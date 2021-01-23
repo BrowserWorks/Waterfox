@@ -19,7 +19,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=531585
 #four, #five, #six, #seven::before, #seven::after {
   transition: 500ms color;
   border-color: black; /* don't derive from color */
-  -moz-column-rule-color: black; /* don't derive from color */
+  column-rule-color: black; /* don't derive from color */
   text-decoration-color: black; /* don't derive from color */
   outline-color: black; /* don't derive from color */
 }
@@ -242,7 +242,7 @@ $("five").addEventListener("transitionstart", function() {
     did_finish_five = true;
   }
   $("five").style.transitionProperty = "margin-left";
-}, false);
+});
 
 $("six").addEventListener("transitionstart", function() {
   if (cs("six").color == "rgb(0, 255, 0)") {
@@ -252,7 +252,7 @@ $("six").addEventListener("transitionstart", function() {
   $("six").style.transitionDuration = "0s";
   $("six").style.transitionDelay = "0s";
   $("six").style.color = "blue";
-}, false);
+});
 
 function poll_start_reversal() {
   if (cs("four").color != "rgb(0, 0, 255)") {

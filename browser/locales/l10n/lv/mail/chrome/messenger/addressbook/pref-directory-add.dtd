@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+
+
+
+
+
+<!ENTITY directorySecure.label             "Lietot drošo savienojumu (SSL)">
+<!ENTITY directorySecure.accesskey         "L">
+
+
+<!ENTITY General.tab                       "Vispārīgi">
+<!ENTITY Offline.tab                       "Nesaistē">
+<!ENTITY Advanced.tab                      "Paplašināti">
+<!ENTITY portNumber.label                  "Porta numurs: ">
+<!ENTITY portNumber.accesskey              "P">
+
+
+
+
+
+
+
+
+
+
+<!ENTITY results.label                     "rezultāti">
+
+
+
+
+
+
+
+<!-- Localization note: this is here because the width of the dialog 
+     is determined by the width of the base DN box; and that is likely
+     to vary somewhat with the language.
+-->
+
+<!ENTITY newDirectoryWidth                 "36em">

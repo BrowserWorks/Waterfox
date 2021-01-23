@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Նկարի հատկանիշները">
+
+<!ENTITY pixelsPopup.value "փիքսել">
+
+<!-- These are in the Location tab panel -->
+<!ENTITY locationEditField.label "Նկարի տեղադրությունը.">
+<!ENTITY locationEditField.accessKey "տ">
+<!ENTITY locationEditField.tooltip "Նշեք նկարի ֆայլի անունը կամ տեղադրությունը">
+<!ENTITY locationEditField.shortenedDataURI "Կրճատված URI-ի տվյալների (պատճենը ողջ URI-ը կտեղադրեն սեղմատախտակին)">
+<!ENTITY title.label "Հուշում.">
+<!ENTITY title.accessKey "Հ">
+<!ENTITY title.tooltip "Html 'title' հատկությունը, որը ցուցադրվում է հուշման մեջ">
+<!ENTITY altText.label "Այլընտրանքային տեքստ.">
+<!ENTITY altText.accessKey "Ա">
+<!ENTITY altTextEditField.tooltip "Նշեք նկարի փոխարեն ցուցադրվելիք տեքստը">
+<!ENTITY noAltText.label "Չօգտագործել այլընտրանքային տեքստ">
+<!ENTITY noAltText.accessKey "Չ">
+
+<!ENTITY previewBox.label "Պատկերի նախադիտում">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+<!ENTITY actualSize.label "Իրական չափը.">
+<!ENTITY actualSizeRadio.label "Իրական չափը">
+<!ENTITY actualSizeRadio.accessKey "Ի">
+<!ENTITY actualSizeRadio.tooltip "Հետադարձել նկարի իրական չափը">
+<!ENTITY customSizeRadio.label "Որոշված չափ">
+<!ENTITY customSizeRadio.accessKey "Ո">
+<!ENTITY customSizeRadio.tooltip "Փոխել նկարի չափը, ինչպես որ էջում է">
+<!ENTITY heightEditField.label "Բարձր-ը.">
+<!ENTITY heightEditField.accessKey "Բ">
+<!ENTITY widthEditField.label "Լայն-ը.">
+<!ENTITY widthEditField.accessKey "Լ">
+<!ENTITY constrainCheckbox.label "Սահմանափակ">
+<!ENTITY constrainCheckbox.accessKey "Ս">
+<!ENTITY constrainCheckbox.tooltip "Որոշել նկարի հարաբերակցությունը">
+
+<!-- These controls are in the Image Map box of the expanded area -->
+<!ENTITY imagemapBox.label "Նկարի քարտեզը">
+<!ENTITY removeImageMapButton.label "Ջնջել">
+<!ENTITY removeImageMapButton.accessKey "Ջ">
+
+<!-- These are the options for image alignment -->
+<!ENTITY alignment.label "Հավասարեցնել տեքստը նկարին">
+<!ENTITY bottomPopup.value "Կոճակի մոտ">
+<!ENTITY topPopup.value "Վերևում">
+<!ENTITY centerPopup.value "Կենտրոնում">
+<!ENTITY wrapRightPopup.value "Ծածկել դեպի աջ">
+<!ENTITY wrapLeftPopup.value "Ծածկել դեպի ձախ">
+
+<!-- These controls are in the Spacing Box -->
+<!ENTITY spacingBox.label "Բացատում">
+<!ENTITY leftRightEditField.label "Ձախ և աջ.">
+<!ENTITY leftRightEditField.accessKey "Ձ">
+<!ENTITY topBottomEditField.label "Վերև և ներքև.">
+<!ENTITY topBottomEditField.accessKey "Վ">
+<!ENTITY borderEditField.label "Հստակ եզրագիծ.">
+<!ENTITY borderEditField.accessKey "Հ">
+
+<!-- These controls are in the Link Box -->
+<!ENTITY showImageLinkBorder.label "Ցուցադրել եզրագիծ՝ հղված նկարի շուրջ">
+<!ENTITY showImageLinkBorder.accessKey "Ց">
+<!ENTITY LinkAdvancedEditButton.label "Հղման ընդլայնված խմբագրում...">
+<!ENTITY LinkAdvancedEditButton.accessKey "Հ">
+<!ENTITY LinkAdvancedEditButton.tooltip "Ավելացնել կամ փոփոխել HTML հատկությունները, ոճի հատկությունները և JavaScript-ը">
+
+<!-- These tabs are currently used in the image input dialog -->
+<!ENTITY imageInputTab.label "Բլանկ">
+<!ENTITY imageLocationTab.label "Տեղադրությունը">
+<!ENTITY imageDimensionsTab.label "Չափերը">
+<!ENTITY imageAppearanceTab.label "Տեսք">
+<!ENTITY imageLinkTab.label "Հղում">

@@ -6,35 +6,78 @@
 
 var EXPORTED_SYMBOLS = ["AboutLoginsChild"];
 
-const { ActorChild } = ChromeUtils.import(
-  "resource://gre/modules/ActorChild.jsm"
-);
 const { LoginHelper } = ChromeUtils.import(
   "resource://gre/modules/LoginHelper.jsm"
 );
+const { XPCOMUtils } = ChromeUtils.import(
+  "resource://gre/modules/XPCOMUtils.jsm"
+);
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+
 ChromeUtils.defineModuleGetter(
   this,
   "AppConstants",
   "resource://gre/modules/AppConstants.jsm"
 );
 
-class AboutLoginsChild extends ActorChild {
+XPCOMUtils.defineLazyServiceGetter(
+  this,
+  "ClipboardHelper",
+  "@mozilla.org/widget/clipboardhelper;1",
+  "nsIClipboardHelper"
+);
+
+const TELEMETRY_EVENT_CATEGORY = "pwmgr";
+const TELEMETRY_MIN_MS_BETWEEN_OPEN_MANAGEMENT = 5000;
+
+let lastOpenManagementOuterWindowID = null;
+let lastOpenManagementEventTime = Number.NEGATIVE_INFINITY;
+let masterPasswordPromise;
+
+class AboutLoginsChild extends JSWindowActorChild {
   handleEvent(event) {
     switch (event.type) {
       case "AboutLoginsInit": {
-        this.mm.sendAsyncMessage("AboutLogins:Subscribe");
+        this.sendAsyncMessage("AboutLogins:Subscribe");
 
-        let documentElement = this.content.document.documentElement;
+        let documentElement = this.document.documentElement;
         documentElement.classList.toggle(
           "official-branding",
           AppConstants.MOZILLA_OFFICIAL
         );
 
-        let waivedContent = Cu.waiveXrays(this.content);
+        let win = this.browsingContext.window;
+        let waivedContent = Cu.waiveXrays(win);
+        let that = this;
         let AboutLoginsUtils = {
           doLoginsMatch(loginA, loginB) {
             return LoginHelper.doLoginsMatch(loginA, loginB, {});
           },
+          getLoginOrigin(uriString) {
+            return LoginHelper.getLoginOrigin(uriString);
+          },
+          /**
+           * Shows the Master Password prompt if enabled, or the
+           * OS auth dialog otherwise.
+           * @param resolve Callback that is called with result of authentication.
+           * @param messageId The string ID that corresponds to a string stored in aboutLogins.ftl.
+           *                  This string will be displayed only when the OS auth dialog is used.
+           */
+          async promptForMasterPassword(resolve, messageId) {
+            masterPasswordPromise = {
+              resolve,
+            };
+
+            that.sendAsyncMessage(
+              "AboutLogins:MasterPasswordRequest",
+              messageId
+            );
+
+            return masterPasswordPromise;
+          },
+          // Default to enabled just in case a search is attempted before we get a response.
+          masterPasswordEnabled: true,
+          passwordRevealVisible: true,
         };
         waivedContent.AboutLoginsUtils = Cu.cloneInto(
           AboutLoginsUtils,
@@ -43,24 +86,113 @@ class AboutLoginsChild extends ActorChild {
             cloneFunctions: true,
           }
         );
+        let aboutLoginsUtilsReadyEvent = new win.CustomEvent(
+          "AboutLoginsUtilsReady"
+        );
+        win.dispatchEvent(aboutLoginsUtilsReadyEvent);
+        break;
+      }
+      case "AboutLoginsCopyLoginDetail": {
+        ClipboardHelper.copyString(event.detail);
+        break;
+      }
+      case "AboutLoginsCreateLogin": {
+        this.sendAsyncMessage("AboutLogins:CreateLogin", {
+          login: event.detail,
+        });
         break;
       }
       case "AboutLoginsDeleteLogin": {
-        this.mm.sendAsyncMessage("AboutLogins:DeleteLogin", {
+        this.sendAsyncMessage("AboutLogins:DeleteLogin", {
           login: event.detail,
         });
         break;
       }
-      case "AboutLoginsOpenSite": {
-        this.mm.sendAsyncMessage("AboutLogins:OpenSite", {
-          login: event.detail,
+      case "AboutLoginsGetHelp": {
+        this.sendAsyncMessage("AboutLogins:GetHelp");
+        break;
+      }
+      case "AboutLoginsHideFooter": {
+        this.sendAsyncMessage("AboutLogins:HideFooter");
+        break;
+      }
+      case "AboutLoginsImport": {
+        this.sendAsyncMessage("AboutLogins:Import");
+        break;
+      }
+      case "AboutLoginsOpenMobileAndroid": {
+        this.sendAsyncMessage("AboutLogins:OpenMobileAndroid", {
+          source: event.detail,
         });
+        break;
+      }
+      case "AboutLoginsOpenMobileIos": {
+        this.sendAsyncMessage("AboutLogins:OpenMobileIos", {
+          source: event.detail,
+        });
+        break;
+      }
+      case "AboutLoginsOpenPreferences": {
+        this.sendAsyncMessage("AboutLogins:OpenPreferences");
+        break;
+      }
+      case "AboutLoginsRecordTelemetryEvent": {
+        let { method, object, extra = {}, value = null } = event.detail;
+
+        if (method == "open_management") {
+          let { docShell } = this.browsingContext;
+          // Compare to the last time open_management was recorded for the same
+          // outerWindowID to not double-count them due to a redirect to remove
+          // the entryPoint query param (since replaceState isn't allowed for
+          // about:). Don't use performance.now for the tab since you can't
+          // compare that number between different tabs and this JSM is shared.
+          let now = docShell.now();
+          if (
+            docShell.outerWindowID == lastOpenManagementOuterWindowID &&
+            now - lastOpenManagementEventTime <
+              TELEMETRY_MIN_MS_BETWEEN_OPEN_MANAGEMENT
+          ) {
+            return;
+          }
+          lastOpenManagementEventTime = now;
+          lastOpenManagementOuterWindowID = docShell.outerWindowID;
+        }
+
+        try {
+          Services.telemetry.recordEvent(
+            TELEMETRY_EVENT_CATEGORY,
+            method,
+            object,
+            value,
+            extra
+          );
+        } catch (ex) {
+          Cu.reportError(
+            "AboutLoginsChild: error recording telemetry event: " + ex.message
+          );
+        }
+        break;
+      }
+      case "AboutLoginsSortChanged": {
+        this.sendAsyncMessage("AboutLogins:SortChanged", event.detail);
+        break;
+      }
+      case "AboutLoginsSyncEnable": {
+        this.sendAsyncMessage("AboutLogins:SyncEnable");
+        break;
+      }
+      case "AboutLoginsSyncOptions": {
+        this.sendAsyncMessage("AboutLogins:SyncOptions");
         break;
       }
       case "AboutLoginsUpdateLogin": {
-        this.mm.sendAsyncMessage("AboutLogins:UpdateLogin", {
+        this.sendAsyncMessage("AboutLogins:UpdateLogin", {
           login: event.detail,
         });
+        break;
+      }
+      case "AboutLoginsExportPasswords": {
+        this.sendAsyncMessage("AboutLogins:ExportPasswords");
         break;
       }
     }
@@ -68,26 +200,58 @@ class AboutLoginsChild extends ActorChild {
 
   receiveMessage(message) {
     switch (message.name) {
-      case "AboutLogins:AllLogins":
-        this.sendToContent("AllLogins", message.data);
+      case "AboutLogins:MasterPasswordResponse":
+        if (masterPasswordPromise) {
+          masterPasswordPromise.resolve(message.data.result);
+          try {
+            let {
+              method,
+              object,
+              extra = {},
+              value = null,
+            } = message.data.telemetryEvent;
+            Services.telemetry.recordEvent(
+              TELEMETRY_EVENT_CATEGORY,
+              method,
+              object,
+              value,
+              extra
+            );
+          } catch (ex) {
+            Cu.reportError(
+              "AboutLoginsChild: error recording telemetry event: " + ex.message
+            );
+          }
+        }
         break;
-      case "AboutLogins:LoginAdded":
-        this.sendToContent("LoginAdded", message.data);
+      case "AboutLogins:Setup":
+        let waivedContent = Cu.waiveXrays(this.browsingContext.window);
+        waivedContent.AboutLoginsUtils.masterPasswordEnabled =
+          message.data.masterPasswordEnabled;
+        waivedContent.AboutLoginsUtils.passwordRevealVisible =
+          message.data.passwordRevealVisible;
+        waivedContent.AboutLoginsUtils.importVisible =
+          message.data.importVisible;
+        waivedContent.AboutLoginsUtils.supportBaseURL = Services.urlFormatter.formatURLPref(
+          "app.support.baseURL"
+        );
+        this.sendToContent("Setup", message.data);
         break;
-      case "AboutLogins:LoginModified":
-        this.sendToContent("LoginModified", message.data);
-        break;
-      case "AboutLogins:LoginRemoved":
-        this.sendToContent("LoginRemoved", message.data);
-        break;
+      default:
+        this.passMessageDataToContent(message);
     }
   }
 
+  passMessageDataToContent(message) {
+    this.sendToContent(message.name.replace("AboutLogins:", ""), message.data);
+  }
+
   sendToContent(messageType, detail) {
+    let win = this.document.defaultView;
     let message = Object.assign({ messageType }, { value: detail });
-    let event = new this.content.CustomEvent("AboutLoginsChromeToContent", {
-      detail: Cu.cloneInto(message, this.content),
+    let event = new win.CustomEvent("AboutLoginsChromeToContent", {
+      detail: Cu.cloneInto(message, win),
     });
-    this.content.dispatchEvent(event);
+    win.dispatchEvent(event);
   }
 }

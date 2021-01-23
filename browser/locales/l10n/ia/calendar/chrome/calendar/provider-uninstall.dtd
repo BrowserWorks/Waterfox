@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Disinstallar un fornitor">
+<!ENTITY providerUninstall.accept.label                    "Remover le inscription eligite">
+<!ENTITY providerUninstall.accept.accesskey                "R">
+<!ENTITY providerUninstall.cancel.label                    "Retener le additivo">
+<!ENTITY providerUninstall.cancel.accesskey                "R">
+<!ENTITY providerUninstall.preName.label                   "Tu requireva de disinstallar o disactivar:">
+<!ENTITY providerUninstall.postName.label                  "Isto causara le disactivation del agendas infra.">
+<!ENTITY providerUninstall.reinstallNote.label             "A minus que tu planifica de reinstallar iste fornitor, tu pote eliger de de-rolar de su calendarios.">

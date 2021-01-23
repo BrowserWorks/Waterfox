@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY importDialog.windowTitle "Importar">
+<!ENTITY importAll.label          "Importar tot">
+<!ENTITY importAll.accesskey      "t">
+<!ENTITY importMail.label         "Correu">
+<!ENTITY importMail.accesskey     "C">
+<!ENTITY importFeeds.label        "Feed Subscriptions">
+<!ENTITY importFeeds.accesskey    "d">
+<!ENTITY importAddressbook.label  "Libretas d'adrezas">
+<!ENTITY importAddressbook.accesskey "L">
+<!ENTITY importSettings.label     "Configuración">
+<!ENTITY importSettings.accesskey "u">
+<!ENTITY importFilters.label      "Filtros">
+<!ENTITY importFilters.accesskey  "F">
+
+<!ENTITY  window.width            "47em">
+<!ENTITY  window.macWidth         "52em">
+
+<!ENTITY importTitle.label        "Asistent d'importación de &brandShortName;">
+<!ENTITY importShortDesc.label    "Importar correu, libretas d'adrezas, configuracions y filtros d'atros programas">
+
+<!ENTITY importDescription1.label "This wizard will import mail messages, address book entries, feed subscriptions, preferences, and/or filters from other mail programs and common address book formats into &brandShortName;.">
+<!ENTITY importDescription2.label "Quan haigan estau importaus, podrá accedir ta ells dende o correu de &brandShortName;.">
+
+<!ENTITY selectDescription.label  "Por favor, trige o tipo de fichero que le fería goyo importar:">
+<!ENTITY selectDescriptionB.label "Please select an existing account or create a new account:">
+<!ENTITY selectDescription.accesskey "P">
+<!ENTITY acctName.label           "Name:">
+<!ENTITY acctName.accesskey       "N">
+
+<!ENTITY back.label               "&lt; Dezaga">
+<!ENTITY forward.label            "Siguient &gt;">
+<!ENTITY finish.label             "Rematar">
+<!ENTITY cancel.label             "Cancelar">
+
+<!ENTITY select.label             "u trige o tipo de datos a importar:">
+
+<!ENTITY title.label              "Puesto">
+<!ENTITY processing.label         "Importando…">

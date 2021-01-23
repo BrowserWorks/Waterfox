@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.navigator.title           "ブラウザー">
+
+<!ENTITY navRadio.label                 "次の場合:">
+<!ENTITY navRadio.accesskey             "n">
+<!ENTITY navStartPageMenu.label         "ブラウザーの起動時">
+<!ENTITY newWinPageMenu.label           "新しいウィンドウを開いたとき">
+<!ENTITY newTabPageMenu.label           "新しいタブを開いたとき">
+
+<!ENTITY blankPageRadio.label           "空白ページを表示する">
+<!ENTITY blankPageRadio.accesskey       "B">
+<!ENTITY homePageRadio.label            "ホームページを表示する">
+<!ENTITY homePageRadio.accesskey        "m">
+<!ENTITY lastPageRadio.label            "最後に訪問したページを表示する">
+<!ENTITY lastPageRadio.accesskey        "L">
+<!ENTITY restoreSessionRadio.label      "以前のセッションを復元する">
+<!ENTITY restoreSessionRadio.accesskey  "P">
+
+<!ENTITY restoreSessionIntro.label      "セッションとウィンドウを復元する時">
+<!ENTITY restoreImmediately.label       "すぐにすべてのタブを復元する">
+<!ENTITY restoreImmediately.accesskey   "e">
+<!-- LOCALIZATION NOTE (restoreTabs.label): This will concatenate to
+     "Restore [___] tab(s) at a time",
+     using (restoreTabs.label) and a number (restoreTabsAtATime.label). -->
+<!ENTITY restoreTabs.label              "一度に">
+<!ENTITY restoreTabs.accesskey          "s">
+<!ENTITY restoreTabsAtATime.label       "個のタブまでを復元する">
+<!ENTITY restoreDeferred.label          "必要な時のみタブを復元する">
+<!ENTITY restoreDeferred.accesskey      "O">
+
+<!ENTITY homePageIntro.label            "パーソナルツールバーの [ホーム] をクリックすると、このページのグループを開きます:">
+<!ENTITY useCurrent.label               "現在のページを使用">
+<!ENTITY useCurrent.accesskey           "U">
+<!ENTITY useCurrentGroup.label          "現在のページのグループを使用">
+<!ENTITY useCurrentGroup.accesskey      "G">
+<!ENTITY browseFile.label               "ファイルを選択...">
+<!ENTITY browseFile.accesskey           "C">
+<!ENTITY useDefault.label               "初期設定に戻す">
+<!ENTITY useDefault.accesskey           "R">
+
+<!ENTITY defaultBrowserGroup.label      "既定のブラウザー">
+<!ENTITY defaultBrowserButton.label     "既定のブラウザーに設定">
+<!ENTITY defaultBrowserButton.accesskey "D">
+<!ENTITY alreadyDefaultText             "&brandShortName; はすでに既定のブラウザーに設定されています。">
+<!ENTITY defaultPendingText             "OK をクリックすると &brandShortName; は既定のブラウザーに設定されます。">
+<!ENTITY wasMadeDefaultText             "&brandShortName; は既定のブラウザーに設定されています。">
+<!ENTITY makeDefaultText                "&brandShortName; を既定のブラウザーに設定します。">

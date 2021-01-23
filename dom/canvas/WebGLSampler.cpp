@@ -12,33 +12,21 @@
 namespace mozilla {
 
 WebGLSampler::WebGLSampler(WebGLContext* const webgl)
-    : WebGLRefCountedObject(webgl), mGLName([&]() {
+    : WebGLContextBoundObject(webgl), mGLName([&]() {
         GLuint ret = 0;
         webgl->gl->fGenSamplers(1, &ret);
         return ret;
-      }()) {
-  mContext->mSamplers.insertBack(this);
-}
+      }()) {}
 
-WebGLSampler::~WebGLSampler() { DeleteOnce(); }
-
-void WebGLSampler::Delete() {
+WebGLSampler::~WebGLSampler() {
+  if (!mContext) return;
   mContext->gl->fDeleteSamplers(1, &mGLName);
-
-  removeFrom(mContext->mSamplers);
-}
-
-WebGLContext* WebGLSampler::GetParentObject() const { return mContext; }
-
-JSObject* WebGLSampler::WrapObject(JSContext* cx,
-                                   JS::Handle<JSObject*> givenProto) {
-  return dom::WebGLSampler_Binding::Wrap(cx, this, givenProto);
 }
 
 static bool ValidateSamplerParameterParams(WebGLContext* webgl, GLenum pname,
                                            const FloatOrInt& param) {
   const auto& paramInt = param.i;
-
+  bool pnameValid = true;
   switch (pname) {
     case LOCAL_GL_TEXTURE_MIN_FILTER:
       switch (paramInt) {
@@ -112,9 +100,22 @@ static bool ValidateSamplerParameterParams(WebGLContext* webgl, GLenum pname,
       }
       break;
 
+    case LOCAL_GL_TEXTURE_MAX_ANISOTROPY:
+      if (webgl->IsExtensionEnabled(
+              WebGLExtensionID::EXT_texture_filter_anisotropic)) {
+        return true;
+      }
+      pnameValid = false;
+      break;
+
     default:
-      webgl->ErrorInvalidEnumInfo("pname", pname);
-      return false;
+      pnameValid = false;
+      break;
+  }
+
+  if (!pnameValid) {
+    webgl->ErrorInvalidEnumInfo("pname", pname);
+    return false;
   }
 
   webgl->ErrorInvalidEnumInfo("param", paramInt);
@@ -163,11 +164,5 @@ void WebGLSampler::SamplerParameter(GLenum pname, const FloatOrInt& param) {
     mContext->gl->fSamplerParameteri(mGLName, pname, param.i);
   }
 }
-
-////
-
-NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE_0(WebGLSampler)
-NS_IMPL_CYCLE_COLLECTION_ROOT_NATIVE(WebGLSampler, AddRef)
-NS_IMPL_CYCLE_COLLECTION_UNROOT_NATIVE(WebGLSampler, Release)
 
 }  // namespace mozilla

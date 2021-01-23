@@ -5,14 +5,14 @@ toolkit.jar:
 *  content/global/xul.css
    content/global/autocomplete.css
    content/global/aboutAbout.js
-   content/global/aboutAbout.xhtml
+   content/global/aboutAbout.html
 #ifdef MOZILLA_OFFICIAL
    content/global/aboutRights.xhtml
 #else
    content/global/aboutRights.xhtml           (aboutRights-unbranded.xhtml)
 #endif
    content/global/aboutNetworking.js
-   content/global/aboutNetworking.xhtml
+   content/global/aboutNetworking.html
 #ifndef ANDROID
    content/global/aboutProfiles.js
    content/global/aboutProfiles.xhtml
@@ -31,9 +31,9 @@ toolkit.jar:
    content/global/aboutUrlClassifier.js
    content/global/aboutUrlClassifier.xhtml
    content/global/aboutUrlClassifier.css
-   content/global/directionDetector.html
    content/global/plugins.html
    content/global/plugins.css
+   content/global/plugins.js
    content/global/browser-child.js
    content/global/browser-content.js
 *   content/global/buildconfig.html
@@ -52,8 +52,8 @@ toolkit.jar:
    content/global/process-content.js
    content/global/resetProfile.css
    content/global/resetProfile.js
-   content/global/resetProfile.xul
-   content/global/resetProfileProgress.xul
+   content/global/resetProfile.xhtml
+   content/global/resetProfileProgress.xhtml
    content/global/TopLevelVideoDocument.js
    content/global/timepicker.xhtml
    content/global/treeUtils.js
@@ -61,36 +61,29 @@ toolkit.jar:
    content/global/viewZoomOverlay.js
 #endif
    content/global/widgets.css
-   content/global/bindings/autocomplete.xml    (widgets/autocomplete.xml)
-   content/global/bindings/button.xml          (widgets/button.xml)
    content/global/bindings/calendar.js         (widgets/calendar.js)
    content/global/bindings/datekeeper.js       (widgets/datekeeper.js)
    content/global/bindings/datepicker.js       (widgets/datepicker.js)
    content/global/bindings/datetimebox.css     (widgets/datetimebox.css)
-*  content/global/bindings/dialog.xml          (widgets/dialog.xml)
-   content/global/bindings/general.xml         (widgets/general.xml)
-   content/global/bindings/popup.xml           (widgets/popup.xml)
-   content/global/bindings/richlistbox.xml     (widgets/richlistbox.xml)
-   content/global/bindings/scrollbox.xml       (widgets/scrollbox.xml)
    content/global/bindings/spinner.js          (widgets/spinner.js)
-   content/global/bindings/tabbox.xml          (widgets/tabbox.xml)
-*  content/global/bindings/textbox.xml         (widgets/textbox.xml)
    content/global/bindings/timekeeper.js       (widgets/timekeeper.js)
    content/global/bindings/timepicker.js       (widgets/timepicker.js)
-   content/global/bindings/toolbarbutton.xml   (widgets/toolbarbutton.xml)
-   content/global/bindings/wizard.xml          (widgets/wizard.xml)
+   content/global/elements/autocomplete-input.js              (widgets/autocomplete-input.js)
    content/global/elements/autocomplete-popup.js              (widgets/autocomplete-popup.js)
    content/global/elements/autocomplete-richlistitem.js       (widgets/autocomplete-richlistitem.js)
    content/global/elements/browser-custom-element.js          (widgets/browser-custom-element.js)
    content/global/elements/button.js           (widgets/button.js)
    content/global/elements/checkbox.js         (widgets/checkbox.js)
    content/global/elements/datetimebox.js      (widgets/datetimebox.js)
+   content/global/elements/dialog.js           (widgets/dialog.js)
    content/global/elements/findbar.js          (widgets/findbar.js)
    content/global/elements/editor.js           (widgets/editor.js)
    content/global/elements/general.js          (widgets/general.js)
    content/global/elements/menu.js             (widgets/menu.js)
    content/global/elements/menupopup.js        (widgets/menupopup.js)
+   content/global/elements/moz-input-box.js    (widgets/moz-input-box.js)
    content/global/elements/notificationbox.js  (widgets/notificationbox.js)
+   content/global/elements/panel.js            (widgets/panel.js)
    content/global/elements/pluginProblem.js    (widgets/pluginProblem.js)
    content/global/elements/radio.js            (widgets/radio.js)
    content/global/elements/richlistbox.js      (widgets/richlistbox.js)
@@ -98,11 +91,12 @@ toolkit.jar:
    content/global/elements/marquee.js          (widgets/marquee.js)
    content/global/elements/menulist.js         (widgets/menulist.js)
    content/global/elements/popupnotification.js  (widgets/popupnotification.js)
+   content/global/elements/arrowscrollbox.js     (widgets/arrowscrollbox.js)
    content/global/elements/search-textbox.js     (widgets/search-textbox.js)
    content/global/elements/stringbundle.js     (widgets/stringbundle.js)
    content/global/elements/tabbox.js           (widgets/tabbox.js)
    content/global/elements/text.js             (widgets/text.js)
-   content/global/elements/textbox.js          (widgets/textbox.js)
+   content/global/elements/toolbarbutton.js    (widgets/toolbarbutton.js)
    content/global/elements/videocontrols.js    (widgets/videocontrols.js)
    content/global/elements/tree.js             (widgets/tree.js)
    content/global/elements/wizard.js           (widgets/wizard.js)

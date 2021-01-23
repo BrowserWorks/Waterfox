@@ -18,23 +18,6 @@
 #include "nsTextFrame.h"  // for nsTextFrame::ShouldSuppressLineBreak
 #include "nsSVGUtils.h"   // for nsSVGUtils::IsInSVGTextSubtree
 
-inline void nsStyleImage::EnsureCachedBIData() const {
-  if (!mCachedBIData) {
-    const_cast<nsStyleImage*>(this)->mCachedBIData =
-        mozilla::MakeUnique<CachedBorderImageData>();
-  }
-}
-
-inline void nsStyleImage::SetSubImage(uint8_t aIndex,
-                                      imgIContainer* aSubImage) const {
-  EnsureCachedBIData();
-  mCachedBIData->SetSubImage(aIndex, aSubImage);
-}
-
-inline imgIContainer* nsStyleImage::GetSubImage(uint8_t aIndex) const {
-  return (mCachedBIData) ? mCachedBIData->GetSubImage(aIndex) : nullptr;
-}
-
 bool nsStyleText::NewlineIsSignificant(const nsTextFrame* aContextFrame) const {
   NS_ASSERTION(aContextFrame->StyleText() == this, "unexpected aContextFrame");
   return NewlineIsSignificantStyle() &&
@@ -54,15 +37,6 @@ bool nsStyleText::WordCanWrap(const nsIFrame* aContextFrame) const {
   return WordCanWrapStyle() && !nsSVGUtils::IsInSVGTextSubtree(aContextFrame);
 }
 
-bool nsStyleDisplay::IsBlockInside(const nsIFrame* aContextFrame) const {
-  NS_ASSERTION(aContextFrame->StyleDisplay() == this,
-               "unexpected aContextFrame");
-  if (nsSVGUtils::IsInSVGTextSubtree(aContextFrame)) {
-    return aContextFrame->IsBlockFrame();
-  }
-  return IsBlockInsideStyle();
-}
-
 bool nsStyleDisplay::IsBlockOutside(const nsIFrame* aContextFrame) const {
   NS_ASSERTION(aContextFrame->StyleDisplay() == this,
                "unexpected aContextFrame");
@@ -79,16 +53,6 @@ bool nsStyleDisplay::IsInlineOutside(const nsIFrame* aContextFrame) const {
     return !aContextFrame->IsBlockFrame();
   }
   return IsInlineOutsideStyle();
-}
-
-bool nsStyleDisplay::IsOriginalDisplayInlineOutside(
-    const nsIFrame* aContextFrame) const {
-  NS_ASSERTION(aContextFrame->StyleDisplay() == this,
-               "unexpected aContextFrame");
-  if (nsSVGUtils::IsInSVGTextSubtree(aContextFrame)) {
-    return !aContextFrame->IsBlockFrame();
-  }
-  return IsOriginalDisplayInlineOutsideStyle();
 }
 
 mozilla::StyleDisplay nsStyleDisplay::GetDisplay(
@@ -131,11 +95,12 @@ bool nsStyleDisplay::IsFixedPosContainingBlockForNonSVGTextFrames(
   // should have the FIXPOS_CB flag set on them.
   NS_ASSERTION(aStyle.StyleDisplay() == this, "unexpected aStyle");
 
-  if (mWillChange.bits & mozilla::StyleWillChangeBits_FIXPOS_CB) {
+  if (mWillChange.bits & mozilla::StyleWillChangeBits::FIXPOS_CB) {
     return true;
   }
 
-  return aStyle.StyleEffects()->HasFilters();
+  return aStyle.StyleEffects()->HasFilters() ||
+         aStyle.StyleEffects()->HasBackdropFilters();
 }
 
 bool nsStyleDisplay::
@@ -176,7 +141,7 @@ bool nsStyleDisplay::IsAbsPosContainingBlockForNonSVGTextFrames() const {
   // NOTE: Any CSS properties that influence the output of this function
   // should have the ABSPOS_CB set on them.
   return IsAbsolutelyPositionedStyle() || IsRelativelyPositionedStyle() ||
-         (mWillChange.bits & mozilla::StyleWillChangeBits_ABSPOS_CB);
+         (mWillChange.bits & mozilla::StyleWillChangeBits::ABSPOS_CB);
 }
 
 bool nsStyleDisplay::IsAbsPosContainingBlock(
@@ -220,12 +185,13 @@ bool nsStyleDisplay::IsAbsolutelyPositioned(
          !nsSVGUtils::IsInSVGTextSubtree(aContextFrame);
 }
 
-uint8_t nsStyleUI::GetEffectivePointerEvents(nsIFrame* aFrame) const {
+mozilla::StylePointerEvents nsStyleUI::GetEffectivePointerEvents(
+    nsIFrame* aFrame) const {
   if (aFrame->GetContent() && !aFrame->GetContent()->GetParent()) {
     // The root frame is not allowed to have pointer-events: none, or else
     // no frames could be hit test against and scrolling the viewport would
     // not work.
-    return NS_STYLE_POINTER_EVENTS_AUTO;
+    return mozilla::StylePointerEvents::Auto;
   }
   return mPointerEvents;
 }
@@ -233,7 +199,7 @@ uint8_t nsStyleUI::GetEffectivePointerEvents(nsIFrame* aFrame) const {
 bool nsStyleBackground::HasLocalBackground() const {
   NS_FOR_VISIBLE_IMAGE_LAYERS_BACK_TO_FRONT(i, mImage) {
     const nsStyleImageLayers::Layer& layer = mImage.mLayers[i];
-    if (!layer.mImage.IsEmpty() &&
+    if (!layer.mImage.IsNone() &&
         layer.mAttachment == mozilla::StyleImageLayerAttachment::Local) {
       return true;
     }

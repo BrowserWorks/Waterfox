@@ -38,6 +38,8 @@ interface nsIHttpUpgradeListener : nsISupports
     [must_use] void onTransportAvailable(in nsISocketTransport   aTransport,
                                          in nsIAsyncInputStream  aSocketIn,
                                          in nsIAsyncOutputStream aSocketOut);
+
+    [must_use] void onUpgradeFailed(in nsresult aErrorCode);
 };
 
 /**
@@ -80,7 +82,7 @@ interface nsIHttpChannelInternal : nsISupports
      * @param aCookieHeader
      *        The cookie header to be parsed.
      */
-    [must_use] void setCookie(in string aCookieHeader);
+    [must_use] void setCookie(in ACString aCookieHeader);
 
     /**
      * Setup this channel as an application cache fallback channel.
@@ -105,11 +107,6 @@ interface nsIHttpChannelInternal : nsISupports
      * THIRD_PARTY_FORCE_ALLOW, described above.
      */
     [must_use] attribute boolean forceAllowThirdPartyCookie;
-
-    /**
-     * True iff the channel has been canceled.
-     */
-    [must_use] readonly attribute boolean canceled;
 
     /**
      * External handlers may set this to true to notify the channel
@@ -169,11 +166,15 @@ interface nsIHttpChannelInternal : nsISupports
      * response. The nsIHttpUpgradeListener will have its
      * onTransportAvailable() method invoked if a matching 101 is processed.
      * The arguments to onTransportAvailable provide the new protocol the low
-     * level tranport streams that are no longer used by HTTP.
+     * level tranport streams that are no longer used by HTTP. If any errors
+     * occur during the upgrade but the original request has (potentially)
+     * already received onStopRequest, the nsIHttpUpgradeListener will have its
+     * onUpgradeFailed() method invoked instead of onTransportAvailable().
      *
      * The onStartRequest and onStopRequest events are still delivered and the
      * listener gets full control over the socket if and when onTransportAvailable
-     * is delievered.
+     * is delivered. Note that if onStopRequest is called with an error, no
+     * methods on the nsIHttpUpgradeListener might be invoked at all.
      *
      * @param aProtocolName
      *        The value of the HTTP Upgrade request header
@@ -329,6 +330,13 @@ interface nsIHttpChannelInternal : nsISupports
     void setAltDataForChild(in boolean aIsForChild);
 
     /**
+     * Prevent the use of alt-data cache for this request.  Use by the
+     * extension StreamFilter class to force use of the regular cache.
+     */
+    [noscript, notxpcom, nostdcall]
+    void disableAltDataCache();
+
+    /**
      * When set to true, the channel will not pop any authentication prompts up
      * to the user.  When provided or cached credentials lead to an
      * authentication failure, that failure will be propagated to the channel
@@ -378,6 +386,29 @@ interface nsIHttpChannelInternal : nsISupports
     [noscript, notxpcom, nostdcall]
     void setIPv6Disabled();
 
+    /**
+     * Returns a cached CrossOriginOpenerPolicy that is computed just before we
+     * determine if there is a policy mismatch.
+     * @throws NS_ERROR_NOT_AVAILABLE if it has not been computed yet
+     */
+    readonly attribute nsILoadInfo_CrossOriginOpenerPolicy crossOriginOpenerPolicy;
+
+    /**
+     * Called during onStartRequest to compute the cross-origin-opener-policy
+     * for a given channel.
+     */
     [noscript]
-    nsILoadInfo_CrossOriginOpenerPolicy getCrossOriginOpenerPolicy();
+    nsILoadInfo_CrossOriginOpenerPolicy computeCrossOriginOpenerPolicy(
+        in nsILoadInfo_CrossOriginOpenerPolicy aInitiatorPolicy);
+
+    [noscript]
+    bool hasCrossOriginOpenerPolicyMismatch(); 
+
+    [noscript]
+    nsILoadInfo_CrossOriginEmbedderPolicy getResponseEmbedderPolicy();
+
+    [notxpcom, nostdcall] attribute boolean hasNonEmptySandboxingFlag;
+
+    [noscript, notxpcom, nostdcall]
+    void DoDiagnosticAssertWhenOnStopNotCalledOnDestroy();
 };

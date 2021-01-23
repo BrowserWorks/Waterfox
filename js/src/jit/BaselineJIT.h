@@ -7,12 +7,15 @@
 #ifndef jit_BaselineJIT_h
 #define jit_BaselineJIT_h
 
+#include "mozilla/Maybe.h"
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/Span.h"
 
 #include "ds/LifoAlloc.h"
 #include "jit/Bailouts.h"
-#include "jit/IonCode.h"
+#include "jit/JitCode.h"
 #include "jit/shared/Assembler-shared.h"
+#include "util/TrailingArray.h"
 #include "vm/EnvironmentObject.h"
 #include "vm/JSContext.h"
 #include "vm/Realm.h"
@@ -23,81 +26,29 @@ namespace jit {
 
 class ICEntry;
 class ICStub;
-class ControlFlowGraph;
 class ReturnAddressEntry;
 
-class PCMappingSlotInfo {
-  uint8_t slotInfo_;
+// Base class for entries mapping a pc offset to a native code offset.
+class BasePCToNativeEntry {
+  uint32_t pcOffset_;
+  uint32_t nativeOffset_;
 
  public:
-  // SlotInfo encoding:
-  //  Bits 0 & 1: number of slots at top of stack which are unsynced.
-  //  Bits 2 & 3: SlotLocation of top slot value (only relevant if
-  //              numUnsynced > 0).
-  //  Bits 3 & 4: SlotLocation of next slot value (only relevant if
-  //              numUnsynced > 1).
-  enum SlotLocation { SlotInR0 = 0, SlotInR1 = 1, SlotIgnore = 3 };
-
-  PCMappingSlotInfo() : slotInfo_(0) {}
-
-  explicit PCMappingSlotInfo(uint8_t slotInfo) : slotInfo_(slotInfo) {}
-
-  static inline bool ValidSlotLocation(SlotLocation loc) {
-    return (loc == SlotInR0) || (loc == SlotInR1) || (loc == SlotIgnore);
-  }
-
-  inline static PCMappingSlotInfo MakeSlotInfo() {
-    return PCMappingSlotInfo(0);
-  }
-
-  inline static PCMappingSlotInfo MakeSlotInfo(SlotLocation topSlotLoc) {
-    MOZ_ASSERT(ValidSlotLocation(topSlotLoc));
-    return PCMappingSlotInfo(1 | (topSlotLoc << 2));
-  }
-
-  inline static PCMappingSlotInfo MakeSlotInfo(SlotLocation topSlotLoc,
-                                               SlotLocation nextSlotLoc) {
-    MOZ_ASSERT(ValidSlotLocation(topSlotLoc));
-    MOZ_ASSERT(ValidSlotLocation(nextSlotLoc));
-    return PCMappingSlotInfo(2 | (topSlotLoc << 2) | (nextSlotLoc) << 4);
-  }
-
-  inline bool isStackSynced() const { return numUnsynced() == 0; }
-  inline unsigned numUnsynced() const { return slotInfo_ & 0x3; }
-  inline SlotLocation topSlotLocation() const {
-    return static_cast<SlotLocation>((slotInfo_ >> 2) & 0x3);
-  }
-  inline SlotLocation nextSlotLocation() const {
-    return static_cast<SlotLocation>((slotInfo_ >> 4) & 0x3);
-  }
-  inline uint8_t toByte() const { return slotInfo_; }
+  BasePCToNativeEntry(uint32_t pcOffset, uint32_t nativeOffset)
+      : pcOffset_(pcOffset), nativeOffset_(nativeOffset) {}
+  uint32_t pcOffset() const { return pcOffset_; }
+  uint32_t nativeOffset() const { return nativeOffset_; }
 };
 
-// A CompactBuffer is used to store native code offsets (relative to the
-// previous pc) and PCMappingSlotInfo bytes. To allow binary search into this
-// table, we maintain a second table of "index" entries. Every X ops, the
-// compiler will add an index entry, so that from the index entry to the
-// actual native code offset, we have to iterate at most X times.
-struct PCMappingIndexEntry {
-  // jsbytecode offset.
-  uint32_t pcOffset;
-
-  // Native code offset.
-  uint32_t nativeOffset;
-
-  // Offset in the CompactBuffer where data for pcOffset starts.
-  uint32_t bufferOffset;
+// Class used during Baseline compilation to store the native code offset for
+// resume offset ops.
+class ResumeOffsetEntry : public BasePCToNativeEntry {
+ public:
+  using BasePCToNativeEntry::BasePCToNativeEntry;
 };
 
-// Describes a single wasm::ImportExit which jumps (via an import with
-// the given index) directly to a BaselineScript or IonScript.
-struct DependentWasmImport {
-  wasm::Instance* instance;
-  size_t importIndex;
-
-  DependentWasmImport(wasm::Instance& instance, size_t importIndex)
-      : instance(&instance), importIndex(importIndex) {}
-};
+using ResumeOffsetEntryVector =
+    Vector<ResumeOffsetEntry, 16, SystemAllocPolicy>;
 
 // Largest script that the baseline compiler will attempt to compile.
 #if defined(JS_CODEGEN_ARM)
@@ -111,7 +62,12 @@ static constexpr uint32_t BaselineMaxScriptLength = 0x0fffffffu;
 
 // Limit the locals on a given script so that stack check on baseline frames
 // doesn't overflow a uint32_t value.
-// (MAX_JSSCRIPT_SLOTS * sizeof(Value)) must fit within a uint32_t.
+// (BaselineMaxScriptSlots * sizeof(Value)) must fit within a uint32_t.
+//
+// This also applies to the Baseline Interpreter: it ensures we don't run out
+// of stack space (and throw over-recursion exceptions) for scripts with a huge
+// number of locals. The C++ interpreter avoids this by having heap-allocated
+// stack frames.
 static constexpr uint32_t BaselineMaxScriptSlots = 0xffffu;
 
 // An entry in the BaselineScript return address table. These entries are used
@@ -125,7 +81,7 @@ static constexpr uint32_t BaselineMaxScriptSlots = 0xffffu;
 // * callVM
 // * IC
 // * DebugTrap (trampoline call)
-// * JSOP_RESUME (because this is like a scripted call)
+// * JSOp::Resume (because this is like a scripted call)
 //
 // Note: see also BaselineFrame::HAS_OVERRIDE_PC.
 class RetAddrEntry {
@@ -155,6 +111,9 @@ class RetAddrEntry {
     // A callVM for the over-recursion check on function entry.
     StackCheck,
 
+    // A callVM for an interrupt check.
+    InterruptCheck,
+
     // DebugTrapHandler (for debugger breakpoints/stepping).
     DebugTrap,
 
@@ -172,23 +131,20 @@ class RetAddrEntry {
 
  public:
   RetAddrEntry(uint32_t pcOffset, Kind kind, CodeOffset retOffset)
-      : returnOffset_(uint32_t(retOffset.offset())), pcOffset_(pcOffset) {
+      : returnOffset_(uint32_t(retOffset.offset())),
+        pcOffset_(pcOffset),
+        kind_(uint32_t(kind)) {
     MOZ_ASSERT(returnOffset_ == retOffset.offset(),
                "retOffset must fit in returnOffset_");
 
     // The pc offset must fit in at least 28 bits, since we shave off 4 for
     // the Kind enum.
     MOZ_ASSERT(pcOffset_ == pcOffset);
-    JS_STATIC_ASSERT(BaselineMaxScriptLength <= (1u << 28) - 1);
+    static_assert(BaselineMaxScriptLength <= (1u << 28) - 1);
     MOZ_ASSERT(pcOffset <= BaselineMaxScriptLength);
-    setKind(kind);
-  }
 
-  // Set the kind and asserts that it's sane.
-  void setKind(Kind kind) {
     MOZ_ASSERT(kind < Kind::Invalid);
-    kind_ = uint32_t(kind);
-    MOZ_ASSERT(this->kind() == kind);
+    MOZ_ASSERT(this->kind() == kind, "kind must fit in kind_ bit field");
   }
 
   CodeOffset returnOffset() const { return CodeOffset(returnOffset_); }
@@ -205,39 +161,37 @@ class RetAddrEntry {
   }
 };
 
-struct BaselineScript final {
+// [SMDOC] BaselineScript
+//
+// This holds the metadata generated by the BaselineCompiler. The machine code
+// associated with this is owned by a JitCode instance. This class instance is
+// followed by several arrays:
+//
+//    <BaselineScript itself>
+//    --
+//    uint8_t*[]              resumeEntryList()
+//    RetAddrEntry[]          retAddrEntries()
+//    OSREntry[]              osrEntries()
+//    DebugTrapEntry[]        debugTrapEntries()
+//    uint32_t[]              traceLoggerToggleOffsets()
+//
+// Note: The arrays are arranged in order of descending alignment requires so
+// that padding is not required.
+class alignas(uintptr_t) BaselineScript final : public TrailingArray {
  private:
   // Code pointer containing the actual method.
   HeapPtr<JitCode*> method_ = nullptr;
 
-  // For functions with a call object, template objects to use for the call
-  // object and decl env object (linked via the call object's enclosing
-  // scope).
-  HeapPtr<EnvironmentObject*> templateEnv_ = nullptr;
-
-  // If non-null, the list of wasm::Modules that contain an optimized call
-  // directly to this script.
-  Vector<DependentWasmImport>* dependentWasmImports_ = nullptr;
-
-  // Early Ion bailouts will enter at this address. This is after frame
-  // construction and before environment chain is initialized.
-  uint32_t bailoutPrologueOffset_;
+  // An ion compilation that is ready, but isn't linked yet.
+  IonCompileTask* pendingIonCompileTask_ = nullptr;
 
   // Baseline Interpreter can enter Baseline Compiler code at this address. This
   // is right after the warm-up counter check in the prologue.
-  uint32_t warmUpCheckPrologueOffset_;
-
-  // Baseline Debug OSR during prologue will enter at this address. This is
-  // right after where a debug prologue VM call would have returned.
-  uint32_t debugOsrPrologueOffset_;
-
-  // Baseline Debug OSR during epilogue will enter at this address. This is
-  // right after where a debug epilogue VM call would have returned.
-  uint32_t debugOsrEpilogueOffset_;
+  uint32_t warmUpCheckPrologueOffset_ = 0;
 
   // The offsets for the toggledJump instructions for profiler instrumentation.
-  uint32_t profilerEnterToggleOffset_;
-  uint32_t profilerExitToggleOffset_;
+  uint32_t profilerEnterToggleOffset_ = 0;
+  uint32_t profilerExitToggleOffset_ = 0;
 
   // The offsets and event used for Tracelogger toggling.
 #ifdef JS_TRACE_LOGGING
@@ -248,99 +202,109 @@ struct BaselineScript final {
   TraceLoggerEvent traceLoggerScriptEvent_ = {};
 #endif
 
+ private:
+  // Offset (in bytes) from `this` to the start of each trailing array. Each
+  // array ends where following one begins. There is no implicit padding (except
+  // possible at very end).
+  Offset resumeEntriesOffset_ = 0;
+  Offset retAddrEntriesOffset_ = 0;
+  Offset osrEntriesOffset_ = 0;
+  Offset debugTrapEntriesOffset_ = 0;
+  Offset traceLoggerToggleOffsetsOffset_ = 0;
+  Offset allocBytes_ = 0;
+
+  // See `Flag` type below.
+  uint8_t flags_ = 0;
+
+  // End of fields.
+
  public:
   enum Flag {
-    // (1 << 0) and (1 << 1) are unused.
-
-    // Flag set when the script contains any writes to its on-stack
-    // (rather than call object stored) arguments.
-    MODIFIES_ARGUMENTS = 1 << 2,
-
     // Flag set when compiled for use with Debugger. Handles various
     // Debugger hooks and compiles toggled calls for traps.
-    HAS_DEBUG_INSTRUMENTATION = 1 << 3,
-
-    // Flag set if this script has ever been Ion compiled, either directly
-    // or inlined into another script. This is cleared when the script's
-    // type information or caches are cleared.
-    ION_COMPILED_OR_INLINED = 1 << 4,
+    HAS_DEBUG_INSTRUMENTATION = 1 << 0,
 
     // Flag is set if this script has profiling instrumentation turned on.
-    PROFILER_INSTRUMENTATION_ON = 1 << 5,
+    PROFILER_INSTRUMENTATION_ON = 1 << 1,
+  };
 
-    // Whether this script uses its environment chain. This is currently
-    // determined by the BytecodeAnalysis and cached on the BaselineScript
-    // for IonBuilder.
-    USES_ENVIRONMENT_CHAIN = 1 << 6,
+  // Native code offset for OSR from Baseline Interpreter into Baseline JIT at
+  // JSOp::LoopHead ops.
+  class OSREntry : public BasePCToNativeEntry {
+   public:
+    using BasePCToNativeEntry::BasePCToNativeEntry;
+  };
+
+  // Native code offset for a debug trap when the script is compiled with debug
+  // instrumentation.
+  class DebugTrapEntry : public BasePCToNativeEntry {
+   public:
+    using BasePCToNativeEntry::BasePCToNativeEntry;
   };
 
  private:
-  uint32_t flags_ = 0;
-
- private:
-  void trace(JSTracer* trc);
-
-  uint32_t retAddrEntriesOffset_ = 0;
-  uint32_t retAddrEntries_ = 0;
-
-  uint32_t pcMappingIndexOffset_ = 0;
-  uint32_t pcMappingIndexEntries_ = 0;
-
-  uint32_t pcMappingOffset_ = 0;
-  uint32_t pcMappingSize_ = 0;
-
-  // We store the native code address corresponding to each bytecode offset in
-  // the script's resumeOffsets list.
-  uint32_t resumeEntriesOffset_ = 0;
-
-  // By default tracelogger is disabled. Therefore we disable the logging code
-  // by default. We store the offsets we must patch to enable the logging.
-  uint32_t traceLoggerToggleOffsetsOffset_ = 0;
-  uint32_t numTraceLoggerToggleOffsets_ = 0;
-
-  // The total bytecode length of all scripts we inlined when we Ion-compiled
-  // this script. 0 if Ion did not compile this script or if we didn't inline
-  // anything.
-  uint16_t inlinedBytecodeLength_ = 0;
-
-  // The max inlining depth where we can still inline all functions we inlined
-  // when we Ion-compiled this script. This starts as UINT8_MAX, since we have
-  // no data yet, and won't affect inlining heuristics in that case. The value
-  // is updated when we Ion-compile this script. See makeInliningDecision for
-  // more info.
-  uint8_t maxInliningDepth_ = UINT8_MAX;
-
-  // An ion compilation that is ready, but isn't linked yet.
-  IonBuilder* pendingBuilder_ = nullptr;
-
-  ControlFlowGraph* controlFlowGraph_ = nullptr;
+  // Layout helpers
+  Offset resumeEntriesOffset() const { return resumeEntriesOffset_; }
+  Offset retAddrEntriesOffset() const { return retAddrEntriesOffset_; }
+  Offset osrEntriesOffset() const { return osrEntriesOffset_; }
+  Offset debugTrapEntriesOffset() const { return debugTrapEntriesOffset_; }
+  Offset traceLoggerToggleOffsetsOffset() const {
+    return traceLoggerToggleOffsetsOffset_;
+  }
+  Offset endOffset() const { return allocBytes_; }
 
   // Use BaselineScript::New to create new instances. It will properly
   // allocate trailing objects.
-  BaselineScript(uint32_t bailoutPrologueOffset,
-                 uint32_t warmUpCheckPrologueOffset,
-                 uint32_t debugOsrPrologueOffset,
-                 uint32_t debugOsrEpilogueOffset,
+  BaselineScript(uint32_t warmUpCheckPrologueOffset,
                  uint32_t profilerEnterToggleOffset,
                  uint32_t profilerExitToggleOffset)
-      : bailoutPrologueOffset_(bailoutPrologueOffset),
-        warmUpCheckPrologueOffset_(warmUpCheckPrologueOffset),
-        debugOsrPrologueOffset_(debugOsrPrologueOffset),
-        debugOsrEpilogueOffset_(debugOsrEpilogueOffset),
+      : warmUpCheckPrologueOffset_(warmUpCheckPrologueOffset),
         profilerEnterToggleOffset_(profilerEnterToggleOffset),
         profilerExitToggleOffset_(profilerExitToggleOffset) {}
 
- public:
-  static BaselineScript* New(
-      JSScript* jsscript, uint32_t bailoutPrologueOffset,
-      uint32_t warmUpCheckPrologueOffset, uint32_t debugOsrPrologueOffset,
-      uint32_t debugOsrEpilogueOffset, uint32_t profilerEnterToggleOffset,
-      uint32_t profilerExitToggleOffset, size_t retAddrEntries,
-      size_t pcMappingIndexEntries, size_t pcMappingSize, size_t resumeEntries,
-      size_t traceLoggerToggleOffsetEntries);
+  template <typename T>
+  mozilla::Span<T> makeSpan(Offset start, Offset end) {
+    return mozilla::MakeSpan(offsetToPointer<T>(start),
+                             numElements<T>(start, end));
+  }
 
-  static void Trace(JSTracer* trc, BaselineScript* script);
-  static void Destroy(FreeOp* fop, BaselineScript* script);
+  // We store the native code address corresponding to each bytecode offset in
+  // the script's resumeOffsets list.
+  mozilla::Span<uint8_t*> resumeEntryList() {
+    return makeSpan<uint8_t*>(resumeEntriesOffset(), retAddrEntriesOffset());
+  }
+
+  // See each type for documentation of these arrays.
+  mozilla::Span<RetAddrEntry> retAddrEntries() {
+    return makeSpan<RetAddrEntry>(retAddrEntriesOffset(), osrEntriesOffset());
+  }
+  mozilla::Span<OSREntry> osrEntries() {
+    return makeSpan<OSREntry>(osrEntriesOffset(), debugTrapEntriesOffset());
+  }
+  mozilla::Span<DebugTrapEntry> debugTrapEntries() {
+    return makeSpan<DebugTrapEntry>(debugTrapEntriesOffset(),
+                                    traceLoggerToggleOffsetsOffset());
+  }
+
+#ifdef JS_TRACE_LOGGING
+  // By default tracelogger is disabled. Therefore we disable the logging code
+  // by default. We store the offsets we must patch to enable the logging.
+  mozilla::Span<uint32_t> traceLoggerToggleOffsets() {
+    return makeSpan<uint32_t>(traceLoggerToggleOffsetsOffset(), endOffset());
+  }
+#endif
+
+ public:
+  static BaselineScript* New(JSContext* cx, uint32_t warmUpCheckPrologueOffset,
+                             uint32_t profilerEnterToggleOffset,
+                             uint32_t profilerExitToggleOffset,
+                             size_t retAddrEntries, size_t osrEntries,
+                             size_t debugTrapEntries, size_t resumeEntries,
+                             size_t traceLoggerToggleOffsetEntries);
+
+  static void Destroy(JSFreeOp* fop, BaselineScript* script);
+
+  void trace(JSTracer* trc);
 
   static inline size_t offsetOfMethod() {
     return offsetof(BaselineScript, method_);
@@ -351,59 +315,19 @@ struct BaselineScript final {
     *data += mallocSizeOf(this);
   }
 
-  void setModifiesArguments() { flags_ |= MODIFIES_ARGUMENTS; }
-  bool modifiesArguments() { return flags_ & MODIFIES_ARGUMENTS; }
-
   void setHasDebugInstrumentation() { flags_ |= HAS_DEBUG_INSTRUMENTATION; }
   bool hasDebugInstrumentation() const {
     return flags_ & HAS_DEBUG_INSTRUMENTATION;
   }
 
-  void setIonCompiledOrInlined() { flags_ |= ION_COMPILED_OR_INLINED; }
-  void clearIonCompiledOrInlined() { flags_ &= ~ION_COMPILED_OR_INLINED; }
-  bool ionCompiledOrInlined() const { return flags_ & ION_COMPILED_OR_INLINED; }
-
-  void setUsesEnvironmentChain() { flags_ |= USES_ENVIRONMENT_CHAIN; }
-  bool usesEnvironmentChain() const { return flags_ & USES_ENVIRONMENT_CHAIN; }
-
-  uint8_t* bailoutPrologueEntryAddr() const {
-    return method_->raw() + bailoutPrologueOffset_;
-  }
   uint8_t* warmUpCheckPrologueAddr() const {
     return method_->raw() + warmUpCheckPrologueOffset_;
-  }
-  uint8_t* debugOsrPrologueEntryAddr() const {
-    return method_->raw() + debugOsrPrologueOffset_;
-  }
-  uint8_t* debugOsrEpilogueEntryAddr() const {
-    return method_->raw() + debugOsrEpilogueOffset_;
-  }
-
-  RetAddrEntry* retAddrEntryList() {
-    return (RetAddrEntry*)(reinterpret_cast<uint8_t*>(this) +
-                           retAddrEntriesOffset_);
-  }
-  uint8_t** resumeEntryList() {
-    return (uint8_t**)(reinterpret_cast<uint8_t*>(this) + resumeEntriesOffset_);
-  }
-  PCMappingIndexEntry* pcMappingIndexEntryList() {
-    return (PCMappingIndexEntry*)(reinterpret_cast<uint8_t*>(this) +
-                                  pcMappingIndexOffset_);
-  }
-  uint8_t* pcMappingData() {
-    return reinterpret_cast<uint8_t*>(this) + pcMappingOffset_;
   }
 
   JitCode* method() const { return method_; }
   void setMethod(JitCode* code) {
     MOZ_ASSERT(!method_);
     method_ = code;
-  }
-
-  EnvironmentObject* templateEnvironment() const { return templateEnv_; }
-  void setTemplateEnvironment(EnvironmentObject* templateEnv) {
-    MOZ_ASSERT(!templateEnv_);
-    templateEnv_ = templateEnv;
   }
 
   bool containsCodeAddress(uint8_t* addr) const {
@@ -413,52 +337,28 @@ struct BaselineScript final {
 
   uint8_t* returnAddressForEntry(const RetAddrEntry& ent);
 
-  RetAddrEntry& retAddrEntry(size_t index);
-  RetAddrEntry& retAddrEntryFromPCOffset(uint32_t pcOffset,
-                                         RetAddrEntry::Kind kind);
-  RetAddrEntry& prologueRetAddrEntry(RetAddrEntry::Kind kind);
-  RetAddrEntry& retAddrEntryFromReturnOffset(CodeOffset returnOffset);
-  RetAddrEntry& retAddrEntryFromReturnAddress(uint8_t* returnAddr);
+  const RetAddrEntry& retAddrEntryFromPCOffset(uint32_t pcOffset,
+                                               RetAddrEntry::Kind kind);
+  const RetAddrEntry& prologueRetAddrEntry(RetAddrEntry::Kind kind);
+  const RetAddrEntry& retAddrEntryFromReturnOffset(CodeOffset returnOffset);
+  const RetAddrEntry& retAddrEntryFromReturnAddress(uint8_t* returnAddr);
 
-  size_t numRetAddrEntries() const { return retAddrEntries_; }
+  uint8_t* nativeCodeForOSREntry(uint32_t pcOffset);
 
-  void copyRetAddrEntries(JSScript* script, const RetAddrEntry* entries);
+  void copyRetAddrEntries(const RetAddrEntry* entries);
+  void copyOSREntries(const OSREntry* entries);
+  void copyDebugTrapEntries(const DebugTrapEntry* entries);
 
   // Copy resumeOffsets list from |script| and convert the pcOffsets
-  // to native addresses in the Baseline code.
-  void computeResumeNativeOffsets(JSScript* script);
-
-  PCMappingIndexEntry& pcMappingIndexEntry(size_t index);
-  CompactBufferReader pcMappingReader(size_t indexEntry);
-
-  size_t numPCMappingIndexEntries() const { return pcMappingIndexEntries_; }
-
-  void copyPCMappingIndexEntries(const PCMappingIndexEntry* entries);
-  void copyPCMappingEntries(const CompactBufferWriter& entries);
-
-  // Baseline JIT may not generate code for unreachable bytecode which
-  // results in mapping returning nullptr.
-  uint8_t* maybeNativeCodeForPC(JSScript* script, jsbytecode* pc,
-                                PCMappingSlotInfo* slotInfo);
-  uint8_t* nativeCodeForPC(JSScript* script, jsbytecode* pc,
-                           PCMappingSlotInfo* slotInfo) {
-    uint8_t* native = maybeNativeCodeForPC(script, pc, slotInfo);
-    MOZ_ASSERT(native);
-    return native;
-  }
+  // to native addresses in the Baseline code based on |entries|.
+  void computeResumeNativeOffsets(JSScript* script,
+                                  const ResumeOffsetEntryVector& entries);
 
   // Return the bytecode offset for a given native code address. Be careful
-  // when using this method: we don't emit code for some bytecode ops, so
-  // the result may not be accurate.
+  // when using this method: it's an approximation and not guaranteed to be the
+  // correct pc.
   jsbytecode* approximatePcForNativeAddress(JSScript* script,
                                             uint8_t* nativeAddress);
-
-  MOZ_MUST_USE bool addDependentWasmImport(JSContext* cx,
-                                           wasm::Instance& instance,
-                                           uint32_t idx);
-  void removeDependentWasmImport(wasm::Instance& instance, uint32_t idx);
-  void unlinkDependentWasmImports(FreeOp* fop);
-  void clearDependentWasmImports();
 
   // Toggle debug traps (used for breakpoints and step mode) in the script.
   // If |pc| is nullptr, toggle traps for all ops in the script. Else, only
@@ -478,93 +378,45 @@ struct BaselineScript final {
   static size_t offsetOfTraceLoggerScriptEvent() {
     return offsetof(BaselineScript, traceLoggerScriptEvent_);
   }
-
-  uint32_t* traceLoggerToggleOffsets() {
-    MOZ_ASSERT(traceLoggerToggleOffsetsOffset_);
-    return reinterpret_cast<uint32_t*>(reinterpret_cast<uint8_t*>(this) +
-                                       traceLoggerToggleOffsetsOffset_);
-  }
 #endif
 
-  static size_t offsetOfFlags() { return offsetof(BaselineScript, flags_); }
   static size_t offsetOfResumeEntriesOffset() {
+    static_assert(sizeof(Offset) == sizeof(uint32_t),
+                  "JIT expect Offset to be uint32_t");
     return offsetof(BaselineScript, resumeEntriesOffset_);
   }
 
   static void writeBarrierPre(Zone* zone, BaselineScript* script);
 
-  uint8_t maxInliningDepth() const { return maxInliningDepth_; }
-  void setMaxInliningDepth(uint32_t depth) {
-    MOZ_ASSERT(depth <= UINT8_MAX);
-    maxInliningDepth_ = depth;
+  bool hasPendingIonCompileTask() const { return !!pendingIonCompileTask_; }
+
+  js::jit::IonCompileTask* pendingIonCompileTask() {
+    MOZ_ASSERT(hasPendingIonCompileTask());
+    return pendingIonCompileTask_;
   }
-  void resetMaxInliningDepth() { maxInliningDepth_ = UINT8_MAX; }
+  void setPendingIonCompileTask(JSRuntime* rt, JSScript* script,
+                                js::jit::IonCompileTask* task);
+  void removePendingIonCompileTask(JSRuntime* rt, JSScript* script);
 
-  uint16_t inlinedBytecodeLength() const { return inlinedBytecodeLength_; }
-  void setInlinedBytecodeLength(uint32_t len) {
-    if (len > UINT16_MAX) {
-      len = UINT16_MAX;
-    }
-    inlinedBytecodeLength_ = len;
-  }
-
-  bool hasPendingIonBuilder() const { return !!pendingBuilder_; }
-
-  js::jit::IonBuilder* pendingIonBuilder() {
-    MOZ_ASSERT(hasPendingIonBuilder());
-    return pendingBuilder_;
-  }
-  void setPendingIonBuilder(JSRuntime* rt, JSScript* script,
-                            js::jit::IonBuilder* builder) {
-    MOZ_ASSERT(script->baselineScript() == this);
-    MOZ_ASSERT(!builder || !hasPendingIonBuilder());
-
-    if (script->isIonCompilingOffThread()) {
-      script->setIonScript(rt, ION_PENDING_SCRIPT);
-    }
-
-    pendingBuilder_ = builder;
-
-    // lazy linking cannot happen during asmjs to ion.
-    clearDependentWasmImports();
-
-    script->updateJitCodeRaw(rt);
-  }
-  void removePendingIonBuilder(JSRuntime* rt, JSScript* script) {
-    setPendingIonBuilder(rt, script, nullptr);
-    if (script->maybeIonScript() == ION_PENDING_SCRIPT) {
-      script->setIonScript(rt, nullptr);
-    }
-  }
-
-  const ControlFlowGraph* controlFlowGraph() const { return controlFlowGraph_; }
-
-  void setControlFlowGraph(ControlFlowGraph* controlFlowGraph) {
-    controlFlowGraph_ = controlFlowGraph;
-  }
+  size_t allocBytes() const { return allocBytes_; }
 };
 static_assert(
     sizeof(BaselineScript) % sizeof(uintptr_t) == 0,
     "The data attached to the script must be aligned for fast JIT access.");
-
-inline bool IsBaselineEnabled(JSContext* cx) {
-#ifdef JS_CODEGEN_NONE
-  return false;
-#else
-  return cx->options().baseline() && cx->runtime()->jitSupportsFloatingPoint;
-#endif
-}
 
 enum class BaselineTier { Interpreter, Compiler };
 
 template <BaselineTier Tier>
 MethodStatus CanEnterBaselineMethod(JSContext* cx, RunState& state);
 
-template <BaselineTier Tier>
-MethodStatus CanEnterBaselineAtBranch(JSContext* cx, InterpreterFrame* fp);
+MethodStatus CanEnterBaselineInterpreterAtBranch(JSContext* cx,
+                                                 InterpreterFrame* fp);
 
-JitExecStatus EnterBaselineAtBranch(JSContext* cx, InterpreterFrame* fp,
-                                    jsbytecode* pc);
+JitExecStatus EnterBaselineInterpreterAtBranch(JSContext* cx,
+                                               InterpreterFrame* fp,
+                                               jsbytecode* pc);
+
+bool CanBaselineInterpretScript(JSScript* script);
 
 // Called by the Baseline Interpreter to compile a script for the Baseline JIT.
 // |res| is set to the native code address in the BaselineScript to jump to, or
@@ -572,65 +424,53 @@ JitExecStatus EnterBaselineAtBranch(JSContext* cx, InterpreterFrame* fp,
 bool BaselineCompileFromBaselineInterpreter(JSContext* cx, BaselineFrame* frame,
                                             uint8_t** res);
 
-void FinishDiscardBaselineScript(FreeOp* fop, JSScript* script);
+void FinishDiscardBaselineScript(JSFreeOp* fop, JSScript* script);
 
 void AddSizeOfBaselineData(JSScript* script, mozilla::MallocSizeOf mallocSizeOf,
-                           size_t* data, size_t* fallbackStubs);
+                           size_t* data);
 
-void ToggleBaselineProfiling(JSRuntime* runtime, bool enable);
+void ToggleBaselineProfiling(JSContext* cx, bool enable);
 
 void ToggleBaselineTraceLoggerScripts(JSRuntime* runtime, bool enable);
 void ToggleBaselineTraceLoggerEngine(JSRuntime* runtime, bool enable);
 
-struct BaselineBailoutInfo {
+struct alignas(uintptr_t) BaselineBailoutInfo {
   // Pointer into the current C stack, where overwriting will start.
-  uint8_t* incomingStack;
+  uint8_t* incomingStack = nullptr;
 
   // The top and bottom heapspace addresses of the reconstructed stack
   // which will be copied to the bottom.
-  uint8_t* copyStackTop;
-  uint8_t* copyStackBottom;
-
-  // Fields to store the top-of-stack baseline values that are held
-  // in registers.  The setR0 and setR1 fields are flags indicating
-  // whether each one is initialized.
-  uint32_t setR0;
-  Value valueR0;
-  uint32_t setR1;
-  Value valueR1;
+  uint8_t* copyStackTop = nullptr;
+  uint8_t* copyStackBottom = nullptr;
 
   // The value of the frame pointer register on resume.
-  void* resumeFramePtr;
+  void* resumeFramePtr = nullptr;
 
   // The native code address to resume into.
-  void* resumeAddr;
+  void* resumeAddr = nullptr;
 
-  // The bytecode pc where we will resume.
-  jsbytecode* resumePC;
+  // If non-null, we have to type monitor the top stack value for this pc (we
+  // resume right after it).
+  jsbytecode* monitorPC = nullptr;
 
   // The bytecode pc of try block and fault block.
-  jsbytecode* tryPC;
-  jsbytecode* faultPC;
-
-  // If resuming into a TypeMonitor IC chain, this field holds the
-  // address of the first stub in that chain.  If this field is
-  // set, then the actual jitcode resumed into is the jitcode for
-  // the first stub, not the resumeAddr above.  The resumeAddr
-  // above, in this case, is pushed onto the stack so that the
-  // TypeMonitor chain can tail-return into the main jitcode when done.
-  ICStub* monitorStub;
+  jsbytecode* tryPC = nullptr;
+  jsbytecode* faultPC = nullptr;
 
   // Number of baseline frames to push on the stack.
-  uint32_t numFrames;
+  uint32_t numFrames = 0;
 
-  // If Ion bailed out on a global script before it could perform the global
-  // declaration conflicts check. In such cases the baseline script is
-  // resumed at the first pc instead of the prologue, so an extra flag is
-  // needed to perform the check.
-  bool checkGlobalDeclarationConflicts;
+  // Size of the innermost BaselineFrame. This is equivalent to
+  // BaselineFrame::debugFrameSize_ in debug builds.
+  uint32_t frameSizeOfInnerMostFrame = 0;
 
   // The bailout kind.
-  BailoutKind bailoutKind;
+  mozilla::Maybe<BailoutKind> bailoutKind = {};
+
+  BaselineBailoutInfo() = default;
+  BaselineBailoutInfo(const BaselineBailoutInfo&) = default;
+
+  void operator=(const BaselineBailoutInfo&) = delete;
 };
 
 MOZ_MUST_USE bool BailoutIonToBaseline(
@@ -638,42 +478,70 @@ MOZ_MUST_USE bool BailoutIonToBaseline(
     bool invalidate, BaselineBailoutInfo** bailoutInfo,
     const ExceptionBailoutInfo* exceptionInfo);
 
-// Mark TypeScripts on the stack as active, so that they are not discarded
-// during GC.
-void MarkActiveTypeScripts(Zone* zone);
-
 MethodStatus BaselineCompile(JSContext* cx, JSScript* script,
                              bool forceDebugInstrumentation = false);
-
-#ifdef JS_STRUCTURED_SPEW
-void JitSpewBaselineICStats(JSScript* script, const char* dumpReason);
-#endif
 
 static const unsigned BASELINE_MAX_ARGS_LENGTH = 20000;
 
 // Class storing the generated Baseline Interpreter code for the runtime.
 class BaselineInterpreter {
+ public:
+  struct CallVMOffsets {
+    uint32_t debugPrologueOffset = 0;
+    uint32_t debugEpilogueOffset = 0;
+    uint32_t debugAfterYieldOffset = 0;
+  };
+  struct ICReturnOffset {
+    uint32_t offset;
+    JSOp op;
+    ICReturnOffset(uint32_t offset, JSOp op) : offset(offset), op(op) {}
+  };
+  using ICReturnOffsetVector = Vector<ICReturnOffset, 0, SystemAllocPolicy>;
+
+ private:
   // The interpreter code.
   JitCode* code_ = nullptr;
 
   // Offset of the code to start interpreting a bytecode op.
   uint32_t interpretOpOffset_ = 0;
 
+  // Like interpretOpOffset_ but skips the debug trap for the current op.
+  uint32_t interpretOpNoDebugTrapOffset_ = 0;
+
+  // Early Ion bailouts will enter at this address. This is after frame
+  // construction and environment initialization.
+  uint32_t bailoutPrologueOffset_ = 0;
+
   // The offsets for the toggledJump instructions for profiler instrumentation.
   uint32_t profilerEnterToggleOffset_ = 0;
   uint32_t profilerExitToggleOffset_ = 0;
 
-  // The offset for the toggledJump instruction for the debugger's
-  // IsDebuggeeCheck code in the prologue.
-  uint32_t debuggeeCheckOffset_ = 0;
+  // Offset of the jump (tail call) to the debug trap handler trampoline code.
+  // When the debugger is enabled, NOPs are patched to calls to this location.
+  uint32_t debugTrapHandlerOffset_ = 0;
+
+  // The offsets of toggled jumps for debugger instrumentation.
+  using CodeOffsetVector = Vector<uint32_t, 0, SystemAllocPolicy>;
+  CodeOffsetVector debugInstrumentationOffsets_;
 
   // Offsets of toggled calls to the DebugTrapHandler trampoline (for
   // breakpoints and stepping).
-  using CodeOffsetVector = Vector<uint32_t, 0, SystemAllocPolicy>;
   CodeOffsetVector debugTrapOffsets_;
 
   // Offsets of toggled jumps for code coverage.
   CodeOffsetVector codeCoverageOffsets_;
+
+  // Offsets of IC calls for IsIonInlinableOp ops, for Ion bailouts.
+  ICReturnOffsetVector icReturnOffsets_;
+
+  // Offsets of some callVMs for BaselineDebugModeOSR.
+  CallVMOffsets callVMOffsets_;
+
+  uint8_t* codeAtOffset(uint32_t offset) const {
+    MOZ_ASSERT(offset > 0);
+    MOZ_ASSERT(offset < code_->instructionsSize());
+    return codeRaw() + offset;
+  }
 
  public:
   BaselineInterpreter() = default;
@@ -682,15 +550,37 @@ class BaselineInterpreter {
   void operator=(const BaselineInterpreter&) = delete;
 
   void init(JitCode* code, uint32_t interpretOpOffset,
-            uint32_t profilerEnterToggleOffset,
-            uint32_t profilerExitToggleOffset, uint32_t debuggeeCheckOffset,
+            uint32_t interpretOpNoDebugTrapOffset,
+            uint32_t bailoutPrologueOffset, uint32_t profilerEnterToggleOffset,
+            uint32_t profilerExitToggleOffset, uint32_t debugTrapHandlerOffset,
+            CodeOffsetVector&& debugInstrumentationOffsets,
             CodeOffsetVector&& debugTrapOffsets,
-            CodeOffsetVector&& codeCoverageOffsets);
+            CodeOffsetVector&& codeCoverageOffsets,
+            ICReturnOffsetVector&& icReturnOffsets,
+            const CallVMOffsets& callVMOffsets);
 
   uint8_t* codeRaw() const { return code_->raw(); }
 
+  uint8_t* retAddrForDebugPrologueCallVM() const {
+    return codeAtOffset(callVMOffsets_.debugPrologueOffset);
+  }
+  uint8_t* retAddrForDebugEpilogueCallVM() const {
+    return codeAtOffset(callVMOffsets_.debugEpilogueOffset);
+  }
+  uint8_t* retAddrForDebugAfterYieldCallVM() const {
+    return codeAtOffset(callVMOffsets_.debugAfterYieldOffset);
+  }
+  uint8_t* bailoutPrologueEntryAddr() const {
+    return codeAtOffset(bailoutPrologueOffset_);
+  }
+
+  uint8_t* retAddrForIC(JSOp op) const;
+
   TrampolinePtr interpretOpAddr() const {
-    return TrampolinePtr(codeRaw() + interpretOpOffset_);
+    return TrampolinePtr(codeAtOffset(interpretOpOffset_));
+  }
+  TrampolinePtr interpretOpNoDebugTrapAddr() const {
+    return TrampolinePtr(codeAtOffset(interpretOpNoDebugTrapOffset_));
   }
 
   void toggleProfilerInstrumentation(bool enable);
@@ -702,6 +592,21 @@ class BaselineInterpreter {
 
 MOZ_MUST_USE bool GenerateBaselineInterpreter(JSContext* cx,
                                               BaselineInterpreter& interpreter);
+
+inline bool IsBaselineJitEnabled(JSContext* cx) {
+  if (MOZ_UNLIKELY(!IsBaselineInterpreterEnabled())) {
+    return false;
+  }
+  if (MOZ_LIKELY(JitOptions.baselineJit)) {
+    return true;
+  }
+  if (JitOptions.jitForTrustedPrincipals) {
+    JS::Realm* realm = js::GetContextRealm(cx);
+    return realm && JS::GetRealmPrincipals(realm) &&
+           JS::GetRealmPrincipals(realm)->isSystemOrAddonPrincipal();
+  }
+  return false;
+}
 
 }  // namespace jit
 }  // namespace js

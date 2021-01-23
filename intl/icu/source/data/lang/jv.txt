@@ -12,7 +12,7 @@ jv{
         numbers{"Angka"}
     }
     Languages{
-        af{"af"}
+        af{"Afrika"}
         agq{"Aghem"}
         ak{"Akan"}
         am{"Amharik"}
@@ -22,9 +22,8 @@ jv{
         asa{"Asu"}
         ast{"Asturia"}
         az{"Azerbaijan"}
-        ban{"ban"}
         bas{"Basaa"}
-        be{"be"}
+        be{"Belarus"}
         bem{"Bemba"}
         bez{"Bena"}
         bg{"Bulgaria"}
@@ -33,8 +32,9 @@ jv{
         bo{"Tibet"}
         br{"Breton"}
         brx{"Bodo"}
-        bs{"bs"}
+        bs{"Bosnia lan Hercegovina"}
         ca{"Katala"}
+        ccp{"Chakma"}
         ce{"Chechen"}
         ceb{"Cebuano"}
         cgg{"Chiga"}
@@ -238,13 +238,20 @@ jv{
         zu{"Zulu"}
         zxx{"Konten tanpa linguistik"}
     }
+    Languages%long{
+        zh_Hans{"Tyonghwa Mandarin (Ringkes)"}
+        zh_Hant{"Tyonghwa Mandarin (Tradisional)"}
+    }
+    Languages%menu{
+        yue{"Tyonghwa, Kanton"}
+        zh{"Tyonghwa, Mandarin"}
+    }
     Languages%short{
         az{"Azeri"}
         en_GB{"Inggris (Britania)"}
-        en_US{"Inggris (AS)"}
     }
     Scripts{
-        Arab{"Arab"}
+        Arab{"hija’iyah"}
         Armn{"Armenia"}
         Beng{"Bangla"}
         Bopo{"Bopomofo"}
@@ -277,7 +284,9 @@ jv{
         Orya{"Odia"}
         Sinh{"Sinhala"}
         Taml{"Tamil"}
+        Telu{"Telugu"}
         Thaa{"Thaana"}
+        Thai{"Thailand"}
         Tibt{"Tibetan"}
         Zmth{"Notasi Matematika"}
         Zsye{"Emoji"}
@@ -344,8 +353,8 @@ jv{
             gujr{"Digit Gujarat"}
             guru{"Digit Gurmukhi"}
             hanidec{"Angka Desimal Mandarin"}
-            hans{"Angka Mandarin Prasaja"}
-            hansfin{"Angka Finansial Mandarin Prasaja"}
+            hans{"Angka Mandarin Ringkes"}
+            hansfin{"Angka Finansial Mandarin Ringkes"}
             hant{"Angka Mandarin Tradisional"}
             hantfin{"Angka Finansial Mandarin Tradisional"}
             hebr{"Angka Ibrani"}
@@ -367,10 +376,9 @@ jv{
             tibt{"Digit Tibet"}
         }
     }
-    Version{"2.1.48.44"}
+    Version{"37"}
     characterLabelPattern{
         all{"{0} — kabeh"}
-        category-list{"{0}: {1}"}
         compatibility{"{0} — kompatibilitas"}
         enclosed{"{0} — ketutup"}
         extended{"{0} — didawakake"}

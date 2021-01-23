@@ -2,22 +2,22 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use std::{cell::RefCell, fmt::Write, mem, sync::Arc, time::Duration};
+use std::{cell::RefCell, fmt::Write, mem, sync::Arc};
 
 use atomic_refcell::AtomicRefCell;
-use dogear::{MergeTimings, Stats, Store, StructureCounts};
+use dogear::Store;
 use log::LevelFilter;
 use moz_task::{Task, TaskRunnable, ThreadPtrHandle, ThreadPtrHolder};
-use nserror::{nsresult, NS_ERROR_FAILURE, NS_ERROR_UNEXPECTED, NS_OK};
+use nserror::{nsresult, NS_ERROR_NOT_AVAILABLE, NS_OK};
 use nsstring::nsString;
 use storage::Conn;
-use storage_variant::HashPropertyBag;
 use thin_vec::ThinVec;
 use xpcom::{
     interfaces::{
-        mozIStorageConnection, mozISyncedBookmarksMirrorCallback, mozISyncedBookmarksMirrorLogger,
+        mozIPlacesPendingOperation, mozIServicesLogger, mozIStorageConnection,
+        mozISyncedBookmarksMirrorCallback, mozISyncedBookmarksMirrorProgressListener,
     },
-    RefPtr,
+    RefPtr, XpCom,
 };
 
 use crate::driver::{AbortController, Driver, Logger};
@@ -28,15 +28,13 @@ use crate::store;
 #[xpimplements(mozISyncedBookmarksMerger)]
 #[refcnt = "nonatomic"]
 pub struct InitSyncedBookmarksMerger {
-    controller: Arc<AbortController>,
     db: RefCell<Option<Conn>>,
-    logger: RefCell<Option<RefPtr<mozISyncedBookmarksMirrorLogger>>>,
+    logger: RefCell<Option<RefPtr<mozIServicesLogger>>>,
 }
 
 impl SyncedBookmarksMerger {
     pub fn new() -> RefPtr<SyncedBookmarksMerger> {
         SyncedBookmarksMerger::allocate(InitSyncedBookmarksMerger {
-            controller: Arc::new(AbortController::default()),
             db: RefCell::default(),
             logger: RefCell::default(),
         })
@@ -58,45 +56,46 @@ impl SyncedBookmarksMerger {
         Ok(())
     }
 
-    xpcom_method!(get_logger => GetLogger() -> *const mozISyncedBookmarksMirrorLogger);
-    fn get_logger(&self) -> Result<RefPtr<mozISyncedBookmarksMirrorLogger>, nsresult> {
+    xpcom_method!(get_logger => GetLogger() -> *const mozIServicesLogger);
+    fn get_logger(&self) -> Result<RefPtr<mozIServicesLogger>, nsresult> {
         match *self.logger.borrow() {
             Some(ref logger) => Ok(logger.clone()),
             None => Err(NS_OK),
         }
     }
 
-    xpcom_method!(set_logger => SetLogger(logger: *const mozISyncedBookmarksMirrorLogger));
-    fn set_logger(&self, logger: Option<&mozISyncedBookmarksMirrorLogger>) -> Result<(), nsresult> {
+    xpcom_method!(set_logger => SetLogger(logger: *const mozIServicesLogger));
+    fn set_logger(&self, logger: Option<&mozIServicesLogger>) -> Result<(), nsresult> {
         self.logger.replace(logger.map(RefPtr::new));
         Ok(())
     }
 
     xpcom_method!(
         merge => Merge(
-            local_time_seconds: libc::int64_t,
-            remote_time_seconds: libc::int64_t,
+            local_time_seconds: i64,
+            remote_time_seconds: i64,
             weak_uploads: *const ThinVec<::nsstring::nsString>,
             callback: *const mozISyncedBookmarksMirrorCallback
-        )
+        ) -> *const mozIPlacesPendingOperation
     );
     fn merge(
         &self,
-        local_time_seconds: libc::int64_t,
-        remote_time_seconds: libc::int64_t,
+        local_time_seconds: i64,
+        remote_time_seconds: i64,
         weak_uploads: Option<&ThinVec<nsString>>,
         callback: &mozISyncedBookmarksMirrorCallback,
-    ) -> Result<(), nsresult> {
+    ) -> Result<RefPtr<mozIPlacesPendingOperation>, nsresult> {
         let callback = RefPtr::new(callback);
         let db = match *self.db.borrow() {
             Some(ref db) => db.clone(),
-            None => return Err(NS_ERROR_FAILURE),
+            None => return Err(NS_ERROR_NOT_AVAILABLE),
         };
         let logger = &*self.logger.borrow();
         let async_thread = db.thread()?;
+        let controller = Arc::new(AbortController::default());
         let task = MergeTask::new(
             &db,
-            Arc::clone(&self.controller),
+            Arc::clone(&controller),
             logger.as_ref().cloned(),
             local_time_seconds,
             remote_time_seconds,
@@ -109,12 +108,13 @@ impl SyncedBookmarksMerger {
             "bookmark_sync::SyncedBookmarksMerger::merge",
             Box::new(task),
         )?;
-        runnable.dispatch(&async_thread)
+        TaskRunnable::dispatch(runnable, &async_thread)?;
+        let op = MergeOp::new(controller);
+        Ok(RefPtr::new(op.coerce()))
     }
 
-    xpcom_method!(finalize => Finalize());
-    fn finalize(&self) -> Result<(), nsresult> {
-        self.controller.abort();
+    xpcom_method!(reset => Reset());
+    fn reset(&self) -> Result<(), nsresult> {
         mem::drop(self.db.borrow_mut().take());
         mem::drop(self.logger.borrow_mut().take());
         Ok(())
@@ -125,19 +125,20 @@ struct MergeTask {
     db: Conn,
     controller: Arc<AbortController>,
     max_log_level: LevelFilter,
-    logger: Option<ThreadPtrHandle<mozISyncedBookmarksMirrorLogger>>,
+    logger: Option<ThreadPtrHandle<mozIServicesLogger>>,
     local_time_millis: i64,
     remote_time_millis: i64,
     weak_uploads: Vec<nsString>,
+    progress: Option<ThreadPtrHandle<mozISyncedBookmarksMirrorProgressListener>>,
     callback: ThreadPtrHandle<mozISyncedBookmarksMirrorCallback>,
-    result: AtomicRefCell<Option<error::Result<Stats>>>,
+    result: AtomicRefCell<error::Result<store::ApplyStatus>>,
 }
 
 impl MergeTask {
     fn new(
         db: &Conn,
         controller: Arc<AbortController>,
-        logger: Option<RefPtr<mozISyncedBookmarksMirrorLogger>>,
+        logger: Option<RefPtr<mozIServicesLogger>>,
         local_time_seconds: i64,
         remote_time_seconds: i64,
         weak_uploads: Vec<nsString>,
@@ -151,20 +152,22 @@ impl MergeTask {
                 Some(level)
             })
             .map(|level| match level as i64 {
-                mozISyncedBookmarksMirrorLogger::LEVEL_ERROR => LevelFilter::Error,
-                mozISyncedBookmarksMirrorLogger::LEVEL_WARN => LevelFilter::Warn,
-                mozISyncedBookmarksMirrorLogger::LEVEL_DEBUG => LevelFilter::Debug,
-                mozISyncedBookmarksMirrorLogger::LEVEL_TRACE => LevelFilter::Trace,
+                mozIServicesLogger::LEVEL_ERROR => LevelFilter::Error,
+                mozIServicesLogger::LEVEL_WARN => LevelFilter::Warn,
+                mozIServicesLogger::LEVEL_DEBUG => LevelFilter::Debug,
+                mozIServicesLogger::LEVEL_TRACE => LevelFilter::Trace,
                 _ => LevelFilter::Off,
             })
             .unwrap_or(LevelFilter::Off);
         let logger = match logger {
-            Some(logger) => Some(ThreadPtrHolder::new(
-                cstr!("mozISyncedBookmarksMirrorLogger"),
-                logger,
-            )?),
+            Some(logger) => Some(ThreadPtrHolder::new(cstr!("mozIServicesLogger"), logger)?),
             None => None,
         };
+        let progress = callback
+            .query_interface::<mozISyncedBookmarksMirrorProgressListener>()
+            .and_then(|p| {
+                ThreadPtrHolder::new(cstr!("mozISyncedBookmarksMirrorProgressListener"), p).ok()
+            });
         Ok(MergeTask {
             db: db.clone(),
             controller,
@@ -173,88 +176,76 @@ impl MergeTask {
             local_time_millis: local_time_seconds * 1000,
             remote_time_millis: remote_time_seconds * 1000,
             weak_uploads,
+            progress,
             callback: ThreadPtrHolder::new(cstr!("mozISyncedBookmarksMirrorCallback"), callback)?,
-            result: AtomicRefCell::default(),
+            result: AtomicRefCell::new(Err(error::Error::DidNotRun)),
         })
     }
-}
 
-impl Task for MergeTask {
-    fn run(&self) {
+    fn merge(&self) -> error::Result<store::ApplyStatus> {
         let mut db = self.db.clone();
+        if db.transaction_in_progress()? {
+            // If a transaction is already open, we can avoid an unnecessary
+            // merge, since we won't be able to apply the merged tree back to
+            // Places. This is common, especially if the user makes lots of
+            // changes at once. In that case, our merge task might run in the
+            // middle of a `Sqlite.jsm` transaction, and fail when we try to
+            // open our own transaction in `Store::apply`. Since the local
+            // tree might be in an inconsistent state, we can't safely update
+            // Places.
+            return Err(error::Error::StorageBusy);
+        }
+        let log = Logger::new(self.max_log_level, self.logger.clone());
+        let driver = Driver::new(log, self.progress.clone());
         let mut store = store::Store::new(
             &mut db,
+            &driver,
             &self.controller,
             self.local_time_millis,
             self.remote_time_millis,
             &self.weak_uploads,
         );
-        let log = Logger::new(self.max_log_level, self.logger.clone());
-        let driver = Driver::new(log);
-        *self.result.borrow_mut() = Some(store.merge_with_driver(&driver, &*self.controller));
+        store.validate()?;
+        store.prepare()?;
+        let status = store.merge_with_driver(&driver, &*self.controller)?;
+        Ok(status)
+    }
+}
+
+impl Task for MergeTask {
+    fn run(&self) {
+        *self.result.borrow_mut() = self.merge();
     }
 
     fn done(&self) -> Result<(), nsresult> {
         let callback = self.callback.get().unwrap();
-        match self.result.borrow_mut().take() {
-            Some(Ok(stats)) => {
-                let mut telem = HashPropertyBag::new();
-                telem.set("fetchLocalTreeTime", stats.time(|t| t.fetch_local_tree));
-                telem.set(
-                    "fetchNewLocalContentsTime",
-                    stats.time(|t| t.fetch_new_local_contents),
-                );
-                telem.set("fetchRemoteTreeTime", stats.time(|t| t.fetch_remote_tree));
-                telem.set(
-                    "fetchNewRemoteContentsTime",
-                    stats.time(|t| t.fetch_new_remote_contents),
-                );
-                telem.set("mergeTime", stats.time(|t| t.merge));
-                telem.set("mergedNodesCount", stats.count(|c| c.merged_nodes));
-                telem.set("mergedDeletionsCount", stats.count(|c| c.merged_deletions));
-                telem.set("remoteRevivesCount", stats.count(|c| c.remote_revives));
-                telem.set("localDeletesCount", stats.count(|c| c.local_deletes));
-                telem.set("localRevivesCount", stats.count(|c| c.local_revives));
-                telem.set("remoteDeletesCount", stats.count(|c| c.remote_deletes));
-                telem.set("dupesCount", stats.count(|c| c.dupes));
-                telem.set("applyTime", stats.time(|t| t.apply));
-                unsafe { callback.HandleResult(telem.bag().coerce()) }
-            }
-            Some(Err(err)) => {
-                let message = {
-                    let mut message = nsString::new();
-                    match write!(message, "{}", err) {
-                        Ok(_) => message,
-                        Err(_) => nsString::from("Merge failed with unknown error"),
-                    }
-                };
+        match mem::replace(&mut *self.result.borrow_mut(), Err(error::Error::DidNotRun)) {
+            Ok(status) => unsafe { callback.HandleSuccess(status.into()) },
+            Err(err) => {
+                let mut message = nsString::new();
+                write!(message, "{}", err).unwrap();
                 unsafe { callback.HandleError(err.into(), &*message) }
             }
-            None => unsafe {
-                callback.HandleError(
-                    NS_ERROR_UNEXPECTED,
-                    &*nsString::from("Failed to run merge on storage thread"),
-                )
-            },
         }
         .to_result()
     }
 }
 
-/// Extension methods that convert timings and counters into types that we
-/// can store in a `HashPropertyBag`.
-trait StatsExt {
-    fn time(&self, func: impl FnOnce(&MergeTimings) -> Duration) -> i64;
-    fn count(&self, func: impl FnOnce(&StructureCounts) -> usize) -> i64;
+#[derive(xpcom)]
+#[xpimplements(mozIPlacesPendingOperation)]
+#[refcnt = "atomic"]
+pub struct InitMergeOp {
+    controller: Arc<AbortController>,
 }
 
-impl StatsExt for Stats {
-    fn time(&self, func: impl FnOnce(&MergeTimings) -> Duration) -> i64 {
-        let d = func(&self.timings);
-        d.as_secs() as i64 * 1000 + i64::from(d.subsec_millis())
+impl MergeOp {
+    pub fn new(controller: Arc<AbortController>) -> RefPtr<MergeOp> {
+        MergeOp::allocate(InitMergeOp { controller })
     }
 
-    fn count(&self, func: impl FnOnce(&StructureCounts) -> usize) -> i64 {
-        func(&self.counts) as i64
+    xpcom_method!(cancel => Cancel());
+    fn cancel(&self) -> Result<(), nsresult> {
+        self.controller.abort();
+        Ok(())
     }
 }

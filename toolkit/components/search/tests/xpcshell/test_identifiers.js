@@ -2,7 +2,7 @@
  *    http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /*
- * Test that a search engine's identifier can be extracted from the filename.
+ * Test of a search engine's identifier.
  */
 
 "use strict";
@@ -10,30 +10,55 @@
 const SEARCH_APP_DIR = 1;
 
 add_task(async function setup() {
-  configureToLoadJarEngines();
+  await useTestEngines("simple-engines");
   await AddonTestUtils.promiseStartupManager();
+
+  const result = await Services.search.init();
+  Assert.ok(
+    Components.isSuccessCode(result),
+    "Should have initialized the service"
+  );
+
+  await installTestEngine();
 });
 
-add_test(function test_identifier() {
-  Services.search.init().then(async function initComplete(aResult) {
-    info("init'd search service");
-    Assert.ok(Components.isSuccessCode(aResult));
+function checkIdentifier(engineName, expectedIdentifier, expectedTelemetryId) {
+  const engine = Services.search.getEngineByName(engineName);
+  Assert.ok(
+    engine instanceof Ci.nsISearchEngine,
+    "Should be derived from nsISearchEngine"
+  );
 
-    await installTestEngine();
-    let profileEngine = Services.search.getEngineByName(kTestEngineName);
-    let jarEngine = Services.search.getEngineByName("bug645970");
+  Assert.equal(
+    engine.identifier,
+    expectedIdentifier,
+    "Should have the correct identifier"
+  );
 
-    Assert.ok(profileEngine instanceof Ci.nsISearchEngine);
-    Assert.ok(jarEngine instanceof Ci.nsISearchEngine);
+  Assert.equal(
+    engine.telemetryId,
+    expectedTelemetryId,
+    "Should have the correct telemetry Id"
+  );
+}
 
-    // An engine loaded from the profile directory won't have an identifier,
-    // because it's not built-in.
-    Assert.equal(profileEngine.identifier, null);
+add_task(async function test_from_profile() {
+  // An engine loaded from the profile directory won't have an identifier,
+  // because it's not built-in.
+  checkIdentifier(kTestEngineName, null, `other-${kTestEngineName}`);
+});
 
-    // An engine loaded from a JAR will have an identifier corresponding to
-    // the filename inside the JAR. (In this case it's the same as the name.)
-    Assert.equal(jarEngine.identifier, "bug645970");
+add_task(async function test_from_telemetry_id() {
+  // The telemetryId check isn't applicable to the legacy config.
+  if (gModernConfig) {
+    checkIdentifier("basic", "telemetry", "telemetry");
+  } else {
+    checkIdentifier("basic", "basic", "basic");
+  }
+});
 
-    run_next_test();
-  });
+add_task(async function test_from_webextension_id() {
+  // If not specified, the telemetry Id is derived from the WebExtension prefix,
+  // it should not use the WebExtension display name.
+  checkIdentifier("Simple Engine", "simple", "simple");
 });

@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabHeader.label "Navegando com abas">
+
+<!ENTITY tabDisplay.label "Geral">
+<!ENTITY autoHide.label "Exibir a barra de abas apenas se houver mais de uma aba">
+<!ENTITY autoHide.accesskey2 "e">
+<!ENTITY background.label "Carregar links em primeiro plano">
+<!ENTITY background.accesskey "s">
+<!ENTITY warnOnClose.label "Alertar ao fechar uma janela com várias abas">
+<!ENTITY warnOnClose.accesskey "A">
+<!ENTITY relatedAfterCurrent.label "Abrir abas relacionadas após a aba atual">
+<!ENTITY relatedAfterCurrent.accesskey "o">
+
+<!ENTITY loadGroup.label "Ao abrir um grupo de marcadores">
+<!ENTITY loadGroupAppend.label "Adicionar abas">
+<!ENTITY loadGroupAppend.accesskey "A">
+<!ENTITY loadGroupReplace.label "Substituir as abas existentes">
+<!ENTITY loadGroupReplace.accesskey "S">
+
+<!ENTITY openTabs.label "Abrir em nova aba quando">
+
+<!ENTITY middleClick.label "Clique com o botão do meio, Ctrl+clique ou Ctrl+Enter em links em uma página web">
+<!ENTITY middleClick.accesskey "m">
+<!ENTITY middleClickMac.label "Clique com o botão do meio, &#8984;+clique ou &#8984;+Return em links em uma página web">
+<!ENTITY middleClickMac.accesskey "m">
+<!ENTITY urlbar.label "Ctrl+Enter na barra de localização">
+<!ENTITY urlbar.accesskey "l">
+<!ENTITY urlbarMac.label "&#8984;+Return na barra de localização">
+<!ENTITY urlbarMac.accesskey "l">
+
+<!ENTITY openManagers.label "Abrir uma nova aba ao invés de uma nova janela">
+<!ENTITY openDataManager.label "Gerenciador de dados">
+<!ENTITY openDataManager.accesskey "D">
+<!ENTITY openAddOnsManager.label "Gerenciador de complementos">
+<!ENTITY openAddOnsManager.accesskey "n">

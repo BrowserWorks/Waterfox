@@ -14,10 +14,14 @@
 #include "mozilla/StaticPtr.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/Unused.h"
+#include "mozilla/Mutex.h"
 #include "nsAppDirectoryServiceDefs.h"
 #include "nsDirectoryServiceUtils.h"
 #include "nsLocalFile.h"
 #include "nsPrintfCString.h"
+#ifndef ANDROID
+#  include "nsTerminator.h"
+#endif
 #include "mozilla/StackWalk.h"
 #include "plstr.h"
 #include "prio.h"
@@ -36,9 +40,16 @@
 
 #include "LateWriteChecks.h"
 
-using namespace mozilla;
-
 /*************************** Auxiliary Declarations ***************************/
+
+static MOZ_THREAD_LOCAL(int) tlsSuspendLateWriteChecks;
+
+bool SuspendingLateWriteChecksForCurrentThread() {
+  if (!tlsSuspendLateWriteChecks.init()) {
+    return true;
+  }
+  return tlsSuspendLateWriteChecks.get() > 0;
+}
 
 // This a wrapper over a file descriptor that provides a Printf method and
 // computes the sha1 of the data that passes through it.
@@ -56,9 +67,9 @@ class SHA1Stream {
     str.AppendPrintf(aFormat, list);
     va_end(list);
     mSHA1.update(str.get(), str.Length());
-    Unused << fwrite(str.get(), 1, str.Length(), mFile);
+    mozilla::Unused << fwrite(str.get(), 1, str.Length(), mFile);
   }
-  void Finish(SHA1Sum::Hash& aHash) {
+  void Finish(mozilla::SHA1Sum::Hash& aHash) {
     int fd = fileno(mFile);
     fflush(mFile);
     MozillaUnRegisterDebugFD(fd);
@@ -69,7 +80,7 @@ class SHA1Stream {
 
  private:
   FILE* mFile;
-  SHA1Sum mSHA1;
+  mozilla::SHA1Sum mSHA1;
 };
 
 static void RecordStackWalker(uint32_t aFrameNumber, void* aPC, void* aSP,
@@ -85,8 +96,8 @@ static void RecordStackWalker(uint32_t aFrameNumber, void* aPC, void* aSP,
  * An implementation of IOInterposeObserver to be registered with IOInterposer.
  * This observer logs all writes as late writes.
  */
-class LateWriteObserver final : public IOInterposeObserver {
-  using char_type = filesystem::Path::value_type;
+class LateWriteObserver final : public mozilla::IOInterposeObserver {
+  using char_type = mozilla::filesystem::Path::value_type;
 
  public:
   explicit LateWriteObserver(const char_type* aProfileDirectory)
@@ -96,20 +107,25 @@ class LateWriteObserver final : public IOInterposeObserver {
     mProfileDirectory = nullptr;
   }
 
-  void Observe(IOInterposeObserver::Observation& aObservation) override;
+  void Observe(
+      mozilla::IOInterposeObserver::Observation& aObservation) override;
 
  private:
   char_type* mProfileDirectory;
 };
 
-void LateWriteObserver::Observe(IOInterposeObserver::Observation& aOb) {
-  // Crash if that is the shutdown check mode
-  if (gShutdownChecks == SCM_CRASH) {
-    MOZ_CRASH();
+void LateWriteObserver::Observe(
+    mozilla::IOInterposeObserver::Observation& aOb) {
+  if (SuspendingLateWriteChecksForCurrentThread()) {
+    return;
   }
 
-  // If we have shutdown mode SCM_NOTHING or we can't record then abort
-  if (gShutdownChecks == SCM_NOTHING || !Telemetry::CanRecordExtended()) {
+#ifdef DEBUG
+  MOZ_CRASH();
+#endif
+
+  // If we can't record then abort
+  if (!mozilla::Telemetry::CanRecordExtended()) {
     return;
   }
 
@@ -119,7 +135,8 @@ void LateWriteObserver::Observe(IOInterposeObserver::Observation& aOb) {
 
   MozStackWalk(RecordStackWalker, /* skipFrames */ 0, /* maxFrames */ 0,
                &rawStack);
-  Telemetry::ProcessedStack stack = Telemetry::GetStackAndModules(rawStack);
+  mozilla::Telemetry::ProcessedStack stack =
+      mozilla::Telemetry::GetStackAndModules(rawStack);
 
   nsTAutoString<char_type> nameAux(mProfileDirectory);
   nameAux.AppendLiteral(NS_SLASH "Telemetry.LateWriteTmpXXXXXX");
@@ -161,7 +178,7 @@ void LateWriteObserver::Observe(IOInterposeObserver::Observation& aOb) {
   size_t numModules = stack.GetNumModules();
   sha1Stream.Printf("%u\n", (unsigned)numModules);
   for (size_t i = 0; i < numModules; ++i) {
-    Telemetry::ProcessedStack::Module module = stack.GetModule(i);
+    mozilla::Telemetry::ProcessedStack::Module module = stack.GetModule(i);
     sha1Stream.Printf("%s %s\n", module.mBreakpadId.get(),
                       NS_ConvertUTF16toUTF8(module.mName).get());
   }
@@ -169,7 +186,7 @@ void LateWriteObserver::Observe(IOInterposeObserver::Observation& aOb) {
   size_t numFrames = stack.GetStackSize();
   sha1Stream.Printf("%u\n", (unsigned)numFrames);
   for (size_t i = 0; i < numFrames; ++i) {
-    const Telemetry::ProcessedStack::Frame& frame = stack.GetFrame(i);
+    const mozilla::Telemetry::ProcessedStack::Frame& frame = stack.GetFrame(i);
     // NOTE: We write the offsets, while the atos tool expects a value with
     // the virtual address added. For example, running otool -l on the the
     // firefox binary shows
@@ -182,7 +199,12 @@ void LateWriteObserver::Observe(IOInterposeObserver::Observation& aOb) {
     sha1Stream.Printf("%d %x\n", frame.mModIndex, (unsigned)frame.mOffset);
   }
 
-  SHA1Sum::Hash sha1;
+#ifndef ANDROID
+  sha1Stream.Printf("%d\n", mozilla::nsTerminator::IsCheckingLateWrites());
+#else
+  sha1Stream.Printf("%d\n", false);
+#endif
+  mozilla::SHA1Sum::Hash sha1;
   sha1Stream.Finish(sha1);
 
   // Note: These files should be deleted by telemetry once it reads them. If
@@ -202,7 +224,8 @@ void LateWriteObserver::Observe(IOInterposeObserver::Observation& aOb) {
 
 /******************************* Setup/Teardown *******************************/
 
-static StaticAutoPtr<LateWriteObserver> sLateWriteObserver;
+static mozilla::StaticAutoPtr<LateWriteObserver> sLateWriteObserver;
+mozilla::Mutex* mMutex = nullptr;
 
 namespace mozilla {
 
@@ -215,13 +238,20 @@ void InitLateWriteChecks() {
       sLateWriteObserver = new LateWriteObserver(nativePath.get());
     }
   }
+  mMutex = new Mutex("LateWriteCheck::mMutex");
 }
 
 void BeginLateWriteChecks() {
+  if (mMutex) {
+    MutexAutoLock lock(*mMutex);
+  }
+
   if (sLateWriteObserver) {
     IOInterposer::Register(IOInterposeObserver::OpWriteFSync,
                            sLateWriteObserver);
   }
+  delete mMutex;
+  mMutex = nullptr;
 }
 
 void StopLateWriteChecks() {
@@ -231,6 +261,22 @@ void StopLateWriteChecks() {
     // called at shutdown and only in special cases.
     // sLateWriteObserver = nullptr;
   }
+}
+
+void PushSuspendLateWriteChecks() {
+  if (!tlsSuspendLateWriteChecks.init()) {
+    return;
+  }
+  tlsSuspendLateWriteChecks.set(tlsSuspendLateWriteChecks.get() + 1);
+}
+
+void PopSuspendLateWriteChecks() {
+  if (!tlsSuspendLateWriteChecks.init()) {
+    return;
+  }
+  int current = tlsSuspendLateWriteChecks.get();
+  MOZ_ASSERT(current > 0);
+  tlsSuspendLateWriteChecks.set(current - 1);
 }
 
 }  // namespace mozilla

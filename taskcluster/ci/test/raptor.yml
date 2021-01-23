@@ -4,31 +4,79 @@
 ---
 job-defaults:
     max-run-time:
-        by-test-platform:
-            .*-qr/.*: 2400
-            .*-ux/.*: 2400
-            default: 1800
+        by-app:
+            firefox:
+                by-test-platform:
+                    .*-qr/.*: 2400
+                    .*-ref-hw-2017/.*: 3600
+                    default: 1800
+            default:
+                by-test-platform:
+                    .*-qr/.*: 2400
+                    .*-ux/.*: 2400
+                    default: 1800
     suite: raptor
-    workdir:
-        by-test-platform:
-            android-hw.*: /builds/worker
-            default: /home/cltbld
+    workdir: /home/cltbld
     run-on-projects:
-        by-test-platform:
-            windows10-64-ux/opt: ['try', 'mozilla-central']
-            windows10-aarch64/opt: ['try', 'mozilla-central']
-            (?:windows10-64|windows7-32|linux64)(?:-qr)?/opt: ['mozilla-central', 'try']
-            android-hw-.*-api-16/opt: ['try']
-            android-hw-.*-aarch64/opt: ['try']
-            macosx.*64(?:-qr)?/opt: ['mozilla-central', 'try']
-            default: ['try', 'trunk', 'mozilla-beta']
+        by-app:
+            firefox:
+                by-test-name:
+                    raptor-tp6-firefox:
+                        by-pageload:
+                            warm:
+                                by-test-platform:
+                                    windows10-64-ref-hw-2017/opt: ["try", "mozilla-central"]
+                                    (linux|windows|macos)(?!.*shippable).*: []
+                                    default: ["try", "mozilla-central"]
+                            cold:
+                                by-test-platform:
+                                    windows10-64-ref-hw-2017/opt: ["try", "mozilla-central"]
+                                    macosx.*64(?:-qr)?/opt: ["mozilla-central", "try"]
+                                    (linux|windows|macos)(?!.*shippable).*: []
+                                    default: ["try", "trunk", "mozilla-beta"]
+                    default:
+                        by-test-platform:
+                            windows10-64-ref-hw-2017/opt: ["try", "mozilla-central"]
+                            macosx.*64(?:-qr)?/opt: ["mozilla-central", "try"]
+                            (linux|windows|macos)(?!.*shippable).*: []
+                            default: ["try", "trunk", "mozilla-beta"]
+            chrome: []
+            chromium: []
+            default:  # tests that dont have "apps: []"
+                by-test-name:
+                    raptor-.*-profiling.*:
+                        by-test-platform:
+                            (linux|windows|macos)(?!.*shippable).*: []
+                            default: ["try", "mozilla-central"]
+                    default:
+                        by-test-platform:
+                            windows10-64-ref-hw-2017/opt: ["try", "mozilla-central"]
+                            macosx.*64(?:-qr)?/opt: ["mozilla-central", "try"]
+                            (linux|windows|macos)(?!.*shippable).*: []
+                            default: ["try", "trunk", "mozilla-beta"]
+    limit-platforms:
+        by-app:
+            chrome:
+                - linux64-shippable/opt
+                - windows7-32-shippable/opt
+                - windows10-64-shippable/opt
+                - macosx1014-64-shippable/opt
+            chromium:
+                - linux64-shippable/opt
+                - windows7-32-shippable/opt
+                - windows10-64-shippable/opt
+                - macosx1014-64-shippable/opt
+            default:
+                - .*
     tier:
-        by-test-platform:
-            windows10-aarch64/.*: 2
-            windows10-64-ccov/.*: 3
-            linux64-ccov/.*: 3
-            android-hw-g5.*: 2
-            default: 1
+        by-app:
+            firefox:
+                by-test-platform:
+                    windows10-64-ccov/.*: 3
+                    linux64-ccov/.*: 3
+                    default: 1
+            default: 2
+    fission-tier: 2
     virtualization:
         by-test-platform:
             windows10-64-ccov/.*: virtual
@@ -41,1019 +89,119 @@ job-defaults:
                     - raptor/mac_config.py
                 windows.*:
                     - raptor/windows_config.py
-                windows10-64-ccov/debug:
+                windows10-64-ccov/.*:
                     - raptor/windows_vm_config.py
-                linux64-ccov/opt:
+                linux64-ccov/.*:
                     - raptor/linux64_config_taskcluster.py
-                android-hw.*:
-                    - raptor/android_hw_config.py
                 default:
                     - raptor/linux_config.py
-
-raptor-tp6-1-firefox:
-    description: "Raptor tp6-1 on Firefox"
-    try-name: raptor-tp6-1-firefox
-    treeherder-symbol: Rap(tp6-1)
-    mozharness:
         extra-options:
-            - --test=raptor-tp6-1
-
-raptor-tp6-1-firefox-profiling:
-    description: "Raptor tp6-1 on Firefox with Gecko Profiling"
-    try-name: raptor-tp6-1-firefox-profiling
-    treeherder-symbol: Rap-Prof(tp6-1)
-    run-on-projects: ['mozilla-central', 'try']
-    max-run-time: 900
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6-1
-            - --gecko-profile
-
-raptor-tp6-2-firefox:
-    description: "Raptor tp6-2 on Firefox"
-    try-name: raptor-tp6-2-firefox
-    treeherder-symbol: Rap(tp6-2)
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6-2
-
-raptor-tp6-2-firefox-profiling:
-    description: "Raptor tp6-2 on Firefox with Gecko Profiling"
-    try-name: raptor-tp6-2-firefox-profiling
-    treeherder-symbol: Rap-Prof(tp6-2)
-    run-on-projects: ['mozilla-central', 'try']
-    max-run-time: 900
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6-2
-            - --gecko-profile
-
-raptor-tp6-3-firefox:
-    description: "Raptor tp6-3 on Firefox"
-    try-name: raptor-tp6-3-firefox
-    treeherder-symbol: Rap(tp6-3)
-    run-on-projects:
-        by-test-platform:
-            windows10-64-ux/opt: ['try', 'mozilla-central']
-            windows10-aarch64/opt: ['try', 'mozilla-central']
-            (?:windows10-64|windows7-32|linux64)(?:-qr)?/opt: ['mozilla-central', 'try']
-            android-hw-.*-api-16/opt: ['try']
-            android-hw-.*-aarch64/opt: ['try']
-            macosx64(?:-qr)?/opt: ['mozilla-central', 'try']
-            default: ['try', 'trunk', 'mozilla-beta']
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6-3
-
-raptor-tp6-3-firefox-profiling:
-    description: "Raptor tp6-3 on Firefox with Gecko Profiling"
-    try-name: raptor-tp6-3-firefox-profiling
-    treeherder-symbol: Rap-Prof(tp6-3)
-    run-on-projects: ['mozilla-central', 'try']
-    max-run-time: 900
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6-3
-            - --gecko-profile
-
-raptor-tp6-4-firefox:
-    description: "Raptor tp6-4 on Firefox"
-    try-name: raptor-tp6-4-firefox
-    treeherder-symbol: Rap(tp6-4)
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6-4
-
-raptor-tp6-4-firefox-profiling:
-    description: "Raptor tp6-4 on Firefox with Gecko Profiling"
-    try-name: raptor-tp6-4-firefox-profiling
-    treeherder-symbol: Rap-Prof(tp6-4)
-    run-on-projects: ['mozilla-central', 'try']
-    max-run-time: 900
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6-4
-            - --gecko-profile
-
-raptor-tp6-5-firefox:
-    description: "Raptor tp6-5 on Firefox"
-    try-name: raptor-tp6-5-firefox
-    treeherder-symbol: Rap(tp6-5)
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6-5
-
-raptor-tp6-5-firefox-profiling:
-    description: "Raptor tp6-5 on Firefox with Gecko Profiling"
-    try-name: raptor-tp6-5-firefox-profiling
-    treeherder-symbol: Rap-Prof(tp6-5)
-    run-on-projects: ['mozilla-central', 'try']
-    max-run-time: 900
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6-5
-            - --gecko-profile
-
-raptor-tp6-6-firefox:
-    description: "Raptor tp6-6 on Firefox"
-    try-name: raptor-tp6-6-firefox
-    treeherder-symbol: Rap(tp6-6)
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6-6
-
-raptor-tp6-6-firefox-profiling:
-    description: "Raptor tp6-6 on Firefox with Gecko Profiling"
-    try-name: raptor-tp6-6-firefox-profiling
-    treeherder-symbol: Rap-Prof(tp6-6)
-    run-on-projects: ['mozilla-central', 'try']
-    max-run-time: 900
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6-6
-            - --gecko-profile
-
-raptor-tp6-7-firefox:
-    description: "Raptor tp6-7 on Firefox"
-    try-name: raptor-tp6-7-firefox
-    treeherder-symbol: Rap(tp6-7)
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6-7
-
-raptor-tp6-7-firefox-profiling:
-    description: "Raptor tp6-7 on Firefox with Gecko Profiling"
-    try-name: raptor-tp6-7-firefox-profiling
-    treeherder-symbol: Rap-Prof(tp6-7)
-    run-on-projects: ['mozilla-central', 'try']
-    max-run-time: 900
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6-7
-            - --gecko-profile
-
-raptor-tp6-8-firefox:
-    description: "Raptor tp6-8 on Firefox"
-    try-name: raptor-tp6-8-firefox
-    treeherder-symbol: Rap(tp6-8)
-    run-on-projects: ['try', 'mozilla-central']
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6-8
-
-raptor-tp6-8-firefox-profiling:
-    description: "Raptor tp6-8 on Firefox with Gecko Profiling"
-    try-name: raptor-tp6-8-firefox-profiling
-    treeherder-symbol: Rap-Prof(tp6-8)
-    run-on-projects: ['mozilla-central', 'try']
-    max-run-time: 900
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6-8
-            - --gecko-profile
-
-raptor-tp6-9-firefox:
-    description: "Raptor tp6-9 on Firefox"
-    try-name: raptor-tp6-9-firefox
-    treeherder-symbol: Rap(tp6-9)
-    run-on-projects: ['try', 'mozilla-central']
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6-9
-
-raptor-tp6-9-firefox-profiling:
-    description: "Raptor tp6-9 on Firefox with Gecko Profiling"
-    try-name: raptor-tp6-9-firefox-profiling
-    treeherder-symbol: Rap-Prof(tp6-9)
-    run-on-projects: ['mozilla-central', 'try']
-    max-run-time: 900
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6-9
-            - --gecko-profile
-
-raptor-tp6-10-firefox:
-    description: "Raptor tp6-10 on Firefox"
-    try-name: raptor-tp6-10-firefox
-    treeherder-symbol: Rap(tp6-10)
-    run-on-projects: ['try', 'mozilla-central']
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6-10
-
-raptor-tp6-10-firefox-profiling:
-    description: "Raptor tp6-10 on Firefox with Gecko Profiling"
-    try-name: raptor-tp6-10-firefox-profiling
-    treeherder-symbol: Rap-Prof(tp6-10)
-    run-on-projects: ['mozilla-central', 'try']
-    max-run-time: 900
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6-10
-            - --gecko-profile
-
-raptor-tp6-binast-1-firefox:
-    description: "Raptor tp6-binast-1 on Firefox"
-    try-name: raptor-tp6-binast-1
-    treeherder-symbol: Rap(tp6-b-1)
-    run-on-projects: ['try', 'mozilla-central']
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6-binast-1
-
-raptor-tp6m-1-geckoview:
-    description: "Raptor tp6m-1 on Geckoview"
-    try-name: raptor-tp6m-1-geckoview
-    treeherder-symbol: Rap(tp6m-1)
-    run-on-projects: ['try', 'mozilla-central']
-    target: geckoview_example.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-1
-            - --app=geckoview
-            - --binary=org.mozilla.geckoview_example
-            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
-
-raptor-tp6m-1-fenix:
-    description: "Raptor tp6m-1 on Fenix"
-    try-name: raptor-tp6m-1-fenix
-    treeherder-symbol: Rap-fenix(tp6m-1)
-    run-on-projects: ['try']
-    e10s: true
-    target:
-        by-test-platform:
-            android-hw.*-aarch64.*/.*:
-                index: project.mobile.fenix.v2.branch.master.latest.raptor.aarch64
-                name: target.apk
+            # Bug 1626522: Temporarily enable extension logging for
+            # an easier investigation of intermittents on mobile devices
+            - --setpref=extensions.logging.enabled=true
+    fission-run-on-projects:
+        by-app:
+            firefox:
+                by-pageload:
+                    warm:
+                        by-test-platform:
+                            linux64-shippable-qr/opt: ["mozilla-central"]
+                            windows10-64-shippable-qr/opt: ["mozilla-central"]
+                            default: []
+                    default: []
+            chrome: []
+            chromium: []
             default:
-                index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
-                name: target.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-1
-            - --app=fenix
-            - --binary-path=org.mozilla.fenix.raptor
-            - --activity=org.mozilla.fenix.browser.BrowserPerformanceTestActivity
+                by-test-platform:
+                    linux64-shippable-qr/opt: ["mozilla-central"]
+                    windows10-64-shippable-qr/opt: ["mozilla-central"]
+                    default: []
+    fetches:
+        fetch:
+            by-app:
+                chromium:
+                    by-test-platform:
+                        win.*64.*:
+                            - win64-chromium
+                        win.*32.*:
+                            - win32-chromium
+                        macosx.*:
+                            - mac-chromium
+                        default:
+                            - linux64-chromium
+                default: []
 
-raptor-tp6m-1-refbrow:
-    description: "Raptor tp6m-1 on the reference browser"
-    treeherder-symbol: Rap-refbrow(tp6m-1)
-    run-on-projects: ['try']
-    target:
-        by-test-platform:
-            android-hw.*-aarch64.*/.*:
-                index: project.mobile.reference-browser.signed-nightly.nightly.latest
-                name: target.aarch64.apk
-            default:
-                index: project.mobile.reference-browser.signed-nightly.nightly.latest
-                name: target.arm.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-1
-            - --app=refbrow
-            - --binary-path=org.mozilla.reference.browser
-            - --activity=org.mozilla.reference.browser.BrowserTestActivity
+raptor-tp6:
+    description: "Raptor (webextension) tp6"
+    apps: ["firefox", "chrome", "chromium"]
+    variants:
+        # Used for defining webrender and fission build variant tests,
+        by-app:
+            firefox: ["fission"]
+            chrome: []
+            chromium: []
+            default: []
+    pageload:
+        by-app:
+            firefox: "both"
+            chrome: "both"
+            chromium: "both"
+            default: "cold"
+    limit-platforms:
+        by-app:
+            chrome:
+                - .*shippable[^-qr].*
+            chromium:
+                - .*shippable[^-qr].*
+            default: []
+    treeherder-symbol: Rap(tp6)
+    max-run-time: 4000
+    raptor-test: tp6
+    raptor-subtests:
+        - amazon
+        - apple
+        - bing
+        - ebay
+        - [facebook, fb]
+        - [facebook-redesign, fb-r]
+        - fandom
+        - [docs, gdoc]
+        - [google-mail, gmail]
+        - google
+        - [sheets, gsheets]
+        - [slides, gslides]
+        - imdb
+        - imgur
+        - instagram
+        - linkedin
+        - microsoft
+        - netflix
+        - office
+        - outlook
+        - paypal
+        - pinterest
+        - reddit
+        - twitch
+        - twitter
+        - wikipedia
+        - yahoo-mail
+        - yandex
+        - youtube
+        - tumblr
+        - yahoo-news
 
-raptor-tp6m-2-geckoview:
-    description: "Raptor tp6m-2 on Geckoview"
-    try-name: raptor-tp6m-2-geckoview
-    treeherder-symbol: Rap(tp6m-2)
-    target: geckoview_example.apk
-    run-on-projects: ['try', 'mozilla-central']
-    tier: 2
+raptor-tp6-binast-firefox:
+    description: "Raptor Binast on Firefox"
+    variants: ["fission"]
+    try-name: raptor-tp6-binast
+    treeherder-symbol: Rap(binast)
     mozharness:
         extra-options:
-            - --test=raptor-tp6m-2
-            - --app=geckoview
-            - --binary=org.mozilla.geckoview_example
-            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
-
-raptor-tp6m-2-refbrow:
-    description: "Raptor tp6m-2 on the reference browser"
-    treeherder-symbol: Rap-refbrow(tp6m-2)
-    run-on-projects: ['try']
-    target:
-        index: project.mobile.reference-browser.signed-nightly.nightly.latest
-        name: target.arm.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-2
-            - --app=refbrow
-            - --binary-path=org.mozilla.reference.browser
-            - --activity=org.mozilla.reference.browser.BrowserTestActivity
-
-raptor-tp6m-3-geckoview:
-    description: "Raptor tp6m-3 on Geckoview"
-    try-name: raptor-tp6m-3-geckoview
-    treeherder-symbol: Rap(tp6m-3)
-    target: geckoview_example.apk
-    run-on-projects: ['try', 'mozilla-central']
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-3
-            - --app=geckoview
-            - --binary=org.mozilla.geckoview_example
-
-raptor-tp6m-3-refbrow:
-    description: "Raptor tp6m-3 on the reference browser"
-    treeherder-symbol: Rap-refbrow(tp6m-3)
-    run-on-projects: ['try']
-    target:
-        index: project.mobile.reference-browser.signed-nightly.nightly.latest
-        name: target.arm.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-3
-            - --app=refbrow
-            - --binary-path=org.mozilla.reference.browser
-            - --activity=org.mozilla.reference.browser.BrowserTestActivity
-
-raptor-tp6m-4-geckoview:
-    description: "Raptor tp6m-4 on Geckoview"
-    try-name: raptor-tp6m-4-geckoview
-    treeherder-symbol: Rap(tp6m-4)
-    target: geckoview_example.apk
-    run-on-projects:
-        by-test-platform:
-            android-hw.*/pgo: ['try', 'mozilla-central']
-            default: ['try']
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-4
-            - --app=geckoview
-            - --binary=org.mozilla.geckoview_example
-
-raptor-tp6m-4-refbrow:
-    description: "Raptor tp6m-4 on the reference browser"
-    treeherder-symbol: Rap-refbrow(tp6m-4)
-    run-on-projects: ['try']
-    target:
-        index: project.mobile.reference-browser.signed-nightly.nightly.latest
-        name: target.arm.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-4
-            - --app=refbrow
-            - --binary-path=org.mozilla.reference.browser
-            - --activity=org.mozilla.reference.browser.BrowserTestActivity
-
-raptor-tp6m-5-geckoview:
-    description: "Raptor tp6m-5 on Geckoview"
-    try-name: raptor-tp6m-5-geckoview
-    treeherder-symbol: Rap(tp6m-5)
-    run-on-projects:
-        by-test-platform:
-            android-hw-p2-8-0-arm7.*/pgo: ['try', 'mozilla-central']
-            android-hw-g5.*/pgo: ['try', 'mozilla-central']
-            android-hw-.*-api-16/opt: ['try']
-            android-hw-.*-aarch64/opt: ['try', 'trunk']
-            default: ['try', 'trunk', 'mozilla-beta']
-    target: geckoview_example.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-5
-            - --app=geckoview
-            - --binary=org.mozilla.geckoview_example
-            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
-
-raptor-tp6m-5-refbrow:
-    description: "Raptor tp6m-5 on the reference browser"
-    treeherder-symbol: Rap-refbrow(tp6m-5)
-    run-on-projects: ['try']
-    target:
-        index: project.mobile.reference-browser.signed-nightly.nightly.latest
-        name: target.arm.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-5
-            - --app=refbrow
-            - --binary-path=org.mozilla.reference.browser
-            - --activity=org.mozilla.reference.browser.BrowserTestActivity
-
-raptor-tp6m-6-geckoview:
-    description: "Raptor tp6m-6 on Geckoview"
-    try-name: raptor-tp6m-6-geckoview
-    treeherder-symbol: Rap(tp6m-6)
-    run-on-projects:
-        by-test-platform:
-            android-hw-p2-8-0-arm7.*/pgo: ['try', 'mozilla-central']
-            android-hw-g5.*/pgo: ['try', 'mozilla-central']
-            android-hw-.*-api-16/opt: ['try']
-            android-hw-.*-aarch64/opt: ['try', 'trunk']
-            default: ['try', 'trunk', 'mozilla-beta']
-    target: geckoview_example.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-6
-            - --app=geckoview
-            - --binary=org.mozilla.geckoview_example
-
-raptor-tp6m-6-refbrow:
-    description: "Raptor tp6m-6 on the reference browser"
-    treeherder-symbol: Rap-refbrow(tp6m-6)
-    run-on-projects: ['try']
-    target:
-        index: project.mobile.reference-browser.signed-nightly.nightly.latest
-        name: target.arm.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-6
-            - --app=refbrow
-            - --binary-path=org.mozilla.reference.browser
-            - --activity=org.mozilla.reference.browser.BrowserTestActivity
-
-raptor-tp6m-7-geckoview:
-    description: "Raptor tp6m-7 on Geckoview"
-    try-name: raptor-tp6m-7-geckoview
-    treeherder-symbol: Rap(tp6m-7)
-    run-on-projects:
-        by-test-platform:
-            android-hw.*/pgo: ['try', 'mozilla-central']
-            default: ['try']
-    target: geckoview_example.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-7
-            - --app=geckoview
-            - --binary=org.mozilla.geckoview_example
-            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
-
-raptor-tp6m-7-refbrow:
-    description: "Raptor tp6m-7 on the reference browser"
-    treeherder-symbol: Rap-refbrow(tp6m-7)
-    run-on-projects: ['try']
-    target:
-        index: project.mobile.reference-browser.signed-nightly.nightly.latest
-        name: target.arm.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-7
-            - --app=refbrow
-            - --binary-path=org.mozilla.reference.browser
-            - --activity=org.mozilla.reference.browser.BrowserTestActivity
-
-raptor-tp6m-8-geckoview:
-    description: "Raptor tp6m-8 on Geckoview"
-    try-name: raptor-tp6m-8-geckoview
-    treeherder-symbol: Rap(tp6m-8)
-    run-on-projects:
-        by-test-platform:
-            android-hw-p2-8-0-arm7.*/pgo: ['try', 'mozilla-central']
-            android-hw-g5.*/pgo: ['try', 'mozilla-central']
-            android-hw-.*-api-16/opt: ['try']
-            android-hw-.*-aarch64/opt: ['try', 'trunk']
-            default: ['try', 'trunk', 'mozilla-beta']
-    target: geckoview_example.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-8
-            - --app=geckoview
-            - --binary=org.mozilla.geckoview_example
-
-raptor-tp6m-8-refbrow:
-    description: "Raptor tp6m-8 on the reference browser"
-    treeherder-symbol: Rap-refbrow(tp6m-8)
-    run-on-projects: ['try']
-    target:
-        index: project.mobile.reference-browser.signed-nightly.nightly.latest
-        name: target.arm.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-8
-            - --app=refbrow
-            - --binary-path=org.mozilla.reference.browser
-            - --activity=org.mozilla.reference.browser.BrowserTestActivity
-
-raptor-tp6m-9-geckoview:
-    description: "Raptor tp6m-9 on Geckoview"
-    try-name: raptor-tp6m-9-geckoview
-    treeherder-symbol: Rap(tp6m-9)
-    target: geckoview_example.apk
-    run-on-projects:
-        by-test-platform:
-            android-hw.*/pgo: ['try', 'mozilla-central']
-            default: ['try']
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-9
-            - --app=geckoview
-            - --binary=org.mozilla.geckoview_example
-            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
-
-raptor-tp6m-9-refbrow:
-    description: "Raptor tp6m-9 on the reference browser"
-    treeherder-symbol: Rap-refbrow(tp6m-9)
-    run-on-projects: ['try']
-    target:
-        index: project.mobile.reference-browser.signed-nightly.nightly.latest
-        name: target.arm.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-9
-            - --app=refbrow
-            - --binary-path=org.mozilla.reference.browser
-            - --activity=org.mozilla.reference.browser.BrowserTestActivity
-
-raptor-tp6m-10-geckoview:
-    description: "Raptor tp6m-10 on Geckoview"
-    try-name: raptor-tp6m-10-geckoview
-    treeherder-symbol: Rap(tp6m-10)
-    target: geckoview_example.apk
-    run-on-projects:
-        by-test-platform:
-            android-hw.*/pgo: ['try', 'mozilla-central']
-            default: ['try']
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-10
-            - --app=geckoview
-            - --binary=org.mozilla.geckoview_example
-            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
-
-raptor-tp6m-10-refbrow:
-    description: "Raptor tp6m-10 on the reference browser"
-    treeherder-symbol: Rap-refbrow(tp6m-10)
-    run-on-projects: ['try']
-    target:
-        index: project.mobile.reference-browser.signed-nightly.nightly.latest
-        name: target.arm.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-10
-            - --app=refbrow
-            - --binary-path=org.mozilla.reference.browser
-            - --activity=org.mozilla.reference.browser.BrowserTestActivity
-
-raptor-tp6m-1-fennec:
-    description: "Raptor tp6m-1 on Fennec"
-    try-name: raptor-tp6m-1-fennec
-    treeherder-symbol: Rap(tp6m-1)
-    target: target.apk
-    run-on-projects: ['try']
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-1
-            - --app=fennec
-            - --binary=org.mozilla.fennec_aurora
-
-raptor-tp6m-2-fennec:
-    description: "Raptor tp6m-2 on Fennec"
-    try-name: raptor-tp6m-2-fennec
-    treeherder-symbol: Rap(tp6m-2)
-    target: target.apk
-    run-on-projects: ['try']
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-2
-            - --app=fennec
-            - --binary=org.mozilla.fennec_aurora
-
-raptor-tp6m-3-fennec:
-    description: "Raptor tp6m-3 on Fennec"
-    try-name: raptor-tp6m-3-fennec
-    treeherder-symbol: Rap(tp6m-3)
-    target: target.apk
-    run-on-projects: ['try']
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-3
-            - --app=fennec
-            - --binary=org.mozilla.fennec_aurora
-
-raptor-tp6m-4-fennec:
-    description: "Raptor tp6m-4 on Fennec"
-    try-name: raptor-tp6m-4-fennec
-    treeherder-symbol: Rap(tp6m-4)
-    target: target.apk
-    run-on-projects: ['try']
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-4
-            - --app=fennec
-            - --binary=org.mozilla.fennec_aurora
-
-raptor-tp6m-5-fennec:
-    description: "Raptor tp6m-5 on Fennec"
-    try-name: raptor-tp6m-5-fennec
-    treeherder-symbol: Rap(tp6m-5)
-    target: target.apk
-    run-on-projects: ['try']
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-5
-            - --app=fennec
-            - --binary=org.mozilla.fennec_aurora
-
-raptor-tp6m-6-fennec:
-    description: "Raptor tp6m-6 on Fennec"
-    try-name: raptor-tp6m-6-fennec
-    treeherder-symbol: Rap(tp6m-6)
-    target: target.apk
-    run-on-projects: ['try']
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-6
-            - --app=fennec
-            - --binary=org.mozilla.fennec_aurora
-
-raptor-tp6m-7-fennec:
-    description: "Raptor tp6m-7 on Fennec"
-    try-name: raptor-tp6m-7-fennec
-    treeherder-symbol: Rap(tp6m-7)
-    target: target.apk
-    run-on-projects: ['try']
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-7
-            - --app=fennec
-            - --binary=org.mozilla.fennec_aurora
-
-raptor-tp6m-8-fennec:
-    description: "Raptor tp6m-8 on Fennec"
-    try-name: raptor-tp6m-8-fennec
-    treeherder-symbol: Rap(tp6m-8)
-    target: target.apk
-    run-on-projects: ['try']
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-8
-            - --app=fennec
-            - --binary=org.mozilla.fennec_aurora
-
-raptor-tp6m-9-fennec:
-    description: "Raptor tp6m-9 on Fennec"
-    try-name: raptor-tp6m-9-fennec
-    treeherder-symbol: Rap(tp6m-9)
-    target: target.apk
-    run-on-projects: ['try']
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-9
-            - --app=fennec
-            - --binary=org.mozilla.fennec_aurora
-
-raptor-tp6m-10-fennec:
-    description: "Raptor tp6m-10 on Fennec"
-    try-name: raptor-tp6m-10-fennec
-    treeherder-symbol: Rap(tp6m-10)
-    target: target.apk
-    run-on-projects: ['try']
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-10
-            - --app=fennec
-            - --binary=org.mozilla.fennec_aurora
-
-raptor-tp6m-1-fenix-cold:
-    description: "Raptor tp6m-1 cold page-load on Fenix"
-    try-name: raptor-tp6m-1-fenix-cold
-    treeherder-symbol: Rap-fenix(tp6m-c-1)
-    run-on-projects: ['try']
-    e10s: true
-    target:
-        by-test-platform:
-            android-hw.*-aarch64.*/.*:
-                index: project.mobile.fenix.v2.branch.master.latest.raptor.aarch64
-                name: target.apk
-            default:
-                index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
-                name: target.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-cold-1
-            - --app=fenix
-            - --binary-path=org.mozilla.fenix.raptor
-            - --activity=org.mozilla.fenix.browser.BrowserPerformanceTestActivity
-
-raptor-tp6m-2-fenix-cold:
-    description: "Raptor tp6m-2 cold page-load on Fenix"
-    try-name: raptor-tp6m-2-fenix-cold
-    treeherder-symbol: Rap-fenix(tp6m-c-2)
-    run-on-projects: ['try']
-    e10s: true
-    target:
-        by-test-platform:
-            android-hw.*-aarch64.*/.*:
-                index: project.mobile.fenix.v2.branch.master.latest.raptor.aarch64
-                name: target.apk
-            default:
-                index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
-                name: target.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-cold-2
-            - --app=fenix
-            - --binary-path=org.mozilla.fenix.raptor
-            - --activity=org.mozilla.fenix.browser.BrowserPerformanceTestActivity
-
-raptor-tp6m-3-fenix-cold:
-    description: "Raptor tp6m-3 cold page-load on Fenix"
-    try-name: raptor-tp6m-3-fenix-cold
-    treeherder-symbol: Rap-fenix(tp6m-c-3)
-    run-on-projects: ['try']
-    e10s: true
-    target:
-        by-test-platform:
-            android-hw.*-aarch64.*/.*:
-                index: project.mobile.fenix.v2.branch.master.latest.raptor.aarch64
-                name: target.apk
-            default:
-                index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
-                name: target.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-cold-3
-            - --app=fenix
-            - --binary-path=org.mozilla.fenix.raptor
-            - --activity=org.mozilla.fenix.browser.BrowserPerformanceTestActivity
-
-raptor-tp6m-4-fenix-cold:
-    description: "Raptor tp6m-4 cold page-load on Fenix"
-    try-name: raptor-tp6m-4-fenix-cold
-    treeherder-symbol: Rap-fenix(tp6m-c-4)
-    run-on-projects: ['try']
-    e10s: true
-    target:
-        by-test-platform:
-            android-hw.*-aarch64.*/.*:
-                index: project.mobile.fenix.v2.branch.master.latest.raptor.aarch64
-                name: target.apk
-            default:
-                index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
-                name: target.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-cold-4
-            - --app=fenix
-            - --binary-path=org.mozilla.fenix.raptor
-            - --activity=org.mozilla.fenix.browser.BrowserPerformanceTestActivity
-
-raptor-tp6m-5-fenix-cold:
-    description: "Raptor tp6m-5 cold page-load on Fenix"
-    try-name: raptor-tp6m-5-fenix-cold
-    treeherder-symbol: Rap-fenix(tp6m-c-5)
-    run-on-projects: ['try']
-    e10s: true
-    target:
-        by-test-platform:
-            android-hw.*-aarch64.*/.*:
-                index: project.mobile.fenix.v2.branch.master.latest.raptor.aarch64
-                name: target.apk
-            default:
-                index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
-                name: target.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-cold-5
-            - --app=fenix
-            - --binary-path=org.mozilla.fenix.raptor
-            - --activity=org.mozilla.fenix.browser.BrowserPerformanceTestActivity
-
-raptor-tp6m-6-fenix-cold:
-    description: "Raptor tp6m-6 cold page-load on Fenix"
-    try-name: raptor-tp6m-6-fenix-cold
-    treeherder-symbol: Rap-fenix(tp6m-c-6)
-    run-on-projects: ['try']
-    e10s: true
-    target:
-        by-test-platform:
-            android-hw.*-aarch64.*/.*:
-                index: project.mobile.fenix.v2.branch.master.latest.raptor.aarch64
-                name: target.apk
-            default:
-                index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
-                name: target.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-cold-6
-            - --app=fenix
-            - --binary-path=org.mozilla.fenix.raptor
-            - --activity=org.mozilla.fenix.browser.BrowserPerformanceTestActivity
-
-raptor-tp6m-7-fenix-cold:
-    description: "Raptor tp6m-7 cold page-load on Fenix"
-    try-name: raptor-tp6m-7-fenix-cold
-    treeherder-symbol: Rap-fenix(tp6m-c-7)
-    run-on-projects: ['try']
-    e10s: true
-    target:
-        by-test-platform:
-            android-hw.*-aarch64.*/.*:
-                index: project.mobile.fenix.v2.branch.master.latest.raptor.aarch64
-                name: target.apk
-            default:
-                index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
-                name: target.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-cold-7
-            - --app=fenix
-            - --binary-path=org.mozilla.fenix.raptor
-            - --activity=org.mozilla.fenix.browser.BrowserPerformanceTestActivity
-
-raptor-tp6m-8-fenix-cold:
-    description: "Raptor tp6m-8 cold page-load on Fenix"
-    try-name: raptor-tp6m-8-fenix-cold
-    treeherder-symbol: Rap-fenix(tp6m-c-8)
-    run-on-projects: ['try']
-    e10s: true
-    target:
-        by-test-platform:
-            android-hw.*-aarch64.*/.*:
-                index: project.mobile.fenix.v2.branch.master.latest.raptor.aarch64
-                name: target.apk
-            default:
-                index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
-                name: target.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-cold-8
-            - --app=fenix
-            - --binary-path=org.mozilla.fenix.raptor
-            - --activity=org.mozilla.fenix.browser.BrowserPerformanceTestActivity
-
-raptor-tp6m-9-fenix-cold:
-    description: "Raptor tp6m-9 cold page-load on Fenix"
-    try-name: raptor-tp6m-9-fenix-cold
-    treeherder-symbol: Rap-fenix(tp6m-c-9)
-    run-on-projects: ['try']
-    e10s: true
-    target:
-        by-test-platform:
-            android-hw.*-aarch64.*/.*:
-                index: project.mobile.fenix.v2.branch.master.latest.raptor.aarch64
-                name: target.apk
-            default:
-                index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
-                name: target.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-cold-9
-            - --app=fenix
-            - --binary-path=org.mozilla.fenix.raptor
-            - --activity=org.mozilla.fenix.browser.BrowserPerformanceTestActivity
-
-raptor-tp6m-10-fenix-cold:
-    description: "Raptor tp6m-10 cold page-load on Fenix"
-    try-name: raptor-tp6m-10-fenix-cold
-    treeherder-symbol: Rap-fenix(tp6m-c-10)
-    run-on-projects: ['try']
-    e10s: true
-    target:
-        by-test-platform:
-            android-hw.*-aarch64.*/.*:
-                index: project.mobile.fenix.v2.branch.master.latest.raptor.aarch64
-                name: target.apk
-            default:
-                index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
-                name: target.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-cold-10
-            - --app=fenix
-            - --binary-path=org.mozilla.fenix.raptor
-            - --activity=org.mozilla.fenix.browser.BrowserPerformanceTestActivity
-
-raptor-tp6m-11-fenix-cold:
-    description: "Raptor tp6m-11 cold page-load on Fenix"
-    try-name: raptor-tp6m-11-fenix-cold
-    treeherder-symbol: Rap-fenix(tp6m-c-11)
-    run-on-projects: ['try']
-    e10s: true
-    target:
-        by-test-platform:
-            android-hw.*-aarch64.*/.*:
-                index: project.mobile.fenix.v2.branch.master.latest.raptor.aarch64
-                name: target.apk
-            default:
-                index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
-                name: target.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-cold-11
-            - --app=fenix
-            - --binary-path=org.mozilla.fenix.raptor
-            - --activity=org.mozilla.fenix.browser.BrowserPerformanceTestActivity
-
-raptor-tp6m-12-fenix-cold:
-    description: "Raptor tp6m-12 cold page-load on Fenix"
-    try-name: raptor-tp6m-12-fenix-cold
-    treeherder-symbol: Rap-fenix(tp6m-c-12)
-    run-on-projects: ['try']
-    e10s: true
-    target:
-        by-test-platform:
-            android-hw.*-aarch64.*/.*:
-                index: project.mobile.fenix.v2.branch.master.latest.raptor.aarch64
-                name: target.apk
-            default:
-                index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
-                name: target.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-cold-12
-            - --app=fenix
-            - --binary-path=org.mozilla.fenix.raptor
-            - --activity=org.mozilla.fenix.browser.BrowserPerformanceTestActivity
-
-raptor-tp6m-13-fenix-cold:
-    description: "Raptor tp6m-13 cold page-load on Fenix"
-    try-name: raptor-tp6m-13-fenix-cold
-    treeherder-symbol: Rap-fenix(tp6m-c-13)
-    run-on-projects: ['try']
-    e10s: true
-    target:
-        by-test-platform:
-            android-hw.*-aarch64.*/.*:
-                index: project.mobile.fenix.v2.branch.master.latest.raptor.aarch64
-                name: target.apk
-            default:
-                index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
-                name: target.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-cold-13
-            - --app=fenix
-            - --binary-path=org.mozilla.fenix.raptor
-            - --activity=org.mozilla.fenix.browser.BrowserPerformanceTestActivity
-
-raptor-tp6m-14-fenix-cold:
-    description: "Raptor tp6m-14 cold page-load on Fenix"
-    try-name: raptor-tp6m-14-fenix-cold
-    treeherder-symbol: Rap-fenix(tp6m-c-14)
-    run-on-projects: ['try']
-    e10s: true
-    target:
-        by-test-platform:
-            android-hw.*-aarch64.*/.*:
-                index: project.mobile.fenix.v2.branch.master.latest.raptor.aarch64
-                name: target.apk
-            default:
-                index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
-                name: target.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-cold-14
-            - --app=fenix
-            - --binary-path=org.mozilla.fenix.raptor
-            - --activity=org.mozilla.fenix.browser.BrowserPerformanceTestActivity
+            - --test=raptor-tp6-binast-instagram-firefox
 
 raptor-speedometer-firefox:
     description: "Raptor Speedometer on Firefox"
+    variants: ["fission"]
     try-name: raptor-speedometer-firefox
     treeherder-symbol: Rap(sp)
     mozharness:
@@ -1064,7 +212,6 @@ raptor-speedometer-firefox-profiling:
     description: "Raptor Speedometer on Firefox with Gecko Profiling"
     try-name: raptor-speedometer-firefox-profiling
     treeherder-symbol: Rap-Prof(sp)
-    run-on-projects: ['mozilla-central', 'try']
     max-run-time: 900
     tier: 2
     mozharness:
@@ -1072,169 +219,9 @@ raptor-speedometer-firefox-profiling:
             - --test=raptor-speedometer
             - --gecko-profile
 
-raptor-speedometer-geckoview:
-    description: "Raptor Speedometer on Geckoview"
-    try-name: raptor-speedometer-geckoview
-    treeherder-symbol: Rap(sp)
-    target: geckoview_example.apk
-    run-on-projects:
-        by-test-platform:
-            android-hw-p2-8-0-arm7.*/pgo: ['try', 'mozilla-central']
-            android-hw-.*-api-16/opt: ['try']
-            android-hw-.*-aarch64/opt: ['try', 'trunk']
-            default: ['try', 'trunk', 'mozilla-beta']
-    max-run-time: 900
-    mozharness:
-        extra-options:
-            - --test=raptor-speedometer
-            - --app=geckoview
-            - --binary=org.mozilla.geckoview_example
-            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
-
-raptor-speedometer-geckoview-power:
-    description: "Raptor Speedometer Power on Geckoview"
-    try-name: raptor-speedometer-geckoview-power
-    treeherder-symbol: Rap-P(sp)
-    target: geckoview_example.apk
-    run-on-projects:
-        by-test-platform:
-            android-hw.*/pgo: ['try', 'mozilla-central']
-            default: ['try']
-    max-run-time: 1800
-    mozharness:
-        extra-options:
-            - --test=raptor-speedometer
-            - --app=geckoview
-            - --binary=org.mozilla.geckoview_example
-            - --power-test
-            - --page-cycles 5
-            - --host HOST_IP
-            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
-
-raptor-scn-power-idle-fenix:
-    description: "Raptor idle-browser power-usage test on Fenix"
-    try-name: raptor-scn-power-idle-fenix
-    treeherder-symbol: Rap-fenix(idl)
-    run-on-projects: ['try']
-    e10s: true
-    target:
-        by-test-platform:
-            android-hw.*-aarch64.*/.*:
-                index: project.mobile.fenix.v2.branch.master.latest.raptor.aarch64
-                name: target.apk
-            default:
-                index: project.mobile.fenix.v2.branch.master.latest.raptor.arm
-                name: target.apk
-    tier: 3
-    max-run-time: 1800
-    mozharness:
-        extra-options:
-            - --test=raptor-scn-power-idle
-            - --app=fenix
-            - --binary-path=org.mozilla.fenix.raptor
-            - --power-test
-            - --host HOST_IP
-            - --activity=org.mozilla.fenix.browser.BrowserPerformanceTestActivity
-
-raptor-scn-power-idle-fennec:
-    description: "Raptor idle-browser power-use measurement on Fennec"
-    try-name: raptor-scn-power-idle-fennec
-    treeherder-symbol: Rap-fennec(idl)
-    target: target.apk
-    run-on-projects: ['try']
-    tier: 3
-    max-run-time: 1800
-    mozharness:
-        extra-options:
-            - --test=raptor-scn-power-idle
-            - --app=fennec
-            - --binary=org.mozilla.fennec_aurora
-            - --power-test
-            - --host HOST_IP
-
-raptor-scn-power-idle-geckoview:
-    description: "Raptor idle-browser power-use measurement on GeckoView"
-    try-name: raptor-scn-power-idle-geckoview
-    treeherder-symbol: Rap-P(idl)
-    target: geckoview_example.apk
-    run-on-projects:
-        by-test-platform:
-            android-hw.*/pgo: ['try', 'trunk', 'mozilla-central']
-            default: ['try']
-    tier: 3
-    max-run-time: 1800
-    mozharness:
-        extra-options:
-            - --test=raptor-scn-power-idle
-            - --app=geckoview
-            - --binary=org.mozilla.geckoview_example
-            - --power-test
-            - --host HOST_IP
-            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
-
-raptor-scn-power-idle-refbrow:
-    description: "Raptor idle-browser power-use measurement on Reference Browser"
-    try-name: raptor-scn-power-idle-refbrow
-    treeherder-symbol: Rap-refbrow(idl)
-    target:
-        by-test-platform:
-            android-hw.*-aarch64.*/.*:
-                index: project.mobile.reference-browser.signed-nightly.nightly.latest
-                name: target.aarch64.apk
-            default:
-                index: project.mobile.reference-browser.signed-nightly.nightly.latest
-                name: target.arm.apk
-    run-on-projects: ['try']
-    tier: 3
-    max-run-time: 1800
-    mozharness:
-        extra-options:
-            - --test=raptor-scn-power-idle
-            - --app=refbrow
-            - --binary-path=org.mozilla.reference.browser
-            - --power-test
-            - --host HOST_IP
-            - --activity=org.mozilla.reference.browser.BrowserTestActivity
-
-raptor-speedometer-fennec:
-    description: "Raptor Speedometer on Fennec"
-    try-name: raptor-speedometer-fennec
-    treeherder-symbol: Rap(sp)
-    target: target.apk
-    run-on-projects:
-        by-test-platform:
-            android-hw-.*-api-16/opt: ['try']
-            android-hw.*: ['try', 'trunk', 'mozilla-beta']
-    tier: 2
-    max-run-time: 900
-    mozharness:
-        extra-options:
-            - --test=raptor-speedometer-fennec
-            - --app=fennec
-            - --binary=org.mozilla.fennec_aurora
-
-raptor-speedometer-refbrow:
-    description: "Raptor Speedometer on the reference browser"
-    treeherder-symbol: Rap-refbrow(sp)
-    run-on-projects: ['try']
-    target:
-        by-test-platform:
-            android-hw.*-aarch64.*/.*:
-                index: project.mobile.reference-browser.signed-nightly.nightly.latest
-                name: target.aarch64.apk
-            default:
-                index: project.mobile.reference-browser.signed-nightly.nightly.latest
-                name: target.arm.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-speedometer
-            - --app=refbrow
-            - --binary-path=org.mozilla.reference.browser
-            - --activity=org.mozilla.reference.browser.BrowserTestActivity
-
 raptor-stylebench-firefox:
     description: "Raptor StyleBench on Firefox"
+    variants: ["fission"]
     try-name: raptor-stylebench-firefox
     treeherder-symbol: Rap(sb)
     mozharness:
@@ -1245,7 +232,6 @@ raptor-stylebench-firefox-profiling:
     description: "Raptor StyleBench on Firefox with Gecko Profiling"
     try-name: raptor-stylebench-firefox-profiling
     treeherder-symbol: Rap-Prof(sb)
-    run-on-projects: ['mozilla-central', 'try']
     max-run-time: 900
     tier: 2
     mozharness:
@@ -1255,6 +241,7 @@ raptor-stylebench-firefox-profiling:
 
 raptor-motionmark-htmlsuite-firefox:
     description: "Raptor MotionMark HtmlSuite on Firefox"
+    variants: ["fission"]
     try-name: raptor-motionmark-htmlsuite-firefox
     treeherder-symbol: Rap(mm-h)
     mozharness:
@@ -1265,8 +252,6 @@ raptor-motionmark-htmlsuite-firefox-profiling:
     description: "Raptor MotionMark HtmlSuite on Firefox with Gecko Profiling"
     try-name: raptor-motionmark-htmlsuite-firefox-profiling
     treeherder-symbol: Rap-Prof(mm-h)
-    run-on-projects: ['mozilla-central', 'try']
-    max-run-time: 900
     tier: 2
     mozharness:
         extra-options:
@@ -1275,6 +260,7 @@ raptor-motionmark-htmlsuite-firefox-profiling:
 
 raptor-motionmark-animometer-firefox:
     description: "Raptor MotionMark Animometer on Firefox"
+    variants: ["fission"]
     try-name: raptor-motionmark-animometer-firefox
     treeherder-symbol: Rap(mm-a)
     mozharness:
@@ -1285,7 +271,6 @@ raptor-motionmark-animometer-firefox-profiling:
     description: "Raptor MotionMark Animometer on Firefox with Gecko Profiling"
     try-name: raptor-motionmark-animometer-firefox-profiling
     treeherder-symbol: Rap-Prof(mm-a)
-    run-on-projects: ['mozilla-central', 'try']
     max-run-time: 900
     tier: 2
     mozharness:
@@ -1295,6 +280,7 @@ raptor-motionmark-animometer-firefox-profiling:
 
 raptor-webaudio-firefox:
     description: "Raptor WebAudio on Firefox"
+    variants: ["fission"]
     try-name: raptor-webaudio-firefox
     treeherder-symbol: Rap(wa)
     mozharness:
@@ -1305,7 +291,6 @@ raptor-webaudio-firefox-profiling:
     description: "Raptor WebAudio on Firefox with Gecko Profiling"
     try-name: raptor-webaudio-firefox
     treeherder-symbol: Rap-Prof(wa)
-    run-on-projects: ['mozilla-central', 'try']
     max-run-time: 900
     tier: 2
     mozharness:
@@ -1315,6 +300,7 @@ raptor-webaudio-firefox-profiling:
 
 raptor-sunspider-firefox:
     description: "Raptor SunSpider on Firefox"
+    variants: ["fission"]
     try-name: raptor-sunspider-firefox
     treeherder-symbol: Rap(ss)
     mozharness:
@@ -1325,7 +311,6 @@ raptor-sunspider-firefox-profiling:
     description: "Raptor SunSpider on Firefox with Gecko Profiling"
     try-name: raptor-sunspider-firefox-profiling
     treeherder-symbol: Rap-Prof(ss)
-    run-on-projects: ['mozilla-central', 'try']
     max-run-time: 900
     tier: 2
     mozharness:
@@ -1335,8 +320,14 @@ raptor-sunspider-firefox-profiling:
 
 raptor-unity-webgl-firefox:
     description: "Raptor Unity WebGL on Firefox"
+    variants: ["fission"]
     try-name: raptor-unity-webgl-firefox
     treeherder-symbol: Rap(ugl)
+    run-on-projects:
+        by-test-platform:
+            (linux|windows|macos)(?!.*shippable).*: []
+            default: ["mozilla-central", "try"]
+    tier: 3
     mozharness:
         extra-options:
             - --test=raptor-unity-webgl
@@ -1348,8 +339,6 @@ raptor-unity-webgl-firefox-profiling:
     description: "Raptor Unity WebGL on Firefox with Gecko Profiling"
     try-name: raptor-unity-webgl-firefox-profiling
     treeherder-symbol: Rap-Prof(ugl)
-    run-on-projects: ['mozilla-central', 'try']
-    max-run-time: 900
     tier: 2
     mozharness:
         extra-options:
@@ -1359,57 +348,17 @@ raptor-unity-webgl-firefox-profiling:
         fetch:
             - unity-webgl
 
-raptor-unity-webgl-geckoview:
-    description: "Raptor Unity WebGL on Geckoview"
-    try-name: raptor-unity-webgl-geckoview
-    treeherder-symbol: Rap(ugl)
-    target: geckoview_example.apk
-    run-on-projects:
-        by-test-platform:
-            android-hw-p2-8-0-arm7.*/pgo: ['try', 'mozilla-central']
-            android-hw-.*-api-16/opt: ['try']
-            default: ['try', 'trunk', 'mozilla-beta']
-    max-run-time: 900
-    tier: 3
-    mozharness:
-        extra-options:
-            - --test=raptor-unity-webgl
-            - --app=geckoview
-            - --binary=org.mozilla.geckoview_example
-            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
-    fetches:
-        fetch:
-            - unity-webgl
-
-raptor-unity-webgl-refbrow:
-    description: "Raptor Unity WebGL on the reference browser"
-    treeherder-symbol: Rap-refbrow(ugl)
-    run-on-projects: ['try']
-    target:
-        by-test-platform:
-            android-hw.*-aarch64.*/.*:
-                index: project.mobile.reference-browser.signed-nightly.nightly.latest
-                name: target.aarch64.apk
-            default:
-                index: project.mobile.reference-browser.signed-nightly.nightly.latest
-                name: target.arm.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-unity-webgl
-            - --app=refbrow
-            - --binary-path=org.mozilla.reference.browser
-            - --activity=org.mozilla.reference.browser.BrowserTestActivity
-    fetches:
-        fetch:
-            - unity-webgl
-
 raptor-wasm-misc-cranelift-firefox:
     description: "Raptor WASM Misc on Firefox with Cranelift"
+    variants: ["fission"]
     try-name: raptor-wasm-misc-cranelift-firefox
     treeherder-symbol: Rap(wm-c)
-    run-on-projects: ['mozilla-central', 'try']
+    run-on-projects:
+        by-test-platform:
+            (linux|windows|macos)(?!.*shippable).*: []
+            default: ["mozilla-central", "try"]
     max-run-time: 1800
+    tier: 2
     mozharness:
         extra-options:
             - --test=raptor-wasm-misc-cranelift
@@ -1419,6 +368,7 @@ raptor-wasm-misc-cranelift-firefox:
 
 raptor-wasm-misc-firefox:
     description: "Raptor WASM Misc on Firefox"
+    variants: ["fission"]
     try-name: raptor-wasm-misc-firefox
     treeherder-symbol: Rap(wm)
     mozharness:
@@ -1432,7 +382,6 @@ raptor-wasm-misc-firefox-profiling:
     description: "Raptor WASM Misc on Firefox with Gecko Profiling"
     try-name: raptor-wasm-misc-firefox-profiling
     treeherder-symbol: Rap-Prof(wm)
-    run-on-projects: ['mozilla-central', 'try']
     max-run-time: 900
     tier: 2
     mozharness:
@@ -1445,6 +394,7 @@ raptor-wasm-misc-firefox-profiling:
 
 raptor-wasm-misc-baseline-firefox:
     description: "Raptor WASM Misc on Firefox with baseline JIT"
+    variants: ["fission"]
     try-name: raptor-wasm-misc-baseline-firefox
     treeherder-symbol: Rap(wm-b)
     mozharness:
@@ -1458,7 +408,6 @@ raptor-wasm-misc-baseline-firefox-profiling:
     description: "Raptor WASM Misc on Firefox with baseline JIT and Gecko Profiling"
     try-name: raptor-wasm-misc-baseline-firefox-profiling
     treeherder-symbol: Rap-Prof(wm-b)
-    run-on-projects: ['mozilla-central', 'try']
     max-run-time: 900
     tier: 2
     mozharness:
@@ -1471,6 +420,7 @@ raptor-wasm-misc-baseline-firefox-profiling:
 
 raptor-wasm-misc-ion-firefox:
     description: "Raptor WASM Misc on Firefox with ION Monkey"
+    variants: ["fission"]
     try-name: raptor-wasm-misc-ion-firefox
     treeherder-symbol: Rap(wm-i)
     mozharness:
@@ -1484,7 +434,6 @@ raptor-wasm-misc-ion-firefox-profiling:
     description: "Raptor WASM Misc on Firefox with ION Monkey and Gecko Profiling"
     try-name: raptor-wasm-misc-ion-firefox-profiling
     treeherder-symbol: Rap-Prof(wm-i)
-    run-on-projects: ['mozilla-central', 'try']
     max-run-time: 900
     tier: 2
     mozharness:
@@ -1497,12 +446,13 @@ raptor-wasm-misc-ion-firefox-profiling:
 
 raptor-assorted-dom-firefox:
     description: "Raptor Assorted-Dom on Firefox"
+    variants: ["fission"]
     try-name: raptor-assorted-dom-firefox
     treeherder-symbol: Rap(dom)
     max-run-time:
         by-test-platform:
             .*-qr/.*: 2100
-            .*-ux/.*: 2100
+            .*-ref-hw-2017/.*: 2100
             default: 1500
     mozharness:
         extra-options:
@@ -1515,7 +465,6 @@ raptor-assorted-dom-firefox-profiling:
     description: "Raptor Assorted-Dom on Firefox with Gecko Profiling"
     try-name: raptor-assorted-dom-firefox-profiling
     treeherder-symbol: Rap-Prof(dom)
-    run-on-projects: ['mozilla-central', 'try']
     max-run-time: 900
     tier: 2
     mozharness:
@@ -1528,12 +477,13 @@ raptor-assorted-dom-firefox-profiling:
 
 raptor-wasm-godot-firefox:
     description: "Raptor Wasm Godot on Firefox"
+    variants: ["fission"]
     try-name: raptor-wasm-godot-firefox
     treeherder-symbol: Rap(godot)
     max-run-time:
         by-test-platform:
             .*-qr/.*: 2100
-            .*-ux/.*: 2100
+            .*-ref-hw-2017/.*: 2100
             default: 1500
     mozharness:
         extra-options:
@@ -1543,7 +493,6 @@ raptor-wasm-godot-firefox-profiling:
     description: "Raptor Wasm Godot on Firefox with Gecko Profiling"
     try-name: raptor-wasm-godot-firefox-profiling
     treeherder-symbol: Rap-Prof(godot)
-    run-on-projects: ['mozilla-central', 'try']
     max-run-time: 900
     tier: 2
     mozharness:
@@ -1553,12 +502,13 @@ raptor-wasm-godot-firefox-profiling:
 
 raptor-wasm-godot-baseline-firefox:
     description: "Raptor Wasm Godot on Firefox with baseline JIT"
+    variants: ["fission"]
     try-name: raptor-wasm-godot-baseline-firefox
     treeherder-symbol: Rap(godot-b)
     max-run-time:
         by-test-platform:
             .*-qr/.*: 2100
-            .*-ux/.*: 2100
+            .*-ref-hw-2017/.*: 2100
             default: 1500
     mozharness:
         extra-options:
@@ -1568,7 +518,6 @@ raptor-wasm-godot-baseline-firefox-profiling:
     description: "Raptor Wasm Godot on Firefox with baseline JIT and Gecko Profiling"
     try-name: raptor-wasm-godot-baseline-firefox-profiling
     treeherder-symbol: Rap-Prof(godot-b)
-    run-on-projects: ['mozilla-central', 'try']
     max-run-time: 900
     tier: 2
     mozharness:
@@ -1578,14 +527,19 @@ raptor-wasm-godot-baseline-firefox-profiling:
 
 raptor-wasm-godot-cranelift-firefox:
     description: "Raptor WASM Godot on Firefox with Cranelift"
+    variants: ["fission"]
     try-name: raptor-wasm-godot-cranelift-firefox
     treeherder-symbol: Rap(godot-c)
-    run-on-projects: ['mozilla-central', 'try']
+    run-on-projects:
+        by-test-platform:
+            (linux|windows|macos)(?!.*shippable).*: []
+            default: ["mozilla-central", "try"]
     max-run-time:
         by-test-platform:
             .*-qr/.*: 2100
-            .*-ux/.*: 2100
+            .*-ref-hw-2017/.*: 2100
             default: 1500
+    tier: 2
     mozharness:
         extra-options:
             - --test=raptor-wasm-godot-cranelift
@@ -1594,8 +548,8 @@ raptor-wasm-godot-cranelift-firefox-profiling:
     description: "Raptor WASM Godot on Firefox with Cranelift Profiling"
     try-name: raptor-wasm-godot-cranelift-firefox-profiling
     treeherder-symbol: Rap-Prof(godot-c)
-    run-on-projects: ['mozilla-central', 'try']
     max-run-time: 900
+    tier: 2
     mozharness:
         extra-options:
             - --test=raptor-wasm-godot-cranelift
@@ -1603,12 +557,13 @@ raptor-wasm-godot-cranelift-firefox-profiling:
 
 raptor-wasm-godot-ion-firefox:
     description: "Raptor WASM godot on Firefox with ION Monkey"
+    variants: ["fission"]
     try-name: raptor-wasm-godot-ion-firefox
     treeherder-symbol: Rap(godot-i)
     max-run-time:
         by-test-platform:
             .*-qr/.*: 2100
-            .*-ux/.*: 2100
+            .*-ref-hw-2017/.*: 2100
             default: 1500
     mozharness:
         extra-options:
@@ -1618,7 +573,6 @@ raptor-wasm-godot-ion-firefox-profiling:
     description: "Raptor WASM godot on Firefox with ION Monkey and Gecko Profiling"
     try-name: raptor-wasm-godot-ion-firefox-profiling
     treeherder-symbol: Rap-Prof(godot-i)
-    run-on-projects: ['mozilla-central', 'try']
     max-run-time: 900
     tier: 2
     mozharness:
@@ -1628,9 +582,131 @@ raptor-wasm-godot-ion-firefox-profiling:
 
 raptor-youtube-playback-firefox:
     description: "Raptor YouTube Playback on Firefox"
+    variants: ["fission"]
     try-name: raptor-youtube-playback-firefox
     treeherder-symbol: Rap(ytp)
-    run-on-projects: ['mozilla-central', 'try']
+    run-on-projects:
+        by-test-platform:
+            windows10-64-ref-hw-2017/opt: ["mozilla-central", "try"]
+            (linux|windows|macos)(?!.*shippable).*: []
+            default: ["mozilla-central", "try"]
+    max-run-time: 3000
+    tier: 2
+    mozharness:
+        extra-options:
+            - --test=raptor-youtube-playback
+
+raptor-youtube-playback-firefox-profiling:
+    description: "Raptor YouTube Playback on Firefox with Gecko Profiling"
+    try-name: raptor-youtube-playback-firefox-profiling
+    treeherder-symbol: Rap-Prof(ytp)
+    max-run-time: 4000
+    tier: 2
+    mozharness:
+        extra-options:
+            - --test=raptor-youtube-playback
+            - --gecko-profile
+
+raptor-youtube-playback-v9-power-firefox:
+    description: "Raptor V9 YouTube Playback on Firefox with Power Testing"
+    try-name: raptor-youtube-playback-v9-power-firefox
+    treeherder-symbol: Rap(ytp-v9-p)
+    run-on-projects:
+        by-test-platform:
+            (linux|windows|macos)(?!.*shippable).*: []
+            default: ["mozilla-central"]
+    max-run-time: 2700
+    tier: 3
+    mozharness:
+        extra-options:
+            - --test=raptor-youtube-playback-v9
+            - --power-test
+
+raptor-youtube-playback-h264-power-firefox:
+    description: "Raptor H264 YouTube Playback on Firefox with Power Testing"
+    try-name: raptor-youtube-playback-h264-power-firefox
+    treeherder-symbol: Rap(ytp-h264-p)
+    run-on-projects:
+        by-test-platform:
+            (linux|windows|macos)(?!.*shippable).*: []
+            default: ["mozilla-central"]
+    max-run-time: 2700
+    tier: 3
+    mozharness:
+        extra-options:
+            - --test=raptor-youtube-playback-h264
+            - --power-test
+
+raptor-youtube-playback-av1-sfr-firefox:
+    description: "Raptor YouTube Playback AV1 SFR on Firefox"
+    variants: ["fission"]
+    try-name: raptor-youtube-playback-av1-sfr-firefox
+    treeherder-symbol: Rap(ytp-av1-sfr)
+    run-on-projects:
+        by-test-platform:
+            windows10-64-ref-hw-2017/opt: ["mozilla-central", "try"]
+            (linux|windows|macos)(?!.*shippable).*: []
+            default: ["mozilla-central", "try"]
+    limit-platforms:
+        - windows10-64-ref-hw-2017/opt
+        - macosx1014-64-shippable/opt
+    max-run-time:
+        by-test-platform:
+            windows10-aarch64/opt: 3600
+            default: 1800
+    tier: 2
+    mozharness:
+        extra-options:
+            - --test=raptor-youtube-playback-av1-sfr
+
+raptor-youtube-playback-h264-sfr-firefox:
+    description: "Raptor YouTube Playback H264 SFR on Firefox"
+    variants: ["fission"]
+    try-name: raptor-youtube-playback-h264-sfr-firefox
+    treeherder-symbol: Rap(ytp-h264-sfr)
+    run-on-projects:
+        by-test-platform:
+            windows10-64-ref-hw-2017/opt: ["mozilla-central", "try"]
+            (linux|windows|macos)(?!.*shippable).*: []
+            default: ["mozilla-central", "try"]
+    max-run-time:
+        by-test-platform:
+            windows10-aarch64/opt: 3600
+            default: 1800
+    tier: 2
+    mozharness:
+        extra-options:
+            - --test=raptor-youtube-playback-h264-sfr
+
+raptor-youtube-playback-vp9-sfr-firefox:
+    description: "Raptor YouTube Playback VP9 SFR on Firefox"
+    variants: ["fission"]
+    try-name: raptor-youtube-playback-vp9-sfr-firefox
+    treeherder-symbol: Rap(ytp-vp9-sfr)
+    run-on-projects:
+        by-test-platform:
+            windows10-64-ref-hw-2017/opt: ["mozilla-central", "try"]
+            (linux|windows|macos)(?!.*shippable).*: []
+            default: ["mozilla-central", "try"]
+    max-run-time:
+        by-test-platform:
+            windows10-aarch64/opt: 3600
+            default: 1800
+    tier: 2
+    mozharness:
+        extra-options:
+            - --test=raptor-youtube-playback-vp9-sfr
+
+raptor-youtube-playback-widevine-hfr-firefox:
+    description: "Raptor YouTube Playback Widevine HFR on Firefox"
+    variants: ["fission"]
+    try-name: raptor-youtube-playback-widevine-hfr-firefox
+    treeherder-symbol: Rap(ytp-widevine-hfr)
+    run-on-projects:
+        by-test-platform:
+            windows10-64-ref-hw-2017/opt: ["mozilla-central", "try"]
+            (linux|windows|macos)(?!.*shippable).*: []
+            default: ["mozilla-central", "try"]
     max-run-time:
         by-test-platform:
             windows10-aarch64/opt: 3600
@@ -1638,312 +714,96 @@ raptor-youtube-playback-firefox:
     tier: 2
     mozharness:
         extra-options:
-            - --test=raptor-youtube-playback
+            - --test=raptor-youtube-playback-widevine-hfr
 
-raptor-tp6-1-firefox-cold:
-    description: "Raptor tp6-1 cold page-load on Firefox"
-    try-name: raptor-tp6-1-firefox-cold
-    treeherder-symbol: Rap(tp6-c-1)
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6-cold-1
-
-raptor-tp6-2-firefox-cold:
-    description: "Raptor tp6-2 cold page-load on Firefox"
-    try-name: raptor-tp6-2-firefox-cold
-    treeherder-symbol: Rap(tp6-c-2)
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6-cold-2
-
-raptor-tp6-3-firefox-cold:
-    description: "Raptor tp6-3 cold page-load on Firefox"
-    try-name: raptor-tp6-3-firefox-cold
-    treeherder-symbol: Rap(tp6-c-3)
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6-cold-3
-
-raptor-tp6-4-firefox-cold:
-    description: "Raptor tp6-4 cold page-load on Firefox"
-    try-name: raptor-tp6-4-firefox-cold
-    treeherder-symbol: Rap(tp6-c-4)
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6-cold-4
-
-raptor-tp6m-1-geckoview-cold:
-    description: "Raptor tp6m-1 cold page-load on Geckoview Example"
-    max-run-time: 2700
-    try-name: raptor-tp6m-1-geckoview-cold
-    treeherder-symbol: Rap(tp6m-c-1)
+raptor-youtube-playback-widevine-h264-sfr-firefox:
+    description: "Raptor YouTube Playback Widevine H264 SFR on Firefox"
+    variants: ["fission"]
+    try-name: raptor-youtube-playback-widevine-h264-sfr-firefox
+    treeherder-symbol: Rap(ytp-widevine-h264-sfr)
     run-on-projects:
         by-test-platform:
-            android-hw-p2-8-0-arm7.*/pgo: ['try', 'mozilla-central']
-            android-hw-.*-api-16/opt: ['try', 'trunk']
-            android-hw-.*-aarch64/opt: ['try', 'trunk']
-            default: ['try', 'trunk', 'mozilla-beta']
-    e10s: true
-    target: geckoview_example.apk
-    tier:
+            windows10-64-ref-hw-2017/opt: ["mozilla-central", "try"]
+            (linux|windows|macos)(?!.*shippable).*: []
+            default: ["mozilla-central", "try"]
+    max-run-time:
         by-test-platform:
-            android-hw-p2-8-0-arm7.*: 2
-            default: 1
+            windows10-aarch64/opt: 3600
+            default: 2700
+    tier: 2
     mozharness:
         extra-options:
-            - --test=raptor-tp6m-cold-1
-            - --app=geckoview
-            - --binary=org.mozilla.geckoview_example
-            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
+            - --test=raptor-youtube-playback-widevine-h264-sfr
 
-raptor-tp6m-2-geckoview-cold:
-    description: "Raptor tp6m-2 cold page-load on Geckoview Example"
-    max-run-time: 2700
-    try-name: raptor-tp6m-2-geckoview-cold
-    treeherder-symbol: Rap(tp6m-c-2)
+raptor-youtube-playback-widevine-vp9-sfr-firefox:
+    description: "Raptor YouTube Playback Widevine VP9 SFR on Firefox"
+    variants: ["fission"]
+    try-name: raptor-youtube-playback-widevine-vp9-sfr-firefox
+    treeherder-symbol: Rap(ytp-widevine-vp9-sfr)
     run-on-projects:
         by-test-platform:
-            android-hw-p2-8-0-arm7.*/pgo: ['try', 'mozilla-central']
-            android-hw-.*-api-16/opt: ['try', 'trunk']
-            android-hw-.*-aarch64/opt: ['try', 'trunk']
-            default: ['try', 'trunk', 'mozilla-beta']
-    e10s: true
-    target: geckoview_example.apk
-    tier:
+            windows10-64-ref-hw-2017/opt: ["mozilla-central", "try"]
+            (linux|windows|macos)(?!.*shippable).*: []
+            default: ["mozilla-central", "try"]
+    max-run-time:
         by-test-platform:
-            android-hw-p2-8-0-arm7.*: 2
-            default: 1
+            windows10-aarch64/opt: 3600
+            default: 2700
+    tier: 2
     mozharness:
         extra-options:
-            - --test=raptor-tp6m-cold-2
-            - --app=geckoview
-            - --binary=org.mozilla.geckoview_example
-            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
+            - --test=raptor-youtube-playback-widevine-vp9-sfr
 
-raptor-tp6m-3-geckoview-cold:
-    description: "Raptor tp6m-3 cold page-load on Geckoview Example"
-    max-run-time: 2700
-    try-name: raptor-tp6m-3-geckoview-cold
-    treeherder-symbol: Rap(tp6m-c-3)
+raptor-ares6-firefox:
+    description: "Raptor Ares6 on Firefox"
+    variants: ["fission"]
+    try-name: raptor-ares6-firefox
+    treeherder-symbol: Rap(ares6)
+    max-run-time: 2500
+    mozharness:
+        extra-options:
+            - --test=raptor-ares6
+
+raptor-ares6-firefox-profiling:
+    description: "Raptor Ares6 on Firefox with Gecko Profiling"
+    try-name: raptor-ares6-firefox-profiling
+    treeherder-symbol: Rap-Prof(ares6)
+    max-run-time: 2500
+    tier: 3
+    mozharness:
+        extra-options:
+            - --test=raptor-ares6
+            - --gecko-profile
+
+raptor-jetstream2-firefox:
+    description: "Raptor Jetstream2 on Firefox"
+    variants: ["fission"]
+    try-name: raptor-jetstream2-firefox
+    treeherder-symbol: Rap(js2)
     run-on-projects:
         by-test-platform:
-            android-hw-p2-8-0-arm7.*/pgo: ['try', 'mozilla-central']
-            android-hw-.*-api-16/opt: ['try', 'trunk']
-            android-hw-.*-aarch64/opt: ['try', 'trunk']
-            default: ['try', 'trunk', 'mozilla-beta']
-    e10s: true
-    target: geckoview_example.apk
-    tier:
-        by-test-platform:
-            android-hw-p2-8-0-arm7.*: 2
-            default: 1
+            windows10-64-ref-hw-2017/opt: ["mozilla-central", "try"]
+            (linux|windows|macos)(?!.*shippable).*: []
+            default: ["mozilla-central", "try"]
+    tier: 3
+    max-run-time: 8000
     mozharness:
         extra-options:
-            - --test=raptor-tp6m-cold-3
-            - --app=geckoview
-            - --binary=org.mozilla.geckoview_example
-            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
+            - --test=raptor-jetstream2
+    fetches:
+        fetch:
+            - jetstream2
 
-raptor-tp6m-4-geckoview-cold:
-    description: "Raptor tp6m-4 cold page-load on Geckoview Example"
-    max-run-time: 2700
-    try-name: raptor-tp6m-4-geckoview-cold
-    treeherder-symbol: Rap(tp6m-c-4)
-    run-on-projects:
-        by-test-platform:
-            android-hw-p2-8-0-arm7.*/pgo: ['try', 'mozilla-central']
-            android-hw-.*-api-16/opt: ['try', 'trunk']
-            android-hw-.*-aarch64/opt: ['try', 'trunk']
-            default: ['try', 'trunk', 'mozilla-beta']
-    e10s: true
-    target: geckoview_example.apk
-    tier:
-        by-test-platform:
-            android-hw-p2-8-0-arm7.*: 2
-            default: 1
+raptor-jetstream2-firefox-profiling:
+    description: "Raptor Jetstream2 on Firefox with Gecko Profiling"
+    try-name: raptor-jetstream2-firefox-profiling
+    treeherder-symbol: Rap-Prof(js2)
+    max-run-time: 8000
+    tier: 3
     mozharness:
         extra-options:
-            - --test=raptor-tp6m-cold-4
-            - --app=geckoview
-            - --binary=org.mozilla.geckoview_example
-            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
-
-raptor-tp6m-5-geckoview-cold:
-    description: "Raptor tp6m-5 cold page-load on Geckoview Example"
-    max-run-time: 2700
-    try-name: raptor-tp6m-5-geckoview-cold
-    treeherder-symbol: Rap(tp6m-c-5)
-    run-on-projects:
-        by-test-platform:
-            android-hw-p2-8-0-arm7.*/pgo: ['try', 'mozilla-central']
-            android-hw-.*-api-16/opt: ['try', 'trunk']
-            android-hw-.*-aarch64/opt: ['try', 'trunk']
-            default: ['try', 'trunk', 'mozilla-beta']
-    e10s: true
-    target: geckoview_example.apk
-    tier:
-        by-test-platform:
-            android-hw-p2-8-0-arm7.*: 2
-            default: 1
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-cold-5
-            - --app=geckoview
-            - --binary=org.mozilla.geckoview_example
-            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
-
-raptor-tp6m-6-geckoview-cold:
-    description: "Raptor tp6m-6 cold page-load on Geckoview Example"
-    max-run-time: 2700
-    try-name: raptor-tp6m-6-geckoview-cold
-    treeherder-symbol: Rap(tp6m-c-6)
-    run-on-projects:
-        by-test-platform:
-            android-hw-p2-8-0-arm7.*/pgo: ['try', 'mozilla-central']
-            android-hw-.*-api-16/opt: ['try', 'trunk']
-            android-hw-.*-aarch64/opt: ['try', 'trunk']
-            default: ['try', 'trunk', 'mozilla-beta']
-    e10s: true
-    target: geckoview_example.apk
-    tier:
-        by-test-platform:
-            android-hw-p2-8-0-arm7.*: 2
-            default: 1
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-cold-6
-            - --app=geckoview
-            - --binary=org.mozilla.geckoview_example
-            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
-
-raptor-tp6m-7-geckoview-cold:
-    description: "Raptor tp6m-7 cold page-load on Geckoview Example"
-    max-run-time: 2700
-    try-name: raptor-tp6m-7-geckoview-cold
-    treeherder-symbol: Rap(tp6m-c-7)
-    run-on-projects: ['mozilla-central', 'try']
-    e10s: true
-    target: geckoview_example.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-cold-7
-            - --app=geckoview
-            - --binary=org.mozilla.geckoview_example
-            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
-
-raptor-tp6m-8-geckoview-cold:
-    description: "Raptor tp6m-8 cold page-load on Geckoview Example"
-    max-run-time: 2700
-    try-name: raptor-tp6m-8-geckoview-cold
-    treeherder-symbol: Rap(tp6m-c-8)
-    run-on-projects: ['mozilla-central', 'try']
-    e10s: true
-    target: geckoview_example.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-cold-8
-            - --app=geckoview
-            - --binary=org.mozilla.geckoview_example
-            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
-
-raptor-tp6m-9-geckoview-cold:
-    description: "Raptor tp6m-9 cold page-load on Geckoview Example"
-    max-run-time: 2700
-    try-name: raptor-tp6m-9-geckoview-cold
-    treeherder-symbol: Rap(tp6m-c-9)
-    run-on-projects: ['mozilla-central', 'try']
-    e10s: true
-    target: geckoview_example.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-cold-9
-            - --app=geckoview
-            - --binary=org.mozilla.geckoview_example
-            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
-
-raptor-tp6m-10-geckoview-cold:
-    description: "Raptor tp6m-10 cold page-load on Geckoview Example"
-    max-run-time: 2700
-    try-name: raptor-tp6m-10-geckoview-cold
-    treeherder-symbol: Rap(tp6m-c-10)
-    run-on-projects: ['mozilla-central', 'try']
-    e10s: true
-    target: geckoview_example.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-cold-10
-            - --app=geckoview
-            - --binary=org.mozilla.geckoview_example
-            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
-
-raptor-tp6m-11-geckoview-cold:
-    description: "Raptor tp6m-11 cold page-load on Geckoview Example"
-    max-run-time: 2700
-    try-name: raptor-tp6m-11-geckoview-cold
-    treeherder-symbol: Rap(tp6m-c-11)
-    run-on-projects: ['mozilla-central', 'try']
-    e10s: true
-    target: geckoview_example.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-cold-11
-            - --app=geckoview
-            - --binary=org.mozilla.geckoview_example
-            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
-
-raptor-tp6m-12-geckoview-cold:
-    description: "Raptor tp6m-12 cold page-load on Geckoview Example"
-    max-run-time: 2700
-    try-name: raptor-tp6m-12-geckoview-cold
-    treeherder-symbol: Rap(tp6m-c-12)
-    run-on-projects: ['mozilla-central', 'try']
-    e10s: true
-    target: geckoview_example.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-cold-12
-            - --app=geckoview
-            - --binary=org.mozilla.geckoview_example
-            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
-
-raptor-tp6m-13-geckoview-cold:
-    description: "Raptor tp6m-13 cold page-load on Geckoview Example"
-    max-run-time: 2700
-    try-name: raptor-tp6m-13-geckoview-cold
-    treeherder-symbol: Rap(tp6m-c-13)
-    run-on-projects: ['mozilla-central', 'try']
-    e10s: true
-    target: geckoview_example.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-cold-13
-            - --app=geckoview
-            - --binary=org.mozilla.geckoview_example
-            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
-
-raptor-tp6m-14-geckoview-cold:
-    description: "Raptor tp6m-14 cold page-load on Geckoview Example"
-    max-run-time: 2700
-    try-name: raptor-tp6m-14-geckoview-cold
-    treeherder-symbol: Rap(tp6m-c-14)
-    run-on-projects: ['mozilla-central', 'try']
-    e10s: true
-    target: geckoview_example.apk
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test=raptor-tp6m-cold-14
-            - --app=geckoview
-            - --binary=org.mozilla.geckoview_example
-            - --activity=org.mozilla.geckoview_example.GeckoViewActivity
+            - --test=raptor-jetstream2
+            - --gecko-profile
+    fetches:
+        fetch:
+            - jetstream2

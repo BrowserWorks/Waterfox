@@ -16,6 +16,8 @@
 
 #include "unicode/utypes.h"
 
+#if U_SHOW_CPLUSPLUS_API
+
 /**
  * \file
  * \brief C++ API: Date/Time interval patterns for formatting date/time interval
@@ -135,8 +137,8 @@ U_NAMESPACE_BEGIN
  * After a DateIntervalInfo object is created, clients may modify
  * the interval patterns using setIntervalPattern function as so desired.
  * Currently, users can only set interval patterns when the following
- * calendar fields are different: ERA, YEAR, MONTH, DATE,  DAY_OF_MONTH,
- * DAY_OF_WEEK, AM_PM,  HOUR, HOUR_OF_DAY, and MINUTE.
+ * calendar fields are different: ERA, YEAR, MONTH, DATE, DAY_OF_MONTH,
+ * DAY_OF_WEEK, AM_PM, HOUR, HOUR_OF_DAY, MINUTE, SECOND, and MILLISECOND.
  * Interval patterns when other calendar fields are different is not supported.
  * <P>
  * DateIntervalInfo objects are cloneable.
@@ -195,7 +197,7 @@ public:
      * @return   a copy of the object
      * @stable ICU 4.0
      */
-    virtual DateIntervalInfo* clone(void) const;
+    virtual DateIntervalInfo* clone() const;
 
     /**
      * Destructor.
@@ -243,7 +245,7 @@ public:
      * Restriction:
      * Currently, users can only set interval patterns when the following
      * calendar fields are different: ERA, YEAR, MONTH, DATE,  DAY_OF_MONTH,
-     * DAY_OF_WEEK, AM_PM,  HOUR, HOUR_OF_DAY, and MINUTE.
+     * DAY_OF_WEEK, AM_PM,  HOUR, HOUR_OF_DAY, MINUTE, SECOND and MILLISECOND.
      * Interval patterns when other calendar fields are different are
      * not supported.
      *
@@ -346,7 +348,7 @@ private:
     /**
      * Following is for saving the interval patterns.
      * We only support interval patterns on
-     * ERA, YEAR, MONTH, DAY, AM_PM, HOUR, and MINUTE
+     * ERA, YEAR, MONTH, DAY, AM_PM, HOUR, MINUTE, SECOND and MILLISECOND.
      */
     enum IntervalPatternIndex
     {
@@ -358,6 +360,7 @@ private:
         kIPI_HOUR,
         kIPI_MINUTE,
         kIPI_SECOND,
+        kIPI_MILLISECOND,
         kIPI_MAX_INDEX
     };
 public:
@@ -451,8 +454,8 @@ private:
      * hash table.
      *
      * Since we only support the following calendar fields:
-     * ERA, YEAR, MONTH, DATE,  DAY_OF_MONTH, DAY_OF_WEEK,
-     * AM_PM,  HOUR, HOUR_OF_DAY, and MINUTE,
+     * ERA, YEAR, MONTH, DATE, DAY_OF_MONTH, DAY_OF_WEEK,
+     * AM_PM, HOUR, HOUR_OF_DAY, MINUTE, SECOND, and MILLISECOND.
      * We reserve only 4 interval patterns for a skeleton.
      *
      * @param field    calendar field
@@ -514,6 +517,8 @@ DateIntervalInfo::operator!=(const DateIntervalInfo& other) const {
 U_NAMESPACE_END
 
 #endif
+
+#endif /* U_SHOW_CPLUSPLUS_API */
 
 #endif
 

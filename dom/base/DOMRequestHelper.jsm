@@ -18,7 +18,7 @@
  */
 var EXPORTED_SYMBOLS = ["DOMRequestIpcHelper"];
 
-const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 function DOMRequestIpcHelper() {
   // _listeners keeps a list of messages for which we added a listener and the
@@ -41,10 +41,12 @@ DOMRequestIpcHelper.prototype = {
    * An object which "inherits" from DOMRequestIpcHelper and declares its own
    * queryInterface method MUST implement Ci.nsISupportsWeakReference.
    */
-  QueryInterface: ChromeUtils.generateQI([Ci.nsISupportsWeakReference,
-                                          Ci.nsIObserver]),
+  QueryInterface: ChromeUtils.generateQI([
+    Ci.nsISupportsWeakReference,
+    Ci.nsIObserver,
+  ]),
 
-   /**
+  /**
    *  'aMessages' is expected to be an array of either:
    *  - objects of this form:
    *    {
@@ -57,7 +59,7 @@ DOMRequestIpcHelper.prototype = {
    *  - or only strings containing the message name, in which case the listener
    *    will be added as a strong reference by default.
    */
-  addMessageListeners: function(aMessages) {
+  addMessageListeners(aMessages) {
     if (!aMessages) {
       return;
     }
@@ -70,7 +72,7 @@ DOMRequestIpcHelper.prototype = {
       aMessages = [aMessages];
     }
 
-    aMessages.forEach((aMsg) => {
+    aMessages.forEach(aMsg => {
       let name = aMsg.name || aMsg;
       // If the listener is already set and it is of the same type we just
       // increase the count and bail out. If it is not of the same type,
@@ -80,15 +82,16 @@ DOMRequestIpcHelper.prototype = {
           this._listeners[name].count++;
           return;
         } else {
-          throw Cr.NS_ERROR_FAILURE;
+          throw Components.Exception("", Cr.NS_ERROR_FAILURE);
         }
       }
 
-      aMsg.weakRef ? Services.cpmm.addWeakMessageListener(name, this)
-                   : Services.cpmm.addMessageListener(name, this);
+      aMsg.weakRef
+        ? Services.cpmm.addWeakMessageListener(name, this)
+        : Services.cpmm.addMessageListener(name, this);
       this._listeners[name] = {
         weakRef: !!aMsg.weakRef,
-        count: 1
+        count: 1,
       };
     });
   },
@@ -97,7 +100,7 @@ DOMRequestIpcHelper.prototype = {
    * 'aMessages' is expected to be a string or an array of strings containing
    * the message names of the listeners to be removed.
    */
-  removeMessageListeners: function(aMessages) {
+  removeMessageListeners(aMessages) {
     if (!this._listeners || !aMessages) {
       return;
     }
@@ -106,7 +109,7 @@ DOMRequestIpcHelper.prototype = {
       aMessages = [aMessages];
     }
 
-    aMessages.forEach((aName) => {
+    aMessages.forEach(aName => {
       if (this._listeners[aName] == undefined) {
         return;
       }
@@ -114,8 +117,8 @@ DOMRequestIpcHelper.prototype = {
       // Only remove the listener really when we don't have anybody that could
       // be waiting on a message.
       if (!--this._listeners[aName].count) {
-        this._listeners[aName].weakRef ?
-            Services.cpmm.removeWeakMessageListener(aName, this)
+        this._listeners[aName].weakRef
+          ? Services.cpmm.removeWeakMessageListener(aName, this)
           : Services.cpmm.removeMessageListener(aName, this);
         delete this._listeners[aName];
       }
@@ -139,7 +142,7 @@ DOMRequestIpcHelper.prototype = {
    *  - or only strings containing the message name, in which case the listener
    *    will be added as a strong referred one by default.
    */
-  initDOMRequestHelper: function(aWindow, aMessages) {
+  initDOMRequestHelper(aWindow, aMessages) {
     // Query our required interfaces to force a fast fail if they are not
     // provided. These calls will throw if the interface is not available.
     this.QueryInterface(Ci.nsISupportsWeakReference);
@@ -160,11 +163,14 @@ DOMRequestIpcHelper.prototype = {
 
     this._destroyed = false;
 
-    Services.obs.addObserver(this, "inner-window-destroyed",
-                             /* weak-ref */ true);
+    Services.obs.addObserver(
+      this,
+      "inner-window-destroyed",
+      /* weak-ref */ true
+    );
   },
 
-  destroyDOMRequestHelper: function() {
+  destroyDOMRequestHelper() {
     if (this._destroyed) {
       return;
     }
@@ -174,9 +180,9 @@ DOMRequestIpcHelper.prototype = {
     Services.obs.removeObserver(this, "inner-window-destroyed");
 
     if (this._listeners) {
-      Object.keys(this._listeners).forEach((aName) => {
-        this._listeners[aName].weakRef ?
-            Services.cpmm.removeWeakMessageListener(aName, this)
+      Object.keys(this._listeners).forEach(aName => {
+        this._listeners[aName].weakRef
+          ? Services.cpmm.removeWeakMessageListener(aName, this)
           : Services.cpmm.removeMessageListener(aName, this);
       });
     }
@@ -192,7 +198,7 @@ DOMRequestIpcHelper.prototype = {
     this._window = null;
   },
 
-  observe: function(aSubject, aTopic, aData) {
+  observe(aSubject, aTopic, aData) {
     if (aTopic !== "inner-window-destroyed") {
       return;
     }
@@ -205,7 +211,7 @@ DOMRequestIpcHelper.prototype = {
     this.destroyDOMRequestHelper();
   },
 
-  getRequestId: function(aRequest) {
+  getRequestId(aRequest) {
     if (!this._requests) {
       this._requests = {};
     }
@@ -215,37 +221,37 @@ DOMRequestIpcHelper.prototype = {
     return id;
   },
 
-  getPromiseResolverId: function(aPromiseResolver) {
+  getPromiseResolverId(aPromiseResolver) {
     // Delegates to getRequest() since the lookup table is agnostic about
     // storage.
     return this.getRequestId(aPromiseResolver);
   },
 
-  getRequest: function(aId) {
+  getRequest(aId) {
     if (this._requests && this._requests[aId]) {
       return this._requests[aId];
     }
   },
 
-  getPromiseResolver: function(aId) {
+  getPromiseResolver(aId) {
     // Delegates to getRequest() since the lookup table is agnostic about
     // storage.
     return this.getRequest(aId);
   },
 
-  removeRequest: function(aId) {
+  removeRequest(aId) {
     if (this._requests && this._requests[aId]) {
       delete this._requests[aId];
     }
   },
 
-  removePromiseResolver: function(aId) {
+  removePromiseResolver(aId) {
     // Delegates to getRequest() since the lookup table is agnostic about
     // storage.
     this.removeRequest(aId);
   },
 
-  takeRequest: function(aId) {
+  takeRequest(aId) {
     if (!this._requests || !this._requests[aId]) {
       return null;
     }
@@ -254,22 +260,26 @@ DOMRequestIpcHelper.prototype = {
     return request;
   },
 
-  takePromiseResolver: function(aId) {
+  takePromiseResolver(aId) {
     // Delegates to getRequest() since the lookup table is agnostic about
     // storage.
     return this.takeRequest(aId);
   },
 
-  _getRandomId: function() {
+  _getRandomId() {
     return Cc["@mozilla.org/uuid-generator;1"]
-             .getService(Ci.nsIUUIDGenerator).generateUUID().toString();
+      .getService(Ci.nsIUUIDGenerator)
+      .generateUUID()
+      .toString();
   },
 
-  createRequest: function() {
+  createRequest() {
     // If we don't have a valid window object, throw.
     if (!this._window) {
-      Cu.reportError("DOMRequestHelper trying to create a DOMRequest without a valid window, failing.");
-      throw Cr.NS_ERROR_FAILURE;
+      Cu.reportError(
+        "DOMRequestHelper trying to create a DOMRequest without a valid window, failing."
+      );
+      throw Components.Exception("", Cr.NS_ERROR_FAILURE);
     }
     return Services.DOMRequest.createRequest(this._window);
   },
@@ -279,11 +289,13 @@ DOMRequestIpcHelper.prototype = {
    * PromiseInit callback. The promise constructor is obtained from the
    * reference to window owned by this DOMRequestIPCHelper.
    */
-  createPromise: function(aPromiseInit) {
+  createPromise(aPromiseInit) {
     // If we don't have a valid window object, throw.
     if (!this._window) {
-      Cu.reportError("DOMRequestHelper trying to create a Promise without a valid window, failing.");
-      throw Cr.NS_ERROR_FAILURE;
+      Cu.reportError(
+        "DOMRequestHelper trying to create a Promise without a valid window, failing."
+      );
+      throw Components.Exception("", Cr.NS_ERROR_FAILURE);
     }
     return new this._window.Promise(aPromiseInit);
   },
@@ -292,35 +304,40 @@ DOMRequestIpcHelper.prototype = {
    * createPromiseWithId() creates a new Promise, accepting a callback
    * which is immediately called with the generated resolverId.
    */
-  createPromiseWithId: function(aCallback) {
+  createPromiseWithId(aCallback) {
     return this.createPromise((aResolve, aReject) => {
-      let resolverId = this.getPromiseResolverId({ resolve: aResolve, reject: aReject });
+      let resolverId = this.getPromiseResolverId({
+        resolve: aResolve,
+        reject: aReject,
+      });
       aCallback(resolverId);
     });
   },
 
-  forEachRequest: function(aCallback) {
+  forEachRequest(aCallback) {
     if (!this._requests) {
       return;
     }
 
-    Object.keys(this._requests).forEach((aKey) => {
+    Object.keys(this._requests).forEach(aKey => {
       if (this.getRequest(aKey) instanceof this._window.DOMRequest) {
         aCallback(aKey);
       }
     });
   },
 
-  forEachPromiseResolver: function(aCallback) {
+  forEachPromiseResolver(aCallback) {
     if (!this._requests) {
       return;
     }
 
-    Object.keys(this._requests).forEach((aKey) => {
-      if ("resolve" in this.getPromiseResolver(aKey) &&
-          "reject" in this.getPromiseResolver(aKey)) {
+    Object.keys(this._requests).forEach(aKey => {
+      if (
+        "resolve" in this.getPromiseResolver(aKey) &&
+        "reject" in this.getPromiseResolver(aKey)
+      ) {
         aCallback(aKey);
       }
     });
   },
-}
+};

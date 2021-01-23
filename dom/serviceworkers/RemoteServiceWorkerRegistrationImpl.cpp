@@ -49,6 +49,7 @@ void RemoteServiceWorkerRegistrationImpl::ClearServiceWorkerRegistration(
 }
 
 void RemoteServiceWorkerRegistrationImpl::Update(
+    const nsCString& aNewestWorkerScriptUrl,
     ServiceWorkerRegistrationCallback&& aSuccessCB,
     ServiceWorkerFailureCallback&& aFailureCB) {
   if (!mActor) {
@@ -57,6 +58,7 @@ void RemoteServiceWorkerRegistrationImpl::Update(
   }
 
   mActor->SendUpdate(
+      aNewestWorkerScriptUrl,
       [successCB = std::move(aSuccessCB), aFailureCB](
           const IPCServiceWorkerRegistrationDescriptorOrCopyableErrorResult&
               aResult) {
@@ -92,7 +94,7 @@ void RemoteServiceWorkerRegistrationImpl::Unregister(
        aFailureCB](Tuple<bool, CopyableErrorResult>&& aResult) {
         if (Get<1>(aResult).Failed()) {
           // application layer error
-          aFailureCB(Get<1>(aResult));
+          aFailureCB(std::move(Get<1>(aResult)));
           return;
         }
         // success
@@ -114,22 +116,13 @@ RemoteServiceWorkerRegistrationImpl::RemoteServiceWorkerRegistrationImpl(
     return;
   }
 
-  RefPtr<WorkerHolderToken> workerHolderToken;
-  if (!NS_IsMainThread()) {
-    WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();
-    MOZ_DIAGNOSTIC_ASSERT(workerPrivate);
-
-    workerHolderToken = WorkerHolderToken::Create(
-        workerPrivate, Canceling, WorkerHolderToken::AllowIdleShutdownStart);
-
-    if (NS_WARN_IF(!workerHolderToken)) {
-      Shutdown();
-      return;
-    }
+  ServiceWorkerRegistrationChild* actor =
+      ServiceWorkerRegistrationChild::Create();
+  if (NS_WARN_IF(!actor)) {
+    Shutdown();
+    return;
   }
 
-  ServiceWorkerRegistrationChild* actor =
-      new ServiceWorkerRegistrationChild(workerHolderToken);
   PServiceWorkerRegistrationChild* sentActor =
       parentActor->SendPServiceWorkerRegistrationConstructor(
           actor, aDescriptor.ToIPC());
@@ -153,14 +146,16 @@ void RemoteServiceWorkerRegistrationImpl::RevokeActor(
   mShutdown = true;
 
   if (mOuter) {
-    mOuter->RegistrationRemoved();
+    RefPtr<ServiceWorkerRegistration> outer = mOuter;
+    outer->RegistrationCleared();
   }
 }
 
 void RemoteServiceWorkerRegistrationImpl::UpdateState(
     const ServiceWorkerRegistrationDescriptor& aDescriptor) {
   if (mOuter) {
-    mOuter->UpdateState(aDescriptor);
+    RefPtr<ServiceWorkerRegistration> outer = mOuter;
+    outer->UpdateState(aDescriptor);
   }
 }
 

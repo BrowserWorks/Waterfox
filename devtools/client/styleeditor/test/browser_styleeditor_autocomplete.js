@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 "use strict";
@@ -7,8 +6,6 @@
 
 const TESTCASE_URI = TEST_BASE_HTTP + "autocomplete.html";
 const MAX_SUGGESTIONS = 15;
-
-const { initCssProperties } = require("devtools/shared/fronts/css-properties");
 
 // Test cases to test that autocompletion works correctly when enabled.
 // Format:
@@ -130,7 +127,7 @@ function getTestCases(cssProperties) {
 
 add_task(async function() {
   const { panel, ui } = await openStyleEditorForURL(TESTCASE_URI);
-  const { cssProperties } = await initCssProperties(panel._toolbox);
+  const { cssProperties } = ui;
   const testCases = getTestCases(cssProperties);
 
   await ui.selectStyleSheet(ui.editors[1].styleSheet);

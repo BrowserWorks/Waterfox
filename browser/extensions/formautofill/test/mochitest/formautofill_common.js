@@ -130,9 +130,13 @@ function checkFieldValue(elem, expectedValue) {
   is(elem.value, String(expectedValue), "Checking " + elem.id + " field");
 }
 
-function triggerAutofillAndCheckProfile(profile) {
+async function triggerAutofillAndCheckProfile(profile) {
   const adaptedProfile = _getAdaptedProfile(profile);
   const promises = [];
+
+  await SpecialPowers.pushPrefEnv({
+    set: [["dom.input_events.beforeinput.enabled", true]],
+  });
 
   for (const [fieldName, value] of Object.entries(adaptedProfile)) {
     info(`triggerAutofillAndCheckProfile: ${fieldName}`);
@@ -140,16 +144,65 @@ function triggerAutofillAndCheckProfile(profile) {
     const expectingEvent =
       document.activeElement == element ? "input" : "change";
     const checkFieldAutofilled = Promise.all([
-      new Promise(resolve =>
+      new Promise(resolve => {
+        let beforeInputFired = false;
+        let hadEditor = SpecialPowers.wrap(element).hasEditor;
+        element.addEventListener(
+          "beforeinput",
+          event => {
+            beforeInputFired = true;
+            is(
+              event.inputType,
+              "insertReplacementText",
+              'inputType value should be "insertReplacementText"'
+            );
+            is(
+              event.data,
+              String(value),
+              `data value of "beforeinput" should be "${value}"`
+            );
+            is(
+              event.dataTransfer,
+              null,
+              'dataTransfer of "beforeinput" should be null'
+            );
+            is(
+              event.getTargetRanges().length,
+              0,
+              'getTargetRanges() of "beforeinput" should return empty array'
+            );
+            is(
+              event.cancelable,
+              true,
+              `"beforeinput" event should be cancelable on ${element.tagName}`
+            );
+            is(
+              event.bubbles,
+              true,
+              `"beforeinput" event should always bubble on ${element.tagName}`
+            );
+            resolve();
+          },
+          { once: true }
+        );
         element.addEventListener(
           "input",
           event => {
             if (element.tagName == "INPUT" && element.type == "text") {
+              if (hadEditor) {
+                ok(
+                  beforeInputFired,
+                  `"beforeinput" event should've been fired before "input" event on ${element.tagName}`
+                );
+              } else {
+                ok(
+                  beforeInputFired,
+                  `"beforeinput" event should've been fired before "input" event on ${element.tagName}`
+                );
+              }
               ok(
                 event instanceof InputEvent,
-                `"input" event should be dispatched with InputEvent interface on ${
-                  element.tagName
-                }`
+                `"input" event should be dispatched with InputEvent interface on ${element.tagName}`
               );
               is(
                 event.inputType,
@@ -158,12 +211,19 @@ function triggerAutofillAndCheckProfile(profile) {
               );
               is(event.data, String(value), `data value should be "${value}"`);
               is(event.dataTransfer, null, "dataTransfer should be null");
+              is(
+                event.getTargetRanges().length,
+                0,
+                "getTargetRanges() should return empty array"
+              );
             } else {
               ok(
+                !beforeInputFired,
+                `"beforeinput" event shouldn't be fired on ${element.tagName}`
+              );
+              ok(
                 event instanceof Event && !(event instanceof UIEvent),
-                `"input" event should be dispatched with Event interface on ${
-                  element.tagName
-                }`
+                `"input" event should be dispatched with Event interface on ${element.tagName}`
               );
             }
             is(
@@ -179,8 +239,8 @@ function triggerAutofillAndCheckProfile(profile) {
             resolve();
           },
           { once: true }
-        )
-      ),
+        );
+      }),
       new Promise(resolve =>
         element.addEventListener(expectingEvent, resolve, { once: true })
       ),
@@ -224,90 +284,54 @@ function checkMenuEntries(expectedValues, isFormAutofillResult = true) {
   }
 }
 
-function invokeAsyncChromeTask(message, response, payload = {}) {
+function invokeAsyncChromeTask(message, payload = {}) {
   info(`expecting the chrome task finished: ${message}`);
-  return new Promise(resolve => {
-    formFillChromeScript.sendAsyncMessage(message, payload);
-    formFillChromeScript.addMessageListener(response, function onReceived(
-      data
-    ) {
-      formFillChromeScript.removeMessageListener(response, onReceived);
-
-      resolve(data);
-    });
-  });
+  return formFillChromeScript.sendQuery(message, payload);
 }
 
 async function addAddress(address) {
-  await invokeAsyncChromeTask(
-    "FormAutofillTest:AddAddress",
-    "FormAutofillTest:AddressAdded",
-    { address }
-  );
+  await invokeAsyncChromeTask("FormAutofillTest:AddAddress", { address });
   await sleep();
 }
 
 async function removeAddress(guid) {
-  return invokeAsyncChromeTask(
-    "FormAutofillTest:RemoveAddress",
-    "FormAutofillTest:AddressRemoved",
-    { guid }
-  );
+  return invokeAsyncChromeTask("FormAutofillTest:RemoveAddress", { guid });
 }
 
 async function updateAddress(guid, address) {
-  return invokeAsyncChromeTask(
-    "FormAutofillTest:UpdateAddress",
-    "FormAutofillTest:AddressUpdated",
-    { address, guid }
-  );
+  return invokeAsyncChromeTask("FormAutofillTest:UpdateAddress", {
+    address,
+    guid,
+  });
 }
 
 async function checkAddresses(expectedAddresses) {
-  return invokeAsyncChromeTask(
-    "FormAutofillTest:CheckAddresses",
-    "FormAutofillTest:areAddressesMatching",
-    { expectedAddresses }
-  );
+  return invokeAsyncChromeTask("FormAutofillTest:CheckAddresses", {
+    expectedAddresses,
+  });
 }
 
 async function cleanUpAddresses() {
-  return invokeAsyncChromeTask(
-    "FormAutofillTest:CleanUpAddresses",
-    "FormAutofillTest:AddressesCleanedUp"
-  );
+  return invokeAsyncChromeTask("FormAutofillTest:CleanUpAddresses");
 }
 
 async function addCreditCard(creditcard) {
-  await invokeAsyncChromeTask(
-    "FormAutofillTest:AddCreditCard",
-    "FormAutofillTest:CreditCardAdded",
-    { creditcard }
-  );
+  await invokeAsyncChromeTask("FormAutofillTest:AddCreditCard", { creditcard });
   await sleep();
 }
 
 async function removeCreditCard(guid) {
-  return invokeAsyncChromeTask(
-    "FormAutofillTest:RemoveCreditCard",
-    "FormAutofillTest:CreditCardRemoved",
-    { guid }
-  );
+  return invokeAsyncChromeTask("FormAutofillTest:RemoveCreditCard", { guid });
 }
 
 async function checkCreditCards(expectedCreditCards) {
-  return invokeAsyncChromeTask(
-    "FormAutofillTest:CheckCreditCards",
-    "FormAutofillTest:areCreditCardsMatching",
-    { expectedCreditCards }
-  );
+  return invokeAsyncChromeTask("FormAutofillTest:CheckCreditCards", {
+    expectedCreditCards,
+  });
 }
 
 async function cleanUpCreditCards() {
-  return invokeAsyncChromeTask(
-    "FormAutofillTest:CleanUpCreditCards",
-    "FormAutofillTest:CreditCardsCleanedUp"
-  );
+  return invokeAsyncChromeTask("FormAutofillTest:CleanUpCreditCards");
 }
 
 async function cleanUpStorage() {
@@ -317,18 +341,13 @@ async function cleanUpStorage() {
 
 async function canTestOSKeyStoreLogin() {
   let { canTest } = await invokeAsyncChromeTask(
-    "FormAutofillTest:CanTestOSKeyStoreLogin",
-    "FormAutofillTest:CanTestOSKeyStoreLoginResult"
+    "FormAutofillTest:CanTestOSKeyStoreLogin"
   );
   return canTest;
 }
 
 async function waitForOSKeyStoreLogin(login = false) {
-  await invokeAsyncChromeTask(
-    "FormAutofillTest:OSKeyStoreLogin",
-    "FormAutofillTest:OSKeyStoreLoggedIn",
-    { login }
-  );
+  await invokeAsyncChromeTask("FormAutofillTest:OSKeyStoreLogin", { login });
 }
 
 function patchRecordCCNumber(record) {
@@ -397,15 +416,13 @@ function formAutoFillCommonSetup() {
   });
 
   add_task(async function setup() {
-    formFillChromeScript.sendAsyncMessage("setup");
     info(`expecting the storage setup`);
-    await formFillChromeScript.promiseOneMessage("setup-finished");
+    await formFillChromeScript.sendQuery("setup");
   });
 
   SimpleTest.registerCleanupFunction(async () => {
-    formFillChromeScript.sendAsyncMessage("cleanup");
     info(`expecting the storage cleanup`);
-    await formFillChromeScript.promiseOneMessage("cleanup-finished");
+    await formFillChromeScript.sendQuery("cleanup");
 
     formFillChromeScript.destroy();
     expectingPopup = null;

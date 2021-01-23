@@ -31,7 +31,7 @@ add_task(async function() {
 
   Services.prefs.clearUserPref(acceptedExtensionIdsPref);
 
-  const allFeaturesAcceptedByProfiler = Services.profiler.GetAllFeatures([]);
+  const allFeaturesAcceptedByProfiler = Services.profiler.GetAllFeatures();
   ok(
     allFeaturesAcceptedByProfiler.length >= 2,
     "Either we've massively reduced the profiler's feature set, or something is wrong."
@@ -47,7 +47,9 @@ add_task(async function() {
   }
   for (const feature of acceptedFeatures) {
     ok(
-      allFeaturesAcceptedByProfiler.includes(feature),
+      // Bug 1594566 - ignore Responsiveness until the extension is updated
+      allFeaturesAcceptedByProfiler.includes(feature) ||
+        feature == "responsiveness",
       `The schema of the geckoProfiler.start() method mentions a "${feature}" feature which is not supported by the profiler.`
     );
   }

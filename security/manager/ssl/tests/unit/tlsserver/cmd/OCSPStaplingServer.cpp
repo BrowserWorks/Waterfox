@@ -115,8 +115,8 @@ int32_t DoSNISocketConfig(PRFileDesc* aFd, const SECItem* aSrvNameArr,
 
   UniqueCERTCertificate cert;
   SSLKEAType certKEA;
-  if (SECSuccess !=
-      ConfigSecureServerWithNamedCert(aFd, certNickname, &cert, &certKEA)) {
+  if (SECSuccess != ConfigSecureServerWithNamedCert(aFd, certNickname, &cert,
+                                                    &certKEA, nullptr)) {
     return SSL_SNI_SEND_ALERT;
   }
 
@@ -149,10 +149,5 @@ int32_t DoSNISocketConfig(PRFileDesc* aFd, const SECItem* aSrvNameArr,
 }
 
 int main(int argc, char* argv[]) {
-  if (argc != 2) {
-    fprintf(stderr, "usage: %s <NSS DB directory>\n", argv[0]);
-    return 1;
-  }
-
-  return StartServer(argv[1], DoSNISocketConfig, nullptr);
+  return StartServer(argc, argv, DoSNISocketConfig, nullptr);
 }

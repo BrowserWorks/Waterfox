@@ -7,27 +7,24 @@
 
 #include "GLContext.h"
 #include "mozilla/dom/WebGL2RenderingContextBinding.h"
+#include "mozilla/IntegerRange.h"
 #include "WebGL2Context.h"
 #include "WebGLProgram.h"
 
 namespace mozilla {
 
 WebGLTransformFeedback::WebGLTransformFeedback(WebGLContext* webgl, GLuint tf)
-    : WebGLRefCountedObject(webgl),
+    : WebGLContextBoundObject(webgl),
       mGLName(tf),
-      mIndexedBindings(webgl->mGLMaxTransformFeedbackSeparateAttribs),
+      mIndexedBindings(webgl->Limits().maxTransformFeedbackSeparateAttribs),
       mIsPaused(false),
-      mIsActive(false) {
-  mContext->mTransformFeedbacks.insertBack(this);
-}
+      mIsActive(false) {}
 
-WebGLTransformFeedback::~WebGLTransformFeedback() { DeleteOnce(); }
-
-void WebGLTransformFeedback::Delete() {
+WebGLTransformFeedback::~WebGLTransformFeedback() {
+  if (!mContext) return;
   if (mGLName) {
     mContext->gl->fDeleteTransformFeedbacks(1, &mGLName);
   }
-  removeFrom(mContext->mTransformFeedbacks);
 }
 
 ////////////////////////////////////////
@@ -71,6 +68,16 @@ void WebGLTransformFeedback::BeginTransformFeedback(GLenum primMode) {
           " feedback index %u.",
           (uint32_t)i);
       return;
+    }
+
+    for (const auto iBound : IntegerRange(mIndexedBindings.size())) {
+      const auto& bound = mIndexedBindings[iBound].mBufferBinding.get();
+      if (iBound != i && buffer == bound) {
+        mContext->GenErrorIllegalUse(
+            LOCAL_GL_TRANSFORM_FEEDBACK_BUFFER, static_cast<uint32_t>(i),
+            LOCAL_GL_TRANSFORM_FEEDBACK_BUFFER, static_cast<uint32_t>(iBound));
+        return;
+      }
     }
 
     const size_t vertCapacity = buffer->ByteLength() / 4 / componentsPerVert;
@@ -161,26 +168,5 @@ void WebGLTransformFeedback::ResumeTransformFeedback() {
   MOZ_ASSERT(mIsActive);
   mIsPaused = false;
 }
-
-////////////////////////////////////////
-
-void WebGLTransformFeedback::AddBufferBindCounts(int8_t addVal) const {
-  const GLenum target = LOCAL_GL_TRANSFORM_FEEDBACK_BUFFER;
-  for (const auto& binding : mIndexedBindings) {
-    WebGLBuffer::AddBindCount(target, binding.mBufferBinding.get(), addVal);
-  }
-}
-
-////////////////////////////////////////
-
-JSObject* WebGLTransformFeedback::WrapObject(JSContext* cx,
-                                             JS::Handle<JSObject*> givenProto) {
-  return dom::WebGLTransformFeedback_Binding::Wrap(cx, this, givenProto);
-}
-
-NS_IMPL_CYCLE_COLLECTION_ROOT_NATIVE(WebGLTransformFeedback, AddRef)
-NS_IMPL_CYCLE_COLLECTION_UNROOT_NATIVE(WebGLTransformFeedback, Release)
-NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(WebGLTransformFeedback, mIndexedBindings,
-                                      mActive_Program)
 
 }  // namespace mozilla

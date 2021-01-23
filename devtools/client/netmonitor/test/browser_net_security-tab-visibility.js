@@ -33,7 +33,9 @@ add_task(async function() {
     },
   ];
 
-  const { tab, monitor } = await initNetMonitor(CUSTOM_GET_URL);
+  const { tab, monitor } = await initNetMonitor(CUSTOM_GET_URL, {
+    requestCount: 1,
+  });
   const { document, store, windowRequire } = monitor.panelWin;
   const Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
   const { getSelectedRequest } = windowRequire(
@@ -44,13 +46,13 @@ add_task(async function() {
 
   for (const testcase of TEST_DATA) {
     info("Testing Security tab visibility for " + testcase.desc);
-    const onNewItem = monitor.panelWin.api.once(EVENTS.NETWORK_EVENT);
+    const onNewItem = monitor.panelWin.api.once(TEST_EVENTS.NETWORK_EVENT);
     const onComplete = testcase.isBroken
       ? waitForSecurityBrokenNetworkEvent()
       : waitForNetworkEvents(monitor, 1);
 
     info("Performing a request to " + testcase.uri);
-    await ContentTask.spawn(tab.linkedBrowser, testcase.uri, async function(
+    await SpecialPowers.spawn(tab.linkedBrowser, [testcase.uri], async function(
       url
     ) {
       content.wrappedJSObject.performRequests(1, url);

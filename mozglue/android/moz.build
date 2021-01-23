@@ -8,14 +8,15 @@ EXPORTS += [
     'APKOpen.h',
 ]
 
+EXPORTS.mozilla += ['Ashmem.h']
+
 SOURCES += [
     'APKOpen.cpp',
+    'Ashmem.cpp',
     'NativeCrypto.cpp',
     'nsGeckoUtils.cpp',
-    'NSSBridge.cpp',
     'pbkdf2_sha256.c',
     'SharedMemNatives.cpp',
-    'SQLiteBridge.cpp',
 ]
 
 if CONFIG['MOZ_CRASHREPORTER']:
@@ -33,16 +34,12 @@ for var in ('ANDROID_PACKAGE_NAME',
             'ANDROID_CPU_ARCH'):
     DEFINES[var] = '"%s"' % CONFIG[var]
 
-if CONFIG['MOZ_PROFILE_GENERATE']:
-    DEFINES['MOZ_PROFILE_GENERATE'] = True
-
 if CONFIG['MOZ_FOLD_LIBS']:
     DEFINES['MOZ_FOLD_LIBS'] = True
 
 LOCAL_INCLUDES += [
     '!/build',
     '../linker',
-    '/db/sqlite3/src',
     '/ipc/chromium/src',
     '/nsprpub/lib/ds',
     '/nsprpub/lib/libc/include',
@@ -60,11 +57,10 @@ LOCAL_INCLUDES += [
     '/security/nss/lib/softoken',
     '/security/nss/lib/ssl',
     '/security/nss/lib/util',
+    '/third_party/sqlite3/src',
     '/toolkit/components/startup',
     '/xpcom/build',
 ]
-
-DisableStlWrapping()
 
 if CONFIG['CC_TYPE'] in ('clang', 'gcc'):
     CXXFLAGS += ['-Wno-error=shadow']

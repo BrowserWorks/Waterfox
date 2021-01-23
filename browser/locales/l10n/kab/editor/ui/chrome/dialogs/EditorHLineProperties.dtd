@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Timeẓliyin n izirig aglawan">
+
+<!ENTITY dimensionsBox.label "Tisektiwin">
+<!ENTITY heightEditField.label "Teɣzi:">
+<!ENTITY heightEditField.accessKey "e">
+<!ENTITY widthEditField.label "Tehri:">
+<!ENTITY widthEditField.accessKey "h">
+<!ENTITY pixelsPopup.value "ipiksilen">
+<!ENTITY alignmentBox.label "Areyyec">
+<!ENTITY leftRadio.label "Ayeffus">
+<!ENTITY leftRadio.accessKey "y">
+<!ENTITY centerRadio.label "Talemmast">
+<!ENTITY centerRadio.accessKey "m">
+<!ENTITY rightRadio.label "Azelmaḍ">
+<!ENTITY rightRadio.accessKey "A">
+
+<!ENTITY threeDShading.label "Tili 3-D">
+<!ENTITY threeDShading.accessKey "l">
+<!ENTITY saveSettings.label "Seqqdec d amezwer">
+<!ENTITY saveSettings.accessKey "z">
+<!ENTITY saveSettings.tooltip "Sekles iɣewwaren-agi akken ad ten-tesqedceḍ deg izirigen iglawanen imaynuten">

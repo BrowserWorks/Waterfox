@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "Postel">
+<!ENTITY readMsgsLink.label           "Lenn ar c'hemennadennoù">
+<!ENTITY composeMsgLink.label         "Skridaozañ ur gemennadenn nevez">
+
+<!ENTITY newsSectionHdr.label         "Strolladoù-keleier">
+<!ENTITY subscribeNewsLink.label      "Ardeiñ ar c'houmanantoù da strolladoù-keleier">
+
+<!ENTITY feedsSectionHdr.label        "Strolladoù-keleier ha Blogoù">
+<!ENTITY subscribeFeeds.label         "Ardeiñ ar c'houmanantoù">
+
+<!ENTITY chat.label                   "Flapiñ">
+<!ENTITY movemail.label               "Movemail">
+
+<!ENTITY accountsSectionHdr.label     "Kontoù">
+<!ENTITY subscribeImapFolders.label   "Teuliad ardeiñ ar c'houmanantoù">
+<!ENTITY settingsLink.label           "Gwelout arventennoù ar gont-mañ">
+<!ENTITY setupNewAcct.label           "Kefluniañ ur gont:">
+
+<!ENTITY advFeaturesSectionHdr.label  "Keweriusterioù kempleshoc'h">
+<!ENTITY searchMsgsLink.label         "Klask er c'hemennadennoù">
+<!ENTITY filtersLink.label            "Ardeiñ siloù ar c'hemennadennoù">
+<!ENTITY junkSettings.label           "Arventennoù ar posteloù lastez">
+<!ENTITY offlineLink.label            "Arventennoù ezlinenn">

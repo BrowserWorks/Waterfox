@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Chat Ruto'onel Rub'i' Taqoya'l">
+
+<!ENTITY accountProtocolTitle.label   "Ruk'amab'ey chat">
+<!ENTITY accountProtocolInfo.label    "Tacha' ri ruk'amab'ey ri ruchat rub'i' ataqoya'l.">
+<!ENTITY accountProtocolField.label   "K'amab'ey:">
+<!ENTITY accountProtocolGetMore.label "Tik'ul ch'aqa' chik…">
+
+<!ENTITY accountUsernameTitle.label   "Rub'i' winäq">
+<!ENTITY accountUsernameDuplicate.label "¡Re rub'i' taqoya'l re' xb'an yan runuk'ulem!">
+
+<!ENTITY accountPasswordTitle.label   "Ewan tzij">
+<!ENTITY accountPasswordInfo.label    "Ttatz'ib'aj ri ewan atzij pa ri kaxa ikim.">
+<!ENTITY accountPasswordField.label   "Ewan tzij:">
+<!ENTITY accountPasswordManager.label "Ri ewan tzij xtiyak pa Kinuk'samajel Ewan Tzij. Man tanojisaj re kajtz'ik re' we nawajo' chi tik'utüx chi re ri ewan atzij toq nib'an okem pa re rub'i' taqoya'l re'.">
+
+<!ENTITY accountAdvancedTitle.label   "Q'axinäq taq Cha'oj">
+<!ENTITY accountAdvancedInfo.label    "We nawajo' yatikïr yatik'o chuwäch re ruxaq re'.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Tiya' rutzijol k'ak'a' Taqoya'l">
+<!ENTITY accountAliasGroupbox.caption "Aj Wawe' Tz'ukun B'i'aj">
+<!ENTITY accountAliasField.label      "Tz'ukun b'i'aj:">
+<!ENTITY accountAliasInfo.label       "Re re' xa xe xkewachin pa ri taq ach'abenik toq xkach'o, man xtikitz'ët ta ri näj kib'i' achib'il.">
+<!ENTITY accountProxySettings.caption "Proxi taq Nuk'ulem">
+<!ENTITY accountProxySettings.change.label     "Tijal…">
+<!ENTITY accountProxySettings.change.accessKey "j">
+
+<!ENTITY accountSummaryTitle.label   "Ch'utitzijol">
+<!ENTITY accountSummaryInfo.label    "Wakami xtik'ut pe jun ch'uti rutzijol ri etamab'äl xatz'ib'aj ikim. Tanik'oj chuwäch xtitz'uk ri rub'i' taqoya'l.">
+<!ENTITY accountSummary.connectNow.label "Wakami tokisäx re rub'i' taqoya'l re'.">

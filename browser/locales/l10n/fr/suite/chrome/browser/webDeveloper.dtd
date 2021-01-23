@@ -1,0 +1,73 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY validatePage.label            "Valider cette page">
+<!ENTITY validatePage.accesskey        "V">
+<!ENTITY allowRemoteDebugging.label     "Autoriser le débogage distant">
+<!ENTITY allowRemoteDebugging.accesskey "A">
+
+<!ENTITY devToolsCmd.keycode             "VK_F12">
+<!ENTITY devToolsCmd.keytext             "F12">
+
+<!ENTITY devtoolsConnect.label           "Connexion…">
+<!ENTITY devtoolsConnect.accesskey       "C">
+
+<!ENTITY browserConsoleCmd.label         "Console du navigateur">
+<!ENTITY browserConsoleCmd.commandkey    "Ζ">
+<!ENTITY browserConsoleCmd.accesskey     "n">
+
+<!ENTITY responsiveDesignTool.label      "Vue adaptative">
+<!ENTITY responsiveDesignTool.accesskey  "u">
+<!ENTITY responsiveDesignTool.commandkey "V">
+
+<!ENTITY eyedropper.label                "Pipette">
+<!ENTITY eyedropper.accesskey            "P">
+
+<!-- LOCALIZATION NOTE (scratchpad.label): This menu item label appears
+  -  in the Tools menu. See bug 653093.
+  -  The Scratchpad is intended to provide a simple text editor for creating
+  -  and evaluating bits of JavaScript code for the purposes of function
+  -  prototyping, experimentation and convenient scripting.
+  -
+  -  It's quite possible that you won't have a good analogue for the word
+  -  "Scratchpad" in your locale. You should feel free to find a close
+  -  approximation to it or choose a word (or words) that means
+  -  "simple discardable text editor". -->
+<!ENTITY scratchpad.label                "Ardoise JavaScript">
+<!ENTITY scratchpad.accesskey            "r">
+<!ENTITY scratchpad.keycode              "VK_F4">
+<!ENTITY scratchpad.keytext              "F4">
+
+<!-- LOCALIZATION NOTE (browserToolboxMenu.label): This is the label for the
+  -  application menu item that opens the browser toolbox UI in the Tools menu. -->
+<!ENTITY browserToolboxMenu.label        "Boîte à outils du navigateur">
+<!ENTITY browserToolboxMenu.accesskey    "t">
+<!ENTITY browserToolboxCmd.commandkey    "I">
+
+<!-- LOCALIZATION NOTE (browserContentToolboxMenu.label): This is the label for the
+  -  application menu item that opens the browser content toolbox UI in the Tools menu.
+  -  This toolbox allows to debug the chrome of the content process in multiprocess builds.  -->
+<!ENTITY browserContentToolboxMenu.label     "Boîte à outils du contenu du navigateur">
+<!ENTITY browserContentToolboxMenu.accesskey "e">
+
+<!ENTITY devToolbarCloseButton.tooltiptext   "Fermer la barre de développement">
+<!ENTITY devToolbarMenu.label                "Barre de développement">
+<!ENTITY devToolbarMenu.accesskey            "B">
+
+<!ENTITY webide.label                        "WebIDE">
+<!ENTITY webide.accesskey                    "W">
+<!ENTITY webide.keycode                      "VK_F8">
+<!ENTITY webide.keytext                      "F8">
+
+<!ENTITY devToolbar.keycode                  "VK_F2">
+<!ENTITY devToolbar.keytext                  "F2">
+
+<!ENTITY devToolboxMenuItem.label            "Afficher/Masquer les outils">
+<!ENTITY devToolboxMenuItem.accesskey        "f">
+<!ENTITY devToolboxMenuItem.keytext          "I">
+
+<!ENTITY devToolbarToolsButton.tooltip       "Afficher/Masquer les outils de développement">
+
+<!ENTITY getMoreDevtoolsCmd.label            "Obtenir d’autres outils">
+<!ENTITY getMoreDevtoolsCmd.accesskey        "O">

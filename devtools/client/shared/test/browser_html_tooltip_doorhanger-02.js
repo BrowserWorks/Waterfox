@@ -10,7 +10,7 @@
  */
 
 const HTML_NS = "http://www.w3.org/1999/xhtml";
-const TEST_URI = CHROME_URL_ROOT + "doc_html_tooltip_doorhanger-02.xul";
+const TEST_URI = CHROME_URL_ROOT + "doc_html_tooltip_doorhanger-02.xhtml";
 
 const {
   HTMLTooltip,
@@ -24,7 +24,7 @@ add_task(async function() {
   await pushPref("devtools.toolbox.footer.height", 200);
 
   await addTab("about:blank");
-  const [, , doc] = await createHost("bottom", TEST_URI);
+  const { doc } = await createHost("bottom", TEST_URI);
 
   info("Run tests for a Tooltip without using a XUL panel");
   useXulWrapper = false;

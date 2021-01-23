@@ -8,6 +8,9 @@ import { range, isEmpty } from "lodash";
 import { connect } from "../../utils/connect";
 import { getHighlightedLineRange } from "../../selectors";
 
+type OwnProps = {|
+  editor: Object,
+|};
 type Props = {
   highlightedLineRange: Object,
   editor: Object,
@@ -44,7 +47,7 @@ class HighlightLines extends Component<Props> {
     const { start, end } = highlightedLineRange;
     codeMirror.operation(() => {
       range(start - 1, end).forEach(line => {
-        codeMirror.removeLineClass(line, "line", "highlight-lines");
+        codeMirror.removeLineClass(line, "wrapClass", "highlight-lines");
       });
     });
   }
@@ -64,7 +67,7 @@ class HighlightLines extends Component<Props> {
       editor.alignLine(start);
 
       range(start - 1, end).forEach(line => {
-        codeMirror.addLineClass(line, "line", "highlight-lines");
+        codeMirror.addLineClass(line, "wrapClass", "highlight-lines");
       });
     });
   };
@@ -74,6 +77,6 @@ class HighlightLines extends Component<Props> {
   }
 }
 
-export default connect(state => ({
+export default connect<Props, OwnProps, _, _, _, _>(state => ({
   highlightedLineRange: getHighlightedLineRange(state),
 }))(HighlightLines);

@@ -31,7 +31,7 @@ void CompositableClient::InitIPDL(const CompositableHandle& aHandle) {
   mForwarder->AssertInForwarderThread();
 
   mHandle = aHandle;
-  mIsAsync = !NS_IsMainThread();
+  mIsAsync |= !NS_IsMainThread();
 }
 
 CompositableClient::CompositableClient(CompositableForwarder* aForwarder,
@@ -125,9 +125,8 @@ void CompositableClient::HandleMemoryPressure() {
   }
 }
 
-void CompositableClient::RemoveTexture(
-    TextureClient* aTexture, const Maybe<wr::RenderRoot>& aRenderRoot) {
-  mForwarder->RemoveTextureFromCompositable(this, aTexture, aRenderRoot);
+void CompositableClient::RemoveTexture(TextureClient* aTexture) {
+  mForwarder->RemoveTextureFromCompositable(this, aTexture);
 }
 
 TextureClientRecycleAllocator* CompositableClient::GetTextureClientRecycler() {
@@ -169,8 +168,7 @@ TextureClientRecycleAllocator* CompositableClient::GetTextureClientRecycler() {
         barrier.NotifyAll();
       });
 
-  ImageBridgeChild::GetSingleton()->GetMessageLoop()->PostTask(
-      runnable.forget());
+  ImageBridgeChild::GetSingleton()->GetThread()->Dispatch(runnable.forget());
 
   // should stop the thread until done.
   while (!done) {
@@ -199,7 +197,7 @@ void CompositableClient::DumpTextureClient(std::stringstream& aStream,
 
 AutoRemoveTexture::~AutoRemoveTexture() {
   if (mCompositable && mTexture && mCompositable->IsConnected()) {
-    mCompositable->RemoveTexture(mTexture, Some(mRenderRoot));
+    mCompositable->RemoveTexture(mTexture);
   }
 }
 

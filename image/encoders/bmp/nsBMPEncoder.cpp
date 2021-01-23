@@ -271,17 +271,13 @@ nsresult nsBMPEncoder::ParseOptions(const nsAString& aOptions,
   // From a format like: name=value;bpp=<bpp_value>;name=value
   // to format: [0] = name=value, [1] = bpp=<bpp_value>, [2] = name=value
   nsTArray<nsCString> nameValuePairs;
-  if (!ParseString(NS_ConvertUTF16toUTF8(aOptions), ';', nameValuePairs)) {
-    return NS_ERROR_INVALID_ARG;
-  }
+  ParseString(NS_ConvertUTF16toUTF8(aOptions), ';', nameValuePairs);
 
   // For each name/value pair in the set
   for (uint32_t i = 0; i < nameValuePairs.Length(); ++i) {
     // Split the name value pair [0] = name, [1] = value
     nsTArray<nsCString> nameValuePair;
-    if (!ParseString(nameValuePairs[i], '=', nameValuePair)) {
-      return NS_ERROR_INVALID_ARG;
-    }
+    ParseString(nameValuePairs[i], '=', nameValuePair);
     if (nameValuePair.Length() != 2) {
       return NS_ERROR_INVALID_ARG;
     }
@@ -289,7 +285,7 @@ nsresult nsBMPEncoder::ParseOptions(const nsAString& aOptions,
     // Parse the bpp portion of the string name=value;version=<version_value>;
     // name=value
     if (nameValuePair[0].Equals("version",
-                                nsCaseInsensitiveCStringComparator())) {
+                                nsCaseInsensitiveCStringComparator)) {
       if (nameValuePair[1].EqualsLiteral("3")) {
         aVersionOut = VERSION_3;
       } else if (nameValuePair[1].EqualsLiteral("5")) {
@@ -300,7 +296,7 @@ nsresult nsBMPEncoder::ParseOptions(const nsAString& aOptions,
     }
 
     // Parse the bpp portion of the string name=value;bpp=<bpp_value>;name=value
-    if (nameValuePair[0].Equals("bpp", nsCaseInsensitiveCStringComparator())) {
+    if (nameValuePair[0].Equals("bpp", nsCaseInsensitiveCStringComparator)) {
       if (nameValuePair[1].EqualsLiteral("24")) {
         aBppOut = 24;
       } else if (nameValuePair[1].EqualsLiteral("32")) {
@@ -593,7 +589,7 @@ void nsBMPEncoder::EncodeFileHeader() {
   ENCODE(&mImageBufferCurr, littleEndianBFH.dataoffset);
 }
 
-// Encodes the BMP infor header mBMPInfoHeader
+// Encodes the BMP info header mBMPInfoHeader
 void nsBMPEncoder::EncodeInfoHeader() {
   V5InfoHeader littleEndianmBIH = mBMPInfoHeader;
   NativeEndian::swapToLittleEndianInPlace(&littleEndianmBIH.bihsize, 1);

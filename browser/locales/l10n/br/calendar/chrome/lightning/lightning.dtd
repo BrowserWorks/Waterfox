@@ -1,0 +1,107 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+
+<!-- Tools menu -->
+<!ENTITY lightning.preferencesLabel "Deiziataer">
+
+<!-- New menu popup in File menu -->
+<!ENTITY lightning.menupopup.new.event.label    "Darvoud...">
+<!ENTITY lightning.menupopup.new.event.accesskey "D">
+<!ENTITY lightning.menupopup.new.task.label     "Trevell...">
+<!ENTITY lightning.menupopup.new.task.accesskey "T">
+<!ENTITY lightning.menupopup.new.calendar.label "Deiziataer…">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "D">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.label               "Digeriñ">
+<!ENTITY lightning.menupopup.open.accesskey           "D">
+<!ENTITY lightning.menupopup.open.message.label       "Kemennadennoù enrollet...">
+<!ENTITY lightning.menupopup.open.message.accesskey   "K">
+<!ENTITY lightning.menupopup.open.calendar.label      "Restr deiziataer...">
+<!ENTITY lightning.menupopup.open.calendar.accesskey  "R">
+
+<!-- View Menu -->
+<!ENTITY lightning.menu.view.calendar.label            "Deiziataer">
+<!ENTITY lightning.menu.view.calendar.accesskey        "i">
+<!ENTITY lightning.menu.view.tasks.label               "Trevelloù">
+<!ENTITY lightning.menu.view.tasks.accesskey           "e">
+
+<!-- Events and Tasks menu -->
+<!ENTITY lightning.menu.eventtask.label                "Darvoudoù ha trevelloù">
+<!ENTITY lightning.menu.eventtask.accesskey            "h">
+
+<!-- properties dialog, calendar creation wizard -->
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.email.label,
+     lightning.calendarproperties.forceEmailScheduling.label)
+     These strings are used in the calendar wizard and the calendar properties dialog, but are only
+     displayed when setting/using a caldav calendar -->
+<!ENTITY lightning.calendarproperties.email.label                           "Postel :">
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.forceEmailScheduling.tooltiptext1,
+     lightning.calendarproperties.forceEmailScheduling.tooltiptext2)
+     - tooltiptext1 is used in the calendar wizard when setting a new caldav calendar
+     - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
+
+<!-- iMIP Bar (meeting support) -->
+<!ENTITY lightning.imipbar.btnAccept.label                                  "Asantiñ">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext                           "Asantiñ ar bedadenn darvoud">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label                       "Asantiñ an holl">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences2.tooltiptext                "Asantiñ ar bedadenn zarvoud evit an holl reveziadennoù eus an darvoud">
+<!ENTITY lightning.imipbar.btnAdd.label                                     "Ouzhpennañ">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext                               "Ouzhpennañ un darvoud d'an deiziataer">
+<!ENTITY lightning.imipbar.btnDecline.label                                 "Nac'hañ">
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext                          "Nac'h ar bedadenn zarvoud">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label                      "Nac'hañ an holl">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences2.tooltiptext               "Nac'h ar bedadenn zarvoud evit an holl reveziadennoù eus an darvoud">
+<!ENTITY lightning.imipbar.btnDeclineCounter.label                          "Nac'hañ">
+<!ENTITY lightning.imipbar.btnDelete.label                                  "Dilemel">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext                            "Dilemel eus an deiziataer">
+<!ENTITY lightning.imipbar.btnDetails.label                                 "Munudoù...">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext                           "Diskouez munudoù an darvoud">
+<!ENTITY lightning.imipbar.btnMore.label                                    "Muioc'h">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext                              "Klikit evit kaout muioc'h a zibarzhioù">
+<!ENTITY lightning.imipbar.btnReconfirm2.label                              "Adkadarnaat">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext                         "Kas un adkadarnadur d'an aozer">
+<!ENTITY lightning.imipbar.btnReschedule.label                              "Adaozañ">
+<!ENTITY lightning.imipbar.btnReschedule.tooltiptext                        "Adaozañ an darvoud">
+<!ENTITY lightning.imipbar.btnSaveCopy.label                                "Enrollañ un eilad">
+<!ENTITY lightning.imipbar.btnSaveCopy.tooltiptext                          "Enrollañ un eilad eus an darvoud war an deiziataer, distag eus ur respont d'an aozer. Roll ar berzhidi a vo goullonderet.">
+<!ENTITY lightning.imipbar.btnTentative.label                               "Argeziad">
+<!ENTITY lightning.imipbar.btnTentative2.tooltiptext                        "Asantiñ ar bedadenn zarvoud evit ar mare">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences.label                    "Argeziad all">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences2.tooltiptext             "Asantiñ ar bedadenn zarvoud evit holl reveziadennoù an darvoud evit ar mare">
+<!ENTITY lightning.imipbar.btnUpdate.label                                  "Hizivaat">
+<!ENTITY lightning.imipbar.btnUpdate.tooltiptext                            "Hizivaat an darvoud en deiziataer">
+<!ENTITY lightning.imipbar.description                                      "Ur bedadenn d'un darvoud a zo endalc'het er gemennadenn-mañ.">
+
+<!ENTITY lightning.imipbar.btnSend.label                                    "Kas ur respont bremañ">
+<!ENTITY lightning.imipbar.btnSend.tooltiptext                              "Kas ur respont d'an aozer">
+<!ENTITY lightning.imipbar.btnSendSeries.tooltiptext                        "Kas ur respont d'an aozer evit an heuliadennoù a-bezh">
+<!ENTITY lightning.imipbar.btnDontSend.label                                "Chom hep kas ur respont">
+<!ENTITY lightning.imipbar.btnDontSend.tooltiptext                          "Cheñch ho statud perzhiad hep kas respont ebet d'an aozer">
+<!ENTITY lightning.imipbar.btnDontSendSeries.tooltiptext                    "Cheñch ho statud war an heuliadennoù hep kas respont ebet d'an aozer">
+
+<!-- Lightning specific keybindings -->
+<!ENTITY lightning.keys.event.showCalendar.key "C">
+<!ENTITY lightning.keys.event.showTasks.key "D">
+<!ENTITY lightning.keys.event.new "I">
+<!ENTITY lightning.keys.todo.new "D">
+
+<!-- Account Central page -->
+<!ENTITY lightning.acctCentral.newCalendar.label "Krouiñ un deiziataer nevez">
+
+<!-- today-pane-specific -->
+<!ENTITY todaypane.showMinimonth.label "Diskouez ar mini-miz">
+<!ENTITY todaypane.showMinimonth.accesskey "M">
+<!ENTITY todaypane.showMiniday.label "Diskouez ar mini-deiz">
+<!ENTITY todaypane.showMiniday.accesskey  "d">
+<!ENTITY todaypane.showNone.label "Chom hep diskouez netra">
+<!ENTITY todaypane.showNone.accesskey "N">
+<!ENTITY todaypane.showTodayPane.label "Diskouez Panell Hiziv">
+<!ENTITY todaypane.showTodayPane.accesskey "D">
+<!ENTITY todaypane.statusButton.label "Panell &amp;hiziv">

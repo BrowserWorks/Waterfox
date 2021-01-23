@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Ֆիլտրի կանոնները">
+<!ENTITY filterEditorDialog.dimensions "width: 100ch;">
+<!ENTITY filterName.label "Ֆիլտրի անունը.">
+<!ENTITY filterName.accesskey "i">
+
+<!ENTITY junk.label "Թափոն">
+<!ENTITY notJunk.label "Թափոն չէ">
+
+<!ENTITY lowestPriorityCmd.label "Lowest">
+<!ENTITY lowPriorityCmd.label "Low">
+<!ENTITY normalPriorityCmd.label "Normal">
+<!ENTITY highPriorityCmd.label "High">
+<!ENTITY highestPriorityCmd.label "Highest">
+
+<!ENTITY contextDesc.label "Կիրառել ֆիլտրը, երբ՝">
+<!ENTITY contextIncomingMail.label "ទទួល​អ៊ីមែល​ថ្មី៖">
+<!ENTITY contextIncomingMail.accesskey "G">
+<!ENTITY contextManual.label "ដំណើរការ​ដោយ​ដៃ">
+<!ENTITY contextManual.accesskey "R">
+<!ENTITY contextBeforeCls.label "ត្រង​មុន​ពេលចាត់ថ្នាក់​សារ​ឥត​បាន​ការ">
+<!ENTITY contextAfterCls.label "ត្រង​បន្ទាប់ពី​ចាត់ថ្នាក់សារ​ឥតបាន​ការ">
+<!ENTITY contextOutgoing.label "បន្ទាប់ពីផ្ញើ">
+<!ENTITY contextOutgoing.accesskey "ផ">
+<!ENTITY contextArchive.label "ទុក​ក្នុង​ប័ណ្ណសារ">
+<!ENTITY contextArchive.accesskey "ទ">
+
+<!ENTITY filterActionDesc.label "Կատարել այս գործողությունը.">
+<!ENTITY filterActionDesc.accesskey "P">
+
+<!ENTITY filterActionOrderWarning.label "ចំណាំ៖ ត្រង​សកម្មភាព​នឹង​ត្រូវ​បាន​ដំណើរការ​ក្នុង​លំដាប់​ផ្សេង។">
+<!ENTITY filterActionOrder.label "មើល​លំដាប់ប្រតិបត្តិ">
+<!-- New Style Filter Rule Actions -->
+
+<!ENTITY moveMessage.label "Տեղափոխել նամակը՝">
+<!ENTITY copyMessage.label "Պատճենել՝">
+<!ENTITY forwardTo.label "Փոխանցել՝">
+<!ENTITY replyWithTemplate.label "Պատասխանել Նմուշով">
+<!ENTITY markMessageRead.label "Mark As Read">
+<!ENTITY markMessageUnread.label "សម្គាល់​ថា​អាន​រួច">
+<!ENTITY markMessageStarred.label "Add Star">
+<!ENTITY setPriority.label "Set Priority to">
+<!ENTITY addTag.label "Tag Message">
+<!ENTITY setJunkScore.label "Set Junk Status to">
+<!ENTITY deleteMessage.label "Delete Message">
+<!ENTITY deleteFromPOP.label "Ջնջել POP սպասարկիչից">
+<!ENTITY fetchFromPOP.label "Ընտրել POP սպասարկիչից">
+<!ENTITY ignoreThread.label "Ignore Thread">
+<!ENTITY ignoreSubthread.label "Ignore Subthread">
+<!ENTITY watchThread.label "Watch Thread">
+<!ENTITY stopExecution.label "Stop Filter Execution">
+
+<!ENTITY addAction.tooltip "បន្ថែម​សកម្មភាព​ថ្មី">
+<!ENTITY removeAction.tooltip "យក​សកម្មភាព​នេះ​ចេញ">
+<!-- LOCALIZATION NOTE
+  The values below are used to control the widths of the filter action widgets.
+  Change the values only when the localized strings in the popup menus
+  are truncated in the widgets.
+ -->
+
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">

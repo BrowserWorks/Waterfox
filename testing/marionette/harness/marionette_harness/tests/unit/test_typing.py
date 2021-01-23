@@ -4,17 +4,17 @@
 
 from __future__ import absolute_import
 
-import urllib
+from six.moves.urllib.parse import quote
 
 from marionette_driver.by import By
 from marionette_driver.errors import ElementNotInteractableException
 from marionette_driver.keys import Keys
 
-from marionette_harness import MarionetteTestCase, skip, skip_if_mobile
+from marionette_harness import MarionetteTestCase, skip
 
 
 def inline(doc):
-    return "data:text/html;charset=utf-8,{}".format(urllib.quote(doc))
+    return "data:text/html;charset=utf-8,{}".format(quote(doc))
 
 
 class TypingTestCase(MarionetteTestCase):
@@ -34,7 +34,6 @@ class TestTypingChrome(TypingTestCase):
         super(TestTypingChrome, self).setUp()
         self.marionette.set_context("chrome")
 
-    @skip_if_mobile("Interacting with chrome elements not available for Fennec")
     def test_cut_and_paste_shortcuts(self):
         with self.marionette.using_context("content"):
             test_html = self.marionette.absolute_url("keyboard.html")
@@ -50,12 +49,12 @@ class TestTypingChrome(TypingTestCase):
             key_reporter.send_keys(self.mod_key, "x")
             self.assertEqual("", key_reporter.get_property("value"))
 
-        url_bar = self.marionette.find_element(By.ID, "urlbar")
+        url_bar = self.marionette.find_element(By.ID, "urlbar-input")
 
         # Clear contents first
         url_bar.send_keys(self.mod_key, "a")
         url_bar.send_keys(Keys.BACK_SPACE)
-        self.assertEqual("", url_bar.get_attribute("value"))
+        self.assertEqual("", url_bar.get_property("value"))
 
         url_bar.send_keys(self.mod_key, "v")
         self.assertEqual("zyxwvutsr", url_bar.get_property("value"))
@@ -215,7 +214,6 @@ class TestTypingContent(TypingTestCase):
         #  filled, we're a letter short here
         self.assertEqual(result.text, "I like chees")
 
-    @skip_if_mobile("Bug 1333069 - Assertion: 'down: 40' not found in u''")
     def test_should_report_key_code_of_arrow_keys_up_down_events(self):
         test_html = self.marionette.absolute_url("keyboard.html")
         self.marionette.navigate(test_html)

@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Salvestatud failid">
+<!ENTITY aboutDownloads.empty                      "Salvestatud faile pole">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "Ava faili sisaldav kaust">
+<!ENTITY cmd.show.accesskey                        "A">
+<!ENTITY cmd.showMac.label                         "Näita Finderis">
+<!ENTITY cmd.showMac.accesskey                     "F">
+<!ENTITY cmd.open.label                            "Ava">
+<!ENTITY cmd.open.accesskey                        "v">
+<!ENTITY cmd.removeFromHistory.label               "Eemalda ajaloost">
+<!ENTITY cmd.removeFromHistory.accesskey           "E">
+<!ENTITY cmd.clearList.label                       "Puhasta nimekiri">
+<!ENTITY cmd.clearList.accesskey                   "P">
+<!ENTITY cmd.clearList.tooltip                     "Eemalda nimekirjast kõik mitteaktiivsed allalaadimised.">
+<!ENTITY cmd.searchDownloads.label                 "Otsi…">
+<!ENTITY cmd.searchDownloads.key                   "O">

@@ -122,6 +122,18 @@
     "minbytes": 16384,
     "maxbytes": 32768
   },
+  "c:\\windows\\system32\\d3d10warp.dll": {
+    "mincount": 6,
+    "maxcount": 6,
+    "minbytes": 81920,
+    "maxbytes": 81920
+  },
+  "c:\\windows\\system32\\d3d11.dll": {
+    "mincount": 10,
+    "maxcount": 10,
+    "minbytes": 139264,
+    "maxbytes": 139264
+  },
   "c:\\windows\\system32\\dwrite.dll": {
     "mincount": 4,
     "maxcount": 4,
@@ -163,6 +175,12 @@
     "maxcount": 8,
     "minbytes": 0,
     "maxbytes": 87040
+  },
+  "c:\\windows\\system32\\windows.globalization.dll": {
+    "mincount": 0,
+    "maxcount": 8,
+    "minbytes": 0,
+    "maxbytes": 126976
   },
   "c:\\windows\\system32\\spool\\drivers\\color": {
     "mincount": 0,
@@ -362,7 +380,7 @@
     "minbytes": 0,
     "maxbytes": 127000
   },
-  "{profile}\\extensions\\pageloader@mozilla.org\\chrome\\pageloader.xul": {
+  "{profile}\\extensions\\pageloader@mozilla.org\\chrome\\pageloader.xhtml": {
     "mincount": 0,
     "maxcount": 4,
     "minbytes": 0,

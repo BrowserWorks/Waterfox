@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     tab.cookiesonsystem.label      "Cookies alzadas">
+<!ENTITY     tab.bannedservers.label        "Puestos web que usan cookies">
+<!ENTITY     div.bannedservers.label        "Administrar puestos web que pueden alzar cookies en o suyo equipo (u no).">
+<!ENTITY     div.cookiesonsystem.label      "Veyer y eliminar cookies que son alzadas en o suyo equipo.">
+<!ENTITY     treehead.cookiename.label      "Nombre d'a cookie">
+<!ENTITY     treehead.cookiedomain.label    "Puesto web">
+<!ENTITY     treehead.cookieexpires.label   "Caduca">
+<!ENTITY     treehead.infoselected.label    "Información sobre a cookie trigada">
+<!ENTITY     button.removecookie.label      "Eliminar cookie">
+<!ENTITY     button.removecookie.accesskey  "r">
+<!ENTITY     button.removeallcookies.label  "Eliminar todas as cookies">
+<!ENTITY     button.removeallcookies.accesskey "E">
+
+<!ENTITY     search.placeholder             "Buscar en as cookies">
+<!ENTITY     focusSearch.key                "f">
+<!ENTITY     windowClose.key                "w">
+<!ENTITY     selectAll.key                  "a">
+
+<!ENTITY     props.name.label               "Nombre:">
+<!ENTITY     props.value.label              "Conteniu:">
+<!ENTITY     props.domain.label             "Servidor:">
+<!ENTITY     props.path.label               "Ruta:">
+<!ENTITY     props.secure.label             "Ninviar para:">
+<!ENTITY     props.expires.label            "Caduca:">
+
+<!ENTITY     treehead.sitename.label        "Puesto web">
+<!ENTITY     treehead.status.label          "Estau">
+<!ENTITY     windowtitle.label              "Administrador de cookies">
+<!ENTITY     buttonaccept.label             "Zarrar">
+<!ENTITY     buttonaccept.accesskey         "Z">
+
+<!ENTITY     blockSite.label                "Bloquiar">
+<!ENTITY     blockSite.accesskey            "B">
+<!ENTITY     allowSite.label                "Permitir">
+<!ENTITY     allowSite.accesskey            "P">
+<!ENTITY     allowSiteSession.label         "Sesión">
+<!ENTITY     allowSiteSession.accesskey     "S">
+<!ENTITY     removepermission.label         "Eliminar puesto web">
+<!ENTITY     removepermission.accesskey     "r">
+<!ENTITY     removeallpermissions.label     "Eliminar totz os puestos web">
+<!ENTITY     removeallpermissions.accesskey "E">
+
+<!ENTITY     futureCookies.label            "No permitir a os puestos web que ninvioron cookies eliminadas ninviar cookies en o futuro">
+<!ENTITY     futureCookies.accesskey        "N">

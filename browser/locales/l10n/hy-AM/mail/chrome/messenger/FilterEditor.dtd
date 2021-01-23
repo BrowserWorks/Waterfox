@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Զտիչի կանոնները">
+<!ENTITY filterEditorDialog.dimensions "width: 100ch;">
+<!ENTITY filterName.label "Զտիչի անունը.">
+<!ENTITY filterName.accesskey "տ">
+
+<!ENTITY junk.label "Թափոն">
+<!ENTITY notJunk.label "Թափոն չէ">
+
+<!ENTITY lowestPriorityCmd.label "Ամենացածր">
+<!ENTITY lowPriorityCmd.label "Ցածր">
+<!ENTITY normalPriorityCmd.label "Նորմալ">
+<!ENTITY highPriorityCmd.label "Բարձր">
+<!ENTITY highestPriorityCmd.label "Ամենաբարձր">
+
+<!ENTITY contextDesc.label "Կիրառել զտիչը, երբ՝">
+<!ENTITY contextIncomingMail.label "Նոր նամակի ստացում.">
+<!ENTITY contextIncomingMail.accesskey "G">
+<!ENTITY contextManual.label "Ձեռադիր բացում">
+<!ENTITY contextManual.accesskey "R">
+<!ENTITY contextBeforeCls.label "Զտել մինչև թափոն դասակարգելը">
+<!ENTITY contextAfterCls.label "Զտել թափոն դասակարգելուց հետո">
+<!ENTITY contextOutgoing.label "Ուղարկելուց հետո">
+<!ENTITY contextOutgoing.accesskey "հ">
+<!ENTITY contextArchive.label "Արխիվացում">
+<!ENTITY contextArchive.accesskey "Ա">
+<!ENTITY contextPeriodic.accesskey "e">
+
+<!ENTITY filterActionDesc.label "Կատարել այս գործողությունը.">
+<!ENTITY filterActionDesc.accesskey "P">
+
+<!ENTITY filterActionOrderWarning.label "Note: Filter actions will be run in a different order.">
+<!ENTITY filterActionOrder.label "Դիտել կատարման կարգը">
+
+<!-- New Style Filter Rule Actions -->
+<!ENTITY moveMessage.label "Տեղափոխել նամակը՝">
+<!ENTITY copyMessage.label "Պատճենել՝">
+<!ENTITY forwardTo.label "Փոխանցել՝">
+<!ENTITY replyWithTemplate.label "Պատասխանել ձևանմուշով">
+<!ENTITY markMessageRead.label "Նշել որպես ընթերցված">
+<!ENTITY markMessageUnread.label "Նշել որպես ընթերցված">
+<!ENTITY markMessageStarred.label "Ավելացնել աստղ">
+<!ENTITY setPriority.label "Առաջնահերթ-ը՝">
+<!ENTITY addTag.label "Պիտակված նամակ">
+<!ENTITY setJunkScore.label "Տալ թափոնի վիճակ՝">
+<!ENTITY deleteMessage.label "Ջնջել նամակը">
+<!ENTITY deleteFromPOP.label "Ջնջել POP սպասարկիչից">
+<!ENTITY fetchFromPOP.label "Ընտրել POP սպասարկիչից">
+<!ENTITY ignoreThread.label "Անտեսել շղթան">
+<!ENTITY ignoreSubthread.label "Անտեսել ենթաշղթան">
+<!ENTITY watchThread.label "Հետևել շղթային">
+<!ENTITY stopExecution.label "Կանգնեցնել զտիչը">
+
+<!ENTITY addAction.tooltip "Նոր գործողություն">
+<!ENTITY removeAction.tooltip "Հեռացնել գործողությունը">
+
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- Flex Attribute: https://developer.mozilla.org/docs/XUL/Attribute/flex -->
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">

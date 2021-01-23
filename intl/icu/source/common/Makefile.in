@@ -88,8 +88,9 @@ ucnv_u7.o ucnv_u8.o ucnv_u16.o ucnv_u32.o ucnvscsu.o ucnvbocu.o \
 ucnv_ext.o ucnvmbcs.o ucnv2022.o ucnvhz.o ucnv_lmb.o ucnvisci.o ucnvdisp.o ucnv_set.o ucnv_ct.o \
 resource.o uresbund.o ures_cnv.o uresdata.o resbund.o resbund_cnv.o \
 ucurr.o \
-localebuilder.o \
+localebuilder.o localeprioritylist.o \
 messagepattern.o ucat.o locmap.o uloc.o locid.o locutil.o locavailable.o locdispnames.o locdspnm.o loclikely.o locresdata.o \
+lsr.o loclikelysubtags.o locdistance.o localematcher.o \
 bytestream.o stringpiece.o bytesinkutil.o \
 stringtriebuilder.o bytestriebuilder.o \
 bytestrie.o bytestrieiterator.o \
@@ -115,7 +116,8 @@ ulist.o uloc_tag.o icudataver.o icuplug.o \
 sharedobject.o simpleformatter.o unifiedcache.o uloc_keytype.o \
 ubiditransform.o \
 pluralmap.o \
-static_unicode_sets.o
+static_unicode_sets.o \
+restrace.o
 
 ## Header files to install
 HEADERS = $(srcdir)/unicode/*.h
@@ -157,11 +159,17 @@ ifneq ($(ENABLE_STATIC),)
 	$(INSTALL-L) $(TARGET) $(DESTDIR)$(libdir)
 endif
 ifneq ($(ENABLE_SHARED),)
+# For MinGW, do we want the DLL to go in the bin location?
+ifeq ($(MINGW_MOVEDLLSTOBINDIR),YES)
+	$(MKINSTALLDIRS) $(DESTDIR)$(bindir)
+	$(INSTALL-L) $(FINAL_SO_TARGET) $(DESTDIR)$(bindir)
+else
 	$(INSTALL-L) $(FINAL_SO_TARGET) $(DESTDIR)$(libdir)
 ifneq ($(FINAL_SO_TARGET),$(SO_TARGET))
 	cd $(DESTDIR)$(libdir) && $(RM) $(notdir $(SO_TARGET)) && ln -s $(notdir $(FINAL_SO_TARGET)) $(notdir $(SO_TARGET))
 ifneq ($(FINAL_SO_TARGET),$(MIDDLE_SO_TARGET))
 	cd $(DESTDIR)$(libdir) && $(RM) $(notdir $(MIDDLE_SO_TARGET)) && ln -s $(notdir $(FINAL_SO_TARGET)) $(notdir $(MIDDLE_SO_TARGET))
+endif
 endif
 endif
 ifneq ($(IMPORT_LIB_EXT),)

@@ -9,7 +9,6 @@
 
 #include "gfxTypes.h"
 #include "mozilla/DOMEventTargetHelper.h"
-#include "mozilla/dom/DOMPrefs.h"
 #include "mozilla/layers/LayersTypes.h"
 #include "mozilla/RefPtr.h"
 #include "CanvasRenderingContextHelper.h"
@@ -24,6 +23,7 @@ class ErrorResult;
 namespace layers {
 class AsyncCanvasRenderer;
 class CanvasClient;
+class ImageContainer;
 }  // namespace layers
 
 namespace dom {
@@ -66,8 +66,7 @@ class OffscreenCanvas final : public DOMEventTargetHelper,
                                JS::Handle<JSObject*> aGivenProto) override;
 
   static already_AddRefed<OffscreenCanvas> Constructor(
-      const GlobalObject& aGlobal, uint32_t aWidth, uint32_t aHeight,
-      ErrorResult& aRv);
+      const GlobalObject& aGlobal, uint32_t aWidth, uint32_t aHeight);
 
   void ClearResources();
 
@@ -147,6 +146,8 @@ class OffscreenCanvas final : public DOMEventTargetHelper,
   layers::LayersBackend GetCompositorBackendType() const {
     return mCompositorBackendType;
   }
+
+  layers::ImageContainer* GetImageContainer();
 
  private:
   ~OffscreenCanvas();

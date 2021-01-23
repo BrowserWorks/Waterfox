@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Saxlanılmış Fayllar">
+<!ENTITY aboutDownloads.empty                      "Saxlanılmış Fayl Yoxdur">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "Yerləşdiyi Qovluğu Aç">
+<!ENTITY cmd.show.accesskey                        "Q">
+<!ENTITY cmd.showMac.label                         "Finder-də göstər">
+<!ENTITY cmd.showMac.accesskey                     "F">
+<!ENTITY cmd.open.label                            "Aç">
+<!ENTITY cmd.open.accesskey                        "A">
+<!ENTITY cmd.removeFromHistory.label               "Tarixçədən sil">
+<!ENTITY cmd.removeFromHistory.accesskey           "r">
+<!ENTITY cmd.clearList.label                       "Siyahını təmizlə">
+<!ENTITY cmd.clearList.accesskey                   "h">
+<!ENTITY cmd.clearList.tooltip                     "Mövcud endirilənlər xaric saxlanılan fayllar siyahısındakı bütün daxil etmələri sil.">
+<!ENTITY cmd.searchDownloads.label                 "Axtar…">
+<!ENTITY cmd.searchDownloads.key                   "F">

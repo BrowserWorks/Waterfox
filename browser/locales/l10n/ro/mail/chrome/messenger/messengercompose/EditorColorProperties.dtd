@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Culori și fundal pagină">
+<!ENTITY pageColors.label "Culori pagină">
+<!ENTITY defaultColorsRadio.label "Culorile implicite ale cititorului (Nu seta culori pe pagină)">
+<!ENTITY defaultColorsRadio.accessKey "C">
+<!ENTITY defaultColorsRadio.tooltip "Folosește numai setările de culori din browserul vizualizatorului (cititorului)">
+<!ENTITY customColorsRadio.label "Folosește culori personalizate:">
+<!ENTITY customColorsRadio.accessKey "p">
+<!ENTITY customColorsRadio.tooltip "Aceste setări de culori le înlocuiesc pe cele din browserul cititorului">
+
+<!ENTITY normalText.label "Text normal">
+<!ENTITY normalText.accessKey "n">
+<!ENTITY linkText.label "Text link">
+<!ENTITY linkText.accessKey "l">
+<!ENTITY activeLinkText.label "Text link activ">
+<!ENTITY activeLinkText.accessKey "a">
+<!ENTITY visitedLinkText.label "Text link vizitat">
+<!ENTITY visitedLinkText.accessKey "v">
+<!ENTITY background.label "Fundal:">
+<!ENTITY background.accessKey "F">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Imagine de fundal:">
+<!ENTITY backgroundImage.accessKey "I">
+<!ENTITY backgroundImage.tooltip "Folosește un fișier de imagine ca fundal pentru pagină">
+<!ENTITY backgroundImage.shortenedDataURI "Date URI prescurtate (copierea va plasa întregul URI în clipboard)">

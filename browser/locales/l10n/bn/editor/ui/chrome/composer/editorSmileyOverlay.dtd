@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Smiley Menu items -->
+
+<!ENTITY insertSmiley.label "স্মাইলি (S)">
+<!ENTITY insertSmiley.accesskey "S">
+
+<!ENTITY smiley1Cmd.label "হাসি (S)">
+<!ENTITY smiley1Cmd.accesskey "S">
+<!ENTITY smiley1Cmd.tooltip "একটি স্মিত হাস্যজ্জ্বল মুখ প্রবেশ">
+<!ENTITY smiley2Cmd.label "ভ্রূকুটি (F)">
+<!ENTITY smiley2Cmd.accesskey "F">
+<!ENTITY smiley2Cmd.tooltip "একটি ভ্রূকুটি করা মুখ প্রবেশ">
+<!ENTITY smiley3Cmd.label "চোখ টিপি (W)">
+<!ENTITY smiley3Cmd.accesskey "W">
+<!ENTITY smiley3Cmd.tooltip "একটি চোখ টেপা মুখ প্রবেশ">
+<!ENTITY smiley4Cmd.label "জিহ্বা-বের করা (T)">
+<!ENTITY smiley4Cmd.accesskey "T">
+<!ENTITY smiley4Cmd.tooltip "একটি জিহ্বা-বের করা মুখ প্রবেশ">
+<!ENTITY smiley5Cmd.label "হাস্যজ্জ্বল (L)">
+<!ENTITY smiley5Cmd.accesskey "L">
+<!ENTITY smiley5Cmd.tooltip "একটি হাস্যজ্জ্বল মুখ প্রবেশ">
+<!ENTITY smiley6Cmd.label "অপ্রস্তুত (E)">
+<!ENTITY smiley6Cmd.accesskey "E">
+<!ENTITY smiley6Cmd.tooltip "একটি অপ্রস্তুত মুখ প্রবেশ">
+<!ENTITY smiley7Cmd.label "অনিশ্চিত (U)">
+<!ENTITY smiley7Cmd.accesskey "U">
+<!ENTITY smiley7Cmd.tooltip "একটি অনিশ্চিত মুখ প্রবেশ">
+<!ENTITY smiley8Cmd.label "বিস্মিত (p)">
+<!ENTITY smiley8Cmd.accesskey "p">
+<!ENTITY smiley8Cmd.tooltip "একটি বিস্মিত মুখ প্রবেশ">
+<!ENTITY smiley9Cmd.label "চুম্বন (K)">
+<!ENTITY smiley9Cmd.accesskey "K">
+<!ENTITY smiley9Cmd.tooltip "একটি চুম্বন মুখ প্রবেশ">
+<!ENTITY smiley10Cmd.label "চোখ রাঙ্গানো (Y)">
+<!ENTITY smiley10Cmd.accesskey "Y">
+<!ENTITY smiley10Cmd.tooltip "একটি চোখ রাঙ্গানো মুখ প্রবেশ">
+<!ENTITY smiley11Cmd.label "দারুন (C)">
+<!ENTITY smiley11Cmd.accesskey "C">
+<!ENTITY smiley11Cmd.tooltip "একটি দারুন মুখ প্রবেশ">
+<!ENTITY smiley12Cmd.label "লোভী মুখ (M)">
+<!ENTITY smiley12Cmd.accesskey "M">
+<!ENTITY smiley12Cmd.tooltip "একটি লোভী মুখ প্রবেশ">
+<!ENTITY smiley13Cmd.label "বিব্রত মুখ (o)">
+<!ENTITY smiley13Cmd.accesskey "o">
+<!ENTITY smiley13Cmd.tooltip "একটি বিব্রত মুখ প্রবেশ">
+<!ENTITY smiley14Cmd.label "নিষ্পাপ (I)">
+<!ENTITY smiley14Cmd.accesskey "I">
+<!ENTITY smiley14Cmd.tooltip "একটি নিষ্পাপ মুখ প্রবেশ">
+<!ENTITY smiley15Cmd.label "কান্না (r)">
+<!ENTITY smiley15Cmd.accesskey "r">
+<!ENTITY smiley15Cmd.tooltip "একটি কান্না মুখ প্রবেশ">
+<!ENTITY smiley16Cmd.label "ঠোঁট আটকানো (a)">
+<!ENTITY smiley16Cmd.accesskey "a">
+<!ENTITY smiley16Cmd.tooltip "একটি ঠোঁট আটকানো মুখ প্রবেশ">
+<!ENTITY SmileButton.tooltip "একটি স্মিত হাস্যজ্জ্বল মুখ প্রবেশ">
+

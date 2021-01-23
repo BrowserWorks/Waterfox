@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.popups.title              "Popup Windows">
+
+<!ENTITY pref.popups.caption            "Popup Windows">
+
+<!ENTITY popupBlock.label               "Block unrequested popup windows">
+<!ENTITY popupBlock.accesskey           "B">
+
+<!ENTITY viewPermissions.label          "Manage Permissions">
+<!ENTITY viewPermissions.accesskey      "M">
+
+<!ENTITY whenBlock.description          "When a popup window has been blocked:">
+<!ENTITY playSound.label                "Play a sound:">
+<!ENTITY playSound.accesskey            "P">
+<!ENTITY systemSound.label              "System beep">
+<!ENTITY systemSound.accesskey          "S">
+<!ENTITY customSound.label              "Custom sound file">
+<!ENTITY customSound.accesskey          "C">
+
+<!ENTITY selectSound.label              "Browse…">
+<!ENTITY selectSound.accesskey          "o">
+<!ENTITY playSoundButton.label          "Play">
+<!ENTITY playSoundButton.accesskey      "l">
+
+<!ENTITY displayIcon.label              "Display an icon in the browser status bar">
+<!ENTITY displayIcon.accesskey          "D">
+
+<!ENTITY displayNotification.label      "Display a notification bar at the top of the content area">
+<!ENTITY displayNotification.accesskey  "N">
+
+<!ENTITY popupNote.description          "Note: Blocking all popups may prevent important features of some web sites from working, such as login windows for banks and shopping sites. For details of how to allow specific sites to use popups while blocking all others, click Help. Even if blocked, sites may use other methods to show popups.">
+

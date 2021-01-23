@@ -34,9 +34,11 @@
 # and when possible we should avoid doing so. We don't generate bindings for
 # these methods here currently.
 
+from __future__ import absolute_import
+
 import os.path
 import re
-import xpidl
+from xpidl import xpidl
 
 
 class AutoIndent(object):
@@ -282,7 +284,7 @@ def attrAsWrapper(iface, m, getter):
 
 header = """\
 //
-// DO NOT EDIT.  THIS FILE IS GENERATED FROM %(filename)s
+// DO NOT EDIT.  THIS FILE IS GENERATED FROM $SRCDIR/%(relpath)s
 //
 
 """
@@ -293,10 +295,10 @@ def idl_basename(f):
     return os.path.splitext(os.path.basename(f))[0]
 
 
-def print_rust_bindings(idl, fd, filename):
+def print_rust_bindings(idl, fd, relpath):
     fd = AutoIndent(fd)
 
-    fd.write(header % {'filename': filename})
+    fd.write(header % {'relpath': relpath})
 
     # All of the idl files will be included into the same rust module, as we
     # can't do forward declarations. Because of this, we want to ignore all
@@ -479,17 +481,12 @@ def write_interface(iface, fd):
     if iface.namemap is None:
         raise Exception("Interface was not resolved.")
 
-    # if we see a base class-less type other than nsISupports, we just need
-    # to discard anything else about it other than its constants.
-    if iface.base is None and iface.name != "nsISupports":
-        assert len([m for m in iface.members
-                    if type(m) == xpidl.Attribute or type(m) == xpidl.Method]) == 0
-        return
+    assert iface.base or (iface.name == "nsISupports")
 
     # Extract the UUID's information so that it can be written into the struct definition
     names = uuid_decoder.match(iface.attributes.uuid).groupdict()
     m3str = names['m3'] + names['m4']
-    names['m3joined'] = ", ".join(["0x%s" % m3str[i:i+2] for i in xrange(0, 16, 2)])
+    names['m3joined'] = ", ".join(["0x%s" % m3str[i:i+2] for i in range(0, 16, 2)])
     names['name'] = iface.name
 
     if printdoccomments:

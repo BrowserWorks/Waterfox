@@ -6,6 +6,7 @@
 
 with Files('**'):
     BUG_COMPONENT = ('Core', 'Graphics')
+    SCHEDULES.inclusive += ['android-hw-gfx']
 with Files('wr/**'):
     BUG_COMPONENT = ('Core', 'Graphics: WebRender')
 
@@ -28,6 +29,7 @@ DIRS += [
     'vr',
     'config',
     'webrender_bindings',
+    'wgpu_bindings',
 ]
 
 if CONFIG['MOZ_ENABLE_SKIA']:
@@ -41,7 +43,13 @@ if CONFIG['ENABLE_TESTS']:
 
 TEST_DIRS += ['tests']
 
-SPHINX_TREES['gfx'] = 'docs'
+SPHINX_TREES['/gfx'] = 'docs'
 
 with Files('docs/**'):
     SCHEDULES.exclusive = ['docs']
+
+with Files('wr/**'):
+    SCHEDULES.exclusive = ['webrender']
+
+with Files('webrender_bindings/**'):
+    SCHEDULES.exclusive = ['webrender']

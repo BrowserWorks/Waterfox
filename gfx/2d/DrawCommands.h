@@ -17,6 +17,7 @@
 #include "DrawCommand.h"
 #include "FilterNodeCapture.h"
 #include "Logging.h"
+#include "nsRegion.h"
 
 namespace mozilla {
 namespace gfx {
@@ -68,6 +69,10 @@ class StoredPattern {
         new (mRadial) RadialGradientPattern(
             *static_cast<const RadialGradientPattern*>(&aPattern));
         return;
+      case PatternType::CONIC_GRADIENT:
+        new (mConic) ConicGradientPattern(
+            *static_cast<const ConicGradientPattern*>(&aPattern));
+        return;
     }
   }
 
@@ -98,6 +103,7 @@ class StoredPattern {
     char mColor[sizeof(ColorPattern)];
     char mLinear[sizeof(LinearGradientPattern)];
     char mRadial[sizeof(RadialGradientPattern)];
+    char mConic[sizeof(ConicGradientPattern)];
     char mSurface[sizeof(SurfacePattern)];
   };
 };
@@ -148,7 +154,7 @@ class DrawSurfaceCommand : public DrawingCommand {
 class DrawSurfaceWithShadowCommand : public DrawingCommand {
  public:
   DrawSurfaceWithShadowCommand(SourceSurface* aSurface, const Point& aDest,
-                               const Color& aColor, const Point& aOffset,
+                               const DeviceColor& aColor, const Point& aOffset,
                                Float aSigma, CompositionOp aOperator)
       : mSurface(aSurface),
         mDest(aDest),
@@ -187,7 +193,7 @@ class DrawSurfaceWithShadowCommand : public DrawingCommand {
  private:
   RefPtr<SourceSurface> mSurface;
   Point mDest;
-  Color mColor;
+  DeviceColor mColor;
   Point mOffset;
   Float mSigma;
   CompositionOp mOperator;
@@ -816,7 +822,7 @@ class PushLayerCommand : public DrawingCommand {
 
 class PopClipCommand : public DrawingCommand {
  public:
-  PopClipCommand() {}
+  PopClipCommand() = default;
 
   CommandType GetType() const override { return PopClipCommand::Type; }
 
@@ -836,7 +842,7 @@ class PopClipCommand : public DrawingCommand {
 
 class PopLayerCommand : public DrawingCommand {
  public:
-  PopLayerCommand() {}
+  PopLayerCommand() = default;
 
   CommandType GetType() const override { return PopLayerCommand::Type; }
 

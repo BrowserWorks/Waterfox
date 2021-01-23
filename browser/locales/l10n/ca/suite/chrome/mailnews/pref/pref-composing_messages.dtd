@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.composing.messages.title        "Redacció">
+<!ENTITY generalComposing.label               "General">
+<!ENTITY forwardMsg.label                     "Reenvia els missatges:">
+<!ENTITY inline.label                         "En línia">
+<!ENTITY inline.accesskey                     "i">
+<!ENTITY asAttachment.label                   "Com a adjunció">
+<!ENTITY asAttachment.accesskey               "a">
+
+<!ENTITY replyQuoteInline.label               "Cita els missatges vists a l'interior en les respostes">
+<!ENTITY replyQuoteInline.accesskey           "C">
+<!ENTITY warnOnSendAccelKey.label             "Confirma quan s'utilitzi una drecera de teclat per enviar el missatge">
+<!ENTITY warnOnSendAccelKey.accesskey         "C">
+<!-- LOCALIZATION NOTE (autoSave.label): This will concatenate with
+     "xxx minutes", using a number and (autoSaveEnd.label). -->
+<!ENTITY autoSave.label                       "Desa el missatge automàticament cada">
+<!ENTITY autoSave.accesskey                   "m">
+<!ENTITY autoSaveEnd.label                    "minuts">
+<!-- LOCALIZATION NOTE (wrapOutMsg.label): This will concatenate with "xxx characters", using a number and (char.label). -->
+<!ENTITY wrapOutMsg.label                     "Ajusta els missatges en text net a">
+<!ENTITY wrapOutMsg.accesskey                 "l">
+<!ENTITY char.label                           "caràcters">
+
+<!ENTITY defaultMessagesHeader.label          "Valors per defecte per als missatges HTML">
+<!ENTITY font.label                           "Tipus de lletra:">
+<!ENTITY font.accesskey                       "T">
+<!ENTITY size.label                           "Mida:">
+<!ENTITY size.accesskey                       "M">
+<!ENTITY fontColor.label                      "Text:">
+<!ENTITY fontColor.accesskey                  "e">
+<!ENTITY bgColor.label                        "Fons:">
+<!ENTITY bgColor.accesskey                    "F">
+
+<!ENTITY selectHeaderType.label               "Seleccioneu el tipus de capçalera de resposta:">
+<!ENTITY selectHeaderType.accesskey           "e">
+<!ENTITY noReplyOption.label                  "Sense capçalera de resposta">
+<!-- LOCALIZATION NOTE (authorWroteOption.label): this is tied to the
+  mailnews.reply_header_authorwrotesingle preference. [Author] needs to be
+  translated. -->
+<!ENTITY authorWroteOption.label              "[Autor/a] ha escrit:">
+<!-- LOCALIZATION NOTE (onDateAuthorWroteOption.label): this is tied to the
+  mailnews.reply_header_ondateauthorwrote preference. [Author] and [date]
+  need to be translated. -->
+<!ENTITY onDateAuthorWroteOption.label        "El [data], [autor/a] ha escrit:">
+<!-- LOCALIZATION NOTE (onDateAuthorWroteOption.label): this is tied to the
+  mailnews.reply_header_authorwroteondate preference. [Author] and [date]
+  need to be translated. -->
+<!ENTITY authorWroteOnDateOption.label        "[Autor/a] ha escrit el [data]:">

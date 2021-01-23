@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "Imenik">
+<!ENTITY Addrbook.accesskey                    "m">
+<!ENTITY GeneratedName.label                   "Ime">
+<!ENTITY GeneratedName.accesskey               "I">
+<!ENTITY PrimaryEmail.label                    "E-pošta">
+<!ENTITY PrimaryEmail.accesskey                "E">
+<!ENTITY Company.label                         "Organizacija">
+<!ENTITY Company.accesskey                     "O">
+<!ENTITY _PhoneticName.label                   "Fonetično ime">
+<!ENTITY _PhoneticName.accesskey               "F">
+<!ENTITY NickName.label                        "Vzdevek">
+<!ENTITY NickName.accesskey                    "V">
+<!ENTITY SecondEmail.label                     "Dodatna e-pošta">
+<!ENTITY SecondEmail.accesskey                 "D">
+<!ENTITY Department.label                      "Oddelek">
+<!ENTITY Department.accesskey                  "l">
+<!ENTITY JobTitle.label                        "Naziv">
+<!ENTITY JobTitle.accesskey                    "z">
+<!ENTITY CellularNumber.label                  "Mobilnik">
+<!ENTITY CellularNumber.accesskey              "M">
+<!ENTITY PagerNumber.label                     "Pozivnik">
+<!ENTITY PagerNumber.accesskey                 "P">
+<!ENTITY FaxNumber.label                       "Faks">
+<!ENTITY FaxNumber.accesskey                   "F">
+<!ENTITY HomePhone.label                       "Telefon doma">
+<!ENTITY HomePhone.accesskey                   "a">
+<!ENTITY WorkPhone.label                       "Telefon v službi">
+<!ENTITY WorkPhone.accesskey                   "ž">
+<!ENTITY ChatName.label                        "Ime za klepet">
+<!ENTITY ChatName.accesskey                    "k">
+<!ENTITY sortAscending.label                   "Naraščajoče">
+<!ENTITY sortAscending.accesskey               "N">
+<!ENTITY sortDescending.label                  "Padajoče">
+<!ENTITY sortDescending.accesskey              "č">

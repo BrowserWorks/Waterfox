@@ -12,13 +12,15 @@ const { XPCOMUtils } = ChromeUtils.import(
 const { AppConstants } = ChromeUtils.import(
   "resource://gre/modules/AppConstants.jsm"
 );
-const { Services } = ChromeUtils.import(
-  "resource://gre/modules/Services.jsm"
+const { AddonManager } = ChromeUtils.import(
+  "resource://gre/modules/AddonManager.jsm"
 );
 
 const PREF_SIGNATURES_REQUIRED = "xpinstall.signatures.required";
 const PREF_LANGPACK_SIGNATURES = "extensions.langpacks.signatures.required";
-const PREF_ALLOW_LEGACY = "extensions.legacy.enabled";
+const PREF_ALLOW_EXPERIMENTS = "extensions.experiments.enabled";
+const PREF_EM_SIDELOAD_SCOPES = "extensions.sideloadScopes";
+const PREF_IS_EMBEDDED = "extensions.isembedded";
 
 var AddonSettings = {};
 
@@ -51,19 +53,71 @@ if (AppConstants.MOZ_REQUIRE_SIGNING && !Cu.isInAutomation) {
   );
 }
 
-if (AppConstants.MOZ_ALLOW_LEGACY_EXTENSIONS || Cu.isInAutomation) {
+// Whether or not we're running in GeckoView embedded in an Android app
+if (Cu.isInAutomation) {
   XPCOMUtils.defineLazyPreferenceGetter(
     AddonSettings,
-    "ALLOW_LEGACY_EXTENSIONS",
-    PREF_ALLOW_LEGACY,
+    "IS_EMBEDDED",
+    PREF_IS_EMBEDDED,
+    false
+  );
+} else {
+  makeConstant("IS_EMBEDDED", AppConstants.platform === "android");
+}
+
+/**
+ * AddonSettings.EXPERIMENTS_ENABLED
+ *
+ * Experimental APIs are always available to privileged signed addons.
+ * This constant makes an optional preference available to enable experimental
+ * APIs for developement purposes.
+ *
+ * Two features are toggled with this preference:
+ *
+ *   1. The ability to load an extension that contains an experimental
+ *      API but is not privileged.
+ *   2. The ability to load an unsigned extension that gains privilege
+ *      if it is temporarily loaded (e.g. via about:debugging).
+ *
+ * MOZ_REQUIRE_SIGNING is set to zero in unbranded builds, we also
+ * ensure nightly, dev-ed and our test infrastructure have access to
+ * the preference.
+ *
+ * Official releases ignore this preference.
+ */
+if (
+  !AppConstants.MOZ_REQUIRE_SIGNING ||
+  AppConstants.NIGHTLY_BUILD ||
+  AppConstants.MOZ_DEV_EDITION ||
+  Cu.isInAutomation
+) {
+  XPCOMUtils.defineLazyPreferenceGetter(
+    AddonSettings,
+    "EXPERIMENTS_ENABLED",
+    PREF_ALLOW_EXPERIMENTS,
     true
   );
 } else {
-  makeConstant("ALLOW_LEGACY_EXTENSIONS", false);
+  makeConstant("EXPERIMENTS_ENABLED", false);
 }
 
 if (AppConstants.MOZ_DEV_EDITION) {
-  makeConstant("DEFAULT_THEME_ID", "australis-dark@waterfox.net");
+  makeConstant("DEFAULT_THEME_ID", "floe@waterfox.net");
 } else {
   makeConstant("DEFAULT_THEME_ID", "default-theme@mozilla.org");
+}
+
+// SCOPES_SIDELOAD is a bitflag for what scopes we will load new extensions from when we scan the directories.
+// If a build allows sideloading, or we're in automation, we'll also allow use of the preference.
+if (AppConstants.MOZ_ALLOW_ADDON_SIDELOAD || Cu.isInAutomation) {
+  XPCOMUtils.defineLazyPreferenceGetter(
+    AddonSettings,
+    "SCOPES_SIDELOAD",
+    PREF_EM_SIDELOAD_SCOPES,
+    AppConstants.MOZ_ALLOW_ADDON_SIDELOAD
+      ? AddonManager.SCOPE_ALL
+      : AddonManager.SCOPE_PROFILE
+  );
+} else {
+  makeConstant("SCOPES_SIDELOAD", AddonManager.SCOPE_PROFILE);
 }

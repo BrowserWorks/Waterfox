@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Bibliotecă">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Organizare">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "Organizează marcajele">
+
+<!ENTITY file.close.label               "Închide">
+<!ENTITY file.close.accesskey           "c">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Vizualizări">
+<!ENTITY views.accesskey                "V">
+<!ENTITY views.tooltip                  "Schimbă vizualizarea">
+<!ENTITY view.columns.label             "Afișează coloane">
+<!ENTITY view.columns.accesskey         "c">
+<!ENTITY view.sort.label                "Sortează">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "Nesortat">
+<!ENTITY view.unsorted.accesskey        "N">
+<!ENTITY view.sortAscending.label       "De la A la Z">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "De la Z la A">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Importă marcaje dintr-un fișier HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "Exportă marcaje într-un fișier HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "Importă date din alt browser…">
+<!ENTITY importOtherBrowser.accesskey      "a">
+
+<!ENTITY cmd.backup.label               "Copie de siguranță…">
+<!ENTITY cmd.backup.accesskey           "g">
+<!ENTITY cmd.restore2.label             "Restaurează">
+<!ENTITY cmd.restore2.accesskey         "R">
+<!ENTITY cmd.restoreFromFile.label      "Alege fișierul…">
+<!ENTITY cmd.restoreFromFile.accesskey  "l">
+
+<!ENTITY col.name.label          "Nume">
+<!ENTITY col.tags.label          "Etichete">
+<!ENTITY col.url.label           "Locație">
+<!ENTITY col.mostrecentvisit.label "Cea mai recentă vizită">
+<!ENTITY col.visitcount.label    "Număr de vizite">
+<!ENTITY col.dateadded.label     "Adăugat">
+<!ENTITY col.lastmodified.label  "Ultima modificare">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Importare și copie de siguranță">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "Importă și fă copie de siguranță marcajelor">
+
+<!ENTITY backButton.tooltip  "Navighează înapoi">
+
+<!ENTITY forwardButton.tooltip  "Navighează înainte">
+
+<!ENTITY detailsPane.selectAnItemText.description "Selectează un element pentru a-l vedea și a-i edita proprietățile">
+

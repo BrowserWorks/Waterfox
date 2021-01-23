@@ -15,8 +15,7 @@
 #include "mozStorageBindingParamsArray.h"
 #include "Variant.h"
 
-namespace mozilla {
-namespace storage {
+namespace mozilla::storage {
 
 ////////////////////////////////////////////////////////////////////////////////
 //// Local Helper Objects
@@ -278,6 +277,12 @@ BindingParams::BindBlobByName(const nsACString& aName, const uint8_t* aValue,
 }
 
 NS_IMETHODIMP
+BindingParams::BindBlobArrayByName(const nsACString& aName,
+                                   const nsTArray<uint8_t>& aValue) {
+  return BindBlobByName(aName, aValue.Elements(), aValue.Length());
+}
+
+NS_IMETHODIMP
 BindingParams::BindStringAsBlobByName(const nsACString& aName,
                                       const nsAString& aValue) {
   return DoBindStringAsBlobByName(this, aName, aValue);
@@ -312,8 +317,7 @@ BindingParams::BindByIndex(uint32_t aIndex, nsIVariant* aValue) {
     (void)mParameters.SetLength(aIndex);
     (void)mParameters.AppendElement(variant);
   } else {
-    NS_ENSURE_TRUE(mParameters.ReplaceElementAt(aIndex, variant),
-                   NS_ERROR_OUT_OF_MEMORY);
+    mParameters.ReplaceElementAt(aIndex, variant);
   }
   return NS_OK;
 }
@@ -330,8 +334,7 @@ AsyncBindingParams::BindByIndex(uint32_t aIndex, nsIVariant* aValue) {
     mParameters.SetLength(aIndex);
     mParameters.AppendElement(variant);
   } else {
-    NS_ENSURE_TRUE(mParameters.ReplaceElementAt(aIndex, variant),
-                   NS_ERROR_OUT_OF_MEMORY);
+    mParameters.ReplaceElementAt(aIndex, variant);
   }
   return NS_OK;
 }
@@ -398,6 +401,12 @@ BindingParams::BindBlobByIndex(uint32_t aIndex, const uint8_t* aValue,
 }
 
 NS_IMETHODIMP
+BindingParams::BindBlobArrayByIndex(uint32_t aIndex,
+                                    const nsTArray<uint8_t>& aValue) {
+  return BindBlobByIndex(aIndex, aValue.Elements(), aValue.Length());
+}
+
+NS_IMETHODIMP
 BindingParams::BindStringAsBlobByIndex(uint32_t aIndex,
                                        const nsAString& aValue) {
   return DoBindStringAsBlobByIndex(this, aIndex, aValue);
@@ -420,5 +429,4 @@ BindingParams::BindAdoptedBlobByIndex(uint32_t aIndex, uint8_t* aValue,
   return BindByIndex(aIndex, value);
 }
 
-}  // namespace storage
-}  // namespace mozilla
+}  // namespace mozilla::storage

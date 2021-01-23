@@ -20,8 +20,8 @@ UrlClassifierFeatureCustomTables::UrlClassifierFeatureCustomTables(
     const nsACString& aName, const nsTArray<nsCString>& aBlacklistTables,
     const nsTArray<nsCString>& aWhitelistTables)
     : mName(aName),
-      mBlacklistTables(aBlacklistTables),
-      mWhitelistTables(aWhitelistTables) {}
+      mBlacklistTables(aBlacklistTables.Clone()),
+      mWhitelistTables(aWhitelistTables.Clone()) {}
 
 UrlClassifierFeatureCustomTables::~UrlClassifierFeatureCustomTables() = default;
 
@@ -35,12 +35,12 @@ NS_IMETHODIMP
 UrlClassifierFeatureCustomTables::GetTables(
     nsIUrlClassifierFeature::listType aListType, nsTArray<nsCString>& aTables) {
   if (aListType == nsIUrlClassifierFeature::blacklist) {
-    aTables = mBlacklistTables;
+    aTables = mBlacklistTables.Clone();
     return NS_OK;
   }
 
   if (aListType == nsIUrlClassifierFeature::whitelist) {
-    aTables = mWhitelistTables;
+    aTables = mWhitelistTables.Clone();
     return NS_OK;
   }
 
@@ -96,7 +96,7 @@ UrlClassifierFeatureCustomTables::ProcessChannel(
 NS_IMETHODIMP
 UrlClassifierFeatureCustomTables::GetURIByListType(
     nsIChannel* aChannel, nsIUrlClassifierFeature::listType aListType,
-    nsIURI** aURI) {
+    nsIUrlClassifierFeature::URIType* aURIType, nsIURI** aURI) {
   return NS_ERROR_NOT_IMPLEMENTED;
 }
 

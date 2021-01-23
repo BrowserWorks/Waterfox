@@ -8,7 +8,7 @@
 #define __NS_SVGOUTERSVGFRAME_H__
 
 #include "mozilla/Attributes.h"
-#include "nsAutoPtr.h"
+#include "mozilla/UniquePtr.h"
 #include "nsISVGSVGFrame.h"
 #include "nsSVGContainerFrame.h"
 #include "nsRegion.h"
@@ -167,7 +167,7 @@ class nsSVGOuterSVGFrame final : public nsSVGDisplayContainerFrame,
   bool mCallingReflowSVG;
 
   /* Returns true if our content is the document element and our document is
-   * embedded in an HTML 'object', 'embed' or 'applet' element. Set
+   * embedded in an HTML 'object' or 'embed' element. Set
    * aEmbeddingFrame to obtain the nsIFrame for the embedding HTML element.
    */
   bool IsRootOfReplacedElementSubDoc(nsIFrame** aEmbeddingFrame = nullptr);
@@ -182,7 +182,7 @@ class nsSVGOuterSVGFrame final : public nsSVGDisplayContainerFrame,
   // A hash-set containing our nsSVGForeignObjectFrame descendants. Note we use
   // a hash-set to avoid the O(N^2) behavior we'd get tearing down an SVG frame
   // subtree if we were to use a list (see bug 381285 comment 20).
-  nsAutoPtr<nsTHashtable<nsPtrHashKey<nsSVGForeignObjectFrame>>>
+  mozilla::UniquePtr<nsTHashtable<nsPtrHashKey<nsSVGForeignObjectFrame>>>
       mForeignObjectHash;
 
   nsRegion mInvalidRegion;

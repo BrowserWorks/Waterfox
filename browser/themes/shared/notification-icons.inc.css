@@ -12,8 +12,8 @@
 }
 
 #notification-popup-box {
-  padding: 5px 0px;
-  margin: -5px 0px;
+  padding: 5px 0;
+  margin: -5px 0;
   margin-inline-end: -5px;
   padding-inline-end: 5px;
 }
@@ -70,6 +70,18 @@
   list-style-image: url(chrome://browser/skin/notification-icons/geo-detailed.svg);
 }
 
+.xr-icon {
+  list-style-image: url(chrome://browser/skin/notification-icons/xr.svg);
+}
+
+.xr-icon.blocked-permission-icon {
+  list-style-image: url(chrome://browser/skin/notification-icons/xr-blocked.svg);
+}
+
+.popup-notification-icon[popupid="xr"] {
+  list-style-image: url(chrome://browser/skin/notification-icons/xr.svg);
+}
+
 .autoplay-media-icon {
   list-style-image: url(chrome://browser/skin/notification-icons/autoplay-media.svg);
 }
@@ -80,14 +92,6 @@
 
 .autoplay-media-icon.blocked-permission-icon {
   list-style-image: url(chrome://browser/skin/notification-icons/autoplay-media-blocked.svg);
-}
-
-.image-icon {
-  list-style-image: url(chrome://browser/skin/notification-icons/images.svg);
-}
-
-.image-icon.blocked-permission-icon {
-  list-style-image: url(chrome://browser/skin/notification-icons/images-blocked.svg);
 }
 
 .storage-access-notification-content {
@@ -116,6 +120,11 @@
 .popup-notification-icon[popupid="password"],
 .login-icon {
   list-style-image: url(chrome://browser/skin/login.svg);
+}
+
+.login-icon[extraAttr="attention"] {
+  fill: var(--toolbarbutton-icon-fill-attention);
+  fill-opacity: 1;
 }
 
 .camera-icon {
@@ -181,7 +190,7 @@
 }
 
 #webRTC-preview:not([hidden]) {
-  display: -moz-stack;
+  display: grid;
   border-radius: 4px;
   border: 1px solid var(--panel-separator-color);
   overflow: hidden;
@@ -189,10 +198,15 @@
   min-height: 10em;
 }
 
+#webRTC-preview > *|* {
+  grid-area: 1 / 1;
+}
+
 html|*#webRTC-previewVideo {
   width: 300px;
   /* If we don't set the min-width, width is ignored. */
   min-width: 300px;
+  min-height: 10em;
   max-height: 200px;
 }
 
@@ -205,6 +219,10 @@ html|*#webRTC-previewVideo {
   padding: .5em;
   padding-inline-start: calc(1.5em + 16px);
   border-top: 1px solid var(--panel-separator-color);
+}
+
+#webRTC-previewWarning:-moz-locale-dir(rtl) {
+  background-position: calc(100% - .75em) .75em;
 }
 
 #webRTC-previewWarning > .text-link {
@@ -221,9 +239,16 @@ html|*#webRTC-previewVideo {
   margin-inline-start: 42px;
   width: 16px;
   height: 16px;
+  -moz-context-properties: fill;
+  fill: currentColor;
 }
 
-.identity-popup-popup-menulist {
+.popup-subitem:-moz-locale-dir(rtl) {
+  transform: scaleX(-1);
+}
+
+#identity-popup-popup-menulist,
+#identity-popup-popup-menulist > menupopup {
   min-width: 6.5em;
 }
 
@@ -249,7 +274,7 @@ html|*#webRTC-previewVideo {
 /* INSTALL ADDONS */
 
 .install-icon {
-  list-style-image: url(chrome://mozapps/skin/extensions/extensionGeneric-16.svg);
+  list-style-image: url(chrome://mozapps/skin/extensions/extension.svg);
 }
 
 .install-icon.blocked-permission-icon,
@@ -268,7 +293,7 @@ html|*#webRTC-previewVideo {
 }
 
 .popup-notification-icon[popupid="addon-install-confirmation"] {
-  list-style-image: url(chrome://browser/skin/addons/addon-install-confirm.svg);
+  list-style-image: url(chrome://browser/content/extension.svg);
 }
 
 #addon-install-confirmation-notification[warning] .popup-notification-icon[popupid="addon-install-confirmation"] {
@@ -281,7 +306,6 @@ html|*#webRTC-previewVideo {
 
 /* OFFLINE APPS */
 
-.popup-notification-icon[popupid*="offline-app-requested"],
 .popup-notification-icon[popupid="offline-app-usage"] {
   list-style-image: url(chrome://global/skin/icons/question-64.png);
 }
@@ -293,18 +317,16 @@ html|*#webRTC-previewVideo {
   transition: fill 1.5s;
 }
 
-.plugin-icon.blocked-permission-icon {
-  list-style-image: url(chrome://global/skin/plugins/plugin-blocked.svg);
-}
-
 #plugin-icon-badge {
   list-style-image: url(chrome://browser/skin/notification-icons/plugin-badge.svg);
+  width: 16px;
+  height: 16px;
   opacity: 0;
   transition: opacity 1.5s;
 }
 
-#plugins-notification-icon[extraAttr="inactive"] > .plugin-icon {
-  fill: #bfbfbf;
+#plugins-notification-icon:not(.plugin-blocked)[extraAttr="inactive"] > .plugin-icon {
+  fill-opacity: 0.25;
 }
 
 #plugins-notification-icon[extraAttr="inactive"] > #plugin-icon-badge {

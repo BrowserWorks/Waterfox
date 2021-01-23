@@ -5,7 +5,6 @@
 
 #include "WebGLFormats.h"
 
-#include "gfxPrefs.h"
 #include "GLContext.h"
 #include "GLDefs.h"
 #include "mozilla/gfx/Logging.h"
@@ -13,6 +12,22 @@
 
 namespace mozilla {
 namespace webgl {
+
+const char* ToString(const ComponentType type) {
+  switch (type) {
+    case ComponentType::Int:
+      return "Int";
+    case ComponentType::UInt:
+      return "UInt";
+    case ComponentType::NormInt:
+      return "NormInt";
+    case ComponentType::NormUInt:
+      return "NormUInt";
+    case ComponentType::Float:
+      return "Float";
+  }
+  MOZ_CRASH("pacify gcc6 warning");
+}
 
 static TextureBaseType ToBaseType(const ComponentType type) {
   switch (type) {
@@ -766,8 +781,10 @@ static bool AddUnsizedFormats(FormatUsageAuthority* fua, gl::GLContext* gl) {
   // clang-format on
 }
 
-void FormatUsageInfo::SetRenderable() {
-  this->isRenderable = true;
+void FormatUsageInfo::SetRenderable(const FormatRenderableState& state) {
+  if (!renderableState.IsExplicit()) {
+    renderableState = state;
+  }
 
 #ifdef DEBUG
   const auto format = this->format;
@@ -1126,6 +1143,11 @@ void FormatUsageAuthority::AllowRBFormat(GLenum sizedFormat,
   MOZ_ASSERT(usage->format->sizedFormat);
   MOZ_ASSERT(usage->IsRenderable() || !expectRenderable);
 
+  const auto& found = mRBFormatMap.find(sizedFormat);
+  if (found != mRBFormatMap.end()) {
+    MOZ_ASSERT(found->second == usage);
+    return;
+  }
   AlwaysInsert(mRBFormatMap, sizedFormat, usage);
 }
 

@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Składowane dataje">
+<!ENTITY aboutDownloads.empty                      "Žedne składowane dataje">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "Wopśimujucy zarědnik wócyniś">
+<!ENTITY cmd.show.accesskey                        "z">
+<!ENTITY cmd.showMac.label                         "W Finder pokazaś">
+<!ENTITY cmd.showMac.accesskey                     "F">
+<!ENTITY cmd.open.label                            "Wócyniś">
+<!ENTITY cmd.open.accesskey                        "W">
+<!ENTITY cmd.removeFromHistory.label               "Z historije wótpóraś">
+<!ENTITY cmd.removeFromHistory.accesskey           "h">
+<!ENTITY cmd.clearList.label                       "Lisćinu wuprozniś">
+<!ENTITY cmd.clearList.accesskey                   "L">
+<!ENTITY cmd.clearList.tooltip                     "Wšykne zapiski z lisćiny skłaźonych datajow wótpóraś, mimo běžnych ześěgnjenjow.">
+<!ENTITY cmd.searchDownloads.label                 "Pytaś…">
+<!ENTITY cmd.searchDownloads.key                   "F">

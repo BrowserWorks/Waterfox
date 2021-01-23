@@ -5,15 +5,11 @@
 #ifndef SharedFontList_h
 #define SharedFontList_h
 
-#include "nsString.h"
-#include "nsTArray.h"
-#include "mozilla/RefPtr.h"
-#include "mozilla/FontPropertyTypes.h"
+#include "gfxFontEntry.h"
 #include <atomic>
 
-class gfxSparseBitSet;
+class gfxCharacterMap;
 struct gfxFontStyle;
-class gfxFontEntry;
 struct GlobalFontMatch;
 
 namespace mozilla {
@@ -51,6 +47,8 @@ struct Pointer {
     mBlockAndOffset.store(aOther.mBlockAndOffset);
   }
 
+  Pointer(Pointer&& aOther) { mBlockAndOffset.store(aOther.mBlockAndOffset); }
+
   bool IsNull() const { return mBlockAndOffset == kNullValue; }
 
   uint32_t Block() const { return mBlockAndOffset >> kBlockShift; }
@@ -65,6 +63,11 @@ struct Pointer {
   void* ToPtr(FontList* aFontList) const;
 
   Pointer& operator=(const Pointer& aOther) {
+    mBlockAndOffset.store(aOther.mBlockAndOffset);
+    return *this;
+  }
+
+  Pointer& operator=(Pointer&& aOther) {
     mBlockAndOffset.store(aOther.mBlockAndOffset);
     return *this;
   }
@@ -89,9 +92,12 @@ struct String {
 
   const nsCString AsString(FontList* aList) const {
     MOZ_ASSERT(!mPointer.IsNull());
-    nsCString res;
-    res.AssignLiteral(static_cast<const char*>(mPointer.ToPtr(aList)), mLength);
-    return res;
+    // It's tempting to use AssignLiteral here so that we get an nsCString that
+    // simply wraps the character data in the shmem block without needing to
+    // allocate or copy. But that's unsafe because in the event of font-list
+    // reinitalization, that shared memory will be unmapped; then any copy of
+    // the nsCString that may still be around will crash if accessed.
+    return nsCString(static_cast<const char*>(mPointer.ToPtr(aList)), mLength);
   }
 
   void Assign(const nsACString& aString, FontList* aList);
@@ -124,13 +130,13 @@ struct String {
 struct Face {
   // Data required to initialize a Face
   struct InitData {
-    nsCString mDescriptor; // descriptor that can be used to instantiate a
-                           // platform font reference
-    uint16_t mIndex;       // an index used with descriptor (on some platforms)
-    bool mFixedPitch;      // is the face fixed-pitch (monospaced)?
-    mozilla::WeightRange mWeight;    // CSS font-weight value
-    mozilla::StretchRange mStretch;  // CSS font-stretch value
-    mozilla::SlantStyleRange mStyle; // CSS font-style value
+    nsCString mDescriptor;  // descriptor that can be used to instantiate a
+                            // platform font reference
+    uint16_t mIndex;        // an index used with descriptor (on some platforms)
+    bool mFixedPitch;       // is the face fixed-pitch (monospaced)?
+    mozilla::WeightRange mWeight;     // CSS font-weight value
+    mozilla::StretchRange mStretch;   // CSS font-stretch value
+    mozilla::SlantStyleRange mStyle;  // CSS font-style value
   };
 
   Face(FontList* aList, const InitData& aData)
@@ -146,7 +152,7 @@ struct Face {
     return !mDescriptor.IsNull() && mIndex != uint16_t(-1);
   }
 
-  void SetCharacterMap(FontList* aList, const gfxSparseBitSet* aCharMap);
+  void SetCharacterMap(FontList* aList, gfxCharacterMap* aCharMap);
 
   String mDescriptor;
   uint16_t mIndex;
@@ -167,32 +173,32 @@ struct Face {
 struct Family {
   // Data required to initialize a Family
   struct InitData {
-    InitData(const nsACString& aKey, // lookup key (lowercased)
-             const nsACString& aName, // display name
-             uint32_t aIndex = 0, // [win] index in the system font collection
-             bool aHidden = false, // [mac] hidden font (e.g. .SFNSText)?
-             bool aBundled = false, // [win] font was bundled with the app
-                                    // rather than system-installed
-             bool aBadUnderline = false, // underline-position in font is bad
-             bool aForceClassic = false // [win] use "GDI classic" rendering
-            )
+    InitData(const nsACString& aKey,   // lookup key (lowercased)
+             const nsACString& aName,  // display name
+             uint32_t aIndex = 0,  // [win] index in the system font collection
+             FontVisibility aVisibility = FontVisibility::Unknown,
+             bool aBundled = false,       // [win] font was bundled with the app
+                                          // rather than system-installed
+             bool aBadUnderline = false,  // underline-position in font is bad
+             bool aForceClassic = false   // [win] use "GDI classic" rendering
+             )
         : mKey(aKey),
           mName(aName),
           mIndex(aIndex),
-          mHidden(aHidden),
+          mVisibility(aVisibility),
           mBundled(aBundled),
           mBadUnderline(aBadUnderline),
           mForceClassic(aForceClassic) {}
     bool operator<(const InitData& aRHS) const { return mKey < aRHS.mKey; }
     bool operator==(const InitData& aRHS) const {
       return mKey == aRHS.mKey && mName == aRHS.mName &&
-             mHidden == aRHS.mHidden && mBundled == aRHS.mBundled &&
+             mVisibility == aRHS.mVisibility && mBundled == aRHS.mBundled &&
              mBadUnderline == aRHS.mBadUnderline;
     }
     const nsCString mKey;
     const nsCString mName;
     uint32_t mIndex;
-    bool mHidden;
+    FontVisibility mVisibility;
     bool mBundled;
     bool mBadUnderline;
     bool mForceClassic;
@@ -239,7 +245,8 @@ struct Family {
     return static_cast<Pointer*>(mFaces.ToPtr(aList));
   }
 
-  bool IsHidden() const { return mIsHidden; }
+  FontVisibility Visibility() const { return mVisibility; }
+  bool IsHidden() const { return Visibility() == FontVisibility::Hidden; }
 
   bool IsBadUnderlineFamily() const { return mIsBadUnderlineFamily; }
   bool IsForceClassic() const { return mIsForceClassic; }
@@ -261,15 +268,15 @@ struct Family {
   std::atomic<uint32_t> mFaceCount;
   String mKey;
   String mName;
-  Pointer mCharacterMap; // If non-null, union of character coverage of all
-                         // faces in the family
-  Pointer mFaces; // Pointer to array of |mFaceCount| face pointers
-  uint32_t mIndex; // [win] Top bit set indicates app-bundled font family
-  bool mIsHidden;
+  Pointer mCharacterMap;  // If non-null, union of character coverage of all
+                          // faces in the family
+  Pointer mFaces;         // Pointer to array of |mFaceCount| face pointers
+  uint32_t mIndex;        // [win] Top bit set indicates app-bundled font family
+  FontVisibility mVisibility;
   bool mIsBadUnderlineFamily;
   bool mIsForceClassic;
-  bool mIsSimple; // family allows simplified style matching: mFaces contains
-                  // exactly 4 entries [Regular, Bold, Italic, BoldItalic].
+  bool mIsSimple;  // family allows simplified style matching: mFaces contains
+                   // exactly 4 entries [Regular, Bold, Italic, BoldItalic].
 };
 
 /**
@@ -325,7 +332,7 @@ struct ParamTraits<mozilla::fontlist::Pointer> {
 
 }  // namespace IPC
 
-#undef ERROR // This is defined via Windows.h, but conflicts with some bindings
-             // code when this gets included in the same compilation unit.
+#undef ERROR  // This is defined via Windows.h, but conflicts with some bindings
+              // code when this gets included in the same compilation unit.
 
 #endif /* SharedFontList_h */

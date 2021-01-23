@@ -26,12 +26,12 @@ import org.mozilla.gecko.annotation.WrapForJNI;
  * <pre>
  *     final GeckoWebExecutor executor = new GeckoWebExecutor();
  *
- *     final GeckoResult&lt;WebResponse&gt; response = executor.fetch(
+ *     final GeckoResult&lt;WebResponse&gt; result = executor.fetch(
  *             new WebRequest.Builder("https://example.org/json")
  *             .header("Accept", "application/json")
  *             .build());
  *
- *     response.then(response -&gt; {
+ *     result.then(response -&gt; {
  *         // Do something with response
  *     });
  * </pre>
@@ -54,7 +54,7 @@ public class GeckoWebExecutor {
     }
 
     @Retention(RetentionPolicy.SOURCE)
-    @IntDef({FETCH_FLAGS_NONE, FETCH_FLAGS_ANONYMOUS, FETCH_FLAGS_NO_REDIRECTS})
+    @IntDef({FETCH_FLAGS_NONE, FETCH_FLAGS_ANONYMOUS, FETCH_FLAGS_NO_REDIRECTS, FETCH_FLAGS_STREAM_FAILURE_TEST})
     /* package */ @interface FetchFlags {};
 
     /**
@@ -73,6 +73,12 @@ public class GeckoWebExecutor {
      */
     @WrapForJNI
     public static final int FETCH_FLAGS_NO_REDIRECTS = 1 << 1;
+
+    /**
+     * This flag causes a read error in the {@link WebResponse} body. Useful for testing.
+     */
+    @WrapForJNI
+    public static final int FETCH_FLAGS_STREAM_FAILURE_TEST = 1 << 10;
 
     /**
      * Create a new GeckoWebExecutor instance.
@@ -118,8 +124,8 @@ public class GeckoWebExecutor {
         }
 
         // We don't need to fully validate the URI here, just a sanity check
-        if (!request.uri.toLowerCase().startsWith("http")) {
-            throw new IllegalArgumentException("URI scheme must be http or https");
+        if (!request.uri.toLowerCase().matches("(http|blob).*")) {
+            throw new IllegalArgumentException("Unsupported URI scheme");
         }
 
         final GeckoResult<WebResponse> result = new GeckoResult<>();

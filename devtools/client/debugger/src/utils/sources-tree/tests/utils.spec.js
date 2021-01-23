@@ -14,7 +14,22 @@ import {
   isDirectory,
   addToTree,
   isNotJavaScript,
+  getPathWithoutThread,
+  createTree,
+  getSourcesInsideGroup,
+  getAllSources,
 } from "../index";
+
+type RawSource = {| url: string, id: string, actors?: any |};
+
+function createSourcesMap(sources: RawSource[]) {
+  const sourcesMap = sources.reduce((map, source) => {
+    map[source.id] = makeMockSource(source.url, source.id);
+    return map;
+  }, {});
+
+  return sourcesMap;
+}
 
 describe("sources tree", () => {
   describe("isExactUrlMatch", () => {
@@ -100,5 +115,107 @@ describe("sources tree", () => {
       const source = makeMockSource("http://example.com/foo.png");
       expect(isNotJavaScript(source)).toBe(true);
     });
+  });
+
+  describe("getPathWithoutThread", () => {
+    it("main thread pattern", () => {
+      const path = getPathWithoutThread("server1.conn0.child1/context18");
+      expect(path).toBe("");
+    });
+
+    it("main thread host", () => {
+      const path = getPathWithoutThread(
+        "server1.conn0.child1/context18/dbg-workers.glitch.me"
+      );
+      expect(path).toBe("dbg-workers.glitch.me");
+    });
+
+    it("main thread children", () => {
+      const path = getPathWithoutThread(
+        "server1.conn0.child1/context18/dbg-workers.glitch.me/more"
+      );
+      expect(path).toBe("dbg-workers.glitch.me/more");
+    });
+
+    it("worker thread", () => {
+      const path = getPathWithoutThread(
+        "server1.conn0.child1/workerTarget25/context1"
+      );
+      expect(path).toBe("");
+    });
+
+    it("worker thread with children", () => {
+      const path = getPathWithoutThread(
+        "server1.conn0.child1/workerTarget25/context1/dbg-workers.glitch.me/utils"
+      );
+      expect(path).toBe("dbg-workers.glitch.me/utils");
+    });
+
+    it("worker thread with file named like pattern", () => {
+      const path = getPathWithoutThread(
+        "server1.conn0.child1/workerTarget25/context1/dbg-workers.glitch.me/utils/context38/index.js"
+      );
+      expect(path).toBe("dbg-workers.glitch.me/utils/context38/index.js");
+    });
+  });
+
+  it("gets all sources in all threads and gets sources inside of the selected directory", () => {
+    const testData1 = [
+      {
+        id: "server1.conn13.child1/39",
+        url: "https://example.com/a.js",
+      },
+      {
+        id: "server1.conn13.child1/37",
+        url: "https://example.com/b.js",
+      },
+      {
+        id: "server1.conn13.child1/35",
+        url: "https://example.com/c.js",
+      },
+    ];
+    const testData2 = [
+      {
+        id: "server1.conn13.child1/33",
+        url: "https://example.com/d.js",
+      },
+      {
+        id: "server1.conn13.child1/31",
+        url: "https://example.com/e.js",
+      },
+    ];
+    const sources = {
+      FakeThread: createSourcesMap(testData1),
+      OtherThread: createSourcesMap(testData2),
+    };
+    const threads = [
+      {
+        actor: "FakeThread",
+        name: "FakeThread",
+        url: "https://example.com/",
+        type: "worker",
+      },
+      {
+        actor: "OtherThread",
+        name: "OtherThread",
+        url: "https://example.com/",
+        type: "worker",
+      },
+    ];
+
+    const tree = createTree({
+      sources,
+      debuggeeUrl: "https://example.com/",
+      threads,
+    }).sourceTree;
+
+    const dirA = tree.contents[0];
+    const dirB = tree.contents[1];
+
+    expect(getSourcesInsideGroup(dirA, { threads, sources })).toHaveLength(3);
+    expect(getSourcesInsideGroup(dirB, { threads, sources })).toHaveLength(2);
+    expect(getSourcesInsideGroup(tree, { threads, sources })).toHaveLength(5);
+
+    expect(getAllSources({ threads, sources })).toHaveLength(5);
   });
 });

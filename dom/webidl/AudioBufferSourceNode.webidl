@@ -20,9 +20,12 @@ dictionary AudioBufferSourceOptions {
 };
 
 [Pref="dom.webaudio.enabled",
- Constructor(BaseAudioContext context, optional AudioBufferSourceOptions options)]
+ Exposed=Window]
 interface AudioBufferSourceNode : AudioScheduledSourceNode {
+    constructor(BaseAudioContext context,
+                optional AudioBufferSourceOptions options = {});
 
+    [SetterThrows]
     attribute AudioBuffer? buffer;
 
     readonly attribute AudioParam playbackRate;
@@ -38,4 +41,4 @@ interface AudioBufferSourceNode : AudioScheduledSourceNode {
 };
 
 // Mozilla extensions
-AudioBufferSourceNode implements AudioNodePassThrough;
+AudioBufferSourceNode includes AudioNodePassThrough;

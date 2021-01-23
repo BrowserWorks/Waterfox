@@ -3,7 +3,8 @@
  * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
 
 // ReactJS
-const PropTypes = require("prop-types");
+const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
+const { span } = require("devtools/client/shared/vendor/react-dom-factories");
 
 // Reps
 const {
@@ -12,9 +13,6 @@ const {
   getURLDisplayString,
   wrapRender,
 } = require("./rep-utils");
-
-const dom = require("react-dom-factories");
-const { span } = dom;
 
 /**
  * Renders DOM document object.
@@ -57,7 +55,7 @@ function supportsObject(object, noGrip = false) {
   }
 
   const type = getGripType(object, noGrip);
-  return object.preview && (type === "HTMLDocument" || type === "XULDocument");
+  return object.preview && type === "HTMLDocument";
 }
 
 // Exports from this module

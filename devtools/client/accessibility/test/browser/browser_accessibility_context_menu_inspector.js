@@ -1,7 +1,11 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
 http://creativecommons.org/publicdomain/zero/1.0/ */
 "use strict";
+
+const a11yAutoInitEnabled = Services.prefs.getBoolPref(
+  "devtools.accessibility.auto-init.enabled",
+  false
+);
 
 const TEST_URI = `
   <h1 id="h1">header</h1>
@@ -25,7 +29,9 @@ async function openContextMenuForNode({ toolbox }, selector) {
     await updated;
   }
 
-  const menuUpdated = inspector.once("node-menu-updated");
+  const menuUpdated = a11yAutoInitEnabled
+    ? Promise.resolve()
+    : inspector.once("node-menu-updated");
   const allMenuItems = openContextMenuAndGetAllItems(inspector);
   await menuUpdated;
   return allMenuItems;
@@ -42,7 +48,7 @@ function checkShowA11YPropertiesNode(allMenuItems, disabled) {
   is(
     showA11YPropertiesNode.disabled,
     disabled,
-    "Show accessibility properties item has correct state"
+    `Show accessibility properties item has correct disabled state: ${disabled}`
   );
   return showA11YPropertiesNode;
 }
@@ -66,18 +72,31 @@ async function checkAccessibleObjectSelection(
   const expectedNode = isText
     ? inspector.selection.nodeFront.inlineTextChild
     : inspector.selection.nodeFront;
-  const expectedSelected = await panel.walker.getAccessibleFor(expectedNode);
+  const expectedSelected = await panel.accessibilityProxy.accessibleWalkerFront.getAccessibleFor(
+    expectedNode
+  );
   is(selected, expectedSelected, "Accessible front selected correctly");
+
+  const doc = panel.panelWin.document;
+  const propertiesTree = doc.querySelector(".tree");
+  is(doc.activeElement, propertiesTree, "Properties list must be focused.");
+  ok(
+    isVisible(doc.querySelector(".treeTable .treeRow.selected")),
+    "Selected row is visible."
+  );
 }
 
 addA11YPanelTask(
   "Test show accessibility properties context menu.",
   TEST_URI,
   async function testShowAccessibilityPropertiesContextMenu(env) {
+    // Load the inspector to ensure it to use in this test.
+    await env.toolbox.loadTool("inspector");
+
     let allMenuItems = await openContextMenuForNode(env);
     let showA11YPropertiesNode = checkShowA11YPropertiesNode(
       allMenuItems,
-      true
+      !a11yAutoInitEnabled
     );
 
     allMenuItems = await openContextMenuForNode(env, "#h1");
@@ -89,7 +108,10 @@ addA11YPanelTask(
     await checkAccessibleObjectSelection(env, showA11YPropertiesNode, true);
 
     allMenuItems = await openContextMenuForNode(env, "#span-2");
-    showA11YPropertiesNode = checkShowA11YPropertiesNode(allMenuItems, true);
+    showA11YPropertiesNode = checkShowA11YPropertiesNode(
+      allMenuItems,
+      !a11yAutoInitEnabled
+    );
 
     const inspector = env.toolbox.getPanel("inspector");
     const span2 = await getNodeFront("#span-2", inspector);

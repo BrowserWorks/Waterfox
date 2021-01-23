@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Fjildsammelingseigenskippen">
+
+<!ENTITY Legend.label "Leginda">
+<!ENTITY Legend.accesskey "L">
+
+<!ENTITY EditLegendText.label "Leginda bewurkje:">
+<!ENTITY EditLegendText.accesskey "b">
+<!ENTITY LegendAlign.label "Leginda útlinje:">
+<!ENTITY LegendAlign.accesskey "A">
+<!ENTITY AlignDefault.label "Standert">
+<!ENTITY AlignLeft.label "Lofts">
+<!ENTITY AlignCenter.label "Sintrearre">
+<!ENTITY AlignRight.label "Rjochts">
+
+<!ENTITY RemoveFieldSet.label "Fjildsammeling fuortsmite">
+<!ENTITY RemoveFieldSet.accesskey "f">

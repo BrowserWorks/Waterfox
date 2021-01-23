@@ -23,11 +23,15 @@ const PDF_VIEWER_ORIGIN = "resource://pdf.js";
 const PDF_VIEWER_WEB_PAGE = "resource://pdf.js/web/viewer.html";
 const MAX_NUMBER_OF_PREFS = 50;
 const MAX_STRING_PREF_LENGTH = 128;
+const PDF_CONTENT_TYPE = "application/pdf";
 
 const { XPCOMUtils } = ChromeUtils.import(
   "resource://gre/modules/XPCOMUtils.jsm"
 );
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const { AppConstants } = ChromeUtils.import(
+  "resource://gre/modules/AppConstants.jsm"
+);
 
 ChromeUtils.defineModuleGetter(
   this,
@@ -58,6 +62,7 @@ ChromeUtils.defineModuleGetter(
   "PdfjsContentUtils",
   "resource://pdf.js/PdfjsContentUtils.jsm"
 );
+ChromeUtils.defineModuleGetter(this, "PdfJs", "resource://pdf.js/PdfJs.jsm");
 
 XPCOMUtils.defineLazyGlobalGetters(this, ["XMLHttpRequest"]);
 
@@ -68,6 +73,26 @@ XPCOMUtils.defineLazyServiceGetter(
   "@mozilla.org/mime;1",
   "nsIMIMEService"
 );
+XPCOMUtils.defineLazyServiceGetter(
+  Svc,
+  "handlers",
+  "@mozilla.org/uriloader/handler-service;1",
+  "nsIHandlerService"
+);
+
+XPCOMUtils.defineLazyGetter(this, "gOurBinary", () => {
+  let file = Services.dirsvc.get("XREExeF", Ci.nsIFile);
+  // Make sure to get the .app on macOS
+  if (AppConstants.platform == "macosx") {
+    while (file) {
+      if (/\.app\/?$/i.test(file.leafName)) {
+        break;
+      }
+      file = file.parent;
+    }
+  }
+  return file;
+});
 
 function getBoolPref(pref, def) {
   try {
@@ -151,7 +176,9 @@ function isValidMatchesCount(data) {
   if (
     typeof total !== "number" ||
     total < 0 ||
-    (typeof current !== "number" || current < 0 || current > total)
+    typeof current !== "number" ||
+    current < 0 ||
+    current > total
   ) {
     return false;
   }
@@ -238,9 +265,8 @@ class ChromeActions {
     this.telemetryState = {
       documentInfo: false,
       firstPageInfo: false,
-      streamTypesUsed: [],
-      fontTypesUsed: [],
-      startAt: Date.now(),
+      streamTypesUsed: {},
+      fontTypesUsed: {},
     };
   }
 
@@ -325,7 +351,7 @@ class ChromeActions {
             Ci.nsILoadContext
           );
           this.extListener = extHelperAppSvc.doContent(
-            data.isAttachment ? "application/octet-stream" : "application/pdf",
+            data.isAttachment ? "application/octet-stream" : PDF_CONTENT_TYPE,
             aRequest,
             loadContext,
             false
@@ -384,10 +410,6 @@ class ChromeActions {
     return !!prefBrowser && prefGfx;
   }
 
-  supportsDocumentColors() {
-    return getIntPref("browser.display.document_color_use", 0) !== 2;
-  }
-
   supportedMouseWheelZoomModifierKeys() {
     return {
       ctrlKey: getIntPref("mousewheel.with_control.action", 3) === 3,
@@ -395,23 +417,26 @@ class ChromeActions {
     };
   }
 
+  isInAutomation() {
+    return Cu.isInAutomation;
+  }
+
   reportTelemetry(data) {
     var probeInfo = JSON.parse(data);
     switch (probeInfo.type) {
       case "documentInfo":
         if (!this.telemetryState.documentInfo) {
-          PdfJsTelemetry.onDocumentVersion(probeInfo.version | 0);
-          PdfJsTelemetry.onDocumentGenerator(probeInfo.generator | 0);
+          PdfJsTelemetry.onDocumentVersion(probeInfo.version);
+          PdfJsTelemetry.onDocumentGenerator(probeInfo.generator);
           if (probeInfo.formType) {
-            PdfJsTelemetry.onForm(probeInfo.formType === "acroform");
+            PdfJsTelemetry.onForm(probeInfo.formType);
           }
           this.telemetryState.documentInfo = true;
         }
         break;
       case "pageInfo":
         if (!this.telemetryState.firstPageInfo) {
-          var duration = Date.now() - this.telemetryState.startAt;
-          PdfJsTelemetry.onTimeToView(duration);
+          PdfJsTelemetry.onTimeToView(probeInfo.timestamp);
           this.telemetryState.firstPageInfo = true;
         }
         break;
@@ -424,24 +449,29 @@ class ChromeActions {
           break;
         }
         var i,
-          streamTypes = documentStats.streamTypes;
-        if (Array.isArray(streamTypes)) {
-          var STREAM_TYPE_ID_LIMIT = 20;
-          for (i = 0; i < STREAM_TYPE_ID_LIMIT; i++) {
-            if (streamTypes[i] && !this.telemetryState.streamTypesUsed[i]) {
-              PdfJsTelemetry.onStreamType(i);
-              this.telemetryState.streamTypesUsed[i] = true;
-            }
+          streamTypes = documentStats.streamTypes,
+          key;
+        var STREAM_TYPE_ID_LIMIT = 20;
+        i = 0;
+        for (key in streamTypes) {
+          if (++i > STREAM_TYPE_ID_LIMIT) {
+            break;
+          }
+          if (!this.telemetryState.streamTypesUsed[key]) {
+            PdfJsTelemetry.onStreamType(key);
+            this.telemetryState.streamTypesUsed[key] = true;
           }
         }
         var fontTypes = documentStats.fontTypes;
-        if (Array.isArray(fontTypes)) {
-          var FONT_TYPE_ID_LIMIT = 20;
-          for (i = 0; i < FONT_TYPE_ID_LIMIT; i++) {
-            if (fontTypes[i] && !this.telemetryState.fontTypesUsed[i]) {
-              PdfJsTelemetry.onFontType(i);
-              this.telemetryState.fontTypesUsed[i] = true;
-            }
+        var FONT_TYPE_ID_LIMIT = 20;
+        i = 0;
+        for (key in fontTypes) {
+          if (++i > FONT_TYPE_ID_LIMIT) {
+            break;
+          }
+          if (!this.telemetryState.fontTypesUsed[key]) {
+            PdfJsTelemetry.onFontType(key);
+            this.telemetryState.fontTypesUsed[key] = true;
           }
         }
         break;
@@ -466,7 +496,7 @@ class ChromeActions {
     } else {
       message = getLocalizedString(strings, "unsupported_feature");
     }
-    PdfJsTelemetry.onFallback();
+    PdfJsTelemetry.onFallback(featureId);
     PdfjsContentUtils.displayWarning(
       domWindow,
       message,
@@ -930,6 +960,45 @@ class FindEventManager {
   }
 }
 
+/**
+ * Forwards zoom events from the browser chrome to the currently active viewer.
+ */
+class ZoomEventManager {
+  constructor(contentWindow) {
+    this.contentWindow = contentWindow;
+    this.winmm = contentWindow.docShell.messageManager;
+  }
+
+  bind() {
+    this.contentWindow.addEventListener(
+      "unload",
+      evt => {
+        this.unbind();
+      },
+      { once: true }
+    );
+
+    this.winmm.addMessageListener("PDFJS:ZoomIn", this);
+    this.winmm.addMessageListener("PDFJS:ZoomOut", this);
+    this.winmm.addMessageListener("PDFJS:ZoomReset", this);
+  }
+
+  receiveMessage(msg) {
+    const type = msg.name.split("PDFJS:")[1].toLowerCase();
+    const contentWindow = this.contentWindow;
+
+    const forward = contentWindow.document.createEvent("CustomEvent");
+    forward.initCustomEvent(type, true, true, null);
+    contentWindow.dispatchEvent(forward);
+  }
+
+  unbind() {
+    this.winmm.removeMessageListener("PDFJS:ZoomIn", this);
+    this.winmm.removeMessageListener("PDFJS:ZoomOut", this);
+    this.winmm.removeMessageListener("PDFJS:ZoomReset", this);
+  }
+}
+
 function PdfStreamConverter() {}
 
 PdfStreamConverter.prototype = {
@@ -957,13 +1026,128 @@ PdfStreamConverter.prototype = {
 
   // nsIStreamConverter::convert
   convert(aFromStream, aFromType, aToType, aCtxt) {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+    throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
   },
 
   // nsIStreamConverter::asyncConvertData
   asyncConvertData(aFromType, aToType, aListener, aCtxt) {
+    if (aCtxt && aCtxt instanceof Ci.nsIChannel) {
+      aCtxt.QueryInterface(Ci.nsIChannel);
+    }
+    // We need to check if we're supposed to convert here, because not all
+    // asyncConvertData consumers will call getConvertedType first:
+    this.getConvertedType(aFromType, aCtxt);
+
     // Store the listener passed to us
     this.listener = aListener;
+  },
+
+  _usableHandler(handlerInfo) {
+    let { preferredApplicationHandler } = handlerInfo;
+    if (
+      !preferredApplicationHandler ||
+      !(preferredApplicationHandler instanceof Ci.nsILocalHandlerApp)
+    ) {
+      return false;
+    }
+    preferredApplicationHandler.QueryInterface(Ci.nsILocalHandlerApp);
+    // We have an app, grab the executable
+    let { executable } = preferredApplicationHandler;
+    if (!executable) {
+      return false;
+    }
+    return !executable.equals(gOurBinary);
+  },
+
+  /*
+   * Check if the user wants to use PDF.js. Returns true if PDF.js should
+   * handle PDFs, and false if not. Will always return true on non-parent
+   * processes.
+   *
+   * If the user has selected to open PDFs with a helper app, and we are that
+   * helper app, or if the user has selected the OS default, and we are that
+   * OS default, reset the preference back to pdf.js .
+   *
+   */
+  _validateAndMaybeUpdatePDFPrefs() {
+    let { processType, PROCESS_TYPE_DEFAULT } = Services.appinfo;
+    // If we're not in the parent, or are the default, then just say yes.
+    if (processType != PROCESS_TYPE_DEFAULT || PdfJs.cachedIsDefault()) {
+      return true;
+    }
+
+    // OK, PDF.js might not be the default. Find out if we've misled the user
+    // into making Firefox an external handler or if we're the OS default and
+    // Firefox is set to use the OS default:
+    let mime = Svc.mime.getFromTypeAndExtension(PDF_CONTENT_TYPE, "pdf");
+    // The above might throw errors. We're deliberately letting those bubble
+    // back up, where they'll tell the stream converter not to use us.
+
+    if (!mime) {
+      // This shouldn't happen, but we can't fix what isn't there. Assume
+      // we're OK to handle with PDF.js
+      return true;
+    }
+
+    const { saveToDisk, useHelperApp, useSystemDefault } = Ci.nsIHandlerInfo;
+    let { preferredAction, alwaysAskBeforeHandling } = mime;
+    // If the user has indicated they want to be asked or want to save to
+    // disk, we shouldn't render inline immediately:
+    if (alwaysAskBeforeHandling || preferredAction == saveToDisk) {
+      return false;
+    }
+    // If we have usable helper app info, don't use PDF.js
+    if (preferredAction == useHelperApp && this._usableHandler(mime)) {
+      return false;
+    }
+    // If we want the OS default and that's not Firefox, don't use PDF.js
+    if (preferredAction == useSystemDefault && !mime.isCurrentAppOSDefault()) {
+      return false;
+    }
+    // Log that we're doing this to help debug issues if people end up being
+    // surprised by this behaviour.
+    Cu.reportError("Found unusable PDF preferences. Fixing back to PDF.js");
+
+    mime.preferredAction = Ci.nsIHandlerInfo.handleInternally;
+    mime.alwaysAskBeforeHandling = false;
+    Svc.handlers.store(mime);
+    return true;
+  },
+
+  getConvertedType(aFromType, aChannel) {
+    const HTML = "text/html";
+    let channelURI = aChannel?.URI;
+    // We can be invoked for application/octet-stream; check if we want the
+    // channel first:
+    if (aFromType != "application/pdf") {
+      let isPDF = channelURI?.QueryInterface(Ci.nsIURL).fileExtension == "pdf";
+      let typeIsOctetStream = aFromType == "application/octet-stream";
+      if (
+        !isPDF ||
+        !typeIsOctetStream ||
+        !getBoolPref(PREF_PREFIX + ".handleOctetStream", false)
+      ) {
+        throw new Components.Exception(
+          "Ignore PDF.js for this download.",
+          Cr.NS_ERROR_FAILURE
+        );
+      }
+      // fall through, this appears to be a pdf.
+    }
+
+    if (this._validateAndMaybeUpdatePDFPrefs()) {
+      return HTML;
+    }
+    // Hm, so normally, no pdfjs. However... if this is a file: channel loaded
+    // with system principal, load it anyway:
+    if (channelURI?.schemeIs("file")) {
+      let triggeringPrincipal = aChannel.loadInfo?.triggeringPrincipal;
+      if (triggeringPrincipal?.isSystemPrincipal) {
+        return HTML;
+      }
+    }
+
+    throw new Components.Exception("Can't use PDF.js", Cr.NS_ERROR_FAILURE);
   },
 
   // nsIStreamListener::onDataAvailable
@@ -1109,6 +1293,9 @@ PdfStreamConverter.prototype = {
           var findEventManager = new FindEventManager(domWindow);
           findEventManager.bind();
         }
+        const zoomEventManager = new ZoomEventManager(domWindow);
+        zoomEventManager.bind();
+
         listener.onStopRequest(aRequest, statusCode);
 
         if (domWindow.frameElement) {
@@ -1129,11 +1316,16 @@ PdfStreamConverter.prototype = {
     // e.g. useful for NoScript. Make make sure we reuse the origin attributes
     // from the request channel to keep isolation consistent.
     var uri = NetUtil.newURI(PDF_VIEWER_WEB_PAGE);
-    var resourcePrincipal = Services.scriptSecurityManager.createCodebasePrincipal(
+    var resourcePrincipal = Services.scriptSecurityManager.createContentPrincipal(
       uri,
       aRequest.loadInfo.originAttributes
     );
+    // Remember the principal we would have had before we mess with it.
+    let originalPrincipal = Services.scriptSecurityManager.getChannelResultPrincipal(
+      aRequest
+    );
     aRequest.owner = resourcePrincipal;
+    aRequest.setProperty("noPDFJSPrincipal", originalPrincipal);
 
     channel.asyncOpen(proxy);
   },

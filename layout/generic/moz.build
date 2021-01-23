@@ -28,6 +28,9 @@ with Files('nsInlineFrame.*'):
 with Files('BRFrame.*'):
     BUG_COMPONENT = ('Core', 'Layout: Block and Inline')
 
+with Files('WBRFrame.*'):
+    BUG_COMPONENT = ('Core', 'Layout: Block and Inline')
+
 with Files('nsBulletFrame.*'):
     BUG_COMPONENT = ('Core', 'Layout: Block and Inline')
 
@@ -92,11 +95,12 @@ with Files('nsVideoFrame.*'):
     BUG_COMPONENT = ('Core', 'Audio/Video')
 
 EXPORTS += [
+    'JustificationUtils.h',
+    'nsAtomicContainerFrame.h',
     'nsCanvasFrame.h',
     'nsContainerFrame.h',
     'nsDirection.h',
     'nsFrame.h',
-    'nsFrameIdList.h',
     'nsFrameList.h',
     'nsFrameSelection.h',
     'nsFrameState.h',
@@ -107,10 +111,12 @@ EXPORTS += [
     'nsIFrameInlines.h',
     'nsILineIterator.h',
     'nsIObjectFrame.h',
-    'nsIPageSequenceFrame.h',
     'nsIScrollableFrame.h',
     'nsIScrollPositionListener.h',
     'nsIStatefulFrame.h',
+    'nsLineBox.h',
+    'nsPageSequenceFrame.h',
+    'nsPlaceholderFrame.h',
     'nsPluginFrame.h',
     'nsQueryFrame.h',
     'nsRubyBaseContainerFrame.h',
@@ -120,6 +126,7 @@ EXPORTS += [
     'nsRubyTextFrame.h',
     'nsSplittableFrame.h',
     'nsSubDocumentFrame.h',
+    'nsTextFrame.h',
     'nsTextFrameUtils.h',
     'nsTextRunTransformations.h',
     'RubyUtils.h',
@@ -133,14 +140,17 @@ EXPORTS += [
 ]
 
 EXPORTS.mozilla += [
+    '!FrameIdList.h',
+    '!FrameTypeList.h',
+    'AnonymousContentKey.h',
     'AspectRatio.h',
     'AutoCopyListener.h',
     'ColumnUtils.h',
     'CSSAlignUtils.h',
     'CSSOrderAwareFrameIterator.h',
-    'FrameTypeList.h',
     'ReflowInput.h',
     'ReflowOutput.h',
+    'ScrollbarPreferences.h',
     'ViewportFrame.h',
     'WritingModes.h',
 ]
@@ -189,6 +199,7 @@ UNIFIED_SOURCES += [
     'nsLineLayout.cpp',
     'nsPageContentFrame.cpp',
     'nsPageFrame.cpp',
+    'nsPageSequenceFrame.cpp',
     'nsPlaceholderFrame.cpp',
     'nsRubyBaseContainerFrame.cpp',
     'nsRubyBaseFrame.cpp',
@@ -196,7 +207,6 @@ UNIFIED_SOURCES += [
     'nsRubyFrame.cpp',
     'nsRubyTextContainerFrame.cpp',
     'nsRubyTextFrame.cpp',
-    'nsSimplePageSequenceFrame.cpp',
     'nsSplittableFrame.cpp',
     'nsSubDocumentFrame.cpp',
     'nsTextFrame.cpp',
@@ -215,12 +225,20 @@ UNIFIED_SOURCES += [
     'StickyScrollContainer.cpp',
     'TextOverflow.cpp',
     'ViewportFrame.cpp',
+    'WBRFrame.cpp'
 ]
 
 # nsPluginFrame.cpp needs to be built separately because of name clashes in the OS X headers.
 SOURCES += [
     'nsPluginFrame.cpp',
 ]
+
+GeneratedFile('FrameIdList.h',
+              script='GenerateFrameLists.py',
+              entry_point='generate_frame_id_list_h')
+GeneratedFile('FrameTypeList.h',
+              script='GenerateFrameLists.py',
+              entry_point='generate_frame_type_list_h')
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
@@ -252,7 +270,7 @@ MOCHITEST_CHROME_MANIFESTS += ['test/chrome.ini']
 
 CXXFLAGS += CONFIG['MOZ_CAIRO_CFLAGS']
 
-if 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk':
     CXXFLAGS += CONFIG['TK_CFLAGS']
 
 if CONFIG['CC_TYPE'] in ('clang', 'gcc'):

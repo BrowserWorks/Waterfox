@@ -7,27 +7,28 @@
 #ifndef NS_WINDOWS_DLL_INTERCEPTOR_H_
 #define NS_WINDOWS_DLL_INTERCEPTOR_H_
 
-#include "mozilla/Assertions.h"
-#include "mozilla/Attributes.h"
-#include "mozilla/ArrayUtils.h"
-#include "mozilla/CheckedInt.h"
-#include "mozilla/DebugOnly.h"
-#include "mozilla/Move.h"
-#include "mozilla/Tuple.h"
-#include "mozilla/TypeTraits.h"
-#include "mozilla/Types.h"
-#include "mozilla/UniquePtr.h"
-#include "mozilla/Vector.h"
-#include "nsWindowsHelpers.h"
-
 #include <wchar.h>
 #include <windows.h>
 #include <winternl.h>
 
+#include <utility>
+
+#include "mozilla/ArrayUtils.h"
+#include "mozilla/Assertions.h"
+#include "mozilla/Atomics.h"
+#include "mozilla/Attributes.h"
+#include "mozilla/CheckedInt.h"
+#include "mozilla/DebugOnly.h"
+#include "mozilla/NativeNt.h"
+#include "mozilla/Tuple.h"
+#include "mozilla/Types.h"
+#include "mozilla/UniquePtr.h"
+#include "mozilla/Vector.h"
 #include "mozilla/interceptor/MMPolicies.h"
 #include "mozilla/interceptor/PatcherDetour.h"
 #include "mozilla/interceptor/PatcherNopSpace.h"
 #include "mozilla/interceptor/VMSharingPolicies.h"
+#include "nsWindowsHelpers.h"
 
 /*
  * Simple function interception.
@@ -82,6 +83,14 @@
  *
  */
 
+#if defined(_M_IX86) && defined(__clang__) && __has_declspec_attribute(guard)
+// On x86, nop-space patches return to the second instruction of their target.
+// This is a deliberate violation of Control Flow Guard, so disable the check.
+#  define INTERCEPTOR_DISABLE_CFGUARD __declspec(guard(nocf))
+#else
+#  define INTERCEPTOR_DISABLE_CFGUARD /* nothing */
+#endif
+
 namespace mozilla {
 namespace interceptor {
 
@@ -116,7 +125,7 @@ class FuncHook final {
   ~FuncHook() = default;
 
   bool Set(InterceptorT& aInterceptor, const char* aName, FuncPtrT aHookDest) {
-    LPVOID addHookOk;
+    LPVOID addHookOk = nullptr;
     InitOnceContext ctx(this, &aInterceptor, aName, aHookDest, false);
 
     return ::InitOnceExecuteOnce(&mInitOnce, &InitOnceCallback, &ctx,
@@ -126,7 +135,7 @@ class FuncHook final {
 
   bool SetDetour(InterceptorT& aInterceptor, const char* aName,
                  FuncPtrT aHookDest) {
-    LPVOID addHookOk;
+    LPVOID addHookOk = nullptr;
     InitOnceContext ctx(this, &aInterceptor, aName, aHookDest, true);
 
     return ::InitOnceExecuteOnce(&mInitOnce, &InitOnceCallback, &ctx,
@@ -137,7 +146,7 @@ class FuncHook final {
   explicit operator bool() const { return !!mOrigFunc; }
 
   template <typename... ArgsType>
-  ReturnType operator()(ArgsType... aArgs) const {
+  INTERCEPTOR_DISABLE_CFGUARD ReturnType operator()(ArgsType&&... aArgs) const {
     return mOrigFunc(std::forward<ArgsType>(aArgs)...);
   }
 
@@ -214,22 +223,24 @@ class MOZ_ONLY_USED_TO_AVOID_STATIC_CONSTRUCTORS FuncHookCrossProcess final {
 
   bool Set(HANDLE aProcess, InterceptorT& aInterceptor, const char* aName,
            FuncPtrT aHookDest) {
+    FuncPtrT origFunc;
     if (!aInterceptor.AddHook(aName, reinterpret_cast<intptr_t>(aHookDest),
-                              reinterpret_cast<void**>(&mOrigFunc))) {
+                              reinterpret_cast<void**>(&origFunc))) {
       return false;
     }
 
-    return CopyStubToChildProcess(aProcess);
+    return CopyStubToChildProcess(origFunc, aProcess);
   }
 
   bool SetDetour(HANDLE aProcess, InterceptorT& aInterceptor, const char* aName,
                  FuncPtrT aHookDest) {
+    FuncPtrT origFunc;
     if (!aInterceptor.AddDetour(aName, reinterpret_cast<intptr_t>(aHookDest),
-                                reinterpret_cast<void**>(&mOrigFunc))) {
+                                reinterpret_cast<void**>(&origFunc))) {
       return false;
     }
 
-    return CopyStubToChildProcess(aProcess);
+    return CopyStubToChildProcess(origFunc, aProcess);
   }
 
   explicit operator bool() const { return !!mOrigFunc; }
@@ -238,7 +249,7 @@ class MOZ_ONLY_USED_TO_AVOID_STATIC_CONSTRUCTORS FuncHookCrossProcess final {
    * NB: This operator is only meaningful when invoked in the target process!
    */
   template <typename... ArgsType>
-  ReturnType operator()(ArgsType... aArgs) const {
+  ReturnType operator()(ArgsType&&... aArgs) const {
     return mOrigFunc(std::forward<ArgsType>(aArgs)...);
   }
 
@@ -250,17 +261,16 @@ class MOZ_ONLY_USED_TO_AVOID_STATIC_CONSTRUCTORS FuncHookCrossProcess final {
 #endif  // defined(DEBUG)
 
  private:
-  bool CopyStubToChildProcess(HANDLE aProcess) {
+  bool CopyStubToChildProcess(FuncPtrT aStub, HANDLE aProcess) {
     SIZE_T bytesWritten;
-    return !!::WriteProcessMemory(aProcess, &mOrigFunc, &mOrigFunc,
-                                  sizeof(mOrigFunc), &bytesWritten);
+    return ::WriteProcessMemory(aProcess, &mOrigFunc, &aStub, sizeof(FuncPtrT),
+                                &bytesWritten) &&
+           bytesWritten == sizeof(FuncPtrT);
   }
 
  private:
   FuncPtrT mOrigFunc;
 };
-
-enum { kDefaultTrampolineSize = 128 };
 
 template <typename MMPolicyT, typename InterceptorT>
 struct TypeResolver;
@@ -278,7 +288,7 @@ struct TypeResolver<mozilla::interceptor::MMPolicyOutOfProcess, InterceptorT> {
 };
 
 template <typename VMPolicy = mozilla::interceptor::VMSharingPolicyShared<
-              mozilla::interceptor::MMPolicyInProcess, kDefaultTrampolineSize>>
+              mozilla::interceptor::MMPolicyInProcess, true>>
 class WindowsDllInterceptor final
     : public TypeResolver<typename VMPolicy::MMPolicyT,
                           WindowsDllInterceptor<VMPolicy>> {
@@ -291,19 +301,17 @@ class WindowsDllInterceptor final
 #endif  // defined(_M_IX86)
 
   HMODULE mModule;
-  int mNHooks;
 
  public:
   template <typename... Args>
-  explicit WindowsDllInterceptor(Args... aArgs)
+  explicit WindowsDllInterceptor(Args&&... aArgs)
       : mDetourPatcher(std::forward<Args>(aArgs)...)
 #if defined(_M_IX86)
         ,
         mNopSpacePatcher(std::forward<Args>(aArgs)...)
 #endif  // defined(_M_IX86)
         ,
-        mModule(nullptr),
-        mNHooks(0) {
+        mModule(nullptr) {
   }
 
   WindowsDllInterceptor(const WindowsDllInterceptor&) = delete;
@@ -314,7 +322,7 @@ class WindowsDllInterceptor final
   ~WindowsDllInterceptor() { Clear(); }
 
   template <size_t N>
-  void Init(const char (&aModuleName)[N], int aNumHooks = 0) {
+  void Init(const char (&aModuleName)[N]) {
     wchar_t moduleName[N];
 
     for (size_t i = 0; i < N; ++i) {
@@ -323,27 +331,22 @@ class WindowsDllInterceptor final
       moduleName[i] = aModuleName[i];
     }
 
-    Init(moduleName, aNumHooks);
+    Init(moduleName);
   }
 
-  void Init(const wchar_t* aModuleName, int aNumHooks = 0) {
+  void Init(const wchar_t* aModuleName) {
     if (mModule) {
       return;
     }
 
     mModule = ::LoadLibraryW(aModuleName);
-    mNHooks = aNumHooks;
   }
 
   /** Force a specific configuration for testing purposes. NOT to be used in
       production code! **/
-  void TestOnlyDetourInit(const wchar_t* aModuleName, DetourFlags aFlags,
-                          int aNumHooks = 0) {
-    Init(aModuleName, aNumHooks);
-
-    if (!mDetourPatcher.Initialized()) {
-      mDetourPatcher.Init(aFlags, mNHooks);
-    }
+  void TestOnlyDetourInit(const wchar_t* aModuleName, DetourFlags aFlags) {
+    Init(aModuleName);
+    mDetourPatcher.Init(aFlags);
   }
 
   void Clear() {
@@ -357,6 +360,11 @@ class WindowsDllInterceptor final
     mDetourPatcher.Clear();
 
     // NB: We intentionally leak mModule
+  }
+
+  constexpr static uint32_t GetWorstCaseRequiredBytesToPatch() {
+    return WindowsDllDetourPatcherPrimitive<
+        typename VMPolicy::MMPolicyT>::GetWorstCaseRequiredBytesToPatch();
   }
 
  private:
@@ -377,7 +385,7 @@ class WindowsDllInterceptor final
       return false;
     }
 
-    FARPROC proc = ::GetProcAddress(mModule, aName);
+    FARPROC proc = mDetourPatcher.GetProcAddress(mModule, aName);
     if (!proc) {
       return false;
     }
@@ -408,7 +416,7 @@ class WindowsDllInterceptor final
       return false;
     }
 
-    FARPROC proc = ::GetProcAddress(mModule, aName);
+    FARPROC proc = mDetourPatcher.GetProcAddress(mModule, aName);
     if (!proc) {
       return false;
     }
@@ -422,14 +430,33 @@ class WindowsDllInterceptor final
     if (!mDetourPatcher.Initialized()) {
       DetourFlags flags = DetourFlags::eDefault;
 #if defined(_M_X64)
-      if (mModule == ::GetModuleHandleW(L"ntdll.dll")) {
-        // NTDLL hooks should attempt to use a 10-byte patch because some
-        // injected DLLs do the same and interfere with our stuff.
+      // NTDLL hooks should attempt to use a 10-byte patch because some
+      // injected DLLs do the same and interfere with our stuff.
+      bool needs10BytePatch = (mModule == ::GetModuleHandleW(L"ntdll.dll"));
+
+      bool isWin8Or81 = IsWin8OrLater() && (!IsWin10OrLater());
+      bool isWin8 = IsWin8OrLater() && (!IsWin8Point1OrLater());
+
+      bool isKernel32Dll = (mModule == ::GetModuleHandleW(L"kernel32.dll"));
+
+      // CloseHandle on Windows 8/8.1 only accomodates 10-byte patches.
+      needs10BytePatch |= isWin8Or81 && isKernel32Dll &&
+                          (reinterpret_cast<void*>(aProc) ==
+                           reinterpret_cast<void*>(&CloseHandle));
+
+      // CreateFileA and DuplicateHandle on Windows 8 require 10-byte patches.
+      needs10BytePatch |= isWin8 && isKernel32Dll &&
+                          ((reinterpret_cast<void*>(aProc) ==
+                            reinterpret_cast<void*>(&::CreateFileA)) ||
+                           (reinterpret_cast<void*>(aProc) ==
+                            reinterpret_cast<void*>(&::DuplicateHandle)));
+
+      if (needs10BytePatch) {
         flags |= DetourFlags::eEnable10BytePatch;
       }
 #endif  // defined(_M_X64)
 
-      mDetourPatcher.Init(flags, mNHooks);
+      mDetourPatcher.Init(flags);
     }
 
     return mDetourPatcher.AddHook(aProc, aHookDest, aOrigFunc);
@@ -443,14 +470,289 @@ class WindowsDllInterceptor final
   friend class FuncHookCrossProcess;
 };
 
+/**
+ * IAT patching is intended for use when we only want to intercept a function
+ * call originating from a specific module.
+ */
+class WindowsIATPatcher final {
+ public:
+  template <typename FuncPtrT>
+  using FuncHookType = FuncHook<WindowsIATPatcher, FuncPtrT>;
+
+ private:
+  static bool CheckASCII(const char* aInStr) {
+    while (*aInStr) {
+      if (*aInStr & 0x80) {
+        return false;
+      }
+      ++aInStr;
+    }
+    return true;
+  }
+
+  static bool AddHook(HMODULE aFromModule, const char* aToModuleName,
+                      const char* aTargetFnName, void* aHookDest,
+                      Atomic<void*>* aOutOrigFunc) {
+    if (!aFromModule || !aToModuleName || !aTargetFnName || !aOutOrigFunc) {
+      return false;
+    }
+
+    // PE Spec requires ASCII names for imported module names
+    const bool isModuleNameAscii = CheckASCII(aToModuleName);
+    MOZ_ASSERT(isModuleNameAscii);
+    if (!isModuleNameAscii) {
+      return false;
+    }
+
+    // PE Spec requires ASCII names for imported function names
+    const bool isTargetFnNameAscii = CheckASCII(aTargetFnName);
+    MOZ_ASSERT(isTargetFnNameAscii);
+    if (!isTargetFnNameAscii) {
+      return false;
+    }
+
+    nt::PEHeaders headers(aFromModule);
+    if (!headers) {
+      return false;
+    }
+
+    PIMAGE_IMPORT_DESCRIPTOR impDesc =
+        headers.GetImportDescriptor(aToModuleName);
+    if (!nt::PEHeaders::IsValid(impDesc)) {
+      // Either aFromModule does not import aToModuleName at load-time, or
+      // aToModuleName is a (currently unsupported) delay-load import.
+      return false;
+    }
+
+    // Resolve the import name table (INT).
+    auto firstINTThunk = headers.template RVAToPtr<PIMAGE_THUNK_DATA>(
+        impDesc->OriginalFirstThunk);
+    if (!nt::PEHeaders::IsValid(firstINTThunk)) {
+      return false;
+    }
+
+    Maybe<ptrdiff_t> thunkIndex;
+
+    // Scan the INT for the location of the thunk for the function named
+    // 'aTargetFnName'.
+    for (PIMAGE_THUNK_DATA curINTThunk = firstINTThunk;
+         nt::PEHeaders::IsValid(curINTThunk); ++curINTThunk) {
+      if (IMAGE_SNAP_BY_ORDINAL(curINTThunk->u1.Ordinal)) {
+        // Currently not supporting import by ordinal; this isn't hard to add,
+        // but we won't bother unless necessary.
+        continue;
+      }
+
+      PIMAGE_IMPORT_BY_NAME curThunkFnName =
+          headers.template RVAToPtr<PIMAGE_IMPORT_BY_NAME>(
+              curINTThunk->u1.AddressOfData);
+      MOZ_ASSERT(curThunkFnName);
+      if (!curThunkFnName) {
+        // Looks like we have a bad name descriptor. Try to continue.
+        continue;
+      }
+
+      // Function name checks MUST be case-sensitive!
+      if (!strcmp(aTargetFnName, curThunkFnName->Name)) {
+        // We found the thunk. Save the index of this thunk, as the IAT thunk
+        // is located at the same index in that table as in the INT.
+        thunkIndex = Some(curINTThunk - firstINTThunk);
+        break;
+      }
+    }
+
+    if (thunkIndex.isNothing()) {
+      // We never found a thunk for that function. Perhaps it's not imported?
+      return false;
+    }
+
+    if (thunkIndex.value() < 0) {
+      // That's just wrong.
+      return false;
+    }
+
+    auto firstIATThunk =
+        headers.template RVAToPtr<PIMAGE_THUNK_DATA>(impDesc->FirstThunk);
+    if (!nt::PEHeaders::IsValid(firstIATThunk)) {
+      return false;
+    }
+
+    // Resolve the IAT thunk for the function we want
+    PIMAGE_THUNK_DATA targetThunk = &firstIATThunk[thunkIndex.value()];
+    if (!nt::PEHeaders::IsValid(targetThunk)) {
+      return false;
+    }
+
+    auto fnPtr = reinterpret_cast<Atomic<void*>*>(&targetThunk->u1.Function);
+
+    // Now we can just change out its pointer with our hook function.
+    AutoVirtualProtect prot(fnPtr, sizeof(void*), PAGE_EXECUTE_READWRITE);
+    if (!prot) {
+      return false;
+    }
+
+    // We do the exchange this way to ensure that *aOutOrigFunc is always valid
+    // once the atomic exchange has taken place.
+    void* tmp;
+
+    do {
+      tmp = *fnPtr;
+      *aOutOrigFunc = tmp;
+    } while (!fnPtr->compareExchange(tmp, aHookDest));
+
+    return true;
+  }
+
+  template <typename InterceptorT, typename FuncPtrT>
+  friend class FuncHook;
+};
+
+template <typename FuncPtrT>
+class MOZ_ONLY_USED_TO_AVOID_STATIC_CONSTRUCTORS
+    FuncHook<WindowsIATPatcher, FuncPtrT>
+        final {
+ public:
+  using ThisType = FuncHook<WindowsIATPatcher, FuncPtrT>;
+  using ReturnType = typename OriginalFunctionPtrTraits<FuncPtrT>::ReturnType;
+
+  constexpr FuncHook()
+      : mInitOnce(INIT_ONCE_STATIC_INIT),
+        mFromModule(nullptr),
+        mOrigFunc(nullptr) {}
+
+#if defined(DEBUG)
+  ~FuncHook() = default;
+#endif  // defined(DEBUG)
+
+  bool Set(const wchar_t* aFromModuleName, const char* aToModuleName,
+           const char* aFnName, FuncPtrT aHookDest) {
+    nsModuleHandle fromModule(::LoadLibraryW(aFromModuleName));
+    if (!fromModule) {
+      return false;
+    }
+
+    return Set(fromModule, aToModuleName, aFnName, aHookDest);
+  }
+
+  // We offer this overload in case the client wants finer-grained control over
+  // loading aFromModule.
+  bool Set(nsModuleHandle& aFromModule, const char* aToModuleName,
+           const char* aFnName, FuncPtrT aHookDest) {
+    LPVOID addHookOk = nullptr;
+    InitOnceContext ctx(this, aFromModule, aToModuleName, aFnName, aHookDest);
+
+    bool result = ::InitOnceExecuteOnce(&mInitOnce, &InitOnceCallback, &ctx,
+                                        &addHookOk) &&
+                  addHookOk;
+    if (!result) {
+      return result;
+    }
+
+    // If we successfully set the hook then we must retain a strong reference
+    // to the module that we modified.
+    mFromModule = aFromModule.disown();
+    return result;
+  }
+
+  explicit operator bool() const { return !!mOrigFunc; }
+
+  template <typename... ArgsType>
+  ReturnType operator()(ArgsType&&... aArgs) const {
+    return mOrigFunc(std::forward<ArgsType>(aArgs)...);
+  }
+
+  FuncPtrT GetStub() const { return mOrigFunc; }
+
+#if defined(DEBUG)
+  // One-time init stuff cannot be moved or copied
+  FuncHook(const FuncHook&) = delete;
+  FuncHook(FuncHook&&) = delete;
+  FuncHook& operator=(const FuncHook&) = delete;
+  FuncHook& operator=(FuncHook&& aOther) = delete;
+#endif  // defined(DEBUG)
+
+ private:
+  struct MOZ_RAII InitOnceContext final {
+    InitOnceContext(ThisType* aHook, const nsModuleHandle& aFromModule,
+                    const char* aToModuleName, const char* aFnName,
+                    FuncPtrT aHookDest)
+        : mHook(aHook),
+          mFromModule(aFromModule),
+          mToModuleName(aToModuleName),
+          mFnName(aFnName),
+          mHookDest(reinterpret_cast<void*>(aHookDest)) {}
+
+    ThisType* mHook;
+    const nsModuleHandle& mFromModule;
+    const char* mToModuleName;
+    const char* mFnName;
+    void* mHookDest;
+  };
+
+ private:
+  bool Apply(const nsModuleHandle& aFromModule, const char* aToModuleName,
+             const char* aFnName, void* aHookDest) {
+    return WindowsIATPatcher::AddHook(
+        aFromModule, aToModuleName, aFnName, aHookDest,
+        reinterpret_cast<Atomic<void*>*>(&mOrigFunc));
+  }
+
+  static BOOL CALLBACK InitOnceCallback(PINIT_ONCE aInitOnce, PVOID aParam,
+                                        PVOID* aOutContext) {
+    MOZ_ASSERT(aOutContext);
+
+    auto ctx = reinterpret_cast<InitOnceContext*>(aParam);
+    bool result = ctx->mHook->Apply(ctx->mFromModule, ctx->mToModuleName,
+                                    ctx->mFnName, ctx->mHookDest);
+
+    *aOutContext =
+        result ? reinterpret_cast<PVOID>(1U << INIT_ONCE_CTX_RESERVED_BITS)
+               : nullptr;
+    return TRUE;
+  }
+
+ private:
+  INIT_ONCE mInitOnce;
+  HMODULE mFromModule;  // never freed
+  FuncPtrT mOrigFunc;
+};
+
+/**
+ * This class applies an irreversible patch to jump to a target function
+ * without backing up the original function.
+ */
+class WindowsDllEntryPointInterceptor final {
+  using DllMainFn = BOOL(WINAPI*)(HINSTANCE, DWORD, LPVOID);
+  using MMPolicyT = MMPolicyInProcessEarlyStage;
+
+  MMPolicyT mMMPolicy;
+
+ public:
+  explicit WindowsDllEntryPointInterceptor(
+      const MMPolicyT::Kernel32Exports& aK32Exports)
+      : mMMPolicy(aK32Exports) {}
+
+  bool Set(const nt::PEHeaders& aHeaders, DllMainFn aDestination) {
+    if (!aHeaders) {
+      return false;
+    }
+
+    WindowsDllDetourPatcherPrimitive<MMPolicyT> patcher;
+    return patcher.AddIrreversibleHook(
+        mMMPolicy, aHeaders.GetEntryPoint(),
+        reinterpret_cast<uintptr_t>(aDestination));
+  }
+};
+
 }  // namespace interceptor
 
 using WindowsDllInterceptor = interceptor::WindowsDllInterceptor<>;
 
 using CrossProcessDllInterceptor = interceptor::WindowsDllInterceptor<
     mozilla::interceptor::VMSharingPolicyUnique<
-        mozilla::interceptor::MMPolicyOutOfProcess,
-        mozilla::interceptor::kDefaultTrampolineSize>>;
+        mozilla::interceptor::MMPolicyOutOfProcess>>;
+
+using WindowsIATPatcher = interceptor::WindowsIATPatcher;
 
 }  // namespace mozilla
 

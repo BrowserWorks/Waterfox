@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- Calendar Subscriptions Dialog -->
+<!ENTITY calendar.subscriptions.dialog.title                            "კალენდრების გამოწერა">
+<!ENTITY calendar.subscriptions.dialog.search.label.value               "კალენდრები რომლებიც შეიცავს:">
+<!ENTITY calendar.subscriptions.dialog.search.button.label              "ძიება">
+<!ENTITY calendar.subscriptions.dialog.select.label.value               "გამოსაწერი კალენდრების შერჩევა:">
+<!ENTITY calendar.subscriptions.dialog.subscribe.button.label           "გამოწერა">
+<!ENTITY calendar.subscriptions.dialog.unsubscribe.button.label         "გამოწერის გაუქმება">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.busy.label         "ძიება…">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.nomatches.label    "თანხვედრა ვერ მოიძებნა.">

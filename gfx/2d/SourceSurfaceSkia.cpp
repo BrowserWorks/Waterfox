@@ -12,10 +12,7 @@
 #include "skia/include/core/SkData.h"
 #include "mozilla/CheckedInt.h"
 
-using namespace std;
-
-namespace mozilla {
-namespace gfx {
+namespace mozilla::gfx {
 
 SourceSurfaceSkia::SourceSurfaceSkia()
     : mFormat(SurfaceFormat::UNKNOWN),
@@ -24,14 +21,33 @@ SourceSurfaceSkia::SourceSurfaceSkia()
       mChangeMutex("SourceSurfaceSkia::mChangeMutex"),
       mIsMapped(false) {}
 
-SourceSurfaceSkia::~SourceSurfaceSkia() {}
+SourceSurfaceSkia::~SourceSurfaceSkia() {
+  // if mIsMapped is true then mChangeMutex will be locked
+  // which will cause problems during destruction.
+  MOZ_RELEASE_ASSERT(!mIsMapped);
+}
 
 IntSize SourceSurfaceSkia::GetSize() const { return mSize; }
 
 SurfaceFormat SourceSurfaceSkia::GetFormat() const { return mFormat; }
 
-sk_sp<SkImage> SourceSurfaceSkia::GetImage() {
-  MutexAutoLock lock(mChangeMutex);
+sk_sp<SkImage> SourceSurfaceSkia::GetImage(Maybe<MutexAutoLock>* aLock) {
+  // If we were provided a lock object, we can let the caller access
+  // a shared SkImage and we know it won't go away while the lock is held.
+  // Otherwise we need to call DrawTargetWillChange to ensure we have our
+  // own SkImage.
+  if (aLock) {
+    MOZ_ASSERT(aLock->isNothing());
+    aLock->emplace(mChangeMutex);
+
+    // Now that we are locked, we can check mDrawTarget. If it's null, then
+    // we're not shared and we can unlock eagerly.
+    if (!mDrawTarget) {
+      aLock->reset();
+    }
+  } else {
+    DrawTargetWillChange();
+  }
   sk_sp<SkImage> image = mImage;
   return image;
 }
@@ -169,5 +185,4 @@ void SourceSurfaceSkia::DrawTargetWillChange() {
   }
 }
 
-}  // namespace gfx
-}  // namespace mozilla
+}  // namespace mozilla::gfx

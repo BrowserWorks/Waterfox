@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label          "Fail">
+<!ENTITY fileMenu.accesskey        "F">
+<!ENTITY newMenu.label            "Baru">
+<!ENTITY newMenu.accesskey          "B">
+
+<!ENTITY editMenu.label          "Edit">
+<!ENTITY editMenu.accesskey        "E">
+<!ENTITY undoCmd.label            "Batal">
+<!ENTITY undoCmd.accesskey          "B">
+<!ENTITY redoCmd.label            "Ulang">
+<!ENTITY redoCmd.accesskey          "U">
+<!ENTITY deleteCmd.label          "Buang">
+<!ENTITY deleteCmd.accesskey        "B">
+<!ENTITY preferencesCmd2.label "Pilihan">
+<!ENTITY preferencesCmd2.accesskey "P">
+<!ENTITY preferencesCmdUnix.label       "Keutamaan">
+<!ENTITY preferencesCmdUnix.accesskey     "n">
+
+<!ENTITY viewMenu.label          "Papar">
+<!ENTITY viewMenu.accesskey        "P">
+<!ENTITY viewToolbarsMenu.label        "Bar alatan">
+<!ENTITY viewToolbarsMenu.accesskey      "B">
+<!ENTITY showTaskbarCmd.label          "Bar Status">
+<!ENTITY showTaskbarCmd.accesskey        "u">
+
+<!ENTITY closeCmd.label      "Tutup">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "T">
+
+<!ENTITY quitApplicationCmd.label  "Keluar">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "u">
+
+<!ENTITY quitApplicationCmdUnix.label  "Keluar">
+<!ENTITY quitApplicationCmdUnix.accesskey  "K">
+
+<!ENTITY quitApplicationCmdMac.label  "Keluar &brandShortName;">
+<!ENTITY quitApplicationCmdMac.accesskey  "K">

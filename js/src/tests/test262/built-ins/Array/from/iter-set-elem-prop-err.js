@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 /*---
 esid: sec-array.from
-es6id: 22.1.2.1
 description: Error setting property on result value (traversed via iterator)
 info: |
     [...]
@@ -19,6 +18,7 @@ features: [Symbol.iterator]
 
 var C = function() {
   Object.defineProperty(this, '0', {
+    writable: true,
     configurable: false
   });
 };

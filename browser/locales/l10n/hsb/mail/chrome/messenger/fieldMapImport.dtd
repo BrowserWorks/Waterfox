@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Adresnik importować">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Importowane daty za datowu sadźbu: ">
+<!ENTITY fieldMapImport.next.label "Přichodny">
+<!ENTITY fieldMapImport.next.accesskey "i">
+<!ENTITY fieldMapImport.previous.label "Předchadny">
+<!ENTITY fieldMapImport.previous.accesskey "e">
+<!ENTITY fieldMapImport.text "Wužijće Horje a Dele, zo byšće adresnikowe pola nalěwo korektnym datam přirjadować, kotrež maja so naprawo importować. Znjemóžńće zapiski, kotrež nochceće importować.">
+<!ENTITY fieldMapImport.up.label "Horje">
+<!ENTITY fieldMapImport.up.accesskey "H">
+<!ENTITY fieldMapImport.down.label "Dele">
+<!ENTITY fieldMapImport.down.accesskey "D">
+<!ENTITY fieldMapImport.fieldListTitle "Pola adresnika">
+<!ENTITY fieldMapImport.dataTitle "Daty datoweje sadźby, kotrež maja so importować">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Prěnja datowa sadźba mjena polow wobsahuje">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "P">

@@ -68,6 +68,17 @@ void MacroAssembler::move32To64SignExtend(Register src, Register64 dest) {
   ma_sra(dest.high, dest.low, Imm32(31));
 }
 
+void MacroAssembler::move32ZeroExtendToPtr(Register src, Register dest) {
+  move32(src, dest);
+}
+
+// ===============================================================
+// Load instructions
+
+void MacroAssembler::load32SignExtendToPtr(const Address& src, Register dest) {
+  load32(src, dest);
+}
+
 // ===============================================================
 // Logical instructions
 
@@ -818,16 +829,11 @@ void MacroAssembler::branchTestSymbol(Condition cond, const ValueOperand& value,
   branchTestSymbol(cond, value.typeReg(), label);
 }
 
-void MacroAssembler::branchTestBigInt(Condition cond, Register tag,
-                                      Label* label) {
-  branchTestBigIntImpl(cond, tag, label);
-}
-
 void MacroAssembler::branchTestBigInt(Condition cond, const BaseIndex& address,
                                       Label* label) {
   SecondScratchRegisterScope scratch2(*this);
-  splitTag(value, scratch2);
-  branchTestBigInt(cond, scratch2, label);
+  Register tag = extractTag(address, scratch2);
+  branchTestBigInt(cond, tag, label);
 }
 
 void MacroAssembler::branchTestBigInt(Condition cond, const ValueOperand& value,
@@ -839,7 +845,7 @@ void MacroAssembler::branchTestBigIntTruthy(bool b, const ValueOperand& value,
                                             Label* label) {
   Register bi = value.payloadReg();
   SecondScratchRegisterScope scratch2(*this);
-  ma_lw(scratch2, Address(bi, BigInt::offsetOfLengthSignAndReservedBits()));
+  ma_lw(scratch2, Address(bi, BigInt::offsetOfDigitLength()));
   ma_b(scratch2, Imm32(0), label, b ? NotEqual : Equal);
 }
 

@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY mailListWindowAdd.title        "Naujas adresatų sąrašas">
+
+<!-- Labels and Access Keys -->
+<!ENTITY addToAddressBook.label         "Adresų knyga:">
+<!ENTITY addToAddressBook.accesskey     "k">
+<!ENTITY ListName.label                 "Sąrašo pavadinimas:">
+<!ENTITY ListName.accesskey             "v">
+<!ENTITY ListNickName.label             "Sąrašo santrumpa:">
+<!ENTITY ListNickName.accesskey         "s">
+<!ENTITY ListDescription.label          "Aprašas: ">
+<!ENTITY ListDescription.accesskey      "A">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "Įveskite el. pašto adresus, kad pridėtumėte juos į gavėjų sąrašą:">
+<!ENTITY AddressTitle.accesskey         "a">
+<!ENTITY UpButton.label                 "Pakelti">
+<!ENTITY DownButton.label               "Nuleisti">

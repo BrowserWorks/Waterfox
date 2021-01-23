@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY digitalSign.certificate.button "Velja…">
+<!ENTITY digitalSign.certificate.accesskey "V">
+<!ENTITY digitalSign.certificate_clear.button "Hreinsa">
+<!ENTITY digitalSign.certificate_clear.accesskey "H">
+<!ENTITY encryption.certificate.button "Velja…">
+<!ENTITY encryption.certificate.accesskey "e">
+<!ENTITY encryption.certificate_clear.button "Hreinsa">
+<!ENTITY encryption.certificate_clear.accesskey "r">
+<!ENTITY signingGroupTitle.label "Rafræn undirskrift">
+<!ENTITY signMessage.accesskey "d">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Veldu skilríki">
+<!ENTITY certPicker.info "Skilríki:">
+<!ENTITY certPicker.detailsLabel "Upplýsingar um valið skilríki:">
+

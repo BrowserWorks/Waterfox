@@ -4,7 +4,7 @@
 
 "use strict";
 
-const { Ci } = require("chrome");
+const { Ci, Cu } = require("chrome");
 const defer = require("devtools/shared/defer");
 const protocol = require("devtools/shared/protocol");
 const { LongStringActor } = require("devtools/server/actors/string");
@@ -15,6 +15,9 @@ const {
   styleSheetsSpec,
 } = require("devtools/shared/specs/stylesheets");
 const InspectorUtils = require("InspectorUtils");
+const {
+  getSourcemapBaseURL,
+} = require("devtools/server/actors/utils/source-map-utils");
 
 loader.lazyRequireGetter(
   this,
@@ -38,16 +41,6 @@ loader.lazyRequireGetter(
   "loadSheet",
   "devtools/shared/layout/utils",
   true
-);
-loader.lazyRequireGetter(
-  this,
-  "ReplayDebugger",
-  "devtools/server/actors/replay/debugger"
-);
-loader.lazyRequireGetter(
-  this,
-  "ReplayInspector",
-  "devtools/server/actors/replay/inspector"
 );
 
 var TRANSITION_PSEUDO_CLASS = ":-moz-styleeditor-transitioning";
@@ -100,7 +93,7 @@ var MediaRuleActor = protocol.ActorClassWithSpec(mediaRuleSpec, {
   },
 
   initialize: function(mediaRule, parentActor) {
-    protocol.Actor.prototype.initialize.call(this, null);
+    protocol.Actor.prototype.initialize.call(this, parentActor.conn);
 
     this.rawRule = mediaRule;
     this.parentActor = parentActor;
@@ -124,7 +117,11 @@ var MediaRuleActor = protocol.ActorClassWithSpec(mediaRuleSpec, {
 
   destroy: function() {
     if (this.mql) {
-      this.mql.removeListener(this._matchesChange);
+      // The content page may already be destroyed and mql be the dead wrapper.
+      if (!Cu.isDeadWrapper(this.mql)) {
+        this.mql.removeListener(this._matchesChange);
+      }
+      this.mql = null;
     }
 
     protocol.Actor.prototype.destroy.call(this);
@@ -172,7 +169,7 @@ exports.getSheetText = getSheetText;
 function getCSSCharset(sheet) {
   if (sheet) {
     // charset attribute of <link> or <style> element, if it exists
-    if (sheet.ownerNode && sheet.ownerNode.getAttribute) {
+    if (sheet.ownerNode?.getAttribute) {
       const linkCharset = sheet.ownerNode.getAttribute("charset");
       if (linkCharset != null) {
         return linkCharset;
@@ -180,7 +177,7 @@ function getCSSCharset(sheet) {
     }
 
     // charset of referring document.
-    if (sheet.ownerNode && sheet.ownerNode.ownerDocument.characterSet) {
+    if (sheet.ownerNode?.ownerDocument.characterSet) {
       return sheet.ownerNode.ownerDocument.characterSet;
     }
   }
@@ -207,13 +204,6 @@ async function fetchStylesheet(sheet, consoleActor) {
     if (result) {
       return result;
     }
-  }
-
-  // When replaying, fetch the stylesheets from the replaying process, so that
-  // we get the same sheets which were used when recording.
-  if (isReplaying) {
-    const dbg = new ReplayDebugger();
-    return dbg.replayingContent(href);
   }
 
   const options = {
@@ -267,7 +257,7 @@ var StyleSheetActor = protocol.ActorClassWithSpec(styleSheetSpec, {
    * Window of target
    */
   get window() {
-    return isReplaying ? ReplayInspector.window : this.parentActor.window;
+    return this.parentActor.window;
   },
 
   /**
@@ -340,10 +330,11 @@ var StyleSheetActor = protocol.ActorClassWithSpec(styleSheetSpec, {
         TRANSITION_PSEUDO_CLASS
       );
     }
+    protocol.Actor.prototype.destroy.call(this);
   },
 
   initialize: function(styleSheet, parentActor) {
-    protocol.Actor.prototype.initialize.call(this, null);
+    protocol.Actor.prototype.initialize.call(this, parentActor.conn);
 
     this.rawSheet = styleSheet;
     this.parentActor = parentActor;
@@ -447,6 +438,13 @@ var StyleSheetActor = protocol.ActorClassWithSpec(styleSheetSpec, {
       title: this.rawSheet.title,
       system: !CssLogic.isAuthorStylesheet(this.rawSheet),
       styleSheetIndex: this.styleSheetIndex,
+      sourceMapBaseURL: getSourcemapBaseURL(
+        // Technically resolveSourceURL should be used here alongside
+        // "this.rawSheet.sourceURL", but the style inspector does not support
+        // /*# sourceURL=*/ in CSS, so we're omitting it here (bug 880831).
+        this.href || docHref,
+        this.ownerWindow
+      ),
       sourceMapURL: this.rawSheet.sourceMapURL,
     };
 
@@ -649,7 +647,7 @@ var StyleSheetsActor = protocol.ActorClassWithSpec(styleSheetsSpec, {
   },
 
   initialize: function(conn, targetActor) {
-    protocol.Actor.prototype.initialize.call(this, null);
+    protocol.Actor.prototype.initialize.call(this, targetActor.conn);
 
     this.parentActor = targetActor;
 
@@ -726,9 +724,7 @@ var StyleSheetsActor = protocol.ActorClassWithSpec(styleSheetsSpec, {
   async getStyleSheets() {
     let actors = [];
 
-    const windows = isReplaying
-      ? [ReplayInspector.window]
-      : this.parentActor.windows;
+    const windows = this.parentActor.windows;
     for (const win of windows) {
       const sheets = await this._addStyleSheets(win);
       actors = actors.concat(sheets);

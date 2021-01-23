@@ -39,6 +39,7 @@ Var InstallOptionalExtensions
 Var ExtensionRecommender
 Var PageName
 Var PreventRebootRequired
+Var RegisterDefaultAgent
 
 ; Telemetry ping fields
 Var SetAsDefault
@@ -51,6 +52,7 @@ Var FinishPhaseStart
 Var FinishPhaseEnd
 Var InstallResult
 Var LaunchedNewApp
+Var PostSigningData
 
 ; By defining NO_STARTMENU_DIR an installer that doesn't provide an option for
 ; an application's Start Menu PROGRAMS directory and doesn't define the
@@ -96,9 +98,11 @@ VIAddVersionKey "OriginalFilename" "setup.exe"
 
 !insertmacro AddDisabledDDEHandlerValues
 !insertmacro ChangeMUIHeaderImage
+!insertmacro ChangeMUISidebarImage
 !insertmacro CheckForFilesInUse
 !insertmacro CleanUpdateDirectories
 !insertmacro CopyFilesFromDir
+!insertmacro CopyPostSigningData
 !insertmacro CreateRegKey
 !insertmacro GetFirstInstallPath
 !insertmacro GetLongPath
@@ -123,6 +127,11 @@ VIAddVersionKey "OriginalFilename" "setup.exe"
 !insertmacro UnloadUAC
 !insertmacro WriteRegStr2
 !insertmacro WriteRegDWORD2
+
+; This needs to be inserted after InitHashAppModelId because it uses
+; $AppUserModelID and the compiler can't handle using variables lexically before
+; they've been declared.
+!insertmacro GetInstallerRegistryPref
 
 !include shared.nsh
 
@@ -156,6 +165,11 @@ ShowInstDetails nevershow
 !define MUI_HEADERIMAGE
 !define MUI_HEADERIMAGE_RIGHT
 !define MUI_WELCOMEFINISHPAGE_BITMAP wizWatermark.bmp
+; By default MUI_BGCOLOR is hardcoded to FFFFFF, which is only correct if the
+; Windows theme or high-contrast mode hasn't changed it, so we need to
+; override that with GetSysColor(COLOR_WINDOW) (this string ends up getting
+; passed to SetCtlColors, which uses this custom syntax to mean that).
+!define MUI_BGCOLOR SYSCLR:WINDOW
 
 ; Use a right to left header image when the language is right to left
 !ifdef ${AB_CD}_rtl
@@ -169,6 +183,7 @@ ShowInstDetails nevershow
  */
 ; Welcome Page
 !define MUI_PAGE_CUSTOMFUNCTION_PRE preWelcome
+!define MUI_PAGE_CUSTOMFUNCTION_SHOW showWelcome
 !define MUI_PAGE_CUSTOMFUNCTION_LEAVE leaveWelcome
 !insertmacro MUI_PAGE_WELCOME
 
@@ -206,6 +221,7 @@ Page custom preSummary leaveSummary
 !define MUI_FINISHPAGE_RUN_FUNCTION LaunchApp
 !define MUI_FINISHPAGE_RUN_TEXT $(LAUNCH_TEXT)
 !define MUI_PAGE_CUSTOMFUNCTION_PRE preFinish
+!define MUI_PAGE_CUSTOMFUNCTION_SHOW showFinish
 !define MUI_PAGE_CUSTOMFUNCTION_LEAVE postFinish
 !insertmacro MUI_PAGE_FINISH
 
@@ -333,17 +349,16 @@ Section "-Application" APP_IDX
   Var /GLOBAL D5
   Var /GLOBAL D6
   Var /GLOBAL D7
-  
 
   ${If} ${FileExists} "$INSTDIR\distribution\distribution.ini"
     ${GetTime} "" "LS" $D1  $D2 $D3 $D4 $D5 $D6 $D7
     !insertmacro _ReplaceInFile "$INSTDIR\distribution\distribution.ini" "%DATE%" "$D1$D2$D3"
-					 
+
     ${GetParameters} $5
     ${GetOptions} $5 "/WFID=" $6
     !insertmacro _ReplaceInFile "$INSTDIR\distribution\distribution.ini" "VAL1" "$6"
     !insertmacro _ReplaceInFile "$INSTDIR\distribution\searchplugins\common\bing.xml" "VAL1" "$6"
-					  
+
     ${GetParameters} $7
     ${GetOptions} $7 "/PARTNERID=" $9
     !insertmacro _ReplaceInFile "$INSTDIR\distribution\distribution.ini" "VAL2" "$9"
@@ -500,6 +515,17 @@ Section "-Application" APP_IDX
   ${EndIf}
 !endif
 
+!ifdef MOZ_UPDATE_AGENT
+  ${PushRegisterUpdateAgentTaskCommand} "register"
+  Pop $0
+  ${If} "$0" != ""
+    ${LogMsg} "Registering update agent task: $0"
+    nsExec::Exec $0
+    Pop $0
+    ${LogMsg} "nsExec::Exec returned $0"
+  ${EndIf}
+!endif
+
   ; These need special handling on uninstall since they may be overwritten by
   ; an install into a different location.
   StrCpy $0 "Software\Microsoft\Windows\CurrentVersion\App Paths\${FileMainEXE}"
@@ -520,7 +546,7 @@ Section "-Application" APP_IDX
   ; Launcher telemetry is opt-out, so we always enable it by default in new
   ; installs. We always use HKCU because this value is a reflection of a pref
   ; from the user profile. While this is not a perfect abstraction (given the
-  ; possibility of multiple Firefox profiles owned by the same Windows user), it
+  ; possibility of multiple Waterfox profiles owned by the same Windows user), it
   ; is more accurate than a machine-wide setting, and should be accurate in the
   ; majority of cases.
   WriteRegDWORD HKCU ${MOZ_LAUNCHER_SUBKEY} "$INSTDIR\${FileMainEXE}|Telemetry" 1
@@ -706,6 +732,35 @@ Section "-Application" APP_IDX
     ${AddMaintCertKeys}
   ${EndIf}
 !endif
+
+!ifdef MOZ_DEFAULT_BROWSER_AGENT
+  ${If} $RegisterDefaultAgent != "0"
+    ExecWait '"$INSTDIR\default-browser-agent.exe" register-task $AppUserModelID' $0
+
+    ${If} $0 == 0x80070534 ; HRESULT_FROM_WIN32(ERROR_NONE_MAPPED)
+      ; The agent sometimes returns this error from trying to register the task
+      ; when we're running out of the MSI. The error is cryptic, but I believe
+      ; the cause is the fact that the MSI service runs us as SYSTEM, so
+      ; proxying the invocation through the shell gets the task registered as
+      ; the interactive user, which is what we want.
+      ; We use ExecInExplorer only as a fallback instead of always, because it
+      ; doesn't work in all environments; see bug 1602726.
+      ExecInExplorer::Exec "$INSTDIR\default-browser-agent.exe" \
+                           /cmdargs "register-task $AppUserModelID"
+      ; We don't need Exec's return value, but don't leave it on the stack.
+      Pop $0
+    ${EndIf}
+
+    ${If} $RegisterDefaultAgent == ""
+      ; If the variable was unset, force it to a good value.
+      StrCpy $RegisterDefaultAgent 1
+    ${EndIf}
+  ${EndIf}
+  ; Remember whether we were told to skip registering the agent, so that updates
+  ; won't try to create a registration when they don't find an existing one.
+  WriteRegDWORD HKCU "Software\Waterfox\${AppName}\Installer\$AppUserModelID" \
+                     "DidRegisterDefaultBrowserAgent" $RegisterDefaultAgent
+!endif
 SectionEnd
 
 ; Cleanup operations to perform at the end of the installation.
@@ -713,6 +768,23 @@ Section "-InstallEndCleanup"
   SetDetailsPrint both
   DetailPrint "$(STATUS_CLEANUP)"
   SetDetailsPrint none
+
+  ; Maybe copy the post-signing data?
+  StrCpy $PostSigningData ""
+  ${GetParameters} $0
+  ClearErrors
+  ; We don't get post-signing data from the MSI.
+  ${GetOptions} $0 "/LaunchedFromMSI" $1
+  ${If} ${Errors}
+    ; The stub will handle copying the data if it ran us.
+    ClearErrors
+    ${GetOptions} $0 "/LaunchedFromStub" $1
+    ${If} ${Errors}
+      ; We're being run standalone, copy the data.
+      ${CopyPostSigningData}
+      Pop $PostSigningData
+    ${EndIf}
+  ${EndIf}
 
   ${Unless} ${Silent}
     ClearErrors
@@ -770,7 +842,7 @@ Section "-InstallEndCleanup"
   Call AddFirewallEntries
 
   ; Refresh desktop icons
-  System::Call "shell32::SHChangeNotify(i ${SHCNE_ASSOCCHANGED}, i ${SHCNF_DWORDFLUSH}, i 0, i 0)"
+  ${RefreshShellIcons}
 
   ${InstallEndCleanupCommon}
 
@@ -784,7 +856,7 @@ Section "-InstallEndCleanup"
     ; user is an admin.
     UAC::IsAdmin
     ${If} "$0" == "1"
-      ; When a reboot is required give SHChangeNotify time to finish the
+      ; When a reboot is required give RefreshShellIcons time to finish the
       ; refreshing the icons so the OS doesn't display the icons from helper.exe
       Sleep 10000
       ${LogHeader} "Reboot Required To Finish Installation"
@@ -927,7 +999,7 @@ Function CheckExistingInstall
 
     Banner::show /NOUNLOAD "$(BANNER_CHECK_EXISTING)"
 
-    ${If} "$TmpVal" == "FoundMessageWindow"
+    ${If} "$TmpVal" == "FoundAppWindow"
       Sleep 5000
     ${EndIf}
 
@@ -947,24 +1019,24 @@ Function CheckExistingInstall
     GetDlgItem $0 $HWNDPARENT 3 ; Back button
     EnableWindow $0 1
 
+    ; If there are files in use $TmpVal will be "true"
     ${If} "$TmpVal" == "true"
-      StrCpy $TmpVal "FoundMessageWindow"
-      ${ManualCloseAppPrompt} "${WindowClass}" "$(WARN_MANUALLY_CLOSE_APP_INSTALL)"
+      ; If it finds a window of the right class, then ManualCloseAppPrompt will
+      ; abort leaving the value of $TmpVal set to "FoundAppWindow".
+      StrCpy $TmpVal "FoundAppWindow"
+      ${ManualCloseAppPrompt} "${MainWindowClass}" "$(WARN_MANUALLY_CLOSE_APP_INSTALL)"
+      ${ManualCloseAppPrompt} "${DialogWindowClass}" "$(WARN_MANUALLY_CLOSE_APP_INSTALL)"
       StrCpy $TmpVal "true"
     ${EndIf}
   ${EndIf}
 FunctionEnd
 
 Function LaunchApp
-!ifndef DEV_EDITION
-  ${ManualCloseAppPrompt} "${WindowClass}" "$(WARN_MANUALLY_CLOSE_APP_LAUNCH)"
-!endif
-
   ClearErrors
   ${GetParameters} $0
   ${GetOptions} "$0" "/UAC:" $1
   ${If} ${Errors}
-    ${ExecAndWaitForInputIdle} "$\"$INSTDIR\${FileMainEXE}$\""
+    ${ExecAndWaitForInputIdle} "$\"$INSTDIR\${FileMainEXE}$\" -first-startup"
   ${Else}
     GetFunctionAddress $0 LaunchAppFromElevatedProcess
     UAC::ExecCodeSegment $0
@@ -977,7 +1049,7 @@ Function LaunchAppFromElevatedProcess
   ; Set our current working directory to the application's install directory
   ; otherwise the 7-Zip temp directory will be in use and won't be deleted.
   SetOutPath "$INSTDIR"
-  ${ExecAndWaitForInputIdle} "$\"$INSTDIR\${FileMainEXE}$\""
+  ${ExecAndWaitForInputIdle} "$\"$INSTDIR\${FileMainEXE}$\" -first-startup"
 FunctionEnd
 
 Function SendPing
@@ -1075,7 +1147,7 @@ Function SendPing
     ${If} $1 == $INSTDIR
       nsJSON::Set /tree ping "Data" "new_default" /value true
     ${Else}
-      StrCpy $0 "$0" "" -11 # 11 == length of "waterfox.exe"
+      StrCpy $0 "$0" "" -12 # 12 == length of "waterfox.exe"
       ${If} "$0" == "${FileMainEXE}"
         nsJSON::Set /tree ping "Data" "old_default" /value true
       ${EndIf}
@@ -1130,6 +1202,16 @@ Function SendPing
     nsJSON::Set /tree ping "Data" "finish_time" /value "$1"
   ${EndIf}
 
+  ; $PostSigningData should only be empty if we didn't try to copy the
+  ; postSigningData file at all. If we did try and the file was missing
+  ; or empty, this will be "0", and for consistency with the stub we will
+  ; still submit it.
+  ${If} $PostSigningData != ""
+    nsJSON::Quote /always $PostSigningData
+    Pop $0
+    nsJSON::Set /tree ping "Data" "attribution" /value $0
+  ${EndIf}
+
   nsJSON::Set /tree ping "Data" "new_launched" /value "$LaunchedNewApp"
 
   nsJSON::Set /tree ping "Data" "succeeded" /value false
@@ -1137,6 +1219,12 @@ Function SendPing
     nsJSON::Set /tree ping "Data" "user_cancelled" /value true
   ${ElseIf} $InstallResult == "success"
     nsJSON::Set /tree ping "Data" "succeeded" /value true
+  ${EndIf}
+
+  ${If} ${Silent}
+    nsJSON::Set /tree ping "Data" "silent" /value true
+  ${Else}
+    nsJSON::Set /tree ping "Data" "silent" /value false
   ${EndIf}
 
   ; Send the ping request. This call will block until a response is received,
@@ -1179,6 +1267,21 @@ Function preWelcome
   Pop $IntroPhaseStart
 FunctionEnd
 
+Function showWelcome
+  ; The welcome and finish pages don't get the correct colors for their labels
+  ; like the other pages do, presumably because they're built by filling in an
+  ; InstallOptions .ini file instead of from a dialog resource like the others.
+  ; Field 2 is the header and Field 3 is the body text.
+  ReadINIStr $0 "$PLUGINSDIR\ioSpecial.ini" "Field 2" "HWND"
+  SetCtlColors $0 SYSCLR:WINDOWTEXT SYSCLR:WINDOW
+  ReadINIStr $0 "$PLUGINSDIR\ioSpecial.ini" "Field 3" "HWND"
+  SetCtlColors $0 SYSCLR:WINDOWTEXT SYSCLR:WINDOW
+
+  ; We need to overwrite the sidebar image so that we get it drawn with proper
+  ; scaling if the display is scaled at anything above 100%.
+  ${ChangeMUISidebarImage} "$PLUGINSDIR\modern-wizard.bmp"
+FunctionEnd
+
 Function leaveWelcome
   ; Bring back the header bitmap for the next pages.
   GetDlgItem $0 $HWNDPARENT 1046
@@ -1189,13 +1292,19 @@ Function preOptions
   System::Call "kernel32::GetTickCount()l .s"
   Pop $OptionsPhaseStart
 
+  ; The header and subheader on the wizard pages don't get the correct text
+  ; color by default for some reason, even though the other controls do.
+  GetDlgItem $0 $HWNDPARENT 1037
+  SetCtlColors $0 SYSCLR:WINDOWTEXT SYSCLR:WINDOW
+  GetDlgItem $0 $HWNDPARENT 1038
+  SetCtlColors $0 SYSCLR:WINDOWTEXT SYSCLR:WINDOW
+
   StrCpy $PageName "Options"
   ${If} ${FileExists} "$EXEDIR\core\distribution\modern-header.bmp"
-  ${AndIf} $hHeaderBitmap == ""
     Delete "$PLUGINSDIR\modern-header.bmp"
     CopyFiles /SILENT "$EXEDIR\core\distribution\modern-header.bmp" "$PLUGINSDIR\modern-header.bmp"
-    ${ChangeMUIHeaderImage} "$PLUGINSDIR\modern-header.bmp"
   ${EndIf}
+  ${ChangeMUIHeaderImage} "$PLUGINSDIR\modern-header.bmp"
   !insertmacro MUI_HEADER_TEXT "$(OPTIONS_PAGE_TITLE)" "$(OPTIONS_PAGE_SUBTITLE)"
   !insertmacro MUI_INSTALLOPTIONS_DISPLAY "options.ini"
 FunctionEnd
@@ -1261,7 +1370,7 @@ FunctionEnd
 !ifdef MOZ_MAINTENANCE_SERVICE
 Function preComponents
   ; If the service already exists, don't show this page
-  ServicesHelper::IsInstalled "MozillaMaintenance"
+  ServicesHelper::IsInstalled "WaterfoxMaintenance"
   Pop $R9
   ${If} $R9 == 1
     ; The service already exists so don't show this page.
@@ -1469,9 +1578,6 @@ Function preSummary
     ; Check if Firefox is the http handler for this user.
     SetShellVarContext current ; Set SHCTX to the current user
     ${IsHandlerForInstallDir} "http" $R9
-    ${If} $TmpVal == "HKLM"
-      SetShellVarContext all ; Set SHCTX to all users
-    ${EndIf}
     ; If Firefox isn't the http handler for this user show the option to set
     ; Firefox as the default browser.
     ${If} "$R9" != "true"
@@ -1530,7 +1636,8 @@ Function leaveSummary
   ClearErrors
   ${DeleteFile} "$INSTDIR\${FileMainEXE}"
   ${If} ${Errors}
-    ${ManualCloseAppPrompt} "${WindowClass}" "$(WARN_MANUALLY_CLOSE_APP_INSTALL)"
+    ${ManualCloseAppPrompt} "${MainWindowClass}" "$(WARN_MANUALLY_CLOSE_APP_INSTALL)"
+    ${ManualCloseAppPrompt} "${DialogWindowClass}" "$(WARN_MANUALLY_CLOSE_APP_INSTALL)"
   ${EndIf}
 FunctionEnd
 
@@ -1547,6 +1654,24 @@ Function preFinish
   ; We don't want the header bitmap showing on the finish page.
   GetDlgItem $0 $HWNDPARENT 1046
   ShowWindow $0 ${SW_HIDE}
+FunctionEnd
+
+Function showFinish
+  ReadINIStr $0 "$PLUGINSDIR\ioSpecial.ini" "Field 2" "HWND"
+  SetCtlColors $0 SYSCLR:WINDOWTEXT SYSCLR:WINDOW
+
+  ReadINIStr $0 "$PLUGINSDIR\ioSpecial.ini" "Field 3" "HWND"
+  SetCtlColors $0 SYSCLR:WINDOWTEXT SYSCLR:WINDOW
+
+  ; We need to overwrite the sidebar image so that we get it drawn with proper
+  ; scaling if the display is scaled at anything above 100%.
+  ${ChangeMUISidebarImage} "$PLUGINSDIR\modern-wizard.bmp"
+
+  ; Field 4 is the launch checkbox. Since it's a checkbox, we need to
+  ; clear the theme from it before we can set its background color.
+  ReadINIStr $0 "$PLUGINSDIR\ioSpecial.ini" "Field 4" "HWND"
+  System::Call 'uxtheme::SetWindowTheme(i $0, w " ", w " ")'
+  SetCtlColors $0 SYSCLR:WINDOWTEXT SYSCLR:WINDOW
 FunctionEnd
 
 Function postFinish

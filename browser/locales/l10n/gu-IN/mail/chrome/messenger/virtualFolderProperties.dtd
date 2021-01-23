@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "નવું સંગ્રહિત શોધ ફોલ્ડર">
+<!ENTITY name.label                 "નામ:">
+<!ENTITY name.accesskey             "n">
+<!ENTITY description.label          "ના ઉપફોલ્ડર તરીકે બનાવો:">
+<!ENTITY description.accesskey      "C">
+
+<!ENTITY searchTermCaption.label "આ સંગ્રહિત શોધ ફોલ્ડર માટે વપરાયેલ શોધ વિચાર રૂપરેખાંકિત કરો: ">
+
+<!ENTITY folderSelectionCaption.label "શોધવા માટે ફોલ્ડરો પસંદ કરો: ">
+<!ENTITY chooseFoldersButton.label "પસંદ કરો...">
+<!ENTITY chooseFoldersButton.accesskey "h">
+
+<!ENTITY searchOnline.label "ઓનલાઈન શોધો (IMAP અને સમાચારો ફોલ્ડરો માટે સંપૂર્ણ પરિણામ આપે છે પરંતુ ફોલ્ડર ખોલવા માટેનો સમય વધારે છે)">
+<!ENTITY searchOnline.accesskey "O">

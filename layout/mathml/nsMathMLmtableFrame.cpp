@@ -10,7 +10,7 @@
 #include "nsStyleConsts.h"
 #include "nsNameSpaceManager.h"
 #include "nsCSSRendering.h"
-#include "nsMathMLElement.h"
+#include "mozilla/dom/MathMLElement.h"
 
 #include "nsTArray.h"
 #include "nsTableFrame.h"
@@ -25,6 +25,7 @@
 
 using namespace mozilla;
 using namespace mozilla::image;
+using mozilla::dom::Element;
 
 //
 // <mtable> -- table or matrix - implementation
@@ -33,33 +34,40 @@ using namespace mozilla::image;
 static int8_t ParseStyleValue(nsAtom* aAttribute,
                               const nsAString& aAttributeValue) {
   if (aAttribute == nsGkAtoms::rowalign_) {
-    if (aAttributeValue.EqualsLiteral("top"))
+    if (aAttributeValue.EqualsLiteral("top")) {
       return static_cast<int8_t>(StyleVerticalAlignKeyword::Top);
-    else if (aAttributeValue.EqualsLiteral("bottom"))
+    }
+    if (aAttributeValue.EqualsLiteral("bottom")) {
       return static_cast<int8_t>(StyleVerticalAlignKeyword::Bottom);
-    else if (aAttributeValue.EqualsLiteral("center"))
+    }
+    if (aAttributeValue.EqualsLiteral("center")) {
       return static_cast<int8_t>(StyleVerticalAlignKeyword::Middle);
-    else
-      return static_cast<int8_t>(StyleVerticalAlignKeyword::Baseline);
-  } else if (aAttribute == nsGkAtoms::columnalign_) {
-    if (aAttributeValue.EqualsLiteral("left"))
-      return NS_STYLE_TEXT_ALIGN_LEFT;
-    else if (aAttributeValue.EqualsLiteral("right"))
-      return NS_STYLE_TEXT_ALIGN_RIGHT;
-    else
-      return NS_STYLE_TEXT_ALIGN_CENTER;
-  } else if (aAttribute == nsGkAtoms::rowlines_ ||
-             aAttribute == nsGkAtoms::columnlines_) {
-    if (aAttributeValue.EqualsLiteral("solid"))
-      return static_cast<int8_t>(StyleBorderStyle::Solid);
-    else if (aAttributeValue.EqualsLiteral("dashed"))
-      return static_cast<int8_t>(StyleBorderStyle::Dashed);
-    else
-      return static_cast<int8_t>(StyleBorderStyle::None);
-  } else {
-    MOZ_CRASH("Unrecognized attribute.");
+    }
+    return static_cast<int8_t>(StyleVerticalAlignKeyword::Baseline);
   }
 
+  if (aAttribute == nsGkAtoms::columnalign_) {
+    if (aAttributeValue.EqualsLiteral("left")) {
+      return int8_t(StyleTextAlign::Left);
+    }
+    if (aAttributeValue.EqualsLiteral("right")) {
+      return int8_t(StyleTextAlign::Right);
+    }
+    return int8_t(StyleTextAlign::Center);
+  }
+
+  if (aAttribute == nsGkAtoms::rowlines_ ||
+      aAttribute == nsGkAtoms::columnlines_) {
+    if (aAttributeValue.EqualsLiteral("solid")) {
+      return static_cast<int8_t>(StyleBorderStyle::Solid);
+    }
+    if (aAttributeValue.EqualsLiteral("dashed")) {
+      return static_cast<int8_t>(StyleBorderStyle::Dashed);
+    }
+    return static_cast<int8_t>(StyleBorderStyle::None);
+  }
+
+  MOZ_CRASH("Unrecognized attribute.");
   return -1;
 }
 
@@ -113,13 +121,15 @@ static nsresult ReportParseError(nsIFrame* aFrame, const char16_t* aAttribute,
                                  const char16_t* aValue) {
   nsIContent* content = aFrame->GetContent();
 
-  const char16_t* params[] = {
-      aValue, aAttribute, content->NodeInfo()->NameAtom()->GetUTF16String()};
+  AutoTArray<nsString, 3> params;
+  params.AppendElement(aValue);
+  params.AppendElement(aAttribute);
+  params.AppendElement(nsDependentAtomString(content->NodeInfo()->NameAtom()));
 
   return nsContentUtils::ReportToConsole(
       nsIScriptError::errorFlag, NS_LITERAL_CSTRING("Layout: MathML"),
       content->OwnerDoc(), nsContentUtils::eMATHML_PROPERTIES,
-      "AttributeParsingError", params, 3);
+      "AttributeParsingError", params);
 }
 
 // Each rowalign='top bottom' or columnalign='left right center' (from
@@ -452,7 +462,7 @@ static void ExtractSpacingValues(const nsAString& aString, nsAtom* aAttribute,
         newValue = aDefaultValue0;
       }
       nsMathMLFrame::ParseNumericValue(
-          valueString, &newValue, nsMathMLElement::PARSE_ALLOW_UNITLESS,
+          valueString, &newValue, dom::MathMLElement::PARSE_ALLOW_UNITLESS,
           presContext, computedStyle, aFontSizeInflation);
       aSpacingArray.AppendElement(newValue);
 
@@ -564,7 +574,7 @@ static void MapAllAttributesIntoCSS(nsMathMLmtableFrame* aTableFrame) {
 
       for (nsIFrame* cellFrame : rowFrame->PrincipalChildList()) {
         DEBUG_VERIFY_THAT_FRAME_IS(cellFrame, TableCell);
-        if (IsTableCell(cellFrame->Type())) {
+        if (cellFrame->IsTableCellFrame()) {
           // Map cell rowalign.
           ParseFrameAttribute(cellFrame, nsGkAtoms::rowalign_, false);
           // Map row columnalign.
@@ -661,7 +671,7 @@ nsContainerFrame* NS_NewMathMLmtableOuterFrame(PresShell* aPresShell,
 
 NS_IMPL_FRAMEARENA_HELPERS(nsMathMLmtableWrapperFrame)
 
-nsMathMLmtableWrapperFrame::~nsMathMLmtableWrapperFrame() {}
+nsMathMLmtableWrapperFrame::~nsMathMLmtableWrapperFrame() = default;
 
 nsresult nsMathMLmtableWrapperFrame::AttributeChanged(int32_t aNameSpaceID,
                                                       nsAtom* aAttribute,
@@ -723,7 +733,7 @@ nsresult nsMathMLmtableWrapperFrame::AttributeChanged(int32_t aNameSpaceID,
              aAttribute == nsGkAtoms::columnalign_ ||
              aAttribute == nsGkAtoms::columnlines_) {
     // clear any cached property list for this table
-    tableFrame->DeleteProperty(AttributeToProperty(aAttribute));
+    tableFrame->RemoveProperty(AttributeToProperty(aAttribute));
     // Reparse the new attribute on the table.
     ParseFrameAttribute(tableFrame, aAttribute, true);
   } else {
@@ -886,7 +896,7 @@ nsContainerFrame* NS_NewMathMLmtableFrame(PresShell* aPresShell,
 
 NS_IMPL_FRAMEARENA_HELPERS(nsMathMLmtableFrame)
 
-nsMathMLmtableFrame::~nsMathMLmtableFrame() {}
+nsMathMLmtableFrame::~nsMathMLmtableFrame() = default;
 
 void nsMathMLmtableFrame::SetInitialChildList(ChildListID aListID,
                                               nsFrameList& aChildList) {
@@ -1041,7 +1051,7 @@ nsContainerFrame* NS_NewMathMLmtrFrame(PresShell* aPresShell,
 
 NS_IMPL_FRAMEARENA_HELPERS(nsMathMLmtrFrame)
 
-nsMathMLmtrFrame::~nsMathMLmtrFrame() {}
+nsMathMLmtrFrame::~nsMathMLmtrFrame() = default;
 
 nsresult nsMathMLmtrFrame::AttributeChanged(int32_t aNameSpaceID,
                                             nsAtom* aAttribute,
@@ -1058,7 +1068,7 @@ nsresult nsMathMLmtrFrame::AttributeChanged(int32_t aNameSpaceID,
     return NS_OK;
   }
 
-  DeleteProperty(AttributeToProperty(aAttribute));
+  RemoveProperty(AttributeToProperty(aAttribute));
 
   bool allowMultiValues = (aAttribute == nsGkAtoms::columnalign_);
 
@@ -1083,7 +1093,7 @@ nsContainerFrame* NS_NewMathMLmtdFrame(PresShell* aPresShell,
 
 NS_IMPL_FRAMEARENA_HELPERS(nsMathMLmtdFrame)
 
-nsMathMLmtdFrame::~nsMathMLmtdFrame() {}
+nsMathMLmtdFrame::~nsMathMLmtdFrame() = default;
 
 void nsMathMLmtdFrame::Init(nsIContent* aContent, nsContainerFrame* aParent,
                             nsIFrame* aPrevInFlow) {
@@ -1106,7 +1116,7 @@ nsresult nsMathMLmtdFrame::AttributeChanged(int32_t aNameSpaceID,
 
   if (aAttribute == nsGkAtoms::rowalign_ ||
       aAttribute == nsGkAtoms::columnalign_) {
-    DeleteProperty(AttributeToProperty(aAttribute));
+    RemoveProperty(AttributeToProperty(aAttribute));
 
     // Reparse the attribute.
     ParseFrameAttribute(this, aAttribute, false);
@@ -1199,7 +1209,7 @@ void nsMathMLmtdInnerFrame::Reflow(nsPresContext* aPresContext,
 
 const nsStyleText* nsMathMLmtdInnerFrame::StyleTextForLineLayout() {
   // Set the default alignment in case nothing was specified
-  uint8_t alignment = StyleText()->mTextAlign;
+  auto alignment = uint8_t(StyleText()->mTextAlign);
 
   nsTArray<int8_t>* alignmentList =
       FindCellProperty(this, ColumnAlignProperty());
@@ -1216,7 +1226,7 @@ const nsStyleText* nsMathMLmtdInnerFrame::StyleTextForLineLayout() {
       alignment = alignmentList->ElementAt(alignmentList->Length() - 1);
   }
 
-  mUniqueStyleText->mTextAlign = alignment;
+  mUniqueStyleText->mTextAlign = StyleTextAlign(alignment);
   return mUniqueStyleText.get();
 }
 

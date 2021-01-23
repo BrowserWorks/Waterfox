@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "અદ્યતન ફેરફાર...">
+<!ENTITY AdvancedEditButton.accessKey "E">
+<!ENTITY AdvancedEditButton.tooltip "HTML લક્ષણો, શૈલી લક્ષણો, અને જાવા સ્ક્રિપ્ટ એડ-ઓન અથવા સુધારો">
+<!ENTITY chooseFileButton.label "ફાઈલ પસંદ કરો...">
+<!ENTITY chooseFileButton.accessKey "F">
+<!ENTITY chooseFileLinkButton.label "ફાઈલ પસંદ કરો...">
+<!ENTITY chooseFileLinkButton.accessKey "o">
+<!ENTITY makeUrlRelative.label "URL એ પાનાંના સ્થાનને સંબંધિત છે">
+<!ENTITY makeUrlRelative.accessKey "r">
+<!ENTITY makeUrlRelative.tooltip "સંબંધિત અને ચોક્કસ URL વચ્ચે બદલો. આને બદલવા માટે તમારે પ્રથમ આ પાનાંને સંગ્રહવું જ પડશે.">
+
+<!-- Shared by Link and Image dialogs -->
+<!ENTITY LinkURLEditField.label "વેબ પાનાંનું સ્થાન, સ્થાનિક ફાઈલ દાખલ કરો, અથવા નામવાળું એન્કર પસંદ કરો અથવા પોપઅપ યાદીમાંથી મથાળું પસંદ કરો:">
+<!ENTITY LinkURLEditField.accessKey "L">

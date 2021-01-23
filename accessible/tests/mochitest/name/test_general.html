@@ -95,6 +95,11 @@
       // Gets the name from @title, ignore whitespace content
       testName("from_label_ignore_ws_subtree", "about");
 
+      // role="alert" doesn't get name from subtree...
+      testName("alert", null);
+      // but the subtree is used if referenced by aria-labelledby.
+      testName("inputLabelledByAlert", "Error");
+
       // ////////////////////////////////////////////////////////////////////////
       // label element
 
@@ -220,6 +225,30 @@
       // tests for duplicate announcement of content
 
       testName("test_note", null);
+
+      // //////////////////////////////////////////////////////////////////////
+      // Tests for name from sub tree of tr element.
+
+      // By default, we want no name.
+      testName("NoNameForTR", null);
+      testName("NoNameForNonStandardTR", null);
+
+      // But we want it if the tr has an ARIA role.
+      testName("NameForTRBecauseStrongARIA", "a b");
+
+      // But not if it is a weak (landmark) ARIA role
+      testName("NoNameForTRBecauseWeakARIA", null);
+
+      // Name from sub tree of grouping if requested by other accessible.
+      testName("grouping", null);
+      testName("requested_name_from_grouping", "label");
+      testName("listitem_containing_block_tbody", "label");
+      // Groupings shouldn't be included when calculating from the subtree of
+      // a treeitem.
+      testName("treeitem_containing_grouping", "root");
+
+      // Name from subtree of grouping labelled by an ancestor.
+      testName("grouping_labelledby_ancestor", "label");
 
       SimpleTest.finish();
     }
@@ -427,6 +456,10 @@
   <!-- no name from subtree because it holds whitespaces only -->
   <a id="from_label_ignore_ws_subtree" href="about:mozilla" title="about">&nbsp;&nbsp;  </a>
 
+  <!-- Don't use subtree unless referenced by aria-labelledby. -->
+  <div id="alert" role="alert">Error</div>
+  <input type="text" id="inputLabelledByAlert" aria-labelledby="alert">
+
   <!-- label element, label contains control -->
   <label>text<button id="btn_label_inside">10</button>text</label>
   <br/>
@@ -631,5 +664,43 @@
   <!-- duplicate announcement -->
   <div id="test_note" role="note">subtree</div>
 
+  <!-- No name for tr from its sub tree -->
+  <table><tr id="NoNameForTR"><th>a</th><td>b</td></tr></table>
+  <table style="display: block;">
+    <tr id="NoNameForNonStandardTR" style="display:block;">
+      <th>a</th><td>b</td>
+    </tr>
+  </table>
+
+  <!-- Name from sub tree of tr, because it has a strong ARIA role -->
+  <table><tr id="NameForTRBecauseStrongARIA" role="row"><th>a</th><td>b</td></tr></table>
+
+  <!-- No name for tr because of weak (landmark) role -->
+  <table><tr id="NoNameForTRBecauseWeakARIA" role="main"><th>a</th><td>b</td></tr></table>
+
+  <!-- Name from subtree of grouping if requested by other object -->
+  <div id="grouping" role="group">label</div>
+  <button id="requested_name_from_grouping"aria-labelledby="grouping"></button>
+  <!-- Name from sub tree of tbody marked as display:block;, which is also a grouping -->
+  <div id="listitem_containing_block_tbody" role="listitem">
+    <table>
+      <tbody style="display: block;">
+        <tr><td>label</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <!-- Name from subtree of treeitem containing grouping -->
+  <div id="treeitem_containing_grouping" role="treeitem" aria-level="1" aria-expanded="true">root
+    <div role="group">
+      <div role="treeitem" aria-level="2">sub</div>
+    </div>
+  </div>
+
+  <!-- Name from subtree of grouping labelled by an ancestor. -->
+  <div id="grouping_ancestor_label">label
+    <div id="grouping_labelledby_ancestor" role="group" aria-labelledby="grouping_ancestor_label">
+      This content should not be included in the grouping's label.
+    </div>
+  </div>
 </body>
 </html>

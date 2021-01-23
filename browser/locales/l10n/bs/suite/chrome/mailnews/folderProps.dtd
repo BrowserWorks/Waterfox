@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Svojstva">
+
+<!ENTITY generalInfo.label                       "Opšti podaci">
+<!ENTITY folderCharsetFallback2.label            "Pomoćna kodna stranica:">
+<!ENTITY folderCharsetEnforce2.label             "Primjeni kodnu stranicu na sve poruke u folderu (postavke kodne stranice pojedinih poruka i automatsko otkrivanje će biti zanemareno)">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Ponovo izgradi skupnu indeks datoteku">
+<!ENTITY folderRebuildSummaryFile2.label         "Popravi folder">
+<!ENTITY folderRebuildSummaryFile.explanation    "Ponekad se (.msf) datoteka koja je indeks foldera ošteti i poruke izgledaju nedostupne ili se izbrisane poruke i dalje pojavljuju; popravak foldera može riješiti ove probleme.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Uvrsti poruke iz ovog foldera u globalne rezultate pretraživanja">
+
+<!ENTITY retention.label "Politika čuvanja">
+<!ENTITY retentionUseAccount.label "Koristi moje postavke računa">
+<!ENTITY daysOld.label "dana staro">
+<!ENTITY message.label "poruke">
+<!ENTITY retentionCleanup.label "Čuvaj poruke:">
+<!ENTITY retentionCleanupImap.label "Čuvaj poruke i u lokalnim kopijama i u njihovim originalima na serveru:">
+<!ENTITY retentionCleanupPop.label "Čuvaj poruke uključujući njihove originale na serveru:">
+<!ENTITY retentionDeleteMsg.label "Izbriši poruke starije od">
+<!ENTITY retentionKeepAll.label "Sve poruke">
+<!ENTITY retentionKeepRecent.label "Najnovije">
+<!ENTITY retentionApplyToFlagged.label "Uvijek zadrži poruke sa zastavicom">
+
+<!ENTITY folderSynchronizationTab.label          "Sinhronizacija">
+<!ENTITY folderCheckForNewMessages2.label        "Prilikom primanja novih poruka za ovaj račun, uvijek provjeri ovaj folder">
+
+<!ENTITY offlineFolder.check.label               "Odaberi ovaj folder za izvanmrežno korištenje">
+<!ENTITY offlineFolder.button.label              "Preuzmite sada">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Odaberi ovu interesnu grupu za izvanmrežno korištenje">
+<!ENTITY offlineNewsgroup.button.label           "Preuzmite sada">
+
+<!ENTITY folderProps.name.label                  "Naziv:">
+<!ENTITY folderProps.location.label              "Lokacija:">
+
+<!ENTITY folderSharingTab.label                  "Dijeljenje">
+<!ENTITY privileges.button.label                 "Privilegije…">
+<!ENTITY permissionsDesc.label                   "Imate sljedeće dozvole:">
+<!ENTITY folderType.label                        "Vrsta foldera:">
+
+<!ENTITY folderQuotaTab.label                    "Kvota">
+<!ENTITY folderQuotaRoot.label                   "Kvota najvišeg nivoa:">
+<!ENTITY folderQuotaUsage.label                  "Iskorištenost:">
+<!ENTITY folderQuotaStatus.label                 "Status:">
+
+<!ENTITY numberOfMessages.label                  "Broj poruka:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "nepoznato">
+<!ENTITY sizeOnDisk.label                        "Veličina na disku:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "nepoznato">

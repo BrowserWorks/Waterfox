@@ -1,0 +1,345 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "Rédaction du message">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label "Fichier">
+<!ENTITY fileMenu.accesskey "F">
+<!ENTITY newMenu.label "Nouveau">
+<!ENTITY newMenu.accesskey "N">
+<!ENTITY newMessage.label "Message">
+<!ENTITY newMessage.key "M">
+<!ENTITY newMessageCmd2.key "N">
+<!ENTITY newMessage.accesskey "M">
+<!ENTITY newContact.label "Contact du carnet d’adresses…">
+<!ENTITY newContact.accesskey "C">
+<!ENTITY attachMenu.label "Joindre">
+<!ENTITY attachMenu.accesskey "J">
+<!ENTITY attachFileCmd.label "Fichier(s)…">
+<!ENTITY attachFileCmd.accesskey "F">
+<!ENTITY attachFileCmd.key "A">
+<!ENTITY attachCloudCmd.label "Espace de fichiers">
+<!ENTITY attachCloudCmd.accesskey "E">
+<!ENTITY attachPageCmd.label "Page web…">
+<!ENTITY attachPageCmd.accesskey "W">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "Carte de visite (vCard)">
+<!ENTITY attachVCardCmd.accesskey "C">
+<!ENTITY remindLater.label "Me le rappeler plus tard">
+<!ENTITY remindLater.accesskey "M">
+<!ENTITY closeCmd.label "Fermer">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "F">
+<!ENTITY saveCmd.label "Enregistrer">
+<!ENTITY saveCmd.key "S">
+<!ENTITY saveCmd.accesskey "s">
+<!ENTITY saveAsCmd.label "Enregistrer comme">
+<!ENTITY saveAsCmd.accesskey "c">
+<!ENTITY saveAsFileCmd.label "Fichier…">
+<!ENTITY saveAsFileCmd.accesskey "F">
+<!ENTITY saveAsDraftCmd.label "Brouillon">
+<!ENTITY saveAsDraftCmd.accesskey "B">
+<!ENTITY saveAsTemplateCmd.label "Modèle">
+<!ENTITY saveAsTemplateCmd.accesskey "o">
+<!ENTITY sendNowCmd.label "Envoyer">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "v">
+<!ENTITY sendLaterCmd.label "Envoyer plus tard">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "l">
+<!ENTITY printSetupCmd.label "Mise en page…">
+<!ENTITY printSetupCmd.accesskey "M">
+<!ENTITY printPreviewCmd.label "Aperçu avant impression">
+<!ENTITY printPreviewCmd.accesskey "A">
+<!ENTITY printCmd.label "Imprimer…">
+<!ENTITY printCmd.key "P">
+<!ENTITY printCmd.accesskey "P">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label "Édition">
+<!ENTITY editMenu.accesskey "n">
+<!ENTITY undoCmd.label "Annuler">
+<!ENTITY undoCmd.key "Z">
+<!ENTITY undoCmd.accesskey "u">
+<!ENTITY redoCmd.label "Rétablir">
+<!ENTITY redoCmd.key "Y">
+<!ENTITY redoCmd.accesskey "R">
+<!ENTITY cutCmd.key "X">
+<!ENTITY copyCmd.key "C">
+<!ENTITY pasteCmd.key "V">
+<!ENTITY pasteNoFormattingCmd.key "V">
+<!ENTITY pasteAsQuotationCmd.key "o">
+<!ENTITY editRewrapCmd.accesskey "o">
+<!ENTITY deleteCmd.label "Supprimer">
+<!ENTITY deleteCmd.accesskey "e">
+<!ENTITY editRewrapCmd.label "Reformater">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY renameAttachmentCmd.label "Renommer la pièce jointe…">
+<!ENTITY renameAttachmentCmd.accesskey "n">
+<!ENTITY reorderAttachmentsCmd.label "Réorganiser les pièces jointes…">
+<!ENTITY reorderAttachmentsCmd.accesskey "a">
+<!ENTITY reorderAttachmentsCmd.key "x">
+<!ENTITY toggleAttachmentPaneCmd.label "Panneau des pièces jointes">
+<!ENTITY toggleAttachmentPaneCmd.accesskey "j">
+<!ENTITY selectAllCmd.accesskey "T">
+<!ENTITY findBarCmd.label "Rechercher…">
+<!ENTITY findBarCmd.accesskey "h">
+<!ENTITY findBarCmd.key "F">
+<!ENTITY findReplaceCmd.label "Rechercher et remplacer…">
+<!ENTITY findReplaceCmd.accesskey "m">
+<!ENTITY findReplaceCmd.key "H">
+<!ENTITY findAgainCmd.label "Rechercher le suivant">
+<!ENTITY findAgainCmd.accesskey "v">
+<!ENTITY findAgainCmd.key "G">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "Rechercher le précédent">
+<!ENTITY findPrevCmd.accesskey "d">
+<!ENTITY findPrevCmd.key "G">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+
+<!-- Reorder Attachment Panel -->
+<!ENTITY reorderAttachmentsPanel.label "Réorganiser les pièces jointes">
+<!ENTITY moveAttachmentTopPanelBtn.label "Déplacer tout en haut">
+<!ENTITY moveAttachmentUpPanelBtn.label "Déplacer vers le haut">
+<!ENTITY moveAttachmentBundleUpPanelBtn.label "Déplacer l’ensemble">
+<!ENTITY moveAttachmentDownPanelBtn.label "Déplacer vers le bas">
+<!ENTITY moveAttachmentBottomPanelBtn.label "Déplacer tout en bas">
+
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.Sort.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.Sort.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.Sort.AZ.label "Trier : A - Z">
+<!ENTITY sortAttachmentsPanelBtn.Sort.ZA.label "Trier : Z - A">
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.SortSelection.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.SortSelection.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.AZ.label "Trier la sélection : A - Z">
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.ZA.label "Trier la sélection : Z - A">
+<!ENTITY sortAttachmentsPanelBtn.key "y">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label "Affichage">
+<!ENTITY viewMenu.accesskey "A">
+<!ENTITY viewToolbarsMenuNew.label "Barres d’outils">
+<!ENTITY viewToolbarsMenuNew.accesskey "t">
+<!ENTITY menubarCmd.label "Barre de menus">
+<!ENTITY menubarCmd.accesskey "m">
+<!ENTITY showCompositionToolbarCmd.label "Barre d’outils courrier">
+<!ENTITY showCompositionToolbarCmd.accesskey "o">
+<!ENTITY showFormattingBarCmd.label "Barre de mise en forme">
+<!ENTITY showFormattingBarCmd.accesskey "f">
+<!ENTITY showTaskbarCmd.label "Barre d’état">
+<!ENTITY showTaskbarCmd.accesskey "e">
+<!ENTITY customizeToolbar.label "Personnaliser…">
+<!ENTITY customizeToolbar.accesskey "P">
+
+<!ENTITY addressSidebar.label "Barre des contacts">
+<!ENTITY addressSidebar.accesskey "o">
+
+<!-- Format Menu -->
+<!ENTITY formatMenu.label "Format">
+<!ENTITY formatMenu.accesskey "m">
+
+<!-- Options Menu -->
+<!ENTITY optionsMenu.label "Options">
+<!ENTITY optionsMenu.accesskey "O">
+<!ENTITY checkSpellingCmd2.label "Vérifier l’orthographe…">
+<!ENTITY checkSpellingCmd2.key "p">
+<!ENTITY checkSpellingCmd2.key2 "VK_F7">
+<!ENTITY checkSpellingCmd2.accesskey "V">
+<!ENTITY enableInlineSpellChecker.label "Vérifier l’orthographe pendant la saisie">
+<!ENTITY enableInlineSpellChecker.accesskey "f">
+<!ENTITY quoteCmd.label "Citer le message">
+<!ENTITY quoteCmd.accesskey "m">
+
+<!--LOCALIZATION NOTE attachVCard.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCard.label "Carte de visite (vCard)">
+<!ENTITY attachVCard.accesskey "C">
+
+<!ENTITY returnReceiptMenu.label "Demander un accusé de réception">
+<!ENTITY returnReceiptMenu.accesskey "t">
+<!ENTITY dsnMenu.label "Notification de l’état de la distribution">
+<!ENTITY dsnMenu.accesskey "N">
+<!ENTITY deliveryFormatMenu.label "Format de distribution">
+<!ENTITY deliveryFormatMenu.accesskey "F">
+<!ENTITY autoFormatCmd.label "Détection automatique">
+<!ENTITY autoFormatCmd.accesskey "a">
+<!ENTITY plainTextFormatCmd.label "Texte seulement">
+<!ENTITY plainTextFormatCmd.accesskey "T">
+<!ENTITY htmlFormatCmd.label "HTML seulement">
+<!ENTITY htmlFormatCmd.accesskey "s">
+<!ENTITY bothFormatCmd.label "Texte et HTML">
+<!ENTITY bothFormatCmd.accesskey "l">
+<!ENTITY priorityMenu.label "Priorité">
+<!ENTITY priorityMenu.accesskey "p">
+<!ENTITY priorityButton.title "Priorité">
+<!ENTITY priorityButton.tooltiptext "Changer la priorité du message">
+<!ENTITY priorityButton.label "Priorité :">
+<!ENTITY lowestPriorityCmd.label "Minimale">
+<!ENTITY lowestPriorityCmd.accesskey "l">
+<!ENTITY lowPriorityCmd.label "Basse">
+<!ENTITY lowPriorityCmd.accesskey "B">
+<!ENTITY normalPriorityCmd.label "Normale">
+<!ENTITY normalPriorityCmd.accesskey "n">
+<!ENTITY highPriorityCmd.label "Haute">
+<!ENTITY highPriorityCmd.accesskey "H">
+<!ENTITY highestPriorityCmd.label "Maximale">
+<!ENTITY highestPriorityCmd.accesskey "M">
+<!ENTITY fileCarbonCopyCmd.label "Archiver une copie">
+<!ENTITY fileCarbonCopyCmd.accesskey "i">
+<!ENTITY fileHereMenu.label "Classer ici">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label "Outils">
+<!ENTITY tasksMenu.accesskey "u">
+<!ENTITY messengerCmd.label "Courrier et groupes">
+<!ENTITY messengerCmd.accesskey "C">
+<!ENTITY messengerCmd.commandkey "1">
+<!ENTITY addressBookCmd.label "Carnet d’adresses">
+<!ENTITY addressBookCmd.accesskey "a">
+<!ENTITY addressBookCmd.key "B">
+<!ENTITY accountManagerCmd2.label "Paramètres des comptes">
+<!ENTITY accountManagerCmd2.accesskey "m">
+<!ENTITY accountManagerCmdUnix2.accesskey "S">
+<!ENTITY preferencesCmd2.label "Options">
+<!ENTITY preferencesCmd2.accesskey "O">
+<!ENTITY preferencesCmdUnix.label "Préférences">
+<!ENTITY preferencesCmdUnix.accesskey "n">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY minimizeWindow.key "m">
+<!ENTITY minimizeWindow.label "Réduire">
+<!ENTITY bringAllToFront.label "Tout amener à l’avant-plan">
+<!ENTITY zoomWindow.label "Zoom">
+<!ENTITY windowMenu.label "Fenêtre">
+
+<!-- Mail Toolbar -->
+<!ENTITY sendButton.label "Envoyer">
+<!ENTITY quoteButton.label "Citer">
+<!ENTITY addressButton.label "Contacts">
+<!ENTITY attachButton.label "Joindre">
+<!ENTITY spellingButton.label "Orthographe">
+<!ENTITY saveButton.label "Enregistrer">
+<!ENTITY printButton.label "Imprimer">
+
+<!-- Mail Toolbar Tooltips -->
+<!ENTITY sendButton.tooltip "Envoyer le message maintenant">
+<!ENTITY sendlaterButton.tooltip "Envoyer ce message plus tard">
+<!ENTITY quoteButton.tooltip "Citer le précédent message">
+<!ENTITY addressButton.tooltip "Sélectionner un destinataire du carnet d’adresses">
+<!ENTITY attachButton.tooltip2 "Ajouter une pièce jointe">
+<!ENTITY spellingButton.tooltip "Vérifier l’orthographe de la sélection ou du message complet">
+<!ENTITY saveButton.tooltip "Enregistrer ce message">
+<!ENTITY cutButton.tooltip              "Couper">
+<!ENTITY copyButton.tooltip             "Copier">
+<!ENTITY pasteButton.tooltip            "Coller">
+<!ENTITY printButton.tooltip "Imprimer ce message">
+
+<!-- Headers -->
+<!--LOCALIZATION NOTE headersSpaces.style is for aligning  the From:, To: and
+    Subject: rows. It should be larger than the largest Header label  -->
+<!ENTITY headersSpace2.style "width: 11em;">
+<!ENTITY extraRecipients.tooltip "Autres types de champs d’adressage">
+<!ENTITY fromAddr2.label "De">
+<!ENTITY fromAddr.accesskey "e">
+<!ENTITY toAddr2.label "Pour">
+<!ENTITY ccAddr2.label "Copie à">
+<!ENTITY bccAddr2.label "Copie cachée à">
+<!ENTITY replyAddr2.label "Répondre à">
+<!ENTITY newsgroupsAddr2.label "Newsgroup">
+<!ENTITY followupAddr2.label "Faire suivre à">
+<!ENTITY subject2.label "Sujet">
+<!ENTITY subject.accesskey "S">
+<!ENTITY attachmentBucketCloseButton.tooltip "Masquer le panneau des pièces jointes">
+
+<!-- Format Toolbar, imported from editorAppShell.xhtml -->
+<!ENTITY SmileButton.tooltip "Insérer une émoticône">
+<!ENTITY smiley1Cmd.label "Sourire">
+<!ENTITY smiley2Cmd.label "Mécontent">
+<!ENTITY smiley3Cmd.label "Clin d’œil">
+<!ENTITY smiley4Cmd.label "Moqueur">
+<!ENTITY smiley5Cmd.label "Mort de rire">
+<!ENTITY smiley6Cmd.label "Embarrassé">
+<!ENTITY smiley7Cmd.label "Perplexe">
+<!ENTITY smiley8Cmd.label "Surprise">
+<!ENTITY smiley9Cmd.label "Bisou">
+<!ENTITY smiley10Cmd.label "Horreur !">
+<!ENTITY smiley11Cmd.label "Cool">
+<!ENTITY smiley12Cmd.label "Censuré">
+<!ENTITY smiley13Cmd.label "Oups !">
+<!ENTITY smiley14Cmd.label "Innocent">
+<!ENTITY smiley15Cmd.label "Triste">
+<!ENTITY smiley16Cmd.label "Motus">
+
+<!-- Message Pane Context Menu -->
+<!ENTITY spellCheckNoSuggestions.label "(Pas de suggestion)">
+<!ENTITY spellCheckIgnoreWord.label "Ignorer le mot">
+<!ENTITY spellCheckIgnoreWord.accesskey "I">
+<!ENTITY spellCheckAddToDictionary.label "Ajouter au dictionnaire">
+<!ENTITY spellCheckAddToDictionary.accesskey "n">
+<!ENTITY undo.label "Annuler">
+<!ENTITY undo.accesskey "U">
+<!ENTITY cut.label "Couper">
+<!ENTITY cut.accesskey "C">
+<!ENTITY copy.label "Copier">
+<!ENTITY copy.accesskey "p">
+<!ENTITY paste.label "Coller">
+<!ENTITY paste.accesskey "o">
+<!ENTITY pasteQuote.label "Coller comme citation">
+<!ENTITY pasteQuote.accesskey "i">
+
+<!-- Attachment Item and List Context Menus -->
+<!ENTITY openAttachment.label "Ouvrir">
+<!ENTITY openAttachment.accesskey "O">
+<!ENTITY delete.label "Supprimer">
+<!ENTITY delete.accesskey "E">
+<!ENTITY removeAttachment.label "Supprimer la pièce jointe">
+<!ENTITY removeAttachment.accesskey "j">
+<!ENTITY renameAttachment.label "Renommer…">
+<!ENTITY renameAttachment.accesskey "R">
+<!ENTITY reorderAttachments.label "Réorganiser les pièces jointes…">
+<!ENTITY reorderAttachments.accesskey "a">
+<!ENTITY removeAllAttachments.label "Supprimer toutes les pièces jointes">
+<!ENTITY removeAllAttachments.accesskey "s">
+<!ENTITY selectAll.label "Tout sélectionner">
+<!ENTITY selectAll.accesskey "t">
+<!ENTITY attachFile.label "Joindre fichier(s)…">
+<!ENTITY attachFile.accesskey "f">
+<!ENTITY attachCloud.label "Espace de fichiers…">
+<!ENTITY attachCloud.accesskey "E">
+<!ENTITY convertCloud.label "Convertir en…">
+<!ENTITY convertCloud.accesskey "C">
+<!ENTITY cancelUpload.label "Annuler le téléchargement">
+<!ENTITY cancelUpload.accesskey "n">
+<!ENTITY convertRegularAttachment.label "Pièce jointe normale">
+<!ENTITY convertRegularAttachment.accesskey "P">
+<!ENTITY attachPage.label "Joindre une page web…">
+<!ENTITY attachPage.accesskey "W">
+
+<!-- Attachment Pane Header Bar Context Menu -->
+<!-- LOCALIZATION NOTE (initiallyShowAttachmentPane.label):
+     Should use the same wording as startExpandedCmd.label
+     in msgHdrViewOverlay.dtd. -->
+<!ENTITY initiallyShowAttachmentPane.label "Afficher par défaut le panneau des pièces jointes">
+<!ENTITY initiallyShowAttachmentPane.accesskey "A">
+
+<!-- Spell checker context menu items -->
+<!ENTITY spellAddDictionaries.label "Ajouter des dictionnaires…">
+<!ENTITY spellAddDictionaries.accesskey "A">
+
+<!-- Title for the address picker panel -->
+<!ENTITY addressesSidebarTitle.label "Contacts">
+
+<!-- Identity popup customize menuitem -->
+<!ENTITY customizeFromAddress.label "Personnaliser l’adresse d’expédition…">
+<!ENTITY customizeFromAddress.accesskey "x">
+
+<!-- Accessibility name for the document -->
+<!ENTITY aria.message.bodyName "Corps du message">
+
+<!-- Status Bar -->
+<!ENTITY languageStatusButton.tooltip "Langue de la vérification orthographique">
+<!ENTITY encodingStatusPanel.tooltip "Encodage du texte">

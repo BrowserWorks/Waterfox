@@ -10,7 +10,8 @@
  * liability, trademark and document use rules apply.
  */
 
+[Exposed=Window]
 interface SVGFEMergeElement : SVGElement {
 };
 
-SVGFEMergeElement implements SVGFilterPrimitiveStandardAttributes;
+SVGFEMergeElement includes SVGFilterPrimitiveStandardAttributes;

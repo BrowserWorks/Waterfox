@@ -12,8 +12,6 @@ BROWSER_CHROME_MANIFESTS += ['test/browser/browser.ini']
 XPCSHELL_TESTS_MANIFESTS += ['test/unit/xpcshell.ini']
 
 TESTING_JS_MODULES += [
-    # Make this file available from the "resource:" URI of the test environment.
-    'test/browser/form_basic.html',
     'test/LoginTestUtils.jsm',
 ]
 
@@ -21,6 +19,7 @@ XPIDL_SOURCES += [
     'nsILoginAutoCompleteSearch.idl',
     'nsILoginInfo.idl',
     'nsILoginManager.idl',
+    'nsILoginManagerAuthPrompter.idl',
     'nsILoginManagerCrypto.idl',
     'nsILoginManagerPrompter.idl',
     'nsILoginManagerStorage.idl',
@@ -32,28 +31,31 @@ XPIDL_MODULE = 'loginmgr'
 EXTRA_JS_MODULES += [
     'crypto-SDR.js',
     'InsecurePasswordUtils.jsm',
-    'LoginAutoCompleteResult.jsm',
+    'LoginAutoComplete.jsm',
     'LoginFormFactory.jsm',
     'LoginHelper.jsm',
     'LoginInfo.jsm',
     'LoginManager.jsm',
-    'LoginManagerContent.jsm',
+    'LoginManagerAuthPrompter.jsm',
+    'LoginManagerChild.jsm',
     'LoginManagerParent.jsm',
     'LoginManagerPrompter.jsm',
     'LoginRecipes.jsm',
+    'NewPasswordModel.jsm',
     'OSCrypto.jsm',
+    'PasswordGenerator.jsm',
+    'storage-json.js',
 ]
 
 if CONFIG['OS_TARGET'] == 'Android':
     EXTRA_JS_MODULES += [
-        'storage-mozStorage.js',
+        'storage-geckoview.js',
     ]
 else:
     EXTRA_JS_MODULES += [
+        'LoginExport.jsm',
         'LoginImport.jsm',
         'LoginStore.jsm',
-        'PasswordGenerator.jsm',
-        'storage-json.js',
     ]
 
 if CONFIG['OS_TARGET'] == 'WINNT':
@@ -61,7 +63,7 @@ if CONFIG['OS_TARGET'] == 'WINNT':
         'OSCrypto_win.js',
     ]
 
-if CONFIG['MOZ_BUILD_APP'] == 'browser':
+if CONFIG['MOZ_BUILD_APP'] == 'browser' or CONFIG['MOZ_SUITE']:
     EXTRA_JS_MODULES += [
         'LoginManagerContextMenu.jsm',
     ]

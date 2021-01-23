@@ -12,7 +12,6 @@
 #include "transportlayersrtp.h"
 
 // Config stuff
-#include "nsIPrefService.h"
 #include "mozilla/dom/RTCConfigurationBinding.h"
 
 // Parsing STUN/TURN URIs
@@ -32,9 +31,13 @@
 
 #include "runnable_utils.h"
 
+#include "mozilla/Algorithm.h"
 #include "mozilla/Telemetry.h"
 
 #include "mozilla/dom/RTCStatsReportBinding.h"
+
+#include "nss.h"                // For NSS_NoDB_Init
+#include "mozilla/PublicSSL.h"  // For psm::InitializeCipherSuite
 
 #include <string>
 #include <vector>
@@ -65,18 +68,21 @@ class MediaTransportHandlerSTS : public MediaTransportHandler,
 
   // We will probably be able to move the proxy lookup stuff into
   // this class once we move mtransport to its own process.
-  void SetProxyServer(NrSocketProxyConfig&& aProxyConfig) override;
+  void SetProxyConfig(NrSocketProxyConfig&& aProxyConfig) override;
 
   void EnsureProvisionalTransport(const std::string& aTransportId,
                                   const std::string& aUfrag,
                                   const std::string& aPwd,
                                   size_t aComponentCount) override;
 
+  void SetTargetForDefaultLocalAddressLookup(const std::string& aTargetIp,
+                                             uint16_t aTargetPort) override;
+
   // We set default-route-only as late as possible because it depends on what
   // capture permissions have been granted on the window, which could easily
   // change between Init (ie; when the PC is created) and StartIceGathering
   // (ie; when we set the local description).
-  void StartIceGathering(bool aDefaultRouteOnly,
+  void StartIceGathering(bool aDefaultRouteOnly, bool aObfuscateHostAddresses,
                          // This will go away once mtransport moves to its
                          // own process, because we won't need to get this
                          // via IPC anymore
@@ -93,21 +99,20 @@ class MediaTransportHandlerSTS : public MediaTransportHandler,
   void RemoveTransportsExcept(
       const std::set<std::string>& aTransportIds) override;
 
-  void StartIceChecks(bool aIsControlling, bool aIsOfferer,
+  void StartIceChecks(bool aIsControlling,
                       const std::vector<std::string>& aIceOptions) override;
 
   void AddIceCandidate(const std::string& aTransportId,
-                       const std::string& aCandidate,
-                       const std::string& aUfrag) override;
+                       const std::string& aCandidate, const std::string& aUfrag,
+                       const std::string& aObfuscatedAddress) override;
 
   void UpdateNetworkState(bool aOnline) override;
 
   void SendPacket(const std::string& aTransportId,
                   MediaPacket&& aPacket) override;
 
-  RefPtr<StatsPromise> GetIceStats(
-      const std::string& aTransportId, DOMHighResTimeStamp aNow,
-      std::unique_ptr<dom::RTCStatsReportInternal>&& aReport) override;
+  RefPtr<dom::RTCStatsPromise> GetIceStats(const std::string& aTransportId,
+                                           DOMHighResTimeStamp aNow) override;
 
  private:
   RefPtr<TransportFlow> CreateTransportFlow(const std::string& aTransportId,
@@ -137,7 +142,8 @@ class MediaTransportHandlerSTS : public MediaTransportHandler,
                                NrIceCtx::ConnectionState aState);
   void OnCandidateFound(NrIceMediaStream* aStream,
                         const std::string& aCandidate,
-                        const std::string& aUfrag);
+                        const std::string& aUfrag, const std::string& aMDNSAddr,
+                        const std::string& aActualAddr);
   void OnStateChange(TransportLayer* aLayer, TransportLayer::State);
   void OnRtcpStateChange(TransportLayer* aLayer, TransportLayer::State);
   void PacketReceived(TransportLayer* aLayer, MediaPacket& aPacket);
@@ -145,14 +151,22 @@ class MediaTransportHandlerSTS : public MediaTransportHandler,
   RefPtr<TransportFlow> GetTransportFlow(const std::string& aTransportId,
                                          bool aIsRtcp) const;
   void GetIceStats(const NrIceMediaStream& aStream, DOMHighResTimeStamp aNow,
-                   dom::RTCStatsReportInternal* aReport) const;
+                   dom::RTCStatsCollection* aStats) const;
 
   virtual ~MediaTransportHandlerSTS() = default;
   nsCOMPtr<nsISerialEventTarget> mStsThread;
   RefPtr<NrIceCtx> mIceCtx;
   RefPtr<NrIceResolver> mDNSResolver;
   std::map<std::string, Transport> mTransports;
-  bool mProxyOnly = false;
+  bool mObfuscateHostAddresses = false;
+  uint32_t mMinDtlsVersion = 0;
+  uint32_t mMaxDtlsVersion = 0;
+
+  std::set<std::string> mSignaledAddresses;
+
+  // Init can only be done on main, but we want this to be usable on any thread
+  typedef MozPromise<bool, std::string, false> InitPromise;
+  RefPtr<InitPromise> mInitPromise;
 };
 
 /* static */
@@ -179,6 +193,11 @@ MediaTransportHandlerSTS::MediaTransportHandlerSTS(
   }
 
   RLogConnector::CreateInstance();
+
+  CSFLogDebug(LOGTAG, "%s done", __func__);
+
+  // We do not set up mDNSService here, because we are not running on main (we
+  // use PBackground), and the DNS service asserts.
 }
 
 static NrIceCtx::Policy toNrIcePolicy(dom::RTCIceTransportPolicy aPolicy) {
@@ -209,11 +228,10 @@ static nsresult addNrIceServer(const nsString& aIceUrl,
   RefPtr<nsIURI> url;
   nsresult rv = NS_NewURI(getter_AddRefs(url), aIceUrl);
   NS_ENSURE_SUCCESS(rv, rv);
-  bool isStun = false, isStuns = false, isTurn = false, isTurns = false;
-  url->SchemeIs("stun", &isStun);
-  url->SchemeIs("stuns", &isStuns);
-  url->SchemeIs("turn", &isTurn);
-  url->SchemeIs("turns", &isTurns);
+  bool isStun = url->SchemeIs("stun");
+  bool isStuns = url->SchemeIs("stuns");
+  bool isTurn = url->SchemeIs("turn");
+  bool isTurns = url->SchemeIs("turns");
   if (!(isStun || isStuns || isTurn || isTurns)) {
     return NS_ERROR_FAILURE;
   }
@@ -322,9 +340,60 @@ nsresult MediaTransportHandler::ConvertIceServers(
   return NS_OK;
 }
 
+static NrIceCtx::GlobalConfig GetGlobalConfig() {
+  NrIceCtx::GlobalConfig config;
+  config.mAllowLinkLocal =
+      Preferences::GetBool("media.peerconnection.ice.link_local", false);
+  config.mAllowLoopback =
+      Preferences::GetBool("media.peerconnection.ice.loopback", false);
+  config.mTcpEnabled =
+      Preferences::GetBool("media.peerconnection.ice.tcp", false);
+  config.mStunClientMaxTransmits = Preferences::GetInt(
+      "media.peerconnection.ice.stun_client_maximum_transmits",
+      config.mStunClientMaxTransmits);
+  config.mTrickleIceGracePeriod =
+      Preferences::GetInt("media.peerconnection.ice.trickle_grace_period",
+                          config.mTrickleIceGracePeriod);
+  config.mIceTcpSoSockCount = Preferences::GetInt(
+      "media.peerconnection.ice.tcp_so_sock_count", config.mIceTcpSoSockCount);
+  config.mIceTcpListenBacklog =
+      Preferences::GetInt("media.peerconnection.ice.tcp_listen_backlog",
+                          config.mIceTcpListenBacklog);
+  (void)Preferences::GetCString("media.peerconnection.ice.force_interface",
+                                config.mForceNetInterface);
+  return config;
+}
+
+static Maybe<NrIceCtx::NatSimulatorConfig> GetNatConfig() {
+  bool block_tcp = Preferences::GetBool(
+      "media.peerconnection.nat_simulator.block_tcp", false);
+  bool block_udp = Preferences::GetBool(
+      "media.peerconnection.nat_simulator.block_udp", false);
+  nsAutoCString mapping_type;
+  (void)Preferences::GetCString(
+      "media.peerconnection.nat_simulator.mapping_type", mapping_type);
+  nsAutoCString filtering_type;
+  (void)Preferences::GetCString(
+      "media.peerconnection.nat_simulator.filtering_type", filtering_type);
+
+  if (block_udp || block_tcp || !mapping_type.IsEmpty() ||
+      !filtering_type.IsEmpty()) {
+    CSFLogDebug(LOGTAG, "NAT filtering type: %s", filtering_type.get());
+    CSFLogDebug(LOGTAG, "NAT mapping type: %s", mapping_type.get());
+    NrIceCtx::NatSimulatorConfig natConfig;
+    natConfig.mBlockUdp = block_udp;
+    natConfig.mBlockTcp = block_tcp;
+    natConfig.mFilteringType = filtering_type;
+    natConfig.mMappingType = mapping_type;
+    return Some(natConfig);
+  }
+  return Nothing();
+}
+
 nsresult MediaTransportHandlerSTS::CreateIceCtx(
     const std::string& aName, const nsTArray<dom::RTCIceServer>& aIceServers,
     dom::RTCIceTransportPolicy aIcePolicy) {
+  // We rely on getting an error when this happens, so do it up front.
   std::vector<NrIceStunServer> stunServers;
   std::vector<NrIceTurnServer> turnServers;
   nsresult rv = ConvertIceServers(aIceServers, &stunServers, &turnServers);
@@ -332,136 +401,172 @@ nsresult MediaTransportHandlerSTS::CreateIceCtx(
     return rv;
   }
 
-  // This stuff will probably live on the other side of IPC; errors down here
-  // will either need to be ignored, or plumbed back in some way other than
-  // the return.
-  bool allowLoopback =
-      Preferences::GetBool("media.peerconnection.ice.loopback", false);
-  bool tcpEnabled = Preferences::GetBool("media.peerconnection.ice.tcp", false);
-  bool allowLinkLocal =
-      Preferences::GetBool("media.peerconnection.ice.link_local", false);
+  mInitPromise = InvokeAsync(
+      GetMainThreadSerialEventTarget(), __func__,
+      [=, self = RefPtr<MediaTransportHandlerSTS>(this)]() {
+        CSFLogDebug(LOGTAG, "%s starting", __func__);
+        if (!NSS_IsInitialized()) {
+          if (NSS_NoDB_Init(nullptr) != SECSuccess) {
+            MOZ_CRASH();
+            return InitPromise::CreateAndReject("NSS_NoDB_Init failed",
+                                                __func__);
+          }
 
-  mIceCtx = NrIceCtx::Create(aName, allowLoopback, tcpEnabled, allowLinkLocal,
-                             toNrIcePolicy(aIcePolicy));
-  if (!mIceCtx) {
-    return NS_ERROR_FAILURE;
-  }
+          if (NS_FAILED(mozilla::psm::InitializeCipherSuite())) {
+            MOZ_CRASH();
+            return InitPromise::CreateAndReject("InitializeCipherSuite failed",
+                                                __func__);
+          }
 
-  mProxyOnly =
-      Preferences::GetBool("media.peerconnection.ice.proxy_only", false);
+          mozilla::psm::DisableMD5();
+        }
 
-  mIceCtx->SignalGatheringStateChange.connect(
-      this, &MediaTransportHandlerSTS::OnGatheringStateChange);
-  mIceCtx->SignalConnectionStateChange.connect(
-      this, &MediaTransportHandlerSTS::OnConnectionStateChange);
+        static bool globalInitDone = false;
+        if (!globalInitDone) {
+          mStsThread->Dispatch(
+              WrapRunnableNM(&NrIceCtx::InitializeGlobals, GetGlobalConfig()),
+              NS_DISPATCH_NORMAL);
+          globalInitDone = true;
+        }
 
-  if (NS_FAILED(rv = mIceCtx->SetStunServers(stunServers))) {
-    CSFLogError(LOGTAG, "%s: Failed to set stun servers", __FUNCTION__);
-    return rv;
-  }
-  // Give us a way to globally turn off TURN support
-  bool disabled =
-      Preferences::GetBool("media.peerconnection.turn.disable", false);
-  if (!disabled) {
-    if (NS_FAILED(rv = mIceCtx->SetTurnServers(turnServers))) {
-      CSFLogError(LOGTAG, "%s: Failed to set turn servers", __FUNCTION__);
-      return rv;
-    }
-  } else if (!turnServers.empty()) {
-    CSFLogError(LOGTAG, "%s: Setting turn servers disabled", __FUNCTION__);
-  }
+        // Give us a way to globally turn off TURN support
+        bool turnDisabled =
+            Preferences::GetBool("media.peerconnection.turn.disable", false);
+        // We are reading these here, because when we setup the DTLS transport
+        // we are on the wrong thread to read prefs
+        mMinDtlsVersion =
+            Preferences::GetUint("media.peerconnection.dtls.version.min");
+        mMaxDtlsVersion =
+            Preferences::GetUint("media.peerconnection.dtls.version.max");
 
-  mDNSResolver = new NrIceResolver;
-  if (NS_FAILED(rv = mDNSResolver->Init())) {
-    CSFLogError(LOGTAG, "%s: Failed to initialize dns resolver", __FUNCTION__);
-    return rv;
-  }
-  if (NS_FAILED(rv = mIceCtx->SetResolver(mDNSResolver->AllocateResolver()))) {
-    CSFLogError(LOGTAG, "%s: Failed to get dns resolver", __FUNCTION__);
-    return rv;
-  }
+        NrIceCtx::Config config;
+        config.mPolicy = toNrIcePolicy(aIcePolicy);
+        config.mNatSimulatorConfig = GetNatConfig();
 
+        return InvokeAsync(
+            mStsThread, __func__,
+            [=, self = RefPtr<MediaTransportHandlerSTS>(this)]() {
+              mIceCtx = NrIceCtx::Create(aName, config);
+              if (!mIceCtx) {
+                return InitPromise::CreateAndReject("NrIceCtx::Create failed",
+                                                    __func__);
+              }
+
+              mIceCtx->SignalGatheringStateChange.connect(
+                  this, &MediaTransportHandlerSTS::OnGatheringStateChange);
+              mIceCtx->SignalConnectionStateChange.connect(
+                  this, &MediaTransportHandlerSTS::OnConnectionStateChange);
+
+              nsresult rv;
+
+              if (NS_FAILED(rv = mIceCtx->SetStunServers(stunServers))) {
+                CSFLogError(LOGTAG, "%s: Failed to set stun servers",
+                            __FUNCTION__);
+                return InitPromise::CreateAndReject(
+                    "Failed to set stun servers", __func__);
+              }
+              if (!turnDisabled) {
+                if (NS_FAILED(rv = mIceCtx->SetTurnServers(turnServers))) {
+                  CSFLogError(LOGTAG, "%s: Failed to set turn servers",
+                              __FUNCTION__);
+                  return InitPromise::CreateAndReject(
+                      "Failed to set turn servers", __func__);
+                }
+              } else if (!turnServers.empty()) {
+                CSFLogError(LOGTAG, "%s: Setting turn servers disabled",
+                            __FUNCTION__);
+              }
+
+              mDNSResolver = new NrIceResolver;
+              if (NS_FAILED(rv = mDNSResolver->Init())) {
+                CSFLogError(LOGTAG, "%s: Failed to initialize dns resolver",
+                            __FUNCTION__);
+                return InitPromise::CreateAndReject(
+                    "Failed to initialize dns resolver", __func__);
+              }
+              if (NS_FAILED(rv = mIceCtx->SetResolver(
+                                mDNSResolver->AllocateResolver()))) {
+                CSFLogError(LOGTAG, "%s: Failed to get dns resolver",
+                            __FUNCTION__);
+                return InitPromise::CreateAndReject(
+                    "Failed to get dns resolver", __func__);
+              }
+
+              CSFLogDebug(LOGTAG, "%s done", __func__);
+              return InitPromise::CreateAndResolve(true, __func__);
+            });
+      });
   return NS_OK;
 }
 
 void MediaTransportHandlerSTS::Destroy() {
-  if (!mStsThread->IsOnCurrentThread()) {
-    mStsThread->Dispatch(WrapRunnable(RefPtr<MediaTransportHandlerSTS>(this),
-                                      &MediaTransportHandlerSTS::Destroy),
-                         NS_DISPATCH_NORMAL);
+  if (!mInitPromise) {
     return;
   }
 
-  disconnect_all();
-  if (mIceCtx) {
-    NrIceStats stats = mIceCtx->Destroy();
-    CSFLogDebug(LOGTAG,
-                "Ice Telemetry: stun (retransmits: %d)"
-                "   turn (401s: %d   403s: %d   438s: %d)",
-                stats.stun_retransmits, stats.turn_401s, stats.turn_403s,
-                stats.turn_438s);
+  mInitPromise->Then(
+      mStsThread, __func__,
+      [this, self = RefPtr<MediaTransportHandlerSTS>(this)]() {
+        disconnect_all();
+        if (mIceCtx) {
+          NrIceStats stats = mIceCtx->Destroy();
+          CSFLogDebug(LOGTAG,
+                      "Ice Telemetry: stun (retransmits: %d)"
+                      "   turn (401s: %d   403s: %d   438s: %d)",
+                      stats.stun_retransmits, stats.turn_401s, stats.turn_403s,
+                      stats.turn_438s);
 
-    Telemetry::ScalarAdd(Telemetry::ScalarID::WEBRTC_NICER_STUN_RETRANSMITS,
-                         stats.stun_retransmits);
-    Telemetry::ScalarAdd(Telemetry::ScalarID::WEBRTC_NICER_TURN_401S,
-                         stats.turn_401s);
-    Telemetry::ScalarAdd(Telemetry::ScalarID::WEBRTC_NICER_TURN_403S,
-                         stats.turn_403s);
-    Telemetry::ScalarAdd(Telemetry::ScalarID::WEBRTC_NICER_TURN_438S,
-                         stats.turn_438s);
-    mIceCtx = nullptr;
-  }
-  mTransports.clear();
+          mIceCtx = nullptr;
+        }
+        mTransports.clear();
+      },
+      [](const std::string& aError) {});
 }
 
-void MediaTransportHandlerSTS::SetProxyServer(
+void MediaTransportHandlerSTS::SetProxyConfig(
     NrSocketProxyConfig&& aProxyConfig) {
-  if (!mStsThread->IsOnCurrentThread()) {
-    mStsThread->Dispatch(NewRunnableMethod<NrSocketProxyConfig&&>(
-        __func__, this, &MediaTransportHandlerSTS::SetProxyServer,
-        std::move(aProxyConfig)));
-    return;
-  }
-
-  mIceCtx->SetProxyServer(std::move(aProxyConfig));
+  mInitPromise->Then(
+      mStsThread, __func__,
+      [this, self = RefPtr<MediaTransportHandlerSTS>(this),
+       aProxyConfig = std::move(aProxyConfig)]() mutable {
+        mIceCtx->SetProxyConfig(std::move(aProxyConfig));
+      },
+      [](const std::string& aError) {});
 }
 
 void MediaTransportHandlerSTS::EnsureProvisionalTransport(
     const std::string& aTransportId, const std::string& aUfrag,
     const std::string& aPwd, size_t aComponentCount) {
-  if (!mStsThread->IsOnCurrentThread()) {
-    mStsThread->Dispatch(
-        WrapRunnable(RefPtr<MediaTransportHandlerSTS>(this),
-                     &MediaTransportHandlerSTS::EnsureProvisionalTransport,
-                     aTransportId, aUfrag, aPwd, aComponentCount),
-        NS_DISPATCH_NORMAL);
-    return;
-  }
+  mInitPromise->Then(
+      mStsThread, __func__,
+      [=, self = RefPtr<MediaTransportHandlerSTS>(this)]() {
+        RefPtr<NrIceMediaStream> stream(mIceCtx->GetStream(aTransportId));
+        if (!stream) {
+          CSFLogDebug(LOGTAG, "%s: Creating ICE media stream=%s components=%u",
+                      mIceCtx->name().c_str(), aTransportId.c_str(),
+                      static_cast<unsigned>(aComponentCount));
 
-  RefPtr<NrIceMediaStream> stream(mIceCtx->GetStream(aTransportId));
-  if (!stream) {
-    CSFLogDebug(LOGTAG, "%s: Creating ICE media stream=%s components=%u",
-                mIceCtx->name().c_str(), aTransportId.c_str(),
-                static_cast<unsigned>(aComponentCount));
+          std::ostringstream os;
+          os << mIceCtx->name() << " transport-id=" << aTransportId;
+          stream =
+              mIceCtx->CreateStream(aTransportId, os.str(), aComponentCount);
 
-    std::ostringstream os;
-    os << mIceCtx->name() << " transport-id=" << aTransportId;
-    stream = mIceCtx->CreateStream(aTransportId, os.str(), aComponentCount);
+          if (!stream) {
+            CSFLogError(LOGTAG, "Failed to create ICE stream.");
+            return;
+          }
 
-    if (!stream) {
-      CSFLogError(LOGTAG, "Failed to create ICE stream.");
-      return;
-    }
+          stream->SignalCandidate.connect(
+              this, &MediaTransportHandlerSTS::OnCandidateFound);
+        }
 
-    stream->SignalCandidate.connect(
-        this, &MediaTransportHandlerSTS::OnCandidateFound);
-  }
+        // Begins an ICE restart if this stream has a different ufrag/pwd
+        stream->SetIceCredentials(aUfrag, aPwd);
 
-  // Begins an ICE restart if this stream has a different ufrag/pwd
-  stream->SetIceCredentials(aUfrag, aPwd);
-
-  // Make sure there's an entry in mTransports
-  mTransports[aTransportId];
+        // Make sure there's an entry in mTransports
+        mTransports[aTransportId];
+      },
+      [](const std::string& aError) {});
 }
 
 void MediaTransportHandlerSTS::ActivateTransport(
@@ -471,266 +576,283 @@ void MediaTransportHandlerSTS::ActivateTransport(
     const nsTArray<uint8_t>& aKeyDer, const nsTArray<uint8_t>& aCertDer,
     SSLKEAType aAuthType, bool aDtlsClient, const DtlsDigestList& aDigests,
     bool aPrivacyRequested) {
-  if (!mStsThread->IsOnCurrentThread()) {
-    mStsThread->Dispatch(
-        WrapRunnable(RefPtr<MediaTransportHandlerSTS>(this),
-                     &MediaTransportHandlerSTS::ActivateTransport, aTransportId,
-                     aLocalUfrag, aLocalPwd, aComponentCount, aUfrag, aPassword,
-                     aKeyDer, aCertDer, aAuthType, aDtlsClient, aDigests,
-                     aPrivacyRequested),
-        NS_DISPATCH_NORMAL);
-    return;
-  }
+  mInitPromise->Then(
+      mStsThread, __func__,
+      [=, keyDer = aKeyDer.Clone(), certDer = aCertDer.Clone(),
+       self = RefPtr<MediaTransportHandlerSTS>(this)]() {
+        MOZ_ASSERT(aComponentCount);
+        RefPtr<DtlsIdentity> dtlsIdentity(
+            DtlsIdentity::Deserialize(keyDer, certDer, aAuthType));
+        if (!dtlsIdentity) {
+          MOZ_ASSERT(false);
+          return;
+        }
 
-  MOZ_ASSERT(aComponentCount);
-  RefPtr<DtlsIdentity> dtlsIdentity(
-      DtlsIdentity::Deserialize(aKeyDer, aCertDer, aAuthType));
-  if (!dtlsIdentity) {
-    MOZ_ASSERT(false);
-    return;
-  }
+        RefPtr<NrIceMediaStream> stream(mIceCtx->GetStream(aTransportId));
+        if (!stream) {
+          MOZ_ASSERT(false);
+          return;
+        }
 
-  RefPtr<NrIceMediaStream> stream(mIceCtx->GetStream(aTransportId));
-  if (!stream) {
-    MOZ_ASSERT(false);
-    return;
-  }
+        CSFLogDebug(LOGTAG, "%s: Activating ICE media stream=%s components=%u",
+                    mIceCtx->name().c_str(), aTransportId.c_str(),
+                    static_cast<unsigned>(aComponentCount));
 
-  CSFLogDebug(LOGTAG, "%s: Activating ICE media stream=%s components=%u",
-              mIceCtx->name().c_str(), aTransportId.c_str(),
-              static_cast<unsigned>(aComponentCount));
+        std::vector<std::string> attrs;
+        attrs.reserve(2 /* ufrag + pwd */);
+        attrs.push_back("ice-ufrag:" + aUfrag);
+        attrs.push_back("ice-pwd:" + aPassword);
 
-  std::vector<std::string> attrs;
-  attrs.reserve(2 /* ufrag + pwd */);
-  attrs.push_back("ice-ufrag:" + aUfrag);
-  attrs.push_back("ice-pwd:" + aPassword);
+        // If we started an ICE restart in EnsureProvisionalTransport, this is
+        // where we decide whether to commit or rollback.
+        nsresult rv = stream->ConnectToPeer(aLocalUfrag, aLocalPwd, attrs);
+        if (NS_FAILED(rv)) {
+          CSFLogError(LOGTAG, "Couldn't parse ICE attributes, rv=%u",
+                      static_cast<unsigned>(rv));
+          MOZ_ASSERT(false);
+          return;
+        }
 
-  // If we started an ICE restart in EnsureProvisionalTransport, this is
-  // where we decide whether to commit or rollback.
-  nsresult rv = stream->ConnectToPeer(aLocalUfrag, aLocalPwd, attrs);
-  if (NS_FAILED(rv)) {
-    CSFLogError(LOGTAG, "Couldn't parse ICE attributes, rv=%u",
-                static_cast<unsigned>(rv));
-    MOZ_ASSERT(false);
-    return;
-  }
+        Transport transport = mTransports[aTransportId];
+        if (!transport.mFlow) {
+          transport.mFlow =
+              CreateTransportFlow(aTransportId, false, dtlsIdentity,
+                                  aDtlsClient, aDigests, aPrivacyRequested);
+          if (!transport.mFlow) {
+            return;
+          }
+          TransportLayer* dtls =
+              transport.mFlow->GetLayer(TransportLayerDtls::ID());
+          dtls->SignalStateChange.connect(
+              this, &MediaTransportHandlerSTS::OnStateChange);
+          if (aComponentCount < 2) {
+            dtls->SignalStateChange.connect(
+                this, &MediaTransportHandlerSTS::OnRtcpStateChange);
+          }
+        }
 
-  Transport transport = mTransports[aTransportId];
-  if (!transport.mFlow) {
-    transport.mFlow =
-        CreateTransportFlow(aTransportId, false, dtlsIdentity, aDtlsClient,
-                            aDigests, aPrivacyRequested);
-    if (!transport.mFlow) {
-      return;
-    }
-    TransportLayer* dtls = transport.mFlow->GetLayer(TransportLayerDtls::ID());
-    dtls->SignalStateChange.connect(this,
-                                    &MediaTransportHandlerSTS::OnStateChange);
-    if (aComponentCount < 2) {
-      dtls->SignalStateChange.connect(
-          this, &MediaTransportHandlerSTS::OnRtcpStateChange);
-    }
-  }
+        if (aComponentCount == 2) {
+          if (!transport.mRtcpFlow) {
+            transport.mRtcpFlow =
+                CreateTransportFlow(aTransportId, true, dtlsIdentity,
+                                    aDtlsClient, aDigests, aPrivacyRequested);
+            if (!transport.mRtcpFlow) {
+              return;
+            }
+            TransportLayer* dtls =
+                transport.mRtcpFlow->GetLayer(TransportLayerDtls::ID());
+            dtls->SignalStateChange.connect(
+                this, &MediaTransportHandlerSTS::OnRtcpStateChange);
+          }
+        } else {
+          transport.mRtcpFlow = nullptr;
+          // components are 1-indexed
+          stream->DisableComponent(2);
+        }
 
-  if (aComponentCount == 2) {
-    if (!transport.mRtcpFlow) {
-      transport.mRtcpFlow =
-          CreateTransportFlow(aTransportId, true, dtlsIdentity, aDtlsClient,
-                              aDigests, aPrivacyRequested);
-      if (!transport.mRtcpFlow) {
-        return;
-      }
-      TransportLayer* dtls =
-          transport.mRtcpFlow->GetLayer(TransportLayerDtls::ID());
-      dtls->SignalStateChange.connect(
-          this, &MediaTransportHandlerSTS::OnRtcpStateChange);
-    }
-  } else {
-    transport.mRtcpFlow = nullptr;
-    // components are 1-indexed
-    stream->DisableComponent(2);
-  }
+        mTransports[aTransportId] = transport;
+      },
+      [](const std::string& aError) {});
+}
 
-  mTransports[aTransportId] = transport;
+void MediaTransportHandlerSTS::SetTargetForDefaultLocalAddressLookup(
+    const std::string& aTargetIp, uint16_t aTargetPort) {
+  mInitPromise->Then(
+      mStsThread, __func__,
+      [=, self = RefPtr<MediaTransportHandlerSTS>(this)]() {
+        mIceCtx->SetTargetForDefaultLocalAddressLookup(aTargetIp, aTargetPort);
+      },
+      [](const std::string& aError) {});
 }
 
 void MediaTransportHandlerSTS::StartIceGathering(
-    bool aDefaultRouteOnly, const nsTArray<NrIceStunAddr>& aStunAddrs) {
-  if (!mStsThread->IsOnCurrentThread()) {
-    mStsThread->Dispatch(
-        WrapRunnable(RefPtr<MediaTransportHandlerSTS>(this),
-                     &MediaTransportHandlerSTS::StartIceGathering,
-                     aDefaultRouteOnly, aStunAddrs),
-        NS_DISPATCH_NORMAL);
-    return;
-  }
+    bool aDefaultRouteOnly, bool aObfuscateHostAddresses,
+    const nsTArray<NrIceStunAddr>& aStunAddrs) {
+  mInitPromise->Then(
+      mStsThread, __func__,
+      [=, stunAddrs = aStunAddrs.Clone(),
+       self = RefPtr<MediaTransportHandlerSTS>(this)]() {
+        mObfuscateHostAddresses = aObfuscateHostAddresses;
 
-  // Belt and suspenders - in e10s mode, the call below to SetStunAddrs
-  // needs to have the proper flags set on ice ctx.  For non-e10s,
-  // setting those flags happens in StartGathering.  We could probably
-  // just set them here, and only do it here.
-  mIceCtx->SetCtxFlags(aDefaultRouteOnly, mProxyOnly);
+        // Belt and suspenders - in e10s mode, the call below to SetStunAddrs
+        // needs to have the proper flags set on ice ctx.  For non-e10s,
+        // setting those flags happens in StartGathering.  We could probably
+        // just set them here, and only do it here.
+        mIceCtx->SetCtxFlags(aDefaultRouteOnly);
 
-  if (aStunAddrs.Length()) {
-    mIceCtx->SetStunAddrs(aStunAddrs);
-  }
+        if (stunAddrs.Length()) {
+          mIceCtx->SetStunAddrs(stunAddrs);
+        }
 
-  // Start gathering, but only if there are streams
-  if (!mIceCtx->GetStreams().empty()) {
-    mIceCtx->StartGathering(aDefaultRouteOnly, mProxyOnly);
-    return;
-  }
+        // Start gathering, but only if there are streams
+        if (!mIceCtx->GetStreams().empty()) {
+          mIceCtx->StartGathering(aDefaultRouteOnly, aObfuscateHostAddresses);
+          return;
+        }
 
-  CSFLogWarn(LOGTAG,
-             "%s: No streams to start gathering on. Can happen with rollback",
-             __FUNCTION__);
+        CSFLogWarn(
+            LOGTAG,
+            "%s: No streams to start gathering on. Can happen with rollback",
+            __FUNCTION__);
 
-  // If there are no streams, we're probably in a situation where we've rolled
-  // back while still waiting for our proxy configuration to come back. Make
-  // sure content knows that the rollback has stuck wrt gathering.
-  OnGatheringStateChange(dom::PCImplIceGatheringState::Complete);
+        // If there are no streams, we're probably in a situation where we've
+        // rolled back while still waiting for our proxy configuration to come
+        // back. Make sure content knows that the rollback has stuck wrt
+        // gathering.
+        OnGatheringStateChange(dom::RTCIceGatheringState::Complete);
+      },
+      [](const std::string& aError) {});
 }
 
 void MediaTransportHandlerSTS::StartIceChecks(
-    bool aIsControlling, bool aIsOfferer,
-    const std::vector<std::string>& aIceOptions) {
-  if (!mStsThread->IsOnCurrentThread()) {
-    mStsThread->Dispatch(WrapRunnable(RefPtr<MediaTransportHandlerSTS>(this),
-                                      &MediaTransportHandlerSTS::StartIceChecks,
-                                      aIsControlling, aIsOfferer, aIceOptions),
-                         NS_DISPATCH_NORMAL);
-    return;
-  }
+    bool aIsControlling, const std::vector<std::string>& aIceOptions) {
+  mInitPromise->Then(
+      mStsThread, __func__,
+      [=, self = RefPtr<MediaTransportHandlerSTS>(this)]() {
+        nsresult rv = mIceCtx->ParseGlobalAttributes(aIceOptions);
+        if (NS_FAILED(rv)) {
+          CSFLogError(LOGTAG, "%s: couldn't parse global parameters",
+                      __FUNCTION__);
+          return;
+        }
 
-  nsresult rv = mIceCtx->ParseGlobalAttributes(aIceOptions);
-  if (NS_FAILED(rv)) {
-    CSFLogError(LOGTAG, "%s: couldn't parse global parameters", __FUNCTION__);
-    return;
-  }
+        rv = mIceCtx->SetControlling(aIsControlling ? NrIceCtx::ICE_CONTROLLING
+                                                    : NrIceCtx::ICE_CONTROLLED);
+        if (NS_FAILED(rv)) {
+          CSFLogError(LOGTAG, "%s: couldn't set controlling to %d",
+                      __FUNCTION__, aIsControlling);
+          return;
+        }
 
-  rv = mIceCtx->SetControlling(aIsControlling ? NrIceCtx::ICE_CONTROLLING
-                                              : NrIceCtx::ICE_CONTROLLED);
-  if (NS_FAILED(rv)) {
-    CSFLogError(LOGTAG, "%s: couldn't set controlling to %d", __FUNCTION__,
-                aIsControlling);
-    return;
-  }
+        rv = mIceCtx->StartChecks();
+        if (NS_FAILED(rv)) {
+          CSFLogError(LOGTAG, "%s: couldn't start checks", __FUNCTION__);
+          return;
+        }
+      },
+      [](const std::string& aError) {});
+}
 
-  rv = mIceCtx->StartChecks(aIsOfferer);
-  if (NS_FAILED(rv)) {
-    CSFLogError(LOGTAG, "%s: couldn't start checks", __FUNCTION__);
-    return;
+void TokenizeCandidate(const std::string& aCandidate,
+                       std::vector<std::string>& aTokens) {
+  aTokens.clear();
+
+  std::istringstream iss(aCandidate);
+  std::string token;
+  while (std::getline(iss, token, ' ')) {
+    aTokens.push_back(token);
   }
 }
 
-void MediaTransportHandlerSTS::AddIceCandidate(const std::string& aTransportId,
-                                               const std::string& aCandidate,
-                                               const std::string& aUfrag) {
-  if (!mStsThread->IsOnCurrentThread()) {
-    mStsThread->Dispatch(
-        WrapRunnable(RefPtr<MediaTransportHandlerSTS>(this),
-                     &MediaTransportHandlerSTS::AddIceCandidate, aTransportId,
-                     aCandidate, aUfrag),
-        NS_DISPATCH_NORMAL);
-    return;
-  }
+void MediaTransportHandlerSTS::AddIceCandidate(
+    const std::string& aTransportId, const std::string& aCandidate,
+    const std::string& aUfrag, const std::string& aObfuscatedAddress) {
+  mInitPromise->Then(
+      mStsThread, __func__,
+      [=, self = RefPtr<MediaTransportHandlerSTS>(this)]() {
+        std::vector<std::string> tokens;
+        TokenizeCandidate(aCandidate, tokens);
 
-  RefPtr<NrIceMediaStream> stream(mIceCtx->GetStream(aTransportId));
-  if (!stream) {
-    CSFLogError(LOGTAG, "No ICE stream for candidate with transport id %s: %s",
-                aTransportId.c_str(), aCandidate.c_str());
-    return;
-  }
+        RefPtr<NrIceMediaStream> stream(mIceCtx->GetStream(aTransportId));
+        if (!stream) {
+          CSFLogError(LOGTAG,
+                      "No ICE stream for candidate with transport id %s: %s",
+                      aTransportId.c_str(), aCandidate.c_str());
+          return;
+        }
 
-  nsresult rv = stream->ParseTrickleCandidate(aCandidate, aUfrag);
-  if (NS_FAILED(rv)) {
-    CSFLogError(LOGTAG,
-                "Couldn't process ICE candidate with transport id %s: "
-                "%s",
-                aTransportId.c_str(), aCandidate.c_str());
-  }
+        nsresult rv = stream->ParseTrickleCandidate(aCandidate, aUfrag,
+                                                    aObfuscatedAddress);
+        if (NS_SUCCEEDED(rv)) {
+          // If the address is not obfuscated, we want to track it as
+          // explicitly signaled so that we know it is fine to reveal
+          // the address later on.
+          if (mObfuscateHostAddresses && tokens.size() > 4 &&
+              aObfuscatedAddress.empty()) {
+            mSignaledAddresses.insert(tokens[4]);
+          }
+        } else {
+          CSFLogError(LOGTAG,
+                      "Couldn't process ICE candidate with transport id %s: "
+                      "%s",
+                      aTransportId.c_str(), aCandidate.c_str());
+        }
+      },
+      [](const std::string& aError) {});
 }
 
 void MediaTransportHandlerSTS::UpdateNetworkState(bool aOnline) {
-  if (!mStsThread->IsOnCurrentThread()) {
-    mStsThread->Dispatch(
-        WrapRunnable(RefPtr<MediaTransportHandlerSTS>(this),
-                     &MediaTransportHandlerSTS::UpdateNetworkState, aOnline),
-        NS_DISPATCH_NORMAL);
-    return;
-  }
-
-  mIceCtx->UpdateNetworkState(aOnline);
+  mInitPromise->Then(
+      mStsThread, __func__,
+      [=, self = RefPtr<MediaTransportHandlerSTS>(this)]() {
+        mIceCtx->UpdateNetworkState(aOnline);
+      },
+      [](const std::string& aError) {});
 }
 
 void MediaTransportHandlerSTS::RemoveTransportsExcept(
     const std::set<std::string>& aTransportIds) {
-  if (!mStsThread->IsOnCurrentThread()) {
-    mStsThread->Dispatch(
-        WrapRunnable(RefPtr<MediaTransportHandlerSTS>(this),
-                     &MediaTransportHandlerSTS::RemoveTransportsExcept,
-                     aTransportIds),
-        NS_DISPATCH_NORMAL);
-    return;
-  }
-
-  for (auto it = mTransports.begin(); it != mTransports.end();) {
-    if (!aTransportIds.count(it->first)) {
-      if (it->second.mFlow) {
-        OnStateChange(it->first, TransportLayer::TS_NONE);
-        OnRtcpStateChange(it->first, TransportLayer::TS_NONE);
-      }
-      mIceCtx->DestroyStream(it->first);
-      it = mTransports.erase(it);
-    } else {
-      MOZ_ASSERT(it->second.mFlow);
-      ++it;
-    }
-  }
+  mInitPromise->Then(
+      mStsThread, __func__,
+      [=, self = RefPtr<MediaTransportHandlerSTS>(this)]() {
+        for (auto it = mTransports.begin(); it != mTransports.end();) {
+          if (!aTransportIds.count(it->first)) {
+            if (it->second.mFlow) {
+              OnStateChange(it->first, TransportLayer::TS_NONE);
+              OnRtcpStateChange(it->first, TransportLayer::TS_NONE);
+            }
+            mIceCtx->DestroyStream(it->first);
+            it = mTransports.erase(it);
+          } else {
+            MOZ_ASSERT(it->second.mFlow);
+            ++it;
+          }
+        }
+      },
+      [](const std::string& aError) {});
 }
 
 void MediaTransportHandlerSTS::SendPacket(const std::string& aTransportId,
                                           MediaPacket&& aPacket) {
-  if (!mStsThread->IsOnCurrentThread()) {
-    mStsThread->Dispatch(NewRunnableMethod<std::string, MediaPacket&&>(
-        __func__, this, &MediaTransportHandlerSTS::SendPacket, aTransportId,
-        std::move(aPacket)));
-    return;
-  }
+  mInitPromise->Then(
+      mStsThread, __func__,
+      [this, self = RefPtr<MediaTransportHandlerSTS>(this), aTransportId,
+       aPacket = std::move(aPacket)]() mutable {
+        MOZ_ASSERT(aPacket.type() != MediaPacket::UNCLASSIFIED);
+        RefPtr<TransportFlow> flow =
+            GetTransportFlow(aTransportId, aPacket.type() == MediaPacket::RTCP);
 
-  MOZ_ASSERT(aPacket.type() != MediaPacket::UNCLASSIFIED);
-  RefPtr<TransportFlow> flow =
-      GetTransportFlow(aTransportId, aPacket.type() == MediaPacket::RTCP);
+        if (!flow) {
+          CSFLogError(LOGTAG,
+                      "%s: No such transport flow (%s) for outgoing packet",
+                      mIceCtx->name().c_str(), aTransportId.c_str());
+          return;
+        }
 
-  if (!flow) {
-    CSFLogError(LOGTAG, "%s: No such transport flow (%s) for outgoing packet",
-                mIceCtx->name().c_str(), aTransportId.c_str());
-    MOZ_ASSERT(false);
-    return;
-  }
+        TransportLayer* layer = nullptr;
+        switch (aPacket.type()) {
+          case MediaPacket::SCTP:
+            layer = flow->GetLayer(TransportLayerDtls::ID());
+            break;
+          case MediaPacket::RTP:
+          case MediaPacket::RTCP:
+            layer = flow->GetLayer(TransportLayerSrtp::ID());
+            break;
+          default:
+            // Maybe it would be useful to allow the injection of other packet
+            // types for testing?
+            MOZ_ASSERT(false);
+            return;
+        }
 
-  TransportLayer* layer = nullptr;
-  switch (aPacket.type()) {
-    case MediaPacket::SCTP:
-      layer = flow->GetLayer(TransportLayerDtls::ID());
-      break;
-    case MediaPacket::RTP:
-    case MediaPacket::RTCP:
-      layer = flow->GetLayer(TransportLayerSrtp::ID());
-      break;
-    default:
-      // Maybe it would be useful to allow the injection of other packet types
-      // for testing?
-      MOZ_ASSERT(false);
-      return;
-  }
+        MOZ_ASSERT(layer);
 
-  MOZ_ASSERT(layer);
-
-  if (layer->SendPacket(aPacket) < 0) {
-    CSFLogError(LOGTAG, "%s: Transport flow (%s) failed to send packet",
-                mIceCtx->name().c_str(), aTransportId.c_str());
-  }
+        if (layer->SendPacket(aPacket) < 0) {
+          CSFLogError(LOGTAG, "%s: Transport flow (%s) failed to send packet",
+                      mIceCtx->name().c_str(), aTransportId.c_str());
+        }
+      },
+      [](const std::string& aError) {});
 }
 
 TransportLayer::State MediaTransportHandler::GetState(
@@ -777,11 +899,12 @@ void MediaTransportHandler::OnAlpnNegotiated(const std::string& aAlpn) {
     return;
   }
 
-  SignalAlpnNegotiated(aAlpn);
+  const bool privacyRequested = aAlpn == "c-webrtc";
+  SignalAlpnNegotiated(aAlpn, privacyRequested);
 }
 
 void MediaTransportHandler::OnGatheringStateChange(
-    dom::PCImplIceGatheringState aState) {
+    dom::RTCIceGatheringState aState) {
   if (mCallbackThread && !mCallbackThread->IsOnCurrentThread()) {
     mCallbackThread->Dispatch(
         WrapRunnable(RefPtr<MediaTransportHandler>(this),
@@ -794,7 +917,7 @@ void MediaTransportHandler::OnGatheringStateChange(
 }
 
 void MediaTransportHandler::OnConnectionStateChange(
-    dom::PCImplIceConnectionState aState) {
+    dom::RTCIceConnectionState aState) {
   if (mCallbackThread && !mCallbackThread->IsOnCurrentThread()) {
     mCallbackThread->Dispatch(
         WrapRunnable(RefPtr<MediaTransportHandler>(this),
@@ -807,12 +930,12 @@ void MediaTransportHandler::OnConnectionStateChange(
 }
 
 void MediaTransportHandler::OnPacketReceived(const std::string& aTransportId,
-                                             MediaPacket& aPacket) {
+                                             const MediaPacket& aPacket) {
   if (mCallbackThread && !mCallbackThread->IsOnCurrentThread()) {
     mCallbackThread->Dispatch(
         WrapRunnable(RefPtr<MediaTransportHandler>(this),
                      &MediaTransportHandler::OnPacketReceived, aTransportId,
-                     aPacket),
+                     const_cast<MediaPacket&>(aPacket)),
         NS_DISPATCH_NORMAL);
     return;
   }
@@ -821,12 +944,12 @@ void MediaTransportHandler::OnPacketReceived(const std::string& aTransportId,
 }
 
 void MediaTransportHandler::OnEncryptedSending(const std::string& aTransportId,
-                                               MediaPacket& aPacket) {
+                                               const MediaPacket& aPacket) {
   if (mCallbackThread && !mCallbackThread->IsOnCurrentThread()) {
     mCallbackThread->Dispatch(
         WrapRunnable(RefPtr<MediaTransportHandler>(this),
                      &MediaTransportHandler::OnEncryptedSending, aTransportId,
-                     aPacket),
+                     const_cast<MediaPacket&>(aPacket)),
         NS_DISPATCH_NORMAL);
     return;
   }
@@ -872,22 +995,21 @@ void MediaTransportHandler::OnRtcpStateChange(const std::string& aTransportId,
   SignalRtcpStateChange(aTransportId, aState);
 }
 
-RefPtr<MediaTransportHandler::StatsPromise>
-MediaTransportHandlerSTS::GetIceStats(
-    const std::string& aTransportId, DOMHighResTimeStamp aNow,
-    std::unique_ptr<dom::RTCStatsReportInternal>&& aReport) {
-  return InvokeAsync(
+RefPtr<dom::RTCStatsPromise> MediaTransportHandlerSTS::GetIceStats(
+    const std::string& aTransportId, DOMHighResTimeStamp aNow) {
+  return mInitPromise->Then(
       mStsThread, __func__,
-      [=, aReport = std::move(aReport),
-       self = RefPtr<MediaTransportHandlerSTS>(this)]() mutable {
+      [=, self = RefPtr<MediaTransportHandlerSTS>(this)]() {
+        UniquePtr<dom::RTCStatsCollection> stats(new dom::RTCStatsCollection);
         if (mIceCtx) {
           for (const auto& stream : mIceCtx->GetStreams()) {
             if (aTransportId.empty() || aTransportId == stream->GetId()) {
-              GetIceStats(*stream, aNow, aReport.get());
+              GetIceStats(*stream, aNow, stats.get());
             }
           }
         }
-        return StatsPromise::CreateAndResolve(std::move(aReport), __func__);
+        return dom::RTCStatsPromise::CreateAndResolve(std::move(stats),
+                                                      __func__);
       });
 }
 
@@ -897,14 +1019,20 @@ MediaTransportHandlerSTS::GetIceLog(const nsCString& aPattern) {
       mStsThread, __func__, [=, self = RefPtr<MediaTransportHandlerSTS>(this)] {
         dom::Sequence<nsString> converted;
         RLogConnector* logs = RLogConnector::GetInstance();
-        nsAutoPtr<std::deque<std::string>> result(new std::deque<std::string>);
+        std::deque<std::string> result;
         // Might not exist yet.
         if (logs) {
-          logs->Filter(aPattern.get(), 0, result);
+          logs->Filter(aPattern.get(), 0, &result);
         }
-        for (auto& line : *result) {
-          converted.AppendElement(NS_ConvertUTF8toUTF16(line.c_str()),
-                                  fallible);
+        /// XXX(Bug 1631386) Check if we should reject the promise instead of
+        /// crashing in an OOM situation.
+        if (!converted.SetCapacity(result.size(), fallible)) {
+          mozalloc_handle_oom(sizeof(nsString) * result.size());
+        }
+        for (auto& line : result) {
+          // Cannot fail, SetCapacity was called before.
+          (void)converted.AppendElement(NS_ConvertUTF8toUTF16(line.c_str()),
+                                        fallible);
         }
         return IceLogPromise::CreateAndResolve(std::move(converted), __func__);
       });
@@ -955,8 +1083,10 @@ void MediaTransportHandlerSTS::ExitPrivateMode() {
 static void ToRTCIceCandidateStats(
     const std::vector<NrIceCandidate>& candidates,
     dom::RTCStatsType candidateType, const nsString& transportId,
-    DOMHighResTimeStamp now, dom::RTCStatsReportInternal* report) {
-  MOZ_ASSERT(report);
+    DOMHighResTimeStamp now, dom::RTCStatsCollection* stats,
+    bool obfuscateHostAddresses,
+    const std::set<std::string>& signaledAddresses) {
+  MOZ_ASSERT(stats);
   for (const auto& candidate : candidates) {
     dom::RTCIceCandidateStats cand;
     cand.mType.Construct(candidateType);
@@ -966,8 +1096,20 @@ static void ToRTCIceCandidateStats(
     cand.mTimestamp.Construct(now);
     cand.mCandidateType.Construct(dom::RTCIceCandidateType(candidate.type));
     cand.mPriority.Construct(candidate.priority);
-    cand.mAddress.Construct(
-        NS_ConvertASCIItoUTF16(candidate.cand_addr.host.c_str()));
+    // https://tools.ietf.org/html/draft-ietf-rtcweb-mdns-ice-candidates-03#section-3.3.1
+    // This obfuscates the address with the mDNS address if one exists
+    if (!candidate.mdns_addr.empty()) {
+      cand.mAddress.Construct(
+          NS_ConvertASCIItoUTF16(candidate.mdns_addr.c_str()));
+    } else if (obfuscateHostAddresses &&
+               candidate.type == NrIceCandidate::ICE_PEER_REFLEXIVE &&
+               signaledAddresses.find(candidate.cand_addr.host) ==
+                   signaledAddresses.end()) {
+      cand.mAddress.Construct(NS_ConvertASCIItoUTF16("(redacted)"));
+    } else {
+      cand.mAddress.Construct(
+          NS_ConvertASCIItoUTF16(candidate.cand_addr.host.c_str()));
+    }
     cand.mPort.Construct(candidate.cand_addr.port);
     cand.mProtocol.Construct(
         NS_ConvertASCIItoUTF16(candidate.cand_addr.transport.c_str()));
@@ -977,16 +1119,25 @@ static void ToRTCIceCandidateStats(
       cand.mRelayProtocol.Construct(
           NS_ConvertASCIItoUTF16(candidate.local_addr.transport.c_str()));
     }
-    report->mIceCandidateStats.Value().AppendElement(cand, fallible);
+    cand.mProxied.Construct(NS_ConvertASCIItoUTF16(
+        candidate.is_proxied ? "proxied" : "non-proxied"));
+    if (!stats->mIceCandidateStats.AppendElement(cand, fallible)) {
+      // XXX(Bug 1632090) Instead of extending the array 1-by-1 (which might
+      // involve multiple reallocations) and potentially crashing here,
+      // SetCapacity could be called outside the loop once.
+      mozalloc_handle_oom(0);
+    }
     if (candidate.trickled) {
-      report->mTrickledIceCandidateStats.Value().AppendElement(cand, fallible);
+      if (!stats->mTrickledIceCandidateStats.AppendElement(cand, fallible)) {
+        mozalloc_handle_oom(0);
+      }
     }
   }
 }
 
 void MediaTransportHandlerSTS::GetIceStats(
     const NrIceMediaStream& aStream, DOMHighResTimeStamp aNow,
-    dom::RTCStatsReportInternal* aReport) const {
+    dom::RTCStatsCollection* aStats) const {
   MOZ_ASSERT(mStsThread->IsOnCurrentThread());
 
   NS_ConvertASCIItoUTF16 transportId(aStream.GetId().c_str());
@@ -1025,28 +1176,45 @@ void MediaTransportHandlerSTS::GetIceStats(
     s.mLastPacketReceivedTimestamp.Construct(candPair.ms_since_last_recv);
     s.mState.Construct(dom::RTCStatsIceCandidatePairState(candPair.state));
     s.mComponentId.Construct(candPair.component_id);
-    aReport->mIceCandidatePairStats.Value().AppendElement(s, fallible);
+    if (!aStats->mIceCandidatePairStats.AppendElement(s, fallible)) {
+      // XXX(Bug 1632090) Instead of extending the array 1-by-1 (which might
+      // involve multiple reallocations) and potentially crashing here,
+      // SetCapacity could be called outside the loop once.
+      mozalloc_handle_oom(0);
+    }
   }
 
   std::vector<NrIceCandidate> candidates;
   if (NS_SUCCEEDED(aStream.GetLocalCandidates(&candidates))) {
     ToRTCIceCandidateStats(candidates, dom::RTCStatsType::Local_candidate,
-                           transportId, aNow, aReport);
+                           transportId, aNow, aStats, mObfuscateHostAddresses,
+                           mSignaledAddresses);
     // add the local candidates unparsed string to a sequence
     for (const auto& candidate : candidates) {
-      aReport->mRawLocalCandidates.Value().AppendElement(
-          NS_ConvertASCIItoUTF16(candidate.label.c_str()), fallible);
+      if (!aStats->mRawLocalCandidates.AppendElement(
+              NS_ConvertASCIItoUTF16(candidate.label.c_str()), fallible)) {
+        // XXX(Bug 1632090) Instead of extending the array 1-by-1 (which might
+        // involve multiple reallocations) and potentially crashing here,
+        // SetCapacity could be called outside the loop once.
+        mozalloc_handle_oom(0);
+      }
     }
   }
   candidates.clear();
 
   if (NS_SUCCEEDED(aStream.GetRemoteCandidates(&candidates))) {
     ToRTCIceCandidateStats(candidates, dom::RTCStatsType::Remote_candidate,
-                           transportId, aNow, aReport);
+                           transportId, aNow, aStats, mObfuscateHostAddresses,
+                           mSignaledAddresses);
     // add the remote candidates unparsed string to a sequence
     for (const auto& candidate : candidates) {
-      aReport->mRawRemoteCandidates.Value().AppendElement(
-          NS_ConvertASCIItoUTF16(candidate.label.c_str()), fallible);
+      if (!aStats->mRawRemoteCandidates.AppendElement(
+              NS_ConvertASCIItoUTF16(candidate.label.c_str()), fallible)) {
+        // XXX(Bug 1632090) Instead of extending the array 1-by-1 (which might
+        // involve multiple reallocations) and potentially crashing here,
+        // SetCapacity could be called outside the loop once.
+        mozalloc_handle_oom(0);
+      }
     }
   }
 }
@@ -1082,6 +1250,10 @@ RefPtr<TransportFlow> MediaTransportHandlerSTS::CreateTransportFlow(
 
   dtls->SetIdentity(aDtlsIdentity);
 
+  dtls->SetMinMaxVersion(
+      static_cast<TransportLayerDtls::Version>(mMinDtlsVersion),
+      static_cast<TransportLayerDtls::Version>(mMaxDtlsVersion));
+
   for (const auto& digest : aDigests) {
     rv = dtls->SetVerificationDigest(digest);
     if (NS_FAILED(rv)) {
@@ -1102,9 +1274,8 @@ RefPtr<TransportFlow> MediaTransportHandlerSTS::CreateTransportFlow(
   // Always permits negotiation of the confidential mode.
   // Only allow non-confidential (which is an allowed default),
   // if we aren't confidential.
-  std::set<std::string> alpn;
-  std::string alpnDefault = "";
-  alpn.insert("c-webrtc");
+  std::set<std::string> alpn = {"c-webrtc"};
+  std::string alpnDefault;
   if (!aPrivacyRequested) {
     alpnDefault = "webrtc";
     alpn.insert(alpnDefault);
@@ -1134,15 +1305,15 @@ RefPtr<TransportFlow> MediaTransportHandlerSTS::CreateTransportFlow(
   return flow;
 }
 
-static mozilla::dom::PCImplIceGatheringState toDomIceGatheringState(
+static mozilla::dom::RTCIceGatheringState toDomIceGatheringState(
     NrIceCtx::GatheringState aState) {
   switch (aState) {
     case NrIceCtx::ICE_CTX_GATHER_INIT:
-      return dom::PCImplIceGatheringState::New;
+      return dom::RTCIceGatheringState::New;
     case NrIceCtx::ICE_CTX_GATHER_STARTED:
-      return dom::PCImplIceGatheringState::Gathering;
+      return dom::RTCIceGatheringState::Gathering;
     case NrIceCtx::ICE_CTX_GATHER_COMPLETE:
-      return dom::PCImplIceGatheringState::Complete;
+      return dom::RTCIceGatheringState::Complete;
   }
   MOZ_CRASH();
 }
@@ -1152,23 +1323,23 @@ void MediaTransportHandlerSTS::OnGatheringStateChange(
   OnGatheringStateChange(toDomIceGatheringState(aState));
 }
 
-static mozilla::dom::PCImplIceConnectionState toDomIceConnectionState(
+static mozilla::dom::RTCIceConnectionState toDomIceConnectionState(
     NrIceCtx::ConnectionState aState) {
   switch (aState) {
     case NrIceCtx::ICE_CTX_INIT:
-      return dom::PCImplIceConnectionState::New;
+      return dom::RTCIceConnectionState::New;
     case NrIceCtx::ICE_CTX_CHECKING:
-      return dom::PCImplIceConnectionState::Checking;
+      return dom::RTCIceConnectionState::Checking;
     case NrIceCtx::ICE_CTX_CONNECTED:
-      return dom::PCImplIceConnectionState::Connected;
+      return dom::RTCIceConnectionState::Connected;
     case NrIceCtx::ICE_CTX_COMPLETED:
-      return dom::PCImplIceConnectionState::Completed;
+      return dom::RTCIceConnectionState::Completed;
     case NrIceCtx::ICE_CTX_FAILED:
-      return dom::PCImplIceConnectionState::Failed;
+      return dom::RTCIceConnectionState::Failed;
     case NrIceCtx::ICE_CTX_DISCONNECTED:
-      return dom::PCImplIceConnectionState::Disconnected;
+      return dom::RTCIceConnectionState::Disconnected;
     case NrIceCtx::ICE_CTX_CLOSED:
-      return dom::PCImplIceConnectionState::Closed;
+      return dom::RTCIceConnectionState::Closed;
   }
   MOZ_CRASH();
 }
@@ -1179,9 +1350,10 @@ void MediaTransportHandlerSTS::OnConnectionStateChange(
 }
 
 // The stuff below here will eventually go into the MediaTransportChild class
-void MediaTransportHandlerSTS::OnCandidateFound(NrIceMediaStream* aStream,
-                                                const std::string& aCandidate,
-                                                const std::string& aUfrag) {
+void MediaTransportHandlerSTS::OnCandidateFound(
+    NrIceMediaStream* aStream, const std::string& aCandidate,
+    const std::string& aUfrag, const std::string& aMDNSAddr,
+    const std::string& aActualAddr) {
   CandidateInfo info;
   info.mCandidate = aCandidate;
   MOZ_ASSERT(!aUfrag.empty());
@@ -1190,8 +1362,13 @@ void MediaTransportHandlerSTS::OnCandidateFound(NrIceMediaStream* aStream,
   NrIceCandidate defaultRtcpCandidate;
   nsresult rv = aStream->GetDefaultCandidate(1, &defaultRtpCandidate);
   if (NS_SUCCEEDED(rv)) {
-    info.mDefaultHostRtp = defaultRtpCandidate.cand_addr.host;
-    info.mDefaultPortRtp = defaultRtpCandidate.cand_addr.port;
+    if (!defaultRtpCandidate.mdns_addr.empty()) {
+      info.mDefaultHostRtp = "0.0.0.0";
+      info.mDefaultPortRtp = 9;
+    } else {
+      info.mDefaultHostRtp = defaultRtpCandidate.cand_addr.host;
+      info.mDefaultPortRtp = defaultRtpCandidate.cand_addr.port;
+    }
   } else {
     CSFLogError(LOGTAG,
                 "%s: GetDefaultCandidates failed for transport id %s, "
@@ -1202,9 +1379,16 @@ void MediaTransportHandlerSTS::OnCandidateFound(NrIceMediaStream* aStream,
 
   // Optional; component won't exist if doing rtcp-mux
   if (NS_SUCCEEDED(aStream->GetDefaultCandidate(2, &defaultRtcpCandidate))) {
-    info.mDefaultHostRtcp = defaultRtcpCandidate.cand_addr.host;
+    if (!defaultRtcpCandidate.mdns_addr.empty()) {
+      info.mDefaultHostRtcp = defaultRtcpCandidate.mdns_addr;
+    } else {
+      info.mDefaultHostRtcp = defaultRtcpCandidate.cand_addr.host;
+    }
     info.mDefaultPortRtcp = defaultRtcpCandidate.cand_addr.port;
   }
+
+  info.mMDNSAddress = aMDNSAddr;
+  info.mActualAddress = aActualAddr;
 
   OnCandidate(aStream->GetId(), info);
 }
@@ -1236,4 +1420,5 @@ void MediaTransportHandlerSTS::EncryptedPacketSending(TransportLayer* aLayer,
                                                       MediaPacket& aPacket) {
   OnEncryptedSending(aLayer->flow_id(), aPacket);
 }
+
 }  // namespace mozilla

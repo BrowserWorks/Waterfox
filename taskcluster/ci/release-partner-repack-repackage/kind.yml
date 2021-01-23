@@ -8,7 +8,6 @@ transforms:
     - taskgraph.transforms.chunk_partners:transforms
     - taskgraph.transforms.name_sanity:transforms
     - taskgraph.transforms.repackage_partner:transforms
-    - taskgraph.transforms.use_toolchains:transforms
     - taskgraph.transforms.job:transforms
     - taskgraph.transforms.task:transforms
 
@@ -22,10 +21,6 @@ only-for-build-platforms:
     - win32-shippable/opt
     - win64-shippable/opt
     - win64-aarch64-shippable/opt
-    - macosx64-nightly/opt
-    - win32-nightly/opt
-    - win64-nightly/opt
-    - win64-aarch64-nightly/opt
 
 job-template:
     mozharness:

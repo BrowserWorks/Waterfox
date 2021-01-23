@@ -9,6 +9,19 @@
  */
 
 add_task(async function() {
+  const isWebRenderEnabled = Services.prefs.getBoolPref("gfx.webrender.all");
+  const isFissionEnabled = Services.prefs.getBoolPref("fission.autostart");
+  if (isFissionEnabled && !isWebRenderEnabled) {
+    // This configuration is not supported.
+    // Also, in this specific configuration, we're displaying a warning, which looks like a flicker.
+    // Deactivating test.
+    ok(
+      true,
+      "Detected Fission without WebRender. Flicker expected, deactivating flicker test"
+    );
+    return;
+  }
+
   let startupRecorder = Cc["@mozilla.org/test/startuprecorder;1"].getService()
     .wrappedJSObject;
   await startupRecorder.done;
@@ -16,7 +29,7 @@ add_task(async function() {
   // Ensure all the frame data is in the test compartment to avoid traversing
   // a cross compartment wrapper for each pixel.
   let frames = Cu.cloneInto(startupRecorder.data.frames, {});
-  ok(frames.length > 0, "Should have captured some frames.");
+  ok(!!frames.length, "Should have captured some frames.");
 
   let unexpectedRects = 0;
   let alreadyFocused = false;

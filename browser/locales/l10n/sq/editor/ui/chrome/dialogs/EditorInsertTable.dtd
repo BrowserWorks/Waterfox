@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Futje Tabele">
+
+<!ENTITY size.label "Madhësi">
+<!ENTITY numRowsEditField.label "Rreshta:">
+<!ENTITY numRowsEditField.accessKey "R">
+<!ENTITY numColumnsEditField.label "Shtylla:">
+<!ENTITY numColumnsEditField.accessKey "S">
+<!ENTITY widthEditField.label "Gjerësi:">
+<!ENTITY widthEditField.accessKey "G">
+<!ENTITY borderEditField.label "Anë:">
+<!ENTITY borderEditField.accessKey "A">
+<!ENTITY borderEditField.tooltip "Shkruani një numër për anën e tabelës, ose shkruani zero (0) për pa anë">
+<!ENTITY pixels.label "piksela">

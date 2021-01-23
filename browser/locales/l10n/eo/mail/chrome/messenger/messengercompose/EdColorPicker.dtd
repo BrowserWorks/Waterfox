@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Koloro">
+<!ENTITY lastPickedColor.label "Antaŭe elektita koloro">
+<!ENTITY lastPickedColor.accessKey "A">
+<!ENTITY chooseColor1.label "Elektu koloron:">
+<!ENTITY chooseColor2.label "aŭ entajpu HTML‑kodon de koloro">
+<!ENTITY chooseColor2.accessKey "H">
+<!ENTITY setColorExample.label "(ekz.: “0000ff” aŭ “blue”):">
+<!ENTITY default.label "Implicita">
+<!ENTITY default.accessKey "I">
+<!ENTITY palette.label "Paletro:">
+<!ENTITY standardPalette.label "Norma">
+<!ENTITY webPalette.label "Ĉiuj retaj koloroj">
+<!ENTITY background.label "Fono de:">
+<!ENTITY background.accessKey "F">
+<!ENTITY table.label "tabelo">
+<!ENTITY table.accessKey "t">
+<!ENTITY cell.label "ĉelo(j)">
+<!ENTITY cell.accessKey "e">

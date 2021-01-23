@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Assistente de importation">
+
+<!ENTITY importFromWin.label            "Importar optiones, parametros de contos, adressario, filtros e altere datos ab:">
+<!ENTITY importFromNonWin.label         "Importar preferentias, parametros de contos, adressario, filtros e altere datos ab:">
+<!ENTITY importSourceNotFound.label     "Nulle application ex que importar datos trovate.">
+
+<!ENTITY importFromNothing.label        "Importar nihil">
+<!ENTITY importFromNothing.accesskey    "n">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 plus recente">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "Importar parametros e dossiers de posta">
+<!ENTITY importItems.title              "Elementos a importar">
+<!ENTITY importItems.label              "Selige le datos a importar:">
+
+<!ENTITY migrating.title                "Importante…">
+<!ENTITY migrating.label                "Le importation del elementos sequente es in curso…">
+
+<!ENTITY selectProfile.title            "Seliger un profilo">
+<!ENTITY selectProfile.label            "Le profilos sequente es disponibile a importar:">
+
+<!ENTITY done.title                     "Importation complete">
+<!ENTITY done.label                     "Le elementos sequente ha essite importate con successo:">

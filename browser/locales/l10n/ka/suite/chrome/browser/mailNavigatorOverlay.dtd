@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newMessageCmd.label             "წერილი">
+<!ENTITY newMessageCmd.accesskey         "M">
+<!ENTITY newMessageCmd.key               "M">
+
+<!ENTITY newContactCmd.label             "პირი…">
+<!ENTITY newContactCmd.accesskey         "C">
+
+<!ENTITY sendPage.label                  "გვერდის გაგზავნა…">
+<!ENTITY sendPage.accesskey              "S">
+
+<!ENTITY contextSendThisPage.label       "ამ გვერდის გაგზავნა…">
+<!ENTITY contextSendThisPage.accesskey   "d">
+<!ENTITY contextSendThisLink.label       "ამ ბმულის გაგზავნა…">
+<!ENTITY contextSendThisLink.accesskey   "k">
+<!ENTITY contextSendImage.label          "სურათის გაგზავნა…">
+<!ENTITY contextSendImage.accesskey      "n">
+<!ENTITY contextSendVideo.label          "ვიდეოს გაგზავნა…">
+<!ENTITY contextSendVideo.accesskey      "n">
+<!ENTITY contextSendAudio.label          "აუდიოს გაგზავნა…">
+<!ENTITY contextSendAudio.accesskey      "n">
+<!ENTITY contextSendFrame.label          "ბლოკის გაგზავნა…">
+<!ENTITY contextSendFrame.accesskey      "d">
+
+<!ENTITY sendLinkCmd.label               "ბმულის გაგზავნა…"> 
+<!ENTITY sendLinkCmd.accesskey           "d">
+

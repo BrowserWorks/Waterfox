@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProduct2.label      "About &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "A">
+
+<!ENTITY preferencesCmdMac.label        "পছন্দসমূহ…">
+
+<!ENTITY servicesMenuMac.label          "সেবা">
+
+<!ENTITY hideThisAppCmdMac2.label       "&brandShorterName; আড়াল কর">
+
+<!ENTITY hideOtherAppsCmdMac.label      "অন্যান্য উইন্ডো আড়াল করা হবে">
+
+<!ENTITY showAllAppsCmdMac.label        "সব প্রদর্শন">
+
+<!ENTITY touchBarCmdMac.label           "টাচ বার কাস্টোমাইজ করুন…">

@@ -24,11 +24,12 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=695385
 <pre id="test">
 <script type="application/javascript">
 // Main Function
-function run() {
+async function run() {
   SimpleTest.waitForExplicitFinish();
+
   let snapshots = new Array(4);
   for (let i = 0; i < snapshots.length; i++) {
-    snapshots[i] = snapshotWindow(frames[i].window, false);
+    snapshots[i] = await snapshotWindow(frames[i], false);
   }
 
   // Compare mochi.test iframe against its reference:

@@ -15,7 +15,7 @@ function assertShown(task) {
       "popupshown"
     );
 
-    await ContentTask.spawn(browser, null, task);
+    await SpecialPowers.spawn(browser, [], task);
 
     await popupshown;
 
@@ -30,7 +30,7 @@ function assertNotShown(task) {
       "popupshown"
     );
 
-    await ContentTask.spawn(browser, null, task);
+    await SpecialPowers.spawn(browser, [], task);
 
     let sawPrompt = await Promise.race([
       popupshown.then(() => true),
@@ -53,15 +53,13 @@ add_task(async function testNotificationPermission() {
   // with user interaction will show the permission prompt.
 
   await assertShown(function() {
-    E10SUtils.wrapHandlingUserInput(content, true, function() {
-      content.document.getElementById("desktop-notification").click();
-    });
+    content.document.notifyUserGestureActivation();
+    content.document.getElementById("desktop-notification").click();
   });
 
   await assertShown(function() {
-    E10SUtils.wrapHandlingUserInput(content, true, function() {
-      content.document.getElementById("push").click();
-    });
+    content.document.notifyUserGestureActivation();
+    content.document.getElementById("push").click();
   });
 
   // Now test that requests without user interaction will fail.

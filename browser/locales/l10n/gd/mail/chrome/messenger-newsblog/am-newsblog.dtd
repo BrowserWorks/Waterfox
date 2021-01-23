@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY biffAll.label                 "Cuir an comas na h-ùrachaidhean airson gach inbhir">
+<!ENTITY biffAll.accesskey             "e">
+
+<!ENTITY newFeedSettings.label         "Bun-roghainnean airson inbhirean ùra">
+
+<!ENTITY manageSubscriptions.label     "Rianaich fo-sgrìobhaidhean…">
+<!ENTITY manageSubscriptions.accesskey "R">
+
+<!ENTITY feedWindowTitle.label         "Draoidh cunntasan inbhirean">
+<!ENTITY feeds.accountName             "Blogaichean ⁊ inbhirean naidheachdan">

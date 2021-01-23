@@ -5,7 +5,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/Logging.h"
-#include "nsAutoPtr.h"
+#include "nsComponentManagerUtils.h"
+#include "nsContentUtils.h"
 #include "nsIConsoleService.h"
 #include "nsIObserverService.h"
 #include "nsIObserver.h"
@@ -154,10 +155,6 @@ nsresult nsObserverService::Create(nsISupports* aOuter, const nsIID& aIID,
 
   RefPtr<nsObserverService> os = new nsObserverService();
 
-  if (!os) {
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
-
   // The memory reporter can not be immediately registered here because
   // the nsMemoryReporterManager may attempt to get the nsObserverService
   // during initialization, causing a recursive GetService.
@@ -246,10 +243,6 @@ nsObserverService::RemoveObserver(nsIObserver* aObserver, const char* aTopic) {
     return NS_ERROR_FAILURE;
   }
 
-  /* This death grip is needed to protect against consumers who call
-   * RemoveObserver from their Destructor thus potentially thus causing
-   * infinite recursion, see bug 485834/bug 325392. */
-  nsCOMPtr<nsIObserver> kungFuDeathGrip(aObserver);
   return observerList->RemoveObserver(aObserver);
 }
 
@@ -286,9 +279,9 @@ NS_IMETHODIMP nsObserverService::NotifyObservers(nsISupports* aSubject,
   mozilla::TimeStamp start = TimeStamp::Now();
 
   AUTO_PROFILER_TEXT_MARKER_CAUSE("NotifyObservers", nsDependentCString(aTopic),
-                                  OTHER, profiler_get_backtrace());
-  AUTO_PROFILER_LABEL_DYNAMIC_CSTR("nsObserverService::NotifyObservers", OTHER,
-                                   aTopic);
+                                  OTHER, Nothing(), profiler_get_backtrace());
+  AUTO_PROFILER_LABEL_DYNAMIC_CSTR_NONSENSITIVE(
+      "nsObserverService::NotifyObservers", OTHER, aTopic);
 
   nsObserverList* observerList = mObserverTopicTable.GetEntry(aTopic);
   if (observerList) {
@@ -320,5 +313,48 @@ nsObserverService::UnmarkGrayStrongObservers() {
     xpc_TryUnmarkWrappedGrayObject(strongObservers[i]);
   }
 
+  return NS_OK;
+}
+
+namespace {
+
+class NotifyWhenScriptSafeRunnable : public mozilla::Runnable {
+ public:
+  NotifyWhenScriptSafeRunnable(nsIObserverService* aObs, nsISupports* aSubject,
+                               const char* aTopic, const char16_t* aData)
+      : mozilla::Runnable("NotifyWhenScriptSafeRunnable"),
+        mObs(aObs),
+        mSubject(aSubject),
+        mTopic(aTopic) {
+    if (aData) {
+      mData.Assign(aData);
+    } else {
+      mData.SetIsVoid(true);
+    }
+  }
+
+  NS_IMETHOD Run() {
+    const char16_t* data = mData.IsVoid() ? nullptr : mData.get();
+    return mObs->NotifyObservers(mSubject, mTopic.get(), data);
+  }
+
+ private:
+  nsCOMPtr<nsIObserverService> mObs;
+  nsCOMPtr<nsISupports> mSubject;
+  nsCString mTopic;
+  nsString mData;
+};
+
+}  // namespace
+
+nsresult nsIObserverService::NotifyWhenScriptSafe(nsISupports* aSubject,
+                                                  const char* aTopic,
+                                                  const char16_t* aData) {
+  if (nsContentUtils::IsSafeToRunScript()) {
+    return NotifyObservers(aSubject, aTopic, aData);
+  }
+
+  nsContentUtils::AddScriptRunner(MakeAndAddRef<NotifyWhenScriptSafeRunnable>(
+      this, aSubject, aTopic, aData));
   return NS_OK;
 }

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Нова снимена папка со пребарување">
+<!ENTITY name.label "Име:">
+<!ENTITY name.accesskey "И">
+<!ENTITY description.label "Креирај потпапка на:">
+<!ENTITY description.accesskey "К">
+
+<!ENTITY searchTermCaption.label "Конфигурирај го критериумот за пребарување користен за оваа снимена папка со пребарување: ">
+
+<!ENTITY folderSelectionCaption.label "Изберете ги папките во кои ќе се пребарува: ">
+<!ENTITY chooseFoldersButton.label "Избери…">
+<!ENTITY chooseFoldersButton.accesskey "з">
+
+<!ENTITY searchOnline.label "Пребарувај на Интернет (дава свежи информации за IMAP и папки со дискусии но го зголемува времето на отворање на папките)">
+<!ENTITY searchOnline.accesskey "е">

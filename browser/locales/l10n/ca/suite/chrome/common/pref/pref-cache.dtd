@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-cache.xul -->
+<!--LOCALIZATION NOTE : FILE Cache prefs dialog -->
+
+
+<!ENTITY pref.cache.title                "Memòria cau">
+<!ENTITY pref.cache.caption              "Defineix les opcions de la memòria cau">
+<!ENTITY cachePara                       "La memòria cau conserva còpies al disc dur de les pàgines web que es visiten més sovint. (Feu clic a Actualitza per obtenir sempre la darrera versió de la pàgina.)">
+<!ENTITY cacheCheck.label                "Permet al &brandShortName; gestionar la mida de la meva memòria cau.">
+<!ENTITY cacheCheck.accesskey            "P">
+<!ENTITY diskCacheUpTo.label             "Utilitza fins a">
+<!ENTITY diskCacheUpTo.accesskey         "U">
+<!ENTITY spaceMbytes                     "MB d'espai de disc per a la memòria cau.">
+<!ENTITY diskCacheFolder.label           "Carpeta de la memòria cau:">
+<!ENTITY clearDiskCache.label            "Buida">
+<!ENTITY clearDiskCache.accesskey        "B">
+<!ENTITY chooseDiskCacheFolder.label     "Trieu una carpeta...">
+<!ENTITY chooseDiskCacheFolder.accesskey "T">
+<!ENTITY diskCacheFolderExplanation      "Els fitxers de la memòria cau es desaran en una subcarpeta anomenada «Cache» en el directori que indiqueu. Reinicieu el &brandShortName; per tal que els canvis tinguin efecte.">
+<!ENTITY docCache.label                  "Compara la pàgina a la memòria cau amb la pàgina a la xarxa:">
+<!ENTITY docCache.accesskey              "m">
+<!ENTITY checkOncePerSession.label       "Una vegada per sessió">
+<!ENTITY checkEveryTime.label            "Cada vegada que es visualitzi la pàgina">
+<!ENTITY checkNever.label                "Mai">
+<!ENTITY checkAutomatically.label        "Quan la pàgina estigui desactualitzada">
+
+<!ENTITY prefetchTitle.label             "Càrrega prèvia d'enllaços">
+<!ENTITY enablePrefetch.label            "Durant la inactivitat, prepara les pàgines web designades de manera que els enllaços que incloguin es carreguin més ràpidament.">
+<!ENTITY enablePrefetch.accesskey        "D">

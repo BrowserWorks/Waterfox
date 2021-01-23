@@ -478,9 +478,9 @@ identifiers:
 [(8, 10), (8, 13)] log log
 [(8, 14), (8, 19)] index index
 [(8, 21), (8, 28)] element element
-[(11, 8), (11, 9)] aa = 10 a
+[(11, 8), (11, 9)] a a
 [(11, 11), (11, 13)] aa aa
-[(11, 20), (11, 21)] bb = 5 b
+[(11, 20), (11, 21)] b b
 [(11, 23), (11, 25)] bb bb
 [(11, 36), (11, 37)] 3 a
 [(12, 22), (12, 27)] foooo foooo
@@ -965,9 +965,9 @@ exports[`Parser.getSymbols function names 1`] = `
 [(22, 13), (22, 25)]  foo()    11
 [(24, 0), (24, 35)]  fn()
 [(24, 19), (24, 31)]  foo()    12
-[(25, 0), (25, 40)]  fn()    1
+[(25, 0), (25, 40)]  f2()
 [(25, 19), (25, 31)]  foo()    13
-[(26, 0), (26, 45)]  fn()    2
+[(26, 0), (26, 45)]  f3()
 [(26, 24), (26, 36)]  foo()    14
 [(29, 8), (29, 21)]  foo() Cls   15
 [(30, 10), (30, 23)]  foo() Cls   16
@@ -1014,17 +1014,17 @@ identifiers:
 [(14, 4), (14, 7)] foo foo
 [(16, 4), (16, 7)] foo foo
 [(17, 5), (17, 8)] foo foo
-[(18, 5), (18, 8)] foo = function () {} foo
+[(18, 5), (18, 8)] foo foo
 [(20, 1), (20, 4)] foo foo
-[(21, 2), (21, 5)] foo = function () {} foo
-[(22, 2), (22, 5)] foo = function () {} bar
+[(21, 2), (21, 5)] foo foo
+[(22, 2), (22, 5)] bar bar
 [(22, 7), (22, 10)] foo foo
 [(24, 9), (24, 11)] fn fn
 [(24, 13), (24, 16)] foo foo
-[(25, 9), (25, 11)] fn fn
-[(25, 13), (25, 16)] foo = function () {} foo
-[(26, 9), (26, 11)] fn fn
-[(26, 13), (26, 16)] foo = function () {} bar
+[(25, 9), (25, 11)] f2 f2
+[(25, 13), (25, 16)] foo foo
+[(26, 9), (26, 11)] f3 f3
+[(26, 13), (26, 16)] bar bar
 [(26, 18), (26, 21)] foo foo
 [(28, 6), (28, 9)] Cls Cls
 [(29, 2), (29, 5)]  foo
@@ -1253,6 +1253,50 @@ loading: false
 framework: undefined"
 `;
 
+exports[`Parser.getSymbols optional chaining 1`] = `
+"functions:
+
+
+callExpressions:
+
+
+memberExpressions:
+[(2, 5), (2, 6)] obj?.a a
+[(3, 8), (3, 9)] obj?.a?.b b
+[(3, 5), (3, 6)] obj?.a a
+
+objectProperties:
+
+
+comments:
+
+
+identifiers:
+[(1, 6), (1, 9)] obj obj
+[(2, 0), (2, 3)] obj obj
+[(2, 5), (2, 6)] a a
+[(3, 0), (3, 3)] obj obj
+[(3, 5), (3, 6)] a a
+[(3, 8), (3, 9)] b b
+
+classes:
+
+
+imports:
+
+
+literals:
+
+
+hasJsx: false
+
+hasTypes: false
+
+loading: false
+
+framework: undefined"
+`;
+
 exports[`Parser.getSymbols proto 1`] = `
 "functions:
 [(1, 12), (1, 25)]  foo()
@@ -1366,8 +1410,8 @@ memberExpressions:
 
 objectProperties:
 [(8, 6), (8, 9)] foo foo
-[(8, 13), (8, 16)] foo.bar bar
-[(9, 5), (9, 8)] baz baz
+[(8, 13), (8, 16)] foo.baw baw
+[(9, 5), (9, 8)] bap bap
 [(10, 5), (10, 7)] ll ll
 [(15, 6), (15, 7)] a a
 [(17, 10), (17, 12)]  my
@@ -1385,23 +1429,23 @@ identifiers:
 [(4, 6), (4, 7)] a a
 [(5, 2), (5, 3)] b b
 [(6, 0), (6, 1)] a a
-[(8, 13), (8, 16)] bar bar
+[(8, 13), (8, 16)] baw baw
 [(8, 6), (8, 9)] {
-  bar
+  baw
 } foo
-[(9, 5), (9, 8)] baz baz
-[(10, 5), (10, 7)] ll = 3 ll
+[(9, 5), (9, 8)] bap bap
+[(10, 5), (10, 7)] ll ll
 [(13, 5), (13, 10)] first first
 [(15, 9), (15, 11)] _a _a
 [(15, 6), (15, 7)] _a a
 [(17, 5), (17, 7)] oh oh
 [(17, 14), (17, 17)] god god
 [(17, 10), (17, 12)] god my
-[(19, 6), (19, 8)] oh oh
+[(19, 6), (19, 8)] oj oj
 [(19, 13), (19, 15)] oy oy
 [(19, 22), (19, 26)] _vey _vey
 [(19, 17), (19, 20)] _vey vey
-[(19, 28), (19, 35)] _mitz = 4 mitzvot
+[(19, 28), (19, 35)] mitzvot mitzvot
 [(19, 37), (19, 42)] _mitz _mitz
 [(21, 5), (21, 8)] one one
 [(21, 13), (21, 18)] stuff stuff

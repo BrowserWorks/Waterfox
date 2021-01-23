@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Форма өрісінің қасиеттерi">
+<!ENTITY windowTitleImage.label "Форма суретінің қасиеттері">
+
+<!ENTITY InputType.label "Өрiс түрi">
+<!ENTITY InputType.accesskey "т">
+<!ENTITY text.value "Мәтін">
+<!ENTITY password.value "Пароль">
+<!ENTITY checkbox.value "Жалауша">
+<!ENTITY radio.value "Ауыстырғыш батырмасы">
+<!ENTITY submit.value "Жіберу батырмасы">
+<!ENTITY reset.value "Тастау батырмасы">
+<!ENTITY file.value "Файл">
+<!ENTITY hidden.value "Жасырын">
+<!ENTITY image.value "Сурет">
+<!ENTITY button.value "Батырма">
+
+<!ENTITY InputSettings.label "Өріс баптаулары">
+<!ENTITY InputName.label "Өріс атауы:">
+<!ENTITY InputName.accesskey "т">
+<!ENTITY GroupName.label "Топтың аты:">
+<!ENTITY GroupName.accesskey "Т">
+<!ENTITY InputValue.label "Өріс мәні:">
+<!ENTITY InputValue.accesskey "м">
+<!ENTITY InitialValue.label "Бастапқы мәні:">
+<!ENTITY InitialValue.accesskey "Б">
+<!ENTITY InputChecked.label "Басынан бастап белгіленген">
+<!ENTITY InputChecked.accesskey "б">
+<!ENTITY InputSelected.label "Басынан бастап таңдалған">
+<!ENTITY InputSelected.accesskey "т">
+<!ENTITY InputReadOnly.label "Тек оқу үшін">
+<!ENTITY InputReadOnly.accesskey "о">
+<!ENTITY InputDisabled.label "Сөндірілген">
+<!ENTITY InputDisabled.accesskey "д">
+<!ENTITY tabIndex.label "Табуляция реті:">
+<!ENTITY tabIndex.accesskey "е">
+<!ENTITY TextSize.label "Өріс өлшемі:">
+<!ENTITY TextSize.accesskey "р">
+<!ENTITY TextLength.label "Максималды ұзындығы:">
+<!ENTITY TextLength.accesskey "з">
+<!ENTITY AccessKey.label "Қатынау кілті:">
+<!ENTITY AccessKey.accesskey "к">
+<!ENTITY Accept.label "Түрлерді қабылдау:">
+<!ENTITY Accept.accesskey "а">
+
+<!ENTITY ImageProperties.label "Сурет қасиеттері…">
+<!ENTITY ImageProperties.accesskey "т">

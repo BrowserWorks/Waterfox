@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label          "Fișier">
+<!ENTITY fileMenu.accesskey        "F">
+<!ENTITY newMenu.label            "Nou">
+<!ENTITY newMenu.accesskey          "C">
+
+<!ENTITY editMenu.label          "Editare">
+<!ENTITY editMenu.accesskey        "E">
+<!ENTITY undoCmd.label            "Anulează">
+<!ENTITY undoCmd.accesskey          "u">
+<!ENTITY redoCmd.label            "Refă">
+<!ENTITY redoCmd.accesskey          "R">
+<!ENTITY deleteCmd.label          "Șterge">
+<!ENTITY deleteCmd.accesskey        "g">
+<!ENTITY preferencesCmd2.label "Opțiuni">
+<!ENTITY preferencesCmd2.accesskey "O">
+<!ENTITY preferencesCmdUnix.label       "Preferințe">
+<!ENTITY preferencesCmdUnix.accesskey     "e">
+
+<!ENTITY customizeCmd.label "Personalizează">
+<!ENTITY customizeCmd.accesskey "t">
+
+<!ENTITY viewMenu.label          "Vizualizare">
+<!ENTITY viewMenu.accesskey        "V">
+<!ENTITY viewToolbarsMenu.label        "Bare de unelte">
+<!ENTITY viewToolbarsMenu.accesskey      "t">
+<!ENTITY showTaskbarCmd.label          "Bară de stare">
+<!ENTITY showTaskbarCmd.accesskey        "u">
+
+<!ENTITY closeCmd.label      "Închide">
+<!ENTITY closeCmd.key      "w">
+<!ENTITY closeCmd.accesskey    "c">
+
+<!ENTITY quitApplicationCmd.label  "Ieșire">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "I">
+
+<!ENTITY quitApplicationCmdUnix.label  "Ieșire">
+<!ENTITY quitApplicationCmdUnix.accesskey  "e">
+
+<!ENTITY quitApplicationCmdMac.label  "Ieșire din &brandShortName;">
+<!ENTITY quitApplicationCmdMac.accesskey  "I">

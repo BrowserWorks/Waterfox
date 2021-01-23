@@ -1,0 +1,223 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressbookWindow.title                        "Адресник">
+<!ENTITY blankResultsPaneMessage.label                  "Този адресник показва контакти само след търсене">
+<!ENTITY localResultsOnlyMessage.label                  "Контакти от отдалечени адресници ще се покажат след като ги потърсите">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label                                 "Файл">
+<!ENTITY fileMenu.accesskey                             "Ф">
+<!ENTITY newMenu.label                                  "Нови">
+<!ENTITY newMenu.accesskey                              "Н">
+<!ENTITY newContact.label                               "Контакт от адресника…">
+<!ENTITY newContact.accesskey                           "К">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "Пощенски списък…">
+<!ENTITY newListCmd.accesskey                           "щ">
+<!ENTITY newAddressBookCmd.label                        "Адресник…">
+<!ENTITY newAddressBookCmd.accesskey                    "А">
+<!ENTITY newCardDAVBookCmd.label                        "Адресник на CardDAV…">
+<!ENTITY newCardDAVBookCmd.accesskey                    "д">
+<!ENTITY newLDAPDirectoryCmd.label                      "Директория в LDAP…">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "Д">
+<!ENTITY newMessageCmd.label                            "Писмо">
+<!ENTITY newMessageCmd.key                              "M">
+<!ENTITY newMessageCmd.accesskey                        "П">
+<!-- LOCALIZATION NOTE (osxAddressBook) : These entities are only used on Mac -->
+<!ENTITY osxAddressBook.label                           "Използване адресника на Mac OS X">
+<!ENTITY osxAddressBook.accesskey                       "O">
+<!ENTITY closeCmd.label                                 "Затваряне">
+<!ENTITY closeCmd.key                                   "W">
+<!ENTITY closeCmd.accesskey                             "З">
+<!ENTITY printSetupCmd.label                            "Настройки на отпечатване…">
+<!ENTITY printSetupCmd.accesskey                        "К">
+<!ENTITY printPreviewContactCmd.label                   "Преглед за отпечатване на визитка">
+<!ENTITY printPreviewContactCmd.accesskey               "в">
+<!ENTITY printPreviewAddressBook.label                  "Преглед за отпечатване на адресника">
+<!ENTITY printPreviewAddressBook.accesskey              "а">
+<!ENTITY printContactCmd.label                          "Отпечатване на визитка…">
+<!ENTITY printContactCmd.accesskey                      "т">
+<!ENTITY printContactCmd.key                            "P">
+<!ENTITY printAddressBook.label                         "Отпечатване на адресника…">
+<!ENTITY printAddressBook.accesskey                     "д">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label                                 "Редактиране">
+<!ENTITY editMenu.accesskey                             "Р">
+<!ENTITY deleteCmd.label                                "Изтриване">
+<!ENTITY deleteAbCmd.label                              "Премахване на адресник">
+<!ENTITY deleteContactCmd.label                         "Премахване на контакт">
+<!ENTITY deleteContactsCmd.label                        "Изтриване на визитки">
+<!ENTITY deleteListCmd.label                            "Изтриване на списък">
+<!ENTITY deleteListsCmd.label                           "Изтриване на списъци">
+<!ENTITY deleteItemsCmd.label                           "Изтриване на позиции">
+<!ENTITY searchAddressesCmd.key                         "f">
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+<!ENTITY propertiesMenu.label                           "Свойства">
+<!ENTITY propertiesMenu.accesskey                       "в">
+<!ENTITY propertiesCmd.key                              "i">
+<!ENTITY abPropertiesMenu.label                         "Свойства на адресника">
+<!ENTITY abPropertiesMenu.accesskey                     "в">
+<!ENTITY contactPropertiesMenu.label                    "Свойства на контакта">
+<!ENTITY contactPropertiesMenu.accesskey                "в">
+<!ENTITY mailingListPropertiesMenu.label                "Свойства на пощенския списък">
+<!ENTITY mailingListPropertiesMenu.accesskey            "в">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label                                 "Изглед">
+<!ENTITY viewMenu.accesskey                             "г">
+<!ENTITY viewToolbarsMenu.label                         "Ленти с инструменти">
+<!ENTITY viewToolbarsMenu.accesskey                     "Л">
+<!ENTITY menubarCmd.label                               "Лента с менюта">
+<!ENTITY menubarCmd.accesskey                           "м">
+<!ENTITY showAbToolbarCmd.label                         "Лента на адресника">
+<!ENTITY showAbToolbarCmd.accesskey                     "а">
+<!ENTITY showTaskbarCmd.label                           "Лента на състоянието">
+<!ENTITY showTaskbarCmd.accesskey                       "Л">
+<!ENTITY customizeToolbar.label                         "Настройване…">
+<!ENTITY customizeToolbar.accesskey                     "Н">
+<!ENTITY layoutMenu.label                               "Оформление">
+<!ENTITY layoutMenu.accesskey                           "ф">
+<!ENTITY showDirectoryPane.label                        "Панел за директория">
+<!ENTITY showDirectoryPane.accesskey                    "д">
+<!ENTITY showContactPane2.label                         "Панел за контакт">
+<!ENTITY showContactPane2.accesskey                     "к">
+<!ENTITY menu_ShowNameAs.label                          "Показване на името като">
+<!ENTITY menu_ShowNameAs.accesskey                      "и">
+<!-- LOCALIZATION NOTE (firstLastCmd2.label): We're not including a comma here
+because displayed names don't have the comma in between. -->
+<!ENTITY firstLastCmd2.label                            "Име Фамилия">
+<!ENTITY firstLastCmd2.accesskey                        "е">
+<!ENTITY lastFirstCmd.label                             "Фамилия, Име">
+<!ENTITY lastFirstCmd.accesskey                         "а">
+<!ENTITY displayNameCmd.label                           "Показвано име">
+<!ENTITY displayNameCmd.accesskey                       "и">
+<!ENTITY sortMenu.label                                 "Подреждане по">
+<!ENTITY sortMenu.accesskey                             "П">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label                                "Инструменти">
+<!ENTITY tasksMenu.accesskey                            "И">
+<!ENTITY messengerCmd.label                             "Поща и дискусионни групи">
+<!ENTITY messengerCmd.accesskey                         "П">
+<!ENTITY messengerCmd.commandkey                        "1">
+<!ENTITY addressBookCmd.label                           "Адресник">
+<!ENTITY addressBookCmd.accesskey                       "А">
+<!ENTITY addressBookCmd.key                             "B">
+<!ENTITY searchAddressesCmd.label                       "Търсене на адреси…">
+<!ENTITY searchAddressesCmd.accesskey                   "Т">
+<!ENTITY importCmd.label                                "Внасяне…">
+<!ENTITY importCmd.accesskey                            "В">
+<!ENTITY exportCmd.label                                "Изнасяне…">
+<!ENTITY exportCmd.accesskey                            "е">
+<!ENTITY preferencesCmd2.label                          "Настройки">
+<!ENTITY preferencesCmd2.accesskey                      "Н">
+<!ENTITY preferencesCmdUnix.label                       "Настройки">
+<!ENTITY preferencesCmdUnix.accesskey                   "Н">
+
+<!-- Address Book Toolbar and Context Menus -->
+<!ENTITY newContactButton.label                         "Нова визитка">
+<!ENTITY newContactButton.accesskey                     "т">
+<!ENTITY newlistButton.label                            "Нов списък">
+<!ENTITY newlistButton.accesskey                        "Н">
+<!ENTITY showAsDefault.label                            "Отваряне по подразбиране">
+<!ENTITY showAsDefault.accesskey                        "о">
+<!ENTITY editPropertiesButton.label                     "Редактиране">
+<!ENTITY propertiesContext.label                        "Свойства">
+<!ENTITY propertiesContext.accesskey                    "в">
+<!ENTITY abPropertiesContext.label                      "Свойства">
+<!ENTITY abPropertiesContext.accesskey                  "в">
+<!ENTITY editContactContext.label                       "Промяна на контакт">
+<!ENTITY editContactContext.accesskey                   "р">
+<!ENTITY editMailingListContext.label                   "Редактиране на списък">
+<!ENTITY editMailingListContext.accesskey               "р">
+<!ENTITY newmsgButton.label                             "Писане">
+<!ENTITY newmsgButton.accesskey                         "П">
+<!ENTITY newIM.label                                    "Бързо съобщение">
+<!ENTITY newIM.accesskey                                "Б">
+<!ENTITY printButton.label                              "Печат…">
+<!ENTITY printButton.accesskey                          "ч">
+<!ENTITY deleteButton2.label                            "Изтриване">
+<!ENTITY deleteButton2.accesskey                        "з">
+
+<!-- Address Book Toolbar Tooltips -->
+<!ENTITY columnChooser.tooltip                          "Избиране на видими колони">
+<!ENTITY newContactButton.tooltip                       "Създава нова визитка в адресника">
+<!ENTITY newlistButton.tooltip                          "Създава нов списък">
+<!ENTITY editPropertiesButton.tooltip                   "Редактиране на избрания елемент">
+<!ENTITY editAbPropertiesButton.tooltip                 "Редактиране на избрания адресник">
+<!ENTITY editContactPropertiesButton.tooltip            "Редактиране на избрания контакт">
+<!ENTITY editMailingListPropertiesButton.tooltip        "Редактиране на избрания пощенски списък">
+<!ENTITY newmsgButton.tooltip                           "Изпращане на писмо">
+<!ENTITY newIM.tooltip                                  "Изпращане на бързо съобщение или покана за разговор">
+<!ENTITY deleteButton2.tooltip                          "Изтриване на избраната позиция">
+
+<!-- Search Bar -->
+<!ENTITY SearchNameOrEmail.label                        "Име или адрес">
+<!ENTITY SearchNameOrEmail.accesskey                    "И">
+<!ENTITY advancedButton.tooltip                         "Разширено търсене на адрес">
+<!ENTITY quickSearchCmd.key                             "k">
+<!ENTITY searchItem.title "Бързо търсене">
+
+<!-- Results Pane -->
+<!ENTITY Addrbook.label                                 "Адресник">
+<!ENTITY Addrbook.accesskey                             "А">
+<!ENTITY GeneratedName.label                            "Име">
+<!ENTITY GeneratedName.accesskey                        "И">
+<!ENTITY PrimaryEmail.label                             "Ел. адрес">
+<!ENTITY PrimaryEmail.accesskey                         "Е">
+<!ENTITY ChatName.label                                 "Име за разговор">
+<!ENTITY ChatName.accesskey                             "И">
+<!ENTITY Company.label                                  "Организация">
+<!ENTITY Company.accesskey                              "г">
+<!ENTITY NickName.label                                 "Псевдоним">
+<!ENTITY NickName.accesskey                             "П">
+<!ENTITY SecondEmail.label                              "Допълнителен ел. адрес">
+<!ENTITY SecondEmail.accesskey                          "Д">
+<!ENTITY Department.label                               "Отдел">
+<!ENTITY Department.accesskey                           "О">
+<!ENTITY JobTitle.label                                 "Длъжност">
+<!ENTITY JobTitle.accesskey                             "д">
+<!ENTITY CellularNumber.label                           "Мобилен телефон">
+<!ENTITY CellularNumber.accesskey                       "М">
+<!ENTITY PagerNumber.label                              "Пейджър">
+<!ENTITY PagerNumber.accesskey                          "й">
+<!ENTITY FaxNumber.label                                "Факс">
+<!ENTITY FaxNumber.accesskey                            "а">
+<!ENTITY HomePhone.label                                "Домашен телефон">
+<!ENTITY HomePhone.accesskey                            "ш">
+<!ENTITY WorkPhone.label                                "Служебен телефон">
+<!ENTITY WorkPhone.accesskey                            "С">
+<!ENTITY sortAscending.label                            "Възходящ">
+<!ENTITY sortAscending.accesskey                        "В">
+<!ENTITY sortDescending.label                           "Низходящ">
+<!ENTITY sortDescending.accesskey                       "Н">
+<!ENTITY _PhoneticName.label                            "Фонетично име">
+<!ENTITY _PhoneticName.accesskey                        "Ф">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "Контакт">
+<!ENTITY home.heading                                   "Домашен">
+<!ENTITY other.heading                                  "Други">
+<!ENTITY chat.heading                                   "Разговори">
+<!ENTITY phone.heading                                  "Телефон">
+<!ENTITY work.heading                                   "Служебен">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "Описание">
+<!ENTITY addresses.heading                              "Адреси">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "Карта">
+<!ENTITY mapIt.tooltip                                  "Показване на адрес от страница върху картата">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label                               "">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY windowMenu.label                               "Прозорец">
+<!ENTITY minimizeWindow.label                           "Минимизиране">
+<!ENTITY minimizeWindow.key                             "m">
+<!ENTITY bringAllToFront.label                          "Извеждане всичко на преден план">
+<!ENTITY zoomWindow.label                               "Мащабиране">

@@ -7,8 +7,6 @@ extern crate crossbeam_utils;
 extern crate cstr;
 #[macro_use]
 extern crate failure;
-#[macro_use]
-extern crate lazy_static;
 extern crate libc;
 extern crate lmdb;
 #[macro_use]
@@ -16,8 +14,10 @@ extern crate log;
 extern crate moz_task;
 extern crate nserror;
 extern crate nsstring;
+extern crate once_cell;
 extern crate rkv;
 extern crate serde_json;
+extern crate tempfile;
 #[macro_use]
 extern crate xpcom;
 
@@ -30,7 +30,7 @@ mod statics;
 use crate::{
     error::{XULStoreError, XULStoreResult},
     iter::XULStoreIterator,
-    persist::persist,
+    persist::{flush_writes, persist},
     statics::DATA_CACHE,
 };
 use nsstring::nsAString;
@@ -218,4 +218,8 @@ pub(crate) fn get_attrs(doc: &nsAString, id: &nsAString) -> XULStoreResult<XULSt
         },
         None => Ok(XULStoreIterator::new(vec![].into_iter())),
     }
+}
+
+pub(crate) fn shutdown() -> XULStoreResult<()> {
+    flush_writes()
 }

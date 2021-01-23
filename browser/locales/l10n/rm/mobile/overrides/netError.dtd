@@ -1,0 +1,213 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Errur cun chargiar la pagina">
+<!ENTITY retry.label "Empruvar anc ina giada">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Impussibel da connectar">
+<!ENTITY connectionFailure.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY deniedPortAccess.title "Questa adressa è restrenschida">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Betg chattà il server">
+<!-- LOCALIZATION NOTE (dnsNotFound.longDesc4) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside tags should be localized.  Do not change the ids. -->
+<!ENTITY dnsNotFound.longDesc4 "
+<ul>
+  <li>Controllescha sche l'adressa cuntegna sbagls da tippar sco
+    <strong>ww</strong>.example.com empè da
+    <strong>www</strong>.example.com</li>
+    <div id='searchbox'>
+      <input id='searchtext' type='search'></input>
+      <button id='searchbutton'>Tschertgar</button>
+    </div>
+  <li>Sche naginas paginas na funcziunan, controllescha la connexiun da datas u da WLAN da tes apparat.
+    <button id='wifi'>Activar WLAN</button>
+  </li>
+</ul>
+">
+
+<!ENTITY fileNotFound.title "Betg chattà la datoteca">
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>Controllescha sch'il num da la datoteca è scrit endretg (era resguardar maiusclas-minusclas).</li>
+  <li>Controllescha sche la datoteca è vegnida spustada, renumnada u stizzada.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.title "Refusà l'access a la datoteca">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>Forsa è ella stizzada, spustada u che ti n'es betg autorisà per l'access.</li>
+</ul>
+">
+
+<!ENTITY generic.title "Oh Dieu.">
+<!ENTITY generic.longDesc "
+<p>&brandShortName; na po betg chargiar questa pagina per x in motiv.</p>
+">
+
+<!ENTITY malformedURI.title "L'adressa è nunvalida">
+<!-- LOCALIZATION NOTE (malformedURI.longDesc2) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY malformedURI.longDesc2 "
+<ul>
+  <li>Adressas d'internet vegnan per ordinari scrittas uschia:
+    <strong>http://www.example.com/</strong></li>
+    <div id='searchbox'>
+      <input id='searchtext' type='search'></input>
+      <button id='searchbutton'>Tschertgar</button>
+    </div>
+  <li>Controllescha che ti utiliseschas stritgs diagonals che mussan enavant (
+    <strong>/</strong>).</li>
+</ul>
+">
+
+<!ENTITY netInterrupt.title "La connexiun è interrutta">
+<!ENTITY netInterrupt.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY notCached.title "Document scrudà">
+<!ENTITY notCached.longDesc "<p>Il document dumandà n'è betg disponibel en il cache da &brandShortName;.</p><ul><li>Sco mesira da precauziun na rechargia &brandShortName; betg automaticamain documents sensibels.</li><li>Clicca sin 'Empruvar danovamain' per rechargiar il document da la website.</li></ul>">
+
+<!ENTITY netOffline.title "Modus offline">
+
+<!ENTITY contentEncodingError.title "Cuntegn cun codaziun nunvalida">
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>Contactescha per plaschair l'administratur da la website per al infurmar davart quest problem.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.title "Tip da datoteca malsegir">
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>Informescha p.pl. ils possessurs da la pagina d'internet per als infurmar davart quest problem.</li>
+</ul>
+">
+
+<!ENTITY netReset.title "La connexiun è vegnida reinizialisada">
+<!ENTITY netReset.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY netTimeout.title "La connexiun ha surpassà la limita da temp">
+<!ENTITY netTimeout.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY unknownProtocolFound.title "Impussibel da chapir l'adressa">
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Ti stos eventualmain installar software supplementara per avrir questa adressa.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.title "Il proxy server refusescha connexiuns">
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>Controllescha la configuraziun dal proxy per far la segira ch'ella è correcta.</li>
+  <li>Contactescha l'administratur da tia rait per t'atschertar ch'il proxy server funcziuna.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.title "Impussibel da chattar il proxy server">
+<!-- LOCALIZATION NOTE (proxyResolveFailure.longDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY proxyResolveFailure.longDesc3 "
+<ul>
+  <li>Controllescha la configuraziun dal proxy per far la segira ch'ella è correcta.</li>
+  <li>Controllescha che tes apparat haja ina colliaziun da datas u da WLAN che funcziunescha.
+    <button id='wifi'>Activar WLAN</button>
+  </li>
+</ul>
+">
+
+<!ENTITY redirectLoop.title "La pagina na renviescha betg a moda correcta">
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Quest problem po mintgatant vegnir chaschunà entras deactivar u
+    refusar cookies.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.title "Resposta nunspetgada dal server">
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>Controllescha ch'il «Personal Security Manager» saja installà sin tes 
+    sistem.</li>
+  <li>Ina configuraziun dal server che na correspunda betg al standard po esser la raschun.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.title "La connexiun segira n'è betg reussida">
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>La pagina dumandada na po betg vegnir mussada perquai ch'igl è impussibel da verifitgar l'autenticitad da las datas retschavidas.</li>
+  <li>Contactescha p.pl. il possessur da la pagina d'internet per al infurmar davart quest problem.</li>
+</ul>
+">
+
+<!ENTITY nssBadCert.title "La connexiun segira n'è betg reussida">
+<!ENTITY nssBadCert.longDesc2 "
+<ul>
+  <li>Quai pudess esser in problem cun la configuraziun dal server u ch'insatgi vul sa dar per quest server.</li>
+  <li>Sche ti has connectà cun success cun quest server en il passà sa tracti eventualmain mo d'ina errur temporara e ti pos empruvar pli tard anc ina giada.</li>
+</ul>
+">
+
+<!-- LOCALIZATION NOTE (sharedLongDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY sharedLongDesc3 "
+<ul>
+  <li>Eventualmain n'è la website temporarmain betg cuntanschibla u surchargiada. Emprova pli tard anc ina giada.</li>
+  <li>Sche ti na pos era betg chargiar autras paginas, controllescha la connexiun da datas u da WLAN da tes apparat.
+    <button id='wifi'>Activar WLAN</button>
+  </li>
+</ul>
+">
+
+<!ENTITY cspBlocked.title "Bloccà da las reglas da segirezza dal cuntegn">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; ha impedì che questa pagina chargia en quella moda perquai che la pagina cuntegna reglas da segirezza dal cuntegn (content security policy) che scumondan quai.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Errur: Cuntegn donnegià">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Impussibel da visualisar la pagina che ti vuls chargiar perquai ch'ina errur è sa mussada en la transmissiun da datas.</p><ul><li>Contactescha per plaschair ils possessurs da la website per als infurmar davart quest problem.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Ti pos era agiuntar ina regla d'excepziun...">
+<!ENTITY securityOverride.getMeOutOfHereButton "Bandunar questa pagina">
+<!ENTITY securityOverride.exceptionButtonLabel "Agiuntar in'excepziun…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <xul:button> tags.  The only language content is the label= field,
+which uses strings already defined above. The button is included here (instead of
+netError.xhtml) because it exposes functionality specific to firefox. -->
+
+<!ENTITY securityOverride.warningContent "
+<p>Ti na duessas betg agiuntar in'excepziun sche ti na ta fidas betg absolutamain da la segirezza da la connexiun actuala u sche ti n'has fin ussa betg vis in avertiment per quest server.</p>
+
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button>
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>
+">
+
+<!ENTITY remoteXUL.title "Remote-XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Infurmescha per plaschair il possessur da la website davart quest problem.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Impussibel da connectar a moda segira">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc "Infurmaziuns avanzadas: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY weakCryptoUsed.title "Tia connexiun n'è betg segirada">
+<!-- LOCALIZATION NOTE (weakCryptoUsed.longDesc) - Do not translate
+     "SSL_ERROR_NO_CYPHER_OVERLAP". -->
+<!ENTITY weakCryptoUsed.longDesc "Infurmaziuns avanzadas: SSL_ERROR_NO_CYPHER_OVERLAP">
+
+<!ENTITY inadequateSecurityError.title "Tia connexiun n'è betg segira">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> utilisescha tecnologia da segirezza ch'è obsoleta e qua tras vulnerabla. In attatgader pudess revelar a moda simpla infurmaziuns che ti has considerà sco segiradas. L'administratur da la website vegn a stuair metter en urden ses server avant che ti possias visitar la website.</p><p>Code d'errur: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY networkProtocolError.title "Errur dal protocol da rait">
+<!ENTITY networkProtocolError.longDesc "<p>Impussibel da mussar la pagina che ti emprovas da chargiar perquai ch'igl è succedida ina errur en il protocol da rait.</p><ul><li>Contactescha per plaschair il possessur da la website per al infurmar davart quest problem.</li></ul>">

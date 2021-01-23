@@ -2,9 +2,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import
-
 import os
+import subprocess
+import sys
 from distutils.spawn import find_executable
 
 import mozunit
@@ -22,16 +22,25 @@ def parser():
 
 @pytest.fixture
 def run(parser, lintdir, files):
-    if lintdir not in cli.SEARCH_PATHS:
-        cli.SEARCH_PATHS.append(lintdir)
-
     def inner(args=None):
         args = args or []
         args.extend(files)
         lintargs = vars(parser.parse_args(args))
         lintargs['root'] = here
+        lintargs['config_paths'] = [os.path.join(here, 'linters')]
         return cli.run(**lintargs)
     return inner
+
+
+def test_cli_with_ascii_encoding(run, monkeypatch, capfd):
+    cmd = [sys.executable, 'runcli.py', '-l=string', '-f=stylish']
+    env = os.environ.copy()
+    env['PYTHONPATH'] = os.pathsep.join(sys.path)
+    env['PYTHONIOENCODING'] = 'ascii'
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                            cwd=here, env=env, universal_newlines=True)
+    out = proc.communicate()[0]
+    assert 'Traceback' not in out
 
 
 def test_cli_run_with_fix(run, capfd):

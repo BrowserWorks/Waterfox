@@ -5,8 +5,8 @@
    unix config.h but also runs code in the windows directory.
    */
 #ifdef __MINGW32__
-#include "../config.h"
-#define GOOGLE_GFLAGS_WINDOWS_CONFIG_H_
+//#include "../config.h"
+//#define GOOGLE_GFLAGS_WINDOWS_CONFIG_H_
 #endif
 
 #ifndef GOOGLE_GFLAGS_WINDOWS_CONFIG_H_

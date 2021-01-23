@@ -72,11 +72,27 @@ void WebGLContext::ClearColor(GLfloat r, GLfloat g, GLfloat b, GLfloat a) {
   const FuncScope funcScope(*this, "clearColor");
   if (IsContextLost()) return;
 
-  const bool supportsFloatColorBuffers =
-      (IsExtensionEnabled(WebGLExtensionID::EXT_color_buffer_float) ||
-       IsExtensionEnabled(WebGLExtensionID::EXT_color_buffer_half_float) ||
-       IsExtensionEnabled(WebGLExtensionID::WEBGL_color_buffer_float));
-  if (!supportsFloatColorBuffers) {
+  if (IsExtensionEnabled(WebGLExtensionID::EXT_color_buffer_float)) {
+    MOZ_ASSERT(IsExtensionExplicit(WebGLExtensionID::EXT_color_buffer_float));
+
+  } else if (IsExtensionEnabled(
+                 WebGLExtensionID::EXT_color_buffer_half_float) ||
+             IsExtensionEnabled(WebGLExtensionID::WEBGL_color_buffer_float)) {
+    const bool explict =
+        (IsExtensionExplicit(WebGLExtensionID::EXT_color_buffer_half_float) ||
+         IsExtensionExplicit(WebGLExtensionID::WEBGL_color_buffer_float));
+    const bool wouldHaveClamped =
+        (r != GLClampFloat(r) || g != GLClampFloat(g) || b != GLClampFloat(b) ||
+         a != GLClampFloat(a));
+    if (!explict && wouldHaveClamped) {
+      if (IsExtensionEnabled(WebGLExtensionID::EXT_color_buffer_half_float)) {
+        WarnIfImplicit(WebGLExtensionID::EXT_color_buffer_half_float);
+      } else if (IsExtensionEnabled(
+                     WebGLExtensionID::WEBGL_color_buffer_float)) {
+        WarnIfImplicit(WebGLExtensionID::WEBGL_color_buffer_float);
+      }
+    }
+  } else {
     r = GLClampFloat(r);
     g = GLClampFloat(g);
     b = GLClampFloat(b);
@@ -124,7 +140,7 @@ void WebGLContext::DepthMask(WebGLboolean b) {
   gl->fDepthMask(b);
 }
 
-void WebGLContext::DrawBuffers(const dom::Sequence<GLenum>& buffers) {
+void WebGLContext::DrawBuffers(const std::vector<GLenum>& buffers) {
   const FuncScope funcScope(*this, "drawBuffers");
   if (IsContextLost()) return;
 
@@ -138,7 +154,7 @@ void WebGLContext::DrawBuffers(const dom::Sequence<GLenum>& buffers) {
   //  constant must be BACK or NONE. [...] If DrawBuffers is supplied with a
   //  constant other than BACK and NONE, or with a value of `n` other than 1,
   //  the error INVALID_OPERATION is generated."
-  if (buffers.Length() != 1) {
+  if (buffers.size() != 1) {
     ErrorInvalidOperation(
         "For the default framebuffer, `buffers` must have a"
         " length of 1.");
@@ -159,16 +175,6 @@ void WebGLContext::DrawBuffers(const dom::Sequence<GLenum>& buffers) {
 
   mDefaultFB_DrawBuffer0 = buffers[0];
   // Don't actually set it.
-}
-
-void WebGLContext::StencilMask(GLuint mask) {
-  const FuncScope funcScope(*this, "stencilMask");
-  if (IsContextLost()) return;
-
-  mStencilWriteMaskFront = mask;
-  mStencilWriteMaskBack = mask;
-
-  gl->fStencilMask(mask);
 }
 
 void WebGLContext::StencilMaskSeparate(GLenum face, GLuint mask) {

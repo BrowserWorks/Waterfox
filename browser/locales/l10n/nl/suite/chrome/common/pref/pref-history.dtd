@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.history.title                "Geschiedenis">
+
+<!ENTITY  pref.history.caption              "Navigatiegeschiedenis">
+<!ENTITY  historyPages.label                "Geschiedenis is een lijst van eerder bezochte pagina’s.">
+<!ENTITY  enableHistory.label               "Bezochte pagina’s onthouden">
+<!ENTITY  enableHistory.accesskey           "a">
+<!ENTITY  clearHistory.label                "Geschiedenis wissen">
+<!ENTITY  clearHistory.accesskey            "G">
+
+<!ENTITY  locationBarHistory.caption        "Locatiebalkgeschiedenis">
+<!ENTITY  urlBarHistoryEnabled.caption      "Locatiebalkgeschiedenis inschakelen">
+<!ENTITY  urlBarHistoryEnabled.accesskey    "L">
+<!ENTITY  clearLocationBar.label            "De lijst met in het locatiebalkmenu opgeslagen websites wissen.">
+<!ENTITY  clearLocationBarButton.label      "Locatiebalk wissen">
+<!ENTITY  clearLocationBarButton.accesskey  "w">
+<!ENTITY  formfillHistory.caption           "Formulier- en zoekgeschiedenis">
+<!ENTITY  enableFormfill.label              "Formulier- en zoekgeschiedenis inschakelen">
+<!ENTITY  enableFormfill.accesskey          "F">
+<!ENTITY  formfillExpire.label              "Formulier- en zoekgeschiedenis maximaal">
+<!ENTITY  formfillExpire.accesskey          "m">
+<!ENTITY  formfillDays.label                "dagen onthouden">

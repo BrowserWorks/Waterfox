@@ -171,6 +171,10 @@ EngineSynchronizer.prototype = {
       // We don't bother validating engines that failed to sync.
       let enginesToValidate = [];
       for (let engine of enginesToSync) {
+        if (engine.shouldSkipSync(why)) {
+          this._log.info(`Engine ${engine.name} asked to be skipped`);
+          continue;
+        }
         // If there's any problems with syncing the engine, report the failure
         if (
           !(await this._syncEngine(engine)) ||
@@ -254,9 +258,7 @@ EngineSynchronizer.prototype = {
         // Failure due to a shutdown exception should prevent other engines
         // trying to start and immediately failing.
         this._log.info(
-          `${
-            engine.name
-          } was interrupted by shutdown; no other engines will sync`
+          `${engine.name} was interrupted by shutdown; no other engines will sync`
         );
         return false;
       }

@@ -1,0 +1,428 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY event.title.label                  "Редагувати пункт" >
+
+<!ENTITY event.dialog.keepDurationButton.tooltip   "Зберігати тривалість коли змінюється кінцева дата">
+<!ENTITY event.dialog.keepDurationButton.accesskey "К">
+
+<!ENTITY newevent.from.label                "З" >
+<!ENTITY newevent.to.label                  "До" >
+
+<!ENTITY newevent.status.label                    "Стан" >
+<!ENTITY newevent.status.accesskey                "С" >
+<!ENTITY newevent.eventStatus.none.label          "Не зазначено" >
+<!ENTITY newevent.eventStatus.none.accesskey      "Н" >
+<!ENTITY newevent.todoStatus.none.label           "Не зазначено" >
+<!ENTITY newevent.eventStatus.cancelled.label     "Скасовано" >
+<!ENTITY newevent.eventStatus.cancelled.accesskey "О" >
+<!ENTITY newevent.todoStatus.cancelled.label      "Скасовано" >
+<!ENTITY newevent.status.tentative.label          "Попередньо" >
+<!ENTITY newevent.status.tentative.accesskey      "П" >
+<!ENTITY newevent.status.confirmed.label          "Підтверджено" >
+<!ENTITY newevent.status.confirmed.accesskey      "т" >
+<!ENTITY newevent.status.needsaction.label        "Вимагає дії" >
+<!ENTITY newevent.status.inprogress.label         "В процесі" >
+<!ENTITY newevent.status.completed.label          "Завершено:" >
+
+<!-- The following entity is for New Task dialog only -->
+<!ENTITY newtodo.percentcomplete.label      "&#37; завершено">
+
+<!-- LOCALIZATON NOTE(event.attendees.notify.label,event.attendees.notifyundisclosed.label,
+     event.attendees.disallowcounter.label)
+   - These three labels are displayed side by side in the event dialog, make sure
+   - they still fit in. -->
+<!ENTITY event.attendees.notify.label                "Повідомити учасників">
+<!ENTITY event.attendees.notify.accesskey            "П">
+<!ENTITY event.attendees.notifyundisclosed.label     "Окремі запрошення на учасника">
+<!ENTITY event.attendees.notifyundisclosed.accesskey "О">
+<!ENTITY event.attendees.notifyundisclosed.tooltip   "В цьому варіанті надсилається одне запрошення на учасника. Кожне запрошення містить лише адресу учасника, таким чином інші учасники не розголошуються.">
+<!ENTITY event.attendees.disallowcounter.label       "Не дозволяти зустрічні пропозиції">
+<!ENTITY event.attendees.disallowcounter.accesskey   "з">
+<!ENTITY event.attendees.disallowcounter.tooltip     "Вказує, що ви не приймаєте зустрічні пропозиції">
+
+<!-- Keyboard Shortcuts -->
+<!ENTITY event.dialog.new.event.key2              "I">
+<!ENTITY event.dialog.new.task.key2               "D">
+<!ENTITY event.dialog.new.message.key2            "N">
+<!ENTITY event.dialog.close.key                   "W">
+<!ENTITY event.dialog.save.key                    "S">
+<!ENTITY event.dialog.saveandclose.key            "L">
+<!ENTITY event.dialog.print.key                   "P">
+<!ENTITY event.dialog.undo.key                    "Z">
+<!ENTITY event.dialog.redo.key                    "Y">
+<!ENTITY event.dialog.cut.key                     "X">
+<!ENTITY event.dialog.copy.key                    "C">
+<!ENTITY event.dialog.paste.key                   "V">
+<!ENTITY event.dialog.select.all.key              "A">
+
+<!-- Menubar -->
+<!ENTITY  event.menu.item.new.label                       "Створити">
+<!ENTITY  event.menu.item.new.accesskey                   "С">
+<!ENTITY  event.menu.item.new.event.label                 "Подію">
+<!ENTITY  event.menu.item.new.event.accesskey             "П">
+<!ENTITY  event.menu.item.new.task.label                  "Завдання">
+<!ENTITY  event.menu.item.new.task.accesskey              "З">
+<!ENTITY  event.menu.item.new.message.label               "Лист">
+<!ENTITY  event.menu.item.new.message.accesskey           "Л">
+<!ENTITY  event.menu.item.new.contact.label               "Контакт адресної книги">
+<!ENTITY  event.menu.item.new.contact.accesskey           "К">
+<!ENTITY  event.menu.item.close.label                     "Закрити">
+<!ENTITY  event.menu.item.close.accesskey                 "к">
+
+<!-- LOCALIZATION NOTE
+   - event.menu.item.save.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a dialog window.
+   - event.menu.item.save.tab.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.save.label                      "Зберегти">
+<!ENTITY  event.menu.item.save.accesskey                  "б">
+<!ENTITY  event.menu.item.save.tab.accesskey              "б">
+
+<!-- LOCALIZATION NOTE
+    - event.menu.item.saveandclose.accesskey is used for "Save and Close"
+    - menu item when editing events/tasks in a dialog window.
+    - event.menu.item.saveandclose.tab.accesskey is used for "Save and Close"
+    - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.saveandclose.label              "Зберегти та закрити">
+<!ENTITY  event.menu.item.saveandclose.accesskey          "т">
+<!ENTITY  event.menu.item.saveandclose.tab.accesskey      "т">
+
+<!ENTITY  event.menu.item.delete.label                    "Видалити…">
+<!ENTITY  event.menu.item.delete.accesskey                "В">
+<!ENTITY  event.menu.item.page.setup.label                "Параметри сторінки">
+<!ENTITY  event.menu.item.page.setup.accesskey            "р">
+<!ENTITY  event.menu.item.print.label                     "Друк">
+<!ENTITY  event.menu.item.print.accesskey                 "Д">
+
+<!ENTITY  event.menu.edit.label                           "Правка">
+<!ENTITY  event.menu.edit.accesskey                       "П">
+<!ENTITY  event.menu.edit.undo.label                      "Скасувати">
+<!ENTITY  event.menu.edit.undo.accesskey                  "С">
+<!ENTITY  event.menu.edit.redo.label                      "Повторити">
+<!ENTITY  event.menu.edit.redo.accesskey                  "П">
+<!ENTITY  event.menu.edit.cut.label                       "Вирізати">
+<!ENTITY  event.menu.edit.cut.accesskey                   "р">
+<!ENTITY  event.menu.edit.copy.label                      "Копіювати">
+<!ENTITY  event.menu.edit.copy.accesskey                  "К">
+<!ENTITY  event.menu.edit.paste.label                     "Вставити">
+<!ENTITY  event.menu.edit.paste.accesskey                 "В">
+<!ENTITY  event.menu.edit.select.all.label                "Виділити все">
+<!ENTITY  event.menu.edit.select.all.accesskey            "с">
+
+<!ENTITY  event.menu.view.label                           "Вигляд">
+<!ENTITY  event.menu.view.accesskey                       "В">
+<!ENTITY  event.menu.view.toolbars.label                  "Панелі інструментів">
+<!ENTITY  event.menu.view.toolbars.accesskey              "П">
+<!ENTITY  event.menu.view.toolbars.event.label            "Панель Подій">
+<!ENTITY  event.menu.view.toolbars.event.accesskey        "П">
+<!ENTITY  event.menu.view.toolbars.customize.label        "Налаштувати…">
+<!ENTITY  event.menu.view.toolbars.customize.accesskey    "Н">
+<!ENTITY  event.menu.view.showlink.label                  "Показувати стосовне посилання">
+<!ENTITY  event.menu.view.showlink.accesskey              "с">
+
+<!ENTITY  event.menu.options.label                            "Налаштування">
+<!ENTITY  event.menu.options.accesskey                        "Н">
+<!ENTITY  event.menu.options.attendees.label                  "Запросити учасників…">
+<!ENTITY  event.menu.options.attendees.accesskey              "с">
+<!ENTITY  event.menu.options.timezone2.label                  "Показати часові пояси">
+<!ENTITY  event.menu.options.timezone2.accesskey              "ч">
+<!ENTITY  event.menu.options.priority2.label                  "Пріоритет">
+<!ENTITY  event.menu.options.priority2.accesskey              "р">
+<!ENTITY  event.menu.options.priority.notspecified.label      "Не визначено">
+<!ENTITY  event.menu.options.priority.notspecified.accesskey  "о">
+<!ENTITY  event.menu.options.priority.low.label               "Низький">
+<!ENTITY  event.menu.options.priority.low.accesskey           "Н">
+<!ENTITY  event.menu.options.priority.normal.label            "Середній">
+<!ENTITY  event.menu.options.priority.normal.accesskey        "С">
+<!ENTITY  event.menu.options.priority.high.label              "Високий">
+<!ENTITY  event.menu.options.priority.high.accesskey          "В">
+<!ENTITY  event.menu.options.privacy.label                    "Приватність">
+<!ENTITY  event.menu.options.privacy.accesskey                "а">
+<!ENTITY  event.menu.options.privacy.public.label             "Публічна подія">
+<!ENTITY  event.menu.options.privacy.public.accesskey         "у">
+<!ENTITY  event.menu.options.privacy.confidential.label       "Показувати тільки дату і час">
+<!ENTITY  event.menu.options.privacy.confidential.accesskey   "з">
+<!ENTITY  event.menu.options.privacy.private.label            "Особиста подія">
+<!ENTITY  event.menu.options.privacy.private.accesskey        "О">
+<!ENTITY  event.menu.options.show.time.label                  "Показувати час як">
+<!ENTITY  event.menu.options.show.time.accesskey              "т">
+<!ENTITY  event.menu.options.show.time.busy.label             "Зайнятий">
+<!ENTITY  event.menu.options.show.time.busy.accesskey         "я">
+<!ENTITY  event.menu.options.show.time.free.label             "Вільний">
+<!ENTITY  event.menu.options.show.time.free.accesskey         "в">
+
+<!ENTITY event.invite.attendees.label                     "Запросити учасників…">
+<!ENTITY event.invite.attendees.accesskey                 "З">
+<!ENTITY event.email.attendees.label                      "Створити повідомлення для всіх учасників…">
+<!ENTITY event.email.attendees.accesskey                  "С">
+<!ENTITY event.email.tentative.attendees.label            "Створити повідомлення для учасників, які ще не визначились…">
+<!ENTITY event.email.tentative.attendees.accesskey        "о">
+<!ENTITY event.remove.attendees.label2                    "Прибрати всіх учасників">
+<!ENTITY event.remove.attendees.accesskey                 "и">
+<!ENTITY event.remove.attendee.label                      "Прибрати учасника">
+<!ENTITY event.remove.attendee.accesskey                  "б">
+
+<!-- Toolbar -->
+<!ENTITY  event.toolbar.save.label2                       "Зберегти">
+<!ENTITY  event.toolbar.saveandclose.label                "Зберегти й закрити">
+<!ENTITY  event.toolbar.delete.label                      "Видалити">
+<!ENTITY  event.toolbar.attendees.label                   "Запросити учасників">
+<!ENTITY  event.toolbar.privacy.label                     "Приватність">
+
+<!ENTITY  event.toolbar.save.tooltip2                     "Зберегти">
+<!ENTITY  event.toolbar.saveandclose.tooltip              "Зберегти й закрити">
+<!ENTITY  event.toolbar.delete.tooltip                    "Видалити">
+<!ENTITY  event.toolbar.attendees.tooltip                 "Запросити учасників">
+<!ENTITY  event.toolbar.attachments.tooltip               "Додати вкладення">
+<!ENTITY  event.toolbar.privacy.tooltip                   "Змінити приватність">
+<!ENTITY  event.toolbar.priority.tooltip                  "Змінити пріоритет">
+<!ENTITY  event.toolbar.status.tooltip                    "Змінити стан">
+<!ENTITY  event.toolbar.freebusy.tooltip                  "Змінити час Вільний/Зайнятий">
+
+<!-- Counter box -->
+<!-- LOCALIZATON NOTE(counter.button.*)
+   - This is only visible in the UI if you have received a counterproposal before and are going to
+   - reschedule the event from the imipbar in the email view. Clicking on the buttons will only
+   - populate the form fields in the dialog, there's no other immediate action on clicking like with
+   - the imip bar. Rescheduling will happen after clicking on save&close as usual. This screenshot
+   - illustrates how it might look like: https://bugzilla.mozilla.org/attachment.cgi?id=8810121 -->
+<!ENTITY counter.button.proposal.label                    "Подати пропозицію">
+<!ENTITY counter.button.proposal.accesskey                "П">
+<!ENTITY counter.button.proposal.tooltip2                 "Поля події будуть заповнені значеннями зустрічної пропозиції, збереження лише з або без додаткових змін відповідно сповістить всіх запрошених">
+<!ENTITY counter.button.original.label                    "Подати оригінальні дані">
+<!ENTITY counter.button.original.accesskey                "о">
+<!ENTITY counter.button.original.tooltip2                 "Поля будуть заповнені значеннями з оригінальної події перед тим, як було зроблено зустрічну пропозицію">
+
+<!-- Main page -->
+<!ENTITY event.title.textbox.label                        "Назва:" >
+<!ENTITY event.title.textbox.accesskey                    "з">
+<!ENTITY event.location.label                             "Місце:" >
+<!ENTITY event.location.accesskey                         "М">
+<!ENTITY event.categories.label                           "Категорія:">
+<!ENTITY event.categories.accesskey                       "К">
+<!ENTITY event.categories.textbox.label                   "Додати нову категорію" >
+<!ENTITY event.calendar.label                             "Календар:" >
+<!ENTITY event.calendar.accesskey                         "К">
+<!ENTITY event.attendees.label                            "Учасники:" >
+<!ENTITY event.attendees.accesskey                        "У">
+<!ENTITY event.alldayevent.label                          "Весь день" >
+<!ENTITY event.alldayevent.accesskey                      "д">
+<!ENTITY event.from.label                                 "Початок:" >
+<!ENTITY event.from.accesskey                             "ч">
+<!ENTITY task.from.label                                  "Початок:" >
+<!ENTITY task.from.accesskey                              "ч">
+<!ENTITY event.to.label                                   "Кінець:" >
+<!ENTITY event.to.accesskey                               "і">
+<!ENTITY task.to.label                                    "Дійсно до:" >
+<!ENTITY task.to.accesskey                                "н">
+<!ENTITY task.status.label                                "Стан:" >
+<!ENTITY task.status.accesskey                            "т">
+<!ENTITY event.repeat.label                               "Повторення:" >
+<!ENTITY event.repeat.accesskey                           "П">
+<!ENTITY event.until.label                                "До:">
+<!ENTITY event.until.accesskey                            "Д">
+<!ENTITY event.reminder.label                             "Нагадування:" >
+<!ENTITY event.reminder.accesskey                         "г">
+<!ENTITY event.description.label                          "Опис:" >
+<!ENTITY event.description.accesskey                      "с">
+<!ENTITY event.attachments.label                          "Вкладення:" >
+<!ENTITY event.attachments.accesskey                      "л" >
+<!ENTITY event.attachments.menubutton.label               "Вкласти">
+<!ENTITY event.attachments.menubutton.accesskey           "В">
+<!ENTITY event.attachments.url.label                      "Вебсторінка…">
+<!ENTITY event.attachments.url.accesskey                  "В">
+<!ENTITY event.attachments.popup.remove.label             "Вилучити" >
+<!ENTITY event.attachments.popup.remove.accesskey         "т" >
+<!ENTITY event.attachments.popup.open.label               "Відкрити" >
+<!ENTITY event.attachments.popup.open.accesskey           "и" >
+<!ENTITY event.attachments.popup.removeAll.label          "Вилучити все" >
+<!ENTITY event.attachments.popup.removeAll.accesskey      "ч" >
+<!ENTITY event.attachments.popup.attachPage.label         "Вкласти вебсторінку…" >
+<!ENTITY event.attachments.popup.attachPage.accesskey     "б" >
+<!ENTITY event.url.label                                  "Пов’язані посилання:" >
+<!ENTITY event.priority2.label                            "Пріоритет:">
+
+<!ENTITY event.reminder.none.label                        "Не нагадувати " >
+<!ENTITY event.reminder.0minutes.before.label             "за 0 хвилин" >
+<!ENTITY event.reminder.5minutes.before.label             "за 5 хвилин" >
+<!ENTITY event.reminder.15minutes.before.label            "за 15 хвилин" >
+<!ENTITY event.reminder.30minutes.before.label            "за 30 хвилин" >
+<!ENTITY event.reminder.1hour.before.label                "за 1 годину" >
+<!ENTITY event.reminder.2hours.before.label               "за 2 години" >
+<!ENTITY event.reminder.12hours.before.label              "за 12 годин" >
+<!ENTITY event.reminder.1day.before.label                 "за 1 день" >
+<!ENTITY event.reminder.2days.before.label                "за 2 дні" >
+<!ENTITY event.reminder.1week.before.label                "за 1 тиждень" >
+<!ENTITY event.reminder.custom.label                      "Налаштувати…" >
+
+<!ENTITY event.reminder.multiple.label                    "Багаторазові нагадування…" >
+
+<!ENTITY event.statusbarpanel.freebusy.label              "Час як:">
+<!ENTITY event.statusbarpanel.privacy.label               "Приватність:">
+
+<!-- Recurrence dialog -->
+<!ENTITY recurrence.title.label                         "Редагувати повторення">
+
+<!ENTITY event.repeat.does.not.repeat.label             "Не повторювати">
+<!ENTITY event.repeat.daily.label                       "Щоденно">
+<!ENTITY event.repeat.weekly.label                      "Щотижня">
+<!ENTITY event.repeat.every.weekday.label               "Кожний будній день">
+<!ENTITY event.repeat.bi.weekly.label                   "Кожні 2 тижні">
+<!ENTITY event.repeat.monthly.label                     "Щомісяця">
+<!ENTITY event.repeat.yearly.label                      "Щороку">
+<!ENTITY event.repeat.custom.label                      "Налаштувати…">
+
+<!ENTITY event.recurrence.pattern.label                 "Визначити періодичність">
+<!ENTITY event.recurrence.occurs.label                  "Повторювати" >
+<!ENTITY event.recurrence.day.label                     "щоденно" >
+<!ENTITY event.recurrence.week.label                    "щотижня" >
+<!ENTITY event.recurrence.month.label                   "щомісяця" >
+<!ENTITY event.recurrence.year.label                    "щороку" >
+
+<!ENTITY event.recurrence.pattern.every.label           "Кожного" >
+<!ENTITY repeat.units.days.both                         "дня" >
+<!ENTITY event.recurrence.pattern.every.weekday.label   "Кожного дня тижня" >
+
+<!ENTITY event.recurrence.pattern.weekly.every.label    "Кожного" >
+<!ENTITY repeat.units.weeks.both                        "тижня" >
+<!ENTITY event.recurrence.on.label                      "у:" >
+
+<!ENTITY event.recurrence.pattern.monthly.every.label   "Кожного" >
+<!ENTITY repeat.units.months.both                       "місяця" >
+<!ENTITY event.recurrence.monthly.every.label           "Кожного" >
+<!ENTITY event.recurrence.monthly.first.label           "першого">
+<!ENTITY event.recurrence.monthly.second.label          "другого">
+<!ENTITY event.recurrence.monthly.third.label           "третього">
+<!ENTITY event.recurrence.monthly.fourth.label          "четвертого">
+<!ENTITY event.recurrence.monthly.fifth.label           "п’ятого">
+<!ENTITY event.recurrence.monthly.last.label            "останнього">
+<!ENTITY event.recurrence.pattern.monthly.week.1.label  "неділі" >
+<!ENTITY event.recurrence.pattern.monthly.week.2.label  "понеділка" >
+<!ENTITY event.recurrence.pattern.monthly.week.3.label  "вівторка" >
+<!ENTITY event.recurrence.pattern.monthly.week.4.label  "середи" >
+<!ENTITY event.recurrence.pattern.monthly.week.5.label  "четверга" >
+<!ENTITY event.recurrence.pattern.monthly.week.6.label  "п’ятниці" >
+<!ENTITY event.recurrence.pattern.monthly.week.7.label  "суботи" >
+<!ENTITY event.recurrence.repeat.dayofmonth.label       "День місяця">
+<!ENTITY event.recurrence.repeat.recur.label            "У такі дні">
+
+<!ENTITY event.recurrence.every.label                        "Кожного:" >
+<!ENTITY repeat.units.years.both                             "року" >
+<!ENTITY event.recurrence.pattern.yearly.every.month.label   "Кожного" >
+
+<!-- LOCALIZATON NOTE
+     Some languages use a preposition when describing dates:
+     Portuguese: 6 de Setembro
+     English: 6 [of] September
+     event.recurrence.pattern.yearly.of.label is "of" in
+     Edit recurrence window -> Recurrence pattern -> Repeat yearly
+-->
+<!ENTITY event.recurrence.pattern.yearly.of.label            "" >
+
+<!ENTITY event.recurrence.pattern.yearly.month.1.label       "Січень" >
+<!ENTITY event.recurrence.pattern.yearly.month.2.label       "Лютий" >
+<!ENTITY event.recurrence.pattern.yearly.month.3.label       "Березень" >
+<!ENTITY event.recurrence.pattern.yearly.month.4.label       "Квітень" >
+<!ENTITY event.recurrence.pattern.yearly.month.5.label       "Травень" >
+<!ENTITY event.recurrence.pattern.yearly.month.6.label       "Червень" >
+<!ENTITY event.recurrence.pattern.yearly.month.7.label       "Липень" >
+<!ENTITY event.recurrence.pattern.yearly.month.8.label       "Серпень" >
+<!ENTITY event.recurrence.pattern.yearly.month.9.label       "Вересень" >
+<!ENTITY event.recurrence.pattern.yearly.month.10.label      "Жовтень" >
+<!ENTITY event.recurrence.pattern.yearly.month.11.label      "Листопад" >
+<!ENTITY event.recurrence.pattern.yearly.month.12.label      "Грудень" >
+<!ENTITY event.recurrence.yearly.every.label                 "Кожного">
+<!ENTITY event.recurrence.yearly.first.label                 "першого">
+<!ENTITY event.recurrence.yearly.second.label                "другого">
+<!ENTITY event.recurrence.yearly.third.label                 "третього">
+<!ENTITY event.recurrence.yearly.fourth.label                "четвертого">
+<!ENTITY event.recurrence.yearly.fifth.label                 "п’ятого">
+<!ENTITY event.recurrence.yearly.last.label                  "останнього">
+<!ENTITY event.recurrence.pattern.yearly.week.1.label        "неділі" >
+<!ENTITY event.recurrence.pattern.yearly.week.2.label        "понеділка" >
+<!ENTITY event.recurrence.pattern.yearly.week.3.label        "вівторка" >
+<!ENTITY event.recurrence.pattern.yearly.week.4.label        "середи" >
+<!ENTITY event.recurrence.pattern.yearly.week.5.label        "четверга" >
+<!ENTITY event.recurrence.pattern.yearly.week.6.label        "п’ятниці" >
+<!ENTITY event.recurrence.pattern.yearly.week.7.label        "суботи" >
+<!ENTITY event.recurrence.pattern.yearly.day.label           "день" >
+<!ENTITY event.recurrence.of.label                           "" >
+<!ENTITY event.recurrence.pattern.yearly.month2.1.label      "Січень" >
+<!ENTITY event.recurrence.pattern.yearly.month2.2.label      "Лютий" >
+<!ENTITY event.recurrence.pattern.yearly.month2.3.label      "Березень" >
+<!ENTITY event.recurrence.pattern.yearly.month2.4.label      "Квітень" >
+<!ENTITY event.recurrence.pattern.yearly.month2.5.label      "Травень" >
+<!ENTITY event.recurrence.pattern.yearly.month2.6.label      "Червень" >
+<!ENTITY event.recurrence.pattern.yearly.month2.7.label      "Липень" >
+<!ENTITY event.recurrence.pattern.yearly.month2.8.label      "Серпень" >
+<!ENTITY event.recurrence.pattern.yearly.month2.9.label      "Вересень" >
+<!ENTITY event.recurrence.pattern.yearly.month2.10.label     "Жовтень" >
+<!ENTITY event.recurrence.pattern.yearly.month2.11.label     "Листопад" >
+<!ENTITY event.recurrence.pattern.yearly.month2.12.label     "Грудень" >
+
+<!ENTITY event.recurrence.range.label                   "Рівень повторень">
+<!ENTITY event.recurrence.forever.label                 "Без кінцевої дати" >
+<!ENTITY event.recurrence.repeat.for.label              "Повторювати лише" >
+<!ENTITY event.recurrence.appointments.label            "раз" >
+<!ENTITY event.repeat.until.label                       "Повторювати до" >
+<!ENTITY event.recurrence.preview.label                 "Попередній перегляд">
+
+<!-- Attendees dialog -->
+<!ENTITY invite.title.label                     "Запрошення учасників">
+<!ENTITY event.organizer.label                  "Організатор">
+<!ENTITY event.freebusy.suggest.slot            "Запропонувати інтервал часу:">
+<!ENTITY event.freebusy.button.next.slot        "Наступний проміжок">
+<!ENTITY event.freebusy.button.previous.slot    "Попередній проміжок">
+<!ENTITY event.freebusy.zoom                    "Масштаб:">
+<!ENTITY event.freebusy.legend.free             "Вільний" >
+<!ENTITY event.freebusy.legend.busy             "Зайнятий" >
+<!ENTITY event.freebusy.legend.busy_tentative   "Не визначено" >
+<!ENTITY event.freebusy.legend.busy_unavailable "Відсутній на місці" >
+<!ENTITY event.freebusy.legend.unknown          "Немає інформації" >
+<!ENTITY event.attendee.role.required           "Обов’язковий учасник">
+<!ENTITY event.attendee.role.optional           "Необов’язковий учасник">
+<!ENTITY event.attendee.role.chair              "Організатор">
+<!ENTITY event.attendee.role.nonparticipant     "Не є учасником">
+<!ENTITY event.attendee.usertype.individual     "Особа">
+<!ENTITY event.attendee.usertype.group          "Група">
+<!ENTITY event.attendee.usertype.resource       "Ресурс">
+<!ENTITY event.attendee.usertype.room           "Кімната">
+<!ENTITY event.attendee.usertype.unknown        "Невідомо">
+
+<!-- Timezone dialog -->
+<!ENTITY timezone.title.label            "Зазначте часовий пояс">
+<!ENTITY event.timezone.custom.label     "Інші часові пояси…">
+
+<!-- Read-Only dialog -->
+<!ENTITY read.only.general.label         "Загальне">
+<!ENTITY read.only.title.label           "Назва:">
+<!ENTITY read.only.calendar.label        "Календар:">
+<!ENTITY read.only.event.start.label     "Дата початку:">
+<!ENTITY read.only.task.start.label      "Дата початку:">
+<!ENTITY read.only.event.end.label       "Дата завершення:">
+<!ENTITY read.only.task.due.label        "Дата завершення:">
+<!ENTITY read.only.repeat.label          "Повторюється:">
+<!ENTITY read.only.location.label        "Місце:">
+<!ENTITY read.only.category.label        "Категорія:">
+<!ENTITY read.only.organizer.label       "Організатор:">
+<!ENTITY read.only.reminder.label        "Нагадування:">
+<!ENTITY read.only.attachments.label     "Вкладення:">
+<!ENTITY read.only.attendees.label       "Учасники">
+<!ENTITY read.only.description.label     "Опис">
+<!ENTITY read.only.link.label            "Посилання">
+
+<!-- Summary dialog -->
+<!ENTITY summary.dialog.saveclose.label         "Зберегти й закрити">
+<!ENTITY summary.dialog.saveclose.tooltiptext   "Зберегти зміни й закрити вікно без зміни статусу участі та надсилання відповіді">
+<!ENTITY summary.dialog.accept.label            "Прийняти">
+<!ENTITY summary.dialog.accept.tooltiptext      "Прийняти запрошення">
+<!ENTITY summary.dialog.tentative.label         "Під сумнівом">
+<!ENTITY summary.dialog.tentative.tooltiptext   "Прийняти запрошення під сумнівом">
+<!ENTITY summary.dialog.decline.label           "Відхилити">
+<!ENTITY summary.dialog.decline.tooltiptext     "Відхилити запрошення">
+<!ENTITY summary.dialog.dontsend.label          "Не надсилати відповідь">
+<!ENTITY summary.dialog.dontsend.tooltiptext    "Змінити статус участі без надсилання відповіді організатору і закрити вікно">
+<!ENTITY summary.dialog.send.label              "Надіслати відповідь зараз">
+<!ENTITY summary.dialog.send.tooltiptext        "Надіслати відповідь організатору  і закрити вікно">

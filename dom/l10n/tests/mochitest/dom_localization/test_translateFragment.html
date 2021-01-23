@@ -1,0 +1,44 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Test DOMLocalization.prototype.translateFragment</title>
+  <script src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"></script>
+  <link rel="stylesheet" type="text/css" href="chrome://mochikit/content/tests/SimpleTest/test.css">
+  <script type="application/javascript">
+  "use strict";
+  async function* generateBundles(resourceIds) {
+    const bundle = new FluentBundle("en-US");
+    bundle.addResource(new FluentResource("title = Hello World"));
+    bundle.addResource(new FluentResource("subtitle = Welcome to FluentBundle"));
+    yield bundle;
+  }
+
+  window.onload = async function() {
+    SimpleTest.waitForExplicitFinish();
+
+    const domLoc = new DOMLocalization(
+      [],
+      false,
+      { generateBundles },
+    );
+
+    const frag = document.querySelectorAll("div")[0];
+    const h1 = document.querySelectorAll("h1")[0];
+    const p1 = document.querySelectorAll("p")[0];
+
+    await domLoc.translateFragment(frag);
+    is(h1.textContent, "Hello World");
+    is(p1.textContent, "Welcome to FluentBundle");
+
+    SimpleTest.finish();
+  };
+  </script>
+</head>
+<body>
+  <div>
+    <h1 data-l10n-id="title" />
+    <p data-l10n-id="subtitle" />
+  </div>
+</body>
+</html>

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "Deler">
+<!ENTITY editContactPanelDeleteContact.accesskey "l">
+
+<!ENTITY editContactName.label "Nomine:">
+<!ENTITY editContactName.accesskey "N">
+
+<!ENTITY editContactEmail.label "Email:">
+<!ENTITY editContactEmail.accesskey "E">
+
+<!ENTITY editContactAddressBook.label "Libro de adresses:">
+<!ENTITY editContactAddressBook.accesskey "a">
+
+<!ENTITY editContactPanelDone.label "Facite">
+<!ENTITY editContactPanelDone.accesskey "F">
+
+<!ENTITY contactMoveDisabledWarning.description "Impossibile cambiar le libro del adresses perque le contacto es in un lista de diffusion.">

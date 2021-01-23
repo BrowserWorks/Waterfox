@@ -7,6 +7,7 @@
 #ifndef mozilla_dom_SharedWorkerService_h
 #define mozilla_dom_SharedWorkerService_h
 
+#include "mozilla/dom/quota/CheckedUnsafePtr.h"
 #include "nsISupportsImpl.h"
 #include "nsTArray.h"
 
@@ -22,6 +23,7 @@ class MessagePortIdentifier;
 class RemoteWorkerData;
 class SharedWorkerManager;
 class SharedWorkerParent;
+class UniqueMessagePortId;
 
 class SharedWorkerService final {
  public:
@@ -43,7 +45,7 @@ class SharedWorkerService final {
   void GetOrCreateWorkerManagerOnMainThread(
       nsIEventTarget* aBackgroundEventTarget, SharedWorkerParent* aActor,
       const RemoteWorkerData& aData, uint64_t aWindowID,
-      const MessagePortIdentifier& aPortIdentifier);
+      UniqueMessagePortId& aPortIdentifier);
 
   void RemoveWorkerManagerOnMainThread(SharedWorkerManager* aManager);
 

@@ -9,8 +9,7 @@
  * https://www.fidoalliance.org/specs/fido-u2f-v1.1-id-20160915/fido-u2f-javascript-api-v1.1-id-20160915.html
  */
 
-[NoInterfaceObject]
-interface GlobalU2F {
+interface mixin GlobalU2F {
   [SecureContext, Throws, Pref="security.webauth.u2f", Replaceable]
   readonly attribute U2F u2f;
 };
@@ -25,6 +24,7 @@ enum Transport {
     "usb"
 };
 
+[GenerateToJSON]
 dictionary U2FClientData {
     DOMString             typ; // Spelling is from the specification
     DOMString             challenge;
@@ -67,7 +67,8 @@ dictionary SignResponse {
 callback U2FRegisterCallback = void(RegisterResponse response);
 callback U2FSignCallback = void(SignResponse response);
 
-[SecureContext, Pref="security.webauth.u2f"]
+[SecureContext, Pref="security.webauth.u2f",
+ Exposed=Window]
 interface U2F {
   // These enumerations are defined in the FIDO U2F Javascript API under the
   // interface "ErrorCode" as constant integers, and also in the U2F.cpp file.

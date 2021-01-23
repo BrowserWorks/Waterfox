@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "Copïau a Ffolderi">
+<!ENTITY sendingPrefix.label "Wrth anfon negeseuon, yn awtomatig: ">
+<!ENTITY fccMailFolder.label "Rhoi copi yn:">
+<!ENTITY fccMailFolder.accesskey "c">
+<!ENTITY fccReplyFollowsParent.label "Rhoi atebion yn ffolder y negeseuon sy'n derbyn ateb">
+<!ENTITY fccReplyFollowsParent.accesskey "a">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Cc y cyfeiriadau e-bost hyn:">
+<!ENTITY ccAddress.accesskey "C">
+<!ENTITY ccAddressList.placeholder "Gwahanu cyfeiriad gyda chollnod">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Bcc y cyfeiriadau e-bost hyn:">
+<!ENTITY bccAddress.accesskey "B">
+<!ENTITY bccAddressList.placeholder "Gwahanu cyfeiriad gyda chollnod">
+<!ENTITY saveMessageDlg.label "Dangos deialog cadarnhau wrth i negeseuon gael eu cadw">
+<!ENTITY saveMessageDlg.accesskey "g">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "Ffolder &quot;Anfonwyd&quot; ar:">
+<!ENTITY sentFolderOn.accesskey "n">
+<!ENTITY sentInOtherFolder.label "Arall:">
+<!ENTITY sentInOtherFolder.accesskey "A">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Archif Negeseuon">
+<!ENTITY keepArchives.label "Cadw archif negeseuon yn:">
+<!ENTITY keepArchives.accesskey "a">
+<!ENTITY archiveHierarchyButton.label "Dewisiadau archifo…">
+<!ENTITY archiveHierarchyButton.accesskey "w">
+<!ENTITY archivesFolderOn.label "Ffolder &quot;Archif&quot; yn:">
+<!ENTITY archivesFolderOn.accesskey "F">
+<!ENTITY archiveInOtherFolder.label "Arall:">
+<!ENTITY archiveInOtherFolder.accesskey "r">
+<!ENTITY specialFolders.label "Drafftiau a Thempledi">
+<!ENTITY keepDrafts2.label "Cadw negeseuon drafft yn:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "Ffolder &quot;Drafftiau&quot; yn:">
+<!ENTITY draftsFolderOn.accesskey "D">
+<!ENTITY draftInOtherFolder.label "Arall:">
+<!ENTITY draftInOtherFolder.accesskey "l">
+<!ENTITY keepTemplates.label "Cadw templedi negeseuon yn:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "Ffolder &quot;Templedi&quot; yn:">
+<!ENTITY templatesFolderOn.accesskey "T">
+<!ENTITY templateInOtherFolder.label "Arall:">
+<!ENTITY templateInOtherFolder.accesskey "r">

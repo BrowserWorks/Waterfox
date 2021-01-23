@@ -57,7 +57,7 @@ class GeckoViewMedia extends GeckoViewModule {
 }
 
 const GeckoViewRecordingMedia = {
-  // The event listener for this is hooked up in GeckoViewStartup.js
+  // The event listener for this is hooked up in GeckoViewStartup.jsm
   observe(aSubject, aTopic, aData) {
     debug`observe: aTopic=${aTopic}`;
     switch (aTopic) {
@@ -81,6 +81,8 @@ const GeckoViewRecordingMedia = {
             return STATUS_RECORDING;
           case MediaManagerService.STATE_NOCAPTURE:
             return STATUS_INACTIVE;
+          default:
+            throw new Error("Unexpected activityStatus value");
         }
       };
 
@@ -88,10 +90,19 @@ const GeckoViewRecordingMedia = {
         const win = windows.queryElementAt(i, Ci.nsIDOMWindow);
         const hasCamera = {};
         const hasMicrophone = {};
+        const screen = {};
+        const window = {};
+        const browser = {};
+        const mediaDevices = {};
         MediaManagerService.mediaCaptureWindowState(
           win,
           hasCamera,
-          hasMicrophone
+          hasMicrophone,
+          screen,
+          window,
+          browser,
+          mediaDevices,
+          true
         );
         var cameraStatus = getStatusString(hasCamera.value);
         var microphoneStatus = getStatusString(hasMicrophone.value);
@@ -110,7 +121,7 @@ const GeckoViewRecordingMedia = {
       }
       dispatcher.sendRequestForResult({
         type: "GeckoView:MediaRecordingStatusChanged",
-        devices: devices,
+        devices,
       });
     } else {
       console.log("no dispatcher present");

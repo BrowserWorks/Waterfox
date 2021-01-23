@@ -12,6 +12,8 @@
 #include "nsIBufferedStreams.h"
 #include "nsICloneableInputStream.h"
 #include "nsIPipe.h"
+#include "nsThreadUtils.h"
+#include "mozilla/webrender/WebRenderTypes.h"
 
 namespace mozilla {
 namespace ipc {
@@ -32,9 +34,9 @@ class IPCStreamDestination::DelayedStartInputStream final
   NS_DECL_THREADSAFE_ISUPPORTS
 
   DelayedStartInputStream(IPCStreamDestination* aDestination,
-                          already_AddRefed<nsIAsyncInputStream>&& aStream)
+                          nsCOMPtr<nsIAsyncInputStream>&& aStream)
       : mDestination(aDestination),
-        mStream(aStream),
+        mStream(std::move(aStream)),
         mMutex("IPCStreamDestination::DelayedStartInputStream::mMutex") {
     MOZ_ASSERT(mDestination);
     MOZ_ASSERT(mStream);
@@ -250,7 +252,7 @@ IPCStreamDestination::IPCStreamDestination()
 {
 }
 
-IPCStreamDestination::~IPCStreamDestination() {}
+IPCStreamDestination::~IPCStreamDestination() = default;
 
 nsresult IPCStreamDestination::Initialize() {
   MOZ_ASSERT(!mReader);
@@ -300,7 +302,7 @@ already_AddRefed<nsIInputStream> IPCStreamDestination::TakeReader() {
 
   if (mDelayedStart) {
     mDelayedStartInputStream =
-        new DelayedStartInputStream(this, mReader.forget());
+        new DelayedStartInputStream(this, std::move(mReader));
     RefPtr<nsIAsyncInputStream> inputStream = mDelayedStartInputStream;
     return inputStream.forget();
   }

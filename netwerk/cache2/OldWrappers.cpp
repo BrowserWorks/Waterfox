@@ -1,3 +1,9 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 // Stuff to link the old imp to the new api - will go away!
 
 #include "CacheLog.h"
@@ -471,10 +477,11 @@ NS_IMETHODIMP _OldCacheEntryWrapper::VisitMetaData(
 
 namespace {
 
-nsresult GetCacheSessionNameForStoragePolicy(
-    const nsACString& scheme, nsCacheStoragePolicy storagePolicy,
-    bool isPrivate, OriginAttributes const* originAttribs,
-    nsACString& sessionName) {
+void GetCacheSessionNameForStoragePolicy(const nsACString& scheme,
+                                         nsCacheStoragePolicy storagePolicy,
+                                         bool isPrivate,
+                                         OriginAttributes const* originAttribs,
+                                         nsACString& sessionName) {
   MOZ_ASSERT(!isPrivate || storagePolicy == nsICache::STORE_IN_MEMORY);
 
   // HTTP
@@ -519,8 +526,6 @@ nsresult GetCacheSessionNameForStoragePolicy(
   nsAutoCString suffix;
   originAttribs->CreateSuffix(suffix);
   sessionName.Append(suffix);
-
-  return NS_OK;
 }
 
 nsresult GetCacheSession(const nsACString& aScheme, bool aWriteToDisk,
@@ -541,10 +546,9 @@ nsresult GetCacheSession(const nsACString& aScheme, bool aWriteToDisk,
   if (aAppCache) {
     aAppCache->GetClientID(clientId);
   } else {
-    rv = GetCacheSessionNameForStoragePolicy(
+    GetCacheSessionNameForStoragePolicy(
         aScheme, storagePolicy, aLoadInfo->IsPrivate(),
         aLoadInfo->OriginAttributesPtr(), clientId);
-    NS_ENSURE_SUCCESS(rv, rv);
   }
 
   LOG(("  GetCacheSession for client=%s, policy=%d", clientId.get(),
@@ -724,9 +728,9 @@ _OldCacheLoad::Run() {
     if (!(mFlags & CHECK_MULTITHREADED)) Check();
 
     // break cycles
-    nsCOMPtr<nsICacheEntryOpenCallback> cb = mCallback.forget();
+    nsCOMPtr<nsICacheEntryOpenCallback> cb = std::move(mCallback);
     mCacheThread = nullptr;
-    nsCOMPtr<nsICacheEntry> entry = mCacheEntry.forget();
+    nsCOMPtr<nsICacheEntry> entry = std::move(mCacheEntry);
 
     rv = cb->OnCacheEntryAvailable(entry, mNew, mAppCache, mStatus);
 

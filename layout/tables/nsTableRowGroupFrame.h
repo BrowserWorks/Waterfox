@@ -66,6 +66,7 @@ class nsTableRowGroupFrame final : public nsContainerFrame,
   virtual void AppendFrames(ChildListID aListID,
                             nsFrameList& aFrameList) override;
   virtual void InsertFrames(ChildListID aListID, nsIFrame* aPrevFrame,
+                            const nsLineList::iterator* aPrevFrameLine,
                             nsFrameList& aFrameList) override;
   virtual void RemoveFrame(ChildListID aListID, nsIFrame* aOldFrame) override;
 
@@ -109,12 +110,12 @@ class nsTableRowGroupFrame final : public nsContainerFrame,
 
   /** return the number of child rows (not necessarily == number of child
    * frames) */
-  int32_t GetRowCount();
+  int32_t GetRowCount() const;
 
   /** return the table-relative row index of the first row in this rowgroup.
    * if there are no rows, -1 is returned.
    */
-  int32_t GetStartRowIndex();
+  int32_t GetStartRowIndex() const;
 
   /** Adjust the row indices of all rows  whose index is >= aRowIndex.
    * @param aRowIndex   - start adjusting with this index
@@ -194,7 +195,7 @@ class nsTableRowGroupFrame final : public nsContainerFrame,
   /** Get the number of rows in a row group
    * @return the number of lines in a row group
    */
-  virtual int32_t GetNumLines() override;
+  virtual int32_t GetNumLines() const override;
 
   /** @see nsILineIterator.h GetDirection
    * @return true if the table is rtl
@@ -213,7 +214,8 @@ class nsTableRowGroupFrame final : public nsContainerFrame,
    * @param aLineBounds       - rect of the row
    */
   NS_IMETHOD GetLine(int32_t aLineNumber, nsIFrame** aFirstFrameOnLine,
-                     int32_t* aNumFramesOnLine, nsRect& aLineBounds) override;
+                     int32_t* aNumFramesOnLine,
+                     nsRect& aLineBounds) const override;
 
   /** Given a frame that's a child of the rowgroup, find which line its on.
    * @param aFrame       - frame, should be a row
@@ -238,7 +240,7 @@ class nsTableRowGroupFrame final : public nsContainerFrame,
    */
   NS_IMETHOD FindFrameAt(int32_t aLineNumber, nsPoint aPos,
                          nsIFrame** aFrameFound, bool* aPosIsBeforeFirstFrame,
-                         bool* aPosIsAfterLastFrame) override;
+                         bool* aPosIsAfterLastFrame) const override;
 
   /** Check whether visual and logical order of cell frames within a line are
    * identical. As the layout will reorder them this is always the case
@@ -258,7 +260,7 @@ class nsTableRowGroupFrame final : public nsContainerFrame,
    * @param aLineNumber - the index of the row relative to the table
    */
   NS_IMETHOD GetNextSiblingOnLine(nsIFrame*& aFrame,
-                                  int32_t aLineNumber) override;
+                                  int32_t aLineNumber) const override;
 
   // row cursor methods to speed up searching for the row(s)
   // containing a point. The basic idea is that we set the cursor
@@ -343,7 +345,7 @@ class nsTableRowGroupFrame final : public nsContainerFrame,
 
   void PlaceChild(nsPresContext* aPresContext,
                   TableRowGroupReflowInput& aReflowInput, nsIFrame* aKidFrame,
-                  mozilla::WritingMode aWM,
+                  const ReflowInput& aKidReflowInput, mozilla::WritingMode aWM,
                   const mozilla::LogicalPoint& aKidPosition,
                   const nsSize& aContainerSize, ReflowOutput& aDesiredSize,
                   const nsRect& aOriginalKidRect,
@@ -383,8 +385,7 @@ class nsTableRowGroupFrame final : public nsContainerFrame,
                           nsTableRowFrame*& aFirstTruncatedRow,
                           nscoord& aDesiredHeight);
 
-  void CreateContinuingRowFrame(nsPresContext& aPresContext,
-                                nsIFrame& aRowFrame, nsIFrame** aContRowFrame);
+  void CreateContinuingRowFrame(nsIFrame& aRowFrame, nsIFrame** aContRowFrame);
 
   bool IsSimpleRowFrame(nsTableFrame* aTableFrame, nsTableRowFrame* aRowFrame);
 

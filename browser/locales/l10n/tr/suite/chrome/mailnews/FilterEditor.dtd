@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Süzgeç kuralları">
+<!ENTITY filterEditorDialog.dimensions "width: 105ch;">
+<!ENTITY filterName.label "Süzgeç ismi:">
+<!ENTITY filterName.accesskey "S">
+
+<!ENTITY junk.label "Gereksiz">
+<!ENTITY notJunk.label "Gereksiz değil">
+
+<!ENTITY lowestPriorityCmd.label "En düşük">
+<!ENTITY lowPriorityCmd.label "Düşük">
+<!ENTITY normalPriorityCmd.label "Normal">
+<!ENTITY highPriorityCmd.label "Yüksek">
+<!ENTITY highestPriorityCmd.label "En yüksek">
+
+<!ENTITY contextDesc.label "Süzgeçlerin çalışma zamanı:">
+<!ENTITY contextDesc.accesskey "z">
+<!ENTITY contextIncoming.label "Posta denetimi esnasında">
+<!ENTITY contextManual.label "Elle çalıştır">
+<!ENTITY contextBoth.label "Posta denetimi esnasında veya elle">
+<!ENTITY contextPostPlugin.label "Posta denetimi (sınıflandırma sonrası)">
+<!ENTITY contextPostPluginBoth.label "Posta denetimi (sınıflandırma sonrası) veya elle çalıştırma">
+
+<!ENTITY filterActionDesc.label "Bu işlemi uygula:">
+<!ENTITY filterActionDesc.accesskey "u">
+<!-- New Style Filter Rule Actions -->
+
+<!ENTITY moveMessage.label "İletiyi taşı">
+<!ENTITY copyMessage.label "İletiyi kopyala">
+<!ENTITY forwardTo.label "İlet">
+<!ENTITY replyWithTemplate.label "Şablon ile yanıtla">
+<!ENTITY markMessageRead.label "İletiyi okunmuş olarak işaretle">
+<!ENTITY markMessageStarred.label "İletiyi işaretle">
+<!ENTITY setPriority.label "Önemlilik">
+<!ENTITY addTag.label "İletiyi etiketle">
+<!ENTITY setJunkScore.label "Gereksiz durumunu ayarla">
+<!ENTITY deleteMessage.label "İletiyi sil">
+<!ENTITY deleteFromPOP.label "POP Sunucusundan sil">
+<!ENTITY fetchFromPOP.label "POP sunucudan ileti gövdesini indir">
+<!ENTITY ignoreThread.label "Dizilimi görmezden gel">
+<!ENTITY ignoreSubthread.label "Alt dizilimleri görmezden gel">
+<!ENTITY watchThread.label "Dizilimleri gözetle">
+<!ENTITY stopExecution.label "Süzgeç yürütümünü durdur">

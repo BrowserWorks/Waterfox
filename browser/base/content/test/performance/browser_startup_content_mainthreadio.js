@@ -143,18 +143,6 @@ const processes = {
       condition: !WIN,
       stat: 1,
     },
-    {
-      // bug 1357205
-      path: "XREAppFeat:formautofill@mozilla.org.xpi",
-      condition: !WIN,
-      stat: 1,
-    },
-    {
-      // bug 1357205
-      path: "XREAppFeat:screenshots@mozilla.org.xpi",
-      condition: !WIN,
-      close: 1,
-    },
   ],
 };
 
@@ -291,7 +279,7 @@ add_task(async function() {
     });
   }
 
-  let tmpPath = expandWhitelistPath(MAC ? "TmpD:" : "/dev/shm").toLowerCase();
+  let tmpPath = expandWhitelistPath("TmpD:").toLowerCase();
   let shouldPass = true;
   for (let procName in processes) {
     let whitelist = processes[procName];
@@ -345,15 +333,22 @@ add_task(async function() {
         continue;
       }
 
-      if (!WIN) {
-        if (filename == "/dev/urandom") {
-          continue;
-        }
+      if (!WIN && filename == "/dev/urandom") {
+        continue;
+      }
 
-        // Ignore I/O due to IPC. This doesn't really touch the disk.
-        if (filename.startsWith(tmpPath + "/org.chromium.")) {
-          continue;
-        }
+      // /dev/shm is always tmpfs (a memory filesystem); this isn't
+      // really I/O any more than mmap/munmap are.
+      if (LINUX && filename.startsWith("/dev/shm/")) {
+        continue;
+      }
+
+      // Shared memory uses temporary files on MacOS <= 10.11 to avoid
+      // a kernel security bug that will never be patched (see
+      // https://crbug.com/project-zero/1671 for details).  This can
+      // be removed when we no longer support those OS versions.
+      if (MAC && filename.startsWith(tmpPath + "/org.mozilla.ipc.")) {
+        continue;
       }
 
       let expected = false;
@@ -368,9 +363,7 @@ add_task(async function() {
       if (!expected) {
         record(
           false,
-          `unexpected ${marker.operation} on ${
-            marker.filename
-          } in ${procName} process`,
+          `unexpected ${marker.operation} on ${marker.filename} in ${procName} process`,
           undefined,
           "  " + getStackFromProfile(profile, marker.stackId).join("\n  ")
         );
@@ -393,7 +386,7 @@ add_task(async function() {
     // no I/O marker in that case, but it's good to keep the test running to check
     // that we are still able to produce startup profiles.
     is(
-      markers.length > 0,
+      !!markers.length,
       !AppConstants.RELEASE_OR_BETA,
       procName +
         " startup profiles should have IO markers in builds that are not RELEASE_OR_BETA"
@@ -429,7 +422,7 @@ add_task(async function() {
   if (shouldPass) {
     ok(shouldPass, "No unexpected main thread I/O during startup");
   } else {
-    const filename = "child-startup-mainthreadio-profile.json";
+    const filename = "profile_startup_content_mainthreadio.json";
     let path = Cc["@mozilla.org/process/environment;1"]
       .getService(Ci.nsIEnvironment)
       .get("MOZ_UPLOAD_DIR");
@@ -442,8 +435,7 @@ add_task(async function() {
     ok(
       false,
       "Unexpected main thread I/O behavior during child process startup; " +
-        "profile uploaded in " +
-        filename
+        `open the ${filename} artifact in the Firefox Profiler to see what happened`
     );
   }
 });

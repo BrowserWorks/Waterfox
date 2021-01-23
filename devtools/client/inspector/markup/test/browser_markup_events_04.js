@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 /* import-globals-from helper_events_test_runner.js */
@@ -12,13 +11,13 @@ const TEST_URL = URL_ROOT + "doc_markup_events_04.html";
 
 loadHelperScript("helper_events_test_runner.js");
 
-const TEST_DATA = [ // eslint-disable-line
+const TEST_DATA = [
   {
     selector: "html",
     expected: [
       {
         type: "click",
-        filename: TEST_URL + ":56",
+        filename: TEST_URL + ":59:67",
         attributes: ["Bubbling", "DOM2"],
         handler:
           "function(foo2, bar2) {\n" +
@@ -27,7 +26,7 @@ const TEST_DATA = [ // eslint-disable-line
       },
       {
         type: "click",
-        filename: TEST_URL + ":52",
+        filename: TEST_URL + ":55:51",
         attributes: ["Bubbling", "DOM2"],
         handler:
           "function(foo, bar) {\n" +
@@ -47,7 +46,7 @@ const TEST_DATA = [ // eslint-disable-line
     expected: [
       {
         type: "click",
-        filename: TEST_URL + ":1",
+        filename: TEST_URL + ":1:0",
         attributes: ["Bubbling", "DOM2"],
         handler: "function anonymous() {\n" + "\n" + "}",
       },
@@ -58,7 +57,7 @@ const TEST_DATA = [ // eslint-disable-line
     expected: [
       {
         type: "click",
-        filename: TEST_URL + ":1",
+        filename: TEST_URL + ":1:0",
         attributes: ["Bubbling", "DOM2"],
         handler:
           "function anonymous(a, b, c) {\n" +
@@ -72,7 +71,7 @@ const TEST_DATA = [ // eslint-disable-line
     expected: [
       {
         type: "click",
-        filename: TEST_URL + ":24",
+        filename: TEST_URL + ":26:47",
         attributes: ["Bubbling", "DOM2"],
         handler:
           "function multi() {\n" + '  alert("multipleAssignment");\n' + "}",
@@ -91,13 +90,13 @@ const TEST_DATA = [ // eslint-disable-line
     ],
   },
   {
-    selector: "#arraysort",
+    selector: "#math-pow",
     expected: [
       {
         type: "click",
         filename: "[native code]",
         attributes: ["Bubbling", "DOM2"],
-        handler: "function sort(, ) {\n" + "  [native code]\n" + "}",
+        handler: "function pow(, ) {\n" + "  [native code]\n" + "}",
       },
     ],
   },
@@ -106,7 +105,7 @@ const TEST_DATA = [ // eslint-disable-line
     expected: [
       {
         type: "click",
-        filename: TEST_URL + ":77",
+        filename: TEST_URL + ":80:29",
         attributes: ["Bubbling", "DOM2"],
         handler:
           "function(event) {\n" +

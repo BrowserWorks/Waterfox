@@ -43,7 +43,8 @@ typedef enum rtp_ptype_
     RTP_RED          = 122,
     RTP_ULPFEC       = 123,
     RTP_I420         = 124,
-    RTP_ISAC         = 124
+    RTP_ISAC         = 124,
+    RTP_RTX          = 125
 } rtp_ptype;
 
 typedef struct {
@@ -192,6 +193,7 @@ typedef enum {
     SDP_ATTR_DTLS_MESSAGE,
     SDP_ATTR_SCTPPORT,
     SDP_ATTR_MAXMESSAGESIZE,
+    SDP_ATTR_SSRC_GROUP,
     SDP_MAX_ATTR_TYPES,
     SDP_ATTR_INVALID
 } sdp_attr_e;

@@ -12,8 +12,8 @@
 #include "mozilla/RefPtr.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/net/StunAddrsRequestChild.h"
-#include "nsIProtocolProxyCallback.h"
 #include "MediaTransportHandler.h"
+#include "nsIHttpChannelInternal.h"
 
 #include "TransceiverImpl.h"
 
@@ -36,6 +36,8 @@ class PeerConnectionImpl;
 class PeerConnectionMedia;
 class PCUuidGenerator;
 class MediaPipeline;
+class MediaPipelineReceive;
+class MediaPipelineTransmit;
 class MediaPipelineFilter;
 class JsepSession;
 
@@ -60,6 +62,8 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
   nsresult UpdateTransports(const JsepSession& aSession,
                             const bool forceIceTcp);
 
+  void ResetStunAddrsForIceRestart() { mStunAddrs.Clear(); }
+
   // Start ICE checks.
   void StartIceChecks(const JsepSession& session);
 
@@ -80,24 +84,15 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
 
   // TODO: Let's move the TransceiverImpl stuff to PeerConnectionImpl.
   nsresult AddTransceiver(JsepTransceiver* aJsepTransceiver,
-                          dom::MediaStreamTrack& aReceiveTrack,
                           dom::MediaStreamTrack* aSendTrack,
                           RefPtr<TransceiverImpl>* aTransceiverImpl);
 
   void GetTransmitPipelinesMatching(
       const dom::MediaStreamTrack* aTrack,
-      nsTArray<RefPtr<MediaPipeline>>* aPipelines);
+      nsTArray<RefPtr<MediaPipelineTransmit>>* aPipelines);
 
-  void GetReceivePipelinesMatching(const dom::MediaStreamTrack* aTrack,
-                                   nsTArray<RefPtr<MediaPipeline>>* aPipelines);
-
-  std::string GetTransportIdMatching(const dom::MediaStreamTrack& aTrack) const;
-
-  nsresult AddRIDExtension(dom::MediaStreamTrack& aRecvTrack,
-                           unsigned short aExtensionId);
-
-  nsresult AddRIDFilter(dom::MediaStreamTrack& aRecvTrack,
-                        const nsAString& aRid);
+  std::string GetTransportIdMatchingSendTrack(
+      const dom::MediaStreamTrack& aTrack) const;
 
   // In cases where the peer isn't yet identified, we disable the pipeline (not
   // the stream, that would potentially affect others), so that it sends
@@ -109,14 +104,13 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
                             const PeerIdentity* aSinkIdentity);
   // this determines if any track is peerIdentity constrained
   bool AnyLocalTrackHasPeerIdentity() const;
-  // When we finally learn who is on the other end, we need to change the
-  // ownership on streams
-  void UpdateRemoteStreamPrincipals_m(nsIPrincipal* aPrincipal);
 
   bool AnyCodecHasPluginID(uint64_t aPluginID);
 
   const nsCOMPtr<nsIThread>& GetMainThread() const { return mMainThread; }
-  const nsCOMPtr<nsIEventTarget>& GetSTSThread() const { return mSTSThread; }
+  const nsCOMPtr<nsISerialEventTarget>& GetSTSThread() const {
+    return mSTSThread;
+  }
 
   // Used by PCImpl in a couple of places. Might be good to move that code in
   // here.
@@ -125,24 +119,10 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
   }
 
   nsPIDOMWindowInner* GetWindow() const;
+  already_AddRefed<nsIHttpChannelInternal> GetChannel() const;
 
-  void AlpnNegotiated_s(const std::string& aAlpn);
-  static void AlpnNegotiated_m(const std::string& aParentHandle,
-                               const std::string& aAlpn);
-
-  // ICE state signals
-  sigslot::signal1<mozilla::dom::PCImplIceGatheringState>
-      SignalIceGatheringStateChange;
-  sigslot::signal1<mozilla::dom::PCImplIceConnectionState>
-      SignalIceConnectionStateChange;
-  // This passes a candidate:... attribute, transport id, and ufrag
-  // end-of-candidates is signaled with the empty string
-  sigslot::signal3<const std::string&, const std::string&, const std::string&>
-      SignalCandidate;
-  // This passes address, port, transport id of the default candidate.
-  sigslot::signal5<const std::string&, uint16_t, const std::string&, uint16_t,
-                   const std::string&>
-      SignalUpdateDefaultCandidate;
+  void AlpnNegotiated_s(const std::string& aAlpn, bool aPrivacyRequested);
+  void AlpnNegotiated_m(bool aPrivacyRequested);
 
   // TODO: Move to PeerConnectionImpl
   RefPtr<WebRtcCallWrapper> mCall;
@@ -152,25 +132,16 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
 
  private:
   void InitLocalAddrs();  // for stun local address IPC request
-  nsresult InitProxy();
-  class ProtocolProxyQueryHandler : public nsIProtocolProxyCallback {
-   public:
-    explicit ProtocolProxyQueryHandler(PeerConnectionMedia* pcm) : pcm_(pcm) {}
-
-    NS_IMETHOD OnProxyAvailable(nsICancelable* request, nsIChannel* aChannel,
-                                nsIProxyInfo* proxyinfo,
-                                nsresult result) override;
-    NS_DECL_ISUPPORTS
-
-   private:
-    void SetProxyOnPcm(nsIProxyInfo& proxyinfo);
-    RefPtr<PeerConnectionMedia> pcm_;
-    virtual ~ProtocolProxyQueryHandler() {}
-  };
+  bool ShouldForceProxy() const;
+  std::unique_ptr<NrSocketProxyConfig> GetProxyConfig() const;
 
   class StunAddrsHandler : public net::StunAddrsListener {
    public:
     explicit StunAddrsHandler(PeerConnectionMedia* pcm) : pcm_(pcm) {}
+
+    void OnMDNSQueryComplete(const nsCString& hostname,
+                             const Maybe<nsCString>& address) override;
+
     void OnStunAddrsAvailable(
         const mozilla::net::NrIceStunAddrArray& addrs) override;
 
@@ -192,27 +163,27 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
   void GatherIfReady();
   void FlushIceCtxOperationQueueIfReady();
   void PerformOrEnqueueIceCtxOperation(nsIRunnable* runnable);
-  void EnsureIceGathering_s(bool aDefaultRouteOnly);
-  void StartIceChecks_s(bool aIsControlling, bool aIsOfferer, bool aIsIceLite,
-                        const std::vector<std::string>& aIceOptionsList);
+  nsresult SetTargetForDefaultLocalAddressLookup();
+  void EnsureIceGathering(bool aDefaultRouteOnly, bool aObfuscateHostAddresses);
 
   bool GetPrefDefaultAddressOnly() const;
+  bool GetPrefObfuscateHostAddresses() const;
 
   void ConnectSignals();
 
   // ICE events
-  void IceGatheringStateChange_s(dom::PCImplIceGatheringState aState);
-  void IceConnectionStateChange_s(dom::PCImplIceConnectionState aState);
+  void IceGatheringStateChange_s(dom::RTCIceGatheringState aState);
+  void IceConnectionStateChange_s(dom::RTCIceConnectionState aState);
   void OnCandidateFound_s(const std::string& aTransportId,
                           const CandidateInfo& aCandidateInfo);
 
-  void IceGatheringStateChange_m(dom::PCImplIceGatheringState aState);
-  void IceConnectionStateChange_m(dom::PCImplIceConnectionState aState);
+  void IceGatheringStateChange_m(dom::RTCIceGatheringState aState);
+  void IceConnectionStateChange_m(dom::RTCIceConnectionState aState);
   void OnCandidateFound_m(const std::string& aTransportId,
                           const CandidateInfo& aCandidateInfo);
 
   bool IsIceCtxReady() const {
-    return mProxyResolveCompleted && mLocalAddrsCompleted;
+    return mLocalAddrsRequestState == STUN_ADDR_REQUEST_COMPLETE;
   }
 
   // The parent PC
@@ -227,7 +198,7 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
   nsCOMPtr<nsIThread> mMainThread;
 
   // The STS thread.
-  nsCOMPtr<nsIEventTarget> mSTSThread;
+  nsCOMPtr<nsISerialEventTarget> mSTSThread;
 
   // Used whenever we need to dispatch a runnable to STS to tweak something
   // on our ICE ctx, but are not ready to do so at the moment (eg; we are
@@ -235,23 +206,45 @@ class PeerConnectionMedia : public sigslot::has_slots<> {
   // gathering or start checking)
   std::vector<nsCOMPtr<nsIRunnable>> mQueuedIceCtxOperations;
 
-  // Used to cancel any ongoing proxy request.
-  nsCOMPtr<nsICancelable> mProxyRequest;
-
-  // Used to track the state of the request.
-  bool mProxyResolveCompleted;
-
-  // Used to track proxy existence and socket proxy configuration.
-  std::unique_ptr<NrSocketProxyConfig> mProxyConfig;
+  // Set if prefs dictate that we should force the use of a web proxy.
+  bool mForceProxy;
 
   // Used to cancel incoming stun addrs response
   RefPtr<net::StunAddrsRequestChild> mStunAddrsRequest;
 
+  enum StunAddrRequestState {
+    STUN_ADDR_REQUEST_NONE,
+    STUN_ADDR_REQUEST_PENDING,
+    STUN_ADDR_REQUEST_COMPLETE
+  };
   // Used to track the state of the stun addr IPC request
-  bool mLocalAddrsCompleted;
+  StunAddrRequestState mLocalAddrsRequestState;
 
   // Used to store the result of the stun addr IPC request
   nsTArray<NrIceStunAddr> mStunAddrs;
+
+  // Used to ensure the target for default local address lookup is only set
+  // once.
+  bool mTargetForDefaultLocalAddressLookupIsSet;
+
+  // Set to true when the object is going to be released.
+  bool mDestroyed;
+
+  // Keep track of local hostnames to register. Registration is deferred
+  // until StartIceChecks has run. Accessed on main thread only.
+  std::map<std::string, std::string> mMDNSHostnamesToRegister;
+  bool mCanRegisterMDNSHostnamesDirectly = false;
+
+  // Used to store the mDNS hostnames that we have registered
+  std::set<std::string> mRegisteredMDNSHostnames;
+
+  // Used to store the mDNS hostnames that we have queried
+  struct PendingIceCandidate {
+    std::vector<std::string> mTokenizedCandidate;
+    std::string mTransportId;
+    std::string mUfrag;
+  };
+  std::map<std::string, std::list<PendingIceCandidate>> mQueriedMDNSHostnames;
 
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(PeerConnectionMedia)
 };

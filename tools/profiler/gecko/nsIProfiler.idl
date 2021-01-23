@@ -26,6 +26,7 @@ interface nsIProfilerStartParams : nsISupports
   readonly attribute double duration;
   readonly attribute double interval;
   readonly attribute uint32_t features;
+  readonly attribute uint64_t activeBrowsingContextID;
 
   [noscript, notxpcom, nostdcall] StringArrayRef getFilters();
 };
@@ -35,16 +36,25 @@ interface nsIProfiler : nsISupports
 {
   boolean CanProfile();
   void StartProfiler(in uint32_t aEntries, in double aInterval,
-                      [array, size_is(aFeatureCount)] in string aFeatures,
-                      in uint32_t aFeatureCount,
-                      [array, size_is(aFilterCount), optional] in string aFilters,
-                      [optional] in uint32_t aFilterCount,
-                      [optional] in double aDuration);
+                     in Array<AUTF8String> aFeatures,
+                     [optional] in Array<AUTF8String> aFilters,
+                     [optional] in uint64_t aActiveBrowsingContextID,
+                     [optional] in double aDuration);
   void StopProfiler();
   boolean IsPaused();
   void PauseSampling();
   void ResumeSampling();
   void AddMarker(in string aMarker);
+
+  /*
+   * Resolves the returned promise after at least one full periodic sampling.
+   * Rejects the promise if sampler is not running (yet, or anymore, or paused).
+   * This is mainly useful in tests, to wait just long enough to guarantee that
+   * one sample was taken in the main process.
+   */
+  [implicit_jscontext]
+  Promise waitOnePeriodicSampling();
+
   /*
    * Returns the JSON string of the profile. If aSinceTime is passed, only
    * report samples taken at >= aSinceTime.
@@ -64,6 +74,9 @@ interface nsIProfiler : nsISupports
   [implicit_jscontext]
   Promise getProfileDataAsArrayBuffer([optional] in double aSinceTime);
 
+  [implicit_jscontext]
+  Promise getProfileDataAsGzippedArrayBuffer([optional] in double aSinceTime);
+
   /**
    * Returns a promise that resolves once the file has been written.
    */
@@ -82,13 +95,22 @@ interface nsIProfiler : nsISupports
    * Returns an array of the features that are supported in this build.
    * Features may vary depending on platform and build flags.
    */
-  void GetFeatures(out uint32_t aCount, [retval, array, size_is(aCount)] out string aFeatures);
+  Array<AUTF8String> GetFeatures();
+
+  /**
+   * Returns a JavaScript object that contains a description of the currently configured
+   * state of the profiler when the profiler is active. This can be useful to assert
+   * the UI of the profiler's recording panel in tests. It returns null when the profiler
+   * is not active.
+   */
+  [implicit_jscontext]
+  readonly attribute jsval activeConfiguration;
 
   /**
    * Returns an array of all features that are supported by the profiler.
    * The array may contain features that are not supported in this build.
    */
-  void GetAllFeatures(out uint32_t aCount, [retval, array, size_is(aCount)] out string aFeatures);
+  Array<AUTF8String> GetAllFeatures();
 
   void GetBufferInfo(out uint32_t aCurrentPosition, out uint32_t aTotalSize,
                      out uint32_t aGeneration);

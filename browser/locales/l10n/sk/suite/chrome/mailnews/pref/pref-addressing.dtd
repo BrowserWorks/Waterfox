@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.addressing.title                 "Adresovanie">
+<!ENTITY emailCollectiontitle.label            "Zbieranie e-mailových adries">
+<!ENTITY emailCollectionPicker.label           "Adresy odosielaných e-mailov automaticky pridať do:">
+<!ENTITY emailCollectionPicker.accesskey       "A">
+<!ENTITY emailCollectiontext.label             "E-mailové adresy odchádzajúcich správ môžu byť automaticky pridávané do lokálneho adresára.">
+
+<!-- Autocompletion -->
+<!ENTITY addressingTitle.label                 "Automatické dokončovanie adries">
+<!ENTITY highlightNonMatches.label             "Zvýrazniť adresy, ktoré nie sú automaticky doplnené">
+<!ENTITY highlightNonMatches.accesskey         "Z">
+<!ENTITY addressingEnable.label                "Lokálne adresáre">
+<!ENTITY addressingEnable.accesskey            "L">
+<!ENTITY autocompleteText.label                "Pri určovaní adries správ hľadať zodpovedajúce položky v:">
+<!ENTITY directories.label                     "Adresárový server:">
+<!ENTITY directories.accesskey                 "d">
+<!ENTITY directoriesNone.label                 "žiadny">
+<!ENTITY editDirectories.label                 "Upraviť adresáre…">
+<!ENTITY editDirectories.accesskey             "U">

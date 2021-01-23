@@ -4,9 +4,11 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-[Constructor(DOMString type, optional PopStateEventInit eventInitDict)]
+[Exposed=Window]
 interface PopStateEvent : Event
 {
+  constructor(DOMString type, optional PopStateEventInit eventInitDict = {});
+
   readonly attribute any state;
 };
 

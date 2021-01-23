@@ -1,0 +1,95 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE This file is very similar to the one in Waterfox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.pagetitle       "about:rights">
+<!ENTITY rights.intro-header    "Om dine rettigheter">
+<!ENTITY rights.intro "&brandFullName; er programvare basert på fri og åpen kildekode, utviklet av et samfunn med tusenvis av medlemmer rundt om i verden. Det er noen ting du bør vite:">
+
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+<!ENTITY rights.intro-point1a "&brandShortName; er tilgjengelig for deg under betingelsene i ">
+<!ENTITY rights.intro-point1b "Mozilla Public License">
+<!ENTITY rights.intro-point1c ". Dette betyr at du kan bruke, kopiere og formidle &brandShortName; til andre. Du kan også forandre kildekoden til &brandShortName; for å passe til dine behov. Mozilla Public License gir deg også rett til å formidle forandrede versjoner.">
+
+<!ENTITY rights.intro-point2a "Mozilla gir deg ikke rett til å bruke Mozilla- eller SeaMonkey-varemerkene eller logoene. Mer informasjon om varemerker finner du ">
+
+<!ENTITY rights.intro-point2aa "&vendorShortName; gir deg ikke rett til å bruke «&brandFullName;»-varemerkene eller logoene. Mer informasjon om varemerker finner du ">
+<!ENTITY rights.intro-point2b "her">
+<!ENTITY rights.intro-point2c ".">
+
+<!-- point 2d is technically point 3. in the list -->
+<!ENTITY rights.intro-point2d "Noen funksjoner i &brandShortName;, som for eksempel krasjrapportereren, gir deg muligheten å gi tilbakemelding til &vendorShortName;. Ved å sende tilbakemelding gir du &vendorShortName; og Mozilla tillatelse til å bruke tilbakemeldingene for å forbedre programmene deres, publisere tilbakemeldingene på nettstedene deres, og å distribuere tilbakemeldingene.">
+
+<!-- point 2da is technically point 3. in the list -->
+<!ENTITY rights.intro-point2da "Noen funksjoner i &brandShortName;, som for eksempel krasjrapportereren, gir deg muligheten å gi tilbakemelding til &vendorShortName;. Ved å sende tilbakemelding gir du &vendorShortName; tillatelse til å bruke tilbakemeldingene for å forbedre programmene deres, publisere tilbakemeldingene på nettstedene deres, og å distribuere tilbakemeldingene.">
+
+<!-- point 3 text for official branded builds -->
+<!ENTITY rights.intro-point3a "Personvernerklæring for &vendorShortName;-produkter kan du finne ">
+<!ENTITY rights.intro-point3b "her">
+<!ENTITY rights.intro-point3c ".">
+
+<!-- point 4 text for official branded builds -->
+<!ENTITY rights2.intro-point4a "&brandShortName; tilbyr også valgfrie informasjonstjenester på web som blant annet SafeBrowsing-tjenesten; men vi kan ikke garantere at de er 100&#37; feilfrie eller nøyaktige. Mer informasjon, også om hvordan tjenestene kan slås av, kan du finne i ">
+<!ENTITY rights.intro-point4b "tjenestebetingelsene">
+<!ENTITY rights.intro-point4c ".">
+
+<!ENTITY rights.webservices-header "&brandFullName; informasjonstjenester">
+
+<!-- Note that this paragraph references entities from extensions.dtd,
+     preferences.dtd, pref-smartupdate.dtd, and pref-security.dtd,
+     so that we can refer to text the user sees in the UI, without
+     this page being forgotten every time those strings are updated.  -->
+<!-- intro paragraph for branded builds -->
+<!ENTITY rights3.webservices-a "&brandFullName; tilbyr valgfrie nettbaserte informasjonstjenester som er tilgjengelig for din bruk med denne binære versjonen av &brandShortName;, som beskrevet nedenfor.  Noen av disse tjenestene (for eksempel utvidelsesforslag og oppdateringstjenester, tjenesten for trygg nettlesing eller varselsfunksjonen for stedsbevisst nettlesing) er aktivert som standard.  Hvis du ikke vil bruke noen av disse tjenestene, eller vilkårene nedenfor er uakseptable, kan du finne instruksjoner om hvordan du deaktiverer en bestemt funksjon eller tjeneste ">
+<!-- intro paragraph for branded builds -->
+<!ENTITY rights3.webservices-aa "&vendorShortName; tilbyr valgfrie nettbaserte informasjonstjenester («Tjenestene») som er tilgjengelig for din bruk med denne binære versjonen av &brandShortName;, som beskrevet nedenfor. Noen av disse tjenestene (for eksempel utvidelsesforslag og oppdateringstjenester, tjenesten for trygg nettlesing eller varselsfunksjonen for stedsbevisst nettlesing) er aktivert som standard.  Hvis du ikke vil bruke noen av disse tjenestene, eller vilkårene nedenfor er uakseptable, kan du finne instruksjoner om hvordan du deaktiverer en bestemt funksjon eller tjeneste ">
+<!ENTITY rights3.webservices-b "her">
+<!ENTITY rights3.webservices-c ". Andre funksjoner og tjenester kan slås på eller av i programinnstillingene.">
+
+<!-- add-on related points for branded builds -->
+<!ENTITY rights.addons-a "Utvidelses-tjenester: ">
+<!ENTITY rights.addons-b "Som standard vil &brandShortName; foreslå utvidelser på &view.discover.label;-siden, og søke etter oppdateringer med jevne mellomrom.  Dersom du ønsker slå av disse funksjonene for å unngå kommunisere informasjon om installerte utvidelser til serveren, følg disse stegene:">
+<!ENTITY rights.addons-term1 "Åpne programinnstillingene">
+<!ENTITY rights.addons-term2 "Velg &smart.label;-panelet i &advance.label;-kategorien">
+<!ENTITY rights.addons-term3 "Fjern avkryssingen til &quot;&autoAddOnsUpdates.label;&quot; og &quot;&enablePersonalized.label;&quot;">
+<!ENTITY rights.addons-term4 "Utvidelsestjenestene er nå avslått">
+
+<!-- safe browsing points for branded builds -->
+<!ENTITY rights.safebrowsing-a "Trygg nettlesing: ">
+<!ENTITY rights.safebrowsing-b "Å slå av trygg nettlesing-funksjonen er ikke anbefalt, ettersom det kan føre til at du besøker utrygge nettsted.  Dersom du ønsker slå av funksjonen fullstendig, følg disse stegene:">
+<!ENTITY rights.safebrowsing-term1 "Åpne programinnstillingene">
+<!ENTITY rights.safebrowsing-term2 "Velg hovedpanelet på &security.label;-panelet">
+<!ENTITY rights.safebrowsing-term3 "Fjern avkryssingen fra &quot;&blockAttackSites.label;&quot; og &quot;&blockWebForgeries.label;&quot;">
+<!ENTITY rights.safebrowsing-term4 "Trygg nettlesing er nå avslått">
+
+<!-- location aware browsing points for branded builds -->
+<!ENTITY rights.locationawarebrowsing-a "Stedsbevisst nettlesing: ">
+<!ENTITY rights.locationawarebrowsing-b "er alltid en funksjon du må aktivt velge å slå på for at den brukes.  Ingen plasseringsinfo sendes uten at du gir tillatelse til det.  Dersom du ønsker å skru av denne funksjonen helt, følg disse stegene:">
+<!ENTITY rights.locationawarebrowsing-term1 "Åpne programinnstillingene">
+<!ENTITY rights.locationawarebrowsing-term2 "Velg hovedpanelet på &security.label;-panelet">
+<!ENTITY rights.locationawarebrowsing-term3 "Velg alternativet for å &quot;&geoDisabled.label;&quot;">
+<!ENTITY rights.locationawarebrowsing-term4 "Stedsbevisst nettlesing er nå avslått">
+
+<!-- points 0-6 text for branded builds -->
+<!ENTITY rights.webservices-term0 "&vendorShortName; og Mozilla i lag med sine bidragsytere, lisensgivere og partnere jobber for å tilby den mest nøyaktige og oppdaterte tjenesten.  Vi kan likevel ikke garantere at denne informasjonen er fullstendig og feilfri.  Det kan for eksempel hende at tjenesten for trygg nettlesing ikke indentifiserer noen risikable nettsteder, og noen trygge nettsteder kan feilaktig ha blitt klassifisert som risikable. All plasseringsinfo som returneres fra våre tjenestetilbydere er bare estimater, og verken vi eller tjenestetilbyderne garanterer for nøyaktigheten av plasseringsinformasjonen som gis.">
+
+<!-- points 0-6 text for branded builds -->
+<!ENTITY rights.webservices-term0a "&vendorShortName; i lag med deres bidragsytere, lisensgivere og partnere jobber for å tilby den mest nøyaktige og oppdaterte tjenesten.  Vi kan likevel ikke garantere at denne informasjonen er fullstendig og feilfri.  Det kan for eksempel hende at tjenesten for trygg nettlesing ikke indentifiserer noen risikable nettsteder, og noen trygge nettsteder kan feilaktig ha blitt klassifisert som risikable og all plasseringsinfo som returneres fra våre tjenestetilbydere er bare estimater. Verken vi eller tjenestetilbyderne garanterer for nøyaktigheten av plasseringsinformasjonen som gis.">
+<!ENTITY rights.webservices-term1 "&vendorShortName; kan avslutte eller forandre Tjenestene etter eget ønske.">
+<!ENTITY rights.webservices-term2 "Du er velkommen til å bruke disse Tjenestene med den medfølgende versjonen av &brandShortName;, og du har alle rettigheter for å gjøre det.  &vendorShortName; og dens lisensgivere reserverer alle andre rettigheter til Tjenestene.  Disse betingelsene er ikke beregnet for å begrense rettighetene som er gitt under åpen kildekode-lisensene som gjelder for &brandShortName;, og den tilhørende kildekodeutgaven av &brandShortName;.">
+<!ENTITY rights.webservices-term2a "Du er velkommen til å bruke disse Tjenestene med den medfølgende versjonen av &brandShortName;, og du har alle rettigheter for å gjøre det. &vendorShortName; og dens lisensgivere reserverer alle andre rettigheter til Tjenestene. Disse betingelsene er ikke beregnet for å begrense rettighetene som er gitt under åpen kildekode-lisensene som gjelder for &brandShortName;, og den tilhørende kildekodeutgaven av &brandShortName;.">
+<!ENTITY rights.webservices-term3 "Tjenestene er tilbydt &quot;som-de-er.&quot;  &vendorShortName;, bidragsyterne, lisensgiverne og distributørene gir ingen garantier, verken eksplisitt eller implisitt, inkludert uten begrensinger, garantier for at Tjenestene skal passe til dine formål.  Du har den fullstendige risikoen for å velge Tjenestene for å oppnå dine hensikter, samt for kvaliteten og ytelsen til Tjenstene. Noen jurisdiksjoner tillater ikke at implisitte garantier ekskluderes, så denne disclaimeren kan muligens ikke gjelde deg.">
+<!ENTITY rights.webservices-term4 "Med unntak av der det er påbudt ved lov, er &vendorShortName;, dens bidragsytere, lisensgivere og distributører ikke ansvarlige for noen indirekte, spesielle, tilfeldige, følgelige, strafferettslige eller forbilledlig skader eller ulemper som skjer som en følge av eller relatert til bruk av &brandShortName; og Tjenestene.  Det kollektive ansvaret i disse betingelsene vil ikke overstige $500 (fem hundre amerikanske dollar). Noen jurisdiksjoner tillater ikke eksklusjon eller begrensing av enkelte former av skade, så det er mulig disse eksklusjonene og begrensingene ikke gjelder deg.">
+<!ENTITY rights.webservices-term5 "&vendorShortName; kan oppdatere disse betingelsene etter behov med jevne mellomrom. Betingelsene kan ikke endres eller annullert uten skriftlig avtale fra &vendorShortName;.">
+<!ENTITY rights.webservices-term6 "Disse betingelsene er underlagt loven til staten California, U.S.A., med unntak av der hvor lovpålegg krever unntak. Dersom noen av disse betingelsene viser seg å være ugyldige eller urettskraftige, vil de gjenværende delene fortsatt ha effekt. Dersom det er avvik mellom en oversatt versjon av disse betingelsene og den engelske utgaven, vil bestemmelsene i den engelske utgaven gjelde.">
+
+<!ENTITY rights.webservices-term6a "Disse vilkårene styres av og tolkes i samsvar med lovene i Tyskland, og alle tvister som oppstår i forbindelse med disse vilkårene skal underlegges den eksklusive jurisdiksjonen til den kompetente domstolen i Tyskland. Hvis en del av disse vilkårene holdes ugyldig eller ikke kan håndheves, vil de resterende delene forbli i full kraft og virkning. I tilfelle konflikt mellom en oversatt versjon av disse vilkårene og den engelskspråklige versjonen, skal den engelskspråklige versjonen gjelde.">

@@ -22,7 +22,7 @@
 
   // The following helper function is called from RTCPeerConnection-helper.js
   //   exchangeIceCandidates
-  //   doSignalingHandshake
+  //   exchangeOfferAnswer
 
   /*
     8.2.  getStats
@@ -64,7 +64,7 @@
     t.add_cleanup(() => pc.close());
     return getTrackFromUserMedia('audio')
     .then(([track, mediaStream]) => {
-      return promise_rejects(t, 'InvalidAccessError', pc.getStats(track));
+      return promise_rejects_dom(t, 'InvalidAccessError', pc.getStats(track));
     });
   }, 'getStats() with track not added to connection should reject with InvalidAccessError');
 
@@ -103,7 +103,7 @@
       assert_not_equals(transceiver1.sender, transceiver2.sender);
       assert_equals(transceiver1.sender.track, transceiver2.sender.track);
 
-      return promise_rejects(t, 'InvalidAccessError', pc.getStats(track));
+      return promise_rejects_dom(t, 'InvalidAccessError', pc.getStats(track));
     });
   }, `getStats() with track associated with more than one sender should reject with InvalidAccessError`);
 
@@ -117,7 +117,7 @@
     const transceiver2 = pc.addTransceiver(transceiver1.receiver.track);
     assert_equals(transceiver1.receiver.track, transceiver2.sender.track);
 
-    return promise_rejects(t, 'InvalidAccessError', pc.getStats(transceiver1.receiver.track));
+    return promise_rejects_dom(t, 'InvalidAccessError', pc.getStats(transceiver1.receiver.track));
   }, 'getStats() with track associated with both sender and receiver should reject with InvalidAccessError');
 
   /*
@@ -172,7 +172,7 @@
         - All RTCOutboundRTPStreamStats objects corresponding to selector.
         - All stats objects referenced directly or indirectly by the RTCOutboundRTPStreamStats
           objects added.
-   */
+  */
   promise_test(async t => {
     const pc = createPeerConnectionWithCleanup(t);
     const pc2 = createPeerConnectionWithCleanup(t);
@@ -180,7 +180,7 @@
     let [track, mediaStream] = await getTrackFromUserMedia('audio');
     pc.addTrack(track, mediaStream);
     exchangeIceCandidates(pc, pc2);
-    await doSignalingHandshake(pc, pc2);
+    await exchangeOfferAnswer(pc, pc2);
     await listenToIceConnected(pc);
     const stats = await pc.getStats(track);
     validateStatsReport(stats);
@@ -203,11 +203,17 @@
     let [track, mediaStream] = await getTrackFromUserMedia('audio');
     pc.addTrack(track, mediaStream);
     exchangeIceCandidates(pc, pc2);
-    await doSignalingHandshake(pc, pc2);
-    await new Promise(resolve => {
-      pc2.getReceivers()[0].track.addEventListener('unmute', resolve);
-    });
-    const stats = await pc2.getStats(track);
+    await exchangeOfferAnswer(pc, pc2);
+    // Wait for unmute if the track is not already unmuted.
+    // According to spec, it should be muted when being created, but this
+    // is not what this test is testing, so allow it to be unmuted.
+    if (pc2.getReceivers()[0].track.muted) {
+      await new Promise(resolve => {
+        pc2.getReceivers()[0].track.addEventListener('unmute', resolve);
+      });
+    }
+    const receivedTrack = pc2.getReceivers()[0].track;
+    const stats = await pc2.getStats(receivedTrack);
     validateStatsReport(stats);
     assert_stats_report_has_stats(stats, ['inbound-rtp']);
   }, `getStats() on track associated with RtpReceiver should return stats report containing inbound-rtp stats`);
@@ -336,7 +342,7 @@
 
 
       exchangeIceCandidates(pc1, pc2);
-      doSignalingHandshake(pc1, pc2);
+      exchangeOfferAnswer(pc1, pc2);
     }))
     .catch(t.step_func(err => {
       assert_unreached(`test failed with error: ${err}`);

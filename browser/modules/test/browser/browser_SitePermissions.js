@@ -9,13 +9,15 @@ ChromeUtils.import("resource:///modules/SitePermissions.jsm", this);
 // This asserts that SitePermissions.set can not save ALLOW permissions
 // temporarily on a tab.
 add_task(async function testTempAllowThrows() {
-  let uri = Services.io.newURI("https://example.com");
+  let principal = Services.scriptSecurityManager.createContentPrincipalFromOrigin(
+    "https://example.com"
+  );
   let id = "notifications";
 
-  await BrowserTestUtils.withNewTab(uri.spec, function(browser) {
+  await BrowserTestUtils.withNewTab(principal.URI.spec, function(browser) {
     Assert.throws(function() {
-      SitePermissions.set(
-        uri,
+      SitePermissions.setForPrincipal(
+        principal,
         id,
         SitePermissions.ALLOW,
         SitePermissions.SCOPE_TEMPORARY,
@@ -27,22 +29,37 @@ add_task(async function testTempAllowThrows() {
 
 // This tests the SitePermissions.getAllPermissionDetailsForBrowser function.
 add_task(async function testGetAllPermissionDetailsForBrowser() {
-  let uri = Services.io.newURI("https://example.com");
+  let principal = Services.scriptSecurityManager.createContentPrincipalFromOrigin(
+    "https://example.com"
+  );
 
-  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, uri.spec);
+  let tab = await BrowserTestUtils.openNewForegroundTab(
+    gBrowser,
+    principal.URI.spec
+  );
 
   Services.prefs.setIntPref("permissions.default.shortcuts", 2);
 
-  SitePermissions.set(uri, "camera", SitePermissions.ALLOW);
-  SitePermissions.set(uri, "cookie", SitePermissions.ALLOW_COOKIES_FOR_SESSION);
-  SitePermissions.set(uri, "popup", SitePermissions.BLOCK);
-  SitePermissions.set(
-    uri,
+  SitePermissions.setForPrincipal(principal, "camera", SitePermissions.ALLOW);
+  SitePermissions.setForPrincipal(
+    principal,
+    "cookie",
+    SitePermissions.ALLOW_COOKIES_FOR_SESSION
+  );
+  SitePermissions.setForPrincipal(principal, "popup", SitePermissions.BLOCK);
+  SitePermissions.setForPrincipal(
+    principal,
     "geo",
     SitePermissions.ALLOW,
     SitePermissions.SCOPE_SESSION
   );
-  SitePermissions.set(uri, "shortcuts", SitePermissions.ALLOW);
+  SitePermissions.setForPrincipal(
+    principal,
+    "shortcuts",
+    SitePermissions.ALLOW
+  );
+
+  SitePermissions.setForPrincipal(principal, "xr", SitePermissions.ALLOW);
 
   let permissions = SitePermissions.getAllPermissionDetailsForBrowser(
     tab.linkedBrowser
@@ -57,7 +74,7 @@ add_task(async function testGetAllPermissionDetailsForBrowser() {
   });
 
   // Check that removed permissions (State.UNKNOWN) are skipped.
-  SitePermissions.remove(uri, "camera");
+  SitePermissions.removeFromPrincipal(principal, "camera");
   permissions = SitePermissions.getAllPermissionDetailsForBrowser(
     tab.linkedBrowser
   );
@@ -97,12 +114,92 @@ add_task(async function testGetAllPermissionDetailsForBrowser() {
     scope: SitePermissions.SCOPE_PERSISTENT,
   });
 
-  SitePermissions.remove(uri, "cookie");
-  SitePermissions.remove(uri, "popup");
-  SitePermissions.remove(uri, "geo");
-  SitePermissions.remove(uri, "shortcuts");
+  let xr = permissions.find(({ id }) => id === "xr");
+  Assert.deepEqual(xr, {
+    id: "xr",
+    label: "Access Virtual Reality Devices",
+    state: SitePermissions.ALLOW,
+    scope: SitePermissions.SCOPE_PERSISTENT,
+  });
+
+  SitePermissions.removeFromPrincipal(principal, "cookie");
+  SitePermissions.removeFromPrincipal(principal, "popup");
+  SitePermissions.removeFromPrincipal(principal, "geo");
+  SitePermissions.removeFromPrincipal(principal, "shortcuts");
+
+  SitePermissions.removeFromPrincipal(principal, "xr");
 
   Services.prefs.clearUserPref("permissions.default.shortcuts");
 
   BrowserTestUtils.removeTab(gBrowser.selectedTab);
+});
+
+add_task(async function testInvalidPrincipal() {
+  // Check that an error is thrown when an invalid principal argument is passed.
+  try {
+    SitePermissions.isSupportedPrincipal("file:///example.js");
+  } catch (e) {
+    Assert.equal(
+      e.message,
+      "Argument passed as principal is not an instance of Ci.nsIPrincipal"
+    );
+  }
+  try {
+    SitePermissions.removeFromPrincipal(null, "canvas");
+  } catch (e) {
+    Assert.equal(
+      e.message,
+      "Atleast one of the arguments, either principal or browser should not be null."
+    );
+  }
+  try {
+    SitePermissions.setForPrincipal(
+      "blah",
+      "camera",
+      SitePermissions.ALLOW,
+      SitePermissions.SCOPE_PERSISTENT,
+      gBrowser.selectedBrowser
+    );
+  } catch (e) {
+    Assert.equal(
+      e.message,
+      "Argument passed as principal is not an instance of Ci.nsIPrincipal"
+    );
+  }
+  try {
+    SitePermissions.getAllByPrincipal("blah");
+  } catch (e) {
+    Assert.equal(
+      e.message,
+      "Argument passed as principal is not an instance of Ci.nsIPrincipal"
+    );
+  }
+  try {
+    SitePermissions.getAllByPrincipal(null);
+  } catch (e) {
+    Assert.equal(e.message, "principal argument cannot be null.");
+  }
+  try {
+    SitePermissions.getForPrincipal(5, "camera");
+  } catch (e) {
+    Assert.equal(
+      e.message,
+      "Argument passed as principal is not an instance of Ci.nsIPrincipal"
+    );
+  }
+  // Check that no error is thrown when passing valid principal and browser arguments.
+  Assert.deepEqual(
+    SitePermissions.getForPrincipal(gBrowser.contentPrincipal, "camera"),
+    {
+      state: SitePermissions.UNKNOWN,
+      scope: SitePermissions.SCOPE_PERSISTENT,
+    }
+  );
+  Assert.deepEqual(
+    SitePermissions.getForPrincipal(null, "camera", gBrowser.selectedBrowser),
+    {
+      state: SitePermissions.UNKNOWN,
+      scope: SitePermissions.SCOPE_PERSISTENT,
+    }
+  );
 });

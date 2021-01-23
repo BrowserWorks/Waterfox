@@ -7,6 +7,7 @@
   --flex-basis-outline-background-color: rgba(69, 161, 255, 0.25);
   --flex-growing-delta-outline-background-color: rgba(221, 0, 169, 0.13);
   --flex-shrinking-delta-outline-background-color: #E9E3FF;
+  --flex-min-max-properties-color: var(--purple-60);
 }
 
 :root.theme-dark {
@@ -14,6 +15,7 @@
   --flex-basis-outline-background-color: rgba(10, 132, 255, 0.3);
   --flex-growing-delta-outline-background-color: rgba(255, 26, 217, 0.25);
   --flex-shrinking-delta-outline-background-color: #322952;
+  --flex-min-max-properties-color: var(--theme-highlight-purple);
 }
 
 .layout-container {
@@ -38,17 +40,21 @@
  * Common styles for the layout container
  */
 
-.layout-container li {
-  padding: 3px 0;
-  -moz-user-select: none;
+.layout-content ul {
+  list-style: none;
 }
 
-.layout-container input {
+.layout-content li {
+  padding: 3px 0;
+  user-select: none;
+}
+
+.layout-content input {
   margin-inline-end: 7px;
   vertical-align: middle;
 }
 
-.layout-container label {
+.layout-content label {
   margin-inline-start: -3px;
 }
 
@@ -72,7 +78,7 @@
 .layout-properties-header {
   font-size: 12px;
   padding: 2px 3px;
-  -moz-user-select: none;
+  user-select: none;
 }
 
 .layout-properties-expander {
@@ -139,7 +145,7 @@ html[dir="rtl"] .flex-header-button-prev::before {
   flex: 1;
   padding: 2px 0;
   padding-inline-start: 20px;
-  -moz-user-select: none;
+  user-select: none;
 }
 
 .flex-header-content:not(.flex-item-shown) {
@@ -193,7 +199,7 @@ html[dir="rtl"] .flex-header-button-prev::before {
   color: var(--theme-comment);
   padding-inline-start: 23px;
   margin-bottom: 4px;
-  -moz-user-select: none;
+  user-select: none;
 }
 
 .flex-item-list .devtools-button {
@@ -313,7 +319,7 @@ html[dir="rtl"] .flex-item-list .devtools-button::after {
   background-size: 16px;
   background-repeat: no-repeat;
   background-position: center 1px;
-  fill: currentColor;
+  fill: var(--flex-min-max-properties-color);
   -moz-context-properties: fill;
   width: 20px;
   height: 20px;
@@ -411,7 +417,7 @@ html[dir="rtl"] .flex-item-list .devtools-button::after {
 
 .flex-outline-point {
   position: relative;
-  -moz-user-select: none;
+  user-select: none;
   grid-row: 1;
   display: grid;
 }
@@ -453,6 +459,11 @@ html[dir="rtl"] .flex-item-list .devtools-button::after {
   grid-column-end: final-end;
   grid-column-start: unset;
   justify-self: end;
+}
+
+.flex-outline-point.min,
+.flex-outline-point.max {
+  color: var(--flex-min-max-properties-color);
 }
 
 .flex-outline-point.min {
@@ -580,14 +591,17 @@ html[dir="rtl"] .flex-item-list .devtools-button::after {
   gap: .5em;
 }
 
-.flex-item-sizing .flexibility .name,
-.flex-item-sizing .max .name,
-.flex-item-sizing .min .name {
+.flex-item-sizing .flexibility .name {
   color: var(--theme-highlight-red);
 }
 
 .flex-item-sizing .base .name {
   color: var(--theme-highlight-blue);
+}
+
+.flex-item-sizing .min .name,
+.flex-item-sizing .max .name {
+  color: var(--flex-min-max-properties-color);
 }
 
 .flex-item-sizing .value {
@@ -643,9 +657,12 @@ html[dir="rtl"] .flex-item-list .devtools-button::after {
 }
 
 .grid-container > ul {
-  list-style: none;
   margin: 0;
   padding: 0;
+}
+
+#grid-list ul {
+  padding-inline-start: 20px;
 }
 
 /**

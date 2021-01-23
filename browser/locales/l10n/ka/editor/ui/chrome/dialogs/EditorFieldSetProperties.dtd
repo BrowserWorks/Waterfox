@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "ველების პარამეტრები">
+
+<!ENTITY Legend.label "ლეგენდა">
+<!ENTITY Legend.accesskey "L">
+
+<!ENTITY EditLegendText.label "ლეგენდის ჩასწორება:">
+<!ENTITY EditLegendText.accesskey "T">
+<!ENTITY LegendAlign.label "ლეგენდის განთავსება:">
+<!ENTITY LegendAlign.accesskey "A">
+<!ENTITY AlignDefault.label "ძირითადი">
+<!ENTITY AlignLeft.label "მარცხნივ">
+<!ENTITY AlignCenter.label "ცენტრში">
+<!ENTITY AlignRight.label "მარჯვნივ">
+
+<!ENTITY RemoveFieldSet.label "ველების მოცილება">
+<!ENTITY RemoveFieldSet.accesskey "R">

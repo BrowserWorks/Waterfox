@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Configuración de SSL</title>
+  <link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+</head>
+<body>
+
+<h1 id="ssl_settings">Configuración de SSL</h1>
+
+<p>Esta sección describe cómo configurar sus preferencias
+  SSL.</p>
+  
+<div class="contentsBox">En esta sección:
+  <ul>
+    <li><a href="#privacy_and_security_preferences_ssl">Preferencias de
+      privacidad y seguridad - SSL</a></li>
+  </ul>
+</div>
+
+<h2 id="privacy_and_security_preferences_ssl">Preferencias de privacidad y
+  seguridad - SSL</h2>
+
+<p>Esta sección describe cómo utilizar el panel de preferencias
+  SSL. Si no está viendo el panel, siga estos pasos:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija <q>Preferencias</q>.</li>
+  <li>Bajo la categoría Privacidad y seguridad, escoja la
+    subcategoría SSL. Si no aparece ninguna subcategoría, haga
+    doble clic en Privacidad y seguridad para expandir la lista.</li>
+</ol>
+  
+<h3 id="ssl_protocol_versions">Versiones del protocolo SSL</h3>
+
+<p>El protocolo &quot;Capa de Conexiones Seguras&quot; (<em>Secure Sockets
+  Layer</em>, SSL) define reglas que rigen la identificación mutua
+  entre un sitio web y un navegador, así como el cifrado de la
+  información que fluye entre ellos. El protocolo de &quot;Seguridad de
+  la Capa de Transporte"&quot; (<em>Transport Layer Security</em>, TLS) es un
+  estándar <abbr title="Internet Engineering Task Force">IETF</abbr>
+  basado en SSL. TLS 1.0 puede considerarse como <em>SSL 3.1</em>.</p>
+
+<p>Normalmente las siguientes tres casillas deberían dejarse
+  seleccionadas para asegurar que tanto los servidores web antiguos como los
+  nuevos son capaces de funcionar con el navegador:</p>
+
+<ul>
+  <li><strong>Habilitar SSL versión 3</strong>: permite a los
+    servidores web más modernos comunicarse con el navegador.</li>
+  <li><strong>Habilitar TLS</strong>: permite a los servidores web que
+    soportan TLS aprovechar este protocolo.</li>
+</ul>
+
+<p><strong>Nota importante relativa a TLS</strong>: algunos servidores que
+  no implementan SSL correctamente no pueden negociar el <em>saludo SSL</em>
+  con software cliente (como &brandShortName;) que soporta TLS. Tales
+  servidores son conocidos como <q>incompatibles TLS</q>.</p>
+
+<p>Cuando la opción Habilitar TLS del panel de preferencias SSL
+  está seleccionada, el navegador intenta utlizar el protocolo TLS para
+  realizar conexiones seguras con el servidor. Si esa conexión falla
+  porque el servidor es incompatible TLS, el navegador recurrirá a SSL
+  3.0.</p>
+
+<h3 id="ssl_warnings">Advertencias SSL</h3>
+
+<p>Es fácil saber cuándo el servidor web que se está visitando utiliza una
+  conexión cifrada. Si la conexión está cifrada, el candado en la esquina
+  inferior derecha del navegador estará cerrado. Si la conexión no está cifrada,
+  el candado permanecerá abierto.</p>
+
+<p>Si usted desea advertencias adicionales, puede seleccionar una o
+  más de las casillas de advertencia en el panel de preferencias SSL.
+  Algunas personas acaban encontrando molestas estos avisos.</p>
+
+<p>Para activar cualquiera de estas advertencias, seleccione la casilla
+  correspondiente:</p>
+
+<ul>
+  <li><strong>Cargar una página que soporta cifrado</strong>:
+    seleccione esta advertencia si desea ser advertido siempre que cargue una
+    página que soporta cifrado.</li>
+  <li><strong>Cargar una página que utiliza cifrado de bajo
+    nivel</strong>: seleccione esta advertencia si quiere ser advertido
+    siempre que cargue una página que soporte cifrado de bajo nivel (el
+    cifrado de bajo nivel es el cifrado disponible más débil, y
+    usa claves de 40 bits).</li>
+  <li><strong>Abandonar una página que soporta cifrado</strong>:
+    seleccione esta advertencia si quiere ser advertido siempre que vaya a
+    abandonar una página que soporte cifrado para dirigirse a una que
+    no lo soporte.</li>
+  <li><strong>Enviar datos de un formulario desde una página sin
+    cifrar a otra sin cifrar</strong>: seleccione esta advertencia si quiere
+    ser advertido siempre que vaya a enviar datos a través de una
+    conexión no cifrada. <strong>Puede querer activar esta
+    opción incluso si no quiere ninguna de las otras, para evitar
+    enviar información confidencial no cifrada
+    inadvertidamente</strong>. Si envía información no cifrada a
+    través de Internet, puede ser interceptada fácilmente por
+    otras personas.</li>
+  <li><strong>Ver una página con una mezcla de contenido cifrado/sin
+    cifrar</strong>: seleccione esta advertencia si quiere ser alertado
+    siempre que visite una página cifrada que incluye cualquier
+    información no cifrada.</li>
+  <li><strong>Ver una página con una mezcla de contenido cifrado/sin
+    cifrar</strong>: seleccione esta advertencia si quiere ser alertado siempre
+    que visite una página cifrada que incluye cualquier
+    información no cifrada.</li>
+</ul>
+
+<p>Para ver definiciones breves, pulse <a href=
+  "glossary.xhtml#authentication">identificación</a>, <a href=
+  "glossary.xhtml#encryption">cifrado</a>, o <a href=
+  "glossary.xhtml#certificate">certificado</a>.</p>
+
+<p>Para más información sobre cifrados y criptografía,
+  vea los siguientes documentos en línea (en inglés):</p>
+
+<ul>
+  <li><a href=
+    "http://developer.mozilla.org/en/Introduction_to_Public-Key_Cryptography"
+    >Introducción a la criptografía de clave pública</a>.</li>
+  <li><a href=
+    "http://developer.mozilla.org/en/Introduction_to_SSL">Introducción a
+    SSL</a>.</li>
+  <li><a href=
+    "http://www.mozilla.org/projects/security/pki/nss/nss-3.11/nss-3.11-algorithms.html"
+    >Tecnologías criptográficas disponibles en NSS 3.9</a>.</li>
+  </ul>
+</body>
+</html>

@@ -1,55 +1,17 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
-
-// Debugger operations may still be in progress when we switch threads.
-const { PromiseTestUtils } = ChromeUtils.import(
-  "resource://testing-common/PromiseTestUtils.jsm"
-);
-PromiseTestUtils.whitelistRejectionsGlobally(
-  /Current thread has paused or resumed/
-);
-PromiseTestUtils.whitelistRejectionsGlobally(/Current thread has changed/);
-
-function assertClass(dbg, selector, className, ...args) {
-  ok(
-    findElement(dbg, selector, ...args).classList.contains(className),
-    `${className} class exists`
-  );
-}
-
-function threadIsPaused(dbg, index) {
-  return ok(findElement(dbg, "threadsPaneItemPause", index));
-}
-
-function threadIsSelected(dbg, index) {
-  return assertClass(dbg, "threadsPaneItem", "selected", index);
-}
-
-function getLabel(dbg, index) {
-  return findElement(dbg, "expressionNode", index).innerText;
-}
-
-function getValue(dbg, index) {
-  return findElement(dbg, "expressionValue", index).innerText;
-}
 
 // Test basic windowless worker functionality: the main thread and worker can be
 // separately controlled from the same debugger.
 add_task(async function() {
   await pushPref("devtools.debugger.features.windowless-workers", true);
+  await pushPref("devtools.debugger.workers-visible", true);
 
   const dbg = await initDebugger("doc-windowless-workers.html");
-  const mainThread = dbg.toolbox.threadClient.actor;
+  const mainThread = dbg.toolbox.threadFront.actor;
 
-  // NOTE: by default we do not wait on worker
-  // commands to complete because the thread could be
-  // shutting down.
-  dbg.client.waitForWorkers(true);
-
-  const workers = await getWorkers(dbg);
+  const workers = await getThreads(dbg);
   ok(workers.length == 2, "Got two workers");
   const thread1 = workers[0].actor;
   const thread2 = workers[1].actor;
@@ -121,7 +83,7 @@ add_task(async function() {
   assertPausedAtSourceAndLine(dbg, workerSource.id, 10);
 
   info("View the second paused thread");
-  dbg.actions.selectThread(getContext(dbg), thread2);
+  await dbg.actions.selectThread(getContext(dbg), thread2);
   threadIsSelected(dbg, 3);
   await waitForPaused(dbg);
   assertPausedAtSourceAndLine(dbg, workerSource.id, 10);
@@ -129,6 +91,29 @@ add_task(async function() {
   info("StepOver in second worker and not the first");
   await stepOver(dbg);
   assertPausedAtSourceAndLine(dbg, workerSource.id, 11);
-  dbg.actions.selectThread(getContext(dbg), thread1);
+  await dbg.actions.selectThread(getContext(dbg), thread1);
   assertPausedAtSourceAndLine(dbg, workerSource.id, 10);
 });
+
+function assertClass(dbg, selector, className, ...args) {
+  ok(
+    findElement(dbg, selector, ...args).classList.contains(className),
+    `${className} class exists`
+  );
+}
+
+function threadIsPaused(dbg, index) {
+  return ok(findElement(dbg, "threadsPaneItemPause", index));
+}
+
+function threadIsSelected(dbg, index) {
+  return assertClass(dbg, "threadsPaneItem", "selected", index);
+}
+
+function getLabel(dbg, index) {
+  return findElement(dbg, "expressionNode", index).innerText;
+}
+
+function getValue(dbg, index) {
+  return findElement(dbg, "expressionValue", index).innerText;
+}

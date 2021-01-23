@@ -10,7 +10,12 @@
  * liability, trademark and document use rules apply.
  */
 
-interface SVGZoomAndPan {
-};
+interface mixin SVGZoomAndPan {
+  // Zoom and Pan Types
+  const unsigned short SVG_ZOOMANDPAN_UNKNOWN = 0;
+  const unsigned short SVG_ZOOMANDPAN_DISABLE = 1;
+  const unsigned short SVG_ZOOMANDPAN_MAGNIFY = 2;
 
-SVGZoomAndPan implements SVGZoomAndPanValues;
+  [SetterThrows]
+  attribute unsigned short zoomAndPan;
+};

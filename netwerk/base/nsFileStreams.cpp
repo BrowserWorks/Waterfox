@@ -73,6 +73,11 @@ nsFileStreamBase::Seek(int32_t whence, int64_t offset) {
 
 NS_IMETHODIMP
 nsFileStreamBase::Tell(int64_t* result) {
+  if (mState == eDeferredOpen && !(mOpenParams.ioFlags & PR_APPEND)) {
+    *result = 0;
+    return NS_OK;
+  }
+
   nsresult rv = DoPendingOpen();
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -276,7 +281,7 @@ nsresult nsFileStreamBase::MaybeOpen(nsIFile* aFile, int32_t aIoFlags,
     nsresult rv = aFile->Clone(getter_AddRefs(file));
     NS_ENSURE_SUCCESS(rv, rv);
 
-    mOpenParams.localFile = file.forget();
+    mOpenParams.localFile = std::move(file);
     NS_ENSURE_TRUE(mOpenParams.localFile, NS_ERROR_UNEXPECTED);
 
     mState = eDeferredOpen;
@@ -484,7 +489,7 @@ nsFileInputStream::Read(char* aBuf, uint32_t aCount, uint32_t* _retval) {
 NS_IMETHODIMP
 nsFileInputStream::ReadLine(nsACString& aLine, bool* aResult) {
   if (!mLineBuffer) {
-    mLineBuffer = new nsLineBuffer<char>;
+    mLineBuffer = MakeUnique<nsLineBuffer<char>>();
   }
   return NS_ReadLine(this, mLineBuffer.get(), aLine, aResult);
 }
@@ -539,7 +544,7 @@ void nsFileInputStream::Serialize(InputStreamParams& aParams,
                                   FileDescriptorArray& aFileDescriptors,
                                   bool aDelayedStart, uint32_t aMaxSize,
                                   uint32_t* aSizeUsed,
-                                  mozilla::dom::ContentChild* aManager) {
+                                  ParentToChildStreamActorManager* aManager) {
   MOZ_ASSERT(aSizeUsed);
   *aSizeUsed = 0;
 
@@ -550,29 +555,7 @@ void nsFileInputStream::Serialize(InputStreamParams& aParams,
                                   FileDescriptorArray& aFileDescriptors,
                                   bool aDelayedStart, uint32_t aMaxSize,
                                   uint32_t* aSizeUsed,
-                                  PBackgroundChild* aManager) {
-  MOZ_ASSERT(aSizeUsed);
-  *aSizeUsed = 0;
-
-  SerializeInternal(aParams, aFileDescriptors);
-}
-
-void nsFileInputStream::Serialize(InputStreamParams& aParams,
-                                  FileDescriptorArray& aFileDescriptors,
-                                  bool aDelayedStart, uint32_t aMaxSize,
-                                  uint32_t* aSizeUsed,
-                                  mozilla::dom::ContentParent* aManager) {
-  MOZ_ASSERT(aSizeUsed);
-  *aSizeUsed = 0;
-
-  SerializeInternal(aParams, aFileDescriptors);
-}
-
-void nsFileInputStream::Serialize(InputStreamParams& aParams,
-                                  FileDescriptorArray& aFileDescriptors,
-                                  bool aDelayedStart, uint32_t aMaxSize,
-                                  uint32_t* aSizeUsed,
-                                  PBackgroundParent* aManager) {
+                                  ChildToParentStreamActorManager* aManager) {
   MOZ_ASSERT(aSizeUsed);
   *aSizeUsed = 0;
 
@@ -588,7 +571,7 @@ void nsFileInputStream::SerializeInternal(
     FileHandleType fd = FileHandleType(PR_FileDesc2NativeHandle(mFD));
     NS_ASSERTION(fd, "This should never be null!");
 
-    DebugOnly<FileDescriptor*> dbgFD = aFileDescriptors.AppendElement(fd);
+    DebugOnly dbgFD = aFileDescriptors.AppendElement(fd);
     NS_ASSERTION(dbgFD->IsValid(), "Sending an invalid file descriptor!");
 
     params.fileDescriptorIndex() = aFileDescriptors.Length() - 1;
@@ -718,6 +701,29 @@ nsFileOutputStream::Init(nsIFile* file, int32_t ioFlags, int32_t perm,
 
   return MaybeOpen(file, ioFlags, perm,
                    mBehaviorFlags & nsIFileOutputStream::DEFER_OPEN);
+}
+
+nsresult nsFileOutputStream::InitWithFileDescriptor(
+    const mozilla::ipc::FileDescriptor& aFd) {
+  NS_ENSURE_TRUE(mFD == nullptr, NS_ERROR_ALREADY_INITIALIZED);
+  NS_ENSURE_TRUE(mState == eUnitialized || mState == eClosed,
+                 NS_ERROR_ALREADY_INITIALIZED);
+
+  if (aFd.IsValid()) {
+    auto rawFD = aFd.ClonePlatformHandle();
+    PRFileDesc* fileDesc = PR_ImportFile(PROsfd(rawFD.release()));
+    if (!fileDesc) {
+      NS_WARNING("Failed to import file handle!");
+      return NS_ERROR_FAILURE;
+    }
+    mFD = fileDesc;
+    mState = eOpened;
+  } else {
+    mState = eError;
+    mErrorValue = NS_ERROR_FILE_NOT_FOUND;
+  }
+
+  return NS_OK;
 }
 
 NS_IMETHODIMP

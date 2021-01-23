@@ -1,9 +1,28 @@
-from copy import copy
-from six import iteritems
+import os.path
+from inspect import isabstract
+from six import iteritems, with_metaclass
 from six.moves.urllib.parse import urljoin, urlparse
 from abc import ABCMeta, abstractproperty
 
-item_types = {}
+from .utils import to_os_path
+
+MYPY = False
+if MYPY:
+    # MYPY is set to True when run under Mypy.
+    from typing import Optional
+    from typing import Text
+    from typing import Dict
+    from typing import Tuple
+    from typing import List
+    from typing import Union
+    from typing import Type
+    from typing import Any
+    from typing import Sequence
+    from typing import Hashable
+    from .manifest import Manifest
+    Fuzzy = Dict[Optional[Tuple[Text, Text, Text]], List[int]]
+
+item_types = {}  # type: Dict[str, Type[ManifestItem]]
 
 
 class ManifestItemMeta(ABCMeta):
@@ -11,97 +30,140 @@ class ManifestItemMeta(ABCMeta):
     item_types dictionary according to the value of their item_type
     attribute, and otherwise behaves like an ABCMeta."""
 
-    def __new__(cls, name, bases, attrs, **kwargs):
-        rv = ABCMeta.__new__(cls, name, bases, attrs, **kwargs)
-        if rv.item_type:
+    def __new__(cls, name, bases, attrs):
+        # type: (Type[ManifestItemMeta], str, Tuple[ManifestItemMeta, ...], Dict[str, Any]) -> ManifestItemMeta
+        rv = super(ManifestItemMeta, cls).__new__(cls, name, bases, attrs)
+        if not isabstract(rv):
+            assert issubclass(rv, ManifestItem)
+            assert isinstance(rv.item_type, str)
             item_types[rv.item_type] = rv
 
-        return rv
+        return rv  # type: ignore
 
 
-class ManifestItem(object):
-    __metaclass__ = ManifestItemMeta
-
+class ManifestItem(with_metaclass(ManifestItemMeta)):
     __slots__ = ("_tests_root", "path")
 
-    item_type = None
-
-    def __init__(self, tests_root=None, path=None):
+    def __init__(self, tests_root, path):
+        # type: (Text, Text) -> None
         self._tests_root = tests_root
         self.path = path
 
     @abstractproperty
     def id(self):
+        # type: () -> Text
         """The test's id (usually its url)"""
         pass
 
+    @abstractproperty
+    def item_type(self):
+        # type: () -> str
+        """The item's type"""
+        pass
+
+    @property
+    def path_parts(self):
+        # type: () -> Tuple[Text, ...]
+        return tuple(self.path.split(os.path.sep))
+
     def key(self):
+        # type: () -> Hashable
         """A unique identifier for the test"""
         return (self.item_type, self.id)
 
     def __eq__(self, other):
+        # type: (Any) -> bool
         if not hasattr(other, "key"):
             return False
-        return self.key() == other.key()
+        return bool(self.key() == other.key())
 
     def __hash__(self):
+        # type: () -> int
         return hash(self.key())
 
     def __repr__(self):
-        return "<%s.%s id=%s, path=%s>" % (self.__module__, self.__class__.__name__, self.id, self.path)
+        # type: () -> str
+        return "<%s.%s id=%r, path=%r>" % (self.__module__, self.__class__.__name__, self.id, self.path)
 
     def to_json(self):
-        return [{}]
+        # type: () -> Tuple[Any, ...]
+        return ()
 
     @classmethod
-    def from_json(cls, manifest, path, obj):
-        return cls(manifest.tests_root, path)
+    def from_json(cls,
+                  manifest,  # type: Manifest
+                  path,  # type: Text
+                  obj  # type: Any
+                  ):
+        # type: (...) -> ManifestItem
+        path = to_os_path(path)
+        tests_root = manifest.tests_root
+        assert tests_root is not None
+        return cls(tests_root, path)
 
 
 class URLManifestItem(ManifestItem):
     __slots__ = ("url_base", "_url", "_extras")
 
-    def __init__(self, tests_root, path, url_base, url, **extras):
+    def __init__(self,
+                 tests_root,  # type: Text
+                 path,  # type: Text
+                 url_base,  # type: Text
+                 url,  # type: Optional[Text]
+                 **extras  # type: Any
+                 ):
+        # type: (...) -> None
         super(URLManifestItem, self).__init__(tests_root, path)
+        assert url_base[0] == "/"
         self.url_base = url_base
+        assert url is None or url[0] != "/"
         self._url = url
         self._extras = extras
 
     @property
-    def _source_file(self):
-        """create a SourceFile for the item"""
-        from .sourcefile import SourceFile
-        return SourceFile(self._tests_root, self.path, self.url_base)
-
-    @property
     def id(self):
+        # type: () -> Text
         return self.url
 
     @property
     def url(self):
+        # type: () -> Text
+        rel_url = self._url or self.path.replace(os.path.sep, u"/")
         # we can outperform urljoin, because we know we just have path relative URLs
-        if self._url[0] == "/":
-            # TODO: MANIFEST6
-            # this is actually a bug in older generated manifests, _url shouldn't
-            # be an absolute path
-            return self._url
         if self.url_base == "/":
-            return "/" + self._url
-        return urljoin(self.url_base, self._url)
+            return "/" + rel_url
+        return urljoin(self.url_base, rel_url)
 
     @property
     def https(self):
+        # type: () -> bool
         flags = set(urlparse(self.url).path.rsplit("/", 1)[1].split(".")[1:-1])
-        return ("https" in flags or "serviceworker" in flags)
+        return "https" in flags or "serviceworker" in flags
+
+    @property
+    def h2(self):
+        # type: () -> bool
+        flags = set(urlparse(self.url).path.rsplit("/", 1)[1].split(".")[1:-1])
+        return "h2" in flags
 
     def to_json(self):
-        rv = [self._url, {}]
+        # type: () -> Tuple[Optional[Text], Dict[Any, Any]]
+        rel_url = None if self._url == self.path.replace(os.path.sep, u"/") else self._url
+        rv = (rel_url, {})  # type: Tuple[Optional[Text], Dict[Any, Any]]
         return rv
 
     @classmethod
-    def from_json(cls, manifest, path, obj):
+    def from_json(cls,
+                  manifest,  # type: Manifest
+                  path,  # type: Text
+                  obj  # type: Tuple[Text, Dict[Any, Any]]
+                  ):
+        # type: (...) -> URLManifestItem
+        path = to_os_path(path)
         url, extras = obj
-        return cls(manifest.tests_root,
+        tests_root = manifest.tests_root
+        assert tests_root is not None
+        return cls(tests_root,
                    path,
                    manifest.url_base,
                    url,
@@ -109,30 +171,37 @@ class URLManifestItem(ManifestItem):
 
 
 class TestharnessTest(URLManifestItem):
+    __slots__ = ()
+
     item_type = "testharness"
 
     @property
     def timeout(self):
+        # type: () -> Optional[Text]
         return self._extras.get("timeout")
 
     @property
     def testdriver(self):
+        # type: () -> Optional[Text]
         return self._extras.get("testdriver")
 
     @property
     def jsshell(self):
+        # type: () -> Optional[Text]
         return self._extras.get("jsshell")
 
     @property
+    def quic(self):
+        # type: () -> Optional[bool]
+        return self._extras.get("quic")
+
+    @property
     def script_metadata(self):
-        if "script_metadata" in self._extras:
-            return self._extras["script_metadata"]
-        else:
-            # TODO: MANIFEST6
-            # this branch should go when the manifest version is bumped
-            return self._source_file.script_metadata
+        # type: () -> Optional[Text]
+        return self._extras.get("script_metadata")
 
     def to_json(self):
+        # type: () -> Tuple[Optional[Text], Dict[Text, Any]]
         rv = super(TestharnessTest, self).to_json()
         if self.timeout is not None:
             rv[-1]["timeout"] = self.timeout
@@ -140,46 +209,69 @@ class TestharnessTest(URLManifestItem):
             rv[-1]["testdriver"] = self.testdriver
         if self.jsshell:
             rv[-1]["jsshell"] = True
-        if self.script_metadata is not None:
-            # we store this even if it is [] to avoid having to read the source file
-            rv[-1]["script_metadata"] = self.script_metadata
+        if self.quic is not None:
+            rv[-1]["quic"] = self.quic
+        if self.script_metadata:
+            rv[-1]["script_metadata"] = [(k, v) for (k,v) in self.script_metadata]
         return rv
 
 
-class RefTestBase(URLManifestItem):
+class RefTest(URLManifestItem):
     __slots__ = ("references",)
 
-    item_type = "reftest_base"
+    item_type = "reftest"
 
-    def __init__(self, tests_root, path, url_base, url, references=None, **extras):
-        super(RefTestBase, self).__init__(tests_root, path, url_base, url, **extras)
+    def __init__(self,
+                 tests_root,  # type: Text
+                 path,  # type: Text
+                 url_base,  # type: Text
+                 url,  # type: Optional[Text]
+                 references=None,  # type: Optional[List[Tuple[Text, Text]]]
+                 **extras  # type: Any
+                 ):
+        super(RefTest, self).__init__(tests_root, path, url_base, url, **extras)
         if references is None:
-            self.references = []
+            self.references = []  # type: List[Tuple[Text, Text]]
         else:
             self.references = references
 
     @property
     def timeout(self):
+        # type: () -> Optional[Text]
         return self._extras.get("timeout")
 
     @property
     def viewport_size(self):
+        # type: () -> Optional[Text]
         return self._extras.get("viewport_size")
 
     @property
     def dpi(self):
+        # type: () -> Optional[Text]
         return self._extras.get("dpi")
 
     @property
     def fuzzy(self):
-        rv = self._extras.get("fuzzy", [])
-        if isinstance(rv, list):
-            return {tuple(item[0]): item[1]
-                    for item in self._extras.get("fuzzy", [])}
+        # type: () -> Fuzzy
+        fuzzy = self._extras.get("fuzzy", {})  # type: Union[Fuzzy, List[Tuple[Optional[Sequence[Text]], List[int]]]]
+        if not isinstance(fuzzy, list):
+            return fuzzy
+
+        rv = {}  # type: Fuzzy
+        for k, v in fuzzy:  # type: Tuple[Optional[Sequence[Text]], List[int]]
+            if k is None:
+                key = None  # type: Optional[Tuple[Text, Text, Text]]
+            else:
+                # mypy types this as Tuple[Text, ...]
+                assert len(k) == 3
+                key = tuple(k)  # type: ignore
+            rv[key] = v
         return rv
 
-    def to_json(self):
-        rv = [self._url, self.references, {}]
+    def to_json(self):  # type: ignore
+        # type: () -> Tuple[Optional[Text], List[Tuple[Text, Text]], Dict[Text, Any]]
+        rel_url = None if self._url == self.path else self._url
+        rv = (rel_url, self.references, {})  # type: Tuple[Optional[Text], List[Tuple[Text, Text]], Dict[Text, Any]]
         extras = rv[-1]
         if self.timeout is not None:
             extras["timeout"] = self.timeout
@@ -192,62 +284,65 @@ class RefTestBase(URLManifestItem):
         return rv
 
     @classmethod
-    def from_json(cls, manifest, path, obj):
+    def from_json(cls,  # type: ignore
+                  manifest,  # type: Manifest
+                  path,  # type: Text
+                  obj  # type: Tuple[Text, List[Tuple[Text, Text]], Dict[Any, Any]]
+                  ):
+        # type: (...) -> RefTest
+        tests_root = manifest.tests_root
+        assert tests_root is not None
+        path = to_os_path(path)
         url, references, extras = obj
-        return cls(manifest.tests_root,
+        return cls(tests_root,
                    path,
                    manifest.url_base,
                    url,
                    references,
                    **extras)
 
-    def to_RefTest(self):
-        if type(self) == RefTest:
-            return self
-        rv = copy(self)
-        rv.__class__ = RefTest
-        return rv
-
-    def to_RefTestNode(self):
-        if type(self) == RefTestNode:
-            return self
-        rv = copy(self)
-        rv.__class__ = RefTestNode
-        return rv
-
-
-class RefTestNode(RefTestBase):
-    item_type = "reftest_node"
-
-
-class RefTest(RefTestBase):
-    item_type = "reftest"
-
 
 class ManualTest(URLManifestItem):
+    __slots__ = ()
+
     item_type = "manual"
 
 
 class ConformanceCheckerTest(URLManifestItem):
+    __slots__ = ()
+
     item_type = "conformancechecker"
 
 
 class VisualTest(URLManifestItem):
+    __slots__ = ()
+
     item_type = "visual"
 
 
-class Stub(URLManifestItem):
-    item_type = "stub"
+class CrashTest(URLManifestItem):
+    __slots__ = ()
+
+    item_type = "crashtest"
+
+    @property
+    def timeout(self):
+        # type: () -> Optional[Text]
+        return None
 
 
 class WebDriverSpecTest(URLManifestItem):
+    __slots__ = ()
+
     item_type = "wdspec"
 
     @property
     def timeout(self):
+        # type: () -> Optional[Text]
         return self._extras.get("timeout")
 
     def to_json(self):
+        # type: () -> Tuple[Optional[Text], Dict[Text, Any]]
         rv = super(WebDriverSpecTest, self).to_json()
         if self.timeout is not None:
             rv[-1]["timeout"] = self.timeout
@@ -255,8 +350,11 @@ class WebDriverSpecTest(URLManifestItem):
 
 
 class SupportFile(ManifestItem):
+    __slots__ = ()
+
     item_type = "support"
 
     @property
     def id(self):
+        # type: () -> Text
         return self.path

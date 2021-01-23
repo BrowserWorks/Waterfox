@@ -31,11 +31,18 @@ job-defaults:
         kind: build
 
 jobs:
-    fennec:
-        name: maybe-release-fennec
-        shipping-product: fennec
+    firefox:
+        name: maybe-release-firefox
+        shipping-product: firefox
         worker:
-            phase: ship_fennec_beta
-            product-key: fennec_beta
+            phase: ship_firefox
         treeherder:
-            platform: fennec-release/opt
+            platform: firefox-release/opt
+
+    devedition:
+        name: maybe-release-devedition
+        shipping-product: devedition
+        worker:
+            phase: ship_devedition
+        treeherder:
+            platform: devedition-release/opt

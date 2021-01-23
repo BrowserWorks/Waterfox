@@ -67,8 +67,9 @@ ServiceWorkerRegistrationDescriptor::ServiceWorkerRegistrationDescriptor(
   operator=(aRight);
 }
 
-ServiceWorkerRegistrationDescriptor& ServiceWorkerRegistrationDescriptor::
-operator=(const ServiceWorkerRegistrationDescriptor& aRight) {
+ServiceWorkerRegistrationDescriptor&
+ServiceWorkerRegistrationDescriptor::operator=(
+    const ServiceWorkerRegistrationDescriptor& aRight) {
   if (this == &aRight) {
     return *this;
   }
@@ -84,8 +85,9 @@ ServiceWorkerRegistrationDescriptor::ServiceWorkerRegistrationDescriptor(
   MOZ_DIAGNOSTIC_ASSERT(IsValid());
 }
 
-ServiceWorkerRegistrationDescriptor& ServiceWorkerRegistrationDescriptor::
-operator=(ServiceWorkerRegistrationDescriptor&& aRight) {
+ServiceWorkerRegistrationDescriptor&
+ServiceWorkerRegistrationDescriptor::operator=(
+    ServiceWorkerRegistrationDescriptor&& aRight) {
   mData.reset();
   mData = std::move(aRight.mData);
   MOZ_DIAGNOSTIC_ASSERT(IsValid());
@@ -117,11 +119,10 @@ ServiceWorkerRegistrationDescriptor::PrincipalInfo() const {
   return mData->principalInfo();
 }
 
-nsCOMPtr<nsIPrincipal> ServiceWorkerRegistrationDescriptor::GetPrincipal()
-    const {
+Result<nsCOMPtr<nsIPrincipal>, nsresult>
+ServiceWorkerRegistrationDescriptor::GetPrincipal() const {
   AssertIsOnMainThread();
-  nsCOMPtr<nsIPrincipal> ref = PrincipalInfoToPrincipal(mData->principalInfo());
-  return ref;
+  return PrincipalInfoToPrincipal(mData->principalInfo());
 }
 
 const nsCString& ServiceWorkerRegistrationDescriptor::Scope() const {

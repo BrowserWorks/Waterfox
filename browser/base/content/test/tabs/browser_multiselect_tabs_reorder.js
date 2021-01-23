@@ -1,16 +1,10 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
-const PREF_MULTISELECT_TABS = "browser.tabs.multiselect";
-const PREF_ANIMATION = "toolkit.cosmeticAnimations.enabled";
-
-add_task(async function setPref() {
-  await SpecialPowers.pushPrefEnv({
-    set: [[PREF_MULTISELECT_TABS, true], [PREF_ANIMATION, false]],
-  });
-});
-
 add_task(async function() {
+  // Disable tab animations
+  gReduceMotionOverride = true;
+
   let tab0 = gBrowser.selectedTab;
   let tab1 = await addTab();
   let tab2 = await addTab();

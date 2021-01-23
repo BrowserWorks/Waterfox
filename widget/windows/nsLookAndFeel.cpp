@@ -14,6 +14,7 @@
 #include "mozilla/Telemetry.h"
 #include "mozilla/WindowsVersion.h"
 #include "gfxFontConstants.h"
+#include "gfxWindowsPlatform.h"
 
 using namespace mozilla;
 using namespace mozilla::widget;
@@ -292,11 +293,11 @@ nsresult nsLookAndFeel::NativeGetColor(ColorID aID, nscolor& aColor) {
       break;
     case ColorID::MozEventreerow:
     case ColorID::MozOddtreerow:
-    case ColorID::MozField:
+    case ColorID::Field:
     case ColorID::MozCombobox:
       idx = COLOR_WINDOW;
       break;
-    case ColorID::MozFieldtext:
+    case ColorID::Fieldtext:
     case ColorID::MozComboboxtext:
       idx = COLOR_WINDOWTEXT;
       break;
@@ -474,7 +475,7 @@ nsresult nsLookAndFeel::GetIntImpl(IntID aID, int32_t& aResult) {
       res = NS_ERROR_NOT_IMPLEMENTED;
       break;
     case eIntID_DWMCompositor:
-      aResult = nsUXThemeData::CheckForCompositor();
+      aResult = gfxWindowsPlatform::GetPlatform()->DwmCompositionEnabled();
       break;
     case eIntID_WindowsAccentColorInTitlebar: {
       nscolor unused;
@@ -505,7 +506,8 @@ nsresult nsLookAndFeel::GetIntImpl(IntID aID, int32_t& aResult) {
     } break;
     case eIntID_WindowsGlass:
       // Aero Glass is only available prior to Windows 8 when DWM is used.
-      aResult = (nsUXThemeData::CheckForCompositor() && !IsWin8OrLater());
+      aResult = (gfxWindowsPlatform::GetPlatform()->DwmCompositionEnabled() &&
+                 !IsWin8OrLater());
       break;
     case eIntID_AlertNotificationOrigin:
       aResult = 0;
@@ -910,4 +912,6 @@ void nsLookAndFeel::EnsureInit() {
     DWORD color = ::GetSysColor(i);
     mSysColorTable[i - SYS_COLOR_MIN] = COLOREF_2_NSRGB(color);
   }
+
+  RecordTelemetry();
 }

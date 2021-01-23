@@ -34,7 +34,7 @@ inDeepTreeWalker::inDeepTreeWalker()
       mCurrentIndex(-1),
       mWhatToShow(mozilla::dom::NodeFilter_Binding::SHOW_ALL) {}
 
-inDeepTreeWalker::~inDeepTreeWalker() {}
+inDeepTreeWalker::~inDeepTreeWalker() = default;
 
 NS_IMPL_ISUPPORTS(inDeepTreeWalker, inIDeepTreeWalker)
 
@@ -144,7 +144,7 @@ static already_AddRefed<nsINodeList> GetChildren(nsINode* aParent,
 
   nsCOMPtr<nsINodeList> ret;
   if (aShowSubDocuments) {
-    Document* domdoc = inLayoutUtils::GetSubDocumentFor(aParent);
+    mozilla::dom::Document* domdoc = inLayoutUtils::GetSubDocumentFor(aParent);
     if (domdoc) {
       aParent = domdoc;
     }
@@ -218,7 +218,7 @@ nsresult inDeepTreeWalker::SetCurrentNode(nsINode* aCurrentNode,
     if (index < 0) {
       // If someone tries to set current node to some value that is not
       // reachable otherwise, let's throw. (For example mShowAnonymousContent is
-      // false and some XBL anon content was passed in)
+      // false and some NAC was passed in)
 
       // Restore state first.
       mCurrentNode = tmpCurrent;

@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+
+<!ENTITY fileMenu.label          "Lêer">
+<!ENTITY fileMenu.accesskey        "L">
+<!ENTITY newMenu.label            "Nuwe">
+<!ENTITY newMenu.accesskey          "N">
+
+<!ENTITY editMenu.label          "Redigeer">
+<!ENTITY editMenu.accesskey        "e">
+<!ENTITY undoCmd.label            "Ontdoen">
+<!ENTITY undoCmd.accesskey          "O">
+<!ENTITY redoCmd.label            "Herdoen">
+<!ENTITY redoCmd.accesskey          "H">
+<!ENTITY deleteCmd.label          "Skrap">
+<!ENTITY deleteCmd.accesskey        "S">
+
+
+<!ENTITY preferencesCmdUnix.label       "Voorkeure">
+<!ENTITY preferencesCmdUnix.accesskey     "k">
+
+<!ENTITY viewMenu.label          "Bekyk">
+<!ENTITY viewMenu.accesskey        "B">
+<!ENTITY viewToolbarsMenu.label        "Nutsbalke">
+<!ENTITY viewToolbarsMenu.accesskey      "N">
+<!ENTITY showTaskbarCmd.label          "Statusbalk">
+<!ENTITY showTaskbarCmd.accesskey        "S">
+
+<!ENTITY closeCmd.label      "Sluit">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "S">
+
+<!ENTITY quitApplicationCmd.label  "Afsluit">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "s">
+
+<!ENTITY quitApplicationCmdUnix.label  "Afsluit">
+<!ENTITY quitApplicationCmdUnix.accesskey  "A">
+
+<!ENTITY quitApplicationCmdMac.label  "Sluit &brandShortName; af">
+<!ENTITY quitApplicationCmdMac.accesskey  "S">

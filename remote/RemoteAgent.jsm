@@ -4,7 +4,7 @@
 
 "use strict";
 
-var EXPORTED_SYMBOLS = ["RemoteAgent"];
+var EXPORTED_SYMBOLS = ["RemoteAgent", "RemoteAgentFactory"];
 
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { XPCOMUtils } = ChromeUtils.import(
@@ -12,77 +12,49 @@ const { XPCOMUtils } = ChromeUtils.import(
 );
 
 XPCOMUtils.defineLazyModuleGetters(this, {
-  FatalError: "chrome://remote/content/Error.jsm",
   HttpServer: "chrome://remote/content/server/HTTPD.jsm",
   JSONHandler: "chrome://remote/content/JSONHandler.jsm",
   Log: "chrome://remote/content/Log.jsm",
-  NetUtil: "resource://gre/modules/NetUtil.jsm",
-  Observer: "chrome://remote/content/Observer.jsm",
   Preferences: "resource://gre/modules/Preferences.jsm",
   RecommendedPreferences: "chrome://remote/content/RecommendedPreferences.jsm",
-  TabObserver: "chrome://remote/content/WindowManager.jsm",
-  Targets: "chrome://remote/content/targets/Targets.jsm",
+  TargetList: "chrome://remote/content/targets/TargetList.jsm",
 });
 XPCOMUtils.defineLazyGetter(this, "log", Log.get);
 
 const ENABLED = "remote.enabled";
 const FORCE_LOCAL = "remote.force-local";
 
-const DEFAULT_HOST = "localhost";
-const DEFAULT_PORT = 9222;
 const LOOPBACKS = ["localhost", "127.0.0.1", "[::1]"];
 
 class RemoteAgentClass {
-  init() {
+  get listening() {
+    return !!this.server && !this.server.isStopped();
+  }
+
+  listen(url) {
     if (!Preferences.get(ENABLED, false)) {
-      throw new Error("Remote agent is disabled by its preference");
+      throw Components.Exception(
+        "Disabled by preference",
+        Cr.NS_ERROR_NOT_AVAILABLE
+      );
     }
     if (Services.appinfo.processType != Ci.nsIXULRuntime.PROCESS_TYPE_DEFAULT) {
-      throw new Error(
-        "Remote agent can only be instantiated from the parent process"
+      throw Components.Exception(
+        "May only be instantiated in parent process",
+        Cr.NS_ERROR_LAUNCHED_CHILD_PROCESS
       );
     }
 
-    if (this.server) {
-      return;
+    if (!(url instanceof Ci.nsIURI)) {
+      url = Services.io.newURI(url);
     }
 
-    this.server = new HttpServer();
-    this.targets = new Targets();
-
-    this.server.registerPrefixHandler("/json/", new JSONHandler(this));
-
-    this.tabs = new TabObserver({ registerExisting: true });
-    this.tabs.on("open", (eventName, tab) => {
-      this.targets.connect(tab.linkedBrowser);
-    });
-    this.tabs.on("close", (eventName, tab) => {
-      this.targets.disconnect(tab.linkedBrowser);
-    });
-
-    this.targets.on("connect", (eventName, target) => {
-      if (!target.path) {
-        throw new Error(`Target is missing 'path' attribute: ${target}`);
-      }
-      this.server.registerPathHandler(target.path, target);
-    });
-    this.targets.on("disconnect", (eventName, target) => {
-      // TODO(ato): removing a handler is currently not possible
-    });
-  }
-
-  get listening() {
-    return !!this.server && !this.server._socketClosed;
-  }
-
-  async listen(address) {
-    if (!(address instanceof Ci.nsIURI)) {
-      throw new TypeError(`Expected nsIURI: ${address}`);
-    }
-
-    let { host, port } = address;
+    let { host, port } = url;
     if (Preferences.get(FORCE_LOCAL) && !LOOPBACKS.includes(host)) {
-      throw new Error("Restricted to loopback devices");
+      throw Components.Exception(
+        "Restricted to loopback devices",
+        Cr.NS_ERROR_ILLEGAL_VALUE
+      );
     }
 
     // nsIServerSocket uses -1 for atomic port allocation
@@ -91,45 +63,70 @@ class RemoteAgentClass {
     }
 
     if (this.listening) {
-      return;
+      return Promise.resolve();
     }
 
-    this.init();
+    Preferences.set(RecommendedPreferences);
 
-    await this.tabs.start();
+    this.server = new HttpServer();
+    this.server.registerPrefixHandler("/json/", new JSONHandler(this));
 
+    this.targets = new TargetList();
+    this.targets.on("target-created", (eventName, target) => {
+      this.server.registerPathHandler(target.path, target);
+    });
+    this.targets.on("target-destroyed", (eventName, target) => {
+      this.server.registerPathHandler(target.path, null);
+    });
+
+    return this.asyncListen(host, port);
+  }
+
+  async asyncListen(host, port) {
     try {
+      await this.targets.watchForTargets();
+
       // Immediatly instantiate the main process target in order
       // to be accessible via HTTP endpoint on startup
       const mainTarget = this.targets.getMainProcessTarget();
 
       this.server._start(port, host);
-      dump(`DevTools listening on ${mainTarget.wsDebuggerURL}\n`);
+      Services.obs.notifyObservers(
+        null,
+        "remote-listening",
+        mainTarget.wsDebuggerURL
+      );
     } catch (e) {
-      throw new Error(`Unable to start remote agent: ${e.message}`, e);
+      await this.close();
+      log.error(`Unable to start remote agent: ${e.message}`, e);
     }
-
-    Preferences.set(RecommendedPreferences);
   }
 
-  async close() {
-    if (this.listening) {
+  close() {
+    try {
+      // if called early at startup, preferences may not be available
       try {
-        // Disconnect the targets first in order to ensure closing all pending
-        // connection first. Otherwise Httpd's stop is not going to resolve.
-        this.targets.clear();
-
-        await this.server.stop();
-
         Preferences.reset(Object.keys(RecommendedPreferences));
+      } catch (e) {}
 
-        this.tabs.stop();
-      } catch (e) {
-        throw new Error(`Unable to stop agent: ${e.message}`, e);
+      // destroy targets before stopping server,
+      // otherwise the HTTP will fail to stop
+      if (this.targets) {
+        this.targets.destructor();
       }
 
-      log.info("Stopped listening");
+      if (this.listening) {
+        return this.server.stop();
+      }
+    } catch (e) {
+      // this function must never fail
+      log.error("unable to stop listener", e);
+    } finally {
+      this.server = null;
+      this.targets = null;
     }
+
+    return Promise.resolve();
   }
 
   get scheme() {
@@ -153,83 +150,16 @@ class RemoteAgentClass {
     return this.server.identity.primaryPort;
   }
 
-  // nsICommandLineHandler
-
-  async handle(cmdLine) {
-    function flag(name) {
-      const caseSensitive = true;
-      try {
-        return cmdLine.handleFlagWithParam(name, caseSensitive);
-      } catch (e) {
-        return cmdLine.handleFlag(name, caseSensitive);
-      }
-    }
-
-    const remoteDebugger = flag("remote-debugger");
-    const remoteDebuggingPort = flag("remote-debugging-port");
-
-    if (remoteDebugger && remoteDebuggingPort) {
-      log.fatal(
-        "Conflicting flags --remote-debugger and --remote-debugging-port"
-      );
-      cmdLine.preventDefault = true;
-      return;
-    }
-
-    if (!remoteDebugger && !remoteDebuggingPort) {
-      return;
-    }
-
-    let host, port;
-    if (typeof remoteDebugger == "string") {
-      [host, port] = remoteDebugger.split(":");
-    } else if (typeof remoteDebuggingPort == "string") {
-      port = remoteDebuggingPort;
-    }
-
-    let addr;
-    try {
-      addr = NetUtil.newURI(
-        `http://${host || DEFAULT_HOST}:${port || DEFAULT_PORT}/`
-      );
-    } catch (e) {
-      log.fatal(
-        `Expected address syntax [<host>]:<port>: ${remoteDebugger ||
-          remoteDebuggingPort}`
-      );
-      cmdLine.preventDefault = true;
-      return;
-    }
-
-    this.init();
-
-    await Observer.once("sessionstore-windows-restored");
-
-    try {
-      this.listen(addr);
-    } catch (e) {
-      this.close();
-      throw new FatalError(
-        `Unable to start remote agent on ${addr.spec}: ${e.message}`,
-        e
-      );
-    }
-  }
-
-  get helpInfo() {
-    return (
-      "  --remote-debugger [<host>][:<port>]\n" +
-      "  --remote-debugging-port <port> Start the Firefox remote agent, which is \n" +
-      "                     a low-level debugging interface based on the CDP protocol.\n" +
-      "                     Defaults to listen on localhost:9222.\n"
-    );
-  }
-
   // XPCOM
 
   get QueryInterface() {
-    return ChromeUtils.generateQI([Ci.nsICommandLineHandler]);
+    return ChromeUtils.generateQI([Ci.nsIRemoteAgent]);
   }
 }
 
 var RemoteAgent = new RemoteAgentClass();
+
+// This is used by the XPCOM codepath which expects a constructor
+var RemoteAgentFactory = function() {
+  return RemoteAgent;
+};

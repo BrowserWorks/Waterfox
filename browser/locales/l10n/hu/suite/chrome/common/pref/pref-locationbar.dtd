@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE : FILE The Location Bar prefs panel -->
+
+<!ENTITY pref.locationBar.title                "Címmező">
+
+<!ENTITY autoComplete.label                    "Automatikus kiegészítés">
+<!ENTITY autoCompleteMatchHistory.label        "Webhelyek automatikus ajánlása az Előzmények alapján">
+<!ENTITY autoCompleteMatchHistory.accesskey    "a">
+<!ENTITY autoCompleteMatchBookmarks.label      "Webhelyek automatikus ajánlása az Könyvjelzők alapján">
+<!ENTITY autoCompleteMatchBookmarks.accesskey  "K">
+<!ENTITY autoCompleteAutoFill.label            "Automatikus kiegészítés beírás közben">
+<!ENTITY autoCompleteAutoFill.accesskey        "u">
+<!ENTITY autoCompleteShowPopup.label           "Lehetséges címek megjelenítése">
+<!ENTITY autoCompleteShowPopup.accesskey       "L">
+<!ENTITY autoCompleteMatchOnlyTyped.label      "Csak az előzőleg begépelt webhelyek megjelenítése">
+<!ENTITY autoCompleteMatchOnlyTyped.accesskey  "C">
+<!--LOCALIZATION NOTE (autoCompleteMatch.label): This is the common leading
+  part of the menulist items listed below, mainly to make the control available
+  via the accesskey
+-->
+<!ENTITY autoCompleteMatch.label               "Egyezés">
+<!ENTITY autoCompleteMatch.accesskey           "E">
+<!ENTITY autoCompleteMatchAnywhere             "Egyezés bárhol a webhely helyében és címében">
+<!ENTITY autoCompleteMatchWordsFirst           "Egyezés bárhol, de a szöveghatárok előnyben részesítésével">
+<!ENTITY autoCompleteMatchWords                "Csak a szöveghatárokon">
+<!ENTITY autoCompleteMatchStart                "Csak a webhely helynek és címének elején">
+<!ENTITY showInternetSearch.label              "Alapértelmezett keresőszolgáltatás megjelenítése">
+<!ENTITY showInternetSearch.accesskey          "e">
+
+<!ENTITY formatting.label                      "Formátum">
+<!ENTITY domainFormatting.label                "Webhelyek és FTP-kiszolgálók tartománynevének jelzése">
+<!ENTITY domainFormatting.accesskey            "W">
+<!ENTITY highlightSecure.label                 "Weboldal kiemelése magas szintű kapcsolat biztonság esetén">
+<!ENTITY highlightSecure.accesskey             "c">
+
+<!ENTITY unknownLocations.label                "Ismeretlen helyek">
+<!ENTITY domainGuessing.label                  "„www.” és „.com” névtagok hozzáadása, ha a webhely nem található">
+<!ENTITY domainGuessing.accesskey              "h">
+<!ENTITY keywords.label                        "Keresés végrehajtása, ha a beírt szöveg nem egy webhely címe">
+<!ENTITY keywords.accesskey                    "K">

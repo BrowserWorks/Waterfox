@@ -54,6 +54,24 @@ static const char* ToReadyStateStr(const TextTrackReadyState aState) {
   return "Unknown";
 }
 
+static const char* ToTextTrackKindStr(const TextTrackKind aKind) {
+  switch (aKind) {
+    case TextTrackKind::Subtitles:
+      return "Subtitles";
+    case TextTrackKind::Captions:
+      return "Captions";
+    case TextTrackKind::Descriptions:
+      return "Descriptions";
+    case TextTrackKind::Chapters:
+      return "Chapters";
+    case TextTrackKind::Metadata:
+      return "Metadata";
+    default:
+      MOZ_ASSERT_UNREACHABLE("Invalid kind.");
+  }
+  return "Unknown";
+}
+
 NS_IMPL_CYCLE_COLLECTION_INHERITED(TextTrack, DOMEventTargetHelper, mCueList,
                                    mActiveCueList, mTextTrackList,
                                    mTrackElement)
@@ -93,7 +111,7 @@ TextTrack::TextTrack(nsPIDOMWindowInner* aOwnerWindow,
   SetDefaultSettings();
 }
 
-TextTrack::~TextTrack() {}
+TextTrack::~TextTrack() = default;
 
 void TextTrack::SetDefaultSettings() {
   nsPIDOMWindowInner* ownerWindow = GetOwner();
@@ -112,7 +130,8 @@ void TextTrack::SetMode(TextTrackMode aValue) {
   if (mMode == aValue) {
     return;
   }
-  WEBVTT_LOG("Set mode=%s", ToStateStr(aValue));
+  WEBVTT_LOG("Set mode=%s for track kind %s", ToStateStr(aValue),
+             ToTextTrackKindStr(mKind));
   mMode = aValue;
 
   HTMLMediaElement* mediaElement = GetMediaElement();
@@ -129,6 +148,12 @@ void TextTrack::SetMode(TextTrackMode aValue) {
   if (mediaElement) {
     mediaElement->NotifyTextTrackModeChanged();
   }
+  // https://html.spec.whatwg.org/multipage/media.html#sourcing-out-of-band-text-tracks:start-the-track-processing-model
+  // Run the `start-the-track-processing-model` to track's corresponding track
+  // element whenever track's mode changes.
+  if (mTrackElement) {
+    mTrackElement->MaybeDispatchLoadResource();
+  }
   // Ensure the TimeMarchesOn is called in case that the mCueList
   // is empty.
   NotifyCueUpdated(nullptr);
@@ -138,12 +163,12 @@ void TextTrack::GetId(nsAString& aId) const {
   // If the track has a track element then its id should be the same as the
   // track element's id.
   if (mTrackElement) {
-    mTrackElement->GetAttribute(NS_LITERAL_STRING("id"), aId);
+    mTrackElement->GetAttr(nsGkAtoms::id, aId);
   }
 }
 
 void TextTrack::AddCue(TextTrackCue& aCue) {
-  WEBVTT_LOG("AddCue %p", &aCue);
+  WEBVTT_LOG("AddCue %p [%f:%f]", &aCue, aCue.StartTime(), aCue.EndTime());
   TextTrack* oldTextTrack = aCue.GetTrack();
   if (oldTextTrack) {
     ErrorResult dummy;
@@ -172,6 +197,14 @@ void TextTrack::RemoveCue(TextTrackCue& aCue, ErrorResult& aRv) {
   }
 }
 
+void TextTrack::ClearAllCues() {
+  WEBVTT_LOG("ClearAllCues");
+  ErrorResult dummy;
+  while (!mCueList->IsEmpty()) {
+    RemoveCue(*(*mCueList)[0], dummy);
+  }
+}
+
 void TextTrack::SetCuesDirty() {
   for (uint32_t i = 0; i < mCueList->Length(); i++) {
     ((*mCueList)[i])->Reset();
@@ -192,12 +225,6 @@ void TextTrack::GetActiveCueArray(nsTArray<RefPtr<TextTrackCue> >& aCues) {
 }
 
 TextTrackReadyState TextTrack::ReadyState() const { return mReadyState; }
-
-void TextTrack::SetReadyState(uint32_t aReadyState) {
-  if (aReadyState <= TextTrackReadyState::FailedToLoad) {
-    SetReadyState(static_cast<TextTrackReadyState>(aReadyState));
-  }
-}
 
 void TextTrack::SetReadyState(TextTrackReadyState aState) {
   WEBVTT_LOG("SetReadyState=%s", ToReadyStateStr(aState));
@@ -276,7 +303,7 @@ bool TextTrack::IsLoaded() {
       return true;
     }
   }
-  return (mReadyState >= Loaded);
+  return mReadyState >= TextTrackReadyState::Loaded;
 }
 
 void TextTrack::NotifyCueActiveStateChanged(TextTrackCue* aCue) {
@@ -316,6 +343,8 @@ void TextTrack::GetCurrentCuesAndOtherCues(
   const double playbackTime = mediaElement->CurrentTime();
   for (uint32_t idx = 0; idx < mCueList->Length(); idx++) {
     TextTrackCue* cue = (*mCueList)[idx];
+    WEBVTT_LOG("cue %p [%f:%f], playbackTime=%f", cue, cue->StartTime(),
+               cue->EndTime(), playbackTime);
     if (cue->StartTime() <= playbackTime && cue->EndTime() > playbackTime) {
       WEBVTT_LOG("Add cue %p [%f:%f] to current cue list", cue,
                  cue->StartTime(), cue->EndTime());

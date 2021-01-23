@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Arventennoù al lastez">
+<!ENTITY trainingDescription.label "Mar gweredekaet e rankit, da gentañ, lakaat &brandShortName; da bleustriñ war hennadiñ ar posteloù lastez dre arverañ an afell war barrenn ar spamoù da verkañ ar posteloù evel lastez pe get. Ret eo deoc'h hennadiñ ar posteloù lastez hag ar re nad int ket. Goude se e c'hello &brandShortName; merkañ ar posteloù lastez ent emgefreek.">
+<!ENTITY level.label "Gweredekaat reolerezhioù azasaus ar posteloù lastez evit ar gont-mañ">
+<!ENTITY level.accesskey "e">
+
+<!ENTITY move.label "Dilec'hiañ ar posteloù lastez da :">
+<!ENTITY move.accesskey "i">
+<!ENTITY junkFolderOn.label "Teuliad al &quot;Lastez&quot; e :">
+<!ENTITY junkFolderOn.accesskey "L">
+<!ENTITY otherFolder.label "All :">
+<!ENTITY otherFolder.accesskey "A">
+<!ENTITY purge1.label "Dilemel ent emgefreek ar posteloù lastez koshoc'h eget">
+<!ENTITY purge1.accesskey "g">
+<!ENTITY purge2.label "a zeizioù">
+
+<!ENTITY whitelistHeader.label "Na verkañ ar posteloù evel lastez ent emgefreek mard emañ ar c'haser war :">
+<!ENTITY whitelistHeader.accesskey "d">
+
+<!ENTITY ispHeadersWarning.label "Ma'z eo gweredekaet e vo sellet ar c'hemennadennoù merket gant an ostilh diavaez-mañ evel lastez gant &brandShortName;.">
+<!ENTITY ispHeaders.label "Fiziout talbennoù ar posteloù lastez arventennet gant :">
+<!ENTITY ispHeaders.accesskey "t">
+
+<!ENTITY junkClassification.label "Diuzad">
+<!ENTITY junkActions.label "Arvoned ha derc'hel">
+
+<!ENTITY globalJunkPrefs.label "Gwellvezioù lastez hollek…">
+<!ENTITY globalJunkPrefs.accesskey "G">

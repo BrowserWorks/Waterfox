@@ -9,11 +9,12 @@ var EXPORTED_SYMBOLS = ["Session"];
 const { ParentProcessDomains } = ChromeUtils.import(
   "chrome://remote/content/domains/ParentProcessDomains.jsm"
 );
-const { Domains } = ChromeUtils.import(
-  "chrome://remote/content/domains/Domains.jsm"
+const { DomainCache } = ChromeUtils.import(
+  "chrome://remote/content/domains/DomainCache.jsm"
 );
-const { RemoteAgentError } = ChromeUtils.import(
-  "chrome://remote/content/Error.jsm"
+
+const { NetworkObserver } = ChromeUtils.import(
+  "chrome://remote/content/observers/NetworkObserver.jsm"
 );
 
 /**
@@ -39,73 +40,43 @@ class Session {
    *        If this session isn't the default one used for the HTTP endpoint we
    *        connected to, the session requires an id to distinguish it from the default
    *        one. This id is used to filter our request, responses and events between
-   *        all active sessions.
+   *        all active sessions. For now, this is only passed by `Target.attachToTarget()`.
    */
   constructor(connection, target, id) {
     this.connection = connection;
     this.target = target;
     this.id = id;
 
-    this.destructor = this.destructor.bind(this);
-
-    this.connection.registerSession(this);
-    this.connection.transport.on("close", this.destructor);
-
-    this.domains = new Domains(this, ParentProcessDomains);
+    this.domains = new DomainCache(this, ParentProcessDomains);
   }
 
   destructor() {
+    if (
+      this.networkObserver &&
+      this.networkObserver.isActive(this.target.browser)
+    ) {
+      this.networkObserver.dispose();
+    }
     this.domains.clear();
   }
 
-  async onMessage({ id, method, params }) {
-    try {
-      if (typeof id == "undefined") {
-        throw new TypeError("Message missing 'id' field");
-      }
-      if (typeof method == "undefined") {
-        throw new TypeError("Message missing 'method' field");
-      }
+  execute(id, domain, command, params) {
+    return this.domains.execute(domain, command, params);
+  }
 
-      const { domain, command } = Domains.splitMethod(method);
-      await this.execute(id, domain, command, params);
-    } catch (e) {
-      this.onError(id, e);
+  get networkObserver() {
+    if (!this._networkObserver) {
+      this._networkObserver = new NetworkObserver();
     }
+    return this._networkObserver;
   }
 
-  async execute(id, domain, command, params) {
-    const inst = this.domains.get(domain);
-    const result = await inst[command](params);
-    this.onResult(id, result);
-  }
-
-  onResult(id, result) {
-    this.connection.send({
-      id,
-      sessionId: this.id,
-      result,
-    });
-  }
-
-  onError(id, error) {
-    this.connection.send({
-      id,
-      sessionId: this.id,
-      error: {
-        message: RemoteAgentError.format(error, { stack: true }),
-      },
-    });
-  }
-
-  // Domain event listener
-
+  /**
+   * Domains event listener. Called when an event is fired
+   * by any Domain and has to be sent to the client.
+   */
   onEvent(eventName, params) {
-    this.connection.send({
-      sessionId: this.id,
-      method: eventName,
-      params,
-    });
+    this.connection.onEvent(eventName, params, this.id);
   }
 
   toString() {

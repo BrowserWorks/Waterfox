@@ -22,13 +22,17 @@ var framesThatShouldLoad = {
 // Number of tests that pass for this file should be 1
 var expectedViolationsLeft = 1;
 
+// CSP frame-ancestor checks happen in the parent, hence we have to
+// proxy the csp violation notifications.
+SpecialPowers.registerObservers("csp-on-violate-policy");
+
 // This is used to watch the blocked data bounce off CSP and allowed data
 // get sent out to the wire.
 function examiner() {
-  SpecialPowers.addObserver(this, "csp-on-violate-policy");
+  SpecialPowers.addObserver(this, "specialpowers-csp-on-violate-policy");
 }
 examiner.prototype  = {
-  observe: function(subject, topic, data) {
+  observe(subject, topic, data) {
     // subject should be an nsURI... though could be null since CSP
     // prohibits cross-origin URI reporting during frame ancestors checks.
     if (subject && !SpecialPowers.can_QI(subject))
@@ -51,8 +55,7 @@ examiner.prototype  = {
       // was not an nsIURI, so it was probably a cross-origin report.
     }
 
-
-    if (topic === "csp-on-violate-policy") {
+    if (topic === "specialpowers-csp-on-violate-policy") {
       //these were blocked... record that they were blocked
       window.frameBlocked(asciiSpec, data);
     }
@@ -60,8 +63,8 @@ examiner.prototype  = {
 
   // must eventually call this to remove the listener,
   // or mochitests might get borked.
-  remove: function() {
-    SpecialPowers.removeObserver(this, "csp-on-violate-policy");
+  remove() {
+    SpecialPowers.removeObserver(this, "specialpowers-csp-on-violate-policy");
   }
 }
 
@@ -92,7 +95,11 @@ var frameLoaded = function(testname, uri) {
 var frameBlocked = function(uri, policy) {
 
   //Check if @ symbol is there in URI or in csp policy.
-  if (policy.includes('@') || uri.includes('@')) {
+  // Bug 1557712: Intermittent failure -> not sure why the 'uri' might ever
+  // be non existing at this point, however if there is no uri, there can
+  // also be no userpass!
+  if (policy.includes('@') ||
+      (typeof uri === 'string' && uri.includes('@'))) {
     ok(false, ' a CSP policy blocked frame from being loaded. But contains' +
       ' userpass. Policy is: ' + policy + ';URI is: ' + uri );
   } else {

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE:
+ This UI can be most easily shown by modifying the version in compatibility.ini
+ to a newer version and then starting Thunderbird.
+ For this feature, "installation" is used to mean "this discrete download of
+ Thunderbird" and "version" is used to mean "the specific revision number of a
+ given Thunderbird channel". These terms are not synonymous.
+-->
+<!ENTITY window.title "Sće staršu wersiju &brandProductName; startował">
+<!ENTITY window.style "width: 490px;">
+
+<!ENTITY window.nosync2 "Nowša wersija &brandProductName; je změny na wašim profilu přewjedła, kotrež hižo z tutej staršej wersiju kompatibelne njejsu. Wužiwajće tutón profil jenož z nowšej wersiju abo załožće nowy profil za tutu isntalaciju &brandShortName;. Hdyž nowy profil załožiće, dyrbiće swoje konta, protyki a přidatki znowa konfigurować.">
+
+<!ENTITY window.moreinfo "Dalše informacije…">
+<!ENTITY window.create "Nowy profil załožić">
+<!ENTITY window.quit-win "Skónčić">
+<!ENTITY window.quit-nonwin "Skónčić">

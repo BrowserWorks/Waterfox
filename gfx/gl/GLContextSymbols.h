@@ -351,10 +351,6 @@ struct GLContextSymbols final {
   void(GLAPIENTRY* fGetObjectPtrLabel)(const GLvoid*, GLsizei, GLsizei*,
                                        GLchar*);
 
-  // draw_range_elements
-  void(GLAPIENTRY* fDrawRangeElements)(GLenum, GLuint, GLuint, GLsizei, GLenum,
-                                       const GLvoid*);
-
   // NV_fence
   void(GLAPIENTRY* fGenFences)(GLsizei, GLuint*);
   void(GLAPIENTRY* fDeleteFences)(GLsizei, const GLuint*);
@@ -445,6 +441,13 @@ struct GLContextSymbols final {
 
   // NV_primitive_restart
   void(GLAPIENTRY* fPrimitiveRestartIndex)(GLuint);
+
+  // OVR_multiview2
+  void(GLAPIENTRY* fFramebufferTextureMultiview)(GLenum target,
+                                                 GLenum attachment,
+                                                 GLuint texture, GLint level,
+                                                 GLint baseViewIndex,
+                                                 GLsizei numViews);
 };
 
 }  // namespace gl

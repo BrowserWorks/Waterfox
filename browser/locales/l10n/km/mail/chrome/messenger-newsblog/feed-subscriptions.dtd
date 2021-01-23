@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Բաժանորդագրություններ">
+<!ENTITY learnMore.label             "ស្វែងយល់​បន្ថែម​អំពី​មតិ​ព័ត៌មាន">
+
+<!ENTITY feedTitle.label             "ចំណង​ជើង៖">
+<!ENTITY feedTitle.accesskey         "T">
+
+<!ENTITY feedLocation.label          "URL អត្ថបទ​ព័ត៌មាន​៖">
+<!ENTITY feedLocation.accesskey      "U">
+<!ENTITY locationValidate.label      "ធ្វើ​ឲ្យ​មាន​សុពលភាព">
+<!ENTITY validateText.label          "ពិនិត្យ​សុពលភាព និង​ទៅ​យក url ត្រឹមត្រូវ។">
+
+<!ENTITY feedFolder.label            "រក្សាទុក​អត្ថបទ​ក្នុង៖">
+<!ENTITY feedFolder.accesskey        "S">
+
+<!ENTITY quickMode.label             "បង្ហាញ​ការ​សង្ខេបអត្ថបទ​ជំនួយ​ឲ្យ​​ផ្ទុក​ទំព័រ​បណ្ដាញ">
+<!ENTITY quickMode.accesskey         "h">
+
+<!ENTITY autotagEnable.label         "បង្កើត​ស្គាល់​ដោយ​ស្វ័យប្រវត្តិ​ពី​ឈ្មោះ feed &lt;category&gt;">
+<!ENTITY autotagEnable.accesskey     "c">
+<!ENTITY autotagUsePrefix.label      "ស្លាក់​បុព្វបទ​​ជាមួយ៖">
+<!ENTITY autotagUsePrefix.accesskey  "P">
+<!ENTITY autoTagPrefix.placeholder   "បញ្ចូល​បុព្វបទ​ស្លាក">
+
+<!ENTITY button.addFeed.label        "Ավելացնել">
+<!ENTITY button.addFeed.accesskey    "A">
+<!ENTITY button.removeFeed.label     "Հեռացնել">
+<!ENTITY button.removeFeed.accesskey "R">
+<!ENTITY button.importOPML.label     "Ներմուծել">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "Արտածել">
+<!ENTITY button.exportOPML.accesskey "x">
+<!ENTITY button.exportOPML.tooltip   "នាំចេញ​អត្ថបទព័ត៌មាន​ជា​មួយរចនាសម្ព័ន្ធ​ថត បញ្ជា(ctrl) ចុច ឬ​បញ្ជា(ctrl) បញ្ចូល(enter) ដើម្បី​នាំចេញ​អត្ថបទ​ព័ត៌មាន​ជា​បញ្ជី">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Փակել">

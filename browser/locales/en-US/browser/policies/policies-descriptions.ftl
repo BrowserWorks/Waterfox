@@ -41,6 +41,8 @@ policy-DisableAppUpdate = Prevent the browser from updating.
 
 policy-DisableBuiltinPDFViewer = Disable PDF.js, the built-in PDF viewer in { -brand-short-name }.
 
+policy-DisableDefaultBrowserAgent = Prevent the default browser agent from taking any actions. Only applicable to Windows; other platforms don’t have the agent.
+
 policy-DisableDeveloperTools = Block access to the developer tools.
 
 policy-DisableFeedbackCommands = Disable commands to send feedback from the Help menu (Submit Feedback and Report Deceptive Site).
@@ -48,7 +50,7 @@ policy-DisableFeedbackCommands = Disable commands to send feedback from the Help
 policy-DisableFirefoxAccounts = Disable { -fxaccount-brand-name } based services, including Sync.
 
 # Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = Disable the Waterfox Screenshots feature.
+policy-DisableFirefoxScreenshots = Disable the Firefox Screenshots feature.
 
 policy-DisableFirefoxStudies = Prevent { -brand-short-name } from running studies.
 
@@ -103,9 +105,11 @@ policy-ExtensionSettings = Manage all aspects of extension installation.
 
 policy-ExtensionUpdate = Enable or disable automatic extension updates.
 
-policy-FirefoxHome = Configure Firefox Home.
+policy-Home = Configure  Home.
 
 policy-FlashPlugin = Allow or deny usage of the Flash plugin.
+
+policy-Handlers = Configure default application handlers.
 
 policy-HardwareAcceleration = If false, turn off hardware acceleration.
 
@@ -114,9 +118,21 @@ policy-Homepage = Set and optionally lock the homepage.
 
 policy-InstallAddonsPermission = Allow certain websites to install add-ons.
 
-policy-LegacyProfiles = Disable the feature enforcing a separate profile for each installation
+policy-LegacyProfiles = Disable the feature enforcing a separate profile for each installation.
+
+## Do not translate "SameSite", it's the name of a cookie attribute.
+
+policy-LegacySameSiteCookieBehaviorEnabled = Enable default legacy SameSite cookie behavior setting.
+
+policy-LegacySameSiteCookieBehaviorEnabledForDomainList = Revert to legacy SameSite behavior for cookies on specified sites.
+
+##
 
 policy-LocalFileLinks = Allow specific websites to link to local files.
+
+policy-ManagedBookmarks = Configures a list of bookmarks managed by an administrator that cannot be changed by the user.
+
+policy-MasterPassword = Require or prevent using a master password.
 
 policy-NetworkPrediction = Enable or disable network prediction (DNS prefetching).
 
@@ -134,7 +150,12 @@ policy-OverridePostUpdatePage = Override the post-update “What’s New” page
 
 policy-PasswordManagerEnabled = Enable saving passwords to the password manager.
 
+# PDF.js and PDF should not be translated
+policy-PDFjs = Disable or configure PDF.js, the built-in PDF viewer in { -brand-short-name }.
+
 policy-Permissions2 = Configure permissions for camera, microphone, location, notifications, and autoplay.
+
+policy-PictureInPicture = Enable or disable Picture-in-Picture.
 
 policy-PopupBlocking = Allow certain websites to display popups by default.
 

@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Veti Vijash Horizontale">
+
+<!ENTITY dimensionsBox.label "Përmasa">
+<!ENTITY heightEditField.label "Lartësi:">
+<!ENTITY heightEditField.accessKey "L">
+<!ENTITY widthEditField.label "Gjerësi:">
+<!ENTITY widthEditField.accessKey "G">
+<!ENTITY pixelsPopup.value "piksela">
+<!ENTITY alignmentBox.label "Drejtim">
+<!ENTITY leftRadio.label "Majtas">
+<!ENTITY leftRadio.accessKey "M">
+<!ENTITY centerRadio.label "Në Qendër">
+<!ENTITY centerRadio.accessKey "N">
+<!ENTITY rightRadio.label "Djathtas">
+<!ENTITY rightRadio.accessKey "D">
+
+<!ENTITY threeDShading.label "Hijezim 3-D">
+<!ENTITY threeDShading.accessKey "H">
+<!ENTITY saveSettings.label "Përdori si Parazgjedhje">
+<!ENTITY saveSettings.accessKey "P">
+<!ENTITY saveSettings.tooltip "Ruajini këto rregullime për t&apos;i përdorur kur futen vija të reja horizontale">

@@ -48,8 +48,7 @@ function check(frame) {
     let a_expected = hits < 3 ? undefined : 1/2;
     assertEq(savedEnv.getVariable("a"), a_expected);
 
-    assertEq(frame.generator, true);
-    assertEq(frame.live, true);
+    assertEq(frame.onStack, true);
 
     let pc = frame.offset;
     assertEq(savedOffsets.has(pc), false);

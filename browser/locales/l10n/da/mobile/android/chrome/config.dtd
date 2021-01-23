@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "Søg">
+
+<!ENTITY newPref.namePlaceholder       "Navn">
+
+<!ENTITY newPref.valueBoolean          "Boolsk værdi">
+<!ENTITY newPref.valueString           "Streng">
+<!ENTITY newPref.valueInteger          "Heltal">
+
+<!ENTITY newPref.stringPlaceholder     "Indtast en streng">
+<!ENTITY newPref.numberPlaceholder     "Indtast et tal">
+
+<!ENTITY newPref.toggleButton          "Skift">
+<!ENTITY newPref.cancelButton          "Annuller">
+
+<!ENTITY contextMenu.copyPrefName      "Kopier navn">
+<!ENTITY contextMenu.copyPrefValue     "Kopier værdi">

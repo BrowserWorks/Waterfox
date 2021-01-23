@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "Dilemel">
+<!ENTITY editContactPanelDeleteContact.accesskey "l">
+
+<!ENTITY editContactName.label "Anv :">
+<!ENTITY editContactName.accesskey "A">
+
+<!ENTITY editContactEmail.label "Postel :">
+<!ENTITY editContactEmail.accesskey "P">
+
+<!ENTITY editContactAddressBook.label "Karned chomlec'hioù :">
+<!ENTITY editContactAddressBook.accesskey "K">
+
+<!ENTITY editContactPanelDone.label "Graet">
+<!ENTITY editContactPanelDone.accesskey "G">
+
+<!ENTITY contactMoveDisabledWarning.description "Ne c'hellit ket kemmañ ar c'harned chomlec'hioù rak an darempred zo e-barzh ur roll skignañ.">

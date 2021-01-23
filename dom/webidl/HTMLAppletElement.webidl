@@ -12,7 +12,8 @@
  */
 
 // http://www.whatwg.org/specs/web-apps/current-work/#the-applet-element
-[NeedResolve]
+[NeedResolve,
+ Exposed=Window]
 interface HTMLAppletElement : HTMLElement {
   [Pure, SetterThrows]
            attribute DOMString align;
@@ -38,6 +39,6 @@ interface HTMLAppletElement : HTMLElement {
            attribute DOMString width;
 };
 
-HTMLAppletElement implements MozImageLoadingContent;
-HTMLAppletElement implements MozFrameLoaderOwner;
-HTMLAppletElement implements MozObjectLoadingContent;
+HTMLAppletElement includes MozImageLoadingContent;
+HTMLAppletElement includes MozFrameLoaderOwner;
+HTMLAppletElement includes MozObjectLoadingContent;

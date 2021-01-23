@@ -1,21 +1,19 @@
 /* import-globals-from antitracking_head.js */
+/* import-globals-from partitionedstorage_head.js */
 
-AntiTracking.runTest(
+AntiTracking.runTestInNormalAndPrivateMode(
   "localStorage and Storage Access API",
   async _ => {
     /* import-globals-from storageAccessAPIHelpers.js */
     await noStorageAccessInitially();
 
-    let shouldThrow =
-      SpecialPowers.Services.prefs.getIntPref(
-        "network.cookie.cookieBehavior"
-      ) == SpecialPowers.Ci.nsICookieService.BEHAVIOR_REJECT;
-
-    is(
-      window.localStorage == null,
-      shouldThrow,
-      shouldThrow ? "LocalStorage is null" : "LocalStorage is not null"
+    let shouldThrow = [
+      SpecialPowers.Ci.nsICookieService.BEHAVIOR_REJECT,
+      SpecialPowers.Ci.nsICookieService.BEHAVIOR_REJECT_FOREIGN,
+    ].includes(
+      SpecialPowers.Services.prefs.getIntPref("network.cookie.cookieBehavior")
     );
+
     let hasThrown;
     try {
       localStorage.foo = 42;
@@ -23,7 +21,7 @@ AntiTracking.runTest(
       is(localStorage.foo, "42", "The value matches");
       hasThrown = false;
     } catch (e) {
-      is(e.name, "TypeError", "We want a type error message.");
+      is(e.name, "SecurityError", "We want a security error message.");
       hasThrown = true;
     }
 
@@ -90,4 +88,29 @@ AntiTracking.runTest(
   ],
   false,
   false
+);
+
+PartitionedStorageHelper.runPartitioningTestInNormalAndPrivateMode(
+  "Partitioned tabs - localStorage",
+  "localstorage",
+
+  // getDataCallback
+  async win => {
+    return "foo" in win.localStorage ? win.localStorage.foo : "";
+  },
+
+  // addDataCallback
+  async (win, value) => {
+    win.localStorage.foo = value;
+    return true;
+  },
+
+  // cleanup
+  async _ => {
+    await new Promise(resolve => {
+      Services.clearData.deleteData(Ci.nsIClearDataService.CLEAR_ALL, value =>
+        resolve()
+      );
+    });
+  }
 );

@@ -27,7 +27,8 @@ import binascii
 import hashlib
 import logging
 import os
-import urlparse
+import six
+import six.moves.urllib.parse as urlparse
 
 from mozbuild.util import (
     mkdir,
@@ -41,10 +42,10 @@ from dlmanager import (
 
 # Minimum number of downloaded artifacts to keep. Each artifact can be very large,
 # so don't make this to large!
-MIN_CACHED_ARTIFACTS = 6
+MIN_CACHED_ARTIFACTS = 12
 
-# Maximum size of the downloaded artifacts to keep in cache, in bytes (1GiB).
-MAX_CACHED_ARTIFACTS_SIZE = 1024 * 1024 * 1024
+# Maximum size of the downloaded artifacts to keep in cache, in bytes (2GiB).
+MAX_CACHED_ARTIFACTS_SIZE = 2 * 1024 * 1024 * 1024
 
 
 class ArtifactPersistLimit(PersistLimit):
@@ -161,13 +162,13 @@ class ArtifactCache(object):
             if len(fname) not in (32, 40, 56, 64, 96, 128):
                 raise TypeError()
             binascii.unhexlify(fname)
-        except TypeError:
+        except (TypeError, binascii.Error):
             # We download to a temporary name like HASH[:16]-basename to
             # differentiate among URLs with the same basenames.  We used to then
             # extract the build ID from the downloaded artifact and use it to make a
             # human readable unique name, but extracting build IDs is time consuming
             # (especially on Mac OS X, where we must mount a large DMG file).
-            hash = hashlib.sha256(url).hexdigest()[:16]
+            hash = hashlib.sha256(six.ensure_binary(url)).hexdigest()[:16]
             # Strip query string and fragments.
             basename = os.path.basename(urlparse.urlparse(url).path)
             fname = hash + '-' + basename
@@ -181,11 +182,6 @@ class ArtifactCache(object):
                 'Skipping cache: removing cached downloaded artifact {path}')
             os.remove(path)
 
-        self.log(
-            logging.INFO,
-            'artifact',
-            {'path': path},
-            'Downloading to temporary location {path}')
         try:
             dl = self._download_manager.download(url, fname)
 
@@ -204,18 +200,23 @@ class ArtifactCache(object):
                          'Downloading... {percent:02.1f} %')
 
             if dl:
+                self.log(
+                    logging.INFO,
+                    'artifact',
+                    {'path': path},
+                    'Downloading artifact to local cache: {path}')
                 dl.set_progress(download_progress)
                 dl.wait()
             else:
+                self.log(
+                    logging.INFO,
+                    'artifact',
+                    {'path': path},
+                    'Using artifact from local cache: {path}')
                 # Avoid the file being removed if it was in the cache already.
                 path = os.path.join(self._cache_dir, fname)
                 self._persist_limit.register_file(path)
 
-            self.log(
-                logging.INFO,
-                'artifact',
-                {'path': os.path.abspath(mozpath.join(self._cache_dir, fname))},
-                'Downloaded artifact to {path}')
             return os.path.abspath(mozpath.join(self._cache_dir, fname))
         finally:
             # Cancel any background downloads in progress.

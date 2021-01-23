@@ -42,13 +42,14 @@ SimpleTest.waitForExplicitFinish();
 function setupTestPreferences() {
   return SpecialPowers.pushPrefEnv({"set": [
     ["media.autoplay.default", SpecialPowers.Ci.nsIAutoplay.BLOCKED],
-    ["media.autoplay.enabled.user-gestures-needed", true],
+    ["media.autoplay.blocking_policy", 0],
     ["media.autoplay.block-webaudio", true],
     ["media.autoplay.block-event.enabled", true],
   ]});
 }
 
 function createAudioContext() {
+  /* global ac */
   window.ac = new AudioContext();
 
   ac.allowedToStart = new Promise(resolve => {

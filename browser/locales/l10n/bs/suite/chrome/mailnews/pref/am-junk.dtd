@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Postavke neželjene pošte">
+<!ENTITY trainingDescription.label "Ako je omogućeno, morate prvo naučiti &brandShortName; da identifikuje neželjenu poštu korištenjem dugmeta za neželjenu poštu na alatnoj traci da označite poruke kao neželjene ili ne. Trebate da identifikujete i neželjene i željene poruke. Nakon toga &brandShortName; će biti u mogućnosti označiti neželjenu poštu automatski.">
+<!ENTITY level.label "Omogući kontrolu neželjene pošte za ovaj račun">
+
+<!ENTITY move.label "Premjesti nove poruke neželjene pošte u:">
+<!ENTITY junkFolderOn.label "Direktorij &quot;Neželjena pošta&quot; u:">
+<!ENTITY otherFolder.label "Ostalo:">
+<!ENTITY purge1.label "Automatski izbriši neželjenu poštu stariju od">
+<!ENTITY purge2.label "dana">
+
+<!ENTITY whitelistHeader.label "Ne označavaj automatski poštu kao neželjenu ako je pošiljalac u: ">
+
+<!ENTITY ispHeadersWarning.label "Ukoliko je omogućeno, &brandShortName; će smatrati poruke označene od strane ovog vanjskog klasifikatora kao neželjene.">
+<!ENTITY ispHeaders.label "Vjeruj zaglavljima neželjene pošte postavljenim od: ">
+
+<!ENTITY junkClassification.label "Selekcija">
+<!ENTITY junkActions.label "Odredište i zadržavanje">
+
+<!ENTITY globalJunkPrefs.label "Globalne postavke neželjene pošte…">

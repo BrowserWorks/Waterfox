@@ -1,5 +1,9 @@
 /* -*- Mode: indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set sts=2 sw=2 et tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 /* eslint-env mozilla/chrome-worker */
 
 "use strict";
@@ -15,6 +19,8 @@ importScripts(
 // The worker instantiates the module, reads the binary into wasm memory, runs
 // the wasm code, and returns the symbol table or an error. Then it shuts down
 // itself.
+
+const { WasmMemBuffer, get_compact_symbol_table } = wasm_bindgen;
 
 // Read an open OS.File instance into the Uint8Array dataBuf.
 function readFileInto(file, dataBuf) {
@@ -38,6 +44,35 @@ function readFileInto(file, dataBuf) {
   }
 }
 
+// Returns a plain object that is Structured Cloneable and has name and
+// description properties.
+function createPlainErrorObject(e) {
+  // OS.File.Error has an empty message property; it constructs the error
+  // message on-demand in its toString() method. So we handle those errors
+  // specially.
+  if (!(e instanceof OS.File.Error)) {
+    // Regular errors: just rewrap the object.
+    if (e instanceof Error) {
+      const { name, message, fileName, lineNumber } = e;
+      return { name, message, fileName, lineNumber };
+    }
+    // The WebAssembly code throws errors with fields error_type and error_msg.
+    if (e.error_type) {
+      return {
+        name: e.error_type,
+        message: e.error_msg,
+      };
+    }
+  }
+
+  return {
+    name: e instanceof OS.File.Error ? "OSFileError" : "Error",
+    message: e.toString(),
+    fileName: e.fileName,
+    lineNumber: e.lineNumber,
+  };
+}
+
 onmessage = async e => {
   try {
     const { binaryPath, debugPath, breakpadId, module } = e.data;
@@ -49,99 +84,44 @@ onmessage = async e => {
     // Instantiate the WASM module.
     await wasm_bindgen(module);
 
-    const { CompactSymbolTable, wasm } = wasm_bindgen;
-
-    const binaryFile = OS.File.open(binaryPath, { read: true });
-    const binaryDataBufLen = binaryFile.stat().size;
-
     // Read the binary file into WASM memory.
-    const binaryDataBufPtr = wasm.__wbindgen_malloc(binaryDataBufLen);
-    const binaryDataBuf = new Uint8Array(
-      wasm.memory.buffer,
-      binaryDataBufPtr,
-      binaryDataBufLen
-    );
-    readFileInto(binaryFile, binaryDataBuf);
+    const binaryFile = OS.File.open(binaryPath, { read: true });
+    const binaryData = new WasmMemBuffer(binaryFile.stat().size, array => {
+      readFileInto(binaryFile, array);
+    });
     binaryFile.close();
 
     // Do the same for the debug file, if it is supplied and different from the
     // binary file. This is only the case on Windows.
-    let debugDataBufLen = binaryDataBufLen;
-    let debugDataBufPtr = binaryDataBufPtr;
+    let debugData = binaryData;
     if (debugPath && debugPath !== binaryPath) {
       const debugFile = OS.File.open(debugPath, { read: true });
-      debugDataBufLen = debugFile.stat().size;
-      debugDataBufPtr = wasm.__wbindgen_malloc(debugDataBufLen);
-      const debugDataBuf = new Uint8Array(
-        wasm.memory.buffer,
-        debugDataBufPtr,
-        debugDataBufLen
-      );
-      readFileInto(debugFile, debugDataBuf);
+      debugData = new WasmMemBuffer(debugFile.stat().size, array => {
+        readFileInto(debugFile, array);
+      });
       debugFile.close();
     }
 
-    // Call get_compact_symbol_table. We're calling the raw wasm function
-    // instead of the binding function that wasm-bindgen generated for us,
-    // because the generated function doesn't let us pass binaryDataBufPtr
-    // or debugDataBufPtr and would force another copy.
-    //
-    // The rust definition of get_compact_symbol_table is:
-    //
-    // #[wasm_bindgen]
-    // pub fn get_compact_symbol_table(binary_data: &[u8], debug_data: &[u8], breakpad_id: &str, dest: &mut CompactSymbolTable) -> bool
-    //
-    // It gets exposed as a wasm function with the following signature:
-    //
-    // pub fn get_compact_symbol_table(binaryDataBufPtr: u32, binaryDataBufLen: u32, debugDataBufPtr: u32, debugDataBufLen: u32, breakpadIdPtr: u32, breakpadIdLen: u32, destPtr: u32) -> u32
-    //
-    // We're relying on implementation details of wasm-bindgen here. The above
-    // is true as of wasm-bindgen 0.2.32.
-
-    // Convert the breakpadId string into bytes in wasm memory.
-    const breakpadIdBuf = new TextEncoder("utf-8").encode(breakpadId);
-    const breakpadIdLen = breakpadIdBuf.length;
-    const breakpadIdPtr = wasm.__wbindgen_malloc(breakpadIdLen);
-    new Uint8Array(wasm.memory.buffer).set(breakpadIdBuf, breakpadIdPtr);
-
-    const output = new CompactSymbolTable();
-    let succeeded;
     try {
-      succeeded =
-        wasm.get_compact_symbol_table(
-          binaryDataBufPtr,
-          binaryDataBufLen,
-          debugDataBufPtr,
-          debugDataBufLen,
-          breakpadIdPtr,
-          breakpadIdLen,
-          output.ptr
-        ) !== 0;
-    } catch (e) {
-      succeeded = false;
-    }
-
-    wasm.__wbindgen_free(breakpadIdPtr, breakpadIdLen);
-    wasm.__wbindgen_free(binaryDataBufPtr, binaryDataBufLen);
-    if (debugDataBufPtr != binaryDataBufPtr) {
-      wasm.__wbindgen_free(debugDataBufPtr, debugDataBufLen);
-    }
-
-    if (!succeeded) {
+      let output = get_compact_symbol_table(binaryData, debugData, breakpadId);
+      const result = [
+        output.take_addr(),
+        output.take_index(),
+        output.take_buffer(),
+      ];
       output.free();
-      throw new Error("get_compact_symbol_table returned false");
+      postMessage(
+        { result },
+        result.map(r => r.buffer)
+      );
+    } finally {
+      binaryData.free();
+      if (debugData != binaryData) {
+        debugData.free();
+      }
     }
-
-    const result = [
-      output.take_addr(),
-      output.take_index(),
-      output.take_buffer(),
-    ];
-    output.free();
-
-    postMessage({ result }, result.map(r => r.buffer));
   } catch (error) {
-    postMessage({ error: error.toString() });
+    postMessage({ error: createPlainErrorObject(error) });
   }
   close();
 };

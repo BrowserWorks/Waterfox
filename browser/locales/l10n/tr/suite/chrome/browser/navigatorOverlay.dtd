@@ -1,0 +1,138 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File Menu -->
+<!ENTITY tabCmd.label "Tarayıcı sekmesi">
+<!ENTITY tabCmd.accesskey "T">
+<!ENTITY tabCmd.commandkey "t">
+<!ENTITY openCmd.label "Open Web Location…">
+<!ENTITY openCmd.accesskey "L">
+<!ENTITY openCmd.commandkey "l">
+<!ENTITY openFileCmd.label "Open File…">
+<!ENTITY openFileCmd.accesskey "O">
+<!ENTITY openFileCmd.commandkey "o">
+
+<!ENTITY closeOtherTabs.label "Diğer sekmeleri kapat">
+<!ENTITY closeOtherTabs.accesskey "t">
+
+<!ENTITY uploadFile.label "Dosya yükle…">
+<!ENTITY uploadFile.accesskey "ü">
+
+<!ENTITY printSetupCmd.label "Page Setup…">
+<!ENTITY printSetupCmd.accesskey "u">
+<!-- Edit Menu -->
+
+<!ENTITY findOnCmd.label "Find in This Page…">
+<!-- View Menu -->
+
+<!ENTITY toolbarsCmd.label "Göster/gizle">
+<!ENTITY toolbarsCmd.accesskey "ö">
+<!ENTITY tabbarCmd.label "Sekme çubuğu">
+<!ENTITY tabbarCmd.accesskey "S">
+<!ENTITY taskbarCmd.label "Status Bar">
+<!ENTITY taskbarCmd.accesskey "S">
+<!ENTITY componentbarCmd.label "Bileşenler çubuğu">
+<!ENTITY componentbarCmd.accesskey "ş">
+
+<!ENTITY fullScreenCmd.label "Tam ekran">
+<!ENTITY fullScreenCmd.accesskey "T">
+
+<!ENTITY useStyleSheetMenu.label "Kullanılacak stil">
+<!ENTITY useStyleSheetMenu.accesskey "u">
+<!ENTITY useStyleSheetNone.label "Hiçbiri">
+<!ENTITY useStyleSheetNone.accesskey "H">
+<!ENTITY useStyleSheetPersistentOnly.label "Öntanımlı stil">
+<!ENTITY useStyleSheetPersistentOnly.accesskey "Ö">
+<!ENTITY bidiSwitchPageDirectionItem.label "Switch Page Direction">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey "g">
+<!ENTITY pageSourceCmd.label "Page Source">
+<!ENTITY pageSourceCmd.accesskey "o">
+<!ENTITY pageSourceCmd.commandkey "u">
+<!ENTITY pageInfoCmd.label "Sayfa bilgileri">
+<!ENTITY pageInfoCmd.accesskey "S">
+<!ENTITY pageInfoCmd.commandkey "i">
+<!-- Go Menu -->
+
+<!ENTITY goMenu.label "Go">
+<!ENTITY goMenu.accesskey "G">
+<!ENTITY goHomeCmd.label "Home">
+<!ENTITY goHomeCmd.accesskey "H">
+<!ENTITY historyCmd.label "Geçmiş">
+<!ENTITY historyCmd.accesskey "G">
+<!ENTITY history.commandKey "h">
+<!ENTITY recentTabs.label "Recently Closed Tabs">
+<!ENTITY recentTabs.accesskey "C">
+<!ENTITY recentTabs.commandkey "t">
+<!ENTITY recentWindows.label "Recently Closed Windows">
+<!ENTITY recentWindows.accesskey "W">
+<!ENTITY recentWindows.commandkey "y">
+<!ENTITY historyRestoreLastSession.label "Restore Previous Session">
+<!ENTITY historyRestoreLastSession.accesskey "R">
+<!ENTITY syncTabsMenu.label "Tabs From Other Computers">
+<!ENTITY syncTabsMenu.accesskey "O">
+<!-- Bookmarks Menu -->
+
+<!ENTITY bookmarksMenu.label "Yer İmleri">
+<!ENTITY bookmarksMenu.accesskey "e">
+<!ENTITY addCurPageCmd.label "Bu sayfayı yer imlerine ekle…">
+<!ENTITY addCurPageCmd.accesskey "B">
+<!ENTITY addCurPageAsCmd.label "Kısayol yer imi…">
+<!ENTITY addCurPageAsCmd.accesskey "K">
+<!ENTITY addCurPageAsCmd.commandkey "d">
+<!ENTITY addCurTabsAsCmd.label "Sekme grubunu yer imlerine ekle…">
+<!ENTITY addCurTabsAsCmd.accesskey "g">
+<!ENTITY manBookmarksCmd.label "Yer imleri yönetimi…">
+<!ENTITY manBookmarksCmd.accesskey "Y">
+<!ENTITY manBookmarksCmd.commandkey "b">
+<!-- Tools Menu -->
+
+<!ENTITY searchInternetCmd.label "İnternet'te ara">
+<!ENTITY searchInternetCmd.accesskey "İ">
+<!ENTITY searchInternet.commandKey "s">
+<!ENTITY translateMenu.label "Sayfayı çevir">
+<!ENTITY translateMenu.accesskey "S">
+
+<!ENTITY cookieMessageTitle.label "Cookie Permissions Changed">
+<!ENTITY cookieDisplayCookiesCmd.label "Manage Stored Cookies">
+<!ENTITY cookieDisplayCookiesCmd.accesskey "M">
+<!ENTITY cookieAllowCookiesCmd.label "Allow Cookies from This Site">
+<!ENTITY cookieAllowCookiesCmd.accesskey "A">
+<!ENTITY cookieAllowCookiesMsg.label "Cookies from this site will always be allowed.">
+<!ENTITY cookieAllowSessionCookiesCmd.label "Allow Session Cookies from This Site">
+<!ENTITY cookieAllowSessionCookiesCmd.accesskey "S">
+<!ENTITY cookieAllowSessionCookiesMsg.label "This site will be able to set cookies for the current session only.">
+<!ENTITY cookieCookiesDefaultCmd.label "Use Default Cookie Permissions">
+<!ENTITY cookieCookiesDefaultCmd.accesskey "U">
+<!ENTITY cookieCookiesDefaultMsg.label "Cookies from this site will be accepted or rejected based on default settings.">
+<!ENTITY cookieBlockCookiesCmd.label "Block Cookies from This Site">
+<!ENTITY cookieBlockCookiesCmd.accesskey "B">
+<!ENTITY cookieBlockCookiesMsg.label "Cookies from this site will always be rejected.">
+
+<!ENTITY cookieImageMessageTitle.label "Image Permissions Changed">
+<!ENTITY cookieDisplayImagesCmd.label "Manage Image Permissions">
+<!ENTITY cookieDisplayImagesCmd.accesskey "M">
+<!ENTITY cookieAllowImagesCmd.label "Allow Images from This Site">
+<!ENTITY cookieAllowImagesCmd.accesskey "A">
+<!ENTITY cookieAllowImagesMsg.label "Images from this site will always be downloaded.">
+<!ENTITY cookieImagesDefaultCmd.label "Use Default Image Permissions">
+<!ENTITY cookieImagesDefaultCmd.accesskey "U">
+<!ENTITY cookieImagesDefaultMsg.label "Images from this site will be downloaded based on default settings.">
+<!ENTITY cookieBlockImagesCmd.label "Block Images from This Site">
+<!ENTITY cookieBlockImagesCmd.accesskey "B">
+<!ENTITY cookieBlockImagesMsg.label "Images from this site will never be downloaded.">
+
+<!ENTITY cookieAllowPopupsCmd.label "Allow Popups from This Site">
+<!ENTITY cookieAllowPopupsCmd.accesskey "A">
+<!ENTITY cookieManagePopups.label "Manage Popups">
+<!ENTITY cookieManagePopups.accesskey "M">
+
+<!ENTITY cookieCookieManager.label "Çerez yöneticisi">
+<!ENTITY cookieCookieManager.accesskey "y">
+<!ENTITY cookieImageManager.label "Resim yöneticisi">
+<!ENTITY cookieImageManager.accesskey "R">
+<!ENTITY cookiePopupManager.label "Popup Manager">
+<!ENTITY cookiePopupManager.accesskey "o">
+
+<!ENTITY clearPrivateDataCmd.label "Özel bilgileri sil…">
+<!ENTITY clearPrivateDataCmd.accesskey "z">

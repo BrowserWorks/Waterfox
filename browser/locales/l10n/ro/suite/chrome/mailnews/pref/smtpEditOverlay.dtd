@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+# Laudatti <Laudatti@gmail.com>
+# toffee <daniel@toffee.ro>
+# janimo <jani@ubuntu.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!ENTITY settings.caption "Parametri">
+<!ENTITY security.caption "Securitate și autentificare">
+<!ENTITY serverName.label "Nume server:">
+<!ENTITY serverName.accesskey "s">
+<!ENTITY serverDescription.label "Colecție locală">
+<!ENTITY serverDescription.accesskey "C">
+<!ENTITY serverPort.label "Port:">
+<!ENTITY serverPort.accesskey "P">
+<!ENTITY userName.label "Nume Utilizator:">
+<!ENTITY userName.accesskey "m">
+<!ENTITY connectionSecurity.label "Securitatea conexiunii:">
+<!ENTITY connectionSecurity.accesskey "n">
+<!ENTITY connectionSecurityType-0.label "Nespecificat">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, dacă e disponibil">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY smtpEditTitle.label "Server SMTP">
+<!ENTITY serverPortDefault.label "Implicit:">
+<!ENTITY authMethod.label "Authentication method:">
+<!ENTITY authMethod.accesskey "i">

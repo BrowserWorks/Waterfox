@@ -74,13 +74,36 @@ let gUndoData = null;
 
 XPCOMUtils.defineLazyGetter(this, "gAvailableMigratorKeys", function() {
   if (AppConstants.platform == "win") {
-    return ["waterfoxclassic","lfirefox","firefox", "edge", "ie", "chrome", "chromium", "360se", "canary"];
+    return [
+      "waterfoxclassic",
+      "firefox",
+      "waterfoxrefresh",
+      "edge",
+      "ie",
+      "chrome",
+      "chromium-edge",
+      "chromium-edge-beta",
+      "chrome-beta",
+      "chromium",
+      "360se",
+      "canary",
+    ];
   }
   if (AppConstants.platform == "macosx") {
-    return ["waterfoxclassic","lfirefox","waterfox", "firefox", "safari", "chrome", "chromium", "canary"];
+    return [
+      "waterfoxclassic",
+      "firefox",
+      "waterfoxrefresh",
+      "safari",
+      "chrome",
+      "chromium-edge",
+      "chromium-edge-beta",
+      "chromium",
+      "canary",
+    ];
   }
   if (AppConstants.XP_UNIX) {
-    return ["waterfoxclassic","lfirefox","waterfox", "firefox", "chrome", "chrome-beta", "chrome-dev", "chromium"];
+    return ["waterfoxclassic", "firefox", "waterfoxrefresh", "chrome", "chrome-beta", "chrome-dev", "chromium"];
   }
   return [];
 });
@@ -244,7 +267,7 @@ var MigratorPrototype = {
    */
   migrate: async function MP_migrate(aItems, aStartup, aProfile) {
     let resources = await this._getMaybeCachedResources(aProfile);
-    if (resources.length == 0) {
+    if (!resources.length) {
       throw new Error("migrate called for a non-existent source");
     }
 
@@ -481,11 +504,11 @@ var MigratorPrototype = {
       let profiles = await this.getSourceProfiles();
       if (!profiles) {
         let resources = await this._getMaybeCachedResources("");
-        if (resources && resources.length > 0) {
+        if (resources && resources.length) {
           exists = true;
         }
       } else {
-        exists = profiles.length > 0;
+        exists = !!profiles.length;
       }
     } catch (ex) {
       Cu.reportError(ex);
@@ -594,27 +617,23 @@ var MigrationUtils = Object.freeze({
       /_(canary|chromium|chrome-beta|chrome-dev)$/,
       "_chrome"
     );
+    aKey = aKey.replace(/_(chromium-edge-beta|chromium-edge)$/, "_edge");
 
     const OVERRIDES = {
       "4_firefox": "4_firefox_history_and_bookmarks",
       "64_firefox": "64_firefox_other",
-      "4_waterfox": "4_waterfox_history_and_bookmarks",
-      "64_waterfox": "64_waterfox_other"
     };
     aKey = OVERRIDES[aKey] || aKey;
 
     if (aReplacements === undefined) {
       return getMigrationBundle().GetStringFromName(aKey);
     }
-    return getMigrationBundle().formatStringFromName(
-      aKey,
-      aReplacements,
-      aReplacements.length
-    );
+    return getMigrationBundle().formatStringFromName(aKey, aReplacements);
   },
 
   _getLocalePropertyForBrowser(browserId) {
     switch (browserId) {
+      case "chromium-edge":
       case "edge":
         return "sourceNameEdge";
       case "ie":
@@ -631,14 +650,14 @@ var MigrationUtils = Object.freeze({
         return "sourceNameChromeDev";
       case "chromium":
         return "sourceNameChromium";
-      case "waterfox":
-        return "sourceNameWaterfox";
-      case "firefox":
-        return "sourceNameFirefox";
+      case "chromium-edge-beta":
+        return "sourceNameEdgeBeta";
+      case "waterfoxrefresh":
+        return "sourceNameWaterfoxRefresh";
       case "360se":
         return "sourceName360se";
-      case "lfirefox":
-        return "sourceNameLfirefox";
+      case "firefox":
+        return "sourceNameFirefox";
       case "waterfoxclassic":
         return "sourceNameWaterfoxClassic";        
 
@@ -670,11 +689,13 @@ var MigrationUtils = Object.freeze({
   async createImportedBookmarksFolder(sourceNameStr, parentGuid) {
     let source = this.getLocalizedString("sourceName" + sourceNameStr);
     let title = this.getLocalizedString("importedBookmarksFolder", [source]);
-    return (await PlacesUtils.bookmarks.insert({
-      type: PlacesUtils.bookmarks.TYPE_FOLDER,
-      parentGuid,
-      title,
-    })).guid;
+    return (
+      await PlacesUtils.bookmarks.insert({
+        type: PlacesUtils.bookmarks.TYPE_FOLDER,
+        parentGuid,
+        title,
+      })
+    ).guid;
   },
 
   /**
@@ -785,15 +806,7 @@ var MigrationUtils = Object.freeze({
    * for this source, or null otherwise.
    *
    * @param aKey internal name of the migration source.
-   *             Supported values: ie (windows),
-   *                               edge (windows),
-   *                               safari (mac),
-   *                               canary (mac/windows),
-   *                               chrome (mac/windows/linux),
-   *                               chromium (mac/windows/linux),
-   *                               360se (windows),
-   *                               firefox,
-   *                               lfirefox.
+   *             See `gAvailableMigratorKeys` for supported values by OS.
    *
    * If null is returned,  either no data can be imported
    * for the given migrator, or aMigratorKey is invalid  (e.g. ie on mac,
@@ -835,12 +848,13 @@ var MigrationUtils = Object.freeze({
    */
   getMigratorKeyForDefaultBrowser() {
     // Canary uses the same description as Chrome so we can't distinguish them.
+    // Edge Beta on macOS uses "Microsoft Edge" with no "beta" indication.
     const APP_DESC_TO_KEY = {
       "Internet Explorer": "ie",
       "Microsoft Edge": "edge",
       Safari: "safari",
-      Firefox: "firefox",
-      Nightly: "firefox",
+      Firefox: "waterfoxrefresh",
+      Nightly: "waterfoxrefresh",
       "Google Chrome": "chrome", // Windows, Linux
       Chrome: "chrome", // OS X
       Chromium: "chromium", // Windows, OS X
@@ -856,7 +870,7 @@ var MigrationUtils = Object.freeze({
       key = APP_DESC_TO_KEY[browserDesc] || "";
       // Handle devedition, as well as "FirefoxNightly" on OS X.
       if (!key && browserDesc.startsWith("Firefox")) {
-        key = "firefox";
+        key = "waterfoxrefresh";
       }
     } catch (ex) {
       Cu.reportError("Could not detect default browser: " + ex);
@@ -866,7 +880,7 @@ var MigrationUtils = Object.freeze({
     // ourselves as the default (on Windows 7 and below). In that case, check if we
     // have a registry key that tells us where to go:
     if (
-      key == "firefox" &&
+      key == "waterfoxrefresh" &&
       AppConstants.isPlatformAndVersionAtMost("win", "6.2")
     ) {
       // Because we remove the registry key, reading the registry key only works once.
@@ -1010,7 +1024,7 @@ var MigrationUtils = Object.freeze({
 
     Services.ww.openWindow(
       aOpener,
-      "chrome://browser/content/migration/migration.xul",
+      "chrome://browser/content/migration/migration.xhtml",
       "_blank",
       features,
       params
@@ -1032,7 +1046,7 @@ var MigrationUtils = Object.freeze({
    *        browser selected, if it could be detected and if there is a
    *        migrator for it, or with the first option selected as a fallback
    *        (The first option is hardcoded to be the most common browser for
-   *         the OS we run on.  See migration.xul).
+   *         the OS we run on.  See migration.xhtml).
    * @param [optional] aProfileToMigrate
    *        If set, the migration wizard will import from the profile indicated.
    * @throws if aMigratorKey is invalid or if it points to a non-existent
@@ -1207,7 +1221,11 @@ var MigrationUtils = Object.freeze({
 
   initializeUndoData() {
     gKeepUndoData = true;
-    gUndoData = new Map([["bookmarks", []], ["visits", []], ["logins", []]]);
+    gUndoData = new Map([
+      ["bookmarks", []],
+      ["visits", []],
+      ["logins", []],
+    ]);
   },
 
   async _postProcessUndoData(state) {
@@ -1222,9 +1240,10 @@ var MigrationUtils = Object.freeze({
     let bmPromises = bookmarkFolders.map(({ guid }) => {
       // Ignore bookmarks where the promise doesn't resolve (ie that are missing)
       // Also check that the bookmark fetch returns isn't null before adding it.
-      return PlacesUtils.bookmarks
-        .fetch(guid)
-        .then(bm => bm && bookmarkFolderData.push(bm), () => {});
+      return PlacesUtils.bookmarks.fetch(guid).then(
+        bm => bm && bookmarkFolderData.push(bm),
+        () => {}
+      );
     });
 
     await Promise.all(bmPromises);
@@ -1304,18 +1323,23 @@ var MigrationUtils = Object.freeze({
   MIGRATION_ENTRYPOINT_PASSWORDS: 4,
   MIGRATION_ENTRYPOINT_NEWTAB: 5,
   MIGRATION_ENTRYPOINT_FILE_MENU: 6,
+  MIGRATION_ENTRYPOINT_HELP_MENU: 7,
 
   _sourceNameToIdMapping: {
     nothing: 1,
-    firefox: 2,
+    waterfoxrefresh: 2,
     edge: 3,
     ie: 4,
     chrome: 5,
+    "chrome-beta": 5,
+    "chrome-dev": 5,
     chromium: 6,
     canary: 7,
     safari: 8,
     "360se": 9,
-    "lfirefox": 10,
+    "chromium-edge": 10,
+    "chromium-edge-beta": 10,
+    "firefox": 11,
   },
   getSourceIdForTelemetry(sourceName) {
     return this._sourceNameToIdMapping[sourceName] || 0;

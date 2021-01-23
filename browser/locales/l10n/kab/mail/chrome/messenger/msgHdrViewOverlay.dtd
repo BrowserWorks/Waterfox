@@ -1,0 +1,114 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "I">
+<!ENTITY fromField4.label "Si">
+<!ENTITY senderField4.label "Amazan">
+<!ENTITY author.label "Ameskar">
+<!ENTITY organizationField4.label "Takebbanit">
+<!ENTITY replyToField4.label "Err i">
+
+<!ENTITY subjectField4.label "Asentel">
+<!ENTITY ccField4.label "Anɣ-i">
+<!ENTITY bccField4.label "Anɣ.Uff.I">
+<!ENTITY newsgroupsField4.label "Igrawen n isalen">
+<!ENTITY followupToField4.label "Seḍfer-I">
+<!ENTITY tagsHdr4.label "Tibzimin">
+<!ENTITY dateField4.label "Azemz">
+<!ENTITY userAgentField4.label "Ameggi aseqdac">
+<!ENTITY referencesField4.label "Timsisɣal">
+<!ENTITY messageIdField4.label "Asulay n yizen">
+<!ENTITY inReplyToField4.label "Di tririt i">
+<!ENTITY originalWebsite4.label "Asmel web">
+
+<!ENTITY hdrArchiveButton1.label "Aɣbaṛ">
+<!ENTITY hdrArchiveButton1.tooltip "Ḥrez izen-agi">
+<!ENTITY hdrSmartReplyButton1.label "Tiririt s tigzi">
+<!ENTITY hdrReplyButton1.label "Err">
+<!ENTITY hdrReplyButton2.tooltip "Err i umazan n yizen-agi">
+<!ENTITY hdrReplyAllButton1.label "Err-asen akk">
+<!ENTITY hdrReplyAllButton1.tooltip "Err i umazan d inermisen imeṛṛa">
+<!ENTITY hdrReplyListButton1.label "Err i tebdart">
+<!ENTITY hdrReplyListButton1.tooltip "Err i tabdart n tirawt">
+<!ENTITY hdrFollowupButton1.label "Ḍfaṛ">
+<!ENTITY hdrFollowupButton1.tooltip "Azen aseḍfeṛ i ugraw-agi n isalen">
+<!ENTITY hdrForwardButton1.label "Welleh">
+<!ENTITY hdrForwardButton1.tooltip "Welleh izen-agi">
+<!ENTITY hdrJunkButton1.label "Aspam">
+<!ENTITY hdrJunkButton1.tooltip "Creḍ izen-agi d aspam">
+<!ENTITY hdrTrashButton1.label "Kkes">
+<!ENTITY hdrTrashButton1.tooltip "Kkes izen-agi">
+
+<!ENTITY hdrViewToolbarShowFull.label "Sken tiginitin akked uḍris">
+<!ENTITY hdrViewToolbarShowFull.accesskey "ḍ">
+<!ENTITY hdrViewToolbarShowIcons.label "Sken kan tignitin">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "k">
+<!ENTITY hdrViewToolbarShowText.label "Sken kan aḍris">
+<!ENTITY hdrViewToolbarShowText.accesskey "r">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "Skan yal tikelt Err i umazan">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "a">
+
+<!ENTITY otherActionsButton2.label "Ugar">
+<!ENTITY otherActionsButton.tooltip "Ugar n tigawin">
+<!ENTITY otherActionsOpenConversation1.label "Ldi deg udiwenni">
+<!ENTITY otherActionsOpenConversation1.accesskey "d">
+<!ENTITY otherActionsOpenInNewWindow1.label "Ldi deg usfaylu amaynut">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "s">
+<!ENTITY otherActionsOpenInNewTab1.label "Ldi ɣef yiccer amaynut">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "c">
+<!ENTITY markAsReadMenuItem1.label "Creḍ amzun yettwaɣṛa">
+<!ENTITY markAsReadMenuItem1.accesskey "z">
+<!ENTITY markAsUnreadMenuItem1.label "Creḍ amzun ur yettwaɣri ara">
+<!ENTITY markAsUnreadMenuItem1.accesskey "C">
+<!ENTITY saveAsMenuItem1.label "Sekles s yisem…">
+<!ENTITY saveAsMenuItem1.accesskey "l">
+<!ENTITY viewSourceMenuItem1.label "Sken aɣbalu">
+<!ENTITY viewSourceMenuItem1.accesskey "ɣ">
+<!ENTITY otherActionsPrint1.label "Siggez…">
+<!ENTITY otherActionsPrint1.accesskey "S">
+
+<!-- Attachment bar context menu items -->
+<!ENTITY startExpandedCmd.label    "Sken di tazwara agalis n imeddayen">
+<!ENTITY startExpandedCmd.accesskey    "g">
+
+<!-- Attachment context menu items -->
+<!ENTITY openAttachmentCmd.label    "Ldi">
+<!ENTITY openAttachmentCmd.accesskey    "L">
+<!ENTITY saveAsAttachmentCmd.label    "Sekles s yisem…">
+<!ENTITY saveAsAttachmentCmd.accesskey    "k">
+<!ENTITY detachAttachmentCmd.label    "Kkes aseddu…">
+<!ENTITY detachAttachmentCmd.accesskey    "d">
+<!ENTITY deleteAttachmentCmd.label    "Kkes">
+<!ENTITY deleteAttachmentCmd.accesskey    "K">
+<!ENTITY openAllAttachmentsCmd.label    "Ldi Merra…">
+<!ENTITY openAllAttachmentsCmd.accesskey    "L">
+<!ENTITY saveAllAttachmentsCmd.label    "Sekles akk…">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "k">
+<!ENTITY detachAllAttachmentsCmd.label    "Kkes akk imeddayen…">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "k">
+<!ENTITY deleteAllAttachmentsCmd.label    "Kkes akk…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "s">
+
+<!ENTITY openAttachment.tooltip "Ldi tasawit yernan">
+
+<!ENTITY detachedAttachmentFolder.show.label        "Ldi akaram igebren afaylu">
+<!ENTITY detachedAttachmentFolder.show.accesskey    "K">
+<!ENTITY detachedAttachmentFolder.showMac.label     "Sken-d di Finder">
+<!ENTITY detachedAttachmentFolder.showMac.accesskey "F">
+
+<!-- Attachment toolbar items -->
+<!ENTITY saveAttachmentButton1.label       "Sekles">
+<!ENTITY saveAttachmentButton1.tooltip     "Sekles afaylu i d-yeddan">
+<!ENTITY saveAllAttachmentsButton1.label   "Sekles akk">
+<!ENTITY saveAllAttachmentsButton1.tooltip "Sekles akk ifuyla i d-yeddan">
+
+<!ENTITY copyLinkCmd.label        "Nɣel tansa n useɣwen">
+<!ENTITY copyLinkCmd.accesskey    "N">
+
+<!ENTITY CopyMessageId.label "Nɣel asulay n yizen">
+<!ENTITY CopyMessageId.accesskey "N">
+<!ENTITY OpenMessageForMsgId.label "Ldi izen i wesulay">
+<!ENTITY OpenMessageForMsgId.accesskey "L">
+<!ENTITY OpenBrowserWithMsgId.label "Ldi iminig s usulay n yizen">
+<!ENTITY OpenBrowserWithMsgId.accesskey "m">

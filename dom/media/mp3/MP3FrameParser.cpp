@@ -11,7 +11,6 @@
 
 #include "mozilla/Assertions.h"
 #include "mozilla/EndianUtils.h"
-#include "mozilla/Pair.h"
 #include "mozilla/ResultExtensions.h"
 #include "mozilla/ScopeExit.h"
 #include "VideoUtils.h"
@@ -35,7 +34,7 @@ static const int BITRATE_SAMPLERATE_PADDING_PRIVATE = 2;
 static const int CHANNELMODE_MODEEXT_COPY_ORIG_EMPH = 3;
 }  // namespace frame_header
 
-FrameParser::FrameParser() {}
+FrameParser::FrameParser() = default;
 
 void FrameParser::Reset() {
   mID3Parser.Reset();
@@ -78,7 +77,7 @@ Result<bool, nsresult> FrameParser::Parse(BufferReader* aReader,
   MOZ_ASSERT(aReader && aBytesToSkip);
   *aBytesToSkip = 0;
 
-  if (!mID3Parser.Header().Size() && !mFirstFrame.Length()) {
+  if (!mID3Parser.Header().HasSizeBeenSet() && !mFirstFrame.Length()) {
     // No MP3 frames have been parsed yet, look for ID3v2 headers at file begin.
     // ID3v1 tags may only be at file end.
     // TODO: should we try to read ID3 tags at end of file/mid-stream, too?
@@ -445,9 +444,9 @@ Result<bool, nsresult> FrameParser::VBRHeader::ParseVBRI(
 }
 
 bool FrameParser::VBRHeader::Parse(BufferReader* aReader) {
-  auto res = MakePair(ParseVBRI(aReader), ParseXing(aReader));
-  const bool rv = (res.first().isOk() && res.first().unwrap()) ||
-                  (res.second().isOk() && res.second().unwrap());
+  auto res = std::make_pair(ParseVBRI(aReader), ParseXing(aReader));
+  const bool rv = (res.first.isOk() && res.first.unwrap()) ||
+                  (res.second.isOk() && res.second.unwrap());
   if (rv) {
     MP3LOG(
         "VBRHeader::Parse found valid VBR/CBR header: type=%s"
@@ -524,7 +523,7 @@ const ID3Parser::ID3Header& ID3Parser::Header() const { return mHeader; }
 ID3Parser::ID3Header::ID3Header() { Reset(); }
 
 void ID3Parser::ID3Header::Reset() {
-  mSize = 0;
+  mSize.reset();
   mPos = 0;
 }
 
@@ -541,11 +540,13 @@ uint8_t ID3Parser::ID3Header::Flags() const {
 }
 
 uint32_t ID3Parser::ID3Header::Size() const {
-  if (!IsValid()) {
+  if (!IsValid() || !mSize) {
     return 0;
   }
-  return mSize;
+  return *mSize;
 }
+
+bool ID3Parser::ID3Header::HasSizeBeenSet() const { return !!mSize; }
 
 uint8_t ID3Parser::ID3Header::FooterSize() const {
   if (Flags() & (1 << 4)) {
@@ -605,8 +606,8 @@ bool ID3Parser::ID3Header::IsValid() const { return mPos >= SIZE; }
 bool ID3Parser::ID3Header::Update(uint8_t c) {
   if (mPos >= id3_header::SIZE_END - id3_header::SIZE_LEN &&
       mPos < id3_header::SIZE_END) {
-    mSize <<= 7;
-    mSize |= c;
+    uint32_t tmp = mSize.valueOr(0) << 7;
+    mSize = Some(tmp | c);
   }
   if (mPos < SIZE) {
     mRaw[mPos] = c;

@@ -9,10 +9,14 @@
 #include "mozilla/UniquePtr.h"
 #include "mozilla/gfx/Point.h"
 #include "mozilla/layers/ProfilerScreenshots.h"
+#include "mozilla/webrender/webrender_ffi.h"
 #include "nsTArray.h"
 
 namespace mozilla {
 namespace wr {
+
+struct Renderer;
+class RendererOGL;
 
 /**
  * Used by |RendererOGL| to grab screenshots from WebRender and submit them to
@@ -32,14 +36,14 @@ class RendererScreenshotGrabber final {
    * The captured screenshot will not be mapped until the second call to
    * |MaybeProcessQueue| after this call to |MaybeGrabScreenshot|.
    */
-  void MaybeGrabScreenshot(Renderer* aRenderer,
+  void MaybeGrabScreenshot(RendererOGL* aRendererOGL,
                            const gfx::IntSize& aWindowSize);
 
   /**
    * Process the screenshots pending in the queue if we are profiling and
    * screenshots are enabled.
    */
-  void MaybeProcessQueue(Renderer* aRenderer);
+  void MaybeProcessQueue(RendererOGL* aRenderer);
 
  private:
   /**

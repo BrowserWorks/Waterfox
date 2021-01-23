@@ -18,6 +18,7 @@
 
 #include "nsIChannel.h"
 #include "nsICacheInfoChannel.h"
+#include "nsIClassOfService.h"
 #include "mozilla/dom/Document.h"
 #include "nsIThreadRetargetableRequest.h"
 #include "nsIInputStream.h"
@@ -59,9 +60,10 @@ imgRequest::imgRequest(imgLoader* aLoader, const ImageCacheKey& aCacheKey)
       mValidator(nullptr),
       mInnerWindowId(0),
       mCORSMode(imgIRequest::CORS_NONE),
-      mReferrerPolicy(mozilla::net::RP_Unset),
       mImageErrorCode(NS_OK),
       mImageAvailable(false),
+      mIsDeniedCrossSiteCORSRequest(false),
+      mIsCrossSiteNoCORSRequest(false),
       mMutex("imgRequest"),
       mProgressTracker(new ProgressTracker()),
       mIsMultiPartChannel(false),
@@ -85,8 +87,9 @@ imgRequest::~imgRequest() {
 nsresult imgRequest::Init(nsIURI* aURI, nsIURI* aFinalURI,
                           bool aHadInsecureRedirect, nsIRequest* aRequest,
                           nsIChannel* aChannel, imgCacheEntry* aCacheEntry,
-                          nsISupports* aCX, nsIPrincipal* aTriggeringPrincipal,
-                          int32_t aCORSMode, ReferrerPolicy aReferrerPolicy) {
+                          mozilla::dom::Document* aLoadingDocument,
+                          nsIPrincipal* aTriggeringPrincipal, int32_t aCORSMode,
+                          nsIReferrerInfo* aReferrerInfo) {
   MOZ_ASSERT(NS_IsMainThread(), "Cannot use nsIURI off main thread!");
 
   LOG_FUNC(gImgLog, "imgRequest::Init");
@@ -105,21 +108,18 @@ nsresult imgRequest::Init(nsIURI* aURI, nsIURI* aFinalURI,
   mTimedChannel = do_QueryInterface(mChannel);
   mTriggeringPrincipal = aTriggeringPrincipal;
   mCORSMode = aCORSMode;
-  mReferrerPolicy = aReferrerPolicy;
+  mReferrerInfo = aReferrerInfo;
 
   // If the original URI and the final URI are different, check whether the
   // original URI is secure. We deliberately don't take the final URI into
   // account, as it needs to be handled using more complicated rules than
   // earlier elements of the redirect chain.
   if (aURI != aFinalURI) {
-    bool isHttps = false;
-    bool isChrome = false;
     bool schemeLocal = false;
-    if (NS_FAILED(aURI->SchemeIs("https", &isHttps)) ||
-        NS_FAILED(aURI->SchemeIs("chrome", &isChrome)) ||
-        NS_FAILED(NS_URIChainHasFlags(
+    if (NS_FAILED(NS_URIChainHasFlags(
             aURI, nsIProtocolHandler::URI_IS_LOCAL_RESOURCE, &schemeLocal)) ||
-        (!isHttps && !isChrome && !schemeLocal)) {
+        (!aURI->SchemeIs("https") && !aURI->SchemeIs("chrome") &&
+         !schemeLocal)) {
       mHadInsecureRedirect = true;
     }
   }
@@ -138,12 +138,11 @@ nsresult imgRequest::Init(nsIURI* aURI, nsIURI* aFinalURI,
   mCacheEntry = aCacheEntry;
   mCacheEntry->UpdateLoadTime();
 
-  SetLoadId(aCX);
+  SetLoadId(aLoadingDocument);
 
   // Grab the inner window ID of the loading document, if possible.
-  nsCOMPtr<dom::Document> doc = do_QueryInterface(aCX);
-  if (doc) {
-    mInnerWindowId = doc->InnerWindowID();
+  if (aLoadingDocument) {
+    mInnerWindowId = aLoadingDocument->InnerWindowID();
   }
 
   return NS_OK;
@@ -389,18 +388,9 @@ nsresult imgRequest::GetFinalURI(nsIURI** aURI) {
   return NS_ERROR_FAILURE;
 }
 
-bool imgRequest::IsScheme(const char* aScheme) const {
-  MOZ_ASSERT(aScheme);
-  bool isScheme = false;
-  if (NS_WARN_IF(NS_FAILED(mURI->SchemeIs(aScheme, &isScheme)))) {
-    return false;
-  }
-  return isScheme;
-}
+bool imgRequest::IsChrome() const { return mURI->SchemeIs("chrome"); }
 
-bool imgRequest::IsChrome() const { return IsScheme("chrome"); }
-
-bool imgRequest::IsData() const { return IsScheme("data"); }
+bool imgRequest::IsData() const { return mURI->SchemeIs("data"); }
 
 nsresult imgRequest::GetImageErrorCode() { return mImageErrorCode; }
 
@@ -469,7 +459,7 @@ void imgRequest::AdjustPriorityInternal(int32_t aDelta) {
 }
 
 void imgRequest::BoostPriority(uint32_t aCategory) {
-  if (!gfxPrefs::ImageLayoutNetworkPriority()) {
+  if (!StaticPrefs::image_layout_network_priority()) {
     return;
   }
 
@@ -655,12 +645,23 @@ imgRequest::OnStartRequest(nsIRequest* aRequest) {
 
   RefPtr<Image> image;
 
+  if (nsCOMPtr<nsIHttpChannel> httpChannel = do_QueryInterface(aRequest)) {
+    nsresult rv;
+    nsCOMPtr<nsILoadInfo> loadInfo = httpChannel->LoadInfo();
+    mIsDeniedCrossSiteCORSRequest =
+        loadInfo->GetTainting() == LoadTainting::CORS &&
+        (NS_FAILED(httpChannel->GetStatus(&rv)) || NS_FAILED(rv));
+    mIsCrossSiteNoCORSRequest = loadInfo->GetTainting() == LoadTainting::Opaque;
+  }
+
   // Figure out if we're multipart.
   nsCOMPtr<nsIMultiPartChannel> multiPartChannel = do_QueryInterface(aRequest);
-  MOZ_ASSERT(multiPartChannel || !mIsMultiPartChannel,
-             "Stopped being multipart?");
   {
     MutexAutoLock lock(mMutex);
+
+    MOZ_ASSERT(multiPartChannel || !mIsMultiPartChannel,
+               "Stopped being multipart?");
+
     mNewPartPending = true;
     image = mImage;
     mIsMultiPartChannel = bool(multiPartChannel);
@@ -996,6 +997,13 @@ void imgRequest::FinishPreparingForNewPart(const NewPartResult& aResult) {
 
 bool imgRequest::ImageAvailable() const { return mImageAvailable; }
 
+void imgRequest::PrioritizeAsPreload() {
+  if (nsCOMPtr<nsIClassOfService> cos = do_QueryInterface(mChannel)) {
+    cos->AddClassFlags(nsIClassOfService::Unblocked);
+  }
+  AdjustPriorityInternal(nsISupportsPriority::PRIORITY_HIGHEST);
+}
+
 NS_IMETHODIMP
 imgRequest::OnDataAvailable(nsIRequest* aRequest, nsIInputStream* aInStr,
                             uint64_t aOffset, uint32_t aCount) {
@@ -1193,15 +1201,12 @@ imgRequest::OnRedirectVerifyCallback(nsresult result) {
   // If the previous URI is a non-HTTPS URI, record that fact for later use by
   // security code, which needs to know whether there is an insecure load at any
   // point in the redirect chain.
-  bool isHttps = false;
-  bool isChrome = false;
   bool schemeLocal = false;
-  if (NS_FAILED(mFinalURI->SchemeIs("https", &isHttps)) ||
-      NS_FAILED(mFinalURI->SchemeIs("chrome", &isChrome)) ||
-      NS_FAILED(NS_URIChainHasFlags(mFinalURI,
+  if (NS_FAILED(NS_URIChainHasFlags(mFinalURI,
                                     nsIProtocolHandler::URI_IS_LOCAL_RESOURCE,
                                     &schemeLocal)) ||
-      (!isHttps && !isChrome && !schemeLocal)) {
+      (!mFinalURI->SchemeIs("https") && !mFinalURI->SchemeIs("chrome") &&
+       !schemeLocal)) {
     MutexAutoLock lock(mMutex);
 
     // The csp directive upgrade-insecure-requests performs an internal redirect

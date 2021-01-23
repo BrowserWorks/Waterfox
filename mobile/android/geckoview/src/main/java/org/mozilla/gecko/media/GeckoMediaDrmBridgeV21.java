@@ -32,7 +32,7 @@ import android.util.Log;
 import org.mozilla.gecko.util.StringUtils;
 import org.mozilla.gecko.util.ProxySelector;
 
-@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
+@TargetApi(Build.VERSION_CODES.LOLLIPOP)
 public class GeckoMediaDrmBridgeV21 implements GeckoMediaDrm {
     protected final String LOGTAG;
     private static final String INVALID_SESSION_ID = "Invalid";
@@ -47,6 +47,7 @@ public class GeckoMediaDrmBridgeV21 implements GeckoMediaDrm {
 
     private UUID mSchemeUUID;
     private Handler mHandler;
+    PostRequestTask mProvisionTask;
     private HandlerThread mHandlerThread;
     private ByteBuffer mCryptoSessionId;
 
@@ -259,6 +260,10 @@ public class GeckoMediaDrmBridgeV21 implements GeckoMediaDrm {
     @Override
     public void release() {
         if (DEBUG) Log.d(LOGTAG, "release()");
+        if (mProvisionTask != null) {
+            mProvisionTask.cancel(true);
+            mProvisionTask = null;
+        }
         if (mProvisioningPromiseId > 0) {
             onRejectPromise(mProvisioningPromiseId, "Releasing ... reject provisioning session.");
             mProvisioningPromiseId = 0;
@@ -612,10 +617,10 @@ public class GeckoMediaDrmBridgeV21 implements GeckoMediaDrm {
         }
         try {
             mProvisioningPromiseId = promiseId;
-            @SuppressLint("NewApi") MediaDrm.ProvisionRequest request = mDrm.getProvisionRequest();
-            PostRequestTask postTask =
+            MediaDrm.ProvisionRequest request = mDrm.getProvisionRequest();
+            mProvisionTask =
                 new PostRequestTask(promiseId, request.getDefaultUrl(), request.getData());
-            postTask.execute();
+            mProvisionTask.execute();
         } catch (Exception e) {
             onRejectPromise(promiseId, "Exception happened in startProvisioning !");
             mProvisioningPromiseId = 0;
@@ -624,7 +629,7 @@ public class GeckoMediaDrmBridgeV21 implements GeckoMediaDrm {
 
     private void onProvisionResponse(final int promiseId, final byte[] response) {
         if (DEBUG) Log.d(LOGTAG, "onProvisionResponse()");
-
+        mProvisionTask = null;
         mProvisioningPromiseId = 0;
         boolean success = provideProvisionResponse(response);
         if (success) {

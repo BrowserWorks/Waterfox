@@ -1,8 +1,0 @@
-The source from this directory was copied from the cubeb-pulse-rs
-git repository using the update.sh script.  The only changes
-made were those applied by update.sh and the addition of
-Makefile.in build files for the Mozilla build system.
-
-The cubeb-pulse-rs git repository is: https://github.com/djg/cubeb-pulse-rs.git
-
-The git commit ID used was 17c1629c323ff24d656ff9449bf50d6758aafc1a (2019-01-24 07:50:09 +1300)

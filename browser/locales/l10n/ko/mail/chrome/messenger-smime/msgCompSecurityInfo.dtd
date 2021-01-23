@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSecurityInfo.dtd UI for viewing security status when composing a message -->
+
+<!--LOCALIZATION NOTE msgCompSecurityInfo.dtd UI for viewing security status when composing a message -->
+<!ENTITY title.label "메시지 보안 정보">
+<!ENTITY subject.plaintextWarning "제목과 메일 주소는 암호화되지 않습니다.">
+<!ENTITY status.heading "메시지 내용은 다음과 같이 전송됩니다.">
+<!ENTITY status.signed "디지털 서명됨:">
+<!ENTITY status.encrypted "암호화 됨:">
+<!ENTITY status.certificates "인증서:">
+<!ENTITY view.label "보기">
+<!ENTITY view.accesskey "V">
+<!ENTITY tree.recipient "받는 사람:">
+<!ENTITY tree.status "상태:">
+<!ENTITY tree.issuedDate "발급일:">
+<!ENTITY tree.expiresDate "만료일:">

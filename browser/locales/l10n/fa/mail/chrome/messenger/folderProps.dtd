@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "ویژگی‌ها">
+
+<!ENTITY generalInfo.label                       "General Information">
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY retention.label "Retention Policy">
+
+
+<!ENTITY daysOld.label "days old">
+<!ENTITY message.label "messages">
+<!ENTITY retentionCleanup.label "برای آزاد کردن فضای دیسک، پیغام‌های قدیمی را می‌توان برای همیشه حذف نمود.">
+<!ENTITY retentionCleanupImap.label "To recover disk space, old messages can be permanently deleted, both local copies and originals on the remote server.">
+<!ENTITY retentionCleanupPop.label "To recover disk space, old messages can be permanently deleted, including originals on the remote server.">
+<!ENTITY retentionDeleteMsg.label "Delete messages more than">
+<!ENTITY retentionDeleteMsg.accesskey "m">
+<!ENTITY retentionKeepAll.label "Don't delete any messages">
+<!ENTITY retentionKeepAll.accesskey "a">
+
+
+<!ENTITY retentionApplyToFlagged.label "Always keep starred messages">
+<!ENTITY retentionApplyToFlagged.accesskey "e">
+
+
+
+
+<!ENTITY offlineFolder.check.label               "Select this folder for offline use">
+<!ENTITY offlineFolder.check.accesskey           "S">
+<!ENTITY offlineFolder.button.label              "Download Now">
+<!ENTITY offlineFolder.button.accesskey          "D">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Select this newsgroup for offline use">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "o">
+<!ENTITY offlineNewsgroup.button.label           "Download Now">
+<!ENTITY offlineNewsgroup.button.accesskey       "D">
+
+<!ENTITY folderProps.name.label                  "نام:">
+<!ENTITY folderProps.name.accesskey              "ن">
+<!ENTITY folderProps.location.label              "مکان:">
+<!ENTITY folderProps.location.accesskey          "م">
+
+<!ENTITY folderSharingTab.label                  "Sharing">
+<!ENTITY privileges.button.label                 "Privileges…">
+<!ENTITY privileges.button.accesskey             "P">
+<!ENTITY permissionsDesc.label                   "You have the following permissions:">
+<!ENTITY folderType.label                        "Folder Type:">
+
+<!ENTITY folderQuotaTab.label                    "Quota">
+<!ENTITY folderQuotaUsage.label                  "Usage:">
+<!ENTITY folderQuotaStatus.label                 "وضعیت:">
+
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+

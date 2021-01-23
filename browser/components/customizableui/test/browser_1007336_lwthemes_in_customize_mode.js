@@ -75,9 +75,9 @@ add_task(async function() {
 
   is(
     header.nextElementSibling.nextElementSibling.nextElementSibling
-      .nextElementSibling,
+      .nextElementSibling.nextElementSibling,
     footer,
-    "There should only be three themes (default, light, dark) in the 'My Themes' section by default"
+    "There should only be four themes (default, light, dark, alpenglow) in the 'My Themes' section by default"
   );
   is(
     header.nextElementSibling.theme.id,
@@ -109,9 +109,7 @@ add_task(async function() {
   ok(!button.disabled, "Reset button should not be disabled anymore");
   ok(
     /light/i.test(themesButtonIcon.style.backgroundImage),
-    `Button should show light theme thumbnail - was: "${
-      themesButtonIcon.style.backgroundImage
-    }"`
+    `Button should show light theme thumbnail - was: "${themesButtonIcon.style.backgroundImage}"`
   );
 
   popupShownPromise = popupShown(popup);
@@ -123,7 +121,7 @@ add_task(async function() {
     "toolbarbutton.customization-lwtheme-menu-theme[active]"
   );
   is(activeThemes.length, 1, "Exactly 1 theme should be selected");
-  if (activeThemes.length > 0) {
+  if (activeThemes.length) {
     is(
       activeThemes[0].theme.id,
       LIGHT_THEME_ID,
@@ -141,9 +139,7 @@ add_task(async function() {
 
   ok(
     !themesButtonIcon.style.backgroundImage,
-    `Button should show fallback theme thumbnail - was: "${
-      themesButtonIcon.style.backgroundImage
-    }"`
+    `Button should show fallback theme thumbnail - was: "${themesButtonIcon.style.backgroundImage}"`
   );
 
   popupShownPromise = popupShown(popup);
@@ -155,7 +151,7 @@ add_task(async function() {
     "toolbarbutton.customization-lwtheme-menu-theme[active]"
   );
   is(activeThemes.length, 1, "Exactly 1 theme should be selected");
-  if (activeThemes.length > 0) {
+  if (activeThemes.length) {
     is(
       activeThemes[0].theme.id,
       "my-theme-5@example.com",
@@ -183,7 +179,7 @@ add_task(async function() {
     "toolbarbutton.customization-lwtheme-menu-theme[active]"
   );
   is(activeThemes.length, 1, "Exactly 1 theme should be selected");
-  if (activeThemes.length > 0) {
+  if (activeThemes.length) {
     is(
       activeThemes[0].theme.id,
       firstLWThemeId,

@@ -45,7 +45,7 @@ class DelayedRunnable : public Runnable, public nsITimerCallback {
   }
 
   nsresult DoRun() {
-    nsCOMPtr<nsIRunnable> r = mWrappedRunnable.forget();
+    nsCOMPtr<nsIRunnable> r = std::move(mWrappedRunnable);
     return r->Run();
   }
 
@@ -73,7 +73,7 @@ class DelayedRunnable : public Runnable, public nsITimerCallback {
   }
 
  private:
-  ~DelayedRunnable() {}
+  ~DelayedRunnable() = default;
 
   nsCOMPtr<nsIEventTarget> mTarget;
   nsCOMPtr<nsIRunnable> mWrappedRunnable;
@@ -89,12 +89,12 @@ NS_IMPL_ISUPPORTS_INHERITED(DelayedRunnable, Runnable, nsITimerCallback)
 ThreadEventTarget::ThreadEventTarget(ThreadTargetSink* aSink,
                                      bool aIsMainThread)
     : mSink(aSink), mIsMainThread(aIsMainThread) {
-  mVirtualThread = GetCurrentVirtualThread();
+  mThread = PR_GetCurrentThread();
 }
 
-void ThreadEventTarget::SetCurrentThread() {
-  mVirtualThread = GetCurrentVirtualThread();
-}
+void ThreadEventTarget::SetCurrentThread() { mThread = PR_GetCurrentThread(); }
+
+void ThreadEventTarget::ClearCurrentThread() { mThread = nullptr; }
 
 NS_IMPL_ISUPPORTS(ThreadEventTarget, nsIEventTarget, nsISerialEventTarget)
 
@@ -124,6 +124,8 @@ ThreadEventTarget::Dispatch(already_AddRefed<nsIRunnable> aEvent,
   // XXX tracedRunnable will always leaked when we fail to disptch.
   event = tracedRunnable.forget();
 #endif
+
+  LogRunnable::LogDispatch(event.get());
 
   if (aFlags & DISPATCH_SYNC) {
     nsCOMPtr<nsIEventTarget> current = GetCurrentThreadEventTarget();
@@ -167,10 +169,11 @@ ThreadEventTarget::Dispatch(already_AddRefed<nsIRunnable> aEvent,
 NS_IMETHODIMP
 ThreadEventTarget::DelayedDispatch(already_AddRefed<nsIRunnable> aEvent,
                                    uint32_t aDelayMs) {
+  nsCOMPtr<nsIRunnable> event = aEvent;
   NS_ENSURE_TRUE(!!aDelayMs, NS_ERROR_UNEXPECTED);
 
   RefPtr<DelayedRunnable> r =
-      new DelayedRunnable(do_AddRef(this), std::move(aEvent), aDelayMs);
+      new DelayedRunnable(do_AddRef(this), event.forget(), aDelayMs);
   nsresult rv = r->Init();
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -185,6 +188,8 @@ ThreadEventTarget::IsOnCurrentThread(bool* aIsOnCurrentThread) {
 
 NS_IMETHODIMP_(bool)
 ThreadEventTarget::IsOnCurrentThreadInfallible() {
-  // Rely on mVirtualThread being correct.
-  MOZ_CRASH("IsOnCurrentThreadInfallible should never be called on nsIThread");
+  // This method is only going to be called if `mThread` is null, which
+  // only happens when the thread has exited the event loop.  Therefore, when
+  // we are called, we can never be on this thread.
+  return false;
 }

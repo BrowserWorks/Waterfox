@@ -4,21 +4,20 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from filecmp import dircmp
 import json
 import os
 import platform
 import re
-from mozfile.mozfile import remove as mozfileremove
 import subprocess
 import sys
-import shutil
-import tempfile
-from distutils.version import LooseVersion, StrictVersion
+from distutils.version import LooseVersion
+from filecmp import dircmp
+
 from mozbuild.nodeutil import (find_node_executable, find_npm_executable,
                                NPM_MIN_VERSION, NODE_MIN_VERSION)
-sys.path.append(os.path.join(
-    os.path.dirname(__file__), "..", "..", "..", "third_party", "python", "which"))
+from mozbuild.util import ensure_subprocess_env
+from mozfile.mozfile import remove as mozfileremove
+
 
 NODE_MACHING_VERSION_NOT_FOUND_MESSAGE = """
 Could not find Node.js executable later than %s.
@@ -74,13 +73,22 @@ def eslint_setup(should_clobber=False):
     package_setup(get_project_root(), 'eslint', should_clobber=should_clobber)
 
 
-def package_setup(package_root, package_name, should_clobber=False):
+def package_setup(package_root, package_name, should_update=False, should_clobber=False,
+                  no_optional=False):
     """Ensure `package_name` at `package_root` is installed.
 
+    When `should_update` is true, clobber, install, and produce a new
+    "package-lock.json" file.
+
     This populates `package_root/node_modules`.
+
     """
     orig_project_root = get_project_root()
     orig_cwd = os.getcwd()
+
+    if should_update:
+        should_clobber = True
+
     try:
         set_project_root(package_root)
         sys.path.append(os.path.dirname(__file__))
@@ -99,7 +107,7 @@ def package_setup(package_root, package_name, should_clobber=False):
             else:
                 mozfileremove(node_modules_path)
 
-        npm_path, version = find_npm_executable()
+        npm_path, _ = find_npm_executable()
         if not npm_path:
             return 1
 
@@ -109,16 +117,14 @@ def package_setup(package_root, package_name, should_clobber=False):
 
         extra_parameters = ["--loglevel=error"]
 
+        if no_optional:
+            extra_parameters.append('--no-optional')
+
         package_lock_json_path = os.path.join(get_project_root(), "package-lock.json")
-        package_lock_json_tmp_path = os.path.join(tempfile.gettempdir(), "package-lock.json.tmp")
 
-        # If we have an npm version newer than 5.8.0, just use 'ci', as that's much
-        # simpler and does exactly what we want.
-        npm_is_older_version = version < StrictVersion("5.8.0").version
-
-        if npm_is_older_version:
+        if should_update:
             cmd = [npm_path, "install"]
-            shutil.copy2(package_lock_json_path, package_lock_json_tmp_path)
+            mozfileremove(package_lock_json_path)
         else:
             cmd = [npm_path, "ci"]
 
@@ -127,21 +133,15 @@ def package_setup(package_root, package_name, should_clobber=False):
         if platform.system() != "Windows":
             cmd.insert(0, node_path)
 
-        cmd.extend(extra_parameters)
-
         # Ensure that bare `node` and `npm` in scripts, including post-install scripts, finds the
         # binary we're invoking with.  Without this, it's easy for compiled extensions to get
         # mismatched versions of the Node.js extension API.
-        path = os.environ.get('PATH', '').split(os.pathsep)
-        node_dir = os.path.dirname(node_path)
-        if node_dir not in path:
-            path = [node_dir] + path
+        extra_parameters.append("--scripts-prepend-node-path")
+
+        cmd.extend(extra_parameters)
 
         print("Installing %s for mach using \"%s\"..." % (package_name, " ".join(cmd)))
-        result = call_process(package_name, cmd, append_env={'PATH': os.pathsep.join(path)})
-
-        if npm_is_older_version:
-            shutil.move(package_lock_json_tmp_path, package_lock_json_path)
+        result = call_process(package_name, cmd)
 
         if not result:
             return 1
@@ -158,7 +158,7 @@ def package_setup(package_root, package_name, should_clobber=False):
 
 def call_process(name, cmd, cwd=None, append_env={}):
     env = dict(os.environ)
-    env.update(append_env)
+    env.update(ensure_subprocess_env(append_env))
 
     try:
         with open(os.devnull, "w") as fnull:
@@ -177,7 +177,7 @@ def call_process(name, cmd, cwd=None, append_env={}):
 def expected_eslint_modules():
     # Read the expected version of ESLint and external modules
     expected_modules_path = os.path.join(get_project_root(), "package.json")
-    with open(expected_modules_path, "r") as f:
+    with open(expected_modules_path, "r", encoding="utf-8") as f:
         sections = json.load(f)
         expected_modules = sections["dependencies"]
         expected_modules.update(sections["devDependencies"])
@@ -186,14 +186,14 @@ def expected_eslint_modules():
     # dependencies are up to date.
     mozilla_json_path = os.path.join(get_eslint_module_path(),
                                      "eslint-plugin-mozilla", "package.json")
-    with open(mozilla_json_path, "r") as f:
+    with open(mozilla_json_path, "r", encoding="utf-8") as f:
         expected_modules.update(json.load(f)["dependencies"])
 
     # Also read the in-tree ESLint plugin spidermonkey information, to ensure the
     # dependencies are up to date.
     mozilla_json_path = os.path.join(get_eslint_module_path(),
                                      "eslint-plugin-spidermonkey-js", "package.json")
-    with open(mozilla_json_path, "r") as f:
+    with open(mozilla_json_path, "r", encoding="utf-8") as f:
         expected_modules.update(json.load(f)["dependencies"])
 
     return expected_modules
@@ -227,7 +227,7 @@ def eslint_module_needs_setup():
     needs_clobber = False
     node_modules_path = os.path.join(get_project_root(), "node_modules")
 
-    for name, expected_data in expected_eslint_modules().iteritems():
+    for name, expected_data in expected_eslint_modules().items():
         # expected_eslint_modules returns a string for the version number of
         # dependencies for installation of eslint generally, and an object
         # for our in-tree plugins (which contains the entire module info).
@@ -242,8 +242,7 @@ def eslint_module_needs_setup():
             print("%s v%s needs to be installed locally." % (name, version_range))
             has_issues = True
             continue
-
-        data = json.load(open(path))
+        data = json.load(open(path, encoding="utf-8"))
 
         if version_range.startswith("file:"):
             # We don't need to check local file installations for versions, as
@@ -310,8 +309,8 @@ def get_possible_node_paths_win():
 
 def get_version(path):
     try:
-        version_str = subprocess.check_output([path, "--version"],
-                                              stderr=subprocess.STDOUT)
+        version_str = subprocess.check_output([path, "--version"], stderr=subprocess.STDOUT,
+                                              universal_newlines=True)
         return version_str
     except (subprocess.CalledProcessError, OSError):
         return None

@@ -2,6 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import os
@@ -77,7 +78,7 @@ class TestMozbuildReading(unittest.TestCase):
         try:
             config = mb.config_environment
         except Exception as e:
-            if e.message == 'config.status not available. Run configure.':
+            if str(e) == 'config.status not available. Run configure.':
                 raise unittest.SkipTest('failing without config.status')
             raise
 

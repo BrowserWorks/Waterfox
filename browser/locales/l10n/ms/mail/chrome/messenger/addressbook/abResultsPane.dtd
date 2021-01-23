@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "Buku Alamat">
+<!ENTITY Addrbook.accesskey                    "B">
+<!ENTITY GeneratedName.label                   "Nama">
+<!ENTITY GeneratedName.accesskey               "N">
+<!ENTITY PrimaryEmail.label                    "E-mel">
+<!ENTITY PrimaryEmail.accesskey                "E">
+<!ENTITY Company.label                         "Organisasi">
+<!ENTITY Company.accesskey                     "s">
+<!ENTITY _PhoneticName.label                   "Nama Fonetik">
+<!ENTITY _PhoneticName.accesskey               "o">
+<!ENTITY NickName.label                        "Nama gelaran">
+<!ENTITY NickName.accesskey                    "g">
+<!ENTITY SecondEmail.label                     "E-mel Tambahan">
+<!ENTITY SecondEmail.accesskey                 "l">
+<!ENTITY Department.label                      "Jabatan">
+<!ENTITY Department.accesskey                  "b">
+<!ENTITY JobTitle.label                        "Jawatan">
+<!ENTITY JobTitle.accesskey                    "J">
+<!ENTITY CellularNumber.label                  "Mudah alih">
+<!ENTITY CellularNumber.accesskey              "M">
+<!ENTITY PagerNumber.label                     "Kelui">
+<!ENTITY PagerNumber.accesskey                 "K">
+<!ENTITY FaxNumber.label                       "Faks">
+<!ENTITY FaxNumber.accesskey                   "F">
+<!ENTITY HomePhone.label                       "Telefon Rumah">
+<!ENTITY HomePhone.accesskey                   "R">
+<!ENTITY WorkPhone.label                       "Telefon Kerja">
+<!ENTITY WorkPhone.accesskey                   "K">
+<!ENTITY ChatName.label                        "Nama Sembang">
+<!ENTITY ChatName.accesskey                    "S">
+<!ENTITY sortAscending.label                   "Menaik">
+<!ENTITY sortAscending.accesskey               "M">
+<!ENTITY sortDescending.label                  "Menurun">
+<!ENTITY sortDescending.accesskey              "M">

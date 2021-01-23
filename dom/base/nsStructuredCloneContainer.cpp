@@ -31,7 +31,7 @@ NS_INTERFACE_MAP_END
 
 nsStructuredCloneContainer::nsStructuredCloneContainer() : mVersion(0) {}
 
-nsStructuredCloneContainer::~nsStructuredCloneContainer() {}
+nsStructuredCloneContainer::~nsStructuredCloneContainer() = default;
 
 NS_IMETHODIMP
 nsStructuredCloneContainer::InitFromJSVal(JS::Handle<JS::Value> aData,
@@ -43,7 +43,10 @@ nsStructuredCloneContainer::InitFromJSVal(JS::Handle<JS::Value> aData,
   ErrorResult rv;
   Write(aCx, aData, rv);
   if (NS_WARN_IF(rv.Failed())) {
-    return rv.StealNSResult();
+    // XXX propagate the error message as well.
+    // We cannot StealNSResult because we threw a DOM exception.
+    rv.SuppressException();
+    return NS_ERROR_DOM_DATA_CLONE_ERR;
   }
 
   mVersion = JS_STRUCTURED_CLONE_VERSION;
@@ -79,7 +82,10 @@ nsresult nsStructuredCloneContainer::DeserializeToJsval(
   ErrorResult rv;
   Read(aCx, &jsStateObj, rv);
   if (NS_WARN_IF(rv.Failed())) {
-    return rv.StealNSResult();
+    // XXX propagate the error message as well.
+    // We cannot StealNSResult because we threw a DOM exception.
+    rv.SuppressException();
+    return NS_ERROR_DOM_DATA_CLONE_ERR;
   }
 
   aValue.set(jsStateObj);

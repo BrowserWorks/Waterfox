@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Imimiselo Yeeakhawunti Ekwinqanaba Eliphambili">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "Iseva uvimba weefayili we-IMAP:">
+<!ENTITY serverDirectory.accesskey "u">
+<!ENTITY usingSubscription.label "Bonisa kuphela iziqulathi zeefayili ezikhutshelwa imirhumo">
+<!ENTITY usingSubscription.accesskey "n">
+<!ENTITY dualUseFolders.label "Iseva ixhasa iziqulathi zeefayili eziqulethe iziqulathi zeefayili ezonganyelweyo nemiyalezo">
+<!ENTITY dualUseFolders.accesskey "i">
+<!ENTITY maximumConnectionsNumber.label "Inani elilelona liphezulu lemidibaniso yeseva eya kwisilondolozi esiqukezayo">
+<!ENTITY maximumConnectionsNumber.accesskey "I">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Ezi zikhethwa zixela izithuba zamagama akwiseva yakho ye-IMAP">
+<!ENTITY personalNamespace.label "Izithuba zamagama obuqu bomntu:">
+<!ENTITY personalNamespace.accesskey "I">
+<!ENTITY publicNamespace.label "Kawonkewonke (kuyabelwana):">
+<!ENTITY publicNamespace.accesskey "o">
+<!ENTITY otherUsersNamespace.label "Abanye Abasebenzisi:">
+<!ENTITY otherUsersNamespace.accesskey "A">
+<!ENTITY overrideNamespaces.label "Vumela iseva ukuba ihambe ngaphezu kwezi zithuba zamagama">
+<!ENTITY overrideNamespaces.accesskey "V">
+<!ENTITY deferToServer.label "Okuphakathi ebhokisini ukwenzela iakhawunti eyahlukileyo">
+<!ENTITY deferToServer.accesskey "e">
+<!ENTITY deferGetNewMail.label "Bandakanya le seva xa ufumana imeyile entsha">
+<!ENTITY deferGetNewMail.accesskey "B">

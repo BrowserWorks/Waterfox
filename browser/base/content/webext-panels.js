@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-// Via webext-panels.xul
+// Via webext-panels.xhtml
 /* import-globals-from browser.js */
 /* import-globals-from nsContextMenu.js */
 
@@ -18,8 +18,6 @@ const { ExtensionUtils } = ChromeUtils.import(
 );
 
 var { promiseEvent } = ExtensionUtils;
-
-const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
 function getBrowser(panel) {
   let browser = document.getElementById("webext-panels-browser");
@@ -63,18 +61,6 @@ function getBrowser(panel) {
       )
     );
     readyPromise = promiseEvent(browser, "XULFrameLoaderCreated");
-
-    window.messageManager.addMessageListener("contextmenu", openContextMenu);
-    window.addEventListener(
-      "unload",
-      () => {
-        window.messageManager.removeMessageListener(
-          "contextmenu",
-          openContextMenu
-        );
-      },
-      { once: true }
-    );
   } else {
     readyPromise = Promise.resolve();
   }
@@ -82,11 +68,6 @@ function getBrowser(panel) {
   stack.appendChild(browser);
 
   return readyPromise.then(() => {
-    browser.messageManager.loadFrameScript(
-      "chrome://browser/content/content.js",
-      false,
-      true
-    );
     ExtensionParent.apiManager.emit(
       "extension-browser-inserted",
       browser,
@@ -160,7 +141,7 @@ function loadPanel(extensionId, extensionUrl, browserStyle) {
 
   getBrowser(sidebar).then(browser => {
     let uri = Services.io.newURI(policy.getURL());
-    let triggeringPrincipal = Services.scriptSecurityManager.createCodebasePrincipal(
+    let triggeringPrincipal = Services.scriptSecurityManager.createContentPrincipal(
       uri,
       {}
     );

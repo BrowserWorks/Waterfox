@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "Каб захаваць дыскавую прастору, не загружаць:">
+<!ENTITY doNotDownloadNntp.label "Каб захаваць дыскавую прастору, не загружаць для карыстання па-за сеткаю:">
+<!ENTITY doNotDownloadImap.label "Каб захаваць дыскавую прастору, сцягванне лістоў з паслугача і ўтрымліванне мясцовых падвояў для пазасеткавага карыстання можа быць абмежавана па ўзросту або памеру.">
+<!ENTITY allFoldersOffline.label "Захоўваць лісты з гэтага рахунку на гэтым кампутары">
+<!ENTITY allFoldersOffline.accesskey "З">
+<!ENTITY offlineNotDownload.label "Лісты, большыя чым">
+<!ENTITY offlineNotDownload.accesskey "б">
+<!ENTITY autosyncNotDownload.label "Не сцягваць лісты, большыя чым">
+<!ENTITY autosyncNotDownload.accesskey "л">
+<!ENTITY kb.label "КБ">
+<!ENTITY daysOld.label "дзён">
+<!ENTITY message.label "апошніх лістоў">
+<!ENTITY nntpNotDownloadRead.label "Прачытаныя лісты">
+<!ENTITY nntpNotDownloadRead.accesskey "ч">
+<!ENTITY nntpDownloadMsg.label "Лісты, якім болей, чым">
+<!ENTITY nntpDownloadMsg.accesskey "і">
+<!ENTITY retentionCleanup.label "Каб вызваліць месца на дыску, старыя лісты можна выдаліць назаўсёды.">
+<!ENTITY retentionCleanupImap.label "Каб вызваліць месца на дыску, старыя лісты можна выдаліць назаўсёды, разам мясцовыя копіі і іх першакрыніцы на адлеглым паслугачы.">
+<!ENTITY retentionCleanupPop.label "Каб вызваліць месца на дыску, старыя лісты можна выдаліць назаўсёды, разам з іх першакрыніцамі на адлеглым паслугачы.">
+<!ENTITY retentionKeepMsg.label "Выдаліць лісты, якім больш за">
+<!ENTITY retentionKeepMsg.accesskey "з">
+<!ENTITY retentionKeepAll.label "Не выдаляць ніякіх лістоў">
+<!ENTITY retentionKeepAll.accesskey "н">
+<!ENTITY retentionKeepRecent.label "Выдаліць усе, акрамя самых апошніх">
+<!ENTITY retentionKeepRecent.accesskey "у">
+<!ENTITY retentionKeepUnreadHidden.label "Заўсёды выдаляць прачытаныя лісты (пераважвае наладжванні ўзросту)">
+<!ENTITY retentionApplyToFlagged.label "Заўсёды захоўваць лісты з сцяжкамі">
+<!ENTITY retentionApplyToFlagged.accesskey "ў">
+<!ENTITY nntpRemoveMsgBody.label "Выдаліць целы лістоў, якім болей, чым ">
+<!ENTITY nntpRemoveMsgBody.accesskey "ц">
+<!ENTITY offlineSelectNntp.label "Вылучыць навінакупы для карыстання па-за сеткаю…">
+<!ENTITY offlineSelectNntp.accesskey "с">
+<!ENTITY offlineImapAdvancedOffline.label "Пашыраны…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "П">
+<!ENTITY syncGroupTitle.label "Сінхранізацыя лістоў">
+<!ENTITY diskspaceGroupTitle.label "Дыскавая прастора">
+<!ENTITY allAutosync.label "Сінхранізаваць усе лісты незалежна ад узросту">
+<!ENTITY allAutosync.accesskey "с">
+<!ENTITY ageAutosyncBefore.label "Сінхранізаваць найбольш новыя">
+<!ENTITY ageAutosync.accesskey "й">
+<!ENTITY ageAutosyncMiddle.label "">
+<!ENTITY dayAgeInterval.label "Дзён">
+<!ENTITY weekAgeInterval.label "Тыдняў">
+<!ENTITY monthAgeInterval.label "Месяцаў">
+<!ENTITY yearAgeInterval.label "Гадоў">
+<!ENTITY ageAutosyncAfter.label "">

@@ -9,17 +9,18 @@
 
 #include "mozilla/Atomics.h"
 #include "mozilla/Attributes.h"
-#include "mozilla/HashFunctions.h"
 #include "mozilla/TimeStamp.h"
 #include "mozilla/Tuple.h"
 
 #include <stdint.h>
+#include <type_traits>
 #include <utility>
 
-#include "jsutil.h"
-
+#include "js/Initialization.h"
+#include "js/Utility.h"
 #include "threading/LockGuard.h"
 #include "threading/Mutex.h"
+#include "threading/ThreadId.h"
 #include "vm/MutexIDs.h"
 
 #ifdef XP_WIN
@@ -40,28 +41,6 @@ class ThreadTrampoline;
 // stream and within the current address space. Use with care.
 class Thread {
  public:
-  struct Hasher;
-
-  class Id {
-    friend struct Hasher;
-    class PlatformData;
-    void* platformData_[2];
-
-   public:
-    Id();
-
-    Id(const Id&) = default;
-    Id(Id&&) = default;
-    Id& operator=(const Id&) = default;
-    Id& operator=(Id&&) = default;
-
-    bool operator==(const Id& aOther) const;
-    bool operator!=(const Id& aOther) const { return !operator==(aOther); }
-
-    inline PlatformData* platformData();
-    inline const PlatformData* platformData() const;
-  };
-
   // Provides optional parameters to a Thread.
   class Options {
     size_t stackSize_;
@@ -76,33 +55,18 @@ class Thread {
     size_t stackSize() const { return stackSize_; }
   };
 
-  // A js::HashTable hash policy for keying hash tables by js::Thread::Id.
-  struct Hasher {
-    typedef Id Lookup;
-
-    static HashNumber hash(const Lookup& l);
-
-    static bool match(const Id& key, const Lookup& lookup) {
-      return key == lookup;
-    }
-  };
-
   // Create a Thread in an initially unjoinable state. A thread of execution can
   // be created for this Thread by calling |init|. Some of the thread's
   // properties may be controlled by passing options to this constructor.
-  template <
-      typename O = Options,
-      // SFINAE to make sure we don't try and treat functors for the other
-      // constructor as an Options and vice versa.
-      typename NonConstO = typename mozilla::RemoveConst<O>::Type,
-      typename DerefO = typename mozilla::RemoveReference<NonConstO>::Type,
-      typename = typename mozilla::EnableIf<
-          mozilla::IsSame<DerefO, Options>::value, void*>::Type>
+  template <typename O = Options,
+            // SFINAE to make sure we don't try and treat functors for the other
+            // constructor as an Options and vice versa.
+            typename NonConstO = std::remove_const_t<O>,
+            typename DerefO = std::remove_reference_t<NonConstO>,
+            typename = std::enable_if_t<std::is_same_v<DerefO, Options>>>
   explicit Thread(O&& options = Options())
-      : idMutex_(mutexid::ThreadId),
-        id_(Id()),
-        options_(std::forward<O>(options)) {
-    MOZ_ASSERT(js::IsInitialized());
+      : id_(ThreadId()), options_(std::forward<O>(options)) {
+    MOZ_ASSERT(isInitialized());
   }
 
   // Start a thread of execution at functor |f| with parameters |args|. This
@@ -113,14 +77,16 @@ class Thread {
   // See the comment below on ThreadTrampoline::args for an explanation.
   template <typename F, typename... Args>
   MOZ_MUST_USE bool init(F&& f, Args&&... args) {
-    MOZ_RELEASE_ASSERT(id_ == Id());
+    MOZ_RELEASE_ASSERT(id_ == ThreadId());
     using Trampoline = detail::ThreadTrampoline<F, Args...>;
-    AutoEnterOOMUnsafeRegion oom;
     auto trampoline =
         js_new<Trampoline>(std::forward<F>(f), std::forward<Args>(args)...);
     if (!trampoline) {
-      oom.crash("js::Thread::init");
+      return false;
     }
+
+    // We hold this lock while create() sets the thread id.
+    LockGuard<Mutex> lock(trampoline->createMutex);
     return create(Trampoline::Start, trampoline);
   }
 
@@ -149,7 +115,7 @@ class Thread {
   // Returns the id of this thread if this represents a thread of execution or
   // the default constructed Id() if not. The thread ID is guaranteed to
   // uniquely identify a thread and can be compared with the == operator.
-  Id get_id();
+  ThreadId get_id();
 
   // Allow threads to be moved so that they can be stored in containers.
   Thread(Thread&& aOther);
@@ -160,13 +126,8 @@ class Thread {
   Thread(const Thread&) = delete;
   void operator=(const Thread&) = delete;
 
-  bool joinable(LockGuard<Mutex>& lock);
-
-  // Synchronize id_ initialization during thread startup.
-  Mutex idMutex_;
-
   // Provide a process global ID to each thread.
-  Id id_;
+  ThreadId id_;
 
   // Overridable thread creation options.
   Options options_;
@@ -174,12 +135,17 @@ class Thread {
   // Dispatch to per-platform implementation of thread creation.
   MOZ_MUST_USE bool create(THREAD_RETURN_TYPE(THREAD_CALL_API* aMain)(void*),
                            void* aArg);
+
+  // An internal version of JS_IsInitialized() that returns whether SpiderMonkey
+  // is currently initialized or is in the process of being initialized.
+  static inline bool isInitialized() {
+    using namespace JS::detail;
+    return libraryInitState == InitState::Initializing ||
+           libraryInitState == InitState::Running;
+  }
 };
 
 namespace ThisThread {
-
-// Return the thread id of the calling thread.
-Thread::Id GetId();
 
 // Set the current thread name. Note that setting the thread name may not be
 // available on all platforms; on these platforms setName() will simply do
@@ -216,7 +182,13 @@ class ThreadTrampoline {
   // thread. To avoid this dangerous and highly non-obvious footgun, the
   // standard requires a "decay" copy of the arguments at the cost of making it
   // impossible to pass references between threads.
-  mozilla::Tuple<typename mozilla::Decay<Args>::Type...> args;
+  mozilla::Tuple<std::decay_t<Args>...> args;
+
+  // Protect the thread id during creation.
+  Mutex createMutex;
+
+  // Thread can access createMutex.
+  friend class js::Thread;
 
  public:
   // Note that this template instatiation duplicates and is identical to the
@@ -225,7 +197,9 @@ class ThreadTrampoline {
   // even if the class template arguments are correct.
   template <typename G, typename... ArgsT>
   explicit ThreadTrampoline(G&& aG, ArgsT&&... aArgsT)
-      : f(std::forward<F>(aG)), args(std::forward<Args>(aArgsT)...) {}
+      : f(std::forward<F>(aG)),
+        args(std::forward<Args>(aArgsT)...),
+        createMutex(mutexid::ThreadId) {}
 
   static THREAD_RETURN_TYPE THREAD_CALL_API Start(void* aPack) {
     auto* pack = static_cast<ThreadTrampoline<F, Args...>*>(aPack);
@@ -236,6 +210,10 @@ class ThreadTrampoline {
 
   template <size_t... Indices>
   void callMain(std::index_sequence<Indices...>) {
+    // Pretend createMutex is a semaphore and wait for a notification that the
+    // thread that spawned us is ready.
+    createMutex.lock();
+    createMutex.unlock();
     f(mozilla::Get<Indices>(args)...);
   }
 };

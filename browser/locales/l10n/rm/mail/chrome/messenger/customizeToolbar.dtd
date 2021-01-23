@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "Modifitgar la trav d'utensils">
+<!ENTITY dialog.dimensions        "width: 112ch; height: 36em;">
+<!ENTITY instructions.description "Agiuntescha u allontanescha elements cun als trair en u ord la trav d'utensils.">
+<!ENTITY show.label               "Mussar:">
+<!ENTITY iconsAndText.label       "Simbols e text">
+<!ENTITY icons.label              "Simbols">
+<!ENTITY text.label               "Text">
+<!ENTITY iconsBesideText.label    "Simbols sper il text">
+<!ENTITY useSmallIcons.label      "Simbols pitschens">
+<!ENTITY restoreDefaultSet.label  "Restaurar il standard">
+<!ENTITY showTitlebar2.label      "Trav dal titel">
+<!ENTITY extraDragSpace2.label    "Spazi per trair la fanestra">
+<!ENTITY saveChanges.label        "Finì">
+<!ENTITY undoChanges.label        "Annullar las midadas">

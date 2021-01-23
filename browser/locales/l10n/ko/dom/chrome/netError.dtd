@@ -1,0 +1,103 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label "페이지 읽기 오류">
+<!ENTITY retry.label "다시 시도">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "연결 실패">
+<!ENTITY connectionFailure.longDesc "<p>사이트는 유효한 것으로 보이나 연결할 수 없습니다.</p><ul><li>사이트가 일시적으로 사용할 수 없는 경우입니까? 나중에 다시 시도해 보세요.</li><li>다른 사이트에도 연결할 수 없습니까?  컴퓨터의 네트워크 연결 상태를 확인해 보세요.</li><li>컴퓨터 또는 네트워크가 방화벽이나 프록시로 보호되고 있습니까? 설정이 잘못 되어있다면 웹 연결이 막힐 수도 있습니다.</li></ul>">
+
+<!ENTITY deniedPortAccess.title "보안성을 이유로 제한된 포트">
+<!ENTITY deniedPortAccess.longDesc "<p>포트를 지정하여 요청한 이 주소 (예를 들어, mozilla.org의 80번 포트 지정 주소 → <q>mozilla.org:80</q>)는 일반적으로 웹 브라우저에서 사용되기보다는 <em>다른</em> 용도로 사용됩니다. 브라우저가 사용자를 보호하고 보안성을 유지하기 위해 이 요청을 취소합니다.</p>">
+
+<!ENTITY dnsNotFound.title "서버를 찾을 수 없음">
+<!ENTITY dnsNotFound.longDesc "<p>브라우저가 제공된 주소에 대한 호스트 서버 주소를 찾을 수 없습니다.</p><ul><li>도메인을 입력할 때 실수하지 않으셨습니까? (예를 들어, <q><strong>www</strong>.mozilla.org</q> 대신 <q><strong>ww</strong>.mozilla.org</q>을 입력한 것과 같은 실수)</li><li>이 도메인 주소가 존재한다고 확신합니까?  등록기간이 만료되었을 수 있습니다.</li><li>다른 사이트에도 연결할 수 없습니까?  네트워크 연결 상태와 DNS 서버 설정을 확인해 보세요.</li><li>사용자 컴퓨터나 네트워크가 방화벽이나 프록시로 보호되고 있지 않습니까?  잘못된 설정은 웹 연결을 막을 수 있습니다.</li></ul>">
+
+<!ENTITY fileNotFound.title "파일을 찾을 수 없음">
+<!ENTITY fileNotFound.longDesc "<ul><li>항목이 이름 변경, 삭제 또는 재배치되지는 않았습니까?</li><li>주소에 철자, 대문자 또는 기타 입력 오류가 있습니까?</li><li>요청한 항목에 대한 충분한 접근 권한을 가지고 있습니까?</li></ul>">
+
+<!ENTITY fileAccessDenied.title "파일 접근이 거부됨">
+<!ENTITY fileAccessDenied.longDesc "<ul><li>삭제 또는 이동되었거나 파일 권한이 접근을 막고 있습니다.</li></ul>">
+
+<!ENTITY generic.title "요청을 완료할 수 없음">
+<!ENTITY generic.longDesc "<p>현재 이 문제 또는 오류에 대한 추가적인 정보를 사용할 수 없습니다.</p>">
+
+<!ENTITY malformedURI.title "주소가 유효하지 않음">
+<!ENTITY malformedURI.longDesc "<p>제공한 주소는 인식 가능한 형식이 아닙니다. 주소 표시줄에 실수가 없는지 확인한 후 다시 시도하세요.</p>">
+
+<!ENTITY netInterrupt.title "데이터 전송이 중단되었습니다">
+<!ENTITY netInterrupt.longDesc "<p>연결은 되었지만, 정보를 전송하는 중에 연결이 중단되었습니다.  다시 시도하세요.</p><ul><li>다른 사이트에도 연결할 수 없습니까?  컴퓨터의 네트워크 연결 상태를 확인해 보세요.</li><li>그래도 문제가 계속됩니까? 도움이 필요하면 네트워크 관리자나 인터넷 제공 업체에 문의하세요.</li></ul>">
+
+<!ENTITY notCached.title "문서 만료">
+<!ENTITY notCached.longDesc "<p>요청하신 문서는 브라우저 캐시에서 사용할 수 없습니다.</p><ul><li>보안 예방책으로 브라우저는 자동으로 민감한 문서를 다시 요청하지 않습니다.</li><li>웹 사이트에서 문서를 다시 요청하려면 다시 시도를 누르세요.</li></ul>">
+
+<!ENTITY netOffline.title "오프라인 모드">
+<!ENTITY netOffline.longDesc2 "<p>브라우저가 오프라인 모드에서 작업 중이며 요청한 항목에 연결할 수 없습니다.</p><ul><li>컴퓨터가 활성화된 네트워크에 연결되어 있습니까?</li><li>&quot;다시 시도&quot;를 눌러 온라인 모드로 전환하고 페이지를 다시 로드하세요.</li></ul>">
+
+<!ENTITY contentEncodingError.title "콘텐츠 인코딩 오류">
+<!ENTITY contentEncodingError.longDesc "<p>현재 연결하시려는 페이지가 유효하지 않거나 지원하지 않는 압축 형식을 사용하므로 해당 페이지를 표시할 수 없습니다.</p><ul><li>웹 사이트 관리자에게 연락하여 이 문제를 알려주실 수 있습니다.</li></ul>">
+
+<!ENTITY unsafeContentType.title "안전하지 않은 파일 형식">
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>웹 사이트 관리자에게 연락하여 이 문제를 알려주실 수 있습니다.</li>
+</ul>
+">
+
+<!ENTITY netReset.title "연결이 중단되었습니다">
+<!ENTITY netReset.longDesc "<p>연결을 시도하는 중 네트워크 연결이 중단되었습니다. 다시 시도하세요.</p>">
+
+<!ENTITY netTimeout.title "네트워크 시간 초과">
+<!ENTITY netTimeout.longDesc "<p>요청한 사이트는 연결 요청에 응답하지 않았기 때문에 브라우저가 답신을 하기위한 대기를 중단했습니다.</p><ul><li>서버에 연결이 몰리는 상태이거나 일시적으로 동작이 중지된 상태일 수 있습니까?  나중에 다시 시도하세요.</li><li>다른 사이트에도 연결할 수 없습니까?  컴퓨터의 네트워크 연결 상태를 확인해 보세요.</li><li>사용자 컴퓨터나 네트워크가 방화벽이나 프록시로 보호되고 있지 않습니까?  잘못된 설정은 웹 연결을 막을 수 있습니다.</li><li>그래도 문제가 계속됩니까? 도움이 필요하면 네트워크 관리자나 인터넷 제공 업체에 문의하세요.</li></ul>">
+
+<!ENTITY unknownProtocolFound.title "알 수 없는 프로토콜">
+<!ENTITY unknownProtocolFound.longDesc "<p>해당 주소는 브라우저가 인식하지 못하는 프로토콜 (예를 들어, <q>wxyz://</q>)을 지정하고 있기 때문에, 브라우저가 사이트에 적절한 방법으로 연결하지 못하고 있습니다.</p><ul><li>멀티미디어나 다른 텍스트 기반이 아닌 서비스에 접근하려고 하는 것입니까? 해당 사이트에 대한 추가적인 요구사항을 확인해 보세요.</li><li>어떤 프로토콜은 브라우저가 프로토콜을 인식하고 처리하기 전에 제3자가 제작한 소프트웨어나 플러그인이 필요할 수도 있습니다.</li></ul>">
+
+<!ENTITY proxyConnectFailure.title "프록시 서버 연결 거부">
+<!ENTITY proxyConnectFailure.longDesc "<p>브라우저가 프록시 서버를 사용하도록 설정되어 있지만, 프록시가 연결을 거부했습니다.</p><ul><li>브라우저의 프록시 설정이 올바르게 되어있습니까? 설정을 확인한 후 다시 시도하세요.</li><li>프록시 서비스가 이 네트워크에서 연결하는 것을 허용합니까?</li><li>그래도 문제가 계속됩니까? 도움이 필요하면 네트워크 관리자나 인터넷 제공 업체에 문의하세요.</li></ul>">
+
+<!ENTITY proxyResolveFailure.title "프록시 서버를 찾을 수 없음">
+<!ENTITY proxyResolveFailure.longDesc "<p>브라우저가 프록시 서버를 사용하도록 설정되어 있지만, 프록시를 찾을 수 없습니다.</p><ul><li>브라우저의 프록시 설정이 올바로 되어있습니까? 설정을 확인한 후 다시 시도하세요.</li><li>컴퓨터가 활성화된 네트워크에 연결되어 있습니까?</li><li>그래도 문제가 계속됩니까? 도움이 필요하면 네트워크 관리자나 인터넷 제공 업체에 문의하세요.</li></ul>">
+
+<!ENTITY redirectLoop.title "페이지 자동 바꾸기 반복">
+<!ENTITY redirectLoop.longDesc "<p>브라우저가 요청한 항목 가져오기 시도를 중단했습니다. 해당 사이트가 완료할 수 없는 방식으로 요청에 대한 페이지를 자동으로 바꾸고 있습니다.</p><ul><li>이 사이트에서 요구하는 쿠키를 사용하지 않거나 차단했습니까?</li><li><em>주의</em>: 사이트의 쿠키 받아들이는 것으로 문제가 해결되지 않는다면, 이 문제는 사용자 컴퓨터의 문제가 아니라 서버 설정 문제로 보입니다.</li></ul>">
+
+<!ENTITY unknownSocketType.title "부정확한 응답">
+<!ENTITY unknownSocketType.longDesc "<p>해당 사이트가 네트워크 요청에 예기치 않은 방식으로 반응했기 때문에 브라우저는 계속할 수 없습니다.</p>">
+
+<!ENTITY nssFailure2.title "보안 연결 실패">
+<!ENTITY nssFailure2.longDesc2 "<p>받은 데이터의 신뢰성을 확인할 수 없으므로 보시려는 페이지를 표시할 수 없습니다.</p><ul><li>웹 사이트 관리자에게 연락하여 이 문제를 알려주실 수 있습니다.</li></ul>">
+
+<!ENTITY nssBadCert.title "보안 연결 실패">
+<!ENTITY nssBadCert.longDesc2 "<ul><li>현재 웹 서버 설정에 문제가 있거나 누군가가 원래 연결하려던 진짜 서버처럼 가장하고 있을 가능성이 있습니다.</li><li>만약 이전에 이 웹 서버에 정상적으로 연결을 한적이 있다면, 일시적인 문제일 수 있으니 나중에 다시 시도하세요.</li></ul>">
+
+<!ENTITY securityOverride.linkText "예외를 설정할 수 있습니다…">
+<!ENTITY securityOverride.warningContent "
+<p>완전히 신뢰하지 못하는 인터넷 연결을 사용하고 있거나 서버로부터의 경고에 익숙하지 않다면 예외를 설정해서는 안됩니다.</p>
+<p>여전히 이 사이트를 예외로 설정하기를 원한다면 고급 암호화 설정에서 할 수 있습니다.</p>
+">
+
+<!ENTITY cspBlocked.title "콘텐츠 보안 정책에 의한 차단">
+<!ENTITY cspBlocked.longDesc "<p>이 페이지는 콘텐츠 보안 정책에서 허락하지 않는 방법으로 로드되어 브라우저가 차단했습니다.</p>">
+
+<!ENTITY xfoBlocked.title "X-Frame-Options 정책에 의해 차단됨">
+<!ENTITY xfoBlocked.longDesc "<p>페이지에 허용하지 않는 X-Frame-Options 정책이 있으므로 브라우저가 이 컨텍스트에서 이 페이지를 로드하지 못했습니다.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "손상된 콘텐츠 오류">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>데이터 전송에 오류가 감지되어 페이지를 표시할 수 없습니다.</p><ul><li>웹 사이트 관리자에게 연락하여 이 문제를 알려주실 수 있습니다.</li></ul>">
+
+<!ENTITY remoteXUL.title "원격 XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>웹 사이트 관리자에게 연락하여 이 문제를 알려주실 수 있습니다.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "연결이 안전하지 않음">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span>가 사용하는 보안 기술은 오래되어서 공격에 노출될 수 있습니다. 안전하다고 생각된 정보가 공격자에 의해 쉽게 노출될 수 있습니다. 사이트를 방문하기 전에 웹 사이트의 관리자가 서버를 고쳐야 합니다.</p><p>오류 코드: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "차단된 페이지">
+
+<!ENTITY networkProtocolError.title "네트워크 프로토콜 오류">
+<!ENTITY networkProtocolError.longDesc "<p>네트워크 프로토콜에 오류가 감지되어 페이지를 표시할 수 없습니다.</p><ul><li>웹 사이트 관리자에게 연락하여 이 문제를 알려주실 수 있습니다.</li></ul>">

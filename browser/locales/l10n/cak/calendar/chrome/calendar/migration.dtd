@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migration.title "&brandFullName;: Tijik' samaj">
+<!ENTITY migration.welcome "Ütz apetik">
+<!ENTITY migration.importing "Tajin nijik">
+<!ENTITY migration.list.description "&brandShortName; tikirel tijik taq datosrichin k'iy aplicaciones populares. Ri datos richin ri aplicaciones petenäq xilitäj pa akematz'ib'. Tab'ana' utzil, Tapitz'a' ri achike nawajo' najik' datos.">
+<!ENTITY migration.progress.description "Tajin nijik' ri tzij cha'on">

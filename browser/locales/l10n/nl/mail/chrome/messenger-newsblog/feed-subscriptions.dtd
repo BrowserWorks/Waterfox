@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Feedabonnementen">
+<!ENTITY learnMore.label             "Meer info over feeds">
+
+<!ENTITY feedTitle.label             "Titel:">
+<!ENTITY feedTitle.accesskey         "T">
+
+<!ENTITY feedLocation.label          "Feed-URL:">
+<!ENTITY feedLocation.accesskey      "F">
+<!ENTITY feedLocation2.placeholder   "Voer een geldige feed-URL in">
+<!ENTITY locationValidate.label      "Valideren">
+<!ENTITY validateText.label          "Validatie controleren en een geldige URL ophalen">
+
+<!ENTITY feedFolder.label            "Artikelen opslaan in:">
+<!ENTITY feedFolder.accesskey        "s">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Op nieuwe artikelen controleren na elke">
+<!ENTITY biffStart.accesskey         "c">
+<!ENTITY biffMinutes.label           "minuten">
+<!ENTITY biffMinutes.accesskey       "m">
+<!ENTITY biffDays.label              "dagen">
+<!ENTITY biffDays.accesskey          "d">
+<!ENTITY recommendedUnits.label      "Aanbeveling van feeduitgever:">
+
+<!ENTITY quickMode.label             "Artikelsamenvatting weergeven i.p.v. de webpagina laden">
+<!ENTITY quickMode.accesskey         "r">
+
+<!ENTITY autotagEnable.label         "Automatisch labels van namen van feed &lt;categorie&gt; aanmaken">
+<!ENTITY autotagEnable.accesskey     "u">
+<!ENTITY autotagUsePrefix.label      "Labels laten voorafgaan door:">
+<!ENTITY autotagUsePrefix.accesskey  "L">
+<!ENTITY autoTagPrefix.placeholder   "Voer een labelvoorvoegsel in">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Toevoegen">
+<!ENTITY button.addFeed.accesskey    "o">
+<!ENTITY button.verifyFeed.label     "Verifiëren">
+<!ENTITY button.verifyFeed.accesskey "e">
+<!ENTITY button.updateFeed.label     "Bijwerken">
+<!ENTITY button.updateFeed.accesskey "w">
+<!ENTITY button.removeFeed.label     "Verwijderen">
+<!ENTITY button.removeFeed.accesskey "V">
+<!ENTITY button.importOPML.label     "Importeren">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "Exporteren">
+<!ENTITY button.exportOPML.accesskey "x">
+<!ENTITY button.exportOPML.tooltip   "Feeds exporteren met mapstructuur; Ctrl+klikken of Ctrl+Enter om feeds als een lijst te exporteren">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Sluiten">

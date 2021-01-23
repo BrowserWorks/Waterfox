@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProduct2.label      "&brandShorterName; کے بارے میں">
+<!ENTITY aboutProduct2.accesskey  "A">
+
+<!ENTITY preferencesCmdMac.label        "ترجیحات ...">
+
+<!ENTITY servicesMenuMac.label          "خدمات">
+
+<!ENTITY hideThisAppCmdMac2.label       "چھپائیں &brandShorterName;">
+
+<!ENTITY hideOtherAppsCmdMac.label      "دیگر چھپائیں">
+
+<!ENTITY showAllAppsCmdMac.label        "تمام دکھائیں">
+
+<!ENTITY touchBarCmdMac.label           "ٹچ بار کی تخصیص کریں…">

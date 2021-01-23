@@ -19,6 +19,7 @@ import org.mozilla.gecko.IGeckoEditableChild;
 import org.mozilla.gecko.IGeckoEditableParent;
 import org.mozilla.gecko.InputMethods;
 import org.mozilla.gecko.util.GamepadUtils;
+import org.mozilla.gecko.util.GeckoBundle;
 import org.mozilla.gecko.util.ThreadUtils;
 import org.mozilla.gecko.util.ThreadUtils.AssertBehavior;
 
@@ -123,9 +124,9 @@ import android.view.inputmethod.EditorInfo;
     private static final int IME_RANGE_SELECTEDCONVERTEDTEXT = 5;
 
     private static final int IME_RANGE_LINE_NONE = 0;
-    private static final int IME_RANGE_LINE_DOTTED = 1;
-    private static final int IME_RANGE_LINE_DASHED = 2;
-    private static final int IME_RANGE_LINE_SOLID = 3;
+    private static final int IME_RANGE_LINE_SOLID = 1;
+    private static final int IME_RANGE_LINE_DOTTED = 2;
+    private static final int IME_RANGE_LINE_DASHED = 3;
     private static final int IME_RANGE_LINE_DOUBLE = 4;
     private static final int IME_RANGE_LINE_WAVY = 5;
 
@@ -318,29 +319,11 @@ import android.view.inputmethod.EditorInfo;
          * @return true if discarding composition
          */
         private boolean isDiscardingComposition() {
-            boolean wasComposing = false;
-            Object[] spans = mShadowText.getSpans(0, mShadowText.length(), Object.class);
-            for (final Object span : spans) {
-                if ((mShadowText.getSpanFlags(span) & Spanned.SPAN_COMPOSING) != 0) {
-                    wasComposing = true;
-                    break;
-                }
-            }
-
-            if (!wasComposing) {
+            if (!isComposing(mShadowText)) {
                 return false;
             }
 
-            boolean isComposing = false;
-            spans = mCurrentText.getSpans(0, mCurrentText.length(), Object.class);
-            for (final Object span : spans) {
-                if ((mCurrentText.getSpanFlags(span) & Spanned.SPAN_COMPOSING) != 0) {
-                    isComposing = true;
-                    break;
-                }
-            }
-
-            return !isComposing;
+            return !isComposing(mCurrentText);
         }
 
         public synchronized void syncShadowText(
@@ -625,13 +608,39 @@ import android.view.inputmethod.EditorInfo;
 
                 // Because we get composition styling here essentially for free,
                 // we don't need to check if we're in batch mode.
-                if (!icMaybeSendComposition(
+                if (icMaybeSendComposition(
                         action.mSequence, SEND_COMPOSITION_USE_ENTIRE_TEXT)) {
-                    // Since we don't have a composition, we can try sending key events.
-                    sendCharKeyEvents(action);
+                    mFocusedChild.onImeReplaceText(
+                            action.mStart, action.mEnd, action.mSequence.toString());
+                    break;
+                }
+
+                // Since we don't have a composition, we can try sending key events.
+                sendCharKeyEvents(action);
+
+                // onImeReplaceText will set the selection range. But we don't
+                // know whether event state manager is processing text and
+                // selection. So current shadow may not be synchronized with
+                // Gecko's text and selection. So we have to avoid unnecessary
+                // selection update.
+                final int selStartOnShadow = Selection.getSelectionStart(mText.getShadowText());
+                final int selEndOnShadow = Selection.getSelectionEnd(mText.getShadowText());
+                int actionStart = action.mStart;
+                int actionEnd = action.mEnd;
+                // If action range is collapsed and selection of shadow text is
+                // collapsed, we may try to dispatch keypress on current caret
+                // position. Action range is previous range before dispatching
+                // keypress, and shadow range is new range after dispatching
+                // it.
+                if (action.mStart == action.mEnd && selStartOnShadow == selEndOnShadow &&
+                    action.mStart == selStartOnShadow + action.mSequence.toString().length()) {
+                    // Replacing range is same value as current shadow's selection.
+                    // So it is unnecessary to update the selection on Gecko.
+                    actionStart = -1;
+                    actionEnd = -1;
                 }
                 mFocusedChild.onImeReplaceText(
-                        action.mStart, action.mEnd, action.mSequence.toString());
+                        actionStart, actionEnd, action.mSequence.toString());
                 break;
 
             default:
@@ -1071,6 +1080,24 @@ import android.view.inputmethod.EditorInfo;
 
         mInBatchMode = inBatchMode;
 
+        if (!inBatchMode && mFocusedChild != null) {
+            // We may not commit composition on Gecko even if Java side has
+            // no composition. So we have to sync composition state with Gecko
+            // when batch edit is done.
+            //
+            // i.e. Although finishComposingText removes composing span, we
+            // don't commit current composition yet.
+            final Editable editable = getEditable();
+            if (editable != null && !isComposing(editable)) {
+                try {
+                    mFocusedChild.onImeRequestCommit();
+                } catch (final RemoteException e) {
+                    Log.e(LOGTAG, "Remote call failed", e);
+                }
+            }
+            // Committing composition doesn't change text, so we can sync shadow text.
+        }
+
         if (!inBatchMode && mNeedSync) {
             icSyncShadowText();
         }
@@ -1380,13 +1407,9 @@ import android.view.inputmethod.EditorInfo;
                 //
                 // Nevertheless, if we somehow lost the composition, we must force the
                 // keyboard to reset.
-                final Spanned text = mText.getShadowText();
-                final Object[] spans = text.getSpans(0, text.length(), Object.class);
-                for (final Object span : spans) {
-                    if ((text.getSpanFlags(span) & Spanned.SPAN_COMPOSING) != 0) {
-                        // Still have composition; no need to reset.
-                        return; // Don't notify listener.
-                    }
+                if (isComposing(mText.getShadowText())) {
+                    // Still have composition; no need to reset.
+                    return; // Don't notify listener.
                 }
                 // No longer have composition; perform reset.
                 icRestartInput(GeckoSession.TextInputDelegate.RESTART_REASON_CONTENT_CHANGE,
@@ -1444,11 +1467,12 @@ import android.view.inputmethod.EditorInfo;
         // display the ime. We can display a widget for date and time types and, if the sdk version
         // is 11 or greater, for datetime/month/week as well.
         int state;
-        if (typeHint != null && (typeHint.equalsIgnoreCase("date") ||
-                                 typeHint.equalsIgnoreCase("time") ||
-                                 typeHint.equalsIgnoreCase("month") ||
-                                 typeHint.equalsIgnoreCase("week") ||
-                                 typeHint.equalsIgnoreCase("datetime-local"))) {
+        if ((typeHint != null && (typeHint.equalsIgnoreCase("date") ||
+                                  typeHint.equalsIgnoreCase("time") ||
+                                  typeHint.equalsIgnoreCase("month") ||
+                                  typeHint.equalsIgnoreCase("week") ||
+                                  typeHint.equalsIgnoreCase("datetime-local"))) ||
+            (modeHint != null && modeHint.equals("none"))) {
             state = SessionTextInput.EditableListener.IME_STATE_DISABLED;
         } else {
             state = originalState;
@@ -1489,7 +1513,7 @@ import android.view.inputmethod.EditorInfo;
             assertOnIcThread();
         }
 
-        ThreadUtils.postToUiThread(new Runnable() {
+        ThreadUtils.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 if (DEBUG) {
@@ -1536,18 +1560,28 @@ import android.view.inputmethod.EditorInfo;
         outAttrs.imeOptions = EditorInfo.IME_ACTION_NONE;
         outAttrs.actionLabel = null;
 
+        if (modeHint.equals("none")) {
+            // inputmode=none hides VKB at force.
+            outAttrs.inputType = InputType.TYPE_NULL;
+            toggleSoftInput(/* force */ true, SessionTextInput.EditableListener.IME_STATE_DISABLED);
+            return;
+        }
+
         if (state == SessionTextInput.EditableListener.IME_STATE_DISABLED) {
             outAttrs.inputType = InputType.TYPE_NULL;
             toggleSoftInput(/* force */ false, state);
             return;
         }
 
+        // We give priority to typeHint so that content authors can't annoy
+        // users by doing dumb things like opening the numeric keyboard for
+        // an email form field.
         outAttrs.inputType = InputType.TYPE_CLASS_TEXT;
         if (state == SessionTextInput.EditableListener.IME_STATE_PASSWORD ||
                 "password".equalsIgnoreCase(typeHint)) {
             outAttrs.inputType |= InputType.TYPE_TEXT_VARIATION_PASSWORD;
         } else if (typeHint.equalsIgnoreCase("url") ||
-                typeHint.equalsIgnoreCase("mozAwesomebar")) {
+                modeHint.equals("mozAwesomebar")) {
             outAttrs.inputType |= InputType.TYPE_TEXT_VARIATION_URI;
         } else if (typeHint.equalsIgnoreCase("email")) {
             outAttrs.inputType |= InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS;
@@ -1555,35 +1589,31 @@ import android.view.inputmethod.EditorInfo;
             outAttrs.inputType = InputType.TYPE_CLASS_PHONE;
         } else if (typeHint.equalsIgnoreCase("number") ||
                 typeHint.equalsIgnoreCase("range")) {
-            outAttrs.inputType = InputType.TYPE_CLASS_NUMBER
-                    | InputType.TYPE_NUMBER_FLAG_SIGNED
-                    | InputType.TYPE_NUMBER_FLAG_DECIMAL;
-        } else if (modeHint.equalsIgnoreCase("numeric")) {
             outAttrs.inputType = InputType.TYPE_CLASS_NUMBER |
-                    InputType.TYPE_NUMBER_FLAG_SIGNED |
-                    InputType.TYPE_NUMBER_FLAG_DECIMAL;
-        } else if (modeHint.equalsIgnoreCase("digit")) {
-            outAttrs.inputType = InputType.TYPE_CLASS_NUMBER;
+                                 InputType.TYPE_NUMBER_VARIATION_NORMAL;
         } else {
-            // TYPE_TEXT_FLAG_IME_MULTI_LINE flag makes the fullscreen IME line wrap
-            outAttrs.inputType |= InputType.TYPE_TEXT_FLAG_AUTO_CORRECT |
-                    InputType.TYPE_TEXT_FLAG_IME_MULTI_LINE;
-            if (typeHint.equalsIgnoreCase("textarea") ||
-                    typeHint.length() == 0) {
-                // empty typeHint indicates contentEditable/designMode documents
-                outAttrs.inputType |= InputType.TYPE_TEXT_FLAG_MULTI_LINE;
+            // We look at modeHint
+            if (modeHint.equals("tel")) {
+                outAttrs.inputType = InputType.TYPE_CLASS_PHONE;
+            } else if (modeHint.equals("url")) {
+                outAttrs.inputType = InputType.TYPE_TEXT_VARIATION_URI;
+            } else if (modeHint.equals("email")) {
+                outAttrs.inputType |= InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS;
+            } else if (modeHint.equals("numeric")) {
+                outAttrs.inputType = InputType.TYPE_CLASS_NUMBER |
+                                     InputType.TYPE_NUMBER_VARIATION_NORMAL;
+            } else if (modeHint.equals("decimal")) {
+                outAttrs.inputType = InputType.TYPE_CLASS_NUMBER |
+                                     InputType.TYPE_NUMBER_FLAG_DECIMAL;
+            } else {
+                // TYPE_TEXT_FLAG_IME_MULTI_LINE flag makes the fullscreen IME line wrap
+                outAttrs.inputType |= InputType.TYPE_TEXT_FLAG_AUTO_CORRECT |
+                        InputType.TYPE_TEXT_FLAG_IME_MULTI_LINE;
+                if (!typeHint.equalsIgnoreCase("text")) {
+                    // auto-capitalized mode is the default for types other than text (bug 871884)
+                    outAttrs.inputType |= InputType.TYPE_TEXT_FLAG_CAP_SENTENCES;
+                }
             }
-            if (modeHint.equalsIgnoreCase("uppercase")) {
-                outAttrs.inputType |= InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS;
-            } else if (modeHint.equalsIgnoreCase("titlecase")) {
-                outAttrs.inputType |= InputType.TYPE_TEXT_FLAG_CAP_WORDS;
-            } else if (typeHint.equalsIgnoreCase("text") &&
-                    !modeHint.equalsIgnoreCase("autocapitalized")) {
-                outAttrs.inputType |= InputType.TYPE_TEXT_VARIATION_NORMAL;
-            } else if (!modeHint.equalsIgnoreCase("lowercase")) {
-                outAttrs.inputType |= InputType.TYPE_TEXT_FLAG_CAP_SENTENCES;
-            }
-            // auto-capitalized mode is the default for types other than text
         }
 
         if (actionHint.equalsIgnoreCase("go")) {
@@ -1627,7 +1657,7 @@ import android.view.inputmethod.EditorInfo;
         // mSoftInputReentrancyGuard is needed to ensure that between the different paths,
         // the soft input is only toggled exactly once.
 
-        ThreadUtils.postToUiThread(new Runnable() {
+        ThreadUtils.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 final int reentrancyGuard = mSoftInputReentrancyGuard.decrementAndGet();
@@ -1666,7 +1696,18 @@ import android.view.inputmethod.EditorInfo;
                     session.getTextInput().getDelegate().hideSoftInput(session);
                     return;
                 }
-                session.getEventDispatcher().dispatch("GeckoView:ZoomToInput", null);
+                {
+                    final GeckoBundle bundle = new GeckoBundle();
+                    // This bit is subtle. We want to force-zoom to the input
+                    // if we're _not_ force-showing the virtual keyboard.
+                    //
+                    // We only force-show the virtual keyboard as a result of
+                    // something that _doesn't_ switch the focus, and we don't
+                    // want to move the view out of the focused editor unless
+                    // we _actually_ show toggle the keyboard.
+                    bundle.putBoolean("force", !force);
+                    session.getEventDispatcher().dispatch("GeckoView:ZoomToInput", bundle);
+                }
                 session.getTextInput().getDelegate().showSoftInput(session);
             }
         });
@@ -2198,6 +2239,17 @@ import android.view.inputmethod.EditorInfo;
                 return false;
         }
         return true;
+    }
+
+    private static boolean isComposing(final Spanned text) {
+        final Object[] spans = text.getSpans(0, text.length(), Object.class);
+        for (final Object span : spans) {
+            if ((text.getSpanFlags(span) & Spanned.SPAN_COMPOSING) != 0) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
 

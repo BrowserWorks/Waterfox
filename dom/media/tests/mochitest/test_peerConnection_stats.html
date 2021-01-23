@@ -183,7 +183,6 @@ const statsExpectedByType = {
       "bytesReceived",
       "lastPacketSentTimestamp",
       "lastPacketReceivedTimestamp",
-      "componentId",
     ],
     optional: [
       "selected",
@@ -216,6 +215,7 @@ const statsExpectedByType = {
     ],
     optional: [
       "relayProtocol",
+      "proxied",
     ],
     unimplemented: [
       "networkType",
@@ -244,6 +244,7 @@ const statsExpectedByType = {
     ],
     optional: [
       "relayProtocol",
+      "proxied",
     ],
     unimplemented: [
       "networkType",
@@ -314,7 +315,9 @@ var pedanticChecks = report => {
   // Check that report is only-maplike
   [...report.keys()].forEach(key => is(report[key], undefined,
       `Report is not dictionary like, it lacks a property for key ${key}`));
-
+  report.forEach((statObj, mapKey) => {
+    info(`"${mapKey} = ${JSON.stringify(statObj, null, 2)}`);
+  });
   // eslint-disable-next-line complexity
   report.forEach((statObj, mapKey) => {
     let tested = {};
@@ -372,7 +375,8 @@ var pedanticChecks = report => {
       if (isRemote) {
         // local id
         if (stat.localId) {
-          ok(report.has(stat.localId), "localId exists in report.");
+          ok(report.has(stat.localId),
+             `localId ${stat.localId} exists in report.`);
           is(report.get(stat.localId).ssrc, stat.ssrc,
             "remote ssrc and local ssrc match.");
           is(report.get(stat.localId).remoteId, stat.id,
@@ -381,7 +385,8 @@ var pedanticChecks = report => {
       } else {
         // remote id
         if (stat.remoteId) {
-          ok(report.has(stat.remoteId), "remoteId exists in report.");
+          ok(report.has(stat.remoteId),
+             `remoteId ${stat.remoteId} exists in report.`);
           is(report.get(stat.remoteId).ssrc, stat.ssrc,
             "remote ssrc and local ssrc match.");
           is(report.get(stat.remoteId).localId, stat.id,
@@ -775,6 +780,12 @@ var pedanticChecks = report => {
           `relayProtocol is undefined for candidates that are not relay and ` +
           `local. value=${stat.relayProtocol}`);
       }
+
+      // proxied
+      if (stat.proxied) {
+        ok(stat.proxied == "proxied" || stat.proxied == "non-proxied",
+           `${stat.type} has proxied. value=${stat.proxied}`);
+      }
     }
 
     //
@@ -801,7 +812,13 @@ var PC_REMOTE_TEST_REMOTE_STATS = test => {
   });
 }
 
-runNetworkTest(function (options) {
+runNetworkTest(async function (options) {
+  // We don't know how to get QP value when using Android system codecs.
+  if (navigator.userAgent.includes("Android")) {
+    await pushPrefs(["media.navigator.mediadatadecoder_vpx_enabled", false],
+                    ["media.webrtc.hw.h264.enabled", false]);
+  }
+
   const test = new PeerConnectionTest(options);
 
   test.chain.insertAfter("PC_LOCAL_WAIT_FOR_MEDIA_FLOW",

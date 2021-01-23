@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.keyNav.title "Navigácia klávesnicou">
+<!ENTITY tabNavigationBehavior.label "Navigácia pomocou klávesu Tab">
+<!ENTITY tabNavigationLinks.label "Odkazmi">
+<!ENTITY tabNavigationLinks.accesskey "O">
+<!ENTITY tabNavigationForms.label "Tlačidlami, prepínačmi, políčkami a zoznamami">
+<!ENTITY tabNavigationForms.accesskey "T">
+<!ENTITY tabNavigationTextboxes.label "Poznámka: textové polia a posuvné polia sú vždy súčasťou prepínania.">
+<!ENTITY tabNavigationDesc.label "Pri stlačení klávesu Tab alebo kombinácie Shift+Tab sa presunúť medzi:">
+<!ENTITY accessibilityBrowseWithCaret.label "Prehliadanie pomocou klávesnice">
+<!ENTITY browseWithCaretDesc.label "Funkcia Prehliadanie pomocou klávesnice umiestni do webovej stránky presúvateľný kurzor, ktorý umožňuje označovať text a prechádzať stránkou pomocou klávesnice.">
+<!ENTITY browseWithCaretUse.label "Používať funkciu Prehliadanie pomocou klávesnice">
+<!ENTITY browseWithCaretUse.accesskey "e">
+<!ENTITY browseWithCaretShortCut.label "Použiť kláves F7 na zapnutie/vypnutie funkcie Prehliadanie pomocou klávesnice">
+<!ENTITY browseWithCaretShortCut.accesskey "F">
+<!ENTITY browseWithCaretWarn.label "Upozorniť pred zapnutím funkcie Prehliadanie pomocou klávesnice">
+<!ENTITY browseWithCaretWarn.accesskey "U">

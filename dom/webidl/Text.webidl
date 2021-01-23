@@ -10,8 +10,11 @@
  * liability, trademark and document use rules apply.
  */
 
-[Constructor(optional DOMString data = "")]
+[Exposed=Window]
 interface Text : CharacterData {
+  [Throws]
+  constructor(optional DOMString data = "");
+
   [Throws]
   Text splitText(unsigned long offset);
   [Throws]
@@ -26,4 +29,4 @@ partial interface Text {
   readonly attribute HTMLSlotElement? openOrClosedAssignedSlot;
 };
 
-Text implements GeometryUtils;
+Text includes GeometryUtils;

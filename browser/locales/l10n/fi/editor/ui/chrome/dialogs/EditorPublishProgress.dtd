@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY siteUrl.label          "Sivuston URL:">
+<!ENTITY docSubdir.label        "Sivun alihakemisto:">
+<!ENTITY otherSubdir.label      "Kuvien alihakemisto:">
+
+<!ENTITY status.label           "Julkaistaan…">
+<!ENTITY fileList.label         "Julkaisun tila">
+<!ENTITY succeeded.label        "Onnistui">
+<!ENTITY failed.label           "Epäonnistui">
+
+<!ENTITY keepOpen               "Pidä tämä ikkuna auki myös, kun julkaiseminen on suoritettu.">
+<!ENTITY closeButton.label      "Sulje">

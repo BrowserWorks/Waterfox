@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 const { XPCOMUtils } = ChromeUtils.import(
   "resource://gre/modules/XPCOMUtils.jsm"
 );
@@ -6,8 +10,14 @@ const { LogManager } = ChromeUtils.import(
 );
 
 XPCOMUtils.defineLazyModuleGetters(this, {
-  AddonStudyAction: "resource://normandy/actions/AddonStudyAction.jsm",
+  AddonRollbackAction: "resource://normandy/actions/AddonRollbackAction.jsm",
+  AddonRolloutAction: "resource://normandy/actions/AddonRolloutAction.jsm",
+  BaseAction: "resource://normandy/actions/BaseAction.jsm",
+  BranchedAddonStudyAction:
+    "resource://normandy/actions/BranchedAddonStudyAction.jsm",
   ConsoleLogAction: "resource://normandy/actions/ConsoleLogAction.jsm",
+  MessagingExperimentAction:
+    "resource://normandy/actions/MessagingExperimentAction.jsm",
   PreferenceExperimentAction:
     "resource://normandy/actions/PreferenceExperimentAction.jsm",
   PreferenceRollbackAction:
@@ -15,8 +25,6 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   PreferenceRolloutAction:
     "resource://normandy/actions/PreferenceRolloutAction.jsm",
   ShowHeartbeatAction: "resource://normandy/actions/ShowHeartbeatAction.jsm",
-  SinglePreferenceExperimentAction:
-    "resource://normandy/actions/SinglePreferenceExperimentAction.jsm",
   Uptake: "resource://normandy/lib/Uptake.jsm",
 });
 
@@ -31,31 +39,46 @@ class ActionsManager {
   constructor() {
     this.finalized = false;
 
-    const addonStudyAction = new AddonStudyAction();
-    const singlePreferenceExperimentAction = new SinglePreferenceExperimentAction();
-
-    this.localActions = {
-      "addon-study": addonStudyAction,
-      "console-log": new ConsoleLogAction(),
-      "opt-out-study": addonStudyAction, // Legacy name used for addon-study on Normandy server
-      "multi-preference-experiment": new PreferenceExperimentAction(),
-      // Historically, this name meant SinglePreferenceExperimentAction.
-      "preference-experiment": singlePreferenceExperimentAction,
-      "preference-rollback": new PreferenceRollbackAction(),
-      "preference-rollout": new PreferenceRolloutAction(),
-      "single-preference-experiment": singlePreferenceExperimentAction,
-      "show-heartbeat": new ShowHeartbeatAction(),
-    };
+    this.localActions = {};
+    for (const [name, Constructor] of Object.entries(
+      ActionsManager.actionConstructors
+    )) {
+      this.localActions[name] = new Constructor();
+    }
   }
 
-  async runRecipe(recipe) {
+  static actionConstructors = {
+    "addon-rollback": AddonRollbackAction,
+    "addon-rollout": AddonRolloutAction,
+    "branched-addon-study": BranchedAddonStudyAction,
+    "console-log": ConsoleLogAction,
+    "messaging-experiment": MessagingExperimentAction,
+    "multi-preference-experiment": PreferenceExperimentAction,
+    "preference-rollback": PreferenceRollbackAction,
+    "preference-rollout": PreferenceRolloutAction,
+    "show-heartbeat": ShowHeartbeatAction,
+  };
+
+  static getCapabilities() {
+    // Prefix each action name with "action." to turn it into a capability name.
+    let capabilities = new Set();
+    for (const actionName of Object.keys(ActionsManager.actionConstructors)) {
+      capabilities.add(`action.${actionName}`);
+    }
+    return capabilities;
+  }
+
+  async processRecipe(recipe, suitability) {
     let actionName = recipe.action;
 
     if (actionName in this.localActions) {
       log.info(`Executing recipe "${recipe.name}" (action=${recipe.action})`);
       const action = this.localActions[actionName];
-      await action.runRecipe(recipe);
-    } else {
+      await action.processRecipe(recipe, suitability);
+
+      // If the recipe doesn't have matching capabilities, then a missing action
+      // is expected. In this case, don't send an error
+    } else if (suitability !== BaseAction.suitability.CAPABILITES_MISMATCH) {
       log.error(
         `Could not execute recipe ${recipe.name}:`,
         `Action ${recipe.action} is either missing or invalid.`
@@ -71,7 +94,7 @@ class ActionsManager {
     this.finalized = true;
 
     // Finalize local actions
-    for (const action of new Set(Object.values(this.localActions))) {
+    for (const action of Object.values(this.localActions)) {
       action.finalize();
     }
   }

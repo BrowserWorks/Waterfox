@@ -5,10 +5,11 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 #include "RemoteSandboxBrokerProcessParent.h"
-#include "nsIRunnable.h"
 #include <windows.h>
 
 using mozilla::ipc::GeckoChildProcessHost;
+using mozilla::ipc::LaunchError;
+using mozilla::ipc::ProcessHandlePromise;
 
 namespace mozilla {
 
@@ -21,11 +22,9 @@ RemoteSandboxBrokerProcessParent::~RemoteSandboxBrokerProcessParent() {
   MOZ_COUNT_DTOR(RemoteSandboxBrokerProcessParent);
 }
 
-RefPtr<RemoteSandboxBrokerProcessParent::HandlePromise>
-RemoteSandboxBrokerProcessParent::AsyncLaunch() {
+RefPtr<ProcessHandlePromise> RemoteSandboxBrokerProcessParent::AsyncLaunch() {
   if (!GeckoChildProcessHost::AsyncLaunch()) {
-    return HandlePromise::CreateAndReject(GeckoChildProcessHost::LaunchError{},
-                                          __func__);
+    return ProcessHandlePromise::CreateAndReject(LaunchError{}, __func__);
   }
   return WhenProcessHandleReady();
 }

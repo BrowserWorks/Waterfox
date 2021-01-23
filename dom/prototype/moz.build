@@ -17,7 +17,6 @@ SOURCES += [
 
 LOCAL_INCLUDES += [
     '/dom/base',
-    '/dom/xbl',
     '/dom/xul',
 ]
 

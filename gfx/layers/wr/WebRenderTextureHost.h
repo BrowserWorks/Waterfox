@@ -30,11 +30,14 @@ class WebRenderTextureHost : public TextureHost {
 
   void DeallocateDeviceData() override {}
 
-  void SetTextureSourceProvider(TextureSourceProvider* aProvider) override;
-
   bool Lock() override;
 
   void Unlock() override;
+
+  void PrepareTextureSource(CompositableTextureSourceRef& aTexture) override;
+  bool BindTextureSource(CompositableTextureSourceRef& aTexture) override;
+  void UnbindTextureSource() override;
+  void SetTextureSourceProvider(TextureSourceProvider* aProvider) override;
 
   gfx::SurfaceFormat GetFormat() const override;
 
@@ -46,11 +49,10 @@ class WebRenderTextureHost : public TextureHost {
   // Please check TextureHost::GetReadFormat().
   gfx::SurfaceFormat GetReadFormat() const override;
 
-  bool BindTextureSource(CompositableTextureSourceRef& aTexture) override;
-
   already_AddRefed<gfx::DataSourceSurface> GetAsSurface() override;
 
   gfx::YUVColorSpace GetYUVColorSpace() const override;
+  gfx::ColorRange GetColorRange() const override;
 
   gfx::IntSize GetSize() const override;
 
@@ -62,13 +64,13 @@ class WebRenderTextureHost : public TextureHost {
 
   virtual void PrepareForUse() override;
 
-  wr::ExternalImageId GetExternalImageKey() { return mExternalImageId; }
+  wr::ExternalImageId GetExternalImageKey();
 
   int32_t GetRGBStride();
 
   bool HasIntermediateBuffer() const override;
 
-  uint32_t NumSubTextures() const override;
+  uint32_t NumSubTextures() override;
 
   void PushResourceUpdates(wr::TransactionBuilder& aResources,
                            ResourceUpdateOp aOp,
@@ -78,18 +80,14 @@ class WebRenderTextureHost : public TextureHost {
   void PushDisplayItems(wr::DisplayListBuilder& aBuilder,
                         const wr::LayoutRect& aBounds,
                         const wr::LayoutRect& aClip, wr::ImageRendering aFilter,
-                        const Range<wr::ImageKey>& aImageKeys) override;
-
-  bool SupportsWrNativeTexture() override;
+                        const Range<wr::ImageKey>& aImageKeys,
+                        const bool aPreferCompositorSurface) override;
 
   bool NeedsYFlip() const override;
 
   void MaybeNofityForUse(wr::TransactionBuilder& aTxn);
 
  protected:
-  void CreateRenderTextureHost(const SurfaceDescriptor& aDesc,
-                               TextureHost* aTexture);
-
   RefPtr<TextureHost> mWrappedTextureHost;
   wr::ExternalImageId mExternalImageId;
 };

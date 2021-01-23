@@ -7,6 +7,14 @@ ChromeUtils.import("resource://normandy/lib/ShieldPreferences.jsm", this);
 
 const OPT_OUT_STUDIES_ENABLED_PREF = "app.shield.optoutstudies.enabled";
 
+const { NormandyTestUtils } = ChromeUtils.import(
+  "resource://testing-common/NormandyTestUtils.jsm"
+);
+const {
+  addonStudyFactory,
+  preferenceStudyFactory,
+} = NormandyTestUtils.factories;
+
 ShieldPreferences.init();
 
 decorate_task(
@@ -64,8 +72,8 @@ decorate_task(
     await stoppedBoth;
 
     Assert.deepEqual(stopArgs, [
-      [study1.name, { reason: "general-opt-out" }],
-      [study2.name, { reason: "general-opt-out" }],
+      [study1.slug, { reason: "general-opt-out" }],
+      [study2.slug, { reason: "general-opt-out" }],
     ]);
   }
 );

@@ -3,7 +3,7 @@
 
 (function(mod) {
   if (typeof exports == "object" && typeof module == "object") // CommonJS
-    mod(require("../../lib/codemirror"), require("../xml/xml"), require("../javascript/javascript"))
+    mod(require("devtools/client/shared/sourceeditor/codemirror/lib/codemirror"), require("devtools/client/shared/sourceeditor/codemirror/mode/xml/xml"), require("devtools/client/shared/sourceeditor/codemirror/mode/javascript/javascript"))
   else if (typeof define == "function" && define.amd) // AMD
     define(["../../lib/codemirror", "../xml/xml", "../javascript/javascript"], mod)
   else // Plain browser env
@@ -32,7 +32,7 @@
     function flatXMLIndent(state) {
       var tagName = state.tagName
       state.tagName = null
-      var result = xmlMode.indent(state, "")
+      var result = xmlMode.indent(state, "", "")
       state.tagName = tagName
       return result
     }
@@ -105,7 +105,7 @@
     function jsToken(stream, state, cx) {
       if (stream.peek() == "<" && jsMode.expressionAllowed(stream, cx.state)) {
         jsMode.skipExpression(cx.state)
-        state.context = new Context(CodeMirror.startState(xmlMode, jsMode.indent(cx.state, "")),
+        state.context = new Context(CodeMirror.startState(xmlMode, jsMode.indent(cx.state, "", "")),
                                     xmlMode, 0, state.context)
         return null
       }

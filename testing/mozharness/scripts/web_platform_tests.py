@@ -26,7 +26,7 @@ from mozharness.mozilla.testing.codecoverage import (
     CodeCoverageMixin,
     code_coverage_config_options
 )
-from mozharness.mozilla.testing.errors import HarnessErrorList
+from mozharness.mozilla.testing.errors import WptHarnessErrorList
 
 from mozharness.mozilla.structuredlog import StructuredOutputParser
 from mozharness.base.log import INFO
@@ -66,7 +66,7 @@ class WebPlatformTest(TestingMixin, MercurialScript, CodeCoverageMixin, AndroidM
             "action": "store_true",
             "dest": "enable_webrender",
             "default": False,
-            "help": "Tries to enable the WebRender compositor."}
+            "help": "Enable the WebRender compositor in Gecko."}
          ],
         [["--headless"], {
             "action": "store_true",
@@ -86,18 +86,31 @@ class WebPlatformTest(TestingMixin, MercurialScript, CodeCoverageMixin, AndroidM
             "default": "1200",
             "help": "Specify headless virtual screen height (default: 1200)."}
          ],
-        [["--single-stylo-traversal"], {
-            "action": "store_true",
-            "dest": "single_stylo_traversal",
-            "default": False,
-            "help": "Forcibly enable single thread traversal in Stylo with STYLO_THREADS=1"}
-         ],
         [["--setpref"], {
             "action": "append",
             "metavar": "PREF=VALUE",
             "dest": "extra_prefs",
             "default": [],
             "help": "Defines an extra user preference."}
+         ],
+        [["--skip-implementation-status"], {
+            "action": "extend",
+            "dest": "skip_implementation_status",
+            "default": [],
+            "help": "Defines a way to not run a specific implementation status "
+                    " (i.e. not implemented)."}
+         ],
+        [["--skip-timeout"], {
+            "action": "store_true",
+            "dest": "skip_timeout",
+            "default": False,
+            "help": "Ignore tests that are expected status of TIMEOUT"}
+         ],
+        [["--include"], {
+            "action": "store",
+            "dest": "include",
+            "default": None,
+            "help": "URL prefix to include."}
          ],
     ] + copy.deepcopy(testing_config_options) + \
         copy.deepcopy(code_coverage_config_options)
@@ -157,6 +170,11 @@ class WebPlatformTest(TestingMixin, MercurialScript, CodeCoverageMixin, AndroidM
             dirs['abs_xre_dir'] = os.path.join(abs_dirs['abs_work_dir'], 'hostutils')
         if self.is_emulator:
             dirs['abs_avds_dir'] = self.config.get('avds_dir')
+            fetches_dir = os.environ.get('MOZ_FETCHES_DIR')
+            if fetches_dir:
+                dirs['abs_sdk_dir'] = os.path.join(fetches_dir, 'android-sdk-linux')
+            else:
+                dirs['abs_sdk_dir'] = os.path.join(abs_dirs['abs_work_dir'], 'android-sdk-linux')
 
         abs_dirs.update(dirs)
         self.abs_dirs = abs_dirs
@@ -207,11 +225,6 @@ class WebPlatformTest(TestingMixin, MercurialScript, CodeCoverageMixin, AndroidM
         cmd = [self.query_python_path('python'), '-u']
         cmd.append(os.path.join(dirs["abs_wpttest_dir"], run_file_name))
 
-        # Make sure that the logging directory exists
-        if self.mkdir_p(dirs["abs_blob_upload_dir"]) == -1:
-            self.fatal("Could not create blobber upload directory")
-            # Exit
-
         mozinfo.find_and_update_from_json(dirs['abs_test_install_dir'])
 
         cmd += ["--log-raw=-",
@@ -226,7 +239,17 @@ class WebPlatformTest(TestingMixin, MercurialScript, CodeCoverageMixin, AndroidM
                 "--stackwalk-binary=%s" % self.query_minidump_stackwalk(),
                 "--stackfix-dir=%s" % os.path.join(dirs["abs_test_install_dir"], "bin"),
                 "--run-by-dir=%i" % (3 if not mozinfo.info["asan"] else 0),
-                "--no-pause-after-test"]
+                "--no-pause-after-test",
+                "--instrument-to-file=%s" % os.path.join(dirs["abs_blob_upload_dir"],
+                                                         "wpt_instruments.txt")]
+
+        if (self.is_android or
+            "wdspec" in test_types or
+            "fission.autostart=true" in c['extra_prefs']):
+            processes = 1
+        else:
+            processes = 2
+        cmd.append("--processes=%s" % processes)
 
         if self.is_android:
             cmd += ["--device-serial=%s" % self.device_serial,
@@ -246,24 +269,31 @@ class WebPlatformTest(TestingMixin, MercurialScript, CodeCoverageMixin, AndroidM
 
         if not c["e10s"]:
             cmd.append("--disable-e10s")
+        if c["enable_webrender"]:
+            cmd.append("--enable-webrender")
 
-        if c["single_stylo_traversal"]:
-            cmd.append("--stylo-threads=1")
-        else:
-            cmd.append("--stylo-threads=4")
+        if c["skip_timeout"]:
+            cmd.append("--skip-timeout")
 
+        for implementation_status in c["skip_implementation_status"]:
+            cmd.append("--skip-implementation-status=%s" % implementation_status)
+
+        test_paths = set()
         if not (self.verify_enabled or self.per_test_coverage):
-            test_paths = json.loads(os.environ.get('MOZHARNESS_TEST_PATHS', '""'))
-            if test_paths:
+            mozharness_test_paths = json.loads(os.environ.get('MOZHARNESS_TEST_PATHS', '""'))
+            if mozharness_test_paths:
                 keys = (['web-platform-tests-%s' % test_type for test_type in test_types] +
                         ['web-platform-tests'])
                 for key in keys:
-                    if key in test_paths:
-                        relpaths = [os.path.relpath(p, 'testing/web-platform')
-                                    for p in test_paths.get(key, [])]
-                        paths = [os.path.join(dirs["abs_wpttest_dir"], relpath)
-                                 for relpath in relpaths]
-                        cmd.extend(paths)
+                    paths = mozharness_test_paths.get(key, [])
+                    for path in paths:
+                        if not path.startswith("/"):
+                            # Assume this is a filesystem path rather than a test id
+                            path = os.path.relpath(path, 'testing/web-platform')
+                            if ".." in path:
+                                self.fatal("Invalid WPT path: {}".format(path))
+                            path = os.path.join(dirs["abs_wpttest_dir"], path)
+                        test_paths.add(path)
             else:
                 for opt in ["total_chunks", "this_chunk"]:
                     val = c.get(opt)
@@ -282,7 +312,8 @@ class WebPlatformTest(TestingMixin, MercurialScript, CodeCoverageMixin, AndroidM
 
         test_type_suite = {
             "testharness": "web-platform-tests",
-            "reftest": "web-platform-tests-reftests",
+            "crashtest": "web-platform-tests-crashtest",
+            "reftest": "web-platform-tests-reftest",
             "wdspec": "web-platform-tests-wdspec",
         }
         for test_type in test_types:
@@ -293,6 +324,10 @@ class WebPlatformTest(TestingMixin, MercurialScript, CodeCoverageMixin, AndroidM
                                           str_format_values=str_format_values))
             cmd.extend(self.query_tests_args(try_tests,
                                              str_format_values=str_format_values))
+        if "include" in c and c["include"]:
+            cmd.append("--include=%s" % c["include"])
+
+        cmd.extend(test_paths)
 
         return cmd
 
@@ -308,9 +343,13 @@ class WebPlatformTest(TestingMixin, MercurialScript, CodeCoverageMixin, AndroidM
                           "mozpack/*",
                           "mozbuild/*"],
             suite_categories=["web-platform"])
+        dirs = self.query_abs_dirs()
         if self.is_android:
-            dirs = self.query_abs_dirs()
             self.xre_path = self.download_hostutils(dirs['abs_xre_dir'])
+        # Make sure that the logging directory exists
+        if self.mkdir_p(dirs["abs_blob_upload_dir"]) == -1:
+            self.fatal("Could not create blobber upload directory")
+            # Exit
 
     def install(self):
         if self.is_android:
@@ -342,7 +381,7 @@ class WebPlatformTest(TestingMixin, MercurialScript, CodeCoverageMixin, AndroidM
         parser = StructuredOutputParser(config=self.config,
                                         log_obj=self.log_obj,
                                         log_compact=True,
-                                        error_list=BaseErrorList + HarnessErrorList,
+                                        error_list=BaseErrorList + WptHarnessErrorList,
                                         allow_crashes=True)
 
         env = {'MINIDUMP_SAVE_PATH': dirs['abs_blob_upload_dir']}
@@ -350,18 +389,12 @@ class WebPlatformTest(TestingMixin, MercurialScript, CodeCoverageMixin, AndroidM
 
         if self.config['allow_software_gl_layers']:
             env['MOZ_LAYERS_ALLOW_SOFTWARE_GL'] = '1'
-        if self.config['enable_webrender']:
-            env['MOZ_WEBRENDER'] = '1'
-            env['MOZ_ACCELERATED'] = '1'
         if self.config['headless']:
             env['MOZ_HEADLESS'] = '1'
             env['MOZ_HEADLESS_WIDTH'] = self.config['headless_width']
             env['MOZ_HEADLESS_HEIGHT'] = self.config['headless_height']
 
-        if self.config['single_stylo_traversal']:
-            env['STYLO_THREADS'] = '1'
-        else:
-            env['STYLO_THREADS'] = '4'
+        env['STYLO_THREADS'] = '4'
 
         if self.is_android:
             env['ADB_PATH'] = self.adb_path

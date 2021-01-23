@@ -10,7 +10,9 @@
 #include "mozilla/TimeStamp.h"
 #include "mozilla/UniquePtr.h"
 
+#include "mozilla/layers/Compositor.h"
 #include "mozilla/layers/ProfilerScreenshots.h"
+#include "mozilla/layers/TextureHost.h"
 #include "mozilla/gfx/Point.h"
 #include "nsTArray.h"
 
@@ -57,9 +59,9 @@ class CompositorScreenshotGrabberImpl final {
   const IntSize mBufferSize;
 };
 
-CompositorScreenshotGrabber::CompositorScreenshotGrabber() {}
+CompositorScreenshotGrabber::CompositorScreenshotGrabber() = default;
 
-CompositorScreenshotGrabber::~CompositorScreenshotGrabber() {}
+CompositorScreenshotGrabber::~CompositorScreenshotGrabber() = default;
 
 void CompositorScreenshotGrabber::MaybeGrabScreenshot(Compositor* aCompositor) {
   if (ProfilerScreenshots::IsEnabled()) {
@@ -87,8 +89,8 @@ void CompositorScreenshotGrabber::MaybeProcessQueue() {
 
 void CompositorScreenshotGrabber::NotifyEmptyFrame() {
 #ifdef MOZ_GECKO_PROFILER
-  profiler_add_marker("NoCompositorScreenshot because nothing changed",
-                      JS::ProfilingCategoryPair::GRAPHICS);
+  PROFILER_ADD_MARKER("NoCompositorScreenshot because nothing changed",
+                      GRAPHICS);
 #endif
 }
 
@@ -183,7 +185,7 @@ void CompositorScreenshotGrabberImpl::GrabScreenshot(Compositor* aCompositor) {
   // ProcessQueue(). This ensures that the buffer isn't mapped into main memory
   // until the next frame. If we did it in this frame, we'd block on the GPU.
   mCurrentFrameQueueItem = Some(QueueItem{
-      TimeStamp::Now(), buffer.forget(), scaledSize, windowTarget->GetSize(),
+      TimeStamp::Now(), std::move(buffer), scaledSize, windowTarget->GetSize(),
       reinterpret_cast<uintptr_t>(static_cast<void*>(this))});
 }
 

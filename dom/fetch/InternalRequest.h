@@ -10,10 +10,10 @@
 #include "mozilla/dom/HeadersBinding.h"
 #include "mozilla/dom/InternalHeaders.h"
 #include "mozilla/dom/RequestBinding.h"
+#include "mozilla/dom/SafeRefPtr.h"
 #include "mozilla/LoadTainting.h"
-#include "mozilla/net/ReferrerPolicy.h"
+#include "mozilla/UniquePtr.h"
 
-#include "nsIContentPolicy.h"
 #include "nsIInputStream.h"
 #include "nsISupportsImpl.h"
 #ifdef DEBUG
@@ -38,15 +38,15 @@ namespace dom {
  * RequestDestination| nsContentPolicyType
  * ------------------+--------------------
  * audio             | TYPE_INTERNAL_AUDIO
- * audioworklet      | TODO
+ * audioworklet      | TYPE_INTERNAL_AUDIOWORKLET
  * document          | TYPE_DOCUMENT, TYPE_INTERNAL_IFRAME, TYPE_SUBDOCUMENT
  * embed             | TYPE_INTERNAL_EMBED
- * font              | TYPE_FONT
+ * font              | TYPE_FONT, TYPE_INTERNAL_FONT_PRELOAD
  * image             | TYPE_INTERNAL_IMAGE, TYPE_INTERNAL_IMAGE_PRELOAD,
  *                   | TYPE_IMAGE, TYPE_INTERNAL_IMAGE_FAVICON, TYPE_IMAGESET
  * manifest          | TYPE_WEB_MANIFEST
  * object            | TYPE_INTERNAL_OBJECT, TYPE_OBJECT
- * "paintworklet"    | TODO
+ * "paintworklet"    | TYPE_INTERNAL_PAINTWORKLET
  * report"           | TODO
  * script            | TYPE_INTERNAL_SCRIPT, TYPE_INTERNAL_SCRIPT_PRELOAD,
  *                   | TYPE_INTERNAL_MODULE, TYPE_INTERNAL_MODULE_PRELOAD,
@@ -68,14 +68,15 @@ namespace dom {
  *
  */
 
+class IPCInternalRequest;
 class Request;
 
 #define kFETCH_CLIENT_REFERRER_STR "about:client"
-class InternalRequest final {
+class InternalRequest final : public AtomicSafeRefCounted<InternalRequest> {
   friend class Request;
 
  public:
-  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(InternalRequest)
+  MOZ_DECLARE_REFCOUNTED_TYPENAME(InternalRequest)
   InternalRequest(const nsACString& aURL, const nsACString& aFragment);
   InternalRequest(const nsACString& aURL, const nsACString& aFragment,
                   const nsACString& aMethod,
@@ -87,7 +88,9 @@ class InternalRequest final {
                   nsContentPolicyType aContentPolicyType,
                   const nsAString& aIntegrity);
 
-  already_AddRefed<InternalRequest> Clone();
+  explicit InternalRequest(const IPCInternalRequest& aIPCRequest);
+
+  SafeRefPtr<InternalRequest> Clone();
 
   void GetMethod(nsCString& aMethod) const { aMethod.Assign(mMethod); }
 
@@ -190,73 +193,11 @@ class InternalRequest final {
     mReferrerPolicy = aReferrerPolicy;
   }
 
-  void SetReferrerPolicy(net::ReferrerPolicy aReferrerPolicy) {
-    switch (aReferrerPolicy) {
-      case net::RP_Unset:
-        mReferrerPolicy = ReferrerPolicy::_empty;
-        break;
-      case net::RP_No_Referrer:
-        mReferrerPolicy = ReferrerPolicy::No_referrer;
-        break;
-      case net::RP_No_Referrer_When_Downgrade:
-        mReferrerPolicy = ReferrerPolicy::No_referrer_when_downgrade;
-        break;
-      case net::RP_Origin:
-        mReferrerPolicy = ReferrerPolicy::Origin;
-        break;
-      case net::RP_Origin_When_Crossorigin:
-        mReferrerPolicy = ReferrerPolicy::Origin_when_cross_origin;
-        break;
-      case net::RP_Unsafe_URL:
-        mReferrerPolicy = ReferrerPolicy::Unsafe_url;
-        break;
-      case net::RP_Same_Origin:
-        mReferrerPolicy = ReferrerPolicy::Same_origin;
-        break;
-      case net::RP_Strict_Origin:
-        mReferrerPolicy = ReferrerPolicy::Strict_origin;
-        break;
-      case net::RP_Strict_Origin_When_Cross_Origin:
-        mReferrerPolicy = ReferrerPolicy::Strict_origin_when_cross_origin;
-        break;
-      default:
-        MOZ_ASSERT_UNREACHABLE("Invalid ReferrerPolicy value");
-        break;
-    }
-  }
-
-  net::ReferrerPolicy GetReferrerPolicy() {
-    switch (mReferrerPolicy) {
-      case ReferrerPolicy::_empty:
-        return net::RP_Unset;
-      case ReferrerPolicy::No_referrer:
-        return net::RP_No_Referrer;
-      case ReferrerPolicy::No_referrer_when_downgrade:
-        return net::RP_No_Referrer_When_Downgrade;
-      case ReferrerPolicy::Origin:
-        return net::RP_Origin;
-      case ReferrerPolicy::Origin_when_cross_origin:
-        return net::RP_Origin_When_Crossorigin;
-      case ReferrerPolicy::Unsafe_url:
-        return net::RP_Unsafe_URL;
-      case ReferrerPolicy::Strict_origin:
-        return net::RP_Strict_Origin;
-      case ReferrerPolicy::Same_origin:
-        return net::RP_Same_Origin;
-      case ReferrerPolicy::Strict_origin_when_cross_origin:
-        return net::RP_Strict_Origin_When_Cross_Origin;
-      default:
-        MOZ_ASSERT_UNREACHABLE("Invalid ReferrerPolicy enum value?");
-        break;
-    }
-    return net::RP_Unset;
-  }
-
-  net::ReferrerPolicy GetEnvironmentReferrerPolicy() const {
+  ReferrerPolicy GetEnvironmentReferrerPolicy() const {
     return mEnvironmentReferrerPolicy;
   }
 
-  void SetEnvironmentReferrerPolicy(net::ReferrerPolicy aReferrerPolicy) {
+  void SetEnvironmentReferrerPolicy(ReferrerPolicy aReferrerPolicy) {
     mEnvironmentReferrerPolicy = aReferrerPolicy;
   }
 
@@ -295,8 +236,8 @@ class InternalRequest final {
   }
 
   const nsString& GetIntegrity() const { return mIntegrity; }
+
   void SetIntegrity(const nsAString& aIntegrity) {
-    MOZ_ASSERT(mIntegrity.IsEmpty());
     mIntegrity.Assign(aIntegrity);
   }
 
@@ -319,16 +260,12 @@ class InternalRequest final {
 
   void SetUnsafeRequest() { mUnsafeRequest = true; }
 
-  InternalHeaders* Headers() { return mHeaders; }
+  InternalHeaders* Headers() const { return mHeaders; }
 
   void SetHeaders(InternalHeaders* aHeaders) {
     MOZ_ASSERT(aHeaders);
     mHeaders = aHeaders;
   }
-
-  bool SameOriginDataURL() const { return mSameOriginDataURL; }
-
-  void UnsetSameOriginDataURL() { mSameOriginDataURL = false; }
 
   void SetBody(nsIInputStream* aStream, int64_t aBodyLength) {
     // A request's body may not be reset once set.
@@ -339,7 +276,7 @@ class InternalRequest final {
 
   // Will return the original stream!
   // Use a tee or copy if you don't want to erase the original.
-  void GetBody(nsIInputStream** aStream, int64_t* aBodyLength = nullptr) {
+  void GetBody(nsIInputStream** aStream, int64_t* aBodyLength = nullptr) const {
     nsCOMPtr<nsIInputStream> s = mBodyStream;
     s.forget(aStream);
 
@@ -359,14 +296,8 @@ class InternalRequest final {
   const nsAString& BodyLocalPath() const { return mBodyLocalPath; }
 
   // The global is used as the client for the new object.
-  already_AddRefed<InternalRequest> GetRequestConstructorCopy(
+  SafeRefPtr<InternalRequest> GetRequestConstructorCopy(
       nsIGlobalObject* aGlobal, ErrorResult& aRv) const;
-
-  bool WasCreatedByFetchEvent() const { return mCreatedByFetchEvent; }
-
-  void SetCreatedByFetchEvent() { mCreatedByFetchEvent = true; }
-
-  void ClearCreatedByFetchEvent() { mCreatedByFetchEvent = false; }
 
   bool IsNavigationRequest() const;
 
@@ -400,12 +331,26 @@ class InternalRequest final {
     mPreferredAlternativeDataType = aDataType;
   }
 
- private:
-  // Does not copy mBodyStream.  Use fallible Clone() for complete copy.
-  explicit InternalRequest(const InternalRequest& aOther);
-
   ~InternalRequest();
 
+  InternalRequest(const InternalRequest& aOther) = delete;
+
+  void SetEmbedderPolicy(nsILoadInfo::CrossOriginEmbedderPolicy aPolicy) {
+    mEmbedderPolicy = aPolicy;
+  }
+
+  nsILoadInfo::CrossOriginEmbedderPolicy GetEmbedderPolicy() const {
+    return mEmbedderPolicy;
+  }
+
+ private:
+  struct ConstructorGuard {};
+
+ public:
+  // Does not copy mBodyStream.  Use fallible Clone() for complete copy.
+  InternalRequest(const InternalRequest& aOther, ConstructorGuard);
+
+ private:
   // Map the content policy type to the associated fetch destination, as defined
   // by the spec at https://fetch.spec.whatwg.org/#concept-request-destination.
   // Note that while the HTML spec for the "Link" element and its "as" attribute
@@ -453,32 +398,25 @@ class InternalRequest final {
   // This will be used for request created from Window or Worker contexts
   // In case there's no Referrer Policy in Request, this will be passed to
   // channel.
-  // The Environment Referrer Policy should be net::ReferrerPolicy so that it
-  // could be associated with nsIHttpChannel.
-  net::ReferrerPolicy mEnvironmentReferrerPolicy;
+  ReferrerPolicy mEnvironmentReferrerPolicy;
   RequestMode mMode;
   RequestCredentials mCredentialsMode;
-  MOZ_INIT_OUTSIDE_CTOR LoadTainting mResponseTainting;
+  LoadTainting mResponseTainting = LoadTainting::Basic;
   RequestCache mCacheMode;
   RequestRedirect mRedirectMode;
   nsString mIntegrity;
-  bool mMozErrors;
+  bool mMozErrors = false;
   nsCString mFragment;
-  MOZ_INIT_OUTSIDE_CTOR bool mAuthenticationFlag;
-  MOZ_INIT_OUTSIDE_CTOR bool mPreserveContentCodings;
-  MOZ_INIT_OUTSIDE_CTOR bool mSameOriginDataURL;
-  MOZ_INIT_OUTSIDE_CTOR bool mSkipServiceWorker;
-  MOZ_INIT_OUTSIDE_CTOR bool mSynchronous;
-  MOZ_INIT_OUTSIDE_CTOR bool mUnsafeRequest;
-  MOZ_INIT_OUTSIDE_CTOR bool mUseURLCredentials;
-  // This is only set when a Request object is created by a fetch event.  We
-  // use it to check if Service Workers are simply fetching intercepted Request
-  // objects without modifying them.
-  bool mCreatedByFetchEvent = false;
+  bool mSkipServiceWorker = false;
+  bool mSynchronous = false;
+  bool mUnsafeRequest = false;
+  bool mUseURLCredentials = false;
   // This is only set when Request.overrideContentPolicyType() has been set.
   // It is illegal to pass such a Request object to a fetch() method unless
   // if the caller has chrome privileges.
   bool mContentPolicyTypeOverridden = false;
+  nsILoadInfo::CrossOriginEmbedderPolicy mEmbedderPolicy =
+      nsILoadInfo::EMBEDDER_POLICY_NULL;
 
   UniquePtr<mozilla::ipc::PrincipalInfo> mPrincipalInfo;
 };

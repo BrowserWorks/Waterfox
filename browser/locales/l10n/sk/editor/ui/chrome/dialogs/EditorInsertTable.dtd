@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+   
+<!-- Window title -->
+<!ENTITY windowTitle.label "Vložiť tabuľku">
+
+<!ENTITY size.label "Veľkosť">
+<!ENTITY numRowsEditField.label "Počet riadkov:">
+<!ENTITY numRowsEditField.accessKey "d">
+<!ENTITY numColumnsEditField.label "Počet stĺpcov:">
+<!ENTITY numColumnsEditField.accessKey "c">
+<!ENTITY widthEditField.label "Šírka tabuľky:">
+<!ENTITY widthEditField.accessKey "r">
+<!ENTITY borderEditField.label "Okraj:">
+<!ENTITY borderEditField.accessKey "O">
+<!ENTITY borderEditField.tooltip "Zadajte hrúbku okraja, alebo nulu, ak tabuľka nemá mať okraj">
+<!ENTITY pixels.label "bodov">

@@ -1,0 +1,81 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Kép tulajdonságai">
+
+<!ENTITY pixelsPopup.value "képpont">
+<!-- These are in the Location tab panel -->
+
+<!ENTITY locationEditField.label "Kép URL:">
+<!ENTITY locationEditField.accessKey "U">
+<!ENTITY locationEditField.tooltip "Írja be a képfájl nevét vagy címét">
+<!ENTITY locationEditField.shortenedDataURI "Rövidített adat URI (a másolás a teljes URI-t a vágólapra helyezi)">
+<!ENTITY title.label "Buboréksúgó:">
+<!ENTITY title.accessKey "B">
+<!ENTITY title.tooltip "A HTML 'title' attribútuma, amely buboréksúgóként jelenik meg">
+<!ENTITY altText.label "Magyarázó szöveg:">
+<!ENTITY altText.accessKey "M">
+<!ENTITY altTextEditField.tooltip "A beírt szöveg megjelenik a kép helyén">
+<!ENTITY noAltText.label "Nincs magyarázó szöveg">
+<!ENTITY noAltText.accessKey "N">
+
+<!ENTITY previewBox.label "Kép előnézete">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+
+<!ENTITY actualSize.label "Valódi méret:">
+<!ENTITY actualSizeRadio.label "Valódi méret">
+<!ENTITY actualSizeRadio.accessKey "V">
+<!ENTITY actualSizeRadio.tooltip "Visszatérés a kép tényleges méretéhez">
+<!ENTITY customSizeRadio.label "Egyéni méret">
+<!ENTITY customSizeRadio.accessKey "E">
+<!ENTITY customSizeRadio.tooltip "A megjelenő kép méretének megváltoztatása">
+<!ENTITY heightEditField.label "Magasság:">
+<!ENTITY heightEditField.accessKey "M">
+<!ENTITY widthEditField.label "Szélesség:">
+<!ENTITY widthEditField.accessKey "z">
+<!ENTITY constrainCheckbox.label "Rögzített méretarány">
+<!ENTITY constrainCheckbox.accessKey "R">
+<!ENTITY constrainCheckbox.tooltip "Fenntartja a kép oldalarányait">
+<!-- These controls are in the Image Map box of the expanded area -->
+
+<!ENTITY imagemapBox.label "Hivatkozástérkép">
+<!ENTITY removeImageMapButton.label "Eltávolítás">
+<!ENTITY removeImageMapButton.accessKey "E">
+<!-- These are the options for image alignment -->
+
+<!ENTITY alignment.label "Szöveg a kép körül">
+<!ENTITY bottomPopup.value "Alul">
+<!ENTITY topPopup.value "Felül">
+<!ENTITY centerPopup.value "Középen">
+<!ENTITY wrapRightPopup.value "Jobb oldalra tördelve">
+<!ENTITY wrapLeftPopup.value "Bal oldalra tördelve">
+<!-- These controls are in the Spacing Box -->
+
+<!ENTITY spacingBox.label "Kép körüli térköz">
+<!ENTITY leftRightEditField.label "Balra és jobbra:">
+<!ENTITY leftRightEditField.accessKey "B">
+<!ENTITY topBottomEditField.label "Fent és lent:">
+<!ENTITY topBottomEditField.accessKey "F">
+<!ENTITY borderEditField.label "Egyszerű szegély:">
+<!ENTITY borderEditField.accessKey "e">
+<!-- These controls are in the Link Box -->
+
+<!ENTITY showImageLinkBorder.label "Szegély megjelenítése a kép körül">
+<!ENTITY showImageLinkBorder.accessKey "S">
+<!ENTITY LinkAdvancedEditButton.label "Hivatkozás szerkesztése…">
+<!ENTITY LinkAdvancedEditButton.accessKey "H">
+<!ENTITY LinkAdvancedEditButton.tooltip "HTML-attribútumok, stílusattribútumok és JavaScript hozzáadása vagy módosítása">
+<!-- These tabs are currently used in the image input dialog -->
+
+<!ENTITY imageInputTab.label "Űrlap">
+<!ENTITY imageLocationTab.label "Hely">
+<!ENTITY imageDimensionsTab.label "Méretek">
+<!ENTITY imageAppearanceTab.label "Megjelenés">
+<!ENTITY imageLinkTab.label "Hivatkozás">

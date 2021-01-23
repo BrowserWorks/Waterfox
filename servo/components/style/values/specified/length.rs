@@ -7,29 +7,29 @@
 //! [length]: https://drafts.csswg.org/css-values/#lengths
 
 use super::{AllowQuirks, Number, Percentage, ToComputedValue};
+use crate::computed_value_flags::ComputedValueFlags;
 use crate::font_metrics::{FontMetrics, FontMetricsOrientation};
 use crate::parser::{Parse, ParserContext};
-use crate::properties::computed_value_flags::ComputedValueFlags;
 use crate::values::computed::{self, CSSPixelLength, Context};
 use crate::values::generics::length as generics;
 use crate::values::generics::length::{
     GenericLengthOrNumber, GenericLengthPercentageOrNormal, GenericMaxSize, GenericSize,
 };
 use crate::values::generics::NonNegative;
-use crate::values::specified::calc::CalcNode;
+use crate::values::specified::calc::{self, CalcNode};
 use crate::values::specified::NonNegativeNumber;
 use crate::values::CSSFloat;
 use crate::Zero;
 use app_units::Au;
 use cssparser::{Parser, Token};
-use euclid::Size2D;
+use euclid::default::Size2D;
 use std::cmp;
 use std::ops::{Add, Mul};
 use style_traits::values::specified::AllowedNumericType;
 use style_traits::{ParseError, SpecifiedValueInfo, StyleParseErrorKind};
 
-pub use super::image::{ColorStop, EndingShape as GradientEndingShape, Gradient};
-pub use super::image::{GradientKind, Image};
+pub use super::image::Image;
+pub use super::image::{EndingShape as GradientEndingShape, Gradient};
 pub use crate::values::specified::calc::CalcLengthPercentage;
 
 /// Number of app units per pixel
@@ -46,14 +46,6 @@ pub const AU_PER_Q: CSSFloat = AU_PER_MM / 4.;
 pub const AU_PER_PT: CSSFloat = AU_PER_IN / 72.;
 /// Number of app units per pica
 pub const AU_PER_PC: CSSFloat = AU_PER_PT * 12.;
-
-/// Same as Gecko's AppUnitsToIntCSSPixels
-///
-/// Converts app units to integer pixel values,
-/// rounding during the conversion
-pub fn au_to_int_px(au: f32) -> i32 {
-    (au / AU_PER_PX).round() as i32
-}
 
 /// A font relative length.
 #[derive(Clone, Copy, Debug, MallocSizeOf, PartialEq, ToCss, ToShmem)]
@@ -79,18 +71,14 @@ pub enum FontBaseSize {
     CurrentStyle,
     /// Use the inherited font-size.
     InheritedStyle,
-    /// Use the inherited font-size, but strip em units.
-    ///
-    /// FIXME(emilio): This is very complex, and should go away.
-    InheritedStyleButStripEmUnits,
 }
 
 impl FontBaseSize {
     /// Calculate the actual size for a given context
-    pub fn resolve(&self, context: &Context) -> Au {
+    pub fn resolve(&self, context: &Context) -> computed::Length {
         match *self {
             FontBaseSize::CurrentStyle => context.style().get_font().clone_font_size().size(),
-            FontBaseSize::InheritedStyleButStripEmUnits | FontBaseSize::InheritedStyle => {
+            FontBaseSize::InheritedStyle => {
                 context.style().get_parent_font().clone_font_size().size()
             },
         }
@@ -104,18 +92,50 @@ impl FontRelativeLength {
             FontRelativeLength::Em(v) |
             FontRelativeLength::Ex(v) |
             FontRelativeLength::Ch(v) |
-            FontRelativeLength::Rem(v) => v == 0.0,
+            FontRelativeLength::Rem(v) => v == 0.,
         }
     }
 
+    fn is_negative(&self) -> bool {
+        match *self {
+            FontRelativeLength::Em(v) |
+            FontRelativeLength::Ex(v) |
+            FontRelativeLength::Ch(v) |
+            FontRelativeLength::Rem(v) => v < 0.,
+        }
+    }
+
+    fn try_sum(&self, other: &Self) -> Result<Self, ()> {
+        use self::FontRelativeLength::*;
+
+        if std::mem::discriminant(self) != std::mem::discriminant(other) {
+            return Err(());
+        }
+
+        Ok(match (self, other) {
+            (&Em(one), &Em(other)) => Em(one + other),
+            (&Ex(one), &Ex(other)) => Ex(one + other),
+            (&Ch(one), &Ch(other)) => Ch(one + other),
+            (&Rem(one), &Rem(other)) => Rem(one + other),
+            // See https://github.com/rust-lang/rust/issues/68867. rustc isn't
+            // able to figure it own on its own so we help.
+            _ => unsafe {
+                match *self {
+                    Em(..) | Ex(..) | Ch(..) | Rem(..) => {},
+                }
+                debug_unreachable!("Forgot to handle unit in try_sum()")
+            },
+        })
+    }
+
     /// Computes the font-relative length.
-    pub fn to_computed_value(&self, context: &Context, base_size: FontBaseSize) -> CSSPixelLength {
-        use std::f32;
+    pub fn to_computed_value(
+        &self,
+        context: &Context,
+        base_size: FontBaseSize,
+    ) -> computed::Length {
         let (reference_size, length) = self.reference_font_size_and_length(context, base_size);
-        let pixel = (length * reference_size.to_f32_px())
-            .min(f32::MAX)
-            .max(f32::MIN);
-        CSSPixelLength::new(pixel)
+        reference_size * length
     }
 
     /// Return reference font size.
@@ -129,7 +149,7 @@ impl FontRelativeLength {
         &self,
         context: &Context,
         base_size: FontBaseSize,
-    ) -> (Au, CSSFloat) {
+    ) -> (computed::Length, CSSFloat) {
         fn query_font_metrics(
             context: &Context,
             base_size: FontBaseSize,
@@ -152,11 +172,7 @@ impl FontRelativeLength {
                     }
                 }
 
-                if base_size == FontBaseSize::InheritedStyleButStripEmUnits {
-                    (Au(0), length)
-                } else {
-                    (reference_font_size, length)
-                }
+                (reference_font_size, length)
             },
             FontRelativeLength::Ex(length) => {
                 if context.for_non_inherited_property.is_some() {
@@ -175,7 +191,7 @@ impl FontRelativeLength {
                     //     determine the x-height, a value of 0.5em must be
                     //     assumed.
                     //
-                    reference_font_size.scale_by(0.5)
+                    reference_font_size * 0.5
                 });
                 (reference_size, length)
             },
@@ -210,7 +226,7 @@ impl FontRelativeLength {
                     if wm.is_vertical() && wm.is_upright() {
                         reference_font_size
                     } else {
-                        reference_font_size.scale_by(0.5)
+                        reference_font_size * 0.5
                     }
                 });
                 (reference_size, length)
@@ -222,10 +238,10 @@ impl FontRelativeLength {
                 //     element, the rem units refer to the property's initial
                 //     value.
                 //
-                let reference_size = if context.is_root_element || context.in_media_query {
+                let reference_size = if context.builder.is_root_element || context.in_media_query {
                     reference_font_size
                 } else {
-                    context.device().root_font_size()
+                    computed::Length::new(context.device().root_font_size().to_f32_px())
                 };
                 (reference_size, length)
             },
@@ -259,8 +275,40 @@ impl ViewportPercentageLength {
             ViewportPercentageLength::Vw(v) |
             ViewportPercentageLength::Vh(v) |
             ViewportPercentageLength::Vmin(v) |
-            ViewportPercentageLength::Vmax(v) => v == 0.0,
+            ViewportPercentageLength::Vmax(v) => v == 0.,
         }
+    }
+
+    fn is_negative(&self) -> bool {
+        match *self {
+            ViewportPercentageLength::Vw(v) |
+            ViewportPercentageLength::Vh(v) |
+            ViewportPercentageLength::Vmin(v) |
+            ViewportPercentageLength::Vmax(v) => v < 0.,
+        }
+    }
+
+    fn try_sum(&self, other: &Self) -> Result<Self, ()> {
+        use self::ViewportPercentageLength::*;
+
+        if std::mem::discriminant(self) != std::mem::discriminant(other) {
+            return Err(());
+        }
+
+        Ok(match (self, other) {
+            (&Vw(one), &Vw(other)) => Vw(one + other),
+            (&Vh(one), &Vh(other)) => Vh(one + other),
+            (&Vmin(one), &Vmin(other)) => Vmin(one + other),
+            (&Vmax(one), &Vmax(other)) => Vmax(one + other),
+            // See https://github.com/rust-lang/rust/issues/68867. rustc isn't
+            // able to figure it own on its own so we help.
+            _ => unsafe {
+                match *self {
+                    Vw(..) | Vh(..) | Vmin(..) | Vmax(..) => {},
+                }
+                debug_unreachable!("Forgot to handle unit in try_sum()")
+            },
+        })
     }
 
     /// Computes the given viewport-relative length for the given viewport size.
@@ -290,15 +338,14 @@ pub struct CharacterWidth(pub i32);
 
 impl CharacterWidth {
     /// Computes the given character width.
-    pub fn to_computed_value(&self, reference_font_size: Au) -> CSSPixelLength {
-        // This applies the *converting a character width to pixels* algorithm as specified
-        // in HTML5 § 14.5.4.
+    pub fn to_computed_value(&self, reference_font_size: computed::Length) -> computed::Length {
+        // This applies the *converting a character width to pixels* algorithm
+        // as specified in HTML5 § 14.5.4.
         //
         // TODO(pcwalton): Find these from the font.
-        let average_advance = reference_font_size.scale_by(0.5);
+        let average_advance = reference_font_size * 0.5;
         let max_advance = reference_font_size;
-        let au = average_advance.scale_by(self.0 as CSSFloat - 1.0) + max_advance;
-        au.into()
+        average_advance * (self.0 as CSSFloat - 1.0) + max_advance
     }
 }
 
@@ -341,6 +388,18 @@ impl AbsoluteLength {
         }
     }
 
+    fn is_negative(&self) -> bool {
+        match *self {
+            AbsoluteLength::Px(v) |
+            AbsoluteLength::In(v) |
+            AbsoluteLength::Cm(v) |
+            AbsoluteLength::Mm(v) |
+            AbsoluteLength::Q(v) |
+            AbsoluteLength::Pt(v) |
+            AbsoluteLength::Pc(v) => v < 0.,
+        }
+    }
+
     /// Convert this into a pixel value.
     #[inline]
     pub fn to_px(&self) -> CSSFloat {
@@ -368,6 +427,12 @@ impl ToComputedValue for AbsoluteLength {
 
     fn from_computed_value(computed: &Self::ComputedValue) -> Self {
         AbsoluteLength::Px(computed.px())
+    }
+}
+
+impl PartialOrd for AbsoluteLength {
+    fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
+        self.to_px().partial_cmp(&other.to_px())
     }
 }
 
@@ -449,6 +514,16 @@ impl Mul<CSSFloat> for NoCalcLength {
 }
 
 impl NoCalcLength {
+    /// Returns whether the value of this length without unit is less than zero.
+    pub fn is_negative(&self) -> bool {
+        match *self {
+            NoCalcLength::Absolute(v) => v.is_negative(),
+            NoCalcLength::FontRelative(v) => v.is_negative(),
+            NoCalcLength::ViewportPercentage(v) => v.is_negative(),
+            NoCalcLength::ServoCharacterWidth(c) => c.0 < 0,
+        }
+    }
+
     /// Parse a given absolute or relative dimension.
     pub fn parse_dimension(
         context: &ParserContext,
@@ -471,17 +546,48 @@ impl NoCalcLength {
             // viewport percentages
             "vw" if !context.in_page_rule() => {
                 NoCalcLength::ViewportPercentage(ViewportPercentageLength::Vw(value))
-            }
+            },
             "vh" if !context.in_page_rule() => {
                 NoCalcLength::ViewportPercentage(ViewportPercentageLength::Vh(value))
-            }
+            },
             "vmin" if !context.in_page_rule() => {
                 NoCalcLength::ViewportPercentage(ViewportPercentageLength::Vmin(value))
-            }
+            },
             "vmax" if !context.in_page_rule() => {
                 NoCalcLength::ViewportPercentage(ViewportPercentageLength::Vmax(value))
-            }
-            _ => return Err(())
+            },
+            _ => return Err(()),
+        })
+    }
+
+    /// Try to sume two lengths if compatible into the left hand side.
+    pub(crate) fn try_sum(&self, other: &Self) -> Result<Self, ()> {
+        use self::NoCalcLength::*;
+
+        if std::mem::discriminant(self) != std::mem::discriminant(other) {
+            return Err(());
+        }
+
+        Ok(match (self, other) {
+            (&Absolute(ref one), &Absolute(ref other)) => Absolute(*one + *other),
+            (&FontRelative(ref one), &FontRelative(ref other)) => FontRelative(one.try_sum(other)?),
+            (&ViewportPercentage(ref one), &ViewportPercentage(ref other)) => {
+                ViewportPercentage(one.try_sum(other)?)
+            },
+            (&ServoCharacterWidth(ref one), &ServoCharacterWidth(ref other)) => {
+                ServoCharacterWidth(CharacterWidth(one.0 + other.0))
+            },
+            // See https://github.com/rust-lang/rust/issues/68867. rustc isn't
+            // able to figure it own on its own so we help.
+            _ => unsafe {
+                match *self {
+                    Absolute(..) |
+                    FontRelative(..) |
+                    ViewportPercentage(..) |
+                    ServoCharacterWidth(..) => {},
+                }
+                debug_unreachable!("Forgot to handle unit in try_sum()")
+            },
         })
     }
 
@@ -502,6 +608,38 @@ impl NoCalcLength {
 }
 
 impl SpecifiedValueInfo for NoCalcLength {}
+
+impl PartialOrd for NoCalcLength {
+    fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
+        use self::NoCalcLength::*;
+
+        if std::mem::discriminant(self) != std::mem::discriminant(other) {
+            return None;
+        }
+
+        match (self, other) {
+            (&Absolute(ref one), &Absolute(ref other)) => one.to_px().partial_cmp(&other.to_px()),
+            (&FontRelative(ref one), &FontRelative(ref other)) => one.partial_cmp(other),
+            (&ViewportPercentage(ref one), &ViewportPercentage(ref other)) => {
+                one.partial_cmp(other)
+            },
+            (&ServoCharacterWidth(ref one), &ServoCharacterWidth(ref other)) => {
+                one.0.partial_cmp(&other.0)
+            },
+            // See https://github.com/rust-lang/rust/issues/68867. rustc isn't
+            // able to figure it own on its own so we help.
+            _ => unsafe {
+                match *self {
+                    Absolute(..) |
+                    FontRelative(..) |
+                    ViewportPercentage(..) |
+                    ServoCharacterWidth(..) => {},
+                }
+                debug_unreachable!("Forgot an arm in partial_cmp?")
+            },
+        }
+    }
+}
 
 impl Zero for NoCalcLength {
     fn zero() -> Self {
@@ -551,6 +689,31 @@ impl Mul<CSSFloat> for Length {
     }
 }
 
+impl PartialOrd for FontRelativeLength {
+    fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
+        use self::FontRelativeLength::*;
+
+        if std::mem::discriminant(self) != std::mem::discriminant(other) {
+            return None;
+        }
+
+        match (self, other) {
+            (&Em(ref one), &Em(ref other)) => one.partial_cmp(other),
+            (&Ex(ref one), &Ex(ref other)) => one.partial_cmp(other),
+            (&Ch(ref one), &Ch(ref other)) => one.partial_cmp(other),
+            (&Rem(ref one), &Rem(ref other)) => one.partial_cmp(other),
+            // See https://github.com/rust-lang/rust/issues/68867. rustc isn't
+            // able to figure it own on its own so we help.
+            _ => unsafe {
+                match *self {
+                    Em(..) | Ex(..) | Ch(..) | Rem(..) => {},
+                }
+                debug_unreachable!("Forgot an arm in partial_cmp?")
+            },
+        }
+    }
+}
+
 impl Mul<CSSFloat> for FontRelativeLength {
     type Output = FontRelativeLength;
 
@@ -579,6 +742,31 @@ impl Mul<CSSFloat> for ViewportPercentageLength {
     }
 }
 
+impl PartialOrd for ViewportPercentageLength {
+    fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
+        use self::ViewportPercentageLength::*;
+
+        if std::mem::discriminant(self) != std::mem::discriminant(other) {
+            return None;
+        }
+
+        match (self, other) {
+            (&Vw(ref one), &Vw(ref other)) => one.partial_cmp(other),
+            (&Vh(ref one), &Vh(ref other)) => one.partial_cmp(other),
+            (&Vmin(ref one), &Vmin(ref other)) => one.partial_cmp(other),
+            (&Vmax(ref one), &Vmax(ref other)) => one.partial_cmp(other),
+            // See https://github.com/rust-lang/rust/issues/68867. rustc isn't
+            // able to figure it own on its own so we help.
+            _ => unsafe {
+                match *self {
+                    Vw(..) | Vh(..) | Vmin(..) | Vmax(..) => {},
+                }
+                debug_unreachable!("Forgot an arm in partial_cmp?")
+            },
+        }
+    }
+}
+
 impl Length {
     #[inline]
     fn parse_internal<'i, 't>(
@@ -587,39 +775,34 @@ impl Length {
         num_context: AllowedNumericType,
         allow_quirks: AllowQuirks,
     ) -> Result<Self, ParseError<'i>> {
-        // FIXME: remove early returns when lifetimes are non-lexical
-        {
-            let location = input.current_source_location();
-            let token = input.next()?;
-            match *token {
-                Token::Dimension {
-                    value, ref unit, ..
-                } if num_context.is_ok(context.parsing_mode, value) => {
-                    return NoCalcLength::parse_dimension(context, value, unit)
-                        .map(Length::NoCalc)
-                        .map_err(|()| location.new_unexpected_token_error(token.clone()));
-                },
-                Token::Number { value, .. } if num_context.is_ok(context.parsing_mode, value) => {
-                    if value != 0. &&
-                        !context.parsing_mode.allows_unitless_lengths() &&
-                        !allow_quirks.allowed(context.quirks_mode)
-                    {
-                        return Err(
-                            location.new_custom_error(StyleParseErrorKind::UnspecifiedError)
-                        );
-                    }
-                    return Ok(Length::NoCalc(NoCalcLength::Absolute(AbsoluteLength::Px(
-                        value,
-                    ))));
-                },
-                Token::Function(ref name) if name.eq_ignore_ascii_case("calc") => {},
-                ref token => return Err(location.new_unexpected_token_error(token.clone())),
-            }
+        let location = input.current_source_location();
+        let token = input.next()?;
+        match *token {
+            Token::Dimension {
+                value, ref unit, ..
+            } if num_context.is_ok(context.parsing_mode, value) => {
+                NoCalcLength::parse_dimension(context, value, unit)
+                    .map(Length::NoCalc)
+                    .map_err(|()| location.new_unexpected_token_error(token.clone()))
+            },
+            Token::Number { value, .. } if num_context.is_ok(context.parsing_mode, value) => {
+                if value != 0. &&
+                    !context.parsing_mode.allows_unitless_lengths() &&
+                    !allow_quirks.allowed(context.quirks_mode)
+                {
+                    return Err(location.new_custom_error(StyleParseErrorKind::UnspecifiedError));
+                }
+                Ok(Length::NoCalc(NoCalcLength::Absolute(AbsoluteLength::Px(
+                    value,
+                ))))
+            },
+            Token::Function(ref name) => {
+                let function = CalcNode::math_function(name, location)?;
+                let calc = CalcNode::parse_length(context, input, num_context, function)?;
+                Ok(Length::Calc(Box::new(calc)))
+            },
+            ref token => return Err(location.new_unexpected_token_error(token.clone())),
         }
-        input.parse_nested_block(|input| {
-            CalcNode::parse_length(context, input, num_context)
-                .map(|calc| Length::Calc(Box::new(calc)))
-        })
     }
 
     /// Parse a non-negative length
@@ -704,14 +887,14 @@ impl Parse for NonNegativeLength {
 impl From<NoCalcLength> for NonNegativeLength {
     #[inline]
     fn from(len: NoCalcLength) -> Self {
-        NonNegative::<Length>(Length::NoCalc(len))
+        NonNegative(Length::NoCalc(len))
     }
 }
 
 impl From<Length> for NonNegativeLength {
     #[inline]
     fn from(len: Length) -> Self {
-        NonNegative::<Length>(len)
+        NonNegative(len)
     }
 }
 
@@ -769,9 +952,10 @@ impl From<Percentage> for LengthPercentage {
     #[inline]
     fn from(pc: Percentage) -> Self {
         if pc.is_calc() {
+            // FIXME(emilio): Hard-coding the clamping mode is suspect.
             LengthPercentage::Calc(Box::new(CalcLengthPercentage {
-                percentage: Some(computed::Percentage(pc.get())),
-                ..Default::default()
+                clamping_mode: AllowedNumericType::All,
+                node: CalcNode::Leaf(calc::Leaf::Percentage(pc.get())),
             }))
         } else {
             LengthPercentage::Percentage(computed::Percentage(pc.get()))
@@ -809,44 +993,41 @@ impl LengthPercentage {
         num_context: AllowedNumericType,
         allow_quirks: AllowQuirks,
     ) -> Result<Self, ParseError<'i>> {
-        // FIXME: remove early returns when lifetimes are non-lexical
-        {
-            let location = input.current_source_location();
-            let token = input.next()?;
-            match *token {
-                Token::Dimension {
-                    value, ref unit, ..
-                } if num_context.is_ok(context.parsing_mode, value) => {
-                    return NoCalcLength::parse_dimension(context, value, unit)
-                        .map(LengthPercentage::Length)
-                        .map_err(|()| location.new_unexpected_token_error(token.clone()));
-                },
-                Token::Percentage { unit_value, .. }
-                    if num_context.is_ok(context.parsing_mode, unit_value) =>
-                {
-                    return Ok(LengthPercentage::Percentage(computed::Percentage(
-                        unit_value,
-                    )));
-                }
-                Token::Number { value, .. } if num_context.is_ok(context.parsing_mode, value) => {
-                    if value != 0. &&
-                        !context.parsing_mode.allows_unitless_lengths() &&
-                        !allow_quirks.allowed(context.quirks_mode)
-                    {
-                        return Err(location.new_unexpected_token_error(token.clone()));
-                    } else {
-                        return Ok(LengthPercentage::Length(NoCalcLength::from_px(value)));
-                    }
-                },
-                Token::Function(ref name) if name.eq_ignore_ascii_case("calc") => {},
-                _ => return Err(location.new_unexpected_token_error(token.clone())),
+        let location = input.current_source_location();
+        let token = input.next()?;
+        match *token {
+            Token::Dimension {
+                value, ref unit, ..
+            } if num_context.is_ok(context.parsing_mode, value) => {
+                return NoCalcLength::parse_dimension(context, value, unit)
+                    .map(LengthPercentage::Length)
+                    .map_err(|()| location.new_unexpected_token_error(token.clone()));
+            },
+            Token::Percentage { unit_value, .. }
+                if num_context.is_ok(context.parsing_mode, unit_value) =>
+            {
+                return Ok(LengthPercentage::Percentage(computed::Percentage(
+                    unit_value,
+                )));
             }
+            Token::Number { value, .. } if num_context.is_ok(context.parsing_mode, value) => {
+                if value != 0. &&
+                    !context.parsing_mode.allows_unitless_lengths() &&
+                    !allow_quirks.allowed(context.quirks_mode)
+                {
+                    return Err(location.new_unexpected_token_error(token.clone()));
+                } else {
+                    return Ok(LengthPercentage::Length(NoCalcLength::from_px(value)));
+                }
+            },
+            Token::Function(ref name) => {
+                let function = CalcNode::math_function(name, location)?;
+                let calc =
+                    CalcNode::parse_length_or_percentage(context, input, num_context, function)?;
+                Ok(LengthPercentage::Calc(Box::new(calc)))
+            },
+            _ => return Err(location.new_unexpected_token_error(token.clone())),
         }
-
-        let calc = input.parse_nested_block(|i| {
-            CalcNode::parse_length_or_percentage(context, i, num_context)
-        })?;
-        Ok(LengthPercentage::Calc(Box::new(calc)))
     }
 
     /// Parses allowing the unitless length quirk.

@@ -5,6 +5,7 @@
 // This file tests async handling of a channel suspended in
 // notifying http-on-examine-merged-response observers.
 // Note that this test is developed based on test_bug482601.js.
+"use strict";
 
 const { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
 
@@ -15,14 +16,9 @@ var observerCalled = false;
 var channelResumed = false;
 
 var observer = {
-  QueryInterface: function(aIID) {
-    if (aIID.equals(Ci.nsISupports) || aIID.equals(Ci.nsIObserver)) {
-      return this;
-    }
-    throw Cr.NS_ERROR_NO_INTERFACE;
-  },
+  QueryInterface: ChromeUtils.generateQI(["nsIObserver"]),
 
-  observe: function(subject, topic, data) {
+  observe(subject, topic, data) {
     if (
       topic === "http-on-examine-merged-response" &&
       subject instanceof Ci.nsIHttpChannel
@@ -41,15 +37,15 @@ var observer = {
 };
 
 var listener = {
-  onStartRequest: function(request) {
+  onStartRequest(request) {
     buffer = "";
   },
 
-  onDataAvailable: function(request, stream, offset, count) {
+  onDataAvailable(request, stream, offset, count) {
     buffer = buffer.concat(read_stream(stream, count));
   },
 
-  onStopRequest: function(request, status) {
+  onStopRequest(request, status) {
     Assert.equal(status, Cr.NS_OK);
     Assert.equal(buffer, "0123456789");
     Assert.equal(channelResumed, true);
@@ -143,7 +139,7 @@ function test_partial2(status, entry) {
     "0123"
   );
 
-  observers_called = "";
+  observerCalled = false;
 
   var chan = makeChan(
     "http://localhost:" + httpserv.identity.primaryPort + "/path/partial"
@@ -177,7 +173,7 @@ function test_cached2(status, entry) {
     "0123456789"
   );
 
-  observers_called = "";
+  observerCalled = false;
 
   var chan = makeChan(
     "http://localhost:" + httpserv.identity.primaryPort + "/path/cached"

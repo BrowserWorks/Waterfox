@@ -8,6 +8,8 @@
 #define mozilla_dom_RemoteWorkerManager_h
 
 #include "base/process.h"
+#include "mozilla/RefPtr.h"
+#include "mozilla/dom/ContentParent.h"
 #include "mozilla/dom/RemoteWorkerTypes.h"
 #include "nsISupportsImpl.h"
 #include "nsTArray.h"
@@ -39,13 +41,35 @@ class RemoteWorkerManager final {
   RemoteWorkerServiceParent* SelectTargetActor(const RemoteWorkerData& aData,
                                                base::ProcessId aProcessId);
 
+  RemoteWorkerServiceParent* SelectTargetActorForServiceWorker(
+      const RemoteWorkerData& aData) const;
+
+  RemoteWorkerServiceParent* SelectTargetActorForSharedWorker(
+      base::ProcessId aProcessId) const;
+
   void LaunchInternal(RemoteWorkerController* aController,
                       RemoteWorkerServiceParent* aTargetActor,
-                      const RemoteWorkerData& aData);
+                      const RemoteWorkerData& aData,
+                      bool aRemoteWorkerAlreadyRegistered = false);
 
-  void LaunchNewContentProcess();
+  void LaunchNewContentProcess(const RemoteWorkerData& aData);
 
   void AsyncCreationFailed(RemoteWorkerController* aController);
+
+  // Iterate through all RemoteWorkerServiceParent actors, starting from a
+  // random index (as if iterating through a circular array).
+  //
+  // aCallback should be a invokable object with a function signature of
+  //   bool (RemoteWorkerServiceParent*, RefPtr<ContentParent>&&)
+  //
+  // aCallback is called with the actor and corresponding ContentParent, should
+  // return false to abort iteration before all actors have been traversed (e.g.
+  // if the desired actor is found), and must not mutate mChildActors (which
+  // shouldn't be an issue because this function is const). aCallback also
+  // doesn't need to worry about proxy-releasing the ContentParent if it isn't
+  // moved out of the parameter.
+  template <typename Callback>
+  void ForEachActor(Callback&& aCallback) const;
 
   // The list of existing RemoteWorkerServiceParent actors for child processes.
   // Raw pointers because RemoteWorkerServiceParent actors unregister themselves

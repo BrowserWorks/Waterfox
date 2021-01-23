@@ -42,6 +42,7 @@ typedef struct Dav1dTileContext Dav1dTileContext;
 #include "src/cdf.h"
 #include "src/data.h"
 #include "src/env.h"
+#include "src/film_grain.h"
 #include "src/intra_edge.h"
 #include "src/ipred.h"
 #include "src/itx.h"
@@ -57,6 +58,7 @@ typedef struct Dav1dTileContext Dav1dTileContext;
 #include "src/thread.h"
 
 typedef struct Dav1dDSPContext {
+    Dav1dFilmGrainDSPContext fg;
     Dav1dIntraPredDSPContext ipred;
     Dav1dMCDSPContext mc;
     Dav1dInvTxfmDSPContext itx;
@@ -89,6 +91,8 @@ struct Dav1dContext {
     Dav1dContentLightLevel *content_light;
     Dav1dRef *mastering_display_ref;
     Dav1dMasteringDisplay *mastering_display;
+    Dav1dRef *itut_t35_ref;
+    Dav1dITUTT35 *itut_t35;
 
     // decoded output picture queue
     Dav1dData in;
@@ -127,6 +131,7 @@ struct Dav1dContext {
     int operating_point;
     unsigned operating_point_idc;
     int all_layers;
+    unsigned frame_size_limit;
     int drain;
 
     Dav1dLogger logger;
@@ -195,12 +200,12 @@ struct Dav1dFrameContext {
             int16_t eob[3 /* plane */];
             uint8_t txtp[3 /* plane */];
         } *cbi;
-        int8_t *txtp;
         // indexed using (t->by >> 1) * (f->b4_stride >> 1) + (t->bx >> 1)
         uint16_t (*pal)[3 /* plane */][8 /* idx */];
         // iterated over inside tile state
         uint8_t *pal_idx;
         coef *cf;
+        int pal_sz, pal_idx_sz, cf_sz;
         // start offsets per tile
         int *tile_start_off;
     } frame_thread;
@@ -211,20 +216,21 @@ struct Dav1dFrameContext {
         Av1Filter *mask;
         Av1Restoration *lr_mask;
         int top_pre_cdef_toggle;
-        int mask_sz /* w*h */, lr_mask_sz, line_sz /* w */, lr_line_sz, re_sz /* h */;
-        Av1FilterLUT lim_lut;
+        int mask_sz /* w*h */, lr_mask_sz, cdef_line_sz[2] /* stride */;
+        int lr_line_sz, re_sz /* h */;
+        ALIGN(Av1FilterLUT lim_lut, 16);
         int last_sharpness;
         uint8_t lvl[8 /* seg_id */][4 /* dir */][8 /* ref */][2 /* is_gmv */];
         uint8_t *tx_lpf_right_edge[2];
-        pixel *cdef_line;
-        pixel *cdef_line_ptr[2 /* pre, post */][3 /* plane */][2 /* y */];
-        pixel *lr_lpf_line;
-        pixel *lr_lpf_line_ptr[3 /* plane */];
+        uint8_t *cdef_line_buf;
+        pixel *cdef_line[2 /* pre, post */][3 /* plane */];
+        pixel *lr_lpf_line[3 /* plane */];
 
         // in-loop filter per-frame state keeping
         int tile_row; // for carry-over at tile row edges
         pixel *p[3], *sr_p[3];
         Av1Filter *mask_ptr, *prev_mask_ptr;
+        int restore_planes; // enum LrRestorePlanes
     } lf;
 
     // threading (refer to tc[] for per-thread things)
@@ -234,19 +240,20 @@ struct Dav1dFrameContext {
         pthread_cond_t cond, icond;
         int tasks_left, num_tasks;
         int (*task_idx_to_sby_and_tile_idx)[2];
-        int titsati_sz, titsati_init[3];
+        int titsati_sz, titsati_init[2];
+        uint16_t titsati_index_rows[1 + DAV1D_MAX_TILE_ROWS];
         int inited;
     } tile_thread;
 };
 
 struct Dav1dTileState {
+    CdfContext cdf;
+    MsacContext msac;
+
     struct {
         int col_start, col_end, row_start, row_end; // in 4px units
         int col, row; // in tile units
     } tiling;
-
-    CdfContext cdf;
-    MsacContext msac;
 
     atomic_int progress; // in sby units, TILE_ERROR after a decoding error
     struct {
@@ -274,24 +281,56 @@ struct Dav1dTileContext {
     Dav1dTileState *ts;
     int bx, by;
     BlockContext l, *a;
-    coef *cf;
-    pixel *emu_edge; // stride=192 for non-SVC, or 320 for SVC
+    ALIGN(union, 32) {
+        int16_t cf_8bpc [32 * 32];
+        int32_t cf_16bpc[32 * 32];
+    };
     // FIXME types can be changed to pixel (and dynamically allocated)
     // which would make copy/assign operations slightly faster?
     uint16_t al_pal[2 /* a/l */][32 /* bx/y4 */][3 /* plane */][8 /* palette_idx */];
-    ALIGN(uint16_t pal[3 /* plane */][8 /* palette_idx */], 16);
     uint8_t pal_sz_uv[2 /* a/l */][32 /* bx4/by4 */];
     uint8_t txtp_map[32 * 32]; // inter-only
-    Dav1dWarpedMotionParams warpmv;
-    union {
-        void *mem;
-        uint8_t *pal_idx;
-        int16_t *ac;
-        pixel *interintra, *lap;
-        int16_t *compinter;
+    ALIGN(union, 64) {
+        struct {
+            union {
+                uint8_t  lap_8bpc [128 * 32];
+                uint16_t lap_16bpc[128 * 32];
+                struct {
+                    int16_t compinter[2][128 * 128];
+                    uint8_t seg_mask[128 * 128];
+                };
+            };
+            union {
+                // stride=192 for non-SVC, or 320 for SVC
+                uint8_t  emu_edge_8bpc [320 * (256 + 7)];
+                uint16_t emu_edge_16bpc[320 * (256 + 7)];
+            };
+        };
+        struct {
+            union {
+                uint8_t levels[32 * 34];
+                struct {
+                    uint8_t pal_order[64][8];
+                    uint8_t pal_ctx[64];
+                };
+            };
+            int16_t ac[32 * 32];
+            uint8_t pal_idx[2 * 64 * 64];
+            uint16_t pal[3 /* plane */][8 /* palette_idx */];
+            ALIGN(union, 32) {
+                struct {
+                    uint8_t interintra_8bpc[64 * 64];
+                    uint8_t edge_8bpc[257];
+                };
+                struct {
+                    uint16_t interintra_16bpc[64 * 64];
+                    uint16_t edge_16bpc[257];
+                };
+            };
+        };
     } scratch;
-    ALIGN(uint8_t scratch_seg_mask[128 * 128], 32);
 
+    Dav1dWarpedMotionParams warpmv;
     Av1Filter *lf_mask;
     int8_t *cur_sb_cdef_idx_ptr;
     // for chroma sub8x8, we need to know the filter for all 4 subblocks in

@@ -1,0 +1,40 @@
+<!--
+# Translator(s):
+#
+# BuBBaX <mikebubbax@yahoo.com>
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from ./customize.xul -->
+
+<!-- LOCALIZATION NOTE  sidebar.customize.title.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.title.label          "Personalizare &sidebarName;">
+<!-- LOCALIZATION NOTE  sidebar.customize.current.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.current.label        "File în &sidebarName;:">
+<!ENTITY sidebar.customize.current.accesskey    "F">
+<!ENTITY sidebar.customize.customize.label      "Personalizare filă">
+<!ENTITY sidebar.customize.customize.accesskey  "P">
+<!ENTITY sidebar.customize.remove.label         "Eliminați">
+<!ENTITY sidebar.customize.remove.accesskey     "E">
+<!ENTITY sidebar.customize.additional.label     "File Disponibile:">
+<!ENTITY sidebar.customize.additional.accesskey "F">
+<!ENTITY sidebar.customize.add.label            "Adaugă">
+<!ENTITY sidebar.customize.add.accesskey        "A">
+<!ENTITY sidebar.customize.preview.label        "Previzualizare">
+<!ENTITY sidebar.customize.preview.accesskey    "P">
+<!ENTITY sidebar.customize.up.label             "Mută sus">
+<!ENTITY sidebar.customize.up.accesskey         "u">
+<!ENTITY sidebar.customize.down.label           "Mută jos">
+<!ENTITY sidebar.customize.down.accesskey       "M">
+<!ENTITY sidebar.more.label                     "Află mai multe file">
+<!ENTITY sidebar.more.accesskey                 "f">

@@ -18,6 +18,7 @@
 #include <gdk/gdk.h>
 #include <gtk/gtk.h>
 #include <algorithm>
+#include "mozilla/Span.h"
 
 /*** type definitions ***/
 typedef struct {
@@ -105,6 +106,11 @@ typedef struct {
   bool initialized;
   ToolbarButtonGTKMetrics button[TOOLBAR_BUTTONS];
 } ToolbarGTKMetrics;
+
+typedef struct {
+  bool initialized;
+  GtkBorder decorationSize;
+} CSDWindowDecorationSize;
 
 typedef enum {
   MOZ_GTK_STEPPER_DOWN = 1 << 0,
@@ -344,6 +350,13 @@ typedef enum {
   MOZ_GTK_WIDGET_NODE_COUNT
 } WidgetNodeType;
 
+/* ButtonLayout represents a GTK CSD button and whether its on the left or
+ * right side of the tab bar */
+struct ButtonLayout {
+  WidgetNodeType mType;
+  bool mAtRight;
+};
+
 /*** General library functions ***/
 /**
  * Initializes the drawing library.  You must call this function
@@ -427,7 +440,7 @@ gint moz_gtk_checkbox_get_metrics(gint* indicator_size,
  * isRadio:            [IN] true when requesting metrics for the radio button
  * returns:    pointer to ToggleGTKMetrics struct
  */
-const ToggleGTKMetrics* GetToggleMetrics(bool isRadio);
+const ToggleGTKMetrics* GetToggleMetrics(WidgetNodeType aWidgetType);
 
 /**
  * Get the desired size of a GtkRadioButton
@@ -439,8 +452,7 @@ const ToggleGTKMetrics* GetToggleMetrics(bool isRadio);
  */
 gint moz_gtk_radio_get_metrics(gint* indicator_size, gint* indicator_spacing);
 
-/** Get the extra size for the focus ring for outline:auto.
- * widget:             [IN]  the widget to get the focus metrics for
+/** Returns the size of the focus ring for outline:auto.
  * focus_h_width:      [OUT] the horizontal width
  * focus_v_width:      [OUT] the vertical width
  *
@@ -537,10 +549,11 @@ void moz_gtk_get_arrow_size(WidgetNodeType widgetType, gint* width,
 
 /**
  * Get the minimum height of a entry widget
- * size:    [OUT] the minimum height
- *
+ * min_content_height:    [OUT] the minimum height of the content box.
+ * border_padding_height: [OUT] the size of borders and paddings.
  */
-void moz_gtk_get_entry_min_height(gint* height);
+void moz_gtk_get_entry_min_height(gint* min_content_height,
+                                  gint* border_padding_height);
 
 /**
  * Get the desired size of a toolbar separator
@@ -596,30 +609,24 @@ const ToolbarButtonGTKMetrics* GetToolbarButtonMetrics(
 
 /**
  * Get toolbar button layout.
- * aButtonLayout:  [IN][OUT] An array which will be filled by WidgetNodeType
- *                           references to visible titlebar buttons.
- *                           Must contains at least TOOLBAR_BUTTONS entries.
- * aMaxButtonNums: [IN] Allocated aButtonLayout entries. Must be at least
- *                      TOOLBAR_BUTTONS wide.
+ * aButtonLayout:  [OUT] An array which will be filled by ButtonLayout
+ *                       references to visible titlebar buttons. Must contain at
+ *                       least TOOLBAR_BUTTONS entries if non-empty.
  * aReversedButtonsPlacement: [OUT] True if the buttons are placed in opposite
  *                                  titlebar corner.
  *
  * returns:    Number of returned entries at aButtonLayout.
  */
-int GetGtkHeaderBarButtonLayout(WidgetNodeType* aButtonLayout,
-                                int aMaxButtonNums,
-                                bool* aReversedButtonsPlacement);
+size_t GetGtkHeaderBarButtonLayout(mozilla::Span<ButtonLayout>,
+                                   bool* aReversedButtonsPlacement);
 
 /**
- * Get size of CSD window extents of given GtkWindow.
+ * Get size of CSD window extents.
  *
- * aGtkWindow      [IN]  Decorated window.
- * aDecorationSize [OUT] Returns calculated (or estimated) decoration
- *                       size of given aGtkWindow.
+ * aIsPopup: [IN] Get decoration size for popup or toplevel window.
  *
- * returns:    True if we have extract decoration size (for GTK 3.20+)
- *             False if we have only an estimation (for GTK+ before  3.20+)
+ * returns: Calculated (or estimated) decoration size of given aGtkWindow.
  */
-bool GetCSDDecorationSize(GtkWindow* aGtkWindow, GtkBorder* aDecorationSize);
+GtkBorder GetCSDDecorationSize(bool aIsPopup);
 
 #endif

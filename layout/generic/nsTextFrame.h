@@ -11,7 +11,7 @@
 #include "mozilla/EventForwards.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/UniquePtr.h"
-#include "mozilla/dom/CharacterData.h"
+#include "mozilla/dom/Text.h"
 #include "nsFrame.h"
 #include "nsFrameSelection.h"
 #include "nsSplittableFrame.h"
@@ -29,9 +29,9 @@
 #endif
 
 class nsTextPaintStyle;
-class PropertyProvider;
 struct SelectionDetails;
 class nsTextFragment;
+class SVGTextFrame;
 
 namespace mozilla {
 class SVGContextPaint;
@@ -49,6 +49,169 @@ class nsTextFrame : public nsFrame {
   typedef gfxTextRun::Range Range;
 
  public:
+  enum TextRunType : uint8_t;
+  struct TabWidthStore;
+
+  /**
+   * An implementation of gfxTextRun::PropertyProvider that computes spacing and
+   * hyphenation based on CSS properties for a text frame.
+   */
+  class MOZ_STACK_CLASS PropertyProvider final
+      : public gfxTextRun::PropertyProvider {
+    typedef gfxTextRun::Range Range;
+    typedef gfxTextRun::HyphenType HyphenType;
+    typedef mozilla::gfx::DrawTarget DrawTarget;
+
+   public:
+    /**
+     * Use this constructor for reflow, when we don't know what text is
+     * really mapped by the frame and we have a lot of other data around.
+     *
+     * @param aLength can be INT32_MAX to indicate we cover all the text
+     * associated with aFrame up to where its flow chain ends in the given
+     * textrun. If INT32_MAX is passed, justification and hyphen-related methods
+     * cannot be called, nor can GetOriginalLength().
+     */
+    PropertyProvider(gfxTextRun* aTextRun, const nsStyleText* aTextStyle,
+                     const nsTextFragment* aFrag, nsTextFrame* aFrame,
+                     const gfxSkipCharsIterator& aStart, int32_t aLength,
+                     nsIFrame* aLineContainer,
+                     nscoord aOffsetFromBlockOriginForTabs,
+                     nsTextFrame::TextRunType aWhichTextRun);
+
+    /**
+     * Use this constructor after the frame has been reflowed and we don't
+     * have other data around. Gets everything from the frame. EnsureTextRun
+     * *must* be called before this!!!
+     */
+    PropertyProvider(nsTextFrame* aFrame, const gfxSkipCharsIterator& aStart,
+                     nsTextFrame::TextRunType aWhichTextRun,
+                     nsFontMetrics* aFontMetrics);
+
+    /**
+     * As above, but assuming we want the inflated text run and associated
+     * metrics.
+     */
+    PropertyProvider(nsTextFrame* aFrame, const gfxSkipCharsIterator& aStart)
+        : PropertyProvider(aFrame, aStart, nsTextFrame::eInflated,
+                           aFrame->InflatedFontMetrics()) {}
+
+    // Call this after construction if you're not going to reflow the text
+    void InitializeForDisplay(bool aTrimAfter);
+
+    void InitializeForMeasure();
+
+    void GetSpacing(Range aRange, Spacing* aSpacing) const final;
+    gfxFloat GetHyphenWidth() const final;
+    void GetHyphenationBreaks(Range aRange,
+                              HyphenType* aBreakBefore) const final;
+    mozilla::StyleHyphens GetHyphensOption() const final {
+      return mTextStyle->mHyphens;
+    }
+
+    already_AddRefed<DrawTarget> GetDrawTarget() const final;
+
+    uint32_t GetAppUnitsPerDevUnit() const final {
+      return mTextRun->GetAppUnitsPerDevUnit();
+    }
+
+    void GetSpacingInternal(Range aRange, Spacing* aSpacing,
+                            bool aIgnoreTabs) const;
+
+    /**
+     * Compute the justification information in given DOM range, return
+     * justification info and assignments if requested.
+     */
+    mozilla::JustificationInfo ComputeJustification(
+        Range aRange,
+        nsTArray<mozilla::JustificationAssignment>* aAssignments = nullptr);
+
+    const nsTextFrame* GetFrame() const { return mFrame; }
+    // This may not be equal to the frame offset/length in because we may have
+    // adjusted for whitespace trimming according to the state bits set in the
+    // frame (for the static provider)
+    const gfxSkipCharsIterator& GetStart() const { return mStart; }
+    // May return INT32_MAX if that was given to the constructor
+    uint32_t GetOriginalLength() const {
+      NS_ASSERTION(mLength != INT32_MAX, "Length not known");
+      return mLength;
+    }
+    const nsTextFragment* GetFragment() const { return mFrag; }
+
+    gfxFontGroup* GetFontGroup() const {
+      if (!mFontGroup) {
+        mFontGroup = GetFontMetrics()->GetThebesFontGroup();
+      }
+      return mFontGroup;
+    }
+
+    nsFontMetrics* GetFontMetrics() const {
+      if (!mFontMetrics) {
+        InitFontGroupAndFontMetrics();
+      }
+      return mFontMetrics;
+    }
+
+    void CalcTabWidths(Range aTransformedRange, gfxFloat aTabWidth) const;
+
+    gfxFloat MinTabAdvance() const;
+
+    const gfxSkipCharsIterator& GetEndHint() const { return mTempIterator; }
+
+   protected:
+    void SetupJustificationSpacing(bool aPostReflow);
+
+    void InitFontGroupAndFontMetrics() const {
+      if (!mFontMetrics) {
+        if (mWhichTextRun == nsTextFrame::eInflated) {
+          if (!mFrame->InflatedFontMetrics()) {
+            float inflation = mFrame->GetFontSizeInflation();
+            mFontMetrics =
+                nsLayoutUtils::GetFontMetricsForFrame(mFrame, inflation);
+            mFrame->SetInflatedFontMetrics(mFontMetrics);
+          } else {
+            mFontMetrics = mFrame->InflatedFontMetrics();
+          }
+        } else {
+          mFontMetrics = nsLayoutUtils::GetFontMetricsForFrame(mFrame, 1.0f);
+        }
+      }
+      mFontGroup = mFontMetrics->GetThebesFontGroup();
+    }
+
+    const RefPtr<gfxTextRun> mTextRun;
+    mutable gfxFontGroup* mFontGroup;
+    mutable RefPtr<nsFontMetrics> mFontMetrics;
+    const nsStyleText* mTextStyle;
+    const nsTextFragment* mFrag;
+    const nsIFrame* mLineContainer;
+    nsTextFrame* mFrame;
+    gfxSkipCharsIterator mStart;  // Offset in original and transformed string
+    const gfxSkipCharsIterator mTempIterator;
+
+    // Either null, or pointing to the frame's TabWidthProperty.
+    mutable nsTextFrame::TabWidthStore* mTabWidths;
+    // How far we've done tab-width calculation; this is ONLY valid when
+    // mTabWidths is nullptr (otherwise rely on mTabWidths->mLimit instead).
+    // It's a DOM offset relative to the current frame's offset.
+    mutable uint32_t mTabWidthsAnalyzedLimit;
+
+    int32_t mLength;                  // DOM string length, may be INT32_MAX
+    const gfxFloat mWordSpacing;      // space for each whitespace char
+    const gfxFloat mLetterSpacing;    // space for each letter
+    mutable gfxFloat mMinTabAdvance;  // min advance for <tab> char
+    mutable gfxFloat mHyphenWidth;
+    mutable gfxFloat mOffsetFromBlockOriginForTabs;
+
+    // The values in mJustificationSpacings corresponds to unskipped
+    // characters start from mJustificationArrayStart.
+    uint32_t mJustificationArrayStart;
+    nsTArray<Spacing> mJustificationSpacings;
+
+    const bool mReflowing;
+    const nsTextFrame::TextRunType mWhichTextRun;
+  };
+
   explicit nsTextFrame(ComputedStyle* aStyle, nsPresContext* aPresContext,
                        ClassID aID = kClassID)
       : nsFrame(aStyle, aPresContext, aID),
@@ -92,12 +255,11 @@ class nsTextFrame : public nsFrame {
     // Setting a non-fluid continuation might affect our flow length (they're
     // quite rare so we assume it always does) so we delete our cached value:
     if (GetContent()->HasFlag(NS_HAS_FLOWLENGTH_PROPERTY)) {
-      GetContent()->DeleteProperty(nsGkAtoms::flowlength);
+      GetContent()->RemoveProperty(nsGkAtoms::flowlength);
       GetContent()->UnsetFlags(NS_HAS_FLOWLENGTH_PROPERTY);
     }
   }
-  nsIFrame* GetNextInFlowVirtual() const final { return GetNextInFlow(); }
-  nsTextFrame* GetNextInFlow() const {
+  nsTextFrame* GetNextInFlow() const final {
     return mNextContinuation && (mNextContinuation->GetStateBits() &
                                  NS_FRAME_IS_FLUID_CONTINUATION)
                ? mNextContinuation
@@ -115,7 +277,7 @@ class nsTextFrame : public nsFrame {
       // Changing from non-fluid to fluid continuation might affect our flow
       // length, so we delete our cached value:
       if (GetContent()->HasFlag(NS_HAS_FLOWLENGTH_PROPERTY)) {
-        GetContent()->DeleteProperty(nsGkAtoms::flowlength);
+        GetContent()->RemoveProperty(nsGkAtoms::flowlength);
         GetContent()->UnsetFlags(NS_HAS_FLOWLENGTH_PROPERTY);
       }
     }
@@ -152,10 +314,17 @@ class nsTextFrame : public nsFrame {
 
 #ifdef DEBUG_FRAME_DUMP
   void List(FILE* out = stderr, const char* aPrefix = "",
-            uint32_t aFlags = 0) const final;
+            ListFlags aFlags = ListFlags()) const final;
   nsresult GetFrameName(nsAString& aResult) const final;
   void ToCString(nsCString& aBuf, int32_t* aTotalContentLength) const;
 #endif
+
+  // Returns this text frame's content's text fragment.
+  //
+  // Assertions in Init() ensure we only ever get a Text node as content.
+  const nsTextFragment* TextFragment() const {
+    return &mContent->AsText()->TextFragment();
+  }
 
   ContentOffsets CalcContentOffsetsFromFramePoint(const nsPoint& aPoint) final;
   ContentOffsets GetCharacterOffsetAtFramePoint(const nsPoint& aPoint);
@@ -163,14 +332,15 @@ class nsTextFrame : public nsFrame {
   /**
    * This is called only on the primary text frame. It indicates that
    * the selection state of the given character range has changed.
-   * Text in the range is unconditionally invalidated
+   * Frames corresponding to the character range are unconditionally invalidated
    * (Selection::Repaint depends on this).
-   * @param aSelected true if the selection has been added to the range,
-   * false otherwise
-   * @param aType the type of selection added or removed
+   * @param aStart start of character range.
+   * @param aEnd end (exclusive) of character range.
+   * @param aSelected true iff the character range is now selected.
+   * @param aType the type of the changed selection.
    */
-  void SetSelectedRange(uint32_t aStart, uint32_t aEnd, bool aSelected,
-                        SelectionType aSelectionType);
+  void SelectionStateChanged(uint32_t aStart, uint32_t aEnd, bool aSelected,
+                             SelectionType aSelectionType);
 
   FrameSearchResult PeekOffsetNoAmount(bool aForward, int32_t* aOffset) final;
   FrameSearchResult PeekOffsetCharacter(
@@ -273,7 +443,7 @@ class nsTextFrame : public nsFrame {
   nsOverflowAreas RecomputeOverflow(nsIFrame* aBlockFrame,
                                     bool aIncludeShadows = true);
 
-  enum TextRunType {
+  enum TextRunType : uint8_t {
     // Anything in reflow (but not intrinsic width calculation) or
     // painting should use the inflated text run (i.e., with font size
     // inflation applied).
@@ -320,7 +490,7 @@ class nsTextFrame : public nsFrame {
    * b. GetContentLength() == 0
    * c. it contains only non-significant white-space
    */
-  bool HasNonSuppressedText();
+  bool HasNonSuppressedText() const;
 
   /**
    * Object with various callbacks for PaintText() to invoke for different parts
@@ -421,6 +591,7 @@ class nsTextFrame : public nsFrame {
     PropertyProvider* provider = nullptr;
     Range contentRange;
     nsTextPaintStyle* textPaintStyle = nullptr;
+    Range glyphRange;
     explicit PaintTextSelectionParams(const PaintTextParams& aParams)
         : PaintTextParams(aParams) {}
   };
@@ -444,6 +615,7 @@ class nsTextFrame : public nsFrame {
     const nsTextPaintStyle* textStyle = nullptr;
     const nsDisplayText::ClipEdges* clipEdges = nullptr;
     const nscolor* decorationOverrideColor = nullptr;
+    Range glyphRange;
     explicit DrawTextParams(gfxContext* aContext)
         : DrawTextRunParams(aContext) {}
   };
@@ -484,6 +656,8 @@ class nsTextFrame : public nsFrame {
 
   nscolor GetCaretColorAt(int32_t aOffset) final;
 
+  // @param aSelectionFlags may be multiple of nsISelectionDisplay::DISPLAY_*.
+  // @return nsISelectionController.idl's `getDisplaySelection`.
   int16_t GetSelectionStatus(int16_t* aSelectionFlags);
 
   int32_t GetContentOffset() const { return mContentOffset; }
@@ -523,11 +697,11 @@ class nsTextFrame : public nsFrame {
       const nsLineList::iterator* aLine = nullptr,
       uint32_t* aFlowEndInTextRun = nullptr);
 
-  gfxTextRun* GetTextRun(TextRunType aWhichTextRun) {
+  gfxTextRun* GetTextRun(TextRunType aWhichTextRun) const {
     if (aWhichTextRun == eInflated || !HasFontSizeInflation()) return mTextRun;
     return GetUninflatedTextRun();
   }
-  gfxTextRun* GetUninflatedTextRun();
+  gfxTextRun* GetUninflatedTextRun() const;
   void SetTextRun(gfxTextRun* aTextRun, TextRunType aWhichTextRun,
                   float aInflation);
   bool IsInTextRunUserData() const {
@@ -689,26 +863,41 @@ class nsTextFrame : public nsFrame {
     // positive offsets are *above* the baseline and negative offsets below
     nscoord mBaselineOffset;
 
+    // This represents the offset from the initial position of the underline
+    const mozilla::LengthPercentageOrAuto mTextUnderlineOffset;
+
+    // for CSS property text-decoration-thickness, the width refers to the
+    // thickness of the decoration line
+    const mozilla::StyleTextDecorationLength mTextDecorationThickness;
     nscolor mColor;
     uint8_t mStyle;
 
+    // The text-underline-position property; affects the underline offset only
+    // if mTextUnderlineOffset is auto.
+    const mozilla::StyleTextUnderlinePosition mTextUnderlinePosition;
+
     LineDecoration(nsIFrame* const aFrame, const nscoord aOff,
+                   mozilla::StyleTextUnderlinePosition aUnderlinePosition,
+                   const mozilla::LengthPercentageOrAuto& aUnderlineOffset,
+                   const mozilla::StyleTextDecorationLength& aDecThickness,
                    const nscolor aColor, const uint8_t aStyle)
         : mFrame(aFrame),
           mBaselineOffset(aOff),
+          mTextUnderlineOffset(aUnderlineOffset),
+          mTextDecorationThickness(aDecThickness),
           mColor(aColor),
-          mStyle(aStyle) {}
+          mStyle(aStyle),
+          mTextUnderlinePosition(aUnderlinePosition) {}
 
-    LineDecoration(const LineDecoration& aOther)
-        : mFrame(aOther.mFrame),
-          mBaselineOffset(aOther.mBaselineOffset),
-          mColor(aOther.mColor),
-          mStyle(aOther.mStyle) {}
+    LineDecoration(const LineDecoration& aOther) = default;
 
     bool operator==(const LineDecoration& aOther) const {
       return mFrame == aOther.mFrame && mStyle == aOther.mStyle &&
              mColor == aOther.mColor &&
-             mBaselineOffset == aOther.mBaselineOffset;
+             mBaselineOffset == aOther.mBaselineOffset &&
+             mTextUnderlinePosition == aOther.mTextUnderlinePosition &&
+             mTextUnderlineOffset == aOther.mTextUnderlineOffset &&
+             mTextDecorationThickness == aOther.mTextDecorationThickness;
     }
 
     bool operator!=(const LineDecoration& aOther) const {
@@ -718,7 +907,7 @@ class nsTextFrame : public nsFrame {
   struct TextDecorations {
     AutoTArray<LineDecoration, 1> mOverlines, mUnderlines, mStrikes;
 
-    TextDecorations() {}
+    TextDecorations() = default;
 
     bool HasDecorationLines() const {
       return HasUnderline() || HasOverline() || HasStrikeout();
@@ -818,6 +1007,8 @@ class nsTextFrame : public nsFrame {
 
   nsPoint GetPointFromIterator(const gfxSkipCharsIterator& aIter,
                                PropertyProvider& aProperties);
+
+ public:
 };
 
 MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS(nsTextFrame::TrimmedOffsetFlags)

@@ -261,8 +261,11 @@ RefPtr<MP3TrackDemuxer::SamplesPromise> MP3TrackDemuxer::GetSamples(
     if (!frame) {
       break;
     }
-
-    frames->mSamples.AppendElement(frame);
+    if (!frame->HasValidTime()) {
+      return SamplesPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_DEMUXER_ERR,
+                                             __func__);
+    }
+    frames->AppendSample(frame);
   }
 
   MP3LOGV("GetSamples() End mSamples.Size()=%zu aNumSamples=%d mOffset=%" PRIu64
@@ -270,11 +273,11 @@ RefPtr<MP3TrackDemuxer::SamplesPromise> MP3TrackDemuxer::GetSamples(
           " mTotalFrameLen=%" PRIu64
           " mSamplesPerFrame=%d mSamplesPerSecond=%d "
           "mChannels=%d",
-          frames->mSamples.Length(), aNumSamples, mOffset, mNumParsedFrames,
+          frames->GetSamples().Length(), aNumSamples, mOffset, mNumParsedFrames,
           mFrameIndex, mTotalFrameLen, mSamplesPerFrame, mSamplesPerSecond,
           mChannels);
 
-  if (frames->mSamples.IsEmpty()) {
+  if (frames->GetSamples().IsEmpty()) {
     return SamplesPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_END_OF_STREAM,
                                            __func__);
   }
@@ -485,7 +488,7 @@ MediaByteRange MP3TrackDemuxer::FindNextFrame() {
   bool foundFrame = false;
   int64_t frameHeaderOffset = 0;
   int64_t startOffset = mOffset;
-  const bool searchingForID3 = !mParser.ID3Header().Size();
+  const bool searchingForID3 = !mParser.ID3Header().HasSizeBeenSet();
 
   // Check whether we've found a valid MPEG frame.
   while (!foundFrame) {

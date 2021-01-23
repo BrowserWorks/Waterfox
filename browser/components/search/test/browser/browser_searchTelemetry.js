@@ -10,6 +10,9 @@
 const { SearchTelemetry } = ChromeUtils.import(
   "resource:///modules/SearchTelemetry.jsm"
 );
+const { ADLINK_CHECK_TIMEOUT_MS } = ChromeUtils.import(
+  "resource:///actors/SearchTelemetryChild.jsm"
+);
 
 const TEST_PROVIDER_INFO = {
   example: {
@@ -55,7 +58,7 @@ async function assertTelemetry(expectedHistograms, expectedScalars) {
     );
   }, "should have the correct number of histograms");
 
-  if (Object.entries(expectedScalars).length > 0) {
+  if (Object.entries(expectedScalars).length) {
     await TestUtils.waitForCondition(() => {
       scalars =
         Services.telemetry.getSnapshotForKeyedScalars("main", false).parent ||
@@ -137,6 +140,34 @@ add_task(async function test_simple_search_page_visit() {
     },
     async () => {
       await assertTelemetry({ "example.in-content:sap:ff": 1 }, {});
+    }
+  );
+});
+
+add_task(async function test_simple_search_page_visit_telemetry() {
+  searchCounts.clear();
+  Services.telemetry.clearScalars();
+
+  await BrowserTestUtils.withNewTab(
+    {
+      gBrowser,
+      /* URL must not be in the cache */
+      url: getSERPUrl(getPageUrl()) + `&random=${Math.random()}`,
+    },
+    async () => {
+      let scalars = {};
+      const key = "browser.search.data_transferred";
+
+      await TestUtils.waitForCondition(() => {
+        scalars =
+          Services.telemetry.getSnapshotForKeyedScalars("main", false).parent ||
+          {};
+        return key in scalars;
+      }, "should have the expected keyed scalars");
+
+      const scalar = scalars[key];
+      Assert.ok("example" in scalar, "correct telemetry category");
+      Assert.notEqual(scalars[key].example, 0, "bandwidth logged");
     }
   );
 });
@@ -251,10 +282,12 @@ add_task(async function test_track_ad_click() {
   );
 
   let pageLoadPromise = BrowserTestUtils.waitForLocationChange(gBrowser);
-  await ContentTask.spawn(tab.linkedBrowser, {}, () => {
+  await SpecialPowers.spawn(tab.linkedBrowser, [], () => {
     content.document.getElementById("ad1").click();
   });
   await pageLoadPromise;
+  /* eslint-disable-next-line mozilla/no-arbitrary-setTimeout */
+  await new Promise(resolve => setTimeout(resolve, ADLINK_CHECK_TIMEOUT_MS));
 
   await assertTelemetry(
     { "example.in-content:sap:ff": 1 },
@@ -268,6 +301,8 @@ add_task(async function test_track_ad_click() {
   pageLoadPromise = BrowserTestUtils.waitForLocationChange(gBrowser);
   gBrowser.goBack();
   await pageLoadPromise;
+  /* eslint-disable-next-line mozilla/no-arbitrary-setTimeout */
+  await new Promise(resolve => setTimeout(resolve, ADLINK_CHECK_TIMEOUT_MS));
 
   // We've gone back, so we register an extra display & if it is with ads or not.
   await assertTelemetry(
@@ -279,10 +314,12 @@ add_task(async function test_track_ad_click() {
   );
 
   pageLoadPromise = BrowserTestUtils.waitForLocationChange(gBrowser);
-  await ContentTask.spawn(tab.linkedBrowser, {}, () => {
+  await SpecialPowers.spawn(tab.linkedBrowser, [], () => {
     content.document.getElementById("ad1").click();
   });
   await pageLoadPromise;
+  /* eslint-disable-next-line mozilla/no-arbitrary-setTimeout */
+  await new Promise(resolve => setTimeout(resolve, ADLINK_CHECK_TIMEOUT_MS));
 
   await assertTelemetry(
     { "example.in-content:sap:ff": 2 },
@@ -316,7 +353,7 @@ add_task(async function test_track_ad_click_with_location_change_other_tab() {
   await BrowserTestUtils.switchTab(gBrowser, tab);
 
   let pageLoadPromise = BrowserTestUtils.waitForLocationChange(gBrowser);
-  await ContentTask.spawn(tab.linkedBrowser, {}, () => {
+  await SpecialPowers.spawn(tab.linkedBrowser, [], () => {
     content.document.getElementById("ad1").click();
   });
   await pageLoadPromise;

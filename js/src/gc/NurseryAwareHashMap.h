@@ -22,8 +22,7 @@ namespace detail {
 template <typename T>
 class UnsafeBareWeakHeapPtr : public ReadBarriered<T> {
  public:
-  UnsafeBareWeakHeapPtr()
-      : ReadBarriered<T>(JS::SafelyInitialized<T>()) {}
+  UnsafeBareWeakHeapPtr() : ReadBarriered<T>(JS::SafelyInitialized<T>()) {}
   MOZ_IMPLICIT UnsafeBareWeakHeapPtr(const T& v) : ReadBarriered<T>(v) {}
   explicit UnsafeBareWeakHeapPtr(const UnsafeBareWeakHeapPtr& v)
       : ReadBarriered<T>(v) {}
@@ -87,9 +86,11 @@ class NurseryAwareHashMap {
   using Range = typename MapType::Range;
   using Entry = typename MapType::Entry;
 
-  explicit NurseryAwareHashMap(AllocPolicy a = AllocPolicy()) : map(a) {}
+  explicit NurseryAwareHashMap(AllocPolicy a = AllocPolicy())
+      : map(a), nurseryEntries(std::move(a)) {}
   explicit NurseryAwareHashMap(size_t length) : map(length) {}
-  NurseryAwareHashMap(AllocPolicy a, size_t length) : map(a, length) {}
+  NurseryAwareHashMap(AllocPolicy a, size_t length)
+      : map(a, length), nurseryEntries(std::move(a)) {}
 
   bool empty() const { return map.empty(); }
   Ptr lookup(const Lookup& l) const { return map.lookup(l); }
@@ -173,6 +174,11 @@ class NurseryAwareHashMap {
     map.sweep();
   }
 
+  void clear() {
+    map.clear();
+    nurseryEntries.clear();
+  }
+
   bool hasNurseryEntries() const { return !nurseryEntries.empty(); }
 };
 
@@ -181,8 +187,7 @@ class NurseryAwareHashMap {
 namespace JS {
 template <typename T>
 struct GCPolicy<js::detail::UnsafeBareWeakHeapPtr<T>> {
-  static void trace(JSTracer* trc,
-                    js::detail::UnsafeBareWeakHeapPtr<T>* thingp,
+  static void trace(JSTracer* trc, js::detail::UnsafeBareWeakHeapPtr<T>* thingp,
                     const char* name) {
     js::TraceEdge(trc, thingp, name);
   }

@@ -14,6 +14,37 @@
 namespace mozilla {
 namespace gfx {
 
+class SourceSurfaceMappedData final : public DataSourceSurface {
+ public:
+  MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(SourceSurfaceMappedData, final)
+
+  SourceSurfaceMappedData(ScopedMap&& aMap, const IntSize& aSize,
+                          SurfaceFormat aFormat)
+      : mMap(std::move(aMap)), mSize(aSize), mFormat(aFormat) {}
+
+  ~SourceSurfaceMappedData() final = default;
+
+  uint8_t* GetData() final { return mMap.GetData(); }
+  int32_t Stride() final { return mMap.GetStride(); }
+
+  SurfaceType GetType() const final { return SurfaceType::DATA; }
+  IntSize GetSize() const final { return mSize; }
+  SurfaceFormat GetFormat() const final { return mFormat; }
+
+  void SizeOfExcludingThis(MallocSizeOf aMallocSizeOf,
+                           SizeOfInfo& aInfo) const override {
+    aInfo.AddType(SurfaceType::DATA);
+    mMap.GetSurface()->SizeOfExcludingThis(aMallocSizeOf, aInfo);
+  }
+
+  void GuaranteePersistance() final {}
+
+ private:
+  ScopedMap mMap;
+  IntSize mSize;
+  SurfaceFormat mFormat;
+};
+
 class SourceSurfaceRawData : public DataSourceSurface {
  public:
   MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(DataSourceSurfaceRawData, override)
@@ -41,6 +72,9 @@ class SourceSurfaceRawData : public DataSourceSurface {
   virtual SurfaceType GetType() const override { return SurfaceType::DATA; }
   virtual IntSize GetSize() const override { return mSize; }
   virtual SurfaceFormat GetFormat() const override { return mFormat; }
+
+  void SizeOfExcludingThis(MallocSizeOf aMallocSizeOf,
+                           SizeOfInfo& aInfo) const override;
 
   virtual void GuaranteePersistance() override;
 
@@ -70,21 +104,20 @@ class SourceSurfaceAlignedRawData : public DataSourceSurface {
   MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(DataSourceSurfaceAlignedRawData,
                                           override)
   SourceSurfaceAlignedRawData() : mStride(0), mFormat(SurfaceFormat::UNKNOWN) {}
-  ~SourceSurfaceAlignedRawData() {}
+  ~SourceSurfaceAlignedRawData() override = default;
 
   bool Init(const IntSize& aSize, SurfaceFormat aFormat, bool aClearMem,
             uint8_t aClearValue, int32_t aStride = 0);
 
-  virtual uint8_t* GetData() override { return mArray; }
-  virtual int32_t Stride() override { return mStride; }
+  uint8_t* GetData() override { return mArray; }
+  int32_t Stride() override { return mStride; }
 
-  virtual SurfaceType GetType() const override { return SurfaceType::DATA; }
-  virtual IntSize GetSize() const override { return mSize; }
-  virtual SurfaceFormat GetFormat() const override { return mFormat; }
+  SurfaceType GetType() const override { return SurfaceType::DATA_ALIGNED; }
+  IntSize GetSize() const override { return mSize; }
+  SurfaceFormat GetFormat() const override { return mFormat; }
 
-  void AddSizeOfExcludingThis(MallocSizeOf aMallocSizeOf, size_t& aHeapSizeOut,
-                              size_t& aNonHeapSizeOut, size_t& aExtHandlesOut,
-                              uint64_t& aExtIdOut) const override;
+  void SizeOfExcludingThis(MallocSizeOf aMallocSizeOf,
+                           SizeOfInfo& aInfo) const override;
 
  private:
   friend class Factory;

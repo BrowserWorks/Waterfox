@@ -48,7 +48,8 @@ var FullZoom = {
   // Initialization & Destruction
 
   init: function FullZoom_init() {
-    gBrowser.addEventListener("ZoomChangeUsingMouseWheel", this);
+    gBrowser.addEventListener("DoZoomEnlargeBy10", this);
+    gBrowser.addEventListener("DoZoomReduceBy10", this);
 
     // Register ourselves with the service so we know when our pref changes.
     this._cps2 = Cc["@mozilla.org/content-pref/service;1"].getService(
@@ -83,7 +84,8 @@ var FullZoom = {
   destroy: function FullZoom_destroy() {
     Services.prefs.removeObserver("browser.zoom.", this);
     this._cps2.removeObserverForName(this.name, this);
-    gBrowser.removeEventListener("ZoomChangeUsingMouseWheel", this);
+    gBrowser.removeEventListener("DoZoomEnlargeBy10", this);
+    gBrowser.removeEventListener("DoZoomReduceBy10", this);
   },
 
   // Event Handlers
@@ -92,10 +94,12 @@ var FullZoom = {
 
   handleEvent: function FullZoom_handleEvent(event) {
     switch (event.type) {
-      case "ZoomChangeUsingMouseWheel":
-        let browser = this._getTargetedBrowser(event);
-        this._ignorePendingZoomAccesses(browser);
-        this._applyZoomToPref(browser);
+      case "DoZoomEnlargeBy10":
+        this.changeZoomBy(this._getTargetedBrowser(event), 0.1);
+        updateZoomStatus();
+        break;
+      case "DoZoomReduceBy10":
+        this.changeZoomBy(this._getTargetedBrowser(event), -0.1);
         updateZoomStatus();
         break;
     }
@@ -168,6 +172,10 @@ var FullZoom = {
       return;
     }
 
+    if (this._isPDFViewer(browser)) {
+      return;
+    }
+
     let ctxt = this._loadContextFromBrowser(browser);
     let domain = this._cps2.extractDomain(browser.currentURI.spec);
     if (aGroup) {
@@ -176,9 +184,6 @@ var FullZoom = {
       }
       return;
     }
-
-    this._globalValue =
-      aValue === undefined ? aValue : this._ensureValid(aValue);
 
     // If the current page doesn't have a site-specific preference, then its
     // zoom should be set to the new global preference now that the global
@@ -269,6 +274,18 @@ var FullZoom = {
       return;
     }
 
+    // The PDF viewer zooming isn't handled by `ZoomManager`, ensure that the
+    // browser zoom level always gets reset to 100% on load (to prevent the
+    // UI elements of the PDF viewer from being zoomed in/out on load).
+    if (this._isPDFViewer(browser)) {
+      this._applyPrefToZoom(
+        1,
+        browser,
+        this._notifyOnLocationChange.bind(this, browser)
+      );
+      return;
+    }
+
     // See if the zoom pref is cached.
     let ctxt = this._loadContextFromBrowser(browser);
     let pref = this._cps2.getCachedByDomainAndName(aURI.spec, this.name, ctxt);
@@ -313,23 +330,66 @@ var FullZoom = {
   // Setting & Pref Manipulation
 
   /**
-   * Reduces the zoom level of the page in the current browser.
+   * If browser in reader mode sends message to reader in order to decrease font size,
+   * Otherwise reduces the zoom level of the page in the current browser.
    */
   async reduce() {
-    ZoomManager.reduce();
     let browser = gBrowser.selectedBrowser;
-    this._ignorePendingZoomAccesses(browser);
-    await this._applyZoomToPref(browser);
+    if (browser.currentURI.spec.startsWith("about:reader")) {
+      browser.messageManager.sendAsyncMessage("Reader:ZoomOut");
+    } else if (this._isPDFViewer(browser)) {
+      browser.messageManager.sendAsyncMessage("PDFJS:ZoomOut");
+    } else {
+      ZoomManager.reduce();
+      this._ignorePendingZoomAccesses(browser);
+      await this._applyZoomToPref(browser);
+    }
   },
 
   /**
-   * Enlarges the zoom level of the page in the current browser.
+   * If browser in reader mode sends message to reader in order to increase font size,
+   * Otherwise enlarges the zoom level of the page in the current browser.
    */
   async enlarge() {
-    ZoomManager.enlarge();
     let browser = gBrowser.selectedBrowser;
-    this._ignorePendingZoomAccesses(browser);
-    await this._applyZoomToPref(browser);
+    if (browser.currentURI.spec.startsWith("about:reader")) {
+      browser.messageManager.sendAsyncMessage("Reader:ZoomIn");
+    } else if (this._isPDFViewer(browser)) {
+      browser.messageManager.sendAsyncMessage("PDFJS:ZoomIn");
+    } else {
+      ZoomManager.enlarge();
+      this._ignorePendingZoomAccesses(browser);
+      await this._applyZoomToPref(browser);
+    }
+  },
+
+  /**
+   * If browser in reader mode sends message to reader in order to increase font size,
+   * Otherwise enlarges the zoom level of the page in the current browser.
+   * This function is not async like reduce/enlarge, because it is invoked by our
+   * event handler. This means that the call to _applyZoomToPref is not awaited and
+   * will happen asynchronously.
+   */
+  changeZoomBy(aBrowser, aValue) {
+    if (aBrowser.currentURI.spec.startsWith("about:reader")) {
+      const message = aValue > 0 ? "Reader::ZoomIn" : "Reader:ZoomOut";
+      aBrowser.messageManager.sendAsyncMessage(message);
+      return;
+    } else if (this._isPDFViewer(aBrowser)) {
+      const message = aValue > 0 ? "PDFJS::ZoomIn" : "PDFJS:ZoomOut";
+      aBrowser.messageManager.sendAsyncMessage(message);
+      return;
+    }
+    let zoom = ZoomManager.getZoomForBrowser(aBrowser);
+    zoom += aValue;
+    if (zoom < ZoomManager.MIN) {
+      zoom = ZoomManager.MIN;
+    } else if (zoom > ZoomManager.MAX) {
+      zoom = ZoomManager.MAX;
+    }
+    ZoomManager.setZoomForBrowser(aBrowser, zoom);
+    this._ignorePendingZoomAccesses(aBrowser);
+    this._applyZoomToPref(aBrowser);
   },
 
   /**
@@ -337,6 +397,9 @@ var FullZoom = {
    * point value, where 1 is the default zoom level.
    */
   setZoom(value, browser = gBrowser.selectedBrowser) {
+    if (this._isPDFViewer(browser)) {
+      return;
+    }
     ZoomManager.setZoomForBrowser(browser, value);
     this._ignorePendingZoomAccesses(browser);
     this._applyZoomToPref(browser);
@@ -349,10 +412,19 @@ var FullZoom = {
    * @return A promise which resolves when the zoom reset has been applied.
    */
   reset: function FullZoom_reset(browser = gBrowser.selectedBrowser) {
+    let forceValue;
+    if (browser.currentURI.spec.startsWith("about:reader")) {
+      browser.messageManager.sendAsyncMessage("Reader:ResetZoom");
+    } else if (this._isPDFViewer(browser)) {
+      browser.messageManager.sendAsyncMessage("PDFJS:ZoomReset");
+      // Ensure that the UI elements of the PDF viewer won't be zoomed in/out
+      // on reset, even if/when browser default zoom value is not set to 100%.
+      forceValue = 1;
+    }
     let token = this._getBrowserToken(browser);
-    let result = this._getGlobalValue(browser).then(value => {
+    let result = ZoomUI.getGlobalValue().then(value => {
       if (token.isCurrent) {
-        ZoomManager.setZoomForBrowser(browser, value === undefined ? 1 : value);
+        ZoomManager.setZoomForBrowser(browser, forceValue || value);
         this._ignorePendingZoomAccesses(browser);
       }
     });
@@ -388,7 +460,7 @@ var FullZoom = {
     aBrowser,
     aCallback
   ) {
-    if (!this.siteSpecific || gInPrintPreviewMode) {
+    if (gInPrintPreviewMode) {
       this._executeSoon(aCallback);
       return;
     }
@@ -396,25 +468,29 @@ var FullZoom = {
     // The browser is sometimes half-destroyed because this method is called
     // by content pref service callbacks, which themselves can be called at any
     // time, even after browsers are closed.
-    if (!aBrowser.mInitialized || aBrowser.isSyntheticDocument) {
+    if (
+      !aBrowser.mInitialized ||
+      aBrowser.isSyntheticDocument ||
+      (!this.siteSpecific && aBrowser.tabHasCustomZoom)
+    ) {
       this._executeSoon(aCallback);
       return;
     }
 
-    if (aValue !== undefined) {
+    if (aValue !== undefined && this.siteSpecific) {
       ZoomManager.setZoomForBrowser(aBrowser, this._ensureValid(aValue));
       this._ignorePendingZoomAccesses(aBrowser);
       this._executeSoon(aCallback);
       return;
     }
 
+    // Above, we check if site-specific zoom is enabled before setting
+    // the tab browser zoom, however global zoom should work independent
+    // of the site-specific pref, so we do no checks here.
     let token = this._getBrowserToken(aBrowser);
-    this._getGlobalValue(aBrowser).then(value => {
+    ZoomUI.getGlobalValue().then(value => {
       if (token.isCurrent) {
-        ZoomManager.setZoomForBrowser(
-          aBrowser,
-          value === undefined ? 1 : value
-        );
+        ZoomManager.setZoomForBrowser(aBrowser, value);
         this._ignorePendingZoomAccesses(aBrowser);
       }
       this._executeSoon(aCallback);
@@ -433,6 +509,10 @@ var FullZoom = {
       gInPrintPreviewMode ||
       browser.isSyntheticDocument
     ) {
+      // If site-specific zoom is disabled, we have called this function
+      // to adjust our tab's zoom level. It is now considered "custom"
+      // and we mark that here.
+      browser.tabHasCustomZoom = !this.siteSpecific;
       return null;
     }
 
@@ -503,7 +583,7 @@ var FullZoom = {
 
   /**
    * Returns the browser that the supplied zoom event is associated with.
-   * @param event  The ZoomChangeUsingMouseWheel event.
+   * @param event  The zoom event.
    * @return  The associated browser element, if one exists, otherwise null.
    */
   _getTargetedBrowser: function FullZoom__getTargetedBrowser(event) {
@@ -527,7 +607,7 @@ var FullZoom = {
       return target.ownerGlobal.docShell.chromeEventHandler;
     }
 
-    throw new Error("Unexpected ZoomChangeUsingMouseWheel event source");
+    throw new Error("Unexpected zoom event source");
   },
 
   /**
@@ -563,35 +643,6 @@ var FullZoom = {
   },
 
   /**
-   * Gets the global browser.content.full-zoom content preference.
-   *
-   * @param browser   The browser pertaining to the zoom.
-   * @returns Promise<prefValue>
-   *                  Resolves to the preference value when done.
-   */
-  _getGlobalValue: function FullZoom__getGlobalValue(browser) {
-    // * !("_globalValue" in this) => global value not yet cached.
-    // * this._globalValue === undefined => global value known not to exist.
-    // * Otherwise, this._globalValue is a number, the global value.
-    return new Promise(resolve => {
-      if ("_globalValue" in this) {
-        resolve(this._globalValue);
-        return;
-      }
-      let value = undefined;
-      this._cps2.getGlobal(this.name, this._loadContextFromBrowser(browser), {
-        handleResult(pref) {
-          value = pref.value;
-        },
-        handleCompletion: reason => {
-          this._globalValue = this._ensureValid(value);
-          resolve(this._globalValue);
-        },
-      });
-    });
-  },
-
-  /**
    * Gets the load context from the given Browser.
    *
    * @param Browser  The Browser whose load context will be returned.
@@ -618,5 +669,13 @@ var FullZoom = {
       return;
     }
     Services.tm.dispatchToMainThread(callback);
+  },
+
+  _isPDFViewer(browser) {
+    return !!(
+      browser.contentPrincipal &&
+      browser.contentPrincipal.URI &&
+      browser.contentPrincipal.URI.spec == "resource://pdf.js/web/viewer.html"
+    );
   },
 };

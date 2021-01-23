@@ -9,7 +9,6 @@ TEST_DIRS += [
 ]
 
 DIRS += [
-    'hyphenation/hyphen',
     'hyphenation/glue',
     'locale',
     'locales',
@@ -26,11 +25,15 @@ DIRS += [
 
 EXPORTS.mozilla += [
     'Encoding.h',
+    'EncodingDetector.h',
+    'JapaneseDetector.h',
 ]
 
 EXPORTS += [
+    '../third_party/rust/chardetng_c/include/chardetng.h',
     '../third_party/rust/encoding_c/include/encoding_rs.h',
     '../third_party/rust/encoding_c/include/encoding_rs_statics.h',
+    '../third_party/rust/shift_or_euc_c/include/shift_or_euc.h',
 ]
 
 with Files("**"):

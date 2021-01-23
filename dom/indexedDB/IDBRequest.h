@@ -12,8 +12,9 @@
 #include "mozilla/EventForwards.h"
 #include "mozilla/dom/IDBRequestBinding.h"
 #include "mozilla/DOMEventTargetHelper.h"
-#include "nsAutoPtr.h"
 #include "nsCycleCollectionParticipant.h"
+#include "ReportInternalError.h"
+#include "SafeRefPtr.h"
 
 #define PRIVATE_IDBREQUEST_IID                       \
   {                                                  \
@@ -50,7 +51,7 @@ class IDBRequest : public DOMEventTargetHelper {
   RefPtr<IDBIndex> mSourceAsIndex;
   RefPtr<IDBCursor> mSourceAsCursor;
 
-  RefPtr<IDBTransaction> mTransaction;
+  SafeRefPtr<IDBTransaction> mTransaction;
 
   JS::Heap<JS::Value> mResultVal;
   RefPtr<DOMException> mError;
@@ -63,20 +64,17 @@ class IDBRequest : public DOMEventTargetHelper {
   bool mHaveResultOrErrorCode;
 
  public:
-  class ResultCallback;
+  [[nodiscard]] static RefPtr<IDBRequest> Create(
+      JSContext* aCx, IDBDatabase* aDatabase,
+      SafeRefPtr<IDBTransaction> aTransaction);
 
-  static already_AddRefed<IDBRequest> Create(JSContext* aCx,
-                                             IDBDatabase* aDatabase,
-                                             IDBTransaction* aTransaction);
+  [[nodiscard]] static RefPtr<IDBRequest> Create(
+      JSContext* aCx, IDBObjectStore* aSource, IDBDatabase* aDatabase,
+      SafeRefPtr<IDBTransaction> aTransaction);
 
-  static already_AddRefed<IDBRequest> Create(JSContext* aCx,
-                                             IDBObjectStore* aSource,
-                                             IDBDatabase* aDatabase,
-                                             IDBTransaction* aTransaction);
-
-  static already_AddRefed<IDBRequest> Create(JSContext* aCx, IDBIndex* aSource,
-                                             IDBDatabase* aDatabase,
-                                             IDBTransaction* aTransaction);
+  [[nodiscard]] static RefPtr<IDBRequest> Create(
+      JSContext* aCx, IDBIndex* aSource, IDBDatabase* aDatabase,
+      SafeRefPtr<IDBTransaction> aTransaction);
 
   static void CaptureCaller(JSContext* aCx, nsAString& aFilename,
                             uint32_t* aLineNo, uint32_t* aColumn);
@@ -91,7 +89,55 @@ class IDBRequest : public DOMEventTargetHelper {
 
   void Reset();
 
-  void SetResultCallback(ResultCallback* aCallback);
+  template <typename ResultCallback>
+  void SetResult(const ResultCallback& aCallback) {
+    AssertIsOnOwningThread();
+    MOZ_ASSERT(!mHaveResultOrErrorCode);
+    MOZ_ASSERT(mResultVal.isUndefined());
+    MOZ_ASSERT(!mError);
+
+    // Already disconnected from the owner.
+    if (!GetOwnerGlobal()) {
+      SetError(NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR);
+      return;
+    }
+
+    // See this global is still valid.
+    if (NS_WARN_IF(NS_FAILED(CheckCurrentGlobalCorrectness()))) {
+      SetError(NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR);
+      return;
+    }
+
+    AutoJSAPI autoJS;
+    if (!autoJS.Init(GetOwnerGlobal())) {
+      IDB_WARNING("Failed to initialize AutoJSAPI!");
+      SetError(NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR);
+      return;
+    }
+
+    JSContext* cx = autoJS.cx();
+
+    JS::Rooted<JS::Value> result(cx);
+    nsresult rv = aCallback(cx, &result);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      // This can only fail if the structured clone contains a mutable file
+      // and the child is not in the main thread and main process.
+      // In that case CreateAndWrapMutableFile() returns false which shows up
+      // as NS_ERROR_DOM_DATA_CLONE_ERR here.
+      MOZ_ASSERT(rv == NS_ERROR_DOM_DATA_CLONE_ERR);
+
+      // We are not setting a result or an error object here since we want to
+      // throw an exception when the 'result' property is being touched.
+      return;
+    }
+
+    mError = nullptr;
+
+    mResultVal = result;
+    mozilla::HoldJSObjects(this);
+
+    mHaveResultOrErrorCode = true;
+  }
 
   void SetError(nsresult aRv);
 
@@ -137,10 +183,29 @@ class IDBRequest : public DOMEventTargetHelper {
     GetResult(aResult, aRv);
   }
 
-  IDBTransaction* GetTransaction() const {
+  Maybe<IDBTransaction&> MaybeTransactionRef() const {
     AssertIsOnOwningThread();
 
-    return mTransaction;
+    return mTransaction ? SomeRef(*mTransaction) : Nothing();
+  }
+
+  IDBTransaction& MutableTransactionRef() const {
+    AssertIsOnOwningThread();
+
+    return *mTransaction;
+  }
+
+  SafeRefPtr<IDBTransaction> AcquireTransaction() const {
+    AssertIsOnOwningThread();
+
+    return mTransaction.clonePtr();
+  }
+
+  // For WebIDL binding.
+  RefPtr<IDBTransaction> GetTransaction() const {
+    AssertIsOnOwningThread();
+
+    return AsRefPtr(mTransaction.clonePtr());
   }
 
   IDBRequestReadyState ReadyState() const;
@@ -170,18 +235,9 @@ class IDBRequest : public DOMEventTargetHelper {
   void ConstructResult();
 };
 
-class NS_NO_VTABLE IDBRequest::ResultCallback {
- public:
-  virtual nsresult GetResult(JSContext* aCx,
-                             JS::MutableHandle<JS::Value> aResult) = 0;
-
- protected:
-  ResultCallback() {}
-};
-
 class IDBOpenDBRequest final : public IDBRequest {
   // Only touched on the owning thread.
-  RefPtr<IDBFactory> mFactory;
+  SafeRefPtr<IDBFactory> mFactory;
 
   RefPtr<StrongWorkerRef> mWorkerRef;
 
@@ -189,13 +245,13 @@ class IDBOpenDBRequest final : public IDBRequest {
   bool mIncreasedActiveDatabaseCount;
 
  public:
-  static already_AddRefed<IDBOpenDBRequest> Create(JSContext* aCx,
-                                                   IDBFactory* aFactory,
-                                                   nsIGlobalObject* aGlobal);
+  [[nodiscard]] static RefPtr<IDBOpenDBRequest> Create(
+      JSContext* aCx, SafeRefPtr<IDBFactory> aFactory,
+      nsIGlobalObject* aGlobal);
 
   bool IsFileHandleDisabled() const { return mFileHandleDisabled; }
 
-  void SetTransaction(IDBTransaction* aTransaction);
+  void SetTransaction(SafeRefPtr<IDBTransaction> aTransaction);
 
   void DispatchNonTransactionError(nsresult aErrorCode);
 
@@ -203,8 +259,6 @@ class IDBOpenDBRequest final : public IDBRequest {
 
   // EventTarget
   virtual nsresult PostHandleEvent(EventChainPostVisitor& aVisitor) override;
-
-  IDBFactory* Factory() const { return mFactory; }
 
   IMPL_EVENT_HANDLER(blocked);
   IMPL_EVENT_HANDLER(upgradeneeded);
@@ -217,7 +271,7 @@ class IDBOpenDBRequest final : public IDBRequest {
                                JS::Handle<JSObject*> aGivenProto) override;
 
  private:
-  IDBOpenDBRequest(IDBFactory* aFactory, nsIGlobalObject* aGlobal,
+  IDBOpenDBRequest(SafeRefPtr<IDBFactory> aFactory, nsIGlobalObject* aGlobal,
                    bool aFileHandleDisabled);
 
   ~IDBOpenDBRequest();

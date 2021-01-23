@@ -23,6 +23,7 @@ var defaultExts = [
     ['EXT_shader_texture_lod'        , [MACHINE_SPECIFIC, FORBID          ]],
     ['EXT_texture_filter_anisotropic', [MACHINE_SPECIFIC, MACHINE_SPECIFIC]],
     ['OES_element_index_uint'        , [ENSURE          , FORBID          ]],
+    ['OES_fbo_render_mipmap'         , [MACHINE_SPECIFIC, FORBID          ]],
     ['OES_standard_derivatives'      , [MACHINE_SPECIFIC, FORBID          ]],
     ['OES_texture_float'             , [ENSURE          , FORBID          ]],
     ['OES_texture_float_linear'      , [ENSURE          , ENSURE          ]],
@@ -44,6 +45,7 @@ var defaultExts = [
     ['EXT_sRGB'                          , [MACHINE_SPECIFIC, FORBID          ]],
     ['EXT_texture_compression_bptc'      , [MACHINE_SPECIFIC, MACHINE_SPECIFIC]],
     ['EXT_texture_compression_rgtc'      , [MACHINE_SPECIFIC, MACHINE_SPECIFIC]],
+    ['OVR_multiview2'                    , [FORBID          , MACHINE_SPECIFIC]],
     ['WEBGL_color_buffer_float'          , [MACHINE_SPECIFIC, FORBID          ]],
     ['WEBGL_compressed_texture_astc'     , [MACHINE_SPECIFIC, MACHINE_SPECIFIC]],
     ['WEBGL_compressed_texture_atc'      , [MACHINE_SPECIFIC, MACHINE_SPECIFIC]],
@@ -54,7 +56,7 @@ var defaultExts = [
 ];
 
 var draftExts = [
-    ['OES_fbo_render_mipmap', [MACHINE_SPECIFIC, FORBID          ]],
+    ['WEBGL_explicit_present', [ENSURE          , ENSURE          ]],
 ];
 
 ////////////////////

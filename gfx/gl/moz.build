@@ -12,7 +12,7 @@ elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
     gl_provider = 'CGL'
 elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'uikit':
     gl_provider = 'EAGL'
-elif 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
+elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk':
     if CONFIG['MOZ_EGL_XRENDER_COMPOSITE']:
         gl_provider = 'EGL'
     else:
@@ -27,7 +27,6 @@ EXPORTS += [
     'AndroidNativeWindow.h',
     'AndroidSurfaceTexture.h',
     'DecomposeIntoNoRepeatTriangles.h',
-    'EGLUtils.h',
     'ForceDiscreteGPUHelperCGL.h',
     'GfxTexturesReporter.h',
     'GLBlitHelper.h',
@@ -47,6 +46,7 @@ EXPORTS += [
     'GLTypes.h',
     'GLUploadHelpers.h',
     'HeapCopyOfStackArray.h',
+    'MozFramebuffer.h',
     'ScopedGLHelpers.h',
     'SharedSurface.h',
     'SharedSurfaceEGL.h',
@@ -91,6 +91,10 @@ if gl_provider == 'CGL':
     SOURCES += [
         'SharedSurfaceIO.cpp',
     ]
+    OS_LIBS += [
+        '-framework IOSurface',
+    ]
+
 elif gl_provider == 'EAGL':
     # These files include ObjC headers that are unfriendly to unified builds
     SOURCES += [
@@ -114,23 +118,21 @@ elif gl_provider == 'GLX':
 if CONFIG['MOZ_WAYLAND']:
     SOURCES += [
         'GLContextProviderWayland.cpp',
+        'SharedSurfaceDMABUF.cpp'
     ]
 
 UNIFIED_SOURCES += [
     'AndroidSurfaceTexture.cpp',
     'DecomposeIntoNoRepeatTriangles.cpp',
-    'EGLUtils.cpp',
     'GfxTexturesReporter.cpp',
     'GLBlitHelper.cpp',
     'GLContext.cpp',
     'GLContextFeatures.cpp',
     'GLContextProviderEGL.cpp',
-    'GLContextTypes.cpp',
     'GLDebugUtils.cpp',
     'GLLibraryEGL.cpp',
     'GLLibraryLoader.cpp',
     'GLReadTexImageHelper.cpp',
-    'GLScreenBuffer.cpp',
     'GLTextureImage.cpp',
     'GLUploadHelpers.cpp',
     'MozFramebuffer.cpp',
@@ -138,8 +140,10 @@ UNIFIED_SOURCES += [
     'SharedSurface.cpp',
     'SharedSurfaceEGL.cpp',
     'SharedSurfaceGL.cpp',
-    'SurfaceTypes.cpp',
     'TextureImageEGL.cpp',
+]
+SOURCES += [
+    'GLScreenBuffer.cpp',
 ]
 
 include('/ipc/chromium/chromium-config.mozbuild')
@@ -153,6 +157,10 @@ CXXFLAGS += CONFIG['MOZ_CAIRO_CFLAGS']
 CXXFLAGS += CONFIG['TK_CFLAGS']
 CFLAGS += CONFIG['MOZ_CAIRO_CFLAGS']
 CFLAGS += CONFIG['TK_CFLAGS']
+
+if CONFIG['MOZ_WAYLAND']:
+    CXXFLAGS += CONFIG['MOZ_WAYLAND_CFLAGS']
+    CFLAGS += CONFIG['MOZ_WAYLAND_CFLAGS']
 
 LOCAL_INCLUDES += CONFIG['SKIA_INCLUDES']
 

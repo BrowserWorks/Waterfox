@@ -21,6 +21,9 @@ args:
       long: shaders
       help: Override path for shaders
       takes_value: true
+  - use_unoptimized_shaders:
+      long: use-unoptimized-shaders
+      help: Use unoptimized shaders rather than the shaders optimized at build-time
   - rebuild:
       short: r
       long: rebuild
@@ -33,6 +36,9 @@ args:
       short: a
       long: no-subpixel-aa
       help: Disable subpixel aa
+  - no_picture_caching:
+      long: no-picture-caching
+      help: Disable picture caching
   - slow_subpixel:
       long: slow-subpixel
       help: Disable dual source blending
@@ -43,6 +49,9 @@ args:
   - angle:
       long: angle
       help: Enable ANGLE rendering (on Windows only)
+  - software:
+      long: software
+      help: Enable software rendering
   - dp_ratio:
       short: p
       long: device-pixel-ratio
@@ -69,8 +78,21 @@ args:
       help: Disable batching of instanced draw calls
   - chase:
       long: chase
-      help: Chase a particular primitive matching the local rect
+      help: Chase a particular primitive matching the local rect or ID
       takes_value: true
+  - dump_shader_source:
+      long: dump-shader-source
+      help: Dump the source of the specified shader
+      takes_value: true
+      global: true
+  - renderer:
+      long: renderer
+      help: Select rendering API (gl3, es3)
+      takes_value: true
+      global: true
+  - no_block:
+      long: no-block
+      help: Don't block on UI events - run event loop as fast as possible.
 
 subcommands:
     - png:
@@ -124,6 +146,16 @@ subcommands:
               long: keyframes
               takes_value: true
               help: Provide a keyframes file, that can be used to animate the yaml input file
+          - scene-id:
+              short: s
+              long: scene-id
+              takes_value: true
+              help: Select a starting scene sequence ID (YAML capture sequence only).
+          - frame-id:
+              short: f
+              long: frame-id
+              takes_value: true
+              help: Select a starting frame sequence ID (YAML capture sequence only).
           - INPUT:
               help: The input YAML, binary recording, or capture directory
               required: true
@@ -156,6 +188,27 @@ subcommands:
               help: name of the file to save benchmarks to
               required: true
               index: 1
+          - benchmark:
+              help: benchmark list filename (default is benchmarks/benchmarks.list)
+              required: false
+              index: 2
+          - auto-filename:
+              long: auto-filename
+              help: generate output filename from date and time (user provided filename is the directory prefix)
+              required: false
+          - csv:
+              long: csv
+              help: save benchmark results as .csv (default is json)
+              required: false
+          - warmup_frames:
+              long: warmup_frames
+              takes_value: true
+              help: number of frames to skip before recording timings
+              required: false
+          - sample_count:
+              long: sample_count
+              takes_value: true
+              help: number of samples to capture
     - compare_perf:
         about: compare two benchmark files
         args:

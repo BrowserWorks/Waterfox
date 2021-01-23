@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('BigInt')) -- BigInt is not enabled unconditionally
 // Copyright (C) 2018 Caio Lima. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 /*---
@@ -20,4 +19,5 @@ assert.sameValue(-3n > true, false, 'The result of (-3n > true) is false');
 assert.sameValue(true > -3n, true, 'The result of (true > -3n) is true');
 assert.sameValue(-3n > false, false, 'The result of (-3n > false) is false');
 assert.sameValue(false > -3n, true, 'The result of (false > -3n) is true');
+
 reportCompare(0, 0);

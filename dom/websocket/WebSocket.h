@@ -31,7 +31,7 @@ namespace mozilla {
 namespace dom {
 
 class Blob;
-
+class StringOrStringSequence;
 class WebSocketImpl;
 
 class WebSocket final : public DOMEventTargetHelper {
@@ -54,12 +54,14 @@ class WebSocket final : public DOMEventTargetHelper {
 
   virtual void DisconnectFromOwner() override;
 
+  mozilla::Maybe<EventCallbackDebuggerNotificationType>
+  GetDebuggerNotificationType() const override {
+    return mozilla::Some(EventCallbackDebuggerNotificationType::Websocket);
+  }
+
   // nsWrapperCache
   virtual JSObject* WrapObject(JSContext* cx,
                                JS::Handle<JSObject*> aGivenProto) override;
-
-  // DOMEventTargetHelper
-  void BindToOwner(nsIGlobalObject* aNew) override;
 
  public:  // static helpers:
   // Determine if preferences allow WebSocket
@@ -68,18 +70,9 @@ class WebSocket final : public DOMEventTargetHelper {
 
  public:  // WebIDL interface:
   // Constructor:
-  static already_AddRefed<WebSocket> Constructor(const GlobalObject& aGlobal,
-                                                 const nsAString& aUrl,
-                                                 ErrorResult& rv);
-
-  static already_AddRefed<WebSocket> Constructor(const GlobalObject& aGlobal,
-                                                 const nsAString& aUrl,
-                                                 const nsAString& aProtocol,
-                                                 ErrorResult& rv);
-
   static already_AddRefed<WebSocket> Constructor(
       const GlobalObject& aGlobal, const nsAString& aUrl,
-      const Sequence<nsString>& aProtocols, ErrorResult& rv);
+      const StringOrStringSequence& aProtocols, ErrorResult& rv);
 
   static already_AddRefed<WebSocket> CreateServerWebSocket(
       const GlobalObject& aGlobal, const nsAString& aUrl,
@@ -99,8 +92,8 @@ class WebSocket final : public DOMEventTargetHelper {
   // webIDL: readonly attribute unsigned short readyState;
   uint16_t ReadyState();
 
-  // webIDL: readonly attribute unsigned long bufferedAmount;
-  uint32_t BufferedAmount() const;
+  // webIDL: readonly attribute unsigned long long bufferedAmount;
+  uint64_t BufferedAmount() const;
 
   // webIDL: attribute Function? onopen;
   IMPL_EVENT_HANDLER(open)
@@ -174,7 +167,7 @@ class WebSocket final : public DOMEventTargetHelper {
   bool mKeepingAlive;
   bool mCheckMustKeepAlive;
 
-  CheckedUint32 mOutgoingBufferedAmount;
+  CheckedUint64 mOutgoingBufferedAmount;
 
   // related to the WebSocket constructor steps
   nsString mURI;

@@ -15,6 +15,7 @@ namespace dom {
 class Element;
 class HTMLFieldSetElement;
 class HTMLFormSubmission;
+class DialogFormSubmission;
 class HTMLFormElement;
 }  // namespace dom
 }  // namespace mozilla
@@ -107,7 +108,7 @@ class nsIFormControl : public nsISupports {
    * Get the form for this form control.
    * @return the form
    */
-  virtual mozilla::dom::Element* GetFormElement() = 0;
+  virtual mozilla::dom::HTMLFormElement* GetFormElement() = 0;
 
   /**
    * Set the form for this form control.
@@ -186,25 +187,11 @@ class nsIFormControl : public nsISupports {
   inline bool IsTextControl(bool aExcludePassword) const;
 
   /**
-   * Returns true if this is a text control or a number control.
-   * @param  aExcludePassword  to have NS_FORM_INPUT_PASSWORD returning false.
-   * @return true if this is a text control or a number control.
-   */
-  inline bool IsTextOrNumberControl(bool aExcludePassword) const;
-
-  /**
    * Returns whether this is a single line text control.
    * @param  aExcludePassword  to have NS_FORM_INPUT_PASSWORD returning false.
    * @return whether this is a single line text control.
    */
   inline bool IsSingleLineTextControl(bool aExcludePassword) const;
-
-  /**
-   * Returns true if this is a single line text control or a number control.
-   * @param  aExcludePassword  to have NS_FORM_INPUT_PASSWORD returning false.
-   * @return true if this is a single line text control or a number control.
-   */
-  inline bool IsSingleLineTextOrNumberControl(bool aExcludePassword) const;
 
   /**
    * Returns whether this is a submittable form control.
@@ -221,6 +208,16 @@ class nsIFormControl : public nsISupports {
   virtual bool IsDisabledForEvents(mozilla::WidgetEvent* aEvent) {
     return false;
   }
+
+  // Returns a number for this form control that is unique within its
+  // owner document.  This is used by nsContentUtils::GenerateStateKey
+  // to identify form controls that are inserted into the document by
+  // the parser.  -1 is returned for form controls with no state or
+  // which were inserted into the document by some other means than
+  // the parser from the network.
+  virtual int32_t GetParserInsertedControlNumberForStateKey() const {
+    return -1;
+  };
 
  protected:
   /**
@@ -253,19 +250,8 @@ bool nsIFormControl::IsTextControl(bool aExcludePassword) const {
          IsSingleLineTextControl(aExcludePassword, type);
 }
 
-bool nsIFormControl::IsTextOrNumberControl(bool aExcludePassword) const {
-  return IsTextControl(aExcludePassword) ||
-         ControlType() == NS_FORM_INPUT_NUMBER;
-}
-
 bool nsIFormControl::IsSingleLineTextControl(bool aExcludePassword) const {
   return IsSingleLineTextControl(aExcludePassword, ControlType());
-}
-
-bool nsIFormControl::IsSingleLineTextOrNumberControl(
-    bool aExcludePassword) const {
-  return IsSingleLineTextControl(aExcludePassword) ||
-         ControlType() == NS_FORM_INPUT_NUMBER;
 }
 
 /*static*/
@@ -273,7 +259,7 @@ bool nsIFormControl::IsSingleLineTextControl(bool aExcludePassword,
                                              uint32_t aType) {
   return aType == NS_FORM_INPUT_TEXT || aType == NS_FORM_INPUT_EMAIL ||
          aType == NS_FORM_INPUT_SEARCH || aType == NS_FORM_INPUT_TEL ||
-         aType == NS_FORM_INPUT_URL ||
+         aType == NS_FORM_INPUT_URL || aType == NS_FORM_INPUT_NUMBER ||
          // TODO: those are temporary until bug 773205 is fixed.
          aType == NS_FORM_INPUT_MONTH || aType == NS_FORM_INPUT_WEEK ||
          aType == NS_FORM_INPUT_DATETIME_LOCAL ||
@@ -281,12 +267,10 @@ bool nsIFormControl::IsSingleLineTextControl(bool aExcludePassword,
 }
 
 bool nsIFormControl::IsSubmittableControl() const {
-  // TODO: keygen should be in that list, see bug 101019.
   uint32_t type = ControlType();
   return type == NS_FORM_OBJECT || type == NS_FORM_TEXTAREA ||
-         type == NS_FORM_SELECT ||
-         // type == NS_FORM_KEYGEN ||
-         type & NS_FORM_BUTTON_ELEMENT || type & NS_FORM_INPUT_ELEMENT;
+         type == NS_FORM_SELECT || type & NS_FORM_BUTTON_ELEMENT ||
+         type & NS_FORM_INPUT_ELEMENT;
 }
 
 bool nsIFormControl::AllowDraggableChildren() const {

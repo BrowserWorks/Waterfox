@@ -7,7 +7,9 @@
  * Test if the 'Same site' cookie attribute is correctly set in the cookie panel
  */
 add_task(async function() {
-  const { tab, monitor } = await initNetMonitor(SET_COOKIE_SAME_SITE_SJS);
+  const { tab, monitor } = await initNetMonitor(SET_COOKIE_SAME_SITE_SJS, {
+    requestCount: 1,
+  });
   info("Starting test... ");
 
   const { document, store, windowRequire } = monitor.panelWin;
@@ -34,28 +36,20 @@ add_task(async function() {
   info("Checking the SameSite property");
   const expectedValues = [
     {
-      key: "Response cookies",
-      value: "",
-    },
-    {
       key: "foo",
       value: "",
     },
     {
       key: "samesite",
-      value: "Lax",
+      value: '"Lax"',
     },
     {
       key: "value",
-      value: "bar",
-    },
-    {
-      key: "Request cookies",
-      value: "",
+      value: '"bar"',
     },
     {
       key: "foo",
-      value: "bar",
+      value: '"bar"',
     },
   ];
   const labelCells = document.querySelectorAll(".treeLabelCell");

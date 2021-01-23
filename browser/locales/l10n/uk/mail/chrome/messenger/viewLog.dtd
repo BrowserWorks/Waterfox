@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Журнал фільтрів">
+<!ENTITY viewLogInfo.text "У журналі фільтрів записується, які фільтри були запущені для даного облікового запису. Щоб вирішити запис в цей журнал, відзначте прапорцем опцію внизу.">
+<!ENTITY clearLog.label "Очистити журнал">
+<!ENTITY clearLog.accesskey "ч">
+<!ENTITY enableLog.label "Записувати дані в журнал фільтрів">
+<!ENTITY enableLog.accesskey "п">
+<!ENTITY closeLog.label "Закрити">
+<!ENTITY closeLog.accesskey "к">

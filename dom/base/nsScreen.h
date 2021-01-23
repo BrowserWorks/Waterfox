@@ -12,7 +12,7 @@
 #include "mozilla/dom/ScreenOrientation.h"
 #include "mozilla/DOMEventTargetHelper.h"
 #include "mozilla/ErrorResult.h"
-#include "mozilla/StaticPrefs.h"
+#include "mozilla/StaticPrefs_media.h"
 #include "nsCOMPtr.h"
 #include "nsRect.h"
 
@@ -47,28 +47,12 @@ class nsScreen : public mozilla::DOMEventTargetHelper {
 
   int32_t GetWidth(ErrorResult& aRv) {
     nsRect rect;
-    if (IsDeviceSizePageSize()) {
-      if (nsCOMPtr<nsPIDOMWindowInner> owner = GetOwner()) {
-        int32_t innerWidth = 0;
-        aRv = owner->GetInnerWidth(&innerWidth);
-        return innerWidth;
-      }
-    }
-
     aRv = GetRect(rect);
     return rect.Width();
   }
 
   int32_t GetHeight(ErrorResult& aRv) {
     nsRect rect;
-    if (IsDeviceSizePageSize()) {
-      if (nsCOMPtr<nsPIDOMWindowInner> owner = GetOwner()) {
-        int32_t innerHeight = 0;
-        aRv = owner->GetInnerHeight(&innerHeight);
-        return innerHeight;
-      }
-    }
-
     aRv = GetRect(rect);
     return rect.Height();
   }
@@ -110,7 +94,7 @@ class nsScreen : public mozilla::DOMEventTargetHelper {
   }
 
   static bool MediaCapabilitiesEnabled(JSContext* aCx, JSObject* aGlobal) {
-    return mozilla::StaticPrefs::MediaCapabilitiesScreenEnabled();
+    return mozilla::StaticPrefs::media_media_capabilities_screen_enabled();
   }
 
   IMPL_EVENT_HANDLER(change);
@@ -141,9 +125,9 @@ class nsScreen : public mozilla::DOMEventTargetHelper {
   explicit nsScreen(nsPIDOMWindowInner* aWindow);
   virtual ~nsScreen();
 
-  bool IsDeviceSizePageSize();
-
   bool ShouldResistFingerprinting() const;
+
+  mozilla::dom::Document* TopContentDocumentInRDMPane() const;
 
   RefPtr<mozilla::dom::ScreenOrientation> mScreenOrientation;
 };

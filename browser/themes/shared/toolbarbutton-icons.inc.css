@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 :root {
   --toolbarbutton-icon-fill-attention: var(--lwt-toolbarbutton-icon-fill-attention, #0a84ff);
 }
@@ -20,9 +24,11 @@ toolbar[brighttext] {
 }
 
 .toolbarbutton-animatable-box {
+  display: block;
   position: absolute;
   overflow: hidden;
   z-index: 2;
+  pointer-events: none;
 }
 
 .toolbarbutton-animatable-box > .toolbarbutton-animatable-image {
@@ -59,7 +65,7 @@ toolbar[brighttext] {
   display: none;
 }
 #nav-bar-customization-target > #stop-reload-button > :-moz-any(#reload-button, #stop-button) > .toolbarbutton-animatable-box {
-  display: -moz-box;
+  display: block;
 }
 
 #stop-reload-button[animate] > #reload-button > .toolbarbutton-icon,
@@ -200,7 +206,7 @@ toolbar[brighttext] {
 }
 
 #add-ons-button {
-  list-style-image: url("chrome://mozapps/skin/extensions/extensionGeneric-16.svg");
+  list-style-image: url("chrome://mozapps/skin/extensions/extension.svg");
 }
 
 #open-file-button {
@@ -250,8 +256,33 @@ toolbar[brighttext] {
   list-style-image: url("chrome://browser/skin/developer.svg");
 }
 
+#profiler-button {
+  list-style-image: url("chrome://devtools/skin/images/tool-profiler.svg");
+}
+
+#profiler-button:not(.profiler-active) > image {
+  transform: scaleX(-1);
+}
+
+#profiler-button.profiler-active {
+  fill: #0060df;
+  fill-opacity: 1;
+}
+
+#profiler-button.profiler-active image {
+  background-color: #0060df33;
+}
+
+#profiler-button.profiler-active:hover image {
+  background-color: #0060df22;
+}
+
+#profiler-button.profiler-paused image {
+  opacity: 0.4;
+}
+
 #preferences-button {
-  list-style-image: url("chrome://browser/skin/settings.svg");
+  list-style-image: url("chrome://global/skin/icons/settings.svg");
 }
 
 #PanelUI-menu-button {
@@ -586,4 +617,11 @@ toolbarbutton.bookmark-item {
 
 .bookmark-item[query][hostContainer] {
   list-style-image: url("chrome://browser/skin/places/folder.svg");
+}
+
+#whats-new-menu-button {
+  list-style-image: url("chrome://browser/skin/whatsnew.svg");
+}
+#pioneer-button {
+  list-style-image: url("chrome://browser/skin/pioneer.svg");
 }

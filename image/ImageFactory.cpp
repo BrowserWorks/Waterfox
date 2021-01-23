@@ -10,7 +10,6 @@
 
 #include "mozilla/Likely.h"
 
-#include "nsIHttpChannel.h"
 #include "nsIFileChannel.h"
 #include "nsIFile.h"
 #include "nsMimeTypes.h"
@@ -22,9 +21,9 @@
 #include "Image.h"
 #include "nsMediaFragmentURIParser.h"
 #include "nsContentUtils.h"
-#include "nsIScriptSecurityManager.h"
 
-#include "gfxPrefs.h"
+#include "mozilla/SchedulerGroup.h"
+#include "mozilla/StaticPrefs_image.h"
 
 namespace mozilla {
 namespace image {
@@ -34,24 +33,18 @@ void ImageFactory::Initialize() {}
 
 static uint32_t ComputeImageFlags(nsIURI* uri, const nsCString& aMimeType,
                                   bool isMultiPart) {
-  nsresult rv;
-
   // We default to the static globals.
-  bool isDiscardable = gfxPrefs::ImageMemDiscardable();
-  bool doDecodeImmediately = gfxPrefs::ImageDecodeImmediatelyEnabled();
+  bool isDiscardable = StaticPrefs::image_mem_discardable();
+  bool doDecodeImmediately = StaticPrefs::image_decode_immediately_enabled();
 
   // We want UI to be as snappy as possible and not to flicker. Disable
   // discarding for chrome URLS.
-  bool isChrome = false;
-  rv = uri->SchemeIs("chrome", &isChrome);
-  if (NS_SUCCEEDED(rv) && isChrome) {
+  if (uri->SchemeIs("chrome")) {
     isDiscardable = false;
   }
 
   // We don't want resources like the "loading" icon to be discardable either.
-  bool isResource = false;
-  rv = uri->SchemeIs("resource", &isResource);
-  if (NS_SUCCEEDED(rv) && isResource) {
+  if (uri->SchemeIs("resource")) {
     isDiscardable = false;
   }
 
@@ -75,9 +68,7 @@ static uint32_t ComputeImageFlags(nsIURI* uri, const nsCString& aMimeType,
 
   // Synchronously decode metadata (including size) if we have a data URI since
   // the data is immediately available.
-  bool isDataURI = false;
-  rv = uri->SchemeIs("data", &isDataURI);
-  if (NS_SUCCEEDED(rv) && isDataURI) {
+  if (uri->SchemeIs("data")) {
     imageFlags |= Image::INIT_FLAG_SYNC_LOAD;
   }
 
@@ -90,7 +81,7 @@ static void NotifyImageLoading(nsIURI* aURI) {
     nsCOMPtr<nsIURI> uri(aURI);
     nsCOMPtr<nsIRunnable> ev = NS_NewRunnableFunction(
         "NotifyImageLoading", [uri]() -> void { NotifyImageLoading(uri); });
-    SystemGroup::Dispatch(TaskCategory::Other, ev.forget());
+    SchedulerGroup::Dispatch(TaskCategory::Other, ev.forget());
     return;
   }
 
@@ -110,17 +101,12 @@ already_AddRefed<Image> ImageFactory::CreateImage(
     nsIRequest* aRequest, ProgressTracker* aProgressTracker,
     const nsCString& aMimeType, nsIURI* aURI, bool aIsMultiPart,
     uint32_t aInnerWindowId) {
-  MOZ_ASSERT(gfxPrefs::SingletonExists(),
-             "Pref observers should have been initialized already");
-
   // Compute the image's initialization flags.
   uint32_t imageFlags = ComputeImageFlags(aURI, aMimeType, aIsMultiPart);
 
 #ifdef DEBUG
   // Record the image load for startup performance testing.
-  bool match = false;
-  if ((NS_SUCCEEDED(aURI->SchemeIs("resource", &match)) && match) ||
-      (NS_SUCCEEDED(aURI->SchemeIs("chrome", &match)) && match)) {
+  if (aURI->SchemeIs("resource") || aURI->SchemeIs("chrome")) {
     NotifyImageLoading(aURI);
   }
 #endif

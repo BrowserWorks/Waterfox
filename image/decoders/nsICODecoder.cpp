@@ -10,12 +10,11 @@
 
 #include <stdlib.h>
 
-#include "mozilla/EndianUtils.h"
-#include "mozilla/Move.h"
-
-#include "mozilla/gfx/Swizzle.h"
+#include <utility>
 
 #include "RasterImage.h"
+#include "mozilla/EndianUtils.h"
+#include "mozilla/gfx/Swizzle.h"
 
 using namespace mozilla::gfx;
 
@@ -299,12 +298,18 @@ LexerTransition<ICOState> nsICODecoder::FinishDirEntry() {
     return Transition::TerminateSuccess();
   }
 
-  // If the resource we selected matches the output size perfectly, we don't
-  // need to do any downscaling.
   if (mDirEntry->mSize == OutputSize()) {
+    // If the resource we selected matches the output size perfectly, we don't
+    // need to do any downscaling.
     MOZ_ASSERT_IF(desiredSize, mDirEntry->mSize == *desiredSize);
     MOZ_ASSERT_IF(!desiredSize, mDirEntry->mSize == Size());
-    mDownscaler.reset();
+  } else if (OutputSize().width < mDirEntry->mSize.width ||
+             OutputSize().height < mDirEntry->mSize.height) {
+    // Create a downscaler if we need to downscale.
+    //
+    // TODO(aosmond): This is the last user of Downscaler. We should switch this
+    // to SurfacePipe as well so we can remove the code from tree.
+    mDownscaler.emplace(OutputSize());
   }
 
   size_t offsetToResource = mDirEntry->mImageOffset - FirstResourceOffset();
@@ -353,16 +358,16 @@ LexerTransition<ICOState> nsICODecoder::SniffResource(const char* aData) {
     size_t toRead = mDirEntry->mBytesInRes - BITMAPINFOSIZE;
     return Transition::ToUnbuffered(ICOState::FINISHED_RESOURCE,
                                     ICOState::READ_RESOURCE, toRead);
-  } else {
-    // Make sure we have a sane size for the bitmap information header.
-    int32_t bihSize = LittleEndian::readUint32(aData);
-    if (bihSize != static_cast<int32_t>(BITMAPINFOSIZE)) {
-      return Transition::TerminateFailure();
-    }
-
-    // Read in the rest of the bitmap information header.
-    return ReadBIH(aData);
   }
+
+  // Make sure we have a sane size for the bitmap information header.
+  int32_t bihSize = LittleEndian::readUint32(aData);
+  if (bihSize != static_cast<int32_t>(BITMAPINFOSIZE)) {
+    return Transition::TerminateFailure();
+  }
+
+  // Read in the rest of the bitmap information header.
+  return ReadBIH(aData);
 }
 
 LexerTransition<ICOState> nsICODecoder::ReadResource() {
@@ -583,10 +588,10 @@ LexerTransition<ICOState> nsICODecoder::FinishMask() {
     }
     int32_t stride = mDownscaler->TargetSize().width * sizeof(uint32_t);
     DebugOnly<bool> ret =
-        // We know the format is B8G8R8A8 because we always assume bmp's inside
+        // We know the format is OS_RGBA because we always assume bmp's inside
         // ico's are transparent.
-        PremultiplyData(imageData, stride, SurfaceFormat::B8G8R8A8, imageData,
-                        stride, SurfaceFormat::B8G8R8A8,
+        PremultiplyData(imageData, stride, SurfaceFormat::OS_RGBA, imageData,
+                        stride, SurfaceFormat::OS_RGBA,
                         mDownscaler->TargetSize());
     MOZ_ASSERT(ret);
   }

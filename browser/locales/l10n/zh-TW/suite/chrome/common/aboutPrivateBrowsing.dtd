@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: where ".private" and ".normal" variants exist,
+   - the former is shown in a private browsing window and the latter in
+   - a regular (non-private) browsing window. -->
+
+<!ENTITY privatebrowsingpage.title.private       "您正在隱私瀏覽視窗中">
+<!ENTITY privatebrowsingpage.title.normal        "您要開始使用隱私瀏覽模式嗎？">
+
+<!ENTITY privatebrowsingpage.status.private      "&brandShortName; 將不會記住此視窗的任何瀏覽紀錄。">
+<!ENTITY privatebrowsingpage.status.normal       "您現在不在隱私視窗當中。">
+
+<!ENTITY privatebrowsingpage.common.description  "在隱私瀏覽視窗中，&brandShortName; 不會保留任何瀏覽記錄、搜尋記錄、下載記錄、網頁表單輸入內容、Cookie、暫存檔案。然而，您所下載的檔案及新增的書籤將被保留。">
+<!ENTITY privatebrowsingpage.track.warn          "雖然這台電腦不會留下任何歷史記錄，您的雇主或網路業者還是能追蹤您瀏覽的頁面。">
+<!ENTITY privatebrowsingpage.learnmore.label     "了解更多">
+<!ENTITY privatebrowsingpage.learnmore.accesskey "L">
+
+<!ENTITY privatebrowsingpage.close.info          "完成後，請關閉視窗以結束隱私瀏覽">
+<!ENTITY privatebrowsingpage.close.label         "立刻關閉此視窗">
+<!ENTITY privatebrowsingpage.close.accesskey     "C">
+
+<!ENTITY privatebrowsingpage.start.info          "您可以點擊下面的按鈕，或選擇選單中的檔案 ▶ 新增 ▶ 隱私視窗以進入隱私瀏覽模式。">
+<!ENTITY privatebrowsingpage.private.label       "開啟新隱私視窗">
+<!ENTITY privatebrowsingpage.private.accesskey   "O">

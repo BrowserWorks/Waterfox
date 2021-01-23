@@ -16,31 +16,24 @@ class EmptyBlobImpl final : public BaseBlobImpl {
  public:
   NS_INLINE_DECL_REFCOUNTING_INHERITED(EmptyBlobImpl, BaseBlobImpl)
 
+  // Blob constructor.
   explicit EmptyBlobImpl(const nsAString& aContentType)
-      : BaseBlobImpl(NS_LITERAL_STRING("EmptyBlobImpl"), aContentType,
-                     0 /* aLength */) {
-    mImmutable = true;
+      : BaseBlobImpl(aContentType, 0 /* aLength */) {}
+
+  void CreateInputStream(nsIInputStream** aStream, ErrorResult& aRv) override;
+
+  already_AddRefed<BlobImpl> CreateSlice(uint64_t aStart, uint64_t aLength,
+                                         const nsAString& aContentType,
+                                         ErrorResult& aRv) override;
+
+  bool IsMemoryFile() const override { return true; }
+
+  void GetBlobImplType(nsAString& aBlobImplType) const override {
+    aBlobImplType = NS_LITERAL_STRING("EmptyBlobImpl");
   }
-
-  EmptyBlobImpl(const nsAString& aName, const nsAString& aContentType,
-                int64_t aLastModifiedDate)
-      : BaseBlobImpl(NS_LITERAL_STRING("EmptyBlobImpl"), aName, aContentType, 0,
-                     aLastModifiedDate) {
-    mImmutable = true;
-  }
-
-  virtual void CreateInputStream(nsIInputStream** aStream,
-                                 ErrorResult& aRv) override;
-
-  virtual already_AddRefed<BlobImpl> CreateSlice(uint64_t aStart,
-                                                 uint64_t aLength,
-                                                 const nsAString& aContentType,
-                                                 ErrorResult& aRv) override;
-
-  virtual bool IsMemoryFile() const override { return true; }
 
  private:
-  ~EmptyBlobImpl() {}
+  ~EmptyBlobImpl() = default;
 };
 
 }  // namespace dom

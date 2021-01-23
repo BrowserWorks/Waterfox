@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "მოგესალმებათ &brandShortName;">
+<!ENTITY header2.label "გნებავთ ახალი ელფოსტის მისამართი?">
+<!ENTITY other.languages "ჩვენ გიჩვენებთ ელფოსტის მხოლოდ პროვაიდერებს თქვენი რეგიონიდან.  ყველა პროვაიდერის საჩვენებლად დაწკაპეთ აქ.">
+<!ENTITY error.line1 "უკაცრავად, ვერ მოვიძიეთ ვერცერთი შემოთავაზებული ელფოსტის მისამართი.">
+<!ENTITY error.line2 "ძიება შეგიძლიათ განახორციელოთ მეტსახელით ან სხვა საძიებო ტერმინით">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before "ასევე, შეგიძლიათ სცადოთ ერთერთი ">
+<!ENTITY error.suggest.middle "უაფასო ალტერნატივა საფოსტო მომსახურებისთვის">
+<!ENTITY error.suggest.after ".">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before "გამარჯობა ">
+<!ENTITY success.title.after ", თქვენ შეგიძლიათ ისარგებლოთ ელფოსტის შემდეგი მისამართებით:">
+<!ENTITY success.tip "(ასევე, ძიება შეგიძლიათ განახორციელოთ მეტსახელით ან სხვა საძიებო ტერმინით)">
+<!ENTITY partnership.description "რამდენიმე პროვაიდერთან თანამშრობლობით, &brandShortName; გთავაზობთ ელფოსტის ახალი მისამართის შექმნას. უბრალოდ მიუთითეთ სახელი, გვარი ან სხვა სასურველი სიტყვები ზედა ველებში.">
+<!ENTITY existing.header "უკვე გაქვთ მისამართი, რომლით სარგებლობაც გსურთ?">
+<!ENTITY tinyheader.title "მისამართის მიღება?">
+<!ENTITY tinyheader.existing "გამოტოვება და გადასვლა არსებულ ელფოსტაზე">
+<!ENTITY content.close "ალბათ მოგვიანებით გავმართავ ჩემს ელფოსტას.">
+<!ENTITY successful.title "გილოცავთ!">
+<!ENTITY successful.successMessage "თქვენ წარმატებით შექმენით თქვენი ანგარიში.">
+<!ENTITY successful.write "დაწერეთ წერილი">
+<!ENTITY successful.write.desc "აცნობეთ ახლობლებს და მეგობრებს თქვენი ახალი ელფოსტის მისამართი.<br/> ამ ელფოსტის ძირითადი დანიშნულებაც ხომ ესაა?">
+<!ENTITY successful.customize "&brandShortName;-ის მორგება მოდულების საშუალებით">
+<!ENTITY successful.customize.desc "არსებობს ათასობით მოდული, რომლითაც &brandShortName;-ის  თქვენი გემოვნებით მორგება შეგიძლიათ.">
+<!ENTITY successful.attach "პირადი ხელმოწერის თანდართვა თითოეულ წერილზე">
+<!ENTITY successful.attach.desc "გაგზავნამდე შეგიძლიათ ავტომატურად მიამაგროთ ციტატა ან სხვა ინფორმაცია თითოეული წერილის ბოლოს.">
+<!ENTITY successful.close "ამ სარკმლის დახურვა.">
+<!ENTITY input.namePlaceholder "თქვენი სახელი ან მეტსახელი">
+<!ENTITY input.search "ძიება">
+<!ENTITY search_engine.title "საძიებო სისტემის მორგება">
+<!ENTITY search_engine.message "თქვენი ელფოსტის პროვაიდერს შეუძლია თქვენთვის ინტერნეტში ხიებაც უზრუნველყოს.">
+<!ENTITY search_engine.button "დასრულება">

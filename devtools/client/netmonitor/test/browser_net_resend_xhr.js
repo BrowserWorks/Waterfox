@@ -8,7 +8,9 @@
  */
 
 add_task(async function() {
-  const { tab, monitor } = await initNetMonitor(POST_RAW_URL);
+  const { tab, monitor } = await initNetMonitor(POST_RAW_URL, {
+    requestCount: 1,
+  });
 
   const { document, store, windowRequire } = monitor.panelWin;
   const Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
@@ -30,6 +32,8 @@ add_task(async function() {
   // Context Menu > "Resend"
   EventUtils.sendMouseEvent({ type: "contextmenu" }, firstRequest);
   getContextMenuItem(monitor, "request-list-context-resend-only").click();
+
+  await performRequests(monitor, tab, 2);
 
   // Selects request that was resent
   const selectedRequest = getSelectedRequest(store.getState());

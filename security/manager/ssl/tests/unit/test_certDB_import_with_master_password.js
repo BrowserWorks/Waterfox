@@ -72,7 +72,7 @@ var gMockPrompter = {
       return this;
     }
 
-    throw new Error(Cr.NS_ERROR_NO_INTERFACE);
+    throw Components.Exception("", Cr.NS_ERROR_NO_INTERFACE);
   },
 };
 
@@ -89,7 +89,7 @@ function getCertAsByteArray(certPath) {
 }
 
 function findCertByCommonName(commonName) {
-  for (let cert of gCertDB.getCerts().getEnumerator()) {
+  for (let cert of gCertDB.getCerts()) {
     if (cert.commonName == commonName) {
       return cert;
     }

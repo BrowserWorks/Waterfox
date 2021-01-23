@@ -13,7 +13,9 @@ const ADD_UA_HEADER = "User-Agent: Custom-Agent";
 const ADD_POSTDATA = "&t3=t4";
 
 add_task(async function() {
-  const { tab, monitor } = await initNetMonitor(POST_DATA_URL);
+  const { tab, monitor } = await initNetMonitor(POST_DATA_URL, {
+    requestCount: 1,
+  });
   info("Starting test... ");
 
   const { document, store, windowRequire, connector } = monitor.panelWin;
@@ -27,7 +29,7 @@ add_task(async function() {
   // Execute requests.
   await performRequests(monitor, tab, 2);
 
-  const origItemId = getSortedRequests(store.getState()).get(0).id;
+  const origItemId = getSortedRequests(store.getState())[0].id;
 
   store.dispatch(Actions.selectRequest(origItemId));
   await waitForRequestData(
@@ -36,7 +38,7 @@ add_task(async function() {
     origItemId
   );
 
-  let origItem = getSortedRequests(store.getState()).get(0);
+  let origItem = getSortedRequests(store.getState())[0];
 
   // add a new custom request cloned from selected request
 
@@ -54,7 +56,7 @@ add_task(async function() {
   testCustomItemChanged(customItem, origItem);
 
   // send the new request
-  wait = waitForNetworkEvents(monitor, 1);
+  const wait = waitForNetworkEvents(monitor, 1);
   store.dispatch(Actions.sendCustomRequest(connector));
   await wait;
 
@@ -63,7 +65,7 @@ add_task(async function() {
   // we must wait for both properties get updated before starting test.
   await waitUntil(() => {
     sentItem = getSelectedRequest(store.getState());
-    origItem = getSortedRequests(store.getState()).get(0);
+    origItem = getSortedRequests(store.getState())[0];
     return (
       sentItem &&
       sentItem.requestHeaders &&
@@ -90,7 +92,7 @@ add_task(async function() {
     "The sent request is selected"
   );
   is(
-    document.querySelector(".network-details-panel"),
+    document.querySelector(".network-details-bar"),
     null,
     "The detail panel is hidden"
   );
@@ -107,7 +109,7 @@ add_task(async function() {
   }
 
   function testCustomItemChanged(item, orig) {
-    const url = item.url;
+    const { url } = item;
     const expectedUrl = orig.url + "&" + ADD_QUERY;
 
     is(url, expectedUrl, "menu item is updated to reflect url entered in form");

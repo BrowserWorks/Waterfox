@@ -58,13 +58,17 @@ class ReleaseParser(BaseTryParser):
 
     ]
     common_groups = ['push']
+    task_configs = ['disable-pgo', 'worker-overrides']
 
     def __init__(self, *args, **kwargs):
         super(ReleaseParser, self).__init__(*args, **kwargs)
         self.set_defaults(migrations=[])
 
 
-def run(version, migrations, limit_locales, tasks, push=True, message='{msg}', closed_tree=False):
+def run(
+    version, migrations, limit_locales, tasks,
+    try_config=None, push=True, message='{msg}', closed_tree=False
+):
     app_version = attr.evolve(version, beta_number=None, is_esr=False)
 
     files_to_change = {
@@ -88,6 +92,8 @@ def run(version, migrations, limit_locales, tasks, push=True, message='{msg}', c
             'release_type': release_type,
         },
     }
+    if try_config:
+        task_config['parameters']['try_task_config'] = try_config
 
     for migration in migrations:
         migration_path = os.path.join(
@@ -96,7 +102,9 @@ def run(version, migrations, limit_locales, tasks, push=True, message='{msg}', c
             '{}.py'.format(migration.replace('-', '_')),
         )
         migration_config = {}
-        execfile(migration_path, migration_config, migration_config)
+        with open(migration_path) as f:
+            code = compile(f.read(), migration_path, "exec")
+            exec(code, migration_config, migration_config)
         for (path, from_, to) in migration_config['config']['replacements']:
             if path in files_to_change:
                 contents = files_to_change[path]

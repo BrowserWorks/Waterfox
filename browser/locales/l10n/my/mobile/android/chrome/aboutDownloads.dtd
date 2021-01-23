@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "ဆွဲချချက်များ">
+<!ENTITY aboutDownloads.header                     "သင်၏ ဆွဲချချက်များ">
+<!ENTITY aboutDownloads.empty                      "ဆွဲချချက်များ မရှိ">
+
+<!ENTITY aboutDownloads.open                       "ဖွင့်ပါ">
+<!ENTITY aboutDownloads.remove                     "ဖျက်ရန်">
+<!ENTITY aboutDownloads.removeAll                  "အားလုံးကို ဖျက်ပါ">
+<!ENTITY aboutDownloads.pause                      "ခေတ္တရပ်တန့်တယ်">
+<!ENTITY aboutDownloads.resume                     "ပြန်စပါ">
+<!ENTITY aboutDownloads.cancel                     "ပယ်​ဖျက်ပါ">
+<!ENTITY aboutDownloads.retry                      "ထပ်ကြိုးစားပါ">

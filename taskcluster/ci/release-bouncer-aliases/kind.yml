@@ -14,10 +14,7 @@ kind-dependencies:
 
 job-defaults:
     description: Update bouncer aliases job
-    worker-type:
-        by-release-level:
-            production: scriptworker-k8s/gecko-3-bouncer
-            staging: scriptworker-k8s/gecko-1-bouncer
+    worker-type: bouncer
     worker:
         implementation: bouncer-aliases
     scopes:
@@ -46,24 +43,6 @@ jobs:
         treeherder:
             platform: devedition-release/opt
 
-    fennec-beta:
-        bouncer-products-per-alias:
-            fennec-beta-latest: apk
-        shipping-product: fennec
-        treeherder:
-            platform: fennec-beta/opt
-        attributes:
-            release-type: beta
-
-    fennec-release:
-        bouncer-products-per-alias:
-            fennec-latest: apk
-        shipping-product: fennec
-        treeherder:
-            platform: fennec-release/opt
-        attributes:
-            release-type: release
-
     firefox:
         bouncer-products-per-alias:
             by-project:
@@ -79,7 +58,7 @@ jobs:
                     firefox-stub: stub-installer
                     firefox-msi-latest-ssl: msi
                     firefox-pkg-latest-ssl: pkg
-                mozilla-esr68:
+                mozilla-esr78:
                     # when there is one ESR branch both sets of aliases work
                     # when there are two ESR branches ...
                     # ... these always point to the older branch
@@ -87,7 +66,7 @@ jobs:
                     firefox-esr-latest: installer
                     firefox-esr-msi-latest-ssl: msi
                     firefox-esr-pkg-latest-ssl: pkg
-                mozilla-esr78:
+                    # mozilla-esrXX: XXX - to uncomment when we branch next ESR
                     # ... these point to the newer branch
                     firefox-esr-next-latest-ssl: installer-ssl
                     firefox-esr-next-latest: installer

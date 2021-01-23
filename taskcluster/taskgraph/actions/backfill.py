@@ -8,12 +8,13 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 import json
 import logging
+import six
 
 import requests
 from requests.exceptions import HTTPError
 
 from .registry import register_callback_action
-from .util import create_tasks, combine_task_graph_files
+from .util import create_tasks, combine_task_graph_files, add_args_to_command
 from taskgraph.util.taskcluster import get_artifact_from_index
 from taskgraph.util.taskgraph import find_decision_task
 from taskgraph.taskgraph import TaskGraph
@@ -40,9 +41,9 @@ logger = logging.getLogger(__name__)
         'properties': {
             'depth': {
                 'type': 'integer',
-                'default': 5,
+                'default': 9,
                 'minimum': 1,
-                'maximum': 10,
+                'maximum': 25,
                 'title': 'Depth',
                 'description': ('The number of previous pushes before the current '
                                 'push to attempt to trigger this task on.')
@@ -77,7 +78,7 @@ def backfill_action(parameters, graph_config, input, task_group_id, task_id):
     label = task['metadata']['name']
     pushes = []
     inclusive_tweak = 1 if input.get('inclusive') else 0
-    depth = input.get('depth', 5) + inclusive_tweak
+    depth = input.get('depth', 9) + inclusive_tweak
     end_id = int(parameters['pushlog_id']) - (1 - inclusive_tweak)
 
     while True:
@@ -144,9 +145,10 @@ def backfill_action(parameters, graph_config, input, task_group_id, task_id):
                         verify_args.append('--gpu-required')
 
                     if 'testPath' in input:
-                        task.task['payload']['env']['MOZHARNESS_TEST_PATHS'] = json.dumps({
-                            task.task['extra']['suite']['flavor']: [input['testPath']]
-                        })
+                        task.task['payload']['env']['MOZHARNESS_TEST_PATHS'] = six.ensure_text(
+                            json.dumps({
+                                task.task['extra']['suite']['flavor']: [input['testPath']]
+                            }))
 
                     cmd_parts = task.task['payload']['command']
                     keep_args = ['--installer-url', '--download-symbols', '--test-packages-url']
@@ -183,7 +185,7 @@ def backfill_action(parameters, graph_config, input, task_group_id, task_id):
                 return task
 
             times = input.get('times', 1)
-            for i in xrange(times):
+            for i in range(times):
                 create_tasks(graph_config, [label], full_task_graph, label_to_taskid,
                              push_params, push_decision_task_id, push, modifier=modifier)
             backfill_pushes.append(push)
@@ -232,32 +234,6 @@ def remove_args_from_command(cmd_parts, preamble_length=0, args_to_ignore=[]):
         # remove job specific arg, and reduce array index as size changes
         cmd_parts.remove(cmd_parts[idx])
         idx -= 1
-
-    if cmd_type == 'dict':
-        cmd_parts = [{'task-reference': ' '.join(cmd_parts)}]
-    elif cmd_type == 'subarray':
-        cmd_parts = [cmd_parts]
-    return cmd_parts
-
-
-def add_args_to_command(cmd_parts, extra_args=[]):
-    """
-        Add custom command line args to a given command.
-        args:
-          cmd_parts: the raw command as seen by taskcluster
-          extra_args: array of args we want to add
-    """
-    cmd_type = 'default'
-    if len(cmd_parts) == 1 and isinstance(cmd_parts[0], dict):
-        # windows has single cmd part as dict: 'task-reference', with long string
-        cmd_parts = cmd_parts[0]['task-reference'].split(' ')
-        cmd_type = 'dict'
-    elif len(cmd_parts) == 1 and isinstance(cmd_parts[0], list):
-        # osx has an single value array with an array inside
-        cmd_parts = cmd_parts[0]
-        cmd_type = 'subarray'
-
-    cmd_parts.extend(extra_args)
 
     if cmd_type == 'dict':
         cmd_parts = [{'task-reference': ' '.join(cmd_parts)}]

@@ -1,0 +1,80 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY name.label                      "U naam:">
+<!ENTITY name.accesskey                  "n">
+<!ENTITY name.text                       "U naam, soos aan ander gewys">
+<!ENTITY email.label                     "E-posadres:">
+<!ENTITY email.accesskey                 "E">
+<!ENTITY password.label                  "Wagwoord:">
+<!ENTITY password.accesskey              "W">
+<!ENTITY password.placeholder            "Wagwoord">
+<!ENTITY password.text                   "Opsioneel, sal net gebruik word om die gebruikernaam te valideer">
+<!ENTITY rememberPassword.label          "Onthou wagwoord">
+<!ENTITY rememberPassword.accesskey      "O">
+
+
+
+<!ENTITY incoming.label                  "Inkomend:">
+<!ENTITY outgoing.label                  "Uitgaande:">
+<!ENTITY username.label                  "Gebruikernaam:">
+
+
+<!ENTITY imap.label                      "IMAP">
+
+<!ENTITY smtp.label                      "SMTP">
+
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "Geen">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+
+<!ENTITY cancel.label                    "Kanselleer">
+<!ENTITY cancel.accesskey                "K">
+<!ENTITY continue.label                  "Gaan voort">
+<!ENTITY continue.accesskey              "G">
+<!ENTITY stop.label                      "Stop">
+<!ENTITY stop.accesskey                  "S">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual edit mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+
+
+
+
+
+
+
+<!ENTITY warning.label                   "Let wel!">
+<!ENTITY incomingSettings.label          "Inkomende instellings:">
+<!ENTITY outgoingSettings.label          "Uitgaande instellings:">
+<!ENTITY technicaldetails.label          "Tegniese detail">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "Ek verstaan die risiko.">
+<!ENTITY confirmWarning.accesskey        "v">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "Klaar">
+<!ENTITY doneAccount.accesskey           "K">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "Wysig instellings">
+<!ENTITY changeSettings.accesskey        "i">
+
+<!ENTITY contactYourProvider.description "&brandShortName; kan u in staat stel om u pos met die aangegewe opstelling te kry. U moet egter u administrateur of e-posverskaffer kontak oor hierdie foutiewe verbindings. Kyk die Thunderbird-kwelvrae vir meer inligting.">
+
+<!ENTITY insecureServer.tooltip.title    "Let wel! Dit is 'n onbeveiligde bediener.">
+<!ENTITY insecureServer.tooltip.details  "Kliek sirkel vir meer besonderhede.">
+
+<!ENTITY insecureUnencrypted.description "U e-pos en magtiging word ongeënkripteerd gestuur, en u wagwoord (en u boodskap) kan dus maklik deur ander mense gelees word. &brandShortName; sal u u e-pos laat kry, maar u moet eintlik u e-posverskaffer kontak om die bediener met 'n beveiligde verbinding op te stel.">
+<!ENTITY insecureSelfSigned.description  "Die bediener gebruik 'n sertifikaat wat ons nie kan vertrou nie, daarom kan ons nie seker wees dat iemand nié die verkeer tussen &brandShortName; en u bediener onderskep nie. &brandShortName; sal u u e-pos laat kry, maar u moet eintlik u e-posverskaffer kontak om die bediener met 'n vertroude sertifikaat op te stel.">
+<!ENTITY secureServer.description        "Baie geluk! Dit is 'n beveiligde bediener.">

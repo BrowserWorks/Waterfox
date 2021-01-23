@@ -4,9 +4,10 @@
 
 //! Media features.
 
-use super::media_feature_expression::{AspectRatio, RangeOrOperator};
+use super::media_feature_expression::RangeOrOperator;
 use super::Device;
 use crate::parser::ParserContext;
+use crate::values::computed::position::Ratio;
 use crate::values::computed::{CSSPixelLength, Resolution};
 use crate::Atom;
 use cssparser::Parser;
@@ -44,8 +45,8 @@ pub enum Evaluator {
     Integer(MediaFeatureEvaluator<u32>),
     Float(MediaFeatureEvaluator<f32>),
     BoolInteger(MediaFeatureEvaluator<bool>),
-    /// An integer ratio, such as the one from device-pixel-ratio.
-    IntRatio(MediaFeatureEvaluator<AspectRatio>),
+    /// A non-negative number ratio, such as the one from device-pixel-ratio.
+    NumberRatio(MediaFeatureEvaluator<Ratio>),
     /// A resolution.
     Resolution(MediaFeatureEvaluator<Resolution>),
     /// A keyword value.
@@ -123,9 +124,6 @@ bitflags! {
         const CHROME_AND_UA_ONLY = 1 << 0;
         /// The feature requires a -webkit- prefix.
         const WEBKIT_PREFIX = 1 << 1;
-        /// The feature requires the webkit-device-pixel-ratio preference to be
-        /// enabled.
-        const WEBKIT_DEVICE_PIXEL_RATIO_PREF_ENABLED = 1 << 2;
     }
 }
 

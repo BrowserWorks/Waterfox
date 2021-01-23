@@ -3,6 +3,21 @@ if (window.AudioContext == undefined) {
   window.OfflineAudioContext = window.webkitOfflineAudioContext;
 }
 
+$ = document.querySelectorAll.bind(document);
+
+let DURATION = null;
+if (location.search) {
+  let duration = location.search.match(/rendering-buffer-length=(\d+)/);
+  if (duration) {
+    DURATION = duration[1];
+  } else {
+    DURATION = 120;
+  }
+} else {
+  DURATION = 120;
+}
+
+
 // Global samplerate at which we run the context.
 var samplerate = 48000;
 // Array containing at first the url of the audio resources to fetch, and the
@@ -133,7 +148,7 @@ function allDone() {
 
   document.getElementById("run-all").disabled = false;
 
-  if (location.search == '?raptor') {
+  if (location.search.includes("raptor")) {
     var _data = ['raptor-benchmark', 'webaudio', JSON.stringify(results)];
     window.postMessage(_data, '*');
   } else {
@@ -147,6 +162,7 @@ function allDone() {
 function runOne(i) {
   benchmark(testcases[i], function() {
     i++;
+    $("#progress-bar")[0].value++;
     if (i < testcases.length) {
       runOne(i);
     } else {
@@ -156,6 +172,8 @@ function runOne(i) {
 }
 
 function runAll() {
+  $("#progress-bar")[0].max = testcases_registered.length;
+  $("#progress-bar")[0].value = 0;
   initAll();
   results = [];
   runOne(0);
@@ -187,15 +205,19 @@ function loadAllSources(endCallback) {
 
 document.addEventListener("DOMContentLoaded", function() {
   document.getElementById("run-all").addEventListener("click", function() {
-    document.getElementById("in-progress").style.display = "inline";
     document.getElementById("run-all").disabled = true;
+    document.getElementById("in-progress").style.display = "inline";
     runAll();
   });
   loadAllSources(function() {
-    document.getElementById("loading").style.display = "none";
-    document.getElementById("run-all").style.display = "inline";
-    document.getElementById("in-progress").style.display = "inline";
-    setTimeout(runAll, 100);
+    // auto-run when running in raptor
+    document.getElementById("loading").remove();
+    document.getElementById("controls").style.display = "block";
+    if (location.search.includes("raptor")) {
+      document.getElementById("run-all").disabled = true;
+      document.getElementById("in-progress").style.display = "inline";
+      setTimeout(runAll, 100);
+    }
   });
 });
 

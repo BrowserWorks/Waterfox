@@ -7,6 +7,7 @@ Support for running mach python-test tasks (via run-task)
 
 from __future__ import absolute_import, print_function, unicode_literals
 
+from six import text_type
 from taskgraph.transforms.job import run_job_using, configure_taskdesc_for_run
 from taskgraph.util.schema import Schema
 from voluptuous import Required
@@ -18,10 +19,10 @@ python_test_schema = Schema({
     Required('python-version'): int,
 
     # The subsuite to run
-    Required('subsuite'): basestring,
+    Required('subsuite'): text_type,
 
     # Base work directory used to set up the task.
-    Required('workdir'): basestring,
+    Required('workdir'): text_type,
 })
 
 
@@ -40,7 +41,7 @@ def configure_python_test(config, job, taskdesc):
     if worker['os'] == 'macosx' and run['python-version'] == 3:
         # OSX hosts can't seem to find python 3 on their own
         run['python-version'] = '/tools/python37/bin/python3.7'
-        if job['worker-type'].endswith('1014'):
+        if worker['os'] == 'macosx':
             run['python-version'] = '/usr/local/bin/python3'
 
     # defer to the mach implementation

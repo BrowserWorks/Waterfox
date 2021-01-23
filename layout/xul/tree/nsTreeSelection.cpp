@@ -8,7 +8,6 @@
 #include "mozilla/dom/Element.h"
 #include "nsCOMPtr.h"
 #include "nsTreeSelection.h"
-#include "nsIBoxObject.h"
 #include "XULTreeElement.h"
 #include "nsITreeView.h"
 #include "nsString.h"
@@ -19,6 +18,7 @@
 #include "nsTreeColumns.h"
 
 using namespace mozilla;
+using dom::XULTreeElement;
 
 // A helper class for managing our ranges of selection.
 struct nsTreeRange {
@@ -457,10 +457,6 @@ NS_IMETHODIMP nsTreeSelection::ClearSelection() {
   FireOnSelectHandler();
 
   return NS_OK;
-}
-
-NS_IMETHODIMP nsTreeSelection::InvertSelection() {
-  return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 NS_IMETHODIMP nsTreeSelection::SelectAll() {

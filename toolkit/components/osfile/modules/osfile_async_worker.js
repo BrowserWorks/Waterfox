@@ -29,7 +29,22 @@ if (this.Components) {
 
   let worker = new PromiseWorker.AbstractWorker();
   worker.dispatch = function(method, args = []) {
-    return Agent[method](...args);
+    let startTime = performance.now();
+    try {
+      return Agent[method](...args);
+    } finally {
+      let text = method;
+      if (args.length && args[0] instanceof Object && args[0].string) {
+        // Including the path in the marker text here means it will be part of
+        // profiles. It's fine to include personally identifiable information
+        // in profiles, because when a profile is captured only the user will
+        // see it, and before uploading it a sanitization step will be offered.
+        // The 'OS.File' name will help the profiler know that these markers
+        // should be sanitized.
+        text += " — " + args[0].string;
+      }
+      ChromeUtils.addProfilerMarker("OS.File", startTime, text);
+    }
   };
   worker.log = LOG;
   worker.postMessage = function(message, ...transfers) {
@@ -179,8 +194,7 @@ if (this.Components) {
 
       // Is it safe to kill the worker?
       let safe =
-        result.openedFiles.length == 0 &&
-        result.openedDirectoryIterators.length == 0;
+        !result.openedFiles.length && !result.openedDirectoryIterators.length;
       result.killed = safe && kill;
 
       return new Meta(result, { shutdown: result.killed });

@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -63,45 +62,45 @@ add_task(async function() {
   );
 
   is(
-    ruleEditor.rule.textProps[0].name,
+    getTextProperty(view, 0, { width: "100px" }).name,
     "width",
     "Should have correct property name"
   );
   is(
-    ruleEditor.rule.textProps[0].value,
+    getTextProperty(view, 0, { width: "100px" }).value,
     "100px",
     "Should have correct property value"
   );
 
   is(
-    ruleEditor.rule.textProps[1].name,
+    getTextProperty(view, 0, { heig: "10px" }).name,
     "heig",
     "Should have correct property name"
   );
   is(
-    ruleEditor.rule.textProps[1].value,
+    getTextProperty(view, 0, { heig: "10px" }).value,
     "10px",
     "Should have correct property value"
   );
 
   is(
-    ruleEditor.rule.textProps[2].name,
+    getTextProperty(view, 0, { background: "orangered" }).name,
     "background",
     "Should have correct property name"
   );
   is(
-    ruleEditor.rule.textProps[2].value,
+    getTextProperty(view, 0, { background: "orangered" }).value,
     "orangered",
     "Should have correct property value"
   );
 
   is(
-    ruleEditor.rule.textProps[3].name,
+    getTextProperty(view, 0, { color: "black" }).name,
     "color",
     "Should have correct property name"
   );
   is(
-    ruleEditor.rule.textProps[3].value,
+    getTextProperty(view, 0, { color: "black" }).value,
     "black",
     "Should have correct property value"
   );

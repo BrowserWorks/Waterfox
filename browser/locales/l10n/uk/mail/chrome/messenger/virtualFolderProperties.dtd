@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Нова віртуальна тека">
+<!ENTITY name.label                 "Назва:">
+<!ENTITY name.accesskey             "Н">
+<!ENTITY description.label          "Створити як вкладену теку:">
+<!ENTITY description.accesskey      "С">
+
+<!ENTITY searchTermCaption.label "Налаштувати критерії пошуку використовувані для цієї віртуальної теки:">
+
+<!ENTITY folderSelectionCaption.label "Виберіть теки в яких буде проводиться пошук:">
+<!ENTITY chooseFoldersButton.label "Вибрати…">
+<!ENTITY chooseFoldersButton.accesskey "В">
+
+<!ENTITY searchOnline.label "Пошук онлайн (дає актуальні результати для тек IMAP та груп новин, але збільшує час відкриття теки)">
+<!ENTITY searchOnline.accesskey "П">
+<!ENTITY newFolderButton.label       "Створити">
+<!ENTITY newFolderButton.accesskey   "С">
+<!ENTITY editFolderButton.label      "Оновити">
+<!ENTITY editFolderButton.accesskey  "О">

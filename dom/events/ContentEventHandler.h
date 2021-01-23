@@ -12,7 +12,6 @@
 #include "nsCOMPtr.h"
 #include "nsIFrame.h"
 #include "nsINode.h"
-#include "nsISelectionController.h"
 
 class nsPresContext;
 class nsRange;
@@ -40,7 +39,7 @@ class MOZ_STACK_CLASS ContentEventHandler {
    */
   class MOZ_STACK_CLASS RawRange final {
    public:
-    RawRange() {}
+    RawRange() = default;
 
     void Clear() {
       mRoot = nullptr;
@@ -52,8 +51,13 @@ class MOZ_STACK_CLASS ContentEventHandler {
     bool Collapsed() const { return mStart == mEnd && IsPositioned(); }
     nsINode* GetStartContainer() const { return mStart.Container(); }
     nsINode* GetEndContainer() const { return mEnd.Container(); }
-    uint32_t StartOffset() const { return mStart.Offset(); }
-    uint32_t EndOffset() const { return mEnd.Offset(); }
+    uint32_t StartOffset() const {
+      return *mStart.Offset(
+          RangeBoundary::OffsetFilter::kValidOrInvalidOffsets);
+    }
+    uint32_t EndOffset() const {
+      return *mEnd.Offset(RangeBoundary::OffsetFilter::kValidOrInvalidOffsets);
+    }
     nsIContent* StartRef() const { return mStart.Ref(); }
     nsIContent* EndRef() const { return mEnd.Ref(); }
 
@@ -84,7 +88,6 @@ class MOZ_STACK_CLASS ContentEventHandler {
     nsresult SelectNodeContents(nsINode* aNodeToSelectContents);
 
    private:
-    nsINode* IsValidBoundary(nsINode* aNode) const;
     inline void AssertStartIsBeforeOrEqualToEnd();
 
     nsCOMPtr<nsINode> mRoot;
@@ -166,7 +169,7 @@ class MOZ_STACK_CLASS ContentEventHandler {
     // referred.
     bool mAfterOpenTag = true;
 
-    NodePosition() : RangeBoundary() {}
+    NodePosition() = default;
 
     NodePosition(nsINode* aContainer, int32_t aOffset)
         : RangeBoundary(aContainer, aOffset) {}

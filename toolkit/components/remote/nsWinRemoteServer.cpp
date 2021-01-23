@@ -6,11 +6,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsWinRemoteServer.h"
-#include "nsWinRemoteUtils.h"
+#include "RemoteUtils.h"
 #include "nsCOMPtr.h"
-#include "nsIComponentManager.h"
-#include "nsIServiceManager.h"
-#include "nsIDOMChromeWindow.h"
 #include "nsXPCOM.h"
 #include "nsPIDOMWindow.h"
 #include "nsIWindowMediator.h"

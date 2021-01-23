@@ -28,7 +28,6 @@
 #include "src/cpu.h"
 #include "src/looprestoration.h"
 
-#include "common/attributes.h"
 #include "common/intops.h"
 #include "src/tables.h"
 
@@ -205,14 +204,20 @@ WIENER_FILTER(ext) \
 SGR_FILTER(ext)
 
 #if BITDEPTH == 8
+WIENER_FILTER(sse2)
 DEF_LR_FILTERS(ssse3)
 # if ARCH_X86_64
 DEF_LR_FILTERS(avx2)
 # endif
 #endif
 
-void bitfn(dav1d_loop_restoration_dsp_init_x86)(Dav1dLoopRestorationDSPContext *const c) {
+COLD void bitfn(dav1d_loop_restoration_dsp_init_x86)(Dav1dLoopRestorationDSPContext *const c) {
     const unsigned flags = dav1d_get_cpu_flags();
+
+    if (!(flags & DAV1D_X86_CPU_FLAG_SSE2)) return;
+#if BITDEPTH == 8
+    c->wiener = wiener_filter_sse2;
+#endif
 
     if (!(flags & DAV1D_X86_CPU_FLAG_SSSE3)) return;
 #if BITDEPTH == 8

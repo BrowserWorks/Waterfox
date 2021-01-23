@@ -1,0 +1,310 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Attn: Localization - some of the menus in this dialog directly affect mail also. -->
+<!-- File menu items -->
+
+
+<!ENTITY saveCmd.key "S">
+<!-- Edit menu items -->
+
+<!ENTITY pasteNoFormatting.key "V">
+
+
+
+<!ENTITY pasteAsQuotationCmd.accesskey "Q">
+<!ENTITY pasteAsQuotationCmd.key "o">
+<!ENTITY findBarCmd.label "Find…">
+<!ENTITY findReplaceCmd.label "Find and Replace…">
+<!ENTITY enableInlineSpellChecker.label "Spellcheck As You Type">
+<!ENTITY enableInlineSpellChecker.accesskey "S">
+<!ENTITY checkSpellingCmd2.label "Check Spelling…">
+<!ENTITY checkSpellingCmd2.accesskey "h">
+<!ENTITY checkSpellingCmd2.key "p">
+<!-- Insert menu items -->
+<!ENTITY insertMenu.accesskey "I">
+
+<!ENTITY insertLinkCmd.accesskey "L">
+<!ENTITY insertLinkCmd.key "L">
+
+<!ENTITY insertAnchorCmd.accesskey "A">
+
+<!ENTITY insertImageCmd.accesskey "I">
+
+<!ENTITY insertHLineCmd.accesskey "o">
+
+<!ENTITY insertTableCmd.accesskey "T">
+
+
+<!ENTITY insertMathCmd.label "Math…">
+<!ENTITY insertMathCmd.accesskey "M">
+
+<!ENTITY insertCharsCmd.accesskey "C">
+
+<!ENTITY insertBreakAllCmd.accesskey "k">
+<!-- Used just in context popup. -->
+<!ENTITY createLinkCmd.accesskey "k">
+
+<!ENTITY editLinkCmd.accesskey "i">
+<!-- Font Face SubMenu -->
+
+<!ENTITY fontfaceMenu.accesskey "F">
+
+<!ENTITY fontVarWidth.accesskey "V">
+
+<!ENTITY fontFixedWidth.accesskey "x">
+<!ENTITY fontFixedWidth.key "T">
+<!ENTITY fontHelvetica.label "Helvetica, Arial">
+<!ENTITY fontHelvetica.accesskey "l">
+
+<!ENTITY fontTimes.accesskey "T">
+
+<!ENTITY fontCourier.accesskey "C">
+<!-- Font Size SubMenu -->
+
+<!ENTITY decreaseFontSize.accesskey "r">
+<!ENTITY decrementFontSize.key "&lt;">
+<!-- < is above this key on many keyboards -->
+<!ENTITY decrementFontSize.key2 ","> 
+
+<!ENTITY increaseFontSize.accesskey "g">
+<!ENTITY incrementFontSize.key "&gt;">
+<!-- > is above this key on many keyboards -->
+<!ENTITY incrementFontSize.key2 "."> 
+
+<!ENTITY fontSizeMenu.label "Size">
+<!ENTITY fontSizeMenu.accesskey "z">
+
+<!ENTITY size-xx-smallCmd.accesskey "a">
+
+<!ENTITY size-x-smallCmd.accesskey "m">
+
+<!ENTITY size-smallCmd.accesskey "s">
+
+<!ENTITY size-mediumCmd.accesskey "d">
+
+<!ENTITY size-largeCmd.accesskey "l">
+
+<!ENTITY size-x-largeCmd.accesskey "x">
+
+<!ENTITY size-xx-largeCmd.accesskey "e">
+<!-- Font Style SubMenu -->
+<!ENTITY fontStyleMenu.accesskey "S">
+
+<!ENTITY styleBoldCmd.accesskey "B">
+<!ENTITY styleBoldCmd.key "B">
+
+<!ENTITY styleItalicCmd.accesskey "I">
+<!ENTITY styleItalicCmd.key "I">
+
+<!ENTITY styleUnderlineCmd.accesskey "U">
+<!ENTITY styleUnderlineCmd.key "U">
+
+<!ENTITY styleStrikeThruCmd.accesskey "k">
+
+<!ENTITY styleSuperscriptCmd.accesskey "p">
+
+<!ENTITY styleSubscriptCmd.accesskey "S">
+
+<!ENTITY styleNonbreakingCmd.accesskey "N">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY formatFontColor.accesskey "C">
+
+
+
+<!ENTITY formatRemoveStyles.key "Y">
+<!ENTITY formatRemoveLinks.key "K">
+
+
+<!ENTITY formatRemoveNamedAnchors2.key "R">
+
+<!ENTITY paragraphMenu.accesskey "P">
+
+<!ENTITY paragraphParagraphCmd.accesskey "P">
+
+<!ENTITY heading1Cmd.accesskey "1">
+
+<!ENTITY heading2Cmd.accesskey "2">
+
+<!ENTITY heading3Cmd.accesskey "3">
+
+<!ENTITY heading4Cmd.accesskey "4">
+
+<!ENTITY heading5Cmd.accesskey "5">
+
+<!ENTITY heading6Cmd.accesskey "6">
+<!ENTITY paragraphAddressCmd.label "Idilesi">
+<!ENTITY paragraphAddressCmd.accesskey "A">
+
+<!ENTITY paragraphPreformatCmd.accesskey "f">
+<!-- List menu items -->
+<!ENTITY formatlistMenu.accesskey "L">
+<!ENTITY noneCmd.label "Akukho nanye">
+<!ENTITY noneCmd.accesskey "N">
+
+<!ENTITY listBulletCmd.accesskey "B">
+
+<!ENTITY listNumberedCmd.accesskey "m">
+
+<!ENTITY listTermCmd.accesskey "T">
+
+<!ENTITY listDefinitionCmd.accesskey "D">
+<!ENTITY listPropsCmd.label "List Properties…">
+<!ENTITY listPropsCmd.accesskey "L">
+
+<!-- Shared in Paragraph, and Toolbar menulist -->
+<!ENTITY bodyTextCmd.accesskey "T">
+<!-- isn't used in menu now, but may be added in future -->
+<!ENTITY advancedPropertiesCmd.accesskey "v">
+<!-- Align menu items -->
+<!ENTITY alignMenu.accesskey "A">
+
+<!ENTITY alignLeft.accesskey "L">
+
+<!ENTITY alignCenter.label "Umbindi">
+<!ENTITY alignCenter.accesskey "C">
+
+
+<!ENTITY alignRight.accesskey "R">
+
+
+<!ENTITY alignJustify.accesskey "J">
+
+<!-- Layer toolbar items -->
+
+
+
+<!ENTITY increaseIndent.accesskey "I">
+<!ENTITY increaseIndent.key "]">
+
+<!ENTITY decreaseIndent.accesskey "D">
+<!ENTITY decreaseIndent.key "[">
+
+<!ENTITY colorsAndBackground.accesskey "u">
+<!-- Table Menu -->
+<!ENTITY tableMenu.accesskey "b">
+<!-- Select Submenu -->
+
+<!ENTITY tableSelectMenu.label "Khetha">
+<!ENTITY tableSelectMenu.accesskey "S">
+
+<!ENTITY tableSelectMenu2.accesskey "S">
+
+<!ENTITY tableInsertMenu2.accesskey "I">
+
+<!ENTITY tableDeleteMenu2.accesskey "D">
+<!-- Insert SubMenu -->
+<!ENTITY tableInsertMenu.accesskey "I">
+
+<!ENTITY tableTable.accesskey "T">
+
+
+<!ENTITY tableRow.accesskey "R">
+
+<!ENTITY tableRowAbove.accesskey "R">
+
+<!ENTITY tableRowBelow.accesskey "B">
+
+
+<!ENTITY tableColumn.accesskey "o">
+
+<!ENTITY tableColumnBefore.accesskey "o">
+
+<!ENTITY tableColumnAfter.accesskey "A">
+
+
+<!ENTITY tableCell.accesskey "C">
+
+<!ENTITY tableCellContents.accesskey "n">
+
+<!ENTITY tableAllCells.accesskey "A">
+
+<!ENTITY tableCellBefore.accesskey "C">
+
+<!ENTITY tableCellAfter.accesskey "f">
+<!-- Delete SubMenu -->
+<!ENTITY tableDeleteMenu.accesskey "D">
+<!-- text for "Join Cells" is in editor.properties 
+     ("JoinSelectedCells" and "JoinCellToRight")
+     the access key must exist in both of those strings
+     But value must be set here for accesskey to draw properly
+-->
+<!ENTITY tableJoinCells.accesskey "j">
+
+<!ENTITY tableSplitCell.accesskey "C">
+
+<!ENTITY convertToTable.accesskey "r">
+
+
+<!-- Toolbar-only items -->
+
+<!ENTITY menuBar.tooltip "Ibar ye Menu">
+
+<!ENTITY cutToolbarCmd.tooltip "Cut">
+<!ENTITY copyToolbarCmd.tooltip "Copy">
+<!ENTITY pasteToolbarCmd.tooltip "Paste">
+<!ENTITY printToolbarCmd.label "Shicilela">
+<!ENTITY printToolbarCmd.tooltip "Shicilela eliphepha">
+<!ENTITY findToolbarCmd.label "Fumana">
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY anchorToolbarCmd.label "Ankile">
+
+
+
+
+
+<!-- Editor toolbar -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY alignJustifyButton.tooltip "Align text along left and right margins">
+<!-- Structure Toolbar Context Menu items -->
+
+
+
+
+
+<!-- TOC manipulation -->
+
+<!ENTITY updateTOC.label          "Hlaziya">
+<!ENTITY updateTOC.accesskey      "H">
+<!ENTITY removeTOC.label          "Susa">
+<!ENTITY removeTOC.accesskey      "S">
+
+

@@ -14,7 +14,6 @@
 #include "nsStackLayout.h"
 #include "nsCOMPtr.h"
 #include "nsBoxLayoutState.h"
-#include "nsBox.h"
 #include "nsBoxFrame.h"
 #include "nsGkAtoms.h"
 #include "nsIContent.h"
@@ -42,45 +41,37 @@ nsresult NS_NewStackLayout(nsCOMPtr<nsBoxLayout>& aNewLayout) {
 /*static*/
 void nsStackLayout::Shutdown() { NS_IF_RELEASE(gInstance); }
 
-nsStackLayout::nsStackLayout() {}
+nsStackLayout::nsStackLayout() = default;
 
 /*
  * Sizing: we are as wide as the widest child plus its left offset
  * we are tall as the tallest child plus its top offset.
- *
- * Only children which have -moz-stack-sizing set to stretch-to-fit
- * (the default) will be included in the size computations.
  */
 
 nsSize nsStackLayout::GetXULPrefSize(nsIFrame* aBox, nsBoxLayoutState& aState) {
   nsSize prefSize(0, 0);
 
-  nsIFrame* child = nsBox::GetChildXULBox(aBox);
+  nsIFrame* child = nsIFrame::GetChildXULBox(aBox);
   while (child) {
-    auto stackSizing = child->StyleXUL()->mStackSizing;
-    if (stackSizing != StyleStackSizing::Ignore) {
-      nsSize pref = child->GetXULPrefSize(aState);
+    nsSize pref = child->GetXULPrefSize(aState);
 
-      AddMargin(child, pref);
-      nsMargin offset;
-      GetOffset(child, offset);
-      pref.width += offset.LeftRight();
-      pref.height += offset.TopBottom();
+    AddXULMargin(child, pref);
+    nsMargin offset;
+    GetOffset(child, offset);
+    pref.width += offset.LeftRight();
+    pref.height += offset.TopBottom();
 
-      if (pref.width > prefSize.width &&
-          stackSizing != StyleStackSizing::IgnoreHorizontal) {
-        prefSize.width = pref.width;
-      }
-      if (pref.height > prefSize.height &&
-          stackSizing != StyleStackSizing::IgnoreVertical) {
-        prefSize.height = pref.height;
-      }
+    if (pref.width > prefSize.width) {
+      prefSize.width = pref.width;
+    }
+    if (pref.height > prefSize.height) {
+      prefSize.height = pref.height;
     }
 
-    child = nsBox::GetNextXULBox(child);
+    child = nsIFrame::GetNextXULBox(child);
   }
 
-  AddBorderAndPadding(aBox, prefSize);
+  AddXULBorderAndPadding(aBox, prefSize);
 
   return prefSize;
 }
@@ -88,68 +79,58 @@ nsSize nsStackLayout::GetXULPrefSize(nsIFrame* aBox, nsBoxLayoutState& aState) {
 nsSize nsStackLayout::GetXULMinSize(nsIFrame* aBox, nsBoxLayoutState& aState) {
   nsSize minSize(0, 0);
 
-  nsIFrame* child = nsBox::GetChildXULBox(aBox);
+  nsIFrame* child = nsIFrame::GetChildXULBox(aBox);
   while (child) {
-    auto stackSizing = child->StyleXUL()->mStackSizing;
-    if (stackSizing != StyleStackSizing::Ignore) {
-      nsSize min = child->GetXULMinSize(aState);
+    nsSize min = child->GetXULMinSize(aState);
 
-      AddMargin(child, min);
-      nsMargin offset;
-      GetOffset(child, offset);
-      min.width += offset.LeftRight();
-      min.height += offset.TopBottom();
+    AddXULMargin(child, min);
+    nsMargin offset;
+    GetOffset(child, offset);
+    min.width += offset.LeftRight();
+    min.height += offset.TopBottom();
 
-      if (min.width > minSize.width &&
-          stackSizing != StyleStackSizing::IgnoreHorizontal) {
-        minSize.width = min.width;
-      }
-      if (min.height > minSize.height &&
-          stackSizing != StyleStackSizing::IgnoreVertical) {
-        minSize.height = min.height;
-      }
+    if (min.width > minSize.width) {
+      minSize.width = min.width;
+    }
+    if (min.height > minSize.height) {
+      minSize.height = min.height;
     }
 
-    child = nsBox::GetNextXULBox(child);
+    child = nsIFrame::GetNextXULBox(child);
   }
 
-  AddBorderAndPadding(aBox, minSize);
+  AddXULBorderAndPadding(aBox, minSize);
 
   return minSize;
 }
 
 nsSize nsStackLayout::GetXULMaxSize(nsIFrame* aBox, nsBoxLayoutState& aState) {
-  nsSize maxSize(NS_INTRINSICSIZE, NS_INTRINSICSIZE);
+  nsSize maxSize(NS_UNCONSTRAINEDSIZE, NS_UNCONSTRAINEDSIZE);
 
-  nsIFrame* child = nsBox::GetChildXULBox(aBox);
+  nsIFrame* child = nsIFrame::GetChildXULBox(aBox);
   while (child) {
-    auto stackSizing = child->StyleXUL()->mStackSizing;
-    if (stackSizing != StyleStackSizing::Ignore) {
-      nsSize min = child->GetXULMinSize(aState);
-      nsSize max = child->GetXULMaxSize(aState);
+    nsSize min = child->GetXULMinSize(aState);
+    nsSize max = child->GetXULMaxSize(aState);
 
-      max = nsBox::BoundsCheckMinMax(min, max);
+    max = nsIFrame::XULBoundsCheckMinMax(min, max);
 
-      AddMargin(child, max);
-      nsMargin offset;
-      GetOffset(child, offset);
-      max.width += offset.LeftRight();
-      max.height += offset.TopBottom();
+    AddXULMargin(child, max);
+    nsMargin offset;
+    GetOffset(child, offset);
+    max.width += offset.LeftRight();
+    max.height += offset.TopBottom();
 
-      if (max.width < maxSize.width &&
-          stackSizing != StyleStackSizing::IgnoreHorizontal) {
-        maxSize.width = max.width;
-      }
-      if (max.height < maxSize.height &&
-          stackSizing != StyleStackSizing::IgnoreVertical) {
-        maxSize.height = max.height;
-      }
+    if (max.width < maxSize.width) {
+      maxSize.width = max.width;
+    }
+    if (max.height < maxSize.height) {
+      maxSize.height = max.height;
     }
 
-    child = nsBox::GetNextXULBox(child);
+    child = nsIFrame::GetNextXULBox(child);
   }
 
-  AddBorderAndPadding(aBox, maxSize);
+  AddXULBorderAndPadding(aBox, maxSize);
 
   return maxSize;
 }
@@ -157,7 +138,7 @@ nsSize nsStackLayout::GetXULMaxSize(nsIFrame* aBox, nsBoxLayoutState& aState) {
 nscoord nsStackLayout::GetAscent(nsIFrame* aBox, nsBoxLayoutState& aState) {
   nscoord vAscent = 0;
 
-  nsIFrame* child = nsBox::GetChildXULBox(aBox);
+  nsIFrame* child = nsIFrame::GetChildXULBox(aBox);
   while (child) {
     nscoord ascent = child->GetXULBoxAscent(aState);
     nsMargin margin;
@@ -165,7 +146,7 @@ nscoord nsStackLayout::GetAscent(nsIFrame* aBox, nsBoxLayoutState& aState) {
     ascent += margin.top;
     if (ascent > vAscent) vAscent = ascent;
 
-    child = nsBox::GetNextXULBox(child);
+    child = nsIFrame::GetNextXULBox(child);
   }
 
   return vAscent;
@@ -185,7 +166,7 @@ uint8_t nsStackLayout::GetOffset(nsIFrame* aChild, nsMargin& aOffset) {
   uint8_t offsetSpecified = 0;
   nsIContent* content = aChild->GetContent();
   if (content && content->IsElement()) {
-    bool ltr = aChild->StyleVisibility()->mDirection == NS_STYLE_DIRECTION_LTR;
+    bool ltr = aChild->StyleVisibility()->mDirection == StyleDirection::Ltr;
     nsAutoString value;
     nsresult error;
 
@@ -266,7 +247,7 @@ nsStackLayout::XULLayout(nsIFrame* aBox, nsBoxLayoutState& aState) {
   bool grow;
 
   do {
-    nsIFrame* child = nsBox::GetChildXULBox(aBox);
+    nsIFrame* child = nsIFrame::GetChildXULBox(aBox);
     grow = false;
 
     while (child) {
@@ -349,24 +330,19 @@ nsStackLayout::XULLayout(nsIFrame* aBox, nsBoxLayoutState& aState) {
         childRect = child->GetRect();
         childRect.Inflate(margin);
 
-        auto stackSizing = child->StyleXUL()->mStackSizing;
-        if (stackSizing != StyleStackSizing::Ignore) {
-          // Did the child push back on us and get bigger?
-          if (offset.LeftRight() + childRect.width > clientRect.width &&
-              stackSizing != StyleStackSizing::IgnoreHorizontal) {
-            clientRect.width = childRect.width + offset.LeftRight();
-            grow = true;
-          }
+        // Did the child push back on us and get bigger?
+        if (offset.LeftRight() + childRect.width > clientRect.width) {
+          clientRect.width = childRect.width + offset.LeftRight();
+          grow = true;
+        }
 
-          if (offset.TopBottom() + childRect.height > clientRect.height &&
-              stackSizing != StyleStackSizing::IgnoreVertical) {
-            clientRect.height = childRect.height + offset.TopBottom();
-            grow = true;
-          }
+        if (offset.TopBottom() + childRect.height > clientRect.height) {
+          clientRect.height = childRect.height + offset.TopBottom();
+          grow = true;
         }
       }
 
-      child = nsBox::GetNextXULBox(child);
+      child = nsIFrame::GetNextXULBox(child);
     }
   } while (grow);
 

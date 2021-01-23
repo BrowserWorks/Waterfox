@@ -1,0 +1,112 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailWizard.title               "Kefluniañ ho chomlec'h postel">
+<!ENTITY emailWizard.caption             "Ober gant ho chomlec'h postel bremanel">
+<!ENTITY name.label                      "Hoc'h anv :">
+<!ENTITY name.accesskey                  "n">
+<!ENTITY fullname.placeholder            "Hoc'h anv a-bezh">
+<!ENTITY name.text                       "Hoc'h anv, evel e vo diskouezet d'ar re all">
+<!ENTITY name.error                      "Skrivit hoc'h anv mar plij">
+<!ENTITY email.label                     "Chomlec'h :">
+<!ENTITY email.accesskey                 "l">
+<!ENTITY email3.placeholder              "Ho chomlec'h postel">
+<!ENTITY email.text                      "Ho chomlec'h postel">
+<!ENTITY email.error                     "N'eo ket talvoudek ar chomlec'h postel">
+<!ENTITY password.label                  "Ger-tremen :">
+<!ENTITY password.accesskey              "G">
+<!ENTITY password.placeholder            "Ger-tremen">
+<!ENTITY password.text                   "Diret, implijet evit kadarnaat an anv arveriad">
+<!ENTITY password.toggle                 "Diskouez/Kuzhat ar ger-tremen">
+<!ENTITY rememberPassword.label          "Derc'hel soñj eus ar ger-tremen">
+<!ENTITY rememberPassword.accesskey      "D">
+<!ENTITY usernameEx.label                "Anv arveriad:">
+<!ENTITY usernameEx.accesskey            "A">
+<!-- LOCALIZATION NOTE(usernameEx.placeholder): YOURDOMAIN refers to the Windows domain in ActiveDirectory. yourusername refers to the user's account name in Windows. -->
+<!ENTITY usernameEx.placeholder          "DOMANI\anv_arveriad">
+<!-- LOCALIZATION NOTE(usernameEx.text): Domain refers to the Windows domain in ActiveDirectory. We mean the user's login in Windows at the local corporate network. -->
+<!ENTITY usernameEx.text                 "Naoudi an domani">
+
+<!ENTITY protocol.label                  "Komenad:">
+<!ENTITY imapLong.label                  "IMAP (teuliadoù a-bell)">
+<!ENTITY pop3Long.label                  "POP3 (mirout ar posteloù war hoc'h urzhiataer)">
+
+<!ENTITY manualConfigTable.summary       "Arventennoù an dafariad">
+<!ENTITY incoming.label                  "Dafariad degemer:">
+<!ENTITY incomingColumn.label            "Dafariad degemer">
+<!ENTITY outgoing.label                  "Dafariad kas :">
+<!ENTITY outgoingColumn.label            "Dafariad kas">
+<!ENTITY username.label                  "Anv arveriad :">
+<!ENTITY serverRow.label                 "Dafariad:">
+<!ENTITY portRow.label                   "Porzh:">
+<!ENTITY sslRow.label                    "SSL:">
+<!ENTITY auth.label                      "Dilesa">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label                      "POP3">
+<!-- LOCALIZATION NOTE(exchange.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange.label                  "Exchange">
+<!ENTITY smtp.label                      "SMTP">
+<!ENTITY autodetect.label                "Dizoleiñ ent emgefreek">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "Tra ebet">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!-- LOCALIZATION NOTE(exchange-hostname.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange-hostname.label         "Dafariad Exchange:">
+
+<!ENTITY advancedSetup.label             "Kefluniad kempleshoc'h">
+<!ENTITY advancedSetup.accesskey         "K">
+<!ENTITY cancel.label                    "Nullañ">
+<!ENTITY cancel.accesskey                "N">
+<!ENTITY continue.label                  "Kenderc'hel">
+<!ENTITY continue.accesskey              "e">
+<!ENTITY stop.label                      "Paouez">
+<!ENTITY stop.accesskey                  "P">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual config mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "Amprouiñ en-dro">
+<!ENTITY half-manual-test.accesskey      "A">
+<!ENTITY manual-config.label             "Kefluniañ dre zorn…">
+<!ENTITY manual-config.accesskey         "K">
+<!ENTITY open-provisioner.label          "Kaout ur chomlec'h postel nevez…">
+<!ENTITY open-provisioner.accesskey      "u">
+
+
+<!ENTITY get-help.label                  "Kaout Skoazell">
+<!ENTITY get-help.accesskey              "S">
+
+
+<!ENTITY warning.label                   "Diwallit !">
+<!ENTITY incomingSettings.label          "Arventennoù an dafariad degemer:">
+<!ENTITY outgoingSettings.label          "Arventennoù an dafariad kas:">
+<!ENTITY technicaldetails.label          "Munudoù kalvezel">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "Kompren a ran ar riskloù.">
+<!ENTITY confirmWarning.accesskey        "p">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "Graet">
+<!ENTITY doneAccount.accesskey           "G">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "Kemmañ an arventennoù">
+<!ENTITY changeSettings.accesskey        "a">
+
+<!ENTITY contactYourProvider.description "&brandShortName; a lezo deoc'h da gaout ho posteloù en ur implijout an arventennoù-mañ. Koulskoude e rankfe deoc'h mont e darempred gant hoc'h ardoer pe ho pourchaser postel a-zivout ar c'hennaskoù direizh-mañ. Sellit ouzh ar FAQ Thunderbird evit kaout muioc'h a ditouroù.">
+
+<!ENTITY insecureServer.tooltip.title    "Diwallit! N'eo ket diogel an dafariad-mañ.">
+<!ENTITY insecureServer.tooltip.details  "Klikit war ar c'helc'h evit kaout muioc'h a ditouroù.">
+
+<!ENTITY insecureUnencrypted.description "Ho posteloù hag ho tilesa zo kaset hep bezañ enrineget. Rak se, ho ker-tremen (hag ho postel) a c'hell bezañ lennet aes gant un trede den. &brandShortName; a lezo deoc'h da gaout ho posteloù, met e rankfe deoc'h mont e darempred gant ho pourchaser postel evit kefluniañ an dafariad gant ur c'hennask diogel.">
+<!ENTITY insecureSelfSigned.description  "An dafariad a implij un testeni na c'hellomp ket kaout fiziañs enni, rak se ne c'hellomp ket bezañ sur n'emañ ket unan bennak o taspakañ an tremen etre &brandShortName; hag ho tafariad. &brandShortName; a lezo deoc'h da gaout ho posteloù, met e rankfe deoc'h mont e darempred gant ho pourchaser postel evit kefluniañ an dafariad gant un testeni fiziek">
+<!ENTITY secureServer.description        "Gourc'hemennoù! Diogel eo an dafariad-mañ.">

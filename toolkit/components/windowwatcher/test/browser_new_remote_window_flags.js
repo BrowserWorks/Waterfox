@@ -20,7 +20,7 @@ function assertFlags(win) {
   let loadContext = docShell.QueryInterface(Ci.nsILoadContext);
   let chromeFlags = docShell.treeOwner
     .QueryInterface(Ci.nsIInterfaceRequestor)
-    .getInterface(Ci.nsIXULWindow).chromeFlags;
+    .getInterface(Ci.nsIAppWindow).chromeFlags;
   Assert.ok(
     loadContext.useRemoteTabs,
     "Should be using remote tabs on the load context"
@@ -75,7 +75,7 @@ add_task(async function test_new_remote_window_flags_window_open() {
  */
 add_task(async function test_new_remote_window_flags_content_open() {
   let newWinPromise = BrowserTestUtils.waitForNewWindow();
-  await ContentTask.spawn(gBrowser.selectedBrowser, null, async function() {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], async function() {
     content.open("about:blank", "_blank");
   });
 

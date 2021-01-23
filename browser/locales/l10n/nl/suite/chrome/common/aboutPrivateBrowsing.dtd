@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: where ".private" and ".normal" variants exist,
+   - the former is shown in a private browsing window and the latter in
+   - a regular (non-private) browsing window. -->
+
+<!ENTITY privatebrowsingpage.title.private       "U bevindt zich in een privénavigatievenster">
+<!ENTITY privatebrowsingpage.title.normal        "Wilt u starten met privénavigatie?">
+
+<!ENTITY privatebrowsingpage.status.private      "&brandShortName; zal geen geschiedenis van dit venster bijhouden.">
+<!ENTITY privatebrowsingpage.status.normal       "U bevindt zich momenteel niet in een privévenster.">
+
+<!ENTITY privatebrowsingpage.common.description  "In een privénavigatievenster zal &brandShortName; geen navigatiegeschiedenis, zoekgeschiedenis, downloadgeschiedenis, webformuliergeschiedenis, cookies of tijdelijke internetbestanden bewaren. Bestanden die u downloadt of bladwijzers die u aanmaakt zullen echter wel worden bewaard.">
+<!ENTITY privatebrowsingpage.track.warn          "Hoewel deze computer geen navigatiegeschiedenis van u zal bewaren, kan uw internetserviceprovider of werkgever toch volgen welke pagina’s u bezoekt.">
+<!ENTITY privatebrowsingpage.learnmore.label     "Meer info">
+<!ENTITY privatebrowsingpage.learnmore.accesskey "M">
+
+<!ENTITY privatebrowsingpage.close.info          "Sluit het venster om privénavigatie te stoppen als u klaar bent.">
+<!ENTITY privatebrowsingpage.close.label         "Dit venster nu sluiten">
+<!ENTITY privatebrowsingpage.close.accesskey     "s">
+
+<!ENTITY privatebrowsingpage.start.info          "Klik om privénavigatie te starten op de onderstaande knop of selecteer Bestand > Nieuw > Privévenster vanuit het menu.">
+<!ENTITY privatebrowsingpage.private.label       "Een nieuw privévenster openen">
+<!ENTITY privatebrowsingpage.private.accesskey   "o">

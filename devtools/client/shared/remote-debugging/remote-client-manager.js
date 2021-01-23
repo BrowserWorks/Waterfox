@@ -23,12 +23,12 @@ class RemoteClientManager {
    * Store a remote client that is already connected.
    *
    * @param {String} id
-   *        Remote runtime id (see devtools/client/aboutdebugging-new/src/types).
+   *        Remote runtime id (see devtools/client/aboutdebugging/src/types).
    * @param {String} type
-   *        Remote runtime type (see devtools/client/aboutdebugging-new/src/types).
-   * @param {DebuggerClient} client
+   *        Remote runtime type (see devtools/client/aboutdebugging/src/types).
+   * @param {DevToolsClient} client
    * @param {Object} runtimeInfo
-   *        See runtimeInfo type from client/aboutdebugging-new/src/types/runtime.js
+   *        See runtimeInfo type from client/aboutdebugging/src/types/runtime.js
    */
   setClient(id, type, client, runtimeInfo) {
     const key = this._getKey(id, type);
@@ -36,7 +36,7 @@ class RemoteClientManager {
     if (runtimeInfo) {
       this._runtimeInfoMap.set(key, runtimeInfo);
     }
-    client.addOneTimeListener("closed", this._onClientClosed);
+    client.once("closed", this._onClientClosed);
   }
 
   // See JSDoc for id, type from setClient.
@@ -120,7 +120,7 @@ class RemoteClientManager {
   _removeClientByKey(key) {
     const client = this._clients.get(key);
     if (client) {
-      client.removeListener("closed", this._onClientClosed);
+      client.off("closed", this._onClientClosed);
       this._clients.delete(key);
       this._runtimeInfoMap.delete(key);
     }

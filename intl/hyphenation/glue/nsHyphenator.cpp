@@ -4,40 +4,206 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsHyphenator.h"
-#include "nsIFile.h"
-#include "nsUTF8Utils.h"
-#include "nsUnicodeProperties.h"
-#include "nsIURI.h"
 
-#include "hyphen.h"
+#include "mozilla/dom/ContentChild.h"
+#include "nsContentUtils.h"
+#include "nsIChannel.h"
+#include "nsIFile.h"
+#include "nsIFileURL.h"
+#include "nsIInputStream.h"
+#include "nsIJARURI.h"
+#include "nsIURI.h"
+#include "nsNetUtil.h"
+#include "nsUnicodeProperties.h"
+#include "nsUTF8Utils.h"
+
+#include "mapped_hyph.h"
+
+using namespace mozilla;
+
+void DefaultDelete<const HyphDic>::operator()(const HyphDic* aHyph) const {
+  mapped_hyph_free_dictionary(const_cast<HyphDic*>(aHyph));
+}
+
+static const void* GetItemPtrFromJarURI(nsIJARURI* aJAR, uint32_t* aLength) {
+  // Try to get the jarfile's nsZipArchive, find the relevant item, and return
+  // a pointer to its data provided it is stored uncompressed.
+  nsCOMPtr<nsIURI> jarFile;
+  if (NS_FAILED(aJAR->GetJARFile(getter_AddRefs(jarFile)))) {
+    return nullptr;
+  }
+  nsCOMPtr<nsIFileURL> fileUrl = do_QueryInterface(jarFile);
+  if (!fileUrl) {
+    return nullptr;
+  }
+  nsCOMPtr<nsIFile> file;
+  fileUrl->GetFile(getter_AddRefs(file));
+  if (!file) {
+    return nullptr;
+  }
+  RefPtr<nsZipArchive> archive = Omnijar::GetReader(file);
+  if (archive) {
+    nsCString path;
+    aJAR->GetJAREntry(path);
+    nsZipItem* item = archive->GetItem(path.get());
+    if (item && item->Compression() == 0 && item->Size() > 0) {
+      // We do NOT own this data, but it won't go away until the omnijar
+      // file is closed during shutdown.
+      const uint8_t* data = archive->GetData(item);
+      if (data) {
+        *aLength = item->Size();
+        return data;
+      }
+    }
+  }
+  return nullptr;
+}
+
+already_AddRefed<ipc::SharedMemoryBasic> GetHyphDictFromParent(
+    nsIURI* aURI, uint32_t* aLength) {
+  MOZ_ASSERT(!XRE_IsParentProcess());
+  ipc::SharedMemoryBasic::Handle handle = ipc::SharedMemoryBasic::NULLHandle();
+  uint32_t size;
+  MOZ_ASSERT(aURI);
+  if (!dom::ContentChild::GetSingleton()->SendGetHyphDict(aURI, &handle,
+                                                          &size)) {
+    return nullptr;
+  }
+  RefPtr<ipc::SharedMemoryBasic> shm = new ipc::SharedMemoryBasic();
+  if (!shm->IsHandleValid(handle)) {
+    return nullptr;
+  }
+  if (!shm->SetHandle(handle, ipc::SharedMemoryBasic::RightsReadOnly)) {
+    return nullptr;
+  }
+  if (!shm->Map(size)) {
+    return nullptr;
+  }
+  char* addr = static_cast<char*>(shm->memory());
+  if (!addr) {
+    return nullptr;
+  }
+  *aLength = size;
+  return shm.forget();
+}
+
+static already_AddRefed<ipc::SharedMemoryBasic> LoadInShmemFromURI(
+    nsIURI* aURI, uint32_t* aLength) {
+  MOZ_ASSERT(XRE_IsParentProcess());
+  nsCOMPtr<nsIChannel> channel;
+  if (NS_FAILED(NS_NewChannel(getter_AddRefs(channel), aURI,
+                              nsContentUtils::GetSystemPrincipal(),
+                              nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
+                              nsIContentPolicy::TYPE_OTHER))) {
+    return nullptr;
+  }
+  nsCOMPtr<nsIInputStream> instream;
+  if (NS_FAILED(channel->Open(getter_AddRefs(instream)))) {
+    return nullptr;
+  }
+  // Check size, bail out if it is excessively large (the largest of the
+  // hyphenation files currently shipped with Firefox is around 1MB
+  // uncompressed).
+  uint64_t available;
+  if (NS_FAILED(instream->Available(&available)) || !available ||
+      available > 16 * 1024 * 1024) {
+    return nullptr;
+  }
+
+  // The shm-related calls here are not expected to fail, but if they do,
+  // we'll just return null (as if the resource was unavailable) and proceed
+  // without hyphenation.
+  RefPtr<ipc::SharedMemoryBasic> shm = new ipc::SharedMemoryBasic();
+  if (!shm->Create(available)) {
+    return nullptr;
+  }
+  if (!shm->Map(available)) {
+    return nullptr;
+  }
+  char* buffer = static_cast<char*>(shm->memory());
+  if (!buffer) {
+    return nullptr;
+  }
+
+  uint32_t bytesRead = 0;
+  if (NS_FAILED(instream->Read(buffer, available, &bytesRead)) ||
+      bytesRead != available) {
+    return nullptr;
+  }
+  *aLength = bytesRead;
+  return shm.forget();
+}
 
 nsHyphenator::nsHyphenator(nsIURI* aURI, bool aHyphenateCapitalized)
-    : mDict(nullptr), mHyphenateCapitalized(aHyphenateCapitalized) {
-  nsCString uriSpec;
-  nsresult rv = aURI->GetSpec(uriSpec);
-  if (NS_FAILED(rv)) {
-    return;
+    : mDict(static_cast<const void*>(nullptr)),
+      mDictSize(0),
+      mHyphenateCapitalized(aHyphenateCapitalized) {
+  nsCOMPtr<nsIJARURI> jar = do_QueryInterface(aURI);
+  if (jar) {
+    // This gives us a raw pointer into the omnijar's data (if uncompressed);
+    // we do not own it and must not attempt to free it!
+    const void* ptr = GetItemPtrFromJarURI(jar, &mDictSize);
+    if (ptr) {
+      if (mapped_hyph_is_valid_hyphenator(static_cast<const uint8_t*>(ptr),
+                                          mDictSize)) {
+        mDict = AsVariant(ptr);
+        return;
+      }
+    } else {
+      // Omnijar must be compressed (currently this is the case on Android).
+      // If we're the parent process, decompress the resource into a shmem
+      // buffer; if we're a child, send a request to the parent for the
+      // shared-memory copy (which it will load if not already available).
+      RefPtr<ipc::SharedMemoryBasic> shm;
+      if (XRE_IsParentProcess()) {
+        shm = LoadInShmemFromURI(aURI, &mDictSize);
+        if (shm && mapped_hyph_is_valid_hyphenator(
+                       static_cast<const uint8_t*>(shm->memory()), mDictSize)) {
+          mDict = AsVariant(shm);
+          return;
+        }
+      } else {
+        shm = GetHyphDictFromParent(aURI, &mDictSize);
+        if (shm) {
+          // We don't need to validate mDict because the parent process
+          // will have done so.
+          mDict = AsVariant(shm);
+          return;
+        }
+      }
+    }
   }
-  mDict = hnj_hyphen_load(uriSpec.get());
-#ifdef DEBUG
-  if (mDict) {
-    printf("loaded hyphenation patterns from %s\n", uriSpec.get());
+
+  if (net::SchemeIsFile(aURI)) {
+    // Ask the Rust lib to mmap the file. In this case our mDictSize field
+    // remains zero; mDict is not a pointer to the raw data but an opaque
+    // reference to a Rust object, and can only be freed by passing it to
+    // mapped_hyph_free_dictionary().
+    nsAutoCString path;
+    aURI->GetFilePath(path);
+    UniquePtr<const HyphDic> dic(mapped_hyph_load_dictionary(path.get()));
+    if (dic) {
+      mDict = AsVariant(std::move(dic));
+      return;
+    }
   }
-#endif
+
+  nsAutoCString msg;
+  aURI->GetSpec(msg);
+  msg.Insert("Invalid hyphenation resource: ", 0);
+  NS_ASSERTION(false, msg.get());
 }
 
-nsHyphenator::~nsHyphenator() {
-  if (mDict != nullptr) {
-    hnj_hyphen_free((HyphenDict*)mDict);
-    mDict = nullptr;
-  }
+bool nsHyphenator::IsValid() {
+  return mDict.match(
+      [](const void*& ptr) { return ptr != nullptr; },
+      [](RefPtr<ipc::SharedMemoryBasic>& shm) { return shm != nullptr; },
+      [](mozilla::UniquePtr<const HyphDic>& hyph) { return hyph != nullptr; });
 }
-
-bool nsHyphenator::IsValid() { return (mDict != nullptr); }
 
 nsresult nsHyphenator::Hyphenate(const nsAString& aString,
                                  nsTArray<bool>& aHyphens) {
-  if (!aHyphens.SetLength(aString.Length(), mozilla::fallible)) {
+  if (!aHyphens.SetLength(aString.Length(), fallible)) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
   memset(aHyphens.Elements(), false, aHyphens.Length() * sizeof(bool));
@@ -58,7 +224,7 @@ nsresult nsHyphenator::Hyphenate(const nsAString& aString,
       }
     }
 
-    nsUGenCategory cat = mozilla::unicode::GetGenCategory(ch);
+    nsUGenCategory cat = unicode::GetGenCategory(ch);
     if (cat == nsUGenCategory::kLetter || cat == nsUGenCategory::kMark) {
       if (!inWord) {
         inWord = true;
@@ -81,13 +247,12 @@ nsresult nsHyphenator::Hyphenate(const nsAString& aString,
 
 void nsHyphenator::HyphenateWord(const nsAString& aString, uint32_t aStart,
                                  uint32_t aLimit, nsTArray<bool>& aHyphens) {
-  // Convert word from aStart and aLimit in aString to utf-8 for libhyphen,
+  // Convert word from aStart and aLimit in aString to utf-8 for mapped_hyph,
   // lowercasing it as we go so that it will match the (lowercased) patterns
   // (bug 1105644).
   nsAutoCString utf8;
-  const char16_t* const begin = aString.BeginReading();
-  const char16_t* cur = begin + aStart;
-  const char16_t* end = begin + aLimit;
+  const char16_t* cur = aString.BeginReading() + aStart;
+  const char16_t* end = aString.BeginReading() + aLimit;
   bool firstLetter = true;
   while (cur < end) {
     uint32_t ch = *cur++;
@@ -96,10 +261,10 @@ void nsHyphenator::HyphenateWord(const nsAString& aString, uint32_t aStart,
       if (cur < end && NS_IS_LOW_SURROGATE(*cur)) {
         ch = SURROGATE_TO_UCS4(ch, *cur++);
       } else {
-        ch = 0xfffd;  // unpaired surrogate, treat as REPLACEMENT CHAR
+        return;  // unpaired surrogate: bail out, don't hyphenate broken text
       }
     } else if (NS_IS_LOW_SURROGATE(ch)) {
-      ch = 0xfffd;  // unpaired surrogate
+      return;  // unpaired surrogate
     }
 
     // XXX What about language-specific casing? Consider Turkish I/i...
@@ -108,14 +273,16 @@ void nsHyphenator::HyphenateWord(const nsAString& aString, uint32_t aStart,
     uint32_t origCh = ch;
     ch = ToLowerCase(ch);
 
-    // Avoid hyphenating capitalized words (bug 1550532) unless explicitly
-    // allowed by prefs for the language in use.
-    if (firstLetter) {
-      if (!mHyphenateCapitalized && ch != origCh) {
+    if (ch != origCh) {
+      // Avoid hyphenating capitalized words (bug 1550532) unless explicitly
+      // allowed by prefs for the language in use.
+      // Also never auto-hyphenate a word that has internal caps, as it may
+      // well be an all-caps acronym or a quirky name like iTunes.
+      if (!mHyphenateCapitalized || !firstLetter) {
         return;
       }
-      firstLetter = false;
     }
+    firstLetter = false;
 
     if (ch < 0x80) {  // U+0000 - U+007F
       utf8.Append(ch);
@@ -134,32 +301,66 @@ void nsHyphenator::HyphenateWord(const nsAString& aString, uint32_t aStart,
     }
   }
 
-  AutoTArray<char, 200> utf8hyphens;
-  utf8hyphens.SetLength(utf8.Length() + 5);
-  char** rep = nullptr;
-  int* pos = nullptr;
-  int* cut = nullptr;
-  int err = hnj_hyphen_hyphenate2((HyphenDict*)mDict, utf8.BeginReading(),
-                                  utf8.Length(), utf8hyphens.Elements(),
-                                  nullptr, &rep, &pos, &cut);
-  if (!err) {
-    // Surprisingly, hnj_hyphen_hyphenate2 converts the 'hyphens' buffer
-    // from utf8 code unit indexing (which would match the utf8 input
-    // string directly) to Unicode character indexing.
-    // We then need to convert this to utf16 code unit offsets for Gecko.
-    const char* hyphPtr = utf8hyphens.Elements();
-    const char16_t* cur = begin + aStart;
-    const char16_t* end = begin + aLimit;
-    while (cur < end) {
-      if (*hyphPtr & 0x01) {
-        aHyphens[cur - begin] = true;
+  AutoTArray<uint8_t, 200> hyphenValues;
+  hyphenValues.SetLength(utf8.Length());
+  int32_t result = mDict.match(
+      [&](const void*& ptr) {
+        return mapped_hyph_find_hyphen_values_raw(
+            static_cast<const uint8_t*>(ptr), mDictSize, utf8.BeginReading(),
+            utf8.Length(), hyphenValues.Elements(), hyphenValues.Length());
+      },
+      [&](RefPtr<mozilla::ipc::SharedMemoryBasic>& shm) {
+        return mapped_hyph_find_hyphen_values_raw(
+            static_cast<const uint8_t*>(shm->memory()), mDictSize,
+            utf8.BeginReading(), utf8.Length(), hyphenValues.Elements(),
+            hyphenValues.Length());
+      },
+      [&](mozilla::UniquePtr<const HyphDic>& hyph) {
+        return mapped_hyph_find_hyphen_values_dic(
+            hyph.get(), utf8.BeginReading(), utf8.Length(),
+            hyphenValues.Elements(), hyphenValues.Length());
+      });
+  if (result > 0) {
+    // We need to convert UTF-8 indexing as used by the hyphenation lib into
+    // UTF-16 indexing of the aHyphens[] array for Gecko.
+    uint32_t utf16index = 0;
+    for (uint32_t utf8index = 0; utf8index < utf8.Length();) {
+      // We know utf8 is valid, so we only need to look at the first byte of
+      // each character to determine its length and the corresponding UTF-16
+      // length to add to utf16index.
+      const uint8_t leadByte = utf8[utf8index];
+      if (leadByte < 0x80) {
+        utf8index += 1;
+      } else if (leadByte < 0xE0) {
+        utf8index += 2;
+      } else if (leadByte < 0xF0) {
+        utf8index += 3;
+      } else {
+        utf8index += 4;
       }
-      cur++;
-      if (cur < end && NS_IS_LOW_SURROGATE(*cur) &&
-          NS_IS_HIGH_SURROGATE(*(cur - 1))) {
-        cur++;
+      // The hyphenation value of interest is the one for the last code unit
+      // of the utf-8 character, and is recorded on the last code unit of the
+      // utf-16 character (in the case of a surrogate pair).
+      utf16index += leadByte >= 0xF0 ? 2 : 1;
+      if (utf16index > 0 && (hyphenValues[utf8index - 1] & 0x01)) {
+        aHyphens[aStart + utf16index - 1] = true;
       }
-      hyphPtr++;
     }
   }
+}
+
+void nsHyphenator::ShareToProcess(base::ProcessId aPid,
+                                  ipc::SharedMemoryBasic::Handle* aOutHandle,
+                                  uint32_t* aOutSize) {
+  // If the resource is invalid, or if we fail to share it to the child
+  // process, we'll just bail out and continue without hyphenation; no need
+  // for this to be a fatal error.
+  if (!mDict.is<RefPtr<mozilla::ipc::SharedMemoryBasic>>()) {
+    return;
+  }
+  if (!mDict.as<RefPtr<mozilla::ipc::SharedMemoryBasic>>()->ShareToProcess(
+          aPid, aOutHandle)) {
+    return;
+  }
+  *aOutSize = mDictSize;
 }

@@ -1,11 +1,10 @@
 #![feature(test)]
-#![deny(warnings)]
 
 extern crate futures;
 extern crate rand;
-extern crate tokio_threadpool;
-extern crate threadpool;
 extern crate test;
+extern crate threadpool;
+extern crate tokio_threadpool;
 
 const ITER: usize = 1_000;
 
@@ -13,14 +12,11 @@ mod blocking {
     use super::*;
 
     use futures::future::*;
-    use tokio_threadpool::{Builder, blocking};
+    use tokio_threadpool::{blocking, Builder};
 
     #[bench]
     fn cpu_bound(b: &mut test::Bencher) {
-        let pool = Builder::new()
-            .pool_size(2)
-            .max_blocking(20)
-            .build();
+        let pool = Builder::new().pool_size(2).max_blocking(20).build();
 
         b.iter(|| {
             let count_down = Arc::new(CountDown::new(::ITER));
@@ -29,17 +25,12 @@ mod blocking {
                 let count_down = count_down.clone();
 
                 pool.spawn(lazy(move || {
-                    poll_fn(|| {
-                        blocking(|| {
-                            perform_complex_computation()
+                    poll_fn(|| blocking(|| perform_complex_computation()).map_err(|_| panic!()))
+                        .and_then(move |_| {
+                            // Do something with the value
+                            count_down.dec();
+                            Ok(())
                         })
-                        .map_err(|_| panic!())
-                    })
-                    .and_then(move |_| {
-                        // Do something with the value
-                        count_down.dec();
-                        Ok(())
-                    })
                 }));
             }
 
@@ -57,10 +48,7 @@ mod message_passing {
 
     #[bench]
     fn cpu_bound(b: &mut test::Bencher) {
-        let pool = Builder::new()
-            .pool_size(2)
-            .max_blocking(20)
-            .build();
+        let pool = Builder::new().pool_size(2).max_blocking(20).build();
 
         let blocking = threadpool::ThreadPool::new(20);
 
@@ -85,7 +73,8 @@ mod message_passing {
                     rx.and_then(move |_| {
                         count_down.dec();
                         Ok(())
-                    }).map_err(|_| panic!())
+                    })
+                    .map_err(|_| panic!())
                 }));
             }
 
@@ -104,9 +93,9 @@ fn perform_complex_computation() -> usize {
 
 // Util for waiting until the tasks complete
 
-use std::sync::*;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering::*;
+use std::sync::*;
 
 struct CountDown {
     rem: AtomicUsize,

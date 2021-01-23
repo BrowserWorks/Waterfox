@@ -21,6 +21,8 @@ echo "running as" $(id)
 
 : TOOLTOOL_CACHE                ${TOOLTOOL_CACHE:=/builds/worker/tooltool-cache}
 
+: MOZ_SCM_LEVEL                 ${MOZ_SCM_LEVEL:=1}
+
 : NEED_XVFB                     ${NEED_XVFB:=false}
 
 : MOZ_SCM_LEVEL                 ${MOZ_SCM_LEVEL:=1}
@@ -36,15 +38,14 @@ fail() {
 }
 
 export MOZ_CRASHREPORTER_NO_REPORT=1
-export MOZ_OBJDIR=obj-firefox
 export TINDERBOX_OUTPUT=1
 
 # Ensure that in tree libraries can be found
-export LIBRARY_PATH=$LIBRARY_PATH:$WORKSPACE/src/obj-firefox:$WORKSPACE/src/gcc/lib64
+export LIBRARY_PATH=$LIBRARY_PATH:$WORKSPACE/obj-build:$WORKSPACE/src/gcc/lib64
 
 # test required parameters are supplied
 if [[ -z ${MOZHARNESS_SCRIPT} ]]; then fail "MOZHARNESS_SCRIPT is not set"; fi
-if [[ -z ${MOZHARNESS_CONFIG} ]]; then fail "MOZHARNESS_CONFIG is not set"; fi
+if [[ -z "${MOZHARNESS_CONFIG}" && -z "${EXTRA_MOZHARNESS_CONFIG}" ]]; then fail "MOZHARNESS_CONFIG or EXTRA_MOZHARNESS_CONFIG is not set"; fi
 
 cleanup() {
     local rv=$?
@@ -67,7 +68,7 @@ export TOOLTOOL_CACHE
 
 config_path_cmds=""
 for path in ${MOZHARNESS_CONFIG_PATHS}; do
-    config_path_cmds="${config_path_cmds} --extra-config-path ${WORKSPACE}/build/src/${path}"
+    config_path_cmds="${config_path_cmds} --extra-config-path ${GECKO_PATH}/${path}"
 done
 
 # support multiple, space delimited, config files
@@ -86,7 +87,6 @@ if [ -n "$MOZHARNESS_ACTIONS" ]; then
 fi
 
 # if MOZHARNESS_OPTIONS is given, append them to mozharness command line run
-# e.g. enable-pgo
 if [ -n "$MOZHARNESS_OPTIONS" ]; then
     options=""
     for option in $MOZHARNESS_OPTIONS; do
@@ -97,10 +97,9 @@ fi
 cd /builds/worker
 
 $GECKO_PATH/mach python $GECKO_PATH/testing/${MOZHARNESS_SCRIPT} \
-  $actions \
-  $options \
   ${config_path_cmds} \
   ${config_cmds} \
+  $actions \
+  $options \
   --log-level=debug \
-  --scm-level=$MOZ_SCM_LEVEL \
-  --work-dir=$WORKSPACE/build \
+  --work-dir=$WORKSPACE \

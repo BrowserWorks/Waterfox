@@ -34,7 +34,12 @@ class SpeechGrammar final : public nsISupports, public nsWrapperCache {
                        JS::Handle<JSObject*> aGivenProto) override;
 
   static already_AddRefed<SpeechGrammar> Constructor(
-      const GlobalObject& aGlobal, ErrorResult& aRv);
+      const GlobalObject& aGlobal);
+
+  static already_AddRefed<SpeechGrammar> WebkitSpeechGrammar(
+      const GlobalObject& aGlobal, ErrorResult& aRv) {
+    return Constructor(aGlobal);
+  }
 
   void GetSrc(nsString& aRetVal, ErrorResult& aRv) const;
 

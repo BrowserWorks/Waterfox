@@ -10,12 +10,17 @@ const {
 } = require("devtools/client/shared/vendor/react");
 const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
 
-const FontPropertyValue = createFactory(require("./FontPropertyValue"));
+const FontPropertyValue = createFactory(
+  require("devtools/client/inspector/fonts/components/FontPropertyValue")
+);
 
-const { getStr } = require("../utils/l10n");
-const { getUnitFromValue, getStepForUnit } = require("../utils/font-utils");
+const { getStr } = require("devtools/client/inspector/fonts/utils/l10n");
+const {
+  getUnitFromValue,
+  getStepForUnit,
+} = require("devtools/client/inspector/fonts/utils/font-utils");
 
-class LineHeight extends PureComponent {
+class LetterSpacing extends PureComponent {
   static get propTypes() {
     return {
       disabled: PropTypes.bool.isRequired,
@@ -58,9 +63,8 @@ class LineHeight extends PureComponent {
     const unit = getUnitFromValue(this.props.value) || "em";
     // When the initial value of "letter-spacing" is "normal", the parsed value
     // is not a number (NaN). Guard by setting the default value to 0.
-    let value = parseFloat(this.props.value);
-    const hasKeywordValue = isNaN(value);
-    value = isNaN(value) ? 0 : value;
+    const isKeywordValue = this.props.value === "normal";
+    const value = isKeywordValue ? 0 : parseFloat(this.props.value);
 
     let { min, max } = this.getDefaultMinMax(unit);
     min = Math.min(min, value);
@@ -85,15 +89,15 @@ class LineHeight extends PureComponent {
       // Increase the increment granularity because letter spacing is very sensitive.
       step: getStepForUnit(unit) / 100,
       // Show the value input and unit only when the value is not a keyword.
-      showInput: !hasKeywordValue,
-      showUnit: !hasKeywordValue,
+      showInput: !isKeywordValue,
+      showUnit: !isKeywordValue,
       unit,
       unitOptions: ["em", "rem", "px"],
       value,
       // Show the value as a read-only label if it's a keyword.
-      valueLabel: hasKeywordValue ? this.props.value : null,
+      valueLabel: isKeywordValue ? this.props.value : null,
     });
   }
 }
 
-module.exports = LineHeight;
+module.exports = LetterSpacing;

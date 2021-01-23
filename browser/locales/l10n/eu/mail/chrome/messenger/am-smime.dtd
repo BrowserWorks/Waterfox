@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY e2eTitle.label "Muturretik muturrerako enkriptatzea">
+<!ENTITY e2eLearnMore.label "Argibide gehiago">
+
+<!ENTITY e2eEnc.description "Muturretik muturrerako enkriptatze gabe mezuen edukiak erraz bistaratzen ditu zure posta hornitzaileak eta zaintza masiboak.">
+<!ENTITY e2eeReqWarning.description "Enkriptatzea behar baduzu, mezuak bidali ahal izateko hartzaile bakoitzaren giltza publikoa edo ziurtagiria behar duzu.">
+
+<!ENTITY e2eSigning.description "Sinadura digitalak ahalbidetzen du, hartzaileek mezua zuk bidalitakoa dela eta edukia aldaketarik gabekoa dela egiaztatzea.">
+<!ENTITY e2eTechPref.description "Hobetsitako enkriptatze teknologia:">
+
+<!ENTITY doNotEncrypt.label "Ez gaitu enkriptatzea era lehenetsian.">
+<!ENTITY doNotEncrypt.accesskey "E">
+<!ENTITY requireEncryptMessage.label "Eskatu enkriptatzea modu lehenetsian">
+<!ENTITY requireEncryptMessage.accesskey "l">
+<!ENTITY encryptionCert2.message "Enkriptatzeko ziurtagiri pertsonala:">
+<!ENTITY digitalSign.certificate.button "Hautatu…">
+<!ENTITY digitalSign.certificate.accesskey "H">
+<!ENTITY digitalSign.certificate_clear.button "Garbitu">
+<!ENTITY digitalSign.certificate_clear.accesskey "G">
+<!ENTITY encryption.certificate.button "Hautatu…">
+<!ENTITY encryption.certificate.accesskey "t">
+<!ENTITY encryption.certificate_clear.button "Garbitu">
+<!ENTITY encryption.certificate_clear.accesskey "G">
+<!ENTITY signingGroupTitle.label "Sinadura digitala">
+<!ENTITY signMessage2.label "Gehitu sinadura digitala modu lehenetsian">
+<!ENTITY signMessage.accesskey "d">
+
+<!ENTITY signingCert2.message "Ziurtagiri pertsonala sinadura digitalerako:">
+
+<!ENTITY sendingDefaults.label "Ezarpen lehenetsiak mezuak bidaltzeko">
+
+<!ENTITY technologyAutomatic.label "Aukeratu automatikoki eskuragarri dauden giltza edo ziurtagirietan oinarrituta">
+
+<!ENTITY certificates2.label "S/MIME">
+<!ENTITY manageCerts3.label "Kudeatu S/MIME ziurtagiriak">
+<!ENTITY manageCerts3.accesskey "M">
+<!ENTITY manageDevices2.label "S/MIME segurtasun-gailuak">
+<!ENTITY manageDevices2.accesskey "g">
+
+<!ENTITY technologySMIME.label "Hobetsi S/MIME">
+<!ENTITY technologyOpenPGP.label "Hobetsi OpenPGP">
+
+<!ENTITY openpgpKeys.label "OpenPGP">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Aukeratu ziurtagiria">
+<!ENTITY certPicker.info  "Ziurtagiria:">
+<!ENTITY certPicker.detailsLabel "Hautatutako ziurtagiriaren xehetasunak:">
+
+<!ENTITY openpgpKey.message "Giltza pertsonala enkriptatzeko eta digitalki sinatzeko">
+<!ENTITY openpgpKey.button "Ezarri giltza pertsonala…">
+<!ENTITY openpgpKey.accesskey "p">

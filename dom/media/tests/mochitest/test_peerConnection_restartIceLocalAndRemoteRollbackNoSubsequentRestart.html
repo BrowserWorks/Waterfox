@@ -17,6 +17,13 @@
 
     addRenegotiation(test.chain,
       [
+        function PC_LOCAL_SETUP_ICE_HANDLER(test) {
+          test.pcLocal.setupIceCandidateHandler(test);
+        },
+        function PC_REMOTE_SETUP_ICE_HANDLER(test) {
+          test.pcRemote.setupIceCandidateHandler(test);
+        },
+
         // causes a full, normal ice restart
         function PC_LOCAL_SET_OFFER_OPTION(test) {
           test.setOfferOptions({ iceRestart: true });
@@ -26,29 +33,13 @@
 
     test.chain.replaceAfter('PC_REMOTE_CREATE_ANSWER',
       [
-        function PC_LOCAL_SETUP_ICE_HANDLER(test) {
-          test.pcLocal.setupIceCandidateHandler(test);
-          if (test.testOptions.steeplechase) {
-            test.pcLocal.endOfTrickleIce.then(() => {
-              send_message({"type": "end_of_trickle_ice"});
-            });
-          }
-        },
-        function PC_REMOTE_SETUP_ICE_HANDLER(test) {
-          test.pcRemote.setupIceCandidateHandler(test);
-          if (test.testOptions.steeplechase) {
-            test.pcRemote.endOfTrickleIce.then(() => {
-              send_message({"type": "end_of_trickle_ice"});
-            });
-          }
-        },
-
         function PC_REMOTE_ROLLBACK(test) {
           return test.setRemoteDescription(test.pcRemote, { type: "rollback" },
                                            STABLE);
         },
 
-        function PC_LOCAL_ROLLBACK(test) {
+        async function PC_LOCAL_ROLLBACK(test) {
+          await test.pcLocal.endOfTrickleIce;
           // We haven't negotiated the new stream yet.
           test.pcLocal.expectNegotiationNeeded();
           return test.setLocalDescription(

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title         "Tilaa">
+<!ENTITY subscribeButton.label         "Tilaa">
+<!ENTITY subscribeButton.accesskey     "T">
+<!ENTITY unsubscribeButton.label       "Peruuta tilaus">
+<!ENTITY unsubscribeButton.accesskey   "P">
+<!ENTITY newGroupsTab.label           "Uudet ryhmät">
+<!ENTITY newGroupsTab.accesskey       "U">
+<!ENTITY refreshButton.label           "Päivitä">
+<!ENTITY refreshButton.accesskey       "P">
+<!ENTITY stopButton.label              "Pysäytä">
+<!ENTITY stopButton.accesskey          "y">
+<!ENTITY server.label                  "Tili:">
+<!ENTITY server.accesskey              "T">
+<!ENTITY subscribedHeader.label        "Tilaa">
+<!-- commenting out until bug 38906 is fixed 
+<!ENTITY messagesHeader.label         "Messages"> -->
+<!ENTITY namefield.label               "Näytä kohteet, jotka sisältävät:">
+<!ENTITY namefield.accesskey           "N">

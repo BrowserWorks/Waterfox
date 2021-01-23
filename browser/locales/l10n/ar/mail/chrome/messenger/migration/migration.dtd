@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "مرشد الاستيراد">
+
+<!ENTITY importFromWin.label            "استورد الخيارات وإعدادات الحساب ودفتر العناوين والمرشحات وبيانات أخرى من:">
+<!ENTITY importFromNonWin.label         "استورد التفضيلات وإعدادات الحساب ودفتر العناوين والمرشحات وبيانات أخرى من:">
+<!ENTITY importSourceNotFound.label     "لم يُعثر على أي تطبيق لاستيراد البيانات منه.">
+
+<!ENTITY importFromNothing.label        "لا تستورد أي شيء">
+<!ENTITY importFromNothing.accesskey    "س">
+<!ENTITY importFromSeamonkey3.label     "سي‌منكي 2 أو أحدث">
+<!ENTITY importFromSeamonkey3.accesskey "س">
+<!ENTITY importFromOutlook.label        "أوتلوك">
+<!ENTITY importFromOutlook.accesskey    "ت">
+
+<!ENTITY importSource.title             "استورد الإعدادات ومجلدات البريد مِن">
+<!ENTITY importItems.title              "عناصر للاستيراد">
+<!ENTITY importItems.label              "اختر عناصرًا لتستورد:">
+
+<!ENTITY migrating.title                "يجري الاستيراد…">
+<!ENTITY migrating.label                "العناصر التالية تم استيرادها…">
+
+<!ENTITY selectProfile.title            "اختر الملف الشخصي">
+<!ENTITY selectProfile.label            "الملفات الشخصية التالية متاحة للاستيراد:">
+
+<!ENTITY done.title                     "تم الاستيراد">
+<!ENTITY done.label                     "العناصر التالية استُورِدت بنجاح:">

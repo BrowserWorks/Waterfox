@@ -7,8 +7,9 @@
 #define mozilla_a11y_AccessibleWrap_h_
 
 #include "Accessible.h"
-#include "GeneratedJNIWrappers.h"
 #include "mozilla/a11y/ProxyAccessible.h"
+#include "mozilla/java/GeckoBundleWrappers.h"
+#include "mozilla/java/SessionAccessibilityWrappers.h"
 #include "nsCOMPtr.h"
 
 namespace mozilla {
@@ -34,6 +35,22 @@ class AccessibleWrap : public Accessible {
   virtual void GetTextContents(nsAString& aText);
 
   virtual bool GetSelectionBounds(int32_t* aStartOffset, int32_t* aEndOffset);
+
+  virtual void Pivot(int32_t aGranularity, bool aForward, bool aInclusive);
+
+  virtual void ExploreByTouch(float aX, float aY);
+
+  virtual void NavigateText(int32_t aGranularity, int32_t aStartOffset,
+                            int32_t aEndOffset, bool aForward, bool aSelect);
+
+  virtual void SetSelection(int32_t aStart, int32_t aEnd);
+
+  virtual void Cut();
+
+  virtual void Copy();
+
+  MOZ_CAN_RUN_SCRIPT_BOUNDARY
+  virtual void Paste();
 
   mozilla::java::GeckoBundle::LocalRef ToBundle(bool aSmall = false);
 
@@ -84,6 +101,8 @@ class AccessibleWrap : public Accessible {
   void GetTextEquiv(nsString& aText);
 
   bool HandleLiveRegionEvent(AccEvent* aEvent);
+
+  void GetSelectionOrCaret(int32_t* aStartOffset, int32_t* aEndOffset);
 
   static void GetRoleDescription(role aRole,
                                  nsIPersistentProperties* aAttributes,

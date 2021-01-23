@@ -8,16 +8,19 @@
 
 #include "prlink.h"
 #include "prenv.h"
-#include "gfxPrefs.h"
+
 #include "nsIGlobalObject.h"
 #include "nsRefPtrHashtable.h"
 #include "nsString.h"
 #include "mozilla/dom/GamepadManager.h"
 #include "mozilla/dom/Gamepad.h"
+#include "mozilla/dom/XRSession.h"
+#include "mozilla/dom/XRInputSourceArray.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Unused.h"
+#include "mozilla/Telemetry.h"
+#include "mozilla/dom/WebXRBinding.h"
 #include "nsServiceManagerUtils.h"
-#include "nsIScreenManager.h"
 
 #ifdef XP_WIN
 #  include "../layers/d3d11/CompositorD3D11.h"
@@ -38,7 +41,10 @@ VRDisplayClient::VRDisplayClient(const VRDisplayInfo& aDisplayInfo)
       mPresentationCount(0),
       mLastEventFrameId(0),
       mLastPresentingGeneration(0),
-      mLastEventControllerState{} {
+      mLastEventControllerState{},
+      // For now WebVR is default to prevent a VRDisplay restore bug in WebVR
+      // compatibility mode. See Bug 1630512
+      mAPIMode(VRAPIMode::WebVR) {
   MOZ_COUNT_CTOR(VRDisplayClient);
 }
 
@@ -51,17 +57,35 @@ void VRDisplayClient::UpdateDisplayInfo(const VRDisplayInfo& aDisplayInfo) {
 
 already_AddRefed<VRDisplayPresentation> VRDisplayClient::BeginPresentation(
     const nsTArray<mozilla::dom::VRLayer>& aLayers, uint32_t aGroup) {
-  ++mPresentationCount;
+  PresentationCreated();
   RefPtr<VRDisplayPresentation> presentation =
       new VRDisplayPresentation(this, aLayers, aGroup);
   return presentation.forget();
 }
 
+void VRDisplayClient::PresentationCreated() { ++mPresentationCount; }
+
 void VRDisplayClient::PresentationDestroyed() { --mPresentationCount; }
 
-void VRDisplayClient::ZeroSensor() {
-  VRManagerChild* vm = VRManagerChild::Get();
-  vm->SendResetSensor(mDisplayInfo.mDisplayID);
+void VRDisplayClient::SessionStarted(dom::XRSession* aSession) {
+  PresentationCreated();
+  MakePresentationGenerationCurrent();
+  mSessions.AppendElement(aSession);
+}
+void VRDisplayClient::SessionEnded(dom::XRSession* aSession) {
+  mSessions.RemoveElement(aSession);
+  PresentationDestroyed();
+}
+
+void VRDisplayClient::StartFrame() {
+  RefPtr<VRManagerChild> vm = VRManagerChild::Get();
+  vm->RunFrameRequestCallbacks();
+
+  nsTArray<RefPtr<dom::XRSession>> sessions;
+  sessions.AppendElements(mSessions);
+  for (auto session : sessions) {
+    session->StartFrame();
+  }
 }
 
 void VRDisplayClient::SetGroupMask(uint32_t aGroupMask) {
@@ -82,6 +106,14 @@ void VRDisplayClient::MakePresentationGenerationCurrent() {
   mLastPresentingGeneration = mDisplayInfo.mDisplayState.presentingGeneration;
 }
 
+gfx::VRAPIMode VRDisplayClient::GetXRAPIMode() const { return mAPIMode; }
+
+void VRDisplayClient::SetXRAPIMode(gfx::VRAPIMode aMode) {
+  mAPIMode = aMode;
+  Telemetry::Accumulate(Telemetry::WEBXR_API_MODE,
+                        static_cast<uint32_t>(mAPIMode));
+}
+
 void VRDisplayClient::FireEvents() {
   RefPtr<VRManagerChild> vm = VRManagerChild::Get();
   // Only fire these events for non-chrome VR sessions
@@ -96,7 +128,7 @@ void VRDisplayClient::FireEvents() {
   // Check if we need to trigger onvrdisplayactivate event
   if (!bLastEventWasMounted && mDisplayInfo.mDisplayState.isMounted) {
     bLastEventWasMounted = true;
-    if (gfxPrefs::VRAutoActivateEnabled()) {
+    if (StaticPrefs::dom_vr_autoactivate_enabled()) {
       vm->FireDOMVRDisplayMountedEvent(mDisplayInfo.mDisplayID);
     }
   }
@@ -104,7 +136,7 @@ void VRDisplayClient::FireEvents() {
   // Check if we need to trigger onvrdisplaydeactivate event
   if (bLastEventWasMounted && !mDisplayInfo.mDisplayState.isMounted) {
     bLastEventWasMounted = false;
-    if (gfxPrefs::VRAutoActivateEnabled()) {
+    if (StaticPrefs::dom_vr_autoactivate_enabled()) {
       vm->FireDOMVRDisplayUnmountedEvent(mDisplayInfo.mDisplayID);
     }
   }
@@ -115,13 +147,300 @@ void VRDisplayClient::FireEvents() {
     vm->NotifyPresentationGenerationChanged(mDisplayInfo.mDisplayID);
   }
 
+  // In WebXR spec, Gamepad instances returned by an XRInputSource's gamepad
+  // attribute MUST NOT be included in the array returned by
+  // navigator.getGamepads().
+  if (mAPIMode == VRAPIMode::WebVR) {
+    FireGamepadEvents();
+  }
+  // Update controller states into XRInputSourceArray.
+  for (auto& session : mSessions) {
+    dom::XRInputSourceArray* inputs = session->InputSources();
+    if (inputs) {
+      inputs->Update(session);
+    }
+  }
+
   // Check if we need to trigger VRDisplay.requestAnimationFrame
   if (mLastEventFrameId != mDisplayInfo.mFrameId) {
     mLastEventFrameId = mDisplayInfo.mFrameId;
-    vm->RunFrameRequestCallbacks();
+    StartFrame();
   }
+}
 
-  FireGamepadEvents();
+void VRDisplayClient::GamepadMappingForWebVR(
+    VRControllerState& aControllerState) {
+  float triggerValue[kVRControllerMaxButtons];
+  memcpy(triggerValue, aControllerState.triggerValue,
+         sizeof(aControllerState.triggerValue));
+  const uint64_t buttonPressed = aControllerState.buttonPressed;
+  const uint64_t buttonTouched = aControllerState.buttonTouched;
+
+  auto SetTriggerValue = [&](uint64_t newSlot, uint64_t oldSlot) {
+    aControllerState.triggerValue[newSlot] = triggerValue[oldSlot];
+  };
+  auto ShiftButtonBitForNewSlot = [&](uint64_t newSlot, uint64_t oldSlot,
+                                      bool aIsTouch = false) {
+    if (aIsTouch) {
+      return ((buttonTouched & (1ULL << oldSlot)) != 0) * (1ULL << newSlot);
+    }
+    SetTriggerValue(newSlot, oldSlot);
+    return ((buttonPressed & (1ULL << oldSlot)) != 0) * (1ULL << newSlot);
+  };
+
+  switch (aControllerState.type) {
+    case VRControllerType::HTCVive:
+      aControllerState.buttonPressed =
+          ShiftButtonBitForNewSlot(1, 0) | ShiftButtonBitForNewSlot(2, 1) |
+          ShiftButtonBitForNewSlot(0, 2) | ShiftButtonBitForNewSlot(3, 4);
+      aControllerState.buttonTouched = ShiftButtonBitForNewSlot(0, 1, true) |
+                                       ShiftButtonBitForNewSlot(2, 1, true) |
+                                       ShiftButtonBitForNewSlot(0, 2, true) |
+                                       ShiftButtonBitForNewSlot(3, 4, true);
+      aControllerState.numButtons = 4;
+      aControllerState.numAxes = 2;
+      break;
+    case VRControllerType::MSMR:
+      aControllerState.buttonPressed =
+          ShiftButtonBitForNewSlot(1, 0) | ShiftButtonBitForNewSlot(2, 1) |
+          ShiftButtonBitForNewSlot(0, 2) | ShiftButtonBitForNewSlot(3, 3) |
+          ShiftButtonBitForNewSlot(4, 4);
+      aControllerState.buttonTouched = ShiftButtonBitForNewSlot(1, 0, true) |
+                                       ShiftButtonBitForNewSlot(2, 1, true) |
+                                       ShiftButtonBitForNewSlot(0, 2, true) |
+                                       ShiftButtonBitForNewSlot(3, 3, true) |
+                                       ShiftButtonBitForNewSlot(4, 4, true);
+      aControllerState.numButtons = 5;
+      aControllerState.numAxes = 4;
+      break;
+    case VRControllerType::HTCViveCosmos:
+      aControllerState.buttonPressed =
+          ShiftButtonBitForNewSlot(0, 0) | ShiftButtonBitForNewSlot(1, 1) |
+          ShiftButtonBitForNewSlot(4, 3) | ShiftButtonBitForNewSlot(2, 4) |
+          ShiftButtonBitForNewSlot(3, 5) | ShiftButtonBitForNewSlot(5, 6);
+      aControllerState.buttonTouched = ShiftButtonBitForNewSlot(0, 0, true) |
+                                       ShiftButtonBitForNewSlot(1, 1, true) |
+                                       ShiftButtonBitForNewSlot(4, 3, true) |
+                                       ShiftButtonBitForNewSlot(2, 4, true) |
+                                       ShiftButtonBitForNewSlot(3, 5, true) |
+                                       ShiftButtonBitForNewSlot(5, 6, true);
+      aControllerState.axisValue[0] = aControllerState.axisValue[2];
+      aControllerState.axisValue[1] = aControllerState.axisValue[3];
+      aControllerState.numButtons = 6;
+      aControllerState.numAxes = 2;
+      break;
+    case VRControllerType::HTCViveFocus:
+      aControllerState.buttonPressed =
+          ShiftButtonBitForNewSlot(0, 2) | ShiftButtonBitForNewSlot(1, 0);
+      aControllerState.buttonTouched = ShiftButtonBitForNewSlot(0, 2, true) |
+                                       ShiftButtonBitForNewSlot(1, 0, true);
+      aControllerState.numButtons = 2;
+      aControllerState.numAxes = 2;
+      break;
+    case VRControllerType::HTCViveFocusPlus: {
+      aControllerState.buttonPressed = ShiftButtonBitForNewSlot(0, 2) |
+                                       ShiftButtonBitForNewSlot(1, 0) |
+                                       ShiftButtonBitForNewSlot(2, 1);
+      aControllerState.buttonTouched = ShiftButtonBitForNewSlot(0, 2, true) |
+                                       ShiftButtonBitForNewSlot(1, 0, true) |
+                                       ShiftButtonBitForNewSlot(2, 1, true);
+      aControllerState.numButtons = 3;
+      aControllerState.numAxes = 2;
+
+      static Matrix4x4 focusPlusTransform;
+      Matrix4x4 originalMtx;
+      if (focusPlusTransform.IsIdentity()) {
+        focusPlusTransform.RotateX(-0.70f);
+        focusPlusTransform.PostTranslate(0.0f, 0.0f, 0.01f);
+        focusPlusTransform.Inverse();
+      }
+      gfx::Quaternion quat(aControllerState.pose.orientation[0],
+                           aControllerState.pose.orientation[1],
+                           aControllerState.pose.orientation[2],
+                           aControllerState.pose.orientation[3]);
+      // We need to invert its quaternion here because we did an invertion
+      // in FxR WaveVR delegate.
+      originalMtx.SetRotationFromQuaternion(quat.Invert());
+      originalMtx._41 = aControllerState.pose.position[0];
+      originalMtx._42 = aControllerState.pose.position[1];
+      originalMtx._43 = aControllerState.pose.position[2];
+      originalMtx = focusPlusTransform * originalMtx;
+
+      gfx::Point3D pos, scale;
+      originalMtx.Decompose(pos, quat, scale);
+
+      quat.Invert();
+      aControllerState.pose.position[0] = pos.x;
+      aControllerState.pose.position[1] = pos.y;
+      aControllerState.pose.position[2] = pos.z;
+
+      aControllerState.pose.orientation[0] = quat.x;
+      aControllerState.pose.orientation[1] = quat.y;
+      aControllerState.pose.orientation[2] = quat.z;
+      aControllerState.pose.orientation[3] = quat.w;
+      break;
+    }
+    case VRControllerType::OculusGo: {
+      aControllerState.buttonPressed =
+          ShiftButtonBitForNewSlot(0, 2) | ShiftButtonBitForNewSlot(1, 0);
+      aControllerState.buttonTouched = ShiftButtonBitForNewSlot(0, 2, true) |
+                                       ShiftButtonBitForNewSlot(1, 0, true);
+      aControllerState.numButtons = 2;
+      aControllerState.numAxes = 2;
+
+      static Matrix4x4 goTransform;
+      Matrix4x4 originalMtx;
+
+      if (goTransform.IsIdentity()) {
+        goTransform.RotateX(-0.60f);
+        goTransform.Inverse();
+      }
+      gfx::Quaternion quat(aControllerState.pose.orientation[0],
+                           aControllerState.pose.orientation[1],
+                           aControllerState.pose.orientation[2],
+                           aControllerState.pose.orientation[3]);
+      // We need to invert its quaternion here because we did an invertion
+      // in FxR OculusVR delegate.
+      originalMtx.SetRotationFromQuaternion(quat.Invert());
+      originalMtx._41 = aControllerState.pose.position[0];
+      originalMtx._42 = aControllerState.pose.position[1];
+      originalMtx._43 = aControllerState.pose.position[2];
+      originalMtx = goTransform * originalMtx;
+
+      gfx::Point3D pos, scale;
+      originalMtx.Decompose(pos, quat, scale);
+
+      quat.Invert();
+      aControllerState.pose.position[0] = pos.x;
+      aControllerState.pose.position[1] = pos.y;
+      aControllerState.pose.position[2] = pos.z;
+
+      aControllerState.pose.orientation[0] = quat.x;
+      aControllerState.pose.orientation[1] = quat.y;
+      aControllerState.pose.orientation[2] = quat.z;
+      aControllerState.pose.orientation[3] = quat.w;
+      break;
+    }
+    case VRControllerType::OculusTouch:
+      aControllerState.buttonPressed =
+          ShiftButtonBitForNewSlot(0, 3) | ShiftButtonBitForNewSlot(1, 0) |
+          ShiftButtonBitForNewSlot(2, 1) | ShiftButtonBitForNewSlot(3, 4) |
+          ShiftButtonBitForNewSlot(4, 5) | ShiftButtonBitForNewSlot(5, 6);
+      aControllerState.buttonTouched = ShiftButtonBitForNewSlot(0, 3, true) |
+                                       ShiftButtonBitForNewSlot(1, 0, true) |
+                                       ShiftButtonBitForNewSlot(2, 1, true) |
+                                       ShiftButtonBitForNewSlot(3, 4, true) |
+                                       ShiftButtonBitForNewSlot(4, 5, true) |
+                                       ShiftButtonBitForNewSlot(5, 6, true);
+      aControllerState.axisValue[0] = aControllerState.axisValue[2];
+      aControllerState.axisValue[1] = aControllerState.axisValue[3];
+      aControllerState.numButtons = 6;
+      aControllerState.numAxes = 2;
+      break;
+    case VRControllerType::OculusTouch2: {
+      aControllerState.buttonPressed =
+          ShiftButtonBitForNewSlot(0, 3) | ShiftButtonBitForNewSlot(1, 0) |
+          ShiftButtonBitForNewSlot(2, 1) | ShiftButtonBitForNewSlot(3, 4) |
+          ShiftButtonBitForNewSlot(4, 5) | ShiftButtonBitForNewSlot(5, 6);
+      aControllerState.buttonTouched = ShiftButtonBitForNewSlot(0, 3, true) |
+                                       ShiftButtonBitForNewSlot(1, 0, true) |
+                                       ShiftButtonBitForNewSlot(2, 1, true) |
+                                       ShiftButtonBitForNewSlot(3, 4, true) |
+                                       ShiftButtonBitForNewSlot(4, 5, true) |
+                                       ShiftButtonBitForNewSlot(5, 6, true);
+      aControllerState.axisValue[0] = aControllerState.axisValue[2];
+      aControllerState.axisValue[1] = aControllerState.axisValue[3];
+      aControllerState.numButtons = 6;
+      aControllerState.numAxes = 2;
+
+      static Matrix4x4 touch2Transform;
+      Matrix4x4 originalMtx;
+
+      if (touch2Transform.IsIdentity()) {
+        touch2Transform.RotateX(-0.77f);
+        touch2Transform.PostTranslate(0.0f, 0.0f, -0.025f);
+        touch2Transform.Inverse();
+      }
+      gfx::Quaternion quat(aControllerState.pose.orientation[0],
+                           aControllerState.pose.orientation[1],
+                           aControllerState.pose.orientation[2],
+                           aControllerState.pose.orientation[3]);
+      // We need to invert its quaternion here because we did an invertion
+      // in FxR OculusVR delegate.
+      originalMtx.SetRotationFromQuaternion(quat.Invert());
+      originalMtx._41 = aControllerState.pose.position[0];
+      originalMtx._42 = aControllerState.pose.position[1];
+      originalMtx._43 = aControllerState.pose.position[2];
+      originalMtx = touch2Transform * originalMtx;
+
+      gfx::Point3D pos, scale;
+      originalMtx.Decompose(pos, quat, scale);
+
+      quat.Invert();
+      aControllerState.pose.position[0] = pos.x;
+      aControllerState.pose.position[1] = pos.y;
+      aControllerState.pose.position[2] = pos.z;
+
+      aControllerState.pose.orientation[0] = quat.x;
+      aControllerState.pose.orientation[1] = quat.y;
+      aControllerState.pose.orientation[2] = quat.z;
+      aControllerState.pose.orientation[3] = quat.w;
+      break;
+    }
+    case VRControllerType::ValveIndex:
+      aControllerState.buttonPressed =
+          ShiftButtonBitForNewSlot(1, 0) | ShiftButtonBitForNewSlot(2, 1) |
+          ShiftButtonBitForNewSlot(0, 2) | ShiftButtonBitForNewSlot(5, 3) |
+          ShiftButtonBitForNewSlot(3, 4) | ShiftButtonBitForNewSlot(4, 5) |
+          ShiftButtonBitForNewSlot(6, 6) | ShiftButtonBitForNewSlot(7, 7) |
+          ShiftButtonBitForNewSlot(8, 8) | ShiftButtonBitForNewSlot(9, 9);
+      aControllerState.buttonTouched = ShiftButtonBitForNewSlot(1, 0, true) |
+                                       ShiftButtonBitForNewSlot(2, 1, true) |
+                                       ShiftButtonBitForNewSlot(0, 2, true) |
+                                       ShiftButtonBitForNewSlot(5, 3, true) |
+                                       ShiftButtonBitForNewSlot(3, 4, true) |
+                                       ShiftButtonBitForNewSlot(4, 5, true) |
+                                       ShiftButtonBitForNewSlot(6, 6, true) |
+                                       ShiftButtonBitForNewSlot(7, 7, true) |
+                                       ShiftButtonBitForNewSlot(8, 8, true) |
+                                       ShiftButtonBitForNewSlot(9, 9, true);
+      aControllerState.numButtons = 10;
+      aControllerState.numAxes = 4;
+      break;
+    case VRControllerType::PicoGaze:
+      aControllerState.buttonPressed = ShiftButtonBitForNewSlot(0, 0);
+      aControllerState.buttonTouched = ShiftButtonBitForNewSlot(0, 0, true);
+      aControllerState.numButtons = 1;
+      aControllerState.numAxes = 0;
+      break;
+    case VRControllerType::PicoG2:
+      aControllerState.buttonPressed =
+          ShiftButtonBitForNewSlot(0, 2) | ShiftButtonBitForNewSlot(1, 0);
+      aControllerState.buttonTouched = ShiftButtonBitForNewSlot(0, 2, true) |
+                                       ShiftButtonBitForNewSlot(1, 0, true);
+      aControllerState.numButtons = 2;
+      aControllerState.numAxes = 2;
+      break;
+    case VRControllerType::PicoNeo2:
+      aControllerState.buttonPressed =
+          ShiftButtonBitForNewSlot(0, 3) | ShiftButtonBitForNewSlot(1, 0) |
+          ShiftButtonBitForNewSlot(2, 1) | ShiftButtonBitForNewSlot(3, 4) |
+          ShiftButtonBitForNewSlot(4, 5) | ShiftButtonBitForNewSlot(5, 6);
+      aControllerState.buttonTouched = ShiftButtonBitForNewSlot(0, 3, true) |
+                                       ShiftButtonBitForNewSlot(1, 0, true) |
+                                       ShiftButtonBitForNewSlot(2, 1, true) |
+                                       ShiftButtonBitForNewSlot(3, 4, true) |
+                                       ShiftButtonBitForNewSlot(4, 5, true) |
+                                       ShiftButtonBitForNewSlot(5, 6, true);
+      aControllerState.axisValue[0] = aControllerState.axisValue[2];
+      aControllerState.axisValue[1] = aControllerState.axisValue[3];
+      aControllerState.numButtons = 6;
+      aControllerState.numAxes = 2;
+      break;
+    default:
+      // Undefined controller types, we will keep its the same order.
+      break;
+  }
 }
 
 void VRDisplayClient::FireGamepadEvents() {
@@ -130,8 +449,14 @@ void VRDisplayClient::FireGamepadEvents() {
     return;
   }
   for (int stateIndex = 0; stateIndex < kVRControllerMaxCount; stateIndex++) {
-    const VRControllerState& state = mDisplayInfo.mControllerState[stateIndex];
-    const VRControllerState& lastState = mLastEventControllerState[stateIndex];
+    VRControllerState state = {}, lastState = {};
+    memcpy(&state, &mDisplayInfo.mControllerState[stateIndex],
+           sizeof(VRControllerState));
+    memcpy(&lastState, &mLastEventControllerState[stateIndex],
+           sizeof(VRControllerState));
+    GamepadMappingForWebVR(state);
+    GamepadMappingForWebVR(lastState);
+
     uint32_t gamepadId =
         mDisplayInfo.mDisplayID * kVRControllerMaxCount + stateIndex;
     bool bIsNew = false;
@@ -161,7 +486,7 @@ void VRDisplayClient::FireGamepadEvents() {
       dom::GamepadAdded info(NS_ConvertUTF8toUTF16(state.controllerName),
                              dom::GamepadMappingType::_empty, state.hand,
                              mDisplayInfo.mDisplayID, state.numButtons,
-                             state.numAxes, state.numHaptics);
+                             state.numAxes, state.numHaptics, 0, 0);
       dom::GamepadChangeEventBody body(info);
       dom::GamepadChangeEvent event(gamepadId, dom::GamepadServiceType::VR,
                                     body);
@@ -274,6 +599,10 @@ bool VRDisplayClient::GetIsConnected() const {
   return mDisplayInfo.GetIsConnected();
 }
 
+bool VRDisplayClient::IsPresenting() {
+  return mDisplayInfo.mPresentingGroups != 0;
+}
+
 void VRDisplayClient::NotifyDisconnected() {
   mDisplayInfo.mDisplayState.isConnected = false;
 }
@@ -309,4 +638,36 @@ void VRDisplayClient::StopVRNavigation(const TimeDuration& aTimeout) {
    */
   VRManagerChild* vm = VRManagerChild::Get();
   vm->SendStopVRNavigation(mDisplayInfo.mDisplayID, aTimeout);
+}
+
+bool VRDisplayClient::IsReferenceSpaceTypeSupported(
+    dom::XRReferenceSpaceType aType) const {
+  /**
+   * https://immersive-web.github.io/webxr/#reference-space-is-supported
+   *
+   * We do not yet support local or local-floor for inline sessions.
+   * This could be expanded if we later support WebXR for inline-ar
+   * sessions on Firefox Fenix.
+   *
+   * We do not yet support unbounded reference spaces.
+   */
+  switch (aType) {
+    case dom::XRReferenceSpaceType::Viewer:
+      // Viewer is always supported, for both inline and immersive sessions
+      return true;
+    case dom::XRReferenceSpaceType::Local:
+    case dom::XRReferenceSpaceType::Local_floor:
+      // Local and Local_Floor are always supported for immersive sessions
+      return bool(mDisplayInfo.GetCapabilities() &
+                  (VRDisplayCapabilityFlags::Cap_ImmersiveVR |
+                   VRDisplayCapabilityFlags::Cap_ImmersiveAR));
+    case dom::XRReferenceSpaceType::Bounded_floor:
+      return bool(mDisplayInfo.GetCapabilities() &
+                  VRDisplayCapabilityFlags::Cap_StageParameters);
+    default:
+      NS_WARNING(
+          "Unknown XRReferenceSpaceType passed to "
+          "VRDisplayClient::IsReferenceSpaceTypeSupported");
+      return false;
+  }
 }

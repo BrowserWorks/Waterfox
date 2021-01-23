@@ -6,9 +6,8 @@
 
 #include "UrlClassifierFeatureCryptominingAnnotation.h"
 
-#include "mozilla/AntiTrackingCommon.h"
 #include "mozilla/net/UrlClassifierCommon.h"
-#include "mozilla/StaticPrefs.h"
+#include "nsIClassifiedChannel.h"
 #include "nsContentUtils.h"
 #include "nsNetUtil.h"
 
@@ -88,11 +87,6 @@ UrlClassifierFeatureCryptominingAnnotation::MaybeCreate(nsIChannel* aChannel) {
       ("UrlClassifierFeatureCryptominingAnnotation: MaybeCreate for channel %p",
        aChannel));
 
-  if (!StaticPrefs::
-          privacy_trackingprotection_cryptomining_annotate_enabled()) {
-    return nullptr;
-  }
-
   if (!UrlClassifierCommon::ShouldEnableClassifier(aChannel)) {
     return nullptr;
   }
@@ -139,18 +133,18 @@ UrlClassifierFeatureCryptominingAnnotation::ProcessChannel(
   static std::vector<UrlClassifierCommon::ClassificationData>
       sClassificationData = {
           {NS_LITERAL_CSTRING("content-cryptomining-track-"),
-           nsIHttpChannel::ClassificationFlags::
+           nsIClassifiedChannel::ClassificationFlags::
                CLASSIFIED_CRYPTOMINING_CONTENT},
       };
 
   uint32_t flags = UrlClassifierCommon::TablesToClassificationFlags(
       aList, sClassificationData,
-      nsIHttpChannel::ClassificationFlags::CLASSIFIED_CRYPTOMINING);
+      nsIClassifiedChannel::ClassificationFlags::CLASSIFIED_CRYPTOMINING);
 
   UrlClassifierCommon::SetTrackingInfo(aChannel, aList, aHashes);
 
   UrlClassifierCommon::AnnotateChannel(
-      aChannel, AntiTrackingCommon::eCryptomining, flags,
+      aChannel, flags,
       nsIWebProgressListener::STATE_LOADED_CRYPTOMINING_CONTENT);
   return NS_OK;
 }
@@ -158,15 +152,19 @@ UrlClassifierFeatureCryptominingAnnotation::ProcessChannel(
 NS_IMETHODIMP
 UrlClassifierFeatureCryptominingAnnotation::GetURIByListType(
     nsIChannel* aChannel, nsIUrlClassifierFeature::listType aListType,
-    nsIURI** aURI) {
+    nsIUrlClassifierFeature::URIType* aURIType, nsIURI** aURI) {
   NS_ENSURE_ARG_POINTER(aChannel);
+  NS_ENSURE_ARG_POINTER(aURIType);
   NS_ENSURE_ARG_POINTER(aURI);
 
   if (aListType == nsIUrlClassifierFeature::blacklist) {
+    *aURIType = nsIUrlClassifierFeature::blacklistURI;
     return aChannel->GetURI(aURI);
   }
 
   MOZ_ASSERT(aListType == nsIUrlClassifierFeature::whitelist);
+
+  *aURIType = nsIUrlClassifierFeature::pairwiseWhitelistURI;
   return UrlClassifierCommon::CreatePairwiseWhiteListURI(aChannel, aURI);
 }
 

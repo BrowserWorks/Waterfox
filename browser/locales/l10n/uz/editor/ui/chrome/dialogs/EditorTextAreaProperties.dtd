@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Matn hududi xossalari">
+
+<!ENTITY Settings.label "Sozlamalar">
+
+<!ENTITY TextAreaName.label "Maydon nomi:">
+<!ENTITY TextAreaName.accessKey "n">
+<!ENTITY TextAreaRows.label "Qatorlar:">
+<!ENTITY TextAreaRows.accessKey "Q">
+<!ENTITY TextAreaCols.label "Ustunlar:">
+<!ENTITY TextAreaCols.accessKey "U">
+<!ENTITY TextAreaReadOnly.label "Faqat o‘qish">
+<!ENTITY TextAreaReadOnly.accessKey "o">
+<!ENTITY TextAreaDisabled.label "O‘chirib qo‘yilgan">
+<!ENTITY TextAreaDisabled.accessKey "O">
+<!ENTITY TextAreaTabIndex.label "Ichki oyna indeksi">
+<!ENTITY TextAreaTabIndex.accessKey "i">
+<!ENTITY TextAreaAccessKey.label "Kirish tugmasi:">
+<!ENTITY TextAreaAccessKey.accessKey "t">
+<!ENTITY InitialText.label "Boshlang‘ich matn:">
+<!ENTITY InitialText.accessKey "m">
+
+<!ENTITY TextAreaWrap.label "Moslash rejimi:">
+<!ENTITY TextAreaWrap.accessKey "M">
+<!ENTITY WrapDefault.value "Standart">
+<!ENTITY WrapOff.value "O‘chirilgan">
+<!ENTITY WrapHard.value "Qattiq">
+<!ENTITY WrapSoft.value "Yumshoq">
+<!ENTITY WrapPhysical.value "Jismoniy">
+<!ENTITY WrapVirtual.value "Virtual">

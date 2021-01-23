@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from EdReplace.xul -->
+
+<!-- extracted from EdReplace.xhtml -->
+
+<!ENTITY replaceDialog.title "Søk og erstatt">
+<!ENTITY findField.label "Søk etter:">
+<!ENTITY findField.accesskey "S">
+<!ENTITY replaceField.label "Erstatt med:">
+<!ENTITY replaceField.accesskey "m">
+<!ENTITY caseSensitiveCheckbox.label "Skill mellom store og små bokstaver">
+<!ENTITY caseSensitiveCheckbox.accesskey "k">
+<!ENTITY wrapCheckbox.label "Bryt rundt">
+<!ENTITY wrapCheckbox.accesskey "B">
+<!ENTITY backwardsCheckbox.label "Søk baklengs">
+<!ENTITY backwardsCheckbox.accesskey "ø">
+<!ENTITY findNextButton.label "Søk etter neste">
+<!ENTITY findNextButton.accesskey "n">
+<!ENTITY replaceButton.label "Erstatt">
+<!ENTITY replaceButton.accesskey "E">
+<!ENTITY replaceAndFindButton.label "Erstatt og søk">
+<!ENTITY replaceAndFindButton.accesskey "r">
+<!ENTITY replaceAllButton.label "Erstatt alle">
+<!ENTITY replaceAllButton.accesskey "t">
+<!ENTITY closeButton.label "Lukk">
+<!ENTITY closeButton.accesskey "L">

@@ -19,6 +19,7 @@
 #include "mozilla/CheckedInt.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/SSE.h"
+#include "mozilla/ppc.h"
 #include "nsTextFragmentImpl.h"
 #include <algorithm>
 
@@ -166,6 +167,14 @@ int32_t FirstNon8Bit(const char16_t* str, const char16_t* end);
 }  // namespace mozilla
 #endif
 
+#ifdef __powerpc__
+namespace mozilla {
+namespace VMX {
+int32_t FirstNon8Bit(const char16_t* str, const char16_t* end);
+}  // namespace VMX
+}  // namespace mozilla
+#endif
+
 /*
  * This function returns -1 if all characters in str are 8 bit characters.
  * Otherwise, it returns a value less than or equal to the index of the first
@@ -177,6 +186,10 @@ static inline int32_t FirstNon8Bit(const char16_t* str, const char16_t* end) {
 #ifdef MOZILLA_MAY_SUPPORT_SSE2
   if (mozilla::supports_sse2()) {
     return mozilla::SSE2::FirstNon8Bit(str, end);
+  }
+#elif defined(__powerpc__)
+  if (mozilla::supports_vmx()) {
+    return mozilla::VMX::FirstNon8Bit(str, end);
   }
 #endif
 
@@ -301,7 +314,7 @@ bool nsTextFragment::SetTo(const char16_t* aBuffer, int32_t aLength,
     }
 
     // Copy data
-    LossyConvertUTF16toLatin1(MakeSpan(aBuffer, aLength),
+    LossyConvertUtf16toLatin1(MakeSpan(aBuffer, aLength),
                               MakeSpan(buff, aLength));
     m1b = buff;
     mState.mIs2b = false;
@@ -331,7 +344,7 @@ void nsTextFragment::CopyTo(char16_t* aDest, int32_t aOffset, int32_t aCount) {
       memcpy(aDest, Get2b() + aOffset, sizeof(char16_t) * aCount);
     } else {
       const char* cp = m1b + aOffset;
-      ConvertLatin1toUTF16(MakeSpan(cp, aCount), MakeSpan(aDest, aCount));
+      ConvertLatin1toUtf16(MakeSpan(cp, aCount), MakeSpan(aDest, aCount));
     }
   }
 }
@@ -416,7 +429,7 @@ bool nsTextFragment::Append(const char16_t* aBuffer, uint32_t aLength,
 
     // Copy data into buff
     char16_t* data = static_cast<char16_t*>(buff->Data());
-    ConvertLatin1toUTF16(MakeSpan(m1b, mState.mLength),
+    ConvertLatin1toUtf16(MakeSpan(m1b, mState.mLength),
                          MakeSpan(data, mState.mLength));
 
     memcpy(data + mState.mLength, aBuffer, aLength * sizeof(char16_t));
@@ -458,7 +471,7 @@ bool nsTextFragment::Append(const char16_t* aBuffer, uint32_t aLength,
   }
 
   // Copy aBuffer into buff.
-  LossyConvertUTF16toLatin1(MakeSpan(aBuffer, aLength),
+  LossyConvertUtf16toLatin1(MakeSpan(aBuffer, aLength),
                             MakeSpan(buff + mState.mLength, aLength));
 
   m1b = buff;

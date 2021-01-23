@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.junk.title "Brukalas">
+<!ENTITY junkSettings.caption "Bendrosios brukalo kontrolės nuostatos">
+<!ENTITY junkMail.intro "Brukalo kontrolės nuostatos atskiroms paskyroms parenkamos paskyrų nuostatų lange.">
+<!-- Junk Mail Controls -->
+
+<!ENTITY manualMark.label               "Pažymėjus, kad laiškai yra brukalas:">
+<!ENTITY manualMark.accesskey           "P">
+<!ENTITY manualMarkModeMove.label       "perkelti juos į paskyros aplanką „Brukalas“">
+<!ENTITY manualMarkModeMove.accesskey   "B">
+<!ENTITY manualMarkModeDelete.label     "pašalinti juos">
+<!ENTITY manualMarkModeDelete.accesskey "š">
+
+<!ENTITY markAsRead.intro               "Laiškus, įgijusius brukalo statusą, žymėti kaip skaitytus:">
+<!ENTITY autoMarkAsRead.label           "kai jį suteikia „&brandShortName;“ brukalo filtrai">
+<!ENTITY autoMarkAsRead.accesskey       "f">
+<!ENTITY manualMarkAsRead.label         "kai brukalo statusas suteikiamas rankiniu būdu">
+<!ENTITY manualMarkAsRead.accesskey     "r">
+
+<!ENTITY enableJunkLogging.label        "Įrašyti brukalo filtravimo veiksmus">
+<!ENTITY enableJunkLogging.accesskey    "e">
+<!ENTITY openJunkLog.label              "Rodyti žurnalą">
+<!ENTITY openJunkLog.accesskey          "ž">
+<!ENTITY resetTrainingData.label        "Atstatyti automatinės kontrolės duomenis">
+<!ENTITY resetTrainingData.accesskey    "t">
+
+<!ENTITY pref.suspectMail.caption       "Įtartini laiškai">
+<!-- Phishing Detector -->
+
+<!ENTITY pref.phishing.caption            "Apgaulingi laiškai">
+<!ENTITY enablePhishingDetector.label     "Pranešti, jei įtariama, jog skaitomame laiške slypi apgaulė">
+<!ENTITY enablePhishingDetector.accesskey "a">
+<!-- Anti Virus -->
+
+

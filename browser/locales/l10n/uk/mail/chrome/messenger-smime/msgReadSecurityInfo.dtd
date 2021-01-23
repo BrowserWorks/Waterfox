@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgReadSecurityInfo.dtd UI for viewing security status when reading a received message -->
+
+<!ENTITY status.label "Захист повідомлення">
+<!ENTITY signatureCert.label "Перегляд сертифіката ключа підпису">
+<!ENTITY encryptionCert.label "Перегляд сертифіката ключа шифрування">
+
+<!ENTITY signer.name "Підписано:">
+<!ENTITY recipient.name "Зашифровано для:">
+<!ENTITY email.address "Адреса електронної пошти:">
+<!ENTITY issuer.name "Сертифікат виданий:">
+
+<!-- LOCALIZATION NOTE(SMIME.label): This a name for a technical standard. You should not translate it, but if applicable, you may write it using localized characters. -->
+<!ENTITY SMIME.label "S/MIME">

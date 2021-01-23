@@ -1,10 +1,12 @@
 "use strict";
 
+ChromeUtils.import("resource://normandy/actions/BaseAction.jsm", this);
 ChromeUtils.import("resource://normandy/actions/ShowHeartbeatAction.jsm", this);
 ChromeUtils.import("resource://normandy/lib/ClientEnvironment.jsm", this);
 ChromeUtils.import("resource://normandy/lib/Heartbeat.jsm", this);
 ChromeUtils.import("resource://normandy/lib/Storage.jsm", this);
 ChromeUtils.import("resource://normandy/lib/Uptake.jsm", this);
+ChromeUtils.import("resource://testing-common/NormandyTestUtils.jsm", this);
 
 const HOUR_IN_MS = 60 * 60 * 1000;
 
@@ -86,7 +88,7 @@ decorate_task(
   async function testHappyPath({ heartbeatClassStub, heartbeatInstanceStub }) {
     const recipe = heartbeatRecipeFactory();
     const action = new ShowHeartbeatAction();
-    await action.runRecipe(recipe);
+    await action.processRecipe(recipe, BaseAction.suitability.FILTER_MATCH);
     await action.finalize();
     is(
       action.state,
@@ -117,8 +119,7 @@ decorate_task(
       "expected arguments were passed"
     );
 
-    const uuidRegex = /[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/i;
-    ok(options.flowId.match(uuidRegex), "flowId should be a uuid");
+    ok(NormandyTestUtils.isUuid(options.flowId, "flowId should be a uuid"));
 
     // postAnswerUrl gains several query string parameters. Check that the prefix is right
     ok(options.postAnswerUrl.startsWith(recipe.arguments.postAnswerUrl));
@@ -144,7 +145,7 @@ decorate_task(
     const recipe = heartbeatRecipeFactory();
 
     const action = new ShowHeartbeatAction();
-    await action.runRecipe(recipe);
+    await action.processRecipe(recipe, BaseAction.suitability.FILTER_MATCH);
     is(action.lastError, null, "No errors should have been thrown");
 
     is(
@@ -168,7 +169,7 @@ decorate_task(
     const recipe = heartbeatRecipeFactory();
 
     const action = new ShowHeartbeatAction();
-    await action.runRecipe(recipe);
+    await action.processRecipe(recipe, BaseAction.suitability.FILTER_MATCH);
     is(action.lastError, null, "No errors should have been thrown");
 
     is(heartbeatClassStub.args.length, 1, "Heartbeat should be called once");
@@ -187,7 +188,7 @@ decorate_task(
     await recipeStorage.setItem("lastShown", Date.now() - 25 * HOUR_IN_MS);
 
     const action = new ShowHeartbeatAction();
-    await action.runRecipe(recipe);
+    await action.processRecipe(recipe, BaseAction.suitability.FILTER_MATCH);
     is(action.lastError, null, "No errors should have been thrown");
 
     is(heartbeatClassStub.args.length, 0, "Heartbeat should not be called");
@@ -214,7 +215,7 @@ decorate_task(
       Date.now() - 25 * HOUR_IN_MS
     );
     const action = new ShowHeartbeatAction();
-    await action.runRecipe(recipe);
+    await action.processRecipe(recipe, BaseAction.suitability.FILTER_MATCH);
     is(action.lastError, null, "No errors should have been thrown");
     is(heartbeatClassStub.args.length, 0, "Heartbeat should not be called");
 
@@ -223,7 +224,7 @@ decorate_task(
       "lastShown",
       Date.now() - 50 * HOUR_IN_MS
     );
-    await action.runRecipe(recipe);
+    await action.processRecipe(recipe, BaseAction.suitability.FILTER_MATCH);
     is(action.lastError, null, "No errors should have been thrown");
     is(
       heartbeatClassStub.args.length,
@@ -250,7 +251,7 @@ decorate_task(
     );
     await recipeStorage.setItem("lastShown", Date.now() - 25 * HOUR_IN_MS);
     const action = new ShowHeartbeatAction();
-    await action.runRecipe(recipe);
+    await action.processRecipe(recipe, BaseAction.suitability.FILTER_MATCH);
     is(action.lastError, null, "No errors should have been thrown");
     is(heartbeatClassStub.args.length, 1, "Heartbeat should be called");
 
@@ -259,7 +260,7 @@ decorate_task(
       Date.now() - 50 * HOUR_IN_MS
     );
     await recipeStorage.setItem("lastShown", Date.now() - 50 * HOUR_IN_MS);
-    await action.runRecipe(recipe);
+    await action.processRecipe(recipe, BaseAction.suitability.FILTER_MATCH);
     is(action.lastError, null, "No errors should have been thrown");
     is(heartbeatClassStub.args.length, 2, "Heartbeat should be called again");
 
@@ -272,7 +273,7 @@ decorate_task(
       "lastInteraction",
       Date.now() - 50 * HOUR_IN_MS
     );
-    await action.runRecipe(recipe);
+    await action.processRecipe(recipe, BaseAction.suitability.FILTER_MATCH);
     is(action.lastError, null, "No errors should have been thrown");
     is(
       heartbeatClassStub.args.length,

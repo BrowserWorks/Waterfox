@@ -8,7 +8,8 @@
  */
 add_task(async function() {
   const { tab, monitor } = await initNetMonitor(
-    HAR_EXAMPLE_URL + "html_har_post-data-test-page.html"
+    HAR_EXAMPLE_URL + "html_har_post-data-test-page.html",
+    { requestCount: 1 }
   );
 
   info("Starting test... ");
@@ -26,7 +27,7 @@ add_task(async function() {
 
   // Execute one GET request on the page and wait till its done.
   const wait = waitForNetworkEvents(monitor, 1);
-  await ContentTask.spawn(tab.linkedBrowser, {}, async function() {
+  await SpecialPowers.spawn(tab.linkedBrowser, [], async function() {
     content.wrappedJSObject.executeTest3();
   });
   await wait;

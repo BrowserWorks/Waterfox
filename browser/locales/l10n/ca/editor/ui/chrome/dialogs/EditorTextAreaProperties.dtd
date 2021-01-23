@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Propietats de l'àrea del text">
+
+<!ENTITY Settings.label "Paràmetres">
+
+<!ENTITY TextAreaName.label "Nom del camp:">
+<!ENTITY TextAreaName.accessKey "N">
+<!ENTITY TextAreaRows.label "Files:">
+<!ENTITY TextAreaRows.accessKey "F">
+<!ENTITY TextAreaCols.label "Columnes:">
+<!ENTITY TextAreaCols.accessKey "C">
+<!ENTITY TextAreaReadOnly.label "Només de lectura">
+<!ENTITY TextAreaReadOnly.accessKey "o">
+<!ENTITY TextAreaDisabled.label "Inhabilitat">
+<!ENTITY TextAreaDisabled.accessKey "I">
+<!ENTITY TextAreaTabIndex.label "Índex de pestanyes:">
+<!ENTITY TextAreaTabIndex.accessKey "x">
+<!ENTITY TextAreaAccessKey.label "Clau d'accés:">
+<!ENTITY TextAreaAccessKey.accessKey "a">
+<!ENTITY InitialText.label "Text inicial:">
+<!ENTITY InitialText.accessKey "T">
+
+<!ENTITY TextAreaWrap.label "Mode d'ajustament:">
+<!ENTITY TextAreaWrap.accessKey "a">
+<!ENTITY WrapDefault.value "Per defecte">
+<!ENTITY WrapOff.value "Inactiu">
+<!ENTITY WrapHard.value "Fort">
+<!ENTITY WrapSoft.value "Lleu">
+<!ENTITY WrapPhysical.value "Físic">
+<!ENTITY WrapVirtual.value "Virtual">

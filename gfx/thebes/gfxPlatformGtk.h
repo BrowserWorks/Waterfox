@@ -22,7 +22,7 @@ class SystemFontListEntry;
 };
 };  // namespace mozilla
 
-class gfxPlatformGtk : public gfxPlatform {
+class gfxPlatformGtk final : public gfxPlatform {
  public:
   gfxPlatformGtk();
   virtual ~gfxPlatformGtk();
@@ -32,7 +32,7 @@ class gfxPlatformGtk : public gfxPlatform {
   }
 
   void ReadSystemFontList(
-      InfallibleTArray<mozilla::dom::SystemFontListEntry>* retValue) override;
+      nsTArray<mozilla::dom::SystemFontListEntry>* retValue) override;
 
   already_AddRefed<gfxASurface> CreateOffscreenSurface(
       const IntSize& aSize, gfxImageFormat aFormat) override;
@@ -47,18 +47,10 @@ class gfxPlatformGtk : public gfxPlatform {
 
   gfxPlatformFontList* CreatePlatformFontList() override;
 
-  gfxFontGroup* CreateFontGroup(const mozilla::FontFamilyList& aFontFamilyList,
-                                const gfxFontStyle* aStyle,
-                                gfxTextPerfMetrics* aTextPerf,
-                                gfxUserFontSet* aUserFontSet,
-                                gfxFloat aDevToCssSize) override;
-
   /**
    * Calls XFlush if xrender is enabled.
    */
   void FlushContentDrawing() override;
-
-  FT_Library GetFTLibrary() override;
 
   static int32_t GetFontScaleDPI();
   static double GetFontScaleFactor();
@@ -95,30 +87,28 @@ class gfxPlatformGtk : public gfxPlatform {
 #endif  // MOZ_X11
 
 #ifdef MOZ_WAYLAND
-  void SetWaylandLastVsync(uint32_t aVsyncTimestamp) {
-    mWaylandLastVsyncTimestamp = aVsyncTimestamp;
-  }
-  int64_t GetWaylandLastVsync() { return mWaylandLastVsyncTimestamp; }
-  void SetWaylandFrameDelay(int64_t aFrameDelay) {
-    mWaylandFrameDelay = aFrameDelay;
-  }
-  int64_t GetWaylandFrameDelay() { return mWaylandFrameDelay; }
+  bool UseWaylandDMABufTextures();
+  bool UseWaylandDMABufWebGL();
+  bool UseWaylandHardwareVideoDecoding();
 #endif
 
+  bool IsX11Display() { return mIsX11Display; }
+  bool IsWaylandDisplay() {
+    return !mIsX11Display && !gfxPlatform::IsHeadless();
+  }
+
  protected:
+  void InitPlatformGPUProcessPrefs() override;
   bool CheckVariationFontSupport() override;
 
   int8_t mMaxGenericSubstitutions;
 
  private:
-  void GetPlatformCMSOutputProfile(void*& mem, size_t& size) override;
+  nsTArray<uint8_t> GetPlatformCMSOutputProfileData() override;
 
+  bool mIsX11Display;
 #ifdef MOZ_X11
   Display* mCompositorDisplay;
-#endif
-#ifdef MOZ_WAYLAND
-  int64_t mWaylandLastVsyncTimestamp;
-  int64_t mWaylandFrameDelay;
 #endif
 };
 

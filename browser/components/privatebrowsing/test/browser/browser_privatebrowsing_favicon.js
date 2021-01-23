@@ -54,7 +54,7 @@ function observeFavicon(aIsPrivate, aExpectedCookie, aPageURI) {
     attr.privateBrowsingId = 1;
   }
 
-  let expectedPrincipal = Services.scriptSecurityManager.createCodebasePrincipal(
+  let expectedPrincipal = Services.scriptSecurityManager.createContentPrincipal(
     aPageURI,
     attr
   );
@@ -176,7 +176,9 @@ function waitOnFaviconLoaded(aFaviconURL) {
 async function assignCookies(aBrowser, aURL, aCookieValue) {
   let tabInfo = await openTab(aBrowser, aURL);
 
-  await ContentTask.spawn(tabInfo.browser, aCookieValue, async function(value) {
+  await SpecialPowers.spawn(tabInfo.browser, [aCookieValue], async function(
+    value
+  ) {
     content.document.cookie = value;
   });
 

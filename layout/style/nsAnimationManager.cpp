@@ -5,19 +5,17 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsAnimationManager.h"
+#include "nsINode.h"
 #include "nsTransitionManager.h"
-#include "mozilla/dom/CSSAnimationBinding.h"
 
 #include "mozilla/AnimationEventDispatcher.h"
-#include "mozilla/AnimationTarget.h"
 #include "mozilla/EffectCompositor.h"
-#include "mozilla/EffectSet.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/ServoStyleSet.h"
-#include "mozilla/StyleAnimationValue.h"
 #include "mozilla/dom/AnimationEffect.h"
 #include "mozilla/dom/DocumentTimeline.h"
 #include "mozilla/dom/KeyframeEffect.h"
+#include "mozilla/dom/MutationObservers.h"
 
 #include "nsPresContext.h"
 #include "nsPresContextInlines.h"
@@ -30,262 +28,26 @@
 #include <algorithm>  // std::stable_sort
 #include <math.h>
 
+namespace mozilla {
+namespace dom {
+struct ComputedEffectTiming;
+struct EffectTiming;
+struct OptionalEffectTiming;
+}  // namespace dom
+}  // namespace mozilla
+
 using namespace mozilla;
 using namespace mozilla::css;
 using mozilla::dom::Animation;
 using mozilla::dom::AnimationEffect;
 using mozilla::dom::AnimationPlayState;
+using mozilla::dom::ComputedEffectTiming;
 using mozilla::dom::CSSAnimation;
+using mozilla::dom::EffectTiming;
+using mozilla::dom::Element;
 using mozilla::dom::KeyframeEffect;
-
-typedef mozilla::ComputedTiming::AnimationPhase AnimationPhase;
-
-////////////////////////// CSSAnimation ////////////////////////////
-
-JSObject* CSSAnimation::WrapObject(JSContext* aCx,
-                                   JS::Handle<JSObject*> aGivenProto) {
-  return dom::CSSAnimation_Binding::Wrap(aCx, this, aGivenProto);
-}
-
-mozilla::dom::Promise* CSSAnimation::GetReady(ErrorResult& aRv) {
-  FlushUnanimatedStyle();
-  return Animation::GetReady(aRv);
-}
-
-void CSSAnimation::Play(ErrorResult& aRv, LimitBehavior aLimitBehavior) {
-  mPauseShouldStick = false;
-  Animation::Play(aRv, aLimitBehavior);
-}
-
-void CSSAnimation::Pause(ErrorResult& aRv) {
-  mPauseShouldStick = true;
-  Animation::Pause(aRv);
-}
-
-AnimationPlayState CSSAnimation::PlayStateFromJS() const {
-  // Flush style to ensure that any properties controlling animation state
-  // (e.g. animation-play-state) are fully updated.
-  FlushUnanimatedStyle();
-  return Animation::PlayStateFromJS();
-}
-
-bool CSSAnimation::PendingFromJS() const {
-  // Flush style since, for example, if the animation-play-state was just
-  // changed its possible we should now be pending.
-  FlushUnanimatedStyle();
-  return Animation::PendingFromJS();
-}
-
-void CSSAnimation::PlayFromJS(ErrorResult& aRv) {
-  // Note that flushing style below might trigger calls to
-  // PlayFromStyle()/PauseFromStyle() on this object.
-  FlushUnanimatedStyle();
-  Animation::PlayFromJS(aRv);
-}
-
-void CSSAnimation::PlayFromStyle() {
-  mIsStylePaused = false;
-  if (!mPauseShouldStick) {
-    ErrorResult rv;
-    Animation::Play(rv, Animation::LimitBehavior::Continue);
-    // play() should not throw when LimitBehavior is Continue
-    MOZ_ASSERT(!rv.Failed(), "Unexpected exception playing animation");
-  }
-}
-
-void CSSAnimation::PauseFromStyle() {
-  // Check if the pause state is being overridden
-  if (mIsStylePaused) {
-    return;
-  }
-
-  mIsStylePaused = true;
-  ErrorResult rv;
-  Animation::Pause(rv);
-  // pause() should only throw when *all* of the following conditions are true:
-  // - we are in the idle state, and
-  // - we have a negative playback rate, and
-  // - we have an infinitely repeating animation
-  // The first two conditions will never happen under regular style processing
-  // but could happen if an author made modifications to the Animation object
-  // and then updated animation-play-state. It's an unusual case and there's
-  // no obvious way to pass on the exception information so we just silently
-  // fail for now.
-  if (rv.Failed()) {
-    NS_WARNING("Unexpected exception pausing animation - silently failing");
-  }
-}
-
-void CSSAnimation::Tick() {
-  Animation::Tick();
-  QueueEvents();
-}
-
-bool CSSAnimation::HasLowerCompositeOrderThan(
-    const CSSAnimation& aOther) const {
-  MOZ_ASSERT(IsTiedToMarkup() && aOther.IsTiedToMarkup(),
-             "Should only be called for CSS animations that are sorted "
-             "as CSS animations (i.e. tied to CSS markup)");
-
-  // 0. Object-equality case
-  if (&aOther == this) {
-    return false;
-  }
-
-  // 1. Sort by document order
-  if (!mOwningElement.Equals(aOther.mOwningElement)) {
-    return mOwningElement.LessThan(
-        const_cast<CSSAnimation*>(this)->CachedChildIndexRef(),
-        aOther.mOwningElement,
-        const_cast<CSSAnimation*>(&aOther)->CachedChildIndexRef());
-  }
-
-  // 2. (Same element and pseudo): Sort by position in animation-name
-  return mAnimationIndex < aOther.mAnimationIndex;
-}
-
-void CSSAnimation::QueueEvents(const StickyTimeDuration& aActiveTime) {
-  // If the animation is pending, we ignore animation events until we finish
-  // pending.
-  if (mPendingState != PendingState::NotPending) {
-    return;
-  }
-
-  // CSS animations dispatch events at their owning element. This allows
-  // script to repurpose a CSS animation to target a different element,
-  // to use a group effect (which has no obvious "target element"), or
-  // to remove the animation effect altogether whilst still getting
-  // animation events.
-  //
-  // It does mean, however, that for a CSS animation that has no owning
-  // element (e.g. it was created using the CSSAnimation constructor or
-  // disassociated from CSS) no events are fired. If it becomes desirable
-  // for these animations to still fire events we should spec the concept
-  // of the "original owning element" or "event target" and allow script
-  // to set it when creating a CSSAnimation object.
-  if (!mOwningElement.IsSet()) {
-    return;
-  }
-
-  nsPresContext* presContext = mOwningElement.GetPresContext();
-  if (!presContext) {
-    return;
-  }
-
-  uint64_t currentIteration = 0;
-  ComputedTiming::AnimationPhase currentPhase;
-  StickyTimeDuration intervalStartTime;
-  StickyTimeDuration intervalEndTime;
-  StickyTimeDuration iterationStartTime;
-
-  if (!mEffect) {
-    currentPhase =
-        GetAnimationPhaseWithoutEffect<ComputedTiming::AnimationPhase>(*this);
-    if (currentPhase == mPreviousPhase) {
-      return;
-    }
-  } else {
-    ComputedTiming computedTiming = mEffect->GetComputedTiming();
-    currentPhase = computedTiming.mPhase;
-    currentIteration = computedTiming.mCurrentIteration;
-    if (currentPhase == mPreviousPhase &&
-        currentIteration == mPreviousIteration) {
-      return;
-    }
-    intervalStartTime = IntervalStartTime(computedTiming.mActiveDuration);
-    intervalEndTime = IntervalEndTime(computedTiming.mActiveDuration);
-
-    uint64_t iterationBoundary = mPreviousIteration > currentIteration
-                                     ? currentIteration + 1
-                                     : currentIteration;
-    iterationStartTime = computedTiming.mDuration.MultDouble(
-        (iterationBoundary - computedTiming.mIterationStart));
-  }
-
-  TimeStamp startTimeStamp = ElapsedTimeToTimeStamp(intervalStartTime);
-  TimeStamp endTimeStamp = ElapsedTimeToTimeStamp(intervalEndTime);
-  TimeStamp iterationTimeStamp = ElapsedTimeToTimeStamp(iterationStartTime);
-
-  AutoTArray<AnimationEventInfo, 2> events;
-
-  auto appendAnimationEvent = [&](EventMessage aMessage,
-                                  const StickyTimeDuration& aElapsedTime,
-                                  const TimeStamp& aScheduledEventTimeStamp) {
-    double elapsedTime = aElapsedTime.ToSeconds();
-    if (aMessage == eAnimationCancel) {
-      // 0 is an inappropriate value for this callsite. What we need to do is
-      // use a single random value for all increasing times reportable.
-      // That is to say, whenever elapsedTime goes negative (because an
-      // animation restarts, something rewinds the animation, or otherwise)
-      // a new random value for the mix-in must be generated.
-      elapsedTime = nsRFPService::ReduceTimePrecisionAsSecs(
-          elapsedTime, 0, TimerPrecisionType::RFPOnly);
-    }
-    events.AppendElement(
-        AnimationEventInfo(mAnimationName, mOwningElement.Target(), aMessage,
-                           elapsedTime, aScheduledEventTimeStamp, this));
-  };
-
-  // Handle cancel event first
-  if ((mPreviousPhase != AnimationPhase::Idle &&
-       mPreviousPhase != AnimationPhase::After) &&
-      currentPhase == AnimationPhase::Idle) {
-    appendAnimationEvent(eAnimationCancel, aActiveTime,
-                         GetTimelineCurrentTimeAsTimeStamp());
-  }
-
-  switch (mPreviousPhase) {
-    case AnimationPhase::Idle:
-    case AnimationPhase::Before:
-      if (currentPhase == AnimationPhase::Active) {
-        appendAnimationEvent(eAnimationStart, intervalStartTime,
-                             startTimeStamp);
-      } else if (currentPhase == AnimationPhase::After) {
-        appendAnimationEvent(eAnimationStart, intervalStartTime,
-                             startTimeStamp);
-        appendAnimationEvent(eAnimationEnd, intervalEndTime, endTimeStamp);
-      }
-      break;
-    case AnimationPhase::Active:
-      if (currentPhase == AnimationPhase::Before) {
-        appendAnimationEvent(eAnimationEnd, intervalStartTime, startTimeStamp);
-      } else if (currentPhase == AnimationPhase::Active) {
-        // The currentIteration must have changed or element we would have
-        // returned early above.
-        MOZ_ASSERT(currentIteration != mPreviousIteration);
-        appendAnimationEvent(eAnimationIteration, iterationStartTime,
-                             iterationTimeStamp);
-      } else if (currentPhase == AnimationPhase::After) {
-        appendAnimationEvent(eAnimationEnd, intervalEndTime, endTimeStamp);
-      }
-      break;
-    case AnimationPhase::After:
-      if (currentPhase == AnimationPhase::Before) {
-        appendAnimationEvent(eAnimationStart, intervalEndTime, startTimeStamp);
-        appendAnimationEvent(eAnimationEnd, intervalStartTime, endTimeStamp);
-      } else if (currentPhase == AnimationPhase::Active) {
-        appendAnimationEvent(eAnimationStart, intervalEndTime, endTimeStamp);
-      }
-      break;
-  }
-  mPreviousPhase = currentPhase;
-  mPreviousIteration = currentIteration;
-
-  if (!events.IsEmpty()) {
-    presContext->AnimationEventDispatcher()->QueueEvents(std::move(events));
-  }
-}
-
-void CSSAnimation::UpdateTiming(SeekFlag aSeekFlag,
-                                SyncNotifyFlag aSyncNotifyFlag) {
-  if (mNeedsNewAnimationIndexWhenRun &&
-      PlayState() != AnimationPlayState::Idle) {
-    mAnimationIndex = sNextAnimationIndex++;
-    mNeedsNewAnimationIndexWhenRun = false;
-  }
-
-  Animation::UpdateTiming(aSeekFlag, aSyncNotifyFlag);
-}
+using mozilla::dom::MutationObservers;
+using mozilla::dom::OptionalEffectTiming;
 
 ////////////////////////// nsAnimationManager ////////////////////////////
 
@@ -377,6 +139,7 @@ class MOZ_STACK_CLASS ServoCSSAnimationBuilder final {
 static void UpdateOldAnimationPropertiesWithNew(
     CSSAnimation& aOld, TimingParams&& aNewTiming,
     nsTArray<Keyframe>&& aNewKeyframes, bool aNewIsStylePaused,
+    CSSAnimationProperties aOverriddenProperties,
     ServoCSSAnimationBuilder& aBuilder) {
   bool animationChanged = false;
 
@@ -384,29 +147,44 @@ static void UpdateOldAnimationPropertiesWithNew(
   // identity (and any expando properties attached to it).
   if (aOld.GetEffect()) {
     dom::AnimationEffect* oldEffect = aOld.GetEffect();
-    animationChanged = oldEffect->SpecifiedTiming() != aNewTiming;
-    oldEffect->SetSpecifiedTiming(std::move(aNewTiming));
+
+    // Copy across the changes that are not overridden
+    TimingParams updatedTiming = oldEffect->SpecifiedTiming();
+    if (~aOverriddenProperties & CSSAnimationProperties::Duration) {
+      updatedTiming.SetDuration(aNewTiming.Duration());
+    }
+    if (~aOverriddenProperties & CSSAnimationProperties::IterationCount) {
+      updatedTiming.SetIterations(aNewTiming.Iterations());
+    }
+    if (~aOverriddenProperties & CSSAnimationProperties::Direction) {
+      updatedTiming.SetDirection(aNewTiming.Direction());
+    }
+    if (~aOverriddenProperties & CSSAnimationProperties::Delay) {
+      updatedTiming.SetDelay(aNewTiming.Delay());
+    }
+    if (~aOverriddenProperties & CSSAnimationProperties::FillMode) {
+      updatedTiming.SetFill(aNewTiming.Fill());
+    }
+
+    animationChanged = oldEffect->SpecifiedTiming() != updatedTiming;
+    oldEffect->SetSpecifiedTiming(std::move(updatedTiming));
 
     KeyframeEffect* oldKeyframeEffect = oldEffect->AsKeyframeEffect();
-    if (oldKeyframeEffect) {
+    if (~aOverriddenProperties & CSSAnimationProperties::Keyframes &&
+        oldKeyframeEffect) {
       aBuilder.SetKeyframes(*oldKeyframeEffect, std::move(aNewKeyframes));
     }
   }
 
   // Handle changes in play state. If the animation is idle, however,
   // changes to animation-play-state should *not* restart it.
-  if (aOld.PlayState() != AnimationPlayState::Idle) {
-    // CSSAnimation takes care of override behavior so that,
-    // for example, if the author has called pause(), that will
-    // override the animation-play-state.
-    // (We should check aNew->IsStylePaused() but that requires
-    //  downcasting to CSSAnimation and we happen to know that
-    //  aNew will only ever be paused by calling PauseFromStyle
-    //  making IsPausedOrPausing synonymous in this case.)
-    if (!aOld.IsStylePaused() && aNewIsStylePaused) {
+  if (aOld.PlayState() != AnimationPlayState::Idle &&
+      ~aOverriddenProperties & CSSAnimationProperties::PlayState) {
+    bool wasPaused = aOld.PlayState() == AnimationPlayState::Paused;
+    if (!wasPaused && aNewIsStylePaused) {
       aOld.PauseFromStyle();
       animationChanged = true;
-    } else if (aOld.IsStylePaused() && !aNewIsStylePaused) {
+    } else if (wasPaused && !aNewIsStylePaused) {
       aOld.PlayFromStyle();
       animationChanged = true;
     }
@@ -416,7 +194,7 @@ static void UpdateOldAnimationPropertiesWithNew(
   // animation to become irrelevant so only add a changed record if
   // the animation is still relevant.
   if (animationChanged && aOld.IsRelevant()) {
-    nsNodeUtils::AnimationChanged(&aOld);
+    MutationObservers::NotifyAnimationChanged(&aOld);
   }
 }
 
@@ -462,18 +240,17 @@ static already_AddRefed<CSSAnimation> BuildAnimation(
     // them.  See
     // http://lists.w3.org/Archives/Public/www-style/2011Apr/0079.html
     // In order to honor what the spec said, we'd copy more data over.
-    UpdateOldAnimationPropertiesWithNew(*oldAnim, std::move(timing),
-                                        std::move(keyframes), isStylePaused,
-                                        aBuilder);
+    UpdateOldAnimationPropertiesWithNew(
+        *oldAnim, std::move(timing), std::move(keyframes), isStylePaused,
+        oldAnim->GetOverriddenProperties(), aBuilder);
     return oldAnim.forget();
   }
 
-  // mTarget is non-null here, so we emplace it directly.
-  Maybe<OwningAnimationTarget> target;
-  target.emplace(aTarget.mElement, aTarget.mPseudoType);
   KeyframeEffectParams effectOptions;
-  RefPtr<KeyframeEffect> effect = new KeyframeEffect(
-      aPresContext->Document(), target, std::move(timing), effectOptions);
+  RefPtr<KeyframeEffect> effect = new dom::CSSAnimationKeyframeEffect(
+      aPresContext->Document(),
+      OwningAnimationTarget(aTarget.mElement, aTarget.mPseudoType),
+      std::move(timing), effectOptions);
 
   aBuilder.SetKeyframes(*effect, std::move(keyframes));
 

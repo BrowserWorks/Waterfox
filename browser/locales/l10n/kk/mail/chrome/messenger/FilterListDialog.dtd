@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Хабарламалар сүзгілері">
+<!ENTITY nameColumn.label "Сүзгі атауы">
+<!ENTITY activeColumn.label "Іске қосылған">
+<!ENTITY newButton.label "Жаңа…">
+<!ENTITY newButton.accesskey "Ж">
+<!ENTITY newButton.popupCopy.label "Көшіріп алу…">
+<!ENTITY newButton.popupCopy.accesskey "К">
+<!ENTITY editButton.label "Өзгерту…">
+<!ENTITY editButton.accesskey "Ө">
+<!ENTITY deleteButton.label "Өшіру">
+<!ENTITY deleteButton.accesskey "р">
+<!ENTITY reorderTopButton "Жоғарыға жылжыту">
+<!ENTITY reorderTopButton.accessKey "о">
+<!ENTITY reorderTopButton.toolTip "Сүзгіні басқалардан бұрын орындалатындай етіп орналастыру">
+<!ENTITY reorderUpButton.label "Жоғарыға">
+<!ENTITY reorderUpButton.accesskey "а">
+<!ENTITY reorderDownButton.label "Төменге">
+<!ENTITY reorderDownButton.accesskey "е">
+<!ENTITY reorderBottomButton "Астына жылжыту">
+<!ENTITY reorderBottomButton.accessKey "м">
+<!ENTITY reorderBottomButton.toolTip "Сүзгіні басқалардан кейін орындалатындай етіп орналастыру">
+<!ENTITY filterHeader.label "Іске қосылған сүзгілер төмендегідей ретпен автожөнелтіледі.">
+<!ENTITY filtersForPrefix.label "Келесі үшін сүзгілер:">
+<!ENTITY filtersForPrefix.accesskey "з">
+<!ENTITY viewLogButton.label "Журналды сүзгілеу">
+<!ENTITY viewLogButton.accesskey "л">
+<!ENTITY runFilters.label "Қазір жөнелту">
+<!ENTITY runFilters.accesskey "ж">
+<!ENTITY stopFilters.label "Тоқтату">
+<!ENTITY stopFilters.accesskey "Т">
+<!ENTITY folderPickerPrefix.label "Таңдалған сүзгі(лер)ді қайда қолдану:">
+<!ENTITY folderPickerPrefix.accesskey "д">
+<!ENTITY helpButton.label "Көмек">
+<!ENTITY helpButton.accesskey "К">
+<!ENTITY closeCmd.key "ж"> 
+<!ENTITY searchBox.emptyText "Сүзгілерді аты бойынша іздеу…">
+

@@ -334,7 +334,7 @@ class SPSNAL {
     }
   }
 
-  SPSNAL() {}
+  SPSNAL() = default;
 
   bool IsValid() const { return mDecodedNAL; }
 
@@ -534,7 +534,7 @@ class SPSNALIterator {
 
 static int32_t ConditionDimension(float aValue) {
   // This will exclude NaNs and too-big values.
-  if (aValue > 1.0 && aValue <= INT32_MAX / 2) {
+  if (aValue > 1.0 && aValue <= float(INT32_MAX) / 2) {
     return int32_t(aValue);
   }
   return 0;
@@ -984,6 +984,11 @@ uint32_t H264::ComputeMaxRefFrames(const mozilla::MediaByteBuffer* aExtraData) {
       if (DecodeRecoverySEI(decodedNAL, data)) {
         return FrameType::I_FRAME;
       }
+    } else if (nalType == H264_NAL_SLICE) {
+      RefPtr<mozilla::MediaByteBuffer> decodedNAL = DecodeNALUnit(p, nalLen);
+      if (DecodeISlice(decodedNAL)) {
+        return FrameType::I_FRAME;
+      }
     }
   }
 
@@ -998,11 +1003,11 @@ uint32_t H264::ComputeMaxRefFrames(const mozilla::MediaByteBuffer* aExtraData) {
 
   // SPS content
   nsTArray<uint8_t> sps;
-  ByteWriter spsw(sps);
+  ByteWriter<BigEndian> spsw(sps);
   int numSps = 0;
   // PPS content
   nsTArray<uint8_t> pps;
-  ByteWriter ppsw(pps);
+  ByteWriter<BigEndian> ppsw(pps);
   int numPps = 0;
 
   int nalLenSize = ((*aSample->mExtraData)[4] & 3) + 1;
@@ -1049,7 +1054,9 @@ uint32_t H264::ComputeMaxRefFrames(const mozilla::MediaByteBuffer* aExtraData) {
     }
     const uint8_t* p = reader.Read(nalLen);
     if (!p) {
-      return extradata.forget();
+      // The read failed, but we may already have some SPS + PPS data so
+      // break out of reading and process what we have, if any.
+      break;
     }
     uint8_t nalType = *p & 0x1f;
 
@@ -1175,6 +1182,23 @@ static inline Result<Ok, nsresult> ReadSEIInt(BufferReader& aBr,
 }
 
 /* static */
+bool H264::DecodeISlice(const mozilla::MediaByteBuffer* aSlice) {
+  if (!aSlice) {
+    return false;
+  }
+
+  // According to ITU-T Rec H.264 Table 7.3.3, read the slice type from
+  // slice_header, and the slice type 2 and 7 are representing I slice.
+  BitReader br(aSlice);
+  // Skip `first_mb_in_slice`
+  br.ReadUE();
+  // The value of slice type can go from 0 to 9, but the value between 5 to
+  // 9 are actually equal to 0 to 4.
+  const uint32_t sliceType = br.ReadUE() % 5;
+  return sliceType == SLICE_TYPES::I_SLICE || sliceType == SI_SLICE;
+}
+
+/* static */
 bool H264::DecodeRecoverySEI(const mozilla::MediaByteBuffer* aSEI,
                              SEIRecoveryData& aDest) {
   if (!aSEI) {
@@ -1292,27 +1316,38 @@ bool H264::DecodeRecoverySEI(const mozilla::MediaByteBuffer* aSEI,
   RefPtr<MediaByteBuffer> encodedSPS =
       EncodeNALUnit(sps->Elements(), sps->Length());
   extraData->Clear();
-  extraData->AppendElement(1);
-  extraData->AppendElement(aProfile);
-  extraData->AppendElement(aConstraints);
-  extraData->AppendElement(aLevel);
-  extraData->AppendElement(3);  // nalLENSize-1
-  extraData->AppendElement(1);  // numPPS
-  uint8_t c[2];
-  mozilla::BigEndian::writeUint16(&c[0], encodedSPS->Length() + 1);
-  extraData->AppendElements(c, 2);
-  extraData->AppendElement((0x00 << 7) | (0x3 << 5) | H264_NAL_SPS);
-  extraData->AppendElements(*encodedSPS);
 
   const uint8_t PPS[] = {0xeb, 0xef, 0x20};
 
-  extraData->AppendElement(1);  // numPPS
-  mozilla::BigEndian::writeUint16(&c[0], sizeof(PPS) + 1);
-  extraData->AppendElements(c, 2);
-  extraData->AppendElement((0x00 << 7) | (0x3 << 5) | H264_NAL_PPS);
-  extraData->AppendElements(PPS, sizeof(PPS));
+  WriteExtraData(
+      extraData, aProfile, aConstraints, aLevel,
+      MakeSpan<const uint8_t>(encodedSPS->Elements(), encodedSPS->Length()),
+      MakeSpan<const uint8_t>(PPS, sizeof(PPS)));
 
   return extraData.forget();
+}
+
+void H264::WriteExtraData(MediaByteBuffer* aDestExtraData,
+                          const uint8_t aProfile, const uint8_t aConstraints,
+                          const uint8_t aLevel, const Span<const uint8_t> aSPS,
+                          const Span<const uint8_t> aPPS) {
+  aDestExtraData->AppendElement(1);
+  aDestExtraData->AppendElement(aProfile);
+  aDestExtraData->AppendElement(aConstraints);
+  aDestExtraData->AppendElement(aLevel);
+  aDestExtraData->AppendElement(3);  // nalLENSize-1
+  aDestExtraData->AppendElement(1);  // numPPS
+  uint8_t c[2];
+  mozilla::BigEndian::writeUint16(&c[0], aSPS.Length() + 1);
+  aDestExtraData->AppendElements(c, 2);
+  aDestExtraData->AppendElement((0x00 << 7) | (0x3 << 5) | H264_NAL_SPS);
+  aDestExtraData->AppendElements(aSPS.Elements(), aSPS.Length());
+
+  aDestExtraData->AppendElement(1);  // numPPS
+  mozilla::BigEndian::writeUint16(&c[0], aPPS.Length() + 1);
+  aDestExtraData->AppendElements(c, 2);
+  aDestExtraData->AppendElement((0x00 << 7) | (0x3 << 5) | H264_NAL_PPS);
+  aDestExtraData->AppendElements(aPPS.Elements(), aPPS.Length());
 }
 
 #undef READUE

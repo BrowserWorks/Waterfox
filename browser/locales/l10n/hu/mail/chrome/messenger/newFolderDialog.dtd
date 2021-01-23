@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Labels -->
+   
+<!ENTITY newFolderDialog.title      "Új mappa">
+<!ENTITY name.label                 "Név:">
+<!ENTITY name.accesskey             "N">
+<!ENTITY description.label          "Almappa létrehozása a következőben:">
+<!ENTITY description.accesskey      "A">
+<!ENTITY folderRestriction1.label   "Ez a kiszolgáló a mappákat két csoportra osztja.">
+<!ENTITY folderRestriction2.label   "Az új mappa tartalmazhat:">
+<!ENTITY foldersOnly.label          "Csak mappákat">
+<!ENTITY messagesOnly.label         "Csak üzeneteket">
+<!ENTITY accept.label               "Mappa létrehozása">
+<!ENTITY accept.accesskey           "a">

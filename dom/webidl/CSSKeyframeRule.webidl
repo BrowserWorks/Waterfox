@@ -8,7 +8,8 @@
  */
 
 // https://drafts.csswg.org/css-animations/#interface-csskeyframerule
+[Exposed=Window]
 interface CSSKeyframeRule : CSSRule {
-           attribute DOMString           keyText;
-  readonly attribute CSSStyleDeclaration style;
+  attribute DOMString keyText;
+  [SameObject, PutForwards=cssText] readonly attribute CSSStyleDeclaration style;
 };

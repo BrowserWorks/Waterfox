@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgViewPickerOverlay.dtd UI for showing various views on a folder -->
+
+<!ENTITY viewPicker.label "Ver:">
+<!ENTITY viewPicker.accesskey "e">
+<!ENTITY viewAll.label "Todas">
+<!ENTITY viewAll.accesskey "d">
+<!ENTITY viewUnread.label "Non lida">
+<!ENTITY viewUnread.accesskey "n">
+<!ENTITY viewNotDeleted.label "Non eliminado">
+<!ENTITY viewNotDeleted.accesskey "n">
+<!ENTITY viewTags.label "Etiquetas">
+<!ENTITY viewTags.accesskey "q">
+<!ENTITY viewCustomViews.label "Visualizacións personalizadas">
+<!ENTITY viewCustomViews.accesskey "p">
+<!ENTITY viewVirtualFolder.label "Gardar visualización como cartafol…">
+<!ENTITY viewVirtualFolder.accesskey "f">
+<!ENTITY viewCustomizeView.label "Personalizar…">
+<!ENTITY viewCustomizeView.accesskey "P">

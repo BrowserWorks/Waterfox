@@ -19,7 +19,7 @@ namespace dom {
 
 // you will see the phrases "rowgroup" and "section" used interchangably
 
-HTMLTableSectionElement::~HTMLTableSectionElement() {}
+HTMLTableSectionElement::~HTMLTableSectionElement() = default;
 
 JSObject* HTMLTableSectionElement::WrapNode(JSContext* aCx,
                                             JS::Handle<JSObject*> aGivenProto) {
@@ -121,11 +121,12 @@ bool HTMLTableSectionElement::ParseAttribute(
     /* ignore these attributes, stored simply as strings
        ch
     */
-    if (aAttribute == nsGkAtoms::charoff) {
-      return aResult.ParseIntWithBounds(aValue, 0);
-    }
     if (aAttribute == nsGkAtoms::height) {
-      return aResult.ParseSpecialIntValue(aValue);
+      // Per HTML spec there should be nothing special here, but all browsers
+      // implement height mapping to style.  See
+      // <https://github.com/whatwg/html/issues/4718>.  All browsers allow 0, so
+      // keep doing that.
+      return aResult.ParseHTMLDimension(aValue);
     }
     if (aAttribute == nsGkAtoms::align) {
       return ParseTableCellHAlignValue(aValue, aResult);

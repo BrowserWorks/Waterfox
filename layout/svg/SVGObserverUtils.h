@@ -16,6 +16,7 @@
 #include "nsIMutationObserver.h"
 #include "nsISupportsBase.h"
 #include "nsISupportsImpl.h"
+#include "nsIReferrerInfo.h"
 #include "nsStringFwd.h"
 #include "nsStubMutationObserver.h"
 #include "nsSVGUtils.h"
@@ -45,26 +46,20 @@ namespace mozilla {
  */
 class URLAndReferrerInfo {
  public:
-  URLAndReferrerInfo(nsIURI* aURI, nsIURI* aReferrer,
-                     mozilla::net::ReferrerPolicy aReferrerPolicy)
-      : mURI(aURI), mReferrer(aReferrer), mReferrerPolicy(aReferrerPolicy) {
+  URLAndReferrerInfo(nsIURI* aURI, nsIReferrerInfo* aReferrerInfo)
+      : mURI(aURI), mReferrerInfo(aReferrerInfo) {
     MOZ_ASSERT(aURI);
   }
 
-  URLAndReferrerInfo(nsIURI* aURI, URLExtraData* aExtraData)
-      : mURI(aURI),
-        mReferrer(aExtraData->GetReferrer()),
-        mReferrerPolicy(aExtraData->GetReferrerPolicy()) {
+  URLAndReferrerInfo(nsIURI* aURI, const URLExtraData& aExtraData)
+      : mURI(aURI), mReferrerInfo(aExtraData.ReferrerInfo()) {
     MOZ_ASSERT(aURI);
   }
 
   NS_INLINE_DECL_REFCOUNTING(URLAndReferrerInfo)
 
   nsIURI* GetURI() const { return mURI; }
-  nsIURI* GetReferrer() const { return mReferrer; }
-  mozilla::net::ReferrerPolicy GetReferrerPolicy() const {
-    return mReferrerPolicy;
-  }
+  nsIReferrerInfo* GetReferrerInfo() const { return mReferrerInfo; }
 
   bool operator==(const URLAndReferrerInfo& aRHS) const;
 
@@ -72,8 +67,7 @@ class URLAndReferrerInfo {
   ~URLAndReferrerInfo() = default;
 
   nsCOMPtr<nsIURI> mURI;
-  nsCOMPtr<nsIURI> mReferrer;
-  mozilla::net::ReferrerPolicy mReferrerPolicy;
+  nsCOMPtr<nsIReferrerInfo> mReferrerInfo;
 };
 
 /**
@@ -103,7 +97,7 @@ class SVGRenderingObserver : public nsStubMutationObserver {
  public:
   typedef mozilla::dom::Element Element;
 
-  SVGRenderingObserver() : mInObserverList(false) {}
+  SVGRenderingObserver() : mInObserverSet(false) {}
 
   // nsIMutationObserver
   NS_DECL_NSIMUTATIONOBSERVER_ATTRIBUTECHANGED
@@ -162,8 +156,8 @@ class SVGRenderingObserver : public nsStubMutationObserver {
   void DebugObserverSet();
 #endif
 
-  // Whether we're in our referenced element's observer list at this time.
-  bool mInObserverList;
+  // Whether we're in our observed element's observer set at this time.
+  bool mInObserverSet;
 };
 
 class SVGObserverUtils {
@@ -218,9 +212,9 @@ class SVGObserverUtils {
    * frame with observers and invalidate them instead.
    *
    * Note that this method is very different to e.g.
-   * nsNodeUtils::AttributeChanged which walks up the content node tree all the
-   * way to the root node (not stopping if it encounters a non-container SVG
-   * node) invalidating all mutation observers (not just
+   * MutationObservers::AttributeChanged which walks up the content node tree
+   * all the way to the root node (not stopping if it encounters a non-container
+   * SVG node) invalidating all mutation observers (not just
    * nsSVGRenderingObservers) on all nodes along the way (not just the first
    * node it finds with observers). In other words, by doing all the
    * things in parentheses in the preceding sentence, this method uses
@@ -251,7 +245,7 @@ class SVGObserverUtils {
    * Get the paint server for aPaintedFrame.
    */
   static nsSVGPaintServerFrame* GetAndObservePaintServer(
-      nsIFrame* aTargetFrame, nsStyleSVGPaint nsStyleSVG::*aPaint);
+      nsIFrame* aPaintedFrame, mozilla::StyleSVGPaint nsStyleSVG::*aPaint);
 
   /**
    * Get the start/mid/end-markers for the given frame, and add the frame as
@@ -296,13 +290,13 @@ class SVGObserverUtils {
    * set is destroyed or has its filter style reset).
    *
    * XXXjwatt: It's a bit unfortunate that both we and
-   * CanvasRenderingContext2D::UpdateFilter process the list of nsStyleFilter
+   * CanvasRenderingContext2D::UpdateFilter process the list of StyleFilter
    * objects separately.  It would be better to refactor things so that we only
    * do that work once.
    */
   static already_AddRefed<nsISupports> ObserveFiltersForCanvasContext(
       CanvasRenderingContext2D* aContext, Element* aCanvasElement,
-      nsTArray<nsStyleFilter>& aFilters);
+      Span<const StyleFilter> aFilters);
 
   /**
    * Called when cycle collecting CanvasRenderingContext2D, and requires the
@@ -403,7 +397,7 @@ class SVGObserverUtils {
    * A helper function to resolve filter URL.
    */
   static already_AddRefed<URLAndReferrerInfo> GetFilterURI(
-      nsIFrame* aFrame, const nsStyleFilter& aFilter);
+      nsIFrame* aFrame, const StyleFilter& aFilter);
 
   /**
    * Return a baseURL for resolving a local-ref URL.

@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title        "ਤਤਕਰਾ">
+<!ENTITY buildToc.label      "ਇੱਥੋਂ ਤਤਕਰਾ ਬਣਾਓ:">
+<!ENTITY tag.label           "ਟੈਗ:">
+<!ENTITY class.label         "ਕਲਾਸ:">
+<!ENTITY header1.label       "ਲੈਵਲ 1">
+<!ENTITY header2.label       "ਲੈਵਲ 2">
+<!ENTITY header3.label       "ਲੈਵਲ 3">
+<!ENTITY header4.label       "ਲੈਵਲ 4">
+<!ENTITY header5.label       "ਲੈਵਲ 5">
+<!ENTITY header6.label       "ਲੈਵਲ 6">
+<!ENTITY makeReadOnly.label  "ਤਤਕਰਾ ਕੇਵਲ ਪੜ੍ਹਨ ਲਈ ਬਣਾਓ">
+<!ENTITY orderedList.label   "ਸਾਰੇ ਤਤਕਰੇ ਵਿੱਚ ਸਭ ਐਂਟਰੀਆਂ ਨੂੰ ਨੰਬਰ ਦਿਓ">

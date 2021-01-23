@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Encontu pa cuentes de charra">
+
+<!ENTITY accountProtocolTitle.label   "Rede de chat">
+<!ENTITY accountProtocolInfo.label    "Por favor, esbilla la rede de la to cuenta de chat.">
+<!ENTITY accountProtocolField.label   "Rede:">
+<!ENTITY accountProtocolGetMore.label "Obtener más…">
+
+<!ENTITY accountUsernameTitle.label   "Nome d'usuariu">
+<!ENTITY accountUsernameDuplicate.label "¡Esta cuenta yá ta configurada!">
+
+<!ENTITY accountPasswordTitle.label   "Contraseña">
+<!ENTITY accountPasswordInfo.label    "Por favor, introduz la contraseña nel campu d'abaxo.">
+<!ENTITY accountPasswordField.label   "Contraseña:">
+<!ENTITY accountPasswordManager.label "La contraseña introducida equí va guardase nel alministrador de contraseñes. Dexa esta caxella erma si quies que te soliciten la contraseña cada vegada que te coneutes a ella.">
+
+<!ENTITY accountAdvancedTitle.label   "Opciones avanzaes">
+<!ENTITY accountAdvancedInfo.label    "Si quies, pues saltate esti pasu.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Avisar si hai corréu nuevu">
+<!ENTITY accountAliasGroupbox.caption "Nomatu llocal">
+<!ENTITY accountAliasField.label      "Nomatu:">
+<!ENTITY accountAliasInfo.label       "Esto namái va amosase nes conversaciones cuando fales, non na llista de los tos collacios.">
+<!ENTITY accountProxySettings.caption "Configuración de proxy">
+<!ENTITY accountProxySettings.change.label     "Camudar…">
+<!ENTITY accountProxySettings.change.accessKey "C">
+
+<!ENTITY accountSummaryTitle.label   "Resume">
+<!ENTITY accountSummaryInfo.label    "A continuación amuésase un resume de la información qu'introduxisti. Por favor, compruébela enantes de que se cree la cuenta.">
+<!ENTITY accountSummary.connectNow.label "Coneutar a esta cuenta agora.">

@@ -21,10 +21,15 @@
 #include "mozilla/Telemetry.h"
 #include "mozilla/TextEventDispatcher.h"
 #include "mozilla/TextEvents.h"
+#include "mozilla/ToString.h"
 #include "mozilla/WindowsVersion.h"
-#include "nsIXULRuntime.h"
 #include "nsWindow.h"
 #include "nsPrintfCString.h"
+
+// Workaround for mingw32
+#ifndef TS_SD_INPUTPANEMANUALDISPLAYENABLE
+#  define TS_SD_INPUTPANEMANUALDISPLAYENABLE 0x40
+#endif
 
 namespace mozilla {
 namespace widget {
@@ -906,6 +911,9 @@ class GetInputScopeString : public nsAutoCString {
         case IS_XML:
           AppendLiteral("IS_XML");
           break;
+        case IS_PRIVATE:
+          AppendLiteral("IS_PRIVATE");
+          break;
         default:
           AppendPrintf("Unknown Value(%d)", inputScope);
           break;
@@ -923,7 +931,7 @@ class InputScopeImpl final : public ITfInputScope {
 
  public:
   explicit InputScopeImpl(const nsTArray<InputScope>& aList)
-      : mInputScopes(aList) {
+      : mInputScopes(aList.Clone()) {
     MOZ_LOG(
         sTextStoreLog, LogLevel::Info,
         ("0x%p InputScopeImpl(%s)", this, GetInputScopeString(aList).get()));
@@ -1913,7 +1921,8 @@ bool TSFTextStore::Init(nsWindowBase* aWidget, const InputContext& aContext) {
     return false;
   }
 
-  SetInputScope(aContext.mHTMLInputType, aContext.mHTMLInputInputmode);
+  SetInputScope(aContext.mHTMLInputType, aContext.mHTMLInputInputmode,
+                aContext.mInPrivateBrowsing);
 
   // Create document manager
   RefPtr<ITfThreadMgr> threadMgr = sThreadMgr;
@@ -2337,15 +2346,15 @@ void TSFTextStore::FlushPendingActions() {
     switch (action.mType) {
       case PendingAction::Type::eKeyboardEvent:
         if (mDestroyed) {
-          MOZ_LOG(
-              sTextStoreLog, LogLevel::Warning,
-              ("0x%p   TSFTextStore::FlushPendingActions() "
-               "IGNORED pending KeyboardEvent(%s) due to already destroyed",
-               action.mKeyMsg->message == WM_KEYDOWN ? "eKeyDown" : "eKeyUp",
-               this));
+          MOZ_LOG(sTextStoreLog, LogLevel::Warning,
+                  ("0x%p   TSFTextStore::FlushPendingActions() "
+                   "IGNORED pending KeyboardEvent(%s) due to already destroyed",
+                   action.mKeyMsg.message == WM_KEYDOWN ? "eKeyDown" : "eKeyUp",
+                   this));
         }
-        MOZ_DIAGNOSTIC_ASSERT(action.mKeyMsg);
-        DispatchKeyboardEventAsProcessedByIME(*action.mKeyMsg);
+        MOZ_DIAGNOSTIC_ASSERT(action.mKeyMsg.message == WM_KEYDOWN ||
+                              action.mKeyMsg.message == WM_KEYUP);
+        DispatchKeyboardEventAsProcessedByIME(action.mKeyMsg);
         if (!widget || widget->Destroyed()) {
           break;
         }
@@ -2661,7 +2670,7 @@ void TSFTextStore::MaybeDispatchKeyboardEventAsProcessedByIME() {
          this));
     PendingAction* action = mPendingActions.AppendElement();
     action->mType = PendingAction::Type::eKeyboardEvent;
-    action->mKeyMsg = sHandlingKeyMsg;
+    memcpy(&action->mKeyMsg, sHandlingKeyMsg, sizeof(MSG));
     return;
   }
 
@@ -2716,7 +2725,8 @@ TSFTextStore::GetStatus(TS_STATUS* pdcs) {
             ("0x%p   TSFTextStore::GetStatus() FAILED due to null pdcs", this));
     return E_INVALIDARG;
   }
-  pdcs->dwDynamicFlags = 0;
+  // We manage on-screen keyboard by own.
+  pdcs->dwDynamicFlags = TS_SD_INPUTPANEMANUALDISPLAYENABLE;
   // we use a "flat" text model for TSF support so no hidden text
   pdcs->dwStaticFlags = TS_SS_NOHIDDENTEXT;
   return S_OK;
@@ -3298,22 +3308,22 @@ static bool GetColor(const TF_DA_COLOR& aTSFColor, nscolor& aResult) {
 }
 
 static bool GetLineStyle(TF_DA_LINESTYLE aTSFLineStyle,
-                         uint8_t& aTextRangeLineStyle) {
+                         TextRangeStyle::LineStyle& aTextRangeLineStyle) {
   switch (aTSFLineStyle) {
     case TF_LS_NONE:
-      aTextRangeLineStyle = TextRangeStyle::LINESTYLE_NONE;
+      aTextRangeLineStyle = TextRangeStyle::LineStyle::None;
       return true;
     case TF_LS_SOLID:
-      aTextRangeLineStyle = TextRangeStyle::LINESTYLE_SOLID;
+      aTextRangeLineStyle = TextRangeStyle::LineStyle::Solid;
       return true;
     case TF_LS_DOT:
-      aTextRangeLineStyle = TextRangeStyle::LINESTYLE_DOTTED;
+      aTextRangeLineStyle = TextRangeStyle::LineStyle::Dotted;
       return true;
     case TF_LS_DASH:
-      aTextRangeLineStyle = TextRangeStyle::LINESTYLE_DASHED;
+      aTextRangeLineStyle = TextRangeStyle::LineStyle::Dashed;
       return true;
     case TF_LS_SQUIGGLE:
-      aTextRangeLineStyle = TextRangeStyle::LINESTYLE_WAVY;
+      aTextRangeLineStyle = TextRangeStyle::LineStyle::Wavy;
       return true;
     default:
       return false;
@@ -3958,62 +3968,17 @@ bool TSFTextStore::ShouldSetInputScopeOfURLBarToDefault() {
 }
 
 void TSFTextStore::SetInputScope(const nsString& aHTMLInputType,
-                                 const nsString& aHTMLInputInputMode) {
+                                 const nsString& aHTMLInputInputMode,
+                                 bool aInPrivateBrowsing) {
   mInputScopes.Clear();
-  if (aHTMLInputType.IsEmpty() || aHTMLInputType.EqualsLiteral("text")) {
-    if (aHTMLInputInputMode.EqualsLiteral("url")) {
-      mInputScopes.AppendElement(IS_URL);
-    } else if (aHTMLInputInputMode.EqualsLiteral("mozAwesomebar")) {
-      // Even if Awesomebar has focus, user may not input URL directly.
-      // However, on-screen keyboard for URL should be shown because it has
-      // some useful additional keys like ".com" and they are not hindrances
-      // even when inputting non-URL text, e.g., words to search something in
-      // the web.  On the other hand, a lot of Microsoft's IMEs and Google
-      // Japanese Input make their open state "closed" automatically if we
-      // notify them of URL as the input scope.  However, this is very annoying
-      // for the users when they try to input some words to search the web or
-      // bookmark/history items.  Therefore, if they are active, we need to
-      // notify them of the default input scope for avoiding this issue.
-      if (TSFTextStore::ShouldSetInputScopeOfURLBarToDefault()) {
-        return;
-      }
-      // Don't append IS_SEARCH here for showing on-screen keyboard for URL.
-      mInputScopes.AppendElement(IS_URL);
-    } else if (aHTMLInputInputMode.EqualsLiteral("email")) {
-      mInputScopes.AppendElement(IS_EMAIL_SMTPEMAILADDRESS);
-    } else if (aHTMLInputType.EqualsLiteral("tel")) {
-      mInputScopes.AppendElement(IS_TELEPHONE_FULLTELEPHONENUMBER);
-      mInputScopes.AppendElement(IS_TELEPHONE_LOCALNUMBER);
-    } else if (aHTMLInputType.EqualsLiteral("numeric")) {
-      mInputScopes.AppendElement(IS_NUMBER);
-    }
-    return;
-  }
 
-  // http://www.whatwg.org/specs/web-apps/current-work/multipage/the-input-element.html
-  if (aHTMLInputType.EqualsLiteral("url")) {
-    mInputScopes.AppendElement(IS_URL);
-  } else if (aHTMLInputType.EqualsLiteral("search")) {
-    mInputScopes.AppendElement(IS_SEARCH);
-  } else if (aHTMLInputType.EqualsLiteral("email")) {
-    mInputScopes.AppendElement(IS_EMAIL_SMTPEMAILADDRESS);
-  } else if (aHTMLInputType.EqualsLiteral("password")) {
-    mInputScopes.AppendElement(IS_PASSWORD);
-  } else if (aHTMLInputType.EqualsLiteral("datetime") ||
-             aHTMLInputType.EqualsLiteral("datetime-local")) {
-    mInputScopes.AppendElement(IS_DATE_FULLDATE);
-    mInputScopes.AppendElement(IS_TIME_FULLTIME);
-  } else if (aHTMLInputType.EqualsLiteral("date") ||
-             aHTMLInputType.EqualsLiteral("month") ||
-             aHTMLInputType.EqualsLiteral("week")) {
-    mInputScopes.AppendElement(IS_DATE_FULLDATE);
-  } else if (aHTMLInputType.EqualsLiteral("time")) {
-    mInputScopes.AppendElement(IS_TIME_FULLTIME);
-  } else if (aHTMLInputType.EqualsLiteral("tel")) {
-    mInputScopes.AppendElement(IS_TELEPHONE_FULLTELEPHONENUMBER);
-    mInputScopes.AppendElement(IS_TELEPHONE_LOCALNUMBER);
-  } else if (aHTMLInputType.EqualsLiteral("number")) {
-    mInputScopes.AppendElement(IS_NUMBER);
+  // IME may refer only first input scope, but we will append inputmode's
+  // input scopes too like Chrome since IME may refer it.
+  IMEHandler::AppendInputScopeFromType(aHTMLInputType, mInputScopes);
+  IMEHandler::AppendInputScopeFromInputmode(aHTMLInputInputMode, mInputScopes);
+
+  if (aInPrivateBrowsing) {
+    mInputScopes.AppendElement(IS_PRIVATE);
   }
 }
 
@@ -4719,25 +4684,28 @@ bool TSFTextStore::MaybeHackNoErrorLayoutBugs(LONG& aACPStart, LONG& aACPEnd) {
     // mode on Win7.  So, we should never return TS_E_NOLAYOUT to MS IME for
     // Japanese.
     case TextInputProcessorID::eMicrosoftIMEForJapanese:
-      if (sAlllowToStopHackingIfFine) {
-        return false;
-      }
       // Basically, MS-IME tries to retrieve whole composition string rect
       // at deciding suggest window immediately after unlocking the document.
       // However, in e10s mode, the content hasn't updated yet in most cases.
       // Therefore, if the first character at the retrieving range rect is
       // available, we should use it as the result.
+      // Note that according to bug 1609675, MS-IME for Japanese itself does
+      // not handle TS_E_NOLAYOUT correctly at least on Build 18363.657 (1909).
       if (TSFPrefs::DoNotReturnNoLayoutErrorToMSJapaneseIMEAtFirstChar() &&
           aACPStart < aACPEnd) {
         aACPEnd = aACPStart;
+        break;
+      }
+      if (sAlllowToStopHackingIfFine) {
+        return false;
       }
       // Although, the condition is not clear, MS-IME sometimes retrieves the
       // caret rect immediately after modifying the composition string but
       // before unlocking the document.  In such case, we should return the
       // nearest character rect.
-      else if (TSFPrefs::DoNotReturnNoLayoutErrorToMSJapaneseIMEAtCaret() &&
-               aACPStart == aACPEnd && selectionForTSF.IsCollapsed() &&
-               selectionForTSF.EndOffset() == aACPEnd) {
+      if (TSFPrefs::DoNotReturnNoLayoutErrorToMSJapaneseIMEAtCaret() &&
+          aACPStart == aACPEnd && selectionForTSF.IsCollapsed() &&
+          selectionForTSF.EndOffset() == aACPEnd) {
         int32_t minOffsetOfLayoutChanged =
             static_cast<int32_t>(mContentForTSF.MinOffsetOfLayoutChanged());
         aACPEnd = aACPStart = std::max(minOffsetOfLayoutChanged - 1, 0);
@@ -4807,7 +4775,7 @@ bool TSFTextStore::MaybeHackNoErrorLayoutBugs(LONG& aACPStart, LONG& aACPEnd) {
         MOZ_ASSERT(TSFStaticSink::IsATOKReferringNativeCaretActive());
         return false;
       }
-      MOZ_FALLTHROUGH;
+      [[fallthrough]];
     case TextInputProcessorID::eATOK2016:
     case TextInputProcessorID::eATOKUnknown:
       if (!TSFPrefs::DoNotReturnNoLayoutErrorToATOKOfCompositionString()) {
@@ -5995,20 +5963,12 @@ nsresult TSFTextStore::OnTextChangeInternal(
 
   MOZ_LOG(sTextStoreLog, LogLevel::Debug,
           ("0x%p   TSFTextStore::OnTextChangeInternal(aIMENotification={ "
-           "mMessage=0x%08X, mTextChangeData={ mStartOffset=%lu, "
-           "mRemovedEndOffset=%lu, mAddedEndOffset=%lu, "
-           "mCausedOnlyByComposition=%s, "
-           "mIncludingChangesDuringComposition=%s, "
-           "mIncludingChangesWithoutComposition=%s }), "
+           "mMessage=0x%08X, mTextChangeData=%s }), "
            "mDestroyed=%s, mSink=0x%p, mSinkMask=%s, "
            "mComposition.IsComposing()=%s",
-           this, aIMENotification.mMessage, textChangeData.mStartOffset,
-           textChangeData.mRemovedEndOffset, textChangeData.mAddedEndOffset,
-           GetBoolName(textChangeData.mCausedOnlyByComposition),
-           GetBoolName(textChangeData.mIncludingChangesDuringComposition),
-           GetBoolName(textChangeData.mIncludingChangesWithoutComposition),
-           GetBoolName(mDestroyed), mSink.get(),
-           GetSinkMaskNameStr(mSinkMask).get(),
+           this, aIMENotification.mMessage,
+           mozilla::ToString(textChangeData).c_str(), GetBoolName(mDestroyed),
+           mSink.get(), GetSinkMaskNameStr(mSinkMask).get(),
            GetBoolName(mComposition.IsComposing())));
 
   if (mDestroyed) {
@@ -6095,18 +6055,10 @@ nsresult TSFTextStore::OnSelectionChangeInternal(
       aIMENotification.mSelectionChangeData;
   MOZ_LOG(sTextStoreLog, LogLevel::Debug,
           ("0x%p   TSFTextStore::OnSelectionChangeInternal("
-           "aIMENotification={ mSelectionChangeData={ mOffset=%lu, "
-           "Length()=%lu, mReversed=%s, mWritingMode=%s, "
-           "mCausedByComposition=%s, mCausedBySelectionEvent=%s, "
-           "mOccurredDuringComposition=%s } }), mDestroyed=%s, "
+           "aIMENotification={ mSelectionChangeData=%s }), mDestroyed=%s, "
            "mSink=0x%p, mSinkMask=%s, mIsRecordingActionsWithoutLock=%s, "
            "mComposition.IsComposing()=%s",
-           this, selectionChangeData.mOffset, selectionChangeData.Length(),
-           GetBoolName(selectionChangeData.mReversed),
-           GetWritingModeName(selectionChangeData.GetWritingMode()).get(),
-           GetBoolName(selectionChangeData.mCausedByComposition),
-           GetBoolName(selectionChangeData.mCausedBySelectionEvent),
-           GetBoolName(selectionChangeData.mOccurredDuringComposition),
+           this, mozilla::ToString(selectionChangeData).c_str(),
            GetBoolName(mDestroyed), mSink.get(),
            GetSinkMaskNameStr(mSinkMask).get(),
            GetBoolName(mIsRecordingActionsWithoutLock),
@@ -6718,7 +6670,8 @@ void TSFTextStore::SetInputContext(nsWindowBase* aWidget,
     if (sEnabledTextStore) {
       RefPtr<TSFTextStore> textStore(sEnabledTextStore);
       textStore->SetInputScope(aContext.mHTMLInputType,
-                               aContext.mHTMLInputInputmode);
+                               aContext.mHTMLInputInputmode,
+                               aContext.mInPrivateBrowsing);
     }
     return;
   }

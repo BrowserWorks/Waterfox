@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+   %brandDTD;
+<!ENTITY aboutLogins.title                       "ចូល">
+<!ENTITY aboutLogins.update                      "ធ្វើ​បច្ចុប្បន្នភាព">
+<!ENTITY aboutLogins.emptyLoginText              "រក្សា​សុវត្ថិភាព​ការ​ចូល​របស់​អ្នក">
+<!ENTITY aboutLogins.emptyLoginHint              "ការ​ចូល និង​ព័ត៌មាន​ចូល​ដែល​អ្នក​រក្សាទុក​ដោយ​ប្រើ &brandShortName; នឹង​បង្ហាញ​នៅ​ទីនេះ។">

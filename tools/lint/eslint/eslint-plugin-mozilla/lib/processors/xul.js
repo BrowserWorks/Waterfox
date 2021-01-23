@@ -17,7 +17,7 @@ let XMLParser = require("./processor-helpers").XMLParser;
 // Stores any XML parse error
 let xmlParseError = null;
 
-// Stores the lines of JS code generated from the XBL
+// Stores the lines of JS code generated from the XUL.
 let scriptLines = [];
 // Stores a map from the synthetic line number to the real line number
 // and column offset.
@@ -34,11 +34,11 @@ const kIfdefStateForLinting = {
   MOZ_DATA_REPORTING: true,
   MOZ_TELEMETRY_REPORTING: true,
   MOZ_CRASHREPORTER: true,
+  MOZ_NORMANDY: true,
   MOZ_MAINTENANCE_SERVICE: true,
   HAVE_SHELL_SERVICE: true,
   MENUBAR_CAN_AUTOHIDE: true,
   MOZILLA_OFFICIAL: true,
-  BROWSER_XHTML: false, // other code can lint browser.xhtml, we hope.
 };
 
 // Anything not in the above list is assumed false.
@@ -144,7 +144,8 @@ function recursiveExpand(node) {
         // Ignore these, see bug 371900 for why people might do this.
         continue;
       }
-      let nodeDesc = node.local;
+      // Ignore dashes in the tag name
+      let nodeDesc = node.local.replace(/-/g, "");
       if (node.attributes.id) {
         nodeDesc += "_" + node.attributes.id.replace(/[^a-z]/gi, "_");
       }

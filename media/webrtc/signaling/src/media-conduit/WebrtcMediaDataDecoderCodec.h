@@ -9,6 +9,7 @@
 #include "MediaInfo.h"
 #include "MediaResult.h"
 #include "PlatformDecoderModule.h"
+#include "VideoConduit.h"
 #include "WebrtcImageBuffer.h"
 #include "webrtc/common_video/include/video_frame_buffer.h"
 #include "webrtc/modules/video_coding/include/video_codec_interface.h"
@@ -51,6 +52,7 @@ class WebrtcMediaDataDecoder : public WebrtcVideoDecoder {
   void QueueFrame(MediaRawData* aFrame);
   AbstractThread* OwnerThread() const { return mTaskQueue; }
   bool OnTaskQueue() const;
+  int32_t CreateDecoder();
 
   const RefPtr<SharedThreadPool> mThreadPool;
   const RefPtr<TaskQueue> mTaskQueue;

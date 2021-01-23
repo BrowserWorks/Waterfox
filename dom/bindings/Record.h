@@ -11,12 +11,13 @@
 #ifndef mozilla_dom_Record_h
 #define mozilla_dom_Record_h
 
-#include "nsTHashtable.h"
+#include <utility>
+
+#include "mozilla/Attributes.h"
 #include "nsHashKeys.h"
 #include "nsString.h"
 #include "nsTArray.h"
-#include "mozilla/Attributes.h"
-#include "mozilla/Move.h"
+#include "nsTHashtable.h"
 
 namespace mozilla {
 namespace dom {
@@ -25,7 +26,7 @@ namespace binding_detail {
 template <typename KeyType, typename ValueType>
 class RecordEntry {
  public:
-  RecordEntry() {}
+  RecordEntry() = default;
 
   // Move constructor so we can do Records of Records.
   RecordEntry(RecordEntry<KeyType, ValueType>&& aOther)
@@ -58,7 +59,7 @@ class Record {
   typedef typename binding_detail::RecordEntry<KeyType, ValueType> EntryType;
   typedef Record<KeyType, ValueType> SelfType;
 
-  Record() {}
+  Record() = default;
 
   // Move constructor so we can do Record of Record.
   Record(SelfType&& aOther) : mEntries(std::move(aOther.mEntries)) {}

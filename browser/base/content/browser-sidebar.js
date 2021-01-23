@@ -17,7 +17,7 @@ var SidebarUI = {
           title: document
             .getElementById("sidebar-switcher-bookmarks")
             .getAttribute("label"),
-          url: "chrome://browser/content/places/bookmarksSidebar.xul",
+          url: "chrome://browser/content/places/bookmarksSidebar.xhtml",
           menuId: "menu_bookmarksSidebar",
           buttonId: "sidebar-switcher-bookmarks",
         },
@@ -28,7 +28,7 @@ var SidebarUI = {
           title: document
             .getElementById("sidebar-switcher-history")
             .getAttribute("label"),
-          url: "chrome://browser/content/places/historySidebar.xul",
+          url: "chrome://browser/content/places/historySidebar.xhtml",
           menuId: "menu_historySidebar",
           buttonId: "sidebar-switcher-history",
           triggerButtonId: "appMenuViewHistorySidebar",
@@ -226,7 +226,7 @@ var SidebarUI = {
     // First reset all ordinals to match DOM ordering.
     let browser = document.getElementById("browser");
     [...browser.children].forEach((node, i) => {
-      node.ordinal = i + 1;
+      node.style.MozBoxOrdinalGroup = i + 1;
     });
 
     if (!this._positionStart) {
@@ -234,9 +234,9 @@ var SidebarUI = {
       // Want to display as:  |   appcontent  | splitter |  sidebar-box  |
       // So we just swap box and appcontent ordering
       let appcontent = document.getElementById("appcontent");
-      let boxOrdinal = this._box.ordinal;
-      this._box.ordinal = appcontent.ordinal;
-      appcontent.ordinal = boxOrdinal;
+      let boxOrdinal = this._box.style.MozBoxOrdinalGroup;
+      this._box.style.MozBoxOrdinalGroup = appcontent.style.MozBoxOrdinalGroup;
+      appcontent.style.MozBoxOrdinalGroup = boxOrdinal;
       // Indicate we've switched ordering to the box
       this._box.setAttribute("positionend", true);
     } else {
@@ -526,12 +526,6 @@ var SidebarUI = {
         // Now that the currentId is updated, fire a show event.
         this._fireShowEvent();
       }
-
-      let selBrowser = gBrowser.selectedBrowser;
-      selBrowser.messageManager.sendAsyncMessage("Sidebar:VisibilityChange", {
-        commandID,
-        isOpen: true,
-      });
     });
   },
 
@@ -548,7 +542,6 @@ var SidebarUI = {
 
     this.hideSwitcherPanel();
 
-    let commandID = this._box.getAttribute("sidebarcommand");
     this.selectMenuItem("");
 
     // Replace the document currently displayed in the sidebar with about:blank
@@ -557,17 +550,13 @@ var SidebarUI = {
     // until about:blank has loaded (which does not happen as long as the
     // element is hidden).
     this.browser.setAttribute("src", "about:blank");
-    this.browser.docShell.createAboutBlankContentViewer(null);
+    this.browser.docShell.createAboutBlankContentViewer(null, null);
 
     this._box.removeAttribute("checked");
     this._box.hidden = this._splitter.hidden = true;
 
     let selBrowser = gBrowser.selectedBrowser;
     selBrowser.focus();
-    selBrowser.messageManager.sendAsyncMessage("Sidebar:VisibilityChange", {
-      commandID,
-      isOpen: false,
-    });
     if (triggerNode) {
       updateToggleControlLabel(triggerNode);
     }

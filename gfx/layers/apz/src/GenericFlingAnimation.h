@@ -15,15 +15,15 @@
 #include "LayersLogging.h"
 #include "Units.h"
 #include "OverscrollHandoffState.h"
-#include "gfxPrefs.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/Monitor.h"
 #include "mozilla/RefPtr.h"
+#include "mozilla/StaticPrefs_apz.h"
 #include "mozilla/TimeStamp.h"
 #include "nsThreadUtils.h"
 
-#define FLING_LOG(...)
-// #define FLING_LOG(...) printf_stderr("FLING: " __VA_ARGS__)
+static mozilla::LazyLogModule sApzFlgLog("apz.fling");
+#define FLING_LOG(...) MOZ_LOG(sApzFlgLog, LogLevel::Debug, (__VA_ARGS__))
 
 namespace mozilla {
 namespace layers {
@@ -95,8 +95,8 @@ class GenericFlingAnimation : public AsyncPanZoomAnimation,
     bool applyAcceleration = !aFlingIsHandedOff;
     if (applyAcceleration && !mApzc.mLastFlingTime.IsNull() &&
         (now - mApzc.mLastFlingTime).ToMilliseconds() <
-            gfxPrefs::APZFlingAccelInterval() &&
-        velocity.Length() >= gfxPrefs::APZFlingAccelMinVelocity()) {
+            StaticPrefs::apz_fling_accel_interval_ms() &&
+        velocity.Length() >= StaticPrefs::apz_fling_accel_min_velocity()) {
       if (velocity.x != 0 &&
           SameDirection(velocity.x, mApzc.mLastFlingVelocity.x)) {
         velocity.x = Accelerate(velocity.x, mApzc.mLastFlingVelocity.x);
@@ -221,8 +221,8 @@ class GenericFlingAnimation : public AsyncPanZoomAnimation,
   }
 
   static float Accelerate(float aBase, float aSupplemental) {
-    return (aBase * gfxPrefs::APZFlingAccelBaseMultiplier()) +
-           (aSupplemental * gfxPrefs::APZFlingAccelSupplementalMultiplier());
+    return (aBase * StaticPrefs::apz_fling_accel_base_mult()) +
+           (aSupplemental * StaticPrefs::apz_fling_accel_supplemental_mult());
   }
 
   AsyncPanZoomController& mApzc;

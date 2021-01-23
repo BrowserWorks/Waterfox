@@ -1,0 +1,60 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY time.midnight "ਅੱਧੀ ਰਾਤ" >
+<!ENTITY time.noon "ਦੁਪਹਿਰ" >
+
+<!-- Day Names -->
+<!-- LOCALIZATION NOTE : Accesskeys for day.1.Ddd to day.7.Ddd are currently
+     only used in Preferences > Views > Workweek groupbox -->
+<!ENTITY day.1.Ddd "ਐਤ" >
+<!ENTITY day.1.Ddd.accesskey "S">
+<!ENTITY day.2.Ddd "ਸੋਮ" >
+<!ENTITY day.2.Ddd.accesskey "M">
+<!ENTITY day.3.Ddd "ਮੰਗਲ" >
+<!ENTITY day.3.Ddd.accesskey "T">
+<!ENTITY day.4.Ddd "ਬੁੱਧ" >
+<!ENTITY day.4.Ddd.accesskey "W">
+<!ENTITY day.5.Ddd "ਵੀਰ" >
+<!ENTITY day.5.Ddd.accesskey "h">
+<!ENTITY day.6.Ddd "ਸ਼ੁੱਕਰ" >
+<!ENTITY day.6.Ddd.accesskey "F">
+<!ENTITY day.7.Ddd "ਸ਼ਨਿੱਚਰ" >
+<!ENTITY day.7.Ddd.accesskey "a">
+
+<!ENTITY day.1.name "ਐਤਵਾਰ" >
+<!ENTITY day.2.name "ਸੋਮਵਰ" >
+<!ENTITY day.3.name "ਮੰਗਲਵਾਰ" >
+<!ENTITY day.4.name "ਬੁੱਧਵਾਰ" >
+<!ENTITY day.5.name "ਵੀਰਵਾਰ" >
+<!ENTITY day.6.name "ਸ਼ੁੱਕਰਵਾਰ" >
+<!ENTITY day.7.name "ਸ਼ਨਿੱਚਰਵਾਰ" >
+
+<!-- Units -->
+<!ENTITY calendar.global.units.minute   "ਮਿੰਟ">
+<!ENTITY calendar.global.units.minutes  "ਮਿੰਟ">
+<!ENTITY calendar.global.units.hour     "ਘੰਟਾ">
+<!ENTITY calendar.global.units.hours    "ਘੰਟੇ">
+<!ENTITY calendar.global.units.day      "ਦਿਨ">
+<!ENTITY calendar.global.units.days     "ਦਿਨ">
+
+<!ENTITY month.1.name "ਜਨਵਰੀ" >
+<!ENTITY month.2.name "ਫਰਵਰੀ" >
+<!ENTITY month.3.name "ਮਾਰਚ" >
+<!ENTITY month.4.name "ਅਪਰੈਲ" >
+<!ENTITY month.5.name "ਮਈ" >
+<!ENTITY month.6.name "ਜੂਨ" >
+<!ENTITY month.7.name "ਜੁਲਾਈ" >
+<!ENTITY month.8.name "ਅਗਸਤ" >
+<!ENTITY month.9.name "ਸਤੰਬਰ" >
+<!ENTITY month.10.name "ਅਕਤੂਬਰ" >
+<!ENTITY month.11.name "ਨਵੰਬਰ" >
+<!ENTITY month.12.name "ਦਸੰਬਰ" >
+
+<!ENTITY onemonthbackward.tooltip "ਇੱਕ ਮਹੀਨਾ ਪਿੱਛੇ" >
+<!ENTITY onemonthforward.tooltip "ਇੱਕ ਮਹੀਨਾ ਅੱਗੇ" >
+<!ENTITY showToday.tooltip "ਅੱਜ ਉੱਤੇ ਜਾਓ">
+<!ENTITY onedayforward.tooltip "ਇੱਕ ਦਿਨ ਅੱਗੇ">
+<!ENTITY onedaybackward.tooltip "ਇੱਕ ਦਿਨ ਪਿੱਛੇ">
+<!ENTITY showselectedday.tooltip "ਚੁਣੇ ਦਿਨ ਲਈ ਈਵੈਂਟ ਵੇਖੋ">

@@ -155,6 +155,53 @@ var PlacesTestUtils = Object.freeze({
   },
 
   /**
+   * Clears any favicons stored in the database.
+   */
+  async clearFavicons() {
+    return new Promise(resolve => {
+      Services.obs.addObserver(function observer() {
+        Services.obs.removeObserver(observer, "places-favicons-expired");
+        resolve();
+      }, "places-favicons-expired");
+      PlacesUtils.favicons.expireAllFavicons();
+    });
+  },
+
+  /**
+   * Adds a bookmark to the database. This should only be used when you need to
+   * add keywords. Otherwise, use `PlacesUtils.bookmarks.insert()`.
+   * @param {string} aBookmarkObj.uri
+   * @param {string} [aBookmarkObj.title]
+   * @param {string} [aBookmarkObj.keyword]
+   */
+  async addBookmarkWithDetails(aBookmarkObj) {
+    await PlacesUtils.bookmarks.insert({
+      parentGuid: PlacesUtils.bookmarks.unfiledGuid,
+      title: aBookmarkObj.title || "A bookmark",
+      url: aBookmarkObj.uri,
+    });
+
+    if (aBookmarkObj.keyword) {
+      await PlacesUtils.keywords.insert({
+        keyword: aBookmarkObj.keyword,
+        url:
+          aBookmarkObj.uri instanceof Ci.nsIURI
+            ? aBookmarkObj.uri.spec
+            : aBookmarkObj.uri,
+        postData: aBookmarkObj.postData,
+      });
+    }
+
+    if (aBookmarkObj.tags) {
+      let uri =
+        aBookmarkObj.uri instanceof Ci.nsIURI
+          ? aBookmarkObj.uri
+          : Services.io.newURI(aBookmarkObj.uri);
+      PlacesUtils.tagging.tagURI(uri, aBookmarkObj.tags);
+    }
+  },
+
+  /**
    * Waits for all pending async statements on the default connection.
    *
    * @return {Promise}
@@ -198,7 +245,7 @@ var PlacesTestUtils = Object.freeze({
       "SELECT id FROM moz_places WHERE url_hash = hash(:url) AND url = :url",
       { url }
     );
-    return rows.length > 0;
+    return !!rows.length;
   },
 
   /**
@@ -404,7 +451,7 @@ var PlacesTestUtils = Object.freeze({
                 }
               };
             }
-            if (name == "skipTags" || name == "skipDescendantsOnItemRemoval") {
+            if (name == "skipTags") {
               return false;
             }
             return () => false;

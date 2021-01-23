@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "Pytać">
+
+<!ENTITY newPref.namePlaceholder       "Mjeno">
+
+<!ENTITY newPref.valueBoolean          "Boolean">
+<!ENTITY newPref.valueString           "String">
+<!ENTITY newPref.valueInteger          "Integer">
+
+<!ENTITY newPref.stringPlaceholder     "Znamješkowy rjećazk zapodać">
+<!ENTITY newPref.numberPlaceholder     "Ličbu zapodać">
+
+<!ENTITY newPref.toggleButton          "Přešaltować">
+<!ENTITY newPref.cancelButton          "Přetorhnyć">
+
+<!ENTITY contextMenu.copyPrefName      "Mjeno kopěrować">
+<!ENTITY contextMenu.copyPrefValue     "Hódnotu kopěrować">

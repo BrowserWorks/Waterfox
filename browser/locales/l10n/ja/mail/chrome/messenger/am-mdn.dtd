@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title			"開封確認">
+<!ENTITY useGlobalPrefs.label		"このアカウントでは共通の開封確認設定に従う">
+<!ENTITY useGlobalPrefs.accesskey	"U">
+<!ENTITY globalReceipts.label		"共通の開封確認設定...">
+<!ENTITY globalReceipts.accesskey	"G">
+<!ENTITY useCustomPrefs.label		"このアカウントでは開封確認の設定を個別に指定する">
+<!ENTITY useCustomPrefs.accesskey	"C">
+<!ENTITY requestReceipt.label		"送信メッセージについて、毎回開封確認の返送を求める">
+<!ENTITY requestReceipt.accesskey	"W">
+<!ENTITY receiptArrive.label		"開封確認が届いたとき:">
+<!ENTITY leaveIt.label			"受信トレイに残す">
+<!ENTITY leaveIt.accesskey		"I">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label		"&quot;送信済みトレイ&quot; フォルダーに移動する">
+<!ENTITY moveToSent.accesskey		"M">
+<!ENTITY requestMDN.label		"開封確認の返送を求められたとき:">
+<!ENTITY returnSome.label		"必要に応じて開封確認を返送する">
+<!ENTITY returnSome.accesskey		"e">
+<!ENTITY never.label			"開封確認は一切返送しない">
+<!ENTITY never.accesskey		"N">
+<!ENTITY notInToCc.label		"メッセージの宛先や Cc に自分が含まれていない場合:">
+<!ENTITY notInToCc.accesskey		"T">
+<!ENTITY outsideDomain.label		"送信者のドメインが自分のものと異なる場合:">
+<!ENTITY outsideDomain.accesskey	"s">
+<!ENTITY otherCases.label		"上記のいずれにも当てはまらない場合:">
+<!ENTITY otherCases.accesskey		"o">
+<!ENTITY askMe.label			"確認する">
+<!ENTITY alwaysSend.label		"常に返送する">
+<!ENTITY neverSend.label		"返送しない">

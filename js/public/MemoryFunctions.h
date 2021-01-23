@@ -16,20 +16,9 @@
 #include "jstypes.h"  // JS_PUBLIC_API
 
 struct JS_PUBLIC_API JSContext;
+class JS_PUBLIC_API JSFreeOp;
+class JS_PUBLIC_API JSObject;
 struct JS_PUBLIC_API JSRuntime;
-
-struct JSFreeOp {
- protected:
-  JSRuntime* runtime_;
-
-  explicit JSFreeOp(JSRuntime* rt) : runtime_(rt) {}
-
- public:
-  JSRuntime* runtime() const {
-    MOZ_ASSERT(runtime_);
-    return runtime_;
-  }
-};
 
 extern JS_PUBLIC_API void* JS_malloc(JSContext* cx, size_t nbytes);
 
@@ -68,6 +57,15 @@ namespace JS {
 #define JS_FOR_EACH_PUBLIC_MEMORY_USE(_) \
   _(XPCWrappedNative)                    \
   _(DOMBinding)                          \
+  _(CTypeFFIType)                        \
+  _(CTypeFFITypeElements)                \
+  _(CTypeFunctionInfo)                   \
+  _(CTypeFieldInfo)                      \
+  _(CDataBufferPtr)                      \
+  _(CDataBuffer)                         \
+  _(CClosureInfo)                        \
+  _(CTypesInt64)                         \
+  _(PerfMeasurement)                     \
   _(Embedding1)                          \
   _(Embedding2)                          \
   _(Embedding3)                          \

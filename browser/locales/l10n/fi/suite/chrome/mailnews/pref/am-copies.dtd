@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!ENTITY copyAndFolderTitle.label "Kopiot ja kansiot">
+<!ENTITY sendingPrefix.label "Kun viestiä lähetetään:">
+<!ENTITY fccMailFolder.label "Tallenna kopio kansioon:">
+<!ENTITY fccMailFolder.accesskey "T">
+<!ENTITY fccReplyFollowsParent.label "Tallenna vastaukset samaan kansioon alkuperäisen viestin kanssa">
+<!ENTITY fccReplyFollowsParent.accesskey "v">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Lähetä kopio (Cc) näihin osoitteisiin:">
+<!ENTITY ccAddress.accesskey "C">
+<!ENTITY ccAddressList.placeholder "Erota osoitteet pilkuilla">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Lähetä piilokopio (Bcc) näihin osoitteisiin:">
+<!ENTITY bccAddress.accesskey "B">
+<!ENTITY bccAddressList.placeholder "Erota osoitteet pilkuilla">
+<!ENTITY saveMessageDlg.label "Kysy vahvistus ennen viestin tallentamista">
+<!ENTITY saveMessageDlg.accesskey "h">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "&quot;Lähetetyt&quot;, tilillä:">
+<!ENTITY sentFolderOn.accesskey "ä">
+<!ENTITY sentInOtherFolder.label "Muu kansio:">
+<!ENTITY sentInOtherFolder.accesskey "M">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Viestiarkistot">
+<!ENTITY keepArchives.label "Pidä viestiarkistot kansiossa:">
+<!ENTITY keepArchives.accesskey "d">
+<!ENTITY archiveHierarchyButton.label "Arkistointiasetukset…">
+<!ENTITY archiveHierarchyButton.accesskey "r">
+<!ENTITY archivesFolderOn.label "&quot;Arkistot&quot;, tilillä:">
+<!ENTITY archivesFolderOn.accesskey "s">
+<!ENTITY archiveInOtherFolder.label "Muu kansio:">
+<!ENTITY archiveInOtherFolder.accesskey "u">
+<!ENTITY specialFolders.label "Luonnokset ja viestipohjat">
+<!ENTITY keepDrafts2.label "Säilytä viestien luonnokset kansiossa:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "&quot;Luonnokset&quot;, tilillä:">
+<!ENTITY draftsFolderOn.accesskey "e">
+<!ENTITY draftInOtherFolder.label "Muu kansio:">
+<!ENTITY draftInOtherFolder.accesskey "k">
+<!ENTITY keepTemplates.label "Tallenna viestipohjat kansioon:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "&quot;Viestipohjat&quot;, tilillä:">
+<!ENTITY templatesFolderOn.accesskey "p">
+<!ENTITY templateInOtherFolder.label "Muu kansio:">
+<!ENTITY templateInOtherFolder.accesskey "n">

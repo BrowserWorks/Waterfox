@@ -11,14 +11,10 @@ const TEST_URL = "data:text/html,a test page";
 
 add_task(async function test_setup() {
   // Stop search-engine loads from hitting the network.
-  await Services.search.addEngineWithDetails(
-    "MozSearch",
-    "",
-    "",
-    "",
-    "GET",
-    "http://example.com/?q={searchTerms}"
-  );
+  await Services.search.addEngineWithDetails("MozSearch", {
+    method: "GET",
+    template: "http://example.com/?q={searchTerms}",
+  });
   let originalEngine = await Services.search.getDefault();
   let engine = Services.search.getEngineByName("MozSearch");
   await Services.search.setDefault(engine);
@@ -72,7 +68,7 @@ add_task(async function checkDragForbiddenURL() {
     // examples. In general we trust that function, we pick some testcases to
     // ensure we disallow dropping trimmed text.
     for (let url of [
-      "chrome://browser/content/aboutDialog.xul",
+      "chrome://browser/content/aboutDialog.xhtml",
       "file:///",
       "javascript:",
       "javascript:void(0)",

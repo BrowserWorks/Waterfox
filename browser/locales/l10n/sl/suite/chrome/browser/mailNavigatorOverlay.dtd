@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newMessageCmd.label             "Sporočilo">
+
+<!ENTITY newContactCmd.label             "Stik ...">
+
+<!ENTITY sendPage.label                  "Pošlji stran …">
+
+<!ENTITY contextSendThisPage.label       "Pošlji to stran ...">
+<!ENTITY contextSendThisLink.label       "Pošlji to povezavo ...">
+<!ENTITY contextSendImage.label          "Pošlji sliko ...">
+<!ENTITY contextSendVideo.label          "Pošlji video …">
+<!ENTITY contextSendAudio.label          "Pošlji zvok …">
+<!ENTITY contextSendFrame.label          "Pošlji okvir ...">
+
+<!ENTITY sendLinkCmd.label               "Pošlji povezavo …"> 
+

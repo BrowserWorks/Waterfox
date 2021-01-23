@@ -7,8 +7,8 @@ use api::units::*;
 use crate::debug_font_data;
 use crate::device::{Device, Program, Texture, TextureSlot, VertexDescriptor, ShaderError, VAO};
 use crate::device::{TextureFilter, VertexAttribute, VertexAttributeKind, VertexUsageHint};
-use euclid::{Point2D, Rect, Size2D, Transform3D};
-use crate::internal_types::{ORTHO_FAR_PLANE, ORTHO_NEAR_PLANE};
+use euclid::{Point2D, Rect, Size2D, Transform3D, default};
+use crate::internal_types::Swizzle;
 use std::f32;
 
 #[cfg_attr(feature = "capture", derive(Serialize))]
@@ -20,7 +20,8 @@ pub enum DebugItem {
         position: DevicePoint,
     },
     Rect {
-        color: ColorF,
+        outer_color: ColorF,
+        inner_color: ColorF,
         rect: DeviceRect,
     },
 }
@@ -122,7 +123,7 @@ impl DebugRenderer {
     pub fn new(device: &mut Device) -> Result<Self, ShaderError> {
         let font_program = device.create_program_linked(
             "debug_font",
-            String::new(),
+            &[],
             &DESC_FONT,
         )?;
         device.bind_program(&font_program);
@@ -130,7 +131,7 @@ impl DebugRenderer {
 
         let color_program = device.create_program_linked(
             "debug_color",
-            String::new(),
+            &[],
             &DESC_COLOR,
         )?;
 
@@ -193,7 +194,7 @@ impl DebugRenderer {
         text: &str,
         color: ColorU,
         bounds: Option<DeviceRect>,
-    ) -> Rect<f32> {
+    ) -> default::Rect<f32> {
         let mut x_start = x;
         let ipw = 1.0 / debug_font_data::BMP_WIDTH as f32;
         let iph = 1.0 / debug_font_data::BMP_HEIGHT as f32;
@@ -314,19 +315,26 @@ impl DebugRenderer {
         device: &mut Device,
         viewport_size: Option<DeviceIntSize>,
         scale: f32,
+        surface_origin_is_top_left: bool,
     ) {
         if let Some(viewport_size) = viewport_size {
             device.disable_depth();
             device.set_blend(true);
             device.set_blend_mode_premultiplied_alpha();
 
+            let (bottom, top) = if surface_origin_is_top_left {
+                (0.0, viewport_size.height as f32 * scale)
+            } else {
+                (viewport_size.height as f32 * scale, 0.0)
+            };
+
             let projection = Transform3D::ortho(
                 0.0,
                 viewport_size.width as f32 * scale,
-                viewport_size.height as f32 * scale,
-                0.0,
-                ORTHO_NEAR_PLANE,
-                ORTHO_FAR_PLANE,
+                bottom,
+                top,
+                device.ortho_near_plane(),
+                device.ortho_far_plane(),
             );
 
             // Triangles
@@ -360,7 +368,7 @@ impl DebugRenderer {
             if !self.font_indices.is_empty() {
                 device.bind_program(&self.font_program);
                 device.set_uniforms(&self.font_program, &projection);
-                device.bind_texture(DebugSampler::Font, &self.font_texture);
+                device.bind_texture(DebugSampler::Font, &self.font_texture, Swizzle::default());
                 device.bind_vao(&self.font_vao);
                 device.update_vao_indices(&self.font_vao, &self.font_indices, VertexUsageHint::Dynamic);
                 device.update_vao_main_vertices(

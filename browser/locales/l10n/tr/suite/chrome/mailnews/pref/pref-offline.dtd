@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-offline.xul -->
+<!--LOCALIZATION NOTE : FILE The 'Offline' preferences dialog -->
+
+<!ENTITY pref.network.title "Ağ ve depolama">
+<!ENTITY pref.offline.caption "Çevrim dışı">
+<!ENTITY textStartUp "Başlangıçta bunları yap:">
+<!ENTITY textStartUp.accesskey "B">
+<!ENTITY menuitemRememberPrevState "Önceki bağlanma durumunu hatırla">
+<!ENTITY menuitemAskMe "Bana çevrim içi olunup olunmayacağını sor">
+<!ENTITY menuitemAlwaysOnline "Hep çevrim içi başla">
+<!ENTITY menuitemAlwaysOffline "Hep çevrim dışı başla">
+<!ENTITY menuitemAutomatic "Otomatik olarak bul (mevcutsa)">
+<!ENTITY textGoingOnline "Çevrim içi olunca gönderilmeyen iletiler gönderilsin mi?">
+<!ENTITY radioAutoSend "Evet">
+<!ENTITY radioAutoSend.accesskey "E">
+<!ENTITY radioNotSend "Hayır">
+<!ENTITY radioNotSend.accesskey "H">
+<!ENTITY radioAskUnsent "Bana sor">
+<!ENTITY radioAskUnsent.accesskey "s">
+<!ENTITY textGoingOffline "Çevrim dışı olurken indirilmeyen iletiler indirilsin mi?">
+<!ENTITY radioAutoDownload "Evet">
+<!ENTITY radioAutoDownload.accesskey "E">
+<!ENTITY radioNotDownload "Hayır">
+<!ENTITY radioNotDownload.accesskey "H">
+<!ENTITY radioAskDownload "Bana sor">
+<!ENTITY radioAskDownload.accesskey "s">
+<!ENTITY mailConnections.caption "Posta bağlantıları">
+<!ENTITY mailnewsTimeout.label "Bağlantı zaman aşımına uğradı">
+<!ENTITY mailnewsTimeout.accesskey "z">
+<!ENTITY mailnewsTimeoutSeconds.label "saniye sonra">
+<!ENTITY Diskspace "Disk alanı">
+<!ENTITY offlineCompact.label "Sağdakini aşıyorsa dizinleri sıkıştır">
+<!ENTITY offlineCompact.accesskey "S">
+<!ENTITY mb.label "MB">

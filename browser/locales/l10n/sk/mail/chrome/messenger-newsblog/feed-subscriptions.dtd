@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Odoberané informačné kanály">
+<!ENTITY learnMore.label             "Ďalšie informácie o informačných kanáloch">
+
+<!ENTITY feedTitle.label             "Titulok:">
+<!ENTITY feedTitle.accesskey         "T">
+
+<!ENTITY feedLocation.label          "Adresa kanála:">
+<!ENTITY feedLocation.accesskey      "A">
+<!ENTITY feedLocation2.placeholder   "Zadajte platnú adresu kanála">
+<!ENTITY locationValidate.label      "Skontrolovať">
+<!ENTITY validateText.label          "Skontrolovať platnosť kanálu a získať platnú adresu URL.">
+
+<!ENTITY feedFolder.label            "Články ukladať v:">
+<!ENTITY feedFolder.accesskey        "n">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Kontrolovať dostupnosť nových článkov každých ">
+<!ENTITY biffStart.accesskey         "k">
+<!ENTITY biffMinutes.label           "minút">
+<!ENTITY biffMinutes.accesskey       "n">
+<!ENTITY biffDays.label              "dní">
+<!ENTITY biffDays.accesskey          "d">
+<!ENTITY recommendedUnits.label      "Vydavateľ odporúča:">
+
+<!ENTITY quickMode.label             "Zobraziť stručný súhrn príspevku namiesto načítania celej webovej stránky">
+<!ENTITY quickMode.accesskey         "Z">
+
+<!ENTITY autotagEnable.label         "Automaticky vytvoriť značky z názvov &lt;kategórií&gt; v kanáloch">
+<!ENTITY autotagEnable.accesskey     "m">
+<!ENTITY autotagUsePrefix.label      "Pridávať predponu:">
+<!ENTITY autotagUsePrefix.accesskey  "r">
+<!ENTITY autoTagPrefix.placeholder   "Zadajte predponu značky">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Pridať">
+<!ENTITY button.addFeed.accesskey    "P">
+<!ENTITY button.verifyFeed.label     "Overiť">
+<!ENTITY button.verifyFeed.accesskey "v">
+<!ENTITY button.updateFeed.label     "Aktualizovať">
+<!ENTITY button.updateFeed.accesskey "k">
+<!ENTITY button.removeFeed.label     "Odstrániť">
+<!ENTITY button.removeFeed.accesskey "d">
+<!ENTITY button.importOPML.label     "Importovať">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "Exportovať">
+<!ENTITY button.exportOPML.accesskey "E">
+<!ENTITY button.exportOPML.tooltip   "Exportovať kanály vrátane súborovej štruktúry. Pomocou skratiek Ctrl+kliknutie alebo Ctrl+enter je možné kanály vyexportovať ako zoznam.">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Zavrieť">

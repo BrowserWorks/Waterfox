@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 /* import-globals-from helper_events_test_runner.js */
@@ -19,41 +18,41 @@ const TEST_DATA = [
     expected: [
       {
         type: "load",
-        filename: TEST_URL + ":27",
+        filename: TEST_URL + ":29:38",
         attributes: [
           "Bubbling",
           "DOM2"
         ],
         handler: `
           () => {
-            var handler1 = function liveDivDblClick() {
+            const handler1 = function liveDivDblClick() {
               alert(1);
             };
-            var handler2 = function liveDivDragStart() {
+            const handler2 = function liveDivDragStart() {
               alert(2);
             };
-            var handler3 = function liveDivDragLeave() {
+            const handler3 = function liveDivDragLeave() {
               alert(3);
             };
-            var handler4 = function liveDivDragEnd() {
+            const handler4 = function liveDivDragEnd() {
               alert(4);
             };
-            var handler5 = function liveDivDrop() {
+            const handler5 = function liveDivDrop() {
               alert(5);
             };
-            var handler6 = function liveDivDragOver() {
+            const handler6 = function liveDivDragOver() {
               alert(6);
             };
-            var handler7 = function divClick1() {
+            const handler7 = function divClick1() {
               alert(7);
             };
-            var handler8 = function divClick2() {
+            const handler8 = function divClick2() {
               alert(8);
             };
-            var handler9 = function divKeyDown() {
+            const handler9 = function divKeyDown() {
               alert(9);
             };
-            var handler10 = function divDragOut() {
+            const handler10 = function divDragOut() {
               alert(10);
             };
 
@@ -73,7 +72,7 @@ const TEST_DATA = [
               $(document).on("dragout", "#livediv:xxxxx", handler10);
             }
 
-            var div = $("div")[0];
+            const div = $("div")[0];
             $(div).click(handler7);
             $(div).click(handler8);
             $(div).keydown(handler9);
@@ -81,7 +80,7 @@ const TEST_DATA = [
       },
       {
         type: "load",
-        filename: URL_ROOT + TEST_LIB + ":1224",
+        filename: URL_ROOT + TEST_LIB + ":1224:17",
         attributes: [
           "Bubbling",
           "DOM2"
@@ -127,7 +126,7 @@ const TEST_DATA = [
     expected: [
       {
         type: "click",
-        filename: TEST_URL + ":34",
+        filename: TEST_URL + ":36:43",
         attributes: [
           "jQuery"
         ],
@@ -138,7 +137,7 @@ const TEST_DATA = [
       },
       {
         type: "click",
-        filename: TEST_URL + ":35",
+        filename: TEST_URL + ":37:43",
         attributes: [
           "jQuery"
         ],
@@ -149,7 +148,7 @@ const TEST_DATA = [
       },
       {
         type: "click",
-        filename: URL_ROOT + TEST_LIB + ":1224",
+        filename: URL_ROOT + TEST_LIB + ":1224:17",
         attributes: [
           "Bubbling",
           "DOM2"
@@ -190,7 +189,7 @@ const TEST_DATA = [
       },
       {
         type: "keydown",
-        filename: TEST_URL + ":36",
+        filename: TEST_URL + ":38:44",
         attributes: [
           "jQuery"
         ],
@@ -201,7 +200,7 @@ const TEST_DATA = [
       },
       {
         type: "keydown",
-        filename: URL_ROOT + TEST_LIB + ":1224",
+        filename: URL_ROOT + TEST_LIB + ":1224:17",
         attributes: [
           "Bubbling",
           "DOM2"

@@ -9,18 +9,18 @@
 #include "nsIWidget.h"
 #include <OpenGL/gl.h>
 #include "gfxFailure.h"
-#include "gfxPrefs.h"
+#include "mozilla/IntegerRange.h"
+#include "mozilla/StaticPrefs_gfx.h"
+#include "mozilla/StaticPrefs_gl.h"
+#include "mozilla/StaticPrefs_layout.h"
 #include "prenv.h"
 #include "GeckoProfiler.h"
-#include "mozilla/gfx/MacIOSurface.h"
+#include "MozFramebuffer.h"
 #include "mozilla/layers/CompositorOptions.h"
 #include "mozilla/widget/CompositorWidget.h"
+#include "ScopedGLHelpers.h"
 
 #include <OpenGL/OpenGL.h>
-
-// When running inside a VM, creating an accelerated OpenGL context usually
-// fails. Uncomment this line to emulate that behavior.
-// #define EMULATE_VM
 
 namespace mozilla {
 namespace gl {
@@ -42,25 +42,14 @@ class CGLLibrary {
       }
     }
 
-    const char* db = PR_GetEnv("MOZ_CGL_DB");
-    if (db) {
-      mUseDoubleBufferedWindows = *db != '0';
-    }
-
     mInitialized = true;
     return true;
-  }
-
-  bool UseDoubleBufferedWindows() const {
-    MOZ_ASSERT(mInitialized);
-    return mUseDoubleBufferedWindows;
   }
 
   const auto& Library() const { return mOGLLibrary; }
 
  private:
   bool mInitialized = false;
-  bool mUseDoubleBufferedWindows = true;
   PRLibrary* mOGLLibrary = nullptr;
 };
 
@@ -68,10 +57,14 @@ CGLLibrary sCGLLibrary;
 
 GLContextCGL::GLContextCGL(CreateContextFlags flags, const SurfaceCaps& caps,
                            NSOpenGLContext* context, bool isOffscreen)
-    : GLContext(flags, caps, nullptr, isOffscreen), mContext(context) {}
+    : GLContext(flags, caps, nullptr, isOffscreen), mContext(context) {
+  CGDisplayRegisterReconfigurationCallback(DisplayReconfigurationCallback, this);
+}
 
 GLContextCGL::~GLContextCGL() {
   MarkDestroyed();
+
+  CGDisplayRemoveReconfigurationCallback(DisplayReconfigurationCallback, this);
 
   if (mContext) {
     if ([NSOpenGLContext currentContext] == mContext) {
@@ -98,7 +91,7 @@ bool GLContextCGL::MakeCurrentImpl() const {
     // If swapInt is 1, then glSwapBuffers will block and wait for a vblank signal.
     // When we're iterating as fast as possible, however, we want a non-blocking
     // glSwapBuffers, which will happen when swapInt==0.
-    GLint swapInt = gfxPrefs::LayoutFrameRate() == 0 ? 0 : 1;
+    GLint swapInt = StaticPrefs::layout_frame_rate() == 0 ? 0 : 1;
     [mContext setValues:&swapInt forParameter:NSOpenGLCPSwapInterval];
   }
   return true;
@@ -106,49 +99,13 @@ bool GLContextCGL::MakeCurrentImpl() const {
 
 bool GLContextCGL::IsCurrentImpl() const { return [NSOpenGLContext currentContext] == mContext; }
 
-GLenum GLContextCGL::GetPreferredARGB32Format() const { return LOCAL_GL_BGRA; }
-
-bool GLContextCGL::IsDoubleBuffered() const { return sCGLLibrary.UseDoubleBufferedWindows(); }
-
-bool GLContextCGL::SwapBuffers() {
-  AUTO_PROFILER_LABEL("GLContextCGL::SwapBuffers", GRAPHICS);
-
-  [mContext flushBuffer];
-  return true;
+/* static */ void GLContextCGL::DisplayReconfigurationCallback(CGDirectDisplayID aDisplay,
+                                                               CGDisplayChangeSummaryFlags aFlags,
+                                                               void* aUserInfo) {
+  if (aFlags & kCGDisplaySetModeFlag) {
+    static_cast<GLContextCGL*>(aUserInfo)->mActiveGPUSwitchMayHaveOccurred = true;
+  }
 }
-
-void GLContextCGL::GetWSIInfo(nsCString* const out) const { out->AppendLiteral("CGL"); }
-
-Maybe<SymbolLoader> GLContextCGL::GetSymbolLoader() const {
-  const auto& lib = sCGLLibrary.Library();
-  return Some(SymbolLoader(*lib));
-}
-
-already_AddRefed<GLContext> GLContextProviderCGL::CreateWrappingExisting(void*, void*) {
-  return nullptr;
-}
-
-static const NSOpenGLPixelFormatAttribute kAttribs_singleBuffered[] = {
-    NSOpenGLPFAAllowOfflineRenderers, 0};
-
-static const NSOpenGLPixelFormatAttribute kAttribs_singleBuffered_accel[] = {
-    NSOpenGLPFAAccelerated, NSOpenGLPFAAllowOfflineRenderers, 0};
-
-static const NSOpenGLPixelFormatAttribute kAttribs_doubleBuffered[] = {
-    NSOpenGLPFAAllowOfflineRenderers, NSOpenGLPFADoubleBuffer, 0};
-
-static const NSOpenGLPixelFormatAttribute kAttribs_doubleBuffered_accel[] = {
-    NSOpenGLPFAAccelerated, NSOpenGLPFAAllowOfflineRenderers, NSOpenGLPFADoubleBuffer, 0};
-
-static const NSOpenGLPixelFormatAttribute kAttribs_doubleBuffered_accel_webrender[] = {
-    NSOpenGLPFAAccelerated,
-    NSOpenGLPFAAllowOfflineRenderers,
-    NSOpenGLPFADoubleBuffer,
-    NSOpenGLPFAOpenGLProfile,
-    NSOpenGLProfileVersion3_2Core,
-    NSOpenGLPFADepthSize,
-    24,
-    0};
 
 static NSOpenGLContext* CreateWithFormat(const NSOpenGLPixelFormatAttribute* attribs) {
   NSOpenGLPixelFormat* format = [[NSOpenGLPixelFormat alloc] initWithAttributes:attribs];
@@ -164,57 +121,127 @@ static NSOpenGLContext* CreateWithFormat(const NSOpenGLPixelFormatAttribute* att
   return context;
 }
 
-already_AddRefed<GLContext> GLContextProviderCGL::CreateForCompositorWidget(
-    CompositorWidget* aCompositorWidget, bool aWebRender, bool aForceAccelerated) {
-  if (!aCompositorWidget) {
-    MOZ_ASSERT(false);
-    return nullptr;
-  }
-  return CreateForWindow(aCompositorWidget->RealWidget(), aWebRender, aForceAccelerated);
+// Get the "OpenGL display mask" for a fresh context. The return value of this
+// function depends on the time at which this function is called.
+// In practice, on a Macbook Pro with an integrated and a discrete GPU, this function returns the
+// display mask for the GPU that currently drives the internal display.
+//
+// Quick reference of the concepts involved in the code below:
+//   GPU switch: On Mac devices with an integrated and a discrete GPU, a GPU switch changes which
+//     GPU drives the internal display. Both GPUs are still usable at all times. (When the
+//     integrated GPU is driving the internal display, using the discrete GPU can incur a longer
+//     warm-up cost.)
+//   Virtual screen: A CGL concept. A "virtual screen" corresponds to a GL renderer. There's one
+//     for the integrated GPU, one for each discrete GPU, and one for the Apple software renderer.
+//     The list of virtual screens is per-NSOpenGLPixelFormat; it is filtered down to only the
+//     renderers that support the requirements from the pixel format attributes. Indexes into this
+//     list (such as currentVirtualScreen) cannot be used interchangably across different
+//     NSOpenGLPixelFormat instances.
+//   Display mask: A bitset per GL renderer. Different renderers have disjoint display masks. The
+//     Apple software renderer has all bits zeroed. For each CGDirectDisplayID,
+//     CGDisplayIDToOpenGLDisplayMask(displayID) returns a single bit in the display mask.
+//   CGDirectDisplayID: An ID for each (physical screen, GPU which can drive this screen) pair. The
+//     current CGDirectDisplayID for an NSScreen object can be obtained using [[[screen
+//     deviceDescription] objectForKey:@"NSScreenNumber"] unsignedIntValue]; it changes depending on
+//     which GPU is currently driving the screen.
+static CGOpenGLDisplayMask GetFreshContextDisplayMask() {
+  NSOpenGLPixelFormatAttribute attribs[] = {NSOpenGLPFAAllowOfflineRenderers, 0};
+  NSOpenGLPixelFormat* pixelFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes:attribs];
+  MOZ_RELEASE_ASSERT(pixelFormat);
+  NSOpenGLContext* context = [[NSOpenGLContext alloc] initWithFormat:pixelFormat
+                                                        shareContext:nullptr];
+  GLint displayMask = 0;
+  [pixelFormat getValues:&displayMask
+            forAttribute:NSOpenGLPFAScreenMask
+        forVirtualScreen:[context currentVirtualScreen]];
+  [pixelFormat release];
+  [context release];
+  return static_cast<CGOpenGLDisplayMask>(displayMask);
 }
 
-already_AddRefed<GLContext> GLContextProviderCGL::CreateForWindow(nsIWidget* aWidget,
-                                                                  bool aWebRender,
-                                                                  bool aForceAccelerated) {
-  if (!sCGLLibrary.EnsureInitialized()) {
-    return nullptr;
+static bool IsSameGPU(CGOpenGLDisplayMask mask1, CGOpenGLDisplayMask mask2) {
+  if ((mask1 & mask2) != 0) {
+    return true;
+  }
+  // Both masks can be zero, when using the Apple software renderer.
+  return !mask1 && !mask2;
+}
+
+static NSOpenGLPixelFormat* GetPixelFormatForContext(NSOpenGLContext* aContext) {
+  // -[NSOpenGLContext pixelFormat] is macOS 10.10+
+  if ([aContext respondsToSelector:@selector(pixelFormat)]) {
+    return [aContext pixelFormat];
+  }
+  return [[[NSOpenGLPixelFormat alloc]
+      initWithCGLPixelFormatObj:CGLGetPixelFormat([aContext CGLContextObj])] autorelease];
+}
+
+void GLContextCGL::MigrateToActiveGPU() {
+  if (!mActiveGPUSwitchMayHaveOccurred.compareExchange(true, false)) {
+    return;
   }
 
-#ifdef EMULATE_VM
-  if (aForceAccelerated) {
-    return nullptr;
+  CGOpenGLDisplayMask newPreferredDisplayMask = GetFreshContextDisplayMask();
+  NSOpenGLPixelFormat* pixelFormat = GetPixelFormatForContext(mContext);
+  GLint currentVirtualScreen = [mContext currentVirtualScreen];
+  GLint currentDisplayMask = 0;
+  [pixelFormat getValues:&currentDisplayMask
+            forAttribute:NSOpenGLPFAScreenMask
+        forVirtualScreen:currentVirtualScreen];
+  if (IsSameGPU(currentDisplayMask, newPreferredDisplayMask)) {
+    // No "virtual screen" change needed.
+    return;
   }
-#endif
 
-  const NSOpenGLPixelFormatAttribute* attribs;
-  if (sCGLLibrary.UseDoubleBufferedWindows()) {
-    if (aWebRender) {
-      attribs =
-          aForceAccelerated ? kAttribs_doubleBuffered_accel_webrender : kAttribs_doubleBuffered;
-    } else {
-      attribs = aForceAccelerated ? kAttribs_doubleBuffered_accel : kAttribs_doubleBuffered;
+  // Find the "virtual screen" with a display mask that matches newPreferredDisplayMask, if
+  // available, and switch the context over to it.
+  // This code was inspired by equivalent functionality in -[NSOpenGLContext update] which only
+  // kicks in for contexts that present via a CAOpenGLLayer.
+  for (const auto i : IntegerRange([pixelFormat numberOfVirtualScreens])) {
+    GLint displayMask = 0;
+    [pixelFormat getValues:&displayMask forAttribute:NSOpenGLPFAScreenMask forVirtualScreen:i];
+    if (IsSameGPU(displayMask, newPreferredDisplayMask)) {
+      CGLSetVirtualScreen([mContext CGLContextObj], i);
+      return;
     }
-  } else {
-    attribs = aForceAccelerated ? kAttribs_singleBuffered_accel : kAttribs_singleBuffered;
   }
-  NSOpenGLContext* context = CreateWithFormat(attribs);
-  if (!context) {
-    return nullptr;
+}
+
+GLenum GLContextCGL::GetPreferredARGB32Format() const { return LOCAL_GL_BGRA; }
+
+bool GLContextCGL::SwapBuffers() {
+  AUTO_PROFILER_LABEL("GLContextCGL::SwapBuffers", GRAPHICS);
+
+  // We do not have a default framebuffer. Just do a flush.
+  // Flushing is necessary if we want our IOSurfaces to have the correct
+  // content once they're picked up by the WindowServer from our CALayers.
+  fFlush();
+
+  return true;
+}
+
+void GLContextCGL::GetWSIInfo(nsCString* const out) const { out->AppendLiteral("CGL"); }
+
+Maybe<SymbolLoader> GLContextCGL::GetSymbolLoader() const {
+  const auto& lib = sCGLLibrary.Library();
+  return Some(SymbolLoader(*lib));
+}
+
+already_AddRefed<GLContext> GLContextProviderCGL::CreateWrappingExisting(void*, void*) {
+  return nullptr;
+}
+
+already_AddRefed<GLContext> GLContextProviderCGL::CreateForCompositorWidget(
+    CompositorWidget* aCompositorWidget, bool aWebRender, bool aForceAccelerated) {
+  CreateContextFlags flags = CreateContextFlags::ALLOW_OFFLINE_RENDERER;
+  if (aForceAccelerated) {
+    flags |= CreateContextFlags::FORCE_ENABLE_HARDWARE;
   }
-
-  GLint opaque = gfxPrefs::CompositorGLContextOpaque();
-  [context setValues:&opaque forParameter:NSOpenGLCPSurfaceOpacity];
-
-  RefPtr<GLContextCGL> glContext =
-      new GLContextCGL(CreateContextFlags::NONE, SurfaceCaps::ForRGBA(), context, false);
-
-  if (!glContext->Init()) {
-    glContext = nullptr;
-    [context release];
-    return nullptr;
+  if (!aWebRender) {
+    flags |= CreateContextFlags::REQUIRE_COMPAT_PROFILE;
   }
-
-  return glContext.forget();
+  nsCString failureUnused;
+  return CreateHeadless(flags, &failureUnused);
 }
 
 static already_AddRefed<GLContextCGL> CreateOffscreenFBOContext(CreateContextFlags flags) {
@@ -226,7 +253,7 @@ static already_AddRefed<GLContextCGL> CreateOffscreenFBOContext(CreateContextFla
 
   std::vector<NSOpenGLPixelFormatAttribute> attribs;
 
-  if (!gfxPrefs::GLAllowHighPower()) {
+  if (!StaticPrefs::gl_allow_high_power()) {
     flags &= ~CreateContextFlags::HIGH_POWER;
   }
   if (flags & CreateContextFlags::ALLOW_OFFLINE_RENDERER ||
@@ -236,7 +263,7 @@ static already_AddRefed<GLContextCGL> CreateOffscreenFBOContext(CreateContextFla
     attribs.push_back(NSOpenGLPFAAllowOfflineRenderers);
   }
 
-  if (gfxPrefs::RequireHardwareGL()) {
+  if (flags & CreateContextFlags::FORCE_ENABLE_HARDWARE) {
     attribs.push_back(NSOpenGLPFAAccelerated);
   }
 
@@ -260,7 +287,7 @@ static already_AddRefed<GLContextCGL> CreateOffscreenFBOContext(CreateContextFla
 
   RefPtr<GLContextCGL> glContext = new GLContextCGL(flags, SurfaceCaps::Any(), context, true);
 
-  if (gfxPrefs::GLMultithreaded()) {
+  if (flags & CreateContextFlags::PREFER_MULTITHREADED) {
     CGLEnable(glContext->GetCGLContext(), kCGLCEMPEngine);
   }
   return glContext.forget();

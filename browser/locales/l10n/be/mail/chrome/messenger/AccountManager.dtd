@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from AccountManager.xul -->
+
+<!-- extracted from AccountManager.xhtml -->
+
+<!ENTITY accountManagerTitle.label "Наладжванні рахунку">
+
+<!ENTITY accountActionsButton.label "Дзеянні рахункаў">
+<!ENTITY accountActionsButton.accesskey "р">
+<!ENTITY addMailAccountButton.label "Дадаць паштовы рахунак…">
+<!ENTITY addMailAccountButton.accesskey "Д">
+<!ENTITY addIMAccountButton.label "Дадаць рахунак гутаркі…">
+<!ENTITY addIMAccountButton.accesskey "г">
+<!ENTITY addFeedAccountButton.label "Дадаць рахунак жывільніка…">
+<!ENTITY addFeedAccountButton.accesskey "ж">
+<!ENTITY addOtherAccountButton.label "Дадаць іншы рахунак…">
+<!ENTITY addOtherAccountButton.accesskey "і">
+<!ENTITY setDefaultButton.label "Прызначыць змоўчным">
+<!ENTITY setDefaultButton.accesskey "З">
+<!ENTITY removeButton.label "Выдаліць рахунак">
+<!ENTITY removeButton.accesskey "д">
+
+<!-- AccountManager.xul -->
+
+<!-- AccountManager.xhtml -->
+<!-- AccountManager.xhtml -->
+<!ENTITY accountManager.size "width: 130ch; height: 55em;">
+<!ENTITY accountTree.width "width: 35ch;">

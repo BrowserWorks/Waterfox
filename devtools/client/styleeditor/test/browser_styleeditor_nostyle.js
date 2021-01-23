@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 "use strict";
@@ -9,16 +8,18 @@
 const TESTCASE_URI = TEST_BASE_HTTP + "nostyle.html";
 
 add_task(async function() {
-  const { panel } = await openStyleEditorForURL(TESTCASE_URI);
+  const { panel, ui } = await openStyleEditorForURL(TESTCASE_URI);
   const { panelWindow } = panel;
 
-  const root = panelWindow.document.querySelector(".splitview-root");
   ok(
-    !root.classList.contains("loading"),
+    !ui._root.classList.contains("loading"),
     "style editor root element does not have 'loading' class name anymore"
   );
 
-  ok(root.querySelector(".empty.placeholder"), "showing 'no style' indicator");
+  ok(
+    ui._root.querySelector(".empty.placeholder"),
+    "showing 'no style' indicator"
+  );
 
   let button = panelWindow.document.querySelector(".style-editor-newButton");
   ok(!button.hasAttribute("disabled"), "new style sheet button is enabled");

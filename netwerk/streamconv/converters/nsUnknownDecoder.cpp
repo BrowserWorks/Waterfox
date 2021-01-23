@@ -8,7 +8,6 @@
 #include "nsIInputStream.h"
 #include "nsIOutputStream.h"
 #include "nsMimeTypes.h"
-#include "nsIPrefService.h"
 #include "nsIPrefBranch.h"
 
 #include "nsCRT.h"
@@ -142,6 +141,12 @@ nsUnknownDecoder::AsyncConvertData(const char* aFromType, const char* aToType,
   MutexAutoLock lock(mMutex);
   mNextListener = aListener;
   return (aListener) ? NS_OK : NS_ERROR_FAILURE;
+}
+
+NS_IMETHODIMP
+nsUnknownDecoder::GetConvertedType(const nsACString& aFromType,
+                                   nsIChannel* aChannel, nsACString& aToType) {
+  return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 // ----
@@ -283,6 +288,29 @@ nsUnknownDecoder::OnStopRequest(nsIRequest* request, nsresult aStatus) {
   if (contentTypeEmpty) {
     DetermineContentType(request);
 
+    /*
+     * In Case we did Sniff Unknown Content with XTCO: nosniff enabled,
+     * add an Telemetry-Entry whether the sniffed content is able to
+     * execute Script.
+     */
+    nsCOMPtr<nsIChannel> channel = do_QueryInterface(request);
+    if (channel) {
+      nsCOMPtr<nsILoadInfo> loadInfo = channel->LoadInfo();
+      if (loadInfo->GetSkipContentSniffing()) {
+        if (mContentType.EqualsLiteral("text/html") ||
+            mContentType.EqualsLiteral("text/xml") ||
+            mContentType.EqualsLiteral("aplication/pdf")) {
+          Telemetry::AccumulateCategorical(
+              mozilla::Telemetry::LABELS_XCTO_NOSNIFF_TOPLEVEL_NAV_EXCEPTIONS::
+                  ExceptionScriptable);
+        } else {
+          Telemetry::AccumulateCategorical(
+              mozilla::Telemetry::LABELS_XCTO_NOSNIFF_TOPLEVEL_NAV_EXCEPTIONS::
+                  Exception);
+        }
+      }
+    }
+
     // Make sure channel listeners see channel as pending while we call
     // OnStartRequest/OnDataAvailable, even though the underlying channel
     // has already hit OnStopRequest.
@@ -326,6 +354,13 @@ nsUnknownDecoder::GetMIMETypeFromContent(nsIRequest* aRequest,
                                          nsACString& type) {
   // This is only used by sniffer, therefore we do not need to lock anything
   // here.
+  nsCOMPtr<nsIChannel> channel(do_QueryInterface(aRequest));
+  if (channel) {
+    nsCOMPtr<nsILoadInfo> loadInfo = channel->LoadInfo();
+    if (loadInfo->GetSkipContentSniffing()) {
+      return NS_ERROR_NOT_AVAILABLE;
+    }
+  }
 
   mBuffer = const_cast<char*>(reinterpret_cast<const char*>(aData));
   mBufferLen = aLength;
@@ -355,12 +390,12 @@ bool nsUnknownDecoder::AllowSniffing(nsIRequest* aRequest) {
     return false;
   }
 
-  bool isLocalFile = false;
-  if (NS_FAILED(uri->SchemeIs("file", &isLocalFile)) || isLocalFile) {
+  nsCOMPtr<nsILoadInfo> loadInfo = channel->LoadInfo();
+  if (loadInfo->GetSkipContentSniffing()) {
     return false;
   }
 
-  return true;
+  return !uri->SchemeIs("file");
 }
 
 /**
@@ -401,10 +436,42 @@ void nsUnknownDecoder::DetermineContentType(nsIRequest* aRequest) {
     if (!mContentType.IsEmpty()) return;
   }
 
+  nsCOMPtr<nsIChannel> channel(do_QueryInterface(aRequest));
+  if (channel) {
+    nsCOMPtr<nsILoadInfo> loadInfo = channel->LoadInfo();
+    if (loadInfo->GetSkipContentSniffing()) {
+      /*
+       * If we did not get a useful Content-Type from the server
+       * but also have sniffing disabled, just determine whether
+       * to use text/plain or octetstream and log an error to the Console
+       */
+      LastDitchSniff(aRequest);
+
+      nsCOMPtr<nsIHttpChannel> httpChannel(do_QueryInterface(aRequest));
+      if (httpChannel) {
+        nsAutoCString type;
+        httpChannel->GetContentType(type);
+        nsCOMPtr<nsIURI> requestUri;
+        httpChannel->GetURI(getter_AddRefs(requestUri));
+        nsAutoCString spec;
+        requestUri->GetSpec(spec);
+        if (spec.Length() > 50) {
+          spec.Truncate(50);
+          spec.AppendLiteral("...");
+        }
+        httpChannel->LogMimeTypeMismatch(
+            NS_LITERAL_CSTRING("XTCOWithMIMEValueMissing"), false,
+            NS_ConvertUTF8toUTF16(spec),
+            // Type is not used in the Error Message but required
+            NS_ConvertUTF8toUTF16(type));
+      }
+      return;
+    }
+  }
+
   const char* testData = mBuffer;
   uint32_t testDataLen = mBufferLen;
   // Check if data are compressed.
-  nsCOMPtr<nsIHttpChannel> channel(do_QueryInterface(aRequest));
   nsAutoCString decodedData;
 
   if (channel) {
@@ -575,6 +642,11 @@ bool nsUnknownDecoder::SniffForXML(nsIRequest* aRequest) {
 }
 
 bool nsUnknownDecoder::SniffURI(nsIRequest* aRequest) {
+  nsCOMPtr<nsIChannel> channel(do_QueryInterface(aRequest));
+  nsCOMPtr<nsILoadInfo> loadInfo = channel->LoadInfo();
+  if (loadInfo->GetSkipContentSniffing()) {
+    return false;
+  }
   nsCOMPtr<nsIMIMEService> mimeService(do_GetService("@mozilla.org/mime;1"));
   if (mimeService) {
     nsCOMPtr<nsIChannel> channel = do_QueryInterface(aRequest);
@@ -612,7 +684,9 @@ bool nsUnknownDecoder::LastDitchSniff(nsIRequest* aRequest) {
   uint32_t testDataLen;
   if (mDecodedData.IsEmpty()) {
     testData = mBuffer;
-    testDataLen = mBufferLen;
+    // Since some legacy text files end with 0x1A, reading the entire buffer
+    // will lead misdetection.
+    testDataLen = std::min<uint32_t>(mBufferLen, MAX_BUFFER_SIZE);
   } else {
     testData = mDecodedData.get();
     testDataLen = std::min(mDecodedData.Length(), MAX_BUFFER_SIZE);
@@ -827,6 +901,11 @@ void nsBinaryDetector::DetermineContentType(nsIRequest* aRequest) {
     return;
   }
 
+  nsCOMPtr<nsILoadInfo> loadInfo = httpChannel->LoadInfo();
+  if (loadInfo->GetSkipContentSniffing()) {
+    LastDitchSniff(aRequest);
+    return;
+  }
   // It's an HTTP channel.  Check for the text/plain mess
   nsAutoCString contentTypeHdr;
   Unused << httpChannel->GetResponseHeader(NS_LITERAL_CSTRING("Content-Type"),

@@ -63,7 +63,6 @@ class XMLHttpRequest : public XMLHttpRequestEventTarget {
   virtual XMLHttpRequestUpload* GetUpload(ErrorResult& aRv) = 0;
 
   virtual void Send(
-      JSContext* aCx,
       const Nullable<
           DocumentOrBlobOrArrayBufferViewOrArrayBufferOrFormDataOrURLSearchParamsOrUSVString>&
           aData,
@@ -127,6 +126,10 @@ class XMLHttpRequest : public XMLHttpRequestEventTarget {
                                JS::Handle<JSObject*> aGivenProto) override {
     return mozilla::dom::XMLHttpRequest_Binding::Wrap(aCx, this, aGivenProto);
   }
+
+ protected:
+  explicit XMLHttpRequest(nsIGlobalObject* aGlobalObject)
+      : XMLHttpRequestEventTarget(aGlobalObject) {}
 };
 
 }  // namespace dom

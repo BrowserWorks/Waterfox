@@ -1,0 +1,233 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Attn: Localization - some of the menus in this dialog directly affect mail also. -->
+<!-- File menu items -->
+
+
+<!-- Edit menu items -->
+
+<!ENTITY pasteNoFormatting.label "Залепи без форматирање">
+<!ENTITY pasteNoFormatting.accesskey "б">
+<!-- For a "Paste" submenu when more than 1 
+     clipboard formats are available -->
+
+<!ENTITY pasteAsQuotationCmd.label "Залепи како цитат">
+<!-- View menu items -->
+
+<!-- Insert menu items -->
+
+<!ENTITY insertMenu.label "Внеси">
+<!ENTITY insertAnchorCmd.label "Именувано сидро…">
+<!ENTITY insertImageCmd.label "Слика…">
+<!ENTITY insertHLineCmd.label "Хоризонтална линија">
+<!ENTITY insertTableCmd.label "Табела…">
+<!ENTITY insertHTMLCmd.label "HTML…">
+<!ENTITY insertHTMLCmd.accesskey "h">
+<!ENTITY insertCharsCmd.label "Знаци и симболи…">
+<!ENTITY insertBreakAllCmd.label "Скрши под сликите">
+<!-- Insert form menu items -->
+
+<!-- Used just in context popup. -->
+
+<!ENTITY createLinkCmd.label "Креирај врска…">
+<!ENTITY editLinkCmd.label "Измени ја врската во нов Composer">
+<!-- Font Face SubMenu -->
+
+<!ENTITY FontFaceSelect.tooltip "Избор на фонт">
+<!ENTITY fontfaceMenu.label "Фонт">
+<!ENTITY fontVarWidth.label "Променлива ширина">
+<!ENTITY fontFixedWidth.label "Фиксна ширина">
+<!ENTITY fontTimes.label "Times">
+<!ENTITY fontCourier.label "Courier">
+<!-- Font Size SubMenu -->
+
+<!ENTITY FontSizeSelect.tooltip "Избор на големина на фонт">
+<!ENTITY decreaseFontSize.label "Помал">
+<!ENTITY increaseFontSize.label "Поголем">
+
+<!-- > is above this key on many keyboards -->
+
+<!ENTITY size-smallCmd.label "мала">
+<!ENTITY size-mediumCmd.label "средна">
+<!ENTITY size-largeCmd.label "голема">
+<!-- Font Style SubMenu -->
+
+<!ENTITY fontStyleMenu.label "Стил на текст">
+<!ENTITY styleBoldCmd.label "Задебелени">
+<!ENTITY styleItalicCmd.label "Закосени">
+<!ENTITY styleUnderlineCmd.label "Подвлечени">
+<!ENTITY styleStrikeThruCmd.label "Со линија низ">
+<!ENTITY styleSuperscriptCmd.label "Superscript">
+<!ENTITY styleSubscriptCmd.label "Subscript">
+<!ENTITY styleNonbreakingCmd.label "Непрекршлив">
+<!ENTITY styleEm.label "Нагласување">
+<!ENTITY styleEm.accesskey "е">
+<!ENTITY styleStrong.label "Посилно нагласување">
+<!ENTITY styleStrong.accesskey "с">
+<!ENTITY styleCite.label "Цитат">
+<!ENTITY styleCite.accesskey "Ц">
+<!ENTITY styleAbbr.label "Кратенка">
+<!ENTITY styleAbbr.accesskey "а">
+<!ENTITY styleAcronym.label "Акроним">
+<!ENTITY styleAcronym.accesskey "р">
+<!ENTITY styleCode.label "Код">
+<!ENTITY styleCode.accesskey "о">
+<!ENTITY styleSamp.label "Пример на излез">
+<!ENTITY styleSamp.accesskey "м">
+<!ENTITY styleVar.label "Променлива">
+<!ENTITY styleVar.accesskey "П">
+
+<!ENTITY formatFontColor.label "Боја на текст…">
+<!ENTITY tableOrCellColor.label "Позадинска боја на табелата или ќелијата…">
+<!ENTITY tableOrCellColor.accesskey "б">
+
+<!ENTITY formatRemoveNamedAnchors.label "Отстрани ги именуваните сидра">
+<!ENTITY formatRemoveNamedAnchors.accesskey "т">
+
+<!ENTITY paragraphMenu.label "Параграф">
+<!ENTITY paragraphParagraphCmd.label "Параграф">
+<!ENTITY heading1Cmd.label "Heading 1">
+<!ENTITY heading2Cmd.label "Heading 2">
+<!ENTITY heading3Cmd.label "Heading 3">
+<!ENTITY heading4Cmd.label "Heading 4">
+<!ENTITY heading5Cmd.label "Heading 5">
+<!ENTITY heading6Cmd.label "Heading 6">
+<!ENTITY paragraphAddressCmd.label "Адреса">
+<!ENTITY paragraphPreformatCmd.label "Претходно форматирано">
+<!-- List menu items -->
+
+<!ENTITY formatlistMenu.label "Список">
+<!ENTITY noneCmd.label "Ништо">
+<!ENTITY listBulletCmd.label "Означено">
+<!ENTITY listNumberedCmd.label "Означена со бројки">
+<!ENTITY listTermCmd.label "Term">
+<!ENTITY listDefinitionCmd.label "Дефиниција">
+
+<!ENTITY ParagraphSelect.tooltip "Избор на формат за параграф">
+<!-- Shared in Paragraph, and Toolbar menulist -->
+<!ENTITY bodyTextCmd.label "Главен текст">
+
+<!-- Style Sheet submenu NOT IMPLEMENTED -->
+
+<!-- Align menu items -->
+
+<!ENTITY alignMenu.label "Порамни">
+<!ENTITY alignLeft.label "Лево">
+<!ENTITY alignLeft.tooltip "Лево порамнување">
+<!ENTITY alignCenter.label "Централно">
+<!ENTITY alignCenter.tooltip "Централно порамнување">
+<!ENTITY alignRight.label "Десно">
+<!ENTITY alignRight.tooltip "Десно порамнување">
+<!ENTITY alignJustify.label "Порамни од двете страни">
+<!ENTITY alignJustify.tooltip "Порамнување од двете страни">
+<!-- Layer toolbar items -->
+
+<!ENTITY increaseIndent.label "Зголеми го поместувањето">
+<!ENTITY decreaseIndent.label "Намали го поместувањето">
+
+<!ENTITY colorsAndBackground.label "Бои и позадина на страницата…">
+<!-- Table Menu -->
+
+<!ENTITY tableMenu.label "Табела">
+
+<!-- Select Submenu -->
+<!ENTITY tableSelectMenu.label "Избери">
+
+<!ENTITY tableSelectMenu2.label "Избери табела">
+<!ENTITY tableInsertMenu2.label "Внеси табела">
+<!ENTITY tableDeleteMenu2.label "Избриши табела">
+<!-- Insert SubMenu -->
+
+<!ENTITY tableInsertMenu.label "Внеси">
+<!ENTITY tableTable.label "Табела">
+<!ENTITY tableRow.label "Редица">
+<!ENTITY tableRows.label "Ред/ици">
+<!ENTITY tableRowAbove.label "Ред над">
+<!-- uses tablerow.accesskey -->
+<!ENTITY tableRowBelow.label "Ред под">
+<!ENTITY tableColumn.label "Колона">
+<!ENTITY tableColumns.label "Колона/и">
+<!ENTITY tableColumnBefore.label "Колона пред">
+<!-- uses tablecolumn.accesskey -->
+<!ENTITY tableColumnAfter.label "Колона после">
+<!ENTITY tableCell.label "Ќелија">
+<!ENTITY tableCells.label "Ќелија/и">
+<!ENTITY tableCellContents.label "Содржина на ќелија">
+<!ENTITY tableAllCells.label "Додај ќелии">
+<!ENTITY tableCellBefore.label "Ќелија пред">
+<!-- uses tablecell.accesskey -->
+<!ENTITY tableCellAfter.label "Ќелија после">
+<!-- Delete SubMenu -->
+<!ENTITY tableDeleteMenu.label "Избриши">
+
+<!-- text for "Join Cells" is in editor.properties 
+     ("JoinSelectedCells" and "JoinCellToRight")
+     the access key must exist in both of those strings
+     But value must be set here for accesskey to draw properly
+-->
+<!ENTITY tableJoinCells.label "ј">
+<!ENTITY tableSplitCell.label "Подели ја ќелијата">
+<!ENTITY convertToTable.label "Од изборот креирај табела">
+<!ENTITY tableProperties.label "Својства на табелата…">
+<!ENTITY tableProperties.accesskey "о">
+<!-- Tools menu -->
+
+<!-- Debug menu items -->
+
+<!-- Toolbar-only items -->
+
+<!ENTITY imageToolbarCmd.label "Слика">
+<!ENTITY imageToolbarCmd.tooltip "Внесува нова слика или ги менува својствата на избраната слика">
+<!ENTITY hruleToolbarCmd.label "Х. линија">
+<!ENTITY hruleToolbarCmd.tooltip "Внесува хорознтална линија или ги менува својствата на избраната линија">
+<!ENTITY tableToolbarCmd.label "Табела">
+<!ENTITY tableToolbarCmd.tooltip "Внесува нова табела или ги менува својствата на избраната табела">
+<!ENTITY linkToolbarCmd.label "Врска">
+<!ENTITY linkToolbarCmd.tooltip "Внесува нова врска или ги менува својствата на избраната врска">
+<!ENTITY anchorToolbarCmd.label "Сидро">
+<!ENTITY anchorToolbarCmd.tooltip "Внесува ново именувано сидро или ги менува својствата на избраното сидро">
+<!ENTITY TextColorButton.tooltip "Избор на боја за текст">
+<!ENTITY BackgroundColorButton.tooltip "Избор на боја за позадина">
+<!-- Editor toolbar -->
+
+<!ENTITY decreaseFontSizeToolbarCmd.tooltip "Помала големина на фонт">
+<!ENTITY increaseFontSizeToolbarCmd.tooltip "Поголема големина на фонт">
+<!ENTITY boldToolbarCmd.tooltip "Задебелени">
+<!ENTITY italicToolbarCmd.tooltip "Закосени">
+<!ENTITY underlineToolbarCmd.tooltip "Подвлечени">
+<!ENTITY bulletListToolbarCmd.tooltip "Применува или отстранува список">
+<!ENTITY numberListToolbarCmd.tooltip "Применува или отстранува нумериран список">
+<!ENTITY outdentToolbarCmd.tooltip "Го поместува текстот на лево">
+<!ENTITY indentToolbarCmd.tooltip "Го поместува текстот на десно">
+<!ENTITY AlignPopupButton.tooltip "Изберете порамнување на текст">
+<!ENTITY InsertPopupButton.tooltip "Внесува врска, сидро, слика, хоризонтална линија или табела">
+<!ENTITY alignLeftButton.tooltip "Го порамнува текстот по левата маргина">
+<!ENTITY alignCenterButton.tooltip "Го порамнува текстот централно">
+<!ENTITY alignRightButton.tooltip "Го порамнува текстот по десната маргина">
+<!-- Formatting toolbar not used, but may be in future -->
+
+<!-- Used with color pickers in Format toolbar and Format Menu -->
+
+<!-- Display Mode toolbar and View menu items -->
+
+<!-- LOCALIZATION NOTE: Do NOT translate text for 'SourceTabDirection'
+     Use latin "ltr" if you want the <html> image to left of the 
+     'SourceMode.label' text defined above,
+     or use latin "rtl" if you want this image to the right of text
+     This is the value of the HTML 'dir' attribute
+-->
+
+<!-- Structure Toolbar Context Menu items -->
+
+<!-- TOC manipulation -->
+
+<!ENTITY insertTOC.label "Внеси">
+<!ENTITY insertTOC.accesskey "и">
+<!ENTITY updateTOC.label "Надгради">
+<!ENTITY updateTOC.accesskey "а">
+<!ENTITY removeTOC.label "Отстрани">
+<!ENTITY removeTOC.accesskey "р">
+<!ENTITY tocMenu.label "Содржина…">
+<!ENTITY tocMenu.accesskey "д">

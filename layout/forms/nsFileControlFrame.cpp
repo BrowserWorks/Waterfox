@@ -22,7 +22,7 @@
 #include "mozilla/dom/MutationEventBinding.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/PresShell.h"
-#include "mozilla/StaticPrefs.h"
+#include "mozilla/StaticPrefs_dom.h"
 #include "nsNodeInfoManager.h"
 #include "nsContentCreatorFunctions.h"
 #include "nsContentUtils.h"
@@ -173,8 +173,8 @@ void nsFileControlFrame::Reflow(nsPresContext* aPresContext,
                           availableISizeForLabel - labelBP, filename)) {
         nsBlockFrame::DidReflow(aPresContext, &aReflowInput);
         aStatus.Reset();
-        labelFrame->AddStateBits(NS_FRAME_IS_DIRTY |
-                                 NS_BLOCK_NEEDS_BIDI_RESOLUTION);
+        labelFrame->MarkSubtreeDirty();
+        labelFrame->AddStateBits(NS_BLOCK_NEEDS_BIDI_RESOLUTION);
         mCachedMinISize = NS_INTRINSIC_ISIZE_UNKNOWN;
         mCachedPrefISize = NS_INTRINSIC_ISIZE_UNKNOWN;
         done = true;
@@ -212,16 +212,17 @@ static already_AddRefed<Element> MakeAnonButton(Document* aDoc,
   // NOTE: SetIsNativeAnonymousRoot() has to be called before setting any
   // attribute.
   button->SetIsNativeAnonymousRoot();
+  button->SetPseudoElementType(PseudoStyleType::fileChooserButton);
 
   // Set the file picking button text depending on the current locale.
   nsAutoString buttonTxt;
-  nsContentUtils::GetLocalizedString(nsContentUtils::eFORMS_PROPERTIES,
-                                     labelKey, buttonTxt);
+  nsContentUtils::GetMaybeLocalizedString(nsContentUtils::eFORMS_PROPERTIES,
+                                          labelKey, aDoc, buttonTxt);
 
   // Set the browse button text. It's a bit of a pain to do because we want to
   // make sure we are not notifying.
-  RefPtr<nsTextNode> textContent =
-      new nsTextNode(button->NodeInfo()->NodeInfoManager());
+  RefPtr<nsTextNode> textContent = new (button->NodeInfo()->NodeInfoManager())
+      nsTextNode(button->NodeInfo()->NodeInfoManager());
 
   textContent->SetText(buttonTxt, false);
 
@@ -232,9 +233,7 @@ static already_AddRefed<Element> MakeAnonButton(Document* aDoc,
 
   // Make sure access key and tab order for the element actually redirect to the
   // file picking button.
-  RefPtr<HTMLButtonElement> buttonElement =
-      HTMLButtonElement::FromNodeOrNull(button);
-
+  auto* buttonElement = HTMLButtonElement::FromNode(button);
   if (!aAccessKey.IsEmpty()) {
     buttonElement->SetAccessKey(aAccessKey, IgnoreErrors());
   }
@@ -258,16 +257,20 @@ nsresult nsFileControlFrame::CreateAnonymousContent(
   fileContent->GetAccessKey(accessKey);
 
   mBrowseFilesOrDirs = MakeAnonButton(doc, "Browse", fileContent, accessKey);
-  if (!mBrowseFilesOrDirs || !aElements.AppendElement(mBrowseFilesOrDirs)) {
+  if (!mBrowseFilesOrDirs) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
+  // XXX(Bug 1631371) Check if this should use a fallible operation as it
+  // pretended earlier, or change the return type to void.
+  aElements.AppendElement(mBrowseFilesOrDirs);
 
   // Create and setup the text showing the selected files.
   mTextContent = doc->CreateHTMLElement(nsGkAtoms::label);
   // NOTE: SetIsNativeAnonymousRoot() has to be called before setting any
   // attribute.
   mTextContent->SetIsNativeAnonymousRoot();
-  RefPtr<nsTextNode> text = new nsTextNode(doc->NodeInfoManager());
+  RefPtr<nsTextNode> text =
+      new (doc->NodeInfoManager()) nsTextNode(doc->NodeInfoManager());
   mTextContent->AppendChildTo(text, false);
 
   // Update the displayed text to reflect the current element's value.
@@ -331,7 +334,7 @@ static void AppendBlobImplAsDirectory(nsTArray<OwningFileOrDirectory>& aArray,
     return;
   }
 
-  RefPtr<Directory> directory = Directory::Create(inner, file);
+  RefPtr<Directory> directory = Directory::Create(inner->AsGlobal(), file);
   MOZ_ASSERT(directory);
 
   OwningFileOrDirectory* element = aArray.AppendElement();
@@ -395,9 +398,8 @@ nsFileControlFrame::DnDListener::HandleEvent(Event* aEvent) {
       inputElement->MozSetDndFilesAndDirectories(array);
     } else {
       bool blinkFileSystemEnabled =
-          Preferences::GetBool("dom.webkitBlink.filesystem.enabled", false);
-      bool dirPickerEnabled =
-          Preferences::GetBool("dom.input.dirpicker", false);
+          StaticPrefs::dom_webkitBlink_filesystem_enabled();
+      bool dirPickerEnabled = StaticPrefs::dom_input_dirpicker();
       if (blinkFileSystemEnabled || dirPickerEnabled) {
         FileList* files = static_cast<FileList*>(fileList.get());
         if (files) {
@@ -488,10 +490,7 @@ bool nsFileControlFrame::DnDListener::IsValidDropData(
   }
 
   // We only support dropping files onto a file upload control
-  nsTArray<nsString> types;
-  aDataTransfer->GetTypes(types, CallerType::System);
-
-  return types.Contains(NS_LITERAL_STRING("Files"));
+  return aDataTransfer->HasFile();
 }
 
 bool nsFileControlFrame::DnDListener::CanDropTheseFiles(
@@ -546,22 +545,6 @@ void nsFileControlFrame::SyncDisabledState() {
   } else {
     mBrowseFilesOrDirs->UnsetAttr(kNameSpaceID_None, nsGkAtoms::disabled, true);
   }
-}
-
-nsresult nsFileControlFrame::AttributeChanged(int32_t aNameSpaceID,
-                                              nsAtom* aAttribute,
-                                              int32_t aModType) {
-  if (aNameSpaceID == kNameSpaceID_None && aAttribute == nsGkAtoms::tabindex) {
-    if (aModType == MutationEvent_Binding::REMOVAL) {
-      mBrowseFilesOrDirs->UnsetAttr(aNameSpaceID, aAttribute, true);
-    } else {
-      nsAutoString value;
-      mContent->AsElement()->GetAttr(aNameSpaceID, aAttribute, value);
-      mBrowseFilesOrDirs->SetAttr(aNameSpaceID, aAttribute, value, true);
-    }
-  }
-
-  return nsBlockFrame::AttributeChanged(aNameSpaceID, aAttribute, aModType);
 }
 
 void nsFileControlFrame::ContentStatesChanged(EventStates aStates) {

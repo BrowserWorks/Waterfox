@@ -9,6 +9,7 @@ import json
 import hashlib
 import os
 import shutil
+import six
 import sqlite3
 import subprocess
 import requests
@@ -23,13 +24,13 @@ from mozversioncontrol import get_repository_object
 
 from ..cli import BaseTryParser
 from ..tasks import generate_tasks, filter_tasks_by_paths, resolve_tests_by_suite
-from ..push import push_to_try
+from ..push import push_to_try, generate_try_task_config
 
 here = os.path.abspath(os.path.dirname(__file__))
 build = MozbuildObject.from_environment(cwd=here)
 vcs = get_repository_object(build.topsrcdir)
 
-root_hash = hashlib.sha256(os.path.abspath(build.topsrcdir)).hexdigest()
+root_hash = hashlib.sha256(six.ensure_binary(os.path.abspath(build.topsrcdir))).hexdigest()
 cache_dir = os.path.join(get_state_dir(), 'cache', root_hash, 'chunk_mapping')
 if not os.path.isdir(cache_dir):
     os.makedirs(cache_dir)
@@ -48,7 +49,6 @@ OPT_TASK_PATTERNS = [
     'macosx64/opt',
     'windows10-64/opt',
     'windows7-32/opt',
-    'android-em-4.3-arm7-api-16/opt',
     'linux64/opt',
 ]
 
@@ -57,7 +57,14 @@ class CoverageParser(BaseTryParser):
     name = 'coverage'
     arguments = []
     common_groups = ['push', 'task']
-    templates = ['artifact', 'env', 'rebuild', 'chemspill-prio']
+    task_configs = [
+        "artifact",
+        "env",
+        "rebuild",
+        "chemspill-prio",
+        "disable-pgo",
+        "worker-overrides",
+    ]
 
 
 def read_test_manifests():
@@ -115,7 +122,7 @@ def download_coverage_mapping(base_revision):
     except (IOError, ValueError):
         print('Chunk mapping file not found.')
 
-    CHUNK_MAPPING_URL_TEMPLATE = 'https://index.taskcluster.net/v1/task/project.releng.services.project.production.code_coverage_bot.{}/artifacts/public/chunk_mapping.tar.xz'  # noqa
+    CHUNK_MAPPING_URL_TEMPLATE = 'https://firefox-ci-tc.services.mozilla.com/api/index/v1/task/project.relman.code-coverage.production.cron.{}/artifacts/public/chunk_mapping.tar.xz'  # noqa
     JSON_PUSHES_URL_TEMPLATE = 'https://hg.mozilla.org/mozilla-central/json-pushes?version=2&tipsonly=1&startdate={}'  # noqa
 
     # Get pushes from at most one month ago.
@@ -343,7 +350,7 @@ def is_opt_task(task):
     return any(platform in task for platform in OPT_TASK_PATTERNS)
 
 
-def run(templates={}, full=False, parameters=None, push=True, message='{msg}', closed_tree=False):
+def run(try_config={}, full=False, parameters=None, push=True, message='{msg}', closed_tree=False):
     download_coverage_mapping(vcs.base_ref)
 
     changed_sources = vcs.get_outgoing_files()
@@ -357,7 +364,8 @@ def run(templates={}, full=False, parameters=None, push=True, message='{msg}', c
 
     tasks_by_chunks = filter_tasks_by_chunks(all_tasks, test_chunks)
     tasks_by_path = filter_tasks_by_paths(all_tasks, test_files)
-    tasks = filter(is_opt_task, set(tasks_by_path + tasks_by_chunks))
+    tasks = filter(is_opt_task, set(tasks_by_path) | set(tasks_by_chunks))
+    tasks = list(tasks)
 
     if not tasks:
         print('ERROR Did not find any matching tasks after filtering.')
@@ -373,10 +381,12 @@ def run(templates={}, full=False, parameters=None, push=True, message='{msg}', c
     print('Found ' + test_count_message)
 
     # Set the test paths to be run by setting MOZHARNESS_TEST_PATHS.
-    path_env = {'MOZHARNESS_TEST_PATHS': json.dumps(resolve_tests_by_suite(test_files))}
-    templates.setdefault('env', {}).update(path_env)
+    path_env = {'MOZHARNESS_TEST_PATHS': six.ensure_text(
+        json.dumps(resolve_tests_by_suite(test_files)))}
+    try_config.setdefault('env', {}).update(path_env)
 
     # Build commit message.
     msg = 'try coverage - ' + test_count_message
-    return push_to_try('coverage', message.format(msg=msg), tasks, templates, push=push,
-                       closed_tree=closed_tree)
+    return push_to_try('coverage', message.format(msg=msg),
+                       try_task_config=generate_try_task_config('coverage', tasks, try_config),
+                       push=push, closed_tree=closed_tree)

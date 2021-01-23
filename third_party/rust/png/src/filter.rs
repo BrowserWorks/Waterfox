@@ -1,5 +1,10 @@
 use std;
 
+/// The byte level filter applied to scanlines to prepare them for compression.
+///
+/// Compression in general benefits from repetitive data. The filter is a content-aware method of
+/// compressing the range of occurring byte values to help the compression algorithm. Note that
+/// this does not operate on pixels but on raw bytes of a scanline.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 pub enum FilterType {
@@ -25,9 +30,9 @@ pub enum FilterType {
 }
 
 fn filter_paeth(a: u8, b: u8, c: u8) -> u8 {
-    let ia = a as i16;
-    let ib = b as i16;
-    let ic = c as i16;
+    let ia = i16::from(a);
+    let ib = i16::from(b);
+    let ic = i16::from(c);
 
     let p = ia + ib - ic;
 
@@ -85,7 +90,7 @@ pub fn unfilter(filter: FilterType, bpp: usize, previous: &[u8], current: &mut [
 
                 for i in bpp..len {
                     current[i] = current[i].wrapping_add(
-                        ((current[i - bpp] as i16 + previous[i] as i16) / 2) as u8
+                        ((i16::from(current[i - bpp]) + i16::from(previous[i])) / 2) as u8
                     );
                 }
                 Ok(())

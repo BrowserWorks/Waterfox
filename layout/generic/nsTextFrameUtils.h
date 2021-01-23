@@ -13,6 +13,12 @@
 class nsIContent;
 struct nsStyleText;
 
+namespace mozilla {
+namespace dom {
+class Text;
+}
+}  // namespace mozilla
+
 #define BIG_TEXT_NODE_SIZE 4096
 
 #define CH_NBSP 160
@@ -29,7 +35,11 @@ class nsTextFrameUtils {
     HasTab = 0x01,
     // the original text has at least one soft hyphen character
     HasShy = 0x02,
-    UnusedFlags = 0x0C,
+    UnusedFlags = 0x04,
+
+    // Flag used in textrun construction to *prevent* hiding of fallback text
+    // for pending user-fonts (used for Canvas2d text).
+    DontSkipDrawingForPendingUserFonts = 0x08,
 
     // The following flags are set by nsTextFrame
 
@@ -127,13 +137,14 @@ class nsTextFrameUtils {
 
   static void AppendLineBreakOffset(nsTArray<uint32_t>* aArray,
                                     uint32_t aOffset) {
-    if (aArray->Length() > 0 && (*aArray)[aArray->Length() - 1] == aOffset)
+    if (aArray->Length() > 0 && (*aArray)[aArray->Length() - 1] == aOffset) {
       return;
+    }
     aArray->AppendElement(aOffset);
   }
 
   static uint32_t ComputeApproximateLengthWithWhitespaceCompression(
-      nsIContent* aContent, const nsStyleText* aStyleText);
+      mozilla::dom::Text* aText, const nsStyleText* aStyleText);
 };
 
 MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS(nsTextFrameUtils::Flags)

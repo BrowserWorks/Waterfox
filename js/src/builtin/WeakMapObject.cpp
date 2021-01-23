@@ -31,7 +31,7 @@ using namespace js;
     return true;
   }
 
-  if (ObjectValueMap* map =
+  if (ObjectValueWeakMap* map =
           args.thisv().toObject().as<WeakMapObject>().getMap()) {
     JSObject* key = &args[0].toObject();
     if (map->has(key)) {
@@ -60,10 +60,10 @@ bool WeakMapObject::has(JSContext* cx, unsigned argc, Value* vp) {
     return true;
   }
 
-  if (ObjectValueMap* map =
+  if (ObjectValueWeakMap* map =
           args.thisv().toObject().as<WeakMapObject>().getMap()) {
     JSObject* key = &args[0].toObject();
-    if (ObjectValueMap::Ptr ptr = map->lookup(key)) {
+    if (ObjectValueWeakMap::Ptr ptr = map->lookup(key)) {
       args.rval().set(ptr->value());
       return true;
     }
@@ -89,10 +89,13 @@ bool WeakMapObject::get(JSContext* cx, unsigned argc, Value* vp) {
     return true;
   }
 
-  if (ObjectValueMap* map =
+  if (ObjectValueWeakMap* map =
           args.thisv().toObject().as<WeakMapObject>().getMap()) {
     JSObject* key = &args[0].toObject();
-    if (ObjectValueMap::Ptr ptr = map->lookup(key)) {
+    // The lookup here is only used for the removal, so we can skip the read
+    // barrier. This is not very important for performance, but makes it easier
+    // to test nonbarriered removal from internal weakmaps (eg Debugger maps.)
+    if (ObjectValueWeakMap::Ptr ptr = map->lookupUnbarriered(key)) {
       map->remove(ptr);
       args.rval().setBoolean(true);
       return true;
@@ -115,7 +118,7 @@ bool WeakMapObject::delete_(JSContext* cx, unsigned argc, Value* vp) {
   MOZ_ASSERT(WeakMapObject::is(args.thisv()));
 
   if (!args.get(0).isObject()) {
-    ReportNotObjectWithName(cx, "WeakMap key", args.get(0));
+    ReportNotObject(cx, JSMSG_OBJECT_REQUIRED_WEAKMAP_KEY, args.get(0));
     return false;
   }
 
@@ -142,10 +145,11 @@ bool WeakCollectionObject::nondeterministicGetKeys(
   if (!arr) {
     return false;
   }
-  if (ObjectValueMap* map = obj->getMap()) {
+  if (ObjectValueWeakMap* map = obj->getMap()) {
     // Prevent GC from mutating the weakmap while iterating.
     gc::AutoSuppressGC suppress(cx);
-    for (ObjectValueMap::Base::Range r = map->all(); !r.empty(); r.popFront()) {
+    for (ObjectValueWeakMap::Base::Range r = map->all(); !r.empty();
+         r.popFront()) {
       JS::ExposeObjectToActiveJS(r.front().key());
       RootedObject key(cx, r.front().key());
       if (!cx->compartment()->wrap(cx, &key)) {
@@ -173,15 +177,15 @@ JS_FRIEND_API bool JS_NondeterministicGetWeakMapKeys(JSContext* cx,
 }
 
 static void WeakCollection_trace(JSTracer* trc, JSObject* obj) {
-  if (ObjectValueMap* map = obj->as<WeakCollectionObject>().getMap()) {
+  if (ObjectValueWeakMap* map = obj->as<WeakCollectionObject>().getMap()) {
     map->trace(trc);
   }
 }
 
-static void WeakCollection_finalize(FreeOp* fop, JSObject* obj) {
+static void WeakCollection_finalize(JSFreeOp* fop, JSObject* obj) {
   MOZ_ASSERT(fop->maybeOnHelperThread());
-  if (ObjectValueMap* map = obj->as<WeakCollectionObject>().getMap()) {
-    fop->delete_(map);
+  if (ObjectValueWeakMap* map = obj->as<WeakCollectionObject>().getMap()) {
+    fop->delete_(obj, map, MemoryUse::WeakMapObject);
   }
 }
 
@@ -199,11 +203,11 @@ JS_PUBLIC_API bool JS::GetWeakMapEntry(JSContext* cx, HandleObject mapObj,
   CHECK_THREAD(cx);
   cx->check(key);
   rval.setUndefined();
-  ObjectValueMap* map = mapObj->as<WeakMapObject>().getMap();
+  ObjectValueWeakMap* map = mapObj->as<WeakMapObject>().getMap();
   if (!map) {
     return true;
   }
-  if (ObjectValueMap::Ptr ptr = map->lookup(key)) {
+  if (ObjectValueWeakMap::Ptr ptr = map->lookup(key)) {
     // Read barrier to prevent an incorrectly gray value from escaping the
     // weak map. See the comment before UnmarkGrayChildren in gc/Marking.cpp
     ExposeValueToActiveJS(ptr->value().get());
@@ -255,17 +259,19 @@ bool WeakMapObject::construct(JSContext* cx, unsigned argc, Value* vp) {
   return true;
 }
 
-const ClassOps WeakCollectionObject::classOps_ = {nullptr, /* addProperty */
-                                                  nullptr, /* delProperty */
-                                                  nullptr, /* enumerate */
-                                                  nullptr, /* newEnumerate */
-                                                  nullptr, /* resolve */
-                                                  nullptr, /* mayResolve */
-                                                  WeakCollection_finalize,
-                                                  nullptr, /* call */
-                                                  nullptr, /* hasInstance */
-                                                  nullptr, /* construct */
-                                                  WeakCollection_trace};
+const JSClassOps WeakCollectionObject::classOps_ = {
+    nullptr,                  // addProperty
+    nullptr,                  // delProperty
+    nullptr,                  // enumerate
+    nullptr,                  // newEnumerate
+    nullptr,                  // resolve
+    nullptr,                  // mayResolve
+    WeakCollection_finalize,  // finalize
+    nullptr,                  // call
+    nullptr,                  // hasInstance
+    nullptr,                  // construct
+    WeakCollection_trace,     // trace
+};
 
 const ClassSpec WeakMapObject::classSpec_ = {
     GenericCreateConstructor<WeakMapObject::construct, 0,
@@ -277,13 +283,13 @@ const ClassSpec WeakMapObject::classSpec_ = {
     WeakMapObject::properties,
 };
 
-const Class WeakMapObject::class_ = {
+const JSClass WeakMapObject::class_ = {
     "WeakMap",
     JSCLASS_HAS_PRIVATE | JSCLASS_HAS_CACHED_PROTO(JSProto_WeakMap) |
         JSCLASS_BACKGROUND_FINALIZE,
     &WeakCollectionObject::classOps_, &WeakMapObject::classSpec_};
 
-const Class WeakMapObject::protoClass_ = {
+const JSClass WeakMapObject::protoClass_ = {
     js_Object_str, JSCLASS_HAS_CACHED_PROTO(JSProto_WeakMap), JS_NULL_CLASS_OPS,
     &WeakMapObject::classSpec_};
 

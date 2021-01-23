@@ -12,7 +12,7 @@ extern crate winit;
 mod boilerplate;
 
 use crate::boilerplate::Example;
-use euclid::TypedScale;
+use euclid::Scale;
 use webrender::api::*;
 use webrender::api::units::*;
 
@@ -33,7 +33,7 @@ struct App {
 impl App {
     fn init(
         &mut self,
-        api: &RenderApi,
+        api: &mut RenderApi,
         device_pixel_ratio: f32,
     ) {
         let init_data = vec![
@@ -78,7 +78,7 @@ impl App {
                 pipeline_id,
                 content_rect: LayoutRect::new(
                     LayoutPoint::origin(),
-                    bounds.size.to_f32() / TypedScale::new(device_pixel_ratio),
+                    bounds.size.to_f32() / Scale::new(device_pixel_ratio),
                 ),
                 color,
             });
@@ -89,7 +89,7 @@ impl App {
 impl Example for App {
     fn render(
         &mut self,
-        api: &RenderApi,
+        api: &mut RenderApi,
         base_builder: &mut DisplayListBuilder,
         _txn: &mut Transaction,
         device_size: DeviceIntSize,
@@ -118,10 +118,11 @@ impl Example for App {
             builder.push_simple_stacking_context(
                 doc.content_rect.origin,
                 space_and_clip.spatial_id,
-                true,
+                PrimitiveFlags::IS_BACKFACE_VISIBLE,
             );
             builder.push_rect(
                 &CommonItemProperties::new(local_rect, space_and_clip),
+                local_rect,
                 doc.color,
             );
             builder.pop_stacking_context();

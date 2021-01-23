@@ -2,24 +2,15 @@
 set -x -e -v
 
 WORKSPACE=$HOME/workspace
-HOME_DIR=$WORKSPACE/build
 INSTALL_DIR=$WORKSPACE/fxc2
-TOOLTOOL_DIR=$WORKSPACE/build/src
-UPLOAD_DIR=$HOME/artifacts
 
 mkdir -p $INSTALL_DIR/bin
 
-cd $TOOLTOOL_DIR
-. taskcluster/scripts/misc/tooltool-download.sh
-export PATH="$TOOLTOOL_DIR/clang/bin:$PATH"
-
-cd $WORKSPACE
+export PATH="$MOZ_FETCHES_DIR/clang/bin:$PATH"
 
 # --------------
 
-git clone -n https://github.com/mozilla/fxc2.git fxc2-clone
-cd fxc2-clone
-git checkout 63ad74b7faa7033f2c1be9cc1cd0225241a1a9a5 # Asserts integrity of the clone (right?)
+cd $MOZ_FETCHES_DIR/fxc2
 make -j$(nproc) x86
 
 cp fxc2.exe $INSTALL_DIR/bin/

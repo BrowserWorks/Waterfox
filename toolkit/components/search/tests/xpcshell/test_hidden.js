@@ -4,11 +4,10 @@
 const kUrlPref = "geoSpecificDefaults.url";
 
 add_task(async function setup() {
-  configureToLoadJarEngines();
-
+  await useTestEngines("simple-engines");
   // Geo specific defaults won't be fetched if there's no country code.
   Services.prefs.setCharPref(
-    "browser.search.geoip.url",
+    "browser.region.network.url",
     'data:application/json,{"country_code": "US"}'
   );
 
@@ -22,8 +21,9 @@ add_task(async function setup() {
         visibleDefaultEngines: ["hidden"],
       },
     });
+  Services.prefs.setBoolPref("browser.search.geoSpecificDefaults", true);
   Services.prefs
-    .getDefaultBranch(BROWSER_SEARCH_PREF)
+    .getDefaultBranch(SearchUtils.BROWSER_SEARCH_PREF)
     .setCharPref(kUrlPref, url);
 
   Assert.ok(!Services.search.isInitialized);
@@ -33,13 +33,20 @@ add_task(async function setup() {
 
 add_task(async function async_init() {
   let commitPromise = promiseAfterCache();
-  await Services.search.init();
+  let enginesReloaded = SearchTestUtils.promiseSearchNotification(
+    "engines-reloaded"
+  );
+  await Services.search.init(true);
+  await enginesReloaded;
 
   let engines = await Services.search.getEngines();
   Assert.equal(engines.length, 1);
 
-  // The default test jar engine has been hidden.
-  let engine = Services.search.getEngineByName("bug645970");
+  // The default test engines have been hidden.
+  let engine = Services.search.getEngineByName("basic");
+  Assert.equal(engine, null);
+
+  engine = Services.search.getEngineByName("Simple Engine");
   Assert.equal(engine, null);
 
   // The hidden engine is visible.
@@ -68,16 +75,23 @@ add_task(async function invalid_engine() {
       },
     });
   Services.prefs
-    .getDefaultBranch(BROWSER_SEARCH_PREF)
+    .getDefaultBranch(SearchUtils.BROWSER_SEARCH_PREF)
     .setCharPref(kUrlPref, url);
 
-  await asyncReInit({ waitForRegionFetch: true });
+  let enginesReloaded = SearchTestUtils.promiseSearchNotification(
+    "engines-reloaded"
+  );
+  await asyncReInit({ awaitRegionFetch: true });
+  await enginesReloaded;
 
   let engines = await Services.search.getEngines();
-  Assert.equal(engines.length, 1);
+  Assert.equal(engines.length, 2);
 
-  // The default test jar engine is visible.
-  let engine = Services.search.getEngineByName("bug645970");
+  // The default test engines are visible.
+  let engine = Services.search.getEngineByName("basic");
+  Assert.notEqual(engine, null);
+
+  engine = Services.search.getEngineByName("basic");
   Assert.notEqual(engine, null);
 
   // The hidden engine is... hidden.

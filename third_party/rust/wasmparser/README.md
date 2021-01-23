@@ -1,9 +1,11 @@
 # The WebAssembly binary file decoder in Rust
 
-[![Build Status](https://travis-ci.org/yurydelendik/wasmparser.rs.svg?branch=master)](https://travis-ci.org/yurydelendik/wasmparser.rs)
+**A [Bytecode Alliance](https://bytecodealliance.org/) project**
+
+![CI](https://github.com/bytecodealliance/wasmparser/workflows/CI/badge.svg)
 [![crates.io link](https://img.shields.io/crates/v/wasmparser.svg)](https://crates.io/crates/wasmparser)
 
-The decoder library provides lightwight and fast decoding/parsing of WebAssembly binary files.
+The decoder library provides lightweight and fast decoding/parsing of WebAssembly binary files.
 
 The other goal is minimal memory footprint. For this reason, there is no AST or IR of WebAssembly data.
 

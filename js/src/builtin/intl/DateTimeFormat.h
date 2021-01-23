@@ -15,14 +15,14 @@
 #include "js/RootingAPI.h"
 #include "vm/NativeObject.h"
 
-namespace js {
+using UDateFormat = void*;
 
-class FreeOp;
-class GlobalObject;
+namespace js {
 
 class DateTimeFormatObject : public NativeObject {
  public:
-  static const Class class_;
+  static const JSClass class_;
+  static const JSClass& protoClass_;
 
   static constexpr uint32_t INTERNALS_SLOT = 0;
   static constexpr uint32_t UDATE_FORMAT_SLOT = 1;
@@ -32,16 +32,27 @@ class DateTimeFormatObject : public NativeObject {
                 "INTERNALS_SLOT must match self-hosting define for internals "
                 "object slot");
 
+  // Estimated memory use for UDateFormat.
+  static constexpr size_t EstimatedMemoryUse = 91626;
+
+  UDateFormat* getDateFormat() const {
+    const auto& slot = getFixedSlot(UDATE_FORMAT_SLOT);
+    if (slot.isUndefined()) {
+      return nullptr;
+    }
+    return static_cast<UDateFormat*>(slot.toPrivate());
+  }
+
+  void setDateFormat(UDateFormat* dateFormat) {
+    setFixedSlot(UDATE_FORMAT_SLOT, PrivateValue(dateFormat));
+  }
+
  private:
-  static const ClassOps classOps_;
+  static const JSClassOps classOps_;
+  static const ClassSpec classSpec_;
 
-  static void finalize(FreeOp* fop, JSObject* obj);
+  static void finalize(JSFreeOp* fop, JSObject* obj);
 };
-
-extern JSObject* CreateDateTimeFormatPrototype(
-    JSContext* cx, JS::Handle<JSObject*> Intl, JS::Handle<GlobalObject*> global,
-    JS::MutableHandle<JSObject*> constructor,
-    intl::DateTimeFormatOptions dtfOptions);
 
 /**
  * Returns a new instance of the standard built-in DateTimeFormat constructor.
@@ -52,18 +63,6 @@ extern JSObject* CreateDateTimeFormatPrototype(
  */
 extern MOZ_MUST_USE bool intl_DateTimeFormat(JSContext* cx, unsigned argc,
                                              JS::Value* vp);
-
-/**
- * Returns an object indicating the supported locales for date and time
- * formatting by having a true-valued property for each such locale with the
- * canonicalized language tag as the property name. The object has no
- * prototype.
- *
- * Usage: availableLocales = intl_DateTimeFormat_availableLocales()
- */
-extern MOZ_MUST_USE bool intl_DateTimeFormat_availableLocales(JSContext* cx,
-                                                              unsigned argc,
-                                                              JS::Value* vp);
 
 /**
  * Returns an array with the calendar type identifiers per Unicode

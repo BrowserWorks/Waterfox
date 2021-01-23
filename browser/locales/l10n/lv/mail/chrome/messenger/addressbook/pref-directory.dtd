@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (window.title) : do not translate "LDAP" in below line -->
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!-- LOCALIZATION NOTE (directoriesText.label) : do not translate "LDAP" in below line -->
+
+
+
+<!ENTITY editDirectory.label       "Rediģēt">
+<!ENTITY editDirectory.accesskey   "e">
+<!ENTITY deleteDirectory.label     "Dzēst">
+<!ENTITY deleteDirectory.accesskey "D">

@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY downloadManager.title "İndirilenler yöneticisi">
+
+<!ENTITY menuBar.tooltip "Menü çubuğu">
+<!ENTITY searchBar.tooltip "Arama çubuğu">
+
+<!ENTITY search.placeholder "İndirilenlerde ara">
+<!ENTITY search.label "İndirilenlerde ara">
+<!ENTITY search.accesskey "a">
+<!ENTITY search.key "f">
+
+<!ENTITY cmd.clearList.label "Listeyi temizle">
+<!ENTITY cmd.clearList.tooltip "Tamamlanan, vazgeçilen ve başarısız olan indirme işlemleri listeden kaldırılır">
+<!ENTITY cmd.clearList.accesskey "e">
+
+<!ENTITY col.name.label "İsim">
+<!ENTITY col.name.accesskey "İ">
+<!ENTITY col.name.tooltip "Dosya adı">
+<!ENTITY col.status.label "Durum">
+<!ENTITY col.status.accesskey "D">
+<!ENTITY col.status.tooltip "Durum">
+<!ENTITY col.actionPlay.label "Duraklat/Devam/Yeniden dene">
+<!ENTITY col.actionPlay.accesskey "D">
+<!ENTITY col.actionPlay.tooltip "Duraklat/Devam/Yeniden dene">
+<!ENTITY col.actionStop.label "İptal/Sil">
+<!ENTITY col.actionStop.accesskey "İ">
+<!ENTITY col.actionStop.tooltip "İptal/Sil">
+<!ENTITY col.progress.label "İlerleme">
+<!ENTITY col.progress.accesskey "l">
+<!ENTITY col.progress.tooltip "İlerleme">
+<!ENTITY col.timeremaining.label "Kalan zaman">
+<!ENTITY col.timeremaining.accesskey "z">
+<!ENTITY col.timeremaining.tooltip "Kalan zaman">
+<!ENTITY col.transferred.label "İndirilen">
+<!ENTITY col.transferred.accesskey "n">
+<!ENTITY col.transferred.tooltip "Transferred">
+<!ENTITY col.transferrate.label "Hız">
+<!ENTITY col.transferrate.accesskey "H">
+<!ENTITY col.transferrate.tooltip "Speed">
+<!ENTITY col.timeelapsed.label "Geçen süre">
+<!ENTITY col.timeelapsed.accesskey "ç">
+<!ENTITY col.timeelapsed.tooltip "Geçen süre">
+<!ENTITY col.starttime.label "Başlama zamanı">
+<!ENTITY col.starttime.accesskey "l">
+<!ENTITY col.starttime.tooltip "Başlama zamanı">
+<!ENTITY col.endtime.label "Bitiş zamanı">
+<!ENTITY col.endtime.accesskey "z">
+<!ENTITY col.endtime.tooltip "Bitiş zamanı">
+<!ENTITY col.progresstext.label "&#37;">
+<!ENTITY col.progresstext.accesskey "&#37;">
+<!ENTITY col.progresstext.tooltip "İlerleme (&#37;)">
+<!ENTITY col.source.label "Kaynak">
+<!ENTITY col.source.accesskey "K">
+<!ENTITY col.source.tooltip "Kaynak">
+
+<!ENTITY view.columns.label "Sütunları göster">
+<!ENTITY view.columns.accesskey "S">
+<!ENTITY view.sortBy.label "Sıralama koşulu">
+<!ENTITY view.sortBy.accesskey "l">
+
+<!ENTITY view.unsorted.label "Sınıflanmamış">
+<!ENTITY view.unsorted.accesskey "f">
+<!ENTITY view.sortAscending.label "A'dan Z'ye sırala">
+<!ENTITY view.sortAscending.accesskey "A">
+<!ENTITY view.sortDescending.label "Z'den A'ya sırala">
+<!ENTITY view.sortDescending.accesskey "Z">
+
+<!ENTITY cmd.pause.label "Duraklat">
+<!ENTITY cmd.pause.accesskey "D">
+<!ENTITY cmd.resume.label "Devam et">
+<!ENTITY cmd.resume.accesskey "t">
+<!ENTITY cmd.retry.label "Yeniden dene">
+<!ENTITY cmd.retry.accesskey "d">
+<!ENTITY cmd.cancel.label "Vazgeç">
+<!ENTITY cmd.cancel.accesskey "V">
+<!ENTITY cmd.remove.label "Listeden kaldır">
+<!ENTITY cmd.remove.accesskey "e">
+<!ENTITY cmd.open.label "Aç">
+<!ENTITY cmd.open.accesskey "A">
+<!ENTITY cmd.show.label "Bulunduğu dizini aç">
+<!ENTITY cmd.show.accesskey "d">
+<!ENTITY cmd.goToDownloadPage.label "İndirme sayfasına git">
+<!ENTITY cmd.goToDownloadPage.accesskey "g">
+<!ENTITY cmd.copyDownloadLink.label "İndirme bağlantısını kopyala">
+<!ENTITY cmd.copyDownloadLink.accesskey "l">
+<!ENTITY cmd.properties.label "Özellikler…">
+<!ENTITY cmd.properties.accesskey "l">

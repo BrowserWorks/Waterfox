@@ -17,24 +17,14 @@
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/Event.h"
 #include "mozilla/LookAndFeel.h"
-#include "mozilla/Preferences.h"
+#include "mozilla/StaticPrefs_layout.h"
 
 namespace mozilla {
 namespace layout {
 
-NS_IMPL_ISUPPORTS(ScrollbarActivity, nsIDOMEventListener)
+using mozilla::dom::Element;
 
-static bool GetForceAlwaysVisiblePref() {
-  static bool sForceAlwaysVisible;
-  static bool sForceAlwaysVisiblePrefCached = false;
-  if (!sForceAlwaysVisiblePrefCached) {
-    Preferences::AddBoolVarCache(
-        &sForceAlwaysVisible,
-        "layout.testing.overlay-scrollbars.always-visible");
-    sForceAlwaysVisiblePrefCached = true;
-  }
-  return sForceAlwaysVisible;
-}
+NS_IMPL_ISUPPORTS(ScrollbarActivity, nsIDOMEventListener)
 
 void ScrollbarActivity::QueryLookAndFeelVals() {
   // Fade animation constants
@@ -144,8 +134,7 @@ void ScrollbarActivity::HandleEventForScrollbar(const nsAString& aType,
                                                 nsIContent* aTarget,
                                                 Element* aScrollbar,
                                                 bool* aStoredHoverState) {
-  if (!aTarget || !aScrollbar ||
-      !nsContentUtils::ContentIsDescendantOf(aTarget, aScrollbar))
+  if (!aTarget || !aScrollbar || !aTarget->IsInclusiveDescendantOf(aScrollbar))
     return;
 
   if (aType.EqualsLiteral("mousedown")) {
@@ -309,9 +298,10 @@ static void SetOpacityOnElement(nsIContent* aContent, double aOpacity) {
   nsCOMPtr<nsStyledElement> inlineStyleContent = do_QueryInterface(aContent);
   if (inlineStyleContent) {
     nsICSSDeclaration* decl = inlineStyleContent->Style();
-    nsAutoString str;
+    nsAutoCString str;
     str.AppendFloat(aOpacity);
-    decl->SetProperty(NS_LITERAL_STRING("opacity"), str, EmptyString());
+    decl->SetProperty(NS_LITERAL_CSTRING("opacity"), str, EmptyString(),
+                      IgnoreErrors());
   }
 }
 
@@ -341,7 +331,7 @@ static void UnsetOpacityOnElement(nsIContent* aContent) {
   if (inlineStyleContent) {
     nsICSSDeclaration* decl = inlineStyleContent->Style();
     nsAutoString dummy;
-    decl->RemoveProperty(NS_LITERAL_STRING("opacity"), dummy);
+    decl->RemoveProperty(NS_LITERAL_CSTRING("opacity"), dummy, IgnoreErrors());
   }
 }
 
@@ -366,7 +356,7 @@ bool ScrollbarActivity::SetIsFading(bool aNewFading) {
 }
 
 void ScrollbarActivity::StartFadeBeginTimer() {
-  if (GetForceAlwaysVisiblePref()) {
+  if (StaticPrefs::layout_testing_overlay_scrollbars_always_visible()) {
     return;
   }
   if (!mFadeBeginTimer) {
@@ -383,9 +373,29 @@ void ScrollbarActivity::CancelFadeBeginTimer() {
   }
 }
 
+static void MaybeInvalidateScrollbarForHover(
+    Element* aScrollbarToInvalidate, Element* aScrollbarAboutToGetHover) {
+  if (aScrollbarToInvalidate) {
+    bool hasHover =
+        aScrollbarToInvalidate->HasAttr(kNameSpaceID_None, nsGkAtoms::hover);
+    bool willHaveHover = (aScrollbarAboutToGetHover == aScrollbarToInvalidate);
+
+    if (hasHover != willHaveHover) {
+      if (nsIFrame* f = aScrollbarToInvalidate->GetPrimaryFrame()) {
+        f->SchedulePaint();
+      }
+    }
+  }
+}
+
 void ScrollbarActivity::HoveredScrollbar(Element* aScrollbar) {
-  SetBooleanAttribute(GetHorizontalScrollbar(), nsGkAtoms::hover, false);
-  SetBooleanAttribute(GetVerticalScrollbar(), nsGkAtoms::hover, false);
+  Element* vertScrollbar = GetVerticalScrollbar();
+  Element* horzScrollbar = GetHorizontalScrollbar();
+  MaybeInvalidateScrollbarForHover(vertScrollbar, aScrollbar);
+  MaybeInvalidateScrollbarForHover(horzScrollbar, aScrollbar);
+
+  SetBooleanAttribute(horzScrollbar, nsGkAtoms::hover, false);
+  SetBooleanAttribute(vertScrollbar, nsGkAtoms::hover, false);
   SetBooleanAttribute(aScrollbar, nsGkAtoms::hover, true);
 }
 

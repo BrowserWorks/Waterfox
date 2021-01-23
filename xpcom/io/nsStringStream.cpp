@@ -28,7 +28,10 @@
 #include "XPCOMModule.h"
 
 using namespace mozilla::ipc;
+using mozilla::fallible;
+using mozilla::MallocSizeOf;
 using mozilla::Maybe;
+using mozilla::ReentrantMonitorAutoEnter;
 using mozilla::Some;
 
 //-----------------------------------------------------------------------------
@@ -58,7 +61,7 @@ class nsStringInputStream final : public nsIStringInputStream,
   nsresult Init(nsTArray<uint8_t>&& aArray);
 
  private:
-  ~nsStringInputStream() {}
+  ~nsStringInputStream() = default;
 
   template <typename M>
   void SerializeInternal(InputStreamParams& aParams, bool aDelayedStart,
@@ -191,6 +194,11 @@ nsStringInputStream::SetData(const char* aData, int32_t aDataLen) {
 
   mOffset = 0;
   return NS_OK;
+}
+
+NS_IMETHODIMP
+nsStringInputStream::SetUTF8Data(const nsACString& aData) {
+  return nsStringInputStream::SetData(aData);
 }
 
 NS_IMETHODIMP
@@ -399,35 +407,17 @@ nsStringInputStream::Tell(int64_t* aOutWhere) {
 // nsIIPCSerializableInputStream implementation
 /////////
 
-void nsStringInputStream::Serialize(InputStreamParams& aParams,
-                                    FileDescriptorArray& /* aFDs */,
-                                    bool aDelayedStart, uint32_t aMaxSize,
-                                    uint32_t* aSizeUsed,
-                                    mozilla::dom::ContentChild* aManager) {
+void nsStringInputStream::Serialize(
+    InputStreamParams& aParams, FileDescriptorArray& /* aFDs */,
+    bool aDelayedStart, uint32_t aMaxSize, uint32_t* aSizeUsed,
+    mozilla::ipc::ParentToChildStreamActorManager* aManager) {
   SerializeInternal(aParams, aDelayedStart, aMaxSize, aSizeUsed, aManager);
 }
 
-void nsStringInputStream::Serialize(InputStreamParams& aParams,
-                                    FileDescriptorArray& /* aFDs */,
-                                    bool aDelayedStart, uint32_t aMaxSize,
-                                    uint32_t* aSizeUsed,
-                                    PBackgroundChild* aManager) {
-  SerializeInternal(aParams, aDelayedStart, aMaxSize, aSizeUsed, aManager);
-}
-
-void nsStringInputStream::Serialize(InputStreamParams& aParams,
-                                    FileDescriptorArray& /* aFDs */,
-                                    bool aDelayedStart, uint32_t aMaxSize,
-                                    uint32_t* aSizeUsed,
-                                    mozilla::dom::ContentParent* aManager) {
-  SerializeInternal(aParams, aDelayedStart, aMaxSize, aSizeUsed, aManager);
-}
-
-void nsStringInputStream::Serialize(InputStreamParams& aParams,
-                                    FileDescriptorArray& /* aFDs */,
-                                    bool aDelayedStart, uint32_t aMaxSize,
-                                    uint32_t* aSizeUsed,
-                                    PBackgroundParent* aManager) {
+void nsStringInputStream::Serialize(
+    InputStreamParams& aParams, FileDescriptorArray& /* aFDs */,
+    bool aDelayedStart, uint32_t aMaxSize, uint32_t* aSizeUsed,
+    mozilla::ipc::ChildToParentStreamActorManager* aManager) {
   SerializeInternal(aParams, aDelayedStart, aMaxSize, aSizeUsed, aManager);
 }
 
@@ -499,7 +489,7 @@ nsStringInputStream::Clone(nsIInputStream** aCloneOut) {
 }
 
 nsresult NS_NewByteInputStream(nsIInputStream** aStreamResult,
-                               Span<const char> aStringToRead,
+                               mozilla::Span<const char> aStringToRead,
                                nsAssignmentType aAssignment) {
   MOZ_ASSERT(aStreamResult, "null out ptr");
 

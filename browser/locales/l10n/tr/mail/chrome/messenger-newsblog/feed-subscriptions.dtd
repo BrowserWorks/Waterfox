@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Besleme abonelikleri">
+<!ENTITY learnMore.label             "Beslemeler hakkında bilgi alın">
+
+<!ENTITY feedTitle.label             "Başlık:">
+<!ENTITY feedTitle.accesskey         "B">
+
+<!ENTITY feedLocation.label          "Besleme adresi:">
+<!ENTITY feedLocation.accesskey      "a">
+<!ENTITY feedLocation2.placeholder   "Geçerli bir besleme adresi girin">
+<!ENTITY locationValidate.label      "Doğrula">
+<!ENTITY validateText.label          "Doğurlamayı denetle ve geçerli bir adres al.">
+
+<!ENTITY feedFolder.label            "Haberlerin depolanacağı yer:">
+<!ENTITY feedFolder.accesskey        "d">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Yeni yazıları kontrol etme sıklığı: ">
+<!ENTITY biffStart.accesskey         "k">
+<!ENTITY biffMinutes.label           "dakika">
+<!ENTITY biffMinutes.accesskey       "d">
+<!ENTITY biffDays.label              "gün">
+<!ENTITY biffDays.accesskey          "g">
+<!ENTITY recommendedUnits.label      "Yayıncının önerisi:">
+
+<!ENTITY quickMode.label             "Web sayfasını yüklemek yerine haber özetini göster">
+<!ENTITY quickMode.accesskey         "ö">
+
+<!ENTITY autotagEnable.label         "Besleme &lt;kategori&gt; adlarından otomatik olarak etiket oluştur">
+<!ENTITY autotagEnable.accesskey     "B">
+<!ENTITY autotagUsePrefix.label      "Etiketlere ön ek ekle:">
+<!ENTITY autotagUsePrefix.accesskey  "ö">
+<!ENTITY autoTagPrefix.placeholder   "Etiket ön eki girin">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Ekle">
+<!ENTITY button.addFeed.accesskey    "l">
+<!ENTITY button.verifyFeed.label     "Doğrula">
+<!ENTITY button.verifyFeed.accesskey "D">
+<!ENTITY button.updateFeed.label     "Güncelle">
+<!ENTITY button.updateFeed.accesskey "G">
+<!ENTITY button.removeFeed.label     "Kaldır">
+<!ENTITY button.removeFeed.accesskey "r">
+<!ENTITY button.importOPML.label     "İçe aktar">
+<!ENTITY button.importOPML.accesskey "k">
+<!ENTITY button.exportOPML.label     "Dışa aktar">
+<!ENTITY button.exportOPML.accesskey "t">
+<!ENTITY button.exportOPML.tooltip   "Export Feeds with folder structure; ctrl click or ctrl enter to export Feeds as a list">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Kapat">

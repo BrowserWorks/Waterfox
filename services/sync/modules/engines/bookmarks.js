@@ -32,6 +32,7 @@ const { Svc, Utils } = ChromeUtils.import("resource://services-sync/util.js");
 XPCOMUtils.defineLazyModuleGetters(this, {
   BookmarkValidator: "resource://services-sync/bookmark_validator.js",
   LiveBookmarkMigrator: "resource:///modules/LiveBookmarkMigrator.jsm",
+  Observers: "resource://services-common/observers.js",
   OS: "resource://gre/modules/osfile.jsm",
   PlacesBackups: "resource://gre/modules/PlacesBackups.jsm",
   PlacesDBUtils: "resource://gre/modules/PlacesDBUtils.jsm",
@@ -77,6 +78,19 @@ XPCOMUtils.defineLazyGetter(this, "IGNORED_SOURCES", () => [
   PlacesUtils.bookmarks.SOURCES.RESTORE_ON_STARTUP,
   PlacesUtils.bookmarks.SOURCES.SYNC_REPARENT_REMOVED_FOLDER_CHILDREN,
 ]);
+
+// The validation telemetry version for the buffered engine. Version 1 is
+// collected by `bookmark_validator.js`, and checks value as well as structure
+// differences. Version 2 is collected by the buffered engine as part of
+// building the remote tree, and checks structure differences only.
+const BUFFERED_BOOKMARK_VALIDATOR_VERSION = 2;
+
+// The maximum time that the buffered engine should wait before aborting a
+// bookmark merge.
+const BUFFERED_BOOKMARK_APPLY_TIMEOUT_MS = 5 * 60 * 60 * 1000; // 5 minutes
+
+// The default frecency value to use when not known.
+const FRECENCY_UNKNOWN = -1;
 
 function isSyncedRootNode(node) {
   return (
@@ -442,7 +456,8 @@ BaseBookmarksEngine.prototype = {
       if (
         Async.isShutdownException(ex) ||
         ex.status > 0 ||
-        ex.name == "MergeConflictError"
+        ex.name == "MergeConflictError" ||
+        ex.name == "InterruptedError"
       ) {
         // Don't run maintenance on shutdown or HTTP errors, or if we aborted
         // the sync because the user changed their bookmarks during merging.
@@ -521,10 +536,6 @@ BaseBookmarksEngine.prototype = {
       FORBIDDEN_INCOMING_IDS.includes(incomingItem.id) ||
       FORBIDDEN_INCOMING_PARENT_IDS.includes(incomingItem.parentid)
     );
-  },
-
-  getValidator() {
-    return new BookmarkValidator();
   },
 };
 
@@ -806,6 +817,10 @@ BookmarksEngine.prototype = {
     this._log.debug("Recording children of " + localRecord.id, order);
     this._store._childrenToOrder[localRecord.id] = order;
   },
+
+  getValidator() {
+    return new BookmarkValidator();
+  },
 };
 
 /**
@@ -868,12 +883,24 @@ BufferedBookmarksEngine.prototype = {
   async _processIncoming(newitems) {
     await super._processIncoming(newitems);
     let buf = await this._store.ensureOpenMirror();
-    let recordsToUpload = await buf.apply({
-      remoteTimeSeconds: Resource.serverTime,
-      weakUpload: [...this._needWeakUpload.keys()],
-    });
-    this._needWeakUpload.clear();
-    this._modified.replace(recordsToUpload);
+
+    let watchdog = this._newWatchdog();
+    watchdog.start(BUFFERED_BOOKMARK_APPLY_TIMEOUT_MS);
+
+    try {
+      let recordsToUpload = await buf.apply({
+        remoteTimeSeconds: Resource.serverTime,
+        weakUpload: [...this._needWeakUpload.keys()],
+        signal: watchdog.signal,
+      });
+      this._modified.replace(recordsToUpload);
+    } finally {
+      watchdog.stop();
+      if (watchdog.abortReason) {
+        this._log.warn(`Aborting bookmark merge: ${watchdog.abortReason}`);
+      }
+      this._needWeakUpload.clear();
+    }
   },
 
   async _reconcile(item) {
@@ -1041,10 +1068,19 @@ BaseBookmarksStore.prototype = {
 
     // Add in the bookmark's frecency if we have something.
     if (record.bmkUri != null) {
-      let frecency = await PlacesSyncUtils.history.fetchURLFrecency(
-        record.bmkUri
-      );
-      if (frecency != -1) {
+      let frecency = FRECENCY_UNKNOWN;
+      try {
+        frecency = await PlacesSyncUtils.history.fetchURLFrecency(
+          record.bmkUri
+        );
+      } catch (ex) {
+        this._log.warn(
+          `Failed to fetch frecency for ${record.id}; assuming default`,
+          ex
+        );
+        this._log.trace("Record {id} has invalid URL ${bmkUri}", record);
+      }
+      if (frecency != FRECENCY_UNKNOWN) {
         index += frecency;
       }
     }
@@ -1290,18 +1326,35 @@ BufferedBookmarksStore.prototype = {
 
     return SyncedBookmarksMirror.open({
       path: mirrorPath,
-      recordTelemetryEvent: (object, method, value, extra) => {
-        this.engine.service.recordTelemetryEvent(object, method, value, extra);
+      recordStepTelemetry: (name, took, counts) => {
+        Observers.notify(
+          "weave:engine:sync:step",
+          {
+            name,
+            took,
+            counts,
+          },
+          this.name
+        );
+      },
+      recordValidationTelemetry: (took, checked, problems) => {
+        Observers.notify(
+          "weave:engine:validate:finish",
+          {
+            version: BUFFERED_BOOKMARK_VALIDATOR_VERSION,
+            took,
+            checked,
+            problems,
+          },
+          this.name
+        );
       },
     });
   },
 
   async applyIncomingBatch(records) {
     let buf = await this.ensureOpenMirror();
-    for (let [, chunk] of PlacesSyncUtils.chunkArray(
-      records,
-      this._batchChunkSize
-    )) {
+    for (let chunk of PlacesUtils.chunkArray(records, this._batchChunkSize)) {
       await buf.store(chunk);
     }
     // Array of failed records.
@@ -1335,26 +1388,15 @@ function BookmarksTracker(name, engine) {
 BookmarksTracker.prototype = {
   __proto__: Tracker.prototype,
 
-  // `_ignore` checks the change source for each observer notification, so we
-  // don't want to let the engine ignore all changes during a sync.
-  get ignoreAll() {
-    return false;
-  },
-
-  // Define an empty setter so that the engine doesn't throw a `TypeError`
-  // setting a read-only property.
-  set ignoreAll(value) {},
-
-  // We never want to persist changed IDs, as the changes are already stored
-  // in Places.
-  persistChangedIDs: false,
-
   onStart() {
     PlacesUtils.bookmarks.addObserver(this, true);
     this._placesListener = new PlacesWeakCallbackWrapper(
       this.handlePlacesEvents.bind(this)
     );
-    PlacesUtils.observers.addListener(["bookmark-added"], this._placesListener);
+    PlacesUtils.observers.addListener(
+      ["bookmark-added", "bookmark-removed"],
+      this._placesListener
+    );
     Svc.Obs.add("bookmarks-restore-begin", this);
     Svc.Obs.add("bookmarks-restore-success", this);
     Svc.Obs.add("bookmarks-restore-failed", this);
@@ -1363,7 +1405,7 @@ BookmarksTracker.prototype = {
   onStop() {
     PlacesUtils.bookmarks.removeObserver(this);
     PlacesUtils.observers.removeListener(
-      ["bookmark-added"],
+      ["bookmark-added", "bookmark-removed"],
       this._placesListener
     );
     Svc.Obs.remove("bookmarks-restore-begin", this);
@@ -1371,25 +1413,8 @@ BookmarksTracker.prototype = {
     Svc.Obs.remove("bookmarks-restore-failed", this);
   },
 
-  // Ensure we aren't accidentally using the base persistence.
-  addChangedID(id, when) {
-    throw new Error("Don't add IDs to the bookmarks tracker");
-  },
-
-  removeChangedID(id) {
-    throw new Error("Don't remove IDs from the bookmarks tracker");
-  },
-
-  // This method is called at various times, so we override with a no-op
-  // instead of throwing.
-  clearChangedIDs() {},
-
   async getChangedIDs() {
     return PlacesSyncUtils.bookmarks.pullChanges();
-  },
-
-  set changedIDs(obj) {
-    throw new Error("Don't set initial changed bookmark IDs");
   },
 
   observe(subject, topic, data) {
@@ -1421,7 +1446,6 @@ BookmarksTracker.prototype = {
 
   QueryInterface: ChromeUtils.generateQI([
     Ci.nsINavBookmarkObserver,
-    Ci.nsINavBookmarkObserver_MOZILLA_1_9_1_ADDITIONS,
     Ci.nsISupportsWeakReference,
   ]),
 
@@ -1437,22 +1461,25 @@ BookmarksTracker.prototype = {
 
   handlePlacesEvents(events) {
     for (let event of events) {
-      if (IGNORED_SOURCES.includes(event.source)) {
-        continue;
+      switch (event.type) {
+        case "bookmark-added":
+          if (IGNORED_SOURCES.includes(event.source)) {
+            continue;
+          }
+
+          this._log.trace("'bookmark-added': " + event.id);
+          this._upScore();
+          break;
+        case "bookmark-removed":
+          if (IGNORED_SOURCES.includes(event.source)) {
+            continue;
+          }
+
+          this._log.trace("'bookmark-removed': " + event.id);
+          this._upScore();
+          break;
       }
-
-      this._log.trace("'bookmark-added': " + event.id);
-      this._upScore();
     }
-  },
-
-  onItemRemoved(itemId, parentId, index, type, uri, guid, parentGuid, source) {
-    if (IGNORED_SOURCES.includes(source)) {
-      return;
-    }
-
-    this._log.trace("onItemRemoved: " + itemId);
-    this._upScore();
   },
 
   // This method is oddly structured, but the idea is to return as quickly as

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "სეანსის აღდგენა">
+<!ENTITY restorepage.pagetitle      "გნებავთ თქვენი სეანსის აღდგენა?">
+<!-- LOCALIZATION NOTE: If "closed unexpectedly" sounds too awkward in the translation,
+                        you may translate "crash" instead (even though it's IT-speak) -->
+<!ENTITY restorepage.issueDesc      "&brandShortName; პროგრამის თქვენი წინა სეანსი მოულოდნელად დაიხურა. გულწრფელად ვწუხვართ. შეგიძლიათ წინა სეანსის სარკმლებისა და ჩანართების აღდგენა ან ახალი სეანსის დაწყება თუ ისინი აღარ გჭირდებათ.">
+<!ENTITY restorepage.remedies       "თუ &brandShortName; პროგრამა რეგულარულად იხურება:">
+<!ENTITY restorepage.dueToChrome    "სცადეთ ბოლოს დამატებული გაფართოებების ამორთვა დამატებების მმართველიდან.">
+<!ENTITY restorepage.dueToContent   "სცადეთ აღადგინოთ საეჭვო ვებსაიტების გარეშე:">
+
+<!ENTITY restorepage.restoreButton  "წინა სეანსის აღდგენა">
+<!ENTITY restorepage.restore.access "R">
+<!ENTITY restorepage.cancelButton   "ახალი სეანის დაწყება">
+<!ENTITY restorepage.cancel.access  "S">
+
+<!ENTITY restorepage.restoreHeader  "აღდგენა">
+<!ENTITY restorepage.listHeader     "სარკმლები და ჩანართები">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "სარკმელი &#37;S">

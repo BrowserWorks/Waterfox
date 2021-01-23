@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "អ្នក​ជំនួយការ​គណនី">
+
+<!ENTITY accountProtocolTitle.label   "បណ្ដាញ​ជជែក">
+<!ENTITY accountProtocolInfo.label    "សូម​ជ្រើស​បណ្ដាញ​គណនី​ជជែក​របស់​អ្នក។">
+<!ENTITY accountProtocolField.label   "បណ្តាញ៖">
+<!ENTITY accountProtocolGetMore.label "យក​ច្រើន​ទៀត...">
+
+<!ENTITY accountUsernameTitle.label   "ឈ្មោះ​អ្នក​ប្រើ">
+<!ENTITY accountUsernameDuplicate.label "បាន​កំណត់​រចនាសម្ព័ន្ធ​គណនី​នេះ​រួច​ហើយ!">
+
+<!ENTITY accountPasswordTitle.label   "Գաղտնաբառ">
+<!ENTITY accountPasswordInfo.label    "សូម​បញ្ចូល​ពាក្យ​សម្ងាត់​របស់​អ្នកក្នុង​ប្រអប់ខាង​ក្រោម។">
+<!ENTITY accountPasswordField.label   "ពាក្យសម្ងាត់៖">
+<!ENTITY accountPasswordManager.label "ពាក្យ​សម្ងាត់​​បាន​បញ្ចូល​នៅ​ទីនេះ​នឹង​ត្រូវ​បាន​រក្សាទុក​ក្នុង​កម្មវិធី​គ្រប់គ្រង​ពាក្យ​សម្ងាត់។ ទុក​ប្រអប់​នេះ​ទំនេរ បើ​អ្នក​ចង់​​ឲ្យ​សួរ​​រក​ពាក្យ​​សម្ងាត់​របស់​អ្នក​រាល់​ពេល​ដែល​គណនី​នេះ​ត្រូវ​បាន​តភ្ជាប់។">
+
+<!ENTITY accountAdvancedTitle.label   "​ជម្រើស​កម្រិត​ខ្ពស់">
+<!ENTITY accountAdvancedInfo.label    "រីករាយ​ក្នុង​ការ​រំលង​ជំហាន​នេះ​ បើ​អ្នក​ចង់។">
+<!ENTITY accountAdvanced.newMailNotification.label   "ជូន​ដំនឹង​ពេល​មាន​អ៊ីមែល​ថ្មី">
+<!ENTITY accountAliasGroupbox.caption "ឈ្មោះក្លែងក្លាយ​មូលដ្ឋាន">
+<!ENTITY accountAliasField.label      "ឈ្មោះ​ក្លែងក្លាយ៖">
+<!ENTITY accountAliasInfo.label       "វា​ត្រូវ​បាន​បង្ហាញ​តែ​ក្នុង​ការ​សន្ទនា​ពេល​អ្នក​និយាយ ទំនាក់ទំនង​ពី​ចម្ងាយ​នឹង​មិន​ឃើញ​វា​ទេ។">
+<!ENTITY accountProxySettings.caption "ការ​កំណត់​ប្រូកស៊ី">
+<!ENTITY accountProxySettings.change.label     "ផ្លាស់​ប្ដូរ...">
+<!ENTITY accountProxySettings.change.accessKey "C">
+
+<!ENTITY accountSummaryTitle.label   "Ընդհանուր">
+<!ENTITY accountSummaryInfo.label    "ព័ត៌មាន​សង្ខេប​ដែល​អ្នក​បាន​បញ្ចូល​ត្រូវ​បាន​បង្ហាញ​ខាង​ក្រោម។ សូម​ពិនិត្យ​វា​មុន​នឹង​គណនី​ត្រូវ​បាន​បង្កើត។">
+<!ENTITY accountSummary.connectNow.label "តភ្ជាប់​គណនី​នេះ​ឥឡូវ។">

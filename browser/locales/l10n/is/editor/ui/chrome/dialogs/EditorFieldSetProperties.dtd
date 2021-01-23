@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Eigindi svæðamengis">
+<!ENTITY Legend.label "Skýring">
+<!ENTITY Legend.accesskey "S">
+<!ENTITY EditLegendText.label "Breyta texta:">
+<!ENTITY EditLegendText.accesskey "t">
+<!ENTITY LegendAlign.label "Stilla texta:">
+<!ENTITY LegendAlign.accesskey "a">
+<!ENTITY AlignDefault.label "Sjálfgefið">
+<!ENTITY AlignLeft.label "Vinstri">
+<!ENTITY AlignCenter.label "Miðjað">
+<!ENTITY AlignRight.label "Hægri">
+<!ENTITY RemoveFieldSet.label "Fjarlægja svæðamengi">
+<!ENTITY RemoveFieldSet.accesskey "r">

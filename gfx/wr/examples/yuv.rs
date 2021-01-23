@@ -21,7 +21,7 @@ fn init_gl_texture(
     internal: gl::GLenum,
     external: gl::GLenum,
     bytes: &[u8],
-    gl: &gl::Gl,
+    gl: &dyn gl::Gl,
 ) {
     gl.bind_texture(gl::TEXTURE_2D, id);
     gl.tex_parameter_i(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as gl::GLint);
@@ -47,7 +47,7 @@ struct YuvImageProvider {
 }
 
 impl YuvImageProvider {
-    fn new(gl: &gl::Gl) -> Self {
+    fn new(gl: &dyn gl::Gl) -> Self {
         let texture_ids = gl.gen_textures(4);
 
         init_gl_texture(texture_ids[0], gl::RED, gl::RED, &[127; 100 * 100], gl);
@@ -61,17 +61,17 @@ impl YuvImageProvider {
     }
 }
 
-impl webrender::ExternalImageHandler for YuvImageProvider {
+impl ExternalImageHandler for YuvImageProvider {
     fn lock(
         &mut self,
         key: ExternalImageId,
         _channel_index: u8,
         _rendering: ImageRendering
-    ) -> webrender::ExternalImage {
+    ) -> ExternalImage {
         let id = self.texture_ids[key.0 as usize];
-        webrender::ExternalImage {
+        ExternalImage {
             uv: TexelRect::new(0.0, 0.0, 1.0, 1.0),
-            source: webrender::ExternalImageSource::NativeTexture(id),
+            source: ExternalImageSource::NativeTexture(id),
         }
     }
     fn unlock(&mut self, _key: ExternalImageId, _channel_index: u8) {
@@ -86,7 +86,7 @@ struct App {
 impl Example for App {
     fn render(
         &mut self,
-        api: &RenderApi,
+        api: &mut RenderApi,
         builder: &mut DisplayListBuilder,
         txn: &mut Transaction,
         _device_size: DeviceIntSize,
@@ -99,7 +99,7 @@ impl Example for App {
         builder.push_simple_stacking_context(
             bounds.origin,
             space_and_clip.spatial_id,
-            true,
+            PrimitiveFlags::IS_BACKFACE_VISIBLE,
         );
 
         let yuv_chanel1 = api.generate_image_key();
@@ -108,7 +108,7 @@ impl Example for App {
         let yuv_chanel3 = api.generate_image_key();
         txn.add_image(
             yuv_chanel1,
-            ImageDescriptor::new(100, 100, ImageFormat::R8, true, false),
+            ImageDescriptor::new(100, 100, ImageFormat::R8, ImageDescriptorFlags::IS_OPAQUE),
             ImageData::External(ExternalImageData {
                 id: ExternalImageId(0),
                 channel_index: 0,
@@ -120,7 +120,7 @@ impl Example for App {
         );
         txn.add_image(
             yuv_chanel2,
-            ImageDescriptor::new(100, 100, ImageFormat::RG8, true, false),
+            ImageDescriptor::new(100, 100, ImageFormat::RG8, ImageDescriptorFlags::IS_OPAQUE),
             ImageData::External(ExternalImageData {
                 id: ExternalImageId(1),
                 channel_index: 0,
@@ -132,7 +132,7 @@ impl Example for App {
         );
         txn.add_image(
             yuv_chanel2_1,
-            ImageDescriptor::new(100, 100, ImageFormat::R8, true, false),
+            ImageDescriptor::new(100, 100, ImageFormat::R8, ImageDescriptorFlags::IS_OPAQUE),
             ImageData::External(ExternalImageData {
                 id: ExternalImageId(2),
                 channel_index: 0,
@@ -144,7 +144,7 @@ impl Example for App {
         );
         txn.add_image(
             yuv_chanel3,
-            ImageDescriptor::new(100, 100, ImageFormat::R8, true, false),
+            ImageDescriptor::new(100, 100, ImageFormat::R8, ImageDescriptorFlags::IS_OPAQUE),
             ImageData::External(ExternalImageData {
                 id: ExternalImageId(3),
                 channel_index: 0,
@@ -165,6 +165,7 @@ impl Example for App {
             YuvData::NV12(yuv_chanel1, yuv_chanel2),
             ColorDepth::Color8,
             YuvColorSpace::Rec601,
+            ColorRange::Limited,
             ImageRendering::Auto,
         );
 
@@ -178,6 +179,7 @@ impl Example for App {
             YuvData::PlanarYCbCr(yuv_chanel1, yuv_chanel2_1, yuv_chanel3),
             ColorDepth::Color8,
             YuvColorSpace::Rec601,
+            ColorRange::Limited,
             ImageRendering::Auto,
         );
 
@@ -187,7 +189,7 @@ impl Example for App {
     fn on_event(
         &mut self,
         _event: winit::WindowEvent,
-        _api: &RenderApi,
+        _api: &mut RenderApi,
         _document_id: DocumentId,
     ) -> bool {
         false
@@ -195,15 +197,15 @@ impl Example for App {
 
     fn get_image_handlers(
         &mut self,
-        gl: &gl::Gl,
-    ) -> (Option<Box<webrender::ExternalImageHandler>>,
-          Option<Box<webrender::OutputImageHandler>>) {
+        gl: &dyn gl::Gl,
+    ) -> (Option<Box<dyn ExternalImageHandler>>,
+          Option<Box<dyn OutputImageHandler>>) {
         let provider = YuvImageProvider::new(gl);
         self.texture_id = provider.texture_ids[0];
         (Some(Box::new(provider)), None)
     }
 
-    fn draw_custom(&mut self, gl: &gl::Gl) {
+    fn draw_custom(&mut self, gl: &dyn gl::Gl) {
         init_gl_texture(self.texture_id, gl::RED, gl::RED, &[self.current_value; 100 * 100], gl);
         self.current_value = self.current_value.wrapping_add(1);
     }

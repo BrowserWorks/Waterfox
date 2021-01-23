@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "Abonare">
+<!ENTITY subscribeButton.label        "Abonează">
+<!ENTITY subscribeButton.accesskey    "A">
+<!ENTITY unsubscribeButton.label      "Dezabonează">
+<!ENTITY unsubscribeButton.accesskey  "D">
+<!ENTITY newGroupsTab.label           "Grupuri noi">
+<!ENTITY newGroupsTab.accesskey       "n">
+<!ENTITY refreshButton.label          "Reîmprospătează">
+<!ENTITY refreshButton.accesskey      "R">
+<!ENTITY stopButton.label             "Oprește">
+<!ENTITY stopButton.accesskey         "t">
+<!ENTITY server.label                 "Cont:">
+<!ENTITY server.accesskey             "C">
+<!ENTITY subscribedHeader.label       "Abonare">
+<!-- commenting out until bug 38906 is fixed
+<!ENTITY messagesHeader.label         "Messages"> -->
+<!ENTITY namefield.label              "Afișează elementele care conțin:">
+<!ENTITY namefield.accesskey          "r">

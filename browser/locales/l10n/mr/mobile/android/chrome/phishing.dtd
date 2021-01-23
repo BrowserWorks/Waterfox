@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "मला येथून बाहेर काढा!">
+<!ENTITY safeb.palm.decline.label "या सावधानतेकडे दुर्लक्ष करा">
+<!ENTITY safeb.palm.reportPage.label "हे पान का अडवले गेले?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "सल्ला प्रदाता <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "कळवलेले आक्रमण पान!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "<span id='malware_sitename'/> वरील हे वेब पृष्ठ आक्रमण पृष्ठ म्हणून कळवलेले आहे आणि ते आपल्या सुरक्षा पसंतींनुसार अडवले आहे.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>आक्रमण पाने आपली खाजगी माहिती चोरणारे प्रोग्राम प्रतिष्ठापित करण्याचा, आपले संगणक दुसऱ्यावर आक्रमण करण्याचा, किंवा आपल्या प्रणालीला हानी करण्याचा प्रयत्न करतात.</p><p>काही आक्रमण पाने मुद्दाम हानिकारक सॉफ्टवेअर वितरीत करतात, पण त्यांतील बरेच तर त्यांच्या मालकांच्या परवानगीशिवाय तडजोड केली जाते.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "फसवी साईट!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "<span id='phishing_sitename'/> वरील हे वेब पृष्ठ फसवे पृष्ठ म्हणून कळवलेले आहे आणि ते आपल्या सुरक्षा पसंतींनुसार अडवले आहे.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>फसव्या साईटस् ह्या आपल्याला चकवा देउन आपल्याकडुन काहीतरी धोकादायक करवुन घेते, जसे सॉफ्टवेअर प्रतिष्ठापन, किंवा आपली खाजगी माहिती जसे, पासवर्ड, फोन नंबर, किंवा क्रेडिट कार्ड माहिती उघड होऊ शकते.</p><p>या वेब पानावर माहिती टाकल्या मुळे ओळख चोरी किंवा इतर फसवेगिरी होऊ शकते.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "नको असलेली सॉफ्टवेअर साईट कळवली!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "<span id='unwanted_sitename'/> वरील हे वेब पृष्ठ नकोसे सॉफ्टवेअर देणारे पृष्ठ म्हणून कळवलेले आहे आणि ते आपल्या सुरक्षा पसंतींनुसार अडवले आहे.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "नको असलेले सॉफ्टवेअर पाने अशी सॉफ्टवेअर प्रस्थापित करण्याचा प्रयत्न करतात जे फसवे असु शकतात आणि आपल्या सिस्टमला अनपेक्षित प्रकारे हानी पोहोचवू शकतात.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "पुढच्या साईटवर मालवेअर असू शकतात">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; हे पृष्ठ अवरोधित केले कारण ते धोकादायक अॅप स्थापित करण्याचा प्रयत्न करू शकतात जे आपली माहिती चोरते किंवा हटवते (उदाहरणार्थ, फोटो, संकेतशब्द, संदेश आणि क्रेडिट कार्ड).">

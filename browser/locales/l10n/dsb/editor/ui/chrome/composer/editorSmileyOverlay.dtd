@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Smiley Menu items -->
+<!ENTITY insertSmiley.label "Smjejkotak">
+<!ENTITY insertSmiley.accesskey "S">
+
+<!ENTITY smiley1Cmd.label "Smjejkotaś">
+<!ENTITY smiley1Cmd.accesskey "S">
+<!ENTITY smiley1Cmd.tooltip "Smějkotak zasajźiś">
+<!ENTITY smiley2Cmd.label "Coło maršćiś">
+<!ENTITY smiley2Cmd.accesskey "C">
+<!ENTITY smiley2Cmd.tooltip "Cołomaršćece woblico zasajziś">
+<!ENTITY smiley3Cmd.label "Zmyrknjenje">
+<!ENTITY smiley3Cmd.accesskey "Z">
+<!ENTITY smiley3Cmd.tooltip "Zmyrkajuce woblico zasaźiś">
+<!ENTITY smiley4Cmd.label "Jězyk wen">
+<!ENTITY smiley4Cmd.accesskey "J">
+<!ENTITY smiley4Cmd.tooltip "Jězyk pokazujuce woblico zasajźiś">
+<!ENTITY smiley5Cmd.label "Smjaśe">
+<!ENTITY smiley5Cmd.accesskey "S">
+<!ENTITY smiley5Cmd.tooltip "Smjejuce se woblico zasajźiś">
+<!ENTITY smiley6Cmd.label "Tšuchły">
+<!ENTITY smiley6Cmd.accesskey "T">
+<!ENTITY smiley6Cmd.tooltip "Tšuchłe woblico zasajźiś">
+<!ENTITY smiley7Cmd.label "Njerozsuźony">
+<!ENTITY smiley7Cmd.accesskey "N">
+<!ENTITY smiley7Cmd.tooltip "Njerozsuźone woblico zasajźiś">
+<!ENTITY smiley8Cmd.label "Pśechwatany">
+<!ENTITY smiley8Cmd.accesskey "P">
+<!ENTITY smiley8Cmd.tooltip "Pśechwatane woblico zasajźiś">
+<!ENTITY smiley9Cmd.label "Póškaś">
+<!ENTITY smiley9Cmd.accesskey "k">
+<!ENTITY smiley9Cmd.tooltip "Póškajuce woblico zasajźiś">
+<!ENTITY smiley10Cmd.label "Drěśe">
+<!ENTITY smiley10Cmd.accesskey "D">
+<!ENTITY smiley10Cmd.tooltip "Źerjece se woblico zasajźiś">
+<!ENTITY smiley11Cmd.label "Cool">
+<!ENTITY smiley11Cmd.accesskey "C">
+<!ENTITY smiley11Cmd.tooltip "Cool woblico zasajźiś">
+<!ENTITY smiley12Cmd.label "Pjenjezna guba">
+<!ENTITY smiley12Cmd.accesskey "P">
+<!ENTITY smiley12Cmd.tooltip "Woblico z pjenjezneju gubu zasajźiś">
+<!ENTITY smiley13Cmd.label "Noga w gubje">
+<!ENTITY smiley13Cmd.accesskey "o">
+<!ENTITY smiley13Cmd.tooltip "Woblico noga w gubje zasajźiś">
+<!ENTITY smiley14Cmd.label "Njewinowaty">
+<!ENTITY smiley14Cmd.accesskey "i">
+<!ENTITY smiley14Cmd.tooltip "Njewinowate woblico zasajźiś">
+<!ENTITY smiley15Cmd.label "Płakaś">
+<!ENTITY smiley15Cmd.accesskey "a">
+<!ENTITY smiley15Cmd.tooltip "Płakajuce woblico zasajźiś">
+<!ENTITY smiley16Cmd.label "Mjelcaty">
+<!ENTITY smiley16Cmd.accesskey "M">
+<!ENTITY smiley16Cmd.tooltip "Mjelcate woblico zasajźiś">
+<!ENTITY SmileButton.label "Smiley zasajźiś">
+<!ENTITY SmileButton.tooltip "Smjejkotak zasajźiś">

@@ -8,18 +8,21 @@
 #define MOZILLA_GFX_VIDEOBRIDGECHILD_H
 
 #include "mozilla/layers/PVideoBridgeChild.h"
+#include "mozilla/layers/VideoBridgeUtils.h"
 #include "ISurfaceAllocator.h"
 #include "TextureForwarder.h"
 
 namespace mozilla {
 namespace layers {
 
+class SynchronousTask;
+
 class VideoBridgeChild final : public PVideoBridgeChild,
                                public TextureForwarder {
  public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(VideoBridgeChild, override);
 
-  static void Startup();
+  static void StartupForGPUProcess();
   static void Shutdown();
 
   static VideoBridgeChild* GetSingleton();
@@ -33,7 +36,7 @@ class VideoBridgeChild final : public PVideoBridgeChild,
   bool DeallocPTextureChild(PTextureChild* actor);
 
   void ActorDestroy(ActorDestroyReason aWhy) override;
-  void DeallocPVideoBridgeChild() override;
+  void ActorDealloc() override;
 
   // ISurfaceAllocator
   bool AllocUnsafeShmem(size_t aSize,
@@ -54,8 +57,8 @@ class VideoBridgeChild final : public PVideoBridgeChild,
 
   // ClientIPCAllocator
   base::ProcessId GetParentPid() const override { return OtherPid(); }
-  MessageLoop* GetMessageLoop() const override { return mMessageLoop; }
-  void CancelWaitForRecycle(uint64_t aTextureId) override {
+  nsISerialEventTarget* GetThread() const override { return mThread; }
+  void CancelWaitForNotifyNotUsed(uint64_t aTextureId) override {
     MOZ_ASSERT(false, "NO RECYCLING HERE");
   }
 
@@ -64,12 +67,26 @@ class VideoBridgeChild final : public PVideoBridgeChild,
 
   bool CanSend() { return mCanSend; }
 
+  static void Open(Endpoint<PVideoBridgeChild>&& aEndpoint);
+
+ protected:
+  void HandleFatalError(const char* aMsg) const override;
+  bool DispatchAllocShmemInternal(size_t aSize,
+                                  SharedMemory::SharedMemoryType aType,
+                                  mozilla::ipc::Shmem* aShmem, bool aUnsafe);
+  void ProxyAllocShmemNow(SynchronousTask* aTask, size_t aSize,
+                          SharedMemory::SharedMemoryType aType,
+                          mozilla::ipc::Shmem* aShmem, bool aUnsafe,
+                          bool* aSuccess);
+  void ProxyDeallocShmemNow(SynchronousTask* aTask, mozilla::ipc::Shmem* aShmem,
+                            bool* aResult);
+
  private:
   VideoBridgeChild();
   virtual ~VideoBridgeChild();
 
   RefPtr<VideoBridgeChild> mIPDLSelfRef;
-  MessageLoop* mMessageLoop;
+  nsCOMPtr<nsISerialEventTarget> mThread;
   bool mCanSend;
 };
 

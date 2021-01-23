@@ -21,6 +21,7 @@
 #include "mozilla/StaticPtr.h"
 #include "mozilla/EndianUtils.h"
 #include "mozilla/TimeStamp.h"
+#include "mozilla/UniquePtr.h"
 
 class nsIFile;
 class nsIDirectoryEnumerator;
@@ -73,7 +74,6 @@ struct CacheIndexRecord {
   uint16_t mOnStartTime;
   uint16_t mOnStopTime;
   uint8_t mContentType;
-  uint16_t mBaseDomainAccessCount;
 
   /*
    *    1000 0000 0000 0000 0000 0000 0000 0000 : initialized
@@ -94,7 +94,6 @@ struct CacheIndexRecord {
         mOnStartTime(kIndexTimeNotAvailable),
         mOnStopTime(kIndexTimeNotAvailable),
         mContentType(nsICacheEntry::CONTENT_TYPE_UNKNOWN),
-        mBaseDomainAccessCount(0),
         mFlags(0) {}
 };
 #pragma pack(pop)
@@ -105,7 +104,6 @@ static_assert(sizeof(CacheIndexRecord::mHash) +
                       sizeof(CacheIndexRecord::mOnStartTime) +
                       sizeof(CacheIndexRecord::mOnStopTime) +
                       sizeof(CacheIndexRecord::mContentType) +
-                      sizeof(CacheIndexRecord::mBaseDomainAccessCount) +
                       sizeof(CacheIndexRecord::mFlags) ==
                   sizeof(CacheIndexRecord),
               "Unexpected sizeof(CacheIndexRecord)!");
@@ -117,7 +115,7 @@ class CacheIndexEntry : public PLDHashEntryHdr {
 
   explicit CacheIndexEntry(KeyTypePointer aKey) {
     MOZ_COUNT_CTOR(CacheIndexEntry);
-    mRec = new CacheIndexRecord();
+    mRec = MakeUnique<CacheIndexRecord>();
     LOG(("CacheIndexEntry::CacheIndexEntry() - Created record [rec=%p]",
          mRec.get()));
     memcpy(&mRec->mHash, aKey, sizeof(SHA1Sum::Hash));
@@ -160,7 +158,6 @@ class CacheIndexEntry : public PLDHashEntryHdr {
     mRec->mOnStartTime = aOther.mRec->mOnStartTime;
     mRec->mOnStopTime = aOther.mRec->mOnStopTime;
     mRec->mContentType = aOther.mRec->mContentType;
-    mRec->mBaseDomainAccessCount = aOther.mRec->mBaseDomainAccessCount;
     mRec->mFlags = aOther.mRec->mFlags;
     return *this;
   }
@@ -171,7 +168,6 @@ class CacheIndexEntry : public PLDHashEntryHdr {
     mRec->mOnStartTime = kIndexTimeNotAvailable;
     mRec->mOnStopTime = kIndexTimeNotAvailable;
     mRec->mContentType = nsICacheEntry::CONTENT_TYPE_UNKNOWN;
-    mRec->mBaseDomainAccessCount = 0;
     mRec->mFlags = 0;
   }
 
@@ -181,7 +177,6 @@ class CacheIndexEntry : public PLDHashEntryHdr {
     MOZ_ASSERT(mRec->mOnStartTime == kIndexTimeNotAvailable);
     MOZ_ASSERT(mRec->mOnStopTime == kIndexTimeNotAvailable);
     MOZ_ASSERT(mRec->mContentType == nsICacheEntry::CONTENT_TYPE_UNKNOWN);
-    MOZ_ASSERT(mRec->mBaseDomainAccessCount == 0);
     // When we init the entry it must be fresh and may be dirty
     MOZ_ASSERT((mRec->mFlags & ~kDirtyMask) == kFreshMask);
 
@@ -233,13 +228,16 @@ class CacheIndexEntry : public PLDHashEntryHdr {
   uint16_t GetOnStopTime() const { return mRec->mOnStopTime; }
 
   void SetContentType(uint8_t aType) { mRec->mContentType = aType; }
-  uint8_t GetContentType() const { return mRec->mContentType; }
-
-  void SetBaseDomainAccessCount(uint16_t aCount) {
-    mRec->mBaseDomainAccessCount = aCount;
-  }
-  uint8_t GetBaseDomainAccessCount() const {
-    return mRec->mBaseDomainAccessCount;
+  uint8_t GetContentType() const { return GetContentType(mRec.get()); }
+  static uint8_t GetContentType(CacheIndexRecord* aRec) {
+    if (aRec->mContentType >= nsICacheEntry::CONTENT_TYPE_LAST) {
+      LOG(
+          ("CacheIndexEntry::GetContentType() - Found invalid content type "
+           "[hash=%08x%08x%08x%08x%08x, contentType=%u]",
+           LOGSHA1(aRec->mHash), aRec->mContentType));
+      return nsICacheEntry::CONTENT_TYPE_UNKNOWN;
+    }
+    return aRec->mContentType;
   }
 
   // Sets filesize in kilobytes.
@@ -255,9 +253,9 @@ class CacheIndexEntry : public PLDHashEntryHdr {
     mRec->mFlags |= aFileSize;
   }
   // Returns filesize in kilobytes.
-  uint32_t GetFileSize() const { return GetFileSize(mRec); }
-  static uint32_t GetFileSize(CacheIndexRecord* aRec) {
-    return aRec->mFlags & kFileSizeMask;
+  uint32_t GetFileSize() const { return GetFileSize(*mRec); }
+  static uint32_t GetFileSize(const CacheIndexRecord& aRec) {
+    return aRec.mFlags & kFileSizeMask;
   }
   static uint32_t IsPinned(CacheIndexRecord* aRec) {
     return aRec->mFlags & kPinnedMask;
@@ -278,8 +276,6 @@ class CacheIndexEntry : public PLDHashEntryHdr {
     ptr += sizeof(uint16_t);
     *ptr = mRec->mContentType;
     ptr += sizeof(uint8_t);
-    NetworkEndian::writeUint16(ptr, mRec->mBaseDomainAccessCount);
-    ptr += sizeof(uint16_t);
     // Dirty and fresh flags should never go to disk, since they make sense only
     // during current session.
     NetworkEndian::writeUint32(ptr, mRec->mFlags & ~(kDirtyMask | kFreshMask));
@@ -299,8 +295,6 @@ class CacheIndexEntry : public PLDHashEntryHdr {
     ptr += sizeof(uint16_t);
     mRec->mContentType = *ptr;
     ptr += sizeof(uint8_t);
-    mRec->mBaseDomainAccessCount = NetworkEndian::readUint16(ptr);
-    ptr += sizeof(uint16_t);
     mRec->mFlags = NetworkEndian::readUint32(ptr);
   }
 
@@ -309,12 +303,11 @@ class CacheIndexEntry : public PLDHashEntryHdr {
         ("CacheIndexEntry::Log() [this=%p, hash=%08x%08x%08x%08x%08x, fresh=%u,"
          " initialized=%u, removed=%u, dirty=%u, anonymous=%u, "
          "originAttrsHash=%" PRIx64 ", frecency=%u, hasAltData=%u, "
-         "onStartTime=%u, onStopTime=%u, contentType=%u, "
-         "baseDomainAccessCount=%u, size=%u]",
+         "onStartTime=%u, onStopTime=%u, contentType=%u, size=%u]",
          this, LOGSHA1(mRec->mHash), IsFresh(), IsInitialized(), IsRemoved(),
          IsDirty(), Anonymous(), OriginAttrsHash(), GetFrecency(),
          GetHasAltData(), GetOnStartTime(), GetOnStopTime(), GetContentType(),
-         GetBaseDomainAccessCount(), GetFileSize()));
+         GetFileSize()));
   }
 
   static bool RecordMatchesLoadContextInfo(CacheIndexRecord* aRec,
@@ -371,7 +364,7 @@ class CacheIndexEntry : public PLDHashEntryHdr {
   // FileSize in kilobytes
   static const uint32_t kFileSizeMask = 0x00FFFFFF;
 
-  nsAutoPtr<CacheIndexRecord> mRec;
+  UniquePtr<CacheIndexRecord> mRec;
 };
 
 class CacheIndexEntryUpdate : public CacheIndexEntry {
@@ -426,11 +419,6 @@ class CacheIndexEntryUpdate : public CacheIndexEntry {
     CacheIndexEntry::SetContentType(aType);
   }
 
-  void SetBaseDomainAccessCount(uint16_t aCount) {
-    mUpdateFlags |= kBaseDomainAccessCountUpdatedMask;
-    CacheIndexEntry::SetBaseDomainAccessCount(aCount);
-  }
-
   void SetFileSize(uint32_t aFileSize) {
     mUpdateFlags |= kFileSizeUpdatedMask;
     CacheIndexEntry::SetFileSize(aFileSize);
@@ -451,9 +439,6 @@ class CacheIndexEntryUpdate : public CacheIndexEntry {
     }
     if (mUpdateFlags & kContentTypeUpdatedMask) {
       aDst->mRec->mContentType = mRec->mContentType;
-    }
-    if (mUpdateFlags & kBaseDomainAccessCountUpdatedMask) {
-      aDst->mRec->mBaseDomainAccessCount = mRec->mBaseDomainAccessCount;
     }
     if (mUpdateFlags & kHasAltDataUpdatedMask &&
         ((aDst->mRec->mFlags ^ mRec->mFlags) & kHasAltDataMask)) {
@@ -478,7 +463,6 @@ class CacheIndexEntryUpdate : public CacheIndexEntry {
   static const uint32_t kHasAltDataUpdatedMask = 0x00000008;
   static const uint32_t kOnStartTimeUpdatedMask = 0x00000010;
   static const uint32_t kOnStopTimeUpdatedMask = 0x00000020;
-  static const uint32_t kBaseDomainAccessCountUpdatedMask = 0x00000040;
 
   uint32_t mUpdateFlags;
 };
@@ -499,9 +483,20 @@ class CacheIndexStats {
         mDisableLogging(false)
 #endif
   {
+    for (uint32_t i = 0; i < nsICacheEntry::CONTENT_TYPE_LAST; ++i) {
+      mCountByType[i] = 0;
+      mSizeByType[i] = 0;
+    }
   }
 
   bool operator==(const CacheIndexStats& aOther) const {
+    for (uint32_t i = 0; i < nsICacheEntry::CONTENT_TYPE_LAST; ++i) {
+      if (mCountByType[i] != aOther.mCountByType[i] ||
+          mSizeByType[i] != aOther.mSizeByType[i]) {
+        return false;
+      }
+    }
+
     return
 #ifdef DEBUG
         aOther.mStateLogged == mStateLogged &&
@@ -533,6 +528,10 @@ class CacheIndexStats {
     mFresh = 0;
     mEmpty = 0;
     mSize = 0;
+    for (uint32_t i = 0; i < nsICacheEntry::CONTENT_TYPE_LAST; ++i) {
+      mCountByType[i] = 0;
+      mSizeByType[i] = 0;
+    }
   }
 
 #ifdef DEBUG
@@ -542,6 +541,12 @@ class CacheIndexStats {
   uint32_t Count() {
     MOZ_ASSERT(!mStateLogged, "CacheIndexStats::Count() - state logged!");
     return mCount;
+  }
+
+  uint32_t CountByType(uint8_t aContentType) {
+    MOZ_ASSERT(!mStateLogged, "CacheIndexStats::CountByType() - state logged!");
+    MOZ_RELEASE_ASSERT(aContentType < nsICacheEntry::CONTENT_TYPE_LAST);
+    return mCountByType[aContentType];
   }
 
   uint32_t Dirty() {
@@ -566,6 +571,12 @@ class CacheIndexStats {
     return mSize;
   }
 
+  uint32_t SizeByType(uint8_t aContentType) {
+    MOZ_ASSERT(!mStateLogged, "CacheIndexStats::SizeByType() - state logged!");
+    MOZ_RELEASE_ASSERT(aContentType < nsICacheEntry::CONTENT_TYPE_LAST);
+    return mSizeByType[aContentType];
+  }
+
   void BeforeChange(const CacheIndexEntry* aEntry) {
 #ifdef DEBUG_STATS
     if (!mDisableLogging) {
@@ -582,7 +593,9 @@ class CacheIndexStats {
 #endif
     if (aEntry) {
       MOZ_ASSERT(mCount);
+      uint8_t contentType = aEntry->GetContentType();
       mCount--;
+      mCountByType[contentType]--;
       if (aEntry->IsDirty()) {
         MOZ_ASSERT(mDirty);
         mDirty--;
@@ -605,6 +618,7 @@ class CacheIndexStats {
           } else {
             MOZ_ASSERT(mSize >= aEntry->GetFileSize());
             mSize -= aEntry->GetFileSize();
+            mSizeByType[contentType] -= aEntry->GetFileSize();
           }
         }
       }
@@ -619,7 +633,9 @@ class CacheIndexStats {
     mStateLogged = false;
 #endif
     if (aEntry) {
+      uint8_t contentType = aEntry->GetContentType();
       ++mCount;
+      ++mCountByType[contentType];
       if (aEntry->IsDirty()) {
         mDirty++;
       }
@@ -636,6 +652,7 @@ class CacheIndexStats {
             mEmpty++;
           } else {
             mSize += aEntry->GetFileSize();
+            mSizeByType[contentType] += aEntry->GetFileSize();
           }
         }
       }
@@ -651,12 +668,14 @@ class CacheIndexStats {
 
  private:
   uint32_t mCount;
+  uint32_t mCountByType[nsICacheEntry::CONTENT_TYPE_LAST];
   uint32_t mNotInitialized;
   uint32_t mRemoved;
   uint32_t mDirty;
   uint32_t mFresh;
   uint32_t mEmpty;
   uint32_t mSize;
+  uint32_t mSizeByType[nsICacheEntry::CONTENT_TYPE_LAST];
 #ifdef DEBUG
   // We completely remove the data about an entry from the stats in
   // BeforeChange() and set this flag to true. The entry is then modified,
@@ -709,12 +728,13 @@ class CacheIndex final : public CacheFileIOListener, public nsIRunnable {
   // MUST be initialized. Call to AddEntry() or EnsureEntryExists() and to
   // InitEntry() must precede the call to this method.
   // Pass nullptr if the value didn't change.
-  static nsresult UpdateEntry(
-      const SHA1Sum::Hash* aHash, const uint32_t* aFrecency,
-      const bool* aHasAltData, const uint16_t* aOnStartTime,
-      const uint16_t* aOnStopTime, const uint8_t* aContentType,
-      const uint16_t* aBaseDomainAccessCount, const uint32_t aTelemetryReportID,
-      const uint32_t* aSize);
+  static nsresult UpdateEntry(const SHA1Sum::Hash* aHash,
+                              const uint32_t* aFrecency,
+                              const bool* aHasAltData,
+                              const uint16_t* aOnStartTime,
+                              const uint16_t* aOnStopTime,
+                              const uint8_t* aContentType,
+                              const uint32_t* aSize);
 
   // Remove all entries from the index. Called when clearing the whole cache.
   static nsresult RemoveAll();
@@ -793,8 +813,8 @@ class CacheIndex final : public CacheFileIOListener, public nsIRunnable {
   virtual ~CacheIndex();
 
   NS_IMETHOD OnFileOpened(CacheFileHandle* aHandle, nsresult aResult) override;
-  nsresult OnFileOpenedInternal(FileOpenHelper* aOpener,
-                                CacheFileHandle* aHandle, nsresult aResult);
+  void OnFileOpenedInternal(FileOpenHelper* aOpener, CacheFileHandle* aHandle,
+                            nsresult aResult);
   NS_IMETHOD OnDataWritten(CacheFileHandle* aHandle, const char* aBuf,
                            nsresult aResult) override;
   NS_IMETHOD OnDataRead(CacheFileHandle* aHandle, char* aBuf,
@@ -817,11 +837,13 @@ class CacheIndex final : public CacheFileIOListener, public nsIRunnable {
                           OriginAttrsHash aOriginAttrsHash, bool aAnonymous);
 
   // Checks whether any of the information about the entry has changed.
-  static bool HasEntryChanged(
-      CacheIndexEntry* aEntry, const uint32_t* aFrecency,
-      const bool* aHasAltData, const uint16_t* aOnStartTime,
-      const uint16_t* aOnStopTime, const uint8_t* aContentType,
-      const uint16_t* aBaseDomainAccessCount, const uint32_t* aSize);
+  static bool HasEntryChanged(CacheIndexEntry* aEntry,
+                              const uint32_t* aFrecency,
+                              const bool* aHasAltData,
+                              const uint16_t* aOnStartTime,
+                              const uint16_t* aOnStopTime,
+                              const uint8_t* aContentType,
+                              const uint32_t* aSize);
 
   // Merge all pending operations from mPendingUpdates into mIndex.
   void ProcessPendingOperations();
@@ -853,7 +875,7 @@ class CacheIndex final : public CacheFileIOListener, public nsIRunnable {
   // When the log is written successfully, the dirty flag in index file is
   // cleared.
   nsresult GetFile(const nsACString& aName, nsIFile** _retval);
-  nsresult RemoveFile(const nsACString& aName);
+  void RemoveFile(const nsACString& aName);
   void RemoveAllIndexFiles();
   void RemoveJournalAndTempFile();
   // Writes journal to the disk and clears dirty flag in index header.
@@ -1014,9 +1036,8 @@ class CacheIndex final : public CacheFileIOListener, public nsIRunnable {
 
   void ReportHashStats();
 
-  // Reports telemetry about cache, i.e. size, entry count, content type stats
-  // and first party cache isolation stats. Clears first party cache isolation
-  // counters stored in the index entries and bumps a telemetry report ID.
+  // Reports telemetry about cache, i.e. size, entry count and content type
+  // stats.
   void DoTelemetryReport();
 
   static mozilla::StaticRefPtr<CacheIndex> gInstance;
@@ -1210,8 +1231,8 @@ class CacheIndex final : public CacheFileIOListener, public nsIRunnable {
           mSize(0) {}
     virtual ~DiskConsumptionObserver() {
       if (mObserver && !NS_IsMainThread()) {
-        NS_ReleaseOnMainThreadSystemGroup("DiskConsumptionObserver::mObserver",
-                                          mObserver.forget());
+        NS_ReleaseOnMainThread("DiskConsumptionObserver::mObserver",
+                               mObserver.forget());
       }
     }
 

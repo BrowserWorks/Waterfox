@@ -8,6 +8,7 @@
 
 #include "gfxPlatformGtk.h"
 #include "mozilla/layers/LayersTypes.h"
+#include "nsWindow.h"
 #include "WindowSurfaceX11Image.h"
 #include "WindowSurfaceX11SHM.h"
 #include "WindowSurfaceXRender.h"
@@ -65,7 +66,7 @@ void WindowSurfaceProvider::CleanupResources() { mWindowSurface = nullptr; }
 UniquePtr<WindowSurface> WindowSurfaceProvider::CreateWindowSurface() {
 #ifdef MOZ_WAYLAND
   if (!mIsX11Display) {
-    LOGDRAW(("Drawing to nsWindow %p using wl_surface\n", (void*)this));
+    LOGDRAW(("Drawing to nsWindow %p will use wl_surface\n", mWidget));
     return MakeUnique<WindowSurfaceWayland>(mWidget);
   }
 #endif
@@ -77,24 +78,21 @@ UniquePtr<WindowSurface> WindowSurfaceProvider::CreateWindowSurface() {
   // 1. XRender (iff XRender is enabled && we are in-process)
   // 2. MIT-SHM
   // 3. XPutImage
-
-#ifdef MOZ_WIDGET_GTK
   if (!mIsShaped && gfxVars::UseXRender()) {
-    LOGDRAW(("Drawing to nsWindow %p using XRender\n", (void*)this));
+    LOGDRAW(("Drawing to Window 0x%lx will use XRender\n", mXWindow));
     return MakeUnique<WindowSurfaceXRender>(mXDisplay, mXWindow, mXVisual,
                                             mXDepth);
   }
-#endif  // MOZ_WIDGET_GTK
 
 #ifdef MOZ_HAVE_SHMIMAGE
   if (!mIsShaped && nsShmImage::UseShm()) {
-    LOGDRAW(("Drawing to nsWindow %p using MIT-SHM\n", (void*)this));
+    LOGDRAW(("Drawing to Window 0x%lx will use MIT-SHM\n", mXWindow));
     return MakeUnique<WindowSurfaceX11SHM>(mXDisplay, mXWindow, mXVisual,
                                            mXDepth);
   }
 #endif  // MOZ_HAVE_SHMIMAGE
 
-  LOGDRAW(("Drawing to nsWindow %p using XPutImage\n", (void*)this));
+  LOGDRAW(("Drawing to Window 0x%lx will use XPutImage\n", mXWindow));
   return MakeUnique<WindowSurfaceX11Image>(mXDisplay, mXWindow, mXVisual,
                                            mXDepth, mIsShaped);
 }
@@ -125,7 +123,7 @@ WindowSurfaceProvider::StartRemoteDrawingInRegion(
 }
 
 void WindowSurfaceProvider::EndRemoteDrawingInRegion(
-    gfx::DrawTarget* aDrawTarget, LayoutDeviceIntRegion& aInvalidRegion) {
+    gfx::DrawTarget* aDrawTarget, const LayoutDeviceIntRegion& aInvalidRegion) {
   if (mWindowSurface) mWindowSurface->Commit(aInvalidRegion);
 }
 

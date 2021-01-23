@@ -14,7 +14,6 @@
 #include "mozilla/ExtensionPolicyService.h"
 #include "mozilla/FileUtils.h"
 #include "mozilla/ipc/IPCStreamUtils.h"
-#include "mozilla/ipc/URIParams.h"
 #include "mozilla/ipc/URIUtils.h"
 #include "mozilla/net/NeckoChild.h"
 #include "mozilla/RefPtr.h"
@@ -37,9 +36,7 @@
 #include "nsIInputStreamPump.h"
 #include "nsIJARURI.h"
 #include "nsIStreamListener.h"
-#include "nsIThread.h"
 #include "nsIInputStream.h"
-#include "nsIOutputStream.h"
 #include "nsIStreamConverterService.h"
 #include "nsNetUtil.h"
 #include "nsReadableUtils.h"
@@ -50,6 +47,10 @@
 #if defined(XP_WIN)
 #  include "nsILocalFileWin.h"
 #  include "WinUtils.h"
+#endif
+
+#if defined(XP_MACOSX)
+#  include "nsMacUtilsImpl.h"
 #endif
 
 #define EXTENSION_SCHEME "moz-extension"
@@ -147,6 +148,9 @@ class ExtensionStreamGetter : public RefCounted<ExtensionStreamGetter> {
   // Handle file descriptor being returned from the parent
   void OnFD(const FileDescriptor& aFD);
 
+  static void CancelRequest(nsIStreamListener* aListener, nsIChannel* aChannel,
+                            nsresult aResult);
+
   MOZ_DECLARE_REFCOUNTED_TYPENAME(ExtensionStreamGetter)
 
  private:
@@ -232,14 +236,10 @@ Result<Ok, nsresult> ExtensionStreamGetter::GetAsync(
   mListener = aListener;
   mChannel = aChannel;
 
-  // Serialize the URI to send to parent
-  mozilla::ipc::URIParams uri;
-  SerializeURI(mURI, uri);
-
   RefPtr<ExtensionStreamGetter> self = this;
   if (mIsJarChannel) {
     // Request an FD for this moz-extension URI
-    gNeckoChild->SendGetExtensionFD(uri)->Then(
+    gNeckoChild->SendGetExtensionFD(mURI)->Then(
         mMainThreadEventTarget, __func__,
         [self](const FileDescriptor& fd) { self->OnFD(fd); },
         [self](const mozilla::ipc::ResponseRejectReason) {
@@ -249,7 +249,7 @@ Result<Ok, nsresult> ExtensionStreamGetter::GetAsync(
   }
 
   // Request an input stream for this moz-extension URI
-  gNeckoChild->SendGetExtensionStream(uri)->Then(
+  gNeckoChild->SendGetExtensionStream(mURI)->Then(
       mMainThreadEventTarget, __func__,
       [self](const RefPtr<nsIInputStream>& stream) {
         self->OnStream(do_AddRef(stream));
@@ -260,8 +260,10 @@ Result<Ok, nsresult> ExtensionStreamGetter::GetAsync(
   return Ok();
 }
 
-static void CancelRequest(nsIStreamListener* aListener, nsIChannel* aChannel,
-                          nsresult aResult) {
+// static
+void ExtensionStreamGetter::CancelRequest(nsIStreamListener* aListener,
+                                          nsIChannel* aChannel,
+                                          nsresult aResult) {
   MOZ_ASSERT(aListener);
   MOZ_ASSERT(aChannel);
 
@@ -280,7 +282,7 @@ void ExtensionStreamGetter::OnStream(already_AddRefed<nsIInputStream> aStream) {
 
   // We must keep an owning reference to the listener
   // until we pass it on to AsyncRead.
-  nsCOMPtr<nsIStreamListener> listener = mListener.forget();
+  nsCOMPtr<nsIStreamListener> listener = std::move(mListener);
 
   MOZ_ASSERT(mChannel);
 
@@ -317,7 +319,7 @@ void ExtensionStreamGetter::OnFD(const FileDescriptor& aFD) {
 
   // We must keep an owning reference to the listener
   // until we pass it on to AsyncOpen.
-  nsCOMPtr<nsIStreamListener> listener = mListener.forget();
+  nsCOMPtr<nsIStreamListener> listener = std::move(mListener);
 
   RefPtr<FileDescriptorFile> fdFile = new FileDescriptorFile(aFD, mJarFile);
   mJarChannel->SetJarFile(fdFile);
@@ -388,6 +390,10 @@ nsresult ExtensionProtocolHandler::GetFlagsForURI(nsIURI* aURI,
     if (!policy->PrivateBrowsingAllowed()) {
       flags |= URI_DISALLOW_IN_PRIVATE_CONTEXT;
     }
+  } else {
+    // In case there is no policy, then default to treating moz-extension URIs
+    // as unsafe and generally only allow chrome: to load such.
+    flags |= URI_DANGEROUS_TO_LOAD;
   }
 
   *aFlags = flags;
@@ -398,6 +404,8 @@ bool ExtensionProtocolHandler::ResolveSpecialCases(const nsACString& aHost,
                                                    const nsACString& aPath,
                                                    const nsACString& aPathname,
                                                    nsACString& aResult) {
+  MOZ_DIAGNOSTIC_ASSERT(NS_IsMainThread(),
+                        "The ExtensionPolicyService is not thread safe");
   // Create special moz-extension://foo/_generated_background_page.html page
   // for all registered extensions. We can't just do this as a substitution
   // because substitutions can only match on host.
@@ -461,7 +469,7 @@ void OpenWhenReady(
           nsIStreamListener* aListener) -> already_AddRefed<Promise> {
         nsresult rv = aCallback(aListener, channel);
         if (NS_FAILED(rv)) {
-          CancelRequest(aListener, channel, rv);
+          ExtensionStreamGetter::CancelRequest(aListener, channel, rv);
         }
         return nullptr;
       },
@@ -610,7 +618,7 @@ Result<bool, nsresult> ExtensionProtocolHandler::DevRepoContains(
   // On the first invocation, set mDevRepo
   if (!mAlreadyCheckedDevRepo) {
     mAlreadyCheckedDevRepo = true;
-    MOZ_TRY(mozilla::GetRepoDir(getter_AddRefs(mDevRepo)));
+    MOZ_TRY(nsMacUtilsImpl::GetRepoDir(getter_AddRefs(mDevRepo)));
     if (MOZ_LOG_TEST(gExtProtocolLog, LogLevel::Debug)) {
       nsAutoCString repoPath;
       Unused << mDevRepo->GetNativePath(repoPath);
@@ -675,9 +683,7 @@ Result<nsCOMPtr<nsIInputStream>, nsresult> ExtensionProtocolHandler::NewStream(
   // these requests ordinarily come from the child's ExtensionProtocolHandler.
   // Ensure this request is for a moz-extension URI. A rogue child process
   // could send us any URI.
-  bool isExtScheme = false;
-  if (NS_FAILED(aChildURI->SchemeIs(EXTENSION_SCHEME, &isExtScheme)) ||
-      !isExtScheme) {
+  if (!aChildURI->SchemeIs(EXTENSION_SCHEME)) {
     return Err(NS_ERROR_UNKNOWN_PROTOCOL);
   }
 
@@ -793,9 +799,7 @@ Result<Ok, nsresult> ExtensionProtocolHandler::NewFD(
   nsresult rv;
 
   // Ensure this is a moz-extension URI
-  bool isExtScheme = false;
-  if (NS_FAILED(aChildURI->SchemeIs(EXTENSION_SCHEME, &isExtScheme)) ||
-      !isExtScheme) {
+  if (!aChildURI->SchemeIs(EXTENSION_SCHEME)) {
     return Err(NS_ERROR_UNKNOWN_PROTOCOL);
   }
 
@@ -841,7 +845,10 @@ Result<Ok, nsresult> ExtensionProtocolHandler::NewFD(
 }
 
 // Set the channel's content type using the provided URI's type
-void SetContentType(nsIURI* aURI, nsIChannel* aChannel) {
+
+// static
+void ExtensionProtocolHandler::SetContentType(nsIURI* aURI,
+                                              nsIChannel* aChannel) {
   nsresult rv;
   nsCOMPtr<nsIMIMEService> mime = do_GetService("@mozilla.org/mime;1", &rv);
   if (NS_SUCCEEDED(rv)) {
@@ -854,9 +861,11 @@ void SetContentType(nsIURI* aURI, nsIChannel* aChannel) {
 }
 
 // Gets a SimpleChannel that wraps the provided ExtensionStreamGetter
-static void NewSimpleChannel(nsIURI* aURI, nsILoadInfo* aLoadinfo,
-                             ExtensionStreamGetter* aStreamGetter,
-                             nsIChannel** aRetVal) {
+
+// static
+void ExtensionProtocolHandler::NewSimpleChannel(
+    nsIURI* aURI, nsILoadInfo* aLoadinfo, ExtensionStreamGetter* aStreamGetter,
+    nsIChannel** aRetVal) {
   nsCOMPtr<nsIChannel> channel = NS_NewSimpleChannel(
       aURI, aLoadinfo, aStreamGetter,
       [](nsIStreamListener* listener, nsIChannel* simpleChannel,
@@ -870,8 +879,12 @@ static void NewSimpleChannel(nsIURI* aURI, nsILoadInfo* aLoadinfo,
 }
 
 // Gets a SimpleChannel that wraps the provided channel
-static void NewSimpleChannel(nsIURI* aURI, nsILoadInfo* aLoadinfo,
-                             nsIChannel* aChannel, nsIChannel** aRetVal) {
+
+// static
+void ExtensionProtocolHandler::NewSimpleChannel(nsIURI* aURI,
+                                                nsILoadInfo* aLoadinfo,
+                                                nsIChannel* aChannel,
+                                                nsIChannel** aRetVal) {
   nsCOMPtr<nsIChannel> channel = NS_NewSimpleChannel(
       aURI, aLoadinfo, aChannel,
       [](nsIStreamListener* listener, nsIChannel* simpleChannel,

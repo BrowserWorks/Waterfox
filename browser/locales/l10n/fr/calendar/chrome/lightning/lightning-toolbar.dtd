@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name "Barre d’outils d’agenda">
+<!ENTITY lightning.toolbar.calendar.name.accesskey "a">
+<!ENTITY lightning.toolbar.task.name "Barre d’outils des tâches">
+<!ENTITY lightning.toolbar.task.name.accesskey "t">
+
+<!ENTITY lightning.toolbar.sync.label "Synchroniser">
+<!ENTITY lightning.toolbar.sync.tooltip "Actualiser les agendas et synchroniser les changements">
+<!ENTITY lightning.toolbar.delete.label "Supprimer">
+<!ENTITY lightning.toolbar.delete.tooltip "Supprimer les tâches ou évènements sélectionnés">
+<!ENTITY lightning.toolbar.edit.label "Modifier">
+<!ENTITY lightning.toolbar.edit.tooltip "Modifier la tâche ou l’évènement sélectionné">
+<!ENTITY lightning.toolbar.gototoday.label "Aujourd’hui">
+<!ENTITY lightning.toolbar.gototoday.tooltip "Aller à la date d’aujourd’hui">
+<!ENTITY lightning.toolbar.print.label "Imprimer">
+<!ENTITY lightning.toolbar.print.tooltip "Imprimer des tâches ou des évènements">
+
+<!-- Mode Toolbar -->
+<!ENTITY lightning.toolbar.calendar.label     "Agenda">
+<!ENTITY lightning.toolbar.calendar.tooltip   "Aller à l’onglet d’agenda">
+<!ENTITY lightning.toolbar.calendar.accesskey "A">
+<!ENTITY lightning.toolbar.task.label         "Tâches">
+<!ENTITY lightning.toolbar.task.tooltip       "Aller à l’onglet des tâches">
+<!ENTITY lightning.toolbar.task.accesskey     "T">
+
+<!-- Toolbar write button -->
+<!ENTITY lightning.toolbar.newevent.label     "Évènement">
+<!ENTITY lightning.toolbar.newevent.tooltip   "Créer un nouvel évènement">
+<!ENTITY lightning.toolbar.newtask.label      "Tâche">
+<!ENTITY lightning.toolbar.newtask.tooltip    "Créer une nouvelle tâche">
+
+<!-- Calendar and Task Mode Toolbar -->
+<!ENTITY lightning.toolbar.day.label                 "Journée">
+<!ENTITY lightning.toolbar.day.accesskey             "J">
+<!ENTITY lightning.toolbar.week.label                "Semaine">
+<!ENTITY lightning.toolbar.week.accesskey            "S">
+<!ENTITY lightning.toolbar.multiweek.label           "Multisemaine">
+<!ENTITY lightning.toolbar.multiweek.accesskey       "a">
+<!ENTITY lightning.toolbar.month.label               "Mois">
+<!ENTITY lightning.toolbar.month.accesskey           "M">
+<!-- LOCALIZATION NOTE: the same as appmenuButton.label and appmenuButton1.tooltip
+     from messenger.dtd -->
+<!ENTITY lightning.toolbar.appmenuButton.label       "Menu de l’application">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip    "Afficher le menu de &brandShortName;">
+<!ENTITY lightning.toolbar.calendarmenu.label        "Panneau d’agenda">
+<!ENTITY lightning.toolbar.calendarmenu.accesskey    "P">
+<!ENTITY lightning.toolbar.calendarpane.label        "Afficher le panneau d’agenda">
+<!ENTITY lightning.toolbar.calendarpane.accesskey    "P">

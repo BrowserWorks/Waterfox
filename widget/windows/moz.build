@@ -6,9 +6,13 @@
 
 with Files("**"):
     BUG_COMPONENT = ("Core", "Widget: Win32")
+    SCHEDULES.exclusive = ['windows']
 
 with Files("*CompositorWidget*"):
     BUG_COMPONENT = ("Core", "Graphics")
+
+with Files("OSK*"):
+    BUG_COMPONENT = ("Core", "DOM: UI Events & Focus Handling")
 
 TEST_DIRS += ['tests']
 
@@ -33,6 +37,7 @@ EXPORTS.mozilla.widget += [
     'WinCompositorWidget.h',
     'WinCompositorWindowThread.h',
     'WindowsEMF.h',
+    'WindowsSMTCProvider.h',
     'WinMessages.h',
     'WinModifierKeyState.h',
     'WinNativeEventData.h',
@@ -41,12 +46,10 @@ EXPORTS.mozilla.widget += [
 UNIFIED_SOURCES += [
     'AudioSession.cpp',
     'CompositorWidgetChild.cpp',
-    'CompositorWidgetParent.cpp',
     'GfxInfo.cpp',
     'IEnumFE.cpp',
     'IMMHandler.cpp',
     'InkCollector.cpp',
-    'InProcessWinCompositorWidget.cpp',
     'JumpListItem.cpp',
     'KeyboardLayout.cpp',
     'LSPAnnotator.cpp',
@@ -70,6 +73,7 @@ UNIFIED_SOURCES += [
     'nsWindowGfx.cpp',
     'nsWinGesture.cpp',
     'ProcInfo.cpp',
+    'RemoteBackbuffer.cpp',
     'ScreenHelperWin.cpp',
     'TaskbarPreview.cpp',
     'TaskbarPreviewButton.cpp',
@@ -88,13 +92,24 @@ UNIFIED_SOURCES += [
 
 # The following files cannot be built in unified mode because of name clashes.
 SOURCES += [
+    'CompositorWidgetParent.cpp',
+    'InProcessWinCompositorWidget.cpp',
     'JumpListBuilder.cpp',
+    'MediaKeysEventSourceFactory.cpp',
     'nsBidiKeyboard.cpp',
     'nsFilePicker.cpp',
+    'nsSharePicker.cpp',
     'nsWidgetFactory.cpp',
+    'OSKInputPaneManager.cpp',
     'WinCompositorWidget.cpp',
+    'WindowsSMTCProvider.cpp',
     'WindowsUIUtils.cpp',
     'WinMouseScrollHandler.cpp',
+]
+
+# These files redefine the winsdk api version macro and we don't want it to leak to other files.
+SOURCES += [
+    'DirectManipulationOwner.cpp',
 ]
 
 # Needs INITGUID and we don't allow INITGUID in unified sources since bug 970429.
@@ -131,10 +146,6 @@ FINAL_LIBRARY = 'xul'
 
 if CONFIG['MOZ_ENABLE_SKIA_PDF']:
   LOCAL_INCLUDES += CONFIG['SKIA_INCLUDES']
-  LOCAL_INCLUDES += [
-    '/gfx/skia/skia/include/config',
-    '/gfx/skia/skia/include/core',
-  ]
 
 LOCAL_INCLUDES += [
     '/layout/forms',

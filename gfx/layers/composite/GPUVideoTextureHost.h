@@ -30,6 +30,8 @@ class GPUVideoTextureHost : public TextureHost {
 
   gfx::SurfaceFormat GetFormat() const override;
 
+  void PrepareTextureSource(CompositableTextureSourceRef& aTexture) override;
+
   bool BindTextureSource(CompositableTextureSourceRef& aTexture) override;
   bool AcquireTextureSource(CompositableTextureSourceRef& aTexture) override;
 
@@ -38,6 +40,7 @@ class GPUVideoTextureHost : public TextureHost {
   }
 
   gfx::YUVColorSpace GetYUVColorSpace() const override;
+  gfx::ColorRange GetColorRange() const override;
 
   gfx::IntSize GetSize() const override;
 
@@ -50,7 +53,9 @@ class GPUVideoTextureHost : public TextureHost {
   void CreateRenderTexture(
       const wr::ExternalImageId& aExternalImageId) override;
 
-  uint32_t NumSubTextures() const override;
+  void MaybeDestroyRenderTexture() override;
+
+  uint32_t NumSubTextures() override;
 
   void PushResourceUpdates(wr::TransactionBuilder& aResources,
                            ResourceUpdateOp aOp,
@@ -60,14 +65,19 @@ class GPUVideoTextureHost : public TextureHost {
   void PushDisplayItems(wr::DisplayListBuilder& aBuilder,
                         const wr::LayoutRect& aBounds,
                         const wr::LayoutRect& aClip, wr::ImageRendering aFilter,
-                        const Range<wr::ImageKey>& aImageKeys) override;
-
-  bool SupportsWrNativeTexture() override;
+                        const Range<wr::ImageKey>& aImageKeys,
+                        const bool aPreferCompositorSurface) override;
 
  protected:
-  GPUVideoTextureHost(TextureFlags aFlags, TextureHost* aWrappedTextureHost);
+  GPUVideoTextureHost(TextureFlags aFlags,
+                      const SurfaceDescriptorGPUVideo& aDescriptor);
+
+  TextureHost* EnsureWrappedTextureHost();
+
+  void UpdatedInternal(const nsIntRegion* Region) override;
 
   RefPtr<TextureHost> mWrappedTextureHost;
+  SurfaceDescriptorGPUVideo mDescriptor;
 };
 
 }  // namespace layers

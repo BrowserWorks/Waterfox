@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Таңдау тізімінің қасиеттері">
+
+<!ENTITY Select.label "Таңдау тiзiмi">
+<!ENTITY SelectName.label "Тізімнің атауы:">
+<!ENTITY SelectName.accesskey "з">
+<!ENTITY SelectSize.label "Биіктігі:">
+<!ENTITY SelectSize.accesskey "Б">
+<!ENTITY SelectMultiple.label "Бірнешеден таңдау">
+<!ENTITY SelectMultiple.accesskey "Б">
+<!ENTITY SelectDisabled.label "Сөндірілген">
+<!ENTITY SelectDisabled.accesskey "д">
+<!ENTITY SelectTabIndex.label "Табуляция реті:">
+<!ENTITY SelectTabIndex.accesskey "е">
+
+<!ENTITY OptGroup.label "Опциялар тобы">
+<!ENTITY OptGroupLabel.label "Белгі:">
+<!ENTITY OptGroupLabel.accesskey "л">
+<!ENTITY OptGroupDisabled.label "Сөндірілген">
+<!ENTITY OptGroupDisabled.accesskey "д">
+
+<!ENTITY Option.label "Параметр">
+<!ENTITY OptionText.label "Мәтіні:">
+<!ENTITY OptionText.accesskey "М">
+<!ENTITY OptionValue.label "Мәні:">
+<!ENTITY OptionValue.accesskey "М">
+<!ENTITY OptionSelected.label "Басынан бастап таңдалған">
+<!ENTITY OptionSelected.accesskey "т">
+<!ENTITY OptionDisabled.label "Сөндірілген">
+<!ENTITY OptionDisabled.accesskey "д">
+
+<!ENTITY TextHeader.label "Мәтін">
+<!ENTITY ValueHeader.label "Мәні">
+<!ENTITY SelectedHeader.label "Таңдалған">
+
+<!ENTITY AddOption.label "Опцияны қосу">
+<!ENTITY AddOption.accesskey "О">
+<!ENTITY AddOptGroup.label "Топты қосу">
+<!ENTITY AddOptGroup.accesskey "Т">
+<!ENTITY RemoveElement.label "Өшіру">
+<!ENTITY RemoveElement.accesskey "ш">
+<!ENTITY MoveElementUp.label "Жоғарлату">
+<!ENTITY MoveElementUp.accesskey "Ж">
+<!ENTITY MoveElementDown.label "Төмендету">
+<!ENTITY MoveElementDown.accesskey "Т">

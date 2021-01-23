@@ -55,7 +55,8 @@ class DrawTargetD2D1 : public DrawTarget {
                           const Point& aDestPoint,
                           const DrawOptions& aOptions = DrawOptions()) override;
   virtual void DrawSurfaceWithShadow(SourceSurface* aSurface,
-                                     const Point& aDest, const Color& aColor,
+                                     const Point& aDest,
+                                     const DeviceColor& aColor,
                                      const Point& aOffset, Float aSigma,
                                      CompositionOp aOperator) override;
   virtual void ClearRect(const Rect& aRect) override;
@@ -116,6 +117,8 @@ class DrawTargetD2D1 : public DrawTarget {
       const IntSize& aSize, SurfaceFormat aFormat) const override;
   virtual bool CanCreateSimilarDrawTarget(const IntSize& aSize,
                                           SurfaceFormat aFormat) const override;
+  virtual RefPtr<DrawTarget> CreateClippedDrawTarget(
+      const Rect& aBounds, SurfaceFormat aFormat) override;
 
   virtual already_AddRefed<PathBuilder> CreatePathBuilder(
       FillRule aFillRule = FillRule::FILL_WINDING) const override;
@@ -136,10 +139,6 @@ class DrawTargetD2D1 : public DrawTarget {
   }
 
   virtual void DetachAllSnapshots() override { MarkChanged(); }
-
-  virtual void GetGlyphRasterizationMetrics(
-      ScaledFont* aScaledFont, const uint16_t* aGlyphIndices,
-      uint32_t aNumGlyphs, GlyphMetrics* aGlyphMetrics) override;
 
   bool Init(const IntSize& aSize, SurfaceFormat aFormat);
   bool Init(ID3D11Texture2D* aTexture, SurfaceFormat aFormat);
@@ -189,7 +188,7 @@ class DrawTargetD2D1 : public DrawTarget {
   bool ShouldClipTemporarySurfaceDrawing(CompositionOp aOp,
                                          const Pattern& aPattern,
                                          bool aClipIsComplex);
-  void PrepareForDrawing(CompositionOp aOp, const Pattern& aPattern);
+  bool PrepareForDrawing(CompositionOp aOp, const Pattern& aPattern);
   void FinalizeDrawing(CompositionOp aOp, const Pattern& aPattern);
   void FlushTransformToDC() {
     if (mTransformDirty) {
@@ -245,7 +244,7 @@ class DrawTargetD2D1 : public DrawTarget {
 
   // This function is used to determine if the mDC is still valid; if it is
   // stale, we should avoid using it to execute any draw commands.
-  bool IsDeviceContextValid();
+  bool IsDeviceContextValid() const;
 
   IntSize mSize;
 

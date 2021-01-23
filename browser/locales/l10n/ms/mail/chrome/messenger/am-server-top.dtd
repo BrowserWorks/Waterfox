@@ -1,0 +1,88 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-server-top.xul -->
+
+<!ENTITY messageStorage.label "Storan Mesej">
+<!ENTITY securitySettings.label "Tetapan Keselamatan">
+<!ENTITY serverSettings.label "Tetapan Pelayan">
+<!ENTITY serverType.label "Jenis Pelayan:">
+<!ENTITY serverName.label "Nama Pelayan:">
+<!ENTITY serverName.accesskey "P">
+<!ENTITY userName.label "Nama Pengguna:">
+<!ENTITY userName.accesskey "N">
+<!ENTITY port.label "Port:">
+<!ENTITY port.accesskey "P">
+<!ENTITY serverPortDefault.label "Piawai:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammer dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "Semak mesej baru setiap ">
+<!ENTITY biffStart.accesskey "p">
+<!ENTITY biffEnd.label "minit">
+<!ENTITY useIdleNotifications.label "Izinkan pelayan menghantar notifikasi segera apabila ada mesej baru">
+<!ENTITY useIdleNotifications.accesskey "i">
+<!ENTITY connectionSecurity.label "Keselamatan sambungan:">
+<!ENTITY connectionSecurity.accesskey "u">
+<!ENTITY connectionSecurityType-0.label "Tiada">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, jika ada">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "Kaedah pengesahan:">
+<!ENTITY authMethod.accesskey "h">
+<!ENTITY leaveOnServer.label "Tinggalkan mesej pada pelayan">
+<!ENTITY leaveOnServer.accesskey "g">
+<!ENTITY headersOnly.label "Ambil pengepala sahaja">
+<!ENTITY headersOnly.accesskey "e">
+<!ENTITY deleteByAgeFromServer.label "Untuk yang paling">
+<!ENTITY deleteByAgeFromServer.accesskey "u">
+<!ENTITY daysEnd.label "hari">
+<!ENTITY deleteOnServer2.label "Sehingga saya buang">
+<!ENTITY deleteOnServer2.accesskey "b">
+<!ENTITY downloadOnBiff.label "Muat turun mesej baru secara automatik">
+<!ENTITY downloadOnBiff.accesskey "m">
+<!ENTITY deleteMessagePrefix.label "Apabila saya buang mesej:">
+<!ENTITY modelMoveToTrash.label "Pindahkan ke dalam folder ini:">
+<!ENTITY modelMoveToTrash.accesskey "h">
+<!ENTITY modelMarkDeleted.label "Hanya tandakan sebagai dibuang">
+<!ENTITY modelMarkDeleted.accesskey "k">
+<!ENTITY modelDeleteImmediately.label "Buang serta-merta">
+<!ENTITY modelDeleteImmediately.accesskey "s">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "Hapus (&quot;Buangan&quot;) Peti masuk apabila Keluar">
+<!ENTITY expungeOnExit.accesskey "B">
+<!ENTITY emptyTrashOnExit.label "Buang Sampah apabila Keluar">
+<!ENTITY emptyTrashOnExit.accesskey "u">
+<!ENTITY loginAtStartup.label "Semak mesej baru pada permulaan">
+<!ENTITY loginAtStartup.accesskey "S">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+   of messages between them
+-->
+<!ENTITY maxMessagesStart.label "Tanya saya sebelum memuat turun lebih daripada">
+<!ENTITY maxMessagesStart.accesskey "m">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "mesej">
+<!ENTITY alwaysAuthenticate.label "Sentiasa minta pengesahan semasa menyambung ke pelayan ini">
+<!ENTITY alwaysAuthenticate.accesskey "s">
+<!ENTITY abbreviate.label "Papar nama kumpulan berita dalam anak tetingkap Folder Mel sebagai:">
+<!ENTITY abbreviateOn.label "Nama penuh (sebagai contoh, 'netscape.public.mozilla.mail-news')">
+<!ENTITY abbreviateOff.label "Nama singkatan (Sebagai contoh, 'n.p.m .mail-news')">
+<!ENTITY advancedButton.label "Lanjutan…">
+<!ENTITY advancedButton.accesskey "j">
+<!ENTITY serverDefaultCharset2.label "Pengekodan Teks Piawai:">
+<!ENTITY localFolderPicker.label "Pilih Direktori Lokal">
+<!ENTITY browseFolder.label "Cari…">
+<!ENTITY browseFolder.accesskey "C">
+<!ENTITY browseNewsrc.label "Cari…">
+<!ENTITY browseNewsrc.accesskey "i">
+
+<!ENTITY accountTitle.label "Tetapan Akaun">
+<!ENTITY accountSettingsDesc.label "Yang berikut adalah akaun istimewa.  Tiada identiti  yang dikaitkan dengannya.">
+<!ENTITY storeType.label "Jenis Storan Mesej:">
+<!ENTITY storeType.accesskey "J">
+<!ENTITY mboxStore2.label "Fail setiap folder (mbox)">
+<!ENTITY maildirStore.label "Fail setiap mesej (maildir)">

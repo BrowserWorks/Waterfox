@@ -74,10 +74,11 @@ bool CompareTextTracks::LessThan(TextTrack* aOne, TextTrack* aTwo) const {
   TextTrackSource sourceTwo = aTwo->GetTextTrackSource();
   if (sourceOne != sourceTwo) {
     return sourceOne == TextTrackSource::Track ||
-           (sourceOne == AddTextTrack && sourceTwo == MediaResourceSpecific);
+           (sourceOne == TextTrackSource::AddTextTrack &&
+            sourceTwo == TextTrackSource::MediaResourceSpecific);
   }
   switch (sourceOne) {
-    case Track: {
+    case TextTrackSource::Track: {
       int32_t positionOne = TrackChildPosition(aOne);
       int32_t positionTwo = TrackChildPosition(aTwo);
       // If either position one or positiontwo are -1 then something has gone
@@ -85,13 +86,13 @@ bool CompareTextTracks::LessThan(TextTrack* aOne, TextTrack* aTwo) const {
       return positionOne != -1 && positionTwo != -1 &&
              positionOne < positionTwo;
     }
-    case AddTextTrack:
+    case TextTrackSource::AddTextTrack:
       // For AddTextTrack sources the tracks will already be in the correct
       // relative order in the source array. Assume we're called in iteration
       // order and can therefore always report aOne < aTwo to maintain the
       // original temporal ordering.
       return true;
-    case MediaResourceSpecific:
+    case TextTrackSource::MediaResourceSpecific:
       // No rules for Media Resource Specific tracks yet.
       break;
   }
@@ -117,7 +118,6 @@ TextTrackManager::TextTrackManager(HTMLMediaElement* aMediaElement)
       mTimeMarchesOnDispatched(false),
       mUpdateCueDisplayDispatched(false),
       performedTrackSelection(false),
-      mCueTelemetryReported(false),
       mShutdown(false) {
   nsISupports* parentObject = mMediaElement->OwnerDoc()->GetParentObject();
 
@@ -166,7 +166,7 @@ already_AddRefed<TextTrack> TextTrackManager::AddTextTrack(
     RefPtr<nsIRunnable> task = NewRunnableMethod(
         "dom::TextTrackManager::HonorUserPreferencesForTrackSelection", this,
         &TextTrackManager::HonorUserPreferencesForTrackSelection);
-    nsContentUtils::RunInStableState(task.forget());
+    NS_DispatchToMainThread(task.forget());
   }
 
   return track.forget();
@@ -185,7 +185,7 @@ void TextTrackManager::AddTextTrack(TextTrack* aTextTrack) {
     RefPtr<nsIRunnable> task = NewRunnableMethod(
         "dom::TextTrackManager::HonorUserPreferencesForTrackSelection", this,
         &TextTrackManager::HonorUserPreferencesForTrackSelection);
-    nsContentUtils::RunInStableState(task.forget());
+    NS_DispatchToMainThread(task.forget());
   }
 }
 
@@ -240,40 +240,39 @@ void TextTrackManager::UpdateCueDisplay() {
   mUpdateCueDisplayDispatched = false;
 
   if (!mMediaElement || !mTextTracks || IsShutdown()) {
+    WEBVTT_LOG("Abort UpdateCueDisplay.");
     return;
   }
 
   nsIFrame* frame = mMediaElement->GetPrimaryFrame();
   nsVideoFrame* videoFrame = do_QueryFrame(frame);
   if (!videoFrame) {
+    WEBVTT_LOG("Abort UpdateCueDisplay, because of no video frame.");
     return;
   }
 
   nsCOMPtr<nsIContent> overlay = videoFrame->GetCaptionOverlay();
-  nsCOMPtr<nsIContent> controls = videoFrame->GetVideoControls();
   if (!overlay) {
+    WEBVTT_LOG("Abort UpdateCueDisplay, because of no overlay.");
     return;
+  }
+
+  nsPIDOMWindowInner* window = mMediaElement->OwnerDoc()->GetInnerWindow();
+  if (!window) {
+    WEBVTT_LOG("Abort UpdateCueDisplay, because of no window.");
   }
 
   nsTArray<RefPtr<TextTrackCue>> showingCues;
   mTextTracks->GetShowingCues(showingCues);
 
-  if (showingCues.Length() > 0) {
-    WEBVTT_LOG("UpdateCueDisplay, processCues, showingCuesNum=%zu",
-               showingCues.Length());
-    RefPtr<nsVariantCC> jsCues = new nsVariantCC();
-
-    jsCues->SetAsArray(nsIDataType::VTYPE_INTERFACE, &NS_GET_IID(EventTarget),
-                       showingCues.Length(),
-                       static_cast<void*>(showingCues.Elements()));
-    nsPIDOMWindowInner* window = mMediaElement->OwnerDoc()->GetInnerWindow();
-    if (window) {
-      sParserWrapper->ProcessCues(window, jsCues, overlay, controls);
-    }
-  } else if (overlay->Length() > 0) {
-    WEBVTT_LOG("UpdateCueDisplay EmptyString");
-    nsContentUtils::SetNodeTextContent(overlay, EmptyString(), true);
-  }
+  WEBVTT_LOG("UpdateCueDisplay, processCues, showingCuesNum=%zu",
+             showingCues.Length());
+  RefPtr<nsVariantCC> jsCues = new nsVariantCC();
+  jsCues->SetAsArray(nsIDataType::VTYPE_INTERFACE, &NS_GET_IID(EventTarget),
+                     showingCues.Length(),
+                     static_cast<void*>(showingCues.Elements()));
+  nsCOMPtr<nsIContent> controls = videoFrame->GetVideoControls();
+  sParserWrapper->ProcessCues(window, jsCues, overlay, controls);
 }
 
 void TextTrackManager::NotifyCueAdded(TextTrackCue& aCue) {
@@ -282,7 +281,6 @@ void TextTrackManager::NotifyCueAdded(TextTrackCue& aCue) {
     mNewCues->AddCue(aCue);
   }
   MaybeRunTimeMarchesOn();
-  ReportTelemetryForCue();
 }
 
 void TextTrackManager::NotifyCueRemoved(TextTrackCue& aCue) {
@@ -312,6 +310,8 @@ void TextTrackManager::PopulatePendingList() {
 
 void TextTrackManager::AddListeners() {
   if (mMediaElement) {
+    mMediaElement->AddEventListener(NS_LITERAL_STRING("resizecaption"), this,
+                                    false, false);
     mMediaElement->AddEventListener(NS_LITERAL_STRING("resizevideocontrols"),
                                     this, false, false);
     mMediaElement->AddEventListener(NS_LITERAL_STRING("seeked"), this, false,
@@ -417,14 +417,20 @@ TextTrackManager::HandleEvent(Event* aEvent) {
 
   nsAutoString type;
   aEvent->GetType(type);
-  if (type.EqualsLiteral("resizevideocontrols") ||
-      type.EqualsLiteral("seeked")) {
+  WEBVTT_LOG("Handle event %s", NS_ConvertUTF16toUTF8(type).get());
+
+  const bool setDirty = type.EqualsLiteral("seeked") ||
+                        type.EqualsLiteral("resizecaption") ||
+                        type.EqualsLiteral("resizevideocontrols");
+  const bool updateDisplay = type.EqualsLiteral("controlbarchange") ||
+                             type.EqualsLiteral("resizecaption");
+
+  if (setDirty) {
     for (uint32_t i = 0; i < mTextTracks->Length(); i++) {
       ((*mTextTracks)[i])->SetCuesDirty();
     }
   }
-
-  if (type.EqualsLiteral("controlbarchange")) {
+  if (updateDisplay) {
     UpdateCueDisplay();
   }
 
@@ -490,7 +496,8 @@ class CompareSimpleTextTrackEvents {
     // TimeMarchesOn step 13.1.
     if (aOne->mTime < aTwo->mTime) {
       return true;
-    } else if (aOne->mTime > aTwo->mTime) {
+    }
+    if (aOne->mTime > aTwo->mTime) {
       return false;
     }
 
@@ -508,7 +515,8 @@ class CompareSimpleTextTrackEvents {
       auto index2 = textTracks.IndexOf(t2);
       if (index1 < index2) {
         return true;
-      } else if (index1 > index2) {
+      }
+      if (index1 > index2) {
         return false;
       }
     }
@@ -520,12 +528,14 @@ class CompareSimpleTextTrackEvents {
     if (c1 != c2) {
       if (c1->StartTime() < c2->StartTime()) {
         return true;
-      } else if (c1->StartTime() > c2->StartTime()) {
+      }
+      if (c1->StartTime() > c2->StartTime()) {
         return false;
       }
       if (c1->EndTime() < c2->EndTime()) {
         return true;
-      } else if (c1->EndTime() > c2->EndTime()) {
+      }
+      if (c1->EndTime() > c2->EndTime()) {
         return false;
       }
 
@@ -536,7 +546,8 @@ class CompareSimpleTextTrackEvents {
       auto index2 = cues.IndexOf(c2);
       if (index1 < index2) {
         return true;
-      } else if (index1 > index2) {
+      }
+      if (index1 > index2) {
         return false;
       }
     }
@@ -844,16 +855,6 @@ void TextTrackManager::ReportTelemetryForTrack(TextTrack* aTextTrack) const {
 
   TextTrackKind kind = aTextTrack->Kind();
   Telemetry::Accumulate(Telemetry::WEBVTT_TRACK_KINDS, uint32_t(kind));
-}
-
-void TextTrackManager::ReportTelemetryForCue() {
-  MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(!mNewCues->IsEmpty());
-
-  if (!mCueTelemetryReported) {
-    Telemetry::Accumulate(Telemetry::WEBVTT_USED_VTT_CUES, 1);
-    mCueTelemetryReported = true;
-  }
 }
 
 bool TextTrackManager::IsLoaded() {

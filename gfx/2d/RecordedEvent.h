@@ -11,13 +11,13 @@
 #include <ostream>
 #include <sstream>
 #include <cstring>
+#include <functional>
 #include <vector>
+
+#include "RecordingTypes.h"
 
 namespace mozilla {
 namespace gfx {
-
-struct PathOp;
-class PathRecording;
 
 const uint32_t kMagicInt = 0xc001feed;
 
@@ -28,7 +28,7 @@ const uint32_t kMagicInt = 0xc001feed;
 const uint16_t kMajorRevision = 10;
 // A change in minor revision means additions of new events. New streams will
 // not play in older players.
-const uint16_t kMinorRevision = 0;
+const uint16_t kMinorRevision = 1;
 
 struct ReferencePtr {
   ReferencePtr() : mLongPtr(0) {}
@@ -111,7 +111,7 @@ class Translator {
 };
 
 struct ColorPatternStorage {
-  Color mColor;
+  DeviceColor mColor;
 };
 
 struct LinearGradientPatternStorage {
@@ -126,6 +126,15 @@ struct RadialGradientPatternStorage {
   Point mCenter2;
   Float mRadius1;
   Float mRadius2;
+  ReferencePtr mStops;
+  Matrix mMatrix;
+};
+
+struct ConicGradientPatternStorage {
+  Point mCenter;
+  Float mAngle;
+  Float mStartOffset;
+  Float mEndOffset;
   ReferencePtr mStops;
   Matrix mMatrix;
 };
@@ -145,6 +154,7 @@ struct PatternStorage {
     char mColor[sizeof(ColorPatternStorage)];
     char mLinear[sizeof(LinearGradientPatternStorage)];
     char mRadial[sizeof(RadialGradientPatternStorage)];
+    char mConic[sizeof(ConicGradientPatternStorage)];
     char mSurface[sizeof(SurfacePatternStorage)];
   };
 };
@@ -169,11 +179,82 @@ struct MemWriter {
   char* mPtr;
 };
 
+// This is a simple interface for an EventRingBuffer, so we can use it in the
+// RecordedEvent reading and writing machinery.
+class EventRingBuffer {
+ public:
+  /**
+   * Templated RecordEvent function so that when we have enough contiguous
+   * space we can record into the buffer quickly using MemWriter.
+   *
+   * @param aRecordedEvent the event to record
+   */
+  template <class RE>
+  void RecordEvent(const RE* aRecordedEvent) {
+    SizeCollector size;
+    WriteElement(size, aRecordedEvent->GetType());
+    aRecordedEvent->Record(size);
+    if (size.mTotalSize > mAvailable) {
+      WaitForAndRecalculateAvailableSpace();
+    }
+    if (size.mTotalSize <= mAvailable) {
+      MemWriter writer(mBufPos);
+      WriteElement(writer, aRecordedEvent->GetType());
+      aRecordedEvent->Record(writer);
+      UpdateWriteTotalsBy(size.mTotalSize);
+    } else {
+      WriteElement(*this, aRecordedEvent->GetType());
+      aRecordedEvent->Record(*this);
+    }
+  }
+
+  /**
+   * Simple write function required by WriteElement.
+   *
+   * @param aData the data to be written to the buffer
+   * @param aSize the number of chars to write
+   */
+  virtual void write(const char* const aData, const size_t aSize) = 0;
+
+  /**
+   * Simple read function required by ReadElement.
+   *
+   * @param aOut the pointer to read into
+   * @param aSize the number of chars to read
+   */
+  virtual void read(char* const aOut, const size_t aSize) = 0;
+
+  virtual bool good() const = 0;
+
+  virtual void SetIsBad() = 0;
+
+ protected:
+  /**
+   * Wait until space is available for writing and then set mBufPos and
+   * mAvailable.
+   */
+  virtual bool WaitForAndRecalculateAvailableSpace() = 0;
+
+  /**
+   * Update write count, mBufPos and mAvailable.
+   *
+   * @param aCount number of bytes written
+   */
+  virtual void UpdateWriteTotalsBy(uint32_t aCount) = 0;
+
+  char* mBufPos = nullptr;
+  uint32_t mAvailable = 0;
+};
+
 struct MemStream {
   char* mData;
   size_t mLength;
   size_t mCapacity;
-  void Resize(size_t aSize) {
+  bool mValid = true;
+  bool Resize(size_t aSize) {
+    if (!mValid) {
+      return false;
+    }
     mLength = aSize;
     if (mLength > mCapacity) {
       mCapacity = mCapacity * 2;
@@ -184,11 +265,19 @@ struct MemStream {
       }
       mData = (char*)realloc(mData, mCapacity);
     }
+    if (mData) {
+      return true;
+    }
+    NS_ERROR("Failed to allocate MemStream!");
+    mValid = false;
+    mLength = 0;
+    return false;
   }
 
   void write(const char* aData, size_t aSize) {
-    Resize(mLength + aSize);
-    memcpy(mData + mLength - aSize, aData, aSize);
+    if (Resize(mLength + aSize)) {
+      memcpy(mData + mLength - aSize, aData, aSize);
+    }
   }
 
   MemStream() : mData(nullptr), mLength(0), mCapacity(0) {}
@@ -199,6 +288,7 @@ class EventStream {
  public:
   virtual void write(const char* aData, size_t aSize) = 0;
   virtual void read(char* aOut, size_t aSize) = 0;
+  virtual bool good() = 0;
   virtual void SetIsBad() = 0;
 };
 
@@ -250,9 +340,11 @@ class RecordedEvent {
     UNSCALEDFONTDESTRUCTION,
     INTOLUMINANCE,
     EXTERNALSURFACECREATION,
+    FLUSH,
+    DETACHALLSNAPSHOTS,
+    OPTIMIZESOURCESURFACE,
+    LAST,
   };
-  static const uint32_t kTotalEventTypes =
-      RecordedEvent::FILTERNODESETINPUT + 1;
 
   virtual ~RecordedEvent() = default;
 
@@ -273,6 +365,7 @@ class RecordedEvent {
 
   virtual void RecordToStream(std::ostream& aStream) const = 0;
   virtual void RecordToStream(EventStream& aStream) const = 0;
+  virtual void RecordToStream(EventRingBuffer& aStream) const = 0;
   virtual void RecordToStream(MemStream& aStream) const = 0;
 
   virtual void OutputSimpleEventInfo(std::stringstream& aStringStream) const {}
@@ -291,25 +384,20 @@ class RecordedEvent {
 
   virtual std::string GetName() const = 0;
 
-  virtual ReferencePtr GetObjectRef() const = 0;
-
   virtual ReferencePtr GetDestinedDT() { return nullptr; }
 
   void OutputSimplePatternInfo(const PatternStorage& aStorage,
                                std::stringstream& aOutput) const;
 
   template <class S>
-  static RecordedEvent* LoadEvent(S& aStream, EventType aType);
-  static RecordedEvent* LoadEventFromStream(std::istream& aStream,
-                                            EventType aType);
-  static RecordedEvent* LoadEventFromStream(EventStream& aStream,
-                                            EventType aType);
-
-  // An alternative to LoadEvent that avoids a heap allocation for the event.
-  // This accepts a callable `f' that will take a RecordedEvent* as a single
-  // parameter
-  template <class S, class F>
-  static bool DoWithEvent(S& aStream, EventType aType, F f);
+  static bool DoWithEvent(S& aStream, EventType aType,
+                          const std::function<bool(RecordedEvent*)>& aAction);
+  static bool DoWithEventFromStream(
+      EventStream& aStream, EventType aType,
+      const std::function<bool(RecordedEvent*)>& aAction);
+  static bool DoWithEventFromStream(
+      EventRingBuffer& aStream, EventType aType,
+      const std::function<bool(RecordedEvent*)>& aAction);
 
   EventType GetType() const { return (EventType)mType; }
 
@@ -328,6 +416,37 @@ class RecordedEvent {
 
   int32_t mType;
   std::vector<Float> mDashPatternStorage;
+};
+
+template <class Derived>
+class RecordedEventDerived : public RecordedEvent {
+  using RecordedEvent::RecordedEvent;
+
+ public:
+  void RecordToStream(std::ostream& aStream) const override {
+    WriteElement(aStream, this->mType);
+    static_cast<const Derived*>(this)->Record(aStream);
+  }
+  void RecordToStream(EventStream& aStream) const override {
+    WriteElement(aStream, this->mType);
+    static_cast<const Derived*>(this)->Record(aStream);
+  }
+  void RecordToStream(EventRingBuffer& aStream) const final {
+    aStream.RecordEvent(static_cast<const Derived*>(this));
+  }
+  void RecordToStream(MemStream& aStream) const override {
+    SizeCollector size;
+    WriteElement(size, this->mType);
+    static_cast<const Derived*>(this)->Record(size);
+
+    if (!aStream.Resize(aStream.mLength + size.mTotalSize)) {
+      return;
+    }
+
+    MemWriter writer(aStream.mData + aStream.mLength - size.mTotalSize);
+    WriteElement(writer, this->mType);
+    static_cast<const Derived*>(this)->Record(writer);
+  }
 };
 
 }  // namespace gfx

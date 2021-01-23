@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "Pajtohuni">
+<!ENTITY subscribeButton.label        "Pajtomë">
+<!ENTITY subscribeButton.accesskey    "P">
+<!ENTITY unsubscribeButton.label      "Shpajtomë">
+<!ENTITY unsubscribeButton.accesskey  "S">
+<!ENTITY newGroupsTab.label           "Grupe të Rinj">
+<!ENTITY newGroupsTab.accesskey       "G">
+<!ENTITY refreshButton.label          "Rifreskoje">
+<!ENTITY refreshButton.accesskey      "F">
+<!ENTITY stopButton.label             "Ndale">
+<!ENTITY stopButton.accesskey         "N">
+<!ENTITY server.label                 "Llogari:">
+<!ENTITY server.accesskey             "L">
+<!ENTITY subscribedHeader.label       "Pajtohuni">
+<!-- commenting out until bug 38906 is fixed
+<!ENTITY messagesHeader.label         "Messages"> -->
+<!ENTITY namefield.label              "Shfaq elementë që përmbajnë:">
+<!ENTITY namefield.accesskey          "S">

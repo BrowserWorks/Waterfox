@@ -2,24 +2,16 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import, print_function
-
 import os
 import json
-import signal
-import which
-
-# Py3/Py2 compatibility.
-try:
-    from json.decoder import JSONDecodeError
-except ImportError:
-    JSONDecodeError = ValueError
+from json.decoder import JSONDecodeError
 
 import mozpack.path as mozpath
+from mozfile import which
 from mozpack.files import FileFinder
-from mozlint import result
-from mozprocess import ProcessHandlerMixin
 
+from mozlint import result
+from mozlint.util.implementation import LintProcess
 
 SHELLCHECK_NOT_FOUND = """
 Unable to locate shellcheck, please ensure it is installed and in
@@ -31,11 +23,7 @@ https://shellcheck.net or your system's package manager.
 results = []
 
 
-class ShellcheckProcess(ProcessHandlerMixin):
-    def __init__(self, config, *args, **kwargs):
-        self.config = config
-        kwargs['processOutputLine'] = [self.process_line]
-        ProcessHandlerMixin.__init__(self, *args, **kwargs)
+class ShellcheckProcess(LintProcess):
 
     def process_line(self, line):
         try:
@@ -54,11 +42,6 @@ class ShellcheckProcess(ProcessHandlerMixin):
                 'rule': entry['code'],
             }
             results.append(result.from_config(self.config, **res))
-
-    def run(self, *args, **kwargs):
-        orig = signal.signal(signal.SIGINT, signal.SIG_IGN)
-        ProcessHandlerMixin.run(self, *args, **kwargs)
-        signal.signal(signal.SIGINT, orig)
 
 
 def determine_shell_from_script(path):
@@ -135,14 +118,11 @@ def get_shellcheck_binary():
     if binary:
         return binary
 
-    try:
-        return which.which('shellcheck')
-    except which.WhichError:
-        return None
+    return which('shellcheck')
 
 
 def lint(paths, config, **lintargs):
-
+    log = lintargs['log']
     binary = get_shellcheck_binary()
 
     if not binary:
@@ -162,5 +142,6 @@ def lint(paths, config, **lintargs):
     for f in files:
         cmd = list(base_command)
         cmd.extend(['-s', files[f], f])
+        log.debug("Command: {}".format(cmd))
         run_process(config, cmd)
     return results

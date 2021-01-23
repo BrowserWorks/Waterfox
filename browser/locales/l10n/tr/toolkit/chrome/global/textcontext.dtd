@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY spellAddToDictionary.label "Sözlüğe ekle">
+<!ENTITY spellAddToDictionary.accesskey "z">
+<!ENTITY spellUndoAddToDictionary.label "Sözlüğe eklemeyi geri al">
+<!ENTITY spellUndoAddToDictionary.accesskey "z">
+<!ENTITY spellCheckToggle.label "Yazım denetimi">
+<!ENTITY spellCheckToggle.accesskey "Y">
+<!ENTITY spellNoSuggestions.label "(Yazım önerisi yok)">
+<!ENTITY spellDictionaries.label "Diller">
+<!ENTITY spellDictionaries.accesskey "D">
+
+<!ENTITY searchTextBox.clear.label "Temizle">
+
+<!ENTITY fillLoginMenu.label          "Bilgileri doldur">
+<!ENTITY fillLoginMenu.accesskey      "B">
+<!ENTITY fillPasswordMenu.label       "Parolayı doldur">
+<!ENTITY fillPasswordMenu.accesskey   "P">
+<!ENTITY fillUsernameMenu.label       "Kullanıcı adını doldur">
+<!ENTITY fillUsernameMenu.accesskey   "K">
+<!ENTITY noLoginSuggestions.label     "(Hesap önerisi yok)">
+<!ENTITY viewSavedLogins.label        "Kayıtlı hesapları göster">

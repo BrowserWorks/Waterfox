@@ -1,4 +1,7 @@
-/* vim:set ts=2 sw=2 sts=2 et: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 /*
  * Software License Agreement (BSD License)
  *
@@ -67,12 +70,12 @@ const Services = require("Services");
 // The cache used in the `nsIURL` function.
 const gNSURLStore = new Map();
 
-// "Lax", "Strict" and "Unset" are special values of the SameSite cookie
+// "Lax", "Strict" and "None" are special values of the SameSite cookie
 // attribute that should not be translated.
 const COOKIE_SAMESITE = {
   LAX: "Lax",
   STRICT: "Strict",
-  UNSET: "Unset",
+  NONE: "None",
 };
 
 /**
@@ -269,7 +272,7 @@ var NetworkHelper = {
   isTopLevelLoad: function(request) {
     if (request instanceof Ci.nsIChannel) {
       const loadInfo = request.loadInfo;
-      if (loadInfo && loadInfo.isTopLevelLoad) {
+      if (loadInfo?.isTopLevelLoad) {
         return request.loadFlags & Ci.nsIChannel.LOAD_DOCUMENT_URI;
       }
     }
@@ -355,13 +358,14 @@ var NetworkHelper = {
    */
   parseSetCookieHeader: function(header) {
     function parseSameSiteAttribute(attribute) {
+      attribute = attribute.toLowerCase();
       switch (attribute) {
-        case COOKIE_SAMESITE.LAX:
+        case COOKIE_SAMESITE.LAX.toLowerCase():
           return COOKIE_SAMESITE.LAX;
-        case COOKIE_SAMESITE.STRICT:
+        case COOKIE_SAMESITE.STRICT.toLowerCase():
           return COOKIE_SAMESITE.STRICT;
         default:
-          return COOKIE_SAMESITE.UNSET;
+          return COOKIE_SAMESITE.NONE;
       }
     }
 
@@ -437,7 +441,6 @@ var NetworkHelper = {
     "application/atom+xml": "xml",
     "application/rss+xml": "xml",
     "application/vnd.mozilla.maybe.feed": "xml",
-    "application/vnd.mozilla.xul+xml": "xml",
     "application/javascript": "js",
     "application/x-javascript": "js",
     "application/x-httpd-php": "txt",
@@ -591,8 +594,6 @@ var NetworkHelper = {
      *      => state === "weak"
      */
 
-    securityInfo.QueryInterface(Ci.nsITransportSecurityInfo);
-
     const wpl = Ci.nsIWebProgressListener;
     const NSSErrorsService = Cc["@mozilla.org/nss_errors_service;1"].getService(
       Ci.nsINSSErrorsService
@@ -601,7 +602,7 @@ var NetworkHelper = {
       const state = securityInfo.securityState;
 
       let uri = null;
-      if (httpActivity.channel && httpActivity.channel.URI) {
+      if (httpActivity.channel?.URI) {
         uri = httpActivity.channel.URI;
       }
       if (uri && !uri.schemeIs("https") && !uri.schemeIs("wss")) {
@@ -670,7 +671,7 @@ var NetworkHelper = {
         }
 
         info.hsts = sss.isSecureURI(sss.HEADER_HSTS, uri, flags);
-        info.hpkp = sss.isSecureURI(sss.HEADER_HPKP, uri, flags);
+        info.hpkp = sss.isSecureURI(sss.STATIC_PINNING, uri, flags);
       } else {
         DevToolsUtils.reportException(
           "NetworkHelper.parseSecurityInfo",

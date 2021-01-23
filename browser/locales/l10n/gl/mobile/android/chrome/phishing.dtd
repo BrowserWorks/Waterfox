@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Sáqueme de aquí!">
+<!ENTITY safeb.palm.decline.label "Ignorar este aviso">
+<!ENTITY safeb.palm.reportPage.label "Por que se bloqueou este sitio?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Asesoramento fornecido por <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "Sitio considerado de ataque!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "O sitio web en <span id='malware_sitename'/> consta como de ataque e foi bloqueado segundo as preferencias de seguranza actuais.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Os sitios de ataque tentan instalar programas que rouban información privada, que utilizan o computador para atacar a terceiros ou que danan o sistema.</p><p>Algúns deles distribúen de forma intencionada software pernicioso, mais moitos comprométense sen o permiso ou coñecemento dos propietarios.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "Sitio enganoso!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "Este sitio web <span id='phishing_sitename'/> identificouse como sitio enganoso e bloqueouse segundo as súas preferencias de seguranza.">
+
+
+<!ENTITY safeb.blocked.unwantedPage.title "Sitio denunciado de servir software non desexado!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Esta páxina web en <span id='unwanted_sitename'/> identificouse como un sitio que contén software non desexado e foi bloqueado segundo as preferencias de seguranza actuais.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "As páxinas con software non desexado tentan instalar un software que pode aparentar facer algo diferente ao que fai e afectar ao seu sistema de maneira inesperada.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "O sitio que quere visitar pode conter malware">

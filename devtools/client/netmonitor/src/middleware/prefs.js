@@ -13,7 +13,9 @@ const {
   ENABLE_PERSISTENT_LOGS,
   DISABLE_BROWSER_CACHE,
   SET_COLUMNS_WIDTH,
-} = require("../constants");
+  WS_TOGGLE_COLUMN,
+  WS_RESET_COLUMNS,
+} = require("devtools/client/netmonitor/src/constants");
 
 /**
  * Update the relevant prefs when:
@@ -58,6 +60,10 @@ function prefsMiddleware(store) {
       case SET_COLUMNS_WIDTH:
         persistColumnsData(store.getState());
         break;
+      case WS_TOGGLE_COLUMN:
+      case WS_RESET_COLUMNS:
+        persistVisibleWebSocketsColumns(store.getState());
+        break;
     }
     return res;
   };
@@ -68,7 +74,7 @@ function prefsMiddleware(store) {
  */
 function persistVisibleColumns(state) {
   const visibleColumns = [];
-  const columns = state.ui.columns;
+  const { columns } = state.ui;
   for (const column in columns) {
     if (columns[column]) {
       visibleColumns.push(column);
@@ -77,6 +83,24 @@ function persistVisibleColumns(state) {
 
   Services.prefs.setCharPref(
     "devtools.netmonitor.visibleColumns",
+    JSON.stringify(visibleColumns)
+  );
+}
+
+/**
+ * Store list of visible WebSockets columns into preferences.
+ */
+function persistVisibleWebSocketsColumns(state) {
+  const visibleColumns = [];
+  const { columns } = state.webSockets;
+  for (const column in columns) {
+    if (columns[column]) {
+      visibleColumns.push(column);
+    }
+  }
+
+  Services.prefs.setCharPref(
+    "devtools.netmonitor.ws.visibleColumns",
     JSON.stringify(visibleColumns)
   );
 }

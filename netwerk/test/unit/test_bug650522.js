@@ -1,7 +1,11 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-function run_test() {
+"use strict";
+
+add_task(async () => {
+  Services.prefs.setBoolPref("network.cookie.sameSite.schemeful", false);
+
   var cs = Cc["@mozilla.org/cookieService;1"].getService(Ci.nsICookieService);
   var cm = Cc["@mozilla.org/cookiemanager;1"].getService(Ci.nsICookieManager);
   var expiry = (Date.now() + 1000) * 1000;
@@ -9,7 +13,7 @@ function run_test() {
   // Test our handling of host names with a single character at the beginning
   // followed by a dot.
   cm.add(
-    "e.mail.com",
+    "e.com",
     "/",
     "foo",
     "bar",
@@ -18,11 +22,13 @@ function run_test() {
     true,
     expiry,
     {},
-    Ci.nsICookie2.SAMESITE_UNSET
+    Ci.nsICookie.SAMESITE_NONE
   );
-  Assert.equal(cm.countCookiesFromHost("e.mail.com"), 1);
-  Assert.equal(
-    cs.getCookieString(NetUtil.newURI("http://e.mail.com"), null),
-    "foo=bar"
+  Assert.equal(cm.countCookiesFromHost("e.com"), 1);
+
+  CookieXPCShellUtils.createServer({ hosts: ["e.com"] });
+  const cookies = await CookieXPCShellUtils.getCookieStringFromDocument(
+    "http://e.com/"
   );
-}
+  Assert.equal(cookies, "foo=bar");
+});

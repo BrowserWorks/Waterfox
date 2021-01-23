@@ -3,10 +3,9 @@ use std::fmt::{self, Display};
 use std::hash::{Hash, Hasher};
 
 use proc_macro2::{Ident, Span};
-use unicode_xid::UnicodeXID;
 
 #[cfg(feature = "parsing")]
-use lookahead;
+use crate::lookahead;
 
 /// A Rust lifetime: `'a`.
 ///
@@ -19,10 +18,8 @@ use lookahead;
 /// - All following characters must be Unicode code points with the XID_Continue
 ///   property.
 ///
-/// *This type is available if Syn is built with the `"derive"` or `"full"`
+/// *This type is available only if Syn is built with the `"derive"` or `"full"`
 /// feature.*
-#[cfg_attr(feature = "extra-traits", derive(Debug))]
-#[derive(Clone)]
 pub struct Lifetime {
     pub apostrophe: Span,
     pub ident: Ident,
@@ -35,7 +32,7 @@ impl Lifetime {
     ///
     /// # Invocation
     ///
-    /// ```edition2018
+    /// ```
     /// # use proc_macro2::Span;
     /// # use syn::Lifetime;
     /// #
@@ -55,21 +52,7 @@ impl Lifetime {
             panic!("lifetime name must not be empty");
         }
 
-        fn xid_ok(symbol: &str) -> bool {
-            let mut chars = symbol.chars();
-            let first = chars.next().unwrap();
-            if !(UnicodeXID::is_xid_start(first) || first == '_') {
-                return false;
-            }
-            for ch in chars {
-                if !UnicodeXID::is_xid_continue(ch) {
-                    return false;
-                }
-            }
-            true
-        }
-
-        if !xid_ok(&symbol[1..]) {
+        if !crate::ident::xid_ok(&symbol[1..]) {
             panic!("{:?} is not a valid lifetime name", symbol);
         }
 
@@ -84,6 +67,15 @@ impl Display for Lifetime {
     fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         "'".fmt(formatter)?;
         self.ident.fmt(formatter)
+    }
+}
+
+impl Clone for Lifetime {
+    fn clone(&self) -> Self {
+        Lifetime {
+            apostrophe: self.apostrophe,
+            ident: self.ident.clone(),
+        }
     }
 }
 
@@ -124,7 +116,7 @@ pub fn Lifetime(marker: lookahead::TokenMarker) -> Lifetime {
 pub mod parsing {
     use super::*;
 
-    use parse::{Parse, ParseStream, Result};
+    use crate::parse::{Parse, ParseStream, Result};
 
     impl Parse for Lifetime {
         fn parse(input: ParseStream) -> Result<Self> {

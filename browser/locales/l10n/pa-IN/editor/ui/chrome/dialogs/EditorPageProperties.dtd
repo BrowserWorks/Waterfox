@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "ਪੇਜ਼ ਵਿਸ਼ੇਸ਼ਤਾ">
+<!ENTITY location.label "ਟਿਕਾਣਾ:">
+<!ENTITY lastModified.label "ਆਖਰੀ ਸੋਧ:">
+<!ENTITY titleInput.label "ਨਾਂ:">
+<!ENTITY titleInput.accessKey "T">
+<!ENTITY authorInput.label "ਲੇਖਕ:">
+<!ENTITY authorInput.accessKey "A">
+<!ENTITY descriptionInput.label "ਵੇਰਵਾ:">
+<!ENTITY descriptionInput.accessKey "D">
+<!ENTITY locationNewPage.label "[ਨਵਾਂ ਪੇਜ਼, ਹਾਲੇ ਸੰਭਾਲਿਆ ਨਹੀਂ]">
+<!ENTITY EditHEADSource1.label "ਤਕਨੀਕੀ ਯੂਜ਼ਰਾਂ ਲਈ:">
+<!ENTITY EditHEADSource2.label "&lt;head&gt; ਖੇਤਰ ਦੇ ਹੋਰ ਗੁਣਾਂ ਵਿੱਚ ਸੋਧ ਕਰਨ ਲਈ,  ਵੇਖੋ ਮੇਨੂ ਜਾਂ ਸੋਧ ਢੰਗ ਟੂਲਬਾਰ ਵਿੱਚੋਂ &quot;HTML ਸਰੋਤ&quot; ਦੀ ਚੋਣ ਕਰੋ।">

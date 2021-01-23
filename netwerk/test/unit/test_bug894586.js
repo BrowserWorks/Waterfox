@@ -3,6 +3,8 @@
  * should not fail for channels of unknown size
  */
 
+"use strict";
+
 var contentSecManager = Cc["@mozilla.org/contentsecuritymanager;1"].getService(
   Ci.nsIContentSecurityManager
 );
@@ -32,14 +34,11 @@ ProtocolHandler.prototype = {
       Ci.nsIProtocolHandler.URI_SYNC_LOAD_IS_OK
     );
   },
-  newURI: function(aSpec, aOriginCharset, aBaseURI) {
-    return this.uri;
-  },
-  newChannel: function(aURI, aLoadInfo) {
+  newChannel(aURI, aLoadInfo) {
     this.loadInfo = aLoadInfo;
     return this;
   },
-  allowPort: function(port, scheme) {
+  allowPort(port, scheme) {
     return port != -1;
   },
 
@@ -66,10 +65,10 @@ ProtocolHandler.prototype = {
   set contentLength(val) {
     throw Components.Exception(
       "Setting content length",
-      NS_ERROR_NOT_IMPLEMENTED
+      Cr.NS_ERROR_NOT_IMPLEMENTED
     );
   },
-  open: function() {
+  open() {
     // throws an error if security checks fail
     contentSecManager.performSecurityCheck(this, null);
 
@@ -81,7 +80,7 @@ ProtocolHandler.prototype = {
       loadUsingSystemPrincipal: true,
     }).open();
   },
-  asyncOpen: function(aListener, aContext) {
+  asyncOpen(aListener, aContext) {
     throw Components.Exception("Not implemented", Cr.NS_ERROR_NOT_IMPLEMENTED);
   },
   contentDisposition: Ci.nsIChannel.DISPOSITION_INLINE,
@@ -100,7 +99,7 @@ ProtocolHandler.prototype = {
   get status() {
     return Cr.NS_OK;
   },
-  cancel: function(status) {},
+  cancel(status) {},
   loadGroup: null,
   loadFlags:
     Ci.nsIRequest.LOAD_NORMAL |
@@ -108,7 +107,7 @@ ProtocolHandler.prototype = {
     Ci.nsIRequest.LOAD_BYPASS_CACHE,
 
   /** nsIFactory */
-  createInstance: function(aOuter, aIID) {
+  createInstance(aOuter, aIID) {
     if (aOuter) {
       throw Components.Exception(
         "createInstance no aggregation",
@@ -117,7 +116,7 @@ ProtocolHandler.prototype = {
     }
     return this.QueryInterface(aIID);
   },
-  lockFactory: function() {},
+  lockFactory() {},
 
   /** nsISupports */
   QueryInterface: ChromeUtils.generateQI([

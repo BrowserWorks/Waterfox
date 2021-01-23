@@ -83,8 +83,8 @@ class PluginModuleParent : public PPluginModuleParent,
   typedef mozilla::PluginLibrary PluginLibrary;
 
   PPluginInstanceParent* AllocPPluginInstanceParent(
-      const nsCString& aMimeType, const InfallibleTArray<nsCString>& aNames,
-      const InfallibleTArray<nsCString>& aValues);
+      const nsCString& aMimeType, const nsTArray<nsCString>& aNames,
+      const nsTArray<nsCString>& aValues);
 
   bool DeallocPPluginInstanceParent(PPluginInstanceParent* aActor);
 
@@ -148,7 +148,7 @@ class PluginModuleParent : public PPluginModuleParent,
 
  protected:
   void SetChildTimeout(const int32_t aChildTimeout);
-  static void TimeoutChanged(const char* aPref, PluginModuleParent* aModule);
+  static void TimeoutChanged(const char* aPref, void* aModule);
 
   virtual void UpdatePluginTimeout() {}
 
@@ -165,9 +165,9 @@ class PluginModuleParent : public PPluginModuleParent,
   void SetPluginFuncs(NPPluginFuncs* aFuncs);
 
   nsresult NPP_NewInternal(NPMIMEType pluginType, NPP instance,
-                           InfallibleTArray<nsCString>& names,
-                           InfallibleTArray<nsCString>& values,
-                           NPSavedData* saved, NPError* error);
+                           nsTArray<nsCString>& names,
+                           nsTArray<nsCString>& values, NPSavedData* saved,
+                           NPError* error);
 
   // NPP-like API that Gecko calls are trampolined into.  These
   // messages then get forwarded along to the plugin instance,
@@ -311,6 +311,7 @@ class PluginModuleParent : public PPluginModuleParent,
    */
   mozilla::Mutex mCrashReporterMutex;
   UniquePtr<ipc::CrashReporterHost> mCrashReporter;
+  nsString mOrphanedDumpId;
 };
 
 class PluginModuleContentParent : public PluginModuleParent {
@@ -421,6 +422,7 @@ class PluginModuleChromeParent : public PluginModuleParent,
   virtual bool ShouldContinueFromReplyTimeout() override;
 
   void ProcessFirstMinidump();
+  void HandleOrphanedMinidump();
   void AddCrashAnnotations();
 
   PluginProcessParent* Process() const { return mSubprocess; }
@@ -458,8 +460,7 @@ class PluginModuleChromeParent : public PluginModuleParent,
 
   mozilla::ipc::IPCResult RecvNotifyContentModuleDestroyed() override;
 
-  static void CachedSettingChanged(const char* aPref,
-                                   PluginModuleChromeParent* aModule);
+  static void CachedSettingChanged(const char* aPref, void* aModule);
 
   mozilla::ipc::IPCResult
   AnswerNPN_SetValue_NPPVpluginRequiresAudioDeviceChanges(
@@ -478,7 +479,7 @@ class PluginModuleChromeParent : public PluginModuleParent,
   };
   Atomic<uint32_t> mHangAnnotationFlags;
 #ifdef XP_WIN
-  InfallibleTArray<float> mPluginCpuUsageOnHang;
+  nsTArray<float> mPluginCpuUsageOnHang;
   PluginHangUIParent* mHangUIParent;
   bool mHangUIEnabled;
   bool mIsTimerReset;

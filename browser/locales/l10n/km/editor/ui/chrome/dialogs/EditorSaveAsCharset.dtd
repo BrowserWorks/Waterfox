@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- These strings are generic to all or most of the editor's dialogs. -->
+<!-- This button is for the progressive disclosure of additional editing functionality -->
+<!-- These strings are for use specifically in the editor's link dialog. -->
+
+
+
+<!ENTITY windowTitle2.label "រក្សាទុក និង​ផ្លាស់ប្ដូរ​ការ​អ៊ិនកូដ​អត្ថបទ">
+<!ENTITY documentTitleTitle.label "Էջի անունը">
+<!ENTITY documentCharsetTitle2.label "ការ​អ៊ិនកូដ​អត្ថបទ​​">
+<!ENTITY documentCharsetDesc2.label "ជ្រើស​ការ​អ៊ិនកូដ​អត្ថបទ​ដែល​អ្នក​ចង់​រក្សាទុក​អត្ថបទ​ក្នុង៖">
+<!ENTITY documentExportToText.label "Արտածել տեքստով">
+

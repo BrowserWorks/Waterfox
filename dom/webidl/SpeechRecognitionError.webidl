@@ -17,9 +17,12 @@ enum SpeechRecognitionErrorCode {
 
 [Pref="media.webspeech.recognition.enable",
  Func="SpeechRecognition::IsAuthorized",
- Constructor(DOMString type, optional SpeechRecognitionErrorInit eventInitDict)]
+ Exposed=Window]
 interface SpeechRecognitionError : Event
 {
+  constructor(DOMString type,
+              optional SpeechRecognitionErrorInit eventInitDict = {});
+
   readonly attribute SpeechRecognitionErrorCode error;
   readonly attribute DOMString? message;
 };

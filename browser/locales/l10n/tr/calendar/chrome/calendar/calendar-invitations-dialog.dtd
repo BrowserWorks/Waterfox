@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<!-- Calendar Invitations Dialog -->
+
+<!ENTITY calendar.invitations.dialog.invitations.text                   "Davetler">
+<!ENTITY calendar.invitations.dialog.statusmessage.updating.text        "Davet listesi güncelleniyor.">
+<!ENTITY calendar.invitations.dialog.statusmessage.noinvitations.text   "Kabul edilmeyen davet bulunamadı.">
+<!-- Calendar Invitations List -->
+
+<!ENTITY calendar.invitations.list.accept.button.label                  "Kabul et">
+<!ENTITY calendar.invitations.list.decline.button.label                 "Reddet">
+<!ENTITY calendar.invitations.list.recurrentevent.text                  "Tekrarlanan etkinlik">
+<!ENTITY calendar.invitations.list.alldayevent.text                     "Tam günlük etkinlik">
+<!ENTITY calendar.invitations.list.location.text                        "Konum:">
+<!ENTITY calendar.invitations.list.organizer.text                       "Düzenleyen: ">
+<!ENTITY calendar.invitations.list.attendee.text                        "Katılımcı: ">
+<!ENTITY calendar.invitations.list.none.text                            "Yok">

@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Kajkosće formularneho pola">
+<!ENTITY windowTitleImage.label "Kajkosće formularneho wobraza">
+
+<!ENTITY InputType.label "Typ pola">
+<!ENTITY InputType.accesskey "T">
+<!ENTITY text.value "Tekst">
+<!ENTITY password.value "Hesło">
+<!ENTITY checkbox.value "Kontrolowy kašćik">
+<!ENTITY radio.value "Opciske tłóčatko">
+<!ENTITY submit.value "Wotpósłanske tłóčatke">
+<!ENTITY reset.value "Wróćostajenske tłóčatko">
+<!ENTITY file.value "Dataja">
+<!ENTITY hidden.value "Schowany">
+<!ENTITY image.value "Wobraz">
+<!ENTITY button.value "Tłóčatko">
+
+<!ENTITY InputSettings.label "Nastajenja pola">
+<!ENTITY InputName.label "Mjeno pola:">
+<!ENTITY InputName.accesskey "M">
+<!ENTITY GroupName.label "Mjeno skupiny:">
+<!ENTITY GroupName.accesskey "s">
+<!ENTITY InputValue.label "Hódnota pola:">
+<!ENTITY InputValue.accesskey "H">
+<!ENTITY InitialValue.label "Spočatna hódnota:">
+<!ENTITY InitialValue.accesskey "o">
+<!ENTITY InputChecked.label "Na spočatku zmóžnjeny">
+<!ENTITY InputChecked.accesskey "z">
+<!ENTITY InputSelected.label "Na spočatku wubrany">
+<!ENTITY InputSelected.accesskey "w">
+<!ENTITY InputReadOnly.label "Jenož čitajomny">
+<!ENTITY InputReadOnly.accesskey "J">
+<!ENTITY InputDisabled.label "Znjemóžnjeny">
+<!ENTITY InputDisabled.accesskey "n">
+<!ENTITY tabIndex.label "Tabulatorowy indeks:">
+<!ENTITY tabIndex.accesskey "l">
+<!ENTITY TextSize.label "Wulkosć pola:">
+<!ENTITY TextSize.accesskey "u">
+<!ENTITY TextLength.label "Maksimalna dołhosć:">
+<!ENTITY TextLength.accesskey "d">
+<!ENTITY AccessKey.label "Přistupna tasta:">
+<!ENTITY AccessKey.accesskey "P">
+<!ENTITY Accept.label "Typy akceptować:">
+<!ENTITY Accept.accesskey "a">
+
+<!ENTITY ImageProperties.label "Wobrazowe kajkosće…">
+<!ENTITY ImageProperties.accesskey "b">

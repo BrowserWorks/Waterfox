@@ -7,8 +7,10 @@
 const { Component } = require("devtools/client/shared/vendor/react");
 const dom = require("devtools/client/shared/vendor/react-dom-factories");
 const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
-const { L10N } = require("../utils/l10n");
-const { propertiesEqual } = require("../utils/request-utils");
+const { L10N } = require("devtools/client/netmonitor/src/utils/l10n");
+const {
+  propertiesEqual,
+} = require("devtools/client/netmonitor/src/utils/request-utils");
 
 const { div } = dom;
 
@@ -41,7 +43,13 @@ class StatusCode extends Component {
 
   render() {
     const { item } = this.props;
-    const { fromCache, fromServiceWorker, status, statusText } = item;
+    const {
+      fromCache,
+      fromServiceWorker,
+      status,
+      statusText,
+      blockedReason,
+    } = item;
     let code;
 
     if (status) {
@@ -52,6 +60,19 @@ class StatusCode extends Component {
       } else {
         code = status;
       }
+    }
+
+    if (blockedReason) {
+      return div(
+        {
+          className:
+            "requests-list-status-code status-code status-code-blocked",
+          title: L10N.getStr("networkMenu.blockedTooltip"),
+        },
+        div({
+          className: "status-code-blocked-icon",
+        })
+      );
     }
 
     // `data-code` refers to the status-code

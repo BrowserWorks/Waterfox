@@ -10,7 +10,6 @@
 #include "nsServiceManagerUtils.h"
 #include "nsIContentViewer.h"
 #include "mozilla/dom/Document.h"
-#include "XULDocument.h"
 #include "InProcessBrowserChildMessageManager.h"
 #include "nsIWindowMediator.h"
 #include "nsPIDOMWindow.h"
@@ -19,7 +18,7 @@
 #include "nsISHEntry.h"
 #include "nsIWindowWatcher.h"
 #include "mozilla/Services.h"
-#include "nsIXULWindow.h"
+#include "nsIAppWindow.h"
 #include "nsIAppShellService.h"
 #include "nsAppShellCID.h"
 #include "nsContentUtils.h"
@@ -32,6 +31,7 @@
 #include "mozilla/dom/ChromeMessageBroadcaster.h"
 #include "mozilla/dom/ContentFrameMessageManager.h"
 #include "mozilla/dom/ContentProcessMessageManager.h"
+#include "mozilla/dom/CustomElementRegistry.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/ParentProcessMessageManager.h"
 #include "mozilla/dom/BrowserChild.h"
@@ -257,10 +257,10 @@ void MarkDocShell(nsIDocShellTreeItem* aNode, bool aCleanupJS) {
   }
 
   int32_t i, childCount;
-  aNode->GetChildCount(&childCount);
+  aNode->GetInProcessChildCount(&childCount);
   for (i = 0; i < childCount; ++i) {
     nsCOMPtr<nsIDocShellTreeItem> child;
-    aNode->GetChildAt(i, getter_AddRefs(child));
+    aNode->GetInProcessChildAt(i, getter_AddRefs(child));
     MarkDocShell(child, aCleanupJS);
   }
 }
@@ -352,22 +352,11 @@ nsresult nsCCUncollectableMarker::Observe(nsISupports* aSubject,
     bool hasHiddenWindow = false;
     appShell->GetHasHiddenWindow(&hasHiddenWindow);
     if (hasHiddenWindow) {
-      nsCOMPtr<nsIXULWindow> hw;
+      nsCOMPtr<nsIAppWindow> hw;
       appShell->GetHiddenWindow(getter_AddRefs(hw));
       nsCOMPtr<nsIDocShell> shell;
       hw->GetDocShell(getter_AddRefs(shell));
       MarkDocShell(shell, cleanupJS);
-    }
-    bool hasHiddenPrivateWindow = false;
-    appShell->GetHasHiddenPrivateWindow(&hasHiddenPrivateWindow);
-    if (hasHiddenPrivateWindow) {
-      nsCOMPtr<nsIXULWindow> hw;
-      appShell->GetHiddenPrivateWindow(getter_AddRefs(hw));
-      if (hw) {
-        nsCOMPtr<nsIDocShell> shell;
-        hw->GetDocShell(getter_AddRefs(shell));
-        MarkDocShell(shell, cleanupJS);
-      }
     }
   }
 
@@ -387,7 +376,7 @@ nsresult nsCCUncollectableMarker::Observe(nsISupports* aSubject,
     eDone = 5
   };
 
-  static_assert(eDone == NS_MAJOR_FORGET_SKIPPABLE_CALLS,
+  static_assert(eDone == kMajorForgetSkippableCalls,
                 "There must be one forgetSkippable call per cleanup state.");
 
   static uint32_t sFSState = eDone;
@@ -478,6 +467,10 @@ void mozilla::dom::TraceBlackJS(JSTracer* aTrc, bool aIsShutdownGC) {
             EventListenerManager* elm = inner->GetExistingListenerManager();
             if (elm) {
               elm->TraceListeners(aTrc);
+            }
+            CustomElementRegistry* cer = inner->GetExistingCustomElements();
+            if (cer) {
+              cer->TraceDefinitions(aTrc);
             }
           }
         }

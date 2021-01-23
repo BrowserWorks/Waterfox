@@ -15,6 +15,7 @@
 #define mozilla_Encoding_h
 
 #include "mozilla/CheckedInt.h"
+#include "mozilla/Maybe.h"
 #include "mozilla/NotNull.h"
 #include "mozilla/Span.h"
 #include "mozilla/Tuple.h"
@@ -245,11 +246,30 @@ class Encoding final {
   }
 
   /**
+   * Checks whether this encoding maps one byte to one Basic Multilingual
+   * Plane code point (i.e. byte length equals decoded UTF-16 length) and
+   * vice versa (for mappable characters).
+   *
+   * `true` iff this encoding is on the list of Legacy single-byte
+   * encodings (https://encoding.spec.whatwg.org/#legacy-single-byte-encodings)
+   * in the spec or x-user-defined.
+   */
+  inline bool IsSingleByte() const { return encoding_is_single_byte(this); }
+
+  /**
    * Checks whether the bytes 0x00...0x7F map exclusively to the characters
    * U+0000...U+007F and vice versa.
    */
   inline bool IsAsciiCompatible() const {
     return encoding_is_ascii_compatible(this);
+  }
+
+  /**
+   * Checks whether this is a Japanese legacy encoding.
+   */
+  inline bool IsJapaneseLegacy() const {
+    return this == SHIFT_JIS_ENCODING || this == EUC_JP_ENCODING ||
+           this == ISO_2022_JP_ENCODING;
   }
 
   /**
@@ -860,7 +880,7 @@ class Encoding final {
  */
 class Decoder final {
  public:
-  ~Decoder() {}
+  ~Decoder() = default;
   static void operator delete(void* aDecoder) {
     decoder_free(reinterpret_cast<Decoder*>(aDecoder));
   }
@@ -886,7 +906,7 @@ class Decoder final {
    */
   inline CheckedInt<size_t> MaxUTF8BufferLength(size_t aByteLength) const {
     CheckedInt<size_t> max(decoder_max_utf8_buffer_length(this, aByteLength));
-    if (max.value() == MaxValue<size_t>::value) {
+    if (max.value() == std::numeric_limits<size_t>::max()) {
       // Mark invalid by overflowing
       max++;
       MOZ_ASSERT(!max.isValid());
@@ -909,7 +929,7 @@ class Decoder final {
       size_t aByteLength) const {
     CheckedInt<size_t> max(
         decoder_max_utf8_buffer_length_without_replacement(this, aByteLength));
-    if (max.value() == MaxValue<size_t>::value) {
+    if (max.value() == std::numeric_limits<size_t>::max()) {
       // Mark invalid by overflowing
       max++;
       MOZ_ASSERT(!max.isValid());
@@ -963,7 +983,7 @@ class Decoder final {
    */
   inline CheckedInt<size_t> MaxUTF16BufferLength(size_t aU16Length) const {
     CheckedInt<size_t> max(decoder_max_utf16_buffer_length(this, aU16Length));
-    if (max.value() == MaxValue<size_t>::value) {
+    if (max.value() == std::numeric_limits<size_t>::max()) {
       // Mark invalid by overflowing
       max++;
       MOZ_ASSERT(!max.isValid());
@@ -1002,6 +1022,34 @@ class Decoder final {
     uint32_t result = decoder_decode_to_utf16_without_replacement(
         this, aSrc.Elements(), &srcRead, aDst.Elements(), &dstWritten, aLast);
     return MakeTuple(result, srcRead, dstWritten);
+  }
+
+  /**
+   * Checks for compatibility with storing Unicode scalar values as unsigned
+   * bytes taking into account the state of the decoder.
+   *
+   * Returns `mozilla::Nothing()` if the decoder is not in a neutral state,
+   * including waiting for the BOM, or if the encoding is never
+   * Latin1-byte-compatible.
+   *
+   * Otherwise returns the index of the first byte whose unsigned value doesn't
+   * directly correspond to the decoded Unicode scalar value, or the length
+   * of the input if all bytes in the input decode directly to scalar values
+   * corresponding to the unsigned byte values.
+   *
+   * Does not change the state of the decoder.
+   *
+   * Do not use this unless you are supporting SpiderMonkey-style string
+   * storage optimizations.
+   */
+  inline mozilla::Maybe<size_t> Latin1ByteCompatibleUpTo(
+      Span<const uint8_t> aBuffer) const {
+    size_t upTo = decoder_latin1_byte_compatible_up_to(this, aBuffer.Elements(),
+                                                       aBuffer.Length());
+    if (upTo == std::numeric_limits<size_t>::max()) {
+      return mozilla::Nothing();
+    }
+    return mozilla::Some(upTo);
   }
 
  private:
@@ -1116,7 +1164,7 @@ class Decoder final {
  */
 class Encoder final {
  public:
-  ~Encoder() {}
+  ~Encoder() = default;
 
   static void operator delete(void* aEncoder) {
     encoder_free(reinterpret_cast<Encoder*>(aEncoder));
@@ -1151,7 +1199,7 @@ class Encoder final {
     CheckedInt<size_t> max(
         encoder_max_buffer_length_from_utf8_if_no_unmappables(this,
                                                               aByteLength));
-    if (max.value() == MaxValue<size_t>::value) {
+    if (max.value() == std::numeric_limits<size_t>::max()) {
       // Mark invalid by overflowing
       max++;
       MOZ_ASSERT(!max.isValid());
@@ -1172,7 +1220,7 @@ class Encoder final {
     CheckedInt<size_t> max(
         encoder_max_buffer_length_from_utf8_without_replacement(this,
                                                                 aByteLength));
-    if (max.value() == MaxValue<size_t>::value) {
+    if (max.value() == std::numeric_limits<size_t>::max()) {
       // Mark invalid by overflowing
       max++;
       MOZ_ASSERT(!max.isValid());
@@ -1235,7 +1283,7 @@ class Encoder final {
     CheckedInt<size_t> max(
         encoder_max_buffer_length_from_utf16_if_no_unmappables(this,
                                                                aU16Length));
-    if (max.value() == MaxValue<size_t>::value) {
+    if (max.value() == std::numeric_limits<size_t>::max()) {
       // Mark invalid by overflowing
       max++;
       MOZ_ASSERT(!max.isValid());
@@ -1256,7 +1304,7 @@ class Encoder final {
     CheckedInt<size_t> max(
         encoder_max_buffer_length_from_utf16_without_replacement(this,
                                                                  aU16Length));
-    if (max.value() == MaxValue<size_t>::value) {
+    if (max.value() == std::numeric_limits<size_t>::max()) {
       // Mark invalid by overflowing
       max++;
       MOZ_ASSERT(!max.isValid());

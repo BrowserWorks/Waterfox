@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -35,7 +33,7 @@ async function testTargetScopedActor(client, form) {
   ok(form.testOneActor, "Found the test target-scoped actor.");
   ok(
     form.testOneActor.includes("testOne"),
-    "testOneActor's actorPrefix should be used."
+    "testOneActor's typeName should be used."
   );
 
   const response = await client.request({

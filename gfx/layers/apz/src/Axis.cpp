@@ -23,10 +23,9 @@
 #include "nsPrintfCString.h"                // for nsPrintfCString
 #include "nsThreadUtils.h"                  // for NS_DispatchToMainThread, etc
 #include "nscore.h"                         // for NS_IMETHOD
-#include "gfxPrefs.h"                       // for the preferences
 
-#define AXIS_LOG(...)
-// #define AXIS_LOG(...) printf_stderr("AXIS: " __VA_ARGS__)
+static mozilla::LazyLogModule sApzAxsLog("apz.axis");
+#define AXIS_LOG(...) MOZ_LOG(sApzAxsLog, LogLevel::Debug, (__VA_ARGS__))
 
 namespace mozilla {
 namespace layers {
@@ -73,16 +72,6 @@ void Axis::UpdateWithTouchAtDevicePoint(ParentLayerCoord aPos,
     AXIS_LOG("%p|%s velocity from tracker is %f\n", mAsyncPanZoomController,
              Name(), mVelocity);
   }
-}
-
-void Axis::HandleDynamicToolbarMovement(uint32_t aStartTimestampMs,
-                                        uint32_t aEndTimestampMs,
-                                        ParentLayerCoord aDelta) {
-  // mVelocityTracker is controller-thread only
-  APZThreadUtils::AssertOnControllerThread();
-
-  mVelocity = mVelocityTracker->HandleDynamicToolbarMovement(
-      aStartTimestampMs, aEndTimestampMs, aDelta);
 }
 
 void Axis::StartTouch(ParentLayerCoord aPos, uint32_t aTimestampMs) {

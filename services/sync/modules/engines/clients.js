@@ -31,7 +31,7 @@ const {
   SINGLE_USER_THRESHOLD,
   SYNC_API_VERSION,
 } = ChromeUtils.import("resource://services-sync/constants.js");
-const { Store, SyncEngine, Tracker } = ChromeUtils.import(
+const { Store, SyncEngine, LegacyTracker } = ChromeUtils.import(
   "resource://services-sync/engines.js"
 );
 const { CryptoWrapper } = ChromeUtils.import(
@@ -44,6 +44,10 @@ ChromeUtils.defineModuleGetter(
   this,
   "fxAccounts",
   "resource://gre/modules/FxAccounts.jsm"
+);
+
+const { PREF_ACCOUNT_ROOT } = ChromeUtils.import(
+  "resource://gre/modules/FxAccountsCommon.js"
 );
 
 ChromeUtils.defineModuleGetter(
@@ -65,9 +69,8 @@ const STALE_CLIENT_REMOTE_AGE = 604800; // 7 days
 // TTL of the message sent to another device when sending a tab
 const NOTIFY_TAB_SENT_TTL_SECS = 1 * 3600; // 1 hour
 
-// This is to avoid multiple sequential syncs ending up calling
-// this expensive endpoint multiple times in a row.
-const TIME_BETWEEN_FXA_DEVICES_FETCH_MS = 10 * 1000;
+// How often we force a refresh of the FxA device list.
+const REFRESH_FXA_DEVICE_INTERVAL_MS = 2 * 60 * 60 * 1000; // 2 hours
 
 // Reasons behind sending collection_changed push notifications.
 const COLLECTION_MODIFIED_REASON_SENDTAB = "sendtab";
@@ -126,6 +129,7 @@ ClientEngine.prototype = {
   allowSkippedRecord: false,
   _knownStaleFxADeviceIds: null,
   _lastDeviceCounts: null,
+  _lastFxaDeviceRefresh: 0,
 
   async initialize() {
     // Reset the last sync timestamp on every startup so that we fetch all clients
@@ -157,10 +161,6 @@ ClientEngine.prototype = {
   },
   set lastRecordUpload(value) {
     Svc.Prefs.set(this.name + ".lastRecordUpload", Math.floor(value));
-  },
-
-  get fxaDevices() {
-    return this._fxaDevices;
   },
 
   get remoteClients() {
@@ -234,21 +234,14 @@ ClientEngine.prototype = {
   },
 
   get localName() {
-    return Utils.getDeviceName();
+    return this.fxAccounts.device.getLocalName();
   },
   set localName(value) {
-    Svc.Prefs.set("client.name", value);
-    // Update the registration in the background.
-    this.fxAccounts.updateDeviceRegistration().catch(error => {
-      this._log.warn("failed to update fxa device registration", error);
-    });
+    this.fxAccounts.device.setLocalName(value);
   },
 
   get localType() {
-    return Utils.getDeviceType();
-  },
-  set localType(value) {
-    Svc.Prefs.set("client.type", value);
+    return this.fxAccounts.device.getLocalType();
   },
 
   getClientName(id) {
@@ -262,6 +255,19 @@ ClientEngine.prototype = {
   getClientFxaDeviceId(id) {
     if (this._store._remoteClients[id]) {
       return this._store._remoteClients[id].fxaDeviceId;
+    }
+    return null;
+  },
+
+  getClientByFxaDeviceId(fxaDeviceId) {
+    for (let id in this._store._remoteClients) {
+      let client = this._store._remoteClients[id];
+      if (client.stale) {
+        continue;
+      }
+      if (client.fxaDeviceId == fxaDeviceId) {
+        return client;
+      }
     }
     return null;
   },
@@ -363,7 +369,7 @@ ClientEngine.prototype = {
     this._log.debug("Updating the known stale clients");
     // _fetchFxADevices side effect updates this._knownStaleFxADeviceIds.
     await this._fetchFxADevices();
-    let localFxADeviceId = await fxAccounts.getDeviceId();
+    let localFxADeviceId = await fxAccounts.device.getLocalId();
     // Process newer records first, so that if we hit a record with a device ID
     // we've seen before, we can mark it stale immediately.
     let clientList = Object.values(this._store._remoteClients).sort(
@@ -394,26 +400,20 @@ ClientEngine.prototype = {
   },
 
   async _fetchFxADevices() {
-    const now = new Date().getTime();
-    if (
-      (this._lastFxADevicesFetch || 0) + TIME_BETWEEN_FXA_DEVICES_FETCH_MS >=
-      now
-    ) {
-      return;
-    }
-    const remoteClients = Object.values(this.remoteClients);
-    try {
-      this._fxaDevices = await this.fxAccounts.getDeviceList();
-      for (const device of this._fxaDevices) {
-        device.clientRecord = remoteClients.find(
-          c => c.fxaDeviceId == device.id
-        );
+    // We only force a refresh periodically to keep the load on the servers
+    // down, and because we expect FxA to have received a push message in
+    // most cases when the FxA device list would have changed. For this reason
+    // we still go ahead and check the stale list even if we didn't force a
+    // refresh.
+    let now = this.fxAccounts._internal.now(); // tests mock this .now() impl.
+    if (now - REFRESH_FXA_DEVICE_INTERVAL_MS > this._lastFxaDeviceRefresh) {
+      this._lastFxaDeviceRefresh = now;
+      try {
+        await this.fxAccounts.device.refreshDeviceList();
+      } catch (e) {
+        this._log.error("Could not refresh the FxA device list", e);
       }
-    } catch (e) {
-      this._log.error("Could not retrieve the FxA device list", e);
-      this._fxaDevices = [];
     }
-    this._lastFxADevicesFetch = now;
 
     // We assume that clients not present in the FxA Device Manager list have been
     // disconnected and so are stale
@@ -421,7 +421,9 @@ ClientEngine.prototype = {
     let localClients = Object.values(this._store._remoteClients)
       .filter(client => client.fxaDeviceId) // iOS client records don't have fxaDeviceId
       .map(client => client.fxaDeviceId);
-    const fxaClients = this._fxaDevices.map(device => device.id);
+    const fxaClients = this.fxAccounts.device.recentDeviceList
+      ? this.fxAccounts.device.recentDeviceList.map(device => device.id)
+      : [];
     this._knownStaleFxADeviceIds = Utils.arraySub(localClients, fxaClients);
   },
 
@@ -452,7 +454,7 @@ ClientEngine.prototype = {
           await this._removeRemoteClient(id);
         }
       }
-      let localFxADeviceId = await fxAccounts.getDeviceId();
+      let localFxADeviceId = await fxAccounts.device.getLocalId();
       // Bug 1264498: Mobile clients don't remove themselves from the clients
       // collection when the user disconnects Sync, so we mark as stale clients
       // with the same name that haven't synced in over a week.
@@ -622,7 +624,7 @@ ClientEngine.prototype = {
     };
     let excludedIds = null;
     if (!ids) {
-      const localFxADeviceId = await fxAccounts.getDeviceId();
+      const localFxADeviceId = await fxAccounts.device.getLocalId();
       excludedIds = [localFxADeviceId];
     }
     try {
@@ -1110,7 +1112,7 @@ ClientStore.prototype = {
     // Package the individual components into a record for the local client
     if (id == this.engine.localID) {
       try {
-        record.fxaDeviceId = await this.engine.fxAccounts.getDeviceId();
+        record.fxaDeviceId = await this.engine.fxAccounts.device.getLocalId();
       } catch (error) {
         this._log.warn("failed to get fxa device id", error);
       }
@@ -1189,9 +1191,7 @@ ClientStore.prototype = {
       let truncatedCommands = Utils.tryFitItems(commands, maxPayloadSize);
       if (truncatedCommands.length != record.commands.length) {
         this._log.warn(
-          `Removing commands from client ${id} (from ${
-            record.commands.length
-          } to ${truncatedCommands.length})`
+          `Removing commands from client ${id} (from ${record.commands.length} to ${truncatedCommands.length})`
         );
         // Restore original order.
         record.commands = truncatedCommands.sort(
@@ -1221,19 +1221,25 @@ ClientStore.prototype = {
 };
 
 function ClientsTracker(name, engine) {
-  Tracker.call(this, name, engine);
+  LegacyTracker.call(this, name, engine);
 }
 ClientsTracker.prototype = {
-  __proto__: Tracker.prototype,
+  __proto__: LegacyTracker.prototype,
 
   _enabled: false,
 
   onStart() {
     Svc.Obs.add("fxaccounts:new_device_id", this.asyncObserver);
-    Svc.Prefs.observe("client.name", this.asyncObserver);
+    Services.prefs.addObserver(
+      PREF_ACCOUNT_ROOT + "device.name",
+      this.asyncObserver
+    );
   },
   onStop() {
-    Svc.Prefs.ignore("client.name", this.asyncObserver);
+    Services.prefs.removeObserver(
+      PREF_ACCOUNT_ROOT + "device.name",
+      this.asyncObserver
+    );
     Svc.Obs.remove("fxaccounts:new_device_id", this.asyncObserver);
   },
 

@@ -18,6 +18,7 @@ class nsTerminator final : public nsIObserver {
   NS_DECL_NSIOBSERVER
 
   nsTerminator();
+  static bool IsCheckingLateWrites();
 
  private:
   nsresult SelfInit();
@@ -29,7 +30,7 @@ class nsTerminator final : public nsIObserver {
   void UpdateTelemetry();
   void UpdateCrashReport(const char* aTopic);
 
-  ~nsTerminator() {}
+  ~nsTerminator() = default;
 
   bool mInitialized;
   int32_t mCurrentStep;

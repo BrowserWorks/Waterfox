@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY spellAddToDictionary.label "Adicionar ao dicionário">
+<!ENTITY spellAddToDictionary.accesskey "d">
+<!ENTITY spellUndoAddToDictionary.label "Desfazer adicionar ao dicionário">
+<!ENTITY spellUndoAddToDictionary.accesskey "n">
+<!ENTITY spellCheckToggle.label "Verificar a ortografia">
+<!ENTITY spellCheckToggle.accesskey "V">
+<!ENTITY spellNoSuggestions.label "(Sem sugestões ortográficas)">
+<!ENTITY spellDictionaries.label "Idiomas">
+<!ENTITY spellDictionaries.accesskey "i">
+
+<!ENTITY searchTextBox.clear.label "Limpar">
+
+<!ENTITY fillLoginMenu.label          "Preencher credenciais">
+<!ENTITY fillLoginMenu.accesskey      "P">
+<!ENTITY fillPasswordMenu.label       "Preencher palavra-passe">
+<!ENTITY fillPasswordMenu.accesskey   "P">
+<!ENTITY fillUsernameMenu.label       "Preencher nome de utilizador">
+<!ENTITY fillUsernameMenu.accesskey   "P">
+<!ENTITY noLoginSuggestions.label     "(Nenhuma sugestão)">
+<!ENTITY viewSavedLogins.label        "Ver credenciais guardadas">

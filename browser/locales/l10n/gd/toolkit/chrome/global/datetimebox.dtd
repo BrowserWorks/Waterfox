@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Placeholders for input type=time -->
+
+<!ENTITY time.hour.placeholder "--">
+<!ENTITY time.minute.placeholder "--">
+<!ENTITY time.second.placeholder "--">
+<!ENTITY time.millisecond.placeholder "--">
+<!ENTITY time.dayperiod.placeholder "--">
+
+<!-- Field labels for input type=time -->
+
+<!ENTITY time.hour.label "Uairean a thìde">
+<!ENTITY time.minute.label "Mionaidean">
+<!ENTITY time.second.label "Diogan">
+<!ENTITY time.millisecond.label "Mille-dhiogan">
+<!ENTITY time.dayperiod.label "m/f">
+
+<!-- Placeholders for input type=date -->
+
+<!ENTITY date.year.placeholder "bbbb">
+<!ENTITY date.month.placeholder "mm">
+<!ENTITY date.day.placeholder "ll">
+
+<!-- Field labels for input type=date -->
+
+<!ENTITY date.year.label "Bliadhna">
+<!ENTITY date.month.label "Mìos">
+<!ENTITY date.day.label "Latha">
+
+<!-- Date/time clear button -->
+
+<!ENTITY datetime.reset.label "Falamhaich">

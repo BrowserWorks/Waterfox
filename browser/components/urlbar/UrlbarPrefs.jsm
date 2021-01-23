@@ -24,8 +24,8 @@ XPCOMUtils.defineLazyModuleGetters(this, {
 const PREF_URLBAR_BRANCH = "browser.urlbar.";
 
 // Prefs are defined as [pref name, default value] or [pref name, [default
-// value, nsIPrefBranch getter method name]].  In the former case, the getter
-// method name is inferred from the typeof the default value.
+// value, type]].  In the former case, the getter method name is inferred from
+// the typeof the default value.
 const PREF_URLBAR_DEFAULTS = new Map([
   // "Autofill" is the name of the feature that automatically completes domains
   // and URLs that the user has visited as the user is typing them in the urlbar
@@ -39,12 +39,7 @@ const PREF_URLBAR_DEFAULTS = new Map([
   // Affects the frecency threshold of the autofill algorithm.  The threshold is
   // the mean of all origin frecencies plus one standard deviation multiplied by
   // this value.  See UnifiedComplete.
-  ["autoFill.stddevMultiplier", [0.0, "getFloatPref"]],
-
-  // If true, this optimizes for replacing the full URL rather than editing
-  // part of it. This also copies the urlbar value to the selection clipboard
-  // on systems that support it.
-  ["clickSelectsAll", false],
+  ["autoFill.stddevMultiplier", [0.0, "float"]],
 
   // Whether using `ctrl` when hitting return/enter in the URL bar
   // (or clicking 'go') should prefix 'www.' and suffix
@@ -61,20 +56,25 @@ const PREF_URLBAR_DEFAULTS = new Map([
   // "heuristic" result).  We fetch it as fast as possible.
   ["delay", 50],
 
-  // If true, this optimizes for replacing the full URL rather than selecting a
-  // portion of it. This also copies the urlbar value to the selection
-  // clipboard on systems that support it.
-  ["doubleClickSelectsAll", false],
+  // Some performance tests disable this because extending the urlbar needs
+  // layout information that we can't get before the first paint. (Or we could
+  // but this would mean flushing layout.)
+  ["disableExtendForTests", false],
+
+  // Controls when to DNS resolve single word search strings, after they were
+  // searched for. If the string is resolved as a valid host, show a
+  // "Did you mean to go to 'host'" prompt.
+  // 0 - never resolve; 1 - use heuristics (default); 2 - always resolve
+  ["dnsResolveSingleWordsAfterSearch", 1],
+
+  // Whether telemetry events should be recorded.
+  ["eventTelemetry.enabled", false],
 
   // When true, `javascript:` URLs are not included in search results.
   ["filter.javascript", true],
 
   // Applies URL highlighting and other styling to the text in the urlbar input.
   ["formatting.enabled", false],
-
-  // Allows results from one search to be reused in the next search.  One of the
-  // INSERTMETHOD values.
-  ["insertMethod", UrlbarUtils.INSERTMETHOD.MERGE_RELATED],
 
   // Controls the composition of search results.
   ["matchBuckets", "suggestion:4,general:Infinity"],
@@ -87,23 +87,28 @@ const PREF_URLBAR_DEFAULTS = new Map([
   // number of characters before fetching results.
   ["maxCharsForSearchSuggestions", 20],
 
-  // May be removed in the future.  Usually (when this pref is at its default of
-  // zero), search engine results do not include results from the user's local
-  // browser history.  This value can be set to include such results.
+  // The maximum number of form history results to include.
   ["maxHistoricalSearchSuggestions", 0],
 
   // The maximum number of results in the urlbar popup.
   ["maxRichResults", 10],
 
-  // One-off search buttons enabled status.
-  ["oneOffSearches", false],
-
   // Whether addresses and search results typed into the address bar
   // should be opened in new tabs by default.
   ["openintab", false],
 
-  // Whether the quantum bar is enabled.
-  ["quantumbar", false],
+  // When true, URLs in the user's history that look like search result pages
+  // are styled to look like search engine results instead of the usual history
+  // results.
+  ["restyleSearches", false],
+
+  // If true, we show tail suggestions when available.
+  ["richSuggestions.tail", false],
+
+  // Hidden pref. Disables checks that prevent search tips being shown, thus
+  // showing them every time the newtab page or the default search engine
+  // homepage is opened.
+  ["searchTips.test.ignoreShowLimits", false],
 
   // Whether speculative connections should be enabled.
   ["speculativeConnect.enabled", true],
@@ -120,9 +125,19 @@ const PREF_URLBAR_DEFAULTS = new Map([
   // Results will include search suggestions when this is true.
   ["suggest.searches", false],
 
+  // Results will include Top Sites and the view will open on focus when this
+  // is true.
+  ["suggest.topsites", true],
+
   // When using switch to tabs, if set to true this will move the tab into the
   // active window.
   ["switchTabs.adoptIntoActiveWindow", false],
+
+  // The number of times the user has been shown the onboarding search tip.
+  ["tipShownCount.searchTip_onboard", 0],
+
+  // The number of times the user has been shown the redirect search tip.
+  ["tipShownCount.searchTip_redirect", 0],
 
   // Remove redundant portions from URLs.
   ["trimURLs", true],
@@ -134,14 +149,21 @@ const PREF_URLBAR_DEFAULTS = new Map([
   // popular domains will no longer be included in the results.
   ["usepreloadedtopurls.expire_days", 14],
 
-  // When true, URLs in the user's history that look like search result pages
-  // are styled to look like search engine results instead of the usual history
-  // results.
-  ["restyleSearches", false],
+  // If true, we show actionable tips in the Urlbar when the user is searching
+  // for those actions.
+  ["update1.interventions", true],
+
+  // If true, we show new users and those about to start an organic search a tip
+  // encouraging them to use the Urlbar.
+  ["update1.searchTips", true],
+
+  // Whether the urlbar displays a permanent search button in design update 2.
+  ["update2.searchButton", false],
 ]);
 const PREF_OTHER_DEFAULTS = new Map([
   ["keyword.enabled", true],
   ["browser.search.suggest.enabled", true],
+  ["browser.search.suggest.enabled.private", false],
   ["ui.popup.disable_autohide", false],
   ["browser.fixup.dns_first_for_single_words", false],
 ]);
@@ -157,8 +179,9 @@ const SUGGEST_PREF_TO_BEHAVIOR = {
 
 const PREF_TYPES = new Map([
   ["boolean", "Bool"],
-  ["string", "Char"],
+  ["float", "Float"],
   ["number", "Int"],
+  ["string", "Char"],
 ]);
 
 // Buckets for result insertion.
@@ -207,6 +230,9 @@ class Preferences {
 
   /**
    * Returns the value for the preference with the given name.
+   * For preferences in the "browser.urlbar."" branch, the passed-in name
+   * should be relative to the branch. It's also possible to get prefs from the
+   * PREF_OTHER_DEFAULTS Map, specifying their full name.
    *
    * @param {string} pref
    *        The name of the preference to get.
@@ -217,6 +243,24 @@ class Preferences {
       this._map.set(pref, this._getPrefValue(pref));
     }
     return this._map.get(pref);
+  }
+
+  /**
+   * Sets the value for the preference with the given name.
+   * For preferences in the "browser.urlbar."" branch, the passed-in name
+   * should be relative to the branch. It's also possible to set prefs from the
+   * PREF_OTHER_DEFAULTS Map, specifying their full name.
+   *
+   * @param {string} pref
+   *        The name of the preference to set.
+   * @param {*} value The preference value.
+   */
+  set(pref, value) {
+    let { defaultValue, setter } = this._getPrefDescriptor(pref);
+    if (typeof value != typeof defaultValue) {
+      throw new Error(`Invalid value type ${typeof value} for pref ${pref}`);
+    }
+    setter(pref, value);
   }
 
   /**
@@ -238,7 +282,6 @@ class Preferences {
     }
     if (pref.startsWith("suggest.")) {
       this._map.delete("defaultBehavior");
-      this._map.delete("emptySearchDefaultBehavior");
     }
   }
 
@@ -250,25 +293,8 @@ class Preferences {
    * @returns {*} The raw preference value.
    */
   _readPref(pref) {
-    let prefs = Services.prefs.getBranch(PREF_URLBAR_BRANCH);
-    let def = PREF_URLBAR_DEFAULTS.get(pref);
-    if (def === undefined) {
-      prefs = Services.prefs;
-      def = PREF_OTHER_DEFAULTS.get(pref);
-    }
-    if (def === undefined) {
-      throw new Error("Trying to access an unknown pref " + pref);
-    }
-    let getterName;
-    if (!Array.isArray(def)) {
-      getterName = `get${PREF_TYPES.get(typeof def)}Pref`;
-    } else {
-      if (def.length != 2) {
-        throw new Error("Malformed pref def: " + pref);
-      }
-      [def, getterName] = def;
-    }
-    return prefs[getterName](pref, def);
+    let { defaultValue, getter } = this._getPrefDescriptor(pref);
+    return getter(pref, defaultValue);
   }
 
   /**
@@ -330,23 +356,46 @@ class Preferences {
         }
         return val;
       }
-      case "emptySearchDefaultBehavior": {
-        // Further restrictions to apply for "empty searches" (searching for
-        // "").  The empty behavior is typed history, if history is enabled.
-        // Otherwise, it is bookmarks, if they are enabled. If both history and
-        // bookmarks are disabled, it defaults to open pages.
-        let val = Ci.mozIPlacesAutoComplete.BEHAVIOR_RESTRICT;
-        if (this.get("suggest.history")) {
-          val |= Ci.mozIPlacesAutoComplete.BEHAVIOR_HISTORY;
-        } else if (this.get("suggest.bookmark")) {
-          val |= Ci.mozIPlacesAutoComplete.BEHAVIOR_BOOKMARK;
-        } else {
-          val |= Ci.mozIPlacesAutoComplete.BEHAVIOR_OPENPAGE;
-        }
-        return val;
-      }
     }
     return this._readPref(pref);
+  }
+
+  /**
+   * Returns a descriptor of the given preference.
+   * @param {string} pref The preference to examine.
+   * @returns {object} An object describing the pref with the following shape:
+   *          { defaultValue, getter, setter }
+   */
+  _getPrefDescriptor(pref) {
+    let branch = Services.prefs.getBranch(PREF_URLBAR_BRANCH);
+    let defaultValue = PREF_URLBAR_DEFAULTS.get(pref);
+    if (defaultValue === undefined) {
+      branch = Services.prefs;
+      defaultValue = PREF_OTHER_DEFAULTS.get(pref);
+    }
+    if (defaultValue === undefined) {
+      throw new Error("Trying to access an unknown pref " + pref);
+    }
+
+    let type;
+    if (!Array.isArray(defaultValue)) {
+      type = PREF_TYPES.get(typeof defaultValue);
+    } else {
+      if (defaultValue.length != 2) {
+        throw new Error("Malformed pref def: " + pref);
+      }
+      [defaultValue, type] = defaultValue;
+      type = PREF_TYPES.get(type);
+    }
+    if (!type) {
+      throw new Error("Unknown pref type: " + pref);
+    }
+    return {
+      defaultValue,
+      getter: branch[`get${type}Pref`],
+      // Float prefs are stored as Char.
+      setter: branch[`set${type == "Float" ? "Char" : type}Pref`],
+    };
   }
 }
 

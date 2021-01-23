@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "Gehigarriak">
+<!ENTITY aboutAddons.header2                    "Zure gehigarriak">
+
+<!ENTITY addonAction.enable                     "Gaitu">
+<!ENTITY addonAction.disable                    "Desgaitu">
+<!ENTITY addonAction.uninstall                  "Desinstalatu">
+<!ENTITY addonAction.undo                       "Desegin">
+<!ENTITY addonAction.update                     "Eguneratu">
+
+<!ENTITY addonUnsigned.message                  "&brandShortName;(e)k ezin izan du gehigarri hau egiaztatu.">
+<!ENTITY addonUnsigned.learnMore                "Argibide gehiago">

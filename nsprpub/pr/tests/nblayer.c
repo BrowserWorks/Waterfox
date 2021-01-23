@@ -53,7 +53,19 @@ typedef enum Verbosity {silent, quiet, chatty, noisy} Verbosity;
 static PRIntn minor_iterations = 5;
 static PRIntn major_iterations = 1;
 static Verbosity verbosity = quiet;
-static PRUint16 default_port = 12273;
+
+#ifdef DEBUG
+#define PORT_INC_DO +100
+#else
+#define PORT_INC_DO
+#endif
+#ifdef IS_64
+#define PORT_INC_3264 +200
+#else
+#define PORT_INC_3264
+#endif
+
+static PRUint16 default_port = 12273 PORT_INC_DO PORT_INC_3264;
 
 static PRFileDesc *PushLayer(PRFileDesc *stack)
 {
@@ -62,16 +74,18 @@ static PRFileDesc *PushLayer(PRFileDesc *stack)
     layer->secret = PR_NEWZAP(PRFilePrivate);
     rv = PR_PushIOLayer(stack, PR_GetLayersIdentity(stack), layer);
     PR_ASSERT(PR_SUCCESS == rv);
-    if (verbosity > quiet)
+    if (verbosity > quiet) {
         PR_fprintf(logFile, "Pushed layer(0x%x) onto stack(0x%x)\n", layer, stack);
+    }
     return stack;
 }  /* PushLayer */
 
 static PRFileDesc *PopLayer(PRFileDesc *stack)
 {
     PRFileDesc *popped = PR_PopIOLayer(stack, identity);
-    if (verbosity > quiet)
+    if (verbosity > quiet) {
         PR_fprintf(logFile, "Popped layer(0x%x) from stack(0x%x)\n", popped, stack);
+    }
     PR_DELETE(popped->secret);
     popped->dtor(popped);
     return stack;
@@ -94,8 +108,9 @@ static void PR_CALLBACK Client(void *arg)
     rv = PR_Connect(stack, &server_address, PR_INTERVAL_NO_TIMEOUT);
     if ((PR_FAILURE == rv) && (PR_IN_PROGRESS_ERROR == PR_GetError()))
     {
-        if (verbosity > quiet)
+        if (verbosity > quiet) {
             PR_fprintf(logFile, "Client connect 'in progress'\n");
+        }
         do
         {
             polldesc.fd = stack;
@@ -103,26 +118,33 @@ static void PR_CALLBACK Client(void *arg)
             polldesc.in_flags = PR_POLL_WRITE | PR_POLL_EXCEPT;
             ready = PR_Poll(&polldesc, 1, PR_INTERVAL_NO_TIMEOUT);
             if ((1 != ready)  /* if not 1, then we're dead */
-            || (0 == (polldesc.in_flags & polldesc.out_flags)))
-                { PR_NOT_REACHED("Whoa!"); break; }
+                || (0 == (polldesc.in_flags & polldesc.out_flags)))
+            {
+                PR_NOT_REACHED("Whoa!");
+                break;
+            }
             if (verbosity > quiet)
                 PR_fprintf(
                     logFile, "Client connect 'in progress' [0x%x]\n",
                     polldesc.out_flags);
             rv = PR_GetConnectStatus(&polldesc);
             if ((PR_FAILURE == rv)
-            && (PR_IN_PROGRESS_ERROR != PR_GetError())) break;
+                && (PR_IN_PROGRESS_ERROR != PR_GetError())) {
+                break;
+            }
         } while (PR_FAILURE == rv);
     }
     PR_ASSERT(PR_SUCCESS == rv);
-    if (verbosity > chatty)
+    if (verbosity > chatty) {
         PR_fprintf(logFile, "Client created connection\n");
+    }
 
     for (mits = 0; mits < minor_iterations; ++mits)
     {
         bytes_sent = 0;
-        if (verbosity > quiet)
+        if (verbosity > quiet) {
             PR_fprintf(logFile, "Client sending %d bytes\n", sizeof(buffer));
+        }
         do
         {
             if (verbosity > chatty)
@@ -130,11 +152,14 @@ static void PR_CALLBACK Client(void *arg)
                     logFile, "Client sending %d bytes\n",
                     sizeof(buffer) - bytes_sent);
             ready = PR_Send(
-                stack, buffer + bytes_sent, sizeof(buffer) - bytes_sent,
-                empty_flags, PR_INTERVAL_NO_TIMEOUT);
-            if (verbosity > chatty)
+                        stack, buffer + bytes_sent, sizeof(buffer) - bytes_sent,
+                        empty_flags, PR_INTERVAL_NO_TIMEOUT);
+            if (verbosity > chatty) {
                 PR_fprintf(logFile, "Client send status [%d]\n", ready);
-            if (0 < ready) bytes_sent += ready;
+            }
+            if (0 < ready) {
+                bytes_sent += ready;
+            }
             else if ((-1 == ready) && (PR_WOULD_BLOCK_ERROR == PR_GetError()))
             {
                 polldesc.fd = stack;
@@ -142,10 +167,15 @@ static void PR_CALLBACK Client(void *arg)
                 polldesc.in_flags = PR_POLL_WRITE;
                 ready = PR_Poll(&polldesc, 1, PR_INTERVAL_NO_TIMEOUT);
                 if ((1 != ready)  /* if not 1, then we're dead */
-                || (0 == (polldesc.in_flags & polldesc.out_flags)))
-                    { PR_NOT_REACHED("Whoa!"); break; }
+                    || (0 == (polldesc.in_flags & polldesc.out_flags)))
+                {
+                    PR_NOT_REACHED("Whoa!");
+                    break;
+                }
             }
-            else break;
+            else {
+                break;
+            }
         } while (bytes_sent < sizeof(buffer));
         PR_ASSERT(sizeof(buffer) == bytes_sent);
 
@@ -157,12 +187,14 @@ static void PR_CALLBACK Client(void *arg)
                     logFile, "Client receiving %d bytes\n",
                     bytes_sent - bytes_read);
             ready = PR_Recv(
-                stack, buffer + bytes_read, bytes_sent - bytes_read,
-                empty_flags, PR_INTERVAL_NO_TIMEOUT);
+                        stack, buffer + bytes_read, bytes_sent - bytes_read,
+                        empty_flags, PR_INTERVAL_NO_TIMEOUT);
             if (verbosity > chatty)
                 PR_fprintf(
                     logFile, "Client receive status [%d]\n", ready);
-            if (0 < ready) bytes_read += ready;
+            if (0 < ready) {
+                bytes_read += ready;
+            }
             else if ((-1 == ready) && (PR_WOULD_BLOCK_ERROR == PR_GetError()))
             {
                 polldesc.fd = stack;
@@ -170,19 +202,26 @@ static void PR_CALLBACK Client(void *arg)
                 polldesc.in_flags = PR_POLL_READ;
                 ready = PR_Poll(&polldesc, 1, PR_INTERVAL_NO_TIMEOUT);
                 if ((1 != ready)  /* if not 1, then we're dead */
-                || (0 == (polldesc.in_flags & polldesc.out_flags)))
-                    { PR_NOT_REACHED("Whoa!"); break; }
+                    || (0 == (polldesc.in_flags & polldesc.out_flags)))
+                {
+                    PR_NOT_REACHED("Whoa!");
+                    break;
+                }
             }
-            else break;
+            else {
+                break;
+            }
         } while (bytes_read < bytes_sent);
-        if (verbosity > chatty)
+        if (verbosity > chatty) {
             PR_fprintf(logFile, "Client received %d bytes\n", bytes_read);
+        }
         PR_ASSERT(bytes_read == bytes_sent);
     }
 
-    if (verbosity > quiet)
+    if (verbosity > quiet) {
         PR_fprintf(logFile, "Client shutting down stack\n");
-    
+    }
+
     rv = PR_Shutdown(stack, PR_SHUTDOWN_BOTH); PR_ASSERT(PR_SUCCESS == rv);
 }  /* Client */
 
@@ -200,11 +239,13 @@ static void PR_CALLBACK Server(void *arg)
 
     do
     {
-        if (verbosity > chatty)
+        if (verbosity > chatty) {
             PR_fprintf(logFile, "Server accepting connection\n");
+        }
         service = PR_Accept(stack, &client_address, PR_INTERVAL_NO_TIMEOUT);
-        if (verbosity > chatty)
+        if (verbosity > chatty) {
             PR_fprintf(logFile, "Server accept status [0x%p]\n", service);
+        }
         if ((NULL == service) && (PR_WOULD_BLOCK_ERROR == PR_GetError()))
         {
             polldesc.fd = stack;
@@ -212,14 +253,18 @@ static void PR_CALLBACK Server(void *arg)
             polldesc.in_flags = PR_POLL_READ | PR_POLL_EXCEPT;
             ready = PR_Poll(&polldesc, 1, PR_INTERVAL_NO_TIMEOUT);
             if ((1 != ready)  /* if not 1, then we're dead */
-            || (0 == (polldesc.in_flags & polldesc.out_flags)))
-                { PR_NOT_REACHED("Whoa!"); break; }
+                || (0 == (polldesc.in_flags & polldesc.out_flags)))
+            {
+                PR_NOT_REACHED("Whoa!");
+                break;
+            }
         }
     } while (NULL == service);
     PR_ASSERT(NULL != service);
-        
-    if (verbosity > quiet)
+
+    if (verbosity > quiet) {
         PR_fprintf(logFile, "Server accepting connection\n");
+    }
 
     do
     {
@@ -231,11 +276,14 @@ static void PR_CALLBACK Server(void *arg)
                     logFile, "Server receiving %d bytes\n",
                     sizeof(buffer) - bytes_read);
             ready = PR_Recv(
-                service, buffer + bytes_read, sizeof(buffer) - bytes_read,
-                empty_flags, PR_INTERVAL_NO_TIMEOUT);
-            if (verbosity > chatty)
+                        service, buffer + bytes_read, sizeof(buffer) - bytes_read,
+                        empty_flags, PR_INTERVAL_NO_TIMEOUT);
+            if (verbosity > chatty) {
                 PR_fprintf(logFile, "Server receive status [%d]\n", ready);
-            if (0 < ready) bytes_read += ready;
+            }
+            if (0 < ready) {
+                bytes_read += ready;
+            }
             else if ((-1 == ready) && (PR_WOULD_BLOCK_ERROR == PR_GetError()))
             {
                 polldesc.fd = service;
@@ -243,24 +291,30 @@ static void PR_CALLBACK Server(void *arg)
                 polldesc.in_flags = PR_POLL_READ;
                 ready = PR_Poll(&polldesc, 1, PR_INTERVAL_NO_TIMEOUT);
                 if ((1 != ready)  /* if not 1, then we're dead */
-                || (0 == (polldesc.in_flags & polldesc.out_flags)))
-                    { PR_NOT_REACHED("Whoa!"); break; }
+                    || (0 == (polldesc.in_flags & polldesc.out_flags)))
+                {
+                    PR_NOT_REACHED("Whoa!");
+                    break;
+                }
             }
-            else break;
+            else {
+                break;
+            }
         } while (bytes_read < sizeof(buffer));
 
         if (0 != bytes_read)
         {
-            if (verbosity > chatty)
+            if (verbosity > chatty) {
                 PR_fprintf(logFile, "Server received %d bytes\n", bytes_read);
+            }
             PR_ASSERT(bytes_read > 0);
 
             bytes_sent = 0;
             do
             {
                 ready = PR_Send(
-                    service, buffer + bytes_sent, bytes_read - bytes_sent,
-                    empty_flags, PR_INTERVAL_NO_TIMEOUT);
+                            service, buffer + bytes_sent, bytes_read - bytes_sent,
+                            empty_flags, PR_INTERVAL_NO_TIMEOUT);
                 if (0 < ready)
                 {
                     bytes_sent += ready;
@@ -272,19 +326,26 @@ static void PR_CALLBACK Server(void *arg)
                     polldesc.in_flags = PR_POLL_WRITE;
                     ready = PR_Poll(&polldesc, 1, PR_INTERVAL_NO_TIMEOUT);
                     if ((1 != ready)  /* if not 1, then we're dead */
-                    || (0 == (polldesc.in_flags & polldesc.out_flags)))
-                        { PR_NOT_REACHED("Whoa!"); break; }
+                        || (0 == (polldesc.in_flags & polldesc.out_flags)))
+                    {
+                        PR_NOT_REACHED("Whoa!");
+                        break;
+                    }
                 }
-                else break;
+                else {
+                    break;
+                }
             } while (bytes_sent < bytes_read);
             PR_ASSERT(bytes_read == bytes_sent);
-            if (verbosity > chatty)
+            if (verbosity > chatty) {
                 PR_fprintf(logFile, "Server sent %d bytes\n", bytes_sent);
+            }
         }
     } while (0 != bytes_read);
 
-    if (verbosity > quiet)
+    if (verbosity > quiet) {
         PR_fprintf(logFile, "Server shutting down stack\n");
+    }
     rv = PR_Shutdown(service, PR_SHUTDOWN_BOTH); PR_ASSERT(PR_SUCCESS == rv);
     rv = PR_Close(service); PR_ASSERT(PR_SUCCESS == rv);
 
@@ -329,7 +390,9 @@ static PRInt16 PR_CALLBACK MyPoll(
             default: break;
         }
     }
-    else PR_NOT_REACHED("How'd I get here?");
+    else {
+        PR_NOT_REACHED("How'd I get here?");
+    }
     new_flags = (fd->lower->methods->poll)(fd->lower, my_flags, out_flags);
     if (verbosity > chatty)
         PR_fprintf(
@@ -393,42 +456,58 @@ static PRInt32 PR_CALLBACK MyRecv(
     {
         switch (mine->rcvstate)
         {
-        case rcv_get_debit:
-            b = (char*)&mine->rcvreq;
-            mine->rcvreq = amount;
-            rv = lo->methods->recv(
-                lo, b + mine->rcvinprogress,
-                sizeof(mine->rcvreq) - mine->rcvinprogress, flags, timeout);
-            if (0 == rv) goto closed;
-            if ((-1 == rv) && (PR_WOULD_BLOCK_ERROR == PR_GetError())) break;
-            mine->rcvinprogress += rv;  /* accumulate the read */
-            if (mine->rcvinprogress < sizeof(mine->rcvreq)) break;  /* loop */
-            mine->rcvstate = rcv_send_credit;
-            mine->rcvinprogress = 0;
-        case rcv_send_credit:
-            b = (char*)&mine->rcvreq;
-            rv = lo->methods->send(
-                lo, b + mine->rcvinprogress,
-                sizeof(mine->rcvreq) - mine->rcvinprogress, flags, timeout);
-            if ((-1 == rv) && (PR_WOULD_BLOCK_ERROR == PR_GetError())) break;
-            mine->rcvinprogress += rv;  /* accumulate the read */
-            if (mine->rcvinprogress < sizeof(mine->rcvreq)) break;  /* loop */
-            mine->rcvstate = rcv_data;
-            mine->rcvinprogress = 0;
-        case rcv_data:
-            b = (char*)buf;
-            rv = lo->methods->recv(
-                lo, b + mine->rcvinprogress,
-                mine->rcvreq - mine->rcvinprogress, flags, timeout);
-            if (0 == rv) goto closed;
-            if ((-1 == rv) && (PR_WOULD_BLOCK_ERROR == PR_GetError())) break;
-            mine->rcvinprogress += rv;  /* accumulate the read */
-            if (mine->rcvinprogress < amount) break;  /* loop */
-            mine->rcvstate = rcv_get_debit;
-            mine->rcvinprogress = 0;
-            return mine->rcvreq;  /* << -- that's it! */
-        default:
-            break;
+            case rcv_get_debit:
+                b = (char*)&mine->rcvreq;
+                mine->rcvreq = amount;
+                rv = lo->methods->recv(
+                         lo, b + mine->rcvinprogress,
+                         sizeof(mine->rcvreq) - mine->rcvinprogress, flags, timeout);
+                if (0 == rv) {
+                    goto closed;
+                }
+                if ((-1 == rv) && (PR_WOULD_BLOCK_ERROR == PR_GetError())) {
+                    break;
+                }
+                mine->rcvinprogress += rv;  /* accumulate the read */
+                if (mine->rcvinprogress < sizeof(mine->rcvreq)) {
+                    break;    /* loop */
+                }
+                mine->rcvstate = rcv_send_credit;
+                mine->rcvinprogress = 0;
+            case rcv_send_credit:
+                b = (char*)&mine->rcvreq;
+                rv = lo->methods->send(
+                         lo, b + mine->rcvinprogress,
+                         sizeof(mine->rcvreq) - mine->rcvinprogress, flags, timeout);
+                if ((-1 == rv) && (PR_WOULD_BLOCK_ERROR == PR_GetError())) {
+                    break;
+                }
+                mine->rcvinprogress += rv;  /* accumulate the read */
+                if (mine->rcvinprogress < sizeof(mine->rcvreq)) {
+                    break;    /* loop */
+                }
+                mine->rcvstate = rcv_data;
+                mine->rcvinprogress = 0;
+            case rcv_data:
+                b = (char*)buf;
+                rv = lo->methods->recv(
+                         lo, b + mine->rcvinprogress,
+                         mine->rcvreq - mine->rcvinprogress, flags, timeout);
+                if (0 == rv) {
+                    goto closed;
+                }
+                if ((-1 == rv) && (PR_WOULD_BLOCK_ERROR == PR_GetError())) {
+                    break;
+                }
+                mine->rcvinprogress += rv;  /* accumulate the read */
+                if (mine->rcvinprogress < amount) {
+                    break;    /* loop */
+                }
+                mine->rcvstate = rcv_get_debit;
+                mine->rcvinprogress = 0;
+                return mine->rcvreq;  /* << -- that's it! */
+            default:
+                break;
         }
     } while (-1 != rv);
     return rv;
@@ -451,40 +530,52 @@ static PRInt32 PR_CALLBACK MySend(
     {
         switch (mine->xmtstate)
         {
-        case xmt_send_debit:
-            b = (char*)&mine->xmtreq;
-            mine->xmtreq = amount;
-            rv = lo->methods->send(
-                lo, b - mine->xmtinprogress,
-                sizeof(mine->xmtreq) - mine->xmtinprogress, flags, timeout);
-            if ((-1 == rv) && (PR_WOULD_BLOCK_ERROR == PR_GetError())) break;
-            mine->xmtinprogress += rv;
-            if (mine->xmtinprogress < sizeof(mine->xmtreq)) break;
-            mine->xmtstate = xmt_recv_credit;
-            mine->xmtinprogress = 0;
-        case xmt_recv_credit:
-             b = (char*)&mine->xmtreq;
-             rv = lo->methods->recv(
-                lo, b + mine->xmtinprogress,
-                sizeof(mine->xmtreq) - mine->xmtinprogress, flags, timeout);
-            if ((-1 == rv) && (PR_WOULD_BLOCK_ERROR == PR_GetError())) break;
-            mine->xmtinprogress += rv;
-            if (mine->xmtinprogress < sizeof(mine->xmtreq)) break;
-            mine->xmtstate = xmt_data;
-            mine->xmtinprogress = 0;
-        case xmt_data:
-            b = (char*)buf;
-            rv = lo->methods->send(
-                lo, b + mine->xmtinprogress,
-                mine->xmtreq - mine->xmtinprogress, flags, timeout);
-            if ((-1 == rv) && (PR_WOULD_BLOCK_ERROR == PR_GetError())) break;
-            mine->xmtinprogress += rv;
-            if (mine->xmtinprogress < amount) break;
-            mine->xmtstate = xmt_send_debit;
-            mine->xmtinprogress = 0;
-            return mine->xmtreq;  /* <<-- That's the one! */
-        default:
-            break;
+            case xmt_send_debit:
+                b = (char*)&mine->xmtreq;
+                mine->xmtreq = amount;
+                rv = lo->methods->send(
+                         lo, b - mine->xmtinprogress,
+                         sizeof(mine->xmtreq) - mine->xmtinprogress, flags, timeout);
+                if ((-1 == rv) && (PR_WOULD_BLOCK_ERROR == PR_GetError())) {
+                    break;
+                }
+                mine->xmtinprogress += rv;
+                if (mine->xmtinprogress < sizeof(mine->xmtreq)) {
+                    break;
+                }
+                mine->xmtstate = xmt_recv_credit;
+                mine->xmtinprogress = 0;
+            case xmt_recv_credit:
+                b = (char*)&mine->xmtreq;
+                rv = lo->methods->recv(
+                         lo, b + mine->xmtinprogress,
+                         sizeof(mine->xmtreq) - mine->xmtinprogress, flags, timeout);
+                if ((-1 == rv) && (PR_WOULD_BLOCK_ERROR == PR_GetError())) {
+                    break;
+                }
+                mine->xmtinprogress += rv;
+                if (mine->xmtinprogress < sizeof(mine->xmtreq)) {
+                    break;
+                }
+                mine->xmtstate = xmt_data;
+                mine->xmtinprogress = 0;
+            case xmt_data:
+                b = (char*)buf;
+                rv = lo->methods->send(
+                         lo, b + mine->xmtinprogress,
+                         mine->xmtreq - mine->xmtinprogress, flags, timeout);
+                if ((-1 == rv) && (PR_WOULD_BLOCK_ERROR == PR_GetError())) {
+                    break;
+                }
+                mine->xmtinprogress += rv;
+                if (mine->xmtinprogress < amount) {
+                    break;
+                }
+                mine->xmtstate = xmt_send_debit;
+                mine->xmtinprogress = 0;
+                return mine->xmtreq;  /* <<-- That's the one! */
+            default:
+                break;
         }
     } while (-1 != rv);
     return rv;
@@ -493,8 +584,12 @@ static PRInt32 PR_CALLBACK MySend(
 static Verbosity ChangeVerbosity(Verbosity verbosity, PRIntn delta)
 {
     PRIntn verbage = (PRIntn)verbosity + delta;
-    if (verbage < (PRIntn)silent) verbage = (PRIntn)silent;
-    else if (verbage > (PRIntn)noisy) verbage = (PRIntn)noisy;
+    if (verbage < (PRIntn)silent) {
+        verbage = (PRIntn)silent;
+    }
+    else if (verbage > (PRIntn)noisy) {
+        verbage = (PRIntn)noisy;
+    }
     return (Verbosity)verbage;
 }  /* ChangeVerbosity */
 
@@ -512,34 +607,38 @@ int main(int argc, char **argv)
     PLOptState *opt = PL_CreateOptState(argc, argv, "dqGC:c:p:");
     while (PL_OPT_EOL != (os = PL_GetNextOpt(opt)))
     {
-        if (PL_OPT_BAD == os) continue;
+        if (PL_OPT_BAD == os) {
+            continue;
+        }
         switch (opt->option)
         {
-        case 0:
-            server_name = opt->value;
-            break;
-        case 'd':  /* debug mode */
-            if (verbosity < noisy)
-                verbosity = ChangeVerbosity(verbosity, 1);
-            break;
-        case 'q':  /* debug mode */
-            if (verbosity > silent)
-                verbosity = ChangeVerbosity(verbosity, -1);
-            break;
-        case 'G':  /* use global threads */
-            thread_scope = PR_GLOBAL_THREAD;
-            break;
-        case 'C':  /* number of threads waiting */
-            major_iterations = atoi(opt->value);
-            break;
-        case 'c':  /* number of client threads */
-            minor_iterations = atoi(opt->value);
-            break;
-        case 'p':  /* default port */
-            default_port = atoi(opt->value);
-            break;
-        default:
-            break;
+            case 0:
+                server_name = opt->value;
+                break;
+            case 'd':  /* debug mode */
+                if (verbosity < noisy) {
+                    verbosity = ChangeVerbosity(verbosity, 1);
+                }
+                break;
+            case 'q':  /* debug mode */
+                if (verbosity > silent) {
+                    verbosity = ChangeVerbosity(verbosity, -1);
+                }
+                break;
+            case 'G':  /* use global threads */
+                thread_scope = PR_GLOBAL_THREAD;
+                break;
+            case 'C':  /* number of threads waiting */
+                major_iterations = atoi(opt->value);
+                break;
+            case 'c':  /* number of client threads */
+                minor_iterations = atoi(opt->value);
+                break;
+            case 'p':  /* default port */
+                default_port = atoi(opt->value);
+                break;
+            default:
+                break;
         }
     }
     PL_DestroyOptState(opt);
@@ -563,13 +662,13 @@ int main(int argc, char **argv)
 
     if (NULL == server_name)
         rv = PR_InitializeNetAddr(
-            PR_IpAddrLoopback, default_port, &server_address);
+                 PR_IpAddrLoopback, default_port, &server_address);
     else
     {
         rv = PR_StringToNetAddr(server_name, &server_address);
         PR_ASSERT(PR_SUCCESS == rv);
         rv = PR_InitializeNetAddr(
-            PR_IpAddrNull, default_port, &server_address);
+                 PR_IpAddrNull, default_port, &server_address);
     }
     PR_ASSERT(PR_SUCCESS == rv);
 
@@ -582,8 +681,9 @@ int main(int argc, char **argv)
 
     while (major_iterations-- > 0)
     {
-        if (verbosity > silent)
+        if (verbosity > silent) {
             PR_fprintf(logFile, "Beginning non-layered test\n");
+        }
 
         client = PR_NewTCPSocket(); PR_ASSERT(NULL != client);
         service = PR_NewTCPSocket(); PR_ASSERT(NULL != service);
@@ -603,15 +703,15 @@ int main(int argc, char **argv)
         rv = PR_Listen(service, 10); PR_ASSERT(PR_SUCCESS == rv);
 
         server_thread = PR_CreateThread(
-            PR_USER_THREAD, Server, service,
-            PR_PRIORITY_HIGH, thread_scope,
-            PR_JOINABLE_THREAD, 16 * 1024);
+                            PR_USER_THREAD, Server, service,
+                            PR_PRIORITY_HIGH, thread_scope,
+                            PR_JOINABLE_THREAD, 16 * 1024);
         PR_ASSERT(NULL != server_thread);
 
         client_thread = PR_CreateThread(
-            PR_USER_THREAD, Client, client,
-            PR_PRIORITY_NORMAL, thread_scope,
-            PR_JOINABLE_THREAD, 16 * 1024);
+                            PR_USER_THREAD, Client, client,
+                            PR_PRIORITY_NORMAL, thread_scope,
+                            PR_JOINABLE_THREAD, 16 * 1024);
         PR_ASSERT(NULL != client_thread);
 
         rv = PR_JoinThread(client_thread);
@@ -621,12 +721,14 @@ int main(int argc, char **argv)
 
         rv = PR_Close(client); PR_ASSERT(PR_SUCCESS == rv);
         rv = PR_Close(service); PR_ASSERT(PR_SUCCESS == rv);
-        if (verbosity > silent)
+        if (verbosity > silent) {
             PR_fprintf(logFile, "Ending non-layered test\n");
+        }
 
         /* with layering */
-        if (verbosity > silent)
+        if (verbosity > silent) {
             PR_fprintf(logFile, "Beginning layered test\n");
+        }
         client = PR_NewTCPSocket(); PR_ASSERT(NULL != client);
         service = PR_NewTCPSocket(); PR_ASSERT(NULL != service);
 
@@ -648,15 +750,15 @@ int main(int argc, char **argv)
         rv = PR_Listen(service, 10); PR_ASSERT(PR_SUCCESS == rv);
 
         server_thread = PR_CreateThread(
-            PR_USER_THREAD, Server, service,
-            PR_PRIORITY_HIGH, thread_scope,
-            PR_JOINABLE_THREAD, 16 * 1024);
+                            PR_USER_THREAD, Server, service,
+                            PR_PRIORITY_HIGH, thread_scope,
+                            PR_JOINABLE_THREAD, 16 * 1024);
         PR_ASSERT(NULL != server_thread);
 
         client_thread = PR_CreateThread(
-            PR_USER_THREAD, Client, client,
-            PR_PRIORITY_NORMAL, thread_scope,
-            PR_JOINABLE_THREAD, 16 * 1024);
+                            PR_USER_THREAD, Client, client,
+                            PR_PRIORITY_NORMAL, thread_scope,
+                            PR_JOINABLE_THREAD, 16 * 1024);
         PR_ASSERT(NULL != client_thread);
 
         rv = PR_JoinThread(client_thread);
@@ -666,8 +768,9 @@ int main(int argc, char **argv)
 
         rv = PR_Close(PopLayer(client)); PR_ASSERT(PR_SUCCESS == rv);
         rv = PR_Close(PopLayer(service)); PR_ASSERT(PR_SUCCESS == rv);
-        if (verbosity > silent)
+        if (verbosity > silent) {
             PR_fprintf(logFile, "Ending layered test\n");
+        }
     }
     return 0;
 }  /* main */

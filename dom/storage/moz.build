@@ -5,7 +5,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 with Files("**"):
-    BUG_COMPONENT = ("Core", "DOM: Web Storage")
+    BUG_COMPONENT = ("Core", "Storage: localStorage & sessionStorage")
 
 EXPORTS.mozilla.dom += [
     'LocalStorage.h',
@@ -30,6 +30,7 @@ UNIFIED_SOURCES += [
     'SessionStorageCache.cpp',
     'SessionStorageManager.cpp',
     'SessionStorageObserver.cpp',
+    'SessionStorageService.cpp',
     'Storage.cpp',
     'StorageActivityService.cpp',
     'StorageDBThread.cpp',

@@ -4,11 +4,10 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-# With --disable-accessibility, we need to compile PDocAccessible.ipdl, but
-# not the C++.
-IPDL_SOURCES += ['PDocAccessible.ipdl']
 
 if CONFIG['ACCESSIBILITY']:
+    IPDL_SOURCES += ['PDocAccessible.ipdl']
+
     EXPORTS.mozilla.a11y += [
         'DocAccessibleChild.h',
         'ProxyAccessible.h',
@@ -25,7 +24,7 @@ if CONFIG['ACCESSIBILITY']:
         '../../xpcom',
     ]
 
-    if 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
+    if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk':
         LOCAL_INCLUDES += [
             '/accessible/atk',
         ]
@@ -43,6 +42,9 @@ if CONFIG['ACCESSIBILITY']:
         ]
 
 include('/ipc/chromium/chromium-config.mozbuild')
+
+# Add libFuzzer configuration directives
+include('/tools/fuzzing/libfuzzer-config.mozbuild')
 
 if CONFIG['CC_TYPE'] in ('clang', 'gcc'):
     CXXFLAGS += ['-Wno-error=shadow']

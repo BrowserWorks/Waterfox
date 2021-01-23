@@ -12,6 +12,7 @@
 #include "TimeUnits.h"
 #include "VideoLimits.h"
 #include "mozilla/gfx/Point.h"  // for gfx::IntSize
+#include "mozilla/gfx/Types.h"
 #include "mozilla/AbstractThread.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/CheckedInt.h"
@@ -20,7 +21,6 @@
 #include "mozilla/RefPtr.h"
 #include "mozilla/SharedThreadPool.h"
 #include "mozilla/UniquePtr.h"
-#include "nsAutoPtr.h"
 #include "nsCOMPtr.h"
 #include "nsINamed.h"
 #include "nsIThread.h"
@@ -80,7 +80,7 @@ class MOZ_STACK_CLASS ReentrantMonitorConditionallyEnter {
   ReentrantMonitorConditionallyEnter(const ReentrantMonitorConditionallyEnter&);
   ReentrantMonitorConditionallyEnter& operator=(
       const ReentrantMonitorConditionallyEnter&);
-  static void* operator new(size_t) CPP_THROW_NEW;
+  static void* operator new(size_t) noexcept(true);
   static void operator delete(void*);
 
   ReentrantMonitor* mReentrantMonitor;
@@ -91,7 +91,7 @@ class ShutdownThreadEvent : public Runnable {
  public:
   explicit ShutdownThreadEvent(nsIThread* aThread)
       : Runnable("ShutdownThreadEvent"), mThread(aThread) {}
-  ~ShutdownThreadEvent() {}
+  ~ShutdownThreadEvent() = default;
   NS_IMETHOD Run() override {
     mThread->Shutdown();
     mThread = nullptr;
@@ -183,8 +183,10 @@ class AutoSetOnScopeExit {
 enum class MediaThreadType {
   PLAYBACK,          // MediaDecoderStateMachine and MediaFormatReader
   PLATFORM_DECODER,  // MediaDataDecoder
-  MSG_CONTROL,
-  WEBRTC_DECODER
+  PLATFORM_ENCODER,  // MediaDataEncoder
+  MTG_CONTROL,
+  WEBRTC_DECODER,
+  MDSM,
 };
 // Returns the thread pool that is shared amongst all decoder state machines
 // for decoding streams.
@@ -289,7 +291,7 @@ RefPtr<GenericPromise> InvokeUntil(Work aWork, Condition aCondition) {
   };
 
   Helper::Iteration(p, aWork, aCondition);
-  return p.forget();
+  return p;
 }
 
 // Simple timer to run a runnable after a timeout.
@@ -308,7 +310,7 @@ class SimpleTimer : public nsITimerCallback, public nsINamed {
   NS_IMETHOD Notify(nsITimer* timer) override;
 
  private:
-  virtual ~SimpleTimer() {}
+  virtual ~SimpleTimer() = default;
   nsresult Init(nsIRunnable* aTask, uint32_t aTimeoutMs,
                 nsIEventTarget* aTarget);
 
@@ -548,6 +550,11 @@ inline void AppendStringIfNotEmpty(nsACString& aDest, nsACString&& aSrc) {
 // Returns true if we're running on a cellular connection; 2G, 3G, etc.
 // Main thread only.
 bool OnCellularConnection();
+
+inline gfx::YUVColorSpace DefaultColorSpace(const gfx::IntSize& aSize) {
+  return aSize.height < 720 ? gfx::YUVColorSpace::BT601
+                            : gfx::YUVColorSpace::BT709;
+}
 
 }  // end namespace mozilla
 

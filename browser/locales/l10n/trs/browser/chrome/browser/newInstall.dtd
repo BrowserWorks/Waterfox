@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
+ discrete download of Waterfox" and "version" is used to mean "the specific
+ revision number of a given Waterfox channel". These terms are not synonymous.
+-->
+
+<!ENTITY window.title "Nej notisiâ huā ñan'ān doj">
+<!ENTITY window.style "width: 490px">
+<!ENTITY sync "Da' nahuin nuguan'àn nej nuguan' ngà na'nïn sà't riña Waterfox ngà sa ga'nïnt nan &brandShortName;, gayi'ì sesiûn ngà si &syncBrand.fxAccount.label;.">
+<!ENTITY continue-button "Gun' ne' ñaan">
+
+<!ENTITY mainText "Ngà huā a'ngô perfî nikāj &brandShortName; nan. Na'ue nadiganj nej markadô, da'nga' huìi, nī sa arâj sunt doj riña a'ngô ne Waterfox (Dàj rû' Waterfox, Waterfox ESR, Waterfox Beta, Waterfox Developer Edition nī Waterfox Nightly) riña aga' sikà' ràa nan.">

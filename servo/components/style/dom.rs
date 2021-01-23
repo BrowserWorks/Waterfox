@@ -22,7 +22,7 @@ use crate::shared_lock::Locked;
 use crate::stylist::CascadeData;
 use crate::traversal_flags::TraversalFlags;
 use crate::{Atom, LocalName, Namespace, WeakAtom};
-use atomic_refcell::{AtomicRef, AtomicRefCell, AtomicRefMut};
+use atomic_refcell::{AtomicRef, AtomicRefMut};
 use selectors::matching::{ElementSelectorFlags, QuirksMode, VisitedHandlingMode};
 use selectors::sink::Push;
 use selectors::Element as SelectorsElement;
@@ -32,26 +32,7 @@ use std::fmt::Debug;
 use std::hash::Hash;
 use std::ops::Deref;
 
-/// An opaque handle to a node, which, unlike UnsafeNode, cannot be transformed
-/// back into a non-opaque representation. The only safe operation that can be
-/// performed on this node is to compare it to another opaque handle or to another
-/// OpaqueNode.
-///
-/// Layout and Graphics use this to safely represent nodes for comparison purposes.
-/// Because the script task's GC does not trace layout, node data cannot be safely stored in layout
-/// data structures. Also, layout code tends to be faster when the DOM is not being accessed, for
-/// locality reasons. Using `OpaqueNode` enforces this invariant.
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-#[cfg_attr(feature = "servo", derive(MallocSizeOf, Deserialize, Serialize))]
-pub struct OpaqueNode(pub usize);
-
-impl OpaqueNode {
-    /// Returns the address of this node, for debugging purposes.
-    #[inline]
-    pub fn id(&self) -> usize {
-        self.0
-    }
-}
+pub use style_traits::dom::OpaqueNode;
 
 /// Simple trait to provide basic information about the type of an element.
 ///
@@ -331,7 +312,7 @@ where
 }
 
 /// The ShadowRoot trait.
-pub trait TShadowRoot: Sized + Copy + Clone + PartialEq {
+pub trait TShadowRoot: Sized + Copy + Clone + Debug + PartialEq {
     /// The concrete node type.
     type ConcreteNode: TNode<ConcreteShadowRoot = Self>;
 
@@ -345,6 +326,14 @@ pub trait TShadowRoot: Sized + Copy + Clone + PartialEq {
     fn style_data<'a>(&self) -> Option<&'a CascadeData>
     where
         Self: 'a;
+
+    /// Get the list of shadow parts for this shadow root.
+    fn parts<'a>(&self) -> &[<Self::ConcreteNode as TNode>::ConcreteElement]
+    where
+        Self: 'a,
+    {
+        &[]
+    }
 
     /// Get a list of elements with a given ID in this shadow root, sorted by
     /// tree position.
@@ -512,6 +501,12 @@ pub trait TElement:
     /// Whether this element has an attribute with a given namespace.
     fn has_attr(&self, namespace: &Namespace, attr: &LocalName) -> bool;
 
+    /// Returns whether this element has a `part` attribute.
+    fn has_part_attr(&self) -> bool;
+
+    /// Returns whether this element exports any part from its shadow tree.
+    fn exports_any_part(&self) -> bool;
+
     /// The ID for this element.
     fn id(&self) -> Option<&WeakAtom>;
 
@@ -519,6 +514,21 @@ pub trait TElement:
     fn each_class<F>(&self, callback: F)
     where
         F: FnMut(&Atom);
+
+    /// Internal iterator for the part names of this element.
+    fn each_part<F>(&self, _callback: F)
+    where
+        F: FnMut(&Atom),
+    {
+    }
+
+    /// Internal iterator for the part names that this element exports for a
+    /// given part name.
+    fn each_exported_part<F>(&self, _name: &Atom, _callback: F)
+    where
+        F: FnMut(&Atom),
+    {
+    }
 
     /// Whether a given element may generate a pseudo-element.
     ///
@@ -687,18 +697,14 @@ pub trait TElement:
     /// Unsafe following the same reasoning as ensure_data.
     unsafe fn clear_data(&self);
 
-    /// Gets a reference to the ElementData container.
-    fn get_data(&self) -> Option<&AtomicRefCell<ElementData>>;
+    /// Whether there is an ElementData container.
+    fn has_data(&self) -> bool;
 
     /// Immutably borrows the ElementData.
-    fn borrow_data(&self) -> Option<AtomicRef<ElementData>> {
-        self.get_data().map(|x| x.borrow())
-    }
+    fn borrow_data(&self) -> Option<AtomicRef<ElementData>>;
 
     /// Mutably borrows the ElementData.
-    fn mutate_data(&self) -> Option<AtomicRefMut<ElementData>> {
-        self.get_data().map(|x| x.borrow_mut())
-    }
+    fn mutate_data(&self) -> Option<AtomicRefMut<ElementData>>;
 
     /// Whether we should skip any root- or item-based display property
     /// blockification on this element.  (This function exists so that Gecko
@@ -758,14 +764,6 @@ pub trait TElement:
         return data.hint.has_animation_hint();
     }
 
-    /// Returns the anonymous content for the current element's XBL binding,
-    /// given if any.
-    ///
-    /// This is used in Gecko for XBL.
-    fn xbl_binding_anonymous_content(&self) -> Option<Self::ConcreteNode> {
-        None
-    }
-
     /// The shadow root this element is a host of.
     fn shadow_root(&self) -> Option<<Self::ConcreteNode as TNode>::ConcreteShadowRoot>;
 
@@ -779,7 +777,7 @@ pub trait TElement:
     /// element-backed pseudo-element, in which case we return the originating
     /// element.
     fn rule_hash_target(&self) -> Self {
-        if self.implemented_pseudo_element().is_some() {
+        if self.is_pseudo_element() {
             self.pseudo_element_originating_element()
                 .expect("Trying to collect rules for a detached pseudo-element")
         } else {
@@ -794,6 +792,9 @@ pub trait TElement:
     /// data if it comes from Shadow DOM.
     ///
     /// Returns whether normal document author rules should apply.
+    ///
+    /// TODO(emilio): We could separate the invalidation data for elements
+    /// matching in other scopes to avoid over-invalidation.
     fn each_applicable_non_document_style_rule_data<'a, F>(&self, mut f: F) -> bool
     where
         Self: 'a,
@@ -801,31 +802,67 @@ pub trait TElement:
     {
         use rule_collector::containing_shadow_ignoring_svg_use;
 
-        let mut doc_rules_apply = self.matches_user_and_author_rules();
+        let target = self.rule_hash_target();
+        if !target.matches_user_and_author_rules() {
+            return false;
+        }
+
+        let mut doc_rules_apply = true;
 
         // Use the same rules to look for the containing host as we do for rule
         // collection.
-        if let Some(shadow) = containing_shadow_ignoring_svg_use(*self) {
+        if let Some(shadow) = containing_shadow_ignoring_svg_use(target) {
             doc_rules_apply = false;
             if let Some(data) = shadow.style_data() {
                 f(data, shadow.host());
             }
         }
 
-        if let Some(shadow) = self.shadow_root() {
+        if let Some(shadow) = target.shadow_root() {
             if let Some(data) = shadow.style_data() {
                 f(data, shadow.host());
             }
         }
 
-        let mut current = self.assigned_slot();
+        let mut current = target.assigned_slot();
         while let Some(slot) = current {
             // Slots can only have assigned nodes when in a shadow tree.
             let shadow = slot.containing_shadow().unwrap();
             if let Some(data) = shadow.style_data() {
-                f(data, shadow.host());
+                if data.any_slotted_rule() {
+                    f(data, shadow.host());
+                }
             }
             current = slot.assigned_slot();
+        }
+
+        if target.has_part_attr() {
+            if let Some(mut inner_shadow) = target.containing_shadow() {
+                loop {
+                    let inner_shadow_host = inner_shadow.host();
+                    match inner_shadow_host.containing_shadow() {
+                        Some(shadow) => {
+                            if let Some(data) = shadow.style_data() {
+                                if data.any_part_rule() {
+                                    f(data, shadow.host())
+                                }
+                            }
+                            // TODO: Could be more granular.
+                            if !shadow.host().exports_any_part() {
+                                break;
+                            }
+                            inner_shadow = shadow;
+                        },
+                        None => {
+                            // TODO(emilio): Should probably distinguish with
+                            // MatchesDocumentRules::{No,Yes,IfPart} or
+                            // something so that we could skip some work.
+                            doc_rules_apply = true;
+                            break;
+                        },
+                    }
+                }
+            }
         }
 
         doc_rules_apply
@@ -877,6 +914,13 @@ pub trait TElement:
         hints: &mut V,
     ) where
         V: Push<ApplicableDeclarationBlock>;
+
+    /// Returns element's local name.
+    fn local_name(&self) -> &<SelectorImpl as selectors::parser::SelectorImpl>::BorrowedLocalName;
+
+    /// Returns element's namespace.
+    fn namespace(&self)
+        -> &<SelectorImpl as selectors::parser::SelectorImpl>::BorrowedNamespaceUrl;
 }
 
 /// TNode and TElement aren't Send because we want to be careful and explicit

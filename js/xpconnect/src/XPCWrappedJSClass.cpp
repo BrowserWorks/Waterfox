@@ -19,9 +19,7 @@
 #include "mozilla/dom/BindingUtils.h"
 #include "mozilla/dom/DOMException.h"
 #include "mozilla/dom/DOMExceptionBinding.h"
-#include "mozilla/dom/DOMPrefs.h"
 #include "mozilla/dom/MozQueryInterface.h"
-#include "mozilla/jsipc/CrossProcessObjectWrappers.h"
 
 #include "jsapi.h"
 #include "jsfriendapi.h"
@@ -98,11 +96,7 @@ class MOZ_STACK_CLASS AutoSavePendingResult {
 // static
 const nsXPTInterfaceInfo* nsXPCWrappedJS::GetInterfaceInfo(REFNSIID aIID) {
   const nsXPTInterfaceInfo* info = nsXPTInterfaceInfo::ByIID(aIID);
-  if (!info) {
-    return nullptr;
-  }
-
-  if (info->IsBuiltinClass() || !nsXPConnect::IsISupportsDescendant(info)) {
+  if (!info || info->IsBuiltinClass()) {
     return nullptr;
   }
 
@@ -148,14 +142,6 @@ JSObject* nsXPCWrappedJS::CallQueryInterfaceOnJSObject(JSContext* cx,
       XPCJSRuntime::Get()->GetStringID(XPCJSContext::IDX_QUERY_INTERFACE);
   if (!JS_GetPropertyById(cx, jsobj, funid, &fun) || fun.isPrimitive()) {
     return nullptr;
-  }
-
-  // Ensure that we are asking for a non-builtinclass interface
-  if (!aIID.Equals(NS_GET_IID(nsISupports))) {
-    const nsXPTInterfaceInfo* info = nsXPTInterfaceInfo::ByIID(aIID);
-    if (!info || info->IsBuiltinClass()) {
-      return nullptr;
-    }
   }
 
   dom::MozQueryInterface* mozQI = nullptr;
@@ -220,7 +206,7 @@ namespace {
 class WrappedJSNamed final : public nsINamed {
   nsCString mName;
 
-  ~WrappedJSNamed() {}
+  ~WrappedJSNamed() = default;
 
  public:
   NS_DECL_ISUPPORTS
@@ -315,11 +301,26 @@ nsresult nsXPCWrappedJS::DelegatedQueryInterface(REFNSIID aIID,
     return NS_OK;
   }
 
-  // We can't have a cached wrapper.
-  if (aIID.Equals(NS_GET_IID(nsWrapperCache))) {
-    *aInstancePtr = nullptr;
-    return NS_NOINTERFACE;
+  // Ensure that we are asking for a non-builtinclass interface, and avoid even
+  // setting up our AutoEntryScript if we are.  Don't bother doing that check
+  // if our IID is nsISupports: we know that's not builtinclass, and we QI to
+  // it a _lot_.
+  if (!aIID.Equals(NS_GET_IID(nsISupports))) {
+    const nsXPTInterfaceInfo* info = nsXPTInterfaceInfo::ByIID(aIID);
+    if (!info || info->IsBuiltinClass()) {
+      MOZ_ASSERT(!aIID.Equals(NS_GET_IID(nsISupportsWeakReference)),
+                 "Later code for nsISupportsWeakReference is being skipped");
+      MOZ_ASSERT(!aIID.Equals(NS_GET_IID(nsISimpleEnumerator)),
+                 "Later code for nsISimpleEnumerator is being skipped");
+      MOZ_ASSERT(!aIID.Equals(NS_GET_IID(nsINamed)),
+                 "Later code for nsINamed is being skipped");
+      *aInstancePtr = nullptr;
+      return NS_NOINTERFACE;
+    }
   }
+
+  MOZ_ASSERT(!aIID.Equals(NS_GET_IID(nsWrapperCache)),
+             "Where did we get non-builtinclass interface info for this??");
 
   // QI on an XPCWrappedJS can run script, so we need an AutoEntryScript.
   // This is inherently Gecko-specific.
@@ -556,6 +557,11 @@ void nsXPCWrappedJS::CleanupOutparams(const nsXPTMethodInfo* info,
 
     MOZ_ASSERT(param.IsIndirect(), "Outparams are always indirect");
 
+    // Don't try to clear optional out params that are not set.
+    if (param.IsOptional() && !nativeParams[i].val.p) {
+      continue;
+    }
+
     // Call 'CleanupValue' on parameters which we know to be initialized:
     //  1. Complex parameters (initialized by caller)
     //  2. 'inout' parameters (initialized by caller)
@@ -600,7 +606,7 @@ nsresult nsXPCWrappedJS::CheckForException(XPCCallContext& ccx,
   RootedValue js_exception(cx);
   bool is_js_exception = JS_GetPendingException(cx, &js_exception);
 
-  /* JS might throw an expection whether the reporter was called or not */
+  /* JS might throw an exception whether the reporter was called or not */
   if (is_js_exception) {
     if (!xpc_exception) {
       XPCConvert::JSValToXPCException(cx, &js_exception, anInterfaceName,
@@ -657,7 +663,7 @@ nsresult nsXPCWrappedJS::CheckForException(XPCCallContext& ccx,
     }
 
     if (reportable) {
-      if (DOMPrefs::DumpEnabled()) {
+      if (nsJSUtils::DumpEnabled()) {
         static const char line[] =
             "************************************************************\n";
         static const char preamble[] =
@@ -780,17 +786,9 @@ nsXPCWrappedJS::CallMethod(uint16_t methodIndex, const nsXPTMethodInfo* info,
 
   const nsXPTInterfaceInfo* interfaceInfo = GetInfo();
   JS::RootedId id(cx);
-  const char* name;
-  nsAutoCString symbolName;
-  if (info->IsSymbol()) {
-    info->GetSymbolDescription(cx, symbolName);
-    name = symbolName.get();
-    id = SYMBOL_TO_JSID(info->GetSymbol(cx));
-  } else {
-    name = info->GetName();
-    if (!AtomizeAndPinJSString(cx, id.get(), name)) {
-      return NS_ERROR_FAILURE;
-    }
+  const char* name = info->NameOrDescription();
+  if (!info->GetId(cx, id.get())) {
+    return NS_ERROR_FAILURE;
   }
 
   // We now need to enter the realm of the actual JSObject* we are pointing at.
@@ -896,8 +894,8 @@ nsXPCWrappedJS::CallMethod(uint16_t methodIndex, const nsXPTMethodInfo* info,
     uint32_t array_count;
     RootedValue val(cx, NullValue());
 
-    // verify that null was not passed for 'out' param
-    if (param.IsOut() && !nativeParams[i].val.p) {
+    // Verify that null was not passed for a non-optional 'out' param.
+    if (param.IsOut() && !nativeParams[i].val.p && !param.IsOptional()) {
       retval = NS_ERROR_INVALID_ARG;
       goto pre_call_clean_up;
     }
@@ -1002,7 +1000,7 @@ pre_call_clean_up:
   for (i = 0; i < paramCount; i++) {
     const nsXPTParamInfo& param = info->GetParam(i);
     MOZ_ASSERT(!param.IsShared(), "[shared] implies [noscript]!");
-    if (!param.IsOut()) {
+    if (!param.IsOut() || !nativeParams[i].val.p) {
       continue;
     }
 
@@ -1096,7 +1094,7 @@ pre_call_clean_up:
 static const JSClass XPCOutParamClass = {"XPCOutParam", 0, JS_NULL_CLASS_OPS};
 
 bool xpc::IsOutObject(JSContext* cx, JSObject* obj) {
-  return js::GetObjectJSClass(obj) == &XPCOutParamClass;
+  return js::GetObjectClass(obj) == &XPCOutParamClass;
 }
 
 JSObject* xpc::NewOutObject(JSContext* cx) {

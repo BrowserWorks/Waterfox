@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -38,7 +37,7 @@ const newAreaTestData = [
   "grid-line-names-updated",
   ["c", {}, "col1-start", OPEN, SELECTED, CHANGE],
   ["VK_BACK_SPACE", {}, "c", !OPEN, !SELECTED, CHANGE],
-  ["VK_BACK_SPACE", {}, "", !OPEN, !SELECTED, CHANGE],
+  ["VK_BACK_SPACE", {}, "", OPEN, !SELECTED, CHANGE],
   ["r", {}, "revert", OPEN, SELECTED, CHANGE],
   ["VK_DOWN", {}, "row1-start", OPEN, SELECTED, CHANGE],
   ["r", {}, "rr", !OPEN, !SELECTED, CHANGE],
@@ -59,7 +58,7 @@ const newRowTestData = [
   ["VK_RETURN", {}, "", !OPEN, !SELECTED, !CHANGE],
   "grid-line-names-updated",
   ["c", {}, "c", !OPEN, !SELECTED, CHANGE],
-  ["VK_BACK_SPACE", {}, "", !OPEN, !SELECTED, CHANGE],
+  ["VK_BACK_SPACE", {}, "", OPEN, !SELECTED, CHANGE],
   ["r", {}, "revert", OPEN, SELECTED, CHANGE],
   ["VK_DOWN", {}, "row1-start", OPEN, SELECTED, CHANGE],
   ["VK_TAB", {}, "", !OPEN, !SELECTED, CHANGE],

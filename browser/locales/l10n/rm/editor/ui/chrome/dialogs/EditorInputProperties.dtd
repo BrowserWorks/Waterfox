@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Caracteristicas dal champ da formular">
+<!ENTITY windowTitleImage.label "Caracteristicas dal maletg da formular">
+
+<!ENTITY InputType.label "Tip da champ">
+<!ENTITY InputType.accesskey "T">
+<!ENTITY text.value "Text">
+<!ENTITY password.value "Pled-clav">
+<!ENTITY checkbox.value "Chaschetta da controlla">
+<!ENTITY radio.value "Buttun radio">
+<!ENTITY submit.value "Buttun da trametter">
+<!ENTITY reset.value "Buttun da reinizialisar">
+<!ENTITY file.value "Datoteca">
+<!ENTITY hidden.value "Zuppentà">
+<!ENTITY image.value "Grafica">
+<!ENTITY button.value "Buttun">
+
+<!ENTITY InputSettings.label "Parameters dal champ">
+<!ENTITY InputName.label "Num dal champ:">
+<!ENTITY InputName.accesskey "N">
+<!ENTITY GroupName.label "Num da la gruppa:">
+<!ENTITY GroupName.accesskey "N">
+<!ENTITY InputValue.label "Valur dal champ:">
+<!ENTITY InputValue.accesskey "V">
+<!ENTITY InitialValue.label "Valur iniziala:">
+<!ENTITY InitialValue.accesskey "V">
+<!ENTITY InputChecked.label "Activà oriundamain">
+<!ENTITY InputChecked.accesskey "C">
+<!ENTITY InputSelected.label "Selecziunà oriundamain">
+<!ENTITY InputSelected.accesskey "S">
+<!ENTITY InputReadOnly.label "Mo per lectura">
+<!ENTITY InputReadOnly.accesskey "R">
+<!ENTITY InputDisabled.label "Deactivà">
+<!ENTITY InputDisabled.accesskey "D">
+<!ENTITY tabIndex.label "Index da tabulatur:">
+<!ENTITY tabIndex.accesskey "I">
+<!ENTITY TextSize.label "Grondezza dal champ:">
+<!ENTITY TextSize.accesskey "G">
+<!ENTITY TextLength.label "Lunghezza maximala:">
+<!ENTITY TextLength.accesskey "L">
+<!ENTITY AccessKey.label "Tasta d'access:">
+<!ENTITY AccessKey.accesskey "c">
+<!ENTITY Accept.label "Acceptar ils tips:">
+<!ENTITY Accept.accesskey "A">
+
+<!ENTITY ImageProperties.label "Caracteristicas da la grafica…">
+<!ENTITY ImageProperties.accesskey "e">

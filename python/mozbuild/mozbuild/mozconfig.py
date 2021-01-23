@@ -2,18 +2,19 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import, print_function, unicode_literals
 
 import filecmp
 import os
 import re
+import six
 import sys
 import subprocess
 import traceback
+from textwrap import dedent
 
-from collections import defaultdict
 from mozpack import path as mozpath
-
+from mozbuild.util import ensure_subprocess_env
 
 MOZ_MYCONFIG_ERROR = '''
 The MOZ_MYCONFIG environment variable to define the location of mozconfigs
@@ -54,6 +55,21 @@ class MozconfigLoadException(Exception):
     def __init__(self, path, message, output=None):
         self.path = path
         self.output = output
+
+        message = dedent("""
+        Error loading mozconfig: {path}
+
+        {message}
+        """).format(path=self.path, message=message).lstrip()
+
+        if self.output:
+            message += dedent("""
+            mozconfig output:
+
+            {output}
+            """).format(output="\n".join(
+                [six.ensure_text(s) for s in self.output]))
+
         Exception.__init__(self, message)
 
 
@@ -66,7 +82,7 @@ class MozconfigLoader(object):
         \s* [?:]?= \s*          # Assignment operator surrounded by optional
                                 # spaces
         (?P<value>.*$)''',      # Everything else (likely the value)
-        re.VERBOSE)
+                                  re.VERBOSE)
 
     # Default mozconfig files in the topsrcdir.
     DEFAULT_TOPSRCDIR_PATHS = ('.mozconfig', 'mozconfig')
@@ -74,7 +90,7 @@ class MozconfigLoader(object):
     DEPRECATED_TOPSRCDIR_PATHS = ('mozconfig.sh', 'myconfig.sh')
     DEPRECATED_HOME_PATHS = ('.mozconfig', '.mozconfig.sh', '.mozmyconfig.sh')
 
-    IGNORE_SHELL_VARIABLES = {'_'}
+    IGNORE_SHELL_VARIABLES = {'_', 'BASH_ARGV', 'BASH_ARGV0', 'BASH_ARGC'}
 
     ENVIRONMENT_VARIABLES = {
         'CC', 'CXX', 'CFLAGS', 'CXXFLAGS', 'LDFLAGS', 'MOZ_OBJDIR',
@@ -145,7 +161,7 @@ class MozconfigLoader(object):
                         'does not exist in any of ' + ', '.join(potential_roots))
 
                 env_path = os.path.join(existing[0], env_path)
-            elif not os.path.exists(env_path): # non-relative path
+            elif not os.path.exists(env_path):  # non-relative path
                 raise MozconfigFindException(
                     'MOZCONFIG environment variable refers to a path that '
                     'does not exist: ' + env_path)
@@ -156,12 +172,12 @@ class MozconfigLoader(object):
                     'non-file: ' + env_path)
 
         srcdir_paths = [os.path.join(self.topsrcdir, p) for p in
-            self.DEFAULT_TOPSRCDIR_PATHS]
+                        self.DEFAULT_TOPSRCDIR_PATHS]
         existing = [p for p in srcdir_paths if os.path.isfile(p)]
 
         if env_path is None and len(existing) > 1:
             raise MozconfigFindException('Multiple default mozconfig files '
-                'present. Remove all but one. ' + ', '.join(existing))
+                                         'present. Remove all but one. ' + ', '.join(existing))
 
         path = None
 
@@ -175,12 +191,12 @@ class MozconfigLoader(object):
             return os.path.abspath(path)
 
         deprecated_paths = [os.path.join(self.topsrcdir, s) for s in
-            self.DEPRECATED_TOPSRCDIR_PATHS]
+                            self.DEPRECATED_TOPSRCDIR_PATHS]
 
         home = env.get('HOME', None)
         if home is not None:
             deprecated_paths.extend([os.path.join(home, s) for s in
-            self.DEPRECATED_HOME_PATHS])
+                                     self.DEPRECATED_HOME_PATHS])
 
         for path in deprecated_paths:
             if os.path.exists(path):
@@ -223,8 +239,6 @@ class MozconfigLoader(object):
         result['make_extra'] = []
         result['make_flags'] = []
 
-        env = dict(os.environ)
-
         # Since mozconfig_loader is a shell script, running it "normally"
         # actually leads to two shell executions on Windows. Avoid this by
         # directly calling sh mozconfig_loader.
@@ -240,10 +254,13 @@ class MozconfigLoader(object):
                                 'action', 'dump_env.py')]
 
         try:
+            env = dict(os.environ)
+            env['PYTHONIOENCODING'] = 'utf-8'
             # We need to capture stderr because that's where the shell sends
             # errors if execution fails.
-            output = subprocess.check_output(command, stderr=subprocess.STDOUT,
-                cwd=self.topsrcdir, env=env)
+            output = six.ensure_text(subprocess.check_output(
+                command, stderr=subprocess.STDOUT, cwd=self.topsrcdir,
+                env=ensure_subprocess_env(env), universal_newlines=True))
         except subprocess.CalledProcessError as e:
             lines = e.output.splitlines()
 
@@ -306,7 +323,7 @@ class MozconfigLoader(object):
 
         # Environment variables also appear as shell variables, but that's
         # uninteresting duplication of information. Filter them out.
-        filt = lambda x, y: {k: v for k, v in x.items() if k not in y}
+        def filt(x, y): return {k: v for k, v in x.items() if k not in y}
         result['vars'] = diff_vars(
             filt(parsed['vars_before'], parsed['env_before']),
             filt(parsed['vars_after'], parsed['env_after'])
@@ -334,6 +351,12 @@ class MozconfigLoader(object):
 
             if name == 'MOZ_OBJDIR':
                 result['topobjdir'] = value
+                if parsed['env_before'].get('MOZ_PROFILE_GENERATE') == '1':
+                    # If MOZ_OBJDIR is specified in the mozconfig, we need to
+                    # make sure that the '/instrumented' directory gets appended
+                    # for the first build to avoid an objdir mismatch when
+                    # running 'mach package' on Windows.
+                    result['topobjdir'] = mozpath.join(result['topobjdir'], 'instrumented')
                 continue
 
             result['make_extra'].append(o)
@@ -353,12 +376,6 @@ class MozconfigLoader(object):
         in_variable = None
 
         for line in output.splitlines():
-
-            # XXX This is an ugly hack. Data may be lost from things
-            # like environment variable values.
-            # See https://bugzilla.mozilla.org/show_bug.cgi?id=831381
-            line = line.decode('mbcs' if sys.platform == 'win32' else 'utf-8',
-                               'ignore')
 
             if not line:
                 continue

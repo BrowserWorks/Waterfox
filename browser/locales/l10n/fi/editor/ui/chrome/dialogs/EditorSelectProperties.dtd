@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label  "Pudotusvalikon ominaisuudet">
+
+<!ENTITY Select.label  "Pudotusvalikko">
+<!ENTITY SelectName.label  "Luettelon nimi:">
+<!ENTITY SelectName.accesskey  "n">
+<!ENTITY SelectSize.label  "Korkeus:">
+<!ENTITY SelectSize.accesskey  "e">
+<!ENTITY SelectMultiple.label  "Useita valintoja">
+<!ENTITY SelectMultiple.accesskey  "U">
+<!ENTITY SelectDisabled.label  "Poista käytöstä">
+<!ENTITY SelectDisabled.accesskey  "t">
+<!ENTITY SelectTabIndex.label  "Sarkainindeksi:">
+<!ENTITY SelectTabIndex.accesskey  "d">
+
+<!ENTITY OptGroup.label  "Valintaryhmä">
+<!ENTITY OptGroupLabel.label  "Nimiö:">
+<!ENTITY OptGroupLabel.accesskey  "N">
+<!ENTITY OptGroupDisabled.label  "Poista käytöstä">
+<!ENTITY OptGroupDisabled.accesskey  "k">
+
+<!ENTITY Option.label  "Valinta">
+<!ENTITY OptionText.label  "Teksti:">
+<!ENTITY OptionText.accesskey  "T">
+<!ENTITY OptionValue.label  "Arvo:">
+<!ENTITY OptionValue.accesskey  "A">
+<!ENTITY OptionSelected.label  "Aluksi valittuna">
+<!ENTITY OptionSelected.accesskey  "u">
+<!ENTITY OptionDisabled.label  "Poista käytöstä">
+<!ENTITY OptionDisabled.accesskey  "k">
+
+<!ENTITY TextHeader.label  "Teksti">
+<!ENTITY ValueHeader.label  "Arvo">
+<!ENTITY SelectedHeader.label  "Valittu">
+
+<!ENTITY AddOption.label  "Lisää valinta">
+<!ENTITY AddOption.accesskey  "v">
+<!ENTITY AddOptGroup.label  "Lisää ryhmä">
+<!ENTITY AddOptGroup.accesskey  "r">
+<!ENTITY RemoveElement.label  "Poista">
+<!ENTITY RemoveElement.accesskey  "o">
+<!ENTITY MoveElementUp.label  "Siirrä ylöspäin">
+<!ENTITY MoveElementUp.accesskey  "y">
+<!ENTITY MoveElementDown.label  "Siirrä alaspäin">
+<!ENTITY MoveElementDown.accesskey  "S">

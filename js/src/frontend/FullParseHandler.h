@@ -13,8 +13,10 @@
 #include <cstddef>  // std::nullptr_t
 #include <string.h>
 
+#include "frontend/FunctionSyntaxKind.h"  // FunctionSyntaxKind
 #include "frontend/ParseNode.h"
 #include "frontend/SharedContext.h"
+#include "frontend/Stencil.h"
 #include "vm/JSContext.h"
 
 namespace js {
@@ -43,11 +45,16 @@ class FullParseHandler {
 
   /*
    * If this is a full parse to construct the bytecode for a function that
-   * was previously lazily parsed, that lazy function and the current index
-   * into its inner functions. We do not want to reparse the inner functions.
+   * was previously lazily parsed, we still don't want to full parse the
+   * inner functions. These members are used for this functionality:
+   *
+   * - lazyOuterFunction_ holds the lazyScript for this current parse
+   * - lazyInnerFunctionIndex is used as we skip over inner functions
+   *   (see skipLazyInnerFunction),
    */
-  const Rooted<LazyScript*> lazyOuterFunction_;
+  const Rooted<BaseScript*> lazyOuterFunction_;
   size_t lazyInnerFunctionIndex;
+
   size_t lazyClosedOverBindingIndex;
 
   const SourceKind sourceKind_;
@@ -71,6 +78,11 @@ class FullParseHandler {
            node->isKind(ParseNodeKind::ElemExpr);
   }
 
+  bool isOptionalPropertyAccess(Node node) {
+    return node->isKind(ParseNodeKind::OptionalDotExpr) ||
+           node->isKind(ParseNodeKind::OptionalElemExpr);
+  }
+
   bool isFunctionCall(Node node) {
     // Note: super() is a special form, *not* a function call.
     return node->isKind(ParseNodeKind::CallExpr);
@@ -91,13 +103,28 @@ class FullParseHandler {
   }
 
   FullParseHandler(JSContext* cx, LifoAlloc& alloc,
-                   LazyScript* lazyOuterFunction,
+                   BaseScript* lazyOuterFunction,
                    SourceKind kind = SourceKind::Text)
       : allocator(cx, alloc),
         lazyOuterFunction_(cx, lazyOuterFunction),
         lazyInnerFunctionIndex(0),
         lazyClosedOverBindingIndex(0),
-        sourceKind_(SourceKind::Text) {}
+        sourceKind_(kind) {
+    // The BaseScript::gcthings() array contains the inner function list
+    // followed by the closed-over bindings data. Advance the index for
+    // closed-over bindings to the end of the inner functions. The
+    // nextLazyInnerFunction / nextLazyClosedOverBinding accessors confirm we
+    // have the expected types. See also: BaseScript::CreateLazy.
+    if (lazyOuterFunction) {
+      for (JS::GCCellPtr gcThing : lazyOuterFunction->gcthings()) {
+        if (gcThing.is<JSObject>()) {
+          lazyClosedOverBindingIndex++;
+        } else {
+          break;
+        }
+      }
+    }
+  }
 
   static NullNode null() { return NullNode(); }
 
@@ -131,16 +158,10 @@ class FullParseHandler {
     return new_<NumericLiteral>(value, decimalPoint, pos);
   }
 
-  // The Boxer object here is any object that can allocate BigIntBoxes.
-  // Specifically, a Boxer has a .newBigIntBox(T) method that accepts a
-  // BigInt* argument and returns a BigIntBox*.
-  template <class Boxer>
-  BigIntLiteralType newBigInt(BigInt* bi, const TokenPos& pos, Boxer& boxer) {
-    BigIntBox* box = boxer.newBigIntBox(bi);
-    if (!box) {
-      return null();
-    }
-    return new_<BigIntLiteral>(box, pos);
+  BigIntLiteralType newBigInt(BigIntIndex index,
+                              CompilationInfo& compilationInfo,
+                              const TokenPos& pos) {
+    return new_<BigIntLiteral>(index, compilationInfo, pos);
   }
 
   BooleanLiteralType newBooleanLiteral(bool cond, const TokenPos& pos) {
@@ -174,6 +195,9 @@ class FullParseHandler {
   void addToCallSiteObject(CallSiteNodeType callSiteObj, Node rawNode,
                            Node cookedNode) {
     MOZ_ASSERT(callSiteObj->isKind(ParseNodeKind::CallSiteObj));
+    MOZ_ASSERT(rawNode->isKind(ParseNodeKind::TemplateStringExpr));
+    MOZ_ASSERT(cookedNode->isKind(ParseNodeKind::TemplateStringExpr) ||
+               cookedNode->isKind(ParseNodeKind::RawUndefinedExpr));
 
     addArrayElement(callSiteObj, cookedNode);
     addArrayElement(callSiteObj->rawNodes(), rawNode);
@@ -197,17 +221,8 @@ class FullParseHandler {
     return new_<RawUndefinedLiteral>(pos);
   }
 
-  // The Boxer object here is any object that can allocate ObjectBoxes.
-  // Specifically, a Boxer has a .newObjectBox(T) method that accepts a
-  // Rooted<RegExpObject*> argument and returns an ObjectBox*.
-  template <class Boxer>
-  RegExpLiteralType newRegExp(RegExpObject* reobj, const TokenPos& pos,
-                              Boxer& boxer) {
-    ObjectBox* objbox = boxer.newObjectBox(reobj);
-    if (!objbox) {
-      return null();
-    }
-    return new_<RegExpLiteral>(objbox, pos);
+  RegExpLiteralType newRegExp(RegExpIndex index, const TokenPos& pos) {
+    return new_<RegExpLiteral>(index, pos);
   }
 
   ConditionalExpressionType newConditional(Node cond, Node thenExpr,
@@ -226,6 +241,18 @@ class FullParseHandler {
 
     if (expr->isKind(ParseNodeKind::ElemExpr)) {
       return newUnary(ParseNodeKind::DeleteElemExpr, begin, expr);
+    }
+
+    if (expr->isKind(ParseNodeKind::OptionalChain)) {
+      Node kid = expr->as<UnaryNode>().kid();
+      // Handle property deletion explicitly. OptionalCall is handled
+      // via DeleteExpr.
+      if (kid->isKind(ParseNodeKind::DotExpr) ||
+          kid->isKind(ParseNodeKind::OptionalDotExpr) ||
+          kid->isKind(ParseNodeKind::ElemExpr) ||
+          kid->isKind(ParseNodeKind::OptionalElemExpr)) {
+        return newUnary(ParseNodeKind::DeleteOptionalChainExpr, begin, kid);
+      }
     }
 
     return newUnary(ParseNodeKind::DeleteExpr, begin, expr);
@@ -309,13 +336,18 @@ class FullParseHandler {
     return new_<CallNode>(ParseNodeKind::CallExpr, callOp, callee, args);
   }
 
+  OptionalCallNodeType newOptionalCall(Node callee, Node args, JSOp callOp) {
+    return new_<CallNode>(ParseNodeKind::OptionalCallExpr, callOp, callee,
+                          args);
+  }
+
   ListNodeType newArguments(const TokenPos& pos) {
     return new_<ListNode>(ParseNodeKind::Arguments, pos);
   }
 
   CallNodeType newSuperCall(Node callee, Node args, bool isSpread) {
     return new_<CallNode>(ParseNodeKind::SuperCallExpr,
-                          isSpread ? JSOP_SPREADSUPERCALL : JSOP_SUPERCALL,
+                          isSpread ? JSOp::SpreadSuperCall : JSOp::SuperCall,
                           callee, args);
   }
 
@@ -440,34 +472,36 @@ class FullParseHandler {
     return true;
   }
 
-  MOZ_MUST_USE bool addClassMethodDefinition(ListNodeType memberList, Node key,
-                                             FunctionNodeType funNode,
-                                             AccessorType atype,
-                                             bool isStatic) {
-    MOZ_ASSERT(memberList->isKind(ParseNodeKind::ClassMemberList));
+  MOZ_MUST_USE ClassMethod* newClassMethodDefinition(Node key,
+                                                     FunctionNodeType funNode,
+                                                     AccessorType atype,
+                                                     bool isStatic) {
     MOZ_ASSERT(isUsableAsObjectPropertyName(key));
 
     checkAndSetIsDirectRHSAnonFunction(funNode);
 
-    ClassMethod* classMethod = new_<ClassMethod>(key, funNode, atype, isStatic);
-    if (!classMethod) {
-      return false;
-    }
-    addList(/* list = */ memberList, /* kid = */ classMethod);
-    return true;
+    return new_<ClassMethod>(key, funNode, atype, isStatic);
   }
 
-  MOZ_MUST_USE bool addClassFieldDefinition(ListNodeType memberList, Node name,
-                                            FunctionNodeType initializer) {
-    MOZ_ASSERT(memberList->isKind(ParseNodeKind::ClassMemberList));
+  MOZ_MUST_USE ClassField* newClassFieldDefinition(Node name,
+                                                   FunctionNodeType initializer,
+                                                   bool isStatic) {
     MOZ_ASSERT(isUsableAsObjectPropertyName(name));
 
-    ClassField* classField = new_<ClassField>(name, initializer);
+    return new_<ClassField>(name, initializer, isStatic);
+  }
 
-    if (!classField) {
-      return false;
-    }
-    addList(/* list = */ memberList, /* kid = */ classField);
+  MOZ_MUST_USE bool addClassMemberDefinition(ListNodeType memberList,
+                                             Node member) {
+    MOZ_ASSERT(memberList->isKind(ParseNodeKind::ClassMemberList));
+    // Constructors can be surrounded by LexicalScopes.
+    MOZ_ASSERT(member->isKind(ParseNodeKind::ClassMethod) ||
+               member->isKind(ParseNodeKind::ClassField) ||
+               (member->isKind(ParseNodeKind::LexicalScope) &&
+                member->as<LexicalScopeNode>().scopeBody()->isKind(
+                    ParseNodeKind::ClassMethod)));
+
+    addList(/* list = */ memberList, /* kid = */ member);
     return true;
   }
 
@@ -489,6 +523,11 @@ class FullParseHandler {
   UnaryNodeType newAwaitExpression(uint32_t begin, Node value) {
     TokenPos pos(begin, value ? value->pn_pos.end : begin + 1);
     return new_<UnaryNode>(ParseNodeKind::AwaitExpr, pos, value);
+  }
+
+  UnaryNodeType newOptionalChain(uint32_t begin, Node value) {
+    TokenPos pos(begin, value->pn_pos.end);
+    return new_<UnaryNode>(ParseNodeKind::OptionalChain, pos, value);
   }
 
   // Statements
@@ -624,9 +663,13 @@ class FullParseHandler {
   }
 
   UnaryNodeType newExprStatement(Node expr, uint32_t end) {
-    MOZ_ASSERT(expr->pn_pos.end <= end);
+    MOZ_ASSERT_IF(sourceKind() == SourceKind::Text, expr->pn_pos.end <= end);
     return new_<UnaryNode>(ParseNodeKind::ExpressionStmt,
                            TokenPos(expr->pn_pos.begin, end), expr);
+  }
+
+  UnaryNodeType newExprStatement(Node expr) {
+    return newExprStatement(expr, expr->pn_pos.end);
   }
 
   TernaryNodeType newIfStatement(uint32_t begin, Node cond, Node thenBranch,
@@ -689,7 +732,8 @@ class FullParseHandler {
   }
 
   UnaryNodeType newReturnStatement(Node expr, const TokenPos& pos) {
-    MOZ_ASSERT_IF(expr, pos.encloses(expr->pn_pos));
+    MOZ_ASSERT_IF(expr && sourceKind() == SourceKind::Text,
+                  pos.encloses(expr->pn_pos));
     return new_<UnaryNode>(ParseNodeKind::ReturnStmt, pos, expr);
   }
 
@@ -708,7 +752,7 @@ class FullParseHandler {
   }
 
   UnaryNodeType newThrowStatement(Node expr, const TokenPos& pos) {
-    MOZ_ASSERT(pos.encloses(expr->pn_pos));
+    MOZ_ASSERT_IF(sourceKind() == SourceKind::Text, pos.encloses(expr->pn_pos));
     return new_<UnaryNode>(ParseNodeKind::ThrowStmt, pos, expr);
   }
 
@@ -734,6 +778,17 @@ class FullParseHandler {
     return new_<PropertyByValue>(lhs, index, lhs->pn_pos.begin, end);
   }
 
+  OptionalPropertyAccessType newOptionalPropertyAccess(Node expr,
+                                                       NameNodeType key) {
+    return new_<OptionalPropertyAccess>(expr, key, expr->pn_pos.begin,
+                                        key->pn_pos.end);
+  }
+
+  OptionalPropertyByValueType newOptionalPropertyByValue(Node lhs, Node index,
+                                                         uint32_t end) {
+    return new_<OptionalPropertyByValue>(lhs, index, lhs->pn_pos.begin, end);
+  }
+
   bool setupCatchScope(LexicalScopeNodeType lexicalScope, Node catchName,
                        Node catchBody) {
     BinaryNode* catchClause;
@@ -754,14 +809,12 @@ class FullParseHandler {
   inline MOZ_MUST_USE bool setLastFunctionFormalParameterDefault(
       FunctionNodeType funNode, Node defaultValue);
 
- private:
   void checkAndSetIsDirectRHSAnonFunction(Node pn) {
     if (IsAnonymousFunctionDefinition(pn)) {
       pn->setDirectRHSAnonFunction(true);
     }
   }
 
- public:
   FunctionNodeType newFunction(FunctionSyntaxKind syntaxKind,
                                const TokenPos& pos) {
     return new_<FunctionNode>(syntaxKind, pos);
@@ -805,15 +858,15 @@ class FullParseHandler {
     return new_<ModuleNode>(pos);
   }
 
-  LexicalScopeNodeType newLexicalScope(LexicalScope::Data* bindings,
-                                       Node body) {
-    return new_<LexicalScopeNode>(bindings, body);
+  LexicalScopeNodeType newLexicalScope(LexicalScope::Data* bindings, Node body,
+                                       ScopeKind kind = ScopeKind::Lexical) {
+    return new_<LexicalScopeNode>(bindings, body, kind);
   }
 
   CallNodeType newNewExpression(uint32_t begin, Node ctor, Node args,
                                 bool isSpread) {
     return new_<CallNode>(ParseNodeKind::NewExpr,
-                          isSpread ? JSOP_SPREADNEW : JSOP_NEW,
+                          isSpread ? JSOp::SpreadNew : JSOp::New,
                           TokenPos(begin, args->pn_pos.end), ctor, args);
   }
 
@@ -862,6 +915,7 @@ class FullParseHandler {
 
   bool isUsableAsObjectPropertyName(Node node) {
     return node->isKind(ParseNodeKind::NumberExpr) ||
+           node->isKind(ParseNodeKind::BigIntExpr) ||
            node->isKind(ParseNodeKind::ObjectPropertyName) ||
            node->isKind(ParseNodeKind::StringExpr) ||
            node->isKind(ParseNodeKind::ComputedName);
@@ -882,7 +936,8 @@ class FullParseHandler {
   }
   void setBeginPosition(Node pn, uint32_t begin) {
     pn->pn_pos.begin = begin;
-    MOZ_ASSERT(pn->pn_pos.begin <= pn->pn_pos.end);
+    MOZ_ASSERT_IF(sourceKind() == SourceKind::Text,
+                  pn->pn_pos.begin <= pn->pn_pos.end);
   }
 
   void setEndPosition(Node pn, Node oth) {
@@ -890,7 +945,8 @@ class FullParseHandler {
   }
   void setEndPosition(Node pn, uint32_t end) {
     pn->pn_pos.end = end;
-    MOZ_ASSERT(pn->pn_pos.begin <= pn->pn_pos.end);
+    MOZ_ASSERT_IF(sourceKind() == SourceKind::Text,
+                  pn->pn_pos.begin <= pn->pn_pos.end);
   }
 
   uint32_t getFunctionNameOffset(Node func, TokenStreamAnyChars& ts) {
@@ -952,9 +1008,6 @@ class FullParseHandler {
   MOZ_MUST_USE NodeType setLikelyIIFE(NodeType node) {
     return parenthesize(node);
   }
-  void setInDirectivePrologue(UnaryNodeType exprStmt) {
-    exprStmt->setIsDirectivePrologueMember();
-  }
 
   bool isName(Node node) { return node->isKind(ParseNodeKind::Name); }
 
@@ -975,8 +1028,8 @@ class FullParseHandler {
   }
 
   PropertyName* maybeDottedProperty(Node pn) {
-    return pn->is<PropertyAccess>() ? &pn->as<PropertyAccess>().name()
-                                    : nullptr;
+    return pn->is<PropertyAccessBase>() ? &pn->as<PropertyAccessBase>().name()
+                                        : nullptr;
   }
   JSAtom* isStringExprStatement(Node pn, TokenPos* pos) {
     if (pn->is<UnaryNode>()) {
@@ -991,16 +1044,25 @@ class FullParseHandler {
 
   bool canSkipLazyInnerFunctions() { return !!lazyOuterFunction_; }
   bool canSkipLazyClosedOverBindings() { return !!lazyOuterFunction_; }
+  bool canSkipRegexpSyntaxParse() { return !!lazyOuterFunction_; }
   JSFunction* nextLazyInnerFunction() {
-    MOZ_ASSERT(lazyInnerFunctionIndex <
-               lazyOuterFunction_->numInnerFunctions());
-    return lazyOuterFunction_->innerFunctions()[lazyInnerFunctionIndex++];
+    return &lazyOuterFunction_->gcthings()[lazyInnerFunctionIndex++]
+                .as<JSObject>()
+                .as<JSFunction>();
   }
   JSAtom* nextLazyClosedOverBinding() {
-    MOZ_ASSERT(lazyClosedOverBindingIndex <
-               lazyOuterFunction_->numClosedOverBindings());
-    return lazyOuterFunction_
-        ->closedOverBindings()[lazyClosedOverBindingIndex++];
+    auto gcthings = lazyOuterFunction_->gcthings();
+
+    // Trailing nullptrs were elided in PerHandlerParser::finishFunction().
+    if (lazyClosedOverBindingIndex >= gcthings.Length()) {
+      return nullptr;
+    }
+
+    // These entries are either JSAtom* or nullptr, so use the 'asCell()'
+    // accessor which is faster.
+    gc::Cell* cell = gcthings[lazyClosedOverBindingIndex++].asCell();
+    MOZ_ASSERT_IF(cell, cell->as<JSString>()->isAtom());
+    return static_cast<JSAtom*>(cell);
   }
 };
 

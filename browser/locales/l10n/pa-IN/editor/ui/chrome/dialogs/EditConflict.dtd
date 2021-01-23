@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "ਸੋਧ ਚੋਣ ਕਰੋ">
+<!ENTITY conflictWarning.label "ਇਸ ਸਫ਼ੇ ਨੂੰ ਹੋਰ ਐਪਲੀਕੇਸ਼ਨ ਰਾਹੀਂ ਸੋਧਿਆ ਗਿਆ ਹੈ, ਅਤੇ ਤੁਹਾਡੇ ਕੋਲ ਵੀ ਐਡੀਟਰ ਵਿੱਚ ਨਾ-ਸੰਭਾਲੀਆਂ ਤਬਦੀਲੀਆਂ ਹਨ।">
+<!ENTITY conflictResolve.label "ਚੋਣ ਕਰੋ ਕਿ ਕਿਹੜਾ ਵਰਜਨ ਰੱਖਣਾ ਹੈ:">
+<!ENTITY keepCurrentPageButton.label "ਤਬਦੀਲੀਆਂ ਨਾਲ ਮੌਜੂਦਾ ਵਰਜਨ ਰੱਖੋ">
+<!ENTITY useOtherPageButton.label "ਹੋਰ ਤਬਦੀਲੀਆਂ ਨਾਲ ਮੌਜੂਦਾ ਸਫ਼ਾ ਤਬਦੀਲ ਕਰੋ">

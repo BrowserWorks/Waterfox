@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Gemte filer">
+<!ENTITY aboutDownloads.empty                      "Ingen gemte filer">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "Åbn hentningsmappe">
+<!ENTITY cmd.show.accesskey                        "Å">
+<!ENTITY cmd.showMac.label                         "Vis i Finder">
+<!ENTITY cmd.showMac.accesskey                     "V">
+<!ENTITY cmd.open.label                            "Åbn">
+<!ENTITY cmd.open.accesskey                        "b">
+<!ENTITY cmd.removeFromHistory.label               "Fjern fra historikken">
+<!ENTITY cmd.removeFromHistory.accesskey           "F">
+<!ENTITY cmd.clearList.label                       "Ryd liste">
+<!ENTITY cmd.clearList.accesskey                   "R">
+<!ENTITY cmd.clearList.tooltip                     "Fjern alle gemte filer fra oversigten, undtagen dem der er ved at blive hentet.">
+<!ENTITY cmd.searchDownloads.label                 "Søg…">
+<!ENTITY cmd.searchDownloads.key                   "S">

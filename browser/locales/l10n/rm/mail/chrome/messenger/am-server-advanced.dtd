@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Parameters avanzads per contos">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "Directory dal server IMAP:">
+<!ENTITY serverDirectory.accesskey "d">
+<!ENTITY usingSubscription.label "Mussar mo ordinaturs abunads">
+<!ENTITY usingSubscription.accesskey "a">
+<!ENTITY dualUseFolders.label "Il server sustegna ordinaturs che cuntegnan sutordinaturs e messadis">
+<!ENTITY dualUseFolders.accesskey "u">
+<!ENTITY maximumConnectionsNumber.label "Dumber maximal da connexiuns a servers mantegnidas">
+<!ENTITY maximumConnectionsNumber.accesskey "M">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Questas preferenzas inditgeschan ils spazis da nums dal server IMAP">
+<!ENTITY personalNamespace.label "Spazi da nums persunal:">
+<!ENTITY personalNamespace.accesskey "P">
+<!ENTITY publicNamespace.label "Public (cundividì):">
+<!ENTITY publicNamespace.accesskey "u">
+<!ENTITY otherUsersNamespace.label "Auters utilisaders:">
+<!ENTITY otherUsersNamespace.accesskey "A">
+<!ENTITY overrideNamespaces.label "Permetter al server da remplazzar quests spazis da nums">
+<!ENTITY overrideNamespaces.accesskey "P">
+<!ENTITY pop3DeferringDesc.label "Memorisar novs messadis telechargiads dal server da quest conto en suandant ordinatur:" >
+<!ENTITY accountInbox.label "Posta entrada per quest conto">
+<!ENTITY accountInbox.accesskey "s">
+<!ENTITY deferToServer.label "Posta entrada d'in auter conto">
+<!ENTITY deferToServer.accesskey "d">
+<!ENTITY deferGetNewMail.label "Includer quest conto cun retschaiver messadis">
+<!ENTITY deferGetNewMail.accesskey "I">

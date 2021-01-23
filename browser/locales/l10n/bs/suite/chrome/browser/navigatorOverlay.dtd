@@ -1,0 +1,102 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File Menu -->
+<!ENTITY tabCmd.label "Tab pretraživača">
+<!ENTITY tabCmd.accesskey "T">
+<!ENTITY tabCmd.commandkey "t">
+<!ENTITY openCmd.label "Otvori web lokaciju…">
+<!ENTITY openCmd.accesskey "L">
+<!ENTITY openCmd.commandkey "l">
+<!ENTITY openFileCmd.label "Otvori datoteku…">
+<!ENTITY openFileCmd.accesskey "O">
+<!ENTITY openFileCmd.commandkey "o">
+
+<!ENTITY closeOtherTabs.label "Zatvori ostale tabove">
+<!ENTITY closeOtherTabs.accesskey "T">
+
+<!ENTITY uploadFile.label "Prenesi datoteku…">
+<!ENTITY uploadFile.accesskey "F">
+
+<!ENTITY printSetupCmd.label "Postavljanje stranice…">
+<!ENTITY printSetupCmd.accesskey "u">
+
+<!-- Edit Menu -->
+<!ENTITY findOnCmd.label "Pronađi na ovoj stranici…">
+
+<!-- View Menu -->
+<!ENTITY toolbarsCmd.label "Prikaži/sakrij">
+<!ENTITY toolbarsCmd.accesskey "w">
+<!ENTITY tabbarCmd.label "Tab traka">
+<!ENTITY tabbarCmd.accesskey "T">
+<!ENTITY taskbarCmd.label "Statusna traka">
+<!ENTITY taskbarCmd.accesskey "S">
+<!ENTITY componentbarCmd.label "Komponentna traka">
+<!ENTITY componentbarCmd.accesskey "C">
+
+<!ENTITY fullScreenCmd.label "Prikaz na cijelom ekranu">
+<!ENTITY fullScreenCmd.accesskey "F">
+
+<!ENTITY useStyleSheetMenu.label "Koristite stil">
+<!ENTITY useStyleSheetMenu.accesskey "U">
+<!ENTITY useStyleSheetNone.label "Nijedan">
+<!ENTITY useStyleSheetNone.accesskey "N">
+<!ENTITY useStyleSheetPersistentOnly.label "Izvorni stil">
+<!ENTITY bidiSwitchPageDirectionItem.label "Promijeni smjer stranice">
+<!ENTITY pageSourceCmd.label "Izvorni kod stranice">
+<!ENTITY pageInfoCmd.label "Informacije o stranici">
+
+<!-- Go Menu -->
+<!ENTITY goMenu.label "Idi">
+<!ENTITY goHomeCmd.label "Početna">
+<!ENTITY historyCmd.label "Historija">
+<!ENTITY recentTabs.label "Nedavno zatvoreni tabovi">
+<!ENTITY recentWindows.label "Nedavno zatvoreni prozori">
+<!ENTITY historyRestoreLastSession.label "Povrati prethodnu sesiju">
+<!ENTITY syncTabsMenu.label "Tabovi sa drugih računara">
+
+<!-- Bookmarks Menu -->
+<!ENTITY bookmarksMenu.label "Zabilješke">
+<!ENTITY addCurPageCmd.label "Zabilježi ovu stranicu">
+<!ENTITY addCurTabsAsCmd.label "Zabilježi ovu grupu tabova…">
+<!ENTITY manBookmarksCmd.label "Upravljaj zabilješkama…">
+
+<!-- Tools Menu -->
+<!ENTITY searchInternetCmd.label "Pretraži web">
+<!ENTITY translateMenu.label "Prevedi stranicu">
+
+<!ENTITY cookieMessageTitle.label "Dozvole kolačića su promijenjene">
+<!ENTITY cookieDisplayCookiesCmd.label "Upravljaj sa spremljenim kolačićima">
+<!ENTITY cookieAllowCookiesCmd.label "Dozvoli kolačiće sa ove web stranice">
+<!ENTITY cookieAllowCookiesMsg.label "Kolačići sa ove web stranice će uvijek biti dozvoljeni.">
+<!ENTITY cookieAllowSessionCookiesCmd.label "Dozvoli kolačiće sesije sa ove web stranice">
+<!ENTITY cookieAllowSessionCookiesMsg.label "Ova web stranica će biti u mogućnosti postaviti kolačiće samo da trenutnu sesiju.">
+<!ENTITY cookieCookiesDefaultCmd.label "Koristite izvorne dozvole za kolačiće">
+<!ENTITY cookieCookiesDefaultMsg.label "Kolačići sa ove web stranice će biti prihvaćeni ili odbaćeni na osnovu izvornih postavki.">
+<!ENTITY cookieBlockCookiesCmd.label "Blokiraj kolačiće sa ove web stranice">
+<!ENTITY cookieBlockCookiesMsg.label "Kolačići sa ove web stranice će uvijek biti odbaćeni.">
+
+<!ENTITY cookieImageMessageTitle.label "Dozvole za slike su promijenjene">
+<!ENTITY cookieDisplayImagesCmd.label "Upravljaj dozvolama za slike">
+<!ENTITY cookieAllowImagesCmd.label "Dozvoli slike sa ove web stranice">
+<!ENTITY cookieAllowImagesMsg.label "Slike sa ove web stranice će uvijek biti preuzete.">
+<!ENTITY cookieImagesDefaultCmd.label "Koristite izvorne dozvole za slike">
+<!ENTITY cookieImagesDefaultMsg.label "Slike sa ove web stranice će biti preuzete na osnovu izvornih postavki.">
+<!ENTITY cookieBlockImagesCmd.label "Blokiraj slike sa ove web stranice">
+<!ENTITY cookieBlockImagesMsg.label "Slike sa ove web stranice neće nikad biti preuzete.">
+
+<!ENTITY popupsMessageChangeTitle.label "Dozvole za iskočne prozore su promijenjene">
+<!ENTITY popupAllowCmd.label "Dozvoli iskočne prozore za ovu web stranicu">
+<!ENTITY popupAllowMsg.label "Iskočni prozori sa ove web stranice će uvijek biti prikazani.">
+<!ENTITY popupDefaultCmd.label "Koristite izvorne dozvole za iskočne prozore">
+<!ENTITY popupDefaultMsg.label "Iskočni prozori sa ove web stranice će biti prikazani na osnovu izvornih postavki.">
+<!ENTITY popupBlockCmd.label "Blokiraj iskočne prozore sa ove web stranice">
+<!ENTITY popupBlockMsg.label "Iskočni prozori sa ove web stranice neće biti prikazani.">
+<!ENTITY popupsManage.label "Upravljaj iskočnim prozorima">
+
+<!ENTITY cookieCookieManager.label "Menadžer kolačića">
+<!ENTITY cookieImageManager.label "Menadžer slika">
+<!ENTITY popupsManager.label "Menadžer iskočnih prozora">
+
+<!ENTITY clearPrivateDataCmd.label "Očisti privatne podatke…">

@@ -19,6 +19,7 @@
 #include <windows.h>
 #include <objbase.h>
 
+#include <d3d11.h>
 #include <dxgi.h>
 #include <dxgi1_6.h>
 
@@ -32,7 +33,7 @@
 #endif
 
 struct ID3D11Device;
-struct IDCompositionDevice;
+struct IDCompositionDevice2;
 struct IDirectDraw7;
 
 namespace mozilla {
@@ -56,8 +57,9 @@ class DeviceManagerDx final {
 
   RefPtr<ID3D11Device> GetCompositorDevice();
   RefPtr<ID3D11Device> GetContentDevice();
+  RefPtr<ID3D11Device> GetCanvasDevice();
   RefPtr<ID3D11Device> GetImageDevice();
-  RefPtr<IDCompositionDevice> GetDirectCompositionDevice();
+  RefPtr<IDCompositionDevice2> GetDirectCompositionDevice();
   RefPtr<ID3D11Device> GetVRDevice();
   RefPtr<ID3D11Device> CreateDecoderDevice();
   RefPtr<layers::MLGDevice> GetMLGDevice();
@@ -85,9 +87,17 @@ class DeviceManagerDx final {
   // Enumerate and return all outputs on the current adapter.
   nsTArray<DXGI_OUTPUT_DESC1> EnumerateOutputs();
 
+  // find the IDXGIOutput with a description.Monitor matching
+  // 'monitor'; returns false if not found or some error occurred.
+  bool GetOutputFromMonitor(HMONITOR monitor, RefPtr<IDXGIOutput>* aOutOutput);
+
+  // Check if the current adapter supports hardware stretching
+  bool CheckHardwareStretchingSupport();
+
   bool CreateCompositorDevices();
   void CreateContentDevices();
   void CreateDirectCompositionDevice();
+  bool CreateCanvasDevice();
 
   void GetCompositorDevices(
       RefPtr<ID3D11Device>* aOutDevice,
@@ -165,11 +175,11 @@ class DeviceManagerDx final {
   RefPtr<IDXGIAdapter1> mAdapter;
   RefPtr<ID3D11Device> mCompositorDevice;
   RefPtr<ID3D11Device> mContentDevice;
+  RefPtr<ID3D11Device> mCanvasDevice;
   RefPtr<ID3D11Device> mImageDevice;
   RefPtr<ID3D11Device> mVRDevice;
   RefPtr<ID3D11Device> mDecoderDevice;
-  RefPtr<IDCompositionDevice> mDirectCompositionDevice;
-
+  RefPtr<IDCompositionDevice2> mDirectCompositionDevice;
   RefPtr<layers::DeviceAttachmentsD3D11> mCompositorAttachments;
   RefPtr<layers::MLGDevice> mMLGDevice;
   bool mCompositorDeviceSupportsVideo;

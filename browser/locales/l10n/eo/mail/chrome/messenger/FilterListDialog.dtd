@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Filtriloj de mesaĝoj">
+<!ENTITY nameColumn.label "Nomo de filtrilo">
+<!ENTITY activeColumn.label "Aktiva">
+<!ENTITY newButton.label "Nova…">
+<!ENTITY newButton.accesskey "N">
+<!ENTITY newButton.popupCopy.label "Kopii…">
+<!ENTITY newButton.popupCopy.accesskey "K">
+<!ENTITY editButton.label "Redakti…">
+<!ENTITY editButton.accesskey "R">
+<!ENTITY deleteButton.label "Forigi">
+<!ENTITY deleteButton.accesskey "i">
+<!ENTITY reorderTopButton "Movi plej supren">
+<!ENTITY reorderTopButton.accessKey "p">
+<!ENTITY reorderTopButton.toolTip "Movi filtrilon plej supren, por estu plenumita antaŭ ĉiuj aliaj">
+<!ENTITY reorderUpButton.label "Movi supren">
+<!ENTITY reorderUpButton.accesskey "s">
+<!ENTITY reorderDownButton.label "Movi malsupren">
+<!ENTITY reorderDownButton.accesskey "m">
+<!ENTITY reorderBottomButton "Movi plej malsupren">
+<!ENTITY reorderBottomButton.accessKey "j">
+<!ENTITY reorderBottomButton.toolTip "Movi filtrilon plej malsupren, por estu plenumita post ĉiuj aliaj">
+<!ENTITY filterHeader.label "Aktivaj filtriloj estos plenumitaj en la jena ordo:">
+<!ENTITY filtersForPrefix.label "Filtriloj por:">
+<!ENTITY filtersForPrefix.accesskey "F">
+<!ENTITY viewLogButton.label "Protokolo">
+<!ENTITY viewLogButton.accesskey "r">
+<!ENTITY runFilters.label "Filtri nun">
+<!ENTITY runFilters.accesskey "u">
+<!ENTITY stopFilters.label "Haltigi">
+<!ENTITY stopFilters.accesskey "H">
+<!ENTITY folderPickerPrefix.label "Apliki elektitajn filtrilo(j)n al:">
+<!ENTITY folderPickerPrefix.accesskey "A">
+<!ENTITY helpButton.label "Helpo">
+<!ENTITY helpButton.accesskey "o">
+<!ENTITY closeCmd.key "W">
+<!ENTITY searchBox.emptyText "Nomo de filtrilo…">

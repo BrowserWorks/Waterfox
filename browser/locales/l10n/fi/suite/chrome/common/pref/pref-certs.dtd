@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  managecerts.caption      "Varmenteiden hallinta">
+<!ENTITY  managecerts.text         "Tarkastele omia, muiden yksilöiden ja varmentajien varmenteita painamalla tästä.">
+<!ENTITY  managecerts.button       "Varmenteiden hallinta">
+<!ENTITY  managecerts.accesskey    "a">
+<!ENTITY  managedevices.caption    "Turvalaitteiden hallinta">
+<!ENTITY  managedevices.text       "Tarkastele turvalaitteita, kuten älykortteja, painamalla tästä.">
+<!ENTITY  managedevices.button     "Turvalaitteiden hallinta">
+<!ENTITY  managedevices.accesskey  "T">
+
+<!ENTITY  ssl.label                "SSL">
+
+<!ENTITY  pref.certs.title         "Varmenteet">
+<!ENTITY  certs.label              "Varmenteet">
+
+<!ENTITY validation.ocsp.caption                  "OCSP">
+<!ENTITY enableOCSP.label                         "Käytä OCSP:tä varmenteiden tilan tarkastamiseen">
+<!ENTITY enableOCSP.accesskey                     "K">
+<!ENTITY validation.requireOCSP.description       "Älä hyväksy varmennetta, jos OCSP-palvelimeen ei pystytä muodostamaan yhteyttä">
+<!ENTITY validation.requireOCSP.accesskey         "Ä">

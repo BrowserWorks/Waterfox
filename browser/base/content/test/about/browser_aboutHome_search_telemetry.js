@@ -13,20 +13,22 @@ add_task(async function() {
     { gBrowser, url: "about:home" },
     async function(browser) {
       let currEngine = await Services.search.getDefault();
-      let engine = await promiseNewEngine("searchSuggestionEngine.xml");
+
+      let engine;
+      await promiseContentSearchChange(browser, async () => {
+        engine = await promiseNewEngine("searchSuggestionEngine.xml");
+        await Services.search.setDefault(engine);
+        return engine.name;
+      });
+
       // Make this actually work in healthreport by giving it an ID:
       Object.defineProperty(engine.wrappedJSObject, "identifier", {
         value: "org.mozilla.testsearchsuggestions",
       });
 
-      await Promise.all([
-        promiseContentSearchChange(browser, engine.name),
-        Services.search.setDefault(engine),
-      ]);
-
-      await ContentTask.spawn(
+      await SpecialPowers.spawn(
         browser,
-        { expectedName: engine.name },
+        [{ expectedName: engine.name }],
         async function(args) {
           let engineName =
             content.wrappedJSObject.gContentSearchController.defaultEngine.name;
@@ -65,7 +67,7 @@ add_task(async function() {
       );
 
       // Perform a search to increase the SEARCH_COUNT histogram.
-      await ContentTask.spawn(browser, { searchStr }, async function(args) {
+      await SpecialPowers.spawn(browser, [{ searchStr }], async function(args) {
         let doc = content.document;
         info("Perform a search.");
         let el = doc.querySelector(["#searchText", "#newtab-search-text"]);

@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Jornal de filtratge">
+<!ENTITY viewLogInfo.text "Lo jornal de filtratge consigna quins filtres son estats executats per aqueste compte. Utilizatz la casa de marcar çaijós per activar lo jornal.">
+<!ENTITY clearLog.label "Voidar lo jornal">
+<!ENTITY clearLog.accesskey "V">
+<!ENTITY enableLog.label "Activar lo jornal de filtratge">
+<!ENTITY enableLog.accesskey "A">
+<!ENTITY closeLog.label "Fermer">
+<!ENTITY closeLog.accesskey "F">

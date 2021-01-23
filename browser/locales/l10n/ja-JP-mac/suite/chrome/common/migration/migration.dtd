@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migrationWizard.title          "設定移行アシスタント">
+
+<!ENTITY importAllFrom.label            "オプション、ブックマーク、履歴、パスワードその他のデータを読み込む対象を選んでください:">
+<!ENTITY importBookmarksFrom.label      "ブックマークを読み込む対象を選んでください:">
+
+<!ENTITY importFromThunderbird.label     "Thunderbird">
+<!ENTITY importFromThunderbird.accesskey "T">
+<!ENTITY importFromFile.label            "ファイルから読み込む">
+<!ENTITY importFromFile.accesskey        "F">
+<!ENTITY importFromNothing.label         "設定を読み込まない">
+<!ENTITY importFromNothing.accesskey     "D">
+
+<!ENTITY importSource.title             "設定とデータの読み込み元">
+<!ENTITY importItems.title              "読み込む項目">
+<!ENTITY importItems.label              "読み込む項目を選択してください:">
+
+<!ENTITY selectProfile.title            "プロファイルの選択">
+<!ENTITY selectProfile.label            "読み込むプロファイルを選択してください:">
+
+<!ENTITY migrating.title                "読み込んでいます...">
+<!ENTITY migrating.label                "次の項目を現在読み込んでいます...">
+
+<!ENTITY done.title                     "読み込み完了">
+<!ENTITY done.label                     "次のデータが正常に読み込まれました:">

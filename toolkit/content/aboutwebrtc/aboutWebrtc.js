@@ -48,7 +48,7 @@ function getLog() {
 var reportsRetrieved = getStats();
 var logRetrieved = getLog();
 
-function onLoad() {
+window.onload = function() {
   document.title = getString("document_title");
   let controls = document.querySelector("#controls");
   if (controls) {
@@ -72,7 +72,7 @@ function onLoad() {
   Promise.all([reportsRetrieved, logRetrieved])
     .then(([stats, log]) => contentInit({ reports: stats.reports, log }))
     .catch(error => contentInit({ error }));
-}
+};
 
 function onClearLog() {
   WebrtcGlobalInformation.clearLogging();
@@ -206,7 +206,7 @@ SavePage.prototype.onClick = function() {
         node.style.removeProperty("display");
       }
 
-      this._message = formatString("save_page_msg", [FilePicker.file.path], 1);
+      this._message = formatString("save_page_msg", [FilePicker.file.path]);
       this.update();
     }
   });
@@ -231,7 +231,7 @@ DebugMode.prototype.onState = function() {
   this._label = getString("debug_mode_on_state_label");
   try {
     let file = Services.prefs.getCharPref("media.webrtc.debug.log_file");
-    this._message = formatString("debug_mode_on_state_msg", [file], 1);
+    this._message = formatString("debug_mode_on_state_msg", [file]);
   } catch (e) {
     this._message = null;
   }
@@ -241,7 +241,7 @@ DebugMode.prototype.offState = function() {
   this._label = getString("debug_mode_off_state_label");
   try {
     let file = Services.prefs.getCharPref("media.webrtc.debug.log_file");
-    this._message = formatString("debug_mode_off_state_msg", [file], 1);
+    this._message = formatString("debug_mode_off_state_msg", [file]);
   } catch (e) {
     this._message = null;
   }
@@ -278,7 +278,7 @@ AecLogging.prototype.offState = function() {
   this._label = getString("aec_logging_off_state_label");
   try {
     let file = WebrtcGlobalInformation.aecDebugLogDir;
-    this._message = formatString("aec_logging_off_state_msg", [file], 1);
+    this._message = formatString("aec_logging_off_state_msg", [file]);
   } catch (e) {
     this._message = null;
   }
@@ -527,18 +527,20 @@ RTPStats.prototype = {
   },
 
   generateRTPStats() {
-    let remoteRtpStats = {};
+    const remoteRtpStatsMap = {};
     let rtpStats = [].concat(
-      this._report.inboundRTPStreamStats || [],
-      this._report.outboundRTPStreamStats || []
+      this._report.inboundRtpStreamStats || [],
+      this._report.outboundRtpStreamStats || []
+    );
+    let remoteRtpStats = [].concat(
+      this._report.remoteInboundRtpStreamStats || [],
+      this._report.remoteOutboundRtpStreamStats || []
     );
 
-    // Generate an id-to-streamStat index for each streamStat that is marked
-    // as a remote. This will be used next to link the remote to its local side.
-    for (let stats of rtpStats) {
-      if (stats.isRemote) {
-        remoteRtpStats[stats.id] = stats;
-      }
+    // Generate an id-to-streamStat index for each remote streamStat. This will
+    // be used next to link the remote to its local side.
+    for (let stats of remoteRtpStats) {
+      remoteRtpStatsMap[stats.id] = stats;
     }
 
     // If a streamStat has a remoteId attribute, create a remoteRtpStats
@@ -546,11 +548,11 @@ RTPStats.prototype = {
     // That is, the index generated above is merged into the returned list.
     for (let stats of rtpStats) {
       if (stats.remoteId) {
-        stats.remoteRtpStats = remoteRtpStats[stats.remoteId];
+        stats.remoteRtpStats = remoteRtpStatsMap[stats.remoteId];
       }
     }
 
-    this._stats = rtpStats;
+    this._stats = rtpStats.concat(remoteRtpStats);
   },
 
   renderCoderStats(stats) {
@@ -690,7 +692,7 @@ ICEStats.prototype = {
     }
     caption.appendChild(
       renderElement("span", getString("trickle_highlight_color_name2"), {
-        className: "trickled",
+        className: "ice-trickled",
       })
     );
     // only append span if non-whitespace chars present
@@ -702,13 +704,13 @@ ICEStats.prototype = {
     // don't use |stat.x || ""| here because it hides 0 values
     let tbody = stats.map(stat =>
       [
+        stat.state,
+        stat.nominated,
+        stat.selected,
         stat["local-candidate"],
         stat["remote-candidate"],
         stat.componentId,
-        stat.state,
         stat.priority,
-        stat.nominated,
-        stat.selected,
         stat.bytesSent,
         stat.bytesReceived,
       ].map(entry => (Object.is(entry, undefined) ? "" : entry))
@@ -716,13 +718,13 @@ ICEStats.prototype = {
 
     let statsTable = new SimpleTable(
       [
+        "ice_state",
+        "nominated",
+        "selected",
         "local_candidate",
         "remote_candidate",
         "ice_component_id",
-        "ice_state",
         "priority",
-        "nominated",
-        "selected",
         "ice_pair_bytes_sent",
         "ice_pair_bytes_received",
       ].map(columnName => getString(columnName)),
@@ -736,10 +738,28 @@ ICEStats.prototype = {
       // look at statsTable row index + 1 to skip column headers
       let rowIndex = index + 1;
       if (stat["remote-trickled"]) {
-        statsTable.rows[rowIndex].cells[1].className = "trickled";
+        statsTable.rows[rowIndex].cells[4].className = "ice-trickled";
       }
       if (stat["local-trickled"]) {
-        statsTable.rows[rowIndex].cells[0].className = "trickled";
+        statsTable.rows[rowIndex].cells[3].className = "ice-trickled";
+      }
+      if (stat.state) {
+        let state = stat.state;
+        if (state == "succeeded") {
+          statsTable.rows[rowIndex].cells[0].className = "ice-success";
+        }
+        if (state == "failed") {
+          statsTable.rows[rowIndex].cells[0].className = "ice-failed";
+        }
+        if (state == "cancelled") {
+          statsTable.rows[rowIndex].cells[0].className = "ice-cancelled";
+        }
+      }
+      if (stat.nominated) {
+        statsTable.rows[rowIndex].cells[1].className = "ice-success";
+      }
+      if (stat.selected) {
+        statsTable.rows[rowIndex].cells[2].className = "ice-success";
       }
     });
 
@@ -749,8 +769,8 @@ ICEStats.prototype = {
     let rowCount = statsTable.rows.length - 1;
     for (var i = 0; i < rowCount; i++) {
       if (
-        statsTable.rows[i].cells[2].innerHTML !==
-        statsTable.rows[i + 1].cells[2].innerHTML
+        statsTable.rows[i].cells[5].innerHTML !==
+        statsTable.rows[i + 1].cells[5].innerHTML
       ) {
         statsTable.rows[i].className = "bottom-border";
       }
@@ -760,23 +780,26 @@ ICEStats.prototype = {
   },
 
   renderRawICECandidates() {
-    let div = document.createElement("div");
-
-    let tbody = [];
-    let rows = this.generateRawICECandidates();
-    for (let row of rows) {
-      tbody.push([row.local, row.remote]);
+    const div = document.createElement("div");
+    const candidates = direction => {
+      return [
+        ...new Set(
+          direction == "local"
+            ? this._report.rawLocalCandidates.sort()
+            : this._report.rawRemoteCandidates.sort()
+        ),
+      ]
+        .filter(i => `${i}` != "")
+        .map(i => [i]);
+    };
+    for (const direction of ["local", "remote"]) {
+      const statsTable = new SimpleTable(
+        [getString(`raw_${direction}_candidate`)],
+        candidates(direction)
+      ).render();
+      statsTable.className = "raw-candidate";
+      div.appendChild(statsTable);
     }
-
-    let statsTable = new SimpleTable(
-      [getString("raw_local_candidate"), getString("raw_remote_candidate")],
-      tbody
-    ).render();
-
-    // we want different formatting on the raw stats table (namely, left-align)
-    statsTable.className = "raw-candidate";
-    div.appendChild(statsTable);
-
     return div;
   },
 
@@ -796,29 +819,6 @@ ICEStats.prototype = {
     section.appendChild(div);
 
     return section;
-  },
-
-  generateRawICECandidates() {
-    let rows = [];
-    let row;
-
-    let rawLocals = this._report.rawLocalCandidates.sort();
-    // add to a Set (to remove duplicates) because some of these come from
-    // candidates in use and some come from the raw trickled candidates
-    // received that may have been dropped because no stream was found or
-    // they were for a component id that was too high.
-    let rawRemotes = [...new Set(this._report.rawRemoteCandidates)].sort();
-    let rowCount = Math.max(rawLocals.length, rawRemotes.length);
-    for (var i = 0; i < rowCount; i++) {
-      let rawLocal = rawLocals[i];
-      let rawRemote = rawRemotes[i];
-      row = {
-        local: rawLocal || "",
-        remote: rawRemote || "",
-      };
-      rows.push(row);
-    }
-    return rows;
   },
 
   renderIceMetric(labelName, value) {
@@ -909,7 +909,12 @@ ICEStats.prototype = {
       type = `${c.candidateType}-${c.relayProtocol}`;
     }
 
-    return `${c.address}:${c.port}/${c.transport}(${type})`;
+    var proxied = "";
+    if (c.type == "local-candidate") {
+      proxied = `[${c.proxied}]`;
+    }
+
+    return `${c.address}:${c.port}/${c.protocol}(${type}) ${proxied}`;
   },
 };
 

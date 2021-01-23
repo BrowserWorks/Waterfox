@@ -77,7 +77,7 @@ struct mem_source
 {
 	const unsigned char *buf;
 	size_t size;
-	qcms_bool valid;
+	bool valid;
 	const char *invalid_reason;
 };
 
@@ -195,8 +195,8 @@ static void check_profile_version(struct mem_source *src)
 
 static void read_class_signature(qcms_profile *profile, struct mem_source *mem)
 {
-	profile->class = read_u32(mem, 12);
-	switch (profile->class) {
+	profile->class_type = read_u32(mem, 12);
+	switch (profile->class_type) {
 		case DISPLAY_DEVICE_PROFILE:
 		case INPUT_DEVICE_PROFILE:
 		case OUTPUT_DEVICE_PROFILE:
@@ -269,7 +269,7 @@ static struct tag_index read_tag_table(qcms_profile *profile, struct mem_source 
 // Checks a profile for obvious inconsistencies and returns
 // true if the profile looks bogus and should probably be
 // ignored.
-qcms_bool qcms_profile_is_bogus(qcms_profile *profile)
+bool qcms_profile_is_bogus(qcms_profile *profile)
 {
        float sum[3], target[3], tolerance[3];
        float rX, rY, rZ, gX, gY, gZ, bX, bY, bZ;
@@ -903,10 +903,12 @@ static struct curveType *curve_from_gamma(float gamma)
 
 //XXX: should this also be taking a black_point?
 /* similar to CGColorSpaceCreateCalibratedRGB */
-qcms_profile* qcms_profile_create_rgb_with_gamma(
+qcms_profile* qcms_profile_create_rgb_with_gamma_set(
 		qcms_CIE_xyY white_point,
 		qcms_CIE_xyYTRIPLE primaries,
-		float gamma)
+		float redGamma,
+		float greenGamma,
+		float blueGamma)
 {
 	qcms_profile* profile = qcms_profile_create();
 	if (!profile)
@@ -918,19 +920,27 @@ qcms_profile* qcms_profile_create_rgb_with_gamma(
 		return INVALID_PROFILE;
 	}
 
-	profile->redTRC = curve_from_gamma(gamma);
-	profile->blueTRC = curve_from_gamma(gamma);
-	profile->greenTRC = curve_from_gamma(gamma);
+	profile->redTRC = curve_from_gamma(redGamma);
+	profile->blueTRC = curve_from_gamma(blueGamma);
+	profile->greenTRC = curve_from_gamma(greenGamma);
 
 	if (!profile->redTRC || !profile->blueTRC || !profile->greenTRC) {
 		qcms_profile_release(profile);
 		return NO_MEM_PROFILE;
 	}
-	profile->class = DISPLAY_DEVICE_PROFILE;
+	profile->class_type = DISPLAY_DEVICE_PROFILE;
 	profile->rendering_intent = QCMS_INTENT_PERCEPTUAL;
 	profile->color_space = RGB_SIGNATURE;
         profile->pcs = XYZ_SIGNATURE;
 	return profile;
+}
+
+qcms_profile* qcms_profile_create_rgb_with_gamma(
+		qcms_CIE_xyY white_point,
+		qcms_CIE_xyYTRIPLE primaries,
+		float gamma)
+{
+	return qcms_profile_create_rgb_with_gamma_set(white_point, primaries, gamma, gamma, gamma);
 }
 
 qcms_profile* qcms_profile_create_rgb_with_table(
@@ -956,7 +966,7 @@ qcms_profile* qcms_profile_create_rgb_with_table(
 		qcms_profile_release(profile);
 		return NO_MEM_PROFILE;
 	}
-	profile->class = DISPLAY_DEVICE_PROFILE;
+	profile->class_type = DISPLAY_DEVICE_PROFILE;
 	profile->rendering_intent = QCMS_INTENT_PERCEPTUAL;
 	profile->color_space = RGB_SIGNATURE;
         profile->pcs = XYZ_SIGNATURE;
@@ -1016,6 +1026,11 @@ static qcms_CIE_xyY white_point_from_temp(int temp_K)
 	return white_point;
 }
 
+qcms_CIE_xyY qcms_white_point_sRGB(void)
+{
+	return white_point_from_temp(6504);
+}
+
 qcms_profile* qcms_profile_sRGB(void)
 {
 	qcms_profile *profile;
@@ -1028,7 +1043,7 @@ qcms_profile* qcms_profile_sRGB(void)
 	};
 	qcms_CIE_xyY D65;
 
-	D65 = white_point_from_temp(6504);
+	D65 = qcms_white_point_sRGB();
 
 	table = build_sRGB_gamma_table(1024);
 
@@ -1094,8 +1109,8 @@ qcms_profile* qcms_profile_from_memory(const void *mem, size_t size)
 		profile->chromaticAdaption.invalid = true; //Signal the data is not present
 	}
 
-	if (profile->class == DISPLAY_DEVICE_PROFILE || profile->class == INPUT_DEVICE_PROFILE ||
-            profile->class == OUTPUT_DEVICE_PROFILE  || profile->class == COLOR_SPACE_PROFILE) {
+	if (profile->class_type == DISPLAY_DEVICE_PROFILE || profile->class_type == INPUT_DEVICE_PROFILE ||
+            profile->class_type == OUTPUT_DEVICE_PROFILE  || profile->class_type == COLOR_SPACE_PROFILE) {
 		if (profile->color_space == RGB_SIGNATURE) {
 			if (find_tag(index, TAG_A2B0)) {
 				if (read_u32(src, find_tag(index, TAG_A2B0)->offset) == LUT8_TYPE ||
@@ -1405,7 +1420,7 @@ void qcms_data_create_rgb_with_gamma(qcms_CIE_xyY white_point, qcms_CIE_xyYTRIPL
 	 * PCS illumiant field. Likewise mandatory profile tags are omitted.
 	 */
 	write_u32(data, 0, length); // the total length of this memory
-	write_u32(data, 12, DISPLAY_DEVICE_PROFILE); // profile->class
+	write_u32(data, 12, DISPLAY_DEVICE_PROFILE); // profile->class_type
 	write_u32(data, 16, RGB_SIGNATURE); // profile->color_space
 	write_u32(data, 20, XYZ_SIGNATURE); // profile->pcs
 	write_u32(data, 64, QCMS_INTENT_PERCEPTUAL); // profile->rendering_intent

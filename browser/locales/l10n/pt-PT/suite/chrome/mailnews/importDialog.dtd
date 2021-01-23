@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY importDialog.windowTitle "Importar">
+<!ENTITY importAll.label          "Importar tudo">
+<!ENTITY importAll.accesskey      "t">
+<!ENTITY importMail.label         "Correio">
+<!ENTITY importMail.accesskey     "C">
+<!ENTITY importFeeds.label        "Fontes subscritas">
+<!ENTITY importFeeds.accesskey    "o">
+<!ENTITY importAddressbook.label  "Livro de endereços">
+<!ENTITY importAddressbook.accesskey "L">
+<!ENTITY importSettings.label     "Definições">
+<!ENTITY importSettings.accesskey "s">
+<!ENTITY importFilters.label      "Filtros">
+<!ENTITY importFilters.accesskey  "F">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "Assistente de importação de correio do &brandShortName;">
+<!ENTITY importShortDesc.label    "Importar correio, livro de endereços, definições e filtros de outros programas">
+
+<!ENTITY importDescription1.label "Este assistente vai importar mensagens de correio, entradas do Livro de Endereços, e/ou personalizações de outros programas de correio e formatos de livros de endereços comuns para o Correio do &brandShortName;.">
+<!ENTITY importDescription2.label "Ao serem importadas, poderá aceder a elas a partir do Correio e/ou Livro de Endereços do &brandShortName;.">
+
+<!ENTITY selectDescription.label  "Por favor selecione o tipo de ficheiro que deseja importar:">
+<!ENTITY selectDescriptionB.label "Por favor selecione uma conta existente ou crie uma nova:">
+<!ENTITY selectDescription.accesskey "P">
+<!ENTITY acctName.label           "Nome:">
+<!ENTITY acctName.accesskey       "N">
+<!ENTITY noModulesFound.label     "Não foi encontrada qualquer aplicação ou ficheiro para importar dados.">
+
+<!ENTITY back.label               "&lt; Recuar">
+<!ENTITY forward.label            "Avançatr &gt;">
+<!ENTITY finish.label             "Concluir">
+<!ENTITY cancel.label             "Cancelar">
+
+<!ENTITY select.label             "ou selecione o tipo de dados a importar:">
+
+<!ENTITY title.label              "Título">
+<!ENTITY processing.label         "A importar…">

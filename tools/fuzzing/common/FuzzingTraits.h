@@ -8,9 +8,9 @@
 #define mozilla_fuzzing_FuzzingTraits_h
 
 #include "mozilla/Assertions.h"
-#include "mozilla/TypeTraits.h"
 #include <cmath>
 #include <random>
+#include <type_traits>
 
 namespace mozilla {
 namespace fuzzing {
@@ -35,7 +35,7 @@ class FuzzingTraits {
  */
 template <typename T>
 T RandomNumericLimit() {
-  static_assert(mozilla::IsArithmetic<T>::value == true,
+  static_assert(std::is_arithmetic_v<T> == true,
                 "T must be an arithmetic type");
   return FuzzingTraits::Sometimes(2) ? std::numeric_limits<T>::min()
                                      : std::numeric_limits<T>::max();
@@ -46,8 +46,7 @@ T RandomNumericLimit() {
  */
 template <typename T>
 T RandomInteger() {
-  static_assert(mozilla::IsIntegral<T>::value == true,
-                "T must be an integral type");
+  static_assert(std::is_integral_v<T> == true, "T must be an integral type");
   double r =
       static_cast<double>(FuzzingTraits::Random((sizeof(T) * CHAR_BIT) + 1));
   T x = static_cast<T>(pow(2.0, r)) - 1;
@@ -62,8 +61,7 @@ T RandomInteger() {
  */
 template <typename T>
 T RandomIntegerRange(T min, T max) {
-  static_assert(mozilla::IsIntegral<T>::value == true,
-                "T must be an integral type");
+  static_assert(std::is_integral_v<T> == true, "T must be an integral type");
   MOZ_ASSERT(min < max);
   std::uniform_int_distribution<T> d(min, max);
   return d(FuzzingTraits::Rng());
@@ -91,7 +89,7 @@ inline char RandomIntegerRange(char min, char max) {
  */
 template <typename T>
 T RandomFloatingPointRange(T min, T max) {
-  static_assert(mozilla::IsFloatingPoint<T>::value == true,
+  static_assert(std::is_floating_point_v<T> == true,
                 "T must be a floating point type");
   MOZ_ASSERT(min < max);
   std::uniform_real_distribution<T> d(
@@ -105,7 +103,7 @@ T RandomFloatingPointRange(T min, T max) {
  */
 template <typename T>
 T RandomFloatingPoint() {
-  static_assert(mozilla::IsFloatingPoint<T>::value == true,
+  static_assert(std::is_floating_point_v<T> == true,
                 "T must be a floating point type");
   int radix = RandomIntegerRange<int>(std::numeric_limits<T>::min_exponent,
                                       std::numeric_limits<T>::max_exponent);

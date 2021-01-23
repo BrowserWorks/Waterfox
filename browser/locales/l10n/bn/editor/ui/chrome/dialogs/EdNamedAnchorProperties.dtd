@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "নামসহ অ্যাংকর বৈশিষ্ট্য">
+<!ENTITY anchorNameEditField.label "অ্যাংকরের নাম (N):">
+<!ENTITY anchorNameEditField.accessKey "N">
+<!ENTITY nameInput.tooltip "এই নামসহ অ্যাংকরের জন্য একটি স্বতন্ত্র নাম দিন (লক্ষ্য)">
+

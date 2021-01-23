@@ -10,8 +10,13 @@ for var in ('CC', 'CC_VERSION', 'CXX', 'RUSTC', 'RUSTC_VERSION'):
     if CONFIG[var]:
         DEFINES[var] = CONFIG[var]
 
-for var in ('target', 'MOZ_CONFIGURE_OPTIONS'):
+for var in ('MOZ_CONFIGURE_OPTIONS',):
     DEFINES[var] = CONFIG[var]
+
+if CONFIG['MOZ_ANDROID_FAT_AAR_ARCHITECTURES']:
+    DEFINES['target'] = '</td><td>'.join(sorted(CONFIG['MOZ_ANDROID_FAT_AAR_ARCHITECTURES']))
+else:
+    DEFINES['target'] = CONFIG['target']
 
 DEFINES['CFLAGS'] = ' '.join(CONFIG['OS_CFLAGS'])
 
@@ -22,7 +27,7 @@ DEFINES['RUSTFLAGS'] = ' '.join(rustflags)
 
 cxx_flags = []
 for var in ('OS_CPPFLAGS', 'OS_CXXFLAGS', 'DEBUG', 'OPTIMIZE', 'FRAMEPTR'):
-    cxx_flags += COMPILE_FLAGS.get(var, [])
+    cxx_flags += COMPILE_FLAGS[var] or []
 
 DEFINES['CXXFLAGS'] = ' '.join(cxx_flags)
 
@@ -54,13 +59,7 @@ with Files('aboutwebrtc/*'):
 with Files('gmp-sources/*'):
     BUG_COMPONENT = ('Toolkit', 'General')
 
-with Files('tests/browser/browser_audio*'):
-    BUG_COMPONENT = ('Core', 'Audio/Video: Playback')
-
-with Files('tests/browser/browser_autoplay*'):
-    BUG_COMPONENT = ('Core', 'Audio/Video: Playback')
-
-with Files('tests/browser/*block*'):
+with Files('tests/browser/browser_*autoplay*'):
     BUG_COMPONENT = ('Core', 'Audio/Video: Playback')
 
 with Files('tests/browser/*silent*'):
@@ -94,7 +93,7 @@ with Files('tests/browser/*find*'):
     BUG_COMPONENT = ('Toolkit', 'Find Toolbar')
 
 with Files('tests/browser/browser_isSynthetic.js'):
-    BUG_COMPONENT = ('Firefox', 'Tabbed Browsing')
+    BUG_COMPONENT = ('Firefox', 'Tabbed Browser')
 
 with Files('tests/browser/*mediaPlayback*'):
     BUG_COMPONENT = ('Toolkit', 'XUL Widgets')
@@ -118,13 +117,10 @@ with Files('tests/chrome/*autocomplete*'):
     BUG_COMPONENT = ('Toolkit', 'Autocomplete')
 
 with Files('tests/chrome/*drop*'):
-    BUG_COMPONENT = ('Core', 'Drag and Drop')
+    BUG_COMPONENT = ('Core', 'DOM: Drag & Drop')
 
 with Files('tests/chrome/*1048178*'):
     BUG_COMPONENT = ('Core', 'XUL')
-
-with Files('tests/chrome/*253481*'):
-    BUG_COMPONENT = ('Core', 'Editor')
 
 with Files('tests/chrome/*263683*'):
     BUG_COMPONENT = ('Toolkit', 'Find Toolbar')
@@ -159,12 +155,9 @@ with Files('tests/chrome/*451540*'):
     BUG_COMPONENT = ('Toolkit', 'Find Toolbar')
 
 with Files('tests/chrome/*557987*'):
-    BUG_COMPONENT = ('Core', 'XP Toolkit/Widgets: Menus')
+    BUG_COMPONENT = ('Firefox', 'Menus')
 with Files('tests/chrome/*562554*'):
-    BUG_COMPONENT = ('Core', 'XP Toolkit/Widgets: Menus')
-
-with Files('tests/chrome/*570192*'):
-    BUG_COMPONENT = ('Firefox', 'Session Restore')
+    BUG_COMPONENT = ('Firefox', 'Menus')
 
 with Files('tests/chrome/*findbar*'):
     BUG_COMPONENT = ('Toolkit', 'Find Toolbar')
@@ -176,10 +169,7 @@ with Files('tests/mochitest/*autocomplete*'):
     BUG_COMPONENT = ('Toolkit', 'Autocomplete')
 
 with Files('tests/mochitest/*mousecapture*'):
-    BUG_COMPONENT = ('Core', 'User events and focus handling')
-
-with Files('tests/reftests/*multiline*'):
-    BUG_COMPONENT = ('Core', 'XBL')
+    BUG_COMPONENT = ('Core', 'DOM: UI Events & Focus Handling')
 
 with Files('tests/reftests/*videocontrols*'):
     BUG_COMPONENT = ('Toolkit', 'Video/Audio Controls')
@@ -203,7 +193,7 @@ with Files('tests/widgets/*menubar*'):
     BUG_COMPONENT = ('Core', 'XUL')
 
 with Files('tests/widgets/*capture*'):
-    BUG_COMPONENT = ('Core', 'User events and focus handling')
+    BUG_COMPONENT = ('Core', 'DOM: UI Events & Focus Handling')
 
 with Files('tests/widgets/*popup*'):
     BUG_COMPONENT = ('Toolkit', 'XUL Widgets')
@@ -253,9 +243,6 @@ with Files('contentAreaUtils.js'):
     BUG_COMPONENT = ('Toolkit', 'General')
 
 with Files('*picker*'):
-    BUG_COMPONENT = ('Toolkit', 'XUL Widgets')
-
-with Files('direction*'):
     BUG_COMPONENT = ('Toolkit', 'XUL Widgets')
 
 with Files('edit*'):

@@ -7,9 +7,8 @@
 #ifndef js_Fifo_h
 #define js_Fifo_h
 
-#include "mozilla/Move.h"
-
-#include "jsutil.h"
+#include <algorithm>
+#include <utility>
 
 #include "js/Vector.h"
 
@@ -48,7 +47,7 @@ class Fifo {
   void fixup() {
     if (front_.empty() && !rear_.empty()) {
       front_.swap(rear_);
-      Reverse(front_.begin(), front_.end());
+      std::reverse(front_.begin(), front_.end());
     }
   }
 
@@ -162,8 +161,15 @@ class Fifo {
   // the number of elements removed.
   template <class Pred>
   size_t eraseIf(Pred pred) {
-    size_t erased = EraseIf(front_, pred);
-    erased += EraseIf(rear_, pred);
+    size_t frontLength = front_.length();
+    front_.eraseIf(pred);
+    size_t erased = frontLength - front_.length();
+
+    size_t rearLength = rear_.length();
+    rear_.eraseIf(pred);
+    erased += rearLength - rear_.length();
+
+    fixup();
     return erased;
   }
 

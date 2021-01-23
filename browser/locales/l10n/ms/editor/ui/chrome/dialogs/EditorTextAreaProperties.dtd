@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Sifat Medan Teks">
+
+<!ENTITY Settings.label "Tetapan">
+
+<!ENTITY TextAreaName.label "Nama Medan:">
+<!ENTITY TextAreaName.accessKey "N">
+<!ENTITY TextAreaRows.label "Baris:">
+<!ENTITY TextAreaRows.accessKey "B">
+<!ENTITY TextAreaCols.label "Lajur:">
+<!ENTITY TextAreaCols.accessKey "L">
+<!ENTITY TextAreaReadOnly.label "Baca Sahaja">
+<!ENTITY TextAreaReadOnly.accessKey "S">
+<!ENTITY TextAreaDisabled.label "Dinyahdayakan">
+<!ENTITY TextAreaDisabled.accessKey "D">
+<!ENTITY TextAreaTabIndex.label "Indeks Tab:">
+<!ENTITY TextAreaTabIndex.accessKey "I">
+<!ENTITY TextAreaAccessKey.label "Kekunci Akses:">
+<!ENTITY TextAreaAccessKey.accessKey "K">
+<!ENTITY InitialText.label "Teks Mula:">
+<!ENTITY InitialText.accessKey "T">
+
+<!ENTITY TextAreaWrap.label "Mod Balutan:">
+<!ENTITY TextAreaWrap.accessKey "B">
+<!ENTITY WrapDefault.value "Piawai">
+<!ENTITY WrapOff.value "Nyahaktif">
+<!ENTITY WrapHard.value "Keras">
+<!ENTITY WrapSoft.value "Lembut">
+<!ENTITY WrapPhysical.value "Fizikal">
+<!ENTITY WrapVirtual.value "Maya">

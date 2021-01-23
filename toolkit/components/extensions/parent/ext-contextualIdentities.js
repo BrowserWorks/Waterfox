@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
 
 ChromeUtils.defineModuleGetter(
@@ -19,7 +23,6 @@ var { ExtensionError } = ExtensionUtils;
 
 const CONTAINER_PREF_INSTALL_DEFAULTS = {
   "privacy.userContext.enabled": true,
-  "privacy.userContext.longPressBehavior": 2,
   "privacy.userContext.ui.enabled": true,
   "privacy.usercontext.about_newtab_segregation.enabled": true,
   "privacy.userContext.extension": undefined,
@@ -115,16 +118,12 @@ ExtensionPreferencesManager.addSetting(CONTAINERS_ENABLED_SETTING_NAME, {
 
   setCallback(value) {
     if (value !== true) {
-      return Object.assign(CONTAINER_PREF_INSTALL_DEFAULTS, {
+      return {
+        ...CONTAINER_PREF_INSTALL_DEFAULTS,
         "privacy.userContext.extension": value,
-      });
+      };
     }
-
-    let prefs = {};
-    for (let pref of this.prefNames) {
-      prefs[pref] = undefined;
-    }
-    return prefs;
+    return {};
   },
 });
 

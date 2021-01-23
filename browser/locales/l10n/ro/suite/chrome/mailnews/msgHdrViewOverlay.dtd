@@ -1,0 +1,60 @@
+<!--
+# Translator(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+# turcan <nicturcan@gmail.com>
+# secarica <orice@secarica.ro>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField.label "Către:">
+<!ENTITY fromField.label "De la:">
+<!ENTITY senderField.label "Expeditor:">
+<!ENTITY organizationField.label "Organizație: ">
+<!ENTITY replyToField.label "Răspuns către:">
+
+<!ENTITY subjectField.label "Subiect:">
+<!--# LOCALIZATION NOTE (ccField.label): DONT_TRANSLATE -->
+<!ENTITY ccField.label "Cc: ">
+<!ENTITY bccField.label "Copie ascunsă:">
+<!ENTITY newsgroupsField.label "Grupuri de discuții:">
+<!ENTITY followupToField.label "Urmare la:">
+
+<!ENTITY tagsHdr.label "Etichete:">
+<!ENTITY dateField.label "Data: ">
+<!ENTITY userAgentField.label "Agentul utilizatorului:">
+<!ENTITY referencesField.label "Referințe: ">
+<!ENTITY messageIdField.label "ID mesaj: ">
+<!ENTITY inReplyToField.label "In-Reply-To: ">
+<!ENTITY originalWebsite.label "Sait web:">
+
+<!ENTITY editMessage.label                 "Editează ciorna...">
+<!ENTITY editMessage.accesskey             "d">
+
+<!ENTITY attachmentsTree.label             "Anexe:">
+<!ENTITY attachmentsTree.accesskey         "A">
+<!ENTITY openAttachmentCmd.label           "Deschis">
+<!ENTITY openAttachmentCmd.accesskey       "D">
+<!ENTITY viewAttachmentCmd.label           "Vizualizează sursa">
+<!ENTITY viewAttachmentCmd.accesskey       "V">
+<!ENTITY saveAsAttachmentCmd.label         "Salvează ca…">
+<!ENTITY saveAsAttachmentCmd.accesskey     "a">
+<!ENTITY detachAttachmentCmd.label         "Elimină anexa…">
+<!ENTITY detachAttachmentCmd.accesskey     "E">
+<!ENTITY deleteAttachmentCmd.label         "Șterge elementul">
+<!ENTITY deleteAttachmentCmd.accesskey     "t">
+<!ENTITY saveAllAttachmentsCmd.label       "Salvează toate…">
+<!ENTITY saveAllAttachmentsCmd.accesskey   "S">
+<!ENTITY detachAllAttachmentsCmd.label     "Elimină toate anexele…">
+<!ENTITY detachAllAttachmentsCmd.accesskey "E">
+<!ENTITY deleteAllAttachmentsCmd.label     "Șterge toate anexele…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey "e">

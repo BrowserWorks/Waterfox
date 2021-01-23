@@ -8,20 +8,31 @@ const React = require("devtools/client/shared/vendor/react");
 const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
 const { connect } = require("devtools/client/shared/vendor/react-redux");
 
-const { isFiltered } = require("../utils/audit");
-const { FILTERS } = require("../constants");
+const { isFiltered } = require("devtools/client/accessibility/utils/audit");
+const { FILTERS } = require("devtools/client/accessibility/constants");
 const {
-  accessibility: { AUDIT_TYPE, SCORES },
+  accessibility: {
+    AUDIT_TYPE,
+    SCORES: { BEST_PRACTICES, FAIL, WARNING },
+  },
 } = require("devtools/shared/constants");
 
-function validateContrast({ error, score }) {
-  return !error && score === SCORES.FAIL;
+function validateCheck({ error, score }) {
+  return !error && [BEST_PRACTICES, FAIL, WARNING].includes(score);
 }
 
 const AUDIT_TYPE_TO_FILTER = {
   [AUDIT_TYPE.CONTRAST]: {
     filterKey: FILTERS.CONTRAST,
-    validator: validateContrast,
+    validator: validateCheck,
+  },
+  [AUDIT_TYPE.KEYBOARD]: {
+    filterKey: FILTERS.KEYBOARD,
+    validator: validateCheck,
+  },
+  [AUDIT_TYPE.TEXT_LABEL]: {
+    filterKey: FILTERS.TEXT_LABEL,
+    validator: validateCheck,
   },
 };
 
@@ -51,6 +62,7 @@ class AuditFilter extends React.Component {
     for (const type in checks) {
       if (
         AUDIT_TYPE_TO_FILTER[type] &&
+        checks[type] &&
         filters[AUDIT_TYPE_TO_FILTER[type].filterKey] &&
         AUDIT_TYPE_TO_FILTER[type].validator(checks[type])
       ) {

@@ -5,6 +5,7 @@
 const toolbox = require("devtools-launchpad/index");
 const sourceMapAssets = require("devtools-source-map/assets");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
+const webpack = require("webpack");
 
 const getConfig = require("./bin/getConfig");
 const mozillaCentralMappings = require("./configs/mozilla-central-mappings");
@@ -46,6 +47,14 @@ const webpackConfig = {
         to: `source-map-worker-assets/${name}`,
       }))
     ),
+    new webpack.BannerPlugin({
+      banner: `/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ `,
+      raw: true,
+      exclude: /\.css$/,
+    }),
   ],
 };
 
@@ -76,4 +85,17 @@ if (!isProduction) {
   extra.recordsPath = "bin/module-manifest.json";
 }
 
-module.exports = toolbox.toolboxConfig(webpackConfig, envConfig, extra);
+const overallConfig = toolbox.toolboxConfig(webpackConfig, envConfig, extra);
+
+for (const rule of overallConfig.module.rules) {
+  // The launchpad still uses Babel 6. Rewrite it to use the local Babel 7
+  // install instead.
+  if (rule.loader === "babel-loader?ignore=src/lib") {
+    rule.loader = require.resolve("babel-loader");
+    rule.options = {
+      ignore: ["src/lib"],
+    };
+  }
+}
+
+module.exports = overallConfig;

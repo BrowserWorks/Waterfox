@@ -1,0 +1,74 @@
+<!--
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- Note to localizers, don't localize the strings 'width' or 'height' -->
+<!ENTITY  pageInfoWindow.dimensions  "width: 100ch; height: 38em;">
+
+<!ENTITY  copy.label             "Kopiraj">
+<!ENTITY  selectall.label        "Izberi vse">
+<!ENTITY  copyLinks.label           "Kopiraj povezavo">
+<!ENTITY  openInNewTab.label        "Odpri v novem zavihku">
+<!ENTITY  openInNewWindow.label     "Odpri v novem oknu">
+
+<!ENTITY  generalTab            "Splošno">
+<!ENTITY  generalSize           "Velikost:">
+<!ENTITY  generalSource         "Vir predpomnilnika:">
+<!ENTITY  generalModified       "Spremenjeno:">
+<!ENTITY  generalMetaName       "Ime">
+<!ENTITY  generalMetaContent    "Vsebina">
+<!ENTITY  generalSecurityDetails           "Podrobnosti">
+
+<!ENTITY  formsTab              "Obrazci">
+<!ENTITY  formName              "Ime">
+<!ENTITY  formFields            "Polja:">
+<!ENTITY  formLabel             "Oznaka">
+<!ENTITY  formFName             "Ime polja">
+<!ENTITY  formCValue            "Trenutna vrednost">
+
+<!ENTITY  linksTab              "Povezave">
+<!ENTITY  linkName              "Ime">
+
+<!ENTITY  mediaAlt              "Nadomestno besedilo:">
+<!ENTITY  mediaAltHeader        "Nadomestno besedilo">
+<!ENTITY  mediaType             "Vrsta">
+<!ENTITY  mediaSize             "Velikost">
+<!ENTITY  mediaTitle            "Naslov:">
+<!ENTITY  mediaLongdesc         "Dolg opis:">
+<!ENTITY  mediaSaveAs           "Shrani kot …">
+
+<!ENTITY  feedSubscribe         "Naroči se">
+
+<!ENTITY  permTab               "Dovoljenja">
+<!ENTITY  permUseDefault        "Uporabi privzeto">
+<!ENTITY  permAskAlways         "Vedno vprašaj">
+<!ENTITY  permAllow             "Dovoli">
+<!ENTITY  permissionsFor        "Dovoljenja za:">
+<!ENTITY  permImage             "Naloži slike">
+<!ENTITY  permPopup             "Odpri pojavna okna">
+<!ENTITY  permCookie            "Nastavi piškotke">
+<!ENTITY  permNotifications     "Prikaži obvestila">
+<!ENTITY  permInstall           "Namesti razširitve ali teme">
+
+<!ENTITY  securityTab           "Varnost">
+<!ENTITY  securityHeader        "Varnostni podatki za to stran">
+<!ENTITY  securityView.certView "Preglej digitalno potrdilo">
+<!ENTITY  securityView.unknown   "Neznano">
+
+
+<!ENTITY  securityView.identity.header   "Identiteta spletnega mesta">
+<!ENTITY  securityView.identity.owner    "Lastnik:">
+<!ENTITY  securityView.identity.domain   "Spletno mesto:">
+<!ENTITY  securityView.identity.verifier "Overil:">
+
+<!ENTITY  securityView.identity.validity "Poteče:">
+
+<!ENTITY  securityView.privacy.header                   "Zasebnost in zgodovina">
+<!ENTITY  securityView.privacy.cookies                  "Ali to spletno mesto shranjuje podatke (piškotke) na moj računalnik?">
+<!ENTITY  securityView.privacy.viewCookies              "Preglej piškotke">
+<!ENTITY  securityView.privacy.passwords                "Ali sem shranil kakšno geslo za to spletno mesto?">
+<!ENTITY  securityView.privacy.viewPasswords            "Preglej shranjena gesla">
+
+<!ENTITY  securityView.technical.header                 "Tehnične podrobnosti">

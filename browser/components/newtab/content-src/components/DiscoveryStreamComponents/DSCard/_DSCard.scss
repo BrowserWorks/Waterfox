@@ -9,23 +9,49 @@ $excerpt-line-height: 20;
   flex-direction: column;
   position: relative;
 
+  .playhead {
+    background: $blue-60 url('../data/content/assets/glyph-playhead.svg') no-repeat 12px center;
+    border-radius: 20px;
+    bottom: -16px;
+    color: $white-0;
+    display: flex;
+    flex-direction: column;
+    height: 40px;
+    justify-content: center;
+    left: 16px;
+    min-width: 40px;
+    padding: 0 0 0 40px;
+    position: absolute;
+    transition: padding 100ms ease-in-out 0ms, color 100ms linear 100ms;
+    z-index: 1;
+
+    &:hover {
+      color: $white-100;
+      padding: 0 20px 0 40px;
+    }
+
+    span {
+      display: none;
+    }
+
+    &:hover span {
+      display: inline;
+      font-style: normal;
+      font-weight: 600;
+      font-size: 13px;
+    }
+  }
+
   &.placeholder {
     background: transparent;
     box-shadow: inset $inner-box-shadow;
     border-radius: 4px;
-
-    .ds-card-link {
-      cursor: default;
-    }
-
-    .img-wrapper {
-      opacity: 0;
-    }
+    min-height: 300px;
   }
-
 
   .img-wrapper {
     width: 100%;
+    position: relative;
   }
 
   .img {
@@ -39,18 +65,9 @@ $excerpt-line-height: 20;
   }
 
   .ds-card-link {
+    height: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    height: 100%;
-
-    &:focus {
-      @include ds-fade-in;
-
-      @include dark-theme-only {
-        @include ds-fade-in($blue-40-40);
-      }
-    }
 
     &:hover {
       @include ds-fade-in($grey-30);
@@ -58,10 +75,23 @@ $excerpt-line-height: 20;
       @include dark-theme-only {
         @include ds-fade-in($grey-60);
       }
+
+      header {
+        @include dark-theme-only {
+          color: $blue-40;
+        }
+
+        color: $blue-60;
+      }
     }
 
-    &:focus,
-    &:hover {
+    &:focus {
+      @include ds-fade-in;
+
+      @include dark-theme-only {
+        @include ds-fade-in($blue-40-40);
+      }
+
       header {
         @include dark-theme-only {
           color: $blue-40;
@@ -72,6 +102,12 @@ $excerpt-line-height: 20;
     }
 
     &:active {
+      @include ds-fade-in($grey-30);
+
+      @include dark-theme-only {
+        @include ds-fade-in($grey-60);
+      }
+
       header {
         @include dark-theme-only {
           color: $blue-50;
@@ -82,41 +118,133 @@ $excerpt-line-height: 20;
     }
   }
 
+  &.video-card .meta {
+    margin-top: 4px;
+  }
+
   .meta {
     display: flex;
     flex-direction: column;
+    padding: 12px 16px;
     flex-grow: 1;
-    padding: 12px;
 
     .info-wrap {
       flex-grow: 1;
-      margin: 0 0 12px;
     }
 
     .title {
       // show only 3 lines of copy
-      @include limit-visibile-lines(3, $header-line-height, $header-font-size);
+      @include limit-visible-lines(3, $header-line-height, $header-font-size);
       font-weight: 600;
     }
 
     .excerpt {
       // show only 3 lines of copy
-      @include limit-visibile-lines(3, $excerpt-line-height, $excerpt-font-size);
+      @include limit-visible-lines(
+        3,
+        $excerpt-line-height,
+        $excerpt-font-size
+      );
     }
 
-    .source {
-      -webkit-line-clamp: 1;
-      margin-bottom: 2px;
-    }
-
-    .context,
     .source {
       @include dark-theme-only {
         color: $grey-40;
       }
 
+      -webkit-line-clamp: 1;
+      margin-bottom: 2px;
       font-size: 13px;
       color: $grey-50;
+    }
+
+    .cta-button {
+      @include dark-theme-only {
+        color: $grey-10;
+        background: $grey-90-70;
+      }
+
+      width: 100%;
+      margin: 12px 0 4px;
+      box-shadow: none;
+      border-radius: 4px;
+      height: 32px;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 5px 8px 7px;
+      border: 0;
+      color: $grey-90;
+      background: $grey-90-10;
+
+      &:focus {
+        @include dark-theme-only {
+          background: $grey-90-70;
+          box-shadow: 0 0 0 2px $grey-80, 0 0 0 5px $blue-50-50;
+        }
+
+        background: $grey-90-10;
+        box-shadow: 0 0 0 2px $white, 0 0 0 5px $blue-50-50;
+      }
+
+      &:hover {
+        @include dark-theme-only {
+          background: $grey-90-50;
+        }
+
+        background: $grey-90-20;
+      }
+
+      &:active {
+        @include dark-theme-only {
+          background: $grey-90-70;
+        }
+
+        background: $grey-90-30;
+      }
+    }
+
+    .cta-link {
+      @include dark-theme-only {
+        color: $blue-40;
+        fill: $blue-40;
+      }
+
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 24px;
+      height: 24px;
+      width: auto;
+      background-size: auto;
+      background-position: right 1.5px;
+      padding-right: 9px;
+      color: $blue-60;
+      fill: $blue-60;
+
+      &:focus {
+        @include dark-theme-only {
+          box-shadow: 0 0 0 1px $grey-80, 0 0 0 4px $blue-50-50;
+        }
+
+        box-shadow: 0 0 0 1px $white, 0 0 0 4px $blue-50-50;
+        border-radius: 4px;
+        outline: 0;
+      }
+
+      &:active {
+        @include dark-theme-only {
+          color: $blue-50;
+          fill: $blue-50;
+          box-shadow: none;
+        }
+
+        color: $blue-70;
+        fill: $blue-70;
+        box-shadow: none;
+      }
+
+      &:hover {
+        text-decoration: underline;
+      }
     }
   }
 

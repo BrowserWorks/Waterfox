@@ -6,11 +6,13 @@
  *   - an existent active entry
  */
 
+"use strict";
+
 function doom(url, callback) {
   get_cache_service()
     .diskCacheStorage(Services.loadContextInfo.default, false)
     .asyncDoomURI(createURI(url), "", {
-      onCacheEntryDoomed: function(result) {
+      onCacheEntryDoomed(result) {
         callback(result);
       },
     });

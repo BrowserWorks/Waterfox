@@ -14,8 +14,16 @@
 namespace js {
 
 class DateObject : public NativeObject {
+  // Time in milliseconds since the (Unix) epoch.
   static const uint32_t UTC_TIME_SLOT = 0;
-  static const uint32_t TZA_SLOT = 1;
+
+  // Raw time zone offset in seconds, i.e. without daylight saving adjustment,
+  // of the current system zone.
+  //
+  // This value is exclusively used to verify the cached slots are still valid.
+  //
+  // It is NOT the return value of Date.prototype.getTimezoneOffset()!
+  static const uint32_t UTC_TIME_ZONE_OFFSET_SLOT = 1;
 
   /*
    * Cached slots holding local properties of the date.
@@ -45,8 +53,8 @@ class DateObject : public NativeObject {
   static const uint32_t RESERVED_SLOTS = LOCAL_SECONDS_INTO_YEAR_SLOT + 1;
 
  public:
-  static const Class class_;
-  static const Class protoClass_;
+  static const JSClass class_;
+  static const JSClass protoClass_;
 
   JS::ClippedTime clippedTime() const {
     double t = getFixedSlot(UTC_TIME_SLOT).toDouble();

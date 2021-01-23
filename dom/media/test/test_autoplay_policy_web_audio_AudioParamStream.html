@@ -44,13 +44,14 @@ SimpleTest.waitForExplicitFinish();
 function setupTestPreferences() {
   return SpecialPowers.pushPrefEnv({"set": [
     ["media.autoplay.default", SpecialPowers.Ci.nsIAutoplay.BLOCKED],
-    ["media.autoplay.enabled.user-gestures-needed", true],
+    ["media.autoplay.blocking_policy", 0],
     ["media.autoplay.block-webaudio", true],
     ["media.autoplay.block-event.enabled", true],
   ]});
 }
 
 function createAudioContext() {
+  /* global ac */
   window.ac = new AudioContext();
 
   ac.allowedToStart = new Promise(resolve => {
@@ -101,7 +102,7 @@ function createAudioParams(nodeType) {
       return [ac.createStereoPanner().pan];
     default:
       ok(false, `non-defined node type ${nodeType}.`);
-      return;
+      return [];
   }
 }
 
@@ -132,7 +133,7 @@ function connectAudioScheduledSourceNodeToAudioParams() {
   let audioParamsArr = createAllAudioParamsFromDifferentAudioNode();
   for (let audioParam of audioParamsArr) {
     osc.connect(audioParam);
-    ok(SpecialPowers.wrap(audioParam).isStreamSuspended,
+    ok(SpecialPowers.wrap(audioParam).isTrackSuspended,
       `(${audioParam.name}) audioParam's stream has been suspended.`);
   }
 
@@ -146,7 +147,7 @@ async function audioContextAndAudioParamStreamsShouldBeResumed(audioParamsArr) {
   await ac.allowedToStart;
   is(ac.state, "running", `AudioContext is allowed to start.`);
   for (let audioParam of audioParamsArr) {
-    ok(!SpecialPowers.wrap(audioParam).isStreamSuspended,
+    ok(!SpecialPowers.wrap(audioParam).isTrackSuspended,
        `(${audioParam.name}) audioParam's stream has been resumed.`);;
   }
 }
@@ -155,7 +156,7 @@ async function suspendAudioContextAndAudioParamStreams(audioParamsArr) {
   await ac.suspend();
   is(ac.state, "suspended", `AudioContext is suspended.`);
   for (let audioParam of audioParamsArr) {
-    ok(SpecialPowers.wrap(audioParam).isStreamSuspended,
+    ok(SpecialPowers.wrap(audioParam).isTrackSuspended,
        `(${audioParam.name}) audioParam's stream has been suspended.`);;
   }
 }

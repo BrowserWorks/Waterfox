@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -16,6 +15,10 @@ add_task(async function() {
 
   info("Switch the host to the right");
   await toolbox.switchHost("right");
+
+  // Switching hosts is not correctly waiting when DevTools run in content frame
+  // See Bug 1571421.
+  await wait(1000);
 
   const button = doc.querySelector(".sidebar-toggle");
   const toolboxWidth = doc.getElementById("inspector-splitter-box").clientWidth;

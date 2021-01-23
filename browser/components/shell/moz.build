@@ -11,6 +11,7 @@ LOCAL_INCLUDES += [
 
 BROWSER_CHROME_MANIFESTS += ['test/browser.ini']
 MOCHITEST_CHROME_MANIFESTS += ['test/chrome.ini']
+XPCSHELL_TESTS_MANIFESTS += ['test/unit/xpcshell.ini']
 
 JAR_MANIFESTS += ['jar.mn']
 
@@ -26,7 +27,12 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
     SOURCES += [
         'nsMacShellService.cpp',
     ]
-elif 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
+
+    LOCAL_INCLUDES += [
+        # For CocoaFileUtils
+        '/xpcom/io'
+    ]
+elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk':
     XPIDL_SOURCES += [
         'nsIGNOMEShellService.idl',
     ]
@@ -34,7 +40,17 @@ elif 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
     SOURCES += [
         'nsGNOMEShellService.cpp',
     ]
+    if CONFIG['MOZ_ENABLE_DBUS']:
+        SOURCES += [
+            'nsGNOMEShellDBusHelper.cpp',
+            'nsGNOMEShellSearchProvider.cpp',
+        ]
+        include('/ipc/chromium/chromium-config.mozbuild')
+
 elif CONFIG['OS_ARCH'] == 'WINNT':
+    XPIDL_SOURCES += [
+        'nsIWindowsShellService.idl',
+    ]
     SOURCES += [
         'nsWindowsShellService.cpp',
     ]
@@ -57,6 +73,8 @@ for var in ('MOZ_APP_NAME', 'MOZ_APP_VERSION'):
     DEFINES[var] = '"%s"' % CONFIG[var]
 
 CXXFLAGS += CONFIG['TK_CFLAGS']
+if CONFIG['MOZ_ENABLE_DBUS']:
+    CXXFLAGS += CONFIG['MOZ_DBUS_GLIB_CFLAGS']
 
 with Files('**'):
     BUG_COMPONENT = ('Firefox', 'Shell Integration')

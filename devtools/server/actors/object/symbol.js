@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -18,12 +16,12 @@ loader.lazyRequireGetter(
 /**
  * Creates an actor for the specified symbol.
  *
- * @param symbol Symbol
- *        The symbol.
+ * @param {DevToolsServerConnection} conn: The connection to the client.
+ * @param {Symbol} symbol: The symbol we want to create an actor for.
  */
 const SymbolActor = protocol.ActorClassWithSpec(symbolSpec, {
-  initialize(symbol) {
-    protocol.Actor.prototype.initialize.call(this);
+  initialize(conn, symbol) {
+    protocol.Actor.prototype.initialize.call(this, conn);
     this.symbol = symbol;
   },
 
@@ -36,6 +34,7 @@ const SymbolActor = protocol.ActorClassWithSpec(symbolSpec, {
     // it so we need to manually leave on destroy so that we don't leak
     // memory.
     this._releaseActor();
+    protocol.Actor.prototype.destroy.call(this);
   },
 
   /**
@@ -49,7 +48,7 @@ const SymbolActor = protocol.ActorClassWithSpec(symbolSpec, {
     const name = getSymbolName(this.symbol);
     if (name !== undefined) {
       // Create a grip for the name because it might be a longString.
-      form.name = createValueGrip(name, this.registeredPool);
+      form.name = createValueGrip(name, this.getParent());
     }
     return form;
   },
@@ -58,17 +57,18 @@ const SymbolActor = protocol.ActorClassWithSpec(symbolSpec, {
    * Handle a request to release this SymbolActor instance.
    */
   release: function() {
-    // TODO: also check if registeredPool === threadActor.threadLifetimePool
+    // TODO: also check if this.getParent() === threadActor.threadLifetimePool
     // when the web console moves away from manually releasing pause-scoped
     // actors.
     this._releaseActor();
-    this.registeredPool.removeActor(this);
+    this.destroy();
     return {};
   },
 
   _releaseActor: function() {
-    if (this.registeredPool && this.registeredPool.symbolActors) {
-      delete this.registeredPool.symbolActors[this.symbol];
+    const parent = this.getParent();
+    if (parent && parent.symbolActors) {
+      delete parent.symbolActors[this.symbol];
     }
   },
 });
@@ -85,7 +85,7 @@ function getSymbolName(symbol) {
  *
  * @param sym Symbol
  *        The symbol we are creating a grip for.
- * @param pool ActorPool
+ * @param pool Pool
  *        The actor pool where the new actor will be added.
  */
 function symbolGrip(sym, pool) {
@@ -97,8 +97,8 @@ function symbolGrip(sym, pool) {
     return pool.symbolActors[sym].form();
   }
 
-  const actor = new SymbolActor(sym);
-  pool.addActor(actor);
+  const actor = new SymbolActor(pool.conn, sym);
+  pool.manage(actor);
   pool.symbolActors[sym] = actor;
   return actor.form();
 }

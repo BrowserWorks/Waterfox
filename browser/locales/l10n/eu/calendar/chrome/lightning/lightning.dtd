@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+
+<!-- Tools menu -->
+<!ENTITY lightning.preferencesLabel "Calendar">
+
+<!-- New menu popup in File menu -->
+<!ENTITY lightning.menupopup.new.event.label    "Gertaera…">
+<!ENTITY lightning.menupopup.new.event.accesskey "G">
+<!ENTITY lightning.menupopup.new.task.label     "Zeregina…">
+<!ENTITY lightning.menupopup.new.task.accesskey "Z">
+<!ENTITY lightning.menupopup.new.calendar.label "Egutegia…">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "E">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.label               "Ireki">
+<!ENTITY lightning.menupopup.open.accesskey           "I">
+<!ENTITY lightning.menupopup.open.message.label       "Gordetako mezua…">
+<!ENTITY lightning.menupopup.open.message.accesskey   "m">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.calendar.label      "Calendar fitxategia…">
+<!ENTITY lightning.menupopup.open.calendar.accesskey  "C">
+
+<!-- View Menu -->
+<!ENTITY lightning.menu.view.calendar.label            "Calendar">
+<!ENTITY lightning.menu.view.calendar.accesskey        "n">
+<!ENTITY lightning.menu.view.tasks.label               "Zereginak">
+<!ENTITY lightning.menu.view.tasks.accesskey           "Z">
+
+<!-- Events and Tasks menu -->
+<!ENTITY lightning.menu.eventtask.label                "Gertaerak eta zereginak">
+<!ENTITY lightning.menu.eventtask.accesskey            "r">
+
+<!-- properties dialog, calendar creation wizard -->
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.email.label,
+     lightning.calendarproperties.forceEmailScheduling.label)
+     These strings are used in the calendar wizard and the calendar properties dialog, but are only
+     displayed when setting/using a caldav calendar -->
+<!ENTITY lightning.calendarproperties.email.label                           "E-posta:">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.label            "Lehenetsi bezero aldeko posta antolaketa">
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.forceEmailScheduling.tooltiptext1,
+     lightning.calendarproperties.forceEmailScheduling.tooltiptext2)
+     - tooltiptext1 is used in the calendar wizard when setting a new caldav calendar
+     - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "Oraingoz, zuk hau gaitu dezakezu baldin eta zerbitzaria egutegia antolatzeko gai bada eta egutegi hau bertan konfiguratu ondoren.">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "Aukera hau zerbitzariak egutegi antolaketa onartzen badu dago eskuragarri. Gaituz posta elektronikoan oinarritutako antolaketara estandarrera itzultzea ahalbidetzen da, zerbitzarian utzi ordez.">
+
+<!-- iMIP Bar (meeting support) -->
+<!ENTITY lightning.imipbar.btnAccept.label                                  "Onartu">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext                           "Onartu gonbidapena">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label                       "Onartu guztiak">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences2.tooltiptext                "Onartu gonbidapena gertaeraren agerpen guztietarako">
+<!ENTITY lightning.imipbar.btnAdd.label                                     "Gehitu">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext                               "Gehitu gertaera egutegira">
+<!ENTITY lightning.imipbar.btnDecline.label                                 "Baztertu">
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext                          "Baztertu gonbidapena">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label                      "Baztertu guztiak">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences2.tooltiptext               "Baztertu gonbidapena gertaeraren agerpen guztietarako">
+<!ENTITY lightning.imipbar.btnDeclineCounter.label                          "Baztertu">
+<!ENTITY lightning.imipbar.btnDeclineCounter.tooltiptext                    "Baztertu kontraproposamena">
+<!ENTITY lightning.imipbar.btnDelete.label                                  "Ezabatu">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext                            "Ezabatu egutegitik">
+<!ENTITY lightning.imipbar.btnDetails.label                                 "Xehetasunak…">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext                           "Erakutsi gertaeraren xehetasunak">
+<!ENTITY lightning.imipbar.btnDoNotShowImipBar.label                        "Ez erakutsi niri mezu hauek">
+<!ENTITY lightning.imipbar.btnGoToCalendar.label                            "Egutegia">
+<!ENTITY lightning.imipbar.btnGoToCalendar.tooltiptext                      "Joan egutegi fitxara">
+<!ENTITY lightning.imipbar.btnMore.label                                    "Gehiago">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext                              "Egin klik aukera gehiago erakusteko">
+<!ENTITY lightning.imipbar.btnReconfirm2.label                              "Birberretsi">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext                         "Birberrespena bidaltzen dio antolatzaileari">
+<!ENTITY lightning.imipbar.btnReschedule.label                              "Berrantolatu">
+<!ENTITY lightning.imipbar.btnReschedule.tooltiptext                        "Gertaera berrantolatu">
+<!ENTITY lightning.imipbar.btnSaveCopy.label                                "Gorde kopia bat">
+<!ENTITY lightning.imipbar.btnSaveCopy.tooltiptext                          "Gorde gertaeraren kopia egutegian antolatzaileari erantzutea ala ez alde batera utzita. Partaideen zerrenda aditzera emango da.">
+<!ENTITY lightning.imipbar.btnTentative.label                               "Behin-behinekoa">
+<!ENTITY lightning.imipbar.btnTentative2.tooltiptext                        "Onartu gonbidapena behin-behinean">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences.label                    "Behin-behinekoak guztiak">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences2.tooltiptext             "Onartu behin-behinean gonbidapena gertaeraren agerpen guztietarako">
+<!ENTITY lightning.imipbar.btnUpdate.label                                  "Eguneratu">
+<!ENTITY lightning.imipbar.btnUpdate.tooltiptext                            "Eguneratu gertaera egutegian">
+<!ENTITY lightning.imipbar.description                                      "Mezu honek gertaera bateko gonbidapena du.">
+
+<!ENTITY lightning.imipbar.btnSend.label                                    "Bidali erantzuna orain">
+<!ENTITY lightning.imipbar.btnSend.tooltiptext                              "Bidali erantzuna antolatzaileari">
+<!ENTITY lightning.imipbar.btnSendSeries.tooltiptext                        "Bidali serie osorako erantzuna antolatzaileari">
+<!ENTITY lightning.imipbar.btnDontSend.label                                "Ez bidali erantzunik">
+<!ENTITY lightning.imipbar.btnDontSend.tooltiptext                          "Aldatu zure partaidetza egoera antolatzaileari erantzunik bidali gabe">
+<!ENTITY lightning.imipbar.btnDontSendSeries.tooltiptext                    "Aldatu zure partaidetza egoera serierako antolatzaileari erantzunik bidali gabe">
+
+<!-- Lightning specific keybindings -->
+<!ENTITY lightning.keys.event.showCalendar.key "C">
+<!ENTITY lightning.keys.event.showTasks.key "D">
+<!ENTITY lightning.keys.event.new "I">
+<!ENTITY lightning.keys.todo.new "D">
+
+<!-- Account Central page -->
+<!ENTITY lightning.acctCentral.newCalendar.label "Sortu egutegi berria">
+
+<!-- today-pane-specific -->
+<!ENTITY todaypane.showMinimonth.label "Ikusi mini-hilabetea">
+<!ENTITY todaypane.showMinimonth.accesskey "m">
+<!ENTITY todaypane.showMiniday.label "Ikusi mini-eguna">
+<!ENTITY todaypane.showMiniday.accesskey  "e">
+<!ENTITY todaypane.showNone.label "Ikusi batez">
+<!ENTITY todaypane.showNone.accesskey "b">
+<!ENTITY todaypane.showTodayPane.label "Ikusi gaurko panela">
+<!ENTITY todaypane.showTodayPane.accesskey "u">
+<!ENTITY todaypane.statusButton.label "Gaurko panela">

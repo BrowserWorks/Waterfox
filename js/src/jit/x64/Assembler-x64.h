@@ -9,7 +9,7 @@
 
 #include "mozilla/ArrayUtils.h"
 
-#include "jit/IonCode.h"
+#include "jit/JitCode.h"
 #include "jit/JitRealm.h"
 #include "jit/shared/Assembler-shared.h"
 
@@ -108,7 +108,8 @@ static constexpr FloatRegister ScratchFloat32Reg =
     FloatRegister(X86Encoding::xmm15, FloatRegisters::Single);
 static constexpr FloatRegister ScratchDoubleReg =
     FloatRegister(X86Encoding::xmm15, FloatRegisters::Double);
-static constexpr FloatRegister ScratchSimd128Reg = xmm15;
+static constexpr FloatRegister ScratchSimd128Reg =
+    FloatRegister(X86Encoding::xmm15, FloatRegisters::Simd128);
 
 // Avoid rbp, which is the FramePointer, which is unavailable in some modes.
 static constexpr Register CallTempReg0 = rax;
@@ -125,19 +126,17 @@ static constexpr Register IntArgReg1 = rdx;
 static constexpr Register IntArgReg2 = r8;
 static constexpr Register IntArgReg3 = r9;
 static constexpr uint32_t NumIntArgRegs = 4;
-// Use "const" instead of constexpr here to work around a bug
-// of VS2015 Update 1. See bug 1229604.
-static const Register IntArgRegs[NumIntArgRegs] = {rcx, rdx, r8, r9};
+static constexpr Register IntArgRegs[NumIntArgRegs] = {rcx, rdx, r8, r9};
 
-static const Register CallTempNonArgRegs[] = {rax, rdi, rbx, rsi};
-static const uint32_t NumCallTempNonArgRegs =
+static constexpr Register CallTempNonArgRegs[] = {rax, rdi, rbx, rsi};
+static constexpr uint32_t NumCallTempNonArgRegs =
     mozilla::ArrayLength(CallTempNonArgRegs);
 
 static constexpr FloatRegister FloatArgReg0 = xmm0;
 static constexpr FloatRegister FloatArgReg1 = xmm1;
 static constexpr FloatRegister FloatArgReg2 = xmm2;
 static constexpr FloatRegister FloatArgReg3 = xmm3;
-static const uint32_t NumFloatArgRegs = 4;
+static constexpr uint32_t NumFloatArgRegs = 4;
 static constexpr FloatRegister FloatArgRegs[NumFloatArgRegs] = {xmm0, xmm1,
                                                                 xmm2, xmm3};
 #else
@@ -148,12 +147,11 @@ static constexpr Register IntArgReg3 = rcx;
 static constexpr Register IntArgReg4 = r8;
 static constexpr Register IntArgReg5 = r9;
 static constexpr uint32_t NumIntArgRegs = 6;
-static const Register IntArgRegs[NumIntArgRegs] = {rdi, rsi, rdx, rcx, r8, r9};
+static constexpr Register IntArgRegs[NumIntArgRegs] = {rdi, rsi, rdx,
+                                                       rcx, r8,  r9};
 
-// Use "const" instead of constexpr here to work around a bug
-// of VS2015 Update 1. See bug 1229604.
-static const Register CallTempNonArgRegs[] = {rax, rbx};
-static const uint32_t NumCallTempNonArgRegs =
+static constexpr Register CallTempNonArgRegs[] = {rax, rbx};
+static constexpr uint32_t NumCallTempNonArgRegs =
     mozilla::ArrayLength(CallTempNonArgRegs);
 
 static constexpr FloatRegister FloatArgReg0 = xmm0;
@@ -231,9 +229,16 @@ static constexpr Register WasmTableCallScratchReg1 = ABINonArgReg1;
 static constexpr Register WasmTableCallSigReg = ABINonArgReg2;
 static constexpr Register WasmTableCallIndexReg = ABINonArgReg3;
 
+// Register used as a scratch along the return path in the fast js -> wasm stub
+// code.  This must not overlap ReturnReg, JSReturnOperand, or WasmTlsReg.  It
+// must be a volatile register.
+static constexpr Register WasmJitEntryReturnScratch = rbx;
+
 static constexpr Register OsrFrameReg = IntArgReg3;
 
 static constexpr Register PreBarrierReg = rdx;
+
+static constexpr Register InterpreterPCReg = r14;
 
 static constexpr uint32_t ABIStackAlignment = 16;
 static constexpr uint32_t CodeAlignment = 16;
@@ -245,11 +250,6 @@ static_assert(JitStackAlignment % sizeof(Value) == 0 &&
                   JitStackValueAlignment >= 1,
               "Stack alignment should be a non-zero multiple of sizeof(Value)");
 
-// This boolean indicates whether we support SIMD instructions flavoured for
-// this architecture or not. Rather than a method in the LIRGenerator, it is
-// here such that it is accessible from the entire codebase. Once full support
-// for SIMD is reached on all tier-1 platforms, this constant can be deleted.
-static constexpr bool SupportsSimd = false;
 static constexpr uint32_t SimdMemoryAlignment = 16;
 
 static_assert(CodeAlignment % SimdMemoryAlignment == 0,
@@ -265,10 +265,10 @@ static_assert(JitStackAlignment % SimdMemoryAlignment == 0,
               "spilled values.  Thus it should be larger than the alignment "
               "for SIMD accesses.");
 
-static const uint32_t WasmStackAlignment = SimdMemoryAlignment;
-static const uint32_t WasmTrapInstructionLength = 2;
+static constexpr uint32_t WasmStackAlignment = SimdMemoryAlignment;
+static constexpr uint32_t WasmTrapInstructionLength = 2;
 
-static const Scale ScalePointer = TimesEight;
+static constexpr Scale ScalePointer = TimesEight;
 
 }  // namespace jit
 }  // namespace js
@@ -327,9 +327,6 @@ class Assembler : public AssemblerX86Shared {
   using AssemblerX86Shared::push;
   using AssemblerX86Shared::vmovq;
 
-  static uint8_t* PatchableJumpAddress(JitCode* code, size_t index);
-  static void PatchJumpEntry(uint8_t* entry, uint8_t* target);
-
   Assembler() : extendedJumpTable_(0) {}
 
   static void TraceJumpRelocations(JSTracer* trc, JitCode* code,
@@ -341,7 +338,7 @@ class Assembler : public AssemblerX86Shared {
 
   // Copy the assembly code to the given buffer, and perform any pending
   // relocations relying on the target address.
-  void executableCopy(uint8_t* buffer, bool flushICache = true);
+  void executableCopy(uint8_t* buffer);
 
   // Actual assembly emitting functions.
 
@@ -723,6 +720,10 @@ class Assembler : public AssemblerX86Shared {
       case Operand::MEM_ADDRESS32:
         masm.addq_mr(src.address(), dest.encoding());
         break;
+      case Operand::MEM_SCALE:
+        masm.addq_mr(src.disp(), src.base(), src.index(), src.scale(),
+                     dest.encoding());
+        break;
       default:
         MOZ_CRASH("unexpected operand kind");
     }
@@ -886,6 +887,7 @@ class Assembler : public AssemblerX86Shared {
   void bsfq(const Register& src, const Register& dest) {
     masm.bsfq_rr(src.encoding(), dest.encoding());
   }
+  void bswapq(const Register& reg) { masm.bswapq_r(reg.encoding()); }
   void popcntq(const Register& src, const Register& dest) {
     masm.popcntq_rr(src.encoding(), dest.encoding());
   }
@@ -915,6 +917,17 @@ class Assembler : public AssemblerX86Shared {
 
   void vcvtsi2sdq(Register src, FloatRegister dest) {
     masm.vcvtsi2sdq_rr(src.encoding(), dest.encoding());
+  }
+
+  void vpextrq(unsigned lane, FloatRegister src, Register dest) {
+    MOZ_ASSERT(HasSSE41());
+    masm.vpextrq_irr(lane, src.encoding(), dest.encoding());
+  }
+
+  void vpinsrq(unsigned lane, Register src1, FloatRegister src0,
+               FloatRegister dest) {
+    MOZ_ASSERT(HasSSE41());
+    masm.vpinsrq_irr(lane, src1.encoding(), src0.encoding(), dest.encoding());
   }
 
   void negq(Register reg) { masm.negq_r(reg.encoding()); }
@@ -1133,15 +1146,6 @@ class Assembler : public AssemblerX86Shared {
     masm.vcvtsq2ss_rr(src1.encoding(), src0.encoding(), dest.encoding());
   }
 };
-
-static inline void PatchJump(CodeLocationJump jump, CodeLocationLabel label) {
-  if (X86Encoding::CanRelinkJump(jump.raw(), label.raw())) {
-    X86Encoding::SetRel32(jump.raw(), label.raw());
-  } else {
-    X86Encoding::SetRel32(jump.raw(), jump.jumpTableEntry());
-    Assembler::PatchJumpEntry(jump.jumpTableEntry(), label.raw());
-  }
-}
 
 static inline bool GetIntArgReg(uint32_t intArg, uint32_t floatArg,
                                 Register* out) {

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSecurityInfo.dtd UI for viewing security status when composing a message -->
+
+<!ENTITY title.label "Безбедност поруке">
+<!ENTITY subject.plaintextWarning "Имајте на уму, теме електронских порука се никада не шифрују.">
+<!ENTITY status.heading "Садржај ваше поруке ће бити послат на следећи начин:">
+<!ENTITY status.signed "Дигитално потписан:">
+<!ENTITY status.encrypted "Шифрован:">
+<!ENTITY status.certificates "Сертификати:">
+<!ENTITY view.label "Преглед">
+<!ENTITY view.accesskey "г">
+<!ENTITY tree.recipient "Прималац">
+<!ENTITY tree.status "Стање">
+<!ENTITY tree.issuedDate "Издат">
+<!ENTITY tree.expiresDate "Истиче">

@@ -7,6 +7,7 @@
 GeckoProgram('fuzz-tests', linkage=None)
 
 include('../js-cxxflags.mozbuild')
+include('../js-standalone.mozbuild')
 
 UNIFIED_SOURCES += [
     'testExample.cpp',
@@ -18,6 +19,11 @@ UNIFIED_SOURCES += [
 if CONFIG['JS_BUILD_BINAST']:
     UNIFIED_SOURCES += [
         'testBinASTReader.cpp',
+    ]
+
+if CONFIG['ENABLE_NEW_REGEXP']:
+    UNIFIED_SOURCES += [
+        'testRegExp.cpp',
     ]
 
 DEFINES['EXPORT_JS_API'] = True
@@ -43,15 +49,5 @@ if CONFIG['LIBFUZZER']:
 USE_LIBS += [
     'static:js',
 ]
-
-if CONFIG['ENABLE_WASM_CRANELIFT']:
-    USE_LIBS += [
-        'jsrust'
-    ]
-
-if CONFIG['MOZ_NEEDS_LIBATOMIC']:
-    OS_LIBS += ['atomic']
-
-OS_LIBS += CONFIG['MOZ_ZLIB_LIBS']
 
 DEFINES['topsrcdir'] = '%s/js/src' % TOPSRCDIR

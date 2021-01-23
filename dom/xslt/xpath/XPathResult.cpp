@@ -79,7 +79,7 @@ void XPathResult::RemoveObserver() {
 
 nsINode* XPathResult::IterateNext(ErrorResult& aRv) {
   if (!isIterator()) {
-    aRv.Throw(NS_ERROR_DOM_TYPE_ERR);
+    aRv.ThrowTypeError("Result is not an iterator");
     return nullptr;
   }
 
@@ -88,7 +88,8 @@ nsINode* XPathResult::IterateNext(ErrorResult& aRv) {
   }
 
   if (mInvalidIteratorState) {
-    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
+    aRv.ThrowInvalidStateError(
+        "The document has been mutated since the result was returned");
     return nullptr;
   }
 
@@ -126,9 +127,9 @@ void XPathResult::ContentRemoved(nsIContent* aChild,
   Invalidate(aChild->GetParent());
 }
 
-nsresult XPathResult::SetExprResult(txAExprResult* aExprResult,
-                                    uint16_t aResultType,
-                                    nsINode* aContextNode) {
+void XPathResult::SetExprResult(txAExprResult* aExprResult,
+                                uint16_t aResultType, nsINode* aContextNode,
+                                ErrorResult& aRv) {
   MOZ_ASSERT(aExprResult);
 
   if ((isSnapshot(aResultType) || isIterator(aResultType) ||
@@ -137,7 +138,8 @@ nsresult XPathResult::SetExprResult(txAExprResult* aExprResult,
     // The DOM spec doesn't really say what should happen when reusing an
     // XPathResult and an error is thrown. Let's not touch the XPathResult
     // in that case.
-    return NS_ERROR_DOM_TYPE_ERR;
+    aRv.ThrowTypeError("Result type mismatch");
+    return;
   }
 
   mResultType = aResultType;
@@ -184,7 +186,7 @@ nsresult XPathResult::SetExprResult(txAExprResult* aExprResult,
   }
 
   if (!isIterator()) {
-    return NS_OK;
+    return;
   }
 
   mCurrentPos = 0;
@@ -199,28 +201,15 @@ nsresult XPathResult::SetExprResult(txAExprResult* aExprResult,
       mDocument->AddMutationObserver(this);
     }
   }
-
-  return NS_OK;
 }
 
 void XPathResult::Invalidate(const nsIContent* aChangeRoot) {
   nsCOMPtr<nsINode> contextNode = do_QueryReferent(mContextNode);
-  if (contextNode && aChangeRoot && aChangeRoot->GetBindingParent()) {
-    // If context node is in anonymous content, changes to
-    // non-anonymous content need to invalidate the XPathResult. If
-    // the changes are happening in a different anonymous trees, no
-    // invalidation should happen.
-    nsIContent* ctxBindingParent = nullptr;
-    if (contextNode->IsContent()) {
-      ctxBindingParent = contextNode->AsContent()->GetBindingParent();
-    } else if (auto* attr = Attr::FromNode(contextNode)) {
-      if (Element* parent = attr->GetElement()) {
-        ctxBindingParent = parent->GetBindingParent();
-      }
-    }
-    if (ctxBindingParent != aChangeRoot->GetBindingParent()) {
-      return;
-    }
+  // If the changes are happening in a different anonymous trees, no
+  // invalidation should happen.
+  if (contextNode && aChangeRoot &&
+      !nsContentUtils::IsInSameAnonymousTree(contextNode, aChangeRoot)) {
+    return;
   }
 
   mInvalidIteratorState = true;
@@ -253,7 +242,7 @@ nsresult XPathResult::GetExprResult(txAExprResult** aExprResult) {
 
   uint32_t i, count = mResultNodes.Count();
   for (i = 0; i < count; ++i) {
-    nsAutoPtr<txXPathNode> node(
+    UniquePtr<txXPathNode> node(
         txXPathNativeNode::createXPathNode(mResultNodes[i]));
     if (!node) {
       return NS_ERROR_OUT_OF_MEMORY;

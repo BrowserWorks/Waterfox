@@ -25,7 +25,7 @@ interface nsIPermission : nsISupports
     /**
      * a case-sensitive ASCII string, indicating the type of permission
      * (e.g., "cookie", "image", etc).
-     * This string is specified by the consumer when adding a permission 
+     * This string is specified by the consumer when adding a permission
      * via nsIPermissionManager.
      * @see nsIPermissionManager
      */
@@ -66,6 +66,13 @@ interface nsIPermission : nsISupports
      */
     boolean matches(in nsIPrincipal principal,
                     in boolean exactHost);
+
+    /**
+     * Similar to matches() but the principal's URI should be just an origin
+     * (no path, no queryString, etc).
+     */
+    [noscript] boolean matchesPrincipalForPermission(in nsIPrincipal principal,
+                                                     in boolean exactHost);
 
     /**
      * Test whether a URI would be affected by this permission.

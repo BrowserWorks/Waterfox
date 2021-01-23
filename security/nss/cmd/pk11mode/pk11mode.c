@@ -16,7 +16,7 @@
 #include <string.h>
 #include <stdarg.h>
 
-#if defined(XP_UNIX) && !defined(NO_FORK_CHECK)
+#if defined(XP_UNIX) && defined(DO_FORK_CHECK)
 #include <unistd.h>
 #include <sys/wait.h>
 #else
@@ -5229,7 +5229,7 @@ PKM_Digest(CK_FUNCTION_LIST_PTR pFunctionList,
 char *
 PKM_FilePasswd(char *pwFile)
 {
-    unsigned char phrase[200];
+    unsigned char phrase[500];
     PRFileDesc *fd;
     PRInt32 nb;
     int i;

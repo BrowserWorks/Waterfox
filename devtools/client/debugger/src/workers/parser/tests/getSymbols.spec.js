@@ -12,7 +12,7 @@ import cases from "jest-in-case";
 cases(
   "Parser.getSymbols",
   ({ name, file, original, type }) => {
-    const { source } = original
+    const source = original
       ? populateOriginalSource(file, type)
       : populateSource(file, type);
 
@@ -31,6 +31,7 @@ cases(
     { name: "call sites", file: "call-sites" },
     { name: "call expression", file: "callExpressions" },
     { name: "object expressions", file: "object-expressions" },
+    { name: "optional chaining", file: "optional-chaining" },
     {
       name: "finds symbols in an html file",
       file: "parseScriptTags",

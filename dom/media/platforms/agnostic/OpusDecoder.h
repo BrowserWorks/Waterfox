@@ -9,7 +9,6 @@
 #  include "PlatformDecoderModule.h"
 
 #  include "mozilla/Maybe.h"
-#  include "nsAutoPtr.h"
 #  include "nsTArray.h"
 
 struct OpusMSDecoder;
@@ -54,7 +53,7 @@ class OpusDataDecoder : public MediaDataDecoder,
   const RefPtr<TaskQueue> mTaskQueue;
 
   // Opus decoder state
-  nsAutoPtr<OpusParser> mOpusParser;
+  UniquePtr<OpusParser> mOpusParser;
   OpusMSDecoder* mOpusDecoder;
 
   uint16_t mSkip;  // Samples left to trim before playback.
@@ -68,6 +67,7 @@ class OpusDataDecoder : public MediaDataDecoder,
   Maybe<int64_t> mLastFrameTime;
   AutoTArray<uint8_t, 8> mMappingTable;
   AudioConfig::ChannelLayout::ChannelMap mChannelMap;
+  bool mDefaultPlaybackDeviceMono;
 };
 
 }  // namespace mozilla

@@ -14,7 +14,7 @@ NS_IMPL_NS_NEW_HTML_ELEMENT(Legend)
 namespace mozilla {
 namespace dom {
 
-HTMLLegendElement::~HTMLLegendElement() {}
+HTMLLegendElement::~HTMLLegendElement() = default;
 
 NS_IMPL_ELEMENT_CLONE(HTMLLegendElement)
 
@@ -34,9 +34,9 @@ bool HTMLLegendElement::ParseAttribute(int32_t aNamespaceID, nsAtom* aAttribute,
                                        nsAttrValue& aResult) {
   // this contains center, because IE4 does
   static const nsAttrValue::EnumTable kAlignTable[] = {
-      {"left", NS_STYLE_TEXT_ALIGN_LEFT},
-      {"right", NS_STYLE_TEXT_ALIGN_RIGHT},
-      {"center", NS_STYLE_TEXT_ALIGN_CENTER},
+      {"left", LegendAlignValue::Left},
+      {"right", LegendAlignValue::Right},
+      {"center", LegendAlignValue::Center},
       {nullptr, 0}};
 
   if (aAttribute == nsGkAtoms::align && aNamespaceID == kNameSpaceID_None) {
@@ -57,16 +57,17 @@ nsChangeHint HTMLLegendElement::GetAttributeChangeHint(const nsAtom* aAttribute,
   return retval;
 }
 
-nsresult HTMLLegendElement::BindToTree(Document* aDocument, nsIContent* aParent,
-                                       nsIContent* aBindingParent) {
-  return nsGenericHTMLElement::BindToTree(aDocument, aParent, aBindingParent);
+nsresult HTMLLegendElement::BindToTree(BindContext& aContext,
+                                       nsINode& aParent) {
+  return nsGenericHTMLElement::BindToTree(aContext, aParent);
 }
 
-void HTMLLegendElement::UnbindFromTree(bool aDeep, bool aNullParent) {
-  nsGenericHTMLElement::UnbindFromTree(aDeep, aNullParent);
+void HTMLLegendElement::UnbindFromTree(bool aNullParent) {
+  nsGenericHTMLElement::UnbindFromTree(aNullParent);
 }
 
 void HTMLLegendElement::Focus(const FocusOptions& aOptions,
+                              const mozilla::dom::CallerType aCallerType,
                               ErrorResult& aError) {
   nsIFrame* frame = GetPrimaryFrame();
   if (!frame) {
@@ -75,7 +76,7 @@ void HTMLLegendElement::Focus(const FocusOptions& aOptions,
 
   int32_t tabIndex;
   if (frame->IsFocusable(&tabIndex, false)) {
-    nsGenericHTMLElement::Focus(aOptions, aError);
+    nsGenericHTMLElement::Focus(aOptions, aCallerType, aError);
     return;
   }
 
@@ -90,7 +91,6 @@ void HTMLLegendElement::Focus(const FocusOptions& aOptions,
   aError = fm->MoveFocus(
       nullptr, this, nsIFocusManager::MOVEFOCUS_FORWARD,
       nsIFocusManager::FLAG_NOPARENTFRAME |
-          nsIFocusManager::FLAG_BYELEMENTFOCUS |
           nsFocusManager::FocusOptionsToFocusManagerFlags(aOptions),
       getter_AddRefs(result));
 }
@@ -100,7 +100,7 @@ bool HTMLLegendElement::PerformAccesskey(bool aKeyCausesActivation,
   FocusOptions options;
   ErrorResult rv;
 
-  Focus(options, rv);
+  Focus(options, CallerType::System, rv);
   return NS_SUCCEEDED(rv.StealNSResult());
 }
 

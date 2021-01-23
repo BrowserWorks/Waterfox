@@ -11,8 +11,10 @@
  */
 
 // http://www.whatwg.org/specs/web-apps/current-work/#htmlframeelement
-[HTMLConstructor]
+[Exposed=Window]
 interface HTMLFrameElement : HTMLElement {
+  [HTMLConstructor] constructor();
+
            [CEReactions, SetterThrows]
            attribute DOMString name;
            [CEReactions, SetterThrows]
@@ -35,4 +37,4 @@ interface HTMLFrameElement : HTMLElement {
   attribute [TreatNullAs=EmptyString] DOMString marginWidth;
 };
 
-HTMLFrameElement implements MozFrameLoaderOwner;
+HTMLFrameElement includes MozFrameLoaderOwner;

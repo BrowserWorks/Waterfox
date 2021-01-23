@@ -1,7 +1,7 @@
 {
   "title": "SimpleSnippet",
   "description": "A simple template with an icon, text, and optional button.",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "type": "object",
   "definitions": {
     "plainText": {
@@ -39,6 +39,11 @@
       "type": "string",
       "description": "Snippet icon, dark theme variant. 64x64px. SVG or PNG preferred."
     },
+    "icon_alt_text": {
+      "type": "string",
+      "description": "Alt text describing icon for screen readers",
+      "default": ""
+    },
     "title_icon": {
       "type": "string",
       "description": "Small icon that shows up before the title / text. 16x16px. SVG or PNG preferred. Grayscale."
@@ -46,6 +51,11 @@
     "title_icon_dark_theme": {
       "type": "string",
       "description": "Small icon that shows up before the title / text. Dark theme variant. 16x16px. SVG or PNG preferred. Grayscale."
+    },
+    "title_icon_alt_text": {
+      "type": "string",
+      "description": "Alt text describing title icon for screen readers",
+      "default": ""
     },
     "button_action": {
       "type": "string",
@@ -58,8 +68,15 @@
       ]
     },
     "button_action_args": {
-      "type": "string",
       "description": "Additional parameters for button action, example which specific menu the button should open"
+    },
+    "button_entrypoint_value": {
+      "description": "String used for telemetry attribution of clicks",
+      "type": "string"
+    },
+    "button_entrypoint_name": {
+      "description": "String used for telemetry attribution of clicks",
+      "type": "string"
     },
     "button_label": {
       "allOf": [
@@ -132,6 +149,7 @@
     "button_url": ["button_label"],
     "button_color": ["button_label"],
     "button_background_color": ["button_label"],
-    "section_title_url": ["section_title_text"]
+    "section_title_url": ["section_title_text"],
+    "button_entrypoint_name": ["button_entrypoint_value"]
   }
 }

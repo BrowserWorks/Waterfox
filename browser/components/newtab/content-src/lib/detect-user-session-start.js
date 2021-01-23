@@ -1,5 +1,9 @@
-import {actionCreators as ac, actionTypes as at} from "common/Actions.jsm";
-import {perfService as perfSvc} from "common/PerfService.jsm";
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+import { actionCreators as ac, actionTypes as at } from "common/Actions.jsm";
+import { perfService as perfSvc } from "content-src/lib/perf-service";
 
 const VISIBLE = "visible";
 const VISIBILITY_CHANGE_EVENT = "visibilitychange";
@@ -26,7 +30,10 @@ export class DetectUserSessionStart {
       this._sendEvent();
     } else {
       // If the document is not visible, listen for when it does become visible.
-      this.document.addEventListener(VISIBILITY_CHANGE_EVENT, this._onVisibilityChange);
+      this.document.addEventListener(
+        VISIBILITY_CHANGE_EVENT,
+        this._onVisibilityChange
+      );
     }
   }
 
@@ -39,13 +46,16 @@ export class DetectUserSessionStart {
     this._perfService.mark("visibility_event_rcvd_ts");
 
     try {
-      let visibility_event_rcvd_ts = this._perfService
-        .getMostRecentAbsMarkStartByName("visibility_event_rcvd_ts");
+      let visibility_event_rcvd_ts = this._perfService.getMostRecentAbsMarkStartByName(
+        "visibility_event_rcvd_ts"
+      );
 
-      this._store.dispatch(ac.AlsoToMain({
-        type: at.SAVE_SESSION_PERF_DATA,
-        data: {visibility_event_rcvd_ts},
-      }));
+      this._store.dispatch(
+        ac.AlsoToMain({
+          type: at.SAVE_SESSION_PERF_DATA,
+          data: { visibility_event_rcvd_ts },
+        })
+      );
     } catch (ex) {
       // If this failed, it's likely because the `privacy.resistFingerprinting`
       // pref is true.  We should at least not blow up.
@@ -59,7 +69,10 @@ export class DetectUserSessionStart {
   _onVisibilityChange() {
     if (this.document.visibilityState === VISIBLE) {
       this._sendEvent();
-      this.document.removeEventListener(VISIBILITY_CHANGE_EVENT, this._onVisibilityChange);
+      this.document.removeEventListener(
+        VISIBILITY_CHANGE_EVENT,
+        this._onVisibilityChange
+      );
     }
   }
 }

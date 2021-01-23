@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "Elimină contul și datele">
+<!ENTITY removeButton.label           "Elimină">
+<!ENTITY removeButton.accesskey       "R">
+<!ENTITY removeAccount.label          "Elimină informațiile contului">
+<!ENTITY removeAccount.accesskey      "a">
+<!ENTITY removeAccount.desc           "Elimină doar ceea ce știe &brandShortName; despre acest cont. Nu afectează contul propriu-zis de pe server.">
+<!ENTITY removeData.label             "Elimină datele mesajelor">
+<!ENTITY removeData.accesskey         "m">
+<!ENTITY removeDataChat.label         "Elimină datele conversațiilor">
+<!ENTITY removeDataChat.accesskey     "c">
+<!ENTITY removeDataLocalAccount.desc  "Elimină toate mesajele, dosarele și filtrele asociate acestui cont de pe discul local. Nu afectează anumite mesaje care pot fi păstrate în continuare pe server. Nu alege această opțiune dacă ai de gând să arhivezi datele locale sau să le refolosești în &brandShortName; mai târziu.">
+<!ENTITY removeDataServerAccount.desc "Elimină toate mesajele, dosarele și filtrele asociate acestui cont de pe discul local. Mesajele și dosarele tale vor fi în continuare păstrate pe server.">
+<!ENTITY removeDataChatAccount.desc   "Elimină toate jurnalele de conversații stocate pentru acest cont pe discul local.">
+<!ENTITY showData.label               "Afișează locația datelor">
+<!ENTITY showData.accesskey           "l">
+<!ENTITY progressPending              "Se șterg datele selectate…">
+<!ENTITY progressSuccess              "Ștergerea s-a efectuat cu succes.">
+<!ENTITY progressFailure              "Ștergerea a eșuat.">

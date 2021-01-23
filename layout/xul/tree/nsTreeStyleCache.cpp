@@ -37,7 +37,7 @@ ComputedStyle* nsTreeStyleCache::GetComputedStyle(
   // Go ahead and init the transition table.
   if (!mTransitionTable) {
     // Automatic miss. Build the table
-    mTransitionTable = new TransitionTable();
+    mTransitionTable = MakeUnique<TransitionTable>();
   }
 
   // The first transition is always made off the supplied pseudo-element.
@@ -92,10 +92,10 @@ ComputedStyle* nsTreeStyleCache::GetComputedStyle(
     // Put the ComputedStyle in our table, transferring the owning reference to
     // the table.
     if (!mCache) {
-      mCache = new ComputedStyleCache();
+      mCache = MakeUnique<ComputedStyleCache>();
     }
     result = newResult.get();
-    mCache->Put(currState, newResult.forget());
+    mCache->Put(currState, std::move(newResult));
   }
 
   return result;

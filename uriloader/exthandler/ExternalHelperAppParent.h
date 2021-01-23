@@ -11,17 +11,15 @@
 #include "nsIResumableChannel.h"
 #include "nsIStreamListener.h"
 #include "nsHashPropertyBag.h"
-#include "PrivateBrowsingChannel.h"
+#include "mozilla/net/PrivateBrowsingChannel.h"
 
 namespace IPC {
 class URI;
 }  // namespace IPC
 
-namespace mozilla {
+class nsExternalAppHandler;
 
-namespace ipc {
-class URIParams;
-}  // namespace ipc
+namespace mozilla {
 
 namespace net {
 class PChannelDiverterParent;
@@ -70,28 +68,27 @@ class ExternalHelperAppParent
   NS_DECL_NSISTREAMLISTENER
   NS_DECL_NSIREQUESTOBSERVER
 
-  mozilla::ipc::IPCResult RecvOnStartRequest(const nsCString& entityID,
-                                             PBrowserParent* aBrowser) override;
+  mozilla::ipc::IPCResult RecvOnStartRequest(
+      const nsCString& entityID) override;
   mozilla::ipc::IPCResult RecvOnDataAvailable(const nsCString& data,
                                               const uint64_t& offset,
                                               const uint32_t& count) override;
   mozilla::ipc::IPCResult RecvOnStopRequest(const nsresult& code) override;
 
   mozilla::ipc::IPCResult RecvDivertToParentUsing(
-      PChannelDiverterParent* diverter, PBrowserParent* aBrowser) override;
+      PChannelDiverterParent* diverter) override;
 
   bool WasFileChannel() override { return mWasFileChannel; }
 
-  ExternalHelperAppParent(const Maybe<mozilla::ipc::URIParams>& uri,
-                          const int64_t& contentLength,
+  ExternalHelperAppParent(nsIURI* uri, const int64_t& contentLength,
                           const bool& wasFileChannel,
                           const nsCString& aContentDispositionHeader,
                           const uint32_t& aContentDispositionHint,
                           const nsString& aContentDispositionFilename);
   void Init(const Maybe<mozilla::net::LoadInfoArgs>& aLoadInfoArgs,
             const nsCString& aMimeContentType, const bool& aForceSave,
-            const Maybe<mozilla::ipc::URIParams>& aReferrer,
-            PBrowserParent* aBrowser);
+            nsIURI* aReferrer, BrowsingContext* aContext,
+            const bool& aShouldCloseWindow);
 
  protected:
   virtual ~ExternalHelperAppParent();
@@ -100,7 +97,7 @@ class ExternalHelperAppParent
   void Delete();
 
  private:
-  nsCOMPtr<nsIStreamListener> mListener;
+  RefPtr<nsExternalAppHandler> mListener;
   nsCOMPtr<nsIURI> mURI;
   nsCOMPtr<nsILoadInfo> mLoadInfo;
   bool mPending;
@@ -110,6 +107,7 @@ class ExternalHelperAppParent
   bool mIPCClosed;
   nsLoadFlags mLoadFlags;
   nsresult mStatus;
+  bool mCanceled;
   int64_t mContentLength;
   bool mWasFileChannel;
   uint32_t mContentDisposition;

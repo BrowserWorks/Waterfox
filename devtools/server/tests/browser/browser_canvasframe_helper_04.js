@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -14,8 +13,7 @@ const TEST_URL_2 =
 
 add_task(async function() {
   const browser = await addTab(TEST_URL_1);
-  await injectEventUtilsInContentTask(browser);
-  await ContentTask.spawn(browser, TEST_URL_2, async function(url2) {
+  await SpecialPowers.spawn(browser, [TEST_URL_2], async function(url2) {
     const { require } = ChromeUtils.import(
       "resource://devtools/shared/Loader.jsm"
     );
@@ -103,7 +101,7 @@ add_task(async function() {
     // Wait for the next event tick to make sure the remaining part of the
     // test is not executed in the microtask checkpoint for load event
     // itself.  Otherwise the synthesizeMouseDown doesn't work.
-    await new Promise(r => setTimeout(r, 0));
+    await new Promise(r => content.setTimeout(r, 0));
 
     // Update to the new document we just loaded
     doc = content.document;

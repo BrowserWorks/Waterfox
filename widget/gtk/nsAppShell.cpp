@@ -24,7 +24,6 @@
 #  include "WakeLockListener.h"
 #endif
 #include "gfxPlatform.h"
-#include "nsAppRunner.h"
 #include "ScreenHelperGTK.h"
 #include "HeadlessScreenHelper.h"
 #include "mozilla/widget/ScreenManager.h"
@@ -45,6 +44,8 @@ LazyLogModule gWidgetFocusLog("WidgetFocus");
 LazyLogModule gWidgetDragLog("WidgetDrag");
 LazyLogModule gWidgetDrawLog("WidgetDraw");
 LazyLogModule gWidgetWaylandLog("WidgetWayland");
+LazyLogModule gWaylandDmabufLog("WaylandDmabuf");
+LazyLogModule gClipboardLog("WidgetClipboard");
 
 static GPollFunc sPollFunc;
 
@@ -61,7 +62,6 @@ static gint PollWrapper(GPollFD* ufds, guint nfsd, gint timeout_) {
   return result;
 }
 
-#ifdef MOZ_WIDGET_GTK
 // For bug 726483.
 static decltype(GtkContainerClass::check_resize) sReal_gtk_window_check_resize;
 
@@ -108,7 +108,6 @@ static void WrapGdkFrameClockDispose(GObject* object) {
 
   sRealGdkFrameClockDispose(object);
 }
-#endif
 
 /*static*/
 gboolean nsAppShell::EventProcessorCallback(GIOChannel* source,
@@ -168,19 +167,25 @@ nsresult nsAppShell::Init() {
     } else {
       screenManager.SetHelper(mozilla::MakeUnique<ScreenHelperGTK>());
     }
-  }
 
-  if (gtk_check_version(3, 16, 3) == nullptr) {
-    // Before 3.16.3, GDK cannot override classname by --class command line
-    // option when program uses gdk_set_program_class().
-    //
-    // See https://bugzilla.gnome.org/show_bug.cgi?id=747634
-    if (gAppData) {
-      gdk_set_program_class(gAppData->remotingName);
+    if (gtk_check_version(3, 16, 3) == nullptr) {
+      // Before 3.16.3, GDK cannot override classname by --class command line
+      // option when program uses gdk_set_program_class().
+      //
+      // See https://bugzilla.gnome.org/show_bug.cgi?id=747634
+      //
+      // Only bother doing this for the parent process, since it's the one
+      // creating top-level windows. (At this point, a child process hasn't
+      // received the list of registered chrome packages, so the
+      // GetBrandShortName call would fail anyway.)
+      nsAutoString brandName;
+      mozilla::widget::WidgetUtils::GetBrandShortName(brandName);
+      if (!brandName.IsEmpty()) {
+        gdk_set_program_class(NS_ConvertUTF16toUTF8(brandName).get());
+      }
     }
   }
 
-#ifdef MOZ_WIDGET_GTK
   if (!sReal_gtk_window_check_resize &&
       gtk_check_version(3, 8, 0) != nullptr) {  // GTK 3.0 to GTK 3.6.
     // GtkWindow is a static class and so will leak anyway but this ref
@@ -210,10 +215,13 @@ nsresult nsAppShell::Init() {
   }
 
   // Workaround for bug 1209659 which is fixed by Gtk3.20
-  if (gtk_check_version(3, 20, 0) != nullptr) unsetenv("GTK_CSD");
-#endif
+  if (gtk_check_version(3, 20, 0) != nullptr) {
+    unsetenv("GTK_CSD");
+  }
 
-  if (PR_GetEnv("MOZ_DEBUG_PAINTS")) gdk_window_set_debug_updates(TRUE);
+  if (PR_GetEnv("MOZ_DEBUG_PAINTS")) {
+    gdk_window_set_debug_updates(TRUE);
+  }
 
   // Whitelist of only common, stable formats - see bugs 1197059 and 1203078
   GSList* pixbufFormats = gdk_pixbuf_get_formats();
@@ -271,7 +279,7 @@ void nsAppShell::ScheduleNativeEventCallback() {
 bool nsAppShell::ProcessNextNativeEvent(bool mayWait) {
   bool ret = g_main_context_iteration(nullptr, mayWait);
 #ifdef MOZ_WAYLAND
-  WaylandDispatchDisplays();
+  mozilla::widget::WaylandDispatchDisplays();
 #endif
   return ret;
 }

@@ -10,7 +10,6 @@
 #include "platform.h"
 #include "ProfileBufferEntry.h"
 #include "ThreadInfo.h"
-#include "ThreadResponsiveness.h"
 
 #include "js/ProfilingStack.h"
 #include "mozilla/TimeStamp.h"
@@ -43,17 +42,15 @@ class ProfileBuffer;
 // when the profiler is stopped.
 class ProfiledThreadData final {
  public:
-  ProfiledThreadData(ThreadInfo* aThreadInfo, nsIEventTarget* aEventTarget,
-                     bool aIncludeResponsiveness);
+  ProfiledThreadData(ThreadInfo* aThreadInfo, nsIEventTarget* aEventTarget);
   ~ProfiledThreadData();
 
   void NotifyUnregistered(uint64_t aBufferPosition) {
-    mResponsiveness.reset();
     mLastSample = mozilla::Nothing();
     MOZ_ASSERT(!mBufferPositionWhenReceivedJSContext,
                "JSContext should have been cleared before the thread was "
                "unregistered");
-    mUnregisterTime = mozilla::TimeStamp::Now();
+    mUnregisterTime = mozilla::TimeStamp::NowUnfuzzed();
     mBufferPositionWhenUnregistered = mozilla::Some(aBufferPosition);
   }
   mozilla::Maybe<uint64_t> BufferPositionWhenUnregistered() {
@@ -65,17 +62,11 @@ class ProfiledThreadData final {
   void StreamJSON(const ProfileBuffer& aBuffer, JSContext* aCx,
                   SpliceableJSONWriter& aWriter, const nsACString& aProcessName,
                   const mozilla::TimeStamp& aProcessStartTime,
-                  double aSinceTime, bool aJSTracerEnabled);
+                  double aSinceTime, bool aJSTracerEnabled,
+                  ProfilerCodeAddressService* aService);
 
   void StreamTraceLoggerJSON(JSContext* aCx, SpliceableJSONWriter& aWriter,
                              const mozilla::TimeStamp& aProcessStartTime);
-
-  // Returns nullptr if this is not the main thread, the responsiveness
-  // feature is not turned on, or if this thread is not being profiled.
-  ThreadResponsiveness* GetThreadResponsiveness() {
-    ThreadResponsiveness* responsiveness = mResponsiveness.ptrOr(nullptr);
-    return responsiveness;
-  }
 
   const RefPtr<ThreadInfo> Info() const { return mThreadInfo; }
 
@@ -107,10 +98,6 @@ class ProfiledThreadData final {
   // Group B:
   // The following fields are only used while this thread is alive and
   // registered. They become Nothing() once the thread is unregistered.
-
-  // A helper object that instruments nsIThreads to obtain responsiveness
-  // information about their event loop.
-  mozilla::Maybe<ThreadResponsiveness> mResponsiveness;
 
   // When sampling, this holds the position in ActivePS::mBuffer of the most
   // recent sample for this thread, or Nothing() if there is no sample for this

@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "Kopyalar ve Dizinler">
+<!ENTITY sendingPrefix.label "İletileri gönderirken otomatik olarak: ">
+<!ENTITY fccMailFolder.label "Bir kopyasını buraya koy:">
+<!ENTITY fccMailFolder.accesskey "p">
+<!ENTITY fccReplyFollowsParent.label "Yanıtları yanıtlanan iletinin dizinine koy">
+<!ENTITY fccReplyFollowsParent.accesskey "Y">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Bu e-posta adreslerini Cc'ye ekle:">
+<!ENTITY ccAddress.accesskey "C">
+<!ENTITY ccAddressList.placeholder "Adresleri virgülle ayırın">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Bu e-posta adreslerini Bcc'ye ekle:">
+<!ENTITY bccAddress.accesskey "B">
+<!ENTITY bccAddressList.placeholder "Adresleri virgülle ayırın">
+<!ENTITY saveMessageDlg.label "İletiler kaydedildiğinde onay penceresini göster">
+<!ENTITY saveMessageDlg.accesskey "s">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "&quot;Giden&quot; dizini:">
+<!ENTITY sentFolderOn.accesskey "e">
+<!ENTITY sentInOtherFolder.label "Diğer:">
+<!ENTITY sentInOtherFolder.accesskey "D">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "İleti arşivleri">
+<!ENTITY keepArchives.label "İleti arşivlerinin tutulacağı yer:">
+<!ENTITY keepArchives.accesskey "r">
+<!ENTITY archiveHierarchyButton.label "Arşivleme seçenekleri...">
+<!ENTITY archiveHierarchyButton.accesskey "A">
+<!ENTITY archivesFolderOn.label "&quot;Arşiv&quot; dizini:">
+<!ENTITY archivesFolderOn.accesskey "d">
+<!ENTITY archiveInOtherFolder.label "Diğer:">
+<!ENTITY archiveInOtherFolder.accesskey "D">
+<!ENTITY specialFolders.label "Taslaklar ve şablonlar">
+<!ENTITY keepDrafts2.label "Taslak iletilerin tutulacağı yer:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "&quot;Taslak&quot; dizini:">
+<!ENTITY draftsFolderOn.accesskey "T">
+<!ENTITY draftInOtherFolder.label "Diğer:">
+<!ENTITY draftInOtherFolder.accesskey "D">
+<!ENTITY keepTemplates.label "İleti şablonlarının tutulacağı yer:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "&quot;Şablonlar&quot; dizini:">
+<!ENTITY templatesFolderOn.accesskey "o">
+<!ENTITY templateInOtherFolder.label "Diğer:">
+<!ENTITY templateInOtherFolder.accesskey "r">

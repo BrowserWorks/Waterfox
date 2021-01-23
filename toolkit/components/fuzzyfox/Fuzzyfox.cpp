@@ -7,12 +7,12 @@
 #include "Fuzzyfox.h"
 #include "mozilla/Logging.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/SchedulerGroup.h"
 #include "mozilla/Services.h"
-#include "mozilla/SystemGroup.h"
+#include "mozilla/StaticPrefs_privacy.h"
 #include "mozilla/TimeStamp.h"
 #include "nsComponentManagerUtils.h"
 #include "nsIPrefBranch.h"
-#include "nsIPrefService.h"
 #include "nsServiceManagerUtils.h"
 #include "prrng.h"
 #include "prtime.h"
@@ -40,10 +40,8 @@ static LazyLogModule sFuzzyfoxLog("Fuzzyfox");
 #define FUZZYFOX_ENABLED_PREF "privacy.fuzzyfox.enabled"
 #define FUZZYFOX_ENABLED_PREF_DEFAULT false
 #define FUZZYFOX_CLOCKGRAIN_PREF "privacy.fuzzyfox.clockgrainus"
-#define FUZZYFOX_CLOCKGRAIN_PREF_DEFAULT 100
 
 static bool sFuzzyfoxInitializing;
-Atomic<uint32_t, Relaxed> Fuzzyfox::sFuzzyfoxClockGrain;
 
 NS_IMPL_ISUPPORTS_INHERITED(Fuzzyfox, Runnable, nsIObserver)
 
@@ -52,7 +50,7 @@ void Fuzzyfox::Start() {
   MOZ_ASSERT(NS_IsMainThread());
 
   RefPtr<Fuzzyfox> r = new Fuzzyfox();
-  SystemGroup::Dispatch(TaskCategory::Other, r.forget());
+  SchedulerGroup::Dispatch(TaskCategory::Other, r.forget());
 }
 
 Fuzzyfox::Fuzzyfox()
@@ -66,10 +64,6 @@ Fuzzyfox::Fuzzyfox()
   // [[ I originally ran this after observing profile-after-change, but
   // it turned out that this contructor was getting called _after_ that
   // event had already fired. ]]
-  Preferences::AddAtomicUintVarCache(&sFuzzyfoxClockGrain,
-                                     FUZZYFOX_CLOCKGRAIN_PREF,
-                                     FUZZYFOX_CLOCKGRAIN_PREF_DEFAULT);
-
   bool fuzzyfoxEnabled = Preferences::GetBool(FUZZYFOX_ENABLED_PREF,
                                               FUZZYFOX_ENABLED_PREF_DEFAULT);
 
@@ -78,8 +72,14 @@ Fuzzyfox::Fuzzyfox()
 
   sFuzzyfoxInitializing = fuzzyfoxEnabled;
 
-  // Should I see if these fail? And do what?
   nsCOMPtr<nsIPrefBranch> prefs = do_GetService(NS_PREFSERVICE_CONTRACTID);
+  if (!prefs) {
+    // Sometimes the call to the pref service fails. If that happens, we
+    // don't add the observers. The user will have to restart to have
+    // preference changes take effect.
+    return;
+  }
+
   prefs->AddObserver(FUZZYFOX_ENABLED_PREF, this, false);
   prefs->AddObserver(FUZZYFOX_CLOCKGRAIN_PREF, this, false);
 }
@@ -111,7 +111,7 @@ Fuzzyfox::Observe(nsISupports* aObject, const char* aTopic,
       if (sFuzzyfoxInitializing) {
         // Queue a runnable
         nsCOMPtr<nsIRunnable> r = this;
-        SystemGroup::Dispatch(TaskCategory::Other, r.forget());
+        SchedulerGroup::Dispatch(TaskCategory::Other, r.forget());
       } else {
         mStartTime = 0;
         mTickType = eUptick;
@@ -123,9 +123,9 @@ Fuzzyfox::Observe(nsISupports* aObject, const char* aTopic,
   return NS_OK;
 }
 
-#define DISPATCH_AND_RETURN()                             \
-  nsCOMPtr<nsIRunnable> r = this;                         \
-  SystemGroup::Dispatch(TaskCategory::Other, r.forget()); \
+#define DISPATCH_AND_RETURN()                                \
+  nsCOMPtr<nsIRunnable> r = this;                            \
+  SchedulerGroup::Dispatch(TaskCategory::Other, r.forget()); \
   return NS_OK
 
 NS_IMETHODIMP
@@ -262,7 +262,8 @@ uint64_t Fuzzyfox::PickDuration() {
   long int rval = rand();
 
   // Avoid divide by zero errors and overflow errors
-  uint32_t duration = sFuzzyfoxClockGrain <= 0 ? 1 : sFuzzyfoxClockGrain;
+  uint32_t duration =
+      std::max((uint32_t)1, StaticPrefs::privacy_fuzzyfox_clockgrainus());
   duration = duration >= (UINT32_MAX / 2) ? (UINT32_MAX / 2) : duration;
 
   // We want uniform distribution from 1->duration*2
@@ -319,15 +320,13 @@ void Fuzzyfox::UpdateClocks(uint64_t aNewTime, TimeStamp aNewTimeStamp) {
   TimeStamp::UpdateFuzzyTimeStamp(aNewTimeStamp);
 }
 
-uint64_t Fuzzyfox::GetClockGrain() { return sFuzzyfoxClockGrain; }
-
 /*
  * FloorToGrain accepts a timestamp in microsecond precision
  * and returns it in microseconds, rounded down to the nearest
  * ClockGrain value.
  */
 uint64_t Fuzzyfox::FloorToGrain(uint64_t aValue) {
-  return aValue - (aValue % GetClockGrain());
+  return aValue - (aValue % StaticPrefs::privacy_fuzzyfox_clockgrainus());
 }
 
 /*
@@ -337,7 +336,7 @@ uint64_t Fuzzyfox::FloorToGrain(uint64_t aValue) {
 TimeStamp Fuzzyfox::FloorToGrain(TimeStamp aValue) {
 #ifdef XP_WIN
   // grain is in us
-  uint64_t grain = GetClockGrain();
+  uint64_t grain = StaticPrefs::privacy_fuzzyfox_clockgrainus();
   // GTC and QPS are stored in |mt| and need to be converted to
   uint64_t GTC = mt2ms(aValue.mValue.mGTC) * 1000;
   uint64_t QPC = mt2ms(aValue.mValue.mQPC) * 1000;
@@ -357,7 +356,8 @@ TimeStamp Fuzzyfox::FloorToGrain(TimeStamp aValue) {
  * ClockGrain value.
  */
 uint64_t Fuzzyfox::CeilToGrain(uint64_t aValue) {
-  return (aValue / GetClockGrain()) * GetClockGrain();
+  return (aValue / StaticPrefs::privacy_fuzzyfox_clockgrainus()) *
+         StaticPrefs::privacy_fuzzyfox_clockgrainus();
 }
 
 /*
@@ -367,7 +367,7 @@ uint64_t Fuzzyfox::CeilToGrain(uint64_t aValue) {
 TimeStamp Fuzzyfox::CeilToGrain(TimeStamp aValue) {
 #ifdef XP_WIN
   // grain is in us
-  uint64_t grain = GetClockGrain();
+  uint64_t grain = StaticPrefs::privacy_fuzzyfox_clockgrainus();
   // GTC and QPS are stored in |mt| and need to be converted
   uint64_t GTC = mt2ms(aValue.mValue.mGTC) * 1000;
   uint64_t QPC = mt2ms(aValue.mValue.mQPC) * 1000;

@@ -5,11 +5,6 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
-@deprecated_option(env='MOZ_JEMALLOC4')
-def moz_jemalloc4(value):
-    die('MOZ_JEMALLOC4 is deprecated')
-
-
 @depends(target)
 def jemalloc_default(target):
     return target.kernel in ('Darwin', 'Linux', 'WINNT')
@@ -28,7 +23,7 @@ add_old_configure_assignment('MOZ_MEMORY', True, when='--enable-jemalloc')
 def replace_malloc_default(milestone, build_project):
     if build_project == 'memory':
         return True
-    if milestone.is_nightly and build_project != 'js':
+    if milestone.is_early_beta_or_earlier and build_project != 'js':
         return True
 
 
@@ -50,3 +45,38 @@ def replace_malloc_static(build_project):
 
 
 set_config('MOZ_REPLACE_MALLOC_STATIC', replace_malloc_static)
+
+# PHC (Probabilistic Heap Checker)
+# ==============================================================
+
+# In general, it only makes sense for PHC to run on the platforms that have a
+# crash reporter.
+@depends(milestone, target, replace_malloc_default, '--enable-replace-malloc',
+         when='--enable-jemalloc')
+def phc_default(milestone, target, replace_malloc_default, replace_malloc):
+    if not replace_malloc_default or \
+       (replace_malloc.origin != 'default' and not replace_malloc):
+        return False
+    # Nightly or early beta only because PHC has a non-negligible performance cost.
+    if not milestone.is_early_beta_or_earlier:
+        return False
+    # Both Linux32 and Win32 have frequent crashes when stack tracing (for
+    # unclear reasons), so PHC is enabled only on 64-bit only in both cases.
+    #
+    # XXX: PHC is implemented but not yet enabled on Mac. Bug 1576515 is about
+    #      enabling it on Mac, but it is blocked by bug 1035892.
+    return (target.os == 'GNU' and target.kernel == 'Linux' and
+            target.bitness == 64) or \
+           (target.kernel == 'WINNT' and target.bitness == 64)
+
+
+option('--enable-phc', env='MOZ_PHC', default=phc_default,
+       when='--enable-jemalloc',
+       help='{Enable|Disable} PHC (Probabilistic Memory Checker). '
+            'Also enables replace-malloc and frame pointers')
+imply_option('--enable-replace-malloc', True, when='--enable-phc')
+imply_option('--enable-frame-pointers', True, when='--enable-phc')
+
+
+set_config('MOZ_PHC', True, when='--enable-phc')
+

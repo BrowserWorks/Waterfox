@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Restroù Enrollet">
+<!ENTITY aboutDownloads.empty                      "Restroù Enrollet Ebet">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "Digeriñ an teuliad a endalc'h ar restr ">
+<!ENTITY cmd.show.accesskey                        "D">
+<!ENTITY cmd.showMac.label                         "Diskouez e-barzh Finder">
+<!ENTITY cmd.showMac.accesskey                     "F">
+<!ENTITY cmd.open.label                            "Digeriñ">
+<!ENTITY cmd.open.accesskey                        "D">
+<!ENTITY cmd.removeFromHistory.label               "Dilemel diwar ar roll">
+<!ENTITY cmd.removeFromHistory.accesskey           "l">
+<!ENTITY cmd.clearList.label                       "Skarzhañ ar roll">
+<!ENTITY cmd.clearList.accesskey                   "k">
+<!ENTITY cmd.clearList.tooltip                     "Dilemel an holl enankadoù eus roll ar restroù enrollet, war-bouez ar pellgargadurioù bremanel.">
+<!ENTITY cmd.searchDownloads.label                 "Klask...">
+<!ENTITY cmd.searchDownloads.key                   "B">

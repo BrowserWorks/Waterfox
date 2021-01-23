@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-composer.xul -->
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+
+
+
+<!ENTITY  pref.composer.title           "Composer">
+<!ENTITY  recentFiles.title             "Lañser ar pajennoù nevesañ">
+<!ENTITY  documentsInMenu.label         "Niver brasañ ar roll pajennoù:">
+<!ENTITY  documentsInMenu.accesskey     "N">
+<!ENTITY  savingFiles.title             "Pa vez enrollet pe brudet ar pajennoù">
+<!ENTITY  preserveExisting.label        "Gwareziñ mentrezh an tarzh orinel">
+<!ENTITY  preserveExisting.accesskey    "G">
+<!ENTITY  preserveExisting.tooltip      "Gwareziñ an troc'hoù linenn ha mentrezh orinel ar bajenn">
+<!ENTITY  saveAssociatedFiles.label     "Enrollañ ar skeudennoù hag ar restroù kevredet all pa vez enrollet ar pajennoù">
+<!ENTITY  saveAssociatedFiles.accesskey "s">
+<!ENTITY  showPublishDialog.label       "Bepred diskouez ar prenestr Brudañ pa vez brudet pajennadoù">
+<!ENTITY  showPublishDialog.accesskey   "d">
+<!ENTITY  composerEditing.label         "Brudañ">
+<!ENTITY  maintainStructure.label       "Gwareziñ tresad an daolenn pa vez enlakaet pe dilamet kelligoù">
+<!ENTITY  maintainStructure.tooltip     "Gwareziñ stumm hirgarrezek an daolenn gant ouzhpennañ kelligoù ent emgefreek goude enlakaat pe dilemel kelligoù">
+<!ENTITY  maintainStructure.accesskey   "t">
+<!ENTITY  useCSS.label                  "Implijout stiloù CSS e-lec'h elfennoù HTML ha doareennoù">
+<!ENTITY  useCSS.accesskey              "I">
+<!ENTITY  crInPCreatesNewP.label        "Ar stokell Enankañ en ur rannbennad a grou ur rannbennad nevez">
+<!ENTITY  crInPCreatesNewP.accesskey    "A">

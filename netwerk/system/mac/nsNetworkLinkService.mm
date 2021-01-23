@@ -2,6 +2,9 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+#include <numeric>
+#include <vector>
+#include <algorithm>
 
 #include <sys/socket.h>
 #include <sys/sysctl.h>
@@ -10,22 +13,28 @@
 #include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/route.h>
-
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-
 #include <arpa/inet.h>
+#include <ifaddrs.h>
+
 #include "nsCOMPtr.h"
 #include "nsIObserverService.h"
 #include "nsServiceManagerUtils.h"
 #include "nsString.h"
 #include "nsCRT.h"
+#include "nsNetCID.h"
+#include "nsThreadUtils.h"
 #include "mozilla/Logging.h"
-#include "mozilla/Preferences.h"
+#include "mozilla/StaticPrefs_network.h"
 #include "mozilla/SHA1.h"
 #include "mozilla/Base64.h"
+#include "mozilla/ScopeExit.h"
+#include "mozilla/Services.h"
 #include "mozilla/Telemetry.h"
 #include "nsNetworkLinkService.h"
+#include "../../base/IPv6Utils.h"
+#include "../NetworkLinkServiceDefines.h"
 
 #import <Cocoa/Cocoa.h>
 #import <netinet/in.h>
@@ -36,6 +45,11 @@ using namespace mozilla;
 
 static LazyLogModule gNotifyAddrLog("nsNotifyAddr");
 #define LOG(args) MOZ_LOG(gNotifyAddrLog, mozilla::LogLevel::Debug, args)
+
+// See bug 1584165. Sometimes the ARP table is empty or doesn't have
+// the entry of gateway after the network change, so we'd like to delay
+// the calaulation of network id.
+static const uint32_t kNetworkIdDelayAfterChange = 3000;
 
 // If non-successful, extract the error code and return it.  This
 // error code dance is inspired by
@@ -69,11 +83,11 @@ NS_IMPL_ISUPPORTS(nsNetworkLinkService, nsINetworkLinkService, nsIObserver)
 nsNetworkLinkService::nsNetworkLinkService()
     : mLinkUp(true),
       mStatusKnown(false),
-      mAllowChangedEvent(true),
       mReachability(nullptr),
       mCFRunLoop(nullptr),
       mRunLoopSource(nullptr),
-      mStoreRef(nullptr) {}
+      mStoreRef(nullptr),
+      mMutex("nsNetworkLinkService::mMutex") {}
 
 nsNetworkLinkService::~nsNetworkLinkService() = default;
 
@@ -98,6 +112,224 @@ nsNetworkLinkService::GetLinkType(uint32_t* aLinkType) {
   return NS_OK;
 }
 
+NS_IMETHODIMP
+nsNetworkLinkService::GetNetworkID(nsACString& aNetworkID) {
+  MutexAutoLock lock(mMutex);
+  aNetworkID = mNetworkId;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsNetworkLinkService::GetPlatformDNSIndications(uint32_t* aPlatformDNSIndications) {
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+// Note that this function is copied from xpcom/io/nsLocalFileUnix.cpp.
+static nsresult CFStringReftoUTF8(CFStringRef aInStrRef, nsACString& aOutStr) {
+  // first see if the conversion would succeed and find the length of the result
+  CFIndex usedBufLen, inStrLen = ::CFStringGetLength(aInStrRef);
+  CFIndex charsConverted =
+      ::CFStringGetBytes(aInStrRef, CFRangeMake(0, inStrLen), kCFStringEncodingUTF8, 0, false,
+                         nullptr, 0, &usedBufLen);
+  if (charsConverted == inStrLen) {
+    // all characters converted, do the actual conversion
+    aOutStr.SetLength(usedBufLen);
+    if (aOutStr.Length() != (unsigned int)usedBufLen) {
+      return NS_ERROR_OUT_OF_MEMORY;
+    }
+    UInt8* buffer = (UInt8*)aOutStr.BeginWriting();
+    ::CFStringGetBytes(aInStrRef, CFRangeMake(0, inStrLen), kCFStringEncodingUTF8, 0, false, buffer,
+                       usedBufLen, &usedBufLen);
+    return NS_OK;
+  }
+
+  return NS_ERROR_FAILURE;
+}
+
+static void GetDNSSearchDomains(const SCDynamicStoreRef aStoreRef, const CFStringRef aPattern,
+                                nsTArray<nsCString>& aResult) {
+  CFDictionaryRef dnsDict = (CFDictionaryRef)SCDynamicStoreCopyValue(aStoreRef, aPattern);
+  if (dnsDict) {
+    CFTypeRef domains;
+    if (::CFDictionaryGetValueIfPresent(dnsDict, kSCPropNetDNSSearchDomains, &domains)) {
+      if (domains && ::CFGetTypeID(domains) == ::CFArrayGetTypeID()) {
+        int count = ::CFArrayGetCount(static_cast<CFArrayRef>(domains));
+        for (int i = 0; i < count; i++) {
+          CFTypeRef domain = ::CFArrayGetValueAtIndex(static_cast<CFArrayRef>(domains), i);
+          if (domain && ::CFGetTypeID(domain) == ::CFStringGetTypeID()) {
+            nsAutoCString domainStr;
+            if (NS_SUCCEEDED(CFStringReftoUTF8(static_cast<CFStringRef>(domain), domainStr))) {
+              LOG(("DNS search domain [%s]\n", domainStr.get()));
+              aResult.AppendElement(domainStr);
+            }
+          }
+        }
+      }
+    }
+  }
+  CFReleaseSafe(dnsDict);
+}
+
+static OSStatus GetPrimaryServiceInfo(const SCDynamicStoreRef aStoreRef, nsACString& aServiceName,
+                                      nsACString& aServiceId) {
+  OSStatus err = getErrorCodePtr(aStoreRef);
+  if (err != noErr) {
+    return err;
+  }
+
+  CFStringRef globalIPv4StateKey = ::SCDynamicStoreKeyCreateNetworkGlobalEntity(
+      nullptr, kSCDynamicStoreDomainState, kSCEntNetIPv4);
+  err = getErrorCodePtr(globalIPv4StateKey);
+
+  // Get the primary interface.
+  CFDictionaryRef primaryInterface = nullptr;
+  if (err == noErr) {
+    primaryInterface = (CFDictionaryRef)::SCDynamicStoreCopyValue(aStoreRef, globalIPv4StateKey);
+    err = getErrorCodePtr(primaryInterface);
+  }
+
+  CFTypeRef serviceId;
+  if (err == noErr && ::CFDictionaryGetValueIfPresent(
+                          primaryInterface, kSCDynamicStorePropNetPrimaryService, &serviceId)) {
+    err = -1;
+    if (serviceId && ::CFGetTypeID(serviceId) == ::CFStringGetTypeID()) {
+      if (NS_SUCCEEDED(CFStringReftoUTF8(static_cast<CFStringRef>(serviceId), aServiceId))) {
+        err = noErr;
+      }
+    }
+  }
+
+  CFTypeRef serviceName;
+  if (err == noErr && ::CFDictionaryGetValueIfPresent(
+                          primaryInterface, kSCDynamicStorePropNetPrimaryInterface, &serviceName)) {
+    err = -1;
+    if (serviceName && ::CFGetTypeID(serviceName) == ::CFStringGetTypeID()) {
+      if (NS_SUCCEEDED(CFStringReftoUTF8(static_cast<CFStringRef>(serviceName), aServiceName))) {
+        err = noErr;
+      }
+    }
+  }
+
+  CFReleaseSafe(globalIPv4StateKey);
+  CFReleaseSafe(primaryInterface);
+
+  if (err == noErr) {
+    return noErr;
+  }
+
+  return err;
+}
+
+static OSStatus IsInterfaceActive(const SCDynamicStoreRef aStoreRef, const char* aInterfaceName,
+                                  bool& aResult) {
+  aResult = false;
+
+  OSStatus err = getErrorCodePtr(aStoreRef);
+  if (err != noErr) {
+    return err;
+  }
+
+  CFStringRef serviceNameRef = nullptr;
+  if (err == noErr) {
+    serviceNameRef = CFStringCreateWithCString(nullptr, aInterfaceName, kCFStringEncodingUTF8);
+    err = getErrorCodePtr(serviceNameRef);
+  }
+
+  CFStringRef linkPattern = nullptr;
+  if (err == noErr) {
+    linkPattern = ::SCDynamicStoreKeyCreateNetworkInterfaceEntity(
+        nullptr, kSCDynamicStoreDomainState, serviceNameRef, kSCEntNetLink);
+    err = getErrorCodePtr(linkPattern);
+  }
+
+  CFDictionaryRef dict = nullptr;
+  if (err == noErr) {
+    dict = (CFDictionaryRef)SCDynamicStoreCopyValue(aStoreRef, linkPattern);
+    err = getErrorCodePtr(dict);
+  }
+
+  if (err == noErr) {
+    CFTypeRef activeRef;
+    err = -1;
+    if (::CFDictionaryGetValueIfPresent(dict, kSCPropNetLinkActive, &activeRef)) {
+      if (activeRef && ::CFGetTypeID(activeRef) == ::CFBooleanGetTypeID()) {
+        aResult = ::CFBooleanGetValue(static_cast<CFBooleanRef>(activeRef));
+        err = noErr;
+      }
+    }
+  }
+
+  CFReleaseSafe(dict);
+  CFReleaseSafe(linkPattern);
+  CFReleaseSafe(serviceNameRef);
+  return err;
+}
+
+void nsNetworkLinkService::GetDnsSuffixListInternal() {
+  MOZ_ASSERT(!NS_IsMainThread());
+
+  RefPtr<nsNetworkLinkService> self = this;
+  auto sendNotification = mozilla::MakeScopeExit([self] {
+    NS_DispatchToMainThread(NS_NewRunnableFunction(
+        "nsNetworkLinkService::GetDnsSuffixListInternal",
+        [self]() { self->NotifyObservers(NS_DNS_SUFFIX_LIST_UPDATED_TOPIC, nullptr); }));
+  });
+
+  nsAutoCString primaryServiceName;
+  nsAutoCString primaryServiceId;
+  OSStatus err = GetPrimaryServiceInfo(mStoreRef, primaryServiceName, primaryServiceId);
+
+  bool active = false;
+  if (err == noErr) {
+    err = IsInterfaceActive(mStoreRef, primaryServiceName.get(), active);
+    LOG(("primaryServiceName:[%s] active=%d", primaryServiceName.get(), active));
+  }
+
+  if (err != noErr || !active) {
+    // Primary interface is not active. Clear the DNS suffix list.
+    MutexAutoLock lock(mMutex);
+    mDNSSuffixList.Clear();
+    return;
+  }
+
+  nsTArray<nsCString> result;
+
+  CFStringRef serviceIdRef =
+      CFStringCreateWithCString(nullptr, primaryServiceId.get(), kCFStringEncodingUTF8);
+  err = getErrorCodePtr(serviceIdRef);
+  if (err == noErr) {
+    CFStringRef dnsSetupPattern = ::SCDynamicStoreKeyCreateNetworkServiceEntity(
+        nullptr, kSCDynamicStoreDomainSetup, serviceIdRef, kSCEntNetDNS);
+    CFStringRef dnsStatePattern = ::SCDynamicStoreKeyCreateNetworkServiceEntity(
+        nullptr, kSCDynamicStoreDomainState, serviceIdRef, kSCEntNetDNS);
+    err = getErrorCodePtr(dnsSetupPattern);
+    if (err == noErr) {
+      err = getErrorCodePtr(dnsStatePattern);
+      if (err == noErr) {
+        GetDNSSearchDomains(mStoreRef, dnsSetupPattern, result);
+        GetDNSSearchDomains(mStoreRef, dnsStatePattern, result);
+      }
+    }
+    CFReleaseSafe(dnsStatePattern);
+    CFReleaseSafe(dnsSetupPattern);
+  }
+  CFReleaseSafe(serviceIdRef);
+
+  if (err == noErr) {
+    MutexAutoLock lock(mMutex);
+    mDNSSuffixList = std::move(result);
+  }
+}
+
+NS_IMETHODIMP
+nsNetworkLinkService::GetDnsSuffixList(nsTArray<nsCString>& aDnsSuffixList) {
+  aDnsSuffixList.Clear();
+
+  MutexAutoLock lock(mMutex);
+  aDnsSuffixList.AppendElements(mDNSSuffixList);
+  return NS_OK;
+}
+
 #ifndef SA_SIZE
 #  define SA_SIZE(sa)                                 \
     ((!(sa) || ((struct sockaddr*)(sa))->sa_len == 0) \
@@ -105,19 +337,18 @@ nsNetworkLinkService::GetLinkType(uint32_t* aLinkType) {
          : 1 + ((((struct sockaddr*)(sa))->sa_len - 1) | (sizeof(uint32_t) - 1)))
 #endif
 
-static char* getMac(struct sockaddr_dl* sdl, char* buf, size_t bufsize) {
-  char* cp;
-  int n, p = 0;
+static bool getMac(struct sockaddr_dl* sdl, char* buf, size_t bufsize) {
+  unsigned char* mac;
+  mac = (unsigned char*)LLADDR(sdl);
 
-  buf[0] = 0;
-  cp = (char*)LLADDR(sdl);
-  n = sdl->sdl_alen;
-  if (n > 0) {
-    while (--n >= 0) {
-      p += snprintf(&buf[p], bufsize - p, "%02x%s", *cp++ & 0xff, n > 0 ? ":" : "");
-    }
+  if (sdl->sdl_alen != 6) {
+    LOG(("networkid: unexpected MAC size %u", sdl->sdl_alen));
+    return false;
   }
-  return buf;
+
+  snprintf(buf, bufsize, "%02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2], mac[3], mac[4],
+           mac[5]);
+  return true;
 }
 
 /* If the IP matches, get the MAC and return true */
@@ -125,8 +356,9 @@ static bool matchIp(struct sockaddr_dl* sdl, struct sockaddr_inarp* addr, char* 
                     size_t bufsize) {
   if (sdl->sdl_alen) {
     if (!strcmp(inet_ntoa(addr->sin_addr), ip)) {
-      getMac(sdl, buf, bufsize);
-      return true; /* done! */
+      if (getMac(sdl, buf, bufsize)) {
+        return true; /* done! */
+      }
     }
   }
   return false; /* continue */
@@ -155,7 +387,7 @@ static bool scanArp(char* ip, char* mac, size_t maclen) {
     return false;
   }
   if (needed == 0) {
-    // empty table
+    LOG(("scanArp: empty table"));
     return false;
   }
 
@@ -190,12 +422,90 @@ static bool scanArp(char* ip, char* mac, size_t maclen) {
   return false;
 }
 
-static int routingTable(char* gw, size_t aGwLen) {
+// Append the mac address of rtm to `stringsToHash`. If it's not in arp table, append
+// ifname and IP address.
+static bool parseHashKey(struct rt_msghdr* rtm, nsTArray<nsCString>& stringsToHash,
+                         bool skipDstCheck) {
+  struct sockaddr* sa;
+  struct sockaddr_in* sockin;
+  char ip[INET_ADDRSTRLEN];
+
+  // Ignore the routing table message without destination/gateway sockaddr.
+  // Destination address is needed to check if the gateway is default or
+  // overwritten by VPN. If yes, append the mac address or IP/interface name to
+  // `stringsToHash`.
+  if ((rtm->rtm_addrs & (RTA_DST | RTA_GATEWAY)) != (RTA_DST | RTA_GATEWAY)) {
+    return false;
+  }
+
+  sa = reinterpret_cast<struct sockaddr*>(rtm + 1);
+
+  struct sockaddr* destination =
+      reinterpret_cast<struct sockaddr*>((char*)sa + RTAX_DST * SA_SIZE(sa));
+  if (!destination || destination->sa_family != AF_INET) {
+    return false;
+  }
+
+  sockin = reinterpret_cast<struct sockaddr_in*>(destination);
+
+  inet_ntop(AF_INET, &sockin->sin_addr.s_addr, ip, sizeof(ip) - 1);
+
+  if (!skipDstCheck && strcmp("0.0.0.0", ip)) {
+    return false;
+  }
+
+  struct sockaddr* gateway =
+      reinterpret_cast<struct sockaddr*>((char*)sa + RTAX_GATEWAY * SA_SIZE(sa));
+
+  if (!gateway) {
+    return false;
+  }
+  if (gateway->sa_family == AF_INET) {
+    sockin = reinterpret_cast<struct sockaddr_in*>(gateway);
+    inet_ntop(AF_INET, &sockin->sin_addr.s_addr, ip, sizeof(ip) - 1);
+    char mac[18];
+
+    // TODO: cache the arp table instead of multiple system call.
+    if (scanArp(ip, mac, sizeof(mac))) {
+      stringsToHash.AppendElement(nsCString(mac));
+    } else {
+      // Can't find a real MAC address. This might be a VPN gateway.
+      char buf[IFNAMSIZ] = {0};
+      char* ifName = if_indextoname(rtm->rtm_index, buf);
+      if (!ifName) {
+        LOG(("parseHashKey: AF_INET if_indextoname failed"));
+        return false;
+      }
+
+      stringsToHash.AppendElement(nsCString(ifName));
+      stringsToHash.AppendElement(nsCString(ip));
+    }
+  } else if (gateway->sa_family == AF_LINK) {
+    char buf[64];
+    struct sockaddr_dl* sockdl = reinterpret_cast<struct sockaddr_dl*>(gateway);
+    if (getMac(sockdl, buf, sizeof(buf))) {
+      stringsToHash.AppendElement(nsCString(buf));
+    } else {
+      char buf[IFNAMSIZ] = {0};
+      char* ifName = if_indextoname(rtm->rtm_index, buf);
+      if (!ifName) {
+        LOG(("parseHashKey: AF_LINK if_indextoname failed"));
+        return false;
+      }
+
+      stringsToHash.AppendElement(nsCString(ifName));
+    }
+  }
+  return true;
+}
+
+// It detects the IP of the default gateways in the routing table, then the MAC
+// address of that IP in the ARP table before it hashes that string (to avoid
+// information leakage).
+bool nsNetworkLinkService::RoutingTable(nsTArray<nsCString>& aHash) {
   size_t needed;
   int mib[6];
   struct rt_msghdr* rtm;
-  struct sockaddr* sa;
-  struct sockaddr_in* sockin;
 
   mib[0] = CTL_NET;
   mib[1] = PF_ROUTE;
@@ -203,68 +513,285 @@ static int routingTable(char* gw, size_t aGwLen) {
   mib[3] = 0;
   mib[4] = NET_RT_DUMP;
   mib[5] = 0;
+
   if (sysctl(mib, 6, nullptr, &needed, nullptr, 0) < 0) {
-    return 1;
+    return false;
   }
 
   UniquePtr<char[]> buf(new char[needed]);
 
   if (sysctl(mib, 6, &buf[0], &needed, nullptr, 0) < 0) {
-    return 3;
+    return false;
   }
 
-  rtm = reinterpret_cast<struct rt_msghdr*>(&buf[0]);
-  sa = reinterpret_cast<struct sockaddr*>(rtm + 1);
-  sa = reinterpret_cast<struct sockaddr*>(SA_SIZE(sa) + (char*)sa);
-  sockin = reinterpret_cast<struct sockaddr_in*>(sa);
-  inet_ntop(AF_INET, &sockin->sin_addr.s_addr, gw, aGwLen - 1);
+  char* lim = &buf[0] + needed;
+  bool rv = false;
 
-  return 0;
+  // `next + 1 < lim` ensures we have valid `rtm->rtm_msglen` which is an
+  // unsigned short at the beginning of `rt_msghdr`.
+  for (char* next = &buf[0]; next + 1 < lim; next += rtm->rtm_msglen) {
+    rtm = reinterpret_cast<struct rt_msghdr*>(next);
+
+    if (next + rtm->rtm_msglen > lim) {
+      LOG(("Rt msg is truncated..."));
+      break;
+    }
+
+    if (parseHashKey(rtm, aHash, false)) {
+      rv = true;
+    }
+  }
+  return rv;
+}
+
+// Detect the routing of network.netlink.route.check.IPv4
+bool nsNetworkLinkService::RoutingFromKernel(nsTArray<nsCString>& aHash) {
+  int sockfd;
+  if ((sockfd = socket(AF_ROUTE, SOCK_RAW, 0)) == -1) {
+    LOG(("RoutingFromKernel: Can create a socket for network id"));
+    return false;
+  }
+
+  MOZ_ASSERT(!NS_IsMainThread());
+
+  size_t needed = 1024;
+  struct rt_msghdr* rtm;
+  struct sockaddr_in* sin;
+  UniquePtr<char[]> buf(new char[needed]);
+  pid_t pid;
+  int seq;
+
+  rtm = reinterpret_cast<struct rt_msghdr*>(&buf[0]);
+  memset(rtm, 0, sizeof(struct rt_msghdr));
+  rtm->rtm_msglen = sizeof(struct rt_msghdr) + sizeof(struct sockaddr_in);
+  rtm->rtm_version = RTM_VERSION;
+  rtm->rtm_type = RTM_GET;
+  rtm->rtm_addrs = RTA_DST;
+  rtm->rtm_pid = (pid = getpid());
+  rtm->rtm_seq = (seq = random());
+
+  sin = reinterpret_cast<struct sockaddr_in*>(rtm + 1);
+  memset(sin, 0, sizeof(struct sockaddr_in));
+  sin->sin_len = sizeof(struct sockaddr_in);
+  sin->sin_family = AF_INET;
+  sin->sin_addr = mRouteCheckIPv4;
+
+  if (write(sockfd, rtm, rtm->rtm_msglen) == -1) {
+    LOG(("RoutingFromKernel: write() failed. No route to the predefine destincation"));
+    return false;
+  }
+
+  do {
+    ssize_t r;
+    if ((r = read(sockfd, rtm, needed)) < 0) {
+      LOG(("RoutingFromKernel: read() failed."));
+      return false;
+    }
+
+    LOG(("RoutingFromKernel: read() rtm_type: %d (%d), rtm_pid: %d (%d), rtm_seq: %d (%d)\n",
+         rtm->rtm_type, RTM_GET, rtm->rtm_pid, pid, rtm->rtm_seq, seq));
+  } while (rtm->rtm_type != RTM_GET || rtm->rtm_pid != pid || rtm->rtm_seq != seq);
+
+  return parseHashKey(rtm, aHash, true);
+}
+
+// Figure out the current IPv4 "network identification" string.
+bool nsNetworkLinkService::IPv4NetworkId(SHA1Sum* aSHA1) {
+  nsTArray<nsCString> hash;
+  if (!RoutingTable(hash)) {
+    NS_WARNING("IPv4NetworkId: No default gateways");
+  }
+
+  if (!RoutingFromKernel(hash)) {
+    NS_WARNING("IPv4NetworkId: No route to the predefined destination");
+  }
+
+  // We didn't get any valid hash key to generate network ID.
+  if (hash.IsEmpty()) {
+    LOG(("IPv4NetworkId: No valid hash key"));
+    return false;
+  }
+
+  hash.Sort();
+  for (uint32_t i = 0; i < hash.Length(); ++i) {
+    LOG(("IPv4NetworkId: Hashing string for network id: %s", hash[i].get()));
+    aSHA1->update(hash[i].get(), hash[i].Length());
+  }
+
+  return true;
 }
 
 //
-// Figure out the current "network identification" string.
+// Sort and hash the prefixes and netmasks
 //
-// It detects the IP of the default gateway in the routing table, then the MAC
-// address of that IP in the ARP table before it hashes that string (to avoid
-// information leakage).
-//
-void nsNetworkLinkService::calculateNetworkId(void) {
-  bool found = false;
-  char hw[MAXHOSTNAMELEN];
-  if (!routingTable(hw, sizeof(hw))) {
-    char mac[256];  // big enough for a printable MAC address
-    if (scanArp(hw, mac, sizeof(mac))) {
-      LOG(("networkid: MAC %s\n", hw));
-      nsAutoCString mac(hw);
-      // This 'addition' could potentially be a
-      // fixed number from the profile or something.
-      nsAutoCString addition("local-rubbish");
-      nsAutoCString output;
-      SHA1Sum sha1;
-      nsCString combined(mac + addition);
-      sha1.update(combined.get(), combined.Length());
-      uint8_t digest[SHA1Sum::kHashSize];
-      sha1.finish(digest);
-      nsCString newString(reinterpret_cast<char*>(digest), SHA1Sum::kHashSize);
-      nsresult rv = Base64Encode(newString, output);
-      MOZ_RELEASE_ASSERT(NS_SUCCEEDED(rv));
-      LOG(("networkid: id %s\n", output.get()));
-      if (mNetworkId != output) {
-        // new id
-        Telemetry::Accumulate(Telemetry::NETWORK_ID, 1);
-        mNetworkId = output;
-      } else {
-        // same id
-        Telemetry::Accumulate(Telemetry::NETWORK_ID, 2);
+void nsNetworkLinkService::HashSortedPrefixesAndNetmasks(
+    std::vector<prefix_and_netmask> prefixAndNetmaskStore, SHA1Sum* sha1) {
+  // getifaddrs does not guarantee the interfaces will always be in the same order.
+  // We want to make sure the hash remains consistent Regardless of the interface order.
+  std::sort(prefixAndNetmaskStore.begin(), prefixAndNetmaskStore.end(),
+            [](prefix_and_netmask a, prefix_and_netmask b) {
+              // compare prefixStore
+              int comparedPrefix = memcmp(&a.first, &b.first, sizeof(in6_addr));
+              if (comparedPrefix == 0) {
+                // compare netmaskStore
+                return memcmp(&a.second, &b.second, sizeof(in6_addr)) < 0;
+              }
+              return comparedPrefix < 0;
+            });
+
+  for (const auto& prefixAndNetmask : prefixAndNetmaskStore) {
+    sha1->update(&prefixAndNetmask.first, sizeof(in6_addr));
+    sha1->update(&prefixAndNetmask.second, sizeof(in6_addr));
+  }
+}
+
+bool nsNetworkLinkService::IPv6NetworkId(SHA1Sum* sha1) {
+  struct ifaddrs* ifap;
+  std::vector<prefix_and_netmask> prefixAndNetmaskStore;
+
+  if (!getifaddrs(&ifap)) {
+    struct ifaddrs* ifa;
+    for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+      if (ifa->ifa_addr == NULL) {
+        continue;
       }
-      found = true;
+      if ((AF_INET6 == ifa->ifa_addr->sa_family) &&
+          !(ifa->ifa_flags & (IFF_POINTOPOINT | IFF_LOOPBACK))) {
+        // only IPv6 interfaces that aren't pointtopoint or loopback
+        struct sockaddr_in6* sin_netmask = (struct sockaddr_in6*)ifa->ifa_netmask;
+        if (sin_netmask) {
+          struct sockaddr_in6* sin_addr = (struct sockaddr_in6*)ifa->ifa_addr;
+          int scope = net::utils::ipv6_scope(sin_addr->sin6_addr.s6_addr);
+          if (scope == IPV6_SCOPE_GLOBAL) {
+            struct in6_addr prefix;
+            memset(&prefix, 0, sizeof(prefix));
+            // Get the prefix by combining the address and netmask.
+            for (size_t i = 0; i < sizeof(prefix); ++i) {
+              prefix.s6_addr[i] =
+                  sin_addr->sin6_addr.s6_addr[i] & sin_netmask->sin6_addr.s6_addr[i];
+            }
+
+            // check if prefix and netmask was already found
+            auto prefixAndNetmask = std::make_pair(prefix, sin_netmask->sin6_addr);
+            auto foundPosition = std::find_if(
+                prefixAndNetmaskStore.begin(), prefixAndNetmaskStore.end(),
+                [&prefixAndNetmask](prefix_and_netmask current) {
+                  return memcmp(&prefixAndNetmask.first, &current.first, sizeof(in6_addr)) == 0 &&
+                         memcmp(&prefixAndNetmask.second, &current.second, sizeof(in6_addr)) == 0;
+                });
+            if (foundPosition != prefixAndNetmaskStore.end()) {
+              continue;
+            }
+            prefixAndNetmaskStore.push_back(prefixAndNetmask);
+          }
+        }
+      }
+    }
+    freeifaddrs(ifap);
+  }
+  if (prefixAndNetmaskStore.empty()) {
+    LOG(("IPv6NetworkId failed"));
+    return false;
+  }
+
+  nsNetworkLinkService::HashSortedPrefixesAndNetmasks(prefixAndNetmaskStore, sha1);
+
+  return true;
+}
+
+void nsNetworkLinkService::calculateNetworkIdWithDelay(uint32_t aDelay) {
+  MOZ_ASSERT(NS_IsMainThread());
+
+  if (aDelay) {
+    if (mNetworkIdTimer) {
+      LOG(("Restart the network id timer."));
+      mNetworkIdTimer->Cancel();
+    } else {
+      LOG(("Create the network id timer."));
+      mNetworkIdTimer = NS_NewTimer();
+    }
+    mNetworkIdTimer->InitWithCallback(this, aDelay, nsITimer::TYPE_ONE_SHOT);
+    return;
+  }
+
+  nsCOMPtr<nsIEventTarget> target = do_GetService(NS_STREAMTRANSPORTSERVICE_CONTRACTID);
+  if (!target) {
+    return;
+  }
+
+  MOZ_ALWAYS_SUCCEEDS(
+      target->Dispatch(NewRunnableMethod("nsNetworkLinkService::calculateNetworkIdInternal", this,
+                                         &nsNetworkLinkService::calculateNetworkIdInternal),
+                       NS_DISPATCH_NORMAL));
+}
+
+NS_IMETHODIMP
+nsNetworkLinkService::Notify(nsITimer* aTimer) {
+  MOZ_ASSERT(aTimer == mNetworkIdTimer);
+
+  mNetworkIdTimer = nullptr;
+  calculateNetworkIdWithDelay(0);
+  return NS_OK;
+}
+
+void nsNetworkLinkService::calculateNetworkIdInternal(void) {
+  MOZ_ASSERT(!NS_IsMainThread(), "Should not be called on the main thread");
+  SHA1Sum sha1;
+  bool idChanged = false;
+  bool found4 = IPv4NetworkId(&sha1);
+  bool found6 = IPv6NetworkId(&sha1);
+
+  if (found4 || found6) {
+    // This 'addition' could potentially be a fixed number from the
+    // profile or something.
+    nsAutoCString addition("local-rubbish");
+    nsAutoCString output;
+    sha1.update(addition.get(), addition.Length());
+    uint8_t digest[SHA1Sum::kHashSize];
+    sha1.finish(digest);
+    nsAutoCString newString(reinterpret_cast<char*>(digest), SHA1Sum::kHashSize);
+    nsresult rv = Base64Encode(newString, output);
+    MOZ_RELEASE_ASSERT(NS_SUCCEEDED(rv));
+    LOG(("networkid: id %s\n", output.get()));
+    MutexAutoLock lock(mMutex);
+    if (mNetworkId != output) {
+      // new id
+      if (found4 && !found6) {
+        Telemetry::Accumulate(Telemetry::NETWORK_ID2, 1);  // IPv4 only
+      } else if (!found4 && found6) {
+        Telemetry::Accumulate(Telemetry::NETWORK_ID2, 3);  // IPv6 only
+      } else {
+        Telemetry::Accumulate(Telemetry::NETWORK_ID2, 4);  // Both!
+      }
+      mNetworkId = output;
+      idChanged = true;
+    } else {
+      // same id
+      LOG(("Same network id"));
+      Telemetry::Accumulate(Telemetry::NETWORK_ID2, 2);
+    }
+  } else {
+    // no id
+    LOG(("No network id"));
+    MutexAutoLock lock(mMutex);
+    if (!mNetworkId.IsEmpty()) {
+      mNetworkId.Truncate();
+      idChanged = true;
+      Telemetry::Accumulate(Telemetry::NETWORK_ID2, 0);
     }
   }
-  if (!found) {
-    // no id
-    Telemetry::Accumulate(Telemetry::NETWORK_ID, 0);
+
+  // Don't report network change if this is the first time we calculate the id.
+  static bool initialIDCalculation = true;
+  if (idChanged && !initialIDCalculation) {
+    RefPtr<nsNetworkLinkService> self = this;
+
+    NS_DispatchToMainThread(
+        NS_NewRunnableFunction("nsNetworkLinkService::calculateNetworkIdInternal",
+                               [self]() { self->OnNetworkIdChanged(); }));
   }
+
+  initialIDCalculation = false;
 }
 
 NS_IMETHODIMP
@@ -277,10 +804,41 @@ nsNetworkLinkService::Observe(nsISupports* subject, const char* topic, const cha
 }
 
 /* static */
-void nsNetworkLinkService::IPConfigChanged(SCDynamicStoreRef aStoreREf, CFArrayRef aChangedKeys,
-                                           void* aInfo) {
+void nsNetworkLinkService::NetworkConfigChanged(SCDynamicStoreRef aStoreREf,
+                                                CFArrayRef aChangedKeys, void* aInfo) {
+  LOG(("nsNetworkLinkService::NetworkConfigChanged"));
+
+  bool ipConfigChanged = false;
+  bool dnsConfigChanged = false;
+  for (CFIndex i = 0; i < CFArrayGetCount(aChangedKeys); ++i) {
+    CFStringRef key = static_cast<CFStringRef>(CFArrayGetValueAtIndex(aChangedKeys, i));
+    if (CFStringHasSuffix(key, kSCEntNetIPv4) || CFStringHasSuffix(key, kSCEntNetIPv6)) {
+      ipConfigChanged = true;
+    }
+    if (CFStringHasSuffix(key, kSCEntNetDNS)) {
+      dnsConfigChanged = true;
+    }
+  }
+
   nsNetworkLinkService* service = static_cast<nsNetworkLinkService*>(aInfo);
-  service->SendEvent(true);
+  if (ipConfigChanged) {
+    service->OnIPConfigChanged();
+  }
+
+  if (dnsConfigChanged) {
+    service->DNSConfigChanged();
+  }
+}
+
+void nsNetworkLinkService::DNSConfigChanged() {
+  LOG(("nsNetworkLinkService::DNSConfigChanged"));
+  nsCOMPtr<nsIEventTarget> target = do_GetService(NS_STREAMTRANSPORTSERVICE_CONTRACTID);
+  if (target) {
+    RefPtr<nsNetworkLinkService> self = this;
+    MOZ_ALWAYS_SUCCEEDS(
+        target->Dispatch(NS_NewRunnableFunction("nsNetworkLinkService::GetDnsSuffixListInternal",
+                                                [self]() { self->GetDnsSuffixListInternal(); })));
+  }
 }
 
 nsresult nsNetworkLinkService::Init(void) {
@@ -293,7 +851,11 @@ nsresult nsNetworkLinkService::Init(void) {
   rv = observerService->AddObserver(this, "xpcom-shutdown", false);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  Preferences::AddBoolVarCache(&mAllowChangedEvent, NETWORK_NOTIFY_CHANGED_PREF, true);
+  if (inet_pton(AF_INET, ROUTE_CHECK_IPV4, &mRouteCheckIPv4) != 1) {
+    LOG(("Cannot parse address " ROUTE_CHECK_IPV4));
+    MOZ_DIAGNOSTIC_ASSERT(false, "Cannot parse address " ROUTE_CHECK_IPV4);
+    return NS_ERROR_UNEXPECTED;
+  }
 
   // If the network reachability API can reach 0.0.0.0 without
   // requiring a connection, there is a network interface available.
@@ -315,21 +877,26 @@ nsresult nsNetworkLinkService::Init(void) {
   }
 
   SCDynamicStoreContext storeContext = {0, this, nullptr, nullptr, nullptr};
-  mStoreRef = ::SCDynamicStoreCreate(nullptr, CFSTR("AddIPAddressListChangeCallbackSCF"),
-                                     IPConfigChanged, &storeContext);
+  mStoreRef = ::SCDynamicStoreCreate(nullptr, CFSTR("IPAndDNSChangeCallbackSCF"),
+                                     NetworkConfigChanged, &storeContext);
 
-  CFStringRef patterns[2] = {nullptr, nullptr};
+  CFStringRef patterns[4] = {nullptr, nullptr, nullptr, nullptr};
   OSStatus err = getErrorCodePtr(mStoreRef);
   if (err == noErr) {
     // This pattern is "State:/Network/Service/[^/]+/IPv4".
     patterns[0] = ::SCDynamicStoreKeyCreateNetworkServiceEntity(nullptr, kSCDynamicStoreDomainState,
                                                                 kSCCompAnyRegex, kSCEntNetIPv4);
-    err = getErrorCodePtr(patterns[0]);
-    if (err == noErr) {
-      // This pattern is "State:/Network/Service/[^/]+/IPv6".
-      patterns[1] = ::SCDynamicStoreKeyCreateNetworkServiceEntity(
-          nullptr, kSCDynamicStoreDomainState, kSCCompAnyRegex, kSCEntNetIPv6);
-      err = getErrorCodePtr(patterns[1]);
+    // This pattern is "State:/Network/Service/[^/]+/IPv6".
+    patterns[1] = ::SCDynamicStoreKeyCreateNetworkServiceEntity(nullptr, kSCDynamicStoreDomainState,
+                                                                kSCCompAnyRegex, kSCEntNetIPv6);
+    // This pattern is "State:/Network/Service/[^/]+/DNS".
+    patterns[2] = ::SCDynamicStoreKeyCreateNetworkServiceEntity(nullptr, kSCDynamicStoreDomainState,
+                                                                kSCCompAnyRegex, kSCEntNetDNS);
+    // This pattern is "Setup:/Network/Service/[^/]+/DNS".
+    patterns[3] = ::SCDynamicStoreKeyCreateNetworkServiceEntity(nullptr, kSCDynamicStoreDomainSetup,
+                                                                kSCCompAnyRegex, kSCEntNetDNS);
+    if (!patterns[0] || !patterns[1] || !patterns[2] || !patterns[3]) {
+      err = -1;
     }
   }
 
@@ -339,7 +906,7 @@ nsresult nsNetworkLinkService::Init(void) {
   // that match that pattern list, then create our run loop
   // source.
   if (err == noErr) {
-    patternList = ::CFArrayCreate(nullptr, (const void**)patterns, 2, &kCFTypeArrayCallBacks);
+    patternList = ::CFArrayCreate(nullptr, (const void**)patterns, 4, &kCFTypeArrayCallBacks);
     if (!patternList) {
       err = -1;
     }
@@ -355,6 +922,8 @@ nsresult nsNetworkLinkService::Init(void) {
 
   CFReleaseSafe(patterns[0]);
   CFReleaseSafe(patterns[1]);
+  CFReleaseSafe(patterns[2]);
+  CFReleaseSafe(patterns[3]);
   CFReleaseSafe(patternList);
 
   if (err != noErr) {
@@ -384,8 +953,11 @@ nsresult nsNetworkLinkService::Init(void) {
     mCFRunLoop = nullptr;
     return NS_ERROR_NOT_AVAILABLE;
   }
-
   UpdateReachability();
+
+  calculateNetworkIdWithDelay(0);
+
+  DNSConfigChanged();
 
   return NS_OK;
 }
@@ -410,6 +982,11 @@ nsresult nsNetworkLinkService::Shutdown() {
   ::CFRelease(mRunLoopSource);
   mRunLoopSource = nullptr;
 
+  if (mNetworkIdTimer) {
+    mNetworkIdTimer->Cancel();
+    mNetworkIdTimer = nullptr;
+  }
+
   return NS_OK;
 }
 
@@ -431,35 +1008,58 @@ void nsNetworkLinkService::UpdateReachability() {
   mStatusKnown = true;
 }
 
-void nsNetworkLinkService::SendEvent(bool aNetworkChanged) {
-  nsCOMPtr<nsIObserverService> observerService = do_GetService("@mozilla.org/observer-service;1");
-  if (!observerService) {
+void nsNetworkLinkService::OnIPConfigChanged() {
+  MOZ_ASSERT(NS_IsMainThread());
+
+  calculateNetworkIdWithDelay(kNetworkIdDelayAfterChange);
+  if (!StaticPrefs::network_notify_changed()) {
     return;
   }
 
-  const char* event;
-  if (aNetworkChanged) {
-    if (!mAllowChangedEvent) {
-      return;
-    }
-    event = NS_NETWORK_LINK_DATA_CHANGED;
-  } else if (!mStatusKnown) {
-    event = NS_NETWORK_LINK_DATA_UNKNOWN;
-  } else {
-    event = mLinkUp ? NS_NETWORK_LINK_DATA_UP : NS_NETWORK_LINK_DATA_DOWN;
-  }
-  LOG(("SendEvent: network is '%s'\n", event));
+  NotifyObservers(NS_NETWORK_LINK_TOPIC, NS_NETWORK_LINK_DATA_CHANGED);
+}
 
-  observerService->NotifyObservers(static_cast<nsINetworkLinkService*>(this), NS_NETWORK_LINK_TOPIC,
-                                   NS_ConvertASCIItoUTF16(event).get());
+void nsNetworkLinkService::OnNetworkIdChanged() {
+  MOZ_ASSERT(NS_IsMainThread());
+
+  NotifyObservers(NS_NETWORK_ID_CHANGED_TOPIC, nullptr);
+}
+
+void nsNetworkLinkService::OnReachabilityChanged() {
+  MOZ_ASSERT(NS_IsMainThread());
+
+  if (!mStatusKnown) {
+    NotifyObservers(NS_NETWORK_LINK_TOPIC, NS_NETWORK_LINK_DATA_UNKNOWN);
+    return;
+  }
+
+  NotifyObservers(NS_NETWORK_LINK_TOPIC,
+                  mLinkUp ? NS_NETWORK_LINK_DATA_UP : NS_NETWORK_LINK_DATA_DOWN);
+}
+
+void nsNetworkLinkService::NotifyObservers(const char* aTopic, const char* aData) {
+  MOZ_ASSERT(NS_IsMainThread());
+
+  LOG(("nsNetworkLinkService::NotifyObservers: topic:%s data:%s\n", aTopic, aData ? aData : ""));
+
+  nsCOMPtr<nsIObserverService> observerService = mozilla::services::GetObserverService();
+
+  if (observerService) {
+    observerService->NotifyObservers(static_cast<nsINetworkLinkService*>(this), aTopic,
+                                     aData ? NS_ConvertASCIItoUTF16(aData).get() : nullptr);
+  }
 }
 
 /* static */
 void nsNetworkLinkService::ReachabilityChanged(SCNetworkReachabilityRef target,
                                                SCNetworkConnectionFlags flags, void* info) {
+  LOG(("nsNetworkLinkService::ReachabilityChanged"));
   nsNetworkLinkService* service = static_cast<nsNetworkLinkService*>(info);
 
   service->UpdateReachability();
-  service->SendEvent(false);
-  service->calculateNetworkId();
+  service->OnReachabilityChanged();
+  service->calculateNetworkIdWithDelay(kNetworkIdDelayAfterChange);
+  // If a new interface is up or the order of interfaces is changed, we should
+  // update the DNS suffix list.
+  service->DNSConfigChanged();
 }

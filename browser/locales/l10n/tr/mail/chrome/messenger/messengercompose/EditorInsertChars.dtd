@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Karakter Ekle">
+<!ENTITY category.label "Kategori">
+<!ENTITY letter.label "Harf:">
+<!ENTITY letter.accessKey "H">
+<!ENTITY character.label "Karakter:">
+<!ENTITY character.accessKey "K">
+<!ENTITY accentUpper.label "Vurgulu Büyük Harf">
+<!ENTITY accentLower.label "Vurgulu Küçük Harf ">
+<!ENTITY otherUpper.label "Diğer Büyük Harf">
+<!ENTITY otherLower.label "Diğer Küçük Harf">
+<!ENTITY commonSymbols.label "Genel Simgeler">
+<!ENTITY insertButton.label "Ekle">
+<!ENTITY closeButton.label "Kapat">

@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function, unicode_literals
 
 import os
 import struct
@@ -86,7 +86,7 @@ def may_strip(path):
     Return whether strip() should be called
     '''
     from buildconfig import substs
-    return not substs['PKG_SKIP_STRIP']
+    return bool(substs.get('PKG_STRIP'))
 
 
 def strip(path):
@@ -95,7 +95,7 @@ def strip(path):
     '''
     from buildconfig import substs
     strip = substs['STRIP']
-    flags = substs['STRIP_FLAGS'].split() if 'STRIP_FLAGS' in substs else []
+    flags = substs.get('STRIP_FLAGS', [])
     cmd = [strip] + flags + [path]
     if subprocess.call(cmd) != 0:
         errors.fatal('Error executing ' + ' '.join(cmd))

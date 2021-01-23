@@ -1,5 +1,5 @@
-use std::io::prelude::*;
 use std::io;
+use std::io::prelude::*;
 use std::mem;
 
 #[cfg(feature = "tokio")]
@@ -7,8 +7,8 @@ use futures::Poll;
 #[cfg(feature = "tokio")]
 use tokio_io::{AsyncRead, AsyncWrite};
 
-use zio;
-use {Compress, Decompress};
+use crate::zio;
+use crate::{Compress, Decompress};
 
 /// A ZLIB encoder, or compressor.
 ///
@@ -43,11 +43,10 @@ pub struct ZlibEncoder<R> {
     data: Compress,
 }
 
-
 impl<R: BufRead> ZlibEncoder<R> {
     /// Creates a new encoder which will read uncompressed data from the given
     /// stream and emit the compressed stream.
-    pub fn new(r: R, level: ::Compression) -> ZlibEncoder<R> {
+    pub fn new(r: R, level: crate::Compression) -> ZlibEncoder<R> {
         ZlibEncoder {
             obj: r,
             data: Compress::new(level, true),
@@ -151,7 +150,7 @@ impl<R: AsyncWrite + BufRead> AsyncWrite for ZlibEncoder<R> {
 ///
 /// # fn main() {
 /// # let mut e = ZlibEncoder::new(Vec::new(), Compression::default());
-/// # e.write(b"Hello World").unwrap();
+/// # e.write_all(b"Hello World").unwrap();
 /// # let bytes = e.finish().unwrap();
 /// # println!("{}", decode_bufreader(bytes).unwrap());
 /// # }

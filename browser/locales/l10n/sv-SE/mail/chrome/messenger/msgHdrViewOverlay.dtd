@@ -1,0 +1,114 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "Till">
+<!ENTITY fromField4.label "Från">
+<!ENTITY senderField4.label "Avsändare">
+<!ENTITY author.label "Författare">
+<!ENTITY organizationField4.label "Organisation">
+<!ENTITY replyToField4.label "Svara till">
+
+<!ENTITY subjectField4.label "Ämne">
+<!ENTITY ccField4.label "Kopia">
+<!ENTITY bccField4.label "Dold kopia">
+<!ENTITY newsgroupsField4.label "Diskussionsgrupper">
+<!ENTITY followupToField4.label "Uppföljning till">
+<!ENTITY tagsHdr4.label "Etiketter">
+<!ENTITY dateField4.label "Datum">
+<!ENTITY userAgentField4.label "Använt program">
+<!ENTITY referencesField4.label "Referenser">
+<!ENTITY messageIdField4.label "Meddelande-ID">
+<!ENTITY inReplyToField4.label "Svar på">
+<!ENTITY originalWebsite4.label "Webbplats">
+
+<!ENTITY hdrArchiveButton1.label "Arkivera">
+<!ENTITY hdrArchiveButton1.tooltip "Arkivera meddelandet">
+<!ENTITY hdrSmartReplyButton1.label "Svara smart">
+<!ENTITY hdrReplyButton1.label "Svara">
+<!ENTITY hdrReplyButton2.tooltip "Svara avsändare av meddelandet">
+<!ENTITY hdrReplyAllButton1.label "Svara alla">
+<!ENTITY hdrReplyAllButton1.tooltip "Svara avsändaren och alla mottagare">
+<!ENTITY hdrReplyListButton1.label "Svara listan">
+<!ENTITY hdrReplyListButton1.tooltip "Svara till e-postlistan">
+<!ENTITY hdrFollowupButton1.label "Uppföljning">
+<!ENTITY hdrFollowupButton1.tooltip "Skicka en uppföljning till nyhetsgruppen">
+<!ENTITY hdrForwardButton1.label "Vidarebefordra">
+<!ENTITY hdrForwardButton1.tooltip "Vidarebefordra meddelandet">
+<!ENTITY hdrJunkButton1.label "Skräp">
+<!ENTITY hdrJunkButton1.tooltip "Märk meddelandet som skräp">
+<!ENTITY hdrTrashButton1.label "Ta bort">
+<!ENTITY hdrTrashButton1.tooltip "Ta bort meddelandet">
+
+<!ENTITY hdrViewToolbarShowFull.label "Visa ikoner och text">
+<!ENTITY hdrViewToolbarShowFull.accesskey "V">
+<!ENTITY hdrViewToolbarShowIcons.label "Visa endast ikoner">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "e">
+<!ENTITY hdrViewToolbarShowText.label "Visa endast text">
+<!ENTITY hdrViewToolbarShowText.accesskey "t">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "Visa alltid Svara till avsändaren">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "a">
+
+<!ENTITY otherActionsButton2.label "Fler">
+<!ENTITY otherActionsButton.tooltip "Fler åtgärder">
+<!ENTITY otherActionsOpenConversation1.label "Öppna i konversation">
+<!ENTITY otherActionsOpenConversation1.accesskey "k">
+<!ENTITY otherActionsOpenInNewWindow1.label "Öppna i nytt fönster">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "Ö">
+<!ENTITY otherActionsOpenInNewTab1.label "Öppna i ny flik">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "a">
+<!ENTITY markAsReadMenuItem1.label "Markera som läst">
+<!ENTITY markAsReadMenuItem1.accesskey "M">
+<!ENTITY markAsUnreadMenuItem1.label "Markera som oläst">
+<!ENTITY markAsUnreadMenuItem1.accesskey "o">
+<!ENTITY saveAsMenuItem1.label "Spara som…">
+<!ENTITY saveAsMenuItem1.accesskey "S">
+<!ENTITY viewSourceMenuItem1.label "Visa källkod">
+<!ENTITY viewSourceMenuItem1.accesskey "V">
+<!ENTITY otherActionsPrint1.label "Skriv ut…">
+<!ENTITY otherActionsPrint1.accesskey "u">
+
+<!-- Attachment bar context menu items -->
+<!ENTITY startExpandedCmd.label    "Inledningsvis visa panelen bilaga">
+<!ENTITY startExpandedCmd.accesskey    "V">
+
+<!-- Attachment context menu items -->
+<!ENTITY openAttachmentCmd.label    "Öppna">
+<!ENTITY openAttachmentCmd.accesskey    "p">
+<!ENTITY saveAsAttachmentCmd.label    "Spara som…">
+<!ENTITY saveAsAttachmentCmd.accesskey    "s">
+<!ENTITY detachAttachmentCmd.label    "Avskilj…">
+<!ENTITY detachAttachmentCmd.accesskey    "k">
+<!ENTITY deleteAttachmentCmd.label    "Ta bort">
+<!ENTITY deleteAttachmentCmd.accesskey    "b">
+<!ENTITY openAllAttachmentsCmd.label    "Öppna alla…">
+<!ENTITY openAllAttachmentsCmd.accesskey    "p">
+<!ENTITY saveAllAttachmentsCmd.label    "Spara alla…">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "a">
+<!ENTITY detachAllAttachmentsCmd.label    "Avskilj alla…">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "v">
+<!ENTITY deleteAllAttachmentsCmd.label    "Ta bort alla…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "T">
+
+<!ENTITY openAttachment.tooltip "Öppna den bifogade filen">
+
+<!ENTITY detachedAttachmentFolder.show.label        "Öppna objektets mapp">
+<!ENTITY detachedAttachmentFolder.show.accesskey    "m">
+<!ENTITY detachedAttachmentFolder.showMac.label     "Visa i Finder">
+<!ENTITY detachedAttachmentFolder.showMac.accesskey "F">
+
+<!-- Attachment toolbar items -->
+<!ENTITY saveAttachmentButton1.label       "Spara">
+<!ENTITY saveAttachmentButton1.tooltip     "Spara den bifogade filen">
+<!ENTITY saveAllAttachmentsButton1.label   "Spara alla">
+<!ENTITY saveAllAttachmentsButton1.tooltip "Spara alla bifogade filer">
+
+<!ENTITY copyLinkCmd.label        "Kopiera länkadress">
+<!ENTITY copyLinkCmd.accesskey    "K">
+
+<!ENTITY CopyMessageId.label "Kopiera meddelande-ID">
+<!ENTITY CopyMessageId.accesskey "K">
+<!ENTITY OpenMessageForMsgId.label "Öppna meddelande för ID">
+<!ENTITY OpenMessageForMsgId.accesskey "p">
+<!ENTITY OpenBrowserWithMsgId.label "Öppna webbläsare med meddelande-ID">
+<!ENTITY OpenBrowserWithMsgId.accesskey "w">

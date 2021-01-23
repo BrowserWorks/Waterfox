@@ -7,7 +7,6 @@
 #include "GLContextEAGL.h"
 #include "nsDebug.h"
 #include "nsIWidget.h"
-#include "gfxPrefs.h"
 #include "gfxFailure.h"
 #include "prenv.h"
 #include "mozilla/Preferences.h"
@@ -171,19 +170,14 @@ already_AddRefed<GLContext> GLContextProviderEAGL::CreateForCompositorWidget(
     MOZ_ASSERT(false);
     return nullptr;
   }
-  return CreateForWindow(aCompositorWidget->RealWidget(), aWebRender, aForceAccelerated);
-}
 
-already_AddRefed<GLContext> GLContextProviderEAGL::CreateForWindow(nsIWidget* aWidget,
-                                                                   bool aWebRender,
-                                                                   bool aForceAccelerated) {
   RefPtr<GLContext> glContext =
       CreateEAGLContext(CreateContextFlags::NONE, false, GetGlobalContextEAGL());
   if (!glContext) {
     return nullptr;
   }
 
-  if (!GLContextEAGL::Cast(glContext)->AttachToWindow(aWidget)) {
+  if (!GLContextEAGL::Cast(glContext)->AttachToWindow(aCompositorWidget->RealWidget())) {
     return nullptr;
   }
 

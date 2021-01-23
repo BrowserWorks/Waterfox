@@ -1,0 +1,96 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY downloadManager.title           "Správca preberania súborov">
+
+<!ENTITY menuBar.tooltip                 "Panel Ponuka">
+<!ENTITY searchBar.tooltip               "Panel Vyhľadávanie">
+
+<!ENTITY search.placeholder              "Hľadať súbory">
+<!ENTITY search.label                    "Hľadať súbory">
+<!ENTITY search.accesskey                "H">
+<!ENTITY search.key                      "f">
+
+<!ENTITY cmd.clearList.label             "Vymazať zoznam">
+<!ENTITY cmd.clearList.tooltip           "Odstrániť dokončené, zrušené alebo neúspešne prevzaté súbory zo zoznamu">
+<!ENTITY cmd.clearList.accesskey         "V">
+
+<!ENTITY col.name.label                  "Názov">
+<!ENTITY col.name.accesskey              "N">
+<!ENTITY col.name.tooltip                "Názov súboru">
+<!ENTITY col.status.label                "Stav">
+<!ENTITY col.status.accesskey            "S">
+<!ENTITY col.status.tooltip              "Stav">
+<!ENTITY col.actionPlay.label            "Pozastaviť/Pokračovať/Znova">
+<!ENTITY col.actionPlay.accesskey        "k">
+<!ENTITY col.actionPlay.tooltip          "Pozastaviť/Pokračovať/Znova">
+<!ENTITY col.actionStop.label            "Zrušiť/Odstrániť">
+<!ENTITY col.actionStop.accesskey        "O">
+<!ENTITY col.actionStop.tooltip          "Zrušiť/Odstrániť">
+<!ENTITY col.progress.label              "Priebeh">
+<!ENTITY col.progress.accesskey          "P">
+<!ENTITY col.progress.tooltip            "Priebeh">
+<!ENTITY col.timeremaining.label         "Zostávajúci čas">
+<!ENTITY col.timeremaining.accesskey     "v">
+<!ENTITY col.timeremaining.tooltip       "Zostávajúci čas">
+<!ENTITY col.transferred.label           "Prenesené">
+<!ENTITY col.transferred.accesskey       "e">
+<!ENTITY col.transferred.tooltip         "Prenesené">
+<!ENTITY col.transferrate.label          "Rýchlosť">
+<!ENTITY col.transferrate.accesskey      "c">
+<!ENTITY col.transferrate.tooltip        "Rýchlosť">
+<!ENTITY col.timeelapsed.label           "Uplynutý čas">
+<!ENTITY col.timeelapsed.accesskey       "U">
+<!ENTITY col.timeelapsed.tooltip         "Uplynutý čas">
+<!ENTITY col.starttime.label             "Čas spustenia">
+<!ENTITY col.starttime.accesskey         "t">
+<!ENTITY col.starttime.tooltip           "Čas spustenia preberania">
+<!ENTITY col.endtime.label               "Čas ukončenia">
+<!ENTITY col.endtime.accesskey           "a">
+<!ENTITY col.endtime.tooltip             "Čas ukončenia preberania">
+<!ENTITY col.progresstext.label          "&#37;">
+<!ENTITY col.progresstext.accesskey      "&#37;">
+<!ENTITY col.progresstext.tooltip        "Uplynulo: &#37;">
+<!ENTITY col.source.label                "Zdroj">
+<!ENTITY col.source.accesskey            "r">
+<!ENTITY col.source.tooltip              "Zdroj">
+
+<!ENTITY view.columns.label              "Zobraziť stĺpce">
+<!ENTITY view.columns.accesskey          "Z">
+<!ENTITY view.sortBy.label               "Usporiadať podľa">
+<!ENTITY view.sortBy.accesskey           "U">
+
+<!ENTITY view.unsorted.label             "Neusporiadané">
+<!ENTITY view.unsorted.accesskey         "d">
+<!ENTITY view.sortAscending.label        "Smer usporiadania A > Z">
+<!ENTITY view.sortAscending.accesskey    "m">
+<!ENTITY view.sortDescending.label       "Smer usporiadania Z > A">
+<!ENTITY view.sortDescending.accesskey   "Z">
+
+<!ENTITY cmd.pause.label                 "Pozastaviť">
+<!ENTITY cmd.pause.accesskey             "s">
+<!ENTITY cmd.resume.label                "Pokračovať">
+<!ENTITY cmd.resume.accesskey            "P">
+<!ENTITY cmd.retry.label                 "Znova">
+<!ENTITY cmd.retry.accesskey             "n">
+<!ENTITY cmd.cancel.label                "Zrušiť">
+<!ENTITY cmd.cancel.accesskey            "Z">
+<!ENTITY cmd.remove.label                "Odstrániť zo zoznamu">
+<!ENTITY cmd.remove.accesskey            "d">
+<!ENTITY cmd.open.label                  "Otvoriť">
+<!ENTITY cmd.open.accesskey              "O">
+<!ENTITY cmd.show.label                  "Otvoriť priečinok so súborom">
+<!ENTITY cmd.show.accesskey              "t">
+<!ENTITY cmd.goToDownloadPage.label      "Prejsť na stránku so súborom">
+<!ENTITY cmd.goToDownloadPage.accesskey  "r">
+<!ENTITY cmd.copyDownloadLink.label      "Kopírovať adresu súboru">
+<!ENTITY cmd.copyDownloadLink.accesskey  "K">
+<!ENTITY cmd.properties.label            "Vlastnosti…">
+<!ENTITY cmd.properties.accesskey        "V">
+<!-- LOCALIZATION NOTE (cmd.unblock2.label):
+     This command is shown in the context menu when downloads are blocked.
+     -->
+<!ENTITY cmd.unblock2.label               "Povoliť prevzatie">
+<!ENTITY cmd.unblock2.accesskey           "l">
+

@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-composer.xul -->
+
+<!-- extracted from content/pref-composer.xhtml -->
+
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+<!ENTITY  pref.composer.title           "Nuk'unel">
+<!ENTITY  recentFiles.title             "Kik'utsamaj K'ak'a' Ruxaq">
+<!ENTITY  documentsInMenu.label         "Nïm kajilab'al taq ruxaq echolajin:">
+<!ENTITY  documentsInMenu.accesskey     "k">
+<!ENTITY  savingFiles.title             "Toq Ye'ayäk o Nataluj Kitzijol taq Ruxaq">
+<!ENTITY  preserveExisting.label        "Tiyak ri qitzij ruxe'el b'anikil">
+<!ENTITY  preserveExisting.accesskey    "y">
+<!ENTITY  preserveExisting.tooltip      "Keyak ri taq ropinïk cholaj chuqa' ri nab'ey rub'anikil ruxaq">
+<!ENTITY  saveAssociatedFiles.label     "Keyak taq wachib'äl chuqa' ch'aqa' chik taq yakb'äl kiximon ki' toq yeyak taq ruxaq">
+<!ENTITY  saveAssociatedFiles.accesskey "K">
+<!ENTITY  showPublishDialog.label       "Jantape' tik'ut pe ri ch'ab'enïk richin Eltzijonïk toq nelesäx kitzijol taq ruxaq">
+<!ENTITY  showPublishDialog.accesskey   "J">
+<!ENTITY  composerEditing.label         "Tajin ninuk'">
+<!ENTITY  maintainStructure.label       "Tiyake' ri ruwachib'enik kemon kajtz'ik toq yech'ik o yeyuj ch'utikajtz'ik">
+<!ENTITY  maintainStructure.tooltip     "Tiyake' ri kib'anikil yuqtz'ik kemon taq kajtz'ik toq nitz'aqatisäx pa kiyonil ch'utikajtz'ik chi rij toq yech'ik o yeyuj taq ch'utikajtz'ik">
+<!ENTITY  maintainStructure.accesskey   "M">
+<!ENTITY  useCSS.label                  "Ke'akisäx CSS taq che't pa kik'exel taq HTML taq ch'akulal chuqa' b'anikil">
+<!ENTITY  useCSS.accesskey              "K">
+<!ENTITY  crInPCreatesNewP.label        "Titzolin pa jun pajtzij junelïk ninuk' jun k'ak'a' pajtzij">
+<!ENTITY  crInPCreatesNewP.accesskey    "T">

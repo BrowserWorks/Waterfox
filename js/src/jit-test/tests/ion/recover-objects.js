@@ -22,6 +22,9 @@ setJitCompilerOption("ion.warmup.trigger", getJitCompilerOptions()["ion.warmup.t
 if (getJitCompilerOptions()["ion.forceinlineCaches"])
     setJitCompilerOption("ion.forceinlineCaches", 0);
 
+// Prevent the GC from cancelling Ion compilations, when we expect them to succeed
+gczeal(0);
+
 function resumeHere() {}
 var uceFault = function (i) {
     if (i > max - 2)
@@ -37,7 +40,7 @@ function inline_notSoEmpty1(a, b, c, d) {
     // arguments, if somebody ever called fun.arguments inside it.
     return { v: (a.v + b.v + c.v + d.v - 10) / 4 };
 }
-var uceFault_notSoEmpty1 = eval(uneval(uceFault).replace('uceFault', 'uceFault_notSoEmpty1'));
+var uceFault_notSoEmpty1 = eval(`(${uceFault})`.replace('uceFault', 'uceFault_notSoEmpty1'));
 function notSoEmpty1() {
     var a = { v: i };
     var b = { v: 1 + a.v };
@@ -67,7 +70,7 @@ function inline_notSoEmpty2(a, b, c, d) {
     "use strict";
     return { v: (a.v + b.v + c.v + d.v - 10) / 4 };
 }
-var uceFault_notSoEmpty2 = eval(uneval(uceFault).replace('uceFault', 'uceFault_notSoEmpty2'));
+var uceFault_notSoEmpty2 = eval(`(${uceFault})`.replace('uceFault', 'uceFault_notSoEmpty2'));
 function notSoEmpty2(i) {
     var a = { v: i };
     var b = { v: 1 + a.v };

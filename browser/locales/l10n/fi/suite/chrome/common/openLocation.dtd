@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/openLocation.xul -->
+
+<!ENTITY enter.label "Kirjoita avattavan verkkosivun osoite (URL) tai omalla koneellasi olevan tiedoston nimi:">  
+<!-- LOCALIZATION NOTE (enter.accesskey): should be present in both enter.label
+     as defined above and attachEnterLabel as defined in
+     openLocation.properties -->
+<!ENTITY enter.accesskey "K">
+<!ENTITY chooseFile.label "Valitse tiedosto…">
+<!ENTITY chooseFile.accesskey "V">
+<!ENTITY newPrivate.label "Uuteen tietosuojaikkunaan">
+<!ENTITY newWindow.label "Uuteen ikkunaan">
+<!ENTITY newTab.label "Uuteen välilehteen">
+<!ENTITY currentTab.label "Nykyiseen välilehteen">
+<!ENTITY editNewWindow.label "Uuteen Composer-ikkunaan">
+<!ENTITY open.label "Avaa">
+<!ENTITY caption.label "Avaa sijainti">
+<!ENTITY openWhere.label "Avaa:">
+<!ENTITY openWhere.accesskey "A">

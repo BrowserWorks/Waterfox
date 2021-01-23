@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label               "Eigenskippen">
+<!ENTITY propertiesMenu.accesskey           "i">
+<!ENTITY propertiesCmd.key                  "i">
+<!ENTITY abPropertiesMenu.label             "Adresboekeigenskippen">
+<!ENTITY abPropertiesMenu.accesskey         "i">
+<!ENTITY contactPropertiesMenu.label        "Kontakteigenskippen">
+<!ENTITY contactPropertiesMenu.accesskey    "i">
+<!ENTITY mailingListPropertiesMenu.label    "Mailinglisteigenskippen">
+<!ENTITY mailingListPropertiesMenu.accesskey "i">
+
+<!ENTITY abContextMenuButton.tooltip        "Adresboekkontekstmenu werjaan">
+<!ENTITY addressbookPicker.label            "Adresboek:">
+<!ENTITY addressbookPicker.accesskey        "k">
+<!ENTITY searchContacts.label               "Kontakten sykje:">
+<!ENTITY searchContacts.accesskey           "n">
+<!ENTITY SearchNameOrEmail.label            "Namme of e-mail">
+
+<!ENTITY addtoToFieldMenu.label             "Tafoegje oan it Oan-fjild">
+<!ENTITY addtoToFieldMenu.accesskey         "O">
+<!ENTITY addtoCcFieldMenu.label             "Tafoegje oan it Cc-fjild">
+<!ENTITY addtoCcFieldMenu.accesskey         "C">
+<!ENTITY addtoBccFieldMenu.label            "Tafoegje oan it Bcc-fjild">
+<!ENTITY addtoBccFieldMenu.accesskey        "B">
+<!ENTITY deleteAddrBookCard.label           "Fuortsmite">
+<!ENTITY deleteAddrBookCard.accesskey       "F">
+<!ENTITY propertiesContext.label            "Eigenskippen">
+<!ENTITY propertiesContext.accesskey        "i">
+<!ENTITY abPropertiesContext.label          "Eigenskippen">
+<!ENTITY abPropertiesContext.accesskey      "i">
+<!ENTITY editContactContext.label           "Kontakt bewurkje">
+<!ENTITY editContactContext.accesskey       "K">
+<!ENTITY editMailingListContext.label       "List bewurkje">
+<!ENTITY editMailingListContext.accesskey   "L">
+
+<!ENTITY newContactAbContext.label          "Nij kontakt">
+<!ENTITY newContactAbContext.accesskey      "o">
+<!ENTITY newListAbContext.label             "Nije list">
+<!ENTITY newListAbContext.accesskey         "l">
+
+<!ENTITY toButton.label                     "Tafoegje oan Oan:">
+<!ENTITY toButton.accesskey                 "A">
+<!ENTITY ccButton.label                     "Tafoegje oan Cc:">
+<!ENTITY ccButton.accesskey                 "C">
+<!ENTITY bccButton.label                    "Tafoegje oan Bcc: ">
+<!ENTITY bccButton.accesskey                "B">

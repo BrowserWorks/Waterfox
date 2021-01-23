@@ -2,24 +2,29 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-html {
-  height: 100%;
+:root {
+  --prefs-table-border-width: 1px;
+  --prefs-table-border: var(--prefs-table-border-width) solid var(--in-content-box-border-color);
 }
 
 .hidden {
   display: none;
 }
 
-body.config-background {
-  min-height: 100%;
-  background-image: url("chrome://browser/content/aboutconfig/background.svg");
-  background-repeat: no-repeat;
-  background-position: center center;
-  background-size: 450px;
+.table-shown > #show-all,
+.table-shown > .config-background-wrapper {
+  display: none;
 }
 
-body.config-warning {
-  background-image: url("chrome://browser/content/aboutconfig/background.svg#warning");
+.config-background {
+  background: url("chrome://browser/content/aboutconfig/background.svg") no-repeat;
+  height: 182px;
+  margin: 32px auto;
+  width: 235px;
+}
+
+.config-help-text {
+  text-align: center;
 }
 
 .title {
@@ -41,39 +46,53 @@ body.config-warning {
 #about-config-search {
   -moz-context-properties: fill, fill-opacity;
   fill: currentColor;
-  fill-opacity: 0.8;
+  fill-opacity: 0.4;
   box-sizing: border-box;
   width: 100%;
-  background-image: url("chrome://global/skin/icons/search-textbox.svg");
+  background-image: url("chrome://browser/skin/search-glass.svg");
   background-repeat: no-repeat;
-  background-position: 9px center;
-  background-size: 12px 12px;
-  padding-inline-start: 30px;
+  background-position: 8px center;
+  background-size: 16px;
   z-index: 1;
+  /* Set horizontal margin to 0 to ensure alignment with table. */
+  margin-inline: 0;
+  text-align: match-parent;
+  /* All prefs must be left-to-right. */
+  direction: ltr;
 }
 
-#about-config-search:dir(rtl) {
-  background-position-x: right 9px;
+#about-config-search:placeholder-shown {
+  /* Display the placeholder in its natural directionality,
+   * even if the user changes the text direction manually
+   * (e.g. via RightCtrl+Shift). */
+  direction: inherit;
 }
 
-#show-all:not(.hidden) {
+:root:dir(ltr) #about-config-search {
+  /* Be explicit about padding direction since
+   * `about-config-search` is forced to be LTR. */
+  padding-left: 32px;
+}
+
+:root:dir(rtl) #about-config-search {
+  background-position-x: right 8px;
+  padding-right: 32px;
+}
+
+#show-all {
   display: block;
   margin: 10px auto;
-}
-
-/* Ghost the button when it's not selected. */
-#show-all:not(:focus):not(:hover):not(:active) {
-  background-color: transparent;
-  opacity: .7;
 }
 
 #prefs {
   background-color: var(--in-content-box-background);
   color: var(--in-content-text-color);
   margin: 10px;
+  table-layout: fixed;
+  width: calc(100% - 20px);
   min-width: 644px;
   /* To stay consistent with about:preferences (664px - 20px margin). */
-  border: 1px solid var(--in-content-box-border-color);
+  border: var(--prefs-table-border);
   border-radius: 2px;
   border-spacing: 0;
 }
@@ -92,7 +111,7 @@ body.config-warning {
 
 #prefs > tr.locked {
   opacity: 0.4;
-  background-image: url("chrome://browser/skin/preferences/in-content/privacy-security.svg");
+  background-image: url("chrome://browser/skin/preferences/privacy-security.svg");
   background-repeat: no-repeat;
   background-position: 9px center;
   background-size: 16px 16px;
@@ -107,22 +126,31 @@ body.config-warning {
 #prefs > tr > td,
 #prefs > tr > th {
   padding: 4px;
-  width: 50%;
   font-weight: inherit;
 }
 
 #prefs > tr > th {
-  text-align: unset;
-  padding-inline-start: 30px;
+  direction: ltr;
+  text-align: match-parent;
+}
+
+#prefs > tr:dir(ltr) > th {
+  /* Be explicit about padding direction since `th` is forced to be LTR. */
+  padding-left: 30px;
+}
+
+#prefs > tr:dir(rtl) > th {
+  padding-right: 30px;
 }
 
 #prefs > tr.deleted > th {
   font-weight: bold;
-  opacity: 0.4;
+  color: var(--in-content-deemphasized-text);
 }
 
 #prefs > tr > td.cell-edit,
 #prefs > tr > td.cell-reset {
+  width: 40px;
   padding: 0;
 }
 
@@ -132,9 +160,91 @@ body.config-warning {
   word-break: break-all;
 }
 
+tr:not(.deleted) > .cell-value {
+  /* Always display the text in the value cell using left-to-right rules, but
+     align it according to the page direction. This doesn't apply to the radio
+     buttons shown for deleted preferences. */
+  direction: ltr;
+  text-align: match-parent;
+}
+
+#form-edit > label {
+  padding-inline-end: 10px;
+}
+
 td.cell-value > form > input[type="text"],
 td.cell-value > form > input[type="number"] {
   -moz-appearance: textfield;
+  margin: 0;
   width: 100%;
   box-sizing: border-box;
+  /* Align the text inside the input field in the same way as the table cell,
+     for both the left-to-right and right-to-left directions. */
+  text-align: match-parent;
+}
+
+.button-add,
+.button-save,
+.button-edit,
+.button-toggle,
+.button-delete,
+.button-reset {
+  -moz-context-properties: fill;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 16px;
+  fill: currentColor;
+  min-width: auto;
+  width: 32px;
+}
+
+.button-add {
+  background-image: url("chrome://browser/skin/add.svg");
+}
+
+.button-save {
+  background-image: url("chrome://global/skin/icons/check.svg");
+}
+
+.button-edit {
+  background-image: url("chrome://browser/skin/edit.svg");
+}
+
+.button-toggle {
+  background-image: url("chrome://browser/skin/toggle.svg");
+}
+
+.button-delete {
+  background-image: url("chrome://global/skin/icons/delete.svg");
+}
+
+.button-reset {
+  background-image: url("chrome://browser/skin/undo.svg");
+}
+
+.button-reset:dir(rtl) {
+  transform: scaleX(-1);
+}
+
+/* The ::before creates a blank space between the last visible pref and the add row. */
+#prefs[has-visible-prefs] > .add > th::before,
+#prefs[has-visible-prefs] > .add > td::before {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 0;
+  /* Make it wider by the border width so the border-inline is hidden. */
+  inset-inline: calc(var(--prefs-table-border-width) * -1);
+  height: 12px;
+  background-color: var(--in-content-page-background);
+  /* This is visually the top border on the add row. */
+  border-bottom: var(--prefs-table-border);
+}
+
+#prefs[has-visible-prefs] > .add > th,
+#prefs[has-visible-prefs] > .add > td {
+  /* This is the border underneath the last existing pref row. */
+  border-top: var(--prefs-table-border);
+  padding-top: 14px;
+  position: relative;
 }

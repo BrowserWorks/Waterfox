@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label          "Afaylu">
+<!ENTITY fileMenu.accesskey        "A">
+<!ENTITY newMenu.label            "Amaynut">
+<!ENTITY newMenu.accesskey          "m">
+
+<!ENTITY editMenu.label          "Ẓreg">
+<!ENTITY editMenu.accesskey        "Ẓ">
+<!ENTITY undoCmd.label            "Sefsax">
+<!ENTITY undoCmd.accesskey          "S">
+<!ENTITY redoCmd.label            "Err-d">
+<!ENTITY redoCmd.accesskey          "E">
+<!ENTITY deleteCmd.label          "Kkes">
+<!ENTITY deleteCmd.accesskey        "K">
+<!ENTITY preferencesCmd2.label "Iɣewwaṛen">
+<!ENTITY preferencesCmd2.accesskey "w">
+<!ENTITY preferencesCmdUnix.label       "Ismenyifen">
+<!ENTITY preferencesCmdUnix.accesskey     "s">
+
+<!ENTITY customizeCmd.label "Sagen">
+<!ENTITY customizeCmd.accesskey "t">
+
+<!ENTITY viewMenu.label          "Sken">
+<!ENTITY viewMenu.accesskey        "e">
+<!ENTITY viewToolbarsMenu.label        "Afeggag n ifecka">
+<!ENTITY viewToolbarsMenu.accesskey      "A">
+<!ENTITY showTaskbarCmd.label          "Afeggag n waddad">
+<!ENTITY showTaskbarCmd.accesskey        "f">
+
+<!ENTITY closeCmd.label      "Mdel">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "M">
+
+<!ENTITY quitApplicationCmd.label  "Ffeɣ">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "ɣ">
+
+<!ENTITY quitApplicationCmdUnix.label  "Ffeɣ">
+<!ENTITY quitApplicationCmdUnix.accesskey  "f">
+
+<!ENTITY quitApplicationCmdMac.label  "Ffeɣ si &brandShortName;">
+<!ENTITY quitApplicationCmdMac.accesskey  "f">

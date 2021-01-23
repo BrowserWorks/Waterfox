@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.addressing.title                 "Adressering">
+<!ENTITY emailCollectiontitle.label            "Oppsamling av e-postadresser">
+<!ENTITY emailCollectionPicker.label           "Legg til e-postadresser i:">
+<!ENTITY emailCollectionPicker.accesskey       "L">
+<!ENTITY emailCollectiontext.label             "E-postadresser fra sendte meldinger kan automatisk bli lagt til i en lokal adressebok.">
+
+<!-- Autocompletion -->
+<!ENTITY addressingTitle.label                 "Adresser autofullføring">
+<!ENTITY highlightNonMatches.label             "Uthev adresser som ikke har autofullføring">
+<!ENTITY highlightNonMatches.accesskey         "U">
+<!ENTITY addressingEnable.label                "Lokale adressebøker">
+<!ENTITY addressingEnable.accesskey            "L">
+<!ENTITY autocompleteText.label                "Ved adressering av meldinger, se etter treff i:">
+<!ENTITY directories.label                     "Katalogserver:">
+<!ENTITY directories.accesskey                 "K">
+<!ENTITY directoriesNone.label                 "Ingen">
+<!ENTITY editDirectories.label                 "Rediger kataloger …">
+<!ENTITY editDirectories.accesskey             "R">

@@ -13,6 +13,12 @@ cranelift_x86 = ['jsrust_shared/cranelift_x86']
 cranelift_arm32 = ['jsrust_shared/cranelift_arm32']
 cranelift_arm64 = ['jsrust_shared/cranelift_arm64']
 cranelift_none = ['jsrust_shared/cranelift_none']
+simd-accel = ['jsrust_shared/simd-accel']
+smoosh = ['jsrust_shared/smoosh']
 
 [dependencies]
 jsrust_shared = { path = "./shared" }
+# Workaround for https://github.com/rust-lang/rust/issues/58393
+mozglue-static = { path = "../../../mozglue/static/rust" }
+wat = { version = "1.0.17" }
+wasmparser = { version = "0.48.2" }

@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of 
+Netscape Communicator, Please translate using the brandname in respective 
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word 
+"&brandShortName;" below.
+-->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Import">
+<!ENTITY importAll.label          "Importovať všetko">
+<!ENTITY importAll.accesskey      "v">
+<!ENTITY importMail.label         "Pošta">
+<!ENTITY importMail.accesskey     "P">
+<!ENTITY importFeeds.label        "Informačné kanály">
+<!ENTITY importFeeds.accesskey    "m">
+<!ENTITY importAddressbook.label  "Adresáre">
+<!ENTITY importAddressbook.accesskey "d">
+<!ENTITY importSettings.label     "Nastavenie">
+<!ENTITY importSettings.accesskey "s">
+<!ENTITY importFilters.label      "Filtre">
+<!ENTITY importFilters.accesskey  "F">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "Sprievodca importom v programe &brandShortName;">
+<!ENTITY importShortDesc.label    "Import pošty, adresárov, nastavení a filtrov z iných programov">
+
+<!ENTITY importDescription1.label "Tento sprievodca importuje poštové správy, položky adresárov, odoberané informačné kanály, nastavenia a/alebo filtre z iných poštových klientov a z bežných formátov adresárov do programu &brandShortName;.">
+<!ENTITY importDescription2.label "Po importovaní budú tieto položky dostupné v programe &brandShortName;.">
+
+<!ENTITY selectDescription.label  "Zvoľte typ súboru, z ktorého chcete importovať:">
+<!ENTITY selectDescriptionB.label "Zvoľte existujúci účet alebo si vytvorte nový:">
+<!ENTITY selectDescription.accesskey "v">
+<!ENTITY acctName.label           "Názov:">
+<!ENTITY acctName.accesskey       "N">
+<!ENTITY noModulesFound.label     "Nenašli sa žiadne aplikácie alebo súbory, z ktorých by sa dali importovať údaje.">
+
+<!ENTITY back.label               "&lt; Naspäť">
+<!ENTITY forward.label            "Ďalej &gt;">
+<!ENTITY finish.label             "Dokončiť">
+<!ENTITY cancel.label             "Zrušiť">
+
+<!ENTITY select.label             "Alebo vyberte typ materiálu, ktorý sa má importovať:">
+
+<!ENTITY title.label              "Titul">
+<!ENTITY processing.label         "Importuje sa…">

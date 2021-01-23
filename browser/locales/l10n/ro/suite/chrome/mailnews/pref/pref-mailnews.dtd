@@ -1,0 +1,48 @@
+<!--
+# Translator(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+# adiroiban <adiroiban@gmail.com>
+# strainu <crangasi2001@yahoo.com>
+# toffee <daniel@toffee.ro>
+# manuelciosici <manuelrciosici@gmail.com>
+# janimo <jani@ubuntu.com>
+# Laudatti <Laudatti@gmail.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.mailnews.title              "Email și grupuri de discuții">
+<!ENTITY generalSettings.caption          "Configurări generale">
+<!ENTITY confirmMove.label                "Confirm when moving folders to the Trash">
+<!ENTITY confirmMove.accesskey            "C">
+<!ENTITY preserveThreading.label          "Preserve threading when sorting messages">
+<!ENTITY preserveThreading.accesskey      "v">
+<!ENTITY mailBiffOnNewWindow.label        "Only check for new mail after opening Mail &amp; Newsgroups">
+<!ENTITY mailBiffOnNewWindow.accesskey    "O">
+
+<!ENTITY defaultMailSettings.description  "Make &brandShortName; the default application for:">
+<!ENTITY setDefaultMail.label             "Email">
+<!ENTITY setDefaultMail.accesskey         "m">
+<!ENTITY setDefaultNews.label             "Noutăți">
+<!ENTITY setDefaultNews.accesskey         "N">
+<!ENTITY setDefaultFeed.label             "Feed-uri">
+<!ENTITY setDefaultFeed.accesskey         "e">
+
+<!ENTITY messengerStartPage.caption       "Pagina de start a contului">
+<!ENTITY enableStartPage.label            "When Mail launches, show the Start Page in the message area">
+<!ENTITY enableStartPage.accesskey        "W">
+<!ENTITY location.label                   "Locația:">
+<!ENTITY location.accesskey               "L">
+<!ENTITY useDefault.label                 "Restaurează">
+<!ENTITY useDefault.accesskey             "R">
+<!ENTITY rememberLastMsg.label            "Reține ultimul mesaj selectat">
+<!ENTITY rememberLastMsg.accesskey        "R">

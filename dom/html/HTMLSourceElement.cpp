@@ -28,7 +28,7 @@ HTMLSourceElement::HTMLSourceElement(
     already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo)
     : nsGenericHTMLElement(std::move(aNodeInfo)) {}
 
-HTMLSourceElement::~HTMLSourceElement() {}
+HTMLSourceElement::~HTMLSourceElement() = default;
 
 NS_IMPL_CYCLE_COLLECTION_INHERITED(HTMLSourceElement, nsGenericHTMLElement,
                                    mSrcMediaSource)
@@ -124,13 +124,12 @@ nsresult HTMLSourceElement::AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
       aNameSpaceID, aName, aValue, aOldValue, aMaybeScriptedPrincipal, aNotify);
 }
 
-nsresult HTMLSourceElement::BindToTree(Document* aDocument, nsIContent* aParent,
-                                       nsIContent* aBindingParent) {
-  nsresult rv =
-      nsGenericHTMLElement::BindToTree(aDocument, aParent, aBindingParent);
+nsresult HTMLSourceElement::BindToTree(BindContext& aContext,
+                                       nsINode& aParent) {
+  nsresult rv = nsGenericHTMLElement::BindToTree(aContext, aParent);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  if (auto* media = HTMLMediaElement::FromNodeOrNull(aParent)) {
+  if (auto* media = HTMLMediaElement::FromNode(aParent)) {
     media->NotifyAddedSource();
   }
 

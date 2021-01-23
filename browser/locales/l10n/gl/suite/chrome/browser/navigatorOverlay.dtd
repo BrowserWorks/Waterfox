@@ -1,0 +1,138 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File Menu -->
+<!ENTITY tabCmd.label "Lapela do navegador">
+<!ENTITY tabCmd.accesskey "L">
+<!ENTITY tabCmd.commandkey "t">
+<!ENTITY openCmd.label "Abrir localización web…">
+<!ENTITY openCmd.accesskey "l">
+<!ENTITY openCmd.commandkey "l">
+<!ENTITY openFileCmd.label "Abrir ficheiro…">
+<!ENTITY openFileCmd.accesskey "o">
+<!ENTITY openFileCmd.commandkey "o">
+
+<!ENTITY closeOtherTabs.label "Pechar as outras lapelas">
+<!ENTITY closeOtherTabs.accesskey "t">
+
+<!ENTITY uploadFile.label "Subir ficheiro…">
+<!ENTITY uploadFile.accesskey "f">
+
+<!ENTITY printSetupCmd.label "Configuración da páxina…">
+<!ENTITY printSetupCmd.accesskey "u">
+
+<!-- Edit Menu -->
+<!ENTITY findOnCmd.label "Localizar nesta páxina…">
+
+<!-- View Menu -->
+<!ENTITY toolbarsCmd.label "Mostrar/Ocultar">
+<!ENTITY toolbarsCmd.accesskey "M">
+<!ENTITY tabbarCmd.label "Barra de lapelas">
+<!ENTITY tabbarCmd.accesskey "B">
+<!ENTITY taskbarCmd.label "Barra de estado">
+<!ENTITY taskbarCmd.accesskey "s">
+<!ENTITY componentbarCmd.label "Barra de compoñentes">
+<!ENTITY componentbarCmd.accesskey "c">
+
+<!ENTITY fullScreenCmd.label "Pantalla completa">
+<!ENTITY fullScreenCmd.accesskey "P">
+
+<!ENTITY useStyleSheetMenu.label "Usar a folla de estilos">
+<!ENTITY useStyleSheetMenu.accesskey "U">
+<!ENTITY useStyleSheetNone.label "Ningunha">
+<!ENTITY useStyleSheetNone.accesskey "N">
+<!ENTITY useStyleSheetPersistentOnly.label "Estilo predeterminado">
+<!ENTITY useStyleSheetPersistentOnly.accesskey "d">
+<!ENTITY bidiSwitchPageDirectionItem.label "Cambiar a orientación da páxina">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey "C">
+<!ENTITY pageSourceCmd.label "Código da páxina">
+<!ENTITY pageSourceCmd.accesskey "o">
+<!ENTITY pageSourceCmd.commandkey "u">
+<!ENTITY pageInfoCmd.label "Información da páxina">
+<!ENTITY pageInfoCmd.accesskey "I">
+<!ENTITY pageInfoCmd.commandkey "i">
+
+<!-- Go Menu -->
+<!ENTITY goMenu.label "Ir">
+<!ENTITY goMenu.accesskey "I">
+<!ENTITY goHomeCmd.label "Inicio">
+<!ENTITY goHomeCmd.accesskey "I">
+<!ENTITY historyCmd.label "Historial">
+<!ENTITY historyCmd.accesskey "s">
+<!ENTITY history.commandKey "h">
+<!ENTITY recentTabs.label "Lapelas pechadas recentemente">
+<!ENTITY recentTabs.accesskey "c">
+<!ENTITY recentTabs.commandkey "d">
+<!ENTITY recentWindows.label "Xanelas pechadas recentemente">
+<!ENTITY recentWindows.accesskey "X">
+<!ENTITY recentWindows.commandkey "y">
+<!ENTITY historyRestoreLastSession.label "Restaurar a sesión anterior">
+<!ENTITY historyRestoreLastSession.accesskey "R">
+<!ENTITY syncTabsMenu.label "As lapelas doutros equipos">
+<!ENTITY syncTabsMenu.accesskey "o">
+
+<!-- Bookmarks Menu -->
+<!ENTITY bookmarksMenu.label "Marcadores">
+<!ENTITY bookmarksMenu.accesskey "M">
+<!ENTITY addCurPageCmd.label "Marcar esta páxina">
+<!ENTITY addCurPageCmd.accesskey "M">
+<!ENTITY addCurPageAsCmd.label "Crear marcador…">
+<!ENTITY addCurPageAsCmd.accesskey "C">
+<!ENTITY addCurPageAsCmd.commandkey "d">
+<!ENTITY addCurTabsAsCmd.label "Marcar este grupo de lapelas…">
+<!ENTITY addCurTabsAsCmd.accesskey "g">
+<!ENTITY manBookmarksCmd.label "Xestionar marcadores…">
+<!ENTITY manBookmarksCmd.accesskey "m">
+<!ENTITY manBookmarksCmd.commandkey "b">
+
+<!-- Tools Menu -->
+<!ENTITY searchInternetCmd.label "Buscar na web">
+<!ENTITY searchInternetCmd.accesskey "s">
+<!ENTITY searchInternet.commandKey "s">
+<!ENTITY translateMenu.label "Traducir páxina">
+<!ENTITY translateMenu.accesskey "T">
+
+<!ENTITY cookieMessageTitle.label "Cambiáronse os permisos das cookies">
+<!ENTITY cookieDisplayCookiesCmd.label "Xestionar cookies gardadas">
+<!ENTITY cookieDisplayCookiesCmd.accesskey "X">
+<!ENTITY cookieAllowCookiesCmd.label "Permitir as cookies deste sitio web">
+<!ENTITY cookieAllowCookiesCmd.accesskey "a">
+<!ENTITY cookieAllowCookiesMsg.label "Sempre se permitirán as cookies deste sitio web.">
+<!ENTITY cookieAllowSessionCookiesCmd.label "Permitir cookies de sesión deste sitio web">
+<!ENTITY cookieAllowSessionCookiesCmd.accesskey "s">
+<!ENTITY cookieAllowSessionCookiesMsg.label "Este sitio web só poderá enviar cookies para a sesión actual.">
+<!ENTITY cookieCookiesDefaultCmd.label "Usar permisos predeterminados para as cookies">
+<!ENTITY cookieCookiesDefaultCmd.accesskey "U">
+<!ENTITY cookieCookiesDefaultMsg.label "Aceptáranse ou rexeitáranse as cookies deste sitio web baseándose na configuración predeterminada.">
+<!ENTITY cookieBlockCookiesCmd.label "Bloquear as cookies deste sitio web">
+<!ENTITY cookieBlockCookiesCmd.accesskey "B">
+<!ENTITY cookieBlockCookiesMsg.label "Sempre se rexeitarán as cookies deste sitio web.">
+
+<!ENTITY cookieImageMessageTitle.label "Cambiáronse os permisos das imaxes">
+<!ENTITY cookieDisplayImagesCmd.label "Xestionar os permisos das imaxes">
+<!ENTITY cookieDisplayImagesCmd.accesskey "m">
+<!ENTITY cookieAllowImagesCmd.label "Permitir as imaxes deste sitio web">
+<!ENTITY cookieAllowImagesCmd.accesskey "a">
+<!ENTITY cookieAllowImagesMsg.label "Sempre se descargarán as imaxes deste sitio web.">
+<!ENTITY cookieImagesDefaultCmd.label "Usar os permisos predeterminados para as imaxes">
+<!ENTITY cookieImagesDefaultCmd.accesskey "U">
+<!ENTITY cookieImagesDefaultMsg.label "Descargaranse as imaxes deste sitio web baseándose na configuración predeterminada.">
+<!ENTITY cookieBlockImagesCmd.label "Bloquear as imaxes deste sitio web">
+<!ENTITY cookieBlockImagesCmd.accesskey "B">
+<!ENTITY cookieBlockImagesMsg.label "Nunca se descargarán as imaxes deste sitio web.">
+
+<!ENTITY cookieAllowPopupsCmd.label "Permitir xanelas emerxentes deste sitio web">
+<!ENTITY cookieAllowPopupsCmd.accesskey "a">
+<!ENTITY cookieManagePopups.label "Xestionar xanelas emerxentes">
+<!ENTITY cookieManagePopups.accesskey "m">
+
+<!ENTITY cookieCookieManager.label "Xestor de cookies">
+<!ENTITY cookieCookieManager.accesskey "c">
+<!ENTITY cookieImageManager.label "Xestor de imaxes">
+<!ENTITY cookieImageManager.accesskey "i">
+<!ENTITY cookiePopupManager.label "Xestor de xanelas emerxentes">
+<!ENTITY cookiePopupManager.accesskey "o">
+
+<!ENTITY clearPrivateDataCmd.label "Limpar datos privados…">
+<!ENTITY clearPrivateDataCmd.accesskey "L">

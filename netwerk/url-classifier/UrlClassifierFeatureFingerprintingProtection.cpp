@@ -6,9 +6,9 @@
 
 #include "UrlClassifierFeatureFingerprintingProtection.h"
 
-#include "mozilla/AntiTrackingCommon.h"
 #include "mozilla/net/UrlClassifierCommon.h"
-#include "mozilla/StaticPrefs.h"
+#include "ChannelClassifierService.h"
+#include "mozilla/StaticPrefs_privacy.h"
 #include "nsContentUtils.h"
 #include "nsNetUtil.h"
 
@@ -111,7 +111,10 @@ UrlClassifierFeatureFingerprintingProtection::MaybeCreate(
            "with uri %s",
            aChannel, spec.get()));
     }
+    return nullptr;
+  }
 
+  if (UrlClassifierCommon::IsPassiveContent(aChannel)) {
     return nullptr;
   }
 
@@ -150,8 +153,7 @@ UrlClassifierFeatureFingerprintingProtection::ProcessChannel(
   NS_ENSURE_ARG_POINTER(aChannel);
   NS_ENSURE_ARG_POINTER(aShouldContinue);
 
-  bool isAllowListed = UrlClassifierCommon::IsAllowListed(
-      aChannel, AntiTrackingCommon::eFingerprinting);
+  bool isAllowListed = UrlClassifierCommon::IsAllowListed(aChannel);
 
   // This is a blocking feature.
   *aShouldContinue = isAllowListed;
@@ -162,6 +164,11 @@ UrlClassifierFeatureFingerprintingProtection::ProcessChannel(
 
   nsAutoCString list;
   UrlClassifierCommon::TablesToString(aList, list);
+
+  if (ChannelClassifierService::OnBeforeBlockChannel(aChannel, mName, list) ==
+      ChannelBlockDecision::Unblocked) {
+    return NS_OK;
+  }
 
   UrlClassifierCommon::SetBlockedContent(aChannel, NS_ERROR_FINGERPRINTING_URI,
                                          list, EmptyCString(), EmptyCString());
@@ -185,15 +192,19 @@ UrlClassifierFeatureFingerprintingProtection::ProcessChannel(
 NS_IMETHODIMP
 UrlClassifierFeatureFingerprintingProtection::GetURIByListType(
     nsIChannel* aChannel, nsIUrlClassifierFeature::listType aListType,
-    nsIURI** aURI) {
+    nsIUrlClassifierFeature::URIType* aURIType, nsIURI** aURI) {
   NS_ENSURE_ARG_POINTER(aChannel);
+  NS_ENSURE_ARG_POINTER(aURIType);
   NS_ENSURE_ARG_POINTER(aURI);
 
   if (aListType == nsIUrlClassifierFeature::blacklist) {
+    *aURIType = nsIUrlClassifierFeature::blacklistURI;
     return aChannel->GetURI(aURI);
   }
 
   MOZ_ASSERT(aListType == nsIUrlClassifierFeature::whitelist);
+
+  *aURIType = nsIUrlClassifierFeature::pairwiseWhitelistURI;
   return UrlClassifierCommon::CreatePairwiseWhiteListURI(aChannel, aURI);
 }
 

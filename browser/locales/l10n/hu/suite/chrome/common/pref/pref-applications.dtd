@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Applications prefs dialog -->
+<!ENTITY pref.applications.title "Segédalkalmazások">
+
+<!ENTITY typeColumn.label        "Tartalomtípus">
+<!ENTITY typeColumn.accesskey    "T">
+
+<!ENTITY actionColumn2.label     "Művelet">
+<!ENTITY actionColumn2.accesskey "M">
+
+<!ENTITY search.placeholder      "Tartalomtípusok és műveletek keresése">
+
+<!ENTITY useAppChooser.label     "Használja a natív alkalmazásválasztót, ha az elérhető">
+<!ENTITY useAppChooser.accesskey "H">

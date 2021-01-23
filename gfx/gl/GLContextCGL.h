@@ -17,6 +17,12 @@
 typedef void NSOpenGLContext;
 #endif
 
+#include <CoreGraphics/CGDisplayConfiguration.h>
+
+#include "mozilla/Atomics.h"
+
+class nsIWidget;
+
 namespace mozilla {
 namespace gl {
 
@@ -24,6 +30,8 @@ class GLContextCGL : public GLContext {
   friend class GLContextProviderCGL;
 
   NSOpenGLContext* mContext;
+
+  mozilla::Atomic<bool> mActiveGPUSwitchMayHaveOccurred;
 
  public:
   MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(GLContextCGL, override)
@@ -44,13 +52,21 @@ class GLContextCGL : public GLContext {
   NSOpenGLContext* GetNSOpenGLContext() const { return mContext; }
   CGLContextObj GetCGLContext() const;
 
+  // Can be called on any thread
+  static void DisplayReconfigurationCallback(CGDirectDisplayID aDisplay,
+                                             CGDisplayChangeSummaryFlags aFlags,
+                                             void* aUserInfo);
+
+  // Call at the beginning of a frame, on contexts that should stay on the
+  // active GPU. This method will migrate the context to the new active GPU, if
+  // the active GPU has changed since the last call.
+  void MigrateToActiveGPU();
+
   virtual bool MakeCurrentImpl() const override;
 
   virtual bool IsCurrentImpl() const override;
 
   virtual GLenum GetPreferredARGB32Format() const override;
-
-  virtual bool IsDoubleBuffered() const override;
 
   virtual bool SwapBuffers() override;
 

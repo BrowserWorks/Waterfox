@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-media.xul -->
+
+<!-- LOCALIZATION NOTE : FILE Media management prefs -->
+<!ENTITY pref.media.title               "Médiá">
+<!ENTITY mediaHTML5Preferences.label    "Zvuk/video">
+<!ENTITY allowMediaAutoplay.label       "Povoliť automatické prehrávanie mediálneho obsahu HTML5">
+<!ENTITY allowMediaAutoplay.accesskey   "a">
+
+<!ENTITY enableDrmMedia.label           "Povoliť správu digitálnych práv (DRM) pre">
+<!ENTITY enableEmeForSuite.label        "moduly tretích strán na dešifrovanie obsahu">
+<!ENTITY enableEmeForSuite.accesskey    "o">
+
+<!ENTITY animLoopingTitle.label         "Počet opakovaní animácií animovaných obrázkov">
+<!ENTITY animLoopAsSpecified.label      "Podľa nastavenia v obrázku">
+<!ENTITY animLoopAsSpecified.accesskey  "t">
+<!ENTITY animLoopOnce.label             "Jedna">
+<!ENTITY animLoopOnce.accesskey         "J">
+<!ENTITY animLoopNever.label            "Žiadna">
+<!ENTITY animLoopNever.accesskey        "d">

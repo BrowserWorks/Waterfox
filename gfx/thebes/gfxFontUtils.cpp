@@ -9,6 +9,7 @@
 #include "gfxFontUtils.h"
 #include "gfxFontEntry.h"
 #include "gfxFontVariations.h"
+#include "gfxUtils.h"
 
 #include "nsServiceManagerUtils.h"
 
@@ -546,7 +547,7 @@ typedef struct {
   AutoSwap_PRUint16 arrays[1];
 } Format4Cmap;
 
-typedef struct {
+typedef struct Format14Cmap {
   AutoSwap_PRUint16 format;
   AutoSwap_PRUint32 length;
   AutoSwap_PRUint32 numVarSelectorRecords;
@@ -560,7 +561,7 @@ typedef struct {
   VarSelectorRecord varSelectorRecords[1];
 } Format14Cmap;
 
-typedef struct {
+typedef struct NonDefUVSTable {
   AutoSwap_PRUint32 numUVSMappings;
 
   typedef struct {
@@ -846,10 +847,13 @@ void gfxFontUtils::ParseFontList(const nsACString& aFamilyList,
 }
 
 void gfxFontUtils::AppendPrefsFontList(const char* aPrefName,
-                                       nsTArray<nsCString>& aFontList) {
+                                       nsTArray<nsCString>& aFontList,
+                                       bool aLocalized) {
   // get the list of single-face font families
   nsAutoCString fontlistValue;
-  nsresult rv = Preferences::GetCString(aPrefName, fontlistValue);
+  nsresult rv = aLocalized
+                    ? Preferences::GetLocalizedCString(aPrefName, fontlistValue)
+                    : Preferences::GetCString(aPrefName, fontlistValue);
   if (NS_FAILED(rv)) {
     return;
   }
@@ -858,9 +862,10 @@ void gfxFontUtils::AppendPrefsFontList(const char* aPrefName,
 }
 
 void gfxFontUtils::GetPrefsFontList(const char* aPrefName,
-                                    nsTArray<nsCString>& aFontList) {
+                                    nsTArray<nsCString>& aFontList,
+                                    bool aLocalized) {
   aFontList.Clear();
-  AppendPrefsFontList(aPrefName, aFontList);
+  AppendPrefsFontList(aPrefName, aFontList, aLocalized);
 }
 
 // produce a unique font name that is (1) a valid Postscript name and (2) less
@@ -935,15 +940,14 @@ gfxUserFontType gfxFontUtils::DetermineFontDataType(const uint8_t* aFontData,
     }
   }
 
-  // test for WOFF
+  // test for WOFF or WOFF2
   if (aFontDataLength >= sizeof(AutoSwap_PRUint32)) {
     const AutoSwap_PRUint32* version =
         reinterpret_cast<const AutoSwap_PRUint32*>(aFontData);
     if (uint32_t(*version) == TRUETYPE_TAG('w', 'O', 'F', 'F')) {
       return GFX_USERFONT_WOFF;
     }
-    if (Preferences::GetBool(GFX_PREF_WOFF2_ENABLED) &&
-        uint32_t(*version) == TRUETYPE_TAG('w', 'O', 'F', '2')) {
+    if (uint32_t(*version) == TRUETYPE_TAG('w', 'O', 'F', '2')) {
       return GFX_USERFONT_WOFF2;
     }
   }
@@ -1535,6 +1539,7 @@ struct COLRLayerRecord {
   AutoSwap_PRUint16 paletteEntryIndex;
 };
 
+// sRGB color space
 struct CPALColorRecord {
   uint8_t blue;
   uint8_t green;
@@ -1673,11 +1678,10 @@ static COLRBaseGlyphRecord* LookForBaseGlyphRecord(const COLRHeader* aCOLR,
               CompareBaseGlyph));
 }
 
-bool gfxFontUtils::GetColorGlyphLayers(hb_blob_t* aCOLR, hb_blob_t* aCPAL,
-                                       uint32_t aGlyphId,
-                                       const mozilla::gfx::Color& aDefaultColor,
-                                       nsTArray<uint16_t>& aGlyphs,
-                                       nsTArray<mozilla::gfx::Color>& aColors) {
+bool gfxFontUtils::GetColorGlyphLayers(
+    hb_blob_t* aCOLR, hb_blob_t* aCPAL, uint32_t aGlyphId,
+    const mozilla::gfx::DeviceColor& aDefaultColor, nsTArray<uint16_t>& aGlyphs,
+    nsTArray<mozilla::gfx::DeviceColor>& aColors) {
   unsigned int blobLength;
   const COLRHeader* colr =
       reinterpret_cast<const COLRHeader*>(hb_blob_get_data(aCOLR, &blobLength));
@@ -1710,17 +1714,19 @@ bool gfxFontUtils::GetColorGlyphLayers(hb_blob_t* aCOLR, hb_blob_t* aCPAL,
           reinterpret_cast<const uint8_t*>(cpal) + offsetFirstColorRecord +
           sizeof(CPALColorRecord) * uint16_t(layer->paletteEntryIndex));
       aColors.AppendElement(
-          mozilla::gfx::Color(color->red / 255.0, color->green / 255.0,
-                              color->blue / 255.0, color->alpha / 255.0));
+          mozilla::gfx::ToDeviceColor(mozilla::gfx::sRGBColor::FromU8(
+              color->red, color->green, color->blue, color->alpha)));
     }
     layer++;
   }
   return true;
 }
 
-void gfxFontUtils::GetVariationInstances(
-    gfxFontEntry* aFontEntry, nsTArray<gfxFontVariationInstance>& aInstances) {
-  MOZ_ASSERT(aInstances.IsEmpty());
+void gfxFontUtils::GetVariationData(
+    gfxFontEntry* aFontEntry, nsTArray<gfxFontVariationAxis>* aAxes,
+    nsTArray<gfxFontVariationInstance>* aInstances) {
+  MOZ_ASSERT(!aAxes || aAxes->IsEmpty());
+  MOZ_ASSERT(!aInstances || aInstances->IsEmpty());
 
   if (!aFontEntry->HasVariations()) {
     return;
@@ -1750,6 +1756,7 @@ void gfxFontUtils::GetVariationInstances(
     AutoSwap_PRUint16 flags;
     AutoSwap_PRUint16 axisNameID;
   };
+  const uint16_t HIDDEN_AXIS = 0x0001;  // AxisRecord flags value
 
   // https://www.microsoft.com/typography/otspec/fvar.htm#instanceRecord
   struct InstanceRecord {
@@ -1804,8 +1811,7 @@ void gfxFontUtils::GetVariationInstances(
   if (axisCount ==
           0 ||  // no axes?
                 // https://www.microsoft.com/typography/otspec/fvar.htm#axisSize
-      axisSize != 20 ||      // required value for current table version
-      instanceCount == 0 ||  // no instances?
+      axisSize != 20 ||  // required value for current table version
       // https://www.microsoft.com/typography/otspec/fvar.htm#instanceSize
       (instanceSize != axisCount * sizeof(int32_t) + 4 &&
        instanceSize != axisCount * sizeof(int32_t) + 6)) {
@@ -1824,30 +1830,51 @@ void gfxFontUtils::GetVariationInstances(
   if (instData + uint32_t(instanceCount) * instanceSize > data + len) {
     return;
   }
-  aInstances.SetCapacity(instanceCount);
-  for (unsigned i = 0; i < instanceCount; ++i, instData += instanceSize) {
-    // Typed pointer to the current instance record, to read its fields.
-    auto inst = reinterpret_cast<const InstanceRecord*>(instData);
-    // Pointer to the coordinates array within the instance record.
-    // This array has axisCount elements, and is included in instanceSize
-    // (which depends on axisCount, and was validated above) so we know
-    // access to coords[j] below will not be outside the table bounds.
-    auto coords = &inst->coordinates[0];
-    gfxFontVariationInstance instance;
-    uint16_t nameID = inst->subfamilyNameID;
-    nsresult rv = ReadCanonicalName(nameTable, nameID, instance.mName);
-    if (NS_FAILED(rv)) {
-      // If no name was available for the instance, ignore it.
-      continue;
+  if (aInstances) {
+    aInstances->SetCapacity(instanceCount);
+    for (unsigned i = 0; i < instanceCount; ++i, instData += instanceSize) {
+      // Typed pointer to the current instance record, to read its fields.
+      auto inst = reinterpret_cast<const InstanceRecord*>(instData);
+      // Pointer to the coordinates array within the instance record.
+      // This array has axisCount elements, and is included in instanceSize
+      // (which depends on axisCount, and was validated above) so we know
+      // access to coords[j] below will not be outside the table bounds.
+      auto coords = &inst->coordinates[0];
+      gfxFontVariationInstance instance;
+      uint16_t nameID = inst->subfamilyNameID;
+      nsresult rv = ReadCanonicalName(nameTable, nameID, instance.mName);
+      if (NS_FAILED(rv)) {
+        // If no name was available for the instance, ignore it.
+        continue;
+      }
+      instance.mValues.SetCapacity(axisCount);
+      for (unsigned j = 0; j < axisCount; ++j) {
+        gfxFontVariationValue value = {axes[j].axisTag,
+                                       int32_t(coords[j]) / 65536.0f};
+        instance.mValues.AppendElement(value);
+      }
+      aInstances->AppendElement(std::move(instance));
     }
-    instance.mValues.SetCapacity(axisCount);
-    for (unsigned j = 0; j < axisCount; ++j) {
-      gfxFontVariationValue value;
-      value.mAxis = axes[j].axisTag;
-      value.mValue = int32_t(coords[j]) / 65536.0;
-      instance.mValues.AppendElement(value);
+  }
+  if (aAxes) {
+    aAxes->SetCapacity(axisCount);
+    for (unsigned i = 0; i < axisCount; ++i) {
+      if (uint16_t(axes[i].flags) & HIDDEN_AXIS) {
+        continue;
+      }
+      gfxFontVariationAxis axis;
+      axis.mTag = axes[i].axisTag;
+      uint16_t nameID = axes[i].axisNameID;
+      nsresult rv = ReadCanonicalName(nameTable, nameID, axis.mName);
+      if (NS_FAILED(rv)) {
+        axis.mName.Truncate(0);
+      }
+      // Convert values from 16.16 fixed-point to float
+      axis.mMinValue = int32_t(axes[i].minValue) / 65536.0f;
+      axis.mDefaultValue = int32_t(axes[i].defaultValue) / 65536.0f;
+      axis.mMaxValue = int32_t(axes[i].maxValue) / 65536.0f;
+      aAxes->AppendElement(axis);
     }
-    aInstances.AppendElement(instance);
   }
 }
 

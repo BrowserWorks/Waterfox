@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Event Menu -->
+<!ENTITY event.new.event                        "ახალი ღონისძიება…">
+<!ENTITY event.new.event.accesskey              "ხ">
+
+<!ENTITY event.new.task                         "ახალი დავალება…">
+<!ENTITY event.new.task.accesskey               "დ">
+
+<!ENTITY calendar.import.label                  "იმპორტი">
+<!ENTITY calendar.import.accesskey              "I">
+
+<!ENTITY calendar.export.label                  "კალენდრის ექსპორტი…">
+<!ENTITY calendar.export.accesskey              "E">
+
+<!ENTITY calendar.publish.label                 "გამოქვეყნება…">
+<!ENTITY calendar.publish.accesskey             "b">
+
+<!ENTITY calendar.deletecalendar.label          "შერჩეული კალენდრის წაშლა…">
+<!ENTITY calendar.deletecalendar.accesskey      "D">
+<!ENTITY calendar.unsubscribecalendar.label     "კალენდრის გამოწერის გაუქმება…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "უ">
+
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+<!ENTITY calendar.removecalendar.label          "მითითებული კალენდრის წაშლა…">
+<!ENTITY calendar.removecalendar.accesskey      "წ">
+
+
+<!ENTITY calendar.menu.customize.label          "მორგება…">
+<!ENTITY calendar.menu.customize.accesskey      "C">
+
+<!ENTITY showUnifinderCmd.label                 "ღონისძიების მონახვა">
+<!ENTITY showUnifinderCmd.accesskey             "F">
+<!ENTITY showUnifinderCmd.tooltip               "ღონისძიების საძიებო არის გახსნა/დახურვა">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "დავალებების კალენდარში ჩვენება">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "T">
+
+<!ENTITY goTodayCmd.label                       "დღეს">
+<!ENTITY goTodayCmd.accesskey                   "T">
+
+<!ENTITY showCurrentView.label                  "მიმდინარე ჩვენება">
+<!ENTITY showCurrentView.accesskey              "V">
+
+<!ENTITY calendar.properties.label              "კალენდრის პარამეტრები…">
+<!ENTITY calendar.properties.accesskey          "C">

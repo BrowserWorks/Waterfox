@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Abonnement på nyheitskjelder">
+<!ENTITY learnMore.label             "Les meir om nyheitskjelder">
+
+<!ENTITY feedTitle.label             "Tittel:">
+<!ENTITY feedTitle.accesskey         "T">
+
+<!ENTITY feedLocation.label          "Kjelde-URL:">
+<!ENTITY feedLocation.accesskey      "K">
+<!ENTITY locationValidate.label      "Valider">
+
+
+<!-- Account Settings and Subscription Dialog -->
+
+
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Legg til">
+<!ENTITY button.addFeed.accesskey    "L">
+<!ENTITY button.updateFeed.label     "Oppdater">
+<!ENTITY button.updateFeed.accesskey "O">
+<!ENTITY button.removeFeed.label     "Slett">
+<!ENTITY button.removeFeed.accesskey "S">
+<!ENTITY button.importOPML.label     "Importer">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "Eksporter">
+<!ENTITY button.exportOPML.accesskey "E">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Lat att">

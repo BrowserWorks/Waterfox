@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this file,
+# You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from __future__ import absolute_import, print_function
 
@@ -33,6 +36,7 @@ if __name__ == "__main__":
     parser.add_argument("--verify-channel", required=True, dest="verify_channel")
     parser.add_argument("--chunks", required=True, dest="chunks", type=int)
     parser.add_argument("--this-chunk", required=True, dest="thisChunk", type=int)
+    parser.add_argument("--diff-summary", required=True, type=str)
 
     options = parser.parse_args()
     assert options.chunks and options.thisChunk, \
@@ -53,7 +57,11 @@ if __name__ == "__main__":
         myVerifyConfig.write(fh)
         fh.close()
         run_cmd(["cat", configFile])
-        run_cmd(UPDATE_VERIFY_COMMAND + [configFile], cwd=UPDATE_VERIFY_DIR)
+        run_cmd(
+            UPDATE_VERIFY_COMMAND + [configFile],
+            cwd=UPDATE_VERIFY_DIR,
+            env={"DIFF_SUMMARY_LOG": path.abspath(options.diff_summary)},
+        )
     finally:
         if path.exists(configFile):
             os.unlink(configFile)

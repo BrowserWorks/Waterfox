@@ -16,7 +16,7 @@ const SCHEMES = {
   "mailbox:": false,
   "moz-anno:favicon:http://": false,
   "view-source:http://": false,
-  "chrome://browser/content/browser.xul?": false,
+  "chrome://browser/content/browser.xhtml?": false,
   "resource://": false,
   "data:,": false,
   "javascript:": false,
@@ -38,6 +38,9 @@ add_task(async function test_isURIVisited() {
   for (let scheme in SCHEMES) {
     info("Testing scheme " + scheme);
     for (let t in PlacesUtils.history.TRANSITIONS) {
+      if (t == "EMBED") {
+        continue;
+      }
       info("With transition " + t);
       let aTransition = PlacesUtils.history.TRANSITIONS[t];
 

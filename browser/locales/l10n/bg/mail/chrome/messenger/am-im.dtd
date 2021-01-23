@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountWindow.title           "Свойства на сметката">
+<!ENTITY accountWindow.width           "300">
+<!ENTITY account.general               "Основни">
+<!ENTITY account.advanced              "За напреднали">
+<!ENTITY account.name                  "Потребителско име:">
+<!ENTITY account.password              "Парола:">
+<!ENTITY account.alias                 "Псевдоним:">
+<!ENTITY account.newMailNotification   "Известяване при нова поща">
+<!ENTITY account.autojoin              "Канали за автоматично присъединяване:">
+<!ENTITY account.proxySettings.caption "Настройки на прокси:">
+<!ENTITY account.proxySettings.change.label     "Промяна…">
+<!ENTITY account.proxySettings.change.accessKey "П">

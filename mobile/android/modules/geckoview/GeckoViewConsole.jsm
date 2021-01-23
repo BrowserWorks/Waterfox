@@ -91,11 +91,11 @@ var GeckoViewConsole = {
         bundle.GetStringFromName("stacktrace.anonymousFunction");
       const lineNumber = args[0].lineNumber;
 
-      let body = bundle.formatStringFromName(
-        "stacktrace.outputMessage",
-        [filename, functionName, lineNumber],
-        3
-      );
+      let body = bundle.formatStringFromName("stacktrace.outputMessage", [
+        filename,
+        functionName,
+        lineNumber,
+      ]);
       body += "\n";
       args.forEach(function(aFrame) {
         const functionName =
@@ -116,21 +116,18 @@ var GeckoViewConsole = {
       const bundle = Services.strings.createBundle(
         "chrome://browser/locale/browser.properties"
       );
-      const body = bundle.formatStringFromName(
-        "timer.start",
-        [aMessage.arguments.name],
-        1
-      );
+      const body = bundle.formatStringFromName("timer.start", [
+        aMessage.arguments.name,
+      ]);
       Services.console.logStringMessage(body);
     } else if (aMessage.level == "timeEnd" && aMessage.arguments) {
       const bundle = Services.strings.createBundle(
         "chrome://browser/locale/browser.properties"
       );
-      const body = bundle.formatStringFromName(
-        "timer.end",
-        [aMessage.arguments.name, aMessage.arguments.duration],
-        2
-      );
+      const body = bundle.formatStringFromName("timer.end", [
+        aMessage.arguments.name,
+        aMessage.arguments.duration,
+      ]);
       Services.console.logStringMessage(body);
     } else if (
       ["group", "groupCollapsed", "groupEnd"].includes(aMessage.level)

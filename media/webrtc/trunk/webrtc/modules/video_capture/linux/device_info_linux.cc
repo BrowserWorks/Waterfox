@@ -44,7 +44,7 @@ VideoCaptureModule::DeviceInfo* VideoCaptureImpl::CreateDeviceInfo() {
 void DeviceInfoLinux::HandleEvent(inotify_event* event, int fd)
 {
     if (event->mask & IN_CREATE) {
-        if (fd == _fd_v4l || fd == _fd_snd) {
+        if (fd == _fd_v4l) {
             DeviceChange();
         } else if ((event->mask & IN_ISDIR) && (fd == _fd_dev)) {
             if (_wd_v4l < 0) {
@@ -56,25 +56,15 @@ void DeviceInfoLinux::HandleEvent(inotify_event* event, int fd)
                     DeviceChange();
                 }
             }
-            if (_wd_snd < 0) {
-                usleep(5*1000);
-                _wd_snd = inotify_add_watch(_fd_snd, "/dev/snd/by-path/", IN_CREATE | IN_DELETE | IN_DELETE_SELF);
-                if (_wd_snd >= 0) {
-                    DeviceChange();
-                }
-            }
         }
     } else if (event->mask & IN_DELETE) {
-        if (fd == _fd_v4l || fd == _fd_snd) {
+        if (fd == _fd_v4l) {
             DeviceChange();
         }
     } else if (event->mask & IN_DELETE_SELF) {
         if (fd == _fd_v4l) {
             inotify_rm_watch(_fd_v4l, _wd_v4l);
             _wd_v4l = -1;
-        } else if (fd == _fd_snd) {
-            inotify_rm_watch(_fd_snd, _wd_snd);
-            _wd_snd = -1;
         } else {
             assert(false);
         }
@@ -138,11 +128,6 @@ int DeviceInfoLinux::ProcessInotifyEvents()
                 break;
             }
         }
-        if (EventCheck(_fd_snd) > 0) {
-            if (HandleEvents(_fd_snd) < 0) {
-                break;
-            }
-        }
     }
     return 0;
 }
@@ -155,11 +140,9 @@ bool DeviceInfoLinux::InotifyEventThread(void* obj)
 bool DeviceInfoLinux::InotifyProcess()
 {
     _fd_v4l = inotify_init();
-    _fd_snd = inotify_init();
     _fd_dev = inotify_init();
-    if (_fd_v4l >= 0 && _fd_snd >= 0 && _fd_dev >= 0) {
+    if (_fd_v4l >= 0 && _fd_dev >= 0) {
         _wd_v4l = inotify_add_watch(_fd_v4l, "/dev/v4l/by-path/", IN_CREATE | IN_DELETE | IN_DELETE_SELF);
-        _wd_snd = inotify_add_watch(_fd_snd, "/dev/snd/by-path/", IN_CREATE | IN_DELETE | IN_DELETE_SELF);
         _wd_dev = inotify_add_watch(_fd_dev, "/dev/", IN_CREATE);
         ProcessInotifyEvents();
 
@@ -167,16 +150,11 @@ bool DeviceInfoLinux::InotifyProcess()
           inotify_rm_watch(_fd_v4l, _wd_v4l);
         }
 
-        if (_wd_snd >= 0) {
-          inotify_rm_watch(_fd_snd, _wd_snd);
-        }
-
         if (_wd_dev >= 0) {
           inotify_rm_watch(_fd_dev, _wd_dev);
         }
 
         close(_fd_v4l);
-        close(_fd_snd);
         close(_fd_dev);
         return true;
     } else {
@@ -222,11 +200,18 @@ uint32_t DeviceInfoLinux::NumberOfDevices() {
   uint32_t count = 0;
   char device[20];
   int fd = -1;
+  struct v4l2_capability cap;
 
   /* detect /dev/video [0-63]VideoCaptureModule entries */
   for (int n = 0; n < 64; n++) {
     sprintf(device, "/dev/video%d", n);
     if ((fd = open(device, O_RDONLY)) != -1) {
+      // query device capabilities and make sure this is a video capture device
+      if (ioctl(fd, VIDIOC_QUERYCAP, &cap) < 0 || !IsVideoCaptureDevice(&cap)) {
+        close(fd);
+        continue;
+      }
+
       close(fd);
       count++;
     }
@@ -251,9 +236,15 @@ int32_t DeviceInfoLinux::GetDeviceName(uint32_t deviceNumber,
   int fd = -1;
   bool found = false;
   int device_index;
+  struct v4l2_capability cap;
   for (device_index = 0; device_index < 64; device_index++) {
     sprintf(device, "/dev/video%d", device_index);
     if ((fd = open(device, O_RDONLY)) != -1) {
+      // query device capabilities and make sure this is a video capture device
+      if (ioctl(fd, VIDIOC_QUERYCAP, &cap) < 0 || !IsVideoCaptureDevice(&cap)) {
+        close(fd);
+        continue;
+      }
       if (count == deviceNumber) {
         // Found the device
         found = true;
@@ -269,7 +260,6 @@ int32_t DeviceInfoLinux::GetDeviceName(uint32_t deviceNumber,
     return -1;
 
   // query device capabilities
-  struct v4l2_capability cap;
   if (ioctl(fd, VIDIOC_QUERYCAP, &cap) < 0) {
     RTC_LOG(LS_INFO) << "error in querying the device capability for device "
                      << device << ". errno = " << errno;
@@ -337,6 +327,11 @@ int32_t DeviceInfoLinux::CreateCapabilityMap(const char* deviceUniqueIdUTF8) {
     // query device capabilities
     struct v4l2_capability cap;
     if (ioctl(fd, VIDIOC_QUERYCAP, &cap) == 0) {
+      // skip devices without video capture capability
+      if (!IsVideoCaptureDevice(&cap)) {
+        continue;
+      }
+
       if (cap.bus_info[0] != 0) {
         if (strncmp((const char*)cap.bus_info, (const char*)deviceUniqueIdUTF8,
                     strlen((const char*)deviceUniqueIdUTF8)) ==
@@ -386,6 +381,15 @@ bool DeviceInfoLinux::IsDeviceNameMatches(const char* name,
   if (strncmp(deviceUniqueIdUTF8, name, strlen(name)) == 0)
     return true;
   return false;
+}
+
+bool DeviceInfoLinux::IsVideoCaptureDevice(struct v4l2_capability* cap)
+{
+  if (cap->capabilities & V4L2_CAP_DEVICE_CAPS) {
+    return cap->device_caps & V4L2_CAP_VIDEO_CAPTURE;
+  } else {
+    return cap->capabilities & V4L2_CAP_VIDEO_CAPTURE;
+  }
 }
 
 int32_t DeviceInfoLinux::FillCapabilities(int fd) {

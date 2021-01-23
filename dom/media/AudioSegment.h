@@ -6,11 +6,14 @@
 #ifndef MOZILLA_AUDIOSEGMENT_H_
 #define MOZILLA_AUDIOSEGMENT_H_
 
+#include <speex/speex_resampler.h>
+#include "MediaTrackGraph.h"
 #include "MediaSegment.h"
 #include "AudioSampleFormat.h"
 #include "AudioChannelFormat.h"
 #include "SharedBuffer.h"
 #include "WebAudioUtils.h"
+#include "nsAutoRef.h"
 #ifdef MOZILLA_INTERNAL_API
 #  include "mozilla/TimeStamp.h"
 #endif
@@ -20,7 +23,7 @@ namespace mozilla {
 struct AudioChunk;
 class AudioSegment;
 }  // namespace mozilla
-DECLARE_USE_COPY_CONSTRUCTORS(mozilla::AudioChunk)
+MOZ_DECLARE_RELOCATE_USING_MOVE_CONSTRUCTOR(mozilla::AudioChunk)
 
 /**
  * This allows compilation of nsTArray<AudioSegment> and
@@ -30,7 +33,7 @@ DECLARE_USE_COPY_CONSTRUCTORS(mozilla::AudioChunk)
  * Note that AudioSegment(const AudioSegment&) is deleted, so this should
  * never come into effect.
  */
-DECLARE_USE_COPY_CONSTRUCTORS(mozilla::AudioSegment)
+MOZ_DECLARE_RELOCATE_USING_MOVE_CONSTRUCTOR(mozilla::AudioSegment)
 
 namespace mozilla {
 
@@ -149,7 +152,7 @@ struct AudioChunk {
   typedef mozilla::AudioSampleFormat SampleFormat;
 
   // Generic methods
-  void SliceTo(StreamTime aStart, StreamTime aEnd) {
+  void SliceTo(TrackTime aStart, TrackTime aEnd) {
     MOZ_ASSERT(aStart >= 0 && aStart < aEnd && aEnd <= mDuration,
                "Slice out of bounds");
     if (mBuffer) {
@@ -162,7 +165,7 @@ struct AudioChunk {
     }
     mDuration = aEnd - aStart;
   }
-  StreamTime GetDuration() const { return mDuration; }
+  TrackTime GetDuration() const { return mDuration; }
   bool CanCombineWithFollowing(const AudioChunk& aOther) const {
     if (aOther.mBuffer != mBuffer) {
       return false;
@@ -193,7 +196,7 @@ struct AudioChunk {
     return true;
   }
   bool IsNull() const { return mBuffer == nullptr; }
-  void SetNull(StreamTime aDuration) {
+  void SetNull(TrackTime aDuration) {
     mBuffer = nullptr;
     mChannelData.Clear();
     mDuration = aDuration;
@@ -202,7 +205,7 @@ struct AudioChunk {
     mPrincipalHandle = PRINCIPAL_HANDLE_NONE;
   }
 
-  size_t ChannelCount() const { return mChannelData.Length(); }
+  uint32_t ChannelCount() const { return mChannelData.Length(); }
 
   bool IsMuted() const { return mVolume == 0.0f; }
 
@@ -262,11 +265,11 @@ struct AudioChunk {
 
   const PrincipalHandle& GetPrincipalHandle() const { return mPrincipalHandle; }
 
-  StreamTime mDuration = 0;            // in frames within the buffer
+  TrackTime mDuration = 0;             // in frames within the buffer
   RefPtr<ThreadSharedObject> mBuffer;  // the buffer object whose lifetime is
                                        // managed; null means data is all zeroes
   // one pointer per channel; empty if and only if mBuffer is null
-  AutoTArray<const void*, GUESS_AUDIO_CHANNELS> mChannelData;
+  CopyableAutoTArray<const void*, GUESS_AUDIO_CHANNELS> mChannelData;
   float mVolume = 1.0f;  // volume multiplier to apply
   // format of frames in mBuffer (or silence if mBuffer is null)
   SampleFormat mBufferFormat = AUDIO_FORMAT_SILENCE;
@@ -280,27 +283,31 @@ struct AudioChunk {
  * The audio rate is determined by the track, not stored in this class.
  */
 class AudioSegment : public MediaSegmentBase<AudioSegment, AudioChunk> {
+  // The channel count that MaxChannelCount() returned last time it was called.
+  uint32_t mMemoizedMaxChannelCount = 0;
+
  public:
   typedef mozilla::AudioSampleFormat SampleFormat;
 
   AudioSegment() : MediaSegmentBase<AudioSegment, AudioChunk>(AUDIO) {}
 
-  AudioSegment(AudioSegment&& aSegment)
-      : MediaSegmentBase<AudioSegment, AudioChunk>(std::move(aSegment)) {}
+  AudioSegment(AudioSegment&& aSegment) = default;
 
   AudioSegment(const AudioSegment&) = delete;
   AudioSegment& operator=(const AudioSegment&) = delete;
 
-  ~AudioSegment() {}
+  ~AudioSegment() = default;
 
-  // Resample the whole segment in place.
+  // Resample the whole segment in place.  `aResampler` is an instance of a
+  // resampler, initialized with `aResamplerChannelCount` channels. If this
+  // function finds a chunk with more channels, `aResampler` is destroyed and a
+  // new resampler is created, and `aResamplerChannelCount` is updated with the
+  // new channel count value.
   template <typename T>
-  void Resample(SpeexResamplerState* aResampler, uint32_t aInRate,
+  void Resample(nsAutoRef<SpeexResamplerState>& aResampler,
+                uint32_t* aResamplerChannelCount, uint32_t aInRate,
                 uint32_t aOutRate) {
     mDuration = 0;
-#ifdef DEBUG
-    uint32_t segmentChannelCount = ChannelCount();
-#endif
 
     for (ChunkIterator ci(*this); !ci.IsEnded(); ci.Next()) {
       AutoTArray<nsTArray<T>, GUESS_AUDIO_CHANNELS> output;
@@ -313,7 +320,17 @@ class AudioSegment : public MediaSegmentBase<AudioSegment, AudioChunk> {
         continue;
       }
       uint32_t channels = c.mChannelData.Length();
-      MOZ_ASSERT(channels == segmentChannelCount);
+      // This might introduce a discontinuity, but a channel count change in the
+      // middle of a stream is not that common. This also initializes the
+      // resampler as late as possible.
+      if (channels != *aResamplerChannelCount) {
+        SpeexResamplerState* state =
+            speex_resampler_init(channels, aInRate, aOutRate,
+                                 SPEEX_RESAMPLER_QUALITY_DEFAULT, nullptr);
+        MOZ_ASSERT(state);
+        aResampler.own(state);
+        *aResamplerChannelCount = channels;
+      }
       output.SetLength(channels);
       bufferPtrs.SetLength(channels);
       uint32_t inFrames = c.mDuration;
@@ -326,8 +343,8 @@ class AudioSegment : public MediaSegmentBase<AudioSegment, AudioChunk> {
         uint32_t outFrames = outSize;
 
         const T* in = static_cast<const T*>(c.mChannelData[i]);
-        dom::WebAudioUtils::SpeexResamplerProcess(aResampler, i, in, &inFrames,
-                                                  out, &outFrames);
+        dom::WebAudioUtils::SpeexResamplerProcess(aResampler.get(), i, in,
+                                                  &inFrames, out, &outFrames);
         MOZ_ASSERT(inFrames == c.mDuration);
 
         bufferPtrs[i] = out;
@@ -343,7 +360,8 @@ class AudioSegment : public MediaSegmentBase<AudioSegment, AudioChunk> {
     }
   }
 
-  void ResampleChunks(SpeexResamplerState* aResampler, uint32_t aInRate,
+  void ResampleChunks(nsAutoRef<SpeexResamplerState>& aResampler,
+                      uint32_t* aResamplerChannelCount, uint32_t aInRate,
                       uint32_t aOutRate);
   void AppendFrames(already_AddRefed<ThreadSharedObject> aBuffer,
                     const nsTArray<const float*>& aChannelData,
@@ -381,7 +399,7 @@ class AudioSegment : public MediaSegmentBase<AudioSegment, AudioChunk> {
   // in the segment.
   AudioChunk* AppendAndConsumeChunk(AudioChunk* aChunk) {
     AudioChunk* chunk = AppendChunk(aChunk->mDuration);
-    chunk->mBuffer = aChunk->mBuffer.forget();
+    chunk->mBuffer = std::move(aChunk->mBuffer);
     chunk->mChannelData.SwapElements(aChunk->mChannelData);
 
     MOZ_ASSERT(chunk->mBuffer || aChunk->mChannelData.IsEmpty(),
@@ -402,18 +420,20 @@ class AudioSegment : public MediaSegmentBase<AudioSegment, AudioChunk> {
   // aChannelCount channels.
   void Mix(AudioMixer& aMixer, uint32_t aChannelCount, uint32_t aSampleRate);
 
-  int ChannelCount() {
-    NS_WARNING_ASSERTION(
-        !mChunks.IsEmpty(),
-        "Cannot query channel count on a AudioSegment with no chunks.");
-    // Find the first chunk that has non-zero channels. A chunk that hs zero
-    // channels is just silence and we can simply discard it.
+  // Returns the maximum channel count across all chunks in this segment.
+  // Should there be no chunk with a channel count we return the memoized return
+  // value from last time this method was called.
+  uint32_t MaxChannelCount() {
+    uint32_t channelCount = 0;
     for (ChunkIterator ci(*this); !ci.IsEnded(); ci.Next()) {
       if (ci->ChannelCount()) {
-        return ci->ChannelCount();
+        channelCount = std::max(channelCount, ci->ChannelCount());
       }
     }
-    return 0;
+    if (channelCount == 0) {
+      return mMemoizedMaxChannelCount;
+    }
+    return mMemoizedMaxChannelCount = channelCount;
   }
 
   static Type StaticType() { return AUDIO; }
@@ -428,7 +448,7 @@ void WriteChunk(AudioChunk& aChunk, uint32_t aOutputChannels,
                 AudioDataValue* aOutputBuffer) {
   AutoTArray<const SrcT*, GUESS_AUDIO_CHANNELS> channelData;
 
-  channelData = aChunk.ChannelData<SrcT>();
+  channelData = aChunk.ChannelData<SrcT>().Clone();
 
   if (channelData.Length() < aOutputChannels) {
     // Up-mix. Note that this might actually make channelData have more

@@ -80,11 +80,10 @@ class MediaSource final : public DOMEventTargetHelper,
   void ClearLiveSeekableRange(ErrorResult& aRv);
 
   static bool IsTypeSupported(const GlobalObject&, const nsAString& aType);
-  static nsresult IsTypeSupported(const nsAString& aType,
-                                  DecoderDoctorDiagnostics* aDiagnostics);
-
-  static bool Enabled(JSContext* cx, JSObject* aGlobal);
-  static bool ExperimentalEnabled(JSContext* cx, JSObject* aGlobal);
+  // Throws on aRv if not supported.
+  static void IsTypeSupported(const nsAString& aType,
+                              DecoderDoctorDiagnostics* aDiagnostics,
+                              ErrorResult& aRv);
 
   IMPL_EVENT_HANDLER(sourceopen);
   IMPL_EVENT_HANDLER(sourceended);
@@ -114,9 +113,9 @@ class MediaSource final : public DOMEventTargetHelper,
 
   nsIPrincipal* GetPrincipal() { return mPrincipal; }
 
-  // Returns a string describing the state of the MediaSource internal
+  // Returns a structure describing the state of the MediaSource internal
   // buffered data. Used for debugging purposes.
-  void GetMozDebugReaderData(nsAString& aString);
+  already_AddRefed<Promise> MozDebugReaderData(ErrorResult& aRv);
 
   bool HasLiveSeekableRange() const { return mLiveSeekableRange.isSome(); }
   media::TimeInterval LiveSeekableRange() const {

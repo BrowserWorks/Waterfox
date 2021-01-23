@@ -11,7 +11,7 @@
 #include "mp3sniff.h"
 #include "nestegg/nestegg.h"
 #include "nsIClassInfoImpl.h"
-#include "nsIHttpChannel.h"
+#include "nsIChannel.h"
 #include "nsMediaSniffer.h"
 #include "nsMimeTypes.h"
 #include "nsString.h"
@@ -45,8 +45,10 @@ nsMediaSnifferEntry sFtypEntries[] = {
     PATTERN_ENTRY("\xFF\xFF\xFF", "mp4", VIDEO_MP4),  // Could be mp41 or mp42.
     PATTERN_ENTRY("\xFF\xFF\xFF", "avc",
                   VIDEO_MP4),  // Could be avc1, avc2, ...
+    PATTERN_ENTRY("\xFF\xFF\xFF\xFF", "3gp4",
+                  VIDEO_MP4),  // 3gp4 is based on MP4
     PATTERN_ENTRY("\xFF\xFF\xFF", "3gp",
-                  VIDEO_3GPP),  // Could be 3gp4, 3gp5, ...
+                  VIDEO_3GPP),  // Could be 3gp5, ...
     PATTERN_ENTRY("\xFF\xFF\xFF\xFF", "M4V ", VIDEO_MP4),
     PATTERN_ENTRY("\xFF\xFF\xFF\xFF", "M4A ", AUDIO_MP4),
     PATTERN_ENTRY("\xFF\xFF\xFF\xFF", "M4P ", AUDIO_MP4),
@@ -138,6 +140,10 @@ nsMediaSniffer::GetMIMETypeFromContent(nsIRequest* aRequest,
                                        nsACString& aSniffedType) {
   nsCOMPtr<nsIChannel> channel = do_QueryInterface(aRequest);
   if (channel) {
+    nsCOMPtr<nsILoadInfo> loadInfo = channel->LoadInfo();
+    if (loadInfo->GetSkipContentSniffing()) {
+      return NS_ERROR_NOT_AVAILABLE;
+    }
     nsLoadFlags loadFlags = 0;
     channel->GetLoadFlags(&loadFlags);
     if (!(loadFlags & nsIChannel::LOAD_MEDIA_SNIFFER_OVERRIDES_CONTENT_TYPE)) {
@@ -189,16 +195,16 @@ nsMediaSniffer::GetMIMETypeFromContent(nsIRequest* aRequest,
     return NS_OK;
   }
 
+  if (MatchesADTS(aData, clampedLength)) {
+    aSniffedType.AssignLiteral(AUDIO_AAC);
+    return NS_OK;
+  }
+
   // Flac frames are generally big, often in excess of 24kB.
   // Using a size of MAX_BYTES_SNIFFED effectively means that we will only
   // recognize flac content if it starts with a frame.
   if (MatchesFLAC(aData, clampedLength)) {
     aSniffedType.AssignLiteral(AUDIO_FLAC);
-    return NS_OK;
-  }
-
-  if (MatchesADTS(aData, clampedLength)) {
-    aSniffedType.AssignLiteral(AUDIO_AAC);
     return NS_OK;
   }
 

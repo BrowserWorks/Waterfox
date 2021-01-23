@@ -754,6 +754,64 @@ add_task(async function test_tooLateToSend() {
   );
 });
 
+add_task(
+  { skip_if: () => gIsAndroid },
+  async function test_pingSenderShutdownBatch() {
+    const TEST_TYPE = "test-ping-sender-batch";
+
+    await TelemetrySend.reset();
+    PingServer.start();
+    PingServer.registerPingHandler(() =>
+      Assert.ok(false, "Should not have received any pings at this time.")
+    );
+
+    Assert.equal(
+      TelemetrySend.pendingPingCount,
+      0,
+      "Should have no pending pings yet"
+    );
+
+    TelemetrySend.testTooLateToSend(true);
+
+    const id = await TelemetryController.submitExternalPing(
+      TEST_TYPE,
+      { payload: false },
+      { usePingSender: true }
+    );
+    const id2 = await TelemetryController.submitExternalPing(
+      TEST_TYPE,
+      { payload: false },
+      { usePingSender: true }
+    );
+
+    Assert.equal(
+      TelemetrySend.pendingPingCount,
+      2,
+      "Should have stored these two pings in pending land."
+    );
+
+    // Permit pings to be received.
+    PingServer.resetPingHandler();
+
+    TelemetrySend.flushPingSenderBatch();
+
+    const ping = await PingServer.promiseNextPing();
+    Assert.equal(ping.type, TEST_TYPE);
+    Assert.equal(ping.id, id);
+
+    const ping2 = await PingServer.promiseNextPing();
+    Assert.equal(ping2.type, TEST_TYPE);
+    Assert.equal(ping2.id, id2);
+
+    await TelemetryStorage.reset();
+    Assert.equal(
+      TelemetrySend.pendingPingCount,
+      0,
+      "Should clean up after yourself"
+    );
+  }
+);
+
 // Test that the current, non-persisted pending pings are properly saved on shutdown.
 add_task(async function test_persistCurrentPingsOnShutdown() {
   const TEST_TYPE = "test-persistCurrentPingsOnShutdown";
@@ -910,7 +968,12 @@ add_task(async function testCookies() {
   PingServer.clearRequests();
 
   let uri = Services.io.newURI("http://localhost:" + PingServer.port);
-  Services.cookies.setCookieString(uri, null, "cookie-time=yes", null);
+  let channel = NetUtil.newChannel({
+    uri,
+    loadUsingSystemPrincipal: true,
+    contentPolicyType: Ci.nsIContentPolicy.TYPE_DOCUMENT,
+  });
+  Services.cookies.setCookieStringFromHttp(uri, "cookie-time=yes", channel);
 
   const id = await TelemetryController.submitExternalPing(TEST_TYPE, {});
   let foundit = false;

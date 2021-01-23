@@ -323,10 +323,19 @@ void MacroAssemblerMIPSShared::ma_mul(Register rd, Register rs, Imm32 imm) {
 void MacroAssemblerMIPSShared::ma_mul_branch_overflow(Register rd, Register rs,
                                                       Register rt,
                                                       Label* overflow) {
+#ifdef MIPSR6
+  if (rd == rs) {
+    ma_move(SecondScratchReg, rs);
+    rs = SecondScratchReg;
+  }
+  as_mul(rd, rs, rt);
+  as_muh(SecondScratchReg, rs, rt);
+#else
   as_mult(rs, rt);
   as_mflo(rd);
-  as_sra(ScratchRegister, rd, 31);
   as_mfhi(SecondScratchReg);
+#endif
+  as_sra(ScratchRegister, rd, 31);
   ma_b(ScratchRegister, SecondScratchReg, overflow, Assembler::NotEqual);
 }
 
@@ -340,10 +349,22 @@ void MacroAssemblerMIPSShared::ma_mul_branch_overflow(Register rd, Register rs,
 void MacroAssemblerMIPSShared::ma_div_branch_overflow(Register rd, Register rs,
                                                       Register rt,
                                                       Label* overflow) {
+#ifdef MIPSR6
+  if (rd == rs) {
+    ma_move(SecondScratchReg, rs);
+    rs = SecondScratchReg;
+  }
+  as_mod(ScratchRegister, rs, rt);
+#else
   as_div(rs, rt);
   as_mfhi(ScratchRegister);
+#endif
   ma_b(ScratchRegister, ScratchRegister, overflow, Assembler::NonZero);
+#ifdef MIPSR6
+  as_div(rd, rs, rt);
+#else
   as_mflo(rd);
+#endif
 }
 
 void MacroAssemblerMIPSShared::ma_div_branch_overflow(Register rd, Register rs,
@@ -471,10 +492,118 @@ void MacroAssemblerMIPSShared::ma_load(Register dest, const BaseIndex& src,
                    extension);
 }
 
+void MacroAssemblerMIPSShared::ma_load_unaligned(Register dest,
+                                                 const BaseIndex& src,
+                                                 LoadStoreSize size,
+                                                 LoadStoreExtension extension) {
+  int16_t lowOffset, hiOffset;
+  SecondScratchRegisterScope base(asMasm());
+  asMasm().computeScaledAddress(src, base);
+  ScratchRegisterScope scratch(asMasm());
+
+  if (Imm16::IsInSignedRange(src.offset) &&
+      Imm16::IsInSignedRange(src.offset + size / 8 - 1)) {
+    lowOffset = Imm16(src.offset).encode();
+    hiOffset = Imm16(src.offset + size / 8 - 1).encode();
+  } else {
+    ma_li(scratch, Imm32(src.offset));
+    asMasm().addPtr(scratch, base);
+    lowOffset = Imm16(0).encode();
+    hiOffset = Imm16(size / 8 - 1).encode();
+  }
+
+  switch (size) {
+    case SizeHalfWord:
+      MOZ_ASSERT(dest != scratch);
+      if (extension == ZeroExtend) {
+        as_lbu(scratch, base, hiOffset);
+      } else {
+        as_lb(scratch, base, hiOffset);
+      }
+      as_lbu(dest, base, lowOffset);
+      ma_ins(dest, scratch, 8, 24);
+      break;
+    case SizeWord:
+      MOZ_ASSERT(dest != base);
+      as_lwl(dest, base, hiOffset);
+      as_lwr(dest, base, lowOffset);
+#ifdef JS_CODEGEN_MIPS64
+      if (extension == ZeroExtend) {
+        as_dext(dest, dest, 0, 32);
+      }
+#endif
+      break;
+#ifdef JS_CODEGEN_MIPS64
+    case SizeDouble:
+      MOZ_ASSERT(dest != base);
+      as_ldl(dest, base, hiOffset);
+      as_ldr(dest, base, lowOffset);
+      break;
+#endif
+    default:
+      MOZ_CRASH("Invalid argument for ma_load_unaligned");
+  }
+}
+
+void MacroAssemblerMIPSShared::ma_load_unaligned(Register dest,
+                                                 const Address& address,
+                                                 LoadStoreSize size,
+                                                 LoadStoreExtension extension) {
+  int16_t lowOffset, hiOffset;
+  ScratchRegisterScope scratch1(asMasm());
+  SecondScratchRegisterScope scratch2(asMasm());
+  Register base;
+
+  if (Imm16::IsInSignedRange(address.offset) &&
+      Imm16::IsInSignedRange(address.offset + size / 8 - 1)) {
+    base = address.base;
+    lowOffset = Imm16(address.offset).encode();
+    hiOffset = Imm16(address.offset + size / 8 - 1).encode();
+  } else {
+    ma_li(scratch1, Imm32(address.offset));
+    asMasm().addPtr(address.base, scratch1);
+    base = scratch1;
+    lowOffset = Imm16(0).encode();
+    hiOffset = Imm16(size / 8 - 1).encode();
+  }
+
+  switch (size) {
+    case SizeHalfWord:
+      MOZ_ASSERT(base != scratch2 && dest != scratch2);
+      if (extension == ZeroExtend) {
+        as_lbu(scratch2, base, hiOffset);
+      } else {
+        as_lb(scratch2, base, hiOffset);
+      }
+      as_lbu(dest, base, lowOffset);
+      ma_ins(dest, scratch2, 8, 24);
+      break;
+    case SizeWord:
+      MOZ_ASSERT(dest != base);
+      as_lwl(dest, base, hiOffset);
+      as_lwr(dest, base, lowOffset);
+#ifdef JS_CODEGEN_MIPS64
+      if (extension == ZeroExtend) {
+        as_dext(dest, dest, 0, 32);
+      }
+#endif
+      break;
+#ifdef JS_CODEGEN_MIPS64
+    case SizeDouble:
+      MOZ_ASSERT(dest != base);
+      as_ldl(dest, base, hiOffset);
+      as_ldr(dest, base, lowOffset);
+      break;
+#endif
+    default:
+      MOZ_CRASH("Invalid argument for ma_load_unaligned");
+  }
+}
+
 void MacroAssemblerMIPSShared::ma_load_unaligned(
     const wasm::MemoryAccessDesc& access, Register dest, const BaseIndex& src,
     Register temp, LoadStoreSize size, LoadStoreExtension extension) {
-  MOZ_ASSERT(MOZ_LITTLE_ENDIAN, "Wasm-only; wasm is disabled on big-endian.");
+  MOZ_ASSERT(MOZ_LITTLE_ENDIAN(), "Wasm-only; wasm is disabled on big-endian.");
   int16_t lowOffset, hiOffset;
   Register base;
 
@@ -626,10 +755,95 @@ void MacroAssemblerMIPSShared::ma_store(Imm32 imm, const BaseIndex& dest,
                     extension);
 }
 
+void MacroAssemblerMIPSShared::ma_store_unaligned(Register data,
+                                                  const Address& address,
+                                                  LoadStoreSize size) {
+  int16_t lowOffset, hiOffset;
+  ScratchRegisterScope scratch(asMasm());
+  Register base;
+
+  if (Imm16::IsInSignedRange(address.offset) &&
+      Imm16::IsInSignedRange(address.offset + size / 8 - 1)) {
+    base = address.base;
+    lowOffset = Imm16(address.offset).encode();
+    hiOffset = Imm16(address.offset + size / 8 - 1).encode();
+  } else {
+    ma_li(scratch, Imm32(address.offset));
+    asMasm().addPtr(address.base, scratch);
+    base = scratch;
+    lowOffset = Imm16(0).encode();
+    hiOffset = Imm16(size / 8 - 1).encode();
+  }
+
+  switch (size) {
+    case SizeHalfWord: {
+      SecondScratchRegisterScope scratch2(asMasm());
+      MOZ_ASSERT(base != scratch2);
+      as_sb(data, base, lowOffset);
+      ma_ext(scratch2, data, 8, 8);
+      as_sb(scratch2, base, hiOffset);
+      break;
+    }
+    case SizeWord:
+      as_swl(data, base, hiOffset);
+      as_swr(data, base, lowOffset);
+      break;
+#ifdef JS_CODEGEN_MIPS64
+    case SizeDouble:
+      as_sdl(data, base, hiOffset);
+      as_sdr(data, base, lowOffset);
+      break;
+#endif
+    default:
+      MOZ_CRASH("Invalid argument for ma_store_unaligned");
+  }
+}
+
+void MacroAssemblerMIPSShared::ma_store_unaligned(Register data,
+                                                  const BaseIndex& dest,
+                                                  LoadStoreSize size) {
+  int16_t lowOffset, hiOffset;
+  SecondScratchRegisterScope base(asMasm());
+  asMasm().computeScaledAddress(dest, base);
+  ScratchRegisterScope scratch(asMasm());
+
+  if (Imm16::IsInSignedRange(dest.offset) &&
+      Imm16::IsInSignedRange(dest.offset + size / 8 - 1)) {
+    lowOffset = Imm16(dest.offset).encode();
+    hiOffset = Imm16(dest.offset + size / 8 - 1).encode();
+  } else {
+    ma_li(scratch, Imm32(dest.offset));
+    asMasm().addPtr(scratch, base);
+    lowOffset = Imm16(0).encode();
+    hiOffset = Imm16(size / 8 - 1).encode();
+  }
+
+  switch (size) {
+    case SizeHalfWord:
+      MOZ_ASSERT(base != scratch);
+      as_sb(data, base, lowOffset);
+      ma_ext(scratch, data, 8, 8);
+      as_sb(scratch, base, hiOffset);
+      break;
+    case SizeWord:
+      as_swl(data, base, hiOffset);
+      as_swr(data, base, lowOffset);
+      break;
+#ifdef JS_CODEGEN_MIPS64
+    case SizeDouble:
+      as_sdl(data, base, hiOffset);
+      as_sdr(data, base, lowOffset);
+      break;
+#endif
+    default:
+      MOZ_CRASH("Invalid argument for ma_store_unaligned");
+  }
+}
+
 void MacroAssemblerMIPSShared::ma_store_unaligned(
     const wasm::MemoryAccessDesc& access, Register data, const BaseIndex& dest,
     Register temp, LoadStoreSize size, LoadStoreExtension extension) {
-  MOZ_ASSERT(MOZ_LITTLE_ENDIAN, "Wasm-only; wasm is disabled on big-endian.");
+  MOZ_ASSERT(MOZ_LITTLE_ENDIAN(), "Wasm-only; wasm is disabled on big-endian.");
   int16_t lowOffset, hiOffset;
   Register base;
 
@@ -733,7 +947,7 @@ void MacroAssemblerMIPSShared::ma_b(Label* label, JumpKind jumpKind) {
   asMasm().branchWithCode(getBranchCode(BranchIsJump), label, jumpKind);
 }
 
-Assembler::Condition MacroAssemblerMIPSShared::ma_cmp(Register scratch,
+Assembler::Condition MacroAssemblerMIPSShared::ma_cmp(Register dest,
                                                       Register lhs,
                                                       Register rhs,
                                                       Condition c) {
@@ -742,49 +956,49 @@ Assembler::Condition MacroAssemblerMIPSShared::ma_cmp(Register scratch,
       // bgtu s,t,label =>
       //   sltu at,t,s
       //   bne at,$zero,offs
-      as_sltu(scratch, rhs, lhs);
+      as_sltu(dest, rhs, lhs);
       return NotEqual;
     case AboveOrEqual:
       // bgeu s,t,label =>
       //   sltu at,s,t
       //   beq at,$zero,offs
-      as_sltu(scratch, lhs, rhs);
+      as_sltu(dest, lhs, rhs);
       return Equal;
     case Below:
       // bltu s,t,label =>
       //   sltu at,s,t
       //   bne at,$zero,offs
-      as_sltu(scratch, lhs, rhs);
+      as_sltu(dest, lhs, rhs);
       return NotEqual;
     case BelowOrEqual:
       // bleu s,t,label =>
       //   sltu at,t,s
       //   beq at,$zero,offs
-      as_sltu(scratch, rhs, lhs);
+      as_sltu(dest, rhs, lhs);
       return Equal;
     case GreaterThan:
       // bgt s,t,label =>
       //   slt at,t,s
       //   bne at,$zero,offs
-      as_slt(scratch, rhs, lhs);
+      as_slt(dest, rhs, lhs);
       return NotEqual;
     case GreaterThanOrEqual:
       // bge s,t,label =>
       //   slt at,s,t
       //   beq at,$zero,offs
-      as_slt(scratch, lhs, rhs);
+      as_slt(dest, lhs, rhs);
       return Equal;
     case LessThan:
       // blt s,t,label =>
       //   slt at,s,t
       //   bne at,$zero,offs
-      as_slt(scratch, lhs, rhs);
+      as_slt(dest, lhs, rhs);
       return NotEqual;
     case LessThanOrEqual:
       // ble s,t,label =>
       //   slt at,t,s
       //   beq at,$zero,offs
-      as_slt(scratch, rhs, lhs);
+      as_slt(dest, rhs, lhs);
       return Equal;
     default:
       MOZ_CRASH("Invalid condition.");
@@ -792,49 +1006,52 @@ Assembler::Condition MacroAssemblerMIPSShared::ma_cmp(Register scratch,
   return Always;
 }
 
-Assembler::Condition MacroAssemblerMIPSShared::ma_cmp(Register scratch,
+Assembler::Condition MacroAssemblerMIPSShared::ma_cmp(Register dest,
                                                       Register lhs, Imm32 imm,
                                                       Condition c) {
+  ScratchRegisterScope scratch(asMasm());
+  MOZ_ASSERT(lhs != scratch);
+
   switch (c) {
     case Above:
     case BelowOrEqual:
       if (Imm16::IsInSignedRange(imm.value + 1) && imm.value != -1) {
         // lhs <= rhs via lhs < rhs + 1 if rhs + 1 does not overflow
-        as_sltiu(scratch, lhs, imm.value + 1);
+        as_sltiu(dest, lhs, imm.value + 1);
 
         return (c == BelowOrEqual ? NotEqual : Equal);
       } else {
         ma_li(scratch, imm);
-        as_sltu(scratch, scratch, lhs);
+        as_sltu(dest, scratch, lhs);
         return (c == BelowOrEqual ? Equal : NotEqual);
       }
     case AboveOrEqual:
     case Below:
       if (Imm16::IsInSignedRange(imm.value)) {
-        as_sltiu(scratch, lhs, imm.value);
+        as_sltiu(dest, lhs, imm.value);
       } else {
         ma_li(scratch, imm);
-        as_sltu(scratch, lhs, scratch);
+        as_sltu(dest, lhs, scratch);
       }
       return (c == AboveOrEqual ? Equal : NotEqual);
     case GreaterThan:
     case LessThanOrEqual:
       if (Imm16::IsInSignedRange(imm.value + 1)) {
         // lhs <= rhs via lhs < rhs + 1.
-        as_slti(scratch, lhs, imm.value + 1);
+        as_slti(dest, lhs, imm.value + 1);
         return (c == LessThanOrEqual ? NotEqual : Equal);
       } else {
         ma_li(scratch, imm);
-        as_slt(scratch, scratch, lhs);
+        as_slt(dest, scratch, lhs);
         return (c == LessThanOrEqual ? Equal : NotEqual);
       }
     case GreaterThanOrEqual:
     case LessThan:
       if (Imm16::IsInSignedRange(imm.value)) {
-        as_slti(scratch, lhs, imm.value);
+        as_slti(dest, lhs, imm.value);
       } else {
         ma_li(scratch, imm);
-        as_slt(scratch, lhs, scratch);
+        as_slt(dest, lhs, scratch);
       }
       return (c == GreaterThanOrEqual ? Equal : NotEqual);
     default:
@@ -1007,6 +1224,14 @@ void MacroAssemblerMIPSShared::ma_cmp_set_double(Register dest,
   FloatTestKind moveCondition;
   compareFloatingPoint(DoubleFloat, lhs, rhs, c, &moveCondition);
 
+#ifdef MIPSR6
+  as_mfc1(dest, FloatRegisters::f24);
+  if (moveCondition == TestForTrue) {
+    as_andi(dest, dest, 0x1);
+  } else {
+    as_addiu(dest, dest, 0x1);
+  }
+#else
   ma_li(dest, Imm32(1));
 
   if (moveCondition == TestForTrue) {
@@ -1014,6 +1239,7 @@ void MacroAssemblerMIPSShared::ma_cmp_set_double(Register dest,
   } else {
     as_movt(dest, zero);
   }
+#endif
 }
 
 void MacroAssemblerMIPSShared::ma_cmp_set_float32(Register dest,
@@ -1023,6 +1249,14 @@ void MacroAssemblerMIPSShared::ma_cmp_set_float32(Register dest,
   FloatTestKind moveCondition;
   compareFloatingPoint(SingleFloat, lhs, rhs, c, &moveCondition);
 
+#ifdef MIPSR6
+  as_mfc1(dest, FloatRegisters::f24);
+  if (moveCondition == TestForTrue) {
+    as_andi(dest, dest, 0x1);
+  } else {
+    as_addiu(dest, dest, 0x1);
+  }
+#else
   ma_li(dest, Imm32(1));
 
   if (moveCondition == TestForTrue) {
@@ -1030,6 +1264,7 @@ void MacroAssemblerMIPSShared::ma_cmp_set_float32(Register dest,
   } else {
     as_movt(dest, zero);
   }
+#endif
 }
 
 void MacroAssemblerMIPSShared::ma_cmp_set(Register rd, Register rs, Imm32 imm,
@@ -1203,6 +1438,13 @@ void MacroAssemblerMIPSShared::minMaxDouble(FloatRegister srcDest,
 
   // First or second is NaN, result is NaN.
   ma_bc1d(first, second, &nan, Assembler::DoubleUnordered, ShortJump);
+#ifdef MIPSR6
+  if (isMax) {
+    as_max(DoubleFloat, srcDest, first, second);
+  } else {
+    as_min(DoubleFloat, srcDest, first, second);
+  }
+#else
   // Make sure we handle -0 and 0 right.
   ma_bc1d(first, second, &equal, Assembler::DoubleEqual, ShortJump);
   compareFloatingPoint(DoubleFloat, first, second, cond, &moveCondition);
@@ -1228,6 +1470,7 @@ void MacroAssemblerMIPSShared::minMaxDouble(FloatRegister srcDest,
   MOZ_ASSERT(TestForTrue == moveCondition);
   // First is 0 or -0, move max/min to it, else just return it.
   as_movt(DoubleFloat, first, ScratchDoubleReg);
+#endif
   ma_b(&done, ShortJump);
 
   bind(&nan);
@@ -1248,6 +1491,13 @@ void MacroAssemblerMIPSShared::minMaxFloat32(FloatRegister srcDest,
 
   // First or second is NaN, result is NaN.
   ma_bc1s(first, second, &nan, Assembler::DoubleUnordered, ShortJump);
+#ifdef MIPSR6
+  if (isMax) {
+    as_max(SingleFloat, srcDest, first, second);
+  } else {
+    as_min(SingleFloat, srcDest, first, second);
+  }
+#else
   // Make sure we handle -0 and 0 right.
   ma_bc1s(first, second, &equal, Assembler::DoubleEqual, ShortJump);
   compareFloatingPoint(SingleFloat, first, second, cond, &moveCondition);
@@ -1273,6 +1523,7 @@ void MacroAssemblerMIPSShared::minMaxFloat32(FloatRegister srcDest,
   MOZ_ASSERT(TestForTrue == moveCondition);
   // First is 0 or -0, move max/min to it, else just return it.
   as_movt(SingleFloat, first, ScratchFloat32Reg);
+#endif
   ma_b(&done, ShortJump);
 
   bind(&nan);
@@ -1482,8 +1733,7 @@ void MacroAssembler::call(JitCode* c) {
   callJitNoProfiler(ScratchRegister);
 }
 
-CodeOffset MacroAssembler::nopPatchableToCall(const wasm::CallSiteDesc& desc) {
-  CodeOffset offset(currentOffset());
+CodeOffset MacroAssembler::nopPatchableToCall() {
   // MIPS32   //MIPS64
   as_nop();  // lui      // lui
   as_nop();  // ori      // ori
@@ -1493,8 +1743,7 @@ CodeOffset MacroAssembler::nopPatchableToCall(const wasm::CallSiteDesc& desc) {
   as_nop();  // jalr
   as_nop();
 #endif
-  append(desc, CodeOffset(currentOffset()));
-  return offset;
+  return CodeOffset(currentOffset());
 }
 
 void MacroAssembler::patchNopToCall(uint8_t* call, uint8_t* target) {
@@ -1730,6 +1979,7 @@ void MacroAssemblerMIPSShared::outOfLineWasmTruncateToInt64Check(
       MOZ_ASSERT(moveCondition == TestForTrue);
 
       as_movt(output, zero);
+
     } else {
       // Positive overflow is already saturated to INT64_MAX, so we only have
       // to handle NaN and negative overflow here.
@@ -1838,7 +2088,7 @@ void MacroAssemblerMIPSShared::wasmLoadImpl(
     const wasm::MemoryAccessDesc& access, Register memoryBase, Register ptr,
     Register ptrScratch, AnyRegister output, Register tmp) {
   uint32_t offset = access.offset();
-  MOZ_ASSERT(offset < wasm::OffsetGuardLimit);
+  MOZ_ASSERT(offset < wasm::MaxOffsetGuardLimit);
   MOZ_ASSERT_IF(offset, ptrScratch != InvalidReg);
 
   // Maybe add the offset.
@@ -1917,7 +2167,7 @@ void MacroAssemblerMIPSShared::wasmStoreImpl(
     const wasm::MemoryAccessDesc& access, AnyRegister value,
     Register memoryBase, Register ptr, Register ptrScratch, Register tmp) {
   uint32_t offset = access.offset();
-  MOZ_ASSERT(offset < wasm::OffsetGuardLimit);
+  MOZ_ASSERT(offset < wasm::MaxOffsetGuardLimit);
   MOZ_ASSERT_IF(offset, ptrScratch != InvalidReg);
 
   // Maybe add the offset.
@@ -2054,7 +2304,7 @@ static void CompareExchange(MacroAssembler& masm,
 
   masm.as_andi(offsetTemp, SecondScratchReg, 3);
   masm.subPtr(offsetTemp, SecondScratchReg);
-#if !MOZ_LITTLE_ENDIAN
+#if !MOZ_LITTLE_ENDIAN()
   masm.as_xori(offsetTemp, offsetTemp, 3);
 #endif
   masm.as_sll(offsetTemp, offsetTemp, 3);
@@ -2197,7 +2447,7 @@ static void AtomicExchange(MacroAssembler& masm,
 
   masm.as_andi(offsetTemp, SecondScratchReg, 3);
   masm.subPtr(offsetTemp, SecondScratchReg);
-#if !MOZ_LITTLE_ENDIAN
+#if !MOZ_LITTLE_ENDIAN()
   masm.as_xori(offsetTemp, offsetTemp, 3);
 #endif
   masm.as_sll(offsetTemp, offsetTemp, 3);
@@ -2355,7 +2605,7 @@ static void AtomicFetchOp(MacroAssembler& masm,
 
   masm.as_andi(offsetTemp, SecondScratchReg, 3);
   masm.subPtr(offsetTemp, SecondScratchReg);
-#if !MOZ_LITTLE_ENDIAN
+#if !MOZ_LITTLE_ENDIAN()
   masm.as_xori(offsetTemp, offsetTemp, 3);
 #endif
   masm.as_sll(offsetTemp, offsetTemp, 3);
@@ -2536,7 +2786,7 @@ static void AtomicEffectOp(MacroAssembler& masm,
 
   masm.as_andi(offsetTemp, SecondScratchReg, 3);
   masm.subPtr(offsetTemp, SecondScratchReg);
-#if !MOZ_LITTLE_ENDIAN
+#if !MOZ_LITTLE_ENDIAN()
   masm.as_xori(offsetTemp, offsetTemp, 3);
 #endif
   masm.as_sll(offsetTemp, offsetTemp, 3);
@@ -2761,16 +3011,280 @@ void MacroAssembler::flexibleDivMod32(Register rhs, Register srcDest,
                                       Register remOutput, bool isUnsigned,
                                       const LiveRegisterSet&) {
   if (isUnsigned) {
+#ifdef MIPSR6
+    as_divu(ScratchRegister, srcDest, rhs);
+    as_modu(remOutput, srcDest, rhs);
+    ma_move(srcDest, ScratchRegister);
+#else
     as_divu(srcDest, rhs);
+#endif
   } else {
+#ifdef MIPSR6
+    as_div(ScratchRegister, srcDest, rhs);
+    as_mod(remOutput, srcDest, rhs);
+    ma_move(srcDest, ScratchRegister);
+#else
     as_div(srcDest, rhs);
+#endif
   }
+#ifndef MIPSR6
   as_mfhi(remOutput);
   as_mflo(srcDest);
+#endif
+}
+
+CodeOffset MacroAssembler::moveNearAddressWithPatch(Register dest) {
+  return movWithPatch(ImmPtr(nullptr), dest);
+}
+
+void MacroAssembler::patchNearAddressMove(CodeLocationLabel loc,
+                                          CodeLocationLabel target) {
+  PatchDataWithValueCheck(loc, ImmPtr(target.raw()), ImmPtr(nullptr));
 }
 
 // ========================================================================
 // Spectre Mitigations.
 
 void MacroAssembler::speculationBarrier() { MOZ_CRASH(); }
+
+void MacroAssembler::floorFloat32ToInt32(FloatRegister src, Register dest,
+                                         Label* fail) {
+  ScratchFloat32Scope scratch(*this);
+
+  Label skipCheck, done;
+
+  // If Nan, 0 or -0 check for bailout
+  loadConstantFloat32(0.0f, scratch);
+  ma_bc1s(src, scratch, &skipCheck, Assembler::DoubleNotEqual, ShortJump);
+
+  // If binary value is not zero, it is NaN or -0, so we bail.
+  moveFromDoubleLo(src, SecondScratchReg);
+  branch32(Assembler::NotEqual, SecondScratchReg, Imm32(0), fail);
+
+  // Input was zero, so return zero.
+  move32(Imm32(0), dest);
+  ma_b(&done, ShortJump);
+
+  bind(&skipCheck);
+  as_floorws(scratch, src);
+  moveFromDoubleLo(scratch, dest);
+
+  branch32(Assembler::Equal, dest, Imm32(INT_MIN), fail);
+  branch32(Assembler::Equal, dest, Imm32(INT_MAX), fail);
+
+  bind(&done);
+}
+
+void MacroAssembler::floorDoubleToInt32(FloatRegister src, Register dest,
+                                        Label* fail) {
+  ScratchDoubleScope scratch(*this);
+
+  Label skipCheck, done;
+
+  // If Nan, 0 or -0 check for bailout
+  loadConstantDouble(0.0, scratch);
+  ma_bc1d(src, scratch, &skipCheck, Assembler::DoubleNotEqual, ShortJump);
+
+  // If high part is not zero, it is NaN or -0, so we bail.
+  moveFromDoubleHi(src, SecondScratchReg);
+  branch32(Assembler::NotEqual, SecondScratchReg, Imm32(0), fail);
+
+  // Input was zero, so return zero.
+  move32(Imm32(0), dest);
+  ma_b(&done, ShortJump);
+
+  bind(&skipCheck);
+  as_floorwd(scratch, src);
+  moveFromDoubleLo(scratch, dest);
+
+  branch32(Assembler::Equal, dest, Imm32(INT_MIN), fail);
+  branch32(Assembler::Equal, dest, Imm32(INT_MAX), fail);
+
+  bind(&done);
+}
+
+void MacroAssembler::ceilFloat32ToInt32(FloatRegister src, Register dest,
+                                        Label* fail) {
+  ScratchFloat32Scope scratch(*this);
+
+  Label performCeil, done;
+
+  // If x < -1 or x > 0 then perform ceil.
+  loadConstantFloat32(0.0f, scratch);
+  branchFloat(Assembler::DoubleGreaterThan, src, scratch, &performCeil);
+  loadConstantFloat32(-1.0f, scratch);
+  branchFloat(Assembler::DoubleLessThanOrEqual, src, scratch, &performCeil);
+
+  // If binary value is not zero, the input was not 0, so we bail.
+  moveFromFloat32(src, SecondScratchReg);
+  branch32(Assembler::NotEqual, SecondScratchReg, Imm32(0), fail);
+
+  // Input was zero, so return zero.
+  move32(Imm32(0), dest);
+  ma_b(&done, ShortJump);
+
+  bind(&performCeil);
+  as_ceilws(scratch, src);
+  moveFromFloat32(scratch, dest);
+
+  branch32(Assembler::Equal, dest, Imm32(INT_MIN), fail);
+  branch32(Assembler::Equal, dest, Imm32(INT_MAX), fail);
+
+  bind(&done);
+}
+
+void MacroAssembler::ceilDoubleToInt32(FloatRegister src, Register dest,
+                                       Label* fail) {
+  ScratchDoubleScope scratch(*this);
+
+  Label performCeil, done;
+
+  // If x < -1 or x > 0 then perform ceil.
+  loadConstantDouble(0, scratch);
+  branchDouble(Assembler::DoubleGreaterThan, src, scratch, &performCeil);
+  loadConstantDouble(-1, scratch);
+  branchDouble(Assembler::DoubleLessThanOrEqual, src, scratch, &performCeil);
+
+  // If high part is not zero, the input was not 0, so we bail.
+  moveFromDoubleHi(src, SecondScratchReg);
+  branch32(Assembler::NotEqual, SecondScratchReg, Imm32(0), fail);
+
+  // Input was zero, so return zero.
+  move32(Imm32(0), dest);
+  ma_b(&done, ShortJump);
+
+  bind(&performCeil);
+  as_ceilwd(scratch, src);
+  moveFromDoubleLo(scratch, dest);
+
+  branch32(Assembler::Equal, dest, Imm32(INT_MIN), fail);
+  branch32(Assembler::Equal, dest, Imm32(INT_MAX), fail);
+
+  bind(&done);
+}
+
+void MacroAssembler::roundFloat32ToInt32(FloatRegister src, Register dest,
+                                         FloatRegister temp, Label* fail) {
+  ScratchFloat32Scope scratch(*this);
+
+  Label negative, end, skipCheck;
+
+  // Load biggest number less than 0.5 in the temp register.
+  loadConstantFloat32(GetBiggestNumberLessThan(0.5f), temp);
+
+  // Branch to a slow path for negative inputs. Doesn't catch NaN or -0.
+  loadConstantFloat32(0.0f, scratch);
+  ma_bc1s(src, scratch, &negative, Assembler::DoubleLessThan, ShortJump);
+
+  // If Nan, 0 or -0 check for bailout
+  ma_bc1s(src, scratch, &skipCheck, Assembler::DoubleNotEqual, ShortJump);
+
+  // If binary value is not zero, it is NaN or -0, so we bail.
+  moveFromFloat32(src, SecondScratchReg);
+  branch32(Assembler::NotEqual, SecondScratchReg, Imm32(0), fail);
+
+  // Input was zero, so return zero.
+  move32(Imm32(0), dest);
+  ma_b(&end, ShortJump);
+
+  bind(&skipCheck);
+  as_adds(scratch, src, temp);
+  as_floorws(scratch, scratch);
+
+  moveFromFloat32(scratch, dest);
+
+  branchTest32(Assembler::Equal, dest, Imm32(INT_MIN), fail);
+  branchTest32(Assembler::Equal, dest, Imm32(INT_MAX), fail);
+
+  jump(&end);
+
+  // Input is negative, but isn't -0.
+  bind(&negative);
+
+  // Inputs in ]-0.5; 0] need to be added 0.5, other negative inputs need to
+  // be added the biggest double less than 0.5.
+  Label loadJoin;
+  loadConstantFloat32(-0.5f, scratch);
+  branchFloat(Assembler::DoubleLessThan, src, scratch, &loadJoin);
+  loadConstantFloat32(0.5f, temp);
+  bind(&loadJoin);
+
+  as_adds(temp, src, temp);
+
+  // If input + 0.5 >= 0, input is a negative number >= -0.5 and the
+  // result is -0.
+  branchFloat(Assembler::DoubleGreaterThanOrEqual, temp, scratch, fail);
+
+  // Truncate and round toward zero.
+  // This is off-by-one for everything but integer-valued inputs.
+  as_floorws(scratch, temp);
+  moveFromFloat32(scratch, dest);
+
+  branch32(Assembler::Equal, dest, Imm32(INT_MIN), fail);
+
+  bind(&end);
+}
+
+void MacroAssembler::roundDoubleToInt32(FloatRegister src, Register dest,
+                                        FloatRegister temp, Label* fail) {
+  ScratchDoubleScope scratch(*this);
+
+  Label negative, end, skipCheck;
+
+  // Load biggest number less than 0.5 in the temp register.
+  loadConstantDouble(GetBiggestNumberLessThan(0.5), temp);
+
+  // Branch to a slow path for negative inputs. Doesn't catch NaN or -0.
+  loadConstantDouble(0.0, scratch);
+  ma_bc1d(src, scratch, &negative, Assembler::DoubleLessThan, ShortJump);
+
+  // If Nan, 0 or -0 check for bailout
+  ma_bc1d(src, scratch, &skipCheck, Assembler::DoubleNotEqual, ShortJump);
+
+  // If high part is not zero, it is NaN or -0, so we bail.
+  moveFromDoubleHi(src, SecondScratchReg);
+  branch32(Assembler::NotEqual, SecondScratchReg, Imm32(0), fail);
+
+  // Input was zero, so return zero.
+  move32(Imm32(0), dest);
+  ma_b(&end, ShortJump);
+
+  bind(&skipCheck);
+  as_addd(scratch, src, temp);
+  as_floorwd(scratch, scratch);
+
+  moveFromDoubleLo(scratch, dest);
+
+  branch32(Assembler::Equal, dest, Imm32(INT_MIN), fail);
+  branch32(Assembler::Equal, dest, Imm32(INT_MAX), fail);
+
+  jump(&end);
+
+  // Input is negative, but isn't -0.
+  bind(&negative);
+
+  // Inputs in ]-0.5; 0] need to be added 0.5, other negative inputs need to
+  // be added the biggest double less than 0.5.
+  Label loadJoin;
+  loadConstantDouble(-0.5, scratch);
+  branchDouble(Assembler::DoubleLessThan, src, scratch, &loadJoin);
+  loadConstantDouble(0.5, temp);
+  bind(&loadJoin);
+
+  addDouble(src, temp);
+
+  // If input + 0.5 >= 0, input is a negative number >= -0.5 and the
+  // result is -0.
+  branchDouble(Assembler::DoubleGreaterThanOrEqual, temp, scratch, fail);
+
+  // Truncate and round toward zero.
+  // This is off-by-one for everything but integer-valued inputs.
+  as_floorwd(scratch, temp);
+  moveFromDoubleLo(scratch, dest);
+
+  branch32(Assembler::Equal, dest, Imm32(INT_MIN), fail);
+
+  bind(&end);
+}
+
 //}}} check_macroassembler_style

@@ -10,7 +10,8 @@
  * liability, trademark and document use rules apply.
  */
 
+[Exposed=Window]
 interface SVGFEFloodElement : SVGElement {
 };
 
-SVGFEFloodElement implements SVGFilterPrimitiveStandardAttributes;
+SVGFEFloodElement includes SVGFilterPrimitiveStandardAttributes;

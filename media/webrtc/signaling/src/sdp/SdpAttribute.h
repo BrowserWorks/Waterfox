@@ -987,7 +987,7 @@ class SdpRtcpFbAttributeList : public SdpAttribute {
  public:
   SdpRtcpFbAttributeList() : SdpAttribute(kRtcpFbAttribute) {}
 
-  enum Type { kAck, kApp, kCcm, kNack, kTrrInt, kRemb, kTransCC };
+  enum Type { kAck, kApp, kCcm, kNack, kTrrInt, kRemb, kTransportCC };
 
   static const char* pli;
   static const char* sli;
@@ -1039,7 +1039,7 @@ inline std::ostream& operator<<(std::ostream& os,
     case SdpRtcpFbAttributeList::kRemb:
       os << "goog-remb";
       break;
-    case SdpRtcpFbAttributeList::kTransCC:
+    case SdpRtcpFbAttributeList::kTransportCC:
       os << "transport-cc";
       break;
     default:
@@ -1071,6 +1071,7 @@ class SdpRtpmapAttributeList : public SdpAttribute {
     kRed,
     kUlpfec,
     kTelephoneEvent,
+    kRtx,
     kOtherCodec
   };
 
@@ -1153,6 +1154,9 @@ inline std::ostream& operator<<(std::ostream& os,
     case SdpRtpmapAttributeList::kTelephoneEvent:
       os << "telephone-event";
       break;
+    case SdpRtpmapAttributeList::kRtx:
+      os << "rtx";
+      break;
     default:
       MOZ_ASSERT(false);
       os << "?";
@@ -1206,6 +1210,36 @@ class SdpFmtpAttributeList : public SdpAttribute {
     }
 
     std::vector<uint8_t> encodings;
+  };
+
+  class RtxParameters : public Parameters {
+   public:
+    uint8_t apt = 255;  // Valid payload types are 0 - 127, use 255 to represent
+                        // unset value.
+    Maybe<uint32_t> rtx_time;
+
+    RtxParameters() : Parameters(SdpRtpmapAttributeList::kRtx) {}
+
+    virtual ~RtxParameters() {}
+
+    virtual Parameters* Clone() const override {
+      return new RtxParameters(*this);
+    }
+
+    virtual void Serialize(std::ostream& os) const override {
+      if (apt <= 127) {
+        os << "apt=" << static_cast<uint32_t>(apt);
+        rtx_time.apply([&](const auto& time) { os << ";rtx-time=" << time; });
+      }
+    }
+
+    virtual bool CompareEq(const Parameters& aOther) const override {
+      if (aOther.codec_type != codec_type) {
+        return false;
+      }
+      auto other = static_cast<const RtxParameters&>(aOther);
+      return other.apt == apt && other.rtx_time == rtx_time;
+    }
   };
 
   class H264Parameters : public Parameters {
@@ -1322,19 +1356,50 @@ class SdpFmtpAttributeList : public SdpAttribute {
     enum {
       kDefaultMaxPlaybackRate = 48000,
       kDefaultStereo = 0,
-      kDefaultUseInBandFec = 0
+      kDefaultUseInBandFec = 0,
+      kDefaultMaxAverageBitrate = 0,
+      kDefaultUseDTX = 0,
+      kDefaultFrameSize = 0,
+      kDefaultMinFrameSize = 0,
+      kDefaultMaxFrameSize = 0,
+      kDefaultUseCbr = 0
     };
     OpusParameters()
         : Parameters(SdpRtpmapAttributeList::kOpus),
           maxplaybackrate(kDefaultMaxPlaybackRate),
           stereo(kDefaultStereo),
-          useInBandFec(kDefaultUseInBandFec) {}
+          useInBandFec(kDefaultUseInBandFec),
+          maxAverageBitrate(kDefaultMaxAverageBitrate),
+          useDTX(kDefaultUseDTX),
+          frameSizeMs(kDefaultFrameSize),
+          minFrameSizeMs(kDefaultMinFrameSize),
+          maxFrameSizeMs(kDefaultMaxFrameSize),
+          useCbr(kDefaultUseCbr) {}
 
     Parameters* Clone() const override { return new OpusParameters(*this); }
 
     void Serialize(std::ostream& os) const override {
       os << "maxplaybackrate=" << maxplaybackrate << ";stereo=" << stereo
          << ";useinbandfec=" << useInBandFec;
+
+      if (useDTX) {
+        os << ";usedtx=1";
+      }
+      if (maxAverageBitrate) {
+        os << ";maxaveragebitrate=" << maxAverageBitrate;
+      }
+      if (frameSizeMs) {
+        os << ";ptime=" << frameSizeMs;
+      }
+      if (minFrameSizeMs) {
+        os << ";minptime=" << minFrameSizeMs;
+      }
+      if (maxFrameSizeMs) {
+        os << ";maxptime=" << maxFrameSizeMs;
+      }
+      if (useCbr) {
+        os << ";cbr=1";
+      }
     }
 
     virtual bool CompareEq(const Parameters& other) const override {
@@ -1350,12 +1415,24 @@ class SdpFmtpAttributeList : public SdpAttribute {
       }
 
       return maxplaybackrateIsEq && stereo == otherOpus.stereo &&
-             useInBandFec == otherOpus.useInBandFec;
+             useInBandFec == otherOpus.useInBandFec &&
+             maxAverageBitrate == otherOpus.maxAverageBitrate &&
+             useDTX == otherOpus.useDTX &&
+             frameSizeMs == otherOpus.frameSizeMs &&
+             minFrameSizeMs == otherOpus.minFrameSizeMs &&
+             maxFrameSizeMs == otherOpus.maxFrameSizeMs &&
+             useCbr == otherOpus.useCbr;
     }
 
     unsigned int maxplaybackrate;
     unsigned int stereo;
     unsigned int useInBandFec;
+    uint32_t maxAverageBitrate;
+    bool useDTX;
+    uint32_t frameSizeMs;
+    uint32_t minFrameSizeMs;
+    uint32_t maxFrameSizeMs;
+    bool useCbr;
   };
 
   class TelephoneEventParameters : public Parameters {
@@ -1535,21 +1612,25 @@ class SdpSimulcastAttribute : public SdpAttribute {
   void Serialize(std::ostream& os) const override;
   bool Parse(std::istream& is, std::string* error);
 
+  class Encoding {
+   public:
+    Encoding(const std::string& aRid, bool aPaused)
+        : rid(aRid), paused(aPaused) {}
+    std::string rid;
+    bool paused = false;
+  };
+
   class Version {
    public:
     void Serialize(std::ostream& os) const;
     bool IsSet() const { return !choices.empty(); }
     bool Parse(std::istream& is, std::string* error);
-    bool GetChoicesAsFormats(std::vector<uint16_t>* formats) const;
 
-    std::vector<std::string> choices;
+    std::vector<Encoding> choices;
   };
 
   class Versions : public std::vector<Version> {
    public:
-    enum Type { kPt, kRid };
-
-    Versions() : type(kRid) {}
     void Serialize(std::ostream& os) const;
     bool IsSet() const {
       if (empty()) {
@@ -1566,7 +1647,6 @@ class SdpSimulcastAttribute : public SdpAttribute {
     }
 
     bool Parse(std::istream& is, std::string* error);
-    Type type;
   };
 
   Versions sendVersions;
@@ -1621,7 +1701,8 @@ class SdpSsrcGroupAttributeList : public SdpAttribute {
     kFec,    // RFC5576
     kFid,    // RFC5576
     kFecFr,  // RFC5956
-    kDup     // RFC7104
+    kDup,    // RFC7104
+    kSim     // non-standard, used by hangouts
   };
 
   struct SsrcGroup {
@@ -1655,6 +1736,9 @@ inline std::ostream& operator<<(std::ostream& os,
       break;
     case SdpSsrcGroupAttributeList::kDup:
       os << "DUP";
+      break;
+    case SdpSsrcGroupAttributeList::kSim:
+      os << "SIM";
       break;
     default:
       MOZ_ASSERT(false);

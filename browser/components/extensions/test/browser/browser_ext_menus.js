@@ -7,7 +7,7 @@ const PAGE =
   "http://mochi.test:8888/browser/browser/components/extensions/test/browser/context.html";
 
 async function openContextMenuInPageActionPanel(extension, win = window) {
-  SetPageProxyState("valid");
+  win.gURLBar.setPageProxyState("valid");
   await promiseAnimationFrame(win);
   const mainPanelshown = BrowserTestUtils.waitForEvent(
     BrowserPageActions.panelNode,
@@ -208,12 +208,13 @@ add_task(async function test_hiddenPageActionContextMenu() {
     return window.getComputedStyle(node).visibility == "visible";
   });
 
-  is(menuItems.length, 3, "Correct number of children");
-  const [dontShowItem, separator, manageItem] = menuItems;
+  is(menuItems.length, 4, "Correct number of children");
+  const [dontShowItem, separator, manageItem, removeItem] = menuItems;
 
   is(dontShowItem.label, "Remove from Address Bar", "Correct first child");
   is(separator.tagName, "menuseparator", "Correct second child");
   is(manageItem.label, "Manage Extension\u2026", "Correct third child");
+  is(removeItem.label, "Remove Extension", "Correct fourth child");
 
   await closeChromeContextMenu(menu.id);
   await closeChromeContextMenu(BrowserPageActions.panelNode.id);
@@ -382,17 +383,16 @@ add_task(async function test_onclick_frameid() {
   await extension.startup();
   await extension.awaitMessage("ready");
 
-  async function click(selector) {
-    const func = selector === "body" ? openContextMenu : openContextMenuInFrame;
-    const menu = await func(selector);
+  async function click(menu) {
     const items = menu.getElementsByAttribute("label", "modify");
+    is(items.length, 1, "found menu item");
     await closeExtensionContextMenu(items[0]);
     return extension.awaitMessage("click");
   }
 
-  let info = await click("body");
+  let info = await click(await openContextMenu("body"));
   is(info.frameId, 0, "top level click");
-  info = await click("#frame");
+  info = await click(await openContextMenuInFrame());
   isnot(info.frameId, undefined, "frame click, frameId is not undefined");
   isnot(info.frameId, 0, "frame click, frameId probably okay");
 

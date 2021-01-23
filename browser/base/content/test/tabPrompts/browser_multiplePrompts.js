@@ -13,14 +13,14 @@ add_task(async function() {
   let contentScript = function(MAX_PROMPT) {
     var i = MAX_PROMPT;
     let fns = ["alert", "prompt", "confirm"];
-    window.addEventListener("message", function() {
+    function openDialog() {
       i--;
       if (i) {
-        window.postMessage("ping", "*");
+        SpecialPowers.Services.tm.dispatchToMainThread(openDialog);
       }
       window[fns[i % 3]](fns[i % 3] + " countdown #" + i);
-    });
-    window.postMessage("ping", "*");
+    }
+    SpecialPowers.Services.tm.dispatchToMainThread(openDialog);
   };
   let url =
     "data:text/html,<script>(" +
@@ -59,9 +59,7 @@ add_task(async function() {
     // The oldest should be the first.
     let i = 0;
     for (let promptElement of promptElements) {
-      let prompt = tab.linkedBrowser.tabModalPromptBox.prompts.get(
-        promptElement
-      );
+      let prompt = tab.linkedBrowser.tabModalPromptBox.getPrompt(promptElement);
       let expectedType = ["alert", "prompt", "confirm"][i % 3];
       is(
         prompt.Dialog.args.text,

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY progress.title                  "Muat turun sedang Dilaksanakan…">
+<!ENTITY closeWindow.key                 "w">
+<!ENTITY cmd.pause.tooltip               "Jeda">
+<!ENTITY cmd.resume.tooltip              "Sambung">
+<!ENTITY cmd.retry.tooltip               "Cuba lagi">
+<!ENTITY cmd.cancel.tooltip              "Batal">
+<!ENTITY cmd.open.label                  "Buka">
+<!ENTITY cmd.open.accesskey              "B">
+<!ENTITY cmd.show.label                  "Buka Kandungan Folder">
+<!ENTITY cmd.show.accesskey              "F">
+<!ENTITY cmd.goToDownloadPage.label      "Pergi ke Halaman Muat Turun">
+<!ENTITY cmd.goToDownloadPage.accesskey  "P">
+<!ENTITY cmd.copyDownloadLink.label      "Salin Pautan Muat Turun">
+<!ENTITY cmd.copyDownloadLink.accesskey  "M">
+<!ENTITY closeWhenDone.label             "Tutup tetingkap ini apabila muat turun selesai.">
+<!ENTITY closeWhenDone.accesskey         "t">

@@ -116,6 +116,13 @@ nsHTTPCompressConv::AsyncConvertData(const char* aFromType, const char* aToType,
 }
 
 NS_IMETHODIMP
+nsHTTPCompressConv::GetConvertedType(const nsACString& aFromType,
+                                     nsIChannel* aChannel,
+                                     nsACString& aToType) {
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
 nsHTTPCompressConv::OnStartRequest(nsIRequest* request) {
   LOG(("nsHttpCompresssConv %p onstart\n", this));
   nsCOMPtr<nsIStreamListener> listener;
@@ -287,7 +294,7 @@ nsHTTPCompressConv::OnDataAvailable(nsIRequest* request, nsIInputStream* iStr,
         return NS_OK;
       }
 
-      MOZ_FALLTHROUGH;
+      [[fallthrough]];
 
     case HTTP_COMPRESS_DEFLATE:
 
@@ -467,7 +474,7 @@ nsHTTPCompressConv::OnDataAvailable(nsIRequest* request, nsIInputStream* iStr,
 
     case HTTP_COMPRESS_BROTLI: {
       if (!mBrotli) {
-        mBrotli = new BrotliWrapper();
+        mBrotli = MakeUnique<BrotliWrapper>();
       }
 
       mBrotli->mRequest = request;

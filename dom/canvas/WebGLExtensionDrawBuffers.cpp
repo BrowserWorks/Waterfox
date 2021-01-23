@@ -18,22 +18,6 @@ namespace mozilla {
 WebGLExtensionDrawBuffers::WebGLExtensionDrawBuffers(WebGLContext* webgl)
     : WebGLExtensionBase(webgl) {
   MOZ_ASSERT(IsSupported(webgl), "Don't construct extension if unsupported.");
-
-  webgl->UpdateMaxDrawBuffers();
-}
-
-WebGLExtensionDrawBuffers::~WebGLExtensionDrawBuffers() {}
-
-void WebGLExtensionDrawBuffers::DrawBuffersWEBGL(
-    const dom::Sequence<GLenum>& buffers) {
-  if (mIsLost) {
-    if (mContext) {
-      mContext->ErrorInvalidOperation("drawBuffersWEBGL: Extension is lost.");
-    }
-    return;
-  }
-
-  mContext->DrawBuffers(buffers);
 }
 
 bool WebGLExtensionDrawBuffers::IsSupported(const WebGLContext* webgl) {
@@ -47,7 +31,5 @@ bool WebGLExtensionDrawBuffers::IsSupported(const WebGLContext* webgl) {
   }
   return gl->IsSupported(gl::GLFeature::draw_buffers);
 }
-
-IMPL_WEBGL_EXTENSION_GOOP(WebGLExtensionDrawBuffers, WEBGL_draw_buffers)
 
 }  // namespace mozilla

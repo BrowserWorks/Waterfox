@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('BigInt')) -- BigInt is not enabled unconditionally
 // Copyright (C) 2018 Igalia, S.L. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 /*---
@@ -50,4 +49,5 @@ assert.sameValue(
   false,
   'The result of ("-9007199254740992" <= -9007199254740993n) is false'
 );
+
 reportCompare(0, 0);

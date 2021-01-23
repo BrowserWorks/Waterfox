@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -50,6 +48,10 @@ class Tabbar extends Component {
         expandPaneTitle: PropTypes.string.isRequired,
         // Click callback
         onClick: PropTypes.func.isRequired,
+        // align toggle button to right
+        alignRight: PropTypes.bool,
+        // if set to true toggle-button rotate 90
+        canVerticalSplit: PropTypes.bool,
       }),
     };
   }
@@ -313,18 +315,7 @@ class Tabbar extends Component {
     });
 
     // Show a drop down menu with frames.
-    // XXX Missing menu API for specifying target (anchor)
-    // and relative position to it. See also:
-    // https://developer.mozilla.org/en-US/docs/Mozilla/Tech/XUL/Method/openPopup
-    // https://bugzilla.mozilla.org/show_bug.cgi?id=1274551
-    const rect = target.getBoundingClientRect();
-    const screenX = target.ownerDocument.defaultView.mozInnerScreenX;
-    const screenY = target.ownerDocument.defaultView.mozInnerScreenY;
-    menu.popupWithZoom(
-      rect.left + screenX,
-      rect.bottom + screenY,
-      this.props.menuDocument
-    );
+    menu.popupAtTarget(target, this.props.menuDocument);
 
     return menu;
   }

@@ -6,11 +6,14 @@
 #ifndef mozilla_widget_AndroidAlerts_h__
 #define mozilla_widget_AndroidAlerts_h__
 
+#include "nsDataHashtable.h"
 #include "nsInterfaceHashtable.h"
 #include "nsCOMPtr.h"
 #include "nsHashKeys.h"
 #include "nsIAlertsService.h"
 #include "nsIObserver.h"
+
+#include "mozilla/java/WebNotificationWrappers.h"
 
 #include "mozilla/StaticPtr.h"
 
@@ -26,6 +29,10 @@ class AndroidAlerts : public nsIAlertsService {
 
   static void NotifyListener(const nsAString& aName, const char* aTopic,
                              const char16_t* aCookie);
+
+  static nsDataHashtable<nsStringHashKey,
+                         mozilla::java::WebNotification::GlobalRef>
+      mNotificationsMap;
 
  protected:
   virtual ~AndroidAlerts() { sListenerMap = nullptr; }

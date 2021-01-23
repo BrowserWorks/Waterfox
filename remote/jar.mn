@@ -8,17 +8,26 @@ remote.jar:
 
   content/Connection.jsm (Connection.jsm)
   content/Error.jsm (Error.jsm)
+  content/Format.jsm (Format.jsm)
   content/JSONHandler.jsm (JSONHandler.jsm)
   content/Log.jsm (Log.jsm)
-  content/Observer.jsm (Observer.jsm)
   content/Protocol.jsm (Protocol.jsm)
   content/RecommendedPreferences.jsm (RecommendedPreferences.jsm)
+  content/StreamRegistry.jsm (StreamRegistry.jsm)
   content/Sync.jsm (Sync.jsm)
+  content/TabManager.jsm (TabManager.jsm)
   content/WindowManager.jsm (WindowManager.jsm)
+
+  # observers
+  content/observers/ChannelEventSink.jsm (observers/ChannelEventSink.jsm)
+  content/observers/ContextObserver.jsm (observers/ContextObserver.jsm)
+  content/observers/NetworkObserver.jsm (observers/NetworkObserver.jsm)
+  content/observers/TargetObserver.jsm (observers/TargetObserver.jsm)
 
   # sessions
   content/sessions/frame-script.js (sessions/frame-script.js)
   content/sessions/ContentProcessSession.jsm (sessions/ContentProcessSession.jsm)
+  content/sessions/MainProcessSession.jsm (sessions/MainProcessSession.jsm)
   content/sessions/Session.jsm (sessions/Session.jsm)
   content/sessions/TabSession.jsm (sessions/TabSession.jsm)
 
@@ -26,14 +35,13 @@ remote.jar:
   content/targets/MainProcessTarget.jsm (targets/MainProcessTarget.jsm)
   content/targets/TabTarget.jsm (targets/TabTarget.jsm)
   content/targets/Target.jsm (targets/Target.jsm)
-  content/targets/Targets.jsm (targets/Targets.jsm)
+  content/targets/TargetList.jsm (targets/TargetList.jsm)
 
   # domains
   content/domains/ContentProcessDomain.jsm (domains/ContentProcessDomain.jsm)
   content/domains/ContentProcessDomains.jsm (domains/ContentProcessDomains.jsm)
-  content/domains/ContextObserver.jsm (domains/ContextObserver.jsm)
   content/domains/Domain.jsm (domains/Domain.jsm)
-  content/domains/Domains.jsm (domains/Domains.jsm)
+  content/domains/DomainCache.jsm (domains/DomainCache.jsm)
   content/domains/ParentProcessDomains.jsm (domains/ParentProcessDomains.jsm)
   content/domains/content/DOM.jsm (domains/content/DOM.jsm)
   content/domains/content/Emulation.jsm (domains/content/Emulation.jsm)
@@ -46,10 +54,19 @@ remote.jar:
   content/domains/content/runtime/ExecutionContext.jsm (domains/content/runtime/ExecutionContext.jsm)
   content/domains/content/Security.jsm (domains/content/Security.jsm)
   content/domains/parent/Browser.jsm (domains/parent/Browser.jsm)
+  content/domains/parent/Emulation.jsm (domains/parent/Emulation.jsm)
+  content/domains/parent/Input.jsm (domains/parent/Input.jsm)
+  content/domains/parent/IO.jsm (domains/parent/IO.jsm)
+  content/domains/parent/Network.jsm (domains/parent/Network.jsm)
+  content/domains/parent/Page.jsm (domains/parent/Page.jsm)
+  content/domains/parent/page/DialogHandler.jsm (domains/parent/page/DialogHandler.jsm)
+  content/domains/parent/Security.jsm (domains/parent/Security.jsm)
   content/domains/parent/Target.jsm (domains/parent/Target.jsm)
 
   # transport layer
   content/server/HTTPD.jsm (../netwerk/test/httpserver/httpd.js)
-  content/server/Stream.jsm (server/Stream.jsm)
-  content/server/WebSocket.jsm (server/WebSocket.jsm)
+  content/server/WebSocketHandshake.jsm (server/WebSocketHandshake.jsm)
   content/server/WebSocketTransport.jsm (server/WebSocketTransport.jsm)
+
+  # imports from external folders
+  content/external/EventUtils.js (../testing/mochitest/tests/SimpleTest/EventUtils.js)

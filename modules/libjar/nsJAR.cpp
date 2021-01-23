@@ -7,7 +7,7 @@
 #include "nsJARInputStream.h"
 #include "nsJAR.h"
 #include "nsIFile.h"
-#include "nsIConsoleService.h"
+#include "nsIObserverService.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/Omnijar.h"
 #include "mozilla/Unused.h"
@@ -32,7 +32,7 @@ nsJAR::nsJAR()
       mLock("nsJAR::mLock"),
       mMtime(0),
       mOpened(false),
-      mIsOmnijar(false) {}
+      mSkipArchiveClosing(false) {}
 
 nsJAR::~nsJAR() { Close(); }
 
@@ -90,7 +90,7 @@ nsJAR::Open(nsIFile* zipFile) {
   RefPtr<nsZipArchive> zip = mozilla::Omnijar::GetReader(zipFile);
   if (zip) {
     mZip = zip;
-    mIsOmnijar = true;
+    mSkipArchiveClosing = true;
     return NS_OK;
   }
   return mZip->OpenArchive(zipFile);
@@ -100,6 +100,16 @@ NS_IMETHODIMP
 nsJAR::OpenInner(nsIZipReader* aZipReader, const nsACString& aZipEntry) {
   NS_ENSURE_ARG_POINTER(aZipReader);
   if (mOpened) return NS_ERROR_FAILURE;  // Already open!
+
+  nsJAR* outerJAR = static_cast<nsJAR*>(aZipReader);
+  RefPtr<nsZipArchive> innerZip =
+      mozilla::Omnijar::GetInnerReader(outerJAR->mZipFile, aZipEntry);
+  if (innerZip) {
+    mOpened = true;
+    mZip = innerZip;
+    mSkipArchiveClosing = true;
+    return NS_OK;
+  }
 
   bool exist;
   nsresult rv = aZipReader->HasEntry(aZipEntry, &exist);
@@ -152,9 +162,9 @@ nsJAR::Close() {
 
   mOpened = false;
 
-  if (mIsOmnijar) {
+  if (mSkipArchiveClosing) {
     // Reset state, but don't close the omnijar because we did not open it.
-    mIsOmnijar = false;
+    mSkipArchiveClosing = false;
     mZip = new nsZipArchive();
     return NS_OK;
   }
@@ -602,7 +612,7 @@ nsresult nsZipReaderCache::GetZip(nsIFile* zipFile, nsIZipReader** result,
     }
 
     MOZ_ASSERT(!mZips.Contains(uri));
-    mZips.Put(uri, zip);
+    mZips.Put(uri, RefPtr{zip});
   }
   zip.forget(result);
   return rv;
@@ -658,7 +668,7 @@ nsZipReaderCache::GetInnerZip(nsIFile* zipFile, const nsACString& entry,
     }
 
     MOZ_ASSERT(!mZips.Contains(uri));
-    mZips.Put(uri, zip);
+    mZips.Put(uri, RefPtr{zip});
   }
   zip.forget(result);
   return rv;
@@ -692,8 +702,10 @@ nsZipReaderCache::GetFd(nsIFile* zipFile, PRFileDesc** aRetVal) {
   zip->ClearReleaseTime();
   rv = zip->GetNSPRFileDesc(aRetVal);
   // Do this to avoid possible deadlock on mLock with ReleaseZip().
-  MutexAutoUnlock unlock(mLock);
-  RefPtr<nsJAR> zipTemp = zip.forget();
+  {
+    MutexAutoUnlock unlock(mLock);
+    zip = nullptr;
+  }
   return rv;
 #endif /* XP_WIN */
 }

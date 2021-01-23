@@ -9,6 +9,8 @@
  * 3. checks presence of index.sql and files in the expected location
  */
 
+"use strict";
+
 const { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
 
 var httpServer = null;
@@ -104,7 +106,7 @@ function run_test() {
     Ci.nsIScriptSecurityManager
   );
   var uri = make_uri("http://localhost:4444");
-  var principal = ssm.createCodebasePrincipal(uri, {});
+  var principal = ssm.createContentPrincipal(uri, {});
 
   if (pm.testPermissionFromPrincipal(principal, "offline-app") != 0) {
     dump(
@@ -121,6 +123,7 @@ function run_test() {
     Ci.nsIPrefBranch
   );
   ps.setBoolPref("browser.cache.offline.enable", true);
+  ps.setBoolPref("browser.cache.offline.storage.enable", true);
   // Set this pref to mimic the default browser behavior.
   ps.setComplexValue(
     "browser.cache.offline.parent_directory",
@@ -147,7 +150,7 @@ function run_test() {
   ];
 
   update.addObserver({
-    updateStateChanged: function(update, state) {
+    updateStateChanged(update, state) {
       Assert.equal(state, expectedStates.shift());
 
       if (state == Ci.nsIOfflineCacheUpdateObserver.STATE_FINISHED) {
@@ -155,7 +158,7 @@ function run_test() {
       }
     },
 
-    applicationCacheAvailable: function(appCache) {},
+    applicationCacheAvailable(appCache) {},
   });
 
   do_test_pending();

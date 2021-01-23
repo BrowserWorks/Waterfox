@@ -14,9 +14,7 @@ ifdef BUILD_OPT
 	DEFINES    += -UDEBUG -DNDEBUG
 else
 	OPTIMIZER  += -g
-	USERNAME   := $(shell whoami)
-	USERNAME   := $(subst -,_,$(USERNAME))
-	DEFINES    += -DDEBUG -UNDEBUG -DDEBUG_$(USERNAME)
+	DEFINES    += -DDEBUG -UNDEBUG
 endif
 
 ifdef BUILD_TREE
@@ -26,10 +24,6 @@ else
 NSINSTALL_DIR  = $(CORE_DEPTH)/coreconf/nsinstall
 NSINSTALL      = $(NSINSTALL_DIR)/$(OBJDIR_NAME)/nsinstall
 endif
-
-MKDEPEND_DIR    = $(CORE_DEPTH)/coreconf/mkdepend
-MKDEPEND        = $(MKDEPEND_DIR)/$(OBJDIR_NAME)/mkdepend
-MKDEPENDENCIES  = $(OBJDIR_NAME)/depend.mk
 
 ####################################################################
 #
@@ -60,7 +54,7 @@ else
 endif
 
 define MAKE_OBJDIR
-if test ! -d $(@D); then rm -rf $(@D); $(NSINSTALL) -D $(@D); fi
+if test ! -d $(@D); then $(NSINSTALL) -D $(@D); fi
 endef
 
 include $(CORE_DEPTH)/coreconf/Werror.mk

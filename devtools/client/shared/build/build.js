@@ -3,6 +3,11 @@
  * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
 /* globals process, __filename, __dirname */
 
+/* Usage:  node build.js [LIST_OF_SOURCE_FILES...] OUTPUT_DIR
+ *    Compiles all source files and places the results of the compilation in
+ * OUTPUT_DIR.
+ */
+
 "use strict";
 
 const Babel = require("./babel");
@@ -11,7 +16,7 @@ const _path = require("path");
 
 const defaultPlugins = [
   "transform-flow-strip-types",
-  "transform-class-properties",
+  "proposal-class-properties",
   "transform-react-jsx",
 ];
 
@@ -22,21 +27,61 @@ function transform(filePath) {
     : defaultPlugins;
 
   const doc = fs.readFileSync(filePath, "utf8");
-  const out = Babel.transform(doc, { plugins });
+
+  let out;
+  try {
+    out = Babel.transform(doc, { plugins });
+  } catch (err) {
+    throw new Error(`
+========================
+NODE COMPILATION ERROR!
+
+File:   ${filePath}
+Stack:
+
+${err.stack}
+
+========================
+`);
+  }
 
   return out.code;
 }
 
-const deps = [__filename, _path.resolve(__dirname, "babel.js")];
-
-for (let i = 2; i < process.argv.length; i++) {
-  const srcPath = process.argv[i];
-  const code = transform(srcPath);
-  const filePath = _path.basename(srcPath);
-  fs.writeFileSync(filePath, code);
-  deps.push(srcPath);
+// fs.mkdirSync's "recursive" option appears not to work, so I'm writing a
+// simple version of the function myself.
+function mkdirs(filePath) {
+  if (fs.existsSync(filePath)) {
+    return;
+  }
+  mkdirs(_path.dirname(filePath));
+  try {
+    fs.mkdirSync(filePath);
+  } catch (err) {
+    // Ignore any errors resulting from the directory already existing.
+    if (err.code != "EEXIST") {
+      throw err;
+    }
+  }
 }
 
-// Print all dependencies prefixed with 'dep:' in order to help node.py, the script that
-// calls this module, to report back the precise list of all dependencies.
-console.log(deps.map(file => "dep:" + file).join("\n"));
+if (false) {
+  const code = transform("devtools/client/debugger/src/utils/prefs.js");
+  console.log(code.slice(0, 1500));
+} else {
+  const deps = [__filename, _path.resolve(__dirname, "babel.js")];
+  const outputDir = process.argv[process.argv.length - 1];
+  mkdirs(outputDir);
+
+  for (let i = 2; i < process.argv.length - 1; i++) {
+    const srcPath = process.argv[i];
+    const code = transform(srcPath);
+    const fullPath = _path.join(outputDir, _path.basename(srcPath));
+    fs.writeFileSync(fullPath, code);
+    deps.push(srcPath);
+  }
+
+  // Print all dependencies prefixed with 'dep:' in order to help node.py, the script that
+  // calls this module, to report back the precise list of all dependencies.
+  console.log(deps.map(file => "dep:" + file).join("\n"));
+}

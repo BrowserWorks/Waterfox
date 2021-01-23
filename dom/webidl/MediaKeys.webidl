@@ -11,7 +11,7 @@
  */
 
 // Note: "persistent-usage-record" session type is unsupported yet, as
-// it's marked as "at risk" in the spec, and Chrome doesn't support it. 
+// it's marked as "at risk" in the spec, and Chrome doesn't support it.
 enum MediaKeySessionType {
   "temporary",
   "persistent-license",
@@ -23,6 +23,7 @@ dictionary MediaKeysPolicy {
   DOMString minHdcpVersion = "";
 };
 
+[Exposed=Window]
 interface MediaKeys {
   readonly attribute DOMString keySystem;
 
@@ -33,5 +34,5 @@ interface MediaKeys {
   Promise<void> setServerCertificate(BufferSource serverCertificate);
 
   [Pref="media.eme.hdcp-policy-check.enabled", NewObject]
-  Promise<MediaKeyStatus> getStatusForPolicy(optional MediaKeysPolicy policy);
+  Promise<MediaKeyStatus> getStatusForPolicy(optional MediaKeysPolicy policy = {});
 };

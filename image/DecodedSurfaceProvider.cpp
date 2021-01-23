@@ -5,7 +5,7 @@
 
 #include "DecodedSurfaceProvider.h"
 
-#include "gfxPrefs.h"
+#include "mozilla/StaticPrefs_image.h"
 #include "nsProxyRelease.h"
 
 #include "Decoder.h"
@@ -43,7 +43,7 @@ void DecodedSurfaceProvider::DropImageReference() {
   // get evicted is holding the surface cache lock, causing deadlock.
   RefPtr<RasterImage> image = mImage;
   mImage = nullptr;
-  NS_ReleaseOnMainThreadSystemGroup(image.forget(), /* aAlwaysProxy = */ true);
+  NS_ReleaseOnMainThread(image.forget(), /* aAlwaysProxy = */ true);
 }
 
 DrawableFrameRef DecodedSurfaceProvider::DrawableRef(size_t aFrame) {
@@ -200,7 +200,8 @@ void DecodedSurfaceProvider::FinishDecoding() {
 }
 
 bool DecodedSurfaceProvider::ShouldPreferSyncRun() const {
-  return mDecoder->ShouldSyncDecode(gfxPrefs::ImageMemDecodeBytesAtATime());
+  return mDecoder->ShouldSyncDecode(
+      StaticPrefs::image_mem_decode_bytes_at_a_time_AtStartup());
 }
 
 }  // namespace image

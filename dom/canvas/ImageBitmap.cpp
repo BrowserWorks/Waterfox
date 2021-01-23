@@ -6,7 +6,6 @@
 
 #include "mozilla/dom/ImageBitmap.h"
 #include "mozilla/CheckedInt.h"
-#include "mozilla/dom/DOMPrefs.h"
 #include "mozilla/dom/HTMLMediaElementBinding.h"
 #include "mozilla/dom/ImageBitmapBinding.h"
 #include "mozilla/dom/Promise.h"
@@ -97,7 +96,7 @@ class ImageBitmapShutdownObserver final : public nsIObserver {
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSIOBSERVER
  private:
-  ~ImageBitmapShutdownObserver() {}
+  ~ImageBitmapShutdownObserver() = default;
 
   class SendShutdownToWorkerThread : public MainThreadWorkerControlRunnable {
    public:
@@ -616,6 +615,12 @@ UniquePtr<ImageBitmapCloneData> ImageBitmap::ToCloneData() const {
   result->mPictureRect = mPictureRect;
   result->mAlphaType = mAlphaType;
   RefPtr<SourceSurface> surface = mData->GetAsSourceSurface();
+  if (!surface) {
+    // It might just not be possible to get/map the surface. (e.g. from another
+    // process)
+    return nullptr;
+  }
+
   result->mSurface = surface->GetDataSurface();
   MOZ_ASSERT(result->mSurface);
   result->mWriteOnly = mWriteOnly;
@@ -770,8 +775,10 @@ already_AddRefed<ImageBitmap> ImageBitmap::CreateInternal(
 
   // Check security.
   nsCOMPtr<nsIPrincipal> principal = aVideoEl.GetCurrentVideoPrincipal();
+  bool hadCrossOriginRedirects = aVideoEl.HadCrossOriginRedirects();
   bool CORSUsed = aVideoEl.GetCORSMode() != CORS_NONE;
-  bool writeOnly = CheckWriteOnlySecurity(CORSUsed, principal);
+  bool writeOnly =
+      CheckWriteOnlySecurity(CORSUsed, principal, hadCrossOriginRedirects);
 
   // Create ImageBitmap.
   RefPtr<layers::Image> data = aVideoEl.GetCurrentImage();
@@ -814,12 +821,14 @@ already_AddRefed<ImageBitmap> ImageBitmap::CreateInternal(
   RefPtr<SourceSurface> croppedSurface;
   IntRect cropRect = aCropRect.valueOr(IntRect());
 
-  // If the HTMLCanvasElement's rendering context is WebGL, then the snapshot
-  // we got from the HTMLCanvasElement is a DataSourceSurface which is a copy
-  // of the rendering context. We handle cropping in this case.
+  // If the HTMLCanvasElement's rendering context is WebGL/WebGPU,
+  // then the snapshot we got from the HTMLCanvasElement is
+  // a DataSourceSurface which is a copy of the rendering context.
+  // We handle cropping in this case.
   bool needToReportMemoryAllocation = false;
   if ((aCanvasEl.GetCurrentContextType() == CanvasContextType::WebGL1 ||
-       aCanvasEl.GetCurrentContextType() == CanvasContextType::WebGL2) &&
+       aCanvasEl.GetCurrentContextType() == CanvasContextType::WebGL2 ||
+       aCanvasEl.GetCurrentContextType() == CanvasContextType::WebGPU) &&
       aCropRect.isSome()) {
     RefPtr<DataSourceSurface> dataSurface = surface->GetDataSurface();
     croppedSurface = CropAndCopyDataSourceSurface(dataSurface, cropRect);
@@ -861,11 +870,11 @@ already_AddRefed<ImageBitmap> ImageBitmap::CreateInternal(
     nsIGlobalObject* aGlobal, ImageData& aImageData,
     const Maybe<IntRect>& aCropRect, ErrorResult& aRv) {
   // Copy data into SourceSurface.
-  dom::Uint8ClampedArray array;
+  RootedSpiderMonkeyInterface<Uint8ClampedArray> array(RootingCx());
   DebugOnly<bool> inited = array.Init(aImageData.GetDataObject());
   MOZ_ASSERT(inited);
 
-  array.ComputeLengthAndData();
+  array.ComputeState();
   const SurfaceFormat FORMAT = SurfaceFormat::R8G8B8A8;
   // ImageData's underlying data is not alpha-premultiplied.
   const auto alphaType = gfxAlphaType::NonPremult;
@@ -885,13 +894,26 @@ already_AddRefed<ImageBitmap> ImageBitmap::CreateInternal(
 
   // Create and Crop the raw data into a layers::Image
   RefPtr<layers::Image> data;
+
+  // If the data could move during a GC, copy it out into a local buffer that
+  // lives until a CreateImageFromRawData lower in the stack copies it.
+  // Reassure the static analysis that we know what we're doing.
+  size_t maxInline = JS_MaxMovableTypedArraySize();
+  uint8_t inlineDataBuffer[maxInline];
+  uint8_t* fixedData = array.FixedData(inlineDataBuffer, maxInline);
+
+  // Lie to the hazard analysis and say that we're done with everything that
+  // `array` was using (safe because the data buffer is fixed, and the holding
+  // JSObject is being kept alive elsewhere.)
+  array.Reset();
+
   if (NS_IsMainThread()) {
-    data = CreateImageFromRawData(imageSize, imageStride, FORMAT, array.Data(),
-                                  dataLength, aCropRect);
+    data = CreateImageFromRawData(imageSize, imageStride, FORMAT,
+                                  fixedData, dataLength, aCropRect);
   } else {
     RefPtr<CreateImageFromRawDataInMainThreadSyncTask> task =
         new CreateImageFromRawDataInMainThreadSyncTask(
-            array.Data(), dataLength, imageStride, FORMAT, imageSize, aCropRect,
+            fixedData, dataLength, imageStride, FORMAT, imageSize, aCropRect,
             getter_AddRefs(data));
     task->Dispatch(Canceling, aRv);
   }
@@ -901,7 +923,7 @@ already_AddRefed<ImageBitmap> ImageBitmap::CreateInternal(
     return nullptr;
   }
 
-  // Create an ImageBimtap.
+  // Create an ImageBitmap.
   RefPtr<ImageBitmap> ret =
       new ImageBitmap(aGlobal, data, false /* write-only */, alphaType);
 
@@ -1082,11 +1104,11 @@ class CreateImageBitmapFromBlob final : public CancelableRunnable,
         mCropRect(aCropRect),
         mOriginalCropRect(aCropRect),
         mMainThreadEventTarget(aMainThreadEventTarget),
-        mThread(GetCurrentVirtualThread()) {}
+        mThread(PR_GetCurrentThread()) {}
 
-  virtual ~CreateImageBitmapFromBlob() {}
+  virtual ~CreateImageBitmapFromBlob() = default;
 
-  bool IsCurrentThread() const { return mThread == GetCurrentVirtualThread(); }
+  bool IsCurrentThread() const { return mThread == PR_GetCurrentThread(); }
 
   // Called on the owning thread.
   nsresult StartMimeTypeAndDecodeAndCropBlob();
@@ -1195,10 +1217,18 @@ already_AddRefed<Promise> ImageBitmap::Create(
     return nullptr;
   }
 
-  if (aCropRect.isSome() &&
-      (aCropRect->Width() == 0 || aCropRect->Height() == 0)) {
-    aRv.Throw(NS_ERROR_RANGE_ERR);
-    return promise.forget();
+  if (aCropRect.isSome()) {
+    if (aCropRect->Width() == 0) {
+      aRv.ThrowRangeError(
+          "The crop rect width passed to createImageBitmap must be nonzero");
+      return promise.forget();
+    }
+
+    if (aCropRect->Height() == 0) {
+      aRv.ThrowRangeError(
+          "The crop rect height passed to createImageBitmap must be nonzero");
+      return promise.forget();
+    }
   }
 
   RefPtr<ImageBitmap> imageBitmap;
@@ -1328,6 +1358,11 @@ bool ImageBitmap::WriteStructuredClone(
     ImageBitmap* aImageBitmap) {
   MOZ_ASSERT(aWriter);
   MOZ_ASSERT(aImageBitmap);
+
+  if (!aImageBitmap->mData) {
+    // A closed image cannot be cloned.
+    return false;
+  }
 
   const uint32_t picRectX = BitwiseCast<uint32_t>(aImageBitmap->mPictureRect.x);
   const uint32_t picRectY = BitwiseCast<uint32_t>(aImageBitmap->mPictureRect.y);
@@ -1527,7 +1562,12 @@ nsresult CreateImageBitmapFromBlob::GetMimeTypeAsync() {
 NS_IMETHODIMP
 CreateImageBitmapFromBlob::OnInputStreamReady(nsIAsyncInputStream* aStream) {
   // The stream should have data now. Let's start from scratch again.
-  return MimeTypeAndDecodeAndCropBlob();
+  nsresult rv = MimeTypeAndDecodeAndCropBlob();
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    MimeTypeAndDecodeAndCropBlobCompletedMainThread(nullptr, rv);
+  }
+
+  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -1543,8 +1583,9 @@ CreateImageBitmapFromBlob::OnImageReady(imgIContainer* aImgContainer,
   MOZ_ASSERT(aImgContainer);
 
   // Get the surface out.
-  uint32_t frameFlags =
-      imgIContainer::FLAG_SYNC_DECODE | imgIContainer::FLAG_WANT_DATA_SURFACE;
+  uint32_t frameFlags = imgIContainer::FLAG_SYNC_DECODE |
+                        imgIContainer::FLAG_ASYNC_NOTIFY |
+                        imgIContainer::FLAG_WANT_DATA_SURFACE;
   uint32_t whichFrame = imgIContainer::FRAME_FIRST;
   RefPtr<SourceSurface> surface =
       aImgContainer->GetFrame(whichFrame, frameFlags);
@@ -1654,7 +1695,7 @@ void CreateImageBitmapFromBlob::
     imageBitmap->SetPictureRect(mCropRect.ref(), rv);
 
     if (rv.Failed()) {
-      mPromise->MaybeReject(rv);
+      mPromise->MaybeReject(std::move(rv));
       return;
     }
   }

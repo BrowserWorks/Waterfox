@@ -1,15 +1,11 @@
-use pool::{self, Pool, Lifecycle, MAX_FUTURES};
+use pool::{self, Lifecycle, Pool, MAX_FUTURES};
 use task::Task;
 
-use std::sync::Arc;
 use std::sync::atomic::Ordering::{AcqRel, Acquire};
+use std::sync::Arc;
 
-use tokio_executor::{self, SpawnError};
 use futures::{future, Future};
-#[cfg(feature = "unstable-futures")]
-use futures2;
-#[cfg(feature = "unstable-futures")]
-use futures2_wake::{into_waker, Futures2Wake};
+use tokio_executor::{self, SpawnError};
 
 /// Submit futures to the associated thread pool for execution.
 ///
@@ -27,7 +23,7 @@ use futures2_wake::{into_waker, Futures2Wake};
 /// [`ThreadPool::sender`]: struct.ThreadPool.html#method.sender
 #[derive(Debug)]
 pub struct Sender {
-    pub(crate) inner: Arc<Pool>,
+    pub(crate) pool: Arc<Pool>,
 }
 
 impl Sender {
@@ -81,7 +77,8 @@ impl Sender {
     /// # }
     /// ```
     pub fn spawn<F>(&self, future: F) -> Result<(), SpawnError>
-    where F: Future<Item = (), Error = ()> + Send + 'static,
+    where
+        F: Future<Item = (), Error = ()> + Send + 'static,
     {
         let mut s = self;
         tokio_executor::Executor::spawn(&mut s, Box::new(future))
@@ -89,7 +86,7 @@ impl Sender {
 
     /// Logic to prepare for spawning
     fn prepare_for_spawn(&self) -> Result<(), SpawnError> {
-        let mut state: pool::State = self.inner.state.load(Acquire).into();
+        let mut state: pool::State = self.pool.state.load(Acquire).into();
 
         // Increment the number of futures spawned on the pool as well as
         // validate that the pool is still running/
@@ -108,8 +105,11 @@ impl Sender {
 
             next.inc_num_futures();
 
-            let actual = self.inner.state.compare_and_swap(
-                state.into(), next.into(), AcqRel).into();
+            let actual = self
+                .pool
+                .state
+                .compare_and_swap(state.into(), next.into(), AcqRel)
+                .into();
 
             if actual == state {
                 trace!("execute; count={:?}", next.num_futures());
@@ -129,22 +129,18 @@ impl tokio_executor::Executor for Sender {
         tokio_executor::Executor::status(&s)
     }
 
-    fn spawn(&mut self, future: Box<Future<Item = (), Error = ()> + Send>)
-        -> Result<(), SpawnError>
-    {
+    fn spawn(
+        &mut self,
+        future: Box<dyn Future<Item = (), Error = ()> + Send>,
+    ) -> Result<(), SpawnError> {
         let mut s = &*self;
         tokio_executor::Executor::spawn(&mut s, future)
-    }
-
-    #[cfg(feature = "unstable-futures")]
-    fn spawn2(&mut self, f: Task2) -> Result<(), futures2::executor::SpawnError> {
-        futures2::executor::Executor::spawn(self, f)
     }
 }
 
 impl<'a> tokio_executor::Executor for &'a Sender {
     fn status(&self) -> Result<(), tokio_executor::SpawnError> {
-        let state: pool::State = self.inner.state.load(Acquire).into();
+        let state: pool::State = self.pool.state.load(Acquire).into();
 
         if state.num_futures() == MAX_FUTURES {
             // No capacity
@@ -159,9 +155,10 @@ impl<'a> tokio_executor::Executor for &'a Sender {
         Ok(())
     }
 
-    fn spawn(&mut self, future: Box<Future<Item = (), Error = ()> + Send>)
-        -> Result<(), SpawnError>
-    {
+    fn spawn(
+        &mut self,
+        future: Box<dyn Future<Item = (), Error = ()> + Send>,
+    ) -> Result<(), SpawnError> {
         self.prepare_for_spawn()?;
 
         // At this point, the pool has accepted the future, so schedule it for
@@ -170,19 +167,31 @@ impl<'a> tokio_executor::Executor for &'a Sender {
         // Create a new task for the future
         let task = Arc::new(Task::new(future));
 
-        self.inner.submit(task, &self.inner);
+        // Call `submit_external()` in order to place the task into the global
+        // queue. This way all workers have equal chance of running this task,
+        // which means IO handles will be assigned to reactors more evenly.
+        self.pool.submit_external(task, &self.pool);
 
         Ok(())
     }
+}
 
-    #[cfg(feature = "unstable-futures")]
-    fn spawn2(&mut self, f: Task2) -> Result<(), futures2::executor::SpawnError> {
-        futures2::executor::Executor::spawn(self, f)
+impl<T> tokio_executor::TypedExecutor<T> for Sender
+where
+    T: Future<Item = (), Error = ()> + Send + 'static,
+{
+    fn status(&self) -> Result<(), tokio_executor::SpawnError> {
+        tokio_executor::Executor::status(self)
+    }
+
+    fn spawn(&mut self, future: T) -> Result<(), SpawnError> {
+        tokio_executor::Executor::spawn(self, Box::new(future))
     }
 }
 
 impl<T> future::Executor<T> for Sender
-where T: Future<Item = (), Error = ()> + Send + 'static,
+where
+    T: Future<Item = (), Error = ()> + Send + 'static,
 {
     fn execute(&self, future: T) -> Result<(), future::ExecuteError<T>> {
         if let Err(e) = tokio_executor::Executor::status(self) {
@@ -200,51 +209,10 @@ where T: Future<Item = (), Error = ()> + Send + 'static,
     }
 }
 
-#[cfg(feature = "unstable-futures")]
-type Task2 = Box<futures2::Future<Item = (), Error = futures2::Never> + Send>;
-
-#[cfg(feature = "unstable-futures")]
-impl futures2::executor::Executor for Sender {
-    fn spawn(&mut self, f: Task2) -> Result<(), futures2::executor::SpawnError> {
-        let mut s = &*self;
-        futures2::executor::Executor::spawn(&mut s, f)
-    }
-
-    fn status(&self) -> Result<(), futures2::executor::SpawnError> {
-        let s = &*self;
-        futures2::executor::Executor::status(&s)
-    }
-}
-
-#[cfg(feature = "unstable-futures")]
-impl<'a> futures2::executor::Executor for &'a Sender {
-    fn spawn(&mut self, f: Task2) -> Result<(), futures2::executor::SpawnError> {
-        self.prepare_for_spawn()
-            // TODO: get rid of this once the futures crate adds more error types
-            .map_err(|_| futures2::executor::SpawnError::shutdown())?;
-
-        // At this point, the pool has accepted the future, so schedule it for
-        // execution.
-
-        // Create a new task for the future
-        let task = Task::new2(f, |id| into_waker(Arc::new(Futures2Wake::new(id, &self.inner))));
-
-        self.inner.submit(task, &self.inner);
-
-        Ok(())
-    }
-
-    fn status(&self) -> Result<(), futures2::executor::SpawnError> {
-        tokio_executor::Executor::status(self)
-        // TODO: get rid of this once the futures crate adds more error types
-            .map_err(|_| futures2::executor::SpawnError::shutdown())
-    }
-}
-
 impl Clone for Sender {
     #[inline]
     fn clone(&self) -> Sender {
-        let inner = self.inner.clone();
-        Sender { inner }
+        let pool = self.pool.clone();
+        Sender { pool }
     }
 }

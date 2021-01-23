@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title "Configurar recordatorios">
+<!ENTITY reminder.add.label "Añadir">
+<!ENTITY reminder.add.accesskey "A">
+<!ENTITY reminder.remove.label "Eliminar">
+<!ENTITY reminder.remove.accesskey "E">
+<!ENTITY reminder.reminderDetails.label "Detalles del recordatorio">
+<!ENTITY reminder.action.label "Elija una acción de recordatorio">
+<!ENTITY reminder.action.alert.label "Mostrar una alerta">
+<!ENTITY reminder.action.email.label "Enviar un correo-e">
+<!ENTITY alarm.units.minutes "minutos">
+<!ENTITY alarm.units.hours "horas">
+<!ENTITY alarm.units.days "días">

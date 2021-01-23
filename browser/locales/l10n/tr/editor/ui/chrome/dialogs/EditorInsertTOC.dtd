@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title        "İçindekiler">
+<!ENTITY buildToc.label      "Şunları kullanarak içindekiler tablosu oluştur:">
+<!ENTITY tag.label           "Etiket:">
+<!ENTITY class.label         "Sınıf:">
+<!ENTITY header1.label       "Düzey 1">
+<!ENTITY header2.label       "Düzey 2">
+<!ENTITY header3.label       "Düzey 3">
+<!ENTITY header4.label       "Düzey 4">
+<!ENTITY header5.label       "Düzey 5">
+<!ENTITY header6.label       "Düzey 6">
+<!ENTITY makeReadOnly.label  "İçindekiler bölümünü salt okunur yap">
+<!ENTITY orderedList.label   "İçindekiler'deki tüm maddeleri numaralandır">

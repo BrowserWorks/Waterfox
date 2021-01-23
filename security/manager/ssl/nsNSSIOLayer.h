@@ -7,13 +7,12 @@
 #ifndef nsNSSIOLayer_h
 #define nsNSSIOLayer_h
 
-#include "TransportSecurityInfo.h"
+#include "CommonSocketControl.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/TimeStamp.h"
 #include "mozilla/UniquePtr.h"
 #include "nsCOMPtr.h"
 #include "nsDataHashtable.h"
-#include "nsIClientAuthDialogs.h"
 #include "nsIProxyInfo.h"
 #include "nsISSLSocketControl.h"
 #include "nsNSSCertificate.h"
@@ -31,16 +30,12 @@ using mozilla::OriginAttributes;
 
 class nsIObserver;
 
-class nsNSSSocketInfo final : public mozilla::psm::TransportSecurityInfo,
-                              public nsISSLSocketControl,
-                              public nsIClientAuthUserDecision {
+class nsNSSSocketInfo final : public CommonSocketControl {
  public:
   nsNSSSocketInfo(mozilla::psm::SharedSSLState& aState, uint32_t providerFlags,
                   uint32_t providerTlsFlags);
 
   NS_DECL_ISUPPORTS_INHERITED
-  NS_DECL_NSISSLSOCKETCONTROL
-  NS_DECL_NSICLIENTAUTHUSERDECISION
 
   void SetForSTARTTLS(bool aForSTARTTLS);
   bool GetForSTARTTLS();
@@ -54,16 +49,36 @@ class nsNSSSocketInfo final : public mozilla::psm::TransportSecurityInfo,
   void SetTLSVersionRange(SSLVersionRange range) { mTLSVersionRange = range; }
   SSLVersionRange GetTLSVersionRange() const { return mTLSVersionRange; };
 
+  // From nsISSLSocketControl.
+  NS_IMETHOD ProxyStartSSL(void) override;
+  NS_IMETHOD StartTLS(void) override;
+  NS_IMETHOD SetNPNList(nsTArray<nsCString>& aNPNList) override;
+  NS_IMETHOD GetAlpnEarlySelection(nsACString& _retval) override;
+  NS_IMETHOD GetEarlyDataAccepted(bool* aEarlyDataAccepted) override;
+  NS_IMETHOD DriveHandshake(void) override;
+  using nsISSLSocketControl::GetKEAUsed;
+  NS_IMETHOD GetKEAUsed(int16_t* aKEAUsed) override;
+  NS_IMETHOD GetKEAKeyBits(uint32_t* aKEAKeyBits) override;
+  NS_IMETHOD GetProviderTlsFlags(uint32_t* aProviderTlsFlags) override;
+  NS_IMETHOD GetSSLVersionOffered(int16_t* aSSLVersionOffered) override;
+  NS_IMETHOD GetMACAlgorithmUsed(int16_t* aMACAlgorithmUsed) override;
+  bool GetDenyClientCert() override;
+  void SetDenyClientCert(bool aDenyClientCert) override;
+  NS_IMETHOD GetClientCert(nsIX509Cert** aClientCert) override;
+  NS_IMETHOD SetClientCert(nsIX509Cert* aClientCert) override;
+  NS_IMETHOD GetEsniTxt(nsACString& aEsniTxt) override;
+  NS_IMETHOD SetEsniTxt(const nsACString& aEsniTxt) override;
+  NS_IMETHOD GetPeerId(nsACString& aResult) override;
+
   PRStatus CloseSocketAndDestroy();
 
   void SetNegotiatedNPN(const char* value, uint32_t length);
   void SetEarlyDataAccepted(bool aAccepted);
 
-  void SetResumed(bool aResumed);
-
   void SetHandshakeCompleted();
   bool IsHandshakeCompleted() const { return mHandshakeCompleted; }
   void NoteTimeUntilReady();
+  void NoteSessionResumptionTime(bool aUsingExternalCache);
 
   void SetFalseStartCallbackCalled() { mFalseStartCallbackCalled = true; }
   void SetFalseStarted() { mFalseStarted = true; }
@@ -76,7 +91,6 @@ class nsNSSSocketInfo final : public mozilla::psm::TransportSecurityInfo,
   bool GetJoined() { return mJoined; }
   void SetSentClientCert() { mSentClientCert = true; }
 
-  uint32_t GetProviderFlags() const { return mProviderFlags; }
   uint32_t GetProviderTlsFlags() const { return mProviderTlsFlags; }
 
   mozilla::psm::SharedSSLState& SharedState();
@@ -89,7 +103,7 @@ class nsNSSSocketInfo final : public mozilla::psm::TransportSecurityInfo,
   };
   void SetCertVerificationWaiting();
   // Use errorCode == 0 to indicate success;
-  void SetCertVerificationResult(PRErrorCode errorCode);
+  void SetCertVerificationResult(PRErrorCode errorCode) override;
 
   // for logging only
   PRBool IsWaitingForCertVerification() const {
@@ -103,14 +117,6 @@ class nsNSSSocketInfo final : public mozilla::psm::TransportSecurityInfo,
   void SetKEAUsed(uint16_t kea) { mKEAUsed = kea; }
 
   void SetKEAKeyBits(uint32_t keaBits) { mKEAKeyBits = keaBits; }
-
-  void SetBypassAuthentication(bool val) {
-    if (!mHandshakeCompleted) {
-      mBypassAuthentication = val;
-    }
-  }
-
-  void SetSSLVersionUsed(int16_t version) { mSSLVersionUsed = version; }
 
   void SetMACAlgorithmUsed(int16_t mac) { mMACAlgorithmUsed = mac; }
 
@@ -153,6 +159,12 @@ class nsNSSSocketInfo final : public mozilla::psm::TransportSecurityInfo,
 
   void SetSharedOwningReference(mozilla::psm::SharedSSLState* ref);
 
+  nsresult SetResumptionTokenFromExternalCache();
+
+  void SetClientCertChain(mozilla::UniqueCERTCertList&& clientCertChain) {
+    mClientCertChain = std::move(clientCertChain);
+  }
+
  protected:
   virtual ~nsNSSSocketInfo();
 
@@ -165,25 +177,18 @@ class nsNSSSocketInfo final : public mozilla::psm::TransportSecurityInfo,
   bool mForSTARTTLS;
   SSLVersionRange mTLSVersionRange;
   bool mHandshakePending;
-  bool mRememberClientAuthCertificate;
   bool mPreliminaryHandshakeDone;  // after false start items are complete
 
   nsresult ActivateSSL();
 
-  nsCString mNegotiatedNPN;
   nsCString mEsniTxt;
-  bool mNPNCompleted;
+  nsCString mPeerId;
   bool mEarlyDataAccepted;
   bool mDenyClientCert;
   bool mFalseStartCallbackCalled;
   bool mFalseStarted;
   bool mIsFullHandshake;
-  bool mHandshakeCompleted;
-  bool mJoined;
-  bool mSentClientCert;
   bool mNotedTimeUntilReady;
-  bool mFailedVerification;
-  mozilla::Atomic<bool, mozilla::Relaxed> mResumed;
 
   // True when SSL layer has indicated an "SSL short write", i.e. need
   // to call on send one or more times to push all pending data to write.
@@ -207,16 +212,24 @@ class nsNSSSocketInfo final : public mozilla::psm::TransportSecurityInfo,
   // Values are from nsISSLSocketControl
   int16_t mKEAUsed;
   uint32_t mKEAKeyBits;
-  int16_t mSSLVersionUsed;
   int16_t mMACAlgorithmUsed;
-  bool mBypassAuthentication;
 
-  uint32_t mProviderFlags;
   uint32_t mProviderTlsFlags;
   mozilla::TimeStamp mSocketCreationTimestamp;
   uint64_t mPlaintextBytesRead;
 
   nsCOMPtr<nsIX509Cert> mClientCert;
+  // Regarding the client certificate message in the TLS handshake, RFC 5246
+  // (TLS 1.2) says:
+  //   If the certificate_authorities list in the certificate request
+  //   message was non-empty, one of the certificates in the certificate
+  //   chain SHOULD be issued by one of the listed CAs.
+  // (RFC 8446 (TLS 1.3) has a similar provision)
+  // These certificates may be known to gecko but not NSS (e.g. enterprise
+  // intermediates). In order to make these certificates discoverable to NSS
+  // so it can include them in the message, we cache them here as temporary
+  // certificates.
+  mozilla::UniqueCERTCertList mClientCertChain;
 
   // if non-null this is a reference to the mSharedState (which is
   // not an owning reference). If this is used, the info has a private
@@ -224,6 +237,36 @@ class nsNSSSocketInfo final : public mozilla::psm::TransportSecurityInfo,
   // rest of the session. This is normally used when you have per
   // socket tls flags overriding session wide defaults.
   RefPtr<mozilla::psm::SharedSSLState> mOwningSharedRef;
+};
+
+// This class is used to store the needed information for invoking the client
+// cert selection UI.
+class ClientAuthInfo final {
+ public:
+  explicit ClientAuthInfo(const nsACString& hostName,
+                          const OriginAttributes& originAttributes,
+                          int32_t port, uint32_t providerFlags,
+                          uint32_t providerTlsFlags, nsIX509Cert* clientCert);
+  ~ClientAuthInfo() = default;
+  ClientAuthInfo(ClientAuthInfo&& aOther) noexcept;
+
+  const nsACString& HostName() const;
+  const OriginAttributes& OriginAttributesRef() const;
+  int32_t Port() const;
+  already_AddRefed<nsIX509Cert> GetClientCert() const;
+  uint32_t ProviderFlags() const;
+  uint32_t ProviderTlsFlags() const;
+
+ private:
+  ClientAuthInfo(const ClientAuthInfo&) = delete;
+  void operator=(const ClientAuthInfo&) = delete;
+
+  nsCString mHostName;
+  OriginAttributes mOriginAttributes;
+  int32_t mPort;
+  uint32_t mProviderFlags;
+  uint32_t mProviderTlsFlags;
+  nsCOMPtr<nsIX509Cert> mClientCert;
 };
 
 class nsSSLIOLayerHelpers {
@@ -303,6 +346,11 @@ nsresult nsSSLIOLayerAddToSocket(int32_t family, const char* host, int32_t port,
                                  bool forSTARTTLS, uint32_t flags,
                                  uint32_t tlsFlags);
 
-nsresult nsSSLIOLayerFreeTLSIntolerantSites();
+SECStatus DoGetClientAuthData(ClientAuthInfo&& info,
+                              const mozilla::UniqueCERTCertificate& serverCert,
+                              nsTArray<nsTArray<uint8_t>>&& collectedCANames,
+                              mozilla::UniqueCERTCertificate& outCert,
+                              mozilla::UniqueSECKEYPrivateKey& outKey,
+                              mozilla::UniqueCERTCertList& outBuiltChain);
 
 #endif  // nsNSSIOLayer_h

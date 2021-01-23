@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY converterDialog.title "Iompaichear seòrsa stòras nan teachdaireachd">
+<!ENTITY converterDialog.continueButton "Lean air adhart">
+<!ENTITY converterDialog.cancelButton "Sguir dheth">
+<!ENTITY converterDialog.finishButton "Crìochnaich">
+<!ENTITY converterDialog.complete "Chaidh iompachadh is thèid &brandShortName; ath-thòiseachadh an-dràsta.">
+<!ENTITY converterDialog.error "Dh’fhàillig an t-iompachadh.">
+

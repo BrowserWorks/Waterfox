@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "תוספות">
+<!ENTITY aboutAddons.header2                    "התוספות שלך">
+
+<!ENTITY addonAction.enable                     "הפעלה">
+<!ENTITY addonAction.disable                    "ניטרול">
+<!ENTITY addonAction.uninstall                  "הסרת התקנה">
+<!ENTITY addonAction.undo                       "ביטול">
+<!ENTITY addonAction.update                     "עדכון">
+
+<!ENTITY addonUnsigned.message                  "לא ניתן לאמת תוסף זה על־ידי &brandShortName;.">
+<!ENTITY addonUnsigned.learnMore                "מידע נוסף">

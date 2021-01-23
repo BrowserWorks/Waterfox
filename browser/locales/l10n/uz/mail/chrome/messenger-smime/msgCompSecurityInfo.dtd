@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSecurityInfo.dtd UI for viewing security status when composing a message -->
+
+
+<!ENTITY title.label "Xabar xavfsizligi">
+<!ENTITY subject.plaintextWarning "Diqqat qiling; E-pochta xabarlarining mavzulari hech qachon shifrlanmaydi.">
+<!ENTITY status.heading "Xabaringiz tarkibi quyidagi kabi jo‘natiladi:">
+<!ENTITY status.signed "Raqamli kiritilgan:">
+<!ENTITY status.encrypted "Shifrlangan:">
+<!ENTITY status.certificates "Sertifikatlar:">
+<!ENTITY view.label "Ko‘rinishi">
+<!ENTITY view.accesskey "K">
+<!ENTITY tree.recipient "Qabul qiluvchi">
+<!ENTITY tree.status "Holati">
+<!ENTITY tree.issuedDate "Topshirilgan sanasi">
+<!ENTITY tree.expiresDate "Eskirish sanasi">

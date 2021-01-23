@@ -3,20 +3,25 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "mozilla/FloatingPoint.h"
-#include "mozilla/Move.h"
-
 #include "txStylesheet.h"
+
+#include <utility>
+
+#include "mozilla/FloatingPoint.h"
 #include "txExpr.h"
-#include "txXSLTPatterns.h"
-#include "txToplevelItems.h"
 #include "txInstructions.h"
-#include "txXSLTFunctions.h"
-#include "txLog.h"
 #include "txKey.h"
+#include "txLog.h"
+#include "txToplevelItems.h"
 #include "txXPathTreeWalker.h"
+#include "txXSLTFunctions.h"
+#include "txXSLTPatterns.h"
 
 using mozilla::LogLevel;
+using mozilla::MakeUnique;
+using mozilla::UniquePtr;
+using mozilla::Unused;
+using mozilla::WrapUnique;
 
 txStylesheet::txStylesheet() : mRootFrame(nullptr) {}
 
@@ -25,37 +30,39 @@ nsresult txStylesheet::init() {
 
   // Create default templates
   // element/root template
-  mContainerTemplate = new txPushParams;
+  mContainerTemplate = MakeUnique<txPushParams>();
 
-  nsAutoPtr<txNodeTest> nt(new txNodeTypeTest(txNodeTypeTest::NODE_TYPE));
-  nsAutoPtr<Expr> nodeExpr(new LocationStep(nt, LocationStep::CHILD_AXIS));
-  nt.forget();
+  UniquePtr<txNodeTest> nt(new txNodeTypeTest(txNodeTypeTest::NODE_TYPE));
+  UniquePtr<Expr> nodeExpr(
+      new LocationStep(nt.get(), LocationStep::CHILD_AXIS));
+  Unused << nt.release();
 
   txPushNewContext* pushContext = new txPushNewContext(std::move(nodeExpr));
-  mContainerTemplate->mNext = pushContext;
+  mContainerTemplate->mNext = WrapUnique(pushContext);
 
   txApplyDefaultElementTemplate* applyTemplates =
       new txApplyDefaultElementTemplate;
-  pushContext->mNext = applyTemplates;
+  pushContext->mNext = WrapUnique(applyTemplates);
 
   txLoopNodeSet* loopNodeSet = new txLoopNodeSet(applyTemplates);
-  applyTemplates->mNext = loopNodeSet;
+  applyTemplates->mNext = WrapUnique(loopNodeSet);
 
   txPopParams* popParams = new txPopParams;
-  pushContext->mBailTarget = loopNodeSet->mNext = popParams;
+  loopNodeSet->mNext = WrapUnique(popParams);
+  pushContext->mBailTarget = loopNodeSet->mNext.get();
 
-  popParams->mNext = new txReturn();
+  popParams->mNext = MakeUnique<txReturn>();
 
   // attribute/textnode template
-  nt = new txNodeTypeTest(txNodeTypeTest::NODE_TYPE);
-  nodeExpr = new LocationStep(nt, LocationStep::SELF_AXIS);
-  nt.forget();
+  nt = MakeUnique<txNodeTypeTest>(txNodeTypeTest::NODE_TYPE);
+  nodeExpr = MakeUnique<LocationStep>(nt.get(), LocationStep::SELF_AXIS);
+  Unused << nt.release();
 
-  mCharactersTemplate = new txValueOf(std::move(nodeExpr), false);
-  mCharactersTemplate->mNext = new txReturn();
+  mCharactersTemplate = MakeUnique<txValueOf>(std::move(nodeExpr), false);
+  mCharactersTemplate->mNext = MakeUnique<txReturn>();
 
   // pi/comment/namespace template
-  mEmptyTemplate = new txReturn();
+  mEmptyTemplate = MakeUnique<txReturn>();
 
   return NS_OK;
 }
@@ -126,7 +133,7 @@ nsresult txStylesheet::findTemplate(const txXPathNode& aNode,
           *aTemplate = templ.mFirstInstruction;
           *aImportFrame = frame;
 #if defined(TX_TO_STRING)
-          match = templ.mMatch;
+          match = templ.mMatch.get();
 #endif
         }
       }
@@ -162,12 +169,12 @@ nsresult txStylesheet::findTemplate(const txXPathNode& aNode,
     // and a root (if it is orphaned)
     if (txXPathNodeUtils::isAttribute(aNode) ||
         txXPathNodeUtils::isText(aNode)) {
-      *aTemplate = mCharactersTemplate;
+      *aTemplate = mCharactersTemplate.get();
     } else if (txXPathNodeUtils::isElement(aNode) ||
                txXPathNodeUtils::isRoot(aNode)) {
-      *aTemplate = mContainerTemplate;
+      *aTemplate = mContainerTemplate.get();
     } else {
-      *aTemplate = mEmptyTemplate;
+      *aTemplate = mEmptyTemplate.get();
     }
   }
 
@@ -227,7 +234,7 @@ nsresult txStylesheet::isStripSpaceAllowed(const txXPathNode& aNode,
   // check Whitespace stipping handling list against given Node
   int32_t i;
   for (i = 0; i < frameCount; ++i) {
-    txStripSpaceTest* sst = mStripSpaceTests[i];
+    const auto& sst = mStripSpaceTests[i];
     bool matched;
     nsresult rv = sst->matches(node, aContext, matched);
     NS_ENSURE_SUCCESS(rv, rv);
@@ -248,8 +255,7 @@ nsresult txStylesheet::doneCompiling() {
   nsresult rv = NS_OK;
   // Collect all importframes into a single ordered list
   txListIterator frameIter(&mImportFrames);
-  rv = frameIter.addAfter(mRootFrame);
-  NS_ENSURE_SUCCESS(rv, rv);
+  frameIter.addAfter(mRootFrame);
 
   mRootFrame = nullptr;
   frameIter.next();
@@ -304,19 +310,19 @@ nsresult txStylesheet::doneCompiling() {
       itemIter.remove();  // remove() moves to the previous
       itemIter.next();
     }
-    if (!mStripSpaceTests.AppendElements(frameStripSpaceTests)) {
-      return NS_ERROR_OUT_OF_MEMORY;
-    }
+    // XXX(Bug 1631371) Check if this should use a fallible operation as it
+    // pretended earlier.
+    mStripSpaceTests.AppendElements(frameStripSpaceTests);
 
     frameStripSpaceTests.Clear();
   }
 
   if (!mDecimalFormats.get(txExpandedName())) {
-    nsAutoPtr<txDecimalFormat> format(new txDecimalFormat);
-    rv = mDecimalFormats.add(txExpandedName(), format);
+    UniquePtr<txDecimalFormat> format(new txDecimalFormat);
+    rv = mDecimalFormats.add(txExpandedName(), format.get());
     NS_ENSURE_SUCCESS(rv, rv);
 
-    format.forget();
+    Unused << format.release();
   }
 
   return NS_OK;
@@ -326,15 +332,14 @@ nsresult txStylesheet::addTemplate(txTemplateItem* aTemplate,
                                    ImportFrame* aImportFrame) {
   NS_ASSERTION(aTemplate, "missing template");
 
-  txInstruction* instr = aTemplate->mFirstInstruction;
-  nsresult rv = mTemplateInstructions.add(instr);
-  NS_ENSURE_SUCCESS(rv, rv);
+  txInstruction* instr = aTemplate->mFirstInstruction.get();
+  mTemplateInstructions.add(instr);
 
   // mTemplateInstructions now owns the instructions
-  aTemplate->mFirstInstruction.forget();
+  Unused << aTemplate->mFirstInstruction.release();
 
   if (!aTemplate->mName.isNull()) {
-    rv = mNamedTemplates.add(aTemplate->mName, instr);
+    nsresult rv = mNamedTemplates.add(aTemplate->mName, instr);
     NS_ENSURE_TRUE(NS_SUCCEEDED(rv) || rv == NS_ERROR_XSLT_ALREADY_SET, rv);
   }
 
@@ -349,21 +354,22 @@ nsresult txStylesheet::addTemplate(txTemplateItem* aTemplate,
       aImportFrame->mMatchableTemplates.get(aTemplate->mMode);
 
   if (!templates) {
-    nsAutoPtr<nsTArray<MatchableTemplate> > newList(
+    UniquePtr<nsTArray<MatchableTemplate> > newList(
         new nsTArray<MatchableTemplate>);
-    rv = aImportFrame->mMatchableTemplates.set(aTemplate->mMode, newList);
+    nsresult rv =
+        aImportFrame->mMatchableTemplates.set(aTemplate->mMode, newList.get());
     NS_ENSURE_SUCCESS(rv, rv);
 
-    templates = newList.forget();
+    templates = newList.release();
   }
 
   // Add the simple patterns to the list of matchable templates, according
   // to default priority
-  nsAutoPtr<txPattern> simple = std::move(aTemplate->mMatch);
-  nsAutoPtr<txPattern> unionPattern;
+  UniquePtr<txPattern> simple = std::move(aTemplate->mMatch);
+  UniquePtr<txPattern> unionPattern;
   if (simple->getType() == txPattern::UNION_PATTERN) {
     unionPattern = std::move(simple);
-    simple = unionPattern->getSubPatternAt(0);
+    simple = WrapUnique(unionPattern->getSubPatternAt(0));
     unionPattern->setSubPatternAt(0, nullptr);
   }
 
@@ -391,7 +397,7 @@ nsresult txStylesheet::addTemplate(txTemplateItem* aTemplate,
     nt->mPriority = priority;
 
     if (unionPattern) {
-      simple = unionPattern->getSubPatternAt(unionPos);
+      simple = WrapUnique(unionPattern->getSubPatternAt(unionPos));
       if (simple) {
         unionPattern->setSubPatternAt(unionPos, nullptr);
       }
@@ -412,10 +418,7 @@ nsresult txStylesheet::addFrames(txListIterator& aInsertIter) {
       txImportItem* import = static_cast<txImportItem*>(item);
       import->mFrame->mFirstNotImported =
           static_cast<ImportFrame*>(aInsertIter.next());
-      rv = aInsertIter.addBefore(import->mFrame);
-      NS_ENSURE_SUCCESS(rv, rv);
-
-      import->mFrame.forget();
+      aInsertIter.addBefore(import->mFrame.release());
       aInsertIter.previous();
       rv = addFrames(aInsertIter);
       NS_ENSURE_SUCCESS(rv, rv);
@@ -439,9 +442,9 @@ nsresult txStylesheet::addStripSpace(
         break;
       }
     }
-    if (!aFrameStripSpaceTests.InsertElementAt(i, sst)) {
-      return NS_ERROR_OUT_OF_MEMORY;
-    }
+    // XXX(Bug 1631371) Check if this should use a fallible operation as it
+    // pretended earlier.
+    aFrameStripSpaceTests.InsertElementAt(i, sst);
 
     aStripSpaceItem->mStripSpaceTests.RemoveElementAt(testCount - 1);
   }
@@ -454,20 +457,20 @@ nsresult txStylesheet::addAttributeSet(txAttributeSetItem* aAttributeSetItem) {
   txInstruction* oldInstr = mAttributeSets.get(aAttributeSetItem->mName);
   if (!oldInstr) {
     rv = mAttributeSets.add(aAttributeSetItem->mName,
-                            aAttributeSetItem->mFirstInstruction);
+                            aAttributeSetItem->mFirstInstruction.get());
     NS_ENSURE_SUCCESS(rv, rv);
 
-    aAttributeSetItem->mFirstInstruction.forget();
+    Unused << aAttributeSetItem->mFirstInstruction.release();
 
     return NS_OK;
   }
 
   // We need to prepend the new instructions before the existing ones.
-  txInstruction* instr = aAttributeSetItem->mFirstInstruction;
+  txInstruction* instr = aAttributeSetItem->mFirstInstruction.get();
   txInstruction* lastNonReturn = nullptr;
   while (instr->mNext) {
     lastNonReturn = instr;
-    instr = instr->mNext;
+    instr = instr->mNext.get();
   }
 
   if (!lastNonReturn) {
@@ -476,12 +479,13 @@ nsresult txStylesheet::addAttributeSet(txAttributeSetItem* aAttributeSetItem) {
   }
 
   rv = mAttributeSets.set(aAttributeSetItem->mName,
-                          aAttributeSetItem->mFirstInstruction);
+                          aAttributeSetItem->mFirstInstruction.get());
   NS_ENSURE_SUCCESS(rv, rv);
 
-  aAttributeSetItem->mFirstInstruction.forget();
+  Unused << aAttributeSetItem->mFirstInstruction.release();
 
-  lastNonReturn->mNext = oldInstr;  // ...and link up the old instructions.
+  lastNonReturn->mNext =
+      WrapUnique(oldInstr);  // ...and link up the old instructions.
 
   return NS_OK;
 }
@@ -490,20 +494,20 @@ nsresult txStylesheet::addGlobalVariable(txVariableItem* aVariable) {
   if (mGlobalVariables.get(aVariable->mName)) {
     return NS_OK;
   }
-  nsAutoPtr<GlobalVariable> var(new GlobalVariable(
+  UniquePtr<GlobalVariable> var(new GlobalVariable(
       std::move(aVariable->mValue), std::move(aVariable->mFirstInstruction),
       aVariable->mIsParam));
-  nsresult rv = mGlobalVariables.add(aVariable->mName, var);
+  nsresult rv = mGlobalVariables.add(aVariable->mName, var.get());
   NS_ENSURE_SUCCESS(rv, rv);
 
-  var.forget();
+  Unused << var.release();
 
   return NS_OK;
 }
 
 nsresult txStylesheet::addKey(const txExpandedName& aName,
-                              nsAutoPtr<txPattern> aMatch,
-                              nsAutoPtr<Expr> aUse) {
+                              UniquePtr<txPattern> aMatch,
+                              UniquePtr<Expr> aUse) {
   nsresult rv = NS_OK;
 
   txXSLKey* xslKey = mKeys.get(aName);
@@ -522,18 +526,19 @@ nsresult txStylesheet::addKey(const txExpandedName& aName,
 }
 
 nsresult txStylesheet::addDecimalFormat(const txExpandedName& aName,
-                                        nsAutoPtr<txDecimalFormat>&& aFormat) {
+                                        UniquePtr<txDecimalFormat>&& aFormat) {
   txDecimalFormat* existing = mDecimalFormats.get(aName);
   if (existing) {
-    NS_ENSURE_TRUE(existing->isEqual(aFormat), NS_ERROR_XSLT_PARSE_FAILURE);
+    NS_ENSURE_TRUE(existing->isEqual(aFormat.get()),
+                   NS_ERROR_XSLT_PARSE_FAILURE);
 
     return NS_OK;
   }
 
-  nsresult rv = mDecimalFormats.add(aName, aFormat);
+  nsresult rv = mDecimalFormats.add(aName, aFormat.get());
   NS_ENSURE_SUCCESS(rv, rv);
 
-  aFormat.forget();
+  Unused << aFormat.release();
 
   return NS_OK;
 }
@@ -545,8 +550,8 @@ txStylesheet::ImportFrame::~ImportFrame() {
   }
 }
 
-txStylesheet::GlobalVariable::GlobalVariable(nsAutoPtr<Expr>&& aExpr,
-                                             nsAutoPtr<txInstruction>&& aInstr,
+txStylesheet::GlobalVariable::GlobalVariable(UniquePtr<Expr>&& aExpr,
+                                             UniquePtr<txInstruction>&& aInstr,
                                              bool aIsParam)
     : mExpr(std::move(aExpr)),
       mFirstInstruction(std::move(aInstr)),

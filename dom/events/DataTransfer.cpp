@@ -5,9 +5,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/ArrayUtils.h"
+#include "mozilla/BasePrincipal.h"
 #include "mozilla/BasicEvents.h"
 #include "mozilla/CheckedInt.h"
-
+#include "mozilla/Span.h"
+#include "mozilla/StaticPrefs_dom.h"
 #include "DataTransfer.h"
 
 #include "nsISupportsPrimitives.h"
@@ -17,6 +19,7 @@
 #include "nsError.h"
 #include "nsIDragService.h"
 #include "nsIClipboard.h"
+#include "nsIXPConnect.h"
 #include "nsContentUtils.h"
 #include "nsIContent.h"
 #include "nsIObjectInputStream.h"
@@ -40,8 +43,6 @@
 #include "mozilla/dom/Promise.h"
 #include "nsNetUtil.h"
 #include "nsReadableUtils.h"
-
-#define MOZ_CALLS_ENABLED_PREF "dom.datatransfer.mozAtAPIs"
 
 namespace mozilla {
 namespace dom {
@@ -82,22 +83,6 @@ enum CustomClipboardTypeId {
   eCustomClipboardTypeId_String
 };
 
-// The dom.events.dataTransfer.protected.enabled preference controls whether or
-// not the `protected` dataTransfer state is enabled. If the `protected`
-// dataTransfer stae is disabled, then the DataTransfer will be read-only
-// whenever it should be protected, and will not be disconnected after a drag
-// event is completed.
-static bool PrefProtected() {
-  static bool sInitialized = false;
-  static bool sValue = false;
-  if (!sInitialized) {
-    sInitialized = true;
-    Preferences::AddBoolVarCache(&sValue,
-                                 "dom.events.dataTransfer.protected.enabled");
-  }
-  return sValue;
-}
-
 static DataTransfer::Mode ModeForEvent(EventMessage aEventMessage) {
   switch (aEventMessage) {
     case eCut:
@@ -114,8 +99,9 @@ static DataTransfer::Mode ModeForEvent(EventMessage aEventMessage) {
       // the DataTransfer, rather than just the type information.
       return DataTransfer::Mode::ReadOnly;
     default:
-      return PrefProtected() ? DataTransfer::Mode::Protected
-                             : DataTransfer::Mode::ReadOnly;
+      return StaticPrefs::dom_events_dataTransfer_protected_enabled()
+                 ? DataTransfer::Mode::Protected
+                 : DataTransfer::Mode::ReadOnly;
   }
 }
 
@@ -245,11 +231,11 @@ DataTransfer::DataTransfer(nsISupports* aParent, EventMessage aEventMessage,
                "invalid event type for DataTransfer constructor");
 }
 
-DataTransfer::~DataTransfer() {}
+DataTransfer::~DataTransfer() = default;
 
 // static
 already_AddRefed<DataTransfer> DataTransfer::Constructor(
-    const GlobalObject& aGlobal, ErrorResult& aRv) {
+    const GlobalObject& aGlobal) {
   RefPtr<DataTransfer> transfer =
       new DataTransfer(aGlobal.GetAsSupports(), eCopy, /* is external */ false,
                        /* clipboard type */ -1);
@@ -314,21 +300,19 @@ void DataTransfer::GetMozTriggeringPrincipalURISpec(
     return;
   }
 
-  nsCOMPtr<nsIURI> uri;
-  principal->GetURI(getter_AddRefs(uri));
-  if (!uri) {
-    aPrincipalURISpec.Truncate(0);
-    return;
-  }
-
   nsAutoCString spec;
-  nsresult rv = uri->GetSpec(spec);
-  if (NS_FAILED(rv)) {
-    aPrincipalURISpec.Truncate(0);
-    return;
-  }
-
+  principal->GetAsciiSpec(spec);
   CopyUTF8toUTF16(spec, aPrincipalURISpec);
+}
+
+nsIContentSecurityPolicy* DataTransfer::GetMozCSP() {
+  nsCOMPtr<nsIDragSession> dragSession = nsContentUtils::GetDragSession();
+  if (!dragSession) {
+    return nullptr;
+  }
+  nsCOMPtr<nsIContentSecurityPolicy> csp;
+  dragSession->GetCsp(getter_AddRefs(csp));
+  return csp;
 }
 
 already_AddRefed<FileList> DataTransfer::GetFiles(
@@ -342,43 +326,14 @@ void DataTransfer::GetTypes(nsTArray<nsString>& aTypes,
   // Gecko-internal callers too, clear it to be safe.
   aTypes.Clear();
 
-  const nsTArray<RefPtr<DataTransferItem>>* items = mItems->MozItemsAt(0);
-  if (NS_WARN_IF(!items)) {
-    return;
-  }
-
-  for (uint32_t i = 0; i < items->Length(); i++) {
-    DataTransferItem* item = items->ElementAt(i);
-    MOZ_ASSERT(item);
-
-    if (item->ChromeOnly() && aCallerType != CallerType::System) {
-      continue;
-    }
-
-    // NOTE: The reason why we get the internal type here is because we want
-    // kFileMime to appear in the types list for backwards compatibility
-    // reasons.
-    nsAutoString type;
-    item->GetInternalType(type);
-    if (item->Kind() != DataTransferItem::KIND_FILE ||
-        type.EqualsASCII(kFileMime)) {
-      // If the entry has kind KIND_STRING or KIND_OTHER we want to add it to
-      // the list.
-      aTypes.AppendElement(type);
-    }
-  }
-
-  for (uint32_t i = 0; i < mItems->Length(); ++i) {
-    bool found = false;
-    DataTransferItem* item = mItems->IndexedGetter(i, found);
-    MOZ_ASSERT(found);
-    if (item->Kind() != DataTransferItem::KIND_FILE) {
-      continue;
-    }
-    aTypes.AppendElement(NS_LITERAL_STRING("Files"));
-    break;
-  }
+  return mItems->GetTypes(aTypes, aCallerType);
 }
+
+bool DataTransfer::HasType(const nsAString& aType) const {
+  return mItems->HasType(aType);
+}
+
+bool DataTransfer::HasFile() const { return mItems->HasFile(); }
 
 void DataTransfer::GetData(const nsAString& aFormat, nsAString& aData,
                            nsIPrincipal& aSubjectPrincipal, ErrorResult& aRv) {
@@ -564,8 +519,7 @@ nsresult DataTransfer::GetDataAtInternal(const nsAString& aFormat,
   }
 
   // If we have chrome only content, and we aren't chrome, don't allow access
-  if (!nsContentUtils::IsSystemPrincipal(aSubjectPrincipal) &&
-      item->ChromeOnly()) {
+  if (!aSubjectPrincipal->IsSystemPrincipal() && item->ChromeOnly()) {
     return NS_OK;
   }
 
@@ -608,7 +562,7 @@ void DataTransfer::MozGetDataAt(JSContext* aCx, const nsAString& aFormat,
 bool DataTransfer::PrincipalMaySetData(const nsAString& aType,
                                        nsIVariant* aData,
                                        nsIPrincipal* aPrincipal) {
-  if (!nsContentUtils::IsSystemPrincipal(aPrincipal)) {
+  if (!aPrincipal->IsSystemPrincipal()) {
     DataTransferItem::eKind kind = DataTransferItem::KindFromData(aData);
     if (kind == DataTransferItem::KIND_OTHER) {
       NS_WARNING("Disallowing adding non string/file types to DataTransfer");
@@ -676,10 +630,9 @@ void DataTransfer::GetExternalClipboardFormats(const int32_t& aWhichClipboard,
 
   if (aPlainTextOnly) {
     bool hasType;
-    static const char* unicodeMime[] = {kUnicodeMime};
-    nsresult rv = clipboard->HasDataMatchingFlavors(
-        unicodeMime,
-        /* number of flavors to check */ 1, aWhichClipboard, &hasType);
+    AutoTArray<nsCString, 1> unicodeMime = {nsDependentCString(kUnicodeMime)};
+    nsresult rv = clipboard->HasDataMatchingFlavors(unicodeMime,
+                                                    aWhichClipboard, &hasType);
     NS_SUCCEEDED(rv);
     if (hasType) {
       aResult->AppendElement(kUnicodeMime);
@@ -694,9 +647,9 @@ void DataTransfer::GetExternalClipboardFormats(const int32_t& aWhichClipboard,
 
   for (uint32_t f = 0; f < mozilla::ArrayLength(formats); ++f) {
     bool hasType;
-    nsresult rv = clipboard->HasDataMatchingFlavors(
-        &(formats[f]),
-        /* number of flavors to check */ 1, aWhichClipboard, &hasType);
+    AutoTArray<nsCString, 1> format = {nsDependentCString(formats[f])};
+    nsresult rv =
+        clipboard->HasDataMatchingFlavors(format, aWhichClipboard, &hasType);
     NS_SUCCEEDED(rv);
     if (hasType) {
       aResult->AppendElement(formats[f]);
@@ -739,7 +692,6 @@ void DataTransfer::GetExternalTransferableFormats(
       aResult->AppendElement(nsCString(format));
     }
   }
-  return;
 }
 
 nsresult DataTransfer::SetDataAtInternal(const nsAString& aFormat,
@@ -1105,8 +1057,12 @@ already_AddRefed<nsITransferable> DataTransfer::GetTransferable(
                 totalCustomLength = 0;
                 continue;
               }
-              rv = stream->WriteBytes((const char*)type.get(),
-                                      formatLength.value());
+              MOZ_ASSERT(formatLength.isValid() &&
+                             formatLength.value() ==
+                                 type.Length() * sizeof(nsString::char_type),
+                         "Why is formatLength off?");
+              rv = stream->WriteBytes(
+                  AsBytes(MakeSpan(type.BeginReading(), type.Length())));
               if (NS_WARN_IF(NS_FAILED(rv))) {
                 totalCustomLength = 0;
                 continue;
@@ -1116,7 +1072,13 @@ already_AddRefed<nsITransferable> DataTransfer::GetTransferable(
                 totalCustomLength = 0;
                 continue;
               }
-              rv = stream->WriteBytes((const char*)data.get(), lengthInBytes);
+              // XXXbz it's not obvious to me that lengthInBytes is the actual
+              // length of "data" if the variant contained an nsISupportsString
+              // as VTYPE_INTERFACE, say.  We used lengthInBytes above for
+              // sizing, so just keep doing that.
+              rv = stream->WriteBytes(MakeSpan(
+                  reinterpret_cast<const uint8_t*>(data.BeginReading()),
+                  lengthInBytes));
               if (NS_WARN_IF(NS_FAILED(rv))) {
                 totalCustomLength = 0;
                 continue;
@@ -1270,7 +1232,7 @@ bool DataTransfer::ConvertFromVariant(nsIVariant* aVariant,
 
 void DataTransfer::Disconnect() {
   SetMode(Mode::Protected);
-  if (PrefProtected()) {
+  if (StaticPrefs::dom_events_dataTransfer_protected_enabled()) {
     ClearAll();
   }
 }
@@ -1571,7 +1533,8 @@ void DataTransfer::FillInExternalCustomTypes(nsIVariant* aData, uint32_t aIndex,
 }
 
 void DataTransfer::SetMode(DataTransfer::Mode aMode) {
-  if (!PrefProtected() && aMode == Mode::Protected) {
+  if (!StaticPrefs::dom_events_dataTransfer_protected_enabled() &&
+      aMode == Mode::Protected) {
     mMode = Mode::ReadOnly;
   } else {
     mMode = aMode;
@@ -1580,17 +1543,9 @@ void DataTransfer::SetMode(DataTransfer::Mode aMode) {
 
 /* static */
 bool DataTransfer::MozAtAPIsEnabled(JSContext* aCx, JSObject* aObj /*unused*/) {
-  // Read the pref
-  static bool sPrefCached = false;
-  static bool sPrefCacheValue = false;
-
-  if (!sPrefCached) {
-    sPrefCached = true;
-    Preferences::AddBoolVarCache(&sPrefCacheValue, MOZ_CALLS_ENABLED_PREF);
-  }
-
   // We can expose moz* APIs if we are chrome code or if pref is enabled
-  return nsContentUtils::IsSystemCaller(aCx) || sPrefCacheValue;
+  return nsContentUtils::IsSystemCaller(aCx) ||
+         StaticPrefs::dom_datatransfer_mozAtAPIs_DoNotUseDirectly();
 }
 
 }  // namespace dom

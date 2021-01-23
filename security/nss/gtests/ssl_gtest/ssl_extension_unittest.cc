@@ -20,6 +20,45 @@
 
 namespace nss_test {
 
+class Dtls13LegacyCookieInjector : public TlsHandshakeFilter {
+ public:
+  Dtls13LegacyCookieInjector(const std::shared_ptr<TlsAgent>& a)
+      : TlsHandshakeFilter(a, {kTlsHandshakeClientHello}) {}
+
+  virtual PacketFilter::Action FilterHandshake(const HandshakeHeader& header,
+                                               const DataBuffer& input,
+                                               DataBuffer* output) {
+    const uint8_t cookie_bytes[] = {0x03, 0x0A, 0x0B, 0x0C};
+    uint32_t offset = 2 /* version */ + 32 /* random */;
+
+    if (agent()->variant() != ssl_variant_datagram) {
+      ADD_FAILURE();
+      return KEEP;
+    }
+
+    if (header.handshake_type() != ssl_hs_client_hello) {
+      return KEEP;
+    }
+
+    DataBuffer cookie(cookie_bytes, sizeof(cookie_bytes));
+    *output = input;
+
+    // Add the SID length (if any) to locate the cookie.
+    uint32_t sid_len = 0;
+    if (!output->Read(offset, 1, &sid_len)) {
+      ADD_FAILURE();
+      return KEEP;
+    }
+    offset += 1 + sid_len;
+    output->Splice(cookie, offset, 1);
+
+    return CHANGE;
+  }
+
+ private:
+  DataBuffer cookie_;
+};
+
 class TlsExtensionTruncator : public TlsExtensionFilter {
  public:
   TlsExtensionTruncator(const std::shared_ptr<TlsAgent>& a, uint16_t extension,
@@ -189,8 +228,27 @@ class TlsExtensionTest13
   }
 
   void ConnectWithReplacementVersionList(uint16_t version) {
-    DataBuffer versions_buf;
+    // Convert the version encoding for DTLS, if needed.
+    if (variant_ == ssl_variant_datagram) {
+      switch (version) {
+#ifdef DTLS_1_3_DRAFT_VERSION
+        case SSL_LIBRARY_VERSION_TLS_1_3:
+          version = 0x7f00 | DTLS_1_3_DRAFT_VERSION;
+          break;
+#endif
+        case SSL_LIBRARY_VERSION_TLS_1_2:
+          version = SSL_LIBRARY_VERSION_DTLS_1_2_WIRE;
+          break;
+        case SSL_LIBRARY_VERSION_TLS_1_1:
+          /* TLS_1_1 maps to DTLS_1_0, see sslproto.h. */
+          version = SSL_LIBRARY_VERSION_DTLS_1_0_WIRE;
+          break;
+        default:
+          PORT_Assert(0);
+      }
+    }
 
+    DataBuffer versions_buf;
     size_t index = versions_buf.Write(0, 2, 1);
     versions_buf.Write(index, version, 2);
     MakeTlsFilter<TlsExtensionReplacer>(
@@ -652,7 +710,7 @@ TEST_P(TlsExtensionTest12, SignatureAlgorithmDisableDSA) {
       MakeTlsFilter<TlsExtensionCapture>(client_, ssl_signature_algorithms_xtn);
   client_->SetSignatureSchemes(schemes.data(), schemes.size());
   ConnectExpectAlert(server_, kTlsAlertHandshakeFailure);
-  server_->CheckErrorCode(SSL_ERROR_UNSUPPORTED_SIGNATURE_ALGORITHM);
+  server_->CheckErrorCode(SSL_ERROR_NO_CYPHER_OVERLAP);
   client_->CheckErrorCode(SSL_ERROR_NO_CYPHER_OVERLAP);
 
   // Check if no DSA algorithms are advertised.
@@ -1225,6 +1283,14 @@ TEST_P(TlsConnectStream, IncludePadding) {
   client_->StartConnect();
   client_->Handshake();
   EXPECT_TRUE(capture->captured());
+}
+
+TEST_F(TlsConnectDatagram13, Dtls13RejectLegacyCookie) {
+  EnsureTlsSetup();
+  MakeTlsFilter<Dtls13LegacyCookieInjector>(client_);
+  ConnectExpectAlert(server_, kTlsAlertIllegalParameter);
+  server_->CheckErrorCode(SSL_ERROR_RX_MALFORMED_CLIENT_HELLO);
+  client_->CheckErrorCode(SSL_ERROR_ILLEGAL_PARAMETER_ALERT);
 }
 
 INSTANTIATE_TEST_CASE_P(

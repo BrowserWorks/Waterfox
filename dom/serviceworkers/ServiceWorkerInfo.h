@@ -33,6 +33,7 @@ class ServiceWorkerInfo final : public nsIServiceWorkerInfo {
   ServiceWorkerDescriptor mDescriptor;
   const nsString mCacheName;
   OriginAttributes mOriginAttributes;
+  const nsString mWorkerPrivateId;
 
   // This LoadFlags is only applied to imported scripts, since the main script
   // has already been downloaded when performing the bytecheck. This LoadFlag is
@@ -125,6 +126,7 @@ class ServiceWorkerInfo final : public nsIServiceWorkerInfo {
     MOZ_ASSERT(NS_IsMainThread());
     MOZ_DIAGNOSTIC_ASSERT(mHandlesFetch == Unknown);
     mHandlesFetch = aHandlesFetch ? Enabled : Disabled;
+    mDescriptor.SetHandlesFetch(aHandlesFetch);
   }
 
   void SetRegistrationVersion(uint64_t aVersion);

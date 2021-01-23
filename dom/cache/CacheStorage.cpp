@@ -16,7 +16,7 @@
 #include "mozilla/dom/cache/Cache.h"
 #include "mozilla/dom/cache/CacheChild.h"
 #include "mozilla/dom/cache/CacheStorageChild.h"
-#include "mozilla/dom/cache/CacheWorkerHolder.h"
+#include "mozilla/dom/cache/CacheWorkerRef.h"
 #include "mozilla/dom/cache/PCacheChild.h"
 #include "mozilla/dom/cache/ReadStream.h"
 #include "mozilla/dom/cache/TypeUtils.h"
@@ -26,11 +26,11 @@
 #include "mozilla/ipc/BackgroundUtils.h"
 #include "mozilla/ipc/PBackgroundChild.h"
 #include "mozilla/ipc/PBackgroundSharedTypes.h"
-#include "mozilla/StaticPrefs.h"
+#include "mozilla/StaticPrefs_dom.h"
 #include "nsContentUtils.h"
 #include "mozilla/dom/Document.h"
 #include "nsIGlobalObject.h"
-#include "nsIScriptSecurityManager.h"
+#include "nsMixedContentBlocker.h"
 #include "nsURLParsers.h"
 
 namespace mozilla {
@@ -63,7 +63,7 @@ struct CacheStorage::Entry final {
   CacheOpArgs mArgs;
   // We cannot add the requests until after the actor is present.  So store
   // the request data separately for now.
-  RefPtr<InternalRequest> mRequest;
+  SafeRefPtr<InternalRequest> mRequest;
 };
 
 namespace {
@@ -132,8 +132,7 @@ bool IsTrusted(const PrincipalInfo& aPrincipalInfo, bool aTestingPrefEnabled) {
 
   nsDependentCSubstring hostname(url + authPos + hostPos, hostLen);
 
-  return hostname.EqualsLiteral("localhost") ||
-         hostname.EqualsLiteral("127.0.0.1") || hostname.EqualsLiteral("::1");
+  return nsMixedContentBlocker::IsPotentiallyTrustworthyLoopbackHost(hostname);
 }
 
 }  // namespace
@@ -189,15 +188,16 @@ already_AddRefed<CacheStorage> CacheStorage::CreateOnWorker(
     return ref.forget();
   }
 
-  RefPtr<CacheWorkerHolder> workerHolder = CacheWorkerHolder::Create(
-      aWorkerPrivate, CacheWorkerHolder::AllowIdleShutdownStart);
-  if (!workerHolder) {
+  SafeRefPtr<CacheWorkerRef> workerRef =
+      CacheWorkerRef::Create(aWorkerPrivate, CacheWorkerRef::eIPCWorkerRef);
+  if (!workerRef) {
     NS_WARNING("Worker thread is shutting down.");
     aRv.Throw(NS_ERROR_FAILURE);
     return nullptr;
   }
 
-  const PrincipalInfo& principalInfo = aWorkerPrivate->GetPrincipalInfo();
+  const PrincipalInfo& principalInfo =
+      aWorkerPrivate->GetEffectiveStoragePrincipalInfo();
 
   if (NS_WARN_IF(!QuotaManager::IsPrincipalInfoValid(principalInfo))) {
     aRv.Throw(NS_ERROR_FAILURE);
@@ -228,8 +228,8 @@ already_AddRefed<CacheStorage> CacheStorage::CreateOnWorker(
     return ref.forget();
   }
 
-  RefPtr<CacheStorage> ref =
-      new CacheStorage(aNamespace, aGlobal, principalInfo, workerHolder);
+  RefPtr<CacheStorage> ref = new CacheStorage(
+      aNamespace, aGlobal, principalInfo, std::move(workerRef));
   return ref.forget();
 }
 
@@ -267,7 +267,7 @@ bool CacheStorage::DefineCaches(JSContext* aCx, JS::Handle<JSObject*> aGlobal) {
 
 CacheStorage::CacheStorage(Namespace aNamespace, nsIGlobalObject* aGlobal,
                            const PrincipalInfo& aPrincipalInfo,
-                           CacheWorkerHolder* aWorkerHolder)
+                           SafeRefPtr<CacheWorkerRef> aWorkerRef)
     : mNamespace(aNamespace),
       mGlobal(aGlobal),
       mPrincipalInfo(MakeUnique<PrincipalInfo>(aPrincipalInfo)),
@@ -283,10 +283,11 @@ CacheStorage::CacheStorage(Namespace aNamespace, nsIGlobalObject* aGlobal,
     return;
   }
 
-  // WorkerHolder ownership is passed to the CacheStorageChild actor and any
-  // actors it may create.  The WorkerHolder will keep the worker thread alive
+  // WorkerRef ownership is passed to the CacheStorageChild actor and any
+  // actors it may create.  The WorkerRef will keep the worker thread alive
   // until the actors can gracefully shutdown.
-  CacheStorageChild* newActor = new CacheStorageChild(this, aWorkerHolder);
+  CacheStorageChild* newActor =
+      new CacheStorageChild(this, std::move(aWorkerRef));
   PCacheStorageChild* constructedActor = actor->SendPCacheStorageConstructor(
       newActor, mNamespace, *mPrincipalInfo);
 
@@ -319,7 +320,7 @@ already_AddRefed<Promise> CacheStorage::Match(
     return nullptr;
   }
 
-  RefPtr<InternalRequest> request =
+  SafeRefPtr<InternalRequest> request =
       ToInternalRequest(aCx, aRequest, IgnoreBody, aRv);
   if (NS_WARN_IF(aRv.Failed())) {
     return nullptr;
@@ -333,10 +334,10 @@ already_AddRefed<Promise> CacheStorage::Match(
   CacheQueryParams params;
   ToCacheQueryParams(params, aOptions);
 
-  nsAutoPtr<Entry> entry(new Entry());
+  auto entry = MakeUnique<Entry>();
   entry->mPromise = promise;
   entry->mArgs = StorageMatchArgs(CacheRequest(), params, GetOpenMode());
-  entry->mRequest = request;
+  entry->mRequest = std::move(request);
 
   RunRequest(std::move(entry));
 
@@ -362,7 +363,7 @@ already_AddRefed<Promise> CacheStorage::Has(const nsAString& aKey,
     return nullptr;
   }
 
-  nsAutoPtr<Entry> entry(new Entry());
+  auto entry = MakeUnique<Entry>();
   entry->mPromise = promise;
   entry->mArgs = StorageHasArgs(nsString(aKey));
 
@@ -390,7 +391,7 @@ already_AddRefed<Promise> CacheStorage::Open(const nsAString& aKey,
     return nullptr;
   }
 
-  nsAutoPtr<Entry> entry(new Entry());
+  auto entry = MakeUnique<Entry>();
   entry->mPromise = promise;
   entry->mArgs = StorageOpenArgs(nsString(aKey));
 
@@ -418,7 +419,7 @@ already_AddRefed<Promise> CacheStorage::Delete(const nsAString& aKey,
     return nullptr;
   }
 
-  nsAutoPtr<Entry> entry(new Entry());
+  auto entry = MakeUnique<Entry>();
   entry->mPromise = promise;
   entry->mArgs = StorageDeleteArgs(nsString(aKey));
 
@@ -445,7 +446,7 @@ already_AddRefed<Promise> CacheStorage::Keys(ErrorResult& aRv) {
     return nullptr;
   }
 
-  nsAutoPtr<Entry> entry(new Entry());
+  auto entry = MakeUnique<Entry>();
   entry->mPromise = promise;
   entry->mArgs = StorageKeysArgs();
 
@@ -469,9 +470,8 @@ already_AddRefed<CacheStorage> CacheStorage::Constructor(
   static_assert(
       CHROME_ONLY_NAMESPACE == (uint32_t)CacheStorageNamespace::Chrome,
       "Chrome namespace should match webidl Chrome enum");
-  static_assert(
-      NUMBER_OF_NAMESPACES == (uint32_t)CacheStorageNamespace::EndGuard_,
-      "Number of namespace should match webidl endguard enum");
+  static_assert(NUMBER_OF_NAMESPACES == CacheStorageNamespaceValues::Count,
+                "Number of namespace should match webidl count");
 
   Namespace ns = static_cast<Namespace>(aNamespace);
   nsCOMPtr<nsIGlobalObject> global = do_QueryInterface(aGlobal.GetAsSupports());
@@ -541,23 +541,21 @@ CacheStorage::~CacheStorage() {
   }
 }
 
-void CacheStorage::RunRequest(nsAutoPtr<Entry>&& aEntry) {
+void CacheStorage::RunRequest(UniquePtr<Entry> aEntry) {
   MOZ_ASSERT(mActor);
 
-  nsAutoPtr<Entry> entry(std::move(aEntry));
+  AutoChildOpArgs args(this, aEntry->mArgs, 1);
 
-  AutoChildOpArgs args(this, entry->mArgs, 1);
-
-  if (entry->mRequest) {
+  if (aEntry->mRequest) {
     ErrorResult rv;
-    args.Add(entry->mRequest, IgnoreBody, IgnoreInvalidScheme, rv);
+    args.Add(*aEntry->mRequest, IgnoreBody, IgnoreInvalidScheme, rv);
     if (NS_WARN_IF(rv.Failed())) {
-      entry->mPromise->MaybeReject(rv);
+      aEntry->mPromise->MaybeReject(std::move(rv));
       return;
     }
   }
 
-  mActor->ExecuteOp(mGlobal, entry->mPromise, this, args.SendAsOpArgs());
+  mActor->ExecuteOp(mGlobal, aEntry->mPromise, this, args.SendAsOpArgs());
 }
 
 OpenMode CacheStorage::GetOpenMode() const {
@@ -567,7 +565,7 @@ OpenMode CacheStorage::GetOpenMode() const {
 bool CacheStorage::HasStorageAccess() const {
   NS_ASSERT_OWNINGTHREAD(CacheStorage);
 
-  nsContentUtils::StorageAccess access;
+  StorageAccess access;
 
   if (NS_IsMainThread()) {
     nsCOMPtr<nsPIDOMWindowInner> window = do_QueryInterface(mGlobal);
@@ -575,7 +573,7 @@ bool CacheStorage::HasStorageAccess() const {
       return true;
     }
 
-    access = nsContentUtils::StorageAllowedForWindow(window);
+    access = StorageAllowedForWindow(window);
   } else {
     WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();
     MOZ_ASSERT(workerPrivate);
@@ -583,7 +581,7 @@ bool CacheStorage::HasStorageAccess() const {
     access = workerPrivate->StorageAccess();
   }
 
-  return access > nsContentUtils::StorageAccess::ePrivateBrowsing;
+  return access > StorageAccess::ePrivateBrowsing;
 }
 
 }  // namespace cache

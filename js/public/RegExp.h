@@ -51,11 +51,9 @@ extern JS_PUBLIC_API bool ExecuteRegExp(JSContext* cx, Handle<JSObject*> obj,
 
 /* RegExp interface for clients without a global object. */
 
-extern JS_PUBLIC_API bool ExecuteRegExpNoStatics(JSContext* cx,
-                                                 Handle<JSObject*> reobj,
-                                                 char16_t* chars, size_t length,
-                                                 size_t* indexp, bool test,
-                                                 MutableHandle<Value> rval);
+extern JS_PUBLIC_API bool ExecuteRegExpNoStatics(
+    JSContext* cx, Handle<JSObject*> reobj, const char16_t* chars,
+    size_t length, size_t* indexp, bool test, MutableHandle<Value> rval);
 
 /**
  * On success, returns true, setting |*isRegExp| to true if |obj| is a RegExp
@@ -81,6 +79,16 @@ extern JS_PUBLIC_API RegExpFlags GetRegExpFlags(JSContext* cx,
  */
 extern JS_PUBLIC_API JSString* GetRegExpSource(JSContext* cx,
                                                Handle<JSObject*> obj);
+/**
+ * Check whether the given source is a valid regexp. If the regexp parses
+ * successfully, returns true and sets |error| to undefined. If the regexp
+ * has a syntax error, returns true, sets |error| to that error object, and
+ * clears the exception. Returns false on OOM or over-recursion.
+ */
+extern JS_PUBLIC_API bool CheckRegExpSyntax(JSContext* cx,
+                                            const char16_t* chars,
+                                            size_t length, RegExpFlags flags,
+                                            MutableHandle<Value> error);
 
 }  // namespace JS
 

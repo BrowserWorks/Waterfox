@@ -4,8 +4,6 @@ add_task(async function() {
   await SpecialPowers.flushPrefEnv();
   await SpecialPowers.pushPrefEnv({
     set: [
-      ["browser.contentblocking.allowlist.annotations.enabled", true],
-      ["browser.contentblocking.allowlist.storage.enabled", true],
       ["network.cookie.cookieBehavior", Ci.nsICookieService.BEHAVIOR_REJECT],
       ["privacy.trackingprotection.enabled", false],
       ["privacy.trackingprotection.pbmode.enabled", false],
@@ -20,12 +18,12 @@ add_task(async function() {
   await BrowserTestUtils.browserLoaded(browser);
 
   info("Disabling content blocking for this page");
-  ContentBlocking.disableForCurrentPage();
+  gProtectionsHandler.disableForCurrentPage();
 
   // The previous function reloads the browser, so wait for it to load again!
   await BrowserTestUtils.browserLoaded(browser);
 
-  await ContentTask.spawn(browser, {}, async function(obj) {
+  await SpecialPowers.spawn(browser, [], async function(obj) {
     await new content.Promise(async resolve => {
       let document = content.document;
       let window = document.defaultView;
@@ -57,7 +55,7 @@ add_task(async function() {
   });
 
   info("Enabling content blocking for this page");
-  ContentBlocking.enableForCurrentPage();
+  gProtectionsHandler.enableForCurrentPage();
 
   // The previous function reloads the browser, so wait for it to load again!
   await BrowserTestUtils.browserLoaded(browser);

@@ -12,6 +12,9 @@
 #include "txExpr.h"
 #include "txIXPathContext.h"
 
+using mozilla::UniquePtr;
+using mozilla::Unused;
+
 class txEarlyEvalContext : public txIEvalContext {
  public:
   explicit txEarlyEvalContext(txResultRecycler* aRecycler)
@@ -159,9 +162,8 @@ nsresult txXPathOptimizer::optimizePath(Expr* aInExpr, Expr** aOutExpr) {
     if (step->getAxisIdentifier() == LocationStep::SELF_AXIS &&
         !step->getSubExprAt(0)) {
       txNodeTest* test = step->getNodeTest();
-      txNodeTypeTest* typeTest;
       if (test->getType() == txNodeTest::NODETYPE_TEST &&
-          (typeTest = static_cast<txNodeTypeTest*>(test))->getNodeTestType() ==
+          (static_cast<txNodeTypeTest*>(test))->getNodeTestType() ==
               txNodeTypeTest::NODE_TYPE) {
         // We have a '.' as first step followed by a single '/'.
 
@@ -219,12 +221,12 @@ nsresult txXPathOptimizer::optimizeUnion(Expr* aInExpr, Expr** aOutExpr) {
 
       // Create a txUnionNodeTest if needed
       if (!unionTest) {
-        nsAutoPtr<txNodeTest> owner(unionTest = new txUnionNodeTest);
+        UniquePtr<txNodeTest> owner(unionTest = new txUnionNodeTest);
         rv = unionTest->addNodeTest(currentStep->getNodeTest());
         NS_ENSURE_SUCCESS(rv, rv);
 
         currentStep->setNodeTest(unionTest);
-        owner.forget();
+        Unused << owner.release();
       }
 
       // Merge the nodetest into the union

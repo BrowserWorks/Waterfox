@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Account manager window for Instantbird -->
+<!ENTITY accounts.title                      "Kontuak - &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "Berehalako mezularitzaren egoera">
+<!ENTITY accountsWindow2.style               "width: 45em; height: 32em;">
+
+<!ENTITY accountManager.newAccount.label     "Kontu berria">
+<!ENTITY accountManager.newAccount.accesskey "K">
+<!ENTITY accountManager.close.label          "Itxi">
+<!ENTITY accountManager.close.accesskey      "t">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "Ez da konturik konfiguratu oraindik">
+<!ENTITY accountManager.noAccount.description "Egin klik &accountManager.newAccount.label; botoian &brandShortName;(e)k konfigurazio-prozesuan zehar gida zaitzan.">
+<!ENTITY account.autoSignOn.label     "Hasi saioa abioan">
+<!ENTITY account.autoSignOn.accesskey "H">
+<!ENTITY account.connect.label        "Konektatu">
+<!ENTITY account.connect.accesskey    "o">
+<!ENTITY account.disconnect.label     "Deskonektatu">
+<!ENTITY account.disconnect.accesskey "e">
+<!ENTITY account.delete.label         "Ezabatu">
+<!ENTITY account.delete.accesskey     "E">
+<!ENTITY account.edit.label           "Propietateak">
+<!ENTITY account.edit.accesskey       "P">
+<!ENTITY account.moveup.label         "Eraman gora">
+<!ENTITY account.movedown.label       "Eraman behera">
+<!ENTITY account.cancelReconnection.label         "Utzi birkonexioa">
+<!ENTITY account.cancelReconnection.accesskey     "U">
+<!ENTITY account.copyDebugLog.label     "Kopiatu arazketa-loga">
+<!ENTITY account.copyDebugLog.accesskey "K">
+<!ENTITY account.showDebugLog.label     "Erakutsi arazketa egunkaria">
+<!ENTITY account.showDebugLog.accesskey "H">
+<!ENTITY account.connecting           "Konektatzen...">
+<!ENTITY account.disconnecting        "Deskonektatzen…">
+<!ENTITY account.disconnected         "Konektatu gabe">

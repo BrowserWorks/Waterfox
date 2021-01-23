@@ -17,36 +17,58 @@
 
 namespace mozilla {
 
-UniquePtr<Sdp> RsdparsaSdpParser::Parse(const std::string& sdpText) {
-  ClearParseErrors();
-  RustSdpSession* result;
-  RustSdpError* err;
-  StringView sdpTextView{sdpText.c_str(), sdpText.length()};
+const std::string& RsdparsaSdpParser::ParserName() {
+  static const std::string& WEBRTC_SDP_NAME = "WEBRTCSDP";
+  return WEBRTC_SDP_NAME;
+}
+
+UniquePtr<SdpParser::Results> RsdparsaSdpParser::Parse(
+    const std::string& aText) {
+  UniquePtr<SdpParser::InternalResults> results(
+      new SdpParser::InternalResults(Name()));
+  RustSdpSession* result = nullptr;
+  RustSdpError* err = nullptr;
+  StringView sdpTextView{aText.c_str(), aText.length()};
   nsresult rv = parse_sdp(sdpTextView, false, &result, &err);
   if (rv != NS_OK) {
     size_t line = sdp_get_error_line_num(err);
-    std::string errMsg = convertStringView(sdp_get_error_message(err));
-    sdp_free_error(err);
-    AddParseError(line, errMsg);
-    return nullptr;
+    char* cString = sdp_get_error_message(err);
+    if (cString) {
+      std::string errMsg(cString);
+      sdp_free_error_message(cString);
+      sdp_free_error(err);
+      results->AddParseError(line, errMsg);
+    } else {
+      results->AddParseError(line, "Unable to retreive parse error.");
+    }
+    return results;
   }
 
   if (err) {
     size_t line = sdp_get_error_line_num(err);
-    std::string warningMsg = convertStringView(sdp_get_error_message(err));
-    sdp_free_error(err);
-    AddParseWarnings(line, warningMsg);
+    char* cString = sdp_get_error_message(err);
+    if (cString) {
+      std::string warningMsg(cString);
+      results->AddParseWarning(line, warningMsg);
+      sdp_free_error_message(cString);
+      sdp_free_error(err);
+    } else {
+      results->AddParseWarning(line, "Unable to retreive parse warning.");
+    }
   }
 
-  RsdparsaSessionHandle uniqueResult;
-  uniqueResult.reset(result);
+  RsdparsaSessionHandle uniqueResult(result);
   RustSdpOrigin rustOrigin = sdp_get_origin(uniqueResult.get());
-  sdp::AddrType addrType = convertAddressType(rustOrigin.addr.addrType);
+  auto address = convertExplicitlyTypedAddress(&rustOrigin.addr);
   SdpOrigin origin(convertStringView(rustOrigin.username), rustOrigin.sessionId,
-                   rustOrigin.sessionVersion, addrType,
-                   std::string(rustOrigin.addr.unicastAddr));
+                   rustOrigin.sessionVersion, address.first, address.second);
 
-  return MakeUnique<RsdparsaSdp>(std::move(uniqueResult), origin);
+  results->SetSdp(MakeUnique<RsdparsaSdp>(std::move(uniqueResult), origin));
+  return results;
+}
+
+bool RsdparsaSdpParser::IsNamed(const std::string& aName) {
+  return aName == ParserName();
 }
 
 }  // namespace mozilla

@@ -2,18 +2,22 @@
 set -x -e -v
 
 WORKSPACE=$HOME/workspace
-HOME_DIR=$WORKSPACE/build
 INSTALL_DIR=$WORKSPACE/wine
-UPLOAD_DIR=$HOME/artifacts
 
 mkdir -p $INSTALL_DIR
+mkdir -p $WORKSPACE/build/wine
+mkdir -p $WORKSPACE/build/wine64
 
-cd $HOME_DIR
-
-# --------------
-cd wine-3.0.3
-./configure --prefix=$INSTALL_DIR/
+cd $WORKSPACE/build/wine64
+$MOZ_FETCHES_DIR/wine-5.0/configure --enable-win64 --without-x --without-freetype --prefix=$INSTALL_DIR/
 make -j$(nproc)
+
+cd $WORKSPACE/build/wine
+$MOZ_FETCHES_DIR/wine-5.0/configure --with-wine64=../wine64 --without-x --without-freetype --prefix=$INSTALL_DIR/
+make -j$(nproc)
+make install
+
+cd $WORKSPACE/build/wine64
 make install
 
 # --------------

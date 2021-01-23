@@ -21,18 +21,12 @@ StyleInfo::StyleInfo(dom::Element* aElement) : mElement(aElement) {
 
 void StyleInfo::Display(nsAString& aValue) {
   aValue.Truncate();
-  AppendASCIItoUTF16(
-      nsCSSProps::ValueToKeyword(mComputedStyle->StyleDisplay()->mDisplay,
-                                 nsCSSProps::kDisplayKTable),
-      aValue);
+  mComputedStyle->GetComputedPropertyValue(eCSSProperty_display, aValue);
 }
 
 void StyleInfo::TextAlign(nsAString& aValue) {
   aValue.Truncate();
-  AppendASCIItoUTF16(
-      nsCSSProps::ValueToKeyword(mComputedStyle->StyleText()->mTextAlign,
-                                 nsCSSProps::kTextAlignKTable),
-      aValue);
+  mComputedStyle->GetComputedPropertyValue(eCSSProperty_text_align, aValue);
 }
 
 void StyleInfo::TextIndent(nsAString& aValue) {
@@ -40,7 +34,7 @@ void StyleInfo::TextIndent(nsAString& aValue) {
 
   const auto& textIndent = mComputedStyle->StyleText()->mTextIndent;
   if (textIndent.ConvertsToLength()) {
-    aValue.AppendFloat(textIndent.LengthInCSSPixels());
+    aValue.AppendFloat(textIndent.ToLengthInCSSPixels());
     aValue.AppendLiteral("px");
     return;
   }
@@ -49,7 +43,8 @@ void StyleInfo::TextIndent(nsAString& aValue) {
     aValue.AppendLiteral("%");
     return;
   }
-  // FIXME: This doesn't handle calc in any meaningful way?
+  // FIXME: This doesn't handle calc in any meaningful way? Probably should just
+  // use the Servo serialization code...
   aValue.AppendLiteral("0px");
 }
 
@@ -76,7 +71,23 @@ void StyleInfo::FormatColor(const nscolor& aValue, nsString& aFormattedValue) {
 
 void StyleInfo::FormatTextDecorationStyle(uint8_t aValue,
                                           nsAString& aFormattedValue) {
-  nsCSSKeyword keyword = nsCSSProps::ValueToKeywordEnum(
-      aValue, nsCSSProps::kTextDecorationStyleKTable);
-  AppendUTF8toUTF16(nsCSSKeywords::GetStringValue(keyword), aFormattedValue);
+  // TODO: When these are enum classes that rust also understands we should just
+  // make an FFI call here.
+  switch (aValue) {
+    case NS_STYLE_TEXT_DECORATION_STYLE_NONE:
+      return aFormattedValue.AssignASCII("-moz-none");
+    case NS_STYLE_TEXT_DECORATION_STYLE_SOLID:
+      return aFormattedValue.AssignASCII("solid");
+    case NS_STYLE_TEXT_DECORATION_STYLE_DOUBLE:
+      return aFormattedValue.AssignASCII("double");
+    case NS_STYLE_TEXT_DECORATION_STYLE_DOTTED:
+      return aFormattedValue.AssignASCII("dotted");
+    case NS_STYLE_TEXT_DECORATION_STYLE_DASHED:
+      return aFormattedValue.AssignASCII("dashed");
+    case NS_STYLE_TEXT_DECORATION_STYLE_WAVY:
+      return aFormattedValue.AssignASCII("wavy");
+    default:
+      MOZ_ASSERT_UNREACHABLE("Unknown decoration style");
+      break;
+  }
 }

@@ -12,22 +12,24 @@
 #include "nsIRunnable.h"
 #include "nsTArray.h"
 
-using mozilla::dom::ClassifierInfo;
 using mozilla::ipc::IPCResult;
 
 namespace mozilla {
 namespace net {
 
+class BackgroundDataBridgeChild;
 class HttpChannelChild;
 
 class HttpBackgroundChannelChild final : public PHttpBackgroundChannelChild {
   friend class BackgroundChannelCreateCallback;
   friend class PHttpBackgroundChannelChild;
+  friend class HttpChannelChild;
+  friend class BackgroundDataBridgeChild;
 
  public:
   explicit HttpBackgroundChannelChild();
 
-  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(HttpBackgroundChannelChild)
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(HttpBackgroundChannelChild, final)
 
   // Associate this background channel with a HttpChannelChild and
   // initiate the createion of the PBackground IPC channel.
@@ -46,17 +48,14 @@ class HttpBackgroundChannelChild final : public PHttpBackgroundChannelChild {
                                    const nsresult& aTransportStatus,
                                    const uint64_t& aOffset,
                                    const uint32_t& aCount,
-                                   const nsCString& aData);
+                                   const nsCString& aData,
+                                   const bool& aDataFromSocketProcess);
 
-  IPCResult RecvOnStopRequest(const nsresult& aChannelStatus,
-                              const ResourceTimingStruct& aTiming,
-                              const TimeStamp& aLastActiveTabOptHit,
-                              const nsHttpHeaderArray& aResponseTrailers);
-
-  IPCResult RecvOnProgress(const int64_t& aProgress,
-                           const int64_t& aProgressMax);
-
-  IPCResult RecvOnStatus(const nsresult& aStatus);
+  IPCResult RecvOnStopRequest(
+      const nsresult& aChannelStatus, const ResourceTimingStructArgs& aTiming,
+      const TimeStamp& aLastActiveTabOptHit,
+      const nsHttpHeaderArray& aResponseTrailers,
+      const nsTArray<ConsoleReportCollected>& aConsoleReports);
 
   IPCResult RecvFlushedForDiversion();
 
@@ -64,24 +63,9 @@ class HttpBackgroundChannelChild final : public PHttpBackgroundChannelChild {
 
   IPCResult RecvOnStartRequestSent();
 
-  IPCResult RecvNotifyChannelClassifierProtectionDisabled(
-      const uint32_t& aAcceptedReason);
-
-  IPCResult RecvNotifyCookieAllowed();
-
-  IPCResult RecvNotifyCookieBlocked(const uint32_t& aRejectedReason);
-
-  IPCResult RecvNotifyClassificationFlags(const uint32_t& aClassificationFlags,
-                                          const bool& aIsThirdParty);
-
-  IPCResult RecvNotifyFlashPluginStateChanged(
-      const nsIHttpChannel::FlashPluginState& aState);
-
-  IPCResult RecvSetClassifierMatchedInfo(const ClassifierInfo& info);
-
-  IPCResult RecvSetClassifierMatchedTrackingInfo(const ClassifierInfo& info);
-
   void ActorDestroy(ActorDestroyReason aWhy) override;
+
+  void CreateDataBridge();
 
  private:
   virtual ~HttpBackgroundChannelChild();
@@ -97,7 +81,12 @@ class HttpBackgroundChannelChild final : public PHttpBackgroundChannelChild {
   // OnStartRequestReceived.
   // return true after both RecvOnStartRequestSend and OnStartRequestReceived
   // are invoked.
-  bool IsWaitingOnStartRequest();
+  // When ODA message is from socket process, it is possible that both
+  // RecvOnStartRequestSent and OnStartRequestReceived are not invoked, but
+  // RecvOnTransportAndData is already invoked. In this case, we only need to
+  // check if OnStartRequestReceived is invoked to make sure ODA doesn't happen
+  // before OnStartRequest.
+  bool IsWaitingOnStartRequest(bool aDataFromSocketProcess = false);
 
   // Associated HttpChannelChild for handling the channel events.
   // Will be removed while failed to create background channel,
@@ -117,6 +106,8 @@ class HttpBackgroundChannelChild final : public PHttpBackgroundChannelChild {
   // Should be flushed after OnStartRequest is received and handled.
   // Should only access on STS thread.
   nsTArray<nsCOMPtr<nsIRunnable>> mQueuedRunnables;
+
+  RefPtr<BackgroundDataBridgeChild> mDataBridgeChild;
 };
 
 }  // namespace net

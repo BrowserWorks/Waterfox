@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "ਫਾਰਮ ਵਿਸ਼ੇਸ਼ਤਾ">
+
+<!ENTITY Settings.label "ਵਿਸ਼ੇਸ਼ਤਾ">
+
+<!ENTITY FormName.label "ਫਾਰਮ ਨਾਂ:">
+<!ENTITY FormName.accesskey "N">
+<!ENTITY FormAction.label "ਕਾਰਵਾਈ URL:">
+<!ENTITY FormAction.accesskey "A">
+<!ENTITY FormMethod.label "ਸੋਧ:">
+<!ENTITY FormMethod.accesskey "M">
+<!ENTITY FormEncType.label "ਇੰਕੋਡਿੰਗ:">
+<!ENTITY FormEncType.accesskey "c">
+<!ENTITY FormTarget.label "ਟਿਕਾਣਾ ਫਰੇਮ:">
+<!ENTITY FormTarget.accesskey "T">
+
+<!ENTITY RemoveForm.label "ਫਾਰਮ ਹਟਾਓ">
+<!ENTITY RemoveForm.accesskey "R">

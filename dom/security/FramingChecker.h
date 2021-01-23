@@ -7,29 +7,44 @@
 #ifndef mozilla_dom_FramingChecker_h
 #define mozilla_dom_FramingChecker_h
 
+#include "nsStringFwd.h"
+
 class nsIDocShell;
 class nsIChannel;
 class nsIHttpChannel;
 class nsIDocShellTreeItem;
 class nsIURI;
-class nsIPrincipal;
+class nsIContentSecurityPolicy;
+
+namespace mozilla {
+namespace dom {
+class BrowsingContext;
+}
+}  // namespace mozilla
 
 class FramingChecker {
  public:
   // Determine if X-Frame-Options allows content to be framed
   // as a subdocument
-  static bool CheckFrameOptions(nsIChannel* aChannel, nsIDocShell* aDocShell,
-                                nsIPrincipal* aPrincipal);
+  static bool CheckFrameOptions(nsIChannel* aChannel,
+                                nsIContentSecurityPolicy* aCSP);
 
  protected:
-  enum XFOHeader { eDENY, eSAMEORIGIN, eALLOWFROM };
+  enum XFOHeader { eDENY, eSAMEORIGIN };
+
+  /**
+   * Logs to the window about a X-Frame-Options error.
+   *
+   * @param aMessageTag the error message identifier to log
+   * @param aChannel the HTTP Channel
+   * @param aURI the URI of the frame attempting to load
+   * @param aPolicy the header value string from the frame to the console.
+   */
+  static void ReportError(const char* aMessageTag, nsIHttpChannel* aChannel,
+                          nsIURI* aURI, const nsAString& aPolicy);
 
   static bool CheckOneFrameOptionsPolicy(nsIHttpChannel* aHttpChannel,
-                                         const nsAString& aPolicy,
-                                         nsIDocShell* aDocShell);
-
-  static void ReportXFOViolation(nsIDocShellTreeItem* aTopDocShellItem,
-                                 nsIURI* aThisURI, XFOHeader aHeader);
+                                         const nsAString& aPolicy);
 };
 
 #endif /* mozilla_dom_FramingChecker_h */

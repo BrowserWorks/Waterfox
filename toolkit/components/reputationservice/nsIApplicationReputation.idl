@@ -10,6 +10,7 @@ interface nsIApplicationReputationCallback;
 interface nsIApplicationReputationQuery;
 interface nsIArray;
 interface nsIURI;
+interface nsIReferrerInfo;
 
 /*
  * A service for asynchronously querying an application reputation service
@@ -46,6 +47,19 @@ interface nsIApplicationReputationService : nsISupports {
    */
   void queryReputation(in nsIApplicationReputationQuery aQuery,
                        in nsIApplicationReputationCallback aCallback);
+
+  /**
+   * Check if a file with this name should be treated as a binary executable,
+   * and is therefore subject to application reputation checks.
+   * Will return true if the filename's extension is either:
+   * - in kBinaryFileExtensions in ApplicationReputation.cpp
+   * - in sExecutableExts in nsLocalFileCommon.h *and* not in
+   *   kNonBinaryExecutables in ApplicationReputation.cpp
+   *
+   * @param aFilename
+   *        The filename to check.
+   */
+  bool isBinary(in AUTF8String aFilename);
 };
 
 /**
@@ -63,7 +77,7 @@ interface nsIApplicationReputationQuery : nsISupports {
   /*
    * The reference, if any.
    */
-  readonly attribute nsIURI referrerURI;
+  readonly attribute nsIReferrerInfo referrerInfo;
 
   /*
    * The target filename for the downloaded file, as inferred from the source
@@ -86,10 +100,10 @@ interface nsIApplicationReputationQuery : nsISupports {
   readonly attribute ACString sha256Hash;
 
   /*
-   * The nsIArray of nsIX509CertList of nsIX509Cert that verify for this
+   * The Array of Array of Array of bytes that verify for this
    * binary, if it is signed.
    */
-  readonly attribute nsIArray signatureInfo;
+  readonly attribute Array<Array<Array<uint8_t> > > signatureInfo;
 
   /*
    * The nsIArray of nsIPrincipal of redirects that lead to this download. The

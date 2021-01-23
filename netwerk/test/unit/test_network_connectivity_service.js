@@ -53,7 +53,10 @@ function contentHandler(metadata, response) {
 
 const DEFAULT_WAIT_TIME = 200; // ms
 
-const kDNSv6Domain = mozinfo.os == "linux" ? "ip6-localhost" : "localhost";
+const kDNSv6Domain =
+  mozinfo.os == "linux" || mozinfo.os == "android"
+    ? "ip6-localhost"
+    : "localhost";
 
 add_task(async function testDNS() {
   let ncs = Cc[
@@ -120,11 +123,7 @@ add_task(async function testDNS() {
     "network.connectivity-service.DNSv6.domain",
     kDNSv6Domain
   );
-  Services.obs.notifyObservers(
-    null,
-    "network:captive-portal-connectivity",
-    null
-  );
+  Services.obs.notifyObservers(null, "network:captive-portal-connectivity");
   // This will cause the state to go to UNKNOWN for a bit, until the check is completed.
   equal(
     ncs.DNSv4,
@@ -194,11 +193,7 @@ add_task(async function testDNS() {
   // check that the CPS status is NOT_AVAILABLE when the endpoint is down.
   await new Promise(resolve => httpserver.stop(resolve));
   await new Promise(resolve => httpserverv6.stop(resolve));
-  Services.obs.notifyObservers(
-    null,
-    "network:captive-portal-connectivity",
-    null
-  );
+  Services.obs.notifyObservers(null, "network:captive-portal-connectivity");
   await promiseObserverNotification(
     "network:connectivity-service:ip-checks-complete"
   );

@@ -8,6 +8,7 @@
 
 #include <vector>
 
+#include "ipc/IPCMessageUtils.h"
 #include "ProcessedStack.h"
 
 class JSObject;
@@ -25,6 +26,11 @@ class CombinedStacks {
   explicit CombinedStacks();
   explicit CombinedStacks(size_t aMaxStacksCount);
 
+  CombinedStacks(CombinedStacks&&) = default;
+  CombinedStacks& operator=(CombinedStacks&&) = default;
+
+  void Swap(CombinedStacks& aOther);
+
   typedef std::vector<Telemetry::ProcessedStack::Frame> Stack;
   const Telemetry::ProcessedStack::Module& GetModule(unsigned aIndex) const;
   size_t GetModuleCount() const;
@@ -33,6 +39,8 @@ class CombinedStacks {
   size_t GetStackCount() const;
   size_t SizeOfExcludingThis() const;
   void RemoveStack(unsigned aIndex);
+  bool GetIsFromTerminatorWatchdog();
+  void SetIsFromTerminatorWatchdog(bool aIsFromTerminatorWatchdog);
 
 #if defined(MOZ_GECKO_PROFILER)
   /** Clears the contents of vectors and resets the index. */
@@ -47,6 +55,10 @@ class CombinedStacks {
   size_t mNextIndex;
   // The maximum number of stacks to keep in the CombinedStacks object.
   size_t mMaxStacksCount;
+  // Indicates if this stack came from a late write in nsTerminator.
+  bool mIsFromTerminatorWatchdog;
+
+  friend struct ::IPC::ParamTraits<CombinedStacks>;
 };
 
 /**
@@ -56,5 +68,42 @@ JSObject* CreateJSStackObject(JSContext* cx, const CombinedStacks& stacks);
 
 }  // namespace Telemetry
 }  // namespace mozilla
+
+namespace IPC {
+
+template <>
+struct ParamTraits<mozilla::Telemetry::CombinedStacks> {
+  typedef mozilla::Telemetry::CombinedStacks paramType;
+
+  static void Write(Message* aMsg, const paramType& aParam) {
+    WriteParam(aMsg, aParam.mModules);
+    WriteParam(aMsg, aParam.mStacks);
+    WriteParam(aMsg, aParam.mNextIndex);
+    WriteParam(aMsg, aParam.mMaxStacksCount);
+  }
+
+  static bool Read(const Message* aMsg, PickleIterator* aIter,
+                   paramType* aResult) {
+    if (!ReadParam(aMsg, aIter, &aResult->mModules)) {
+      return false;
+    }
+
+    if (!ReadParam(aMsg, aIter, &aResult->mStacks)) {
+      return false;
+    }
+
+    if (!ReadParam(aMsg, aIter, &aResult->mNextIndex)) {
+      return false;
+    }
+
+    if (!ReadParam(aMsg, aIter, &aResult->mMaxStacksCount)) {
+      return false;
+    }
+
+    return true;
+  }
+};
+
+}  // namespace IPC
 
 #endif  // CombinedStacks_h__

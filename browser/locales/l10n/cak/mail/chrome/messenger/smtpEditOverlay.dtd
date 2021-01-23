@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY settings.caption "Taq nuk'ulem">
+<!ENTITY security.caption "Jikomal chuqa' Jikib'anem">
+<!ENTITY serverName.label "Rub'i' K'uxasamaj:">
+<!ENTITY serverName.accesskey "K">
+<!ENTITY serverDescription.label "Tzijoxkil:">
+<!ENTITY serverDescription.accesskey "T">
+<!ENTITY serverPort.label "B'ey:">
+<!ENTITY serverPort.accesskey "B">
+<!ENTITY userName.label "Rub'i' winäq:">
+<!ENTITY userName.accesskey "R">
+<!ENTITY connectionSecurity.label "Rujikomal okem:">
+<!ENTITY connectionSecurity.accesskey "e">
+<!ENTITY connectionSecurityType-0.label "Majun">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, kan wachel">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY smtpEditTitle.label "SMTP K'uxasamaj">
+<!ENTITY serverPortDefault.label "K'o wi:">
+<!ENTITY authMethod.label "Rub'eyal jikib'axïk:">
+<!ENTITY authMethod.accesskey "i">

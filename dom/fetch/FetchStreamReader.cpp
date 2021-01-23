@@ -7,7 +7,6 @@
 #include "FetchStreamReader.h"
 #include "InternalResponse.h"
 #include "mozilla/dom/PromiseBinding.h"
-#include "mozilla/SystemGroup.h"
 #include "mozilla/TaskCategory.h"
 #include "nsContentUtils.h"
 #include "nsIScriptError.h"
@@ -82,7 +81,7 @@ nsresult FetchStreamReader::Create(JSContext* aCx, nsIGlobalObject* aGlobal,
 
     // These 2 objects create a ref-cycle here that is broken when the stream is
     // closed or the worker shutsdown.
-    streamReader->mWorkerRef = workerRef.forget();
+    streamReader->mWorkerRef = std::move(workerRef);
   }
 
   pipeIn.forget(aInputStream);
@@ -253,16 +252,15 @@ void FetchStreamReader::ResolvedCallback(JSContext* aCx,
     return;
   }
 
-  UniquePtr<FetchReadableStreamReadDataArray> value(
-      new FetchReadableStreamReadDataArray);
-  if (!value->Init(aCx, aValue) || !value->mValue.WasPassed()) {
+  RootedDictionary<FetchReadableStreamReadDataArray> value(aCx);
+  if (!value.Init(aCx, aValue) || !value.mValue.WasPassed()) {
     JS_ClearPendingException(aCx);
     CloseAndRelease(aCx, NS_ERROR_DOM_INVALID_STATE_ERR);
     return;
   }
 
-  Uint8Array& array = value->mValue.Value();
-  array.ComputeLengthAndData();
+  Uint8Array& array = value.mValue.Value();
+  array.ComputeState();
   uint32_t len = array.Length();
 
   if (len == 0) {

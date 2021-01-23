@@ -7,6 +7,8 @@
 #ifndef mozilla_dom_serviceworkerregistrationinfo_h
 #define mozilla_dom_serviceworkerregistrationinfo_h
 
+#include <functional>
+
 #include "mozilla/dom/ServiceWorkerInfo.h"
 #include "mozilla/dom/ServiceWorkerRegistrationBinding.h"
 #include "mozilla/dom/ServiceWorkerRegistrationDescriptor.h"
@@ -35,6 +37,8 @@ class ServiceWorkerRegistrationInfo final
   };
   nsTArray<UniquePtr<VersionEntry>> mVersionList;
 
+  const nsID mAgentClusterId = nsContentUtils::GenerateUUID();
+
   uint32_t mControlledClientsCounter;
   uint32_t mDelayMultiplier;
 
@@ -53,16 +57,22 @@ class ServiceWorkerRegistrationInfo final
 
   virtual ~ServiceWorkerRegistrationInfo();
 
-  // When unregister() is called on a registration, it is not immediately
-  // removed since documents may be controlled. It is marked as
-  // pendingUninstall and when all controlling documents go away, removed.
-  bool mPendingUninstall;
+  // When unregister() is called on a registration, it is removed from the
+  // "scope to registration map" but not immediately "cleared" (i.e. its workers
+  // terminated, updated to the redundant state, etc.) because it may still be
+  // controlling clients. It is marked as unregistered and when all controlled
+  // clients go away, cleared. This way we can tell if a registration
+  // is unregistered by querying the object itself rather than incurring a table
+  // lookup (in the case when the registrations are passed around as pointers).
+  bool mUnregistered;
 
   bool mCorrupt;
 
  public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSISERVICEWORKERREGISTRATIONINFO
+
+  typedef std::function<void()> TryToActivateCallback;
 
   ServiceWorkerRegistrationInfo(const nsACString& aScope,
                                 nsIPrincipal* aPrincipal,
@@ -77,11 +87,9 @@ class ServiceWorkerRegistrationInfo final
 
   nsIPrincipal* Principal() const;
 
-  bool IsPendingUninstall() const;
+  bool IsUnregistered() const;
 
-  void SetPendingUninstall();
-
-  void ClearPendingUninstall();
+  void SetUnregistered();
 
   already_AddRefed<ServiceWorkerInfo> Newest() const {
     RefPtr<ServiceWorkerInfo> newest;
@@ -94,6 +102,14 @@ class ServiceWorkerRegistrationInfo final
     }
 
     return newest.forget();
+  }
+
+  already_AddRefed<ServiceWorkerInfo> NewestIncludingEvaluating() const {
+    if (mEvaluatingWorker) {
+      RefPtr<ServiceWorkerInfo> newest = mEvaluatingWorker;
+      return newest.forget();
+    }
+    return Newest();
   }
 
   already_AddRefed<ServiceWorkerInfo> GetServiceWorkerInfoById(uint64_t aId);
@@ -112,15 +128,19 @@ class ServiceWorkerRegistrationInfo final
     return mActiveWorker && mControlledClientsCounter;
   }
 
+  // As a side effect, this nullifies
+  // `m{Evaluating,Installing,Waiting,Active}Worker`s.
+  void ShutdownWorkers();
+
   void Clear();
 
   void ClearAsCorrupt();
 
   bool IsCorrupt() const;
 
-  void TryToActivateAsync();
+  void TryToActivateAsync(TryToActivateCallback&& aCallback = nullptr);
 
-  void TryToActivate();
+  void TryToActivate(TryToActivateCallback&& aCallback);
 
   void Activate();
 
@@ -195,11 +215,15 @@ class ServiceWorkerRegistrationInfo final
 
   uint64_t Version() const;
 
-  uint32_t GetUpdateDelay();
+  uint32_t GetUpdateDelay(const bool aWithMultiplier = true);
 
   void FireUpdateFound();
 
-  void NotifyRemoved();
+  void NotifyCleared();
+
+  void ClearWhenIdle();
+
+  const nsID& AgentClusterId() const;
 
  private:
   // Roughly equivalent to [[Update Registration State algorithm]]. Make sure
@@ -219,6 +243,13 @@ class ServiceWorkerRegistrationInfo final
   static uint64_t GetNextId();
 
   static uint64_t GetNextVersion();
+
+  // `aFunc`'s argument will be a reference to
+  // `m{Evaluating,Installing,Waiting,Active}Worker` (not to copy of them).
+  // Additionally, a null check will be performed for each worker before each
+  // call to `aFunc`, so `aFunc` will always get a reference to a non-null
+  // pointer.
+  void ForEachWorker(void (*aFunc)(RefPtr<ServiceWorkerInfo>&));
 };
 
 }  // namespace dom

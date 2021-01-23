@@ -2,20 +2,21 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 import os
 import subprocess
 import platform
-from mozboot.util import get_state_dir
-import which
-
 from distutils.version import (
     StrictVersion,
 )
 
-NODE_MIN_VERSION = StrictVersion("8.11.0")
-NPM_MIN_VERSION = StrictVersion("6.13.4")
+from mozboot.util import get_state_dir
+from mozfile import which
+from six import PY3
+
+NODE_MIN_VERSION = StrictVersion("10.21.0")
+NPM_MIN_VERSION = StrictVersion("6.14.4")
 
 
 def find_node_paths():
@@ -25,7 +26,10 @@ def find_node_paths():
     """
     # Also add in the location to which `mach bootstrap` or
     # `mach artifact toolchain` installs clang.
-    mozbuild_state_dir = get_state_dir()
+    if 'MOZ_FETCHES_DIR' in os.environ:
+        mozbuild_state_dir = os.environ['MOZ_FETCHES_DIR']
+    else:
+        mozbuild_state_dir = get_state_dir()
 
     if platform.system() == "Windows":
         mozbuild_node_path = os.path.join(mozbuild_state_dir, 'node')
@@ -57,28 +61,15 @@ def check_executable_version(exe, wrap_call_with_node=False):
     if wrap_call_with_node and platform.system() != "Windows":
         binary, _ = find_node_executable()
         if binary:
-            out = subprocess.check_output([binary, exe, "--version"]).lstrip('v').rstrip()
+            out = subprocess.check_output([binary, exe, "--version"],
+                                          universal_newlines=PY3).lstrip('v').rstrip()
 
     # If we can't find node, or we don't need to wrap it, fallback to calling
     # direct.
     if not out:
-        out = subprocess.check_output([exe, "--version"]).lstrip('v').rstrip()
+        out = subprocess.check_output([exe, "--version"],
+                                      universal_newlines=PY3).lstrip('v').rstrip()
     return StrictVersion(out)
-
-
-def simple_which(filename, path=None):
-    # Note: On windows, npm uses ".cmd"
-    exts = [".cmd", ".exe", ""] if platform.system() == "Windows" else [""]
-
-    for ext in exts:
-        try:
-            return which.which(filename + ext, path)
-        except which.WhichError:
-            pass
-
-    # If we got this far, we didn't find it with any of the extensions, so
-    # just return.
-    return None
 
 
 def find_node_executable(nodejs_exe=os.environ.get('NODEJS'), min_version=NODE_MIN_VERSION):
@@ -120,10 +111,7 @@ def find_executable(names, min_version, use_node_for_version_check=False):
 
     found_exe = None
     for name in names:
-        try:
-            exe = simple_which(name, paths)
-        except which.WhichError:
-            continue
+        exe = which(name, path=paths)
 
         if not exe:
             continue

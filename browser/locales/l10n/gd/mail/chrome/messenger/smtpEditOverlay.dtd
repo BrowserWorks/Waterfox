@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY settings.caption "Roghainnean">
+<!ENTITY security.caption "Tèarainteachd is dearbhachadh">
+<!ENTITY serverName.label "Ainm an fhrithealaiche:">
+<!ENTITY serverName.accesskey "A">
+<!ENTITY serverDescription.label "Tuairisgeul:">
+<!ENTITY serverDescription.accesskey "T">
+<!ENTITY serverPort.label "Port:">
+<!ENTITY serverPort.accesskey "P">
+<!ENTITY userName.label "Ainm a' chleachdaiche:">
+<!ENTITY userName.accesskey "m">
+<!ENTITY connectionSecurity.label "Tèarainteachd a' cheangail:">
+<!ENTITY connectionSecurity.accesskey "n">
+<!ENTITY connectionSecurityType-0.label "Chan eil gin">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, ma bhios e ri fhaighinn">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY smtpEditTitle.label "Frithealaiche SMTP">
+<!ENTITY serverPortDefault.label "Bunaiteach:">
+<!ENTITY authMethod.label "An dòigh dearbhachaidh:">
+<!ENTITY authMethod.accesskey "i">

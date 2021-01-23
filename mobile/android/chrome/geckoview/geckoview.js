@@ -15,6 +15,7 @@ var { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 XPCOMUtils.defineLazyModuleGetters(this, {
   E10SUtils: "resource://gre/modules/E10SUtils.jsm",
   EventDispatcher: "resource://gre/modules/Messaging.jsm",
+  GeckoViewSettings: "resource://gre/modules/GeckoViewSettings.jsm",
   GeckoViewUtils: "resource://gre/modules/GeckoViewUtils.jsm",
   HistogramStopwatch: "resource://gre/modules/GeckoViewTelemetry.jsm",
 });
@@ -22,6 +23,10 @@ XPCOMUtils.defineLazyModuleGetters(this, {
 XPCOMUtils.defineLazyGetter(this, "WindowEventDispatcher", () =>
   EventDispatcher.for(window)
 );
+
+// This file assumes `warn` and `debug` are imported into scope
+// by the child scripts.
+/* global debug, warn */
 
 /**
  * ModuleManager creates and manages GeckoView modules. Each GeckoView module
@@ -67,6 +72,11 @@ var ModuleManager = {
     );
 
     window.document.documentElement.appendChild(aBrowser);
+
+    // TODO: Bug 1635914 remove workaround. In theory this should not be needed
+    // as docShell should be active by default, but this is not currently the
+    // case so we force it here.
+    aBrowser.docShellIsActive = true;
 
     WindowEventDispatcher.registerListener(this, [
       "GeckoView:UpdateModuleState",
@@ -120,32 +130,68 @@ var ModuleManager = {
     this._modules.forEach(aCallback, this);
   },
 
-  updateRemoteTypeForURI(aURI) {
-    const currentType = this.browser.remoteType || E10SUtils.NOT_REMOTE;
-    const remoteType = E10SUtils.getRemoteTypeForURI(
+  getActor(aActorName) {
+    return this.browser.browsingContext.currentWindowGlobal.getActor(
+      aActorName
+    );
+  },
+
+  remoteTypeFor(aURI, currentType) {
+    return E10SUtils.getRemoteTypeForURI(
       aURI,
-      this.settings.useMultiprocess,
+      GeckoViewSettings.useMultiprocess,
       /* useRemoteSubframes */ false,
       currentType,
       this.browser.currentURI
     );
+  },
 
-    debug`updateRemoteType: uri=${aURI} currentType=${currentType}
+  shouldLoadInThisProcess(aURI) {
+    const currentType = this.browser.remoteType || E10SUtils.NOT_REMOTE;
+    return currentType === this.remoteTypeFor(aURI, currentType);
+  },
+
+  async updateRemoteAndNavigate(aURI, aLoadOptions, aHistoryIndex = -1) {
+    const currentType = this.browser.remoteType || E10SUtils.NOT_REMOTE;
+    const remoteType = this.remoteTypeFor(aURI, currentType);
+
+    debug`updateRemoteAndNavigate: uri=${aURI} currentType=${currentType}
                              remoteType=${remoteType}`;
 
-    if (currentType === remoteType) {
-      // We're already using a child process of the correct type.
-      return false;
-    }
-
-    if (remoteType !== E10SUtils.NOT_REMOTE && !this.settings.useMultiprocess) {
+    if (
+      remoteType !== E10SUtils.NOT_REMOTE &&
+      !GeckoViewSettings.useMultiprocess
+    ) {
       warn`Tried to create a remote browser in non-multiprocess mode`;
       return false;
     }
 
-    // Now we're switching the remoteness (value of "remote" attr).
+    // Session state like history is maintained at the process level so we need
+    // to collect it and restore it in the other process when switching.
+    // TODO: This should go away when we migrate the history to the main
+    // process Bug 1507287.
+    const { history } = await this.getActor("GeckoViewContent").sendQuery(
+      "CollectSessionState"
+    );
+    // Ignore scroll and form data since we're navigating away from this page
+    // anyway
+    const sessionState = { history };
 
-    let disabledModules = [];
+    // If the navigation is from history we don't need to load the page again
+    // so we ignore loadOptions
+    if (aHistoryIndex >= 0) {
+      // Make sure the historyIndex is valid
+      history.index = aHistoryIndex + 1;
+      history.index = Math.max(
+        1,
+        Math.min(history.index, history.entries.length)
+      );
+    } else {
+      sessionState.loadOptions = aLoadOptions;
+    }
+
+    // Now we're switching the remoteness (value of "remote" attr).
+    const disabledModules = [];
     this.forEach(module => {
       if (module.enabled) {
         module.enabled = false;
@@ -189,6 +235,11 @@ var ModuleManager = {
       module.enabled = true;
     });
 
+    this.messageManager.sendAsyncMessage(
+      "GeckoView:RestoreState",
+      sessionState
+    );
+
     this.browser.focus();
     return true;
   },
@@ -196,6 +247,11 @@ var ModuleManager = {
   _updateSettings(aSettings) {
     Object.assign(this._settings, aSettings);
     this._frozenSettings = Object.freeze(Object.assign({}, this._settings));
+
+    const windowType = aSettings.isPopup
+      ? "navigator:popup"
+      : "navigator:geckoview";
+    window.document.documentElement.setAttribute("windowtype", windowType);
 
     this.forEach(module => {
       if (module.impl) {
@@ -419,17 +475,23 @@ class ModuleInfo {
 }
 
 function createBrowser() {
-  const browser = (window.browser = document.createElement("browser"));
+  const browser = (window.browser = document.createXULElement("browser"));
   // Identify this `<browser>` element uniquely to Marionette, devtools, etc.
   browser.permanentKey = {};
 
+  browser.setAttribute("nodefaultsrc", "true");
   browser.setAttribute("type", "content");
   browser.setAttribute("primary", "true");
   browser.setAttribute("flex", "1");
 
-  const settings = window.arguments[0].QueryInterface(Ci.nsIAndroidView)
-    .initData.settings;
-  if (settings.useMultiprocess) {
+  if (GeckoViewSettings.useMultiprocess) {
+    const pointerEventsEnabled = Services.prefs.getBoolPref(
+      "dom.w3c_pointer_events.multiprocess.android.enabled",
+      false
+    );
+    if (pointerEventsEnabled) {
+      Services.prefs.setBoolPref("dom.w3c_pointer_events.enabled", true);
+    }
     browser.setAttribute("remote", "true");
     browser.setAttribute("remoteType", E10SUtils.DEFAULT_REMOTE_TYPE);
   }
@@ -446,12 +508,6 @@ function startup() {
 
   const browser = createBrowser();
   ModuleManager.init(browser, [
-    {
-      name: "GeckoViewAccessibility",
-      onInit: {
-        resource: "resource://gre/modules/GeckoViewAccessibility.jsm",
-      },
-    },
     {
       name: "GeckoViewContent",
       onInit: {
@@ -470,7 +526,12 @@ function startup() {
       name: "GeckoViewNavigation",
       onInit: {
         resource: "resource://gre/modules/GeckoViewNavigation.jsm",
-        frameScript: "chrome://geckoview/content/GeckoViewNavigationChild.js",
+      },
+    },
+    {
+      name: "GeckoViewProcessHangMonitor",
+      onInit: {
+        resource: "resource://gre/modules/GeckoViewProcessHangMonitor.jsm",
       },
     },
     {
@@ -508,7 +569,7 @@ function startup() {
     },
     {
       name: "GeckoViewContentBlocking",
-      onEnable: {
+      onInit: {
         resource: "resource://gre/modules/GeckoViewContentBlocking.jsm",
       },
     },
@@ -518,7 +579,17 @@ function startup() {
         frameScript: "chrome://geckoview/content/SessionStateAggregator.js",
       },
     },
+    {
+      name: "GeckoViewAutofill",
+      onInit: {
+        frameScript: "chrome://geckoview/content/GeckoViewAutofillChild.js",
+      },
+    },
   ]);
+
+  // TODO: Bug 1569360 Allows actors to temporarely access ModuleManager until
+  // we migrate everything over to actors.
+  window.moduleManager = ModuleManager;
 
   Services.tm.dispatchToMainThread(() => {
     // This should always be the first thing we do here - any additional delayed
@@ -532,6 +603,12 @@ function startup() {
     InitLater(() =>
       Services.obs.notifyObservers(window, "browser-delayed-startup-finished")
     );
+
+    // Let the extension code know it can start loading things that were delayed
+    // while GeckoView started up.
+    InitLater(() => {
+      Services.obs.notifyObservers(window, "extensions-late-startup");
+    });
 
     // This should always go last, since the idle tasks (except for the ones with
     // timeouts) should execute in order. Note that this observer notification is

@@ -4,6 +4,10 @@
 
 "use strict";
 
+const { PermissionTestUtils } = ChromeUtils.import(
+  "resource://testing-common/PermissionTestUtils.jsm"
+);
+
 var tab;
 var notification;
 var notificationURL =
@@ -30,7 +34,7 @@ add_task(async function test_notificationPreventDefaultAndSwitchTabs() {
 
       // First, show a notification that will be have the tab-switching prevented.
       function promiseNotificationEvent(evt) {
-        return ContentTask.spawn(aBrowser, evt, async function(contentEvt) {
+        return SpecialPowers.spawn(aBrowser, [evt], async function(contentEvt) {
           return new Promise(resolve => {
             let contentNotification = content.wrappedJSObject._notification;
             contentNotification.addEventListener(
@@ -104,5 +108,5 @@ add_task(async function test_notificationPreventDefaultAndSwitchTabs() {
 });
 
 add_task(async function cleanup() {
-  Services.perms.remove(makeURI(notificationURL), "desktop-notification");
+  PermissionTestUtils.remove(notificationURL, "desktop-notification");
 });

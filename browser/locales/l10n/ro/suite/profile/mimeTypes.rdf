@@ -1,0 +1,86 @@
+<?xml version="1.0"?>  
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!--
+ This file is used as a persistent data store for helper application
+ information about both MIME type and protocol scheme helpers.
+
+ The root of the data are the two containers
+ <RDF:Seq about="urn:mimetypes:root"/> and <RDF:Seq about="urn:schemes:root"/>.
+
+ These contain one <RDF:li/> entry per MIME type/protocol.  Each <RDF:li/> entry
+ corresponds to a "urn:<class>:<type>" resource, where <class> is either
+ "mimetype" or "scheme" and <type> is either a MIME type in "major/minor" format
+ or a scheme.  For example, for HTML we would have "urn:mimetype:text/html",
+ while for mailto: we would have "urn:scheme:mailto".
+
+ Typically, this resource will be in the <RDF:Description/> node which has the
+ corresponding "about" attribute.
+
+ Each "urn:<class>:<type>" resource can have the following properties:
+
+   NC:Value - the MIME type or scheme string
+   NC:editable - a "true" or "false" depending on whether this entry is
+                 editable
+   NC:description - a description of the type ("HTML Document" for text/html)
+   NC:fileExtensions - for MIME types, there will be one of these properties
+                       per extension that corresponds to this MIME type,
+                       each one having a single extension as its value.
+   NC:handlerProp - the way the type should be handled.  This corresponds to a
+                    "urn:<class>:handler:<type>" resource.  Eg, the way HTML is
+                    handled would be stored in the
+                    "urn:mimetype:handler:text/html" resource.
+
+ Each "urn:<class>:handler:<type>" resource can have the following properties:
+
+   NC:useSystemDefault - "true" if we should handle per default OS setting,
+                          "false" or not set otherwise
+   NC:saveToDisk - "true" if the data should be saved to disk, "false" or not
+                   set otherwise.
+     (Note - if both of these are false, that means "open in helper app")
+   NC:alwaysAsk - "true" if the user should always be prompted before handling
+                  data of this type, false otherwise.
+   NC:externalApplication - the preferred helper application to use for this
+                            type.  This corresponds to a
+                            "urn:<class>:externalApplication:<type>" resource.
+   NC:possibleApplication - a helper application that can be used for this type.
+                            Since there can be multiple possible applications,
+                            there can be multiple assertions in the graph with
+                            this property for a given handler resource.
+
+ Each "urn:<class>:externalApplication:<type>" resource, and each resource
+ that represents a possible application, can have the following property:
+
+   NC:prettyName - the "pretty name" of the application ("Acrobat Reader" for
+                   /usr/bin/acroread, eg).
+
+ If the resource represents a local application, then it can have the following
+ property:
+
+   NC:path - the path to the application on the local filesystem, for example
+             /usr/bin/test or C:\windows\system32\cmd.exe.
+
+ If the resource represents a web application, then it can have the following
+ property:
+
+   NC:uriTemplate - a URI pointing to the web application to which the type
+                    should be handed off, with %s in the template representing
+                    the place where the content should be inserted. For example,
+                    here is a URI template for a service that lets you email
+                    an address in a mailto: link:
+                      http://www.example.com/sendmail?link=%s
+-->
+			
+<RDF:RDF xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:NC="http://home.netscape.com/NC-rdf#">
+
+  <RDF:Description about="urn:mimetypes"> 
+    <NC:MIME-types> 
+      <RDF:Seq about="urn:mimetypes:root"> 
+      </RDF:Seq>
+    </NC:MIME-types> 
+  </RDF:Description> 
+</RDF:RDF>

@@ -6,7 +6,7 @@
 
 #include "ChromeUtils.h"
 #include "MozQueryInterface.h"
-#include "nsIException.h"
+#include "xptinfo.h"
 
 #include <string.h>
 

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "Konto ja selle andmete eemaldamine">
+<!ENTITY removeButton.label           "Eemalda">
+<!ENTITY removeButton.accesskey       "E">
+<!ENTITY removeAccount.label          "Eemaldatakse konto info">
+<!ENTITY removeAccount.accesskey      "k">
+<!ENTITY removeAccount.desc           "Eemaldatakse vaid &brandShortName;i teadmised sellest kontost. See ei mõjuta kontot e-posti serveris.">
+<!ENTITY removeData.label             "Eemaldatakse kirjad">
+<!ENTITY removeData.accesskey         "i">
+<!ENTITY removeDataChat.label         "Eemaldatakse vestluste andmed">
+<!ENTITY removeDataChat.accesskey     "v">
+<!ENTITY removeDataLocalAccount.desc  "Eemaldab sinu kettalt kõik selle kontoga seotud kirjad, kaustad ja filtrid. See ei mõjuta mõnesid kirju, mida võidakse serveris säilitada. Ära vali seda valikut, kui kavatsed kohalikud andmed arhiveerida või neid hiljem &brandShortName;is uuesti kasutada.">
+<!ENTITY removeDataServerAccount.desc "Eemaldab sinu kettalt kõik selle kontoga seotud kirjad, kaustad ja filtrid. Sinu kirju ja kaustu säilitatakse siiski serveris edasi.">
+<!ENTITY removeDataChatAccount.desc   "Salvestuspinnalt kustutatakse kõigi selle kontoga seotud vestluste logid.">
+<!ENTITY showData.label               "Kuva andmete asukoht">
+<!ENTITY showData.accesskey           "a">
+<!ENTITY progressPending              "Valitud andmete eemaldamine…">
+<!ENTITY progressSuccess              "Eemaldamine õnnestus.">
+<!ENTITY progressFailure              "Eemaldamine ebaõnnestus.">

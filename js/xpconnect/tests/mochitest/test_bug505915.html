@@ -31,10 +31,8 @@ function go() {
         document.createTreeWalker(xdoc, 0, null);
         ok(false, "should have thrown a security exception");
     } catch (e) {
-        ok(/NS_ERROR_XPC_SECURITY_MANAGER_VETO/.test(e) ||
-           /TypeError: Argument 1 of Document.createTreeWalker does not implement interface Node/.test(e),
-           "threw a security exception or binding exception instead of an " +
-           "invalid child exception");
+        ok(/TypeError: Document.createTreeWalker: Argument 1 does not implement interface Node/.test(e),
+           "threw a binding exception instead of an invalid child exception");
     }
 
     SimpleTest.finish();
@@ -45,7 +43,7 @@ SimpleTest.waitForExplicitFinish();
 </script>
 </pre>
 
-<iframe id="ifr" onload="go();" src="http://example.org/"></iframe>
+<iframe id="ifr" onload="go();" src="http://test1.mochi.test:8888/"></iframe>
 
 </body>
 </html>

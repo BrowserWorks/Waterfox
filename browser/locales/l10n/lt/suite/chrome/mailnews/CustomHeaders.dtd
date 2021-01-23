@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Antraščių tvarkymas">
+<!ENTITY addButton.label "Pridėti">
+<!ENTITY addButton.accesskey "P">
+<!ENTITY removeButton.label "Pašalinti">
+<!ENTITY removeButton.accesskey "š">
+<!ENTITY newMsgHeader.label "Surinkite naują antraštę:">
+<!ENTITY newMsgHeader.accesskey "S">

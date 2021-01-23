@@ -118,6 +118,7 @@ export type ScopeBindingList = {
 
 export type SourceScope = {
   type: "object" | "function" | "block",
+  scopeKind: string,
   displayName: string,
   start: SourceLocation,
   end: SourceLocation,
@@ -212,21 +213,20 @@ function toParsedScopes(
   if (!children || children.length === 0) {
     return undefined;
   }
-  return children.map(scope => {
+  return children.map(scope => ({
     // Removing unneed information from TempScope such as parent reference.
     // We also need to convert BabelLocation to the Location type.
-    return {
-      start: scope.loc.start,
-      end: scope.loc.end,
-      type:
-        scope.type === "module" || scope.type === "function-body"
-          ? "block"
-          : scope.type,
-      displayName: scope.displayName,
-      bindings: scope.bindings,
-      children: toParsedScopes(scope.children, sourceId),
-    };
-  });
+    start: scope.loc.start,
+    end: scope.loc.end,
+    type:
+      scope.type === "module" || scope.type === "function-body"
+        ? "block"
+        : scope.type,
+    scopeKind: "",
+    displayName: scope.displayName,
+    bindings: scope.bindings,
+    children: toParsedScopes(scope.children, sourceId),
+  }));
 }
 
 function createTempScope(
@@ -415,10 +415,7 @@ function createGlobalScope(
     end: fromBabelLocation(ast.loc.end, sourceId),
   });
 
-  return {
-    global,
-    lexical,
-  };
+  return { global, lexical };
 }
 
 const scopeCollectionVisitor = {
@@ -447,7 +444,7 @@ const scopeCollectionVisitor = {
         refs: [],
       };
     } else if (t.isFunction(node)) {
-      let scope = state.scope;
+      let { scope } = state;
       if (t.isFunctionExpression(node) && isNode(node.id, "Identifier")) {
         scope = pushTempScope(state, "block", "Function Expression", {
           start: fromBabelLocation(node.loc.start, state.sourceId),
@@ -842,7 +839,7 @@ const scopeCollectionVisitor = {
       scope && scope !== parentScope;
       scope = scope.parent
     ) {
-      const freeVariables = state.freeVariables;
+      const { freeVariables } = state;
       state.freeVariables = state.freeVariableStack.pop();
       const parentFreeVariables = state.freeVariables;
 
@@ -917,8 +914,7 @@ function buildMetaBindings(
     t.isNumericLiteral(parent.expressions[0]) &&
     parent.expressions[1] === node
   ) {
-    let start = parent.loc.start;
-    let end = parent.loc.end;
+    let { start, end } = parent.loc;
 
     if (t.isCallExpression(grandparent, { callee: parent })) {
       // Attempt to expand the range around parentheses, e.g.

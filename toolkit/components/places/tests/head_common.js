@@ -41,6 +41,7 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   TestUtils: "resource://testing-common/TestUtils.jsm",
   AppConstants: "resource://gre/modules/AppConstants.jsm",
   PlacesUtils: "resource://gre/modules/PlacesUtils.jsm",
+  PlacesDBUtils: "resource://gre/modules/PlacesDBUtils.jsm",
 });
 
 XPCOMUtils.defineLazyGetter(this, "SMALLPNG_DATA_URI", function() {
@@ -707,8 +708,8 @@ function do_compare_arrays(a1, a2, sorted) {
     return a1.every((e, i) => e == a2[i]);
   }
   return (
-    a1.filter(e => !a2.includes(e)).length == 0 &&
-    a2.filter(e => !a1.includes(e)).length == 0
+    !a1.filter(e => !a2.includes(e)).length &&
+    !a2.filter(e => !a1.includes(e)).length
   );
 }
 
@@ -756,7 +757,6 @@ NavHistoryResultObserver.prototype = {
   batching() {},
   containerStateChanged() {},
   invalidateContainer() {},
-  nodeAnnotationChanged() {},
   nodeDateAddedChanged() {},
   nodeHistoryDetailsChanged() {},
   nodeIconChanged() {},
@@ -805,7 +805,7 @@ async function foreign_count(url) {
     `,
     { url }
   );
-  return rows.length == 0 ? 0 : rows[0].getResultByName("foreign_count");
+  return !rows.length ? 0 : rows[0].getResultByName("foreign_count");
 }
 
 function compareAscending(a, b) {
@@ -907,9 +907,9 @@ async function compareFavicons(icon1, icon2, msg) {
   }
 
   let data1 = await getIconData(icon1);
-  Assert.ok(data1.length > 0, "Should fetch icon data");
+  Assert.ok(!!data1.length, "Should fetch icon data");
   let data2 = await getIconData(icon2);
-  Assert.ok(data2.length > 0, "Should fetch icon data");
+  Assert.ok(!!data2.length, "Should fetch icon data");
   Assert.deepEqual(data1, data2, msg);
 }
 

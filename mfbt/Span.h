@@ -20,39 +20,21 @@
 // https://github.com/Microsoft/GSL/blob/3819df6e378ffccf0e29465afe99c3b324c2aa70/include/gsl/gsl_util
 
 #ifndef mozilla_Span_h
-#  define mozilla_Span_h
+#define mozilla_Span_h
 
-#  include "mozilla/Array.h"
-#  include "mozilla/Assertions.h"
-#  include "mozilla/Casting.h"
-#  include "mozilla/IntegerTypeTraits.h"
-#  include "mozilla/Move.h"
-#  include "mozilla/TypeTraits.h"
-#  include "mozilla/UniquePtr.h"
+#include <algorithm>
+#include <array>
+#include <cstring>
+#include <iterator>
+#include <limits>
+#include <type_traits>
+#include <utility>
 
-#  include <algorithm>
-#  include <array>
-#  include <cstring>
-#  include <iterator>
-
-#  ifdef _MSC_VER
-#    pragma warning(push)
-
-// turn off some warnings that are noisy about our MOZ_RELEASE_ASSERT statements
-#    pragma warning(disable : 4127)  // conditional expression is constant
-
-// blanket turn off warnings from CppCoreCheck for now
-// so people aren't annoyed by them when running the tool.
-// more targeted suppressions will be added in a future update to the GSL
-#    pragma warning( \
-        disable : 26481 26482 26483 26485 26490 26491 26492 26493 26495)
-
-#    if _MSC_VER < 1910
-#      pragma push_macro("constexpr")
-#      define constexpr /*constexpr*/
-
-#    endif  // _MSC_VER < 1910
-#  endif    // _MSC_VER
+#include "mozilla/Array.h"
+#include "mozilla/Assertions.h"
+#include "mozilla/Casting.h"
+#include "mozilla/IntegerTypeTraits.h"
+#include "mozilla/UniquePtr.h"
 
 namespace mozilla {
 
@@ -71,7 +53,7 @@ inline constexpr T narrow_cast(U&& u) {
 // and reserving a magic value that realistically doesn't occur in
 // compile-time-constant Span sizes makes things a lot less messy in terms of
 // comparison between signed and unsigned.
-constexpr const size_t dynamic_extent = mozilla::MaxValue<size_t>::value;
+constexpr const size_t dynamic_extent = std::numeric_limits<size_t>::max();
 
 template <class ElementType, size_t Extent = dynamic_extent>
 class Span;
@@ -87,75 +69,80 @@ inline size_t strlen16(const char16_t* aZeroTerminated) {
   return len;
 }
 
-// C++14 types that we don't have because we build as C++11.
 template <class T>
-using remove_cv_t = typename mozilla::RemoveCV<T>::Type;
-template <class T>
-using remove_const_t = typename mozilla::RemoveConst<T>::Type;
-template <bool B, class T, class F>
-using conditional_t = typename mozilla::Conditional<B, T, F>::Type;
-template <class T>
-using add_pointer_t = typename mozilla::AddPointer<T>::Type;
-template <bool B, class T = void>
-using enable_if_t = typename mozilla::EnableIf<B, T>::Type;
-
-template <class T>
-struct is_span_oracle : mozilla::FalseType {};
+struct is_span_oracle : std::false_type {};
 
 template <class ElementType, size_t Extent>
-struct is_span_oracle<mozilla::Span<ElementType, Extent>> : mozilla::TrueType {
-};
+struct is_span_oracle<mozilla::Span<ElementType, Extent>> : std::true_type {};
 
 template <class T>
-struct is_span : public is_span_oracle<remove_cv_t<T>> {};
+struct is_span : public is_span_oracle<std::remove_cv_t<T>> {};
 
 template <class T>
-struct is_std_array_oracle : mozilla::FalseType {};
+struct is_std_array_oracle : std::false_type {};
 
 template <class ElementType, size_t Extent>
-struct is_std_array_oracle<std::array<ElementType, Extent>>
-    : mozilla::TrueType {};
+struct is_std_array_oracle<std::array<ElementType, Extent>> : std::true_type {};
 
 template <class T>
-struct is_std_array : public is_std_array_oracle<remove_cv_t<T>> {};
+struct is_std_array : public is_std_array_oracle<std::remove_cv_t<T>> {};
 
 template <size_t From, size_t To>
 struct is_allowed_extent_conversion
-    : public mozilla::IntegralConstant<
-          bool, From == To || From == mozilla::dynamic_extent ||
-                    To == mozilla::dynamic_extent> {};
+    : public std::integral_constant<bool, From == To ||
+                                              From == mozilla::dynamic_extent ||
+                                              To == mozilla::dynamic_extent> {};
 
 template <class From, class To>
 struct is_allowed_element_type_conversion
-    : public mozilla::IntegralConstant<
-          bool, mozilla::IsConvertible<From (*)[], To (*)[]>::value> {};
+    : public std::integral_constant<
+          bool, std::is_convertible_v<From (*)[], To (*)[]>> {};
 
-template <class Span, bool IsConst>
+struct SpanKnownBounds {};
+
+template <class SpanT, bool IsConst>
 class span_iterator {
-  using element_type_ = typename Span::element_type;
+  using element_type_ = typename SpanT::element_type;
+
+  template <class ElementType, size_t Extent>
+  friend class ::mozilla::Span;
 
  public:
   using iterator_category = std::random_access_iterator_tag;
-  using value_type = remove_const_t<element_type_>;
-  using difference_type = typename Span::index_type;
+  using value_type = std::remove_const_t<element_type_>;
+  using difference_type = typename SpanT::index_type;
 
-  using reference = conditional_t<IsConst, const element_type_, element_type_>&;
-  using pointer = add_pointer_t<reference>;
+  using reference =
+      std::conditional_t<IsConst, const element_type_, element_type_>&;
+  using pointer = std::add_pointer_t<reference>;
 
-  constexpr span_iterator() : span_iterator(nullptr, 0) {}
+  constexpr span_iterator() : span_iterator(nullptr, 0, SpanKnownBounds{}) {}
 
-  constexpr span_iterator(const Span* span, typename Span::index_type index)
+  constexpr span_iterator(const SpanT* span, typename SpanT::index_type index)
       : span_(span), index_(index) {
     MOZ_RELEASE_ASSERT(span == nullptr ||
                        (index_ >= 0 && index <= span_->Length()));
   }
 
-  friend class span_iterator<Span, true>;
-  constexpr MOZ_IMPLICIT span_iterator(const span_iterator<Span, false>& other)
-      : span_iterator(other.span_, other.index_) {}
+ private:
+  // For whatever reason, the compiler doesn't like optimizing away the above
+  // MOZ_RELEASE_ASSERT when `span_iterator` is constructed for
+  // obviously-correct cases like `span.begin()` or `span.end()`.  We provide
+  // this private constructor for such cases.
+  constexpr span_iterator(const SpanT* span, typename SpanT::index_type index,
+                          SpanKnownBounds)
+      : span_(span), index_(index) {}
 
-  constexpr span_iterator<Span, IsConst>& operator=(
-      const span_iterator<Span, IsConst>&) = default;
+ public:
+  // `other` is already correct by construction; we do not need to go through
+  // the release assert above.  Put differently, this constructor is effectively
+  // a copy constructor and therefore needs no assertions.
+  friend class span_iterator<SpanT, true>;
+  constexpr MOZ_IMPLICIT span_iterator(const span_iterator<SpanT, false>& other)
+      : span_(other.span_), index_(other.index_) {}
+
+  constexpr span_iterator<SpanT, IsConst>& operator=(
+      const span_iterator<SpanT, IsConst>&) = default;
 
   constexpr reference operator*() const {
     MOZ_RELEASE_ASSERT(span_);
@@ -168,7 +155,6 @@ class span_iterator {
   }
 
   constexpr span_iterator& operator++() {
-    MOZ_RELEASE_ASSERT(span_ && index_ >= 0 && index_ < span_->Length());
     ++index_;
     return *this;
   }
@@ -180,7 +166,6 @@ class span_iterator {
   }
 
   constexpr span_iterator& operator--() {
-    MOZ_RELEASE_ASSERT(span_ && index_ > 0 && index_ <= span_->Length());
     --index_;
     return *this;
   }
@@ -208,11 +193,7 @@ class span_iterator {
     return ret -= n;
   }
 
-  constexpr span_iterator& operator-=(difference_type n)
-
-  {
-    return *this += -n;
-  }
+  constexpr span_iterator& operator-=(difference_type n) { return *this += -n; }
 
   constexpr difference_type operator-(const span_iterator& rhs) const {
     MOZ_RELEASE_ASSERT(span_ == rhs.span_);
@@ -260,7 +241,7 @@ class span_iterator {
   }
 
  protected:
-  const Span* span_;
+  const SpanT* span_;
   size_t index_;
 };
 
@@ -278,7 +259,7 @@ class extent_type {
 
   static_assert(Ext >= 0, "A fixed-size Span must be >= 0 in size.");
 
-  constexpr extent_type() {}
+  constexpr extent_type() = default;
 
   template <index_type Other>
   constexpr MOZ_IMPLICIT extent_type(extent_type<Other> ext) {
@@ -377,7 +358,7 @@ class extent_type<dynamic_extent> {
  * AsBytes(). Any Span<T> can be viewed as Span<uint8_t> using the function
  * AsWritableBytes().
  */
-template <class ElementType, size_t Extent>
+template <class ElementType, size_t Extent /* = dynamic_extent */>
 class Span {
  public:
   // constants and types
@@ -396,18 +377,17 @@ class Span {
   constexpr static const index_type extent = Extent;
 
   // [Span.cons], Span constructors, copy, assignment, and destructor
-  // "Dependent" is needed to make "span_details::enable_if_t<(Dependent ||
-  //   Extent == 0 || Extent == mozilla::MaxValue<size_t>::value)>" SFINAE,
-  // since "span_details::enable_if_t<(Extent == 0 || Extent ==
-  //   mozilla::MaxValue<size_t>::value)>" is ill-formed when Extent is neither
-  //   of the extreme values.
+  // "Dependent" is needed to make "std::enable_if_t<(Dependent ||
+  //   Extent == 0 || Extent == dynamic_extent)>" SFINAE,
+  // since
+  // "std::enable_if_t<(Extent == 0 || Extent == dynamic_extent)>" is
+  // ill-formed when Extent is neither of the extreme values.
   /**
    * Constructor with no args.
    */
   template <bool Dependent = false,
-            class = span_details::enable_if_t<
-                (Dependent || Extent == 0 ||
-                 Extent == mozilla::MaxValue<size_t>::value)>>
+            class = std::enable_if_t<(Dependent || Extent == 0 ||
+                                      Extent == dynamic_extent)>>
   constexpr Span() : storage_(nullptr, span_details::extent_type<0>()) {}
 
   /**
@@ -425,6 +405,17 @@ class Span {
    */
   constexpr Span(pointer aStartPtr, pointer aEndPtr)
       : storage_(aStartPtr, std::distance(aStartPtr, aEndPtr)) {}
+
+  /**
+   * Constructor for pair of Span iterators.
+   */
+  template <typename OtherElementType, size_t OtherExtent, bool IsConst>
+  constexpr Span(
+      span_details::span_iterator<Span<OtherElementType, OtherExtent>, IsConst>
+          aBegin,
+      span_details::span_iterator<Span<OtherElementType, OtherExtent>, IsConst>
+          aEnd)
+      : storage_(aBegin == aEnd ? nullptr : &*aBegin, aEnd - aBegin) {}
 
   /**
    * Constructor for C array.
@@ -447,7 +438,7 @@ class Span {
    * Constructor for std::array.
    */
   template <size_t N,
-            class ArrayElementType = span_details::remove_const_t<element_type>>
+            class ArrayElementType = std::remove_const_t<element_type>>
   constexpr MOZ_IMPLICIT Span(std::array<ArrayElementType, N>& aArr)
       : storage_(&aArr[0], span_details::extent_type<N>()) {}
 
@@ -456,14 +447,14 @@ class Span {
    */
   template <size_t N>
   constexpr MOZ_IMPLICIT Span(
-      const std::array<span_details::remove_const_t<element_type>, N>& aArr)
+      const std::array<std::remove_const_t<element_type>, N>& aArr)
       : storage_(&aArr[0], span_details::extent_type<N>()) {}
 
   /**
    * Constructor for mozilla::Array.
    */
   template <size_t N,
-            class ArrayElementType = span_details::remove_const_t<element_type>>
+            class ArrayElementType = std::remove_const_t<element_type>>
   constexpr MOZ_IMPLICIT Span(mozilla::Array<ArrayElementType, N>& aArr)
       : storage_(&aArr[0], span_details::extent_type<N>()) {}
 
@@ -472,7 +463,7 @@ class Span {
    */
   template <size_t N>
   constexpr MOZ_IMPLICIT Span(
-      const mozilla::Array<span_details::remove_const_t<element_type>, N>& aArr)
+      const mozilla::Array<std::remove_const_t<element_type>, N>& aArr)
       : storage_(&aArr[0], span_details::extent_type<N>()) {}
 
   /**
@@ -490,13 +481,12 @@ class Span {
    */
   template <
       class Container,
-      class = span_details::enable_if_t<
+      class = std::enable_if_t<
           !span_details::is_span<Container>::value &&
           !span_details::is_std_array<Container>::value &&
-          mozilla::IsConvertible<typename Container::pointer, pointer>::value &&
-          mozilla::IsConvertible<
-              typename Container::pointer,
-              decltype(mozilla::DeclVal<Container>().data())>::value>>
+          std::is_convertible_v<typename Container::pointer, pointer> &&
+          std::is_convertible_v<typename Container::pointer,
+                                decltype(std::declval<Container>().data())>>>
   constexpr MOZ_IMPLICIT Span(Container& cont)
       : Span(cont.data(), ReleaseAssertedCast<index_type>(cont.size())) {}
 
@@ -505,13 +495,12 @@ class Span {
    */
   template <
       class Container,
-      class = span_details::enable_if_t<
-          mozilla::IsConst<element_type>::value &&
+      class = std::enable_if_t<
+          std::is_const_v<element_type> &&
           !span_details::is_span<Container>::value &&
-          mozilla::IsConvertible<typename Container::pointer, pointer>::value &&
-          mozilla::IsConvertible<
-              typename Container::pointer,
-              decltype(mozilla::DeclVal<Container>().data())>::value>>
+          std::is_convertible_v<typename Container::pointer, pointer> &&
+          std::is_convertible_v<typename Container::pointer,
+                                decltype(std::declval<Container>().data())>>>
   constexpr MOZ_IMPLICIT Span(const Container& cont)
       : Span(cont.data(), ReleaseAssertedCast<index_type>(cont.size())) {}
 
@@ -528,12 +517,12 @@ class Span {
   /**
    * Constructor from other Span with conversion of element type.
    */
-  template <class OtherElementType, size_t OtherExtent,
-            class = span_details::enable_if_t<
-                span_details::is_allowed_extent_conversion<OtherExtent,
-                                                           Extent>::value &&
-                span_details::is_allowed_element_type_conversion<
-                    OtherElementType, element_type>::value>>
+  template <
+      class OtherElementType, size_t OtherExtent,
+      class = std::enable_if_t<span_details::is_allowed_extent_conversion<
+                                   OtherExtent, Extent>::value &&
+                               span_details::is_allowed_element_type_conversion<
+                                   OtherElementType, element_type>::value>>
   constexpr MOZ_IMPLICIT Span(const Span<OtherElementType, OtherExtent>& other)
       : storage_(other.data(),
                  span_details::extent_type<OtherExtent>(other.size())) {}
@@ -541,12 +530,12 @@ class Span {
   /**
    * Constructor from other Span with conversion of element type.
    */
-  template <class OtherElementType, size_t OtherExtent,
-            class = span_details::enable_if_t<
-                span_details::is_allowed_extent_conversion<OtherExtent,
-                                                           Extent>::value &&
-                span_details::is_allowed_element_type_conversion<
-                    OtherElementType, element_type>::value>>
+  template <
+      class OtherElementType, size_t OtherExtent,
+      class = std::enable_if_t<span_details::is_allowed_extent_conversion<
+                                   OtherExtent, Extent>::value &&
+                               span_details::is_allowed_element_type_conversion<
+                                   OtherElementType, element_type>::value>>
   constexpr MOZ_IMPLICIT Span(Span<OtherElementType, OtherExtent>&& other)
       : storage_(other.data(),
                  span_details::extent_type<OtherExtent>(other.size())) {}
@@ -704,11 +693,17 @@ class Span {
   constexpr pointer data() const { return storage_.data(); }
 
   // [Span.iter], Span iterator support
-  iterator begin() const { return {this, 0}; }
-  iterator end() const { return {this, Length()}; }
+  iterator begin() const { return {this, 0, span_details::SpanKnownBounds{}}; }
+  iterator end() const {
+    return {this, Length(), span_details::SpanKnownBounds{}};
+  }
 
-  const_iterator cbegin() const { return {this, 0}; }
-  const_iterator cend() const { return {this, Length()}; }
+  const_iterator cbegin() const {
+    return {this, 0, span_details::SpanKnownBounds{}};
+  }
+  const_iterator cend() const {
+    return {this, Length(), span_details::SpanKnownBounds{}};
+  }
 
   reverse_iterator rbegin() const { return reverse_iterator{end()}; }
   reverse_iterator rend() const { return reverse_iterator{begin()}; }
@@ -718,6 +713,26 @@ class Span {
   }
   const_reverse_iterator crend() const {
     return const_reverse_iterator{cbegin()};
+  }
+
+  template <size_t SplitPoint>
+  constexpr std::pair<Span<ElementType, SplitPoint>,
+                      Span<ElementType, Extent - SplitPoint>>
+  SplitAt() const {
+    static_assert(Extent != dynamic_extent);
+    static_assert(SplitPoint <= Extent);
+    return {First<SplitPoint>(), Last<Extent - SplitPoint>()};
+  }
+
+  constexpr std::pair<Span<ElementType, dynamic_extent>,
+                      Span<ElementType, dynamic_extent>>
+  SplitAt(const index_type aSplitPoint) const {
+    MOZ_RELEASE_ASSERT(aSplitPoint <= Length());
+    return {First(aSplitPoint), Last(Length() - aSplitPoint)};
+  }
+
+  constexpr Span<std::add_const_t<ElementType>, Extent> AsConst() const {
+    return {Elements(), Length()};
   }
 
  private:
@@ -737,9 +752,8 @@ class Span {
           data_(elements ? elements
                          : reinterpret_cast<pointer>(alignof(element_type))) {
       const size_t extentSize = ExtentType::size();
-      MOZ_RELEASE_ASSERT(
-          (!elements && extentSize == 0) ||
-          (elements && extentSize != mozilla::MaxValue<size_t>::value));
+      MOZ_RELEASE_ASSERT((!elements && extentSize == 0) ||
+                         (elements && extentSize != dynamic_extent));
     }
 
     constexpr pointer data() const { return data_; }
@@ -751,11 +765,26 @@ class Span {
   storage_type<span_details::extent_type<Extent>> storage_;
 };
 
+template <typename T, size_t OtherExtent, bool IsConst>
+Span(span_details::span_iterator<Span<T, OtherExtent>, IsConst> aBegin,
+     span_details::span_iterator<Span<T, OtherExtent>, IsConst> aEnd)
+    -> Span<std::conditional_t<IsConst, std::add_const_t<T>, T>>;
+
+template <typename T, size_t Extent>
+Span(T (&aArr)[Extent]) -> Span<T, Extent>;
+
+template <class Container>
+Span(Container&) -> Span<typename Container::value_type>;
+
+template <class Container>
+Span(const Container&) -> Span<const typename Container::value_type>;
+
 // [Span.comparison], Span comparison operators
 template <class ElementType, size_t FirstExtent, size_t SecondExtent>
 inline constexpr bool operator==(const Span<ElementType, FirstExtent>& l,
                                  const Span<ElementType, SecondExtent>& r) {
-  return (l.size() == r.size()) && std::equal(l.begin(), l.end(), r.begin());
+  return (l.size() == r.size()) &&
+         std::equal(l.data(), l.data() + l.size(), r.data());
 }
 
 template <class ElementType, size_t Extent>
@@ -767,7 +796,8 @@ inline constexpr bool operator!=(const Span<ElementType, Extent>& l,
 template <class ElementType, size_t Extent>
 inline constexpr bool operator<(const Span<ElementType, Extent>& l,
                                 const Span<ElementType, Extent>& r) {
-  return std::lexicographical_compare(l.begin(), l.end(), r.begin(), r.end());
+  return std::lexicographical_compare(l.data(), l.data() + l.size(), r.data(),
+                                      r.data() + r.size());
 }
 
 template <class ElementType, size_t Extent>
@@ -796,13 +826,14 @@ namespace span_details {
 // see it as constexpr and so will fail compilation of the template
 template <class ElementType, size_t Extent>
 struct calculate_byte_size
-    : mozilla::IntegralConstant<size_t, static_cast<size_t>(
-                                            sizeof(ElementType) *
-                                            static_cast<size_t>(Extent))> {};
+    : std::integral_constant<size_t,
+                             static_cast<size_t>(sizeof(ElementType) *
+                                                 static_cast<size_t>(Extent))> {
+};
 
 template <class ElementType>
 struct calculate_byte_size<ElementType, dynamic_extent>
-    : mozilla::IntegralConstant<size_t, dynamic_extent> {};
+    : std::integral_constant<size_t, dynamic_extent> {};
 }  // namespace span_details
 
 // [Span.objectrep], views of object representation
@@ -819,12 +850,25 @@ AsBytes(Span<ElementType, Extent> s) {
 /**
  * View span as Span<uint8_t>.
  */
-template <
-    class ElementType, size_t Extent,
-    class = span_details::enable_if_t<!mozilla::IsConst<ElementType>::value>>
+template <class ElementType, size_t Extent,
+          class = std::enable_if_t<!std::is_const_v<ElementType>>>
 Span<uint8_t, span_details::calculate_byte_size<ElementType, Extent>::value>
 AsWritableBytes(Span<ElementType, Extent> s) {
   return {reinterpret_cast<uint8_t*>(s.data()), s.size_bytes()};
+}
+
+/**
+ * View a span of uint8_t as a span of char.
+ */
+inline Span<const char> AsChars(Span<const uint8_t> s) {
+  return {reinterpret_cast<const char*>(s.data()), s.size()};
+}
+
+/**
+ * View a writable span of uint8_t as a span of char.
+ */
+inline Span<char> AsWritableChars(Span<uint8_t> s) {
+  return {reinterpret_cast<char*>(s.data()), s.size()};
 }
 
 //
@@ -856,10 +900,10 @@ Span<ElementType> MakeSpan(ElementType* aStartPtr, ElementType* aEndPtr) {
  * the MakeSpan() overload that accepts a pointer and length and specify the
  * string literal's full length.
  */
-template <class ElementType, size_t N,
-          class = span_details::enable_if_t<
-              !IsSame<ElementType, const char>::value &&
-              !IsSame<ElementType, const char16_t>::value>>
+template <
+    class ElementType, size_t N,
+    class = std::enable_if_t<!std::is_same_v<ElementType, const char> &&
+                             !std::is_same_v<ElementType, const char16_t>>>
 Span<ElementType> MakeSpan(ElementType (&aArr)[N]) {
   return Span<ElementType>(aArr, N);
 }
@@ -928,15 +972,5 @@ inline Span<const char16_t> MakeStringSpan(const char16_t* aZeroTerminated) {
 }
 
 }  // namespace mozilla
-
-#  ifdef _MSC_VER
-#    if _MSC_VER < 1910
-#      undef constexpr
-#      pragma pop_macro("constexpr")
-
-#    endif  // _MSC_VER < 1910
-
-#    pragma warning(pop)
-#  endif  // _MSC_VER
 
 #endif  // mozilla_Span_h

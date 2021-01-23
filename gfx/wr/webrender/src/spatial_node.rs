@@ -3,13 +3,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use api::{ExternalScrollId, PipelineId, PropertyBinding, ReferenceFrameKind, ScrollClamping, ScrollLocation};
+use api::{ExternalScrollId, PipelineId, PropertyBinding, PropertyBindingId, ReferenceFrameKind, ScrollClamping, ScrollLocation};
 use api::{TransformStyle, ScrollSensitivity, StickyOffsetBounds};
 use api::units::*;
-use crate::clip_scroll_tree::{CoordinateSystem, CoordinateSystemId, SpatialNodeIndex, TransformUpdateState};
-use euclid::SideOffsets2D;
+use crate::spatial_tree::{CoordinateSystem, CoordinateSystemId, SpatialNodeIndex, TransformUpdateState};
+use euclid::{Point2D, Vector2D, SideOffsets2D};
 use crate::scene::SceneProperties;
-use crate::util::{LayoutFastTransform, LayoutToWorldFastTransform, ScaleOffset, TransformedRectKind};
+use crate::util::{LayoutFastTransform, MatrixHelpers, ScaleOffset, TransformedRectKind, PointHelpers};
 
 #[derive(Clone, Debug)]
 pub enum SpatialNodeType {
@@ -27,17 +27,23 @@ pub enum SpatialNodeType {
     ReferenceFrame(ReferenceFrameInfo),
 }
 
-/// Contains information common among all types of ClipScrollTree nodes.
+/// Contains information common among all types of SpatialTree nodes.
 #[derive(Clone, Debug)]
 pub struct SpatialNode {
-    /// The transformation for this viewport in world coordinates is the transformation for
-    /// our parent reference frame, plus any accumulated scrolling offsets from nodes
-    /// between our reference frame and this node. For reference frames, we also include
-    /// whatever local transformation this reference frame provides.
-    pub world_viewport_transform: LayoutToWorldFastTransform,
+    /// The scale/offset of the viewport for this spatial node, relative to the
+    /// coordinate system. Includes any accumulated scrolling offsets from nodes
+    /// between our reference frame and this node.
+    pub viewport_transform: ScaleOffset,
 
-    /// World transform for content transformed by this node.
-    pub world_content_transform: LayoutToWorldFastTransform,
+    /// Content scale/offset relative to the coordinate system.
+    pub content_transform: ScaleOffset,
+
+    /// Snapping scale/offset relative to the coordinate system. If None, then
+    /// we should not snap entities bound to this spatial node.
+    pub snapping_transform: Option<ScaleOffset>,
+
+    /// The axis-aligned coordinate system id of this node.
+    pub coordinate_system_id: CoordinateSystemId,
 
     /// The current transform kind of this node.
     pub transform_kind: TransformedRectKind,
@@ -59,13 +65,14 @@ pub struct SpatialNode {
     /// node will not be clipped by clips that are transformed by this node.
     pub invertible: bool,
 
-    /// The axis-aligned coordinate system id of this node.
-    pub coordinate_system_id: CoordinateSystemId,
+    /// Whether this specific node is currently being async zoomed.
+    /// Should be set when a SetIsTransformAsyncZooming FrameMsg is received.
+    pub is_async_zooming: bool,
 
-    /// The transformation from the coordinate system which established our compatible coordinate
-    /// system (same coordinate system id) and us. This can change via scroll offsets and via new
-    /// reference frame transforms.
-    pub coordinate_system_relative_scale_offset: ScaleOffset,
+    /// Whether this node or any of its ancestors is being pinch zoomed.
+    /// This is calculated in update(). This will be used to decide whether
+    /// to override corresponding picture's raster space as an optimisation.
+    pub is_ancestor_or_self_zooming: bool,
 }
 
 fn compute_offset_from(
@@ -99,6 +106,27 @@ fn compute_offset_from(
     offset
 }
 
+/// Snap an offset to be incorporated into a transform, where the local space
+/// may be considered the world space. We convert from world space to device
+/// space using the global device pixel scale, which may not always be correct
+/// if there are intermediate surfaces used, however those are either cases
+/// where snapping is not important (e.g. has perspective or is not axis
+/// aligned), or an edge case (e.g. SVG filters) which we can accept
+/// imperfection for now.
+fn snap_offset<OffsetUnits, ScaleUnits>(
+    offset: Vector2D<f32, OffsetUnits>,
+    scale: Vector2D<f32, ScaleUnits>,
+    global_device_pixel_scale: DevicePixelScale,
+) -> Vector2D<f32, OffsetUnits> {
+    let world_offset = Point2D::new(offset.x * scale.x, offset.y * scale.y);
+    let snapped_device_offset = (world_offset * global_device_pixel_scale).snap();
+    let snapped_world_offset = snapped_device_offset / global_device_pixel_scale;
+    Vector2D::new(
+        if scale.x != 0.0 { snapped_world_offset.x / scale.x } else { offset.x },
+        if scale.y != 0.0 { snapped_world_offset.y / scale.y } else { offset.y },
+    )
+}
+
 impl SpatialNode {
     pub fn new(
         pipeline_id: PipelineId,
@@ -106,16 +134,18 @@ impl SpatialNode {
         node_type: SpatialNodeType,
     ) -> Self {
         SpatialNode {
-            world_viewport_transform: LayoutToWorldFastTransform::identity(),
-            world_content_transform: LayoutToWorldFastTransform::identity(),
+            viewport_transform: ScaleOffset::identity(),
+            content_transform: ScaleOffset::identity(),
+            snapping_transform: None,
+            coordinate_system_id: CoordinateSystemId(0),
             transform_kind: TransformedRectKind::AxisAligned,
             parent: parent_index,
             children: Vec::new(),
             pipeline_id,
             node_type,
             invertible: true,
-            coordinate_system_id: CoordinateSystemId(0),
-            coordinate_system_relative_scale_offset: ScaleOffset::identity(),
+            is_async_zooming: false,
+            is_ancestor_or_self_zooming: false,
         }
     }
 
@@ -208,8 +238,8 @@ impl SpatialNode {
 
                 let origin = LayoutPoint::new(origin.x.max(0.0), origin.y.max(0.0));
                 LayoutVector2D::new(
-                    (-origin.x).max(-scrollable_width).min(0.0).round(),
-                    (-origin.y).max(-scrollable_height).min(0.0).round(),
+                    (-origin.x).max(-scrollable_width).min(0.0),
+                    (-origin.y).max(-scrollable_height).min(0.0),
                 )
             }
             ScrollClamping::NoClamping => LayoutPoint::zero() - *origin,
@@ -230,15 +260,16 @@ impl SpatialNode {
         state: &TransformUpdateState,
     ) {
         self.invertible = false;
+        self.viewport_transform = ScaleOffset::identity();
+        self.content_transform = ScaleOffset::identity();
         self.coordinate_system_id = state.current_coordinate_system_id;
-        self.world_content_transform = LayoutToWorldFastTransform::identity();
-        self.world_viewport_transform = LayoutToWorldFastTransform::identity();
     }
 
     pub fn update(
         &mut self,
         state: &mut TransformUpdateState,
         coord_systems: &mut Vec<CoordinateSystem>,
+        global_device_pixel_scale: DevicePixelScale,
         scene_properties: &SceneProperties,
         previous_spatial_nodes: &[SpatialNode],
     ) {
@@ -249,8 +280,19 @@ impl SpatialNode {
             return;
         }
 
-        self.update_transform(state, coord_systems, scene_properties, previous_spatial_nodes);
-        self.transform_kind = self.world_viewport_transform.kind();
+        self.update_transform(state, coord_systems, global_device_pixel_scale, scene_properties, previous_spatial_nodes);
+        //TODO: remove the field entirely?
+        self.transform_kind = if self.coordinate_system_id.0 == 0 {
+            TransformedRectKind::AxisAligned
+        } else {
+            TransformedRectKind::Complex
+        };
+
+        let is_parent_zooming = match self.parent {
+            Some(parent) => previous_spatial_nodes[parent.0 as usize].is_ancestor_or_self_zooming,
+            _ => false,
+        };
+        self.is_ancestor_or_self_zooming = self.is_async_zooming | is_parent_zooming;
 
         // If this node is a reference frame, we check if it has a non-invertible matrix.
         // For non-reference-frames we assume that they will produce only additional
@@ -258,7 +300,6 @@ impl SpatialNode {
         match self.node_type {
             SpatialNodeType::ReferenceFrame(info) if !info.invertible => {
                 self.mark_uninvertible(state);
-                return;
             }
             _ => self.invertible = true,
         }
@@ -268,60 +309,58 @@ impl SpatialNode {
         &mut self,
         state: &mut TransformUpdateState,
         coord_systems: &mut Vec<CoordinateSystem>,
+        global_device_pixel_scale: DevicePixelScale,
         scene_properties: &SceneProperties,
         previous_spatial_nodes: &[SpatialNode],
     ) {
         match self.node_type {
             SpatialNodeType::ReferenceFrame(ref mut info) => {
-                // Resolve the transform against any property bindings.
-                let source_transform = LayoutFastTransform::from(
-                    scene_properties.resolve_layout_transform(&info.source_transform)
-                );
-
-                // Do a change-basis operation on the perspective matrix using
-                // the scroll offset.
-                let source_transform = match info.kind {
-                    ReferenceFrameKind::Perspective { scrolling_relative_to: Some(external_id) } => {
-                        let scroll_offset = compute_offset_from(
-                            self.parent,
-                            external_id,
-                            previous_spatial_nodes,
-                        );
-
-                        // Do a change-basis operation on the
-                        // perspective matrix using the scroll offset.
-                        source_transform
-                            .pre_translate(&scroll_offset)
-                            .post_translate(&-scroll_offset)
-                    }
-                    ReferenceFrameKind::Perspective { scrolling_relative_to: None } |
-                    ReferenceFrameKind::Transform => source_transform,
-                };
-
-                let resolved_transform =
-                    LayoutFastTransform::with_vector(info.origin_in_parent_reference_frame)
-                        .pre_mul(&source_transform);
-
-                // The transformation for this viewport in world coordinates is the transformation for
-                // our parent reference frame, plus any accumulated scrolling offsets from nodes
-                // between our reference frame and this node. Finally, we also include
-                // whatever local transformation this reference frame provides.
-                let relative_transform = resolved_transform
-                    .post_translate(&state.parent_accumulated_scroll_offset)
-                    .to_transform()
-                    .with_destination::<LayoutPixel>();
-
-                self.world_viewport_transform =
-                    state.parent_reference_frame_transform.pre_mul(&relative_transform.into());
-                self.world_content_transform = self.world_viewport_transform;
-
-                info.invertible = self.world_viewport_transform.is_invertible();
+                let mut cs_scale_offset = ScaleOffset::identity();
 
                 if info.invertible {
+                    // Resolve the transform against any property bindings.
+                    let source_transform = LayoutFastTransform::from(
+                        scene_properties.resolve_layout_transform(&info.source_transform)
+                    );
+
+                    // Do a change-basis operation on the perspective matrix using
+                    // the scroll offset.
+                    let source_transform = match info.kind {
+                        ReferenceFrameKind::Perspective { scrolling_relative_to: Some(external_id) } => {
+                            let scroll_offset = compute_offset_from(
+                                self.parent,
+                                external_id,
+                                previous_spatial_nodes,
+                            );
+
+                            // Do a change-basis operation on the
+                            // perspective matrix using the scroll offset.
+                            source_transform
+                                .pre_translate(scroll_offset)
+                                .post_translate(-scroll_offset)
+                        }
+                        ReferenceFrameKind::Perspective { scrolling_relative_to: None } |
+                        ReferenceFrameKind::Transform | ReferenceFrameKind::Zoom => source_transform,
+                    };
+
+                    let resolved_transform =
+                        LayoutFastTransform::with_vector(info.origin_in_parent_reference_frame)
+                            .pre_transform(&source_transform);
+
+                    // The transformation for this viewport in world coordinates is the transformation for
+                    // our parent reference frame, plus any accumulated scrolling offsets from nodes
+                    // between our reference frame and this node. Finally, we also include
+                    // whatever local transformation this reference frame provides.
+                    let relative_transform = resolved_transform
+                        .post_translate(snap_offset(state.parent_accumulated_scroll_offset, state.coordinate_system_relative_scale_offset.scale, global_device_pixel_scale))
+                        .to_transform()
+                        .with_destination::<LayoutPixel>();
+
                     let mut reset_cs_id = match info.transform_style {
                         TransformStyle::Preserve3D => !state.preserves_3d,
                         TransformStyle::Flat => state.preserves_3d,
                     };
+
                     // We reset the coordinate system upon either crossing the preserve-3d context boundary,
                     // or simply a 3D transformation.
                     if !reset_cs_id {
@@ -329,8 +368,20 @@ impl SpatialNode {
                         // incompatible coordinate system.
                         match ScaleOffset::from_transform(&relative_transform) {
                             Some(ref scale_offset) => {
-                                self.coordinate_system_relative_scale_offset =
-                                    state.coordinate_system_relative_scale_offset.accumulate(scale_offset);
+                                // We generally do not want to snap animated transforms as it causes jitter.
+                                // However, we do want to snap the visual viewport offset when scrolling.
+                                // Therefore only snap the transform for Zoom reference frames. This may still
+                                // cause jitter when zooming, unfortunately.
+                                let mut maybe_snapped = scale_offset.clone();
+                                if info.kind == ReferenceFrameKind::Zoom {
+                                    maybe_snapped.offset = snap_offset(
+                                        scale_offset.offset,
+                                        state.coordinate_system_relative_scale_offset.scale,
+                                        global_device_pixel_scale
+                                    );
+                                }
+                                cs_scale_offset =
+                                    state.coordinate_system_relative_scale_offset.accumulate(&maybe_snapped);
                             }
                             None => reset_cs_id = true,
                         }
@@ -338,20 +389,30 @@ impl SpatialNode {
                     if reset_cs_id {
                         // If we break 2D axis alignment or have a perspective component, we need to start a
                         // new incompatible coordinate system with which we cannot share clips without masking.
-                        self.coordinate_system_relative_scale_offset = ScaleOffset::identity();
-
                         let transform = state.coordinate_system_relative_scale_offset
                             .to_transform()
-                            .pre_mul(&relative_transform);
+                            .pre_transform(&relative_transform);
 
                         // Push that new coordinate system and record the new id.
-                        let coord_system = CoordinateSystem {
-                            transform,
-                            should_flatten: match (info.transform_style, info.kind) {
-                                (TransformStyle::Flat, ReferenceFrameKind::Transform) => true,
-                                (_, _) => false,
-                            },
-                            parent: Some(state.current_coordinate_system_id),
+                        let coord_system = {
+                            let parent_system = &coord_systems[state.current_coordinate_system_id.0 as usize];
+                            let mut cur_transform = transform;
+                            if parent_system.should_flatten {
+                                cur_transform.flatten_z_output();
+                            }
+                            let world_transform = cur_transform.post_transform(&parent_system.world_transform);
+                            let determinant = world_transform.determinant();
+                            info.invertible = determinant != 0.0 && !determinant.is_nan();
+
+                            CoordinateSystem {
+                                transform,
+                                world_transform,
+                                should_flatten: match (info.transform_style, info.kind) {
+                                    (TransformStyle::Flat, ReferenceFrameKind::Transform) => true,
+                                    (_, _) => false,
+                                },
+                                parent: Some(state.current_coordinate_system_id),
+                            }
                         };
                         state.current_coordinate_system_id = CoordinateSystemId(coord_systems.len() as u32);
                         coord_systems.push(coord_system);
@@ -362,6 +423,9 @@ impl SpatialNode {
                 // nodes, even if we encounter a node that is not invertible. This ensures
                 // that the invariant in get_relative_transform is not violated.
                 self.coordinate_system_id = state.current_coordinate_system_id;
+                self.viewport_transform = cs_scale_offset;
+                self.content_transform = cs_scale_offset;
+                self.invertible = info.invertible;
             }
             _ => {
                 // We calculate this here to avoid a double-borrow later.
@@ -374,25 +438,14 @@ impl SpatialNode {
                 // transform, plus any accumulated scroll offset from our parents, plus any offset
                 // provided by our own sticky positioning.
                 let accumulated_offset = state.parent_accumulated_scroll_offset + sticky_offset;
-                self.world_viewport_transform = if accumulated_offset != LayoutVector2D::zero() {
-                    state.parent_reference_frame_transform.pre_translate(&accumulated_offset)
-                } else {
-                    state.parent_reference_frame_transform
-                };
-
-                let scroll_offset = self.scroll_offset();
-                self.world_content_transform = if scroll_offset != LayoutVector2D::zero() {
-                    self.world_viewport_transform.pre_translate(&scroll_offset)
-                } else {
-                    self.world_viewport_transform
-                };
-
+                self.viewport_transform = state.coordinate_system_relative_scale_offset
+                    .offset(snap_offset(accumulated_offset, state.coordinate_system_relative_scale_offset.scale, global_device_pixel_scale).to_untyped());
 
                 // The transformation for any content inside of us is the viewport transformation, plus
                 // whatever scrolling offset we supply as well.
                 let added_offset = accumulated_offset + self.scroll_offset();
-                self.coordinate_system_relative_scale_offset =
-                    state.coordinate_system_relative_scale_offset.offset(added_offset.to_untyped());
+                self.content_transform = state.coordinate_system_relative_scale_offset
+                    .offset(snap_offset(added_offset, state.coordinate_system_relative_scale_offset.scale, global_device_pixel_scale).to_untyped());
 
                 if let SpatialNodeType::StickyFrame(ref mut info) = self.node_type {
                     info.current_offset = sticky_offset;
@@ -423,7 +476,7 @@ impl SpatialNode {
         // between the scrolled content and unscrolled viewport we adjust the viewport's
         // position by the scroll offset in order to work with their relative positions on the
         // page.
-        let sticky_rect = info.frame_rect.translate(viewport_scroll_offset);
+        let mut sticky_rect = info.frame_rect.translate(*viewport_scroll_offset);
 
         let mut sticky_offset = LayoutVector2D::zero();
         if let Some(margin) = info.margins.top {
@@ -444,27 +497,34 @@ impl SpatialNode {
                 sticky_offset.y = top_viewport_edge - sticky_rect.min_y();
                 sticky_offset.y = sticky_offset.y.max(-info.previously_applied_offset.y);
             }
-            debug_assert!(sticky_offset.y + info.previously_applied_offset.y >= 0.0);
         }
 
         // If we don't have a sticky-top offset (sticky_offset.y + info.previously_applied_offset.y
         // == 0), or if we have a previously-applied bottom offset (previously_applied_offset.y < 0)
-        // then we check for handling the bottom margin case.
+        // then we check for handling the bottom margin case. Note that the "don't have a sticky-top
+        // offset" case includes the case where we *had* a sticky-top offset but we reduced it to
+        // zero in the above block.
         if sticky_offset.y + info.previously_applied_offset.y <= 0.0 {
             if let Some(margin) = info.margins.bottom {
+                // If sticky_offset.y is nonzero that means we must have set it
+                // in the sticky-top handling code above, so this item must have
+                // both top and bottom sticky margins. We adjust the item's rect
+                // by the top-sticky offset, and then combine any offset from
+                // the bottom-sticky calculation into sticky_offset below.
+                sticky_rect.origin.y += sticky_offset.y;
+
                 // Same as the above case, but inverted for bottom-sticky items. Here
                 // we adjust items upwards, resulting in a negative sticky_offset.y,
                 // or reduce the already-present upward adjustment, resulting in a positive
                 // sticky_offset.y.
                 let bottom_viewport_edge = viewport_rect.max_y() - margin;
                 if sticky_rect.max_y() > bottom_viewport_edge {
-                    sticky_offset.y = bottom_viewport_edge - sticky_rect.max_y();
+                    sticky_offset.y += bottom_viewport_edge - sticky_rect.max_y();
                 } else if info.previously_applied_offset.y < 0.0 &&
                     sticky_rect.max_y() < bottom_viewport_edge {
-                    sticky_offset.y = bottom_viewport_edge - sticky_rect.max_y();
+                    sticky_offset.y += bottom_viewport_edge - sticky_rect.max_y();
                     sticky_offset.y = sticky_offset.y.min(-info.previously_applied_offset.y);
                 }
-                debug_assert!(sticky_offset.y + info.previously_applied_offset.y <= 0.0);
             }
         }
 
@@ -478,20 +538,19 @@ impl SpatialNode {
                 sticky_offset.x = left_viewport_edge - sticky_rect.min_x();
                 sticky_offset.x = sticky_offset.x.max(-info.previously_applied_offset.x);
             }
-            debug_assert!(sticky_offset.x + info.previously_applied_offset.x >= 0.0);
         }
 
         if sticky_offset.x + info.previously_applied_offset.x <= 0.0 {
             if let Some(margin) = info.margins.right {
+                sticky_rect.origin.x += sticky_offset.x;
                 let right_viewport_edge = viewport_rect.max_x() - margin;
                 if sticky_rect.max_x() > right_viewport_edge {
-                    sticky_offset.x = right_viewport_edge - sticky_rect.max_x();
+                    sticky_offset.x += right_viewport_edge - sticky_rect.max_x();
                 } else if info.previously_applied_offset.x < 0.0 &&
                     sticky_rect.max_x() < right_viewport_edge {
-                    sticky_offset.x = right_viewport_edge - sticky_rect.max_x();
+                    sticky_offset.x += right_viewport_edge - sticky_rect.max_x();
                     sticky_offset.x = sticky_offset.x.min(-info.previously_applied_offset.x);
                 }
-                debug_assert!(sticky_offset.x + info.previously_applied_offset.x <= 0.0);
             }
         }
 
@@ -540,23 +599,13 @@ impl SpatialNode {
                 state.preserves_3d = false;
             }
             SpatialNodeType::ReferenceFrame(ref info) => {
-                state.parent_reference_frame_transform = self.world_viewport_transform;
-
-                let should_flatten =
-                    info.kind == ReferenceFrameKind::Transform &&
-                    info.transform_style == TransformStyle::Flat;
-
-                if should_flatten {
-                    state.parent_reference_frame_transform = state.parent_reference_frame_transform.project_to_2d();
-                }
                 state.preserves_3d = info.transform_style == TransformStyle::Preserve3D;
-
                 state.parent_accumulated_scroll_offset = LayoutVector2D::zero();
-                state.coordinate_system_relative_scale_offset = self.coordinate_system_relative_scale_offset;
+                state.coordinate_system_relative_scale_offset = self.content_transform;
                 let translation = -info.origin_in_parent_reference_frame;
                 state.nearest_scrolling_ancestor_viewport =
                     state.nearest_scrolling_ancestor_viewport
-                       .translate(&translation);
+                       .translate(translation);
             }
         }
     }
@@ -603,15 +652,13 @@ impl SpatialNode {
         if scrollable_width > 0. {
             scrolling.offset.x = (scrolling.offset.x + delta.x)
                 .min(0.0)
-                .max(-scrollable_width)
-                .round();
+                .max(-scrollable_width);
         }
 
         if scrollable_height > 0. {
             scrolling.offset.y = (scrolling.offset.y + delta.y)
                 .min(0.0)
-                .max(-scrollable_height)
-                .round();
+                .max(-scrollable_height);
         }
 
         scrolling.offset != original_layer_scroll_offset
@@ -628,6 +675,73 @@ impl SpatialNode {
         match self.node_type {
             SpatialNodeType::ScrollFrame(info) if info.external_id == Some(external_id) => true,
             _ => false,
+        }
+    }
+
+    /// Updates the snapping transform.
+    pub fn update_snapping(
+        &mut self,
+        parent: Option<&SpatialNode>,
+    ) {
+        // Reset in case of an early return.
+        self.snapping_transform = None;
+
+        // We need to incorporate the parent scale/offset with the child.
+        // If the parent does not have a scale/offset, then we know we are
+        // not 2d axis aligned and thus do not need to snap its children
+        // either.
+        let parent_scale_offset = match parent {
+            Some(parent) => {
+                match parent.snapping_transform {
+                    Some(scale_offset) => scale_offset,
+                    None => return,
+                }
+            },
+            _ => ScaleOffset::identity(),
+        };
+
+        let scale_offset = match self.node_type {
+            SpatialNodeType::ReferenceFrame(ref info) => {
+                match info.source_transform {
+                    PropertyBinding::Value(ref value) => {
+                        // We can only get a ScaleOffset if the transform is 2d axis
+                        // aligned.
+                        match ScaleOffset::from_transform(value) {
+                            Some(scale_offset) => {
+                                let origin_offset = info.origin_in_parent_reference_frame;
+                                ScaleOffset::from_offset(origin_offset.to_untyped())
+                                    .accumulate(&scale_offset)
+                            }
+                            None => return,
+                        }
+                    }
+
+                    // Assume animations start at the identity transform for snapping purposes.
+                    // We still want to incorporate the reference frame offset however.
+                    // TODO(aosmond): Is there a better known starting point?
+                    PropertyBinding::Binding(..) => {
+                        let origin_offset = info.origin_in_parent_reference_frame;
+                        ScaleOffset::from_offset(origin_offset.to_untyped())
+                    }
+                }
+            }
+            _ => ScaleOffset::identity(),
+        };
+
+        self.snapping_transform = Some(parent_scale_offset.accumulate(&scale_offset));
+    }
+
+    /// Returns true for ReferenceFrames whose source_transform is
+    /// bound to the property binding id.
+    pub fn is_transform_bound_to_property(&self, id: PropertyBindingId) -> bool {
+        if let SpatialNodeType::ReferenceFrame(ref info) = self.node_type {
+            if let PropertyBinding::Binding(key, _) = info.source_transform {
+                id == key.id
+            } else {
+                false
+            }
+        } else {
+            false
         }
     }
 }
@@ -745,7 +859,7 @@ pub struct ReferenceFrameInfo {
 #[derive(Clone, Debug)]
 pub struct StickyFrameInfo {
     pub frame_rect: LayoutRect,
-    pub margins: SideOffsets2D<Option<f32>>,
+    pub margins: SideOffsets2D<Option<f32>, LayoutPixel>,
     pub vertical_offset_bounds: StickyOffsetBounds,
     pub horizontal_offset_bounds: StickyOffsetBounds,
     pub previously_applied_offset: LayoutVector2D,
@@ -755,7 +869,7 @@ pub struct StickyFrameInfo {
 impl StickyFrameInfo {
     pub fn new(
         frame_rect: LayoutRect,
-        margins: SideOffsets2D<Option<f32>>,
+        margins: SideOffsets2D<Option<f32>, LayoutPixel>,
         vertical_offset_bounds: StickyOffsetBounds,
         horizontal_offset_bounds: StickyOffsetBounds,
         previously_applied_offset: LayoutVector2D
@@ -782,10 +896,10 @@ fn test_cst_perspective_relative_scroll() {
     // since wrench doesn't understand external scroll ids. When wrench
     // supports this, we could also verify with a reftest.
 
-    use crate::clip_scroll_tree::ClipScrollTree;
+    use crate::spatial_tree::SpatialTree;
     use euclid::approxeq::ApproxEq;
 
-    let mut cst = ClipScrollTree::new();
+    let mut cst = SpatialTree::new();
     let pipeline_id = PipelineId::dummy();
     let ext_scroll_id = ExternalScrollId(1, pipeline_id);
     let transform = LayoutTransform::create_perspective(100.0);
@@ -832,7 +946,7 @@ fn test_cst_perspective_relative_scroll() {
         pipeline_id,
     );
 
-    cst.update_tree(WorldPoint::zero(), &SceneProperties::new());
+    cst.update_tree(WorldPoint::zero(), DevicePixelScale::new(1.0), &SceneProperties::new());
 
     let scroll_offset = compute_offset_from(
         cst.spatial_nodes[ref_frame.0 as usize].parent,

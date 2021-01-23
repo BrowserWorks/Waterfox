@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -41,7 +39,7 @@ async function testJSEnabled() {
   // takes a while to become live.
   await waitForTick();
 
-  await ContentTask.spawn(gBrowser.selectedBrowser, {}, function() {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], function() {
     const doc = content.document;
     const output = doc.getElementById("output");
     doc.querySelector("#logJSEnabled").click();
@@ -56,7 +54,7 @@ async function testJSEnabled() {
 async function testJSEnabledIframe() {
   info("Testing that JS is enabled in the iframe");
 
-  await ContentTask.spawn(gBrowser.selectedBrowser, {}, function() {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], function() {
     const doc = content.document;
     const iframe = doc.querySelector("iframe");
     const iframeDoc = iframe.contentDocument;
@@ -104,7 +102,7 @@ async function toggleJS(toolbox) {
 async function testJSDisabled() {
   info("Testing that JS is disabled");
 
-  await ContentTask.spawn(gBrowser.selectedBrowser, {}, function() {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], function() {
     const doc = content.document;
     const output = doc.getElementById("output");
     doc.querySelector("#logJSDisabled").click();
@@ -119,7 +117,7 @@ async function testJSDisabled() {
 async function testJSDisabledIframe() {
   info("Testing that JS is disabled in the iframe");
 
-  await ContentTask.spawn(gBrowser.selectedBrowser, {}, function() {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], function() {
     const doc = content.document;
     const iframe = doc.querySelector("iframe");
     const iframeDoc = iframe.contentDocument;

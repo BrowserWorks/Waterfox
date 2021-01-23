@@ -29,6 +29,7 @@ function getProbeSum(probe, sum) {
 
 add_task(async function setup() {
   await AddonTestUtils.promiseStartupManager();
+  Services.prefs.setBoolPref("browser.search.geoSpecificDefaults", true);
 });
 
 add_task(async function test_location_timeout() {
@@ -40,8 +41,8 @@ add_task(async function test_location_timeout() {
   let server = startServer(continuePromise);
   let url =
     "http://localhost:" + server.identity.primaryPort + "/lookup_country";
-  Services.prefs.setCharPref("browser.search.geoip.url", url);
-  Services.prefs.setIntPref("browser.search.geoip.timeout", 50);
+  Services.prefs.setCharPref("browser.region.network.url", url);
+  Services.prefs.setIntPref("browser.region.network.timeout", 50);
   await Services.search.init();
   ok(
     !Services.prefs.prefHasUserValue("browser.search.region"),
@@ -50,38 +51,25 @@ add_task(async function test_location_timeout() {
   // should be no result recorded at all.
   checkCountryResultTelemetry(null);
 
-  // should have set the flag indicating we saw a timeout.
-  let histogram = Services.telemetry.getHistogramById(
-    "SEARCH_SERVICE_COUNTRY_TIMEOUT"
-  );
-  let snapshot = histogram.snapshot();
-  deepEqual(snapshot.values, { 0: 0, 1: 1, 2: 0 });
   // should not yet have SEARCH_SERVICE_COUNTRY_FETCH_TIME_MS recorded as our
   // test server is still blocked on our promise.
   equal(getProbeSum("SEARCH_SERVICE_COUNTRY_FETCH_TIME_MS"), 0);
 
-  let notification = SearchTestUtils.promiseSearchNotification(
-    "geoip-lookup-xhr-complete"
-  );
   // now tell the server to send its response.  That will end up causing the
   // search service to notify of that the response was received.
   resolveContinuePromise();
-  await notification;
+  await SearchTestUtils.promiseSearchNotification("engines-reloaded");
 
   // now we *should* have a report of how long the response took even though
   // it timed out.
   // The telemetry "sum" will be the actual time in ms - just check it's non-zero.
   ok(getProbeSum("SEARCH_SERVICE_COUNTRY_FETCH_TIME_MS") != 0);
-  // should have reported the fetch ended up being successful
+  // should have reported the fetch ended up being successful.
   checkCountryResultTelemetry(TELEMETRY_RESULT_ENUM.SUCCESS);
 
   // and should have the result of the response that finally came in, and
   // everything dependent should also be updated.
   equal(Services.prefs.getCharPref("browser.search.region"), "AU");
 
-  await (() => {
-    return new Promise(resolve => {
-      server.stop(resolve);
-    });
-  })();
+  await new Promise(resolve => server.stop(resolve));
 });

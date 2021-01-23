@@ -33,7 +33,6 @@ class CompositableForwarder;
 class CompositorBridgeParentBase;
 class TextureForwarder;
 
-class ShmemAllocator;
 class ShmemSectionAllocator;
 class LegacySurfaceDescriptorAllocator;
 class ClientIPCAllocator;
@@ -70,11 +69,11 @@ class ISurfaceAllocator {
   MOZ_DECLARE_REFCOUNTED_TYPENAME(ISurfaceAllocator)
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(ISurfaceAllocator)
 
-  ISurfaceAllocator() {}
+  ISurfaceAllocator() = default;
 
   // down-casting
 
-  virtual ShmemAllocator* AsShmemAllocator() { return nullptr; }
+  virtual mozilla::ipc::IShmemAllocator* AsShmemAllocator() { return nullptr; }
 
   virtual ShmemSectionAllocator* AsShmemSectionAllocator() { return nullptr; }
 
@@ -114,7 +113,7 @@ class ISurfaceAllocator {
 /// Methods that are specific to the client/child side.
 class ClientIPCAllocator : public ISurfaceAllocator {
  public:
-  ClientIPCAllocator() {}
+  ClientIPCAllocator() = default;
 
   ClientIPCAllocator* AsClientAllocator() override { return this; }
 
@@ -122,13 +121,13 @@ class ClientIPCAllocator : public ISurfaceAllocator {
 
   virtual MessageLoop* GetMessageLoop() const = 0;
 
-  virtual void CancelWaitForRecycle(uint64_t aTextureId) = 0;
+  virtual void CancelWaitForNotifyNotUsed(uint64_t aTextureId) = 0;
 };
 
 /// Methods that are specific to the host/parent side.
 class HostIPCAllocator : public ISurfaceAllocator {
  public:
-  HostIPCAllocator() {}
+  HostIPCAllocator() = default;
 
   HostIPCAllocator* AsHostIPCAllocator() override { return this; }
 
@@ -141,7 +140,7 @@ class HostIPCAllocator : public ISurfaceAllocator {
                              uint64_t aTransactionId) = 0;
 
   virtual void SendAsyncMessage(
-      const InfallibleTArray<AsyncParentMessageData>& aMessage) = 0;
+      const nsTArray<AsyncParentMessageData>& aMessage) = 0;
 
   virtual void SendPendingAsyncMessages();
 
@@ -154,21 +153,6 @@ class HostIPCAllocator : public ISurfaceAllocator {
  protected:
   std::vector<AsyncParentMessageData> mPendingAsyncMessage;
   bool mAboutToSendAsyncMessages = false;
-};
-
-/// An allocator can provide shared memory.
-///
-/// The allocated shmems can be deallocated on either process, as long as they
-/// belong to the same channel.
-class ShmemAllocator {
- public:
-  virtual bool AllocShmem(size_t aSize,
-                          mozilla::ipc::SharedMemory::SharedMemoryType aShmType,
-                          mozilla::ipc::Shmem* aShmem) = 0;
-  virtual bool AllocUnsafeShmem(
-      size_t aSize, mozilla::ipc::SharedMemory::SharedMemoryType aShmType,
-      mozilla::ipc::Shmem* aShmem) = 0;
-  virtual void DeallocShmem(mozilla::ipc::Shmem& aShmem) = 0;
 };
 
 /// An allocator that can group allocations in bigger chunks of shared memory.
@@ -216,7 +200,7 @@ void DestroySurfaceDescriptor(mozilla::ipc::IShmemAllocator* aAllocator,
                               SurfaceDescriptor* aSurface);
 
 class GfxMemoryImageReporter final : public nsIMemoryReporter {
-  ~GfxMemoryImageReporter() {}
+  ~GfxMemoryImageReporter() = default;
 
  public:
   NS_DECL_ISUPPORTS

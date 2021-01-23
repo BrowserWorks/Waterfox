@@ -6,18 +6,18 @@
 
 #include "imgRequestProxy.h"
 
-#include "ImageLogging.h"
-#include "imgLoader.h"
+#include <utility>
+
 #include "Image.h"
+#include "ImageLogging.h"
 #include "ImageOps.h"
 #include "ImageTypes.h"
-#include "nsError.h"
-#include "nsCRTGlue.h"
 #include "imgINotificationObserver.h"
-#include "mozilla/dom/TabGroup.h"  // for TabGroup
+#include "imgLoader.h"
+#include "mozilla/Telemetry.h"     // for Telemetry
 #include "mozilla/dom/DocGroup.h"  // for DocGroup
-#include "mozilla/Move.h"
-#include "mozilla/Telemetry.h"  // for Telemetry
+#include "nsCRTGlue.h"
+#include "nsError.h"
 
 using namespace mozilla;
 using namespace mozilla::image;
@@ -93,10 +93,11 @@ NS_IMPL_ADDREF(imgRequestProxy)
 NS_IMPL_RELEASE(imgRequestProxy)
 
 NS_INTERFACE_MAP_BEGIN(imgRequestProxy)
-  NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, imgIRequest)
+  NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, PreloaderBase)
   NS_INTERFACE_MAP_ENTRY(imgIRequest)
   NS_INTERFACE_MAP_ENTRY(nsIRequest)
   NS_INTERFACE_MAP_ENTRY(nsISupportsPriority)
+  NS_INTERFACE_MAP_ENTRY_CONCRETE(imgRequestProxy)
   NS_INTERFACE_MAP_ENTRY_CONDITIONAL(nsITimedChannel, TimedChannel() != nullptr)
 NS_INTERFACE_MAP_END
 
@@ -249,26 +250,7 @@ void imgRequestProxy::ClearValidating() {
   }
 }
 
-bool imgRequestProxy::IsOnEventTarget() const {
-  // Ensure we are in some main thread context because the scheduler group
-  // methods are only safe to call on the main thread.
-  MOZ_ASSERT(NS_IsMainThread());
-
-  if (mTabGroup) {
-    MOZ_ASSERT(mEventTarget);
-    return mTabGroup->IsSafeToRun();
-  }
-
-  if (mListener) {
-    // If we have no scheduler group but we do have a listener, then we know
-    // that the listener requires unlabelled dispatch.
-    MOZ_ASSERT(mEventTarget);
-    return mozilla::SchedulerGroup::IsSafeToRunUnlabeled();
-  }
-
-  // No listener means it is always safe, as there is nothing to do.
-  return true;
-}
+bool imgRequestProxy::IsOnEventTarget() const { return true; }
 
 already_AddRefed<nsIEventTarget> imgRequestProxy::GetEventTarget() const {
   nsCOMPtr<nsIEventTarget> target(mEventTarget);
@@ -295,7 +277,7 @@ nsresult imgRequestProxy::DispatchWithTargetIfAvailable(
 void imgRequestProxy::DispatchWithTarget(already_AddRefed<nsIRunnable> aEvent) {
   LOG_FUNC(gImgLog, "imgRequestProxy::DispatchWithTarget");
 
-  MOZ_ASSERT(mListener || mTabGroup);
+  MOZ_ASSERT(mListener);
   MOZ_ASSERT(mEventTarget);
 
   mHadDispatch = true;
@@ -320,9 +302,6 @@ void imgRequestProxy::AddToOwner(Document* aLoadingDocument) {
   if (aLoadingDocument) {
     RefPtr<mozilla::dom::DocGroup> docGroup = aLoadingDocument->GetDocGroup();
     if (docGroup) {
-      mTabGroup = docGroup->GetTabGroup();
-      MOZ_ASSERT(mTabGroup);
-
       mEventTarget = docGroup->EventTargetFor(mozilla::TaskCategory::Other);
       MOZ_ASSERT(mEventTarget);
     }
@@ -543,10 +522,11 @@ bool imgRequestProxy::StartDecodingWithResult(uint32_t aFlags) {
   return false;
 }
 
-bool imgRequestProxy::RequestDecodeWithResult(uint32_t aFlags) {
+imgIContainer::DecodeResult imgRequestProxy::RequestDecodeWithResult(
+    uint32_t aFlags) {
   if (IsValidating()) {
     mDecodeRequested = true;
-    return false;
+    return imgIContainer::DECODE_REQUESTED;
   }
 
   RefPtr<Image> image = GetImage();
@@ -558,7 +538,7 @@ bool imgRequestProxy::RequestDecodeWithResult(uint32_t aFlags) {
     GetOwner()->StartDecoding();
   }
 
-  return false;
+  return imgIContainer::DECODE_REQUESTED;
 }
 
 NS_IMETHODIMP
@@ -659,6 +639,16 @@ NS_IMETHODIMP
 imgRequestProxy::SetLoadFlags(nsLoadFlags flags) {
   mLoadFlags = flags;
   return NS_OK;
+}
+
+NS_IMETHODIMP
+imgRequestProxy::GetTRRMode(nsIRequest::TRRMode* aTRRMode) {
+  return GetTRRModeImpl(aTRRMode);
+}
+
+NS_IMETHODIMP
+imgRequestProxy::SetTRRMode(nsIRequest::TRRMode aTRRMode) {
+  return SetTRRModeImpl(aTRRMode);
 }
 
 /**  imgIRequest methods **/
@@ -889,6 +879,22 @@ imgRequestProxy::GetImagePrincipal(nsIPrincipal** aPrincipal) {
 }
 
 NS_IMETHODIMP
+imgRequestProxy::GetHadCrossOriginRedirects(bool* aHadCrossOriginRedirects) {
+  *aHadCrossOriginRedirects = false;
+
+  nsCOMPtr<nsITimedChannel> timedChannel = TimedChannel();
+  if (timedChannel) {
+    bool allRedirectsSameOrigin = false;
+    *aHadCrossOriginRedirects =
+        NS_SUCCEEDED(
+            timedChannel->GetAllRedirectsSameOrigin(&allRedirectsSameOrigin)) &&
+        !allRedirectsSameOrigin;
+  }
+
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 imgRequestProxy::GetMultipart(bool* aMultipart) {
   if (!GetOwner()) {
     return NS_ERROR_FAILURE;
@@ -1030,6 +1036,22 @@ void imgRequestProxy::OnLoadComplete(bool aLastPart) {
   if (aLastPart || (mLoadFlags & nsIRequest::LOAD_BACKGROUND) == 0) {
     if (aLastPart) {
       RemoveFromLoadGroup();
+
+      nsresult errorCode = NS_OK;
+      // if the load is cross origin without CORS, or the CORS access is
+      // rejected, always fire load event to avoid leaking site information for
+      // <link rel=preload>.
+      // XXXedgar, currently we don't do the same thing for <img>.
+      imgRequest* request = GetOwner();
+      if (!request || !(request->IsDeniedCrossSiteCORSRequest() ||
+                        request->IsCrossSiteNoCORSRequest())) {
+        uint32_t status = imgIRequest::STATUS_NONE;
+        GetImageStatus(&status);
+        if (status & imgIRequest::STATUS_ERROR) {
+          errorCode = NS_ERROR_FAILURE;
+        }
+      }
+      NotifyStop(errorCode);
     } else {
       // More data is coming, so change the request to be a background request
       // and put it back in the loadgroup.
@@ -1062,11 +1084,6 @@ void imgRequestProxy::NullOutListener() {
   } else {
     mListener = nullptr;
   }
-
-  // Note that we don't free the event target. We actually need that to ensure
-  // we get removed from the ProgressTracker properly. No harm in keeping it
-  // however.
-  mTabGroup = nullptr;
 }
 
 NS_IMETHODIMP
@@ -1102,8 +1119,10 @@ nsresult imgRequestProxy::GetStaticRequest(Document* aLoadingDocument,
   // Create a static imgRequestProxy with our new extracted frame.
   nsCOMPtr<nsIPrincipal> currentPrincipal;
   GetImagePrincipal(getter_AddRefs(currentPrincipal));
-  RefPtr<imgRequestProxy> req =
-      new imgRequestProxyStatic(frozenImage, currentPrincipal);
+  bool hadCrossOriginRedirects = true;
+  GetHadCrossOriginRedirects(&hadCrossOriginRedirects);
+  RefPtr<imgRequestProxy> req = new imgRequestProxyStatic(
+      frozenImage, currentPrincipal, hadCrossOriginRedirects);
   req->Init(nullptr, nullptr, aLoadingDocument, mURI, nullptr);
 
   NS_ADDREF(*aReturn = req);
@@ -1188,6 +1207,15 @@ imgCacheValidator* imgRequestProxy::GetValidator() const {
   return owner->GetValidator();
 }
 
+void imgRequestProxy::PrioritizeAsPreload() {
+  if (imgRequest* owner = GetOwner()) {
+    owner->PrioritizeAsPreload();
+  }
+  if (imgCacheValidator* validator = GetValidator()) {
+    validator->PrioritizeAsPreload();
+  }
+}
+
 ////////////////// imgRequestProxyStatic methods
 
 class StaticBehaviour : public ProxyBehaviour {
@@ -1219,8 +1247,10 @@ class StaticBehaviour : public ProxyBehaviour {
 };
 
 imgRequestProxyStatic::imgRequestProxyStatic(mozilla::image::Image* aImage,
-                                             nsIPrincipal* aPrincipal)
-    : mPrincipal(aPrincipal) {
+                                             nsIPrincipal* aPrincipal,
+                                             bool aHadCrossOriginRedirects)
+    : mPrincipal(aPrincipal),
+      mHadCrossOriginRedirects(aHadCrossOriginRedirects) {
   mBehaviour = mozilla::MakeUnique<StaticBehaviour>(aImage);
 }
 
@@ -1235,9 +1265,19 @@ imgRequestProxyStatic::GetImagePrincipal(nsIPrincipal** aPrincipal) {
   return NS_OK;
 }
 
+NS_IMETHODIMP
+imgRequestProxyStatic::GetHadCrossOriginRedirects(
+    bool* aHadCrossOriginRedirects) {
+  *aHadCrossOriginRedirects = mHadCrossOriginRedirects;
+  return NS_OK;
+}
+
 imgRequestProxy* imgRequestProxyStatic::NewClonedProxy() {
   nsCOMPtr<nsIPrincipal> currentPrincipal;
   GetImagePrincipal(getter_AddRefs(currentPrincipal));
+  bool hadCrossOriginRedirects = true;
+  GetHadCrossOriginRedirects(&hadCrossOriginRedirects);
   RefPtr<mozilla::image::Image> image = GetImage();
-  return new imgRequestProxyStatic(image, currentPrincipal);
+  return new imgRequestProxyStatic(image, currentPrincipal,
+                                   hadCrossOriginRedirects);
 }

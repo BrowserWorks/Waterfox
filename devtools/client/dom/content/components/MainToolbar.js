@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -16,11 +14,15 @@ const SearchBox = createFactory(
   require("devtools/client/shared/components/SearchBox")
 );
 
-const { l10n } = require("../utils");
+const { l10n } = require("devtools/client/dom/content/utils");
 
 // Actions
-const { fetchProperties } = require("../actions/grips");
-const { setVisibilityFilter } = require("../actions/filter");
+const {
+  fetchProperties,
+} = require("devtools/client/dom/content/actions/grips");
+const {
+  setVisibilityFilter,
+} = require("devtools/client/dom/content/actions/filter");
 
 /**
  * This template is responsible for rendering a toolbar

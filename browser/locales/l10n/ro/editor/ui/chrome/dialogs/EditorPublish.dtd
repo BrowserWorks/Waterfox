@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label            "Publică pagina">
+<!ENTITY windowTitleSettings.label    "Setări de publicare">
+<!ENTITY publishTab.label             "Publică">
+<!ENTITY settingsTab.label            "Setări">
+<!ENTITY publishButton.label          "Publică">
+
+<!-- Publish Tab Panel -->
+<!ENTITY siteList.label               "Denumire site:">
+<!ENTITY siteList.accesskey           "e">
+<!ENTITY siteList.tooltip             "Alege site-ul pe care vrei să publici">
+<!ENTITY newSiteButton.label          "Site nou">
+<!ENTITY newSiteButton.accesskey      "n">
+<!ENTITY docDirList.label             "Subdirectorul site-ului pentru această pagină:">
+<!ENTITY docDirList.accesskey         "s">
+<!ENTITY docDirList.tooltip           "Alege sau introdu denumirea subdirectorului la distanță pentru această pagină">
+<!ENTITY publishImgCheckbox.label     "Include imagini și alte fișiere">
+<!ENTITY publishImgCheckbox.accesskey "I">
+<!ENTITY publishImgCheckbox.tooltip   "Publică imaginile și celelalte fișiere la care trimite această pagină">
+<!ENTITY sameLocationRadio.label      "Folosește aceeași locație ca pentru pagină">
+<!ENTITY sameLocationRadio.accesskey  "U">
+<!ENTITY sameLocationRadio.tooltip    "Publică fișierele în aceeași locație cu pagina">
+<!ENTITY useSubdirRadio.label         "Folosește acest subdirector de pe site:">
+<!ENTITY useSubdirRadio.accesskey     "d">
+<!ENTITY useSubdirRadio.tooltip       "Publică fișierele în subdirectorul la distanță selectat">
+<!ENTITY otherDirList.tooltip         "Alege sau introdu denumirea subdirectorului la distanță pe care vor fi publicate fișierele">
+<!ENTITY pageTitle.label              "Titlu pagină:">
+<!ENTITY pageTitle.accesskey          "T">
+<!ENTITY pageTitle.tooltip            "Introdu un titlu care să identifice pagina în fereastră și în marcaje">
+<!ENTITY pageTitleExample.label       "ex.: „Pagina mea de web”">
+<!ENTITY filename.label               "Denumire fișier:">
+<!ENTITY filename.accesskey           "N">
+<!ENTITY filename.tooltip             "Introdu o denumire pentru acest fișier, adăugând „.html” pentru pagini web">
+<!ENTITY filenameExample.label        "ex.: „pagina mea.html”">
+<!ENTITY setDefaultButton.label       "Setează ca implicit">
+<!ENTITY setDefaultButton.accesskey   "I">
+<!ENTITY removeButton.label           "Elimină site-ul">
+<!ENTITY removeButton.accesskey       "E">
+
+<!-- Settings Tab Panel -->
+<!ENTITY publishSites.label           "Site-uri de publicare">
+<!ENTITY serverInfo.label             "Informații despre server">
+<!ENTITY loginInfo.label              "Informații de autentificare">
+<!ENTITY siteName.label               "Denumire site:">
+<!ENTITY siteName.accesskey           "e">
+<!ENTITY siteName.tooltip             "Un nume scurt care identifică acest site de publicare (ex.: „Site-ulmeu”)">
+<!ENTITY siteUrl.label                "Adresa de publicare (ex.: „ftp://ftp.isp.ro/numelemeudeutilizator”):">
+<!ENTITY siteUrl.accesskey            "A">
+<!ENTITY siteUrl.tooltip              "Adresa FTP:// sau HTTP:// furnizată de ISP sau de serviciul de găzduire web">
+<!ENTITY browseUrl.label              "Adresa HTTP a paginii de start (ex.: „http://www.isp.ro/numelemeu”):">
+<!ENTITY browseUrl.accesskey          "A">
+<!ENTITY browseUrl.tooltip            "Adresa HTTP:// a directorului personal (nu include nume de fișier)">
+<!ENTITY username.label               "Nume de utilizator:">
+<!ENTITY username.accesskey           "u">
+<!ENTITY username.tooltip             "Numele de utilizator pentru autentificarea la ISP sau la serviciul de găzduire web">
+<!ENTITY password.label               "Parolă:">
+<!ENTITY password.accesskey           "P">
+<!ENTITY password.tooltip             "Parola asociată numelui de utilizator">
+<!ENTITY savePassword.label           "Salvează parola">
+<!ENTITY savePassword.accesskey       "S">
+<!ENTITY savePassword.tooltip         "Selectează opțiunea pentru a salva parola securizat folosind managerul de parole">

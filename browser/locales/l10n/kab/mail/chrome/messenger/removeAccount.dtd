@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "Kkes amiḍan akked isefka">
+<!ENTITY removeButton.label           "Kkes">
+<!ENTITY removeButton.accesskey       "K">
+<!ENTITY removeAccount.label          "Kkes talɣut n umiḍan">
+<!ENTITY removeAccount.accesskey      "ḍ">
+<!ENTITY removeAccount.desc           "Ad yekkes kan tamusni n &brandShortName; n umiḍan agi. Ur yettḥăz ara amiḍan iman-is ɣef uqeddac.">
+<!ENTITY removeData.label             "Kkes isefka n yizen">
+<!ENTITY removeData.accesskey         "z">
+<!ENTITY removeDataChat.label         "Kkes isefka n udiwenni">
+<!ENTITY removeDataChat.accesskey     "d">
+<!ENTITY removeDataLocalAccount.desc  "Ad yekkes akk iznan, ikaramen akked imzizdigen icudden qer umiḍan agi seg udebsi yinek adigan. Ayagi ur yettḥaz ara kra n yeznan yellan deg uqeddac. Ur fern ara ayagi ma yella tenwiḍ ad teǧǧeḍ isefka idiganen akken ad ten-t-sqedceḍ ar zdat di &brandShortName;.">
+<!ENTITY removeDataServerAccount.desc "Ad yekkes akk iznan, ikaramen akked imzizdigen icudden ɣer umiḍan agi seg udebsi yinek adigan. Iznan inek akked ikaramen inek ad qqimen deg uqeddac.">
+<!ENTITY removeDataChatAccount.desc   "Kkes akk iγmisen n udiwenni ittwaskelsen i umiḍan-agi deg uḍebṣi inek adigan.">
+<!ENTITY showData.label               "Sken adig n isefka">
+<!ENTITY showData.accesskey           "i">
+<!ENTITY progressPending              "Tukksa n isefka yettwafernen…">
+<!ENTITY progressSuccess              "Tukksa tedda.">
+<!ENTITY progressFailure              "Tukksa ur teddi ara.">

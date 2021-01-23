@@ -13,7 +13,6 @@ function updateAllTestPlugins(aState) {
 add_task(async function() {
   registerCleanupFunction(async function() {
     clearAllPluginPermissions();
-    Services.prefs.clearUserPref("plugins.click_to_play");
     setTestPluginEnabledState(Ci.nsIPluginTag.STATE_ENABLED, "Test Plug-in");
     setTestPluginEnabledState(
       Ci.nsIPluginTag.STATE_ENABLED,
@@ -23,7 +22,6 @@ add_task(async function() {
       gTestRoot + "blockNoPlugins",
       gTestBrowser
     );
-    resetBlocklist();
     gTestBrowser = null;
     gBrowser.removeCurrentTab();
     window.focus();
@@ -35,7 +33,6 @@ add_task(async function() {
   gTestBrowser = gBrowser.selectedBrowser;
 
   Services.prefs.setBoolPref("extensions.blocklist.suppressUI", true);
-  Services.prefs.setBoolPref("plugins.click_to_play", true);
 
   updateAllTestPlugins(Ci.nsIPluginTag.STATE_CLICKTOPLAY);
 
@@ -88,7 +85,7 @@ add_task(async function() {
   );
   ok(pluginInfo.activated, "Test 4, plugin node should not be activated");
 
-  await ContentTask.spawn(gTestBrowser, null, async function() {
+  await SpecialPowers.spawn(gTestBrowser, [], async function() {
     let plugin = content.document.getElementById("test");
     let npobj1 = Cu.waiveXrays(plugin).getObjectValue();
     // eslint-disable-next-line no-self-assign

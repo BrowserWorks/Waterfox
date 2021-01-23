@@ -17,6 +17,7 @@
 
 using mozilla::CheckedUint32;
 using mozilla::MakeUniqueFallible;
+using mozilla::UniquePtr;
 
 /*
  * Sorts Nodes as specified by the W3C XSLT 1.0 Recommendation
@@ -37,7 +38,7 @@ nsresult txNodeSorter::addSortElement(Expr* aSelectExpr, Expr* aLangExpr,
                                       Expr* aDataTypeExpr, Expr* aOrderExpr,
                                       Expr* aCaseOrderExpr,
                                       txIEvalContext* aContext) {
-  nsAutoPtr<SortKey> key(new SortKey);
+  UniquePtr<SortKey> key(new SortKey);
   nsresult rv = NS_OK;
 
   // Select
@@ -102,10 +103,7 @@ nsresult txNodeSorter::addSortElement(Expr* aSelectExpr, Expr* aLangExpr,
   }
 
   // mSortKeys owns key now.
-  rv = mSortKeys.add(key);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  key.forget();
+  mSortKeys.add(key.release());
   mNKeys++;
 
   return NS_OK;

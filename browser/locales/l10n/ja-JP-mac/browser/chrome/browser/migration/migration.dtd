@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title		"設定移行アシスタント">
+
+<!ENTITY importFrom.label		"オプション、ブックマーク、履歴、パスワードその他のデータを読み込む対象を選んでください:">
+<!ENTITY importFromUnix.label		"設定、ブックマーク、履歴、パスワードその他のデータを読み込む対象を選んでください:">
+
+<!ENTITY importFromIE.label		"Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey		"M">
+<!ENTITY importFromEdge.label		"Microsoft Edge">
+<!ENTITY importFromEdge.accesskey	"E">
+<!ENTITY importFromEdgeLegacy.label	"Microsoft Edge Legacy">
+<!ENTITY importFromEdgeLegacy.accesskey	"L">
+<!ENTITY importFromEdgeBeta.label	"Microsoft Edge Beta">
+<!ENTITY importFromEdgeBeta.accesskey	"d">
+<!ENTITY importFromNothing.label	"設定を読み込まない">
+<!ENTITY importFromNothing.accesskey	"D">
+<!ENTITY importFromSafari.label		"Safari">
+<!ENTITY importFromSafari.accesskey	"S">
+<!ENTITY importFromCanary.label		"Chrome Canary">
+<!ENTITY importFromCanary.accesskey	"n">
+<!ENTITY importFromChrome.label		"Chrome">
+<!ENTITY importFromChrome.accesskey	"C">
+<!ENTITY importFromChromeBeta.label	"Chrome Beta">
+<!ENTITY importFromChromeBeta.accesskey	"B">
+<!ENTITY importFromChromeDev.label	"Chrome Dev">
+<!ENTITY importFromChromeDev.accesskey	"D">
+<!ENTITY importFromChromium.label	"Chromium">
+<!ENTITY importFromChromium.accesskey	"u">
+<!ENTITY importFromFirefox.label	"Waterfox">
+<!ENTITY importFromFirefox.accesskey	"X">
+<!ENTITY importFrom360se.label		"360 Secure Browser">
+<!ENTITY importFrom360se.accesskey	"3">
+
+<!ENTITY noMigrationSources.label	"ブックマーク、履歴やパスワードなどの読み込む設定やデータを持つアプリケーションが見つかりませんでした。">
+
+<!ENTITY importSource.title		"設定とデータを読み込む">
+<!ENTITY importItems.title		"読み込む項目">
+<!ENTITY importItems.label		"読み込む項目を選択してください:">
+
+<!ENTITY migrating.title		"読み込んでいます...">
+<!ENTITY migrating.label		"次の項目を現在読み込んでいます...">
+
+<!ENTITY selectProfile.title		"プロファイルの選択">
+<!ENTITY selectProfile.label		"読み込むプロファイルを選択してください:">
+
+<!ENTITY done.title			"読み込み完了">
+<!ENTITY done.label			"次のデータが正常に読み込まれました:">
+
+<!ENTITY closeSourceBrowser.label	"続ける前に、選択したブラウザーが閉じられていることを確認してください。">

@@ -1,0 +1,91 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/navigator.xul -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items --> 
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE --> 
+<!ENTITY mainWindow.title "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+
+<!ENTITY mainWindow.titleprivate "პირადი სეანსი">
+
+<!ENTITY editPageCmd.label "გვერდის ჩასწორება">
+<!ENTITY editPageCmd.accesskey "ჩ">
+<!ENTITY editPageCmd.commandkey "e">
+
+<!ENTITY navbarCmd.label "გადასაადგილებელი ხელსაწყოთა ზოლი">
+<!ENTITY navbarCmd.accesskey "გ">
+<!ENTITY bookmarksToolbarCmd.label     "სანიშნების ხელსაწყოთა ზოლი">
+<!ENTITY bookmarksToolbarCmd.accesskey "ს">
+
+<!ENTITY closeWindow.label "სარკმლის დახურვა">
+<!ENTITY closeWindow.accesskey "ა">
+
+<!ENTITY minimizeButton.tooltip       "ჩაკეცვა">
+<!ENTITY restoreButton.tooltip        "აღდგენა">
+
+<!ENTITY feedsMenu.label "გამოწერა ამ გვერდზე">
+<!ENTITY feedsMenu.accesskey "გ">
+
+<!ENTITY menuBar.tooltip                  "მენიუს ზოლი">
+<!ENTITY bookmarksToolbar.tooltip         "სანიშნების ხელსაწყოთა ზოლი">
+<!ENTITY navigationToolbar.tooltip        "გადასაადგილებელი ხელსაწყოთა ზოლი">
+
+<!ENTITY editBookmark.done.label "მზადაა">
+<!ENTITY editBookmark.cancel.label "გაუქმება">
+<!ENTITY editBookmark.removeBookmark.accessKey "უ">
+
+<!-- Toolbar items --> 
+<!ENTITY backButton.label             "წინა">
+<!ENTITY backButton.tooltip           "წინა გვერდზე დაბრუნება">
+<!ENTITY forwardButton.label          "მომდევნო">
+<!ENTITY forwardButton.tooltip        "მომდევნო გვერდზე გადასვლა">
+<!ENTITY reloadButton.label           "განახლება">
+<!ENTITY reloadButton.tooltip         "აქტიური გვერდის განახლება">
+<!ENTITY stopButton.label             "შეჩერება">
+<!ENTITY stopButton.tooltip           "გვერდის ჩატვირთვის შეჩერება">
+<!ENTITY searchButton.label           "ძიება">
+<!ENTITY searchButton.tooltip         "მიუთითეთ სიტყვა მარცხენა ველში და დაწკაპეთ &quot;ძიება&quot;">
+<!ENTITY goButton.label               "გადასვლა">
+<!ENTITY goButton.tooltip             "მიუთითეთ სიტყვა მარცხენა ველში და დაწკაპეთ „გადასვლას“">
+<!ENTITY printButton.label            "ბეჭდვა">
+<!ENTITY printButton.tooltip          "გვერდის ბეჭდვა">
+
+<!ENTITY throbber.tooltip             "გადასვლა &vendorShortName;-ს საწყის გვერდზე">
+
+<!ENTITY throbber.tooltip2            "&brandShortName; – საწყის გვერდზე გადასვლა">
+
+<!ENTITY locationBar.tooltip          "საძიებო ტერმინის, საკვანძო სიტყვის ან მისამართის მითითება">
+<!ENTITY locationBar.accesskey        "თ">
+<!ENTITY locationBar.title            "მისამართი">
+<!ENTITY proxyIcon.tooltip            "ხატულას გადათრევა ამ გვერდის ბმულის შესაქმნელად">
+
+<!ENTITY searchItem.title             "ძიება">
+
+<!ENTITY bookmarksButton.label        "სანიშნები">
+<!ENTITY bookmarksButton.tooltip      "სანიშნების ჩამონათვალი">
+<!ENTITY homeButton.label             "საწყისი გვერდი">
+<!ENTITY bookmarksToolbarItem.label   "სანიშნების ხელსაწყოთა ზოლის ელემენტები">
+<!ENTITY bookmarksToolbarChevron.tooltip "სხვა სანიშნების ჩვენება">
+
+<!-- Statusbar -->
+<!ENTITY  statusText.label            "მზადაა">
+
+<!ENTITY popupIcon.tooltiptext      "ფანჯრების დაშვება ამ გვერდისთვის">
+
+<!ENTITY viewSecurityInfo.label      "უსაფრთხოების მონაცემების ნახვა">
+<!ENTITY viewSecurityInfo.accesskey  "უ">
+<!ENTITY viewCertificate.label       "სერტიფიკატის ნახვა">
+<!ENTITY viewCertificate.accesskey   "ს">
+<!ENTITY viewCertManager.label       "სერტიფიკატების მმართველი">
+<!ENTITY viewCertManager.accesskey   "მ">
+
+<!ENTITY zoomIn.tooltiptext          "უფრო დიდი">
+<!ENTITY zoomOut.tooltiptext         "ურფო პატარა">

@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import print_function, unicode_literals
+from __future__ import absolute_import, print_function, unicode_literals
 
 import argparse
 import os
@@ -22,8 +22,9 @@ from mozpack.executables import (
 )
 
 
-STDCXX_MAX_VERSION = Version('3.4.17')
-GLIBC_MAX_VERSION = Version('2.12')
+STDCXX_MAX_VERSION = Version('3.4.19')
+CXXABI_MAX_VERSION = Version('1.3.7')
+GLIBC_MAX_VERSION = Version('2.17')
 LIBGCC_MAX_VERSION = Version('4.8')
 
 HOST = {
@@ -56,7 +57,7 @@ get_type = memoize(get_type)
 def get_output(*cmd):
     env = dict(os.environ)
     env[b'LC_ALL'] = b'C'
-    return subprocess.check_output(cmd, env=env).splitlines()
+    return subprocess.check_output(cmd, env=env, universal_newlines=True).splitlines()
 
 
 class Skip(RuntimeError):
@@ -86,7 +87,7 @@ def iter_symbols(binary):
     # platforms for static libraries, but its format is different for
     # Windows .obj files, so the following won't work for them, but
     # it currently doesn't matter.
-    if ty == UNKNOWN and open(binary).read(8) == '!<arch>\n':
+    if ty == UNKNOWN and open(binary, 'rb').read(8) == b'!<arch>\n':
         ty = ELF
     if ty in (ELF, MACHO):
         for line in get_output(buildconfig.substs['LLVM_OBJDUMP'], '-t',
@@ -160,8 +161,15 @@ def check_dep_versions(target, binary, lib, prefix, max_version):
     prefix = prefix + '_'
     try:
         for sym in at_least_one(iter_symbols(binary)):
-            if sym['addr'] == 0 and sym['version'] and \
-                    sym['version'].startswith(prefix):
+            # Only check versions on undefined symbols
+            if sym['addr'] != 0:
+                continue
+
+            # No version to check
+            if not sym['version']:
+                continue
+
+            if sym['version'].startswith(prefix):
                 version = Version(sym['version'][len(prefix):])
                 if version > max_version:
                     unwanted.append(sym)
@@ -178,6 +186,8 @@ def check_dep_versions(target, binary, lib, prefix, max_version):
 def check_stdcxx(target, binary):
     check_dep_versions(
         target, binary, 'libstdc++', 'GLIBCXX', STDCXX_MAX_VERSION)
+    check_dep_versions(
+        target, binary, 'libstdc++', 'CXXABI', CXXABI_MAX_VERSION)
 
 
 def check_libgcc(target, binary):
@@ -254,16 +264,14 @@ def check_networking(binary):
     retcode = 0
     networking_functions = set([
         # socketpair is not concerning; it is restricted to AF_UNIX
-        "socket", "connect", "accept", "bind", "listen",
-        "getsockname", "getsockopt", "setsockopt",
-        "recv", "recvfrom",
-        "send", "sendto",
+        "connect", "accept", "listen", "getsockname", "getsockopt",
+        "recv", "send",
         # We would be concerned by recvmsg and sendmsg; but we believe
         # they are okay as documented in 1376621#c23
         "gethostbyname", "gethostbyaddr", "gethostent", "sethostent", "endhostent",
         "gethostent_r", "gethostbyname2", "gethostbyaddr_r", "gethostbyname_r",
         "gethostbyname2_r",
-        "getaddrinfo", "getservent", "getservbyname", "getservbyport", "setservent",
+        "getservent", "getservbyname", "getservbyport", "setservent",
         "getprotoent", "getprotobyname", "getprotobynumber", "setprotoent",
         "endprotoent"])
     bad_occurences_names = set()
@@ -280,12 +288,13 @@ def check_networking(binary):
         s = 'TEST-UNEXPECTED-FAIL | check_networking | {} | Identified {} ' + \
             'networking function(s) being imported in the rust static library ({})'
         print(s.format(basename, len(bad_occurences_names),
-            ",".join(sorted(bad_occurences_names))),
-            file=sys.stderr)
+                       ",".join(sorted(bad_occurences_names))),
+              file=sys.stderr)
         retcode = 1
     elif buildconfig.substs.get('MOZ_AUTOMATION'):
         print('TEST-PASS | check_networking | {}'.format(basename))
     return retcode
+
 
 def checks(target, binary):
     # The clang-plugin is built as target but is really a host binary.
@@ -316,7 +325,7 @@ def checks(target, binary):
             pass
         except RuntimeError as e:
             print('TEST-UNEXPECTED-FAIL | {} | {} | {}'
-                  .format(name, basename, e.message),
+                  .format(name, basename, str(e)),
                   file=sys.stderr)
             retcode = 1
     return retcode
@@ -345,7 +354,7 @@ def main(args):
 
     if options.networking and options.host:
         print('--networking is only valid with --target',
-               file=sys.stderr)
+              file=sys.stderr)
         return 1
 
     if options.networking:

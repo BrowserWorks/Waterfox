@@ -4,14 +4,24 @@
 
 from __future__ import absolute_import, print_function, unicode_literals
 
+import os
+import sys
+
 import pytest
 
-from taskgraph import morph
+from taskgraph import morph, GECKO
+from taskgraph.config import load_graph_config
 from taskgraph.graph import Graph
+from taskgraph.parameters import Parameters
 from taskgraph.taskgraph import TaskGraph
 from taskgraph.task import Task
 
 from mozunit import main
+
+
+@pytest.fixture(scope='module')
+def graph_config():
+    return load_graph_config(os.path.join(GECKO, 'taskcluster', 'ci'))
 
 
 @pytest.fixture
@@ -27,7 +37,10 @@ def make_taskgraph():
     return inner
 
 
-def test_make_index_tasks(make_taskgraph):
+@pytest.mark.xfail(
+    sys.version_info >= (3, 0), reason="python3 migration is not complete"
+)
+def test_make_index_tasks(make_taskgraph, graph_config):
     task_def = {
         'routes': [
             "index.gecko.v2.mozilla-central.latest.firefox-l10n.linux64-opt.es-MX",
@@ -79,7 +92,9 @@ def test_make_index_tasks(make_taskgraph):
         docker_task.label: docker_task,
     })
 
-    index_task = morph.make_index_task(task, taskgraph, label_to_taskid)
+    index_task = morph.make_index_task(
+        task, taskgraph, label_to_taskid, Parameters(strict=False), graph_config
+    )
 
     assert index_task.task['payload']['command'][0] == 'insert-indexes.js'
     assert index_task.task['payload']['env']['TARGET_TASKID'] == 'a-tid'
@@ -87,145 +102,6 @@ def test_make_index_tasks(make_taskgraph):
 
     # check the scope summary
     assert index_task.task['scopes'] == ['index:insert-task:gecko.v2.mozilla-central.*']
-
-
-TASKS = [
-    {
-        'kind': 'build',
-        'label': 'a',
-        'attributes': {},
-        'task': {
-            'extra': {
-                'treeherder': {
-                    'group': 'tc',
-                    'symbol': 'B'
-                }
-            },
-            'payload': {
-                'env': {
-                    'FOO': 'BAR'
-                }
-            },
-            'tags': {
-                'kind': 'build'
-            }
-        }
-    },
-    {
-        'kind': 'test',
-        'label': 'b',
-        'attributes': {},
-        'task': {
-            'extra': {
-                'suite': {'name': 'talos'},
-                'treeherder': {
-                    'group': 'tc',
-                    'symbol': 't'
-                }
-            },
-            'payload': {
-                'env': {
-                    'FOO': 'BAR'
-                }
-            },
-            'tags': {
-                'kind': 'test'
-            }
-        }
-    },
-]
-
-
-@pytest.fixture
-def get_morphed(make_taskgraph):
-    def inner(try_task_config, tasks=None):
-        tasks = tasks or TASKS
-        taskgraph = make_taskgraph({
-            t['label']: Task(**t) for t in tasks[:]
-        })
-
-        fn = morph.apply_jsone_templates(try_task_config)
-        return fn(*taskgraph)[0]
-    return inner
-
-
-def test_template_env(get_morphed):
-    morphed = get_morphed({
-        'templates': {
-            'env': {
-                'ENABLED': 1,
-                'FOO': 'BAZ',
-            }
-        },
-    })
-
-    assert len(morphed.tasks) == 2
-    for t in morphed.tasks.values():
-        assert len(t.task['payload']['env']) == 2
-        assert t.task['payload']['env']['ENABLED'] == 1
-        assert t.task['payload']['env']['FOO'] == 'BAZ'
-
-    morphed = get_morphed({
-        'templates': {
-            'env': {
-                'ENABLED': 0,
-                'FOO': 'BAZ',
-            }
-        },
-    })
-
-    assert len(morphed.tasks) == 2
-    for t in morphed.tasks.values():
-        assert len(t.task['payload']['env']) == 2
-        assert t.task['payload']['env']['ENABLED'] == 0
-        assert t.task['payload']['env']['FOO'] == 'BAZ'
-
-
-def test_template_rebuild(get_morphed):
-    morphed = get_morphed({
-        'tasks': ['b'],
-        'templates': {
-            'rebuild': 4,
-        },
-    })
-    tasks = morphed.tasks.values()
-    assert len(tasks) == 2
-
-    for t in tasks:
-        if t.label == 'a':
-            assert 'task_duplicates' not in t.attributes
-        elif t.label == 'b':
-            assert 'task_duplicates' in t.attributes
-            assert t.attributes['task_duplicates'] == 4
-
-
-@pytest.mark.parametrize('command', (
-    ['foo --bar'],
-    ['foo', '--bar'],
-    [['foo']],
-    [['foo', '--bar']],
-))
-def test_template_gecko_profile(get_morphed, command):
-    tasks = TASKS[:]
-    for t in tasks:
-        t['task']['payload']['command'] = command
-
-    morphed = get_morphed({
-        'templates': {
-            'gecko-profile': True,
-        }
-    }, tasks)
-
-    for t in morphed.tasks.values():
-        command = t.task['payload']['command']
-        if isinstance(command[0], list):
-            command = command[0]
-        command = ' '.join(command)
-
-        if t.label == 'a':
-            assert not command.endswith('--gecko-profile')
-        elif t.label == 'b':
-            assert command.endswith('--gecko-profile')
 
 
 if __name__ == '__main__':

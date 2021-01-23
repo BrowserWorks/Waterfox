@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Muat turun">
+<!ENTITY aboutDownloads.header                     "Muat Turun Anda">
+<!ENTITY aboutDownloads.empty                      "Tiada Muat turun">
+
+<!ENTITY aboutDownloads.open                       "Buka">
+<!ENTITY aboutDownloads.remove                     "Buang">
+<!ENTITY aboutDownloads.removeAll                  "Buang Semua">
+<!ENTITY aboutDownloads.pause                      "Jeda">
+<!ENTITY aboutDownloads.resume                     "Sambung">
+<!ENTITY aboutDownloads.cancel                     "Batal">
+<!ENTITY aboutDownloads.retry                      "Cuba lagi">

@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title             "Mód Sábháilteachta &brandShortName;">
+<!ENTITY window.width                     "37em">
+
+<!ENTITY safeModeDescription.label        "Tá &brandShortName; ag rith sa Mhód Sábháilteachta anois, rud a dhíchumasaíonn do chuid sainshocruithe, téamaí agus eisínteachtaí go sealadach.">
+<!ENTITY safeModeDescription2.label       "Tig leat na hathruithe seo go léir, nó cuid díobh, a chur i bhfeidhm go buan:">
+
+<!ENTITY disableAddons.label              "Díchumasaigh gach breiseán">
+<!ENTITY disableAddons.accesskey          "D">
+
+<!ENTITY resetToolbars.label              "Athshocraigh barraí uirlisí agus rialtáin">
+<!ENTITY resetToolbars.accesskey          "r">
+
+<!ENTITY changeAndRestartButton.label     "Cuir na hAthruithe i bhFeidhm agus Atosaigh">
+<!ENTITY changeAndRestartButton.accesskey "C">
+
+<!ENTITY continueButton.label             "Lean Ar Aghaidh sa Mhód Sábháilteachta">
+<!ENTITY continueButton.accesskey         "L">

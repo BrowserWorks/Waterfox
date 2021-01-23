@@ -9,12 +9,13 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/dom/WindowBinding.h"  // For FrameRequestCallback
+#include "mozilla/dom/WebXRBinding.h"
+#include "mozilla/dom/XRFrame.h"
 #include "mozilla/gfx/PVRManagerChild.h"
 #include "mozilla/ipc/SharedMemory.h"  // for SharedMemory, etc
 #include "ThreadSafeRefcountingWithMainThreadDestruction.h"
 #include "mozilla/layers/ISurfaceAllocator.h"  // for ISurfaceAllocator
 #include "mozilla/layers/LayersTypes.h"        // for LayersBackend
-#include "mozilla/layers/TextureForwarder.h"
 
 namespace mozilla {
 namespace dom {
@@ -22,8 +23,7 @@ class Promise;
 class GamepadManager;
 class Navigator;
 class VRDisplay;
-class VREventObserver;
-class VRMockDisplay;
+class FrameRequestCallback;
 }  // namespace dom
 namespace layers {
 class SyncObjectClient;
@@ -31,6 +31,23 @@ class SyncObjectClient;
 namespace gfx {
 class VRLayerChild;
 class VRDisplayClient;
+
+class VRManagerEventObserver {
+ public:
+  NS_INLINE_DECL_PURE_VIRTUAL_REFCOUNTING
+  virtual void NotifyVRDisplayMounted(uint32_t aDisplayID) = 0;
+  virtual void NotifyVRDisplayUnmounted(uint32_t aDisplayID) = 0;
+  virtual void NotifyVRDisplayConnect(uint32_t aDisplayID) = 0;
+  virtual void NotifyVRDisplayDisconnect(uint32_t aDisplayID) = 0;
+  virtual void NotifyVRDisplayPresentChange(uint32_t aDisplayID) = 0;
+  virtual void NotifyPresentationGenerationChanged(uint32_t aDisplayID) = 0;
+  virtual bool GetStopActivityStatus() const = 0;
+  virtual void NotifyEnumerationCompleted() = 0;
+  virtual void NotifyDetectRuntimesCompleted() = 0;
+
+ protected:
+  virtual ~VRManagerEventObserver() = default;
+};
 
 class VRManagerChild : public PVRManagerChild {
   friend class PVRManagerChild;
@@ -41,27 +58,30 @@ class VRManagerChild : public PVRManagerChild {
   static VRManagerChild* Get();
 
   // Indicate that an observer wants to receive VR events.
-  void AddListener(dom::VREventObserver* aObserver);
+  void AddListener(VRManagerEventObserver* aObserver);
   // Indicate that an observer should no longer receive VR events.
-  void RemoveListener(dom::VREventObserver* aObserver);
+  void RemoveListener(VRManagerEventObserver* aObserver);
   void StartActivity();
   void StopActivity();
+  bool RuntimeSupportsVR() const;
+  bool RuntimeSupportsAR() const;
+  bool RuntimeSupportsInline() const;
 
-  bool GetVRDisplays(nsTArray<RefPtr<VRDisplayClient>>& aDisplays);
+  void GetVRDisplays(nsTArray<RefPtr<VRDisplayClient>>& aDisplays);
   bool RefreshVRDisplaysWithCallback(uint64_t aWindowId);
+  bool EnumerateVRDisplays();
+  void DetectRuntimes();
   void AddPromise(const uint32_t& aID, dom::Promise* aPromise);
-
-  void CreateVRServiceTestDisplay(const nsCString& aID, dom::Promise* aPromise);
-  void CreateVRServiceTestController(const nsCString& aID,
-                                     dom::Promise* aPromise);
+  gfx::VRAPIMode GetVRAPIMode(uint32_t aDisplayID) const;
 
   static void InitSameProcess();
   static void InitWithGPUProcess(Endpoint<PVRManagerChild>&& aEndpoint);
   static bool InitForContent(Endpoint<PVRManagerChild>&& aEndpoint);
-  static bool ReinitForContent(Endpoint<PVRManagerChild>&& aEndpoint);
   static void ShutDown();
 
   static bool IsCreated();
+  static bool IsPresenting();
+  static TimeStamp GetIdleDeadlineHint(TimeStamp aDefault);
 
   PVRLayerChild* CreateVRLayer(uint32_t aDisplayID, nsIEventTarget* aTarget,
                                uint32_t aGroup);
@@ -71,53 +91,54 @@ class VRManagerChild : public PVRManagerChild {
   layers::LayersBackend GetBackendType() const;
   layers::SyncObjectClient* GetSyncObject() { return mSyncObject; }
 
-  nsresult ScheduleFrameRequestCallback(
-      mozilla::dom::FrameRequestCallback& aCallback, int32_t* aHandle);
+  nsresult ScheduleFrameRequestCallback(dom::FrameRequestCallback& aCallback,
+                                        int32_t* aHandle);
   void CancelFrameRequestCallback(int32_t aHandle);
   MOZ_CAN_RUN_SCRIPT
   void RunFrameRequestCallbacks();
   void NotifyPresentationGenerationChanged(uint32_t aDisplayID);
 
   MOZ_CAN_RUN_SCRIPT
-  void UpdateDisplayInfo(nsTArray<VRDisplayInfo>& aDisplayUpdates);
+  void UpdateDisplayInfo(const VRDisplayInfo& aDisplayInfo);
   void FireDOMVRDisplayMountedEvent(uint32_t aDisplayID);
   void FireDOMVRDisplayUnmountedEvent(uint32_t aDisplayID);
   void FireDOMVRDisplayConnectEvent(uint32_t aDisplayID);
   void FireDOMVRDisplayDisconnectEvent(uint32_t aDisplayID);
   void FireDOMVRDisplayPresentChangeEvent(uint32_t aDisplayID);
-  void FireDOMVRDisplayConnectEventsForLoad(dom::VREventObserver* aObserver);
+  void FireDOMVRDisplayConnectEventsForLoad(VRManagerEventObserver* aObserver);
 
-  virtual void HandleFatalError(const char* aMsg) const override;
+  void HandleFatalError(const char* aMsg) const override;
+  void ActorDestroy(ActorDestroyReason aReason) override;
+
+  void RunPuppet(const nsTArray<uint64_t>& aBuffer, dom::Promise* aPromise,
+                 ErrorResult& aRv);
+  void ResetPuppet(dom::Promise* aPromise, ErrorResult& aRv);
 
  protected:
   explicit VRManagerChild();
   ~VRManagerChild();
-  void Destroy();
-  static void DeferredDestroy(RefPtr<VRManagerChild> aVRManagerChild);
 
   PVRLayerChild* AllocPVRLayerChild(const uint32_t& aDisplayID,
                                     const uint32_t& aGroup);
   bool DeallocPVRLayerChild(PVRLayerChild* actor);
 
+  void ActorDealloc() override;
+
   // MOZ_CAN_RUN_SCRIPT_BOUNDARY until we can mark ipdl-generated things as
   // MOZ_CAN_RUN_SCRIPT.
   MOZ_CAN_RUN_SCRIPT_BOUNDARY
   mozilla::ipc::IPCResult RecvUpdateDisplayInfo(
-      nsTArray<VRDisplayInfo>&& aDisplayUpdates);
-
-  mozilla::ipc::IPCResult RecvDispatchSubmitFrameResult(
-      const uint32_t& aDisplayID, const VRSubmitFrameResultInfo& aResult);
-  mozilla::ipc::IPCResult RecvGamepadUpdate(
-      const GamepadChangeEvent& aGamepadEvent);
+      const VRDisplayInfo& aDisplayInfo);
+  mozilla::ipc::IPCResult RecvUpdateRuntimeCapabilities(
+      const VRDisplayCapabilityFlags& aCapabilities);
   mozilla::ipc::IPCResult RecvReplyGamepadVibrateHaptic(
       const uint32_t& aPromiseID);
 
-  mozilla::ipc::IPCResult RecvReplyCreateVRServiceTestDisplay(
-      const nsCString& aID, const uint32_t& aPromiseID,
-      const uint32_t& aDeviceID);
-  mozilla::ipc::IPCResult RecvReplyCreateVRServiceTestController(
-      const nsCString& aID, const uint32_t& aPromiseID,
-      const uint32_t& aDeviceID);
+  MOZ_CAN_RUN_SCRIPT_BOUNDARY
+  mozilla::ipc::IPCResult RecvNotifyPuppetCommandBufferCompleted(bool aSuccess);
+  MOZ_CAN_RUN_SCRIPT_BOUNDARY
+  mozilla::ipc::IPCResult RecvNotifyPuppetResetComplete();
+
   bool IsSameProcess() const { return OtherPid() == base::GetCurrentProcId(); }
 
  private:
@@ -127,33 +148,53 @@ class VRManagerChild : public PVRManagerChild {
   void FireDOMVRDisplayDisconnectEventInternal(uint32_t aDisplayID);
   void FireDOMVRDisplayPresentChangeEventInternal(uint32_t aDisplayID);
   void FireDOMVRDisplayConnectEventsForLoadInternal(
-      uint32_t aDisplayID, dom::VREventObserver* aObserver);
+      uint32_t aDisplayID, VRManagerEventObserver* aObserver);
   void NotifyPresentationGenerationChangedInternal(uint32_t aDisplayID);
+  void NotifyEnumerationCompletedInternal();
+  void NotifyRuntimeCapabilitiesUpdatedInternal();
 
   nsTArray<RefPtr<VRDisplayClient>> mDisplays;
+  VRDisplayCapabilityFlags mRuntimeCapabilities;
   bool mDisplaysInitialized;
   nsTArray<uint64_t> mNavigatorCallbacks;
 
-  MessageLoop* mMessageLoop;
+  struct XRFrameRequest {
+    XRFrameRequest(mozilla::dom::FrameRequestCallback& aCallback,
+                   int32_t aHandle)
+        : mCallback(&aCallback), mHandle(aHandle) {}
 
-  struct FrameRequest;
+    XRFrameRequest(mozilla::dom::XRFrameRequestCallback& aCallback,
+                   mozilla::dom::XRFrame& aFrame, int32_t aHandle)
+        : mXRCallback(&aCallback), mXRFrame(&aFrame), mHandle(aHandle) {}
+    MOZ_CAN_RUN_SCRIPT
+    void Call(const DOMHighResTimeStamp& aTimeStamp);
 
-  nsTArray<FrameRequest> mFrameRequestCallbacks;
+    // Comparator operators to allow RemoveElementSorted with an
+    // integer argument on arrays of XRFrameRequest
+    bool operator==(int32_t aHandle) const { return mHandle == aHandle; }
+    bool operator<(int32_t aHandle) const { return mHandle < aHandle; }
+
+    RefPtr<mozilla::dom::FrameRequestCallback> mCallback;
+    RefPtr<mozilla::dom::XRFrameRequestCallback> mXRCallback;
+    RefPtr<mozilla::dom::XRFrame> mXRFrame;
+    int32_t mHandle;
+  };
+
+  nsTArray<XRFrameRequest> mFrameRequestCallbacks;
   /**
    * The current frame request callback handle
    */
   int32_t mFrameRequestCallbackCounter;
   mozilla::TimeStamp mStartTimeStamp;
 
-  nsTArray<RefPtr<dom::VREventObserver>> mListeners;
+  nsTArray<RefPtr<VRManagerEventObserver>> mListeners;
+  bool mWaitingForEnumeration;
 
   layers::LayersBackend mBackend;
   RefPtr<layers::SyncObjectClient> mSyncObject;
   nsRefPtrHashtable<nsUint32HashKey, dom::Promise> mGamepadPromiseList;
-  uint32_t mPromiseID;
-  nsRefPtrHashtable<nsUint32HashKey, dom::Promise> mPromiseList;
-  RefPtr<dom::VRMockDisplay> mVRMockDisplay;
-  VRControllerState mLastControllerState[kVRControllerMaxCount];
+  RefPtr<dom::Promise> mRunPuppetPromise;
+  nsTArray<RefPtr<dom::Promise>> mResetPuppetPromises;
 
   DISALLOW_COPY_AND_ASSIGN(VRManagerChild);
 };

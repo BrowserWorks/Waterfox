@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (window.width2, window.height): These values should be
+close to the golden ratio (1.618:1) while making sure it's wide enough for long
+file names and tall enough to hint that there are more activities in the list -->
+
+<!ENTITY window.width2                    "485">
+<!ENTITY window.height                    "300">
+
+<!ENTITY activity.title                  "Ardeiñ oberiantiz">
+
+<!ENTITY cmd.pause.label                  "Ehan">
+<!ENTITY cmd.pause.accesskey              "E">
+<!ENTITY cmd.resume.label                 "Adkregiñ">
+<!ENTITY cmd.resume.accesskey             "A">
+<!ENTITY cmd.cancel.label                 "Nullañ">
+<!ENTITY cmd.cancel.accesskey             "N">
+<!ENTITY cmd.undo.label                   "Dizober">
+<!ENTITY cmd.undo.accesskey               "D">
+<!ENTITY cmd.recover.label                "Adsevel">
+<!ENTITY cmd.recover.accesskey            "s">
+<!ENTITY cmd.retry.label                  "Klask en-dro">
+<!ENTITY cmd.retry.accesskey              "K">
+<!ENTITY cmd.removeFromList.label         "Dilemel diwar ar roll">
+<!ENTITY cmd.removeFromList.accesskey     "l">
+
+<!ENTITY cmd.close.commandkey             "w">
+<!ENTITY cmd.close2.commandkey            "j">
+<!ENTITY cmd.close2Unix.commandkey        "y">
+<!ENTITY cmd.clearList.label              "Skarzhañ ar roll">
+<!ENTITY cmd.clearList.tooltip            "Dilemel an ergorennoù echuet, nullet pe c'hwitet warno diwar ar roll">
+<!ENTITY cmd.clearList.accesskey          "z">
+<!ENTITY cmd.find.commandkey              "f">
+<!ENTITY cmd.search.commandkey            "k">
+
+<!ENTITY searchBox.label                  "Klask…">

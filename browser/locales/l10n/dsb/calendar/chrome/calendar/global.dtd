@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY time.midnight "Połnoc" >
+<!ENTITY time.noon "Połdnjo" >
+
+<!-- Day Names -->
+<!-- LOCALIZATION NOTE : Accesskeys for day.1.Ddd to day.7.Ddd are currently
+     only used in Preferences > Views > Workweek groupbox -->
+<!ENTITY day.1.Ddd "Nj" >
+<!ENTITY day.1.Ddd.accesskey "N">
+<!ENTITY day.2.Ddd "Pó" >
+<!ENTITY day.2.Ddd.accesskey "P">
+<!ENTITY day.3.Ddd "Wa" >
+<!ENTITY day.3.Ddd.accesskey "W">
+<!ENTITY day.4.Ddd "Sr" >
+<!ENTITY day.4.Ddd.accesskey "S">
+<!ENTITY day.5.Ddd "St" >
+<!ENTITY day.5.Ddd.accesskey "t">
+<!ENTITY day.6.Ddd "Pě" >
+<!ENTITY day.6.Ddd.accesskey "P">
+<!ENTITY day.7.Ddd "So" >
+<!ENTITY day.7.Ddd.accesskey "o">
+
+<!ENTITY day.1.name "Njeźela" >
+<!ENTITY day.2.name "Pónjeźela" >
+<!ENTITY day.3.name "Wałtora" >
+<!ENTITY day.4.name "Srjoda" >
+<!ENTITY day.5.name "Stwórtk" >
+<!ENTITY day.6.name "Pětk" >
+<!ENTITY day.7.name "Sobota" >
+
+<!ENTITY month.1.name "Januar" >
+<!ENTITY month.2.name "Februar" >
+<!ENTITY month.3.name "Měrc" >
+<!ENTITY month.4.name "Apryl" >
+<!ENTITY month.5.name "Maj" >
+<!ENTITY month.6.name "Junij" >
+<!ENTITY month.7.name "Julij" >
+<!ENTITY month.8.name "Awgust" >
+<!ENTITY month.9.name "September" >
+<!ENTITY month.10.name "Oktober" >
+<!ENTITY month.11.name "Nowember" >
+<!ENTITY month.12.name "December" >
+
+<!ENTITY onemonthbackward.tooltip "Jaden mjasec slědk" >
+<!ENTITY onemonthforward.tooltip "Jaden mjasec doprědka" >
+<!ENTITY oneyearbackward.tooltip "Jadno lěto slědk" >
+<!ENTITY oneyearforward.tooltip "Jadno lěto doprědka" >
+<!ENTITY showToday.tooltip "K źinsnajšnemu">
+<!ENTITY onedayforward.tooltip "Jaden źeń doprědka">
+<!ENTITY onedaybackward.tooltip "Jaden źeń slědk">
+<!ENTITY showselectedday.tooltip "Tšojenja za wubrany źeń pokazaś">

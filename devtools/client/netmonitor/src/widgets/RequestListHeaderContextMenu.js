@@ -5,8 +5,11 @@
 "use strict";
 
 const { showMenu } = require("devtools/client/shared/components/menu/utils");
-const { HEADERS } = require("../constants");
-const { L10N } = require("../utils/l10n");
+const { HEADERS } = require("devtools/client/netmonitor/src/constants");
+const { L10N } = require("devtools/client/netmonitor/src/utils/l10n");
+const {
+  getVisibleColumns,
+} = require("devtools/client/netmonitor/src/selectors/index");
 
 const stringMap = HEADERS.filter(header =>
   header.hasOwnProperty("label")
@@ -34,10 +37,7 @@ class RequestListHeaderContextMenu {
   open(event = {}, columns) {
     const menu = [];
     const subMenu = { timings: [], responseHeaders: [] };
-    const visibleColumns = Object.entries(columns).filter(
-      ([column, shown]) => shown
-    );
-    const onlyOneColumn = visibleColumns.length === 1;
+    const onlyOneColumn = getVisibleColumns(columns).length === 1;
 
     for (const column in columns) {
       const shown = columns[column];
@@ -79,6 +79,14 @@ class RequestListHeaderContextMenu {
       id: "request-list-header-reset-sorting",
       label: L10N.getStr("netmonitor.toolbar.resetSorting"),
       click: () => this.props.resetSorting(),
+    });
+
+    const columnName = event.target.getAttribute("data-name");
+
+    menu.push({
+      id: "request-list-header-resize-column-to-fit-content",
+      label: L10N.getStr("netmonitor.toolbar.resizeColumnToFitContent"),
+      click: () => this.props.resizeColumnToFitContent(columnName),
     });
 
     showMenu(menu, {

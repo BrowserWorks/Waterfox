@@ -1246,6 +1246,7 @@ void Disassembler::VisitFPIntegerConvert(const Instruction* instr) {
     case UCVTF_sx:
     case UCVTF_dw:
     case UCVTF_dx: mnemonic = "ucvtf"; form = form_fr; break;
+    case FJCVTZS: mnemonic = "fjcvtzs"; form = form_rf; break;
   }
   Format(instr, mnemonic, form);
 }
@@ -2991,6 +2992,10 @@ int Disassembler::SubstituteImmediateField(const Instruction* instr,
             AppendToOutput(", #%" PRId32, instr->ImmLSUnsigned() << shift);
           }
           return 3;
+        }
+        default: {
+          VIXL_UNIMPLEMENTED();
+          return 0;
         }
       }
     }

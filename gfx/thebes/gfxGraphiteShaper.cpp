@@ -10,9 +10,14 @@
 #include "gfxTextRun.h"
 
 #include "graphite2/Font.h"
+#include "graphite2/GraphiteExtra.h"
 #include "graphite2/Segment.h"
 
 #include "harfbuzz/hb.h"
+
+#include "mozilla/ScopeExit.h"
+
+#include "ThebesRLBox.h"
 
 #define FloatToFixed(f) (65536 * (f))
 #define FixedToFloat(f) ((f) * (1.0 / 65536.0))
@@ -21,6 +26,14 @@
 // (If speed were an issue we could make some 2's complement assumptions.)
 #define FixedToIntRound(f) \
   ((f) > 0 ? ((32768 + (f)) >> 16) : -((32767 - (f)) >> 16))
+
+#define CopyAndVerifyOrFail(t, cond, failed) \
+  (t).copy_and_verify([&](auto val) {        \
+    if (!(cond)) {                           \
+      *(failed) = true;                      \
+    }                                        \
+    return val;                              \
+  })
 
 using namespace mozilla;  // for AutoSwap_* types
 
@@ -31,23 +44,41 @@ using namespace mozilla;  // for AutoSwap_* types
 gfxGraphiteShaper::gfxGraphiteShaper(gfxFont* aFont)
     : gfxFontShaper(aFont),
       mGrFace(mFont->GetFontEntry()->GetGrFace()),
-      mGrFont(nullptr),
+      mSandbox(mFont->GetFontEntry()->GetGrSandbox()),
+      mCallback(mFont->GetFontEntry()->GetGrSandboxAdvanceCallbackHandle()),
       mFallbackToSmallCaps(false) {
   mCallbackData.mFont = aFont;
 }
 
 gfxGraphiteShaper::~gfxGraphiteShaper() {
-  if (mGrFont) {
-    gr_font_destroy(mGrFont);
+  auto t_mGrFont = rlbox::from_opaque(mGrFont);
+  if (t_mGrFont) {
+    sandbox_invoke(*mSandbox, gr_font_destroy, t_mGrFont);
   }
   mFont->GetFontEntry()->ReleaseGrFace(mGrFace);
 }
 
 /*static*/
-float gfxGraphiteShaper::GrGetAdvance(const void* appFontHandle,
-                                      uint16_t glyphid) {
-  const CallbackData* cb = static_cast<const CallbackData*>(appFontHandle);
-  return FixedToFloat(cb->mFont->GetGlyphWidth(glyphid));
+thread_local gfxGraphiteShaper::CallbackData*
+    gfxGraphiteShaper::tl_GrGetAdvanceData = nullptr;
+
+/*static*/
+tainted_opaque_gr<float> gfxGraphiteShaper::GrGetAdvance(
+    rlbox_sandbox_gr& sandbox,
+    tainted_opaque_gr<const void*> /* appFontHandle */,
+    tainted_opaque_gr<uint16_t> t_glyphid) {
+  CallbackData* cb = tl_GrGetAdvanceData;
+  if (!cb) {
+    // GrGetAdvance callback called unexpectedly. Just return safe value.
+    tainted_gr<float> ret = 0;
+    return ret.to_opaque();
+  }
+  auto glyphid = rlbox::from_opaque(t_glyphid).unverified_safe_because(
+      "Here the only use of a glyphid is for lookup to get a width. "
+      "Implementations of GetGlyphWidth in this code base use a hashtable "
+      "which is robust to unknown keys. So no validation is required.");
+  tainted_gr<float> ret = FixedToFloat(cb->mFont->GetGlyphWidth(glyphid));
+  return ret.to_opaque();
 }
 
 static inline uint32_t MakeGraphiteLangTag(uint32_t aTag) {
@@ -62,17 +93,39 @@ static inline uint32_t MakeGraphiteLangTag(uint32_t aTag) {
 }
 
 struct GrFontFeatures {
-  gr_face* mFace;
-  gr_feature_val* mFeatures;
+  tainted_gr<gr_face*> mFace;
+  tainted_gr<gr_feature_val*> mFeatures;
+  rlbox_sandbox_gr* mSandbox;
 };
 
 static void AddFeature(const uint32_t& aTag, uint32_t& aValue, void* aUserArg) {
   GrFontFeatures* f = static_cast<GrFontFeatures*>(aUserArg);
 
-  const gr_feature_ref* fref = gr_face_find_fref(f->mFace, aTag);
+  tainted_gr<const gr_feature_ref*> fref =
+      sandbox_invoke(*(f->mSandbox), gr_face_find_fref, f->mFace, aTag);
   if (fref) {
-    gr_fref_set_feature_value(fref, aValue, f->mFeatures);
+    sandbox_invoke(*(f->mSandbox), gr_fref_set_feature_value, fref, aValue,
+                   f->mFeatures);
   }
+}
+
+// Count the number of Unicode characters in a UTF-16 string (i.e. surrogate
+// pairs are counted as 1, although they are 2 code units).
+// (Any isolated surrogates will count 1 each, because in decoding they would
+// be replaced by individual U+FFFD REPLACEMENT CHARACTERs.)
+static inline size_t CountUnicodes(const char16_t* aText, uint32_t aLength) {
+  size_t total = 0;
+  const char16_t* end = aText + aLength;
+  while (aText < end) {
+    if (NS_IS_HIGH_SURROGATE(*aText) && aText + 1 < end &&
+        NS_IS_LOW_SURROGATE(*(aText + 1))) {
+      aText += 2;
+    } else {
+      aText++;
+    }
+    total++;
+  }
+  return total;
 }
 
 bool gfxGraphiteShaper::ShapeText(DrawTarget* aDrawTarget,
@@ -80,30 +133,40 @@ bool gfxGraphiteShaper::ShapeText(DrawTarget* aDrawTarget,
                                   uint32_t aLength, Script aScript,
                                   bool aVertical, RoundingFlags aRounding,
                                   gfxShapedText* aShapedText) {
-  // some font back-ends require this in order to get proper hinted metrics
-  if (!mFont->SetupCairoFont(aDrawTarget)) {
-    return false;
-  }
-
   const gfxFontStyle* style = mFont->GetStyle();
+  auto t_mGrFace = rlbox::from_opaque(mGrFace);
+  auto t_mGrFont = rlbox::from_opaque(mGrFont);
 
-  if (!mGrFont) {
-    if (!mGrFace) {
+  if (!t_mGrFont) {
+    if (!t_mGrFace) {
       return false;
     }
 
     if (mFont->ProvidesGlyphWidths()) {
-      gr_font_ops ops = {
-          sizeof(gr_font_ops), &GrGetAdvance,
-          nullptr  // vertical text not yet implemented
-      };
-      mGrFont = gr_make_font_with_ops(mFont->GetAdjustedSize(), &mCallbackData,
-                                      &ops, mGrFace);
+      auto p_ops = mSandbox->malloc_in_sandbox<gr_font_ops>();
+      if (!p_ops) {
+        return false;
+      }
+      auto clean_ops = MakeScopeExit([&] { mSandbox->free_in_sandbox(p_ops); });
+      p_ops->size = sizeof(*p_ops);
+      p_ops->glyph_advance_x = *mCallback;
+      p_ops->glyph_advance_y = nullptr;  // vertical text not yet implemented
+      t_mGrFont = sandbox_invoke(
+          *mSandbox, gr_make_font_with_ops, mFont->GetAdjustedSize(),
+          // For security, we do not pass the callback data to this arg, and use
+          // a TLS var instead. However, gr_make_font_with_ops expects this to
+          // be a non null ptr, and changes its behavior if it isn't. Therefore,
+          // we should pass some dummy non null pointer which will be passed to
+          // the GrGetAdvance callback, but never used. Let's just pass p_ops
+          // again, as this is a non-null tainted pointer.
+          p_ops /* mCallbackData */, p_ops, t_mGrFace);
     } else {
-      mGrFont = gr_make_font(mFont->GetAdjustedSize(), mGrFace);
+      t_mGrFont = sandbox_invoke(*mSandbox, gr_make_font,
+                                 mFont->GetAdjustedSize(), t_mGrFace);
     }
+    mGrFont = t_mGrFont.to_opaque();
 
-    if (!mGrFont) {
+    if (!t_mGrFont) {
       return false;
     }
 
@@ -133,10 +196,11 @@ bool gfxGraphiteShaper::ShapeText(DrawTarget* aDrawTarget,
     style->language->ToUTF8String(langString);
     grLang = GetGraphiteTagForLang(langString);
   }
-  gr_feature_val* grFeatures = gr_face_featureval_for_lang(mGrFace, grLang);
+  tainted_gr<gr_feature_val*> grFeatures =
+      sandbox_invoke(*mSandbox, gr_face_featureval_for_lang, t_mGrFace, grLang);
 
   // insert any merged features into Graphite feature list
-  GrFontFeatures f = {mGrFace, grFeatures};
+  GrFontFeatures f = {t_mGrFace, grFeatures, mSandbox};
   MergeFontFeatures(style, mFont->GetFontEntry()->mFeatureSettings,
                     aShapedText->DisableLigatures(),
                     mFont->GetFontEntry()->FamilyName(), mFallbackToSmallCaps,
@@ -157,166 +221,202 @@ bool gfxGraphiteShaper::ShapeText(DrawTarget* aDrawTarget,
     }
   }
 
-  size_t numChars =
-      gr_count_unicode_characters(gr_utf16, aText, aText + aLength, nullptr);
+  size_t numChars = CountUnicodes(aText, aLength);
   gr_bidirtl grBidi = gr_bidirtl(
       aShapedText->IsRightToLeft() ? (gr_rtl | gr_nobidi) : gr_nobidi);
-  gr_segment* seg = gr_make_seg(mGrFont, mGrFace, 0, grFeatures, gr_utf16,
-                                aText, numChars, grBidi);
 
-  gr_featureval_destroy(grFeatures);
+  tainted_gr<char16_t*> t_aText =
+      mSandbox->malloc_in_sandbox<char16_t>(aLength);
+  if (!t_aText) {
+    return false;
+  }
+  auto clean_txt = MakeScopeExit([&] { mSandbox->free_in_sandbox(t_aText); });
+
+  rlbox::memcpy(*mSandbox, t_aText, aText, aLength * sizeof(char16_t));
+
+  tl_GrGetAdvanceData = &mCallbackData;
+  auto clean_adv_data = MakeScopeExit([&] { tl_GrGetAdvanceData = nullptr; });
+
+  tainted_gr<gr_segment*> seg =
+      sandbox_invoke(*mSandbox, gr_make_seg, mGrFont, t_mGrFace, 0, grFeatures,
+                     gr_utf16, t_aText, numChars, grBidi);
+
+  sandbox_invoke(*mSandbox, gr_featureval_destroy, grFeatures);
 
   if (!seg) {
     return false;
   }
 
-  nsresult rv = SetGlyphsFromSegment(aShapedText, aOffset, aLength, aText, seg,
-                                     aRounding);
+  nsresult rv =
+      SetGlyphsFromSegment(aShapedText, aOffset, aLength, aText,
+                           t_aText.to_opaque(), seg.to_opaque(), aRounding);
 
-  gr_seg_destroy(seg);
+  sandbox_invoke(*mSandbox, gr_seg_destroy, seg);
 
   return NS_SUCCEEDED(rv);
 }
 
-#define SMALL_GLYPH_RUN \
-  256  // avoid heap allocation of per-glyph data arrays
-       // for short (typical) runs up to this length
-
-struct Cluster {
-  uint32_t baseChar;  // in UTF16 code units, not Unicode character indices
-  uint32_t baseGlyph;
-  uint32_t nChars;  // UTF16 code units
-  uint32_t nGlyphs;
-  Cluster() : baseChar(0), baseGlyph(0), nChars(0), nGlyphs(0) {}
-};
-
 nsresult gfxGraphiteShaper::SetGlyphsFromSegment(
     gfxShapedText* aShapedText, uint32_t aOffset, uint32_t aLength,
-    const char16_t* aText, gr_segment* aSegment, RoundingFlags aRounding) {
+    const char16_t* aText, tainted_opaque_gr<char16_t*> t_aText,
+    tainted_opaque_gr<gr_segment*> aSegment, RoundingFlags aRounding) {
   typedef gfxShapedText::CompressedGlyph CompressedGlyph;
 
   int32_t dev2appUnits = aShapedText->GetAppUnitsPerDevUnit();
   bool rtl = aShapedText->IsRightToLeft();
 
-  uint32_t glyphCount = gr_seg_n_slots(aSegment);
-
   // identify clusters; graphite may have reordered/expanded/ligated glyphs.
-  AutoTArray<Cluster, SMALL_GLYPH_RUN> clusters;
-  AutoTArray<uint16_t, SMALL_GLYPH_RUN> gids;
-  AutoTArray<float, SMALL_GLYPH_RUN> xLocs;
-  AutoTArray<float, SMALL_GLYPH_RUN> yLocs;
+  tainted_gr<gr_glyph_to_char_association*> data =
+      sandbox_invoke(*mSandbox, gr_get_glyph_to_char_association, aSegment,
+                     aLength, rlbox::from_opaque(t_aText));
 
-  if (!clusters.SetLength(aLength, fallible) ||
-      !gids.SetLength(glyphCount, fallible) ||
-      !xLocs.SetLength(glyphCount, fallible) ||
-      !yLocs.SetLength(glyphCount, fallible)) {
-    return NS_ERROR_OUT_OF_MEMORY;
+  if (!data) {
+    return NS_ERROR_FAILURE;
   }
 
-  // walk through the glyph slots and check which original character
-  // each is associated with
-  uint32_t gIndex = 0;  // glyph slot index
-  uint32_t cIndex = 0;  // current cluster index
-  for (const gr_slot* slot = gr_seg_first_slot(aSegment); slot != nullptr;
-       slot = gr_slot_next_in_segment(slot), gIndex++) {
-    uint32_t before =
-        gr_cinfo_base(gr_seg_cinfo(aSegment, gr_slot_before(slot)));
-    uint32_t after = gr_cinfo_base(gr_seg_cinfo(aSegment, gr_slot_after(slot)));
-    gids[gIndex] = gr_slot_gid(slot);
-    xLocs[gIndex] = gr_slot_origin_X(slot);
-    yLocs[gIndex] = gr_slot_origin_Y(slot);
-
-    // if this glyph has a "before" character index that precedes the
-    // current cluster's char index, we need to merge preceding
-    // clusters until it gets included
-    while (before < clusters[cIndex].baseChar && cIndex > 0) {
-      clusters[cIndex - 1].nChars += clusters[cIndex].nChars;
-      clusters[cIndex - 1].nGlyphs += clusters[cIndex].nGlyphs;
-      --cIndex;
-    }
-
-    // if there's a gap between the current cluster's base character and
-    // this glyph's, extend the cluster to include the intervening chars
-    if (gr_slot_can_insert_before(slot) && clusters[cIndex].nChars &&
-        before >= clusters[cIndex].baseChar + clusters[cIndex].nChars) {
-      NS_ASSERTION(cIndex < aLength - 1, "cIndex at end of word");
-      Cluster& c = clusters[cIndex + 1];
-      c.baseChar = clusters[cIndex].baseChar + clusters[cIndex].nChars;
-      c.nChars = before - c.baseChar;
-      c.baseGlyph = gIndex;
-      c.nGlyphs = 0;
-      ++cIndex;
-    }
-
-    // increment cluster's glyph count to include current slot
-    NS_ASSERTION(cIndex < aLength, "cIndex beyond word length");
-    ++clusters[cIndex].nGlyphs;
-
-    // bump |after| index if it falls in the middle of a surrogate pair
-    if (NS_IS_HIGH_SURROGATE(aText[after]) && after < aLength - 1 &&
-        NS_IS_LOW_SURROGATE(aText[after + 1])) {
-      after++;
-    }
-    // extend cluster if necessary to reach the glyph's "after" index
-    if (clusters[cIndex].baseChar + clusters[cIndex].nChars < after + 1) {
-      clusters[cIndex].nChars = after + 1 - clusters[cIndex].baseChar;
-    }
-  }
+  tainted_gr<gr_glyph_to_char_cluster*> clusters = data->clusters;
+  tainted_gr<uint16_t*> gids = data->gids;
+  tainted_gr<float*> xLocs = data->xLocs;
+  tainted_gr<float*> yLocs = data->yLocs;
 
   CompressedGlyph* charGlyphs = aShapedText->GetCharacterGlyphs() + aOffset;
 
   bool roundX = bool(aRounding & RoundingFlags::kRoundX);
   bool roundY = bool(aRounding & RoundingFlags::kRoundY);
 
+  bool failedVerify = false;
+
+  // cIndex is primarily used to index into the clusters array which has size
+  // aLength below. As cIndex is not changing anymore, let's just verify it
+  // and remove the tainted wrapper.
+  uint32_t cIndex =
+      CopyAndVerifyOrFail(data->cIndex, val < aLength, &failedVerify);
+  if (failedVerify) {
+    return NS_ERROR_ILLEGAL_VALUE;
+  }
   // now put glyphs into the textrun, one cluster at a time
   for (uint32_t i = 0; i <= cIndex; ++i) {
-    const Cluster& c = clusters[i];
+    // We makes a local copy of "clusters[i]" which is of type
+    // tainted_gr<gr_glyph_to_char_cluster> below. We do this intentionally
+    // rather than taking a reference. Taking a reference with the code
+    //
+    // tainted_volatile_gr<gr_glyph_to_char_cluster>& c = clusters[i];
+    //
+    // produces a tainted_volatile which means the value can change at any
+    // moment allowing for possible time-of-check-time-of-use vuln. We thus
+    // make a local copy to simplify the verification.
+    tainted_gr<gr_glyph_to_char_cluster> c = clusters[i];
 
-    float adv;  // total advance of the cluster
+    tainted_gr<float> t_adv;  // total advance of the cluster
     if (rtl) {
       if (i == 0) {
-        adv = gr_seg_advance_X(aSegment) - xLocs[c.baseGlyph];
+        t_adv = sandbox_invoke(*mSandbox, gr_seg_advance_X, aSegment) -
+                xLocs[c.baseGlyph];
       } else {
-        adv = xLocs[clusters[i - 1].baseGlyph] - xLocs[c.baseGlyph];
+        t_adv = xLocs[clusters[i - 1].baseGlyph] - xLocs[c.baseGlyph];
       }
     } else {
       if (i == cIndex) {
-        adv = gr_seg_advance_X(aSegment) - xLocs[c.baseGlyph];
+        t_adv = sandbox_invoke(*mSandbox, gr_seg_advance_X, aSegment) -
+                xLocs[c.baseGlyph];
       } else {
-        adv = xLocs[clusters[i + 1].baseGlyph] - xLocs[c.baseGlyph];
+        t_adv = xLocs[clusters[i + 1].baseGlyph] - xLocs[c.baseGlyph];
       }
+    }
+
+    float adv = t_adv.unverified_safe_because(
+        "Per Bug 1569464 - this is the advance width of a glyph or cluster of "
+        "glyphs. There are no a-priori limits on what that might be. Incorrect "
+        "values will tend to result in bad layout or missing text, or bad "
+        "nscoord values. But, these will not result in safety issues.");
+
+    // check unexpected offset - offs used to index into aText
+    uint32_t offs =
+        CopyAndVerifyOrFail(c.baseChar, val < aLength, &failedVerify);
+    if (failedVerify) {
+      return NS_ERROR_ILLEGAL_VALUE;
     }
 
     // Check for default-ignorable char that didn't get filtered, combined,
     // etc by the shaping process, and skip it.
-    uint32_t offs = c.baseChar;
-    NS_ASSERTION(offs < aLength, "unexpected offset");
-    if (c.nGlyphs == 1 && c.nChars == 1 &&
-        aShapedText->FilterIfIgnorable(aOffset + offs, aText[offs])) {
-      continue;
+    auto one_glyph = c.nGlyphs == static_cast<uint32_t>(1);
+    auto one_char = c.nChars == static_cast<uint32_t>(1);
+
+    if ((one_glyph && one_char)
+            .unverified_safe_because(
+                "using this boolean check to decide whether to ignore a "
+                "character or not. The worst that can happen is a bad "
+                "rendering.")) {
+      if (aShapedText->FilterIfIgnorable(aOffset + offs, aText[offs])) {
+        continue;
+      }
     }
 
     uint32_t appAdvance = roundX ? NSToIntRound(adv) * dev2appUnits
                                  : NSToIntRound(adv * dev2appUnits);
-    if (c.nGlyphs == 1 && CompressedGlyph::IsSimpleGlyphID(gids[c.baseGlyph]) &&
+
+    const char gid_simple_value[] =
+        "Per Bug 1569464 - these are glyph IDs that can range from 0 to the "
+        "maximum glyph ID supported by the font. However, out-of-range values "
+        "here should not lead to safety issues; they would simply result in "
+        "blank rendering, although this depends on the platform back-end.";
+
+    // gids[c.baseGlyph] is checked and used below. Since this is a
+    // tainted_volatile, which can change at any moment, we make a local copy
+    // first to prevent a time-of-check-time-of-use vuln.
+    uint16_t gid_of_base_glyph =
+        gids[c.baseGlyph].unverified_safe_because(gid_simple_value);
+
+    const char fast_path[] =
+        "Even if the number of glyphs set is an incorrect value, the else "
+        "branch is a more general purpose algorithm which can handle other "
+        "values of nGlyphs";
+
+    if (one_glyph.unverified_safe_because(fast_path) &&
+        CompressedGlyph::IsSimpleGlyphID(gid_of_base_glyph) &&
         CompressedGlyph::IsSimpleAdvance(appAdvance) &&
-        charGlyphs[offs].IsClusterStart() && yLocs[c.baseGlyph] == 0) {
-      charGlyphs[offs].SetSimpleGlyph(appAdvance, gids[c.baseGlyph]);
+        charGlyphs[offs].IsClusterStart() &&
+        (yLocs[c.baseGlyph] == 0).unverified_safe_because(fast_path)) {
+      charGlyphs[offs].SetSimpleGlyph(appAdvance, gid_of_base_glyph);
+
     } else {
       // not a one-to-one mapping with simple metrics: use DetailedGlyph
       AutoTArray<gfxShapedText::DetailedGlyph, 8> details;
       float clusterLoc;
-      for (uint32_t j = c.baseGlyph; j < c.baseGlyph + c.nGlyphs; ++j) {
+
+      uint32_t glyph_end =
+          (c.baseGlyph + c.nGlyphs)
+              .unverified_safe_because(
+                  "This only controls the total number of glyphs set for this "
+                  "particular text. Worst that can happen is a bad rendering");
+
+      // check overflow - ensure loop start is before the end
+      uint32_t glyph_start =
+          CopyAndVerifyOrFail(c.baseGlyph, val <= glyph_end, &failedVerify);
+      if (failedVerify) {
+        return NS_ERROR_ILLEGAL_VALUE;
+      }
+
+      for (uint32_t j = glyph_start; j < glyph_end; ++j) {
         gfxShapedText::DetailedGlyph* d = details.AppendElement();
-        d->mGlyphID = gids[j];
-        d->mOffset.y = roundY ? NSToIntRound(-yLocs[j]) * dev2appUnits
-                              : -yLocs[j] * dev2appUnits;
-        if (j == c.baseGlyph) {
+        d->mGlyphID = gids[j].unverified_safe_because(gid_simple_value);
+
+        const char safe_coordinates[] =
+            "There are no limits on coordinates. Worst case, bad values would "
+            "force rendering off-screen, but there are no memory safety "
+            "issues.";
+
+        float yLocs_j = yLocs[j].unverified_safe_because(safe_coordinates);
+        float xLocs_j = xLocs[j].unverified_safe_because(safe_coordinates);
+
+        d->mOffset.y = roundY ? NSToIntRound(-yLocs_j) * dev2appUnits
+                              : -yLocs_j * dev2appUnits;
+        if (j == glyph_start) {
           d->mAdvance = appAdvance;
-          clusterLoc = xLocs[j];
+          clusterLoc = xLocs_j;
         } else {
           float dx =
-              rtl ? (xLocs[j] - clusterLoc) : (xLocs[j] - clusterLoc - adv);
+              rtl ? (xLocs_j - clusterLoc) : (xLocs_j - clusterLoc - adv);
           d->mOffset.x =
               roundX ? NSToIntRound(dx) * dev2appUnits : dx * dev2appUnits;
           d->mAdvance = 0;
@@ -329,18 +429,26 @@ nsresult gfxGraphiteShaper::SetGlyphsFromSegment(
           details.Elements());
     }
 
-    for (uint32_t j = c.baseChar + 1; j < c.baseChar + c.nChars; ++j) {
-      NS_ASSERTION(j < aLength, "unexpected offset");
+    // check unexpected offset
+    uint32_t char_end = CopyAndVerifyOrFail(c.baseChar + c.nChars,
+                                            val <= aLength, &failedVerify);
+    // check overflow - ensure loop start is before the end
+    uint32_t char_start =
+        CopyAndVerifyOrFail(c.baseChar + 1, val <= char_end, &failedVerify);
+    if (failedVerify) {
+      return NS_ERROR_ILLEGAL_VALUE;
+    }
+
+    for (uint32_t j = char_start; j < char_end; ++j) {
       CompressedGlyph& g = charGlyphs[j];
       NS_ASSERTION(!g.IsSimpleGlyph(), "overwriting a simple glyph");
       g.SetComplex(g.IsClusterStart(), false, 0);
     }
   }
 
+  sandbox_invoke(*mSandbox, gr_free_char_association, data);
   return NS_OK;
 }
-
-#undef SMALL_GLYPH_RUN
 
 // for language tag validation - include list of tags from the IANA registry
 #include "gfxLanguageTagList.cpp"

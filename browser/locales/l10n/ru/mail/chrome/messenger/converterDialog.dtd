@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY converterDialog.title "Смена типа хранилища сообщений">
+<!ENTITY converterDialog.continueButton "Продолжить">
+<!ENTITY converterDialog.cancelButton "Отмена">
+<!ENTITY converterDialog.finishButton "Готово">
+<!ENTITY converterDialog.complete "Преобразование завершено. Сейчас произойдёт перезапуск &brandShortName;.">
+<!ENTITY converterDialog.error "Преобразование не удалось.">
+

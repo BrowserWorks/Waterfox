@@ -12,11 +12,10 @@
 #include "nsError.h"
 #include "SVGAnimatedPointList.h"
 #include "SVGAttrTearoffTable.h"
+#include "mozAutoDocUpdate.h"
 #include "mozilla/dom/SVGElement.h"
 #include "mozilla/dom/SVGPointListBinding.h"
 #include <algorithm>
-
-using namespace mozilla::dom;
 
 // See the comment in this file's header.
 
@@ -24,7 +23,7 @@ using namespace mozilla::dom;
 namespace {
 
 void UpdateListIndicesFromIndex(
-    FallibleTArray<mozilla::nsISVGPoint*>& aItemsArray,
+    FallibleTArray<mozilla::dom::nsISVGPoint*>& aItemsArray,
     uint32_t aStartingIndex) {
   uint32_t length = aItemsArray.Length();
 
@@ -38,6 +37,7 @@ void UpdateListIndicesFromIndex(
 }  // namespace
 
 namespace mozilla {
+namespace dom {
 
 static inline SVGAttrTearoffTable<void, DOMSVGPointList>&
 SVGPointListTearoffTable() {
@@ -50,6 +50,7 @@ NS_IMPL_CYCLE_COLLECTION_CLASS(DOMSVGPointList)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(DOMSVGPointList)
   // No unlinking of mElement, we'd need to null out the value pointer (the
   // object it points to is held by the element) and null-check it everywhere.
+  tmp->RemoveFromTearoffTable();
   NS_IMPL_CYCLE_COLLECTION_UNLINK_PRESERVED_WRAPPER
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(DOMSVGPointList)
@@ -71,18 +72,19 @@ NS_INTERFACE_MAP_END
 // Helper class: AutoChangePointListNotifier
 // Stack-based helper class to pair calls to WillChangePointList and
 // DidChangePointList.
-class MOZ_RAII AutoChangePointListNotifier {
+class MOZ_RAII AutoChangePointListNotifier : public mozAutoDocUpdate {
  public:
   explicit AutoChangePointListNotifier(
       DOMSVGPointList* aPointList MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
-      : mPointList(aPointList) {
+      : mozAutoDocUpdate(aPointList->Element()->GetComposedDoc(), true),
+        mPointList(aPointList) {
     MOZ_GUARD_OBJECT_NOTIFIER_INIT;
     MOZ_ASSERT(mPointList, "Expecting non-null pointList");
-    mEmptyOrOldValue = mPointList->Element()->WillChangePointList();
+    mEmptyOrOldValue = mPointList->Element()->WillChangePointList(*this);
   }
 
   ~AutoChangePointListNotifier() {
-    mPointList->Element()->DidChangePointList(mEmptyOrOldValue);
+    mPointList->Element()->DidChangePointList(mEmptyOrOldValue, *this);
     if (mPointList->AttrIsAnimating()) {
       mPointList->Element()->AnimationNeedsResample();
     }
@@ -111,13 +113,17 @@ DOMSVGPointList* DOMSVGPointList::GetDOMWrapperIfExists(void* aList) {
   return SVGPointListTearoffTable().GetTearoff(aList);
 }
 
-DOMSVGPointList::~DOMSVGPointList() {
+void DOMSVGPointList::RemoveFromTearoffTable() {
+  // Called from Unlink and the destructor.
+  //
   // There are now no longer any references to us held by script or list items.
   // Note we must use GetAnimValKey/GetBaseValKey here, NOT InternalList()!
   void* key = mIsAnimValList ? InternalAList().GetAnimValKey()
                              : InternalAList().GetBaseValKey();
   SVGPointListTearoffTable().RemoveTearoff(key);
 }
+
+DOMSVGPointList::~DOMSVGPointList() { RemoveFromTearoffTable(); }
 
 JSObject* DOMSVGPointList::WrapObject(JSContext* cx,
                                       JS::Handle<JSObject*> aGivenProto) {
@@ -438,4 +444,5 @@ void DOMSVGPointList::MaybeRemoveItemFromAnimValListAt(uint32_t aIndex) {
   UpdateListIndicesFromIndex(animVal->mItems, aIndex);
 }
 
+}  // namespace dom
 }  // namespace mozilla

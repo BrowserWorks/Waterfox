@@ -5,10 +5,13 @@
 
 #include "txToplevelItems.h"
 
-#include "mozilla/Move.h"
-#include "txStylesheet.h"
+#include <utility>
+
 #include "txInstructions.h"
+#include "txStylesheet.h"
 #include "txXSLTPatterns.h"
+
+using mozilla::UniquePtr;
 
 TX_IMPL_GETTYPE(txAttributeSetItem, txToplevelItem::attributeSet)
 TX_IMPL_GETTYPE(txImportItem, txToplevelItem::import)
@@ -26,16 +29,15 @@ txStripSpaceItem::~txStripSpaceItem() {
 
 nsresult txStripSpaceItem::addStripSpaceTest(
     txStripSpaceTest* aStripSpaceTest) {
-  if (!mStripSpaceTests.AppendElement(aStripSpaceTest)) {
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
-
+  // XXX(Bug 1631371) Check if this should use a fallible operation as it
+  // pretended earlier, or change the return type to void.
+  mStripSpaceTests.AppendElement(aStripSpaceTest);
   return NS_OK;
 }
 
 TX_IMPL_GETTYPE(txTemplateItem, txToplevelItem::templ)
 
-txTemplateItem::txTemplateItem(nsAutoPtr<txPattern>&& aMatch,
+txTemplateItem::txTemplateItem(UniquePtr<txPattern>&& aMatch,
                                const txExpandedName& aName,
                                const txExpandedName& aMode, double aPrio)
     : mMatch(std::move(aMatch)), mName(aName), mMode(aMode), mPrio(aPrio) {}
@@ -43,5 +45,5 @@ txTemplateItem::txTemplateItem(nsAutoPtr<txPattern>&& aMatch,
 TX_IMPL_GETTYPE(txVariableItem, txToplevelItem::variable)
 
 txVariableItem::txVariableItem(const txExpandedName& aName,
-                               nsAutoPtr<Expr>&& aValue, bool aIsParam)
+                               UniquePtr<Expr>&& aValue, bool aIsParam)
     : mName(aName), mValue(std::move(aValue)), mIsParam(aIsParam) {}

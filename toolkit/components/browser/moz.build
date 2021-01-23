@@ -13,15 +13,17 @@ XPIDL_SOURCES += [
     'nsIEmbeddingSiteWindow.idl',
     'nsIWebBrowser.idl',
     'nsIWebBrowserChrome.idl',
-    'nsIWebBrowserChrome2.idl',
     'nsIWebBrowserChrome3.idl',
     'nsIWebBrowserChromeFocus.idl',
+]
+
+XPIDL_SOURCES += [
+    'nsIWebBrowserPrint.idl',
 ]
 
 if CONFIG['NS_PRINTING']:
     XPIDL_SOURCES += [
         'nsIPrintingPromptService.idl',
-        'nsIWebBrowserPrint.idl',
     ]
 
 XPIDL_MODULE = 'webBrowser_core'
@@ -30,6 +32,8 @@ UNIFIED_SOURCES += [
     'nsWebBrowser.cpp',
     'nsWebBrowserContentPolicy.cpp',
 ]
+
+include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
 LOCAL_INCLUDES += [

@@ -7,9 +7,9 @@
 /* Wrapper object for reflecting native xpcom objects into JavaScript. */
 
 #include "xpcprivate.h"
-#include "mozilla/jsipc/CrossProcessObjectWrappers.h"
 #include "nsWrapperCacheInlines.h"
 #include "XPCLog.h"
+#include "js/Array.h"  // JS::GetArrayLength, JS::IsArrayObject
 #include "js/MemoryFunctions.h"
 #include "js/Printf.h"
 #include "jsfriendapi.h"
@@ -212,7 +212,7 @@ nsresult XPCWrappedNative::WrapNewGlobal(JSContext* cx,
   // Construct the wrapper, which takes over the strong reference to the
   // native object.
   RefPtr<XPCWrappedNative> wrapper =
-      new XPCWrappedNative(identity.forget(), proto);
+      new XPCWrappedNative(std::move(identity), proto);
 
   //
   // We don't call ::Init() on this wrapper, because our setup requirements
@@ -406,7 +406,7 @@ nsresult XPCWrappedNative::GetNewOrUsed(JSContext* cx, xpcObjectHelper& helper,
       return NS_ERROR_FAILURE;
     }
 
-    wrapper = new XPCWrappedNative(identity.forget(), proto);
+    wrapper = new XPCWrappedNative(std::move(identity), proto);
   } else {
     RefPtr<XPCNativeInterface> iface = Interface;
     if (!iface) {
@@ -420,7 +420,7 @@ nsresult XPCWrappedNative::GetNewOrUsed(JSContext* cx, xpcObjectHelper& helper,
       return NS_ERROR_FAILURE;
     }
 
-    wrapper = new XPCWrappedNative(identity.forget(), Scope, set.forget());
+    wrapper = new XPCWrappedNative(std::move(identity), Scope, set.forget());
   }
 
   MOZ_ASSERT(!xpc::WrapperFactory::IsXrayWrapper(parent),
@@ -480,14 +480,12 @@ static nsresult FinishCreate(JSContext* cx, XPCWrappedNativeScope* Scope,
 }
 
 // This ctor is used if this object will have a proto.
-XPCWrappedNative::XPCWrappedNative(already_AddRefed<nsISupports>&& aIdentity,
+XPCWrappedNative::XPCWrappedNative(nsCOMPtr<nsISupports>&& aIdentity,
                                    XPCWrappedNativeProto* aProto)
     : mMaybeProto(aProto), mSet(aProto->GetSet()) {
   MOZ_ASSERT(NS_IsMainThread());
 
   mIdentity = aIdentity;
-  RecordReplayRegisterDeferredFinalizeThing(nullptr, nullptr, mIdentity);
-
   mFlatJSObject.setFlags(FLAT_JS_OBJECT_VALID);
 
   MOZ_ASSERT(mMaybeProto, "bad ctor param");
@@ -495,16 +493,13 @@ XPCWrappedNative::XPCWrappedNative(already_AddRefed<nsISupports>&& aIdentity,
 }
 
 // This ctor is used if this object will NOT have a proto.
-XPCWrappedNative::XPCWrappedNative(already_AddRefed<nsISupports>&& aIdentity,
+XPCWrappedNative::XPCWrappedNative(nsCOMPtr<nsISupports>&& aIdentity,
                                    XPCWrappedNativeScope* aScope,
-                                   already_AddRefed<XPCNativeSet>&& aSet)
-
-    : mMaybeScope(TagScope(aScope)), mSet(aSet) {
+                                   RefPtr<XPCNativeSet>&& aSet)
+    : mMaybeScope(TagScope(aScope)), mSet(std::move(aSet)) {
   MOZ_ASSERT(NS_IsMainThread());
 
   mIdentity = aIdentity;
-  RecordReplayRegisterDeferredFinalizeThing(nullptr, nullptr, mIdentity);
-
   mFlatJSObject.setFlags(FLAT_JS_OBJECT_VALID);
 
   MOZ_ASSERT(aScope, "bad ctor param");
@@ -526,13 +521,8 @@ void XPCWrappedNative::Destroy() {
 #endif
 
   if (mIdentity) {
-    // Either release mIdentity immediately or defer the release. When
-    // recording or replaying the release must always be deferred, so that
-    // DeferredFinalize matches the earlier call to
-    // RecordReplayRegisterDeferredFinalizeThing.
     XPCJSRuntime* rt = GetRuntime();
-    if ((rt && rt->GetDoingFinalization()) ||
-        recordreplay::IsRecordingOrReplaying()) {
+    if (rt && rt->GetDoingFinalization()) {
       DeferredFinalize(mIdentity.forget().take());
     } else {
       mIdentity = nullptr;
@@ -634,8 +624,8 @@ bool XPCWrappedNative::Init(JSContext* cx, nsIXPCScriptable* aScriptable) {
 
   // create our flatJSObject
 
-  const JSClass* jsclazz = mScriptable ? mScriptable->GetJSClass()
-                                       : Jsvalify(&XPC_WN_NoHelper_JSClass);
+  const JSClass* jsclazz =
+      mScriptable ? mScriptable->GetJSClass() : &XPC_WN_NoHelper_JSClass;
 
   // We should have the global jsclass flag if and only if we're a global.
   MOZ_ASSERT_IF(mScriptable, !!mScriptable->IsGlobalObject() ==
@@ -754,18 +744,12 @@ void XPCWrappedNative::FlatJSObjectFinalized() {
     JSObject* jso = to->GetJSObjectPreserveColor();
     if (jso) {
       JS_SetPrivate(jso, nullptr);
-#ifdef DEBUG
-      JS_UpdateWeakPointerAfterGCUnbarriered(&jso);
-      MOZ_ASSERT(!jso);
-#endif
       to->JSObjectFinalized();
     }
 
     // We also need to release any native pointers held...
-    // As for XPCWrappedNative::Destroy, when recording or replaying the
-    // release must always be deferred.
     RefPtr<nsISupports> native = to->TakeNative();
-    if (native && (GetRuntime() || recordreplay::IsRecordingOrReplaying())) {
+    if (native && GetRuntime()) {
       DeferredFinalize(native.forget().take());
     }
 
@@ -877,7 +861,7 @@ bool XPCWrappedNative::ExtendSet(JSContext* aCx,
       return false;
     }
 
-    mSet = newSet.forget();
+    mSet = std::move(newSet);
   }
   return true;
 }
@@ -1033,7 +1017,6 @@ nsresult XPCWrappedNative::InitTearOff(JSContext* cx,
 
   aTearOff->SetInterface(aInterface);
   aTearOff->SetNative(qiResult);
-  RecordReplayRegisterDeferredFinalizeThing(nullptr, nullptr, qiResult);
 
   if (needJSObject && !InitTearOffJSObject(cx, aTearOff)) {
     return NS_ERROR_OUT_OF_MEMORY;
@@ -1044,7 +1027,7 @@ nsresult XPCWrappedNative::InitTearOff(JSContext* cx,
 
 bool XPCWrappedNative::InitTearOffJSObject(JSContext* cx,
                                            XPCWrappedNativeTearOff* to) {
-  JSObject* obj = JS_NewObject(cx, Jsvalify(&XPC_WN_Tearoff_JSClass));
+  JSObject* obj = JS_NewObject(cx, &XPC_WN_Tearoff_JSClass);
   if (!obj) {
     return false;
   }
@@ -1239,8 +1222,8 @@ bool CallMethodHelper::GetArraySizeFromParam(const nsXPTType& type,
 
     bool isArray;
     bool ok = false;
-    if (JS_IsArrayObject(mCallContext, maybeArray, &isArray) && isArray) {
-      ok = JS_GetArrayLength(mCallContext, arrayOrNull, lengthp);
+    if (JS::IsArrayObject(mCallContext, maybeArray, &isArray) && isArray) {
+      ok = JS::GetArrayLength(mCallContext, arrayOrNull, lengthp);
     } else if (JS_IsTypedArrayObject(&maybeArray.toObject())) {
       *lengthp = JS_GetTypedArrayLength(&maybeArray.toObject());
       ok = true;
@@ -1437,11 +1420,9 @@ bool CallMethodHelper::InitializeDispatchParams() {
   mJSContextIndex = mMethodInfo->IndexOfJSContext();
 
   // Allocate enough space in mDispatchParams up-front.
-  if (!mDispatchParams.AppendElements(paramCount + wantsJSContext +
-                                      wantsOptArgc)) {
-    Throw(NS_ERROR_OUT_OF_MEMORY, mCallContext);
-    return false;
-  }
+  // XXX(Bug 1631371) Check if this should use a fallible operation as it
+  // pretended earlier.
+  mDispatchParams.AppendElements(paramCount + wantsJSContext + wantsOptArgc);
 
   // Initialize each parameter to a valid state (for safe cleanup later).
   for (uint8_t i = 0, paramIdx = 0; i < mDispatchParams.Length(); i++) {
@@ -1553,19 +1534,6 @@ bool CallMethodHelper::ConvertIndependentParam(uint8_t i) {
                            mCallContext);
     }
     param_iid = inner.GetInterface()->IID();
-  }
-
-  // Don't allow CPOWs to be passed to native code (in case they try to cast
-  // to a concrete type).
-  if (src.isObject() && jsipc::IsWrappedCPOW(&src.toObject()) &&
-      type.Tag() == nsXPTType::T_INTERFACE &&
-      !param_iid.Equals(NS_GET_IID(nsISupports))) {
-    // Allow passing CPOWs to XPCWrappedJS.
-    nsCOMPtr<nsIXPConnectWrappedJS> wrappedJS(do_QueryInterface(mCallee));
-    if (!wrappedJS) {
-      ThrowBadParam(NS_ERROR_XPC_CANT_PASS_CPOW_TO_NATIVE, i, mCallContext);
-      return false;
-    }
   }
 
   nsresult err;

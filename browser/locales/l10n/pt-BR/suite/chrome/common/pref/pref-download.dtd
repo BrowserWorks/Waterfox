@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.download.title            "Downloads">
+
+<!ENTITY downloadBehavior.label         "Ao iniciar um download">
+<!ENTITY doNothing.label                "Não abrir nada">
+<!ENTITY doNothing.accesskey            "N">
+<!ENTITY openProgressDialog.label       "Abrir uma janela padrão de download">
+<!ENTITY openProgressDialog.accesskey   "a">
+<!ENTITY openDM.label                   "Abrir o gerenciador de downloads">
+<!ENTITY openDM.accesskey               "g">
+<!ENTITY flashWhenOpen.label            "Apenas piscar o gerenciador de downloads caso já esteja aberto">
+<!ENTITY flashWhenOpen.accesskey        "p">
+
+<!ENTITY downloadLocation.label         "Ao salvar um arquivo">
+<!ENTITY saveTo.label                   "Salvar arquivos em">
+<!ENTITY saveTo.accesskey               "v">
+<!ENTITY chooseDownloadFolder.label     "Procurar...">
+<!ENTITY chooseDownloadFolder.accesskey "c">
+<!ENTITY alwaysAsk.label                "Sempre perguntar onde salvar arquivos">
+<!ENTITY alwaysAsk.accesskey            "a">
+
+<!ENTITY downloadHistory.label          "Histórico de downloads">
+<!ENTITY removeEntries.label            "Remover entradas de downloads">
+<!ENTITY removeEntries.accesskey        "R">
+<!ENTITY whenCompleted.label            "Quando houverem concluído">
+<!ENTITY whenQuittingApp.label          "Quando sair do &brandShortName;">
+<!ENTITY neverRemove.label              "Nunca">
+
+<!ENTITY finishedBehavior.label         "Quando o download for concluído">
+<!ENTITY playSound.label                "Tocar um som">
+<!ENTITY playSound.accesskey            "s">
+<!ENTITY showAlert.label                "Exibir uma notificação">
+<!ENTITY showAlert.accesskey            "x">
+<!ENTITY browse.label                   "Navegar…">
+<!ENTITY browse.accesskey               "N">
+<!ENTITY playButton.label               "Reproduzir">
+<!ENTITY playButton.accesskey           "R">

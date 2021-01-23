@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Obnovení relace">
+<!ENTITY restorepage.pagetitle      "Chcete obnovit vaši relaci?">
+<!-- LOCALIZATION NOTE: If "closed unexpectedly" sounds too awkward in the translation,
+                        you may translate "crash" instead (even though it's IT-speak) -->
+<!ENTITY restorepage.issueDesc      "Předchozí relace aplikace &brandShortName; skončila neočekávaně. Omlouváme se za nepříjemnosti. Nyní můžete obnovit otevřené panely a okna původní relace, nebo začít novou relaci, pokud je už nepotřebujete.">
+<!ENTITY restorepage.remedies       "Pokud se &brandShortName; ukončuje opakovaně:">
+<!ENTITY restorepage.dueToChrome    "Odeberte pomocí Správce doplňků některý z naposledy přidaných doplňků.">
+<!ENTITY restorepage.dueToContent   "Obnovte relaci bez webové stránky, o které si myslíte, že způsobuje pád:">
+
+<!ENTITY restorepage.restoreButton  "Obnovit předchozí relaci">
+<!ENTITY restorepage.restore.access "O">
+<!ENTITY restorepage.cancelButton   "Začít novou relaci">
+<!ENTITY restorepage.cancel.access  "Z">
+
+<!ENTITY restorepage.restoreHeader  "Obnovit">
+<!ENTITY restorepage.listHeader     "Okna a panely">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Okno #&#37;S">

@@ -24,7 +24,6 @@ const TEST_CASES = [
   { width: 800, height: 600 },
   { width: 640, height: 400 },
   { width: 500, height: 350 },
-  { width: 300, height: 170 },
 ];
 
 function getPlatform() {
@@ -188,9 +187,9 @@ async function test_dynamical_window_rounding(aWindow, aCheckFunc) {
 
     info(caseString + "Get innerWidth/Height from the content.");
     await BrowserTestUtils.waitForCondition(async () => {
-      let { contentWidth, contentHeight } = await ContentTask.spawn(
+      let { contentWidth, contentHeight } = await SpecialPowers.spawn(
         tab.linkedBrowser,
-        null,
+        [],
         () => {
           return {
             contentWidth: content.innerWidth,
@@ -259,16 +258,12 @@ async function test_customize_width_and_height(aWindow) {
     if (getPlatform() != "linux") {
       ok(
         handleOSFuzziness(aContentWidth, targetDimensions.width),
-        `Custom Dimension: The content window width is correctly rounded into. ${aRealWidth}px -> ${aContentWidth}px should equal ${
-          targetDimensions.width
-        }`
+        `Custom Dimension: The content window width is correctly rounded into. ${aRealWidth}px -> ${aContentWidth}px should equal ${targetDimensions.width}`
       );
 
       ok(
         handleOSFuzziness(aContentHeight, targetDimensions.height),
-        `Custom Dimension: The content window height is correctly rounded into. ${aRealHeight}px -> ${aContentHeight}px should equal ${
-          targetDimensions.height
-        }`
+        `Custom Dimension: The content window height is correctly rounded into. ${aRealHeight}px -> ${aContentHeight}px should equal ${targetDimensions.height}`
       );
 
       // Using ok() above will cause Win/Mac to fail on even the first test, we don't need to repeat it, return true so waitForCondition ends
@@ -287,7 +282,7 @@ async function test_customize_width_and_height(aWindow) {
 }
 
 async function test_no_rounding_for_chrome(aWindow) {
-  // First, resize the window to a size with is not rounded.
+  // First, resize the window to a size which is not rounded.
   await new Promise(resolve => {
     aWindow.onresize = () => resolve();
     aWindow.resizeTo(700, 450);
@@ -305,6 +300,50 @@ async function test_no_rounding_for_chrome(aWindow) {
     "",
     "There is no margin around chrome tab."
   );
+
+  BrowserTestUtils.removeTab(tab);
+}
+
+// Tests that the findbar opening and closing causes a margin update.
+async function test_findbar(aWindow) {
+  // First, resize the window to a size which is not rounded.
+  await new Promise(resolve => {
+    aWindow.onresize = () => resolve();
+    aWindow.resizeTo(701, 451);
+  });
+
+  let tab = await BrowserTestUtils.openNewForegroundTab(
+    aWindow.gBrowser,
+    TEST_PATH + "file_dummy.html"
+  );
+
+  let promiseRounding = TestUtils.topicObserved(
+    "test:letterboxing:update-margin-finish"
+  );
+
+  let findBarOpenPromise = BrowserTestUtils.waitForEvent(
+    aWindow,
+    "findbaropen"
+  );
+  EventUtils.synthesizeKey("F", { accelKey: true }, aWindow);
+  await findBarOpenPromise;
+  await promiseRounding;
+
+  ok(true, "Margin updated when findbar opened");
+
+  promiseRounding = TestUtils.topicObserved(
+    "test:letterboxing:update-margin-finish"
+  );
+
+  let findBarClosePromise = BrowserTestUtils.waitForEvent(
+    aWindow,
+    "findbarclose"
+  );
+  EventUtils.synthesizeKey("KEY_Escape", {}, aWindow);
+  await findBarClosePromise;
+  await promiseRounding;
+
+  ok(true, "Margin updated when findbar closed");
 
   BrowserTestUtils.removeTab(tab);
 }
@@ -332,6 +371,8 @@ add_task(async function do_tests() {
   info("Run test for no margin around tab with the chrome privilege.");
   await test_no_rounding_for_chrome(window);
 
+  await test_findbar(window);
+
   // Restore the original window size.
   window.outerWidth = originalOuterWidth;
   window.outerHeight = originalOuterHeight;
@@ -351,6 +392,8 @@ add_task(async function do_tests() {
     "Run test for no margin around tab with the chrome privilege in new window."
   );
   await test_no_rounding_for_chrome(win);
+
+  await test_findbar(win);
 
   await BrowserTestUtils.closeWindow(win);
 });

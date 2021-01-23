@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.addressing.title                 "Enderezos">
+<!ENTITY emailCollectiontitle.label            "Colección de enderezos de correo">
+<!ENTITY emailCollectionPicker.label           "Engadir os enderezos de correo na miña:">
+<!ENTITY emailCollectionPicker.accesskey       "m">
+<!ENTITY emailCollectiontext.label             "Os enderezos de correo das mensaxes saíntes poden engadirse automaticamente a unha axenda de enderezos local.">
+
+<!-- Autocompletion -->
+<!ENTITY addressingTitle.label                 "Completar automaticamente enderezos">
+<!ENTITY highlightNonMatches.label             "Realzar enderezos que non son autocompletados">
+<!ENTITY highlightNonMatches.accesskey         "a">
+<!ENTITY addressingEnable.label                "Axendas de enderezos locais">
+<!ENTITY addressingEnable.accesskey            "l">
+<!ENTITY autocompleteText.label                "Ao enviar mensaxes buscar entradas coincidentes en:">
+<!ENTITY directories.label                     "Cartafol do servidor:">
+<!ENTITY directories.accesskey                 "d">
+<!ENTITY directoriesNone.label                 "Ningún">
+<!ENTITY editDirectories.label                 "Editar cartafoles…">
+<!ENTITY editDirectories.accesskey             "E">

@@ -7,6 +7,8 @@
 #ifndef mozilla_SnappyFrameUtils_h__
 #define mozilla_SnappyFrameUtils_h__
 
+#include <cstddef>
+
 #include "mozilla/Attributes.h"
 #include "nsError.h"
 
@@ -68,8 +70,8 @@ class SnappyFrameUtils {
   static size_t MaxCompressedBufferLength(size_t aSourceLength);
 
  protected:
-  SnappyFrameUtils() {}
-  virtual ~SnappyFrameUtils() {}
+  SnappyFrameUtils() = default;
+  virtual ~SnappyFrameUtils() = default;
 };
 
 }  // namespace detail

@@ -73,6 +73,7 @@ if CONFIG['CPU_ARCH'] in ('x86', 'x86_64'):
 
     EXPORTS.dav1d += [
         '../../../third_party/dav1d/src/x86/cpu.h',
+        '../../../third_party/dav1d/src/x86/msac.h',
     ]
 
     # ASM source files
@@ -81,27 +82,32 @@ if CONFIG['CPU_ARCH'] in ('x86', 'x86_64'):
         # an error when it compiles empty files.
         SOURCES += [
             '../../../third_party/dav1d/src/x86/cdef.asm',
+            '../../../third_party/dav1d/src/x86/film_grain.asm',
             '../../../third_party/dav1d/src/x86/ipred.asm',
             '../../../third_party/dav1d/src/x86/itx.asm',
             '../../../third_party/dav1d/src/x86/loopfilter.asm',
             '../../../third_party/dav1d/src/x86/looprestoration.asm',
             '../../../third_party/dav1d/src/x86/mc.asm',
-            '../../../third_party/dav1d/src/x86/msac.asm',
+            '../../../third_party/dav1d/src/x86/msac_init.c',
         ]
 
     SOURCES += [
         '../../../third_party/dav1d/src/x86/cdef_sse.asm',
         '../../../third_party/dav1d/src/x86/cpuid.asm',
+        '../../../third_party/dav1d/src/x86/film_grain_ssse3.asm',
         '../../../third_party/dav1d/src/x86/ipred_ssse3.asm',
         '../../../third_party/dav1d/src/x86/itx_ssse3.asm',
+        '../../../third_party/dav1d/src/x86/loopfilter_ssse3.asm',
         '../../../third_party/dav1d/src/x86/looprestoration_ssse3.asm',
         '../../../third_party/dav1d/src/x86/mc_ssse3.asm',
+        '../../../third_party/dav1d/src/x86/msac.asm',
     ]
 
     # BITDEPTH
     relative_path = '../../../third_party/dav1d/src/x86/'
     bitdepth_basenames = [
         'cdef_init_tmpl.c',
+        'film_grain_init_tmpl.c',
         'ipred_init_tmpl.c',
         'itx_init_tmpl.c',
         'loopfilter_init_tmpl.c',
@@ -142,12 +148,15 @@ elif CONFIG['CPU_ARCH'] == 'arm' or CONFIG['CPU_ARCH'] == 'aarch64':
     ]
     EXPORTS += [
         '../../../third_party/dav1d/src/arm/cpu.h',
+        '../../../third_party/dav1d/src/arm/msac.h',
     ]
 
     # BITDEPTH c file
     relative_path = '../../../third_party/dav1d/src/arm/'
     bitdepth_basenames = [
         'cdef_init_tmpl.c',
+        'ipred_init_tmpl.c',
+        'itx_init_tmpl.c',
         'loopfilter_init_tmpl.c',
         'looprestoration_init_tmpl.c',
         'mc_init_tmpl.c',
@@ -185,13 +194,25 @@ elif CONFIG['CPU_ARCH'] == 'arm' or CONFIG['CPU_ARCH'] == 'aarch64':
     if CONFIG['CPU_ARCH'] == 'aarch64':
         SOURCES += [
             '../../../third_party/dav1d/src/arm/64/cdef.S',
+            '../../../third_party/dav1d/src/arm/64/cdef16.S',
+            '../../../third_party/dav1d/src/arm/64/cdef_tmpl.S',
+            '../../../third_party/dav1d/src/arm/64/ipred.S',
+            '../../../third_party/dav1d/src/arm/64/itx.S',
             '../../../third_party/dav1d/src/arm/64/loopfilter.S',
+            '../../../third_party/dav1d/src/arm/64/loopfilter16.S',
             '../../../third_party/dav1d/src/arm/64/looprestoration.S',
+            '../../../third_party/dav1d/src/arm/64/looprestoration16.S',
+            '../../../third_party/dav1d/src/arm/64/looprestoration_common.S',
+            '../../../third_party/dav1d/src/arm/64/looprestoration_tmpl.S',
             '../../../third_party/dav1d/src/arm/64/mc.S',
+            '../../../third_party/dav1d/src/arm/64/mc16.S',
             '../../../third_party/dav1d/src/arm/64/msac.S',
         ]
     elif CONFIG['CPU_ARCH'] == 'arm':
         SOURCES += [
+            '../../../third_party/dav1d/src/arm/32/cdef.S',
+            '../../../third_party/dav1d/src/arm/32/ipred.S',
+            '../../../third_party/dav1d/src/arm/32/loopfilter.S',
             '../../../third_party/dav1d/src/arm/32/looprestoration.S',
             '../../../third_party/dav1d/src/arm/32/mc.S',
         ]

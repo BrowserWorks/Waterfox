@@ -1,3 +1,5 @@
+"use strict";
+
 var testStr = "This is a test. ";
 for (var i = 0; i < 10; ++i) {
   testStr += testStr;
@@ -34,8 +36,8 @@ function run_test() {
   ctx.wrappedJSObject = ctx;
 
   var observer = {
-    onStartRequest: function(aRequest) {},
-    onStopRequest: function(aRequest, aStatusCode) {
+    onStartRequest(aRequest) {},
+    onStopRequest(aRequest, aStatusCode) {
       Assert.equal(aStatusCode, 0);
       var sis = Cc["@mozilla.org/scriptableinputstream;1"].createInstance(
         Ci.nsIScriptableInputStream

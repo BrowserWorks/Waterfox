@@ -22,8 +22,8 @@ class BigIntObject : public NativeObject {
 
  public:
   static const ClassSpec classSpec_;
-  static const Class class_;
-  static const Class protoClass_;
+  static const JSClass class_;
+  static const JSClass protoClass_;
 
   static JSObject* create(JSContext* cx, JS::Handle<JS::BigInt*> bi);
 
@@ -32,8 +32,10 @@ class BigIntObject : public NativeObject {
   static bool valueOf(JSContext* cx, unsigned argc, JS::Value* vp);
   static bool toString_impl(JSContext* cx, const CallArgs& args);
   static bool toString(JSContext* cx, unsigned argc, JS::Value* vp);
+#ifndef JS_HAS_INTL_API
   static bool toLocaleString_impl(JSContext* cx, const CallArgs& args);
   static bool toLocaleString(JSContext* cx, unsigned argc, JS::Value* vp);
+#endif
   static bool asUintN(JSContext* cx, unsigned argc, JS::Value* vp);
   static bool asIntN(JSContext* cx, unsigned argc, JS::Value* vp);
 

@@ -34,7 +34,7 @@ Result<Ok, nsresult> AnnexB::ConvertSampleToAnnexB(
   BufferReader reader(aSample->Data(), aSample->Size());
 
   nsTArray<uint8_t> tmp;
-  ByteWriter writer(tmp);
+  ByteWriter<BigEndian> writer(tmp);
 
   while (reader.Remaining() >= 4) {
     uint32_t nalLen;
@@ -72,11 +72,16 @@ Result<Ok, nsresult> AnnexB::ConvertSampleToAnnexB(
     // will fail.
     if (aSample->mCrypto.IsEncrypted()) {
       if (aSample->mCrypto.mPlainSizes.Length() == 0) {
-        samplewriter->mCrypto.mPlainSizes.AppendElement(annexB->Length());
+        CheckedUint32 plainSize{annexB->Length()};
+        CheckedUint32 encryptedSize{samplewriter->Size()};
+        encryptedSize -= annexB->Length();
+        samplewriter->mCrypto.mPlainSizes.AppendElement(plainSize.value());
         samplewriter->mCrypto.mEncryptedSizes.AppendElement(
-            samplewriter->Size() - annexB->Length());
+            encryptedSize.value());
       } else {
-        samplewriter->mCrypto.mPlainSizes[0] += annexB->Length();
+        CheckedUint32 newSize{samplewriter->mCrypto.mPlainSizes[0]};
+        newSize += annexB->Length();
+        samplewriter->mCrypto.mPlainSizes[0] = newSize.value();
       }
     }
   }
@@ -205,7 +210,30 @@ static Result<Ok, nsresult> FindStartCode(BufferReader& aBr,
   return Ok();
 }
 
-static Result<mozilla::Ok, nsresult> ParseNALUnits(ByteWriter& aBw,
+/* static */
+void AnnexB::ParseNALEntries(const Span<const uint8_t>& aSpan,
+                             nsTArray<AnnexB::NALEntry>& aEntries) {
+  BufferReader reader(aSpan.data(), aSpan.Length());
+  size_t startSize;
+  auto rv = FindStartCode(reader, startSize);
+  size_t startOffset = reader.Offset();
+  if (rv.isOk()) {
+    while (FindStartCode(reader, startSize).isOk()) {
+      int64_t offset = reader.Offset();
+      int64_t sizeNAL = offset - startOffset - startSize;
+      aEntries.AppendElement(AnnexB::NALEntry(startOffset, sizeNAL));
+      reader.Seek(startOffset);
+      reader.Read(sizeNAL + startSize);
+      startOffset = offset;
+    }
+  }
+  int64_t sizeNAL = reader.Remaining();
+  if (sizeNAL) {
+    aEntries.AppendElement(AnnexB::NALEntry(startOffset, sizeNAL));
+  }
+}
+
+static Result<mozilla::Ok, nsresult> ParseNALUnits(ByteWriter<BigEndian>& aBw,
                                                    BufferReader& aBr) {
   size_t startSize;
 
@@ -232,7 +260,8 @@ static Result<mozilla::Ok, nsresult> ParseNALUnits(ByteWriter& aBw,
   return Ok();
 }
 
-bool AnnexB::ConvertSampleToAVCC(mozilla::MediaRawData* aSample) {
+bool AnnexB::ConvertSampleToAVCC(mozilla::MediaRawData* aSample,
+                                 const RefPtr<MediaByteBuffer>& aAVCCHeader) {
   if (IsAVCC(aSample)) {
     return ConvertSampleTo4BytesAVCC(aSample).isOk();
   }
@@ -242,7 +271,7 @@ bool AnnexB::ConvertSampleToAVCC(mozilla::MediaRawData* aSample) {
   }
 
   nsTArray<uint8_t> nalu;
-  ByteWriter writer(nalu);
+  ByteWriter<BigEndian> writer(nalu);
   BufferReader reader(aSample->Data(), aSample->Size());
 
   if (ParseNALUnits(writer, reader).isErr()) {
@@ -252,8 +281,14 @@ bool AnnexB::ConvertSampleToAVCC(mozilla::MediaRawData* aSample) {
   if (!samplewriter->Replace(nalu.Elements(), nalu.Length())) {
     return false;
   }
+
+  if (aAVCCHeader) {
+    aSample->mExtraData = aAVCCHeader;
+    return true;
+  }
+
   // Create the AVCC header.
-  RefPtr<mozilla::MediaByteBuffer> extradata = new mozilla::MediaByteBuffer;
+  auto extradata = MakeRefPtr<mozilla::MediaByteBuffer>();
   static const uint8_t kFakeExtraData[] = {
       1 /* version */,
       0x64 /* profile (High) */,
@@ -263,10 +298,10 @@ bool AnnexB::ConvertSampleToAVCC(mozilla::MediaRawData* aSample) {
       0xe0 /* num SPS (0) */,
       0 /* num PPS (0) */
   };
-  if (!extradata->AppendElements(kFakeExtraData, ArrayLength(kFakeExtraData))) {
-    return false;
-  }
-  aSample->mExtraData = extradata;
+  // XXX(Bug 1631371) Check if this should use a fallible operation as it
+  // pretended earlier.
+  extradata->AppendElements(kFakeExtraData, ArrayLength(kFakeExtraData));
+  aSample->mExtraData = std::move(extradata);
   return true;
 }
 
@@ -280,7 +315,7 @@ Result<mozilla::Ok, nsresult> AnnexB::ConvertSampleTo4BytesAVCC(
     return Ok();
   }
   nsTArray<uint8_t> dest;
-  ByteWriter writer(dest);
+  ByteWriter<BigEndian> writer(dest);
   BufferReader reader(aSample->Data(), aSample->Size());
   while (reader.Remaining() > nalLenSize) {
     uint32_t nalLen;

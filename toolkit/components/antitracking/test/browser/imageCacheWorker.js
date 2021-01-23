@@ -30,8 +30,8 @@ AntiTracking.runTest(
   {
     runExtraTests: false,
     cookieBehavior,
-    blockingByContentBlockingRTUI,
     blockingByAllowList,
+    expectedBlockingNotifications,
     callback: async _ => {
       // Let's load the image twice here as well.
       let img = document.createElement("img");

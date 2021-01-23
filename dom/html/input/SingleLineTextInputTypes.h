@@ -4,23 +4,27 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef SingleLineTextInputTypes_h__
-#define SingleLineTextInputTypes_h__
+#ifndef mozilla_dom_SingleLineTextInputTypes_h__
+#define mozilla_dom_SingleLineTextInputTypes_h__
 
-#include "InputType.h"
+#include "mozilla/dom/InputType.h"
 
-class SingleLineTextInputTypeBase : public ::InputType {
+namespace mozilla {
+namespace dom {
+
+class SingleLineTextInputTypeBase : public InputType {
  public:
-  ~SingleLineTextInputTypeBase() override {}
+  ~SingleLineTextInputTypeBase() override = default;
 
-  bool IsTooLong() const override;
-  bool IsTooShort() const override;
-  bool IsValueMissing() const override;
-  bool HasPatternMismatch() const override;
+  bool MinAndMaxLengthApply() const final { return true; }
+  bool IsTooLong() const final;
+  bool IsTooShort() const final;
+  bool IsValueMissing() const final;
+  // Can return Nothing() if the JS engine failed to evaluate the pattern.
+  Maybe<bool> HasPatternMismatch() const final;
 
  protected:
-  explicit SingleLineTextInputTypeBase(
-      mozilla::dom::HTMLInputElement* aInputElement)
+  explicit SingleLineTextInputTypeBase(HTMLInputElement* aInputElement)
       : InputType(aInputElement) {}
 
   bool IsMutable() const override;
@@ -29,47 +33,43 @@ class SingleLineTextInputTypeBase : public ::InputType {
 // input type=text
 class TextInputType : public SingleLineTextInputTypeBase {
  public:
-  static InputType* Create(mozilla::dom::HTMLInputElement* aInputElement,
-                           void* aMemory) {
+  static InputType* Create(HTMLInputElement* aInputElement, void* aMemory) {
     return new (aMemory) TextInputType(aInputElement);
   }
 
  private:
-  explicit TextInputType(mozilla::dom::HTMLInputElement* aInputElement)
+  explicit TextInputType(HTMLInputElement* aInputElement)
       : SingleLineTextInputTypeBase(aInputElement) {}
 };
 
 // input type=search
 class SearchInputType : public SingleLineTextInputTypeBase {
  public:
-  static InputType* Create(mozilla::dom::HTMLInputElement* aInputElement,
-                           void* aMemory) {
+  static InputType* Create(HTMLInputElement* aInputElement, void* aMemory) {
     return new (aMemory) SearchInputType(aInputElement);
   }
 
  private:
-  explicit SearchInputType(mozilla::dom::HTMLInputElement* aInputElement)
+  explicit SearchInputType(HTMLInputElement* aInputElement)
       : SingleLineTextInputTypeBase(aInputElement) {}
 };
 
 // input type=tel
 class TelInputType : public SingleLineTextInputTypeBase {
  public:
-  static InputType* Create(mozilla::dom::HTMLInputElement* aInputElement,
-                           void* aMemory) {
+  static InputType* Create(HTMLInputElement* aInputElement, void* aMemory) {
     return new (aMemory) TelInputType(aInputElement);
   }
 
  private:
-  explicit TelInputType(mozilla::dom::HTMLInputElement* aInputElement)
+  explicit TelInputType(HTMLInputElement* aInputElement)
       : SingleLineTextInputTypeBase(aInputElement) {}
 };
 
 // input type=url
 class URLInputType : public SingleLineTextInputTypeBase {
  public:
-  static InputType* Create(mozilla::dom::HTMLInputElement* aInputElement,
-                           void* aMemory) {
+  static InputType* Create(HTMLInputElement* aInputElement, void* aMemory) {
     return new (aMemory) URLInputType(aInputElement);
   }
 
@@ -78,15 +78,14 @@ class URLInputType : public SingleLineTextInputTypeBase {
   nsresult GetTypeMismatchMessage(nsAString& aMessage) override;
 
  private:
-  explicit URLInputType(mozilla::dom::HTMLInputElement* aInputElement)
+  explicit URLInputType(HTMLInputElement* aInputElement)
       : SingleLineTextInputTypeBase(aInputElement) {}
 };
 
 // input type=email
 class EmailInputType : public SingleLineTextInputTypeBase {
  public:
-  static InputType* Create(mozilla::dom::HTMLInputElement* aInputElement,
-                           void* aMemory) {
+  static InputType* Create(HTMLInputElement* aInputElement, void* aMemory) {
     return new (aMemory) EmailInputType(aInputElement);
   }
 
@@ -97,7 +96,7 @@ class EmailInputType : public SingleLineTextInputTypeBase {
   nsresult GetBadInputMessage(nsAString& aMessage) override;
 
  private:
-  explicit EmailInputType(mozilla::dom::HTMLInputElement* aInputElement)
+  explicit EmailInputType(HTMLInputElement* aInputElement)
       : SingleLineTextInputTypeBase(aInputElement) {}
 
   /**
@@ -146,14 +145,16 @@ class EmailInputType : public SingleLineTextInputTypeBase {
 // input type=password
 class PasswordInputType : public SingleLineTextInputTypeBase {
  public:
-  static InputType* Create(mozilla::dom::HTMLInputElement* aInputElement,
-                           void* aMemory) {
+  static InputType* Create(HTMLInputElement* aInputElement, void* aMemory) {
     return new (aMemory) PasswordInputType(aInputElement);
   }
 
  private:
-  explicit PasswordInputType(mozilla::dom::HTMLInputElement* aInputElement)
+  explicit PasswordInputType(HTMLInputElement* aInputElement)
       : SingleLineTextInputTypeBase(aInputElement) {}
 };
 
-#endif /* SingleLineTextInputTypes_h__ */
+}  // namespace dom
+}  // namespace mozilla
+
+#endif /* mozilla_dom_SingleLineTextInputTypes_h__ */

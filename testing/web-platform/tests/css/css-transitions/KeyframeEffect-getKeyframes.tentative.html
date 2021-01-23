@@ -45,7 +45,7 @@ test(t => {
   const expected = [
     { offset: 0,
       computedOffset: 0,
-      easing: 'ease',
+      easing: 'linear',
       composite: 'auto',
       left: '0px',
     },
@@ -80,7 +80,7 @@ test(t => {
     {
       offset: 0,
       computedOffset: 0,
-      easing: 'steps(2)',
+      easing: 'linear',
       composite: 'auto',
       left: '0px',
     },
@@ -96,8 +96,7 @@ test(t => {
   for (let i = 0; i < frames.length; i++) {
     assert_frames_equal(frames[i], expected[i], `ComputedKeyframe #${i}`);
   }
-}, 'KeyframeEffect.getKeyframes() returns expected frames for a simple'
-   + ' transition with a non-default easing function');
+}, 'KeyframeEffect.getKeyframes() returns frames unaffected by a non-default easing function');
 
 test(t => {
   const div = addDiv(t);
@@ -114,7 +113,7 @@ test(t => {
     {
       offset: 0,
       computedOffset: 0,
-      easing: 'ease',
+      easing: 'linear',
       composite: 'auto',
       left: '0px',
     },
@@ -131,5 +130,40 @@ test(t => {
   }
 }, 'KeyframeEffect.getKeyframes() returns expected frames for a'
    + ' transition with a CSS variable endpoint');
+
+test(t => {
+  const div = addDiv(t);
+  div.style.left = '0px';
+  getComputedStyle(div).transitionProperty;
+  div.style.transition = 'left 100s';
+  div.style.left = '100px';
+
+  // Resetting the effect target before retrieving the keyframes should not
+  // affect the computed property values.
+  const anim = div.getAnimations()[0];
+  anim.effect.target = null;
+  const frames = anim.effect.getKeyframes();
+
+  const expected = [
+    {
+      offset: 0,
+      computedOffset: 0,
+      easing: 'linear',
+      composite: 'auto',
+      left: '0px',
+    },
+    {
+      offset: 1,
+      computedOffset: 1,
+      easing: 'linear',
+      composite: 'auto',
+      left: '100px',
+    },
+  ];
+  for (let i = 0; i < frames.length; i++) {
+    assert_frames_equal(frames[i], expected[i], `ComputedKeyframe #${i}`);
+  }
+}, 'KeyframeEffect.getKeyframes() returns expected frames for a'
+   + ' transition after resetting the effect target');
 
 </script>

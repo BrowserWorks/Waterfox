@@ -9,7 +9,6 @@
 #include "mozilla/Tokenizer.h"
 #include "mozilla/Telemetry.h"
 #include "nsCOMPtr.h"
-#include "nsAutoPtr.h"
 #include "nsString.h"
 #include <algorithm>
 #include "mozilla/Unused.h"
@@ -22,8 +21,6 @@ namespace CacheFileUtils {
 // When the format changes we need to update the version.
 static uint32_t const kAltDataVersion = 1;
 const char* kAltDataKey = "alt-data";
-
-static uint32_t const kBaseDomainAccessInfoVersion = 1;
 
 namespace {
 
@@ -563,6 +560,8 @@ uint32_t CachePerfStats::GetStdDev(EDataType aType, bool aFiltered) {
 
 // static
 bool CachePerfStats::IsCacheSlow() {
+  StaticMutexAutoLock lock(sLock);
+
   // Compare mShortAvg with mFilteredAvg to find out whether cache is getting
   // slower. Use only data about single IO operations because ENTRY_OPEN can be
   // affected by more factors than a slow disk.
@@ -660,68 +659,6 @@ void BuildAlternativeDataInfo(const char* aInfo, int64_t aOffset,
   _retval.AppendInt(aOffset);
   _retval.Append(',');
   _retval.Append(aInfo);
-}
-
-nsresult ParseBaseDomainAccessInfo(const char* aInfo, uint32_t aTrID,
-                                   const uint32_t* aSearchSiteID, bool* _found,
-                                   uint16_t* _count) {
-  // The format is: "1;12;339456,490536687,1964820,"
-  //         <version>;<telemetry_report_ID>;<siteID>,<siteID>,
-  mozilla::Tokenizer p(aInfo);
-  uint32_t i = 0;
-  uint16_t siteIDCnt = 0;
-
-  // Check version and telemetry report ID
-  if (!p.ReadInteger(&i) || i != kBaseDomainAccessInfoVersion ||
-      !p.CheckChar(';') || !p.ReadInteger(&i) || i != aTrID ||
-      !p.CheckChar(';')) {
-    LOG(
-        ("ParseBaseDomainAccessInfo() - cannot parse info [info=%s, version=%u,"
-         " trID=%u]",
-         aInfo, kBaseDomainAccessInfoVersion, aTrID));
-    return NS_ERROR_NOT_AVAILABLE;
-  }
-
-  do {
-    if (!p.ReadInteger(&i) || !p.CheckChar(',')) {
-      LOG(
-          ("ParseBaseDomainAccessInfo() - cannot parse site ID [info=%s, "
-           "siteIDCnt=%d]",
-           aInfo, siteIDCnt));
-      return NS_ERROR_NOT_AVAILABLE;
-    }
-
-    // If aSearchSiteID was provided, we don't need the total count of IDs.
-    // Just return true and don't process the rest of data.
-    if (aSearchSiteID && *aSearchSiteID == i) {
-      *_found = true;
-      return NS_OK;
-    }
-
-    ++siteIDCnt;
-  } while (!p.CheckEOF());
-
-  if (_count) {
-    *_count = siteIDCnt;
-  }
-
-  return NS_OK;
-}
-
-void BuildOrAppendBaseDomainAccessInfo(const char* aOldInfo, uint32_t aTrID,
-                                       uint32_t aSiteID, nsACString& _retval) {
-  if (aOldInfo) {
-    _retval.Assign(aOldInfo);
-  } else {
-    _retval.Truncate();
-    _retval.AppendInt(kBaseDomainAccessInfoVersion);
-    _retval.Append(';');
-    _retval.AppendInt(aTrID);
-    _retval.Append(';');
-  }
-
-  _retval.AppendInt(aSiteID);
-  _retval.Append(',');
 }
 
 }  // namespace CacheFileUtils

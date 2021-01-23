@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "Zarad uštede diskovnog prostora, ne preuzimaj:">
+<!ENTITY doNotDownloadNntp.label "Zarad uštede diskovnog prostora, ne preuzimaj za offline korištenje:">
+<!ENTITY doNotDownloadImap.label "Zarad uštede diskovnog prostora, preuzimanje poruka sa servera i čuvanje lokalnih kopija za offline korištenje može biti ograničeno po starosti ili veličini.">
+<!ENTITY allFoldersOffline2.label "Zadrži poruke u svim direktorijima za ovaj račun na ovom računaru">
+<!ENTITY allFoldersOffline2.accesskey "o">
+<!ENTITY allFoldersOfflineNote.label "Napomena: Promjena ovog utiče na sve direktorije ovog računa. Koristite dugme Napredno… da biste podesili direktorije zasebno.">
+<!ENTITY offlineNotDownload.label "Poruke veće od">
+<!ENTITY offlineNotDownload.accesskey "P">
+<!ENTITY autosyncNotDownload.label "Ne preuzimaj poruke veće od">
+<!ENTITY autosyncNotDownload.accesskey "m">
+<!ENTITY kb.label "KB">
+<!ENTITY daysOld.label "dana staro">
+<!ENTITY message.label "poruke">
+<!ENTITY nntpNotDownloadRead.label "Pročitane poruke">
+<!ENTITY nntpNotDownloadRead.accesskey "r">
+<!ENTITY nntpDownloadMsg.label "Poruke starije od">
+<!ENTITY nntpDownloadMsg.accesskey "e">
+<!ENTITY retentionCleanup.label "Kako bi oslobodili diskovni prostor, stare poruke se mogu trajno obrisati.">
+<!ENTITY retentionCleanupImap.label "Kako bi oslobodili diskovni prostor, stare poruke se mogu trajno obrisati, uključujući lokalne kopije i originale na serveru.">
+<!ENTITY retentionCleanupPop.label "Kako bi oslobodili diskovni prostor, stare poruke se mogu trajno obrisati, uključujući i originale na serveru.">
+<!ENTITY retentionKeepMsg.label "Obriši poruke starije od">
+<!ENTITY retentionKeepMsg.accesskey "t">
+<!ENTITY retentionKeepAll.label "Ne briši poruke">
+<!ENTITY retentionKeepAll.accesskey "N">
+<!ENTITY retentionKeepRecent.label "Obriši sve osim najnovijih">
+<!ENTITY retentionKeepRecent.accesskey "b">
+<!ENTITY retentionApplyToFlagged.label "Uvijek zadrži poruke sa zvjezdicom">
+<!ENTITY retentionApplyToFlagged.accesskey "k">
+<!ENTITY nntpRemoveMsgBody.label "Ukloni tijela poruka starija od">
+<!ENTITY nntpRemoveMsgBody.accesskey "l">
+<!ENTITY offlineSelectNntp.label "Izaberite interesne grupe za offline korištenje…">
+<!ENTITY offlineSelectNntp.accesskey "s">
+<!ENTITY offlineImapAdvancedOffline.label "Napredno…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "p">
+<!ENTITY syncGroupTitle.label "Sinhronizacija poruke">
+<!ENTITY diskspaceGroupTitle.label "Prostor na disku">
+
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+<!ENTITY allAutosync.label               "Sinhronizuj lokalno sve poruke bez obzira na starost">
+<!ENTITY allAutosync.accesskey           "i">
+<!ENTITY ageAutosyncBefore.label         "Sinhronizuj najnovije">
+<!ENTITY ageAutosync.accesskey           "z">
+<!ENTITY ageAutosyncMiddle.label         "">
+<!ENTITY dayAgeInterval.label            "Dana">
+<!ENTITY weekAgeInterval.label           "Sedmica">
+<!ENTITY monthAgeInterval.label          "Mjeseci">
+<!ENTITY yearAgeInterval.label           "Godina">
+<!ENTITY ageAutosyncAfter.label          "">

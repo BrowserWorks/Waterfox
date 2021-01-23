@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "ನನ್ನನ್ನು ಇಲ್ಲಿಂದ ಹೊರಗೆ ಕೊಂಡೊಯ್ಯಿರಿ!">
+<!ENTITY safeb.palm.decline.label "ಈ ಎಚ್ಚರಿಕೆಯನ್ನು ನಿರ್ಲಕ್ಷಿಸು">
+<!ENTITY safeb.palm.reportPage.label "ಈ ಪುಟವನ್ನು ಏಕೆ ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "ಸಲಹೆ ಒದಗಿಸಿದವರು <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "ಧಾಳಿಕಾರಕ ಪುಟ ಎಂದು ಪರಿಗಣಿಸಲಾಗಿದೆ!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "ಈ ಜಾಲ ಪುಟವನ್ನು <span id='malware_sitename'/> ನಲ್ಲಿನ ಒಂದು ಧಾಳಿಕಾರಕ ಪುಟ ಎಂದು ಪರಿಗಣಿಸಿ ನಿಮ್ಮ ಸುರಕ್ಷತಾ ಆದ್ಯತೆಗಳ ಅನುಸಾರವಾಗಿ ಇದನ್ನು ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>ಧಾಳಿಕಾರಕ ಪುಟಗಳು ನಿಮ್ಮ ಖಾಸಗಿ ಮಾಹಿತಿಯನ್ನು ಕದಿಯುವಂತಹ, ಇತರರತ್ತ ಧಾಳಿ ಮಾಡುವ ಸಲುವಾಗಿ ನಿಮ್ಮ ಗಣಕವನ್ನು ಬಳಸಬಹುದಾದಂತಹ, ಅಥವ ನಿಮ್ಮ ಗಣಕವನ್ನು ಹಾಳುಗೆಡವಬಲ್ಲಂತಹ ಪ್ರೊಗ್ರಾಂಗಳನ್ನು ಅನುಸ್ಥಾಪಿಸಲು ಪ್ರಯತ್ನಿಸುತ್ತವೆ.</p><p>ಕೆಲವು ಧಾಳಿಕಾರಕ ಪುಟಗಳು ಉದ್ಧೇಶಪೂರ್ವಕವಾಗಿ ಅಪಾಯಕಾರಿ ತಂತ್ರಾಂಶವನ್ನು ವಿತರಿಸುತ್ತವೆ, ಆದರೆ ಹೆಚ್ಚಿನವು ಅವುಗಳ ಮಾಲಿಕರಿಗೆ ತಿಳಿದಿರುವುದಿಲ್ಲ ಅಥವ ಅವರ ಅನುಮತಿ ಪಡೆದಿರುವುದಿಲ್ಲ.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "ವಂಚಕ ತಾಣ!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "ಈ ಜಾಲ ಪುಟವನ್ನು <span id='phishing_sitename'/> ನಲ್ಲಿನ ಒಂದು ಧಾಳಿಕಾರಕ ಪುಟ ಎಂದು ಪರಿಗಣಿಸಿ ನಿಮ್ಮ ಸುರಕ್ಷತಾ ಆದ್ಯತೆಗಳ ಅನುಸಾರವಾಗಿ ಇದನ್ನು ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>ದಾಳಿಕಾರಕ ತಾಣಗಳು ನಿಮ್ಮನ್ನು ಮೋಸಗೊಳಿಸಿ ಹಾನಿಕಾರಕವಾದದ್ದನ್ನು ಮಾಡಿಸುತ್ತವೆ, ತಂತ್ರಾಂಶ ಅನುಸ್ಥಾಪನೆ, ಅಥವಾ ನಿಮ್ಮ ವೈಯುಕ್ತಿಕ ಮಾಹಿತಿ ತೆರೆದಿಡುವಂತೆಯೋ, ಗುಪ್ತಪದಗಳು, ಫೋನ್ ಸಂಖ್ಯೆಗಳು ಅಥವಾ ಕ್ರೆಡಿಟ್ ಕಾರ್ಡ್‌ಗಳಂತವು.</p><p>ಈ ಪುಟದಲ್ಲಿ ಯಾವುದೇ ಮಾಹಿತಿಯನ್ನು ಸೇರಿಸುವುದು ಗುರುತಿನ ಕಳ್ಳತನ ಅಥವಾ ಇತರೆ ವಂಚನೆಯಲ್ಲಿ ಕೊನೆಗೊಳ್ಳಬಹುದು.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "ಅವಶ್ಯವಿಲ್ಲದ ತಂತ್ರಾಂಶ ತಾಣವನ್ನು ವರದಿಮಾಡಿ!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "ಈ ಜಾಲ ಪುಟವನ್ನು <span id='unwanted_sitename'/> ನಲ್ಲಿ ಅವಶ್ಯವಿಲ್ಲದ ತಂತ್ರಾಂಶ ಇರುವುದೆಂದು ವರದಿ ಮಾಡಲಾಗಿರುವುದರಿಂದ ಮತ್ತು ನಿಮ್ಮ ಸುರಕ್ಷತಾ ಆದ್ಯತೆಗಳ ಅನುಸಾರವಾಗಿ ಇದನ್ನು ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "ಅವಶ್ಯವಿಲ್ಲದ ತಂತ್ರಾಂಶ ಪುಟಗಳು ನಿಮ್ಮ ಗಣಕವನ್ನು ಅನಿರೀಕ್ಷಿತ ದಾರಿಗಳಿಂದ ಬಾಧಿಸುವ ಮತ್ತು ವಂಚಕ ತಂತ್ರಾಂಶಗಳನ್ನು ಅನುಸ್ಥಾಪಿಸಲು ಪ್ರಯತ್ನಪಡಬಹುದು.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "ಈ ಮುಂದಿನ ತಾಣವು ಮಾಲ್ವೆರ್‍ಗಳನ್ನು ಹೊಂದಿರಬಹುದು">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; ಈ ಪುಟವನ್ನು ನಿರ್ಬಂಧಿಸಿದೆ ಏಕೆಂದರೆ ನಿಮ್ಮ ಮಾಹಿತಿಯನ್ನು (ಉದಾಹರಣೆಗೆ, ಫೋಟೊಗಳು, ಗುಪ್ತಪದಗಳು, ಸಂದೇಶಗಳು ಮತ್ತು ಕ್ರೆಡಿಟ್ ಕಾರ್ಡ್‌ಗಳನ್ನು) ಕದಿಯಲು ಅಥವಾ ಅಳಿಸುವ ಅಪಾಯಕಾರಿ ತಂತ್ರಾಂಶಗಳನ್ನು ಸ್ಥಾಪಿಸಲು ಇದು ಪ್ರಯತ್ನಿಸಬಹುದು.">

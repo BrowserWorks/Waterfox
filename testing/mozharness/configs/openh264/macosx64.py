@@ -19,15 +19,17 @@ config = {
     'use_yasm': True,
     'operating_system': 'darwin',
     'partial_env': {
-        'CXXFLAGS': ('-target x86_64-apple-darwin11 '
-                     '-B %(abs_work_dir)s/src/cctools/bin '
-                     '-isysroot %(abs_work_dir)s/src/MacOSX10.11.sdk '
-                     '-mmacosx-version-min=10.11'),
-        'LDFLAGS': ('-target x86_64-apple-darwin11 '
-                    '-B %(abs_work_dir)s/src/cctools/bin '
-                    '-isysroot %(abs_work_dir)s/src/MacOSX10.11.sdk '
-                    '-mmacosx-version-min=10.11 '
-                    '-fuse-ld=%(abs_work_dir)s/src/cctools/bin/x86_64-darwin11-ld'),
-        'PATH': '%(abs_work_dir)s/src/clang/bin/:%(PATH)s',
+        'CXXFLAGS': ('-target x86_64-apple-darwin '
+                     '-B {MOZ_FETCHES_DIR}/cctools/bin '
+                     '-isysroot %(abs_work_dir)s/MacOSX10.11.sdk '
+                     '-mmacosx-version-min=10.11'
+                     .format(MOZ_FETCHES_DIR=os.environ['MOZ_FETCHES_DIR'])),
+        'LDFLAGS': ('-target x86_64-apple-darwin '
+                    '-B {MOZ_FETCHES_DIR}/cctools/bin '
+                    '-isysroot %(abs_work_dir)s/MacOSX10.11.sdk '
+                    '-mmacosx-version-min=10.11'
+                     .format(MOZ_FETCHES_DIR=os.environ['MOZ_FETCHES_DIR'])),
+        'PATH': ('{MOZ_FETCHES_DIR}/clang/bin/:%(PATH)s'
+                 .format(MOZ_FETCHES_DIR=os.environ['MOZ_FETCHES_DIR'])),
     },
 }

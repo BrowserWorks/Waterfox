@@ -67,7 +67,7 @@ function openSetP12PasswordDialog() {
     Ci.nsIWritablePropertyBag2
   );
   let win = window.openDialog(
-    "chrome://pippki/content/setp12password.xul",
+    "chrome://pippki/content/setp12password.xhtml",
     "",
     "",
     returnVals
@@ -89,7 +89,7 @@ add_task(async function testFocus() {
   let [win] = await openSetP12PasswordDialog();
   Assert.equal(
     win.document.activeElement,
-    win.document.getElementById("pw1").inputField,
+    win.document.getElementById("pw1"),
     "First password textbox should have focus"
   );
   await BrowserTestUtils.closeWindow(win);
@@ -112,7 +112,8 @@ add_task(async function testPasswordStrengthAndEquality() {
     password2Textbox.oninput();
 
     Assert.equal(
-      win.document.documentElement.getButton("accept").disabled,
+      win.document.getElementById("setp12password").getButton("accept")
+        .disabled,
       password1Textbox.value != password2Textbox.value,
       "Actual and expected accept button disable state should " +
         `match for ${testCase.name}`

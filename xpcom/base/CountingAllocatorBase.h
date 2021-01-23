@@ -9,6 +9,7 @@
 
 #include "mozilla/Assertions.h"
 #include "mozilla/Atomics.h"
+#include "mozilla/mozalloc.h"
 #include "nsIMemoryReporter.h"
 
 namespace mozilla {
@@ -110,13 +111,41 @@ class CountingAllocatorBase {
     free(p);
   }
 
+  // Infallible-allocation wrappers for the counting malloc/calloc/realloc
+  // functions, for clients that don't safely handle allocation failures
+  // themselves.
+  static void* InfallibleCountingMalloc(size_t size) {
+    void* p = moz_xmalloc(size);
+    sAmount += MallocSizeOfOnAlloc(p);
+    return p;
+  }
+
+  static void* InfallibleCountingCalloc(size_t nmemb, size_t size) {
+    void* p = moz_xcalloc(nmemb, size);
+    sAmount += MallocSizeOfOnAlloc(p);
+    return p;
+  }
+
+  static void* InfallibleCountingRealloc(void* p, size_t size) {
+    size_t oldsize = MallocSizeOfOnFree(p);
+    void* pnew = moz_xrealloc(p, size);
+    if (pnew) {
+      size_t newsize = MallocSizeOfOnAlloc(pnew);
+      sAmount += newsize - oldsize;
+    } else if (size == 0) {
+      // See comment in CountingRealloc above.
+      sAmount -= oldsize;
+    } else {
+      // realloc failed.  The amount allocated hasn't changed.
+    }
+    return pnew;
+  }
+
  private:
   // |sAmount| can be (implicitly) accessed by multiple threads, so it
   // must be thread-safe. It may be written during GC, so accesses are not
   // recorded.
-  typedef Atomic<size_t, SequentiallyConsistent,
-                 recordreplay::Behavior::DontPreserve>
-      AmountType;
+  typedef Atomic<size_t, SequentiallyConsistent> AmountType;
   static AmountType sAmount;
 
   MOZ_DEFINE_MALLOC_SIZE_OF_ON_ALLOC(MallocSizeOfOnAlloc)

@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Proprietates del imagine">
+
+<!ENTITY pixelsPopup.value "pixels">
+
+<!-- These are in the Location tab panel -->
+<!ENTITY locationEditField.label "Adresse del imagine:">
+<!ENTITY locationEditField.accessKey "А">
+<!ENTITY locationEditField.tooltip "Insere le nomine de file o position del imagine">
+<!ENTITY locationEditField.shortenedDataURI "URI de datos abbreviate (copiar placiara le URI complete in le area de transferentia)">
+<!ENTITY title.label "Consilio:">
+<!ENTITY title.accessKey "C">
+<!ENTITY title.tooltip "Le attributo html 'titulo' que appare como quadro de suggestion">
+<!ENTITY altText.label "Texto alternative">
+<!ENTITY altText.accessKey "A">
+<!ENTITY altTextEditField.tooltip "Typo de texto a monstrar in loco del imagine">
+<!ENTITY noAltText.label "Non usar texto alternative">
+<!ENTITY noAltText.accessKey "N">
+
+<!ENTITY previewBox.label "Vista preliminar del imagine">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+<!ENTITY actualSize.label "Dimension actual:">
+<!ENTITY actualSizeRadio.label "Dimension actual">
+<!ENTITY actualSizeRadio.accessKey "A">
+<!ENTITY actualSizeRadio.tooltip "Regrede al actual dimension del imagine">
+<!ENTITY customSizeRadio.label "Personalisar dimension">
+<!ENTITY customSizeRadio.accessKey "D">
+<!ENTITY customSizeRadio.tooltip "Cambia le dimension del imagine como monstrate in iste pagina">
+<!ENTITY heightEditField.label "Altor:">
+<!ENTITY heightEditField.accessKey "A">
+<!ENTITY widthEditField.label "Largessa:">
+<!ENTITY widthEditField.accessKey "L">
+<!ENTITY constrainCheckbox.label "Restringer">
+<!ENTITY constrainCheckbox.accessKey "R">
+<!ENTITY constrainCheckbox.tooltip "Mantener le proportiones del imagine">
+
+<!-- These controls are in the Image Map box of the expanded area -->
+<!ENTITY imagemapBox.label "Mappa imagine">
+<!ENTITY removeImageMapButton.label "Remover">
+<!ENTITY removeImageMapButton.accessKey "R">
+
+<!-- These are the options for image alignment -->
+<!ENTITY alignment.label "Alinear texto a imagine">
+<!ENTITY bottomPopup.value "Al base">
+<!ENTITY topPopup.value "Al culmine">
+<!ENTITY centerPopup.value "In centro">
+<!ENTITY wrapRightPopup.value "Incapsular a dextra">
+<!ENTITY wrapLeftPopup.value "Incapsular a sinistra">
+
+<!-- These controls are in the Spacing Box -->
+<!ENTITY spacingBox.label "Spatiamento">
+<!ENTITY leftRightEditField.label "Sinistra e dextra:">
+<!ENTITY leftRightEditField.accessKey "S">
+<!ENTITY topBottomEditField.label "Culmine e pede">
+<!ENTITY topBottomEditField.accessKey "C">
+<!ENTITY borderEditField.label "Bordo plen:">
+<!ENTITY borderEditField.accessKey "B">
+
+<!-- These controls are in the Link Box -->
+<!ENTITY showImageLinkBorder.label "Monstrar bordo circum imagine ligate">
+<!ENTITY showImageLinkBorder.accessKey "B">
+<!ENTITY LinkAdvancedEditButton.label "Redaction avantiate del ligamine…">
+<!ENTITY LinkAdvancedEditButton.accessKey "l">
+<!ENTITY LinkAdvancedEditButton.tooltip "Adder o modificar attributos HTML, attributos de stilo e JavaScript">
+
+<!-- These tabs are currently used in the image input dialog -->
+<!ENTITY imageInputTab.label "Formulario">
+<!ENTITY imageLocationTab.label "Position">
+<!ENTITY imageDimensionsTab.label "Dimensiones">
+<!ENTITY imageAppearanceTab.label "Apparentia">
+<!ENTITY imageLinkTab.label "">

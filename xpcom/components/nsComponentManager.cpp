@@ -21,14 +21,11 @@
 #include "nsCategoryManagerUtils.h"
 #include "nsLayoutModule.h"
 #include "mozilla/MemoryReporting.h"
-#include "nsIConsoleService.h"
 #include "nsIObserverService.h"
-#include "nsISimpleEnumerator.h"
 #include "nsIStringEnumerator.h"
 #include "nsXPCOM.h"
 #include "nsXPCOMPrivate.h"
 #include "nsISupportsPrimitives.h"
-#include "nsIClassInfo.h"
 #include "nsLocalFile.h"
 #include "nsReadableUtils.h"
 #include "nsString.h"
@@ -48,8 +45,6 @@
 #include "nsSupportsPrimitives.h"
 #include "nsArray.h"
 #include "nsIMutableArray.h"
-#include "nsArrayEnumerator.h"
-#include "nsStringEnumerator.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/FileUtils.h"
 #include "mozilla/ScopeExit.h"
@@ -360,9 +355,6 @@ extern const mozilla::Module kLayoutModule;
 extern const mozilla::Module kKeyValueModule;
 extern const mozilla::Module kXREModule;
 extern const mozilla::Module kEmbeddingModule;
-#if defined(MOZ_WIDGET_ANDROID)
-extern const mozilla::Module kBrowserModule;
-#endif
 
 static nsTArray<const mozilla::Module*>* sExtraStaticModules;
 
@@ -448,9 +440,6 @@ nsresult nsComponentManagerImpl::Init() {
   RegisterModule(&kKeyValueModule);
   RegisterModule(&kXREModule);
   RegisterModule(&kEmbeddingModule);
-#if defined(MOZ_WIDGET_ANDROID)
-  RegisterModule(&kBrowserModule);
-#endif
 
   for (uint32_t i = 0; i < sExtraStaticModules->Length(); ++i) {
     RegisterModule((*sExtraStaticModules)[i]);
@@ -757,7 +746,6 @@ static void DoRegisterManifest(NSLocationType aType, FileLocation& aFile,
   auto result = URLPreloader::Read(aFile);
   if (result.isOk()) {
     nsCString buf(result.unwrap());
-
     ParseManifest(aType, aFile, buf.BeginWriting(), aChromeOnly);
   } else if (NS_BOOTSTRAPPED_LOCATION != aType) {
     nsCString uri;
@@ -1604,7 +1592,7 @@ nsComponentManagerImpl::RegisterFactory(const nsCID& aClass, const char* aName,
     return NS_ERROR_FACTORY_NOT_REGISTERED;
   }
 
-  nsAutoPtr<nsFactoryEntry> f(new nsFactoryEntry(aClass, aFactory));
+  auto f = MakeUnique<nsFactoryEntry>(aClass, aFactory);
 
   SafeMutexAutoLock lock(mLock);
   if (auto entry = mFactories.LookupForAdd(f->mCIDEntry->cid)) {
@@ -1616,12 +1604,12 @@ nsComponentManagerImpl::RegisterFactory(const nsCID& aClass, const char* aName,
     }
     if (aContractID) {
       nsDependentCString contractID(aContractID);
-      mContractIDs.Put(contractID, f);
+      mContractIDs.Put(contractID, f.get());
       // We allow dynamically-registered contract IDs to override static
       // entries, so invalidate any static entry for this contract ID.
       StaticComponents::InvalidateContractID(contractID);
     }
-    entry.OrInsert([&f]() { return f.forget(); });
+    entry.OrInsert([&f]() { return f.release(); });
   }
 
   return NS_OK;
@@ -1703,48 +1691,20 @@ nsComponentManagerImpl::IsContractIDRegistered(const char* aClass,
 }
 
 NS_IMETHODIMP
-nsComponentManagerImpl::EnumerateCIDs(nsISimpleEnumerator** aEnumerator) {
-  nsCOMArray<nsISupports> array;
-  auto appendEntry = [&](const nsID& aCID) {
-    nsCOMPtr<nsISupportsID> wrapper = new nsSupportsID();
-    wrapper->SetData(&aCID);
-    array.AppendObject(wrapper);
-  };
+nsComponentManagerImpl::GetContractIDs(nsTArray<nsCString>& aResult) {
+  aResult.Clear();
 
-  for (auto iter = mFactories.Iter(); !iter.Done(); iter.Next()) {
-    appendEntry(*iter.Key());
-  }
-  for (const auto& module : gStaticModules) {
-    if (module.Active()) {
-      appendEntry(module.CID());
-    }
-  }
-
-  return NS_NewArrayEnumerator(aEnumerator, array);
-}
-
-NS_IMETHODIMP
-nsComponentManagerImpl::EnumerateContractIDs(
-    nsISimpleEnumerator** aEnumerator) {
-  auto* array = new nsTArray<nsCString>;
   for (auto iter = mContractIDs.Iter(); !iter.Done(); iter.Next()) {
-    const nsACString& contract = iter.Key();
-    array->AppendElement(contract);
+    aResult.AppendElement(iter.Key());
   }
 
   for (const auto& entry : gContractEntries) {
     if (!entry.Invalid()) {
-      array->AppendElement(entry.ContractID());
+      aResult.AppendElement(entry.ContractID());
     }
   }
 
-  nsCOMPtr<nsIUTF8StringEnumerator> e;
-  nsresult rv = NS_NewAdoptingUTF8StringEnumerator(getter_AddRefs(e), array);
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-
-  return CallQueryInterface(e, aEnumerator);
+  return NS_OK;
 }
 
 NS_IMETHODIMP

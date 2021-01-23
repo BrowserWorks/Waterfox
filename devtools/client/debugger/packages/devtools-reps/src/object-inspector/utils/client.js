@@ -5,21 +5,21 @@
 // @flow
 import type {
   GripProperties,
-  ObjectClient,
+  ObjectFront,
   PropertiesIterator,
   Node,
-  LongStringClient,
+  LongStringFront,
 } from "../types";
 
 const { getValue, nodeHasFullText } = require("../utils/node");
 
 async function enumIndexedProperties(
-  objectClient: ObjectClient,
+  objectFront: ObjectFront,
   start: ?number,
   end: ?number
 ): Promise<{ ownProperties?: Object }> {
   try {
-    const { iterator } = await objectClient.enumProperties({
+    const iterator = await objectFront.enumProperties({
       ignoreNonIndexedProperties: true,
     });
     const response = await iteratorSlice(iterator, start, end);
@@ -31,12 +31,12 @@ async function enumIndexedProperties(
 }
 
 async function enumNonIndexedProperties(
-  objectClient: ObjectClient,
+  objectFront: ObjectFront,
   start: ?number,
   end: ?number
 ): Promise<{ ownProperties?: Object }> {
   try {
-    const { iterator } = await objectClient.enumProperties({
+    const iterator = await objectFront.enumProperties({
       ignoreIndexedProperties: true,
     });
     const response = await iteratorSlice(iterator, start, end);
@@ -48,12 +48,12 @@ async function enumNonIndexedProperties(
 }
 
 async function enumEntries(
-  objectClient: ObjectClient,
+  objectFront: ObjectFront,
   start: ?number,
   end: ?number
 ): Promise<{ ownProperties?: Object }> {
   try {
-    const { iterator } = await objectClient.enumEntries();
+    const iterator = await objectFront.enumEntries();
     const response = await iteratorSlice(iterator, start, end);
     return response;
   } catch (e) {
@@ -63,12 +63,12 @@ async function enumEntries(
 }
 
 async function enumSymbols(
-  objectClient: ObjectClient,
+  objectFront: ObjectFront,
   start: ?number,
   end: ?number
 ): Promise<{ ownSymbols?: Array<Object> }> {
   try {
-    const { iterator } = await objectClient.enumSymbols();
+    const iterator = await objectFront.enumSymbols();
     const response = await iteratorSlice(iterator, start, end);
     return response;
   } catch (e) {
@@ -78,49 +78,41 @@ async function enumSymbols(
 }
 
 async function getPrototype(
-  objectClient: ObjectClient
+  objectFront: ObjectFront
 ): ?Promise<{ prototype?: Object }> {
-  if (typeof objectClient.getPrototype !== "function") {
-    console.error("objectClient.getPrototype is not a function");
+  if (typeof objectFront.getPrototype !== "function") {
+    console.error("objectFront.getPrototype is not a function");
     return Promise.resolve({});
   }
-  return objectClient.getPrototype();
+  return objectFront.getPrototype();
 }
 
 async function getFullText(
-  longStringClient: LongStringClient,
+  longStringFront: LongStringFront,
   item: Node
 ): Promise<{ fullText?: string }> {
   const { initial, fullText, length } = getValue(item);
-
   // Return fullText property if it exists so that it can be added to the
   // loadedProperties map.
   if (nodeHasFullText(item)) {
-    return Promise.resolve({ fullText });
+    return { fullText };
   }
 
-  return new Promise((resolve, reject) => {
-    longStringClient.substring(initial.length, length, response => {
-      if (response.error) {
-        console.error(
-          "LongStringClient.substring",
-          `${response.error}: ${response.message}`
-        );
-        reject({});
-        return;
-      }
-
-      resolve({
-        fullText: initial + response.substring,
-      });
-    });
-  });
+  try {
+    const substring = await longStringFront.substring(initial.length, length);
+    return {
+      fullText: initial + substring,
+    };
+  } catch (e) {
+    console.error("LongStringFront.substring", e);
+    throw e;
+  }
 }
 
 async function getProxySlots(
-  objectClient: ObjectClient
+  objectFront: ObjectFront
 ): Promise<{ proxyTarget?: Object, proxyHandler?: Object }> {
-  return objectClient.getProxySlots();
+  return objectFront.getProxySlots();
 }
 
 function iteratorSlice(

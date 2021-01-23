@@ -21,6 +21,32 @@ const gTokenPasswordDialogs = {
   QueryInterface: ChromeUtils.generateQI([Ci.nsITokenPasswordDialogs]),
 };
 
+let gMockPrompter = {
+  promptPassword(dialogTitle, text, password, checkMsg, checkValue) {
+    // Returning false simulates the user canceling the password prompt.
+    return false;
+  },
+
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIPrompt]),
+};
+
+// Mock nsIWindowWatcher. PSM calls getNewPrompter on this to get an nsIPrompt
+// to call promptPassword. We return the mock one, above.
+let gWindowWatcher = {
+  getNewPrompter: () => gMockPrompter,
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIWindowWatcher]),
+};
+
+add_task(function setup() {
+  let windowWatcherCID = MockRegistrar.register(
+    "@mozilla.org/embedcomp/window-watcher;1",
+    gWindowWatcher
+  );
+  registerCleanupFunction(() => {
+    MockRegistrar.unregister(windowWatcherCID);
+  });
+});
+
 add_task(function testEncryptString() {
   let sdr = Cc["@mozilla.org/security/sdr;1"].getService(
     Ci.nsISecretDecoderRing
@@ -113,7 +139,7 @@ add_task(async function testAsyncEncryptStrings() {
     "aaa 一二三", // Includes Unicode with code points outside [0, 255].
   ];
 
-  let encrypteds = await sdr.asyncEncryptStrings(inputs.length, inputs);
+  let encrypteds = await sdr.asyncEncryptStrings(inputs);
   for (let i = 0; i < inputs.length; i++) {
     let encrypted = encrypteds[i];
     let input = inputs[i];
@@ -142,4 +168,105 @@ add_task(async function testAsyncEncryptStrings() {
       "decryptString(encryptString(input)) should return input"
     );
   }
+});
+
+add_task(async function testAsyncDecryptStrings() {
+  let sdr = Cc["@mozilla.org/security/sdr;1"].getService(
+    Ci.nsISecretDecoderRing
+  );
+
+  // Test valid inputs for encryptString() and decryptString().
+  let testCases = [
+    "",
+    " ", // First printable latin1 character (code point 32).
+    "foo",
+    "1234567890`~!@#$%^&*()-_=+{[}]|\\:;'\",<.>/?",
+    "¡äöüÿ", // Misc + last printable latin1 character (code point 255).
+    "aaa 一二三", // Includes Unicode with code points outside [0, 255].
+  ];
+
+  let convertedTestCases = testCases.map(tc => {
+    let converter = Cc[
+      "@mozilla.org/intl/scriptableunicodeconverter"
+    ].createInstance(Ci.nsIScriptableUnicodeConverter);
+    converter.charset = "UTF-8";
+
+    let convertedInput = converter.ConvertFromUnicode(tc);
+    convertedInput += converter.Finish();
+    return convertedInput;
+  });
+
+  let encryptedStrings = convertedTestCases.map(tc => sdr.encryptString(tc));
+  let decrypteds = await sdr.asyncDecryptStrings(encryptedStrings);
+  for (let i = 0; i < encryptedStrings.length; i++) {
+    let decrypted = decrypteds[i];
+
+    equal(
+      decrypted,
+      testCases[i],
+      "decrypted string should match expected value"
+    );
+    equal(
+      sdr.decryptString(encryptedStrings[i]),
+      convertedTestCases[i],
+      "decryptString(encryptString(input)) should return the initial decrypted string value"
+    );
+  }
+});
+
+add_task(async function testAsyncDecryptInvalidStrings() {
+  let sdr = Cc["@mozilla.org/security/sdr;1"].getService(
+    Ci.nsISecretDecoderRing
+  );
+
+  // Test invalid inputs for sdr.asyncDecryptStrings
+  let testCases = [
+    "~bmV0cGxheQ==", // invalid base64 encoding
+    "bmV0cGxheQ==", // valid base64 characters but not encrypted
+    "https://www.example.com", // website address from erroneous migration
+  ];
+
+  let decrypteds = await sdr.asyncDecryptStrings(testCases);
+  equal(
+    decrypteds.length,
+    testCases.length,
+    "each testcase should still return a response"
+  );
+  for (let i = 0; i < decrypteds.length; i++) {
+    let decrypted = decrypteds[i];
+
+    equal(
+      decrypted,
+      "",
+      "decrypted string should be empty when trying to decrypt an invalid input with asyncDecryptStrings"
+    );
+
+    Assert.throws(
+      () => sdr.decryptString(testCases[i]),
+      /NS_ERROR_ILLEGAL_VALUE|NS_ERROR_FAILURE/,
+      `Check testcase would have thrown: ${testCases[i]}`
+    );
+  }
+});
+
+add_task(async function testAsyncDecryptLoggedOut() {
+  // Set a master password.
+  let token = Cc["@mozilla.org/security/pk11tokendb;1"]
+    .getService(Ci.nsIPK11TokenDB)
+    .getInternalKeyToken();
+  token.initPassword("password");
+  token.logoutSimple();
+
+  let sdr = Cc["@mozilla.org/security/sdr;1"].getService(
+    Ci.nsISecretDecoderRing
+  );
+
+  await Assert.rejects(
+    sdr.asyncDecryptStrings(["irrelevant"]),
+    /NS_ERROR_NOT_AVAILABLE/,
+    "Check error is thrown instead of returning empty strings"
+  );
+
+  token.reset();
+  token.initPassword("");
 });

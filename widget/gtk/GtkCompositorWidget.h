@@ -21,10 +21,6 @@ class PlatformCompositorWidgetDelegate : public CompositorWidgetDelegate {
   virtual void NotifyClientSizeChanged(
       const LayoutDeviceIntSize& aClientSize) = 0;
 
-#ifdef MOZ_WAYLAND
-  virtual void RequestsUpdatingEGLSurface() = 0;
-#endif
-
   // CompositorWidgetDelegate Overrides
 
   PlatformCompositorWidgetDelegate* AsPlatformSpecificDelegate() override {
@@ -39,7 +35,7 @@ class GtkCompositorWidget : public CompositorWidget,
  public:
   GtkCompositorWidget(const GtkCompositorWidgetInitData& aInitData,
                       const layers::CompositorOptions& aOptions,
-                      nsWindow* aWindow = nullptr);
+                      nsWindow* aWindow /* = nullptr*/);
   ~GtkCompositorWidget();
 
   // CompositorWidget Overrides
@@ -50,8 +46,9 @@ class GtkCompositorWidget : public CompositorWidget,
   already_AddRefed<gfx::DrawTarget> StartRemoteDrawingInRegion(
       LayoutDeviceIntRegion& aInvalidRegion,
       layers::BufferMode* aBufferMode) override;
-  void EndRemoteDrawingInRegion(gfx::DrawTarget* aDrawTarget,
-                                LayoutDeviceIntRegion& aInvalidRegion) override;
+  void EndRemoteDrawingInRegion(
+      gfx::DrawTarget* aDrawTarget,
+      const LayoutDeviceIntRegion& aInvalidRegion) override;
   uintptr_t GetWidgetKey() override;
 
   LayoutDeviceIntSize GetClientSize() override;
@@ -64,23 +61,19 @@ class GtkCompositorWidget : public CompositorWidget,
   Window XWindow() const { return mXWindow; }
 
   EGLNativeWindowType GetEGLNativeWindow();
+#ifdef MOZ_WAYLAND
+  void SetEGLNativeWindowSize(const LayoutDeviceIntSize& aEGLWindowSize);
+#endif
 
   // PlatformCompositorWidgetDelegate Overrides
 
   void NotifyClientSizeChanged(const LayoutDeviceIntSize& aClientSize) override;
 
-#ifdef MOZ_WAYLAND
-  void RequestsUpdatingEGLSurface() override;
-  bool WaylandRequestsUpdatingEGLSurface();
-#endif
  protected:
   nsWindow* mWidget;
 
  private:
   LayoutDeviceIntSize mClientSize;
-#ifdef MOZ_WAYLAND
-  bool mWaylandRequestsUpdatingEGLSurface = false;
-#endif
 
   Display* mXDisplay;
   Window mXWindow;

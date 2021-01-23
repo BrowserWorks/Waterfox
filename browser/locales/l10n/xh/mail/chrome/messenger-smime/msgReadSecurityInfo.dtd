@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgReadSecurityInfo.dtd UI for viewing security status when reading a received message -->
+
+
+<!ENTITY status.label "Ukhuseleko Lomyalezo">
+<!ENTITY signatureCert.label "Jonga Isatifikethi Somsayino">
+<!ENTITY encryptionCert.label "Jonga Isatifikethi Soguqulelo Oluntsonkothileyo">
+
+<!ENTITY signer.name "Kusayinwe ngulo:">
+<!ENTITY recipient.name "Kuguqulelwe ngokuntsonkothileyo ukwenzela:">
+<!ENTITY email.address "Idilesi yemeyile:">
+<!ENTITY issuer.name "Isatifikethi sikhutshwe ngulo:">
+

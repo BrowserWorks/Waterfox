@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-composer.xul -->
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+
+
+
+<!ENTITY  pref.composer.title           "Composer">
+<!ENTITY  recentFiles.title             "Dewislen Tudalen Diweddar">
+<!ENTITY  documentsInMenu.label         "Nifer fwyaf o dudalennau wedi'u rhestru:">
+<!ENTITY  documentsInMenu.accesskey     "N">
+<!ENTITY  savingFiles.title             "Wrth Gadw neu Gyhoeddi Tudalennau">
+<!ENTITY  preserveExisting.label        "Cadw fformatio gwreiddiol y ffynhonnell">
+<!ENTITY  preserveExisting.accesskey    "f">
+<!ENTITY  preserveExisting.tooltip      "Cadw toriad llinell a fformatio gwreiddiol y dudalen">
+<!ENTITY  saveAssociatedFiles.label     "Cadw delweddau a ffeiliau cysylltiedig eraill wrth gadw tudalennau">
+<!ENTITY  saveAssociatedFiles.accesskey "d">
+<!ENTITY  showPublishDialog.label       "Dangos deialog Cyhoeddi wrth gyhoeddi tudalennau">
+<!ENTITY  showPublishDialog.accesskey   "D">
+<!ENTITY  composerEditing.label         "Golygu">
+<!ENTITY  maintainStructure.label       "Cadw cynllun tabl wrth fewnosod neu ddileu celloedd">
+<!ENTITY  maintainStructure.tooltip     "Cadw siâp petryal y tabl drwy ychwanegu celloedd yn awtomatig ar ôl mewnosod neu ddileu celloedd">
+<!ENTITY  maintainStructure.accesskey   "t">
+<!ENTITY  useCSS.label                  "Defnyddio arddulliau CSS yn lle elfennau a phriodweddau HTML">
+<!ENTITY  useCSS.accesskey              "a">
+<!ENTITY  crInPCreatesNewP.label        "Mae dychwelyd at baragraff yn creu paragraff newydd bob tro">
+<!ENTITY  crInPCreatesNewP.accesskey    "d">

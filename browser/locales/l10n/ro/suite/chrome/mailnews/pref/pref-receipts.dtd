@@ -1,0 +1,40 @@
+<!--
+# Translator(s):
+#
+# janimo <jani@ubuntu.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE pref-receipts.dtd: UI for Mail/News Return Receipts prefs -->
+<!ENTITY pref.receipts.title          "Confirmări de primire">
+<!ENTITY prefReceipts.caption         "Confirmări de primire">
+<!ENTITY requestReceipt.label         "La trimiterea unui mesaj, solicită întotdeauna confirmare de primire">
+<!ENTITY requestReceipt.accesskey     "L">
+<!ENTITY receiptArrive.label          "Când sosește o confirmare:">
+<!ENTITY leaveIt.label                "Las-o în căsuța poștală">
+<!ENTITY leaveIt.accesskey            "L">
+<!ENTITY moveToSent.label             "Mut-o în dosarul „Mesaje trimise”">
+<!ENTITY moveToSent.accesskey         "M">
+<!ENTITY requestMDN.label             "Când mi se cere confirmare de primire:">
+<!ENTITY returnSome.label             "Trimite confirmare pentru unele mesaje">
+<!ENTITY returnSome.accesskey         "a">
+<!ENTITY never.label                  "Nu trimite confirmare de primire">
+<!ENTITY never.accesskey              "N">
+<!ENTITY notInToCc.label              "Dacă nu mă regăsesc în câmpurile Către sau Cc ale mesajului:">
+<!ENTITY notInToCc.accesskey          "t">
+<!ENTITY outsideDomain.label          "Dacă expeditorul nu este în domeniul meu:">
+<!ENTITY outsideDomain.accesskey      "s">
+<!ENTITY otherCases.label             "Altfel:">
+<!ENTITY otherCases.accesskey         "A">
+<!ENTITY askMe.label                  "Întreabă-mă">
+<!ENTITY alwaysSend.label             "Trimite">
+<!ENTITY neverSend.label              "Nu trimite">

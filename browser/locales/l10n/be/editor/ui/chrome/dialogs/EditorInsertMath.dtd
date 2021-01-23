@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Устаўка Math">
+<!ENTITY sourceEditField.label "Увесці зыходны код LaTeX:">
+<!ENTITY options.label "Наладжванні">
+<!ENTITY optionInline.label "Убудаваны рэжым">
+<!ENTITY optionInline.accesskey "б">
+<!ENTITY optionDisplay.label "Адлюстроўны рэжым">
+<!ENTITY optionDisplay.accesskey "А">
+<!ENTITY optionLTR.label "Кірунак злева направа">
+<!ENTITY optionLTR.accesskey "л">
+<!ENTITY optionRTL.label "Кірунак справа налева">
+<!ENTITY optionRTL.accesskey "п">
+<!ENTITY example.label "Прыклад:">
+<!ENTITY exampleText.label "\sqrt{x_1} + \frac{π^3}{2}">
+<!ENTITY insertButton.label "Уставіць">
+<!ENTITY insertButton.accesskey "У">

@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Провери правопис">
+
+<!ENTITY misspelledWord.label "Погрешно написана реч:">
+<!ENTITY wordEditField.label "Замени са:">
+<!ENTITY wordEditField.accessKey "с">
+<!ENTITY checkwordButton.label "Провери реч">
+<!ENTITY checkwordButton.accessKey "и">
+<!ENTITY suggestions.label "Предлози:">
+<!ENTITY suggestions.accessKey "р">
+<!ENTITY ignoreButton.label "Занемари">
+<!ENTITY ignoreButton.accessKey "З">
+<!ENTITY ignoreAllButton.label "Занемари све">
+<!ENTITY ignoreAllButton.accessKey "н">
+<!ENTITY replaceButton.label "Замени">
+<!ENTITY replaceButton.accessKey "м">
+<!ENTITY replaceAllButton.label "Замени све">
+<!ENTITY replaceAllButton.accessKey "в">
+<!ENTITY stopButton.label "Заустави">
+<!ENTITY stopButton.accessKey "у">
+<!ENTITY userDictionary.label "Лични речник:">
+<!ENTITY moreDictionaries.label "Преузми још речника…">
+<!ENTITY addToUserDictionaryButton.label "Додај реч">
+<!ENTITY addToUserDictionaryButton.accessKey "д">
+<!ENTITY editUserDictionaryButton.label "Уреди…">
+<!ENTITY editUserDictionaryButton.accessKey "е">
+<!ENTITY recheckButton2.label "Поново провери текст">
+<!ENTITY recheckButton2.accessKey "т">
+<!ENTITY closeButton.label "Затвори">
+<!ENTITY closeButton.accessKey "о">
+<!ENTITY sendButton.label "Пошаљи">
+<!ENTITY sendButton.accessKey "а">
+<!ENTITY languagePopup.label "Језик:">
+<!ENTITY languagePopup.accessKey "Ј">

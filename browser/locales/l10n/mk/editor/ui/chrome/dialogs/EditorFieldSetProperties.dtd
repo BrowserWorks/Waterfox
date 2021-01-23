@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Својства на сетот полиња">
+
+<!ENTITY Legend.label "Легенда">
+<!ENTITY Legend.accesskey "Л">
+
+<!ENTITY EditLegendText.label "Измени ја легендата:">
+<!ENTITY EditLegendText.accesskey "т">
+<!ENTITY LegendAlign.label "Порамни ја легендата:">
+<!ENTITY LegendAlign.accesskey "а">
+<!ENTITY AlignDefault.label "Основно">
+<!ENTITY AlignLeft.label "Лево">
+<!ENTITY AlignCenter.label "Централно">
+<!ENTITY AlignRight.label "Десно">
+
+<!ENTITY RemoveFieldSet.label "Острани го сетот на полиња">
+<!ENTITY RemoveFieldSet.accesskey "р">

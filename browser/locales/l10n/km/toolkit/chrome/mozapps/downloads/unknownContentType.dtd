@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "អ្នកបាន​ជ្រើស ដើម្បី​បើក ៖">
+<!ENTITY  from.label                  "ពី ៖">
+<!ENTITY  actionQuestion.label        "តើ &brandShortName; គួរ​ធ្វើ​អ្វី​ជាមួយ​ឯកសារ​នេះ?">
+
+<!ENTITY  openWith.label              "​បើក​ជាមួយ">
+<!ENTITY  openWith.accesskey          "O">
+<!ENTITY  other.label                 "ផ្សេង​ទៀត...">
+
+<!ENTITY  saveFile.label              "រក្សា​ទុក​ឯកសារ">
+<!ENTITY  saveFile.accesskey          "S">
+
+<!ENTITY  rememberChoice.label        "ចាប់ពី​ពេល​នេះ​ទៅ ត្រូវតែ​ធ្វើ​​ដូច្នេះ​ដោយ​ស្វ័យប្រវត្តិ​សម្រាប់​ឯកសារ​ទាំងនេះ។">
+<!ENTITY  rememberChoice.accesskey    "a">
+
+<!ENTITY  whichIs.label              "ដែល​ជា ៖">
+
+<!ENTITY  chooseHandlerMac.label      "ជ្រើស…">
+<!ENTITY  chooseHandlerMac.accesskey  "C">
+<!ENTITY  chooseHandler.label         "រក​មើល…">
+<!ENTITY  chooseHandler.accesskey     "B">
+
+<!ENTITY  unknownPromptText.label     "តើ​អ្នក​ចង់​រក្សា​ទុក​ឯកសារ​នេះ​ឬ?">

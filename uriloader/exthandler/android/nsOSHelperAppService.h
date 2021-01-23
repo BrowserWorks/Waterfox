@@ -18,12 +18,16 @@ class nsOSHelperAppService : public nsExternalHelperAppService {
                              const nsACString& aFileExt, bool* aFound,
                              nsIMIMEInfo** aMIMEInfo) override;
 
-  MOZ_MUST_USE nsresult OSProtocolHandlerExists(const char* aScheme,
-                                                bool* aExists) override;
+  [[nodiscard]] nsresult OSProtocolHandlerExists(const char* aScheme,
+                                                 bool* aExists) override;
 
   NS_IMETHOD GetProtocolHandlerInfoFromOS(const nsACString& aScheme,
                                           bool* found,
                                           nsIHandlerInfo** _retval) override;
+  NS_IMETHOD GetApplicationDescription(const nsACString& aScheme,
+                                       nsAString& _retval) override;
+  NS_IMETHOD IsCurrentAppOSDefaultForProtocol(const nsACString& aScheme,
+                                              bool* _retval) override;
 
   static nsIHandlerApp* CreateAndroidHandlerApp(
       const nsAString& aName, const nsAString& aDescription,

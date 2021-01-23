@@ -14,6 +14,11 @@
 
 #include <string.h>
 
+#if defined(ANDROID) && defined(MOZ_LINKER)
+#  include "Linker.h"
+#  include <android/log.h>
+#endif
+
 using namespace mozilla;
 
 // for _Unwind_Backtrace from libcxxrt or libunwind
@@ -115,14 +120,16 @@ CRITICAL_SECTION gDbgHelpCS;
 // more difficult for WalkStackMain64 to read the suspended thread's counter.
 static Atomic<size_t> sStackWalkSuppressions;
 
+void SuppressStackWalking() { ++sStackWalkSuppressions; }
+
+void DesuppressStackWalking() { --sStackWalkSuppressions; }
+
 MFBT_API
-AutoSuppressStackWalking::AutoSuppressStackWalking() {
-  ++sStackWalkSuppressions;
-}
+AutoSuppressStackWalking::AutoSuppressStackWalking() { SuppressStackWalking(); }
 
 MFBT_API
 AutoSuppressStackWalking::~AutoSuppressStackWalking() {
-  --sStackWalkSuppressions;
+  DesuppressStackWalking();
 }
 
 static uint8_t* sJitCodeRegionStart;
@@ -646,6 +653,8 @@ MFBT_API bool MozDescribeCodeAddress(void* aPC,
 #    include <cxxabi.h>
 #  endif  // MOZ_DEMANGLE_SYMBOLS
 
+namespace mozilla {
+
 void DemangleSymbol(const char* aSymbol, char* aBuffer, int aBufLen) {
   aBuffer[0] = '\0';
 
@@ -660,6 +669,8 @@ void DemangleSymbol(const char* aSymbol, char* aBuffer, int aBufLen) {
   }
 #  endif  // MOZ_DEMANGLE_SYMBOLS
 }
+
+}  // namespace mozilla
 
 // {x86, ppc} x {Linux, Mac} stackwalking code.
 #  if ((defined(__i386) || defined(PPC) || defined(__ppc__)) && \
@@ -769,7 +780,13 @@ bool MFBT_API MozDescribeCodeAddress(void* aPC,
   aDetails->foffset = 0;
 
   Dl_info info;
+
+#  if defined(ANDROID) && defined(MOZ_LINKER)
+  int ok = __wrap_dladdr(aPC, &info);
+#  else
   int ok = dladdr(aPC, &info);
+#  endif
+
   if (!ok) {
     return true;
   }
@@ -777,6 +794,11 @@ bool MFBT_API MozDescribeCodeAddress(void* aPC,
   strncpy(aDetails->library, info.dli_fname, sizeof(aDetails->library));
   aDetails->library[mozilla::ArrayLength(aDetails->library) - 1] = '\0';
   aDetails->loffset = (char*)aPC - (char*)info.dli_fbase;
+
+#  if !defined(XP_FREEBSD)
+  // On FreeBSD, dli_sname is unusably bad, it often returns things like
+  // 'gtk_xtbin_new' or 'XRE_GetBootstrap' instead of long C++ symbols. Just let
+  // GetFunction do the lookup directly in the ELF image.
 
   const char* symbol = info.dli_sname;
   if (!symbol || symbol[0] == '\0') {
@@ -792,6 +814,8 @@ bool MFBT_API MozDescribeCodeAddress(void* aPC,
   }
 
   aDetails->foffset = (char*)aPC - (char*)info.dli_saddr;
+#  endif
+
   return true;
 }
 
@@ -889,8 +913,8 @@ MFBT_API void MozFormatCodeAddress(char* aBuffer, uint32_t aBufferSize,
              aFileName, aLineNo);
   } else if (aLibrary && aLibrary[0]) {
     // We have no filename, but we do have a library name. Use it and the
-    // library offset, and print them in a way that scripts like
-    // fix_{linux,macosx}_stacks.py can easily post-process.
+    // library offset, and print them in a way that `fix_stacks.py` can
+    // post-process.
     snprintf(aBuffer, aBufferSize, "#%02u: %s[%s +0x%" PRIxPTR "]",
              aFrameNumber, function, aLibrary,
              static_cast<uintptr_t>(aLOffset));

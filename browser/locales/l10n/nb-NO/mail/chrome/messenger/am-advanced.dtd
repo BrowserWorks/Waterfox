@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!ENTITY smtpServer.label "Innstillinger for utgående SMTP-server">
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+
+<!ENTITY smtpDescription.label "Når du behandler identitetene dine kan du bruke en server fra denne listen ved å velge den som Utgående Server (SMTP), eller du kan bruke standard server fra denne listen ved å velge «Bruk standard server».">
+
+<!ENTITY smtpListAdd.label  "Legg til …">
+<!ENTITY smtpListAdd.accesskey  "L">
+<!ENTITY smtpListEdit.label "Rediger …">
+<!ENTITY smtpListEdit.accesskey "R">
+<!ENTITY smtpListDelete.label "Slett">
+<!ENTITY smtpListDelete.accesskey "S">
+<!ENTITY smtpListSetDefault.label "Sett standard">
+<!ENTITY smtpListSetDefault.accesskey "e">
+
+<!ENTITY serverDetails.label "Detaljer om den valgte serveren:">
+<!ENTITY serverDescription.label "Beskrivelse: ">
+<!ENTITY serverName.label "Servernavn: ">
+<!ENTITY serverPort.label "Port: ">
+<!ENTITY userName.label   "Brukernavn: ">
+<!ENTITY connectionSecurity.label "Tilkoblingssikkerhet: ">
+<!ENTITY authMethod.label   "Autentiseringsmetode: ">

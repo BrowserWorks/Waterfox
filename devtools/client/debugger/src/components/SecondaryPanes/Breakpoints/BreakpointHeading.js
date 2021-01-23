@@ -23,6 +23,10 @@ import SourceIcon from "../../shared/SourceIcon";
 import type { Source, Breakpoint, Context } from "../../../types";
 import showContextMenu from "./BreakpointHeadingsContextMenu";
 
+type OwnProps = {|
+  sources: Source[],
+  source: Source,
+|};
 type Props = {
   cx: Context,
   sources: Source[],
@@ -36,7 +40,7 @@ type Props = {
 };
 
 class BreakpointHeading extends PureComponent<Props> {
-  onContextMenu = e => {
+  onContextMenu = (e: SyntheticEvent<HTMLElement>) => {
     showContextMenu({ ...this.props, contextMenuEvent: e });
   };
 
@@ -61,7 +65,9 @@ class BreakpointHeading extends PureComponent<Props> {
       >
         <SourceIcon
           source={source}
-          shouldHide={icon => ["file", "javascript"].includes(icon)}
+          modifier={icon =>
+            ["file", "javascript"].includes(icon) ? null : icon
+          }
         />
         <div className="filename">
           {getTruncatedFileName(source, query)}
@@ -78,12 +84,9 @@ const mapStateToProps = (state, { source }) => ({
   breakpointsForSource: getBreakpointsForSource(state, source.id),
 });
 
-export default connect(
-  mapStateToProps,
-  {
-    selectSource: actions.selectSource,
-    enableBreakpointsInSource: actions.enableBreakpointsInSource,
-    disableBreakpointsInSource: actions.disableBreakpointsInSource,
-    removeBreakpointsInSource: actions.removeBreakpointsInSource,
-  }
-)(BreakpointHeading);
+export default connect<Props, OwnProps, _, _, _, _>(mapStateToProps, {
+  selectSource: actions.selectSource,
+  enableBreakpointsInSource: actions.enableBreakpointsInSource,
+  disableBreakpointsInSource: actions.disableBreakpointsInSource,
+  removeBreakpointsInSource: actions.removeBreakpointsInSource,
+})(BreakpointHeading);

@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY e2eTitle.label "Amgryptio Pen-i-Ben">
+<!ENTITY e2eLearnMore.label "Dysgu rhagor">
+
+<!ENTITY e2eEnc.description "Heb amgryptio pen-i-ben mae cynnwys negeseuon yn hawdd eu hamlygu i'ch darparwr e-bost ac i wyliadwriaeth dorfol.">
+<!ENTITY e2eeReqWarning.description "Os oes angen amgryptio arnoch, er mwyn anfon neges mae'n rhaid bod gennych allwedd gyhoeddus neu dystysgrif pob derbynnydd.">
+
+<!ENTITY e2eSigning.description "Mae llofnod digidol yn caniatáu i dderbynwyr wirio bod y neges wedi'i hanfon gennych chi, ac nad yw'r cynnwys wedi'i newid.">
+<!ENTITY e2eTechPref.description "Y dewis o dechnoleg amgryptio:">
+
+<!ENTITY doNotEncrypt.label "Peidio â galluogi amgryptio yn rhagosodedig">
+<!ENTITY doNotEncrypt.accesskey "P">
+<!ENTITY requireEncryptMessage.label "Defnyddio amgryptio yn rhagosodedig">
+<!ENTITY requireEncryptMessage.accesskey "D">
+<!ENTITY encryptionCert2.message "Tystysgrif bersonol ar gyfer amgryptio:">
+<!ENTITY digitalSign.certificate.button "Dewis…">
+<!ENTITY digitalSign.certificate.accesskey "S">
+<!ENTITY digitalSign.certificate_clear.button "Clirio">
+<!ENTITY digitalSign.certificate_clear.accesskey "C">
+<!ENTITY encryption.certificate.button "Dewis…">
+<!ENTITY encryption.certificate.accesskey "w">
+<!ENTITY encryption.certificate_clear.button "Clirio">
+<!ENTITY encryption.certificate_clear.accesskey "l">
+<!ENTITY signingGroupTitle.label "Llofnodi Digidol">
+<!ENTITY signMessage2.label "Ychwanegu fy llofnod ddigidol yn rhagosodedig">
+<!ENTITY signMessage.accesskey "r">
+
+<!ENTITY signingCert2.message "Tystysgrif bersonol ar gyfer amgryptio:">
+
+<!ENTITY sendingDefaults.label "Gosodiadau rhagosodedig ar gyfer anfon negeseuon">
+
+<!ENTITY technologyAutomatic.label "Dewis yn awtomatig ar sail yr allweddi neu'r tystysgrifau sydd ar gael">
+
+<!ENTITY certificates2.label "S/MIME">
+<!ENTITY manageCerts3.label "Rheoli Tystysgrifau S/MIME">
+<!ENTITY manageCerts3.accesskey "M">
+<!ENTITY manageDevices2.label "Dyfeisiau Diogelwch S/MIME">
+<!ENTITY manageDevices2.accesskey "y">
+
+<!ENTITY technologySMIME.label "Dewis S/MIME">
+<!ENTITY technologyOpenPGP.label "Dewis OpenPGP">
+
+<!ENTITY openpgpKeys.label "OpenPGP">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Dewis Tystysgrif">
+<!ENTITY certPicker.info  "Tystysgrif:">
+<!ENTITY certPicker.detailsLabel "Manylion y dystysgrif hon:">
+
+<!ENTITY openpgpKey.message "Allwedd bersonol ar gyfer amgryptio a llofnodi digidol:">
+<!ENTITY openpgpKey.button "Gosod Allwedd Bersonol…">
+<!ENTITY openpgpKey.accesskey "G">

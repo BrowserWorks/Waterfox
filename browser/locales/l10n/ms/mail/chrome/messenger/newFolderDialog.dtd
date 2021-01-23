@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+   
+<!-- Labels -->
+<!ENTITY newFolderDialog.title      "Folder Baru">
+<!ENTITY name.label                 "Nama:">
+<!ENTITY name.accesskey             "m">
+<!ENTITY description.label          "Cipta sebagai sub-folder kepada:">
+<!ENTITY description.accesskey      "k">
+<!ENTITY folderRestriction1.label   "Pelayan ini menghadkan dua jenis folder khas.">
+<!ENTITY folderRestriction2.label   "Izinkan folder baru untuk mengandungkan:">
+<!ENTITY foldersOnly.label          "Folder Sahaja">
+<!ENTITY messagesOnly.label         "Mesej Sahaja">
+<!ENTITY accept.label               "Cipta Folder">
+<!ENTITY accept.accesskey           "p">

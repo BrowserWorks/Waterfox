@@ -12,7 +12,7 @@ For events recorded into Firefox Telemetry we also provide an API that opaquely 
 
 .. important::
 
-    Every new data collection in Firefox needs a `data collection review <https://wiki.mozilla.org/Firefox/Data_Collection#Requesting_Approval>`_ from a data collection peer. Just set the feedback? flag for one of the data peers. We try to reply within a business day.
+    Every new or changed data collection in Firefox needs a `data collection review <https://wiki.mozilla.org/Firefox/Data_Collection>`__ from a Data Steward.
 
 .. _events.serializationformat:
 
@@ -126,15 +126,15 @@ The following event properties are valid:
 - ``notification_emails`` *(required, list of strings)*: A list of emails of owners for this event. This is used for contact for data reviews and potentially to email alerts.
 - expiry: There are two properties that can specify expiry, at least one needs to be set:
 
-  - ``expiry_version`` *(string)*: The version number in which the event expires, e.g. ``"50"``, or ``"never"``. A version number of type "N" is automatically converted to "N.0a1" in order to expire the event also in the development channels. For events that never expire the value ``never`` can be used.
+  - ``expiry_version`` *(required, string)*: The version number in which the event expires, e.g. ``"50"``, or ``"never"``. A version number of type "N" is automatically converted to "N.0a1" in order to expire the event also in the development channels. For events that never expire the value ``never`` can be used.
 
 - ``extra_keys`` *(optional, object)*: An object that specifies valid keys for the ``extra`` argument and a description - see the example above.
-- ``products`` *(optional, list of strings)*: A list of products the event can be recorded on. It defaults to ``all``. Currently supported values are:
+- ``products`` *(required, list of strings)*: A list of products the event can be recorded on. Currently supported values are:
 
-  - ``firefox``
-  - ``fennec``
-  - ``geckoview``
-  - ``all`` (record on all products)
+  - ``firefox`` - Collected in Firefox Desktop for submission via Firefox Telemetry.
+  - ``fennec`` - Collected in Firefox for Android for submission via Firefox Mobile Telemetry.
+  - ``geckoview`` - *deprecated* Will be removed in Firefox 79. (see `bug 1620395 <https://bugzilla.mozilla.org/show_bug.cgi?id=1620395>`__)
+
 - ``operating_systems`` *(optional, list of strings)*: This field restricts recording to certain operating systems only. It defaults to ``all``. Currently supported values are:
 
    - ``mac``
@@ -198,7 +198,9 @@ Example:
 
   Services.telemetry.setEventRecordingEnabled(category, enabled);
 
-Event recording is currently disabled by default. Privileged add-ons and Firefox code can enable & disable recording events for specific categories using this function.
+Event recording is currently disabled by default for events registered in Events.yaml.
+Dynamically-registered events (those registered using ``registerEvents()``) are enabled by default, and cannot be disabled.
+Privileged add-ons and Firefox code can enable & disable recording events for specific categories using this function.
 
 Example:
 
@@ -235,7 +237,7 @@ Register new events from add-ons.
   * ``expired`` - *(optional, bool)* Whether this event entry is expired. This allows recording it without error, but it will be discarded. Defaults to false.
 
 For events recorded from add-ons, registration happens at runtime. Any new events must first be registered through this function before they can be recorded.
-The registered categories will automatically be enabled for recording.
+The registered categories will automatically be enabled for recording, and cannot be disabled.
 If a dynamic event uses the same category as a static event, the category will also be enabled upon registration.
 
 After registration, the events can be recorded through the ``recordEvent()`` function. They will be submitted in event pings like static events are, under the ``dynamic`` process.

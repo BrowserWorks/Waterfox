@@ -15,6 +15,8 @@
 #include "jit/JitFrames.h"
 #include "jit/MacroAssembler.h"
 #include "jit/MoveEmitter.h"
+#include "util/Memory.h"
+#include "vm/JitActivation.h"  // js::jit::JitActivation
 
 #include "jit/MacroAssembler-inl.h"
 #include "vm/JSScript-inl.h"
@@ -174,7 +176,7 @@ void MacroAssemblerX86::handleFailureWithHandlerTail(void* handler,
   jmp(Operand(eax));
 
   // If we found a finally block, this must be a baseline frame. Push
-  // two values expected by JSOP_RETSUB: BooleanValue(true) and the
+  // two values expected by JSOp::Retsub: BooleanValue(true) and the
   // exception.
   bind(&finally);
   ValueOperand exception = ValueOperand(ecx, edx);
@@ -432,8 +434,8 @@ void MacroAssembler::moveValue(const ValueOperand& src,
       return;
     }
     // If only one is, copy that source first.
-    mozilla::Swap(s0, s1);
-    mozilla::Swap(d0, d1);
+    std::swap(s0, s1);
+    std::swap(d0, d1);
   }
 
   if (s0 != d0) {
@@ -489,33 +491,15 @@ void MacroAssembler::branchPtrInNurseryChunkImpl(Condition cond, Register ptr,
            Imm32(int32_t(gc::ChunkLocation::Nursery)), label);
 }
 
-void MacroAssembler::branchValueIsNurseryObject(Condition cond,
-                                                ValueOperand value,
-                                                Register temp, Label* label) {
-  MOZ_ASSERT(cond == Assembler::Equal || cond == Assembler::NotEqual);
-
-  Label done;
-
-  branchTestObject(Assembler::NotEqual, value,
-                   cond == Assembler::Equal ? &done : label);
-  branchPtrInNurseryChunk(cond, value.payloadReg(), temp, label);
-
-  bind(&done);
-}
-
 void MacroAssembler::branchValueIsNurseryCell(Condition cond,
                                               const Address& address,
                                               Register temp, Label* label) {
   MOZ_ASSERT(cond == Assembler::Equal || cond == Assembler::NotEqual);
-  Label done, checkAddress;
 
-  Register tag = extractTag(address, temp);
-  MOZ_ASSERT(tag == temp);
-  branchTestObject(Assembler::Equal, tag, &checkAddress);
-  branchTestString(Assembler::NotEqual, tag,
-                   cond == Assembler::Equal ? &done : label);
+  Label done;
 
-  bind(&checkAddress);
+  branchTestGCThing(Assembler::NotEqual, address,
+                    cond == Assembler::Equal ? &done : label);
   branchPtrInNurseryChunk(cond, ToPayload(address), temp, label);
 
   bind(&done);
@@ -525,13 +509,11 @@ void MacroAssembler::branchValueIsNurseryCell(Condition cond,
                                               ValueOperand value, Register temp,
                                               Label* label) {
   MOZ_ASSERT(cond == Assembler::Equal || cond == Assembler::NotEqual);
-  Label done, checkAddress;
 
-  branchTestObject(Assembler::Equal, value, &checkAddress);
-  branchTestString(Assembler::NotEqual, value,
-                   cond == Assembler::Equal ? &done : label);
+  Label done;
 
-  bind(&checkAddress);
+  branchTestGCThing(Assembler::NotEqual, value,
+                    cond == Assembler::Equal ? &done : label);
   branchPtrInNurseryChunk(cond, value.payloadReg(), temp, label);
 
   bind(&done);
@@ -628,6 +610,7 @@ void MacroAssembler::wasmLoad(const wasm::MemoryAccessDesc& access,
       vmovsd(srcAddr, out.fpu());
       break;
     case Scalar::Int64:
+    case Scalar::Simd128:
     case Scalar::Uint8Clamped:
     case Scalar::BigInt64:
     case Scalar::BigUint64:
@@ -701,6 +684,7 @@ void MacroAssembler::wasmLoadI64(const wasm::MemoryAccessDesc& access,
     case Scalar::Float32:
     case Scalar::Float64:
       MOZ_CRASH("non-int64 loads should use load()");
+    case Scalar::Simd128:
     case Scalar::Uint8Clamped:
     case Scalar::BigInt64:
     case Scalar::BigUint64:
@@ -744,6 +728,7 @@ void MacroAssembler::wasmStore(const wasm::MemoryAccessDesc& access,
     case Scalar::MaxTypedArrayViewType:
     case Scalar::BigInt64:
     case Scalar::BigUint64:
+    case Scalar::Simd128:
       MOZ_CRASH("unexpected type");
   }
 
@@ -1239,6 +1224,17 @@ void MacroAssembler::convertInt64ToFloat32(Register64 input,
   fstp32(Operand(esp, 0));
   vmovss(Address(esp, 0), output);
   freeStack(2 * sizeof(intptr_t));
+}
+
+void MacroAssembler::PushBoxed(FloatRegister reg) { Push(reg); }
+
+CodeOffset MacroAssembler::moveNearAddressWithPatch(Register dest) {
+  return movWithPatch(ImmPtr(nullptr), dest);
+}
+
+void MacroAssembler::patchNearAddressMove(CodeLocationLabel loc,
+                                          CodeLocationLabel target) {
+  PatchDataWithValueCheck(loc, ImmPtr(target.raw()), ImmPtr(nullptr));
 }
 
 //}}} check_macroassembler_style

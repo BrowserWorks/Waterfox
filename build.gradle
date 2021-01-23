@@ -15,14 +15,14 @@ allprojects {
         topsrcdir = gradle.mozconfig.topsrcdir
         topobjdir = gradle.mozconfig.topobjdir
 
-        compileSdkVersion = 28
+        buildToolsVersion = mozconfig.substs.ANDROID_BUILD_TOOLS_VERSION
+        compileSdkVersion = tryInt(mozconfig.substs.ANDROID_TARGET_SDK)
         targetSdkVersion = tryInt(mozconfig.substs.ANDROID_TARGET_SDK)
         minSdkVersion = tryInt(mozconfig.substs.MOZ_ANDROID_MIN_SDK_VERSION)
         manifestPlaceholders = [
             ANDROID_PACKAGE_NAME: mozconfig.substs.ANDROID_PACKAGE_NAME,
             ANDROID_TARGET_SDK: mozconfig.substs.ANDROID_TARGET_SDK,
             MOZ_ANDROID_MIN_SDK_VERSION: mozconfig.substs.MOZ_ANDROID_MIN_SDK_VERSION,
-            MOZ_ANDROID_SHARED_ID: "${mozconfig.substs.ANDROID_PACKAGE_NAME}.sharedID",
         ]
     }
 
@@ -71,7 +71,7 @@ buildscript {
         }
     }
 
-    ext.kotlin_version = '1.2.41'
+    ext.kotlin_version = '1.3.41'
     ext.support_library_version = '28.0.0'
     ext.jacoco_version = '0.8.1'
     ext.lifecycle_library_version = '1.1.1'
@@ -83,8 +83,8 @@ buildscript {
     }
 
     dependencies {
-        classpath 'org.mozilla.apilint:apilint:0.2.1'
-        classpath 'com.android.tools.build:gradle:3.1.4'
+        classpath 'org.mozilla.apilint:apilint:0.2.7'
+        classpath 'com.android.tools.build:gradle:3.4.2'
         classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:0.8.2'
         classpath 'org.apache.commons:commons-exec:1.3'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
@@ -157,26 +157,6 @@ class MachExec extends Exec {
     }
 }
 
-task machBuildGeneratedAndroidCodeAndResources(type: MachExec) {
-    onlyIf rootProject.ext.geckoBinariesOnlyIf
-
-    workingDir "${topsrcdir}"
-
-    commandLine mozconfig.substs.PYTHON
-    args "${topsrcdir}/mach"
-    args 'build'
-    args 'mobile/android/base/generated_android_code_and_resources'
-
-    // Add `-v` if we're running under `--info` (or `--debug`).
-    if (project.logger.isEnabled(LogLevel.INFO)) {
-        args '-v'
-    }
-
-    // `path` is like `:machBuildGeneratedAndroidCodeAndResources`.
-    standardOutput = new TaggedLogOutputStream("${path}>", logger)
-    errorOutput = standardOutput
-}
-
 // Why |mach build mobile/android/base/...| and |mach build faster|?  |mach
 // build faster| generates dependentlibs.list, which in turn depends on compiled
 // code.  That causes a circular dependency between Java compilation/JNI wrapper
@@ -188,7 +168,7 @@ task machBuildFaster(type: MachExec) {
 
     workingDir "${topsrcdir}"
 
-    commandLine mozconfig.substs.PYTHON
+    commandLine mozconfig.substs.PYTHON3
     args "${topsrcdir}/mach"
     args 'build'
     args 'faster'
@@ -209,16 +189,6 @@ def createMachStagePackageTask(name) {
 
         dependsOn rootProject.machBuildFaster
 
-        // We'd prefer to take these from the :omnijar project directly, but
-        // it's awkward to reach across projects at evaluation time, so we
-        // duplicate the list here.
-        inputs.dir "${topsrcdir}/mobile/android/chrome"
-        inputs.dir "${topsrcdir}/mobile/android/components"
-        inputs.dir "${topsrcdir}/mobile/android/locales"
-        inputs.dir "${topsrcdir}/mobile/android/modules"
-        inputs.dir "${topsrcdir}/mobile/android/themes"
-        inputs.dir "${topsrcdir}/toolkit"
-
         workingDir "${topobjdir}"
 
         // We'd prefer this to be a `mach` invocation, but `mach build
@@ -230,6 +200,9 @@ def createMachStagePackageTask(name) {
 
         outputs.file "${topobjdir}/dist/fennec/assets/${mozconfig.substs.ANDROID_CPU_ARCH}/libxul.so"
         outputs.file "${topobjdir}/dist/fennec/lib/${mozconfig.substs.ANDROID_CPU_ARCH}/libmozglue.so"
+
+        // Force running `stage-package`.
+        outputs.upToDateWhen { false }
 
         // `path` is like `:machStagePackage`.
         standardOutput = new TaggedLogOutputStream("${path}>", logger)
@@ -250,43 +223,21 @@ createMachStagePackageTask("machStagePackageForGeckoview").with {
 
 afterEvaluate {
     subprojects { project ->
-        if (project.name != 'thirdparty') {
-            tasks.withType(JavaCompile) {
-                // Add compiler args for all code except third-party code.
-                options.compilerArgs += [
-                    // Turn on all warnings, except...
-                    "-Xlint:all",
-                    // Deprecation, because we do use deprecated API for compatibility.
-                    "-Xlint:-deprecation",
-                    // Serial, because we don't use Java serialization.
-                    "-Xlint:-serial",
-                    // Classfile, because javac has a bug with MethodParameters attributes
-                    // with Java 7. https://bugs.openjdk.java.net/browse/JDK-8190452
-                    "-Xlint:-classfile",
-                    // Turn all remaining warnings into errors,
-                    // unless marked by @SuppressWarnings.
-                    "-Werror"]
-            }
-            if (project.name == 'app') {
-                tasks.withType(JavaCompile) {
-                    // Turn off classfile warnings because upon updating to play services 15.0.0
-                    // a warning is being thrown from play-services-base which fails the build
-                    // (com/google/android/gms/common/api/GoogleApiClient.class):
-                    // warning: Cannot find annotation method 'value()' in type 'GuardedBy':
-                    // class file for javax.annotation.concurrent.GuardedBy not found
-                    options.compilerArgs += ["-Xlint:-classfile"]
-                }
-            }
-        }
-
-        if (!hasProperty('android')) {
-            return
-        }
-        android.applicationVariants.all {
-            preBuild.dependsOn rootProject.machBuildGeneratedAndroidCodeAndResources
-        }
-        android.libraryVariants.all {
-            preBuild.dependsOn rootProject.machBuildGeneratedAndroidCodeAndResources
+        tasks.withType(JavaCompile) {
+            // Add compiler args for all code except third-party code.
+            options.compilerArgs += [
+                // Turn on all warnings, except...
+                "-Xlint:all",
+                // Deprecation, because we do use deprecated API for compatibility.
+                "-Xlint:-deprecation",
+                // Serial, because we don't use Java serialization.
+                "-Xlint:-serial",
+                // Classfile, because javac has a bug with MethodParameters attributes
+                // with Java 7. https://bugs.openjdk.java.net/browse/JDK-8190452
+                "-Xlint:-classfile",
+                // Turn all remaining warnings into errors,
+                // unless marked by @SuppressWarnings.
+                "-Werror"]
         }
     }
 }
@@ -318,12 +269,5 @@ idea {
             excludeDirs += files(file(topobjdir).listFiles())
             excludeDirs -= file("${topobjdir}/gradle")
         }
-
-        if (!mozconfig.substs.MOZ_INSTALL_TRACKING) {
-            excludeDirs += file("${topsrcdir}/mobile/android/thirdparty/com/adjust")
-        }
     }
-}
-
-task wrapper(type: Wrapper) {
 }

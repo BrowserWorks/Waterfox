@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title "Pori Preifat">
+<!-- Localisation note: the plus sign here is a shorthand way of expressing the word "and". Contextually the privatebrowsingpage.title.private string
+                        is used as a title, with the privatebrowsingpage.title string preceding it but on a separate line.
+                        So the final line will say "Private Browsing + Tracking Protection". -->
+
+<!ENTITY privatebrowsingpage.title.private "+ Diogelwch Rhag Tracio">
+<!-- Localization note (privatebrowsingpage.title.normal1): "Private Browsing"
+     is capitalized in English to be consistent with our existing uses of the
+     term. -->
+<!ENTITY privatebrowsingpage.title.normal1 "Nid ydych yn Pori'n Breifat">
+
+<!ENTITY privatebrowsingpage.description.trackingProtection "Mae &brandShortName; yn rhwystro rhannau o'r dudalen gall fod yn tracio eich pori.">
+<!ENTITY privatebrowsingpage.description.privateDetails "Byddwn ni ddim yn cofio unrhyw hanes ond bydd unrhyw ffeiliau rydych wedi eu llwytho i lawr a nodau tudalen yn cael eu cadw ar eich dyfais.">
+<!-- Localization note (privatebrowsingpage.description.normal2): "Private
+     Browsing is capitalized in English to be consistent with our existing uses
+     of the term. -->
+
+<!ENTITY privatebrowsingpage.description.normal2 "Wrth Bori'n Breifat, ni fyddwn yn cadw eich hanes pori na chwcis. Ond bydd unrhyw ffeiliau rydych wedi eu llwytho i lawr a nodau tudalen yn cael eu cadw ar eich dyfais.">
+
+<!ENTITY privatebrowsingpage.link.private "Eisiau gwybod mwy?">
+<!ENTITY privatebrowsingpage.link.normal "Agor mewn tab preifat newydd">

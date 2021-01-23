@@ -41,8 +41,12 @@ function test() {
   Harness.finalContentEvent = "InstallComplete";
   Harness.setup();
 
-  var pm = Services.perms;
-  pm.add(makeURI("http://example.com/"), "install", pm.ALLOW_ACTION);
+  let principal = Services.scriptSecurityManager.createContentPrincipal(
+    Services.io.newURI("http://example.com/"),
+    { userContextId: MY_CONTEXT }
+  );
+
+  PermissionTestUtils.add(principal, "install", Services.perms.ALLOW_ACTION);
 
   var triggers = encodeURIComponent(
     JSON.stringify({
@@ -76,7 +80,7 @@ function install_ended(install, addon) {
     source: "test-host",
     sourceURL: /http:\/\/example.com\/.*\/installtrigger.html/,
   });
-  install.cancel();
+  return addon.uninstall();
 }
 
 const finish_test = async function(count) {
@@ -88,11 +92,11 @@ const finish_test = async function(count) {
 
   Services.obs.removeObserver(check_channel, "http-on-before-connect");
 
-  Services.perms.remove(makeURI("http://example.com"), "install");
+  PermissionTestUtils.remove("http://example.com", "install");
 
-  const results = await ContentTask.spawn(
+  const results = await SpecialPowers.spawn(
     gBrowser.selectedBrowser,
-    null,
+    [],
     () => {
       return {
         return: content.document.getElementById("return").textContent,

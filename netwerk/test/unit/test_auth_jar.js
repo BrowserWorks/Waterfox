@@ -1,3 +1,5 @@
+"use strict";
+
 function createURI(s) {
   let service = Cc["@mozilla.org/network/io-service;1"].getService(
     Ci.nsIIOService
@@ -13,8 +15,8 @@ function run_test() {
     Ci.nsIScriptSecurityManager
   );
   const kURI1 = "http://example.com";
-  var app = secMan.createCodebasePrincipal(createURI(kURI1), {});
-  var appbrowser = secMan.createCodebasePrincipal(createURI(kURI1), {
+  var app = secMan.createContentPrincipal(createURI(kURI1), {});
+  var appbrowser = secMan.createContentPrincipal(createURI(kURI1), {
     inIsolatedMozBrowser: true,
   });
 

@@ -1,0 +1,74 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Eigenskapar">
+
+<!ENTITY generalInfo.label                       "Generell informasjon">
+<!ENTITY folderCharsetFallback2.label            "Reserveteiknkoding:">
+<!ENTITY folderCharsetFallback2.accesskey        "R">
+<!ENTITY folderCharsetEnforce2.label             "Bruk koding på alle meldingar i mappa (individuelle innstillingar for koding av meldingstekst og auto-oppdaging vert ignorert)">
+<!ENTITY folderCharsetEnforce2.accesskey         "B">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Bygg opp oppsummeringsfil på nytt">
+<!ENTITY folderRebuildSummaryFile2.label         "Reparer mappe">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "R">
+<!ENTITY folderRebuildSummaryFile.explanation    "Av og til kan oppsummeringsfila (.msf) verte skada, og meldingar kan sjå ut til å forsvinne, eller sletta meldingar kan bli vist. Å reparere mappa kan rette opp desse problema.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Inkluder meldingar i denne mappa i globalt søkjeresultat">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "n">
+
+<!ENTITY retention.label "Ivaretaking av meldingar">
+<!ENTITY retentionUseAccount.label  "Bruk innstillingane for kontoen">
+<!ENTITY retentionUseAccount.accesskey "r">
+<!ENTITY daysOld.label "dagar gamle">
+<!ENTITY message.label "meldingar">
+<!ENTITY retentionCleanup.label "For å spare diskplass kan gamle meldingar slettast permanent.">
+<!ENTITY retentionCleanupImap.label "For å spare diskplass, kan gamle meldingar verte permanent sletta, både lokale kopiar og originalar på e-posttenaren.">
+<!ENTITY retentionCleanupPop.label "For å spare diskplass, kan gamle meldingar slettast permanent, òg originalmeldingar på e-posttenaren.">
+<!ENTITY retentionDeleteMsg.label "Slett meldingar eldre enn">
+<!ENTITY retentionDeleteMsg.accesskey "e">
+<!ENTITY retentionKeepAll.label "Ikkje slett meldingar">
+<!ENTITY retentionKeepAll.accesskey "I">
+<!ENTITY retentionKeepRecent.label "Slett alle unntatt dei aller siste">
+<!ENTITY retentionKeepRecent.accesskey "S">
+<!ENTITY retentionApplyToFlagged.label "Ta alltid vare på meldingar merkte med stjerne">
+<!ENTITY retentionApplyToFlagged.accesskey "d">
+
+<!ENTITY folderSynchronizationTab.label          "Synkronisering">
+<!ENTITY folderCheckForNewMessages2.label         "Ved nedlasting av nye meldingar for denne kontoen, kontroller alltid denne mappa">
+<!ENTITY folderCheckForNewMessages2.accesskey     "d">
+
+<!ENTITY offlineFolder.check.label               "Vel denne mappa for fråkopla bruk">
+<!ENTITY offlineFolder.check.accesskey           "V">
+<!ENTITY offlineFolder.button.label              "Last ned no">
+<!ENTITY offlineFolder.button.accesskey          "L">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Vel denne nyheitsgruppa for fråkopla bruk">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "V">
+<!ENTITY offlineNewsgroup.button.label           "Last ned no">
+<!ENTITY offlineNewsgroup.button.accesskey       "L">
+
+<!ENTITY folderProps.name.label                  "Namn:">
+<!ENTITY folderProps.name.accesskey              "N">
+<!ENTITY folderProps.color.label                 "Ikonfarge:">
+<!ENTITY folderProps.color.accesskey             "I">
+<!ENTITY folderProps.reset.tooltip               "Tilbakestill standardfarge">
+<!ENTITY folderProps.location.label              "Adresse:">
+<!ENTITY folderProps.location.accesskey          "A">
+
+<!ENTITY folderSharingTab.label                  "Deling">
+<!ENTITY privileges.button.label                 "Løyve …">
+<!ENTITY privileges.button.accesskey             "L">
+<!ENTITY permissionsDesc.label                   "Du har følgande løyve:">
+<!ENTITY folderOtherUsers.label                  "Andre med tilgang til denne mappa:">
+<!ENTITY folderType.label                        "Mappetype:">
+
+<!ENTITY folderQuotaTab.label                    "Kvote">
+<!ENTITY folderQuotaUsage.label                  "Bruk:">
+<!ENTITY folderQuotaStatus.label                 "Status:">
+
+<!ENTITY numberOfMessages.label                  "Tal på meldingar:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "ukjend">
+<!ENTITY sizeOnDisk.label                        "Diskplass:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "ukjend">

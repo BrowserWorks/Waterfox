@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name "Barra Féilirí">
+<!ENTITY lightning.toolbar.calendar.name.accesskey "C">
+<!ENTITY lightning.toolbar.task.name "Barra Tascanna">
+<!ENTITY lightning.toolbar.task.name.accesskey "T">
+
+<!ENTITY lightning.toolbar.sync.label "Sioncronaigh">
+<!ENTITY lightning.toolbar.sync.tooltip "Athlódáil féilirí agus sioncronaigh athruithe">
+<!ENTITY lightning.toolbar.delete.label "Scrios">
+<!ENTITY lightning.toolbar.delete.tooltip "Scrios na himeachtaí nó tascanna roghnaithe">
+<!ENTITY lightning.toolbar.edit.label "Eagar">
+<!ENTITY lightning.toolbar.edit.tooltip "Cuir an t-imeacht nó tasc roghnaithe in eagar">
+<!ENTITY lightning.toolbar.gototoday.label "Taispeáin Inniu">
+<!ENTITY lightning.toolbar.gototoday.tooltip "Taispeáin Inniu">
+<!ENTITY lightning.toolbar.print.label "Priontáil">
+<!ENTITY lightning.toolbar.print.tooltip "Priontáil imeachtaí nó tascanna">
+<!-- Mode Toolbar -->
+
+<!ENTITY lightning.toolbar.calendar.label     "Féilire">
+<!ENTITY lightning.toolbar.calendar.tooltip   "Féach ar chluaisín an fhéilire">
+<!ENTITY lightning.toolbar.calendar.accesskey "F">
+<!ENTITY lightning.toolbar.task.label         "Tascanna">
+<!ENTITY lightning.toolbar.task.tooltip       "Féach ar chluaisín na dtascanna">
+<!ENTITY lightning.toolbar.task.accesskey     "T">
+<!-- Toolbar write button -->
+
+<!ENTITY lightning.toolbar.newevent.label     "Imeacht">
+<!ENTITY lightning.toolbar.newevent.tooltip   "Cruthaigh imeacht nua">
+<!ENTITY lightning.toolbar.newtask.label      "Tasc">
+<!ENTITY lightning.toolbar.newtask.tooltip    "Cruthaigh tasc nua">
+<!-- Calendar and Task Mode Toolbar -->
+
+<!ENTITY lightning.toolbar.day.label                 "Lá">
+<!ENTITY lightning.toolbar.day.accesskey             "L">
+<!ENTITY lightning.toolbar.week.label                "Seachtain">
+<!ENTITY lightning.toolbar.week.accesskey            "S">
+<!ENTITY lightning.toolbar.multiweek.label           "Amharc Ilseachtaine">
+<!ENTITY lightning.toolbar.multiweek.accesskey       "I">
+<!ENTITY lightning.toolbar.month.label               "Mí">
+<!ENTITY lightning.toolbar.month.accesskey           "M">
+<!-- LOCALIZATION NOTE: the same as appmenuButton.label and appmenuButton1.tooltip
+     from messenger.dtd -->
+<!ENTITY lightning.toolbar.appmenuButton.label       "Feidhmchláir">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip    "Taispeáin an Roghchlár &brandShortName;">
+<!ENTITY lightning.toolbar.calendarmenu.label        "Pána Féilire">
+<!ENTITY lightning.toolbar.calendarmenu.accesskey    "P">
+<!ENTITY lightning.toolbar.calendarpane.label        "Taispeáin Pána Féilire">
+<!ENTITY lightning.toolbar.calendarpane.accesskey    "P">

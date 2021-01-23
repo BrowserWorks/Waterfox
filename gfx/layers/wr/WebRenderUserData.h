@@ -12,13 +12,18 @@
 #include "mozilla/layers/StackingContextHelper.h"
 #include "mozilla/webrender/WebRenderAPI.h"
 #include "mozilla/layers/AnimationInfo.h"
-#include "mozilla/layers/RenderRootBoundary.h"
+#include "mozilla/dom/RemoteBrowser.h"
+#include "mozilla/UniquePtr.h"
 #include "nsIFrame.h"
 #include "ImageTypes.h"
 
 class nsDisplayItemGeometry;
 
 namespace mozilla {
+namespace webgpu {
+class WebGPUChild;
+}
+
 namespace wr {
 class IpcResourceUpdateQueue;
 }
@@ -33,9 +38,10 @@ class ImageClient;
 class ImageContainer;
 class WebRenderBridgeChild;
 class WebRenderCanvasData;
-class WebRenderCanvasRendererAsync;
+class WebRenderCanvasRenderer;
 class WebRenderImageData;
 class WebRenderFallbackData;
+class WebRenderLocalCanvasData;
 class RenderRootStateManager;
 class WebRenderGroupData;
 
@@ -71,16 +77,19 @@ class WebRenderUserData {
   virtual WebRenderImageData* AsImageData() { return nullptr; }
   virtual WebRenderFallbackData* AsFallbackData() { return nullptr; }
   virtual WebRenderCanvasData* AsCanvasData() { return nullptr; }
+  virtual WebRenderLocalCanvasData* AsLocalCanvasData() { return nullptr; }
   virtual WebRenderGroupData* AsGroupData() { return nullptr; }
 
   enum class UserDataType {
     eImage,
     eFallback,
+    eAPZAnimation,
     eAnimation,
     eCanvas,
+    eLocalCanvas,
+    eRemote,
     eGroup,
     eMask,
-    eRenderRoot,
   };
 
   virtual UserDataType GetType() = 0;
@@ -201,7 +210,7 @@ class WebRenderFallbackData : public WebRenderUserData {
 
   std::vector<RefPtr<gfx::SourceSurface>> mExternalSurfaces;
   RefPtr<BasicLayerManager> mBasicLayerManager;
-  nsAutoPtr<nsDisplayItemGeometry> mGeometry;
+  UniquePtr<nsDisplayItemGeometry> mGeometry;
   nsRect mBounds;
   nsRect mBuildingRect;
   gfx::Size mScale;
@@ -215,6 +224,20 @@ class WebRenderFallbackData : public WebRenderUserData {
   // when we render directly into a texture on the content side.
   RefPtr<WebRenderImageData> mImageData;
   bool mInvalid;
+};
+
+class WebRenderAPZAnimationData : public WebRenderUserData {
+ public:
+  WebRenderAPZAnimationData(RenderRootStateManager* aManager,
+                            nsDisplayItem* aItem);
+  virtual ~WebRenderAPZAnimationData() = default;
+
+  UserDataType GetType() override { return UserDataType::eAPZAnimation; }
+  static UserDataType Type() { return UserDataType::eAPZAnimation; }
+  uint64_t GetAnimationId() { return mAnimationId; }
+
+ private:
+  uint64_t mAnimationId;
 };
 
 class WebRenderAnimationData : public WebRenderUserData {
@@ -244,23 +267,55 @@ class WebRenderCanvasData : public WebRenderUserData {
   WebRenderCanvasRendererAsync* GetCanvasRenderer();
   WebRenderCanvasRendererAsync* CreateCanvasRenderer();
 
+  void SetImageContainer(ImageContainer* aImageContainer);
+  ImageContainer* GetImageContainer();
+  void ClearImageContainer();
+
  protected:
   UniquePtr<WebRenderCanvasRendererAsync> mCanvasRenderer;
+  RefPtr<ImageContainer> mContainer;
 };
 
-class WebRenderRenderRootData : public WebRenderUserData {
+// WebRender data assocatiated with canvases that don't need to
+// synchronize across content-GPU process barrier.
+class WebRenderLocalCanvasData : public WebRenderUserData {
  public:
-  WebRenderRenderRootData(RenderRootStateManager* aManager,
-                          nsDisplayItem* aItem);
-  virtual ~WebRenderRenderRootData();
+  WebRenderLocalCanvasData(RenderRootStateManager* aManager,
+                           nsDisplayItem* aItem);
+  virtual ~WebRenderLocalCanvasData();
 
-  UserDataType GetType() override { return UserDataType::eRenderRoot; }
-  static UserDataType Type() { return UserDataType::eRenderRoot; }
+  WebRenderLocalCanvasData* AsLocalCanvasData() override { return this; }
+  UserDataType GetType() override { return UserDataType::eLocalCanvas; }
+  static UserDataType Type() { return UserDataType::eLocalCanvas; }
 
-  RenderRootBoundary& EnsureHasBoundary(wr::RenderRoot aChildType);
+  void RequestFrameReadback();
+  void RefreshExternalImage();
+
+  // TODO: introduce a CanvasRenderer derivative to store here?
+
+  WeakPtr<webgpu::WebGPUChild> mGpuBridge;
+  uint64_t mGpuTextureId = 0;
+  wr::ExternalImageId mExternalImageId = {0};
+  wr::ImageKey mImageKey = {};
+  wr::ImageDescriptor mDescriptor;
+  gfx::SurfaceFormat mFormat = gfx::SurfaceFormat::UNKNOWN;
+  bool mDirty = false;
+};
+
+class WebRenderRemoteData : public WebRenderUserData {
+ public:
+  WebRenderRemoteData(RenderRootStateManager* aManager, nsDisplayItem* aItem);
+  virtual ~WebRenderRemoteData();
+
+  UserDataType GetType() override { return UserDataType::eRemote; }
+  static UserDataType Type() { return UserDataType::eRemote; }
+
+  void SetRemoteBrowser(dom::RemoteBrowser* aBrowser) {
+    mRemoteBrowser = aBrowser;
+  }
 
  protected:
-  Maybe<RenderRootBoundary> mBoundary;
+  RefPtr<dom::RemoteBrowser> mRemoteBrowser;
 };
 
 extern void DestroyWebRenderUserDataTable(WebRenderUserDataTable* aTable);

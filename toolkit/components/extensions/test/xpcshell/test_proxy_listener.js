@@ -64,6 +64,7 @@ const testData = [
         username: "mungosantamaria",
         password: "foobar",
       },
+      { type: "direct" },
     ],
     expected: {
       proxyInfo: {
@@ -174,7 +175,7 @@ add_task(async function test_proxy_listener() {
           failoverTimeout,
         } = expectedProxyInfo;
         equal(proxyUsed.host, host, `Expected proxy host to be ${host}`);
-        equal(proxyUsed.port, port, `Expected proxy port to be ${port}`);
+        equal(proxyUsed.port, port || -1, `Expected proxy port to be ${port}`);
         equal(proxyUsed.type, type, `Expected proxy type to be ${type}`);
         // May be null or undefined depending on use of newProxyInfoWithAuth or newProxyInfo
         equal(
@@ -200,6 +201,7 @@ add_task(async function test_proxy_listener() {
         );
         expectedProxyInfo = expectedProxyInfo.failoverProxy;
       }
+      ok(!expectedProxyInfo, "no left over failoverProxy");
     }
   }
 
@@ -248,6 +250,7 @@ add_task(async function test_passthrough() {
 });
 
 add_task(async function test_ftp() {
+  Services.prefs.setBoolPref("network.ftp.enabled", true);
   let extension = await getExtension({
     host: "1.2.3.4",
     port: 8888,
@@ -260,5 +263,56 @@ add_task(async function test_ftp() {
   equal(proxyInfo.port, "8888", `proxy port correct`);
   equal(proxyInfo.type, "http", `proxy type correct`);
 
+  await extension.unload();
+  Services.prefs.clearUserPref("network.ftp.enabled");
+});
+
+add_task(async function test_ftp_disabled() {
+  Services.prefs.setBoolPref("network.ftp.enabled", false);
+  let extension = await getExtension({
+    host: "1.2.3.4",
+    port: 8888,
+    type: "http",
+  });
+
+  let proxyInfo = await getProxyInfo("ftp://somewhere.mozilla.org/");
+
+  equal(
+    proxyInfo,
+    null,
+    `proxy of ftp request is not available when ftp is disabled`
+  );
+
+  await extension.unload();
+  Services.prefs.clearUserPref("network.ftp.enabled");
+});
+
+add_task(async function test_ws() {
+  let proxyRequestCount = 0;
+  let proxy = createHttpServer();
+  proxy.registerPathHandler("CONNECT", (request, response) => {
+    response.setStatusLine(request.httpVersion, 404, "Proxy not found");
+    ++proxyRequestCount;
+  });
+
+  let extension = await getExtension({
+    host: proxy.identity.primaryHost,
+    port: proxy.identity.primaryPort,
+    type: "http",
+  });
+
+  // We need a page to use the WebSocket constructor, so let's use an extension.
+  let dummy = ExtensionTestUtils.loadExtension({
+    background() {
+      // The connection will not be upgraded to WebSocket, so it will close.
+      let ws = new WebSocket("wss://example.net/");
+      ws.onclose = () => browser.test.sendMessage("websocket_closed");
+    },
+  });
+  await dummy.startup();
+  await dummy.awaitMessage("websocket_closed");
+  await dummy.unload();
+
+  equal(proxyRequestCount, 1, "Expected one proxy request");
   await extension.unload();
 });

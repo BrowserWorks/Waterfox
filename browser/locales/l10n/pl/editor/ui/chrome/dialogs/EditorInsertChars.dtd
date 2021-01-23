@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Wstaw znak">
+<!ENTITY category.label "Kategoria">
+<!ENTITY letter.label "Litera:">
+<!ENTITY letter.accessKey "L">
+<!ENTITY character.label "Znak:">
+<!ENTITY character.accessKey "Z">
+<!ENTITY accentUpper.label "Znak diakrytyczny - duże litery">
+<!ENTITY accentLower.label "Znak diakrytyczny - małe litery">
+<!ENTITY otherUpper.label "Inne znaki - duże litery">
+<!ENTITY otherLower.label "Inne znaki - małe litery">
+<!ENTITY commonSymbols.label "Typowe symbole">
+<!ENTITY insertButton.label "Wstaw">
+<!ENTITY closeButton.label "Zamknij">

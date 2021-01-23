@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "بارگیری‌ها">
+<!ENTITY aboutDownloads.header                     "بارگیری‌های شما">
+<!ENTITY aboutDownloads.empty                      "هیچ بارگیری وجود ندارد">
+
+<!ENTITY aboutDownloads.open                       "باز کردن">
+<!ENTITY aboutDownloads.remove                     "حذف">
+<!ENTITY aboutDownloads.removeAll                  "حذف همه">
+<!ENTITY aboutDownloads.pause                      "مکث">
+<!ENTITY aboutDownloads.resume                     "ازسرگیری">
+<!ENTITY aboutDownloads.cancel                     "انصراف">
+<!ENTITY aboutDownloads.retry                      "تلاش مجدد">

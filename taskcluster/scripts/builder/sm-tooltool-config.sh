@@ -5,7 +5,7 @@ set -x
 SPIDERMONKEY_VARIANT=${SPIDERMONKEY_VARIANT:-plain}
 UPLOAD_DIR=${UPLOAD_DIR:-$HOME/artifacts/}
 WORK=${WORK:-$HOME/workspace}
-SRCDIR=${SRCDIR:-$WORK/build/src}
+SRCDIR=${SRCDIR:-$GECKO_PATH}
 
 export TOOLTOOL_CHECKOUT=${TOOLTOOL_CHECKOUT:-$WORK}
 
@@ -60,11 +60,19 @@ BROWSER_PLATFORM=$PLATFORM_OS$BITS
 
 ) || exit 1 # end of set -e scope
 
-# Add all the tooltool binaries to our $PATH.
-for bin in $TOOLTOOL_CHECKOUT/*/bin $TOOLTOOL_CHECKOUT/VC/bin/Hostx64/x86; do
+# Add all the fetches and tooltool binaries to our $PATH.
+for bin in $MOZ_FETCHES_DIR/*/bin $TOOLTOOL_CHECKOUT/VC/bin/Hostx64/x86; do
     if [ ! -d "$bin" ]; then
         continue
     fi
     absbin=$(cd "$bin" && pwd)
     export PATH="$absbin:$PATH"
 done
+
+if [ -e $MOZ_FETCHES_DIR/rustc ]; then
+    export RUSTC="$MOZ_FETCHES_DIR/rustc/bin/rustc"
+    export CARGO="$MOZ_FETCHES_DIR/rustc/bin/cargo"
+fi
+if [ -e $MOZ_FETCHES_DIR/cbindgen ]; then
+    export CBINDGEN="$MOZ_FETCHES_DIR/cbindgen/cbindgen"
+fi

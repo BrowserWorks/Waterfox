@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "Buang Akaun dan Data">
+<!ENTITY removeButton.label           "Buang">
+<!ENTITY removeButton.accesskey       "B">
+<!ENTITY removeAccount.label          "Buang maklumat akaun">
+<!ENTITY removeAccount.accesskey      "a">
+<!ENTITY removeAccount.desc           "Buang hanya akaun yang diketahui &brandShortName;. Tidak memberikan kesan kepada akaun dalam pelayan.">
+<!ENTITY removeData.label             "Buang data mesej">
+<!ENTITY removeData.accesskey         "d">
+<!ENTITY removeDataChat.label         "Buang data perbualan">
+<!ENTITY removeDataChat.accesskey     "d">
+<!ENTITY removeDataLocalAccount.desc  "Buang semua mesej, folder dan tapisan yang dikaitkan dengan akaun ini dari dalam cakera lokal. Ini tidak memberikan kesan kepada mesej yang masih disimpan di dalam pelayan. Jangan pilih pilihan ini jika anda mahu arkib data lokal tersebut atau gunakannya semula dalam &brandShortName;.">
+<!ENTITY removeDataServerAccount.desc "Buang semua mesej, folder dan tapisan yang dikaitkan dengan akaun ini dari dalam cakera lokal. Mesej dan folder anda masih disimpan di dalam pelayan.">
+<!ENTITY removeDataChatAccount.desc   "Buang semua log perbualan yang disimpan oleh akaun ini dalam cakera lokal.">
+<!ENTITY showData.label               "Papar lokasi data">
+<!ENTITY showData.accesskey           "P">
+<!ENTITY progressPending              "Menghapuskan data yang dipilih…">
+<!ENTITY progressSuccess              "Berjaya menghapuskan.">
+<!ENTITY progressFailure              "Gagal menghapuskan.">

@@ -11,6 +11,7 @@
 #include "mozilla/TimeStamp.h"
 #include "nsISupportsImpl.h"
 #include "nsTArray.h"
+#include "nsString.h"
 
 namespace mozilla {
 
@@ -20,6 +21,9 @@ class DataSourceSurface;
 
 namespace layers {
 
+/**
+ * A captured frame from a |LayerManager|.
+ */
 class RecordedFrame {
  public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(RecordedFrame)
@@ -38,16 +42,57 @@ class RecordedFrame {
 };
 
 /**
- *
+ * A recorded frame that has been encoded into a data: URI.
  */
-class CompositionRecorder final {
+struct CollectedFrame {
+  CollectedFrame(double aTimeOffset, nsCString&& aDataUri)
+      : mTimeOffset(aTimeOffset), mDataUri(std::move(aDataUri)) {}
+
+  double mTimeOffset;
+  nsCString mDataUri;
+};
+
+/**
+ * All of the frames collected during a composition recording session.
+ */
+struct CollectedFrames {
+  CollectedFrames(double aRecordingStart, nsTArray<CollectedFrame>&& aFrames)
+      : mRecordingStart(aRecordingStart), mFrames(std::move(aFrames)) {}
+
+  double mRecordingStart;
+  nsTArray<CollectedFrame> mFrames;
+};
+
+/**
+ * A recorder for composited frames.
+ *
+ * This object collects frames sent to it by a |LayerManager| and writes them
+ * out as a series of images until recording has finished.
+ *
+ * If GPU-accelerated rendering is used, the frames will not be mapped into
+ * memory until |WriteCollectedFrames| is called.
+ */
+class CompositionRecorder {
  public:
   explicit CompositionRecorder(TimeStamp aRecordingStart);
-  ~CompositionRecorder();
 
+  /**
+   * Record a composited frame.
+   */
   void RecordFrame(RecordedFrame* aFrame);
 
+  /**
+   * Write out the collected frames as a series of timestamped images.
+   */
   void WriteCollectedFrames();
+
+  /**
+   * Return the collected frames as an array of their timestamps and contents.
+   */
+  CollectedFrames GetCollectedFrames();
+
+ protected:
+  void ClearCollectedFrames();
 
  private:
   nsTArray<RefPtr<RecordedFrame>> mCollectedFrames;
@@ -57,4 +102,4 @@ class CompositionRecorder final {
 }  // namespace layers
 }  // namespace mozilla
 
-#endif  // mozilla_layers_ProfilerScreenshots_h
+#endif  // mozilla_layers_CompositionRecorder_h

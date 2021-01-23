@@ -122,7 +122,10 @@ class CacheFileHandle final : public nsISupports {
   PinningStatus mPinning;
 
   nsCOMPtr<nsIFile> mFile;
-  int64_t mFileSize;
+
+  // file size is atomic because it is used on main thread by
+  // nsHttpChannel::ReportNetVSCacheTelemetry()
+  Atomic<int64_t, Relaxed> mFileSize;
   PRFileDesc* mFD;  // if null then the file doesn't exists on the disk
   nsCString mKey;
 };
@@ -133,9 +136,9 @@ class CacheFileHandles {
   ~CacheFileHandles();
 
   nsresult GetHandle(const SHA1Sum::Hash* aHash, CacheFileHandle** _retval);
-  nsresult NewHandle(const SHA1Sum::Hash* aHash, bool aPriority,
-                     CacheFileHandle::PinningStatus aPinning,
-                     CacheFileHandle** _retval);
+  already_AddRefed<CacheFileHandle> NewHandle(const SHA1Sum::Hash*,
+                                              bool aPriority,
+                                              CacheFileHandle::PinningStatus);
   void RemoveHandle(CacheFileHandle* aHandlle);
   void GetAllHandles(nsTArray<RefPtr<CacheFileHandle> >* _retval);
   void GetActiveHandles(nsTArray<RefPtr<CacheFileHandle> >* _retval);
@@ -163,7 +166,7 @@ class CacheFileHandles {
     HandleHashKey(const HandleHashKey& aOther) {
       MOZ_ASSERT_UNREACHABLE("HandleHashKey copy constructor is forbidden!");
     }
-    ~HandleHashKey() { MOZ_COUNT_DTOR(HandleHashKey); }
+    MOZ_COUNTED_DTOR(HandleHashKey)
 
     bool KeyEquals(KeyTypePointer aKey) const {
       return memcmp(mHash.get(), aKey, sizeof(SHA1Sum::Hash)) == 0;
@@ -323,9 +326,7 @@ class CacheFileIOManager final : public nsITimerCallback, public nsINamed {
                                    const bool* aHasAltData,
                                    const uint16_t* aOnStartTime,
                                    const uint16_t* aOnStopTime,
-                                   const uint8_t* aContentType,
-                                   const uint16_t* aBaseDomainAccessCount,
-                                   const uint32_t aTelemetryReportID);
+                                   const uint8_t* aContentType);
 
   static nsresult UpdateIndexEntry();
 
@@ -369,13 +370,13 @@ class CacheFileIOManager final : public nsITimerCallback, public nsINamed {
   virtual ~CacheFileIOManager();
 
   nsresult InitInternal();
-  nsresult ShutdownInternal();
+  void ShutdownInternal();
 
   nsresult OpenFileInternal(const SHA1Sum::Hash* aHash, const nsACString& aKey,
                             uint32_t aFlags, CacheFileHandle** _retval);
   nsresult OpenSpecialFileInternal(const nsACString& aKey, uint32_t aFlags,
                                    CacheFileHandle** _retval);
-  nsresult CloseHandleInternal(CacheFileHandle* aHandle);
+  void CloseHandleInternal(CacheFileHandle* aHandle);
   nsresult ReadInternal(CacheFileHandle* aHandle, int64_t aOffset, char* aBuf,
                         int32_t aCount);
   nsresult WriteInternal(CacheFileHandle* aHandle, int64_t aOffset,
@@ -421,11 +422,11 @@ class CacheFileIOManager final : public nsITimerCallback, public nsINamed {
   void SyncRemoveAllCacheFiles();
 
   nsresult ScheduleMetadataWriteInternal(CacheFile* aFile);
-  nsresult UnscheduleMetadataWriteInternal(CacheFile* aFile);
-  nsresult ShutdownMetadataWriteSchedulingInternal();
+  void UnscheduleMetadataWriteInternal(CacheFile* aFile);
+  void ShutdownMetadataWriteSchedulingInternal();
 
   static nsresult CacheIndexStateChanged();
-  nsresult CacheIndexStateChangedInternal();
+  void CacheIndexStateChangedInternal();
 
   // Smart size calculation. UpdateSmartCacheSize() must be called on IO thread.
   // It is called in EvictIfOverLimitInternal() just before we decide whether to

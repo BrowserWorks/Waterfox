@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-proxies.xul -->
+
+<!--LOCALIZATION NOTE : FILE The Proxies preferences dialog -->
+<!ENTITY  pref.proxies.title            "Proxy">
+<!ENTITY  pref.proxies.desc             "Un proxy é un servizo de rede que pode filtrar e acelerar a súa conexión á Internet.">
+<!ENTITY  proxyTitle.label              "Configurar proxy para acceder á Internet">
+<!ENTITY  directTypeRadio.label         "Conexión directa á Internet">
+<!ENTITY  directTypeRadio.accesskey     "d">
+<!ENTITY  systemTypeRadio.label         "Usar a configuración do proxy do sistema">
+<!ENTITY  systemTypeRadio.accesskey     "U">
+<!ENTITY  manualTypeRadio.label         "Configuración manual do proxy:">
+<!ENTITY  manualTypeRadio.accesskey     "m">
+<!ENTITY  wpadTypeRadio.label           "Descubrir automaticamente a configuración do proxy">
+<!ENTITY  wpadTypeRadio.accesskey       "a">
+<!ENTITY  autoTypeRadio.label           "URL da configuración automática do proxy:">
+<!ENTITY  autoTypeRadio.accesskey       "c">
+<!ENTITY  reload.label                  "Recargar">
+<!ENTITY  reload.accesskey              "R">
+<!ENTITY  http.label                    "Proxy:">
+<!ENTITY  http.accesskey                "P">
+<!ENTITY  port.label                    "Porto:">
+<!ENTITY  HTTPPort.accesskey            "o">
+<!ENTITY  advanced.label                "Avanzadas…">
+<!ENTITY  advanced.accesskey            "v">
+<!ENTITY  noproxy.label                 "Sen proxy para:">
+<!ENTITY  noproxy.accesskey             "n">
+<!ENTITY  noproxyExplain.label          "Exemplo: .mozilla.org, .net.nz, 192.168.1.0/24">

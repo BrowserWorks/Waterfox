@@ -21,7 +21,6 @@
 #include "nsCOMPtr.h"
 #include "nsComponentManagerUtils.h"
 #include "nsComponentManagerUtils.h"
-#include "nsIEventTarget.h"
 #include "nsNetCID.h"
 #include "nsServiceManagerUtils.h"
 #include "sslexp.h"
@@ -438,6 +437,17 @@ nsresult TransportLayerDtls::SetVerificationDigest(const DtlsDigest& digest) {
   return NS_OK;
 }
 
+void TransportLayerDtls::SetMinMaxVersion(Version min_version,
+                                          Version max_version) {
+  if (min_version < Version::DTLS_1_0 || min_version > Version::DTLS_1_3 ||
+      max_version < Version::DTLS_1_0 || max_version > Version::DTLS_1_3 ||
+      min_version > max_version || max_version < min_version) {
+    return;
+  }
+  minVersion_ = min_version;
+  maxVersion_ = max_version;
+}
+
 // These are the named groups that we will allow.
 static const SSLNamedGroup NamedGroupPreferences[] = {
     ssl_grp_ec_curve25519, ssl_grp_ec_secp256r1, ssl_grp_ec_secp384r1,
@@ -491,6 +501,15 @@ bool TransportLayerDtls::Setup() {
       MOZ_MTLOG(ML_ERROR, "Couldn't set identity");
       return false;
     }
+
+    if (maxVersion_ >= Version::DTLS_1_3) {
+      MOZ_MTLOG(ML_INFO, "Setting DTLS1.3 supported_versions workaround");
+      rv = SSL_SetDtls13VersionWorkaround(ssl_fd.get(), PR_TRUE);
+      if (rv != SECSuccess) {
+        MOZ_MTLOG(ML_ERROR, "Couldn't set DTLS1.3 workaround");
+        return false;
+      }
+    }
   } else {
     MOZ_MTLOG(ML_INFO, "Setting up DTLS as server");
     // Server side
@@ -523,10 +542,8 @@ bool TransportLayerDtls::Setup() {
     }
   }
 
-  // Require TLS 1.1 or 1.2. Perhaps some day in the future we will allow TLS
-  // 1.0 for stream modes.
-  SSLVersionRange version_range = {SSL_LIBRARY_VERSION_TLS_1_1,
-                                   SSL_LIBRARY_VERSION_TLS_1_2};
+  SSLVersionRange version_range = {static_cast<PRUint16>(minVersion_),
+                                   static_cast<PRUint16>(maxVersion_)};
 
   rv = SSL_VersionRangeSet(ssl_fd.get(), &version_range);
   if (rv != SECSuccess) {
@@ -897,7 +914,7 @@ void TransportLayerDtls::Handshake() {
         MOZ_MTLOG(ML_ERROR, LAYER_INFO << "Malformed DTLS message; ignoring");
         // If this were TLS (and not DTLS), this would be fatal, but
         // here we're required to ignore bad messages, so fall through
-        MOZ_FALLTHROUGH;
+        [[fallthrough]];
       case PR_WOULD_BLOCK_ERROR:
         MOZ_MTLOG(ML_NOTICE, LAYER_INFO << "Handshake would have blocked");
         PRIntervalTime timeout;
@@ -1057,15 +1074,11 @@ void TransportLayerDtls::SetState(State state, const char* file,
         MOZ_ASSERT(false);
         break;
       case TS_CONNECTING:
-        handshake_started_ = TimeStamp::Now();
         break;
       case TS_OPEN:
       case TS_CLOSED:
       case TS_ERROR:
         timer_->Cancel();
-        if (state_ == TS_CONNECTING) {
-          RecordHandshakeCompletionTelemetry(state);
-        }
         break;
     }
   }
@@ -1456,41 +1469,6 @@ void TransportLayerDtls::TimerCallback(nsITimer* timer, void* arg) {
   MOZ_MTLOG(ML_DEBUG, "DTLS timer expired");
 
   dtls->Handshake();
-}
-
-void TransportLayerDtls::RecordHandshakeCompletionTelemetry(
-    TransportLayer::State endState) {
-  int32_t delta = (TimeStamp::Now() - handshake_started_).ToMilliseconds();
-
-  switch (endState) {
-    case TransportLayer::State::TS_OPEN:
-      if (role_ == TransportLayerDtls::CLIENT) {
-        Telemetry::Accumulate(Telemetry::WEBRTC_DTLS_CLIENT_SUCCESS_TIME,
-                              delta);
-      } else {
-        Telemetry::Accumulate(Telemetry::WEBRTC_DTLS_SERVER_SUCCESS_TIME,
-                              delta);
-      }
-      return;
-    case TransportLayer::State::TS_ERROR:
-      if (role_ == TransportLayerDtls::CLIENT) {
-        Telemetry::Accumulate(Telemetry::WEBRTC_DTLS_CLIENT_FAILURE_TIME,
-                              delta);
-      } else {
-        Telemetry::Accumulate(Telemetry::WEBRTC_DTLS_SERVER_FAILURE_TIME,
-                              delta);
-      }
-      return;
-    case TransportLayer::State::TS_CLOSED:
-      if (role_ == TransportLayerDtls::CLIENT) {
-        Telemetry::Accumulate(Telemetry::WEBRTC_DTLS_CLIENT_ABORT_TIME, delta);
-      } else {
-        Telemetry::Accumulate(Telemetry::WEBRTC_DTLS_SERVER_ABORT_TIME, delta);
-      }
-      return;
-    default:
-      MOZ_ASSERT(false);
-  }
 }
 
 void TransportLayerDtls::RecordTlsTelemetry() {

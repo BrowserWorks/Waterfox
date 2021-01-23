@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Ütz apetik pa &brandShortName;">
+<!ENTITY header2.label "¿La nawajo' jun k'ak'a' rochochib'al ataqoya'l?">
+<!ENTITY other.languages "Xa xe xkeqak'üt ri ajya'öl yekisüj ochochib'äl pa ri ak'ojlemal.  Tapitz'a' wawe' richin yek'ut pe konojel ri ajya'öl.">
+<!ENTITY error.line1 "Majun rochochib'al taqoya'l niqïl richin niqachilab'ej chawe.">
+<!ENTITY error.line2 "Yatojtob'ej ye'akanoj tz'ukun taq b'i'aj o jun chik tzij richin ye'awïl ch'aqa' chik taq taqoya'l.">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before "Tatojtob'ej jun chi ke ri ">
+<!ENTITY error.suggest.middle "kib'i' sipan taq taqoya'l achi'el ajk'exel">
+<!ENTITY error.suggest.after ".">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before "Achike ab'anon ">
+<!ENTITY success.title.after ", re taq kochochib'al taqoya'l wachel chawe rat:">
+<!ENTITY success.tip "(Yatikïr chuqa' ye'akanoj tz'ukun taq b'i'aj o jun chik tzij richin ye'awïl ch'aqa' chik taq taqoya'l)">
+<!ENTITY partnership.description "Pa winaqirem kik'in k'ïy ajya'öl, &brandShortName; nitikïr nusüj jun k'ak'a' ataqoya'l. Tatz'ib'aj ri ab'i' chuqa' ri ruka'n ab'i' o juley chik taq tzij ri nawajo' richin natikirisaj el.">
+<!ENTITY existing.header "¿La k'o chi jun ochochib'äl ri nawajo' nawokisaj?">
+<!ENTITY tinyheader.title "¿La k'o jun awochochib'al?">
+<!ENTITY tinyheader.existing "Kinik'o' rik'in re' chuqa' tokisäx ri nutaqoya'l k'o wakami">
+<!ENTITY content.close "Ninna'ojij chi xtinb'än ruk'ojlem ri rub'i' nutaqoya'l pa jumej.">
+<!ENTITY successful.title "¡Kakikot!">
+<!ENTITY successful.successMessage "Ütz xab'än chi re ri runuk'ulem rub'i' ataqoya'l.">
+<!ENTITY successful.write "Titz'ib'äx jun taqoya'l">
+<!ENTITY successful.write.desc "Taya' q'ij chi ke ri awachib'il chuqa' awach'alal niketaj ri k'ak'a' awochochib'al.<br/> Ruma ri' toq k'o re k'ak'a' rub'i' ataqoya'l re', ¿qupe'?">
+<!ENTITY successful.customize "Tichinäx &brandShortName; rik'in jujun jeb'ël taq tz'aqat">
+<!ENTITY successful.customize.desc "Yeb'uchu' ri taq tz'aqat yetikïr nikichinaj ri &brandShortName; richin nuk'äm ri' rik'in ri taq awajowab'al.">
+<!ENTITY successful.attach "Titz'aqatisäx jun nujuch' pa ri nutaqoya'l">
+<!ENTITY successful.attach.desc "Yatikïr ruyonil natz'aqatisaj jun sik'inem o jun awetamab'al pa kik'isib'al jujun taq rutzijol ye'atäq.">
+<!ENTITY successful.close "Titz'apïx re tzuwäch re'.">
+<!ENTITY input.namePlaceholder "Ri ab'i' chuqa' ruka'n ab'i' o tzukun ab'i'">
+<!ENTITY input.search "Tikanöx">
+<!ENTITY search_engine.title "Tawichinaj ri akanob'al">
+<!ENTITY search_engine.message "Ri ya'öl ataqoya'l nitikïr chuqa' nusüj chawe ri kanob'äl.">
+<!ENTITY search_engine.button "Tik'is">

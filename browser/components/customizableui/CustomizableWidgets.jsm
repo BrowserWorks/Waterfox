@@ -418,7 +418,13 @@ const CustomizableWidgets = [
     updateCurrentCharset(aDocument) {
       let currentCharset =
         aDocument.defaultView.gBrowser.selectedBrowser.characterSet;
-      currentCharset = CharsetMenu.foldCharset(currentCharset);
+      let {
+        charsetAutodetected,
+      } = aDocument.defaultView.gBrowser.selectedBrowser;
+      currentCharset = CharsetMenu.foldCharset(
+        currentCharset,
+        charsetAutodetected
+      );
 
       let pinnedContainer = aDocument.getElementById(
         "PanelUI-characterEncodingView-pinned"
@@ -446,6 +452,15 @@ const CustomizableWidgets = [
       } catch (e) {}
 
       this._updateElements(detectorContainer.children, currentDetector);
+      let hideDetector = Services.prefs.getBoolPref(
+        "intl.charset.detector.ng.enabled"
+      );
+      aDocument.getElementById(
+        "PanelUI-characterEncodingView-autodetect-container"
+      ).hidden = hideDetector;
+      aDocument.getElementById(
+        "PanelUI-characterEncodingView-autodetect-separator"
+      ).hidden = hideDetector;
     },
     _updateElements(aElements, aCurrentItem) {
       if (!aElements.length) {
@@ -615,12 +630,13 @@ if (Services.prefs.getBoolPref("identity.fxaccounts.enabled")) {
       this._tabsList = doc.getElementById("PanelUI-remotetabs-tabslist");
       Services.obs.addObserver(this, SyncedTabs.TOPIC_TABS_CHANGED);
 
+      let deck = doc.getElementById("PanelUI-remotetabs-deck");
       if (SyncedTabs.isConfiguredToSyncTabs) {
         if (SyncedTabs.hasSyncedThisSession) {
-          this.setDeckIndex(this.deckIndices.DECKINDEX_TABS);
+          deck.selectedIndex = this.deckIndices.DECKINDEX_TABS;
         } else {
           // Sync hasn't synced tabs yet, so show the "fetching" panel.
-          this.setDeckIndex(this.deckIndices.DECKINDEX_FETCHING);
+          deck.selectedIndex = this.deckIndices.DECKINDEX_FETCHING;
         }
         // force a background sync.
         SyncedTabs.syncTabs().catch(ex => {
@@ -630,7 +646,7 @@ if (Services.prefs.getBoolPref("identity.fxaccounts.enabled")) {
         this._showTabs();
       } else {
         // not configured to sync tabs, so no point updating the list.
-        this.setDeckIndex(this.deckIndices.DECKINDEX_TABSDISABLED);
+        deck.selectedIndex = this.deckIndices.DECKINDEX_TABSDISABLED;
       }
     },
     onViewHiding() {
@@ -646,15 +662,6 @@ if (Services.prefs.getBoolPref("identity.fxaccounts.enabled")) {
         default:
           break;
       }
-    },
-    setDeckIndex(index) {
-      let deck = this._tabsList.ownerDocument.getElementById(
-        "PanelUI-remotetabs-deck"
-      );
-      // We call setAttribute instead of relying on the XBL property setter due
-      // to things going wrong when we try and set the index before the XBL
-      // binding has been created - see bug 1241851 for the gory details.
-      deck.setAttribute("selectedIndex", index);
     },
 
     _showTabsPromise: Promise.resolve(),
@@ -677,6 +684,7 @@ if (Services.prefs.getBoolPref("identity.fxaccounts.enabled")) {
         return undefined;
       }
       let doc = this._tabsList.ownerDocument;
+      let deck = doc.getElementById("PanelUI-remotetabs-deck");
       return SyncedTabs.getTabClients()
         .then(clients => {
           // The view may have been hidden while the promise was resolving.
@@ -690,26 +698,40 @@ if (Services.prefs.getBoolPref("identity.fxaccounts.enabled")) {
           }
 
           if (clients.length === 0) {
-            this.setDeckIndex(this.deckIndices.DECKINDEX_NOCLIENTS);
+            deck.selectedIndex = this.deckIndices.DECKINDEX_NOCLIENTS;
             return;
           }
 
-          this.setDeckIndex(this.deckIndices.DECKINDEX_TABS);
+          deck.selectedIndex = this.deckIndices.DECKINDEX_TABS;
           this._clearTabList();
           SyncedTabs.sortTabClientsByLastUsed(clients);
           let fragment = doc.createDocumentFragment();
 
+          let clientNumber = 0;
           for (let client of clients) {
             // add a menu separator for all clients other than the first.
             if (fragment.lastElementChild) {
               let separator = doc.createXULElement("menuseparator");
               fragment.appendChild(separator);
             }
+            // We add the client's elements to a container, and indicate which
+            // element labels it.
+            let labelId = `synced-tabs-client-${clientNumber++}`;
+            let container = doc.createXULElement("vbox");
+            container.classList.add("PanelUI-remotetabs-clientcontainer");
+            container.setAttribute("role", "group");
+            container.setAttribute("aria-labelledby", labelId);
             if (paginationInfo && paginationInfo.clientId == client.id) {
-              this._appendClient(client, fragment, paginationInfo.maxTabs);
+              this._appendClient(
+                client,
+                container,
+                labelId,
+                paginationInfo.maxTabs
+              );
             } else {
-              this._appendClient(client, fragment);
+              this._appendClient(client, container, labelId);
             }
+            fragment.appendChild(container);
           }
           this._tabsList.appendChild(fragment);
           PanelView.forNode(
@@ -747,10 +769,11 @@ if (Services.prefs.getBoolPref("identity.fxaccounts.enabled")) {
       appendTo.appendChild(messageLabel);
       return messageLabel;
     },
-    _appendClient(client, attachFragment, maxTabs = this.TABS_PER_PAGE) {
-      let doc = attachFragment.ownerDocument;
+    _appendClient(client, container, labelId, maxTabs = this.TABS_PER_PAGE) {
+      let doc = container.ownerDocument;
       // Create the element for the remote client.
       let clientItem = doc.createXULElement("label");
+      clientItem.setAttribute("id", labelId);
       clientItem.setAttribute("itemtype", "client");
       let window = doc.defaultView;
       clientItem.setAttribute(
@@ -759,13 +782,10 @@ if (Services.prefs.getBoolPref("identity.fxaccounts.enabled")) {
       );
       clientItem.textContent = client.name;
 
-      attachFragment.appendChild(clientItem);
+      container.appendChild(clientItem);
 
-      if (client.tabs.length == 0) {
-        let label = this._appendMessageLabel(
-          "notabsforclientlabel",
-          attachFragment
-        );
+      if (!client.tabs.length) {
+        let label = this._appendMessageLabel("notabsforclientlabel", container);
         label.setAttribute("class", "PanelUI-remotetabs-notabsforclient-label");
       } else {
         // If this page will display all tabs, show no additional buttons.
@@ -787,7 +807,7 @@ if (Services.prefs.getBoolPref("identity.fxaccounts.enabled")) {
         }
         for (let tab of client.tabs) {
           let tabEnt = this._createTabElement(doc, tab);
-          attachFragment.appendChild(tabEnt);
+          container.appendChild(tabEnt);
         }
         if (hasNextPage) {
           let showAllEnt = this._createShowMoreElement(
@@ -795,7 +815,7 @@ if (Services.prefs.getBoolPref("identity.fxaccounts.enabled")) {
             client.id,
             nextPageIsLastPage ? Infinity : maxTabs + this.TABS_PER_PAGE
           );
-          attachFragment.appendChild(showAllEnt);
+          container.appendChild(showAllEnt);
         }
       }
     },

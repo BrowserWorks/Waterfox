@@ -14,9 +14,7 @@ three different programs/components running simultaneously:
 
   * and the __target__, which is the web document being debugging.
 
-The remote agent currently only ships with builds of [Firefox
-Nightly] and is __not enabled by default__.  To enable it, you must
-flip the [`remote.enabled` preference] to true.
+The remote agent ships in [Firefox Nightly] only.
 
 To check if your Firefox binary has the remote agent enabled, you
 can look in its help message for this:
@@ -28,6 +26,13 @@ can look in its help message for this:
 	                     a low-level debugging interface based on the CDP protocol.
 	                     Defaults to listen on localhost:9222.
 	…
+
+When used, the remote agent will start an HTTP server and print a
+message on stderr with the location of the main target’s WebSocket
+listener:
+
+	% firefox --remote-debugger
+	DevTools listening on ws://localhost:9222/devtools/browser/7b4e84a4-597f-4839-ac6d-c9e86d16fb83
 
 As you will tell from the flag description, `--remote-debugger`
 takes an optional address spec as input:
@@ -49,7 +54,7 @@ Other examples of address specs include:
 The use of `localhost` in the first example above will, depending
 on whether the system supports IPv6, bind to both IP layers and
 accept incoming connections from either IPv4 or IPv6.  The second
-(`127.0.0.1`) and third (`[::1]`) examples will, respecitvely,
+(`127.0.0.1`) and third (`[::1]`) examples will, respectively,
 force the HTTP to listen on IPv4 or IPv6.
 
 The fourth example will use the default hostname, `localhost`, to
@@ -65,4 +70,3 @@ system configuration, but is always guaranteed to be free thus
 eliminating the risk of binding to a port that is already in use.
 
 [Firefox Nightly]: https://www.mozilla.org/en-GB/firefox/channel/desktop/#nightly
-[`remote.enabled` preference]: ./Prefs.html

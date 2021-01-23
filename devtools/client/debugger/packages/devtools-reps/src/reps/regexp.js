@@ -3,13 +3,11 @@
  * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
 
 // ReactJS
-const PropTypes = require("prop-types");
+const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
+const { span } = require("devtools/client/shared/vendor/react-dom-factories");
 
 // Reps
-const { getGripType, isGrip, wrapRender } = require("./rep-utils");
-
-const dom = require("react-dom-factories");
-const { span } = dom;
+const { getGripType, isGrip, wrapRender, ELLIPSIS } = require("./rep-utils");
 
 /**
  * Renders a grip object with regular expression.
@@ -31,7 +29,12 @@ function RegExp(props) {
 }
 
 function getSource(grip) {
-  return grip.displayString;
+  const { displayString } = grip;
+  if (displayString?.type === "longString") {
+    return `${displayString.initial}${ELLIPSIS}`;
+  }
+
+  return displayString;
 }
 
 // Registration

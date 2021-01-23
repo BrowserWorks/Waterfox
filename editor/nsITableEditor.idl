@@ -79,7 +79,7 @@ interface nsITableEditor : nsISupports
     * The selection is collapsed and is left in the
     *  cell at the same row,col location as
     *  the previous selection anchor, if possible,
-    *  else in the closest neigboring cell
+    *  else in the closest neighboring cell
     *
     * @param aNumber    Number of items to insert/delete
     */
@@ -157,18 +157,6 @@ interface nsITableEditor : nsISupports
     */
   [can_run_script]
   void selectTableCell();
-
-  /** Select a rectangular block of cells:
-    *  all cells falling within the row/column index of aStartCell
-    *  to through the row/column index of the aEndCell
-    *  aStartCell can be any location relative to aEndCell,
-    *   as long as they are in the same table
-    *  @param aStartCell  starting cell in block
-    *  @param aEndCell    ending cell in block
-    */
-  [can_run_script]
-  void selectBlockOfCells(in Element aStartCell,
-                          in Element aEndCell);
 
   [can_run_script]
   void selectTableRow();
@@ -252,6 +240,7 @@ interface nsITableEditor : nsISupports
    *                            column.  If colspan is set to 2 or more, the
    *                            start column index is used.
    */
+  [can_run_script]
   void getCellIndexes(in Element aCellElement,
                       out long aRowIndex, out long aColumnIndex);
 
@@ -418,15 +407,16 @@ interface nsITableEditor : nsISupports
     * @return
     *     0                        aCellElement was not a cell
     *                              (returned result = NS_ERROR_FAILURE)
-    *     TableSelection::Cell     There are 1 or more cells selected but
+    *     TableSelectionMode::Cell     There are 1 or more cells selected but
     *                              complete rows or columns are not selected
-    *     TableSelection::Row      All cells are in 1 or more rows
+    *     TableSelectionMode::Row      All cells are in 1 or more rows
     *                              and in each row, all cells selected
     *                              Note: This is the value if all rows
     *                              (thus all cells) are selected
-    *     TableSelection::Column   All cells are in 1 or more columns
+    *     TableSelectionMode::Column   All cells are in 1 or more columns
     *                              and in each column, all cells are selected
     */
+  [can_run_script]
   uint32_t getSelectedCellsType(in Element aElement);
 
   /**
@@ -464,6 +454,7 @@ interface nsITableEditor : nsISupports
    *                     range of Selection.  Even if this is not found,
    *                     this returns null, not throwing exception.
    */
+  [can_run_script]
   Element getFirstSelectedCellInTable(out long aRowIndex, out long aColIndex);
 
   /**

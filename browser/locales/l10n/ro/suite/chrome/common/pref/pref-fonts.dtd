@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# nicubunu <nicubunu@gmail.com>
+# Alexandru Szasz <alexxed@gmail.com>
+# evinteler <emil_vinteler2000@yahoo.com>
+# toffee <daniel@toffee.ro>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- extracted from content/pref-fonts.xul -->
+
+<!-- LOCALIZATION NOTE : FILE 'Fonts' prefs dialog -->
+<!ENTITY  pref.fonts.title                        "Fonturi ">
+
+<!ENTITY  language.label                          "Fonturi pentru:">
+<!ENTITY  language.accesskey                      "t">
+
+<!ENTITY  typefaces.label                         "Tip de font">
+<!ENTITY  sizes.label                             "Mărime (pixeli)">
+
+<!ENTITY  proportional.label                      "Proporțional:">
+<!ENTITY  proportional.accesskey                  "P">
+
+<!ENTITY  serif.label                             "Serif:">
+<!ENTITY  serif.accesskey                         "S">
+<!ENTITY  sans-serif.label                        "Sans-serif:">
+<!ENTITY  sans-serif.accesskey                    "n">
+<!ENTITY  monospace.label                         "Monospațiat:">
+<!ENTITY  monospace.accesskey                     "M">
+<!-- LOCALIZATION NOTE (fantasy.label): 'Fantasy' means 'Ornate' -->
+<!ENTITY  fantasy.label                           "Fantasy:">
+<!ENTITY  fantasy.accesskey                       "F">
+<!ENTITY  cursive.label                           "Cursive:">
+<!ENTITY  cursive.accesskey                       "C">
+
+<!ENTITY  font.langGroup.latin1                   "Occidentală">
+<!ENTITY  font.langGroup.latin2                   "Central europeană">
+<!ENTITY  font.langGroup.japanese                 "Japoneză">
+<!ENTITY  font.langGroup.trad-chinese             "Traditional Chinese(Taiwan)">
+<!ENTITY  font.langGroup.simpl-chinese            "Chineză simplificată">
+<!ENTITY  font.langGroup.trad-chinese-hk          "Traditional Chinese(Hong Kong)">
+<!ENTITY  font.langGroup.korean                   "Coreeană">
+<!ENTITY  font.langGroup.cyrillic                 "Chirilică">
+<!ENTITY  font.langGroup.baltic                   "Baltică">
+<!ENTITY  font.langGroup.el                       "Greacă">
+<!ENTITY  font.langGroup.turkish                  "Turcă">
+<!ENTITY  font.langGroup.unicode                  "Alte limbi">
+<!ENTITY  font.langGroup.user-def                 "Definită de utilizator">
+<!ENTITY  font.langGroup.thai                     "Tailandeză">
+<!ENTITY  font.langGroup.hebrew                   "Ebraică">
+<!ENTITY  font.langGroup.arabic                   "Arabă">
+<!ENTITY  font.langGroup.devanagari               "Devanagari">
+<!ENTITY  font.langGroup.tamil                    "Tamil">
+<!ENTITY  font.langGroup.armenian                 "Armeană">
+<!ENTITY  font.langGroup.bengali                  "Bengali">
+<!ENTITY  font.langGroup.canadian                 "Unified Canadian Syllabary">
+<!ENTITY  font.langGroup.ethiopic                 "Ethiopic">
+<!ENTITY  font.langGroup.georgian                 "Georgiană">
+<!ENTITY  font.langGroup.gujarati                 "Gujarati">
+<!ENTITY  font.langGroup.gurmukhi                 "Gurmukhi">
+<!ENTITY  font.langGroup.khmer                    "Cambodgiană">
+<!ENTITY  font.langGroup.malayalam                "Malayalam">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "Mărime minimă font:">
+<!ENTITY minSize.accesskey                        "M">
+<!ENTITY minSize.none                             "Nespecificat">
+
+<!-- default font type -->
+<!ENTITY  useDefaultFontSerif.label               "Serif">
+<!ENTITY  useDefaultFontSansSerif.label           "Sans Serif">
+
+<!ENTITY  useDocumentFonts.label                  "Allow documents to use other fonts">
+<!ENTITY  useDocumentFonts.accesskey              "o">
+
+<!-- leaving this stuff in for now -->
+
+<!ENTITY  header2                                 "When a webpage chooses its own fonts">
+<!ENTITY  useDefaultFont.label                    "Use my default fonts, ignoring the fonts the page has chosen">
+<!ENTITY  useDefaultFont.accesskey                "u">

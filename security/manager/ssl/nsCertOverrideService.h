@@ -7,8 +7,9 @@
 #ifndef nsCertOverrideService_h
 #define nsCertOverrideService_h
 
+#include <utility>
+
 #include "mozilla/HashFunctions.h"
-#include "mozilla/Move.h"
 #include "mozilla/Mutex.h"
 #include "mozilla/TypedEnumBits.h"
 #include "nsICertOverrideService.h"
@@ -30,19 +31,6 @@ class nsCertOverride {
 
   nsCertOverride()
       : mPort(-1), mIsTemporary(false), mOverrideBits(OverrideBits::None) {}
-
-  nsCertOverride(const nsCertOverride& other) { this->operator=(other); }
-
-  nsCertOverride& operator=(const nsCertOverride& other) {
-    mAsciiHost = other.mAsciiHost;
-    mPort = other.mPort;
-    mIsTemporary = other.mIsTemporary;
-    mFingerprint = other.mFingerprint;
-    mOverrideBits = other.mOverrideBits;
-    mDBKey = other.mDBKey;
-    mCert = other.mCert;
-    return *this;
-  }
 
   nsCString mAsciiHost;
   int32_t mPort;
@@ -73,7 +61,7 @@ class nsCertOverrideEntry final : public PLDHashEntryHdr {
         mSettings(std::move(toMove.mSettings)),
         mHostWithPort(std::move(toMove.mHostWithPort)) {}
 
-  ~nsCertOverrideEntry() {}
+  ~nsCertOverrideEntry() = default;
 
   KeyType GetKey() const { return HostWithPortPtr(); }
 
@@ -131,6 +119,7 @@ class nsCertOverrideService final : public nsICertOverrideService,
  protected:
   ~nsCertOverrideService();
 
+  bool mDisableAllSecurityCheck;
   mozilla::Mutex mMutex;
   nsCOMPtr<nsIFile> mSettingsFile;
   nsTHashtable<nsCertOverrideEntry> mSettingsTable;

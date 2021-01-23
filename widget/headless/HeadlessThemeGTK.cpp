@@ -5,7 +5,7 @@
 
 #include "HeadlessThemeGTK.h"
 
-#include "mozilla/StaticPrefs.h"
+#include "mozilla/StaticPrefs_layout.h"
 #include "nsStyleConsts.h"
 #include "nsIFrame.h"
 
@@ -24,11 +24,6 @@ HeadlessThemeGTK::DrawWidgetBackground(gfxContext* aContext, nsIFrame* aFrame,
 
 LayoutDeviceIntMargin HeadlessThemeGTK::GetWidgetBorder(
     nsDeviceContext* aContext, nsIFrame* aFrame, StyleAppearance aAppearance) {
-  if (aAppearance == StyleAppearance::MenulistButton &&
-      StaticPrefs::layout_css_webkit_appearance_enabled()) {
-    aAppearance = StyleAppearance::Menulist;
-  }
-
   LayoutDeviceIntMargin result;
   // The following values are generated from the Ubuntu GTK theme.
   switch (aAppearance) {
@@ -84,14 +79,14 @@ LayoutDeviceIntMargin HeadlessThemeGTK::GetWidgetBorder(
       result.bottom = 6;
       result.left = 6;
       break;
+    case StyleAppearance::MenulistButton:
     case StyleAppearance::Menulist:
       result.top = 6;
       result.right = 22;
       result.bottom = 6;
       result.left = 7;
       break;
-    case StyleAppearance::MenulistButton:
-    case StyleAppearance::MozMenulistButton:
+    case StyleAppearance::MozMenulistArrowButton:
       result.top = 1;
       result.right = 1;
       result.bottom = 1;
@@ -118,11 +113,6 @@ bool HeadlessThemeGTK::GetWidgetPadding(nsDeviceContext* aContext,
                                         nsIFrame* aFrame,
                                         StyleAppearance aAppearance,
                                         LayoutDeviceIntMargin* aResult) {
-  if (aAppearance == StyleAppearance::MenulistButton &&
-      StaticPrefs::layout_css_webkit_appearance_enabled()) {
-    aAppearance = StyleAppearance::Menulist;
-  }
-
   // The following values are generated from the Ubuntu GTK theme.
   switch (aAppearance) {
     case StyleAppearance::Radio:
@@ -136,8 +126,7 @@ bool HeadlessThemeGTK::GetWidgetPadding(nsDeviceContext* aContext,
     case StyleAppearance::ButtonArrowPrevious:
     case StyleAppearance::TabScrollArrowBack:
     case StyleAppearance::TabScrollArrowForward:
-    case StyleAppearance::MenulistButton:
-    case StyleAppearance::MozMenulistButton:
+    case StyleAppearance::MozMenulistArrowButton:
     case StyleAppearance::RangeThumb:
     case StyleAppearance::ButtonFocus:
       aResult->top = 0;
@@ -170,11 +159,6 @@ HeadlessThemeGTK::GetMinimumWidgetSize(nsPresContext* aPresContext,
                                        bool* aIsOverridable) {
   aResult->width = aResult->height = 0;
   *aIsOverridable = true;
-
-  if (aAppearance == StyleAppearance::MenulistButton &&
-      StaticPrefs::layout_css_webkit_appearance_enabled()) {
-    aAppearance = StyleAppearance::Menulist;
-  }
 
   // The following values are generated from the Ubuntu GTK theme.
   switch (aAppearance) {
@@ -275,12 +259,12 @@ HeadlessThemeGTK::GetMinimumWidgetSize(nsPresContext* aPresContext,
       aResult->height = 31;
       *aIsOverridable = false;
       break;
+    case StyleAppearance::MenulistButton:
     case StyleAppearance::Menulist:
       aResult->width = 44;
       aResult->height = 27;
       break;
-    case StyleAppearance::MenulistButton:
-    case StyleAppearance::MozMenulistButton:
+    case StyleAppearance::MozMenulistArrowButton:
       aResult->width = 29;
       aResult->height = 28;
       *aIsOverridable = false;
@@ -329,11 +313,6 @@ NS_IMETHODIMP_(bool)
 HeadlessThemeGTK::ThemeSupportsWidget(nsPresContext* aPresContext,
                                       nsIFrame* aFrame,
                                       StyleAppearance aAppearance) {
-  if (aAppearance == StyleAppearance::MenulistButton &&
-      StaticPrefs::layout_css_webkit_appearance_enabled()) {
-    aAppearance = StyleAppearance::Menulist;
-  }
-
   switch (aAppearance) {
     case StyleAppearance::Button:
     case StyleAppearance::Radio:
@@ -388,6 +367,7 @@ HeadlessThemeGTK::ThemeSupportsWidget(nsPresContext* aPresContext,
     case StyleAppearance::Textfield:
     case StyleAppearance::Textarea:
     case StyleAppearance::Menulist:
+    case StyleAppearance::MenulistButton:
     case StyleAppearance::MenulistText:
     case StyleAppearance::MenulistTextfield:
     case StyleAppearance::ScaleHorizontal:
@@ -412,8 +392,7 @@ HeadlessThemeGTK::ThemeSupportsWidget(nsPresContext* aPresContext,
     case StyleAppearance::Menuarrow:
     case StyleAppearance::MozGtkInfoBar:
       return !IsWidgetStyled(aPresContext, aFrame, aAppearance);
-    case StyleAppearance::MenulistButton:
-    case StyleAppearance::MozMenulistButton:
+    case StyleAppearance::MozMenulistArrowButton:
       return (!aFrame ||
               IsFrameContentNodeInNamespace(aFrame, kNameSpaceID_XUL)) &&
              !IsWidgetStyled(aPresContext, aFrame, aAppearance);
@@ -425,13 +404,7 @@ HeadlessThemeGTK::ThemeSupportsWidget(nsPresContext* aPresContext,
 
 NS_IMETHODIMP_(bool)
 HeadlessThemeGTK::WidgetIsContainer(StyleAppearance aAppearance) {
-  if (aAppearance == StyleAppearance::MenulistButton &&
-      StaticPrefs::layout_css_webkit_appearance_enabled()) {
-    aAppearance = StyleAppearance::Menulist;
-  }
-
-  if (aAppearance == StyleAppearance::MenulistButton ||
-      aAppearance == StyleAppearance::MozMenulistButton ||
+  if (aAppearance == StyleAppearance::MozMenulistArrowButton ||
       aAppearance == StyleAppearance::Radio ||
       aAppearance == StyleAppearance::RangeThumb ||
       aAppearance == StyleAppearance::Checkbox ||

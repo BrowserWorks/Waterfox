@@ -7,6 +7,7 @@
 #include "RemoteWorkerParent.h"
 #include "RemoteWorkerController.h"
 #include "mozilla/dom/ContentParent.h"
+#include "mozilla/dom/PFetchEventOpProxyParent.h"
 #include "mozilla/ipc/BackgroundParent.h"
 #include "mozilla/Unused.h"
 #include "nsProxyRelease.h"
@@ -52,19 +53,34 @@ RemoteWorkerParent::~RemoteWorkerParent() {
   MOZ_ASSERT(XRE_IsParentProcess());
 }
 
-void RemoteWorkerParent::Initialize() {
+void RemoteWorkerParent::Initialize(bool aAlreadyRegistered) {
   RefPtr<ContentParent> parent = BackgroundParent::GetContentParent(Manager());
 
   // Parent is null if the child actor runs on the parent process.
   if (parent) {
-    parent->RegisterRemoteWorkerActor();
+    if (!aAlreadyRegistered) {
+      parent->RegisterRemoteWorkerActor();
+    }
 
-    nsCOMPtr<nsIEventTarget> target =
-        SystemGroup::EventTargetFor(TaskCategory::Other);
-
-    NS_ProxyRelease("RemoteWorkerParent::Initialize ContentParent", target,
-                    parent.forget());
+    NS_ReleaseOnMainThread("RemoteWorkerParent::Initialize ContentParent",
+                           parent.forget());
   }
+}
+
+PFetchEventOpProxyParent* RemoteWorkerParent::AllocPFetchEventOpProxyParent(
+    const ServiceWorkerFetchEventOpArgs& aArgs) {
+  MOZ_CRASH("PFetchEventOpProxyParent actors must be manually constructed!");
+  return nullptr;
+}
+
+bool RemoteWorkerParent::DeallocPFetchEventOpProxyParent(
+    PFetchEventOpProxyParent* aActor) {
+  MOZ_ASSERT(XRE_IsParentProcess());
+  AssertIsOnBackgroundThread();
+  MOZ_ASSERT(aActor);
+
+  delete aActor;
+  return true;
 }
 
 void RemoteWorkerParent::ActorDestroy(IProtocol::ActorDestroyReason) {
@@ -78,13 +94,11 @@ void RemoteWorkerParent::ActorDestroy(IProtocol::ActorDestroyReason) {
     RefPtr<UnregisterActorRunnable> r =
         new UnregisterActorRunnable(parent.forget());
 
-    nsCOMPtr<nsIEventTarget> target =
-        SystemGroup::EventTargetFor(TaskCategory::Other);
-    target->Dispatch(r.forget(), NS_DISPATCH_NORMAL);
+    SchedulerGroup::Dispatch(TaskCategory::Other, r.forget());
   }
 
   if (mController) {
-    mController->ForgetActorAndTerminate();
+    mController->NoteDeadWorkerActor();
     mController = nullptr;
   }
 }
@@ -117,6 +131,17 @@ IPCResult RemoteWorkerParent::RecvError(const ErrorValue& aValue) {
   return IPC_OK();
 }
 
+void RemoteWorkerParent::MaybeSendDelete() {
+  if (mDeleteSent) {
+    return;
+  }
+
+  // For some reason, if the following two lines are swapped, ASan says there's
+  // a UAF...
+  mDeleteSent = true;
+  Unused << Send__delete__(this);
+}
+
 IPCResult RemoteWorkerParent::RecvClose() {
   AssertIsOnBackgroundThread();
   MOZ_ASSERT(XRE_IsParentProcess());
@@ -125,7 +150,8 @@ IPCResult RemoteWorkerParent::RecvClose() {
     mController->WorkerTerminated();
   }
 
-  Unused << Send__delete__(this);
+  MaybeSendDelete();
+
   return IPC_OK();
 }
 
@@ -134,6 +160,23 @@ void RemoteWorkerParent::SetController(RemoteWorkerController* aController) {
   MOZ_ASSERT(XRE_IsParentProcess());
 
   mController = aController;
+}
+
+IPCResult RemoteWorkerParent::RecvSetServiceWorkerSkipWaitingFlag(
+    SetServiceWorkerSkipWaitingFlagResolver&& aResolve) {
+  AssertIsOnBackgroundThread();
+  MOZ_ASSERT(XRE_IsParentProcess());
+
+  if (mController) {
+    mController->SetServiceWorkerSkipWaitingFlag()->Then(
+        GetCurrentThreadSerialEventTarget(), __func__,
+        [resolve = aResolve](bool /* unused */) { resolve(true); },
+        [resolve = aResolve](nsresult /* unused */) { resolve(false); });
+  } else {
+    aResolve(false);
+  }
+
+  return IPC_OK();
 }
 
 }  // namespace dom

@@ -1,0 +1,12 @@
+status = [
+  "iOS Stable",
+  "MacOS Stable",
+  "MacOS Nightly",
+  "Android Stable",
+  "Ubuntu Stable",
+  "Ubuntu Nightly",
+  "Windows Stable",
+  "Windows Nightly",
+]
+
+timeout_sec = 18000 # 5 hours

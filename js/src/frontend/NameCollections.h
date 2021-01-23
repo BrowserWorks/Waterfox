@@ -7,6 +7,8 @@
 #ifndef frontend_NameCollections_h
 #define frontend_NameCollections_h
 
+#include <type_traits>
+
 #include "ds/InlineTable.h"
 #include "frontend/NameAnalysisTypes.h"
 #include "js/Vector.h"
@@ -105,6 +107,8 @@ class CollectionPool {
 
 template <typename Wrapped>
 struct RecyclableAtomMapValueWrapper {
+  using WrappedType = Wrapped;
+
   union {
     Wrapped wrapped;
     uint64_t dummy;
@@ -154,6 +158,13 @@ template <typename RepresentativeTable>
 class InlineTablePool
     : public CollectionPool<RepresentativeTable,
                             InlineTablePool<RepresentativeTable>> {
+  template <typename>
+  struct IsRecyclableAtomMapValueWrapper : std::false_type {};
+
+  template <typename T>
+  struct IsRecyclableAtomMapValueWrapper<RecyclableAtomMapValueWrapper<T>>
+      : std::true_type {};
+
  public:
   template <typename Table>
   static void assertInvariants() {
@@ -161,12 +172,36 @@ class InlineTablePool
         Table::SizeOfInlineEntries == RepresentativeTable::SizeOfInlineEntries,
         "Only tables with the same size for inline entries are usable in the "
         "pool.");
-    static_assert(mozilla::IsPod<typename Table::Table::Entry>::value,
-                  "Only tables with POD values are usable in the pool.");
+
+    using EntryType = typename Table::Table::Entry;
+    using KeyType = typename EntryType::KeyType;
+    using ValueType = typename EntryType::ValueType;
+
+    static_assert(IsRecyclableAtomMapValueWrapper<ValueType>::value,
+                  "Please adjust the static assertions below if you need to "
+                  "support other types than RecyclableAtomMapValueWrapper");
+
+    using WrappedType = typename ValueType::WrappedType;
+
+    // We can't directly check |std::is_trivial<EntryType>|, because neither
+    // mozilla::HashMapEntry nor IsRecyclableAtomMapValueWrapper are trivially
+    // default constructible. Instead we check that the key and the unwrapped
+    // value are trivial and additionally ensure that the entry itself is
+    // trivially copyable and destructible.
+
+    static_assert(std::is_trivial_v<KeyType>,
+                  "Only tables with trivial keys are usable in the pool.");
+    static_assert(std::is_trivial_v<WrappedType>,
+                  "Only tables with trivial values are usable in the pool.");
+
+    static_assert(
+        std::is_trivially_copyable_v<EntryType>,
+        "Only tables with trivially copyable entries are usable in the pool.");
+    static_assert(std::is_trivially_destructible_v<EntryType>,
+                  "Only tables with trivially destructible entries are usable "
+                  "in the pool.");
   }
 };
-
-using FunctionBoxVector = Vector<FunctionBox*, 24, SystemAllocPolicy>;
 
 template <typename RepresentativeVector>
 class VectorPool : public CollectionPool<RepresentativeVector,
@@ -178,10 +213,17 @@ class VectorPool : public CollectionPool<RepresentativeVector,
         Vector::sMaxInlineStorage == RepresentativeVector::sMaxInlineStorage,
         "Only vectors with the same size for inline entries are usable in the "
         "pool.");
-    static_assert(mozilla::IsPod<typename Vector::ElementType>::value,
-                  "Only vectors of POD values are usable in the pool.");
+
+    using ElementType = typename Vector::ElementType;
+
+    static_assert(std::is_trivial_v<ElementType>,
+                  "Only vectors of trivial values are usable in the pool.");
+    static_assert(std::is_trivially_destructible_v<ElementType>,
+                  "Only vectors of trivially destructible values are usable in "
+                  "the pool.");
+
     static_assert(
-        sizeof(typename Vector::ElementType) ==
+        sizeof(ElementType) ==
             sizeof(typename RepresentativeVector::ElementType),
         "Only vectors with same-sized elements are usable in the pool.");
   }
@@ -242,49 +284,83 @@ class NameCollectionPool {
   }
 };
 
-#define POOLED_COLLECTION_PTR_METHODS(N, T)                                   \
-  NameCollectionPool& pool_;                                                  \
-  T* collection_;                                                             \
-                                                                              \
-  T& collection() {                                                           \
-    MOZ_ASSERT(collection_);                                                  \
-    return *collection_;                                                      \
-  }                                                                           \
-                                                                              \
-  const T& collection() const {                                               \
-    MOZ_ASSERT(collection_);                                                  \
-    return *collection_;                                                      \
-  }                                                                           \
-                                                                              \
- public:                                                                      \
-  explicit N(NameCollectionPool& pool) : pool_(pool), collection_(nullptr) {} \
-                                                                              \
-  ~N() { pool_.release##T(&collection_); }                                    \
-                                                                              \
-  bool acquire(JSContext* cx) {                                               \
-    MOZ_ASSERT(!collection_);                                                 \
-    collection_ = pool_.acquire##T<T>(cx);                                    \
-    return !!collection_;                                                     \
-  }                                                                           \
-                                                                              \
-  explicit operator bool() const { return !!collection_; }                    \
-                                                                              \
-  T* operator->() { return &collection(); }                                   \
-                                                                              \
-  const T* operator->() const { return &collection(); }                       \
-                                                                              \
-  T& operator*() { return collection(); }                                     \
-                                                                              \
+template <typename T, template <typename> typename Impl>
+class PooledCollectionPtr {
+  NameCollectionPool& pool_;
+  T* collection_ = nullptr;
+
+ protected:
+  ~PooledCollectionPtr() { Impl<T>::releaseCollection(pool_, &collection_); }
+
+  T& collection() {
+    MOZ_ASSERT(collection_);
+    return *collection_;
+  }
+
+  const T& collection() const {
+    MOZ_ASSERT(collection_);
+    return *collection_;
+  }
+
+ public:
+  explicit PooledCollectionPtr(NameCollectionPool& pool) : pool_(pool) {}
+
+  bool acquire(JSContext* cx) {
+    MOZ_ASSERT(!collection_);
+    collection_ = Impl<T>::acquireCollection(cx, pool_);
+    return !!collection_;
+  }
+
+  explicit operator bool() const { return !!collection_; }
+
+  T* operator->() { return &collection(); }
+
+  const T* operator->() const { return &collection(); }
+
+  T& operator*() { return collection(); }
+
   const T& operator*() const { return collection(); }
+};
 
 template <typename Map>
-class PooledMapPtr {
-  POOLED_COLLECTION_PTR_METHODS(PooledMapPtr, Map)
+class PooledMapPtr : public PooledCollectionPtr<Map, PooledMapPtr> {
+  friend class PooledCollectionPtr<Map, PooledMapPtr>;
+
+  static Map* acquireCollection(JSContext* cx, NameCollectionPool& pool) {
+    return pool.acquireMap<Map>(cx);
+  }
+
+  static void releaseCollection(NameCollectionPool& pool, Map** ptr) {
+    pool.releaseMap(ptr);
+  }
+
+  using Base = PooledCollectionPtr<Map, PooledMapPtr>;
+
+ public:
+  using Base::Base;
+
+  ~PooledMapPtr() = default;
 };
 
 template <typename Vector>
-class PooledVectorPtr {
-  POOLED_COLLECTION_PTR_METHODS(PooledVectorPtr, Vector)
+class PooledVectorPtr : public PooledCollectionPtr<Vector, PooledVectorPtr> {
+  friend class PooledCollectionPtr<Vector, PooledVectorPtr>;
+
+  static Vector* acquireCollection(JSContext* cx, NameCollectionPool& pool) {
+    return pool.acquireVector<Vector>(cx);
+  }
+
+  static void releaseCollection(NameCollectionPool& pool, Vector** ptr) {
+    pool.releaseVector(ptr);
+  }
+
+  using Base = PooledCollectionPtr<Vector, PooledVectorPtr>;
+  using Base::collection;
+
+ public:
+  using Base::Base;
+
+  ~PooledVectorPtr() = default;
 
   typename Vector::ElementType& operator[](size_t index) {
     return collection()[index];
@@ -295,16 +371,7 @@ class PooledVectorPtr {
   }
 };
 
-#undef POOLED_COLLECTION_PTR_METHODS
-
 }  // namespace frontend
 }  // namespace js
-
-namespace mozilla {
-
-template <typename T>
-struct IsPod<js::frontend::RecyclableAtomMapValueWrapper<T>> : IsPod<T> {};
-
-}  // namespace mozilla
 
 #endif  // frontend_NameCollections_h

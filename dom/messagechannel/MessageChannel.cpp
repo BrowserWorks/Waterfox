@@ -13,7 +13,6 @@
 #include "nsContentUtils.h"
 #include "mozilla/dom/Document.h"
 #include "nsIGlobalObject.h"
-#include "nsIPrincipal.h"
 #include "nsServiceManagerUtils.h"
 
 namespace mozilla {
@@ -32,7 +31,7 @@ MessageChannel::MessageChannel(nsIGlobalObject* aGlobal) : mGlobal(aGlobal) {
   MOZ_ASSERT(aGlobal);
 }
 
-MessageChannel::~MessageChannel() {}
+MessageChannel::~MessageChannel() = default;
 
 JSObject* MessageChannel::WrapObject(JSContext* aCx,
                                      JS::Handle<JSObject*> aGivenProto) {
@@ -77,6 +76,14 @@ already_AddRefed<MessageChannel> MessageChannel::Constructor(
 
   channel->mPort1->UnshippedEntangle(channel->mPort2);
   channel->mPort2->UnshippedEntangle(channel->mPort1);
+
+  // MessagePorts should not work if created from a disconnected window.
+  nsCOMPtr<nsPIDOMWindowInner> window = do_QueryInterface(aGlobal);
+  if (window && !window->GetDocShell()) {
+    // The 2 ports are entangled. We can close one of them to close the other
+    // too.
+    channel->mPort1->CloseForced();
+  }
 
   return channel.forget();
 }

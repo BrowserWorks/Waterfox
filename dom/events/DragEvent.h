@@ -41,11 +41,10 @@ class DragEvent : public MouseEvent {
 
   static already_AddRefed<DragEvent> Constructor(const GlobalObject& aGlobal,
                                                  const nsAString& aType,
-                                                 const DragEventInit& aParam,
-                                                 ErrorResult& aRv);
+                                                 const DragEventInit& aParam);
 
  protected:
-  ~DragEvent() {}
+  ~DragEvent() = default;
 };
 
 }  // namespace dom

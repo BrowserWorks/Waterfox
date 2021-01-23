@@ -11,17 +11,14 @@
  * liability, trademark and document use rules apply.
  */
 
-[Constructor(USVString url, optional USVString base),
- Exposed=(Window,Worker,WorkerDebugger)]
+[Exposed=(Window,Worker,WorkerDebugger),
+ LegacyWindowAlias=webkitURL]
 interface URL {
-  // Bug 824857: no support for stringifier attributes yet.
-  //  stringifier attribute USVString href;
-
-  // Bug 824857 should remove this.
-  stringifier;
+  [Throws]
+  constructor(USVString url, optional USVString base);
 
   [SetterThrows]
-  attribute USVString href;
+  stringifier attribute USVString href;
   [GetterThrows]
   readonly attribute USVString origin;
   [SetterThrows]

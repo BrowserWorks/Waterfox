@@ -23,16 +23,6 @@ ChromeUtils.defineModuleGetter(
   "resource://gre/modules/UpdateUtils.jsm"
 );
 
-function getDERString(cert) {
-  var length = {};
-  var derArray = cert.getRawDER(length);
-  var derString = "";
-  for (var i = 0; i < derArray.length; i++) {
-    derString += String.fromCharCode(derArray[i]);
-  }
-  return derString;
-}
-
 function SecurityReporter() {}
 
 SecurityReporter.prototype = {
@@ -60,13 +50,13 @@ SecurityReporter.prototype = {
       return;
     }
 
-    // Convert the nsIX509CertList into a format that can be parsed into
+    // Convert the array of nsIX509Cert into a format that can be parsed into
     // JSON
     let asciiCertChain = [];
 
     if (transportSecurityInfo.failedCertChain) {
-      for (let cert of transportSecurityInfo.failedCertChain.getEnumerator()) {
-        asciiCertChain.push(btoa(getDERString(cert)));
+      for (let cert of transportSecurityInfo.failedCertChain) {
+        asciiCertChain.push(cert.getBase64DERString());
       }
     }
 

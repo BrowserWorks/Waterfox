@@ -2,15 +2,18 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use api::{DocumentLayer, PremultipliedColorF};
+use api::{AlphaType, DocumentLayer, PremultipliedColorF, YuvFormat, YuvColorSpace};
+use api::EdgeAaSegmentMask;
 use api::units::*;
-use crate::clip_scroll_tree::{ClipScrollTree, ROOT_SPATIAL_NODE_INDEX, SpatialNodeIndex};
+use crate::spatial_tree::{SpatialTree, ROOT_SPATIAL_NODE_INDEX, SpatialNodeIndex};
 use crate::gpu_cache::{GpuCacheAddress, GpuDataRequest};
 use crate::internal_types::FastHashMap;
-use crate::prim_store::EdgeAaSegmentMask;
 use crate::render_task::RenderTaskAddress;
+use crate::renderer::ShaderColorMode;
 use std::i32;
 use crate::util::{TransformedRectKind, MatrixHelpers};
+use crate::glyph_rasterizer::SubpixelDirection;
+use crate::util::pack_as_float;
 
 // Contains type that must exactly match the same structures declared in GLSL.
 
@@ -20,14 +23,9 @@ pub const VECS_PER_TRANSFORM: usize = 8;
 #[repr(C)]
 #[cfg_attr(feature = "capture", derive(Serialize))]
 #[cfg_attr(feature = "replay", derive(Deserialize))]
-pub struct ZBufferId(i32);
+pub struct ZBufferId(pub i32);
 
-// We get 24 bits of Z value - use up 22 bits of it to give us
-// 4 bits to account for GPU issues. This seems to manifest on
-// some GPUs under certain perspectives due to z interpolation
-// precision problems.
 const MAX_DOCUMENT_LAYERS : i8 = 1 << 3;
-const MAX_ITEMS_PER_DOCUMENT_LAYER : i32 = 1 << 19;
 const MAX_DOCUMENT_LAYER_VALUE : i8 = MAX_DOCUMENT_LAYERS / 2 - 1;
 const MIN_DOCUMENT_LAYER_VALUE : i8 = -MAX_DOCUMENT_LAYERS / 2;
 
@@ -43,24 +41,49 @@ impl ZBufferId {
 pub struct ZBufferIdGenerator {
     base: i32,
     next: i32,
+    max_items_per_document_layer: i32,
 }
 
 impl ZBufferIdGenerator {
-    pub fn new(layer: DocumentLayer) -> Self {
+    pub fn new(layer: DocumentLayer, max_depth_ids: i32) -> Self {
         debug_assert!(layer >= MIN_DOCUMENT_LAYER_VALUE);
         debug_assert!(layer <= MAX_DOCUMENT_LAYER_VALUE);
+        let max_items_per_document_layer = max_depth_ids / MAX_DOCUMENT_LAYERS as i32;
         ZBufferIdGenerator {
-            base: layer as i32 * MAX_ITEMS_PER_DOCUMENT_LAYER,
-            next: 0
+            base: layer as i32 * max_items_per_document_layer,
+            next: 0,
+            max_items_per_document_layer,
         }
     }
 
     pub fn next(&mut self) -> ZBufferId {
-        debug_assert!(self.next < MAX_ITEMS_PER_DOCUMENT_LAYER);
+        debug_assert!(self.next < self.max_items_per_document_layer);
         let id = ZBufferId(self.next + self.base);
         self.next += 1;
         id
     }
+}
+
+/// A shader kind identifier that can be used by a generic-shader to select the behavior at runtime.
+///
+/// Not all brush kinds need to be present in this enum, only those we want to support in the generic
+/// brush shader.
+/// Do not use the 24 lowest bits. This will be packed with other information in the vertex attributes.
+/// The constants must match the corresponding defines in brush_multi.glsl.
+#[repr(i32)]
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum BrushShaderKind {
+    None            = 0,
+    Solid           = 1,
+    Image           = 2,
+    Text            = 3,
+    LinearGradient  = 4,
+    RadialGradient  = 5,
+    ConicGradient   = 6,
+    Blend           = 7,
+    MixBlend        = 8,
+    Yuv             = 9,
+    Opacity         = 10,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -105,8 +128,23 @@ pub struct BlurInstance {
 #[cfg_attr(feature = "capture", derive(Serialize))]
 #[cfg_attr(feature = "replay", derive(Deserialize))]
 pub struct ScalingInstance {
+    pub target_rect: DeviceRect,
+    pub source_rect: DeviceIntRect,
+    pub source_layer: i32,
+}
+
+#[derive(Debug)]
+#[repr(C)]
+#[cfg_attr(feature = "capture", derive(Serialize))]
+#[cfg_attr(feature = "replay", derive(Deserialize))]
+pub struct SvgFilterInstance {
     pub task_address: RenderTaskAddress,
-    pub src_task_address: RenderTaskAddress,
+    pub input_1_task_address: RenderTaskAddress,
+    pub input_2_task_address: RenderTaskAddress,
+    pub kind: u16,
+    pub input_count: u16,
+    pub generic_int: u16,
+    pub extra_data_address: GpuCacheAddress,
 }
 
 #[derive(Copy, Clone, Debug, Hash, MallocSizeOf, PartialEq, Eq)]
@@ -154,7 +192,6 @@ pub struct ClipMaskInstance {
     pub local_pos: LayoutPoint,
     pub tile_rect: LayoutRect,
     pub sub_rect: DeviceRect,
-    pub snap_offsets: SnapOffsets,
     pub task_origin: DevicePoint,
     pub screen_origin: DevicePoint,
     pub device_pixel_scale: f32,
@@ -198,6 +235,100 @@ impl ResolveInstanceData {
     }
 }
 
+/// Vertex format for picture cache composite shader.
+/// When editing the members, update desc::COMPOSITE
+/// so its list of instance_attributes matches:
+#[derive(Debug, Clone)]
+#[repr(C)]
+pub struct CompositeInstance {
+    // Device space rectangle of surface
+    rect: DeviceRect,
+    // Device space clip rect for this surface
+    clip_rect: DeviceRect,
+    // Color for solid color tiles, white otherwise
+    color: PremultipliedColorF,
+
+    // Packed into a single vec4 (aParams)
+    z_id: f32,
+    color_space_or_uv_type: f32, // YuvColorSpace for YUV;
+                                 // UV coordinate space for RGB
+    yuv_format: f32,            // YuvFormat
+    yuv_rescale: f32,
+
+    // UV rectangles (pixel space) for color / yuv texture planes
+    uv_rects: [TexelRect; 3],
+
+    // Texture array layers for color / yuv texture planes
+    texture_layers: [f32; 3],
+}
+
+impl CompositeInstance {
+    pub fn new(
+        rect: DeviceRect,
+        clip_rect: DeviceRect,
+        color: PremultipliedColorF,
+        layer: f32,
+        z_id: ZBufferId,
+    ) -> Self {
+        let uv = TexelRect::new(0.0, 0.0, 1.0, 1.0);
+        CompositeInstance {
+            rect,
+            clip_rect,
+            color,
+            z_id: z_id.0 as f32,
+            color_space_or_uv_type: pack_as_float(0u32),
+            yuv_format: 0.0,
+            yuv_rescale: 0.0,
+            texture_layers: [layer, 0.0, 0.0],
+            uv_rects: [uv, uv, uv],
+        }
+    }
+
+    pub fn new_rgb(
+        rect: DeviceRect,
+        clip_rect: DeviceRect,
+        color: PremultipliedColorF,
+        layer: f32,
+        z_id: ZBufferId,
+        uv_rect: TexelRect,
+    ) -> Self {
+        CompositeInstance {
+            rect,
+            clip_rect,
+            color,
+            z_id: z_id.0 as f32,
+            color_space_or_uv_type: pack_as_float(1u32),
+            yuv_format: 0.0,
+            yuv_rescale: 0.0,
+            texture_layers: [layer, 0.0, 0.0],
+            uv_rects: [uv_rect, uv_rect, uv_rect],
+        }
+    }
+
+    pub fn new_yuv(
+        rect: DeviceRect,
+        clip_rect: DeviceRect,
+        z_id: ZBufferId,
+        yuv_color_space: YuvColorSpace,
+        yuv_format: YuvFormat,
+        yuv_rescale: f32,
+        texture_layers: [f32; 3],
+        uv_rects: [TexelRect; 3],
+    ) -> Self {
+        CompositeInstance {
+            rect,
+            clip_rect,
+            color: PremultipliedColorF::WHITE,
+            z_id: z_id.0 as f32,
+            color_space_or_uv_type: pack_as_float(yuv_color_space as u32),
+            yuv_format: pack_as_float(yuv_format as u32),
+            yuv_rescale,
+            texture_layers,
+            uv_rects,
+        }
+    }
+}
+
 #[derive(Debug, Copy, Clone)]
 #[cfg_attr(feature = "capture", derive(Serialize))]
 #[cfg_attr(feature = "replay", derive(Deserialize))]
@@ -235,7 +366,6 @@ impl PrimitiveHeaders {
         self.headers_float.push(PrimitiveHeaderF {
             local_rect: prim_header.local_rect,
             local_clip_rect: prim_header.local_clip_rect,
-            snap_offsets: prim_header.snap_offsets,
         });
 
         self.headers_int.push(PrimitiveHeaderI {
@@ -256,7 +386,6 @@ impl PrimitiveHeaders {
 pub struct PrimitiveHeader {
     pub local_rect: LayoutRect,
     pub local_clip_rect: LayoutRect,
-    pub snap_offsets: SnapOffsets,
     pub specific_prim_address: GpuCacheAddress,
     pub transform_id: TransformPaletteId,
 }
@@ -269,7 +398,6 @@ pub struct PrimitiveHeader {
 pub struct PrimitiveHeaderF {
     pub local_rect: LayoutRect,
     pub local_clip_rect: LayoutRect,
-    pub snap_offsets: SnapOffsets,
 }
 
 // i32 parts of a primitive header
@@ -302,13 +430,24 @@ impl GlyphInstance {
     // TODO(gw): Some of these fields can be moved to the primitive
     //           header since they are constant, and some can be
     //           compressed to a smaller size.
-    pub fn build(&self, data0: i32, data1: i32, data2: i32) -> PrimitiveInstanceData {
+    pub fn build(&self,
+        render_task: RenderTaskAddress,
+        clip_task: RenderTaskAddress,
+        subpx_dir: SubpixelDirection,
+        glyph_index_in_text_run: i32,
+        glyph_uv_rect: GpuCacheAddress,
+        color_mode: ShaderColorMode,
+    ) -> PrimitiveInstanceData {
         PrimitiveInstanceData {
             data: [
                 self.prim_header_index.0 as i32,
-                data0,
-                data1,
-                data2,
+                ((render_task.0 as i32) << 16)
+                | clip_task.0 as i32,
+                (subpx_dir as u32 as i32) << 24
+                | (color_mode as u32 as i32) << 16
+                | glyph_index_in_text_run,
+                glyph_uv_rect.as_int()
+                | ((BrushShaderKind::Text as i32) << 24),
             ],
         }
     }
@@ -319,22 +458,6 @@ pub struct SplitCompositeInstance {
     pub polygons_address: GpuCacheAddress,
     pub z: ZBufferId,
     pub render_task_address: RenderTaskAddress,
-}
-
-impl SplitCompositeInstance {
-    pub fn new(
-        prim_header_index: PrimitiveHeaderIndex,
-        polygons_address: GpuCacheAddress,
-        render_task_address: RenderTaskAddress,
-        z: ZBufferId,
-    ) -> Self {
-        SplitCompositeInstance {
-            prim_header_index,
-            polygons_address,
-            z,
-            render_task_address,
-        }
-    }
 }
 
 impl From<SplitCompositeInstance> for PrimitiveInstanceData {
@@ -358,23 +481,26 @@ bitflags! {
     #[derive(MallocSizeOf)]
     pub struct BrushFlags: u8 {
         /// Apply perspective interpolation to UVs
-        const PERSPECTIVE_INTERPOLATION = 0x1;
+        const PERSPECTIVE_INTERPOLATION = 1;
         /// Do interpolation relative to segment rect,
         /// rather than primitive rect.
-        const SEGMENT_RELATIVE = 0x2;
+        const SEGMENT_RELATIVE = 2;
         /// Repeat UVs horizontally.
-        const SEGMENT_REPEAT_X = 0x4;
+        const SEGMENT_REPEAT_X = 4;
         /// Repeat UVs vertically.
-        const SEGMENT_REPEAT_Y = 0x8;
+        const SEGMENT_REPEAT_Y = 8;
+        /// Horizontally follow border-image-repeat: round.
+        const SEGMENT_REPEAT_X_ROUND = 16;
+        /// Vertically follow border-image-repeat: round.
+        const SEGMENT_REPEAT_Y_ROUND = 32;
+        /// Middle (fill) area of a border-image-repeat.
+        const SEGMENT_NINEPATCH_MIDDLE = 64;
         /// The extra segment data is a texel rect.
-        const SEGMENT_TEXEL_RECT = 0x10;
+        const SEGMENT_TEXEL_RECT = 128;
     }
 }
 
-// TODO(gw): Some of these fields can be moved to the primitive
-//           header since they are constant, and some can be
-//           compressed to a smaller size.
-#[repr(C)]
+/// Convenience structure to encode into PrimitiveInstanceData.
 pub struct BrushInstance {
     pub prim_header_index: PrimitiveHeaderIndex,
     pub render_task_address: RenderTaskAddress,
@@ -382,7 +508,8 @@ pub struct BrushInstance {
     pub segment_index: i32,
     pub edge_flags: EdgeAaSegmentMask,
     pub brush_flags: BrushFlags,
-    pub user_data: i32,
+    pub resource_address: i32,
+    pub brush_kind: BrushShaderKind,
 }
 
 impl From<BrushInstance> for PrimitiveInstanceData {
@@ -390,14 +517,36 @@ impl From<BrushInstance> for PrimitiveInstanceData {
         PrimitiveInstanceData {
             data: [
                 instance.prim_header_index.0,
-                ((instance.render_task_address.0 as i32) << 16) |
-                instance.clip_task_address.0 as i32,
-                instance.segment_index |
-                ((instance.edge_flags.bits() as i32) << 16) |
-                ((instance.brush_flags.bits() as i32) << 24),
-                instance.user_data,
+                ((instance.render_task_address.0 as i32) << 16)
+                | instance.clip_task_address.0 as i32,
+                instance.segment_index
+                | ((instance.edge_flags.bits() as i32) << 16)
+                | ((instance.brush_flags.bits() as i32) << 24),
+                instance.resource_address
+                | ((instance.brush_kind as i32) << 24),
             ]
         }
+    }
+}
+
+/// Convenience structure to encode into the image brush's user data.
+#[derive(Copy, Clone, Debug)]
+pub struct ImageBrushData {
+    pub color_mode: ShaderColorMode,
+    pub alpha_type: AlphaType,
+    pub raster_space: RasterizationSpace,
+    pub opacity: f32,
+}
+
+impl ImageBrushData {
+    #[inline]
+    pub fn encode(&self) -> [i32; 4] {
+        [
+            self.color_mode as i32 | ((self.alpha_type as i32) << 16),
+            self.raster_space as i32,
+            get_shader_opacity(self.opacity),
+            0,
+        ]
     }
 }
 
@@ -512,7 +661,7 @@ impl TransformPalette {
         &mut self,
         child_index: SpatialNodeIndex,
         parent_index: SpatialNodeIndex,
-        clip_scroll_tree: &ClipScrollTree,
+        spatial_tree: &SpatialTree,
     ) -> usize {
         if parent_index == ROOT_SPATIAL_NODE_INDEX {
             child_index.0 as usize
@@ -530,7 +679,7 @@ impl TransformPalette {
             *self.map
                 .entry(key)
                 .or_insert_with(|| {
-                    let transform = clip_scroll_tree.get_relative_transform(
+                    let transform = spatial_tree.get_relative_transform(
                         child_index,
                         parent_index,
                     )
@@ -556,12 +705,12 @@ impl TransformPalette {
         &mut self,
         from_index: SpatialNodeIndex,
         to_index: SpatialNodeIndex,
-        clip_scroll_tree: &ClipScrollTree,
+        spatial_tree: &SpatialTree,
     ) -> TransformPaletteId {
         let index = self.get_index(
             from_index,
             to_index,
-            clip_scroll_tree,
+            spatial_tree,
         );
         let transform_kind = self.metadata[index].transform_kind as u32;
         TransformPaletteId(
@@ -592,33 +741,6 @@ pub enum UvRectKind {
         bottom_left: DeviceHomogeneousVector,
         bottom_right: DeviceHomogeneousVector,
     },
-}
-
-/// Represents offsets in device pixels that a primitive
-/// was snapped to.
-#[cfg_attr(feature = "capture", derive(Serialize))]
-#[cfg_attr(feature = "replay", derive(Deserialize))]
-#[derive(Copy, Clone, Debug)]
-#[repr(C)]
-pub struct SnapOffsets {
-    /// How far the top left corner was snapped
-    pub top_left: DeviceVector2D,
-    /// How far the bottom right corner was snapped
-    pub bottom_right: DeviceVector2D,
-}
-
-impl SnapOffsets {
-    pub fn empty() -> Self {
-        SnapOffsets {
-            top_left: DeviceVector2D::zero(),
-            bottom_right: DeviceVector2D::zero(),
-        }
-    }
-
-    pub fn is_empty(&self) -> bool {
-        let zero = DeviceVector2D::zero();
-        self.top_left == zero && self.bottom_right == zero
-    }
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -670,16 +792,11 @@ fn register_transform(
     to_index: SpatialNodeIndex,
     transform: LayoutToPictureTransform,
 ) -> usize {
-    // TODO(gw): This shouldn't ever happen - should be eliminated before
-    //           we get an uninvertible transform here. But maybe do
-    //           some investigation on if this ever happens?
-    let inv_transform = match transform.inverse() {
-        Some(inv_transform) => inv_transform,
-        None => {
-            error!("Unable to get inverse transform");
-            PictureToLayoutTransform::identity()
-        }
-    };
+    // TODO: refactor the calling code to not even try
+    // registering a non-invertible transform.
+    let inv_transform = transform
+        .inverse()
+        .unwrap_or_else(PictureToLayoutTransform::identity);
 
     let metadata = TransformMetadata {
         transform_kind: transform.transform_kind()
@@ -700,4 +817,8 @@ fn register_transform(
         transforms.push(data);
         index
     }
+}
+
+pub fn get_shader_opacity(opacity: f32) -> i32 {
+    (opacity * 65535.0).round() as i32
 }

@@ -9,16 +9,16 @@ const URL = "about:blank";
 const TEST_URL = "http://test2.example.org/";
 let windowActorOptions = {
   parent: {
-    moduleURI: "resource://testing-common/TestParent.jsm",
+    moduleURI: "resource://testing-common/TestWindowParent.jsm",
   },
   child: {
-    moduleURI: "resource://testing-common/TestChild.jsm",
+    moduleURI: "resource://testing-common/TestWindowChild.jsm",
 
     events: {
       mozshowdropdown: {},
     },
 
-    observers: ["test-js-window-actor-child-observer"],
+    observers: ["test-js-window-actor-child-observer", "audio-playback"],
   },
 };
 
@@ -29,6 +29,7 @@ function declTest(name, cfg) {
     includeChrome = false,
     matches,
     remoteTypes,
+    messageManagerGroups,
     fission,
     test,
   } = cfg;
@@ -46,6 +47,9 @@ function declTest(name, cfg) {
   if (remoteTypes !== undefined) {
     actorOptions.remoteTypes = remoteTypes;
   }
+  if (messageManagerGroups !== undefined) {
+    actorOptions.messageManagerGroups = messageManagerGroups;
+  }
 
   // Add a new task for the actor test declared here.
   add_task(async function() {
@@ -56,12 +60,12 @@ function declTest(name, cfg) {
       remote: true,
       fission,
     });
-    ChromeUtils.registerWindowActor("Test", actorOptions);
+    ChromeUtils.registerWindowActor("TestWindow", actorOptions);
 
     // Wait for the provided URL to load in our browser
     let browser = win.gBrowser.selectedBrowser;
     BrowserTestUtils.loadURI(browser, url);
-    await BrowserTestUtils.browserLoaded(browser);
+    await BrowserTestUtils.browserLoaded(browser, false, url);
 
     // Run the provided test
     info("browser ready");
@@ -69,7 +73,7 @@ function declTest(name, cfg) {
       await Promise.resolve(test(browser, win));
     } finally {
       // Clean up after we're done.
-      ChromeUtils.unregisterWindowActor("Test");
+      ChromeUtils.unregisterWindowActor("TestWindow");
       await BrowserTestUtils.closeWindow(win);
       info("Exiting test: " + name);
     }

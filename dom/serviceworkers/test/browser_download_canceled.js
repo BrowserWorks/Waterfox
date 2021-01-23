@@ -37,24 +37,30 @@ async function clearDownloads() {
  * we have clicked the given button.
  */
 function promiseClickDownloadDialogButton(buttonAction) {
-  const uri = "chrome://mozapps/content/downloads/unknownContentType.xul";
-  BrowserTestUtils.promiseAlertDialogOpen(buttonAction, uri, async win => {
-    // nsHelperAppDlg.js currently uses an eval-based setTimeout(0) to invoke
-    // its postShowCallback that results in a misleading error to the console
-    // if we close the dialog before it gets a chance to run.  Just a
-    // setTimeout is not sufficient because it appears we get our "load"
-    // listener before the document's, so we use TestUtils.waitForTick() to
-    // defer until after its load handler runs, then use setTimeout(0) to end
-    // up after its eval.
-    await TestUtils.waitForTick();
+  const uri = "chrome://mozapps/content/downloads/unknownContentType.xhtml";
+  return BrowserTestUtils.promiseAlertDialogOpen(
+    buttonAction,
+    uri,
+    async win => {
+      // nsHelperAppDlg.js currently uses an eval-based setTimeout(0) to invoke
+      // its postShowCallback that results in a misleading error to the console
+      // if we close the dialog before it gets a chance to run.  Just a
+      // setTimeout is not sufficient because it appears we get our "load"
+      // listener before the document's, so we use TestUtils.waitForTick() to
+      // defer until after its load handler runs, then use setTimeout(0) to end
+      // up after its eval.
+      await TestUtils.waitForTick();
 
-    await new Promise(resolve => setTimeout(resolve, 0));
+      await new Promise(resolve => setTimeout(resolve, 0));
 
-    const button = win.document.documentElement.getButton(buttonAction);
-    button.disabled = false;
-    info(`clicking ${buttonAction} button`);
-    button.click();
-  });
+      const button = win.document
+        .getElementById("unknownContentType")
+        .getButton(buttonAction);
+      button.disabled = false;
+      info(`clicking ${buttonAction} button`);
+      button.click();
+    }
+  );
 }
 
 async function performCanceledDownload(tab, path) {
@@ -65,7 +71,7 @@ async function performCanceledDownload(tab, path) {
   // Trigger the download.
   info(`triggering download of "${path}"`);
   /* eslint-disable no-shadow */
-  await ContentTask.spawn(tab.linkedBrowser, path, function(path) {
+  await SpecialPowers.spawn(tab.linkedBrowser, [path], function(path) {
     // Put a Promise in place that we can wait on for stream closure.
     content.wrappedJSObject.trackStreamClosure(path);
     // Create the link and trigger the download.
@@ -85,7 +91,9 @@ async function performCanceledDownload(tab, path) {
   // Wait for confirmation that the stream stopped.
   info(`wait for the ${path} stream to close.`);
   /* eslint-disable no-shadow */
-  const why = await ContentTask.spawn(tab.linkedBrowser, path, function(path) {
+  const why = await SpecialPowers.spawn(tab.linkedBrowser, [path], function(
+    path
+  ) {
     return content.wrappedJSObject.streamClosed[path].promise;
   });
   /* eslint-enable no-shadow */
@@ -122,9 +130,9 @@ add_task(async function interruptedDownloads() {
 
   // Wait for it to become controlled.  Check that it was a promise that
   // resolved as expected rather than undefined by checking the return value.
-  const controlled = await ContentTask.spawn(
+  const controlled = await SpecialPowers.spawn(
     tab.linkedBrowser,
-    null,
+    [],
     function() {
       // This is a promise set up by the page during load, and we are post-load.
       return content.wrappedJSObject.controlled;
@@ -139,7 +147,7 @@ add_task(async function interruptedDownloads() {
   await performCanceledDownload(tab, "sw-stream-download");
 
   // Cleanup
-  await ContentTask.spawn(tab.linkedBrowser, null, function() {
+  await SpecialPowers.spawn(tab.linkedBrowser, [], function() {
     return content.wrappedJSObject.registration.unregister();
   });
   BrowserTestUtils.removeTab(tab);

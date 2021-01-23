@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Side-eigenskippen">
+<!ENTITY location.label "Lokaasje:">
+<!ENTITY lastModified.label "Lêst wizige:">
+<!ENTITY titleInput.label "Titel:">
+<!ENTITY titleInput.accessKey "T">
+<!ENTITY authorInput.label "Auteur:">
+<!ENTITY authorInput.accessKey "A">
+<!ENTITY descriptionInput.label "Beskriuwing:">
+<!ENTITY descriptionInput.accessKey "B">
+<!ENTITY locationNewPage.label "[Nije side, noch net bewarre]">
+<!ENTITY EditHEADSource1.label "Avansearre brûkers:">
+<!ENTITY EditHEADSource2.label "Om oare ynhâld fan it lt;head&gt;-gebiet te bewurkjen, brûk quot;HTML-boarne&quot; yn it menu Byld of de Bewurkingsarkbalk.">

@@ -7,11 +7,11 @@
 
 #include <d3d11.h>
 #include <d3d11_1.h>
-#include "gfxPrefs.h"
 #include "GLContext.h"
 #include "WGLLibrary.h"
 #include "nsPrintfCString.h"
 #include "mozilla/gfx/DeviceManagerDx.h"
+#include "mozilla/StaticPrefs_webgl.h"
 
 namespace mozilla {
 namespace gl {
@@ -415,7 +415,7 @@ SharedSurface_D3D11Interop::SharedSurface_D3D11Interop(
       mLockHandle(lockHandle),
       mTexD3D(texD3D),
       mDXGIHandle(dxgiHandle),
-      mNeedsFinish(gfxPrefs::WebGLDXGLNeedsFinish()),
+      mNeedsFinish(StaticPrefs::webgl_dxgl_needs_finish()),
       mLockedForGL(false) {
   MOZ_ASSERT(bool(mProdTex) == bool(mInteropFB));
 }
@@ -467,7 +467,8 @@ bool SharedSurface_D3D11Interop::ToSurfaceDescriptor(
   const auto format =
       (mHasAlpha ? gfx::SurfaceFormat::B8G8R8A8 : gfx::SurfaceFormat::B8G8R8X8);
   *out_descriptor = layers::SurfaceDescriptorD3D10(
-      WindowsHandle(mDXGIHandle), format, mSize, gfx::YUVColorSpace::UNKNOWN);
+      WindowsHandle(mDXGIHandle), format, mSize, gfx::YUVColorSpace::UNKNOWN,
+      gfx::ColorRange::FULL);
   return true;
 }
 

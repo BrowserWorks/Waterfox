@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.viewing.messages.title      "Prikaz poruke">
+<!ENTITY style.label                      "Stil:">
+<!ENTITY regular.label                    "Normalno">
+<!ENTITY bold.label                       "Podebljano">
+<!ENTITY italic.label                     "Iskošeno">
+<!ENTITY boldItalic.label                 "Podebljan iskošen">
+<!ENTITY size.label                       "Veličina:">
+<!ENTITY bigger.label                     "Veće">
+<!ENTITY smaller.label                    "Manje">
+<!ENTITY color.label                      "Boja:">
+<!ENTITY displayPlainText.caption         "Poruke s običnim tekstom">
+<!ENTITY fontPlainText.label              "Font:">
+<!ENTITY displayQuoted.label              "Postavke za citirane poruke:">
+<!ENTITY wrapInMsg.label                  "Prelamanje teksta radi prilagođavanja širine prozora">
+<!-- LOCALIZATION NOTE : (convertEmoticons.label) 'Emoticons' are also known as 'Smileys', e.g. :-)   -->
+<!ENTITY convertEmoticons.label           "Grafički prikaži smješke">
+<!ENTITY generalMessageDisplay.caption    "Opće">
+<!ENTITY autoMarkAsRead.label             "Automatski označi poruku kao pročitanu">
+<!-- LOCALIZATION NOTE (markAsReadAfter.label): This will concatenate to
+     "Only after displaying for [___] seconds",
+     using (markAsReadAfter.label) and a number (secondsLabel.label). -->
+<!ENTITY markAsReadAfter.label            "Samo nakon prikazivanja u trajanju od">
+<!ENTITY secondsLabel.label               "sekundi">
+
+<!ENTITY openingMessages.label            "Prilikom otvaranja poruka, prihaži ih u:">
+<!ENTITY newWindowRadio.label             "Novom prozoru poruke">
+<!ENTITY existingWindowRadio.label        "Postojećem prozoru poruke">
+<!ENTITY disableContent.label             "Blokiraj slike i druge sadržaje iz udaljenih izvora">
+<!ENTITY showCondensedAddresses.label     "Prikaži samo ime za prikaz osoba iz mog imenika">
+<!ENTITY closeMsgWindowOnDelete.label     "Zatvori prozor poruke pri brisanju poruke">

@@ -9,6 +9,7 @@
 #include "mozilla/HoldDropJSObjects.h"
 
 #include "jsfriendapi.h"
+#include "js/Modules.h"  // JS::{Get,Set}ModulePrivate
 #include "ScriptLoader.h"
 
 namespace mozilla {
@@ -85,6 +86,13 @@ void HostReleaseTopLevelScript(const JS::Value& aPrivate) {
   CheckModuleScriptPrivate(script, aPrivate);
   script->Release();
 }
+
+//////////////////////////////////////////////////////////////
+// EventScript
+//////////////////////////////////////////////////////////////
+
+EventScript::EventScript(ScriptFetchOptions* aFetchOptions, nsIURI* aBaseURL)
+    : LoadedScript(ScriptKind::eEvent, aFetchOptions, aBaseURL) {}
 
 //////////////////////////////////////////////////////////////
 // ClassicScript

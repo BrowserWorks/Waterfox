@@ -26,6 +26,18 @@ namespace mozilla {
 namespace dom {
 namespace quota {
 
+struct StorageNameParams
+{
+};
+
+struct StorageInitializedParams
+{
+};
+
+struct TemporaryStorageInitializedParams
+{
+};
+
 struct InitParams
 {
 };
@@ -34,10 +46,12 @@ struct InitTemporaryStorageParams
 {
 };
 
-struct InitOriginParams
+struct InitStorageAndOriginParams
 {
   PrincipalInfo principalInfo;
   PersistenceType persistenceType;
+  Type clientType;
+  bool clientTypeIsExplicit;
 };
 
 struct AllUsageParams
@@ -48,7 +62,7 @@ struct AllUsageParams
 struct OriginUsageParams
 {
   PrincipalInfo principalInfo;
-  bool getGroupUsage;
+  bool fromMemory;
 };
 
 union UsageRequestParams
@@ -64,12 +78,12 @@ struct ClearResetOriginParams
   bool persistenceTypeIsExplicit;
   Type clientType;
   bool clientTypeIsExplicit;
-  bool matchAll;
 };
 
 struct ClearOriginParams
 {
   ClearResetOriginParams commonParams;
+  bool matchAll;
 };
 
 struct ResetOriginParams
@@ -100,15 +114,23 @@ struct PersistParams
   PrincipalInfo principalInfo;
 };
 
-struct ListInitializedOriginsParams
+struct EstimateParams
+{
+  PrincipalInfo principalInfo;
+};
+
+struct ListOriginsParams
 {
 };
 
 union RequestParams
 {
+  StorageNameParams;
+  StorageInitializedParams;
+  TemporaryStorageInitializedParams;
   InitParams;
   InitTemporaryStorageParams;
-  InitOriginParams;
+  InitStorageAndOriginParams;
   ClearOriginParams;
   ResetOriginParams;
   ClearDataParams;
@@ -116,7 +138,8 @@ union RequestParams
   ResetAllParams;
   PersistedParams;
   PersistParams;
-  ListInitializedOriginsParams;
+  EstimateParams;
+  ListOriginsParams;
 };
 
 protocol PQuota

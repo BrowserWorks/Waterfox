@@ -13,10 +13,10 @@ const { MessagePort } = ChromeUtils.import(
 
 // The content side of a message port
 class ChildMessagePort extends MessagePort {
-  constructor(contentFrame, window) {
+  constructor(actor, window) {
     let portID =
       Services.appinfo.processID + ":" + ChildMessagePort.nextPortID++;
-    super(contentFrame, portID);
+    super(actor, portID);
 
     this.window = window;
 
@@ -32,24 +32,12 @@ class ChildMessagePort extends MessagePort {
       defineAs: "RPMRemoveMessageListener",
       allowCallbacks: true,
     });
-    Cu.exportFunction(this.getBoolPref.bind(this), window, {
-      defineAs: "RPMGetBoolPref",
-    });
-    Cu.exportFunction(this.setBoolPref.bind(this), window, {
-      defineAs: "RPMSetBoolPref",
-    });
-    Cu.exportFunction(this.getFormatURLPref.bind(this), window, {
-      defineAs: "RPMGetFormatURLPref",
-    });
-    Cu.exportFunction(this.isWindowPrivate.bind(this), window, {
-      defineAs: "RPMIsWindowPrivate",
-    });
-    Cu.exportFunction(this.getUpdateChannel.bind(this), window, {
-      defineAs: "RPMGetUpdateChannel",
-    });
-    Cu.exportFunction(this.getFxAccountsEndpoint.bind(this), window, {
-      defineAs: "RPMGetFxAccountsEndpoint",
-    });
+
+    // The actor form only needs the functions set up above. The actor
+    // will send and receive messages directly.
+    if (!(this.messageManager instanceof Ci.nsIMessageSender)) {
+      return;
+    }
 
     // Send a message for load events
     let loadListener = () => {
@@ -81,7 +69,7 @@ class ChildMessagePort extends MessagePort {
     throw new Error(`Unknown request ${name}.`);
   }
 
-  // Called when a message is received from the message manager.
+  // Called when a message is received from the message manager or actor.
   handleMessage(messagedata) {
     let message = {
       name: messagedata.name,

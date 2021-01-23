@@ -8,7 +8,7 @@
 
 #  include "AndroidSurfaceTexture.h"
 
-#  include "GeneratedJNINatives.h"
+#  include "mozilla/java/GeckoSurfaceTextureNatives.h"
 
 #  include "AndroidNativeWindow.h"
 #  include "GLContextEGL.h"
@@ -76,7 +76,8 @@ class SharedGL final {
     MutexAutoLock lock(sMutex);
 
     if (mTargetSurface != EGL_NO_SURFACE) {
-      GLLibraryEGL::Get()->fDestroySurface(EGL_DISPLAY(), mTargetSurface);
+      const auto& egl = *(sContext->mEgl);
+      egl.fDestroySurface(egl.Display(), mTargetSurface);
     }
 
     // Destroy shared GL context when no one uses it.
@@ -85,19 +86,24 @@ class SharedGL final {
     }
   }
 
-  static already_AddRefed<GLContextEGL> CreateContext() {
+  static already_AddRefed<GLContextEGL> CreateContextImpl(bool aUseGles) {
     sMutex.AssertCurrentThreadOwns();
     MOZ_ASSERT(!sContext);
 
     auto* egl = gl::GLLibraryEGL::Get();
     EGLDisplay eglDisplay = egl->fGetDisplay(EGL_DEFAULT_DISPLAY);
+    MOZ_ASSERT(eglDisplay == egl->Display());
     EGLConfig eglConfig;
-    CreateConfig(&eglConfig, /* bpp */ 24, /* depth buffer? */ false);
+    CreateConfig(egl, &eglConfig, /* bpp */ 24, /* depth buffer? */ false,
+                 aUseGles);
     EGLint attributes[] = {LOCAL_EGL_CONTEXT_CLIENT_VERSION, 2, LOCAL_EGL_NONE};
     EGLContext eglContext =
         egl->fCreateContext(eglDisplay, eglConfig, EGL_NO_CONTEXT, attributes);
+    if (!eglContext) {
+      return nullptr;
+    }
     RefPtr<GLContextEGL> gl = new GLContextEGL(
-        CreateContextFlags::NONE, SurfaceCaps::Any(),
+        egl, CreateContextFlags::NONE, SurfaceCaps::Any(),
         /* offscreen? */ false, eglConfig, EGL_NO_SURFACE, eglContext);
     if (!gl->Init()) {
       NS_WARNING("Fail to create GL context for native blitter.");
@@ -109,12 +115,21 @@ class SharedGL final {
     return gl.forget();
   }
 
+  static already_AddRefed<GLContextEGL> CreateContext() {
+    RefPtr<GLContextEGL> gl = CreateContextImpl(/* aUseGles */ false);
+    if (!gl) {
+      gl = CreateContextImpl(/* aUseGles */ true);
+    }
+    return gl.forget();
+  }
+
   void InitSurface(AndroidNativeWindow& window) {
     sMutex.AssertCurrentThreadOwns();
     MOZ_ASSERT(sContext);
 
-    mTargetSurface = gl::GLLibraryEGL::Get()->fCreateWindowSurface(
-        sContext->GetEGLDisplay(), sContext->mConfig, window.NativeWindow(), 0);
+    const auto& egl = *(sContext->mEgl);
+    mTargetSurface = egl.fCreateWindowSurface(egl.Display(), sContext->mConfig,
+                                              window.NativeWindow(), 0);
   }
 
   static bool UnmakeCurrent(RefPtr<GLContextEGL>& gl) {
@@ -124,9 +139,9 @@ class SharedGL final {
     if (!gl->IsCurrent()) {
       return true;
     }
-
-    return gl::GLLibraryEGL::Get()->fMakeCurrent(
-        EGL_DISPLAY(), EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+    const auto& egl = *(gl->mEgl);
+    return egl.fMakeCurrent(egl.Display(), EGL_NO_SURFACE, EGL_NO_SURFACE,
+                            EGL_NO_CONTEXT);
   }
 
   static Mutex sMutex;

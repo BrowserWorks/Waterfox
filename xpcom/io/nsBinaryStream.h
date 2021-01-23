@@ -26,7 +26,7 @@
 // by nsObjectOutputStream.
 class nsBinaryOutputStream final : public nsIObjectOutputStream {
  public:
-  nsBinaryOutputStream() {}
+  nsBinaryOutputStream() = default;
 
  protected:
   friend already_AddRefed<nsIObjectOutputStream> NS_NewObjectOutputStream(
@@ -52,7 +52,7 @@ class nsBinaryOutputStream final : public nsIObjectOutputStream {
 
  private:
   // virtual dtor since subclasses call our Release()
-  virtual ~nsBinaryOutputStream() {}
+  virtual ~nsBinaryOutputStream() = default;
 };
 
 #define NS_BINARYINPUTSTREAM_CID                     \
@@ -66,7 +66,7 @@ class nsBinaryOutputStream final : public nsIObjectOutputStream {
 
 class nsBinaryInputStream final : public nsIObjectInputStream {
  public:
-  nsBinaryInputStream() {}
+  nsBinaryInputStream() = default;
 
  protected:
   friend already_AddRefed<nsIObjectInputStream> NS_NewObjectInputStream(
@@ -88,8 +88,12 @@ class nsBinaryInputStream final : public nsIObjectInputStream {
   nsCOMPtr<nsIStreamBufferAccess> mBufferAccess;
 
  private:
+  // Shared infrastructure for ReadBytes and ReadByteArray.  Callers
+  // are expected to provide a buffer that can contain aLength bytes.
+  nsresult ReadBytesToBuffer(uint32_t aLength, uint8_t* aBuffer);
+
   // virtual dtor since subclasses call our Release()
-  virtual ~nsBinaryInputStream() {}
+  virtual ~nsBinaryInputStream() = default;
 };
 
 #endif  // nsBinaryStream_h___

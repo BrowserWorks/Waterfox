@@ -13,18 +13,14 @@
 #include "nsStringStream.h"
 #include "nsIFile.h"
 #include "nsIFileURL.h"
-#include "nsIURIMutator.h"
 #include "nsEscape.h"
 #include "nsIDirIndex.h"
 #include "nsURLHelper.h"
-#include "nsIPrefService.h"
-#include "nsIPrefBranch.h"
-#include "nsIPrefLocalizedString.h"
 #include "nsIStringBundle.h"
-#include "nsITextToSubURI.h"
 #include "nsDirIndexParser.h"
 #include "nsNativeCharsetUtils.h"
 #include "nsString.h"
+#include "nsContentUtils.h"
 #include <algorithm>
 #include "nsIChannel.h"
 #include "mozilla/Unused.h"
@@ -95,6 +91,12 @@ nsIndexedToHTML::AsyncConvertData(const char* aFromType, const char* aToType,
 }
 
 NS_IMETHODIMP
+nsIndexedToHTML::GetConvertedType(const nsACString& aFromType,
+                                  nsIChannel* aChannel, nsACString& aToType) {
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
 nsIndexedToHTML::OnStartRequest(nsIRequest* request) {
   nsCString buffer;
   nsresult rv = DoOnStartRequest(request, nullptr, buffer);
@@ -126,13 +128,9 @@ nsresult nsIndexedToHTML::DoOnStartRequest(nsIRequest* request,
   rv = channel->GetOriginalURI(getter_AddRefs(uri));
   if (NS_FAILED(rv)) return rv;
 
-  bool isResource = false;
-  rv = uri->SchemeIs("resource", &isResource);
-  if (NS_FAILED(rv)) return rv;
-
   // We use the original URI for the title and parent link when it's a
   // resource:// url, instead of the jar:file:// url it resolves to.
-  if (!isResource) {
+  if (!uri->SchemeIs("resource")) {
     rv = channel->GetURI(getter_AddRefs(uri));
     if (NS_FAILED(rv)) return rv;
   }
@@ -174,9 +172,7 @@ nsresult nsIndexedToHTML::DoOnStartRequest(nsIRequest* request,
   // would muck up the XUL display
   // - bbaetz
 
-  bool isScheme = false;
-  bool isSchemeFile = false;
-  if (NS_SUCCEEDED(uri->SchemeIs("ftp", &isScheme)) && isScheme) {
+  if (uri->SchemeIs("ftp")) {
     // strip out the password here, so it doesn't show in the page title
     // This is done by the 300: line generation in ftp, but we don't use
     // that - see above
@@ -199,8 +195,7 @@ nsresult nsIndexedToHTML::DoOnStartRequest(nsIRequest* request,
       rv = uri->Resolve(NS_LITERAL_CSTRING(".."), parentStr);
       if (NS_FAILED(rv)) return rv;
     }
-  } else if (NS_SUCCEEDED(uri->SchemeIs("file", &isSchemeFile)) &&
-             isSchemeFile) {
+  } else if (uri->SchemeIs("file")) {
     nsCOMPtr<nsIFileURL> fileUrl = do_QueryInterface(uri);
     nsCOMPtr<nsIFile> file;
     rv = fileUrl->GetFile(getter_AddRefs(file));
@@ -224,7 +219,7 @@ nsresult nsIndexedToHTML::DoOnStartRequest(nsIRequest* request,
     // Directory index will be always encoded in UTF-8 if this is file url
     buffer.AppendLiteral("<meta charset=\"UTF-8\">\n");
 
-  } else if (NS_SUCCEEDED(uri->SchemeIs("jar", &isScheme)) && isScheme) {
+  } else if (uri->SchemeIs("jar")) {
     nsAutoCString path;
     rv = uri->GetPathQueryRef(path);
     if (NS_FAILED(rv)) return rv;
@@ -515,7 +510,7 @@ nsresult nsIndexedToHTML::DoOnStartRequest(nsIRequest* request,
   // 1. file URL may be encoded in platform charset for backward compatibility
   // 2. query part may not be encoded in UTF-8 (see bug 261929)
   // so try the platform's default if this is file url
-  if (NS_FAILED(rv) && isSchemeFile && !NS_IsNativeUTF8()) {
+  if (NS_FAILED(rv) && uri->SchemeIs("file") && !NS_IsNativeUTF8()) {
     auto encoding = mozilla::dom::FallbackEncoding::FromLocale();
     nsAutoCString charset;
     encoding->Name(charset);
@@ -525,13 +520,11 @@ nsresult nsIndexedToHTML::DoOnStartRequest(nsIRequest* request,
 
   nsCString htmlEscSpecUtf8;
   nsAppendEscapedHTML(NS_ConvertUTF16toUTF8(unEscapeSpec), htmlEscSpecUtf8);
-  NS_ConvertUTF8toUTF16 htmlEscSpec(htmlEscSpecUtf8);
+  AutoTArray<nsString, 1> formatTitle;
+  CopyUTF8toUTF16(htmlEscSpecUtf8, *formatTitle.AppendElement());
 
   nsAutoString title;
-  const char16_t* formatTitle[] = {htmlEscSpec.get()};
-
-  rv = mBundle->FormatStringFromName(
-      "DirTitle", formatTitle, sizeof(formatTitle) / sizeof(char16_t*), title);
+  rv = mBundle->FormatStringFromName("DirTitle", formatTitle, title);
   if (NS_FAILED(rv)) return rv;
 
   // we want to convert string bundle to NCR
@@ -554,7 +547,7 @@ nsresult nsIndexedToHTML::DoOnStartRequest(nsIRequest* request,
     // will prematurely close the string.  Go ahead an
     // add a base href, but only do so if we're not
     // dealing with a resource URI.
-    if (!isResource) {
+    if (!uri->SchemeIs("resource")) {
       buffer.AppendLiteral("<base href=\"");
       nsAppendEscapedHTML(baseUri, buffer);
       buffer.AppendLiteral("\" />\n");
@@ -571,14 +564,6 @@ nsresult nsIndexedToHTML::DoOnStartRequest(nsIRequest* request,
   buffer.AppendLiteral("</head>\n<body dir=\"");
   buffer.Append(direction);
   buffer.AppendLiteral("\">\n<h1>");
-
-  const char16_t* formatHeading[] = {htmlEscSpec.get()};
-
-  rv = mBundle->FormatStringFromName("DirTitle", formatHeading,
-                                     sizeof(formatHeading) / sizeof(char16_t*),
-                                     title);
-  if (NS_FAILED(rv)) return rv;
-
   AppendNonAsciiToNCR(title, buffer);
   buffer.AppendLiteral("</h1>\n");
 
@@ -594,7 +579,7 @@ nsresult nsIndexedToHTML::DoOnStartRequest(nsIRequest* request,
     buffer.AppendLiteral("</a></p>\n");
   }
 
-  if (isSchemeFile) {
+  if (uri->SchemeIs("file")) {
     nsAutoString showHiddenText;
     rv = mBundle->GetStringFromName("ShowHidden", showHiddenText);
     if (NS_FAILED(rv)) return rv;
@@ -668,6 +653,24 @@ NS_IMETHODIMP
 nsIndexedToHTML::OnDataAvailable(nsIRequest* aRequest, nsIInputStream* aInput,
                                  uint64_t aOffset, uint32_t aCount) {
   return mParser->OnDataAvailable(aRequest, aInput, aOffset, aCount);
+}
+
+static nsresult FormatTime(const nsDateFormatSelector aDateFormatSelector,
+                           const nsTimeFormatSelector aTimeFormatSelector,
+                           const PRTime aPrTime, nsAString& aStringOut) {
+  // FormatPRExplodedTime will use GMT based formatted string (e.g. GMT+1)
+  // instead of local time zone name (e.g. CEST).
+  // To avoid this case when ResistFingerprinting is disabled, use
+  // |FormatPRTime| to show exact time zone name.
+  if (!nsContentUtils::ShouldResistFingerprinting()) {
+    return mozilla::DateTimeFormat::FormatPRTime(
+        aDateFormatSelector, aTimeFormatSelector, aPrTime, aStringOut);
+  }
+
+  PRExplodedTime prExplodedTime;
+  PR_ExplodeTime(aPrTime, PR_GMTParameters, &prExplodedTime);
+  return mozilla::DateTimeFormat::FormatPRExplodedTime(
+      aDateFormatSelector, aTimeFormatSelector, &prExplodedTime, aStringOut);
 }
 
 NS_IMETHODIMP
@@ -816,12 +819,10 @@ nsIndexedToHTML::OnIndexAvailable(nsIRequest* aRequest, nsISupports* aCtxt,
     pushBuffer.AppendInt(static_cast<int64_t>(t));
     pushBuffer.AppendLiteral("\">");
     nsAutoString formatted;
-    mozilla::DateTimeFormat::FormatPRTime(kDateFormatShort, kTimeFormatNone, t,
-                                          formatted);
+    FormatTime(kDateFormatShort, kTimeFormatNone, t, formatted);
     AppendNonAsciiToNCR(formatted, pushBuffer);
     pushBuffer.AppendLiteral("</td>\n <td>");
-    mozilla::DateTimeFormat::FormatPRTime(kDateFormatNone, kTimeFormatSeconds,
-                                          t, formatted);
+    FormatTime(kDateFormatNone, kTimeFormatSeconds, t, formatted);
     // use NCR to show date in any doc charset
     AppendNonAsciiToNCR(formatted, pushBuffer);
   }

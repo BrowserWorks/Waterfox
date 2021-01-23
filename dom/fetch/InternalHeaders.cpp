@@ -18,9 +18,9 @@
 namespace mozilla {
 namespace dom {
 
-InternalHeaders::InternalHeaders(const nsTArray<Entry>&& aHeaders,
+InternalHeaders::InternalHeaders(nsTArray<Entry>&& aHeaders,
                                  HeadersGuardEnum aGuard)
-    : mGuard(aGuard), mList(aHeaders), mListDirty(true) {}
+    : mGuard(aGuard), mList(std::move(aHeaders)), mListDirty(true) {}
 
 InternalHeaders::InternalHeaders(
     const nsTArray<HeadersEntry>& aHeadersEntryList, HeadersGuardEnum aGuard)
@@ -308,7 +308,7 @@ void InternalHeaders::SetGuard(HeadersGuardEnum aGuard, ErrorResult& aRv) {
   mGuard = aGuard;
 }
 
-InternalHeaders::~InternalHeaders() {}
+InternalHeaders::~InternalHeaders() = default;
 
 // static
 bool InternalHeaders::IsNoCorsSafelistedRequestHeaderName(
@@ -356,8 +356,7 @@ bool InternalHeaders::IsRevalidationHeader(const nsCString& aName) {
 // static
 bool InternalHeaders::IsInvalidName(const nsACString& aName, ErrorResult& aRv) {
   if (!NS_IsValidHTTPToken(aName)) {
-    NS_ConvertUTF8toUTF16 label(aName);
-    aRv.ThrowTypeError<MSG_INVALID_HEADER_NAME>(label);
+    aRv.ThrowTypeError<MSG_INVALID_HEADER_NAME>(aName);
     return true;
   }
 
@@ -368,8 +367,7 @@ bool InternalHeaders::IsInvalidName(const nsACString& aName, ErrorResult& aRv) {
 bool InternalHeaders::IsInvalidValue(const nsACString& aValue,
                                      ErrorResult& aRv) {
   if (!NS_IsReasonableHTTPHeaderValue(aValue)) {
-    NS_ConvertUTF8toUTF16 label(aValue);
-    aRv.ThrowTypeError<MSG_INVALID_HEADER_VALUE>(label);
+    aRv.ThrowTypeError<MSG_INVALID_HEADER_VALUE>(aValue);
     return true;
   }
   return false;
@@ -377,7 +375,7 @@ bool InternalHeaders::IsInvalidValue(const nsACString& aValue,
 
 bool InternalHeaders::IsImmutable(ErrorResult& aRv) const {
   if (mGuard == HeadersGuardEnum::Immutable) {
-    aRv.ThrowTypeError<MSG_HEADERS_IMMUTABLE>();
+    aRv.ThrowTypeError("Headers are immutable and cannot be modified.");
     return true;
   }
   return false;
@@ -418,7 +416,9 @@ void InternalHeaders::Fill(const Sequence<Sequence<nsCString>>& aInit,
   for (uint32_t i = 0; i < aInit.Length() && !aRv.Failed(); ++i) {
     const Sequence<nsCString>& tuple = aInit[i];
     if (tuple.Length() != 2) {
-      aRv.ThrowTypeError<MSG_INVALID_HEADER_SEQUENCE>();
+      aRv.ThrowTypeError(
+          "Headers require name/value tuples when being initialized by a "
+          "sequence.");
       return;
     }
     Append(tuple[0], tuple[1], aRv);

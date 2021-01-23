@@ -95,7 +95,7 @@ class FlacTrackDemuxer : public MediaTrackDemuxer,
   MediaResourceIndex mSource;
 
   // Flac frame parser used to detect frames and extract side info.
-  nsAutoPtr<flac::FrameParser> mParser;
+  UniquePtr<flac::FrameParser> mParser;
 
   // Total duration of parsed frames.
   media::TimeUnit mParsedFramesDuration;

@@ -26,9 +26,15 @@ serviceworker-worker-unregister = Unregister
 serviceworker-worker-debug = Debug
   .title = Only running service workers can be debugged
 
+# Text for the debug link displayed for an already started Service Worker, when we
+# are in multi e10s mode, which effectively disables this link.
+serviceworker-worker-debug-forbidden = Debug
+  .title = Can only debug service workers if multi e10s is disabled
+
 # Text for the start link displayed for a registered but not running Service Worker.
 # Clicking on the link will attempt to start the service worker.
-serviceworker-worker-start = Start
+serviceworker-worker-start2 = Start
+  .title = Can only start service workers if multi e10s is disabled
 
 # Text displayed for the updated time of the service worker. The <time> element will
 # display the last update time of the service worker script.
@@ -50,10 +56,6 @@ serviceworker-worker-status-running = Running
 # Service Worker status. A stopped service worker is registered but not currently active.
 serviceworker-worker-status-stopped = Stopped
 
-# Service Worker status. A registering service worker is not yet registered and cannot be
-# started or debugged.
-serviceworker-worker-status-registering = Registering
-
 # Text displayed when no service workers are visible for the current page. Clicking on the
 # link will open https://developer-mozilla-org/docs/Web/API/Service_Worker_API/Using_Service_Workers
 serviceworker-empty-intro = You need to register a Service Worker to inspect it here. <a>Learn more</a>
@@ -73,3 +75,82 @@ serviceworker-empty-suggestions-debugger = Step through your Service Worker regi
 # Suggestion to go to about:debugging in order to see Service Workers for all domains.
 # Clicking on the link will open about:debugging in a new tab.
 serviceworker-empty-suggestions-aboutdebugging = Inspect Service Workers from other domains. <a>Open about:debugging</a>
+
+# Header for the Manifest page when we have an actual manifest
+manifest-view-header = App Manifest
+
+# Header for the Manifest page when there's no manifest to inspect
+# The link will open https://developer.mozilla.org/en-US/docs/Web/Manifest
+manifest-empty-intro = You need to add a web app manifest to inspect it here. <a>Learn more</a>
+
+# Header for the Errors and Warnings section of Manifest inspection displayed in the application panel.
+manifest-item-warnings = Errors and Warnings
+
+# Header for the Identity section of Manifest inspection displayed in the application panel.
+manifest-item-identity = Identity
+
+# Header for the Presentation section of Manifest inspection displayed in the application panel.
+manifest-item-presentation = Presentation
+
+# Header for the Icon section of Manifest inspection displayed in the application panel.
+manifest-item-icons = Icons
+
+# Text displayed while we are loading the manifest file
+manifest-loading = Loading manifest…
+
+# Text displayed when the manifest has been successfully loaded
+manifest-loaded-ok = Manifest loaded.
+
+# Text displayed as a caption when there has been an error while trying to
+# load the manifest
+manifest-loaded-error = There was an error while loading the manifest:
+
+# Text displayed as an error when there has been a Firefox DevTools error while
+# trying to load the manifest
+manifest-loaded-devtools-error = Firefox DevTools error
+
+# Text displayed when the page has no manifest available
+manifest-non-existing = No manifest found to inspect.
+
+# Text displayed when the page has a manifest embedded in a Data URL and
+# thus we cannot link to it.
+manifest-json-link-data-url = The manifest is embedded in a Data URL.
+
+# Text displayed at manifest icons to label their purpose, as declared
+# in the manifest.
+manifest-icon-purpose = Purpose: <code>{$purpose}</code>
+
+# Text displayed as the alt attribute for <img> tags showing the icons in the
+# manifest.
+manifest-icon-img =
+  .alt = Icon
+
+# Text displayed as the title attribute for <img> tags showing the icons in the
+# manifest. `$sizes` is a user-dependent string that has been parsed as a
+# space-separated list of `<width>x<height>` sizes or the keyword `any`.
+manifest-icon-img-title = Icon with sizes: {$sizes}
+
+# Text displayed as the title attribute for <img> tags showing the icons in the
+# manifest, in case there's no icon size specified by the user
+manifest-icon-img-title-no-sizes = Unspecified size icon
+
+# Sidebar navigation item for Manifest sidebar item section
+sidebar-item-manifest = Manifest
+  .alt = Manifest Icon
+  .title = Manifest
+
+# Sidebar navigation item for Service Workers sidebar item section
+sidebar-item-service-workers = Service Workers
+  .alt = Service Workers Icon
+  .title = Service Workers
+
+# Text for the ALT and TITLE attributes of the warning icon
+icon-warning =
+  .alt = Warning icon
+  .title = Warning
+
+# Text for the ALT and TITLE attributes of the error icon
+icon-error =
+  .alt = Error icon
+  .title = Error
+

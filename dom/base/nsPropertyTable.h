@@ -34,7 +34,7 @@ class nsIFrame;
 
 class nsPropertyOwner {
  public:
-  nsPropertyOwner(const nsPropertyOwner& aOther) : mObject(aOther.mObject) {}
+  nsPropertyOwner(const nsPropertyOwner& aOther) = default;
 
   // These are the types of objects that can own properties. No object should
   // inherit more then one of these classes.
@@ -83,36 +83,35 @@ class nsPropertyTable {
   }
 
   /**
-   * Delete the property |aPropertyName| in the global category for object
+   * Remove the property |aPropertyName| in the global category for object
    * |aObject|. The property's destructor function will be called.
    */
-  nsresult DeleteProperty(nsPropertyOwner aObject, const nsAtom* aPropertyName);
+  nsresult RemoveProperty(nsPropertyOwner aObject, const nsAtom* aPropertyName);
 
   /**
-   * Unset the property |aPropertyName| in the global category for object
+   * Remove the property |aPropertyName| in the global category for object
    * |aObject|, but do not call the property's destructor function.  The
    * property value is returned.
    */
-  void* UnsetProperty(const nsPropertyOwner& aObject,
-                      const nsAtom* aPropertyName,
-                      nsresult* aStatus = nullptr) {
+  void* TakeProperty(const nsPropertyOwner& aObject,
+                     const nsAtom* aPropertyName, nsresult* aStatus = nullptr) {
     return GetPropertyInternal(aObject, aPropertyName, true, aStatus);
   }
 
   /**
-   * Deletes all of the properties for object |aObject|, calling the
-   * destructor function for each property.
+   * Removes all of the properties for object |aObject|, calling the destructor
+   * function for each property.
    */
-  void DeleteAllPropertiesFor(nsPropertyOwner aObject);
+  void RemoveAllPropertiesFor(nsPropertyOwner aObject);
 
   /**
    * Transfers all properties for object |aObject| that were set with the
-   * |aTransfer| argument as true to |aTable|. Deletes the other properties
-   * for object |aObject|, calling the destructor function for each property.
-   * If transfering a property fails, this deletes all the properties for
-   * object |aObject|.
+   * |aTransfer| argument as true to |aTable|. Removes the other properties for
+   * object |aObject|, calling the destructor function for each property.
+   * If transfering a property fails, this deletes all the properties for object
+   * |aObject|.
    */
-  nsresult TransferOrDeleteAllPropertiesFor(nsPropertyOwner aObject,
+  nsresult TransferOrRemoveAllPropertiesFor(nsPropertyOwner aObject,
                                             nsPropertyTable& aOtherTable);
 
   /**
@@ -131,13 +130,13 @@ class nsPropertyTable {
   void EnumerateAll(NSPropertyFunc aCallback, void* aData);
 
   /**
-   * Deletes all of the properties for all objects in the property
-   * table, calling the destructor function for each property.
+   * Removes all of the properties for all objects in the property table,
+   * calling the destructor function for each property.
    */
-  void DeleteAllProperties();
+  void RemoveAllProperties();
 
   nsPropertyTable() : mPropertyList(nullptr) {}
-  ~nsPropertyTable() { DeleteAllProperties(); }
+  ~nsPropertyTable() { RemoveAllProperties(); }
 
   /**
    * Function useable as destructor function for property data that is

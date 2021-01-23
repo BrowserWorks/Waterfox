@@ -15,7 +15,9 @@ add_task(async function() {
 
   requestLongerTimeout(2);
 
-  const { tab, monitor } = await initNetMonitor(FILTERING_URL);
+  const { tab, monitor } = await initNetMonitor(FILTERING_URL, {
+    requestCount: 1,
+  });
   info("Starting test... ");
 
   const { document, store, windowRequire } = monitor.panelWin;
@@ -32,7 +34,7 @@ add_task(async function() {
   for (let i = 0; i < 2; i++) {
     info(`Performing requests in batch #${i}`);
     const wait = waitForNetworkEvents(monitor, 8);
-    await ContentTask.spawn(tab.linkedBrowser, {}, async function() {
+    await SpecialPowers.spawn(tab.linkedBrowser, [], async function() {
       content.wrappedJSObject.performRequests(
         '{ "getMedia": true, "getFlash": true }'
       );
@@ -55,7 +57,7 @@ add_task(async function() {
 
   function testStatus() {
     const state = store.getState();
-    const totalRequestsCount = state.requests.requests.size;
+    const totalRequestsCount = state.requests.requests.length;
     const requestsSummary = getDisplayedRequestsSummary(state);
     info(
       `Current requests: ${requestsSummary.count} of ${totalRequestsCount}.`
@@ -95,11 +97,11 @@ add_task(async function() {
     info("Current summary finish: " + valueFinish);
     const expectedFinish = L10N.getFormatStrWithNumbers(
       "networkMenu.summary.finish",
-      getFormattedTime(requestsSummary.millis)
+      getFormattedTime(requestsSummary.ms)
     );
 
     info(`Computed total bytes: ${requestsSummary.bytes}`);
-    info(`Computed total millis: ${requestsSummary.millis}`);
+    info(`Computed total ms: ${requestsSummary.ms}`);
 
     is(valueCount, expectedCount, "The current summary count is correct.");
     is(

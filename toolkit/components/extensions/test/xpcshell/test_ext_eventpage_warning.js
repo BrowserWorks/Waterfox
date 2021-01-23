@@ -1,6 +1,8 @@
 "use strict";
 
 AddonTestUtils.init(this);
+// This test expects and checks deprecation warnings.
+ExtensionTestUtils.failOnSchemaWarnings(false);
 
 function createEventPageExtension(eventPage) {
   return ExtensionTestUtils.loadExtension({
@@ -79,7 +81,7 @@ add_task(async function test_eventpages() {
         { message: /Event pages are not currently supported./ },
         { message: /Event pages are not currently supported./ },
         {
-          message: /Reading manifest: Error processing background.nonExistentProp: An unexpected property was found/,
+          message: /Reading manifest: Warning processing background.nonExistentProp: An unexpected property was found/,
         },
       ],
     },

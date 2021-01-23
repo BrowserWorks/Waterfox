@@ -39,7 +39,7 @@ class CanvasGradient : public nsWrapperCache {
   }
 
   // WebIDL
-  void AddColorStop(float offset, const nsAString& colorstr, ErrorResult& rv);
+  void AddColorStop(float offset, const nsACString& colorstr, ErrorResult& rv);
 
   JSObject* WrapObject(JSContext* aCx,
                        JS::Handle<JSObject*> aGivenProto) override {
@@ -58,7 +58,7 @@ class CanvasGradient : public nsWrapperCache {
   nsTArray<mozilla::gfx::GradientStop> mRawStops;
   RefPtr<mozilla::gfx::GradientStops> mStops;
   Type mType;
-  virtual ~CanvasGradient() {}
+  virtual ~CanvasGradient() = default;
 };
 
 }  // namespace dom

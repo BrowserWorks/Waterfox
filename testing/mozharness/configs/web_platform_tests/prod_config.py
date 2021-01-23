@@ -14,7 +14,6 @@ ADJUST_MOUSE_AND_SCREEN = False
 config = {
     "options": [
         "--prefs-root=%(test_path)s/prefs",
-        "--processes=1",
         "--config=%(test_path)s/wptrunner.ini",
         "--ca-cert-path=%(test_path)s/tests/tools/certs/cacert.pem",
         "--host-key-path=%(test_path)s/tests/tools/certs/web-platform.test.key",
@@ -22,8 +21,7 @@ config = {
         "--certutil-binary=%(test_install_path)s/bin/certutil",
     ],
 
-    # this would normally be in "exes", but "exes" is clobbered by remove_executables
-    "geckodriver": os.path.join("%(abs_test_bin_dir)s", "geckodriver"),
+    "geckodriver": os.path.join("%(abs_fetches_dir)s", "geckodriver"),
 
     "per_test_category": "web-platform",
 

@@ -1,5 +1,9 @@
 /* -*- Mode: indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set sts=2 sw=2 et tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
 
 var { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
@@ -37,8 +41,10 @@ var gRootItems = new Map();
 // Menu IDs that were eligible for being shown in the current menu.
 var gShownMenuItems = new DefaultMap(() => []);
 
-// Set of extensions that are listening to onShown.
-var gOnShownSubscribers = new Set();
+// Map[Extension -> Set[Contexts]]
+// A DefaultMap (keyed by extension) which keeps track of the
+// contexts with a subscribed onShown event listener.
+var gOnShownSubscribers = new DefaultMap(() => new Set());
 
 // If id is not specified for an item we use an integer.
 var gNextMenuItemID = 0;
@@ -308,7 +314,7 @@ var gMenuBuilder = {
   buildSingleElement(item, contextData) {
     let doc = contextData.menu.ownerDocument;
     let element;
-    if (item.children.length > 0) {
+    if (item.children.length) {
       element = this.createMenuElement(doc, item);
     } else if (item.type == "separator") {
       element = doc.createXULElement("menuseparator");
@@ -441,19 +447,7 @@ var gMenuBuilder = {
         }
 
         let info = item.getClickInfo(contextData, wasChecked);
-
-        const map = {
-          shiftKey: "Shift",
-          altKey: "Alt",
-          metaKey: "Command",
-          ctrlKey: "Ctrl",
-        };
-        info.modifiers = Object.keys(map)
-          .filter(key => event[key])
-          .map(key => map[key]);
-        if (event.ctrlKey && AppConstants.platform === "macosx") {
-          info.modifiers.push("MacCtrl");
-        }
+        info.modifiers = clickModifiersFromEvent(event);
 
         info.button = button;
 
@@ -579,7 +573,9 @@ var gMenuBuilder = {
     if (contextData.onBrowserAction || contextData.onPageAction) {
       dispatchOnShownEvent(contextData.extension);
     } else {
-      gOnShownSubscribers.forEach(dispatchOnShownEvent);
+      for (const extension of gOnShownSubscribers.keys()) {
+        dispatchOnShownEvent(extension);
+      }
     }
 
     this.contextData = contextData;
@@ -1185,8 +1181,7 @@ const menuTracker = {
       gMenuBuilder.build({ menu, tab, pageUrl, inToolsMenu: true });
     }
     if (menu.id === "tabContextMenu") {
-      const trigger = menu.triggerNode;
-      const tab = trigger.localName === "tab" ? trigger : tabTracker.activeTab;
+      const tab = menu.ownerGlobal.TabContextMenu.contextTab;
       const pageUrl = tab.linkedBrowser.currentURI.spec;
       gMenuBuilder.build({ menu, tab, pageUrl, onTab: true });
     }
@@ -1275,10 +1270,14 @@ this.menusInternal = class extends ExtensionAPI {
             let tab = nativeTab && extension.tabManager.convert(nativeTab);
             fire.sync(info, tab);
           };
-          gOnShownSubscribers.add(extension);
+          gOnShownSubscribers.get(extension).add(context);
           extension.on("webext-menu-shown", listener);
           return () => {
-            gOnShownSubscribers.delete(extension);
+            const contexts = gOnShownSubscribers.get(extension);
+            contexts.delete(context);
+            if (contexts.size === 0) {
+              gOnShownSubscribers.delete(extension);
+            }
             extension.off("webext-menu-shown", listener);
           };
         },

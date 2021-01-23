@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY joinChatWindow.title "Пачаць гутарыць">
+<!ENTITY name.label "Пакой">
+<!ENTITY optional.label "(неабавязкова)">
+<!ENTITY account.label "Рахунак">
+<!ENTITY autojoin.label "Самазлучацца з гэтым пакоем гутарак">
+<!ENTITY autojoin.accesskey "С">

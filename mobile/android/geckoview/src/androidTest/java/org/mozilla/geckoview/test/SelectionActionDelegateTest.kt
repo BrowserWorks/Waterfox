@@ -4,33 +4,31 @@
 
 package org.mozilla.geckoview.test
 
-import org.mozilla.geckoview.GeckoResponse
-import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.GeckoSession.SelectionActionDelegate.*
 import org.mozilla.geckoview.test.rule.GeckoSessionTestRule.AssertCalled
 import org.mozilla.geckoview.test.rule.GeckoSessionTestRule.NullDelegate
-import org.mozilla.geckoview.test.rule.GeckoSessionTestRule.WithDevToolsAPI
 import org.mozilla.geckoview.test.rule.GeckoSessionTestRule.WithDisplay
 import org.mozilla.geckoview.test.util.Callbacks
 
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.support.test.InstrumentationRegistry
-import android.support.test.filters.MediumTest
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.filters.MediumTest
 
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.*
+import org.json.JSONArray
 import org.junit.Assume.assumeThat
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.junit.runners.Parameterized.Parameter
 import org.junit.runners.Parameterized.Parameters
+import org.mozilla.geckoview.GeckoSession
 
 @MediumTest
 @RunWith(Parameterized::class)
-@WithDevToolsAPI
 @WithDisplay(width = 100, height = 100)
 class SelectionActionDelegateTest : BaseSessionTest() {
     enum class ContentType {
@@ -79,7 +77,7 @@ class SelectionActionDelegateTest : BaseSessionTest() {
                 testThat(selectedContent, {}, hasShowActionRequest(
                         FLAG_IS_EDITABLE, arrayOf(ACTION_COLLAPSE_TO_START, ACTION_COLLAPSE_TO_END,
                                                   ACTION_COPY, ACTION_CUT, ACTION_DELETE,
-                                                  ACTION_HIDE, ACTION_PASTE, ACTION_SELECT_ALL)))
+                                                  ACTION_HIDE, ACTION_PASTE)))
             }
         } else {
             testThat(selectedContent, {}, hasShowActionRequest(
@@ -196,7 +194,7 @@ class SelectionActionDelegateTest : BaseSessionTest() {
 
     /** Main method that performs test logic. */
     private fun testThat(content: SelectedContent,
-                         respondingWith: (GeckoResponse<String>) -> Unit,
+                         respondingWith: (Selection) -> Unit,
                          result: (SelectedContent) -> Unit,
                          vararg sideEffects: (SelectedContent) -> Unit) {
 
@@ -212,15 +210,15 @@ class SelectionActionDelegateTest : BaseSessionTest() {
                 "layout.accessiblecaret.script_change_update_mode" to 2))
 
         mainSession.delegateDuringNextWait(object : Callbacks.SelectionActionDelegate {
-            override fun onShowActionRequest(session: GeckoSession, selection: GeckoSession.SelectionActionDelegate.Selection, actions: Array<out String>, response: GeckoResponse<String>) {
-                respondingWith(response)
+            override fun onShowActionRequest(session: GeckoSession, selection: GeckoSession.SelectionActionDelegate.Selection) {
+                respondingWith(selection)
             }
         })
 
         content.select()
         mainSession.waitUntilCalled(object : Callbacks.SelectionActionDelegate {
             @AssertCalled(count = 1)
-            override fun onShowActionRequest(session: GeckoSession, selection: Selection, actions: Array<out String>, response: GeckoResponse<String>) {
+            override fun onShowActionRequest(session: GeckoSession, selection: Selection) {
                 assertThat("Initial content should match",
                            selection.text, equalTo(content.initialContent))
             }
@@ -234,14 +232,14 @@ class SelectionActionDelegateTest : BaseSessionTest() {
     /** Helpers. */
 
     private val clipboard by lazy {
-        InstrumentationRegistry.getTargetContext().getSystemService(Context.CLIPBOARD_SERVICE)
+        InstrumentationRegistry.getInstrumentation().targetContext.getSystemService(Context.CLIPBOARD_SERVICE)
                 as ClipboardManager
     }
 
     private fun withClipboard(content: String = "", lambda: () -> Unit) {
         val oldClip = clipboard.primaryClip
         try {
-            clipboard.primaryClip = ClipData.newPlainText("", content)
+            clipboard.setPrimaryClip(ClipData.newPlainText("", content))
 
             sessionRule.addExternalDelegateUntilTestEnd(
                     ClipboardManager.OnPrimaryClipChangedListener::class,
@@ -250,7 +248,7 @@ class SelectionActionDelegateTest : BaseSessionTest() {
                     ClipboardManager.OnPrimaryClipChangedListener {})
             lambda()
         } finally {
-            clipboard.primaryClip = oldClip ?: ClipData.newPlainText("", "")
+            clipboard.setPrimaryClip(oldClip ?: ClipData.newPlainText("", ""))
         }
     }
 
@@ -267,25 +265,26 @@ class SelectionActionDelegateTest : BaseSessionTest() {
                                  override val initialContent: String) : SelectedContent {
         protected fun selectTo(to: Int) {
             mainSession.evaluateJS("""document.getSelection().setBaseAndExtent(
-                $('$id').firstChild, 0, $('$id').firstChild, $to)""")
+                document.querySelector('$id').firstChild, 0,
+                document.querySelector('$id').firstChild, $to)""")
         }
 
         override fun select() = selectTo(initialContent.length)
 
         override val content: String get() {
-            return mainSession.evaluateJS("$('$id').textContent") as String
+            return mainSession.evaluateJS("document.querySelector('$id').textContent") as String
         }
 
         override val selectionOffsets: Pair<Int, Int> get() {
             if (mainSession.evaluateJS("""
-                document.getSelection().anchorNode !== $('$id').firstChild ||
-                document.getSelection().focusNode !== $('$id').firstChild""") as Boolean) {
+                document.getSelection().anchorNode !== document.querySelector('$id').firstChild ||
+                document.getSelection().focusNode !== document.querySelector('$id').firstChild""") as Boolean) {
                 return Pair(-1, -1)
             }
             val offsets = mainSession.evaluateJS("""[
                 document.getSelection().anchorOffset,
-                document.getSelection().focusOffset]""").asJSList<Double>()
-            return Pair(offsets[0].toInt(), offsets[1].toInt())
+                document.getSelection().focusOffset]""") as JSONArray
+            return Pair(offsets[0] as Int, offsets[1] as Int)
         }
     }
 
@@ -296,39 +295,40 @@ class SelectionActionDelegateTest : BaseSessionTest() {
     open inner class SelectedEditableElement(
             val id: String, override val initialContent: String) : SelectedContent {
         override fun focus() {
-            mainSession.waitForJS("$('$id').focus()")
+            mainSession.waitForJS("document.querySelector('$id').focus()")
         }
 
         override fun select() {
-            mainSession.evaluateJS("$('$id').select()")
+            mainSession.evaluateJS("document.querySelector('$id').select()")
         }
 
         override val content: String get() {
-            return mainSession.evaluateJS("$('$id').value") as String
+            return mainSession.evaluateJS("document.querySelector('$id').value") as String
         }
 
         override val selectionOffsets: Pair<Int, Int> get() {
             val offsets = mainSession.evaluateJS(
-                    "[ $('$id').selectionStart, $('$id').selectionEnd ]").asJSList<Double>()
-            return Pair(offsets[0].toInt(), offsets[1].toInt())
+                    """[ document.querySelector('$id').selectionStart,
+                        |document.querySelector('$id').selectionEnd ]""".trimMargin()) as JSONArray
+            return Pair(offsets[0] as Int, offsets[1] as Int)
         }
     }
 
     inner class CollapsedEditableElement(id: String) : SelectedEditableElement(id, "") {
         override fun select() {
-            mainSession.evaluateJS("$('$id').setSelectionRange(0, 0)")
+            mainSession.evaluateJS("document.querySelector('$id').setSelectionRange(0, 0)")
         }
     }
 
     open inner class SelectedFrame(val id: String,
                                    override val initialContent: String) : SelectedContent {
         override fun focus() {
-            mainSession.evaluateJS("$('$id').contentWindow.focus()")
+            mainSession.evaluateJS("document.querySelector('$id').contentWindow.focus()")
         }
 
         protected fun selectTo(to: Int) {
             mainSession.evaluateJS("""(function() {
-                    var doc = $('$id').contentDocument;
+                    var doc = document.querySelector('$id').contentDocument;
                     var text = doc.body.firstChild;
                     doc.getSelection().setBaseAndExtent(text, 0, text, $to);
                 })()""")
@@ -337,19 +337,19 @@ class SelectionActionDelegateTest : BaseSessionTest() {
         override fun select() = selectTo(initialContent.length)
 
         override val content: String get() {
-            return mainSession.evaluateJS("$('$id').contentDocument.body.textContent") as String
+            return mainSession.evaluateJS("document.querySelector('$id').contentDocument.body.textContent") as String
         }
 
         override val selectionOffsets: Pair<Int, Int> get() {
             val offsets = mainSession.evaluateJS("""(function() {
-                    var sel = $('$id').contentDocument.getSelection();
-                    var text = $('$id').contentDocument.body.firstChild;
+                    var sel = document.querySelector('$id').contentDocument.getSelection();
+                    var text = document.querySelector('$id').contentDocument.body.firstChild;
                     if (sel.anchorNode !== text || sel.focusNode !== text) {
                         return [-1, -1];
                     }
                     return [sel.anchorOffset, sel.focusOffset];
-                })()""").asJSList<Double>()
-            return Pair(offsets[0].toInt(), offsets[1].toInt())
+                })()""") as JSONArray
+            return Pair(offsets[0] as Int, offsets[1] as Int)
         }
     }
 
@@ -360,12 +360,12 @@ class SelectionActionDelegateTest : BaseSessionTest() {
 
     /** Lambda for responding with certain actions. */
 
-    private fun withResponse(vararg actions: String): (GeckoResponse<String>) -> Unit {
+    private fun withResponse(vararg actions: String): (Selection) -> Unit {
         var responded = false
         return { response ->
             if (!responded) {
                 responded = true
-                actions.forEach { response.respond(it) }
+                actions.forEach { response.execute(it) }
             }
         }
     }
@@ -377,14 +377,14 @@ class SelectionActionDelegateTest : BaseSessionTest() {
                                      expectedActions: Array<out String>) = { it: SelectedContent ->
         mainSession.forCallbacksDuringWait(object : Callbacks.SelectionActionDelegate {
             @AssertCalled(count = 1)
-            override fun onShowActionRequest(session: GeckoSession, selection: GeckoSession.SelectionActionDelegate.Selection, actions: Array<out String>, response: GeckoResponse<String>) {
+            override fun onShowActionRequest(session: GeckoSession, selection: GeckoSession.SelectionActionDelegate.Selection) {
                 assertThat("Selection text should be valid",
                            selection.text, equalTo(it.initialContent))
                 assertThat("Selection flags should be valid",
                            selection.flags, equalTo(expectedFlags))
                 assertThat("Selection rect should be valid",
                            selection.clientRect!!.isEmpty, equalTo(false))
-                assertThat("Actions must be valid", actions,
+                assertThat("Actions must be valid", selection.availableActions.toTypedArray(),
                            arrayContainingInAnyOrder(*expectedActions))
             }
         })
@@ -403,7 +403,7 @@ class SelectionActionDelegateTest : BaseSessionTest() {
     private fun changesSelectionTo(matcher: Matcher<String>) = { _: SelectedContent ->
         sessionRule.waitUntilCalled(object : Callbacks.SelectionActionDelegate {
             @AssertCalled(count = 1)
-            override fun onShowActionRequest(session: GeckoSession, selection: Selection, actions: Array<out String>, response: GeckoResponse<String>) {
+            override fun onShowActionRequest(session: GeckoSession, selection: Selection) {
                 assertThat("New selection text should match", selection.text, matcher)
             }
         })

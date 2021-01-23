@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY biffAll.label                 "Activar actualisationes pro tote le fluxos">
+<!ENTITY biffAll.accesskey             "A">
+
+<!ENTITY newFeedSettings.label         "Parametros predefinite pro nove fluxos">
+
+<!ENTITY manageSubscriptions.label     "Gerer le subscriptiones…">
+<!ENTITY manageSubscriptions.accesskey "G">
+
+<!ENTITY feedWindowTitle.label         "Assistente de contos de flux">
+<!ENTITY feeds.accountName             "Blogs e actualitates">

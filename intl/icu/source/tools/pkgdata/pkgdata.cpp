@@ -46,6 +46,7 @@
 #include "flagparser.h"
 #include "filetools.h"
 #include "charstr.h"
+#include "uassert.h"
 
 #if U_HAVE_POPEN
 # include <unistd.h>
@@ -65,6 +66,8 @@ using icu::LocalPointerBase;
 U_DEFINE_LOCAL_OPEN_POINTER(LocalPipeFilePointer, FILE, pclose);
 
 #endif
+
+using icu::LocalMemory;
 
 static void loadLists(UPKGOptions *o, UErrorCode *status);
 
@@ -93,7 +96,7 @@ static int32_t pkg_archiveLibrary(const char *targetDir, const char *version, UB
 static void createFileNames(UPKGOptions *o, const char mode, const char *version_major, const char *version, const char *libName, const UBool reverseExt, UBool noVersion);
 static int32_t initializePkgDataFlags(UPKGOptions *o);
 
-static int32_t pkg_getOptionsFromICUConfig(UBool verbose, UOption *option);
+static int32_t pkg_getPkgDataPath(UBool verbose, UOption *option);
 static int runCommand(const char* command, UBool specialHandling=FALSE);
 
 #define IN_COMMON_MODE(mode) (mode == 'a' || mode == 'c')
@@ -122,8 +125,9 @@ enum {
     QUIET,
     WITHOUT_ASSEMBLY,
     PDS_BUILD,
-    UWP_BUILD,
-    UWP_ARM_BUILD
+    WIN_UWP_BUILD,
+    WIN_DLL_ARCH,
+    WIN_DYNAMICBASE
 };
 
 /* This sets the modes that are available */
@@ -167,7 +171,8 @@ static UOption options[]={
     /*20*/    UOPTION_DEF( "without-assembly", 'w', UOPT_NO_ARG),
     /*21*/    UOPTION_DEF("zos-pds-build", 'z', UOPT_NO_ARG),
     /*22*/    UOPTION_DEF("windows-uwp-build", 'u', UOPT_NO_ARG),
-    /*23*/    UOPTION_DEF("windows-uwp-arm-build", 'a', UOPT_NO_ARG)
+    /*23*/    UOPTION_DEF("windows-DLL-arch", 'a', UOPT_REQUIRES_ARG),
+    /*24*/    UOPTION_DEF("windows-dynamicbase", 'b', UOPT_NO_ARG),
 };
 
 /* This enum and the following char array should be kept in sync. */
@@ -258,7 +263,8 @@ const char options_help[][320]={
     "Build the data without assembly code",
     "Build PDS dataset (zOS build only)",
     "Build for Universal Windows Platform (Windows build only)",
-    "Set DLL machine type for UWP to target windows ARM (Windows UWP build only)"
+    "Specify the DLL machine architecture for LINK.exe (Windows build only)",
+    "Ignored. Enable DYNAMICBASE on the DLL. This is now the default. (Windows build only)",
 };
 
 const char  *progname = "PKGDATA";
@@ -304,7 +310,7 @@ main(int argc, char* argv[]) {
 
 #if !defined(WINDOWS_WITH_MSVC) || defined(USING_CYGWIN)
         if(!options[BLDOPT].doesOccur && uprv_strcmp(options[MODE].value, "common") != 0) {
-          if (pkg_getOptionsFromICUConfig(options[VERBOSE].doesOccur, &options[BLDOPT]) != 0) {
+          if (pkg_getPkgDataPath(options[VERBOSE].doesOccur, &options[BLDOPT]) != 0) {
                 fprintf(stderr, " required parameter is missing: -O is required for static and shared builds.\n");
                 fprintf(stderr, "Run '%s --help' for help.\n", progname);
                 return 1;
@@ -466,6 +472,10 @@ main(int argc, char* argv[]) {
 #else
         o.withoutAssembly = TRUE;
 #endif
+    }
+
+    if (options[WIN_DYNAMICBASE].doesOccur) {
+        fprintf(stdout, "Note: Ignoring option -b (windows-dynamicbase).\n");
     }
 
     /* OK options are set up. Now the file lists. */
@@ -718,7 +728,13 @@ static int32_t pkg_executeOptions(UPKGOptions *o) {
                 if (genccodeAssembly &&
                     (uprv_strlen(genccodeAssembly)>3) &&
                     checkAssemblyHeaderName(genccodeAssembly+3)) {
-                    writeAssemblyCode(datFileNamePath, o->tmpDir, o->entryName, NULL, gencFilePath);
+                    writeAssemblyCode(
+                        datFileNamePath,
+                        o->tmpDir,
+                        o->entryName,
+                        NULL,
+                        gencFilePath,
+                        sizeof(gencFilePath));
 
                     result = pkg_createWithAssemblyCode(targetDir, mode, gencFilePath);
                     if (result != 0) {
@@ -753,7 +769,15 @@ static int32_t pkg_executeOptions(UPKGOptions *o) {
                     /* Try to detect the arch type, use NULL if unsuccessful */
                     char optMatchArch[10] = { 0 };
                     pkg_createOptMatchArch(optMatchArch);
-                    writeObjectCode(datFileNamePath, o->tmpDir, o->entryName, (optMatchArch[0] == 0 ? NULL : optMatchArch), NULL, gencFilePath);
+                    writeObjectCode(
+                        datFileNamePath,
+                        o->tmpDir,
+                        o->entryName,
+                        (optMatchArch[0] == 0 ? NULL : optMatchArch),
+                        NULL,
+                        gencFilePath,
+                        sizeof(gencFilePath),
+                        TRUE);
                     pkg_destroyOptMatchArch(optMatchArch);
 #if U_PLATFORM_IS_LINUX_BASED
                     result = pkg_generateLibraryFile(targetDir, mode, gencFilePath);
@@ -1109,12 +1133,15 @@ static int32_t pkg_installLibrary(const char *installDir, const char *targetDir,
     int32_t result = 0;
     char cmd[SMALL_BUFFER_MAX_SIZE];
 
-    sprintf(cmd, "cd %s && %s %s %s%s%s",
+    auto ret = snprintf(cmd,
+            SMALL_BUFFER_MAX_SIZE,
+            "cd %s && %s %s %s%s%s",
             targetDir,
             pkgDataFlags[INSTALL_CMD],
             libFileNames[LIB_FILE_VERSION],
-            installDir, PKGDATA_FILE_SEP_STRING, libFileNames[LIB_FILE_VERSION]
-            );
+            installDir, PKGDATA_FILE_SEP_STRING, libFileNames[LIB_FILE_VERSION]);
+    (void)ret;
+    U_ASSERT(0 <= ret && ret < SMALL_BUFFER_MAX_SIZE);
 
     result = runCommand(cmd);
 
@@ -1232,10 +1259,14 @@ static int32_t pkg_installFileMode(const char *installDir, const char *srcDir, c
                     buffer[bufferLength-1] = 0;
                 }
 
-                sprintf(cmd, "%s %s%s%s %s%s%s",
+                auto ret = snprintf(cmd,
+                        SMALL_BUFFER_MAX_SIZE,
+                        "%s %s%s%s %s%s%s",
                         pkgDataFlags[INSTALL_CMD],
                         srcDir, PKGDATA_FILE_SEP_STRING, buffer,
                         installDir, PKGDATA_FILE_SEP_STRING, buffer);
+                (void)ret;
+                U_ASSERT(0 <= ret && ret < SMALL_BUFFER_MAX_SIZE);
 
                 result = runCommand(cmd);
                 if (result != 0) {
@@ -1507,9 +1538,7 @@ static int32_t pkg_generateLibraryFile(const char *targetDir, const char mode, c
 
 static int32_t pkg_createWithAssemblyCode(const char *targetDir, const char mode, const char *gencFilePath) {
     char tempObjectFile[SMALL_BUFFER_MAX_SIZE] = "";
-    char *cmd;
     int32_t result = 0;
-
     int32_t length = 0;
 
     /* Remove the ending .s and replace it with .o for the new object file. */
@@ -1519,22 +1548,22 @@ static int32_t pkg_createWithAssemblyCode(const char *targetDir, const char mode
     length = static_cast<int32_t>(uprv_strlen(pkgDataFlags[COMPILER]) + uprv_strlen(pkgDataFlags[LIBFLAGS])
              + uprv_strlen(tempObjectFile) + uprv_strlen(gencFilePath) + BUFFER_PADDING_SIZE);
 
-    cmd = (char *)uprv_malloc(sizeof(char) * length);
-    if (cmd == NULL) {
+    LocalMemory<char> cmd((char *)uprv_malloc(sizeof(char) * length));
+    if (cmd.isNull()) {
         return -1;
     }
 
     /* Generate the object file. */
-    sprintf(cmd, "%s %s -o %s %s",
+    sprintf(cmd.getAlias(), "%s %s -o %s %s",
             pkgDataFlags[COMPILER],
             pkgDataFlags[LIBFLAGS],
             tempObjectFile,
             gencFilePath);
 
-    result = runCommand(cmd);
-    uprv_free(cmd);
+    result = runCommand(cmd.getAlias());
+
     if (result != 0) {
-        fprintf(stderr, "Error creating with assembly code. Failed command: %s\n", cmd);
+        fprintf(stderr, "Error creating with assembly code. Failed command: %s\n", cmd.getAlias());
         return result;
     }
 
@@ -1669,12 +1698,20 @@ static int32_t pkg_createWithoutAssemblyCode(UPKGOptions *o, const char *targetD
                             break;
                         }
                     }
-                    sprintf(newName, "%s_%s",
+                    auto ret = snprintf(newName,
+                            SMALL_BUFFER_MAX_SIZE,
+                            "%s_%s",
                             DATA_PREFIX[n],
                             newNameTmp);
-                    sprintf(dataName, "%s_%s",
+                    (void)ret;
+                    U_ASSERT(0 <= ret && ret < SMALL_BUFFER_MAX_SIZE);
+                    ret = snprintf(dataName,
+                            SMALL_BUFFER_MAX_SIZE,
+                            "%s_%s",
                             o->shortName,
                             DATA_PREFIX[n]);
+                    (void)ret;
+                    U_ASSERT(0 <= ret && ret < SMALL_BUFFER_MAX_SIZE);
                 }
                 if (newName[0] != 0) {
                     break;
@@ -1685,7 +1722,13 @@ static int32_t pkg_createWithoutAssemblyCode(UPKGOptions *o, const char *targetD
               printf("# Generating %s \n", gencmnFile);
             }
 
-            writeCCode(file, o->tmpDir, dataName[0] != 0 ? dataName : o->shortName, newName[0] != 0 ? newName : NULL, gencmnFile);
+            writeCCode(
+                file,
+                o->tmpDir,
+                dataName[0] != 0 ? dataName : o->shortName,
+                newName[0] != 0 ? newName : NULL,
+                gencmnFile,
+                sizeof(gencmnFile));
 
 #ifdef USE_SINGLE_CCODE_FILE
             sprintf(cmd, "#include \"%s\"\n", gencmnFile);
@@ -1758,14 +1801,12 @@ static int32_t pkg_createWithoutAssemblyCode(UPKGOptions *o, const char *targetD
 
 #ifdef WINDOWS_WITH_MSVC
 #define LINK_CMD "link.exe /nologo /release /out:"
-#define LINK_FLAGS "/DLL /NOENTRY /MANIFEST:NO /implib:"
-#ifdef _WIN64
-#define LINK_EXTRA_UWP_FLAGS "/NXCOMPAT /DYNAMICBASE /APPCONTAINER "
-#else
-#define LINK_EXTRA_UWP_FLAGS "/NXCOMPAT /SAFESEH /DYNAMICBASE /APPCONTAINER /MACHINE:X86"
-#endif
-#define LINK_EXTRA_UWP_FLAGS_ARM "/NXCOMPAT /DYNAMICBASE /APPCONTAINER /MACHINE:ARM"
-#define LINK_EXTRA_NO_UWP_FLAGS "/base:0x4ad00000 "
+#define LINK_FLAGS "/NXCOMPAT /DYNAMICBASE /DLL /NOENTRY /MANIFEST:NO /implib:"
+
+#define LINK_EXTRA_UWP_FLAGS "/APPCONTAINER "
+#define LINK_EXTRA_UWP_FLAGS_X86_ONLY "/SAFESEH "
+
+#define LINK_EXTRA_FLAGS_MACHINE "/MACHINE:"
 #define LIB_CMD "LIB.exe /nologo /out:"
 #define LIB_FILE "icudt.lib"
 #define LIB_EXT UDATA_LIB_SUFFIX
@@ -1845,23 +1886,23 @@ static int32_t pkg_createWindowsDLL(const char mode, const char *gencFilePath, U
           return 0;
         }
 
-        char *extraFlags = "";
+        char extraFlags[SMALL_BUFFER_MAX_SIZE] = "";
 #ifdef WINDOWS_WITH_MSVC
-        if (options[UWP_BUILD].doesOccur)
-        {
-            if (options[UWP_ARM_BUILD].doesOccur)
-            {
-                extraFlags = LINK_EXTRA_UWP_FLAGS_ARM;
-            }
-            else
-            {
-                extraFlags = LINK_EXTRA_UWP_FLAGS;
+        if (options[WIN_UWP_BUILD].doesOccur) {
+            uprv_strcat(extraFlags, LINK_EXTRA_UWP_FLAGS);
+
+            if (options[WIN_DLL_ARCH].doesOccur) {
+                if (uprv_strcmp(options[WIN_DLL_ARCH].value, "X86") == 0) {
+                    uprv_strcat(extraFlags, LINK_EXTRA_UWP_FLAGS_X86_ONLY);
+                }
             }
         }
-        else
-        {
-            extraFlags = LINK_EXTRA_NO_UWP_FLAGS;
+
+        if (options[WIN_DLL_ARCH].doesOccur) {
+            uprv_strcat(extraFlags, LINK_EXTRA_FLAGS_MACHINE);
+            uprv_strcat(extraFlags, options[WIN_DLL_ARCH].value);
         }
+
 #endif
         sprintf(cmd, "%s\"%s\" %s %s\"%s\" \"%s\" %s",
             LINK_CMD,
@@ -2134,41 +2175,46 @@ static void loadLists(UPKGOptions *o, UErrorCode *status)
     } /* for each file list file */
 }
 
-/* Try calling icu-config directly to get the option file. */
- static int32_t pkg_getOptionsFromICUConfig(UBool verbose, UOption *option) {
+/* Helper for pkg_getPkgDataPath() */
 #if U_HAVE_POPEN
-    LocalPipeFilePointer p;
-    size_t n;
-    static char buf[512] = "";
+static UBool getPkgDataPath(const char *cmd, UBool verbose, char *buf, size_t items) {
     icu::CharString cmdBuf;
     UErrorCode status = U_ZERO_ERROR;
-    const char cmd[] = "icu-config --incpkgdatafile";
-    char dirBuf[1024] = "";
-    /* #1 try the same path where pkgdata was called from. */
-    findDirname(progname, dirBuf, UPRV_LENGTHOF(dirBuf), &status);
-    if(U_SUCCESS(status)) {
-      cmdBuf.append(dirBuf, status);
-      if (cmdBuf[0] != 0) {
-        cmdBuf.append( U_FILE_SEP_STRING, status );
-      }
-      cmdBuf.append( cmd, status );
-      
-      if(verbose) {
-        fprintf(stdout, "# Calling icu-config: %s\n", cmdBuf.data());
-      }
-      p.adoptInstead(popen(cmdBuf.data(), "r"));
+    LocalPipeFilePointer p;
+    size_t n;
+
+    cmdBuf.append(cmd, status);
+    if (verbose) {
+        fprintf(stdout, "# Calling: %s\n", cmdBuf.data());
+    }
+    p.adoptInstead( popen(cmdBuf.data(), "r") );
+
+    if (p.isNull() || (n = fread(buf, 1, items-1, p.getAlias())) <= 0) {
+        fprintf(stderr, "%s: Error calling '%s'\n", progname, cmd);
+        *buf = 0;
+        return FALSE;
     }
 
-    if(p.isNull() || (n = fread(buf, 1, UPRV_LENGTHOF(buf)-1, p.getAlias())) <= 0) {
-        if(verbose) {
-            fprintf(stdout, "# Calling icu-config: %s\n", cmd);
-        }
+    return TRUE;
+}
+#endif
 
-        p.adoptInstead(popen(cmd, "r"));
-        if(p.isNull() || (n = fread(buf, 1, UPRV_LENGTHOF(buf)-1, p.getAlias())) <= 0) {
-            fprintf(stderr, "%s: icu-config: No icu-config found. (fix PATH or use -O option)\n", progname);
+/* Get path to pkgdata.inc. Try pkg-config first, falling back to icu-config. */
+static int32_t pkg_getPkgDataPath(UBool verbose, UOption *option) {
+#if U_HAVE_POPEN
+    static char buf[512] = "";
+    UBool pkgconfigIsValid = TRUE;
+    const char *pkgconfigCmd = "pkg-config --variable=pkglibdir icu-uc";
+    const char *icuconfigCmd = "icu-config --incpkgdatafile";
+    const char *pkgdata = "pkgdata.inc";
+
+    if (!getPkgDataPath(pkgconfigCmd, verbose, buf, UPRV_LENGTHOF(buf))) {
+        if (!getPkgDataPath(icuconfigCmd, verbose, buf, UPRV_LENGTHOF(buf))) {
+            fprintf(stderr, "%s: icu-config not found. Fix PATH or specify -O option\n", progname);
             return -1;
         }
+
+        pkgconfigIsValid = FALSE;
     }
 
     for (int32_t length = strlen(buf) - 1; length >= 0; length--) {
@@ -2179,20 +2225,17 @@ static void loadLists(UPKGOptions *o, UErrorCode *status)
         }
     }
 
-    if(buf[strlen(buf)-1]=='\n')
-    {
-        buf[strlen(buf)-1]=0;
-    }
-
-    if(buf[0] == 0)
-    {
-        fprintf(stderr, "%s: icu-config: invalid response from icu-config (fix PATH or use -O option)\n", progname);
+    if (!*buf) {
+        fprintf(stderr, "%s: Unable to locate pkgdata.inc. Unable to parse the results of '%s'. Check paths or use the -O option to specify the path to pkgdata.inc.\n", progname, pkgconfigIsValid ? pkgconfigCmd : icuconfigCmd);
         return -1;
     }
 
-    if(verbose) {
-      fprintf(stdout, "# icu-config said: %s\n", buf);
+    if (pkgconfigIsValid) {
+        uprv_strcat(buf, U_FILE_SEP_STRING);
+        uprv_strcat(buf, pkgdata);
     }
+
+    buf[strlen(buf)] = 0;
 
     option->value = buf;
     option->doesOccur = TRUE;

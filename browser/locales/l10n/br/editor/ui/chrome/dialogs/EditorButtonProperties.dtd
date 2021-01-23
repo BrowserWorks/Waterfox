@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Perzhioù an afell">
+
+<!ENTITY Settings.label "Arventennoù">
+
+<!ENTITY ButtonType.label "Rizh">
+<!ENTITY ButtonType.accesskey "R">
+<!ENTITY submit.value "Treuzkas">
+<!ENTITY reset.value "Adderaouekaat">
+<!ENTITY button.value "Afell">
+
+<!ENTITY ButtonName.label "Anv:">
+<!ENTITY ButtonName.accesskey "A">
+<!ENTITY ButtonValue.label "Talvoud:">
+<!ENTITY ButtonValue.accesskey "T">
+<!ENTITY tabIndex.label "Menegva taolennata:">
+<!ENTITY tabIndex.accesskey "M">
+<!ENTITY ButtonDisabled.label "Diweredekaet">
+<!ENTITY ButtonDisabled.accesskey "D">
+<!ENTITY AccessKey.label "Stokell moned:">
+<!ENTITY AccessKey.accesskey "S">
+
+<!ENTITY RemoveButton.label "Dilemel an afell">
+<!ENTITY RemoveButton.accesskey "i">

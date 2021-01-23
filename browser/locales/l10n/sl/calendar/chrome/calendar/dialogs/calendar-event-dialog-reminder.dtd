@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "Nastavi opomnike">
+<!ENTITY reminder.add.label                                "Dodaj">
+<!ENTITY reminder.add.accesskey                            "D">
+<!ENTITY reminder.remove.label                             "Odstrani">
+<!ENTITY reminder.remove.accesskey                         "O">
+
+<!ENTITY reminder.reminderDetails.label                    "Podrobnosti o opomniku">
+<!ENTITY reminder.action.label                             "Izberite dejanje opomnika">
+
+<!ENTITY reminder.action.alert.label                       "Prikaži opozorilo">
+<!ENTITY reminder.action.email.label                       "Pošlji e-sporočilo">
+
+<!ENTITY alarm.units.minutes                               "minut" >
+<!ENTITY alarm.units.hours                                 "ur" >
+<!ENTITY alarm.units.days                                  "dni" >

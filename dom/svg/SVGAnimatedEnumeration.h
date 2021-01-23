@@ -43,9 +43,11 @@ class SVGAnimatedEnumeration {
     mIsBaseSet = false;
   }
 
-  nsresult SetBaseValueAtom(const nsAtom* aValue, SVGElement* aSVGElement);
+  // Returns whether aValue corresponded to a key in our mapping (in which case
+  // we actually set the base value) or not (in which case we did not).
+  bool SetBaseValueAtom(const nsAtom* aValue, SVGElement* aSVGElement);
   nsAtom* GetBaseValueAtom(SVGElement* aSVGElement);
-  nsresult SetBaseValue(uint16_t aValue, SVGElement* aSVGElement);
+  void SetBaseValue(uint16_t aValue, SVGElement* aSVGElement, ErrorResult& aRv);
   uint16_t GetBaseValue() const { return mBaseVal; }
 
   void SetAnimValue(uint16_t aValue, SVGElement* aSVGElement);
@@ -79,9 +81,8 @@ class SVGAnimatedEnumeration {
 
     using mozilla::dom::DOMSVGAnimatedEnumeration::SetBaseVal;
     virtual uint16_t BaseVal() override { return mVal->GetBaseValue(); }
-    virtual void SetBaseVal(uint16_t aBaseVal,
-                            mozilla::ErrorResult& aRv) override {
-      aRv = mVal->SetBaseValue(aBaseVal, mSVGElement);
+    virtual void SetBaseVal(uint16_t aBaseVal, ErrorResult& aRv) override {
+      mVal->SetBaseValue(aBaseVal, mSVGElement, aRv);
     }
     virtual uint16_t AnimVal() override {
       // Script may have modified animation parameters or timeline -- DOM

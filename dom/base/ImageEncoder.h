@@ -16,7 +16,6 @@
 #include "nsSize.h"
 
 class nsICanvasRenderingContextInternal;
-class nsIThreadPool;
 
 namespace mozilla {
 
@@ -97,29 +96,24 @@ class ImageEncoder {
   // undefined in this case.
   static already_AddRefed<imgIEncoder> GetImageEncoder(nsAString& aType);
 
-  static nsresult EnsureThreadPool();
-
-  // Thread pool for dispatching EncodingRunnable.
-  static StaticRefPtr<nsIThreadPool> sThreadPool;
-
   friend class EncodingRunnable;
   friend class EncoderThreadPoolTerminator;
 };
 
 /**
  *  The callback interface of ExtractDataAsync and
- * ExtractDataFromLayersImageAsync. ReceiveBlob() is called on main thread when
- * encoding is complete.
+ * ExtractDataFromLayersImageAsync. ReceiveBlobImpl() is called on main thread
+ * when encoding is complete.
  */
 class EncodeCompleteCallback {
  public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(EncodeCompleteCallback)
 
   MOZ_CAN_RUN_SCRIPT
-  virtual nsresult ReceiveBlob(already_AddRefed<Blob> aBlob) = 0;
+  virtual nsresult ReceiveBlobImpl(already_AddRefed<BlobImpl> aBlobImpl) = 0;
 
  protected:
-  virtual ~EncodeCompleteCallback() {}
+  virtual ~EncodeCompleteCallback() = default;
 };
 
 }  // namespace dom

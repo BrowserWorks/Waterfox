@@ -1,0 +1,95 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE This file is very similar to the one in Waterfox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.pagetitle       "about:rights">
+<!ENTITY rights.intro-header    "Acerca de sus derechos">
+<!ENTITY rights.intro "&brandFullName; es software libre y de código abierto, creado por una comunidad de miles de personas a lo largo del mundo. Hay algunas cosas que debe saber:">
+
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+<!ENTITY rights.intro-point1a "&brandShortName; está disponible bajo los términos de la ">
+<!ENTITY rights.intro-point1b "Licencia Pública de Mozilla">
+<!ENTITY rights.intro-point1c ". Esto significa que puede usar, copiar y compartir &brandShortName; con otras personas. También tiene la posibilidad de modificar el código fuente de &brandShortName; como desee a fin de que éste se ajuste a sus necesidades. La Licencia Pública de Mozilla también le otorga el derecho a distribuir esas versiones modificadas.">
+
+<!ENTITY rights.intro-point2a "Mozilla no otorga derechos con respecto a las marcas registradas y logos de Mozilla y Waterfox. Puede encontrar información adicional sobre las marcas registradas ">
+
+<!ENTITY rights.intro-point2aa "&vendorShortName; no le otorga ningún derecho sobre &quot;&brandFullName;&quot; marcas registradas o logotipos. Se puede encontrar información adicional sobre marcas registradas">
+<!ENTITY rights.intro-point2b "aquí">
+<!ENTITY rights.intro-point2c ".">
+
+<!-- point 2d is technically point 3. in the list -->
+<!ENTITY rights.intro-point2d "Algunas funciones en &brandShortName;, tales como los informes de fallos, dan la opción de ofrecer una retroalimentación a &vendorShortName;. Simplemente eligiendo esta acción se otorga a &vendorShortName; y Mozilla permisos para utilizar dichos datos para mejorar las aplicaciones, publicarlos en sus sitios y redistribuirlos.">
+
+<!-- point 2da is technically point 3. in the list -->
+<!ENTITY rights.intro-point2da "Algunas funciones en &brandShortName;, tales como los informes de fallos, le dan la opción de ofrecer una retroalimentación a &vendorShortName;. Si elije esta acción le otorga a &vendorShortName; permiso para utilizar dichos datos para mejorar las aplicaciones, publicarlos en sus sitios y redistribuirlos.">
+
+<!-- point 3 text for official branded builds -->
+<!ENTITY rights.intro-point3a "Las políticas de privacidad para los productos de &vendorShortName; pueden encontrarse ">
+<!ENTITY rights.intro-point3b "aquí">
+<!ENTITY rights.intro-point3c ".">
+
+<!-- point 4 text for official branded builds -->
+<!ENTITY rights2.intro-point4a "&brandShortName; ofrece servicios de información sobre sitios web opcionales, como por ejemplo complementos o el servicio SafeBrowsing; sin embargo, no podemos garantizar que esten libres de errores o sean 100&#37; precisos. Puede encontrar más detalles, incluída la información sobre cómo deshabilitar estos servicios, en los ">
+<!ENTITY rights.intro-point4b "términos del servicio">
+<!ENTITY rights.intro-point4c ".">
+
+<!ENTITY rights.webservices-header "Sitios web de los servicios de &brandFullName;">
+
+<!-- Note that this paragraph references entities from extensions.dtd,
+     preferences.dtd, pref-smartupdate.dtd, and pref-security.dtd,
+     so that we can refer to text the user sees in the UI, without
+     this page being forgotten every time those strings are updated.  -->
+<!-- intro paragraph for branded builds -->
+<!ENTITY rights3.webservices-a "&brandFullName; ofrece servicios opcionales basados en la red (&quot;Servicios&quot;) que están disponibles para su uso con esta versión binaria de &brandShortName; como se describe a continuación.  Algunos de estos servicios (tales como las sugerencias de complementos y los servicios de actualización, de navegaciòn segura o la notificación de la función de ubicación geográfica) están habilitadas por defecto.  Si no desea utilizar ninguno de estos servicios o los siguientes términos le resultan inaceptables, existen instructivos para deshabilitar alguna función o servicio en particular ">
+<!-- intro paragraph for branded builds -->
+<!ENTITY rights3.webservices-aa "&vendorShortName; ofrece servicios opcionales basados en la web (&quot;Servicios&quot;) que están disponibles para usar con esta versión binaria de &brandShortName; como se describe a continuación. Algunos de estos servicios (tales como las sugerencias de complementos y los servicios de actualización, la navegación segura o la notificación de la función de ubicación geográfica) están habilitadas de manera predeterminada. Si no quiere utilizar ninguno de estos servicios o los siguientes términos le resultan inaceptables, existen instrucciones sobre cómo deshabilitar alguna función o servicio en particular ">
+<!ENTITY rights3.webservices-b "aquí">
+<!ENTITY rights3.webservices-c ". Otras funciones y Servicios pueden ser habilitados o no en las preferencias de la aplicación.">
+
+<!-- add-on related points for branded builds -->
+<!ENTITY rights.addons-a "Servicios de complementos: ">
+<!ENTITY rights.addons-b "De manera predeterminada, &brandShortName; va a sugerir complementos de la página &view.discover.label; y va a verificar si hay actualizaciones a intervalos regulares.  Si desea deshabilitar estas funcionalidades para evitar la comunicación de información sobre complementos instalados al servidor, siga estos pasos:">
+<!ENTITY rights.addons-term1 "Abra las preferencias de aplicación">
+<!ENTITY rights.addons-term2 "Seleccione el panel &smart.label; en la categoría &advance.label;">
+<!ENTITY rights.addons-term3 "Desmarque las opciones a &quot;&autoAddOnsUpdates.label;&quot; y &quot;&enablePersonalized.label;&quot;">
+<!ENTITY rights.addons-term4 "Los servicios de complementos ahora están deshabilitados">
+
+<!-- safe browsing points for branded builds -->
+<!ENTITY rights.safebrowsing-a "Navegación segura: ">
+<!ENTITY rights.safebrowsing-b "No se recomienda deshabilitar la funcionalidad de navegaciíón segura porque puede resultar en la visita a sitios inseguros.  Si desea deshabilitar la funcionalidad complemtamente, siga estos pasos:">
+<!ENTITY rights.safebrowsing-term1 "Abra las preferencias de aplicación">
+<!ENTITY rights.safebrowsing-term2 "Seleccione el panel &security.label;">
+<!ENTITY rights.safebrowsing-term3 "Desmarque las opciones a &quot;&blockAttackSites.label;&quot; y &quot;&blockWebForgeries.label;&quot;">
+<!ENTITY rights.safebrowsing-term4 "La navegación segura ahora está deshabilitada">
+
+<!-- location aware browsing points for branded builds -->
+<!ENTITY rights.locationawarebrowsing-a "Navegación con ubicación geográfica: ">
+<!ENTITY rights.locationawarebrowsing-b "es siempre opcional.  Nunca se envía información de ubicación sin su permiso.  Si desea deshabilitar esta función completamente, siga los siguientes pasos:">
+<!ENTITY rights.locationawarebrowsing-term1 "Abrir las preferencias de la aplicación">
+<!ENTITY rights.locationawarebrowsing-term2 "Seleccionar el panel principal de &security.label;">
+<!ENTITY rights.locationawarebrowsing-term3 "Seleccione la opción &quot;&geoDisabled.label;&quot;">
+<!ENTITY rights.locationawarebrowsing-term4 "La navegación con ubicación geográfica ahora está deshabilitada">
+
+<!-- points 0-6 text for branded builds -->
+<!ENTITY rights.webservices-term0 "&vendorShortName; y Mozilla junto a sus colaboradores, licenciatarios y socios trabajan para suministrar sus servicios de la manera más actualizada y segura posible. Sin embargo, no podemos garantizar que esta información es exhaustiva y libre de errorer.  Por ejemplo, el servicio de navegación segura puede no identificar fehacientemente algunos sitios riesgosos como también aseverar que algunos sitios son seguros y el servicio de ubicación geográfica da datos aproximados. Ni nosotros ni ninguno de nuestros proveedores garantizan la precisión de las ubicaciones suministradas.">
+
+<!-- points 0-6 text for branded builds -->
+<!ENTITY rights.webservices-term0a "&vendorShortName; junto a sus colaboradores, licenciatarios y socios trabajan para suministrar sus servicios de la manera más actualizada y segura posible. Sin embargo, no podemos garantizar que esta información sea exhaustiva y libre de errores. Por ejemplo, el servicio de navegación segura puede no identificar algunos sitios riesgosos y también aseverar que algunos sitios son seguros sin que lo sean y el servicio de ubicación geográfica da datos aproximados. Ni nosotros ni ninguno de nuestros proveedores garantizan la precisión de las ubicaciones suministradas.">
+<!ENTITY rights.webservices-term1 "&vendorShortName; puede discontinuar o cambiar los servicios según considere oportuno.">
+<!ENTITY rights.webservices-term2 "Puede usar estos servicios con la versión de &brandShortName;, y tiene plenos derechos para hacerlo. &vendorShortName; y sus licenciatarios se reservan todos los demás derechos en cuanto a los servicios. Estos términos no tienen la intención de limitar ningún derecho otorgado por una licencia de código abierto aplicable a &brandShortName; y las versiones correspondientes en base al código de &brandShortName;.">
+<!ENTITY rights.webservices-term2a "Puede usar estos servicios con la versión de &brandShortName; que acompaña, y tiene plenos derechos para hacerlo. &vendorShortName; y sus licenciatarios se reservan todos los demás derechos en cuanto a los servicios. Estos términos no tienen la intención de limitar ningún derecho otorgado por una licencia de código abierto aplicable a &brandShortName; y las versiones correspondientes en base al código de &brandShortName;.">
+<!ENTITY rights.webservices-term3 "Los servicios son ofrecidos &quot;tal como está.&quot;  &vendorShortName;, sus contribuyentes, licenciatarios y distribuidores rechazan toda clase de garantía, explícita o implícita, incluídas, sin perjuicio de lo antes mencionado, las garantías de que el servicio es comercializable y que cumple con sus necesidades particulares. Usted acepta el riesgo que implica seleccionar este servicio para su propósito así como a la calidad y el desempeño del servicio. Algunas jurisdicciones no permiten la exclusión o limitación de las garantías implícitas, por lo tanto, esta exención de responsabilidad puede no ser aplicable en su caso.">
+<!ENTITY rights.webservices-term4 "Excepto cuando sea obligatorio ante la Ley, &vendorShortName;, sus contribuyentes, licenciatarios y distribuidores no podrán ser responsables por ningún daño o perjuicio indirecto, especial, incidental, resultante, punitivo o ejemplar relacionado con el uso de &brandShortName; y los servicios. La responsabilidad colectiva bajo estos términos no podrá exceder los U$S500 (quinientos dólares estadounidenses). Algunas jurisdicciones no permiten la exclusión o limitación de ciertos daños, Por consiguiente que esta exclusión y limitación puede no ser aplicable en su caso.">
+<!ENTITY rights.webservices-term5 "De ser necesario, &vendorShortName; puede actualizar estos términos en forma esporádica. Estos términos no pueden ser modificados o cancelados sin el consentimiento por escrito de &vendorShortName;.">
+<!ENTITY rights.webservices-term6 "Estos términos son gobernados por las leyes del estado de California, EE. UU., excluyendo sus conflictos de provisiones de la ley. Si alguna parte de estas condiciones es considerada inválida o inejecutable, las restantes partes permanecerán con fuerza y efecto. En el evento de un conflicto entre una versión traducida de estos términos y la versión en idioma inglés, la versión válida será la del idioma inglés.">
+
+<!ENTITY rights.webservices-term6a "Estos términos se rigen e interpretan de acuerdo con las leyes de Alemania y todas las disputas que surjan en relación con estos Términos se van a someter a la jurisdicción exclusiva del tribunal competente en Alemania. Si alguna parte de estos términos se considera inválida o inaplicable, las partes restantes permanecerán en pleno vigor y efecto. En caso de conflicto entre una versión traducida de estos términos y la versión en inglés, prevalecerá la versión en inglés.">

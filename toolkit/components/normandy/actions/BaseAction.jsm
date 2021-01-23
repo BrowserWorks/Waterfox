@@ -58,9 +58,7 @@ class BaseAction {
       // Sometimes err.message is editable. If it is, add helpful details.
       // Otherwise log the helpful details and move on.
       try {
-        err.message = `Could not initialize action ${this.name}: ${
-          err.message
-        }`;
+        err.message = `Could not initialize action ${this.name}: ${err.message}`;
       } catch (_e) {
         this.log.error(
           `Could not initialize action ${this.name}, error follows.`
@@ -116,14 +114,36 @@ class BaseAction {
     // Does nothing, may be overridden
   }
 
+  validateArguments(args, schema = this.schema) {
+    let { valid, parsedValue: validated } = JsonSchemaValidator.validate(
+      args,
+      schema,
+      {
+        allowExtraProperties: true,
+      }
+    );
+    if (!valid) {
+      throw new Error(
+        `Arguments do not match schema. arguments:\n${JSON.stringify(args)}\n` +
+          `schema:\n${JSON.stringify(schema)}`
+      );
+    }
+    return validated;
+  }
+
   /**
    * Execute the per-recipe behavior of this action for a given
    * recipe.  Reports Uptake telemetry for the execution of the recipe.
    *
    * @param {Recipe} recipe
+   * @param {BaseAction.suitability} suitability
    * @throws If this action has already been finalized.
    */
-  async runRecipe(recipe) {
+  async processRecipe(recipe, suitability) {
+    if (!BaseAction.suitabilitySet.has(suitability)) {
+      throw new Error(`Unknown recipe status ${suitability}`);
+    }
+
     this._ensurePreExecution();
 
     if (this.state === BaseAction.STATE_FINALIZED) {
@@ -133,51 +153,70 @@ class BaseAction {
     if (this.state !== BaseAction.STATE_READY) {
       Uptake.reportRecipe(recipe, Uptake.RECIPE_ACTION_DISABLED);
       this.log.warn(
-        `Skipping recipe ${recipe.name} because ${
-          this.name
-        } was disabled during preExecution.`
+        `Skipping recipe ${recipe.name} because ${this.name} was disabled during preExecution.`
       );
       return;
     }
 
-    let [
-      valid,
-      validatedArguments,
-    ] = JsonSchemaValidator.validateAndParseParameters(
-      recipe.arguments,
-      this.schema
-    );
-    if (!valid) {
-      Cu.reportError(
-        new Error(
-          `Arguments do not match schema. arguments: ${JSON.stringify(
-            recipe.arguments
-          )}. schema: ${JSON.stringify(this.schema)}`
-        )
+    let uptakeResult = BaseAction.suitabilityToUptakeStatus[suitability];
+    if (!uptakeResult) {
+      throw new Error(
+        `Coding error, no uptake status for suitability ${suitability}`
       );
-      Uptake.reportRecipe(recipe, Uptake.RECIPE_EXECUTION_ERROR);
-      return;
     }
 
-    recipe.arguments = validatedArguments;
+    // If capabilties don't match, we can't even be sure that the arguments
+    // should be valid. In that case don't try to validate them.
+    if (suitability !== BaseAction.suitability.CAPABILITES_MISMATCH) {
+      try {
+        recipe.arguments = this.validateArguments(recipe.arguments);
+      } catch (error) {
+        Cu.reportError(error);
+        uptakeResult = Uptake.RECIPE_EXECUTION_ERROR;
+        suitability = BaseAction.suitability.ARGUMENTS_INVALID;
+      }
+    }
 
-    let status = Uptake.RECIPE_SUCCESS;
     try {
-      await this._run(recipe);
+      await this._processRecipe(recipe, suitability);
     } catch (err) {
       Cu.reportError(err);
-      status = Uptake.RECIPE_EXECUTION_ERROR;
+      uptakeResult = Uptake.RECIPE_EXECUTION_ERROR;
     }
-    Uptake.reportRecipe(recipe, status);
+    Uptake.reportRecipe(recipe, uptakeResult);
   }
 
   /**
-   * Action specific recipe behavior must be implemented here. It
-   * will be executed once for reach recipe, being passed the recipe
-   * as a parameter.
+   * Action specific recipe behavior may be implemented here. It will be
+   * executed once for each recipe that applies to this client.
+   * The recipe will be passed as a parameter.
+   *
+   * @param {Recipe} recipe
    */
   async _run(recipe) {
     throw new Error("Not implemented");
+  }
+
+  /**
+   * Action specific recipe behavior should be implemented here. It will be
+   * executed once for every recipe currently published. The suitability of the
+   * recipe will be passed, it will be one of the constants from
+   * `BaseAction.suitability`.
+   *
+   * By default, this calls `_run()` for recipes with `status == FILTER_MATCH`,
+   * and does nothing for all other recipes. It is invalid for an action to
+   * override both `_run` and `_processRecipe`.
+   *
+   * @param {Recipe} recipe
+   * @param {RecipeSuitability} suitability
+   */
+  async _processRecipe(recipe, suitability) {
+    if (!suitability) {
+      throw new Error("Suitability is undefined:", suitability);
+    }
+    if (suitability == BaseAction.suitability.FILTER_MATCH) {
+      await this._run(recipe);
+    }
   }
 
   /**
@@ -186,8 +225,8 @@ class BaseAction {
    * recipes will be assumed to have been seen.
    */
   async finalize() {
-    // It's possible that no recipes matched us, so runRecipe() was
-    // never called. In that case, we should ensure that we call
+    // It's possible that no recipes used this action, so processRecipe()
+    // was never called. In that case, we should ensure that we call
     // _preExecute() here.
     this._ensurePreExecution();
 
@@ -204,9 +243,7 @@ class BaseAction {
           status = Uptake.ACTION_POST_EXECUTION_ERROR;
           // Sometimes Error.message can be updated in place. This gives better messages when debugging errors.
           try {
-            err.message = `Could not run postExecution hook for ${this.name}: ${
-              err.message
-            }`;
+            err.message = `Could not run postExecution hook for ${this.name}: ${err.message}`;
           } catch (err) {
             // Sometimes Error.message cannot be updated. Log a warning, and move on.
             this.log.debug(`Could not run postExecution hook for ${this.name}`);
@@ -219,18 +256,14 @@ class BaseAction {
       }
       case BaseAction.STATE_DISABLED: {
         this.log.debug(
-          `Skipping post-execution hook for ${
-            this.name
-          } because it is disabled.`
+          `Skipping post-execution hook for ${this.name} because it is disabled.`
         );
         status = Uptake.ACTION_SUCCESS;
         break;
       }
       case BaseAction.STATE_FAILED: {
         this.log.debug(
-          `Skipping post-execution hook for ${
-            this.name
-          } because it failed during pre-execution.`
+          `Skipping post-execution hook for ${this.name} because it failed during pre-execution.`
         );
         // Don't report a status. A status should have already been reported by this.fail().
         break;
@@ -261,3 +294,55 @@ BaseAction.STATE_READY = "ACTION_READY";
 BaseAction.STATE_DISABLED = "ACTION_DISABLED";
 BaseAction.STATE_FAILED = "ACTION_FAILED";
 BaseAction.STATE_FINALIZED = "ACTION_FINALIZED";
+
+// Make sure to update the docs in ../docs/suitabilities.rst when changing this.
+BaseAction.suitability = {
+  /**
+   * The recipe's signature is not valid. If any action is taken this recipe
+   * should be treated with extreme suspicion.
+   */
+  SIGNATURE_ERROR: "RECIPE_SUITABILITY_SIGNATURE_ERROR",
+
+  /**
+   * The recipe requires capabilities that this recipe runner does not have.
+   * Use caution when interacting with this recipe, as it may not match the
+   * expected schema.
+   */
+  CAPABILITES_MISMATCH: "RECIPE_SUITABILITY_CAPABILITIES_MISMATCH",
+
+  /**
+   * The recipe is suitable to execute in this client.
+   */
+  FILTER_MATCH: "RECIPE_SUITABILITY_FILTER_MATCH",
+
+  /**
+   * This client does not match the recipe's filter, but it is otherwise a
+   * suitable recipe.
+   */
+  FILTER_MISMATCH: "RECIPE_SUITABILITY_FILTER_MISMATCH",
+
+  /**
+   * There was an error while evaluating the filter. It is unknown if this
+   * client matches this filter. This may be temporary, due to network errors,
+   * or permanent due to syntax errors.
+   */
+  FILTER_ERROR: "RECIPE_SUITABILITY_FILTER_ERROR",
+
+  /**
+   * The arguments of the recipe do not match the expected schema for the named
+   * action.
+   */
+  ARGUMENTS_INVALID: "RECIPE_SUITABILITY_ARGUMENTS_INVALID",
+};
+
+BaseAction.suitabilitySet = new Set(Object.values(BaseAction.suitability));
+
+BaseAction.suitabilityToUptakeStatus = {
+  [BaseAction.suitability.SIGNATURE_ERROR]: Uptake.RECIPE_INVALID_SIGNATURE,
+  [BaseAction.suitability.CAPABILITES_MISMATCH]:
+    Uptake.RECIPE_INCOMPATIBLE_CAPABILITIES,
+  [BaseAction.suitability.FILTER_MATCH]: Uptake.RECIPE_SUCCESS,
+  [BaseAction.suitability.FILTER_MISMATCH]: Uptake.RECIPE_DIDNT_MATCH_FILTER,
+  [BaseAction.suitability.FILTER_ERROR]: Uptake.RECIPE_FILTER_BROKEN,
+  [BaseAction.suitability.ARGUMENTS_INVALID]: Uptake.RECIPE_ARGUMENTS_INVALID,
+};

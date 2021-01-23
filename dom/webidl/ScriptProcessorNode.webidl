@@ -10,7 +10,8 @@
  * liability, trademark and document use rules apply.
  */
 
-[Pref="dom.webaudio.enabled"]
+[Pref="dom.webaudio.enabled",
+ Exposed=Window]
 interface ScriptProcessorNode : AudioNode {
 
     attribute EventHandler onaudioprocess;
@@ -20,5 +21,5 @@ interface ScriptProcessorNode : AudioNode {
 };
 
 // Mozilla extension
-ScriptProcessorNode implements AudioNodePassThrough;
+ScriptProcessorNode includes AudioNodePassThrough;
 

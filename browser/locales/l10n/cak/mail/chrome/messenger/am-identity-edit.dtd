@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identityListDesc.label "Tijikib'äx runuk'ulem re b'anikil re':">
+
+<!ENTITY settingsTab.label       "Taq nuk'ulem">
+<!ENTITY copiesFoldersTab.label "Taq Wachib'enïk &amp; taq Yakwuj">
+<!ENTITY addressingTab.label    "Tz'ib'anïk &amp; Ochochib'äl">
+
+<!ENTITY publicData.label        "Winaqil Tzij">
+<!ENTITY privateData.label       "Ichinan Tzij">
+<!ENTITY identityAlias.label     "Retal B'anikil:">
+<!ENTITY identityAlias.accesskey "t">

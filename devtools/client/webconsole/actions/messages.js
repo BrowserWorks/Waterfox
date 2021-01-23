@@ -1,12 +1,13 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 "use strict";
 
-const { prepareMessage } = require("devtools/client/webconsole/utils/messages");
+const {
+  prepareMessage,
+  getNaturalOrder,
+} = require("devtools/client/webconsole/utils/messages");
 const {
   IdGenerator,
 } = require("devtools/client/webconsole/utils/id-generator");
@@ -23,11 +24,10 @@ const {
   MESSAGE_OPEN,
   MESSAGE_CLOSE,
   MESSAGE_TYPE,
+  MESSAGE_REMOVE,
   MESSAGE_UPDATE_PAYLOAD,
-  MESSAGE_TABLE_RECEIVE,
-  PAUSED_EXCECUTION_POINT,
   PRIVATE_MESSAGES_CLEAR,
-} = require("../constants");
+} = require("devtools/client/webconsole/constants");
 
 const defaultIdGenerator = new IdGenerator();
 
@@ -36,6 +36,8 @@ function messagesAdd(packets, idGenerator = null) {
     idGenerator = defaultIdGenerator;
   }
   const messages = packets.map(packet => prepareMessage(packet, idGenerator));
+  // Sort the messages by their timestamps.
+  messages.sort(getNaturalOrder);
   for (let i = messages.length - 1; i >= 0; i--) {
     if (messages[i].type === MESSAGE_TYPE.CLEAR) {
       return batchActions([
@@ -66,13 +68,6 @@ function messagesClearLogpoint(logpointId) {
   return {
     type: MESSAGES_CLEAR_LOGPOINT,
     logpointId,
-  };
-}
-
-function setPauseExecutionPoint(executionPoint) {
-  return {
-    type: PAUSED_EXCECUTION_POINT,
-    executionPoint,
   };
 }
 
@@ -107,49 +102,24 @@ function messageClose(id) {
  * @return {[type]} [description]
  */
 function messageGetMatchingElements(id, cssSelectors) {
-  return ({ dispatch, services }) => {
-    services
-      .requestEvaluation(`document.querySelectorAll('${cssSelectors}')`)
-      .then(response => {
-        dispatch(messageUpdatePayload(id, response.result));
-      })
-      .catch(err => {
-        console.error(err);
-      });
-  };
-}
+  return async ({ dispatch, client, getState }) => {
+    try {
+      // We need to do the querySelectorAll using the target the message is coming from,
+      // as well as with the window the warning message was emitted from.
+      const message = getState().messages.messagesById.get(id);
+      const selectedTargetFront = message?.targetFront;
 
-function messageTableDataGet(id, client, dataType) {
-  return ({ dispatch }) => {
-    let fetchObjectActorData;
-    if (["Map", "WeakMap", "Set", "WeakSet"].includes(dataType)) {
-      fetchObjectActorData = cb => client.enumEntries(cb);
-    } else {
-      fetchObjectActorData = cb =>
-        client.enumProperties(
-          {
-            ignoreNonIndexedProperties: dataType === "Array",
-          },
-          cb
-        );
+      const response = await client.evaluateJSAsync(
+        `document.querySelectorAll('${cssSelectors}')`,
+        {
+          selectedTargetFront,
+          innerWindowID: message.innerWindowID,
+        }
+      );
+      dispatch(messageUpdatePayload(id, response.result));
+    } catch (err) {
+      console.error(err);
     }
-
-    fetchObjectActorData(enumResponse => {
-      const { iterator } = enumResponse;
-      // eslint-disable-next-line mozilla/use-returnValue
-      iterator.slice(0, iterator.count, sliceResponse => {
-        const { ownProperties } = sliceResponse;
-        dispatch(messageTableDataReceive(id, ownProperties));
-      });
-    });
-  };
-}
-
-function messageTableDataReceive(id, data) {
-  return {
-    type: MESSAGE_TABLE_RECEIVE,
-    id,
-    data,
   };
 }
 
@@ -166,6 +136,13 @@ function messageUpdatePayload(id, data) {
     type: MESSAGE_UPDATE_PAYLOAD,
     id,
     data,
+  };
+}
+
+function messageRemove(id) {
+  return {
+    type: MESSAGE_REMOVE,
+    id,
   };
 }
 
@@ -197,13 +174,10 @@ module.exports = {
   messagesClearLogpoint,
   messageOpen,
   messageClose,
+  messageRemove,
   messageGetMatchingElements,
-  messageTableDataGet,
   messageUpdatePayload,
   networkMessageUpdate,
   networkUpdateRequest,
   privateMessagesClear,
-  // for test purpose only.
-  messageTableDataReceive,
-  setPauseExecutionPoint,
 };

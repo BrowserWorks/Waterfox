@@ -1,0 +1,111 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "Čarobnjak za račune">
+<!ENTITY accountWizard.size "width: 40em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!ENTITY accountSetupInfo2.label "Da biste primali poruke, prvo morate podesiti račun.">
+<!ENTITY accountTypeTitle.label "Podešavanje novog računa">
+<!ENTITY accountTypeDesc2.label "Ovaj čarobnjak će prikupiti informacije potrebne za postavljanje računa. Ako ne znate tražene informacije, obratite se administratoru sistema ili pružaocu internetskih usluga.">
+<!ENTITY accountTypeDirections.label "Izaberite vrstu računa koju želite podesiti:">
+<!ENTITY accountTypeMail.label "Email račun">
+<!ENTITY accountTypeNews.label "Račun interesne grupe">
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "Identitet">
+<!ENTITY identityDesc.label "Svaki račun ima svoj identitet, koji predstavlja informaciju po kojoj će vas drugi prepoznati kada prime vaše poruke.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "Upišite ime koje želite da se pojavi u polju &quot;Šalje&quot; vaših odlaznih poruka">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(naprimjer, &quot;John Smith&quot;).">
+<!ENTITY fullnameLabel.label "Vaše ime:">
+
+<!ENTITY emailLabel.label "Email adresa:">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "Informacija o dolaznom serveru">
+<!ENTITY incomingServerTypeDesc.label "Izabrite koju vrstu dolaznog servera koristite.">
+<!-- LOCALIZATION NOTE (imapType.label) : Do not translate "IMAP" in below line -->
+<!ENTITY imapType.label "IMAP">
+<!ENTITY imapType.accesskey "I">
+<!-- LOCALIZATION NOTE (popType.label) : Do not translate "POP" in below line -->
+<!ENTITY popType.label "POP">
+<!ENTITY popType.accesskey "P">
+<!ENTITY portNum.label "Port:">
+<!ENTITY portNum.accesskey "o">
+<!ENTITY defaultPortLabel.label "Izvorno:">
+<!ENTITY defaultPortValue.label "">
+<!-- LOCALIZATION NOTE (incomingServerNameDesc.label) : Do not translate "&quot;pop.example.net&quot;" in below line -->
+<!ENTITY incomingServer.description "Unesite naziv vašeg dolazećeg servera (naprimjer, &quot;mail.primjer.ba&quot;).">
+<!ENTITY incomingServer.label "Dolazni server:">
+<!ENTITY leaveMsgsOnSrvr.label "Ostavi poruke na serveru">
+<!-- LOCALIZATION NOTE (incomingUsername.description) : do not translate "&quot;jsmith&quot;" in below line -->
+<!ENTITY incomingUsername.description "Upišite korisničko ime za primanje emaila koje vam je dao vaš email provajder (naprimjer, &quot;jsmith&quot;).">
+<!ENTITY incomingUsername.label "Korisničko ime:">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Unesite naziv vašeg servera vijesti (NNTP) (naprimjer, &quot;news.primjer.ba&quot;).">
+<!ENTITY newsServerLabel.label "Server interesne grupe:">
+
+<!-- Entities for Outgoing Server page -->
+
+<!ENTITY outgoingTitle.label "Informacije o odlaznom serveru">
+<!-- LOCALIZATION NOTE (outgoingServer.description) : Do not translate "SMTP" and "&quot;smtp.example.net&quot;" in below line -->
+<!ENTITY outgoingServer.description "Unesite naziv vašeg odlaznog servera (SMTP) (naprimjer, &quot;smtp.primjer.ba&quot;).">
+<!ENTITY outgoingServer.label "Odlazni server:">
+<!ENTITY outgoingUsername.description "Upišite korisničko ime za slanje emailova koje vam je dao vaš email provajder (obično je identično korisničkom imenu za primanje emailova).">
+<!ENTITY outgoingUsername.label "Odlazno korisničko ime:">
+
+<!-- LOCALIZATION NOTE (modifyOutgoing.suffix) : This string will be appended after each of
+     haveSmtp1.suffix3, haveSmtp2.suffix3, haveSmtp3.suffix3 .
+-->
+<!ENTITY modifyOutgoing.suffix "Možete promijeniti postavke odlaznog servera iz postavki računa pošte i interesnih grupa.">
+<!-- LOCALIZATION NOTE (haveSmtp1.prefix and haveSmtp1.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp1.prefix and haveSmtp1.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp1.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp1.prefix "Vaš postojeći odlazni server (SMTP), &quot;">
+<!ENTITY haveSmtp1.suffix3 "&quot;, će biti korišten.">
+<!-- LOCALIZATION NOTE (haveSmtp2.prefix and haveSmtp2.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp2.prefix and haveSmtp2.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp2.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp2.prefix "Vaše postojeće odlazno (SMTP) korisničko ime, &quot;">
+<!ENTITY haveSmtp2.suffix3 "&quot;, će biti korišten.">
+<!-- LOCALIZATION NOTE (haveSmtp3.prefix and haveSmtp3.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp3.prefix and haveSmtp3.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp3.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp3.prefix "Vaš odlazni (SMTP) server, &quot;">
+<!ENTITY haveSmtp3.suffix3 "&quot;, je identičan dolaznom serveru, dolazno korisničko ime će biti korišteno za pristup serveru.">
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "Naziv računa">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Unesite naziv koji želite da se odnosi na vaš račun (naprimjer, &quot;Poslovni račun&quot;, &quot;Kućni račun&quot; ili &quot;News račun&quot;).">
+<!ENTITY accnameLabel.label "Naziv računa:">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "Čestitamo!">
+<!ENTITY completionText.label "Molimo vas da potvrdite da su dolje navedene informacije ispravne.">
+<!ENTITY serverTypePrefix.label "Vrsta dolaznog servera:">
+<!ENTITY serverNamePrefix.label "Naziv dolaznog servera:">
+<!ENTITY smtpServerNamePrefix.label "Naziv odlaznog servera (SMTP):">
+<!ENTITY newsServerNamePrefix.label "Naziv servera vijesti (NNTP):">
+<!ENTITY downloadOnLogin.label "Preuzmi poruke odmah">
+<!ENTITY deferStorageDesc.label "Označite ovaj kvadratić da pospremite poštu za ovaj račun u globalnu dolaznu poštu za lokalne direktorije. U suprotnom, račun se pojavljuje kao račun najvišeg nivoa, a njegova pošta se čuva u njegovom direktoriju.">
+<!ENTITY deferStorage.label "Koristite Globalno sanduče (čuvajte poštu u lokalnim direktorijima)">
+<!ENTITY clickFinish.label "Kliknite Završi da spasite ove postavke i izađete iz čarobnjaka.">
+<!ENTITY clickFinish.labelMac "Kliknite Gotovo da spasite ove postavke i izađete iz čarobnjaka.">

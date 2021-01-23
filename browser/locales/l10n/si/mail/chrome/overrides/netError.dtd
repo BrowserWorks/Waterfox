@@ -1,0 +1,174 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "පිටුව පූරණය ගැටලු සහිතයි">
+<!ENTITY retry.label "නැවත උත්සාහ කරන්න">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "සම්බන්ධ වීමට නොහැක">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "මෙම ලිපිනය වාරණය කර ඇත">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "සේවාදායකය හමු නොවුනි">
+<!ENTITY dnsNotFound.longDesc "
+<ul>
+  <li>  <strong>www</strong>.example.com වෙනුවට <strong>ww</strong>.example.com වැනි දෝෂ සමහගතව ලිපිනය යතුරුකරණය කර ඇත්දැයි පරීක්‍ෂා කරන්න</li>
+  <li>ඔබට මෙම පිටුව පූරණය කරගත නොහැකි නම් ඔබගේ පරිගණකයේ ජාල සමබන්ධතාව පරීක්‍ෂා කරනන.</li>
+  <li>ඔබගේ පරිගණකය හෝ ජාලය ෆයර්වෝලයක් හෝ ප්‍රොක්සියක් මඟින් ආරක්‍ෂා කරයි නම් &brandShortName; මඟින් අන්තර්ජාල ප්‍රවේශය අනුමත කර ඇති බවට තහවුරු කරගන්න.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.title "ගොනුව හමු නොවුනි">
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>විශාල අකුරු හෝ වෙනත් යතුරුකරණ දෝෂයක් සඳහා ගොනු නම පරික්‍ෂා කරන්න..</li>
+  <li>ගොනුව ඉවත්කර, නම වෙනස්කර හෝ මකා ඇති දැයි පරික්‍ෂා කරන්න.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.title "මෙම ගොනුවට පිවිසීම අවහිර කර ඇත">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>එය ඉවත් කර , ස්ථාන මාරු කර හෝ, ගොනු අවසරදීම් මගින් පිවිසුම වළකාලීම සිදුවේ .</li>
+</ul>
+">
+
+<!ENTITY generic.title "ඔහ්!">
+<!ENTITY generic.longDesc "
+<p>කුමන හෝ හේතුවක් නිසා මේ පිටුව &brandShortName; හට පූරණය කළ නොහැක.</p>
+">
+
+<!ENTITY malformedURI.title "ලිපිනය නිරවද්‍ය නොවේ">
+<!ENTITY malformedURI.longDesc "
+<ul>
+  <li>වෙබ් ලිපිනය සාමාන්‍යන් ලියනු ලබන්නේ  <strong>http://www.example.com/</strong> ආකාරයටයි</li>
+  <li>ඔබ ඉදිරි ඇළ සළකුණ භාවිතා කරන බවට සුපරීක්‍ෂාකාරි වන්න(එනම්
+    <strong>/</strong>).</li>
+</ul>
+">
+
+<!ENTITY netInterrupt.title "සම්බන්ධය බාධා සහිත විය">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "ලේඛනය කල් ඉකුත්වී ඇත">
+<!ENTITY notCached.longDesc "<p>ඉල්ලූ ලේඛනය &brandShortName;හි කෑෂ් තුළ නැත.</p><ul><li> ආරක්ෂක ක්‍රමවේදයක් ලෙස, &brandShortName; ස්වයංක්‍රීයව සංවේදී දත්ත සහිත ලේඛන යළි ලබා ගන්නේ නැත.</li><li>වෙබ් අඩවියෙන් ලේඛන යළි ලබා ගැනීමට නැවත උත්සාහ කරන්න මත ක්ලික් කරන්න.</li></ul>">
+
+<!ENTITY netOffline.title "Offline mode">
+<!ENTITY netOffline.longDesc2 "
+<ul>
+  <li>Press &quot;Try Again&quot; to switch to online mode and reload the page.</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.title "අන්තර්ගත සංකේතාංකන දෝෂය">
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>කරුණාකර මෙම ගැටළුව පිළිබද අඩවියේ හිමිකරුට දන්වන්න.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.title "අනාරක්‍ෂිත ගොනු ආකාරයක්">
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>කරුණාකර මෙම ගැටළුව පිළිබද අඩවියේ හිමිකරුට දන්වන්න.</li>
+</ul>
+">
+
+<!ENTITY netReset.title "සම්බන්ධය යළි සකසන ලදි (reset)">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "සම්බන්ධක කාළය ඉකුත් විය">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "ලිපිනය තේරුම් ගැනීමට නොහැක">
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>මෙම ලිපිනය විවෘත කිරීම සඳහා ඔබට වෙනත් මෘදුකාංග ස්ථාපනයට සිදුවනු ඇත.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.title "ප්‍රොක්සි සේවාදායකය සම්බන්ධතාවය ඉවත දමයි">
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>ප්‍රොක්සි සේවාදායකයේ සැකසුම් නිවැරදි දැයි පරික්‍ෂා කරන්න.</li>
+  <li>ප්‍රොක්සි සේවාදායකය ක්‍රියාකාරි දැයි පරික්‍ෂා කිරීම සඳහා ඔබගේ පද්ධති පරිපාළක හමුවන්න.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.title "ප්‍රොක්සි සේවාදායකය සොයාගත නොහැකිය">
+<!ENTITY proxyResolveFailure.longDesc "
+<ul>
+  <li>ප්‍රොක්සි සේවාදායකයේ සැකසුම් නිවැරදි දැයි පරික්‍ෂා කරන්න.</li>
+  <li>ඔබගේ පරිගණකයට ක්‍රියාකාරි ජාල සම්බන්ධතාවයක් ඇති දැයි පරික්‍ෂා කරන්න.</li>
+  <li>ඔබගේ පරිගණකය හෝ ජාලය ෆයර්වොලයක් මඟින් හෝ ප්‍රොක්සියක් මඟින් ආරක්‍ෂිතව ඇත්නම්, &brandShortName; වෙබ් අඩවියට ප්‍රවේශයට අවසර ඇති බවට තහවුරු කරගන්න.</li>
+</ul>
+">
+
+<!ENTITY redirectLoop.title "මෙම පිටුව නිසියාකාරව ප්‍රතිමාර්ගගත (redirect) වන්නේ නැත">
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>මෙම ගැටලුව සමහර විට කුකී අක්‍රීය වීම හෝ අනුමත කිරීම ප්‍රතික්‍ෂේප කිරීම නිසා විය හැකිය.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.title "සේවාදායකයෙන් අනපේක්‍ෂිත ප්‍රතිචාරයකි">
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>ඔබගේ පද්ධතිය Personal Security Manager ස්ථාපනය කර ඇති දැයි පරික්‍ෂා කරන්න.</li>
+  <li>මෙය සමහරවිට සේවාදායකයේ අසම්මත මානකරණය නිසා සිදුවිය හැක.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.title "ආරක්‍ෂිත සම්බන්ධය බිද වැටිනි">
+
+<!ENTITY nssBadCert.title "ආරක්‍ෂිත සම්බන්ධය බිද වැටිනි">
+<!ENTITY nssBadCert.longDesc2 "
+<ul>
+  <li>මෙය සේවාදායකයේ මානකරණය සම්බන්ධ ගැටළුවක් විය හැක, එසේ නැති නම්වෙනත් අයෙකු සේවාදායකය ලෙස ව්‍යාජව පෙනිසීටිමක් විය හැක.</li>
+  <li>ඔබ සේවාදායකයට මිට පෙර සාර්තකව සම්බන්ධ වූ අතර, මෙය තාවකාලික දෝෂයක් විය හැකි නිසා ඔබට පසුව යළි උත්සාහ කරන්න.</li>
+</ul>
+">
+
+<!ENTITY sharedLongDesc "
+<ul>
+   <li>මෙම අඩවිය තාවකාලිකව ආභාවිතව හෝ ඉතාමත් කාර්යය බහුලව තිබිය හැක. මිනිත්තු කිහිපයකින්  නැවත උත්සාහ කරන්න.</li>
+  <li>ඔබට මෙම පිටුව පූරණය කරගත නොහැකි නම් ඔබගේ පරිගණකයේ ජාල සමබන්ධතාව පරීක්‍ෂා කරනන.</li>
+  <li>ඔබගේ පරිගණකය හෝ ජාලය ෆයර්වෝලයක් හෝ ප්‍රොක්සියක් මඟින් ආරක්‍ෂා කරයි නම් &brandShortName; මඟින් අන්තර්ජාල ප්‍රවේශය අනුමත කර ඇති බවට තහවුරු කරගන්න.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.title "අන්තර්ගත ආරක්ෂක ප්‍රතිපත්තිය මගින් වළකා ඇත">
+<!ENTITY cspBlocked.longDesc "<p>අන්තර්ගත ආරක්ෂක ප්‍රතිපත්තිය මගින් ඉඩ නොදෙන නිසා &brandShortName; මගින් මෙම පිටුව පූර්ණය වීම වළකා ඇත.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "දූශිත අන්තර්ගත දෝශයක්">
+
+<!ENTITY securityOverride.linkText "හෝ ඔබට හැරදැමීමක් එක් කළ හැකිය…">
+<!ENTITY securityOverride.getMeOutOfHereButton "මා මෙතනින් ඉවතට ගන්න!">
+<!ENTITY securityOverride.exceptionButtonLabel "හැරදැමීමක් එක් කරන්න…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <button> tags. It uses strings already defined above. The
+button is included here (instead of netError.xhtml) because it exposes
+functionality specific to thunderbird. -->
+
+<!ENTITY securityOverride.warningContent "
+<p>ඔබ පූර්ණ විශ්වාසයක් නොමැති අන්තර්ජාල සම්බන්ධතාවයක් භාවිතා කරයි නම් හෝ ඔබ මෙම අඩවියට අවවාද පණිවිඩ දැක නැත්නම් ඔබ හැරදැමීම් එක් කළ නොකළ යුතුයි.</p>
+
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button>
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>
+">
+
+<!ENTITY remoteXUL.title "Remote XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>කරුණාකර මෙම ගැටලුව පිළිබද අඩවියේ හිමිකරුට දන්වන්න.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "ඔබේ සබඳතාව ආරක්ෂිත නොමැත">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+

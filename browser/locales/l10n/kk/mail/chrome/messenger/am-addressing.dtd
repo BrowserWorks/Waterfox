@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "Құрастыру және адрестеу">
+<!ENTITY addressingGroupTitle.label "Адрестеу">
+<!ENTITY addressingText.label      "Адрестерді қарау кезінде:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Бұл тіркелгі үшін менің глобалды LDAP сервер баптауларымды қолдану">
+<!ENTITY useGlobal.accesskey       "о">
+<!ENTITY editDirectories.label     "Бумаларды түзету…">
+<!ENTITY editDirectories.accesskey "е">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Басқа LDAP серверін қолдану:">
+<!ENTITY directories.accesskey     "Б">
+<!ENTITY directoriesNone.label     "Ешнәрсе">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "Құрылымы">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Хабарламаларды HTML пішімінде құрастыру">
+<!ENTITY useHtml.accesskey                    "с">
+<!ENTITY autoQuote.label                      "Жауап берге кезде түпнұсқа хабарламасын дәйексөз ретінде алу">
+<!ENTITY autoQuote.accesskey                  "а">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "Дәйексөз ретінде алу кезінде,">
+<!ENTITY quoting.accesskey                    "к">
+<!ENTITY aboveQuote.label                     "менің жауабымды дәйексөзге дейін бастау">
+<!ENTITY belowQuote.label                     "менің жауабымды дәйексөзден кейін бастау">
+<!ENTITY selectAndQuote.label                 "дәйексөзді таңдау">
+<!ENTITY place.label                          "және менің қолтаңбамды орналастыру">
+<!ENTITY place.accesskey                      "т">
+<!ENTITY belowText.label                      "дәйексөзден кейін (ұсынылады)">
+<!ENTITY aboveText.label                      "жауабымнан кейін (дәйексөзге дейін)">
+<!ENTITY includeSigOnReply.label              "Жауаптар үшін қолтаңбамды іске қосу">
+<!ENTITY includeSigOnReply.accesskey          "к">
+<!ENTITY includeSigOnForward.label            "Қайта бағдарлаулар үшін қолтаңбамды іске қосу">
+<!ENTITY includeSigOnForward.accesskey        "д">
+
+<!ENTITY globalComposingPrefs.label           "Глобалды хаттарды құрастыру баптаулары…">
+<!ENTITY globalComposingPrefs.accesskey       "Г">
+
+<!ENTITY globalAddressingPrefs.label          "Глобалды адрестеу баптаулары…">
+<!ENTITY globalAddressingPrefs.accesskey      "п">

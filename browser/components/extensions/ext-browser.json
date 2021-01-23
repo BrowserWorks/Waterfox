@@ -9,8 +9,9 @@
   },
   "browserAction": {
     "url": "chrome://browser/content/parent/ext-browserAction.js",
-    "schema": "chrome://browser/content/schemas/browser_action.json",
+    "schema": "chrome://extensions/content/schemas/browser_action.json",
     "scopes": ["addon_parent"],
+    "events": ["update", "uninstall", "disable"],
     "manifest": ["browser_action"],
     "paths": [
       ["browserAction"]
@@ -35,8 +36,9 @@
   "chrome_settings_overrides": {
     "url": "chrome://browser/content/parent/ext-chrome-settings-overrides.js",
     "scopes": [],
-    "events": ["update", "uninstall", "disable"],
+    "events": ["update", "uninstall", "disable", "enabling"],
     "schema": "chrome://browser/content/schemas/chrome_settings_overrides.json",
+    "settings": true,
     "manifest": ["chrome_settings_overrides"]
   },
   "commands": {
@@ -99,12 +101,6 @@
       ["history"]
     ]
   },
-  "legacy": {
-    "url": "chrome://browser/content/parent/ext-legacy.js",
-    "schema": "chrome://browser/content/schemas/legacy.json",
-    "scopes": ["addon_parent"],
-    "manifest": ["legacy"]
-  },
   "identity": {
     "url": "chrome://extensions/content/parent/ext-identity.js",
     "schema": "chrome://extensions/content/schemas/identity.json",
@@ -112,6 +108,12 @@
     "paths": [
       ["identity"]
     ]
+  },
+  "legacy": {
+    "url": "chrome://browser/content/parent/ext-legacy.js",
+    "schema": "chrome://browser/content/schemas/legacy.json",
+    "scopes": ["addon_parent"],
+    "manifest": ["legacy"]
   },
   "menusChild": {
     "schema": "chrome://browser/content/schemas/menus_child.json",
@@ -127,6 +129,14 @@
       ["menusInternal"]
     ]
   },
+  "normandyAddonStudy": {
+    "url": "chrome://browser/content/parent/ext-normandyAddonStudy.js",
+    "schema": "chrome://browser/content/schemas/normandyAddonStudy.json",
+    "scopes": ["addon_parent", "content_parent", "devtools_parent"],
+    "paths": [
+      ["normandyAddonStudy"]
+    ]
+  },
   "omnibox": {
     "url": "chrome://browser/content/parent/ext-omnibox.js",
     "schema": "chrome://browser/content/schemas/omnibox.json",
@@ -138,8 +148,9 @@
   },
   "pageAction": {
     "url": "chrome://browser/content/parent/ext-pageAction.js",
-    "schema": "chrome://browser/content/schemas/page_action.json",
+    "schema": "chrome://extensions/content/schemas/page_action.json",
     "scopes": ["addon_parent"],
+    "events": ["update", "uninstall", "disable"],
     "manifest": ["page_action"],
     "paths": [
       ["pageAction"]
@@ -196,11 +207,28 @@
       ["tabs"]
     ]
   },
+  "topSites": {
+    "url": "chrome://browser/content/parent/ext-topSites.js",
+    "schema": "chrome://browser/content/schemas/top_sites.json",
+    "scopes": ["addon_parent"],
+    "paths": [
+      ["topSites"]
+    ]
+  },
+  "urlbar": {
+    "url": "chrome://browser/content/parent/ext-urlbar.js",
+    "schema": "chrome://browser/content/schemas/urlbar.json",
+    "scopes": ["addon_parent"],
+    "settings": true,
+    "paths": [
+      ["urlbar"]
+    ]
+  },
   "urlOverrides": {
     "url": "chrome://browser/content/parent/ext-url-overrides.js",
     "schema": "chrome://browser/content/schemas/url_overrides.json",
     "scopes": ["addon_parent"],
-    "events": ["update", "uninstall", "disable"],
+    "events": ["update", "uninstall", "disable", "enabling"],
     "manifest": ["chrome_url_overrides"],
     "paths": [
       ["urlOverrides"]

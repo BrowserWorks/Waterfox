@@ -1,6 +1,6 @@
 {
-    "llvm_revision": "d2298e74235598f15594fe2c99bbac870a507c59",
-    "stages": "3",
+    "stages": "4",
+    "pgo" : true,
     "build_libcxx": false,
     "build_type": "Release",
     "assertions": false,
@@ -9,10 +9,10 @@
     "cxx": "cl.exe",
     "ml": "ml64.exe",
     "patches": [
-      "workaround-issue38586.patch",
       "unpoison-thread-stacks.patch",
       "downgrade-mangling-error.patch",
-      "loosen-msvc-detection.patch",
-      "revert-r355311.patch"
+      "rG7e18aeba5062.patch",
+      "llvmorg-10-init-5191-ga84b200e604-windows-pgo.patch",
+      "loosen-msvc-detection.patch"
     ]
 }

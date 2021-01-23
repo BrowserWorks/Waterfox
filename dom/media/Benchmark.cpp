@@ -11,15 +11,12 @@
 #include "PDMFactory.h"
 #include "VideoUtils.h"
 #include "WebMDemuxer.h"
-#include "gfxPrefs.h"
 #include "mozilla/AbstractThread.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/SharedThreadPool.h"
 #include "mozilla/StaticMutex.h"
-#include "mozilla/StaticPrefs.h"
-#include "mozilla/SystemGroup.h"
+#include "mozilla/StaticPrefs_media.h"
 #include "mozilla/TaskQueue.h"
-#include "mozilla/Telemetry.h"
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/gfx/gfxVars.h"
 #include "nsIGfxInfo.h"
@@ -67,7 +64,7 @@ uint32_t VP9Benchmark::MediaBenchmarkVp9Fps() {
   if (!ShouldRun()) {
     return 0;
   }
-  return StaticPrefs::MediaBenchmarkVp9Fps();
+  return StaticPrefs::media_benchmark_vp9_fps();
 }
 
 // static
@@ -79,8 +76,8 @@ bool VP9Benchmark::IsVP9DecodeFast(bool aDefault) {
     return false;
   }
   static StaticMutex sMutex;
-  uint32_t decodeFps = StaticPrefs::MediaBenchmarkVp9Fps();
-  uint32_t hadRecentUpdate = StaticPrefs::MediaBenchmarkVp9Versioncheck();
+  uint32_t decodeFps = StaticPrefs::media_benchmark_vp9_fps();
+  uint32_t hadRecentUpdate = StaticPrefs::media_benchmark_vp9_versioncheck();
   bool needBenchmark;
   {
     StaticMutexAutoLock lock(sMutex);
@@ -94,10 +91,11 @@ bool VP9Benchmark::IsVP9DecodeFast(bool aDefault) {
         new BufferMediaResource(sWebMSample, sizeof(sWebMSample)));
     RefPtr<Benchmark> estimiser = new Benchmark(
         demuxer,
-        {StaticPrefs::MediaBenchmarkFrames(),  // frames to measure
+        {StaticPrefs::media_benchmark_frames(),  // frames to measure
          1,  // start benchmarking after decoding this frame.
          8,  // loop after decoding that many frames.
-         TimeDuration::FromMilliseconds(StaticPrefs::MediaBenchmarkTimeout())});
+         TimeDuration::FromMilliseconds(
+             StaticPrefs::media_benchmark_timeout())});
     estimiser->Run()->Then(
         AbstractThread::MainThread(), __func__,
         [](uint32_t aDecodeFps) {
@@ -122,7 +120,7 @@ bool VP9Benchmark::IsVP9DecodeFast(bool aDefault) {
     return aDefault;
   }
 
-  return decodeFps >= StaticPrefs::MediaBenchmarkVp9Threshold();
+  return decodeFps >= StaticPrefs::media_benchmark_vp9_threshold();
 #endif
 }
 
@@ -168,7 +166,6 @@ void Benchmark::Dispose() {
 void Benchmark::Init() {
   MOZ_ASSERT(NS_IsMainThread());
   gfxVars::Initialize();
-  gfxPrefs::GetSingleton();
 }
 
 BenchmarkPlayback::BenchmarkPlayback(Benchmark* aGlobalState,
@@ -216,7 +213,7 @@ void BenchmarkPlayback::DemuxNextSample() {
   promise->Then(
       Thread(), __func__,
       [this, ref](RefPtr<MediaTrackDemuxer::SamplesHolder> aHolder) {
-        mSamples.AppendElements(std::move(aHolder->mSamples));
+        mSamples.AppendElements(std::move(aHolder->GetMovableSamples()));
         if (ref->mParameters.mStopAtFrame &&
             mSamples.Length() == ref->mParameters.mStopAtFrame.ref()) {
           InitDecoder(mTrackDemuxer->GetInfo());
@@ -241,6 +238,11 @@ void BenchmarkPlayback::DemuxNextSample() {
 void BenchmarkPlayback::InitDecoder(UniquePtr<TrackInfo>&& aInfo) {
   MOZ_ASSERT(OnThread());
 
+  if (!aInfo) {
+    Error(MediaResult(NS_ERROR_FAILURE, "Invalid TrackInfo"));
+    return;
+  }
+
   RefPtr<PDMFactory> platform = new PDMFactory();
   mInfo = std::move(aInfo);
   mDecoder = platform->CreateDecoder({*mInfo, mDecoderTaskQueue});
@@ -258,16 +260,11 @@ void BenchmarkPlayback::InitDecoder(UniquePtr<TrackInfo>&& aInfo) {
 void BenchmarkPlayback::FinalizeShutdown() {
   MOZ_ASSERT(OnThread());
 
+  MOZ_ASSERT(mFinished, "GlobalShutdown must have been run");
   MOZ_ASSERT(!mDecoder, "mDecoder must have been shutdown already");
+  MOZ_ASSERT(!mDemuxer, "mDemuxer must have been shutdown already");
   MOZ_DIAGNOSTIC_ASSERT(mDecoderTaskQueue->IsEmpty());
   mDecoderTaskQueue = nullptr;
-
-  if (mTrackDemuxer) {
-    mTrackDemuxer->Reset();
-    mTrackDemuxer->BreakCycles();
-    mTrackDemuxer = nullptr;
-  }
-  mDemuxer = nullptr;
 
   RefPtr<Benchmark> ref(mGlobalState);
   ref->Thread()->Dispatch(NS_NewRunnableFunction(
@@ -280,6 +277,13 @@ void BenchmarkPlayback::GlobalShutdown() {
   MOZ_ASSERT(!mFinished, "We've already shutdown");
 
   mFinished = true;
+
+  if (mTrackDemuxer) {
+    mTrackDemuxer->Reset();
+    mTrackDemuxer->BreakCycles();
+    mTrackDemuxer = nullptr;
+  }
+  mDemuxer = nullptr;
 
   if (mDecoder) {
     RefPtr<Benchmark> ref(mGlobalState);

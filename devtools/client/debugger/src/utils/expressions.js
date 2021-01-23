@@ -5,7 +5,11 @@
 // @flow
 
 import { correctIndentation } from "./indentation";
+import { getGrip } from "./evaluation-result";
 import type { Expression } from "../types";
+import type { Grip } from "../client/firefox/types";
+
+const UNAVAILABLE_GRIP = { unavailable: true };
 
 /*
  * wrap the expression input in a try/catch so that it can be safely
@@ -13,7 +17,7 @@ import type { Expression } from "../types";
  *
  * NOTE: we add line after the expression to protect against comments.
  */
-export function wrapExpression(input: string) {
+export function wrapExpression(input: string): string {
   return correctIndentation(`
     try {
       ${input}
@@ -23,7 +27,7 @@ export function wrapExpression(input: string) {
   `);
 }
 
-function isUnavailable(value) {
+function isUnavailable(value): boolean {
   if (!value.preview || !value.preview.name) {
     return false;
   }
@@ -31,51 +35,40 @@ function isUnavailable(value) {
   return ["ReferenceError", "TypeError"].includes(value.preview.name);
 }
 
-export function getValue(expression: Expression) {
-  const value = expression.value;
+export function getValue(
+  expression: Expression
+): Grip | string | number | null | Object {
+  const { value, exception, error } = expression;
+
+  if (error) {
+    return error;
+  }
+
   if (!value) {
-    return {
-      path: expression.from,
-      value: { unavailable: true },
-    };
+    return UNAVAILABLE_GRIP;
   }
 
-  if (value.exception) {
-    if (isUnavailable(value.exception)) {
-      return { value: { unavailable: true } };
+  if (exception) {
+    if (isUnavailable(exception)) {
+      return UNAVAILABLE_GRIP;
     }
-    return {
-      path: value.from,
-      value: value.exception,
-    };
+    return exception;
   }
 
-  if (value.error) {
-    return {
-      path: value.from,
-      value: value.error,
-    };
-  }
+  const valueGrip = getGrip(value.result);
 
-  if (value.result && value.result.class == "Error") {
-    const { name, message } = value.result.preview;
-    if (isUnavailable(value.result)) {
-      return { value: { unavailable: true } };
+  if (
+    valueGrip &&
+    typeof valueGrip === "object" &&
+    valueGrip.class == "Error"
+  ) {
+    if (isUnavailable(valueGrip)) {
+      return UNAVAILABLE_GRIP;
     }
 
-    const newValue = `${name}: ${message}`;
-    return { path: value.input, value: newValue };
+    const { name, message } = valueGrip.preview;
+    return `${name}: ${message}`;
   }
 
-  if (typeof value.result == "object") {
-    return {
-      path: value.result.actor,
-      value: value.result,
-    };
-  }
-
-  return {
-    path: value.input,
-    value: value.result,
-  };
+  return valueGrip;
 }

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY digitalSign.certificate.button "Вылучыць…">
+<!ENTITY digitalSign.certificate.accesskey "В">
+<!ENTITY digitalSign.certificate_clear.button "Ачысціць">
+<!ENTITY digitalSign.certificate_clear.accesskey "А">
+<!ENTITY encryption.certificate.button "Вылучыць…">
+<!ENTITY encryption.certificate.accesskey "ы">
+<!ENTITY encryption.certificate_clear.button "Ачысціць">
+<!ENTITY encryption.certificate_clear.accesskey "ч">
+<!ENTITY signingGroupTitle.label "Лічбавае падпісанне">
+<!ENTITY signMessage.accesskey "Л">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Абраць сертыфікат">
+<!ENTITY certPicker.info  "Сертыфікат:">
+<!ENTITY certPicker.detailsLabel "Падрабязнасці вылучанага сертыфіката:">
+

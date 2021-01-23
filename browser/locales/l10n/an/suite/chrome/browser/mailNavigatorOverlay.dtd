@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newMessageCmd.label             "Mensache">
+<!ENTITY newMessageCmd.accesskey         "M">
+<!ENTITY newMessageCmd.key               "M">
+
+<!ENTITY newContactCmd.label             "Contacto…">
+<!ENTITY newContactCmd.accesskey         "C">
+
+<!ENTITY sendPage.label                  "Ninviar pachina…">
+<!ENTITY sendPage.accesskey              "p">
+
+<!ENTITY contextSendThisPage.label       "Ninviar ista pachina…">
+<!ENTITY contextSendThisPage.accesskey   "p">
+<!ENTITY contextSendThisLink.label       "Niviar iste vinclo…">
+<!ENTITY contextSendThisLink.accesskey   "v">
+<!ENTITY contextSendImage.label          "Ynviar imachen…">
+<!ENTITY contextSendImage.accesskey      "n">
+<!ENTITY contextSendVideo.label          "Ynviar vídeo…">
+<!ENTITY contextSendVideo.accesskey      "n">
+<!ENTITY contextSendAudio.label          "Ynviar audio…">
+<!ENTITY contextSendAudio.accesskey      "n">
+<!ENTITY contextSendFrame.label          "Ynviar marco…">
+<!ENTITY contextSendFrame.accesskey      "n">
+
+<!ENTITY sendLinkCmd.label               "Ninviar enlace…"> 
+<!ENTITY sendLinkCmd.accesskey           "l">
+

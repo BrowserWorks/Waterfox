@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE Mouse-wheel management prefs, for those lucky OSes that support mouse wheels -->
+
+<!ENTITY pref.mouseWheel.title           "თაგუნას ბორბალი">
+<!ENTITY mouseWheelPanel.label           "თაგუნას ბორბლის ქცევის განსაზღვრა მოცემულ ღილაკთან მიმართებით: ">
+<!ENTITY usingJustTheWheel.label         "ღილაკის გარეშე">
+<!ENTITY usingWheelAndAlt.label          "&altKey.label;">
+<!ENTITY usingWheelAndCtrl.label         "&ctrlKey.label;">
+<!ENTITY usingWheelAndShft.label         "&shiftKey.label;">
+<!-- Key labels, for mousewheel prefs -->
+<!ENTITY usingWheelAndAlt.label2         "Alt">
+<!ENTITY usingWheelAndOption.label       "Option">
+<!ENTITY usingWheelAndCtrl.label2        "Ctrl">
+<!ENTITY usingWheelAndShft.label2        "Shift">
+<!ENTITY mouseWheelGroup.label           "მართობული გადახვევა">
+<!ENTITY mouseWheelHorizGroup.label      "განივი გადახვევა">
+<!ENTITY sameAsVertical.label            "იგივე, რაც მართობული გადახვევისთვის">
+<!ENTITY sameAsVertical.accesskey        "v">
+<!ENTITY doNothing.label                 "დატოვება როგორც არის">
+<!ENTITY doNothing.accesskey             "D">
+<!ENTITY doNothingHoriz.accesskey        "n">
+<!ENTITY scrollDocument.label            "დოკუმენტის გადაფურცვლა">
+<!ENTITY scrollDocument.accesskey        "გ">
+<!ENTITY scrollDocumentHoriz.accesskey   "კ">
+<!ENTITY history.label                   "ისტორიის ნუსხის წინ და უკან გადახვევა">
+<!ENTITY history.accesskey               "M">
+<!ENTITY historyHoriz.accesskey          "b">
+<!ENTITY zoom.label                      "გვერდის ზომის გაზრდა ან შემცირება">
+<!ENTITY zoom.accesskey                  "Z">
+<!ENTITY zoomHoriz.accesskey             "o">
+<!ENTITY wheelSpeed.label                "თაგუნას ბორბლის სიჩქარე:">
+<!ENTITY wheelSpeed.accesskey            "ო">
+<!ENTITY wheelSpeedHoriz.accesskey       "ს">
+<!ENTITY reverseDirection.label          "უკუმიმართულებით">
+<!ENTITY reverseDirection.accesskey      "R">
+<!ENTITY reverseDirectionHoriz.accesskey "e">

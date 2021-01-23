@@ -64,9 +64,8 @@ already_AddRefed<ImageClient> ImageClient::CreateImageClient(
   return result.forget();
 }
 
-void ImageClient::RemoveTexture(TextureClient* aTexture,
-                                const Maybe<wr::RenderRoot>& aRenderRoot) {
-  GetForwarder()->RemoveTextureFromCompositable(this, aTexture, aRenderRoot);
+void ImageClient::RemoveTexture(TextureClient* aTexture) {
+  GetForwarder()->RemoveTextureFromCompositable(this, aTexture);
 }
 
 ImageClientSingle::ImageClientSingle(CompositableForwarder* aFwd,
@@ -84,14 +83,14 @@ void ImageClientSingle::FlushAllImages() {
     // the texture actually presents in a content render root, as the only
     // risk would be if the content render root has not / is not going to
     // generate a frame before the texture gets cleared.
-    RemoveTexture(b.mTextureClient, Some(wr::RenderRoot::Default));
+    RemoveTexture(b.mTextureClient);
   }
   mBuffers.Clear();
 }
 
 /* static */
 already_AddRefed<TextureClient> ImageClient::CreateTextureClientForImage(
-    Image* aImage, KnowsCompositor* aForwarder) {
+    Image* aImage, KnowsCompositor* aKnowsCompositor) {
   RefPtr<TextureClient> texture;
   if (aImage->GetFormat() == ImageFormat::PLANAR_YCBCR) {
     PlanarYCbCrImage* ycbcr = static_cast<PlanarYCbCrImage*>(aImage);
@@ -100,9 +99,9 @@ already_AddRefed<TextureClient> ImageClient::CreateTextureClientForImage(
       return nullptr;
     }
     texture = TextureClient::CreateForYCbCr(
-        aForwarder, data->mYSize, data->mYStride, data->mCbCrSize,
+        aKnowsCompositor, data->mYSize, data->mYStride, data->mCbCrSize,
         data->mCbCrStride, data->mStereoMode, data->mColorDepth,
-        data->mYUVColorSpace, TextureFlags::DEFAULT);
+        data->mYUVColorSpace, data->mColorRange, TextureFlags::DEFAULT);
     if (!texture) {
       return nullptr;
     }
@@ -124,13 +123,13 @@ already_AddRefed<TextureClient> ImageClient::CreateTextureClientForImage(
     texture = AndroidSurfaceTextureData::CreateTextureClient(
         typedImage->GetHandle(), size, typedImage->GetContinuous(),
         typedImage->GetOriginPos(), typedImage->GetHasAlpha(),
-        aForwarder->GetTextureForwarder(), TextureFlags::DEFAULT);
+        aKnowsCompositor->GetTextureForwarder(), TextureFlags::DEFAULT);
 #endif
   } else {
     RefPtr<gfx::SourceSurface> surface = aImage->GetAsSourceSurface();
     MOZ_ASSERT(surface);
     texture = TextureClient::CreateForDrawing(
-        aForwarder, surface->GetFormat(), aImage->GetSize(),
+        aKnowsCompositor, surface->GetFormat(), aImage->GetSize(),
         BackendSelector::Content, TextureFlags::DEFAULT);
     if (!texture) {
       return nullptr;
@@ -162,8 +161,7 @@ already_AddRefed<TextureClient> ImageClient::CreateTextureClientForImage(
 }
 
 bool ImageClientSingle::UpdateImage(ImageContainer* aContainer,
-                                    uint32_t aContentFlags,
-                                    const Maybe<wr::RenderRoot>& aRenderRoot) {
+                                    uint32_t aContentFlags) {
   AutoTArray<ImageContainer::OwningImage, 4> images;
   uint32_t generationCounter;
   aContainer->GetCurrentImages(&images, &generationCounter);
@@ -187,7 +185,7 @@ bool ImageClientSingle::UpdateImage(ImageContainer* aContainer,
     // We return true because the caller would attempt to recreate the
     // ImageClient otherwise, and that isn't going to help.
     for (auto& b : mBuffers) {
-      RemoveTexture(b.mTextureClient, aRenderRoot);
+      RemoveTexture(b.mTextureClient);
     }
     mBuffers.Clear();
     return true;
@@ -251,10 +249,10 @@ bool ImageClientSingle::UpdateImage(ImageContainer* aContainer,
     texture->SyncWithObject(GetForwarder()->GetSyncObject());
   }
 
-  GetForwarder()->UseTextures(this, textures, aRenderRoot);
+  GetForwarder()->UseTextures(this, textures);
 
   for (auto& b : mBuffers) {
-    RemoveTexture(b.mTextureClient, aRenderRoot);
+    RemoveTexture(b.mTextureClient);
   }
   mBuffers.SwapElements(newBuffers);
 
@@ -287,8 +285,7 @@ ImageClientBridge::ImageClientBridge(CompositableForwarder* aFwd,
     : ImageClient(aFwd, aFlags, CompositableType::IMAGE_BRIDGE) {}
 
 bool ImageClientBridge::UpdateImage(ImageContainer* aContainer,
-                                    uint32_t aContentFlags,
-                                    const Maybe<wr::RenderRoot>& aRenderRoot) {
+                                    uint32_t aContentFlags) {
   if (!GetForwarder() || !mLayer) {
     return false;
   }

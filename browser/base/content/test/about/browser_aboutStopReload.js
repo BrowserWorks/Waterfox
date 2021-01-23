@@ -1,5 +1,5 @@
 async function waitForNoAnimation(elt) {
-  return BrowserTestUtils.waitForCondition(() => !elt.hasAttribute("animate"));
+  return TestUtils.waitForCondition(() => !elt.hasAttribute("animate"));
 }
 
 async function getAnimatePromise(elt) {
@@ -14,6 +14,9 @@ function stopReloadMutationCallback() {
     "stop-reload's animate attribute should not have been mutated"
   );
 }
+
+// Force-enable the animation
+gReduceMotionOverride = false;
 
 add_task(async function checkDontShowStopOnNewTab() {
   let stopReloadContainer = document.getElementById("stop-reload-button");
@@ -121,7 +124,7 @@ add_task(async function checkAnimateStopOnTabAfterTabFinishesOpening() {
     gBrowser,
     waitForStateStop: true,
   });
-  await BrowserTestUtils.waitForCondition(() => {
+  await TestUtils.waitForCondition(() => {
     info(
       "Waiting for tabAnimationsInProgress to equal 0, currently " +
         gBrowser.tabAnimationsInProgress
@@ -147,7 +150,7 @@ add_task(async function checkDoShowStopFromLocalURI() {
     opening: "about:robots",
     waitForStateStop: true,
   });
-  await BrowserTestUtils.waitForCondition(() => {
+  await TestUtils.waitForCondition(() => {
     info(
       "Waiting for tabAnimationsInProgress to equal 0, currently " +
         gBrowser.tabAnimationsInProgress

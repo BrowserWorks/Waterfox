@@ -22,12 +22,18 @@ value :
   | \w+  # string identifier or value;
 """
 
-import sys
+from __future__ import absolute_import, print_function, unicode_literals
+
+import errno
+import io
+from optparse import OptionParser
 import os
 import re
-from optparse import OptionParser
-import errno
-from makeutil import Makefile
+import six
+import sys
+
+from mozbuild.makeutil import Makefile
+from mozpack.path import normsep
 
 # hack around win32 mangling our line endings
 # http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/65443
@@ -43,6 +49,15 @@ __all__ = [
   'Preprocessor',
   'preprocess'
 ]
+
+
+def _to_text(a):
+    # We end up converting a lot of different types (text_type, binary_type,
+    # int, etc.) to Unicode in this script. This function handles all of those
+    # possibilities.
+    if isinstance(a, (six.text_type, six.binary_type)):
+        return six.ensure_text(a)
+    return six.text_type(a)
 
 
 def path_starts_with(path, prefix):
@@ -197,6 +212,7 @@ class Expression:
             if tok[1].value == '!=':
                 rv = not rv
             return rv
+
         # Helper function to evaluate __get_logical_and and __get_logical_or results
         def eval_logical_op(tok):
             left = opmap[tok[0].type](tok[0])
@@ -217,12 +233,13 @@ class Expression:
           'defined': lambda tok: tok.value in context,
           'int': lambda tok: tok.value}
 
-        return opmap[self.e.type](self.e);
+        return opmap[self.e.type](self.e)
 
     class __AST(list):
         """
         Internal class implementing Abstract Syntax Tree nodes
         """
+
         def __init__(self, type):
             self.type = type
             super(self.__class__, self).__init__(self)
@@ -231,26 +248,32 @@ class Expression:
         """
         Internal class implementing Abstract Syntax Tree leafs
         """
+
         def __init__(self, type, value):
             self.value = value
             self.type = type
+
         def __str__(self):
             return self.value.__str__()
+
         def __repr__(self):
             return self.value.__repr__()
 
-    class ParseError(StandardError):
+    class ParseError(Exception):
         """
         Error raised when parsing fails.
         It has two members, offset and content, which give the offset of the
         error and the offending content.
         """
+
         def __init__(self, expression):
             self.offset = expression.offset
             self.content = expression.content[:3]
+
         def __str__(self):
             return 'Unexpected content at offset {0}, "{1}"'.format(self.offset,
                                                                     self.content)
+
 
 class Context(dict):
     """
@@ -266,6 +289,7 @@ class Context(dict):
     to reflect the ambiguity between string literals and preprocessor
     variables.
     """
+
     def __getitem__(self, key):
         if key in self:
             return super(self.__class__, self).__getitem__(key)
@@ -285,10 +309,11 @@ class Preprocessor:
 
     def __init__(self, defines=None, marker='#'):
         self.context = Context()
-        for k,v in {'FILE': '',
-                    'LINE': 0,
-                    'DIRECTORY': os.path.abspath('.')}.iteritems():
-            self.context[k] = v
+        self.context.update({
+            'FILE': '',
+            'LINE': 0,
+            'DIRECTORY': os.path.abspath('.')
+            })
         try:
             # Can import globally because of bootstrapping issues.
             from buildconfig import topsrcdir, topobjdir
@@ -308,23 +333,25 @@ class Preprocessor:
         self.checkLineNumbers = False
         self.filters = []
         self.cmds = {}
-        for cmd, level in {'define': 0,
-                           'undef': 0,
-                           'if': sys.maxint,
-                           'ifdef': sys.maxint,
-                           'ifndef': sys.maxint,
-                           'else': 1,
-                           'elif': 1,
-                           'elifdef': 1,
-                           'elifndef': 1,
-                           'endif': sys.maxint,
-                           'expand': 0,
-                           'literal': 0,
-                           'filter': 0,
-                           'unfilter': 0,
-                           'include': 0,
-                           'includesubst': 0,
-                           'error': 0}.iteritems():
+        for cmd, level in (
+            ('define', 0),
+            ('undef', 0),
+            ('if', sys.maxsize),
+            ('ifdef', sys.maxsize),
+            ('ifndef', sys.maxsize),
+            ('else', 1),
+            ('elif', 1),
+            ('elifdef', 1),
+            ('elifndef', 1),
+            ('endif', sys.maxsize),
+            ('expand', 0),
+            ('literal', 0),
+            ('filter', 0),
+            ('unfilter', 0),
+            ('include', 0),
+            ('includesubst', 0),
+            ('error', 0),
+        ):
             self.cmds[cmd] = (level, getattr(self, 'do_' + cmd))
         self.out = sys.stdout
         self.setMarker(marker)
@@ -341,7 +368,8 @@ class Preprocessor:
         elif self.actionLevel == 1:
             msg = 'no useful preprocessor directives found'
         if msg:
-            class Fake(object): pass
+            class Fake(object):
+                pass
             fake = Fake()
             fake.context = {
                 'FILE': file,
@@ -357,7 +385,7 @@ class Preprocessor:
         """
         self.marker = aMarker
         if aMarker:
-            self.instruction = re.compile('{0}(?P<cmd>[a-z]+)(?:\s+(?P<args>.*?))?\s*$'
+            self.instruction = re.compile('\s*{0}(?P<cmd>[a-z]+)(?:\s+(?P<args>.*?))?\s*$'
                                           .format(aMarker))
             self.comment = re.compile(aMarker, re.U)
         else:
@@ -454,7 +482,7 @@ class Preprocessor:
             self.actionLevel = 2
         self.out.write(filteredLine)
 
-    def handleCommandLine(self, args, defaultToStdin = False):
+    def handleCommandLine(self, args, defaultToStdin=False):
         """
         Parse a commandline into this parser.
         Uses OptionParser internally, no args mean sys.argv[1:].
@@ -467,7 +495,7 @@ class Preprocessor:
                 except OSError as error:
                     if error.errno != errno.EEXIST:
                         raise
-            return open(path, 'wb')
+            return io.open(path, 'w', encoding='utf-8', newline='\n')
 
         p = self.getCommandLineParser()
         options, args = p.parse_args(args=args)
@@ -485,29 +513,27 @@ class Preprocessor:
             if not options.output:
                 raise Preprocessor.Error(self, "--depend doesn't work with stdout",
                                          None)
-            try:
-                from makeutil import Makefile
-            except:
-                raise Preprocessor.Error(self, "--depend requires the "
-                                               "mozbuild.makeutil module", None)
             depfile = get_output_file(options.depend)
 
         if args:
             for f in args:
-                with open(f, 'rU') as input:
+                with io.open(f, 'rU', encoding='utf-8') as input:
                     self.processFile(input=input, output=out)
             if depfile:
                 mk = Makefile()
-                mk.create_rule([options.output]).add_dependencies(self.includes)
+                mk.create_rule(
+                    [six.ensure_text(options.output)]
+                ).add_dependencies(self.includes)
                 mk.dump(depfile)
                 depfile.close()
 
         if options.output:
             out.close()
 
-    def getCommandLineParser(self, unescapeDefines = False):
+    def getCommandLineParser(self, unescapeDefines=False):
         escapedValue = re.compile('".*"$')
         numberValue = re.compile('\d+$')
+
         def handleD(option, opt, value, parser):
             vals = value.split('=', 1)
             if len(vals) == 1:
@@ -518,12 +544,16 @@ class Preprocessor:
             elif numberValue.match(vals[1]):
                 vals[1] = int(vals[1])
             self.context[vals[0]] = vals[1]
+
         def handleU(option, opt, value, parser):
             del self.context[value]
+
         def handleF(option, opt, value, parser):
             self.do_filter(value)
+
         def handleMarker(option, opt, value, parser):
             self.setMarker(value)
+
         def handleSilenceDirectiveWarnings(option, opt, value, parse):
             self.setSilenceDirectiveWarnings(True)
         p = OptionParser()
@@ -534,7 +564,7 @@ class Preprocessor:
         p.add_option('-F', action='callback', callback=handleF, type="string",
                      metavar="FILTER", help='Enable the specified filter')
         p.add_option('-o', '--output', type="string", default=None,
-                     metavar="FILENAME", help='Output to the specified file '+
+                     metavar="FILENAME", help='Output to the specified file ' +
                      'instead of stdout')
         p.add_option('--depend', type="string", default=None, metavar="FILENAME",
                      help='Generate dependencies in the given file')
@@ -583,19 +613,22 @@ class Preprocessor:
             val = self.applyFilters(m.group('value'))
             try:
                 val = int(val)
-            except:
+            except Exception:
                 pass
         self.context[m.group('name')] = val
+
     def do_undef(self, args):
         m = re.match('(?P<name>\w+)$', args, re.U)
         if not m:
             raise Preprocessor.Error(self, 'SYNTAX_DEF', args)
         if args in self.context:
             del self.context[args]
+
     # Logic
     def ensure_not_else(self):
         if len(self.ifStates) == 0 or self.ifStates[-1] == 2:
             sys.stderr.write('WARNING: bad nesting of #else in %s\n' % self.context['FILE'])
+
     def do_if(self, args, replace=False):
         if self.disableLevel and not replace:
             self.disableLevel += 1
@@ -607,7 +640,7 @@ class Preprocessor:
         except Exception:
             # XXX do real error reporting
             raise Preprocessor.Error(self, 'SYNTAX_ERR', args)
-        if type(val) == str:
+        if isinstance(val, six.text_type) or isinstance(val, six.binary_type):
             # we're looking for a number value, strings are false
             val = False
         if not val:
@@ -618,7 +651,7 @@ class Preprocessor:
             self.ifStates[-1] = self.disableLevel
         else:
             self.ifStates.append(self.disableLevel)
-        pass
+
     def do_ifdef(self, args, replace=False):
         if self.disableLevel and not replace:
             self.disableLevel += 1
@@ -633,7 +666,7 @@ class Preprocessor:
             self.ifStates[-1] = self.disableLevel
         else:
             self.ifStates.append(self.disableLevel)
-        pass
+
     def do_ifndef(self, args, replace=False):
         if self.disableLevel and not replace:
             self.disableLevel += 1
@@ -648,52 +681,59 @@ class Preprocessor:
             self.ifStates[-1] = self.disableLevel
         else:
             self.ifStates.append(self.disableLevel)
-        pass
-    def do_else(self, args, ifState = 2):
+
+    def do_else(self, args, ifState=2):
         self.ensure_not_else()
         hadTrue = self.ifStates[-1] == 0
-        self.ifStates[-1] = ifState # in-else
+        self.ifStates[-1] = ifState  # in-else
         if hadTrue:
             self.disableLevel = 1
             return
         self.disableLevel = 0
+
     def do_elif(self, args):
         if self.disableLevel == 1:
             if self.ifStates[-1] == 1:
                 self.do_if(args, replace=True)
         else:
             self.do_else(None, self.ifStates[-1])
+
     def do_elifdef(self, args):
         if self.disableLevel == 1:
             if self.ifStates[-1] == 1:
                 self.do_ifdef(args, replace=True)
         else:
             self.do_else(None, self.ifStates[-1])
+
     def do_elifndef(self, args):
         if self.disableLevel == 1:
             if self.ifStates[-1] == 1:
                 self.do_ifndef(args, replace=True)
         else:
             self.do_else(None, self.ifStates[-1])
+
     def do_endif(self, args):
         if self.disableLevel > 0:
             self.disableLevel -= 1
         if self.disableLevel == 0:
             self.ifStates.pop()
+
     # output processing
     def do_expand(self, args):
         lst = re.split('__(\w+)__', args, re.U)
-        do_replace = False
+
         def vsubst(v):
             if v in self.context:
-                return str(self.context[v])
+                return _to_text(self.context[v])
             return ''
         for i in range(1, len(lst), 2):
             lst[i] = vsubst(lst[i])
-        lst.append('\n') # add back the newline
-        self.write(reduce(lambda x, y: x+y, lst, ''))
+        lst.append('\n')  # add back the newline
+        self.write(six.moves.reduce(lambda x, y: x+y, lst, ''))
+
     def do_literal(self, args):
         self.write(args + '\n')
+
     def do_filter(self, args):
         filters = [f for f in args.split(' ') if hasattr(self, 'filter_' + f)]
         if len(filters) == 0:
@@ -701,30 +741,27 @@ class Preprocessor:
         current = dict(self.filters)
         for f in filters:
             current[f] = getattr(self, 'filter_' + f)
-        filterNames = current.keys()
-        filterNames.sort()
-        self.filters = [(fn, current[fn]) for fn in filterNames]
+        self.filters = [(fn, current[fn]) for fn in sorted(current.keys())]
         return
+
     def do_unfilter(self, args):
         filters = args.split(' ')
         current = dict(self.filters)
         for f in filters:
             if f in current:
                 del current[f]
-        filterNames = current.keys()
-        filterNames.sort()
-        self.filters = [(fn, current[fn]) for fn in filterNames]
+        self.filters = [(fn, current[fn]) for fn in sorted(current.keys())]
         return
+
     # Filters
     #
-    # emptyLines
-    #   Strips blank lines from the output.
+    # emptyLines: Strips blank lines from the output.
     def filter_emptyLines(self, aLine):
         if aLine == '\n':
             return ''
         return aLine
-    # slashslash
-    #   Strips everything after //
+
+    # slashslash: Strips everything after //.
     def filter_slashslash(self, aLine):
         if (aLine.find('//') == -1):
             return aLine
@@ -732,23 +769,27 @@ class Preprocessor:
         if rest:
             aLine += '\n'
         return aLine
-    # spaces
-    #   Collapses sequences of spaces into a single space
+
+    # spaces: Collapses sequences of spaces into a single space.
     def filter_spaces(self, aLine):
         return re.sub(' +', ' ', aLine).strip(' ')
-    # substition
-    #   helper to be used by both substition and attemptSubstitution
+
+    # substitution: variables wrapped in @ are replaced with their value.
     def filter_substitution(self, aLine, fatal=True):
         def repl(matchobj):
             varname = matchobj.group('VAR')
             if varname in self.context:
-                return str(self.context[varname])
+                return _to_text(self.context[varname])
             if fatal:
                 raise Preprocessor.Error(self, 'UNDEFINED_VAR', varname)
             return matchobj.group(0)
         return self.varsubst.sub(repl, aLine)
+
+    # attemptSubstitution: variables wrapped in @ are replaced with their
+    # value, or an empty string if the variable is not defined.
     def filter_attemptSubstitution(self, aLine):
         return self.filter_substitution(aLine, fatal=False)
+
     # File ops
     def do_include(self, args, filters=True):
         """
@@ -756,21 +797,21 @@ class Preprocessor:
         args can either be a file name, or a file-like object.
         Files should be opened, and will be closed after processing.
         """
-        isName = type(args) == str or type(args) == unicode
+        isName = isinstance(args, six.string_types)
         oldCheckLineNumbers = self.checkLineNumbers
         self.checkLineNumbers = False
         if isName:
             try:
-                args = str(args)
+                args = _to_text(args)
                 if filters:
                     args = self.applyFilters(args)
                 if not os.path.isabs(args):
                     args = os.path.join(self.curdir, args)
-                args = open(args, 'rU')
+                args = io.open(args, 'rU', encoding='utf-8')
             except Preprocessor.Error:
                 raise
-            except:
-                raise Preprocessor.Error(self, 'FILE_NOT_FOUND', str(args))
+            except Exception:
+                raise Preprocessor.Error(self, 'FILE_NOT_FOUND', _to_text(args))
         self.checkLineNumbers = bool(re.search('\.(js|jsm|java|webidl)(?:\.in)?$', args.name))
         oldFile = self.context['FILE']
         oldLine = self.context['LINE']
@@ -786,11 +827,11 @@ class Preprocessor:
         else:
             abspath = os.path.abspath(args.name)
             self.curdir = os.path.dirname(abspath)
-            self.includes.add(abspath)
+            self.includes.add(six.ensure_text(abspath))
             if self.topobjdir and path_starts_with(abspath, self.topobjdir):
-                abspath = '$OBJDIR' + abspath[len(self.topobjdir):]
+                abspath = '$OBJDIR' + normsep(abspath[len(self.topobjdir):])
             elif self.topsrcdir and path_starts_with(abspath, self.topsrcdir):
-                abspath = '$SRCDIR' + abspath[len(self.topsrcdir):]
+                abspath = '$SRCDIR' + normsep(abspath[len(self.topsrcdir):])
             self.context['FILE'] = abspath
             self.context['DIRECTORY'] = os.path.dirname(abspath)
         self.context['LINE'] = 0
@@ -806,20 +847,22 @@ class Preprocessor:
         self.context['LINE'] = oldLine
         self.context['DIRECTORY'] = oldDir
         self.curdir = oldCurdir
+
     def do_includesubst(self, args):
         args = self.filter_substitution(args)
         self.do_include(args)
+
     def do_error(self, args):
-        raise Preprocessor.Error(self, 'Error: ', str(args))
+        raise Preprocessor.Error(self, 'Error: ', _to_text(args))
 
 
 def preprocess(includes=[sys.stdin], defines={},
-               output = sys.stdout,
+               output=sys.stdout,
                marker='#'):
     pp = Preprocessor(defines=defines,
                       marker=marker)
     for f in includes:
-        with open(f, 'rU') as input:
+        with io.open(f, 'rU', encoding='utf-8') as input:
             pp.processFile(input=input, output=output)
     return pp.includes
 

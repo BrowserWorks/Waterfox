@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Airíonna an Tacair Réimsí">
+
+<!ENTITY Legend.label "Eochair Eolais">
+<!ENTITY Legend.accesskey "E">
+
+<!ENTITY EditLegendText.label "Cuir an eochair eolais in eagar:">
+<!ENTITY EditLegendText.accesskey "e">
+<!ENTITY LegendAlign.label "Ailínigh an eochair eolais:">
+<!ENTITY LegendAlign.accesskey "A">
+<!ENTITY AlignDefault.label "Réamhshocrú">
+<!ENTITY AlignLeft.label "Ar Chlé">
+<!ENTITY AlignCenter.label "Láraithe">
+<!ENTITY AlignRight.label "Ar Dheis">
+
+<!ENTITY RemoveFieldSet.label "Bain Tacar Réimsí">
+<!ENTITY RemoveFieldSet.accesskey "R">

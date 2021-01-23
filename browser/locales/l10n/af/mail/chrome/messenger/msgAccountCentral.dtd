@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "E-pos">
+<!ENTITY readMsgsLink.label           "Lees boodskappe">
+<!ENTITY composeMsgLink.label         "Skryf 'n nuwe boodskap">
+
+<!ENTITY newsSectionHdr.label         "Nuusgroepe">
+<!ENTITY subscribeNewsLink.label      "Bestuur nuusgroepintekeninge">
+
+<!ENTITY feedsSectionHdr.label        "Voere">
+<!ENTITY subscribeFeeds.label         "Bestuur intekeninge">
+
+
+
+<!ENTITY accountsSectionHdr.label     "Rekeninge">
+<!ENTITY subscribeImapFolders.label   "Bestuur vouerintekeninge">
+<!ENTITY settingsLink.label           "Bekyk opstelling vir hierdie rekening">
+
+
+<!ENTITY advFeaturesSectionHdr.label  "Gevorderde kenmerke">
+<!ENTITY searchMsgsLink.label         "Deursoek boodskappe">
+<!ENTITY filtersLink.label            "Bestuur boodskapfilters">
+<!ENTITY junkSettings.label           "Gemorspos-opstelling">
+<!ENTITY offlineLink.label            "Aflynopstelling">

@@ -1,3 +1,4 @@
+// |reftest| async
 // Copyright (C) 2016 the V8 project authors. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 /*---
@@ -5,7 +6,6 @@ description: >
     Rejected promises ignore resolution after deferred invocation of the
     provided reject function
 esid: sec-promise-executor
-es6id: 25.4.3.1
 info: |
     [...]
     9. Let completion be Call(executor, undefined,

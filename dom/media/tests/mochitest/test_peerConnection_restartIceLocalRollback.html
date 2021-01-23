@@ -25,11 +25,6 @@
         // (does not result in sending an offer)
         function PC_LOCAL_SETUP_ICE_HANDLER(test) {
           test.pcLocal.setupIceCandidateHandler(test, () => {});
-          if (test.testOptions.steeplechase) {
-            test.pcLocal.endOfTrickleIce.then(() => {
-              send_message({"type": "end_of_trickle_ice"});
-            });
-          }
         },
         function PC_LOCAL_CREATE_AND_SET_OFFER(test) {
           return test.createOffer(test.pcLocal).then(offer => {
@@ -40,6 +35,15 @@
         },
         function PC_LOCAL_EXPECT_ICE_CONNECTED(test) {
           test.pcLocal.iceCheckingIceRollbackExpected = true;
+        },
+        function PC_LOCAL_WAIT_FOR_GATHERING(test) {
+          return new Promise(r => {
+            test.pcLocal._pc.addEventListener("icegatheringstatechange", () => {
+              if (test.pcLocal._pc.iceGatheringState == "gathering") {
+                r();
+              }
+            });
+          });
         },
         function PC_LOCAL_ROLLBACK(test) {
           return test.setLocalDescription(test.pcLocal,

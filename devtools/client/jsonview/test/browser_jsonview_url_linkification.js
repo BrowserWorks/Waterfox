@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -66,7 +64,7 @@ async function testLinkNavigation({
 }) {
   const onTabLoaded = BrowserTestUtils.waitForNewTab(gBrowser, url);
 
-  ContentTask.spawn(browser, [urlText || url, url, clickLabel], args => {
+  SpecialPowers.spawn(browser, [[urlText || url, url, clickLabel]], args => {
     const [expectedURLText, expectedURL, shouldClickLabel] = args;
     const { document } = content;
 

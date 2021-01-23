@@ -10,7 +10,6 @@
 #include "nscore.h"
 #include "nsCOMPtr.h"
 #include "nsCOMArray.h"
-#include "nsIBlocklistService.h"
 #include "nsIPluginTag.h"
 #include "nsITimer.h"
 #include "nsString.h"
@@ -92,6 +91,8 @@ class nsIInternalPluginTag : public nsIPluginTag {
   nsTArray<nsCString> mMimeTypes;         // UTF-8
   nsTArray<nsCString> mMimeDescriptions;  // UTF-8
   nsTArray<nsCString> mExtensions;        // UTF-8
+
+  static uint32_t sNextId;
 };
 NS_DEFINE_STATIC_IID_ACCESSOR(nsIInternalPluginTag, NS_IINTERNALPLUGINTAG_IID)
 
@@ -101,7 +102,7 @@ class nsPluginTag final : public nsIInternalPluginTag {
  public:
   NS_DECLARE_STATIC_IID_ACCESSOR(NS_PLUGINTAG_IID)
 
-  NS_DECL_ISUPPORTS
+  NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSIPLUGINTAG
 
   // These must match the STATE_* values in nsIPluginTag.idl
@@ -113,24 +114,25 @@ class nsPluginTag final : public nsIInternalPluginTag {
   };
 
   nsPluginTag(nsPluginInfo* aPluginInfo, int64_t aLastModifiedTime,
-              bool fromExtension, uint32_t aBlocklistState);
+              uint32_t aBlocklistState);
   nsPluginTag(const char* aName, const char* aDescription,
               const char* aFileName, const char* aFullPath,
               const char* aVersion, const char* const* aMimeTypes,
               const char* const* aMimeDescriptions,
               const char* const* aExtensions, int32_t aVariants,
-              int64_t aLastModifiedTime, bool fromExtension,
-              uint32_t aBlocklistState, bool aArgsAreUTF8 = false);
+              int64_t aLastModifiedTime, uint32_t aBlocklistState,
+              bool aArgsAreUTF8 = false);
   nsPluginTag(uint32_t aId, const char* aName, const char* aDescription,
               const char* aFileName, const char* aFullPath,
               const char* aVersion, nsTArray<nsCString> aMimeTypes,
               nsTArray<nsCString> aMimeDescriptions,
               nsTArray<nsCString> aExtensions, bool aIsJavaPlugin, bool aIsFlashPlugin,
               bool aSupportsAsyncRender, int64_t aLastModifiedTime,
-              bool aFromExtension, int32_t aSandboxLevel,
-              uint32_t aBlocklistState);
+              int32_t aSandboxLevel, uint32_t aBlocklistState);
 
   void TryUnloadPlugin(bool inShutdown);
+
+  static void EnsureSandboxInformation();
 
   // plugin is enabled and not blocklisted
   bool IsActive();
@@ -147,8 +149,6 @@ class nsPluginTag final : public nsIInternalPluginTag {
 
   bool HasSameNameAndMimes(const nsPluginTag* aPluginTag) const;
   const nsCString& GetNiceFileName() override;
-
-  bool IsFromExtension() const;
 
   RefPtr<nsPluginTag> mNext;
   uint32_t mId;
@@ -175,7 +175,6 @@ class nsPluginTag final : public nsIInternalPluginTag {
   virtual ~nsPluginTag();
 
   nsCString mNiceFileName;  // UTF-8
-  bool mIsFromExtension;
   uint32_t mBlocklistState;
 
   void InitMime(const char* const* aMimeTypes,
@@ -184,8 +183,6 @@ class nsPluginTag final : public nsIInternalPluginTag {
   void InitSandboxLevel();
   nsresult EnsureMembersAreUTF8();
   void FixupVersion();
-
-  static uint32_t sNextId;
 };
 NS_DEFINE_STATIC_IID_ACCESSOR(nsPluginTag, NS_PLUGINTAG_IID)
 
@@ -241,10 +238,6 @@ class nsFakePluginTag : public nsIInternalPluginTag, public nsIFakePluginTag {
   nsString mSandboxScript;
 
   nsPluginTag::PluginState mState;
-
-  // Stores the id to use for the JS-implemented plugin that gets registered
-  // next through nsPluginHost::RegisterFakePlugin.
-  static uint32_t sNextId;
 };
 
 #endif  // nsPluginTags_h_

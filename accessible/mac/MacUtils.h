@@ -15,12 +15,24 @@ namespace mozilla {
 namespace a11y {
 namespace utils {
 
+// convert an array of Gecko accessibles to an NSArray of native accessibles
+static inline NSMutableArray* ConvertToNSArray(nsTArray<Accessible*>& aArray);
+
+// convert an array of Gecko proxy accessibles to an NSArray of native accessibles
+static inline NSMutableArray* ConvertToNSArray(nsTArray<ProxyAccessible*>& aArray);
+
 /**
  * Get a localized string from the string bundle.
  * Return nil if not found.
  */
 NSString* LocalizedString(const nsString& aString);
 
+/**
+ * Gets an accessible atttribute from the mozAccessible's associated
+ * accessible wrapper or proxy, and returns the value as an NSString.
+ * nil if no attribute is found.
+ */
+NSString* GetAccAttr(mozAccessible* aNativeAccessible, const char* aAttrName);
 }
 }
 }

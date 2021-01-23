@@ -11,6 +11,108 @@ SpecialPowers.pushPrefEnv({
 const PAGE =
   "data:text/html,<html><body>A%20regular,%20everyday,%20normal%20page.";
 
+let gListenerId = 0;
+
+/**
+ * Adds a content event listener on the given browser element. NOTE: this test
+ * is checking the behavior of pageshow and pagehide as seen by frame scripts,
+ * so it is specifically implemented using the message message manager.
+ * Similar to BrowserTestUtils.waitForContentEvent, but the listener will fire
+ * until it is removed. A callable object is returned that, when called, removes
+ * the event listener. Note that this function works even if the browser's
+ * frameloader is swapped.
+ *
+ * @param {xul:browser} browser
+ *        The browser element to listen for events in.
+ * @param {string} eventName
+ *        Name of the event to listen to.
+ * @param {function} listener
+ *        Function to call in parent process when event fires.
+ *        Not passed any arguments.
+ * @param {function} checkFn [optional]
+ *        Called with the Event object as argument, should return true if the
+ *        event is the expected one, or false if it should be ignored and
+ *        listening should continue. If not specified, the first event with
+ *        the specified name resolves the returned promise. This is called
+ *        within the content process and can have no closure environment.
+ *
+ * @returns function
+ *        If called, the return value will remove the event listener.
+ */
+function addContentEventListenerWithMessageManager(
+  browser,
+  eventName,
+  listener,
+  checkFn
+) {
+  let id = gListenerId++;
+  let checkFnSource = checkFn
+    ? encodeURIComponent(escape(checkFn.toSource()))
+    : "";
+
+  // To correctly handle frameloader swaps, we load a frame script
+  // into all tabs but ignore messages from the ones not related to
+  // |browser|.
+
+  /* eslint-disable no-eval */
+  function frameScript(innerId, innerEventName, innerCheckFnSource) {
+    let innerCheckFn;
+    if (innerCheckFnSource) {
+      innerCheckFn = eval(`(() => (${unescape(innerCheckFnSource)}))()`);
+    }
+
+    function innerListener(event) {
+      if (innerCheckFn && !innerCheckFn(event)) {
+        return;
+      }
+      sendAsyncMessage("ContentEventListener:Run", innerId);
+    }
+    function removeListener(msg) {
+      if (msg.data == innerId) {
+        removeMessageListener("ContentEventListener:Remove", removeListener);
+        removeEventListener(innerEventName, innerListener);
+      }
+    }
+    addMessageListener("ContentEventListener:Remove", removeListener);
+    addEventListener(innerEventName, innerListener);
+  }
+  /* eslint-enable no-eval */
+
+  let frameScriptSource = `data:,(${frameScript.toString()})(${id}, "${eventName}",
+     "${checkFnSource}")`;
+
+  let mm = Services.mm;
+
+  function runListener(msg) {
+    if (msg.data == id && msg.target == browser) {
+      listener();
+    }
+  }
+  mm.addMessageListener("ContentEventListener:Run", runListener);
+
+  let needCleanup = true;
+
+  let unregisterFunction = function() {
+    if (!needCleanup) {
+      return;
+    }
+    needCleanup = false;
+    mm.removeMessageListener("ContentEventListener:Run", runListener);
+    mm.broadcastAsyncMessage("ContentEventListener:Remove", id);
+    mm.removeDelayedFrameScript(frameScriptSource);
+  };
+
+  function cleanupObserver(subject, topic, data) {
+    if (subject == browser.messageManager) {
+      unregisterFunction();
+    }
+  }
+
+  mm.loadFrameScript(frameScriptSource, true);
+
+  return unregisterFunction;
+}
+
 /**
  * Returns a Promise that resolves when it sees a pageshow and
  * pagehide events in a particular order, where each event must
@@ -54,23 +156,17 @@ function prepareForVisibilityEvents(browser, expectedOrder) {
 
     let checkFn = e => e.persisted;
 
-    rmvHide = BrowserTestUtils.addContentEventListener(
+    rmvHide = addContentEventListenerWithMessageManager(
       browser,
       "pagehide",
       () => eventListener("pagehide"),
-      {},
-      checkFn,
-      false,
-      false
+      checkFn
     );
-    rmvShow = BrowserTestUtils.addContentEventListener(
+    rmvShow = addContentEventListenerWithMessageManager(
       browser,
       "pageshow",
       () => eventListener("pageshow"),
-      {},
-      checkFn,
-      false,
-      false
+      checkFn
     );
   });
 }
@@ -107,7 +203,7 @@ add_task(async function test_swap_frameloader_pagevisibility_events() {
 
   // Wait for that initial browser to show its pageshow event if it hasn't
   // happened so that we don't confuse it with the other expected events.
-  await ContentTask.spawn(emptyBrowser, {}, async () => {
+  await ContentTask.spawn(emptyBrowser, null, async () => {
     if (content.document.visibilityState === "hidden") {
       info("waiting for hidden emptyBrowser to pageshow");
       await ContentTaskUtils.waitForEvent(content, "pageshow", {});

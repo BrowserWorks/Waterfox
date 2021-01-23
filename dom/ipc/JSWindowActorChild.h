@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim:set ts=2 sw=2 sts=2 et cindent: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -11,9 +11,11 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/ErrorResult.h"
 #include "mozilla/dom/BindingDeclarations.h"
-#include "mozilla/dom/JSWindowActor.h"
+#include "mozilla/dom/ContentChild.h"
+#include "mozilla/dom/JSActor.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsWrapperCache.h"
+#include "nsIContentChild.h"
 
 namespace mozilla {
 namespace dom {
@@ -31,31 +33,39 @@ class WindowProxyHolder;
 namespace mozilla {
 namespace dom {
 
-class JSWindowActorChild final : public JSWindowActor {
+class JSWindowActorChild final : public JSActor {
  public:
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS_INHERITED(JSWindowActorChild,
-                                                         JSWindowActor)
+                                                         JSActor)
+
+  explicit JSWindowActorChild(nsIGlobalObject* aGlobal = nullptr);
+
+  nsIGlobalObject* GetParentObject() const override { return mGlobal; }
 
   JSObject* WrapObject(JSContext* aCx,
                        JS::Handle<JSObject*> aGivenProto) override;
 
-  static already_AddRefed<JSWindowActorChild> Constructor(GlobalObject& aGlobal,
-                                                          ErrorResult& aRv) {
-    return MakeAndAddRef<JSWindowActorChild>();
+  static already_AddRefed<JSWindowActorChild> Constructor(
+      GlobalObject& aGlobal) {
+    nsCOMPtr<nsIGlobalObject> global(
+        do_QueryInterface(aGlobal.GetAsSupports()));
+    return MakeAndAddRef<JSWindowActorChild>(global);
   }
 
-  WindowGlobalChild* Manager() const;
-  void Init(const nsAString& aName, WindowGlobalChild* aManager);
+  WindowGlobalChild* GetManager() const;
+  void Init(const nsACString& aName, WindowGlobalChild* aManager);
   void StartDestroy();
   void AfterDestroy();
   Document* GetDocument(ErrorResult& aRv);
   BrowsingContext* GetBrowsingContext(ErrorResult& aRv);
+  nsIDocShell* GetDocShell(ErrorResult& aRv);
   Nullable<WindowProxyHolder> GetContentWindow(ErrorResult& aRv);
 
  protected:
-  void SendRawMessage(const JSWindowActorMessageMeta& aMeta,
+  void SendRawMessage(const JSActorMessageMeta& aMeta,
                       ipc::StructuredCloneData&& aData,
+                      ipc::StructuredCloneData&& aStack,
                       ErrorResult& aRv) override;
 
  private:
@@ -63,6 +73,8 @@ class JSWindowActorChild final : public JSWindowActor {
 
   bool mCanSend = true;
   RefPtr<WindowGlobalChild> mManager;
+
+  nsCOMPtr<nsIGlobalObject> mGlobal;
 };
 
 }  // namespace dom

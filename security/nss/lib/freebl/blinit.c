@@ -17,18 +17,30 @@
 #include <intrin.h> /* for _xgetbv() */
 #endif
 
+#if defined(_WIN64) && defined(__aarch64__)
+#include <windows.h>
+#endif
+
+#if defined(DARWIN)
+#include <TargetConditionals.h>
+#endif
+
 static PRCallOnceType coFreeblInit;
 
 /* State variables. */
 static PRBool aesni_support_ = PR_FALSE;
 static PRBool clmul_support_ = PR_FALSE;
 static PRBool avx_support_ = PR_FALSE;
+static PRBool avx2_support_ = PR_FALSE;
 static PRBool ssse3_support_ = PR_FALSE;
+static PRBool sse4_1_support_ = PR_FALSE;
+static PRBool sse4_2_support_ = PR_FALSE;
 static PRBool arm_neon_support_ = PR_FALSE;
 static PRBool arm_aes_support_ = PR_FALSE;
 static PRBool arm_sha1_support_ = PR_FALSE;
 static PRBool arm_sha2_support_ = PR_FALSE;
 static PRBool arm_pmull_support_ = PR_FALSE;
+static PRBool ppc_crypto_support_ = PR_FALSE;
 
 #ifdef NSS_X86_OR_X64
 /*
@@ -68,31 +80,54 @@ check_xcr0_ymm()
 #define ECX_XSAVE (1 << 26)
 #define ECX_OSXSAVE (1 << 27)
 #define ECX_AVX (1 << 28)
+#define EBX_AVX2 (1 << 5)
+#define EBX_BMI1 (1 << 3)
+#define EBX_BMI2 (1 << 8)
+#define ECX_FMA (1 << 12)
+#define ECX_MOVBE (1 << 22)
 #define ECX_SSSE3 (1 << 9)
+#define ECX_SSE4_1 (1 << 19)
+#define ECX_SSE4_2 (1 << 20)
 #define AVX_BITS (ECX_XSAVE | ECX_OSXSAVE | ECX_AVX)
+#define AVX2_EBX_BITS (EBX_AVX2 | EBX_BMI1 | EBX_BMI2)
+#define AVX2_ECX_BITS (ECX_FMA | ECX_MOVBE)
 
 void
 CheckX86CPUSupport()
 {
     unsigned long eax, ebx, ecx, edx;
+    unsigned long eax7, ebx7, ecx7, edx7;
     char *disable_hw_aes = PR_GetEnvSecure("NSS_DISABLE_HW_AES");
     char *disable_pclmul = PR_GetEnvSecure("NSS_DISABLE_PCLMUL");
     char *disable_avx = PR_GetEnvSecure("NSS_DISABLE_AVX");
+    char *disable_avx2 = PR_GetEnvSecure("NSS_DISABLE_AVX2");
     char *disable_ssse3 = PR_GetEnvSecure("NSS_DISABLE_SSSE3");
+    char *disable_sse4_1 = PR_GetEnvSecure("NSS_DISABLE_SSE4_1");
+    char *disable_sse4_2 = PR_GetEnvSecure("NSS_DISABLE_SSE4_2");
     freebl_cpuid(1, &eax, &ebx, &ecx, &edx);
+    freebl_cpuid(7, &eax7, &ebx7, &ecx7, &edx7);
     aesni_support_ = (PRBool)((ecx & ECX_AESNI) != 0 && disable_hw_aes == NULL);
     clmul_support_ = (PRBool)((ecx & ECX_CLMUL) != 0 && disable_pclmul == NULL);
     /* For AVX we check AVX, OSXSAVE, and XSAVE
      * as well as XMM and YMM state. */
     avx_support_ = (PRBool)((ecx & AVX_BITS) == AVX_BITS) && check_xcr0_ymm() &&
                    disable_avx == NULL;
+    /* For AVX2 we check AVX2, BMI1, BMI2, FMA, MOVBE.
+     * We do not check for AVX above. */
+    avx2_support_ = (PRBool)((ebx7 & AVX2_EBX_BITS) == AVX2_EBX_BITS &&
+                             (ecx & AVX2_ECX_BITS) == AVX2_ECX_BITS &&
+                             disable_avx2 == NULL);
     ssse3_support_ = (PRBool)((ecx & ECX_SSSE3) != 0 &&
                               disable_ssse3 == NULL);
+    sse4_1_support_ = (PRBool)((ecx & ECX_SSE4_1) != 0 &&
+                               disable_sse4_1 == NULL);
+    sse4_2_support_ = (PRBool)((ecx & ECX_SSE4_2) != 0 &&
+                               disable_sse4_2 == NULL);
 }
 #endif /* NSS_X86_OR_X64 */
 
 /* clang-format off */
-#if defined(__aarch64__) || defined(__arm__)
+#if (defined(__aarch64__) || defined(__arm__)) && !defined(TARGET_OS_IPHONE)
 #ifndef __has_include
 #define __has_include(x) 0
 #endif
@@ -103,9 +138,25 @@ CheckX86CPUSupport()
 #include <sys/auxv.h>
 #endif
 extern unsigned long getauxval(unsigned long type) __attribute__((weak));
-#else
+#elif defined(__arm__) || !defined(__OpenBSD__)
 static unsigned long (*getauxval)(unsigned long) = NULL;
 #endif /* defined(__GNUC__) && __GNUC__ >= 2 && defined(__ELF__)*/
+
+#if defined(__FreeBSD__) && !defined(__aarch64__) && __has_include(<sys/auxv.h>)
+/* Avoid conflict with static declaration above */
+#define getauxval freebl_getauxval
+static unsigned long getauxval(unsigned long type)
+{
+    /* Only AT_HWCAP* return unsigned long */
+    if (type != AT_HWCAP && type != AT_HWCAP2) {
+        return 0;
+    }
+
+    unsigned long ret = 0;
+    elf_aux_info(type, &ret, sizeof(ret));
+    return ret;
+}
+#endif
 
 #ifndef AT_HWCAP2
 #define AT_HWCAP2 26
@@ -118,6 +169,8 @@ static unsigned long (*getauxval)(unsigned long) = NULL;
 /* clang-format on */
 
 #if defined(__aarch64__)
+
+#if defined(__linux__)
 // Defines from hwcap.h in Linux kernel - ARM64
 #ifndef HWCAP_AES
 #define HWCAP_AES (1 << 3)
@@ -131,21 +184,54 @@ static unsigned long (*getauxval)(unsigned long) = NULL;
 #ifndef HWCAP_SHA2
 #define HWCAP_SHA2 (1 << 6)
 #endif
+#endif /* defined(__linux__) */
+
+#if defined(__FreeBSD__)
+#include <stdint.h>
+#include <machine/armreg.h>
+// Support for older version of armreg.h
+#ifndef ID_AA64ISAR0_AES_VAL
+#define ID_AA64ISAR0_AES_VAL ID_AA64ISAR0_AES
+#endif
+#ifndef ID_AA64ISAR0_SHA1_VAL
+#define ID_AA64ISAR0_SHA1_VAL ID_AA64ISAR0_SHA1
+#endif
+#ifndef ID_AA64ISAR0_SHA2_VAL
+#define ID_AA64ISAR0_SHA2_VAL ID_AA64ISAR0_SHA2
+#endif
+#endif /* defined(__FreeBSD__) */
 
 void
 CheckARMSupport()
 {
-    char *disable_arm_neon = PR_GetEnvSecure("NSS_DISABLE_ARM_NEON");
-    char *disable_hw_aes = PR_GetEnvSecure("NSS_DISABLE_HW_AES");
+#if defined(_WIN64)
+    BOOL arm_crypto_support = IsProcessorFeaturePresent(PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE);
+    arm_aes_support_ = arm_crypto_support;
+    arm_pmull_support_ = arm_crypto_support;
+    arm_sha1_support_ = arm_crypto_support;
+    arm_sha2_support_ = arm_crypto_support;
+#elif defined(__linux__)
     if (getauxval) {
         long hwcaps = getauxval(AT_HWCAP);
-        arm_aes_support_ = hwcaps & HWCAP_AES && disable_hw_aes == NULL;
-        arm_pmull_support_ = hwcaps & HWCAP_PMULL;
-        arm_sha1_support_ = hwcaps & HWCAP_SHA1;
-        arm_sha2_support_ = hwcaps & HWCAP_SHA2;
+        arm_aes_support_ = (hwcaps & HWCAP_AES) == HWCAP_AES;
+        arm_pmull_support_ = (hwcaps & HWCAP_PMULL) == HWCAP_PMULL;
+        arm_sha1_support_ = (hwcaps & HWCAP_SHA1) == HWCAP_SHA1;
+        arm_sha2_support_ = (hwcaps & HWCAP_SHA2) == HWCAP_SHA2;
     }
+#elif defined(__FreeBSD__)
+    /* qemu-user does not support register access from userspace */
+    if (PR_GetEnvSecure("QEMU_EMULATING") == NULL) {
+        uint64_t isar0 = READ_SPECIALREG(id_aa64isar0_el1);
+        arm_aes_support_ = ID_AA64ISAR0_AES_VAL(isar0) >= ID_AA64ISAR0_AES_BASE;
+        arm_pmull_support_ = ID_AA64ISAR0_AES_VAL(isar0) >= ID_AA64ISAR0_AES_PMULL;
+        arm_sha1_support_ = ID_AA64ISAR0_SHA1_VAL(isar0) >= ID_AA64ISAR0_SHA1_BASE;
+        arm_sha2_support_ = ID_AA64ISAR0_SHA2_VAL(isar0) >= ID_AA64ISAR0_SHA2_BASE;
+    }
+#endif
     /* aarch64 must support NEON. */
-    arm_neon_support_ = disable_arm_neon == NULL;
+    arm_neon_support_ = PR_GetEnvSecure("NSS_DISABLE_ARM_NEON") == NULL;
+    arm_aes_support_ &= PR_GetEnvSecure("NSS_DISABLE_HW_AES") == NULL;
+    arm_pmull_support_ &= PR_GetEnvSecure("NSS_DISABLE_PMULL") == NULL;
 }
 #endif /* defined(__aarch64__) */
 
@@ -204,6 +290,46 @@ GetNeonSupport()
     return PR_FALSE;
 }
 
+#ifdef __linux__
+static long
+ReadCPUInfoForHWCAP2()
+{
+    FILE *cpuinfo;
+    char buf[512];
+    char *p;
+    long hwcap2 = 0;
+
+    cpuinfo = fopen("/proc/cpuinfo", "r");
+    if (!cpuinfo) {
+        return 0;
+    }
+    while (fgets(buf, 511, cpuinfo)) {
+        if (!memcmp(buf, "Features", 8)) {
+            p = strstr(buf, " aes");
+            if (p && (p[4] == ' ' || p[4] == '\n')) {
+                hwcap2 |= HWCAP2_AES;
+            }
+            p = strstr(buf, " sha1");
+            if (p && (p[5] == ' ' || p[5] == '\n')) {
+                hwcap2 |= HWCAP2_SHA1;
+            }
+            p = strstr(buf, " sha2");
+            if (p && (p[5] == ' ' || p[5] == '\n')) {
+                hwcap2 |= HWCAP2_SHA2;
+            }
+            p = strstr(buf, " pmull");
+            if (p && (p[6] == ' ' || p[6] == '\n')) {
+                hwcap2 |= HWCAP2_PMULL;
+            }
+            break;
+        }
+    }
+
+    fclose(cpuinfo);
+    return hwcap2;
+}
+#endif /* __linux__ */
+
 void
 CheckARMSupport()
 {
@@ -216,6 +342,13 @@ CheckARMSupport()
         // AT_HWCAP2 isn't supported by glibc or Linux kernel, getauxval will
         // returns 0.
         long hwcaps = getauxval(AT_HWCAP2);
+#ifdef __linux__
+        if (!hwcaps) {
+            // Some ARMv8 devices may not implement AT_HWCAP2. So we also
+            // read /proc/cpuinfo if AT_HWCAP2 is 0.
+            hwcaps = ReadCPUInfoForHWCAP2();
+        }
+#endif
         arm_aes_support_ = hwcaps & HWCAP2_AES && disable_hw_aes == NULL;
         arm_pmull_support_ = hwcaps & HWCAP2_PMULL;
         arm_sha1_support_ = hwcaps & HWCAP2_SHA1;
@@ -271,9 +404,24 @@ avx_support()
     return avx_support_;
 }
 PRBool
+avx2_support()
+{
+    return avx2_support_;
+}
+PRBool
 ssse3_support()
 {
     return ssse3_support_;
+}
+PRBool
+sse4_1_support()
+{
+    return sse4_1_support_;
+}
+PRBool
+sse4_2_support()
+{
+    return sse4_2_support_;
 }
 PRBool
 arm_neon_support()
@@ -300,6 +448,58 @@ arm_sha2_support()
 {
     return arm_sha2_support_;
 }
+PRBool
+ppc_crypto_support()
+{
+    return ppc_crypto_support_;
+}
+
+#if defined(__powerpc__)
+
+#ifndef __has_include
+#define __has_include(x) 0
+#endif
+
+/* clang-format off */
+#if defined(__linux__) || (defined(__FreeBSD__) && __FreeBSD__ >= 12)
+#if __has_include(<sys/auxv.h>)
+#include <sys/auxv.h>
+#endif
+#elif (defined(__FreeBSD__) && __FreeBSD__ < 12)
+#include <sys/sysctl.h>
+#endif
+
+// Defines from cputable.h in Linux kernel - PPC, letting us build on older kernels
+#ifndef PPC_FEATURE2_VEC_CRYPTO
+#define PPC_FEATURE2_VEC_CRYPTO 0x02000000
+#endif
+
+static void
+CheckPPCSupport()
+{
+    char *disable_hw_crypto = PR_GetEnvSecure("NSS_DISABLE_PPC_GHASH");
+
+    unsigned long hwcaps = 0;
+#if defined(__linux__)
+#if __has_include(<sys/auxv.h>)
+    hwcaps = getauxval(AT_HWCAP2);
+#endif
+#elif defined(__FreeBSD__)
+#if __FreeBSD__ >= 12
+#if __has_include(<sys/auxv.h>)
+    elf_aux_info(AT_HWCAP2, &hwcaps, sizeof(hwcaps));
+#endif
+#else
+    size_t len = sizeof(hwcaps);
+    sysctlbyname("hw.cpu_features2", &hwcaps, &len, NULL, 0);
+#endif
+#endif
+
+    ppc_crypto_support_ = hwcaps & PPC_FEATURE2_VEC_CRYPTO && disable_hw_crypto == NULL;
+}
+/* clang-format on */
+
+#endif /* __powerpc__ */
 
 static PRStatus
 FreeblInit(void)
@@ -308,6 +508,8 @@ FreeblInit(void)
     CheckX86CPUSupport();
 #elif (defined(__aarch64__) || defined(__arm__))
     CheckARMSupport();
+#elif (defined(__powerpc__))
+    CheckPPCSupport();
 #endif
     return PR_SUCCESS;
 }

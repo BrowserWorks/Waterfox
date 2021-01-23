@@ -2,11 +2,7 @@ const PAGE =
   "https://example.com/browser/toolkit/content/tests/browser/file_plugIn.html";
 
 async function click_icon(tab) {
-  let icon = document.getAnonymousElementByAttribute(
-    tab,
-    "anonid",
-    "soundplaying-icon"
-  );
+  let icon = tab.soundPlayingIcon;
 
   await hover_icon(icon, document.getElementById("tabbrowser-tab-tooltip"));
   EventUtils.synthesizeMouseAtCenter(icon, { button: 0 });
@@ -59,10 +55,10 @@ add_task(async function block_plug_in() {
   ok(tab.linkedBrowser.audioMuted, "Audio should be muted now");
 
   info("- stop plugin -");
-  await ContentTask.spawn(tab.linkedBrowser, null, stop_plugin);
+  await SpecialPowers.spawn(tab.linkedBrowser, [], stop_plugin);
 
   info("- start plugin -");
-  await ContentTask.spawn(tab.linkedBrowser, null, start_plugin);
+  await SpecialPowers.spawn(tab.linkedBrowser, [], start_plugin);
 
   info("- unmute browser -");
   ok(tab.linkedBrowser.audioMuted, "Audio should be muted now");

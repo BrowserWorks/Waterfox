@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Kanalowe abonomenty">
+<!ENTITY learnMore.label             "Zhońće wjace wo kanalach">
+
+<!ENTITY feedTitle.label             "Titul:">
+<!ENTITY feedTitle.accesskey         "T">
+
+<!ENTITY feedLocation.label          "URL kanala:">
+<!ENTITY feedLocation.accesskey      "U">
+<!ENTITY feedLocation2.placeholder   "Zapodajće płaćiwy URL kanala">
+<!ENTITY locationValidate.label      "Płaćiwosć přepruwować">
+<!ENTITY validateText.label          "Płaćiwosć přepruwuwać a płaćiwy URL wotwołać.">
+
+<!ENTITY feedFolder.label            "Nastawki składować w:">
+<!ENTITY feedFolder.accesskey        "N">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Za nowymi nastawkami pruwować kóžde ">
+<!ENTITY biffStart.accesskey         "k">
+<!ENTITY biffMinutes.label           "mjeńšin">
+<!ENTITY biffMinutes.accesskey       "e">
+<!ENTITY biffDays.label              "dnjow">
+<!ENTITY biffDays.accesskey          "d">
+<!ENTITY recommendedUnits.label      "Wudawaćel poruča:">
+
+<!ENTITY quickMode.label             "Nastawkowe zjeće pokazać, město toho zo by webstronu začitało">
+<!ENTITY quickMode.accesskey         "h">
+
+<!ENTITY autotagEnable.label         "Znački awtomatisce z kanalowych &lt;kategorjowych&gt; mjenow wutworić">
+<!ENTITY autotagEnable.accesskey     "a">
+<!ENTITY autotagUsePrefix.label      "Znački prefigować z:">
+<!ENTITY autotagUsePrefix.accesskey  "f">
+<!ENTITY autoTagPrefix.placeholder   "Zapodajće značkowy prefiks">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Přidać">
+<!ENTITY button.addFeed.accesskey    "P">
+<!ENTITY button.verifyFeed.label     "Přepruwować">
+<!ENTITY button.verifyFeed.accesskey "P">
+<!ENTITY button.updateFeed.label     "Aktualizować">
+<!ENTITY button.updateFeed.accesskey "A">
+<!ENTITY button.removeFeed.label     "Wotstronić">
+<!ENTITY button.removeFeed.accesskey "W">
+<!ENTITY button.importOPML.label     "Importować">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "Eksportować">
+<!ENTITY button.exportOPML.accesskey "E">
+<!ENTITY button.exportOPML.tooltip   "Kanale z rjadowakowej strukturu eksportować; Strg+kliknjenje abo Strg+enter, zo by kanale jako lisćinu eksportowało">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Začinić">

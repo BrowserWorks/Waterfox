@@ -6,13 +6,18 @@
 %include addons/extension-controlled.inc.css
 
 %filter substitution
+%define identityBoxPaddingInline 6px
+%define identityBoxMarginInlineEnd 2px
+%define lwtPopupBrighttextLinkColor #74c0ff
 %define themeTransition background-color 0.1s cubic-bezier(.17,.67,.83,.67)
-%define lwtPopupBrighttextLinkColor #45a1ff
+%define urlbarBreakoutExtend 2px
 
 :root {
   /* Note: Setting this to 0 (without px) breaks CSS calculations for OSX. */
   --space-above-tabbar: 0px;
   --tabs-navbar-shadow-size: 1px;
+  --short-notification-background: #0250BB;
+  --short-notification-gradient: #9059FF;
 }
 
 :root[extradragspace][tabsintitlebar]:not([inFullscreen]) {
@@ -56,7 +61,11 @@
 #PersonalToolbar {
   overflow: -moz-hidden-unscrollable;
   max-height: 4em;
-  padding: 0 6px 2px;
+  padding: 2px 6px;
+}
+
+:root[uidensity=compact] #PersonalToolbar {
+  padding-inline: 2px;
 }
 
 :root[sessionrestored] #PersonalToolbar {
@@ -83,6 +92,26 @@
   min-height: 22px;
 }
 
+#PlacesToolbarDropIndicator {
+  list-style-image: url(chrome://browser/skin/toolbar-drag-indicator.svg);
+  pointer-events: none;
+}
+
+/* rules for menupopup drop indicators */
+menupopup::part(drop-indicator-bar) {
+  position: relative;
+  /* these two margins must together compensate the indicator's height */
+  margin-block: -1px;
+}
+
+menupopup::part(drop-indicator) {
+  list-style-image: none;
+  height: 2px;
+  margin-inline-end: -4em;
+  background-color: Highlight;
+  pointer-events: none;
+}
+
 /* Required for Library animation */
 
 #navigator-toolbox {
@@ -94,7 +123,7 @@
 }
 
 #library-animatable-box[animate] {
-  display: -moz-box;
+  display: block;
 }
 
 /* Back / Forward context menu */
@@ -124,8 +153,7 @@
   background-position: center;
   width: 24px;
   height: 24px;
-  margin-left: 7px;
-  margin-right: 7px;
+  margin-inline: 7px;
   position: relative;
   /* Need to ensure this gets positioned on top of the position:relative #navigator-toolbox
    * in case the dark/light themes give that item a background. */
@@ -137,8 +165,7 @@
   -moz-user-focus: normal;
   /* Clear default button styling */
   -moz-appearance: none;
-  margin-top: unset;
-  margin-bottom: unset;
+  margin-block: unset;
   min-width: unset;
   color: unset;
   text-shadow: unset;
@@ -170,12 +197,15 @@
 
 #DateTimePickerPanel[side="top"],
 #DateTimePickerPanel[side="bottom"] {
-  margin-left: 0;
-  margin-right: 0;
+  margin-inline: 0;
 }
 
 #widget-overflow .webextension-popup-browser {
   background: #fff;
+
+  /* height set via JS can be lower than the stack min-height,
+     ensure the browser takes up at least that min-height */
+  min-height: 100%;
 }
 
 #addon-progress-notification-progressmeter {
@@ -191,6 +221,7 @@
 
 #cfr-notification-header {
   width: 100%;
+  display: block;
   text-align: center;
   box-shadow: 0px 1px 0px rgba(0, 0, 0, 0.2);
 }
@@ -209,6 +240,7 @@
   margin: 7px;
   color: inherit;
   cursor: default;
+  justify-self: end;
 }
 
 #cfr-notification-header-image {
@@ -230,11 +262,92 @@
   width: 343px;
 }
 
+#contextual-feature-recommendation-notification[data-notification-bucket="CFR_MILESTONE_MESSAGE"] {
+  background: radial-gradient(circle farthest-side at top right, var(--short-notification-gradient), var(--short-notification-background));
+  width: unset;
+  max-width: 700px;
+  overflow-wrap: break-word;
+}
+
+#contextual-feature-recommendation-notification[data-notification-bucket="CFR_MILESTONE_MESSAGE"]:-moz-locale-dir(rtl) {
+  background: radial-gradient(circle farthest-side at top left, var(--short-notification-gradient), var(--short-notification-background));
+}
+
+#contextual-feature-recommendation-notification[data-notification-bucket="CFR_MILESTONE_MESSAGE"] .popup-notification-body-container,
+#contextual-feature-recommendation-notification[data-notification-bucket="CFR_MILESTONE_MESSAGE"] .popup-notification-footer-container,
+#contextual-feature-recommendation-notification[data-notification-bucket="CFR_MILESTONE_MESSAGE"] #cfr-notification-header-link {
+  display: none;
+}
+
+#contextual-feature-recommendation-notification[data-notification-bucket="CFR_MILESTONE_MESSAGE"] #cfr-notification-header {
+  box-shadow: none;
+}
+
+#contextual-feature-recommendation-notification[data-notification-bucket="CFR_MILESTONE_MESSAGE"] description {
+  font-weight: 400;
+  margin: unset;
+  margin-inline: 12px;
+  transform: translateY(50%);
+}
+
+#contextual-feature-recommendation-notification[data-notification-bucket="CFR_MILESTONE_MESSAGE"] .popup-notification-button-container,
+#contextual-feature-recommendation-notification[data-notification-bucket="CFR_MILESTONE_MESSAGE"] .popup-notification-header-container {
+  display: inline-flex;
+}
+
+#contextual-feature-recommendation-notification[data-notification-bucket="CFR_MILESTONE_MESSAGE"] .popup-notification-button-container {
+  float: inline-end;
+  background-color: transparent;
+}
+
+#contextual-feature-recommendation-notification[data-notification-bucket="CFR_MILESTONE_MESSAGE"] .popup-notification-button.popup-notification-primary-button {
+  background-color: rgba(216, 216, 216, 0.2);
+  border: none;
+  border-radius: 2px;
+  margin: 4px;
+  padding: 3px 12px;
+}
+
+#contextual-feature-recommendation-notification[data-notification-bucket="CFR_MILESTONE_MESSAGE"] .popup-notification-button.popup-notification-primary-button:after {
+  content: url(chrome://browser/skin/back-12.svg);
+  -moz-context-properties: fill;
+  fill: currentColor;
+  transform: scaleX(-1) translateY(2px);
+  float: inline-end;
+}
+
+#contextual-feature-recommendation-notification[data-notification-bucket="CFR_MILESTONE_MESSAGE"]:-moz-locale-dir(rtl) .popup-notification-button.popup-notification-primary-button:after {
+  transform: scaleX(1) translateY(2px);
+}
+
+#contextual-feature-recommendation-notification[data-notification-bucket="CFR_MILESTONE_MESSAGE"] .popup-notification-button.popup-notification-primary-button:hover {
+  background-color: rgba(216, 216, 216, 0.4);
+}
+
+#contextual-feature-recommendation-notification[data-notification-bucket="CFR_MILESTONE_MESSAGE"] .popup-notification-button.popup-notification-primary-button:active {
+  background-color: rgba(216, 216, 216, 0.5);
+}
+
+#contextual-feature-recommendation-notification[data-notification-bucket="CFR_MILESTONE_MESSAGE"] .popup-notification-header-container {
+  color: white;
+  max-width: unset;
+}
+
+#contextual-feature-recommendation-notification[data-notification-bucket="CFR_SOCIAL_TRACKING_PROTECTION"] {
+  width: 386px;
+}
+
 #contextual-feature-recommendation-notification .popup-notification-icon {
   margin-inline-end: 4px;
 }
 
+#contextual-feature-recommendation-notification .cfr-doorhanger-large-icon {
+  width: 64px;
+  height: 64px;
+}
+
 #contextual-feature-recommendation-notification .popup-notification-body-container {
+  width: 100%;
   padding-bottom: 0;
 }
 
@@ -253,10 +366,37 @@
   font-size: 13px;
 }
 
-#contextual-feature-recommendation-notification[data-notification-category="cfrFeatures"] .popup-notification-body-container,
-#contextual-feature-recommendation-notification[data-notification-category="cfrFeatures"] #cfr-notification-footer-addon-info,
-#contextual-feature-recommendation-notification[data-notification-category="cfrAddons"] #cfr-notification-feature-steps {
+#contextual-feature-recommendation-notification[data-notification-category="message_and_animation"] .popup-notification-body-container,
+#contextual-feature-recommendation-notification[data-notification-category="message_and_animation"] #cfr-notification-footer-addon-info,
+#contextual-feature-recommendation-notification[data-notification-category="addon_recommendation"] #cfr-notification-feature-steps,
+#contextual-feature-recommendation-notification[data-notification-category="icon_and_message"] .popup-notification-footer-container {
   display: none;
+}
+
+/*
+ * `icon_and_message` CFR doorhanger with: icon, title and subtitle.
+ * No panel header is shown
+ */
+#contextual-feature-recommendation-notification[data-notification-category="icon_and_message"] #cfr-notification-header {
+  display: none;
+}
+
+#contextual-feature-recommendation-notification[data-notification-category="icon_and_message"] .popup-notification-description {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+#contextual-feature-recommendation-notification[data-notification-category="icon_and_message"] popupnotificationcontent {
+  display: block; /* This forces the subtitle content to wrap */
+}
+
+#contextual-feature-recommendation-notification[data-notification-category="icon_and_message"] .popup-notification-body-container {
+  padding-bottom: 20px;
+}
+
+#contextual-feature-recommendation-notification[data-notification-bucket="CFR_SOCIAL_TRACKING_PROTECTION"] .popup-notification-description {
+  font-size: 13px;
 }
 
 #cfr-notification-feature-steps {
@@ -266,21 +406,16 @@
 }
 
 #cfr-notification-feature-steps li {
-  padding-inline-start: 9px;
+  margin-inline-start: 10px;
   position: relative;
+  display: list-item;
 }
 
 #cfr-notification-feature-steps li:not(:last-child) {
   margin-bottom: 5px;
 }
 
-#cfr-notification-feature-steps li:before {
-  content: "\2022";
-  position: absolute;
-  inset-inline-start: 0;
-}
-
-#contextual-feature-recommendation-notification[data-notification-category="cfrFeatures"] #cfr-notification-footer-text {
+#contextual-feature-recommendation-notification[data-notification-category="message_and_animation"] #cfr-notification-footer-text {
   font-size: 14px;
   font-weight: 600;
 }
@@ -291,6 +426,7 @@
   margin: 0;
 }
 
+#contextual-feature-recommendation-notification .popup-notification-learnmore-link,
 #cfr-notification-footer-users,
 #cfr-notification-footer-learn-more-link {
   font-size: 12px;
@@ -299,8 +435,7 @@
 #cfr-notification-footer-addon-info {
   align-items: center;
   display: flex;
-  margin-top: 10px;
-  margin-bottom: 6px;
+  margin-block: 10px 6px;
 }
 
 #cfr-notification-footer-filled-stars,
@@ -366,7 +501,7 @@
   }
 }
 
-#contextual-feature-recommendation-notification[data-notification-category="cfrAddons"] #cfr-notification-footer-pintab-animation-container {
+#contextual-feature-recommendation-notification[data-notification-category="addon_recommendation"] #cfr-notification-footer-pintab-animation-container {
   display: none;
 }
 
@@ -444,13 +579,54 @@
   background: rgba(0, 0, 0, 0.5);
 }
 
+/* nhnt11: Workaround to insert a linebreak after the DoH doorhanger's title.
+ * The title uses the inline html|b that usually contains the hostname for
+ * permission prompts to achieve bold formatting. This is always the 2nd child.
+ */
+.popup-notification-description[popupid="doh-first-time"] > html|b:first-of-type {
+  display: block;
+  margin-bottom: 4px; /* matches the margin-bottom on description elements */
+}
+
+/* ENABLE DEVTOOLS POPUP */
+
+#enable-devtools-popup {
+%if defined(XP_MACOSX) || defined(XP_WIN)
+  font-size: 1.18em;
+%endif
+}
+
+#sharing-tabs-warning-panel > hbox[type="window"] > vbox > label > #sharing-warning-screen-panel-header,
+#sharing-tabs-warning-panel > hbox[type="screen"] > vbox > label > #sharing-warning-window-panel-header {
+  display: none;
+}
+
+#sharing-tabs-warning-panel {
+  max-width: 400px;
+}
+
+#sharing-warning-proceed-to-tab {
+  -moz-appearance: none;
+  border-style: none;
+  margin: 0;
+  background-color: rgb(0,96,223);
+  color: rgb(255,255,255);
+  border-radius: 5px;
+  padding: 10px;
+  margin-top: 15px;
+  margin-bottom: 10px;
+}
+
+#sharing-warning-proceed-to-tab:hover {
+  background-color: rgb(0,62,170);
+}
+
 .toolbar-statusbar {
   box-shadow: var(--lwt-text-color);
-  color: var(--lwt-text-color);
   fill: var(--lwt-text-color);
   height: 22px;
   border-top: 1px solid rgba(38,38,38,.15);
-  font-size: 11.5px;
+  font-size: 12px;
   position: relative;
   z-index: 1;
   display: flex;
@@ -466,63 +642,62 @@
 }
 
 .button-toolbar {
-  display: flex;
-  min-width: 0;
-  position: relative;
+    display: flex;
+    min-width: 0;
+    position: relative;
 }
 
-.status-info {
-  flex: 1;
-  display: inline-block;
-  align-items: center;
-  max-width: 100vw;
-  transition: opacity 200ms cubic-bezier(0.75, 0, 1, 1);
-  padding-right: 6px;
-  padding-left: 6px;
-  padding-bottom: 3px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+#status-info {
+    flex: 1;
+    align-items: center;
+    max-width: 100vw;
+    transition: opacity 200ms cubic-bezier(0.75, 0, 1, 1);
+    padding-right: 6px;
+    padding-left: 6px;
+    padding-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.page-zoom-controls {
-  display: flex;
-  align-items: center;
+#page-zoom-controls {
+    display: flex;
+    align-items: center;
 }
 
-.page-zoom-controls .reset-zoom {
-  flex: 0 0 auto;
-  margin-right: 15px;
+#page-zoom-controls #zoomresetsb {
+    flex: 0 0 auto;
+    margin-right: 5px;
 }
 
-.page-zoom-controls .zoom-percent-status {
-  align-self: center;
-  text-align: center;
-  flex: 0 0 auto;
-  width: 40px;
-  margin: 1px 5px 2px;
+#page-zoom-controls #zoom-percent-status {
+    align-self: center;
+    text-align: center;
+    flex: 0 0 auto;
+    width: 40px;
+    margin: 1px 0px 2px;
+    -moz-box-pack: center;
 }
 
 .button-textonly {
-  -moz-appearance: none;
-  color: var(--lwt-text-color);
+    -moz-appearance: none;
+    color: var(--lwt-text-color);
 }
 
 .button-textonly:hover {
-  color: inherit !important;
+    color: inherit !important;
 }
 
-.page-zoom-controls .reset-zoom.button-textonly[disabled="true"] {
-  opacity: 0.5;
-  color: inherit !important;
+#page-zoom-controls #zoomresetsb.button-textonly[disabled="true"] {
+    opacity: 0.5;
+    color: inherit !important;
 }
 
 .statusbarbtn {
-  margin-left: 5px;
+    margin-left: 5px;
 }
 
 #zoomoutsb {
-  margin-right: 5px;
   list-style-image: url(chrome://browser/skin/zoom-out.svg);
 }
 
@@ -532,17 +707,10 @@
 
 #fullscreensb {
   list-style-image: url(chrome://browser/skin/fullscreen.svg);
-  margin-left: 10px;
-  margin-right: 12px;
-  margin-bottom: 3px;
 }
 
 #browser-bottombox #TabsToolbar {
   background: var(--lwt-accent-color);
-}
-
-#PanelUI-menu-button.browser {
-  list-style-image: url("chrome://branding/content/icon16.png");
 }
 
 :root[tabsintitlebar]:not([tabBarPosition="topAboveAB"]) #toolbar-menubar[autohide="true"],
@@ -595,4 +763,34 @@
 
 #toolbar-menubar-pagetitle {
   display: none;
+}
+
+#PanelUI-menu-button.browser {
+  list-style-image: url("chrome://branding/content/icon16.png");
+}
+
+:root[sbRangeBtn="true"] #zoom-range-status,
+:root[sbRangeBtn="false"] #zoomoutsb,
+:root[sbRangeBtn="false"] #zoominsb,
+:root[sbRangeBtn="false"] #afterZoomOut,
+:root[sbRangeBtn="false"] #beforeZoomIn {
+  display: none !important;
+}
+
+input#zoom-percent-status {
+  -moz-appearance: textfield;
+}
+
+#wrapper-status-info {
+  flex: 1;
+}
+
+#status-bar:not([customizing="true"]) #status-info-customize,
+#status-bar[customizing="true"] #status-info-text,
+:root[sbMode="0"] #statuspanel-inner,
+:root[sbMode="2"] #statuspanel-inner,
+:root[sbMode="0"] .toolbar-statusbar,
+:root[sbMode="1"] .toolbar-statusbar,
+:root[sbMode="2"] #urlbar-zoom-button{
+  display: none !important;
 }

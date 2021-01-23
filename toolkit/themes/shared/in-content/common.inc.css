@@ -36,10 +36,10 @@
   --in-content-category-background-selected-hover: rgba(12,12,13,0.15);
   --in-content-category-background-selected-active: rgba(12,12,13,0.2);
   --in-content-tab-color: #424f5a;
-  --in-content-link-color: #0a8dff;
-  --in-content-link-color-hover: #0060df;
-  --in-content-link-color-active: #003eaa;
-  --in-content-link-color-visited: #0a8dff;
+  --in-content-link-color: var(--blue-60);
+  --in-content-link-color-hover: var(--blue-70);
+  --in-content-link-color-active: var(--blue-80);
+  --in-content-link-color-visited: var(--blue-60);
   --in-content-button-background: var(--grey-90-a10);
   --in-content-button-background-hover: var(--grey-90-a20);
   --in-content-button-background-active: var(--grey-90-a30);
@@ -49,11 +49,10 @@
   --in-content-table-background: #ebebeb;
   --in-content-table-border-dark-color: #d1d1d1;
   --in-content-table-header-background: #0a84ff;
+  --in-content-dialog-header-background: #f1f1f1;
+  --in-content-sidebar-width: 240px;
 
   --panel-border-radius: 2px; /* This is overridden on Windows */
-
-  /* The photon animation curve */
-  --animation-curve: cubic-bezier(.07,.95,0,1);
 
   --blue-40: #45a1ff;
   --blue-40-a10: rgb(69, 161, 255, 0.1);
@@ -65,7 +64,6 @@
   --grey-20: #ededf0;
   --grey-30: #d7d7db;
   --grey-40: #b1b1b3;
-  --grey-50: #737373;
   --grey-60: #4a4a4f;
   --grey-90: #0c0c0d;
   --grey-90-a10: rgba(12, 12, 13, 0.1);
@@ -79,8 +77,6 @@
   --green-80: #006504;
   --green-90: #003706;
   --orange-50: #ff9400;
-  --purple-70: #6200a4;
-  --purple-70-a40: rgba(98, 0, 164, 0.4);
   --red-50: #ff0039;
   --red-50-a30: rgba(255, 0, 57, 0.3);
   --red-60: #d70022;
@@ -89,6 +85,7 @@
   --red-90: #3e0200;
   --yellow-50: #ffe900;
   --yellow-60: #d7b600;
+  --yellow-60-a30: rgba(215, 182, 0, 0.3);
   --yellow-70: #a47f00;
   --yellow-80: #715100;
   --yellow-90: #3e2800;
@@ -100,12 +97,11 @@
   --card-shadow: var(--shadow-10);
   --card-outline-color: var(--grey-30);
   --card-shadow-hover: var(--card-shadow), 0 0 0 5px var(--card-outline-color);
-  --card-shadow-focus: 0 0 0 2px var(--blue-50), 0 0 0 6px var(--blue-50-a30);
 }
 
-@supports -moz-bool-pref("browser.in-content.dark-mode") {
 @media (prefers-color-scheme: dark) {
   :root {
+    /* Keep this in sync with layout/base/PresShell.cpp! */
     --in-content-page-background: #2A2A2E;
     --in-content-page-color: rgb(249, 249, 250);
     --in-content-text-color: var(--in-content-page-color);
@@ -132,12 +128,14 @@
     --in-content-table-background: #202023;
     --in-content-table-border-dark-color: rgba(249,249,250,0.2);
     --in-content-table-header-background: #002b57;
+    --in-content-dialog-header-background: rgba(249,249,250,0.05);
 
     --in-content-category-text-selected: var(--blue-40);
     --in-content-category-text-selected-active: var(--blue-50);
     --in-content-link-color: var(--blue-40);
     --in-content-link-color-hover: var(--blue-50);
     --in-content-link-color-active: var(--blue-60);
+    --in-content-link-color-visited: var(--blue-40);
 
     --in-content-tab-color: var(--in-content-page-color);
 
@@ -146,11 +144,8 @@
     scrollbar-color: rgba(249,249,250,.4) rgba(20,20,25,.3);
   }
 }
-}
 
-html|html,
-xul|page,
-xul|window {
+:root {
   font: message-box;
   -moz-appearance: none;
   background-color: var(--in-content-page-background);
@@ -199,8 +194,7 @@ xul|tabpanels {
 
 xul|tabs {
   margin-bottom: 15px;
-  border-top: 1px solid var(--in-content-box-border-color);
-  border-bottom: 1px solid var(--in-content-box-border-color);
+  border-block: 1px solid var(--in-content-box-border-color);
   background-color: var(--in-content-page-background);
   color: var(--in-content-tab-color);
 }
@@ -229,6 +223,7 @@ xul|tab[selected] {
 
 html|button {
   padding: 3px;
+  font: inherit;
 }
 
 /* xul buttons and menulists */
@@ -254,9 +249,8 @@ xul|menulist {
 
 xul|button,
 html|button {
-  /* use the same margin of other elements for the alignment */
-  margin-left: 4px;
-  margin-right: 4px;
+  /* Use the same margin of other elements for the alignment */
+  margin-inline: 4px;
 }
 
 html|button::-moz-focus-inner,
@@ -267,6 +261,7 @@ html|input[type="color"]::-moz-focus-inner {
 
 *|button:-moz-focusring,
 html|select:-moz-focusring,
+html|input[type="checkbox"]:-moz-focusring,
 html|input[type="color"]:-moz-focusring,
 xul|menulist:-moz-focusring {
   outline: 2px solid var(--in-content-border-active);
@@ -287,13 +282,17 @@ html|select:not([size]):not([multiple]) {
   fill: currentColor;
   font-size: inherit;
   line-height: 2.1;
-  padding-inline-start: 5px;
-  padding-inline-end: 24px;
+  padding-inline: 5px 24px;
   text-overflow: ellipsis;
 }
 
 html|select:not([size]):not([multiple]):dir(rtl) {
-  background-position: left 3px center;
+  background-position-x: left 3px;
+}
+
+html|select:not([size]):not([multiple]) > html|option {
+  background-color: var(--in-content-box-background);
+  color: var(--in-content-text-color);
 }
 
 html|button:enabled:hover,
@@ -323,21 +322,37 @@ xul|menulist[disabled="true"] {
 }
 
 html|button[autofocus],
+html|button[type="submit"],
 *|button.primary {
   background-color: var(--in-content-primary-button-background);
   color: var(--in-content-selected-text) !important;
 }
 
 html|button[autofocus]:enabled:hover,
+html|button[type="submit"]:enabled:hover,
 html|button.primary:enabled:hover,
 xul|button.primary:not([disabled="true"]):hover {
   background-color: var(--in-content-primary-button-background-hover);
 }
 
 html|button[autofocus]:enabled:hover:active,
+html|button[type="submit"]:enabled:hover:active,
 html|button.primary:enabled:hover:active,
 xul|button.primary:not([disabled="true"]):hover:active {
   background-color: var(--in-content-primary-button-background-active);
+}
+
+html|button.danger-button {
+  background-color: var(--red-60);
+  color: white !important;
+}
+
+html|button.danger-button:enabled:hover {
+  background-color: var(--red-70);
+}
+
+html|button.danger-button:enabled:hover:active {
+  background-color: var(--red-80);
 }
 
 html|button.ghost-button {
@@ -357,18 +372,16 @@ html|input[type="color"] {
   width: 50px;
 }
 
-xul|menulist > xul|*.menulist-label-box > xul|*.menulist-icon[src] {
+xul|menulist[image]::part(icon) {
   margin-inline-end: 5px;
 }
 
 xul|*.close-icon > xul|*.button-box {
-  padding-top: 0;
-  padding-bottom: 0;
-  padding-right: 0 !important;
-  padding-left: 0 !important;
+  padding-block: 0;
+  padding-inline: 0 !important;
 }
 
-xul|*.menulist-dropmarker {
+xul|menulist::part(dropmarker) {
   -moz-appearance: none;
   margin-inline-end: 4px;
   padding: 0;
@@ -379,7 +392,7 @@ xul|*.menulist-dropmarker {
   fill: currentColor;
 }
 
-xul|*.menulist-dropmarker > xul|*.dropmarker-icon {
+xul|menulist::part(dropmarker-icon) {
   width: 12px;
   height: 12px;
 }
@@ -396,10 +409,8 @@ xul|menulist > xul|menupopup xul|menuitem {
   -moz-appearance: none;
   font-size: 1em;
   color: var(--in-content-text-color);
-  padding-top: 0.2em;
-  padding-bottom: 0.2em;
-  padding-inline-start: 10px;
-  padding-inline-end: 30px;
+  padding-block: 0.2em;
+  padding-inline: 10px 30px;
 }
 
 xul|menulist > xul|menupopup > xul|menu:not([disabled="true"])[_moz-menuactive="true"],
@@ -435,49 +446,55 @@ xul|menulist > xul|menupopup xul|menuseparator {
 html|input[type="email"],
 html|input[type="tel"],
 html|input[type="text"],
+html|input[type="password"],
+html|input[type="url"],
 html|input[type="number"],
 html|textarea,
-xul|textbox {
+xul|search-textbox {
   -moz-appearance: none;
   border: 1px solid var(--in-content-box-border-color);
   border-radius: 2px;
-  /* !important to override disabled styling from textbox.css. We reduce the
-     opacity instead of changing colors. */
-  color: inherit !important;
-  background-color: var(--in-content-box-background) !important;
+  color: inherit;
+  background-color: var(--in-content-box-background);
 }
 
-xul|textbox {
-  min-height: 30px;
-  padding-right: 8px;
-  padding-left: 8px;
+xul|search-textbox {
+  min-height: 32px;
+  padding-inline: 8px;
 }
 
 html|input[type="email"],
 html|input[type="tel"],
 html|input[type="text"],
+html|input[type="password"],
+html|input[type="url"],
 html|input[type="number"],
 html|textarea {
   font-family: inherit;
   font-size: inherit;
   padding: 5px 8px;
+  margin: 2px 4px;
 }
 
 html|input[type="email"]:enabled:not(:focus):hover,
 html|input[type="tel"]:enabled:not(:focus):hover,
 html|input[type="text"]:enabled:not(:focus):hover,
+html|input[type="password"]:enabled:not(:focus):hover,
+html|input[type="url"]:enabled:not(:focus):hover,
 html|input[type="number"]:enabled:not(:focus):hover,
 html|textarea:enabled:not(:focus):hover,
-xul|textbox:not([disabled="true"]):not([focused]):hover {
+xul|search-textbox:not([disabled="true"]):not([focused]):hover {
   border-color: var(--in-content-border-hover);
 }
 
 html|input[type="email"]:focus,
 html|input[type="tel"]:focus,
 html|input[type="text"]:focus,
+html|input[type="password"]:focus,
+html|input[type="url"]:focus,
 html|input[type="number"]:focus,
 html|textarea:focus,
-xul|textbox[focused] {
+xul|search-textbox[focused] {
   border-color: var(--in-content-border-active);
   box-shadow: 0 0 0 1px var(--in-content-border-active),
     0 0 0 4px var(--in-content-border-active-shadow);
@@ -486,17 +503,19 @@ xul|textbox[focused] {
 html|input[type="email"]:-moz-ui-invalid,
 html|input[type="tel"]:-moz-ui-invalid,
 html|input[type="text"]:-moz-ui-invalid,
+html|input[type="password"]:-moz-ui-invalid,
+html|input[type="url"]:-moz-ui-invalid,
 html|input[type="number"]:-moz-ui-invalid,
 html|textarea:-moz-ui-invalid {
   border-color: var(--in-content-border-invalid);
 }
 
-/* Don't show the field error outlines and focus borders at the same time.
-   This doesn't apply to XUL <textbox> since they don't expose validity
-   attributes */
+/* Don't show the field error outlines and focus borders at the same time. */
 html|input[type="email"]:-moz-ui-invalid:focus,
 html|input[type="tel"]:-moz-ui-invalid:focus,
 html|input[type="text"]:-moz-ui-invalid:focus,
+html|input[type="password"]:-moz-ui-invalid:focus,
+html|input[type="url"]:-moz-ui-invalid:focus,
 html|input[type="number"]:-moz-ui-invalid:focus,
 html|textarea:-moz-ui-invalid:focus {
   box-shadow: 0 0 0 3px var(--in-content-border-invalid-shadow);
@@ -505,9 +524,11 @@ html|textarea:-moz-ui-invalid:focus {
 html|input[type="email"]:disabled,
 html|input[type="tel"]:disabled,
 html|input[type="text"]:disabled,
+html|input[type="password"]:disabled,
+html|input[type="url"]:disabled,
 html|input[type="number"]:disabled,
 html|textarea:disabled,
-xul|textbox[disabled="true"] {
+xul|search-textbox[disabled="true"] {
   opacity: 0.4;
 }
 
@@ -627,8 +648,7 @@ xul|radio[disabled="true"] {
 }
 
 xul|*.radio-label-box {
-  margin-inline-start: -1px; /* negative margin for the transparent border */
-  margin-inline-end: 8px;
+  margin-inline: -1px 8px; /* the negative margin-inline-start for the transparent border */
   padding-inline-start: 0;
 }
 
@@ -639,16 +659,40 @@ xul|*.radio-label-box {
   background-color: initial; /* override the background-color set on all richlistboxes in common.inc.css */
   margin: 70px 0 0;
   border-width: 0;
-  width: 240px;
+  width: var(--in-content-sidebar-width);
+  box-shadow: none;
+}
+
+html|*#categories {
+  box-sizing: border-box;
+  padding: 1px;
 }
 
 *|*#categories > *|*.category {
   min-height: 48px;
   -moz-appearance: none;
   margin-inline-start: 34px;
-  padding-inline-end: 10px;
-  padding-inline-start: 10px;
+  padding-inline: 10px;
   transition: background-color 150ms;
+}
+
+html|*#categories > html|*.category {
+  border: 0;
+  background-color: initial;
+  background-size: 24px;
+  background-repeat: no-repeat;
+  background-position-x: 10px;
+  background-position-y: 12px;
+  margin-inline-end: 0;
+  min-width: auto;
+  padding-inline-start: 34px;
+  text-align: start;
+  -moz-context-properties: fill, fill-opacity;
+  fill: currentColor;
+}
+
+html|*#categories > html|*.category:dir(rtl) {
+  background-position-x: right 10px;
 }
 
 *|*#categories > *|*.category:hover {
@@ -662,7 +706,7 @@ xul|*.radio-label-box {
 
 *|*#categories > *|*.category[selected],
 *|*#categories > *|*.category.selected {
-  color: var(--in-content-category-text-selected);
+  color: var(--in-content-category-text-selected) !important;
   background-color: transparent;
 }
 
@@ -673,7 +717,7 @@ xul|*.radio-label-box {
 
 *|*#categories > *|*.category[selected]:hover:active,
 *|*#categories > *|*.category.selected:hover:active {
-  color: var(--in-content-category-text-selected-active);
+  color: var(--in-content-category-text-selected-active) !important;
   background-color: var(--in-content-category-background-selected-active);
 }
 
@@ -681,10 +725,14 @@ xul|*.radio-label-box {
   outline: var(--in-content-category-outline-focus);
 }
 
+html|*#categories[last-input-type="mouse"] > html|button.category:-moz-focusring {
+  outline: none;
+  box-shadow: none;
+}
+
 *|*.category-name {
   font-size: 1.07em;
   line-height: 1.4em;
-  padding-bottom: 2px;
   padding-inline-start: 9px;
   margin: 0;
   -moz-user-select: none;
@@ -703,22 +751,34 @@ xul|*.radio-label-box {
 }
 
 @media (max-width: 830px) {
-  #categories {
-    width: 118px;
+  :root {
+    --in-content-sidebar-width: 118px;
   }
 
+  html|*.category:not(.category-no-icon) > html|*.category-name,
   .category-icon + .category-name {
     display: none;
   }
 
   #categories > .category {
-    padding-inline-start: 13px; /* make category icons align center */
+    padding-inline-start: 12px; /* make category icons align center */
     margin-inline-end: 33px;
   }
 
+  html|*#categories > html|*.category {
+    width: 48px;
+    min-width: auto;
+    box-sizing: border-box;
+  }
+
+  html|*#categories > html|*.category,
+  /* We need to override the full-width RTL rule, so explicitly specify RTL. */
+  html|*#categories > html|*.category:dir(rtl) {
+    background-position: center;
+  }
+
   .main-content {
-    padding-left: 0;
-    padding-right: 0;
+    padding-inline: 0;
   }
 
   .pane-container {
@@ -749,8 +809,7 @@ html|select[size][multiple],
 xul|listheader,
 xul|richlistbox {
   -moz-appearance: none;
-  margin-left: 0;
-  margin-right: 0;
+  margin-inline: 0;
   background-color: var(--in-content-box-background);
   border: 1px solid var(--in-content-box-border-color);
   border-radius: 2px;
@@ -794,6 +853,12 @@ xul|treechildren::-moz-tree-row(selected) {
   background-color: var(--in-content-item-selected);
 }
 
+xul|panel[type="autocomplete-richlistbox"] {
+  background-color: var(--in-content-box-background);
+  border: 1px solid var(--in-content-box-border-color);
+  color: var(--in-content-text-color);
+}
+
 /* Trees */
 
 xul|tree {
@@ -807,7 +872,9 @@ xul|tree {
 
 xul|tree:-moz-focusring,
 xul|richlistbox:-moz-focusring {
-  border: 1px dotted var(--in-content-border-focus);
+  border-color: var(--in-content-border-active);
+  box-shadow: 0 0 0 1px var(--in-content-border-active),
+    0 0 0 4px var(--in-content-border-active-shadow);
 }
 
 xul|treecols {
@@ -903,7 +970,7 @@ xul|treechildren::-moz-tree-image(selected) {
 }
 
 .message-bar-icon {
-  list-style-image: url("chrome://browser/skin/identity-icon.svg");
+  list-style-image: url("chrome://global/skin/icons/identity-icon.svg");
   width: 24px;
   height: 24px;
   padding: 4px;
@@ -922,6 +989,11 @@ xul|treechildren::-moz-tree-image(selected) {
   list-style-image: url("chrome://browser/skin/warning.svg");
 }
 
+input[type="text"][warning]:enabled:not(:focus) {
+  border-color: var(--yellow-60);
+  box-shadow: 0 0 0 1px var(--yellow-60), 0 0 0 4px var(--yellow-60-a30);
+}
+
 .card {
   background: var(--in-content-box-background);
   /* Needed for high-contrast where the border will appear. */
@@ -934,7 +1006,7 @@ xul|treechildren::-moz-tree-image(selected) {
   transition: box-shadow 150ms;
 }
 
-.card:hover {
+.card:not(.card-no-hover):hover {
   box-shadow: var(--card-shadow-hover);
 }
 
@@ -944,14 +1016,21 @@ xul|treechildren::-moz-tree-image(selected) {
   margin: -16px -16px 16px;
 }
 
-.sidebar-footer-button {
-  padding: 1px; /* Adding padding around help label in order to make entire keyboard focusing outline visible */
+.card-heading-image:dir(rtl) {
+  transform: scaleX(-1);
 }
 
+.sidebar-footer-list {
+  list-style-type: none;
+  margin-block: 0 36px;
+  margin-inline: 34px 0;
+  padding: 0;
+}
+
+.sidebar-footer-link,
 .sidebar-footer-button > .text-link {
   -moz-box-flex: 1;
-  margin-inline-start: 34px;
-  margin-inline-end: 0;
+  margin-inline: 34px 0;
   text-decoration: none;
   color: currentColor;
   width: 36px;
@@ -959,15 +1038,49 @@ xul|treechildren::-moz-tree-image(selected) {
   cursor: default;
 }
 
+.sidebar-footer-link {
+  display: flex;
+  align-items: center;
+  background-size: 16px;
+  background-repeat: no-repeat;
+  background-position-x: 13px;
+  background-position-y: 10px;
+  cursor: default;
+  -moz-context-properties: fill, fill-opacity;
+  fill: currentColor;
+  padding-inline-start: 43px;
+
+  /* These override the common styles. */
+  margin: 0;
+  font-size: .9em;
+  width: auto;
+}
+
+.sidebar-footer-link:dir(rtl) {
+  background-position-x: right 13px;
+}
+
+.sidebar-footer-link,
+.sidebar-footer-link:hover,
+.sidebar-footer-link:hover:active,
+.sidebar-footer-link:visited {
+  text-decoration: none;
+  color: currentColor;
+}
+
+.sidebar-footer-link:hover,
 .sidebar-footer-button > .text-link:hover {
   background-color: var(--in-content-category-background-hover);
   border-radius: 2px;
 }
 
+.sidebar-footer-link:hover:active:not([disabled]),
 .sidebar-footer-button > .text-link:hover:active:not([disabled]) {
   background-color: var(--in-content-category-background-active);
+  color: currentColor;
 }
 
+.sidebar-footer-link:-moz-focusring,
 .sidebar-footer-button > .text-link:-moz-focusring {
   outline: var(--in-content-category-outline-focus);
 }
@@ -990,16 +1103,20 @@ xul|treechildren::-moz-tree-image(selected) {
   margin-bottom: 36px;
 }
 
-.help-icon {
+xul|*.help-icon {
   list-style-image: url("chrome://global/skin/icons/help.svg");
 }
 
+html|*.help-icon {
+  background-image: url("chrome://global/skin/icons/help.svg");
+}
+
 .preferences-icon {
-  list-style-image: url("chrome://browser/skin/preferences/in-content/general.svg");
+  background-image: url("chrome://global/skin/icons/settings.svg");
 }
 
 .addons-icon {
-  list-style-image: url("chrome://mozapps/skin/extensions/category-extensions.svg");
+  list-style-image: url("chrome://mozapps/skin/extensions/extension.svg");
   /* The add-ons icon doesn't have much (any?) margin, so make it a bit smaller. */
   width: 14px;
   height: 14px;
@@ -1027,4 +1144,42 @@ xul|treechildren::-moz-tree-image(selected) {
   .sidebar-footer-label {
     display: none;
   }
+
+  .sidebar-footer-list {
+    margin-inline-start: 40px;
+  }
+
+  .sidebar-footer-link {
+    width: 36px;
+    height: 36px;
+    padding-inline-start: 0;
+    margin-inline-start: 1px;
+  }
+
+  .sidebar-footer-link,
+  /* We need to override the full-width RTL rule, so explicitly specify RTL. */
+  .sidebar-footer-link:dir(rtl) {
+    background-position: center;
+  }
+
+  .sidebar-footer-link-text {
+    display: none;
+  }
+}
+
+.back-button {
+  -moz-context-properties: fill;
+  fill: currentColor;
+  background-image: url("chrome://global/skin/icons/arrow-left.svg");
+  background-repeat: no-repeat;
+  background-position: center;
+  min-width: auto;
+  width: 32px;
+  margin-block: 0;
+  margin-inline-start: 0;
+}
+
+.back-button:-moz-locale-dir(rtl),
+.back-button:dir(rtl) {
+  transform: scaleX(-1);
 }

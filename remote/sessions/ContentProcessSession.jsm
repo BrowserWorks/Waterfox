@@ -9,8 +9,14 @@ var EXPORTED_SYMBOLS = ["ContentProcessSession"];
 const { ContentProcessDomains } = ChromeUtils.import(
   "chrome://remote/content/domains/ContentProcessDomains.jsm"
 );
-const { Domains } = ChromeUtils.import(
-  "chrome://remote/content/domains/Domains.jsm"
+const { DomainCache } = ChromeUtils.import(
+  "chrome://remote/content/domains/DomainCache.jsm"
+);
+
+ChromeUtils.defineModuleGetter(
+  this,
+  "ContextObserver",
+  "chrome://remote/content/observers/ContextObserver.jsm"
 );
 
 class ContentProcessSession {
@@ -23,14 +29,26 @@ class ContentProcessSession {
     // implements the following interface. So do the QI only once from here.
     this.docShell.QueryInterface(Ci.nsIWebNavigation);
 
-    this.domains = new Domains(this, ContentProcessDomains);
+    this.domains = new DomainCache(this, ContentProcessDomains);
     this.messageManager.addMessageListener("remote:request", this);
     this.messageManager.addMessageListener("remote:destroy", this);
   }
 
-  destroy() {
+  destructor() {
+    this._contextObserver?.destructor();
+
     this.messageManager.removeMessageListener("remote:request", this);
     this.messageManager.removeMessageListener("remote:destroy", this);
+    this.domains.clear();
+  }
+
+  get contextObserver() {
+    if (!this._contextObserver) {
+      this._contextObserver = new ContextObserver(
+        this.docShell.chromeEventHandler
+      );
+    }
+    return this._contextObserver;
   }
 
   // Domain event listener
@@ -65,13 +83,7 @@ class ContentProcessSession {
         try {
           const { id, domain, command, params } = data.request;
 
-          const inst = this.domains.get(domain);
-          const func = inst[command];
-          if (!func || typeof func != "function") {
-            throw new Error(`Implementation missing: ${domain}.${command}`);
-          }
-
-          const result = await func.call(inst, params);
+          const result = await this.domains.execute(domain, command, params);
 
           this.messageManager.sendAsyncMessage("remote:result", {
             browsingContextId,
@@ -92,7 +104,7 @@ class ContentProcessSession {
         break;
 
       case "remote:destroy":
-        this.destroy();
+        this.destructor();
         break;
     }
   }

@@ -2,8 +2,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import, print_function
-
 import os
 from fnmatch import fnmatch
 
@@ -24,7 +22,7 @@ def assert_paths(a, b):
     assert set(map(normalize, a)) == set(map(normalize, b))
 
 
-TEST_CASES = (
+@pytest.mark.parametrize('test', (
     {
         'paths': ['a.js', 'subdir1/subdir3/d.js'],
         'include': ['.'],
@@ -67,10 +65,19 @@ TEST_CASES = (
         'expected': ['subdir1'],
         'expected_exclude': ['subdir1/subdir3'],
     },
-)
-
-
-@pytest.mark.parametrize('test', TEST_CASES)
+    {
+        'paths': ['docshell'],
+        'include': ['docs'],
+        'exclude': [],
+        'expected': [],
+    },
+    {
+        'paths': ['does/not/exist'],
+        'include': ['.'],
+        'exclude': [],
+        'expected': [],
+    }
+))
 def test_filterpaths(test):
     expected = test.pop('expected')
     expected_exclude = test.pop('expected_exclude', [])
@@ -78,6 +85,31 @@ def test_filterpaths(test):
     paths, exclude = pathutils.filterpaths(root, **test)
     assert_paths(paths, expected)
     assert_paths(exclude, expected_exclude)
+
+
+@pytest.mark.parametrize('test', (
+    {
+        'paths': ['subdir1/b.js'],
+        'config': {
+            'exclude': ['subdir1'],
+            'extensions': 'js',
+        },
+        'expected': [],
+    },
+    {
+        'paths': ['subdir1/subdir3'],
+        'config': {
+            'exclude': ['subdir1'],
+            'extensions': 'js',
+        },
+        'expected': [],
+    },
+))
+def test_expand_exclusions(test):
+    expected = test.pop('expected', [])
+
+    paths = list(pathutils.expand_exclusions(test['paths'], test['config'], root))
+    assert_paths(paths, expected)
 
 
 @pytest.mark.parametrize('paths,expected', [
@@ -88,6 +120,7 @@ def test_filterpaths(test):
     (['subdir1/b.py', 'subdir1/subdir3'], ['subdir1/b.py', 'subdir1/subdir3']),
     (['subdir1/b.py', 'subdir1/b.js'], ['subdir1/b.py', 'subdir1/b.js']),
     (['subdir1/subdir3'], ['subdir1/subdir3']),
+    (['foo', 'foobar', ], ['foo', 'foobar']),
 ])
 def test_collapse(paths, expected):
     os.chdir(root)

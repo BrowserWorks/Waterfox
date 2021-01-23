@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Event Menu -->
+<!ENTITY event.new.event                        "Nowe wydarzenie…">
+<!ENTITY event.new.event.accesskey              "w">
+
+<!ENTITY event.new.task                         "Nowe zadanie…">
+<!ENTITY event.new.task.accesskey               "z">
+
+<!ENTITY calendar.import.label                  "Importuj z pliku…">
+<!ENTITY calendar.import.accesskey              "I">
+
+<!ENTITY calendar.export.label                  "Eksportuj…">
+<!ENTITY calendar.export.accesskey              "E">
+
+<!ENTITY calendar.publish.label                 "Publikuj…">
+<!ENTITY calendar.publish.accesskey             "b">
+
+<!ENTITY calendar.deletecalendar.label "Usuń wybrany kalendarz…">
+<!ENTITY calendar.deletecalendar.accesskey "U">
+<!ENTITY calendar.unsubscribecalendar.label "Zrezygnuj z subskrypcji wybranego kalendarza…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "Z">
+<!ENTITY calendar.removecalendar.label "Usuń wybrany kalendarz…">
+<!ENTITY calendar.removecalendar.accesskey "U">
+
+<!ENTITY calendar.menu.customize.label          "Dostosuj…">
+<!ENTITY calendar.menu.customize.accesskey      "D">
+
+<!ENTITY showUnifinderCmd.label                 "Znajdź wydarzenia">
+<!ENTITY showUnifinderCmd.accesskey             "d">
+<!ENTITY showUnifinderCmd.tooltip               "Przełącz panel wyszukiwania wydarzeń">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "Wyświetlaj zadania w kalendarzu">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "z">
+
+<!ENTITY goTodayCmd.label                       "Dzisiaj">
+<!ENTITY goTodayCmd.accesskey                   "z">
+
+<!ENTITY showCurrentView.label                  "Bieżący widok">
+<!ENTITY showCurrentView.accesskey              "B">
+<!ENTITY calendar.properties.label              "Właściwości kalendarza…">
+<!ENTITY calendar.properties.accesskey          "W">

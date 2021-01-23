@@ -21,8 +21,12 @@
 #include "mozilla/BinarySearch.h"
 #include "mozilla/ScopeExit.h"
 
+#include "gc/Memory.h"
+#include "threading/ExclusiveData.h"
 #include "vm/MutexIDs.h"
-#include "wasm/cranelift/clifapi.h"
+#ifdef ENABLE_WASM_CRANELIFT
+#  include "wasm/cranelift/clifapi.h"
+#endif
 #include "wasm/WasmBuiltins.h"
 #include "wasm/WasmCode.h"
 #include "wasm/WasmInstance.h"
@@ -282,16 +286,100 @@ bool wasm::InCompiledCode(void* pc) {
   return LookupBuiltinThunk(pc, &codeRange, &codeBase);
 }
 
+/**
+ * ReadLockFlag maintains a flag that can be mutated multiple times before it
+ * is read, at which point it maintains the same value.
+ */
+class ReadLockFlag {
+ private:
+  bool enabled_;
+  bool read_;
+
+ public:
+  ReadLockFlag() : enabled_(false), read_(false) {}
+
+  bool get() {
+    read_ = true;
+    return enabled_;
+  }
+
+  bool set(bool enabled) {
+    if (read_) {
+      return false;
+    }
+    enabled_ = enabled;
+    return true;
+  }
+};
+
+#ifdef WASM_SUPPORTS_HUGE_MEMORY
+/*
+ * Some 64 bit systems greatly limit the range of available virtual memory. We
+ * require about 6GiB for each wasm huge memory, which can exhaust the address
+ * spaces of these systems quickly. In order to avoid this, we only enable huge
+ * memory if we observe a large enough address space.
+ *
+ * This number is conservatively chosen to continue using huge memory on our
+ * smallest address space system, Android on ARM64 (39 bits), along with a bit
+ * for error in detecting the address space limit.
+ */
+static const size_t MinAddressBitsForHugeMemory = 38;
+
+/*
+ * In addition to the above, some systems impose an independent limit on the
+ * amount of virtual memory that may be used.
+ */
+static const size_t MinVirtualMemoryLimitForHugeMemory =
+    size_t(1) << MinAddressBitsForHugeMemory;
+#endif
+
+ExclusiveData<ReadLockFlag> sHugeMemoryEnabled(mutexid::WasmHugeMemoryEnabled);
+
+static bool IsHugeMemoryEnabledHelper() {
+  auto state = sHugeMemoryEnabled.lock();
+  return state->get();
+}
+
+bool wasm::IsHugeMemoryEnabled() {
+  static bool enabled = IsHugeMemoryEnabledHelper();
+  return enabled;
+}
+
+bool wasm::DisableHugeMemory() {
+  auto state = sHugeMemoryEnabled.lock();
+  return state->set(false);
+}
+
+void ConfigureHugeMemory() {
+#ifdef WASM_SUPPORTS_HUGE_MEMORY
+  if (gc::SystemAddressBits() < MinAddressBitsForHugeMemory) {
+    return;
+  }
+
+  if (gc::VirtualMemoryLimit() != size_t(-1) &&
+      gc::VirtualMemoryLimit() < MinVirtualMemoryLimitForHugeMemory) {
+    return;
+  }
+
+  auto state = sHugeMemoryEnabled.lock();
+  bool set = state->set(true);
+  MOZ_RELEASE_ASSERT(set);
+#endif
+}
+
 bool wasm::Init() {
   MOZ_RELEASE_ASSERT(!sProcessCodeSegmentMap);
+
+  ConfigureHugeMemory();
 
 #ifdef ENABLE_WASM_CRANELIFT
   cranelift_initialize();
 #endif
 
+  AutoEnterOOMUnsafeRegion oomUnsafe;
   ProcessCodeSegmentMap* map = js_new<ProcessCodeSegmentMap>();
   if (!map) {
-    return false;
+    oomUnsafe.crash("js::wasm::Init");
   }
 
   sProcessCodeSegmentMap = map;

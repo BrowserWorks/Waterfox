@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageMarkByDate.label "Phawula Imiyalezo njenge-Funda Phambi Komhla">
+<!ENTITY markByDateLower.label "Phawula imiyalezo njenge-funda ukusuka:">
+<!ENTITY markByDateLower.accesskey "u">
+<!ENTITY markByDateUpper.label "Ukuya:">
+<!ENTITY markByDateUpper.accesskey "U">

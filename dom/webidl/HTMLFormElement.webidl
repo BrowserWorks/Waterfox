@@ -11,8 +11,11 @@
  * and create derivative works of this document.
  */
 
-[OverrideBuiltins, LegacyUnenumerableNamedProperties, HTMLConstructor]
+[OverrideBuiltins, LegacyUnenumerableNamedProperties,
+ Exposed=Window]
 interface HTMLFormElement : HTMLElement {
+  [HTMLConstructor] constructor();
+
            [CEReactions, Pure, SetterThrows]
            attribute DOMString acceptCharset;
            [CEReactions, Pure, SetterThrows]
@@ -43,6 +46,8 @@ interface HTMLFormElement : HTMLElement {
 
   [Throws]
   void submit();
+  [Pref="dom.forms.requestsubmit.enabled", Throws]
+  void requestSubmit(optional HTMLElement? submitter = null);
   [CEReactions]
   void reset();
   boolean checkValidity();

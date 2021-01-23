@@ -14,14 +14,14 @@ import {
 } from "../../../utils/test-head";
 import {
   createSource,
-  sourceThreadClient,
-} from "../../tests/helpers/threadClient.js";
+  mockCommandClient,
+} from "../../tests/helpers/mockCommandClient";
 import { getBreakpointsList } from "../../../selectors";
 import { isFulfilled, isRejected } from "../../../utils/async-value";
 
 describe("loadSourceText", () => {
   it("should load source text", async () => {
-    const store = createStore(sourceThreadClient);
+    const store = createStore(mockCommandClient);
     const { dispatch, getState, cx } = store;
 
     const foo1Source = await dispatch(
@@ -59,17 +59,17 @@ describe("loadSourceText", () => {
 
     const store = createStore(
       {
-        ...sourceThreadClient,
+        ...mockCommandClient,
         sourceContents: async () => fooGenContent,
-        getBreakpointPositions: async () => ({ "1": [0] }),
-        getBreakableLines: async () => [],
+        getSourceActorBreakpointPositions: async () => ({ "1": [0] }),
+        getSourceActorBreakableLines: async () => [],
       },
       {},
       {
         getGeneratedRangesForOriginal: async () => [
           { start: { line: 1, column: 0 }, end: { line: 1, column: 1 } },
         ],
-        getOriginalLocations: async (sourceId, items) =>
+        getOriginalLocations: async items =>
           items.map(item => ({
             ...item,
             sourceId:
@@ -156,8 +156,8 @@ describe("loadSourceText", () => {
           count++;
           resolve = r;
         }),
-      getBreakpointPositions: async () => ({}),
-      getBreakableLines: async () => [],
+      getSourceActorBreakpointPositions: async () => ({}),
+      getSourceActorBreakableLines: async () => [],
     });
     const id = "foo";
 
@@ -194,8 +194,8 @@ describe("loadSourceText", () => {
           count++;
           resolve = r;
         }),
-      getBreakpointPositions: async () => ({}),
-      getBreakableLines: async () => [],
+      getSourceActorBreakpointPositions: async () => ({}),
+      getSourceActorBreakableLines: async () => [],
     });
     const id = "foo";
 
@@ -223,7 +223,7 @@ describe("loadSourceText", () => {
   });
 
   it("should cache subsequent source text loads", async () => {
-    const { dispatch, getState, cx } = createStore(sourceThreadClient);
+    const { dispatch, getState, cx } = createStore(mockCommandClient);
 
     const source = await dispatch(
       actions.newGeneratedSource(makeSource("foo1"))
@@ -238,7 +238,7 @@ describe("loadSourceText", () => {
   });
 
   it("should indicate a loading source", async () => {
-    const store = createStore(sourceThreadClient);
+    const store = createStore(mockCommandClient);
     const { dispatch, cx } = store;
 
     const source = await dispatch(
@@ -255,7 +255,7 @@ describe("loadSourceText", () => {
   });
 
   it("should indicate an errored source text", async () => {
-    const { dispatch, getState, cx } = createStore(sourceThreadClient);
+    const { dispatch, getState, cx } = createStore(mockCommandClient);
 
     const source = await dispatch(
       actions.newGeneratedSource(makeSource("bad-id"))
@@ -268,7 +268,7 @@ describe("loadSourceText", () => {
       : null;
     expect(
       content && isRejected(content) && typeof content.value === "string"
-        ? content.value.indexOf("unknown source")
+        ? content.value.indexOf("Unknown source")
         : -1
     ).not.toBe(-1);
   });

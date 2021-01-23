@@ -1,0 +1,33 @@
+<!--
+# Translator(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Message Header View Popup -->
+<!ENTITY AddToAddressBook.label            "Add To Address Book…">
+<!ENTITY AddToAddressBook.accesskey        "B">
+<!ENTITY SendMailTo.label                  "Compose Mail To…">
+<!ENTITY SendMailTo.accesskey              "s">
+<!ENTITY CopyEmailAddress.label            "Copiază adresa de email">
+<!ENTITY CopyEmailAddress.accesskey        "C">
+<!ENTITY CreateFilterFrom.label            "Creează filtru din…">
+<!ENTITY CreateFilterFrom.accesskey        "f">
+<!ENTITY copyLinkCmd.label                 "Copiază adresa legăturii">
+<!ENTITY copyLinkCmd.accesskey             "C">
+<!ENTITY CopyMessageId.label               "Copiază Message-ID">
+<!ENTITY CopyMessageId.accesskey           "C">
+<!ENTITY OpenMessageForMsgId.label         "Deschide mesajul pentru ID">
+<!ENTITY OpenMessageForMsgId.accesskey     "O">
+<!ENTITY OpenBrowserWithMsgId.label        "Deschide navigatorul cu Message-ID">
+<!ENTITY OpenBrowserWithMsgId.accesskey    "B">

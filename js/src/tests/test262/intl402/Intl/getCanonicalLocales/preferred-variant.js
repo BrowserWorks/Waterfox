@@ -36,10 +36,10 @@ info: |
 includes: [testIntl.js]
 ---*/
 
-// Generated from http://www.iana.org/assignments/language-subtag-registry/language-subtag-registry
-// File-Date: 2017-08-15
+// Generated from https://github.com/unicode-org/cldr/blob/master/common/supplemental/supplementalMetadata.xml
+// File-Date: 2020-03-30
 var canonicalizedTags = {
-  "ja-latn-hepburn-heploc": "ja-Latn-alalc97",
+  "ja-latn-hepburn-heploc": "ja-Latn-alalc97-hepburn",
 };
 
 // make sure the data above is correct

@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "&brandShortName; වෙත සාදරයෙන් පිළිගනිමු">
+<!ENTITY header2.label "ඔබ නව ඊමේල් ලිපිනයකට කැමතිද?">
+<!ENTITY other.languages "අප පෙන්වනු ලබන්නේ ඔබගේ ප්‍රදේශයේ ලිපිබයබ් සපයන්නන් පමණි.  සියළු සපයන්නන් පෙන්වීමට මෙහි ක්ලික් කරන්න.">
+<!ENTITY error.line1 "කණගාටුයි, අපිට කිසිඳු යෝජිත ඊමේල් ලිපිනයක් සොයාගත නොහැකි විය.">
+<!ENTITY error.line2 "වැඩිදුරටත් ඊමේල් සෙවීම සඳහා අනුවර්ත නම් හෝ වෙනත් යෙදුම් සමඟින් ඔබට උත්සාහ කළ හැකිය">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before "තවදුරටත් ඔබට උත්සාහ කළ හැකි ">
+<!ENTITY error.suggest.middle "නොමිලේ දෙන ඊමේල් ගිණුම් විකල්පයන්">
+<!ENTITY error.suggest.after ".">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before "ආයුබෝවන් ">
+<!ENTITY success.title.after ", පහත ඊමේල් ලිපිනයන් ඔබ වෙනුවෙන් පවතී:">
+<!ENTITY success.tip "(වැඩිදුරටත් ඊමේල් සෙවීම සඳහා අනුවර්ත නම් හෝ වෙනත් යෙදුම් සමඟින් ඔබට උත්සාහ කළ හැකිය)">
+<!ENTITY partnership.description "In partnership with several providers, &brandShortName; can offer you a new email account. Just fill in your first and last name, or any other words you’d like, in the fields above to get started.">
+<!ENTITY existing.header "ඔබට භාවිතා කිරීමට අවශ්‍ය ලිපිනය දැනටම තිබෙනවාද?">
+<!ENTITY tinyheader.title "ලිපිනය ලබාගත්තාද?">
+<!ENTITY tinyheader.existing "මෙය නොසලකා හැර මගේ දැනට තිබෙන ඊමේලය භවිතා කරන්න">
+<!ENTITY content.close "මම යිතනවා මගේ ලිපිනය මම පසුව වින්‍යාස කරයි කියලා.">
+<!ENTITY successful.title "සුභපැතුම්!">
+<!ENTITY successful.successMessage "ඔබගේ ගිණුම ඔබ සාර්ථකව සකස් කර ඇත.">
+<!ENTITY successful.write "ඊමේල් ලියන්න">
+<!ENTITY successful.write.desc "ඔබගේ නව ලිපිනය පිළිබඳව මිතුරන් සහ පවුලේ අය දැනුවත් කරන්න.<br/> ඔබ මෙම නව ලිපිනය ලබාගත්තේ ඒ සඳහා නේද?">
+<!ENTITY successful.customize "කදිමට ගැලපෙන ඇඩෝන සමඟ &brandShortName; රිසිකරණය කරන්න">
+<!ENTITY successful.customize.desc "ඔබගේ විශේෂිත අවශ්‍යතාවයන්ට ගැලපෙන දහස් ගණනක් ඇඩෝන &brandShortName; රිසිකරණය සඳහා සහායය ලබාදේ.">
+<!ENTITY successful.attach "මගේ ඊමේලයට පෞද්ගලික අත්සනක් (personal signature) අමුණන්න">
+<!ENTITY successful.attach.desc "ඔබට යම් උදෘතයක් හෝ ඔබ ගැන යම් තොරතුරක් ඔබ යවන සෑම ඊමේලයක් සමඟම එය අවසානයට ස්වයංක්‍රීයව අමුණා යැවිය හැකිය.">
+<!ENTITY successful.close "මෙම කවුළුව වසන්න.">
+<!ENTITY input.namePlaceholder "ඔබගේ නම හෝ අන්වර්ථ නම">
+<!ENTITY input.search "සොයන්න">
+<!ENTITY search_engine.title "ඔබගේ සෙවුම් යන්ත්‍රය රිසිකරණය">
+<!ENTITY search_engine.message "ඔබගේ ඊමේල් සපයන්නාට ඔබට වෙබ් සෙවුම් පහසුකම්ද සැපයිය හැකිය.">
+<!ENTITY search_engine.button "අවසානයි">

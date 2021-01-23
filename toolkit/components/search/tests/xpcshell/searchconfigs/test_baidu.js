@@ -29,6 +29,7 @@ const test = new SearchConfigTest({
     {
       included: [{}],
       domain: "baidu.com",
+      telemetryId: "baidu",
       searchUrlCode: "tn=monline_7_dg",
       suggestUrlCode: "tn=monline_7_dg",
     },
@@ -40,5 +41,6 @@ add_task(async function setup() {
 });
 
 add_task(async function test_searchConfig_baidu() {
-  await test.run();
+  await test.run(false);
+  await test.run(true);
 });

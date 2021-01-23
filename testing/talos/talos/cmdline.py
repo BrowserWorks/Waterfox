@@ -122,13 +122,10 @@ def create_parser(mach_interface=False):
     add_arg('--setpref', action='append', default=[], dest="extraPrefs",
             metavar="PREF=VALUE",
             help="defines an extra user preference")
-    add_arg('--mitmproxy',
-            help='Test uses mitmproxy to serve the pages, specify the '
-                 'path and name of the mitmdump file to playback')
-    add_arg('--mitmdumpPath',
-            help="Path to mitmproxy's mitmdump playback tool")
     add_arg("--firstNonBlankPaint", action='store_true', dest="fnbpaint",
             help="Wait for firstNonBlankPaint event before recording the time")
+    add_arg("--pdfPaint", action='store_true', dest="pdfpaint",
+            help="Wait for the first page of a PDF to be rendered")
     add_arg('--webServer', dest='webserver',
             help="DEPRECATED")
     if not mach_interface:
@@ -187,6 +184,10 @@ def create_parser(mach_interface=False):
             help='Remove any existing ccov gcda output files after browser'
                  ' initialization but before starting the tests. NOTE:'
                  ' Currently only supported in production.')
+    add_arg('--enable-webrender', action="store_true", default=False,
+            help="Enable the WebRender compositor in Gecko.")
+    add_arg('--enable-fission', action="store_true", default=False,
+            help="Enable Fission (site isolation) in Gecko.")
 
     add_logging_group(parser)
     return parser

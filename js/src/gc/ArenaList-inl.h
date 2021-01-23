@@ -10,6 +10,7 @@
 #include "gc/ArenaList.h"
 
 #include "gc/Heap.h"
+#include "gc/Zone.h"
 
 void js::gc::SortedArenaListSegment::append(Arena* arena) {
   MOZ_ASSERT(arena);
@@ -239,12 +240,12 @@ JSRuntime* js::gc::ArenaLists::runtimeFromAnyThread() {
 }
 
 js::gc::Arena* js::gc::ArenaLists::getFirstArena(AllocKind thingKind) const {
-  return arenaLists(thingKind).head();
+  return arenaList(thingKind).head();
 }
 
 js::gc::Arena* js::gc::ArenaLists::getFirstArenaToSweep(
     AllocKind thingKind) const {
-  return arenaListsToSweep(thingKind);
+  return arenasToSweep(thingKind);
 }
 
 js::gc::Arena* js::gc::ArenaLists::getFirstSweptArena(
@@ -257,7 +258,7 @@ js::gc::Arena* js::gc::ArenaLists::getFirstSweptArena(
 
 js::gc::Arena* js::gc::ArenaLists::getArenaAfterCursor(
     AllocKind thingKind) const {
-  return arenaLists(thingKind).arenaAfterCursor();
+  return arenaList(thingKind).arenaAfterCursor();
 }
 
 bool js::gc::ArenaLists::arenaListsAreEmpty() const {
@@ -269,7 +270,7 @@ bool js::gc::ArenaLists::arenaListsAreEmpty() const {
     if (concurrentUse(i) == ConcurrentUse::BackgroundFinalize) {
       return false;
     }
-    if (!arenaLists(i).isEmpty()) {
+    if (!arenaList(i).isEmpty()) {
       return false;
     }
   }
@@ -280,7 +281,7 @@ void js::gc::ArenaLists::unmarkAll() {
   for (auto i : AllAllocKinds()) {
     /* The background finalization must have stopped at this point. */
     MOZ_ASSERT(concurrentUse(i) == ConcurrentUse::None);
-    for (Arena* arena = arenaLists(i).head(); arena; arena = arena->next) {
+    for (Arena* arena = arenaList(i).head(); arena; arena = arena->next) {
       arena->unmarkAll();
     }
   }
@@ -311,16 +312,12 @@ void js::gc::ArenaLists::checkEmptyFreeLists() {
   MOZ_ASSERT(freeLists().allEmpty());
 }
 
-bool js::gc::ArenaLists::checkEmptyArenaLists() {
-  bool empty = true;
+void js::gc::ArenaLists::checkEmptyArenaLists() {
 #ifdef DEBUG
   for (auto i : AllAllocKinds()) {
-    if (!checkEmptyArenaList(i)) {
-      empty = false;
-    }
+    checkEmptyArenaList(i);
   }
 #endif
-  return empty;
 }
 
 #endif  // gc_ArenaList_inl_h

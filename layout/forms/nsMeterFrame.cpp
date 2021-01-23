@@ -23,6 +23,7 @@
 #include <algorithm>
 
 using namespace mozilla;
+using mozilla::dom::Document;
 using mozilla::dom::Element;
 using mozilla::dom::HTMLMeterElement;
 
@@ -35,7 +36,7 @@ NS_IMPL_FRAMEARENA_HELPERS(nsMeterFrame)
 nsMeterFrame::nsMeterFrame(ComputedStyle* aStyle, nsPresContext* aPresContext)
     : nsContainerFrame(aStyle, aPresContext, kClassID), mBarDiv(nullptr) {}
 
-nsMeterFrame::~nsMeterFrame() {}
+nsMeterFrame::~nsMeterFrame() = default;
 
 void nsMeterFrame::DestroyFrom(nsIFrame* aDestructRoot,
                                PostDestroyData& aPostDestroyData) {
@@ -136,7 +137,7 @@ void nsMeterFrame::ReflowBarFrame(nsIFrame* aBarFrame,
 
   size = NSToCoordRound(size * position);
 
-  if (!vertical && (wm.IsVertical() ? wm.IsVerticalRL() : !wm.IsBidiLTR())) {
+  if (!vertical && wm.IsPhysicalRTL()) {
     xoffset += aReflowInput.ComputedWidth() - size;
   }
 
@@ -161,9 +162,9 @@ void nsMeterFrame::ReflowBarFrame(nsIFrame* aBarFrame,
 
   ReflowOutput barDesiredSize(reflowInput);
   ReflowChild(aBarFrame, aPresContext, barDesiredSize, reflowInput, xoffset,
-              yoffset, 0, aStatus);
+              yoffset, ReflowChildFlags::Default, aStatus);
   FinishReflowChild(aBarFrame, aPresContext, barDesiredSize, &reflowInput,
-                    xoffset, yoffset, 0);
+                    xoffset, yoffset, ReflowChildFlags::Default);
 }
 
 nsresult nsMeterFrame::AttributeChanged(int32_t aNameSpaceID,
@@ -231,11 +232,9 @@ bool nsMeterFrame::ShouldUseNativeStyle() const {
   //   background.
   return StyleDisplay()->mAppearance == StyleAppearance::Meter &&
          !PresContext()->HasAuthorSpecifiedRules(
-             this,
-             NS_AUTHOR_SPECIFIED_BORDER | NS_AUTHOR_SPECIFIED_BACKGROUND) &&
+             this, NS_AUTHOR_SPECIFIED_BORDER_OR_BACKGROUND) &&
          barFrame &&
          barFrame->StyleDisplay()->mAppearance == StyleAppearance::Meterchunk &&
          !PresContext()->HasAuthorSpecifiedRules(
-             barFrame,
-             NS_AUTHOR_SPECIFIED_BORDER | NS_AUTHOR_SPECIFIED_BACKGROUND);
+             barFrame, NS_AUTHOR_SPECIFIED_BORDER_OR_BACKGROUND);
 }

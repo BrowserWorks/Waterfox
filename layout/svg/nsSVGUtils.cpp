@@ -24,9 +24,9 @@
 #include "nsGkAtoms.h"
 #include "nsIContent.h"
 #include "nsIFrame.h"
+#include "nsIFrameInlines.h"
 #include "nsLayoutUtils.h"
 #include "nsPresContext.h"
-#include "nsStyleCoord.h"
 #include "nsStyleStruct.h"
 #include "nsStyleTransformMatrix.h"
 #include "SVGAnimatedLength.h"
@@ -46,6 +46,7 @@
 #include "SVGTextFrame.h"
 #include "nsTextFrame.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/StaticPrefs_svg.h"
 #include "mozilla/SVGContextPaint.h"
 #include "mozilla/Unused.h"
 #include "mozilla/gfx/2D.h"
@@ -63,19 +64,17 @@ using namespace mozilla::dom::SVGUnitTypes_Binding;
 using namespace mozilla::gfx;
 using namespace mozilla::image;
 
-static bool sSVGDisplayListHitTestingEnabled;
-static bool sSVGDisplayListPaintingEnabled;
-static bool sSVGNewGetBBoxEnabled;
-
 bool NS_SVGDisplayListHitTestingEnabled() {
-  return sSVGDisplayListHitTestingEnabled;
+  return StaticPrefs::svg_display_lists_hit_testing_enabled();
 }
 
 bool NS_SVGDisplayListPaintingEnabled() {
-  return sSVGDisplayListPaintingEnabled;
+  return StaticPrefs::svg_display_lists_painting_enabled();
 }
 
-bool NS_SVGNewGetBBoxEnabled() { return sSVGNewGetBBoxEnabled; }
+bool NS_SVGNewGetBBoxEnabled() {
+  return StaticPrefs::svg_new_getBBox_enabled();
+}
 
 // we only take the address of this:
 static mozilla::gfx::UserDataKey sSVGAutoRenderStateKey;
@@ -111,17 +110,6 @@ bool SVGAutoRenderState::IsPaintingToWindow(DrawTarget* aDrawTarget) {
     return static_cast<SVGAutoRenderState*>(state)->mPaintingToWindow;
   }
   return false;
-}
-
-void nsSVGUtils::Init() {
-  Preferences::AddBoolVarCache(&sSVGDisplayListHitTestingEnabled,
-                               "svg.display-lists.hit-testing.enabled");
-
-  Preferences::AddBoolVarCache(&sSVGDisplayListPaintingEnabled,
-                               "svg.display-lists.painting.enabled");
-
-  Preferences::AddBoolVarCache(&sSVGNewGetBBoxEnabled,
-                               "svg.new-getBBox.enabled");
 }
 
 nsRect nsSVGUtils::GetPostFilterVisualOverflowRect(
@@ -192,7 +180,7 @@ void nsSVGUtils::ScheduleReflowSVG(nsIFrame* aFrame) {
   if (aFrame->IsSVGOuterSVGFrame()) {
     outerSVGFrame = static_cast<nsSVGOuterSVGFrame*>(aFrame);
   } else {
-    aFrame->AddStateBits(NS_FRAME_IS_DIRTY);
+    aFrame->MarkSubtreeDirty();
 
     nsIFrame* f = aFrame->GetParent();
     while (f && !f->IsSVGOuterSVGFrame()) {
@@ -322,7 +310,8 @@ nsIFrame* nsSVGUtils::GetOuterSVGFrameAndCoveredRegion(nsIFrame* aFrame,
         nsSVGUtils::eForGetClientRects | nsSVGUtils::eBBoxIncludeFill |
         nsSVGUtils::eBBoxIncludeStroke | nsSVGUtils::eBBoxIncludeMarkers;
 
-    auto ctm = nsLayoutUtils::GetTransformToAncestor(aFrame, outer);
+    auto ctm = nsLayoutUtils::GetTransformToAncestor(RelativeTo{aFrame},
+                                                     RelativeTo{outer});
 
     float initPositionX = NSAppUnitsToFloatPixels(aFrame->GetPosition().x,
                                                   AppUnitsPerCSSPixel()),
@@ -347,7 +336,7 @@ nsIFrame* nsSVGUtils::GetOuterSVGFrameAndCoveredRegion(nsIFrame* aFrame,
     // double-counting.
     m = m.PreTranslate(-initPositionX, -initPositionY);
 
-    SVGBBox bbox = nsSVGUtils::GetBBox(aFrame, flags, &m);
+    gfxRect bbox = nsSVGUtils::GetBBox(aFrame, flags, &m);
     *aRect = nsLayoutUtils::RoundGfxRectToAppRect(bbox, appUnitsPerDevPixel);
   }
 
@@ -441,6 +430,8 @@ float nsSVGUtils::ComputeOpacity(nsIFrame* aFrame, bool aHandleOpacity) {
 
 void nsSVGUtils::DetermineMaskUsage(nsIFrame* aFrame, bool aHandleOpacity,
                                     MaskUsage& aUsage) {
+  using ClipPathType = StyleClipPath::Tag;
+
   aUsage.opacity = ComputeOpacity(aFrame, aHandleOpacity);
 
   nsIFrame* firstFrame =
@@ -456,11 +447,10 @@ void nsSVGUtils::DetermineMaskUsage(nsIFrame* aFrame, bool aHandleOpacity,
   nsSVGClipPathFrame* clipPathFrame;
   // XXX check return value?
   SVGObserverUtils::GetAndObserveClipPath(firstFrame, &clipPathFrame);
-  MOZ_ASSERT(!clipPathFrame ||
-             svgReset->mClipPath.GetType() == StyleShapeSourceType::URL);
+  MOZ_ASSERT(!clipPathFrame || svgReset->mClipPath.IsUrl());
 
-  switch (svgReset->mClipPath.GetType()) {
-    case StyleShapeSourceType::URL:
+  switch (svgReset->mClipPath.tag) {
+    case ClipPathType::Url:
       if (clipPathFrame) {
         if (clipPathFrame->IsTrivial()) {
           aUsage.shouldApplyClipPath = true;
@@ -469,12 +459,12 @@ void nsSVGUtils::DetermineMaskUsage(nsIFrame* aFrame, bool aHandleOpacity,
         }
       }
       break;
-    case StyleShapeSourceType::Shape:
-    case StyleShapeSourceType::Box:
-    case StyleShapeSourceType::Path:
+    case ClipPathType::Shape:
+    case ClipPathType::Box:
+    case ClipPathType::Path:
       aUsage.shouldApplyBasicShapeOrPath = true;
       break;
-    case StyleShapeSourceType::None:
+    case ClipPathType::None:
       MOZ_ASSERT(!aUsage.shouldGenerateClipMaskLayer &&
                  !aUsage.shouldApplyClipPath &&
                  !aUsage.shouldApplyBasicShapeOrPath);
@@ -495,7 +485,7 @@ class MixModeBlender {
   }
 
   bool ShouldCreateDrawTargetForBlend() const {
-    return mFrame->StyleEffects()->mMixBlendMode != NS_STYLE_BLEND_NORMAL;
+    return mFrame->StyleEffects()->mMixBlendMode != StyleBlend::Normal;
   }
 
   gfxContext* CreateBlendTarget(const gfxMatrix& aTransform) {
@@ -556,7 +546,7 @@ class MixModeBlender {
       gfxContextMatrixAutoSaveRestore matrixAutoSaveRestore(mSourceCtx);
       mSourceCtx->Multiply(aTransform);
       nsRect overflowRect = mFrame->GetVisualOverflowRectRelativeToSelf();
-      if (mFrame->IsFrameOfType(nsIFrame::eSVGGeometry) ||
+      if (mFrame->IsSVGGeometryFrameOrSubclass() ||
           nsSVGUtils::IsInSVGTextSubtree(mFrame)) {
         // Unlike containers, leaf frames do not include GetPosition() in
         // GetCanvasTM().
@@ -617,7 +607,7 @@ void nsSVGUtils::PaintFrameWithEffects(nsIFrame* aFrame, gfxContext& aContext,
     // We don't do this optimization for nondisplay SVG since nondisplay
     // SVG doesn't maintain bounds/overflow rects.
     nsRect overflowRect = aFrame->GetVisualOverflowRectRelativeToSelf();
-    if (aFrame->IsFrameOfType(nsIFrame::eSVGGeometry) ||
+    if (aFrame->IsSVGGeometryFrameOrSubclass() ||
         nsSVGUtils::IsInSVGTextSubtree(aFrame)) {
       // Unlike containers, leaf frames do not include GetPosition() in
       // GetCanvasTM().
@@ -709,8 +699,13 @@ void nsSVGUtils::PaintFrameWithEffects(nsIFrame* aFrame, gfxContext& aContext,
       StyleMaskMode maskMode =
           aFrame->StyleSVGReset()->mMask.mLayers[0].mMaskMode;
       nsSVGMaskFrame::MaskParams params(&aContext, aFrame, aTransform,
-                                        maskUsage.opacity, &maskTransform,
-                                        maskMode, aImgParams);
+                                        maskUsage.opacity, maskMode,
+                                        aImgParams);
+      // We want the mask to be untransformed so use the inverse of the current
+      // transform as the maskTransform to compensate.
+      maskTransform = aContext.CurrentMatrix();
+      maskTransform.Invert();
+
       maskSurface = maskFrame->GetMaskForMaskedFrame(params);
 
       if (!maskSurface) {
@@ -722,13 +717,14 @@ void nsSVGUtils::PaintFrameWithEffects(nsIFrame* aFrame, gfxContext& aContext,
     }
 
     if (maskUsage.shouldGenerateClipMaskLayer) {
-      Matrix clippedMaskTransform;
       RefPtr<SourceSurface> clipMaskSurface = clipPathFrame->GetClipMask(
-          aContext, aFrame, aTransform, &clippedMaskTransform, maskSurface,
-          maskTransform);
+          aContext, aFrame, aTransform, maskSurface, maskTransform);
       if (clipMaskSurface) {
+        // We want the mask to be untransformed so use the inverse of the
+        // current transform as the maskTransform to compensate.
+        maskTransform = aContext.CurrentMatrix();
+        maskTransform.Invert();
         maskSurface = clipMaskSurface;
-        maskTransform = clippedMaskTransform;
       } else {
         // Either entire surface is clipped out, or gfx buffer allocation
         // failure in nsSVGClipPathFrame::GetClipMask.
@@ -934,38 +930,34 @@ gfxRect nsSVGUtils::GetClipRectForFrame(nsIFrame* aFrame, float aX, float aY,
   const nsStyleDisplay* disp = aFrame->StyleDisplay();
   const nsStyleEffects* effects = aFrame->StyleEffects();
 
-  if (!(effects->mClipFlags & NS_STYLE_CLIP_RECT)) {
-    NS_ASSERTION(effects->mClipFlags == NS_STYLE_CLIP_AUTO,
-                 "We don't know about this type of clip.");
+  bool clipApplies = disp->mOverflowX == StyleOverflow::Hidden ||
+                     disp->mOverflowY == StyleOverflow::Hidden;
+
+  if (!clipApplies || effects->mClip.IsAuto()) {
     return gfxRect(aX, aY, aWidth, aHeight);
   }
 
-  if (disp->mOverflowX == StyleOverflow::Hidden ||
-      disp->mOverflowY == StyleOverflow::Hidden) {
-    nsIntRect clipPxRect = effects->mClip.ToOutsidePixels(
-        aFrame->PresContext()->AppUnitsPerDevPixel());
-    gfxRect clipRect = gfxRect(clipPxRect.x, clipPxRect.y, clipPxRect.width,
-                               clipPxRect.height);
-
-    if (NS_STYLE_CLIP_RIGHT_AUTO & effects->mClipFlags) {
-      clipRect.width = aWidth - clipRect.X();
-    }
-    if (NS_STYLE_CLIP_BOTTOM_AUTO & effects->mClipFlags) {
-      clipRect.height = aHeight - clipRect.Y();
-    }
-
-    if (disp->mOverflowX != StyleOverflow::Hidden) {
-      clipRect.x = aX;
-      clipRect.width = aWidth;
-    }
-    if (disp->mOverflowY != StyleOverflow::Hidden) {
-      clipRect.y = aY;
-      clipRect.height = aHeight;
-    }
-
-    return clipRect;
+  auto& rect = effects->mClip.AsRect();
+  nsRect coordClipRect = rect.ToLayoutRect();
+  nsIntRect clipPxRect = coordClipRect.ToOutsidePixels(
+      aFrame->PresContext()->AppUnitsPerDevPixel());
+  gfxRect clipRect =
+      gfxRect(clipPxRect.x, clipPxRect.y, clipPxRect.width, clipPxRect.height);
+  if (rect.right.IsAuto()) {
+    clipRect.width = aWidth - clipRect.X();
   }
-  return gfxRect(aX, aY, aWidth, aHeight);
+  if (rect.bottom.IsAuto()) {
+    clipRect.height = aHeight - clipRect.Y();
+  }
+  if (disp->mOverflowX != StyleOverflow::Hidden) {
+    clipRect.x = aX;
+    clipRect.width = aWidth;
+  }
+  if (disp->mOverflowY != StyleOverflow::Hidden) {
+    clipRect.y = aY;
+    clipRect.height = aHeight;
+  }
+  return clipRect;
 }
 
 void nsSVGUtils::SetClipRect(gfxContext* aContext, const gfxMatrix& aCTM,
@@ -1131,7 +1123,7 @@ gfxPoint nsSVGUtils::FrameSpaceInCSSPxToUserSpaceOffset(nsIFrame* aFrame) {
   }
 
   // Leaf frames apply their own offset inside their user space.
-  if (aFrame->IsFrameOfType(nsIFrame::eSVGGeometry) ||
+  if (aFrame->IsSVGGeometryFrameOrSubclass() ||
       nsSVGUtils::IsInSVGTextSubtree(aFrame)) {
     return nsLayoutUtils::RectToGfxRect(aFrame->GetRect(),
                                         AppUnitsPerCSSPixel())
@@ -1312,7 +1304,7 @@ gfxRect nsSVGUtils::PathExtentsToMaxStrokeExtents(const gfxRect& aPathExtents,
 
   if (affectedByMiterlimit) {
     const nsStyleSVG* style = aFrame->StyleSVG();
-    if (style->mStrokeLinejoin == NS_STYLE_STROKE_LINEJOIN_MITER &&
+    if (style->mStrokeLinejoin == StyleStrokeLinejoin::Miter &&
         styleExpansionFactor < style->mStrokeMiterlimit / 2.0) {
       styleExpansionFactor = style->mStrokeMiterlimit / 2.0;
     }
@@ -1326,29 +1318,27 @@ gfxRect nsSVGUtils::PathExtentsToMaxStrokeExtents(const gfxRect& aPathExtents,
 
 /* static */
 nscolor nsSVGUtils::GetFallbackOrPaintColor(
-    ComputedStyle* aComputedStyle, nsStyleSVGPaint nsStyleSVG::*aFillOrStroke) {
-  const nsStyleSVGPaint& paint = aComputedStyle->StyleSVG()->*aFillOrStroke;
-  ComputedStyle* styleIfVisited = aComputedStyle->GetStyleIfVisited();
+    const ComputedStyle& aStyle, StyleSVGPaint nsStyleSVG::*aFillOrStroke) {
+  const auto& paint = aStyle.StyleSVG()->*aFillOrStroke;
   nscolor color;
-  switch (paint.Type()) {
-    case eStyleSVGPaintType_Server:
-    case eStyleSVGPaintType_ContextStroke:
-      color = paint.GetFallbackType() == eStyleSVGFallbackType_Color
-                  ? paint.GetFallbackColor(aComputedStyle)
+  switch (paint.kind.tag) {
+    case StyleSVGPaintKind::Tag::PaintServer:
+    case StyleSVGPaintKind::Tag::ContextStroke:
+      color = paint.fallback.IsColor()
+                  ? paint.fallback.AsColor().CalcColor(aStyle)
                   : NS_RGBA(0, 0, 0, 0);
       break;
-    case eStyleSVGPaintType_ContextFill:
-      color = paint.GetFallbackType() == eStyleSVGFallbackType_Color
-                  ? paint.GetFallbackColor(aComputedStyle)
+    case StyleSVGPaintKind::Tag::ContextFill:
+      color = paint.fallback.IsColor()
+                  ? paint.fallback.AsColor().CalcColor(aStyle)
                   : NS_RGB(0, 0, 0);
       break;
     default:
-      color = paint.GetColor(aComputedStyle);
+      color = paint.kind.AsColor().CalcColor(aStyle);
       break;
   }
-  if (styleIfVisited) {
-    const nsStyleSVGPaint& paintIfVisited =
-        styleIfVisited->StyleSVG()->*aFillOrStroke;
+  if (const auto* styleIfVisited = aStyle.GetStyleIfVisited()) {
+    const auto& paintIfVisited = styleIfVisited->StyleSVG()->*aFillOrStroke;
     // To prevent Web content from detecting if a user has visited a URL
     // (via URL loading triggered by paint servers or performance
     // differences between paint servers or between a paint server and a
@@ -1356,11 +1346,11 @@ nscolor nsSVGUtils::GetFallbackOrPaintColor(
     // paint server is used or switch between paint servers and simple
     // colors.  A :visited style may only override a simple color with
     // another simple color.
-    if (paintIfVisited.Type() == eStyleSVGPaintType_Color &&
-        paint.Type() == eStyleSVGPaintType_Color) {
-      nscolor colors[2] = {color, paintIfVisited.GetColor(styleIfVisited)};
-      return ComputedStyle::CombineVisitedColors(
-          colors, aComputedStyle->RelevantLinkVisited());
+    if (paintIfVisited.kind.IsColor() && paint.kind.IsColor()) {
+      nscolor colors[2] = {
+          color, paintIfVisited.kind.AsColor().CalcColor(*styleIfVisited)};
+      return ComputedStyle::CombineVisitedColors(colors,
+                                                 aStyle.RelevantLinkVisited());
     }
   }
   return color;
@@ -1372,14 +1362,13 @@ void nsSVGUtils::MakeFillPatternFor(nsIFrame* aFrame, gfxContext* aContext,
                                     imgDrawingParams& aImgParams,
                                     SVGContextPaint* aContextPaint) {
   const nsStyleSVG* style = aFrame->StyleSVG();
-  if (style->mFill.Type() == eStyleSVGPaintType_None) {
+  if (style->mFill.kind.IsNone()) {
     return;
   }
 
   const float opacity = aFrame->StyleEffects()->mOpacity;
 
-  float fillOpacity = GetOpacity(style->FillOpacitySource(),
-                                 style->mFillOpacity, aContextPaint);
+  float fillOpacity = GetOpacity(style->mFillOpacity, aContextPaint);
   if (opacity < 1.0f && nsSVGUtils::CanOptimizeOpacity(aFrame)) {
     // Combine the group opacity into the fill opacity (we will have skipped
     // creating an offscreen surface to apply the group opacity).
@@ -1404,12 +1393,12 @@ void nsSVGUtils::MakeFillPatternFor(nsIFrame* aFrame, gfxContext* aContext,
 
   if (aContextPaint) {
     RefPtr<gfxPattern> pattern;
-    switch (style->mFill.Type()) {
-      case eStyleSVGPaintType_ContextFill:
+    switch (style->mFill.kind.tag) {
+      case StyleSVGPaintKind::Tag::ContextFill:
         pattern = aContextPaint->GetFillPattern(
             dt, fillOpacity, aContext->CurrentMatrixDouble(), aImgParams);
         break;
-      case eStyleSVGPaintType_ContextStroke:
+      case StyleSVGPaintKind::Tag::ContextStroke:
         pattern = aContextPaint->GetStrokePattern(
             dt, fillOpacity, aContext->CurrentMatrixDouble(), aImgParams);
         break;
@@ -1421,15 +1410,15 @@ void nsSVGUtils::MakeFillPatternFor(nsIFrame* aFrame, gfxContext* aContext,
     }
   }
 
-  if (style->mFill.GetFallbackType() == eStyleSVGFallbackType_None) {
+  if (style->mFill.fallback.IsNone()) {
     return;
   }
 
   // On failure, use the fallback colour in case we have an
   // objectBoundingBox where the width or height of the object is zero.
   // See http://www.w3.org/TR/SVG11/coords.html#ObjectBoundingBox
-  Color color(Color::FromABGR(
-      GetFallbackOrPaintColor(aFrame->Style(), &nsStyleSVG::mFill)));
+  sRGBColor color(sRGBColor::FromABGR(
+      GetFallbackOrPaintColor(*aFrame->Style(), &nsStyleSVG::mFill)));
   color.a *= fillOpacity;
   aOutPattern->InitColorPattern(ToDeviceColor(color));
 }
@@ -1440,14 +1429,13 @@ void nsSVGUtils::MakeStrokePatternFor(nsIFrame* aFrame, gfxContext* aContext,
                                       imgDrawingParams& aImgParams,
                                       SVGContextPaint* aContextPaint) {
   const nsStyleSVG* style = aFrame->StyleSVG();
-  if (style->mStroke.Type() == eStyleSVGPaintType_None) {
+  if (style->mStroke.kind.IsNone()) {
     return;
   }
 
   const float opacity = aFrame->StyleEffects()->mOpacity;
 
-  float strokeOpacity = GetOpacity(style->StrokeOpacitySource(),
-                                   style->mStrokeOpacity, aContextPaint);
+  float strokeOpacity = GetOpacity(style->mStrokeOpacity, aContextPaint);
   if (opacity < 1.0f && nsSVGUtils::CanOptimizeOpacity(aFrame)) {
     // Combine the group opacity into the stroke opacity (we will have skipped
     // creating an offscreen surface to apply the group opacity).
@@ -1472,12 +1460,12 @@ void nsSVGUtils::MakeStrokePatternFor(nsIFrame* aFrame, gfxContext* aContext,
 
   if (aContextPaint) {
     RefPtr<gfxPattern> pattern;
-    switch (style->mStroke.Type()) {
-      case eStyleSVGPaintType_ContextFill:
+    switch (style->mStroke.kind.tag) {
+      case StyleSVGPaintKind::Tag::ContextFill:
         pattern = aContextPaint->GetFillPattern(
             dt, strokeOpacity, aContext->CurrentMatrixDouble(), aImgParams);
         break;
-      case eStyleSVGPaintType_ContextStroke:
+      case StyleSVGPaintKind::Tag::ContextStroke:
         pattern = aContextPaint->GetStrokePattern(
             dt, strokeOpacity, aContext->CurrentMatrixDouble(), aImgParams);
         break;
@@ -1489,49 +1477,36 @@ void nsSVGUtils::MakeStrokePatternFor(nsIFrame* aFrame, gfxContext* aContext,
     }
   }
 
-  if (style->mStroke.GetFallbackType() == eStyleSVGFallbackType_None) {
+  if (style->mStroke.fallback.IsNone()) {
     return;
   }
 
   // On failure, use the fallback colour in case we have an
   // objectBoundingBox where the width or height of the object is zero.
   // See http://www.w3.org/TR/SVG11/coords.html#ObjectBoundingBox
-  Color color(Color::FromABGR(
-      GetFallbackOrPaintColor(aFrame->Style(), &nsStyleSVG::mStroke)));
+  sRGBColor color(sRGBColor::FromABGR(
+      GetFallbackOrPaintColor(*aFrame->Style(), &nsStyleSVG::mStroke)));
   color.a *= strokeOpacity;
   aOutPattern->InitColorPattern(ToDeviceColor(color));
 }
 
 /* static */
-float nsSVGUtils::GetOpacity(nsStyleSVGOpacitySource aOpacityType,
-                             const float& aOpacity,
+float nsSVGUtils::GetOpacity(const StyleSVGOpacity& aOpacity,
                              SVGContextPaint* aContextPaint) {
   float opacity = 1.0f;
-  switch (aOpacityType) {
-    case eStyleSVGOpacitySource_Normal:
-      opacity = aOpacity;
-      break;
-    case eStyleSVGOpacitySource_ContextFillOpacity:
+  switch (aOpacity.tag) {
+    case StyleSVGOpacity::Tag::Opacity:
+      return aOpacity.AsOpacity();
+    case StyleSVGOpacity::Tag::ContextFillOpacity:
       if (aContextPaint) {
         opacity = aContextPaint->GetFillOpacity();
-      } else {
-        NS_WARNING(
-            "Content used context-fill-opacity when not in a context element");
       }
       break;
-    case eStyleSVGOpacitySource_ContextStrokeOpacity:
+    case StyleSVGOpacity::Tag::ContextStrokeOpacity:
       if (aContextPaint) {
         opacity = aContextPaint->GetStrokeOpacity();
-      } else {
-        NS_WARNING(
-            "Content used context-stroke-opacity when not in a context "
-            "element");
       }
       break;
-    default:
-      MOZ_ASSERT_UNREACHABLE(
-          "Unknown object opacity inheritance type for SVG "
-          "glyph");
   }
   return opacity;
 }
@@ -1544,8 +1519,8 @@ bool nsSVGUtils::HasStroke(nsIFrame* aFrame, SVGContextPaint* aContextPaint) {
 float nsSVGUtils::GetStrokeWidth(nsIFrame* aFrame,
                                  SVGContextPaint* aContextPaint) {
   const nsStyleSVG* style = aFrame->StyleSVG();
-  if (aContextPaint && style->StrokeWidthFromObject()) {
-    return aContextPaint->GetStrokeWidth();
+  if (style->mStrokeWidth.IsContextValue()) {
+    return aContextPaint ? aContextPaint->GetStrokeWidth() : 1.0f;
   }
 
   nsIContent* content = aFrame->GetContent();
@@ -1554,7 +1529,8 @@ float nsSVGUtils::GetStrokeWidth(nsIFrame* aFrame,
   }
 
   SVGElement* ctx = static_cast<SVGElement*>(content);
-  return SVGContentUtils::CoordToFloat(ctx, style->mStrokeWidth);
+  return SVGContentUtils::CoordToFloat(
+      ctx, style->mStrokeWidth.AsLengthPercentage());
 }
 
 void nsSVGUtils::SetupStrokeGeometry(nsIFrame* aFrame, gfxContext* aContext,
@@ -1580,48 +1556,51 @@ uint16_t nsSVGUtils::GetGeometryHitTestFlags(nsIFrame* aFrame) {
   uint16_t flags = 0;
 
   switch (aFrame->StyleUI()->mPointerEvents) {
-    case NS_STYLE_POINTER_EVENTS_NONE:
+    case StylePointerEvents::None:
       break;
-    case NS_STYLE_POINTER_EVENTS_AUTO:
-    case NS_STYLE_POINTER_EVENTS_VISIBLEPAINTED:
+    case StylePointerEvents::Auto:
+    case StylePointerEvents::Visiblepainted:
       if (aFrame->StyleVisibility()->IsVisible()) {
-        if (aFrame->StyleSVG()->mFill.Type() != eStyleSVGPaintType_None)
+        if (!aFrame->StyleSVG()->mFill.kind.IsNone())
           flags |= SVG_HIT_TEST_FILL;
-        if (aFrame->StyleSVG()->mStroke.Type() != eStyleSVGPaintType_None)
+        if (!aFrame->StyleSVG()->mStroke.kind.IsNone())
           flags |= SVG_HIT_TEST_STROKE;
-        if (aFrame->StyleSVG()->mStrokeOpacity > 0)
+        if (!aFrame->StyleSVG()->mStrokeOpacity.IsOpacity() ||
+            aFrame->StyleSVG()->mStrokeOpacity.AsOpacity() > 0)
           flags |= SVG_HIT_TEST_CHECK_MRECT;
       }
       break;
-    case NS_STYLE_POINTER_EVENTS_VISIBLEFILL:
+    case StylePointerEvents::Visiblefill:
       if (aFrame->StyleVisibility()->IsVisible()) {
         flags |= SVG_HIT_TEST_FILL;
       }
       break;
-    case NS_STYLE_POINTER_EVENTS_VISIBLESTROKE:
+    case StylePointerEvents::Visiblestroke:
       if (aFrame->StyleVisibility()->IsVisible()) {
         flags |= SVG_HIT_TEST_STROKE;
       }
       break;
-    case NS_STYLE_POINTER_EVENTS_VISIBLE:
+    case StylePointerEvents::Visible:
       if (aFrame->StyleVisibility()->IsVisible()) {
         flags |= SVG_HIT_TEST_FILL | SVG_HIT_TEST_STROKE;
       }
       break;
-    case NS_STYLE_POINTER_EVENTS_PAINTED:
-      if (aFrame->StyleSVG()->mFill.Type() != eStyleSVGPaintType_None)
-        flags |= SVG_HIT_TEST_FILL;
-      if (aFrame->StyleSVG()->mStroke.Type() != eStyleSVGPaintType_None)
+    case StylePointerEvents::Painted:
+      if (!aFrame->StyleSVG()->mFill.kind.IsNone()) flags |= SVG_HIT_TEST_FILL;
+      if (!aFrame->StyleSVG()->mStroke.kind.IsNone())
         flags |= SVG_HIT_TEST_STROKE;
-      if (aFrame->StyleSVG()->mStrokeOpacity) flags |= SVG_HIT_TEST_CHECK_MRECT;
+      if (!aFrame->StyleSVG()->mStrokeOpacity.IsOpacity() ||
+          aFrame->StyleSVG()->mStrokeOpacity.AsOpacity() > 0) {
+        flags |= SVG_HIT_TEST_CHECK_MRECT;
+      }
       break;
-    case NS_STYLE_POINTER_EVENTS_FILL:
+    case StylePointerEvents::Fill:
       flags |= SVG_HIT_TEST_FILL;
       break;
-    case NS_STYLE_POINTER_EVENTS_STROKE:
+    case StylePointerEvents::Stroke:
       flags |= SVG_HIT_TEST_STROKE;
       break;
-    case NS_STYLE_POINTER_EVENTS_ALL:
+    case StylePointerEvents::All:
       flags |= SVG_HIT_TEST_FILL | SVG_HIT_TEST_STROKE;
       break;
     default:
@@ -1706,10 +1685,9 @@ gfxMatrix nsSVGUtils::GetTransformMatrixInUserSpace(const nsIFrame* aFrame) {
     return {};
   }
 
+  nsStyleTransformMatrix::TransformReferenceBox refBox(aFrame);
   nsDisplayTransform::FrameTransformProperties properties{
-      aFrame, AppUnitsPerCSSPixel(), nullptr};
-  nsStyleTransformMatrix::TransformReferenceBox refBox;
-  refBox.Init(aFrame);
+      aFrame, refBox, AppUnitsPerCSSPixel()};
 
   // SVG elements can have x/y offset, their default transform origin
   // is the origin of user space, not the top left point of the frame.

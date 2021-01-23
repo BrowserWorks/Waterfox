@@ -7,6 +7,13 @@ Defines artifacts to sign before repackage.
 
 from __future__ import absolute_import, print_function, unicode_literals
 from taskgraph.util.taskcluster import get_artifact_path
+from taskgraph.util.declarative_artifacts import get_geckoview_upstream_artifacts
+
+
+LANGPACK_SIGN_PLATFORMS = {  # set
+    'linux64-shippable', 'linux64-devedition',
+    'macosx64-shippable', 'macosx64-devedition',
+}
 
 
 def is_partner_kind(kind):
@@ -14,58 +21,90 @@ def is_partner_kind(kind):
         return True
 
 
+def is_notarization_kind(kind):
+    if kind and 'notarization' in kind:
+        return True
+
+
 def generate_specifications_of_artifacts_to_sign(
-    task, keep_locale_template=True, kind=None
+    config, job, keep_locale_template=True, kind=None, dep_kind=None
 ):
-    build_platform = task.attributes.get('build_platform')
-    use_stub = task.attributes.get('stub-installer')
+    build_platform = job['attributes'].get('build_platform')
+    use_stub = job['attributes'].get('stub-installer')
+    # Get locales to know if we want to sign ja-JP-mac langpack
+    locales = job["attributes"].get('chunk_locales', [])
     if kind == 'release-source-signing':
         artifacts_specifications = [{
             'artifacts': [
-                get_artifact_path(task, 'source.tar.xz')
+                get_artifact_path(job, 'source.tar.xz')
             ],
             'formats': ['autograph_gpg'],
         }]
     elif 'android' in build_platform:
         artifacts_specifications = [{
-            'artifacts': [
-                get_artifact_path(task, '{locale}/target.apk'),
-            ],
-            'formats': ['autograph_apk_fennec_sha1'],
+            'artifacts': get_geckoview_artifacts_to_sign(config, job),
+            'formats': ['autograph_gpg'],
         }]
     # XXX: Mars aren't signed here (on any platform) because internals will be
     # signed at after this stage of the release
     elif 'macosx' in build_platform:
-        if is_partner_kind(kind):
-            extension = 'tar.gz'
+        if is_notarization_kind(dep_kind):
+            # This task is notarization part 3: download signed bits,
+            # and staple notarization.
+            artifacts_specifications = [{
+                'artifacts': [
+                    get_artifact_path(job, '{locale}/target.tar.gz'),
+                    get_artifact_path(job, '{locale}/target.pkg'),
+                ],
+                'formats': [],
+            }]
+            langpack_formats = []
         else:
-            extension = 'dmg'
-        artifacts_specifications = [{
-            'artifacts': [get_artifact_path(task, '{{locale}}/target.{}'.format(extension))],
-            'formats': ['macapp', 'autograph_widevine', 'autograph_omnija'],
-        }]
+            # This task is either depsigning, or notarization part 1:
+            # download unsigned bits, and sign. If notarization part 1,
+            # submit for notarization and create a uuid_manifest.json
+            if is_partner_kind(kind):
+                extension = 'tar.gz'
+            else:
+                extension = 'dmg'
+            artifacts_specifications = [{
+                'artifacts': [get_artifact_path(job, '{{locale}}/target.{}'.format(extension))],
+                'formats': ['macapp', 'autograph_widevine', 'autograph_omnija'],
+            }]
+            langpack_formats = ['autograph_langpack']
+
+        if 'ja-JP-mac' in locales and build_platform in LANGPACK_SIGN_PLATFORMS:
+            artifacts_specifications += [{
+                'artifacts': [get_artifact_path(job, 'ja-JP-mac/target.langpack.xpi')],
+                'formats': langpack_formats,
+            }]
     elif 'win' in build_platform:
         artifacts_specifications = [{
             'artifacts': [
-                get_artifact_path(task, '{locale}/setup.exe'),
+                get_artifact_path(job, '{locale}/setup.exe'),
             ],
             'formats': ['autograph_authenticode'],
         }, {
             'artifacts': [
-                get_artifact_path(task, '{locale}/target.zip'),
+                get_artifact_path(job, '{locale}/target.zip'),
             ],
             'formats': ['autograph_authenticode', 'autograph_widevine', 'autograph_omnija'],
         }]
 
         if use_stub:
             artifacts_specifications[0]['artifacts'] += [
-                get_artifact_path(task, '{locale}/setup-stub.exe')
+                get_artifact_path(job, '{locale}/setup-stub.exe')
             ]
     elif 'linux' in build_platform:
         artifacts_specifications = [{
-            'artifacts': [get_artifact_path(task, '{locale}/target.tar.bz2')],
+            'artifacts': [get_artifact_path(job, '{locale}/target.tar.bz2')],
             'formats': ['autograph_gpg', 'autograph_widevine', 'autograph_omnija'],
         }]
+        if build_platform in LANGPACK_SIGN_PLATFORMS:
+            artifacts_specifications += [{
+                'artifacts': [get_artifact_path(job, '{locale}/target.langpack.xpi')],
+                'formats': ['autograph_langpack'],
+            }]
     else:
         raise Exception("Platform not implemented for signing")
 
@@ -107,8 +146,7 @@ def get_signed_artifacts(input, formats, behavior=None):
     """
     artifacts = set()
     if input.endswith('.dmg'):
-        if behavior != "mac_pkg":
-            artifacts.add(input.replace('.dmg', '.tar.gz'))
+        artifacts.add(input.replace('.dmg', '.tar.gz'))
         if behavior and behavior != "mac_sign":
             artifacts.add(input.replace('.dmg', '.pkg'))
     else:
@@ -117,3 +155,13 @@ def get_signed_artifacts(input, formats, behavior=None):
         artifacts.add('{}.asc'.format(input))
 
     return artifacts
+
+
+def get_geckoview_artifacts_to_sign(config, job):
+    upstream_artifacts = get_geckoview_upstream_artifacts(config, job)
+    return [
+        path
+        for upstream_artifact in upstream_artifacts
+        for path in upstream_artifact['paths']
+        if not path.endswith('.md5') and not path.endswith('.sha1')
+    ]

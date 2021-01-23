@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "Papildinājumi">
+<!ENTITY aboutAddons.header2                    "Jūsu papildinājumi">
+
+<!ENTITY addonAction.enable                     "Aktivēt">
+<!ENTITY addonAction.disable                    "Deaktivēt">
+<!ENTITY addonAction.uninstall                  "Atinstalēt">
+<!ENTITY addonAction.undo                       "Atcelt">
+<!ENTITY addonAction.update                     "Atjaunināt">
+
+<!ENTITY addonUnsigned.message                  "&brandShortName; nevar pārbaudīt šo papildinājumu.">
+<!ENTITY addonUnsigned.learnMore                "Uzzināt vairāk">

@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title "Gerast áskrifandi">
+<!ENTITY subscribeButton.label "Gerast áskrifandi">
+<!ENTITY subscribeButton.accesskey "G">
+<!ENTITY unsubscribeButton.label "Afpanta áskrift
+">
+<!ENTITY unsubscribeButton.accesskey "A">
+<!ENTITY newGroupsTab.label "Nýir hópar">
+<!ENTITY newGroupsTab.accesskey "N">
+<!ENTITY refreshButton.label "Endurlesa">
+<!ENTITY refreshButton.accesskey "E">
+<!ENTITY stopButton.label "Stöðva">
+<!ENTITY stopButton.accesskey "t">
+<!ENTITY server.label "Reikningur:">
+<!ENTITY server.accesskey "R">
+<!ENTITY subscribedHeader.label "Gerast áskrifandi">
+<!-- commenting out until bug 38906 is fixed 
+<!ENTITY messagesHeader.label         "Messages"> -->
+<!ENTITY namefield.label "Sýna hluti sem innihalda:">
+<!ENTITY namefield.accesskey "n">

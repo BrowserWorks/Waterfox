@@ -1,0 +1,220 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressbookWindow.title                        "Adresaro">
+<!ENTITY blankResultsPaneMessage.label                  "Tiu ĉi adresaro montras kontaktojn nur post serĉi">
+<!ENTITY localResultsOnlyMessage.label                  "Kontaktoj el foraj adresaroj ne estas montrataj antaŭ serĉi">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label                                 "Dosiero">
+<!ENTITY fileMenu.accesskey                             "D">
+<!ENTITY newMenu.label                                  "Nova">
+<!ENTITY newMenu.accesskey                              "N">
+<!ENTITY newContact.label                               "kontakto…">
+<!ENTITY newContact.accesskey                           "k">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "dissendolisto…">
+<!ENTITY newListCmd.accesskey                           "d">
+<!ENTITY newAddressBookCmd.label                        "adresaro…">
+<!ENTITY newAddressBookCmd.accesskey                    "a">
+<!ENTITY newLDAPDirectoryCmd.label                      "katalogo LDAP…">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "L">
+<!ENTITY newMessageCmd.label                            "mesaĝo">
+<!ENTITY newMessageCmd.key                              "M">
+<!ENTITY newMessageCmd.accesskey                        "m">
+<!-- LOCALIZATION NOTE (osxAddressBook) : These entities are only used on Mac -->
+<!ENTITY osxAddressBook.label                           "Uzi adresaron Mac OS X">
+<!ENTITY osxAddressBook.accesskey                       "X">
+<!ENTITY closeCmd.label                                 "Fermi">
+<!ENTITY closeCmd.key                                   "W">
+<!ENTITY closeCmd.accesskey                             "F">
+<!ENTITY printSetupCmd.label                            "Agordoj pri paĝo…">
+<!ENTITY printSetupCmd.accesskey                        "p">
+<!ENTITY printPreviewContactCmd.label                   "Antaŭvidi presadon de kontakto">
+<!ENTITY printPreviewContactCmd.accesskey               "o">
+<!ENTITY printPreviewAddressBook.label                  "Antaŭvidi presadon de adresaro">
+<!ENTITY printPreviewAddressBook.accesskey              "d">
+<!ENTITY printContactCmd.label                          "Presi kontakton…">
+<!ENTITY printContactCmd.accesskey                      "P">
+<!ENTITY printContactCmd.key                            "P">
+<!ENTITY printAddressBook.label                         "Presi adresaron…">
+<!ENTITY printAddressBook.accesskey                     "a">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label                                 "Redakti">
+<!ENTITY editMenu.accesskey                             "R">
+<!ENTITY deleteCmd.label                                "Forigi">
+<!ENTITY deleteAbCmd.label                              "Forigi adresaron">
+<!ENTITY deleteContactCmd.label                         "Forigi kontakton">
+<!ENTITY deleteContactsCmd.label                        "Forigi kontaktojn">
+<!ENTITY deleteListCmd.label                            "Forigi liston">
+<!ENTITY deleteListsCmd.label                           "Forigi listojn">
+<!ENTITY deleteItemsCmd.label                           "Forigi objektojn">
+<!ENTITY searchAddressesCmd.key                         "f">
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+<!ENTITY propertiesMenu.label                           "Atributoj">
+<!ENTITY propertiesMenu.accesskey                       "A">
+<!ENTITY propertiesCmd.key                              "i">
+<!ENTITY abPropertiesMenu.label                         "Atributoj de adresaro">
+<!ENTITY abPropertiesMenu.accesskey                     "A">
+<!ENTITY contactPropertiesMenu.label                    "Atributoj de kontakto">
+<!ENTITY contactPropertiesMenu.accesskey                "A">
+<!ENTITY mailingListPropertiesMenu.label                "Atributoj de dissendolisto">
+<!ENTITY mailingListPropertiesMenu.accesskey            "A">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label                                 "Vido">
+<!ENTITY viewMenu.accesskey                             "V">
+<!ENTITY viewToolbarsMenu.label                         "Ilarstrioj">
+<!ENTITY viewToolbarsMenu.accesskey                     "I">
+<!ENTITY menubarCmd.label                               "Strio de menuo">
+<!ENTITY menubarCmd.accesskey                           "m">
+<!ENTITY showAbToolbarCmd.label                         "Strio de adresaro">
+<!ENTITY showAbToolbarCmd.accesskey                     "a">
+<!ENTITY showTaskbarCmd.label                           "Stata strio">
+<!ENTITY showTaskbarCmd.accesskey                       "S">
+<!ENTITY customizeToolbar.label                         "Personecigi…">
+<!ENTITY customizeToolbar.accesskey                     "P">
+<!ENTITY layoutMenu.label                               "Aranĝo">
+<!ENTITY layoutMenu.accesskey                           "A">
+<!ENTITY showDirectoryPane.label                        "Panelo de adresaroj">
+<!ENTITY showDirectoryPane.accesskey                    "a">
+<!ENTITY showContactPane2.label                         "Panelo de kontakto">
+<!ENTITY showContactPane2.accesskey                     "k">
+<!ENTITY menu_ShowNameAs.label                          "Vidigi kontakton kiel">
+<!ENTITY menu_ShowNameAs.accesskey                      "V">
+<!-- LOCALIZATION NOTE (firstLastCmd2.label): We're not including a comma here
+because displayed names don't have the comma in between. -->
+<!ENTITY firstLastCmd2.label                            "Personnomo Familinomo">
+<!ENTITY firstLastCmd2.accesskey                        "P">
+<!ENTITY lastFirstCmd.label                             "Familinomo, Personnomo">
+<!ENTITY lastFirstCmd.accesskey                         "F">
+<!ENTITY displayNameCmd.label                           "Montrata nomo">
+<!ENTITY displayNameCmd.accesskey                       "M">
+<!ENTITY sortMenu.label                                 "Ordigi laŭ">
+<!ENTITY sortMenu.accesskey                             "O">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label                                "Iloj">
+<!ENTITY tasksMenu.accesskey                            "I">
+<!ENTITY messengerCmd.label                             "Retpoŝto kaj novaĵgrupoj">
+<!ENTITY messengerCmd.accesskey                         "R">
+<!ENTITY messengerCmd.commandkey                        "1">
+<!ENTITY addressBookCmd.label                           "Adresaro">
+<!ENTITY addressBookCmd.accesskey                       "A">
+<!ENTITY addressBookCmd.key                             "B">
+<!ENTITY searchAddressesCmd.label                       "Serĉi kontaktojn…">
+<!ENTITY searchAddressesCmd.accesskey                   "S">
+<!ENTITY importCmd.label                                "Enporti…">
+<!ENTITY importCmd.accesskey                            "n">
+<!ENTITY exportCmd.label                                "Elporti…">
+<!ENTITY exportCmd.accesskey                            "l">
+<!ENTITY preferencesCmd2.label                          "Elektebloj">
+<!ENTITY preferencesCmd2.accesskey                      "E">
+<!ENTITY preferencesCmdUnix.label                       "Preferoj">
+<!ENTITY preferencesCmdUnix.accesskey                   "P">
+
+<!-- Address Book Toolbar and Context Menus -->
+<!ENTITY newContactButton.label                         "Nova kontakto">
+<!ENTITY newContactButton.accesskey                     "k">
+<!ENTITY newlistButton.label                            "Nova dissendolisto">
+<!ENTITY newlistButton.accesskey                        "l">
+<!ENTITY showAsDefault.label                            "Implicita adresaro">
+<!ENTITY showAsDefault.accesskey                        "I">
+<!ENTITY editPropertiesButton.label                     "Redakti">
+<!ENTITY propertiesContext.label                        "Atributoj">
+<!ENTITY propertiesContext.accesskey                    "A">
+<!ENTITY abPropertiesContext.label                      "Atributoj">
+<!ENTITY abPropertiesContext.accesskey                  "A">
+<!ENTITY editContactContext.label                       "Redakti kontakton">
+<!ENTITY editContactContext.accesskey                   "R">
+<!ENTITY editMailingListContext.label                   "Redakti liston">
+<!ENTITY editMailingListContext.accesskey               "R">
+<!ENTITY newmsgButton.label                             "Sendi retleteron">
+<!ENTITY newmsgButton.accesskey                         "l">
+<!ENTITY newIM.label                                    "Sendi tujmesaĝon">
+<!ENTITY newIM.accesskey                                "t">
+<!ENTITY printButton.label                              "Presi…">
+<!ENTITY printButton.accesskey                          "P">
+<!ENTITY deleteButton2.label                            "Forigi">
+<!ENTITY deleteButton2.accesskey                        "F">
+
+<!-- Address Book Toolbar Tooltips -->
+<!ENTITY newContactButton.tooltip                       "Krei novan kontakton en la adresaro">
+<!ENTITY newlistButton.tooltip                          "Krei novan dissendoliston">
+<!ENTITY editPropertiesButton.tooltip                   "Redakti elektitan objekton">
+<!ENTITY editAbPropertiesButton.tooltip                 "Redakti atributojn de elektita adresaro">
+<!ENTITY editContactPropertiesButton.tooltip            "Redakti elektitan kontakton">
+<!ENTITY editMailingListPropertiesButton.tooltip        "Redakti elektitan dissendoliston">
+<!ENTITY newmsgButton.tooltip                           "Sendi retleteron">
+<!ENTITY newIM.tooltip                                  "Babili per tujmesaĝilo">
+<!ENTITY deleteButton2.tooltip                          "Forigi elektitan objekton">
+
+<!-- Search Bar -->
+<!ENTITY SearchNameOrEmail.label                        "Nomo aŭ retpoŝta adreso">
+<!ENTITY SearchNameOrEmail.accesskey                    "N">
+<!ENTITY advancedButton.tooltip                         "Sperta serĉo de adreso">
+<!ENTITY quickSearchCmd.key                             "k">
+<!ENTITY searchItem.title "Rapide serĉi">
+
+<!-- Results Pane -->
+<!ENTITY Addrbook.label                                 "Adresaro">
+<!ENTITY Addrbook.accesskey                             "A">
+<!ENTITY GeneratedName.label                            "Nomo">
+<!ENTITY GeneratedName.accesskey                        "N">
+<!ENTITY PrimaryEmail.label                             "Retpoŝta adreso">
+<!ENTITY PrimaryEmail.accesskey                         "R">
+<!ENTITY ChatName.label                                 "Tujmesaĝila nomo">
+<!ENTITY ChatName.accesskey                             "T">
+<!ENTITY Company.label                                  "Firmao/organizaĵo">
+<!ENTITY Company.accesskey                              "g">
+<!ENTITY NickName.label                                 "Kaŝnomo">
+<!ENTITY NickName.accesskey                             "K">
+<!ENTITY SecondEmail.label                              "Plia retpoŝta adreso">
+<!ENTITY SecondEmail.accesskey                          "i">
+<!ENTITY Department.label                               "Sekcio">
+<!ENTITY Department.accesskey                           "S">
+<!ENTITY JobTitle.label                                 "Posteno">
+<!ENTITY JobTitle.accesskey                             "P">
+<!ENTITY CellularNumber.label                           "Poŝtelefono">
+<!ENTITY CellularNumber.accesskey                       "f">
+<!ENTITY PagerNumber.label                              "Televokilo">
+<!ENTITY PagerNumber.accesskey                          "v">
+<!ENTITY FaxNumber.label                                "Telekopiilo">
+<!ENTITY FaxNumber.accesskey                            "e">
+<!ENTITY HomePhone.label                                "Telefono hejma">
+<!ENTITY HomePhone.accesskey                            "h">
+<!ENTITY WorkPhone.label                                "Telefono laboreja">
+<!ENTITY WorkPhone.accesskey                            "l">
+<!ENTITY sortAscending.label                            "Kreskante">
+<!ENTITY sortAscending.accesskey                        "r">
+<!ENTITY sortDescending.label                           "Malkreskante">
+<!ENTITY sortDescending.accesskey                       "M">
+<!ENTITY _PhoneticName.label                            "Elparolo de nomo">
+<!ENTITY _PhoneticName.accesskey                        "E">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "Kontakto">
+<!ENTITY home.heading                                   "Hejmo">
+<!ENTITY other.heading                                  "Aliaj">
+<!ENTITY chat.heading                                   "Tujmesaĝiloj">
+<!ENTITY phone.heading                                  "Telefono">
+<!ENTITY work.heading                                   "Laborejo">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "Priskribo">
+<!ENTITY addresses.heading                              "Adresoj">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "Montri mapon">
+<!ENTITY mapIt.tooltip                                  "Montri enretan mapon por tiu ĉi adreso">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label                               "">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY windowMenu.label                               "Fenestro">
+<!ENTITY minimizeWindow.label                           "Plejetigi">
+<!ENTITY minimizeWindow.key                             "m">
+<!ENTITY bringAllToFront.label                          "Malfonigi ĉiujn">
+<!ENTITY zoomWindow.label                               "Pligrandigilo">

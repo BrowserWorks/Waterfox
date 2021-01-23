@@ -1,0 +1,112 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailWizard.title               "Nastavenie existujúcej e-mailovej adresy">
+<!ENTITY emailWizard.caption             "Použiť existujúcu e-mailovú adresu">
+<!ENTITY name.label                      "Vaše meno:">
+<!ENTITY name.accesskey                  "V">
+<!ENTITY fullname.placeholder            "Vaše celé meno">
+<!ENTITY name.text                       "Vaše meno tak ako bude zobrazené ostatným">
+<!ENTITY name.error                      "Prosím, zadajte svoje meno">
+<!ENTITY email.label                     "E-mailová adresa:">
+<!ENTITY email.accesskey                 "E">
+<!ENTITY email3.placeholder              "Vaša e-mailová adresa">
+<!ENTITY email.text                      "Vaša existujúca e-mailová adresa">
+<!ENTITY email.error                     "Neplatná e-mailová adresa">
+<!ENTITY password.label                  "Heslo:">
+<!ENTITY password.accesskey              "H">
+<!ENTITY password.placeholder            "Heslo">
+<!ENTITY password.text                   "Voliteľné, bude použité len na overenie prihlasovacieho mena">
+<!ENTITY password.toggle                 "Zobraziť/skryť heslo">
+<!ENTITY rememberPassword.label          "Zapamätať si heslo">
+<!ENTITY rememberPassword.accesskey      "m">
+<!ENTITY usernameEx.label                "Vaše prihlasovacie meno:">
+<!ENTITY usernameEx.accesskey            "l">
+<!-- LOCALIZATION NOTE(usernameEx.placeholder): YOURDOMAIN refers to the Windows domain in ActiveDirectory. yourusername refers to the user's account name in Windows. -->
+<!ENTITY usernameEx.placeholder          "YOURDOMAIN\yourusername">
+<!-- LOCALIZATION NOTE(usernameEx.text): Domain refers to the Windows domain in ActiveDirectory. We mean the user's login in Windows at the local corporate network. -->
+<!ENTITY usernameEx.text                 "Prihlásenie k doméne">
+
+<!ENTITY protocol.label                  "Protokol:">
+<!ENTITY imapLong.label                  "IMAP (vzdialené priečinky)">
+<!ENTITY pop3Long.label                  "POP3 (uchováva poštu na disku počítača)">
+
+<!ENTITY manualConfigTable.summary       "Nastavenia servera">
+<!ENTITY incoming.label                  "Prijímanie:">
+<!ENTITY incomingColumn.label            "Prijímanie">
+<!ENTITY outgoing.label                  "Odosielanie:">
+<!ENTITY outgoingColumn.label            "Odosielanie">
+<!ENTITY username.label                  "Používateľské meno:">
+<!ENTITY serverRow.label                 "Server:">
+<!ENTITY portRow.label                   "Port:">
+<!ENTITY sslRow.label                    "SSL:">
+<!ENTITY auth.label                      "Overenie">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label                      "POP3">
+<!-- LOCALIZATION NOTE(exchange.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange.label                  "Exchange">
+<!ENTITY smtp.label                      "SMTP">
+<!ENTITY autodetect.label                "Autodetekcia">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "Žiadne">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!-- LOCALIZATION NOTE(exchange-hostname.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange-hostname.label         "Server Exchange:">
+
+<!ENTITY advancedSetup.label             "Spresniť nastavenie">
+<!ENTITY advancedSetup.accesskey         "e">
+<!ENTITY cancel.label                    "Zrušiť">
+<!ENTITY cancel.accesskey                "Z">
+<!ENTITY continue.label                  "Pokračovať">
+<!ENTITY continue.accesskey              "P">
+<!ENTITY stop.label                      "Zastaviť">
+<!ENTITY stop.accesskey                  "s">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual config mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "Znova otestovať nastavenie">
+<!ENTITY half-manual-test.accesskey      "s">
+<!ENTITY manual-config.label             "Nastaviť manuálne…">
+<!ENTITY manual-config.accesskey         "m">
+<!ENTITY open-provisioner.label          "Získať novú e-mailovú adresu…">
+<!ENTITY open-provisioner.accesskey      "v">
+
+
+<!ENTITY get-help.label                  "Získať pomoc">
+<!ENTITY get-help.accesskey              "p">
+
+
+<!ENTITY warning.label                   "Upozornenie!">
+<!ENTITY incomingSettings.label          "Nastavenia pre prichádzajúcu poštu:">
+<!ENTITY outgoingSettings.label          "Nastavenia pre odchádzajúcu poštu:">
+<!ENTITY technicaldetails.label          "Technické podrobnosti">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "Rozumiem riziku">
+<!ENTITY confirmWarning.accesskey        "R">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "Hotovo">
+<!ENTITY doneAccount.accesskey           "o">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "Zmeniť nastavenia">
+<!ENTITY changeSettings.accesskey        "e">
+
+<!ENTITY contactYourProvider.description "&brandShortName; vám môže umožniť získať vaše e-mailové správy použitím poskytnutej konfigurácie. Avšak mali by ste kontaktovať vášho poskytovateľa e-mailovej schránky alebo správcu systému a požiadať ho o údaje k neplatným pripojeniam. Ďalšie informácie nájdete na stránke Thunderbird - Často kladené otázky.">
+
+<!ENTITY insecureServer.tooltip.title    "Upozornenie! Toto je nezabezpečený server.">
+<!ENTITY insecureServer.tooltip.details  "Ďalšie informácie získate po kliknutí na krúžok.">
+
+<!ENTITY insecureUnencrypted.description "Vaša e-mailová adresa a prihlasovacie údaje sú odosielané nezašifrované, takže heslo (a vaša správa) môžu byť jednoducho prečítané inými ľuďmi. &brandShortName; vám umožní získať vaše e-mailové správy, ale mali by ste vášho poskytovateľa požiadať o zriadenie zabezpečeného pripojenia k poštovému serveru.">
+<!ENTITY insecureSelfSigned.description  "Server používa certifikát, ktorému nemôžeme dôverovať, takže nemôžeme zaručiť, že niekto nesleduje údaje posielané medzi &brandShortName;om a serverom. &brandShortName; vám umožní získať vaše e-mailové správy, ale mali by ste vášho poskytovateľa požiadať o zriadenie zabezpečeného pripojenia s platným certifikátom poštového servera.">
+<!ENTITY secureServer.description        "Gratulujeme! Toto je zabezpečený server.">

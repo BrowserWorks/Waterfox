@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/openLocation.xul -->
+
+<!ENTITY enter.label "Unesite web lokaciju (URL) ili navedite lokalnu datoteku koju želite otvoriti:">
+<!-- LOCALIZATION NOTE (enter.accesskey): should be present in both enter.label
+     as defined above and attachEnterLabel as defined in
+     openLocation.properties -->
+<!ENTITY chooseFile.label "Izaberite datoteku…">
+<!ENTITY newPrivate.label "Novi privatni prozor">
+<!ENTITY newWindow.label "Novi prozor browsera">
+<!ENTITY newTab.label "Novi tab browsera">
+<!ENTITY currentTab.label "Trenutni tab browsera">
+<!ENTITY editNewWindow.label "Novi prozor Composera">
+<!ENTITY open.label "Otvori">
+<!ENTITY caption.label "Otvori web lokaciju">
+<!ENTITY openWhere.label "Otvori u:">

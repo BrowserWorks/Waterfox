@@ -15,8 +15,8 @@ namespace dom {
 ServiceWorkerRegisterJob::ServiceWorkerRegisterJob(
     nsIPrincipal* aPrincipal, const nsACString& aScope,
     const nsACString& aScriptSpec, ServiceWorkerUpdateViaCache aUpdateViaCache)
-    : ServiceWorkerUpdateJob(Type::Register, aPrincipal, aScope, aScriptSpec,
-                             aUpdateViaCache) {}
+    : ServiceWorkerUpdateJob(Type::Register, aPrincipal, aScope,
+                             nsCString(aScriptSpec), aUpdateViaCache) {}
 
 void ServiceWorkerRegisterJob::AsyncExecute() {
   MOZ_ASSERT(NS_IsMainThread());
@@ -34,14 +34,6 @@ void ServiceWorkerRegisterJob::AsyncExecute() {
     bool sameUVC = GetUpdateViaCache() == registration->GetUpdateViaCache();
     registration->SetUpdateViaCache(GetUpdateViaCache());
 
-    if (registration->IsPendingUninstall()) {
-      registration->ClearPendingUninstall();
-      // Its possible that a ready promise is created between when the
-      // uninstalling flag is set and when we resurrect the registration
-      // here.  In that case we might need to fire the ready promise
-      // now.
-      swm->CheckPendingReadyPromises();
-    }
     RefPtr<ServiceWorkerInfo> newest = registration->Newest();
     if (newest && mScriptSpec.Equals(newest->ScriptSpec()) && sameUVC) {
       SetRegistration(registration);
@@ -61,7 +53,7 @@ void ServiceWorkerRegisterJob::AsyncExecute() {
   Update();
 }
 
-ServiceWorkerRegisterJob::~ServiceWorkerRegisterJob() {}
+ServiceWorkerRegisterJob::~ServiceWorkerRegisterJob() = default;
 
 }  // namespace dom
 }  // namespace mozilla

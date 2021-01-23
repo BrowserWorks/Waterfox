@@ -19,6 +19,7 @@ pub mod basic_shape;
 pub mod border;
 #[path = "box.rs"]
 pub mod box_;
+pub mod calc;
 pub mod color;
 pub mod column;
 pub mod counters;
@@ -26,11 +27,10 @@ pub mod easing;
 pub mod effects;
 pub mod flex;
 pub mod font;
-#[cfg(feature = "gecko")]
-pub mod gecko;
 pub mod grid;
 pub mod image;
 pub mod length;
+pub mod motion;
 pub mod position;
 pub mod rect;
 pub mod size;
@@ -40,7 +40,7 @@ pub mod transform;
 pub mod ui;
 pub mod url;
 
-// https://drafts.csswg.org/css-counter-styles/#typedef-symbols-type
+/// https://drafts.csswg.org/css-counter-styles/#typedef-symbols-type
 #[allow(missing_docs)]
 #[cfg_attr(feature = "servo", derive(Deserialize, Serialize))]
 #[derive(
@@ -56,6 +56,7 @@ pub mod url;
     ToResolvedValue,
     ToShmem,
 )]
+#[repr(u8)]
 pub enum SymbolsType {
     Cyclic,
     Numeric,
@@ -64,72 +65,44 @@ pub enum SymbolsType {
     Fixed,
 }
 
-#[cfg(feature = "gecko")]
-impl SymbolsType {
-    /// Convert symbols type to their corresponding Gecko values.
-    pub fn to_gecko_keyword(self) -> u8 {
-        use crate::gecko_bindings::structs;
-        match self {
-            SymbolsType::Cyclic => structs::NS_STYLE_COUNTER_SYSTEM_CYCLIC as u8,
-            SymbolsType::Numeric => structs::NS_STYLE_COUNTER_SYSTEM_NUMERIC as u8,
-            SymbolsType::Alphabetic => structs::NS_STYLE_COUNTER_SYSTEM_ALPHABETIC as u8,
-            SymbolsType::Symbolic => structs::NS_STYLE_COUNTER_SYSTEM_SYMBOLIC as u8,
-            SymbolsType::Fixed => structs::NS_STYLE_COUNTER_SYSTEM_FIXED as u8,
-        }
-    }
-
-    /// Convert Gecko value to symbol type.
-    pub fn from_gecko_keyword(gecko_value: u32) -> SymbolsType {
-        use crate::gecko_bindings::structs;
-        match gecko_value {
-            structs::NS_STYLE_COUNTER_SYSTEM_CYCLIC => SymbolsType::Cyclic,
-            structs::NS_STYLE_COUNTER_SYSTEM_NUMERIC => SymbolsType::Numeric,
-            structs::NS_STYLE_COUNTER_SYSTEM_ALPHABETIC => SymbolsType::Alphabetic,
-            structs::NS_STYLE_COUNTER_SYSTEM_SYMBOLIC => SymbolsType::Symbolic,
-            structs::NS_STYLE_COUNTER_SYSTEM_FIXED => SymbolsType::Fixed,
-            x => panic!("Unexpected value for symbol type {}", x),
-        }
-    }
-}
-
 /// <https://drafts.csswg.org/css-counter-styles/#typedef-counter-style>
 ///
-/// Since wherever <counter-style> is used, 'none' is a valid value as
-/// well, we combine them into one type to make code simpler.
+/// Note that 'none' is not a valid name.
 #[cfg_attr(feature = "gecko", derive(MallocSizeOf))]
 #[derive(Clone, Debug, Eq, PartialEq, ToComputedValue, ToCss, ToResolvedValue, ToShmem)]
-pub enum CounterStyleOrNone {
-    /// `none`
-    None,
+#[repr(u8)]
+pub enum CounterStyle {
     /// `<counter-style-name>`
     Name(CustomIdent),
     /// `symbols()`
     #[css(function)]
-    Symbols(SymbolsType, Symbols),
+    Symbols(#[css(skip_if = "is_symbolic")] SymbolsType, Symbols),
 }
 
-impl CounterStyleOrNone {
+#[inline]
+fn is_symbolic(symbols_type: &SymbolsType) -> bool {
+    *symbols_type == SymbolsType::Symbolic
+}
+
+impl CounterStyle {
     /// disc value
     pub fn disc() -> Self {
-        CounterStyleOrNone::Name(CustomIdent(atom!("disc")))
+        CounterStyle::Name(CustomIdent(atom!("disc")))
     }
 
     /// decimal value
     pub fn decimal() -> Self {
-        CounterStyleOrNone::Name(CustomIdent(atom!("decimal")))
+        CounterStyle::Name(CustomIdent(atom!("decimal")))
     }
 }
 
-impl Parse for CounterStyleOrNone {
+impl Parse for CounterStyle {
     fn parse<'i, 't>(
         context: &ParserContext,
         input: &mut Parser<'i, 't>,
     ) -> Result<Self, ParseError<'i>> {
         if let Ok(name) = input.try(|i| parse_counter_style_name(i)) {
-            return Ok(CounterStyleOrNone::Name(name));
-        }
-        if input.try(|i| i.expect_ident_matching("none")).is_ok() {
-            return Ok(CounterStyleOrNone::None);
+            return Ok(CounterStyle::Name(name));
         }
         input.expect_function_matching("symbols")?;
         input.parse_nested_block(|input| {
@@ -148,12 +121,12 @@ impl Parse for CounterStyleOrNone {
             if symbols.0.iter().any(|sym| !sym.is_allowed_in_symbols()) {
                 return Err(input.new_custom_error(StyleParseErrorKind::UnspecifiedError));
             }
-            Ok(CounterStyleOrNone::Symbols(symbols_type, symbols))
+            Ok(CounterStyle::Symbols(symbols_type, symbols))
         })
     }
 }
 
-impl SpecifiedValueInfo for CounterStyleOrNone {
+impl SpecifiedValueInfo for CounterStyle {
     fn collect_completion_keywords(f: KeywordsCollectFn) {
         // XXX The best approach for implementing this is probably
         // having a CounterStyleName type wrapping CustomIdent, and
@@ -162,7 +135,7 @@ impl SpecifiedValueInfo for CounterStyleOrNone {
         // approach here.
         macro_rules! predefined {
             ($($name:expr,)+) => {
-                f(&["none", "symbols", $($name,)+]);
+                f(&["symbols", $($name,)+]);
             }
         }
         include!("../../counter_style/predefined.rs");
@@ -229,6 +202,28 @@ impl<T: Zero> Zero for NonNegative<T> {
 )]
 pub struct GreaterThanOrEqualToOne<T>(pub T);
 
+/// A wrapper of values between zero and one.
+#[cfg_attr(feature = "servo", derive(Deserialize, Serialize))]
+#[derive(
+    Animate,
+    Clone,
+    ComputeSquaredDistance,
+    Copy,
+    Debug,
+    Hash,
+    MallocSizeOf,
+    PartialEq,
+    PartialOrd,
+    SpecifiedValueInfo,
+    ToAnimatedZero,
+    ToComputedValue,
+    ToCss,
+    ToResolvedValue,
+    ToShmem,
+)]
+#[repr(transparent)]
+pub struct ZeroToOne<T>(pub T);
+
 /// A clip rect for clip and image-region
 #[allow(missing_docs)]
 #[derive(
@@ -247,9 +242,53 @@ pub struct GreaterThanOrEqualToOne<T>(pub T);
     ToShmem,
 )]
 #[css(function = "rect", comma)]
-pub struct ClipRect<LengthOrAuto> {
+#[repr(C)]
+pub struct GenericClipRect<LengthOrAuto> {
     pub top: LengthOrAuto,
     pub right: LengthOrAuto,
     pub bottom: LengthOrAuto,
     pub left: LengthOrAuto,
+}
+
+pub use self::GenericClipRect as ClipRect;
+
+/// Either a clip-rect or `auto`.
+#[allow(missing_docs)]
+#[derive(
+    Animate,
+    Clone,
+    ComputeSquaredDistance,
+    Copy,
+    Debug,
+    MallocSizeOf,
+    Parse,
+    PartialEq,
+    SpecifiedValueInfo,
+    ToAnimatedValue,
+    ToAnimatedZero,
+    ToComputedValue,
+    ToCss,
+    ToResolvedValue,
+    ToShmem,
+)]
+#[repr(C, u8)]
+pub enum GenericClipRectOrAuto<R> {
+    Auto,
+    Rect(R),
+}
+
+pub use self::GenericClipRectOrAuto as ClipRectOrAuto;
+
+impl<L> ClipRectOrAuto<L> {
+    /// Returns the `auto` value.
+    #[inline]
+    pub fn auto() -> Self {
+        ClipRectOrAuto::Auto
+    }
+
+    /// Returns whether this value is the `auto` value.
+    #[inline]
+    pub fn is_auto(&self) -> bool {
+        matches!(*self, ClipRectOrAuto::Auto)
+    }
 }

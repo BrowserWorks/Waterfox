@@ -4,8 +4,6 @@ add_task(async function() {
   await SpecialPowers.flushPrefEnv();
   await SpecialPowers.pushPrefEnv({
     set: [
-      ["browser.contentblocking.allowlist.annotations.enabled", true],
-      ["browser.contentblocking.allowlist.storage.enabled", true],
       [
         "network.cookie.cookieBehavior",
         Ci.nsICookieService.BEHAVIOR_REJECT_TRACKER,
@@ -13,6 +11,7 @@ add_task(async function() {
       ["privacy.trackingprotection.enabled", false],
       ["privacy.trackingprotection.pbmode.enabled", false],
       ["privacy.trackingprotection.annotate_channels", true],
+      ["privacy.partition.network_state", false],
       [
         "privacy.restrict3rdpartystorage.userInteractionRequiredForHosts",
         "tracking.example.com,tracking.example.org",
@@ -30,7 +29,7 @@ add_task(async function() {
   await BrowserTestUtils.browserLoaded(browser);
 
   info("Loading tracking scripts and tracking images");
-  await ContentTask.spawn(browser, null, async function() {
+  await SpecialPowers.spawn(browser, [], async function() {
     // Let's load the script twice here.
     {
       let src = content.document.createElement("script");
@@ -93,13 +92,15 @@ add_task(async function() {
     });
 
   info("Creating a 3rd party content");
-  await ContentTask.spawn(
+  await SpecialPowers.spawn(
     browser,
-    {
-      page: TEST_3RD_PARTY_PAGE_WO,
-      blockingCallback: (async _ => {}).toString(),
-      nonBlockingCallback: (async _ => {}).toString(),
-    },
+    [
+      {
+        page: TEST_3RD_PARTY_PAGE_WO,
+        blockingCallback: (async _ => {}).toString(),
+        nonBlockingCallback: (async _ => {}).toString(),
+      },
+    ],
     async function(obj) {
       await new content.Promise(resolve => {
         let ifr = content.document.createElement("iframe");
@@ -135,7 +136,7 @@ add_task(async function() {
   );
 
   info("Loading tracking scripts and tracking images again");
-  await ContentTask.spawn(browser, null, async function() {
+  await SpecialPowers.spawn(browser, [], async function() {
     // Let's load the script twice here.
     {
       let src = content.document.createElement("script");
@@ -210,7 +211,7 @@ add_task(async function() {
   let expectTrackerFound = item => {
     is(
       item[0],
-      Ci.nsIWebProgressListener.STATE_LOADED_TRACKING_CONTENT,
+      Ci.nsIWebProgressListener.STATE_LOADED_LEVEL_1_TRACKING_CONTENT,
       "Correct blocking type reported"
     );
     is(item[1], true, "Correct blocking status reported");
@@ -227,6 +228,16 @@ add_task(async function() {
     ok(item[2] >= 1, "Correct repeat count reported");
   };
 
+  let expectTrackerCookiesLoaded = item => {
+    is(
+      item[0],
+      Ci.nsIWebProgressListener.STATE_COOKIES_LOADED_TRACKER,
+      "Correct blocking type reported"
+    );
+    is(item[1], true, "Correct blocking status reported");
+    ok(item[2] >= 1, "Correct repeat count reported");
+  };
+
   let log = JSON.parse(await browser.getContentBlockingLog());
   for (let trackerOrigin in log) {
     is(
@@ -235,15 +246,18 @@ add_task(async function() {
       "Correct tracker origin must be reported"
     );
     let originLog = log[trackerOrigin];
-    is(originLog.length, 4, "We should have 4 entries in the compressed log");
+    is(originLog.length, 5, "We should have 4 entries in the compressed log");
     expectTrackerFound(originLog[0]);
     expectCookiesLoaded(originLog[1]);
-    expectTrackerBlocked(originLog[2], true);
-    expectTrackerBlocked(originLog[3], false);
+    expectTrackerCookiesLoaded(originLog[2]);
+    expectTrackerBlocked(originLog[3], true);
+    expectTrackerBlocked(originLog[4], false);
   }
 
   info("Removing the tab");
   BrowserTestUtils.removeTab(tab);
+
+  UrlClassifierTestUtils.cleanupTestTrackers();
 });
 
 add_task(async function() {

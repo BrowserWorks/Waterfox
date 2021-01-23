@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!ENTITY newMessageCmd.label             "un mesaj nou">
+<!ENTITY newMessageCmd.accesskey         "m">
+<!ENTITY newMessageCmd.key               "p">
+
+<!ENTITY newContactCmd.label             "Contact…">
+<!ENTITY newContactCmd.accesskey         "C">
+
+<!ENTITY sendPage.label                  "Trimite pagina…">
+<!ENTITY sendPage.accesskey              "T">
+
+<!ENTITY contextSendThisPage.label       "Send This Page…">
+<!ENTITY contextSendThisPage.accesskey   "d">
+<!ENTITY contextSendThisLink.label       "Send This Link…">
+<!ENTITY contextSendThisLink.accesskey   "k">
+<!ENTITY contextSendImage.label          "Trimite imaginea...">
+<!ENTITY contextSendImage.accesskey      "n">
+<!ENTITY contextSendVideo.label          "Trimite clipul…">
+<!ENTITY contextSendVideo.accesskey      "T">
+<!ENTITY contextSendAudio.label          "Trimite fișierul audio…">
+<!ENTITY contextSendAudio.accesskey      "T">
+<!ENTITY contextSendFrame.label          "Send Frame…">
+<!ENTITY contextSendFrame.accesskey      "d">
+
+<!ENTITY sendLinkCmd.label               "Trimite legătura..."> 
+<!ENTITY sendLinkCmd.accesskey           "T">
+

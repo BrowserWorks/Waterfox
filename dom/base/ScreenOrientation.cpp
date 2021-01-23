@@ -5,7 +5,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "ScreenOrientation.h"
-#include "nsIDeviceSensors.h"
 #include "nsIDocShell.h"
 #include "mozilla/dom/Document.h"
 #include "nsGlobalWindow.h"
@@ -16,6 +15,7 @@
 #include "mozilla/Hal.h"
 #include "mozilla/Preferences.h"
 
+#include "mozilla/dom/ContentChild.h"
 #include "mozilla/dom/Event.h"
 #include "mozilla/dom/Promise.h"
 #include "nsContentUtils.h"
@@ -78,12 +78,14 @@ ScreenOrientation::ScreenOrientation(nsPIDOMWindowInner* aWindow,
   mAngle = config.angle();
 
   Document* doc = GetResponsibleDocument();
-  if (doc) {
-    doc->SetCurrentOrientation(mType, mAngle);
+  BrowsingContext* bc = doc ? doc->GetBrowsingContext() : nullptr;
+  if (bc && !bc->InRDMPane()) {
+    bc->SetCurrentOrientation(mType, mAngle);
   }
 }
 
 ScreenOrientation::~ScreenOrientation() {
+  UnlockDeviceOrientation();
   hal::UnregisterScreenConfigurationObserver(this);
   MOZ_ASSERT(!mFullscreenListener);
 }
@@ -101,10 +103,10 @@ class ScreenOrientation::FullscreenEventListener final
 
 class ScreenOrientation::VisibleEventListener final
     : public nsIDOMEventListener {
-  ~VisibleEventListener() {}
+  ~VisibleEventListener() = default;
 
  public:
-  VisibleEventListener() {}
+  VisibleEventListener() = default;
 
   NS_DECL_ISUPPORTS
   NS_DECL_NSIDOMEVENTLISTENER
@@ -147,7 +149,7 @@ ScreenOrientation::LockOrientationTask::LockOrientationTask(
   MOZ_ASSERT(aDocument);
 }
 
-ScreenOrientation::LockOrientationTask::~LockOrientationTask() {}
+ScreenOrientation::LockOrientationTask::~LockOrientationTask() = default;
 
 bool ScreenOrientation::LockOrientationTask::OrientationLockContains(
     OrientationType aOrientationType) {
@@ -169,14 +171,14 @@ ScreenOrientation::LockOrientationTask::Run() {
   if (mDocument->Hidden()) {
     // Active orientation lock is not the document's orientation lock.
     mPromise->MaybeResolveWithUndefined();
-    mDocument->SetOrientationPendingPromise(nullptr);
+    mDocument->ClearOrientationPendingPromise();
     return NS_OK;
   }
 
   if (mOrientationLock == hal::eScreenOrientation_None) {
     mScreenOrientation->UnlockDeviceOrientation();
     mPromise->MaybeResolveWithUndefined();
-    mDocument->SetOrientationPendingPromise(nullptr);
+    mDocument->ClearOrientationPendingPromise();
     return NS_OK;
   }
 
@@ -189,16 +191,17 @@ ScreenOrientation::LockOrientationTask::Run() {
 
   if (NS_WARN_IF(!result)) {
     mPromise->MaybeReject(NS_ERROR_UNEXPECTED);
-    mDocument->SetOrientationPendingPromise(nullptr);
+    mDocument->ClearOrientationPendingPromise();
     return NS_OK;
   }
 
-  if (OrientationLockContains(mDocument->CurrentOrientationType()) ||
+  BrowsingContext* bc = mDocument->GetBrowsingContext();
+  if (OrientationLockContains(bc->GetCurrentOrientationType()) ||
       (mOrientationLock == hal::eScreenOrientation_Default &&
-       mDocument->CurrentOrientationAngle() == 0)) {
+       bc->GetCurrentOrientationAngle() == 0)) {
     // Orientation lock will not cause an orientation change.
     mPromise->MaybeResolveWithUndefined();
-    mDocument->SetOrientationPendingPromise(nullptr);
+    mDocument->ClearOrientationPendingPromise();
   }
 
   return NS_OK;
@@ -247,29 +250,24 @@ already_AddRefed<Promise> ScreenOrientation::Lock(
   return LockInternal(orientation, aRv);
 }
 
-static inline void AbortOrientationPromises(nsIDocShell* aDocShell) {
-  MOZ_ASSERT(aDocShell);
+void ScreenOrientation::AbortInProcessOrientationPromises(
+    BrowsingContext* aBrowsingContext) {
+  MOZ_ASSERT(aBrowsingContext);
 
-  Document* doc = aDocShell->GetDocument();
-  if (doc) {
-    Promise* promise = doc->GetOrientationPendingPromise();
-    if (promise) {
-      promise->MaybeReject(NS_ERROR_DOM_ABORT_ERR);
-      doc->SetOrientationPendingPromise(nullptr);
-    }
-  }
-
-  int32_t childCount;
-  aDocShell->GetChildCount(&childCount);
-  for (int32_t i = 0; i < childCount; i++) {
-    nsCOMPtr<nsIDocShellTreeItem> child;
-    if (NS_SUCCEEDED(aDocShell->GetChildAt(i, getter_AddRefs(child)))) {
-      nsCOMPtr<nsIDocShell> childShell(do_QueryInterface(child));
-      if (childShell) {
-        AbortOrientationPromises(childShell);
+  aBrowsingContext = aBrowsingContext->Top();
+  aBrowsingContext->PreOrderWalk([](BrowsingContext* aContext) {
+    nsIDocShell* docShell = aContext->GetDocShell();
+    if (docShell) {
+      Document* doc = docShell->GetDocument();
+      if (doc) {
+        Promise* promise = doc->GetOrientationPendingPromise();
+        if (promise) {
+          promise->MaybeReject(NS_ERROR_DOM_ABORT_ERR);
+          doc->ClearOrientationPendingPromise();
+        }
       }
     }
-  }
+  });
 }
 
 already_AddRefed<Promise> ScreenOrientation::LockInternal(
@@ -312,18 +310,22 @@ already_AddRefed<Promise> ScreenOrientation::LockInternal(
     return p.forget();
   }
 
-  nsCOMPtr<nsIDocShellTreeItem> root;
-  docShell->GetSameTypeRootTreeItem(getter_AddRefs(root));
-  nsCOMPtr<nsIDocShell> rootShell(do_QueryInterface(root));
-  if (!rootShell) {
+  RefPtr<BrowsingContext> bc = docShell->GetBrowsingContext();
+  bc = bc ? bc->Top() : nullptr;
+  if (!bc) {
     aRv.Throw(NS_ERROR_UNEXPECTED);
     return nullptr;
   }
 
-  rootShell->SetOrientationLock(aOrientation);
-  AbortOrientationPromises(rootShell);
+  bc->SetOrientationLock(aOrientation);
+  AbortInProcessOrientationPromises(bc);
+  dom::ContentChild::GetSingleton()->SendAbortOtherOrientationPendingPromises(
+      bc);
 
-  doc->SetOrientationPendingPromise(p);
+  if (!doc->SetOrientationPendingPromise(p)) {
+    p->MaybeReject(NS_ERROR_DOM_SECURITY_ERR);
+    return p.forget();
+  }
 
   nsCOMPtr<nsIRunnable> lockOrientationTask = new LockOrientationTask(
       this, p, aOrientation, doc, perm == FULLSCREEN_LOCK_ALLOWED);
@@ -413,12 +415,13 @@ OrientationType ScreenOrientation::GetType(CallerType aCallerType,
   }
 
   Document* doc = GetResponsibleDocument();
-  if (!doc) {
+  BrowsingContext* bc = doc ? doc->GetBrowsingContext() : nullptr;
+  if (!bc) {
     aRv.Throw(NS_ERROR_UNEXPECTED);
     return OrientationType::Portrait_primary;
   }
 
-  return doc->CurrentOrientationType();
+  return bc->GetCurrentOrientationType();
 }
 
 uint16_t ScreenOrientation::GetAngle(CallerType aCallerType,
@@ -428,12 +431,13 @@ uint16_t ScreenOrientation::GetAngle(CallerType aCallerType,
   }
 
   Document* doc = GetResponsibleDocument();
-  if (!doc) {
+  BrowsingContext* bc = doc ? doc->GetBrowsingContext() : nullptr;
+  if (!bc) {
     aRv.Throw(NS_ERROR_UNEXPECTED);
     return 0;
   }
 
-  return doc->CurrentOrientationAngle();
+  return bc->GetCurrentOrientationAngle();
 }
 
 ScreenOrientation::LockPermission
@@ -444,8 +448,7 @@ ScreenOrientation::GetLockOrientationPermission(bool aCheckSandbox) const {
   }
 
   // Chrome can always lock the screen orientation.
-  nsIDocShell* docShell = owner->GetDocShell();
-  if (docShell && docShell->ItemType() == nsIDocShellTreeItem::typeChrome) {
+  if (owner->GetBrowsingContext()->IsChrome()) {
     return LOCK_ALLOWED;
   }
 
@@ -483,7 +486,8 @@ void ScreenOrientation::Notify(const hal::ScreenConfiguration& aConfiguration) {
   }
 
   Document* doc = GetResponsibleDocument();
-  if (!doc) {
+  BrowsingContext* bc = doc ? doc->GetBrowsingContext() : nullptr;
+  if (!bc) {
     return;
   }
 
@@ -519,8 +523,8 @@ void ScreenOrientation::Notify(const hal::ScreenConfiguration& aConfiguration) {
     return;
   }
 
-  if (mType != doc->CurrentOrientationType()) {
-    doc->SetCurrentOrientation(mType, mAngle);
+  if (mType != bc->GetCurrentOrientationType()) {
+    bc->SetCurrentOrientation(mType, mAngle);
 
     nsCOMPtr<nsIRunnable> runnable = DispatchChangeEventAndResolvePromise();
     rv = NS_DispatchToMainThread(runnable);
@@ -551,7 +555,7 @@ ScreenOrientation::DispatchChangeEventAndResolvePromise() {
           Promise* pendingPromise = doc->GetOrientationPendingPromise();
           if (pendingPromise) {
             pendingPromise->MaybeResolveWithUndefined();
-            doc->SetOrientationPendingPromise(nullptr);
+            doc->ClearOrientationPendingPromise();
           }
         }
       });
@@ -602,10 +606,11 @@ ScreenOrientation::VisibleEventListener::HandleEvent(Event* aEvent) {
   target->RemoveSystemEventListener(NS_LITERAL_STRING("visibilitychange"), this,
                                     true);
 
-  if (doc->CurrentOrientationType() !=
-      orientation->DeviceType(CallerType::System)) {
-    doc->SetCurrentOrientation(orientation->DeviceType(CallerType::System),
-                               orientation->DeviceAngle(CallerType::System));
+  BrowsingContext* bc = doc->GetBrowsingContext();
+  if (bc && bc->GetCurrentOrientationType() !=
+                orientation->DeviceType(CallerType::System)) {
+    bc->SetCurrentOrientation(orientation->DeviceType(CallerType::System),
+                              orientation->DeviceAngle(CallerType::System));
 
     nsCOMPtr<nsIRunnable> runnable =
         orientation->DispatchChangeEventAndResolvePromise();

@@ -58,7 +58,7 @@ Naming standards for class names:
 
 DevTools supports 2 different themes: the dark theme and the light theme. In order to support them, there are 2 class names available (`theme-dark` and `theme-light`).
 
-* Use [pre-defined CSS variables](https://developer.mozilla.org/en-US/docs/Tools/DevToolsColors) instead of hardcoding colors when possible.
+* Use [pre-defined CSS variables](https://searchfox.org/mozilla-central/source/devtools/client/themes/variables.css) instead of hardcoding colors when possible.
 * If you need to support themes and the pre-defined variables don't fit, define a variable with your custom colors at the beginning of the CSS file. This avoids selector duplication in the code.
 
 Example:
@@ -83,7 +83,7 @@ It's recommended to use SVG since it keeps the CSS clean when supporting multipl
 
 * Read [Writing Efficient CSS](https://developer.mozilla.org/en-US/docs/Web/Guide/CSS/Writing_efficient_CSS).
 * Use an iframe where possible so your rules are scoped to the smallest possible set of nodes.<!--TODO: is this still true? and also refine exactly when it is appropriate to use an iframe. Examples might help-->
-* If your CSS is used in `browser.xul`, you need to take special care with performance:
+* If your CSS is used in `browser.xhtml`, you need to take special care with performance:
  * Descendent selectors should be avoided.
  * If possible, find ways to use **only** id selectors, class selectors and selector groups.
 

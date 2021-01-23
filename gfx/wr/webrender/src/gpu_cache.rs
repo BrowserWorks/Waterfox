@@ -28,7 +28,7 @@ use api::{DebugFlags, DocumentId, PremultipliedColorF};
 #[cfg(test)]
 use api::IdNamespace;
 use api::units::TexelRect;
-use euclid::{HomogeneousVector, TypedRect};
+use euclid::{HomogeneousVector, Rect};
 use crate::internal_types::{FastHashMap, FastHashSet};
 use crate::profiler::GpuCacheProfileCounters;
 use crate::render_backend::{FrameStamp, FrameId};
@@ -102,8 +102,8 @@ impl From<[f32; 4]> for GpuBlockData {
     }
 }
 
-impl<P> From<TypedRect<f32, P>> for GpuBlockData {
-    fn from(r: TypedRect<f32, P>) -> Self {
+impl<P> From<Rect<f32, P>> for GpuBlockData {
+    fn from(r: Rect<f32, P>) -> Self {
         GpuBlockData {
             data: [
                 r.origin.x,
@@ -391,16 +391,16 @@ impl FreeBlockLists {
             0 => panic!("Can't allocate zero sized blocks!"),
             1 => (1, &mut self.free_list_1),
             2 => (2, &mut self.free_list_2),
-            3...4 => (4, &mut self.free_list_4),
-            5...8 => (8, &mut self.free_list_8),
-            9...16 => (16, &mut self.free_list_16),
-            17...32 => (32, &mut self.free_list_32),
-            33...64 => (64, &mut self.free_list_64),
-            65...128 => (128, &mut self.free_list_128),
-            129...256 => (256, &mut self.free_list_256),
-            257...341 => (341, &mut self.free_list_341),
-            342...512 => (512, &mut self.free_list_512),
-            513...1024 => (1024, &mut self.free_list_1024),
+            3..=4 => (4, &mut self.free_list_4),
+            5..=8 => (8, &mut self.free_list_8),
+            9..=16 => (16, &mut self.free_list_16),
+            17..=32 => (32, &mut self.free_list_32),
+            33..=64 => (64, &mut self.free_list_64),
+            65..=128 => (128, &mut self.free_list_128),
+            129..=256 => (256, &mut self.free_list_256),
+            257..=341 => (341, &mut self.free_list_341),
+            342..=512 => (512, &mut self.free_list_512),
+            513..=1024 => (1024, &mut self.free_list_1024),
             _ => panic!("Can't allocate > MAX_VERTEX_TEXTURE_WIDTH per resource!"),
         }
     }
@@ -769,6 +769,7 @@ impl GpuCache {
     pub fn begin_frame(&mut self, stamp: FrameStamp) {
         debug_assert!(self.texture.pending_blocks.is_empty());
         assert!(self.prepared_for_frames);
+        profile_scope!("begin_frame");
         self.now = stamp;
         self.texture.evict_old_blocks(self.now);
         self.saved_block_count = 0;
@@ -849,6 +850,7 @@ impl GpuCache {
         &mut self,
         profile_counters: &mut GpuCacheProfileCounters,
     ) -> FrameStamp {
+        profile_scope!("end_frame");
         profile_counters
             .allocated_rows
             .set(self.texture.rows.len());

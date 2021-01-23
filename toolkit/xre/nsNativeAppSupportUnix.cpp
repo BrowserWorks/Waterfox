@@ -17,14 +17,8 @@
 
 #include "nsIFile.h"
 #include "nsDirectoryServiceDefs.h"
-#include "nsICommandLineRunner.h"
-#include "nsIWindowMediator.h"
 #include "nsPIDOMWindow.h"
-#include "nsIDocShell.h"
-#include "nsIBaseWindow.h"
 #include "nsIWidget.h"
-#include "nsIWritablePropertyBag2.h"
-#include "nsIPrefService.h"
 #include "mozilla/Services.h"
 
 #include <stdlib.h>
@@ -326,21 +320,19 @@ void nsNativeAppSupportUnix::SaveYourselfCB(SmcConn smc_conn,
   }
 
   bool status = false;
-  if (save_style != SmSaveGlobal) {
-    nsCOMPtr<nsISupportsPRBool> didSaveSession =
-        do_CreateInstance(NS_SUPPORTS_PRBOOL_CONTRACTID);
+  nsCOMPtr<nsISupportsPRBool> didSaveSession =
+      do_CreateInstance(NS_SUPPORTS_PRBOOL_CONTRACTID);
 
-    if (!didSaveSession) {
-      SmcSaveYourselfDone(smc_conn, True);
-      return;
-    }
-
-    // Notify observers to save the session state
-    didSaveSession->SetData(false);
-    obsServ->NotifyObservers(didSaveSession, "session-save", nullptr);
-
-    didSaveSession->GetData(&status);
+  if (!didSaveSession) {
+    SmcSaveYourselfDone(smc_conn, True);
+    return;
   }
+
+  // Notify observers to save the session state
+  didSaveSession->SetData(false);
+  obsServ->NotifyObservers(didSaveSession, "session-save", nullptr);
+
+  didSaveSession->GetData(&status);
 
   // If the interact style permits us to, we are shutting down and we didn't
   // manage to (or weren't asked to) save the local state, then notify the user

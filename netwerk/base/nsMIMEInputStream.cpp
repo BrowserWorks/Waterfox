@@ -8,22 +8,23 @@
  * automatic creation of the content-length header.
  */
 
-#include "ipc/IPCMessageUtils.h"
+#include "nsMIMEInputStream.h"
 
+#include <utility>
+
+#include "ipc/IPCMessageUtils.h"
+#include "mozilla/Mutex.h"
+#include "mozilla/ipc/InputStreamUtils.h"
 #include "nsCOMPtr.h"
 #include "nsComponentManagerUtils.h"
 #include "nsIAsyncInputStream.h"
-#include "nsIInputStreamLength.h"
+#include "nsIClassInfoImpl.h"
 #include "nsIHttpHeaderVisitor.h"
+#include "nsIIPCSerializableInputStream.h"
+#include "nsIInputStreamLength.h"
 #include "nsIMIMEInputStream.h"
 #include "nsISeekableStream.h"
 #include "nsString.h"
-#include "nsMIMEInputStream.h"
-#include "nsIClassInfoImpl.h"
-#include "nsIIPCSerializableInputStream.h"
-#include "mozilla/Move.h"
-#include "mozilla/Mutex.h"
-#include "mozilla/ipc/InputStreamUtils.h"
 
 using namespace mozilla::ipc;
 using mozilla::Maybe;
@@ -336,38 +337,18 @@ nsresult nsMIMEInputStreamConstructor(nsISupports* outer, REFNSIID iid,
   return inst->QueryInterface(iid, result);
 }
 
-void nsMIMEInputStream::Serialize(InputStreamParams& aParams,
-                                  FileDescriptorArray& aFileDescriptors,
-                                  bool aDelayedStart, uint32_t aMaxSize,
-                                  uint32_t* aSizeUsed,
-                                  mozilla::dom::ContentChild* aManager) {
+void nsMIMEInputStream::Serialize(
+    InputStreamParams& aParams, FileDescriptorArray& aFileDescriptors,
+    bool aDelayedStart, uint32_t aMaxSize, uint32_t* aSizeUsed,
+    mozilla::ipc::ParentToChildStreamActorManager* aManager) {
   SerializeInternal(aParams, aFileDescriptors, aDelayedStart, aMaxSize,
                     aSizeUsed, aManager);
 }
 
-void nsMIMEInputStream::Serialize(InputStreamParams& aParams,
-                                  FileDescriptorArray& aFileDescriptors,
-                                  bool aDelayedStart, uint32_t aMaxSize,
-                                  uint32_t* aSizeUsed,
-                                  PBackgroundChild* aManager) {
-  SerializeInternal(aParams, aFileDescriptors, aDelayedStart, aMaxSize,
-                    aSizeUsed, aManager);
-}
-
-void nsMIMEInputStream::Serialize(InputStreamParams& aParams,
-                                  FileDescriptorArray& aFileDescriptors,
-                                  bool aDelayedStart, uint32_t aMaxSize,
-                                  uint32_t* aSizeUsed,
-                                  mozilla::dom::ContentParent* aManager) {
-  SerializeInternal(aParams, aFileDescriptors, aDelayedStart, aMaxSize,
-                    aSizeUsed, aManager);
-}
-
-void nsMIMEInputStream::Serialize(InputStreamParams& aParams,
-                                  FileDescriptorArray& aFileDescriptors,
-                                  bool aDelayedStart, uint32_t aMaxSize,
-                                  uint32_t* aSizeUsed,
-                                  PBackgroundParent* aManager) {
+void nsMIMEInputStream::Serialize(
+    InputStreamParams& aParams, FileDescriptorArray& aFileDescriptors,
+    bool aDelayedStart, uint32_t aMaxSize, uint32_t* aSizeUsed,
+    mozilla::ipc::ChildToParentStreamActorManager* aManager) {
   SerializeInternal(aParams, aFileDescriptors, aDelayedStart, aMaxSize,
                     aSizeUsed, aManager);
 }
@@ -394,7 +375,7 @@ void nsMIMEInputStream::SerializeInternal(InputStreamParams& aParams,
     params.optionalStream().emplace(wrappedParams);
   }
 
-  params.headers() = mHeaders;
+  params.headers() = mHeaders.Clone();
   params.startedReading() = mStartedReading;
 
   aParams = params;
@@ -411,7 +392,7 @@ bool nsMIMEInputStream::Deserialize(
   const MIMEInputStreamParams& params = aParams.get_MIMEInputStreamParams();
   const Maybe<InputStreamParams>& wrappedParams = params.optionalStream();
 
-  mHeaders = params.headers();
+  mHeaders = params.headers().Clone();
   mStartedReading = params.startedReading();
 
   if (wrappedParams.isSome()) {

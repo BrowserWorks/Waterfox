@@ -42,6 +42,7 @@ class nsFind : public nsIFind {
   // Parameters set from the interface:
   bool mFindBackward;
   bool mCaseSensitive;
+  bool mMatchDiacritics;
 
   // Use "find entire words" mode by setting to a word breaker or null, to
   // disable "entire words" mode.
@@ -50,10 +51,20 @@ class nsFind : public nsIFind {
   struct State;
   class StateRestorer;
 
+  // Extract a character from a string, handling surrogate pairs and
+  // incrementing the index if a surrogate pair is encountered
+  char32_t DecodeChar(const char16_t* t2b, int32_t* index) const;
+
+  // Determine if a line break can occur between two characters
+  //
+  // This could be improved because some languages require more context than two
+  // characters to determine where line breaks can occur
+  bool BreakInBetween(char32_t x, char32_t y) const;
+
   // Get the first character from the next node (last if mFindBackward).
   //
   // This will mutate the state, but then restore it afterwards.
-  char16_t PeekNextChar(State&) const;
+  char32_t PeekNextChar(State&) const;
 };
 
 #endif  // nsFind_h__

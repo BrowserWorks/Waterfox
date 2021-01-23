@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Location Bar prefs panel -->
+<!ENTITY pref.locationBar.title                "Panel Adresa">
+
+<!ENTITY autoComplete.label                    "Automatické dokončovanie">
+<!ENTITY autoCompleteMatchHistory.label        "Automaticky ponúkať webové stránky z Histórie">
+<!ENTITY autoCompleteMatchHistory.accesskey    "A">
+<!ENTITY autoCompleteMatchBookmarks.label      "Automaticky ponúkať webové stránky zo Záložiek">
+<!ENTITY autoCompleteMatchBookmarks.accesskey  "e">
+<!ENTITY autoCompleteAutoFill.label            "Automaticky doplniť najvhodnejší výsledok">
+<!ENTITY autoCompleteAutoFill.accesskey        "u">
+<!ENTITY autoCompleteShowPopup.label           "Zobraziť zoznam nájdených výsledkov">
+<!ENTITY autoCompleteShowPopup.accesskey       "b">
+<!ENTITY autoCompleteMatchOnlyTyped.label      "Ponúkať len predtým zadané webové stránky">
+<!ENTITY autoCompleteMatchOnlyTyped.accesskey  "o">
+<!--LOCALIZATION NOTE (autoCompleteMatch.label): This is the common leading
+  part of the menulist items listed below, mainly to make the control available
+  via the accesskey
+-->
+<!ENTITY autoCompleteMatch.label               "Hľadať">
+<!ENTITY autoCompleteMatch.accesskey           "H">
+<!ENTITY autoCompleteMatchAnywhere             "v celej adrese alebo titulku">
+<!ENTITY autoCompleteMatchWordsFirst           "v celej adrese alebo titulku, ale hlavne na okrajoch slov">
+<!ENTITY autoCompleteMatchWords                "len na okrajoch slov">
+<!ENTITY autoCompleteMatchStart                "len na začiatku adresy alebo titulku">
+<!ENTITY showInternetSearch.label              "Zobraziť predvolený vyhľadávací modul">
+<!ENTITY showInternetSearch.accesskey          "Z">
+
+<!ENTITY formatting.label                      "Formátovanie">
+<!ENTITY domainFormatting.label                "Zvýrazňovať doménu v adrese webových stránok a serverov FTP">
+<!ENTITY domainFormatting.accesskey            "d">
+<!ENTITY highlightSecure.label                 "Zvýrazňovať webové stránky s vysokým stupňom bezpečnosti pripojenia">
+<!ENTITY highlightSecure.accesskey             "w">
+
+<!ENTITY unknownLocations.label                "Neznáme adresy">
+<!ENTITY domainGuessing.label                  "Pridať &quot;www.&quot; a &quot;.com&quot; k zadanej adrese, ak webová stránka nebola nájdená">
+<!ENTITY domainGuessing.accesskey              "N">
+<!ENTITY keywords.label                        "Vykonať vyhľadávanie na webe, ak zadaný text nie je webová adresa">
+<!ENTITY keywords.accesskey                    "V">

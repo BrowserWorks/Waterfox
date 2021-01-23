@@ -48,7 +48,7 @@ function setupTestPreferences() {
   return SpecialPowers.pushPrefEnv({
     set: [
       ["media.autoplay.default", SpecialPowers.Ci.nsIAutoplay.BLOCKED],
-      ["media.autoplay.enabled.user-gestures-needed", true],
+      ["media.autoplay.blocking_policy", 0],
       ["media.autoplay.block-event.enabled", true],
       ["media.autoplay.block-webaudio", true],
       ["media.navigator.permission.fake", true],
@@ -91,7 +91,7 @@ function resumeWithoutExpectedSuccess() {
   let promise = ac.resume();
   ac.resumePromises.push(promise);
   return new Promise((resolve, reject) => {
-    setTimeout(() => {
+    content.setTimeout(() => {
       if (ac.state == "suspended") {
         ok(true, "audio context is still suspended");
         resolve();
@@ -110,15 +110,16 @@ function resumeWithExpectedSuccess() {
   });
 }
 
-function callGUM(testParameters) {
+async function callGUM(testParameters) {
   info("- calling gum with " + JSON.stringify(testParameters.constraints));
   if (testParameters.shouldAllowStartingContext) {
     // Because of the prefs we've set and passed, this is going to allow the
     // window to start an AudioContext synchronously.
     testParameters.constraints.fake = true;
-    return content.navigator.mediaDevices.getUserMedia(
+    await content.navigator.mediaDevices.getUserMedia(
       testParameters.constraints
     );
+    return;
   }
 
   // Call gUM, without sucess: we've made it so that only fake requests
@@ -130,7 +131,6 @@ function callGUM(testParameters) {
   // because of saved permissions for an origin or explicit user consent using
   // the prompt.
   content.navigator.mediaDevices.getUserMedia(testParameters.constraints);
-  return Promise.resolve();
 }
 
 async function testWebAudioWithGUM(testParameters) {
@@ -140,16 +140,13 @@ async function testWebAudioWithGUM(testParameters) {
     "https://example.com"
   );
   info("- create audio context -");
-  // We want the same audio context be used between different content
-  // tasks, so it *must* be loaded by frame script.
-  const mm = tab.linkedBrowser.messageManager;
-  mm.loadFrameScript("data:,(" + createAudioContext.toString() + ")();", false);
+  await SpecialPowers.spawn(tab.linkedBrowser, [], createAudioContext);
 
   info("- check whether audio context starts running -");
   try {
-    await ContentTask.spawn(
+    await SpecialPowers.spawn(
       tab.linkedBrowser,
-      null,
+      [],
       checkingAudioContextRunningState
     );
   } catch (error) {
@@ -157,7 +154,7 @@ async function testWebAudioWithGUM(testParameters) {
   }
 
   try {
-    await ContentTask.spawn(tab.linkedBrowser, testParameters, callGUM);
+    await SpecialPowers.spawn(tab.linkedBrowser, [testParameters], callGUM);
   } catch (error) {
     ok(false, error.toString());
   }
@@ -167,7 +164,7 @@ async function testWebAudioWithGUM(testParameters) {
     let resumeFunc = testParameters.shouldAllowStartingContext
       ? resumeWithExpectedSuccess
       : resumeWithoutExpectedSuccess;
-    await ContentTask.spawn(tab.linkedBrowser, null, resumeFunc);
+    await SpecialPowers.spawn(tab.linkedBrowser, [], resumeFunc);
   } catch (error) {
     ok(false, error.toString());
   }

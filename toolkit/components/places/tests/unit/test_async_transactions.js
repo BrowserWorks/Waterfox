@@ -7,7 +7,6 @@
 const bmsvc = PlacesUtils.bookmarks;
 const obsvc = PlacesUtils.observers;
 const tagssvc = PlacesUtils.tagging;
-const annosvc = PlacesUtils.annotations;
 const PT = PlacesTransactions;
 const menuGuid = PlacesUtils.bookmarks.menuGuid;
 
@@ -34,20 +33,34 @@ var observer = {
 
   handlePlacesEvents(events) {
     for (let event of events) {
-      // Ignore tag items.
-      if (event.isTagging) {
-        this.tagRelatedGuids.add(event.guid);
-        return;
-      }
+      switch (event.type) {
+        case "bookmark-added":
+          // Ignore tag items.
+          if (event.isTagging) {
+            this.tagRelatedGuids.add(event.guid);
+            return;
+          }
 
-      this.itemsAdded.set(event.guid, {
-        itemId: event.id,
-        parentGuid: event.parentGuid,
-        index: event.index,
-        itemType: event.itemType,
-        title: event.title,
-        url: event.url,
-      });
+          this.itemsAdded.set(event.guid, {
+            itemId: event.id,
+            parentGuid: event.parentGuid,
+            index: event.index,
+            itemType: event.itemType,
+            title: event.title,
+            url: event.url,
+          });
+          break;
+        case "bookmark-removed":
+          if (this.tagRelatedGuids.has(event.guid)) {
+            return;
+          }
+
+          this.itemsRemoved.set(event.guid, {
+            parentGuid: event.parentGuid,
+            index: event.index,
+            itemType: event.itemType,
+          });
+      }
     }
   },
 
@@ -57,26 +70,6 @@ var observer = {
 
   onEndUpdateBatch() {
     this.endUpdateBatch = true;
-  },
-
-  onItemRemoved(
-    aItemId,
-    aParentId,
-    aIndex,
-    aItemType,
-    aURI,
-    aGuid,
-    aParentGuid
-  ) {
-    if (this.tagRelatedGuids.has(aGuid)) {
-      return;
-    }
-
-    this.itemsRemoved.set(aGuid, {
-      parentGuid: aParentGuid,
-      index: aIndex,
-      itemType: aItemType,
-    });
   },
 
   onItemChanged(
@@ -99,18 +92,9 @@ var observer = {
       changesForGuid = new Map();
       this.itemsChanged.set(aGuid, changesForGuid);
     }
-
-    let newValue = aNewValue;
-    if (aIsAnnoProperty) {
-      if (annosvc.itemHasAnnotation(aItemId, aProperty)) {
-        newValue = annosvc.getItemAnnotation(aItemId, aProperty);
-      } else {
-        newValue = null;
-      }
-    }
     let change = {
       isAnnoProperty: aIsAnnoProperty,
-      newValue,
+      newValue: aNewValue,
       lastModified: aLastModified,
       itemType: aItemType,
     };
@@ -147,10 +131,16 @@ var bmStartIndex = 0;
 function run_test() {
   bmsvc.addObserver(observer);
   observer.handlePlacesEvents = observer.handlePlacesEvents.bind(observer);
-  obsvc.addListener(["bookmark-added"], observer.handlePlacesEvents);
+  obsvc.addListener(
+    ["bookmark-added", "bookmark-removed"],
+    observer.handlePlacesEvents
+  );
   registerCleanupFunction(function() {
     bmsvc.removeObserver(observer);
-    obsvc.removeListener(["bookmark-added"], observer.handlePlacesEvents);
+    obsvc.removeListener(
+      ["bookmark-added", "bookmark-removed"],
+      observer.handlePlacesEvents
+    );
   });
 
   run_next_test();
@@ -287,26 +277,11 @@ function ensureItemsChanged(...items) {
     let changes = observer.itemsChanged.get(item.guid);
     Assert.ok(changes.has(item.property));
     let info = changes.get(item.property);
-    if (!("isAnnoProperty" in item)) {
-      Assert.ok(!info.isAnnoProperty);
-    } else {
-      Assert.equal(info.isAnnoProperty, Boolean(item.isAnnoProperty));
-    }
+    Assert.ok(!info.isAnnoProperty);
     Assert.equal(info.newValue, item.newValue);
     if ("url" in item) {
       Assert.ok(item.url.equals(info.url));
     }
-  }
-}
-
-function ensureAnnotationsSet(aGuid, aAnnos) {
-  Assert.ok(observer.itemsChanged.has(aGuid));
-  let changes = observer.itemsChanged.get(aGuid);
-  for (let anno of aAnnos) {
-    Assert.ok(changes.has(anno.name));
-    let changeInfo = changes.get(anno.name);
-    Assert.ok(changeInfo.isAnnoProperty);
-    Assert.equal(changeInfo.newValue, anno.value);
   }
 }
 
@@ -1231,7 +1206,7 @@ add_task(async function test_add_and_remove_bookmarks_with_additional_info() {
   await ensureItemsRemoved(b2_info);
   ensureTags([TAG_1]);
 
-  // Check if Remove correctly restores tags and annotations.
+  // Check if Remove correctly restores tags.
   observer.reset();
   await PT.redo();
   ensureTags([TAG_1, TAG_2]);
@@ -1266,7 +1241,34 @@ add_task(async function test_add_and_remove_bookmarks_with_additional_info() {
 
   observer.reset();
   await PT.redo();
+  // The tag containers are removed in async and take some time
+  let oldCountTag1 = 0;
+  let oldCountTag2 = 0;
+  let allTags = await bmsvc.fetchTags();
+  for (let i of allTags) {
+    if (i.name == TAG_1) {
+      oldCountTag1 = i.count;
+    }
+    if (i.name == TAG_2) {
+      oldCountTag2 = i.count;
+    }
+  }
+  await TestUtils.waitForCondition(async () => {
+    allTags = await bmsvc.fetchTags();
+    let newCountTag1 = 0;
+    let newCountTag2 = 0;
+    for (let i of allTags) {
+      if (i.name == TAG_1) {
+        newCountTag1 = i.count;
+      }
+      if (i.name == TAG_2) {
+        newCountTag2 = i.count;
+      }
+    }
+    return newCountTag1 == oldCountTag1 - 1 && newCountTag2 == oldCountTag2 - 1;
+  });
   await ensureItemsRemoved(b2_info);
+
   ensureTags([]);
 
   observer.reset();
@@ -1758,10 +1760,9 @@ add_task(async function test_untag_uri() {
     }
     function ensureTagsUnset() {
       for (let url of urls) {
-        let expectedTags =
-          tagsRemoved.length == 0
-            ? []
-            : preRemovalTags.get(url).filter(tag => !tagsRemoved.includes(tag));
+        let expectedTags = !tagsRemoved.length
+          ? []
+          : preRemovalTags.get(url).filter(tag => !tagsRemoved.includes(tag));
         ensureTagsForURI(url, expectedTags);
       }
     }
@@ -1973,11 +1974,11 @@ add_task(async function test_invalid_uri_spec_throws() {
   );
   Assert.throws(
     () => PT.Tag({ tag: "TheTag", urls: ["invalid uri spec"] }),
-    /TypeError: invalid uri spec is not a valid URL/
+    /TypeError: URL constructor: invalid uri spec is not a valid URL/
   );
   Assert.throws(
     () => PT.Tag({ tag: "TheTag", urls: ["about:blank", "invalid uri spec"] }),
-    /TypeError: invalid uri spec is not a valid URL/
+    /TypeError: URL constructor: invalid uri spec is not a valid URL/
   );
 });
 
@@ -2132,4 +2133,70 @@ add_task(async function test_renameTag() {
   await PT.clearTransactionsHistory();
   ensureUndoState();
   await PlacesUtils.bookmarks.eraseEverything();
+});
+
+add_task(async function test_remove_invalid_url() {
+  let folderGuid = await PT.NewFolder({
+    title: "Test Folder",
+    parentGuid: menuGuid,
+  }).transact();
+
+  let guid = "invalid_____";
+  let folderedGuid = "invalid____2";
+  let url = "invalid-uri";
+  await PlacesUtils.withConnectionWrapper("test_bookmarks_remove", async db => {
+    await db.execute(
+      `
+      INSERT INTO moz_places(url, url_hash, title, rev_host, guid)
+      VALUES (:url, hash(:url), 'Invalid URI', '.', GENERATE_GUID())
+    `,
+      { url }
+    );
+    await db.execute(
+      `INSERT INTO moz_bookmarks (type, fk, parent, position, guid)
+        VALUES (:type,
+                (SELECT id FROM moz_places WHERE url = :url),
+                (SELECT id FROM moz_bookmarks WHERE guid = :parentGuid),
+                (SELECT MAX(position) + 1 FROM moz_bookmarks WHERE parent = (SELECT id FROM moz_bookmarks WHERE guid = :parentGuid)),
+                :guid)
+      `,
+      {
+        type: PlacesUtils.bookmarks.TYPE_BOOKMARK,
+        url,
+        parentGuid: PlacesUtils.bookmarks.unfiledGuid,
+        guid,
+      }
+    );
+    await db.execute(
+      `INSERT INTO moz_bookmarks (type, fk, parent, position, guid)
+        VALUES (:type,
+                (SELECT id FROM moz_places WHERE url = :url),
+                (SELECT id FROM moz_bookmarks WHERE guid = :parentGuid),
+                (SELECT MAX(position) + 1 FROM moz_bookmarks WHERE parent = (SELECT id FROM moz_bookmarks WHERE guid = :parentGuid)),
+                :guid)
+      `,
+      {
+        type: PlacesUtils.bookmarks.TYPE_BOOKMARK,
+        url,
+        parentGuid: folderGuid,
+        guid: folderedGuid,
+      }
+    );
+  });
+
+  let guids = [folderGuid, guid];
+  await PT.Remove(guids).transact();
+  await ensureNonExistent(...guids, folderedGuid);
+  // Shouldn't throw, should restore the folder but not the bookmarks.
+  await PT.undo();
+  await ensureNonExistent(guid, folderedGuid);
+  Assert.ok(
+    await PlacesUtils.bookmarks.fetch(folderGuid),
+    "The folder should have been re-created"
+  );
+  await PT.redo();
+  await ensureNonExistent(guids, folderedGuid);
+  // Cleanup
+  await PT.clearTransactionsHistory();
+  observer.reset();
 });

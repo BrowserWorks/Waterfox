@@ -5,16 +5,19 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 include "mozilla/GfxMessageUtils.h";
+include "mozilla/dom/DocShellMessageUtils.h";
+include "mozilla/dom/TabMessageUtils.h";
 include "mozilla/layers/LayersMessageUtils.h";
 
 include IPCBlob;
 include IPCStream;
+include protocol PIPCBlobInputStream;
 include ProtocolTypes;
 
 using struct mozilla::void_t
   from "ipc/IPCMessageUtils.h";
 
-using struct mozilla::SerializedStructuredCloneBuffer
+using moveonly struct mozilla::SerializedStructuredCloneBuffer
   from "ipc/IPCMessageUtils.h";
 
 using LayoutDeviceIntRect from "Units.h";
@@ -23,14 +26,21 @@ using DesktopToLayoutDeviceScale from "Units.h";
 using CSSToLayoutDeviceScale from "Units.h";
 using CSSRect from "Units.h";
 using CSSSize from "Units.h";
+using ScreenIntSize from "Units.h";
 using mozilla::LayoutDeviceIntPoint from "Units.h";
+using nsSizeMode from "mozilla/dom/TabMessageUtils.h";
+using ScrollbarPreference from "mozilla/ScrollbarPreferences.h";
 using hal::ScreenOrientation from "mozilla/HalScreenConfiguration.h";
 using mozilla::gfx::SurfaceFormat from "mozilla/gfx/Types.h";
 using refcounted class nsIPrincipal from "mozilla/dom/PermissionMessageUtils.h";
-using refcounted class mozilla::dom::BrowsingContext from "mozilla/dom/BrowsingContext.h";
+using mozilla::dom::MaybeDiscardedBrowsingContext from "mozilla/dom/BrowsingContext.h";
 using refcounted class nsIURI from "mozilla/ipc/URIUtils.h";
 using refcounted class nsIContentSecurityPolicy from "mozilla/dom/CSPMessageUtils.h";
+using refcounted class nsIInputStream from "mozilla/ipc/IPCStreamUtils.h";
 using refcounted class nsIReferrerInfo from "mozilla/dom/ReferrerInfoUtils.h";
+using refcounted class nsIVariant from "mozilla/dom/PropertyBagUtils.h";
+using class mozilla::TimeStamp from "mozilla/TimeStamp.h";
+using refcounted class mozilla::dom::BrowsingContext from "mozilla/dom/BrowsingContext.h";
 
 namespace mozilla {
 namespace dom {
@@ -54,7 +64,29 @@ struct ClonedMessageData
   SerializedStructuredCloneBuffer data;
   IPCBlob[] blobs;
   IPCStream[] inputStreams;
-  MessagePortIdentifier[] identfiers;
+  MessagePortIdentifier[] identifiers;
+};
+
+struct ErrorMessageData {
+};
+
+union ClonedOrErrorMessageData {
+  ClonedMessageData;
+  ErrorMessageData;
+};
+
+struct RefMessageData {
+  nsID uuid;
+};
+
+union MessageDataType {
+  ClonedMessageData;
+  RefMessageData;
+};
+
+struct MessageData {
+  nsID? agentClusterId;
+  MessageDataType data;
 };
 
 union IPCDataTransferData
@@ -110,6 +142,15 @@ struct FrameScriptInfo
 {
   nsString url;
   bool runInGlobalScope;
+};
+
+struct FeaturePolicyInfo
+{
+  nsString[]   inheritedDeniedFeatureNames;
+  nsString     declaredString;
+  nsIPrincipal defaultOrigin;
+  nsIPrincipal selfOrigin;
+  nsIPrincipal srcOrigin;
 };
 
 /**
@@ -187,16 +228,6 @@ struct PerformanceInfo
   CategoryDispatch[] items;
 };
 
-
-struct WindowGlobalInit
-{
-  nsIPrincipal principal;
-  nsIURI documentURI;
-  BrowsingContext browsingContext;
-  uint64_t innerWindowId;
-  uint64_t outerWindowId;
-};
-
 struct DocShellLoadStateInit
 {
   nsIURI URI;
@@ -210,15 +241,19 @@ struct DocShellLoadStateInit
   bool InheritPrincipal;
   bool PrincipalIsExplicit;
   nsIPrincipal PrincipalToInherit;
+  nsIPrincipal StoragePrincipalToInherit;
   bool ForceAllowDataURI;
   bool OriginalFrameSrc;
+  bool IsFormSubmission;
   uint32_t LoadType;
   nsString Target;
   nsIURI BaseURI;
   uint32_t LoadFlags;
   bool FirstParty;
+  bool HasValidUserGestureActivation;
   nsCString TypeHint;
   nsString FileName;
+  bool IsHttpsOnlyModeUpgradeExempt;
   bool IsFromProcessingFrameAttributes;
   // The Content Security Policy of the load, that is, the CSP of the entity
   // responsible for causing the load to occur. Most likely this is the CSP
@@ -227,14 +262,118 @@ struct DocShellLoadStateInit
   // also the CSP that will be applied to the load in case the load
   // encounters a server side redirect.
   nsIContentSecurityPolicy Csp;
+
+  MaybeDiscardedBrowsingContext SourceBrowsingContext;
+
+  nsCString? OriginalURIString;
+  int32_t? CancelContentJSEpoch;
+
+  nsIInputStream PostDataStream;
+  nsIInputStream HeadersStream;
+
+  nsString SrcdocData; // useless without sourcedocshell
+
   // Fields missing due to lack of need or serialization
-  // nsCOMPtr<nsISHEntry> mSHEntry;
   // nsCOMPtr<nsIDocShell> mSourceDocShell;
   // bool mIsSrcDocLoad; // useless without sourcedocshell
-  // nsString mSrcdocData; // useless without sourcedocshell
-  // nsIInputStream PostDataStream; // will be used after IPC transaction
-  // nsIInputStream HeadersStream; // will be used after IPC transaction
   // nsIChannel pendingRedirectedChannel; // sent through other mechanism
+
+  uint32_t LoadIdentifier;
+};
+
+struct TimedChannelInfo
+{
+  bool timingEnabled;
+  int8_t redirectCount;
+  int8_t internalRedirectCount;
+  TimeStamp asyncOpen;
+  TimeStamp channelCreation;
+  TimeStamp redirectStart;
+  TimeStamp redirectEnd;
+  nsString initiatorType;
+  bool allRedirectsSameOrigin;
+  bool allRedirectsPassTimingAllowCheck;
+  bool? timingAllowCheckForPrincipal;
+  TimeStamp launchServiceWorkerStart;
+  TimeStamp launchServiceWorkerEnd;
+  TimeStamp dispatchFetchEventStart;
+  TimeStamp dispatchFetchEventEnd;
+  TimeStamp handleFetchEventStart;
+  TimeStamp handleFetchEventEnd;
+  TimeStamp responseStart;
+  TimeStamp responseEnd;
+};
+
+struct ReplacementChannelConfigInit
+{
+  uint32_t redirectFlags;
+  uint32_t classOfService;
+  bool? privateBrowsing;
+  nsCString? method;
+  nsIReferrerInfo referrerInfo;
+  TimedChannelInfo? timedChannel;
+  nullable PIPCBlobInputStream uploadStream;
+  bool uploadStreamHasHeaders;
+  nsCString? contentType;
+  nsCString? contentLength;
+};
+
+union IPDLVariantValue
+{
+  bool;
+  uint8_t;   // In practice, uint8_t and uint16_t are likely unneeded,
+  int16_t;   // as signed->unsigned->signed has universal behavior.
+  uint16_t;  // but those conversions are only guaranteed in C++20.
+  int32_t;
+  uint32_t;
+  float;
+  double;
+  nsID;
+  nsString;
+  nsCString;
+  nsIURI;
+  nsIPrincipal;
+};
+
+struct IDPLVariant
+{
+  uint32_t type;  // We explicitly store the original nsIVariant type so that
+                  // the conversion back into a nsVariant later is lossless.
+  IPDLVariantValue data;
+};
+
+struct IPDLProperty
+{
+  nsString name;
+  nsIVariant value;
+};
+
+// Struct with information to show a frame from the parent process.
+struct ParentShowInfo
+{
+  nsString name;
+  bool fullscreenAllowed;
+  bool fakeShowInfo;
+  bool isTransparent;
+  float dpi;
+  int32_t widgetRounding;
+  double defaultScale;
+};
+
+// Struct with information to show an iframe from the process that owns the
+// frame.
+struct OwnerShowInfo {
+  // This can be an IntSize rather than a Rect because content processes always
+  // render to a virtual <0, 0> top-left point.
+  ScreenIntSize size;
+
+  // TODO(emilio): Margin preferences go here.
+  ScrollbarPreference scrollbarPreference;
+
+  // TODO(emilio): I think we should really be able to figure out these from the
+  // parent process too instead.
+  bool parentWindowIsActive;
+  nsSizeMode sizeMode;
 };
 
 } // namespace dom

@@ -25,7 +25,7 @@
       this.setAttribute("consumeoutsideclicks", "never");
 
       this.textContent = "";
-      this.appendChild(MozXULElement.parseXULToFragment(this._markup));
+      this.appendChild(this.constructor.fragment);
 
       /**
        * This is the default number of rows that we give the autocomplete
@@ -108,9 +108,9 @@
       return this._richlistbox;
     }
 
-    get _markup() {
+    static get markup() {
       return `
-      <richlistbox class="autocomplete-richlistbox" flex="1"></richlistbox>
+      <richlistbox class="autocomplete-richlistbox" flex="1"/>
     `;
     }
 
@@ -393,6 +393,8 @@
             "autofill-footer",
             "autofill-clear-button",
             "autofill-insecureWarning",
+            "generatedPassword",
+            "importableLogins",
             "insecureWarning",
             "loginsFooter",
             "loginWithOrigin",
@@ -423,6 +425,12 @@
             case "autofill-insecureWarning":
               options = { is: "autocomplete-creditcard-insecure-field" };
               break;
+            case "importableLogins":
+              options = { is: "autocomplete-importable-logins-richlistitem" };
+              break;
+            case "generatedPassword":
+              options = { is: "autocomplete-generated-password-richlistitem" };
+              break;
             case "insecureWarning":
               options = { is: "autocomplete-richlistitem-insecure-warning" };
               break;
@@ -430,7 +438,7 @@
               options = { is: "autocomplete-richlistitem-logins-footer" };
               break;
             case "loginWithOrigin":
-              options = { is: "autocomplete-richlistitem-login-with-origin" };
+              options = { is: "autocomplete-login-richlistitem" };
               break;
             default:
               options = { is: "autocomplete-richlistitem" };
@@ -459,11 +467,9 @@
             this.mousedOverIndex === this._currentIndex)
         ) {
           // try to re-use the existing item
-          let reused = item._reuseAcItem();
-          if (reused) {
-            this._currentIndex++;
-            continue;
-          }
+          item._reuseAcItem();
+          this._currentIndex++;
+          continue;
         } else {
           if (typeof item._cleanup == "function") {
             item._cleanup();
@@ -545,26 +551,6 @@
           this._normalMaxRows = this.mInput.maxRows;
         }
 
-        // Set an attribute for styling the popup based on the input.
-        let inputID = "";
-        if (
-          this.mInput &&
-          this.mInput.ownerDocument &&
-          this.mInput.ownerDocument.documentURIObject.schemeIs("chrome")
-        ) {
-          inputID = this.mInput.id;
-          // Take care of elements with no id that are inside xbl bindings
-          if (!inputID) {
-            let bindingParent = this.mInput.ownerDocument.getBindingParent(
-              this.mInput
-            );
-            if (bindingParent) {
-              inputID = bindingParent.id;
-            }
-          }
-        }
-        this.setAttribute("autocompleteinput", inputID);
-
         this.mPopupOpen = true;
       });
 
@@ -582,7 +568,6 @@
         }
         this.input.controller.stopSearch();
 
-        this.removeAttribute("autocompleteinput");
         this.mPopupOpen = false;
 
         // Reset the maxRows property to the cached "normal" value (if there's

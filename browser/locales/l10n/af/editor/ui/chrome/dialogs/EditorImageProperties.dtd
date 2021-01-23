@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Prenteienskappe">
+
+<!ENTITY pixelsPopup.value "pixels">
+<!-- These are in the Location tab panel -->
+
+<!ENTITY locationEditField.label "Prentligging:">
+<!ENTITY locationEditField.accessKey "l">
+<!ENTITY locationEditField.tooltip "Tik die prent se lêernaam of ligging in">
+
+<!ENTITY title.label "Nutswenk:">
+<!ENTITY title.accessKey "N">
+<!ENTITY title.tooltip "Die HTML-&quot;title&quot;-attribuut wat as opwipwenk vertoon">
+<!ENTITY altText.label "Alt-teks:">
+<!ENTITY altText.accessKey "A">
+<!ENTITY altTextEditField.tooltip "Tik teks in wat in die plek van die prent vertoon moet word">
+<!ENTITY noAltText.label "Moenie Alt-teks gebruik nie">
+<!ENTITY noAltText.accessKey "M">
+
+<!ENTITY previewBox.label "Prentvoorskou">
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+
+<!ENTITY actualSize.label "Werklike grootte:">
+<!ENTITY actualSizeRadio.label "Werklike grootte">
+<!ENTITY actualSizeRadio.accessKey "W">
+<!ENTITY actualSizeRadio.tooltip "Keer terug na prent se werklike grootte">
+<!ENTITY customSizeRadio.label "Gepasmaakte grootte">
+<!ENTITY customSizeRadio.accessKey "g">
+<!ENTITY customSizeRadio.tooltip "Wysig die prent se grootte soos vertoon op die bladsy">
+<!ENTITY heightEditField.label "Hoogte:">
+<!ENTITY heightEditField.accessKey "g">
+<!ENTITY widthEditField.label "Wydte:">
+<!ENTITY widthEditField.accessKey "W">
+<!ENTITY constrainCheckbox.label "Beperk">
+<!ENTITY constrainCheckbox.accessKey "B">
+<!ENTITY constrainCheckbox.tooltip "Behou die prent se aspekverhouding">
+<!-- These controls are in the Image Map box of the expanded area -->
+
+<!ENTITY imagemapBox.label "Prentkaart">
+<!ENTITY removeImageMapButton.label "Verwyder">
+<!ENTITY removeImageMapButton.accessKey "V">
+<!-- These are the options for image alignment -->
+
+<!ENTITY alignment.label "Rig teks volgens prent">
+<!ENTITY bottomPopup.value "Aan die onderkant">
+<!ENTITY topPopup.value "Aan die bokant">
+<!ENTITY centerPopup.value "In die middel">
+<!ENTITY wrapRightPopup.value "Vou na regs">
+<!ENTITY wrapLeftPopup.value "Vou na links">
+<!-- These controls are in the Spacing Box -->
+
+<!ENTITY spacingBox.label "Spasiëring">
+<!ENTITY leftRightEditField.label "Links en regs:">
+<!ENTITY leftRightEditField.accessKey "L">
+<!ENTITY topBottomEditField.label "Bo- en onderkant:">
+<!ENTITY topBottomEditField.accessKey "B">
+<!ENTITY borderEditField.label "Soliede rand:">
+<!ENTITY borderEditField.accessKey "r">
+<!-- These controls are in the Link Box -->
+
+<!ENTITY showImageLinkBorder.label "Wys rand rondom geskakelde prent">
+<!ENTITY showImageLinkBorder.accessKey "r">
+
+
+<!ENTITY LinkAdvancedEditButton.tooltip "Wysig of voeg HTML-attribute, styl-attribute en JavaScript by">
+<!-- These tabs are currently used in the image input dialog -->
+
+<!ENTITY imageInputTab.label "Vorm">
+<!ENTITY imageLocationTab.label "Ligging">
+<!ENTITY imageDimensionsTab.label "Dimensies">
+<!ENTITY imageAppearanceTab.label "Voorkoms">
+<!ENTITY imageLinkTab.label "Skakel">

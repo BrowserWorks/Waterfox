@@ -3,25 +3,22 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include <type_traits>
 #include <utility>
 
 #include "mozilla/Assertions.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/Compiler.h"
 #include "mozilla/Maybe.h"
-#include "mozilla/Move.h"
 #include "mozilla/TemplateLib.h"
 #include "mozilla/Types.h"
-#include "mozilla/TypeTraits.h"
 #include "mozilla/UniquePtr.h"
 
-using mozilla::IsSame;
 using mozilla::Maybe;
 using mozilla::Nothing;
 using mozilla::Some;
-using mozilla::Swap;
+using mozilla::SomeRef;
 using mozilla::ToMaybe;
-using mozilla::UniquePtr;
 
 #define RUN_TEST(t)                                                     \
   do {                                                                  \
@@ -141,10 +138,10 @@ struct UnmovableValue {
 
   Status GetStatus() { return mStatus; }
 
- private:
   UnmovableValue(UnmovableValue&& aOther) = delete;
   UnmovableValue& operator=(UnmovableValue&& aOther) = delete;
 
+ private:
   Status mStatus;
 };
 
@@ -172,10 +169,62 @@ struct UncopyableUnmovableValue {
   Status mStatus;
 };
 
+static_assert(std::is_trivially_destructible_v<Maybe<int>>);
+static_assert(std::is_trivially_copy_constructible_v<Maybe<int>>);
+static_assert(std::is_trivially_copy_assignable_v<Maybe<int>>);
+
+static_assert(42 == Some(42).value());
+static_assert(42 == Some(42).valueOr(43));
+static_assert(42 == Maybe<int>{}.valueOr(42));
+static_assert(42 == Some(42).valueOrFrom([] { return 43; }));
+static_assert(42 == Maybe<int>{}.valueOrFrom([] { return 42; }));
+static_assert(Some(43) == [] {
+  auto val = Some(42);
+  val.apply([](int& val) { val += 1; });
+  return val;
+}());
+static_assert(Some(43) == Some(42).map([](int val) { return val + 1; }));
+
+struct TriviallyDestructible {
+  TriviallyDestructible() {  // not trivially constructible
+  }
+};
+
+static_assert(std::is_trivially_destructible_v<Maybe<TriviallyDestructible>>);
+
+struct UncopyableValueLiteralType {
+  explicit constexpr UncopyableValueLiteralType(int aValue) : mValue{aValue} {}
+
+  UncopyableValueLiteralType(UncopyableValueLiteralType&&) = default;
+  UncopyableValueLiteralType& operator=(UncopyableValueLiteralType&&) = default;
+
+  int mValue;
+};
+
+static_assert(
+    std::is_trivially_destructible_v<Maybe<UncopyableValueLiteralType>>);
+static_assert(!std::is_copy_constructible_v<Maybe<UncopyableValueLiteralType>>);
+static_assert(!std::is_copy_assignable_v<Maybe<UncopyableValueLiteralType>>);
+static_assert(std::is_move_constructible_v<Maybe<UncopyableValueLiteralType>>);
+static_assert(std::is_move_assignable_v<Maybe<UncopyableValueLiteralType>>);
+
+constexpr Maybe<UncopyableValueLiteralType> someUncopyable =
+    Some(UncopyableValueLiteralType{42});
+static_assert(someUncopyable.isSome());
+static_assert(42 == someUncopyable->mValue);
+
+constexpr Maybe<UncopyableValueLiteralType> someUncopyableAssigned = [] {
+  auto res = Maybe<UncopyableValueLiteralType>{};
+  res = Some(UncopyableValueLiteralType{42});
+  return res;
+}();
+static_assert(someUncopyableAssigned.isSome());
+static_assert(42 == someUncopyableAssigned->mValue);
+
 static bool TestBasicFeatures() {
   // Check that a Maybe<T> is initialized to Nothing.
   Maybe<BasicValue> mayValue;
-  static_assert(IsSame<BasicValue, decltype(mayValue)::ValueType>::value,
+  static_assert(std::is_same_v<BasicValue, decltype(mayValue)::ValueType>,
                 "Should have BasicValue ValueType");
   MOZ_RELEASE_ASSERT(!mayValue);
   MOZ_RELEASE_ASSERT(!mayValue.isSome());
@@ -188,13 +237,13 @@ static bool TestBasicFeatures() {
   MOZ_RELEASE_ASSERT(!mayValue.isNothing());
   MOZ_RELEASE_ASSERT(*mayValue == BasicValue());
   MOZ_RELEASE_ASSERT(mayValue.value() == BasicValue());
-  static_assert(IsSame<BasicValue, decltype(mayValue.value())>::value,
+  static_assert(std::is_same_v<BasicValue, decltype(mayValue.value())>,
                 "value() should return a BasicValue");
   MOZ_RELEASE_ASSERT(mayValue.ref() == BasicValue());
-  static_assert(IsSame<BasicValue&, decltype(mayValue.ref())>::value,
+  static_assert(std::is_same_v<BasicValue&, decltype(mayValue.ref())>,
                 "ref() should return a BasicValue&");
   MOZ_RELEASE_ASSERT(mayValue.ptr() != nullptr);
-  static_assert(IsSame<BasicValue*, decltype(mayValue.ptr())>::value,
+  static_assert(std::is_same_v<BasicValue*, decltype(mayValue.ptr())>,
                 "ptr() should return a BasicValue*");
   MOZ_RELEASE_ASSERT(mayValue->GetStatus() == eWasDefaultConstructed);
 
@@ -228,13 +277,13 @@ static bool TestBasicFeatures() {
   MOZ_RELEASE_ASSERT(!mayValueCRef.isNothing());
   MOZ_RELEASE_ASSERT(*mayValueCRef == BasicValue());
   MOZ_RELEASE_ASSERT(mayValueCRef.value() == BasicValue());
-  static_assert(IsSame<BasicValue, decltype(mayValueCRef.value())>::value,
+  static_assert(std::is_same_v<BasicValue, decltype(mayValueCRef.value())>,
                 "value() should return a BasicValue");
   MOZ_RELEASE_ASSERT(mayValueCRef.ref() == BasicValue());
-  static_assert(IsSame<const BasicValue&, decltype(mayValueCRef.ref())>::value,
+  static_assert(std::is_same_v<const BasicValue&, decltype(mayValueCRef.ref())>,
                 "ref() should return a const BasicValue&");
   MOZ_RELEASE_ASSERT(mayValueCRef.ptr() != nullptr);
-  static_assert(IsSame<const BasicValue*, decltype(mayValueCRef.ptr())>::value,
+  static_assert(std::is_same_v<const BasicValue*, decltype(mayValueCRef.ptr())>,
                 "ptr() should return a const BasicValue*");
   MOZ_RELEASE_ASSERT(mayValueCRef->GetStatus() == eWasDefaultConstructed);
   mayValue.reset();
@@ -253,88 +302,263 @@ static bool TestBasicFeatures() {
   MOZ_RELEASE_ASSERT(mayCValue2.isSome());
   MOZ_RELEASE_ASSERT(*mayCValue2 == BasicValue(6));
 
+  // Check that take works
+  mayValue = Some(BasicValue(6));
+  Maybe taken = mayValue.take();
+  MOZ_RELEASE_ASSERT(taken->GetStatus() == eWasMoveConstructed);
+  MOZ_RELEASE_ASSERT(taken == Some(BasicValue(6)));
+  MOZ_RELEASE_ASSERT(!mayValue.isSome());
+  MOZ_RELEASE_ASSERT(mayValue.take() == Nothing());
+
+  // Check that extract works
+  mayValue = Some(BasicValue(7));
+  BasicValue extracted = mayValue.extract();
+  MOZ_RELEASE_ASSERT(extracted.GetStatus() == eWasMoveConstructed);
+  MOZ_RELEASE_ASSERT(extracted == BasicValue(7));
+  MOZ_RELEASE_ASSERT(!mayValue.isSome());
+
   return true;
 }
 
+template <typename T>
+static void TestCopyMaybe() {
+  {
+    MOZ_RELEASE_ASSERT(0 == sUndestroyedObjects);
+
+    Maybe<T> src = Some(T());
+    Maybe<T> dstCopyConstructed = src;
+
+    MOZ_RELEASE_ASSERT(2 == sUndestroyedObjects);
+    MOZ_RELEASE_ASSERT(dstCopyConstructed->GetStatus() == eWasCopyConstructed);
+  }
+
+  {
+    MOZ_RELEASE_ASSERT(0 == sUndestroyedObjects);
+
+    Maybe<T> src = Some(T());
+    Maybe<T> dstCopyAssigned;
+    dstCopyAssigned = src;
+
+    MOZ_RELEASE_ASSERT(2 == sUndestroyedObjects);
+    MOZ_RELEASE_ASSERT(dstCopyAssigned->GetStatus() == eWasCopyConstructed);
+  }
+}
+
+template <typename T>
+static void TestMoveMaybe() {
+  {
+    MOZ_RELEASE_ASSERT(0 == sUndestroyedObjects);
+
+    Maybe<T> src = Some(T());
+    Maybe<T> dstMoveConstructed = std::move(src);
+
+    MOZ_RELEASE_ASSERT(1 == sUndestroyedObjects);
+    MOZ_RELEASE_ASSERT(dstMoveConstructed->GetStatus() == eWasMoveConstructed);
+  }
+
+  {
+    MOZ_RELEASE_ASSERT(0 == sUndestroyedObjects);
+
+    Maybe<T> src = Some(T());
+    Maybe<T> dstMoveAssigned;
+    dstMoveAssigned = std::move(src);
+
+    MOZ_RELEASE_ASSERT(1 == sUndestroyedObjects);
+    MOZ_RELEASE_ASSERT(dstMoveAssigned->GetStatus() == eWasMoveConstructed);
+  }
+
+  {
+    MOZ_RELEASE_ASSERT(0 == sUndestroyedObjects);
+
+    Maybe<T> src = Some(T());
+    Maybe<T> dstMoveConstructed = src.take();
+
+    MOZ_RELEASE_ASSERT(1 == sUndestroyedObjects);
+    MOZ_RELEASE_ASSERT(dstMoveConstructed->GetStatus() == eWasMoveConstructed);
+  }
+
+  {
+    MOZ_RELEASE_ASSERT(0 == sUndestroyedObjects);
+
+    Maybe<T> src = Some(T());
+    T dstMoveConstructed = src.extract();
+
+    MOZ_RELEASE_ASSERT(1 == sUndestroyedObjects);
+    MOZ_RELEASE_ASSERT(dstMoveConstructed.GetStatus() == eWasMoveConstructed);
+  }
+}
+
 static bool TestCopyAndMove() {
-  // Check that we get moves when possible for types that can support both moves
-  // and copies.
-  Maybe<BasicValue> mayBasicValue = Some(BasicValue(1));
-  MOZ_RELEASE_ASSERT(mayBasicValue->GetStatus() == eWasMoveConstructed);
-  MOZ_RELEASE_ASSERT(mayBasicValue->GetTag() == 1);
-  mayBasicValue = Some(BasicValue(2));
-  MOZ_RELEASE_ASSERT(mayBasicValue->GetStatus() == eWasMoveAssigned);
-  MOZ_RELEASE_ASSERT(mayBasicValue->GetTag() == 2);
-  mayBasicValue.reset();
-  mayBasicValue.emplace(BasicValue(3));
-  MOZ_RELEASE_ASSERT(mayBasicValue->GetStatus() == eWasMoveConstructed);
-  MOZ_RELEASE_ASSERT(mayBasicValue->GetTag() == 3);
+  MOZ_RELEASE_ASSERT(0 == sUndestroyedObjects);
 
-  // Check that we get copies when moves aren't possible.
-  Maybe<BasicValue> mayBasicValue2 = Some(*mayBasicValue);
-  MOZ_RELEASE_ASSERT(mayBasicValue2->GetStatus() == eWasCopyConstructed);
-  MOZ_RELEASE_ASSERT(mayBasicValue2->GetTag() == 3);
-  mayBasicValue->SetTag(4);
-  mayBasicValue2 = mayBasicValue;
-  // This test should work again when we fix bug 1052940.
-  // MOZ_RELEASE_ASSERT(mayBasicValue2->GetStatus() == eWasCopyAssigned);
-  MOZ_RELEASE_ASSERT(mayBasicValue2->GetTag() == 4);
-  mayBasicValue->SetTag(5);
-  mayBasicValue2.reset();
-  mayBasicValue2.emplace(*mayBasicValue);
-  MOZ_RELEASE_ASSERT(mayBasicValue2->GetStatus() == eWasCopyConstructed);
-  MOZ_RELEASE_ASSERT(mayBasicValue2->GetTag() == 5);
+  {
+    // Check that we get moves when possible for types that can support both
+    // moves and copies.
+    {
+      Maybe<BasicValue> mayBasicValue = Some(BasicValue(1));
+      MOZ_RELEASE_ASSERT(1 == sUndestroyedObjects);
+      MOZ_RELEASE_ASSERT(mayBasicValue->GetStatus() == eWasMoveConstructed);
+      MOZ_RELEASE_ASSERT(mayBasicValue->GetTag() == 1);
+      mayBasicValue = Some(BasicValue(2));
+      MOZ_RELEASE_ASSERT(1 == sUndestroyedObjects);
+      MOZ_RELEASE_ASSERT(mayBasicValue->GetStatus() == eWasMoveAssigned);
+      MOZ_RELEASE_ASSERT(mayBasicValue->GetTag() == 2);
+      mayBasicValue.reset();
+      MOZ_RELEASE_ASSERT(0 == sUndestroyedObjects);
+      mayBasicValue.emplace(BasicValue(3));
+      MOZ_RELEASE_ASSERT(1 == sUndestroyedObjects);
+      MOZ_RELEASE_ASSERT(mayBasicValue->GetStatus() == eWasMoveConstructed);
+      MOZ_RELEASE_ASSERT(mayBasicValue->GetTag() == 3);
 
-  // Check that std::move() works. (Another sanity check for move support.)
-  Maybe<BasicValue> mayBasicValue3 = Some(std::move(*mayBasicValue));
-  MOZ_RELEASE_ASSERT(mayBasicValue3->GetStatus() == eWasMoveConstructed);
-  MOZ_RELEASE_ASSERT(mayBasicValue3->GetTag() == 5);
-  MOZ_RELEASE_ASSERT(mayBasicValue->GetStatus() == eWasMovedFrom);
-  mayBasicValue2->SetTag(6);
-  mayBasicValue3 = Some(std::move(*mayBasicValue2));
-  MOZ_RELEASE_ASSERT(mayBasicValue3->GetStatus() == eWasMoveAssigned);
-  MOZ_RELEASE_ASSERT(mayBasicValue3->GetTag() == 6);
-  MOZ_RELEASE_ASSERT(mayBasicValue2->GetStatus() == eWasMovedFrom);
-  Maybe<BasicValue> mayBasicValue4;
-  mayBasicValue4.emplace(std::move(*mayBasicValue3));
-  MOZ_RELEASE_ASSERT(mayBasicValue4->GetStatus() == eWasMoveConstructed);
-  MOZ_RELEASE_ASSERT(mayBasicValue4->GetTag() == 6);
-  MOZ_RELEASE_ASSERT(mayBasicValue3->GetStatus() == eWasMovedFrom);
+      // Check that we get copies when moves aren't possible.
+      Maybe<BasicValue> mayBasicValue2 = Some(*mayBasicValue);
+      MOZ_RELEASE_ASSERT(mayBasicValue2->GetStatus() == eWasCopyConstructed);
+      MOZ_RELEASE_ASSERT(mayBasicValue2->GetTag() == 3);
+      mayBasicValue->SetTag(4);
+      mayBasicValue2 = mayBasicValue;
+      // This test should work again when we fix bug 1052940.
+      // MOZ_RELEASE_ASSERT(mayBasicValue2->GetStatus() == eWasCopyAssigned);
+      MOZ_RELEASE_ASSERT(mayBasicValue2->GetTag() == 4);
+      mayBasicValue->SetTag(5);
+      mayBasicValue2.reset();
+      mayBasicValue2.emplace(*mayBasicValue);
+      MOZ_RELEASE_ASSERT(mayBasicValue2->GetStatus() == eWasCopyConstructed);
+      MOZ_RELEASE_ASSERT(mayBasicValue2->GetTag() == 5);
 
-  // Check that we always get copies for types that don't support moves.
-  // XXX(seth): These tests fail but probably shouldn't. For now we'll just
-  // consider using Maybe with types that allow copies but have deleted or
-  // private move constructors, or which do not support copy assignment, to
-  // be supported only to the extent that we need for existing code to work.
-  // These tests should work again when we fix bug 1052940.
-  /*
-  Maybe<UnmovableValue> mayUnmovableValue = Some(UnmovableValue());
-  MOZ_RELEASE_ASSERT(mayUnmovableValue->GetStatus() == eWasCopyConstructed);
-  mayUnmovableValue = Some(UnmovableValue());
-  MOZ_RELEASE_ASSERT(mayUnmovableValue->GetStatus() == eWasCopyAssigned);
-  mayUnmovableValue.reset();
-  mayUnmovableValue.emplace(UnmovableValue());
-  MOZ_RELEASE_ASSERT(mayUnmovableValue->GetStatus() == eWasCopyConstructed);
-  */
+      // Check that std::move() works. (Another sanity check for move support.)
+      Maybe<BasicValue> mayBasicValue3 = Some(std::move(*mayBasicValue));
+      MOZ_RELEASE_ASSERT(mayBasicValue3->GetStatus() == eWasMoveConstructed);
+      MOZ_RELEASE_ASSERT(mayBasicValue3->GetTag() == 5);
+      MOZ_RELEASE_ASSERT(mayBasicValue->GetStatus() == eWasMovedFrom);
+      mayBasicValue2->SetTag(6);
+      mayBasicValue3 = Some(std::move(*mayBasicValue2));
+      MOZ_RELEASE_ASSERT(mayBasicValue3->GetStatus() == eWasMoveAssigned);
+      MOZ_RELEASE_ASSERT(mayBasicValue3->GetTag() == 6);
+      MOZ_RELEASE_ASSERT(mayBasicValue2->GetStatus() == eWasMovedFrom);
+      Maybe<BasicValue> mayBasicValue4;
+      mayBasicValue4.emplace(std::move(*mayBasicValue3));
+      MOZ_RELEASE_ASSERT(mayBasicValue4->GetStatus() == eWasMoveConstructed);
+      MOZ_RELEASE_ASSERT(mayBasicValue4->GetTag() == 6);
+      MOZ_RELEASE_ASSERT(mayBasicValue3->GetStatus() == eWasMovedFrom);
+    }
 
-  // Check that types that only support moves, but not copies, work.
-  Maybe<UncopyableValue> mayUncopyableValue = Some(UncopyableValue());
-  MOZ_RELEASE_ASSERT(mayUncopyableValue->GetStatus() == eWasMoveConstructed);
-  mayUncopyableValue = Some(UncopyableValue());
-  MOZ_RELEASE_ASSERT(mayUncopyableValue->GetStatus() == eWasMoveAssigned);
-  mayUncopyableValue.reset();
-  mayUncopyableValue.emplace(UncopyableValue());
-  MOZ_RELEASE_ASSERT(mayUncopyableValue->GetStatus() == eWasMoveConstructed);
+    TestCopyMaybe<BasicValue>();
+    TestMoveMaybe<BasicValue>();
+  }
 
-  // Check that types that support neither moves or copies work.
-  Maybe<UncopyableUnmovableValue> mayUncopyableUnmovableValue;
-  mayUncopyableUnmovableValue.emplace();
-  MOZ_RELEASE_ASSERT(mayUncopyableUnmovableValue->GetStatus() ==
-                     eWasDefaultConstructed);
-  mayUncopyableUnmovableValue.reset();
-  mayUncopyableUnmovableValue.emplace(0);
-  MOZ_RELEASE_ASSERT(mayUncopyableUnmovableValue->GetStatus() ==
-                     eWasConstructed);
+  MOZ_RELEASE_ASSERT(0 == sUndestroyedObjects);
+
+  {
+    // Check that we always get copies for types that don't support moves.
+    {
+      Maybe<UnmovableValue> mayUnmovableValue = Some(UnmovableValue());
+      MOZ_RELEASE_ASSERT(mayUnmovableValue->GetStatus() == eWasCopyConstructed);
+      mayUnmovableValue = Some(UnmovableValue());
+      MOZ_RELEASE_ASSERT(mayUnmovableValue->GetStatus() == eWasCopyAssigned);
+      mayUnmovableValue.reset();
+      mayUnmovableValue.emplace(UnmovableValue());
+      MOZ_RELEASE_ASSERT(mayUnmovableValue->GetStatus() == eWasCopyConstructed);
+    }
+
+    TestCopyMaybe<UnmovableValue>();
+
+    static_assert(std::is_copy_constructible_v<Maybe<UnmovableValue>>);
+    static_assert(std::is_copy_assignable_v<Maybe<UnmovableValue>>);
+    // XXX Why do these static_asserts not hold?
+    // static_assert(!std::is_move_constructible_v<Maybe<UnmovableValue>>);
+    // static_assert(!std::is_move_assignable_v<Maybe<UnmovableValue>>);
+  }
+
+  MOZ_RELEASE_ASSERT(0 == sUndestroyedObjects);
+
+  {
+    // Check that types that only support moves, but not copies, work.
+    {
+      Maybe<UncopyableValue> mayUncopyableValue = Some(UncopyableValue());
+      MOZ_RELEASE_ASSERT(mayUncopyableValue->GetStatus() ==
+                         eWasMoveConstructed);
+      mayUncopyableValue = Some(UncopyableValue());
+      MOZ_RELEASE_ASSERT(mayUncopyableValue->GetStatus() == eWasMoveAssigned);
+      mayUncopyableValue.reset();
+      mayUncopyableValue.emplace(UncopyableValue());
+      MOZ_RELEASE_ASSERT(mayUncopyableValue->GetStatus() ==
+                         eWasMoveConstructed);
+      mayUncopyableValue = Nothing();
+    }
+
+    TestMoveMaybe<BasicValue>();
+
+    static_assert(!std::is_copy_constructible_v<Maybe<UncopyableValue>>);
+    static_assert(!std::is_copy_assignable_v<Maybe<UncopyableValue>>);
+    static_assert(std::is_move_constructible_v<Maybe<UncopyableValue>>);
+    static_assert(std::is_move_assignable_v<Maybe<UncopyableValue>>);
+  }
+
+  MOZ_RELEASE_ASSERT(0 == sUndestroyedObjects);
+
+  {  // Check that types that support neither moves or copies work.
+    Maybe<UncopyableUnmovableValue> mayUncopyableUnmovableValue;
+    mayUncopyableUnmovableValue.emplace();
+    MOZ_RELEASE_ASSERT(mayUncopyableUnmovableValue->GetStatus() ==
+                       eWasDefaultConstructed);
+    mayUncopyableUnmovableValue.reset();
+    mayUncopyableUnmovableValue.emplace(0);
+    MOZ_RELEASE_ASSERT(mayUncopyableUnmovableValue->GetStatus() ==
+                       eWasConstructed);
+    mayUncopyableUnmovableValue = Nothing();
+
+    static_assert(
+        !std::is_copy_constructible_v<Maybe<UncopyableUnmovableValue>>);
+    static_assert(!std::is_copy_assignable_v<Maybe<UncopyableUnmovableValue>>);
+    static_assert(
+        !std::is_move_constructible_v<Maybe<UncopyableUnmovableValue>>);
+    static_assert(!std::is_move_assignable_v<Maybe<UncopyableUnmovableValue>>);
+  }
+
+  {
+    // Test copy and move with a trivially copyable and trivially destructible
+    // type.
+    {
+      constexpr Maybe<int> src = Some(42);
+      constexpr Maybe<int> dstCopyConstructed = src;
+
+      static_assert(src.isSome());
+      static_assert(dstCopyConstructed.isSome());
+      static_assert(42 == *src);
+      static_assert(42 == *dstCopyConstructed);
+      static_assert(42 == dstCopyConstructed.value());
+    }
+
+    {
+      const Maybe<int> src = Some(42);
+      Maybe<int> dstCopyAssigned;
+      dstCopyAssigned = src;
+
+      MOZ_RELEASE_ASSERT(src.isSome());
+      MOZ_RELEASE_ASSERT(dstCopyAssigned.isSome());
+      MOZ_RELEASE_ASSERT(42 == *src);
+      MOZ_RELEASE_ASSERT(42 == *dstCopyAssigned);
+    }
+
+    {
+      Maybe<int> src = Some(42);
+      const Maybe<int> dstMoveConstructed = std::move(src);
+
+      MOZ_RELEASE_ASSERT(!src.isSome());
+      MOZ_RELEASE_ASSERT(dstMoveConstructed.isSome());
+      MOZ_RELEASE_ASSERT(42 == *dstMoveConstructed);
+    }
+
+    {
+      Maybe<int> src = Some(42);
+      Maybe<int> dstMoveAssigned;
+      dstMoveAssigned = std::move(src);
+
+      MOZ_RELEASE_ASSERT(!src.isSome());
+      MOZ_RELEASE_ASSERT(dstMoveAssigned.isSome());
+      MOZ_RELEASE_ASSERT(42 == *dstMoveAssigned);
+    }
+  }
 
   return true;
 }
@@ -354,119 +578,121 @@ static bool TestFunctionalAccessors() {
   // Check that the 'some' case of functional accessors works.
   Maybe<BasicValue> someValue = Some(BasicValue(3));
   MOZ_RELEASE_ASSERT(someValue.valueOr(value) == BasicValue(3));
-  static_assert(IsSame<BasicValue, decltype(someValue.valueOr(value))>::value,
+  static_assert(std::is_same_v<BasicValue, decltype(someValue.valueOr(value))>,
                 "valueOr should return a BasicValue");
   MOZ_RELEASE_ASSERT(someValue.valueOrFrom(&MakeBasicValue) == BasicValue(3));
-  static_assert(IsSame<BasicValue,
-                       decltype(someValue.valueOrFrom(&MakeBasicValue))>::value,
-                "valueOrFrom should return a BasicValue");
+  static_assert(
+      std::is_same_v<BasicValue,
+                     decltype(someValue.valueOrFrom(&MakeBasicValue))>,
+      "valueOrFrom should return a BasicValue");
   MOZ_RELEASE_ASSERT(someValue.ptrOr(&value) != &value);
-  static_assert(IsSame<BasicValue*, decltype(someValue.ptrOr(&value))>::value,
+  static_assert(std::is_same_v<BasicValue*, decltype(someValue.ptrOr(&value))>,
                 "ptrOr should return a BasicValue*");
   MOZ_RELEASE_ASSERT(*someValue.ptrOrFrom(&MakeBasicValuePtr) == BasicValue(3));
   static_assert(
-      IsSame<BasicValue*,
-             decltype(someValue.ptrOrFrom(&MakeBasicValuePtr))>::value,
+      std::is_same_v<BasicValue*,
+                     decltype(someValue.ptrOrFrom(&MakeBasicValuePtr))>,
       "ptrOrFrom should return a BasicValue*");
   MOZ_RELEASE_ASSERT(someValue.refOr(value) == BasicValue(3));
-  static_assert(IsSame<BasicValue&, decltype(someValue.refOr(value))>::value,
+  static_assert(std::is_same_v<BasicValue&, decltype(someValue.refOr(value))>,
                 "refOr should return a BasicValue&");
   MOZ_RELEASE_ASSERT(someValue.refOrFrom(&MakeBasicValueRef) == BasicValue(3));
   static_assert(
-      IsSame<BasicValue&,
-             decltype(someValue.refOrFrom(&MakeBasicValueRef))>::value,
+      std::is_same_v<BasicValue&,
+                     decltype(someValue.refOrFrom(&MakeBasicValueRef))>,
       "refOrFrom should return a BasicValue&");
 
   // Check that the 'some' case works through a const reference.
   const Maybe<BasicValue>& someValueCRef = someValue;
   MOZ_RELEASE_ASSERT(someValueCRef.valueOr(value) == BasicValue(3));
   static_assert(
-      IsSame<BasicValue, decltype(someValueCRef.valueOr(value))>::value,
+      std::is_same_v<BasicValue, decltype(someValueCRef.valueOr(value))>,
       "valueOr should return a BasicValue");
   MOZ_RELEASE_ASSERT(someValueCRef.valueOrFrom(&MakeBasicValue) ==
                      BasicValue(3));
   static_assert(
-      IsSame<BasicValue,
-             decltype(someValueCRef.valueOrFrom(&MakeBasicValue))>::value,
+      std::is_same_v<BasicValue,
+                     decltype(someValueCRef.valueOrFrom(&MakeBasicValue))>,
       "valueOrFrom should return a BasicValue");
   MOZ_RELEASE_ASSERT(someValueCRef.ptrOr(&value) != &value);
   static_assert(
-      IsSame<const BasicValue*, decltype(someValueCRef.ptrOr(&value))>::value,
+      std::is_same_v<const BasicValue*, decltype(someValueCRef.ptrOr(&value))>,
       "ptrOr should return a const BasicValue*");
   MOZ_RELEASE_ASSERT(*someValueCRef.ptrOrFrom(&MakeBasicValuePtr) ==
                      BasicValue(3));
   static_assert(
-      IsSame<const BasicValue*,
-             decltype(someValueCRef.ptrOrFrom(&MakeBasicValuePtr))>::value,
+      std::is_same_v<const BasicValue*,
+                     decltype(someValueCRef.ptrOrFrom(&MakeBasicValuePtr))>,
       "ptrOrFrom should return a const BasicValue*");
   MOZ_RELEASE_ASSERT(someValueCRef.refOr(value) == BasicValue(3));
   static_assert(
-      IsSame<const BasicValue&, decltype(someValueCRef.refOr(value))>::value,
+      std::is_same_v<const BasicValue&, decltype(someValueCRef.refOr(value))>,
       "refOr should return a const BasicValue&");
   MOZ_RELEASE_ASSERT(someValueCRef.refOrFrom(&MakeBasicValueRef) ==
                      BasicValue(3));
   static_assert(
-      IsSame<const BasicValue&,
-             decltype(someValueCRef.refOrFrom(&MakeBasicValueRef))>::value,
+      std::is_same_v<const BasicValue&,
+                     decltype(someValueCRef.refOrFrom(&MakeBasicValueRef))>,
       "refOrFrom should return a const BasicValue&");
 
   // Check that the 'none' case of functional accessors works.
   Maybe<BasicValue> noneValue;
   MOZ_RELEASE_ASSERT(noneValue.valueOr(value) == BasicValue(9));
-  static_assert(IsSame<BasicValue, decltype(noneValue.valueOr(value))>::value,
+  static_assert(std::is_same_v<BasicValue, decltype(noneValue.valueOr(value))>,
                 "valueOr should return a BasicValue");
   MOZ_RELEASE_ASSERT(noneValue.valueOrFrom(&MakeBasicValue) == BasicValue(9));
-  static_assert(IsSame<BasicValue,
-                       decltype(noneValue.valueOrFrom(&MakeBasicValue))>::value,
-                "valueOrFrom should return a BasicValue");
+  static_assert(
+      std::is_same_v<BasicValue,
+                     decltype(noneValue.valueOrFrom(&MakeBasicValue))>,
+      "valueOrFrom should return a BasicValue");
   MOZ_RELEASE_ASSERT(noneValue.ptrOr(&value) == &value);
-  static_assert(IsSame<BasicValue*, decltype(noneValue.ptrOr(&value))>::value,
+  static_assert(std::is_same_v<BasicValue*, decltype(noneValue.ptrOr(&value))>,
                 "ptrOr should return a BasicValue*");
   MOZ_RELEASE_ASSERT(*noneValue.ptrOrFrom(&MakeBasicValuePtr) == BasicValue(9));
   static_assert(
-      IsSame<BasicValue*,
-             decltype(noneValue.ptrOrFrom(&MakeBasicValuePtr))>::value,
+      std::is_same_v<BasicValue*,
+                     decltype(noneValue.ptrOrFrom(&MakeBasicValuePtr))>,
       "ptrOrFrom should return a BasicValue*");
   MOZ_RELEASE_ASSERT(noneValue.refOr(value) == BasicValue(9));
-  static_assert(IsSame<BasicValue&, decltype(noneValue.refOr(value))>::value,
+  static_assert(std::is_same_v<BasicValue&, decltype(noneValue.refOr(value))>,
                 "refOr should return a BasicValue&");
   MOZ_RELEASE_ASSERT(noneValue.refOrFrom(&MakeBasicValueRef) == BasicValue(9));
   static_assert(
-      IsSame<BasicValue&,
-             decltype(noneValue.refOrFrom(&MakeBasicValueRef))>::value,
+      std::is_same_v<BasicValue&,
+                     decltype(noneValue.refOrFrom(&MakeBasicValueRef))>,
       "refOrFrom should return a BasicValue&");
 
   // Check that the 'none' case works through a const reference.
   const Maybe<BasicValue>& noneValueCRef = noneValue;
   MOZ_RELEASE_ASSERT(noneValueCRef.valueOr(value) == BasicValue(9));
   static_assert(
-      IsSame<BasicValue, decltype(noneValueCRef.valueOr(value))>::value,
+      std::is_same_v<BasicValue, decltype(noneValueCRef.valueOr(value))>,
       "valueOr should return a BasicValue");
   MOZ_RELEASE_ASSERT(noneValueCRef.valueOrFrom(&MakeBasicValue) ==
                      BasicValue(9));
   static_assert(
-      IsSame<BasicValue,
-             decltype(noneValueCRef.valueOrFrom(&MakeBasicValue))>::value,
+      std::is_same_v<BasicValue,
+                     decltype(noneValueCRef.valueOrFrom(&MakeBasicValue))>,
       "valueOrFrom should return a BasicValue");
   MOZ_RELEASE_ASSERT(noneValueCRef.ptrOr(&value) == &value);
   static_assert(
-      IsSame<const BasicValue*, decltype(noneValueCRef.ptrOr(&value))>::value,
+      std::is_same_v<const BasicValue*, decltype(noneValueCRef.ptrOr(&value))>,
       "ptrOr should return a const BasicValue*");
   MOZ_RELEASE_ASSERT(*noneValueCRef.ptrOrFrom(&MakeBasicValuePtr) ==
                      BasicValue(9));
   static_assert(
-      IsSame<const BasicValue*,
-             decltype(noneValueCRef.ptrOrFrom(&MakeBasicValuePtr))>::value,
+      std::is_same_v<const BasicValue*,
+                     decltype(noneValueCRef.ptrOrFrom(&MakeBasicValuePtr))>,
       "ptrOrFrom should return a const BasicValue*");
   MOZ_RELEASE_ASSERT(noneValueCRef.refOr(value) == BasicValue(9));
   static_assert(
-      IsSame<const BasicValue&, decltype(noneValueCRef.refOr(value))>::value,
+      std::is_same_v<const BasicValue&, decltype(noneValueCRef.refOr(value))>,
       "refOr should return a const BasicValue&");
   MOZ_RELEASE_ASSERT(noneValueCRef.refOrFrom(&MakeBasicValueRef) ==
                      BasicValue(9));
   static_assert(
-      IsSame<const BasicValue&,
-             decltype(noneValueCRef.refOrFrom(&MakeBasicValueRef))>::value,
+      std::is_same_v<const BasicValue&,
+                     decltype(noneValueCRef.refOrFrom(&MakeBasicValueRef))>,
       "refOrFrom should return a const BasicValue&");
 
   // Clean up so the undestroyed objects count stays accurate.
@@ -561,7 +787,7 @@ static bool TestMap() {
   // Check that map handles the 'Nothing' case.
   Maybe<BasicValue> mayValue;
   MOZ_RELEASE_ASSERT(mayValue.map(&TimesTwo) == Nothing());
-  static_assert(IsSame<Maybe<int>, decltype(mayValue.map(&TimesTwo))>::value,
+  static_assert(std::is_same_v<Maybe<int>, decltype(mayValue.map(&TimesTwo))>,
                 "map(TimesTwo) should return a Maybe<int>");
   MOZ_RELEASE_ASSERT(mayValue.map(&TimesTwoAndResetOriginal) == Nothing());
 
@@ -577,7 +803,7 @@ static bool TestMap() {
   const Maybe<BasicValue>& mayValueCRef = mayValue;
   MOZ_RELEASE_ASSERT(mayValueCRef.map(&TimesTwo) == Some(4));
   static_assert(
-      IsSame<Maybe<int>, decltype(mayValueCRef.map(&TimesTwo))>::value,
+      std::is_same_v<Maybe<int>, decltype(mayValueCRef.map(&TimesTwo))>,
       "map(TimesTwo) should return a Maybe<int>");
 
   // Check that map works with functors.
@@ -653,7 +879,7 @@ static bool TestToMaybe() {
 
   // Check that a non-null pointer translates into a Some value.
   Maybe<BasicValue> mayValue = ToMaybe(&value);
-  static_assert(IsSame<Maybe<BasicValue>, decltype(ToMaybe(&value))>::value,
+  static_assert(std::is_same_v<Maybe<BasicValue>, decltype(ToMaybe(&value))>,
                 "ToMaybe should return a Maybe<BasicValue>");
   MOZ_RELEASE_ASSERT(mayValue.isSome());
   MOZ_RELEASE_ASSERT(mayValue->GetTag() == 1);
@@ -663,7 +889,7 @@ static bool TestToMaybe() {
   // Check that a null pointer translates into a Nothing value.
   mayValue = ToMaybe(nullPointer);
   static_assert(
-      IsSame<Maybe<BasicValue>, decltype(ToMaybe(nullPointer))>::value,
+      std::is_same_v<Maybe<BasicValue>, decltype(ToMaybe(nullPointer))>,
       "ToMaybe should return a Maybe<BasicValue>");
   MOZ_RELEASE_ASSERT(mayValue.isNothing());
 
@@ -995,6 +1221,120 @@ static bool TestTypeConversion() {
   return true;
 }
 
+static bool TestReference() {
+  static_assert(std::is_trivially_destructible_v<Maybe<int&>>);
+  static_assert(std::is_trivially_copy_constructible_v<Maybe<int&>>);
+  static_assert(std::is_trivially_copy_assignable_v<Maybe<int&>>);
+
+  static_assert(Maybe<int&>{}.isNothing());
+  static_assert(Maybe<int&>{Nothing{}}.isNothing());
+
+  {
+    Maybe<int&> defaultConstructed;
+
+    MOZ_RELEASE_ASSERT(defaultConstructed.isNothing());
+    MOZ_RELEASE_ASSERT(!defaultConstructed.isSome());
+    MOZ_RELEASE_ASSERT(!defaultConstructed);
+  }
+
+  {
+    Maybe<int&> nothing = Nothing();
+
+    MOZ_RELEASE_ASSERT(nothing.isNothing());
+    MOZ_RELEASE_ASSERT(!nothing.isSome());
+    MOZ_RELEASE_ASSERT(!nothing);
+  }
+
+  {
+    int foo = 42;
+    Maybe<int&> some = SomeRef(foo);
+
+    MOZ_RELEASE_ASSERT(!some.isNothing());
+    MOZ_RELEASE_ASSERT(some.isSome());
+    MOZ_RELEASE_ASSERT(some);
+    MOZ_RELEASE_ASSERT(&some.ref() == &foo);
+
+    some.ref()++;
+    MOZ_RELEASE_ASSERT(43 == foo);
+
+    (*some)++;
+    MOZ_RELEASE_ASSERT(44 == foo);
+  }
+
+  {
+    int foo = 42;
+    Maybe<int&> some;
+    some.emplace(foo);
+
+    MOZ_RELEASE_ASSERT(!some.isNothing());
+    MOZ_RELEASE_ASSERT(some.isSome());
+    MOZ_RELEASE_ASSERT(some);
+    MOZ_RELEASE_ASSERT(&some.ref() == &foo);
+
+    some.ref()++;
+    MOZ_RELEASE_ASSERT(43 == foo);
+  }
+
+  {
+    Maybe<int&> defaultConstructed;
+    defaultConstructed.reset();
+
+    MOZ_RELEASE_ASSERT(defaultConstructed.isNothing());
+    MOZ_RELEASE_ASSERT(!defaultConstructed.isSome());
+    MOZ_RELEASE_ASSERT(!defaultConstructed);
+  }
+
+  {
+    int foo = 42;
+    Maybe<int&> some = SomeRef(foo);
+    some.reset();
+
+    MOZ_RELEASE_ASSERT(some.isNothing());
+    MOZ_RELEASE_ASSERT(!some.isSome());
+    MOZ_RELEASE_ASSERT(!some);
+  }
+
+  {
+    int foo = 42;
+    Maybe<int&> some = SomeRef(foo);
+
+    auto& applied = some.apply([](int& ref) { ref++; });
+
+    MOZ_RELEASE_ASSERT(&some == &applied);
+    MOZ_RELEASE_ASSERT(43 == foo);
+  }
+
+  {
+    Maybe<int&> nothing;
+
+    auto& applied = nothing.apply([](int& ref) { ref++; });
+
+    MOZ_RELEASE_ASSERT(&nothing == &applied);
+  }
+
+  {
+    int foo = 42;
+    Maybe<int&> some = SomeRef(foo);
+
+    auto mapped = some.map([](int& ref) { return &ref; });
+    static_assert(std::is_same_v<decltype(mapped), Maybe<int*>>);
+
+    MOZ_RELEASE_ASSERT(&foo == *mapped);
+  }
+
+  {
+    Maybe<int&> nothing;
+
+    auto mapped = nothing.map([](int& ref) { return &ref; });
+
+    MOZ_RELEASE_ASSERT(mapped.isNothing());
+    MOZ_RELEASE_ASSERT(!mapped.isSome());
+    MOZ_RELEASE_ASSERT(!mapped);
+  }
+
+  return true;
+}
+
 // These are quasi-implementation details, but we assert them here to prevent
 // backsliding to earlier times when Maybe<T> for smaller T took up more space
 // than T's alignment required.
@@ -1009,6 +1349,7 @@ static_assert(sizeof(Maybe<long>) <= 2 * sizeof(long),
               "Maybe<long> shouldn't bloat");
 static_assert(sizeof(Maybe<double>) <= 2 * sizeof(double),
               "Maybe<double> shouldn't bloat");
+static_assert(sizeof(Maybe<int&>) == sizeof(int*));
 
 int main() {
   RUN_TEST(TestBasicFeatures);
@@ -1022,6 +1363,7 @@ int main() {
   RUN_TEST(TestSomeNullptrConversion);
   RUN_TEST(TestSomePointerConversion);
   RUN_TEST(TestTypeConversion);
+  RUN_TEST(TestReference);
 
   return 0;
 }

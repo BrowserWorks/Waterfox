@@ -9,10 +9,10 @@
   <body>
     <script>
         promise_test(t => {
-          return promise_rejects(
+          return promise_rejects_dom(
               t, 'NotAllowedError',
               navigator.share({title: 'the title', text: 'the message',
-                               url: 'data:the url'}));
+                               url: 'https://example.com'}));
         }, 'share without a user gesture');
     </script>
   </body>

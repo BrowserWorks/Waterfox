@@ -7,13 +7,40 @@
 #ifndef nsBaseHashtable_h__
 #define nsBaseHashtable_h__
 
-#include "mozilla/MemoryReporting.h"
-#include "mozilla/Move.h"
-#include "nsTHashtable.h"
-#include "nsDebug.h"
+#include <utility>
 
-template <class KeyClass, class DataType, class UserDataType>
+#include "mozilla/MemoryReporting.h"
+#include "nsDebug.h"
+#include "nsTHashtable.h"
+
+template <class KeyClass, class DataType, class UserDataType, class Converter>
 class nsBaseHashtable;  // forward declaration
+
+/**
+ * Data type conversion helper that is used to wrap and unwrap the specified
+ * DataType.
+ */
+template <class DataType, class UserDataType>
+class nsDefaultConverter {
+ public:
+  /**
+   * Maps the storage DataType to the exposed UserDataType.
+   */
+  static UserDataType Unwrap(DataType& src) { return UserDataType(src); }
+
+  /**
+   * Const ref variant used for example with nsCOMPtr wrappers.
+   */
+  static DataType Wrap(const UserDataType& src) { return DataType(src); }
+
+  /**
+   * Generic conversion, this is useful for things like already_AddRefed.
+   */
+  template <typename U>
+  static DataType Wrap(U&& src) {
+    return std::move(src);
+  }
+};
 
 /**
  * the private nsTHashtable::EntryType class used by nsBaseHashtable
@@ -23,16 +50,26 @@ class nsBaseHashtable;  // forward declaration
 template <class KeyClass, class DataType>
 class nsBaseHashtableET : public KeyClass {
  public:
-  DataType mData;
-  friend class nsTHashtable<nsBaseHashtableET<KeyClass, DataType>>;
+  const DataType& GetData() const { return mData; }
+  DataType* GetModifiableData() { return &mData; }
+  template <typename U>
+  void SetData(U&& aData) {
+    mData = std::forward<U>(aData);
+  }
 
  private:
+  DataType mData;
+  friend class nsTHashtable<nsBaseHashtableET<KeyClass, DataType>>;
+  template <typename KeyClassX, typename DataTypeX, typename UserDataTypeX,
+            typename ConverterX>
+  friend class nsBaseHashtable;
+
   typedef typename KeyClass::KeyType KeyType;
   typedef typename KeyClass::KeyTypePointer KeyTypePointer;
 
   explicit nsBaseHashtableET(KeyTypePointer aKey);
   nsBaseHashtableET(nsBaseHashtableET<KeyClass, DataType>&& aToMove);
-  ~nsBaseHashtableET();
+  ~nsBaseHashtableET() = default;
 };
 
 /**
@@ -43,11 +80,14 @@ class nsBaseHashtableET : public KeyClass {
  * @param KeyClass a wrapper-class for the hashtable key, see nsHashKeys.h
  *   for a complete specification.
  * @param DataType the datatype stored in the hashtable,
- *   for example, uint32_t or nsCOMPtr.  If UserDataType is not the same,
- *   DataType must implicitly cast to UserDataType
+ *   for example, uint32_t or nsCOMPtr.
  * @param UserDataType the user sees, for example uint32_t or nsISupports*
+ * @param Converter that can be used to map from DataType to UserDataType. A
+ *   default converter is provided that assumes implicit conversion is an
+ *   option.
  */
-template <class KeyClass, class DataType, class UserDataType>
+template <class KeyClass, class DataType, class UserDataType,
+          class Converter = nsDefaultConverter<DataType, UserDataType>>
 class nsBaseHashtable
     : protected nsTHashtable<nsBaseHashtableET<KeyClass, DataType>> {
   typedef mozilla::fallible_t fallible_t;
@@ -61,7 +101,7 @@ class nsBaseHashtable
   using nsTHashtable<EntryType>::SizeOfExcludingThis;
   using nsTHashtable<EntryType>::SizeOfIncludingThis;
 
-  nsBaseHashtable() {}
+  nsBaseHashtable() = default;
   explicit nsBaseHashtable(uint32_t aInitLength)
       : nsTHashtable<EntryType>(aInitLength) {}
 
@@ -70,6 +110,12 @@ class nsBaseHashtable
    * @return    number of entries
    */
   uint32_t Count() const { return nsTHashtable<EntryType>::Count(); }
+
+  /**
+   * Return whether the table is empty.
+   * @return    whether empty
+   */
+  bool IsEmpty() const { return nsTHashtable<EntryType>::IsEmpty(); }
 
   /**
    * retrieve the value for a key.
@@ -87,7 +133,7 @@ class nsBaseHashtable
     }
 
     if (aData) {
-      *aData = ent->mData;
+      *aData = Converter::Unwrap(ent->mData);
     }
 
     return true;
@@ -109,7 +155,7 @@ class nsBaseHashtable
       return UserDataType{};
     }
 
-    return ent->mData;
+    return Converter::Unwrap(ent->mData);
   }
 
   /**
@@ -133,14 +179,14 @@ class nsBaseHashtable
     }
   }
 
-  MOZ_MUST_USE bool Put(KeyType aKey, const UserDataType& aData,
-                        const fallible_t&) {
+  [[nodiscard]] bool Put(KeyType aKey, const UserDataType& aData,
+                         const fallible_t&) {
     EntryType* ent = this->PutEntry(aKey, mozilla::fallible);
     if (!ent) {
       return false;
     }
 
-    ent->mData = aData;
+    ent->mData = Converter::Wrap(aData);
 
     return true;
   }
@@ -156,13 +202,14 @@ class nsBaseHashtable
     }
   }
 
-  MOZ_MUST_USE bool Put(KeyType aKey, UserDataType&& aData, const fallible_t&) {
+  [[nodiscard]] bool Put(KeyType aKey, UserDataType&& aData,
+                         const fallible_t&) {
     EntryType* ent = this->PutEntry(aKey, mozilla::fallible);
     if (!ent) {
       return false;
     }
 
-    ent->mData = std::move(aData);
+    ent->mData = Converter::Wrap(std::move(aData));
 
     return true;
   }
@@ -223,11 +270,25 @@ class nsBaseHashtable
       mEntry = nullptr;
     }
 
-    MOZ_MUST_USE DataType& Data() {
+    [[nodiscard]] DataType& Data() {
       MOZ_ASSERT(!!*this, "must have an entry to access its value");
       return mEntry->mData;
     }
   };
+
+  /**
+   * Removes all entries matching a predicate.
+   *
+   * The predicate must be compatible with signature bool (const Iterator &).
+   */
+  template <typename Pred>
+  void RemoveIf(Pred&& aPred) {
+    for (auto iter = Iter(); !iter.Done(); iter.Next()) {
+      if (aPred(const_cast<std::add_const_t<decltype(iter)>&>(iter))) {
+        iter.Remove();
+      }
+    }
+  }
 
   /**
    * Looks up aKey in the hashtable and returns an object that allows you to
@@ -247,7 +308,7 @@ class nsBaseHashtable
    * lookups.  If you want to insert a new entry if one does not exist, then use
    * LookupForAdd instead, see below.
    */
-  MOZ_MUST_USE LookupResult Lookup(KeyType aKey) {
+  [[nodiscard]] LookupResult Lookup(KeyType aKey) {
     return LookupResult(this->GetEntry(aKey), *this);
   }
 
@@ -286,11 +347,11 @@ class nsBaseHashtable
     }
 
     template <class F>
-    UserDataType OrInsert(F func) {
+    DataType& OrInsert(F func) {
       MOZ_ASSERT(mTableGeneration == mTable.GetGeneration());
       MOZ_ASSERT(mEntry);
       if (!mExistingEntry) {
-        mEntry->mData = func();
+        mEntry->mData = Converter::Wrap(func());
 #ifdef DEBUG
         mDidInitNewEntry = true;
 #endif
@@ -305,7 +366,7 @@ class nsBaseHashtable
       mEntry = nullptr;
     }
 
-    MOZ_MUST_USE DataType& Data() {
+    [[nodiscard]] DataType& Data() {
       MOZ_ASSERT(mTableGeneration == mTable.GetGeneration());
       MOZ_ASSERT(mEntry);
       return mEntry->mData;
@@ -337,7 +398,7 @@ class nsBaseHashtable
    * hashtable if one doesn't exist before but would like to avoid two hashtable
    * lookups.
    */
-  MOZ_MUST_USE EntryPtr LookupForAdd(KeyType aKey) {
+  [[nodiscard]] EntryPtr LookupForAdd(KeyType aKey) {
     auto count = Count();
     EntryType* ent = this->PutEntry(aKey);
     return EntryPtr(*this, ent, count == Count());
@@ -360,11 +421,11 @@ class nsBaseHashtable
 
     explicit Iterator(nsBaseHashtable* aTable) : Base(&aTable->mTable) {}
     Iterator(Iterator&& aOther) : Base(aOther.mTable) {}
-    ~Iterator() {}
+    ~Iterator() = default;
 
     KeyType Key() const { return static_cast<EntryType*>(Get())->GetKey(); }
     UserDataType UserData() const {
-      return static_cast<EntryType*>(Get())->mData;
+      return Converter::Unwrap(static_cast<EntryType*>(Get())->mData);
     }
     DataType& Data() const { return static_cast<EntryType*>(Get())->mData; }
 
@@ -380,6 +441,14 @@ class nsBaseHashtable
   Iterator ConstIter() const {
     return Iterator(const_cast<nsBaseHashtable*>(this));
   }
+
+  using typename nsTHashtable<EntryType>::iterator;
+  using typename nsTHashtable<EntryType>::const_iterator;
+
+  using nsTHashtable<EntryType>::begin;
+  using nsTHashtable<EntryType>::end;
+  using nsTHashtable<EntryType>::cbegin;
+  using nsTHashtable<EntryType>::cend;
 
   /**
    * reset the hashtable, removing all entries
@@ -411,9 +480,7 @@ class nsBaseHashtable
     nsTHashtable<EntryType>::SwapElements(aOther);
   }
 
-#ifdef DEBUG
   using nsTHashtable<EntryType>::MarkImmutable;
-#endif
 };
 
 //
@@ -428,8 +495,5 @@ template <class KeyClass, class DataType>
 nsBaseHashtableET<KeyClass, DataType>::nsBaseHashtableET(
     nsBaseHashtableET<KeyClass, DataType>&& aToMove)
     : KeyClass(std::move(aToMove)), mData(std::move(aToMove.mData)) {}
-
-template <class KeyClass, class DataType>
-nsBaseHashtableET<KeyClass, DataType>::~nsBaseHashtableET() {}
 
 #endif  // nsBaseHashtable_h__

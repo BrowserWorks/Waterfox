@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Event Menu -->
+<!ENTITY event.new.event                        "Uus sündmus…">
+<!ENTITY event.new.event.accesskey              "s">
+
+<!ENTITY event.new.task                         "Uus ülesanne…">
+<!ENTITY event.new.task.accesskey               "n">
+
+<!ENTITY calendar.import.label                  "Import…">
+<!ENTITY calendar.import.accesskey              "I">
+
+<!ENTITY calendar.export.label                  "Kalendri eksport…">
+<!ENTITY calendar.export.accesskey              "e">
+
+<!ENTITY calendar.publish.label                 "Avaldamine…">
+<!ENTITY calendar.publish.accesskey             "A">
+
+<!ENTITY calendar.deletecalendar.label          "Kustuta valitud kalender…">
+<!ENTITY calendar.deletecalendar.accesskey      "K">
+
+<!ENTITY calendar.unsubscribecalendar.label     "Lõpeta valitud kalendri tellimine…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "L">
+
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+<!ENTITY calendar.removecalendar.label          "Eemalda valitud kalender…">
+<!ENTITY calendar.removecalendar.accesskey      "E">
+
+<!ENTITY calendar.menu.customize.label          "Kohandamine…">
+<!ENTITY calendar.menu.customize.accesskey      "h">
+
+<!ENTITY showUnifinderCmd.label                 "Otsi sündmusi">
+<!ENTITY showUnifinderCmd.accesskey             "i">
+<!ENTITY showUnifinderCmd.tooltip               "Lülita sündmuste otsingu paneeli">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "Näita kalendris ülesandeid">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "N">
+
+<!ENTITY goTodayCmd.label                       "Täna">
+<!ENTITY goTodayCmd.accesskey                   "T">
+
+<!ENTITY showCurrentView.label                  "Aktiivne vaade">
+<!ENTITY showCurrentView.accesskey              "A">
+
+<!ENTITY calendar.properties.label              "Kalendri omadused…">
+<!ENTITY calendar.properties.accesskey          "o">

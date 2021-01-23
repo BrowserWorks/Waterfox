@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
 
 var { ExtensionParent } = ChromeUtils.import(
@@ -66,6 +70,9 @@ class BackgroundPage extends HiddenExtensionPage {
       // Extension was down before the background page has loaded.
       Cu.reportError(e);
       ExtensionTelemetry.backgroundPageLoad.stopwatchCancel(extension, this);
+      if (extension.persistentListeners) {
+        EventManager.clearPrimedListeners(this.extension, false);
+      }
       extension.emit("background-page-aborted");
       return;
     }
@@ -86,7 +93,7 @@ class BackgroundPage extends HiddenExtensionPage {
       EventManager.clearPrimedListeners(extension, !!this.extension);
     }
 
-    extension.emit("startup");
+    extension.emit("background-page-started");
   }
 
   shutdown() {
@@ -122,6 +129,25 @@ this.backgroundPage = class extends ExtensionAPI {
     ) {
       return;
     }
+
+    // Used by runtime messaging to wait for background page listeners.
+    let bgStartupPromise = new Promise(resolve => {
+      let done = () => {
+        extension.off("background-page-started", done);
+        extension.off("background-page-aborted", done);
+        extension.off("shutdown", done);
+        resolve();
+      };
+      extension.on("background-page-started", done);
+      extension.on("background-page-aborted", done);
+      extension.on("shutdown", done);
+    });
+
+    extension.wakeupBackground = () => {
+      extension.emit("background-page-event");
+      extension.wakeupBackground = () => bgStartupPromise;
+      return bgStartupPromise;
+    };
 
     if (extension.startupReason !== "APP_STARTUP" || !DELAYED_STARTUP) {
       return this.build();

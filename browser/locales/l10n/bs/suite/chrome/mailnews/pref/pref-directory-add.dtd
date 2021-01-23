@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY directoryName.label               "Naziv: ">
+<!ENTITY directoryHostname.label           "Naziv hosta: ">
+<!ENTITY directoryBaseDN.label             "Base DN: ">
+<!ENTITY findButton.label                  "Pronađi">
+<!ENTITY directorySecure.label             "Koristi sigurnu vezu (SSL)">
+<!ENTITY directoryLogin.label              "Bind DN: ">
+<!ENTITY General.tab                       "Opće">
+<!ENTITY Offline.tab                       "Van mreže">
+<!ENTITY Advanced.tab                      "Napredno">
+<!ENTITY portNumber.label                  "Broj porta: ">
+<!ENTITY searchFilter.label                "Traži filter: ">
+<!ENTITY scope.label                       "Opseg: ">
+<!ENTITY scopeOneLevel.label               "Jedan nivo">
+<!ENTITY scopeSubtree.label                "Podstablo">
+<!ENTITY return.label                      "Ne vraćaj više od">
+<!ENTITY results.label                     "rezultata">
+<!ENTITY offlineText.label                 "Možete preuzeti lokalnu kopiju ovog direktorija tako da je dostupan za upotrebu kada radite van mreže.">
+<!ENTITY saslMechanism.label               "Metoda prijave: ">
+<!ENTITY saslOff.label                     "Jednostavno">
+<!ENTITY saslGSSAPI.label                  "Kerberos (GSSAPI)">
+
+<!-- Localization note: this is here because the width of the dialog 
+     is determined by the width of the base DN box; and that is likely
+     to vary somewhat with the language.
+-->
+<!ENTITY newDirectoryWidth                 "36em">

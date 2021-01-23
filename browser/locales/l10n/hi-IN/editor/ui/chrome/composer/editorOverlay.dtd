@@ -1,0 +1,569 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Attn: Localization - some of the menus in this dialog directly affect mail also. -->
+
+<!-- File menu items -->
+<!ENTITY fileMenu.label "फाइल">
+<!ENTITY filemenu.accesskey "f">
+<!ENTITY newBlankPageCmd.label "कंपोजर पृष्ठ">
+<!ENTITY newBlankPage.accesskey "P" >
+<!ENTITY newMenu.label "नया">
+<!ENTITY openFileCmd.label "फाइल खोलें...">
+<!ENTITY fileopen.accesskey "o">
+<!ENTITY fileopen.keybinding "o">
+<!ENTITY openremoteCmd.label "वेब स्थान खोलें...">
+<!ENTITY fileopenremote.accesskey "l">
+<!ENTITY fileopenremote.keybinding "l">
+<!ENTITY fileRecentMenu.label "हाल के पृष्ठ">
+<!ENTITY filerecentmenu.accesskey "r">
+<!ENTITY fileRevert.label "वापस करें">
+<!ENTITY filerevert.accesskey "v">
+<!ENTITY saveCmd.label "सहेजें">
+<!ENTITY filesave.accesskey "s">
+<!ENTITY filesave.keybinding "s">
+<!ENTITY saveAsCmd.label "इस रूप में सहेजें...">
+<!ENTITY filesaveas.accesskey "A">
+
+<!ENTITY publishCmd.label "प्रकाशित करें">
+<!ENTITY publishcmd.accesskey "b">
+<!ENTITY publishAsCmd.label "इस रूप में प्रकाशित करें...">
+<!ENTITY publishas.accesskey "h">
+<!ENTITY exportToTextCmd.label "पाठ में निर्यात करें...">
+<!ENTITY fileexporttotext.accesskey "T">
+<!ENTITY saveAsChangeEncodingCmd.label "संप्रतीक एनकोडिंग सहेजें व बदलें">
+<!ENTITY filesaveandchangeencoding.accesskey "E">
+<!ENTITY previewCmd.label "पृष्ठ ब्रॉउज करें">
+<!ENTITY filepreview.accesskey "w">
+<!ENTITY sendPageCmd.label "पृष्ठ भेजें...">
+<!ENTITY sendPage.accesskey "d">
+<!ENTITY printSetupCmd.label "पृष्ठ जमावट...">
+<!ENTITY fileprintsetup.accesskey "u">
+<!ENTITY printPreviewCmd.label "छपाई पूर्वावलोकन">
+<!ENTITY fileprintpreview.accesskey "v">
+<!ENTITY printCmd.label "छापें...">
+<!ENTITY printButtonCmd.label "छापें...">
+<!ENTITY fileprint.accesskey "p">
+<!ENTITY fileprint.keybinding "p">
+<!ENTITY closeCmd.label "बंद करें">
+<!ENTITY fileclose.accesskey "c">
+<!ENTITY fileclose.keybinding "w">
+<!ENTITY exitCmd.label "त्यागें">
+<!ENTITY fileexit.accesskey "q">
+<!ENTITY fileexit.keybinding "q">
+
+<!-- Edit menu items -->
+<!ENTITY editMenu.label "संपादित करें">
+<!ENTITY editmenu.accesskey "e">
+<!ENTITY pasteNoFormatting.label "संरूपण के बिना चिपकायें">
+<!ENTITY pasteNoFormatting.accesskey "o">
+<!ENTITY pasteAs.label "इस रूप में चिपकायें">
+<!ENTITY pasteAs.accesskey "a">
+<!ENTITY publishSettings.label "प्रकाशन साइट जमावट...">
+<!ENTITY publishSettings.accesskey "b">
+
+<!-- For a "Paste" submenu when more than 1 
+     clipboard formats are available -->
+<!ENTITY pasteHTMLCmd.label "HTML">
+<!ENTITY pasteHTML.accesskey "h">
+<!ENTITY pasteTextCmd.label "पाठ">
+<!ENTITY pasteText.accesskey "t">
+<!ENTITY pasteImageCmd.label "चित्र">
+<!ENTITY pasteImage.accesskey "i">
+<!ENTITY pasteRowsCmd.label "पंक्ति">
+<!ENTITY pasteRows.accesskey "r">
+<!ENTITY pasteColumnsCmd.label "कॉलम">
+<!ENTITY pasteColumns.accesskey "c">
+<!-- LOCALIZATION NOTE: Text for menu item is in editor.properties
+     Set to: "Table" or "Nested Table" depending on context 
+     This accesskey must be in both strings -->
+<!ENTITY pasteTable.accesskey "a">
+<!ENTITY pasteLinkCmd.label "लिंक">
+<!ENTITY editpastelink.accesskey "l">
+<!ENTITY pasteAsQuotationCmd.label "उद्धरण के रूप में चिपकायें">
+<!ENTITY editpastequotation.accesskey "q">
+<!ENTITY editpastequotation.keybinding "v">
+<!ENTITY editStripQuotesCmd.label "उद्धरण काटें">
+<!ENTITY editRewrapCmd.label "फिर रैप करें">
+<!ENTITY findCmd.label "ढूंढें औऱ बदलें...">
+<!ENTITY editfind.accesskey "f">
+<!ENTITY editfind.keybinding "f">
+<!ENTITY editfind.keybinding2 "VK_F19">
+<!ENTITY findAgainCmd.label "फिर ढूंढें">
+<!ENTITY editfindnext.accesskey "g">
+<!ENTITY editfindnext.keybinding "g">
+<!ENTITY editfindnext.keybinding2 "VK_F3">
+<!ENTITY findPrevCmd.label "पिछला ढूंढें">
+<!ENTITY editfindprev.accesskey "v">
+<!ENTITY editfindprev.keybinding "g">
+<!ENTITY editfindprev.keybinding2 "VK_F3">
+<!ENTITY checkSpellingCmd.label "वर्तनी जांचें">
+<!ENTITY validateCmd.label "HTML वैधीकृत करें">
+<!ENTITY validate.accesskey "v">
+<!ENTITY checkLinksCmd.label "लिंक जांचें">
+<!ENTITY editcheckspelling.accesskey "s">
+<!ENTITY editcheckspelling.keybinding "k">
+
+<!-- View menu items -->
+<!ENTITY viewPageSource.label "पृष्ठ श्रोत">
+<!ENTITY viewpagesource.accesskey "s">
+<!ENTITY viewParagraphMarks.label "अनुच्छेद चिह्न">
+<!ENTITY viewparagraphmarks.accesskey "p">
+
+<!-- Insert menu items -->
+<!ENTITY insertMenu.label "अंदर डालें">
+<!ENTITY insertmenu.accesskey "i">
+<!ENTITY insertLinkCmd.label "लिंक...">
+<!ENTITY insertlink.accesskey "l">
+<!ENTITY insertlink.keybinding "l">
+<!ENTITY insertAnchorCmd.label "नामित एंकर...">
+<!ENTITY insertanchor.accesskey "A">
+<!ENTITY insertImageCmd.label "चित्र...">
+<!ENTITY insertimage.accesskey "i">
+<!ENTITY insertImageMapCmd.label "चित्र मानचित्र...">
+<!ENTITY insertHLineCmd.label "क्षैतिज रेखा">
+<!ENTITY inserthline.accesskey "o">
+<!ENTITY insertTableCmd.label "तालिका...">
+<!ENTITY inserttable.accesskey "t">
+<!ENTITY insertFormMenu.label "प्रपत्र">
+<!ENTITY insertformmenu.accesskey "F">
+<!ENTITY insertHTMLCmd.label "HTML...">
+<!ENTITY insertHTMLCmd.accesskey "h">
+<!ENTITY insertCharsCmd.label "संप्रतीक व संकेत...">
+<!ENTITY insertchars.accesskey "C">
+<!ENTITY insertBreakCmd.label "रेखा टूटन">
+<!ENTITY insertbreak.accesskey "b">
+<!ENTITY insertBreakAllCmd.label "चित्र के नीचे तोड़ें">
+<!ENTITY insertbreakall.accesskey "k">
+
+<!-- Insert form menu items -->
+<!ENTITY insertFormCmd.label "परिभाषा प्रपत्र...">
+<!ENTITY insertform.accesskey "D">
+<!ENTITY insertInputTagCmd.label "प्रपत्र क्षेत्र...">
+<!ENTITY insertinputtag.accesskey "e">
+<!ENTITY insertInputImageCmd.label "प्रपत्र चित्र...">
+<!ENTITY insertinputimage.accesskey "I">
+<!ENTITY insertTextAreaCmd.label "पाठ क्षेत्र...">
+<!ENTITY inserttextarea.accesskey "T">
+<!ENTITY insertSelectCmd.label "चयन सूची...">
+<!ENTITY insertselect.accesskey "S">
+<!ENTITY insertButtonCmd.label "बटन परिभाषित करें...">
+<!ENTITY insertbutton.accesskey "B">
+<!ENTITY insertLabelCmd.label "लेबल परिभाषित करें">
+<!ENTITY insertlabel.accesskey "L">
+<!ENTITY insertFieldSetCmd.label "क्षेत्र सेट परिभाषित करें...">
+<!ENTITY insertfieldset.accesskey "F">
+<!ENTITY insertIsIndexCmd.label "सूची खोज">
+<!ENTITY insertisindex.accesskey "x">
+
+<!-- Used just in context popup. -->
+<!ENTITY createLinkCmd.label "लिंक बनायें...">
+<!ENTITY createlink.accesskey "k">
+<!ENTITY editLinkCmd.label "नये कंपोजर में लिंक संपादित करें">
+<!ENTITY editlink.accesskey "i">
+<!-- (Toplevel Edit menu uses utilityOverlay) -->
+<!ENTITY undoCmd.label "वापस करें">
+<!ENTITY undo.accesskey "u">
+<!ENTITY redoCmd.label "फिर करें">
+<!ENTITY redo.accesskey "r">
+<!ENTITY cutCmd.label "काटें">
+<!ENTITY cut.accesskey "t">
+<!ENTITY copyCmd.label "कॉपी करें">
+<!ENTITY copy.accesskey "c">
+<!ENTITY pasteCmd.label "चिपकायें">
+<!ENTITY paste.accesskey "p">
+<!ENTITY deleteCmd.label "मिटायें">
+<!ENTITY delete.accesskey "d">
+<!ENTITY clearCmd.label "साफ करें">
+<!ENTITY clear.accesskey "l">
+<!ENTITY selectAllCmd.label "सभी को चुनें">
+<!ENTITY selectall.accesskey "a">
+
+<!-- Font Face SubMenu -->
+<!ENTITY FontFaceSelect.tooltip "एक फंट चुनें">
+<!ENTITY fontfaceMenu.label "फंट">
+<!ENTITY formatfontmenu.accesskey "f">
+<!ENTITY fontVarWidth.label "चर चौड़ाई">
+<!ENTITY fontvarwidth.accesskey "v">
+<!ENTITY fontFixedWidth.label "निर्धारित चौड़ाई">
+<!ENTITY fontfixedwidth.accesskey "x">
+<!ENTITY formatfontfixed.keybinding "t">
+<!ENTITY fontHelveticaFont.label "Helvetica, Arial">
+<!ENTITY fonthelvetica.accesskey "l">
+<!ENTITY fontTimes.label "Times">
+<!ENTITY fonttimes.accesskey "t">
+<!ENTITY fontCourier.label "Courier">
+<!ENTITY fontcourier.accesskey "c">
+<!ENTITY localfontfaceMenu.label "स्थानीय फंट">
+<!ENTITY localfontmenu.accesskey "f">
+
+<!-- Font Size SubMenu -->
+<!ENTITY FontSizeSelect.tooltip "एक फंट आकार चुनें">
+<!ENTITY decreaseFontSize.label "छोटा">
+<!ENTITY decreasefontsize.accesskey "r">
+<!ENTITY decreaseFontSize.keybinding "-">
+<!ENTITY increaseFontSize.label "बड़ा">
+<!ENTITY increasefontsize.accesskey "g">
+<!ENTITY increaseFontSize.keybinding "+">
+<!ENTITY increaseFontSize.keybinding2 "="> <!-- + is above this key on many keyboards -->
+
+<!ENTITY fontsizeMenu.label "आकार">
+<!ENTITY formatsizemenu.accesskey "z">
+<!ENTITY size-xx-smallCmd.label "xx-small">
+<!ENTITY size-xx-small.accesskey "a">
+<!ENTITY size-x-smallCmd.label "x-small">
+<!ENTITY size-x-small.accesskey "m">
+<!ENTITY size-smallCmd.label "छोटा">
+<!ENTITY size-small.accesskey "s">
+<!ENTITY size-mediumCmd.label "मध्यम">
+<!ENTITY size-medium.accesskey "d">
+<!ENTITY size-largeCmd.label "बड़ा">
+<!ENTITY size-large.accesskey "l">
+<!ENTITY size-x-largeCmd.label "x-large">
+<!ENTITY size-x-large.accesskey "x">
+<!ENTITY size-xx-largeCmd.label "xx-large">
+<!ENTITY size-xx-large.accesskey "e">
+
+<!-- Font Style SubMenu -->
+<!ENTITY fontStyleMenu.label "पाठ शैली">
+<!ENTITY formatstylemenu.accesskey "s">
+<!ENTITY styleBoldCmd.label "बोल्ड">
+<!ENTITY stylebold.accesskey "b">
+<!ENTITY stylebold.keybinding "b">
+<!ENTITY styleItalicCmd.label "इटालिक">
+<!ENTITY styleitalic.accesskey "I">
+<!ENTITY styleitalic.keybinding "i">
+<!ENTITY styleUnderlineCmd.label "रेखांकित करें">
+<!ENTITY styleunderline.accesskey "u">
+<!ENTITY styleunderline.keybinding "u">
+<!ENTITY styleStrikeThruCmd.label "काटें">
+<!ENTITY stylestrikethru.accesskey "k">
+<!ENTITY styleSuperscriptCmd.label "सुपरस्क्रिप्ट">
+<!ENTITY stylesuperscript.accesskey "p">
+<!ENTITY styleSubscriptCmd.label "सब स्क्रिप्ट">
+<!ENTITY stylesubscript.accesskey "S">
+<!ENTITY styleNonbreakingCmd.label "गैर खंडित">
+<!ENTITY stylenonbreaking.accesskey "N">
+<!ENTITY styleEm.label "महत्व">
+<!ENTITY styleEm.accesskey "e">
+<!ENTITY styleStrong.label "ज्यादा महत्व">
+<!ENTITY styleStrong.accesskey "t">
+<!ENTITY styleCite.label "प्रशस्तिपत्र">
+<!ENTITY styleCite.accesskey "c">
+<!ENTITY styleAbbr.label "संक्षिप्ताक्षर">
+<!ENTITY styleAbbr.accesskey "A">
+<!ENTITY styleAcronym.label "Acronym">
+<!ENTITY styleAcronym.accesskey "r">
+<!ENTITY styleCode.label "कोड">
+<!ENTITY styleCode.accesskey "o">
+<!ENTITY styleSamp.label "नमूना आउटपुट">
+<!ENTITY styleSamp.accesskey "m">
+<!ENTITY styleVar.label "चर">
+<!ENTITY styleVar.accesskey "v">
+
+<!ENTITY formatFontColor.label "पाठ रंग...">
+<!ENTITY formatfontcolor.accesskey "c">
+<!ENTITY tableOrCellColor.label "तालिका या सेल पृष्ठभूमि रंग...">
+<!ENTITY tableOrCellColor.accesskey "B">
+
+<!ENTITY formatremovestyles.keybinding "y">
+<!ENTITY formatremovelinks.keybinding "k">
+<!ENTITY formatRemoveNamedAnchors.label "नामित एंकर हटायें">
+<!ENTITY formatRemoveNamedAnchors.accesskey "R">
+<!ENTITY formatremovenamedanchors.keybinding "a">
+
+<!ENTITY formatindent.keybinding "]">
+<!ENTITY formatoutdent.keybinding "[">
+<!ENTITY paragraphMenu.label "अनुच्छेद">
+<!ENTITY formatparagraphmenu.accesskey "P">
+<!ENTITY paragraphParagraphCmd.label "अनुच्छेद">  
+<!ENTITY paragraphparagraph.accesskey "P">
+<!ENTITY heading1Cmd.label "शीर्षक 1">
+<!ENTITY heading1.accesskey "1">
+<!ENTITY heading2Cmd.label "शीर्षक 2">
+<!ENTITY heading2.accesskey "2">
+<!ENTITY heading3Cmd.label "शीर्षक 3">
+<!ENTITY heading3.accesskey "3">
+<!ENTITY heading4Cmd.label "शीर्षक 4">
+<!ENTITY heading4.accesskey "4">
+<!ENTITY heading5Cmd.label "शीर्षक 5">
+<!ENTITY heading5.accesskey "5">
+<!ENTITY heading6Cmd.label "शीर्षक 6">
+<!ENTITY heading6.accesskey "6">
+<!ENTITY paragraphAddressCmd.label "पता">
+<!ENTITY paragraphaddress.accesskey "a">
+<!ENTITY paragraphPreformatCmd.label "पूर्वसंरूपित">
+<!ENTITY paragraphpreformat.accesskey "f">
+<!ENTITY paragraphBlockquoteCmd.label "Blockquote">
+<!ENTITY paragraphblockquote.accesskey "b">
+
+<!-- List menu items -->
+<!ENTITY formatlistMenu.label "सूची">
+<!ENTITY formatlistmenu.accesskey "l">
+<!ENTITY noneCmd.label "कोई नहीं">
+<!ENTITY none.accesskey "N">
+<!ENTITY listBulletCmd.label "बुलेट किया">
+<!ENTITY listbullet.accesskey "b">
+<!ENTITY listNumberedCmd.label "संख्या दिया हुआ">
+<!ENTITY listnumbered.accesskey "m">
+<!ENTITY listTermCmd.label "पद">
+<!ENTITY listterm.accesskey "t">
+<!ENTITY listDefinitionCmd.label "परिभाषा">
+<!ENTITY listdefinition.accesskey "d">
+<!ENTITY listProps.label "सूची गुण...">
+<!ENTITY listprops.accesskey "l">
+
+<!ENTITY ParagraphSelect.tooltip "एक अनुच्छेद प्रारूप चुनें">
+<!-- Shared in Paragraph, and Toolbar menulist -->
+<!ENTITY bodyTextCmd.label "शरीर पाठ">
+<!ENTITY bodytext.accesskey "T">
+<!-- isn't used in menu now, but may be added in future -->
+<!ENTITY advancedPropertiesCmd.label "उन्नत गुण">
+<!ENTITY advancedproperties.accesskey "v">
+
+<!ENTITY NormalAbbr.label "पाठ">
+<!ENTITY ParagraphAbbr.label "P">  
+<!ENTITY Heading1Abbr.label "H1">
+<!ENTITY Heading2Abbr.label "H2">
+<!ENTITY Heading3Abbr.label "H3">
+<!ENTITY Heading4Abbr.label "H4">
+<!ENTITY Heading5Abbr.label "H5">
+<!ENTITY Heading6Abbr.label "H6">
+<!ENTITY BlockquoteAbbr.label "BQ">
+<!ENTITY AddressAbbr.label "Addr.">
+<!ENTITY PreformatAbbr.label "Pre.">
+
+<!-- Style Sheet submenu NOT IMPLEMENTED -->
+<!ENTITY stylesheetMenu.label "स्टाइल शीट लागू करें">
+<!ENTITY formatstylesheetmenu.accesskey "y">
+
+<!-- Align menu items -->
+<!ENTITY alignMenu.label "पंक्तिबद्ध करें">
+<!ENTITY formatalignmenu.accesskey "a">
+<!ENTITY alignLeft.label "बांयां">
+<!ENTITY alignleft.accesskey "l">
+<!ENTITY alignLeft.tooltip "बांये रखें">
+<!ENTITY alignCenter.label "केंद्र">
+<!ENTITY aligncenter.accesskey "c">
+<!ENTITY alignCenter.tooltip "केद्र में रखें">
+<!ENTITY alignRight.label "दांयें">
+<!ENTITY alignright.accesskey "r">
+<!ENTITY alignRight.tooltip "दांयें रखें">
+<!ENTITY alignJustify.label "जस्टिफाई">
+<!ENTITY alignjustify.accesskey "j">
+<!ENTITY alignJustify.tooltip "जस्टिफाई रखें">
+
+<!-- Layer toolbar items -->
+<!ENTITY layer.tooltip "स्तर">
+<!ENTITY layerSendToBack.tooltip "पीछे जायें">
+<!ENTITY layerBringToFront.tooltip "सामने लायें">
+
+<!ENTITY increaseIndent.label "किनारा बढायें">
+<!ENTITY increaseindent.accesskey "i">
+<!ENTITY increaseindentkb "=">
+<!ENTITY decreaseIndent.label "किनारा घटायें">
+<!ENTITY decreaseindent.accesskey "D">
+<!ENTITY decreaseindentkb "-">
+
+<!ENTITY grid.label "ग्रिड की अवस्थिति ठीक कर रहा है">
+<!ENTITY grid.accesskey "t">
+
+<!ENTITY pageProperties.label "पृष्ठ शीर्षक औऱ गुण...">
+<!ENTITY pageproperties.accesskey "g">
+<!ENTITY colorsAndBackground.label "पृष्ठ रंग व पृष्ठभूमि...">
+<!ENTITY colorsandbackground.accesskey "u">
+
+<!-- Table Menu -->
+<!ENTITY tableMenu.label "तालिका">
+<!ENTITY tablemenu.accesskey "b">
+<!-- Select Submenu -->
+<!ENTITY tableSelectMenu.label "चुनें">
+<!ENTITY tableselectmenu.accesskey "s">
+
+<!ENTITY tableSelectMenu2.label "तालिका चुनें">
+<!ENTITY tableInsertMenu2.label "तालिका डालें">
+<!ENTITY tableDeleteMenu2.label "तालिका मिटायें">
+
+<!-- Insert SubMenu -->
+<!ENTITY tableInsertMenu.label "डालें">
+<!ENTITY tableinsertmenu.accesskey "i">
+<!ENTITY tableTable.label "तालिका">
+<!ENTITY tabletable.accesskey "t">
+<!ENTITY tableRow.label "पंक्ति">
+<!ENTITY tableRows.label "पंक्ति">
+<!ENTITY tablerow.accesskey "r">
+<!ENTITY tableRowAbove.label "ऊपर पंक्ति">
+<!-- uses tablerow.accesskey -->
+<!ENTITY tableRowBelow.label "नीचे पंक्ति">
+<!ENTITY tablerowbelow.accesskey "b">
+<!ENTITY tableColumn.label "कॉलम">
+<!ENTITY tableColumns.label "कॉलम">
+<!ENTITY tablecolumn.accesskey "o">
+<!ENTITY tableColumnBefore.label "पहले कॉलम">
+<!-- uses tablecolumn.accesskey -->
+<!ENTITY tableColumnAfter.label "कॉलम बाद में">
+<!ENTITY tablecolumnafter.accesskey "a">
+<!ENTITY tableCell.label "सेल">
+<!ENTITY tableCells.label "सेल">
+<!ENTITY tablecell.accesskey "c">
+<!ENTITY tableCellContents.label "सेल सामग्री">
+<!ENTITY tablecellcontents.accesskey "n">
+<!ENTITY tableAllCells.label "सारा सेल">
+<!ENTITY tableCellBefore.label "पहले सेल">
+<!ENTITY tableallcells.accesskey "a">
+<!-- uses tablecell.accesskey -->
+<!ENTITY tableCellAfter.label "सेल बाद में">
+<!ENTITY tablecellafter.accesskey "f">
+<!-- Delete SubMenu -->
+<!ENTITY tableDeleteMenu.label "मिटायें">
+<!ENTITY tabledeletemenu.accesskey "D">
+
+<!ENTITY tableFix.label "स्थिर तालिका लेआउट">
+<!ENTITY tablefix.accesskey "f">
+<!-- text for "Join Cells" is in editor.properties 
+     ("JoinSelectedCells" and "JoinCellToRight")
+     the access key must exist in both of those strings
+     But value must be set here for accesskey to draw properly
+-->
+<!ENTITY tableJoinCells.label "j">
+<!ENTITY tablejoincells.accesskey "j">
+<!ENTITY tableSplitCell.label "सेल विभाजित करें">
+<!ENTITY tablesplitcell.accesskey "c">
+<!ENTITY convertToTable.label "चयन से तालिका बनायें">
+<!ENTITY converttotable.accesskey "r">
+<!ENTITY tableProperties.label "तालिका गुण...">
+<!ENTITY tableProperties.accesskey "o">
+
+<!-- Tools menu -->
+<!ENTITY toolsmenu.accesskey "l">
+<!ENTITY toolbrowser.accesskey "b">
+<!ENTITY toolplaineditor.accesskey "p">
+<!ENTITY toolsetfocus.accesskey "f">
+
+<!-- Debug menu items -->
+<!ENTITY debugMenu.label "डिबग">
+<!ENTITY newEditorTestPage.label "पाठ पृष्ठ के साथ कंपोजर">
+<!ENTITY textEditorCmd.label "प्लेनटेक्सट संपादक">
+<!ENTITY outputTextCmd.label "आउटपुट पाठ">
+<!ENTITY outputHTMLCmd.label "आउटपुट HTML">
+<!ENTITY insertTextCmd.label "पाठ डालें">
+<!ENTITY testSelectionCmd.label "पाठ चयन">
+<!ENTITY testTableLayoutCmd.label "पाठ तालिका लेआउट">
+<!ENTITY testDocumentCmd.label "पाठ दस्तावेज">
+<!ENTITY showEmbeddedCmd.label "एंबेडेड वस्तु दिखायें">
+<!ENTITY dumpContentCmd.label "सामग्री तरू डंप करें">
+<!ENTITY runUnitTestsCmd.label "ईकाई जांच चलायें">
+<!ENTITY dumpUndoStack.label "डंप वापस करे स्टैक">
+<!ENTITY dumpRedoStack.label "डंप फिर करें स्टैक">
+<!ENTITY executeJSTransactionViaTxmgr.label "Execute JS Transaction Via Transaction Manager">
+<!ENTITY executeJSTransactionViaEditor.label "Execute JS Transaction Via Editor">
+<!ENTITY startLogCmd.label "लॉग शुरू करें">
+<!ENTITY stopLogCmd.label "लॉग रोकें">
+<!ENTITY runLogCmd.label "लॉग चलायें">
+<!ENTITY setFocusCmd.label "फोकस सेट करें">
+
+<!-- Toolbar-only items -->
+<!ENTITY menuBar.tooltip "मेनू बार">
+<!ENTITY compositionToolbar.tooltip "रचना उपकरणपट्टी">
+<!ENTITY formatToolbar.tooltip "संरूपण उपकऱणपट्टी">
+<!ENTITY newToolbarCmd.tooltip "एक नया रचना पेज बनायें">
+<!ENTITY openToolbarCmd.label "खोलें">
+<!ENTITY openToolbarCmd.tooltip "एक स्थानीय फाइल खोलें">
+<!ENTITY saveToolbarCmd.tooltip "स्थानीय अवस्थिति में फाइल सहेजें">
+<!ENTITY publishToolbarCmd.tooltip "दूरस्थ अवस्थिति में फाइल अपलोड करें">
+<!ENTITY previewToolbarCmd.label "ब्रॉउज">
+<!ENTITY previewToolbarCmd.tooltip "संचरण में पृष्ठ लोड करें">
+<!ENTITY printToolbarCmd.label "छापें">
+<!ENTITY printToolbarCmd.tooltip "इस पृष्ठ छापें">
+<!ENTITY findToolbarCmd.label "ढूंढे">
+<!ENTITY findToolbarCmd.tooltip "पेज में पाठ ढूंढें">
+<!ENTITY spellToolbarCmd.label "वर्तनी">
+<!ENTITY spellToolbarCmd.tooltip "चयनित या पूरे पेज की वर्तनी जांचे">
+<!ENTITY imageToolbarCmd.label "चित्र">
+<!ENTITY imageToolbarCmd.tooltip "नया चित्र डालें या चयनित चित्र गुण संपादित करें">
+<!ENTITY hruleToolbarCmd.label "H.रेखा">
+<!ENTITY hruleToolbarCmd.tooltip "क्षैतिज पंक्ति डालें या चयनित पंक्ति के गुण संपादित करें">
+<!ENTITY tableToolbarCmd.label "तालिका">
+<!ENTITY tableToolbarCmd.tooltip "नयी तालिका डालें या चयनित तालिका के गुण संपादित करें">
+<!ENTITY linkToolbarCmd.label "लिंक">
+<!ENTITY linkToolbarCmd.tooltip "नया लिंक डालें या चयनित पंक्ति के गुण संपादित करें">
+<!ENTITY anchorToolbarCmd.label "एंकर">
+<!ENTITY anchorToolbarCmd.tooltip "नामित एंकर डालें या चयनित एंकर के गुण संपादित करें">
+<!ENTITY textColorCaption.label "पाठ रंग">
+<!ENTITY TextColorButton.tooltip "पाठ के लिये रंग चुनें">
+<!ENTITY BackgroundColorButton.tooltip "पृष्ठभूमि के लिये रंग चुनें">
+<!ENTITY throbber.tooltip "&vendorShortName पर जायें; होम पेज">
+<!ENTITY HighlightColorButton.tooltip "पाठ के लिये हाइलाइट रंग चुनें">
+
+<!-- Editor toolbar -->
+<!ENTITY decreaseFontSizeToolbarCmd.tooltip "छोटा फंट आकार">
+<!ENTITY increaseFontSizeToolbarCmd.tooltip "बड़ा फंट आकार">
+<!ENTITY boldToolbarCmd.tooltip "बोल्ड">
+<!ENTITY italicToolbarCmd.tooltip "इटालिक">
+<!ENTITY underlineToolbarCmd.tooltip "रेखांकित करें">
+<!ENTITY bulletListToolbarCmd.tooltip "बुलेटेड सूची को लागू करें या हटायें">
+<!ENTITY numberListToolbarCmd.tooltip "क्रमांकित सूची को लागू करें या हटायें">
+<!ENTITY outdentToolbarCmd.tooltip "हाशिया के बाहर का पाठ (बांयें जायें)">
+<!ENTITY indentToolbarCmd.tooltip  "हाशिया पाठ (दायें जायें)">
+<!ENTITY AlignPopupButton.tooltip "पाठ पंक्तिबद्धता चुनें">
+<!ENTITY InsertPopupButton.tooltip "एक लिंक, एंकर, चित्र, क्षैतिज रेखा, या तालिका डालें">
+<!ENTITY alignLeftButton.tooltip "बांयें हाशिया के गिर्द पाठ समायोजित करें">
+<!ENTITY alignCenterButton.tooltip "केंद्र के गिर्द पाठ समायोजित करें">
+<!ENTITY alignRightButton.tooltip "दायें हाशिया के गिर्द पाठ समायोजित करें">
+<!ENTITY alignjustifyButton.tooltip "बांयें व दायें हाशिया के गिर्द पाठ समायोजित करें">
+
+<!-- Formatting toolbar not used, but may be in future -->
+<!ENTITY formatToolbar.boldChar "B">
+<!ENTITY formatToolbar.italicChar "I">
+<!ENTITY formatToolbar.underlineChar "U">
+
+<!-- Used with color pickers in Format toolbar and Format Menu -->
+<!ENTITY colorPicker.default.label "पाठक मूलभूत रंग">
+<!ENTITY colorPicker.default.accesskey "r">
+<!ENTITY colorLabel.label "रंग:">
+<!ENTITY ok.label "ठीक">
+
+<!-- Display Mode toolbar and View menu items -->
+<!ENTITY NormalModeTab.label "सामान्य">
+<!ENTITY NormalMode.label "सामान्य संपादन मोड">
+<!ENTITY NormalMode.accesskey "n">
+<!ENTITY NormalMode.tooltip "तालिका किनाारा व नामित एंकर दिखायें">
+<!ENTITY AllTagsMode.label "HTML टैग">
+<!ENTITY AllTagsMode.accesskey "A">
+<!ENTITY AllTagsMode.tooltip "सारे HTML टैग के लिये आइकन  दिखायें">
+
+<!ENTITY HTMLSourceMode.label "HTML श्रोत">
+<!-- Toolbar has an image with "HTML" text, so don't include it in the string -->
+<!ENTITY SourceMode.label "श्रोत">
+<!ENTITY HTMLSourceMode.accesskey "h">
+<!ENTITY HTMLSourceMode.tooltip "HTML श्रोत संपादित करें">
+<!ENTITY PreviewMode.label "पूर्वावलोकन">
+<!ENTITY PreviewMode.accesskey "p">
+<!ENTITY PreviewMode.tooltip "WYSIWYG (as in Navigator) के रूप में दिखायें">
+
+<!-- LOCALIZATION NOTE: Do NOT translate text for 'SourceTabDirection'
+     Use latin "ltr" if you want the <html> image to left of the 
+     'SourceMode.label' text defined above,
+     or use latin "rtl" if you want this image to the right of text
+     This is the value of the HTML 'dir' attribute
+-->
+<!ENTITY SourceTabDirection "ltr">
+
+<!-- Structure Toolbar Context Menu items -->
+<!ENTITY structSelect.label         "चुनें">
+<!ENTITY structSelect.accesskey     "s">
+<!ENTITY structRemoveTag.label      "टैब हटायें">
+<!ENTITY structRemoveTag.accesskey  "r">
+<!ENTITY structChangeTag.label      "टैग बदलें">
+<!ENTITY structChangeTag.accesskey  "c">
+
+<!-- TOC manipulation -->
+<!ENTITY insertTOC.label          "डालें">
+<!ENTITY insertTOC.accesskey      "i">
+<!ENTITY updateTOC.label          "अद्यतन करें">
+<!ENTITY updateTOC.accesskey      "u">
+<!ENTITY removeTOC.label          "हटायें">
+<!ENTITY removeTOC.accesskey      "r">
+<!ENTITY tocMenu.label            "सामग्री की तालिका...">
+<!ENTITY tocMenu.accesskey        "b">

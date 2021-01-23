@@ -15,8 +15,15 @@ const fxaDevices = [
 
 add_task(async function setup() {
   await promiseSyncReady();
+  await Services.search.init();
   // gSync.init() is called in a requestIdleCallback. Force its initialization.
   gSync.init();
+  sinon
+    .stub(Weave.Service.clientsEngine, "getClientByFxaDeviceId")
+    .callsFake(fxaDeviceId => {
+      let target = fxaDevices.find(c => c.id == fxaDeviceId);
+      return target ? target.clientRecord : null;
+    });
   sinon.stub(Weave.Service.clientsEngine, "getClientType").returns("desktop");
   await BrowserTestUtils.openNewForegroundTab(gBrowser, "about:mozilla");
 });
@@ -59,7 +66,7 @@ add_task(async function test_link_contextmenu() {
     );
 
   // Add a link to the page
-  await ContentTask.spawn(gBrowser.selectedBrowser, null, () => {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], () => {
     let a = content.document.createElement("a");
     a.href = "https://www.example.org";
     a.id = "testingLink";
@@ -249,9 +256,9 @@ add_task(async function test_page_contextmenu_unconfigured() {
     "Send tab to device is enabled"
   );
   checkPopup([
-    { label: "Not Connected to Sync", disabled: true },
+    { label: "Not Signed In", disabled: true },
     "----",
-    { label: "Sign in to Sync..." },
+    { label: "Sign in to Firefox..." },
     { label: "Learn About Sending Tabs..." },
   ]);
 
@@ -311,8 +318,8 @@ add_task(async function test_page_contextmenu_login_failed() {
 });
 
 add_task(async function test_page_contextmenu_fxa_disabled() {
-  const getter = sinon.stub(gSync, "SYNC_ENABLED").get(() => false);
-  gSync.onSyncDisabled(); // Would have been called on gSync initialization if SYNC_ENABLED had been set.
+  const getter = sinon.stub(gSync, "FXA_ENABLED").get(() => false);
+  gSync.onFxaDisabled(); // Would have been called on gSync initialization if FXA_ENABLED had been set.
   await openContentContextMenu("#moztext");
   is(
     document.getElementById("context-sendpagetodevice").hidden,
@@ -336,6 +343,7 @@ add_task(async function test_page_contextmenu_fxa_disabled() {
 // However, browser_contextmenu.js contains tests that verify its presence.
 
 add_task(async function teardown() {
+  Weave.Service.clientsEngine.getClientByFxaDeviceId.restore();
   Weave.Service.clientsEngine.getClientType.restore();
   gBrowser.removeCurrentTab();
 });
@@ -347,11 +355,6 @@ function checkPopup(expectedItems = null) {
     return;
   }
   const menuItems = popup.children;
-  is(
-    menuItems.length,
-    expectedItems.length,
-    "Popup has the expected children count."
-  );
   for (let i = 0; i < menuItems.length; i++) {
     const menuItem = menuItems[i];
     const expectedItem = expectedItems[i];
@@ -372,6 +375,12 @@ function checkPopup(expectedItems = null) {
       "Correct menu item disabled state"
     );
   }
+  // check the length last - the above loop might have given us other clues...
+  is(
+    menuItems.length,
+    expectedItems.length,
+    "Popup has the expected children count."
+  );
 }
 
 async function openContentContextMenu(selector, openSubmenuId = null) {

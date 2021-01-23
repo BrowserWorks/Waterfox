@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Вставка символу">
+<!ENTITY category.label "Категорія">
+<!ENTITY letter.label "Літери:">
+<!ENTITY letter.accessKey "Л">
+<!ENTITY character.label "Символ:">
+<!ENTITY character.accessKey "С">
+<!ENTITY accentUpper.label "Заголовні з діакритичними знаками">
+<!ENTITY accentLower.label "Рядкові з діакритичними знаками">
+<!ENTITY otherUpper.label "Інші заголовні">
+<!ENTITY otherLower.label "Інші рядкові">
+<!ENTITY commonSymbols.label "Загальні символи">
+<!ENTITY insertButton.label "Вставити">
+<!ENTITY closeButton.label "Закрити">

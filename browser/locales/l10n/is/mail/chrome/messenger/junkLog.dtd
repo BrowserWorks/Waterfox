@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY adaptiveJunkLog.title "Atburðaskrá fyrir þjálfaða ruslpóstsíu">
+<!ENTITY adaptiveJunkLogInfo.label "Atburðaskrá sem sýnir aðgerðir þjálfaðrar ruslpóstsíu.">
+<!ENTITY clearLog.label "Hreinsa atburðaskrá">
+<!ENTITY clearLog.accesskey "H">
+<!ENTITY closeLog.label "Loka">
+<!ENTITY closeLog.accesskey "o">

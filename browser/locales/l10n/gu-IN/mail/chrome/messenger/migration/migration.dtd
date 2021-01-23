@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "આયાત વિઝાર્ડ">
+
+<!ENTITY importFromNothing.label        "કંઈપણ આયાત કરો નહિં">
+<!ENTITY importFromNothing.accesskey    "D">
+<!ENTITY importFromOutlook.label        "આઉટલુક">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "સુયોજનો અને મેલ ફોલ્ડરો આમાંથી આયાત કરો">
+<!ENTITY importItems.title              "આયાત કરવા માટેની વસ્તુઓ">
+<!ENTITY importItems.label              "કઈ વસ્તુઓની આયાત કરવી છે તે પસંદ કરો:">
+
+<!ENTITY migrating.title                "આયાત કરી રહ્યા છીએ...">
+<!ENTITY migrating.label                "નીચેની વસ્તુઓ વર્તમાનમાં આયાત થઈ રહી છે...">
+
+<!ENTITY selectProfile.title            "રુપરેખા પસંદ કરો">
+<!ENTITY selectProfile.label            "નીચેની રુપરેખાઓ આમાંથી આયાત કરવા માટે ઉપ્લબ્ધ છે:">
+
+<!ENTITY done.title                     "આયાત પૂર્ણ">
+<!ENTITY done.label                     "નીચેની વસ્તુઓની સફળતાપૂર્વક આયાત થઈ ગઈ:">

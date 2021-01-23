@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Smiley Menu items -->
+<!ENTITY insertSmiley.label "Senyuman">
+<!ENTITY insertSmiley.accesskey "S">
+
+<!ENTITY smiley1Cmd.label "Senyum">
+<!ENTITY smiley1Cmd.accesskey "S">
+<!ENTITY smiley1Cmd.tooltip "Sisip wajah senyuman">
+<!ENTITY smiley2Cmd.label "Berkerut">
+<!ENTITY smiley2Cmd.accesskey "B">
+<!ENTITY smiley2Cmd.tooltip "Sisip wajah berkerut">
+<!ENTITY smiley3Cmd.label "Kenyit">
+<!ENTITY smiley3Cmd.accesskey "K">
+<!ENTITY smiley3Cmd.tooltip "Sisip wajah kenyit">
+<!ENTITY smiley4Cmd.label "Jelir lidah">
+<!ENTITY smiley4Cmd.accesskey "J">
+<!ENTITY smiley4Cmd.tooltip "Sisip wajah jelir lidah">
+<!ENTITY smiley5Cmd.label "Ketawa">
+<!ENTITY smiley5Cmd.accesskey "K">
+<!ENTITY smiley5Cmd.tooltip "Sisip wajah ketawa">
+<!ENTITY smiley6Cmd.label "Sipu">
+<!ENTITY smiley6Cmd.accesskey "S">
+<!ENTITY smiley6Cmd.tooltip "Sisip wajah sipu">
+<!ENTITY smiley7Cmd.label "Tak pasti">
+<!ENTITY smiley7Cmd.accesskey "T">
+<!ENTITY smiley7Cmd.tooltip "Sisip wajah tak pasti">
+<!ENTITY smiley8Cmd.label "Terkejut">
+<!ENTITY smiley8Cmd.accesskey "j">
+<!ENTITY smiley8Cmd.tooltip "Sisip wajah terkejut">
+<!ENTITY smiley9Cmd.label "Cium">
+<!ENTITY smiley9Cmd.accesskey "C">
+<!ENTITY smiley9Cmd.tooltip "Sisip wajah mencium">
+<!ENTITY smiley10Cmd.label "Jerit">
+<!ENTITY smiley10Cmd.accesskey "J">
+<!ENTITY smiley10Cmd.tooltip "Sisip wajah menjerit">
+<!ENTITY smiley11Cmd.label "Selamba">
+<!ENTITY smiley11Cmd.accesskey "S">
+<!ENTITY smiley11Cmd.tooltip "Sisip wajah selamba">
+<!ENTITY smiley12Cmd.label "Mulut-berwang">
+<!ENTITY smiley12Cmd.accesskey "M">
+<!ENTITY smiley12Cmd.tooltip "Sisip wajah mulut-berwang">
+<!ENTITY smiley13Cmd.label "Kaki-dalam-Mulut">
+<!ENTITY smiley13Cmd.accesskey "k">
+<!ENTITY smiley13Cmd.tooltip "Sisip wajah kaki-dalam-mulut">
+<!ENTITY smiley14Cmd.label "Polos">
+<!ENTITY smiley14Cmd.accesskey "P">
+<!ENTITY smiley14Cmd.tooltip "Sisip wajah polos">
+<!ENTITY smiley15Cmd.label "Menangis">
+<!ENTITY smiley15Cmd.accesskey "s">
+<!ENTITY smiley15Cmd.tooltip "Sisip wajah menangis">
+<!ENTITY smiley16Cmd.label "Bibir-Terkatup">
+<!ENTITY smiley16Cmd.accesskey "b">
+<!ENTITY smiley16Cmd.tooltip "Sisip wajah bibir-terkatup">
+<!ENTITY SmileButton.tooltip "Sisip wajah senyuman">
+

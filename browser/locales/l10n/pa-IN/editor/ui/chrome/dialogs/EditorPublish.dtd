@@ -1,0 +1,68 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label         "ਪੇਜ਼ ਪਬਲਿਸ਼">
+<!ENTITY windowTitleSettings.label "ਪਬਲਿਸ਼ ਸੈਟਿੰਗ">
+
+<!ENTITY publishTab.label         "ਪਬਲਿਸ਼">
+<!ENTITY settingsTab.label        "ਸੈਟਿੰਗ">
+
+<!ENTITY publishButton.label      "ਪਬਲਿਸ਼">
+
+<!-- Publish Tab Panel -->
+<!ENTITY siteList.label           "ਸਾਇਟ ਨਾਂ:">
+<!ENTITY siteList.accesskey           "e">
+<!ENTITY siteList.tooltip         "ਸਾਇਟ, ਜਿਸ ਉੱਤੇ ਤੁਸੀਂ ਪਬਲਿਸ਼ ਕਰਨਾ ਚਾਹੁੰਦੇ ਹੋ, ਦੀ ਚੋਣ ਕਰੋ">
+<!ENTITY newSiteButton.label      "ਨਵੀਂ ਸਾਇਟ">
+<!ENTITY newSiteButton.accesskey      "N">
+<!ENTITY docDirList.label         "ਇਸ ਪੇਜ਼ ਲਈ ਸਾਇਟ ਅਧੀਨ-ਡਾਇਰੈਕਟਰੀ:">
+<!ENTITY docDirList.accesskey         "S">
+<!ENTITY docDirList.tooltip           "ਇਹ ਪੇਜ਼ ਲਈ ਰਿਮੋਟ ਸਬ-ਡਾਇਰੈਕਟਰੀ ਚੁਣੋ ਜਾਂ ਨਾਂ ਦਿਓ">
+<!ENTITY publishImgCheckbox.label "ਚਿੱਤਰ ਅਤੇ ਹੋਰ ਫਾਇਲਾਂ ਸ਼ਾਮਿਲ">
+<!ENTITY publishImgCheckbox.accesskey "o">
+<!ENTITY publishImgCheckbox.tooltip "ਇਸ ਪੇਜ਼ ਰਾਹੀਂ ਮੰਗੇ ਚਿੱਤਰ ਅਤੇ ਹੋਰ ਫਾਇਲਾਂ ਵੀ ਪਬਲਿਸ਼ ਕਰੋ">
+<!ENTITY sameLocationRadio.label  "ਪੇਜ਼ ਦਾ ਟਿਕਾਣਾ ਹੀ ਵਰਤੋਂ">
+<!ENTITY sameLocationRadio.accesskey  "U">
+<!ENTITY sameLocationRadio.tooltip "ਪੇਜ਼ ਦੇ ਟਿਕਾਣੇ ਉੱਤੇ ਹੀ ਫਾਇਲਾਂ ਪਬਲਿਸ਼ ਕਰੋ">
+<!ENTITY useSubdirRadio.label         "ਇਹ ਸਾਈਟ ਸਬ-ਡਾਇਰੈਕਟਰੀ ਵਰਤੋਂ:">
+<!ENTITY useSubdirRadio.accesskey     "d">
+<!ENTITY useSubdirRadio.tooltip       "ਫਾਇਲਾਂ ਨੂੰ ਚੁਣੀ ਰਿਮੋਟ ਸਬ-ਡਾਇਰੈਕਟਰੀ ਵਿੱਚ ਪਬਲਿਸ਼ ਕਰੋ">
+<!ENTITY otherDirList.tooltip         "ਰਿਮੋਟ ਸਬ-ਡਾਇਰੈਕਟਰੀ ਚੁਣੋ ਜਾਂ ਦਿਓ, ਜਿੱਥੇ ਫਾਇਲਾਂ ਨੂੰ ਪਬਲਿਸ਼ ਕਰਨਾ ਹੈ">
+<!ENTITY pageTitle.label          "ਪੇਜ਼ ਟਾਈਟਲ:">
+<!ENTITY pageTitle.accesskey          "T">
+<!ENTITY pageTitle.tooltip        "ਵਿੰਡੋ ਵਿੱਚ ਅਤੇ ਬੁੱਕਮਾਰਕ ਦੀ ਪਛਾਣ ਲਈ ਨਾਂ ਦਿਓ">
+<!ENTITY pageTitleExample.label   "ਜਿਵੇਂ ਕਿ: &quot;ਮੇਰਾ ਵੈਬ ਸਫ਼ਾ&quot;">
+<!ENTITY filename.label           "ਫਾਇਲ ਨਾਂ:">
+<!ENTITY filename.accesskey           "F">
+<!ENTITY filename.tooltip         "ਇਸ ਫਾਇਲ ਲਈ ਨਾਂ ਦਿਓ, ਵੈਬ ਸਫ਼ੇ ਲਈ '.html' ਸਮੇਤ">
+<!ENTITY filenameExample.label    "ਜਿਵੇਂ ਕਿ,: &quot;mypage.html&quot;">
+<!ENTITY setDefaultButton.label   "ਡਿਫਾਲਟ ਦੇ ਤੌਰ 'ਤੇ ਵਰਤੋਂ">
+<!ENTITY setDefaultButton.accesskey   "D">
+<!ENTITY removeButton.label       "ਸਾਇਟ ਹਟਾਓ">
+<!ENTITY removeButton.accesskey       "R">
+
+<!-- Settings Tab Panel -->
+<!ENTITY publishSites.label   "ਸਾਇਟ ਪਬਲਿਸ਼">
+<!ENTITY serverInfo.label     "ਸਰਵਰ ਜਾਣਕਾਰੀ">
+<!ENTITY loginInfo.label      "ਲਾਗਇਨ ਜਾਣਕਾਰੀ">
+<!ENTITY siteName.label       "ਸਾਇਟ ਨਾਂ:">
+<!ENTITY siteName.accesskey           "e">
+<!ENTITY siteName.tooltip     "ਇਸ ਸਾਇਟ ਦੀ ਪਛਾਣ ਕਰਨ ਲਈ ਆਮ ਜਿਹਾ ਨਾਂ (ਜਿਵੇਂ ਕਿ: 'MySite')">
+<!ENTITY siteUrl.accesskey            "a">
+<!ENTITY siteUrl.label        "ਪਬਲਿਸ਼ਿੰਗ ਨਾਂ (e.g.: 'ftp://ftp.myisp.com/myusername'):">
+<!ENTITY siteUrl.tooltip      "ਤੁਹਾਡੇ ISP ਜਾਂ ਵੈਬ ਹੋਸਟ ਸਰਵਿਸ ਵਲੋਂ ਦਿੱਤਾ ਗਿਆ FTP:// ਜਾਂ HTTP:// ਐਡਰੈੱਸ">
+<!ENTITY browseUrl.label      "ਆਪਣੇ ਮੇਨ ਪੇਜ਼ ਦਾ HTTP ਐਡਰੈੱਸ (ਜਿਵੇਂ ਕਿ: 'http://www.myisp.com/myusername'):">
+<!ENTITY browseUrl.accesskey          "T">
+<!ENTITY browseUrl.tooltip    "ਆਪਣੀ ਘਰ ਡਾਇਰੈਕਟਰੀ ਦਾ HTTP:// ਐਡਰੈੱਸ (ਫਾਇਲ ਨਾਂ ਨਾ ਦਿਓ)">
+<!ENTITY username.label       "ਯੂਜ਼ਰ ਨਾਂ:">
+<!ENTITY username.accesskey           "U">
+<!ENTITY username.tooltip     "ਆਪਣਾ ਯੂਜ਼ਰ ਨਾਂ ਦਿਓ, ਜਿਸ ਨਾਲ ਤੁਸੀਂ ਆਪਣੇ ISP  ਜਾਂ ਵੈਬ ਹੋਸਟਿੰਗ ਸੇਵਾ ਦੀ ਵਰਤੋਂ ਕਰ ਸਕਦੇ ਹੋ">
+<!ENTITY password.label       "ਪਾਸਵਰਡ:">
+<!ENTITY password.accesskey           "w">
+<!ENTITY password.tooltip     "ਤੁਹਾਡੇ ਯੂਜ਼ਰ ਨਾਂ ਨਾਲ ਸਬੰਧਿਤ ਪਾਸਵਰਡ">
+<!ENTITY savePassword.label   "ਪਾਸਵਰਡ ਸੰਭਾਲੋ">
+<!ENTITY savePassword.accesskey       "S">
+<!ENTITY savePassword.tooltip "ਆਪਣੇ ਪਾਸਵਰਡ ਨੂੰ ਸੁਰੱਖਿਅਤ ਢੰਗ ਨਾਲ ਆਪਣੇ ਪਾਸਵਰਡ ਮੈਨੇਜਰ ਨਾਲ ਸੁਰੱਖਿਅਤ ਰੱਖਣ ਲਈ ਇਸ ਦੀ ਚੋਣ ਕਰੋ">

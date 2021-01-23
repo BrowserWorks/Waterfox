@@ -19,18 +19,18 @@ add_task(async function() {
   // all the requests the page is making, not only the XHRs.
   // We can't use about:blank here, because initNetMonitor checks that the
   // page has actually made at least one request.
-  const { tab, monitor } = await initNetMonitor(SIMPLE_URL);
+  const { monitor } = await initNetMonitor(SIMPLE_URL, { requestCount: 1 });
 
   const { document, store, windowRequire } = monitor.panelWin;
   const Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
 
   store.dispatch(Actions.batchEnable(false));
   let waitPromise = waitForNetworkEvents(monitor, N_EXPECTED_REQUESTS);
-  BrowserTestUtils.loadURI(tab.linkedBrowser, CAUSE_URL);
+  await navigateTo(CAUSE_URL);
   await waitPromise;
 
   info("Clicking item and waiting for details panel to open");
-  waitPromise = waitForDOM(document, ".network-details-panel");
+  waitPromise = waitForDOM(document, ".network-details-bar");
   const xhrRequestItem = document.querySelectorAll(".request-list-item")[3];
   EventUtils.sendMouseEvent({ type: "mousedown" }, xhrRequestItem);
   await waitPromise;

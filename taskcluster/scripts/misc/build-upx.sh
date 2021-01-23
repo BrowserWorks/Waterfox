@@ -2,9 +2,7 @@
 set -x -e -v
 
 WORKSPACE=$HOME/workspace
-HOME_DIR=$WORKSPACE/build
 INSTALL_DIR=$WORKSPACE/upx
-UPLOAD_DIR=$HOME/artifacts
 
 mkdir -p $INSTALL_DIR/bin
 
@@ -12,7 +10,8 @@ cd $WORKSPACE
 
 git clone -n https://github.com/upx/upx.git upx-clone
 cd upx-clone
-git checkout d31947e1f016e87f24f88b944439bbee892f0429 # Asserts integrity of the clone (right?)
+# https://github.com/upx/upx/releases/tag/v3.95
+git checkout 7a3637ff5a800b8bcbad20ae7f668d8c8449b014 # Asserts integrity of the clone (right?)
 git submodule update --init --recursive
 cd src
 make -j$(nproc)

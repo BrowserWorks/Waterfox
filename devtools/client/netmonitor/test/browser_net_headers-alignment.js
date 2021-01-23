@@ -10,7 +10,10 @@
 add_task(async function() {
   requestLongerTimeout(4);
 
-  const { tab, monitor } = await initNetMonitor(INFINITE_GET_URL, true);
+  const { tab, monitor } = await initNetMonitor(INFINITE_GET_URL, {
+    enableCache: true,
+    requestCount: 1,
+  });
   const { document, windowRequire, store } = monitor.panelWin;
   const Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
 
@@ -32,7 +35,7 @@ add_task(async function() {
   testColumnsAlignment(headers, requestsContainer);
 
   // Stop doing requests.
-  await ContentTask.spawn(tab.linkedBrowser, {}, async function() {
+  await SpecialPowers.spawn(tab.linkedBrowser, [], async function() {
     content.wrappedJSObject.stopRequests();
   });
 

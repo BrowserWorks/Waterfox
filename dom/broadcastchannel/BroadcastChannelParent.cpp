@@ -11,7 +11,6 @@
 #include "mozilla/ipc/BackgroundParent.h"
 #include "mozilla/ipc/IPCStreamUtils.h"
 #include "mozilla/Unused.h"
-#include "nsIScriptSecurityManager.h"
 
 namespace mozilla {
 
@@ -32,7 +31,7 @@ BroadcastChannelParent::~BroadcastChannelParent() {
 }
 
 mozilla::ipc::IPCResult BroadcastChannelParent::RecvPostMessage(
-    const ClonedMessageData& aData) {
+    const MessageData& aData) {
   AssertIsOnBackgroundThread();
 
   if (NS_WARN_IF(!mService)) {

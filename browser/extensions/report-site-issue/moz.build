@@ -27,6 +27,10 @@ FINAL_TARGET_FILES.features['webcompat-reporter@mozilla.org'].experimentalAPIs +
   'experimentalAPIs/tabExtras.json'
 ]
 
+FINAL_TARGET_FILES.features['webcompat-reporter@mozilla.org'].experimentalAPIs.actors += [
+  'experimentalAPIs/actors/tabExtrasActor.jsm'
+]
+
 FINAL_TARGET_FILES.features['webcompat-reporter@mozilla.org'].icons += [
   'icons/lightbulb.svg'
 ]
@@ -34,4 +38,4 @@ FINAL_TARGET_FILES.features['webcompat-reporter@mozilla.org'].icons += [
 BROWSER_CHROME_MANIFESTS += ['test/browser/browser.ini']
 
 with Files('**'):
-    BUG_COMPONENT = ('Web Compatibility Tools', 'General')
+    BUG_COMPONENT = ('Web Compatibility', 'Tooling & Investigations')

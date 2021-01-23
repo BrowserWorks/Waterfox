@@ -4,7 +4,13 @@
 const TEST_ORIGIN = "https://example.com";
 const TEST_SUB_ORIGIN = "https://test1.example.com";
 const REMOVE_DIALOG_URL =
-  "chrome://browser/content/preferences/siteDataRemoveSelected.xul";
+  "chrome://browser/content/preferences/dialogs/siteDataRemoveSelected.xhtml";
+
+// Greek IDN for 'example.test'.
+const TEST_IDN_ORIGIN =
+  "https://\u03C0\u03B1\u03C1\u03AC\u03B4\u03B5\u03B9\u03B3\u03BC\u03B1.\u03B4\u03BF\u03BA\u03B9\u03BC\u03AE";
+const TEST_PUNY_ORIGIN = "https://xn--hxajbheg2az3al.xn--jxalpdlp/";
+const TEST_PUNY_SUB_ORIGIN = "https://sub1.xn--hxajbheg2az3al.xn--jxalpdlp/";
 
 ChromeUtils.defineModuleGetter(
   this,
@@ -12,36 +18,33 @@ ChromeUtils.defineModuleGetter(
   "resource://testing-common/SiteDataTestUtils.jsm"
 );
 
-add_task(async function setup() {
-  let oldCanRecord = Services.telemetry.canRecordExtended;
-  Services.telemetry.canRecordExtended = true;
-
-  registerCleanupFunction(() => {
-    Services.telemetry.canRecordExtended = oldCanRecord;
-  });
-});
-
-async function testClearing(testQuota, testCookies) {
+async function testClearing(
+  testQuota,
+  testCookies,
+  testURI,
+  origin,
+  subOrigin
+) {
   // Add some test quota storage.
   if (testQuota) {
-    await SiteDataTestUtils.addToIndexedDB(TEST_ORIGIN);
-    await SiteDataTestUtils.addToIndexedDB(TEST_SUB_ORIGIN);
+    await SiteDataTestUtils.addToIndexedDB(origin);
+    await SiteDataTestUtils.addToIndexedDB(subOrigin);
   }
 
   // Add some test cookies.
   if (testCookies) {
-    SiteDataTestUtils.addToCookies(TEST_ORIGIN, "test1", "1");
-    SiteDataTestUtils.addToCookies(TEST_ORIGIN, "test2", "2");
-    SiteDataTestUtils.addToCookies(TEST_SUB_ORIGIN, "test3", "1");
+    SiteDataTestUtils.addToCookies(origin, "test1", "1");
+    SiteDataTestUtils.addToCookies(origin, "test2", "2");
+    SiteDataTestUtils.addToCookies(subOrigin, "test3", "1");
   }
 
-  await BrowserTestUtils.withNewTab(TEST_ORIGIN, async function(browser) {
+  await BrowserTestUtils.withNewTab(testURI, async function(browser) {
     // Verify we have added quota storage.
     if (testQuota) {
-      let usage = await SiteDataTestUtils.getQuotaUsage(TEST_ORIGIN);
+      let usage = await SiteDataTestUtils.getQuotaUsage(origin);
       Assert.greater(usage, 0, "Should have data for the base origin.");
 
-      usage = await SiteDataTestUtils.getQuotaUsage(TEST_SUB_ORIGIN);
+      usage = await SiteDataTestUtils.getQuotaUsage(subOrigin);
       Assert.greater(usage, 0, "Should have data for the sub origin.");
     }
 
@@ -51,12 +54,8 @@ async function testClearing(testQuota, testCookies) {
       gIdentityHandler._identityPopup,
       "popupshown"
     );
-    let siteDataUpdated = TestUtils.topicObserved(
-      "sitedatamanager:sites-updated"
-    );
     gIdentityHandler._identityBox.click();
     await promisePanelOpen;
-    await siteDataUpdated;
 
     let clearFooter = document.getElementById(
       "identity-popup-clear-sitedata-footer"
@@ -64,7 +63,10 @@ async function testClearing(testQuota, testCookies) {
     let clearButton = document.getElementById(
       "identity-popup-clear-sitedata-button"
     );
-    ok(!clearFooter.hidden, "The clear data footer is not hidden.");
+    TestUtils.waitForCondition(
+      () => !clearFooter.hidden,
+      "The clear data footer is not hidden."
+    );
 
     let cookiesCleared;
     if (testCookies) {
@@ -84,10 +86,10 @@ async function testClearing(testQuota, testCookies) {
       ]);
     }
 
-    Services.telemetry.clearEvents();
-
     // Click the "Clear data" button.
-    siteDataUpdated = TestUtils.topicObserved("sitedatamanager:sites-updated");
+    let siteDataUpdated = TestUtils.topicObserved(
+      "sitedatamanager:sites-updated"
+    );
     let hideEvent = BrowserTestUtils.waitForEvent(
       gIdentityHandler._identityPopup,
       "popuphidden"
@@ -100,29 +102,18 @@ async function testClearing(testQuota, testCookies) {
     await hideEvent;
     await removeDialogPromise;
 
-    let events = Services.telemetry.snapshotEvents(
-      Ci.nsITelemetry.DATASET_PRERELEASE_CHANNELS
-    ).parent;
-    let buttonEvents = events.filter(
-      e =>
-        e[1] == "security.ui.identitypopup" &&
-        e[2] == "click" &&
-        e[3] == "clear_sitedata"
-    );
-    is(buttonEvents.length, 1, "recorded telemetry for the button click");
-
     await siteDataUpdated;
 
     // Check that cookies were deleted.
     if (testCookies) {
       await cookiesCleared;
-      let uri = Services.io.newURI(TEST_ORIGIN);
+      let uri = Services.io.newURI(origin);
       is(
         Services.cookies.countCookiesFromHost(uri.host),
         0,
         "Cookies from the base domain should be cleared"
       );
-      uri = Services.io.newURI(TEST_SUB_ORIGIN);
+      uri = Services.io.newURI(subOrigin);
       is(
         Services.cookies.countCookiesFromHost(uri.host),
         0,
@@ -133,11 +124,11 @@ async function testClearing(testQuota, testCookies) {
     // Check that quota storage was deleted.
     if (testQuota) {
       await TestUtils.waitForCondition(async () => {
-        let usage = await SiteDataTestUtils.getQuotaUsage(TEST_ORIGIN);
+        let usage = await SiteDataTestUtils.getQuotaUsage(origin);
         return usage == 0;
       }, "Should have no data for the base origin.");
 
-      let usage = await SiteDataTestUtils.getQuotaUsage(TEST_SUB_ORIGIN);
+      let usage = await SiteDataTestUtils.getQuotaUsage(subOrigin);
       is(usage, 0, "Should have no data for the sub origin.");
     }
 
@@ -146,10 +137,12 @@ async function testClearing(testQuota, testCookies) {
       gIdentityHandler._identityPopup,
       "popupshown"
     );
-    siteDataUpdated = TestUtils.topicObserved("sitedatamanager:sites-updated");
     gIdentityHandler._identityBox.click();
     await promisePanelOpen;
-    await siteDataUpdated;
+
+    // Wait for a second to see if the button is shown.
+    // eslint-disable-next-line mozilla/no-arbitrary-setTimeout
+    await new Promise(c => setTimeout(c, 1000));
 
     ok(
       clearFooter.hidden,
@@ -160,15 +153,26 @@ async function testClearing(testQuota, testCookies) {
 
 // Test removing quota managed storage.
 add_task(async function test_ClearSiteData() {
-  await testClearing(true, false);
+  await testClearing(true, false, TEST_ORIGIN, TEST_ORIGIN, TEST_SUB_ORIGIN);
 });
 
 // Test removing cookies.
 add_task(async function test_ClearCookies() {
-  await testClearing(false, true);
+  await testClearing(false, true, TEST_ORIGIN, TEST_ORIGIN, TEST_SUB_ORIGIN);
 });
 
 // Test removing both.
 add_task(async function test_ClearCookiesAndSiteData() {
-  await testClearing(true, true);
+  await testClearing(true, true, TEST_ORIGIN, TEST_ORIGIN, TEST_SUB_ORIGIN);
+});
+
+// Test IDN Domains
+add_task(async function test_IDN_ClearCookiesAndSiteData() {
+  await testClearing(
+    true,
+    true,
+    TEST_IDN_ORIGIN,
+    TEST_PUNY_ORIGIN,
+    TEST_PUNY_SUB_ORIGIN
+  );
 });

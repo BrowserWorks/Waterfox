@@ -19,61 +19,61 @@ add_task(async function test_opening_blocked_popups() {
     "data:text/html,Hello"
   );
 
-  await ContentTask.spawn(
+  let popupframeBC = await SpecialPowers.spawn(
     tab.linkedBrowser,
-    baseURL + "popup_blocker.html",
+    [baseURL + "popup_blocker.html"],
     uri => {
       let iframe = content.document.createElement("iframe");
       iframe.id = "popupframe";
       iframe.src = uri;
       content.document.body.appendChild(iframe);
+      return iframe.browsingContext;
     }
   );
 
   // Wait for the popup-blocked notification.
   let notification;
-  await BrowserTestUtils.waitForCondition(
+  await TestUtils.waitForCondition(
     () =>
       (notification = gBrowser
         .getNotificationBox()
-        .getNotificationWithValue("popup-blocked"))
+        .getNotificationWithValue("popup-blocked")),
+    "Waiting for the popup-blocked notification."
   );
 
   ok(notification, "Should have notification.");
 
-  await ContentTask.spawn(tab.linkedBrowser, baseURL, async function(uri) {
+  let pageHideHappened = BrowserTestUtils.waitForContentEvent(
+    tab.linkedBrowser,
+    "pagehide",
+    true
+  );
+  await SpecialPowers.spawn(tab.linkedBrowser, [baseURL], async function(uri) {
     let iframe = content.document.createElement("iframe");
-    let pageHideHappened = ContentTaskUtils.waitForEvent(
-      this,
-      "pagehide",
-      true
-    );
     content.document.body.appendChild(iframe);
     iframe.src = uri;
-    await pageHideHappened;
   });
 
+  await pageHideHappened;
   notification = gBrowser
     .getNotificationBox()
     .getNotificationWithValue("popup-blocked");
   ok(notification, "Should still have notification");
 
+  pageHideHappened = BrowserTestUtils.waitForContentEvent(
+    tab.linkedBrowser,
+    "pagehide",
+    true
+  );
   // Now navigate the subframe.
-  await ContentTask.spawn(tab.linkedBrowser, null, async function() {
-    let pageHideHappened = ContentTaskUtils.waitForEvent(
-      this,
-      "pagehide",
-      true
-    );
-    content.document.getElementById(
-      "popupframe"
-    ).contentDocument.location.href = "about:blank";
-    await pageHideHappened;
+  await SpecialPowers.spawn(popupframeBC, [], async function() {
+    content.document.location.href = "about:blank";
   });
-
-  await BrowserTestUtils.waitForCondition(
+  await pageHideHappened;
+  await TestUtils.waitForCondition(
     () =>
-      !gBrowser.getNotificationBox().getNotificationWithValue("popup-blocked")
+      !gBrowser.getNotificationBox().getNotificationWithValue("popup-blocked"),
+    "Notification should go away"
   );
   ok(
     !gBrowser.getNotificationBox().getNotificationWithValue("popup-blocked"),
@@ -81,9 +81,9 @@ add_task(async function test_opening_blocked_popups() {
   );
 
   // Remove the frame and add another one:
-  await ContentTask.spawn(
+  await SpecialPowers.spawn(
     tab.linkedBrowser,
-    baseURL + "popup_blocker.html",
+    [baseURL + "popup_blocker.html"],
     uri => {
       content.document.getElementById("popupframe").remove();
       let iframe = content.document.createElement("iframe");
@@ -94,7 +94,7 @@ add_task(async function test_opening_blocked_popups() {
   );
 
   // Wait for the popup-blocked notification.
-  await BrowserTestUtils.waitForCondition(
+  await TestUtils.waitForCondition(
     () =>
       (notification = gBrowser
         .getNotificationBox()
@@ -103,11 +103,11 @@ add_task(async function test_opening_blocked_popups() {
 
   ok(notification, "Should have notification.");
 
-  await ContentTask.spawn(tab.linkedBrowser, null, () => {
+  await SpecialPowers.spawn(tab.linkedBrowser, [], () => {
     content.document.getElementById("popupframe").remove();
   });
 
-  await BrowserTestUtils.waitForCondition(
+  await TestUtils.waitForCondition(
     () =>
       !gBrowser.getNotificationBox().getNotificationWithValue("popup-blocked")
   );

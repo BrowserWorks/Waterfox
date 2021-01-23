@@ -11,9 +11,9 @@
 #include "nsIProtocolHandler.h"
 #include "nsIURI.h"
 #include "nsCOMPtr.h"
-#include "nsIInputStream.h"
 #include "nsTArray.h"
 #include "nsWeakReference.h"
+#include <functional>
 
 #define BLOBURI_SCHEME "blob"
 
@@ -44,13 +44,10 @@ class BlobURLProtocolHandler final : public nsIProtocolHandler,
 
   // Methods for managing uri->object mapping
   // AddDataEntry creates the URI with the given scheme and returns it in aUri
-  static nsresult AddDataEntry(mozilla::dom::BlobImpl* aBlobImpl,
-                               nsIPrincipal* aPrincipal, nsACString& aUri);
-  static nsresult AddDataEntry(mozilla::dom::MediaSource* aMediaSource,
-                               nsIPrincipal* aPrincipal, nsACString& aUri);
+  static nsresult AddDataEntry(BlobImpl*, nsIPrincipal*, nsACString& aUri);
+  static nsresult AddDataEntry(MediaSource*, nsIPrincipal*, nsACString& aUri);
   // IPC only
-  static nsresult AddDataEntry(const nsACString& aURI, nsIPrincipal* aPrincipal,
-                               mozilla::dom::BlobImpl* aBlobImpl);
+  static void AddDataEntry(const nsACString& aURI, nsIPrincipal*, BlobImpl*);
 
   // This method revokes a blobURL. Because some operations could still be in
   // progress, the revoking consists in marking the blobURL as revoked and in
@@ -66,9 +63,14 @@ class BlobURLProtocolHandler final : public nsIProtocolHandler,
   static void Traverse(const nsACString& aUri,
                        nsCycleCollectionTraversalCallback& aCallback);
 
-  static bool GetAllBlobURLEntries(
-      nsTArray<mozilla::dom::BlobURLRegistrationData>& aRegistrations,
-      mozilla::dom::ContentParent* aCP);
+  // Main-thread only method to invoke a helper function that gets called for
+  // every known and recently revoked Blob URL. The helper function should
+  // return true to keep going or false to stop enumerating (presumably because
+  // of an unexpected XPCOM or IPC error). This method returns false if already
+  // shutdown or if the helper method returns false, true otherwise.
+  static bool ForEachBlobURL(
+      std::function<bool(BlobImpl*, nsIPrincipal*, const nsACString&,
+                         bool aRevoked)>&& aCb);
 
   // This method returns false if aURI is not a known BlobURL. Otherwise it
   // returns true.

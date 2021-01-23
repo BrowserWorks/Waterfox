@@ -1,4 +1,3 @@
-/* vim:set ts=2 sw=2 sts=2 et: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -8,9 +7,10 @@
 const EventEmitter = require("devtools/shared/event-emitter");
 const { LocalizationHelper, ELLIPSIS } = require("devtools/shared/l10n");
 const KeyShortcuts = require("devtools/client/shared/key-shortcuts");
-const JSOL = require("devtools/client/shared/vendor/jsol");
+const { parseItemValue } = require("devtools/shared/storage/utils");
 const { KeyCodes } = require("devtools/client/shared/keycodes");
 const { getUnicodeHostname } = require("devtools/client/shared/unicode-url");
+const getStorageTypeURL = require("devtools/client/storage/utils/mdn-utils");
 
 // GUID to be used as a separator in compound keys. This must match the same
 // constant in devtools/server/actors/storage.js,
@@ -33,19 +33,14 @@ loader.lazyRequireGetter(
 loader.lazyImporter(
   this,
   "VariablesView",
-  "resource://devtools/client/shared/widgets/VariablesView.jsm"
-);
-loader.lazyRequireGetter(
-  this,
-  "validator",
-  "devtools/client/shared/vendor/stringvalidator/validator"
+  "resource://devtools/client/storage/VariablesView.jsm"
 );
 
 /**
  * Localization convenience methods.
  */
 const STORAGE_STRINGS = "devtools/client/locales/storage.properties";
-const L10N = new LocalizationHelper(STORAGE_STRINGS);
+const L10N = new LocalizationHelper(STORAGE_STRINGS, true);
 
 const GENERIC_VARIABLES_VIEW_SETTINGS = {
   lazyEmpty: true,
@@ -64,42 +59,65 @@ const REASON = {
   UPDATE: "update",
 };
 
-const COOKIE_KEY_MAP = {
-  path: "Path",
-  host: "Domain",
-  expires: "Expires",
-  hostOnly: "HostOnly",
-  isSecure: "Secure",
-  isHttpOnly: "HttpOnly",
-  creationTime: "CreationTime",
-  lastAccessed: "LastAccessed",
-};
-
 const SAFE_HOSTS_PREFIXES_REGEX = /^(about:|https?:|file:|moz-extension:)/;
-const MATH_REGEX = /(?:(?:^|[-+_*/])(?:\s*-?\d+(\.\d+)?(?:[eE][+-]?\d+)?\s*))+$/;
 
 // Maximum length of item name to show in context menu label - will be
 // trimmed with ellipsis if it's longer.
 const ITEM_NAME_MAX_LENGTH = 32;
 
+// We only localize certain table headers. The headers that we do not localize
+// along with their English translation are stored in this Map for easy
+// reference.
+const NON_L10N_STRINGS = new Map([
+  ["Cache.url", "URL"],
+  ["cookies.host", "Domain"],
+  ["cookies.hostOnly", "HostOnly"],
+  ["cookies.isHttpOnly", "HttpOnly"],
+  ["cookies.isSecure", "Secure"],
+  ["cookies.path", "Path"],
+  ["cookies.sameSite", "SameSite"],
+  ["cookies.uniqueKey", "Unique key"],
+  ["extensionStorage.name", "Key"],
+  ["extensionStorage.value", "Value"],
+  ["indexedDB.autoIncrement", "Auto Increment"],
+  ["indexedDB.db", "Database Name"],
+  ["indexedDB.indexes", "Indexes"],
+  ["indexedDB.keyPath", "Key Path"],
+  ["indexedDB.name", "Key"],
+  ["indexedDB.objectStore", "Object Store Name"],
+  ["indexedDB.objectStores", "Object Stores"],
+  ["indexedDB.origin", "Origin"],
+  ["indexedDB.storage", "Storage"],
+  ["indexedDB.uniqueKey", "Unique key"],
+  ["indexedDB.value", "Value"],
+  ["indexedDB.version", "Version"],
+  ["localStorage.name", "Key"],
+  ["localStorage.value", "Value"],
+  ["sessionStorage.name", "Key"],
+  ["sessionStorage.value", "Value"],
+]);
+
+// If a l10n ID has been changed since it was created we store it in this map
+// along with it's new value for easy reference.
+const NON_ORIGINAL_L10N_IDS = new Map([
+  ["cookies.expires", "cookies.expires2"],
+  ["cookies.lastAccessed", "cookies.lastAccessed2"],
+  ["cookies.creationTime", "cookies.creationTime2"],
+  ["indexedDB.keyPath", "indexedDB.keyPath2"],
+]);
+
 /**
  * StorageUI is controls and builds the UI of the Storage Inspector.
  *
- * @param {Front} front
- *        Front for the storage actor
- * @param {Target} target
- *        Interface for the page we're debugging
  * @param {Window} panelWin
  *        Window of the toolbox panel to populate UI in.
  */
 class StorageUI {
-  constructor(front, target, panelWin, toolbox) {
+  constructor(panelWin, toolbox) {
     EventEmitter.decorate(this);
-    this._target = target;
     this._window = panelWin;
     this._panelDoc = panelWin.document;
     this._toolbox = toolbox;
-    this.front = front;
     this.storageTypes = null;
     this.sidebarToggledOpen = null;
     this.shouldLoadMoreItems = true;
@@ -114,9 +132,10 @@ class StorageUI {
 
     const tableNode = this._panelDoc.getElementById("storage-table");
     this.table = new TableWidget(tableNode, {
-      emptyText: L10N.getStr("table.emptyText"),
+      emptyText: "storage-table-empty-text",
       highlightUpdated: true,
       cellContextMenuId: "storage-table-popup",
+      l10n: this._panelDoc.l10n,
     });
 
     this.updateObjectSidebar = this.updateObjectSidebar.bind(this);
@@ -148,46 +167,8 @@ class StorageUI {
       this.searchBox.focus();
     });
 
-    this.front
-      .listStores()
-      .then(storageTypes => {
-        // When we are in the browser console we list indexedDBs internal to
-        // Firefox e.g. defined inside a .jsm. Because there is no way before this
-        // point to know whether or not we are inside the browser toolbox we have
-        // already fetched the hostnames of these databases.
-        //
-        // If we are not inside the browser toolbox we need to delete these
-        // hostnames.
-        if (!this._target.chrome && storageTypes.indexedDB) {
-          const hosts = storageTypes.indexedDB.hosts;
-          const newHosts = {};
-
-          for (const [host, dbs] of Object.entries(hosts)) {
-            if (SAFE_HOSTS_PREFIXES_REGEX.test(host)) {
-              newHosts[host] = dbs;
-            }
-          }
-
-          storageTypes.indexedDB.hosts = newHosts;
-        }
-
-        this.populateStorageTree(storageTypes);
-      })
-      .catch(e => {
-        if (!this._toolbox || this._toolbox._destroyer) {
-          // The toolbox is in the process of being destroyed... in this case throwing here
-          // is expected and normal so let's ignore the error.
-          return;
-        }
-
-        // The toolbox is open so the error is unexpected and real so let's log it.
-        console.error(e);
-      });
-
     this.onEdit = this.onEdit.bind(this);
-    this.front.on("stores-update", this.onEdit);
     this.onCleared = this.onCleared.bind(this);
-    this.front.on("stores-cleared", this.onCleared);
 
     this.handleKeypress = this.handleKeypress.bind(this);
     this._panelDoc.addEventListener("keypress", this.handleKeypress);
@@ -285,6 +266,81 @@ class StorageUI {
     this._treePopupDelete.addEventListener("command", this.onRemoveTreeItem);
   }
 
+  get currentTarget() {
+    return this._toolbox.targetList.targetFront;
+  }
+
+  async init() {
+    const { targetList } = this._toolbox;
+    this._onTargetAvailable = this._onTargetAvailable.bind(this);
+    this._onTargetDestroyed = this._onTargetDestroyed.bind(this);
+    await targetList.watchTargets(
+      [targetList.TYPES.FRAME],
+      this._onTargetAvailable,
+      this._onTargetDestroyed
+    );
+  }
+
+  async _onTargetAvailable({ targetFront }) {
+    // Only support top level target and navigation to new processes.
+    // i.e. ignore additional targets created for remote <iframes>
+    if (!targetFront.isTopLevel) {
+      return;
+    }
+
+    this.front = await targetFront.getFront("storage");
+    this.front.on("stores-update", this.onEdit);
+    this.front.on("stores-cleared", this.onCleared);
+    try {
+      const storageTypes = await this.front.listStores();
+      // When we are in the browser console we list indexedDBs internal to
+      // Firefox e.g. defined inside a .jsm. Because there is no way before this
+      // point to know whether or not we are inside the browser toolbox we have
+      // already fetched the hostnames of these databases.
+      //
+      // If we are not inside the browser toolbox we need to delete these
+      // hostnames.
+      if (!targetFront.chrome && storageTypes.indexedDB) {
+        const hosts = storageTypes.indexedDB.hosts;
+        const newHosts = {};
+
+        for (const [host, dbs] of Object.entries(hosts)) {
+          if (SAFE_HOSTS_PREFIXES_REGEX.test(host)) {
+            newHosts[host] = dbs;
+          }
+        }
+
+        storageTypes.indexedDB.hosts = newHosts;
+      }
+
+      this.populateStorageTree(storageTypes);
+    } catch (e) {
+      if (!this._toolbox || this._toolbox._destroyer) {
+        // The toolbox is in the process of being destroyed... in this case throwing here
+        // is expected and normal so let's ignore the error.
+        return;
+      }
+
+      // The toolbox is open so the error is unexpected and real so let's log it.
+      console.error(e);
+    }
+  }
+
+  _onTargetDestroyed({ targetFront }) {
+    // Only support top level target and navigation to new processes.
+    // i.e. ignore additional targets created for remote <iframes>
+    if (!targetFront.isTopLevel) {
+      return;
+    }
+
+    this.table.clear();
+    this.hideSidebar();
+    this.tree.clear();
+
+    this.front.off("stores-update", this.onEdit);
+    this.front.off("stores-cleared", this.onCleared);
+  }
+
   set animationsEnabled(value) {
     this._panelDoc.documentElement.classList.toggle("no-animate", !value);
   }
@@ -295,8 +351,6 @@ class StorageUI {
     this.table.off(TableWidget.EVENTS.CELL_EDIT, this.editItem);
     this.table.destroy();
 
-    this.front.off("stores-update", this.onEdit);
-    this.front.off("stores-cleared", this.onCleared);
     this._panelDoc.removeEventListener("keypress", this.handleKeypress);
     this.searchBox.removeEventListener("input", this.filterItems);
     this.searchBox = null;
@@ -591,25 +645,33 @@ class StorageUI {
         } else {
           for (const name of deleted[type][host]) {
             try {
-              // trying to parse names in case of indexedDB or cache
-              const names = JSON.parse(name);
-              // Is a whole cache, database or objectstore deleted?
-              // Then remove it from the tree.
-              if (names.length < 3) {
-                if (this.tree.isSelected([type, host, ...names])) {
-                  this.table.clear();
-                  this.hideSidebar();
-                  this.tree.selectPreviousItem();
+              if (["indexedDB", "Cache"].includes(type)) {
+                // For indexedDB and Cache, the key is being parsed because
+                // these storages are represented as a tree and the key
+                // used to notify their changes is not a simple string.
+                const names = JSON.parse(name);
+                // Is a whole cache, database or objectstore deleted?
+                // Then remove it from the tree.
+                if (names.length < 3) {
+                  if (this.tree.isSelected([type, host, ...names])) {
+                    this.table.clear();
+                    this.hideSidebar();
+                    this.tree.selectPreviousItem();
+                  }
+                  this.tree.remove([type, host, ...names]);
                 }
-                this.tree.remove([type, host, ...names]);
-              }
 
-              // Remove the item from table if currently displayed.
-              if (names.length > 0) {
-                const tableItemName = names.pop();
-                if (this.tree.isSelected([type, host, ...names])) {
-                  await this.removeItemFromTable(tableItemName);
+                // Remove the item from table if currently displayed.
+                if (names.length > 0) {
+                  const tableItemName = names.pop();
+                  if (this.tree.isSelected([type, host, ...names])) {
+                    await this.removeItemFromTable(tableItemName);
+                  }
                 }
+              } else if (this.tree.isSelected([type, host])) {
+                // For all the other storage types with a simple string key,
+                // remove the item from the table by name without any parsing.
+                await this.removeItemFromTable(name);
               }
             } catch (ex) {
               if (this.tree.isSelected([type, host])) {
@@ -644,8 +706,17 @@ class StorageUI {
     try {
       const toUpdate = [];
       for (const name of changed[type][host]) {
-        const names = JSON.parse(name);
-        if (names[0] == db && names[1] == objectStore && names[2]) {
+        if (["indexedDB", "Cache"].includes(type)) {
+          // For indexedDB and Cache, the key is being parsed because
+          // these storage are represented as a tree and the key
+          // used to notify their changes is not a simple string.
+          const names = JSON.parse(name);
+          if (names[0] == db && names[1] == objectStore && names[2]) {
+            toUpdate.push(name);
+          }
+        } else {
+          // For all the other storage types with a simple string key,
+          // update the item from the table by name without any parsing.
           toUpdate.push(name);
         }
       }
@@ -708,19 +779,20 @@ class StorageUI {
           }
         }
 
-        this.actorSupportsAddItem = await this._target.actorHasMethod(
+        const target = this.currentTarget;
+        this.actorSupportsAddItem = await target.actorHasMethod(
           type,
           "addItem"
         );
-        this.actorSupportsRemoveItem = await this._target.actorHasMethod(
+        this.actorSupportsRemoveItem = await target.actorHasMethod(
           type,
           "removeItem"
         );
-        this.actorSupportsRemoveAll = await this._target.actorHasMethod(
+        this.actorSupportsRemoveAll = await target.actorHasMethod(
           type,
           "removeAll"
         );
-        this.actorSupportsRemoveAllSessionCookies = await this._target.actorHasMethod(
+        this.actorSupportsRemoveAllSessionCookies = await target.actorHasMethod(
           type,
           "removeAllSessionCookies"
         );
@@ -817,12 +889,13 @@ class StorageUI {
    * Populates the selected entry from the table in the sidebar for a more
    * detailed view.
    */
+  /* eslint-disable-next-line */
   async updateObjectSidebar() {
     const item = this.table.selectedRow;
     let value;
 
     // Get the string value (async action) and the update the UI synchronously.
-    if (item && item.name && item.valueActor) {
+    if (item?.name && item?.valueActor) {
       value = await item.valueActor.string();
     }
 
@@ -855,7 +928,10 @@ class StorageUI {
       itemVar.setGrip(value);
 
       // May be the item value is a json or a key value pair itself
-      this.parseItemValue(item.name, value);
+      const obj = parseItemValue(value);
+      if (typeof obj === "object") {
+        this.populateSidebar(item.name, obj);
+      }
 
       // By default the item name and value are shown. If this is the only
       // information available, then nothing else is to be displayed.
@@ -869,12 +945,12 @@ class StorageUI {
         );
         for (const prop of otherProps) {
           const column = this.table.columns.get(prop);
-          if (column && column.private) {
+          if (column?.private) {
             continue;
           }
 
-          const cookieProp = COOKIE_KEY_MAP[prop] || prop;
-          rawObject[cookieProp] = item[prop];
+          const fieldName = getColumnName(this.table.datatype, prop);
+          rawObject[fieldName] = item[prop];
         }
         itemVar.populate(rawObject, { sorted: true });
         itemVar.twisty = true;
@@ -884,12 +960,15 @@ class StorageUI {
       // Case when displaying IndexedDB db/object store properties.
       for (const key in item) {
         const column = this.table.columns.get(key);
-        if (column && column.private) {
+        if (column?.private) {
           continue;
         }
 
         mainScope.addItem(key, {}, true).setGrip(item[key]);
-        this.parseItemValue(key, item[key]);
+        const obj = parseItemValue(item[key]);
+        if (typeof obj === "object") {
+          this.populateSidebar(item.name, obj);
+        }
       }
     }
 
@@ -926,48 +1005,12 @@ class StorageUI {
   }
 
   /**
-   * Tries to parse a string value into either a json or a key-value separated
-   * object and populates the sidebar with the parsed value. The value can also
-   * be a key separated array.
+   * Populates the sidebar with a parsed object.
    *
-   * @param {string} name
-   *        The key corresponding to the `value` string in the object
-   * @param {string} originalValue
-   *        The string to be parsed into an object
+   * @param {object} obj - Either a json or a key-value separated object or a
+   * key separated array
    */
-  parseItemValue(name, originalValue) {
-    // Find if value is URLEncoded ie
-    let decodedValue = "";
-    try {
-      decodedValue = decodeURIComponent(originalValue);
-    } catch (e) {
-      // Unable to decode, nothing to do
-    }
-    const value =
-      decodedValue && decodedValue !== originalValue
-        ? decodedValue
-        : originalValue;
-
-    if (!this._shouldParse(value)) {
-      return;
-    }
-
-    let obj = null;
-    try {
-      obj = JSOL.parse(value);
-    } catch (ex) {
-      obj = null;
-    }
-
-    if (!obj && value) {
-      obj = this._extractKeyValPairs(value);
-    }
-
-    // return if obj is null, or same as value, or just a string.
-    if (!obj || obj === value || typeof obj === "string") {
-      return;
-    }
-
+  populateSidebar(name, obj) {
     const jsonObject = Object.create(null);
     const view = this.view;
     jsonObject[name] = obj;
@@ -981,101 +1024,6 @@ class StorageUI {
     jsonVar.expanded = true;
     jsonVar.twisty = true;
     jsonVar.populate(jsonObject, { expanded: true });
-  }
-
-  /**
-   * Tries to parse a string into an object on the basis of key-value pairs,
-   * separated by various separators. If failed, tries to parse for single
-   * separator separated values to form an array.
-   *
-   * @param {string} value
-   *        The string to be parsed into an object or array
-   */
-  _extractKeyValPairs(value) {
-    const makeObject = (keySep, pairSep) => {
-      const object = {};
-      for (const pair of value.split(pairSep)) {
-        const [key, val] = pair.split(keySep);
-        object[key] = val;
-      }
-      return object;
-    };
-
-    // Possible separators.
-    const separators = ["=", ":", "~", "#", "&", "\\*", ",", "\\."];
-    // Testing for object
-    for (let i = 0; i < separators.length; i++) {
-      const kv = separators[i];
-      for (let j = 0; j < separators.length; j++) {
-        if (i == j) {
-          continue;
-        }
-        const p = separators[j];
-        const word = `[^${kv}${p}]*`;
-        const keyValue = `${word}${kv}${word}`;
-        const keyValueList = `${keyValue}(${p}${keyValue})*`;
-        const regex = new RegExp(`^${keyValueList}$`);
-        if (
-          value.match &&
-          value.match(regex) &&
-          value.includes(kv) &&
-          (value.includes(p) || value.split(kv).length == 2)
-        ) {
-          return makeObject(kv, p);
-        }
-      }
-    }
-    // Testing for array
-    for (const p of separators) {
-      const word = `[^${p}]*`;
-      const wordList = `(${word}${p})+${word}`;
-      const regex = new RegExp(`^${wordList}$`);
-
-      if (regex.test(value)) {
-        const pNoBackslash = p.replace(/\\*/g, "");
-        return value.split(pNoBackslash);
-      }
-    }
-    return null;
-  }
-
-  /**
-   * Check whether the value string represents something that should be
-   * displayed as text. If so then it shouldn't be parsed into a tree.
-   *
-   * @param  {String} value
-   *         The value to be parsed.
-   */
-  _shouldParse(value) {
-    const validators = [
-      "isBase64",
-      "isBoolean",
-      "isCurrency",
-      "isDataURI",
-      "isEmail",
-      "isFQDN",
-      "isHexColor",
-      "isIP",
-      "isISO8601",
-      "isMACAddress",
-      "isSemVer",
-      "isURL",
-    ];
-
-    // Check for minus calculations e.g. 8-3 because otherwise 5 will be displayed.
-    if (MATH_REGEX.test(value)) {
-      return false;
-    }
-
-    // Check for any other types that shouldn't be parsed.
-    for (const test of validators) {
-      if (validator[test](value)) {
-        return false;
-      }
-    }
-
-    // Seems like this is data that should be parsed.
-    return true;
   }
 
   /**
@@ -1103,6 +1051,33 @@ class StorageUI {
 
     let names = null;
     if (!host) {
+      let storageTypeHintL10nId = "";
+      switch (type) {
+        case "Cache":
+          storageTypeHintL10nId = "storage-table-type-cache-hint";
+          break;
+        case "cookies":
+          storageTypeHintL10nId = "storage-table-type-cookies-hint";
+          break;
+        case "extensionStorage":
+          storageTypeHintL10nId = "storage-table-type-extensionstorage-hint";
+          break;
+        case "localStorage":
+          storageTypeHintL10nId = "storage-table-type-localstorage-hint";
+          break;
+        case "indexedDB":
+          storageTypeHintL10nId = "storage-table-type-indexeddb-hint";
+          break;
+        case "sessionStorage":
+          storageTypeHintL10nId = "storage-table-type-sessionstorage-hint";
+          break;
+      }
+      this.table.setPlaceholder(
+        storageTypeHintL10nId,
+        getStorageTypeURL(this.table.datatype) +
+          "?utm_source=devtools&utm_medium=storage-inspector"
+      );
+
       // If selected item has no host then reset table headers
       await this.clearHeaders();
       return;
@@ -1161,23 +1136,16 @@ class StorageUI {
         privateFields.push(f.name);
       }
 
-      columns[f.name] = f.name;
-      let columnName;
-      try {
-        // Path key names for l10n in the case of a string change.
-        const name = f.name === "keyPath" ? "keyPath2" : f.name;
-
-        columnName = L10N.getStr("table.headers." + type + "." + name);
-      } catch (e) {
-        columnName = COOKIE_KEY_MAP[f.name];
-      }
-
-      if (!columnName) {
-        console.error(
-          "Unable to localize table header type:" + type + " key:" + f.name
-        );
-      } else {
+      const columnName = getColumnName(type, f.name);
+      if (columnName) {
         columns[f.name] = columnName;
+      } else if (!f.private) {
+        // Private fields are only displayed when running tests so there is no
+        // need to log an error if they are not localized.
+        columns[f.name] = f.name;
+        console.error(
+          `No string defined in NON_L10N_STRINGS for '${type}.${f.name}'`
+        );
       }
     });
 
@@ -1254,8 +1222,8 @@ class StorageUI {
       event.keyCode == KeyCodes.DOM_VK_BACK_SPACE ||
       event.keyCode == KeyCodes.DOM_VK_DELETE
     ) {
-      if (this.table.selectedRow && event.target.nodeName !== "textbox") {
-        this.onRemoveItem();
+      if (this.table.selectedRow && event.target.localName != "input") {
+        this.onRemoveItem(event);
         event.stopPropagation();
         event.preventDefault();
       }
@@ -1459,16 +1427,21 @@ class StorageUI {
 
   /**
    * Handles removing an item from the storage
+   *
+   * @param {DOMEvent} event
+   *        The event passed by the command or keypress event.
    */
-  onRemoveItem() {
+  onRemoveItem(event) {
     const [, host, ...path] = this.tree.selectedItem;
     const front = this.getCurrentFront();
     const uniqueId = this.table.uniqueId;
     const rowId =
-      this.table.contextMenuRowId || this.table.selectedRow[uniqueId];
+      event.type == "command"
+        ? this.table.contextMenuRowId
+        : this.table.selectedRow[uniqueId];
     const data = this.table.items.get(rowId);
 
-    let name = data[this.table.uniqueId];
+    let name = data[uniqueId];
     if (path.length > 0) {
       name = JSON.stringify([...path, name]);
     }
@@ -1585,4 +1558,34 @@ function addEllipsis(name) {
   }
 
   return name;
+}
+
+/**
+ * Get a string for a column name automatically choosing whether or not the
+ * string should be localized.
+ *
+ * @param {String} type
+ *        The storage type.
+ * @param {String} name
+ *        The field name that may need to be localized.
+ */
+function getColumnName(type, name) {
+  // Check if a l10n ID has been changed since it was created and map it to
+  // its new value if it has.
+  let id = `${type}.${name}`;
+  id = NON_ORIGINAL_L10N_IDS.get(id) || id;
+
+  // If the ID exists in NON_L10N_STRINGS then we do not translate it
+  // otherwise we get it from the L10N database. If it doesn't exist in the
+  // database we will just use the field name.
+  let columnName = NON_L10N_STRINGS.get(id);
+  if (!columnName) {
+    try {
+      columnName = L10N.getStr(`table.headers.${id}`);
+    } catch (e) {
+      columnName = name;
+    }
+  }
+
+  return columnName;
 }

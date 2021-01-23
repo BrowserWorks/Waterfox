@@ -11,6 +11,8 @@
 #include "mozilla/dom/BindingDeclarations.h"
 #include "mozilla/dom/ChromeUtilsBinding.h"
 #include "mozilla/ErrorResult.h"
+#include "nsDOMNavigationTiming.h"  // for DOMHighResTimeStamp
+#include "nsIContentChild.h"
 
 namespace mozilla {
 
@@ -24,9 +26,11 @@ class ArrayBufferViewOrArrayBuffer;
 class BrowsingContext;
 class IdleRequestCallback;
 struct IdleRequestOptions;
+struct MediaMetadataInit;
 class MozQueryInterface;
 class PrecompiledScript;
 class Promise;
+struct ProcessActorOptions;
 struct WindowActorOptions;
 
 class ChromeUtils {
@@ -38,6 +42,9 @@ class ChromeUtils {
                                      ErrorResult& rv);
 
  public:
+  // Implemented in devtools/shared/heapsnapshot/HeapSnapshot.cpp
+  static uint64_t GetObjectNodeId(GlobalObject& global, JS::HandleObject aVal);
+
   // Implemented in devtools/shared/heapsnapshot/HeapSnapshot.cpp
   static void SaveHeapSnapshot(GlobalObject& global,
                                const HeapSnapshotBoundaries& boundaries,
@@ -72,6 +79,10 @@ class ChromeUtils {
 
   static void ReleaseAssert(GlobalObject& aGlobal, bool aCondition,
                             const nsAString& aMessage);
+
+  static void AddProfilerMarker(GlobalObject& aGlobal, const nsACString& aName,
+                                const Optional<DOMHighResTimeStamp>& aStartTime,
+                                const Optional<nsACString>& text);
 
   static void OriginAttributesToSuffix(
       GlobalObject& aGlobal, const dom::OriginAttributesDictionary& aAttrs,
@@ -140,6 +151,11 @@ class ChromeUtils {
   static already_AddRefed<Promise> RequestPerformanceMetrics(
       GlobalObject& aGlobal, ErrorResult& aRv);
 
+  static void SetPerfStatsCollectionMask(GlobalObject& aGlobal, uint64_t aMask);
+
+  static already_AddRefed<Promise> CollectPerfStats(GlobalObject& aGlobal,
+                                                    ErrorResult& aRv);
+
   static already_AddRefed<Promise> RequestProcInfo(GlobalObject& aGlobal,
                                                    ErrorResult& aRv);
 
@@ -178,15 +194,39 @@ class ChromeUtils {
   static void ResetLastExternalProtocolIframeAllowed(GlobalObject& aGlobal);
 
   static void RegisterWindowActor(const GlobalObject& aGlobal,
-                                  const nsAString& aName,
+                                  const nsACString& aName,
                                   const WindowActorOptions& aOptions,
                                   ErrorResult& aRv);
 
   static void UnregisterWindowActor(const GlobalObject& aGlobal,
-                                    const nsAString& aName);
+                                    const nsACString& aName);
+
+  static void RegisterProcessActor(const GlobalObject& aGlobal,
+                                   const nsACString& aName,
+                                   const ProcessActorOptions& aOptions,
+                                   ErrorResult& aRv);
+
+  static void UnregisterProcessActor(const GlobalObject& aGlobal,
+                                     const nsACString& aName);
 
   static bool IsClassifierBlockingErrorCode(GlobalObject& aGlobal,
                                             uint32_t aError);
+
+  static void PrivateNoteIntentionalCrash(const GlobalObject& aGlobal,
+                                          ErrorResult& aError);
+
+  static void GenerateMediaControlKeysTestEvent(
+      const GlobalObject& aGlobal, MediaControlKeysTestEvent aEvent);
+
+  static nsIContentChild* GetContentChild(const GlobalObject&);
+
+  // This function would only be used for testing.
+  static void GetCurrentActiveMediaMetadata(const GlobalObject& aGlobal,
+                                            MediaMetadataInit& aMetadata);
+
+  // This function would only be used for testing.
+  static MediaSessionPlaybackTestState GetCurrentMediaSessionPlaybackState(
+      GlobalObject& aGlobal);
 };
 
 }  // namespace dom

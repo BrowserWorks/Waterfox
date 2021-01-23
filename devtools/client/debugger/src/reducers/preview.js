@@ -7,13 +7,13 @@
 import type { AstLocation } from "../workers/parser";
 
 import type { Action } from "../actions/types";
-import type { Node, Grip, GripProperties } from "devtools-reps";
+import type { Node, Grip } from "devtools-reps";
 
 export type Preview = {|
   expression: string,
-  result: Grip,
+  resultGrip: Grip | null,
   root: Node,
-  properties: GripProperties,
+  properties: Array<Grip>,
   location: AstLocation,
   cursorPos: any,
   tokenPos: AstLocation,
@@ -22,11 +22,13 @@ export type Preview = {|
 
 export type PreviewState = {
   +preview: ?Preview,
+  previewCount: number,
 };
 
 export function initialPreviewState(): PreviewState {
   return {
     preview: null,
+    previewCount: 0,
   };
 }
 
@@ -37,6 +39,10 @@ function update(
   switch (action.type) {
     case "CLEAR_PREVIEW": {
       return { ...state, preview: null };
+    }
+
+    case "START_PREVIEW": {
+      return { ...state, previewCount: state.previewCount + 1 };
     }
 
     case "SET_PREVIEW": {
@@ -51,8 +57,12 @@ function update(
 // https://github.com/firefox-devtools/debugger/blob/master/src/reducers/sources.js#L179-L185
 type OuterState = { preview: PreviewState };
 
-export function getPreview(state: OuterState) {
+export function getPreview(state: OuterState): ?Preview {
   return state.preview.preview;
+}
+
+export function getPreviewCount(state: OuterState): number {
+  return state.preview.previewCount;
 }
 
 export default update;

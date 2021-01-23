@@ -1,24 +1,24 @@
 use std::iter;
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq)]
-pub struct BoolSettingIndex(usize);
+pub(crate) struct BoolSettingIndex(usize);
 
 #[derive(Hash, PartialEq, Eq)]
-pub struct BoolSetting {
+pub(crate) struct BoolSetting {
     pub default: bool,
     pub bit_offset: u8,
     pub predicate_number: u8,
 }
 
 #[derive(Hash, PartialEq, Eq)]
-pub enum SpecificSetting {
+pub(crate) enum SpecificSetting {
     Bool(BoolSetting),
     Enum(Vec<&'static str>),
     Num(u8),
 }
 
 #[derive(Hash, PartialEq, Eq)]
-pub struct Setting {
+pub(crate) struct Setting {
     pub name: &'static str,
     pub comment: &'static str,
     pub specific: SpecificSetting,
@@ -66,10 +66,10 @@ impl Setting {
 }
 
 #[derive(Hash, PartialEq, Eq)]
-pub struct PresetIndex(usize);
+pub(crate) struct PresetIndex(usize);
 
 #[derive(Hash, PartialEq, Eq)]
-pub enum PresetType {
+pub(crate) enum PresetType {
     BoolSetting(BoolSettingIndex),
     OtherPreset(PresetIndex),
 }
@@ -86,7 +86,7 @@ impl Into<PresetType> for PresetIndex {
 }
 
 #[derive(Hash, PartialEq, Eq)]
-pub struct Preset {
+pub(crate) struct Preset {
     pub name: &'static str,
     values: Vec<BoolSettingIndex>,
 }
@@ -110,7 +110,7 @@ impl Preset {
     }
 }
 
-pub struct SettingGroup {
+pub(crate) struct SettingGroup {
     pub name: &'static str,
     pub settings: Vec<Setting>,
     pub bool_start_byte_offset: u8,
@@ -148,11 +148,19 @@ impl SettingGroup {
         }
         panic!("Should have found bool setting by name.");
     }
+
+    pub fn predicate_by_name(&self, name: &'static str) -> SettingPredicateNumber {
+        self.predicates
+            .iter()
+            .find(|pred| pred.name == name)
+            .unwrap_or_else(|| panic!("unknown predicate {}", name))
+            .number
+    }
 }
 
 /// This is the basic information needed to track the specific parts of a setting when building
 /// them.
-pub enum ProtoSpecificSetting {
+pub(crate) enum ProtoSpecificSetting {
     Bool(bool),
     Enum(Vec<&'static str>),
     Num(u8),
@@ -166,7 +174,7 @@ struct ProtoSetting {
 }
 
 #[derive(Hash, PartialEq, Eq)]
-pub enum PredicateNode {
+pub(crate) enum PredicateNode {
     OwnedBool(BoolSettingIndex),
     SharedBool(&'static str, &'static str),
     Not(Box<PredicateNode>),
@@ -209,10 +217,12 @@ struct ProtoPredicate {
     node: PredicateNode,
 }
 
-pub struct Predicate {
+pub(crate) type SettingPredicateNumber = u8;
+
+pub(crate) struct Predicate {
     pub name: &'static str,
     node: PredicateNode,
-    pub number: u8,
+    pub number: SettingPredicateNumber,
 }
 
 impl Predicate {
@@ -221,7 +231,7 @@ impl Predicate {
     }
 }
 
-pub struct SettingGroupBuilder {
+pub(crate) struct SettingGroupBuilder {
     name: &'static str,
     settings: Vec<ProtoSetting>,
     presets: Vec<Preset>,
@@ -258,7 +268,7 @@ impl SettingGroupBuilder {
         default: bool,
     ) -> BoolSettingIndex {
         assert!(
-            self.predicates.len() == 0,
+            self.predicates.is_empty(),
             "predicates must be added after the boolean settings"
         );
         self.add_setting(name, comment, ProtoSpecificSetting::Bool(default));
@@ -315,7 +325,7 @@ impl SettingGroupBuilder {
     /// 2. in the list above.
     ///
     /// Assign `byte_offset` and `bit_offset` fields in all settings.
-    pub fn finish(self) -> SettingGroup {
+    pub fn build(self) -> SettingGroup {
         let mut group = SettingGroup {
             name: self.name,
             settings: Vec::new(),
@@ -369,7 +379,7 @@ impl SettingGroupBuilder {
         }
 
         assert!(
-            group.predicates.len() == 0,
+            group.predicates.is_empty(),
             "settings_size is the byte size before adding predicates"
         );
         group.settings_size = group.byte_size();
@@ -383,11 +393,11 @@ impl SettingGroupBuilder {
             .extend(predicates.into_iter().map(|predicate| {
                 let number = predicate_number;
                 predicate_number += 1;
-                return Predicate {
+                Predicate {
                     name: predicate.name,
                     node: predicate.node,
                     number,
-                };
+                }
             }));
 
         group.presets.extend(self.presets);

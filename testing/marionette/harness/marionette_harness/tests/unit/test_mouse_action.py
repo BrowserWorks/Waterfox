@@ -4,16 +4,16 @@
 
 from __future__ import absolute_import
 
-import urllib
+from six.moves.urllib.parse import quote
 
 from marionette_driver import By, errors, Wait
 from marionette_driver.keys import Keys
 
-from marionette_harness import MarionetteTestCase, skip_if_mobile
+from marionette_harness import MarionetteTestCase
 
 
 def inline(doc):
-    return "data:text/html;charset=utf-8,{}".format(urllib.quote(doc))
+    return "data:text/html;charset=utf-8,{}".format(quote(doc))
 
 
 class BaseMouseAction(MarionetteTestCase):
@@ -78,7 +78,6 @@ class TestPointerActions(BaseMouseAction):
         event_count = self.marionette.execute_script("return window.eventCount", sandbox=None)
         self.assertEqual(event_count, 2)
 
-    @skip_if_mobile("There is no context menu available on mobile")
     def test_context_click_action(self):
         test_html = self.marionette.absolute_url("clicks.html")
         self.marionette.navigate(test_html)
@@ -91,11 +90,16 @@ class TestPointerActions(BaseMouseAction):
 
         self.assertEqual("closed", context_menu_state())
         self.mouse_chain.click(element=click_el, button=2).perform()
-        self.wait_for_condition(lambda _: context_menu_state() == "open")
-
+        Wait(self.marionette).until(
+            lambda _: context_menu_state() == "open",
+            message="Context menu did not open"
+        )
         with self.marionette.using_context("chrome"):
             self.marionette.find_element(By.ID, "main-window").send_keys(Keys.ESCAPE)
-        self.wait_for_condition(lambda _: context_menu_state() == "closed")
+        Wait(self.marionette).until(
+            lambda _: context_menu_state() == "closed",
+            message="Context menu did not close"
+        )
 
     def test_middle_click_action(self):
         test_html = self.marionette.absolute_url("clicks.html")
@@ -106,7 +110,10 @@ class TestPointerActions(BaseMouseAction):
         el = self.marionette.find_element(By.ID, "showbutton")
         self.mouse_chain.click(element=el, button=1).perform()
 
-        self.wait_for_condition(lambda _: el.get_property("innerHTML") == "1")
+        Wait(self.marionette).until(
+            lambda _: el.get_property("innerHTML") == "1",
+            message="Middle-click hasn't been fired"
+        )
 
 
 class TestNonSpecCompliantPointerOrigin(BaseMouseAction):
@@ -132,8 +139,10 @@ class TestNonSpecCompliantPointerOrigin(BaseMouseAction):
         elem_center_point = self.get_element_center_point(elem)
 
         self.mouse_chain.click(element=elem).perform()
-        click_position = Wait(self.marionette).until(lambda _: self.click_position,
-                                                     message="No click event has been detected")
+        click_position = Wait(self.marionette).until(
+            lambda _: self.click_position,
+            message="No click event has been detected"
+        )
         self.assertAlmostEqual(click_position["x"], elem_center_point["x"], delta=1)
         self.assertAlmostEqual(click_position["y"], elem_center_point["y"], delta=1)
 
@@ -146,12 +155,13 @@ class TestNonSpecCompliantPointerOrigin(BaseMouseAction):
         elem_center_point = self.get_element_center_point(elem)
 
         self.mouse_chain.click(element=elem).perform()
-        click_position = Wait(self.marionette).until(lambda _: self.click_position,
-                                                     message="No click event has been detected")
+        click_position = Wait(self.marionette).until(
+            lambda _: self.click_position,
+            message="No click event has been detected"
+        )
         self.assertAlmostEqual(click_position["x"], elem_center_point["x"], delta=1)
         self.assertAlmostEqual(click_position["y"], elem_center_point["y"], delta=1)
 
-    @skip_if_mobile("Bug 1534291 - Missing MoveTargetOutOfBoundsException")
     def test_click_element_larger_than_viewport_with_center_point_outside(self):
         self.marionette.navigate(inline("""
           <div id="div" style="width: 300vw; height: 300vh; background: green;"

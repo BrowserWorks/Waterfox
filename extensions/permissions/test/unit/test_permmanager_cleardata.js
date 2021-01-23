@@ -5,28 +5,27 @@ var pm;
 
 // Create a principal based on the { origin, originAttributes }.
 function createPrincipal(aOrigin, aOriginAttributes) {
-  return Services.scriptSecurityManager.createCodebasePrincipal(
+  return Services.scriptSecurityManager.createContentPrincipal(
     NetUtil.newURI(aOrigin),
     aOriginAttributes
   );
 }
 
-// Return the data required by 'clear-origin-attributes-data' notification.
 function getData(aPattern) {
   return JSON.stringify(aPattern);
 }
 
 // Use aEntries to create principals, add permissions to them and check that they have them.
-// Then, it is notifying 'clear-origin-attributes-data' with the given aData and check if the permissions
+// Then, it is removing origin attributes with the given aData and check if the permissions
 // of principals[i] matches the permission in aResults[i].
 function test(aEntries, aData, aResults) {
   let principals = [];
 
-  for (entry of aEntries) {
+  for (const entry of aEntries) {
     principals.push(createPrincipal(entry.origin, entry.originAttributes));
   }
 
-  for (principal of principals) {
+  for (const principal of principals) {
     Assert.equal(
       pm.testPermissionFromPrincipal(principal, "test/clear-origin"),
       pm.UNKNOWN_ACTION
@@ -44,7 +43,9 @@ function test(aEntries, aData, aResults) {
     );
   }
 
-  Services.obs.notifyObservers(null, "clear-origin-attributes-data", aData);
+  // `clear-origin-attributes-data` notification is removed from permission
+  // manager
+  pm.removePermissionsWithAttributes(aData);
 
   var length = aEntries.length;
   for (let i = 0; i < length; ++i) {
@@ -63,9 +64,7 @@ function test(aEntries, aData, aResults) {
 function run_test() {
   do_get_profile();
 
-  pm = Cc["@mozilla.org/permissionmanager;1"].getService(
-    Ci.nsIPermissionManager
-  );
+  pm = Services.perms;
 
   let entries = [
     { origin: "http://example.com", originAttributes: {} },

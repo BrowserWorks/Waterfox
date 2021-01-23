@@ -14,8 +14,10 @@ dictionary OfflineAudioCompletionEventInit : EventInit {
     required AudioBuffer renderedBuffer;
 };
 
-[Constructor(DOMString type, OfflineAudioCompletionEventInit eventInitDict),
- Pref="dom.webaudio.enabled"]
+[Pref="dom.webaudio.enabled",
+ Exposed=Window]
 interface OfflineAudioCompletionEvent : Event {
-    readonly attribute AudioBuffer renderedBuffer;
+  constructor(DOMString type, OfflineAudioCompletionEventInit eventInitDict);
+
+  readonly attribute AudioBuffer renderedBuffer;
 };

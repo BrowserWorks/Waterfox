@@ -89,19 +89,22 @@ async function fetchHeaders(headers, getLongString) {
  * @param {array} updateTypes - a list of network event update types
  */
 function fetchNetworkUpdatePacket(requestData, request, updateTypes) {
+  const promises = [];
   updateTypes.forEach(updateType => {
     // Only stackTrace will be handled differently
     if (updateType === "stackTrace") {
       if (request.cause.stacktraceAvailable && !request.stacktrace) {
-        requestData(request.id, updateType);
+        promises.push(requestData(request.id, updateType));
       }
       return;
     }
 
     if (request[`${updateType}Available`] && !request[updateType]) {
-      requestData(request.id, updateType);
+      promises.push(requestData(request.id, updateType));
     }
   });
+
+  return Promise.all(promises);
 }
 
 /**
@@ -125,10 +128,17 @@ function formDataURI(mimeType, encoding, text) {
  * Write out a list of headers into a chunk of text
  *
  * @param {array} headers - array of headers info { name, value }
+ * @param {string} preHeaderText - first line of the headers request/response
  * @return {string} list of headers in text format
  */
-function writeHeaderText(headers) {
-  return headers.map(({ name, value }) => name + ": " + value).join("\n");
+function writeHeaderText(headers, preHeaderText) {
+  let result = "";
+  if (preHeaderText) {
+    result += preHeaderText + "\r\n";
+  }
+  result += headers.map(({ name, value }) => name + ": " + value).join("\r\n");
+  result += "\r\n\r\n";
+  return result;
 }
 
 /**
@@ -194,7 +204,7 @@ function getUrl(url) {
  */
 function getUrlProperty(input, property) {
   const url = getUrl(input);
-  return url && url[property] ? url[property] : "";
+  return url?.[property] ? url[property] : "";
 }
 
 /**
@@ -322,16 +332,20 @@ function parseQueryString(query) {
   if (!query) {
     return null;
   }
-
   return query
     .replace(/^[?&]/, "")
     .split("&")
     .map(e => {
       const param = e.split("=");
       return {
-        name: param[0] ? getUnicodeUrlPath(param[0]) : "",
+        name: param[0] ? getUnicodeUrlPath(param[0].replace(/\+/g, " ")) : "",
         value: param[1]
-          ? getUnicodeUrlPath(param.slice(1).join("=")).replace(/\+/g, " ")
+          ? getUnicodeUrlPath(
+              param
+                .slice(1)
+                .join("=")
+                .replace(/\+/g, " ")
+            )
           : "",
       };
     });
@@ -411,42 +425,39 @@ function propertiesEqual(props, item1, item2) {
  * Calculate the start time of a request, which is the time from start
  * of 1st request until the start of this request.
  *
- * Without a firstRequestStartedMillis argument the wrong time will be returned.
+ * Without a firstRequestStartedMs argument the wrong time will be returned.
  * However, it can be omitted when comparing two start times and neither supplies
- * a firstRequestStartedMillis.
+ * a firstRequestStartedMs.
  */
-function getStartTime(item, firstRequestStartedMillis = 0) {
-  return item.startedMillis - firstRequestStartedMillis;
+function getStartTime(item, firstRequestStartedMs = 0) {
+  return item.startedMs - firstRequestStartedMs;
 }
 
 /**
  * Calculate the end time of a request, which is the time from start
  * of 1st request until the end of this response.
  *
- * Without a firstRequestStartedMillis argument the wrong time will be returned.
+ * Without a firstRequestStartedMs argument the wrong time will be returned.
  * However, it can be omitted when comparing two end times and neither supplies
- * a firstRequestStartedMillis.
+ * a firstRequestStartedMs.
  */
-function getEndTime(item, firstRequestStartedMillis = 0) {
-  const { startedMillis, totalTime } = item;
-  return startedMillis + totalTime - firstRequestStartedMillis;
+function getEndTime(item, firstRequestStartedMs = 0) {
+  const { startedMs, totalTime } = item;
+  return startedMs + totalTime - firstRequestStartedMs;
 }
 
 /**
  * Calculate the response time of a request, which is the time from start
  * of 1st request until the beginning of download of this response.
  *
- * Without a firstRequestStartedMillis argument the wrong time will be returned.
+ * Without a firstRequestStartedMs argument the wrong time will be returned.
  * However, it can be omitted when comparing two response times and neither supplies
- * a firstRequestStartedMillis.
+ * a firstRequestStartedMs.
  */
-function getResponseTime(item, firstRequestStartedMillis = 0) {
-  const { startedMillis, totalTime, eventTimings = { timings: {} } } = item;
+function getResponseTime(item, firstRequestStartedMs = 0) {
+  const { startedMs, totalTime, eventTimings = { timings: {} } } = item;
   return (
-    startedMillis +
-    totalTime -
-    firstRequestStartedMillis -
-    eventTimings.timings.receive
+    startedMs + totalTime - firstRequestStartedMs - eventTimings.timings.receive
   );
 }
 
@@ -506,6 +517,24 @@ function getResponseHeader(item, header) {
 }
 
 /**
+ * Get the value of a particular request header, or null if not
+ * present.
+ */
+function getRequestHeader(item, header) {
+  const { requestHeaders } = item;
+  if (!requestHeaders || !requestHeaders.headers.length) {
+    return null;
+  }
+  header = header.toLowerCase();
+  for (const requestHeader of requestHeaders.headers) {
+    if (requestHeader.name.toLowerCase() == header) {
+      return requestHeader.value;
+    }
+  }
+  return null;
+}
+
+/**
  * Extracts any urlencoded form data sections from a POST request.
  */
 async function updateFormDataSections(props) {
@@ -546,6 +575,15 @@ async function updateFormDataSections(props) {
 }
 
 /**
+ * This helper function helps to resolve the full payload of a WebSocket frame
+ * that is wrapped in a LongStringActor object.
+ */
+async function getFramePayload(payload, getLongString) {
+  const result = await getLongString(payload);
+  return result;
+}
+
+/**
  * This helper function is used for additional processing of
  * incoming network update packets. It's used by Network and
  * Console panel reducers.
@@ -575,6 +613,57 @@ function processNetworkUpdates(update, request) {
   return result;
 }
 
+/**
+ * This method checks that the response is base64 encoded by
+ * comparing these 2 values:
+ * 1. The original response
+ * 2. The value of doing a base64 decode on the
+ * response and then base64 encoding the result.
+ * If the values are different or an error is thrown,
+ * the method will return false.
+ */
+function isBase64(payload) {
+  try {
+    return btoa(atob(payload)) == payload;
+  } catch (err) {
+    return false;
+  }
+}
+
+/**
+ * Checks if the payload is of JSON type.
+ */
+function isJSON(payload) {
+  let json, error;
+
+  try {
+    json = JSON.parse(payload);
+  } catch (err) {
+    if (isBase64(payload)) {
+      try {
+        json = JSON.parse(atob(payload));
+      } catch (err64) {
+        error = err;
+      }
+    } else {
+      error = err;
+    }
+  }
+
+  // Do not present JSON primitives (e.g. boolean, strings in quotes, numbers)
+  // as JSON expandable tree.
+  if (!error) {
+    if (typeof json !== "object") {
+      return {};
+    }
+  }
+
+  return {
+    json,
+    error,
+  };
+}
+
 module.exports = {
   decodeUnicodeBase64,
   getFormDataSections,
@@ -586,6 +675,8 @@ module.exports = {
   getFileName,
   getEndTime,
   getFormattedProtocol,
+  getFramePayload,
+  getRequestHeader,
   getResponseHeader,
   getResponseTime,
   getStartTime,
@@ -602,4 +693,5 @@ module.exports = {
   processNetworkUpdates,
   propertiesEqual,
   ipToLong,
+  isJSON,
 };

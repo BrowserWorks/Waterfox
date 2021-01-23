@@ -12,7 +12,6 @@
 }
 
 .result-list * {
-  -moz-user-select: none;
   user-select: none;
 }
 
@@ -39,7 +38,7 @@
 }
 
 .result-list li.selected {
-  background: var(--accordion-header-background);
+  background: var(--theme-accordion-header-background);
 }
 
 .result-list.small li.selected {

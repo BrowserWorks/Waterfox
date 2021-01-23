@@ -16,8 +16,6 @@ user_pref("browser.contentHandlers.types.5.uri", "http://127.0.0.1/rss?url=%s");
 user_pref("browser.link.open_newwindow", 2);
 user_pref("browser.newtabpage.activity-stream.default.sites", "");
 user_pref("browser.newtabpage.activity-stream.telemetry", false);
-user_pref("browser.ping-centre.production.endpoint", "https://127.0.0.1/pingcentre/dummy/");
-user_pref("browser.ping-centre.staging.endpoint", "https://127.0.0.1/pingcentre/dummy/");
 user_pref("browser.reader.detectedFirstArticle", true);
 user_pref("browser.safebrowsing.blockedURIs.enabled", false);
 user_pref("browser.safebrowsing.downloads.enabled", false);
@@ -31,12 +29,8 @@ user_pref("browser.safebrowsing.provider.google4.gethashURL", "http://127.0.0.1/
 user_pref("browser.safebrowsing.provider.google4.updateURL", "http://127.0.0.1/safebrowsing4-dummy/update");
 user_pref("browser.safebrowsing.provider.mozilla.gethashURL", "http://127.0.0.1/safebrowsing-dummy/gethash");
 user_pref("browser.safebrowsing.provider.mozilla.updateURL", "http://127.0.0.1/safebrowsing-dummy/update");
-user_pref("browser.search.geoip.url", "");
 user_pref("browser.shell.checkDefaultBrowser", false);
 user_pref("browser.tabs.remote.autostart", true);
-// Turn off the location bar search suggestions opt-in.  It interferes with
-// tests that don't expect it to be there.
-user_pref("browser.urlbar.userMadeSearchSuggestionsChoice", true);
 user_pref("browser.warnOnQuit", false);
 user_pref("datareporting.healthreport.documentServerURI", "http://127.0.0.1/healthreport/");
 user_pref("devtools.chrome.enabled", false);
@@ -47,19 +41,17 @@ user_pref("dom.allow_scripts_to_close_windows", true);
 user_pref("dom.disable_open_during_load", false);
 user_pref("dom.disable_window_flip", true);
 user_pref("dom.disable_window_move_resize", true);
+user_pref("dom.push.connection.enabled", false);
 user_pref("extensions.autoDisableScopes", 10);
 user_pref("extensions.blocklist.enabled", false);
-user_pref("extensions.blocklist.url", "http://127.0.0.1/extensions-dummy/blocklistURL");
 user_pref("extensions.checkCompatibility", false);
 user_pref("extensions.getAddons.get.url", "http://127.0.0.1/extensions-dummy/repositoryGetURL");
-user_pref("extensions.getAddons.getWithPerformance.url", "http://127.0.0.1/extensions-dummy/repositoryGetWithPerformanceURL");
 user_pref("extensions.getAddons.search.browseURL", "http://127.0.0.1/extensions-dummy/repositoryBrowseURL");
 user_pref("extensions.hotfix.url", "http://127.0.0.1/extensions-dummy/hotfixURL");
 user_pref("extensions.systemAddon.update.url", "http://127.0.0.1/dummy-system-addons.xml");
 user_pref("extensions.update.background.url", "http://127.0.0.1/extensions-dummy/updateBackgroundURL");
 user_pref("extensions.update.notifyUser", false);
 user_pref("extensions.update.url", "http://127.0.0.1/extensions-dummy/updateURL");
-user_pref("extensions.webservice.discoverURL", "http://127.0.0.1/extensions-dummy/discoveryURL");
 user_pref("identity.fxaccounts.auth.uri", "https://127.0.0.1/fxa-dummy/");
 user_pref("identity.fxaccounts.migrateToDevEdition", false);
 // Avoid idle-daily notifications, to avoid expensive operations that may
@@ -75,9 +67,6 @@ user_pref("media.navigator.permission.disabled", true);
 user_pref("media.peerconnection.enabled", true);
 // Disable speculative connections so they aren't reported as leaking when they're hanging around.
 user_pref("network.http.speculative-parallel-limit", 0);
-user_pref("network.proxy.http", "localhost");
-user_pref("network.proxy.http_port", 80);
-user_pref("network.proxy.type", 1);
 // Set places maintenance far in the future (the maximum time possible in an
 // int32_t) to avoid it kicking in during tests. The maintenance can take a
 // relatively long time which may cause unnecessary intermittents and slow down
@@ -95,3 +84,4 @@ user_pref("security.fileuri.strict_origin_policy", false);
 user_pref("toolkit.telemetry.server", "https://127.0.0.1/telemetry-dummy/");
 user_pref("startup.homepage_welcome_url", "");
 user_pref("startup.homepage_welcome_url.additional", "");
+user_pref("trailhead.firstrun.branches", "join");

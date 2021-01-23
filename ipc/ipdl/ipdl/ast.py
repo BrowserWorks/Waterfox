@@ -2,6 +2,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from .util import hash_str
+
+
 NOT_NESTED = 1
 INSIDE_SYNC_NESTED = 2
 INSIDE_CPOW_NESTED = 3
@@ -9,7 +12,7 @@ INSIDE_CPOW_NESTED = 3
 NORMAL_PRIORITY = 1
 INPUT_PRIORITY = 2
 HIGH_PRIORITY = 3
-
+MEDIUMHIGH_PRIORITY = 4
 
 class Visitor:
     def defaultVisit(self, node):
@@ -209,7 +212,7 @@ class UsingStmt(Node):
 
 class PrettyPrinted:
     @classmethod
-    def __hash__(cls): return hash(cls.pretty)
+    def __hash__(cls): return hash_str(cls.pretty)
 
     @classmethod
     def __str__(cls): return cls.pretty
@@ -218,6 +221,8 @@ class PrettyPrinted:
 class ASYNC(PrettyPrinted):
     pretty = 'async'
 
+class TAINTED(PrettyPrinted):
+    pretty = 'tainted'
 
 class INTR(PrettyPrinted):
     pretty = 'intr'
@@ -302,6 +307,7 @@ class MessageDecl(Node):
         self.inParams = []
         self.outParams = []
         self.compress = ''
+        self.tainted = ''
         self.verify = ''
 
     def addInParams(self, inParamsList):
@@ -316,6 +322,8 @@ class MessageDecl(Node):
                 self.compress = modifier
             elif modifier == 'verify':
                 self.verify = modifier
+            elif modifier.startswith('tainted'):
+                self.tainted = modifier
             elif modifier != '':
                 raise Exception("Unexpected message modifier `%s'" % modifier)
 

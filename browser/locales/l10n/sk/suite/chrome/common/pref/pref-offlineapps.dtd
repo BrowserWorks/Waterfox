@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-offlineapps.xul -->
+
+<!--LOCALIZATION NOTE : FILE Offline Apps prefs dialog -->
+<!ENTITY pref.offlineapps.title             "Webové aplikácie v režime offline">
+<!ENTITY pref.offlineCache.caption          "Webový obsah v režime offline a používateľské údaje">
+
+<!ENTITY clearOfflineAppCache.label         "Vymazať">
+<!ENTITY clearOfflineAppCache.accesskey     "V">
+
+<!ENTITY offlineAlwaysAllow.label           "Povoliť všetkým webovým stránkam ukladať údaje pre použitie v režime offline">
+<!ENTITY offlineAlwaysAllow.accesskey       "o">
+<!ENTITY offlineExplicit.label              "Umožniť len webovým stránkam s explicitným povolením">
+<!ENTITY offlineExplicit.accesskey          "e">
+<!ENTITY offlineNotifyAsk.label             "Upozorniť, ak sa webová stránka pokúša uložiť údaje pre použitie v režime offline">
+<!ENTITY offlineNotifyAsk.accesskey         "U">
+<!ENTITY offlineNotifyPermissions.label     "Spravovať povolenia">
+<!ENTITY offlineNotifyPermissions.accesskey "S">
+
+<!ENTITY offlineAppsUsage.label             "Nasledujúce webové stránky používajú úložisko režimu offline:">
+<!ENTITY offlineAppsListRemove.label        "Vymazať údaje…">
+<!ENTITY offlineAppsListRemove.accesskey    "d">

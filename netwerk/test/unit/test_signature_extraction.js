@@ -10,6 +10,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 //// Globals
+"use strict";
 
 ChromeUtils.defineModuleGetter(
   this,
@@ -114,12 +115,12 @@ function promiseCopyToSaver(aSourceString, aSaverOutputStream, aCloseWhenDone) {
     );
     copier.asyncCopy(
       {
-        onStartRequest: function() {},
-        onStopRequest: function(aRequest, aContext, aStatusCode) {
+        onStartRequest() {},
+        onStopRequest(aRequest, aContext, aStatusCode) {
           if (Components.isSuccessCode(aStatusCode)) {
             resolve();
           } else {
-            reject(new Components.Exception(aResult));
+            reject(new Components.Exception(aStatusCode));
           }
         },
       },
@@ -132,10 +133,6 @@ var gStillRunning = true;
 
 ////////////////////////////////////////////////////////////////////////////////
 //// Tests
-
-function run_test() {
-  run_next_test();
-}
 
 add_task(function test_setup() {
   // Wait 10 minutes, that is half of the external xpcshell timeout.
@@ -180,24 +177,22 @@ add_task(async function test_signature() {
   saver.finish(Cr.NS_OK);
   await completionPromise;
 
-  // There's only one nsIX509CertList in the signature array.
+  // There's only one Array of certs(raw bytes) in the signature array.
   Assert.equal(1, saver.signatureInfo.length);
-  let certLists = saver.signatureInfo.enumerate();
-  Assert.ok(certLists.hasMoreElements());
-  let certList = certLists.getNext().QueryInterface(Ci.nsIX509CertList);
-  Assert.ok(!certLists.hasMoreElements());
+  let certLists = saver.signatureInfo;
+  Assert.ok(certLists.length === 1);
 
-  // Check that it has 3 certs.
-  let certs = certList.getEnumerator();
-  Assert.ok(certs.hasMoreElements());
-  let signer = certs.getNext().QueryInterface(Ci.nsIX509Cert);
-  Assert.ok(certs.hasMoreElements());
-  let issuer = certs.getNext().QueryInterface(Ci.nsIX509Cert);
-  Assert.ok(certs.hasMoreElements());
-  let root = certs.getNext().QueryInterface(Ci.nsIX509Cert);
-  Assert.ok(!certs.hasMoreElements());
+  // Check that it has 3 certs(raw bytes).
+  let certs = certLists[0];
+  Assert.ok(certs.length === 3);
 
-  // Check that the certs have expected strings attached.
+  const certDB = Cc["@mozilla.org/security/x509certdb;1"].getService(
+    Ci.nsIX509CertDB
+  );
+  let signer = certDB.constructX509(certs[0]);
+  let issuer = certDB.constructX509(certs[1]);
+  let root = certDB.constructX509(certs[2]);
+
   let organization = "Microsoft Corporation";
   Assert.equal("Microsoft Corporation", signer.commonName);
   Assert.equal(organization, signer.organization);

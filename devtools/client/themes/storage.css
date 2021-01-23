@@ -2,6 +2,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/*
+ * Global styles
+ */
+a {
+  color: var(--theme-highlight-blue);
+  text-decoration: none;
+  cursor: pointer;
+}
+
 /* Storage Host Tree */
 
 #storage-tree {
@@ -12,6 +21,29 @@
 
 #storage-tree {
   background: var(--theme-sidebar-background);
+}
+
+/* Let the component gain focus when a click hits an empty area */
+#storage-tree {
+  -moz-user-focus: normal;
+}
+
+#storage-tree:focus {
+  outline: 0;
+}
+
+/* Storage Table */
+
+/* Let the component gain focus when a click hits an empty area */
+#storage-table {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  -moz-user-focus: normal;
+}
+
+#storage-table:focus {
+  outline: 0;
 }
 
 /* The minimum column width needs to be determined by the header width */
@@ -32,10 +64,6 @@
   min-width: 60px;
 }
 
-#expires, #lastAccessed, #creationTime {
-  min-width: 115px;
-}
-
 #value {
   min-width: 95px;
 }
@@ -50,17 +78,32 @@
   min-width: 48px;
 }
 
+#expires,
+#lastAccessed,
+#creationTime {
+  min-width: 115px;
+}
+
+/* Prevent all columns except for value from resizing with the panel */
+#storage-table .table-widget-column:not(#value) {
+  width: 0;
+}
+
 /* Text input in storage table */
-#storage-table textbox {
+#storage-table input {
   -moz-appearance: none;
+  -moz-box-flex: 1;
   /* make sure the outline is not cut off */
   position: relative;
-  max-width: calc(100% - 1px);
-  padding: 3px 3px;
+  box-sizing: border-box;
+  padding: 0 2px;
   font: inherit;
-  line-height: 14px;
   color: var(--theme-text-color-strong);
   background-color: var(--theme-body-background);
+}
+
+#storage-table input:focus {
+  outline: 1px solid var(--blue-50);
 }
 
 /* Variables View Sidebar */
@@ -68,6 +111,10 @@
 #storage-sidebar {
   max-width: 500px;
   min-width: 250px;
+}
+
+#storage-sidebar .devtools-toolbar {
+  padding-inline: 0;
 }
 
 /* Toolbar */
@@ -78,6 +125,12 @@
 */
 #storage-toolbar {
   display: -moz-box;
+}
+
+#storage-searchbox {
+  -moz-box-flex: 1;
+  margin-inline-start: -3px;
+  margin-inline-end: 1px;
 }
 
 #storage-toolbar .add-button::before {

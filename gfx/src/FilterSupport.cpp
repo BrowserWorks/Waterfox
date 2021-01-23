@@ -15,6 +15,7 @@
 #include "gfxContext.h"
 #include "gfxPattern.h"
 #include "gfxPlatform.h"
+#include "gfxUtils.h"
 #include "gfx2DGlue.h"
 
 #include "nsMargin.h"
@@ -212,7 +213,7 @@ static already_AddRefed<FilterNode> GaussianBlur(DrawTarget* aDT,
 already_AddRefed<FilterNode> Clear(DrawTarget* aDT) {
   RefPtr<FilterNode> filter = aDT->CreateFilter(FilterType::FLOOD);
   if (filter) {
-    filter->SetAttribute(ATT_FLOOD_COLOR, Color(0, 0, 0, 0));
+    filter->SetAttribute(ATT_FLOOD_COLOR, DeviceColor());
     return filter.forget();
   }
   return nullptr;
@@ -286,7 +287,7 @@ class FilterCachedColorModels {
   // This array is indexed by ColorModel::ToIndex.
   RefPtr<FilterNode> mFilterForColorModel[4];
 
-  ~FilterCachedColorModels() {}
+  ~FilterCachedColorModels() = default;
 };
 
 FilterCachedColorModels::FilterCachedColorModels(DrawTarget* aDT,
@@ -751,12 +752,11 @@ static already_AddRefed<FilterNode> FilterNodeFromPrimitiveDescription(
       Size radii = aMorphology.mRadii;
       int32_t rx = radii.width;
       int32_t ry = radii.height;
-      if (rx < 0 || ry < 0) {
-        // XXX SVGContentUtils::ReportToConsole()
-        return nullptr;
-      }
-      if (rx == 0 && ry == 0) {
-        return nullptr;
+
+      // Is one of the radii zero or negative, return the input image
+      if (rx <= 0 || ry <= 0) {
+        RefPtr<FilterNode> filter(mSources[0]);
+        return filter.forget();
       }
 
       // Clamp radii to prevent completely insane values:
@@ -778,7 +778,7 @@ static already_AddRefed<FilterNode> FilterNodeFromPrimitiveDescription(
     }
 
     already_AddRefed<FilterNode> operator()(const FloodAttributes& aFlood) {
-      Color color = aFlood.mColor;
+      DeviceColor color = ToDeviceColor(aFlood.mColor);
       RefPtr<FilterNode> filter = mDT->CreateFilter(FilterType::FLOOD);
       if (!filter) {
         return nullptr;
@@ -799,14 +799,18 @@ static already_AddRefed<FilterNode> FilterNodeFromPrimitiveDescription(
 
     already_AddRefed<FilterNode> operator()(
         const ComponentTransferAttributes& aComponentTransfer) {
-      RefPtr<FilterNode> filters[4];  // one for each FILTER_*_TRANSFER type
-      bool useRgb = aComponentTransfer.mTypes[kChannelG] ==
-                        SVG_FECOMPONENTTRANSFER_TYPE_UNKNOWN &&
-                    aComponentTransfer.mTypes[kChannelB] ==
-                        SVG_FECOMPONENTTRANSFER_TYPE_UNKNOWN;
+      MOZ_ASSERT(aComponentTransfer.mTypes[0] !=
+                 SVG_FECOMPONENTTRANSFER_SAME_AS_R);
+      MOZ_ASSERT(aComponentTransfer.mTypes[3] !=
+                 SVG_FECOMPONENTTRANSFER_SAME_AS_R);
 
+      RefPtr<FilterNode> filters[4];  // one for each FILTER_*_TRANSFER type
       for (int32_t i = 0; i < 4; i++) {
-        int32_t inputIndex = useRgb && i < 3 ? 0 : i;
+        int32_t inputIndex = (aComponentTransfer.mTypes[i] ==
+                              SVG_FECOMPONENTTRANSFER_SAME_AS_R) &&
+                                     (i < 3)
+                                 ? 0
+                                 : i;
         ConvertComponentTransferFunctionToFilter(aComponentTransfer, inputIndex,
                                                  i, mDT, filters[0], filters[1],
                                                  filters[2], filters[3]);
@@ -989,19 +993,19 @@ static already_AddRefed<FilterNode> FilterNodeFromPrimitiveDescription(
       RefPtr<FilterNode> alpha = FilterWrappers::ToAlpha(mDT, mSources[0]);
       RefPtr<FilterNode> blur =
           FilterWrappers::GaussianBlur(mDT, alpha, aDropShadow.mStdDeviation);
-      RefPtr<FilterNode> offsetBlur =
-          FilterWrappers::Offset(mDT, blur, aDropShadow.mOffset);
+      RefPtr<FilterNode> offsetBlur = FilterWrappers::Offset(
+          mDT, blur, IntPoint::Truncate(aDropShadow.mOffset));
       RefPtr<FilterNode> flood = mDT->CreateFilter(FilterType::FLOOD);
       if (!flood) {
         return nullptr;
       }
-      Color color = aDropShadow.mColor;
+      sRGBColor color = aDropShadow.mColor;
       if (mDescription.InputColorSpace(0) == ColorSpace::LinearRGB) {
-        color = Color(gsRGBToLinearRGBMap[uint8_t(color.r * 255)],
-                      gsRGBToLinearRGBMap[uint8_t(color.g * 255)],
-                      gsRGBToLinearRGBMap[uint8_t(color.b * 255)], color.a);
+        color = sRGBColor(gsRGBToLinearRGBMap[uint8_t(color.r * 255)],
+                          gsRGBToLinearRGBMap[uint8_t(color.g * 255)],
+                          gsRGBToLinearRGBMap[uint8_t(color.b * 255)], color.a);
       }
-      flood->SetAttribute(ATT_FLOOD_COLOR, color);
+      flood->SetAttribute(ATT_FLOOD_COLOR, ToDeviceColor(color));
 
       RefPtr<FilterNode> composite = mDT->CreateFilter(FilterType::COMPOSITE);
       if (!composite) {
@@ -1065,7 +1069,7 @@ static already_AddRefed<FilterNode> FilterNodeFromPrimitiveDescription(
         return nullptr;
       }
 
-      filter->SetAttribute(ATT_LIGHTING_COLOR, aLighting.mColor);
+      filter->SetAttribute(ATT_LIGHTING_COLOR, ToDeviceColor(aLighting.mColor));
       filter->SetAttribute(ATT_LIGHTING_SURFACE_SCALE, aLighting.mSurfaceScale);
       filter->SetAttribute(ATT_LIGHTING_KERNEL_UNIT_LENGTH,
                            aLighting.mKernelUnitLength);
@@ -1453,7 +1457,7 @@ static nsIntRegion ResultChangeRegionForPrimitive(
     }
 
     nsIntRegion operator()(const DropShadowAttributes& aDropShadow) {
-      IntPoint offset = aDropShadow.mOffset;
+      IntPoint offset = IntPoint::Truncate(aDropShadow.mOffset);
       nsIntRegion offsetRegion =
           mInputChangeRegions[0].MovedBy(offset.x, offset.y);
       Size stdDeviation = aDropShadow.mStdDeviation;
@@ -1833,7 +1837,7 @@ static nsIntRegion SourceNeededRegionForPrimitive(
     }
 
     nsIntRegion operator()(const DropShadowAttributes& aDropShadow) {
-      IntPoint offset = aDropShadow.mOffset;
+      IntPoint offset = IntPoint::Truncate(aDropShadow.mOffset);
       nsIntRegion offsetRegion =
           mResultNeededRegion.MovedBy(-nsIntPoint(offset.x, offset.y));
       Size stdDeviation = aDropShadow.mStdDeviation;
@@ -1923,54 +1927,6 @@ FilterPrimitiveDescription::FilterPrimitiveDescription(
     : mAttributes(std::move(aAttributes)),
       mOutputColorSpace(ColorSpace::SRGB),
       mIsTainted(false) {}
-
-FilterPrimitiveDescription::FilterPrimitiveDescription(
-    const FilterPrimitiveDescription& aOther)
-    : mAttributes(aOther.mAttributes),
-      mInputPrimitives(aOther.mInputPrimitives),
-      mFilterPrimitiveSubregion(aOther.mFilterPrimitiveSubregion),
-      mFilterSpaceBounds(aOther.mFilterSpaceBounds),
-      mInputColorSpaces(aOther.mInputColorSpaces),
-      mOutputColorSpace(aOther.mOutputColorSpace),
-      mIsTainted(aOther.mIsTainted) {}
-
-FilterPrimitiveDescription& FilterPrimitiveDescription::operator=(
-    const FilterPrimitiveDescription& aOther) {
-  if (this != &aOther) {
-    mAttributes = aOther.mAttributes;
-    mInputPrimitives = aOther.mInputPrimitives;
-    mFilterPrimitiveSubregion = aOther.mFilterPrimitiveSubregion;
-    mFilterSpaceBounds = aOther.mFilterSpaceBounds;
-    mInputColorSpaces = aOther.mInputColorSpaces;
-    mOutputColorSpace = aOther.mOutputColorSpace;
-    mIsTainted = aOther.mIsTainted;
-  }
-  return *this;
-}
-
-FilterPrimitiveDescription::FilterPrimitiveDescription(
-    FilterPrimitiveDescription&& aOther)
-    : mAttributes(std::move(aOther.mAttributes)),
-      mInputPrimitives(std::move(aOther.mInputPrimitives)),
-      mFilterPrimitiveSubregion(aOther.mFilterPrimitiveSubregion),
-      mFilterSpaceBounds(aOther.mFilterSpaceBounds),
-      mInputColorSpaces(std::move(aOther.mInputColorSpaces)),
-      mOutputColorSpace(aOther.mOutputColorSpace),
-      mIsTainted(aOther.mIsTainted) {}
-
-FilterPrimitiveDescription& FilterPrimitiveDescription::operator=(
-    FilterPrimitiveDescription&& aOther) {
-  if (this != &aOther) {
-    mAttributes = std::move(aOther.mAttributes);
-    mInputPrimitives = std::move(aOther.mInputPrimitives);
-    mFilterPrimitiveSubregion = aOther.mFilterPrimitiveSubregion;
-    mFilterSpaceBounds = aOther.mFilterSpaceBounds;
-    mInputColorSpaces = std::move(aOther.mInputColorSpaces);
-    mOutputColorSpace = aOther.mOutputColorSpace;
-    mIsTainted = aOther.mIsTainted;
-  }
-  return *this;
-}
 
 bool FilterPrimitiveDescription::operator==(
     const FilterPrimitiveDescription& aOther) const {

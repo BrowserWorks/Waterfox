@@ -32,18 +32,23 @@ class AbstractSandboxBroker {
   virtual bool LaunchApp(const wchar_t* aPath, const wchar_t* aArguments,
                          base::EnvironmentMap& aEnvironment,
                          GeckoProcessType aProcessType,
-                         const bool aEnableLogging, void** aProcessHandle) = 0;
+                         const bool aEnableLogging,
+                         const IMAGE_THUNK_DATA* aCachedNtdllThunk,
+                         void** aProcessHandle) = 0;
 
   // Security levels for different types of processes
   virtual void SetSecurityLevelForContentProcess(int32_t aSandboxLevel,
                                                  bool aIsFileProcess) = 0;
 
-  virtual void SetSecurityLevelForGPUProcess(int32_t aSandboxLevel) = 0;
+  virtual void SetSecurityLevelForGPUProcess(
+      int32_t aSandboxLevel, const nsCOMPtr<nsIFile>& aProfileDir) = 0;
   virtual bool SetSecurityLevelForRDDProcess() = 0;
+  virtual bool SetSecurityLevelForSocketProcess() = 0;
 
   virtual bool SetSecurityLevelForPluginProcess(int32_t aSandboxLevel) = 0;
   enum SandboxLevel { LockDown, Restricted };
-  virtual bool SetSecurityLevelForGMPlugin(SandboxLevel aLevel) = 0;
+  virtual bool SetSecurityLevelForGMPlugin(SandboxLevel aLevel,
+                                           bool aIsRemoteLaunch = false) = 0;
 
   // File system permissions
   virtual bool AllowReadFile(wchar_t const* file) = 0;
@@ -77,6 +82,7 @@ class SandboxBroker : public AbstractSandboxBroker {
   bool LaunchApp(const wchar_t* aPath, const wchar_t* aArguments,
                  base::EnvironmentMap& aEnvironment,
                  GeckoProcessType aProcessType, const bool aEnableLogging,
+                 const IMAGE_THUNK_DATA* aCachedNtdllThunk,
                  void** aProcessHandle) override;
   virtual ~SandboxBroker();
 
@@ -84,11 +90,14 @@ class SandboxBroker : public AbstractSandboxBroker {
   void SetSecurityLevelForContentProcess(int32_t aSandboxLevel,
                                          bool aIsFileProcess) override;
 
-  void SetSecurityLevelForGPUProcess(int32_t aSandboxLevel) override;
+  void SetSecurityLevelForGPUProcess(
+      int32_t aSandboxLevel, const nsCOMPtr<nsIFile>& aProfileDir) override;
   bool SetSecurityLevelForRDDProcess() override;
+  bool SetSecurityLevelForSocketProcess() override;
 
   bool SetSecurityLevelForPluginProcess(int32_t aSandboxLevel) override;
-  bool SetSecurityLevelForGMPlugin(SandboxLevel aLevel) override;
+  bool SetSecurityLevelForGMPlugin(SandboxLevel aLevel,
+                                   bool aIsRemoteLaunch = false) override;
 
   // File system permissions
   bool AllowReadFile(wchar_t const* file) override;

@@ -48,6 +48,7 @@
 #endif
 
 #include "include/common/attributes.h"
+#include "include/common/bitdepth.h"
 #include "include/common/intops.h"
 
 int xor128_rand(void);
@@ -59,6 +60,7 @@ name##_16bpc(void)
 
 void checkasm_check_msac(void);
 decl_check_bitfns(void checkasm_check_cdef);
+decl_check_bitfns(void checkasm_check_filmgrain);
 decl_check_bitfns(void checkasm_check_ipred);
 decl_check_bitfns(void checkasm_check_itx);
 decl_check_bitfns(void checkasm_check_loopfilter);
@@ -67,7 +69,7 @@ decl_check_bitfns(void checkasm_check_mc);
 
 void *checkasm_check_func(void *func, const char *name, ...);
 int checkasm_bench_func(void);
-void checkasm_fail_func(const char *msg, ...);
+int checkasm_fail_func(const char *msg, ...);
 void checkasm_update_bench(int iterations, uint64_t cycles);
 void checkasm_report(const char *name, ...);
 void checkasm_set_signal_handler_state(int enabled);
@@ -144,7 +146,7 @@ static inline uint64_t readtime(void) {
 }
 #define readtime readtime
 #endif
-#elif ARCH_ARM && !defined(_MSC_VER)
+#elif ARCH_ARM && !defined(_MSC_VER) && __ARM_ARCH >= 7
 static inline uint64_t readtime(void) {
     uint32_t cycle_counter;
     /* This requires enabling user mode access to the cycle counter (which
@@ -153,6 +155,24 @@ static inline uint64_t readtime(void) {
                          : "=r"(cycle_counter)
                          :: "memory");
     return cycle_counter;
+}
+#define readtime readtime
+#elif ARCH_PPC64LE
+static inline uint64_t readtime(void) {
+    uint32_t tbu, tbl, temp;
+
+    __asm__ __volatile__(
+        "1:\n"
+        "mfspr %2,269\n"
+        "mfspr %0,268\n"
+        "mfspr %1,269\n"
+        "cmpw   %2,%1\n"
+        "bne    1b\n"
+    : "=r"(tbl), "=r"(tbu), "=r"(temp)
+    :
+    : "cc");
+
+    return (((uint64_t)tbu) << 32) | (uint64_t)tbl;
 }
 #define readtime readtime
 #endif
@@ -173,12 +193,20 @@ void checkasm_checked_call(void *func, ...);
  * not guaranteed and false negatives is theoretically possible, but there
  * can never be any false positives. */
 void checkasm_stack_clobber(uint64_t clobber, ...);
+/* YMM and ZMM registers on x86 are turned off to save power when they haven't
+ * been used for some period of time. When they are used there will be a
+ * "warmup" period during which performance will be reduced and inconsistent
+ * which is problematic when trying to benchmark individual functions. We can
+ * work around this by periodically issuing "dummy" instructions that uses
+ * those registers to keep them powered on. */
+void checkasm_simd_warmup(void);
 #define declare_new(ret, ...)\
     ret (*checked_call)(void *, int, int, int, int, int, __VA_ARGS__) =\
     (void *)checkasm_checked_call;
 #define CLOB (UINT64_C(0xdeadbeefdeadbeef))
 #define call_new(...)\
     (checkasm_set_signal_handler_state(1),\
+     checkasm_simd_warmup(),\
      checkasm_stack_clobber(CLOB, CLOB, CLOB, CLOB, CLOB, CLOB, CLOB,\
                             CLOB, CLOB, CLOB, CLOB, CLOB, CLOB, CLOB,\
                             CLOB, CLOB, CLOB, CLOB, CLOB, CLOB, CLOB),\
@@ -260,7 +288,29 @@ void checkasm_stack_clobber(uint64_t clobber, ...);
         }\
     } while (0)
 #else
-#define bench_new(...) while (0)
+#define bench_new(...) do {} while (0)
+#endif
+
+#define DECL_CHECKASM_CHECK_FUNC(type) \
+int checkasm_check_##type(const char *const file, const int line, \
+                          const type *const buf1, const ptrdiff_t stride1, \
+                          const type *const buf2, const ptrdiff_t stride2, \
+                          const int w, const int h, const char *const name)
+
+DECL_CHECKASM_CHECK_FUNC(uint8_t);
+DECL_CHECKASM_CHECK_FUNC(uint16_t);
+DECL_CHECKASM_CHECK_FUNC(int16_t);
+DECL_CHECKASM_CHECK_FUNC(int32_t);
+
+
+#define PASTE(a,b) a ## b
+#define CONCAT(a,b) PASTE(a,b)
+
+#define checkasm_check(prefix, ...) CONCAT(checkasm_check_, prefix)(__FILE__, __LINE__, __VA_ARGS__)
+
+#ifdef BITDEPTH
+#define checkasm_check_pixel(...) checkasm_check(PIXEL_TYPE, __VA_ARGS__)
+#define checkasm_check_coef(...)  checkasm_check(COEF_TYPE,  __VA_ARGS__)
 #endif
 
 #endif /* DAV1D_TESTS_CHECKASM_CHECKASM_H */

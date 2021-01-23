@@ -5,7 +5,7 @@
 //! Rust helpers for Gecko's nsTArray.
 
 use crate::gecko_bindings::bindings;
-use crate::gecko_bindings::structs::{nsTArray, nsTArrayHeader};
+use crate::gecko_bindings::structs::{nsTArray, nsTArrayHeader, CopyableTArray};
 use std::mem;
 use std::ops::{Deref, DerefMut};
 use std::slice;
@@ -89,9 +89,11 @@ impl<T> nsTArray<T> {
     pub unsafe fn set_len(&mut self, len: u32) {
         // this can leak
         debug_assert!(len >= self.len() as u32);
+        if self.len() == len as usize {
+            return;
+        }
         self.ensure_capacity(len as usize);
-        let header = self.header_mut();
-        header.mLength = len;
+        self.header_mut().mLength = len;
     }
 
     /// Resizes an array containing only POD elements
@@ -103,6 +105,9 @@ impl<T> nsTArray<T> {
     where
         T: Copy,
     {
+        if self.len() == len as usize {
+            return;
+        }
         self.ensure_capacity(len as usize);
         let header = self.header_mut();
         header.mLength = len;
@@ -121,5 +126,18 @@ impl<T> nsTArray<T> {
             self.set_len_pod(iter.len() as u32);
         }
         self.iter_mut().zip(iter).for_each(|(r, v)| *r = v);
+    }
+}
+
+impl<T> Deref for CopyableTArray<T> {
+    type Target = nsTArray<T>;
+    fn deref(&self) -> &Self::Target {
+        &self._base
+    }
+}
+
+impl<T> DerefMut for CopyableTArray<T> {
+    fn deref_mut(&mut self) -> &mut nsTArray<T> {
+        &mut self._base
     }
 }

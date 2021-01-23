@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY % brandDTD
+     SYSTEM "chrome://branding/locale/brand.dtd">
+   %brandDTD;
+<!ENTITY aboutLogins.title                    "Kasutajakontod">
+<!ENTITY aboutLogins.update                   "Uuenda">
+<!ENTITY aboutLogins.emptyLoginText           "Siin saad ohutult salvestada oma kasutajakontode andmeid">
+<!ENTITY aboutLogins.emptyLoginHint           "&brandShortName;is salvestatud kasutajakontode andmed ilmuvad nähtavale siin.">

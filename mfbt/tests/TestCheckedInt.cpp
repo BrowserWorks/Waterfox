@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <climits>
+#include <type_traits>
 
 using namespace mozilla;
 
@@ -34,7 +35,7 @@ void verifyImplFunction(bool aX, bool aExpected, const char* aFile, int aLine,
 
 #define VERIFY_IMPL(x, expected)                                     \
   verifyImplFunction((x), (expected), __FILE__, __LINE__, sizeof(T), \
-                     IsSigned<T>::value)
+                     std::is_signed_v<T>)
 
 #define VERIFY(x) VERIFY_IMPL(x, true)
 #define VERIFY_IS_FALSE(x) VERIFY_IMPL(x, false)
@@ -48,8 +49,8 @@ struct testTwiceBiggerType {
     VERIFY(
         detail::IsSupported<typename detail::TwiceBiggerType<T>::Type>::value);
     VERIFY(sizeof(typename detail::TwiceBiggerType<T>::Type) == 2 * sizeof(T));
-    VERIFY(bool(IsSigned<typename detail::TwiceBiggerType<T>::Type>::value) ==
-           bool(IsSigned<T>::value));
+    VERIFY(bool(std::is_signed_v<typename detail::TwiceBiggerType<T>::Type>) ==
+           bool(std::is_signed_v<T>));
   }
 };
 
@@ -73,18 +74,18 @@ void test() {
   alreadyRun = true;
 
   VERIFY(detail::IsSupported<T>::value);
-  const bool isTSigned = IsSigned<T>::value;
+  const bool isTSigned = std::is_signed_v<T>;
   VERIFY(bool(isTSigned) == !bool(T(-1) > T(0)));
 
   testTwiceBiggerType<T>::run();
 
-  typedef typename MakeUnsigned<T>::Type unsignedT;
+  using unsignedT = std::make_unsigned_t<T>;
 
   VERIFY(sizeof(unsignedT) == sizeof(T));
-  VERIFY(IsSigned<unsignedT>::value == false);
+  VERIFY(std::is_signed_v<unsignedT> == false);
 
-  const CheckedInt<T> max(MaxValue<T>::value);
-  const CheckedInt<T> min(MinValue<T>::value);
+  const CheckedInt<T> max(std::numeric_limits<T>::max());
+  const CheckedInt<T> min(std::numeric_limits<T>::min());
 
   // Check MinValue and MaxValue, since they are custom implementations and a
   // mistake there could potentially NOT be caught by any other tests... while
@@ -489,28 +490,28 @@ void test() {
   // Check that construction of CheckedInt from an integer value of a
   // mismatched type is checked Also check casting between all types.
 
-#define VERIFY_CONSTRUCTION_FROM_INTEGER_TYPE2(U, V, PostVExpr)          \
-  {                                                                      \
-    bool isUSigned = IsSigned<U>::value;                                 \
-    VERIFY_IS_VALID(CheckedInt<T>(V(0) PostVExpr));                      \
-    VERIFY_IS_VALID(CheckedInt<T>(V(1) PostVExpr));                      \
-    VERIFY_IS_VALID(CheckedInt<T>(V(100) PostVExpr));                    \
-    if (isUSigned) {                                                     \
-      VERIFY_IS_VALID_IF(CheckedInt<T>(V(-1) PostVExpr), isTSigned);     \
-    }                                                                    \
-    if (sizeof(U) > sizeof(T)) {                                         \
-      VERIFY_IS_INVALID(                                                 \
-          CheckedInt<T>(V(MaxValue<T>::value) PostVExpr + one.value())); \
-    }                                                                    \
-    VERIFY_IS_VALID_IF(                                                  \
-        CheckedInt<T>(MaxValue<U>::value),                               \
-        (sizeof(T) > sizeof(U) ||                                        \
-         ((sizeof(T) == sizeof(U)) && (isUSigned || !isTSigned))));      \
-    VERIFY_IS_VALID_IF(                                                  \
-        CheckedInt<T>(MinValue<U>::value),                               \
-        isUSigned == false                                               \
-            ? 1                                                          \
-            : bool(isTSigned) == false ? 0 : sizeof(T) >= sizeof(U));    \
+#define VERIFY_CONSTRUCTION_FROM_INTEGER_TYPE2(U, V, PostVExpr)       \
+  {                                                                   \
+    bool isUSigned = std::is_signed_v<U>;                             \
+    VERIFY_IS_VALID(CheckedInt<T>(V(0) PostVExpr));                   \
+    VERIFY_IS_VALID(CheckedInt<T>(V(1) PostVExpr));                   \
+    VERIFY_IS_VALID(CheckedInt<T>(V(100) PostVExpr));                 \
+    if (isUSigned) {                                                  \
+      VERIFY_IS_VALID_IF(CheckedInt<T>(V(-1) PostVExpr), isTSigned);  \
+    }                                                                 \
+    if (sizeof(U) > sizeof(T)) {                                      \
+      VERIFY_IS_INVALID(CheckedInt<T>(                                \
+          V(std::numeric_limits<T>::max()) PostVExpr + one.value())); \
+    }                                                                 \
+    VERIFY_IS_VALID_IF(                                               \
+        CheckedInt<T>(std::numeric_limits<U>::max()),                 \
+        (sizeof(T) > sizeof(U) ||                                     \
+         ((sizeof(T) == sizeof(U)) && (isUSigned || !isTSigned))));   \
+    VERIFY_IS_VALID_IF(                                               \
+        CheckedInt<T>(std::numeric_limits<U>::min()),                 \
+        isUSigned == false                                            \
+            ? 1                                                       \
+            : bool(isTSigned) == false ? 0 : sizeof(T) >= sizeof(U)); \
   }
 #define VERIFY_CONSTRUCTION_FROM_INTEGER_TYPE(U)      \
   VERIFY_CONSTRUCTION_FROM_INTEGER_TYPE2(U, U, +zero) \

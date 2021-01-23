@@ -14,6 +14,7 @@ import os
 import platform
 import re
 import sys
+
 from .string_version import StringVersion
 from ctypes.util import find_library
 
@@ -66,7 +67,7 @@ info = {'os': unknown,
         'os_version': unknown,
         'bits': unknown,
         'has_sandbox': unknown,
-        'webrender': bool(os.environ.get("MOZ_WEBRENDER", False)),
+        'webrender': False,
         'automation': bool(os.environ.get("MOZ_AUTOMATION", False)),
         }
 (system, node, release, version, machine, processor) = platform.uname()
@@ -98,25 +99,31 @@ elif system.startswith(('MINGW', 'MSYS_NT')):
     info['os'] = 'win'
     os_version = version = unknown
 elif system == "Linux":
-    if hasattr(platform, "linux_distribution"):
-        (distro, os_version, codename) = platform.linux_distribution()
-    else:
-        (distro, os_version, codename) = platform.dist()
+    # Attempt to use distro package to determine Linux distribution first.
+    # Failing that, fall back to use the platform method.
+    # Note that platform.linux_distribution() will be deprecated as of 3.8
+    # and this block will be removed once support for 2.7/3.5 is dropped.
+    try:
+        from distro import linux_distribution
+    except ImportError:
+        from platform import linux_distribution
+
+    output = linux_distribution()
+    (distribution, os_version, codename) = tuple(
+        str(item.title()) for item in output)
+
     if not processor:
         processor = machine
-    version = "%s %s" % (distro, os_version)
-
-    # Bug in Python 2's `platform` library:
-    # It will return a triple of empty strings if the distribution is not supported.
-    # It works on Python 3. If we don't have an OS version,
-    # the unit tests fail to run.
-    if not distro and not os_version and not codename:
-        distro = 'lfs'
-        version = release
+    if not distribution:
+        distribution = 'lfs'
+    if not os_version:
         os_version = release
+    if not codename:
+        codename = 'unknown'
+    version = "%s %s" % (distribution, os_version)
 
     info['os'] = 'linux'
-    info['linux_distro'] = distro
+    info['linux_distro'] = distribution
 elif system in ['DragonFly', 'FreeBSD', 'NetBSD', 'OpenBSD']:
     info['os'] = 'bsd'
     version = os_version = sys.platform
@@ -192,12 +199,7 @@ def update(new_info):
     :param new_info: Either a dict containing the new info or a path/url
                      to a json file containing the new info.
     """
-
-    PY3 = sys.version_info[0] == 3
-    if PY3:
-        string_types = str,
-    else:
-        string_types = basestring,
+    from six import string_types
     if isinstance(new_info, string_types):
         # lazy import
         import mozfile

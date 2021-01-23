@@ -13,12 +13,6 @@
   </style>
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
   <script type="text/javascript">
-  var numAssertions = 9;
-
-  // these are from the additional margin-inline-{start,end} tests
-  numAssertions += 2;
-
-  SimpleTest.expectAssertions(numAssertions);
   SimpleTest.waitForExplicitFinish();
   SimpleTest.requestLongerTimeout(2);
 
@@ -202,14 +196,6 @@ function test_value(property, val, is_initial)
     gElementN.parentNode.style.removeProperty(property);
     gElementF.parentNode.style.removeProperty(property);
   }
-
-  // FIXME -moz-binding value makes gElementF and its parent loses
-  // their frame. Force it to get recreated after each property.
-  // See bug 1331903.
-  gDisplayTree.style.display = "none";
-  get_computed_value(getComputedStyle(gElementF, ""), "width");
-  gDisplayTree.style.display = "";
-  get_computed_value(getComputedStyle(gElementF, ""), "width");
 }
 
 function test_property(prop) {

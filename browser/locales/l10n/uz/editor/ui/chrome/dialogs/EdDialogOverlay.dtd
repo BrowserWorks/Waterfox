@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "Qo‘shimcha tahrirlash…">
+<!ENTITY AdvancedEditButton.accessKey "t">
+<!ENTITY AdvancedEditButton.tooltip "HTML atributlari, uslub atributlari va JavaScriptni qo‘shish yoki tahrirlash">
+<!ENTITY chooseFileButton.label "Faylni tanlash...">
+<!ENTITY chooseFileButton.accessKey "F">
+<!ENTITY chooseFileLinkButton.label "Faylni tanlash...">
+<!ENTITY chooseFileLinkButton.accessKey "t">
+<!ENTITY makeUrlRelative.label "Aloqador sahifa URL manzili">
+<!ENTITY makeUrlRelative.accessKey "A">
+<!ENTITY makeUrlRelative.tooltip "Aloqador va mutlaq URL manzillar orasidagi o‘zgarish. Siz uni o‘zgartirish uchun birinchi navbatda sahifani saqlashingiz kerak.">
+<!-- Shared by Link and Image dialogs -->
+
+<!ENTITY LinkURLEditField.label "Veb sahifa, mahalliy faylni kiriting. Bunday qila olmasangiz Nomlangan langarni yoki ochiluvchi ro‘yxatdan bosh qatorni tanlang:">
+<!ENTITY LinkURLEditField.accessKey "w">

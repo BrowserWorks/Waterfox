@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('BigInt')) -- BigInt is not enabled unconditionally
 // Copyright (C) 2017 Josh Wolfe. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 /*---
@@ -21,4 +20,5 @@ assert.sameValue(0n === Symbol('1'), false, 'The result of (0n === Symbol("1")) 
 assert.sameValue(Symbol('1') === 0n, false, 'The result of (Symbol("1") === 0n) is false');
 assert.sameValue(1n === Symbol('1'), false, 'The result of (1n === Symbol("1")) is false');
 assert.sameValue(Symbol('1') === 1n, false, 'The result of (Symbol("1") === 1n) is false');
+
 reportCompare(0, 0);

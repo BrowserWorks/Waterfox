@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Kajkosće popisa">
+
+<!ENTITY Settings.label "Nastajenja">
+<!ENTITY Settings.accesskey "N">
+
+<!ENTITY EditLabelText.label "Tekst wobdźěłać:">
+<!ENTITY EditLabelText.accesskey "T">
+<!ENTITY LabelFor.label "Za kontrolu:">
+<!ENTITY LabelFor.accesskey "k">
+<!ENTITY AccessKey.label "Přistupna tasta:">
+<!ENTITY AccessKey.accesskey "P">
+
+<!ENTITY RemoveLabel.label "Popis wotstronić">
+<!ENTITY RemoveLabel.accesskey "w">

@@ -22,7 +22,7 @@ ChromiumCDMVideoDecoder::ChromiumCDMVideoDecoder(
       mGMPThread(GetGMPAbstractThread()),
       mImageContainer(aParams.mImageContainer) {}
 
-ChromiumCDMVideoDecoder::~ChromiumCDMVideoDecoder() {}
+ChromiumCDMVideoDecoder::~ChromiumCDMVideoDecoder() = default;
 
 static uint32_t ToCDMH264Profile(uint8_t aProfile) {
   switch (aProfile) {
@@ -57,7 +57,7 @@ RefPtr<MediaDataDecoder::InitPromise> ChromiumCDMVideoDecoder::Init() {
     config.mCodec() = cdm::VideoCodec::kCodecH264;
     config.mProfile() =
         ToCDMH264Profile(mConfig.mExtraData->SafeElementAt(1, 0));
-    config.mExtraData() = *mConfig.mExtraData;
+    config.mExtraData() = mConfig.mExtraData->Clone();
     mConvertToAnnexB = true;
   } else if (VPXDecoder::IsVP8(mConfig.mMimeType)) {
     config.mCodec() = cdm::VideoCodec::kCodecVp8;

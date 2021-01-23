@@ -5,9 +5,54 @@
 "use strict";
 
 const actionTypes = {
-  UPDATE_WORKERS: "UPDATE_WORKERS",
+  // manifest substate
+  FETCH_MANIFEST_FAILURE: "FETCH_MANIFEST_FAILURE",
+  FETCH_MANIFEST_START: "FETCH_MANIFEST_START",
+  FETCH_MANIFEST_SUCCESS: "FETCH_MANIFEST_SUCCESS",
+  RESET_MANIFEST: "RESET_MANIFEST",
+  // page substate
   UPDATE_DOMAIN: "UPDATE_DOMAIN",
+  // ui substate
+  UPDATE_SELECTED_PAGE: "UPDATE_SELECTED_PAGE",
+  // workers substate
+  UPDATE_CAN_DEBUG_WORKERS: "UPDATE_CAN_DEBUG_WORKERS",
+  UPDATE_WORKERS: "UPDATE_WORKERS",
+};
+
+// NOTE: these const values are used as part of CSS selectors - be mindful of the characters used
+const PAGE_TYPES = {
+  MANIFEST: "manifest",
+  SERVICE_WORKERS: "service-workers",
+};
+
+const DEFAULT_PAGE = PAGE_TYPES.SERVICE_WORKERS;
+
+const MANIFEST_CATEGORIES = {
+  IDENTITY: "identity",
+  PRESENTATION: "presentation",
+  ICONS: "icons",
+};
+
+const MANIFEST_MEMBER_VALUE_TYPES = {
+  COLOR: "color",
+  ICON: "icon",
+  STRING: "string",
+};
+
+const MANIFEST_ISSUE_LEVELS = {
+  ERROR: "error",
+  WARNING: "warning",
 };
 
 // flatten constants
-module.exports = Object.assign({}, actionTypes);
+module.exports = Object.assign(
+  {},
+  {
+    DEFAULT_PAGE,
+    PAGE_TYPES,
+    MANIFEST_CATEGORIES,
+    MANIFEST_ISSUE_LEVELS,
+    MANIFEST_MEMBER_VALUE_TYPES,
+  },
+  actionTypes
+);

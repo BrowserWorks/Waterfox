@@ -30,6 +30,7 @@ const {
   COMMAND_PAIR_DECLINE,
   COMMAND_PAIR_COMPLETE,
   COMMAND_PAIR_PREFERENCES,
+  FX_OAUTH_CLIENT_ID,
   ON_PROFILE_CHANGE_NOTIFICATION,
   PREF_LAST_FXA_USER,
   WEBCHANNEL_ID,
@@ -81,6 +82,28 @@ XPCOMUtils.defineLazyPreferenceGetter(
   this,
   "pairingEnabled",
   "identity.fxaccounts.pairing.enabled"
+);
+XPCOMUtils.defineLazyPreferenceGetter(
+  this,
+  "separatePrivilegedMozillaWebContentProcess",
+  "browser.tabs.remote.separatePrivilegedMozillaWebContentProcess",
+  false
+);
+XPCOMUtils.defineLazyPreferenceGetter(
+  this,
+  "separatedMozillaDomains",
+  "browser.tabs.remote.separatedMozillaDomains",
+  false,
+  false,
+  val => val.split(",")
+);
+XPCOMUtils.defineLazyPreferenceGetter(
+  this,
+  "accountServer",
+  "identity.fxaccounts.remote.root",
+  false,
+  false,
+  val => Services.io.newURI(val)
 );
 
 // These engines were added years after Sync had been introduced, they need
@@ -143,7 +166,7 @@ this.FxAccountsWebChannel = function(options) {
   this._setupChannel();
 };
 
-this.FxAccountsWebChannel.prototype = {
+FxAccountsWebChannel.prototype = {
   /**
    * WebChannel that is used to communicate with content page
    */
@@ -191,6 +214,23 @@ this.FxAccountsWebChannel.prototype = {
   _receiveMessage(message, sendingContext) {
     const { command, data } = message;
 
+    let shouldCheckRemoteType =
+      separatePrivilegedMozillaWebContentProcess &&
+      separatedMozillaDomains.some(function(val) {
+        return (
+          accountServer.asciiHost == val ||
+          accountServer.asciiHost.endsWith("." + val)
+        );
+      });
+    let { currentRemoteType } = sendingContext.browsingContext;
+    if (shouldCheckRemoteType && currentRemoteType != "privilegedmozilla") {
+      log.error(
+        `Rejected FxA webchannel message from remoteType = ${currentRemoteType}`
+      );
+      return;
+    }
+
+    let browser = sendingContext.browsingContext.top.embedderElement;
     switch (command) {
       case COMMAND_PROFILE_CHANGE:
         Services.obs.notifyObservers(
@@ -223,14 +263,11 @@ this.FxAccountsWebChannel.prototype = {
         this._channel.send(response, sendingContext);
         break;
       case COMMAND_SYNC_PREFERENCES:
-        this._helpers.openSyncPreferences(
-          sendingContext.browser,
-          data.entryPoint
-        );
+        this._helpers.openSyncPreferences(browser, data.entryPoint);
         break;
       case COMMAND_PAIR_PREFERENCES:
         if (pairingEnabled) {
-          sendingContext.browser.loadURI("about:preferences?action=pair#sync", {
+          browser.loadURI("about:preferences?action=pair#sync", {
             triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
           });
         }
@@ -245,8 +282,9 @@ this.FxAccountsWebChannel.prototype = {
 
         const service = data && data.service;
         const isPairing = data && data.isPairing;
+        const context = data && data.context;
         this._helpers
-          .getFxaStatus(service, sendingContext, isPairing)
+          .getFxaStatus(service, sendingContext, isPairing, context)
           .then(fxaStatus => {
             let response = {
               command,
@@ -317,9 +355,9 @@ this.FxAccountsWebChannel.prototype = {
      *        Command message
      * @param sendingContext {Object}
      *        Message sending context.
-     *        @param sendingContext.browser {browser}
-     *               The <browser> object that captured the
-     *               WebChannelMessageToChrome.
+     *        @param sendingContext.browsingContext {BrowsingContext}
+     *               The browsingcontext from which the
+     *               WebChannelMessageToChrome was sent.
      *        @param sendingContext.eventTarget {EventTarget}
      *               The <EventTarget> where the message was sent.
      *        @param sendingContext.principal {Principal}
@@ -357,11 +395,12 @@ this.FxAccountsWebChannelHelpers = function(options) {
   options = options || {};
 
   this._fxAccounts = options.fxAccounts || fxAccounts;
+  this._weaveXPCOM = options.weaveXPCOM || null;
   this._privateBrowsingUtils =
     options.privateBrowsingUtils || PrivateBrowsingUtils;
 };
 
-this.FxAccountsWebChannelHelpers.prototype = {
+FxAccountsWebChannelHelpers.prototype = {
   // If the last fxa account used for sync isn't this account, we display
   // a modal dialog checking they really really want to do this...
   // (This is sync-specific, so ideally would be in sync's identity module,
@@ -378,33 +417,15 @@ this.FxAccountsWebChannelHelpers.prototype = {
    *
    * @param accountData the user's account data and credentials
    */
-  login(accountData) {
+  async login(accountData) {
     // We don't act on customizeSync anymore, it used to open a dialog inside
     // the browser to selecte the engines to sync but we do it on the web now.
+    log.debug("Webchannel is logging a user in.");
     delete accountData.customizeSync;
 
-    if (accountData.offeredSyncEngines) {
-      EXTRA_ENGINES.forEach(engine => {
-        if (
-          accountData.offeredSyncEngines.includes(engine) &&
-          !accountData.declinedSyncEngines.includes(engine)
-        ) {
-          // These extra engines are disabled by default.
-          Services.prefs.setBoolPref(`services.sync.engine.${engine}`, true);
-        }
-      });
-      delete accountData.offeredSyncEngines;
-    }
-
-    if (accountData.declinedSyncEngines) {
-      let declinedSyncEngines = accountData.declinedSyncEngines;
-      log.debug("Received declined engines", declinedSyncEngines);
-      Weave.Service.engineManager.setDeclined(declinedSyncEngines);
-      declinedSyncEngines.forEach(engine => {
-        Services.prefs.setBoolPref("services.sync.engine." + engine, false);
-      });
-      delete accountData.declinedSyncEngines;
-    }
+    // Save requested services for later.
+    const requestedServices = accountData.services;
+    delete accountData.services;
 
     // the user has already been shown the "can link account"
     // screen. No need to keep this data around.
@@ -413,13 +434,49 @@ this.FxAccountsWebChannelHelpers.prototype = {
     // Remember who it was so we can log out next time.
     this.setPreviousAccountNameHashPref(accountData.email);
 
+    await this._fxAccounts.telemetry.recordConnection(
+      Object.keys(requestedServices || {}),
+      "webchannel"
+    );
+
     // A sync-specific hack - we want to ensure sync has been initialized
     // before we set the signed-in user.
-    let xps = Cc["@mozilla.org/weave/service;1"].getService(Ci.nsISupports)
-      .wrappedJSObject;
-    return xps.whenLoaded().then(() => {
-      return this._fxAccounts.setSignedInUser(accountData);
-    });
+    // XXX - probably not true any more, especially now we have observerPreloads
+    // in FxAccounts.jsm?
+    let xps =
+      this._weaveXPCOM ||
+      Cc["@mozilla.org/weave/service;1"].getService(Ci.nsISupports)
+        .wrappedJSObject;
+    await xps.whenLoaded();
+    await this._fxAccounts._internal.setSignedInUser(accountData);
+
+    if (requestedServices) {
+      // User has enabled Sync.
+      if (requestedServices.sync) {
+        const { offeredEngines, declinedEngines } = requestedServices.sync;
+        if (offeredEngines && declinedEngines) {
+          EXTRA_ENGINES.forEach(engine => {
+            if (
+              offeredEngines.includes(engine) &&
+              !declinedEngines.includes(engine)
+            ) {
+              // These extra engines are disabled by default.
+              Services.prefs.setBoolPref(
+                `services.sync.engine.${engine}`,
+                true
+              );
+            }
+          });
+          log.debug("Received declined engines", declinedEngines);
+          Weave.Service.engineManager.setDeclined(declinedEngines);
+          declinedEngines.forEach(engine => {
+            Services.prefs.setBoolPref(`services.sync.engine.${engine}`, false);
+          });
+        }
+        log.debug("Webchannel is enabling sync");
+        await xps.Weave.Service.configure();
+      }
+    }
   },
 
   /**
@@ -427,15 +484,15 @@ this.FxAccountsWebChannelHelpers.prototype = {
    *
    * @param the uid of the account which have been logged out
    */
-  logout(uid) {
-    return fxAccounts.getSignedInUser().then(userData => {
-      if (userData && userData.uid === uid) {
-        // true argument is `localOnly`, because server-side stuff
-        // has already been taken care of by the content server
-        return fxAccounts.signOut(true);
-      }
-      return null;
-    });
+  async logout(uid) {
+    let fxa = this._fxAccounts;
+    let userData = await fxa._internal.getUserAccountData(["uid"]);
+    if (userData && userData.uid === uid) {
+      await fxa.telemetry.recordDisconnection(null, "webchannel");
+      // true argument is `localOnly`, because server-side stuff
+      // has already been taken care of by the content server
+      await fxa.signOut(true);
+    }
   },
 
   /**
@@ -447,8 +504,9 @@ this.FxAccountsWebChannelHelpers.prototype = {
       return true;
     }
 
+    let browser = sendingContext.browsingContext.top.embedderElement;
     const isPrivateBrowsing = this._privateBrowsingUtils.isBrowserPrivate(
-      sendingContext.browser
+      browser
     );
     log.debug("is private browsing", isPrivateBrowsing);
     return isPrivateBrowsing;
@@ -457,7 +515,7 @@ this.FxAccountsWebChannelHelpers.prototype = {
   /**
    * Check whether sending fxa_status data should be allowed.
    */
-  shouldAllowFxaStatus(service, sendingContext, isPairing) {
+  shouldAllowFxaStatus(service, sendingContext, isPairing, context) {
     // Return user data for any service in non-PB mode. In PB mode,
     // only return user data if service==="sync" or is in pairing mode
     // (as service will be equal to the OAuth client ID and not "sync").
@@ -478,6 +536,7 @@ this.FxAccountsWebChannelHelpers.prototype = {
     return (
       !this.isPrivateBrowsingMode(sendingContext) ||
       service === "sync" ||
+      context === "fx_desktop_v3" ||
       isPairing
     );
   },
@@ -487,11 +546,18 @@ this.FxAccountsWebChannelHelpers.prototype = {
    * If returning status information is not allowed or no user is signed into
    * Sync, `user_data` will be null.
    */
-  async getFxaStatus(service, sendingContext, isPairing) {
+  async getFxaStatus(service, sendingContext, isPairing, context) {
     let signedInUser = null;
 
-    if (this.shouldAllowFxaStatus(service, sendingContext, isPairing)) {
-      const userData = await this._fxAccounts.getSignedInUser();
+    if (
+      this.shouldAllowFxaStatus(service, sendingContext, isPairing, context)
+    ) {
+      const userData = await this._fxAccounts._internal.getUserAccountData([
+        "email",
+        "sessionToken",
+        "uid",
+        "verified",
+      ]);
       if (userData) {
         signedInUser = {
           email: userData.email,
@@ -504,7 +570,9 @@ this.FxAccountsWebChannelHelpers.prototype = {
 
     return {
       signedInUser,
+      clientId: FX_OAUTH_CLIENT_ID,
       capabilities: {
+        multiService: true,
         pairing: pairingEnabled,
         engines: this._getAvailableExtraEngines(),
       },
@@ -547,15 +615,16 @@ this.FxAccountsWebChannelHelpers.prototype = {
         log.info("changePassword ignoring unsupported field", name);
       }
     }
-    await this._fxAccounts.updateUserAccountData(newCredentials);
+    await this._fxAccounts._internal.updateUserAccountData(newCredentials);
     // Force the keys derivation, to be able to register a send-tab command
-    // in updateDeviceRegistration.
+    // in updateDeviceRegistration (but it's not clear we really do need to
+    // force keys here - see bug 1580398 for more)
     try {
-      await this._fxAccounts.getKeys();
+      await this._fxAccounts.keys.getKeys();
     } catch (e) {
       log.error("getKeys errored", e);
     }
-    await this._fxAccounts.updateDeviceRegistration();
+    await this._fxAccounts._internal.updateDeviceRegistration();
   },
 
   /**
@@ -623,11 +692,9 @@ this.FxAccountsWebChannelHelpers.prototype = {
     );
     let continueLabel = sb.GetStringFromName("continue.label");
     let title = sb.GetStringFromName("relinkVerify.title");
-    let description = sb.formatStringFromName(
-      "relinkVerify.description",
-      [acctName],
-      1
-    );
+    let description = sb.formatStringFromName("relinkVerify.description", [
+      acctName,
+    ]);
     let body =
       sb.GetStringFromName("relinkVerify.heading") + "\n\n" + description;
     let ps = Services.prompt;
@@ -671,7 +738,7 @@ var EnsureFxAccountsWebChannel = () => {
       if (contentUri) {
         // The FxAccountsWebChannel listens for events and updates
         // the state machine accordingly.
-        singleton = new this.FxAccountsWebChannel({
+        singleton = new FxAccountsWebChannel({
           content_uri: contentUri,
           channel_id: WEBCHANNEL_ID,
         });

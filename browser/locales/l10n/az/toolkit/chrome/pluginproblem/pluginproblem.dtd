@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY tapToPlayPlugin                                     "Qoşmanı aktivləşdirmək üçün bura toxunun.">
+<!ENTITY clickToActivatePlugin                               "Qoşmanı aktivləşdir.">
+<!ENTITY checkForUpdates                                     "Yeniləmələr üçün yoxla…">
+<!ENTITY blockedPlugin.label                                 "Bu qoşma sizi qorumaq üçün əngəlləndi.">
+<!ENTITY hidePluginBtn.label                                 "Qoşmanı gizlə">
+<!ENTITY managePlugins                                       "Qoşmaları idarə et…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Təkrar yoxlamaq üçün ">
+<!ENTITY reloadPlugin.post                                   " səhifəni yeniləyin.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Çökmə hesabatını göndər">
+<!ENTITY report.submitting                                   "Hesabat göndərilir…">
+<!ENTITY report.submitted                                    "Çökmə hesabatı göndərildi.">
+<!ENTITY report.disabled                                     "Çökmə hesabatı göndərilməsi söndürülüb.">
+<!ENTITY report.failed                                       "Göndərmə uğursuz oldu.">
+<!ENTITY report.unavailable                                  "Hesabat yoxdur.">
+<!ENTITY report.comment                                      "Şərh əlavə edin (şərhlər hamı tərəfindən görünür)">
+<!ENTITY report.pageURL                                      "Səhifənin keçidini (URL) daxil et">
+
+<!ENTITY plugin.file                                         "Fayl">
+<!ENTITY plugin.mimeTypes                                    "MIME Növləri">
+<!ENTITY plugin.flashProtectedMode.label                     "Adobe Flash müdafiə rejimini aktivləşdir">
+<!ENTITY plugin.enableBlocklists.label                       "Təhlükəli və güvənilməz Flash məzmunları əngəllə">

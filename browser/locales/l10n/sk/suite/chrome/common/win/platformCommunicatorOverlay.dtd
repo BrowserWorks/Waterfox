@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- win -->
+<!-- LOCALIZATION NOTE : FILE Do not translate "accel" or "shift",
+                         You may want to translate the Cmd.key and accesskey -->
+
+<!ENTITY closeCmd.label                 "Zavrieť">
+<!ENTITY closeCmd.key                   "W">
+<!ENTITY closeCmd.accesskey             "Z">
+
+<!ENTITY quitApplicationCmd.label       "Koniec">
+<!ENTITY quitApplicationCmd.key         "Q">
+<!ENTITY quitApplicationCmd.accesskey   "K">
+
+<!ENTITY redoCmd.key                    "Y">
+
+<!ENTITY findReplaceCmd.key             "H">
+<!ENTITY findTypeTextCmd.key            "/">
+<!ENTITY findTypeLinksCmd.key           "'">
+
+<!ENTITY accel.emacs_conflict           "accel">
+
+<!-- Help viewer -->
+<!ENTITY openHelpCmd.label              "Obsah pomocníka">
+<!ENTITY openHelpCmd.accesskey          "O">
+<!ENTITY openHelpCmd.key                "VK_F1">
+<!ENTITY helpForIEUsers.label           "Pre používateľov Internet Explorera">
+<!ENTITY helpForIEUsers.accesskey       "E">
+<!-- LOCALIZATION NOTE some localizations need to change the
+                       "Help" menu label on Windows -->
+<!ENTITY helpMenu.label                 "Pomocník">
+<!ENTITY helpMenu.accesskey             "P">
+
+
+<!-- Key labels, for mousewheel prefs -->
+<!ENTITY ctrlKey.label                  "Ctrl">
+<!ENTITY altKey.label                   "Alt">
+<!ENTITY shiftKey.label                 "Shift">
+
+<!ENTITY menubarCmd.label               "Panel Ponuka">
+<!ENTITY menubarCmd.accesskey           "P">

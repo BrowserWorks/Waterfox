@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Postavke popisa">
+
+<!ENTITY ListType.label "Vrsta popisa">
+<!ENTITY bulletStyle.label "Stil grafičke oznake:">
+<!ENTITY startingNumber.label "Započni na:">
+<!ENTITY startingNumber.accessKey "Z">
+<!ENTITY none.value "Niti jedan">
+<!ENTITY bulletList.value "Popis grafičkih oznaka (bez brojeva)">
+<!ENTITY numberList.value "Numerički popis">
+<!ENTITY definitionList.value "Popis definicija">
+<!ENTITY changeEntireListRadio.label "Promjeni cijeli popis">
+<!ENTITY changeEntireListRadio.accessKey "c">
+<!ENTITY changeSelectedRadio.label "Promjeni samo odabrane stavke">
+<!ENTITY changeSelectedRadio.accessKey "i">

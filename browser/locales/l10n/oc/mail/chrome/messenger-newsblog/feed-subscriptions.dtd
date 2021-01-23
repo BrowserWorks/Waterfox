@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label "Abonaments als fluses">
+
+<!ENTITY feedTitle.label "Títol :">
+
+<!ENTITY button.addFeed.label "Apondre">
+<!ENTITY button.addFeed.accesskey "A">
+<!ENTITY button.removeFeed.label "Suprimir">
+<!ENTITY button.removeFeed.accesskey "S">
+<!ENTITY button.importOPML.label "Importar">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label "Exportar">
+<!ENTITY button.exportOPML.accesskey "x">
+
+<!ENTITY cmd.close.commandKey "w">

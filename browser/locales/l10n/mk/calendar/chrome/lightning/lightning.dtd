@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<!ENTITY lightning.taskLabel "Lightning">
+<!ENTITY lightning.menupopup.new.event.label "Настан…">
+<!ENTITY lightning.menupopup.new.task.label "Задача…">
+<!ENTITY lightning.menupopup.new.calendar.label "Календар…">
+<!ENTITY lightning.menupopup.open.label "Отвори">
+<!ENTITY lightning.menupopup.open.accesskey "О">
+<!ENTITY lightning.menupopup.open.message.label "Снимена порака…">
+<!ENTITY lightning.menupopup.open.message.accesskey "п">
+<!ENTITY lightning.menupopup.open.calendar.label "Датотека од календар…">
+<!ENTITY lightning.menupopup.open.calendar.accesskey "к">
+<!ENTITY agenda.treeview.label "Поглед:">
+<!ENTITY agenda.treeview.all.label "Сè">
+<!ENTITY agenda.treeview.events.label "Настани">
+<!ENTITY agenda.treeview.tasks.label "Задачи">
+<!ENTITY agenda.treeview.reminders.label "Потсетник">
+<!ENTITY agenda.treeview.customize.label "Прилагоди…">
+<!ENTITY agenda.treeview.item.label "Објект">
+<!ENTITY agenda.treeview.description "Прилагоди ги прегледите">
+<!ENTITY lightning.sidebar.agenda.label "Дневен ред">
+<!ENTITY lightning.sidebar.todo.label "Треба да">
+<!ENTITY lightning.sidebar.calendars.label "Календари">
+<!ENTITY lightning.calendar.label "Календар">
+<!ENTITY lightning.calendar.accesskey "К">
+<!ENTITY lightning.tasks.label "Задачи">
+<!ENTITY lightning.tasks.accesskey "д">
+<!ENTITY lightning.toolbar.mail.label "Пошта">
+<!ENTITY lightning.toolbar.mail.accesskey "П">
+<!ENTITY lightning.toolbar.calendar.label "Mozilla Sunbird">
+<!ENTITY lightning.toolbar.calendar.accesskey "M">
+<!ENTITY lightning.toolbar.task.label "Задача">
+<!ENTITY lightning.toolbar.task.accesskey "З">
+<!ENTITY customize.toolbar.selector.label "Алатник:">
+<!ENTITY customize.toolbar.selector.mode "Режимски алатник">
+<!ENTITY customize.toolbar.selector.mail "Алатник за пошта">
+<!ENTITY customize.toolbar.selector.calendar "Календарски алатник">
+<!ENTITY customize.toolbar.selector.task     "Алатник со задачи">
+<!ENTITY customize.toolbar.location.label "Локација:">
+<!ENTITY customize.toolbar.location.top "Врв">
+<!ENTITY customize.toolbar.location.bottom "Дно">
+<!ENTITY lightning.toolbar.edit.calendar.label "Уреди го избраниот календар">
+<!ENTITY lightning.toolbar.edit.calendar.accesskey "Т">
+<!ENTITY lightning.toolbar.delete.calendar.label "Избриши го избраниот календар">
+<!ENTITY lightning.toolbar.delete.calendar.accesskey "Б">
+<!ENTITY lightning.toolbar.day.label "Ден">
+<!ENTITY lightning.toolbar.day.accesskey "Д">
+<!ENTITY lightning.toolbar.week.label "Седмица">
+<!ENTITY lightning.toolbar.week.accesskey "Н">
+<!ENTITY lightning.toolbar.multiweek.label "Повеќе седмици">
+<!ENTITY lightning.toolbar.multiweek.accesskey "П">
+<!ENTITY lightning.toolbar.month.label "Месец">
+<!ENTITY lightning.toolbar.month.accesskey "М">
+<!ENTITY lightning.calendarproperties.showevents.inagenda.label "Покажи ги денешните настани">
+<!ENTITY lightning.calendarproperties.showtasks.label "Покажи ги задачите во денешен панел и режим за задачи">
+<!ENTITY lightning.context.newevent.accesskey "E">
+<!ENTITY lightning.imipbar.description "Оваа порака содржи покана за настан.">

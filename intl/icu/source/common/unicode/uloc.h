@@ -742,12 +742,18 @@ uloc_getDisplayName(const char* localeID,
 
 
 /**
- * Gets the specified locale from a list of all available locales.  
- * The return value is a pointer to an item of 
- * a locale name array.  Both this array and the pointers
- * it contains are owned by ICU and should not be deleted or written through
- * by the caller.  The locale name is terminated by a null pointer.
- * @param n the specific locale name index of the available locale list
+ * Gets the specified locale from a list of available locales.
+ *
+ * This method corresponds to uloc_openAvailableByType called with the
+ * ULOC_AVAILABLE_DEFAULT type argument.
+ *
+ * The return value is a pointer to an item of a locale name array. Both this
+ * array and the pointers it contains are owned by ICU and should not be
+ * deleted or written through by the caller. The locale name is terminated by
+ * a null pointer.
+ *
+ * @param n the specific locale name index of the available locale list;
+ *     should not exceed the number returned by uloc_countAvailable.
  * @return a specified locale name of all available locales
  * @stable ICU 2.0
  */
@@ -761,6 +767,72 @@ uloc_getAvailable(int32_t n);
  * @stable ICU 2.0
  */
 U_STABLE int32_t U_EXPORT2 uloc_countAvailable(void);
+
+#ifndef U_HIDE_DRAFT_API
+
+/**
+ * Types for uloc_getAvailableByType and uloc_countAvailableByType.
+ *
+ * @draft ICU 65
+ */
+typedef enum ULocAvailableType {
+  /**
+   * Locales that return data when passed to ICU APIs,
+   * but not including legacy or alias locales.
+   *
+   * @draft ICU 65
+   */
+  ULOC_AVAILABLE_DEFAULT,
+
+  /**
+   * Legacy or alias locales that return data when passed to ICU APIs.
+   * Examples of supported legacy or alias locales:
+   *
+   * - iw (alias to he)
+   * - mo (alias to ro)
+   * - zh_CN (alias to zh_Hans_CN)
+   * - sr_BA (alias to sr_Cyrl_BA)
+   * - ars (alias to ar_SA)
+   *
+   * The locales in this set are disjoint from the ones in
+   * ULOC_AVAILABLE_DEFAULT. To get both sets at the same time, use
+   * ULOC_AVAILABLE_WITH_LEGACY_ALIASES.
+   *
+   * @draft ICU 65
+   */
+  ULOC_AVAILABLE_ONLY_LEGACY_ALIASES,
+
+  /**
+   * The union of the locales in ULOC_AVAILABLE_DEFAULT and
+   * ULOC_AVAILABLE_ONLY_LEGACY_ALIAS.
+   *
+   * @draft ICU 65
+   */
+  ULOC_AVAILABLE_WITH_LEGACY_ALIASES,
+
+#ifndef U_HIDE_INTERNAL_API
+  /**
+   * @internal
+   */
+  ULOC_AVAILABLE_COUNT
+#endif
+} ULocAvailableType;
+
+/**
+ * Gets a list of available locales according to the type argument, allowing
+ * the user to access different sets of supported locales in ICU.
+ *
+ * The returned UEnumeration must be closed by the caller.
+ *
+ * @param type Type choice from ULocAvailableType.
+ * @param status Set if an error occurred.
+ * @return a UEnumeration owned by the caller, or nullptr on failure.
+ * @draft ICU 65
+ */
+U_DRAFT UEnumeration* U_EXPORT2
+uloc_openAvailableByType(ULocAvailableType type, UErrorCode* status);
+
+#endif // U_HIDE_DRAFT_API
 
 /**
  *
@@ -962,29 +1034,45 @@ uloc_getLineOrientation(const char* localeId,
                         UErrorCode *status);
 
 /**
- * enums for the 'outResult' parameter return value
+ * Output values which uloc_acceptLanguage() writes to the 'outResult' parameter.
+ *
  * @see uloc_acceptLanguageFromHTTP
  * @see uloc_acceptLanguage
  * @stable ICU 3.2
  */
 typedef enum {
-  ULOC_ACCEPT_FAILED   = 0,  /* No exact match was found. */
-  ULOC_ACCEPT_VALID    = 1,  /* An exact match was found. */
-  ULOC_ACCEPT_FALLBACK = 2   /* A fallback was found, for example, 
-                                Accept list contained 'ja_JP'
-                                which matched available locale 'ja'. */
+    /**
+     * No exact match was found.
+     * @stable ICU 3.2
+     */
+    ULOC_ACCEPT_FAILED   = 0,
+    /**
+     * An exact match was found.
+     * @stable ICU 3.2
+     */
+    ULOC_ACCEPT_VALID    = 1,
+    /**
+     * A fallback was found. For example, the Accept-Language list includes 'ja_JP'
+     * and is matched with available locale 'ja'.
+     * @stable ICU 3.2
+     */
+    ULOC_ACCEPT_FALLBACK = 2   /*  */
 } UAcceptResult;
-
 
 /**
  * Based on a HTTP header from a web browser and a list of available locales,
  * determine an acceptable locale for the user.
+ *
+ * This is a thin wrapper over C++ class LocaleMatcher.
+ *
  * @param result - buffer to accept the result locale
  * @param resultAvailable the size of the result buffer.
  * @param outResult - An out parameter that contains the fallback status
  * @param httpAcceptLanguage - "Accept-Language:" header as per HTTP.
  * @param availableLocales - list of available locales to match
- * @param status Error status, may be BUFFER_OVERFLOW_ERROR
+ * @param status ICU error code. Its input value must pass the U_SUCCESS() test,
+ *               or else the function returns immediately. Check for U_FAILURE()
+ *               on output or use with function chaining. (See User Guide for details.)
  * @return length needed for the locale.
  * @stable ICU 3.2
  */
@@ -998,13 +1086,18 @@ uloc_acceptLanguageFromHTTP(char *result, int32_t resultAvailable,
 /**
  * Based on a list of available locales,
  * determine an acceptable locale for the user.
+ *
+ * This is a thin wrapper over C++ class LocaleMatcher.
+ *
  * @param result - buffer to accept the result locale
  * @param resultAvailable the size of the result buffer.
  * @param outResult - An out parameter that contains the fallback status
  * @param acceptList - list of acceptable languages
  * @param acceptListCount - count of acceptList items
  * @param availableLocales - list of available locales to match
- * @param status Error status, may be BUFFER_OVERFLOW_ERROR
+ * @param status ICU error code. Its input value must pass the U_SUCCESS() test,
+ *               or else the function returns immediately. Check for U_FAILURE()
+ *               on output or use with function chaining. (See User Guide for details.)
  * @return length needed for the locale.
  * @stable ICU 3.2
  */

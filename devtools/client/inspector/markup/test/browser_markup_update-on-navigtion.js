@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 "use strict";
@@ -14,7 +13,7 @@ add_task(async function() {
   assertMarkupViewIsLoaded();
   await selectNode("#one", inspector);
 
-  const willNavigate = inspector.target.once("will-navigate");
+  const willNavigate = inspector.currentTarget.once("will-navigate");
   await testActor.eval(`window.location = "${URL_2}"`);
 
   info("Waiting for will-navigate");

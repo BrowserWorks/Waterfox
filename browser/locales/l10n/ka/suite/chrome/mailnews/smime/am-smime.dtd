@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY securityTitle.label "უსაფრთხოება">
+<!ENTITY securityTab.label "უსაფრთხოება">
+<!ENTITY securityHeading.label "ხელმოწერილი ან დაშიფრული წერილების გასაგზავნად და მისაღებად უნდა მიეთითოს ორივე, ციფრული ხელმოწერისა და დაშიფვრის სერტიფიკატი.">
+<!ENTITY encryptionGroupTitle.label "დაშიფვრა">
+<!ENTITY encryptionChoiceLabel.label "დაშიფვრის ძირითადი პარამეტრები წერილების გაგზავნისას:">
+<!ENTITY neverEncrypt.label "არასოდეს (დაუშიფრავად)">
+<!ENTITY neverEncrypt.accesskey "რ">
+<!ENTITY alwaysEncryptMessage.label "ყოველთვის (არ გაიგზავნება თუ ყველა მიმღებს არ გააჩნია სერტიფიკატი)">
+<!ENTITY alwaysEncryptMessage.accesskey "ყ">
+<!ENTITY encryptionCert.message "ამ სერტთიფიკატის გამოყენება გამოგზავნილი წერილების დასაშიფრად და გასაშიფრად:">
+<!ENTITY digitalSign.certificate.button "არჩევა…">
+<!ENTITY digitalSign.certificate.accesskey "S">
+<!ENTITY digitalSign.certificate_clear.button "გასუფთავება">
+<!ENTITY digitalSign.certificate_clear.accesskey "C">
+<!ENTITY encryption.certificate.button "არჩევა…">
+<!ENTITY encryption.certificate.accesskey "ჩ">
+<!ENTITY encryption.certificate_clear.button "გასუფთავება">
+<!ENTITY encryption.certificate_clear.accesskey "უ">
+<!ENTITY signingGroupTitle.label "ციფრული ხელმოწერა">
+<!ENTITY signMessage.label "ციფრული ხელმოწერილი წერილები (ნაგულისხმები)">
+<!ENTITY signMessage.accesskey "D">
+<!ENTITY signingCert.message "ამ სერტიფიკატის გასაგზავნი წერილების ხელმოსაწერად გამოყენება:">
+
+<!ENTITY certificates.label "სერტიფიკატები">
+<!ENTITY manageCerts2.label "სერტიფიკატების მართვა…">
+<!ENTITY manageCerts2.accesskey "ს">
+<!ENTITY manageDevices.label "უსაფრთხოების მოწყობილობათა მართვა…">
+<!ENTITY manageDevices.accesskey "g">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "სერტიფიკატის შერჩევა">
+<!ENTITY certPicker.info  "სერტიფიკატი:">
+<!ENTITY certPicker.detailsLabel "შერჩეული სერტიფიკატის მონაცემები:">

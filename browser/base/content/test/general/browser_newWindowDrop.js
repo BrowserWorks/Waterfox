@@ -10,14 +10,10 @@ add_task(async function test_setup() {
   requestLongerTimeout(10);
 
   // Stop search-engine loads from hitting the network
-  await Services.search.addEngineWithDetails(
-    "MozSearch",
-    "",
-    "",
-    "",
-    "GET",
-    "http://example.com/?q={searchTerms}"
-  );
+  await Services.search.addEngineWithDetails("MozSearch", {
+    method: "GET",
+    template: "http://example.com/?q={searchTerms}",
+  });
   let engine = Services.search.getEngineByName("MozSearch");
   originalEngine = await Services.search.getDefault();
   await Services.search.setDefault(engine);
@@ -45,10 +41,10 @@ add_task(async function single_url() {
   await dropText("mochi.test/first", ["http://www.mochi.test/first"]);
 });
 add_task(async function single_javascript() {
-  await dropText("javascript:'bad'", ["javascript:'bad'"]);
+  await dropText("javascript:'bad'", ["about:blank"]);
 });
 add_task(async function single_javascript_capital() {
-  await dropText("jAvascript:'bad'", ["javascript:'bad'"]);
+  await dropText("jAvascript:'bad'", ["about:blank"]);
 });
 add_task(async function single_url2() {
   await dropText("mochi.test/second", ["http://www.mochi.test/second"]);
@@ -69,7 +65,7 @@ add_task(async function multiple_urls() {
 });
 add_task(async function multiple_urls_javascript() {
   await dropText("javascript:'bad1'\nmochi.test/3", [
-    "javascript:'bad1'",
+    "about:blank",
     "http://www.mochi.test/3",
   ]);
 });
@@ -190,9 +186,7 @@ function dropText(text, expectedURLs, ignoreFirstWindow = false) {
 async function drop(dragData, expectedURLs, ignoreFirstWindow = false) {
   let dragDataString = JSON.stringify(dragData);
   info(
-    `Starting test for dragData:${dragDataString}; expectedURLs.length:${
-      expectedURLs.length
-    }`
+    `Starting test for dragData:${dragDataString}; expectedURLs.length:${expectedURLs.length}`
   );
   let EventUtils = {};
   Services.scriptloader.loadSubScript(
@@ -200,9 +194,10 @@ async function drop(dragData, expectedURLs, ignoreFirstWindow = false) {
     EventUtils
   );
 
-  // Since synthesizeDrop triggers the srcElement, need to use another button.
-  let dragSrcElement = document.getElementById("downloads-button");
-  ok(dragSrcElement, "Downloads button exists");
+  // Since synthesizeDrop triggers the srcElement, need to use another button
+  // that should be visible.
+  let dragSrcElement = document.getElementById("sidebar-button");
+  ok(dragSrcElement, "Sidebar button exists");
   let newWindowButton = document.getElementById("new-window-button");
   ok(newWindowButton, "New Window button exists");
 

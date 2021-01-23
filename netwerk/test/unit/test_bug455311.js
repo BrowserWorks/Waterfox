@@ -1,3 +1,5 @@
+"use strict";
+
 function getLinkFile() {
   if (mozinfo.os == "win") {
     return do_get_file("test_link.url");
@@ -19,20 +21,14 @@ function NotificationCallbacks(origURI, newURI) {
   this._newURI = newURI;
 }
 NotificationCallbacks.prototype = {
-  QueryInterface: function(iid) {
-    if (
-      iid.equals(Ci.nsISupports) ||
-      iid.equals(Ci.nsIInterfaceRequestor) ||
-      iid.equals(Ci.nsIChannelEventSink)
-    ) {
-      return this;
-    }
-    throw Cr.NS_ERROR_NO_INTERFACE;
-  },
-  getInterface: function(iid) {
+  QueryInterface: ChromeUtils.generateQI([
+    "nsIInterfaceRequestor",
+    "nsIChannelEventSink",
+  ]),
+  getInterface(iid) {
     return this.QueryInterface(iid);
   },
-  asyncOnChannelRedirect: function(oldChan, newChan, flags, callback) {
+  asyncOnChannelRedirect(oldChan, newChan, flags, callback) {
     Assert.equal(oldChan.URI.spec, this._origURI.spec);
     Assert.equal(oldChan.URI, this._origURI);
     Assert.equal(oldChan.originalURI.spec, this._origURI.spec);
@@ -40,7 +36,7 @@ NotificationCallbacks.prototype = {
     Assert.equal(newChan.originalURI.spec, this._newURI.spec);
     Assert.equal(newChan.originalURI, newChan.URI);
     Assert.equal(newChan.URI.spec, this._newURI.spec);
-    throw Cr.NS_ERROR_ABORT;
+    throw Components.Exception("", Cr.NS_ERROR_ABORT);
   },
 };
 
@@ -50,27 +46,21 @@ function RequestObserver(origURI, newURI, nextTest) {
   this._nextTest = nextTest;
 }
 RequestObserver.prototype = {
-  QueryInterface: function(iid) {
-    if (
-      iid.equals(Ci.nsISupports) ||
-      iid.equals(Ci.nsIRequestObserver) ||
-      iid.equals(Ci.nsIStreamListener)
-    ) {
-      return this;
-    }
-    throw Cr.NS_ERROR_NO_INTERFACE;
-  },
-  onStartRequest: function(req) {
+  QueryInterface: ChromeUtils.generateQI([
+    "nsIRequestObserver",
+    "nsIStreamListener",
+  ]),
+  onStartRequest(req) {
     var chan = req.QueryInterface(Ci.nsIChannel);
     Assert.equal(chan.URI.spec, this._origURI.spec);
     Assert.equal(chan.URI, this._origURI);
     Assert.equal(chan.originalURI.spec, this._origURI.spec);
     Assert.equal(chan.originalURI, this._origURI);
   },
-  onDataAvailable: function(req, stream, offset, count) {
+  onDataAvailable(req, stream, offset, count) {
     do_throw("Unexpected call to onDataAvailable");
   },
-  onStopRequest: function(req, status) {
+  onStopRequest(req, status) {
     var chan = req.QueryInterface(Ci.nsIChannel);
     try {
       Assert.equal(chan.URI.spec, this._origURI.spec);
@@ -103,7 +93,13 @@ function run_test() {
   }
 
   link = getLinkFile();
-  linkURI = ios.newFileURI(link);
+  if (link.isSymlink()) {
+    let file = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsIFile);
+    file.initWithPath(link.target);
+    linkURI = ios.newFileURI(file);
+  } else {
+    linkURI = ios.newFileURI(link);
+  }
 
   do_test_pending();
   var chan = NetUtil.newChannel({

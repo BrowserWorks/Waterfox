@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY e2eTitle.label "Ende-til-ende-kryptering">
+<!ENTITY e2eLearnMore.label "Les mer">
+
+<!ENTITY e2eEnc.description "Uten ende-til-ende-kryptering eksponeres innholdet i meldingene lett for e-postleverandøren din og for masseovervåking.">
+<!ENTITY e2eeReqWarning.description "Hvis du trenger kryptering, må du ha den offentlige nøkkelen eller sertifikatet til hver mottaker for å sende en melding.">
+
+<!ENTITY e2eSigning.description "En digital signatur gjør at mottakere kan bekrefte at meldingen ble sendt av deg, og at innholdet ikke er endret.">
+<!ENTITY e2eTechPref.description "Foretrukket krypteringsteknologi:">
+
+<!ENTITY doNotEncrypt.label "Ikke aktiver kryptering som standard">
+<!ENTITY doNotEncrypt.accesskey "k">
+<!ENTITY requireEncryptMessage.label "Krev kryptering som standard">
+<!ENTITY requireEncryptMessage.accesskey "y">
+<!ENTITY encryptionCert2.message "Personlig sertifikat for kryptering:">
+<!ENTITY digitalSign.certificate.button "Velg …">
+<!ENTITY digitalSign.certificate.accesskey "V">
+<!ENTITY digitalSign.certificate_clear.button "Tøm">
+<!ENTITY digitalSign.certificate_clear.accesskey "T">
+<!ENTITY encryption.certificate.button "Velg …">
+<!ENTITY encryption.certificate.accesskey "e">
+<!ENTITY encryption.certificate_clear.button "Tøm">
+<!ENTITY encryption.certificate_clear.accesskey "ø">
+<!ENTITY signingGroupTitle.label "Digital signering">
+<!ENTITY signMessage2.label "Legg til min digitale signatur som standard">
+<!ENTITY signMessage.accesskey "m">
+
+<!ENTITY signingCert2.message "Personlig sertifikat for digital signering:">
+
+<!ENTITY sendingDefaults.label "Standardinnstillinger for sending av meldinger">
+
+<!ENTITY technologyAutomatic.label "Velg automatisk basert på tilgjengelige nøkler eller sertifikater">
+
+<!ENTITY certificates2.label "S/MIME">
+<!ENTITY manageCerts3.label "Behandle S/MIME-sertifikater">
+<!ENTITY manageCerts3.accesskey "M">
+<!ENTITY manageDevices2.label "S/MIME-sikkerhetsenheter">
+<!ENTITY manageDevices2.accesskey "e">
+
+<!ENTITY technologySMIME.label "Foretrekk S/MIME">
+<!ENTITY technologyOpenPGP.label "Foretrekk OpenPGP">
+
+<!ENTITY openpgpKeys.label "OpenPGP">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Velg sertifikat">
+<!ENTITY certPicker.info  "Sertifikat:">
+<!ENTITY certPicker.detailsLabel "Detaljer om valgt sertifikat:">
+
+<!ENTITY openpgpKey.message "Personlig nøkkel for kryptering og digital signering:">
+<!ENTITY openpgpKey.button "Angi personlig nøkkel…">
+<!ENTITY openpgpKey.accesskey "o">

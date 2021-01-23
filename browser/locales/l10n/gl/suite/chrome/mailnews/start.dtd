@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startpage.title "Benvida ao correo e grupo de novas de &brandShortName;">
+<!--# LOCALIZATION NOTE (headline.label): the URL for <a id="vendorURL"> is fetched from brand.properties -->
+<!ENTITY headline.label
+'Benvida ao correo e grupo de novas de <a id="vendorURL" href="">&brandShortName;</a>!'>
+<!ENTITY description.label
+"Correo e grupo de novas de &brandShortName; é un potente cliente de correo e novas de código aberto, que inclúe detección avanzada de correo lixo e outras características útiles.">
+<!ENTITY features.title "Características">
+<!ENTITY feat_multiacc.label "Compatibilidade para múltiples contas">
+<!ENTITY feat_junk.label "Detección de correo lixo">
+<!ENTITY feat_feeds.label "Lector de fontes">
+<!ENTITY feat_filters.label "Filtros de mensaxes">
+<!ENTITY feat_htmlmsg.label "Compatíbel con mensaxes HTML">
+<!ENTITY feat_abook.label "Axenda de enderezos">
+<!ENTITY feat_tags.label "Visualización de correo e etiquetas personalizábeis">
+<!ENTITY feat_integration.label
+"Integración axustada coa suite de aplicativos &brandShortName;">
+<!ENTITY dict.title "Dicionarios">
+<!ENTITY dict_intro.label "Úsanse os dicionarios para corrixir a ortografía das súas mensaxes.">
+<!--# LOCALIZATION NOTE (dict_info.label): the URL for <a id="dictURL"> is fetched from brand.properties -->
+<!ENTITY dict_info.label
+'Poden instalarse moitos idiomas adicionais desde a sección de <a id="dictURL" href="">dicionarios</a> de <a href="https://addons.mozilla.org/seamonkey/">Mozilla Add-ons</a>.'>
+<!ENTITY info.title "Máis información">
+<!--# LOCALIZATION NOTE (info_bugs.label): the URL for <a id="releaseNotesURL"> is fetched from brand.properties -->
+<!ENTITY info_bugs.label
+'<a href="http://www.mozilla.org/mailnews/">Agradecémoslle</a> os informes de erros e as peticións de novas características, pero lea antes as <a id="releaseNotesURL" href="">notas da versión</a> e consulte antes <a href="https://bugzilla.mozilla.org/query.cgi">Bugzilla</a>.'>

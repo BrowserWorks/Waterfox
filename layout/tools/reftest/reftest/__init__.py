@@ -2,10 +2,12 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import unicode_literals
+from __future__ import unicode_literals, absolute_import, print_function
 
+import io
 import os
 import re
+import six
 
 RE_COMMENT = re.compile(r'\s+#')
 RE_HTTP = re.compile(r'HTTP\((\.\.(\/\.\.)*)\)')
@@ -33,24 +35,58 @@ PREF_ITEMS = (
     'test-pref',
     'ref-pref',
 )
+RE_ANNOTATION = re.compile(r'(.*)\((.*)\)')
 
 
 class ReftestManifest(object):
     """Represents a parsed reftest manifest.
-
-    We currently only capture file information because that is the only thing
-    tools require.
     """
     def __init__(self, finder=None):
         self.path = None
         self.dirs = set()
         self.files = set()
         self.manifests = set()
-        self.tests = set()
+        self.tests = []
         self.finder = finder
 
     def load(self, path):
         """Parse a reftest manifest file."""
+
+        def add_test(file, annotations, referenced_test=None):
+            # We can't package about:, data:, or chrome: URIs.
+            # Discarding data isn't correct for a parser. But retaining
+            # all data isn't currently a requirement.
+            if RE_PROTOCOL.match(file):
+                return
+            test = os.path.normpath(os.path.join(mdir, urlprefix + file))
+            if test in self.files:
+                # if test path has already been added, make no changes, to
+                # avoid duplicate paths in self.tests
+                return
+            self.files.add(test)
+            self.dirs.add(os.path.dirname(test))
+            test_dict = {
+                'path': test,
+                'here': os.path.dirname(test),
+                'manifest': normalized_path,
+                'name': os.path.basename(test),
+                'head': '',
+                'support-files': '',
+                'subsuite': '',
+            }
+            if referenced_test:
+                test_dict['referenced-test'] = referenced_test
+            for annotation in annotations:
+                m = RE_ANNOTATION.match(annotation)
+                if m:
+                    if m.group(1) not in test_dict:
+                        test_dict[m.group(1)] = m.group(2)
+                    else:
+                        test_dict[m.group(1)] += ";" + m.group(2)
+                else:
+                    test_dict[annotation] = None
+            self.tests.append(test_dict)
+
         normalized_path = os.path.normpath(os.path.abspath(path))
         self.manifests.add(normalized_path)
         if not self.path:
@@ -62,12 +98,14 @@ class ReftestManifest(object):
         if self.finder:
             lines = self.finder.get(path).read().splitlines()
         else:
-            with open(path, 'r') as fh:
+            with io.open(path, 'r', encoding='utf-8') as fh:
                 lines = fh.read().splitlines()
 
         urlprefix = ''
-        for line in lines:
-            line = line.decode('utf-8')
+        defaults = []
+        for i, line in enumerate(lines):
+            lineno = i + 1
+            line = six.ensure_text(line)
 
             # Entire line is a comment.
             if line.startswith('#'):
@@ -82,14 +120,17 @@ class ReftestManifest(object):
                 continue
 
             items = line.split()
-            tests = []
+            if items[0] == "defaults":
+                defaults = items[1:]
+                continue
 
+            items = defaults + items
+            annotations = []
             for i in range(len(items)):
                 item = items[i]
 
-                if item.startswith(FAILURE_TYPES):
-                    continue
-                if item.startswith(PREF_ITEMS):
+                if item.startswith(FAILURE_TYPES) or item.startswith(PREF_ITEMS):
+                    annotations += [item]
                     continue
                 if item == 'HTTP':
                     continue
@@ -101,11 +142,13 @@ class ReftestManifest(object):
                         mdir, m.group(1))))
                     continue
 
+                if i < len(defaults):
+                    raise ValueError("Error parsing manifest {}, line {}: "
+                                     "Invalid defaults token '{}'".format(
+                                        path, lineno, item))
+
                 if item == 'url-prefix':
                     urlprefix = items[i+1]
-                    break
-
-                if item == 'default-preferences':
                     break
 
                 if item == 'include':
@@ -113,21 +156,10 @@ class ReftestManifest(object):
                     break
 
                 if item == 'load' or item == 'script':
-                    tests.append(items[i+1])
+                    add_test(items[i+1], annotations)
                     break
 
                 if item == '==' or item == '!=' or item == 'print':
-                    tests.extend(items[i+1:i+3])
+                    add_test(items[i+1], annotations)
+                    add_test(items[i+2], annotations, items[i+1])
                     break
-
-            for f in tests:
-                # We can't package about:, data:, or chrome: URIs.
-                # Discarding data isn't correct for a parser. But retaining
-                # all data isn't currently a requirement.
-                if RE_PROTOCOL.match(f):
-                    continue
-
-                test = os.path.normpath(os.path.join(mdir, urlprefix + f))
-                self.files.add(test)
-                self.dirs.add(os.path.dirname(test))
-                self.tests.add((test, normalized_path))

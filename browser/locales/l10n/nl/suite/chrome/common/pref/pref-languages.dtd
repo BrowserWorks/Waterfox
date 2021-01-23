@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE 'Languages' preferences dialog -->
+
+<!ENTITY languages.customize.prefLangDescript           "Webpagina’s zijn soms beschikbaar in meerdere talen. Kies de talen voor het weergeven van webpagina’s, op volgorde van voorkeur.">
+<!ENTITY languages.customize.title                      "Talen">
+<!ENTITY langtitle.label                                "Talen voor webpagina’s">
+<!ENTITY languages.customize.prefAddLangDescript        "Selecteer de talen die u wilt toevoegen.">
+<!ENTITY languages.customize.addButton.label            "Toevoegen…">
+<!ENTITY languages.customize.addButton.accesskey        "T">
+<!ENTITY languages.customize.deleteButton.label         "Verwijderen">
+<!ENTITY languages.customize.deleteButton.accesskey     "V">
+<!ENTITY languages.customize.add.title.label            "Talen toevoegen">
+<!ENTITY languages.customize.available.label            "Talen:">
+<!ENTITY languages.customize.active.label               "Talen op volgorde van voorkeur:">
+<!ENTITY languages.customize.active.accesskey           "a">
+<!ENTITY languages.customize.others.label               "Andere:">
+<!ENTITY languages.customize.others.accesskey           "A">
+<!ENTITY languages.customize.Fallback2.grouplabel       "Tekstcodering voor legacy-inhoud">
+<!ENTITY languages.customize.Fallback2.label            "Terugvaltekstcodering:">
+<!ENTITY languages.customize.Fallback2.accesskey        "c">
+<!ENTITY languages.customize.Fallback2.desc             "Deze tekstcodering wordt gebruikt voor legacy-inhoud die geen eigen codering kan aangeven.">
+<!-- LOCALIZATION NOTE  Character Encoding Preferences Dialog: Do NOT localize the terms "en-bz, ar-jo"  -->
+<!ENTITY languages.customize.others.examples            "bv. en-bz, ar-jo">
+<!ENTITY languages.customize.moveUp.label               "Omhoog verplaatsen">
+<!ENTITY languages.customize.moveUp.accesskey           "O">
+<!ENTITY languages.customize.moveDown.label             "Omlaag verplaatsen">
+<!ENTITY languages.customize.moveDown.accesskey         "m">

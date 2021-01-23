@@ -1,0 +1,265 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY appmenu.tooltip                     "මෙනුව විවෘත කරන්න">
+<!ENTITY navbarOverflow.label                "තවත් මෙවලම්...">
+
+<!-- LOCALIZATION NOTE (duplicateTabs.label): This is a command to duplicate
+a tab (i.e. it is a verb, not adjective). -->
+
+<!-- Tab context menu -->
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "ටැබ අමුණන්න">
+<!ENTITY  unpinTab.label                     "ටැබ ගලවන්න">
+
+<!ENTITY  listAllTabs.label      "සියළු ටැබ් ලැයිස්තුගත කරන්න">
+
+<!-- LOCALIZATION NOTE (allTabsMenu.searchTabs.label): "Search" is a verb, as
+in "Search through tabs". -->
+
+<!ENTITY tabCmd.label "නව ටැබයක් විවෘත කරන්න">
+<!ENTITY openFileCmd.label "ගොනුවක් විවෘත කරන්න...">
+<!ENTITY printCmd.label "මුද්‍රණය...">
+
+
+<!ENTITY menubarCmd.label "මෙනු තීරුව">
+<!ENTITY menubarCmd.accesskey "M">
+<!ENTITY personalbarCmd.label "පිටු සලකුණු මෙවලම් තීරුව">
+<!ENTITY personalbarCmd.accesskey "B">
+<!ENTITY bookmarksToolbarItem.label "පිටු සලකුණු මෙවලම් තීරුවේ අයිතමයන්">
+
+<!ENTITY fullScreenCmd.label "පූර්ණ තිරය">
+
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "දැන් පූර්ණ තිරයේ">
+<!ENTITY fullscreenWarning.generic.label "මෙම ලේඛනය දැන් පූර්ණ තිරයේ">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "පූර්ණ තිරයෙන් පිටවන්න (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "පූර්ණ තිරයෙන් පිටවන්න (esc)">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "හට ඔබගේ දක්වනයේ පාලනය පවතී. පාලනය නැවත ලැබීමට Esc ඔබන්න.">
+<!ENTITY pointerlockWarning.generic.label "මෙම ලේඛනය හට ඔබගේ දක්වනයේ පාලනය පවතී. පාලනය නැවත ලැබීමට Esc ඔබන්න.">
+
+<!ENTITY showAllBookmarks2.label "සියළු පිටුසලකුණු පෙන්වන්න…">
+<!ENTITY recentBookmarks.label "මෑතදී පිටුසලකුණු කළ">
+<!ENTITY bookmarksToolbarChevron.tooltip "තවත් පිටුසලකුණු පෙන්වන්න">
+
+<!ENTITY printButton.label            "මුද්‍රණය">
+<!ENTITY printButton.tooltip          "පිටුව මුද්‍රණය">
+
+
+<!ENTITY searchItem.title             "සොයන්න">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "මුල් පිටුව">
+<!ENTITY homeButton.defaultPage.tooltip "&brandShortName; නිවෙස් පිටුව">
+
+<!ENTITY bookmarksButton.label          "පිටු සලකුණු">
+
+<!ENTITY bookmarksSubview.label             "පිටු සලකුණු">
+<!ENTITY bookmarksMenuButton2.label         "පිටු සලකුණු මෙනුව">
+<!ENTITY bookmarksMenuButton.other.label    "වෙනත් පිටුසලකුණු">
+<!ENTITY bookmarksMenuButton.mobile.label   "ජංගම පිටු සළකුණු">
+<!ENTITY viewBookmarksSidebar2.label        "පිටුලකුණු පැති තීරුව පෙන්වන්න">
+<!ENTITY hideBookmarksSidebar.label         "පිටු සලකුණු පැති තීරුව සඟවන්න">
+<!ENTITY viewBookmarksToolbar.label         "පිටුලකුණු මෙවලම්තීරුව පෙන්වන්න">
+<!ENTITY hideBookmarksToolbar.label         "පිටු සලකුණු මෙවලම් තීරුව සඟවන්න">
+<!ENTITY searchBookmarks.label              "පිටුසලකුණු සොයන්න">
+<!ENTITY bookmarkingTools.label             "පිටු සලකුණු මෙවලම්">
+<!ENTITY addBookmarksMenu.label             "මෙවලම් තීරුවට පිටුසලකුණු මෙනුව එක් කරන්න">
+<!ENTITY removeBookmarksMenu.label          "මෙවලම් තීරුවෙන් පිටු සලකුණු මෙනුව ඉවත් කරන්න">
+
+<!ENTITY historyButton.label            "ඉතිහාසය">
+
+<!ENTITY downloads.label              "බාගැනිම්">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "බාගැනිම්">
+<!ENTITY addons.label                 "ඇඩෝන">
+
+<!ENTITY webDeveloperMenu.label       "වෙබ් සංවර්ධකයා">
+
+
+<!ENTITY newNavigatorCmd.label        "නව කවුළුවක්">
+<!ENTITY newPrivateWindow.label     "නව පුද්ගලික කවුළුව">
+
+<!ENTITY editMenu.label         "සැකසුම්">
+<!ENTITY preferencesCmd2.label       "විකල්ප...">
+<!ENTITY preferencesCmdUnix.label       "අභිප්‍රේත">
+
+<!ENTITY overflowCustomizeToolbar.label       "මෙවලම් තීරු රිසිකරණය…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "C">
+
+<!ENTITY historyMenu.label "අතීතය">
+<!ENTITY historyUndoMenu.label "මෑතකදි වැසු ටැබ්">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "මෑතකදී වැසූ කවුළු">
+
+<!ENTITY appMenuHistory.showAll.label "සම්පූර්ණ අතීතය පෙන්වන්න">
+<!ENTITY appMenuHistory.clearRecent.label "මෑත ඉතිහාසය මකන්න...">
+<!ENTITY appMenuHistory.restoreSession.label "පෙර සැසිය ප්‍රතිස්ථාපනය">
+<!ENTITY appMenuHistory.viewSidebar.label "අතීත පැතිතීරු දසුන">
+<!ENTITY appMenuHistory.recentHistory.label "මෑත ඉතිහාසය">
+<!ENTITY appMenuHelp.label "උදව්">
+
+<!ENTITY appMenuRemoteTabs.label "සම්මුහුර්ථ කළ ටැබ">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "විවෘත ටැබ නොමැත">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "තවත් පෙන්වන්න">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "මෙම මෙවලමෙන් තවත් ටැබ් පෙන්වන්න">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "සියල්ල පෙන්වන්න">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "මෙම මෙවලමෙන් සියළු ටැබ් පෙන්වන්න">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label " වෙනත් උපාංගයන්ගේ සිට ටැබ් ලැයිස්තුව බැලිමට ටැබ් සම්මුහුර්ථය අරින්න (Turn on).">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Waterfox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "වෙනත් උපාංගයක සිට ඔබේ මෙම ටැබ් බැලීමට අවශ්‍යද?">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "සම්මුහුර්ත අභිප්‍රේතයන් විවෘත කරන්න">
+<!ENTITY appMenuRemoteTabs.unverified.label "ඔබේ ගිනුම තහවුරු කල යුතුයි.">
+<!ENTITY appMenuRemoteTabs.managedevices.label "උපාංග පාලනය...">
+<!ENTITY appMenuRemoteTabs.sidebar.label "සම්මුහුර්ත ටැබ් පැති තීරුවේ පෙන්වන්න">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "තවත් උපාංගයක් සබඳ කරන්න">
+
+<!ENTITY appMenuRecentHighlights.label "මෑත ඉස්මතු කිරීම්">
+
+<!ENTITY customizeMenu.addToToolbar.label "මෙවලම් තීරුවට එක් කරන්න">
+<!ENTITY customizeMenu.addToToolbar.accesskey "A">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "පිටාර මෙනුවට එක් කරන්න">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "M">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "පිටාර මෙනුවෙන් ඉවත් කරන්න">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "U">
+<!ENTITY customizeMenu.removeFromToolbar.label "මෙවලම් තීරුවෙන්න ඉවත් කරන්න">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "R">
+<!ENTITY customizeMenu.addMoreItems.label "තවත් අයිතම එක් කරන්න....">
+<!ENTITY customizeMenu.addMoreItems.accesskey "A">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "තවත්">
+
+<!ENTITY contentSearchSubmit.tooltip  "සෙවුම යොමු කරන්න">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "සෙවුම">
+<!ENTITY searchIcon.tooltip           "සෙවුම">
+
+<!ENTITY openLinkCmdInTab.accesskey   "T">
+
+<!ENTITY pageAction.copyLink.label    "සබැඳිය පිටපත් කරන්න">
+
+<!ENTITY emailPageCmd.label           "විද්‍යුත් තැපැල් සබැඳිය">
+
+<!-- Media (video/audio) controls -->
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoom.label                 "විශාලනය">
+
+<!ENTITY sidebarCloseButton.tooltip     "පැති තීරුව වසන්න">
+
+<!ENTITY quitApplicationCmdWin2.label       "පිට‌වෙන්න">
+<!ENTITY quitApplicationCmdWin2.accesskey   "x">
+<!ENTITY quitApplicationCmdWin2.tooltip     "&brandShorterName; පිටවීම">
+<!ENTITY quitApplicationCmd.label       "ඉවත් වන්න">
+<!ENTITY quitApplicationCmd.accesskey   "Q">
+<!ENTITY quitApplicationCmdMac2.label   "&brandShorterName; පිටවීම">
+
+<!ENTITY allowPopups.accesskey "p">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "පොප්-අප් ඇහිරුම් අභීප්‍රේත සැකසීම...">
+<!ENTITY editPopupSettings.label "පොප්-අප් ඇහිරුම් විකල්ප සැකසීම...">
+<!ENTITY editPopupSettings.accesskey "E">
+<!ENTITY dontShowMessage.accesskey "D">
+
+<!ENTITY findOnCmd.label     "මේ පිටුවේ සොයන්න...">
+
+<!ENTITY spellAddDictionaries.label "ශබ්ද කෝෂය එක් කරන්න...">
+<!ENTITY spellAddDictionaries.accesskey "A">
+
+
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "ගවේෂක ටැබ්">
+
+
+<!ENTITY syncBrand.shortName.label    "සම්මුහුර්තය">
+
+<!ENTITY customizeMode.autoHideDownloadsButton.label "ස්වයං-සැඟවුම">
+
+
+
+
+
+<!ENTITY uiTour.infoPanel.close "වසන්න">
+
+<!ENTITY panicButton.thankyou.msg1                "ඔබගේ ආසන්න වෙබ් ඉතිහාසය මකා දමන ලදී.">
+<!ENTITY panicButton.thankyou.msg2                "සුරක්ෂිත වෙබ් අත්දැකීම!">
+<!ENTITY panicButton.thankyou.buttonlabel         "ස්තූතියි!">
+
+<!ENTITY updateAvailable.panelUI.label "&brandShorterName; යාවත් කිරීම බාගන්න">
+
+<!ENTITY updateManual.panelUI.label "&brandShorterName; නැවුම් පිටපතක් ලබා ගන්න">
+
+<!ENTITY updateRestart.panelUI.label2 "&brandShorterName; යාවත් කිරීමට යළි අරබන්න">
+
+<!ENTITY sendToDevice.syncNotReady.label "උපාංග සමමුහුර්ත කරමින්…">
+
+<!ENTITY pageAction.shareUrl.label "බෙදාගන්න">
+<!ENTITY pageAction.shareMore.label "තවත්…">
+
+<!ENTITY libraryButton.tooltip "ඉතිහාසය, සුරැකි පිටු සලකුණු හා තවත් දෑ බලන්න">
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+<!ENTITY accessibilityIndicator.tooltip "පිවිසුම්කාරක විශේෂාංග සක්‍රීයයි">
+
+<!-- LOCALIZATION NOTE: (addonPostInstallMessage.label):
+     The first <image> tag is replaced with the icon for the add-ons menu.
+     The second <image> tag is replaced with the icon for the toolbar menu. -->
+

@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Bainvegni a &brandShortName;">
+<!ENTITY header2.label "Vuls ti ina nova adressa dad e-mail?">
+<!ENTITY other.languages "Nus mussain be purschiders che offreschan adressas en tia regiun. Clicca qua per mussar tut ils purschiders.">
+<!ENTITY error.line1 "Perstgisa, nus n'avain chattà naginas propostas per adressas d'e-mail.">
+<!ENTITY error.line2 "Ti pos empruvar da tschertgar surnums u mintga auter term per chattar dapli adressas">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before "Forsa vuls ti era empruvar ina da las ">
+<!ENTITY error.suggest.middle "alternativas gratuitas">
+<!ENTITY error.suggest.after ".">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before "Olla ">
+<!ENTITY success.title.after ", suandantas adressas dad e-mail èn disponiblas:">
+<!ENTITY success.tip "(Ti pos era tschertgar surnums u mintga auter term per chattar dapli adressas)">
+<!ENTITY partnership.description "En collavuraziun cun differents providers po &brandShortName; ta porscher in nov conto dad e-mails. Endatescha be tes prenum e num u mintga auter pled en il champ survart per cumenzar.">
+<!ENTITY existing.header "Has ti gia ina adressa che ti vuls utilisar?">
+<!ENTITY tinyheader.title "Gia ina adressa?">
+<!ENTITY tinyheader.existing "Interrumper ed utilisar mia adressa existenta">
+<!ENTITY content.close "Jau vi configurar pli tard mes conto.">
+<!ENTITY successful.title "Gratulaziun!">
+<!ENTITY successful.successMessage "Ti has configurà cun success tes conto.">
+<!ENTITY successful.write "Scriver in pèr e-mails">
+<!ENTITY successful.write.desc "Fa savair tes amis e tia famiglia che ti has ina nova adressa.<br/> Perquai has ti ina nova adressa, u betg?">
+<!ENTITY successful.customize "Persunalisescha &brandShortName; cun cools supplements">
+<!ENTITY successful.customize.desc "I dat millis da supplements che ta laschan persunalisar &brandShortName; per ch'el correspunda a tes agens basegns.">
+<!ENTITY successful.attach "Agiuntar ina signatura persunala a mes e-mails">
+<!ENTITY successful.attach.desc "Ti pos agiuntar automaticamain in citat u insatge davart tai a la fin da mintga messadi che ti tramettas.">
+<!ENTITY successful.close "Serrar questa fanestra.">
+<!ENTITY input.namePlaceholder "Tes num u surnum">
+<!ENTITY input.search "Tschertgar">
+<!ENTITY search_engine.title "Persunalisescha tia maschina da tschertgar">
+<!ENTITY search_engine.message "Tes purschider dad e-mails ta po era porscher servetschs da tschertgar en la rait.">
+<!ENTITY search_engine.button "Terminar">

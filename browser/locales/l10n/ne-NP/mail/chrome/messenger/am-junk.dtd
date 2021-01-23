@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "जङ्क सेटिङ">
+<!ENTITY level.label "यो खाताका लागि अनुकूल जङ्क मेल नियन्त्रण सक्षम पार्नुहोस्">
+<!ENTITY level.accesskey "E">
+
+<!ENTITY move.label "यसमा नयाँ जङ्क सन्देशहरू सार्नुहोस्:">
+<!ENTITY junkFolderOn.label "फोल्डरमा &quot;जङ्क&quot;:">
+<!ENTITY otherFolder.label "अन्य:">
+<!ENTITY purge1.label "यसभन्दा पूरानो जङ्क मेल स्वचालित रूपमा मेट्नुहोस्">
+<!ENTITY purge1.accesskey "u">
+<!ENTITY purge2.label "दिन">
+
+<!ENTITY ispHeaders.label "यसद्वारा सेट गरेको जङ्क मेल हेडरहरू विश्वास गर्नुहोस्:">
+<!ENTITY ispHeaders.accesskey "T">
+

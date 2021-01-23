@@ -1,0 +1,275 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY appmenu.tooltip                     "మెనూని తెరువు">
+<!ENTITY navbarOverflow.label                "మరిన్ని పనిముట్లు…">
+
+<!-- Tab context menu -->
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "ట్యాబుని పిన్ చేయి">
+<!ENTITY  unpinTab.label                     "ట్యాబు పిన్ను తీసేయి">
+
+<!ENTITY  listAllTabs.label      "అన్ని ట్యాబుల జాబితా చూపించు">
+
+<!ENTITY tabCmd.label "కొత్త ట్యాబు">
+<!ENTITY openFileCmd.label "ఫైలును తెరువు…">
+<!ENTITY printCmd.label "ముద్రించు…">
+
+
+<!ENTITY menubarCmd.label "మెనూ పట్టీ">
+<!ENTITY menubarCmd.accesskey "M">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY personalbarCmd.label "ఇష్టాంశాల పట్టీ">
+<!ENTITY personalbarCmd.accesskey "B">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY personalbar.accessibleLabel "ఇష్టాంశాలు">
+<!ENTITY bookmarksToolbarItem.label "ఇష్టాంశాల పట్టీ అంశాలు">
+
+<!ENTITY fullScreenCmd.label "నిండు తెర">
+
+
+<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
+     for the Waterfox Account toolbar menu screen. The `Signed in as` text is
+     followed by the user's email. -->
+<!ENTITY fxa.menu.syncSettings2.label "&syncBrand.shortName.label; అమరికలు">
+<!ENTITY fxa.menu.firefoxAccount "&syncBrand.fxAccount.label;">
+
+<!ENTITY fxa.menu.firefoxServices.label "&brandProductName; సేవలు">
+<!ENTITY fxa.menu.account.label "ఖాతా">
+<!ENTITY fxa.menu.settings.label "అమరికలు">
+<!ENTITY fxa.menu.accountSettings.label "ఖాతా అమరికలు">
+<!ENTITY fxa.menu.manageAccount2.label "ఖాతా నిర్వహణ">
+
+<!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
+     for the Waterfox Account toolbar menu screen.  -->
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "ఇప్పుడు నిండు తెరలో ఉంది">
+<!ENTITY fullscreenWarning.generic.label "ఈ పత్రం ఇప్పుడు నిండు తెరలో ఉంది">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "నిండు తెరను వదలివెళ్ళు (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "నిండు తెరను వదలివెళ్ళు (esc)">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "మీ పాయింటర్ ">
+<!ENTITY pointerlockWarning.afterDomain.label " నియంత్రణలో ఉంది. తిరిగి మీ ఆధీనం లోనికి తెచ్చుకోడానికి Esc నొక్కండి.">
+<!ENTITY pointerlockWarning.generic.label "మీ పాయింటర్ ఈ పత్రపు నియంత్రణలో ఉంది. తిరిగి మీ ఆధీనం లోనికి తెచ్చుకోడానికి Esc నొక్కండి.">
+
+<!ENTITY showAllBookmarks2.label "ఇష్టాంశాలన్నింటినీ చూపించు">
+<!ENTITY recentBookmarks.label "ఇటీవల ఇష్టాంశాలుగా చేసినవి">
+<!ENTITY bookmarksToolbarChevron.tooltip "మరిన్ని ఇష్టాంశాలను చూపించు">
+
+<!ENTITY printButton.label            "ముద్రించు">
+<!ENTITY printButton.tooltip          "ఈ పేజీని ముద్రించు">
+
+<!ENTITY searchItem.title             "వెతకడం">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "ముంగిలి">
+<!ENTITY homeButton.defaultPage.tooltip "&brandShortName; ముంగిలి పేజీ">
+
+<!ENTITY bookmarksButton.label          "ఇష్టాంశాలు">
+
+<!ENTITY bookmarksSubview.label             "ఇష్టాంశాలు">
+<!ENTITY bookmarksMenuButton2.label         "ఇష్టాంశాల మెనూ">
+<!ENTITY bookmarksMenuButton.other.label    "ఇతర ఇష్టాంశాలు">
+<!ENTITY bookmarksMenuButton.mobile.label   "మొబైలు ఇష్టాంశాలు">
+<!ENTITY viewBookmarksSidebar2.label        "ఇష్టాంశాల ప్రక్కపట్టీని చూడండి">
+<!ENTITY hideBookmarksSidebar.label         "ఇష్టాంశాల ప్రక్కపట్టీని దాచు">
+<!ENTITY viewBookmarksToolbar.label         "ఇష్టాంశాల పట్టీని చూడండి">
+<!ENTITY hideBookmarksToolbar.label         "ఇష్టాంశాల పనిముట్లపట్టీని దాచు">
+<!ENTITY searchBookmarks.label              "ఇష్టాంశాలను వెతకండి">
+<!ENTITY bookmarkingTools.label             "ఇష్టాంశాల పనిముట్లు">
+<!ENTITY addBookmarksMenu.label             "ఉపకరణపట్టీకి ఇష్టాంశాల మెనూని జోడించండి">
+<!ENTITY removeBookmarksMenu.label          "ఉపకరణపట్టీ నుండి ఇష్టాంశాల మెనుని తీసివేయండి">
+
+<!ENTITY historyButton.label            "చరిత్ర">
+
+<!ENTITY downloads.label              "దింపుకోళ్ళు">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "దింపుకోళ్ళు">
+<!ENTITY addons.label                 "పొడగింతలు">
+
+<!ENTITY webDeveloperMenu.label       "వెబ్ అభివృద్దికారి">
+
+
+<!ENTITY newNavigatorCmd.label        "కొత్త విండో">
+<!ENTITY newPrivateWindow.label     "కొత్త ఆంతరంగిక విండో">
+
+<!ENTITY editMenu.label         "సవరణ">
+<!ENTITY preferencesCmd2.label       "ఎంపికలు">
+<!ENTITY preferencesCmdUnix.label       "అభిరుచులు">
+<!ENTITY logins.label                           "ప్రవేశాలు, సంకేతపదాలు">
+
+<!ENTITY overflowCustomizeToolbar.label       "పనిముట్లపట్టీని మలుచుకోండి…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "C">
+
+<!ENTITY historyMenu.label "చరిత్ర">
+<!ENTITY historyUndoMenu.label "ఇటీవల మూసిన ట్యాబులు">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "ఇటీవల మూసిన విండోలు">
+
+<!ENTITY appMenuHistory.showAll.label "మొత్తం చరిత్రను చూపించు">
+<!ENTITY appMenuHistory.clearRecent.label "ఇటీవలి చరిత్రను తుడిచివేయి…">
+<!ENTITY appMenuHistory.restoreSession.label "మునుపటి సెషన్‌ను పునరుద్ధరించు">
+<!ENTITY appMenuHistory.viewSidebar.label "చరిత్ర పక్కపట్టీను చూడండి">
+<!ENTITY appMenuHistory.recentHistory.label "ఇటీవలి చరిత్ర">
+<!ENTITY appMenuHelp.label "సహాయం">
+
+<!ENTITY appMenuRemoteTabs.label "సింకైన ట్యాబులు">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "తెరిచివున్న ట్యాబులు లేవు">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "ఇంకా చూపించు">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "ఈ పరికరం నుండి మరిన్ని ట్యాబులను చూపించు">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "అన్నీ చూపించు">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "ఈ పరికరం నుండి అన్ని ట్యాబులను చూపించు">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "మీ ఇతర పరికరాల లోని ట్యాబుల జాబితాను చూడడానికి ట్యాబ్ సింక్ ను ప్రారంభించండి.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Waterfox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "ఇతర పరికరాలలో తెరిచివున్న మీ ట్యాబులను ఇక్కడ చూడాలనుకుంటున్నారా?">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "Sync అభిరుచులను తెరువు">
+<!ENTITY appMenuRemoteTabs.unverified.label "మీ ఖాతాను తనిఖీ చెయ్యాలి.">
+<!ENTITY appMenuRemoteTabs.managedevices.label "పరికరాలను నిర్వహించండి…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "సింక్రనిత ట్యాబుల ప్రక్కపట్టీని చూడండి">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "మరొక పరికరాన్ని అనుసంధానించండి">
+
+<!ENTITY appMenuRecentHighlights.label "ఇటీవలి ముఖ్యాంశాలు">
+
+<!ENTITY customizeMenu.addToToolbar.label "పనిముట్ల పట్టీకి చేర్చు">
+<!ENTITY customizeMenu.addToToolbar.accesskey "A">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "Overflow మెనూకు జోడించు">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "M">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Overflow మెనూ నుంచి పిన్‌ తీయండి">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "U">
+<!ENTITY customizeMenu.removeFromToolbar.label "పనిముట్ల పట్టీ నుండి తీసివేయి">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "R">
+<!ENTITY customizeMenu.addMoreItems.label "మరిన్ని అంశాలను చేర్చండి…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "A">
+<!-- LOCALIZATION NOTE (reportExtension.label) This label is used in the extensions
+     toolbar buttons context menus, a user can use this command to submit to Mozilla
+     an abuse report related to that extension. "Report" is a verb. -->
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "ఇంకా">
+
+<!ENTITY contentSearchSubmit.tooltip  "శోధనను సమర్పించండి">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "వెతకండి">
+<!ENTITY searchIcon.tooltip           "వెతుకు">
+
+<!ENTITY openLinkCmdInTab.accesskey   "T">
+
+<!ENTITY pageAction.copyLink.label    "లంకెను కాపీచెయ్యి">
+
+<!-- LOCALIZATION NOTE(pocket-button.tooltiptext, saveToPocketCmd.label, saveLinkToPocketCmd.label, pocketMenuitem.label):
+  "Pocket" is a brand name. -->
+
+<!ENTITY emailPageCmd.label           "లింకును ఈమెయిలు చేయి…">
+
+<!-- Media (video/audio) controls -->
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoom.label                 "జూమ్">
+
+<!ENTITY sidebarCloseButton.tooltip     "పక్కపట్టీని మూసివేయి">
+
+<!ENTITY quitApplicationCmdWin2.label       "నిష్క్రమించు">
+<!ENTITY quitApplicationCmdWin2.accesskey   "x">
+<!ENTITY quitApplicationCmdWin2.tooltip     "&brandShorterName; నిష్క్రమించు">
+<!ENTITY quitApplicationCmd.label       "నిష్క్రమించు">
+<!ENTITY quitApplicationCmd.accesskey   "Q">
+<!ENTITY quitApplicationCmdMac2.label   "&brandShorterName; నిష్క్రమించు">
+
+<!ENTITY allowPopups.accesskey "p">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "పాప్అప్ బ్లాకరు అభిరుచులను సరిచేయి…">
+<!ENTITY editPopupSettings.label "పాప్అప్ బ్లాకరు ఎంపికలను సరిచేయి...">
+<!ENTITY editPopupSettings.accesskey "E">
+<!ENTITY dontShowMessage.accesskey "D">
+
+<!ENTITY findOnCmd.label     "ఈ పేజీలో వెతకండి…">
+
+<!ENTITY spellAddDictionaries.label "నిఘంటువులను చేర్చు…">
+<!ENTITY spellAddDictionaries.accesskey "A">
+
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "విహారిణి ట్యాబులు">
+
+<!ENTITY syncBrand.shortName.label    "సింక్">
+
+<!ENTITY customizeMode.autoHideDownloadsButton.label "స్వయంచాలకంగా మరుగునవుంచు">
+
+
+<!ENTITY uiTour.infoPanel.close "మూసివేయి">
+
+<!ENTITY panicButton.thankyou.msg1                "మీ ఇటీవలి చరిత్ర తుడిచివేయబడింది.">
+<!ENTITY panicButton.thankyou.msg2                "సురక్షిత విహారణ!">
+<!ENTITY panicButton.thankyou.buttonlabel         "కృతజ్ఞతలు!">
+
+<!ENTITY updateAvailable.panelUI.label "&brandShorterName; తాజాకరణను దించుకోండి">
+<!ENTITY updateManual.panelUI.label "&brandShorterName; తాజా కాపీని దించుకోండి">
+<!ENTITY updateRestart.panelUI.label2 "&brandShorterName;‌ను తాజాకరించడానికి పునఃప్రారంభించండి">
+
+<!ENTITY sendToDevice.syncNotReady.label "పరికరాలను సమకాలీకరిస్తోంది…">
+
+<!ENTITY pageAction.shareUrl.label "పంచుకో">
+<!ENTITY pageAction.shareMore.label "మరిన్ని…">
+
+<!ENTITY libraryButton.tooltip "చరిత్ర, భద్రపరచిన ఇష్టాంశాలు, ఇంకా మరెన్నో చూడండి">
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+<!ENTITY accessibilityIndicator.tooltip "ప్రాప్యత లక్షణాలు చేతనమైవున్నాయి">

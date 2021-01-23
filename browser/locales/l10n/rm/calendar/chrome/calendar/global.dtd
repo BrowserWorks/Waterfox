@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY time.midnight "Mesanotg" >
+<!ENTITY time.noon "Mezdi" >
+
+<!-- Day Names -->
+<!-- LOCALIZATION NOTE : Accesskeys for day.1.Ddd to day.7.Ddd are currently
+     only used in Preferences > Views > Workweek groupbox -->
+<!ENTITY day.1.Ddd "Du" >
+<!ENTITY day.1.Ddd.accesskey "D">
+<!ENTITY day.2.Ddd "Gli" >
+<!ENTITY day.2.Ddd.accesskey "G">
+<!ENTITY day.3.Ddd "Ma" >
+<!ENTITY day.3.Ddd.accesskey "M">
+<!ENTITY day.4.Ddd "Me" >
+<!ENTITY day.4.Ddd.accesskey "M">
+<!ENTITY day.5.Ddd "Gie" >
+<!ENTITY day.5.Ddd.accesskey "G">
+<!ENTITY day.6.Ddd "Ve" >
+<!ENTITY day.6.Ddd.accesskey "V">
+<!ENTITY day.7.Ddd "So" >
+<!ENTITY day.7.Ddd.accesskey "S">
+
+<!ENTITY day.1.name "Dumengia" >
+<!ENTITY day.2.name "Glindesdi" >
+<!ENTITY day.3.name "Mardi" >
+<!ENTITY day.4.name "Mesemna" >
+<!ENTITY day.5.name "Gievgia" >
+<!ENTITY day.6.name "Venderdi" >
+<!ENTITY day.7.name "Sonda" >
+
+<!ENTITY month.1.name "Schaner" >
+<!ENTITY month.2.name "Favrer" >
+<!ENTITY month.3.name "Mars" >
+<!ENTITY month.4.name "Avrigl" >
+<!ENTITY month.5.name "Matg" >
+<!ENTITY month.6.name "Zercladur" >
+<!ENTITY month.7.name "Fanadur" >
+<!ENTITY month.8.name "Avust" >
+<!ENTITY month.9.name "Settember" >
+<!ENTITY month.10.name "October" >
+<!ENTITY month.11.name "November" >
+<!ENTITY month.12.name "December" >
+
+<!ENTITY onemonthbackward.tooltip "Mais precedent" >
+<!ENTITY onemonthforward.tooltip "Proxim mais" >
+<!ENTITY oneyearbackward.tooltip "Onn precedent" >
+<!ENTITY oneyearforward.tooltip "Proxim onn" >
+<!ENTITY showToday.tooltip "Ir ad oz">
+<!ENTITY onedayforward.tooltip "Ir al proxim di">
+<!ENTITY onedaybackward.tooltip "Ir al di precedent">
+<!ENTITY showselectedday.tooltip "Mussar eveniments per il di tschernì">

@@ -11,7 +11,7 @@
 #ifndef vm_AtomsTable_h
 #define vm_AtomsTable_h
 
-#include <type_traits>  // std::{enable_if,is_const}
+#include <type_traits>  // std::{enable_if_t,is_const_v}
 
 #include "js/GCHashTable.h"
 #include "js/TypeDecls.h"
@@ -49,7 +49,7 @@ class AtomStateEntry {
 
  public:
   AtomStateEntry() : bits(0) {}
-  AtomStateEntry(const AtomStateEntry& other) : bits(other.bits) {}
+  AtomStateEntry(const AtomStateEntry& other) = default;
   AtomStateEntry(JSAtom* ptr, bool tagged)
       : bits(uintptr_t(ptr) | uintptr_t(tagged)) {
     MOZ_ASSERT((uintptr_t(ptr) & 0x1) == 0);
@@ -88,8 +88,7 @@ struct AtomHasher {
   }
 };
 
-using AtomSet = JS::GCHashSet<AtomStateEntry, AtomHasher,
-                              SystemAllocPolicy>;
+using AtomSet = JS::GCHashSet<AtomStateEntry, AtomHasher, SystemAllocPolicy>;
 
 // This class is a wrapper for AtomSet that is used to ensure the AtomSet is
 // not modified. It should only expose read-only methods from AtomSet.
@@ -110,7 +109,7 @@ class FrozenAtomSet {
     return mSet->shallowSizeOfIncludingThis(mallocSizeOf);
   }
 
-  typedef AtomSet::Range Range;
+  using Range = AtomSet::Range;
 
   AtomSet::Range all() const { return mSet->all(); }
 };
@@ -174,8 +173,8 @@ class AtomsTable {
       const mozilla::Maybe<uint32_t>& indexValue,
       const AtomHasher::Lookup& lookup);
 
-  template <typename CharT, typename = typename std::enable_if<
-                                !std::is_const<CharT>::value>::type>
+  template <typename CharT,
+            typename = std::enable_if_t<!std::is_const_v<CharT>>>
   MOZ_ALWAYS_INLINE JSAtom* atomizeAndCopyChars(
       JSContext* cx, CharT* chars, size_t length, PinningBehavior pin,
       const mozilla::Maybe<uint32_t>& indexValue,
@@ -189,7 +188,7 @@ class AtomsTable {
   void tracePinnedAtoms(JSTracer* trc, const AutoAccessAtomsZone& access);
 
   // Sweep all atoms non-incrementally.
-  void sweepAll(JSRuntime* rt);
+  void traceWeak(JSTracer* trc);
 
   bool startIncrementalSweep();
 

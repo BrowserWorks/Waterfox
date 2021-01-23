@@ -11,10 +11,10 @@
 #include <unordered_map>
 #include <vector>
 
-#include "gfxPrefs.h"
 #include "Layers.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/MozPromise.h"
+#include "mozilla/StaticPrefs_apz.h"
 #include "mozilla/layers/APZTestData.h"
 #include "mozilla/layers/FocusTarget.h"
 #include "mozilla/layers/IpcResourceUpdateQueue.h"
@@ -34,10 +34,6 @@ class nsIWidget;
 namespace mozilla {
 
 struct ActiveScrolledRoot;
-
-namespace dom {
-class TabGroup;
-}
 
 namespace layers {
 
@@ -154,13 +150,13 @@ class WebRenderLayerManager final : public LayerManager {
   void LogTestDataForCurrentPaint(ScrollableLayerGuid::ViewID aScrollId,
                                   const std::string& aKey,
                                   const std::string& aValue) {
-    MOZ_ASSERT(gfxPrefs::APZTestLoggingEnabled(), "don't call me");
+    MOZ_ASSERT(StaticPrefs::apz_test_logging_enabled(), "don't call me");
     mApzTestData.LogTestDataForPaint(mPaintSequenceNumber, aScrollId, aKey,
                                      aValue);
   }
   void LogAdditionalTestData(const std::string& aKey,
                              const std::string& aValue) {
-    MOZ_ASSERT(gfxPrefs::APZTestLoggingEnabled(), "don't call me");
+    MOZ_ASSERT(StaticPrefs::apz_test_logging_enabled(), "don't call me");
     mApzTestData.RecordAdditionalData(aKey, aValue);
   }
 
@@ -171,24 +167,16 @@ class WebRenderLayerManager final : public LayerManager {
   WebRenderUserDataRefTable* GetWebRenderUserDataTable() {
     return mWebRenderCommandBuilder.GetWebRenderUserDataTable();
   }
-  WebRenderScrollData& GetScrollData(wr::RenderRoot aRenderRoot) {
-    return mScrollDatas[aRenderRoot];
-  }
+  WebRenderScrollData& GetScrollData() { return mScrollData; }
 
   void WrUpdated();
-  void WindowOverlayChanged() { mWindowOverlayChanged = true; }
   nsIWidget* GetWidget() { return mWidget; }
-
-  dom::TabGroup* GetTabGroup();
 
   uint32_t StartFrameTimeRecording(int32_t aBufferSize) override;
   void StopFrameTimeRecording(uint32_t aStartIndex,
                               nsTArray<float>& aFrameIntervals) override;
 
-  RenderRootStateManager* GetRenderRootStateManager(
-      wr::RenderRoot aRenderRoot) {
-    return &mStateManagers[aRenderRoot];
-  }
+  RenderRootStateManager* GetRenderRootStateManager() { return &mStateManager; }
 
   virtual void PayloadPresented() override;
 
@@ -213,9 +201,8 @@ class WebRenderLayerManager final : public LayerManager {
 
   // This holds the scroll data that we need to send to the compositor for
   // APZ to do it's job
-  wr::RenderRootArray<WebRenderScrollData> mScrollDatas;
+  WebRenderScrollData mScrollData;
 
-  bool mWindowOverlayChanged;
   bool mNeedsComposite;
   bool mIsFirstPaint;
   FocusTarget mFocusTarget;
@@ -238,8 +225,9 @@ class WebRenderLayerManager final : public LayerManager {
   nsCString mURL;
   WebRenderCommandBuilder mWebRenderCommandBuilder;
 
-  wr::RenderRootArray<size_t> mLastDisplayListSizes;
-  wr::RenderRootArray<RenderRootStateManager> mStateManagers;
+  size_t mLastDisplayListSize;
+  RenderRootStateManager mStateManager;
+  DisplayItemCache mDisplayItemCache;
 };
 
 }  // namespace layers

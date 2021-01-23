@@ -11,6 +11,7 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+    <meta http-equiv="Content-Security-Policy" content="default-src chrome:; object-src 'none'" />
     <title data-l10n-id="page-title"/>
 
     <link rel="icon" type="image/png" id="favicon"
@@ -78,8 +79,23 @@
             <td id="buildid-box"></td>
           </tr>
 
+          <tr>
+            <th class="column" data-l10n-id="app-basics-distribution-id"/>
+            <td id="distributionid-box"></td>
+          </tr>
+
 #ifndef ANDROID
 #ifdef MOZ_UPDATER
+          <tr id="update-row" class="no-copy">
+            <th class="column" data-l10n-id="app-basics-update-dir"/>
+
+            <td>
+              <button id="update-dir-button" data-l10n-id="show-dir-label"/>
+               <span id="update-dir-box" dir="ltr">
+               </span>
+            </td>
+          </tr>
+
           <tr class="no-copy">
             <th class="column" data-l10n-id="app-basics-update-history"/>
 
@@ -114,7 +130,7 @@
           <tr class="no-copy">
             <th class="column" data-l10n-id="app-basics-binary"/>
 
-            <td id="binary-box">
+            <td id="binary-box" dir="ltr">
             </td>
           </tr>
 
@@ -123,7 +139,7 @@
 
             <td>
               <button id="profile-dir-button" data-l10n-id="show-dir-label"/>
-               <span id="profile-dir-box">
+               <span id="profile-dir-box" dir="ltr">
                </span>
             </td>
           </tr>
@@ -442,6 +458,18 @@
           </tr>
         </tbody>
 
+        <tbody id="media-capabilities-tbody">
+          <tr>
+            <th colspan="9" class="title-column" data-l10n-id="media-capabilities-title"/>
+          </tr>
+          <tr>
+            <td colspan="9">
+              <button id="enumerate-database-button" data-l10n-id="media-capabilities-enumerate"/>
+              <pre id="enumerate-database-result" class="hidden no-copy"></pre>
+            </td>
+          </tr>
+        </tbody>
+
       </table>
 
       <!-- - - - - - - - - - - - - - - - - - - - - -->
@@ -497,20 +525,6 @@
         </tr>
       </table>
 #endif
-
-      <!-- - - - - - - - - - - - - - - - - - - - - -->
-      <h2 class="major-section" data-l10n-id="js-title"/>
-
-      <table>
-        <tbody>
-          <tr>
-            <th class="column" data-l10n-id="js-incremental-gc"/>
-
-            <td id="javascript-incremental-gc">
-            </td>
-          </tr>
-        </tbody>
-      </table>
 
       <!-- - - - - - - - - - - - - - - - - - - - - -->
       <h2 class="major-section" data-l10n-id="a11y-title"/>
@@ -585,6 +599,37 @@
 #endif
 #endif
 
+      <h2 class="major-section" data-l10n-id="startup-cache-title"/>
+
+      <table>
+        <tbody>
+          <tr>
+            <th class="column" data-l10n-id="startup-cache-disk-cache-path"/>
+
+            <td id="startup-cache-disk-cache-path">
+            </td>
+          </tr>
+          <tr>
+            <th class="column" data-l10n-id="startup-cache-ignore-disk-cache"/>
+
+            <td id="startup-cache-ignore-disk-cache">
+            </td>
+          </tr>
+          <tr>
+            <th class="column" data-l10n-id="startup-cache-found-disk-cache-on-init"/>
+
+            <td id="startup-cache-found-disk-cache-on-init">
+            </td>
+          </tr>
+          <tr>
+            <th class="column" data-l10n-id="startup-cache-wrote-to-disk-cache"/>
+
+            <td id="startup-cache-wrote-to-disk-cache">
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
       <h2 class="major-section" data-l10n-id="intl-title"/>
 
       <table>
@@ -634,7 +679,25 @@
           </tr>
         </tbody>
       </table>
+
       <!-- - - - - - - - - - - - - - - - - - - - - -->
+
+#if defined(ENABLE_REMOTE_AGENT)
+      <h2 class="major-section" data-l10n-id="remote-debugging-title"/>
+
+      <table>
+        <tbody>
+          <tr>
+            <th class="column" data-l10n-id="remote-debugging-accepting-connections"/>
+            <td id="remote-debugging-accepting-connections"></td>
+          </tr>
+          <tr>
+            <th class="column" data-l10n-id="remote-debugging-url"/>
+            <td id="remote-debugging-url"></td>
+          </tr>
+        </tbody>
+      </table>
+#endif
 
     </div>
 

@@ -136,20 +136,12 @@ void QuotaUsageRequestChild::HandleResponse(
   if (aResponse.IsEmpty()) {
     variant->SetAsEmptyArray();
   } else {
-    nsTArray<RefPtr<UsageResult>> usageResults;
+    nsTArray<RefPtr<UsageResult>> usageResults(aResponse.Length());
 
-    const uint32_t count = aResponse.Length();
-
-    usageResults.SetCapacity(count);
-
-    for (uint32_t index = 0; index < count; index++) {
-      auto& originUsage = aResponse[index];
-
-      RefPtr<UsageResult> usageResult =
-          new UsageResult(originUsage.origin(), originUsage.persisted(),
-                          originUsage.usage(), originUsage.lastAccessed());
-
-      usageResults.AppendElement(usageResult.forget());
+    for (const auto& originUsage : aResponse) {
+      usageResults.AppendElement(MakeRefPtr<UsageResult>(
+          originUsage.origin(), originUsage.persisted(), originUsage.usage(),
+          originUsage.lastAccessed()));
     }
 
     variant->SetAsArray(nsIDataType::VTYPE_INTERFACE_IS,
@@ -165,8 +157,8 @@ void QuotaUsageRequestChild::HandleResponse(
   AssertIsOnOwningThread();
   MOZ_ASSERT(mRequest);
 
-  RefPtr<OriginUsageResult> result = new OriginUsageResult(
-      aResponse.usage(), aResponse.fileUsage(), aResponse.limit());
+  RefPtr<OriginUsageResult> result =
+      new OriginUsageResult(aResponse.usage(), aResponse.fileUsage());
 
   RefPtr<nsVariant> variant = new nsVariant();
   variant->SetAsInterface(NS_GET_IID(nsIQuotaOriginUsageResult), result);
@@ -263,6 +255,29 @@ void QuotaRequestChild::HandleResponse(bool aResponse) {
   mRequest->SetResult(variant);
 }
 
+void QuotaRequestChild::HandleResponse(const nsAString& aResponse) {
+  AssertIsOnOwningThread();
+  MOZ_ASSERT(mRequest);
+
+  RefPtr<nsVariant> variant = new nsVariant();
+  variant->SetAsAString(aResponse);
+
+  mRequest->SetResult(variant);
+}
+
+void QuotaRequestChild::HandleResponse(const EstimateResponse& aResponse) {
+  AssertIsOnOwningThread();
+  MOZ_ASSERT(mRequest);
+
+  RefPtr<EstimateResult> result =
+      new EstimateResult(aResponse.usage(), aResponse.limit());
+
+  RefPtr<nsVariant> variant = new nsVariant();
+  variant->SetAsInterface(NS_GET_IID(nsIQuotaEstimateResult), result);
+
+  mRequest->SetResult(variant);
+}
+
 void QuotaRequestChild::HandleResponse(const nsTArray<nsCString>& aResponse) {
   AssertIsOnOwningThread();
   MOZ_ASSERT(mRequest);
@@ -272,21 +287,14 @@ void QuotaRequestChild::HandleResponse(const nsTArray<nsCString>& aResponse) {
   if (aResponse.IsEmpty()) {
     variant->SetAsEmptyArray();
   } else {
-    nsTArray<RefPtr<InitializedOriginsResult>> initializedOriginsResults(
-        aResponse.Length());
-    for (auto& origin : aResponse) {
-      RefPtr<InitializedOriginsResult> initializedOriginsResult =
-          new InitializedOriginsResult(origin);
+    nsTArray<const char*> stringPointers(aResponse.Length());
 
-      initializedOriginsResults.AppendElement(
-          initializedOriginsResult.forget());
+    for (const auto& string : aResponse) {
+      stringPointers.AppendElement(string.get());
     }
 
-    variant->SetAsArray(
-        nsIDataType::VTYPE_INTERFACE_IS,
-        &NS_GET_IID(nsIQuotaInitializedOriginsResult),
-        initializedOriginsResults.Length(),
-        static_cast<void*>(initializedOriginsResults.Elements()));
+    variant->SetAsArray(nsIDataType::VTYPE_CHAR_STR, nullptr,
+                        stringPointers.Length(), stringPointers.Elements());
   }
 
   mRequest->SetResult(variant);
@@ -306,6 +314,19 @@ mozilla::ipc::IPCResult QuotaRequestChild::Recv__delete__(
       HandleResponse(aResponse.get_nsresult());
       break;
 
+    case RequestResponse::TStorageNameResponse:
+      HandleResponse(aResponse.get_StorageNameResponse().name());
+      break;
+
+    case RequestResponse::TStorageInitializedResponse:
+      HandleResponse(aResponse.get_StorageInitializedResponse().initialized());
+      break;
+
+    case RequestResponse::TTemporaryStorageInitializedResponse:
+      HandleResponse(
+          aResponse.get_TemporaryStorageInitializedResponse().initialized());
+      break;
+
     case RequestResponse::TInitResponse:
     case RequestResponse::TInitTemporaryStorageResponse:
     case RequestResponse::TClearOriginResponse:
@@ -317,16 +338,20 @@ mozilla::ipc::IPCResult QuotaRequestChild::Recv__delete__(
       HandleResponse();
       break;
 
-    case RequestResponse::TInitOriginResponse:
-      HandleResponse(aResponse.get_InitOriginResponse().created());
+    case RequestResponse::TInitStorageAndOriginResponse:
+      HandleResponse(aResponse.get_InitStorageAndOriginResponse().created());
       break;
 
     case RequestResponse::TPersistedResponse:
       HandleResponse(aResponse.get_PersistedResponse().persisted());
       break;
 
-    case RequestResponse::TListInitializedOriginsResponse:
-      HandleResponse(aResponse.get_ListInitializedOriginsResponse().origins());
+    case RequestResponse::TEstimateResponse:
+      HandleResponse(aResponse.get_EstimateResponse());
+      break;
+
+    case RequestResponse::TListOriginsResponse:
+      HandleResponse(aResponse.get_ListOriginsResponse().origins());
       break;
 
     default:

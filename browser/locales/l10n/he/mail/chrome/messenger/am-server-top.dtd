@@ -1,0 +1,86 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageStorage.label "אחסון הודעות">
+<!ENTITY securitySettings.label "הגדרות אבטחה">
+<!ENTITY serverSettings.label "הגדרות שרת">
+<!ENTITY serverType.label "סוג שרת:">
+<!ENTITY serverName.label "שם השרת:">
+<!ENTITY serverName.accesskey "S">
+<!ENTITY userName.label "שם משתמש:">
+<!ENTITY userName.accesskey "N">
+<!ENTITY port.label "שער:">
+<!ENTITY port.accesskey "P">
+<!ENTITY serverPortDefault.label "ברירת מחדל:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammar dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "בדוק אם קיימות הודעות חדשות כל ">
+<!ENTITY biffStart.accesskey "ב">
+<!ENTITY biffEnd.label "דקות">
+<!ENTITY useIdleNotifications.label "לאפשר התרעות מיידיות מהשרת בעת הגעת הודעות חדשות">
+<!ENTITY useIdleNotifications.accesskey "א">
+<!ENTITY connectionSecurity.label "אבטחת קישוריות:">
+<!ENTITY connectionSecurity.accesskey "א">
+<!ENTITY connectionSecurityType-0.label "ללא">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, אם זמין">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "צורת אימות:">
+<!ENTITY authMethod.accesskey "א">
+<!ENTITY leaveOnServer.label "השאר הודעות על השרת">
+<!ENTITY leaveOnServer.accesskey "ה">
+<!ENTITY headersOnly.label "טען כותרות בלבד">
+<!ENTITY headersOnly.accesskey "כ">
+<!ENTITY deleteByAgeFromServer.label "לכל היותר">
+<!ENTITY deleteByAgeFromServer.accesskey "o">
+<!ENTITY daysEnd.label "ימים">
+<!ENTITY deleteOnServer2.label "עד שאמחק אותם">
+<!ENTITY deleteOnServer2.accesskey "d">
+<!ENTITY downloadOnBiff.label "הורד הודעות חדשות אוטומטית">
+<!ENTITY downloadOnBiff.accesskey "m">
+<!ENTITY deleteMessagePrefix.label "כאשר אני מוחק הודעה:">
+<!ENTITY modelMoveToTrash.label "העבר לתיקיית אשפה">
+<!ENTITY modelMoveToTrash.accesskey "א">
+<!ENTITY modelMarkDeleted.label "סמן כמחוקה">
+<!ENTITY modelMarkDeleted.accesskey "מ">
+<!ENTITY modelDeleteImmediately.label "הסר אותה מיד">
+<!ENTITY modelDeleteImmediately.accesskey "ה">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "נקה (&quot;רוקן&quot;) תיבת דואר נכנס ביציאה">
+<!ENTITY expungeOnExit.accesskey "E">
+<!ENTITY emptyTrashOnExit.label "רוקן אשפה ביציאה">
+<!ENTITY emptyTrashOnExit.accesskey "x">
+<!ENTITY loginAtStartup.label "בדוק אם יש דואר חדש בעת הפעלה">
+<!ENTITY loginAtStartup.accesskey "C">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+    of messages between them
+-->
+<!ENTITY maxMessagesStart.label "שאל אותי לפני הורדת יותר מאשר">
+<!ENTITY maxMessagesStart.accesskey "m">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "הודעות">
+<!ENTITY alwaysAuthenticate.label "תמיד בקש אימות בעת התחברות לשרת זה">
+<!ENTITY alwaysAuthenticate.accesskey "w">
+<!ENTITY abbreviate.label "הצג שמות קבוצות דיון בחלונית תיקיות הדואר בצורת:">
+<!ENTITY abbreviateOn.label "שמות מלאים (לדוגמה, 'netscape.public.mozilla.mail-news')">
+<!ENTITY abbreviateOff.label "שמות מקוצרים (לדוגמה, 'n.p.m.mail-news')">
+<!ENTITY advancedButton.label "מתקדם…">
+<!ENTITY advancedButton.accesskey "ק">
+<!ENTITY serverDefaultCharset2.label "קידוד טקסט כבררת מחדל:">
+<!ENTITY localFolderPicker.label "בחר ספרייה מקומית">
+<!ENTITY browseFolder.label "עיון…">
+<!ENTITY browseFolder.accesskey "ע">
+<!ENTITY browseNewsrc.label "עיון…">
+<!ENTITY browseNewsrc.accesskey "ע">
+
+<!ENTITY accountTitle.label "הגדרות חשבון">
+<!ENTITY accountSettingsDesc.label "הבא הוא חשבון מיוחד. אינו זהויות שמקושרות אליו.">
+<!ENTITY storeType.label "סוג אחסון הודעות:">
+<!ENTITY storeType.accesskey "ס">
+<!ENTITY mboxStore2.label "קובץ לתיקייה (mbox)">
+<!ENTITY maildirStore.label "קובץ להודעה (maildir)">

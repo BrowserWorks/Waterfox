@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "Премахване на сметка и данни">
+<!ENTITY removeButton.label           "Премахване">
+<!ENTITY removeButton.accesskey       "п">
+<!ENTITY removeAccount.label          "Премахване да данните за сметката">
+<!ENTITY removeAccount.accesskey      "д">
+<!ENTITY removeAccount.desc           "Премахва само информацията за сметката от &brandShortName;. Сметката на сървъра остава незасегната.">
+<!ENTITY removeData.label             "Премахване на съобщенията">
+<!ENTITY removeData.accesskey         "с">
+<!ENTITY removeDataChat.label         "Премахване на разговорите">
+<!ENTITY removeDataChat.accesskey     "р">
+<!ENTITY removeDataLocalAccount.desc  "Премахва всички съобщения, папки и филтри свързани с тази сметка от местния диск. Съобщенията, останали на сървъра няма да бъдат засегнати. Не избирайте тази възможност ако планирате да правите архив на местните данни или по-късно да ги преизползвате в &brandShortName;.">
+<!ENTITY removeDataServerAccount.desc "Премахва всички съобщения, папки и филтри свързани с тази сметка от местния диск. Папките и съобщенията остават на сървъра.">
+<!ENTITY removeDataChatAccount.desc   "Премахва всички журнали от разговорите съхранени за тази сметка от местния диск.">
+<!ENTITY showData.label               "Папка с данните">
+<!ENTITY showData.accesskey           "п">
+<!ENTITY progressPending              "Премахване на избраните данни…">
+<!ENTITY progressSuccess              "Данните са премахнати успешно.">
+<!ENTITY progressFailure              "Грешка при премахване на данните.">

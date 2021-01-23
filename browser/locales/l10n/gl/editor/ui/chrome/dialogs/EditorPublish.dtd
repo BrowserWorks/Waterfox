@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label            "Publicar páxina">
+<!ENTITY windowTitleSettings.label    "Configuración da publicación">
+<!ENTITY publishTab.label             "Publicar">
+<!ENTITY settingsTab.label            "Configuración">
+<!ENTITY publishButton.label          "Publicar">
+
+<!-- Publish Tab Panel -->
+<!ENTITY siteList.label               "Nome do sitio:">
+<!ENTITY siteList.accesskey           "e">
+<!ENTITY siteList.tooltip             "Escolla o sitio en que desexa publicar">
+<!ENTITY newSiteButton.label          "Novo sitio">
+<!ENTITY newSiteButton.accesskey      "N">
+<!ENTITY docDirList.label             "Subdirectorio do sitio desta páxina:">
+<!ENTITY docDirList.accesskey         "S">
+<!ENTITY docDirList.tooltip           "Escolla ou introduza o nome do subdirectorio remoto desta páxina">
+<!ENTITY publishImgCheckbox.label     "Incluír imaxes e outros ficheiros">
+<!ENTITY publishImgCheckbox.accesskey "I">
+<!ENTITY publishImgCheckbox.tooltip   "Publicar imaxes e outros ficheiros referenciados pola páxina">
+<!ENTITY sameLocationRadio.label      "Utilizar a mesma localización como páxina">
+<!ENTITY sameLocationRadio.accesskey  "U">
+<!ENTITY sameLocationRadio.tooltip    "Publicar ficheiros na mesma localización como páxina">
+<!ENTITY useSubdirRadio.label         "Utilizar este sitio como subdirectorio:">
+<!ENTITY useSubdirRadio.accesskey     "z">
+<!ENTITY useSubdirRadio.tooltip       "Publicar ficheiros no subdirectorio remoto seleccionado">
+<!ENTITY otherDirList.tooltip         "Escolla ou inttroduza o nome do subdirectorio remoto onde desexa publicar os ficheiros">
+<!ENTITY pageTitle.label              "Título de páxina:">
+<!ENTITY pageTitle.accesskey          "T">
+<!ENTITY pageTitle.tooltip            "Introduza un título para identificar a páxina na xanela e nos marcadores">
+<!ENTITY pageTitleExample.label       "p.ex.: &quot;A miña páxina web&quot;">
+<!ENTITY filename.label               "Nome do ficheiro:">
+<!ENTITY filename.accesskey           "f">
+<!ENTITY filename.tooltip             "Introduza un nome para este ficheiro, incluíndo '.html' para páxinas web">
+<!ENTITY filenameExample.label        "p.ex,: &quot;aminhapaxina.html&quot;">
+<!ENTITY setDefaultButton.label       "Estabelecer como predefinido">
+<!ENTITY setDefaultButton.accesskey   "b">
+<!ENTITY removeButton.label           "Eliminar sitio">
+<!ENTITY removeButton.accesskey       "E">
+
+<!-- Settings Tab Panel -->
+<!ENTITY publishSites.label           "Publicación de sitios">
+<!ENTITY serverInfo.label             "Información de servidor">
+<!ENTITY loginInfo.label              "Información de acceso">
+<!ENTITY siteName.label               "Nome do sitio:">
+<!ENTITY siteName.accesskey           "N">
+<!ENTITY siteName.tooltip             "Un alcume que identifica este sitio (p.ex.: 'OMeuSitio')">
+<!ENTITY siteUrl.label                "Enderezo de publicación (p.ex.: 'ftp://ftp.fornecedor.com/nomeusuario'):">
+<!ENTITY siteUrl.accesskey            "d">
+<!ENTITY siteUrl.tooltip              "Os enderezos FTP:// ou HTTP:// indicados polo seu ISP ou polo servizo de aloxamento web">
+<!ENTITY browseUrl.label              "O enderezo HTTP da súa páxina de inicio (p.ex.: 'http://www.fornecedor.com/nomeusuario'):">
+<!ENTITY browseUrl.accesskey          "T">
+<!ENTITY browseUrl.tooltip            "O enderezo HTTP:// do directorio de inicio (sen incluír o nome de ficheiro)">
+<!ENTITY username.label               "Nome de usuario:">
+<!ENTITY username.accesskey           "u">
+<!ENTITY username.tooltip             "O nome que utiliza para acceder no ISP ou no servizo de aloxamento web">
+<!ENTITY password.label               "Contrasinal:">
+<!ENTITY password.accesskey           "C">
+<!ENTITY password.tooltip             "O contrasinal asociado ao nome de usuario">
+<!ENTITY savePassword.label           "Gardar contrasinal">
+<!ENTITY savePassword.accesskey       "G">
+<!ENTITY savePassword.tooltip         "Seleccione esta opción para gardar con seguranza o contrasinal co Xestor de contrasinais">

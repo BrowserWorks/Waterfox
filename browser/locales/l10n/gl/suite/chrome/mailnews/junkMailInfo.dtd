@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Sobre o correo lixo">
+<!ENTITY window.width  "450">
+<!ENTITY info1a.label  "O Mail detectará automaticamente as mensaxes entrantes que aparezan no cartafol de correo lixo. Esas mensaxes non desexadas teñen o campo «Spam» marcado con unha icona">
+<!ENTITY info1b.label  ".">
+<!ENTITY info2.label   "Inicialmente, vostede poderá entrenar o Mail para identificar o correo non desexado usando o botón da barra de ferramentas para marcar as mensaxes como correo non desexado ou non.">
+<!ENTITY info3.label   "No momento no que Mail identifique correctamente o correo non desexado, vostede pode activar a ocpión de movelos para outro cartafol no momento de seren recibidos.">
+<!ENTITY info4.label   "Para obter máis información, prema Axuda.">

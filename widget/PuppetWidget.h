@@ -111,7 +111,7 @@ class PuppetWidget : public nsBaseWidget,
   virtual void Enable(bool aState) override { mEnabled = aState; }
   virtual bool IsEnabled() const override { return mEnabled; }
 
-  virtual nsresult SetFocus(bool aRaise = false) override;
+  virtual void SetFocus(Raise, mozilla::dom::CallerType aCallerType) override;
 
   virtual nsresult ConfigureChildren(
       const nsTArray<Configuration>& aConfigurations) override;
@@ -132,9 +132,7 @@ class PuppetWidget : public nsBaseWidget,
   virtual mozilla::LayoutDeviceToLayoutDeviceMatrix4x4
   WidgetToTopLevelWidgetTransform() override;
 
-  virtual LayoutDeviceIntPoint WidgetToScreenOffset() override {
-    return GetWindowPosition() + GetChromeOffset();
-  }
+  virtual LayoutDeviceIntPoint WidgetToScreenOffset() override;
 
   virtual LayoutDeviceIntPoint TopLevelWidgetToScreenOffset() override {
     return GetWindowPosition();
@@ -150,13 +148,13 @@ class PuppetWidget : public nsBaseWidget,
   nsEventStatus DispatchInputEvent(WidgetInputEvent* aEvent) override;
   void SetConfirmedTargetAPZC(
       uint64_t aInputBlockId,
-      const nsTArray<SLGuidAndRenderRoot>& aTargets) const override;
+      const nsTArray<ScrollableLayerGuid>& aTargets) const override;
   void UpdateZoomConstraints(
       const uint32_t& aPresShellId, const ScrollableLayerGuid::ViewID& aViewId,
       const mozilla::Maybe<ZoomConstraints>& aConstraints) override;
   bool AsyncPanZoomEnabled() const override;
 
-  virtual void GetEditCommands(
+  virtual bool GetEditCommands(
       NativeKeyBindingsType aType, const mozilla::WidgetKeyboardEvent& aEvent,
       nsTArray<mozilla::CommandInt>& aCommands) override;
 
@@ -234,7 +232,15 @@ class PuppetWidget : public nsBaseWidget,
 
   nsIntSize GetScreenDimensions();
 
+  // safe area insets support
+  virtual ScreenIntMargin GetSafeAreaInsets() const override;
+  void UpdateSafeAreaInsets(const ScreenIntMargin& aSafeAreaInsets);
+
   // Get the offset to the chrome of the window that this tab belongs to.
+  //
+  // NOTE: In OOP iframes this value is zero. You should use
+  // WidgetToTopLevelWidgetTransform instead which is already including the
+  // chrome offset.
   LayoutDeviceIntPoint GetChromeOffset();
 
   // Get the screen position of the application window.
@@ -242,7 +248,9 @@ class PuppetWidget : public nsBaseWidget,
 
   virtual LayoutDeviceIntRect GetScreenBounds() override;
 
-  virtual MOZ_MUST_USE nsresult StartPluginIME(
+  virtual LayoutDeviceIntSize GetCompositionSize() override;
+
+  [[nodiscard]] virtual nsresult StartPluginIME(
       const mozilla::WidgetKeyboardEvent& aKeyboardEvent, int32_t aPanelX,
       int32_t aPanelY, nsString& aCommitted) override;
 
@@ -304,9 +312,6 @@ class PuppetWidget : public nsBaseWidget,
 
   nsresult SetSystemFont(const nsCString& aFontName) override;
   nsresult GetSystemFont(nsCString& aFontName) override;
-
-  nsresult SetPrefersReducedMotionOverrideForTest(bool aValue) override;
-  nsresult ResetPrefersReducedMotionOverrideForTest() override;
 
   // TextEventDispatcherListener
   using nsBaseWidget::NotifyIME;
@@ -394,6 +399,8 @@ class PuppetWidget : public nsBaseWidget,
 
   nsCOMPtr<imgIContainer> mCustomCursor;
   uint32_t mCursorHotspotX, mCursorHotspotY;
+
+  ScreenIntMargin mSafeAreaInsets;
 
   nsCOMArray<nsIKeyEventInPluginCallback> mKeyEventInPluginCallbacks;
 

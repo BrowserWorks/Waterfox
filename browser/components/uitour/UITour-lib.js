@@ -19,10 +19,9 @@ if (typeof Mozilla == "undefined") {
      * desktop browser chrome. It can be used for tasks such as opening menu
      * panels and highlighting the position of buttons in the toolbar.
      *
-     * <p>For security/privacy reasons `Mozilla.UITour` will only work on a list of allowed
+     * For security/privacy reasons `Mozilla.UITour` will only work on a list of allowed
      * secure origins. The list of allowed origins can be found in
-     * {@link https://dxr.mozilla.org/mozilla-central/source/browser/app/permissions|
-     * browser/app/permissions}.</p>
+     * https://searchfox.org/mozilla-central/source/browser/app/permissions.
      *
      * @since 29
      * @namespace
@@ -88,48 +87,51 @@ if (typeof Mozilla == "undefined") {
    * @typedef {String} Mozilla.UITour.Target
    *
    * @summary Not all targets are available at all times because they may not be visible
-   * or UITour doesn't not how to automatically make them visible. Use
-   * <code>`Mozilla.UITour.getConfiguration('availableTargets', callback)`</code> to determine
-   * which ones are available at a given time.
+   * or UITour doesn't not how to automatically make them visible. Use the
+   * following to determine which ones are available at a given time::
+   *
+   * .. code-block:: javascript
+   *
+   *    Mozilla.UITour.getConfiguration('availableTargets', callback)
+   *
    * @see Mozilla.UITour.getConfiguration
    * @see Mozilla.UITour.showHighlight
    * @see Mozilla.UITour.showInfo
    *
-   * @description Valid values:<ul>
-   * <li>accountStatus
-   * <li>addons
-   * <li>appMenu
-   * <li>backForward
-   * <li>bookmarks
-   * <li>controlCenter-trackingUnblock
-   * <li>controlCenter-trackingBlock
-   * <li>customize
-   * <li>devtools
-   * <li>forget
-   * <li>help
-   * <li>home
-   * <li>library
-   * <li>pageActionButton
-   * <li>pageAction-bookmark
-   * <li>pageAction-copyURL
-   * <li>pageAction-emailLink
-   * <li>pageAction-sendToDevice
-   * <li>pocket
-   * <li>privateWindow
-   * <li>quit
-   * <li>readerMode-urlBar
-   * <li>screenshots
-   * <li>search
-   * <li>searchIcon
-   * <li>searchPrefsLink
-   * <li>selectedTabIcon
-   * <li>trackingProtection
-   * <li>urlbar
-   * <li>webide
-   * </ul>
+   * @description Valid values:
+   *
+   * - accountStatus
+   * - addons
+   * - appMenu
+   * - backForward
+   * - bookmarks
+   * - customize
+   * - devtools
+   * - forget
+   * - help
+   * - home
+   * - library
+   * - pageActionButton
+   * - pageAction-bookmark
+   * - pageAction-copyURL
+   * - pageAction-emailLink
+   * - pageAction-sendToDevice
+   * - pocket
+   * - privateWindow
+   * - quit
+   * - readerMode-urlBar
+   * - screenshots
+   * - search
+   * - searchIcon
+   * - selectedTabIcon
+   * - urlbar
    *
    * Generate using the following in the Browser Console:
-   * <code>`[...UITour.targets.keys()].join("\n* &lt;li&gt;")`</code>
+   *
+   * .. code-block:: javascript
+   *
+   *    [...UITour.targets.keys()].join("\n* - ")
+   *
    */
 
   /**
@@ -172,7 +174,7 @@ if (typeof Mozilla == "undefined") {
 
   /**
    * Register an identifier to use in
-   * {@link https://wiki.mozilla.org/Telemetry|Telemetry}. `pageID` must be a
+   * `Telemetry <https://wiki.mozilla.org/Telemetry>`_. `pageID` must be a
    * string unique to the page/tour.
    *
    * @example
@@ -191,15 +193,19 @@ if (typeof Mozilla == "undefined") {
    * @typedef {String} Mozilla.UITour.HighlightEffect
    *
    * Specifies the effect/animation to use when highlighting UI elements.
-   * @description Valid values:<ul>
-   * <li>random
-   * <li>wobble
-   * <li>zoom
-   * <li>color
-   * </ul>
+   * @description Valid values:
+   *
+   * - random
+   * - wobble
+   * - zoom
+   * - color
    *
    * Generate using the following in the Browser Console:
-   * <code>[...UITour.highlightEffects].join("\n* &lt;li&gt;")</code>
+   *
+   * .. code-block:: javascript
+   *
+   *    [...UITour.highlightEffects].join("\n* - ")
+   *
    * @see Mozilla.UITour.showHighlight
    */
 
@@ -316,12 +322,11 @@ if (typeof Mozilla == "undefined") {
 
   /**
    * @typedef {String} Mozilla.UITour.MenuName
-   * Valid values:<ul>
-   * <li>appMenu
-   * <li>bookmarks
-   * <li>controlCenter
-   * <li>pocket
-   * </ul>
+   * Valid values:
+   *
+   * - appMenu
+   * - bookmarks
+   * - pocket
    *
    * @see Mozilla.UITour.showMenu
    * @see Mozilla.UITour.hideMenu
@@ -376,16 +381,28 @@ if (typeof Mozilla == "undefined") {
   };
 
   /**
+   * Loads about:protections in the tour tab.
+   * @since 70
+   */
+  Mozilla.UITour.showProtectionReport = function() {
+    _sendEvent("showProtectionReport");
+  };
+
+  /**
    * @typedef Mozilla.UITour.ConfigurationName
-   * @description Valid values:<ul>
-   * <li>{@link Mozilla.UITour.Configuration.AppInfo|appinfo}</li>
-   * <li>{@link Mozilla.UITour.Configuration.CanReset|canReset}</li>
-   * <li>{@link Mozilla.UITour.Configuration.AvailableTargets|availableTargets}</li>
-   * <li>{@link Mozilla.UITour.Configuration.Search|search}</li>
-   * <li>{@link Mozilla.UITour.Configuration.Search|selectedSearchEngine}
-   * - DEPRECATED, use 'search'</li>
-   * <li>{@link Mozilla.UITour.Configuration.Sync|sync}</li>
-   * </ul>
+   * @description Valid values:
+   *
+   * - :js:func:`appinfo <Mozilla.UITour.Configuration.AppInfo>`
+   * - :js:func:`canReset <Mozilla.UITour.Configuration.CanReset>`
+   * - :js:func:`availableTargets <Mozilla.UITour.Configuration.AvailableTargets>`
+   * - :js:func:`search <Mozilla.UITour.Configuration.Search>`
+   * - :js:func:`selectedSearchEngine <Mozilla.UITour.Configuration.Search>`
+   *   DEPRECATED, use 'search'
+   * - :js:func:`sync <Mozilla.UITour.Configuration.Sync>`
+   *   DEPRECATED, use 'fxa'
+   * - :js:func:`fxa <Mozilla.UITour.Configuration.FxA>`
+   * - :js:func:`fxaConnections <Mozilla.UITour.Configuration.FxAConnections>`
+   *
    */
 
   /**
@@ -395,14 +412,16 @@ if (typeof Mozilla == "undefined") {
    */
 
   /**
-   * Indicate whether a user can refresh their Firefox profile via {@link Mozilla.UITour.resetFirefox}.
-   * @typedef {Boolean} Mozilla.UITour.Configuration.CanReset
+   * @typedef {boolean} Mozilla.UITour.Configuration.CanReset
+   *
+   * @description Indicate whether a user can refresh their Firefox profile via :js:func:`Mozilla.UITour.resetFirefox`.
+   *
    * @see Mozilla.UITour.resetFirefox
    * @since 48
    */
 
   /**
-   * @typedef {Object} Mozilla.UITour.Configuration.AppInfo
+   * @typedef {object} Mozilla.UITour.Configuration.AppInfo
    * @property {Boolean} canSetDefaultBrowserInBackground - Whether the application can be set as
    *                                                        the default browser in the background
    *                                                        without user interaction.
@@ -447,7 +466,79 @@ if (typeof Mozilla == "undefined") {
    */
 
   /**
-   * Array of UI {@link Mozilla.UITour.Target|Targets} currently available to be annotated.
+   * FxA local status, including whether FxA is connected and the general
+   * account state.
+   * @typedef {Object} Mozilla.UITour.Configuration.FxA
+   * @property {Boolean} setup - Whether FxA is setup on this device. If false,
+   *    no other properties will exist.
+   * @property {Boolean} accountStateOK - Whether the FxA account state is OK.
+   *    If false, it probably means the account is unverified or the user has
+   *    changed their password on another device and needs to update it here.
+   *    In that case many other properties will not exist.
+   * @property {Mozilla.UITour.Configuration.BrowserServices} [browserServices] -
+   *    Information about account services attached to this browser, and with
+   *    special support implemented by this browser. You should not expect
+   *    every accountService connected in this browser to get a special entry
+   *    here. Indeed, what services, and in what circumstances they may appear
+   *    here in the future is largely TBD.
+   * @since 71
+   */
+
+  /**
+   * FxA connections status - information about the account which typically
+   * isn't stored locally, so needs to be obtained from the FxA servers. As such,
+   * requesting this information is likely to be high-latency and may return
+   * incomplete data if there is a network or server error.
+   * @typedef {Object} Mozilla.UITour.Configuration.FxAConnections
+   * @property {Boolean} setup - Whether FxA is setup on this device. If false,
+   *    no other properties will exist.
+   * @property {Number} [numOtherDevices] - Number of devices connected to this
+   *    account, not counting this device.
+   * @property {Object.<String, Number>} [numDevicesByType] - A count of devices
+   *    connected to the account by device 'type'. Valid values for type are
+   *    defined by the FxA server but roughly correspond to form-factor with
+   *    values like 'desktop', 'mobile', 'vr', etc.
+   * @property {Mozilla.UITour.Configuration.AccountServices} [accountServices] -
+   *    Information about services attached to this account. These services
+   *    may be enabled on devices or applications external to this
+   *    browser and should not be confused with devices. For example, if the user
+   *    has enabled Monitor or Lockwise on one or more devices - including on
+   *    this device - that service will have a single entry here.
+   * @since 73
+   */
+
+  /**
+   * Information about clients attached to the account.
+   * An object. The key is a string ID of the attached service. A list of attached
+   * service IDs can be found
+   * `on our telemetry documentation site <https://docs.telemetry.mozilla.org/datasets/fxa_metrics/attribution.html#service-attribution>`_.
+   * The value is a :js:func:`Mozilla.UITour.Configuration.AccountService`
+   * @typedef {Object.<string, Mozilla.UITour.Configuration.AccountService>} Mozilla.UITour.Configuration.AccountServices
+   * @since 71
+   */
+
+  /**
+   * Information about an account service
+   * @typedef {Object} Mozilla.UITour.Configuration.AccountService
+   * @property {String} id - The service ID. A list of attached
+   * service IDs can be found
+   * `on our telemetry documentation site <https://docs.telemetry.mozilla.org/datasets/fxa_metrics/attribution.html#service-attribution>`_.
+   * @property {Number} lastAccessedWeeksAgo - How many weeks ago the service
+   *    was accessed by this account.
+   * @since 71
+   */
+
+  /**
+   * Information about a services attached to the browser. All properties are
+   * optional and only exist if the service is enabled.
+   *
+   * @typedef {Object} Mozilla.UITour.Configuration.BrowserServices
+   * @property {Mozilla.UITour.Configuration.Sync} sync - If sync is configured
+   * @since 71
+   */
+
+  /**
+   * Array of UI :js:func:`Targets <Mozilla.UITour.Target>` currently available to be annotated.
    * @typedef {Mozilla.UITour.Target[]} Mozilla.UITour.Configuration.AvailableTargets
    */
 
@@ -467,10 +558,10 @@ if (typeof Mozilla == "undefined") {
   /**
    * Set some value or take some action.
    *
-   * <p><strong>Valid configuration names:</strong><dl>
-   * <dt>defaultBrowser</dt>
-   * <dd>Try to set the application as the default web browser. Since Fx40</dd>
-   * </dl></p>
+   * Valid configuration names:
+   *
+   * defaultBrowser
+   *   Try to set the application as the default web browser. Since Fx40
    *
    * @param {String} configName - Configuration name to set (e.g. "defaultBrowser")
    * @param {String|Number|Boolean} [configValue] - Not currently used
@@ -492,7 +583,7 @@ if (typeof Mozilla == "undefined") {
    * @param {Object} extraURLCampaignParams - An object containing additional
    * parameters for the URL opened by the browser for reasons of promotional
    * campaign tracking. Each attribute of the object must have a name that
-   * is a string, begins with "utm_" and contains only only alphanumeric
+   * is a string, begins with `utm_` and contains only only alphanumeric
    * characters, dashes or underscores. The values may be any string and will
    * automatically be encoded.
    * @param {String} email - A string containing the default email account
@@ -526,7 +617,7 @@ if (typeof Mozilla == "undefined") {
    * @param {Object} extraURLCampaignParams - An object containing additional
    * parameters for the URL opened by the browser for reasons of promotional
    * campaign tracking. Each attribute of the object must have a name that
-   * is a string, begins with "utm_" and contains only only alphanumeric
+   * is a string, begins with `utm_` and contains only only alphanumeric
    * characters, dashes or underscores. The values may be any string and will
    * automatically be encoded.
    * @since 59
@@ -581,7 +672,7 @@ if (typeof Mozilla == "undefined") {
   /**
    * Set the specified search engine as the user-set default.
    *
-   * @see {@link https://dxr.mozilla.org/mozilla-release/source/browser/locales/search/list.json}
+   * See https://searchfox.org/mozilla-release/source/browser/locales/search/list.json
    *
    * @param {String} identifier - Identifier of the engine (e.g. 'yahoo').
    * @see Mozilla.UITour.Configuration.Search
@@ -680,17 +771,16 @@ if (typeof Mozilla == "undefined") {
    * @param {String} pane - Pane to open/switch the preferences to.
    * Valid values match fragments on about:preferences and are subject to change e.g.:
    *
-   * <ul>
-   * For the Preferences
-   * <li>general
-   * <li>applications
-   * <li>sync
-   * <li>privacy
-   * <li>advanced
-   * </ul>
+   * For the Preferences:
    *
-   * To open to the options of sending telemetry, health report, crach reports,
-   * that is, the privcacy pane > reports on the preferences.
+   * - general
+   * - applications
+   * - sync
+   * - privacy
+   * - advanced
+   *
+   * To open to the options of sending telemetry, health report, crash reports,
+   * that is, the privacy pane > reports on the preferences.
    * Please call `Mozilla.UITour.openPreferences("privacy-reports")`.
    * UITour would do route mapping automatically.
    *

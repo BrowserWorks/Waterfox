@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY % brandDTD
+     SYSTEM "chrome://branding/locale/brand.dtd">
+   %brandDTD;
+<!ENTITY aboutLogins.title                       "Acessi">
+<!ENTITY aboutLogins.update                      "Agiorna">
+<!ENTITY aboutLogins.emptyLoginText              "Mantegni i teu acessi a-o seguo">
+<!ENTITY aboutLogins.emptyLoginHint              "I acessi e-e credensiali che ti sarvi deuviando &brandShortName; saian mostræ chi.">

@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "Kopije a zarědniki">
+<!ENTITY sendingPrefix.label "Pśi słanju powěsćow awtomatiski: ">
+<!ENTITY fccMailFolder.label "Kopiju wótpołožyś w:">
+<!ENTITY fccMailFolder.accesskey "K">
+<!ENTITY fccReplyFollowsParent.label "Wótegrona w zarědniku teje powěsći wótpołožyś, na kótaruž se wótegranja">
+<!ENTITY fccReplyFollowsParent.accesskey "W">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Toś te e-mailowe adrese ako kopiju pósłaś:">
+<!ENTITY ccAddress.accesskey "T">
+<!ENTITY ccAddressList.placeholder "Adrese pśez komy źěliś">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Toś te e-mailowe adrese ako schowanu kopiju pósłaś:">
+<!ENTITY bccAddress.accesskey "m">
+<!ENTITY bccAddressList.placeholder "Adrese pśez komy źěliś">
+<!ENTITY saveMessageDlg.label "Wobkšuśeński dialog pokazaś, gaž se powěsći składuju">
+<!ENTITY saveMessageDlg.accesskey "d">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "Zarědniku &quot;Pósłany&quot; na:">
+<!ENTITY sentFolderOn.accesskey "P">
+<!ENTITY sentInOtherFolder.label "Drugem zarědniku:">
+<!ENTITY sentInOtherFolder.accesskey "D">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Powěsćowe archiwy">
+<!ENTITY keepArchives.label "Powěsćowe archiwy wobchowaś w:">
+<!ENTITY keepArchives.accesskey "P">
+<!ENTITY archiveHierarchyButton.label "Archiwowe opcije…">
+<!ENTITY archiveHierarchyButton.accesskey "A">
+<!ENTITY archivesFolderOn.label "&quot;Archiwowym&quot; zarědniku na:">
+<!ENTITY archivesFolderOn.accesskey "z">
+<!ENTITY archiveInOtherFolder.label "Drugem zarědniku:">
+<!ENTITY archiveInOtherFolder.accesskey "D">
+<!ENTITY specialFolders.label "Nacerjenja a pśedłogi">
+<!ENTITY keepDrafts2.label "Nacerjeńske powěsći wobchowaś w:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "Zarědniku &quot;Nacerjenja&quot; na:">
+<!ENTITY draftsFolderOn.accesskey "N">
+<!ENTITY draftInOtherFolder.label "Drugem zarědniku:">
+<!ENTITY draftInOtherFolder.accesskey "r">
+<!ENTITY keepTemplates.label "Powěsćowe pśedłogi wobchowaś w:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "Zarědniku &quot;Pśedłogi&quot; na:">
+<!ENTITY templatesFolderOn.accesskey "Z">
+<!ENTITY templateInOtherFolder.label "Drugem zarědniku:">
+<!ENTITY templateInOtherFolder.accesskey "u">

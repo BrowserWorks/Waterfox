@@ -14,7 +14,6 @@
 #include "mozilla/a11y/Platform.h"
 #include "RelationType.h"
 #include "mozilla/a11y/Role.h"
-#include "xpcAccessibleDocument.h"
 
 namespace mozilla {
 namespace a11y {
@@ -31,8 +30,10 @@ uint64_t ProxyAccessible::NativeState() const {
   return state;
 }
 
-void ProxyAccessible::Name(nsString& aName) const {
-  Unused << mDoc->SendName(mID, &aName);
+uint32_t ProxyAccessible::Name(nsString& aName) const {
+  uint32_t flag;
+  Unused << mDoc->SendName(mID, &aName, &flag);
+  return flag;
 }
 
 void ProxyAccessible::Value(nsString& aValue) const {
@@ -111,10 +112,11 @@ nsStaticAtom* ProxyAccessible::ARIARoleAtom() const {
   return NS_GetStaticAtom(role);
 }
 
-int32_t ProxyAccessible::GetLevelInternal() {
-  int32_t level = 0;
-  Unused << mDoc->SendGetLevelInternal(mID, &level);
-  return level;
+GroupPos ProxyAccessible::GroupPosition() {
+  GroupPos groupPos;
+  Unused << mDoc->SendGroupPosition(mID, &groupPos.level, &groupPos.setSize,
+                                    &groupPos.posInSet);
+  return groupPos;
 }
 
 void ProxyAccessible::ScrollTo(uint32_t aScrollType) {
@@ -768,11 +770,38 @@ ProxyAccessible* ProxyAccessible::FocusedChild() {
 
 ProxyAccessible* ProxyAccessible::ChildAtPoint(
     int32_t aX, int32_t aY, Accessible::EWhichChildAtPoint aWhichChild) {
-  uint64_t childID = 0;
-  bool ok = false;
-  Unused << mDoc->SendAccessibleAtPoint(
-      mID, aX, aY, false, static_cast<uint32_t>(aWhichChild), &childID, &ok);
-  return ok ? mDoc->GetAccessible(childID) : nullptr;
+  ProxyAccessible* target = this;
+  do {
+    if (target->mOuterDoc) {
+      MOZ_ASSERT(target->ChildrenCount() == 1);
+      DocAccessibleParent* childDoc = target->ChildAt(0)->AsDoc();
+      MOZ_ASSERT(childDoc);
+      if (childDoc->IsTopLevelInContentProcess()) {
+        // This is an OOP iframe. Remote calls can only work within their
+        // process, so they stop at OOP iframes.
+        if (aWhichChild == Accessible::eDirectChild) {
+          // Return the child document if it's within the bounds of the iframe.
+          nsIntRect docRect = target->Bounds();
+          if (docRect.Contains(aX, aY)) {
+            return childDoc;
+          }
+          return nullptr;
+        }
+        // We must continue the search from the child document.
+        target = childDoc;
+      }
+    }
+    PDocAccessibleParent* resultDoc = nullptr;
+    uint64_t resultID = 0;
+    Unused << target->mDoc->SendChildAtPoint(target->mID, aX, aY,
+                                             static_cast<uint32_t>(aWhichChild),
+                                             &resultDoc, &resultID);
+    // If resultDoc is null, this means there is no child at this point.
+    auto useDoc = static_cast<DocAccessibleParent*>(resultDoc);
+    target = resultDoc ? useDoc->GetAccessible(resultID) : nullptr;
+  } while (target && target->mOuterDoc &&
+           aWhichChild == Accessible::eDeepestChild);
+  return target;
 }
 
 nsIntRect ProxyAccessible::Bounds() {
@@ -812,16 +841,6 @@ void ProxyAccessible::MimeType(nsString aMime) {
 void ProxyAccessible::URLDocTypeMimeType(nsString& aURL, nsString& aDocType,
                                          nsString& aMimeType) {
   Unused << mDoc->SendURLDocTypeMimeType(mID, &aURL, &aDocType, &aMimeType);
-}
-
-ProxyAccessible* ProxyAccessible::AccessibleAtPoint(int32_t aX, int32_t aY,
-                                                    bool aNeedsScreenCoords) {
-  uint64_t childID = 0;
-  bool ok = false;
-  Unused << mDoc->SendAccessibleAtPoint(
-      mID, aX, aY, aNeedsScreenCoords,
-      static_cast<uint32_t>(Accessible::eDirectChild), &childID, &ok);
-  return ok ? mDoc->GetAccessible(childID) : nullptr;
 }
 
 void ProxyAccessible::Extents(bool aNeedsScreenCoords, int32_t* aX, int32_t* aY,

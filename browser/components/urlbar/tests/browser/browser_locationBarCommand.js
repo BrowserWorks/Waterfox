@@ -11,7 +11,10 @@ const START_VALUE = "example.org";
 
 add_task(async function setup() {
   await SpecialPowers.pushPrefEnv({
-    set: [["browser.altClickSave", true], ["browser.urlbar.autoFill", false]],
+    set: [
+      ["browser.altClickSave", true],
+      ["browser.urlbar.autoFill", false],
+    ],
   });
 });
 
@@ -53,7 +56,7 @@ add_task(async function shift_left_click_test() {
     gBrowser.selectedBrowser,
     "Content window should be focused"
   );
-  is(win.gURLBar.textValue, TEST_VALUE, "New URL is loaded in new window");
+  is(win.gURLBar.value, TEST_VALUE, "New URL is loaded in new window");
 
   // Cleanup.
   let ourWindowRefocusedPromise = Promise.all([
@@ -97,7 +100,7 @@ add_task(async function shift_accel_left_click_test() {
 
   // Select the new background tab
   gBrowser.selectedTab = gBrowser.selectedTab.nextElementSibling;
-  is(gURLBar.textValue, TEST_VALUE, "New URL is loaded in new tab");
+  is(gURLBar.value, TEST_VALUE, "New URL is loaded in new tab");
 
   // Cleanup.
   gBrowser.removeCurrentTab();
@@ -124,6 +127,11 @@ add_task(async function load_in_current_tab_test() {
       type: "keypress",
       details: { altKey: true },
     },
+    {
+      desc: "AltGr+Return keypress in a blank tab",
+      type: "keypress",
+      details: { altGraphKey: true },
+    },
   ];
 
   for (let { desc, type, details } of tests) {
@@ -138,7 +146,7 @@ add_task(async function load_in_current_tab_test() {
     await loadStartedPromise;
 
     info("URL should be loaded in the current tab");
-    is(gURLBar.textValue, TEST_VALUE, "Urlbar still has the value we entered");
+    is(gURLBar.value, TEST_VALUE, "Urlbar still has the value we entered");
     await promiseCheckChildNoFocusedElement(gBrowser.selectedBrowser);
     is(
       document.activeElement,
@@ -166,6 +174,12 @@ add_task(async function load_in_new_tab_test() {
       details: { altKey: true },
       url: START_VALUE,
     },
+    {
+      desc: "AltGr+Return keypress in a dirty tab",
+      type: "keypress",
+      details: { altGraphKey: true },
+      url: START_VALUE,
+    },
   ];
 
   for (let { desc, type, details, url } of tests) {
@@ -174,14 +188,14 @@ add_task(async function load_in_new_tab_test() {
     // Add a new tab.
     let tab = await promiseOpenNewTab(url);
 
-    // Trigger a load and check it occurs in the current tab.
+    // Trigger a load and check it occurs in a new tab.
     let tabSwitchedPromise = promiseNewTabSwitched();
     await triggerCommand(type, details);
     await tabSwitchedPromise;
 
     // Check the load occurred in a new tab.
     info("URL should be loaded in a new focused tab");
-    is(gURLBar.textValue, TEST_VALUE, "Urlbar still has the value we entered");
+    is(gURLBar.value, TEST_VALUE, "Urlbar still has the value we entered");
     await promiseCheckChildNoFocusedElement(gBrowser.selectedBrowser);
     is(
       document.activeElement,
@@ -267,7 +281,7 @@ function promiseCheckChildNoFocusedElement(browser) {
     return null;
   }
 
-  return ContentTask.spawn(browser, {}, async function() {
+  return ContentTask.spawn(browser, null, async function() {
     Assert.equal(
       Services.focus.focusedElement,
       null,

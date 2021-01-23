@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tabs.otherComputers.label): Keep this in sync with syncTabsMenu.label from navigator.dtd -->
+<!ENTITY tabs.otherComputers.label               "Tab Dari Komputer Lain">
+
+<!ENTITY tabs.searchText.label                   "Taip di sini untuk mencari tab…">
+
+<!-- LOCALIZATION NOTE (tabs.context.openTab.accesskey, tabs.context.openMultipleTabs.accesskey;
+     tabs.context.bookmarkSingleTab.accesskey, tabs.context.bookmarkMultipleTabs.accesskey):
+     Only one of each of these pairs will show at a time (based on selection), so reusing accesskey is ok. -->
+<!ENTITY tabs.context.openTab.label                   "Buka Tab Ini">
+<!ENTITY tabs.context.openTab.accesskey               "B">
+<!ENTITY tabs.context.openMultipleTabs.label          "Buka Tab Yang Dipilih">
+<!ENTITY tabs.context.openMultipleTabs.accesskey      "B">
+<!ENTITY tabs.context.bookmarkSingleTab.label         "Tandabuku Tab Ini…">
+<!ENTITY tabs.context.bookmarkSingleTab.accesskey     "T">
+<!ENTITY tabs.context.bookmarkMultipleTabs.label      "Tandabuku Tab Yang Dipilih…">
+<!ENTITY tabs.context.bookmarkMultipleTabs.accesskey  "T">
+<!ENTITY tabs.context.refreshList.label               "Muat Semula Senarai">
+<!ENTITY tabs.context.refreshList.accesskey           "M">

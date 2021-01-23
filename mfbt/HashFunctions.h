@@ -178,8 +178,9 @@ inline HashNumber AddUintptrToHash<8>(HashNumber aHash, uintptr_t aValue) {
  * Currently, we support hashing uint32_t's, values which we can implicitly
  * convert to uint32_t, data pointers, and function pointers.
  */
-template <typename T, bool TypeIsNotIntegral = !mozilla::IsIntegral<T>::value,
-          typename U = typename mozilla::EnableIf<TypeIsNotIntegral>::Type>
+template <typename T, bool TypeIsNotIntegral = !std::is_integral_v<T>,
+          bool TypeIsNotEnum = !std::is_enum_v<T>,
+          std::enable_if_t<TypeIsNotIntegral && TypeIsNotEnum, int> = 0>
 MOZ_MUST_USE inline HashNumber AddToHash(HashNumber aHash, T aA) {
   /*
    * Try to convert |A| to uint32_t implicitly.  If this works, great.  If not,
@@ -204,10 +205,17 @@ MOZ_MUST_USE inline HashNumber AddToHash(HashNumber aHash, A* aA) {
 // types are treated the same as 64-bit pointers, and smaller integral types are
 // first implicitly converted to 32 bits and then passed to AddUintptrToHash()
 // to be hashed.
-template <typename T, typename U = typename mozilla::EnableIf<
-                          mozilla::IsIntegral<T>::value>::Type>
+template <typename T, std::enable_if_t<std::is_integral_v<T>, int> = 0>
 MOZ_MUST_USE constexpr HashNumber AddToHash(HashNumber aHash, T aA) {
   return detail::AddUintptrToHash<sizeof(T)>(aHash, aA);
+}
+
+template <typename T, std::enable_if_t<std::is_enum_v<T>, int> = 0>
+MOZ_MUST_USE constexpr HashNumber AddToHash(HashNumber aHash, T aA) {
+  // Hash using AddUintptrToHash with the underlying type of the enum type
+  using UnderlyingType = typename std::underlying_type<T>::type;
+  return detail::AddUintptrToHash<sizeof(UnderlyingType)>(
+      aHash, static_cast<UnderlyingType>(aA));
 }
 
 template <typename A, typename... Args>
@@ -285,9 +293,6 @@ inline HashNumber HashString(const unsigned char* aStr, size_t aLength) {
   return HashStringKnownLength(aStr, aLength);
 }
 
-// You may need to use the
-// MOZ_{PUSH,POP}_DISABLE_INTEGRAL_CONSTANT_OVERFLOW_WARNING macros if you use
-// this function. See the comment on those macros' definitions for more detail.
 MOZ_MUST_USE constexpr HashNumber HashString(const char16_t* aStr) {
   return HashStringUntilZero(aStr);
 }

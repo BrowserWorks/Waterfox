@@ -12,7 +12,7 @@ const MS_PER_DAY = 1000 * 60 * 60 * 24;
 const COMPATIBILITY_STATUS = {
   COMPATIBLE: "compatible",
   TOO_OLD: "too-old",
-  TOO_OLD_67_DEBUGGER: "too-old-67-debugger",
+  TOO_OLD_FENNEC: "too-old-fennec",
   TOO_RECENT: "too-recent",
 };
 exports.COMPATIBILITY_STATUS = COMPATIBILITY_STATUS;
@@ -62,8 +62,8 @@ function computeMinMaxVersion(localVersion) {
 /**
  * Tells if the remote device is using a supported version of Firefox.
  *
- * @param {DebuggerClient} debuggerClient
- *        DebuggerClient instance connected to the target remote Firefox.
+ * @param {DevToolsClient} devToolsClient
+ *        DevToolsClient instance connected to the target remote Firefox.
  * @return Object with the following attributes:
  *   * String status, one of COMPATIBILITY_STATUS
  *            COMPATIBLE if the runtime is compatible,
@@ -78,14 +78,14 @@ function computeMinMaxVersion(localVersion) {
  *   * String deviceID
  *            Build ID of remote runtime. A date with like this: YYYYMMDD.
  */
-async function checkVersionCompatibility(debuggerClient) {
+async function checkVersionCompatibility(devToolsClient) {
   const localDescription = {
     appbuildid: Services.appinfo.appBuildID,
     platformversion: AppConstants.MOZ_APP_VERSION,
   };
 
   try {
-    const deviceFront = await debuggerClient.mainRoot.getFront("device");
+    const deviceFront = await devToolsClient.mainRoot.getFront("device");
     const description = await deviceFront.getDescription();
     return _compareVersionCompatibility(localDescription, description);
   } catch (e) {
@@ -122,7 +122,11 @@ function _compareVersionCompatibility(localDescription, deviceDescription) {
 
   let status;
   if (isTooOld) {
-    status = COMPATIBILITY_STATUS.TOO_OLD;
+    if (runtimeMajorVersion === 68 && deviceDescription.os === "Android") {
+      status = COMPATIBILITY_STATUS.TOO_OLD_FENNEC;
+    } else {
+      status = COMPATIBILITY_STATUS.TOO_OLD;
+    }
   } else if (isTooRecent) {
     status = COMPATIBILITY_STATUS.TOO_RECENT;
   } else if (isSameMajorVersion && runtimeDate - localDate > 7 * MS_PER_DAY) {
@@ -132,8 +136,6 @@ function _compareVersionCompatibility(localDescription, deviceDescription) {
     // Still allow devices to be newer by up to a week. This accommodates those with local
     // device builds, since their devices will almost always be newer than the client.
     status = COMPATIBILITY_STATUS.TOO_RECENT;
-  } else if (localMajorVersion >= 67 && runtimeMajorVersion < 67) {
-    status = COMPATIBILITY_STATUS.TOO_OLD_67_DEBUGGER;
   } else {
     status = COMPATIBILITY_STATUS.COMPATIBLE;
   }

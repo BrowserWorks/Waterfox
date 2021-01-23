@@ -23,6 +23,7 @@
 #include "mozilla/ThreadLocal.h"
 
 #include "threading/Thread.h"
+#include "vm/JitActivation.h"  // js::jit::JitActivation
 #include "vm/Realm.h"
 #include "vm/Runtime.h"
 #include "wasm/WasmInstance.h"
@@ -136,7 +137,7 @@ using mozilla::DebugOnly;
 #    define EPC_sig(p) ((p)->uc_mcontext.pc)
 #    define RFP_sig(p) ((p)->uc_mcontext.regs[29])
 #    define RLR_sig(p) ((p)->uc_mcontext.regs[30])
-#    define R31_sig(p) ((p)->uc_mcontext.regs[31])
+#    define R31_sig(p) ((p)->uc_mcontext.sp)
 #  endif
 #  if defined(__linux__) && defined(__mips__)
 #    define EPC_sig(p) ((p)->uc_mcontext.pc)
@@ -995,11 +996,6 @@ void wasm::EnsureEagerProcessSignalHandlers() {
   // If there is no JIT, then there should be no Wasm signal handlers.
   return;
 #endif
-
-  // Signal handlers are currently disabled when recording or replaying.
-  if (mozilla::recordreplay::IsRecordingOrReplaying()) {
-    return;
-  }
 
 #if defined(ANDROID) && defined(MOZ_LINKER)
   // Signal handling is broken on some android systems.

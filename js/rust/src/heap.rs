@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 use glue;
 use jsapi::root::*;
 use rust::GCMethods;
@@ -30,6 +34,14 @@ pub unsafe trait Trace {
  * C/C++ stack must use Rooted/Handle/MutableHandle instead.
  *
  * Type T must be a public GC pointer type.
+ *
+ * Note that the rust version of Heap<T> implements different barriers to the
+ * C++ version, which also provides features to help integration with
+ * cycle-collected C++ objects. That version has a read barrier which performs
+ * gray unmarking and also marks the contents during an incremental GC. This
+ * version has a pre-write barrier instead, and this enforces the
+ * snapshot-at-the-beginning invariant which is necessary for incremental GC in
+ * the absence of the read barrier.
  */
 #[repr(C)]
 #[derive(Debug)]
@@ -39,7 +51,8 @@ pub struct Heap<T: GCMethods + Copy> {
 
 impl<T: GCMethods + Copy> Heap<T> {
     pub fn new(v: T) -> Heap<T>
-        where Heap<T>: Default
+    where
+        Heap<T>: Default,
     {
         let ptr = Heap::default();
         ptr.set(v);
@@ -56,9 +69,7 @@ impl<T: GCMethods + Copy> Heap<T> {
     }
 
     pub fn get(&self) -> T {
-        unsafe {
-            *self.ptr.get()
-        }
+        unsafe { *self.ptr.get() }
     }
 
     pub unsafe fn get_unsafe(&self) -> *mut T {
@@ -66,20 +77,17 @@ impl<T: GCMethods + Copy> Heap<T> {
     }
 
     pub fn handle(&self) -> JS::Handle<T> {
-        unsafe {
-            JS::Handle::from_marked_location(self.ptr.get() as *const _)
-        }
+        unsafe { JS::Handle::from_marked_location(self.ptr.get() as *const _) }
     }
 
     pub fn handle_mut(&self) -> JS::MutableHandle<T> {
-        unsafe {
-            JS::MutableHandle::from_marked_location(self.ptr.get())
-        }
+        unsafe { JS::MutableHandle::from_marked_location(self.ptr.get()) }
     }
 }
 
 impl<T: GCMethods + Copy> Clone for Heap<T>
-    where Heap<T>: Default
+where
+    Heap<T>: Default,
 {
     fn clone(&self) -> Self {
         Heap::new(self.get())
@@ -93,11 +101,12 @@ impl<T: GCMethods + Copy + PartialEq> PartialEq for Heap<T> {
 }
 
 impl<T> Default for Heap<*mut T>
-    where *mut T: GCMethods + Copy
+where
+    *mut T: GCMethods + Copy,
 {
     fn default() -> Heap<*mut T> {
         Heap {
-            ptr: UnsafeCell::new(ptr::null_mut())
+            ptr: UnsafeCell::new(ptr::null_mut()),
         }
     }
 }
@@ -105,7 +114,7 @@ impl<T> Default for Heap<*mut T>
 impl Default for Heap<JS::Value> {
     fn default() -> Heap<JS::Value> {
         Heap {
-            ptr: UnsafeCell::new(JS::Value::default())
+            ptr: UnsafeCell::new(JS::Value::default()),
         }
     }
 }
@@ -123,7 +132,7 @@ impl<T: GCMethods + Copy> Drop for Heap<T> {
 macro_rules! c_str {
     ($str:expr) => {
         concat!($str, "\0").as_ptr() as *const ::std::os::raw::c_char
-    }
+    };
 }
 
 unsafe impl Trace for Heap<*mut JSFunction> {
@@ -147,6 +156,13 @@ unsafe impl Trace for Heap<*mut JSScript> {
 unsafe impl Trace for Heap<*mut JSString> {
     unsafe fn trace(&self, trc: *mut JSTracer) {
         glue::CallStringTracer(trc, self as *const _ as *mut Self, c_str!("string"));
+    }
+}
+
+#[cfg(feature = "bigint")]
+unsafe impl Trace for Heap<*mut JS::BigInt> {
+    unsafe fn trace(&self, trc: *mut JSTracer) {
+        glue::CallBigIntTracer(trc, self as *const _ as *mut Self, c_str!("bigint"));
     }
 }
 

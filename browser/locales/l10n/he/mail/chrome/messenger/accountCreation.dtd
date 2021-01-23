@@ -1,0 +1,88 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY name.label                      "השם שלך:">
+<!ENTITY name.accesskey                  "ש">
+<!ENTITY name.text                       "השם שלך, כפי שיוצג לאחרים">
+<!ENTITY email.label                     "כתובת דוא״ל:">
+<!ENTITY email.accesskey                 "ד">
+<!ENTITY email.text                      "כתובת הדוא״ל הנוכחית שלך">
+<!ENTITY password.label                  "ססמה:">
+<!ENTITY password.accesskey              "ס">
+<!ENTITY password.placeholder            "ססמה">
+<!ENTITY password.text                   "רשות, ישמש לאימות שם המשתמש בלבד">
+<!ENTITY rememberPassword.label          "זכור ססמה">
+<!ENTITY rememberPassword.accesskey      "ז">
+<!-- LOCALIZATION NOTE(usernameEx.placeholder): YOURDOMAIN refers to the Windows domain in ActiveDirectory. yourusername refers to the user's account name in Windows. -->
+<!-- LOCALIZATION NOTE(usernameEx.text): Domain refers to the Windows domain in ActiveDirectory. We mean the user's login in Windows at the local corporate network. -->
+
+<!ENTITY imapLong.label                  "IMAP (תיקיות מרוחקות)">
+<!ENTITY pop3Long.label                  "POP3 (שמירת ההודעות במחשב שלך)">
+
+<!ENTITY incoming.label                  "נכנס:">
+<!ENTITY outgoing.label                  "יוצא:">
+<!ENTITY username.label                  "שם משתמש:">
+<!ENTITY auth.label                      "אימות">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label                      "POP3">
+<!-- LOCALIZATION NOTE(exchange.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY smtp.label                      "SMTP">
+<!ENTITY autodetect.label                "זיהוי אוטומטי">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "ללא">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!-- LOCALIZATION NOTE(exchange-hostname.label): Do not translate Exchange, it is a product name. -->
+
+<!ENTITY advancedSetup.label             "הגדרות מתקדמות">
+<!ENTITY advancedSetup.accesskey         "ה">
+<!ENTITY cancel.label                    "ביטול">
+<!ENTITY cancel.accesskey                "ב">
+<!ENTITY continue.label                  "המשך">
+<!ENTITY continue.accesskey              "ה">
+<!ENTITY stop.label                      "עצור">
+<!ENTITY stop.accesskey                  "ע">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual config mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "בדיקה חוזרת">
+<!ENTITY half-manual-test.accesskey      "ב">
+<!ENTITY open-provisioner.label          "קבלת כתובת דוא״ל חדשה…">
+<!ENTITY open-provisioner.accesskey      "ק">
+
+
+
+
+<!ENTITY warning.label                   "זהירות!">
+<!ENTITY incomingSettings.label          "הגדרות שרת דואר נכנס:">
+<!ENTITY outgoingSettings.label          "הגדרות שרת דואר יוצא:">
+<!ENTITY technicaldetails.label          "פרטים טכניים">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "אני מבין את הסיכונים.">
+<!ENTITY confirmWarning.accesskey        "מ">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "סיום">
+<!ENTITY doneAccount.accesskey           "ס">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "שנה הגדרות">
+<!ENTITY changeSettings.accesskey        "ש">
+
+<!ENTITY contactYourProvider.description "&brandShortName; יכול לאפשר לך לקבל את הדואר שלך עם ההגדרות שסופקו. למרות זאת, כדאי שתיצור קשר עם המנהל שלך או עם ספק שירות הדוא״ל בנוגע לחיבורים לא תקינים אלו. אנא גש ל־Thunderbird FAQ למידע נוסף.">
+
+<!ENTITY insecureServer.tooltip.title    "זהירות! זהו שרת לא מאובטח.">
+<!ENTITY insecureServer.tooltip.details  "לחץ על העיגול לפרטים נוספים.">
+
+<!ENTITY insecureUnencrypted.description "הדואר האלקטרוני וההזדהות שלך נשלחים באופן לא מוצפן, כך שהססמה שלך (וגם ההודעות) יכולות להיקרא בקלות על־ידי אנשים אחרים. &brandShortName; יאפשר לך לקבל את הדואר שלך, אבל רצוי ליצור קשר עם ספק הדוא״ל שלך כדי שיגדיר חיבור מאובטח לשרת.">
+<!ENTITY insecureSelfSigned.description  "השרת משתמש באישור שאינו נסמך, ואיננו יכולים להיות בטוחים שאף־אחד לא מיירט את התעבורה בין &brandShortName; והשרת שלך. &brandShortName; יאפשר לך לקבל את הדואר שלך, אבל מומלץ שתפנה לספק הדואל שלך ותבקש ממנו להגדיר את השרת עם אישור אבטחה נסמך.">
+<!ENTITY secureServer.description        "איחולים! זהו שרת מאובטח.">

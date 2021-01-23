@@ -95,7 +95,7 @@ RefPtr<MediaDataDecoder::DecodePromise> DAV1DDecoder::InvokeDecode(
   // release callback are not coming in the same order that the
   // buffers have been added in the decoder (threading ordering
   // inside decoder)
-  mDecodingBuffers.Put(aSample->Data(), aSample);
+  mDecodingBuffers.Put(aSample->Data(), RefPtr{aSample});
   Dav1dData data;
   int res = dav1d_data_wrap(&data, aSample->Data(), aSample->Size(),
                             ReleaseDataBuffer_s, this);
@@ -194,15 +194,17 @@ already_AddRefed<VideoData> DAV1DDecoder::ConstructImage(
         b.mYUVColorSpace = YUVColorSpace::BT601;
         break;
       case DAV1D_MC_BT709:
-      default:
-        // Set 709 as default, as it's the most sane default.
         b.mYUVColorSpace = YUVColorSpace::BT709;
         break;
+      default:
+        break;
     }
-  } else {
-    // BT709 is the only default that makes sense in a modern video context.
-    b.mYUVColorSpace = YUVColorSpace::BT709;
   }
+  if (b.mYUVColorSpace == YUVColorSpace::UNKNOWN) {
+    b.mYUVColorSpace = DefaultColorSpace({aPicture.p.w, aPicture.p.h});
+  }
+  b.mColorRange = aPicture.seq_hdr->color_range ? gfx::ColorRange::FULL
+                                                : gfx::ColorRange::LIMITED;
 
   b.mPlanes[0].mData = static_cast<uint8_t*>(aPicture.data[0]);
   b.mPlanes[0].mStride = aPicture.stride[0];

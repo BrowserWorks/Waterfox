@@ -22,9 +22,10 @@
 // IMPORTANT: Do not change this list without review from
 //            a JavaScript Engine peer!
 var ecmaGlobals = [
+  { name: "AggregateError", nightly: true },
   "Array",
   "ArrayBuffer",
-  { name: "Atomics", disabled: true },
+  "Atomics",
   "Boolean",
   "BigInt",
   "BigInt64Array",
@@ -58,7 +59,10 @@ var ecmaGlobals = [
   "Reflect",
   "RegExp",
   "Set",
-  { name: "SharedArrayBuffer", disabled: true },
+  {
+    name: "SharedArrayBuffer",
+    crossOriginIsolated: true,
+  },
   "String",
   "Symbol",
   "SyntaxError",
@@ -103,9 +107,21 @@ var interfaceNamesInGlobalScope = [
   // IMPORTANT: Do not change this list without review from a DOM peer!
   "Directory",
   // IMPORTANT: Do not change this list without review from a DOM peer!
-  "DOMError",
-  // IMPORTANT: Do not change this list without review from a DOM peer!
   "DOMException",
+  // IMPORTANT: Do not change this list without review from a DOM peer!
+  "DOMMatrix",
+  // IMPORTANT: Do not change this list without review from a DOM peer!
+  "DOMMatrixReadOnly",
+  // IMPORTANT: Do not change this list without review from a DOM peer!
+  "DOMPoint",
+  // IMPORTANT: Do not change this list without review from a DOM peer!
+  "DOMPointReadOnly",
+  // IMPORTANT: Do not change this list without review from a DOM peer!
+  "DOMQuad",
+  // IMPORTANT: Do not change this list without review from a DOM peer!
+  "DOMRect",
+  // IMPORTANT: Do not change this list without review from a DOM peer!
+  "DOMRectReadOnly",
   // IMPORTANT: Do not change this list without review from a DOM peer!
   "DOMRequest",
   // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -195,15 +211,23 @@ var interfaceNamesInGlobalScope = [
   // IMPORTANT: Do not change this list without review from a DOM peer!
   "ProgressEvent",
   // IMPORTANT: Do not change this list without review from a DOM peer!
-  { name: "PushEvent", fennec: true },
+  "PromiseRejectionEvent",
   // IMPORTANT: Do not change this list without review from a DOM peer!
-  { name: "PushManager", fennec: true },
+  { name: "PushEvent" },
   // IMPORTANT: Do not change this list without review from a DOM peer!
-  { name: "PushMessageData", fennec: true },
+  { name: "PushManager" },
   // IMPORTANT: Do not change this list without review from a DOM peer!
-  { name: "PushSubscription", fennec: true },
+  { name: "PushMessageData" },
   // IMPORTANT: Do not change this list without review from a DOM peer!
-  { name: "PushSubscriptionOptions", fennec: true },
+  { name: "PushSubscription" },
+  // IMPORTANT: Do not change this list without review from a DOM peer!
+  { name: "PushSubscriptionOptions" },
+  // IMPORTANT: Do not change this list without review from a DOM peer!
+  { name: "Report", nightly: true },
+  // IMPORTANT: Do not change this list without review from a DOM peer!
+  { name: "ReportBody", nightly: true },
+  // IMPORTANT: Do not change this list without review from a DOM peer!
+  { name: "ReportingObserver", nightly: true },
   // IMPORTANT: Do not change this list without review from a DOM peer!
   "Request",
   // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -242,11 +266,13 @@ var interfaceNamesInGlobalScope = [
 
 function createInterfaceMap({
   isNightly,
+  isEarlyBetaOrEarlier,
   isRelease,
   isDesktop,
   isAndroid,
   isInsecureContext,
   isFennec,
+  isCrossOriginIsolated,
 }) {
   var interfaceMap = {};
 
@@ -268,6 +294,8 @@ function createInterfaceMap({
           entry.fennecOrDesktop === (isAndroid && !isFennec) ||
           entry.fennec === !isFennec ||
           entry.release === !isRelease ||
+          entry.earlyBetaOrEarlier === !isEarlyBetaOrEarlier ||
+          entry.crossOriginIsolated === !isCrossOriginIsolated ||
           entry.disabled
         ) {
           interfaceMap[entry.name] = false;

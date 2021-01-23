@@ -1,5 +1,5 @@
 /**
- * Test for LoginManagerContent.getUserNameAndPasswordFields
+ * Test for LoginManagerChild.getUserNameAndPasswordFields
  */
 
 "use strict";
@@ -7,10 +7,10 @@
 XPCOMUtils.defineLazyGlobalGetters(this, ["URL"]);
 
 const LMCBackstagePass = ChromeUtils.import(
-  "resource://gre/modules/LoginManagerContent.jsm",
+  "resource://gre/modules/LoginManagerChild.jsm",
   null
 );
-const { LoginManagerContent } = LMCBackstagePass;
+const { LoginManagerChild } = LMCBackstagePass;
 const TESTCASES = [
   {
     description: "1 password field outside of a <form>",
@@ -37,11 +37,22 @@ const TESTCASES = [
     returnedFieldIDs: ["un1", "pw1", null],
   },
   {
-    description: "4 empty password fields outside of a <form>",
+    description: "5 empty password fields outside of a <form>",
     document: `<input id="pw1" type=password>
       <input id="pw2" type=password>
       <input id="pw3" type=password>
-      <input id="pw4" type=password>`,
+      <input id="pw4" type=password>
+      <input id="pw5" type=password>`,
+    returnedFieldIDs: [null, "pw1", null],
+  },
+  {
+    description: "6 empty password fields outside of a <form>",
+    document: `<input id="pw1" type=password>
+      <input id="pw2" type=password>
+      <input id="pw3" type=password>
+      <input id="pw4" type=password>
+      <input id="pw5" type=password>
+      <input id="pw6" type=password>`,
     returnedFieldIDs: [null, null, null],
   },
   {
@@ -111,7 +122,7 @@ for (let tc of TESTCASES) {
       let formOrigin = LoginHelper.getLoginOrigin(document.documentURI);
       LoginRecipesContent.cacheRecipes(formOrigin, win, new Set());
 
-      let actual = LoginManagerContent.getUserNameAndPasswordFields(input);
+      let actual = new LoginManagerChild().getUserNameAndPasswordFields(input);
 
       Assert.strictEqual(
         testcase.returnedFieldIDs.length,

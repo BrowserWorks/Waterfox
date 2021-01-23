@@ -13,8 +13,10 @@
 interface nsISupports;
 interface Variant;
 
-[HTMLConstructor]
+[Exposed=Window]
 interface HTMLCanvasElement : HTMLElement {
+  [HTMLConstructor] constructor();
+
   [CEReactions, Pure, SetterThrows]
            attribute unsigned long width;
   [CEReactions, Pure, SetterThrows]
@@ -27,7 +29,7 @@ interface HTMLCanvasElement : HTMLElement {
   DOMString toDataURL(optional DOMString type = "",
                       optional any encoderOptions);
   [Throws, NeedsSubjectPrincipal]
-  void toBlob(BlobCallback _callback,
+  void toBlob(BlobCallback callback,
               optional DOMString type = "",
               optional any encoderOptions);
 };
@@ -36,7 +38,7 @@ interface HTMLCanvasElement : HTMLElement {
 partial interface HTMLCanvasElement {
   [Pure, SetterThrows]
            attribute boolean mozOpaque;
-  [Throws, NeedsSubjectPrincipal]
+  [Throws, NeedsSubjectPrincipal, Pref="canvas.mozgetasfile.enabled"]
   File mozGetAsFile(DOMString name, optional DOMString? type = null);
   // A Mozilla-only extension to get a canvas context backed by double-buffered
   // shared memory. Only privileged callers can call this.
@@ -56,7 +58,8 @@ partial interface HTMLCanvasElement {
   OffscreenCanvas transferControlToOffscreen();
 };
 
-[ChromeOnly]
+[ChromeOnly,
+ Exposed=Window]
 interface MozCanvasPrintState
 {
   // A canvas rendering context.

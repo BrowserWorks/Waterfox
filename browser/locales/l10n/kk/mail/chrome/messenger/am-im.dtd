@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountWindow.title           "Тіркелгі қасиеттері">
+<!ENTITY accountWindow.width           "300">
+<!ENTITY account.general               "Жалпы">
+<!ENTITY account.advanced              "Қосымша баптаулары">
+<!ENTITY account.name                  "Пайдаланушы:">
+<!ENTITY account.password              "Пароль:">
+<!ENTITY account.alias                 "Бүркеншік:">
+<!ENTITY account.newMailNotification   "Жаңа хат туралы хабарлау">
+<!ENTITY account.autojoin              "Автокіретін арналары:">
+<!ENTITY account.proxySettings.caption "Прокси баптаулары:">
+<!ENTITY account.proxySettings.change.label     "Өзгерту…">
+<!ENTITY account.proxySettings.change.accessKey "з">

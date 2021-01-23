@@ -36,22 +36,6 @@ class ExplicitChildIterator {
   explicit ExplicitChildIterator(const nsIContent* aParent,
                                  bool aStartAtBeginning = true);
 
-  ExplicitChildIterator(const ExplicitChildIterator& aOther)
-      : mParent(aOther.mParent),
-        mParentAsSlot(aOther.mParentAsSlot),
-        mChild(aOther.mChild),
-        mDefaultChild(aOther.mDefaultChild),
-        mIsFirst(aOther.mIsFirst),
-        mIndexInInserted(aOther.mIndexInInserted) {}
-
-  ExplicitChildIterator(ExplicitChildIterator&& aOther)
-      : mParent(aOther.mParent),
-        mParentAsSlot(aOther.mParentAsSlot),
-        mChild(aOther.mChild),
-        mDefaultChild(aOther.mDefaultChild),
-        mIsFirst(aOther.mIsFirst),
-        mIndexInInserted(aOther.mIndexInInserted) {}
-
   nsIContent* GetNextChild();
 
   // Looks for aChildToFind respecting insertion points until aChildToFind is
@@ -134,28 +118,11 @@ class FlattenedChildIterator : public ExplicitChildIterator {
     Init(false);
   }
 
-  FlattenedChildIterator(FlattenedChildIterator&& aOther)
-      : ExplicitChildIterator(std::move(aOther)),
-        mOriginalContent(aOther.mOriginalContent),
-        mXBLInvolved(aOther.mXBLInvolved) {}
-
-  FlattenedChildIterator(const FlattenedChildIterator& aOther)
-      : ExplicitChildIterator(aOther),
-        mOriginalContent(aOther.mOriginalContent),
-        mXBLInvolved(aOther.mXBLInvolved) {}
-
-  bool XBLInvolved() {
-    if (mXBLInvolved.isNothing()) {
-      mXBLInvolved = Some(ComputeWhetherXBLIsInvolved());
-    }
-    return *mXBLInvolved;
-  }
+  bool ShadowDOMInvolved() { return mShadowDOMInvolved; }
 
   const nsIContent* Parent() const { return mOriginalContent; }
 
  private:
-  bool ComputeWhetherXBLIsInvolved() const;
-
   void Init(bool aIgnoreXBL);
 
  protected:
@@ -176,9 +143,7 @@ class FlattenedChildIterator : public ExplicitChildIterator {
  private:
   // For certain optimizations, nsCSSFrameConstructor needs to know if the child
   // list of the element that we're iterating matches its .childNodes.
-  //
-  // This is lazily computed when asked for it.
-  Maybe<bool> mXBLInvolved;
+  bool mShadowDOMInvolved = false;
 };
 
 /**
@@ -199,26 +164,17 @@ class AllChildrenIterator : private FlattenedChildIterator {
         mFlags(aFlags),
         mPhase(aStartAtBeginning ? eAtBegin : eAtEnd) {}
 
-  AllChildrenIterator(AllChildrenIterator&& aOther)
-      : FlattenedChildIterator(std::move(aOther)),
-        mAnonKids(std::move(aOther.mAnonKids)),
-        mAnonKidsIdx(aOther.mAnonKidsIdx),
-        mFlags(aOther.mFlags),
-        mPhase(aOther.mPhase)
 #ifdef DEBUG
-        ,
-        mMutationGuard(aOther.mMutationGuard)
-#endif
-  {
-  }
+  AllChildrenIterator(AllChildrenIterator&&) = default;
 
   AllChildrenIterator& operator=(AllChildrenIterator&& aOther) {
+    // Explicitly call the destructor to ensure the assertion in the destructor
+    // is checked.
     this->~AllChildrenIterator();
     new (this) AllChildrenIterator(std::move(aOther));
     return *this;
   }
 
-#ifdef DEBUG
   ~AllChildrenIterator() { MOZ_ASSERT(!mMutationGuard.Mutated(0)); }
 #endif
 
@@ -307,12 +263,9 @@ class MOZ_NEEDS_MEMMOVABLE_MEMBERS StyleChildrenIterator
     MOZ_COUNT_CTOR(StyleChildrenIterator);
   }
 
-  StyleChildrenIterator& operator=(StyleChildrenIterator&& aOther) {
-    AllChildrenIterator::operator=(std::move(aOther));
-    return *this;
-  }
+  StyleChildrenIterator& operator=(StyleChildrenIterator&& aOther) = default;
 
-  ~StyleChildrenIterator() { MOZ_COUNT_DTOR(StyleChildrenIterator); }
+  MOZ_COUNTED_DTOR(StyleChildrenIterator)
 
   using AllChildrenIterator::GetNextChild;
   using AllChildrenIterator::GetPreviousChild;

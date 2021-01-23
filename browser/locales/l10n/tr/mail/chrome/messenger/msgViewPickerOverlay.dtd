@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgViewPickerOverlay.dtd UI for showing various views on a folder -->
+
+
+<!ENTITY viewPicker.label "Göster:">
+<!ENTITY viewPicker.accesskey "G">
+<!ENTITY viewAll.label "Hepsini">
+<!ENTITY viewAll.accesskey "e">
+<!ENTITY viewUnread.label "Okunmayanları">
+<!ENTITY viewUnread.accesskey "u">
+<!ENTITY viewNotDeleted.label "Silinmemiş">
+<!ENTITY viewNotDeleted.accesskey "S">
+<!ENTITY viewTags.label "Etiketler">
+<!ENTITY viewTags.accesskey "t">
+<!ENTITY viewCustomViews.label "Özel görünümler">
+<!ENTITY viewCustomViews.accesskey "z">
+<!ENTITY viewVirtualFolder.label "Görünümü dizin olarak kaydet…">
+<!ENTITY viewVirtualFolder.accesskey "G">
+<!ENTITY viewCustomizeView.label "Özelleştir…">
+<!ENTITY viewCustomizeView.accesskey "l">

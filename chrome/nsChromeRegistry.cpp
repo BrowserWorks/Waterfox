@@ -16,23 +16,16 @@
 #include "nsQueryObject.h"
 
 #include "mozilla/dom/URL.h"
-#include "nsDOMWindowList.h"
 #include "nsIConsoleService.h"
 #include "mozilla/dom/Document.h"
-#include "nsIDOMWindow.h"
 #include "nsIObserverService.h"
 #include "nsIScriptError.h"
-#include "nsIWindowMediator.h"
-#include "nsIPrefService.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/PresShell.h"
 #include "mozilla/Printf.h"
 #include "mozilla/StyleSheet.h"
 #include "mozilla/StyleSheetInlines.h"
 #include "mozilla/dom/Location.h"
-#include "nsIURIMutator.h"
-
-#include "unicode/uloc.h"
 
 nsChromeRegistry* nsChromeRegistry::gChromeRegistry;
 
@@ -135,18 +128,17 @@ nsresult nsChromeRegistry::GetProviderAndPath(nsIURI* aChromeURL,
                                               nsACString& aPath) {
   nsresult rv;
 
-#ifdef DEBUG
-  bool isChrome;
-  aChromeURL->SchemeIs("chrome", &isChrome);
-  NS_ASSERTION(isChrome, "Non-chrome URI?");
-#endif
+  NS_ASSERTION(aChromeURL->SchemeIs("chrome"), "Non-chrome URI?");
 
   nsAutoCString path;
   rv = aChromeURL->GetPathQueryRef(path);
   NS_ENSURE_SUCCESS(rv, rv);
 
   if (path.Length() < 3) {
-    LogMessage("Invalid chrome URI: %s", path.get());
+#ifdef DEBUG
+    LogMessage("Invalid chrome URI (need path): %s",
+               aChromeURL->GetSpecOrDefault().get());
+#endif
     return NS_ERROR_FAILURE;
   }
 
@@ -155,7 +147,10 @@ nsresult nsChromeRegistry::GetProviderAndPath(nsIURI* aChromeURL,
 
   int32_t slash = path.FindChar('/', 1);
   if (slash == 1) {
-    LogMessage("Invalid chrome URI: %s", path.get());
+#ifdef DEBUG
+    LogMessage("Invalid chrome URI (path cannot start with another slash): %s",
+               aChromeURL->GetSpecOrDefault().get());
+#endif
     return NS_ERROR_FAILURE;
   }
 
@@ -285,11 +280,8 @@ nsChromeRegistry::AllowScriptsForPackage(nsIURI* aChromeURI, bool* aResult) {
   nsresult rv;
   *aResult = false;
 
-#ifdef DEBUG
-  bool isChrome;
-  aChromeURI->SchemeIs("chrome", &isChrome);
-  NS_ASSERTION(isChrome, "Non-chrome URI passed to AllowScriptsForPackage!");
-#endif
+  NS_ASSERTION(aChromeURI->SchemeIs("chrome"),
+               "Non-chrome URI passed to AllowScriptsForPackage!");
 
   nsCOMPtr<nsIURL> url(do_QueryInterface(aChromeURI));
   NS_ENSURE_TRUE(url, NS_NOINTERFACE);
@@ -309,11 +301,8 @@ nsChromeRegistry::AllowContentToAccess(nsIURI* aURI, bool* aResult) {
 
   *aResult = false;
 
-#ifdef DEBUG
-  bool isChrome;
-  aURI->SchemeIs("chrome", &isChrome);
-  NS_ASSERTION(isChrome, "Non-chrome URI passed to AllowContentToAccess!");
-#endif
+  NS_ASSERTION(aURI->SchemeIs("chrome"),
+               "Non-chrome URI passed to AllowContentToAccess!");
 
   nsCOMPtr<nsIURL> url = do_QueryInterface(aURI);
   if (!url) {
@@ -340,11 +329,8 @@ nsChromeRegistry::CanLoadURLRemotely(nsIURI* aURI, bool* aResult) {
 
   *aResult = false;
 
-#ifdef DEBUG
-  bool isChrome;
-  aURI->SchemeIs("chrome", &isChrome);
-  NS_ASSERTION(isChrome, "Non-chrome URI passed to CanLoadURLRemotely!");
-#endif
+  NS_ASSERTION(aURI->SchemeIs("chrome"),
+               "Non-chrome URI passed to CanLoadURLRemotely!");
 
   nsCOMPtr<nsIURL> url = do_QueryInterface(aURI);
   if (!url) {
@@ -371,11 +357,8 @@ nsChromeRegistry::MustLoadURLRemotely(nsIURI* aURI, bool* aResult) {
 
   *aResult = false;
 
-#ifdef DEBUG
-  bool isChrome;
-  aURI->SchemeIs("chrome", &isChrome);
-  NS_ASSERTION(isChrome, "Non-chrome URI passed to MustLoadURLRemotely!");
-#endif
+  NS_ASSERTION(aURI->SchemeIs("chrome"),
+               "Non-chrome URI passed to MustLoadURLRemotely!");
 
   nsCOMPtr<nsIURL> url = do_QueryInterface(aURI);
   if (!url) {
@@ -396,16 +379,6 @@ nsChromeRegistry::MustLoadURLRemotely(nsIURI* aURI, bool* aResult) {
   return NS_OK;
 }
 
-bool nsChromeRegistry::GetDirectionForLocale(const nsACString& aLocale) {
-  int pref = mozilla::Preferences::GetInt("intl.uidirection", -1);
-  if (pref >= 0) {
-    return (pref > 0);
-  }
-  nsAutoCString locale(aLocale);
-  SanitizeForBCP47(locale);
-  return uloc_isRightToLeft(locale.get());
-}
-
 already_AddRefed<nsChromeRegistry> nsChromeRegistry::GetSingleton() {
   if (gChromeRegistry) {
     RefPtr<nsChromeRegistry> registry = gChromeRegistry;
@@ -421,21 +394,4 @@ already_AddRefed<nsChromeRegistry> nsChromeRegistry::GetSingleton() {
   if (NS_FAILED(cr->Init())) return nullptr;
 
   return cr.forget();
-}
-
-void nsChromeRegistry::SanitizeForBCP47(nsACString& aLocale) {
-  // Currently, the only locale code we use that's not BCP47-conformant is
-  // "ja-JP-mac" on OS X, but let's try to be more general than just
-  // hard-coding that here.
-  const int32_t LANG_TAG_CAPACITY = 128;
-  char langTag[LANG_TAG_CAPACITY];
-  nsAutoCString locale(aLocale);
-  UErrorCode err = U_ZERO_ERROR;
-  // This is a fail-safe method that will set langTag to "und" if it cannot
-  // match any part of the input locale code.
-  int32_t len =
-      uloc_toLanguageTag(locale.get(), langTag, LANG_TAG_CAPACITY, false, &err);
-  if (U_SUCCESS(err) && len > 0) {
-    aLocale.Assign(langTag, len);
-  }
 }

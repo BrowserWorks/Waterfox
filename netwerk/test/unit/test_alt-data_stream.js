@@ -11,6 +11,8 @@
  *
  */
 
+"use strict";
+
 const { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
 
 XPCOMUtils.defineLazyGetter(this, "URL", function() {
@@ -91,8 +93,8 @@ function openAltChannel() {
 
 var altDataListener = {
   buffer: "",
-  onStartRequest: function(request) {},
-  onDataAvailable: function(request, stream, offset, count) {
+  onStartRequest(request) {},
+  onDataAvailable(request, stream, offset, count) {
     let string = NetUtil.readInputStreamToString(stream, count);
     this.buffer += string;
 
@@ -108,7 +110,7 @@ var altDataListener = {
       os.close();
     }
   },
-  onStopRequest: function(request, status) {
+  onStopRequest(request, status) {
     var cc = request.QueryInterface(Ci.nsICacheInfoChannel);
     Assert.equal(cc.alternativeDataType, altContentType);
     Assert.equal(this.buffer.length, altContent.length);
@@ -127,12 +129,12 @@ function openAltChannelWithOriginalContent() {
 
 var originalListener = {
   buffer: "",
-  onStartRequest: function(request) {},
-  onDataAvailable: function(request, stream, offset, count) {
+  onStartRequest(request) {},
+  onDataAvailable(request, stream, offset, count) {
     let string = NetUtil.readInputStreamToString(stream, count);
     this.buffer += string;
   },
-  onStopRequest: function(request, status) {
+  onStopRequest(request, status) {
     var cc = request.QueryInterface(Ci.nsICacheInfoChannel);
     Assert.equal(cc.alternativeDataType, altContentType);
     Assert.equal(this.buffer.length, responseContent.length);
@@ -143,7 +145,7 @@ var originalListener = {
 
 function testAltDataStream(cc) {
   cc.getAltDataInputStream(altContentType, {
-    onInputStreamReady: function(aInputStream) {
+    onInputStreamReady(aInputStream) {
       Assert.ok(!!aInputStream);
       httpServer.stop(do_test_finished);
     },

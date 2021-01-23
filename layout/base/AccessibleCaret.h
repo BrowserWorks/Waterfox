@@ -12,6 +12,7 @@
 #include "mozilla/dom/Element.h"
 #include "nsCOMPtr.h"
 #include "nsIDOMEventListener.h"
+#include "nsIFrame.h"
 #include "nsISupportsBase.h"
 #include "nsISupportsImpl.h"
 #include "nsLiteralString.h"
@@ -91,15 +92,18 @@ class AccessibleCaret {
            (mAppearance != Appearance::NormalNotShown);
   }
 
-  // This enumeration representing the result returned by SetPosition().
+  // This enum represents the result returned by SetPosition().
   enum class PositionChangedResult : uint8_t {
-    // Position is not changed.
+    // Both position and the zoom level are not changed.
     NotChanged,
 
-    // Position or zoom level is changed.
-    Changed,
+    // The position is changed. (The zoom level may or may not be changed.)
+    Position,
 
-    // Position is out of scroll port.
+    // Only the zoom level is changed. The position is *not* changed.
+    Zoom,
+
+    // The position is out of scroll port.
     Invisible
   };
 
@@ -133,6 +137,8 @@ class AccessibleCaret {
   // Ensures that the caret element is made "APZ aware" so that the APZ code
   // doesn't scroll the page when the user is trying to drag the caret.
   void EnsureApzAware();
+
+  bool IsInPositionFixedSubtree() const;
 
  protected:
   // Argument aRect should be relative to CustomContentContainerFrame().
@@ -168,6 +174,9 @@ class AccessibleCaret {
   // Remove caret element from custom content container.
   void RemoveCaretElement(dom::Document*);
 
+  // Clear the cached rects and zoom level.
+  void ClearCachedData();
+
   // The top-center of the imaginary caret to which this AccessibleCaret is
   // attached.
   static nsPoint CaretElementPosition(const nsRect& aRect) {
@@ -182,7 +191,7 @@ class AccessibleCaret {
     }
 
    private:
-    virtual ~DummyTouchListener(){};
+    virtual ~DummyTouchListener() = default;
   };
 
   // Member variables
@@ -198,6 +207,14 @@ class AccessibleCaret {
 
   // mImaginaryCaretRect is relative to root frame.
   nsRect mImaginaryCaretRect;
+
+  // Cached mImaginaryCaretRect relative to the custom content container. This
+  // is used in SetPosition() to check whether the caret position has changed.
+  nsRect mImaginaryCaretRectInContainerFrame;
+
+  // The reference frame we used to calculate mImaginaryCaretRect and
+  // mImaginaryCaretRectInContainerFrame.
+  WeakFrame mImaginaryCaretReferenceFrame;
 
   // Cache current zoom level to determine whether position is changed.
   float mZoomLevel = 0.0f;

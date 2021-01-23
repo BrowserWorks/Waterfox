@@ -12,14 +12,17 @@
 #include "mozilla/dom/BlobBinding.h"
 #include "mozilla/dom/Fetch.h"
 #include "mozilla/dom/PromiseNativeHandler.h"
+#include "mozilla/dom/Request.h"
 #include "mozilla/dom/Response.h"
 #include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/dom/ScriptLoader.h"
 #include "mozilla/dom/WorkletImpl.h"
-#include "js/CompilationAndEvaluation.h"
+#include "js/Modules.h"
 #include "js/SourceText.h"
 #include "nsIInputStreamPump.h"
+#include "nsIStreamLoader.h"
 #include "nsIThreadRetargetableRequest.h"
+#include "nsIInputStreamPump.h"
 #include "nsNetUtil.h"
 #include "xpcprivate.h"
 
@@ -50,6 +53,8 @@ class ExecutionRunnable final : public Runnable {
 
   void RunOnMainThread();
 
+  bool ParseAndLinkModule(JSContext* aCx, JS::MutableHandle<JSObject*> aModule);
+
   RefPtr<WorkletFetchHandler> mHandler;
   RefPtr<WorkletImpl> mWorkletImpl;
   JS::UniqueTwoByteChars mScriptBuffer;
@@ -66,10 +71,9 @@ class WorkletFetchHandler final : public PromiseNativeHandler,
  public:
   NS_DECL_THREADSAFE_ISUPPORTS
 
-  static already_AddRefed<Promise> Fetch(Worklet* aWorklet,
+  static already_AddRefed<Promise> Fetch(Worklet* aWorklet, JSContext* aCx,
                                          const nsAString& aModuleURL,
                                          const WorkletOptions& aOptions,
-                                         CallerType aCallerType,
                                          ErrorResult& aRv) {
     MOZ_ASSERT(aWorklet);
     MOZ_ASSERT(NS_IsMainThread());
@@ -93,10 +97,9 @@ class WorkletFetchHandler final : public PromiseNativeHandler,
       return promise.forget();
     }
 
-    nsCOMPtr<nsIURI> baseURI = doc->GetBaseURI();
     nsCOMPtr<nsIURI> resolvedURI;
-    nsresult rv =
-        NS_NewURI(getter_AddRefs(resolvedURI), aModuleURL, nullptr, baseURI);
+    nsresult rv = NS_NewURI(getter_AddRefs(resolvedURI), aModuleURL, nullptr,
+                            doc->GetBaseURI());
     if (NS_WARN_IF(NS_FAILED(rv))) {
       promise->MaybeReject(rv);
       return promise.forget();
@@ -118,21 +121,33 @@ class WorkletFetchHandler final : public PromiseNativeHandler,
       }
     }
 
-    RequestOrUSVString request;
-    request.SetAsUSVString().Rebind(aModuleURL.Data(), aModuleURL.Length());
+    RequestOrUSVString requestInput;
+    requestInput.SetAsUSVString().ShareOrDependUpon(aModuleURL);
 
-    RequestInit init;
-    init.mCredentials.Construct(aOptions.mCredentials);
+    RequestInit requestInit;
+    requestInit.mCredentials.Construct(aOptions.mCredentials);
 
-    RefPtr<Promise> fetchPromise =
-        FetchRequest(global, request, init, aCallerType, aRv);
+    SafeRefPtr<Request> request =
+        Request::Constructor(global, aCx, requestInput, requestInit, aRv);
+    if (aRv.Failed()) {
+      return nullptr;
+    }
+
+    request->OverrideContentPolicyType(aWorklet->Impl()->ContentPolicyType());
+
+    RequestOrUSVString finalRequestInput;
+    finalRequestInput.SetAsRequest() = request.unsafeGetRawPtr();
+
+    RefPtr<Promise> fetchPromise = FetchRequest(
+        global, finalRequestInput, requestInit, CallerType::System, aRv);
     if (NS_WARN_IF(aRv.Failed())) {
-      promise->MaybeReject(aRv);
-      return promise.forget();
+      // OK to just return null, since caller will ignore return value
+      // anyway if aRv is a failure.
+      return nullptr;
     }
 
     RefPtr<WorkletFetchHandler> handler =
-        new WorkletFetchHandler(aWorklet, aModuleURL, promise);
+        new WorkletFetchHandler(aWorklet, spec, promise);
     fetchPromise->AppendNativeHandler(handler);
 
     aWorklet->AddImportFetchHandler(spec, handler);
@@ -237,7 +252,7 @@ class WorkletFetchHandler final : public PromiseNativeHandler,
     RejectPromises(NS_ERROR_DOM_NETWORK_ERR);
   }
 
-  const nsString& URL() const { return mURL; }
+  const nsCString& URL() const { return mURL; }
 
   void ExecutionFailed(nsresult aRv) {
     MOZ_ASSERT(NS_IsMainThread());
@@ -250,7 +265,7 @@ class WorkletFetchHandler final : public PromiseNativeHandler,
   }
 
  private:
-  WorkletFetchHandler(Worklet* aWorklet, const nsAString& aURL,
+  WorkletFetchHandler(Worklet* aWorklet, const nsACString& aURL,
                       Promise* aPromise)
       : mWorklet(aWorklet), mStatus(ePending), mErrorStatus(NS_OK), mURL(aURL) {
     MOZ_ASSERT(aWorklet);
@@ -260,7 +275,7 @@ class WorkletFetchHandler final : public PromiseNativeHandler,
     mPromises.AppendElement(aPromise);
   }
 
-  ~WorkletFetchHandler() {}
+  ~WorkletFetchHandler() = default;
 
   void AddPromise(Promise* aPromise) {
     MOZ_ASSERT(aPromise);
@@ -317,7 +332,7 @@ class WorkletFetchHandler final : public PromiseNativeHandler,
 
   nsresult mErrorStatus;
 
-  nsString mURL;
+  nsCString mURL;
 };
 
 NS_IMPL_ISUPPORTS(WorkletFetchHandler, nsIStreamLoaderObserver)
@@ -337,37 +352,59 @@ ExecutionRunnable::Run() {
   return NS_OK;
 }
 
+bool ExecutionRunnable::ParseAndLinkModule(
+    JSContext* aCx, JS::MutableHandle<JSObject*> aModule) {
+  JS::CompileOptions compileOptions(aCx);
+  compileOptions.setIntroductionType("Worklet");
+  compileOptions.setFileAndLine(mHandler->URL().get(), 1);
+  compileOptions.setIsRunOnce(true);
+  compileOptions.setNoScriptRval(true);
+
+  JS::SourceText<char16_t> buffer;
+  if (!buffer.init(aCx, std::move(mScriptBuffer), mScriptLength)) {
+    return false;
+  }
+  JS::Rooted<JSObject*> module(aCx,
+                               JS::CompileModule(aCx, compileOptions, buffer));
+  if (!module) {
+    return false;
+  }
+  // Link() was previously named Instantiate().
+  // https://github.com/tc39/ecma262/pull/1312
+  // Any imports will fail here - bug 1572644.
+  if (!JS::ModuleInstantiate(aCx, module)) {
+    return false;
+  }
+  aModule.set(module);
+  return true;
+}
+
 void ExecutionRunnable::RunOnWorkletThread() {
-  WorkletThread::EnsureCycleCollectedJSContext(mParentRuntime);
+  WorkletThread* workletThread =
+      static_cast<WorkletThread*>(NS_GetCurrentThread());
+  workletThread->EnsureCycleCollectedJSContext(mParentRuntime);
 
   WorkletGlobalScope* globalScope = mWorkletImpl->GetGlobalScope();
-  MOZ_ASSERT(globalScope);
+  if (!globalScope) {
+    mResult = NS_ERROR_DOM_UNKNOWN_ERR;
+    return;
+  }
 
   AutoEntryScript aes(globalScope, "Worklet");
   JSContext* cx = aes.cx();
 
-  JS::Rooted<JSObject*> globalObj(cx, globalScope->GetGlobalJSObject());
-
-  NS_ConvertUTF16toUTF8 url(mHandler->URL());
-
-  JS::CompileOptions compileOptions(cx);
-  compileOptions.setIntroductionType("Worklet");
-  compileOptions.setFileAndLine(url.get(), 0);
-  compileOptions.setIsRunOnce(true);
-  compileOptions.setNoScriptRval(true);
-
-  JSAutoRealm ar(cx, globalObj);
-
-  JS::Rooted<JS::Value> unused(cx);
-  JS::SourceText<char16_t> buffer;
-  if (!buffer.init(cx, std::move(mScriptBuffer), mScriptLength) ||
-      !JS::Evaluate(cx, compileOptions, buffer, &unused)) {
-    ErrorResult error;
-    error.MightThrowJSException();
-    error.StealExceptionFromJSContext(cx);
-    mResult = error.StealNSResult();
+  JS::Rooted<JSObject*> module(cx);
+  if (!ParseAndLinkModule(cx, &module)) {
+    mResult = NS_ERROR_DOM_ABORT_ERR;
     return;
   }
+
+  // https://drafts.css-houdini.org/worklets/#fetch-and-invoke-a-worklet-script
+  // invokes
+  // https://html.spec.whatwg.org/multipage/webappapis.html#run-a-module-script
+  // without /rethrow errors/ and so unhandled exceptions do not cause the
+  // promise to be rejected.
+  JS::ModuleEvaluate(cx, module);
 
   // All done.
   mResult = NS_OK;
@@ -417,10 +454,6 @@ Worklet::Worklet(nsPIDOMWindowInner* aWindow, RefPtr<WorkletImpl> aImpl,
   MOZ_ASSERT(aWindow);
   MOZ_ASSERT(mImpl);
   MOZ_ASSERT(NS_IsMainThread());
-
-#ifdef RELEASE_OR_BETA
-  MOZ_CRASH("This code should not go to release/beta yet!");
-#endif
 }
 
 Worklet::~Worklet() { mImpl->NotifyWorkletFinished(); }
@@ -430,13 +463,13 @@ JSObject* Worklet::WrapObject(JSContext* aCx,
   return mImpl->WrapWorklet(aCx, this, aGivenProto);
 }
 
-already_AddRefed<Promise> Worklet::AddModule(const nsAString& aModuleURL,
+already_AddRefed<Promise> Worklet::AddModule(JSContext* aCx,
+                                             const nsAString& aModuleURL,
                                              const WorkletOptions& aOptions,
                                              CallerType aCallerType,
                                              ErrorResult& aRv) {
   MOZ_ASSERT(NS_IsMainThread());
-  return WorkletFetchHandler::Fetch(this, aModuleURL, aOptions, aCallerType,
-                                    aRv);
+  return WorkletFetchHandler::Fetch(this, aCx, aModuleURL, aOptions, aRv);
 }
 
 WorkletFetchHandler* Worklet::GetImportFetchHandler(const nsACString& aURI) {
@@ -450,7 +483,7 @@ void Worklet::AddImportFetchHandler(const nsACString& aURI,
   MOZ_ASSERT(!mImportHandlers.GetWeak(aURI));
   MOZ_ASSERT(NS_IsMainThread());
 
-  mImportHandlers.Put(aURI, aHandler);
+  mImportHandlers.Put(aURI, RefPtr{aHandler});
 }
 
 }  // namespace dom

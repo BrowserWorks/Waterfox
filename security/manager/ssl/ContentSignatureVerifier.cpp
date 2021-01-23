@@ -8,6 +8,7 @@
 
 #include "BRNameMatchingPolicy.h"
 #include "CryptoTask.h"
+#include "CSTrustDomain.h"
 #include "ScopedNSSTypes.h"
 #include "SharedCertVerifier.h"
 #include "cryptohi.h"
@@ -17,11 +18,13 @@
 #include "mozilla/dom/Promise.h"
 #include "nsCOMPtr.h"
 #include "nsPromiseFlatString.h"
+#include "nsProxyRelease.h"
 #include "nsSecurityHeaderParser.h"
 #include "nsWhitespaceTokenizer.h"
 #include "mozpkix/pkix.h"
 #include "mozpkix/pkixtypes.h"
 #include "secerr.h"
+#include "ssl.h"
 
 NS_IMPL_ISUPPORTS(ContentSignatureVerifier, nsIContentSignatureVerifier)
 
@@ -50,7 +53,8 @@ class VerifyContentSignatureTask : public CryptoTask {
         mCertChain(aCertChain),
         mHostname(aHostname),
         mSignatureVerified(false),
-        mPromise(aPromise) {}
+        mPromise(new nsMainThreadPtrHolder<Promise>(
+            "VerifyContentSignatureTask::mPromise", aPromise)) {}
 
  private:
   virtual nsresult CalculateResult() override;
@@ -61,7 +65,7 @@ class VerifyContentSignatureTask : public CryptoTask {
   nsCString mCertChain;
   nsCString mHostname;
   bool mSignatureVerified;
-  RefPtr<Promise> mPromise;
+  nsMainThreadPtrHandle<Promise> mPromise;
 };
 
 NS_IMETHODIMP
@@ -84,7 +88,7 @@ ContentSignatureVerifier::AsyncVerifyContentSignature(
 
   RefPtr<VerifyContentSignatureTask> task(new VerifyContentSignatureTask(
       aData, aCSHeader, aCertChain, aHostname, promise));
-  nsresult rv = task->Dispatch("ContentSig");
+  nsresult rv = task->Dispatch();
   if (NS_FAILED(rv)) {
     return rv;
   }

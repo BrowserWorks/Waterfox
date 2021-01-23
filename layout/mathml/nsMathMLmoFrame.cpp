@@ -10,7 +10,7 @@
 #include "nsPresContext.h"
 #include "nsContentUtils.h"
 #include "nsFrameSelection.h"
-#include "nsMathMLElement.h"
+#include "mozilla/dom/MathMLElement.h"
 #include <algorithm>
 
 using namespace mozilla;
@@ -28,7 +28,7 @@ nsIFrame* NS_NewMathMLmoFrame(PresShell* aPresShell, ComputedStyle* aStyle) {
 
 NS_IMPL_FRAMEARENA_HELPERS(nsMathMLmoFrame)
 
-nsMathMLmoFrame::~nsMathMLmoFrame() {}
+nsMathMLmoFrame::~nsMathMLmoFrame() = default;
 
 static const char16_t kApplyFunction = char16_t(0x2061);
 static const char16_t kInvisibleTimes = char16_t(0x2062);
@@ -373,8 +373,8 @@ void nsMathMLmoFrame::ProcessOperatorData() {
   mContent->AsElement()->GetAttr(kNameSpaceID_None, nsGkAtoms::lspace_, value);
   if (!value.IsEmpty()) {
     nsCSSValue cssValue;
-    if (nsMathMLElement::ParseNumericValue(value, cssValue, 0,
-                                           mContent->OwnerDoc())) {
+    if (dom::MathMLElement::ParseNumericValue(value, cssValue, 0,
+                                              mContent->OwnerDoc())) {
       if ((eCSSUnit_Number == cssValue.GetUnit()) && !cssValue.GetFloatValue())
         leadingSpace = 0;
       else if (cssValue.IsLengthUnit())
@@ -400,8 +400,8 @@ void nsMathMLmoFrame::ProcessOperatorData() {
   mContent->AsElement()->GetAttr(kNameSpaceID_None, nsGkAtoms::rspace_, value);
   if (!value.IsEmpty()) {
     nsCSSValue cssValue;
-    if (nsMathMLElement::ParseNumericValue(value, cssValue, 0,
-                                           mContent->OwnerDoc())) {
+    if (dom::MathMLElement::ParseNumericValue(value, cssValue, 0,
+                                              mContent->OwnerDoc())) {
       if ((eCSSUnit_Number == cssValue.GetUnit()) && !cssValue.GetFloatValue())
         trailingSpace = 0;
       else if (cssValue.IsLengthUnit())
@@ -484,8 +484,8 @@ void nsMathMLmoFrame::ProcessOperatorData() {
   mContent->AsElement()->GetAttr(kNameSpaceID_None, nsGkAtoms::minsize_, value);
   if (!value.IsEmpty()) {
     nsCSSValue cssValue;
-    if (nsMathMLElement::ParseNumericValue(
-            value, cssValue, nsMathMLElement::PARSE_ALLOW_UNITLESS,
+    if (dom::MathMLElement::ParseNumericValue(
+            value, cssValue, dom::MathMLElement::PARSE_ALLOW_UNITLESS,
             mContent->OwnerDoc())) {
       nsCSSUnit unit = cssValue.GetUnit();
       if (eCSSUnit_Number == unit)
@@ -516,8 +516,8 @@ void nsMathMLmoFrame::ProcessOperatorData() {
   mContent->AsElement()->GetAttr(kNameSpaceID_None, nsGkAtoms::maxsize_, value);
   if (!value.IsEmpty()) {
     nsCSSValue cssValue;
-    if (nsMathMLElement::ParseNumericValue(
-            value, cssValue, nsMathMLElement::PARSE_ALLOW_UNITLESS,
+    if (dom::MathMLElement::ParseNumericValue(
+            value, cssValue, dom::MathMLElement::PARSE_ALLOW_UNITLESS,
             mContent->OwnerDoc())) {
       nsCSSUnit unit = cssValue.GetUnit();
       if (eCSSUnit_Number == unit)
@@ -719,7 +719,8 @@ nsMathMLmoFrame::Stretch(DrawTarget* aDrawTarget,
     // let the MathMLChar stretch itself...
     nsresult res = mMathMLChar.Stretch(
         this, aDrawTarget, fontSizeInflation, aStretchDirection, container,
-        charSize, stretchHint, StyleVisibility()->mDirection);
+        charSize, stretchHint,
+        StyleVisibility()->mDirection == StyleDirection::Rtl);
     if (NS_FAILED(res)) {
       // gracefully handle cases where stretching the char failed (i.e.,
       // GetBoundingMetrics failed) clear our 'form' to behave as if the
@@ -844,7 +845,9 @@ nsMathMLmoFrame::Stretch(DrawTarget* aDrawTarget,
     aDesiredStretchSize.Width() = mBoundingMetrics.width;
     aDesiredStretchSize.mBoundingMetrics.width = mBoundingMetrics.width;
 
-    nscoord dx = (StyleVisibility()->mDirection ? trailingSpace : leadingSpace);
+    nscoord dx = StyleVisibility()->mDirection == StyleDirection::Rtl
+                     ? trailingSpace
+                     : leadingSpace;
     if (dx) {
       // adjust the offsets
       mBoundingMetrics.leftBearing += dx;
@@ -946,7 +949,8 @@ nsresult nsMathMLmoFrame::Place(DrawTarget* aDrawTarget, bool aPlaceOrigin,
     rv = mMathMLChar.Stretch(
         this, aDrawTarget, nsLayoutUtils::FontSizeInflationFor(this),
         NS_STRETCH_DIRECTION_VERTICAL, aDesiredSize.mBoundingMetrics,
-        newMetrics, NS_STRETCH_LARGEOP, StyleVisibility()->mDirection);
+        newMetrics, NS_STRETCH_LARGEOP,
+        StyleVisibility()->mDirection == StyleDirection::Rtl);
 
     if (NS_FAILED(rv)) {
       // Just use the initial size
@@ -1011,7 +1015,7 @@ void nsMathMLmoFrame::GetIntrinsicISizeMetrics(gfxContext* aRenderingContext,
   // leadingSpace and trailingSpace are actually applied to the outermost
   // embellished container but for determining total intrinsic width it should
   // be safe to include it for the core here instead.
-  bool isRTL = StyleVisibility()->mDirection;
+  bool isRTL = StyleVisibility()->mDirection == StyleDirection::Rtl;
   aDesiredSize.Width() +=
       mEmbellishData.leadingSpace + mEmbellishData.trailingSpace;
   aDesiredSize.mBoundingMetrics.width = aDesiredSize.Width();

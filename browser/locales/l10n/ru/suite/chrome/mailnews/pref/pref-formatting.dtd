@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.formatting.title        "Формат отправки">
+<!ENTITY sendMaildesc.label           "При отправке сообщений в формате HTML, когда указано, что один или более адресатов не могут получать почту в формате HTML:">
+<!ENTITY askMe.label                  "Спрашивать (почтовый клиент спросит, какой формат использовать)">
+<!ENTITY askMe.accesskey              "ш">
+<!ENTITY convertPlain2.label          "Преобразовывать сообщение в простой текст (форматирование может быть утеряно)">
+<!ENTITY convertPlain2.accesskey      "з">
+<!ENTITY sendHTML2.label              "Отправлять сообщение только в HTML (может вызвать проблемы с отображением)">
+<!ENTITY sendHTML2.accesskey          "я">
+<!ENTITY sendBoth2.label              "Отправлять сообщение в виде как простого текста, так и HTML (увеличивает размер)">
+<!ENTITY sendBoth2.accesskey          "п">
+
+<!-- Html and Plain Text Domains  -->
+<!ENTITY domain.title                 "Домены поддерживающие HTML и Простой текст">
+<!ENTITY domaindesc.label             "При отправке сообщения на адрес, доменная часть которого находится в одном из списков ниже, почтовый клиент автоматически отправляет это сообщение в нужном формате (HTML или простой текст).">
+<!ENTITY HTMLdomaintitle.label        "Домены, поддерживающие HTML">
+<!ENTITY HTMLdomaintitle.accesskey    "о">
+<!ENTITY PlainTexttitle.label         "Домены, поддерживающие простой текст">
+<!ENTITY PlainTexttitle.accesskey     "е">
+<!ENTITY AddButton.label              "Добавить…">
+<!ENTITY AddHtmlDomain.accesskey      "в">
+<!ENTITY AddPlainText.accesskey       "и">
+<!ENTITY DeleteButton.label           "Удалить">
+<!ENTITY DeleteHtmlDomain.accesskey   "а">
+<!ENTITY DeletePlainText.accesskey    "л">
+
+<!-- Add Domain Name -->
+<!ENTITY add.htmltitle                "Добавить имя в список «Поддержка HTML»">
+<!ENTITY add.htmldomain               "Имя домена:">
+<!ENTITY add.plaintexttitle           "Добавить имя в список «Поддержка простого текста»">
+<!ENTITY add.plaintextdomain          "Имя домена:">
+
+<!ENTITY domainnameError.title        "Ошибка">
+<!-- LOCALIZATION NOTE: do not translate @string@ -->
+<!ENTITY invalidEntryError.label      "Имя домена @string@ некорректно и будет проигнорировано. Корректные имена доменов имеют по меньшей мере одну «.» и символы слева и справа от неё.">
+
+<!-- Global auto-detect switch -->
+<!ENTITY autoDowngrade.label          "Автоматически отправлять сообщение в виде простого текста, если нет существенного форматирования (перекрывает другие настройки)">
+<!ENTITY autoDowngrade.accesskey      "м">

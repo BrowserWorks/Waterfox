@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.notifications.title "Notificaciones">
+<!ENTITY notifications.caption "Notificaciones">
+<!ENTITY newMessagesArrive.label "Cuando lleguen nuevos mensajes:">
+<!ENTITY showAlertFor.label "Mostrar una alerta durante">
+<!ENTITY showAlertFor.accesskey "d">
+<!ENTITY showAlertTimeEnd.label "segundos">
+<!ENTITY showAlertPreviewText.label "Mostrar una vista preliminar del texto del mensaje">
+<!ENTITY showAlertPreviewText.accesskey "o">
+<!ENTITY showAlertSubject.label "Mostrar el asunto">
+<!ENTITY showAlertSubject.accesskey "s">
+<!ENTITY showAlertSender.label "Mostrar el remitente">
+<!ENTITY showAlertSender.accesskey "l">
+<!ENTITY useSystemAlert.label "Usar las notificaciones de escritorio del sistema operativo">
+<!ENTITY useSystemAlert.accesskey "n">
+<!ENTITY useBuiltInAlert.label "Usar las ventanas de notificaciones propias de &brandShortName;">
+<!ENTITY useBuiltInAlert.accesskey "v">
+<!ENTITY showTrayIcon.label "Mostrar un icono en la bandeja">
+<!ENTITY showTrayIcon.accesskey "i">
+<!ENTITY showBalloon.label "Mostrar una alerta emergente">
+<!ENTITY showBalloon.accesskey "u">
+<!ENTITY bounceSystemDockIcon.label "Animar el icono de notificación">
+<!ENTITY bounceSystemDockIcon.accesskey "A">
+<!ENTITY playSound.label "Reproducir un sonido">
+<!ENTITY playSound.accesskey "P">
+<!ENTITY playButton.label "Reproducir">
+<!ENTITY playButton.accesskey "R">
+<!ENTITY systemsound.label "Sonido de nuevo mensaje de correo del sistema">
+<!ENTITY systemsound.accesskey "M">
+<!ENTITY customsound.label "Archivo de sonido personalizado">
+<!ENTITY customsound.accesskey "h">
+<!ENTITY browse.label "Examinar…">
+<!ENTITY browse.accesskey "E">
+<!ENTITY browse.title "Elegir archivo">

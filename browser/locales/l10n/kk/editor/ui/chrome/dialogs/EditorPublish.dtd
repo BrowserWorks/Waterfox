@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label            "Парақты жариялау">
+<!ENTITY windowTitleSettings.label    "Жариялау баптаулары">
+<!ENTITY publishTab.label             "Жариялау">
+<!ENTITY settingsTab.label            "Баптаулар">
+<!ENTITY publishButton.label          "Жариялау">
+
+<!-- Publish Tab Panel -->
+<!ENTITY siteList.label               "Сайт аты:">
+<!ENTITY siteList.accesskey           "й">
+<!ENTITY siteList.tooltip             "Жариялау үшін сайтты таңдаңыз">
+<!ENTITY newSiteButton.label          "Жаңа сайт">
+<!ENTITY newSiteButton.accesskey      "Ж">
+<!ENTITY docDirList.label             "Бұл парақ үшін сайттың ішкі бумасы:">
+<!ENTITY docDirList.accesskey         "с">
+<!ENTITY docDirList.tooltip           "Бұл парақ үшін қашықтағы буманың атын таңдаңыз немесе енгізіңіз">
+<!ENTITY publishImgCheckbox.label     "Суретте және басқа файлдарды қоса">
+<!ENTITY publishImgCheckbox.accesskey "а">
+<!ENTITY publishImgCheckbox.tooltip   "Бұл парақта көрсетілгендей, суреттер және басқа файлдарды жариялау">
+<!ENTITY sameLocationRadio.label      "Парақтағы адресті қолдану">
+<!ENTITY sameLocationRadio.accesskey  "о">
+<!ENTITY sameLocationRadio.tooltip    "Файлдарды да парақтың орналасқан жеріне жариялау">
+<!ENTITY useSubdirRadio.label         "Бұл ішкі бумасын қолдану:">
+<!ENTITY useSubdirRadio.accesskey     "ш">
+<!ENTITY useSubdirRadio.tooltip       "Файлдарды таңдалған қашықтағы ішкі бумасына жариялау">
+<!ENTITY otherDirList.tooltip         "Файлдар жарияланатын қашықтағы ішкі буманың атын таңдаңыз немесе енгізіңіз">
+<!ENTITY pageTitle.label              "Беттің атауы:">
+<!ENTITY pageTitle.accesskey          "т">
+<!ENTITY pageTitle.tooltip            "Парақты терезеде және бетбелгілерде анықтау үшін оның атауын енгізіңіз">
+<!ENTITY pageTitleExample.label       "мыс.: &quot;Менің веб парағым&quot;">
+<!ENTITY filename.label               "Файл аты:">
+<!ENTITY filename.accesskey           "Ф">
+<!ENTITY filename.tooltip             "Бұл файл үшін атын енгізу, веб парағы үшін '.html' қосып">
+<!ENTITY filenameExample.label        "мыс.: &quot;меніңпарағым.html&quot;">
+<!ENTITY setDefaultButton.label       "Бастапқы ретінде орнату">
+<!ENTITY setDefaultButton.accesskey   "т">
+<!ENTITY removeButton.label           "Сайтты өшіру">
+<!ENTITY removeButton.accesskey       "ш">
+
+<!-- Settings Tab Panel -->
+<!ENTITY publishSites.label           "Сайттарды жариялау">
+<!ENTITY serverInfo.label             "Сервер ақпараты">
+<!ENTITY loginInfo.label              "Кіру ақпараты">
+<!ENTITY siteName.label               "Сайт аты:">
+<!ENTITY siteName.accesskey           "й">
+<!ENTITY siteName.tooltip             "Бұл жариялау сайтын анықтайтын бүркеншік аты (мыс.: &quot;МеніңСайтым&quot;)">
+<!ENTITY siteUrl.label                "Жариялау адресі (мыс.: 'ftp://ftp.myisp.com/myusername'):">
+<!ENTITY siteUrl.accesskey            "а">
+<!ENTITY siteUrl.tooltip              "Сіздің провайдеріңіз немесе хостинг қызметі ұсынған FTP:// немесе HTTP:// адресі">
+<!ENTITY browseUrl.label              "Үй парағыңыздың HTTP адресі (e.g.: 'http://www.myisp.com/myusername'):">
+<!ENTITY browseUrl.accesskey          "а">
+<!ENTITY browseUrl.tooltip            "Үй бумаңыздың HTTP:// адресі (файл атын қоспаңыз)">
+<!ENTITY username.label               "Пайдаланушы аты:">
+<!ENTITY username.accesskey           "й">
+<!ENTITY username.tooltip             "Интернет қызметтерін ұсынушысы немесе веб хостинг қызметі берген пайдаланушы аты">
+<!ENTITY password.label               "Пароль:">
+<!ENTITY password.accesskey           "р">
+<!ENTITY password.tooltip             "Пайдаланушы атыңызбен байланысқан пароль">
+<!ENTITY savePassword.label           "Парольді сақтау">
+<!ENTITY savePassword.accesskey       "р">
+<!ENTITY savePassword.tooltip         "Пароліңізді парольдер басқарушысы көмегімен қауіпсіз түрде сақтау үшін осыны белгілеңіз">

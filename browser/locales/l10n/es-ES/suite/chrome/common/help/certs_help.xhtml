@@ -1,0 +1,409 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" > 
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Administrador de certificados</title>
+  <link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+</head>
+<body>
+  
+<div class="boilerplate">Este documento ha sido proporcionado sólo para aportar
+  información. Puede ayudarle a dar ciertos pasos a la hora de decidir la forma
+  de proteger la privacidad y seguridad de su información personal en Internet.
+  Este documento, sin embargo, no trata de todos los aspectos existentes en
+  materia de privacidad y seguridad, ni representa recomendaciones sobre lo que
+  constituye unas medidas de protección adecuadas en materia de privacidad y
+  seguridad en Internet.</div>
+
+<h1 id="certificate_manager">Administrador de certificados</h1>
+
+<p>En esta sección se explica cómo se utiliza el administrador de certificados.
+  Si desea más información sobre la utilización de certificados, consulte
+  <a href="using_certs_help.xhtml">Usar certificados</a>.</p>
+
+<p>Si aún no está viendo la ventana Administrador de certificados, siga los
+  pasos que se indican a continuación:</p>
+
+<ol>
+  <li>Abra el menú <span class="mac">&brandShortName;</span>
+    <span class="noMac">Editar</span> y elija &quot;Preferencias&quot;.</li>
+  <li>Dentro de la categoría Privacidad y seguridad, haga clic en Certificados
+    (si no aparece ninguna subcategoría, haga doble clic en Seguridad y
+    privacidad para expandir la lista).</li>
+  <li>Haga clic en Administrar certificados.</li>
+</ol>
+
+<div class="contentsBox">En esta sección:
+<ul>
+  <li><a href="#your_certificates">Sus certificados</a></li>
+  <li><a href="#people">Personas</a></li>
+  <li><a href="#servers">Servidores</a></li>
+  <li><a href="#authorities">Autoridades</a></li>
+  <li><a href="#others">Otros</a></li>
+</ul>
+</div>
+
+<h2 id="your_certificates">Sus certificados</h2>
+
+<p>La pestaña Sus certificados del <a href="#certificate_manager">administrador
+  de certificados</a> muestra los certificados almacenados que lo identifican.
+  Sus certificados aparecen enumerados bajo los nombres de las organizaciones
+  que los han emitido. Si no puede ver nombres de certificados bajo el nombre
+  de una organización, haga doble clic en el nombre para expandirla.</p>
+
+<p>Use los botones siguientes para ver y administrar sus certificados (la
+  mayoría de las acciones requiere que se seleccionen uno o más
+  certificados):</p>
+
+<ul>
+  <li><strong>Ver</strong>: visualiza información detallada sobre los
+    certificados seleccionados.</li>
+  <li><strong>Hacer una copia de seguridad</strong>: inicia el proceso de
+    guardar los certificados seleccionados. Aparecerá una ventana que
+    le permitirá elegir una contraseña para proteger la copia de
+    seguridad. A continuación, puede guardar la copia de seguridad en
+    el directorio que elija.</li>
+  <li><strong>Hacer copia de seguridad de todo</strong>: inicia el proceso de
+    salvaguarda de todos los certificados almacenados en el
+    <a href="glossary.xhtml#software_security_device">dispositivo de seguridad
+    de software</a>.
+
+    <p><strong>Nota</strong>: no es posible realizar copia de seguridad de los
+    certificados almacenados en tarjetas inteligentes. El archivo de copia de
+    seguridad que se crea no incluirá ningún certificado
+    almacenado en tarjetas inteligentes ni en ningún otro dispositivo
+    de seguridad externo, tanto si selecciona alguno de los certificados y
+    hace clic en Hacer copia de seguridad, como si hace clic en Hacer copia de
+    seguridad de todo. Sólo podrá hacer copias de seguridad de
+    los certificados que estén almacenados en un dispositivo de
+    seguridad de software incorporado.</p>
+  </li>
+  <li><strong>Importar</strong>: importa un archivo que contiene un
+    certificado o más de los que anteriormente se realizó copia
+    de seguridad. Al hacer clic en Importar, lo primero que le pide el
+    administrador de certificados es que localice el archivo que contiene la
+    copia de seguridad. Los nombres de los archivos de copia de seguridad de
+    certificados terminan normalmente en <tt>.p12</tt>; por ejemplo,
+    <tt>MiCert.p12</tt>. Después de seleccionar el archivo que desee
+    importar, el administrador de certificados le pedirá que introduzca
+    la contraseña que estableció cuando realizó la copia
+    de seguridad del certificado.</li>
+  <li><strong>Eliminar</strong>: elimina los certificados seleccionados.</li>
+</ul>
+
+<h3 id="choose_a_certificate_backup_password">Elegir una contraseña de
+  respaldo para los certificados</h3>
+
+<p>La contraseña de copia de seguridad protege uno o varios de los certificados
+  de los que el usuario hace copia de seguridad desde la pestaña
+  <a href="#your_certificates">Sus certificados</a> del administrador de
+  certificados.</p>
+
+<p>El administrador de certificados le pide que establezca esta contraseña
+  cuando realiza copias de seguridad de certificados y solicita la
+  contraseña cuando el usuario intenta importar certificados de los que
+  previamente ha realizado copia de seguridad.</p>
+
+<ul>
+  <li><strong>Contraseña de copia de seguridad de certificado</strong>:
+    escriba la contraseña de copia de seguridad en este campo.</li>
+  <li><strong>Contraseña de copia de seguridad de certificado (otra
+    vez)</strong>: vuelva a escribir la contraseña de copia de
+    seguridad. Si la segunda vez no la escribe exactamente igual que la
+    primera vez, el botón Aceptar permanecerá inactivo. Si
+    ocurre esto, intente volver a escribir la contraseña nueva.</li>
+</ul>
+
+<p>Si alguien consigue el archivo que contiene un certificado del que ha
+  realizado copia de seguridad e importa con éxito el certificado, esa persona
+  podrá enviar mensajes o acceder a sitios web haciéndose pasar por usted.
+  Esto puede acarrear graves consecuencias, por ejemplo, si firma digitalmente
+  mensajes importantes de correo electrónico o si administra sus cuentas
+  bancarias o de inversión desde Internet.</p>
+
+<p>Por lo tanto, es importante que seleccione una contraseña de copia de
+  seguridad de certificado que sea difícil de averiguar. El <strong>medidor de
+  calidad de contraseñas</strong> le da una idea aproximada de la calidad de
+  la contraseña en el momento en que la introduce, en función de factores como
+  la longitud y la utilización de mayúsculas, minúsculas, números y símbolos.
+  No obstante, eso no garantiza que su contraseña no se pueda averiguar.</p>
+
+<p>Si desea más información, consulte el documento en línea
+  <a href="passwords_help.xhtml#choosing_a_good_password">Elección de una
+  buena contraseña (en inglés)</a>.</p>
+
+<p>También es importante guardar las contraseñas en un lugar seguro, y no en un
+  sitio que sea fácilmente accesible. Si olvida esta contraseña, no podrá
+  importar la copia de seguridad del certificado.</p>
+
+<h3 id="delete_your_certificates">Eliminar sus certificados</h3>
+
+<p>Antes de suprimir uno de los certificados caducados de la pestaña
+  <a href="#your_certificates">Sus certificados</a> del administrador de
+  certificados, asegúrese de que no volverá a necesitarlo más adelante para
+  leer mensajes antiguos de correo electrónico que haya cifrado con la
+  clave privada correspondiente.</p>
+
+<h2 id="people">Personas</h2>
+
+<p>La pestaña Personas del <a href="#certificate_manager">administrador de
+  certificados</a> muestra certificados de correo electrónico almacenados que
+  identifican a otras personas.</p>
+
+<p>Cuando un usuario le envía mensajes de correo electrónico firmados
+  digitalmente, el administrador de certificados importa sus certificados
+  automáticamente. Estos certificados pueden utilizarse para enviar mensajes
+  cifrados a esas personas.</p>
+
+<p>Los certificados que identifican personas aparecen enumerados bajo los
+  nombres de las organizaciones que los han emitido. Si no puede ver nombres de
+  certificados bajo el nombre de una organización, haga doble clic en el nombre
+  para expandirla.</p>
+
+<p>Use los botones siguientes para ver y administrar sus certificados (la
+  mayoría de las acciones requiere que se seleccionen uno o más
+  certificados):</p>
+ 
+<ul>
+  <li><strong>Ver</strong>: visualiza información detallada sobre los
+    certificados seleccionados.</li>
+  <li><strong>Importar</strong>: importa un archivo que contiene uno o más
+    certificados. Al hacer clic en Importar, lo primero que le pide el
+    administrador de certificados es que localice el archivo que contiene
+    el/los certificado(s).</li>
+  <li><strong>Exportar</strong>: exporta el certificado seleccionado. Puede
+   elegir entre varios formatos.</li>
+  <li><strong>Eliminar</strong>: elimina los certificados seleccionados.</li>
+</ul>
+
+<h3 id="delete_email_certificates">Eliminar certificados de correo
+  electrónico</h3>
+
+<p>Antes de suprimir el certificado de otra persona de la pestaña
+  <a href="#people">Personas</a> del administrador de certificados,
+  asegúrese de que no volverá a necesitarlo más adelante para enviar correo
+  electrónico cifrado a esa persona o para verificar las firmas digitales de
+  sus mensajes.</p>
+
+<h2 id="servers">Servidores</h2>
+
+<p>La pestaña Servidores del administrador de certificados muestra los
+  certificados almacenados que identifican servidores (sitios web, servidores
+  de correo).</p>
+
+<p>Los certificados que identifican servidores se agrupan bajo los nombres de
+  las organizaciones que los han emitido. Si no puede ver nombres de
+  certificados bajo el nombre de una organización, haga doble clic en el nombre
+  para expandirla.</p>
+
+<p>Use los botones siguientes para ver y administrar sus certificados (la
+  mayoría de las acciones requiere que se seleccionen uno o más
+  certificados):</p>
+
+<ul>
+  <li><strong>Ver</strong>: visualice información detallada sobre los
+    certificados seleccionados.</li>
+  <li><strong>Exportar</strong>: exporta el certificado seleccionado. Puede
+   elegir entre varios formatos.</li>
+  <li><strong>Eliminar</strong>: elimina los certificados seleccionados.</li>
+  <li><strong>Añadir excepción</strong>: Añade una excepción de seguridad para
+    un servidor (sitio web, servidor de correo) que le identifica a sí mismo
+    con información no válida. Esta es una característica avanzada, actúe con
+    precaución.</li>
+</ul>
+
+<h3 id="delete_website_certificates">Eliminar un certificado de sitio web</h3>
+
+<p>Antes de suprimir un certificado de servidor de la pestaña
+  <a href="#servers">Servidores</a> del administrador de certificados,
+  asegúrese de que no volverá a necesitarlo para identificar un sitio web o
+  servidor de correo ni para configurar una conexión cifrada.</p>
+
+<h2 id="Authorities">Autoridades</h2>
+
+<p>La pestaña Autoridades del <a href="#certificate_manager">administrador de
+  certificados</a> muestra los certificados almacenados que identifican
+  <a href="glossary.xhtml#certificate_authority">autoridades certificadoras
+  (CA)</a>.</p>
+
+<p>Los certificados de CA aparecen agrupados bajo los nombres de las
+  organizaciones que los han emitido. Si no puede ver nombres de certificados
+  bajo el nombre de una organización, haga doble clic en el nombre
+  para expandirla.</p>
+
+<p>Use los botones siguientes para ver y administrar sus certificados (la
+  mayoría de las acciones requiere que se seleccionen uno o más
+  certificados):</p>
+
+<ul>
+  <li><strong>Ver</strong>: visualiza información detallada sobre los
+    certificados seleccionados.</li>
+  <li><strong>Editar confianza</strong>: muestra o modifica los valores que el
+    administrador de certificados asocia a los certificados seleccionados.
+    Puede utilizar estos valores para designar cuáles son los tipos de
+    certificados (si es que existe alguno) emitidos por las CA
+    correspondientes en los que confía.</li>
+  <li><strong>Importar</strong>: importa un archivo que contiene uno o más
+    certificados. Al hacer clic en Importar, lo primero que le pide el
+    administrador de certificados es que localice el archivo que contiene
+    el/los certificado(s).</li>
+  <li><strong>Exportar</strong>: exporta el certificado seleccionado. Puede
+    elegir entre varios formatos.</li>
+  <li><strong>Eliminar o dejar de confiar</strong>: elimina los certificados
+    seleccionados.</li>
+</ul>
+
+<p>Para garantizar la confianza plena en una
+  <a href="glossary.xhtml#certificate_chain">cadena de certificados</a> de CA
+  completa, sólo es necesario editar el certificado de la CA raíz.</p>
+
+<p>Para importar la cadena, hay que hacer clic en un enlace a una página web
+  facilitada por la CA. A partir de entonces se puede utilizar la pestaña
+  Autoridades para localizar el certificado raíz y editar sus valores de
+  confianza.</p>
+
+<p>Las CA raíz e intermedias aparecerán todas bajo la misma organización. El
+  certificado raíz es el que se muestra a sí mismo como emisor.</p>
+
+<p><strong>Si descarga una CA intermedia</strong>: si descarga un certificado
+  de CA intermedia que está unido a un certificado raíz previamente marcado
+  como de confianza en su navegador, no necesitará indicar para qué propósitos
+  confía en el. Los certificados intermedios heredan automáticamente los
+  valores de confianza de sus certificados raíz.</p>
+
+<h3 id="edit_ca_certificate_trust_settings">Editar los valores de confianza de
+  un certificado de CA</h3>
+
+<p>Al seleccionar un certificado de CA de la pestaña
+  <a href="#authorities">Autoridades</a> del administrador de certificados y
+  hacer clic en Editar, aparece una ventana denominada <q>Editar valores de
+  confianza de certificado de CA</q>. Desde aquí puede especificar los tipos de
+  certificados en los que confía para esta CA. Si quita la marca de
+  verificación de todas las casillas, el administrador de certificados no
+  confiará en ningún certificado emitido por esta CA.</p>
+
+<p>Las elecciones que realice tienen los siguientes efectos:</p>
+
+<ul>
+  <li><strong>Este certificado puede identificar sitios web</strong>: el
+    administrador de certificados confiará en los certificados emitidos
+    por esta CA para propósitos de identificación y cifrado de
+    conexiones de sitios web. Si desactiva esta casilla de
+    verificación, el administrador de certificados no confiará
+    en los certificados de sitio web emitidos por esta CA.</li>
+  <li><strong>Este certificado puede identificar usuarios de correo
+    electrónico</strong>: el administrador de certificados
+    confiará en los certificados emitidos por esta CA para
+    propósitos de firma o cifrado de correo electrónico. Si
+    desactiva esta casilla de verificación, el administrador de
+    certificados no confiará en los certificados de  correo
+    electrónico emitidos por esta CA.</li>
+  <li><strong>Este certificado puede identificar programadores de
+    software</strong>: el administrador de certificados confiará en los
+    certificados emitidos por esta CA para propósitos de
+    identificación de programadores de software. Si desactiva esta
+    casilla de verificación, el administrador de certificados no
+    confiará en tales certificados emitidos por esta CA.</li>
+</ul>
+
+<p>Haga clic en Aceptar para confirmar los valores seleccionados.</p>
+
+<h3 id="delete_ca_certificates">Eliminar un certificado de CA</h3>
+
+<p>Antes de suprimir un certificado de CA de la pestaña
+  <a href="#authorities">Autoridades</a> del administrador de certificados,
+  asegúrese de que no volverá a necesitarlo para validar certificados
+  emitidos por la CA. Si suprime el único certificado válido que tenga para una
+  CA, el administrador de certificados no volverá a confiar en los certificados
+  emitidos por dicha CA.</p>
+
+<h2 id="others">Otros</h2>
+
+<p>La pestaña Otros del administrador de certificados muestra los certificados
+  que tiene archivos que no se ajustan a ninguna de las otras categorías, es
+  decir, certificados que no pertenecen a usted, a otra gente, a servidores ni
+  a CAs.</p>
+
+<p>Estos otros certificados se agrupan bajo los nombres de las organizaciones
+  que los emitieron. Si no puede ver nombres de certificados bajo el nombre de
+  una organización, haga doble clic en el nombre para expandirla.</p>
+
+<p>Use los botones siguientes para ver y administrar sus certificados:</p>
+
+<ul>
+  <li><strong>Ver</strong>: muestra información detallada sobre los
+    certificados seleccionados.</li>
+  <li><strong>Exportar</strong>: exporta los certificados seleccionados. Puede
+    elegir entre varios formatos.</li>
+  <li><strong>Eliminar</strong>: elimina los certificados seleccionados.</li>
+</ul>
+
+<h2 id="device_manager">Administrador de dispositivos</h2>
+
+<p>En esta sección se describen las opciones disponibles en la ventana
+  Administrador de dispositivos. Si desea obtener información previa e
+  instrucciones detalladas sobre la utilización del administrador de
+  dispositivos, consulte
+  <a href="using_certs_help.xhtml#managing_smart_cards_and_other_security_devices">Gestión
+  de tarjetas inteligentes y otros dispositivos de seguridad</a>.</p>
+
+<p>Si aún no ha llegado a la ventana Administrador de dispositivos, siga los
+  pasos que se indican a continuación:</p>
+
+<ol>
+   <li>Abra el menú <span class="mac">&brandShortName;</span>
+       <span class="noMac">Editar</span> y elija &quot;Preferencias&quot;.</li>
+  <li>Dentro de la categoría Privacidad y seguridad, haga clic en
+    Certificados (si no aparece ninguna subcategoría, haga doble clic
+    en Seguridad y privacidad para expandir la lista).</li>
+  <li>En el panel Certificados, haga clic en Administrar dispositivos de
+    seguridad.</li>
+</ol>
+
+<p>El administrador de dispositivos muestra una lista de todos los módulos PKCS
+  #11 disponibles y de los dispositivos de seguridad gestionados por cada
+  módulo bajo el nombre de éstos.</p>
+
+<p>Si selecciona un módulo o dispositivo, la información sobre el elemento
+  seleccionado aparece en  mitad de la ventana y algunos de los botones del
+  lado derecho de la ventana pasan a estar disponibles. En general, el usuario
+  lleva a cabo una acción sobre un módulo o dispositivo seleccionando el nombre
+  de éste y haciendo clic en el botón adecuado:</p>
+
+<ul>
+  <li><strong>Iniciar sesión</strong>: entre en el dispositivo de
+    seguridad seleccionado.</li>
+  <li><strong>Finalizar sesión</strong>: salga del dispositivo de
+    seguridad seleccionado. Una vez que haya finalizado sesión en el
+    dispositivo, tanto éste como los certificados que contiene
+    dejarán de estar a su disposición hasta que vuelva a iniciar
+    sesión.</li>
+  <li><strong>Cambiar contraseña</strong>: cambie la contraseña
+    maestra para el dispositivo de seguridad seleccionado.</li>
+  <li><strong>Cargar</strong>: muestra un cuadro de diálogo que permite
+    indicar el nombre y la ubicación de un nuevo módulo PKCS
+    #11. Antes de agregar un módulo nuevo, debe instalar el software
+    del módulo en el equipo y, si es necesario, conectar cualquier
+    dispositivo de hardware asociado. Siga las instrucciones suministradas por
+    el vendedor.</li>
+  <li><strong>Descargar</strong>: descargue el módulo seleccionado. Si
+    descarga un módulo, deja de estar disponible el módulo y sus
+    dispositivos de seguridad para la utilización en el navegador.</li>
+  <li><strong>Habilitar FIPS</strong>: activa y desactiva el modo FIPS. Si
+    desea más información, consulte
+    <a href="using_certs_help.xhtml#enable_fips_mode">Activación de
+    modo FIPS</a>.</li>
+</ul>
+
+</body>
+</html>

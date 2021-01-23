@@ -1,5 +1,8 @@
 # WebRender
-GPU renderer for the Web content, used by Servo.
+
+[![Version](https://img.shields.io/crates/v/webrender.svg)](https://crates.io/crates/webrender)
+
+WebRender is a GPU-based 2D rendering engine written in [Rust](https://www.rust-lang.org/). [Firefox](https://www.mozilla.org/firefox), the research web browser [Servo](https://github.com/servo/servo), and other GUI frameworks draw with it. It currently uses the OpenGL API internally.
 
 Note that the canonical home for this code is in gfx/wr folder of the
 mozilla-central repository at https://hg.mozilla.org/mozilla-central. The

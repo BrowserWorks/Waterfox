@@ -11,6 +11,7 @@ DIRS += [
 DevToolsModules(
     'accessible.js',
     'auto-refresh.js',
+    'box-model-renderer.js',
     'box-model.js',
     'css-grid.js',
     'css-transform.js',

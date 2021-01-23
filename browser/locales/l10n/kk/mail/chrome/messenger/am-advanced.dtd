@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!ENTITY smtpServer.label "Шығыс пошта сервері (SMTP) баптаулары">
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+
+<!ENTITY smtpDescription.label "Тіркелу мәліметтеріңізді басқару кезінде сіз бұл тізімнен серверді оны шығыс пошта сервері (SMTP) ретінде таңдау арқылы қолдана аласыз, немесе сіз &quot;Негізгі серверді орнату&quot; арқылы бұл тізімнен үнсіз келісім бойынша серверін қолдана аласыз.">
+
+<!ENTITY smtpListAdd.label  "Қосу…">
+<!ENTITY smtpListAdd.accesskey  "о">
+<!ENTITY smtpListEdit.label "Өзгерту…">
+<!ENTITY smtpListEdit.accesskey "Ө">
+<!ENTITY smtpListDelete.label "Өшіру">
+<!ENTITY smtpListDelete.accesskey "ш">
+<!ENTITY smtpListSetDefault.label "Негізгі қылу">
+<!ENTITY smtpListSetDefault.accesskey "Н">
+
+<!ENTITY serverDetails.label "Таңдалған сервердің ақпараты:">
+<!ENTITY serverDescription.label "Анықтамасы: ">
+<!ENTITY serverName.label "Сервердің атауы: ">
+<!ENTITY serverPort.label "Порт: ">
+<!ENTITY userName.label   "Пайдаланушы аты: ">
+<!ENTITY connectionSecurity.label "Байланыс қауіпсіздігі: ">
+<!ENTITY authMethod.label   "Аутентификация тәсілі: ">

@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Registo dos filtros">
+<!ENTITY viewLogInfo.text "O registo dos filtros documenta os filtros que foram executados nesta conta. Utilize a caixa de verificação abaixo para ativar o serviço.">
+<!ENTITY clearLog.label "Limpar registo">
+<!ENTITY clearLog.accesskey "L">
+<!ENTITY enableLog.label "Ativar registo">
+<!ENTITY enableLog.accesskey "A">
+<!ENTITY closeLog.label "Fechar">
+<!ENTITY closeLog.accesskey "F">

@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSMIMEOverlay.dtd UI for s/mime hooks in message composition -->
+
+<!ENTITY menu_securityDoNotEncrypt.label "Не шифрувати">
+<!ENTITY menu_securityDoNotEncrypt.accesskey "е">
+
+<!-- not yet used
+<!ENTITY menu_securityEncryptOptional.label "Allow Encryption">
+<!ENTITY menu_securityEncryptOptional.accesskey "w">
+-->
+
+<!ENTITY menu_securityEncryptRequire2.label "Вимагати шифрування">
+<!ENTITY menu_securityEncryptRequire.accesskey "В">
+
+<!ENTITY menu_securitySign.label "Цифровий підпис">
+<!ENTITY menu_securitySign.accesskey "Ц">
+
+<!ENTITY menu_securityAttachMyKey.label "Приєднати мій відкритий ключ">
+<!ENTITY menu_securityAttachMyKey.accesskey "П">
+
+<!ENTITY menu_securityTech.label "Технологія шифрування">
+<!ENTITY menu_securityTech.accesskey "Т">
+
+<!ENTITY menu_techPGP.label "OpenPGP">
+<!ENTITY menu_techPGP.accesskey "O">
+<!ENTITY menu_techSMIME.label "S/MIME">
+<!ENTITY menu_techSMIME.accesskey "S">
+
+<!ENTITY menu_securityStatus.label "Захист повідомлення">
+<!ENTITY menu_securityStatus.accesskey "х">
+
+<!ENTITY securityButton.label "Захист">
+<!ENTITY securityButton.tooltip "Перегляд або зміна параметрів захисту">
+
+<!ENTITY menu_viewSecurityStatus.label "Інформація про захист повідомлення">
+<!ENTITY menu_viewSecurityStatus.accesskey "І">

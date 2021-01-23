@@ -24,25 +24,40 @@ ChromeUtils.defineModuleGetter(
 );
 
 var security = {
-  init(uri, windowInfo) {
+  async init(uri, windowInfo) {
     this.uri = uri;
     this.windowInfo = windowInfo;
+    this.securityInfo = await this._getSecurityInfo();
   },
 
-  // Display the server certificate (static)
   viewCert() {
-    var cert = security._cert;
-    viewCertHelper(window, cert);
+    if (Services.prefs.getBoolPref("security.aboutcertificate.enabled")) {
+      let certChain = this.securityInfo.certChain;
+      let certs = certChain.map(elem =>
+        encodeURIComponent(elem.getBase64DERString())
+      );
+      let certsStringURL = certs.map(elem => `cert=${elem}`);
+      certsStringURL = certsStringURL.join("&");
+      let url = `about:certificate?${certsStringURL}`;
+      let win = BrowserWindowTracker.getTopWindow();
+      win.switchToTabHavingURI(url, true, {});
+    } else {
+      Services.ww.openWindow(
+        window,
+        "chrome://pippki/content/certViewer.xhtml",
+        "_blank",
+        "centerscreen,chrome",
+        this.securityInfo.cert
+      );
+    }
   },
 
-  _getSecurityInfo() {
+  async _getSecurityInfo() {
     // We don't have separate info for a frame, return null until further notice
     // (see bug 138479)
     if (!this.windowInfo.isTopWindow) {
       return null;
     }
-
-    var hostName = this.windowInfo.hostName;
 
     var ui = security._getSecurityUI();
     if (!ui) {
@@ -54,16 +69,25 @@ var security = {
       ui.state &
       (Ci.nsIWebProgressListener.STATE_LOADED_MIXED_ACTIVE_CONTENT |
         Ci.nsIWebProgressListener.STATE_LOADED_MIXED_DISPLAY_CONTENT);
-    var isInsecure = ui.state & Ci.nsIWebProgressListener.STATE_IS_INSECURE;
     var isEV = ui.state & Ci.nsIWebProgressListener.STATE_IDENTITY_EV_TOPLEVEL;
-    var secInfo = ui.secInfo;
 
-    if (!isInsecure && secInfo) {
-      var cert = secInfo.serverCert;
-      var issuerName = cert.issuerOrganization || cert.issuerName;
+    let secInfo = await window.opener.gBrowser.selectedBrowser.browsingContext.currentWindowGlobal.getSecurityInfo();
+    if (secInfo) {
+      secInfo.QueryInterface(Ci.nsITransportSecurityInfo);
+      let cert = secInfo.serverCert;
+      let issuerName = null;
+      if (cert) {
+        issuerName = cert.issuerOrganization || cert.issuerName;
+      }
+
+      let certChainArray = [];
+      if (secInfo.succeededCertChain.length) {
+        certChainArray = secInfo.succeededCertChain;
+      } else {
+        certChainArray = secInfo.failedCertChain;
+      }
 
       var retval = {
-        hostName,
         cAName: issuerName,
         encryptionAlgorithm: undefined,
         encryptionStrength: undefined,
@@ -72,6 +96,7 @@ var security = {
         isMixed,
         isEV,
         cert,
+        certChain: certChainArray,
         certificateTransparency: undefined,
       };
 
@@ -122,7 +147,6 @@ var security = {
       return retval;
     }
     return {
-      hostName,
       cAName: "",
       encryptionAlgorithm: "",
       encryptionStrength: 0,
@@ -165,7 +189,7 @@ var security = {
     let usage = this.siteData.reduce((acc, site) => acc + site.usage, 0);
     if (usage > 0) {
       let size = DownloadUtils.convertByteUnits(usage);
-      let hasCookies = this.siteData.some(site => site.cookies.length > 0);
+      let hasCookies = this.siteData.some(site => !!site.cookies.length);
       if (hasCookies) {
         document.l10n.setAttributes(
           siteDataLabel,
@@ -206,18 +230,16 @@ var security = {
    */
   viewPasswords() {
     LoginHelper.openPasswordManager(window, {
-      filterString: this._getSecurityInfo().hostName,
+      filterString: this.windowInfo.hostName,
       entryPoint: "pageinfo",
     });
   },
-
-  _cert: null,
 };
 
-function securityOnLoad(uri, windowInfo) {
-  security.init(uri, windowInfo);
+async function securityOnLoad(uri, windowInfo) {
+  await security.init(uri, windowInfo);
 
-  var info = security._getSecurityInfo();
+  let info = security.securityInfo;
   if (
     !info ||
     (uri.scheme === "about" && !uri.spec.startsWith("about:certerror"))
@@ -228,7 +250,7 @@ function securityOnLoad(uri, windowInfo) {
   document.getElementById("securityTab").hidden = false;
 
   /* Set Identity section text */
-  setText("security-identity-domain-value", info.hostName);
+  setText("security-identity-domain-value", windowInfo.hostName);
 
   var validity;
   if (info.cert && !info.isBroken) {
@@ -248,7 +270,7 @@ function securityOnLoad(uri, windowInfo) {
       // treating these certs as domain-validated only.
       document.l10n.setAttributes(
         document.getElementById("security-identity-owner-value"),
-        "security-no-owner"
+        "page-info-security-no-owner"
       );
       setText(
         "security-identity-verifier-value",
@@ -259,11 +281,11 @@ function securityOnLoad(uri, windowInfo) {
     // We don't have valid identity credentials.
     document.l10n.setAttributes(
       document.getElementById("security-identity-owner-value"),
-      "security-no-owner"
+      "page-info-security-no-owner"
     );
     document.l10n.setAttributes(
       document.getElementById("security-identity-verifier-value"),
-      "not-set-verified-by"
+      "page-info-not-specified"
     );
   }
 
@@ -276,7 +298,6 @@ function securityOnLoad(uri, windowInfo) {
   /* Manage the View Cert button*/
   var viewCert = document.getElementById("security-view-cert");
   if (info.cert) {
-    security._cert = info.cert;
     viewCert.collapsed = false;
   } else {
     viewCert.collapsed = true;
@@ -306,7 +327,7 @@ function securityOnLoad(uri, windowInfo) {
   document.l10n.setAttributes(
     document.getElementById("security-privacy-history-value"),
     "security-visits-number",
-    { visits: previousVisitCount(info.hostName) }
+    { visits: previousVisitCount(windowInfo.hostName) }
   );
 
   /* Set the Technical Detail section messages */
@@ -335,12 +356,11 @@ function securityOnLoad(uri, windowInfo) {
     );
     msg1 = pkiBundle.getString("pageInfo_Privacy_Encrypted1");
     msg2 = pkiBundle.getString("pageInfo_Privacy_Encrypted2");
-    security._cert = info.cert;
   } else {
     hdr = pkiBundle.getString("pageInfo_NoEncryption");
-    if (info.hostName != null) {
+    if (windowInfo.hostName != null) {
       msg1 = pkiBundle.getFormattedString("pageInfo_Privacy_None1", [
-        info.hostName,
+        windowInfo.hostName,
       ]);
     } else {
       msg1 = pkiBundle.getString("pageInfo_Privacy_None4");
@@ -369,25 +389,11 @@ function setText(id, value) {
   if (!element) {
     return;
   }
-  if (element.localName == "textbox" || element.localName == "label") {
+  if (element.localName == "input" || element.localName == "label") {
     element.value = value;
   } else {
     element.textContent = value;
   }
-}
-
-function viewCertHelper(parent, cert) {
-  if (!cert) {
-    return;
-  }
-
-  Services.ww.openWindow(
-    parent,
-    "chrome://pippki/content/certViewer.xul",
-    "_blank",
-    "centerscreen,chrome",
-    cert
-  );
 }
 
 /**

@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowtitle.label              "Exceptions">
+<!ENTITY treehead.sitename.label        "Site">
+<!ENTITY treehead.status.label          "État">
+<!ENTITY remove.label                   "Supprimer le site">
+<!ENTITY remove.accesskey               "S">
+<!ENTITY removeall.label                "Tout supprimer">
+<!ENTITY removeall.accesskey            "u">
+<!ENTITY address.label                  "Adresse du site web :">
+<!ENTITY address.accesskey              "W">
+<!ENTITY block.label                    "Bloquer">
+<!ENTITY block.accesskey                "B">
+<!ENTITY session.label                  "Autoriser pour la session">
+<!ENTITY session.accesskey              "o">
+<!ENTITY allow.label                    "Autoriser">
+<!ENTITY allow.accesskey                "A">

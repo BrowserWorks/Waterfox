@@ -34,7 +34,7 @@ class nsFloatCache {
 #ifdef NS_BUILD_REFCNT_LOGGING
   ~nsFloatCache();
 #else
-  ~nsFloatCache() {}
+  ~nsFloatCache() = default;
 #endif
 
   nsFloatCache* Next() const { return mNext; }
@@ -100,7 +100,7 @@ class nsFloatCacheFreeList : private nsFloatCacheList {
   ~nsFloatCacheFreeList();
 #else
   nsFloatCacheFreeList() : mTail(nullptr) {}
-  ~nsFloatCacheFreeList() {}
+  ~nsFloatCacheFreeList() = default;
 #endif
 
   // Reimplement trivial functions
@@ -272,6 +272,11 @@ class nsLineBox final : public nsLineLink {
   void ClearHasLineClampEllipsis() { mFlags.mHasLineClampEllipsis = false; }
   bool HasLineClampEllipsis() const { return mFlags.mHasLineClampEllipsis; }
 
+  // mMovedFragments bit
+  void SetMovedFragments() { mFlags.mMovedFragments = true; }
+  void ClearMovedFragments() { mFlags.mMovedFragments = false; }
+  bool MovedFragments() const { return mFlags.mMovedFragments; }
+
  private:
   // Add a hash table for fast lookup when the line has more frames than this.
   static const uint32_t kMinChildCountForHashtable = 200;
@@ -405,17 +410,19 @@ class nsLineBox final : public nsLineLink {
                                        const nsSize& aContainerSize) {
     return mozilla::LogicalRect(aWM, GetOverflowArea(aType), aContainerSize);
   }
-  nsRect GetOverflowArea(nsOverflowType aType) {
+  nsRect GetOverflowArea(nsOverflowType aType) const {
     return mData ? mData->mOverflowAreas.Overflow(aType) : GetPhysicalBounds();
   }
-  nsOverflowAreas GetOverflowAreas() {
+  nsOverflowAreas GetOverflowAreas() const {
     if (mData) {
       return mData->mOverflowAreas;
     }
     nsRect bounds = GetPhysicalBounds();
     return nsOverflowAreas(bounds, bounds);
   }
-  nsRect GetVisualOverflowArea() { return GetOverflowArea(eVisualOverflow); }
+  nsRect GetVisualOverflowArea() const {
+    return GetOverflowArea(eVisualOverflow);
+  }
   nsRect GetScrollableOverflowArea() {
     return GetOverflowArea(eScrollableOverflow);
   }
@@ -517,18 +524,23 @@ class nsLineBox final : public nsLineLink {
   static const char* BreakTypeToString(StyleClear aBreakType);
   char* StateToString(char* aBuf, int32_t aBufSize) const;
 
-  void List(FILE* out, int32_t aIndent, uint32_t aFlags = 0) const;
+  void List(FILE* out, int32_t aIndent,
+            nsIFrame::ListFlags aFlags = nsIFrame::ListFlags()) const;
   void List(FILE* out = stderr, const char* aPrefix = "",
-            uint32_t aFlags = 0) const;
+            nsIFrame::ListFlags aFlags = nsIFrame::ListFlags()) const;
   nsIFrame* LastChild() const;
 #endif
 
   void AddSizeOfExcludingThis(nsWindowSizes& aSizes) const;
 
- private:
+  // Find the index of aFrame within the line, starting search at the start.
   int32_t IndexOf(nsIFrame* aFrame) const;
 
- public:
+  // Find the index of aFrame within the line, starting search at the end.
+  // (Produces the same result as IndexOf, but with different performance
+  // characteristics.)  The caller must provide the last frame in the line.
+  int32_t RIndexOf(nsIFrame* aFrame, nsIFrame* aLastFrameInLine) const;
+
   bool Contains(nsIFrame* aFrame) const {
     return MOZ_UNLIKELY(mFlags.mHasHashedFrames) ? mFrames->Contains(aFrame)
                                                  : IndexOf(aFrame) >= 0;
@@ -620,6 +632,9 @@ class nsLineBox final : public nsLineLink {
     // line in the set of lines found by LineClampLineIterator for a given
     // block will have this flag set.
     bool mHasLineClampEllipsis : 1;
+    // Has this line moved to a different fragment of the block since
+    // the last time it was reflowed?
+    bool mMovedFragments : 1;
     StyleClear mBreakType;
   };
 
@@ -831,6 +846,12 @@ class nsLineList_iterator {
     return mCurrent != aOther.mCurrent;
   }
 
+#ifdef DEBUG
+  bool IsInSameList(const iterator_self_type aOther) const {
+    return mListLink == aOther.mListLink;
+  }
+#endif
+
  private:
   link_type* mCurrent;
 #ifdef DEBUG
@@ -964,6 +985,12 @@ class nsLineList_reverse_iterator {
     return mCurrent != aOther.mCurrent;
   }
 
+#ifdef DEBUG
+  bool IsInSameList(const iterator_self_type aOther) const {
+    return mListLink == aOther.mListLink;
+  }
+#endif
+
  private:
   link_type* mCurrent;
 #ifdef DEBUG
@@ -1094,6 +1121,12 @@ class nsLineList_const_iterator {
     return mCurrent != aOther.mCurrent;
   }
 
+#ifdef DEBUG
+  bool IsInSameList(const iterator_self_type aOther) const {
+    return mListLink == aOther.mListLink;
+  }
+#endif
+
  private:
   const link_type* mCurrent;
 #ifdef DEBUG
@@ -1214,6 +1247,12 @@ class nsLineList_const_reverse_iterator {
     return mCurrent != aOther.mCurrent;
   }
 
+#ifdef DEBUG
+  bool IsInSameList(const iterator_self_type aOther) const {
+    return mListLink == aOther.mListLink;
+  }
+#endif
+
   // private:
   const link_type* mCurrent;
 #ifdef DEBUG
@@ -1255,7 +1294,7 @@ class nsLineList {
     clear();
   }
 
-  ~nsLineList() { MOZ_COUNT_DTOR(nsLineList); }
+  MOZ_COUNTED_DTOR(nsLineList)
 
   const_iterator begin() const {
     const_iterator rv;
@@ -1542,9 +1581,7 @@ class nsLineList {
 #endif /* !NS_LINELIST_DEBUG_PASS_END */
 
 inline nsLineList_iterator& nsLineList_iterator::operator=(
-    const nsLineList_iterator& aOther) {
-  ASSIGN_FROM(aOther)
-}
+    const nsLineList_iterator& aOther) = default;
 
 inline nsLineList_iterator& nsLineList_iterator::operator=(
     const nsLineList_reverse_iterator& aOther) {
@@ -1557,9 +1594,7 @@ inline nsLineList_reverse_iterator& nsLineList_reverse_iterator::operator=(
 }
 
 inline nsLineList_reverse_iterator& nsLineList_reverse_iterator::operator=(
-    const nsLineList_reverse_iterator& aOther) {
-  ASSIGN_FROM(aOther)
-}
+    const nsLineList_reverse_iterator& aOther) = default;
 
 inline nsLineList_const_iterator& nsLineList_const_iterator::operator=(
     const nsLineList_iterator& aOther) {
@@ -1572,34 +1607,34 @@ inline nsLineList_const_iterator& nsLineList_const_iterator::operator=(
 }
 
 inline nsLineList_const_iterator& nsLineList_const_iterator::operator=(
-    const nsLineList_const_iterator& aOther) {
-  ASSIGN_FROM(aOther)
-}
+    const nsLineList_const_iterator& aOther) = default;
 
 inline nsLineList_const_iterator& nsLineList_const_iterator::operator=(
     const nsLineList_const_reverse_iterator& aOther) {
   ASSIGN_FROM(aOther)
 }
 
-inline nsLineList_const_reverse_iterator& nsLineList_const_reverse_iterator::
-operator=(const nsLineList_iterator& aOther) {
+inline nsLineList_const_reverse_iterator&
+nsLineList_const_reverse_iterator::operator=(
+    const nsLineList_iterator& aOther) {
   ASSIGN_FROM(aOther)
 }
 
-inline nsLineList_const_reverse_iterator& nsLineList_const_reverse_iterator::
-operator=(const nsLineList_reverse_iterator& aOther) {
+inline nsLineList_const_reverse_iterator&
+nsLineList_const_reverse_iterator::operator=(
+    const nsLineList_reverse_iterator& aOther) {
   ASSIGN_FROM(aOther)
 }
 
-inline nsLineList_const_reverse_iterator& nsLineList_const_reverse_iterator::
-operator=(const nsLineList_const_iterator& aOther) {
+inline nsLineList_const_reverse_iterator&
+nsLineList_const_reverse_iterator::operator=(
+    const nsLineList_const_iterator& aOther) {
   ASSIGN_FROM(aOther)
 }
 
-inline nsLineList_const_reverse_iterator& nsLineList_const_reverse_iterator::
-operator=(const nsLineList_const_reverse_iterator& aOther) {
-  ASSIGN_FROM(aOther)
-}
+inline nsLineList_const_reverse_iterator&
+nsLineList_const_reverse_iterator::operator=(
+    const nsLineList_const_reverse_iterator& aOther) = default;
 
 //----------------------------------------------------------------------
 
@@ -1610,18 +1645,19 @@ class nsLineIterator final : public nsILineIterator {
 
   virtual void DisposeLineIterator() override;
 
-  virtual int32_t GetNumLines() override;
+  virtual int32_t GetNumLines() const override;
   virtual bool GetDirection() override;
   NS_IMETHOD GetLine(int32_t aLineNumber, nsIFrame** aFirstFrameOnLine,
-                     int32_t* aNumFramesOnLine, nsRect& aLineBounds) override;
+                     int32_t* aNumFramesOnLine,
+                     nsRect& aLineBounds) const override;
   virtual int32_t FindLineContaining(nsIFrame* aFrame,
                                      int32_t aStartLine = 0) override;
   NS_IMETHOD FindFrameAt(int32_t aLineNumber, nsPoint aPos,
                          nsIFrame** aFrameFound, bool* aPosIsBeforeFirstFrame,
-                         bool* aPosIsAfterLastFrame) override;
+                         bool* aPosIsAfterLastFrame) const override;
 
   NS_IMETHOD GetNextSiblingOnLine(nsIFrame*& aFrame,
-                                  int32_t aLineNumber) override;
+                                  int32_t aLineNumber) const override;
   NS_IMETHOD CheckLineOrder(int32_t aLine, bool* aIsReordered,
                             nsIFrame** aFirstVisual,
                             nsIFrame** aLastVisual) override;

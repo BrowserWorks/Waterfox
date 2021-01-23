@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loginAtStartup.label "სტატიების განახლების შემოწმება სეანსის დაწყებისას">
+<!ENTITY loginAtStartup.accesskey "C">
+<!ENTITY biffAll.label "განახლებების ჩართვა, ყველა არხისთვის">
+<!ENTITY biffAll.accesskey "ხ">
+
+<!ENTITY newFeedSettings.label "ნაგულისხმევი პარამეტრები, სიახლეების არხებისთვის">
+
+<!ENTITY manageSubscriptions.label "გამოწერების მართვა…">
+<!ENTITY manageSubscriptions.accesskey "M">
+
+<!-- entities from rss.rdf -->
+<!ENTITY feeds.accountName "ბლოგები და სიახლეთა არხები">
+<!ENTITY feeds.wizardShortName "არხები">
+<!ENTITY feeds.wizardLongName "ბლოგები და სიახლეთა არხები">
+<!ENTITY feeds.wizardLongName.accesskey "F">

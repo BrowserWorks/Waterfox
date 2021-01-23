@@ -180,7 +180,7 @@ const SecurityInfo = {
       ];
     }
 
-    // HSTS and HPKP if available.
+    // HSTS and static pinning if available.
     if (uri && uri.host) {
       // SiteSecurityService uses different storage if the channel is
       // private. Thus we must give isSecureURI correct flags or we
@@ -194,7 +194,7 @@ const SecurityInfo = {
       }
 
       info.hsts = sss.isSecureURI(sss.HEADER_HSTS, uri, flags);
-      info.hpkp = sss.isSecureURI(sss.HEADER_HPKP, uri, flags);
+      info.hpkp = sss.isSecureURI(sss.STATIC_PINNING, uri, flags);
     } else {
       info.hsts = false;
       info.hpkp = false;
@@ -205,7 +205,7 @@ const SecurityInfo = {
 
   getCertificateChain(certChain, options = {}) {
     let certificates = [];
-    for (let cert of certChain.getEnumerator()) {
+    for (let cert of certChain) {
       certificates.push(this.parseCertificateInfo(cert, options));
     }
     return certificates;
@@ -253,7 +253,7 @@ const SecurityInfo = {
       },
     };
     if (options.rawDER) {
-      certData.rawDER = cert.getRawDER({});
+      certData.rawDER = cert.getRawDER();
     }
     return certData;
   },

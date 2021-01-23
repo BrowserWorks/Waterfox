@@ -6,6 +6,8 @@
 
 #include "ImageEncoder.h"
 #include "mozilla/dom/CanvasRenderingContext2D.h"
+#include "mozilla/dom/GeneratePlaceholderCanvasData.h"
+#include "mozilla/dom/MemoryBlobImpl.h"
 #include "mozilla/dom/WorkerPrivate.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/gfx/DataSurfaceHelpers.h"
@@ -14,7 +16,7 @@
 #include "mozilla/SyncRunnable.h"
 #include "mozilla/Unused.h"
 #include "gfxUtils.h"
-#include "nsThreadPool.h"
+#include "nsThreadUtils.h"
 #include "nsNetUtil.h"
 #include "nsXPCOMCIDInternal.h"
 #include "YCbCrUtils.h"
@@ -73,7 +75,7 @@ already_AddRefed<DataSourceSurface> GetBRGADataSourceSurfaceSync(
 }
 
 class EncodingCompleteEvent : public CancelableRunnable {
-  virtual ~EncodingCompleteEvent() {}
+  virtual ~EncodingCompleteEvent() = default;
 
  public:
   explicit EncodingCompleteEvent(
@@ -98,14 +100,12 @@ class EncodingCompleteEvent : public CancelableRunnable {
     nsresult rv = NS_OK;
 
     // We want to null out mEncodeCompleteCallback no matter what.
-    RefPtr<EncodeCompleteCallback> callback(mEncodeCompleteCallback.forget());
+    RefPtr<EncodeCompleteCallback> callback(std::move(mEncodeCompleteCallback));
     if (!mFailed) {
-      // The correct parentObject has to be set by the mEncodeCompleteCallback.
-      RefPtr<Blob> blob =
-          Blob::CreateMemoryBlob(nullptr, mImgData, mImgSize, mType);
-      MOZ_ASSERT(blob);
-
-      rv = callback->ReceiveBlob(blob.forget());
+      RefPtr<BlobImpl> blobImpl = new MemoryBlobImpl(mImgData, mImgSize, mType);
+      rv = callback->ReceiveBlobImpl(blobImpl.forget());
+    } else {
+      rv = callback->ReceiveBlobImpl(nullptr);
     }
 
     return rv;
@@ -134,7 +134,7 @@ class EncodingCompleteEvent : public CancelableRunnable {
 };
 
 class EncodingRunnable : public Runnable {
-  virtual ~EncodingRunnable() {}
+  virtual ~EncodingRunnable() = default;
 
  public:
   NS_INLINE_DECL_REFCOUNTING_INHERITED(EncodingRunnable, Runnable)
@@ -213,8 +213,6 @@ class EncodingRunnable : public Runnable {
   bool mUsingCustomOptions;
 };
 
-StaticRefPtr<nsIThreadPool> ImageEncoder::sThreadPool;
-
 /* static */
 nsresult ImageEncoder::ExtractData(nsAString& aType, const nsAString& aOptions,
                                    const nsIntSize aSize, bool aUsePlaceholder,
@@ -241,11 +239,6 @@ nsresult ImageEncoder::ExtractDataFromLayersImageAsync(
     return NS_IMAGELIB_ERROR_NO_ENCODER;
   }
 
-  nsresult rv = EnsureThreadPool();
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-
   RefPtr<EncodingCompleteEvent> completeEvent =
       new EncodingCompleteEvent(aEncodeCallback);
 
@@ -254,7 +247,7 @@ nsresult ImageEncoder::ExtractDataFromLayersImageAsync(
       new EncodingRunnable(aType, aOptions, nullptr, aImage, encoder,
                            completeEvent, imgIEncoder::INPUT_FORMAT_HOSTARGB,
                            size, aUsePlaceholder, aUsingCustomOptions);
-  return sThreadPool->Dispatch(event, NS_DISPATCH_NORMAL);
+  return NS_DispatchBackgroundTask(event.forget());
 }
 
 /* static */
@@ -267,18 +260,13 @@ nsresult ImageEncoder::ExtractDataAsync(
     return NS_IMAGELIB_ERROR_NO_ENCODER;
   }
 
-  nsresult rv = EnsureThreadPool();
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-
   RefPtr<EncodingCompleteEvent> completeEvent =
       new EncodingCompleteEvent(aEncodeCallback);
 
   nsCOMPtr<nsIRunnable> event = new EncodingRunnable(
       aType, aOptions, std::move(aImageBuffer), nullptr, encoder, completeEvent,
       aFormat, aSize, aUsePlaceholder, aUsingCustomOptions);
-  return sThreadPool->Dispatch(event, NS_DISPATCH_NORMAL);
+  return NS_DispatchBackgroundTask(event.forget());
 }
 
 /*static*/
@@ -396,8 +384,9 @@ nsresult ImageEncoder::ExtractDataInternal(
       return NS_ERROR_INVALID_ARG;
     }
     if (aUsePlaceholder) {
-      // If placeholder data was requested, return all-white, opaque image data.
-      memset(map.mData, 0xFF, 4 * aSize.width * aSize.height);
+      auto size = 4 * aSize.width * aSize.height;
+      auto* data = map.mData;
+      GeneratePlaceholderCanvasData(size, data);
     }
     rv = aEncoder->InitFromData(map.mData, aSize.width * aSize.height * 4,
                                 aSize.width, aSize.height, aSize.width * 4,
@@ -430,76 +419,6 @@ already_AddRefed<imgIEncoder> ImageEncoder::GetImageEncoder(nsAString& aType) {
   }
 
   return encoder.forget();
-}
-
-class EncoderThreadPoolTerminator final : public nsIObserver {
- public:
-  NS_DECL_ISUPPORTS
-
-  NS_IMETHOD Observe(nsISupports*, const char* topic,
-                     const char16_t*) override {
-    NS_ASSERTION(!strcmp(topic, "xpcom-shutdown-threads"), "Unexpected topic");
-    if (ImageEncoder::sThreadPool) {
-      ImageEncoder::sThreadPool->Shutdown();
-      ImageEncoder::sThreadPool = nullptr;
-    }
-    return NS_OK;
-  }
-
- private:
-  ~EncoderThreadPoolTerminator() {}
-};
-
-NS_IMPL_ISUPPORTS(EncoderThreadPoolTerminator, nsIObserver)
-
-static void RegisterEncoderThreadPoolTerminatorObserver() {
-  MOZ_ASSERT(NS_IsMainThread());
-  nsCOMPtr<nsIObserverService> os = mozilla::services::GetObserverService();
-  NS_ASSERTION(os, "do_GetService failed");
-  os->AddObserver(new EncoderThreadPoolTerminator(), "xpcom-shutdown-threads",
-                  false);
-}
-
-/* static */
-nsresult ImageEncoder::EnsureThreadPool() {
-  if (!sThreadPool) {
-    nsCOMPtr<nsIThreadPool> threadPool = new nsThreadPool();
-    sThreadPool = threadPool;
-
-    if (!NS_IsMainThread()) {
-      NS_DispatchToMainThread(NS_NewRunnableFunction(
-          "dom::ImageEncoder::EnsureThreadPool",
-          []() -> void { RegisterEncoderThreadPoolTerminatorObserver(); }));
-    } else {
-      RegisterEncoderThreadPoolTerminatorObserver();
-    }
-
-    const uint32_t kThreadLimit = 2;
-    const uint32_t kIdleThreadLimit = 1;
-    const uint32_t kIdleThreadTimeoutMs = 30000;
-
-    nsresult rv = sThreadPool->SetName(NS_LITERAL_CSTRING("EncodingRunnable"));
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      return rv;
-    }
-
-    rv = sThreadPool->SetThreadLimit(kThreadLimit);
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      return rv;
-    }
-
-    rv = sThreadPool->SetIdleThreadLimit(kIdleThreadLimit);
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      return rv;
-    }
-
-    rv = sThreadPool->SetIdleThreadTimeout(kIdleThreadTimeoutMs);
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      return rv;
-    }
-  }
-
-  return NS_OK;
 }
 
 }  // namespace dom

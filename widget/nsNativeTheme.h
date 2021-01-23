@@ -32,7 +32,7 @@ class EventStates;
 
 class nsNativeTheme : public nsITimerCallback, public nsINamed {
  protected:
-  virtual ~nsNativeTheme() {}
+  virtual ~nsNativeTheme() = default;
 
   NS_DECL_ISUPPORTS
   NS_DECL_NSITIMERCALLBACK
@@ -69,7 +69,7 @@ class nsNativeTheme : public nsITimerCallback, public nsINamed {
   // RTL chrome direction
   static bool IsFrameRTL(nsIFrame* aFrame);
 
-  bool IsHTMLContent(nsIFrame* aFrame);
+  static bool IsHTMLContent(nsIFrame* aFrame);
 
   // button:
   bool IsDefaultButton(nsIFrame* aFrame) {
@@ -185,7 +185,7 @@ class nsNativeTheme : public nsITimerCallback, public nsINamed {
   bool IsRangeHorizontal(nsIFrame* aFrame);
 
   // scrollbar
-  bool IsDarkBackground(nsIFrame* aFrame);
+  static bool IsDarkBackground(nsIFrame* aFrame);
   // custom scrollbar
   typedef nscolor (*AutoColorGetter)(mozilla::ComputedStyle*);
   bool IsWidgetScrollbarPart(mozilla::StyleAppearance aAppearance);

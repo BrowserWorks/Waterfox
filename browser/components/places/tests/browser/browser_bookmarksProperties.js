@@ -31,9 +31,9 @@ const TYPE_BOOKMARK = 1;
 
 const TEST_URL = "http://www.example.com/";
 
-const DIALOG_URL = "chrome://browser/content/places/bookmarkProperties.xul";
+const DIALOG_URL = "chrome://browser/content/places/bookmarkProperties.xhtml";
 const DIALOG_URL_MINIMAL_UI =
-  "chrome://browser/content/places/bookmarkProperties2.xul";
+  "chrome://browser/content/places/bookmarkProperties2.xhtml";
 
 const { BrowserWindowTracker } = ChromeUtils.import(
   "resource:///modules/BrowserWindowTracker.jsm"
@@ -120,7 +120,9 @@ gTests.push({
           case "popuphidden":
             // Everything worked fine, we can stop observing the window.
             self._cleanShutdown = true;
-            self.window.document.documentElement.cancelDialog();
+            self.window.document
+              .getElementById("bookmarkpropertiesdialog")
+              .cancelDialog();
             break;
           case "popupshown":
             tagsField.popup.removeEventListener("popupshown", this, true);
@@ -247,7 +249,9 @@ gTests.push({
           case "popuphidden":
             // Everything worked fine.
             self._cleanShutdown = true;
-            self.window.document.documentElement.cancelDialog();
+            self.window.document
+              .getElementById("bookmarkpropertiesdialog")
+              .cancelDialog();
             break;
           case "popupshown":
             tagsField.popup.removeEventListener("popupshown", this, true);
@@ -397,12 +401,14 @@ gTests.push({
 
         self._cleanShutdown = true;
         self._removeObserver = PlacesTestUtils.waitForNotification(
-          "onItemRemoved",
-          (itemId, parentId, index, type, uri, guid) =>
-            guid == self._bookmarkGuid
+          "bookmark-removed",
+          events => events.some(eve => eve.guid == self._bookmarkGuid),
+          "places"
         );
 
-        self.window.document.documentElement.cancelDialog();
+        self.window.document
+          .getElementById("bookmarkpropertiesdialog")
+          .cancelDialog();
       });
     });
     foldersExpander.doCommand();
@@ -467,42 +473,41 @@ function execute_test_in_sidebar(test) {
   });
 }
 
-function open_properties_dialog(test) {
-  return new Promise(async resolve => {
-    var sidebar = document.getElementById("sidebar");
+async function open_properties_dialog(test) {
+  var sidebar = document.getElementById("sidebar");
 
-    // If this is history sidebar, set the required view.
-    if (test.sidebar == SIDEBAR_HISTORY_ID) {
-      sidebar.contentDocument.getElementById(test.historyView).doCommand();
-    }
+  // If this is history sidebar, set the required view.
+  if (test.sidebar == SIDEBAR_HISTORY_ID) {
+    sidebar.contentDocument.getElementById(test.historyView).doCommand();
+  }
 
-    // Get sidebar's Places tree.
-    var sidebarTreeID =
-      test.sidebar == SIDEBAR_BOOKMARKS_ID
-        ? SIDEBAR_BOOKMARKS_TREE_ID
-        : SIDEBAR_HISTORY_TREE_ID;
-    var tree = sidebar.contentDocument.getElementById(sidebarTreeID);
-    // The sidebar may take a moment to open from the doCommand, therefore wait
-    // until it has opened before continuing.
-    await BrowserTestUtils.waitForCondition(
-      () => tree,
-      "Sidebar tree has been loaded"
-    );
+  // Get sidebar's Places tree.
+  var sidebarTreeID =
+    test.sidebar == SIDEBAR_BOOKMARKS_ID
+      ? SIDEBAR_BOOKMARKS_TREE_ID
+      : SIDEBAR_HISTORY_TREE_ID;
+  var tree = sidebar.contentDocument.getElementById(sidebarTreeID);
+  // The sidebar may take a moment to open from the doCommand, therefore wait
+  // until it has opened before continuing.
+  await BrowserTestUtils.waitForCondition(
+    () => tree,
+    "Sidebar tree has been loaded"
+  );
 
-    // Ask current test to select the node to edit.
-    test.selectNode(tree);
-    Assert.ok(
-      tree.selectedNode,
-      "We have a places node selected: " + tree.selectedNode.title
-    );
+  // Ask current test to select the node to edit.
+  test.selectNode(tree);
+  Assert.ok(
+    tree.selectedNode,
+    "We have a places node selected: " + tree.selectedNode.title
+  );
 
+  return new Promise(resolve => {
     // Wait for the Properties dialog.
-    function windowObserver(aSubject, aTopic, aData) {
+    function windowObserver(observerWindow, aTopic, aData) {
       if (aTopic != "domwindowopened") {
         return;
       }
       Services.ww.unregisterNotification(windowObserver);
-      let observerWindow = aSubject.QueryInterface(Ci.nsIDOMWindow);
       waitForFocus(async () => {
         // Ensure overlay is loaded
         await BrowserTestUtils.waitForCondition(
@@ -549,7 +554,10 @@ function open_properties_dialog(test) {
       " command '" + command + "' on current selected node is enabled"
     );
 
-    // This will open the dialog.
-    tree.controller.doCommand(command);
+    // This will open the dialog. For some reason this needs to be executed
+    // later, as otherwise opening the dialog throws an exception.
+    executeSoon(() => {
+      tree.controller.doCommand(command);
+    });
   });
 }

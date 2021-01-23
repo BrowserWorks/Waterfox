@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "İçe Aktarma Sihirbazı">
+
+<!ENTITY importFromWin.label            "Seçenekler'i, Hesap Ayarları'nı, Adres Defteri'ni, Süzgeçler'i ve diğer verileri buradan içe aktar:">
+<!ENTITY importFromNonWin.label         "Tercihler'i, Hesap Ayarları'nı, Adres Defteri'ni, Süzgeçler'i ve diğer verileri buradan içe aktar: ">
+<!ENTITY importSourceNotFound.label     "Verilerin aktarılabileceği bir uygulama bulunamadı.">
+
+<!ENTITY importFromNothing.label        "İçe bir şey aktarma">
+<!ENTITY importFromNothing.accesskey    "ç">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 veya üstü">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "Ayarları ve Posta Dizinlerini İçe Aktar">
+<!ENTITY importItems.title              "İçe Aktarılacak Ögeler">
+<!ENTITY importItems.label              "İçe aktarılacak ögeleri seçin:">
+
+<!ENTITY migrating.title                "İçe aktarılıyor…">
+<!ENTITY migrating.label                "Aşağıdaki ögeler şu anda içe aktarılıyor…">
+
+<!ENTITY selectProfile.title            "Kimlik Seç">
+<!ENTITY selectProfile.label            "Aşağıdaki kimliklerden veri alınabilir:">
+
+<!ENTITY done.title                     "İçe Aktarma Tamamlandı">
+<!ENTITY done.label                     "Aşağıdaki ögeler başarılı bir şekilde içe aktarıldı:">

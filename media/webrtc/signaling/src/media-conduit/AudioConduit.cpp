@@ -15,8 +15,6 @@
 #include "nsCOMPtr.h"
 #include "mozilla/media/MediaUtils.h"
 #include "nsServiceManagerUtils.h"
-#include "nsIPrefService.h"
-#include "nsIPrefBranch.h"
 #include "nsThreadUtils.h"
 #include "mozilla/Telemetry.h"
 #include "mtransport/runnable_utils.h"
@@ -53,7 +51,8 @@ using LocalDirection = MediaSessionConduitLocalDirection;
  * Factory Method for AudioConduit
  */
 RefPtr<AudioSessionConduit> AudioSessionConduit::Create(
-    RefPtr<WebRtcCallWrapper> aCall, nsCOMPtr<nsIEventTarget> aStsThread) {
+    RefPtr<WebRtcCallWrapper> aCall,
+    nsCOMPtr<nsISerialEventTarget> aStsThread) {
   CSFLogDebug(LOGTAG, "%s ", __FUNCTION__);
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -86,12 +85,13 @@ WebrtcAudioConduit::~WebrtcAudioConduit() {
   mPtrVoEBase = nullptr;
 }
 
-bool WebrtcAudioConduit::SetLocalSSRCs(
-    const std::vector<unsigned int>& aSSRCs) {
+bool WebrtcAudioConduit::SetLocalSSRCs(const std::vector<uint32_t>& aSSRCs,
+                                       const std::vector<uint32_t>& aRtxSSRCs) {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aSSRCs.size() == 1,
              "WebrtcAudioConduit::SetLocalSSRCs accepts exactly 1 ssrc.");
 
+  // We ignore aRtxSSRCs, it is only used in the VideoConduit.
   if (aSSRCs.empty()) {
     return false;
   }
@@ -109,14 +109,15 @@ bool WebrtcAudioConduit::SetLocalSSRCs(
   return RecreateSendStreamIfExists();
 }
 
-std::vector<unsigned int> WebrtcAudioConduit::GetLocalSSRCs() {
+std::vector<uint32_t> WebrtcAudioConduit::GetLocalSSRCs() {
   MutexAutoLock lock(mMutex);
-  return std::vector<unsigned int>(1, mRecvStreamConfig.rtp.local_ssrc);
+  return std::vector<uint32_t>(1, mRecvStreamConfig.rtp.local_ssrc);
 }
 
-bool WebrtcAudioConduit::SetRemoteSSRC(unsigned int ssrc) {
+bool WebrtcAudioConduit::SetRemoteSSRC(uint32_t ssrc, uint32_t rtxSsrc) {
   MOZ_ASSERT(NS_IsMainThread());
 
+  // We ignore aRtxSsrc, it is only used in the VideoConduit.
   if (mRecvStreamConfig.rtp.remote_ssrc == ssrc) {
     return true;
   }
@@ -125,7 +126,7 @@ bool WebrtcAudioConduit::SetRemoteSSRC(unsigned int ssrc) {
   return RecreateRecvStreamIfExists();
 }
 
-bool WebrtcAudioConduit::GetRemoteSSRC(unsigned int* ssrc) {
+bool WebrtcAudioConduit::GetRemoteSSRC(uint32_t* ssrc) {
   {
     MutexAutoLock lock(mMutex);
     if (!mRecvStream) {
@@ -280,34 +281,66 @@ void WebrtcAudioConduit::OnRtpPacket(const webrtc::RTPHeader& aHeader,
                                      const int64_t aTimestamp,
                                      const uint32_t aJitter) {
   ASSERT_ON_THREAD(mStsThread);
-  mRtpSourceObserver.OnRtpPacket(aHeader, aTimestamp, aJitter);
+  mRtpSourceObserver->OnRtpPacket(aHeader, aJitter);
+}
+
+void WebrtcAudioConduit::OnRtcpBye() {
+  RefPtr<WebrtcAudioConduit> self = this;
+  NS_DispatchToMainThread(media::NewRunnableFrom([self]() mutable {
+    MOZ_ASSERT(NS_IsMainThread());
+    if (self->mRtcpEventObserver) {
+      self->mRtcpEventObserver->OnRtcpBye();
+    }
+    return NS_OK;
+  }));
+}
+
+void WebrtcAudioConduit::OnRtcpTimeout() {
+  RefPtr<WebrtcAudioConduit> self = this;
+  NS_DispatchToMainThread(media::NewRunnableFrom([self]() mutable {
+    MOZ_ASSERT(NS_IsMainThread());
+    if (self->mRtcpEventObserver) {
+      self->mRtcpEventObserver->OnRtcpTimeout();
+    }
+    return NS_OK;
+  }));
+}
+
+void WebrtcAudioConduit::SetRtcpEventObserver(
+    mozilla::RtcpEventObserver* observer) {
+  MOZ_ASSERT(NS_IsMainThread());
+  mRtcpEventObserver = observer;
 }
 
 void WebrtcAudioConduit::GetRtpSources(
-    const int64_t aTimeNow, nsTArray<dom::RTCRtpSourceEntry>& outSources) {
+    nsTArray<dom::RTCRtpSourceEntry>& outSources) {
   MOZ_ASSERT(NS_IsMainThread());
-  return mRtpSourceObserver.GetRtpSources(aTimeNow, outSources);
+  return mRtpSourceObserver->GetRtpSources(outSources);
 }
 
 // test-only: inserts a CSRC entry in a RtpSourceObserver's history for
 // getContributingSources mochitests
 void InsertAudioLevelForContributingSource(RtpSourceObserver& observer,
-                                           uint32_t aCsrcSource,
-                                           int64_t aTimestamp,
-                                           bool aHasAudioLevel,
-                                           uint8_t aAudioLevel) {
+                                           const uint32_t aCsrcSource,
+                                           const int64_t aTimestamp,
+                                           const uint32_t aRtpTimestamp,
+                                           const bool aHasAudioLevel,
+                                           const uint8_t aAudioLevel) {
   using EntryType = dom::RTCRtpSourceEntryType;
   auto key = RtpSourceObserver::GetKey(aCsrcSource, EntryType::Contributing);
   auto& hist = observer.mRtpSources[key];
-  hist.Insert(aTimestamp, aTimestamp, aHasAudioLevel, aAudioLevel);
+  hist.Insert(aTimestamp, aTimestamp, aRtpTimestamp, aHasAudioLevel,
+              aAudioLevel);
 }
 
 void WebrtcAudioConduit::InsertAudioLevelForContributingSource(
-    uint32_t aCsrcSource, int64_t aTimestamp, bool aHasAudioLevel,
-    uint8_t aAudioLevel) {
+    const uint32_t aCsrcSource, const int64_t aTimestamp,
+    const uint32_t aRtpTimestamp, const bool aHasAudioLevel,
+    const uint8_t aAudioLevel) {
   MOZ_ASSERT(NS_IsMainThread());
   mozilla::InsertAudioLevelForContributingSource(
-      mRtpSourceObserver, aCsrcSource, aTimestamp, aHasAudioLevel, aAudioLevel);
+      *mRtpSourceObserver, aCsrcSource, aTimestamp, aRtpTimestamp,
+      aHasAudioLevel, aAudioLevel);
 }
 
 /*
@@ -377,11 +410,6 @@ MediaConduitErrorCode WebrtcAudioConduit::ConfigureSendMediaCodec(
 
   mDtmfEnabled = codecConfig->mDtmfEnabled;
 
-  condError = StartTransmitting();
-  if (condError != kMediaConduitNoError) {
-    return condError;
-  }
-
   return kMediaConduitNoError;
 }
 
@@ -420,15 +448,32 @@ MediaConduitErrorCode WebrtcAudioConduit::ConfigureRecvMediaCodecs(
     webrtc::SdpAudioFormat::Parameters parameters;
     if (codec->mName == "opus") {
       if (codec->mChannels == 2) {
-        parameters = {{"stereo", "1"}};
+        parameters["stereo"] = "1";
       }
       if (codec->mFECEnabled) {
         parameters["useinbandfec"] = "1";
       }
+      if (codec->mDTXEnabled) {
+        parameters["usedtx"] = "1";
+      }
       if (codec->mMaxPlaybackRate) {
-        std::ostringstream o;
-        o << codec->mMaxPlaybackRate;
-        parameters["maxplaybackrate"] = o.str();
+        parameters["maxplaybackrate"] = std::to_string(codec->mMaxPlaybackRate);
+      }
+      if (codec->mMaxAverageBitrate) {
+        parameters["maxaveragebitrate"] =
+            std::to_string(codec->mMaxAverageBitrate);
+      }
+      if (codec->mFrameSizeMs) {
+        parameters["ptime"] = std::to_string(codec->mFrameSizeMs);
+      }
+      if (codec->mMinFrameSizeMs) {
+        parameters["minptime"] = std::to_string(codec->mMinFrameSizeMs);
+      }
+      if (codec->mMaxFrameSizeMs) {
+        parameters["maxptime"] = std::to_string(codec->mMaxFrameSizeMs);
+      }
+      if (codec->mCbrEnabled) {
+        parameters["cbr"] = "1";
       }
     }
 
@@ -584,7 +629,8 @@ MediaConduitErrorCode WebrtcAudioConduit::SendAudioFrame(
 MediaConduitErrorCode WebrtcAudioConduit::GetAudioFrame(int16_t speechData[],
                                                         int32_t samplingFreqHz,
                                                         int32_t capture_delay,
-                                                        int& lengthSamples) {
+                                                        size_t& numChannels,
+                                                        size_t& lengthSamples) {
   CSFLogDebug(LOGTAG, "%s ", __FUNCTION__);
 
   // validate params
@@ -615,24 +661,30 @@ MediaConduitErrorCode WebrtcAudioConduit::GetAudioFrame(int16_t speechData[],
     return kMediaConduitSessionNotInited;
   }
 
-  int lengthSamplesAllowed = lengthSamples;
+  size_t lengthSamplesAllowed = lengthSamples;
   lengthSamples = 0;  // output paramter
 
   mRecvChannelProxy->GetAudioFrameWithInfo(samplingFreqHz, &mAudioFrame);
+  numChannels = mAudioFrame.num_channels_;
+
+  if (numChannels == 0) {
+    CSFLogError(LOGTAG, "%s Audio frame has zero channels", __FUNCTION__);
+    return kMediaConduitPlayoutError;
+  }
+
   // XXX Annoying, have to copy to our buffers -- refactor?
   lengthSamples = mAudioFrame.samples_per_channel_ * mAudioFrame.num_channels_;
   MOZ_RELEASE_ASSERT(lengthSamples <= lengthSamplesAllowed);
   PodCopy(speechData, mAudioFrame.data(), lengthSamples);
 
-  CSFLogDebug(LOGTAG, "%s GetAudioFrame:Got samples: length %d ", __FUNCTION__,
+  CSFLogDebug(LOGTAG, "%s GetAudioFrame:Got samples: length %zu ", __FUNCTION__,
               lengthSamples);
   return kMediaConduitNoError;
 }
 
 // Transport Layer Callbacks
-MediaConduitErrorCode WebrtcAudioConduit::ReceivedRTPPacket(const void* data,
-                                                            int len,
-                                                            uint32_t ssrc) {
+MediaConduitErrorCode WebrtcAudioConduit::ReceivedRTPPacket(
+    const void* data, int len, webrtc::RTPHeader& header) {
   ASSERT_ON_THREAD(mStsThread);
 
   // Handle the unknown ssrc (and ssrc-not-signaled case).
@@ -649,7 +701,7 @@ MediaConduitErrorCode WebrtcAudioConduit::ReceivedRTPPacket(const void* data,
     return kMediaConduitNoError;
   }
 
-  if (mRecvSSRC != ssrc) {
+  if (mRecvSSRC != header.ssrc) {
     // a new switch needs to be done
     // any queued packets are from a previous switch that hasn't completed
     // yet; drop them and only process the latest SSRC
@@ -657,10 +709,10 @@ MediaConduitErrorCode WebrtcAudioConduit::ReceivedRTPPacket(const void* data,
     mRtpPacketQueue.Enqueue(data, len);
 
     CSFLogDebug(LOGTAG, "%s: switching from SSRC %u to %u", __FUNCTION__,
-                static_cast<uint32_t>(mRecvSSRC), ssrc);
+                static_cast<uint32_t>(mRecvSSRC), header.ssrc);
 
     // we "switch" here immediately, but buffer until the queue is released
-    mRecvSSRC = ssrc;
+    mRecvSSRC = header.ssrc;
 
     // Ensure lamba captures refs
     RefPtr<WebrtcAudioConduit> self = this;
@@ -669,8 +721,8 @@ MediaConduitErrorCode WebrtcAudioConduit::ReceivedRTPPacket(const void* data,
       return kMediaConduitRTPProcessingFailed;
     }
     NS_DispatchToMainThread(
-        media::NewRunnableFrom([self, thread, ssrc]() mutable {
-          self->SetRemoteSSRC(ssrc);
+        media::NewRunnableFrom([self, thread, ssrc = header.ssrc]() mutable {
+          self->SetRemoteSSRC(ssrc, 0);
           // We want to unblock the queued packets on the original thread
           thread->Dispatch(media::NewRunnableFrom([self, ssrc]() mutable {
                              if (ssrc == self->mRecvSSRC) {
@@ -709,7 +761,18 @@ MediaConduitErrorCode WebrtcAudioConduit::ReceivedRTCPPacket(const void* data,
     CSFLogError(LOGTAG, "%s RTCP Processing Failed", __FUNCTION__);
     return kMediaConduitRTPProcessingFailed;
   }
+
+  // TODO(bug 1496533): We will need to keep separate timestamps for each SSRC,
+  // and for each SSRC we will need to keep a timestamp for SR and RR.
+  mLastRtcpReceived = Some(GetNow());
   return kMediaConduitNoError;
+}
+
+// TODO(bug 1496533): We will need to add a type (ie; SR or RR) param here, or
+// perhaps break this function into two functions, one for each type.
+Maybe<DOMHighResTimeStamp> WebrtcAudioConduit::LastRtcpReceived() const {
+  ASSERT_ON_THREAD(mStsThread);
+  return mLastRtcpReceived;
 }
 
 MediaConduitErrorCode WebrtcAudioConduit::StopTransmitting() {
@@ -809,20 +872,19 @@ MediaConduitErrorCode WebrtcAudioConduit::StartReceivingLocked() {
 }
 
 // WebRTC::RTP Callback Implementation
-// Called on AudioGUM or MSG thread
+// Called on AudioGUM or MTG thread
 bool WebrtcAudioConduit::SendRtp(const uint8_t* data, size_t len,
                                  const webrtc::PacketOptions& options) {
   CSFLogDebug(LOGTAG, "%s: len %lu", __FUNCTION__, (unsigned long)len);
 
   ReentrantMonitorAutoEnter enter(mTransportMonitor);
-  // XXX(pkerr) - the PacketOptions are being ignored. This parameter was added
-  // along with the Call API update in the webrtc.org codebase. The only field
-  // in it is the packet_id, which is used when the header extension for
-  // TransportSequenceNumber is being used, which we don't.
-  (void)options;
   if (mTransmitterTransport &&
       (mTransmitterTransport->SendRtpPacket(data, len) == NS_OK)) {
     CSFLogDebug(LOGTAG, "%s Sent RTP Packet ", __FUNCTION__);
+    if (options.packet_id >= 0) {
+      int64_t now_ms = PR_Now() / 1000;
+      mCall->Call()->OnSentPacket({options.packet_id, now_ms});
+    }
     return true;
   }
   CSFLogError(LOGTAG, "%s RTP Packet Send Failed ", __FUNCTION__);
@@ -870,10 +932,28 @@ bool WebrtcAudioConduit::CodecConfigToWebRTCCodec(
     if (codecInfo->mFECEnabled) {
       parameters["useinbandfec"] = "1";
     }
+    if (codecInfo->mDTXEnabled) {
+      parameters["usedtx"] = "1";
+    }
     if (codecInfo->mMaxPlaybackRate) {
-      std::ostringstream o;
-      o << codecInfo->mMaxPlaybackRate;
-      parameters["maxplaybackrate"] = o.str();
+      parameters["maxplaybackrate"] =
+          std::to_string(codecInfo->mMaxPlaybackRate);
+    }
+    if (codecInfo->mMaxAverageBitrate) {
+      parameters["maxaveragebitrate"] =
+          std::to_string(codecInfo->mMaxAverageBitrate);
+    }
+    if (codecInfo->mFrameSizeMs) {
+      parameters["ptime"] = std::to_string(codecInfo->mFrameSizeMs);
+    }
+    if (codecInfo->mMinFrameSizeMs) {
+      parameters["minptime"] = std::to_string(codecInfo->mMinFrameSizeMs);
+    }
+    if (codecInfo->mMaxFrameSizeMs) {
+      parameters["maxptime"] = std::to_string(codecInfo->mMaxFrameSizeMs);
+    }
+    if (codecInfo->mCbrEnabled) {
+      parameters["cbr"] = "1";
     }
   }
 
@@ -1063,6 +1143,7 @@ MediaConduitErrorCode WebrtcAudioConduit::CreateChannels() {
   }
 
   mRecvChannelProxy->SetRtpPacketObserver(this);
+  mRecvChannelProxy->SetRtcpEventObserver(this);
   mRecvChannelProxy->RegisterTransport(this);
 
   mSendChannelProxy = vei->GetChannelProxy(mSendChannel);
@@ -1088,6 +1169,7 @@ void WebrtcAudioConduit::DeleteChannels() {
   }
 
   if (mRecvChannel != -1) {
+    mRecvChannelProxy->SetRtcpEventObserver(nullptr);
     mRecvChannelProxy = nullptr;
     mPtrVoEBase->DeleteChannel(mRecvChannel);
     mRecvChannel = -1;

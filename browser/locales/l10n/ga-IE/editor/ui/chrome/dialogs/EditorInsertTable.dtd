@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Ionsáigh Tábla">
+
+<!ENTITY size.label "Méid">
+<!ENTITY numRowsEditField.label "Rónna:">
+<!ENTITY numRowsEditField.accessKey "R">
+<!ENTITY numColumnsEditField.label "Colúin:">
+<!ENTITY numColumnsEditField.accessKey "C">
+<!ENTITY widthEditField.label "Leithead:">
+<!ENTITY widthEditField.accessKey "L">
+<!ENTITY borderEditField.label "Teorainn:">
+<!ENTITY borderEditField.accessKey "T">
+<!ENTITY borderEditField.tooltip "Clóbhuail uimhir le haghaidh imlíne an tábla, nó clóbhuail náid (0) le haghaidh tábla gan imlíne">
+<!ENTITY pixels.label "picteilíní">

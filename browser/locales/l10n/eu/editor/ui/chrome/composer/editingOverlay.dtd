@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Ireki fitxategia…">
+<!ENTITY openFileCmd.accesskey "I">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Ireki web helbidea…">
+<!ENTITY openRemoteCmd.accesskey "b">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Azken orriak">
+<!ENTITY fileRecentMenu.accesskey "r">
+<!ENTITY saveCmd.label "Gorde">
+<!ENTITY saveCmd.accesskey "G">
+<!ENTITY saveAsCmd.label "Gorde honela…">
+<!ENTITY saveAsCmd.accesskey "h">
+<!ENTITY saveAsChangeEncodingCmd2.label "Gorde eta aldatu kodeketa">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "k">
+<!ENTITY publishCmd.label "Argitaratu">
+<!ENTITY publishCmd.accesskey "A">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Argitaratu honela…">
+<!ENTITY publishAsCmd.accesskey "n">
+<!ENTITY fileRevert.label "Leheneratu">
+<!ENTITY fileRevert.accesskey "t">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Argitaratzeko gunearen ezarpenak…">
+<!ENTITY publishSettings.accesskey "r">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "Berria">
+<!ENTITY newToolbarCmd.tooltip "Sortu Composer orri berria">
+<!ENTITY openToolbarCmd.label "Ireki">
+<!ENTITY openToolbarCmd.tooltip "Ireki fitxategi lokala">
+<!ENTITY saveToolbarCmd.tooltip "Gorde fitxategia kokaleku lokalean">
+<!ENTITY publishToolbarCmd.tooltip "Igo fitxategia urruneko kokaleku batera">
+<!ENTITY printToolbarCmd.label "Inprimatu">
+<!ENTITY printToolbarCmd.tooltip "Inprimatu orri hau">

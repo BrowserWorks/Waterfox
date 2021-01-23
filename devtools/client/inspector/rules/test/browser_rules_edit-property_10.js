@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -20,8 +19,8 @@ add_task(async function() {
   const { inspector, view: ruleView } = await openRuleView();
 
   await selectNode("div", inspector);
-  const rule = getRuleViewRuleEditor(ruleView, 1).rule;
-  const prop = rule.textProps[0];
+  const prop = getTextProperty(ruleView, 1, { color: "red" });
+
   let onRuleViewChanged;
 
   info(`Rename the CSS property name to "Color"`);

@@ -11,6 +11,7 @@
 #include "mozilla/dom/ErrorEventBinding.h"
 #include "mozilla/dom/RemoteWorkerChild.h"
 #include "mozilla/dom/ServiceWorkerManager.h"
+#include "mozilla/dom/ServiceWorkerUtils.h"
 #include "mozilla/dom/SimpleGlobalObject.h"
 #include "mozilla/dom/WorkerDebuggerGlobalScopeBinding.h"
 #include "mozilla/dom/WorkerGlobalScopeBinding.h"
@@ -80,15 +81,28 @@ class ReportErrorRunnable final : public WorkerDebuggeeRunnable {
       // worker error reporting will crash.  Instead, pass the error to
       // the ServiceWorkerManager to report on any controlled documents.
       if (aWorkerPrivate->IsServiceWorker()) {
-        RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
-        if (swm) {
-          swm->HandleError(aCx, aWorkerPrivate->GetPrincipal(),
-                           aWorkerPrivate->ServiceWorkerScope(),
-                           aWorkerPrivate->ScriptURL(), mReport->mMessage,
-                           mReport->mFilename, mReport->mLine,
-                           mReport->mLineNumber, mReport->mColumnNumber,
-                           mReport->mFlags, mReport->mExnType);
+        if (ServiceWorkerParentInterceptEnabled()) {
+          RefPtr<RemoteWorkerChild> actor(
+              aWorkerPrivate->GetRemoteWorkerControllerWeakRef());
+
+          Unused << NS_WARN_IF(!actor);
+
+          if (actor) {
+            actor->ErrorPropagationOnMainThread(nullptr, false);
+          }
+
+        } else {
+          RefPtr<ServiceWorkerManager> swm =
+              ServiceWorkerManager::GetInstance();
+          if (swm) {
+            swm->HandleError(aCx, aWorkerPrivate->GetPrincipal(),
+                             aWorkerPrivate->ServiceWorkerScope(),
+                             aWorkerPrivate->ScriptURL(), EmptyString(),
+                             EmptyString(), EmptyString(), 0, 0,
+                             nsIScriptError::errorFlag, JSEXN_ERR);
+          }
         }
+
         return true;
       }
 
@@ -159,14 +173,27 @@ class ReportGenericErrorRunnable final : public WorkerDebuggeeRunnable {
     }
 
     if (aWorkerPrivate->IsServiceWorker()) {
-      RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
-      if (swm) {
-        swm->HandleError(aCx, aWorkerPrivate->GetPrincipal(),
-                         aWorkerPrivate->ServiceWorkerScope(),
-                         aWorkerPrivate->ScriptURL(), EmptyString(),
-                         EmptyString(), EmptyString(), 0, 0, JSREPORT_ERROR,
-                         JSEXN_ERR);
+      if (ServiceWorkerParentInterceptEnabled()) {
+        RefPtr<RemoteWorkerChild> actor(
+            aWorkerPrivate->GetRemoteWorkerControllerWeakRef());
+
+        Unused << NS_WARN_IF(!actor);
+
+        if (actor) {
+          actor->ErrorPropagationOnMainThread(nullptr, false);
+        }
+
+      } else {
+        RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
+        if (swm) {
+          swm->HandleError(aCx, aWorkerPrivate->GetPrincipal(),
+                           aWorkerPrivate->ServiceWorkerScope(),
+                           aWorkerPrivate->ScriptURL(), EmptyString(),
+                           EmptyString(), EmptyString(), 0, 0,
+                           nsIScriptError::errorFlag, JSEXN_ERR);
+        }
       }
+
       return true;
     }
 
@@ -200,14 +227,14 @@ void WorkerErrorNote::AssignErrorNote(JSErrorNotes::Note* aNote) {
 }
 
 WorkerErrorReport::WorkerErrorReport()
-    : mFlags(0), mExnType(JSEXN_ERR), mMutedError(false) {}
+    : mIsWarning(false), mExnType(JSEXN_ERR), mMutedError(false) {}
 
 void WorkerErrorReport::AssignErrorReport(JSErrorReport* aReport) {
   WorkerErrorBase::AssignErrorBase(aReport);
   xpc::ErrorReport::ErrorReportToMessageString(aReport, mMessage);
 
   mLine.Assign(aReport->linebuf(), aReport->linebufLength());
-  mFlags = aReport->flags;
+  mIsWarning = aReport->isWarning();
   MOZ_ASSERT(aReport->exnType >= JSEXN_FIRST && aReport->exnType < JSEXN_LIMIT);
   mExnType = JSExnType(aReport->exnType);
   mMutedError = aReport->isMuted;
@@ -241,7 +268,7 @@ void WorkerErrorReport::ReportError(
 
   // We should not fire error events for warnings but instead make sure that
   // they show up in the error console.
-  if (!JSREPORT_IS_WARNING(aReport->mFlags)) {
+  if (!aReport->mIsWarning) {
     // First fire an ErrorEvent at the worker.
     RootedDictionary<ErrorEventInit> init(aCx);
 
@@ -362,9 +389,9 @@ void WorkerErrorReport::LogErrorToConsole(JSContext* aCx,
   JS::RootedObject stack(aCx, aReport.ReadStack(aCx));
   JS::RootedObject stackGlobal(aCx, JS::CurrentGlobalOrNull(aCx));
 
-  ErrorData errorData(aReport.mLineNumber, aReport.mColumnNumber,
-                      aReport.mFlags, aReport.mMessage, aReport.mFilename,
-                      aReport.mLine, notes);
+  ErrorData errorData(aReport.mIsWarning, aReport.mLineNumber,
+                      aReport.mColumnNumber, aReport.mMessage,
+                      aReport.mFilename, aReport.mLine, notes);
   LogErrorToConsole(errorData, aInnerWindowId, stack, stackGlobal);
 }
 
@@ -375,21 +402,19 @@ void WorkerErrorReport::LogErrorToConsole(const ErrorData& aReport,
                                           JS::HandleObject aStackGlobal) {
   AssertIsOnMainThread();
 
-  RefPtr<nsScriptErrorBase> scriptError;
-  if (aStack) {
-    scriptError = new nsScriptErrorWithStack(aStack, aStackGlobal);
-  } else {
-    scriptError = new nsScriptError();
-  }
+  RefPtr<nsScriptErrorBase> scriptError =
+      CreateScriptError(nullptr, JS::NothingHandleValue, aStack, aStackGlobal);
 
   NS_WARNING_ASSERTION(scriptError, "Failed to create script error!");
 
   if (scriptError) {
     nsAutoCString category("Web Worker");
-    if (NS_FAILED(scriptError->InitWithWindowID(
+    uint32_t flags = aReport.isWarning() ? nsIScriptError::warningFlag
+                                         : nsIScriptError::errorFlag;
+    if (NS_FAILED(scriptError->nsIScriptError::InitWithWindowID(
             aReport.message(), aReport.filename(), aReport.line(),
-            aReport.lineNumber(), aReport.columnNumber(), aReport.flags(),
-            category, aInnerWindowId))) {
+            aReport.lineNumber(), aReport.columnNumber(), flags, category,
+            aInnerWindowId))) {
       NS_WARNING("Failed to init script error!");
       scriptError = nullptr;
     }

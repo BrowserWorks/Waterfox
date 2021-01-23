@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "বার্তা ডাউনলোড এবং অভিন্নকরণ করা হবে">
+<!ENTITY MsgSelect.label "অফলাইনে ব্যবহারের জন্য আইটেম">
+<!ENTITY MsgSyncDesc.label "আপনি যদি অফলাইনে ব্যবহারের জন্য ইতোমধ্যেই মেইল ফোল্ডার বা নিউজগ্রুপ নির্বাচন করে থাকেন, তবে আপনি এখন সেগুলো ডাউনলোড এবং/বা যুগপৎ করতে পারেন। অন্যথায়, অফলাইনে ব্যবহারের জন্য মেইল ফোল্ডার এবং নিউজগ্রুপ পছন্দ করতে &quot;নির্বাচন&quot; বোতাম ব্যবহার করুন।">
+<!ENTITY MsgSyncDirections.label "নিম্নের গুলোকে ডাউনলোড এবং/বা যুগপৎ করা হবে:">
+<!ENTITY syncTypeMail.label "মেইল বার্তা (M)">
+<!ENTITY syncTypeMail.accesskey "M">
+<!ENTITY syncTypeNews.label "নিউজগ্রুপ বার্তা (N)">
+<!ENTITY syncTypeNews.accesskey "N">
+<!ENTITY sendMessage.label "অপ্রেরিত বার্তা প্রেরণ (S)">
+<!ENTITY sendMessage.accesskey "S">
+<!ENTITY workOffline.label "একবার ডাউনলোড এবং/বা যুগপৎ করণ সম্পন্ন হলে অফলাইনে কাজ করা (W)">
+<!ENTITY workOffline.accesskey "W">
+<!ENTITY selectButton.label "নির্বাচন... (e)">
+<!ENTITY selectButton.accesskey "e">
+<!ENTITY MsgSelectDesc.label "অফলাইনে ব্যবহারের জন্য মেইল ফোল্ডার এবং নিউজগ্রুপ পছন্দ করা হবে।">
+<!ENTITY MsgSelectInd.label "ডাউনলোড">
+<!ENTITY MsgSelectItems.label "ফোল্ডার এবং নিউজগ্রুপ">

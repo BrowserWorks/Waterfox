@@ -211,6 +211,7 @@
       testGroupAttrs("h4", 0, 0, 4);
       testGroupAttrs("h5", 0, 0, 5);
       testGroupAttrs("h6", 0, 0, 6);
+      testGroupAttrs("ariaHeadingNoLevel", 0, 0, 2);
       // No child item counts or "hierarchical" flag for parent of headings
       testAbsentAttrs("headings", {"child-item-count": "", "hierarchical": ""});
 
@@ -232,12 +233,27 @@
       // row child item count provided by parent grid's aria-colcount
       testGroupParentAttrs("table_row", 4, false);
 
+      // Attributes calculated even when row is wrapped in a div.
+      testGroupAttrs("wrapped_row_1", 1, 2);
+      testGroupAttrs("wrapped_row_2", 2, 2);
+
       // ////////////////////////////////////////////////////////////////////////
       // ARIA list constructed by ARIA owns
       testGroupAttrs("t1_li1", 1, 3);
       testGroupAttrs("t1_li2", 2, 3);
       testGroupAttrs("t1_li3", 3, 3);
       testGroupParentAttrs("aria-list_4", 3, false);
+
+      // Test group attributes of ARIA comments
+      testGroupAttrs("comm_single_1", 1, 2, 1);
+      testGroupAttrs("comm_single_2", 2, 2, 1);
+      testGroupAttrs("comm_nested_1", 1, 3, 1);
+      testGroupAttrs("comm_nested_1_1", 1, 2, 2);
+      testGroupAttrs("comm_nested_1_2", 2, 2, 2);
+      testGroupAttrs("comm_nested_2", 2, 3, 1);
+      testGroupAttrs("comm_nested_2_1", 1, 1, 2);
+      testGroupAttrs("comm_nested_2_1_1", 1, 1, 3);
+      testGroupAttrs("comm_nested_3", 3, 3, 1);
 
       // Test that group position information updates after deleting node.
       testGroupAttrs("tree4_ti1", 1, 2, 1);
@@ -487,6 +503,7 @@
     <h4 id="h4">heading4</h4>
     <h5 id="h5">heading5</h5>
     <h6 id="h6">heading6</h6>
+    <div id="ariaHeadingNoLevel" role="heading">ariaHeadingNoLevel</div>
   </div>
 
   <ul id="combo1" role="combobox">Password
@@ -507,10 +524,43 @@
     </div>
   </div>
 
+  <div role="grid" aria-readonly="true">
+    <div tabindex="-1">
+      <div role="row" id="wrapped_row_1">
+        <div role="gridcell">cell content</div>
+      </div>
+    </div>
+    <div tabindex="-1">
+      <div role="row" id="wrapped_row_2">
+        <div role="gridcell">cell content</div>
+      </div>
+    </div>
+  </div>
+
   <div role="list" aria-owns="t1_li1 t1_li2 t1_li3" id="aria-list_4">
     <div role="listitem" id="t1_li2">Apples</div>
     <div role="listitem" id="t1_li1">Oranges</div>
-  </span>
+  </div>
   <div role="listitem" id="t1_li3">Bananas</div>
+
+  <!-- ARIA comments, 1 level, group pos and size calculation -->
+  <article>
+    <p id="comm_single_1" role="comment">Comment 1</p>
+    <p id="comm_single_2" role="comment">Comment 2</p>
+  </article>
+
+  <!-- Nested comments -->
+  <article>
+    <div id="comm_nested_1" role="comment"><p>Comment 1 level 1</p>
+      <div id="comm_nested_1_1" role="comment"><p>Comment 1 level 2</p></div>
+      <div id="comm_nested_1_2" role="comment"><p>Comment 2 level 2</p></div>
+    </div>
+    <div id="comm_nested_2" role="comment"><p>Comment 2 level 1</p>
+      <div id="comm_nested_2_1" role="comment"><p>Comment 3 level 2</p>
+        <div id="comm_nested_2_1_1" role="comment"><p>Comment 1 level 3</p></div>
+      </div>
+    </div>
+    <div id="comm_nested_3" role="comment"><p>Comment 3 level 1</p></div>
+  </article>
 </body>
 </html>

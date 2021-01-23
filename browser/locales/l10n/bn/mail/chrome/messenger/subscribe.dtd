@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title "সাবস্ক্রাইব">
+<!ENTITY subscribeButton.label "সাবস্ক্রাইব (S)">
+<!ENTITY subscribeButton.accesskey "S">
+<!ENTITY unsubscribeButton.label "সাবস্ক্রাইবহীন (U)">
+<!ENTITY unsubscribeButton.accesskey "U">
+<!ENTITY newGroupsTab.label "নতুন গ্রুপ (N)">
+<!ENTITY newGroupsTab.accesskey "N">
+<!ENTITY refreshButton.label "রিফ্রেশ (R)">
+<!ENTITY refreshButton.accesskey "R">
+<!ENTITY stopButton.label "থামুন (t)">
+<!ENTITY stopButton.accesskey "t">
+<!ENTITY server.label "অ্যাকাউন্ট (A):">
+<!ENTITY server.accesskey "A">
+<!ENTITY subscribedHeader.label "সাবস্ক্রাইব">
+<!-- commenting out until bug 38906 is fixed 
+<!ENTITY messagesHeader.label         "Messages"> -->
+<!ENTITY namefield.label "আইটেম দেখান, যাতে থাকবে (o):">
+<!ENTITY namefield.accesskey "o">

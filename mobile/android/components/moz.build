@@ -5,50 +5,12 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 with Files('**'):
-    BUG_COMPONENT = ('Firefox for Android', 'General')
+    BUG_COMPONENT = ('GeckoView', 'General')
 
 with Files('extensions/**'):
     BUG_COMPONENT = ('WebExtensions', 'Android')
 
-XPIDL_SOURCES += [
-    'SessionStore.idl',
-]
-
-XPIDL_MODULE = 'MobileComponents'
-
-EXTRA_COMPONENTS += [
-    'AboutRedirector.js',
-    'AddonUpdateService.js',
-    'BlocklistPrompt.js',
-    'BrowserCLH.js',
-    'ColorPicker.js',
-    'ContentDispatchChooser.js',
-    'ContentPermissionPrompt.js',
-    'DirectoryProvider.js',
-    'FilePicker.js',
-    'FxAccountsPush.js',
-    'HelperAppDialog.js',
-    'ImageBlockingPolicy.js',
-    'LoginManagerPrompter.js',
-    'NSSDialogService.js',
-    'PersistentNotificationHandler.js',
-    'PresentationDevicePrompt.js',
-    'PresentationRequestUIGlue.js',
-    'PromptService.js',
-    'SessionStore.js',
-    'TabSource.js',
-    'XPIDialogService.js',
-]
-
-# Keep it this way if at all possible.  If you need preprocessing,
-# consider adding fields to AppConstants.jsm.
-EXTRA_PP_COMPONENTS += [
-    'MobileComponents.manifest',
-]
-
 DIRS += [
     'extensions',
-    'build',
     'geckoview',
-    'search',
 ]

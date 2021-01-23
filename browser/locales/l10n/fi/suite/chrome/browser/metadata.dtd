@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY no-properties.label   "Ominaisuuksia ei ole määritetty.">
+
+<!ENTITY caption.label         "Elementin ominaisuudet">
+<!ENTITY image-sec.label       "Kuvan ominaisuudet">
+<!ENTITY image-url.label       "Osoite:">
+<!ENTITY image-desc.label      "Kuvaus:">
+<!ENTITY image-alt.label       "Vaihtoehtoinen teksti:">
+<!ENTITY image-width.label     "Leveys:">
+<!ENTITY image-height.label    "Korkeus:">
+<!ENTITY image-filesize.label  "Tiedostokoko:">
+<!ENTITY image-filesize.value  "Tuntematon">
+<!ENTITY insdel-sec.label      "Lisää tai poista ominaisuuksia">
+<!ENTITY insdel-cite.label     "Tiedot:">
+<!ENTITY insdel-date.label     "Päivämäärä:">
+<!ENTITY link-sec.label        "Linkin ominaisuudet">
+<!ENTITY link-url.label        "Osoite:">
+<!ENTITY link-target.label     "Avautuu:">
+<!ENTITY link-type.label       "Kohteen tyyppi:">
+<!ENTITY link-lang.label       "Kohteen kieli:">
+<!ENTITY link-rel.label        "Suhde:">
+<!ENTITY link-rev.label        "Käänteinen suhde:">
+<!ENTITY misc-sec.label        "Muut ominaisuudet">
+<!ENTITY misc-lang.label       "Tekstin kieli:">
+<!ENTITY misc-title.label      "Otsikko:">
+<!ENTITY misc-tblsummary.label "Taulukon tietoja:">
+<!ENTITY quote-sec.label       "Lainauksen ominaisuudet">
+<!ENTITY quote-cite.label      "Tiedot:">

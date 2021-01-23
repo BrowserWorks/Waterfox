@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -70,13 +68,6 @@ ArrowScrollBox.prototype = {
     // Overflow and underflow are moz specific events
     this.inner.addEventListener("underflow", this.onUnderflow);
     this.inner.addEventListener("overflow", this.onOverflow);
-  },
-
-  /**
-   * Determine whether the current text directionality is RTL
-   */
-  isRtl: function() {
-    return this.doc.dir === "rtl";
   },
 
   /**
@@ -155,8 +146,7 @@ ArrowScrollBox.prototype = {
         return;
       }
 
-      const block = this.isRtl() ? "end" : "start";
-      this.scrollToElement(element, block);
+      this.scrollToElement(element, "start");
     };
 
     this.clickOrHold(scrollToStart);
@@ -172,8 +162,7 @@ ArrowScrollBox.prototype = {
         return;
       }
 
-      const block = this.isRtl() ? "start" : "end";
-      this.scrollToElement(element, block);
+      this.scrollToElement(element, "end");
     };
 
     this.clickOrHold(scrollToEnd);
@@ -252,9 +241,7 @@ ArrowScrollBox.prototype = {
   getFirstInvisibleElement: function() {
     const elementsList = Array.from(this.inner.childNodes).reverse();
 
-    const predicate = this.isRtl()
-      ? this.elementRightOfContainer
-      : this.elementLeftOfContainer;
+    const predicate = this.elementLeftOfContainer;
     return this.findFirstWithBounds(elementsList, predicate);
   },
 
@@ -263,9 +250,7 @@ ArrowScrollBox.prototype = {
    * non or partly visible element in the scroll box
    */
   getLastInvisibleElement: function() {
-    const predicate = this.isRtl()
-      ? this.elementLeftOfContainer
-      : this.elementRightOfContainer;
+    const predicate = this.elementRightOfContainer;
     return this.findFirstWithBounds(this.inner.childNodes, predicate);
   },
 

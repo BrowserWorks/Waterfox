@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+<!ENTITY windowTitle.label "HTML Ruk'utunïk Taqoya'l">
+
+
+<!ENTITY question.label "¿La kan nawajo' nak'ëx ri rutzijol rik'in jun cholan tzij majun rub'anikil o nitaq pa HTML jantäq?">
+
+<!ENTITY plainTextAndHtml.label "Titaq achi'el Cholan tzij ri majun rub'anikil chuqa' HTML">
+<!ENTITY plainTextAndHtml.accesskey "a">
+<!ENTITY plainTextOnly.label "Titaq Xa Xe pa Cholan tzij Majun Rub'anikil">
+<!ENTITY plainTextOnly.accesskey "R">
+<!ENTITY htmlOnly.label "Titaq pa HTML Xa Xe">
+<!ENTITY htmlOnly.accesskey "H">
+
+<!ENTITY send.label "Titaq">
+<!ENTITY send.accesskey "T">

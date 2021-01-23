@@ -10,23 +10,17 @@
 #include "nsArrayUtils.h"
 #include "nsClipboard.h"
 #include "nsClipboardWayland.h"
-#include "nsIStorageStream.h"
-#include "nsIBinaryOutputStream.h"
 #include "nsSupportsPrimitives.h"
 #include "nsString.h"
 #include "nsReadableUtils.h"
 #include "nsPrimitiveHelpers.h"
-#include "nsIServiceManager.h"
 #include "nsImageToPixbuf.h"
 #include "nsStringStream.h"
-#include "nsIObserverService.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/TimeStamp.h"
 #include "nsDragService.h"
 #include "mozwayland/mozwayland.h"
 #include "nsWaylandDisplay.h"
-
-#include "imgIContainer.h"
 
 #include <gtk/gtk.h>
 #include <poll.h>
@@ -50,7 +44,7 @@ static inline GdkDragAction wl_to_gdk_actions(uint32_t dnd_actions) {
 }
 
 static inline uint32_t gdk_to_wl_actions(GdkDragAction action) {
-  uint32_t dnd_actions = 0;
+  uint32_t dnd_actions = WL_DATA_DEVICE_MANAGER_DND_ACTION_NONE;
 
   if (action & (GDK_ACTION_COPY | GDK_ACTION_LINK | GDK_ACTION_PRIVATE))
     dnd_actions |= WL_DATA_DEVICE_MANAGER_DND_ACTION_COPY;
@@ -95,13 +89,19 @@ GdkAtom* DataOffer::GetTargets(int* aTargetNum) {
 bool DataOffer::HasTarget(const char* aMimeType) {
   int length = mTargetMIMETypes.Length();
   for (int32_t j = 0; j < length; j++) {
-    if (mTargetMIMETypes[j] == gdk_atom_intern(aMimeType, FALSE)) return true;
+    if (mTargetMIMETypes[j] == gdk_atom_intern(aMimeType, FALSE)) {
+      LOGCLIP(("DataOffer::HasTarget() we have mime %s\n", aMimeType));
+      return true;
+    }
   }
+  LOGCLIP(("DataOffer::HasTarget() missing mime %s\n", aMimeType));
   return false;
 }
 
 char* DataOffer::GetData(wl_display* aDisplay, const char* aMimeType,
                          uint32_t* aContentLength) {
+  LOGCLIP(("DataOffer::GetData() mime %s\n", aMimeType));
+
   int pipe_fd[2];
   if (pipe(pipe_fd) == -1) return nullptr;
 
@@ -118,10 +118,26 @@ char* DataOffer::GetData(wl_display* aDisplay, const char* aMimeType,
   struct pollfd fds;
   fds.fd = pipe_fd[0];
   fds.events = POLLIN;
+  int pollReturn = -1;
 
-  // Choose some reasonable timeout here
-  int ret = poll(&fds, 1, kClipboardTimeout / 1000);
-  if (!ret || ret == -1) {
+#define MAX_CLIPBOARD_POLL_ATTEMPTS 10
+  for (int i = 0; i < MAX_CLIPBOARD_POLL_ATTEMPTS; i++) {
+    pollReturn = poll(&fds, 1, kClipboardTimeout / 1000);
+    // ret > 0 means we have data available
+    // ret = 0 means poll timeout expired
+    // ret < 0 means poll failed with error
+    if (pollReturn >= 0) {
+      break;
+    }
+    // We should try again for EINTR/EAGAIN errors,
+    // quit for all other ones.
+    if (errno != EINTR && errno != EAGAIN) {
+      break;
+    }
+  }
+  // Quit for poll error() and timeout
+  if (pollReturn <= 0) {
+    NS_WARNING("DataOffer::RequestDataTransfer() poll timeout!");
     close(pipe_fd[0]);
     return nullptr;
   }
@@ -156,6 +172,7 @@ char* DataOffer::GetData(wl_display* aDisplay, const char* aMimeType,
   g_io_channel_unref(channel);
   close(pipe_fd[0]);
 
+  LOGCLIP(("  Got clipboard data length %d\n", *aContentLength));
   return clipboardData;
 }
 
@@ -175,12 +192,20 @@ void WaylandDataOffer::DragOfferAccept(const char* aMimeType, uint32_t aTime) {
 /* We follow logic of gdk_wayland_drag_context_commit_status()/gdkdnd-wayland.c
  * here.
  */
-void WaylandDataOffer::SetDragStatus(GdkDragAction aAction, uint32_t aTime) {
-  uint32_t dnd_actions = gdk_to_wl_actions(aAction);
-  uint32_t all_actions = WL_DATA_DEVICE_MANAGER_DND_ACTION_COPY |
-                         WL_DATA_DEVICE_MANAGER_DND_ACTION_MOVE;
+void WaylandDataOffer::SetDragStatus(GdkDragAction aPreferredAction,
+                                     uint32_t aTime) {
+  uint32_t preferredAction = gdk_to_wl_actions(aPreferredAction);
+  uint32_t allActions = WL_DATA_DEVICE_MANAGER_DND_ACTION_NONE;
 
-  wl_data_offer_set_actions(mWaylandDataOffer, all_actions, dnd_actions);
+  /* We only don't choose a preferred action if we don't accept any.
+   * If we do accept any, it is currently alway copy and move
+   */
+  if (preferredAction != WL_DATA_DEVICE_MANAGER_DND_ACTION_NONE) {
+    allActions = WL_DATA_DEVICE_MANAGER_DND_ACTION_COPY |
+                 WL_DATA_DEVICE_MANAGER_DND_ACTION_MOVE;
+  }
+
+  wl_data_offer_set_actions(mWaylandDataOffer, allActions, preferredAction);
 
   /* Workaround Wayland D&D architecture here. To get the data_device_drop()
      signal (which routes to nsDragService::GetData() call) we need to
@@ -204,11 +229,20 @@ GdkDragAction WaylandDataOffer::GetSelectedDragAction() {
 }
 
 void WaylandDataOffer::SetAvailableDragActions(uint32_t aWaylandActions) {
-  mAvailableDragAction = aWaylandActions;
+  mAvailableDragActions = aWaylandActions;
 }
 
 GdkDragAction WaylandDataOffer::GetAvailableDragActions() {
-  return wl_to_gdk_actions(mAvailableDragAction);
+  return wl_to_gdk_actions(mAvailableDragActions);
+}
+
+void WaylandDataOffer::SetWaylandDragContext(
+    nsWaylandDragContext* aDragContext) {
+  mDragContext = aDragContext;
+}
+
+nsWaylandDragContext* WaylandDataOffer::GetWaylandDragContext() {
+  return mDragContext;
 }
 
 static void data_offer_offer(void* data, struct wl_data_offer* wl_data_offer,
@@ -235,6 +269,17 @@ static void data_offer_action(void* data, struct wl_data_offer* wl_data_offer,
                               uint32_t dnd_action) {
   auto* offer = static_cast<WaylandDataOffer*>(data);
   offer->SetSelectedDragAction(dnd_action);
+
+  /* Mimic GTK which triggers the motion event callback */
+  nsWaylandDragContext* dropContext = offer->GetWaylandDragContext();
+  if (dropContext) {
+    uint32_t time;
+    nscoord x, y;
+    dropContext->GetLastDropInfo(&time, &x, &y);
+
+    WindowDragMotionHandler(dropContext->GetWidget(), nullptr, dropContext, x,
+                            y, time);
+  }
 }
 
 /* wl_data_offer callback description:
@@ -250,7 +295,10 @@ static const moz_wl_data_offer_listener data_offer_listener = {
     data_offer_offer, data_offer_source_actions, data_offer_action};
 
 WaylandDataOffer::WaylandDataOffer(wl_data_offer* aWaylandDataOffer)
-    : mWaylandDataOffer(aWaylandDataOffer) {
+    : mWaylandDataOffer(aWaylandDataOffer),
+      mDragContext(nullptr),
+      mSelectedDragAction(0),
+      mAvailableDragActions(0) {
   wl_data_offer_add_listener(
       mWaylandDataOffer, (struct wl_data_offer_listener*)&data_offer_listener,
       this);
@@ -307,7 +355,9 @@ nsWaylandDragContext::nsWaylandDragContext(WaylandDataOffer* aDataOffer,
       mTime(0),
       mGtkWidget(nullptr),
       mX(0),
-      mY(0) {}
+      mY(0) {
+  aDataOffer->SetWaylandDragContext(this);
+}
 
 void nsWaylandDragContext::DropDataEnter(GtkWidget* aGtkWidget, uint32_t aTime,
                                          nscoord aX, nscoord aY) {
@@ -330,11 +380,11 @@ void nsWaylandDragContext::GetLastDropInfo(uint32_t* aTime, nscoord* aX,
   *aY = mY;
 }
 
-void nsWaylandDragContext::SetDragStatus(GdkDragAction aAction) {
-  mDataOffer->SetDragStatus(aAction, mTime);
+void nsWaylandDragContext::SetDragStatus(GdkDragAction aPreferredAction) {
+  mDataOffer->SetDragStatus(aPreferredAction, mTime);
 }
 
-GdkDragAction nsWaylandDragContext::GetSelectedDragAction() {
+GdkDragAction nsWaylandDragContext::GetAvailableDragActions() {
   GdkDragAction gdkAction = mDataOffer->GetSelectedDragAction();
 
   // We emulate gdk_drag_context_get_actions() here.
@@ -404,7 +454,7 @@ void nsRetrievalContextWayland::SetClipboardDataOffer(
     NS_ASSERTION(dataOffer, "We're missing stored clipboard data offer!");
     if (dataOffer) {
       g_hash_table_remove(mActiveOffers, aWaylandDataOffer);
-      mClipboardOffer = dataOffer;
+      mClipboardOffer = WrapUnique(dataOffer);
     }
   }
 }
@@ -422,7 +472,7 @@ void nsRetrievalContextWayland::SetPrimaryDataOffer(
     NS_ASSERTION(dataOffer, "We're missing primary data offer!");
     if (dataOffer) {
       g_hash_table_remove(mActiveOffers, aPrimaryDataOffer);
-      mPrimaryOffer = dataOffer;
+      mPrimaryOffer = WrapUnique(dataOffer);
     }
   }
 }
@@ -454,6 +504,7 @@ void nsRetrievalContextWayland::ClearDragAndDropDataOffer(void) {
 static void data_device_data_offer(void* data,
                                    struct wl_data_device* data_device,
                                    struct wl_data_offer* offer) {
+  LOGCLIP(("data_device_data_offer() callback\n"));
   nsRetrievalContextWayland* context =
       static_cast<nsRetrievalContextWayland*>(data);
   context->RegisterNewDataOffer(offer);
@@ -463,6 +514,7 @@ static void data_device_data_offer(void* data,
 static void data_device_selection(void* data,
                                   struct wl_data_device* wl_data_device,
                                   struct wl_data_offer* offer) {
+  LOGCLIP(("data_device_selection() callback\n"));
   nsRetrievalContextWayland* context =
       static_cast<nsRetrievalContextWayland*>(data);
   context->SetClipboardDataOffer(offer);
@@ -486,7 +538,6 @@ static void data_device_enter(void* data, struct wl_data_device* data_device,
   }
 
   LOGDRAG(("nsWindow data_device_enter for GtkWidget %p\n", (void*)gtkWidget));
-
   dragContext->DropDataEnter(gtkWidget, time, wl_fixed_to_int(x_fixed),
                              wl_fixed_to_int(y_fixed));
 }
@@ -498,6 +549,8 @@ static void data_device_leave(void* data, struct wl_data_device* data_device) {
   nsWaylandDragContext* dropContext = context->GetDragContext();
   WindowDragLeaveHandler(dropContext->GetWidget());
 
+  LOGDRAG(("nsWindow data_device_leave for GtkWidget %p\n",
+           (void*)dropContext->GetWidget()));
   context->ClearDragAndDropDataOffer();
 }
 
@@ -513,6 +566,8 @@ static void data_device_motion(void* data, struct wl_data_device* data_device,
   nscoord y = wl_fixed_to_int(y_fixed);
   dropContext->DropMotion(time, x, y);
 
+  LOGDRAG(("nsWindow data_device_motion for GtkWidget %p\n",
+           (void*)dropContext->GetWidget()));
   WindowDragMotionHandler(dropContext->GetWidget(), nullptr, dropContext, x, y,
                           time);
 }
@@ -520,13 +575,14 @@ static void data_device_motion(void* data, struct wl_data_device* data_device,
 static void data_device_drop(void* data, struct wl_data_device* data_device) {
   nsRetrievalContextWayland* context =
       static_cast<nsRetrievalContextWayland*>(data);
-
   nsWaylandDragContext* dropContext = context->GetDragContext();
 
   uint32_t time;
   nscoord x, y;
   dropContext->GetLastDropInfo(&time, &x, &y);
 
+  LOGDRAG(("nsWindow data_device_drop GtkWidget %p\n",
+           (void*)dropContext->GetWidget()));
   WindowDragDropHandler(dropContext->GetWidget(), nullptr, dropContext, x, y,
                         time);
 }
@@ -560,6 +616,7 @@ static void primary_selection_data_offer(
     void* data,
     struct gtk_primary_selection_device* gtk_primary_selection_device,
     struct gtk_primary_selection_offer* gtk_primary_offer) {
+  LOGCLIP(("primary_selection_data_offer() callback\n"));
   // create and add listener
   nsRetrievalContextWayland* context =
       static_cast<nsRetrievalContextWayland*>(data);
@@ -570,6 +627,7 @@ static void primary_selection_selection(
     void* data,
     struct gtk_primary_selection_device* gtk_primary_selection_device,
     struct gtk_primary_selection_offer* gtk_primary_offer) {
+  LOGCLIP(("primary_selection_selection() callback\n"));
   nsRetrievalContextWayland* context =
       static_cast<nsRetrievalContextWayland*>(data);
   context->SetPrimaryDataOffer(gtk_primary_offer);
@@ -600,7 +658,7 @@ bool nsRetrievalContextWayland::HasSelectionSupport(void) {
 
 nsRetrievalContextWayland::nsRetrievalContextWayland(void)
     : mInitialized(false),
-      mDisplay(WaylandDisplayGet()),
+      mDisplay(mozilla::widget::WaylandDisplayGet()),
       mActiveOffers(g_hash_table_new(NULL, NULL)),
       mClipboardOffer(nullptr),
       mPrimaryOffer(nullptr),
@@ -669,6 +727,7 @@ struct FastTrackClipboard {
 
 static void wayland_clipboard_contents_received(
     GtkClipboard* clipboard, GtkSelectionData* selection_data, gpointer data) {
+  LOGCLIP(("wayland_clipboard_contents_received() callback\n"));
   FastTrackClipboard* fastTrack = static_cast<FastTrackClipboard*>(data);
   fastTrack->mRetrievalContex->TransferFastTrackClipboard(
       fastTrack->mClipboardRequestNumber, selection_data);
@@ -697,6 +756,9 @@ const char* nsRetrievalContextWayland::GetClipboardData(
   NS_ASSERTION(mClipboardData == nullptr && mClipboardDataLength == 0,
                "Looks like we're leaking clipboard data here!");
 
+  LOGCLIP(("nsRetrievalContextWayland::GetClipboardData [%p] mime %s\n", this,
+           aMimeType));
+
   /* If actual clipboard data is owned by us we don't need to go
    * through Wayland but we ask Gtk+ to directly call data
    * getter callback nsClipboard::SelectionGetEvent().
@@ -704,13 +766,15 @@ const char* nsRetrievalContextWayland::GetClipboardData(
    */
   GdkAtom selection = GetSelectionAtom(aWhichClipboard);
   if (gdk_selection_owner_get(selection)) {
+    LOGCLIP(("  Internal clipboard content\n"));
     mClipboardRequestNumber++;
     gtk_clipboard_request_contents(
         gtk_clipboard_get(selection), gdk_atom_intern(aMimeType, FALSE),
         wayland_clipboard_contents_received,
         new FastTrackClipboard(mClipboardRequestNumber, this));
   } else {
-    DataOffer* dataOffer =
+    LOGCLIP(("  Remote clipboard content\n"));
+    const auto& dataOffer =
         (selection == GDK_SELECTION_PRIMARY) ? mPrimaryOffer : mClipboardOffer;
     if (!dataOffer) {
       // Something went wrong. We're requested to provide clipboard data
@@ -730,8 +794,10 @@ const char* nsRetrievalContextWayland::GetClipboardData(
 
 const char* nsRetrievalContextWayland::GetClipboardText(
     int32_t aWhichClipboard) {
+  LOGCLIP(("nsRetrievalContextWayland::GetClipboardText [%p]\n", this));
+
   GdkAtom selection = GetSelectionAtom(aWhichClipboard);
-  DataOffer* dataOffer =
+  const auto& dataOffer =
       (selection == GDK_SELECTION_PRIMARY) ? mPrimaryOffer : mClipboardOffer;
   if (!dataOffer) return nullptr;
 
@@ -746,6 +812,8 @@ const char* nsRetrievalContextWayland::GetClipboardText(
 
 void nsRetrievalContextWayland::ReleaseClipboardData(
     const char* aClipboardData) {
+  LOGCLIP(("nsRetrievalContextWayland::ReleaseClipboardData [%p]\n", this));
+
   NS_ASSERTION(aClipboardData == mClipboardData,
                "Releasing unknown clipboard data!");
   g_free((void*)aClipboardData);

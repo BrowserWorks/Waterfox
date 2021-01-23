@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title        "Lëndë">
+<!ENTITY buildToc.label      "Ndërto tabelë lënde prej:">
+<!ENTITY tag.label           "Shenjë:">
+<!ENTITY class.label         "Klasë:">
+<!ENTITY header1.label       "Niveli 1">
+<!ENTITY header2.label       "Niveli 2">
+<!ENTITY header3.label       "Niveli 3">
+<!ENTITY header4.label       "Niveli 4">
+<!ENTITY header5.label       "Niveli 5">
+<!ENTITY header6.label       "Niveli 6">
+<!ENTITY makeReadOnly.label  "Bëje tabelën e lëndës vetëm të lexueshme">
+<!ENTITY orderedList.label   "Numër për tërë zërat në tabelën e lëndës">

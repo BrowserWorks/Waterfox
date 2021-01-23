@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Appearance prefs dialog.  -->
+
+<!ENTITY pref.appearance.title "Aparencia">
+<!--LOCALIZATION NOTE (onStartLegend.label): Don't translate "&brandShortName;".
+    Place &brandShortName; in the phrase where the name of the application should appear
+-->
+<!ENTITY onStartLegend.label                    "Cando &brandShortName; se inicia, abrir">
+<!ENTITY navCheck.label                         "Navegador">
+<!ENTITY navCheck.accesskey                     "g">
+<!ENTITY showToolsLegend.label                  "Mostrar as barras de ferramentas como">
+<!ENTITY picsNtextRadio.label                   "Imaxes e texto">
+<!ENTITY picsNtextRadio.accesskey               "x">
+<!ENTITY picsOnlyRadio.label                    "Só as imaxes">
+<!ENTITY picsOnlyRadio.accesskey                "i">
+<!ENTITY textonlyRadio.label                    "Só o texto">
+<!ENTITY textonlyRadio.accesskey                "x">
+<!ENTITY showHideTooltips.label                 "Mostrar suxestións">
+<!ENTITY showHideTooltips.accesskey             "t">
+
+<!ENTITY pref.locales.title                     "Idioma da interface de usuario">
+<!ENTITY selectLocale.label                     "Seleccione o idioma para o texto que aparece nas caixas de diálogo, nos menús, nas barras de ferramentas e nas etiquetas dos botóns:">
+<!--LOCALIZATION NOTE (restartOnLangChange.label): Don't translate "&brandShortName;".
+    Place &brandShortName; in the phrase where the name of the application should appear
+-->
+<!ENTITY restartOnLangChange.label              "As preferencias de idioma terán efecto cando reinicie &brandShortName;.">
+

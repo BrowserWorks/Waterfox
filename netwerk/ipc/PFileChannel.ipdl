@@ -6,7 +6,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 include protocol PNecko;
-include URIParams;
 
 namespace mozilla {
 namespace net {
@@ -14,7 +13,7 @@ namespace net {
 /* Used to facilitate http redirects to file:// - see
  * https://bugzilla.mozilla.org/show_bug.cgi?id=1345094
  */
-async protocol PFileChannel
+async refcounted protocol PFileChannel
 {
   manager PNecko;
 

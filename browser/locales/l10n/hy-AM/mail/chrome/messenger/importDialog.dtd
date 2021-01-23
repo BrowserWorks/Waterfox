@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Ներմուծել">
+<!ENTITY importAll.label          "Ներմուծել ամեն ինչ">
+<!ENTITY importAll.accesskey      "E">
+<!ENTITY importMail.label         "Նամակ">
+<!ENTITY importMail.accesskey     "M">
+<!ENTITY importFeeds.label        "Բաժանորդագրություններ">
+<!ENTITY importFeeds.accesskey    "d">
+<!ENTITY importAddressbook.label  "Հասցեագիրք">
+<!ENTITY importAddressbook.accesskey "A">
+<!ENTITY importSettings.label     "Կարգավորումներ">
+<!ENTITY importSettings.accesskey "S">
+<!ENTITY importFilters.label      "Զտիչներ">
+<!ENTITY importFilters.accesskey  "F">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "&brandShortName;-ի Ներմուծման Օգնական">
+<!ENTITY importShortDesc.label    "Ներմուծել նամակ, Հասցեագիրք, Կարգավորումներ և զտիչներ այլ ծրագրերից">
+
+<!ENTITY importDescription1.label "Օգնականը կներմուծի նամակներ, հասցեներ, նախապատվություններ և/կամ զտիչներ այլ փոստային ծրագրից և ընտրված հասցեներ &brandShortName;-ում։">
+<!ENTITY importDescription2.label "Երբ ներմուծվեն, Դուք կկարողանաք մուտք գործել &brandShortName;-ի միջոցով։">
+
+<!ENTITY selectDescription.label  "Ընտրեք, թե ի՞նչ եք ցանկանում ներմուծել.">
+<!ENTITY selectDescriptionB.label "Ընտրեք գոյություն ունեցող հաշիվ կամ ստեղծեք նորը.">
+<!ENTITY selectDescription.accesskey "P">
+<!ENTITY acctName.label           "Անունը.">
+<!ENTITY acctName.accesskey       "N">
+<!ENTITY noModulesFound.label     "Տվյալներ ներմուծելու համար չի գտնվել ոչ մի հավելված կամ նիշք:">
+
+<!ENTITY back.label               "&lt; Նախորդը">
+<!ENTITY forward.label            "Առաջ &gt;">
+<!ENTITY finish.label             "Ավարտել">
+<!ENTITY cancel.label             "Չեղարկել">
+
+<!ENTITY select.label             "կամ ընտրեք, թե ինչը ներմուծել.">
+
+<!ENTITY title.label              "Անվանում">
+<!ENTITY processing.label         "Ներմուծվում է...">

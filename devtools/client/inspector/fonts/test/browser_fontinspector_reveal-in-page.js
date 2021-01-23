@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 "use strict";
@@ -44,9 +43,7 @@ add_task(async function() {
 
     ok(
       true,
-      `${
-        expectedSelectionChangeEvents[i]
-      } selectionchange events detected on mouseover`
+      `${expectedSelectionChangeEvents[i]} selectionchange events detected on mouseover`
     );
 
     // Simulating a mouse out event on the font name and expecting a selectionchange.
@@ -66,7 +63,9 @@ add_task(async function() {
 });
 
 async function waitForNSelectionEvents(tab, numberOfTimes) {
-  await ContentTask.spawn(tab.linkedBrowser, numberOfTimes, async function(n) {
+  await SpecialPowers.spawn(tab.linkedBrowser, [numberOfTimes], async function(
+    n
+  ) {
     const win = content.wrappedJSObject;
 
     await new Promise(resolve => {

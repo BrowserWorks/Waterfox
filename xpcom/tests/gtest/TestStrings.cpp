@@ -12,7 +12,9 @@
 #include "nsReadableUtils.h"
 #include "nsCRTGlue.h"
 #include "mozilla/RefPtr.h"
+#include "mozilla/TextUtils.h"
 #include "mozilla/Unused.h"
+#include "mozilla/Utf8.h"
 #include "nsTArray.h"
 #include "gtest/gtest.h"
 #include "gtest/MozGTestBench.h"  // For MOZ_GTEST_BENCH
@@ -39,6 +41,9 @@ namespace TestStrings {
 
 using mozilla::BlackBox;
 using mozilla::fallible;
+using mozilla::IsAscii;
+using mozilla::IsUtf8;
+using mozilla::MakeSpan;
 
 #define TestExample1                                                           \
   "Sed ut perspiciatis unde omnis iste natus error sit voluptatem "            \
@@ -1282,7 +1287,7 @@ static void test_parse_string_helper(const char* str, char separator, int len,
                                      const char* s1, const char* s2) {
   nsCString data(str);
   nsTArray<nsCString> results;
-  EXPECT_TRUE(ParseString(data, separator, results));
+  ParseString(data, separator, results);
   EXPECT_EQ(int(results.Length()), len);
   const char* strings[] = {s1, s2};
   for (int i = 0; i < len; ++i) {
@@ -1943,6 +1948,40 @@ TEST_F(Strings, latin1_to_utf8) {
   EXPECT_TRUE(t.Equals("\xC3\xA4"));
 }
 
+TEST_F(Strings, ConvertToSpan) {
+  nsString string;
+
+  // from const string
+  {
+    const auto& constStringRef = string;
+
+    auto span = Span{constStringRef};
+    static_assert(std::is_same_v<decltype(span), Span<const char16_t>>);
+  }
+
+  // from non-const string
+  {
+    auto span = Span{string};
+    static_assert(std::is_same_v<decltype(span), Span<char16_t>>);
+  }
+
+  nsCString cstring;
+
+  // from const string
+  {
+    const auto& constCStringRef = cstring;
+
+    auto span = Span{constCStringRef};
+    static_assert(std::is_same_v<decltype(span), Span<const char>>);
+  }
+
+  // from non-const string
+  {
+    auto span = Span{cstring};
+    static_assert(std::is_same_v<decltype(span), Span<char>>);
+  }
+}
+
 // Note the five calls in the loop, so divide by 100k
 MOZ_GTEST_BENCH_F(Strings, PerfStripWhitespace, [this] {
   nsCString test1(mExample1Utf8);
@@ -2025,56 +2064,56 @@ MOZ_GTEST_BENCH_F(Strings, PerfStripCharsCRLF, [this] {
 
 MOZ_GTEST_BENCH_F(Strings, PerfIsUTF8One, [this] {
   for (int i = 0; i < 200000; i++) {
-    bool b = IsUTF8(*BlackBox(&mAsciiOneUtf8));
+    bool b = IsUtf8(*BlackBox(&mAsciiOneUtf8));
     BlackBox(&b);
   }
 });
 
 MOZ_GTEST_BENCH_F(Strings, PerfIsUTF8Fifteen, [this] {
   for (int i = 0; i < 200000; i++) {
-    bool b = IsUTF8(*BlackBox(&mAsciiFifteenUtf8));
+    bool b = IsUtf8(*BlackBox(&mAsciiFifteenUtf8));
     BlackBox(&b);
   }
 });
 
 MOZ_GTEST_BENCH_F(Strings, PerfIsUTF8Hundred, [this] {
   for (int i = 0; i < 200000; i++) {
-    bool b = IsUTF8(*BlackBox(&mAsciiHundredUtf8));
+    bool b = IsUtf8(*BlackBox(&mAsciiHundredUtf8));
     BlackBox(&b);
   }
 });
 
 MOZ_GTEST_BENCH_F(Strings, PerfIsUTF8Example3, [this] {
   for (int i = 0; i < 100000; i++) {
-    bool b = IsUTF8(*BlackBox(&mExample3Utf8));
+    bool b = IsUtf8(*BlackBox(&mExample3Utf8));
     BlackBox(&b);
   }
 });
 
 MOZ_GTEST_BENCH_F(Strings, PerfIsASCII8One, [this] {
   for (int i = 0; i < 200000; i++) {
-    bool b = IsASCII(*BlackBox(&mAsciiOneUtf8));
+    bool b = IsAscii(*BlackBox(&mAsciiOneUtf8));
     BlackBox(&b);
   }
 });
 
 MOZ_GTEST_BENCH_F(Strings, PerfIsASCIIFifteen, [this] {
   for (int i = 0; i < 200000; i++) {
-    bool b = IsASCII(*BlackBox(&mAsciiFifteenUtf8));
+    bool b = IsAscii(*BlackBox(&mAsciiFifteenUtf8));
     BlackBox(&b);
   }
 });
 
 MOZ_GTEST_BENCH_F(Strings, PerfIsASCIIHundred, [this] {
   for (int i = 0; i < 200000; i++) {
-    bool b = IsASCII(*BlackBox(&mAsciiHundredUtf8));
+    bool b = IsAscii(*BlackBox(&mAsciiHundredUtf8));
     BlackBox(&b);
   }
 });
 
 MOZ_GTEST_BENCH_F(Strings, PerfIsASCIIExample3, [this] {
   for (int i = 0; i < 100000; i++) {
-    bool b = IsASCII(*BlackBox(&mExample3Utf8));
+    bool b = IsAscii(*BlackBox(&mExample3Utf8));
     BlackBox(&b);
   }
 });
@@ -2443,6 +2482,25 @@ CONVERSION_BENCH(PerfUTF8toUTF16VIHundred, CopyUTF8toUTF16, mViHundredUtf8,
 
 CONVERSION_BENCH(PerfUTF8toUTF16VIThousand, CopyUTF8toUTF16, mViThousandUtf8,
                  nsAutoString);
+
+// Tests for usability of nsTLiteralString in constant expressions.
+static_assert(NS_LITERAL_STRING("").IsEmpty());
+
+constexpr auto testStringA = NS_LITERAL_STRING("a");
+static_assert(!testStringA.IsEmpty());
+static_assert(!testStringA.IsVoid());
+static_assert(testStringA.IsLiteral());
+static_assert(testStringA.IsTerminated());
+static_assert(testStringA.GetDataFlags() ==
+              (nsLiteralString::DataFlags::LITERAL |
+               nsLiteralString::DataFlags::TERMINATED));
+static_assert(*static_cast<const char16_t*>(testStringA.Data()) == 'a');
+static_assert(1 == testStringA.Length());
+static_assert(testStringA.CharAt(0) == 'a');
+static_assert(testStringA[0] == 'a');
+static_assert(*testStringA.BeginReading() == 'a');
+static_assert(*testStringA.EndReading() == 0);
+static_assert(testStringA.EndReading() - testStringA.BeginReading() == 1);
 
 }  // namespace TestStrings
 

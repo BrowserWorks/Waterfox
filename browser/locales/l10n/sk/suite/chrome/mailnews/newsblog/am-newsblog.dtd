@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loginAtStartup.label "Po spustení skontrolovať nové príspevky">
+<!ENTITY loginAtStartup.accesskey "u">
+<!ENTITY biffAll.label "Povoliť aktualizácie pre všetky kanály">
+<!ENTITY biffAll.accesskey "e">
+
+<!ENTITY newFeedSettings.label "Predvolené nastavenia pre nové kanály">
+
+<!ENTITY manageSubscriptions.label "Správa odoberania…">
+<!ENTITY manageSubscriptions.accesskey "S">
+
+<!-- entities from rss.rdf -->
+<!ENTITY feeds.accountName "Blogy a informačné kanály">
+<!ENTITY feeds.wizardShortName "Kanály">
+<!ENTITY feeds.wizardLongName "Blogy a informačné kanály (RSS)">
+<!ENTITY feeds.wizardLongName.accesskey "B">

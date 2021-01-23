@@ -5,23 +5,40 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsIGlobalObject.h"
-
+#include "mozilla/CycleCollectedJSContext.h"
 #include "mozilla/dom/BlobURLProtocolHandler.h"
+#include "mozilla/dom/FunctionBinding.h"
+#include "mozilla/dom/Report.h"
+#include "mozilla/dom/ReportingObserver.h"
 #include "mozilla/dom/ServiceWorker.h"
 #include "mozilla/dom/ServiceWorkerRegistration.h"
 #include "nsContentUtils.h"
 #include "nsThreadUtils.h"
 #include "nsGlobalWindowInner.h"
 
+// Max number of Report objects
+constexpr auto MAX_REPORT_RECORDS = 100;
+
+using mozilla::AutoSlowOperation;
+using mozilla::CycleCollectedJSContext;
 using mozilla::DOMEventTargetHelper;
+using mozilla::ErrorResult;
+using mozilla::IgnoredErrorResult;
 using mozilla::MallocSizeOf;
 using mozilla::Maybe;
+using mozilla::MicroTaskRunnable;
 using mozilla::dom::BlobURLProtocolHandler;
 using mozilla::dom::ClientInfo;
+using mozilla::dom::Report;
+using mozilla::dom::ReportingObserver;
 using mozilla::dom::ServiceWorker;
 using mozilla::dom::ServiceWorkerDescriptor;
 using mozilla::dom::ServiceWorkerRegistration;
 using mozilla::dom::ServiceWorkerRegistrationDescriptor;
+using mozilla::dom::VoidFunction;
+
+nsIGlobalObject::nsIGlobalObject()
+    : mIsDying(false), mIsScriptForbidden(false), mIsInnerWindow(false) {}
 
 bool nsIGlobalObject::IsScriptForbidden(JSObject* aCallback,
                                         bool aIsJSImplementedWebIDL) const {
@@ -42,12 +59,16 @@ bool nsIGlobalObject::IsScriptForbidden(JSObject* aCallback,
 }
 
 nsIGlobalObject::~nsIGlobalObject() {
-  UnlinkHostObjectURIs();
+  UnlinkObjectsInGlobal();
   DisconnectEventTargetObjects();
   MOZ_DIAGNOSTIC_ASSERT(mEventTargetObjects.isEmpty());
 }
 
 nsIPrincipal* nsIGlobalObject::PrincipalOrNull() {
+  if (!NS_IsMainThread()) {
+    return nullptr;
+  }
+
   JSObject* global = GetGlobalJSObjectPreserveColor();
   if (NS_WARN_IF(!global)) return nullptr;
 
@@ -83,54 +104,51 @@ class UnlinkHostObjectURIsRunnable final : public mozilla::Runnable {
   }
 
  private:
-  ~UnlinkHostObjectURIsRunnable() {}
+  ~UnlinkHostObjectURIsRunnable() = default;
 
   nsTArray<nsCString> mURIs;
 };
 
 }  // namespace
 
-void nsIGlobalObject::UnlinkHostObjectURIs() {
-  if (mHostObjectURIs.IsEmpty()) {
-    return;
-  }
+void nsIGlobalObject::UnlinkObjectsInGlobal() {
+  if (!mHostObjectURIs.IsEmpty()) {
+    // BlobURLProtocolHandler is main-thread only.
+    if (NS_IsMainThread()) {
+      for (uint32_t index = 0; index < mHostObjectURIs.Length(); ++index) {
+        BlobURLProtocolHandler::RemoveDataEntry(mHostObjectURIs[index]);
+      }
 
-  if (NS_IsMainThread()) {
-    for (uint32_t index = 0; index < mHostObjectURIs.Length(); ++index) {
-      BlobURLProtocolHandler::RemoveDataEntry(mHostObjectURIs[index]);
+      mHostObjectURIs.Clear();
+    } else {
+      RefPtr<UnlinkHostObjectURIsRunnable> runnable =
+          new UnlinkHostObjectURIsRunnable(mHostObjectURIs);
+      MOZ_ASSERT(mHostObjectURIs.IsEmpty());
+
+      nsresult rv = NS_DispatchToMainThread(runnable);
+      if (NS_FAILED(rv)) {
+        NS_WARNING("Failed to dispatch a runnable to the main-thread.");
+      }
     }
-
-    mHostObjectURIs.Clear();
-    return;
   }
 
-  // BlobURLProtocolHandler is main-thread only.
-
-  RefPtr<UnlinkHostObjectURIsRunnable> runnable =
-      new UnlinkHostObjectURIsRunnable(mHostObjectURIs);
-  MOZ_ASSERT(mHostObjectURIs.IsEmpty());
-
-  nsresult rv = NS_DispatchToMainThread(runnable);
-  if (NS_FAILED(rv)) {
-    NS_WARNING("Failed to dispatch a runnable to the main-thread.");
-  }
+  mReportRecords.Clear();
+  mReportingObservers.Clear();
 }
 
-void nsIGlobalObject::TraverseHostObjectURIs(
-    nsCycleCollectionTraversalCallback& aCb) {
-  if (mHostObjectURIs.IsEmpty()) {
-    return;
-  }
-
+void nsIGlobalObject::TraverseObjectsInGlobal(
+    nsCycleCollectionTraversalCallback& cb) {
   // Currently we only store BlobImpl objects off the the main-thread and they
   // are not CCed.
-  if (!NS_IsMainThread()) {
-    return;
+  if (!mHostObjectURIs.IsEmpty() && NS_IsMainThread()) {
+    for (uint32_t index = 0; index < mHostObjectURIs.Length(); ++index) {
+      BlobURLProtocolHandler::Traverse(mHostObjectURIs[index], cb);
+    }
   }
 
-  for (uint32_t index = 0; index < mHostObjectURIs.Length(); ++index) {
-    BlobURLProtocolHandler::Traverse(mHostObjectURIs[index], aCb);
-  }
+  nsIGlobalObject* tmp = this;
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mReportRecords)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mReportingObservers)
 }
 
 void nsIGlobalObject::AddEventTargetObject(DOMEventTargetHelper* aObject) {
@@ -189,6 +207,14 @@ Maybe<ClientInfo> nsIGlobalObject::GetClientInfo() const {
   return Maybe<ClientInfo>();
 }
 
+Maybe<nsID> nsIGlobalObject::GetAgentClusterId() const {
+  Maybe<ClientInfo> ci = GetClientInfo();
+  if (ci.isSome()) {
+    return ci.value().AgentClusterId();
+  }
+  return mozilla::Nothing();
+}
+
 Maybe<ServiceWorkerDescriptor> nsIGlobalObject::GetController() const {
   // By default globals do not have a service worker controller.  Only real
   // window and worker globals can currently be controlled as a client.
@@ -229,4 +255,92 @@ nsPIDOMWindowInner* nsIGlobalObject::AsInnerWindow() {
 size_t nsIGlobalObject::ShallowSizeOfExcludingThis(MallocSizeOf aSizeOf) const {
   size_t rtn = mHostObjectURIs.ShallowSizeOfExcludingThis(aSizeOf);
   return rtn;
+}
+
+class QueuedMicrotask : public MicroTaskRunnable {
+ public:
+  QueuedMicrotask(nsIGlobalObject* aGlobal, VoidFunction& aCallback)
+      : mGlobal(aGlobal), mCallback(&aCallback) {}
+
+  MOZ_CAN_RUN_SCRIPT_BOUNDARY void Run(AutoSlowOperation& aAso) final {
+    IgnoredErrorResult rv;
+    MOZ_KnownLive(mCallback)->Call(static_cast<ErrorResult&>(rv));
+  }
+
+  bool Suppressed() final { return mGlobal->IsInSyncOperation(); }
+
+ private:
+  nsCOMPtr<nsIGlobalObject> mGlobal;
+  RefPtr<VoidFunction> mCallback;
+};
+
+void nsIGlobalObject::QueueMicrotask(VoidFunction& aCallback) {
+  CycleCollectedJSContext* context = CycleCollectedJSContext::Get();
+  if (context) {
+    RefPtr<MicroTaskRunnable> mt = new QueuedMicrotask(this, aCallback);
+    context->DispatchToMicroTask(mt.forget());
+  }
+}
+
+void nsIGlobalObject::RegisterReportingObserver(ReportingObserver* aObserver,
+                                                bool aBuffered) {
+  MOZ_ASSERT(aObserver);
+
+  if (mReportingObservers.Contains(aObserver)) {
+    return;
+  }
+
+  if (NS_WARN_IF(
+          !mReportingObservers.AppendElement(aObserver, mozilla::fallible))) {
+    return;
+  }
+
+  if (!aBuffered) {
+    return;
+  }
+
+  for (Report* report : mReportRecords) {
+    aObserver->MaybeReport(report);
+  }
+}
+
+void nsIGlobalObject::UnregisterReportingObserver(
+    ReportingObserver* aObserver) {
+  MOZ_ASSERT(aObserver);
+  mReportingObservers.RemoveElement(aObserver);
+}
+
+void nsIGlobalObject::BroadcastReport(Report* aReport) {
+  MOZ_ASSERT(aReport);
+
+  for (ReportingObserver* observer : mReportingObservers) {
+    observer->MaybeReport(aReport);
+  }
+
+  if (NS_WARN_IF(!mReportRecords.AppendElement(aReport, mozilla::fallible))) {
+    return;
+  }
+
+  while (mReportRecords.Length() > MAX_REPORT_RECORDS) {
+    mReportRecords.RemoveElementAt(0);
+  }
+}
+
+void nsIGlobalObject::NotifyReportingObservers() {
+  for (auto& observer : mReportingObservers.Clone()) {
+    // MOZ_KnownLive because the clone of 'mReportingObservers' is guaranteed to
+    // keep it alive.
+    //
+    // This can go away once
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=1620312 is fixed.
+    MOZ_KnownLive(observer)->MaybeNotify();
+  }
+}
+
+void nsIGlobalObject::RemoveReportRecords() {
+  mReportRecords.Clear();
+
+  for (auto& observer : mReportingObservers) {
+    observer->ForgetReports();
+  }
 }

@@ -4,24 +4,29 @@
 
 "use strict";
 
-add_task(async function setup() {
-  await SpecialPowers.pushPrefEnv({
-    set: [["extensions.htmlaboutaddons.enabled", true]],
-  });
-});
+const SUPPORT_URL = Services.urlFormatter.formatURL(
+  Services.prefs.getStringPref("app.support.baseURL")
+);
+const SUMO_URL = SUPPORT_URL + "recommended-extensions-program";
 
 async function checkRecommendedBadge(id, hidden) {
-  function checkBadge() {
+  async function checkBadge() {
     let card = win.document.querySelector(`addon-card[addon-id="${id}"]`);
     let badge = card.querySelector(".addon-badge-recommended");
     is(badge.hidden, hidden, `badge is ${hidden ? "hidden" : "shown"}`);
+    if (!hidden) {
+      info("Verify the badge links to the support page");
+      let tabLoaded = BrowserTestUtils.waitForNewTab(gBrowser, SUMO_URL);
+      EventUtils.synthesizeMouseAtCenter(badge, {}, win);
+      BrowserTestUtils.removeTab(await tabLoaded);
+    }
     return card;
   }
 
   let win = await loadInitialView("extension");
 
   // Check list view.
-  let card = checkBadge();
+  let card = await checkBadge();
 
   // Load detail view.
   let loaded = waitForViewLoad(win);
@@ -29,7 +34,7 @@ async function checkRecommendedBadge(id, hidden) {
   await loaded;
 
   // Check detail view.
-  checkBadge();
+  await checkBadge();
 
   await closeView(win);
 }

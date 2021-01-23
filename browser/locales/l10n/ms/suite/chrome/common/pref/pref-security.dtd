@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Privacy and Security' prefs settings -->
+<!ENTITY pref.security.title              "Privasi &amp; Keselamatan">
+
+<!ENTITY tracking.label                   "Penjejakan Pengguna">
+<!ENTITY trackingIntro.label              "Laman web boleh menjejak cara anda menggunakannya, sekali gus menjejaskan privasi anda.">
+
+<!ENTITY doNotTrack.label                 "Maklumkan laman web bahawa saya tidak mahu dijejaki">
+<!ENTITY doNotTrack.accesskey             "M">
+<!ENTITY trackProtect.label               "Halang aktiviti penjejakan oleh laman yang dikenali">
+<!ENTITY trackProtect.accesskey           "n">
+<!ENTITY warnTrackContent.label           "Beri amaran kepada saya apabila ada aktiviti penjejakan">
+<!ENTITY warnTrackContent.accesskey       "B">
+
+<!ENTITY geoLocation.label                "Pelayaran Sedar Lokasi">
+<!ENTITY geoIntro.label                   "Laman web boleh meminta maklumat lanjut lokasi semasa anda.">
+
+<!ENTITY geoEnabled.label                 "Maklumkan saya apabila ada permintaan keizinan">
+<!ENTITY geoEnabled.accesskey             "m">
+<!ENTITY geoDisabled.label                "Nyahdayakan ciri ini dan tolak semua permintaan">
+<!ENTITY geoDisabled.accesskey            "N">
+
+<!-- LOCALIZATION NOTE (safeBrowsing.label, blockWebForgeries.label, blockAttackSites.label):
+  The methods by which forged (phished) and attack sites will be detected by
+  phishing providers will vary from human review to machine-based heuristics
+  to a combination of both, so it's important that these strings convey the
+  meaning "reported" (and not something like "known").
+-->
+<!ENTITY safeBrowsing.label               "Pelayaran Selamat">
+<!ENTITY safeBrowsingIntro.label          "&brandShortName; boleh menyekat laman web yang dilaporkan mengandungi kandungan berbahaya.">
+
+<!ENTITY blockAttackSites.label           "Sekat laman penyerang (perisian hasad, virus)">
+<!ENTITY blockAttackSites.accesskey       "S">
+
+<!ENTITY blockWebForgeries.label          "Sekat web penipuan (Phishing)">
+<!ENTITY blockWebForgeries.accesskey      "P">

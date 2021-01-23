@@ -248,23 +248,10 @@ already_AddRefed<XPCNativeInterface> XPCNativeInterface::NewInstance(
 
   uint16_t methodCount = aInfo->MethodCount();
   uint16_t constCount = aInfo->ConstantCount();
-
-  // If the interface does not have nsISupports in its inheritance chain
-  // then we know we can't reflect its methods. However, some interfaces that
-  // are used just to reflect constants are declared this way. We need to
-  // go ahead and build the thing. But, we'll ignore whatever methods it may
-  // have.
-  if (!nsXPConnect::IsISupportsDescendant(aInfo)) {
-    methodCount = 0;
-  }
-
   totalCount = methodCount + constCount;
 
   if (totalCount > MAX_LOCAL_MEMBER_COUNT) {
     members = new XPCNativeMember[totalCount];
-    if (!members) {
-      return nullptr;
-    }
   } else {
     members = local_members;
   }
@@ -285,16 +272,10 @@ already_AddRefed<XPCNativeInterface> XPCNativeInterface::NewInstance(
     }
 
     jsid name;
-    if (info.IsSymbol()) {
-      name = SYMBOL_TO_JSID(info.GetSymbol(cx));
-    } else {
-      str = JS_AtomizeAndPinString(cx, info.GetName());
-      if (!str) {
-        NS_ERROR("bad method name");
-        failed = true;
-        break;
-      }
-      name = INTERNED_STRING_TO_JSID(cx, str);
+    if (!info.GetId(cx, name)) {
+      NS_ERROR("bad method name");
+      failed = true;
+      break;
     }
 
     if (info.IsSetter()) {
@@ -341,7 +322,7 @@ already_AddRefed<XPCNativeInterface> XPCNativeInterface::NewInstance(
         failed = true;
         break;
       }
-      jsid name = INTERNED_STRING_TO_JSID(cx, str);
+      jsid name = PropertyKey::fromPinnedString(str);
 
       // XXX need better way to find dups
       // MOZ_ASSERT(!LookupMemberByID(name),"duplicate method/constant name");
@@ -364,7 +345,7 @@ already_AddRefed<XPCNativeInterface> XPCNativeInterface::NewInstance(
         nullptr == (str = JS_AtomizeAndPinString(cx, bytes))) {
       failed = true;
     }
-    interfaceName = INTERNED_STRING_TO_JSID(cx, str);
+    interfaceName = PropertyKey::fromPinnedString(str);
   }
 
   if (!failed) {
@@ -412,7 +393,6 @@ void XPCNativeInterface::DebugDump(int16_t depth) {
   XPC_LOG_ALWAYS(("XPCNativeInterface @ %p", this));
   XPC_LOG_INDENT();
   XPC_LOG_ALWAYS(("name is %s", GetNameString()));
-  XPC_LOG_ALWAYS(("mMemberCount is %d", mMemberCount));
   XPC_LOG_ALWAYS(("mInfo @ %p", mInfo));
   XPC_LOG_OUTDENT();
 #endif
@@ -489,7 +469,7 @@ already_AddRefed<XPCNativeSet> XPCNativeSet::GetNewOrUsed(JSContext* cx,
     return set.forget();
   }
 
-  set = NewInstance(cx, {iface.forget()});
+  set = NewInstance(cx, {std::move(iface)});
   if (!set) {
     return nullptr;
   }
@@ -697,19 +677,16 @@ already_AddRefed<XPCNativeSet> XPCNativeSet::NewInstance(
 
   // Stick the nsISupports in front and skip additional nsISupport(s)
   XPCNativeInterface** outp = (XPCNativeInterface**)&obj->mInterfaces;
-  uint16_t memberCount = 1;  // for the one member in nsISupports
 
   NS_ADDREF(*(outp++) = isup);
 
   for (auto key = array.begin(); key != array.end(); key++) {
-    RefPtr<XPCNativeInterface> cur = key->forget();
+    RefPtr<XPCNativeInterface> cur = std::move(*key);
     if (isup == cur) {
       continue;
     }
-    memberCount += cur->GetMemberCount();
     *(outp++) = cur.forget().take();
   }
-  obj->mMemberCount = memberCount;
   obj->mInterfaceCount = slots;
 
   return obj.forget();
@@ -734,8 +711,6 @@ already_AddRefed<XPCNativeSet> XPCNativeSet::NewInstanceMutate(
   void* place = new char[size];
   RefPtr<XPCNativeSet> obj = new (place) XPCNativeSet();
 
-  obj->mMemberCount =
-      otherSet->GetMemberCount() + newInterface->GetMemberCount();
   obj->mInterfaceCount = otherSet->mInterfaceCount + 1;
 
   XPCNativeInterface** src = otherSet->mInterfaces;
@@ -770,7 +745,6 @@ void XPCNativeSet::DebugDump(int16_t depth) {
       mInterfaces[i]->DebugDump(depth);
     }
   }
-  XPC_LOG_ALWAYS(("mMemberCount of %d", mMemberCount));
   XPC_LOG_OUTDENT();
 #endif
 }

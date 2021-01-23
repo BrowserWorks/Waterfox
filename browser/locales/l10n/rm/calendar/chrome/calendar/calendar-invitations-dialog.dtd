@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- Calendar Invitations Dialog -->
+<!ENTITY calendar.invitations.dialog.invitations.text                   "Invitaziuns">
+<!ENTITY calendar.invitations.dialog.statusmessage.updating.text        "actualisar la glista dad intivaziuns.">
+<!ENTITY calendar.invitations.dialog.statusmessage.noinvitations.text   "Chattà naginas invitaziuns betg confermadas.">
+
+<!-- Calendar Invitations List -->
+<!ENTITY calendar.invitations.list.accept.button.label                  "Acceptar">
+<!ENTITY calendar.invitations.list.decline.button.label                 "Refusar">
+<!ENTITY calendar.invitations.list.recurrentevent.text                  "Eveniment repetitiv">
+<!ENTITY calendar.invitations.list.alldayevent.text                     "Tuttadi">
+<!ENTITY calendar.invitations.list.location.text                        "Lieu: ">
+<!ENTITY calendar.invitations.list.organizer.text                       "Organisatur: ">
+<!ENTITY calendar.invitations.list.attendee.text                        "Participants: ">
+<!ENTITY calendar.invitations.list.none.text                            "Nagin">

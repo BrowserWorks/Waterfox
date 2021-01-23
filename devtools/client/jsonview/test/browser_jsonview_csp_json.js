@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -17,7 +15,7 @@ add_task(async function() {
 
   // The JSON Viewer alters the CSP, but the displayed header should be the original one
   await selectJsonViewContentTab("headers");
-  await ContentTask.spawn(tab.linkedBrowser, null, async function() {
+  await SpecialPowers.spawn(tab.linkedBrowser, [], async function() {
     const responseHeaders = content.document.querySelector(".netHeadersGroup");
     const names = responseHeaders.querySelectorAll(".netInfoParamName");
     let found = false;

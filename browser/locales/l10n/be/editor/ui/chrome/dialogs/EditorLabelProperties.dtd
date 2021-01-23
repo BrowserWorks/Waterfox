@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Уласцівасці меткі">
+<!ENTITY Settings.label "Наладжванні">
+<!ENTITY Settings.accesskey "Н">
+<!ENTITY EditLabelText.label "Рэдагаваць тэкст:">
+<!ENTITY EditLabelText.accesskey "Т">
+<!ENTITY LabelFor.label "Для кіравання:">
+<!ENTITY LabelFor.accesskey "Д">
+<!ENTITY AccessKey.label "Клавіша доступу:">
+<!ENTITY AccessKey.accesskey "К">
+<!ENTITY RemoveLabel.label "Выдаліць метку">
+<!ENTITY RemoveLabel.accesskey "д">

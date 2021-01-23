@@ -41,16 +41,12 @@ function matches_never(perm, uris) {
 }
 
 function mk_permission(uri) {
-  let pm = Cc["@mozilla.org/permissionmanager;1"].getService(
-    Ci.nsIPermissionManager
-  );
+  let pm = Services.perms;
 
-  let secMan = Cc["@mozilla.org/scriptsecuritymanager;1"].getService(
-    Ci.nsIScriptSecurityManager
-  );
+  let secMan = Services.scriptSecurityManager;
 
   // Get the permission from the principal!
-  let principal = secMan.createCodebasePrincipal(uri, {});
+  let principal = secMan.createContentPrincipal(uri, {});
 
   pm.addFromPrincipal(principal, "test/matchesuri", pm.ALLOW_ACTION);
   let permission = pm.getPermissionObject(principal, "test/matchesuri", true);
@@ -60,13 +56,7 @@ function mk_permission(uri) {
 
 function run_test() {
   // initialize the permission manager service
-  let pm = Cc["@mozilla.org/permissionmanager;1"].getService(
-    Ci.nsIPermissionManager
-  );
-
-  let secMan = Cc["@mozilla.org/scriptsecuritymanager;1"].getService(
-    Ci.nsIScriptSecurityManager
-  );
+  let pm = Services.perms;
 
   let fileprefix = "file:///";
   if (Services.appinfo.OS == "WINNT") {

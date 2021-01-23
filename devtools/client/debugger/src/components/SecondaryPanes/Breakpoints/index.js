@@ -14,7 +14,6 @@ import Breakpoint from "./Breakpoint";
 import BreakpointHeading from "./BreakpointHeading";
 
 import actions from "../../../actions";
-import { getDisplayPath } from "../../../utils/source";
 import { getSelectedLocation } from "../../../utils/selected-location";
 import { createHeadlessEditor } from "../../../utils/editor/create-editor";
 
@@ -23,11 +22,7 @@ import {
   sortSelectedBreakpoints,
 } from "../../../utils/breakpoint";
 
-import {
-  getSelectedSource,
-  getBreakpointSources,
-  getSkipPausing,
-} from "../../../selectors";
+import { getSelectedSource, getBreakpointSources } from "../../../selectors";
 
 import type { Source } from "../../../types";
 import type { BreakpointSources } from "../../../selectors/breakpointSources";
@@ -35,10 +30,14 @@ import type SourceEditor from "../../../utils/editor/source-editor";
 
 import "./Breakpoints.css";
 
+type OwnProps = {|
+  shouldPauseOnExceptions: boolean,
+  shouldPauseOnCaughtExceptions: boolean,
+  pauseOnExceptions: Function,
+|};
 type Props = {
   breakpointSources: BreakpointSources,
-  selectedSource: Source,
-  skipPausing: boolean,
+  selectedSource: ?Source,
   shouldPauseOnExceptions: boolean,
   shouldPauseOnCaughtExceptions: boolean,
   pauseOnExceptions: Function,
@@ -109,14 +108,12 @@ class Breakpoints extends Component<Props> {
       return null;
     }
 
-    const sources = [
-      ...breakpointSources.map(({ source, breakpoints }) => source),
-    ];
+    const editor = this.getEditor();
+    const sources = [...breakpointSources.map(({ source }) => source)];
 
     return (
       <div className="pane breakpoints-list">
-        {breakpointSources.map(({ source, breakpoints, i }) => {
-          const path = getDisplayPath(source, sources);
+        {breakpointSources.map(({ source, breakpoints }) => {
           const sortedBreakpoints = sortSelectedBreakpoints(
             breakpoints,
             selectedSource
@@ -124,17 +121,16 @@ class Breakpoints extends Component<Props> {
 
           return [
             <BreakpointHeading
+              key={source.id}
               source={source}
               sources={sources}
-              path={path}
-              key={source.url}
             />,
             ...sortedBreakpoints.map(breakpoint => (
               <Breakpoint
                 breakpoint={breakpoint}
                 source={source}
                 selectedSource={selectedSource}
-                editor={this.getEditor()}
+                editor={editor}
                 key={makeBreakpointId(
                   getSelectedLocation(breakpoint, selectedSource)
                 )}
@@ -147,9 +143,8 @@ class Breakpoints extends Component<Props> {
   }
 
   render() {
-    const { skipPausing } = this.props;
     return (
-      <div className={classnames("pane", skipPausing && "skip-pausing")}>
+      <div className="pane">
         {this.renderExceptionsOptions()}
         {this.renderBreakpoints()}
       </div>
@@ -160,12 +155,8 @@ class Breakpoints extends Component<Props> {
 const mapStateToProps = state => ({
   breakpointSources: getBreakpointSources(state),
   selectedSource: getSelectedSource(state),
-  skipPausing: getSkipPausing(state),
 });
 
-export default connect(
-  mapStateToProps,
-  {
-    pauseOnExceptions: actions.pauseOnExceptions,
-  }
-)(Breakpoints);
+export default connect<Props, OwnProps, _, _, _, _>(mapStateToProps, {
+  pauseOnExceptions: actions.pauseOnExceptions,
+})(Breakpoints);

@@ -6,115 +6,34 @@
 
 const TEST_URL = "https://example.com/";
 
-function arrivingHereIsBad(aResult) {
-  ok(false, "Bad result! Received a: " + aResult);
-}
-
-function expectError(aType) {
-  let expected = `${aType}Error`;
-  return function(aResult) {
-    is(
-      aResult.slice(0, expected.length),
-      expected,
-      `Expecting a ${aType}Error`
-    );
-  };
-}
-
 let expectNotSupportedError = expectError("NotSupported");
 let expectInvalidStateError = expectError("InvalidState");
 let expectSecurityError = expectError("Security");
 
-/* eslint-disable no-shadow */
-function promiseU2FRegister(tab, app_id) {
-  let challenge = crypto.getRandomValues(new Uint8Array(16));
-  challenge = bytesToBase64UrlSafe(challenge);
+function promiseU2FRegister(tab, app_id_) {
+  let challenge_ = crypto.getRandomValues(new Uint8Array(16));
+  challenge_ = bytesToBase64UrlSafe(challenge_);
 
-  return ContentTask.spawn(tab.linkedBrowser, [app_id, challenge], function([
-    app_id,
-    challenge,
-  ]) {
-    return new Promise(resolve => {
-      content.u2f.register(
-        app_id,
-        [{ version: "U2F_V2", challenge }],
-        [],
-        resolve
-      );
-    });
-  }).then(res => {
+  return SpecialPowers.spawn(
+    tab.linkedBrowser,
+    [[app_id_, challenge_]],
+    function([app_id, challenge]) {
+      return new Promise(resolve => {
+        content.u2f.register(
+          app_id,
+          [{ version: "U2F_V2", challenge }],
+          [],
+          resolve
+        );
+      });
+    }
+  ).then(res => {
     is(res.errorCode, 0, "u2f.register() succeeded");
     let data = base64ToBytesUrlSafe(res.registrationData);
     is(data[0], 0x05, "Reserved byte is correct");
     return data.slice(67, 67 + data[66]);
   });
 }
-
-function promiseWebAuthnRegister(tab, appid) {
-  return ContentTask.spawn(tab.linkedBrowser, [appid], ([appid]) => {
-    const cose_alg_ECDSA_w_SHA256 = -7;
-
-    let challenge = content.crypto.getRandomValues(new Uint8Array(16));
-
-    let pubKeyCredParams = [
-      {
-        type: "public-key",
-        alg: cose_alg_ECDSA_w_SHA256,
-      },
-    ];
-
-    let publicKey = {
-      rp: { id: content.document.domain, name: "none", icon: "none" },
-      user: {
-        id: new Uint8Array(),
-        name: "none",
-        icon: "none",
-        displayName: "none",
-      },
-      pubKeyCredParams,
-      extensions: { appid },
-      challenge,
-    };
-
-    return content.navigator.credentials
-      .create({ publicKey })
-      .then(res => res.rawId);
-  });
-}
-
-function promiseWebAuthnSign(tab, key_handle, extensions = {}) {
-  return ContentTask.spawn(
-    tab.linkedBrowser,
-    [key_handle, extensions],
-    ([key_handle, extensions]) => {
-      let challenge = content.crypto.getRandomValues(new Uint8Array(16));
-
-      let credential = {
-        id: key_handle,
-        type: "public-key",
-        transports: ["usb"],
-      };
-
-      let publicKey = {
-        challenge,
-        extensions,
-        rpId: content.document.domain,
-        allowCredentials: [credential],
-      };
-
-      return content.navigator.credentials
-        .get({ publicKey })
-        .then(credential => {
-          return {
-            authenticatorData: credential.response.authenticatorData,
-            clientDataJSON: credential.response.clientDataJSON,
-            extensions: credential.getClientExtensionResults(),
-          };
-        });
-    }
-  );
-}
-/* eslint-enable no-shadow */
 
 add_task(function test_setup() {
   Services.prefs.setBoolPref("security.webauth.u2f", true);
@@ -142,19 +61,19 @@ add_task(async function test_appid() {
   let keyHandle = await promiseU2FRegister(tab, appid);
 
   // The FIDO AppId extension can't be used for MakeCredential.
-  await promiseWebAuthnRegister(tab, appid)
+  await promiseWebAuthnMakeCredential(tab, "none", { appid })
     .then(arrivingHereIsBad)
     .catch(expectNotSupportedError);
 
   // Using the keyHandle shouldn't work without the FIDO AppId extension.
   // This will be an invalid state, because the softtoken will consent without
   // having the correct "RP ID" via the FIDO extension.
-  await promiseWebAuthnSign(tab, keyHandle)
+  await promiseWebAuthnGetAssertion(tab, keyHandle)
     .then(arrivingHereIsBad)
     .catch(expectInvalidStateError);
 
   // Invalid app IDs (for the current origin) must be rejected.
-  await promiseWebAuthnSign(tab, keyHandle, {
+  await promiseWebAuthnGetAssertion(tab, keyHandle, {
     appid: "https://bogus.com/appId",
   })
     .then(arrivingHereIsBad)
@@ -162,7 +81,7 @@ add_task(async function test_appid() {
 
   // Non-matching app IDs must be rejected. Even when the user/softtoken
   // consents, leading to an invalid state.
-  await promiseWebAuthnSign(tab, keyHandle, { appid: appid + "2" })
+  await promiseWebAuthnGetAssertion(tab, keyHandle, { appid: appid + "2" })
     .then(arrivingHereIsBad)
     .catch(expectInvalidStateError);
 
@@ -170,7 +89,7 @@ add_task(async function test_appid() {
   let rpIdHash = await crypto.subtle.digest("SHA-256", rpId);
 
   // Succeed with the right fallback rpId.
-  await promiseWebAuthnSign(tab, keyHandle, { appid }).then(
+  await promiseWebAuthnGetAssertion(tab, keyHandle, { appid }).then(
     ({ authenticatorData, clientDataJSON, extensions }) => {
       is(extensions.appid, true, "appid extension was acted upon");
 
@@ -182,6 +101,75 @@ add_task(async function test_appid() {
       is(clientData.clientExtensions.appid, appid, "appid extension sent");
     }
   );
+
+  // Close tab.
+  BrowserTestUtils.removeTab(tab);
+});
+
+add_task(async function test_appid_unused() {
+  // Open a new tab.
+  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, TEST_URL);
+
+  // Get a keyHandle for a FIDO AppId.
+  let appid = "https://example.com/appId";
+
+  let { attObj, rawId } = await promiseWebAuthnMakeCredential(tab);
+  let { authDataObj } = await webAuthnDecodeCBORAttestation(attObj);
+
+  // Make sure the RP ID hash matches what we calculate.
+  await checkRpIdHash(authDataObj.rpIdHash, "example.com");
+
+  // Get a new assertion.
+  let {
+    clientDataJSON,
+    authenticatorData,
+    signature,
+    extensions,
+  } = await promiseWebAuthnGetAssertion(tab, rawId, { appid });
+
+  // Check the we can parse clientDataJSON.
+  let clientData = JSON.parse(buffer2string(clientDataJSON));
+  ok(
+    "appid" in clientData.clientExtensions,
+    `since it was passed, appid field should appear in the client data, but ` +
+      `saw: ${JSON.stringify(clientData.clientExtensions)}`
+  );
+
+  ok(
+    "appid" in extensions,
+    `appid should be populated in the extensions data, but saw: ` +
+      `${JSON.stringify(extensions)}`
+  );
+  is(extensions.appid, false, "appid extension should indicate it was unused");
+
+  // Check auth data.
+  let attestation = await webAuthnDecodeAuthDataArray(
+    new Uint8Array(authenticatorData)
+  );
+  is(
+    attestation.flags,
+    flag_TUP,
+    "Assertion's user presence byte set correctly"
+  );
+
+  // Verify the signature.
+  let params = await deriveAppAndChallengeParam(
+    "example.com",
+    clientDataJSON,
+    attestation
+  );
+  let signedData = await assembleSignedData(
+    params.appParam,
+    params.attestation.flags,
+    params.attestation.counter,
+    params.challengeParam
+  );
+  let valid = await verifySignature(
+    authDataObj.publicKeyHandle,
+    signedData,
+    signature
+  );
+  ok(valid, "signature is valid");
 
   // Close tab.
   BrowserTestUtils.removeTab(tab);

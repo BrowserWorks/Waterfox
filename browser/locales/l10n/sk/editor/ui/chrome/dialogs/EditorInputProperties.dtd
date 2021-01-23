@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Vlastnosti vstupného poľa">
+<!ENTITY windowTitleImage.label "Vlastnosti obrázkového poľa">
+
+<!ENTITY InputType.label "Typ poľa">
+<!ENTITY InputType.accesskey "T">
+<!ENTITY text.value "Text">
+<!ENTITY password.value "Heslo">
+<!ENTITY checkbox.value "Označovacie pole">
+<!ENTITY radio.value "Prepínač">
+<!ENTITY submit.value "Odosielacie tlačidlo">
+<!ENTITY reset.value "Tlačidlo vynulovania">
+<!ENTITY file.value "Súbor">
+<!ENTITY hidden.value "Skryté">
+<!ENTITY image.value "Obrázok">
+<!ENTITY button.value "Tlačidlo">
+
+<!ENTITY InputSettings.label "Nastavenie poľa">
+<!ENTITY InputName.label "Názov poľa">
+<!ENTITY InputName.accesskey "N">
+<!ENTITY GroupName.label "Názov skupiny:">
+<!ENTITY GroupName.accesskey "N">
+<!ENTITY InputValue.label "Hodnota poľa:">
+<!ENTITY InputValue.accesskey "H">
+<!ENTITY InitialValue.label "Pôvodná hodnota:">
+<!ENTITY InitialValue.accesskey "h">
+<!ENTITY InputChecked.label "Na začiatku označené">
+<!ENTITY InputChecked.accesskey "z">
+<!ENTITY InputSelected.label "Na začiatku označené">
+<!ENTITY InputSelected.accesskey "z">
+<!ENTITY InputReadOnly.label "Iba na čítanie">
+<!ENTITY InputReadOnly.accesskey "I">
+<!ENTITY InputDisabled.label "Zakázané">
+<!ENTITY InputDisabled.accesskey "a">
+<!ENTITY tabIndex.label "Poradie:">
+<!ENTITY tabIndex.accesskey "r">
+<!ENTITY TextSize.label "Veľkosť poľa:">
+<!ENTITY TextSize.accesskey "e">
+<!ENTITY TextLength.label "Maximálna dĺžka:">
+<!ENTITY TextLength.accesskey "x">
+<!ENTITY AccessKey.label "Prístupový kláves:">
+<!ENTITY AccessKey.accesskey "s">
+<!ENTITY Accept.label "Akceptovať typy:">
+<!ENTITY Accept.accesskey "c">
+
+<!ENTITY ImageProperties.label "Vlastnosti obrázka…">
+<!ENTITY ImageProperties.accesskey "b">

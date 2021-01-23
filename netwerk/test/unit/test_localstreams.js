@@ -1,5 +1,7 @@
 // Tests bug 304414
 
+"use strict";
+
 const PR_RDONLY = 0x1; // see prio.h
 
 // Does some sanity checks on the stream and returns the number of bytes read
@@ -58,7 +60,6 @@ function test_stream(stream) {
 
     numread += avail;
   }
-  return numread;
 }
 
 function stream_for_file(file) {
@@ -73,7 +74,7 @@ function stream_from_channel(file) {
   var ios = Cc["@mozilla.org/network/io-service;1"].getService(Ci.nsIIOService);
   var uri = ios.newFileURI(file);
   return NetUtil.newChannel({
-    uri: uri,
+    uri,
     loadUsingSystemPrincipal: true,
   }).open();
 }

@@ -2,7 +2,17 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 :root{
-  -moz-user-select: none;
+  user-select: none;
+}
+
+.theme-light {
+  --experimental-background: #E0EEFF;
+  --experimental-color: #436286;
+}
+
+.theme-dark {
+  --experimental-background: #436286;
+  --experimental-color: #E0EEFF;
 }
 
 #options-panel-container {
@@ -15,11 +25,7 @@
 
 .options-vertical-pane {
   display: inline;
-  float: left;
-}
-
-.options-vertical-pane:dir(rtl) {
-  float: right;
+  float: inline-start;
 }
 
 .options-vertical-pane {
@@ -130,13 +136,45 @@
 
 .deprecation-notice {
   align-items: center;
-  background-color: hsl(54, 100%, 92%);
-  color: var(--yellow-80);
+  background-color: var(--theme-warning-background);
+  color: var(--theme-warning-color);
   display: flex;
-  box-shadow: 0 0 0px 4px hsl(54, 100%, 92%);
+  margin-inline-start: 8px;
+  outline: var(--theme-warning-background) solid 4px;
+}
+
+.deprecation-notice a {
+  color: currentColor;
+}
+.deprecation-notice a:hover{
+  text-decoration: underline;
+}
+
+.experimental-notice::before {
+  mask-image: url("chrome://devtools/skin/images/filter-small.svg");
+  mask-size: 15px;
+  transform: scaleY(-1);
+  background-color: var(--experimental-color);
+  display: inline-block;
+  content: "";
+  flex-shrink: 0;
+  height: 15px;
+  margin-inline-end: 5px;
+  width: 15px;
+}
+
+.experimental-notice {
+  background-color: var(--experimental-background);
+  color: var(--experimental-color);
+  outline: var(--experimental-background) solid 4px;
+  align-items: center;
+  display: flex;
   margin-inline-start: 8px;
 }
 
-.deprecation-notice a:hover{
+.experimental-notice a {
+  color: currentColor;
+}
+.experimental-notice a:hover{
   text-decoration: underline;
 }

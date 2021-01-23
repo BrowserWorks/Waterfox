@@ -8,13 +8,11 @@
 use crate::computed_values::list_style_type::T as ListStyleType;
 use crate::parser::{Parse, ParserContext};
 use crate::values::generics::counters as generics;
-use crate::values::generics::counters::CounterIncrement as GenericCounterIncrement;
 use crate::values::generics::counters::CounterPair;
-use crate::values::generics::counters::CounterSetOrReset as GenericCounterSetOrReset;
 #[cfg(feature = "gecko")]
-use crate::values::generics::CounterStyleOrNone;
+use crate::values::generics::CounterStyle;
 use crate::values::specified::url::SpecifiedImageUrl;
-#[cfg(feature = "gecko")]
+#[cfg(any(feature = "gecko", feature = "servo-layout-2020"))]
 use crate::values::specified::Attr;
 use crate::values::specified::Integer;
 use crate::values::CustomIdent;
@@ -23,7 +21,7 @@ use selectors::parser::SelectorParseErrorKind;
 use style_traits::{ParseError, StyleParseErrorKind};
 
 /// A specified value for the `counter-increment` property.
-pub type CounterIncrement = GenericCounterIncrement<Integer>;
+pub type CounterIncrement = generics::GenericCounterIncrement<Integer>;
 
 impl Parse for CounterIncrement {
     fn parse<'i, 't>(
@@ -35,7 +33,7 @@ impl Parse for CounterIncrement {
 }
 
 /// A specified value for the `counter-set` and `counter-reset` properties.
-pub type CounterSetOrReset = GenericCounterSetOrReset<Integer>;
+pub type CounterSetOrReset = generics::GenericCounterSetOrReset<Integer>;
 
 impl Parse for CounterSetOrReset {
     fn parse<'i, 't>(
@@ -63,7 +61,10 @@ fn parse_counters<'i, 't>(
         let location = input.current_source_location();
         let name = match input.next() {
             Ok(&Token::Ident(ref ident)) => CustomIdent::from_ident(location, ident, &["none"])?,
-            Ok(t) => return Err(location.new_unexpected_token_error(t.clone())),
+            Ok(t) => {
+                let t = t.clone();
+                return Err(location.new_unexpected_token_error(t));
+            },
             Err(_) => break,
         };
 
@@ -81,10 +82,10 @@ fn parse_counters<'i, 't>(
 }
 
 /// The specified value for the `content` property.
-pub type Content = generics::Content<SpecifiedImageUrl>;
+pub type Content = generics::GenericContent<SpecifiedImageUrl>;
 
 /// The specified value for a content item in the `content` property.
-pub type ContentItem = generics::ContentItem<SpecifiedImageUrl>;
+pub type ContentItem = generics::GenericContentItem<SpecifiedImageUrl>;
 
 impl Content {
     #[cfg(feature = "servo")]
@@ -98,13 +99,13 @@ impl Content {
     }
 
     #[cfg(feature = "gecko")]
-    fn parse_counter_style(context: &ParserContext, input: &mut Parser) -> CounterStyleOrNone {
+    fn parse_counter_style(context: &ParserContext, input: &mut Parser) -> CounterStyle {
         input
             .try(|input| {
                 input.expect_comma()?;
-                CounterStyleOrNone::parse(context, input)
+                CounterStyle::parse(context, input)
             })
-            .unwrap_or(CounterStyleOrNone::decimal())
+            .unwrap_or(CounterStyle::decimal())
     }
 }
 
@@ -112,6 +113,7 @@ impl Parse for Content {
     // normal | none | [ <string> | <counter> | open-quote | close-quote | no-open-quote |
     // no-close-quote ]+
     // TODO: <uri>, attr(<identifier>)
+    #[cfg_attr(feature = "servo", allow(unused_mut))]
     fn parse<'i, 't>(
         context: &ParserContext,
         input: &mut Parser<'i, 't>,
@@ -128,81 +130,82 @@ impl Parse for Content {
         {
             return Ok(generics::Content::None);
         }
-        #[cfg(feature = "gecko")]
-        {
-            if input
-                .try(|input| input.expect_ident_matching("-moz-alt-content"))
-                .is_ok()
-            {
-                return Ok(generics::Content::MozAltContent);
-            }
-        }
 
         let mut content = vec![];
+        let mut has_alt_content = false;
         loop {
-            #[cfg(feature = "gecko")]
+            #[cfg(any(feature = "gecko", feature = "servo-layout-2020"))]
             {
                 if let Ok(url) = input.try(|i| SpecifiedImageUrl::parse(context, i)) {
                     content.push(generics::ContentItem::Url(url));
                     continue;
                 }
             }
-            // FIXME: remove clone() when lifetimes are non-lexical
-            match input.next().map(|t| t.clone()) {
-                Ok(Token::QuotedString(ref value)) => {
+            match input.next() {
+                Ok(&Token::QuotedString(ref value)) => {
                     content.push(generics::ContentItem::String(
-                        value.as_ref().to_owned().into_boxed_str(),
+                        value.as_ref().to_owned().into(),
                     ));
                 },
-                Ok(Token::Function(ref name)) => {
+                Ok(&Token::Function(ref name)) => {
                     let result = match_ignore_ascii_case! { &name,
-                        "counter" => Some(input.parse_nested_block(|input| {
+                        "counter" => input.parse_nested_block(|input| {
                             let location = input.current_source_location();
                             let name = CustomIdent::from_ident(location, input.expect_ident()?, &[])?;
                             let style = Content::parse_counter_style(context, input);
                             Ok(generics::ContentItem::Counter(name, style))
-                        })),
-                        "counters" => Some(input.parse_nested_block(|input| {
+                        }),
+                        "counters" => input.parse_nested_block(|input| {
                             let location = input.current_source_location();
                             let name = CustomIdent::from_ident(location, input.expect_ident()?, &[])?;
                             input.expect_comma()?;
-                            let separator = input.expect_string()?.as_ref().to_owned().into_boxed_str();
+                            let separator = input.expect_string()?.as_ref().to_owned().into();
                             let style = Content::parse_counter_style(context, input);
                             Ok(generics::ContentItem::Counters(name, separator, style))
-                        })),
-                        #[cfg(feature = "gecko")]
-                        "attr" => Some(input.parse_nested_block(|input| {
+                        }),
+                        #[cfg(any(feature = "gecko", feature = "servo-layout-2020"))]
+                        "attr" => input.parse_nested_block(|input| {
                             Ok(generics::ContentItem::Attr(Attr::parse_function(context, input)?))
-                        })),
-                        _ => None
-                    };
-                    match result {
-                        Some(result) => content.push(result?),
-                        None => {
+                        }),
+                        _ => {
+                            let name = name.clone();
                             return Err(input.new_custom_error(
-                                StyleParseErrorKind::UnexpectedFunction(name.clone()),
-                            ));
-                        },
-                    }
+                                StyleParseErrorKind::UnexpectedFunction(name),
+                            ))
+                        }
+                    }?;
+                    content.push(result);
                 },
-                Ok(Token::Ident(ref ident)) => {
+                Ok(&Token::Ident(ref ident)) => {
                     content.push(match_ignore_ascii_case! { &ident,
                         "open-quote" => generics::ContentItem::OpenQuote,
                         "close-quote" => generics::ContentItem::CloseQuote,
                         "no-open-quote" => generics::ContentItem::NoOpenQuote,
                         "no-close-quote" => generics::ContentItem::NoCloseQuote,
-                        _ => return Err(input.new_custom_error(
-                            SelectorParseErrorKind::UnexpectedIdent(ident.clone())
-                        ))
+                        #[cfg(feature = "gecko")]
+                        "-moz-alt-content" => {
+                            has_alt_content = true;
+                            generics::ContentItem::MozAltContent
+                        },
+                        _ =>{
+                            let ident = ident.clone();
+                            return Err(input.new_custom_error(
+                                SelectorParseErrorKind::UnexpectedIdent(ident)
+                            ));
+                        }
                     });
                 },
                 Err(_) => break,
-                Ok(t) => return Err(input.new_unexpected_token_error(t)),
+                Ok(t) => {
+                    let t = t.clone();
+                    return Err(input.new_unexpected_token_error(t));
+                },
             }
         }
-        if content.is_empty() {
+        // We don't allow to parse `-moz-alt-content in multiple positions.
+        if content.is_empty() || (has_alt_content && content.len() != 1) {
             return Err(input.new_custom_error(StyleParseErrorKind::UnspecifiedError));
         }
-        Ok(generics::Content::Items(content.into_boxed_slice()))
+        Ok(generics::Content::Items(content.into()))
     }
 }

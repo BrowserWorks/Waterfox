@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE 'Languages' preferences dialog -->
+
+<!ENTITY languages.customize.prefLangDescript           "ვებგვერდი, ზოგჯერ, შესაძლებელია რამდენიმე ენაზე ინახოს.  შეარჩიეთ ენები ვებგვერდის სანახავად, თქვენთვის სასურველი რიგით.">
+<!ENTITY languages.customize.title                      "ენები">
+<!ENTITY langtitle.label                                "ენები ვებგვერდებისათვის">
+<!ENTITY languages.customize.prefAddLangDescript        "სასურველი ენ(ებ)ის შერჩევა დასამატებლად.">
+<!ENTITY languages.customize.addButton.label            "დამატება...">
+<!ENTITY languages.customize.addButton.accesskey        "A">
+<!ENTITY languages.customize.deleteButton.label         "მოცილება">
+<!ENTITY languages.customize.deleteButton.accesskey     "R">
+<!ENTITY languages.customize.add.title.label            "ენების დამატება">
+<!ENTITY languages.customize.available.label            "ენები:">
+<!ENTITY languages.customize.active.label               "ენების სასურველი რიგი:">
+<!ENTITY languages.customize.active.accesskey           "L">
+<!ENTITY languages.customize.others.label               "სხვები:">
+<!ENTITY languages.customize.others.accesskey           "O">
+<!ENTITY languages.customize.Fallback2.grouplabel       "ტექსტის კოდირება მოძველებული შიგთავსითვის">
+<!ENTITY languages.customize.Fallback2.label            "ტექსტის სათადარიგო კოდირება:">
+<!ENTITY languages.customize.Fallback2.accesskey        "ტ">
+<!ENTITY languages.customize.Fallback2.desc             "გამოიყენება მოძველებული შიგთავსისთვის, რომელიც თავის კოდირებას ვერ უთითებს.">
+<!-- LOCALIZATION NOTE  Character Encoding Preferences Dialog: Do NOT localize the terms "en-bz, ar-jo"  -->
+<!ENTITY languages.customize.others.examples            "მაგ.: en-bz, ar-jo">
+<!ENTITY languages.customize.moveUp.label               "აწევა">
+<!ENTITY languages.customize.moveUp.accesskey           "U">
+<!ENTITY languages.customize.moveDown.label             "ჩამოწევა">
+<!ENTITY languages.customize.moveDown.accesskey         "D">

@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "डाउनलोड और सिंक संदेश">
+<!ENTITY MsgSelect.label "ऑफलाइन प्रयोग के लिये मद">
+<!ENTITY MsgSyncDesc.label "अगर आप पहले से मेल फोल्डर या समाचार समूह ऑफलाइन प्रयोग के लिये चुन चुके हैं, आप उसे डाउनलोड और/या सिंक कर सकते हैं. अन्यथा, &quot;Select&quot; का प्रयोग करें ऑफलाइन प्रयोग के लिये समाचारसमूह और मेल फोल्डर चुनें.">
+<!ENTITY MsgSyncDirections.label "डाउनलोड और/या सिंक करें निम्न को:">
+<!ENTITY syncTypeMail.label "मेल संदेश">
+<!ENTITY syncTypeMail.accesskey "M">
+<!ENTITY syncTypeNews.label "समाचारसमूह संदेश">
+<!ENTITY syncTypeNews.accesskey "N">
+<!ENTITY sendMessage.label "नहीं भेजा गया संदेश भेजें">
+<!ENTITY sendMessage.accesskey "S">
+<!ENTITY workOffline.label "डाउनलोड और/या सिंक के पूरे होने पर ऑफ़लाइन काम करें">
+<!ENTITY workOffline.accesskey "W">
+<!ENTITY selectButton.label "चुनें...">
+<!ENTITY selectButton.accesskey "E">
+<!ENTITY MsgSelectDesc.label "ऑफलाइन प्रयोग के लिये मेल फोल्डर और समाचार समूह चुनें.">
+<!ENTITY MsgSelectInd.label "डाउनलोड करें">
+<!ENTITY MsgSelectItems.label "फोल्डर व समाचार समूह">

@@ -3,6 +3,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+"use strict";
+
 const { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
 
 const gDashboard = Cc["@mozilla.org/network/dashboard;1"].getService(
@@ -54,14 +56,13 @@ add_test(function test_sockets() {
   let threadManager = Cc["@mozilla.org/thread-manager;1"].getService();
 
   let transport = sts.createTransport(
-    null,
-    0,
+    [],
     "127.0.0.1",
     gServerSocket.port,
     null
   );
   let listener = {
-    onTransportStatus: function(aTransport, aStatus, aProgress, aProgressMax) {
+    onTransportStatus(aTransport, aStatus, aProgress, aProgressMax) {
       if (aStatus == Ci.nsISocketTransport.STATUS_CONNECTED_TO) {
         gDashboard.requestSockets(function(data) {
           gServerSocket.close();
@@ -86,7 +87,7 @@ add_test(function test_sockets() {
 
 function run_test() {
   Services.prefs.setBoolPref(
-    "network.cookieSettings.unblocked_for_testing",
+    "network.cookieJarSettings.unblocked_for_testing",
     true
   );
 
@@ -99,10 +100,7 @@ function run_test() {
   let uri = ioService.newURI(
     "http://localhost:" + gHttpServer.identity.primaryPort
   );
-  let channel = NetUtil.newChannel({
-    uri: uri,
-    loadUsingSystemPrincipal: true,
-  });
+  let channel = NetUtil.newChannel({ uri, loadUsingSystemPrincipal: true });
 
   channel.open();
 

@@ -343,12 +343,12 @@ var PingPicker = {
       controls.classList.add("hidden");
       document.l10n.setAttributes(
         pingType,
-        "about-telemetry-current-ping-sidebar"
+        "about-telemetry-current-data-sidebar"
       );
       // Change home page text.
       document.l10n.setAttributes(
         pingExplanation,
-        "about-telemetry-ping-details-current"
+        "about-telemetry-data-details-current"
       );
     }
 
@@ -367,7 +367,7 @@ var PingPicker = {
     let sourceArchivedContainer = document.getElementById(
       "ping-source-archive-container"
     );
-    let archivedDisabled = archivedPingList.length == 0;
+    let archivedDisabled = !archivedPingList.length;
     sourceArchived.disabled = archivedDisabled;
     sourceArchivedContainer.classList.toggle("disabled", archivedDisabled);
 
@@ -432,7 +432,7 @@ var PingPicker = {
 
     // augment ping payload with event telemetry
     let eventSnapshot = Telemetry.snapshotEvents(
-      Telemetry.DATASET_RELEASE_CHANNEL_OPTIN,
+      Telemetry.DATASET_PRERELEASE_CHANNELS,
       false
     );
     for (let process of Object.keys(eventSnapshot)) {
@@ -753,7 +753,7 @@ var EnvironmentData = {
     );
     this.renderPersona(addons, addonSection, "persona");
 
-    let hasAddonData = Object.keys(ping.environment.addons).length > 0;
+    let hasAddonData = !!Object.keys(ping.environment.addons).length;
     let s = GenericSubsection.renderSubsectionHeader(
       "addons",
       hasAddonData,
@@ -981,7 +981,7 @@ var StackRenderer = {
       hideE.hidden = true;
     }
 
-    if (aStacks.length == 0) {
+    if (!aStacks.length) {
       return;
     }
 
@@ -1010,8 +1010,7 @@ var StackRenderer = {
 
     let titleText = bundle.formatStringFromName(
       aPrefix + "-title",
-      aFormatArgs,
-      aFormatArgs.length
+      aFormatArgs
     );
     titleElement.appendChild(document.createTextNode(titleText));
 
@@ -1125,9 +1124,7 @@ var CapturedStacks = {
         ? payload.processes.parent.capturedStacks
         : false;
     let hasData =
-      capturedStacks &&
-      capturedStacks.stacks &&
-      capturedStacks.stacks.length > 0;
+      capturedStacks && capturedStacks.stacks && !!capturedStacks.stacks.length;
     setHasData("captured-stacks-section", hasData);
     if (!hasData) {
       return;
@@ -1585,7 +1582,7 @@ var Search = {
 function RenderObject(aObject) {
   let output = "";
   if (Array.isArray(aObject)) {
-    if (aObject.length == 0) {
+    if (!aObject.length) {
       return "[]";
     }
     output = "[" + JSON.stringify(aObject[0]);
@@ -1595,7 +1592,7 @@ function RenderObject(aObject) {
     return output + "]";
   }
   let keys = Object.keys(aObject);
-  if (keys.length == 0) {
+  if (!keys.length) {
     return "{}";
   }
   output = '{"' + keys[0] + '":\u00A0' + JSON.stringify(aObject[keys[0]]);
@@ -1764,7 +1761,7 @@ var AddonDetails = {
     let addonSection = document.getElementById("addon-details");
     removeAllChildNodes(addonSection);
     let addonDetails = aPing.payload.addonDetails;
-    const hasData = addonDetails && Object.keys(addonDetails).length > 0;
+    const hasData = addonDetails && !!Object.keys(addonDetails).length;
     setHasData("addon-details-section", hasData);
     if (!hasData) {
       return;
@@ -1793,10 +1790,12 @@ var AddonDetails = {
 
 class Section {
   static renderContent(data, process, div, section) {
-    if (data && Object.keys(data).length > 0) {
+    if (data && Object.keys(data).length) {
       let s = GenericSubsection.renderSubsectionHeader(process, true, section);
       let heading = document.createElement("h2");
-      heading.textContent = process;
+      document.l10n.setAttributes(heading, "about-telemetry-process", {
+        process,
+      });
       s.appendChild(heading);
 
       this.renderData(data, s);
@@ -1967,7 +1966,7 @@ var Events = {
       for (const process of Object.keys(aPayload.processes)) {
         let data = aPayload.processes[process].events;
         hasData = hasData || data !== {};
-        if (data && Object.keys(data).length > 0) {
+        if (data && Object.keys(data).length) {
           let s = GenericSubsection.renderSubsectionHeader(
             process,
             true,
@@ -1989,7 +1988,7 @@ var Events = {
       for (const process of Object.keys(aPayload.events)) {
         let data = process;
         hasData = hasData || data !== {};
-        if (data && Object.keys(data).length > 0) {
+        if (data && Object.keys(data).length) {
           let s = GenericSubsection.renderSubsectionHeader(
             process,
             true,
@@ -2414,8 +2413,13 @@ var LateWritesSingleton = {
   },
 
   renderLateWrites: function LateWritesSingleton_renderLateWrites(lateWrites) {
-    setHasData("late-writes-section", !!lateWrites);
-    if (!lateWrites) {
+    let hasData = !!(
+      lateWrites &&
+      lateWrites.stacks &&
+      lateWrites.stacks.length
+    );
+    setHasData("late-writes-section", hasData);
+    if (!hasData) {
       return;
     }
 
@@ -2497,7 +2501,7 @@ var SessionInformation = {
     let infoSection = document.getElementById("session-info");
     removeAllChildNodes(infoSection);
 
-    let hasData = Object.keys(aPayload.info).length > 0;
+    let hasData = !!Object.keys(aPayload.info).length;
     setHasData("session-info-section", hasData);
 
     if (hasData) {
@@ -2515,7 +2519,7 @@ var SimpleMeasurements = {
     let simpleMeasurements = this.sortStartupMilestones(
       aPayload.simpleMeasurements
     );
-    let hasData = Object.keys(simpleMeasurements).length > 0;
+    let hasData = !!Object.keys(simpleMeasurements).length;
     setHasData("simple-measurements-section", hasData);
 
     if (hasData) {

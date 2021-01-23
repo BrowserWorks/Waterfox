@@ -150,12 +150,6 @@ class CryptoKey final : public nsISupports, public nsWrapperCache {
   static UniqueSECKEYPublicKey PublicKeyFromJwk(const JsonWebKey& aKeyData);
   static nsresult PublicKeyToJwk(SECKEYPublicKey* aPubKey, JsonWebKey& aRetVal);
 
-  static UniqueSECKEYPublicKey PublicDhKeyFromRaw(
-      CryptoBuffer& aKeyData, const CryptoBuffer& aPrime,
-      const CryptoBuffer& aGenerator);
-  static nsresult PublicDhKeyToRaw(SECKEYPublicKey* aPubKey,
-                                   CryptoBuffer& aRetVal);
-
   static UniqueSECKEYPublicKey PublicECKeyFromRaw(CryptoBuffer& aKeyData,
                                                   const nsString& aNamedCurve);
   static nsresult PublicECKeyToRaw(SECKEYPublicKey* aPubKey,
@@ -164,11 +158,14 @@ class CryptoKey final : public nsISupports, public nsWrapperCache {
   static bool PublicKeyValid(SECKEYPublicKey* aPubKey);
 
   // Structured clone methods use these to clone keys
-  bool WriteStructuredClone(JSStructuredCloneWriter* aWriter) const;
-  bool ReadStructuredClone(JSStructuredCloneReader* aReader);
+  bool WriteStructuredClone(JSContext* aCx,
+                            JSStructuredCloneWriter* aWriter) const;
+  static already_AddRefed<CryptoKey> ReadStructuredClone(
+      JSContext* aCx, nsIGlobalObject* aGlobal,
+      JSStructuredCloneReader* aReader);
 
  private:
-  ~CryptoKey() {}
+  ~CryptoKey() = default;
 
   RefPtr<nsIGlobalObject> mGlobal;
   uint32_t mAttributes;  // see above

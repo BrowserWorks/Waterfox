@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-cache.xul -->
+
+<!--LOCALIZATION NOTE : FILE Cache prefs dialog -->
+<!ENTITY pref.cache.title                "ბუფერი">
+<!ENTITY pref.cache.caption              "ბუფერის პარამეტრები">
+<!ENTITY cachePara                       "დისკის ბუფერში ინახება მონახულებული ვებგვერდების ასლები.  (წკაპი &quot;განახლება&quot;-ზე ყოველთვის გიჩვენებთ გვერდის უახლეს ვერსიას.)">
+<!ENTITY cacheCheck.label                "ბოფერის ზომის შერჩევის &brandShortName; პროგრამისთვის მინდობა">
+<!ENTITY cacheCheck.accesskey            "L">
+<!ENTITY diskCacheUpTo.label             "ზომა:">
+<!ENTITY diskCacheUpTo.accesskey         "U">
+<!ENTITY spaceMbytes                     "მეგაბაიტამდე">
+<!ENTITY diskCacheFolder.label           "ბუფერის საქაღალდის მისამართი:">
+<!ENTITY clearDiskCache.label            "ბუფერის გასუფთავება">
+<!ENTITY clearDiskCache.accesskey        "C">
+<!ENTITY chooseDiskCacheFolder.label     "საქაღალდის არჩევა…">
+<!ENTITY chooseDiskCacheFolder.accesskey "F">
+<!ENTITY diskCacheFolderExplanation      "ბუფერის ფაილები შეინახება თქვენ მიერ მითითებული საქაღალდის &quot;ბუფერი&quot; ქვესაქაღალდეში. ცვლილებები ამოქმედდება &brandShortName;-ს ახალი სეანსის შემდეგ.">
+<!ENTITY docCache.label                  "ბუფერში განთავსებული გვერდის ქსელურ ვერსიასთან შედარება:">
+<!ENTITY docCache.accesskey              "m">
+<!ENTITY checkOncePerSession.label       "სეანსში ერთხელ">
+<!ENTITY checkEveryTime.label            "ყოველთვის, გვერდის ნახვისას">
+<!ENTITY checkNever.label                "არასოდეს">
+<!ENTITY checkAutomatically.label        "როცა გვერდი ვადაგასულია">
+
+<!ENTITY prefetchTitle.label             "ბმულის წინასწარი ჩატვირთვა">
+<!ENTITY enablePrefetch.label            "უქმად ყოფნისას მიმდინარე ბმების ვებგვერდების წინასწარი ჩატვირთვა, რათა ისინი უფრო სწრაფად გაიხსნას">
+<!ENTITY enablePrefetch.accesskey        "P">

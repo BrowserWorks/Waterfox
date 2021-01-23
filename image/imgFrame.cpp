@@ -13,7 +13,7 @@
 
 #include "gfx2DGlue.h"
 #include "gfxPlatform.h"
-#include "gfxPrefs.h"
+
 #include "gfxUtils.h"
 
 #include "GeckoProfiler.h"
@@ -27,6 +27,7 @@
 #include "mozilla/layers/SourceSurfaceVolatileData.h"
 #include "mozilla/Likely.h"
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/StaticPrefs_browser.h"
 #include "nsMargin.h"
 #include "nsRefreshDriver.h"
 #include "nsThreadUtils.h"
@@ -37,10 +38,6 @@ using namespace gfx;
 
 namespace image {
 
-static void ScopedMapRelease(void* aMap) {
-  delete static_cast<DataSourceSurface::ScopedMap*>(aMap);
-}
-
 static int32_t VolatileSurfaceStride(const IntSize& size,
                                      SurfaceFormat format) {
   // Stride must be a multiple of four or cairo will complain.
@@ -49,25 +46,26 @@ static int32_t VolatileSurfaceStride(const IntSize& size,
 
 static already_AddRefed<DataSourceSurface> CreateLockedSurface(
     DataSourceSurface* aSurface, const IntSize& size, SurfaceFormat format) {
-  // Shared memory is never released until the surface itself is released
-  if (aSurface->GetType() == SurfaceType::DATA_SHARED) {
-    RefPtr<DataSourceSurface> surf(aSurface);
-    return surf.forget();
-  }
-
-  DataSourceSurface::ScopedMap* smap =
-      new DataSourceSurface::ScopedMap(aSurface, DataSourceSurface::READ_WRITE);
-  if (smap->IsMapped()) {
-    // The ScopedMap is held by this DataSourceSurface.
-    RefPtr<DataSourceSurface> surf = Factory::CreateWrappingDataSourceSurface(
-        smap->GetData(), aSurface->Stride(), size, format, &ScopedMapRelease,
-        static_cast<void*>(smap));
-    if (surf) {
+  switch (aSurface->GetType()) {
+    case SurfaceType::DATA_SHARED:
+    case SurfaceType::DATA_ALIGNED: {
+      // Shared memory is never released until the surface itself is released.
+      // Similar for aligned/heap surfaces.
+      RefPtr<DataSourceSurface> surf(aSurface);
       return surf.forget();
+    }
+    default: {
+      // Volatile memory requires us to map it first, and it is fallible.
+      DataSourceSurface::ScopedMap smap(aSurface,
+                                        DataSourceSurface::READ_WRITE);
+      if (smap.IsMapped()) {
+        return MakeAndAddRef<SourceSurfaceMappedData>(std::move(smap), size,
+                                                      format);
+      }
+      break;
     }
   }
 
-  delete smap;
   return nullptr;
 }
 
@@ -81,14 +79,14 @@ static bool ShouldUseHeap(const IntSize& aSize, int32_t aStride,
 
   // For as long as an animated image is retained, its frames will never be
   // released to let the OS purge volatile buffers.
-  if (aIsAnimated && gfxPrefs::ImageMemAnimatedUseHeap()) {
+  if (aIsAnimated && StaticPrefs::image_mem_animated_use_heap()) {
     return true;
   }
 
   // Lets us avoid too many small images consuming all of the handles. The
   // actual allocation checks for overflow.
   int32_t bufferSize = (aStride * aSize.height) / 1024;
-  if (bufferSize < gfxPrefs::ImageMemVolatileMinThresholdKB()) {
+  if (bufferSize < StaticPrefs::image_mem_volatile_min_threshold_kb()) {
     return true;
   }
 
@@ -99,7 +97,7 @@ static already_AddRefed<DataSourceSurface> AllocateBufferForImage(
     const IntSize& size, SurfaceFormat format, bool aIsAnimated = false) {
   int32_t stride = VolatileSurfaceStride(size, format);
 
-  if (gfxVars::GetUseWebRenderOrDefault() && gfxPrefs::ImageMemShared()) {
+  if (gfxVars::GetUseWebRenderOrDefault() && StaticPrefs::image_mem_shared()) {
     RefPtr<SourceSurfaceSharedData> newSurf = new SourceSurfaceSharedData();
     if (newSurf->Init(size, stride, format)) {
       return newSurf.forget();
@@ -158,11 +156,11 @@ static bool ClearSurface(DataSourceSurface* aSurface, const IntSize& aSize,
   uint8_t* data = aSurface->GetData();
   MOZ_ASSERT(data);
 
-  if (aFormat == SurfaceFormat::B8G8R8X8) {
+  if (aFormat == SurfaceFormat::OS_RGBX) {
     // Skia doesn't support RGBX surfaces, so ensure the alpha value is set
     // to opaque white. While it would be nice to only do this for Skia,
     // imgFrame can run off main thread and past shutdown where
-    // we might not have gfxPlatform, so just memset everytime instead.
+    // we might not have gfxPlatform, so just memset every time instead.
     memset(data, 0xFF, stride * aSize.height);
   } else if (aSurface->OnHeap()) {
     // We only need to memset it if the buffer was allocated on the heap.
@@ -230,7 +228,7 @@ nsresult imgFrame::InitForDecoder(const nsIntSize& aImageSize,
     // surface because if we use BGRX, the next frame composited into the
     // surface could be BGRA and cause rendering problems.
     MOZ_ASSERT(aAnimParams);
-    mFormat = SurfaceFormat::B8G8R8A8;
+    mFormat = SurfaceFormat::OS_RGBA;
   } else {
     mFormat = aFormat;
   }
@@ -355,10 +353,12 @@ nsresult imgFrame::InitForDecoderRecycle(const AnimationParams& aAnimParams) {
   return NS_OK;
 }
 
-nsresult imgFrame::InitWithDrawable(
-    gfxDrawable* aDrawable, const nsIntSize& aSize, const SurfaceFormat aFormat,
-    SamplingFilter aSamplingFilter, uint32_t aImageFlags,
-    gfx::BackendType aBackend) {
+nsresult imgFrame::InitWithDrawable(gfxDrawable* aDrawable,
+                                    const nsIntSize& aSize,
+                                    const SurfaceFormat aFormat,
+                                    SamplingFilter aSamplingFilter,
+                                    uint32_t aImageFlags,
+                                    gfx::BackendType aBackend) {
   // Assert for properties that should be verified by decoders,
   // warn for properties related to bad content.
   if (!SurfaceCache::IsLegalSize(aSize)) {
@@ -552,7 +552,7 @@ imgFrame::SurfaceWithFormat imgFrame::SurfaceForDrawing(
     // transparent pixels in the padding or undecoded area
     RefPtr<DrawTarget> target =
         gfxPlatform::GetPlatform()->CreateOffscreenContentDrawTarget(
-            mImageSize, SurfaceFormat::B8G8R8A8);
+            mImageSize, SurfaceFormat::OS_RGBA);
     if (!target) {
       return SurfaceWithFormat();
     }
@@ -923,17 +923,27 @@ void imgFrame::AddSizeOfExcludingThis(MallocSizeOf aMallocSizeOf,
   MonitorAutoLock lock(mMonitor);
 
   AddSizeOfCbData metadata;
+
+  metadata.mFinished = mFinished;
   if (mLockedSurface) {
-    metadata.heap += aMallocSizeOf(mLockedSurface);
+    // The locked surface should only be present if we have mRawSurface. Hence
+    // we only need to get its allocation size to avoid double counting.
+    metadata.mHeapBytes += aMallocSizeOf(mLockedSurface);
+    metadata.AddType(mLockedSurface->GetType());
   }
   if (mOptSurface) {
-    metadata.heap += aMallocSizeOf(mOptSurface);
+    metadata.mHeapBytes += aMallocSizeOf(mOptSurface);
+
+    SourceSurface::SizeOfInfo info;
+    mOptSurface->SizeOfExcludingThis(aMallocSizeOf, info);
+    metadata.Accumulate(info);
   }
   if (mRawSurface) {
-    metadata.heap += aMallocSizeOf(mRawSurface);
-    mRawSurface->AddSizeOfExcludingThis(aMallocSizeOf, metadata.heap,
-                                        metadata.nonHeap, metadata.handles,
-                                        metadata.externalId);
+    metadata.mHeapBytes += aMallocSizeOf(mRawSurface);
+
+    SourceSurface::SizeOfInfo info;
+    mRawSurface->SizeOfExcludingThis(aMallocSizeOf, info);
+    metadata.Accumulate(info);
   }
 
   aCallback(metadata);
@@ -941,7 +951,9 @@ void imgFrame::AddSizeOfExcludingThis(MallocSizeOf aMallocSizeOf,
 
 RecyclingSourceSurface::RecyclingSourceSurface(imgFrame* aParent,
                                                DataSourceSurface* aSurface)
-    : mParent(aParent), mSurface(aSurface), mType(SurfaceType::DATA) {
+    : mParent(WrapNotNull(aParent)),
+      mSurface(WrapNotNull(aSurface)),
+      mType(SurfaceType::DATA) {
   mParent->mMonitor.AssertCurrentThreadOwns();
   ++mParent->mRecycleLockCount;
 

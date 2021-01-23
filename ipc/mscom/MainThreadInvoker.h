@@ -7,14 +7,15 @@
 #ifndef mozilla_mscom_MainThreadInvoker_h
 #define mozilla_mscom_MainThreadInvoker_h
 
+#include <windows.h>
+
+#include <utility>
+
 #include "mozilla/AlreadyAddRefed.h"
-#include "mozilla/Move.h"
 #include "mozilla/StaticPtr.h"
 #include "mozilla/TimeStamp.h"
 #include "nsCOMPtr.h"
 #include "nsThreadUtils.h"
-
-#include <windows.h>
 
 class nsIRunnable;
 
@@ -40,7 +41,8 @@ class MainThreadInvoker {
 
 template <typename Class, typename... Args>
 inline bool InvokeOnMainThread(const char* aName, Class* aObject,
-                               void (Class::*aMethod)(Args...), Args... aArgs) {
+                               void (Class::*aMethod)(Args...),
+                               Args&&... aArgs) {
   nsCOMPtr<nsIRunnable> runnable(NewNonOwningRunnableMethod<Args...>(
       aName, aObject, aMethod, std::forward<Args>(aArgs)...));
 

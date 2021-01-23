@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "पाठ क्षेत्र गुण">
+
+<!ENTITY Settings.label "जमावट">
+
+<!ENTITY TextAreaName.label "क्षेत्र नाम:">
+<!ENTITY TextAreaName.accessKey "N">
+<!ENTITY TextAreaRows.label "पंक्ति:">
+<!ENTITY TextAreaRows.accessKey "R">
+<!ENTITY TextAreaCols.label "कॉलम:">
+<!ENTITY TextAreaCols.accessKey "C">
+<!ENTITY TextAreaReadOnly.label "सिर्फ पढने के लिये">
+<!ENTITY TextAreaReadOnly.accessKey "O">
+<!ENTITY TextAreaDisabled.label "निष्क्रिय">
+<!ENTITY TextAreaDisabled.accessKey "D">
+<!ENTITY TextAreaTabIndex.label "टैब सूची:">
+<!ENTITY TextAreaTabIndex.accessKey "I">
+<!ENTITY TextAreaAccessKey.label "अभिगम कुंजी:">
+<!ENTITY TextAreaAccessKey.accessKey "K">
+<!ENTITY InitialText.label "आरंभिक पाठ:">
+<!ENTITY InitialText.accessKey "T">
+
+<!ENTITY TextAreaWrap.label "रैप मोड:">
+<!ENTITY TextAreaWrap.accessKey "W">
+<!ENTITY WrapDefault.value "मूलभूत">
+<!ENTITY WrapOff.value "बंद">
+<!ENTITY WrapHard.value "कड़ा">
+<!ENTITY WrapSoft.value "मुलायम">
+<!ENTITY WrapPhysical.value "भौतिक">
+<!ENTITY WrapVirtual.value "आभासी">

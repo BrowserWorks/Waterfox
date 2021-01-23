@@ -138,23 +138,78 @@ void ToUpperCase(const nsAString& aSource, nsAString& aDest) {
 
 #ifdef MOZILLA_INTERNAL_API
 
-int32_t nsCaseInsensitiveStringComparator::operator()(const char16_t* lhs,
-                                                      const char16_t* rhs,
-                                                      uint32_t lLength,
-                                                      uint32_t rLength) const {
+uint32_t ToFoldedCase(uint32_t aChar) {
+  if (IS_ASCII(aChar)) return gASCIIToLower[aChar];
+  return mozilla::unicode::GetFoldedcase(aChar);
+}
+
+void ToFoldedCase(nsAString& aString) {
+  char16_t* buf = aString.BeginWriting();
+  ToFoldedCase(buf, buf, aString.Length());
+}
+
+void ToFoldedCase(const char16_t* aIn, char16_t* aOut, uint32_t aLen) {
+  for (uint32_t i = 0; i < aLen; i++) {
+    uint32_t ch = aIn[i];
+    if (i < aLen - 1 && NS_IS_SURROGATE_PAIR(ch, aIn[i + 1])) {
+      ch = mozilla::unicode::GetFoldedcase(SURROGATE_TO_UCS4(ch, aIn[i + 1]));
+      NS_ASSERTION(!IS_IN_BMP(ch), "case mapping crossed BMP/SMP boundary!");
+      aOut[i++] = H_SURROGATE(ch);
+      aOut[i] = L_SURROGATE(ch);
+      continue;
+    }
+    aOut[i] = ToFoldedCase(ch);
+  }
+}
+
+uint32_t ToNaked(uint32_t aChar) {
+  if (IS_ASCII(aChar)) {
+    return aChar;
+  }
+  return mozilla::unicode::GetNaked(aChar);
+}
+
+void ToNaked(nsAString& aString) {
+  uint32_t i = 0;
+  while (i < aString.Length()) {
+    uint32_t ch = aString[i];
+    if (i < aString.Length() - 1 && NS_IS_SURROGATE_PAIR(ch, aString[i + 1])) {
+      ch = SURROGATE_TO_UCS4(ch, aString[i + 1]);
+      if (mozilla::unicode::IsCombiningDiacritic(ch)) {
+        aString.Cut(i, 2);
+      } else {
+        ch = mozilla::unicode::GetNaked(ch);
+        NS_ASSERTION(!IS_IN_BMP(ch), "stripping crossed BMP/SMP boundary!");
+        aString.Replace(i++, 1, H_SURROGATE(ch));
+        aString.Replace(i++, 1, L_SURROGATE(ch));
+      }
+      continue;
+    }
+    if (mozilla::unicode::IsCombiningDiacritic(ch)) {
+      aString.Cut(i, 1);
+    } else {
+      aString.Replace(i++, 1, ToNaked(ch));
+    }
+  }
+}
+
+int32_t nsCaseInsensitiveStringComparator(const char16_t* lhs,
+                                          const char16_t* rhs, uint32_t lLength,
+                                          uint32_t rLength) {
   return (lLength == rLength) ? CaseInsensitiveCompare(lhs, rhs, lLength)
                               : (lLength > rLength) ? 1 : -1;
 }
 
-int32_t nsCaseInsensitiveUTF8StringComparator::operator()(
-    const char* lhs, const char* rhs, uint32_t lLength,
-    uint32_t rLength) const {
+int32_t nsCaseInsensitiveUTF8StringComparator(const char* lhs, const char* rhs,
+                                              uint32_t lLength,
+                                              uint32_t rLength) {
   return CaseInsensitiveCompare(lhs, rhs, lLength, rLength);
 }
 
-int32_t nsASCIICaseInsensitiveStringComparator::operator()(
-    const char16_t* lhs, const char16_t* rhs, uint32_t lLength,
-    uint32_t rLength) const {
+int32_t nsASCIICaseInsensitiveStringComparator(const char16_t* lhs,
+                                               const char16_t* rhs,
+                                               uint32_t lLength,
+                                               uint32_t rLength) {
   if (lLength != rLength) {
     if (lLength > rLength) return 1;
     return -1;
@@ -187,8 +242,7 @@ uint32_t ToLowerCase(uint32_t aChar) { return ToLowerCase_inline(aChar); }
 void ToLowerCase(const char16_t* aIn, char16_t* aOut, uint32_t aLen) {
   for (uint32_t i = 0; i < aLen; i++) {
     uint32_t ch = aIn[i];
-    if (NS_IS_HIGH_SURROGATE(ch) && i < aLen - 1 &&
-        NS_IS_LOW_SURROGATE(aIn[i + 1])) {
+    if (i < aLen - 1 && NS_IS_SURROGATE_PAIR(ch, aIn[i + 1])) {
       ch = mozilla::unicode::GetLowercase(SURROGATE_TO_UCS4(ch, aIn[i + 1]));
       NS_ASSERTION(!IS_IN_BMP(ch), "case mapping crossed BMP/SMP boundary!");
       aOut[i++] = H_SURROGATE(ch);
@@ -220,8 +274,7 @@ uint32_t ToUpperCase(uint32_t aChar) {
 void ToUpperCase(const char16_t* aIn, char16_t* aOut, uint32_t aLen) {
   for (uint32_t i = 0; i < aLen; i++) {
     uint32_t ch = aIn[i];
-    if (NS_IS_HIGH_SURROGATE(ch) && i < aLen - 1 &&
-        NS_IS_LOW_SURROGATE(aIn[i + 1])) {
+    if (i < aLen - 1 && NS_IS_SURROGATE_PAIR(ch, aIn[i + 1])) {
       ch = mozilla::unicode::GetUppercase(SURROGATE_TO_UCS4(ch, aIn[i + 1]));
       NS_ASSERTION(!IS_IN_BMP(ch), "case mapping crossed BMP/SMP boundary!");
       aOut[i++] = H_SURROGATE(ch);
@@ -257,9 +310,9 @@ int32_t CaseInsensitiveCompare(const char16_t* a, const char16_t* b,
       // in the case where it _is_ a surrogate, we're definitely going to get
       // a mismatch, and don't need to interpret and lowercase it
 
-      if (NS_IS_HIGH_SURROGATE(c1) && len > 1 && NS_IS_LOW_SURROGATE(*a)) {
+      if (len > 1 && NS_IS_SURROGATE_PAIR(c1, *a)) {
         c1 = SURROGATE_TO_UCS4(c1, *a++);
-        if (NS_IS_HIGH_SURROGATE(c2) && NS_IS_LOW_SURROGATE(*b)) {
+        if (NS_IS_SURROGATE_PAIR(c2, *b)) {
           c2 = SURROGATE_TO_UCS4(c2, *b++);
         }
         // If c2 wasn't a surrogate, decrementing len means we'd stop
@@ -381,24 +434,43 @@ int32_t CaseInsensitiveCompare(const char* aLeft, const char* aRight,
   return 0;
 }
 
+static MOZ_ALWAYS_INLINE uint32_t
+GetLowerUTF8Codepoint_inline(const char* aStr, const char* aEnd,
+                             const char** aNext, bool aMatchDiacritics) {
+  uint32_t c;
+  for (;;) {
+    c = GetLowerUTF8Codepoint_inline(aStr, aEnd, aNext);
+    if (aMatchDiacritics) {
+      break;
+    }
+    if (!mozilla::unicode::IsCombiningDiacritic(c)) {
+      break;
+    }
+    aStr = *aNext;
+  }
+  return c;
+}
+
 bool CaseInsensitiveUTF8CharsEqual(const char* aLeft, const char* aRight,
                                    const char* aLeftEnd, const char* aRightEnd,
                                    const char** aLeftNext,
-                                   const char** aRightNext, bool* aErr) {
+                                   const char** aRightNext, bool* aErr,
+                                   bool aMatchDiacritics) {
   NS_ASSERTION(aLeftNext, "Out pointer shouldn't be null.");
   NS_ASSERTION(aRightNext, "Out pointer shouldn't be null.");
   NS_ASSERTION(aErr, "Out pointer shouldn't be null.");
   NS_ASSERTION(aLeft < aLeftEnd, "aLeft must be less than aLeftEnd.");
   NS_ASSERTION(aRight < aRightEnd, "aRight must be less than aRightEnd.");
 
-  uint32_t leftChar = GetLowerUTF8Codepoint_inline(aLeft, aLeftEnd, aLeftNext);
+  uint32_t leftChar = GetLowerUTF8Codepoint_inline(aLeft, aLeftEnd, aLeftNext,
+                                                   aMatchDiacritics);
   if (MOZ_UNLIKELY(leftChar == uint32_t(-1))) {
     *aErr = true;
     return false;
   }
 
-  uint32_t rightChar =
-      GetLowerUTF8Codepoint_inline(aRight, aRightEnd, aRightNext);
+  uint32_t rightChar = GetLowerUTF8Codepoint_inline(
+      aRight, aRightEnd, aRightNext, aMatchDiacritics);
   if (MOZ_UNLIKELY(rightChar == uint32_t(-1))) {
     *aErr = true;
     return false;
@@ -406,6 +478,11 @@ bool CaseInsensitiveUTF8CharsEqual(const char* aLeft, const char* aRight,
 
   // Can't have an error past this point.
   *aErr = false;
+
+  if (!aMatchDiacritics) {
+    leftChar = ToNaked(leftChar);
+    rightChar = ToNaked(rightChar);
+  }
 
   return leftChar == rightChar;
 }
@@ -436,7 +513,7 @@ uint32_t HashUTF8AsUTF16(const char* aUTF8, uint32_t aLength, bool* aErr) {
 }
 
 bool IsSegmentBreakSkipChar(uint32_t u) {
-  return unicode::IsEastAsianWidthFWH(u) &&
+  return unicode::IsEastAsianWidthFHWexcludingEmoji(u) &&
          unicode::GetScriptCode(u) != unicode::Script::HANGUL;
 }
 

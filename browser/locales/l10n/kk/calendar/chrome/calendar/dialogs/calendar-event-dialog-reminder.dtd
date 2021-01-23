@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "Еске салуларды баптау">
+<!ENTITY reminder.add.label                                "Қосу">
+<!ENTITY reminder.add.accesskey                            "о">
+<!ENTITY reminder.remove.label                             "Өшіру">
+<!ENTITY reminder.remove.accesskey                         "ш">
+
+<!ENTITY reminder.reminderDetails.label                    "Еске салудың ақпараты">
+<!ENTITY reminder.action.label                             "Еске салудың әрекетін таңдау">
+
+<!ENTITY reminder.action.alert.label                       "Ескертуді көрсету">
+<!ENTITY reminder.action.email.label                       "Эл. поштаны жіберу">
+
+<!ENTITY alarm.units.minutes                               "минут" >
+<!ENTITY alarm.units.hours                                 "сағат" >
+<!ENTITY alarm.units.days                                  "күн" >

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "පෞද්ගලික ශබ්දකෝෂය">
+
+<!ENTITY wordEditField.label "නව වදනක්:">
+<!ENTITY wordEditField.accessKey "N">
+<!ENTITY AddButton.label "එක් කරන්න">
+<!ENTITY AddButton.accessKey "A">
+<!ENTITY DictionaryList.label "ශබ්දකෝෂයේ වචන:">
+<!ENTITY DictionaryList.accessKey "W">
+<!ENTITY ReplaceButton.label "Replace">
+<!ENTITY ReplaceButton.accessKey "R">
+<!ENTITY RemoveButton.label "ඉවත් කරන්න">
+<!ENTITY RemoveButton.accessKey "e">
+
+<!ENTITY CloseButton.label "වහන්න">
+<!ENTITY CloseButton.accessKey "C">

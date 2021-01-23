@@ -17,19 +17,6 @@ using mozilla::gfx::D3D11Checks::VideoFormatOptionSet from "mozilla/gfx/D3D11Che
 namespace mozilla {
 namespace gfx {
 
-union GfxPrefValue {
-  bool;
-  int32_t;
-  uint32_t;
-  float;
-  nsCString;
-};
-
-struct GfxPrefSetting {
-  int32_t index;
-  GfxPrefValue value;
-};
-
 struct D3D11DeviceStatus
 {
   bool isWARP;
@@ -47,12 +34,14 @@ struct DevicePrefs
   FeatureStatus oglCompositing;
   FeatureStatus advancedLayers;
   FeatureStatus useD2D1;
+  FeatureStatus webGPU;
 };
 
 struct ContentDeviceData
 {
   DevicePrefs prefs;
   D3D11DeviceStatus d3d11;
+  uint8_t[] cmsOutputProfileData;
 };
 
 // Represents the state of a feature that has failed to initialize.
@@ -71,6 +60,7 @@ struct GPUDeviceData
   FeatureFailure? oglCompositing;
   FeatureFailure? advancedLayers;
   D3D11DeviceStatus? gpuDevice;
+  FeatureFailure? webGPU;
 };
 
 union GfxVarValue

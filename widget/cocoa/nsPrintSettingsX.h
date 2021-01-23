@@ -9,19 +9,6 @@
 #include "nsPrintSettingsImpl.h"
 #import <Cocoa/Cocoa.h>
 
-// The constants for paper orientation were renamed in 10.9. __MAC_10_9 is
-// defined on OS X 10.9 and later. Although 10.8 and earlier are not supported
-// at this time, this allows for building on those older OS versions. The
-// values are consistent across OS versions so the rename does not affect
-// runtime, just compilation.
-#ifdef __MAC_10_9
-#  define NS_PAPER_ORIENTATION_PORTRAIT (NSPaperOrientationPortrait)
-#  define NS_PAPER_ORIENTATION_LANDSCAPE (NSPaperOrientationLandscape)
-#else
-#  define NS_PAPER_ORIENTATION_PORTRAIT (NSPortraitOrientation)
-#  define NS_PAPER_ORIENTATION_LANDSCAPE (NSLandscapeOrientation)
-#endif
-
 #define NS_PRINTSETTINGSX_IID                        \
   {                                                  \
     0x0DF2FDBD, 0x906D, 0x4726, {                    \
@@ -67,6 +54,16 @@ class nsPrintSettingsX : public nsPrintSettings {
   void SetInchesScale(float aWidthScale, float aHeightScale);
   void GetInchesScale(float* aWidthScale, float* aHeightScale);
 
+  // GetPrintRange doesn't need overriding because SetPrintRange always calls
+  // nsPrintSettings::SetPrintRange.
+  NS_IMETHOD SetPrintRange(int16_t aPrintRange) final;
+
+  NS_IMETHOD GetStartPageRange(int32_t* aStartPageRange) final;
+  NS_IMETHOD SetStartPageRange(int32_t aStartPageRange) final;
+
+  NS_IMETHOD GetEndPageRange(int32_t* aEndPageRange) final;
+  NS_IMETHOD SetEndPageRange(int32_t aEndPageRange) final;
+
   NS_IMETHOD SetScaling(double aScaling) override;
   NS_IMETHOD GetScaling(double* aScaling) override;
 
@@ -87,6 +84,8 @@ class nsPrintSettingsX : public nsPrintSettings {
 
   // Set the printer name using the native PrintInfo data.
   void SetPrinterNameFromPrintInfo();
+
+  void SetDispositionSaveToFile();
 
  protected:
   virtual ~nsPrintSettingsX();

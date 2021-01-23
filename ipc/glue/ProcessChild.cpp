@@ -4,6 +4,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "mozilla/ipc/ProcessChild.h"
+
 #include "nsDebug.h"
 
 #ifdef XP_WIN
@@ -12,13 +14,15 @@
 #  include <unistd.h>  // for _exit()
 #endif
 
+#include "mozilla/AppShutdown.h"
 #include "mozilla/ipc/IOThreadChild.h"
-#include "mozilla/ipc/ProcessChild.h"
 
 namespace mozilla {
 namespace ipc {
 
 ProcessChild* ProcessChild::gProcessChild;
+
+static Atomic<bool> sExpectingShutdown(false);
 
 ProcessChild::ProcessChild(ProcessId aParentPid)
     : ChildProcess(new IOThreadChild()),
@@ -32,16 +36,13 @@ ProcessChild::ProcessChild(ProcessId aParentPid)
 ProcessChild::~ProcessChild() { gProcessChild = nullptr; }
 
 /* static */
-void ProcessChild::QuickExit() {
-#ifdef XP_WIN
-  // In bug 1254829, the destructor got called when dll got detached on windows,
-  // switch to TerminateProcess to bypass dll detach handler during the process
-  // termination.
-  TerminateProcess(GetCurrentProcess(), 0);
-#else
-  _exit(0);
-#endif
-}
+void ProcessChild::NotifyImpendingShutdown() { sExpectingShutdown = true; }
+
+/* static */
+bool ProcessChild::ExpectingShutdown() { return sExpectingShutdown; }
+
+/* static */
+void ProcessChild::QuickExit() { AppShutdown::DoImmediateExit(); }
 
 }  // namespace ipc
 }  // namespace mozilla

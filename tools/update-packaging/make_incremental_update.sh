@@ -21,6 +21,7 @@ print_usage() {
   notice "  -h  show this help text"
   notice "  -f  clobber this file in the installation"
   notice "      Must be a path to a file to clobber in the partial update."
+  notice "  -q  be less verbose"
   notice ""
 }
 
@@ -46,16 +47,6 @@ check_for_forced_update() {
   fi
 
   if [ "$forced_file_chk" = "Contents/Resources/removed-files" ]; then
-    ## "true" *giggle*
-    return 0;
-  fi
-
-  if [ "$forced_file_chk" = "chrome.manifest" ]; then
-    ## "true" *giggle*
-    return 0;
-  fi
-
-  if [ "$forced_file_chk" = "Contents/Resources/chrome.manifest" ]; then
     ## "true" *giggle*
     return 0;
   fi
@@ -89,10 +80,12 @@ fi
 
 requested_forced_updates='Contents/MacOS/firefox'
 
-while getopts "hf:" flag
+while getopts "hqf:" flag
 do
    case "$flag" in
       h) print_usage; exit 0
+      ;;
+      q) QUIET=1
       ;;
       f) requested_forced_updates="$requested_forced_updates $OPTARG"
       ;;
@@ -115,7 +108,7 @@ if [ $(echo "$newdir" | grep -c '\/$') = 1 ]; then
   # Remove the /
   newdir=$(echo "$newdir" | sed -e 's:\/$::')
 fi
-workdir="$newdir.work"
+workdir="$(mktemp -d)"
 updatemanifestv2="$workdir/updatev2.manifest"
 updatemanifestv3="$workdir/updatev3.manifest"
 archivefiles="updatev2.manifest updatev3.manifest"
@@ -205,7 +198,7 @@ for ((i=0; $i<$num_oldfiles; i=$i+1)); do
       # compare the sizes.  Then choose the smaller of the two to package.
       dir=$(dirname "$workdir/$f")
       mkdir -p "$dir"
-      notice "diffing \"$f\""
+      verbose_notice "diffing \"$f\""
       # MBSDIFF_HOOK represents the communication interface with funsize and,
       # if enabled, caches the intermediate patches for future use and
       # compute avoidance
@@ -230,7 +223,7 @@ for ((i=0; $i<$num_oldfiles; i=$i+1)); do
         # if service enabled then check patch existence for retrieval
         if [[ -n $MAR_OLD_FORMAT ]]; then
           if $MBSDIFF_HOOK -g "$olddir/$f" "$newdir/$f" "$workdir/$f.patch.bz2"; then
-            notice "file \"$f\" found in funsize, diffing skipped"
+            verbose_notice "file \"$f\" found in funsize, diffing skipped"
           else
             # if not found already - compute it and cache it for future use
             $MBSDIFF "$olddir/$f" "$newdir/$f" "$workdir/$f.patch"
@@ -239,7 +232,7 @@ for ((i=0; $i<$num_oldfiles; i=$i+1)); do
           fi
         else
           if $MBSDIFF_HOOK -g "$olddir/$f" "$newdir/$f" "$workdir/$f.patch.xz"; then
-            notice "file \"$f\" found in funsize, diffing skipped"
+            verbose_notice "file \"$f\" found in funsize, diffing skipped"
           else
             # if not found already - compute it and cache it for future use
             $MBSDIFF "$olddir/$f" "$newdir/$f" "$workdir/$f.patch"
@@ -320,7 +313,7 @@ notice ""
 notice "Adding file remove instructions to update manifests"
 for ((i=0; $i<$num_removes; i=$i+1)); do
   f="${remove_array[$i]}"
-  notice "     remove \"$f\""
+  verbose_notice "     remove \"$f\""
   echo "remove \"$f\"" >> $updatemanifestv2
   echo "remove \"$f\"" >> $updatemanifestv3
 done
@@ -338,7 +331,7 @@ for ((i=0; $i<$num_olddirs; i=$i+1)); do
   f="${olddirs[$i]}"
   # If this dir doesn't exist in the new directory remove it.
   if [ ! -d "$newdir/$f" ]; then
-    notice "      rmdir $f/"
+    verbose_notice "      rmdir $f/"
     echo "rmdir \"$f/\"" >> $updatemanifestv2
     echo "rmdir \"$f/\"" >> $updatemanifestv3
   fi
@@ -357,9 +350,9 @@ if [[ -n $MOZ_PRODUCT_VERSION ]]
 then
   mar_command="$mar_command -V $MOZ_PRODUCT_VERSION"
 fi
-if [[ -n $MOZ_CHANNEL_ID ]]
+if [[ -n $MAR_CHANNEL_ID ]]
 then
-  mar_command="$mar_command -H $MOZ_CHANNEL_ID"
+  mar_command="$mar_command -H $MAR_CHANNEL_ID"
 fi
 mar_command="$mar_command -C \"$workdir\" -c output.mar"
 eval "$mar_command $archivefiles"

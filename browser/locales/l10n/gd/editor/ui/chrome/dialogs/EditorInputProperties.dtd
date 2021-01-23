@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Roghainnean raon an fhoirm">
+<!ENTITY windowTitleImage.label "Roghainnean dealbh an fhoirm">
+
+<!ENTITY InputType.label "Seòrsa an raoin">
+<!ENTITY InputType.accesskey "S">
+<!ENTITY text.value "Teacsa">
+<!ENTITY password.value "Facal-faire">
+<!ENTITY checkbox.value "Bogsa-cromaige">
+<!ENTITY radio.value "Putan-rèidio">
+<!ENTITY submit.value "Putan a' chuir">
+<!ENTITY reset.value "Putan an ath-shuidheachaidh">
+<!ENTITY file.value "Faidhle">
+<!ENTITY hidden.value "Falaichte">
+<!ENTITY image.value "Dealbh">
+<!ENTITY button.value "Putan">
+
+<!ENTITY InputSettings.label "Roghainnean an raoin">
+<!ENTITY InputName.label "Ainm an raoin:">
+<!ENTITY InputName.accesskey "n">
+<!ENTITY GroupName.label "Ainm a' bhuidhinn:">
+<!ENTITY GroupName.accesskey "n">
+<!ENTITY InputValue.label "Luach an raoin:">
+<!ENTITY InputValue.accesskey "L">
+<!ENTITY InitialValue.label "An luach tùsail:">
+<!ENTITY InitialValue.accesskey "A">
+<!ENTITY InputChecked.label "Le cromag o thùs">
+<!ENTITY InputChecked.accesskey "c">
+<!ENTITY InputSelected.label "Air a thaghadh o thùs">
+<!ENTITY InputSelected.accesskey "s">
+<!ENTITY InputReadOnly.label "Ri leughadh a-mhàin">
+<!ENTITY InputReadOnly.accesskey "R">
+<!ENTITY InputDisabled.label "Air a chur à comas">
+<!ENTITY InputDisabled.accesskey "A">
+<!ENTITY tabIndex.label "Clàr-innse tabaichte:">
+<!ENTITY tabIndex.accesskey "i">
+<!ENTITY TextSize.label "Meud an raoin:">
+<!ENTITY TextSize.accesskey "M">
+<!ENTITY TextLength.label "Faid as motha:">
+<!ENTITY TextLength.accesskey "F">
+<!ENTITY AccessKey.label "Iuchair inntrigidh:">
+<!ENTITY AccessKey.accesskey "I">
+<!ENTITY Accept.label "Gabh ris an t-seòrsa seo:">
+<!ENTITY Accept.accesskey "a">
+
+<!ENTITY ImageProperties.label "Roghainnean an deilbh…">
+<!ENTITY ImageProperties.accesskey "e">

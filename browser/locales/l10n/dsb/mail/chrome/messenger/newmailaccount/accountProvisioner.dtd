@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Witajśo k &brandShortName;">
+<!ENTITY header2.label "Cośo nowu e-mailowu adresu?">
+<!ENTITY other.languages "Pokazujomy jano póbitowarje, kótarež póbituju adrese we wašych śtronach. Klikniśo how, aby wšykne póbitowarje pokazał.">
+<!ENTITY error.line1 "Bóžko njejsmy mógli naraźone e-mailowe adrese namakaś.">
+<!ENTITY error.line2 "Móžośo teke za pśimjenjami abo hynakšim wurazom pytaś, aby dalšne e-mailowe adrese namakał.">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before "Móžośo teke jadnu z ">
+<!ENTITY error.suggest.middle "dermotnych alternatiwow e-mailowych kontow wužywaś">
+<!ENTITY error.suggest.after ".">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before "Witajśo ">
+<!ENTITY success.title.after ", slědujuce e-mailowe adrese stoje wam k dispoziciji:">
+<!ENTITY success.tip "(Móžośo teke za pśimjenjami abo hynakšim wurazom pytaś, aby dalšne e-mailowe adrese namakał)">
+<!ENTITY partnership.description "W partnarstwje z někotarymi póbitowarjami móžo &brandShortName; nowe e-mailowe konto póbitowaś. Zapišćo jano swójo pśedmě a familijowe mě abo někake druge słowa pó swójej wólbje do pólow górjejce, aby wy zachopił.">
+<!ENTITY existing.header "Maśo južo adresu, kótaruž cośo wužywaś?">
+<!ENTITY tinyheader.title "Maśo adresu?">
+<!ENTITY tinyheader.existing "To pśeskócyś a eksistěrujucu e-mailowu adresu wužywaś">
+<!ENTITY content.close "Konto pózdźej konfigurěrowaś.">
+<!ENTITY successful.title "Głukužycenje!">
+<!ENTITY successful.successMessage "Sćo swójo konto wuspešnje konfigurěrował.">
+<!ENTITY successful.write "E-mailku pisaś">
+<!ENTITY successful.write.desc "Dajśo swój pśijaśele a swóju familiju swóju nowu adresu k wěsći.<br/> Togodla sćo toś to nowe konto załožył, nic ga?">
+<!ENTITY successful.customize "Pśiměŕśo &brandShortName; z někotarymi wjelicnymi dodankami">
+<!ENTITY successful.customize.desc "Su tysace dodankow, kótarež wam zmóžnjaju, &brandShortName; pśiměriś, aby wašym wósobinskim žycenjam wótpowědował.">
+<!ENTITY successful.attach "Wósobinsku signaturu k e-mailoju pśipowjesyś">
+<!ENTITY successful.attach.desc "Móžośo citat abo hynakše informacije wó sebi ke kóńcoju kuždeje powěsći, kótaruž sćelośo, pśipowjesyś.">
+<!ENTITY successful.close "Toś to wokno zacyniś.">
+<!ENTITY input.namePlaceholder "Wašo mě abo pśimě">
+<!ENTITY input.search "Pytaś">
+<!ENTITY search_engine.title "Swóju pytnicu pśiměriś">
+<!ENTITY search_engine.message "Waš e-mailowy póbitowaŕ móžo was z móžnosćami webpytanja wugótowaś.">
+<!ENTITY search_engine.button "Dokóńcyś">

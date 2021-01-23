@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Taq Runuk'ulem Seq'">
+<!ENTITY trainingDescription.label "We nitzij, nab'ey katok pa &brandShortName; richin naya' retal ri seq' taqoya'l rik'in nawokisaj ri Seq' pitz'b'äl richin naya' ketal ri taq rutzijol chi e seq' o man e seq' ta. K'atzinel naya' ketal ri taq rutzijol e seq' chuqa' manäq. K'a ri' ri &brandShortName; xtuya' ketal ri e seq' pa ruyonil.">
+<!ENTITY level.label "Ketzij k'amonel taq ruchajinel seq taqoya'l pa re rub'i' taqoya'l re'">
+<!ENTITY level.accesskey "K">
+
+<!ENTITY move.label "Kesilöx k'ak'a' seq' taq rutzijol pa:">
+<!ENTITY move.accesskey "K">
+<!ENTITY junkFolderOn.label "&quot;Seq'&quot; yakwuj pa:">
+<!ENTITY junkFolderOn.accesskey "S">
+<!ENTITY otherFolder.label "Juley chik:">
+<!ENTITY otherFolder.accesskey "J">
+<!ENTITY purge1.label "Ruyonil tiyuj seq' taqoya'l ik'owinäq chi re">
+<!ENTITY purge1.accesskey "u">
+<!ENTITY purge2.label "taq q'ij">
+
+<!ENTITY whitelistHeader.label "Man tiya' retal ruyonil ri seq' taqoya'l we ri taqonel k'o pa: ">
+<!ENTITY whitelistHeader.accesskey "M">
+
+<!ENTITY ispHeadersWarning.label "We nitzij &brandShortName; ruyonil xkerutz'ët ri taq rutzijol nuya' ketal re chi rij cha'onel re' achi'el seq'.">
+<!ENTITY ispHeaders.label "Kenimäx ri taq kijub'i'aj seq' taqoya'l richin: ">
+<!ENTITY ispHeaders.accesskey "K">
+
+<!ENTITY junkClassification.label "Cha'onïk">
+<!ENTITY junkActions.label "K'ulunem chuqa' k'amonem">
+
+<!ENTITY globalJunkPrefs.label "Chijun taq Rajowab'al Seq'…">
+<!ENTITY globalJunkPrefs.accesskey "C">

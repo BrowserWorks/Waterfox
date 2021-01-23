@@ -178,7 +178,7 @@ do {					\
 static inline int cairo_const
 _cairo_popcount (uint32_t mask)
 {
-#if __GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 4)
+#if __GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 4) || __clang__
     return __builtin_popcount (mask);
 #else
     register int y;
@@ -219,7 +219,7 @@ be16_to_cpu(uint16_t v)
 static inline uint32_t cairo_const
 cpu_to_be32(uint32_t v)
 {
-    return (cpu_to_be16 (v) << 16) | cpu_to_be16 (v >> 16);
+    return ((uint32_t) cpu_to_be16 (v) << 16) | cpu_to_be16 (v >> 16);
 }
 
 static inline uint32_t cairo_const
@@ -1105,10 +1105,6 @@ _cairo_font_options_init_default (cairo_font_options_t *options);
 cairo_private void
 _cairo_font_options_init_copy (cairo_font_options_t		*options,
 			       const cairo_font_options_t	*other);
-
-cairo_private void
-_cairo_font_options_set_lcd_filter (cairo_font_options_t   *options,
-				   cairo_lcd_filter_t  lcd_filter);
 
 cairo_private cairo_lcd_filter_t
 _cairo_font_options_get_lcd_filter (const cairo_font_options_t *options);
@@ -2423,6 +2419,7 @@ slim_hidden_proto (cairo_font_options_merge);
 slim_hidden_proto (cairo_font_options_set_antialias);
 slim_hidden_proto (cairo_font_options_set_hint_metrics);
 slim_hidden_proto (cairo_font_options_set_hint_style);
+slim_hidden_proto (cairo_font_options_set_lcd_filter);
 slim_hidden_proto (cairo_font_options_set_subpixel_order);
 slim_hidden_proto (cairo_font_options_status);
 slim_hidden_proto (cairo_format_stride_for_width);

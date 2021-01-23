@@ -1,5 +1,3 @@
-/* -*- js-indent-level: 2; indent-tabs-mode: nil -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -7,36 +5,39 @@
 "use strict";
 
 /* global XPCNativeWrapper evalWithDebugger */
+const { ActorClassWithSpec, Actor } = require("devtools/shared/protocol");
+const { webconsoleSpec } = require("devtools/shared/specs/webconsole");
 
 const Services = require("Services");
 const { Cc, Ci, Cu } = require("chrome");
-const { DebuggerServer } = require("devtools/server/main");
-const { ActorPool } = require("devtools/server/actors/common");
+const { DevToolsServer } = require("devtools/server/devtools-server");
 const { ThreadActor } = require("devtools/server/actors/thread");
 const { ObjectActor } = require("devtools/server/actors/object");
-const {
-  LongStringActor,
-} = require("devtools/server/actors/object/long-string");
+const { LongStringActor } = require("devtools/server/actors/string");
 const {
   createValueGrip,
+  isArray,
   stringIsLong,
 } = require("devtools/server/actors/object/utils");
 const DevToolsUtils = require("devtools/shared/DevToolsUtils");
 const ErrorDocs = require("devtools/server/actors/errordocs");
-const {
-  evalWithDebugger,
-} = require("devtools/server/actors/webconsole/eval-with-debugger");
 
 loader.lazyRequireGetter(
   this,
-  "NetworkMonitorActor",
-  "devtools/server/actors/network-monitor",
+  "evalWithDebugger",
+  "devtools/server/actors/webconsole/eval-with-debugger",
   true
 );
 loader.lazyRequireGetter(
   this,
-  "ConsoleProgressListener",
-  "devtools/server/actors/webconsole/listeners/console-progress",
+  "NetworkMonitorActor",
+  "devtools/server/actors/network-monitor/network-monitor",
+  true
+);
+loader.lazyRequireGetter(
+  this,
+  "ConsoleFileActivityListener",
+  "devtools/server/actors/webconsole/listeners/console-file-activity",
   true
 );
 loader.lazyRequireGetter(
@@ -172,53 +173,47 @@ function isObject(value) {
  *
  * @constructor
  * @param object connection
- *        The connection to the client, DebuggerServerConnection.
+ *        The connection to the client, DevToolsServerConnection.
  * @param object [parentActor]
  *        Optional, the parent actor.
  */
-function WebConsoleActor(connection, parentActor) {
-  this.conn = connection;
-  this.parentActor = parentActor;
+const WebConsoleActor = ActorClassWithSpec(webconsoleSpec, {
+  initialize: function(connection, parentActor) {
+    Actor.prototype.initialize.call(this, connection);
+    this.conn = connection;
+    this.parentActor = parentActor;
 
-  this._actorPool = new ActorPool(this.conn);
-  this.conn.addActorPool(this._actorPool);
+    this._prefs = {};
+    this.dbg = this.parentActor.dbg;
 
-  this._prefs = {};
+    this._gripDepth = 0;
+    this._evalCounter = 0;
+    this._listeners = new Set();
+    this._lastConsoleInputEvaluation = undefined;
 
-  this.dbg = this.parentActor.makeDebugger();
-
-  this._gripDepth = 0;
-  this._listeners = new Set();
-  this._lastConsoleInputEvaluation = undefined;
-
-  this.objectGrip = this.objectGrip.bind(this);
-  this._onWillNavigate = this._onWillNavigate.bind(this);
-  this._onChangedToplevelDocument = this._onChangedToplevelDocument.bind(this);
-  EventEmitter.on(
-    this.parentActor,
-    "changed-toplevel-document",
-    this._onChangedToplevelDocument
-  );
-  this._onObserverNotification = this._onObserverNotification.bind(this);
-  if (this.parentActor.isRootActor) {
-    Services.obs.addObserver(
-      this._onObserverNotification,
-      "last-pb-context-exited"
+    this.objectGrip = this.objectGrip.bind(this);
+    this._onWillNavigate = this._onWillNavigate.bind(this);
+    this._onChangedToplevelDocument = this._onChangedToplevelDocument.bind(
+      this
     );
-  }
+    EventEmitter.on(
+      this.parentActor,
+      "changed-toplevel-document",
+      this._onChangedToplevelDocument
+    );
+    this._onObserverNotification = this._onObserverNotification.bind(this);
+    if (this.parentActor.isRootActor) {
+      Services.obs.addObserver(
+        this._onObserverNotification,
+        "last-pb-context-exited"
+      );
+    }
 
-  this.traits = {
-    transferredResponseSize: true,
-    selectedObjectActor: true, // 44+
-    fetchCacheDescriptor: true,
-  };
-
-  if (this.dbg.replaying && !isWorker) {
-    this.dbg.onConsoleMessage = this.onReplayingMessage.bind(this);
-  }
-}
-
-WebConsoleActor.prototype = {
+    this.traits = {
+      // Supports new cached messages structure for 77+
+      newCacheStructure: true,
+    };
+  },
   /**
    * Debugger instance.
    *
@@ -232,14 +227,6 @@ WebConsoleActor.prototype = {
    * @type number
    */
   _gripDepth: null,
-
-  /**
-   * Actor pool for all of the actors we send to the client.
-   * @private
-   * @type object
-   * @see ActorPool
-   */
-  _actorPool: null,
 
   /**
    * Web Console-related preferences.
@@ -257,7 +244,7 @@ WebConsoleActor.prototype = {
   _listeners: null,
 
   /**
-   * The debugger server connection instance.
+   * The devtools server connection instance.
    * @type object
    */
   conn: null,
@@ -387,9 +374,9 @@ WebConsoleActor.prototype = {
   consoleAPIListener: null,
 
   /**
-   * The ConsoleProgressListener instance.
+   * The ConsoleFileActivityListener instance.
    */
-  consoleProgressListener: null,
+  consoleFileActivityListener: null,
 
   /**
    * The ConsoleReflowListener instance.
@@ -405,17 +392,13 @@ WebConsoleActor.prototype = {
 
   typeName: "console",
 
-  get globalDebugObject() {
-    return this.parentActor.threadActor.globalDebugObject;
-  },
-
   grip: function() {
     return { actor: this.actorID };
   },
 
   hasNativeConsoleAPI: function(window) {
-    if (isWorker) {
-      // Can't use XPCNativeWrapper as a way to check for console API in workers
+    if (isWorker || !(window instanceof Ci.nsIDOMWindow)) {
+      // We can only use XPCNativeWrapper on non-worker nsIDOMWindow.
       return true;
     }
 
@@ -442,13 +425,14 @@ WebConsoleActor.prototype = {
    * Destroy the current WebConsoleActor instance.
    */
   destroy() {
+    this.stopListeners();
+    Actor.prototype.destroy.call(this);
+
     EventEmitter.off(
       this.parentActor,
       "changed-toplevel-document",
       this._onChangedToplevelDocument
     );
-
-    this.conn.removeActorPool(this._actorPool);
 
     if (this.parentActor.isRootActor) {
       Services.obs.removeObserver(
@@ -457,16 +441,9 @@ WebConsoleActor.prototype = {
       );
     }
 
-    if (this.dbg.replaying && !isWorker) {
-      this.dbg.onConsoleMessage = null;
-    }
-
-    this.stopListeners({ listeners: null });
-    this._actorPool = null;
     this._webConsoleCommandsCache = null;
     this._lastConsoleInputEvaluation = null;
     this._evalWindow = null;
-    this.dbg.enabled = false;
     this.dbg = null;
     this.conn = null;
   },
@@ -492,7 +469,7 @@ WebConsoleActor.prototype = {
     }
 
     const actor = new EnvironmentActor(environment, this);
-    this._actorPool.addActor(actor);
+    this.manage(actor);
     environment.actor = actor;
 
     return actor;
@@ -505,7 +482,7 @@ WebConsoleActor.prototype = {
    * @return object
    */
   createValueGrip: function(value) {
-    return createValueGrip(value, this._actorPool, this.objectGrip);
+    return createValueGrip(value, this, this.objectGrip);
   },
 
   /**
@@ -520,11 +497,6 @@ WebConsoleActor.prototype = {
    *         Debuggee value for |value|.
    */
   makeDebuggeeValue: function(value, useObjectGlobal) {
-    if (this.dbg.replaying) {
-      // If we are replaying then any values we are operating on should already
-      // be debuggee values.
-      return value;
-    }
     if (useObjectGlobal && isObject(value)) {
       try {
         const global = Cu.getGlobalForObject(value);
@@ -545,7 +517,7 @@ WebConsoleActor.prototype = {
    * @param object object
    *        The object you want.
    * @param object pool
-   *        An ActorPool where the new actor instance is added.
+   *        A Pool where the new actor instance is added.
    * @param object
    *        The object grip.
    */
@@ -553,6 +525,7 @@ WebConsoleActor.prototype = {
     const actor = new ObjectActor(
       object,
       {
+        thread: this.parentActor.threadActor,
         getGripDepth: () => this._gripDepth,
         incrementGripDepth: () => this._gripDepth++,
         decrementGripDepth: () => this._gripDepth--,
@@ -563,11 +536,10 @@ WebConsoleActor.prototype = {
             Error("sources not yet implemented")
           ),
         createEnvironmentActor: env => this.createEnvironmentActor(env),
-        getGlobalDebugObject: () => this.globalDebugObject,
       },
       this.conn
     );
-    pool.addActor(actor);
+    pool.manage(actor);
     return actor.form();
   },
 
@@ -577,14 +549,14 @@ WebConsoleActor.prototype = {
    * @param string string
    *        The string you want to create the grip for.
    * @param object pool
-   *        An ActorPool where the new actor instance is added.
+   *        A Pool where the new actor instance is added.
    * @return object
    *         A LongStringActor object that wraps the given string.
    */
   longStringGrip: function(string, pool) {
-    const actor = new LongStringActor(string);
-    pool.addActor(actor);
-    return actor.grip();
+    const actor = new LongStringActor(this.conn, string);
+    pool.manage(actor);
+    return actor.form();
   },
 
   /**
@@ -599,29 +571,9 @@ WebConsoleActor.prototype = {
    */
   _createStringGrip: function(string) {
     if (string && stringIsLong(string)) {
-      return this.longStringGrip(string, this._actorPool);
+      return this.longStringGrip(string, this);
     }
     return string;
-  },
-
-  /**
-   * Get an object actor by its ID.
-   *
-   * @param string actorID
-   * @return object
-   */
-  getActorByID: function(actorID) {
-    return this._actorPool.get(actorID);
-  },
-
-  /**
-   * Release an actor.
-   *
-   * @param object actor
-   *        The actor instance you want to release.
-   */
-  releaseActor: function(actor) {
-    this._actorPool.removeActor(actor);
   },
 
   /**
@@ -635,38 +587,56 @@ WebConsoleActor.prototype = {
   },
 
   /**
+   * Preprocess a debugger object (e.g. return the `boundTargetFunction`
+   * debugger object if the given debugger object is a bound function).
+   *
+   * This method is called by both the `inspect` binding implemented
+   * for the webconsole and the one implemented for the devtools API
+   * `browser.devtools.inspectedWindow.eval`.
+   */
+  preprocessDebuggerObject(dbgObj) {
+    // Returns the bound target function on a bound function.
+    if (dbgObj?.isBoundFunction && dbgObj?.boundTargetFunction) {
+      return dbgObj.boundTargetFunction;
+    }
+
+    return dbgObj;
+  },
+
+  /**
    * This helper is used by the WebExtensionInspectedWindowActor to
    * inspect an object in the developer toolbox.
+   *
+   * NOTE: shared parts related to preprocess the debugger object (between
+   * this function and the `inspect` webconsole command defined in
+   * "devtools/server/actor/webconsole/utils.js") should be added to
+   * the webconsole actors' `preprocessDebuggerObject` method.
    */
   inspectObject(dbgObj, inspectFromAnnotation) {
-    this.conn.sendActorEvent(this.actorID, "inspectObject", {
+    dbgObj = this.preprocessDebuggerObject(dbgObj);
+    this.emit("inspectObject", {
       objectActor: this.createValueGrip(dbgObj),
       inspectFromAnnotation,
     });
   },
-
-  /**
-   * When using a replaying debugger, all messages we have seen so far.
-   */
-  replayingMessages: null,
 
   // Request handlers for known packet types.
 
   /**
    * Handler for the "startListeners" request.
    *
-   * @param object request
-   *        The JSON request object received from the Web Console client.
+   * @param array listeners
+   *        An array of events to start sent by the Web Console client.
    * @return object
-   *         The response object which holds the startedListeners array.
+   *        The response object which holds the startedListeners array.
    */
-  startListeners: async function(request) {
+  // eslint-disable-next-line complexity
+  startListeners: async function(listeners) {
     const startedListeners = [];
     const window = !this.parentActor.isRootActor ? this.window : null;
 
-    while (request.listeners.length > 0) {
-      const listener = request.listeners.shift();
-      switch (listener) {
+    for (const event of listeners) {
+      switch (event) {
         case "PageError":
           // Workers don't support this message type yet
           if (isWorker) {
@@ -679,7 +649,7 @@ WebConsoleActor.prototype = {
             );
             this.consoleServiceListener.init();
           }
-          startedListeners.push(listener);
+          startedListeners.push(event);
           break;
         case "ConsoleAPI":
           if (!this.consoleAPIListener) {
@@ -692,7 +662,7 @@ WebConsoleActor.prototype = {
             );
             this.consoleAPIListener.init();
           }
-          startedListeners.push(listener);
+          startedListeners.push(event);
           break;
         case "NetworkActivity":
           // Workers don't support this message type
@@ -727,7 +697,8 @@ WebConsoleActor.prototype = {
               // most requests that happen in parent. This one will communicate through
               // `messageManager`.
               await this.conn.spawnActorInParentProcess(this.actorID, {
-                module: "devtools/server/actors/network-monitor",
+                module:
+                  "devtools/server/actors/network-monitor/network-monitor",
                 constructor: "NetworkMonitorActor",
                 args: [
                   { outerWindowID: this.parentActor.outerWindowID },
@@ -767,7 +738,7 @@ WebConsoleActor.prototype = {
             );
             this.stackTraceCollector.init();
           }
-          startedListeners.push(listener);
+          startedListeners.push(event);
           break;
         case "FileActivity":
           // Workers don't support this message type
@@ -775,16 +746,14 @@ WebConsoleActor.prototype = {
             break;
           }
           if (this.window instanceof Ci.nsIDOMWindow) {
-            if (!this.consoleProgressListener) {
-              this.consoleProgressListener = new ConsoleProgressListener(
+            if (!this.consoleFileActivityListener) {
+              this.consoleFileActivityListener = new ConsoleFileActivityListener(
                 this.window,
                 this
               );
             }
-            this.consoleProgressListener.startMonitor(
-              this.consoleProgressListener.MONITOR_FILE_ACTIVITY
-            );
-            startedListeners.push(listener);
+            this.consoleFileActivityListener.startMonitor();
+            startedListeners.push(event);
           }
           break;
         case "ReflowActivity":
@@ -798,7 +767,7 @@ WebConsoleActor.prototype = {
               this
             );
           }
-          startedListeners.push(listener);
+          startedListeners.push(event);
           break;
         case "ContentProcessMessages":
           // Workers don't support this message type
@@ -808,7 +777,7 @@ WebConsoleActor.prototype = {
           if (!this.contentProcessListener) {
             this.contentProcessListener = new ContentProcessListener(this);
           }
-          startedListeners.push(listener);
+          startedListeners.push(event);
           break;
         case "DocumentEvents":
           // Workers don't support this message type
@@ -818,7 +787,7 @@ WebConsoleActor.prototype = {
           if (!this.documentEventsListener) {
             this.documentEventsListener = new DocumentEventsListener(this);
           }
-          startedListeners.push(listener);
+          startedListeners.push(event);
           break;
       }
     }
@@ -836,18 +805,18 @@ WebConsoleActor.prototype = {
   /**
    * Handler for the "stopListeners" request.
    *
-   * @param object request
-   *        The JSON request object received from the Web Console client.
+   * @param array listeners
+   *        An array of events to stop sent by the Web Console client.
    * @return object
-   *         The response packet to send to the client: holds the
-   *         stoppedListeners array.
+   *        The response packet to send to the client: holds the
+   *        stoppedListeners array.
    */
-  stopListeners: function(request) {
+  stopListeners: function(listeners) {
     const stoppedListeners = [];
 
     // If no specific listeners are requested to be detached, we stop all
     // listeners.
-    const toDetach = request.listeners || [
+    const eventsToDetach = listeners || [
       "PageError",
       "ConsoleAPI",
       "NetworkActivity",
@@ -857,22 +826,21 @@ WebConsoleActor.prototype = {
       "DocumentEvents",
     ];
 
-    while (toDetach.length > 0) {
-      const listener = toDetach.shift();
-      switch (listener) {
+    for (const event of eventsToDetach) {
+      switch (event) {
         case "PageError":
           if (this.consoleServiceListener) {
             this.consoleServiceListener.destroy();
             this.consoleServiceListener = null;
           }
-          stoppedListeners.push(listener);
+          stoppedListeners.push(event);
           break;
         case "ConsoleAPI":
           if (this.consoleAPIListener) {
             this.consoleAPIListener.destroy();
             this.consoleAPIListener = null;
           }
-          stoppedListeners.push(listener);
+          stoppedListeners.push(event);
           break;
         case "NetworkActivity":
           if (this.netmonitors) {
@@ -887,37 +855,35 @@ WebConsoleActor.prototype = {
             this.stackTraceCollector.destroy();
             this.stackTraceCollector = null;
           }
-          stoppedListeners.push(listener);
+          stoppedListeners.push(event);
           break;
         case "FileActivity":
-          if (this.consoleProgressListener) {
-            this.consoleProgressListener.stopMonitor(
-              this.consoleProgressListener.MONITOR_FILE_ACTIVITY
-            );
-            this.consoleProgressListener = null;
+          if (this.consoleFileActivityListener) {
+            this.consoleFileActivityListener.stopMonitor();
+            this.consoleFileActivityListener = null;
           }
-          stoppedListeners.push(listener);
+          stoppedListeners.push(event);
           break;
         case "ReflowActivity":
           if (this.consoleReflowListener) {
             this.consoleReflowListener.destroy();
             this.consoleReflowListener = null;
           }
-          stoppedListeners.push(listener);
+          stoppedListeners.push(event);
           break;
         case "ContentProcessMessages":
           if (this.contentProcessListener) {
             this.contentProcessListener.destroy();
             this.contentProcessListener = null;
           }
-          stoppedListeners.push(listener);
+          stoppedListeners.push(event);
           break;
         case "DocumentEvents":
           if (this.documentEventsListener) {
             this.documentEventsListener.destroy();
             this.documentEventsListener = null;
           }
-          stoppedListeners.push(listener);
+          stoppedListeners.push(event);
           break;
       }
     }
@@ -932,15 +898,14 @@ WebConsoleActor.prototype = {
    * Handler for the "getCachedMessages" request. This method sends the cached
    * error messages and the window.console API calls to the client.
    *
-   * @param object request
-   *        The JSON request object received from the Web Console client.
+   * @param array messageTypes
+   *        An array of message types sent by the Web Console client.
    * @return object
    *         The response packet to send to the client: it holds the cached
    *         messages array.
    */
-  getCachedMessages: function(request) {
-    const types = request.messageTypes;
-    if (!types) {
+  getCachedMessages: function(messageTypes) {
+    if (!messageTypes) {
       return {
         error: "missingParameter",
         message: "The messageTypes parameter is missing.",
@@ -949,23 +914,16 @@ WebConsoleActor.prototype = {
 
     const messages = [];
 
-    let replayingMessages = [];
-    if (this.dbg.replaying) {
-      replayingMessages = this.dbg.findAllConsoleMessages();
-    }
+    const consoleServiceCachedMessages =
+      messageTypes.includes("PageError") || messageTypes.includes("LogMessage")
+        ? this.consoleServiceListener?.getCachedMessages(
+            !this.parentActor.isRootActor
+          )
+        : null;
 
-    while (types.length > 0) {
-      const type = types.shift();
+    for (const type of messageTypes) {
       switch (type) {
         case "ConsoleAPI": {
-          replayingMessages.forEach(msg => {
-            if (msg.messageType == "ConsoleAPI") {
-              const message = this.prepareConsoleMessageForRemote(msg);
-              message._type = type;
-              messages.push(message);
-            }
-          });
-
           if (!this.consoleAPIListener) {
             break;
           }
@@ -989,58 +947,64 @@ WebConsoleActor.prototype = {
               return;
             }
 
-            const message = this.prepareConsoleMessageForRemote(cachedMessage);
-            message._type = type;
-            messages.push(message);
+            messages.push({
+              message: this.prepareConsoleMessageForRemote(cachedMessage),
+              type: "consoleAPICall",
+            });
           });
           break;
         }
-        case "PageError": {
-          replayingMessages.forEach(msg => {
-            if (msg.messageType == "PageError") {
-              const message = this.preparePageErrorForRemote(msg);
-              message._type = type;
-              messages.push(message);
-            }
-          });
 
-          if (!this.consoleServiceListener) {
+        case "PageError": {
+          if (!consoleServiceCachedMessages) {
             break;
           }
-          const cache = this.consoleServiceListener.getCachedMessages(
-            !this.parentActor.isRootActor
-          );
-          cache.forEach(cachedMessage => {
-            let message = null;
-            if (cachedMessage instanceof Ci.nsIScriptError) {
-              message = this.preparePageErrorForRemote(cachedMessage);
-              message._type = type;
-            } else {
-              message = {
-                _type: "LogMessage",
-                message: this._createStringGrip(cachedMessage.message),
-                timeStamp: cachedMessage.timeStamp,
-              };
+
+          for (const cachedMessage of consoleServiceCachedMessages) {
+            if (!(cachedMessage instanceof Ci.nsIScriptError)) {
+              continue;
             }
-            messages.push(message);
-          });
+
+            messages.push({
+              pageError: this.preparePageErrorForRemote(cachedMessage),
+              type: "pageError",
+            });
+          }
+          break;
+        }
+
+        case "LogMessage": {
+          if (!consoleServiceCachedMessages) {
+            break;
+          }
+
+          for (const cachedMessage of consoleServiceCachedMessages) {
+            if (cachedMessage instanceof Ci.nsIScriptError) {
+              continue;
+            }
+
+            messages.push({
+              message: this._createStringGrip(cachedMessage.message),
+              timeStamp: cachedMessage.timeStamp,
+              type: "logMessage",
+            });
+          }
           break;
         }
       }
     }
 
     return {
-      from: this.actorID,
       messages: messages,
     };
   },
 
   /**
-   * Handler for the "evaluateJSAsync" request. This method evaluates the given
-   * JavaScript string and sends back a packet with a unique ID.
+   * Handler for the "evaluateJSAsync" request. This method evaluates a given
+   * JavaScript string with an associated `resultID`.
+   *
    * The result will be returned later as an unsolicited `evaluationResult`,
    * that can be associated back to this request via the `resultID` field.
-   * Cannot be async, see Comment two on Bug #1452920
    *
    * @param object request
    *        The JSON request object received from the Web Console client.
@@ -1048,33 +1012,45 @@ WebConsoleActor.prototype = {
    *         The response packet to send to with the unique id in the
    *         `resultID` field.
    */
-  evaluateJSAsync: function(request) {
-    // We want to be able to run console commands without waiting
-    // for the first to return (see Bug 1088861).
+  evaluateJSAsync: async function(request) {
+    const startTime = Date.now();
+    // Use Date instead of UUID as this code is used by workers, which
+    // don't have access to the UUID XPCOM component.
+    // Also use a counter in order to prevent mixing up response when calling
+    // evaluateJSAsync during the same millisecond.
+    const resultID = startTime + "-" + this._evalCounter++;
 
-    // First, send a response packet with the id only.
-    const resultID = Date.now();
-    this.conn.send({
-      from: this.actorID,
-      resultID: resultID,
+    // Execute the evaluation in the next event loop in order to immediately
+    // reply with the resultID.
+    DevToolsUtils.executeSoon(async () => {
+      try {
+        // Execute the script that may pause.
+        let response = this.evaluateJS(request);
+        // Wait for any potential returned Promise.
+        response = await this._maybeWaitForResponseResult(response);
+        // Set the timestamp only now, so any messages logged in the expression will come
+        // before the result.
+        response.timestamp = Date.now();
+        // Finally, emit an unsolicited evaluationResult packet with the evaluation result.
+        this.emit("evaluationResult", {
+          type: "evaluationResult",
+          resultID,
+          startTime,
+          ...response,
+        });
+        return;
+      } catch (e) {
+        const message = `Encountered error while waiting for Helper Result: ${e}`;
+        DevToolsUtils.reportException("evaluateJSAsync", Error(message));
+      }
     });
-
-    // Then, execute the script that may pause.
-    const response = this.evaluateJS(request);
-    response.resultID = resultID;
-
-    this._waitForResultAndSend(response).catch(e =>
-      DevToolsUtils.reportException(
-        "evaluateJSAsync",
-        Error(`Encountered error while waiting for Helper Result: ${e}`)
-      )
-    );
+    return { resultID };
   },
 
   /**
    * In order to have asynchronous commands (e.g. screenshot, top-level await, …) ,
    * we have to be able to handle promises. This method handles waiting for the promise,
-   * and then dispatching the result.
+   * and then returns the result.
    *
    * @private
    * @param object response
@@ -1083,54 +1059,46 @@ WebConsoleActor.prototype = {
    *         `awaitResult` field.
    *
    * @return object
-   *         The response packet to send to with the unique id in the
-   *         `resultID` field, with a sanitized helperResult field.
+   *         The updated response object.
    */
-  _waitForResultAndSend: async function(response) {
-    let updateTimestamp = false;
+  _maybeWaitForResponseResult: async function(response) {
+    if (!response) {
+      return response;
+    }
+
+    const thenable = obj => obj && typeof obj.then === "function";
+    const waitForHelperResult =
+      response.helperResult && thenable(response.helperResult);
+    const waitForAwaitResult =
+      response.awaitResult && thenable(response.awaitResult);
+
+    if (!waitForAwaitResult && !waitForHelperResult) {
+      return response;
+    }
 
     // Wait for asynchronous command completion before sending back the response
-    if (
-      response.helperResult &&
-      typeof response.helperResult.then == "function"
-    ) {
+    if (waitForHelperResult) {
       response.helperResult = await response.helperResult;
-      updateTimestamp = true;
-    } else if (
-      response.awaitResult &&
-      typeof response.awaitResult.then === "function"
-    ) {
+    } else if (waitForAwaitResult) {
       let result;
       try {
         result = await response.awaitResult;
+
+        // `createValueGrip` expect a debuggee value, while here we have the raw object.
+        // We need to call `makeDebuggeeValue` on it to make it work.
+        const dbgResult = this.makeDebuggeeValue(result);
+        response.result = this.createValueGrip(dbgResult);
       } catch (e) {
         // The promise was rejected. We let the engine handle this as it will report a
         // `uncaught exception` error.
         response.topLevelAwaitRejected = true;
       }
 
-      if (!response.topLevelAwaitRejected) {
-        // `createValueGrip` expect a debuggee value, while here we have the raw object.
-        // We need to call `makeDebuggeeValue` on it to make it work.
-        const dbgResult = this.makeDebuggeeValue(result);
-        response.result = this.createValueGrip(dbgResult);
-      }
-
       // Remove the promise from the response object.
       delete response.awaitResult;
-
-      updateTimestamp = true;
     }
 
-    if (updateTimestamp) {
-      // We need to compute the timestamp again as the one in the response was set before
-      // doing the evaluation, which is now innacurate since we waited for a bit.
-      response.timestamp = Date.now();
-    }
-
-    // Finally, send an unsolicited evaluationResult packet with
-    // the normal return value
-    this.conn.sendActorEvent(this.actorID, "evaluationResult", response);
+    return response;
   },
 
   /**
@@ -1142,26 +1110,30 @@ WebConsoleActor.prototype = {
    * @return object
    *         The evaluation response packet.
    */
+  // eslint-disable-next-line complexity
   evaluateJS: function(request) {
     const input = request.text;
-    const timestamp = Date.now();
 
     const evalOptions = {
-      bindObjectActor: request.bindObjectActor,
       frameActor: request.frameActor,
       url: request.url,
+      innerWindowID: request.innerWindowID,
       selectedNodeActor: request.selectedNodeActor,
       selectedObjectActor: request.selectedObjectActor,
+      eager: request.eager,
+      bindings: request.bindings,
+      lineNumber: request.lineNumber,
     };
+
     const { mapped } = request;
 
     // Set a flag on the thread actor which indicates an evaluation is being
     // done for the client. This can affect how debugger handlers behave.
-    this.parentActor.threadActor.insideClientEvaluation = true;
+    this.parentActor.threadActor.insideClientEvaluation = evalOptions;
 
     const evalInfo = evalWithDebugger(input, evalOptions, this);
 
-    this.parentActor.threadActor.insideClientEvaluation = false;
+    this.parentActor.threadActor.insideClientEvaluation = null;
 
     const evalResult = evalInfo.result;
     const helperResult = evalInfo.helperResult;
@@ -1179,8 +1151,7 @@ WebConsoleActor.prototype = {
       if ("return" in evalResult) {
         result = evalResult.return;
         if (
-          mapped &&
-          mapped.await &&
+          mapped?.await &&
           result &&
           result.class === "Promise" &&
           typeof result.unsafeDereference === "function"
@@ -1233,7 +1204,8 @@ WebConsoleActor.prototype = {
             // in the debugger's compartment, and then call the "toString"
             // property from there.
             if (typeof error.unsafeDereference === "function") {
-              errorMessage = error.unsafeDereference().toString();
+              const rawError = error.unsafeDereference();
+              errorMessage = rawError ? rawError.toString() : "";
             }
           }
         }
@@ -1265,7 +1237,7 @@ WebConsoleActor.prototype = {
 
         try {
           const notes = error.errorNotes;
-          if (notes && notes.length) {
+          if (notes?.length) {
             errorNotes = [];
             for (const note of notes) {
               errorNotes.push({
@@ -1284,39 +1256,49 @@ WebConsoleActor.prototype = {
       }
     }
 
-    // If a value is encountered that the debugger server doesn't support yet,
+    // If a value is encountered that the devtools server doesn't support yet,
     // the console should remain functional.
     let resultGrip;
     if (!awaitResult) {
       try {
-        resultGrip = this.createValueGrip(result);
+        const objectActor = this.parentActor.threadActor.getThreadLifetimeObject(
+          result
+        );
+        if (objectActor) {
+          resultGrip = this.parentActor.threadActor.createValueGrip(result);
+        } else {
+          resultGrip = this.createValueGrip(result);
+        }
       } catch (e) {
         errorMessage = e;
       }
     }
 
-    if (!awaitResult) {
-      this._lastConsoleInputEvaluation = result;
-    } else {
-      // If we evaluated a top-level await expression, we want to assign its result to the
-      // _lastConsoleInputEvaluation only when the promise resolves, and only if it
-      // resolves. If the promise rejects, we don't re-assign _lastConsoleInputEvaluation,
-      // it will keep its previous value.
-      awaitResult.then(res => {
-        this._lastConsoleInputEvaluation = this.makeDebuggeeValue(res);
-      });
+    // Don't update _lastConsoleInputEvaluation in eager evaluation, as it would interfere
+    // with the $_ command.
+    if (!request.eager) {
+      if (!awaitResult) {
+        this._lastConsoleInputEvaluation = result;
+      } else {
+        // If we evaluated a top-level await expression, we want to assign its result to the
+        // _lastConsoleInputEvaluation only when the promise resolves, and only if it
+        // resolves. If the promise rejects, we don't re-assign _lastConsoleInputEvaluation,
+        // it will keep its previous value.
+        awaitResult.then(res => {
+          this._lastConsoleInputEvaluation = this.makeDebuggeeValue(res);
+        });
+      }
     }
 
     return {
-      from: this.actorID,
       input: input,
       result: resultGrip,
       awaitResult,
-      timestamp: timestamp,
       exception: errorGrip,
       exceptionMessage: this._createStringGrip(errorMessage),
       exceptionDocURL: errorDocURL,
       exceptionStack,
+      hasException: errorGrip !== null,
       errorMessageName,
       frame,
       helperResult: helperResult,
@@ -1327,21 +1309,34 @@ WebConsoleActor.prototype = {
   /**
    * The Autocomplete request handler.
    *
-   * @param object request
+   * @param string text
    *        The request message - what input to autocomplete.
+   * @param number cursor
+   *        The cursor position at the moment of starting autocomplete.
+   * @param string frameActor
+   *        The frameactor id of the current paused frame.
+   * @param string selectedNodeActor
+   *        The actor id of the currently selected node.
+   * @param array authorizedEvaluations
+   *        Array of the properties access which can be executed by the engine.
    * @return object
    *         The response message - matched properties.
    */
-  autocomplete: function(request) {
-    const frameActorId = request.frameActor;
+  autocomplete: function(
+    text,
+    cursor,
+    frameActorId,
+    selectedNodeActor,
+    authorizedEvaluations,
+    expressionVars = []
+  ) {
     let dbgObject = null;
     let environment = null;
-    let hadDebuggee = false;
     let matches = [];
     let matchProp;
     let isElementAccess;
 
-    const reqText = request.text.substr(0, request.cursor);
+    const reqText = text.substr(0, cursor);
 
     if (isCommand(reqText)) {
       const commandsCache = this._getWebConsoleCommandsCache();
@@ -1369,35 +1364,28 @@ WebConsoleActor.prototype = {
           );
         }
       } else {
-        // This is the general case (non-paused debugger)
-        hadDebuggee = this.dbg.hasDebuggee(this.evalWindow);
         dbgObject = this.dbg.addDebuggee(this.evalWindow);
       }
 
       const result = JSPropertyProvider({
         dbgObject,
         environment,
-        inputValue: request.text,
-        cursor: request.cursor,
+        inputValue: text,
+        cursor,
         webconsoleActor: this,
-        selectedNodeActor: request.selectedNodeActor,
-        authorizedEvaluations: request.authorizedEvaluations,
+        selectedNodeActor,
+        authorizedEvaluations,
+        expressionVars,
       });
-
-      if (!hadDebuggee && dbgObject) {
-        this.dbg.removeDebuggee(this.evalWindow);
-      }
 
       if (result === null) {
         return {
-          from: this.actorID,
           matches: null,
         };
       }
 
       if (result && result.isUnsafeGetter === true) {
         return {
-          from: this.actorID,
           isUnsafeGetter: true,
           getterPath: result.getterPath,
         };
@@ -1454,7 +1442,6 @@ WebConsoleActor.prototype = {
     }
 
     return {
-      from: this.actorID,
       matches,
       matchProp,
       isElementAccess: isElementAccess === true,
@@ -1491,14 +1478,14 @@ WebConsoleActor.prototype = {
   /**
    * The "getPreferences" request handler.
    *
-   * @param object request
-   *        The request message - which preferences need to be retrieved.
+   * @param array preferences
+   *        The preferences that need to be retrieved.
    * @return object
    *         The response message - a { key: value } object map.
    */
-  getPreferences: function(request) {
+  getPreferences: function(preferences) {
     const prefs = Object.create(null);
-    for (const key of request.preferences) {
+    for (const key of preferences) {
       prefs[key] = this._prefs[key];
     }
     return { preferences: prefs };
@@ -1507,12 +1494,12 @@ WebConsoleActor.prototype = {
   /**
    * The "setPreferences" request handler.
    *
-   * @param object request
-   *        The request message - which preferences need to be updated.
+   * @param object preferences
+   *        The preferences that need to be updated.
    */
-  setPreferences: function(request) {
-    for (const key in request.preferences) {
-      this._prefs[key] = request.preferences[key];
+  setPreferences: function(preferences) {
+    for (const key in preferences) {
+      this._prefs[key] = preferences[key];
 
       if (this.netmonitors) {
         if (key == "NetworkMonitor.saveRequestAndResponseBodies") {
@@ -1530,7 +1517,7 @@ WebConsoleActor.prototype = {
         }
       }
     }
-    return { updated: Object.keys(request.preferences) };
+    return { updated: Object.keys(preferences) };
   },
 
   // End of request handlers.
@@ -1555,6 +1542,7 @@ WebConsoleActor.prototype = {
       chromeWindow: this.chromeWindow.bind(this),
       makeDebuggeeValue: debuggerGlobal.makeDebuggeeValue.bind(debuggerGlobal),
       createValueGrip: this.createValueGrip.bind(this),
+      preprocessDebuggerObject: this.preprocessDebuggerObject.bind(this),
       sandbox: Object.create(null),
       helperResult: null,
       consoleActor: this,
@@ -1611,25 +1599,6 @@ WebConsoleActor.prototype = {
   // Event handlers for various listeners.
 
   /**
-   * Handle console messages sent to us from a replaying process via the
-   * debugger.
-   */
-  onReplayingMessage: function(msg) {
-    if (msg.messageType == "ConsoleAPI") {
-      this.onConsoleAPICall(msg);
-    }
-
-    if (msg.messageType == "PageError") {
-      const packet = {
-        from: this.actorID,
-        type: "pageError",
-        pageError: this.preparePageErrorForRemote(msg),
-      };
-      this.conn.send(packet);
-    }
-  },
-
-  /**
    * Handler for messages received from the ConsoleServiceListener. This method
    * sends the nsIConsoleMessage to the remote Web Console client.
    *
@@ -1637,22 +1606,16 @@ WebConsoleActor.prototype = {
    *        The message we need to send to the client.
    */
   onConsoleServiceMessage: function(message) {
-    let packet;
     if (message instanceof Ci.nsIScriptError) {
-      packet = {
-        from: this.actorID,
-        type: "pageError",
+      this.emit("pageError", {
         pageError: this.preparePageErrorForRemote(message),
-      };
+      });
     } else {
-      packet = {
-        from: this.actorID,
-        type: "logMessage",
+      this.emit("logMessage", {
         message: this._createStringGrip(message.message),
         timeStamp: message.timeStamp,
-      };
+      });
     }
-    this.conn.send(packet);
   },
 
   getActorIdForInternalSourceId(id) {
@@ -1684,8 +1647,9 @@ WebConsoleActor.prototype = {
         lineNumber: s.line,
         columnNumber: s.column,
         functionName: s.functionDisplayName,
+        asyncCause: s.asyncCause ? s.asyncCause : undefined,
       });
-      s = s.parent;
+      s = s.parent || s.asyncParent;
     }
     return stack;
   },
@@ -1703,14 +1667,14 @@ WebConsoleActor.prototype = {
     let lineText = pageError.sourceLine;
     if (
       lineText &&
-      lineText.length > DebuggerServer.LONG_STRING_INITIAL_LENGTH
+      lineText.length > DevToolsServer.LONG_STRING_INITIAL_LENGTH
     ) {
-      lineText = lineText.substr(0, DebuggerServer.LONG_STRING_INITIAL_LENGTH);
+      lineText = lineText.substr(0, DevToolsServer.LONG_STRING_INITIAL_LENGTH);
     }
 
     let notesArray = null;
     const notes = pageError.notes;
-    if (notes && notes.length) {
+    if (notes?.length) {
       notesArray = [];
       for (let i = 0, len = notes.length; i < len; i++) {
         const note = notes.queryElementAt(i, Ci.nsIScriptErrorNote);
@@ -1736,7 +1700,7 @@ WebConsoleActor.prototype = {
       columnNumber = stack[0].columnNumber;
     }
 
-    return {
+    const result = {
       errorMessage: this._createStringGrip(pageError.errorMessage),
       errorMessageName: pageError.errorMessageName,
       exceptionDocURL: ErrorDocs.GetURL(pageError),
@@ -1749,17 +1713,30 @@ WebConsoleActor.prototype = {
       innerWindowID: pageError.innerWindowID,
       timeStamp: pageError.timeStamp,
       warning: !!(pageError.flags & pageError.warningFlag),
-      error: !!(pageError.flags & pageError.errorFlag),
-      exception: !!(pageError.flags & pageError.exceptionFlag),
-      strict: !!(pageError.flags & pageError.strictFlag),
+      error: !(pageError.flags & (pageError.warningFlag | pageError.infoFlag)),
       info: !!(pageError.flags & pageError.infoFlag),
       private: pageError.isFromPrivateWindow,
       stacktrace: stack,
       notes: notesArray,
-      executionPoint: pageError.executionPoint,
       chromeContext: pageError.isFromChromeContext,
       cssSelectors: pageError.cssSelectors,
+      isPromiseRejection: pageError.isPromiseRejection,
     };
+
+    // If the pageError does have an exception object, we want to return the grip for it,
+    // but only if we do manage to get the grip, as we're checking the property on the
+    // client to render things differently.
+    if (pageError.hasException) {
+      try {
+        const obj = this.makeDebuggeeValue(pageError.exception, true);
+        if (obj?.class !== "DeadObject") {
+          result.exception = this.createValueGrip(obj);
+          result.hasException = true;
+        }
+      } catch (e) {}
+    }
+
+    return result;
   },
 
   /**
@@ -1771,7 +1748,7 @@ WebConsoleActor.prototype = {
    *        The console API call we need to send to the remote client.
    */
   onConsoleAPICall: function(message) {
-    this.conn.sendActorEvent(this.actorID, "consoleAPICall", {
+    this.emit("consoleAPICall", {
       message: this.prepareConsoleMessageForRemote(message),
     });
   },
@@ -1827,10 +1804,10 @@ WebConsoleActor.prototype = {
   /**
    * Send a new HTTP request from the target's window.
    *
-   * @param object message
-   *        Object with 'request' - the HTTP request details.
+   * @param object request
+   *        The details of the HTTP request.
    */
-  async sendHTTPRequest({ request }) {
+  async sendHTTPRequest(request) {
     const { url, method, headers, body, cause } = request;
     // Set the loadingNode and loadGroup to the target document - otherwise the
     // request won't show up in the opened netmonitor.
@@ -1905,6 +1882,39 @@ WebConsoleActor.prototype = {
   },
 
   /**
+   * Send a message to all the netmonitor message managers, and resolve when
+   * all of them replied with the expected responseName message.
+   *
+   * @param {String} messageName
+   *        Name of the message to send via the netmonitor message managers.
+   * @param {String} responseName
+   *        Name of the message that should be received when the message has
+   *        been processed by the netmonitor instance.
+   * @param {Object} args
+   *        argument object passed with the initial message.
+   */
+  async _sendMessageToNetmonitors(messageName, responseName, args) {
+    if (!this.netmonitors) {
+      return;
+    }
+    await Promise.all(
+      this.netmonitors.map(({ messageManager }) => {
+        const onResponseReceived = new Promise(resolve => {
+          messageManager.addMessageListener(
+            responseName,
+            function onResponse() {
+              messageManager.removeMessageListener(responseName, onResponse);
+              resolve();
+            }
+          );
+        });
+        messageManager.sendAsyncMessage(messageName, args);
+        return onResponseReceived;
+      })
+    );
+  },
+
+  /**
    * Block a request based on certain filtering options.
    *
    * Currently, an exact URL match is the only supported filter type.
@@ -1914,14 +1924,12 @@ WebConsoleActor.prototype = {
    * @param object filter
    *   An object containing a `url` key with a URL to block.
    */
-  async blockRequest({ filter }) {
-    if (this.netmonitors) {
-      for (const { messageManager } of this.netmonitors) {
-        messageManager.sendAsyncMessage("debug:block-request", {
-          filter,
-        });
-      }
-    }
+  async blockRequest(filter) {
+    await this._sendMessageToNetmonitors(
+      "debug:block-request",
+      "debug:block-request:response",
+      { filter }
+    );
 
     return {};
   },
@@ -1936,14 +1944,30 @@ WebConsoleActor.prototype = {
    * @param object filter
    *   An object containing a `url` key with a URL to unblock.
    */
-  async unblockRequest({ filter }) {
-    if (this.netmonitors) {
-      for (const { messageManager } of this.netmonitors) {
-        messageManager.sendAsyncMessage("debug:unblock-request", {
-          filter,
-        });
-      }
-    }
+  async unblockRequest(filter) {
+    await this._sendMessageToNetmonitors(
+      "debug:unblock-request",
+      "debug:unblock-request:response",
+      { filter }
+    );
+
+    return {};
+  },
+
+  /**
+   * Sets the list of blocked request URLs as provided by the netmonitor frontend
+   *
+   * This match will be a (String).includes match, not an exact URL match
+   *
+   * @param object filter
+   *   An object containing a `url` key with a URL to unblock.
+   */
+  async setBlockedUrls(urls) {
+    await this._sendMessageToNetmonitors(
+      "debug:set-blocked-urls",
+      "debug:set-blocked-urls:response",
+      { urls }
+    );
 
     return {};
   },
@@ -1952,17 +1976,14 @@ WebConsoleActor.prototype = {
    * Handler for file activity. This method sends the file request information
    * to the remote Web Console client.
    *
-   * @see ConsoleProgressListener
+   * @see ConsoleFileActivityListener
    * @param string fileURI
    *        The requested file URI.
    */
   onFileActivity: function(fileURI) {
-    const packet = {
-      from: this.actorID,
-      type: "fileActivity",
+    this.emit("fileActivity", {
       uri: fileURI,
-    };
-    this.conn.send(packet);
+    });
   },
 
   // End of event handlers for various listeners.
@@ -1983,7 +2004,6 @@ WebConsoleActor.prototype = {
     const result = WebConsoleUtils.cloneObject(message);
 
     result.workerType = WebConsoleUtils.getWorkerType(result) || "none";
-
     result.sourceId = this.getActorIdForInternalSourceId(result.sourceId);
 
     delete result.wrappedJSObject;
@@ -2009,10 +2029,92 @@ WebConsoleActor.prototype = {
       return this.createValueGrip(string);
     });
 
+    if (result.level === "table") {
+      const tableItems = this._getConsoleTableMessageItems(result);
+      if (tableItems) {
+        result.arguments[0].ownProperties = tableItems;
+        result.arguments[0].preview = null;
+      }
+
+      // Only return the 2 first params.
+      result.arguments = result.arguments.slice(0, 2);
+    }
+
     result.category = message.category || "webdev";
     result.innerWindowID = message.innerID;
 
     return result;
+  },
+
+  /**
+   * Return the properties needed to display the appropriate table for a given
+   * console.table call.
+   * This function does a little more than creating an ObjectActor for the first
+   * parameter of the message. When layout out the console table in the output, we want
+   * to be able to look into sub-properties so the table can have a different layout (
+   * for arrays of arrays, objects with objects properties, arrays of objects, …).
+   * So here we need to retrieve the properties of the first parameter, and also all the
+   * sub-properties we might need.
+   *
+   * @param {Object} result: The console.table message.
+   * @returns {Object} An object containing the properties of the first argument of the
+   *                   console.table call.
+   */
+  _getConsoleTableMessageItems: function(result) {
+    if (
+      !result ||
+      !Array.isArray(result.arguments) ||
+      result.arguments.length == 0
+    ) {
+      return null;
+    }
+
+    const [tableItemGrip] = result.arguments;
+    const dataType = tableItemGrip.class;
+    const needEntries = ["Map", "WeakMap", "Set", "WeakSet"].includes(dataType);
+    const ignoreNonIndexedProperties = isArray(tableItemGrip);
+
+    const tableItemActor = this.actor(tableItemGrip.actor);
+    if (!tableItemActor) {
+      return null;
+    }
+
+    // Retrieve the properties (or entries for Set/Map) of the console table first arg.
+    const iterator = needEntries
+      ? tableItemActor.enumEntries()
+      : tableItemActor.enumProperties({
+          ignoreNonIndexedProperties,
+        });
+    const { ownProperties } = iterator.all();
+
+    // The iterator returns a descriptor for each property, wherein the value could be
+    // in one of those sub-property.
+    const descriptorKeys = ["safeGetterValues", "getterValue", "value"];
+
+    Object.values(ownProperties).forEach(desc => {
+      if (typeof desc !== "undefined") {
+        descriptorKeys.forEach(key => {
+          if (desc && desc.hasOwnProperty(key)) {
+            const grip = desc[key];
+
+            // We need to load sub-properties as well to render the table in a nice way.
+            const actor = grip && this.actor(grip.actor);
+            if (actor) {
+              const res = actor
+                .enumProperties({
+                  ignoreNonIndexedProperties: isArray(grip),
+                })
+                .all();
+              if (res?.ownProperties) {
+                desc[key].ownProperties = res.ownProperties;
+              }
+            }
+          }
+        });
+      }
+    });
+
+    return ownProperties;
   },
 
   /**
@@ -2044,13 +2146,8 @@ WebConsoleActor.prototype = {
    *        Notification topic.
    */
   _onObserverNotification: function(subject, topic) {
-    switch (topic) {
-      case "last-pb-context-exited":
-        this.conn.send({
-          from: this.actorID,
-          type: "lastPrivateContextExited",
-        });
-        break;
+    if (topic === "last-pb-context-exited") {
+      this.emit("lastPrivateContextExited");
     }
   },
 
@@ -2076,30 +2173,15 @@ WebConsoleActor.prototype = {
 
     // Unregister existing listener on the previous document
     // (pass a copy of the array as it will shift from it)
-    this.stopListeners({ listeners: listeners.slice() });
+    this.stopListeners(listeners.slice());
 
     // This method is called after this.window is changed,
     // so we register new listener on this new window
-    this.startListeners({ listeners: listeners });
+    this.startListeners(listeners);
 
     // Also reset the cached top level chrome window being targeted
     this._lastChromeWindow = null;
   },
-};
-
-WebConsoleActor.prototype.requestTypes = {
-  startListeners: WebConsoleActor.prototype.startListeners,
-  stopListeners: WebConsoleActor.prototype.stopListeners,
-  getCachedMessages: WebConsoleActor.prototype.getCachedMessages,
-  evaluateJS: WebConsoleActor.prototype.evaluateJS,
-  evaluateJSAsync: WebConsoleActor.prototype.evaluateJSAsync,
-  autocomplete: WebConsoleActor.prototype.autocomplete,
-  clearMessagesCache: WebConsoleActor.prototype.clearMessagesCache,
-  getPreferences: WebConsoleActor.prototype.getPreferences,
-  setPreferences: WebConsoleActor.prototype.setPreferences,
-  sendHTTPRequest: WebConsoleActor.prototype.sendHTTPRequest,
-  blockRequest: WebConsoleActor.prototype.blockRequest,
-  unblockRequest: WebConsoleActor.prototype.unblockRequest,
-};
+});
 
 exports.WebConsoleActor = WebConsoleActor;

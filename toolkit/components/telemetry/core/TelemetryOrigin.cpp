@@ -14,11 +14,11 @@
 #include "TelemetryCommon.h"
 #include "TelemetryOriginEnums.h"
 
+#include "js/Array.h"  // JS::NewArrayObject
 #include "mozilla/Atomics.h"
 #include "mozilla/Base64.h"
 #include "mozilla/dom/PrioEncoder.h"
 #include "mozilla/Preferences.h"
-#include "mozilla/Pair.h"
 #include "mozilla/Services.h"
 #include "mozilla/StaticMutex.h"
 #include "mozilla/Tuple.h"
@@ -27,13 +27,10 @@
 #include <cmath>
 #include <type_traits>
 
-using mozilla::ErrorResult;
 using mozilla::Get;
-using mozilla::MakePair;
 using mozilla::MakeTuple;
 using mozilla::MakeUnique;
 using mozilla::MallocSizeOf;
-using mozilla::Pair;
 using mozilla::StaticMutex;
 using mozilla::StaticMutexAutoLock;
 using mozilla::Tuple;
@@ -73,7 +70,7 @@ class OriginMetricIDHashKey : public PLDHashEntryHdr {
   explicit OriginMetricIDHashKey(KeyTypePointer aKey) : mValue(*aKey) {}
   OriginMetricIDHashKey(OriginMetricIDHashKey&& aOther)
       : PLDHashEntryHdr(std::move(aOther)), mValue(std::move(aOther.mValue)) {}
-  ~OriginMetricIDHashKey() {}
+  ~OriginMetricIDHashKey() = default;
 
   KeyType GetKey() const { return mValue; }
   bool KeyEquals(KeyTypePointer aKey) const { return *aKey == mValue; }
@@ -129,7 +126,7 @@ UniquePtr<IdToOriginBag> gMetricToOriginBag;
 mozilla::Atomic<bool, mozilla::Relaxed> gInitDone(false);
 
 // Useful for app-encoded data
-typedef nsTArray<Pair<OriginMetricID, nsTArray<nsTArray<bool>>>>
+typedef nsTArray<std::pair<OriginMetricID, nsTArray<nsTArray<bool>>>>
     IdBoolsPairArray;
 
 // Prio has a maximum supported number of bools it can encode at a time.
@@ -233,7 +230,7 @@ nsresult AppEncodeTo(const StaticMutexAutoLock& lock,
           metricData[shardIndex][index % PrioEncoder::gNumBooleans] = true;
         }
       }
-      aResult.AppendElement(MakePair(id, metricData));
+      aResult.EmplaceBack(id, std::move(metricData));
     } while (generation++ < maxGeneration);
   }
   return NS_OK;
@@ -257,28 +254,59 @@ void TelemetryOrigin::InitializeGlobalState() {
              "TelemetryOrigin::InitializeGlobalState "
              "may only be called once");
 
-  // The contents and order of this array matters.
+  // The contents and order of the arrays that follow matter.
   // Both ensure a consistent app-encoding.
-  gOriginHashesList = MakeUnique<OriginHashesList>(OriginHashesList{
-#define ORIGIN(origin, hash) MakeTuple(origin, hash),
+  static const char sOriginStrings[] = {
+#define ORIGIN(origin, hash) origin "\0"
 #include "TelemetryOriginData.inc"
 #undef ORIGIN
-  });
+  };
+  static const char sHashStrings[] = {
+#define ORIGIN(origin, hash) hash "\0"
+#include "TelemetryOriginData.inc"
+#undef ORIGIN
+  };
+
+  struct OriginHashLengths {
+    uint8_t originLength;
+    uint8_t hashLength;
+  };
+  static const OriginHashLengths sOriginHashLengths[] = {
+#define ORIGIN(origin, hash) {sizeof(origin), sizeof(hash)},
+#include "TelemetryOriginData.inc"
+#undef ORIGIN
+  };
+
+  static const size_t kNumOrigins = MOZ_ARRAY_LENGTH(sOriginHashLengths);
+
+  gOriginHashesList = MakeUnique<OriginHashesList>(kNumOrigins);
 
   gPrioDatasPerMetric =
-      ceil(static_cast<double>(gOriginHashesList->Length() + kNumMetaOrigins) /
+      ceil(static_cast<double>(kNumOrigins + kNumMetaOrigins) /
            PrioEncoder::gNumBooleans);
 
-  gOriginToIndexMap = MakeUnique<OriginToIndexMap>(gOriginHashesList->Length() +
-                                                   kNumMetaOrigins);
-  gHashToIndexMap = MakeUnique<HashToIndexMap>(gOriginHashesList->Length());
-  for (size_t i = 0; i < gOriginHashesList->Length(); ++i) {
-    const char* origin = Get<0>((*gOriginHashesList)[i]);
-    const char* hash = Get<1>((*gOriginHashesList)[i]);
+  gOriginToIndexMap =
+      MakeUnique<OriginToIndexMap>(kNumOrigins + kNumMetaOrigins);
+  gHashToIndexMap = MakeUnique<HashToIndexMap>(kNumOrigins);
+  size_t originOffset = 0;
+  size_t hashOffset = 0;
+  for (size_t i = 0; i < kNumOrigins; ++i) {
+    const char* origin = &sOriginStrings[originOffset];
+    const char* hash = &sHashStrings[hashOffset];
     MOZ_ASSERT(!kUnknownOrigin.Equals(origin),
                "Unknown origin literal is reserved in Origin Telemetry");
-    gOriginToIndexMap->Put(nsDependentCString(origin), i);
-    gHashToIndexMap->Put(nsDependentCString(hash), i);
+
+    gOriginHashesList->AppendElement(MakeTuple(origin, hash));
+
+    const size_t originLength = sOriginHashLengths[i].originLength;
+    const size_t hashLength = sOriginHashLengths[i].hashLength;
+
+    originOffset += originLength;
+    hashOffset += hashLength;
+
+    // -1 to leave off the null terminators.
+    gOriginToIndexMap->Put(nsDependentCString(origin, originLength - 1), i);
+    gHashToIndexMap->Put(nsDependentCString(hash, hashLength - 1), i);
   }
 
   // Add the meta-origin for tracking recordings to untracked origins.
@@ -288,10 +316,8 @@ void TelemetryOrigin::InitializeGlobalState() {
 
   // This map shouldn't change at runtime, so make debug builds complain
   // if it tries.
-#ifdef DEBUG
   gOriginToIndexMap->MarkImmutable();
   gHashToIndexMap->MarkImmutable();
-#endif  // DEBUG
 
   gInitDone = true;
 }
@@ -471,13 +497,13 @@ nsresult TelemetryOrigin::GetEncodedOriginSnapshot(
   }
 
   // Step 2: Don't need the lock to prio-encode and base64-encode
-  nsTArray<Pair<nsCString, Pair<nsCString, nsCString>>> prioData;
+  nsTArray<std::pair<nsCString, std::pair<nsCString, nsCString>>> prioData;
   for (auto& metricData : appEncodedMetricData) {
-    auto& boolVectors = metricData.second();
+    auto& boolVectors = metricData.second;
     for (uint32_t i = 0; i < boolVectors.Length(); ++i) {
       // "encoding" is of the form `metricName-X` where X is the shard index.
       nsCString encodingName =
-          nsPrintfCString("%s-%u", GetNameForMetricID(metricData.first()), i);
+          nsPrintfCString("%s-%u", GetNameForMetricID(metricData.first), i);
       nsCString aResult;
       nsCString bResult;
       rv = PrioEncoder::EncodeNative(encodingName, boolVectors[i], aResult,
@@ -497,7 +523,7 @@ nsresult TelemetryOrigin::GetEncodedOriginSnapshot(
       }
 
       prioData.AppendElement(
-          MakePair(encodingName, MakePair(aBase64, bBase64)));
+          std::make_pair(encodingName, std::make_pair(aBase64, bBase64)));
     }
   }
 
@@ -512,7 +538,7 @@ nsresult TelemetryOrigin::GetEncodedOriginSnapshot(
   // }, ...]
 
   JS::RootedObject prioDataArray(aCx,
-                                 JS_NewArrayObject(aCx, prioData.Length()));
+                                 JS::NewArrayObject(aCx, prioData.Length()));
   if (NS_WARN_IF(!prioDataArray)) {
     return NS_ERROR_FAILURE;
   }
@@ -522,7 +548,7 @@ nsresult TelemetryOrigin::GetEncodedOriginSnapshot(
     if (NS_WARN_IF(!prioDatumObj)) {
       return NS_ERROR_FAILURE;
     }
-    JSString* encoding = ToJSString(aCx, prioDatum.first());
+    JSString* encoding = ToJSString(aCx, prioDatum.first);
     JS::RootedString rootedEncoding(aCx, encoding);
     if (NS_WARN_IF(!JS_DefineProperty(aCx, prioDatumObj, "encoding",
                                       rootedEncoding, JSPROP_ENUMERATE))) {
@@ -538,13 +564,12 @@ nsresult TelemetryOrigin::GetEncodedOriginSnapshot(
       return NS_ERROR_FAILURE;
     }
 
-    JS::RootedString aRootStr(aCx, ToJSString(aCx, prioDatum.second().first()));
+    JS::RootedString aRootStr(aCx, ToJSString(aCx, prioDatum.second.first));
     if (NS_WARN_IF(!JS_DefineProperty(aCx, prioObj, "a", aRootStr,
                                       JSPROP_ENUMERATE))) {
       return NS_ERROR_FAILURE;
     }
-    JS::RootedString bRootStr(aCx,
-                              ToJSString(aCx, prioDatum.second().second()));
+    JS::RootedString bRootStr(aCx, ToJSString(aCx, prioDatum.second.second));
     if (NS_WARN_IF(!JS_DefineProperty(aCx, prioObj, "b", bRootStr,
                                       JSPROP_ENUMERATE))) {
       return NS_ERROR_FAILURE;

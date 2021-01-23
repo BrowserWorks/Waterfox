@@ -1,10 +1,10 @@
-// |reftest| skip -- Intl.ListFormat is not supported
 // Copyright 2018 Igalia, S.L. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
 esid: sec-Intl.ListFormat.prototype.formatToParts
-description: Checks the behavior of Intl.ListFormat.prototype.formatToParts() in English.
+description: >
+    Checks the behavior of Intl.ListFormat.prototype.formatToParts() in English.
 features: [Intl.ListFormat]
 locale: [en-US]
 ---*/

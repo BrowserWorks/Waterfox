@@ -4,9 +4,6 @@
 
 /* eslint-env mozilla/frame-script */
 
-const TP_PB_ENABLED_PREF = "privacy.trackingprotection.pbmode.enabled";
-const PB_SEARCH_UI_ENABLED_PREF = "browser.privatebrowsing.searchUI";
-
 document.addEventListener("DOMContentLoaded", function() {
   if (!RPMIsWindowPrivate()) {
     document.documentElement.classList.remove("private");
@@ -19,42 +16,6 @@ document.addEventListener("DOMContentLoaded", function() {
     return;
   }
 
-  document.getElementById("startTour").addEventListener("click", function() {
-    RPMSendAsyncMessage("DontShowIntroPanelAgain");
-  });
-
-  let introURL = RPMGetFormatURLPref("privacy.trackingprotection.introURL");
-  // Variation 1 is specific to the Content Blocking UI.
-  let variation = "?variation=1";
-
-  document
-    .getElementById("startTour")
-    .setAttribute("href", introURL + variation);
-
-  document
-    .getElementById("learnMore")
-    .setAttribute(
-      "href",
-      RPMGetFormatURLPref("app.support.baseURL") + "private-browsing"
-    );
-
-  let tpEnabled = RPMGetBoolPref(TP_PB_ENABLED_PREF);
-  if (!tpEnabled) {
-    document.getElementById("tpSubHeader").remove();
-    document.getElementById("tpSection").remove();
-  }
-
-  let searchUIEnabled = RPMGetBoolPref(PB_SEARCH_UI_ENABLED_PREF);
-  if (searchUIEnabled) {
-    setupSearchUI();
-  }
-});
-
-function setupSearchUI() {
-  // Show the new search UI and hide the old one.
-  document.documentElement.classList.remove("no-search-ui");
-  document.documentElement.classList.add("search-ui");
-
   // Setup the private browsing myths link.
   document
     .getElementById("private-browsing-myths")
@@ -62,6 +23,51 @@ function setupSearchUI() {
       "href",
       RPMGetFormatURLPref("app.support.baseURL") + "private-browsing-myths"
     );
+
+  // Set up the private search banner.
+  const privateSearchBanner = document.getElementById("search-banner");
+
+  RPMSendQuery("ShouldShowSearchBanner", {}).then(engineName => {
+    if (engineName) {
+      document.l10n.setAttributes(
+        document.getElementById("about-private-browsing-search-banner-title"),
+        "about-private-browsing-search-banner-title",
+        { engineName }
+      );
+      privateSearchBanner.removeAttribute("hidden");
+      document.body.classList.add("showBanner");
+    }
+
+    // We set this attribute so that tests know when we are done.
+    document.documentElement.setAttribute("SearchBannerInitialized", true);
+  });
+
+  function hideSearchBanner() {
+    privateSearchBanner.setAttribute("hidden", "true");
+    document.body.classList.remove("showBanner");
+    RPMSendAsyncMessage("SearchBannerDismissed");
+  }
+
+  document
+    .getElementById("search-banner-close-button")
+    .addEventListener("click", () => {
+      hideSearchBanner();
+    });
+
+  let openSearchOptions = document.getElementById(
+    "about-private-browsing-search-banner-description"
+  );
+  let openSearchOptionsEvtHandler = evt => {
+    if (
+      evt.target.id == "open-search-options-link" &&
+      (evt.keyCode == evt.DOM_VK_RETURN || evt.type == "click")
+    ) {
+      RPMSendAsyncMessage("OpenSearchPreferences");
+      hideSearchBanner();
+    }
+  };
+  openSearchOptions.addEventListener("click", openSearchOptionsEvtHandler);
+  openSearchOptions.addEventListener("keypress", openSearchOptionsEvtHandler);
 
   // Setup the search hand-off box.
   let btn = document.getElementById("search-handoff-button");
@@ -111,14 +117,5 @@ function setupSearchUI() {
   });
 
   // Load contentSearchUI so it sets the search engine icon for us.
-  // TODO: FIXME. We should eventually refector contentSearchUI to do only what
-  // we need and have it do the common search handoff work for
-  // about:newtab and about:privatebrowsing.
-  let input = document.getElementById("dummy-input");
-  new window.ContentSearchUIController(
-    input,
-    input.parentNode,
-    "aboutprivatebrowsing",
-    "aboutprivatebrowsing"
-  );
-}
+  new window.ContentSearchHandoffUIController();
+});

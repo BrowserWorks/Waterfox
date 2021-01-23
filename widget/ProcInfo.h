@@ -9,27 +9,42 @@
 #include <base/process.h>
 #include <stdint.h>
 #include "mozilla/dom/ipc/IdType.h"
+#include "mozilla/MozPromise.h"
 
 namespace mozilla {
 
-// Process types
+namespace ipc {
+class GeckoChildProcessHost;
+}
+
+// Process types. When updating this enum, please make sure to update
+// WebIDLProcType and ProcTypeToWebIDL to mirror the changes.
 enum class ProcType {
-  // These must match the ones in ContentParent.h and E10SUtils.jsm
+  // These must match the ones in ContentParent.h, and E10SUtils.jsm
   Web,
+  WebIsolated,
   File,
   Extension,
-  Privileged,
+  PrivilegedAbout,
+  PrivilegedMozilla,
   WebLargeAllocation,
-  // GPU process (only on Windows)
-  Gpu,
-  // RDD process (Windows and macOS)
-  Rdd,
-  // Socket process
+  WebCOOPCOEP,
+  // the rest matches GeckoProcessTypes.h
+  Browser,  // Default is named Browser here
+  Plugin,
+  IPDLUnitTest,
+  GMPlugin,
+  GPU,
+  VR,
+  RDD,
   Socket,
-  // Main process
-  Browser,
+  RemoteSandboxBroker,
+#ifdef MOZ_ENABLE_FORKSERVER
+  ForkServer,
+#endif
   // Unknown type of process
-  Unknown
+  Unknown,
+  Max = Unknown,
 };
 
 struct ThreadInfo {
@@ -50,6 +65,8 @@ struct ProcInfo {
   dom::ContentParentId childId;
   // Process type
   ProcType type;
+  // Origin, if any
+  nsString origin;
   // Process filename (without the path name).
   nsString filename;
   // VMS in bytes.
@@ -61,7 +78,7 @@ struct ProcInfo {
   // System time in ns.
   uint64_t cpuKernel = 0;
   // Threads owned by this process.
-  nsTArray<ThreadInfo> threads;
+  CopyableTArray<ThreadInfo> threads;
 };
 
 typedef MozPromise<ProcInfo, nsresult, true> ProcInfoPromise;
@@ -72,8 +89,16 @@ typedef MozPromise<ProcInfo, nsresult, true> ProcInfoPromise;
  * Depending on the platform, this call can be quite expensive and the
  * promise may return after several ms.
  */
+#ifdef XP_MACOSX
 RefPtr<ProcInfoPromise> GetProcInfo(base::ProcessId pid, int32_t childId,
-                                    const ProcType& type);
+                                    const ProcType& processType,
+                                    const nsAString& origin,
+                                    mach_port_t aChildTask = MACH_PORT_NULL);
+#else
+RefPtr<ProcInfoPromise> GetProcInfo(base::ProcessId pid, int32_t childId,
+                                    const ProcType& processType,
+                                    const nsAString& origin);
+#endif
 
 }  // namespace mozilla
 #endif  // ProcInfo_h

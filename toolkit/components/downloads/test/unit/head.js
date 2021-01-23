@@ -61,6 +61,12 @@ ChromeUtils.defineModuleGetter(
   "Services",
   "resource://gre/modules/Services.jsm"
 );
+ChromeUtils.defineModuleGetter(
+  this,
+  "E10SUtils",
+  "resource://gre/modules/E10SUtils.jsm"
+);
+
 ChromeUtils.defineModuleGetter(this, "OS", "resource://gre/modules/osfile.jsm");
 ChromeUtils.defineModuleGetter(
   this,
@@ -108,6 +114,12 @@ XPCOMUtils.defineLazyServiceGetter(
   "gMIMEService",
   "@mozilla.org/mime;1",
   "nsIMIMEService"
+);
+
+const ReferrerInfo = Components.Constructor(
+  "@mozilla.org/referrer-info;1",
+  "nsIReferrerInfo",
+  "init"
 );
 
 const TEST_TARGET_FILE_NAME = "test-download.txt";
@@ -294,7 +306,7 @@ function promiseNewDownload(aSourceUrl) {
  *        {
  *          isPrivate: Boolean indicating whether the download originated from a
  *                     private window.
- *          referrer: String containing the referrer for the download source.
+ *          referrerInfo: referrerInfo for the download source.
  *          targetFile: nsIFile for the target, or null to use a temporary file.
  *          outPersist: Receives a reference to the created nsIWebBrowserPersist
  *                      instance.
@@ -384,10 +396,7 @@ function promiseStartLegacyDownload(aSourceUrl, aOptions) {
           .catch(do_report_unexpected_exception);
 
         let isPrivate = aOptions && aOptions.isPrivate;
-        let referrer =
-          aOptions && aOptions.referrer
-            ? NetUtil.newURI(aOptions.referrer)
-            : null;
+        let referrerInfo = aOptions ? aOptions.referrerInfo : null;
         // Initialize the components so they reference each other.  This will cause
         // the Download object to be created and added to the public downloads.
         transfer.init(
@@ -407,11 +416,11 @@ function promiseStartLegacyDownload(aSourceUrl, aOptions) {
           sourceURI,
           Services.scriptSecurityManager.getSystemPrincipal(),
           0,
-          referrer,
-          Ci.nsIHttpChannel.REFERRER_POLICY_UNSAFE_URL,
+          referrerInfo,
           null,
           null,
           targetFile,
+          Ci.nsIContentPolicy.TYPE_SAVEAS_DOWNLOAD,
           isPrivate
         );
       })
@@ -518,6 +527,37 @@ function promiseDownloadMidway(aDownload) {
         !aDownload.stopped &&
         !aDownload.canceled &&
         aDownload.progress == 50
+      ) {
+        aDownload.onchange = null;
+        resolve();
+      }
+    };
+
+    // Register for the notification, but also call the function directly in
+    // case the download already reached the expected progress.
+    aDownload.onchange = onchange;
+    onchange();
+  });
+}
+
+/**
+ * Waits for a download to make any amount of progress.
+ *
+ * @param aDownload
+ *        The Download object to wait upon.
+ *
+ * @return {Promise}
+ * @resolves When the download has transfered any number of bytes.
+ * @rejects Never.
+ */
+function promiseDownloadStarted(aDownload) {
+  return new Promise(resolve => {
+    // Wait for the download to transfer some amount of bytes.
+    let onchange = function() {
+      if (
+        !aDownload.stopped &&
+        !aDownload.canceled &&
+        aDownload.currentBytes > 0
       ) {
         aDownload.onchange = null;
         resolve();
@@ -729,6 +769,28 @@ function isValidDate(aDate) {
 }
 
 /**
+ * Check actual ReferrerInfo is the same as expected.
+ * Because the actual download's referrer info's computedReferrer is computed
+ * from referrerPolicy and originalReferrer and is non-null, and the expected
+ * referrer info was constructed in isolation and therefore the computedReferrer
+ * is null, it isn't possible to use equals here. */
+function checkEqualReferrerInfos(aActualInfo, aExpectedInfo) {
+  Assert.equal(
+    !!aExpectedInfo.originalReferrer,
+    !!aActualInfo.originalReferrer
+  );
+  if (aExpectedInfo.originalReferrer && aActualInfo.originalReferrer) {
+    Assert.equal(
+      aExpectedInfo.originalReferrer.spec,
+      aActualInfo.originalReferrer.spec
+    );
+  }
+
+  Assert.equal(aExpectedInfo.sendReferrer, aActualInfo.sendReferrer);
+  Assert.equal(aExpectedInfo.referrerPolicy, aActualInfo.referrerPolicy);
+}
+
+/**
  * Waits for the download annotations to be set for the given page, required
  * because the addDownload method will add these to the database asynchronously.
  */
@@ -800,6 +862,17 @@ add_task(function test_common_initialize() {
   );
 
   registerInterruptibleHandler(
+    "/interruptible_nosize.txt",
+    function firstPart(aRequest, aResponse) {
+      aResponse.setHeader("Content-Type", "text/plain", false);
+      aResponse.write(TEST_DATA_SHORT);
+    },
+    function secondPart(aRequest, aResponse) {
+      aResponse.write(TEST_DATA_SHORT);
+    }
+  );
+
+  registerInterruptibleHandler(
     "/interruptible_resumable.txt",
     function firstPart(aRequest, aResponse) {
       aResponse.setHeader("Content-Type", "text/plain", false);
@@ -862,17 +935,11 @@ add_task(function test_common_initialize() {
       );
 
       let bos = new BinaryOutputStream(aResponse.bodyOutputStream);
-      bos.writeByteArray(
-        TEST_DATA_SHORT_GZIP_ENCODED_FIRST,
-        TEST_DATA_SHORT_GZIP_ENCODED_FIRST.length
-      );
+      bos.writeByteArray(TEST_DATA_SHORT_GZIP_ENCODED_FIRST);
     },
     function secondPart(aRequest, aResponse) {
       let bos = new BinaryOutputStream(aResponse.bodyOutputStream);
-      bos.writeByteArray(
-        TEST_DATA_SHORT_GZIP_ENCODED_SECOND,
-        TEST_DATA_SHORT_GZIP_ENCODED_SECOND.length
-      );
+      bos.writeByteArray(TEST_DATA_SHORT_GZIP_ENCODED_SECOND);
     }
   );
 
@@ -891,6 +958,20 @@ add_task(function test_common_initialize() {
       aResponse.finish();
     }
   );
+
+  gHttpServer.registerPathHandler("/busy.txt", function(aRequest, aResponse) {
+    aResponse.setStatusLine("1.1", 504, "Gateway Timeout");
+    aResponse.setHeader("Content-Type", "text/plain", false);
+    aResponse.setHeader("Content-Length", "" + TEST_DATA_SHORT.length, false);
+    aResponse.write(TEST_DATA_SHORT);
+  });
+
+  gHttpServer.registerPathHandler("/redirect", function(aRequest, aResponse) {
+    aResponse.setStatusLine("1.1", 301, "Moved Permanently");
+    aResponse.setHeader("Location", httpUrl("busy.txt"), false);
+    aResponse.setHeader("Content-Type", "text/javascript", false);
+    aResponse.setHeader("Content-Length", "0", false);
+  });
 
   // This URL will emulate being blocked by Windows Parental controls
   gHttpServer.registerPathHandler("/parentalblocked.zip", function(

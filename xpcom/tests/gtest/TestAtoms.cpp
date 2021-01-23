@@ -9,7 +9,6 @@
 #include "nsAtom.h"
 #include "nsString.h"
 #include "UTFStrings.h"
-#include "nsIServiceManager.h"
 #include "nsThreadUtils.h"
 
 #include "gtest/gtest.h"
@@ -141,10 +140,8 @@ TEST(Atoms, Table)
   EXPECT_EQ(NS_GetNumberOfAtoms(), count + 1);
 }
 
-class nsAtomRunner final : public nsIRunnable {
+class nsAtomRunner final : public Runnable {
  public:
-  NS_DECL_THREADSAFE_ISUPPORTS
-
   NS_IMETHOD Run() final {
     for (int i = 0; i < 10000; i++) {
       RefPtr<nsAtom> atom = NS_Atomize(u"A Testing Atom");
@@ -152,11 +149,11 @@ class nsAtomRunner final : public nsIRunnable {
     return NS_OK;
   }
 
- private:
-  ~nsAtomRunner() {}
-};
+  nsAtomRunner() : Runnable("nsAtomRunner") {}
 
-NS_IMPL_ISUPPORTS(nsAtomRunner, nsIRunnable)
+ private:
+  ~nsAtomRunner() = default;
+};
 
 TEST(Atoms, ConcurrentAccessing)
 {
@@ -166,7 +163,8 @@ TEST(Atoms, ConcurrentAccessing)
   EXPECT_EQ(NS_GetUnusedAtomCount(), int32_t(0));
   nsCOMPtr<nsIThread> threads[kThreadCount];
   for (size_t i = 0; i < kThreadCount; i++) {
-    nsresult rv = NS_NewThread(getter_AddRefs(threads[i]), new nsAtomRunner);
+    nsresult rv = NS_NewNamedThread("Atom Test", getter_AddRefs(threads[i]),
+                                    new nsAtomRunner);
     EXPECT_TRUE(NS_SUCCEEDED(rv));
   }
   for (size_t i = 0; i < kThreadCount; i++) {

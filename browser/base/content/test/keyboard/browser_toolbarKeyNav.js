@@ -19,44 +19,6 @@ function resetToolbarWithoutDevEditionButtons() {
   CustomizableUI.removeWidgetFromArea("developer-button");
 }
 
-async function expectFocusAfterKey(
-  aKey,
-  aFocus,
-  aAncestorOk = false,
-  aWindow = window
-) {
-  let res = aKey.match(/^(Shift\+)?(?:(.)|(.+))$/);
-  let shift = Boolean(res[1]);
-  let key;
-  if (res[2]) {
-    key = res[2]; // Character.
-  } else {
-    key = "KEY_" + res[3]; // Tab, ArrowRight, etc.
-  }
-  let expected;
-  let friendlyExpected;
-  if (typeof aFocus == "string") {
-    expected = aWindow.document.getElementById(aFocus);
-    friendlyExpected = aFocus;
-  } else {
-    expected = aFocus;
-    if (aFocus == aWindow.gURLBar.inputField) {
-      friendlyExpected = "URL bar input";
-    } else if (aFocus == aWindow.gBrowser.selectedBrowser) {
-      friendlyExpected = "Web document";
-    }
-  }
-  info("Listening on item " + (expected.id || expected.className));
-  let focused = BrowserTestUtils.waitForEvent(expected, "focus", aAncestorOk);
-  EventUtils.synthesizeKey(key, { shiftKey: shift }, aWindow);
-  let receivedEvent = await focused;
-  info(
-    "Got focus on item: " +
-      (receivedEvent.target.id || receivedEvent.target.className)
-  );
-  ok(true, friendlyExpected + " focused after " + aKey + " pressed");
-}
-
 function startFromUrlBar(aWindow = window) {
   aWindow.gURLBar.focus();
   is(
@@ -127,11 +89,14 @@ add_task(async function testTabStopsPageLoaded() {
   await BrowserTestUtils.withNewTab("https://example.com", async function() {
     await waitUntilReloadEnabled();
     startFromUrlBar();
-    await expectFocusAfterKey("Shift+Tab", "identity-box");
+    await expectFocusAfterKey(
+      "Shift+Tab",
+      "tracking-protection-icon-container"
+    );
     await expectFocusAfterKey("Shift+Tab", "reload-button");
     await expectFocusAfterKey("Shift+Tab", "tabbrowser-tabs", true);
     await expectFocusAfterKey("Tab", "reload-button");
-    await expectFocusAfterKey("Tab", "identity-box");
+    await expectFocusAfterKey("Tab", "tracking-protection-icon-container");
     await expectFocusAfterKey("Tab", gURLBar.inputField);
     await expectFocusAfterKey("Tab", "pageActionButton");
     await expectFocusAfterKey("Tab", "library-button");
@@ -152,8 +117,11 @@ add_task(async function testTabStopsWithNotification() {
     await popupShown;
     startFromUrlBar();
     // If the notification anchor were in the tab order, the next shift+tab
-    // would focus it instead of #identity-box.
-    await expectFocusAfterKey("Shift+Tab", "identity-box");
+    // would focus it instead of #tracking-protection-icon-container.
+    await expectFocusAfterKey(
+      "Shift+Tab",
+      "tracking-protection-icon-container"
+    );
   });
 });
 
@@ -241,7 +209,10 @@ add_task(async function testArrowsDisabledButtons() {
   ) {
     await waitUntilReloadEnabled();
     startFromUrlBar();
-    await expectFocusAfterKey("Shift+Tab", "identity-box");
+    await expectFocusAfterKey(
+      "Shift+Tab",
+      "tracking-protection-icon-container"
+    );
     // Back and Forward buttons are disabled.
     await expectFocusAfterKey("Shift+Tab", "reload-button");
     EventUtils.synthesizeKey("KEY_ArrowLeft");
@@ -255,7 +226,10 @@ add_task(async function testArrowsDisabledButtons() {
     await BrowserTestUtils.browserLoaded(aBrowser);
     await waitUntilReloadEnabled();
     startFromUrlBar();
-    await expectFocusAfterKey("Shift+Tab", "identity-box");
+    await expectFocusAfterKey(
+      "Shift+Tab",
+      "tracking-protection-icon-container"
+    );
     await expectFocusAfterKey("Shift+Tab", "back-button");
     // Forward button is still disabled.
     await expectFocusAfterKey("ArrowRight", "reload-button");
@@ -372,4 +346,84 @@ add_task(async function testPanelCloseRestoresFocus() {
       "Focus restored to Library button after panel closed"
     );
   });
+});
+
+// Test that the arrow key works in the group of the
+// 'tracking-protection-icon-container' and the 'identity-box'.
+add_task(async function testArrowKeyForTPIconContainerandIdentityBox() {
+  await BrowserTestUtils.withNewTab("https://example.com", async function() {
+    await waitUntilReloadEnabled();
+    startFromUrlBar();
+    await expectFocusAfterKey(
+      "Shift+Tab",
+      "tracking-protection-icon-container"
+    );
+    await expectFocusAfterKey("ArrowRight", "identity-box");
+    await expectFocusAfterKey(
+      "ArrowLeft",
+      "tracking-protection-icon-container"
+    );
+  });
+});
+
+// Test navigation by typed characters.
+add_task(async function testCharacterNavigation() {
+  await BrowserTestUtils.withNewTab("https://example.com", async function() {
+    await waitUntilReloadEnabled();
+    startFromUrlBar();
+    await expectFocusAfterKey("Tab", "pageActionButton");
+    await expectFocusAfterKey("h", "home-button");
+    // There's no button starting with "hs", so pressing s should do nothing.
+    EventUtils.synthesizeKey("s");
+    is(
+      document.activeElement.id,
+      "home-button",
+      "home-button still focused after s pressed"
+    );
+    // Escape should reset the search.
+    EventUtils.synthesizeKey("KEY_Escape");
+    // Now that the search is reset, pressing s should focus Save to Pocket.
+    await expectFocusAfterKey("s", "pocket-button");
+    // Pressing i makes the search "si", so it should focus Sidebars.
+    await expectFocusAfterKey("i", "sidebar-button");
+    // Reset the search.
+    EventUtils.synthesizeKey("KEY_Escape");
+    await expectFocusAfterKey("s", "pocket-button");
+    // Pressing s again should find the next button starting with s: Sidebars.
+    await expectFocusAfterKey("s", "sidebar-button");
+  });
+});
+
+// Test that toolbar character navigation doesn't trigger in PanelMultiView for
+// a panel anchored to the toolbar.
+// We do this by opening the Library menu and ensuring that pressing s
+// does nothing.
+// This test should be removed if PanelMultiView implements character
+// navigation.
+add_task(async function testCharacterInPanelMultiView() {
+  let button = document.getElementById("library-button");
+  forceFocus(button);
+  let view = document.getElementById("appMenu-libraryView");
+  let focused = BrowserTestUtils.waitForEvent(view, "focus", true);
+  EventUtils.synthesizeKey(" ");
+  let focusEvt = await focused;
+  ok(true, "Focus inside Library menu after toolbar button pressed");
+  EventUtils.synthesizeKey("s");
+  is(document.activeElement, focusEvt.target, "s inside panel does nothing");
+  let hidden = BrowserTestUtils.waitForEvent(document, "popuphidden", true);
+  view.closest("panel").hidePopup();
+  await hidden;
+});
+
+// Test tab stops after the search bar is added.
+add_task(async function testTabStopsAfterSearchBarAdded() {
+  await SpecialPowers.pushPrefEnv({
+    set: [["browser.search.widget.inNavBar", 1]],
+  });
+  await withNewBlankTab(async function() {
+    startFromUrlBar();
+    await expectFocusAfterKey("Tab", "searchbar", true);
+    await expectFocusAfterKey("Tab", "library-button");
+  });
+  await SpecialPowers.popPrefEnv();
 });

@@ -6,8 +6,8 @@
 package org.mozilla.geckoview.test.util
 
 import org.mozilla.geckoview.AllowOrDeny
+import org.mozilla.geckoview.Autofill
 import org.mozilla.geckoview.ContentBlocking
-import org.mozilla.geckoview.GeckoResponse
 import org.mozilla.geckoview.GeckoResult
 import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.GeckoSession.ContentDelegate.ContextElement
@@ -23,12 +23,13 @@ import org.json.JSONObject
 class Callbacks private constructor() {
     object Default : All
 
-    interface All : ContentBlockingDelegate, ContentDelegate,
+    interface All : AutofillDelegate, ContentBlockingDelegate, ContentDelegate,
                     HistoryDelegate, MediaDelegate,
                     NavigationDelegate, PermissionDelegate, ProgressDelegate,
                     PromptDelegate, ScrollDelegate, SelectionActionDelegate,
                     TextInputDelegate
 
+    interface AutofillDelegate : Autofill.Delegate {}
     interface ContentDelegate : GeckoSession.ContentDelegate {}
     interface NavigationDelegate : GeckoSession.NavigationDelegate {}
     interface PermissionDelegate : GeckoSession.PermissionDelegate {}
@@ -57,9 +58,6 @@ class Callbacks private constructor() {
         }
 
         override fun updateCursorAnchorInfo(session: GeckoSession, info: CursorAnchorInfo) {
-        }
-
-        override fun notifyAutoFill(session: GeckoSession, notification: Int, virtualId: Int) {
         }
     }
 }

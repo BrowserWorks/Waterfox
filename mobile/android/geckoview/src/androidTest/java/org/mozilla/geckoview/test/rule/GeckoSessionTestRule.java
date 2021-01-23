@@ -5,24 +5,30 @@
 
 package org.mozilla.geckoview.test.rule;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONTokener;
+import org.mozilla.gecko.GeckoThread;
+import org.mozilla.gecko.util.ThreadUtils;
+import org.mozilla.geckoview.Autofill;
 import org.mozilla.geckoview.ContentBlocking;
 import org.mozilla.geckoview.GeckoDisplay;
 import org.mozilla.geckoview.GeckoResult;
-import org.mozilla.geckoview.GeckoResult.OnValueListener;
 import org.mozilla.geckoview.GeckoRuntime;
 import org.mozilla.geckoview.GeckoSession;
 import org.mozilla.geckoview.GeckoSessionSettings;
+import org.mozilla.geckoview.RuntimeTelemetry;
 import org.mozilla.geckoview.SessionTextInput;
+import org.mozilla.geckoview.WebExtension;
+import org.mozilla.geckoview.WebExtensionController;
+import org.mozilla.geckoview.test.util.TestServer;
 import org.mozilla.geckoview.test.util.RuntimeCreator;
 import org.mozilla.geckoview.test.util.Environment;
 import org.mozilla.geckoview.test.util.UiThreadUtils;
-import org.mozilla.geckoview.test.rdp.Actor;
-import org.mozilla.geckoview.test.rdp.Promise;
-import org.mozilla.geckoview.test.rdp.RDPConnection;
-import org.mozilla.geckoview.test.rdp.Tab;
 import org.mozilla.geckoview.test.util.Callbacks;
 
 import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
@@ -36,15 +42,14 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 import android.app.Instrumentation;
-import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.SurfaceTexture;
-import android.net.LocalSocketAddress;
-import android.os.Looper;
+import android.os.Parcel;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
+import android.util.Log;
 import android.util.Pair;
 import android.view.MotionEvent;
 import android.view.Surface;
@@ -69,6 +74,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
@@ -84,12 +91,14 @@ import kotlin.reflect.KClass;
 public class GeckoSessionTestRule implements TestRule {
     private static final String LOGTAG = "GeckoSessionTestRule";
 
-    public static final String APK_URI_PREFIX = "resource://android/";
+    private static final int TEST_PORT = 4245;
+    public static final String TEST_ENDPOINT = "http://localhost:" + TEST_PORT;
 
     private static final Method sOnPageStart;
     private static final Method sOnPageStop;
     private static final Method sOnNewSession;
     private static final Method sOnCrash;
+    private static final Method sOnKill;
 
     static {
         try {
@@ -101,6 +110,8 @@ public class GeckoSessionTestRule implements TestRule {
                     "onNewSession", GeckoSession.class, String.class);
             sOnCrash = GeckoSession.ContentDelegate.class.getMethod(
                     "onCrash", GeckoSession.class);
+            sOnKill = GeckoSession.ContentDelegate.class.getMethod(
+                    "onKill", GeckoSession.class);
         } catch (final NoSuchMethodException e) {
             throw new RuntimeException(e);
         }
@@ -155,32 +166,23 @@ public class GeckoSessionTestRule implements TestRule {
     }
 
     /**
-     * Specify that the test uses DevTools-enabled APIs, such as {@link #evaluateJS}.
-     */
-    @Target({ElementType.METHOD, ElementType.TYPE})
-    @Retention(RetentionPolicy.RUNTIME)
-    public @interface WithDevToolsAPI {
-        boolean value() default true;
-    }
-
-    /**
      * Specify a list of GeckoSession settings to be applied to the GeckoSession object
      * under test. Can be used on classes or methods. Note that the settings values must
      * be string literals regardless of the type of the settings.
      * <p>
-     * Disable e10s for a particular test:
+     * Enable tracking protection for a particular test:
      * <pre>
-     * &#64;Setting.List(&#64;Setting(key = Setting.Key.USE_MULTIPROCESS,
+     * &#64;Setting.List(&#64;Setting(key = Setting.Key.USE_TRACKING_PROTECTION,
      *                        value = "false"))
      * &#64;Test public void test() { ... }
      * </pre>
      * <p>
      * Use multiple settings:
      * <pre>
-     * &#64;Setting.List({&#64;Setting(key = Setting.Key.USE_MULTIPROCESS,
-     *                         value = "false"),
+     * &#64;Setting.List({&#64;Setting(key = Setting.Key.USE_PRIVATE_MODE,
+     *                         value = "true"),
      *                &#64;Setting(key = Setting.Key.USE_TRACKING_PROTECTION,
-     *                         value = "true")})
+     *                         value = "false")})
      * </pre>
      */
     @Target({ElementType.METHOD, ElementType.TYPE})
@@ -191,7 +193,6 @@ public class GeckoSessionTestRule implements TestRule {
             DISPLAY_MODE,
             ALLOW_JAVASCRIPT,
             SCREEN_ID,
-            USE_MULTIPROCESS,
             USE_PRIVATE_MODE,
             USE_TRACKING_PROTECTION,
             FULL_ACCESSIBILITY_TREE;
@@ -266,17 +267,6 @@ public class GeckoSessionTestRule implements TestRule {
 
         Key key();
         String value();
-    }
-
-    /**
-     * If a test requests a default open session, reuse a cached session instead of creating an
-     * open session every time. A new session is still created if the test requests a non-default
-     * session such as a closed session or a session with custom settings.
-     */
-    @Target({ElementType.METHOD, ElementType.TYPE})
-    @Retention(RetentionPolicy.RUNTIME)
-    public @interface ReuseSession {
-        boolean value() default true;
     }
 
     /**
@@ -367,56 +357,6 @@ public class GeckoSessionTestRule implements TestRule {
         }
     }
 
-    public static class PromiseWrapper {
-        private final Promise mPromise;
-        private final long mTimeoutMillis;
-
-        /* package */ PromiseWrapper(final @NonNull Promise promise, final long timeoutMillis) {
-            mPromise = promise;
-            mTimeoutMillis = timeoutMillis;
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            return (o instanceof PromiseWrapper) && mPromise.equals(((PromiseWrapper) o).mPromise);
-        }
-
-        @Override
-        public int hashCode() {
-            return mPromise.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return mPromise.toString();
-        }
-
-        /**
-         * Return whether this promise is pending.
-         *
-         * @return True if this promise is pending.
-         */
-        public boolean isPending() {
-            return mPromise.isPending();
-        }
-
-        /**
-         * Wait for this promise to settle. If the promise is fulfilled, return its value.
-         * If the promise is rejected, throw an exception containing the reason.
-         *
-         * @return Fulfilled value of the promise.
-         */
-        public Object getValue() {
-            while (mPromise.isPending()) {
-                UiThreadUtils.loopUntilIdle(mTimeoutMillis);
-            }
-            if (mPromise.isRejected()) {
-                throw new RejectedPromiseException(mPromise.getReason());
-            }
-            return mPromise.getValue();
-        }
-    }
-
     public static class CallRequirement {
         public final boolean allowed;
         public final int count;
@@ -477,7 +417,7 @@ public class GeckoSessionTestRule implements TestRule {
             } else if (other instanceof MethodCall) {
                 final MethodCall otherCall = (MethodCall) other;
                 return (session == null || otherCall.session == null ||
-                        session == otherCall.session) &&
+                        session.equals(otherCall.session)) &&
                         methodsEqual(method, ((MethodCall) other).method);
             } else if (other instanceof Method) {
                 return methodsEqual(method, (Method) other);
@@ -614,11 +554,11 @@ public class GeckoSessionTestRule implements TestRule {
         private final Map<Pair<GeckoSession, Method>, MethodCall> mDelegates = new HashMap<>();
         private final List<ExternalDelegate<?>> mExternalDelegates = new ArrayList<>();
         private int mOrder;
-        private String mOldPrefs;
+        private JSONObject mOldPrefs;
 
         public void delegate(final @Nullable GeckoSession session,
                              final @NonNull Object callback) {
-            for (final Class<?> ifce : DEFAULT_DELEGATES) {
+            for (final Class<?> ifce : mAllDelegates) {
                 if (!ifce.isInstance(callback)) {
                     continue;
                 }
@@ -680,48 +620,23 @@ public class GeckoSessionTestRule implements TestRule {
 
         /** Generate a JS function to set new prefs and return a set of saved prefs. */
         public void setPrefs(final @NonNull Map<String, ?> prefs) {
-            final String existingPrefs;
-            if (mOldPrefs == null) {
-                existingPrefs = "{}";
-            } else {
-                existingPrefs = String.format("JSON.parse(%s)", JSONObject.quote(mOldPrefs));
-            }
+            mOldPrefs = (JSONObject) webExtensionApiCall("SetPrefs", args -> {
+                final JSONObject existingPrefs = mOldPrefs != null ? mOldPrefs : new JSONObject();
 
-            final StringBuilder newPrefs = new StringBuilder();
-            for (final Map.Entry<String, ?> pref : prefs.entrySet()) {
-                final String name = JSONObject.quote(pref.getKey());
-                final Object value = pref.getValue();
-                final String jsValue;
-                if (value instanceof Boolean) {
-                    jsValue = value.toString();
-                } else if (value instanceof Number) {
-                    jsValue = String.valueOf(((Number) value).intValue());
-                } else if (value instanceof CharSequence) {
-                    jsValue = JSONObject.quote(value.toString());
-                } else {
-                    throw new IllegalArgumentException("Unsupported pref value: " + value);
+                final JSONObject newPrefs = new JSONObject();
+                for (final Map.Entry<String, ?> pref : prefs.entrySet()) {
+                    final Object value = pref.getValue();
+                    if (value instanceof Boolean || value instanceof Number ||
+                            value instanceof CharSequence) {
+                        newPrefs.put(pref.getKey(), value);
+                    } else {
+                        throw new IllegalArgumentException("Unsupported pref value: " + value);
+                    }
                 }
-                newPrefs.append(String.format("%s: %s,", name, jsValue));
-            }
 
-            final String prefSetter = String.format(
-                    "(function() {" +
-                    "  const prefs = ChromeUtils.import('resource://gre/modules/Preferences.jsm'," +
-                    "                                   {}).Preferences;" +
-                    "  const oldPrefs = %1$s;" +
-                    "  const newPrefs = {%2$s};" +
-                    "  Object.assign(oldPrefs," +
-                    "                ...Object.keys(newPrefs)" + // Save old prefs.
-                    "                         .filter(key => !(key in oldPrefs))" +
-                    "                         .map(key => ({[key]: prefs.get(key, null)})));" +
-                    "  prefs.set(newPrefs);" + // Set new prefs.
-                    "  return JSON.stringify(oldPrefs);" +
-                    "})()", existingPrefs, newPrefs.toString());
-
-            final Object oldPrefs = evaluateChromeJS(prefSetter);
-            assertThat("Old prefs should be JSON string",
-                       oldPrefs, instanceOf(String.class));
-            mOldPrefs = (String) oldPrefs;
+                args.put("oldPrefs", existingPrefs);
+                args.put("newPrefs", newPrefs);
+            });
         }
 
         /** Generate a JS function to set new prefs and reset a set of saved prefs. */
@@ -730,20 +645,10 @@ public class GeckoSessionTestRule implements TestRule {
                 return;
             }
 
-            evaluateChromeJS(String.format(
-                    "(function() {" +
-                    "  const prefs = ChromeUtils.import('resource://gre/modules/Preferences.jsm'," +
-                    "                                   {}).Preferences;" +
-                    "  const oldPrefs = JSON.parse(%1$s);" +
-                    "  for (let [name, value] of Object.entries(oldPrefs)) {" +
-                    "    if (value === null) {" +
-                    "      prefs.reset(name);" +
-                    "    } else {" +
-                    "      prefs.set(name, value);" +
-                    "    }" +
-                    "  }" +
-                    "})()", JSONObject.quote(mOldPrefs)));
-            mOldPrefs = null;
+            webExtensionApiCall("RestorePrefs", args -> {
+                args.put("oldPrefs", mOldPrefs);
+                mOldPrefs = null;
+            });
         }
 
         public void clear() {
@@ -825,10 +730,6 @@ public class GeckoSessionTestRule implements TestRule {
 
     private static final Set<Class<?>> DEFAULT_DELEGATES = getDefaultDelegates();
 
-    private static RDPConnection sRDPConnection;
-    protected static GeckoSession sCachedSession;
-    protected static Tab sCachedRDPTab;
-
     public final Environment env = new Environment();
 
     protected final Instrumentation mInstrumentation =
@@ -854,15 +755,10 @@ public class GeckoSessionTestRule implements TestRule {
     protected Surface mDisplaySurface;
     protected GeckoDisplay mDisplay;
     protected boolean mClosedSession;
-    protected boolean mWithDevTools;
-    protected Map<GeckoSession, Tab> mRDPTabs;
-    protected Tab mRDPChromeProcess;
-    protected boolean mReuseSession;
     protected boolean mIgnoreCrash;
 
     public GeckoSessionTestRule() {
         mDefaultSettings = new GeckoSessionSettings.Builder()
-                .useMultiprocess(env.isMultiprocess())
                 .build();
     }
 
@@ -959,6 +855,10 @@ public class GeckoSessionTestRule implements TestRule {
         return RuntimeCreator.getRuntime();
     }
 
+    public void setTelemetryDelegate(RuntimeTelemetry.Delegate delegate) {
+        RuntimeCreator.setTelemetryDelegate(delegate);
+    }
+
     public @Nullable GeckoDisplay getDisplay() {
         return mDisplay;
     }
@@ -975,6 +875,10 @@ public class GeckoSessionTestRule implements TestRule {
             return GeckoSession.class.getMethod("setContentBlockingDelegate", cls)
                    .invoke(session, delegate);
         }
+        if (cls == Autofill.Delegate.class) {
+            return GeckoSession.class.getMethod("setAutofillDelegate", cls)
+                   .invoke(session, delegate);
+        }
         return GeckoSession.class.getMethod("set" + cls.getSimpleName(), cls)
                .invoke(session, delegate);
     }
@@ -988,6 +892,10 @@ public class GeckoSessionTestRule implements TestRule {
         }
         if (cls == ContentBlocking.Delegate.class) {
             return GeckoSession.class.getMethod("getContentBlockingDelegate")
+                   .invoke(session);
+        }
+        if (cls == Autofill.Delegate.class) {
+            return GeckoSession.class.getMethod("getAutofillDelegate")
                    .invoke(session);
         }
         return GeckoSession.class.getMethod("get" + cls.getSimpleName())
@@ -1050,10 +958,6 @@ public class GeckoSessionTestRule implements TestRule {
                 mDisplaySize = new Point(displaySize.width(), displaySize.height());
             } else if (ClosedSessionAtStart.class.equals(annotation.annotationType())) {
                 mClosedSession = ((ClosedSessionAtStart) annotation).value();
-            } else if (WithDevToolsAPI.class.equals(annotation.annotationType())) {
-                mWithDevTools = ((WithDevToolsAPI) annotation).value();
-            } else if (ReuseSession.class.equals(annotation.annotationType())) {
-                mReuseSession = ((ReuseSession) annotation).value();
             } else if (IgnoreCrash.class.equals(annotation.annotationType())) {
                 mIgnoreCrash = ((IgnoreCrash) annotation).value();
             }
@@ -1071,13 +975,11 @@ public class GeckoSessionTestRule implements TestRule {
         return new RuntimeException(cause != null ? cause : e);
     }
 
-    protected void prepareStatement(final Description description) throws Throwable {
+    protected void prepareStatement(final Description description) {
         final GeckoSessionSettings settings = new GeckoSessionSettings(mDefaultSettings);
         mTimeoutMillis = env.getDefaultTimeoutMillis();
         mNullDelegates = new HashSet<>();
         mClosedSession = false;
-        mWithDevTools = false;
-        mReuseSession = true;
         mIgnoreCrash = false;
 
         applyAnnotations(Arrays.asList(description.getTestClass().getAnnotations()), settings);
@@ -1115,8 +1017,9 @@ public class GeckoSessionTestRule implements TestRule {
                         !DEFAULT_DELEGATES.contains(method.getDeclaringClass());
 
                 if (!ignore) {
-                    assertThat("Callbacks must be on UI thread",
-                               Looper.myLooper(), equalTo(Looper.getMainLooper()));
+                    if (!isExternalDelegate) {
+                        ThreadUtils.assertOnUiThread();
+                    }
 
                     final GeckoSession session;
                     if (isExternalDelegate) {
@@ -1129,7 +1032,8 @@ public class GeckoSessionTestRule implements TestRule {
                         session = (GeckoSession) args[0];
                     }
 
-                    if (sOnCrash.equals(method) && !mIgnoreCrash && isUsingSession(session)) {
+                    if ((sOnCrash.equals(method) || sOnKill.equals(method))
+                            && !mIgnoreCrash && isUsingSession(session)) {
                         if (env.shouldShutdownOnCrash()) {
                             getRuntime().shutdown();
                         }
@@ -1161,39 +1065,7 @@ public class GeckoSessionTestRule implements TestRule {
                     mCurrentMethodCall = null;
                 }
 
-                if (call == null || returnValue == null || !sOnNewSession.equals(method)) {
-                    return returnValue;
-                }
-
-                // We're delegating an onNewSession call.
-                // Make sure we wait on the newly opened session, if any.
-                final GeckoSession oldSession = (GeckoSession) args[0];
-
-                @SuppressWarnings("unchecked")
-                final GeckoResult<GeckoSession> result = (GeckoResult<GeckoSession>)returnValue;
-                final GeckoResult<GeckoSession> tmpResult = new GeckoResult<>();
-                result.then(new OnValueListener<GeckoSession, Void>() {
-                    @Override
-                    public GeckoResult<Void> onValue(final GeckoSession newSession) throws Throwable {
-                        tmpResult.complete(newSession);
-
-                        // GeckoSession has already hooked up its then() listener earlier,
-                        // so ours will run after. We can wait for the session to
-                        // open here.
-                        tmpResult.then(new OnValueListener<GeckoSession, Void>() {
-                            @Override
-                            public GeckoResult<Void> onValue(GeckoSession newSession) throws Throwable {
-                                if (oldSession.isOpen() && newSession != null) {
-                                    GeckoSessionTestRule.this.waitForOpenSession(newSession);
-                                }
-                                return null;
-                            }
-                        });
-                        return null;
-                    }
-                });
-
-                return tmpResult;
+                return returnValue;
             }
         };
 
@@ -1203,16 +1075,7 @@ public class GeckoSessionTestRule implements TestRule {
                                                 classes, recorder);
         mAllDelegates = new HashSet<>(DEFAULT_DELEGATES);
 
-        if (sCachedSession != null && !sCachedSession.isOpen()) {
-            sCachedSession = null;
-        }
-
-        final boolean useDefaultSession = !mClosedSession && mDefaultSettings.equals(settings);
-        if (useDefaultSession && mReuseSession && sCachedSession != null) {
-            mMainSession = sCachedSession;
-        } else {
-            mMainSession = new GeckoSession(settings);
-        }
+        mMainSession = new GeckoSession(settings);
         prepareSession(mMainSession);
 
         if (mDisplaySize != null) {
@@ -1223,28 +1086,31 @@ public class GeckoSessionTestRule implements TestRule {
             mDisplay.surfaceChanged(mDisplaySurface, mDisplaySize.x, mDisplaySize.y);
         }
 
-        if (useDefaultSession && mReuseSession) {
-            if (sCachedSession == null) {
-                // We are creating a cached session.
-                final boolean withDevTools = mWithDevTools;
-                mWithDevTools = true; // Always get an RDP tab for cached session.
-                openSession(mMainSession);
-                sCachedSession = mMainSession;
-                sCachedRDPTab = mRDPTabs.get(mMainSession);
-                mWithDevTools = withDevTools;
-            } else {
-                // We are reusing a cached session.
-                mMainSession.loadUri("about:blank");
-                waitForOpenSession(mMainSession);
-            }
-        } else if (!mClosedSession) {
+        if (!mClosedSession) {
             openSession(mMainSession);
+            UiThreadUtils.waitForCondition(() ->
+                            RuntimeCreator.sTestSupport.get() != RuntimeCreator.TEST_SUPPORT_INITIAL,
+                    env.getDefaultTimeoutMillis());
+            if (RuntimeCreator.sTestSupport.get() != RuntimeCreator.TEST_SUPPORT_OK) {
+                throw new RuntimeException("Could not register TestSupport, see logs for error.");
+            }
         }
     }
 
-    protected void prepareSession(final GeckoSession session) throws Throwable {
+    protected void prepareSession(final GeckoSession session) {
+        UiThreadUtils.waitForCondition(() ->
+                        RuntimeCreator.sTestSupport.get() != RuntimeCreator.TEST_SUPPORT_INITIAL,
+                env.getDefaultTimeoutMillis());
+        session.getWebExtensionController()
+                .setMessageDelegate(RuntimeCreator.sTestSupportExtension,
+                                    mMessageDelegate,
+                          "browser");
         for (final Class<?> cls : DEFAULT_DELEGATES) {
-            setDelegate(cls, session, mNullDelegates.contains(cls) ? null : mCallbackProxy);
+            try {
+                setDelegate(cls, session, mNullDelegates.contains(cls) ? null : mCallbackProxy);
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -1255,65 +1121,56 @@ public class GeckoSessionTestRule implements TestRule {
      * @param session Session to open.
      */
     public void openSession(final GeckoSession session) {
-        session.open(getRuntime());
-        waitForOpenSession(session);
-    }
-
-    /* package */ void waitForOpenSession(final GeckoSession session) {
-        waitForInitialLoad(session);
-
-        if (mWithDevTools) {
-            if (sRDPConnection == null) {
-                final String packageName = InstrumentationRegistry.getTargetContext()
-                                                                  .getPackageName();
-                final LocalSocketAddress address = new LocalSocketAddress(
-                        packageName + "/firefox-debugger-socket",
-                        LocalSocketAddress.Namespace.ABSTRACT);
-                sRDPConnection = new RDPConnection(address);
-                sRDPConnection.setTimeout(mTimeoutMillis);
-            }
-            if (mRDPTabs == null) {
-                mRDPTabs = new HashMap<>();
-            }
-            final Tab tab = session.equals(sCachedSession) ? sCachedRDPTab
-                                                           : sRDPConnection.getMostRecentTab();
-            mRDPTabs.put(session, tab);
-        }
-    }
-
-    private void waitForInitialLoad(final GeckoSession session) {
+        ThreadUtils.assertOnUiThread();
         // We receive an initial about:blank load; don't expose that to the test. The initial
         // load ends with the first onPageStop call, so ignore everything from the session
         // until the first onPageStop call.
 
-        // For the cached session, we may get multiple initial loads. We should specifically look
-        // for an about:blank load, and wait until that has stopped.
-        final boolean lookForAboutBlank = session.equals(sCachedSession);
+        try {
+            // We cannot detect initial page load without progress delegate.
+            assertThat("ProgressDelegate cannot be null-delegate when opening session",
+                    GeckoSession.ProgressDelegate.class, not(isIn(mNullDelegates)));
+            mCallRecordHandler = (method, args) -> {
+                Log.e(LOGTAG, "method: " + method);
+                final boolean matching = DEFAULT_DELEGATES.contains(
+                        method.getDeclaringClass()) && session.equals(args[0]);
+                if (matching && sOnPageStop.equals(method)) {
+                    mCallRecordHandler = null;
+                }
+                return matching;
+            };
+
+            session.open(getRuntime());
+
+            UiThreadUtils.waitForCondition(() -> mCallRecordHandler == null,
+                    env.getDefaultTimeoutMillis());
+        } finally {
+            mCallRecordHandler = null;
+        }
+    }
+
+    private void waitForOpenSession(final GeckoSession session) {
+        ThreadUtils.assertOnUiThread();
+        // We receive an initial about:blank load; don't expose that to the test. The initial
+        // load ends with the first onPageStop call, so ignore everything from the session
+        // until the first onPageStop call.
 
         try {
             // We cannot detect initial page load without progress delegate.
             assertThat("ProgressDelegate cannot be null-delegate when opening session",
                        GeckoSession.ProgressDelegate.class, not(isIn(mNullDelegates)));
-            mCallRecordHandler = new CallRecordHandler() {
-                private boolean mIsAboutBlank = !lookForAboutBlank;
-
-                @Override
-                public boolean handleCall(final Method method, final Object[] args) {
-                    final boolean matching = DEFAULT_DELEGATES.contains(
-                            method.getDeclaringClass()) && session.equals(args[0]);
-                    if (matching && sOnPageStart.equals(method)) {
-                        mIsAboutBlank = "about:blank".equals(args[1]);
-                    } else if (matching && mIsAboutBlank && sOnPageStop.equals(method)) {
-                        mCallRecordHandler = null;
-                    }
-                    return matching;
+            mCallRecordHandler = (method, args) -> {
+                Log.e(LOGTAG, "method: " + method);
+                final boolean matching = DEFAULT_DELEGATES.contains(
+                        method.getDeclaringClass()) && session.equals(args[0]);
+                if (matching && sOnPageStop.equals(method)) {
+                    mCallRecordHandler = null;
                 }
+                return matching;
             };
 
-            do {
-                UiThreadUtils.loopUntilIdle(env.getDefaultTimeoutMillis());
-            } while (mCallRecordHandler != null);
-
+            UiThreadUtils.waitForCondition(() -> mCallRecordHandler == null,
+                    env.getDefaultTimeoutMillis());
         } finally {
             mCallRecordHandler = null;
         }
@@ -1323,32 +1180,11 @@ public class GeckoSessionTestRule implements TestRule {
      * Internal method to perform callback checks at the end of a test.
      */
     public void performTestEndCheck() {
-        if (sCachedSession != null && mIgnoreCrash) {
-            // Make sure the cached session has been closed by crashes.
-            while (sCachedSession.isOpen()) {
-                UiThreadUtils.loopUntilIdle(mTimeoutMillis);
-            }
-        }
-
         mWaitScopeDelegates.clearAndAssert();
         mTestScopeDelegates.clearAndAssert();
-
-        if (sCachedSession != null && mReuseSession) {
-            assertThat("Cached session should be open",
-                       sCachedSession.isOpen(), equalTo(true));
-        }
     }
 
     protected void cleanupSession(final GeckoSession session) {
-        final Tab tab = (mRDPTabs != null) ? mRDPTabs.get(session) : null;
-        if (tab != null) {
-            if (session.isOpen()) {
-                tab.getPromises().detach();
-                tab.detach();
-            }
-
-            mRDPTabs.remove(session);
-        }
         if (session.isOpen()) {
             session.close();
         }
@@ -1365,6 +1201,26 @@ public class GeckoSessionTestRule implements TestRule {
         }
     }
 
+    protected void cleanupExtensions() throws Throwable {
+        WebExtensionController controller = getRuntime().getWebExtensionController();
+        List<WebExtension> list = waitForResult(controller.list());
+
+        boolean hasTestSupport = false;
+        // Uninstall any left-over extensions
+        for (WebExtension extension : list) {
+            if (!extension.id.equals(RuntimeCreator.TEST_SUPPORT_EXTENSION_ID)) {
+                waitForResult(controller.uninstall(extension));
+            } else {
+                hasTestSupport = true;
+            }
+        }
+
+        // If an extension was still installed, this test should fail.
+        // Note the test support extension is always kept for speed.
+        assertThat("A WebExtension was left installed during this test.",
+                list.size(), equalTo(hasTestSupport ? 1 : 0));
+    }
+
     protected void cleanupStatement() throws Throwable {
         mWaitScopeDelegates.clear();
         mTestScopeDelegates.clear();
@@ -1373,12 +1229,8 @@ public class GeckoSessionTestRule implements TestRule {
             cleanupSession(session);
         }
 
-        if (mMainSession.isOpen() && mMainSession.equals(sCachedSession)) {
-            // We have to detach the Promises object, but keep the Tab itself.
-            sCachedRDPTab.getPromises().detach();
-        } else {
-            cleanupSession(mMainSession);
-        }
+        cleanupSession(mMainSession);
+        cleanupExtensions();
 
         if (mIgnoreCrash) {
             deleteCrashDumps();
@@ -1404,31 +1256,54 @@ public class GeckoSessionTestRule implements TestRule {
         mLastWaitStart = 0;
         mLastWaitEnd = 0;
         mTimeoutMillis = 0;
-        mRDPTabs = null;
-        mRDPChromeProcess = null;
+        RuntimeCreator.setTelemetryDelegate(null);
     }
 
     @Override
     public Statement apply(final Statement base, final Description description) {
         return new Statement() {
+            private TestServer mServer;
+
+            private void initTest() {
+                try {
+                    mServer.start(TEST_PORT);
+
+                    RuntimeCreator.setPortDelegate(mPortDelegate);
+                    getRuntime();
+
+                    Log.e(LOGTAG, "====");
+                    Log.e(LOGTAG, "before prepareStatement " + description);
+                    prepareStatement(description);
+                    Log.e(LOGTAG, "after prepareStatement");
+                } catch (final Throwable t) {
+                    // Any error here is not related to a specific test
+                    throw new TestHarnessException(t);
+                }
+            }
+
             @Override
             public void evaluate() throws Throwable {
                 final AtomicReference<Throwable> exceptionRef = new AtomicReference<>();
-                mInstrumentation.runOnMainSync(new Runnable() {
-                    @Override
-                    public void run() {
+
+                mServer = new TestServer(InstrumentationRegistry.getInstrumentation().getTargetContext());
+
+                mInstrumentation.runOnMainSync(() -> {
+                    try {
+                        initTest();
+                        base.evaluate();
+                        Log.e(LOGTAG, "after evaluate");
+                        performTestEndCheck();
+                        Log.e(LOGTAG, "after performTestEndCheck");
+                        Log.e(LOGTAG, "====");
+                    } catch (Throwable t) {
+                        Log.e(LOGTAG, "====", t);
+                        exceptionRef.set(t);
+                    } finally {
                         try {
-                            prepareStatement(description);
-                            base.evaluate();
-                            performTestEndCheck();
+                            mServer.stop();
+                            cleanupStatement();
                         } catch (Throwable t) {
-                            exceptionRef.set(t);
-                        } finally {
-                            try {
-                                cleanupStatement();
-                            } catch (Throwable t) {
-                                exceptionRef.set(t);
-                            }
+                            exceptionRef.compareAndSet(null, t);
                         }
                     }
                 });
@@ -1439,6 +1314,13 @@ public class GeckoSessionTestRule implements TestRule {
                 }
             }
         };
+    }
+
+    /**
+     * This simply sends an empty message to the web content and waits for a reply.
+     */
+    public void waitForRoundTrip(final GeckoSession session) {
+        waitForJS(session, "true");
     }
 
     /**
@@ -1628,9 +1510,11 @@ public class GeckoSessionTestRule implements TestRule {
         forCallbacksDuringWait(session, callback);
     }
 
-    protected void waitUntilCalled(final @Nullable GeckoSession session,
-                                   final @NonNull Class<?> delegate,
-                                   final @NonNull List<MethodCall> methodCalls) {
+    private void waitUntilCalled(final @Nullable GeckoSession session,
+                                 final @NonNull Class<?> delegate,
+                                 final @NonNull List<MethodCall> methodCalls) {
+        ThreadUtils.assertOnUiThread();
+
         if (session != null && !session.equals(mMainSession)) {
             assertThat("Session should be wrapped through wrapSession",
                        session, isIn(mSubSessions));
@@ -1677,15 +1561,10 @@ public class GeckoSessionTestRule implements TestRule {
         beforeWait();
 
         while (!calledAny || !methodCalls.isEmpty()) {
-            while (index >= mCallRecords.size()) {
-                UiThreadUtils.loopUntilIdle(mTimeoutMillis);
-                // We could loop forever here if the UI thread keeps receiving
-                // messages that don't result in any methods being called.
-                // Check whether we've exceeded our allotted time and bail out.
-                if (SystemClock.uptimeMillis() - startTime > mTimeoutMillis) {
-                    break;
-                }
-            }
+            final int currentIndex = index;
+
+            // Let's wait for more messages if we reached the end
+            UiThreadUtils.waitForCondition(() -> (currentIndex < mCallRecords.size()), mTimeoutMillis);
 
             if (SystemClock.uptimeMillis() - startTime > mTimeoutMillis) {
                 throw new UiThreadUtils.TimeoutException("Timed out after " + mTimeoutMillis + "ms");
@@ -1797,7 +1676,7 @@ public class GeckoSessionTestRule implements TestRule {
             final CallRecord record = mCallRecords.get(index);
             if (!record.method.getDeclaringClass().isInstance(callback) ||
                     (session != null && DEFAULT_DELEGATES.contains(
-                            record.method.getDeclaringClass()) && record.args[0] != session)) {
+                            record.method.getDeclaringClass()) && !session.equals(record.args[0]))) {
                 continue;
             }
 
@@ -1918,6 +1797,128 @@ public class GeckoSessionTestRule implements TestRule {
         session.getPanZoomController().onTouchEvent(up);
     }
 
+    Map<GeckoSession, WebExtension.Port> mPorts = new HashMap<>();
+
+    private WebExtension.MessageDelegate mMessageDelegate = new WebExtension.MessageDelegate() {
+        @Override
+        public void onConnect(final @NonNull WebExtension.Port port) {
+            mPorts.put(port.sender.session, port);
+            port.setDelegate(mPortDelegate);
+        }
+    };
+
+    private WebExtension.PortDelegate mPortDelegate = new WebExtension.PortDelegate() {
+        @Override
+        public void onPortMessage(@NonNull Object message, @NonNull WebExtension.Port port) {
+            JSONObject response = (JSONObject) message;
+
+            final String id;
+            try {
+                id = response.getString("id");
+                EvalJSResult result = new EvalJSResult();
+
+                final Object exception = response.get("exception");
+                if (exception != JSONObject.NULL) {
+                    result.exception = exception;
+                }
+
+                final Object value = response.get("response");
+                if (value != JSONObject.NULL){
+                    result.value = value;
+                }
+
+                mPendingMessages.put(id, result);
+            } catch (JSONException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+
+        @Override
+        public void onDisconnect(final @NonNull WebExtension.Port port) {
+            mPorts.remove(port.sender.session);
+        }
+    };
+
+    private static class EvalJSResult {
+        Object value;
+        Object exception;
+    }
+
+    Map<String, EvalJSResult> mPendingMessages = new HashMap<>();
+
+    public class ExtensionPromise {
+        private UUID mUuid;
+        private GeckoSession mSession;
+
+        protected ExtensionPromise(final UUID uuid, final GeckoSession session, final String js) {
+            mUuid = uuid;
+            mSession = session;
+            evaluateJS(
+                    session, "this['" + uuid + "'] = " + js + "; true"
+            );
+        }
+
+        public Object getValue() {
+            return evaluateJS(mSession, "this['" + mUuid + "']");
+        }
+    }
+
+    public ExtensionPromise evaluatePromiseJS(final @NonNull GeckoSession session,
+                                              final @NonNull String js) {
+        return new ExtensionPromise(UUID.randomUUID(), session, js);
+    }
+
+    public Object evaluateJS(final @NonNull GeckoSession session, final @NonNull String js) {
+        // Let's make sure we have the port already
+        UiThreadUtils.waitForCondition(() -> mPorts.containsKey(session), mTimeoutMillis);
+
+        final JSONObject message = new JSONObject();
+        final String id = UUID.randomUUID().toString();
+        try {
+            message.put("id", id);
+            message.put("eval", js);
+        } catch (JSONException ex) {
+            throw new RuntimeException(ex);
+        }
+
+        mPorts.get(session).postMessage(message);
+
+        return waitForMessage(id);
+    }
+
+    public int getSessionPid(final @NonNull GeckoSession session) {
+        final Double dblPid = (Double) webExtensionApiCall(session, "GetPidForTab", null);
+        return dblPid.intValue();
+    }
+
+    private Object waitForMessage(String id) {
+        UiThreadUtils.waitForCondition(() -> mPendingMessages.containsKey(id),
+                mTimeoutMillis);
+
+        final EvalJSResult result = mPendingMessages.get(id);
+        mPendingMessages.remove(id);
+
+        if (result.exception != null) {
+            throw new RejectedPromiseException(result.exception);
+        }
+
+        if (result.value == null) {
+            return null;
+        }
+
+        Object value;
+        try {
+            value = new JSONTokener((String) result.value).nextValue();
+        } catch (JSONException ex) {
+            value = result.value;
+        }
+
+        if (value instanceof Integer) {
+            return ((Integer) value).doubleValue();
+        }
+        return value;
+    }
+
     /**
      * Initialize and keep track of the specified session within the test rule. The
      * session is automatically cleaned up at the end of the test.
@@ -1942,6 +1943,12 @@ public class GeckoSessionTestRule implements TestRule {
             openSession(session);
         }
         return session;
+    }
+
+    public GeckoSession createFromParcel(Parcel source) {
+        final GeckoSession session = new GeckoSession(mMainSession.getSettings());
+        session.readFromParcel(source);
+        return wrapSession(session);
     }
 
     /**
@@ -2002,77 +2009,6 @@ public class GeckoSessionTestRule implements TestRule {
     }
 
     /**
-     * Evaluate a JavaScript expression in the context of the target page and return the result.
-     * RDP must be enabled first using the {@link WithDevToolsAPI} annotation. String, number, and
-     * boolean results are converted to Java values. Undefined and null results are returned as
-     * null. Objects are returned as Map instances. Arrays are returned as Object[] instances.
-     *
-     * @param session Session containing the target page.
-     * @param js JavaScript expression.
-     * @return Result of evaluating the expression.
-     * @see #evaluateChromeJS
-     * @see #waitForJS
-     */
-    public Object evaluateJS(final @NonNull GeckoSession session, final @NonNull String js) {
-        assertThat("Must enable RDP using @WithDevToolsAPI",
-                   mWithDevTools, equalTo(true));
-
-        final Tab tab = mRDPTabs.get(session);
-        assertThat("Session should have tab object", tab, notNullValue());
-        return evaluateJS(tab, js);
-    }
-
-    /**
-     * Evaluate a JavaScript expression in the context of a chrome window and return the result.
-     * RDP must be enabled first using the {@link WithDevToolsAPI} annotation. Results are
-     * converted the same way as {@link #evaluateJS}.
-     *
-     * @param js JavaScript expression.
-     * @return Result of evaluating the expression.
-     * @see #evaluateJS
-     * @see #waitForChromeJS
-     */
-    public Object evaluateChromeJS(final @NonNull String js) {
-        assertThat("Must enable RDP using @WithDevToolsAPI",
-                   mWithDevTools, equalTo(true));
-        ensureChromeProcess();
-        return evaluateJS(mRDPChromeProcess, js);
-    }
-
-    private void ensureChromeProcess() {
-        if (mRDPChromeProcess == null) {
-            mRDPChromeProcess = sRDPConnection.getChromeProcess();
-            assertThat("Should have chrome process object",
-                       mRDPChromeProcess, notNullValue());
-        }
-    }
-
-    private Object evaluateJS(final @NonNull Tab tab, final @NonNull String js) {
-        final Actor.Reply<Object> reply = tab.getConsole().evaluateJS(js);
-        while (!reply.hasResult()) {
-            UiThreadUtils.loopUntilIdle(mTimeoutMillis);
-        }
-
-        final Object result = reply.get();
-        if (result instanceof Promise) {
-            // Map the static Promise into a live Promise. In order to perform the mapping, we set
-            // a tag on the static Promise, fetch a list of live Promises, and see which live
-            // Promise has the same tag on it.
-            final String tag = String.valueOf(result.hashCode());
-            tab.getConsole().evaluateJS("$_.tag = " + JSONObject.quote(tag) + ", $_");
-
-            final Promise[] promises = tab.getPromises().listPromises();
-            for (final Promise promise : promises) {
-                if (tag.equals(promise.getProperty("tag"))) {
-                    return new PromiseWrapper(promise, mTimeoutMillis);
-                }
-            }
-            throw new AssertionError("Cannot find Promise");
-        }
-        return result;
-    }
-
-    /**
      * Evaluate a JavaScript expression and return the result, similar to {@link #evaluateJS}.
      * In addition, treat the evaluation as a wait event, which will affect other calls such as
      * {@link #forCallbacksDuringWait}. If the result is a Promise, wait on the Promise to settle
@@ -2082,105 +2018,174 @@ public class GeckoSessionTestRule implements TestRule {
      * @param js JavaScript expression.
      * @return Result of the expression or value of the resolved Promise.
      * @see #evaluateJS
-     * @see #waitForChromeJS
      */
     public @Nullable Object waitForJS(final @NonNull GeckoSession session, final @NonNull String js) {
         try {
             beforeWait();
-            return resolvePromise(evaluateJS(session, js));
+            return evaluateJS(session, js);
         } finally {
             afterWait(mCallRecords.size());
         }
     }
 
     /**
-     * Evaluate a JavaScript expression in the context of a chrome window and return the result,
-     * similar to {@link #evaluateChromeJS}. In addition, treat the evaluation as a wait event,
-     * which will affect other calls such as {@link #forCallbacksDuringWait}. If the result is a
-     * Promise, wait on the Promise to settle and return or throw based on the outcome.
-     *
-     * @param js JavaScript expression.
-     * @return Result of the expression or value of the resolved Promise.
-     * @see #evaluateChromeJS
-     * @see #waitForJS
-     */
-    public @Nullable Object waitForChromeJS(final @NonNull String js) {
-        try {
-            beforeWait();
-            return resolvePromise(evaluateChromeJS(js));
-        } finally {
-            afterWait(mCallRecords.size());
-        }
-    }
-
-    private @Nullable Object resolvePromise(final @Nullable Object result) {
-        if (result instanceof PromiseWrapper) {
-            return ((PromiseWrapper) result).getValue();
-        }
-        return result;
-    }
-
-    /**
-     * Get a list of Gecko prefs. RDP must be enabled first using the {@link WithDevToolsAPI}
-     * annotation. Undefined prefs will return as null.
+     * Get a list of Gecko prefs. Undefined prefs will return as null.
      *
      * @param prefs List of pref names.
      * @return Pref values as a list of values.
      */
-    public List<?> getPrefs(final @NonNull String... prefs) {
-        assertThat("Must enable RDP using @WithDevToolsAPI",
-                   mWithDevTools, equalTo(true));
-
-        final StringBuilder prefsList = new StringBuilder();
-        for (final String pref : prefs) {
-            prefsList.append(JSONObject.quote(pref)).append(',');
-        }
-
-        return (List<?>) evaluateChromeJS(String.format(
-                "(function() {" +
-                "  return ChromeUtils.import('resource://gre/modules/Preferences.jsm', {})" +
-                "                    .Preferences.get([%1$s]);" +
-                "})()", prefsList.toString()));
+    public JSONArray getPrefs(final @NonNull String... prefs) {
+        return (JSONArray) webExtensionApiCall("GetPrefs", args -> {
+            args.put("prefs", new JSONArray(Arrays.asList(prefs)));
+        });
     }
 
     /**
-     * Set a list of Gecko prefs for the rest of the test. RDP must be enabled first using the
-     * {@link WithDevToolsAPI} annotation. Prefs set in {@link #setPrefsDuringNextWait} can
+     * Gets the color of a link for a given URI and selector.
+     *
+     * @param uri Page where the link is present.
+     * @param selector Selector that matches the link
+     * @return String representing the color, e.g. rgb(0, 0, 255)
+     */
+    public String getLinkColor(final String uri, final String selector) {
+        return (String) webExtensionApiCall("GetLinkColor", args -> {
+            args.put("uri", uri);
+            args.put("selector", selector);
+        });
+    }
+
+    public List<String> getRequestedLocales() {
+        try {
+            JSONArray locales = (JSONArray) webExtensionApiCall("GetRequestedLocales", null);
+            List<String> result = new ArrayList<>();
+
+            for (int i = 0; i < locales.length(); i++) {
+                result.add(locales.getString(i));
+            }
+
+            return result;
+        } catch (JSONException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    /**
+     * Adds value to the given histogram.
+     *
+     * @param id the histogram id to increment.
+     * @param value to add to the histogram.
+     */
+    public void addHistogram(final String id, final long value) {
+        webExtensionApiCall("AddHistogram", args -> {
+            args.put("id", id);
+            args.put("value", value);
+        });
+    }
+
+    /**
+     * Revokes SSL overrides set for a given host and port
+     *
+     * @param host the host.
+     * @param port the port (-1 == 443).
+     */
+    public void removeCertOverride(final String host, final long port) {
+        webExtensionApiCall("RemoveCertOverride", args -> {
+            args.put("host", host);
+            args.put("port", port);
+        });
+    }
+
+    private interface SetArgs {
+        void setArgs(JSONObject object) throws JSONException;
+    }
+
+    /**
+     * Sets value to the given scalar.
+     *
+     * @param id the scalar to be set.
+     * @param value the value to set.
+     */
+    public <T> void setScalar(final String id, final T value) {
+        webExtensionApiCall("SetScalar", args -> {
+            args.put("id", id);
+            args.put("value", value);
+        });
+    }
+
+    /**
+     * Invokes nsIDOMWindowUtils.setResolutionAndScaleTo.
+     */
+    public void setResolutionAndScaleTo(final float resolution) {
+        webExtensionApiCall("SetResolutionAndScaleTo", args -> {
+            args.put("resolution", resolution);
+        });
+    }
+
+    private Object webExtensionApiCall(final @NonNull String apiName, final @NonNull SetArgs argsSetter) {
+        return webExtensionApiCall(null, apiName, argsSetter);
+    }
+
+    private Object webExtensionApiCall(final GeckoSession session, final @NonNull String apiName,
+                                       final @NonNull SetArgs argsSetter) {
+        // Ensure background script is connected
+        UiThreadUtils.waitForCondition(() -> RuntimeCreator.backgroundPort() != null,
+                mTimeoutMillis);
+
+        if (session != null) {
+            // Ensure content script is connected
+            UiThreadUtils.waitForCondition(() -> mPorts.get(session) != null,
+                    mTimeoutMillis);
+        }
+
+        final String id = UUID.randomUUID().toString();
+
+        final JSONObject message = new JSONObject();
+
+        try {
+            final JSONObject args = new JSONObject();
+            if (argsSetter != null) {
+                argsSetter.setArgs(args);
+            }
+
+            message.put("id", id);
+            message.put("type", apiName);
+            message.put("args", args);
+        } catch (JSONException ex) {
+            throw new RuntimeException(ex);
+        }
+
+        if (session == null) {
+            RuntimeCreator.backgroundPort().postMessage(message);
+        } else {
+            // We post the message using session's port instead of the background port. By routing
+            // the message through the extension's content script, we are able to obtain and attach
+            // the session's WebExtension tab as a `tab` argument to the API.
+            mPorts.get(session).postMessage(message);
+        }
+
+        return waitForMessage(id);
+    }
+
+    /**
+     * Set a list of Gecko prefs for the rest of the test. Prefs set in {@link #setPrefsDuringNextWait} can
      * temporarily take precedence over prefs set in {@code setPrefsUntilTestEnd}.
      *
      * @param prefs Map of pref names to values.
      * @see #setPrefsDuringNextWait
      */
     public void setPrefsUntilTestEnd(final @NonNull Map<String, ?> prefs) {
-        assertThat("Must enable RDP using @WithDevToolsAPI",
-                   mWithDevTools, equalTo(true));
         mTestScopeDelegates.setPrefs(prefs);
     }
 
     /**
-     * Set a list of Gecko prefs during the next wait. RDP must be enabled first using the
-     * {@link WithDevToolsAPI} annotation. Prefs set in {@code setPrefsDuringNextWait} can
+     * Set a list of Gecko prefs during the next wait. Prefs set in {@code setPrefsDuringNextWait} can
      * temporarily take precedence over prefs set in {@link #setPrefsUntilTestEnd}.
      *
      * @param prefs Map of pref names to values.
      * @see #setPrefsUntilTestEnd
      */
     public void setPrefsDuringNextWait(final @NonNull Map<String, ?> prefs) {
-        assertThat("Must enable RDP using @WithDevToolsAPI",
-                   mWithDevTools, equalTo(true));
         mWaitScopeDelegates.setPrefs(prefs);
-    }
-
-    /**
-     * Force cycle/garbage collection in the content to clean up previous resources. RDP must
-     * be enabled first using the {@link WithDevToolsAPI} annotation.
-     */
-    public void forceGarbageCollection() {
-        assertThat("Must enable RDP using @WithDevToolsAPI",
-                   mWithDevTools, equalTo(true));
-        ensureChromeProcess();
-        mRDPChromeProcess.getMemory().forceCycleCollection();
-        mRDPChromeProcess.getMemory().forceGarbageCollection();
     }
 
     /**

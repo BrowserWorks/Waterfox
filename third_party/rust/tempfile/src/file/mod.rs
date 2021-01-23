@@ -3,13 +3,14 @@ use std::env;
 use std::error;
 use std::ffi::OsStr;
 use std::fmt;
-use std::fs::{self, File};
+use std::fs::{self, File, OpenOptions};
 use std::io::{self, Read, Seek, SeekFrom, Write};
 use std::mem;
 use std::ops::Deref;
 use std::path::{Path, PathBuf};
 
-use Builder;
+use crate::error::IoResultExt;
+use crate::Builder;
 
 mod imp;
 
@@ -33,7 +34,6 @@ mod imp;
 /// # Examples
 ///
 /// ```
-/// # extern crate tempfile;
 /// use tempfile::tempfile;
 /// use std::io::{self, Write};
 ///
@@ -75,7 +75,6 @@ pub fn tempfile() -> io::Result<File> {
 /// # Examples
 ///
 /// ```
-/// # extern crate tempfile;
 /// use tempfile::tempfile_in;
 /// use std::io::{self, Write};
 ///
@@ -122,17 +121,13 @@ impl From<PathPersistError> for TempPath {
 }
 
 impl fmt::Display for PathPersistError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "failed to persist temporary file path: {}", self.error)
     }
 }
 
 impl error::Error for PathPersistError {
-    fn description(&self) -> &str {
-        "failed to persist temporary file path"
-    }
-
-    fn cause(&self) -> Option<&error::Error> {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         Some(&self.error)
     }
 }
@@ -159,7 +154,6 @@ impl TempPath {
     /// # Examples
     ///
     /// ```no_run
-    /// # extern crate tempfile;
     /// # use std::io;
     /// use tempfile::NamedTempFile;
     ///
@@ -183,7 +177,7 @@ impl TempPath {
     /// # }
     /// ```
     pub fn close(mut self) -> io::Result<()> {
-        let result = fs::remove_file(&self.path);
+        let result = fs::remove_file(&self.path).with_err_path(|| &self.path);
         mem::replace(&mut self.path, PathBuf::new());
         mem::forget(self);
         result
@@ -211,7 +205,6 @@ impl TempPath {
     ///
     /// ```no_run
     /// # use std::io::{self, Write};
-    /// # extern crate tempfile;
     /// use tempfile::NamedTempFile;
     ///
     /// # fn main() {
@@ -271,7 +264,6 @@ impl TempPath {
     ///
     /// ```no_run
     /// # use std::io::{self, Write};
-    /// # extern crate tempfile;
     /// use tempfile::NamedTempFile;
     ///
     /// # fn main() {
@@ -309,10 +301,59 @@ impl TempPath {
             }),
         }
     }
+
+    /// Keep the temporary file from being deleted. This function will turn the
+    /// temporary file into a non-temporary file without moving it.
+    ///
+    ///
+    /// # Errors
+    ///
+    /// On some platforms (e.g., Windows), we need to mark the file as
+    /// non-temporary. This operation could fail.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use std::io::{self, Write};
+    /// use tempfile::NamedTempFile;
+    ///
+    /// # fn main() {
+    /// #     if let Err(_) = run() {
+    /// #         ::std::process::exit(1);
+    /// #     }
+    /// # }
+    /// # fn run() -> Result<(), io::Error> {
+    /// let mut file = NamedTempFile::new()?;
+    /// writeln!(file, "Brian was here. Briefly.")?;
+    ///
+    /// let path = file.into_temp_path();
+    /// let path = path.keep()?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// [`PathPersistError`]: struct.PathPersistError.html
+    pub fn keep(mut self) -> Result<PathBuf, PathPersistError> {
+        match imp::keep(&self.path) {
+            Ok(_) => {
+                // Don't drop `self`. We don't want to try deleting the old
+                // temporary file path. (It'll fail, but the failure is never
+                // seen.)
+                let mut path = PathBuf::new();
+                mem::swap(&mut self.path, &mut path);
+                mem::forget(self);
+                Ok(path)
+            }
+            Err(e) => Err(PathPersistError {
+                error: e,
+                path: self,
+            }),
+        }
+    }
 }
 
 impl fmt::Debug for TempPath {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.path.fmt(f)
     }
 }
@@ -352,7 +393,63 @@ impl AsRef<OsStr> for TempPath {
 ///
 /// # Security
 ///
-/// This variant is *NOT* secure/reliable in the presence of a pathological temporary file cleaner.
+/// Most operating systems employ temporary file cleaners to delete old
+/// temporary files. Unfortunately these temporary file cleaners don't always
+/// reliably _detect_ whether the temporary file is still being used.
+///
+/// Specifically, the following sequence of events can happen:
+///
+/// 1. A user creates a temporary file with `NamedTempFile::new()`.
+/// 2. Time passes.
+/// 3. The temporary file cleaner deletes (unlinks) the temporary file from the
+///    filesystem.
+/// 4. Some other program creates a new file to replace this deleted temporary
+///    file.
+/// 5. The user tries to re-open the temporary file (in the same program or in a
+///    different program) by path. Unfortunately, they'll end up opening the
+///    file created by the other program, not the original file.
+///
+/// ## Operating System Specific Concerns
+///
+/// The behavior of temporary files and temporary file cleaners differ by
+/// operating system.
+///
+/// ### Windows
+///
+/// On Windows, open files _can't_ be deleted. This removes most of the concerns
+/// around temporary file cleaners.
+///
+/// Furthermore, temporary files are, by default, created in per-user temporary
+/// file directories so only an application running as the same user would be
+/// able to interfere (which they could do anyways). However, an application
+/// running as the same user can still _accidentally_ re-create deleted
+/// temporary files if the number of random bytes in the temporary file name is
+/// too small.
+///
+/// So, the only real concern on Windows is:
+///
+/// 1. Opening a named temporary file in a world-writable directory.
+/// 2. Using the `into_temp_path()` and/or `into_parts()` APIs to close the file
+///    handle without deleting the underlying file.
+/// 3. Continuing to use the file by path.
+///
+/// ### UNIX
+///
+/// Unlike on Windows, UNIX (and UNIX like) systems allow open files to be
+/// "unlinked" (deleted).
+///
+/// #### MacOS
+///
+/// Like on Windows, temporary files are created in per-user temporary file
+/// directories by default so calling `NamedTempFile::new()` should be
+/// relatively safe.
+///
+/// #### Linux
+///
+/// Unfortunately, most _Linux_ distributions don't create per-user temporary
+/// file directories. Worse, systemd's tmpfiles daemon (a common temporary file
+/// cleaner) will happily remove open temporary files if they haven't been
+/// modified within the last 10 days.
 ///
 /// # Resource Leaking
 ///
@@ -374,7 +471,7 @@ pub struct NamedTempFile {
 }
 
 impl fmt::Debug for NamedTempFile {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "NamedTempFile({:?})", self.path)
     }
 }
@@ -410,16 +507,13 @@ impl From<PersistError> for NamedTempFile {
 }
 
 impl fmt::Display for PersistError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "failed to persist temporary file: {}", self.error)
     }
 }
 
 impl error::Error for PersistError {
-    fn description(&self) -> &str {
-        "failed to persist temporary file"
-    }
-    fn cause(&self) -> Option<&error::Error> {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         Some(&self.error)
     }
 }
@@ -432,9 +526,9 @@ impl NamedTempFile {
     /// # Security
     ///
     /// This will create a temporary file in the default temporary file
-    /// directory (platform dependent). These directories are often patrolled by temporary file
-    /// cleaners so only use this method if you're *positive* that the temporary file cleaner won't
-    /// delete your file.
+    /// directory (platform dependent). This has security implications on many
+    /// platforms so please read the security section of this type's
+    /// documentation.
     ///
     /// Reasons to use this method:
     ///
@@ -466,7 +560,6 @@ impl NamedTempFile {
     ///
     /// ```no_run
     /// # use std::io::{self, Write};
-    /// # extern crate tempfile;
     /// use tempfile::NamedTempFile;
     ///
     /// # fn main() {
@@ -500,15 +593,14 @@ impl NamedTempFile {
     ///
     /// # Security
     ///
-    /// Only use this method if you're positive that a
-    /// temporary file cleaner won't have deleted your file. Otherwise, the path
-    /// returned by this method may refer to an attacker controlled file.
+    /// Referring to a temporary file's path may not be secure in all cases.
+    /// Please read the security section on the top level documentation of this
+    /// type for details.
     ///
     /// # Examples
     ///
     /// ```no_run
     /// # use std::io::{self, Write};
-    /// # extern crate tempfile;
     /// use tempfile::NamedTempFile;
     ///
     /// # fn main() {
@@ -539,7 +631,6 @@ impl NamedTempFile {
     /// # Examples
     ///
     /// ```no_run
-    /// # extern crate tempfile;
     /// # use std::io;
     /// use tempfile::NamedTempFile;
     ///
@@ -575,9 +666,9 @@ impl NamedTempFile {
     ///
     /// # Security
     ///
-    /// Only use this method if you're positive that a
-    /// temporary file cleaner won't have deleted your file. Otherwise, you
-    /// might end up persisting an attacker controlled file.
+    /// This method persists the temporary file using it's path and may not be
+    /// secure in the in all cases. Please read the security section on the top
+    /// level documentation of this type for details.
     ///
     /// # Errors
     ///
@@ -587,7 +678,6 @@ impl NamedTempFile {
     ///
     /// ```no_run
     /// # use std::io::{self, Write};
-    /// # extern crate tempfile;
     /// use tempfile::NamedTempFile;
     ///
     /// # fn main() {
@@ -630,9 +720,9 @@ impl NamedTempFile {
     ///
     /// # Security
     ///
-    /// Only use this method if you're positive that a
-    /// temporary file cleaner won't have deleted your file. Otherwise, you
-    /// might end up persisting an attacker controlled file.
+    /// This method persists the temporary file using it's path and may not be
+    /// secure in the in all cases. Please read the security section on the top
+    /// level documentation of this type for details.
     ///
     /// # Errors
     ///
@@ -643,7 +733,6 @@ impl NamedTempFile {
     ///
     /// ```no_run
     /// # use std::io::{self, Write};
-    /// # extern crate tempfile;
     /// use tempfile::NamedTempFile;
     ///
     /// # fn main() {
@@ -673,7 +762,48 @@ impl NamedTempFile {
         }
     }
 
-    /// Reopen the temporary file.
+    /// Keep the temporary file from being deleted. This function will turn the
+    /// temporary file into a non-temporary file without moving it.
+    ///
+    ///
+    /// # Errors
+    ///
+    /// On some platforms (e.g., Windows), we need to mark the file as
+    /// non-temporary. This operation could fail.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use std::io::{self, Write};
+    /// use tempfile::NamedTempFile;
+    ///
+    /// # fn main() {
+    /// #     if let Err(_) = run() {
+    /// #         ::std::process::exit(1);
+    /// #     }
+    /// # }
+    /// # fn run() -> Result<(), io::Error> {
+    /// let mut file = NamedTempFile::new()?;
+    /// writeln!(file, "Brian was here. Briefly.")?;
+    ///
+    /// let (file, path) = file.keep()?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// [`PathPersistError`]: struct.PathPersistError.html
+    pub fn keep(self) -> Result<(File, PathBuf), PersistError> {
+        let (file, path) = (self.file, self.path);
+        match path.keep() {
+            Ok(path) => Ok((file, path)),
+            Err(PathPersistError { error, path }) => Err(PersistError {
+                file: NamedTempFile { path, file },
+                error,
+            }),
+        }
+    }
+
+    /// Securely reopen the temporary file.
     ///
     /// This function is useful when you need multiple independent handles to
     /// the same file. It's perfectly fine to drop the original `NamedTempFile`
@@ -684,11 +814,16 @@ impl NamedTempFile {
     ///
     /// If the file cannot be reopened, `Err` is returned.
     ///
+    /// # Security
+    ///
+    /// Unlike `File::open(my_temp_file.path())`, `NamedTempFile::reopen()`
+    /// guarantees that the re-opened file is the _same_ file, even in the
+    /// presence of pathological temporary file cleaners.
+    ///
     /// # Examples
     ///
     /// ```no_run
     /// # use std::io;
-    /// # extern crate tempfile;
     /// use tempfile::NamedTempFile;
     ///
     /// # fn main() {
@@ -705,6 +840,7 @@ impl NamedTempFile {
     /// ```
     pub fn reopen(&self) -> io::Result<File> {
         imp::reopen(self.as_file(), NamedTempFile::path(self))
+            .with_err_path(|| NamedTempFile::path(self))
     }
 
     /// Get a reference to the underlying file.
@@ -731,49 +867,57 @@ impl NamedTempFile {
     pub fn into_temp_path(self) -> TempPath {
         self.path
     }
+
+    /// Converts the named temporary file into its constituent parts.
+    ///
+    /// Note: When the path is dropped, the file is deleted but the file handle
+    /// is still usable.
+    pub fn into_parts(self) -> (File, TempPath) {
+        (self.file, self.path)
+    }
 }
 
 impl Read for NamedTempFile {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        self.as_file_mut().read(buf)
+        self.as_file_mut().read(buf).with_err_path(|| self.path())
     }
 }
 
 impl<'a> Read for &'a NamedTempFile {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        self.as_file().read(buf)
+        self.as_file().read(buf).with_err_path(|| self.path())
     }
 }
 
 impl Write for NamedTempFile {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        self.as_file_mut().write(buf)
+        self.as_file_mut().write(buf).with_err_path(|| self.path())
     }
     #[inline]
     fn flush(&mut self) -> io::Result<()> {
-        self.as_file_mut().flush()
+        self.as_file_mut().flush().with_err_path(|| self.path())
     }
 }
 
 impl<'a> Write for &'a NamedTempFile {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        self.as_file().write(buf)
+        self.as_file().write(buf).with_err_path(|| self.path())
     }
     #[inline]
     fn flush(&mut self) -> io::Result<()> {
-        self.as_file().flush()
+        self.as_file().flush().with_err_path(|| self.path())
     }
 }
 
 impl Seek for NamedTempFile {
     fn seek(&mut self, pos: SeekFrom) -> io::Result<u64> {
-        self.as_file_mut().seek(pos)
+        self.as_file_mut().seek(pos).with_err_path(|| self.path())
     }
 }
 
 impl<'a> Seek for &'a NamedTempFile {
     fn seek(&mut self, pos: SeekFrom) -> io::Result<u64> {
-        self.as_file().seek(pos)
+        self.as_file().seek(pos).with_err_path(|| self.path())
     }
 }
 
@@ -793,10 +937,19 @@ impl std::os::windows::io::AsRawHandle for NamedTempFile {
     }
 }
 
-// pub(crate)
-pub fn create_named(path: PathBuf) -> io::Result<NamedTempFile> {
-    imp::create_named(&path).map(|file| NamedTempFile {
-        path: TempPath { path },
-        file,
-    })
+pub(crate) fn create_named(
+    mut path: PathBuf,
+    open_options: &mut OpenOptions,
+) -> io::Result<NamedTempFile> {
+    // Make the path absolute. Otherwise, changing directories could cause us to
+    // delete the wrong file.
+    if !path.is_absolute() {
+        path = env::current_dir()?.join(path)
+    }
+    imp::create_named(&path, open_options)
+        .with_err_path(|| path.clone())
+        .map(|file| NamedTempFile {
+            path: TempPath { path },
+            file,
+        })
 }

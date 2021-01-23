@@ -13,8 +13,6 @@
  * limitations under the License.
  */
 
-use std::iter::{IntoIterator, Iterator};
-
 use super::{
     BinaryReader, BinaryReaderError, CustomSectionKind, Range, Result, SectionCode, SectionHeader,
 };
@@ -247,6 +245,92 @@ impl<'a> Section<'a> {
             end: self.offset + self.data.len(),
         }
     }
+
+    pub fn content<'b>(&self) -> Result<SectionContent<'b>>
+    where
+        'a: 'b,
+    {
+        let c = match self.code {
+            SectionCode::Type => SectionContent::Type(self.get_type_section_reader()?),
+            SectionCode::Function => SectionContent::Function(self.get_function_section_reader()?),
+            SectionCode::Code => SectionContent::Code(self.get_code_section_reader()?),
+            SectionCode::Export => SectionContent::Export(self.get_export_section_reader()?),
+            SectionCode::Import => SectionContent::Import(self.get_import_section_reader()?),
+            SectionCode::Global => SectionContent::Global(self.get_global_section_reader()?),
+            SectionCode::Memory => SectionContent::Memory(self.get_memory_section_reader()?),
+            SectionCode::Data => SectionContent::Data(self.get_data_section_reader()?),
+            SectionCode::Table => SectionContent::Table(self.get_table_section_reader()?),
+            SectionCode::Element => SectionContent::Element(self.get_element_section_reader()?),
+            SectionCode::Start => SectionContent::Start(self.get_start_section_content()?),
+            SectionCode::DataCount => {
+                SectionContent::DataCount(self.get_data_count_section_content()?)
+            }
+            SectionCode::Custom { kind, name } => {
+                // The invalid custom section may cause trouble during
+                // content() call. The spec recommends to ignore erroneous
+                // content in custom section.
+                // Return None in the content field if invalid.
+                let binary = self.get_binary_reader();
+                let content = match kind {
+                    CustomSectionKind::Name => self
+                        .get_name_section_reader()
+                        .ok()
+                        .map(CustomSectionContent::Name),
+                    CustomSectionKind::Producers => self
+                        .get_producers_section_reader()
+                        .ok()
+                        .map(CustomSectionContent::Producers),
+                    CustomSectionKind::Linking => self
+                        .get_linking_section_reader()
+                        .ok()
+                        .map(CustomSectionContent::Linking),
+                    CustomSectionKind::Reloc => self
+                        .get_reloc_section_reader()
+                        .ok()
+                        .map(CustomSectionContent::Reloc),
+                    CustomSectionKind::SourceMappingURL => self
+                        .get_sourcemappingurl_section_content()
+                        .ok()
+                        .map(CustomSectionContent::SourceMappingURL),
+                    _ => None,
+                };
+                SectionContent::Custom {
+                    name,
+                    binary,
+                    content,
+                }
+            }
+        };
+        Ok(c)
+    }
+}
+
+pub enum SectionContent<'a> {
+    Type(TypeSectionReader<'a>),
+    Function(FunctionSectionReader<'a>),
+    Code(CodeSectionReader<'a>),
+    Export(ExportSectionReader<'a>),
+    Import(ImportSectionReader<'a>),
+    Global(GlobalSectionReader<'a>),
+    Memory(MemorySectionReader<'a>),
+    Data(DataSectionReader<'a>),
+    Table(TableSectionReader<'a>),
+    Element(ElementSectionReader<'a>),
+    Start(u32),
+    DataCount(u32),
+    Custom {
+        name: &'a str,
+        binary: BinaryReader<'a>,
+        content: Option<CustomSectionContent<'a>>,
+    },
+}
+
+pub enum CustomSectionContent<'a> {
+    Name(NameSectionReader<'a>),
+    Producers(ProducersSectionReader<'a>),
+    Linking(LinkingSectionReader<'a>),
+    Reloc(RelocSectionReader<'a>),
+    SourceMappingURL(&'a str),
 }
 
 /// Reads top-level WebAssembly file structure: header and sections.
@@ -284,16 +368,16 @@ impl<'a> ModuleReader<'a> {
 
     fn verify_section_end(&self, end: usize) -> Result<()> {
         if self.reader.buffer.len() < end {
-            return Err(BinaryReaderError {
-                message: "Section body extends past end of file",
-                offset: self.reader.buffer.len(),
-            });
+            return Err(BinaryReaderError::new(
+                "Section body extends past end of file",
+                self.reader.buffer.len(),
+            ));
         }
         if self.reader.position > end {
-            return Err(BinaryReaderError {
-                message: "Section header is too big to fit into section body",
-                offset: end,
-            });
+            return Err(BinaryReaderError::new(
+                "Section header is too big to fit into section body",
+                end,
+            ));
         }
         Ok(())
     }

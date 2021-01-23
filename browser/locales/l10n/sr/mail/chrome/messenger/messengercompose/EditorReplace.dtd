@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from EdReplace.xul -->
+
+<!-- extracted from EdReplace.xhtml -->
+
+<!ENTITY replaceDialog.title "Нађи и замени">
+<!ENTITY findField.label "Нађи текст:">
+<!ENTITY findField.accesskey "н">
+<!ENTITY replaceField.label "Замени са:">
+<!ENTITY replaceField.accesskey "е">
+<!ENTITY caseSensitiveCheckbox.label "Упореди величину слова">
+<!ENTITY caseSensitiveCheckbox.accesskey "с">
+<!ENTITY wrapCheckbox.label "Преламај около">
+<!ENTITY wrapCheckbox.accesskey "П">
+<!ENTITY backwardsCheckbox.label "Тражи уназад">
+<!ENTITY backwardsCheckbox.accesskey "у">
+<!ENTITY findNextButton.label "Нађи следеће">
+<!ENTITY findNextButton.accesskey "Н">
+<!ENTITY replaceButton.label "Замени">
+<!ENTITY replaceButton.accesskey "З">
+<!ENTITY replaceAndFindButton.label "Нађи и замени">
+<!ENTITY replaceAndFindButton.accesskey "и">
+<!ENTITY replaceAllButton.label "Замени све">
+<!ENTITY replaceAllButton.accesskey "в">
+<!ENTITY closeButton.label "Затвори">
+<!ENTITY closeButton.accesskey "т">

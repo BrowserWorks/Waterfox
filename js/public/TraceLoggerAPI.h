@@ -148,6 +148,12 @@ extern JS_PUBLIC_API void StopTraceLogger(JSContext* cx);
 // Clear and free any event data that was recorded by the trace logger.
 extern JS_PUBLIC_API void ResetTraceLogger(void);
 
+// Spew trace logger statistics.
+extern JS_PUBLIC_API void SpewTraceLoggerThread(JSContext* cx);
+
+// Spew trace logger statistics.
+extern JS_PUBLIC_API void SpewTraceLoggerForCurrentProcess();
+
 #else
 // Define empty inline functions for when trace logging compilation is not
 // enabled.  TraceLogging.cpp will not be built in that case so we need to
@@ -157,6 +163,8 @@ inline bool TraceLoggerSupported() { return false; }
 inline void StartTraceLogger(JSContext* cx) {}
 inline void StopTraceLogger(JSContext* cx) {}
 inline void ResetTraceLogger(void) {}
+inline void SpewTraceLoggerThread(JSContext* cx) {}
+inline void SpewTraceLoggerForCurrentProcess() {}
 inline size_t TraceLoggerDictionaryImpl::NextChunk(JSContext* cx,
                                                    size_t* dataIndex,
                                                    ImplType buffer[],

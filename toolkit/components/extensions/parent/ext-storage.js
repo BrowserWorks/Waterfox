@@ -1,14 +1,26 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
 
 XPCOMUtils.defineLazyModuleGetters(this, {
   AddonManagerPrivate: "resource://gre/modules/AddonManager.jsm",
   ExtensionStorage: "resource://gre/modules/ExtensionStorage.jsm",
   ExtensionStorageIDB: "resource://gre/modules/ExtensionStorageIDB.jsm",
-  extensionStorageSync: "resource://gre/modules/ExtensionStorageSync.jsm",
   NativeManifests: "resource://gre/modules/NativeManifests.jsm",
 });
 
 var { ExtensionError } = ExtensionUtils;
+
+XPCOMUtils.defineLazyGetter(this, "extensionStorageSync", () => {
+  let url = Services.prefs.getBoolPref("webextensions.storage.sync.kinto")
+    ? "resource://gre/modules/ExtensionStorageSyncKinto.jsm"
+    : "resource://gre/modules/ExtensionStorageSync.jsm";
+
+  const { extensionStorageSync } = ChromeUtils.import(url, {});
+  return extensionStorageSync;
+});
 
 const enforceNoTemporaryAddon = extensionId => {
   const EXCEPTION_MESSAGE =
@@ -24,9 +36,11 @@ const enforceNoTemporaryAddon = extensionId => {
 const managedStorage = new WeakMap();
 
 const lookupManagedStorage = async (extensionId, context) => {
-  let extensionPolicy = Services.policies.getExtensionPolicy(extensionId);
-  if (extensionPolicy) {
-    return ExtensionStorage._serializableMap(extensionPolicy);
+  if (Services.policies) {
+    let extensionPolicy = Services.policies.getExtensionPolicy(extensionId);
+    if (extensionPolicy) {
+      return ExtensionStorage._serializableMap(extensionPolicy);
+    }
   }
   let info = await NativeManifests.lookupManifest(
     "storage",
@@ -84,11 +98,24 @@ this.storage = class extends ExtensionAPI {
               res.storagePrincipal.deserialize(this, true),
               persisted
             );
-            const changes = await db[method](...args);
-            if (changes) {
-              ExtensionStorageIDB.notifyListeners(extension.id, changes);
+            try {
+              const changes = await db[method](...args);
+              if (changes) {
+                ExtensionStorageIDB.notifyListeners(extension.id, changes);
+              }
+              return changes;
+            } catch (err) {
+              const normalizedError = ExtensionStorageIDB.normalizeStorageError(
+                {
+                  error: err,
+                  extensionId: extension.id,
+                  storageMethod: method,
+                }
+              ).message;
+              return Promise.reject({
+                message: String(normalizedError),
+              });
             }
-            return changes;
           },
           // Private storage.local JSONFile backend methods (used internally by the child
           // ext-storage.js module).
@@ -131,6 +158,10 @@ this.storage = class extends ExtensionAPI {
           clear() {
             enforceNoTemporaryAddon(extension.id);
             return extensionStorageSync.clear(extension, context);
+          },
+          getBytesInUse(keys) {
+            enforceNoTemporaryAddon(extension.id);
+            return extensionStorageSync.getBytesInUse(extension, keys, context);
           },
         },
 

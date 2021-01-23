@@ -12,6 +12,7 @@
 #include "frontend/SourceNotes.h"
 #include "vm/Opcodes.h"
 #include "vm/Scope.h"
+#include "vm/StencilEnums.h"  // TryNoteKind
 
 using namespace js;
 using namespace js::frontend;
@@ -58,30 +59,14 @@ bool ForOfEmitter::emitInitialize(const Maybe<uint32_t>& forPos) {
     }
   }
 
+  // For-of loops have the iterator next method and the iterator itself on the
+  // stack.
+
   int32_t iterDepth = bce_->bytecodeSection().stackDepth();
-
-  // For-of loops have the iterator next method, the iterator itself, and
-  // the result.value on the stack.
-  // Push an undefined to balance the stack.
-  if (!bce_->emit1(JSOP_UNDEFINED)) {
-    //              [stack] NEXT ITER UNDEF
-    return false;
-  }
-
   loopInfo_.emplace(bce_, iterDepth, allowSelfHostedIter_, iterKind_);
 
-  // Annotate so IonMonkey can find the loop-closing jump.
-  if (!bce_->newSrcNote(SRC_FOR_OF, &noteIndex_)) {
-    return false;
-  }
-
-  if (!loopInfo_->emitEntryJump(bce_)) {
-    //              [stack] NEXT ITER UNDEF
-    return false;
-  }
-
   if (!loopInfo_->emitLoopHead(bce_, Nothing())) {
-    //              [stack] NEXT ITER UNDEF
+    //              [stack] NEXT ITER
     return false;
   }
 
@@ -94,12 +79,12 @@ bool ForOfEmitter::emitInitialize(const Maybe<uint32_t>& forPos) {
     // it must be the innermost one. If that scope has closed-over
     // bindings inducing an environment, recreate the current environment.
     MOZ_ASSERT(headLexicalEmitterScope_ == bce_->innermostEmitterScope());
-    MOZ_ASSERT(headLexicalEmitterScope_->scope(bce_)->kind() ==
+    MOZ_ASSERT(headLexicalEmitterScope_->scope(bce_).kind() ==
                ScopeKind::Lexical);
 
     if (headLexicalEmitterScope_->hasEnvironment()) {
-      if (!bce_->emit1(JSOP_RECREATELEXICALENV)) {
-        //          [stack] NEXT ITER UNDEF
+      if (!bce_->emit1(JSOp::RecreateLexicalEnv)) {
+        //          [stack] NEXT ITER
         return false;
       }
     }
@@ -121,11 +106,7 @@ bool ForOfEmitter::emitInitialize(const Maybe<uint32_t>& forPos) {
     }
   }
 
-  if (!bce_->emit1(JSOP_POP)) {
-    //              [stack] NEXT ITER
-    return false;
-  }
-  if (!bce_->emit1(JSOP_DUP2)) {
+  if (!bce_->emit1(JSOp::Dup2)) {
     //              [stack] NEXT ITER NEXT ITER
     return false;
   }
@@ -135,40 +116,19 @@ bool ForOfEmitter::emitInitialize(const Maybe<uint32_t>& forPos) {
     return false;
   }
 
-  if (!bce_->emit1(JSOP_DUP)) {
+  if (!bce_->emit1(JSOp::Dup)) {
     //              [stack] NEXT ITER RESULT RESULT
     return false;
   }
-  if (!bce_->emitAtomOp(bce_->cx->names().done, JSOP_GETPROP)) {
+  if (!bce_->emitAtomOp(JSOp::GetProp, bce_->cx->names().done)) {
     //              [stack] NEXT ITER RESULT DONE
     return false;
   }
 
-  InternalIfEmitter ifDone(bce_);
-
-  if (!ifDone.emitThen()) {
-    //              [stack] NEXT ITER RESULT
-    return false;
-  }
-
-  // Remove RESULT from the stack to release it.
-  if (!bce_->emit1(JSOP_POP)) {
-    //              [stack] NEXT ITER
-    return false;
-  }
-  if (!bce_->emit1(JSOP_UNDEFINED)) {
-    //              [stack] NEXT ITER UNDEF
-    return false;
-  }
-
-  // If the iteration is done, leave loop here, instead of the branch at
-  // the end of the loop.
-  if (!loopInfo_->emitSpecialBreakForDone(bce_)) {
-    //              [stack] NEXT ITER UNDEF
-    return false;
-  }
-
-  if (!ifDone.emitEnd()) {
+  // if (done) break;
+  MOZ_ASSERT(bce_->innermostNestableControl == loopInfo_.ptr(),
+             "must be at the top-level of the loop");
+  if (!bce_->emitJump(JSOp::IfNe, &loopInfo_->breaks)) {
     //              [stack] NEXT ITER RESULT
     return false;
   }
@@ -176,8 +136,8 @@ bool ForOfEmitter::emitInitialize(const Maybe<uint32_t>& forPos) {
   // Emit code to assign result.value to the iteration variable.
   //
   // Note that ES 13.7.5.13, step 5.c says getting result.value does not
-  // call IteratorClose, so start JSTRY_ITERCLOSE after the GETPROP.
-  if (!bce_->emitAtomOp(bce_->cx->names().value, JSOP_GETPROP)) {
+  // call IteratorClose, so start TryNoteKind::ForOfIterClose after the GetProp.
+  if (!bce_->emitAtomOp(JSOp::GetProp, bce_->cx->names().value)) {
     //              [stack] NEXT ITER VALUE
     return false;
   }
@@ -195,19 +155,9 @@ bool ForOfEmitter::emitInitialize(const Maybe<uint32_t>& forPos) {
 bool ForOfEmitter::emitBody() {
   MOZ_ASSERT(state_ == State::Initialize);
 
-  MOZ_ASSERT(bce_->bytecodeSection().stackDepth() == loopDepth_,
+  MOZ_ASSERT(bce_->bytecodeSection().stackDepth() == loopDepth_ + 1,
              "the stack must be balanced around the initializing "
              "operation");
-
-  // Remove VALUE from the stack to release it.
-  if (!bce_->emit1(JSOP_POP)) {
-    //              [stack] NEXT ITER
-    return false;
-  }
-  if (!bce_->emit1(JSOP_UNDEFINED)) {
-    //              [stack] NEXT ITER UNDEF
-    return false;
-  }
 
 #ifdef DEBUG
   state_ = State::Body;
@@ -218,49 +168,43 @@ bool ForOfEmitter::emitBody() {
 bool ForOfEmitter::emitEnd(const Maybe<uint32_t>& iteratedPos) {
   MOZ_ASSERT(state_ == State::Body);
 
-  MOZ_ASSERT(bce_->bytecodeSection().stackDepth() == loopDepth_,
+  MOZ_ASSERT(bce_->bytecodeSection().stackDepth() == loopDepth_ + 1,
              "the stack must be balanced around the for-of body");
 
   if (!loopInfo_->emitEndCodeNeedingIteratorClose(bce_)) {
+    //              [stack] NEXT ITER VALUE
     return false;
   }
 
-  loopInfo_->setContinueTarget(bce_->bytecodeSection().offset());
+  if (!loopInfo_->emitContinueTarget(bce_)) {
+    //              [stack] NEXT ITER VALUE
+    return false;
+  }
 
-  // We use the iterated value's position to attribute JSOP_LOOPENTRY,
+  // We use the iterated value's position to attribute the backedge,
   // which corresponds to the iteration protocol.
   // This is a bit misleading for 2nd and later iterations and might need
   // some fix (bug 1482003).
-  if (!loopInfo_->emitLoopEntry(bce_, iteratedPos)) {
+  if (iteratedPos) {
+    if (!bce_->updateSourceCoordNotes(*iteratedPos)) {
+      return false;
+    }
+  }
+
+  if (!bce_->emit1(JSOp::Pop)) {
+    //              [stack] NEXT ITER
     return false;
   }
 
-  if (!bce_->emit1(JSOP_FALSE)) {
-    //              [stack] NEXT ITER UNDEF FALSE
-    return false;
-  }
-  if (!loopInfo_->emitLoopEnd(bce_, JSOP_IFEQ)) {
-    //              [stack] NEXT ITER UNDEF
+  if (!loopInfo_->emitLoopEnd(bce_, JSOp::Goto, TryNoteKind::ForOf)) {
+    //              [stack] NEXT ITER
     return false;
   }
 
+  // All jumps/breaks to this point still have an extra value on the stack.
   MOZ_ASSERT(bce_->bytecodeSection().stackDepth() == loopDepth_);
-
-  // Let Ion know where the closing jump of this loop is.
-  if (!bce_->setSrcNoteOffset(noteIndex_, SrcNote::ForOf::BackJumpOffset,
-                              loopInfo_->loopEndOffsetFromEntryJump())) {
-    return false;
-  }
-
-  if (!loopInfo_->patchBreaksAndContinues(bce_)) {
-    return false;
-  }
-
-  if (!bce_->addTryNote(JSTRY_FOR_OF, bce_->bytecodeSection().stackDepth(),
-                        loopInfo_->headOffset(),
-                        loopInfo_->breakTargetOffset())) {
-    return false;
-  }
+  bce_->bytecodeSection().setStackDepth(bce_->bytecodeSection().stackDepth() +
+                                        1);
 
   if (!bce_->emitPopN(3)) {
     //              [stack]

@@ -18,10 +18,8 @@
 #include "mozilla/UniquePtr.h"
 #include "nsCycleCollectionParticipant.h"  // NS_DECL_CYCLE_*
 #include "nsIContent.h"                    // base class
-#include "nsNodeUtils.h"  // class member nsNodeUtils::CloneNodeImpl
 #include "nsIHTMLCollection.h"
 #include "nsDataHashtable.h"
-#include "nsXBLBinding.h"
 
 class ContentUnbinder;
 class nsContentList;
@@ -58,7 +56,7 @@ class nsNodeSupportsWeakRefTearoff final : public nsISupportsWeakReference {
   NS_DECL_CYCLE_COLLECTION_CLASS(nsNodeSupportsWeakRefTearoff)
 
  private:
-  ~nsNodeSupportsWeakRefTearoff() {}
+  ~nsNodeSupportsWeakRefTearoff() = default;
 
   nsCOMPtr<nsINode> mNode;
 };
@@ -100,7 +98,6 @@ class FragmentOrElement : public nsIContent {
   virtual uint32_t TextLength() const override;
   virtual bool TextIsOnlyWhitespace() override;
   virtual bool ThreadSafeTextIsOnlyWhitespace() const override;
-  virtual nsXBLBinding* DoGetXBLBinding() const override;
   virtual bool IsLink(nsIURI** aURI) const override;
 
   virtual void DestroyContent() override;
@@ -194,11 +191,6 @@ class FragmentOrElement : public nsIContent {
     RefPtr<ShadowRoot> mShadowRoot;
 
     /**
-     * XBL binding installed on the element.
-     */
-    RefPtr<nsXBLBinding> mXBLBinding;
-
-    /**
      * Web components custom element data.
      */
     RefPtr<CustomElementData> mCustomElementData;
@@ -241,6 +233,11 @@ class FragmentOrElement : public nsIContent {
      * An object implementing the .classList property for this element.
      */
     RefPtr<nsDOMTokenList> mClassList;
+
+    /**
+     * An object implementing the .part property for this element.
+     */
+    RefPtr<nsDOMTokenList> mPart;
   };
 
   /**

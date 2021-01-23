@@ -6,8 +6,8 @@
 #include "nsIContentPolicy.idl"
 
 interface nsIURI;
-interface nsIDocShell;
 interface nsIEventTarget;
+interface nsILoadInfo;
 interface nsIPrincipal;
 interface nsICSPEventListener;
 
@@ -29,7 +29,7 @@ class nsCSPPolicy;
 
 [ptr] native CSPPolicyPtr(const nsCSPPolicy);
 
-[scriptable, builtinclass, uuid(b3c4c0ae-bd5e-4cad-87e0-8d210dbb3f9f)]
+[scriptable, builtinclass, uuid(1d632008-6c97-48ae-a51c-16e2daa0f4f6)]
 interface nsIContentSecurityPolicy : nsISerializable
 {
   /**
@@ -62,6 +62,7 @@ interface nsIContentSecurityPolicy : nsISerializable
   const unsigned short BLOCK_ALL_MIXED_CONTENT        = 18;
   const unsigned short SANDBOX_DIRECTIVE              = 19;
   const unsigned short WORKER_SRC_DIRECTIVE           = 20;
+  const unsigned short NAVIGATE_TO_DIRECTIVE          = 21;
 
   /**
    * Accessor method for a read-only string version of the policy at a given
@@ -145,6 +146,24 @@ interface nsIContentSecurityPolicy : nsISerializable
                           in unsigned long aLineNumber,
                           in unsigned long aColumnNumber);
 
+  /*
+   * Whether this policy allows a navigation subject to the navigate-to
+   * policy.
+   * @param aURI The target URI
+   * @param aIsFormSubmission True if the navigation was initiated by a form submission. This
+   *        is important since the form-action directive overrides navigate-to in that case.  
+   * @param aWasRedirect True if a redirect has happened. Important for path-sensitivity.
+   * @param aEnforceWhitelist True if the whitelist of allowed targets must be enforced. If 
+   *        this is true, the whitelist must be enforced even if 'unsafe-allow-redirects' is 
+   *        used. If 'unsafe-allow-redirects' is not used then the whitelist is always enforced
+   * @return
+   *     Whether or not the effects of the navigation is allowed
+   */
+  boolean getAllowsNavigateTo(in nsIURI aURI, 
+                              in boolean aIsFormSubmission,
+                              in boolean aWasRedirected,
+                              in boolean aEnforceWhitelist);
+
   /**
    * whether this policy allows eval and eval-like functions
    * such as setTimeout("code string", time).
@@ -221,31 +240,49 @@ interface nsIContentSecurityPolicy : nsISerializable
    * Called after the CSP object is created to fill in appropriate request
    * context. Either use
    *  * aDocument (preferred), or if no document is available, then provide
-   *  * aPrincipal
+   *  * aPrincipal, aSelfURI, aReferrer, aInnerWindowId explicitly.
    */
-  void setRequestContext(in Document aDocument,
-                         in nsIPrincipal aPrincipal);
+  [must_use] void setRequestContextWithDocument(in Document aDocument);
+  [must_use] void setRequestContextWithPrincipal(in nsIPrincipal aRequestPrincipal,
+                                                 in nsIURI aSelfURI,
+                                                 in AString aReferrer,
+                                                 in unsigned long long aInnerWindowId);
+
+  /**
+   * Get the various arguments needed to create a new request context for a CSP.
+   */
+  [noscript, notxpcom, nostdcall] readonly attribute nsIPrincipal requestPrincipal;
+  [noscript, notxpcom, nostdcall] readonly attribute nsIURI selfURI;
+  [noscript] readonly attribute AString referrer;
+  [noscript, notxpcom, nostdcall] readonly attribute unsigned long long innerWindowID;
+
+  /**
+   * Warning: Do not set that attribute unless you know exactly what you are doing!
+   *
+   * Primarily used to allow Devtools to edit inline styles!
+   */
+  [noscript, notxpcom, nostdcall] attribute boolean skipAllowInlineStyleCheck;
 
   /**
    *  Ensure we have a nsIEventTarget to use to label CSPReportSenderRunnable
    */
   [noscript] void ensureEventTarget(in nsIEventTarget aEventTarget);
 
- 
+
   /**
    * Verifies ancestry as permitted by the policy.
    *
    * NOTE: Calls to this may trigger violation reports when queried, so this
    * value should not be cached.
    *
-   * @param docShell
-   *    containing the protected resource
+   * @param aLoadInfo
+   *    The loadinfo of the channel containing the protected resource
    * @return
    *    true if the frame's ancestors are all allowed by policy (except for
    *    report-only policies, which will send reports and then return true
    *    here when violated).
    */
-  boolean permitsAncestry(in nsIDocShell docShell);
+  boolean permitsAncestry(in nsILoadInfo aLoadInfo);
 
 
   /**
@@ -292,12 +329,11 @@ interface nsIContentSecurityPolicy : nsISerializable
   short shouldLoad(in nsContentPolicyType aContentType,
                    in nsICSPEventListener aCSPEventListener,
                    in nsIURI          aContentLocation,
-                   in nsIURI          aRequestOrigin,
-                   in nsISupports     aContext,
                    in ACString        aMimeTypeGuess,
                    in nsIURI          aOriginalURIIfRedirect,
                    in bool            aSendViolationReports,
-                   in AString         aNonce);
+                   in AString         aNonce,
+                   in boolean         aParserCreated);
 
 %{ C++
 // nsIObserver topic to fire when the policy encounters a violation.

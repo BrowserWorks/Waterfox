@@ -150,9 +150,7 @@ var Authentication = {
       let deleteResult = await fetch(restmailURI, { method: "DELETE" });
       if (!deleteResult.ok) {
         Logger.logInfo(
-          `Warning: Got non-success status ${
-            deleteResult.status
-          } when deleting emails`
+          `Warning: Got non-success status ${deleteResult.status} when deleting emails`
         );
         return false;
       }
@@ -207,7 +205,7 @@ var Authentication = {
         account.password,
         true
       );
-      await fxAccounts.setSignedInUser(credentials);
+      await fxAccounts._internal.setSignedInUser(credentials);
       if (!credentials.verified) {
         await this._completeVerification(account.username);
       }

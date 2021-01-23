@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "વ્યક્તિગત શબ્દકોષ">
+
+<!ENTITY wordEditField.label "નવો શબ્દકોષ:">
+<!ENTITY wordEditField.accessKey "N">
+<!ENTITY AddButton.label "એડ-ઓન">
+<!ENTITY AddButton.accessKey "A">
+<!ENTITY DictionaryList.label "શબ્દકોષમાંના શબ્દો:">
+<!ENTITY DictionaryList.accessKey "W">
+<!ENTITY ReplaceButton.label "બદલો">
+<!ENTITY ReplaceButton.accessKey "R">
+<!ENTITY RemoveButton.label "દૂર કરો">
+<!ENTITY RemoveButton.accessKey "e">
+
+<!ENTITY CloseButton.label "બંધ કરો">
+<!ENTITY CloseButton.accessKey "C">

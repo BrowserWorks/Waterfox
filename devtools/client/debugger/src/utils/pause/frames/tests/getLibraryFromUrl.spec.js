@@ -60,8 +60,16 @@ describe("getLibraryFromUrl", () => {
         "https://debugger-example.com/react.production.min.js",
         "https://debugger-react-example.com/react.js",
         "https://debugger-react-example.com/react/react.js",
+        "https://debugger-example.com/react-dom.js",
+        "https://debugger-example.com/react-dom.development.js",
+        "https://debugger-example.com/react-dom.production.min.js",
+        "https://debugger-react-example.com/react-dom.js",
+        "https://debugger-react-example.com/react/react-dom.js",
+        "https://debugger-react-example.com/react-dom-dev.js",
         "/node_modules/react/test.js",
+        "/node_modules/react-dev/test.js",
         "/node_modules/react-dom/test.js",
+        "/node_modules/react-dom-dev/test.js",
       ];
       reactUrlList.forEach(reactUrl => {
         const frame = makeMockFrameWithURL(reactUrl);
@@ -96,14 +104,14 @@ describe("getLibraryFromUrl", () => {
   describe("When zone.js is on the frame", () => {
     it("should not return Angular when no callstack", () => {
       const frame = makeMockFrameWithURL("/node_modules/zone/zone.js");
-      expect(getLibraryFromUrl(frame)).toEqual(null);
+      expect(getLibraryFromUrl(frame)).toBeNull();
     });
 
     it("should not return Angular when stack without Angular frames", () => {
       const frame = makeMockFrameWithURL("/node_modules/zone/zone.js");
       const callstack = [frame];
 
-      expect(getLibraryFromUrl(frame, callstack)).toEqual(null);
+      expect(getLibraryFromUrl(frame, callstack)).toBeNull();
     });
 
     it("should return Angular when stack with AngularJS (1.x) frames", () => {

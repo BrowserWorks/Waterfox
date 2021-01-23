@@ -7,101 +7,9 @@
 
 #import <Cocoa/Cocoa.h>
 
-#include "mozilla/RefPtr.h"
 #include "nsITouchBarHelper.h"
-#include "nsITouchBarInput.h"
-
-#if !defined(MAC_OS_X_VERSION_10_12) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_12
-@interface NSButton (NewConstructors)
-@property(nonatomic) BOOL imageHugsTitle;
-+ (NSButton*)buttonWithTitle:(NSString*)title target:(id)target action:(SEL)action;
-@end
-
-@interface NSColor (DisplayP3Colors)
-+ (NSColor*)colorWithDisplayP3Red:(CGFloat)red
-                            green:(CGFloat)green
-                             blue:(CGFloat)blue
-                            alpha:(CGFloat)alpha;
-@end
-#endif
-
-#if !defined(MAC_OS_X_VERSION_10_12_2) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_12_2
-typedef NSString* NSTouchBarItemIdentifier;
-__attribute__((weak_import)) @interface NSTouchBarItem : NSObject
-- (instancetype)initWithIdentifier:(NSTouchBarItemIdentifier)aIdentifier;
-@end
-
-__attribute__((weak_import)) @interface NSCustomTouchBarItem : NSTouchBarItem
-@property(strong) NSView* view;
-@property(strong) NSString* customizationLabel;
-@end
-
-@protocol NSTouchBarDelegate
-@end
-
-__attribute__((weak_import)) @interface NSTouchBar : NSObject
-@property(strong) NSArray<NSTouchBarItemIdentifier>* defaultItemIdentifiers;
-@property(strong) id<NSTouchBarDelegate> delegate;
-- (NSTouchBarItem*)itemForIdentifier:(NSTouchBarItemIdentifier)aIdentifier;
-@end
-
-@protocol NSSharingServicePickerTouchBarItemDelegate
-@end
-
-__attribute__((weak_import)) @interface NSSharingServicePickerTouchBarItem : NSTouchBarItem
-@property(strong) id<NSSharingServicePickerTouchBarItemDelegate> delegate;
-@property(strong) NSImage* buttonImage;
-@end
-
-@interface NSButton (TouchBarButton)
-@property(strong) NSColor* bezelColor;
-@end
-#endif
-
-/**
- * NSObject representation of nsITouchBarInput.
- */
-@interface TouchBarInput : NSObject {
-  NSString* mKey;
-  NSString* mTitle;
-  NSImage* mImage;
-  NSString* mType;
-  NSColor* mColor;
-  BOOL mDisabled;
-  NSTouchBarItemIdentifier mNativeIdentifier;
-  nsCOMPtr<nsITouchBarInputCallback> mCallback;
-}
-
-- (NSString*)key;
-- (NSString*)title;
-- (NSImage*)image;
-- (NSString*)type;
-- (NSColor*)color;
-- (BOOL)isDisabled;
-- (NSTouchBarItemIdentifier)nativeIdentifier;
-- (nsCOMPtr<nsITouchBarInputCallback>)callback;
-- (void)setKey:(NSString*)aKey;
-- (void)setTitle:(NSString*)aTitle;
-- (void)setImage:(NSImage*)aImage;
-- (void)setType:(NSString*)aType;
-- (void)setColor:(NSColor*)aColor;
-- (void)setDisabled:(BOOL)aDisabled;
-- (void)setNativeIdentifier:(NSString*)aNativeIdentifier;
-- (void)setCallback:(nsCOMPtr<nsITouchBarInputCallback>)aCallback;
-
-- (id)initWithKey:(NSString*)aKey
-            title:(NSString*)aTitle
-            image:(NSString*)aImage
-             type:(NSString*)aType
-         callback:(nsCOMPtr<nsITouchBarInputCallback>)aCallback
-            color:(uint32_t)aColor
-         disabled:(BOOL)aDisabled;
-
-- (TouchBarInput*)initWithXPCOM:(nsCOMPtr<nsITouchBarInput>)aInput;
-
-- (void)dealloc;
-
-@end
+#include "nsTouchBarInput.h"
+#include "nsTouchBarNativeAPIDefines.h"
 
 /**
  * Our TouchBar is its own delegate. This is adequate for our purposes,
@@ -127,10 +35,25 @@ __attribute__((weak_import)) @interface NSSharingServicePickerTouchBarItem : NST
 @property(strong) NSMutableDictionary<NSTouchBarItemIdentifier, TouchBarInput*>* mappedLayoutItems;
 
 /**
+ * Stores buttons displayed in a NSScrollView. They must be stored separately
+ * because they are untethered from the nsTouchBar. As such, they
+ * cannot be retrieved with [NSTouchBar itemForIdentifier].
+ */
+@property(strong)
+    NSMutableDictionary<NSTouchBarItemIdentifier, NSCustomTouchBarItem*>* scrollViewButtons;
+
+/**
  * Returns an instance of nsTouchBar based on implementation details
  * fetched from the frontend through nsTouchBarHelper.
  */
 - (instancetype)init;
+
+/**
+ * If aInputs is not nil, a nsTouchBar containing the inputs specified is
+ * initialized. Otherwise, a nsTouchBar is initialized containing a default set
+ * of inputs.
+ */
+- (instancetype)initWithInputs:(NSMutableArray<TouchBarInput*>*)aInputs;
 
 - (void)dealloc;
 
@@ -146,20 +69,56 @@ __attribute__((weak_import)) @interface NSSharingServicePickerTouchBarItem : NST
 /**
  * Updates an input on the Touch Bar by redirecting to one of the specific
  * TouchBarItem types updaters.
+ * Returns true if the input was successfully updated.
  */
-- (void)updateItem:(TouchBarInput*)aInput;
+- (bool)updateItem:(TouchBarInput*)aInput;
+
+/**
+ * Helper function for updateItem. Checks to see if a given input exists within
+ * any of this Touch Bar's popovers and updates it if it exists.
+ */
+- (bool)maybeUpdatePopoverChild:(TouchBarInput*)aInput;
+
+/**
+ * Helper function for updateItem. Checks to see if a given input exists within
+ * any of this Touch Bar's scroll views and updates it if it exists.
+ */
+- (bool)maybeUpdateScrollViewChild:(TouchBarInput*)aInput;
+
+/**
+ * Helper function for updateItem. Replaces an item in the
+ * self.mappedLayoutItems dictionary.
+ */
+- (void)replaceMappedLayoutItem:(TouchBarInput*)aItem;
 
 /**
  * Update or create various subclasses of TouchBarItem.
  */
-- (NSTouchBarItem*)updateButton:(NSCustomTouchBarItem*)aButton input:(TouchBarInput*)aInput;
-- (NSTouchBarItem*)updateMainButton:(NSCustomTouchBarItem*)aMainButton input:(TouchBarInput*)aInput;
+- (void)updateButton:(NSCustomTouchBarItem*)aButton
+      withIdentifier:(NSTouchBarItemIdentifier)aIdentifier;
+- (void)updateMainButton:(NSCustomTouchBarItem*)aMainButton
+          withIdentifier:(NSTouchBarItemIdentifier)aIdentifier;
+- (void)updatePopover:(NSPopoverTouchBarItem*)aPopoverItem
+       withIdentifier:(NSTouchBarItemIdentifier)aIdentifier;
+- (void)updateScrollView:(NSCustomTouchBarItem*)aScrollViewItem
+          withIdentifier:(NSTouchBarItemIdentifier)aIdentifier;
+- (void)updateLabel:(NSTextField*)aLabel withIdentifier:(NSTouchBarItemIdentifier)aIdentifier;
 - (NSTouchBarItem*)makeShareScrubberForIdentifier:(NSTouchBarItemIdentifier)aIdentifier;
 
 /**
- *  Redirects button actions to the appropriate handler and handles telemetry.
+ * If aShowing is true, aPopover is shown. Otherwise, it is hidden.
+ */
+- (void)showPopover:(TouchBarInput*)aPopover showing:(bool)aShowing;
+
+/**
+ *  Redirects button actions to the appropriate handler.
  */
 - (void)touchBarAction:(id)aSender;
+
+/**
+ * Helper function to initialize a new nsTouchBarInputIcon and load an icon.
+ */
+- (void)loadIconForInput:(TouchBarInput*)aInput forItem:(NSTouchBarItem*)aItem;
 
 - (NSArray*)itemsForSharingServicePickerTouchBarItem:
     (NSSharingServicePickerTouchBarItem*)aPickerTouchBarItem;
@@ -167,11 +126,6 @@ __attribute__((weak_import)) @interface NSSharingServicePickerTouchBarItem : NST
 - (NSArray<NSSharingService*>*)sharingServicePicker:(NSSharingServicePicker*)aSharingServicePicker
                             sharingServicesForItems:(NSArray*)aItems
                             proposedSharingServices:(NSArray<NSSharingService*>*)aProposedServices;
-
-/**
- * Retrieves TouchBarInput icons.
- */
-+ (NSImage*)getTouchBarIconNamed:(NSString*)aImageName;
 
 - (void)releaseJSObjects;
 

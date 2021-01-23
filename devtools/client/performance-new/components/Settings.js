@@ -1,21 +1,73 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+// @ts-check
+
+/**
+ * @typedef {Object} StateProps
+ * @property {number} interval
+ * @property {number} entries
+ * @property {string[]} features
+ * @property {string[]} threads
+ * @property {string} threadsString
+ * @property {string[]} objdirs
+ * @property {string[]} supportedFeatures
+ */
+
+/**
+ * @typedef {Object} ThunkDispatchProps
+ * @property {typeof actions.changeInterval} changeInterval
+ * @property {typeof actions.changeEntries} changeEntries
+ * @property {typeof actions.changeFeatures} changeFeatures
+ * @property {typeof actions.changeThreads} changeThreads
+ * @property {typeof actions.changeObjdirs} changeObjdirs
+ */
+
+/**
+ * @typedef {ResolveThunks<ThunkDispatchProps>} DispatchProps
+ */
+
+/**
+ * @typedef {Object} State
+ * @property {null | string} temporaryThreadText
+ */
+
+/**
+ * @typedef {import("../@types/perf").PopupWindow} PopupWindow
+ * @typedef {import("../@types/perf").State} StoreState
+ * @typedef {import("../@types/perf").FeatureDescription} FeatureDescription
+ *
+ * @typedef {StateProps & DispatchProps} Props
+ */
+
+/**
+ * @template P
+ * @typedef {import("react-redux").ResolveThunks<P>} ResolveThunks<P>
+ */
+
+/**
+ * @template InjectedProps
+ * @template NeededProps
+ * @typedef {import("react-redux")
+ *    .InferableComponentEnhancerWithProps<InjectedProps, NeededProps>
+ * } InferableComponentEnhancerWithProps<InjectedProps, NeededProps>
+ */
 "use strict";
+
 const {
   PureComponent,
   createFactory,
 } = require("devtools/client/shared/vendor/react");
 const {
   div,
-  details,
-  summary,
   label,
   input,
-  span,
+  h1,
   h2,
+  h3,
   section,
   p,
+  em,
 } = require("devtools/client/shared/vendor/react-dom-factories");
 const Range = createFactory(
   require("devtools/client/performance-new/components/Range")
@@ -25,27 +77,25 @@ const DirectoryPicker = createFactory(
 );
 const {
   makeExponentialScale,
+  makePowerOf2Scale,
   formatFileSize,
-  calculateOverhead,
+  featureDescriptions,
 } = require("devtools/client/performance-new/utils");
 const { connect } = require("devtools/client/shared/vendor/react-redux");
-const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
 const actions = require("devtools/client/performance-new/store/actions");
 const selectors = require("devtools/client/performance-new/store/selectors");
-const { XPCOMUtils } = require("resource://gre/modules/XPCOMUtils.jsm");
-XPCOMUtils.defineLazyServiceGetter(
-  this,
-  "FilePicker",
-  "@mozilla.org/filepicker;1",
-  "nsIFilePicker"
-);
+const {
+  openFilePickerForObjdir,
+} = require("devtools/client/performance-new/browser");
 
-// sizeof(double) + sizeof(char)
-// http://searchfox.org/mozilla-central/rev/e8835f52eff29772a57dca7bcc86a9a312a23729/tools/profiler/core/ProfileEntry.h#73
-const PROFILE_ENTRY_SIZE = 9;
+// The Gecko Profiler interprets the "entries" setting as 8 bytes per entry.
+const PROFILE_ENTRY_SIZE = 8;
 
-const NOTCHES = Array(22).fill("discrete-level-notch");
+/**
+ * @typedef {{ name: string, id: string, title: string }} ThreadColumn
+ */
 
+/** @type {Array<ThreadColumn[]>} */
 const threadColumns = [
   [
     {
@@ -113,108 +163,17 @@ const threadColumns = [
   ],
 ];
 
-const featureCheckboxes = [
-  {
-    name: "Native Stacks",
-    value: "stackwalk",
-    title:
-      "Record native stacks (C++ and Rust). This is not available on all platforms.",
-    recommended: true,
-  },
-  {
-    name: "JavaScript",
-    value: "js",
-    title:
-      "Record JavaScript stack information, and interleave it with native stacks.",
-    recommended: true,
-  },
-  {
-    name: "Responsiveness",
-    value: "responsiveness",
-    title: "Collect thread responsiveness information.",
-    recommended: true,
-  },
-  {
-    name: "Java",
-    value: "java",
-    title: "Profile Java code (Android only).",
-  },
-  {
-    name: "Native Leaf Stack",
-    value: "leaf",
-    title:
-      "Record the native memory address of the leaf-most stack. This could be " +
-      "useful on platforms that do not support stack walking.",
-  },
-  {
-    name: "Main Thread IO",
-    value: "mainthreadio",
-    title: "Record main thread I/O markers.",
-  },
-  {
-    name: "Memory",
-    value: "memory",
-    title:
-      "Add memory measurements to the samples, this includes resident set size " +
-      "(RSS) and unique set size (USS).",
-  },
-  {
-    name: "Privacy",
-    value: "privacy",
-    title: "Remove some potentially user-identifiable information.",
-  },
-  {
-    name: "Sequential Styling",
-    value: "seqstyle",
-    title: "Disable parallel traversal in styling.",
-  },
-  {
-    name: "JIT Optimizations",
-    value: "trackopts",
-    title: "Track JIT optimizations in the JS engine.",
-  },
-  {
-    name: "TaskTracer",
-    value: "tasktracer",
-    title: "Enable TaskTracer (Experimental, requires custom build.)",
-  },
-  {
-    name: "Screenshots",
-    value: "screenshots",
-    title: "Record screenshots of all browser windows.",
-  },
-  {
-    name: "JSTracer",
-    value: "jstracer",
-    title: "Trace JS engine (Experimental, requires custom build.)",
-  },
-];
-
 /**
  * This component manages the settings for recording a performance profile.
+ * @extends {React.PureComponent<Props, State>}
  */
 class Settings extends PureComponent {
-  static get propTypes() {
-    return {
-      // StateProps
-      interval: PropTypes.number.isRequired,
-      entries: PropTypes.number.isRequired,
-      features: PropTypes.array.isRequired,
-      threads: PropTypes.array.isRequired,
-      threadsString: PropTypes.string.isRequired,
-      objdirs: PropTypes.array.isRequired,
-
-      // DispatchProps
-      changeInterval: PropTypes.func.isRequired,
-      changeEntries: PropTypes.func.isRequired,
-      changeFeatures: PropTypes.func.isRequired,
-      changeThreads: PropTypes.func.isRequired,
-      changeObjdirs: PropTypes.func.isRequired,
-    };
-  }
-
+  /**
+   * @param {Props} props
+   */
   constructor(props) {
     super(props);
+    /** @type {State} */
     this.state = {
       // Allow the textbox to have a temporary tracked value.
       temporaryThreadText: null,
@@ -233,38 +192,16 @@ class Settings extends PureComponent {
     this._renderThreadsColumns = this._renderThreadsColumns.bind(this);
 
     this._intervalExponentialScale = makeExponentialScale(0.01, 100);
-    this._entriesExponentialScale = makeExponentialScale(100000, 100000000);
+    this._entriesExponentialScale = makePowerOf2Scale(
+      128 * 1024,
+      256 * 1024 * 1024
+    );
   }
 
-  _renderNotches() {
-    const { interval, entries, features } = this.props;
-    const overhead = calculateOverhead(interval, entries, features);
-    const notchCount = 22;
-    const notches = [];
-    for (let i = 0; i < notchCount; i++) {
-      const active =
-        i <= Math.round(overhead * (NOTCHES.length - 1))
-          ? "active"
-          : "inactive";
-
-      let level = "normal";
-      if (i > 16) {
-        level = "critical";
-      } else if (i > 10) {
-        level = "warning";
-      }
-      notches.push(
-        div({
-          key: i,
-          className:
-            `perf-settings-notch perf-settings-notch-${level} ` +
-            `perf-settings-notch-${active}`,
-        })
-      );
-    }
-    return notches;
-  }
-
+  /**
+   * Handle the checkbox change.
+   * @param {React.ChangeEvent<HTMLInputElement>} event
+   */
   _handleThreadCheckboxChange(event) {
     const { threads, changeThreads } = this.props;
     const { checked, value } = event.target;
@@ -278,6 +215,10 @@ class Settings extends PureComponent {
     }
   }
 
+  /**
+   * Handle the checkbox change.
+   * @param {React.ChangeEvent<HTMLInputElement>} event
+   */
   _handleFeaturesCheckboxChange(event) {
     const { features, changeFeatures } = this.props;
     const { checked, value } = event.target;
@@ -293,18 +234,13 @@ class Settings extends PureComponent {
 
   _handleAddObjdir() {
     const { objdirs, changeObjdirs } = this.props;
-    FilePicker.init(window, "Pick build directory", FilePicker.modeGetFolder);
-    FilePicker.open(rv => {
-      if (rv == FilePicker.returnOK) {
-        const path = FilePicker.file.path;
-        if (path && !objdirs.includes(path)) {
-          const newObjdirs = [...objdirs, path];
-          changeObjdirs(newObjdirs);
-        }
-      }
-    });
+    openFilePickerForObjdir(window, objdirs, changeObjdirs);
   }
 
+  /**
+   * @param {number} index
+   * @return {void}
+   */
   _handleRemoveObjdir(index) {
     const { objdirs, changeObjdirs } = this.props;
     const newObjdirs = [...objdirs];
@@ -312,15 +248,26 @@ class Settings extends PureComponent {
     changeObjdirs(newObjdirs);
   }
 
+  /**
+   * @param {React.ChangeEvent<HTMLInputElement>} event
+   */
   _setThreadTextFromInput(event) {
     this.setState({ temporaryThreadText: event.target.value });
   }
 
+  /**
+   * @param {React.ChangeEvent<HTMLInputElement>} event
+   */
   _handleThreadTextCleanup(event) {
     this.setState({ temporaryThreadText: null });
     this.props.changeThreads(_threadTextToList(event.target.value));
   }
 
+  /**
+   * @param {ThreadColumn[]} threadDisplay
+   * @param {number} index
+   * @return {React.ReactNode}
+   */
   _renderThreadsColumns(threadDisplay, index) {
     const { threads } = this.props;
     return div(
@@ -328,7 +275,8 @@ class Settings extends PureComponent {
       threadDisplay.map(({ name, title, id }) =>
         label(
           {
-            className: "perf-settings-checkbox-label",
+            className:
+              "perf-settings-checkbox-label perf-settings-thread-label",
             key: name,
             title,
           },
@@ -347,130 +295,180 @@ class Settings extends PureComponent {
   }
 
   _renderThreads() {
-    return details(
-      { className: "perf-settings-details" },
-      summary(
-        {
-          className: "perf-settings-summary",
-          id: "perf-settings-threads-summary",
-        },
-        "Threads:"
-      ),
-      // Contain the overflow of the slide down animation with the first div.
+    const { temporaryThreadText } = this.state;
+    const { threads } = this.props;
+
+    return renderSection(
+      "perf-settings-threads-summary",
+      "Threads",
       div(
-        { className: "perf-settings-details-contents" },
-        // Provide a second <div> element for the contents of the slide down animation.
+        null,
         div(
-          { className: "perf-settings-details-contents-slider" },
-          div(
-            { className: "perf-settings-thread-columns" },
-            threadColumns.map(this._renderThreadsColumns)
-          ),
-          div(
-            { className: "perf-settings-row" },
-            label(
-              {
-                className: "perf-settings-text-label",
-                title:
-                  "These thread names are a comma separated list that is used to " +
-                  "enable profiling of the threads in the profiler. The name needs to " +
-                  "be only a partial match of the thread name to be included. It " +
-                  "is whitespace sensitive.",
-              },
-              div({}, "Add custom threads by name:"),
-              input({
-                className: "perf-settings-text-input",
-                id: "perf-settings-thread-text",
-                type: "text",
-                value:
-                  this.state.temporaryThreadText === null
-                    ? this.props.threads
-                    : this.state.temporaryThreadText,
-                onBlur: this._handleThreadTextCleanup,
-                onFocus: this._setThreadTextFromInput,
-                onChange: this._setThreadTextFromInput,
-              })
-            )
+          { className: "perf-settings-thread-columns" },
+          threadColumns.map(this._renderThreadsColumns)
+        ),
+        div(
+          { className: "perf-settings-all-threads" },
+          label(
+            {
+              className: "perf-settings-checkbox-label",
+            },
+            input({
+              className: "perf-settings-checkbox",
+              id: "perf-settings-thread-checkbox-all-threads",
+              type: "checkbox",
+              value: "*",
+              checked: threads.includes("*"),
+              onChange: this._handleThreadCheckboxChange,
+            }),
+            "Bypass selections above and record ",
+            em(null, "all"),
+            " registered threads"
+          )
+        ),
+        div(
+          { className: "perf-settings-row" },
+          label(
+            {
+              className: "perf-settings-text-label",
+              title:
+                "These thread names are a comma separated list that is used to " +
+                "enable profiling of the threads in the profiler. The name needs to " +
+                "be only a partial match of the thread name to be included. It " +
+                "is whitespace sensitive.",
+            },
+            div(null, "Add custom threads by name:"),
+            input({
+              className: "perf-settings-text-input",
+              id: "perf-settings-thread-text",
+              type: "text",
+              value:
+                temporaryThreadText === null
+                  ? threads.join(",")
+                  : temporaryThreadText,
+              onBlur: this._handleThreadTextCleanup,
+              onFocus: this._setThreadTextFromInput,
+              onChange: this._setThreadTextFromInput,
+            })
           )
         )
       )
     );
   }
 
-  _renderFeatures() {
-    return details(
-      { className: "perf-settings-details" },
-      summary(
-        {
-          className: "perf-settings-summary",
-          id: "perf-settings-features-summary",
-        },
-        "Features:"
-      ),
-      div(
-        { className: "perf-settings-details-contents" },
-        div(
-          { className: "perf-settings-details-contents-slider" },
-          featureCheckboxes.map(({ name, value, title, recommended }) =>
-            label(
-              {
-                className:
-                  "perf-settings-checkbox-label perf-settings-feature-label",
-                key: value,
-              },
-              input({
-                className: "perf-settings-checkbox",
-                id: `perf-settings-feature-checkbox-${value}`,
-                type: "checkbox",
-                value,
-                checked: this.props.features.includes(value),
-                onChange: this._handleFeaturesCheckboxChange,
-              }),
-              div({ className: "perf-settings-feature-name" }, name),
-              div(
-                { className: "perf-settings-feature-title" },
-                title,
-                recommended
-                  ? span(
-                      { className: "perf-settings-subtext" },
-                      " (Recommended on by default.)"
-                    )
-                  : null
-              )
+  /**
+   * @param {string} sectionTitle
+   * @param {FeatureDescription[]} features
+   * @param {boolean} isSupported
+   */
+  _renderFeatureSection(sectionTitle, features, isSupported) {
+    if (features.length === 0) {
+      return null;
+    }
+    return div(
+      null,
+      h3(null, sectionTitle),
+      features.map(featureDescription => {
+        const { name, value, title, disabledReason } = featureDescription;
+        const extraClassName = isSupported
+          ? ""
+          : "perf-settings-checkbox-label-disabled";
+        return label(
+          {
+            className: `perf-settings-checkbox-label perf-settings-feature-label ${extraClassName}`,
+            key: value,
+          },
+          div(
+            { className: "perf-settings-checkbox-and-name" },
+            input({
+              className: "perf-settings-checkbox",
+              id: `perf-settings-feature-checkbox-${value}`,
+              type: "checkbox",
+              value,
+              checked: isSupported && this.props.features.includes(value),
+              onChange: this._handleFeaturesCheckboxChange,
+              disabled: !isSupported,
+            }),
+            div(
+              { className: "perf-settings-feature-name" },
+              !isSupported && featureDescription.experimental
+                ? // Note when unsupported features are experimental.
+                  `${name} (Experimental)`
+                : name
             )
+          ),
+          div(
+            { className: "perf-settings-feature-title" },
+            title,
+            !isSupported && disabledReason
+              ? div(
+                  { className: "perf-settings-feature-disabled-reason" },
+                  disabledReason
+                )
+              : null
           )
-        )
+        );
+      })
+    );
+  }
+
+  _renderFeatures() {
+    const { supportedFeatures } = this.props;
+
+    // Divvy up the features into their respective groups.
+    const recommended = [];
+    const supported = [];
+    const unsupported = [];
+    const experimental = [];
+
+    for (const feature of featureDescriptions) {
+      if (supportedFeatures.includes(feature.value)) {
+        if (feature.experimental) {
+          experimental.push(feature);
+        } else if (feature.recommended) {
+          recommended.push(feature);
+        } else {
+          supported.push(feature);
+        }
+      } else {
+        unsupported.push(feature);
+      }
+    }
+
+    return div(
+      { className: "perf-settings-sections" },
+      div(
+        null,
+        this._renderFeatureSection(
+          "Features (Recommended on by default)",
+          recommended,
+          true
+        ),
+        this._renderFeatureSection("Features", supported, true),
+        this._renderFeatureSection("Experimental", experimental, true),
+        this._renderFeatureSection("Disabled Features", unsupported, false)
       )
     );
   }
 
   _renderLocalBuildSection() {
     const { objdirs } = this.props;
-    return details(
-      { className: "perf-settings-details" },
-      summary(
-        {
-          className: "perf-settings-summary",
-          id: "perf-settings-local-build-summary",
-        },
-        "Local build:"
-      ),
+    return renderSection(
+      "perf-settings-local-build-summary",
+      "Local build",
       div(
-        { className: "perf-settings-details-contents" },
-        div(
-          { className: "perf-settings-details-contents-slider" },
-          p(
-            null,
-            `If you're profiling a build that you have compiled yourself, on this
-            machine, please add your build's objdir to the list below so that
-            it can be used to look up symbol information.`
-          ),
-          DirectoryPicker({
-            dirs: objdirs,
-            onAdd: this._handleAddObjdir,
-            onRemove: this._handleRemoveObjdir,
-          })
-        )
+        null,
+        p(
+          null,
+          `If you're profiling a build that you have compiled yourself, on this
+          machine, please add your build's objdir to the list below so that
+          it can be used to look up symbol information.`
+        ),
+        DirectoryPicker({
+          dirs: objdirs,
+          onAdd: this._handleAddObjdir,
+          onRemove: this._handleRemoveObjdir,
+        })
       )
     );
   }
@@ -478,15 +476,8 @@ class Settings extends PureComponent {
   render() {
     return section(
       { className: "perf-settings" },
-      h2({ className: "perf-settings-title" }, "Recording Settings"),
-      div(
-        { className: "perf-settings-row" },
-        label({ className: "perf-settings-label" }, "Overhead:"),
-        div(
-          { className: "perf-settings-value perf-settings-notches" },
-          this._renderNotches()
-        )
-      ),
+      h1(null, "Full Settings"),
+      h2({ className: "perf-settings-title" }, "Buffer Settings"),
       Range({
         label: "Sampling interval:",
         value: this.props.interval,
@@ -512,8 +503,8 @@ class Settings extends PureComponent {
 
 /**
  * Clean up the thread list string into a list of values.
- * @param string threads, comma separated values.
- * @return Array list of thread names
+ * @param {string} threads - Comma separated values.
+ * @return {string[]}
  */
 function _threadTextToList(threads) {
   return (
@@ -545,6 +536,26 @@ function _entriesTextDisplay(value) {
   return formatFileSize(value * PROFILE_ENTRY_SIZE);
 }
 
+/**
+ * about:profiling doesn't need to collapse the children into details/summary,
+ * but the popup and devtools do (for now).
+ *
+ * @param {string} id
+ * @param {React.ReactNode} title
+ * @param {React.ReactNode} children
+ * @returns React.ReactNode
+ */
+function renderSection(id, title, children) {
+  return div(
+    { className: "perf-settings-sections" },
+    div(null, h2(null, title), children)
+  );
+}
+
+/**
+ * @param {StoreState} state
+ * @returns {StateProps}
+ */
 function mapStateToProps(state) {
   return {
     interval: selectors.getInterval(state),
@@ -553,9 +564,11 @@ function mapStateToProps(state) {
     threads: selectors.getThreads(state),
     threadsString: selectors.getThreadsString(state),
     objdirs: selectors.getObjdirs(state),
+    supportedFeatures: selectors.getSupportedFeatures(state),
   };
 }
 
+/** @type {ThunkDispatchProps} */
 const mapDispatchToProps = {
   changeInterval: actions.changeInterval,
   changeEntries: actions.changeEntries,
@@ -564,7 +577,9 @@ const mapDispatchToProps = {
   changeObjdirs: actions.changeObjdirs,
 };
 
-module.exports = connect(
+const SettingsConnected = connect(
   mapStateToProps,
   mapDispatchToProps
 )(Settings);
+
+module.exports = SettingsConnected;

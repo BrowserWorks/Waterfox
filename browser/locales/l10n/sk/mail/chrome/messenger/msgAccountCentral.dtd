@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "Pošta">
+<!ENTITY readMsgsLink.label           "Čítať novú poštu">
+<!ENTITY composeMsgLink.label         "Napísať novú správu">
+
+<!ENTITY newsSectionHdr.label         "Diskusné skupiny">
+<!ENTITY subscribeNewsLink.label      "Správa odoberania diskusných skupín">
+
+<!ENTITY feedsSectionHdr.label        "Informačné kanály">
+<!ENTITY subscribeFeeds.label         "Správa odoberania">
+
+<!ENTITY chat.label                   "Konverzácie">
+<!ENTITY movemail.label               "Movemail">
+
+<!ENTITY accountsSectionHdr.label     "Účty">
+<!ENTITY subscribeImapFolders.label   "Správa odoberania priečinkov">
+<!ENTITY settingsLink.label           "Zobraziť nastavenia tohto účtu">
+<!ENTITY setupNewAcct.label           "Vytvorenie účtu:">
+
+<!ENTITY advFeaturesSectionHdr.label  "Pokročilé funkcie">
+<!ENTITY searchMsgsLink.label         "Vyhľadávanie v správach">
+<!ENTITY filtersLink.label            "Správa filtrov správ">
+<!ENTITY junkSettings.label           "Nastavenie rozpoznávania nevyžiadanej pošty">
+<!ENTITY offlineLink.label            "Nastavenie režimu offline">

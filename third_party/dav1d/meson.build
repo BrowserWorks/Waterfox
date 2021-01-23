@@ -23,14 +23,14 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 project('dav1d', ['c'],
-    version: '0.3.0',
+    version: '0.6.0',
     default_options: ['c_std=c99',
                       'warning_level=2',
                       'buildtype=release',
                       'b_ndebug=if-release'],
     meson_version: '>= 0.47.0')
 
-dav1d_soname_version   = '1.1.0'
+dav1d_soname_version       = '4.0.0'
 dav1d_api_version_array    = dav1d_soname_version.split('.')
 dav1d_api_version_major    = dav1d_api_version_array[0]
 dav1d_api_version_minor    = dav1d_api_version_array[1]
@@ -61,14 +61,15 @@ foreach bitdepth : ['8', '16']
 endforeach
 
 # ASM option
-is_asm_enabled = (get_option('build_asm') == true and
+is_asm_enabled = (get_option('enable_asm') == true and
     (host_machine.cpu_family().startswith('x86') or
      host_machine.cpu_family() == 'aarch64'      or
-     host_machine.cpu_family().startswith('arm')))
+     host_machine.cpu_family().startswith('arm') or
+     host_machine.cpu() == 'ppc64le'))
 cdata.set10('HAVE_ASM', is_asm_enabled)
 
 if is_asm_enabled and get_option('b_sanitize') == 'memory'
-    error('asm causes false positive with memory sanitizer. Use \'-Dbuild_asm=false\'.')
+    error('asm causes false positive with memory sanitizer. Use \'-Denable_asm=false\'.')
 endif
 
 # Logging option
@@ -81,30 +82,63 @@ cdata.set10('CONFIG_LOG', get_option('logging'))
 # Arguments in test_args will be used even on feature tests
 test_args = []
 
-# Define _POSIX_C_SOURCE to POSIX.1–2001 (IEEE Std 1003.1-2001)
-test_args  += '-D_POSIX_C_SOURCE=200112L'
-add_project_arguments('-D_POSIX_C_SOURCE=200112L', language: 'c')
+optional_arguments = []
+
+if host_machine.system() == 'linux'
+    test_args += '-D_GNU_SOURCE'
+    add_project_arguments('-D_GNU_SOURCE', language: 'c')
+elif host_machine.system() == 'darwin'
+    test_args += '-D_DARWIN_C_SOURCE'
+    add_project_arguments('-D_DARWIN_C_SOURCE', language: 'c')
+else
+    test_args += '-D_POSIX_C_SOURCE=200112L'
+    add_project_arguments('-D_POSIX_C_SOURCE=200112L', language: 'c')
+endif
 
 if host_machine.system() == 'windows'
     cdata.set('_WIN32_WINNT',           '0x0601')
     cdata.set('UNICODE',                1) # Define to 1 for Unicode (Wide Chars) APIs
     cdata.set('_UNICODE',               1) # Define to 1 for Unicode (Wide Chars) APIs
     cdata.set('__USE_MINGW_ANSI_STDIO', 1) # Define to force use of MinGW printf
+    cdata.set('_CRT_DECLARE_NONSTDC_NAMES', 1) # Define to get off_t from sys/types.h on MSVC
     if cc.has_function('fseeko', prefix : '#include <stdio.h>', args : test_args)
         cdata.set('_FILE_OFFSET_BITS', 64) # Not set by default by Meson on Windows
     else
         cdata.set('fseeko', '_fseeki64')
         cdata.set('ftello', '_ftelli64')
     endif
-endif
 
-# On Windows, we use a compatibility layer to emulate pthread
-if host_machine.system() == 'windows'
+    if (host_machine.cpu_family() == 'x86_64' and cc.get_id() == 'gcc')
+        optional_arguments += '-mcmodel=small'
+    endif
+
+    # On Windows, we use a compatibility layer to emulate pthread
     thread_dependency = []
     thread_compat_dep = declare_dependency(sources : files('src/win32/thread.c'))
+
+    rt_dependency = []
 else
     thread_dependency = dependency('threads')
     thread_compat_dep = []
+
+    rt_dependency = []
+    if cc.has_function('clock_gettime', prefix : '#include <time.h>', args : test_args)
+        cdata.set('HAVE_CLOCK_GETTIME', 1)
+    elif host_machine.system() != 'darwin'
+        rt_dependency = cc.find_library('rt', required: false)
+        if not cc.has_function('clock_gettime', prefix : '#include <time.h>', args : test_args, dependencies : rt_dependency)
+            error('clock_gettime not found')
+        endif
+        cdata.set('HAVE_CLOCK_GETTIME', 1)
+    endif
+endif
+
+libdl_dependency = []
+if host_machine.system() == 'linux'
+    libdl_dependency = cc.find_library('dl', required : false)
+    if cc.has_function('dlsym', prefix : '#include <dlfcn.h>', args : test_args, dependencies : libdl_dependency)
+        cdata.set('HAVE_DLSYM', 1)
+    endif
 endif
 
 
@@ -156,7 +190,8 @@ elif cc.has_function('memalign', prefix : '#include <malloc.h>', args : test_arg
 endif
 
 if (host_machine.cpu_family() == 'aarch64' or
-    host_machine.cpu_family().startswith('arm'))
+    host_machine.cpu_family().startswith('arm') or
+    host_machine.cpu() == 'ppc64le')
     if cc.has_function('getauxval', prefix : '#include <sys/auxv.h>', args : test_args)
         cdata.set('HAVE_GETAUXVAL', 1)
     endif
@@ -176,16 +211,23 @@ endif
 # Compiler flags that should be set
 # But when the compiler does not supports them
 # it is not an error and silently tolerated
-optional_arguments = [
-  '-Wundef',
-  '-Werror=vla',
-  '-Wno-maybe-uninitialized',
-  '-Wno-missing-field-initializers',
-  '-Wno-unused-parameter',
-  '-Werror=missing-prototypes',
-  '-Wshorten-64-to-32',
-]
-if cc.get_id() == 'msvc'
+if cc.get_id() != 'msvc'
+    optional_arguments += [
+      '-Wundef',
+      '-Werror=vla',
+      '-Wno-maybe-uninitialized',
+      '-Wno-missing-field-initializers',
+      '-Wno-unused-parameter',
+      '-Werror=missing-prototypes',
+      '-Wshorten-64-to-32',
+    ]
+    if host_machine.cpu_family() == 'x86'
+        optional_arguments += [
+          '-msse2',
+          '-mfpmath=sse',
+        ]
+    endif
+else
     optional_arguments += [
       '-wd4028', # parameter different from declaration
       '-wd4996'  # use of POSIX functions
@@ -195,6 +237,12 @@ endif
 if (get_option('buildtype') != 'debug' and get_option('buildtype') != 'plain')
     optional_arguments += '-fomit-frame-pointer'
     optional_arguments += '-ffast-math'
+endif
+
+if (host_machine.system() == 'darwin' and cc.get_id() == 'clang' and
+    cc.version().startswith('11'))
+    # Workaround for Xcode 11 -fstack-check bug, see #301
+    optional_arguments += '-fno-stack-check'
 endif
 
 add_project_arguments(cc.get_supported_arguments(optional_arguments), language : 'c')
@@ -220,12 +268,12 @@ if host_machine.cpu_family().startswith('x86')
     if get_option('stack_alignment') > 0
         stack_alignment = get_option('stack_alignment')
     elif host_machine.cpu_family() == 'x86_64'
-        if cc.has_argument('-mpreferred-stack-boundary=5')
-            stackalign_flag = ['-mpreferred-stack-boundary=5']
+        if cc.has_argument('-mpreferred-stack-boundary=6')
+            stackalign_flag = ['-mpreferred-stack-boundary=6']
             stackrealign_flag = ['-mincoming-stack-boundary=4']
             stack_alignment = 32
-        elif cc.has_argument('-mstack-alignment=32')
-            stackalign_flag = ['-mstack-alignment=32']
+        elif cc.has_argument('-mstack-alignment=64')
+            stackalign_flag = ['-mstack-alignment=64']
             stackrealign_flag = ['-mstackrealign']
             stack_alignment = 32
         else
@@ -282,25 +330,17 @@ if (is_asm_enabled and
     endif
 endif
 
+cdata.set10('ARCH_X86', host_machine.cpu_family().startswith('x86'))
+cdata.set10('ARCH_X86_64', host_machine.cpu_family() == 'x86_64')
+cdata.set10('ARCH_X86_32', host_machine.cpu_family() == 'x86')
+
 if host_machine.cpu_family().startswith('x86')
-    cdata.set10('ARCH_X86', true)
-    if host_machine.cpu_family() == 'x86_64'
-        cdata_asm.set10('ARCH_X86_64', true)
-        cdata.set10('ARCH_X86_64', true)
-        cdata_asm.set10('ARCH_X86_32', false)
-        cdata.set10('ARCH_X86_32', false)
-    else
-        cdata_asm.set10('ARCH_X86_64', false)
-        cdata.set10('ARCH_X86_64', false)
-        cdata_asm.set10('ARCH_X86_32', true)
-        cdata.set10('ARCH_X86_32', true)
-        cdata_asm.set10('PIC', true)
-    endif
-else
-    cdata.set10('ARCH_X86', false)
-    cdata.set10('ARCH_X86_64', false)
-    cdata.set10('ARCH_X86_32', false)
+    cdata_asm.set10('ARCH_X86_64', host_machine.cpu_family() == 'x86_64')
+    cdata_asm.set10('ARCH_X86_32', host_machine.cpu_family() == 'x86')
+    cdata_asm.set10('PIC', true)
 endif
+
+cdata.set10('ARCH_PPC64LE', host_machine.cpu() == 'ppc64le')
 
 if cc.symbols_have_underscore_prefix()
     cdata.set10('PREFIX', true)
@@ -328,10 +368,15 @@ if is_asm_enabled and host_machine.cpu_family().startswith('x86')
     # check NASM version
     if nasm.found()
         nasm_r = run_command(nasm, '-v')
+
+        if nasm_r.returncode() != 0
+            error('failed running nasm to obtain its version')
+        endif
+
         out = nasm_r.stdout().strip().split()
         if out[1].to_lower() == 'version'
-            if out[2].version_compare('<2.13.02')
-                error('nasm 2.13.02 or later is required, found nasm @0@'.format(out[2]))
+            if out[2].version_compare('<2.14')
+                error('nasm 2.14 or later is required, found nasm @0@'.format(out[2]))
             endif
         else
             error('unexpected nasm version string: @0@'.format(nasm_r.stdout()))
@@ -356,7 +401,7 @@ if is_asm_enabled and host_machine.cpu_family().startswith('x86')
         depfile: '@BASENAME@.obj.ndep',
         arguments: [
             '-f', nasm_format,
-            '-I', '@SOURCE_DIR@/src/',
+            '-I', '@0@/src/'.format(meson.current_source_dir()),
             '-I', '@0@/'.format(meson.current_build_dir()),
             '-MQ', '@OUTPUT@', '-MF', '@DEPFILE@',
             '@EXTRA_ARGS@',
@@ -378,5 +423,7 @@ subdir('doc')
 subdir('src')
 
 subdir('tools')
+
+subdir('examples')
 
 subdir('tests')

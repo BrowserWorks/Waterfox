@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "O‘chirish">
+<!ENTITY editContactPanelDeleteContact.accesskey "O">
+
+<!ENTITY editContactName.label "Nomi:">
+<!ENTITY editContactName.accesskey "N">
+
+<!ENTITY editContactEmail.label "E-pochta:">
+<!ENTITY editContactEmail.accesskey "E">
+
+<!ENTITY editContactAddressBook.label "Manzil kitobi…">
+<!ENTITY editContactAddressBook.accesskey "k">
+
+<!ENTITY editContactPanelDone.label "Tayyor">
+<!ENTITY editContactPanelDone.accesskey "T">
+
+<!ENTITY contactMoveDisabledWarning.description "Siz manzil kitobini o‘zgartira olmaysiz, chunki kontakt  xabarlashish ro‘yxatida.">

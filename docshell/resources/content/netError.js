@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 // Error url MUST be formatted like this:
 //   moz-neterror:page?e=error&u=url&d=desc
 //
@@ -125,8 +129,8 @@ function initPage() {
     document.getElementById("errorTryAgain").style.display = "none";
   }
 
-  if (err == "cspBlocked") {
-    // Remove the "Try again" button for CSP violations, since it's
+  if (err == "cspBlocked" || err == "xfoBlocked") {
+    // Remove the "Try again" button for XFO and CSP violations, since it's
     // almost certainly useless. (Bug 553180)
     document.getElementById("errorTryAgain").style.display = "none";
   }

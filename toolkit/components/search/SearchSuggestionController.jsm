@@ -20,8 +20,13 @@ const SEARCH_RESPONSE_SUGGESTION_JSON = "application/x-suggestions+json";
 const DEFAULT_FORM_HISTORY_PARAM = "searchbar-history";
 const HTTP_OK = 200;
 const BROWSER_SUGGEST_PREF = "browser.search.suggest.enabled";
+const BROWSER_SUGGEST_PRIVATE_PREF = "browser.search.suggest.enabled.private";
 const REMOTE_TIMEOUT_PREF = "browser.search.suggest.timeout";
 const REMOTE_TIMEOUT_DEFAULT = 500; // maximum time (ms) to wait before giving up on a remote suggestions
+
+const SEARCH_DATA_TRANSFERRED_SCALAR = "browser.search.data_transferred";
+const SEARCH_TELEMETRY_KEY_PREFIX = "sggt";
+const SEARCH_TELEMETRY_PRIVATE_BROWSING_KEY_SUFFIX = "pb";
 
 XPCOMUtils.defineLazyServiceGetter(
   this,
@@ -31,27 +36,84 @@ XPCOMUtils.defineLazyServiceGetter(
 );
 
 /**
- * Remote search suggestions will be shown if gRemoteSuggestionsEnabled
- * is true. Global because only one pref observer is needed for all instances.
- */
-var gRemoteSuggestionsEnabled = Services.prefs.getBoolPref(
-  BROWSER_SUGGEST_PREF
-);
-Services.prefs.addObserver(BROWSER_SUGGEST_PREF, function(
-  aSubject,
-  aTopic,
-  aData
-) {
-  gRemoteSuggestionsEnabled = Services.prefs.getBoolPref(BROWSER_SUGGEST_PREF);
-});
-
-/**
  * Generates an UUID.
- * @returns an UUID string, without leading or trailing braces.
+ *
+ * @returns {string}
+ *   An UUID string, without leading or trailing braces.
  */
 function uuid() {
   let uuid = UUIDGenerator.generateUUID().toString();
   return uuid.slice(1, uuid.length - 1);
+}
+
+/**
+ * Represents a search suggestion.
+ * TODO: Support other Google tail fields: `a`, `dc`, `i`, `q`, `ansa`,
+ * `ansb`, `ansc`, `du`. See bug 1626897 comment 2.
+ */
+class SearchSuggestionEntry {
+  /**
+   * Creates an entry.
+   * @param {string} value
+   *   The suggestion as a full-text string. Suitable for display directly to
+   *   the user.
+   * @param {string} [matchPrefix]
+   *   Represents the part of a tail suggestion that is already typed. For
+   *   example, Google returns "…" as the match prefix to replace
+   *   "what time is it in" in a tail suggestion for the query
+   *   "what time is it in t".
+   * @param {string} [tail]
+   *   Represents the suggested part of a tail suggestion. For example, Google
+   *   might return "toronto" as the tail for the query "what time is it in t".
+   */
+  constructor(value, { matchPrefix, tail } = {}) {
+    this._value = value;
+    this._matchPrefix = matchPrefix;
+    this._tail = tail;
+  }
+
+  /**
+   * Returns true if `otherEntry` is equivalent to this instance of
+   * SearchSuggestionEntry.
+   * @param {SearchSuggestionEntry} otherEntry
+   * @returns {boolean}
+   */
+  equals(otherEntry) {
+    return otherEntry.value == this.value;
+  }
+
+  get value() {
+    return this._value;
+  }
+
+  get matchPrefix() {
+    return this._matchPrefix;
+  }
+
+  get tail() {
+    return this._tail;
+  }
+
+  get tailOffsetIndex() {
+    if (!this._tail) {
+      return -1;
+    }
+
+    let offsetIndex = this._value.lastIndexOf(this._tail);
+    if (offsetIndex + this._tail.length < this._value.length) {
+      // We might have a tail suggestion that starts with a word contained in
+      // the full-text suggestion. e.g. "london sights in l" ... "london".
+      let lastWordIndex = this._value.lastIndexOf(" ");
+      if (this._tail.startsWith(this._value.substring(lastWordIndex))) {
+        offsetIndex = lastWordIndex;
+      } else {
+        // Something's gone wrong. Consumers should not show this result.
+        offsetIndex = -1;
+      }
+    }
+
+    return offsetIndex;
+  }
 }
 
 // Maps each engine name to a unique firstPartyDomain, so that requests to
@@ -76,7 +138,7 @@ function SearchSuggestionController(callback = null) {
   this._callback = callback;
 }
 
-this.SearchSuggestionController.prototype = {
+SearchSuggestionController.prototype = {
   /**
    * The maximum number of local form history results to return. This limit is
    * only enforced if remote results are also returned.
@@ -138,11 +200,15 @@ this.SearchSuggestionController.prototype = {
    * results from them will not be provided.
    *
    * @param {string} searchTerm - the term to provide suggestions for
-   * @param {bool} privateMode - whether the request is being made in the context of private browsing
+   * @param {boolean} privateMode - whether the request is being made in the context of private browsing
    * @param {nsISearchEngine} engine - search engine for the suggestions.
    * @param {int} userContextId - the userContextId of the selected tab.
    *
-   * @return {Promise} resolving to an object containing results or null.
+   * @returns {Promise} resolving to an object with the following contents:
+   * @returns {array<SearchSuggestionEntry>} results.local
+   *   Contains local search suggestions.
+   * @returns {array<SearchSuggestionEntry>} results.remote
+   *   Contains remote search suggestions.
    */
   fetch(searchTerm, privateMode, engine, userContextId = 0) {
     // There is no smart filtering from previous results here (as there is when looking through
@@ -176,7 +242,8 @@ this.SearchSuggestionController.prototype = {
     // Remote results
     if (
       searchTerm &&
-      gRemoteSuggestionsEnabled &&
+      this.suggestionsEnabled &&
+      (!privateMode || this.suggestionsInPrivateBrowsingEnabled) &&
       this.maxRemoteResults &&
       engine.supportsResponseType(SEARCH_RESPONSE_SUGGESTION_JSON)
     ) {
@@ -218,11 +285,6 @@ this.SearchSuggestionController.prototype = {
   stop() {
     if (this._request) {
       this._request.abort();
-    } else if (!this.maxRemoteResults) {
-      Cu.reportError(
-        "SearchSuggestionController: Cannot stop fetching if remote results were not " +
-          "requested"
-      );
     }
     this._reset();
   },
@@ -286,7 +348,49 @@ this.SearchSuggestionController.prototype = {
   },
 
   /**
+   * Report bandwidth used by search activities. It only reports when it matches
+   * search provider information.
+   *
+   * @param {string} engineId the name of the search provider.
+   * @param {boolean} privateMode set to true if this is coming from a private browsing mode request.
+   */
+  _reportBandwidthForEngine(engineId, privateMode) {
+    if (!this._request || !this._request.channel) {
+      return;
+    }
+
+    let channel = ChannelWrapper.get(this._request.channel);
+    let bytesTransferred = channel.requestSize + channel.responseSize;
+    if (bytesTransferred == 0) {
+      return;
+    }
+
+    let telemetryKey = `${SEARCH_TELEMETRY_KEY_PREFIX}-${engineId}`;
+    if (privateMode) {
+      telemetryKey += `-${SEARCH_TELEMETRY_PRIVATE_BROWSING_KEY_SUFFIX}`;
+    }
+
+    Services.telemetry.keyedScalarAdd(
+      SEARCH_DATA_TRANSFERRED_SCALAR,
+      telemetryKey,
+      bytesTransferred
+    );
+  },
+
+  /**
    * Fetch suggestions from the search engine over the network.
+   *
+   * @param {string} searchTerm
+   *   The term being searched for.
+   * @param {SearchEngine} engine
+   *   The engine to request suggestions from.
+   * @param {boolean} privateMode
+   *   Set to true if this is coming from a private browsing mode request.
+   * @param {number} userContextId
+   *   The id of the user container this request was made from.
+   * @returns {Promise}
+   *   Returns a promise that is resolved when the response is received, or
+   *   rejected if there is an error.
    */
   _fetchRemote(searchTerm, engine, privateMode, userContextId) {
     let deferredResponse = PromiseUtils.defer();
@@ -323,18 +427,22 @@ this.SearchSuggestionController.prototype = {
 
     this._request.mozBackgroundRequest = true; // suppress dialogs and fail silently
 
+    let engineId = engine.identifier || "other";
+
     this._request.addEventListener(
       "load",
-      this._onRemoteLoaded.bind(this, deferredResponse)
+      this._onRemoteLoaded.bind(this, deferredResponse, engineId, privateMode)
     );
-    this._request.addEventListener("error", evt =>
-      deferredResponse.resolve("HTTP error")
-    );
+    this._request.addEventListener("error", evt => {
+      this._reportBandwidthForEngine(engineId, privateMode);
+      deferredResponse.resolve("HTTP error");
+    });
     // Reject for an abort assuming it's always from .stop() in which case we shouldn't return local
     // or remote results for existing searches.
-    this._request.addEventListener("abort", evt =>
-      deferredResponse.reject("HTTP request aborted")
-    );
+    this._request.addEventListener("abort", evt => {
+      this._reportBandwidthForEngine(engineId, privateMode);
+      deferredResponse.reject("HTTP request aborted");
+    });
 
     if (submission.postData) {
       this._request.sendInputStream(submission.postData);
@@ -348,15 +456,24 @@ this.SearchSuggestionController.prototype = {
   /**
    * Called when the request completed successfully (thought the HTTP status could be anything)
    * so we can handle the response data.
+   *
+   * @param {Promise} deferredResponse
+   *   The promise to resolve when a response is received.
+   * @param {string} engineId
+   *   The name of the search provider.
+   * @param {boolean} privateMode
+   *   Set to true if this is coming from a private browsing mode request.
    * @private
    */
-  _onRemoteLoaded(deferredResponse) {
+  _onRemoteLoaded(deferredResponse, engineId, privateMode) {
     if (!this._request) {
       deferredResponse.resolve(
         "Got HTTP response after the request was cancelled"
       );
       return;
     }
+
+    this._reportBandwidthForEngine(engineId, privateMode);
 
     let status, serverResults;
     try {
@@ -382,6 +499,7 @@ this.SearchSuggestionController.prototype = {
     }
 
     if (
+      !Array.isArray(serverResults) ||
       !serverResults[0] ||
       this._searchString.localeCompare(serverResults[0], undefined, {
         sensitivity: "base",
@@ -393,7 +511,10 @@ this.SearchSuggestionController.prototype = {
       );
       return;
     }
-    let results = serverResults[1] || [];
+
+    // Remove the search string from the server results since it is no longer
+    // needed.
+    let results = serverResults.slice(1) || [];
     deferredResponse.resolve({ result: results });
   },
 
@@ -417,7 +538,7 @@ this.SearchSuggestionController.prototype = {
 
   /**
    * @param {Array} suggestResults - an array of result objects from different sources (local or remote)
-   * @return {Object}
+   * @returns {object}
    */
   _dedupeAndReturnResults(suggestResults) {
     if (this._searchString === null) {
@@ -434,17 +555,33 @@ this.SearchSuggestionController.prototype = {
       formHistoryResult: null,
     };
 
-    for (let result of suggestResults) {
+    for (let resultData of suggestResults) {
       if (typeof result === "string") {
         // Failure message
-        Cu.reportError("SearchSuggestionController: " + result);
-      } else if (result.formHistoryResult) {
+        Cu.reportError(
+          "SearchSuggestionController found an unexpected string value: " +
+            resultData
+        );
+      } else if (resultData.formHistoryResult) {
         // Local results have a formHistoryResult property.
-        results.formHistoryResult = result.formHistoryResult;
-        results.local = result.result || [];
-      } else {
+        results.formHistoryResult = resultData.formHistoryResult;
+        if (resultData.result) {
+          results.local = resultData.result.map(
+            s => new SearchSuggestionEntry(s)
+          );
+        }
+      } else if (resultData.result) {
         // Remote result
-        results.remote = result.result || [];
+        let richSuggestionData = this._getRichSuggestionData(resultData.result);
+        let fullTextSuggestions = resultData.result[0];
+        for (let i = 0; i < fullTextSuggestions.length; ++i) {
+          results.remote.push(
+            this._newSearchSuggestionEntry(
+              fullTextSuggestions[i],
+              richSuggestionData?.[i]
+            )
+          );
+        }
       }
     }
 
@@ -453,12 +590,13 @@ this.SearchSuggestionController.prototype = {
       results.local = results.local.slice(0, this.maxLocalResults);
     }
 
-    // We don't want things to appear in both history and suggestions so remove entries from
-    // remote results that are already in local.
+    // We don't want things to appear in both history and suggestions so remove
+    // entries from remote results that are already in local.
     if (results.remote.length && results.local.length) {
       for (let i = 0; i < results.local.length; ++i) {
-        let term = results.local[i];
-        let dupIndex = results.remote.indexOf(term);
+        let dupIndex = results.remote.findIndex(e =>
+          e.equals(results.local[i])
+        );
         if (dupIndex != -1) {
           results.remote.splice(dupIndex, 1);
         }
@@ -479,6 +617,58 @@ this.SearchSuggestionController.prototype = {
     return results;
   },
 
+  /**
+   * Returns rich suggestion data from a remote fetch, if available.
+   * @param {array} remoteResultData
+   *  The results.remote array returned by SearchSuggestionsController.fetch.
+   * @returns {array}
+   *  An array of additional rich suggestion data. Each element should
+   *  correspond to the array of text suggestions.
+   */
+  _getRichSuggestionData(remoteResultData) {
+    if (!remoteResultData || !Array.isArray(remoteResultData)) {
+      return undefined;
+    }
+
+    for (let entry of remoteResultData) {
+      if (
+        typeof entry == "object" &&
+        entry.hasOwnProperty("google:suggestdetail")
+      ) {
+        let richData = entry["google:suggestdetail"];
+        if (
+          Array.isArray(richData) &&
+          richData.length == remoteResultData[0].length
+        ) {
+          return richData;
+        }
+      }
+    }
+    return undefined;
+  },
+
+  /**
+   * Given a text suggestion and rich suggestion data, returns a
+   * SearchSuggestionEntry.
+   * @param {string} suggestion
+   *   A suggestion string.
+   * @param {object} richSuggestionData
+   *   Rich suggestion data returned by the engine. In Google's case, this is
+   *   the corresponding entry at "google:suggestdetail".
+   * @returns {SearchSuggestionEntry}
+   */
+  _newSearchSuggestionEntry(suggestion, richSuggestionData) {
+    if (richSuggestionData) {
+      // We have valid rich suggestions.
+      return new SearchSuggestionEntry(suggestion, {
+        matchPrefix: richSuggestionData?.mp,
+        tail: richSuggestionData?.t,
+      });
+    }
+    // Return a regular suggestion.
+    return new SearchSuggestionEntry(suggestion);
+  },
+
   _reset() {
     this._request = null;
     if (this._remoteResultTimer) {
@@ -494,9 +684,9 @@ this.SearchSuggestionController.prototype = {
  * Determines whether the given engine offers search suggestions.
  *
  * @param {nsISearchEngine} engine - The search engine
- * @return {boolean} True if the engine offers suggestions and false otherwise.
+ * @returns {boolean} True if the engine offers suggestions and false otherwise.
  */
-this.SearchSuggestionController.engineOffersSuggestions = function(engine) {
+SearchSuggestionController.engineOffersSuggestions = function(engine) {
   return engine.supportsResponseType(SEARCH_RESPONSE_SUGGESTION_JSON);
 };
 
@@ -504,8 +694,28 @@ this.SearchSuggestionController.engineOffersSuggestions = function(engine) {
  * The maximum time (ms) to wait before giving up on a remote suggestions.
  */
 XPCOMUtils.defineLazyPreferenceGetter(
-  this.SearchSuggestionController.prototype,
+  SearchSuggestionController.prototype,
   "remoteTimeout",
   REMOTE_TIMEOUT_PREF,
   REMOTE_TIMEOUT_DEFAULT
+);
+
+/**
+ * Whether or not remote suggestions are turned on.
+ */
+XPCOMUtils.defineLazyPreferenceGetter(
+  SearchSuggestionController.prototype,
+  "suggestionsEnabled",
+  BROWSER_SUGGEST_PREF,
+  true
+);
+
+/**
+ * Whether or not remote suggestions are turned on in private browsing mode.
+ */
+XPCOMUtils.defineLazyPreferenceGetter(
+  SearchSuggestionController.prototype,
+  "suggestionsInPrivateBrowsingEnabled",
+  BROWSER_SUGGEST_PRIVATE_PREF,
+  false
 );

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY mailListWindowAdd.title        "Tabdart n telɣut tamaynut">
+
+<!-- Labels and Access Keys -->
+<!ENTITY addToAddressBook.label         "&amp;Rnu ɣeṛ: ">
+<!ENTITY addToAddressBook.accesskey     "e">
+<!ENTITY ListName.label                 "Isem n tebdart: ">
+<!ENTITY ListName.accesskey             "d">
+<!ENTITY ListNickName.label             "Meferisem n tebdart">
+<!ENTITY ListNickName.accesskey         "f">
+<!ENTITY ListDescription.label          "Aglam: ">
+<!ENTITY ListDescription.accesskey      "l">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "Aru tansiwin imayl ara ternuḍ ɣeṛ tebdart n tnezwit:">
+<!ENTITY AddressTitle.accesskey         "m">
+<!ENTITY UpButton.label                 "Ali">
+<!ENTITY DownButton.label               "Ader">
+

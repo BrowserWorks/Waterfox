@@ -4,6 +4,8 @@
 
 // Note: sets Cc and Ci variables
 
+"use strict";
+
 const { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
 const ReferrerInfo = Components.Constructor(
   "@mozilla.org/referrer-info;1",
@@ -73,20 +75,12 @@ function setup_test() {
   Assert.equal(setOK, "foo");
 
   var uri = NetUtil.newURI("http://foo1.invalid:80");
-  channel.referrerInfo = new ReferrerInfo(
-    Ci.nsIHttpChannel.REFERRER_POLICY_UNSET,
-    true,
-    uri
-  );
+  channel.referrerInfo = new ReferrerInfo(Ci.nsIReferrerInfo.EMPTY, true, uri);
   setOK = channel.getRequestHeader("Referer");
   Assert.equal(setOK, "http://foo1.invalid/");
 
   uri = NetUtil.newURI("http://foo2.invalid:90/bar");
-  channel.referrerInfo = new ReferrerInfo(
-    Ci.nsIHttpChannel.REFERRER_POLICY_UNSET,
-    true,
-    uri
-  );
+  channel.referrerInfo = new ReferrerInfo(Ci.nsIReferrerInfo.EMPTY, true, uri);
   setOK = channel.getRequestHeader("Referer");
   Assert.equal(setOK, "http://foo2.invalid:90/bar");
 

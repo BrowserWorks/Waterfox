@@ -6,7 +6,7 @@
 
 "use strict";
 
-const { L10N } = require("../utils/l10n");
+const { L10N } = require("devtools/client/netmonitor/src/utils/l10n");
 
 loader.lazyRequireGetter(
   this,
@@ -16,7 +16,7 @@ loader.lazyRequireGetter(
 );
 
 loader.lazyGetter(this, "HarImporter", function() {
-  return require("../har/har-importer").HarImporter;
+  return require("devtools/client/netmonitor/src/har/har-importer").HarImporter;
 });
 
 /**
@@ -95,7 +95,7 @@ var HarMenuUtils = {
 
 function readFile(file) {
   return new Promise(resolve => {
-    const { OS } = Cu.import("resource://gre/modules/osfile.jsm", {});
+    const { OS } = Cu.import("resource://gre/modules/osfile.jsm");
     OS.File.read(file.path).then(data => {
       const decoder = new TextDecoder();
       resolve(decoder.decode(data));

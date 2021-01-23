@@ -47,6 +47,118 @@ add_task(async function test_error_target_downloadingToSameFile() {
 });
 
 /**
+ * Tests allowHttpStatus allowing requests
+ */
+add_task(async function test_error_notfound() {
+  const targetFile = getTempFile(TEST_TARGET_FILE_NAME);
+  let called = false;
+  const download = await Downloads.createDownload({
+    source: {
+      url: httpUrl("notfound.gone"),
+      allowHttpStatus(aDownload, aStatusCode) {
+        Assert.strictEqual(download, aDownload, "Check Download objects");
+        Assert.strictEqual(aStatusCode, 404, "The status should be correct");
+        called = true;
+        return true;
+      },
+    },
+    target: targetFile,
+  });
+  await download.start();
+  Assert.ok(called, "allowHttpStatus should have been called");
+});
+
+/**
+ * Tests allowHttpStatus rejecting requests
+ */
+add_task(async function test_error_notfound_reject() {
+  const targetFile = getTempFile(TEST_TARGET_FILE_NAME);
+  let called = false;
+  const download = await Downloads.createDownload({
+    source: {
+      url: httpUrl("notfound.gone"),
+      allowHttpStatus(aDownload, aStatusCode) {
+        Assert.strictEqual(download, aDownload, "Check Download objects");
+        Assert.strictEqual(aStatusCode, 404, "The status should be correct");
+        called = true;
+        return false;
+      },
+    },
+    target: targetFile,
+  });
+  await Assert.rejects(
+    download.start(),
+    ex => ex instanceof Downloads.Error && ex.becauseSourceFailed,
+    "Download should have been rejected"
+  );
+  Assert.ok(called, "allowHttpStatus should have been called");
+});
+
+/**
+ * Tests allowHttpStatus rejecting requests other than 404
+ */
+add_task(async function test_error_busy_reject() {
+  const targetFile = getTempFile(TEST_TARGET_FILE_NAME);
+  let called = false;
+  const download = await Downloads.createDownload({
+    source: {
+      url: httpUrl("busy.txt"),
+      allowHttpStatus(aDownload, aStatusCode) {
+        Assert.strictEqual(download, aDownload, "Check Download objects");
+        Assert.strictEqual(aStatusCode, 504, "The status should be correct");
+        called = true;
+        return false;
+      },
+    },
+    target: targetFile,
+  });
+  await Assert.rejects(
+    download.start(),
+    ex => ex instanceof Downloads.Error && ex.becauseSourceFailed,
+    "Download should have been rejected"
+  );
+  Assert.ok(called, "allowHttpStatus should have been called");
+});
+
+/**
+ * Tests redirects are followed correctly, and the meta data corresponds
+ * to the correct, final response
+ */
+add_task(async function test_redirects() {
+  const targetFile = getTempFile(TEST_TARGET_FILE_NAME);
+  let called = false;
+  const download = await Downloads.createDownload({
+    source: {
+      url: httpUrl("redirect"),
+      allowHttpStatus(aDownload, aStatusCode) {
+        Assert.strictEqual(download, aDownload, "Check Download objects");
+        Assert.strictEqual(
+          aStatusCode,
+          504,
+          "The status should be correct after a redirect"
+        );
+        called = true;
+        return true;
+      },
+    },
+    target: targetFile,
+  });
+  await download.start();
+  Assert.equal(
+    download.contentType,
+    "text/plain",
+    "Content-Type is correct after redirect"
+  );
+  Assert.equal(
+    download.totalBytes,
+    TEST_DATA_SHORT.length,
+    "Content-Length is correct after redirect"
+  );
+  Assert.equal(download.target.size, TEST_DATA_SHORT.length);
+  Assert.ok(called, "allowHttpStatus should have been called");
+});
+
+/**
  * Tests the DownloadError object.
  */
 add_task(function test_DownloadError() {

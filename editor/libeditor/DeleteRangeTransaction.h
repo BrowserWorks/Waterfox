@@ -27,7 +27,8 @@ class RangeUpdater;
  */
 class DeleteRangeTransaction final : public EditAggregateTransaction {
  protected:
-  DeleteRangeTransaction(EditorBase& aEditorBase, nsRange& aRangeToDelete);
+  DeleteRangeTransaction(EditorBase& aEditorBase,
+                         const nsRange& aRangeToDelete);
 
  public:
   /**
@@ -37,7 +38,7 @@ class DeleteRangeTransaction final : public EditAggregateTransaction {
    * @param aRangeToDelete      The range to delete.
    */
   static already_AddRefed<DeleteRangeTransaction> Create(
-      EditorBase& aEditorBase, nsRange& aRangeToDelete) {
+      EditorBase& aEditorBase, const nsRange& aRangeToDelete) {
     RefPtr<DeleteRangeTransaction> transaction =
         new DeleteRangeTransaction(aEditorBase, aRangeToDelete);
     return transaction.forget();
@@ -48,8 +49,9 @@ class DeleteRangeTransaction final : public EditAggregateTransaction {
   NS_IMETHOD QueryInterface(REFNSIID aIID, void** aInstancePtr) override;
 
   NS_DECL_EDITTRANSACTIONBASE
+  NS_DECL_EDITTRANSACTIONBASE_GETASMETHODS_OVERRIDE(DeleteRangeTransaction)
 
-  NS_IMETHOD RedoTransaction() override;
+  MOZ_CAN_RUN_SCRIPT NS_IMETHOD RedoTransaction() override;
 
  protected:
   /**

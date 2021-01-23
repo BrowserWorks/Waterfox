@@ -5,16 +5,7 @@ const TEST_HTTP_POST =
   "http://example.org/browser/dom/html/test/form_submit_server.sjs";
 
 // Test for bug 1351358.
-add_task(async function() {
-  // Set prefs to ensure file content process, to allow linked web content in
-  // file URI process and allow more that one file content process.
-  await SpecialPowers.pushPrefEnv({
-    set: [
-      ["browser.tabs.remote.separateFileUriProcess", true],
-      ["browser.tabs.remote.allowLinkedWebInFileUriProcess", true],
-    ],
-  });
-
+async function runTest(doNewTab) {
   // Create file URI and test data file paths.
   let testFile = getChromeDir(getResolvedURI(gTestPath));
   testFile.append("dummy_page.html");
@@ -28,16 +19,28 @@ add_task(async function() {
   // Open file:// page tab in which to run the test.
   await BrowserTestUtils.withNewTab(fileUriString, async function(fileBrowser) {
     // Create a form to post to server that writes posted data into body as JSON.
-    let promiseLoad = BrowserTestUtils.browserLoaded(
-      fileBrowser,
-      false,
-      TEST_HTTP_POST
-    );
+
+    var promiseLoad;
+    if (doNewTab) {
+      promiseLoad = BrowserTestUtils.waitForNewTab(
+        gBrowser,
+        TEST_HTTP_POST,
+        true,
+        false
+      );
+    } else {
+      promiseLoad = BrowserTestUtils.browserLoaded(
+        fileBrowser,
+        false,
+        TEST_HTTP_POST
+      );
+    }
+
     /* eslint-disable no-shadow */
-    await ContentTask.spawn(
+    await SpecialPowers.spawn(
       fileBrowser,
-      [TEST_HTTP_POST, filePaths],
-      ([actionUri, filePaths]) => {
+      [TEST_HTTP_POST, filePaths, doNewTab],
+      (actionUri, filePaths, doNewTab) => {
         Cu.importGlobalProperties(["File"]);
 
         let doc = content.document;
@@ -45,6 +48,9 @@ add_task(async function() {
         form.action = actionUri;
         form.method = "POST";
         form.enctype = "multipart/form-data";
+        if (doNewTab) {
+          form.target = "_blank";
+        }
 
         let inputText = form.appendChild(doc.createElement("input"));
         inputText.type = "text";
@@ -82,7 +88,17 @@ add_task(async function() {
     );
     /* eslint-enable no-shadow */
 
-    let href = await promiseLoad;
+    var href;
+    var testBrowser;
+    var newTab;
+    if (doNewTab) {
+      newTab = await promiseLoad;
+      testBrowser = newTab.linkedBrowser;
+      href = testBrowser.currentURI.spec;
+    } else {
+      testBrowser = fileBrowser;
+      href = await promiseLoad;
+    }
     is(
       href,
       TEST_HTTP_POST,
@@ -95,7 +111,9 @@ add_task(async function() {
     } else {
       binContentType = "application/octet-stream";
     }
-    await ContentTask.spawn(fileBrowser, { binContentType }, args => {
+
+    /* eslint-disable no-shadow */
+    await SpecialPowers.spawn(testBrowser, [binContentType], binContentType => {
       let data = JSON.parse(content.document.body.textContent);
       is(
         data[0].headers["Content-Disposition"],
@@ -132,7 +150,7 @@ add_task(async function() {
       );
       is(
         data[3].headers["Content-Type"],
-        args.binContentType,
+        binContentType,
         "Check binary file input Content-Type"
       );
       is(
@@ -141,5 +159,22 @@ add_task(async function() {
         "Check binary file input body"
       );
     });
+    /* eslint-enable no-shadow */
+
+    if (newTab) {
+      BrowserTestUtils.removeTab(newTab);
+    }
   });
+}
+
+add_task(async function runWithDocumentChannel() {
+  // Set prefs to use documentchannel.
+  await SpecialPowers.pushPrefEnv({
+    set: [["browser.tabs.documentchannel", true]],
+  });
+
+  await runTest(false);
+  await runTest(true);
+
+  await SpecialPowers.popPrefEnv();
 });

@@ -29,11 +29,10 @@ class FocusEvent : public UIEvent {
 
   static already_AddRefed<FocusEvent> Constructor(const GlobalObject& aGlobal,
                                                   const nsAString& aType,
-                                                  const FocusEventInit& aParam,
-                                                  ErrorResult& aRv);
+                                                  const FocusEventInit& aParam);
 
  protected:
-  ~FocusEvent() {}
+  ~FocusEvent() = default;
 
   void InitFocusEvent(const nsAString& aType, bool aCanBubble, bool aCancelable,
                       nsGlobalWindowInner* aView, int32_t aDetail,

@@ -8,8 +8,10 @@
  * http://www.whatwg.org/specs/web-apps/current-work/#other-elements,-attributes-and-apis
  */
 
-[HTMLConstructor]
+[Exposed=Window]
 interface HTMLScriptElement : HTMLElement {
+  [HTMLConstructor] constructor();
+
   [CEReactions, SetterNeedsSubjectPrincipal=NonSystem, SetterThrows]
   attribute DOMString src;
   [CEReactions, SetterThrows]

@@ -5,7 +5,11 @@
 const { AddonTestUtils } = ChromeUtils.import(
   "resource://testing-common/AddonTestUtils.jsm"
 );
-const { HomePage } = ChromeUtils.import("resource:///modules/HomePage.jsm");
+XPCOMUtils.defineLazyModuleGetters(this, {
+  HomePage: "resource:///modules/HomePage.jsm",
+  RemoteSettings: "resource://services-settings/remote-settings.js",
+  sinon: "resource://testing-common/Sinon.jsm",
+});
 
 AddonTestUtils.init(this);
 AddonTestUtils.overrideCertDB();
@@ -16,9 +20,24 @@ AddonTestUtils.createAppInfo(
   "1",
   "42"
 );
+// Override ExtensionXPCShellUtils.jsm's overriding of the pref as the
+// search service needs it.
+Services.prefs.clearUserPref("services.settings.default_bucket");
+
+async function setupRemoteSettings() {
+  const settings = await RemoteSettings("hijack-blocklists");
+  sinon.stub(settings, "get").returns([
+    {
+      id: "homepage-urls",
+      matches: ["ignore=me"],
+      _status: "synced",
+    },
+  ]);
+}
 
 add_task(async function setup() {
   await AddonTestUtils.promiseStartupManager();
+  await setupRemoteSettings();
 });
 
 add_task(async function test_overrides_update_removal() {

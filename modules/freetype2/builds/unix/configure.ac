@@ -2,7 +2,7 @@
 #
 # Process this file with autoconf to produce a configure script.
 #
-# Copyright 2001-2018 by
+# Copyright (C) 2001-2020 by
 # David Turner, Robert Wilhelm, and Werner Lemberg.
 #
 # This file is part of the FreeType project, and may only be used, modified,
@@ -11,13 +11,13 @@
 # indicate that you have read the license and understand and accept it
 # fully.
 
-AC_INIT([FreeType], [2.9.1], [freetype@nongnu.org], [freetype])
+AC_INIT([FreeType], [2.10.2], [freetype@nongnu.org], [freetype])
 AC_CONFIG_SRCDIR([ftconfig.in])
 
 
 # Don't forget to update `docs/VERSIONS.TXT'!
 
-version_info='22:1:16'
+version_info='23:2:17'
 AC_SUBST([version_info])
 ft_version=`echo $version_info | tr : .`
 AC_SUBST([ft_version])
@@ -37,7 +37,7 @@ AC_SUBST(EXEEXT)
 PKG_PROG_PKG_CONFIG([0.24])
 
 LT_INIT(win32-dll)
-LT_PROG_RC
+AC_CHECK_HEADER([windows.h], [LT_PROG_RC])
 
 
 # checks for native programs to generate building tool
@@ -196,7 +196,7 @@ AC_SYS_LARGEFILE
 AC_ARG_ENABLE([mmap],
   AS_HELP_STRING([--disable-mmap],
                  [do not check mmap() and do not use]),
-  [enable_mmap="no"],[enable_mmap="yes"])
+  [enable_mmap="no"], [enable_mmap="yes"])
 if test "x${enable_mmap}" != "xno"; then
   AC_FUNC_MMAP
 fi
@@ -311,14 +311,26 @@ AC_SUBST([XX_ANSIFLAGS])
 # It is recommended that shared libraries hide symbols except those with
 # explicit __attribute__((visibility("default"))).
 #
+found_visibility_flag=no
 AC_MSG_CHECKING([for -fvisibility=hidden compiler flag])
 orig_CFLAGS="${CFLAGS}"
 CFLAGS="${CFLAGS} -fvisibility=hidden"
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],[])],
-                  AC_MSG_RESULT(yes),
-                  CFLAGS="${orig_CFLAGS}"
-                  AC_MSG_RESULT(no))
+AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])],
+               [found_visibility_flag=yes
+                AC_MSG_RESULT(yes)],
+               [CFLAGS="${orig_CFLAGS}"
+                AC_MSG_RESULT(no)])
 
+if test "${found_visibility_flag}" = "no"; then
+  AC_MSG_CHECKING([for -xldscope=hidden compiler flag])
+  orig_CFLAGS="${CFLAGS}"
+  CFLAGS="${CFLAGS} -xldscope=hidden"
+  AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])],
+                 [found_visibility_flag=yes
+                  AC_MSG_RESULT(yes)],
+                 [CFLAGS="${orig_CFLAGS}"
+                  AC_MSG_RESULT(no)])
+fi
 
 # All library tests below try `pkg-config' first.  If that fails, a function
 # from the library is tested in the traditional autoconf way (zlib, bzip2),
@@ -466,7 +478,7 @@ if test x"$with_png" = xyes -o x"$with_png" = xauto; then
       libpng_libsstaticconf="$LIBPNG_LIBS"
       have_libpng="yes (LIBPNG_CFLAGS and LIBPNG_LIBS)"
     else
-      # fall back to config script.
+      # fall back to config script
       AC_MSG_CHECKING([for libpng-config])
       if which libpng-config > /dev/null 2>&1; then
         LIBPNG_CFLAGS=`libpng-config --cflags`
@@ -496,7 +508,7 @@ AC_ARG_WITH([harfbuzz],
 
 have_harfbuzz=no
 if test x"$with_harfbuzz" = xyes -o x"$with_harfbuzz" = xauto; then
-  harfbuzz_pkg="harfbuzz >= 1.3.0"
+  harfbuzz_pkg="harfbuzz >= 1.8.0"
   have_harfbuzz_pkg=no
 
   if test x"$HARFBUZZ_CFLAGS" = x -a x"$HARFBUZZ_LIBS" = x; then
@@ -528,6 +540,50 @@ fi
 
 if test x"$with_harfbuzz" = xyes -a "$have_harfbuzz" = no; then
   AC_MSG_ERROR([harfbuzz support requested but library not found])
+fi
+
+
+# check for system libbrotlidec
+
+AC_ARG_WITH([brotli],
+  [AS_HELP_STRING([--with-brotli=@<:@yes|no|auto@:>@],
+                  [support decompression of WOFF2 streams @<:@default=auto@:>@])],
+  [], [with_brotli=auto])
+
+have_brotli=no
+if test x"$with_brotli" = xyes -o x"$with_brotli" = xauto; then
+  brotli_pkg="libbrotlidec"
+  have_brotli_pkg=no
+
+  if test x"$BROTLI_CFLAGS" = x -a x"$BROTLI_LIBS" = x; then
+    PKG_CHECK_EXISTS([$brotli_pkg], [have_brotli_pkg=yes])
+  fi
+  PKG_CHECK_MODULES([BROTLI], [$brotli_pkg],
+                    [have_brotli="yes (pkg-config)"], [:])
+
+  if test $have_brotli_pkg = yes; then
+    # we have libbrotlidec.pc
+    brotli_reqpriv="$brotli_pkg"
+    brotli_libspriv=
+    brotli_libsstaticconf=`$PKG_CONFIG --static --libs "$brotli_pkg"`
+  else
+    brotli_reqpriv=
+
+    if test "$have_brotli" != no; then
+      # BROTLI_CFLAGS and BROTLI_LIBS are set by the user
+      brotli_libspriv="$BROTLI_LIBS"
+      brotli_libsstaticconf="$BROTLI_LIBS"
+      have_brotli="yes (BROTLI_CFLAGS and BROTLI_LIBS)"
+    else
+      # since Brotli is quite a new library we don't fall back to a
+      # different test
+      :
+    fi
+  fi
+fi
+
+if test x"$with_brotli" = xyes -a "$have_brotli" = no; then
+  AC_MSG_ERROR([brotli support requested but library not found])
 fi
 
 
@@ -956,12 +1012,36 @@ case "$CFLAGS" in
     ;;
 esac
 
+# Check for Python and docwriter
 
-# entries in Requires.private are separated by commas;
+have_py3=no
+have_docwriter=no
+PIP=pip
+
+AC_CHECK_PROGS([PYTHON], [python3 python], [missing])
+if test "x$PYTHON" != "xmissing"; then
+  AX_PROG_PYTHON_VERSION([3.5], [have_py3=yes], [])
+
+  if test "x$have_py3" = "xyes"; then
+    PIP="$PYTHON -m $PIP"
+    AC_MSG_CHECKING([for \`docwriter' Python module])
+    $PYTHON -m docwriter -h > /dev/null 2>&1
+    if test "x$?" = "x0"; then
+      have_docwriter=yes
+      AC_MSG_RESULT([yes])
+    else
+      AC_MSG_RESULT([no])
+    fi
+  fi
+fi
+
+
+# entries in Requires.private are separated by commas
 REQUIRES_PRIVATE="$zlib_reqpriv,     \
                   $bzip2_reqpriv,    \
                   $libpng_reqpriv,   \
-                  $harfbuzz_reqpriv"
+                  $harfbuzz_reqpriv, \
+                  $brotli_reqpriv"
 # beautify
 REQUIRES_PRIVATE=`echo "$REQUIRES_PRIVATE" \
                   | sed -e 's/^  *//'      \
@@ -976,6 +1056,7 @@ LIBS_PRIVATE="$zlib_libspriv     \
               $bzip2_libspriv    \
               $libpng_libspriv   \
               $harfbuzz_libspriv \
+              $brotli_libspriv   \
               $ft2_extra_libs"
 # beautify
 LIBS_PRIVATE=`echo "$LIBS_PRIVATE"  \
@@ -988,6 +1069,7 @@ LIBSSTATIC_CONFIG="-lfreetype               \
                    $bzip2_libsstaticconf    \
                    $libpng_libsstaticconf   \
                    $harfbuzz_libsstaticconf \
+                   $brotli_libsstaticconf   \
                    $ft2_extra_libs"
 # remove -L/usr/lib and -L/usr/lib64 since `freetype-config' adds them later
 # on if necessary; also beautify
@@ -1052,6 +1134,13 @@ if test "$have_harfbuzz" != no; then
 else
   ftoption_unset FT_CONFIG_OPTION_USE_HARFBUZZ
 fi
+if test "$have_brotli" != no; then
+  CFLAGS="$CFLAGS $BROTLI_CFLAGS"
+  LDFLAGS="$LDFLAGS $BROTLI_LIBS"
+  ftoption_set FT_CONFIG_OPTION_USE_BROTLI
+else
+  ftoption_unset FT_CONFIG_OPTION_USE_BROTLI
+fi
 
 AC_SUBST([CFLAGS])
 AC_SUBST([LDFLAGS])
@@ -1098,6 +1187,18 @@ Library configuration:
   bzip2:         $have_bzip2
   libpng:        $have_libpng
   harfbuzz:      $have_harfbuzz
+  brotli:        $have_brotli
 ])
+
+# Warn if docwriter is not installed
+
+if test $have_docwriter = no; then
+  AC_MSG_NOTICE([
+  Warning: \`make refdoc' will fail since pip package \`docwriter' is not
+  installed.  To install, run \`$PIP install docwriter', or to use a Python
+  virtual environment, run \`make refdoc-venv' (requires pip package
+  \`virtualenv'). These operations require Python >= 3.5.
+  ])
+fi
 
 # end of configure.raw

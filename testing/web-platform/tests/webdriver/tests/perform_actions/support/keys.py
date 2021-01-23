@@ -17,9 +17,10 @@
 
 """The Keys implementation."""
 
-from inspect import getmembers
 import sys
 
+from inspect import getmembers
+from six import text_type
 
 class Keys(object):
     """
@@ -105,7 +106,7 @@ class Keys(object):
     R_DELETE = u"\uE05D"
 
 
-ALL_KEYS = getmembers(Keys, lambda x: type(x) == unicode)
+ALL_KEYS = getmembers(Keys, lambda x: type(x) == text_type)
 
 ALL_EVENTS = {
     "ADD": {
@@ -379,7 +380,7 @@ ALL_EVENTS = {
         "value": u"\ue012",
     },
     "META": {
-        "code": "OSLeft",
+        "code": "MetaLeft",
         "ctrl": False,
         "key": "Meta",
         "location": 1,
@@ -631,7 +632,7 @@ ALL_EVENTS = {
         "value": u"\ue05c",
     },
     "R_META": {
-        "code": "OSRight",
+        "code": "MetaRight",
         "ctrl": False,
         "key": "Meta",
         "location": 2,

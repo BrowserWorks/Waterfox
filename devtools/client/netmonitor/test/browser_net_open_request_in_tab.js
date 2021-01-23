@@ -8,7 +8,9 @@
  */
 
 add_task(async function() {
-  const { tab, monitor } = await initNetMonitor(OPEN_REQUEST_IN_TAB_URL);
+  const { tab, monitor } = await initNetMonitor(OPEN_REQUEST_IN_TAB_URL, {
+    requestCount: 1,
+  });
   info("Starting test...");
 
   const { document, store, windowRequire } = monitor.panelWin;
@@ -86,7 +88,9 @@ add_task(async function() {
  */
 
 add_task(async function() {
-  const { tab, monitor } = await initNetMonitor(OPEN_REQUEST_IN_TAB_URL);
+  const { tab, monitor } = await initNetMonitor(OPEN_REQUEST_IN_TAB_URL, {
+    requestCount: 1,
+  });
   info("Starting test...");
 
   const { document, store, windowRequire } = monitor.panelWin;
@@ -156,9 +160,9 @@ add_task(async function() {
 
 async function performRequest(monitor, tab, method, contentType, payload) {
   const wait = waitForNetworkEvents(monitor, 1);
-  await ContentTask.spawn(
+  await SpecialPowers.spawn(
     tab.linkedBrowser,
-    [method, contentType, payload],
+    [[method, contentType, payload]],
     async function([method_, contentType_, payload_]) {
       content.wrappedJSObject.performRequest(method_, contentType_, payload_);
     }
@@ -168,9 +172,9 @@ async function performRequest(monitor, tab, method, contentType, payload) {
 }
 
 async function checkTabResponse(checkedTab, method, contentType, payload) {
-  await ContentTask.spawn(
+  await SpecialPowers.spawn(
     checkedTab.linkedBrowser,
-    [method, contentType, payload],
+    [[method, contentType, payload]],
     async function([method_, contentType_, payload_]) {
       const { body } = content.wrappedJSObject.document;
       const expected = [method_, contentType_, payload_].join("\n");

@@ -89,9 +89,7 @@ add_task(async function() {
       is(
         actual.disposition,
         expected.disposition,
-        `Expected "${event}" to have fired with disposition: "${
-          expected.disposition
-        }".`
+        `Expected "${event}" to have fired with disposition: "${expected.disposition}".`
       );
     }
   }
@@ -266,11 +264,6 @@ add_task(async function() {
     await extension.awaitMessage("set-synchronous-set");
 
     let text = await startInputSession();
-    if (!UrlbarPrefs.get("quantumbar")) {
-      // TODO Bug 1530338: We can't yet wait for a specific result for the
-      // quantumbar. Therefore we just skip this for now.
-      await waitForResult(0);
-    }
 
     extension.sendMessage(info.test);
     await extension.awaitMessage("test-ready");

@@ -5,6 +5,7 @@
 #include "LoadContextInfo.h"
 
 #include "mozilla/dom/ToJSValue.h"
+#include "mozilla/StoragePrincipalHelper.h"
 #include "nsDocShell.h"
 #include "nsIChannel.h"
 #include "nsILoadContext.h"
@@ -120,7 +121,7 @@ LoadContextInfo* GetLoadContextInfo(nsIChannel* aChannel) {
   }
 
   OriginAttributes oa;
-  NS_GetOriginAttributes(aChannel, oa);
+  StoragePrincipalHelper::GetOriginAttributesForNetworkState(aChannel, oa);
   MOZ_ASSERT(pb == (oa.mPrivateBrowsingId > 0));
 
   return new LoadContextInfo(anon, oa);
@@ -136,8 +137,9 @@ LoadContextInfo* GetLoadContextInfo(nsILoadContext* aLoadContext,
   aLoadContext->GetOriginAttributes(oa);
 
 #ifdef DEBUG
-  nsCOMPtr<nsIDocShellTreeItem> docShell = do_QueryInterface(aLoadContext);
-  if (!docShell || docShell->ItemType() != nsIDocShellTreeItem::typeChrome) {
+  nsCOMPtr<nsIDocShell> docShell = do_QueryInterface(aLoadContext);
+  if (!docShell ||
+      nsDocShell::Cast(docShell)->GetBrowsingContext()->IsContent()) {
     MOZ_ASSERT(aLoadContext->UsePrivateBrowsing() ==
                (oa.mPrivateBrowsingId > 0));
   }

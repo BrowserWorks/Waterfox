@@ -18,7 +18,7 @@ function commonDialogOnLoad() {
     args[prop.name] = prop.value;
   }
 
-  let dialog = document.documentElement;
+  let dialog = document.getElementById("commonDialog");
 
   let ui = {
     prompt: window,
@@ -40,9 +40,6 @@ function commonDialogOnLoad() {
     focusTarget: window,
   };
 
-  // limit the dialog to the screen width
-  document.getElementById("filler").maxWidth = screen.availWidth;
-
   Dialog = new CommonDialog(args, ui);
   document.addEventListener("dialogaccept", function() {
     Dialog.onButton0();
@@ -62,6 +59,11 @@ function commonDialogOnLoad() {
 
   // resize the window to the content
   window.sizeToContent();
+
+  // If the icon hasn't loaded yet, size the window to the content again when
+  // it does, as its layout can change.
+  ui.infoIcon.addEventListener("load", () => window.sizeToContent());
+
   window.getAttention();
 }
 

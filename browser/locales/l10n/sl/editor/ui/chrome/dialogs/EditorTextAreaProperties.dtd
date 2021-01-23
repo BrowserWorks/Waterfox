@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Lastnosti področja za besedilo">
+
+<!ENTITY Settings.label "Nastavitve">
+
+<!ENTITY TextAreaName.label "Ime polja:">
+<!ENTITY TextAreaName.accessKey "I">
+<!ENTITY TextAreaRows.label "Vrstice:">
+<!ENTITY TextAreaRows.accessKey "V">
+<!ENTITY TextAreaCols.label "Stolpci:">
+<!ENTITY TextAreaCols.accessKey "S">
+<!ENTITY TextAreaReadOnly.label "Samo za branje">
+<!ENTITY TextAreaReadOnly.accessKey "S">
+<!ENTITY TextAreaDisabled.label "Onemogočeno">
+<!ENTITY TextAreaDisabled.accessKey "O">
+<!ENTITY TextAreaTabIndex.label "Kazalo zavihkov:">
+<!ENTITY TextAreaTabIndex.accessKey "K">
+<!ENTITY TextAreaAccessKey.label "Ključ za dostop:">
+<!ENTITY TextAreaAccessKey.accessKey "K">
+<!ENTITY InitialText.label "Začetno besedilo:">
+<!ENTITY InitialText.accessKey "Z">
+
+<!ENTITY TextAreaWrap.label "Način oblivanja:">
+<!ENTITY TextAreaWrap.accessKey "N">
+<!ENTITY WrapDefault.value "Privzeto">
+<!ENTITY WrapOff.value "Izklopljeno">
+<!ENTITY WrapHard.value "Trdo">
+<!ENTITY WrapSoft.value "Mehko">
+<!ENTITY WrapPhysical.value "Fizično">
+<!ENTITY WrapVirtual.value "Navidezno">

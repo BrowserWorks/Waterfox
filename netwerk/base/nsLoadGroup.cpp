@@ -11,6 +11,7 @@
 #include "nsArrayEnumerator.h"
 #include "nsCOMArray.h"
 #include "nsCOMPtr.h"
+#include "nsContentUtils.h"
 #include "mozilla/Logging.h"
 #include "nsString.h"
 #include "nsTArray.h"
@@ -18,10 +19,10 @@
 #include "nsITimedChannel.h"
 #include "nsIInterfaceRequestor.h"
 #include "nsIRequestObserver.h"
-#include "nsIRequestContext.h"
 #include "CacheObserver.h"
 #include "MainThreadUtils.h"
 #include "RequestContextService.h"
+#include "mozilla/StoragePrincipalHelper.h"
 #include "mozilla/Unused.h"
 
 namespace mozilla {
@@ -92,6 +93,8 @@ nsLoadGroup::nsLoadGroup()
       mStatus(NS_OK),
       mIsCanceling(false),
       mDefaultLoadIsTimed(false),
+      mBrowsingContextDiscarded(false),
+      mExternalRequestContext(false),
       mTimedRequests(0),
       mCachedRequests(0) {
   LOG(("LOADGROUP [%p]: Created.\n", this));
@@ -103,8 +106,16 @@ nsLoadGroup::~nsLoadGroup() {
 
   mDefaultLoadRequest = nullptr;
 
-  if (mRequestContext) {
+  if (mRequestContext && !mExternalRequestContext) {
     mRequestContextService->RemoveRequestContext(mRequestContext->GetID());
+    if (IsNeckoChild() && gNeckoChild) {
+      gNeckoChild->SendRemoveRequestContext(mRequestContext->GetID());
+    }
+  }
+
+  nsCOMPtr<nsIObserverService> os = mozilla::services::GetObserverService();
+  if (os) {
+    Unused << os->RemoveObserver(this, "last-pb-context-exited");
   }
 
   LOG(("LOADGROUP [%p]: Destroyed.\n", this));
@@ -114,7 +125,7 @@ nsLoadGroup::~nsLoadGroup() {
 // nsISupports methods:
 
 NS_IMPL_ISUPPORTS(nsLoadGroup, nsILoadGroup, nsILoadGroupChild, nsIRequest,
-                  nsISupportsPriority, nsISupportsWeakReference)
+                  nsISupportsPriority, nsISupportsWeakReference, nsIObserver)
 
 ////////////////////////////////////////////////////////////////////////////////
 // nsIRequest methods:
@@ -153,10 +164,9 @@ static bool AppendRequestsToArray(PLDHashTable* aTable,
     nsIRequest* request = e->mKey;
     NS_ASSERTION(request, "What? Null key in PLDHashTable entry?");
 
-    bool ok = !!aArray->AppendElement(request);
-    if (!ok) {
-      break;
-    }
+    // XXX(Bug 1631371) Check if this should use a fallible operation as it
+    // pretended earlier.
+    aArray->AppendElement(request);
     NS_ADDREF(request);
   }
 
@@ -194,14 +204,18 @@ nsLoadGroup::Cancel(nsresult status) {
   mIsCanceling = true;
 
   nsresult firstError = NS_OK;
-
   while (count > 0) {
-    nsCOMPtr<nsIRequest> request = dont_AddRef(requests.ElementAt(--count));
+    nsCOMPtr<nsIRequest> request = requests.ElementAt(--count);
 
     NS_ASSERTION(request, "NULL request found in list.");
 
     if (!mRequests.Search(request)) {
       // |request| was removed already
+      // We need to null out the entry in the request array so we don't try
+      // to notify the observers for this request.
+      nsCOMPtr<nsIRequest> request = dont_AddRef(requests.ElementAt(count));
+      requests.ElementAt(count) = nullptr;
+
       continue;
     }
 
@@ -212,19 +226,27 @@ nsLoadGroup::Cancel(nsresult status) {
            nameStr.get()));
     }
 
-    //
-    // Remove the request from the load group...  This may cause
-    // the OnStopRequest notification to fire...
-    //
-    // XXX: What should the context be?
-    //
-    (void)RemoveRequest(request, nullptr, status);
-
     // Cancel the request...
     rv = request->Cancel(status);
 
     // Remember the first failure and return it...
     if (NS_FAILED(rv) && NS_SUCCEEDED(firstError)) firstError = rv;
+
+    if (NS_FAILED(RemoveRequestFromHashtable(request, status))) {
+      // It's possible that request->Cancel causes the request to be removed
+      // from the loadgroup causing RemoveRequestFromHashtable to fail.
+      // In that case we shouldn't call NotifyRemovalObservers or decrement
+      // mForegroundCount since that has already happened.
+      nsCOMPtr<nsIRequest> request = dont_AddRef(requests.ElementAt(count));
+      requests.ElementAt(count) = nullptr;
+
+      continue;
+    }
+  }
+
+  for (count = requests.Length(); count > 0;) {
+    nsCOMPtr<nsIRequest> request = dont_AddRef(requests.ElementAt(--count));
+    (void)NotifyRemovalObservers(request, status);
   }
 
   if (mRequestContext) {
@@ -330,6 +352,16 @@ NS_IMETHODIMP
 nsLoadGroup::SetLoadFlags(uint32_t aLoadFlags) {
   mLoadFlags = aLoadFlags;
   return NS_OK;
+}
+
+NS_IMETHODIMP
+nsLoadGroup::GetTRRMode(nsIRequest::TRRMode* aTRRMode) {
+  return GetTRRModeImpl(aTRRMode);
+}
+
+NS_IMETHODIMP
+nsLoadGroup::SetTRRMode(nsIRequest::TRRMode aTRRMode) {
+  return SetTRRModeImpl(aTRRMode);
 }
 
 NS_IMETHODIMP
@@ -478,6 +510,20 @@ nsLoadGroup::AddRequest(nsIRequest* request, nsISupports* ctxt) {
 NS_IMETHODIMP
 nsLoadGroup::RemoveRequest(nsIRequest* request, nsISupports* ctxt,
                            nsresult aStatus) {
+  // Make sure we have a owning reference to the request we're about
+  // to remove.
+  nsCOMPtr<nsIRequest> kungFuDeathGrip(request);
+
+  nsresult rv = RemoveRequestFromHashtable(request, aStatus);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+
+  return NotifyRemovalObservers(request, aStatus);
+}
+
+nsresult nsLoadGroup::RemoveRequestFromHashtable(nsIRequest* request,
+                                                 nsresult aStatus) {
   NS_ENSURE_ARG_POINTER(request);
   nsresult rv;
 
@@ -489,11 +535,6 @@ nsLoadGroup::RemoveRequest(nsIRequest* request, nsISupports* ctxt,
          this, request, nameStr.get(), static_cast<uint32_t>(aStatus),
          mRequests.EntryCount() - 1));
   }
-
-  // Make sure we have a owning reference to the request we're about
-  // to remove.
-
-  nsCOMPtr<nsIRequest> kungFuDeathGrip(request);
 
   //
   // Remove the request from the group.  If this fails, it means that
@@ -546,11 +587,17 @@ nsLoadGroup::RemoveRequest(nsIRequest* request, nsISupports* ctxt,
     TelemetryReport();
   }
 
+  return NS_OK;
+}
+
+nsresult nsLoadGroup::NotifyRemovalObservers(nsIRequest* request,
+                                             nsresult aStatus) {
+  NS_ENSURE_ARG_POINTER(request);
   // Undo any group priority delta...
   if (mPriority != 0) RescheduleRequest(request, -mPriority);
 
   nsLoadFlags flags;
-  rv = request->GetLoadFlags(&flags);
+  nsresult rv = request->GetLoadFlags(&flags);
   if (NS_FAILED(rv)) return rv;
 
   if (!(flags & nsIRequest::LOAD_BACKGROUND)) {
@@ -657,7 +704,7 @@ nsLoadGroup::SetParentLoadGroup(nsILoadGroup* aParentLoadGroup) {
 
 NS_IMETHODIMP
 nsLoadGroup::GetChildLoadGroup(nsILoadGroup** aChildLoadGroup) {
-  NS_ADDREF(*aChildLoadGroup = this);
+  *aChildLoadGroup = do_AddRef(this).take();
   return NS_OK;
 }
 
@@ -672,7 +719,7 @@ nsLoadGroup::GetRootLoadGroup(nsILoadGroup** aRootLoadGroup) {
   if (ancestor) return ancestor->GetRootLoadGroup(aRootLoadGroup);
 
   // finally just return this
-  NS_ADDREF(*aRootLoadGroup = this);
+  *aRootLoadGroup = do_AddRef(this).take();
   return NS_OK;
 }
 
@@ -712,19 +759,6 @@ nsLoadGroup::GetDefaultLoadFlags(uint32_t* aFlags) {
 NS_IMETHODIMP
 nsLoadGroup::SetDefaultLoadFlags(uint32_t aFlags) {
   mDefaultLoadFlags = aFlags;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsLoadGroup::GetUserAgentOverrideCache(nsACString& aUserAgentOverrideCache) {
-  aUserAgentOverrideCache = mUserAgentOverrideCache;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsLoadGroup::SetUserAgentOverrideCache(
-    const nsACString& aUserAgentOverrideCache) {
-  mUserAgentOverrideCache = aUserAgentOverrideCache;
   return NS_OK;
 }
 
@@ -937,6 +971,49 @@ nsresult nsLoadGroup::Init() {
         getter_AddRefs(mRequestContext));
   }
 
+  nsCOMPtr<nsIObserverService> os = mozilla::services::GetObserverService();
+  NS_ENSURE_STATE(os);
+
+  Unused << os->AddObserver(this, "last-pb-context-exited", true);
+
+  return NS_OK;
+}
+
+nsresult nsLoadGroup::InitWithRequestContextId(
+    const uint64_t& aRequestContextId) {
+  mRequestContextService = RequestContextService::GetOrCreate();
+  if (mRequestContextService) {
+    Unused << mRequestContextService->GetRequestContext(
+        aRequestContextId, getter_AddRefs(mRequestContext));
+  }
+  mExternalRequestContext = true;
+
+  nsCOMPtr<nsIObserverService> os = mozilla::services::GetObserverService();
+  NS_ENSURE_STATE(os);
+
+  Unused << os->AddObserver(this, "last-pb-context-exited", true);
+
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsLoadGroup::Observe(nsISupports* aSubject, const char* aTopic,
+                     const char16_t* aData) {
+  MOZ_ASSERT(!strcmp(aTopic, "last-pb-context-exited"));
+
+  OriginAttributes attrs;
+  StoragePrincipalHelper::GetRegularPrincipalOriginAttributes(this, attrs);
+  if (attrs.mPrivateBrowsingId == 0) {
+    return NS_OK;
+  }
+
+  mBrowsingContextDiscarded = true;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsLoadGroup::GetIsBrowsingContextDiscarded(bool* aIsBrowsingContextDiscarded) {
+  *aIsBrowsingContextDiscarded = mBrowsingContextDiscarded;
   return NS_OK;
 }
 

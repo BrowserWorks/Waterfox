@@ -6,11 +6,11 @@
 #ifndef nsHttpConnection_h__
 #define nsHttpConnection_h__
 
+#include "HttpConnectionBase.h"
 #include "nsHttpConnectionInfo.h"
 #include "nsHttpResponseHead.h"
 #include "nsAHttpTransaction.h"
 #include "nsCOMPtr.h"
-#include "nsAutoPtr.h"
 #include "nsProxyRelease.h"
 #include "prinrval.h"
 #include "TunnelUtils.h"
@@ -48,20 +48,20 @@ class ASpdySession;
 // accessed from any other thread.
 //-----------------------------------------------------------------------------
 
-class nsHttpConnection final : public nsAHttpSegmentReader,
+class nsHttpConnection final : public HttpConnectionBase,
+                               public nsAHttpSegmentReader,
                                public nsAHttpSegmentWriter,
                                public nsIInputStreamCallback,
                                public nsIOutputStreamCallback,
                                public nsITransportEventSink,
                                public nsIInterfaceRequestor,
-                               public NudgeTunnelCallback,
-                               public ARefBase,
-                               public nsSupportsWeakReference {
+                               public NudgeTunnelCallback {
  private:
   virtual ~nsHttpConnection();
 
  public:
   NS_DECLARE_STATIC_IID_ACCESSOR(NS_HTTPCONNECTION_IID)
+  NS_DECL_HTTPCONNECTIONBASE
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSAHTTPSEGMENTREADER
   NS_DECL_NSAHTTPSEGMENTWRITER
@@ -73,31 +73,12 @@ class nsHttpConnection final : public nsAHttpSegmentReader,
 
   nsHttpConnection();
 
-  // Initialize the connection:
-  //  info        - specifies the connection parameters.
-  //  maxHangTime - limits the amount of time this connection can spend on a
-  //                single transaction before it should no longer be kept
-  //                alive.  a value of 0xffff indicates no limit.
-  MOZ_MUST_USE nsresult Init(nsHttpConnectionInfo* info, uint16_t maxHangTime,
-                             nsISocketTransport*, nsIAsyncInputStream*,
-                             nsIAsyncOutputStream*, bool connectedTransport,
-                             nsIInterfaceRequestor*, PRIntervalTime);
-
-  // Activate causes the given transaction to be processed on this
-  // connection.  It fails if there is already an existing transaction unless
-  // a multiplexing protocol such as SPDY is being used
-  MOZ_MUST_USE nsresult Activate(nsAHttpTransaction*, uint32_t caps,
-                                 int32_t pri);
-
   void SetFastOpen(bool aFastOpen);
   // Close this connection and return the transaction. The transaction is
   // restarted as well. This will only happened before connection is
   // connected.
   nsAHttpTransaction* CloseConnectionFastOpenTakesTooLongOrError(
       bool aCloseocketTransport);
-
-  // Close the underlying socket transport.
-  void Close(nsresult reason, bool aIsShutdown = false);
 
   //-------------------------------------------------------------------------
   // XXX document when these are ok to call
@@ -106,23 +87,9 @@ class nsHttpConnection final : public nsAHttpSegmentReader,
     return (mUsingSpdyVersion != SpdyVersion::NONE) ||
            (mKeepAliveMask && mKeepAlive);
   }
-  bool CanReuse();  // can this connection be reused?
-  bool CanDirectlyActivate();
 
   // Returns time in seconds for how long connection can be reused.
   uint32_t TimeToLive();
-
-  void DontReuse();
-
-  bool IsProxyConnectInProgress() { return mProxyConnectInProgress; }
-
-  bool LastTransactionExpectedNoContent() {
-    return mLastTransactionExpectedNoContent;
-  }
-
-  void SetLastTransactionExpectedNoContent(bool val) {
-    mLastTransactionExpectedNoContent = val;
-  }
 
   bool NeedSpdyTunnel() {
     return mConnInfo->UsingHttpsProxy() && !mTLSFilter &&
@@ -139,39 +106,16 @@ class nsHttpConnection final : public nsAHttpSegmentReader,
   }
   void SetUrgentStartPreferred(bool urgent);
 
-  nsISocketTransport* Transport() { return mSocketTransport; }
-  nsAHttpTransaction* Transaction() { return mTransaction; }
-  nsHttpConnectionInfo* ConnectionInfo() { return mConnInfo; }
-
-  // nsAHttpConnection compatible methods (non-virtual):
-  MOZ_MUST_USE nsresult OnHeadersAvailable(nsAHttpTransaction*,
-                                           nsHttpRequestHead*,
-                                           nsHttpResponseHead*, bool* reset);
-  void CloseTransaction(nsAHttpTransaction*, nsresult reason,
-                        bool aIsShutdown = false);
-  void GetConnectionInfo(nsHttpConnectionInfo** ci) {
-    NS_IF_ADDREF(*ci = mConnInfo);
-  }
-  MOZ_MUST_USE nsresult TakeTransport(nsISocketTransport**,
-                                      nsIAsyncInputStream**,
-                                      nsIAsyncOutputStream**);
-  void GetSecurityInfo(nsISupports**);
-  bool IsPersistent() { return IsKeepAlive() && !mDontReuse; }
-  bool IsReused();
   void SetIsReusedAfter(uint32_t afterMilliseconds);
-  MOZ_MUST_USE nsresult PushBack(const char* data, uint32_t length);
-  MOZ_MUST_USE nsresult ResumeSend();
-  MOZ_MUST_USE nsresult ResumeRecv();
+
   int64_t MaxBytesRead() { return mMaxBytesRead; }
   HttpVersion GetLastHttpResponseVersion() { return mLastHttpResponseVersion; }
 
   friend class HttpConnectionForceIO;
-  MOZ_MUST_USE nsresult ForceSend();
-  MOZ_MUST_USE nsresult ForceRecv();
 
-  static MOZ_MUST_USE nsresult ReadFromStream(nsIInputStream*, void*,
-                                              const char*, uint32_t, uint32_t,
-                                              uint32_t*);
+  [[nodiscard]] static nsresult ReadFromStream(nsIInputStream*, void*,
+                                               const char*, uint32_t, uint32_t,
+                                               uint32_t*);
 
   // When a persistent connection is in the connection manager idle
   // connection pool, the nsHttpConnection still reads errors and hangups
@@ -180,10 +124,10 @@ class nsHttpConnection final : public nsAHttpSegmentReader,
   void BeginIdleMonitoring();
   void EndIdleMonitoring();
 
-  bool UsingSpdy() { return (mUsingSpdyVersion != SpdyVersion::NONE); }
+  bool UsingSpdy() override { return (mUsingSpdyVersion != SpdyVersion::NONE); }
   SpdyVersion GetSpdyVersion() { return mUsingSpdyVersion; }
   bool EverUsedSpdy() { return mEverUsedSpdy; }
-  PRIntervalTime Rtt() { return mRtt; }
+  bool UsingHttp3() override { return false; }
 
   // true when connection SSL NPN phase is complete and we know
   // authoritatively whether UsingSpdy() or not.
@@ -203,21 +147,12 @@ class nsHttpConnection final : public nsAHttpSegmentReader,
   // When the connection is active this is called every second
   void ReadTimeoutTick();
 
-  int64_t BytesWritten() { return mTotalBytesWritten; }  // includes TLS
   int64_t ContentBytesWritten() { return mContentBytesWritten; }
 
-  void SetSecurityCallbacks(nsIInterfaceRequestor* aCallbacks);
-  void PrintDiagnostics(nsCString& log);
-
-  void SetTransactionCaps(uint32_t aCaps) { mTransactionCaps = aCaps; }
-
-  // IsExperienced() returns true when the connection has started at least one
-  // non null HTTP transaction of any version.
-  bool IsExperienced() { return mExperienced; }
-
-  static MOZ_MUST_USE nsresult MakeConnectString(nsAHttpTransaction* trans,
-                                                 nsHttpRequestHead* request,
-                                                 nsACString& result, bool h2ws);
+  [[nodiscard]] static nsresult MakeConnectString(nsAHttpTransaction* trans,
+                                                  nsHttpRequestHead* request,
+                                                  nsACString& result,
+                                                  bool h2ws);
   void SetupSecondaryTLS(nsAHttpTransaction* aSpdyConnectTransaction = nullptr);
   void SetInSpdyTunnel(bool arg);
 
@@ -233,26 +168,16 @@ class nsHttpConnection final : public nsAHttpSegmentReader,
            (mTrafficCount == (mTotalBytesWritten + mTotalBytesRead)) &&
            !mFastOpen;
   }
-  // override of nsAHttpConnection
-  virtual HttpVersion Version();
-
-  bool TestJoinConnection(const nsACString& hostname, int32_t port);
-  bool JoinConnection(const nsACString& hostname, int32_t port);
 
   void SetFastOpenStatus(uint8_t tfoStatus);
   uint8_t GetFastOpenStatus() { return mFastOpenStatus; }
 
-  void SetEvent(nsresult aStatus);
-
   // Return true when the socket this connection is using has not been
   // authenticated using a client certificate.  Before SSL negotiation
   // has finished this returns false.
-  bool NoClientCertAuth() const;
+  bool NoClientCertAuth() const override;
 
-  // HTTP/2 websocket support
-  bool CanAcceptWebsocket();
-
-  void SetTrafficCategory(HttpTrafficCategory aCategory);
+  bool CanAcceptWebsocket() override;
 
  private:
   // Value (set in mTCPKeepaliveConfig) indicates which set of prefs to use.
@@ -263,23 +188,24 @@ class nsHttpConnection final : public nsAHttpSegmentReader,
   };
 
   // called to cause the underlying socket to start speaking SSL
-  MOZ_MUST_USE nsresult InitSSLParams(bool connectingToProxy,
-                                      bool ProxyStartSSL);
-  MOZ_MUST_USE nsresult SetupNPNList(nsISSLSocketControl* ssl, uint32_t caps);
+  [[nodiscard]] nsresult InitSSLParams(bool connectingToProxy,
+                                       bool ProxyStartSSL);
+  [[nodiscard]] nsresult SetupNPNList(nsISSLSocketControl* ssl, uint32_t caps);
 
-  MOZ_MUST_USE nsresult OnTransactionDone(nsresult reason);
-  MOZ_MUST_USE nsresult OnSocketWritable();
-  MOZ_MUST_USE nsresult OnSocketReadable();
+  [[nodiscard]] nsresult OnTransactionDone(nsresult reason);
+  [[nodiscard]] nsresult OnSocketWritable();
+  [[nodiscard]] nsresult OnSocketReadable();
 
-  MOZ_MUST_USE nsresult SetupProxyConnect();
+  [[nodiscard]] nsresult SetupProxyConnect();
 
   PRIntervalTime IdleTime();
   bool IsAlive();
 
   // Makes certain the SSL handshake is complete and NPN negotiation
   // has had a chance to happen
-  MOZ_MUST_USE bool EnsureNPNComplete(nsresult& aOut0RTTWriteHandshakeValue,
-                                      uint32_t& aOut0RTTBytesWritten);
+  [[nodiscard]] bool EnsureNPNComplete(nsresult& aOut0RTTWriteHandshakeValue,
+                                       uint32_t& aOut0RTTBytesWritten);
+
   void SetupSSL();
 
   // Start the Spdy transaction handler when NPN indicates spdy/*
@@ -294,16 +220,19 @@ class nsHttpConnection final : public nsAHttpSegmentReader,
                                   nsTArray<RefPtr<nsAHttpTransaction> >& list);
 
   // Directly Add a transaction to an active connection for SPDY
-  MOZ_MUST_USE nsresult AddTransaction(nsAHttpTransaction*, int32_t);
+  [[nodiscard]] nsresult AddTransaction(nsAHttpTransaction*, int32_t);
 
   // Used to set TCP keepalives for fast detection of dead connections during
   // an initial period, and slower detection for long-lived connections.
-  MOZ_MUST_USE nsresult StartShortLivedTCPKeepalives();
-  MOZ_MUST_USE nsresult StartLongLivedTCPKeepalives();
-  MOZ_MUST_USE nsresult DisableTCPKeepalives();
+  [[nodiscard]] nsresult StartShortLivedTCPKeepalives();
+  [[nodiscard]] nsresult StartLongLivedTCPKeepalives();
+  [[nodiscard]] nsresult DisableTCPKeepalives();
 
  private:
-  nsCOMPtr<nsISocketTransport> mSocketTransport;
+  // mTransaction only points to the HTTP Transaction callbacks if the
+  // transaction is open, otherwise it is null.
+  RefPtr<nsAHttpTransaction> mTransaction;
+
   nsCOMPtr<nsIAsyncInputStream> mSocketIn;
   nsCOMPtr<nsIAsyncOutputStream> mSocketOut;
 
@@ -313,18 +242,10 @@ class nsHttpConnection final : public nsAHttpSegmentReader,
   nsCOMPtr<nsIInputStream> mProxyConnectStream;
   nsCOMPtr<nsIInputStream> mRequestStream;
 
-  // mTransaction only points to the HTTP Transaction callbacks if the
-  // transaction is open, otherwise it is null.
-  RefPtr<nsAHttpTransaction> mTransaction;
   RefPtr<TLSFilterTransaction> mTLSFilter;
   nsWeakPtr mWeakTrans;  // SpdyConnectTransaction *
 
   RefPtr<nsHttpHandler> mHttpHandler;  // keep gHttpHandler alive
-
-  Mutex mCallbacksLock;
-  nsMainThreadPtrHandle<nsIInterfaceRequestor> mCallbacks;
-
-  RefPtr<nsHttpConnectionInfo> mConnInfo;
 
   PRIntervalTime mLastReadTime;
   PRIntervalTime mLastWriteTime;
@@ -336,12 +257,9 @@ class nsHttpConnection final : public nsAHttpSegmentReader,
   int64_t mCurrentBytesRead;     // data read per activation
   int64_t mMaxBytesRead;         // max read in 1 activation
   int64_t mTotalBytesRead;       // total data read
-  int64_t mTotalBytesWritten;    // does not include CONNECT tunnel
   int64_t mContentBytesWritten;  // does not include CONNECT tunnel or TLS
 
   RefPtr<nsIAsyncInputStream> mInputOverflow;
-
-  PRIntervalTime mRtt;
 
   // Whether the first non-null transaction dispatched on this connection was
   // urgent-start or not
@@ -357,7 +275,6 @@ class nsHttpConnection final : public nsAHttpSegmentReader,
   bool mLastTransactionExpectedNoContent;
   bool mIdleMonitoring;
   bool mProxyConnectInProgress;
-  bool mExperienced;
   bool mInSpdyTunnel;
   bool mForcePlainText;
 
@@ -391,9 +308,6 @@ class nsHttpConnection final : public nsAHttpSegmentReader,
   // mLastHttpResponseVersion stores the last response's http version seen.
   HttpVersion mLastHttpResponseVersion;
 
-  // The capabailities associated with the most recent transaction
-  uint32_t mTransactionCaps;
-
   // If a large keepalive has been requested for any trans,
   // scale the default by this factor
   uint32_t mDefaultTimeoutFactor;
@@ -407,7 +321,7 @@ class nsHttpConnection final : public nsAHttpSegmentReader,
  private:
   // For ForceSend()
   static void ForceSendIO(nsITimer* aTimer, void* aClosure);
-  MOZ_MUST_USE nsresult MaybeForceSendIO();
+  [[nodiscard]] nsresult MaybeForceSendIO();
   bool mForceSendPending;
   nsCOMPtr<nsITimer> mForceSendTimer;
 
@@ -433,14 +347,7 @@ class nsHttpConnection final : public nsAHttpSegmentReader,
   bool mCheckNetworkStallsWithTFO;
   PRIntervalTime mLastRequestBytesSentTime;
 
- public:
-  void BootstrapTimings(TimingStruct times);
-
  private:
-  TimingStruct mBootstrappedTimings;
-  bool mBootstrappedTimingsSet;
-
-  nsTArray<HttpTrafficCategory> mTrafficCategory;
   bool mThroughCaptivePortal;
 };
 

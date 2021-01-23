@@ -38,11 +38,9 @@ const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 XPCOMUtils.defineLazyModuleGetters(this, {
   NetUtil: "resource://gre/modules/NetUtil.jsm",
   PluralForm: "resource://gre/modules/PluralForm.jsm",
-  AppConstants: "resource://gre/modules/AppConstants.jsm",
   BrowserWindowTracker: "resource:///modules/BrowserWindowTracker.jsm",
   DownloadHistory: "resource://gre/modules/DownloadHistory.jsm",
   Downloads: "resource://gre/modules/Downloads.jsm",
-  DownloadUIHelper: "resource://gre/modules/DownloadUIHelper.jsm",
   DownloadUtils: "resource://gre/modules/DownloadUtils.jsm",
   PlacesUtils: "resource://gre/modules/PlacesUtils.jsm",
   PrivateBrowsingUtils: "resource://gre/modules/PrivateBrowsingUtils.jsm",
@@ -156,19 +154,14 @@ var DownloadsCommon = {
       if (stringName in kDownloadsStringsRequiringFormatting) {
         strings[stringName] = function() {
           // Convert "arguments" to a real array before calling into XPCOM.
-          return sb.formatStringFromName(
-            stringName,
-            Array.from(arguments),
-            arguments.length
-          );
+          return sb.formatStringFromName(stringName, Array.from(arguments));
         };
       } else if (stringName in kDownloadsStringsRequiringPluralForm) {
         strings[stringName] = function(aCount) {
           // Convert "arguments" to a real array before calling into XPCOM.
           let formattedString = sb.formatStringFromName(
             stringName,
-            Array.from(arguments),
-            arguments.length
+            Array.from(arguments)
           );
           return PluralForm.get(aCount, formattedString);
         };
@@ -436,70 +429,23 @@ var DownloadsCommon = {
   /**
    * Opens a downloaded file.
    *
-   * @param aFile
-   *        the downloaded file to be opened.
-   * @param aMimeInfo
-   *        the mime type info object.  May be null.
-   * @param aOwnerWindow
-   *        the window with which this action is associated.
+   * @param downloadProperties
+   *        A Download object or the initial properties of a serialized download
+   * @param options.openWhere
+   *        Optional string indicating how to handle opening a download target file URI.
+   *        One of "window", "tab", "tabshifted".
+   * @return {Promise}
+   * @resolves When the instruction to launch the file has been
+   *           successfully given to the operating system or handled internally
+   * @rejects  JavaScript exception if there was an error trying to launch
+   *           the file.
    */
-  openDownloadedFile(aFile, aMimeInfo, aOwnerWindow) {
-    if (!(aFile instanceof Ci.nsIFile)) {
-      throw new Error("aFile must be a nsIFile object");
+  async openDownload(download, options) {
+    // some download objects got serialized and need reconstituting
+    if (typeof download.launch !== "function") {
+      download = await Downloads.createDownload(download);
     }
-    if (aMimeInfo && !(aMimeInfo instanceof Ci.nsIMIMEInfo)) {
-      throw new Error("Invalid value passed for aMimeInfo");
-    }
-    if (!(aOwnerWindow instanceof Ci.nsIDOMWindow)) {
-      throw new Error("aOwnerWindow must be a dom-window object");
-    }
-
-    let isWindowsExe =
-      AppConstants.platform == "win" &&
-      aFile.leafName.toLowerCase().endsWith(".exe");
-
-    let promiseShouldLaunch;
-    // Don't prompt on Windows for .exe since there will be a native prompt.
-    if (aFile.isExecutable() && !isWindowsExe) {
-      // We get a prompter for the provided window here, even though anchoring
-      // to the most recently active window should work as well.
-      promiseShouldLaunch = DownloadUIHelper.getPrompter(
-        aOwnerWindow
-      ).confirmLaunchExecutable(aFile.path);
-    } else {
-      promiseShouldLaunch = Promise.resolve(true);
-    }
-
-    promiseShouldLaunch
-      .then(shouldLaunch => {
-        if (!shouldLaunch) {
-          return;
-        }
-
-        // Actually open the file.
-        try {
-          if (
-            aMimeInfo &&
-            aMimeInfo.preferredAction == aMimeInfo.useHelperApp
-          ) {
-            aMimeInfo.launchWithFile(aFile);
-            return;
-          }
-        } catch (ex) {}
-
-        // If either we don't have the mime info, or the preferred action failed,
-        // attempt to launch the file directly.
-        try {
-          aFile.launch();
-        } catch (ex) {
-          // If launch fails, try sending it through the system's external "file:"
-          // URL handler.
-          Cc["@mozilla.org/uriloader/external-protocol-service;1"]
-            .getService(Ci.nsIExternalProtocolService)
-            .loadURI(NetUtil.newURI(aFile));
-        }
-      })
-      .catch(Cu.reportError);
+    return download.launch(options).catch(ex => Cu.reportError(ex));
   },
 
   /**
@@ -637,7 +583,7 @@ var DownloadsCommon = {
           function() {
             if (
               subj.document.documentURI ==
-              "chrome://global/content/commonDialog.xul"
+              "chrome://global/content/commonDialog.xhtml"
             ) {
               Services.ww.unregisterNotification(onOpen);
               let dialog = subj.document.getElementById("commonDialog");
@@ -667,10 +613,10 @@ var DownloadsCommon = {
   },
 };
 
-XPCOMUtils.defineLazyGetter(this.DownloadsCommon, "log", () => {
+XPCOMUtils.defineLazyGetter(DownloadsCommon, "log", () => {
   return DownloadsLogger.log.bind(DownloadsLogger);
 });
-XPCOMUtils.defineLazyGetter(this.DownloadsCommon, "error", () => {
+XPCOMUtils.defineLazyGetter(DownloadsCommon, "error", () => {
   return DownloadsLogger.error.bind(DownloadsLogger);
 });
 
@@ -988,7 +934,7 @@ const DownloadsViewPrototype = {
    */
   addView(aView) {
     // Start receiving events when the first of our views is registered.
-    if (this._views.length == 0) {
+    if (!this._views.length) {
       if (this._isPrivate) {
         PrivateDownloadsData.addView(this);
       } else {
@@ -1026,7 +972,7 @@ const DownloadsViewPrototype = {
     }
 
     // Stop receiving events when the last of our views is unregistered.
-    if (this._views.length == 0) {
+    if (!this._views.length) {
       if (this._isPrivate) {
         PrivateDownloadsData.removeView(this);
       } else {
@@ -1083,7 +1029,7 @@ const DownloadsViewPrototype = {
    * @note Subclasses should override this.
    */
   onDownloadStateChanged(download) {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+    throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
   },
 
   /**
@@ -1115,7 +1061,7 @@ const DownloadsViewPrototype = {
    * @note Subclasses should override this.
    */
   onDownloadRemoved(download) {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+    throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
   },
 
   /**
@@ -1125,7 +1071,7 @@ const DownloadsViewPrototype = {
    * @note Subclasses should override this.
    */
   _refreshProperties() {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+    throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
   },
 
   /**
@@ -1134,7 +1080,7 @@ const DownloadsViewPrototype = {
    * @note Subclasses should override this.
    */
   _updateView() {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+    throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
   },
 
   /**
@@ -1180,7 +1126,7 @@ DownloadsIndicatorDataCtor.prototype = {
   removeView(aView) {
     DownloadsViewPrototype.removeView.call(this, aView);
 
-    if (this._views.length == 0) {
+    if (!this._views.length) {
       this._itemCount = 0;
     }
   },
@@ -1398,7 +1344,7 @@ DownloadsSummaryData.prototype = {
   removeView(aView) {
     DownloadsViewPrototype.removeView.call(this, aView);
 
-    if (this._views.length == 0) {
+    if (!this._views.length) {
       // Clear out our collection of Download objects. If we ever have
       // another view registered with us, this will get re-populated.
       this._downloads = [];
@@ -1453,7 +1399,7 @@ DownloadsSummaryData.prototype = {
    * which was set when constructing this DownloadsSummaryData instance.
    */
   *_downloadsForSummary() {
-    if (this._downloads.length > 0) {
+    if (this._downloads.length) {
       for (let i = this._numToExclude; i < this._downloads.length; ++i) {
         yield this._downloads[i];
       }

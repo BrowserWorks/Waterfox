@@ -890,7 +890,7 @@ findQfromSeed(
     pqgGenType *typePtr,        /* output. Generation Type used */
     unsigned int *qgen_counter) /* output. q_counter */
 {
-    HASH_HashType hashtype;
+    HASH_HashType hashtype = HASH_AlgNULL;
     SECItem firstseed = { 0, 0, 0 };
     SECItem qseed = { 0, 0, 0 };
     SECStatus rv;
@@ -1013,6 +1013,8 @@ makePfromQandSeed(
 
     hashlen = HASH_ResultLen(hashtype);
     outlen = hashlen * PR_BITS_PER_BYTE;
+
+    PORT_Assert(outlen > 0);
 
     /* L - 1 = n*outlen + b */
     n = (L - 1) / outlen;
@@ -1237,7 +1239,7 @@ pqg_ParamGen(unsigned int L, unsigned int N, pqgGenType type,
     unsigned int offset;  /* Per FIPS 186, app 2.2. 186-3 app A.1.1.2 */
     unsigned int outlen;  /* Per FIPS 186-3, appendix A.1.1.2. */
     unsigned int maxCount;
-    HASH_HashType hashtype;
+    HASH_HashType hashtype = HASH_AlgNULL;
     SECItem *seed; /* Per FIPS 186, app 2.2. 186-3 app A.1.1.2 */
     PLArenaPool *arena = NULL;
     PQGParams *params = NULL;
@@ -1628,8 +1630,8 @@ PQG_VerifyParams(const PQGParams *params,
     unsigned int qseed_len;
     unsigned int qgen_counter_ = 0;
     SECItem pseed_ = { 0, 0, 0 };
-    HASH_HashType hashtype;
-    pqgGenType type;
+    HASH_HashType hashtype = HASH_AlgNULL;
+    pqgGenType type = FIPS186_1_TYPE;
 
 #define CHECKPARAM(cond)      \
     if (!(cond)) {            \
@@ -1802,6 +1804,7 @@ PQG_VerifyParams(const PQGParams *params,
         /* 10. P generated from (L, counter, g, SEED, Q) matches P
          * in PQGParams. */
         outlen = HASH_ResultLen(hashtype) * PR_BITS_PER_BYTE;
+        PORT_Assert(outlen > 0);
         n = (L - 1) / outlen;
         offset = vfy->counter * (n + 1) + ((type == FIPS186_1_TYPE) ? 2 : 1);
         CHECK_SEC_OK(makePfromQandSeed(hashtype, L, N, offset, g, &vfy->seed,

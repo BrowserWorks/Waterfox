@@ -29,9 +29,13 @@ HOST_SOURCES += [
     'NoAutoTypeChecker.cpp',
     'NoDuplicateRefCntMemberChecker.cpp',
     'NoExplicitMoveConstructorChecker.cpp',
+    'NoNewThreadsChecker.cpp',
     'NonMemMovableMemberChecker.cpp',
     'NonMemMovableTemplateArgChecker.cpp',
     'NonParamInsideFunctionDeclChecker.cpp',
+    'NonTrivialTypeInFfiChecker.cpp',
+    'NoPrincipalGetURI.cpp',
+    'NoUsingNamespaceMozillaJavaChecker.cpp',
     'OverrideBaseCallChecker.cpp',
     'OverrideBaseCallUsageChecker.cpp',
     'ParamTraitsEnumChecker.cpp',
@@ -40,11 +44,15 @@ HOST_SOURCES += [
     'ScopeChecker.cpp',
     'SprintfLiteralChecker.cpp',
     'TrivialCtorDtorChecker.cpp',
+    'TrivialDtorChecker.cpp',
     'VariableUsageHelpers.cpp',
 ]
 
+# Ideally, we wouldn't have compile-time choices wrt checkes. bug 1617153.
 if CONFIG['OS_ARCH'] == 'WINNT':
+    HOST_DEFINES['TARGET_IS_WINDOWS'] = True
     HOST_SOURCES += [
+        'FopenUsageChecker.cpp',
         'LoadLibraryUsageChecker.cpp',
     ]
 
@@ -56,12 +64,17 @@ if CONFIG['ENABLE_MOZSEARCH_PLUGIN']:
         'mozsearch-plugin/StringOperations.cpp',
     ]
 
-GENERATED_FILES += ['ThirdPartyPaths.cpp']
-third_party_paths = GENERATED_FILES['ThirdPartyPaths.cpp']
-third_party_paths.script = "ThirdPartyPaths.py:generate"
-third_party_paths.inputs = [
-    '/tools/rewriting/ThirdPartyPaths.txt',
-]
+GeneratedFile('ThirdPartyPaths.cpp', script="ThirdPartyPaths.py",
+              entry_point="generate", inputs=[
+                  '/tools/rewriting/ThirdPartyPaths.txt',
+                  '/tools/rewriting/Generated.txt',
+              ])
+
+GeneratedFile('ThreadAllows.h', script="ThreadAllows.py",
+              entry_point="generate_file", inputs=[
+              '/build/clang-plugin/ThreadAllows.txt',
+              '/build/clang-plugin/ThreadFileAllows.txt'
+              ])
 
 HOST_COMPILE_FLAGS['STL'] = []
 HOST_COMPILE_FLAGS['VISIBILITY'] = []
@@ -72,13 +85,18 @@ if CONFIG['HOST_OS_ARCH'] == 'Darwin':
 
 # As of clang 8, llvm-config doesn't output the flags used to build clang
 # itself, so we don't end up with -fPIC as a side effect. llvm.org/PR8220
-if CONFIG['HOST_OS_ARCH'] != 'Windows':
+if CONFIG['HOST_OS_ARCH'] != 'WINNT':
     HOST_CXXFLAGS += ['-fPIC']
 
 DIRS += [
     'tests',
 ]
 
+include('external/sources.mozbuild')
+
+if CONFIG['ENABLE_CLANG_PLUGIN_ALPHA']:
+    HOST_DEFINES["MOZ_CLANG_PLUGIN_ALPHA"] = "1"
+    include('alpha/sources.mozbuild')
 
 # In the current moz.build world, we need to override essentially every
 # variable to limit ourselves to what we need to build the clang plugin.

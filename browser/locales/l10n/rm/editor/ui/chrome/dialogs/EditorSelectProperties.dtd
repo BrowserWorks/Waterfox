@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Caracteristicas da la glista da selecziun">
+
+<!ENTITY Select.label "Glista da selecziun">
+<!ENTITY SelectName.label "Num da la glista:">
+<!ENTITY SelectName.accesskey "N">
+<!ENTITY SelectSize.label "Autezza:">
+<!ENTITY SelectSize.accesskey "A">
+<!ENTITY SelectMultiple.label "Selecziun multipla">
+<!ENTITY SelectMultiple.accesskey "M">
+<!ENTITY SelectDisabled.label "Deactivà">
+<!ENTITY SelectDisabled.accesskey "D">
+<!ENTITY SelectTabIndex.label "Index da tabulatur:">
+<!ENTITY SelectTabIndex.accesskey "I">
+
+<!ENTITY OptGroup.label "Gruppa d'opziuns">
+<!ENTITY OptGroupLabel.label "Descripziun:">
+<!ENTITY OptGroupLabel.accesskey "s">
+<!ENTITY OptGroupDisabled.label "Deactivà">
+<!ENTITY OptGroupDisabled.accesskey "D">
+
+<!ENTITY Option.label "Opziun">
+<!ENTITY OptionText.label "Text:">
+<!ENTITY OptionText.accesskey "T">
+<!ENTITY OptionValue.label "Valur:">
+<!ENTITY OptionValue.accesskey "V">
+<!ENTITY OptionSelected.label "Selecziunà oriundamain">
+<!ENTITY OptionSelected.accesskey "S">
+<!ENTITY OptionDisabled.label "Deactivà">
+<!ENTITY OptionDisabled.accesskey "D">
+
+<!ENTITY TextHeader.label "Text">
+<!ENTITY ValueHeader.label "Valur">
+<!ENTITY SelectedHeader.label "Tschernì">
+
+<!ENTITY AddOption.label "Agiuntar opziun">
+<!ENTITY AddOption.accesskey "O">
+<!ENTITY AddOptGroup.label "Agiuntar gruppa">
+<!ENTITY AddOptGroup.accesskey "G">
+<!ENTITY RemoveElement.label "Allontanar">
+<!ENTITY RemoveElement.accesskey "l">
+<!ENTITY MoveElementUp.label "Ensi">
+<!ENTITY MoveElementUp.accesskey "s">
+<!ENTITY MoveElementDown.label "Engiu">
+<!ENTITY MoveElementDown.accesskey "g">

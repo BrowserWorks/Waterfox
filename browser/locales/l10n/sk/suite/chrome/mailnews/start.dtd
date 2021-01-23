@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startpage.title "Víta vás Pošta a diskusné skupiny &brandShortName;">
+<!--# LOCALIZATION NOTE (headline.label): the URL for <a id="vendorURL"> is fetched from brand.properties -->
+<!ENTITY headline.label
+'Víta vás Pošta a diskusné skupiny <a id="vendorURL" href="">&brandShortName;</a>!'>
+<!ENTITY description.label
+"Pošta a diskusné skupiny &brandShortName; je výkonný klient s otvoreným zdrojovým kódom pre poštu a diskusné skupiny podporujúci rozšírenú detekciu nevyžiadanej pošty a obsahujúci ďalšie užitočné funkcie.">
+<!ENTITY features.title "Funkcie">
+<!ENTITY feat_multiacc.label "Podpora viacerých účtov">
+<!ENTITY feat_junk.label "Detekcia nevyžiadanej pošty">
+<!ENTITY feat_feeds.label "Čítačka informačných kanálov (RSS)">
+<!ENTITY feat_filters.label "Filtrovanie správ">
+<!ENTITY feat_htmlmsg.label "Podpora pre správy vo formáte HTML">
+<!ENTITY feat_abook.label "Adresár kontaktov">
+<!ENTITY feat_tags.label "Prispôsobiteľné menovky a zobrazenia správ">
+<!ENTITY feat_integration.label
+"Úzka integrácia s balíkom aplikácií &brandShortName;">
+<!ENTITY dict.title "Slovníky">
+<!ENTITY dict_intro.label "Slovníky sa používajú na kontrolu pravopisu vo vašich správach.">
+<!--# LOCALIZATION NOTE (dict_info.label): the URL for <a id="dictURL"> is fetched from brand.properties -->
+<!ENTITY dict_info.label
+'Slovníky nájdete v sekcii
+<a id="dictURL" href="">Slovníky</a> na serveri
+<a href="https://addons.mozilla.org/seamonkey/">Mozilla Add-ons</a>.'>
+<!ENTITY dict_info.label2
+'Slovníky nájdete v sekcii
+<a id="dictURL" href="">Slovníky</a> na stránke
+<a href="https://addons.thunderbird.net/seamonkey/">Doplnky SeaMonkey a Thunderbirdu</a>.'>
+<!ENTITY info.title "Ďalšie informácie">
+<!--# LOCALIZATION NOTE (info_bugs.label): the URL for <a id="releaseNotesURL"> is fetched from brand.properties -->
+<!ENTITY info_bugs.label
+'<a href="https://developer.mozilla.org/docs/Mozilla/Projects/MailNews">Radi uvítame vaše hlásenia chýb a žiadosti o nové funkcie</a>, ale predtým si prečítajte <a id="releaseNotesURL" href="">poznámky k vydaniu</a> a zadajte požiadavku do systému
+<a href="https://bugzilla.mozilla.org/query.cgi">Bugzilla</a>.'>

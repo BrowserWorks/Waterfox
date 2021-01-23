@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY e2eTitle.label "Cryptographia testa a testa">
+<!ENTITY e2eLearnMore.label "Saper plus">
+
+<!ENTITY e2eEnc.description "Sin cryptographia testa a testa le contentos de messages es facilemente exponite a tu fornitor de email e a surveliantia de massa.">
+<!ENTITY e2eeReqWarning.description "Si tu require cryptographia, pro inviar un message tu debe haber le clave public o le certificato de cata destinatario.">
+
+<!ENTITY e2eSigning.description "Un firma digital consenti al destinatarios de verificar que le message ha essite inviate per tu e que le contento non ha essite cambiate.">
+<!ENTITY e2eTechPref.description "Technologia de cryptographia preferite:">
+
+<!ENTITY doNotEncrypt.label "Non activar le cryptographia per defecto">
+<!ENTITY doNotEncrypt.accesskey "N">
+<!ENTITY requireEncryptMessage.label "Exiger le cryptographia per defecto">
+<!ENTITY requireEncryptMessage.accesskey "d">
+<!ENTITY encryptionCert2.message "Certificato personal pro le cryptographia:">
+<!ENTITY digitalSign.certificate.button "Seliger…">
+<!ENTITY digitalSign.certificate.accesskey "S">
+<!ENTITY digitalSign.certificate_clear.button "Rader">
+<!ENTITY digitalSign.certificate_clear.accesskey "C">
+<!ENTITY encryption.certificate.button "Eliger…">
+<!ENTITY encryption.certificate.accesskey "r">
+<!ENTITY encryption.certificate_clear.button "Rader">
+<!ENTITY encryption.certificate_clear.accesskey "a">
+<!ENTITY signingGroupTitle.label "Firma digital">
+<!ENTITY signMessage2.label "Adder mi firma digital per defecto">
+<!ENTITY signMessage.accesskey "d">
+
+<!ENTITY signingCert2.message "Certificato personal pro firma digital:">
+
+<!ENTITY sendingDefaults.label "Parametros predefinite pro inviar messages">
+
+<!ENTITY technologyAutomatic.label "Eliger automaticamente in base a claves o certificatos disponibile">
+
+<!ENTITY certificates2.label "S/MIME">
+<!ENTITY manageCerts3.label "Gerer certificatos S/MIME">
+<!ENTITY manageCerts3.accesskey "G">
+<!ENTITY manageDevices2.label "Dispositivos de securitate S/MIME">
+<!ENTITY manageDevices2.accesskey "s">
+
+<!ENTITY technologySMIME.label "Preferer S/MIME">
+<!ENTITY technologyOpenPGP.label "Preferer OpenPGP">
+
+<!ENTITY openpgpKeys.label "OpenPGP">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Seliger certificato">
+<!ENTITY certPicker.info  "Certificato:">
+<!ENTITY certPicker.detailsLabel "Detalios de certificato seligite:">
+
+<!ENTITY openpgpKey.message "Clave personal pro cryptographia e firma digital:">
+<!ENTITY openpgpKey.button "Definir le clave personal…">
+<!ENTITY openpgpKey.accesskey "o">

@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY siteUrl.label         "Site URL'si:">
+<!ENTITY docSubdir.label       "Sayfa alt dizini:">
+<!ENTITY otherSubdir.label     "Resim alt dizini:">
+
+<!ENTITY status.label          "Yayımlanıyor…">
+<!ENTITY fileList.label        "Yayımlama Durumu">
+<!ENTITY succeeded.label       "Başarılı">
+<!ENTITY failed.label          "Başarısız">
+
+<!ENTITY keepOpen              "Yayımlama tamamlandıktan sonra bu pencereyi açık tut.">
+<!ENTITY closeButton.label     "Kapat">

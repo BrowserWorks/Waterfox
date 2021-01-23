@@ -1,0 +1,136 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY offlineGoOfflineCmd.label "Праца па-за сеткай">
+<!ENTITY offlineGoOfflineCmd.accesskey "з">
+<!ENTITY fileMenu.label "Файл">
+<!ENTITY fileMenu.accesskey "ф">
+<!ENTITY newMenu.label "Стварыць">
+<!ENTITY newMenu.accesskey "С">
+<!ENTITY newBlankPageCmd.label "Старонку Укладальніка">
+<!ENTITY newBlankPageCmd.accesskey "л">
+<!ENTITY newBlankPageCmd.key "n">
+<!ENTITY newPageFromTemplateCmd.label "Старонку, выкарыстоўваючы ўзор">
+<!ENTITY newPageFromTemplateCmd.accesskey "Ў">
+<!ENTITY newPageFromDraftCmd.label "Старонку, выкарыстоўваючы чарнавік">
+<!ENTITY newPageFromDraftCmd.accesskey "Ч">
+<!ENTITY newNavigatorCmd.label "Акно азіральніка">
+<!ENTITY newNavigatorCmd.key "N">
+<!ENTITY newNavigatorCmd.accesskey "а">
+<!ENTITY newPrivateWindowCmd.label "Адасобленае акно">
+<!ENTITY newPrivateWindowCmd.key "B">
+<!ENTITY newPrivateWindowCmd.accesskey "а">
+<!ENTITY printSetupCmd.label "Уладкаваць старонку…">
+<!ENTITY printSetupCmd.accesskey "У">
+<!ENTITY printPreviewCmd.label "Перадпрагляд друку">
+<!ENTITY printPreviewCmd.accesskey "П">
+<!ENTITY printCmd.label "Друкаваць…">
+<!ENTITY printCmd.accesskey "Д">
+<!ENTITY printCmd.key "P">
+<!ENTITY editMenu.label "Праўка">
+<!ENTITY editMenu.accesskey "П">
+<!ENTITY undoCmd.label "Адмяніць">
+<!ENTITY undoCmd.key "Z">
+<!ENTITY undoCmd.accesskey "м">
+<!ENTITY redoCmd.label "Вярнуць">
+<!ENTITY redoCmd.key "Y">
+<!ENTITY redoCmd.accesskey "В">
+<!ENTITY cutCmd.label "Выразаць">
+<!ENTITY cutCmd.key "X">
+<!ENTITY cutCmd.accesskey "р">
+<!ENTITY copyCmd.label "Капіяваць">
+<!ENTITY copyCmd.key "C">
+<!ENTITY copyCmd.accesskey "к">
+<!ENTITY pasteCmd.label "Уставіць">
+<!ENTITY pasteCmd.key "V">
+<!ENTITY pasteCmd.accesskey "у">
+<!ENTITY pasteGoCmd.label "Уставіць і пайсці">
+<!ENTITY pasteGoCmd.accesskey "п">
+<!ENTITY pasteSearchCmd.label "Уставіць і знайсці">
+<!ENTITY pasteSearchCmd.accesskey "У">
+<!ENTITY deleteCmd.label "Выдаліць">
+<!ENTITY deleteCmd.accesskey "д">
+<!ENTITY selectAllCmd.label "Вылучыць усё">
+<!ENTITY selectAllCmd.key "A">
+<!ENTITY selectAllCmd.accesskey "л">
+<!ENTITY clearHistoryCmd.label "Ачысціць гісторыю пошуку">
+<!ENTITY clearHistoryCmd.accesskey "г">
+<!ENTITY showSuggestionsCmd.label "Паказаць прапановы">
+<!ENTITY showSuggestionsCmd.accesskey "п">
+<!ENTITY preferencesCmd.label "Перавагі…">
+<!ENTITY preferencesCmd.key "E">
+<!ENTITY preferencesCmd.accesskey "П">
+<!ENTITY findBarCmd.key "F">
+<!ENTITY findBarCmd.accesskey "З">
+<!ENTITY findReplaceCmd.key "H">
+<!ENTITY findReplaceCmd.accesskey "м">
+<!ENTITY findAgainCmd.label "Знайсці зноў">
+<!ENTITY findAgainCmd.key "G">
+<!ENTITY findAgainCmd.accesskey "g">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "Знайсці папярэдні">
+<!ENTITY findPrevCmd.key "G">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.accesskey "п">
+<!ENTITY findTypeTextCmd.label "Знаходзіць тэкст, што вы набіраеце">
+<!ENTITY findTypeTextCmd.accesskey "т">
+<!ENTITY findTypeLinksCmd.label "Знаходзіць спасылкі, якія вы набіраеце">
+<!ENTITY findTypeLinksCmd.accesskey "с">
+<!ENTITY viewMenu.label "Прагляд">
+<!ENTITY viewMenu.accesskey "г">
+<!ENTITY viewToolbarsMenu.label "Паказаць/Схаваць">
+<!ENTITY viewToolbarsMenu.accesskey "х">
+<!ENTITY showTaskbarCmd.label "Паліца з статусам">
+<!ENTITY showTaskbarCmd.accesskey "С">
+<!ENTITY helpMenu.label "Даведка">
+<!ENTITY helpMenu.accesskey "Д">
+<!ENTITY helpTroubleshootingInfo.label "Звесткі для вырашэння праблемаў">
+<!ENTITY helpTroubleshootingInfo.accesskey "З">
+<!ENTITY releaseCmd.label "Заўвагі аб выданні">
+<!ENTITY releaseCmd.accesskey "В">
+<!ENTITY helpSafeMode.label "Перазапусціць з забароненымі дадаткамі">
+<!ENTITY helpSafeMode.accesskey "е">
+<!ENTITY updateCmd.label "Праверыць, ці існуюць абнаўленні…">
+<!ENTITY updateCmd.accesskey "П">
+<!ENTITY aboutCmd.label "Пра &brandShortName;">
+<!ENTITY aboutCmd.accesskey "П">
+<!ENTITY aboutCommPluginsCmd.label "Пра ўбудовы">
+<!ENTITY aboutCommPluginsCmd.accesskey "Ў">
+<!ENTITY direct.label "У сетцы (пасярэднік: няма)">
+<!ENTITY direct.accesskey "н">
+<!ENTITY manual.label "У сетцы (пасярэднік: уручную)">
+<!ENTITY manual.accesskey "р">
+<!ENTITY pac.label "У сетцы (пасярэднік: аўта URL)">
+<!ENTITY pac.accesskey "с">
+<!ENTITY wpad.label "У сетцы (пасярэднік: самавызначэнне)">
+<!ENTITY wpad.accesskey "с">
+<!ENTITY system.label "У сетцы (пасярэднік: ужываецца сістэмны пасярэднік).">
+<!ENTITY system.accesskey "с">
+<!ENTITY proxy.label "Наладка пасярэднікаў…">
+<!ENTITY proxy.accesskey "л">
+<!ENTITY bidiSwitchTextDirectionItem.label "Пераключыць кірунак тэксту">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey "к">
+<!ENTITY bidiSwitchTextDirectionItem.commandkey "X">
+<!ENTITY customizeToolbarContext.label "Уладкаваць…">
+<!ENTITY customizeToolbarContext.accesskey "У">
+<!ENTITY customizeToolbar.toolbarmode.label "Наладжванні гэтай прыладапаліцы">
+<!ENTITY customizeToolbar.toolbarmode.accesskey "л">
+<!ENTITY customizeToolbar.iconsAndText.label "Значкі і тэкст">
+<!ENTITY customizeToolbar.iconsAndText.accesskey "і">
+<!ENTITY customizeToolbar.icons.label "Значкі">
+<!ENTITY customizeToolbar.icons.accesskey "З">
+<!ENTITY customizeToolbar.text.label "Тэкст">
+<!ENTITY customizeToolbar.text.accesskey "Т">
+<!ENTITY customizeToolbar.useSmallIcons.label "Дробныя значкі">
+<!ENTITY customizeToolbar.useSmallIcons.accesskey "Д">
+<!ENTITY customizeToolbar.labelAlignEnd.label "Паказваць тэкст побач з значкамі">
+<!ENTITY customizeToolbar.labelAlignEnd.accesskey "б">
+<!ENTITY customizeToolbar.useDefault.label "Аднавіць змоўчныя">
+<!ENTITY customizeToolbar.useDefault.accesskey "А">
+<!ENTITY allowPopups.accesskey "в">
+<!ENTITY showPopupManager.label "Кіраваць вынырцамі">
+<!ENTITY showPopupManager.accesskey "К">
+<!ENTITY dontShowMessage.label "Не паказваць гэтае паведамленне, калі вынырцы затрымліваюцца">
+<!ENTITY dontShowMessage.accesskey "Н">
+<!ENTITY syncToolbarButton.label "Sync">

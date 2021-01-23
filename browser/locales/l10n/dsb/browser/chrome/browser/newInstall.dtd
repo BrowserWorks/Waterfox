@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
+ discrete download of Waterfox" and "version" is used to mean "the specific
+ revision number of a given Waterfox channel". These terms are not synonymous.
+-->
+
+<!ENTITY window.title "Wažne nowosći">
+<!ENTITY window.style "width: 490px">
+<!ENTITY sync "Aby informacije synchronizěrował, kótarež sćo južo składł do Waterfox z toś teju instalaciju &brandShortName;, pśizjawśo se ze swójim &syncBrand.fxAccount.label;.">
+<!ENTITY continue-button "Dalej">
+
+<!ENTITY mainText "Toś ta instalacija &brandShortName; ma nowy profil. Njeźěli cytańske znamjenja, gronidła a wužywaŕske nastajenja z drugimi instalacijami Waterfox (Firefox, Waterfox ESR, Waterfox Beta, Waterfox Developer Edition a Waterfox Nightly) na toś tom licadle.">

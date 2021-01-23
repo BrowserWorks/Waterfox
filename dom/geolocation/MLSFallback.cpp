@@ -5,7 +5,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "MLSFallback.h"
-#include "nsGeoPosition.h"
+#include "GeolocationPosition.h"
+#include "nsComponentManagerUtils.h"
 #include "nsIGeolocationProvider.h"
 #include "nsServiceManagerUtils.h"
 
@@ -13,7 +14,7 @@ NS_IMPL_ISUPPORTS(MLSFallback, nsITimerCallback, nsINamed)
 
 MLSFallback::MLSFallback(uint32_t delay) : mDelayMs(delay) {}
 
-MLSFallback::~MLSFallback() {}
+MLSFallback::~MLSFallback() = default;
 
 nsresult MLSFallback::Startup(nsIGeolocationUpdate* aWatcher) {
   if (mHandoffTimer || mMLSFallbackProvider) {

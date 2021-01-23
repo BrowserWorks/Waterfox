@@ -10,7 +10,7 @@
  * which is Copyright 2018 The Chromium Authors. All rights reserved.
  */
 
-var EXPORTED_SYMBOLS = ["PasswordGenerator"];
+const EXPORTED_SYMBOLS = ["PasswordGenerator"];
 
 const { XPCOMUtils } = ChromeUtils.import(
   "resource://gre/modules/XPCOMUtils.jsm"
@@ -30,7 +30,7 @@ const ALL_CHARACTERS = LOWER_CASE_ALPHA + UPPER_CASE_ALPHA + DIGITS;
 
 const REQUIRED_CHARACTER_CLASSES = [LOWER_CASE_ALPHA, UPPER_CASE_ALPHA, DIGITS];
 
-const PasswordGenerator = {
+this.PasswordGenerator = {
   /**
    * @param {Number} length of the password to generate
    * @returns {string} password that was generated

@@ -15,21 +15,12 @@ function unmountRoot() {
 }
 
 module.exports = {
-  bootstrap: ({
-    threadClient,
-    tabTarget,
-    debuggerClient,
-    workers,
-    panel,
-  }: any) =>
+  bootstrap: ({ targetList, devToolsClient, workers, panel }: any) =>
     onConnect(
       {
         tab: { clientType: "firefox" },
-        tabConnection: {
-          tabTarget,
-          threadClient,
-          debuggerClient,
-        },
+        targetList,
+        devToolsClient,
       },
       workers,
       panel

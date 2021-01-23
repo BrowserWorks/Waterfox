@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label               "Omadused">
+<!ENTITY propertiesMenu.accesskey           "O">
+<!ENTITY propertiesCmd.key                  "i">
+<!ENTITY abPropertiesMenu.label             "Aadressiraamatu omadused">
+<!ENTITY abPropertiesMenu.accesskey         "o">
+<!ENTITY contactPropertiesMenu.label        "Kontakti omadused">
+<!ENTITY contactPropertiesMenu.accesskey    "o">
+<!ENTITY mailingListPropertiesMenu.label    "Meililisti omadused">
+<!ENTITY mailingListPropertiesMenu.accesskey "o">
+
+<!ENTITY abContextMenuButton.tooltip        "Kuva aadressiraamatu kontekstimenüü">
+<!ENTITY addressbookPicker.label            "Aadressiraamat:">
+<!ENTITY addressbookPicker.accesskey        "A">
+<!ENTITY searchContacts.label               "Kontakti otsimine:">
+<!ENTITY searchContacts.accesskey           "o">
+<!ENTITY SearchNameOrEmail.label            "Nimi või e-post">
+
+<!ENTITY addtoToFieldMenu.label             "Lisa väljale Saaja">
+<!ENTITY addtoToFieldMenu.accesskey         "L">
+<!ENTITY addtoCcFieldMenu.label             "Lisa väljale Koopia">
+<!ENTITY addtoCcFieldMenu.accesskey         "i">
+<!ENTITY addtoBccFieldMenu.label            "Lisa väljale Pimekoopia">
+<!ENTITY addtoBccFieldMenu.accesskey        "p">
+<!ENTITY deleteAddrBookCard.label           "Kustuta">
+<!ENTITY deleteAddrBookCard.accesskey       "K">
+<!ENTITY propertiesContext.label            "Omadused">
+<!ENTITY propertiesContext.accesskey        "o">
+<!ENTITY abPropertiesContext.label          "Omadused">
+<!ENTITY abPropertiesContext.accesskey      "o">
+<!ENTITY editContactContext.label           "Muuda kontakti">
+<!ENTITY editContactContext.accesskey       "M">
+<!ENTITY editMailingListContext.label       "Muuda meililisti">
+<!ENTITY editMailingListContext.accesskey   "M">
+
+<!ENTITY newContactAbContext.label          "Uus kontakt">
+<!ENTITY newContactAbContext.accesskey      "k">
+<!ENTITY newListAbContext.label             "Uus list">
+<!ENTITY newListAbContext.accesskey         "l">
+
+<!ENTITY toButton.label                     "Lisa väljale Saaja:">
+<!ENTITY toButton.accesskey                 "L">
+<!ENTITY ccButton.label                     "Lisa väljale Koopia:">
+<!ENTITY ccButton.accesskey                 "i">
+<!ENTITY bccButton.label                    "Lisa väljale Pimekoopia:">
+<!ENTITY bccButton.accesskey                "v">

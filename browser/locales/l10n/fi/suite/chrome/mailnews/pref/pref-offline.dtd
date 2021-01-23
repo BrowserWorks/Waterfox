@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-offline.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Offline' preferences dialog -->
+<!ENTITY pref.network.title               "Verkko ja tallennus">
+<!ENTITY pref.offline.caption             "Yhteydetön tila">
+<!ENTITY textStartUp                      "Käynnistettäessä:">
+<!ENTITY textStartUp.accesskey            "n">
+<!ENTITY menuitemRememberPrevState        "Muista tila edellisestä istunnosta">
+<!ENTITY menuitemAskMe                    "Kysy käynnistyksen yhteydessä">
+<!ENTITY menuitemAlwaysOnline             "Käynnistä aina yhteystilaan">
+<!ENTITY menuitemAlwaysOffline            "Käynnistä aina yhteydettömään tilaan">
+<!ENTITY menuitemAutomatic                "Tunnista automaattisesti (jos mahdollista)">
+<!ENTITY textGoingOnline                  "Lähetetäänkö lähettämättömät viestit yhteystilaan siirryttäessä?">
+<!ENTITY radioAutoSend                    "Kyllä">
+<!ENTITY radioAutoSend.accesskey          "K">
+<!ENTITY radioNotSend                     "Ei">
+<!ENTITY radioNotSend.accesskey           "E">
+<!ENTITY radioAskUnsent                   "Kysy">
+<!ENTITY radioAskUnsent.accesskey         "y">
+<!ENTITY textGoingOffline                 "Noudetaanko viestit yhteydetöntä tilaa varten siirryttäessä yhteydettömään tilaan?">
+<!ENTITY radioAutoDownload                "Kyllä">
+<!ENTITY radioAutoDownload.accesskey      "ä">
+<!ENTITY radioNotDownload                 "Ei">
+<!ENTITY radioNotDownload.accesskey       "i">
+<!ENTITY radioAskDownload                 "Kysy">
+<!ENTITY radioAskDownload.accesskey       "s">
+<!ENTITY mailConnections.caption          "Sähköpostiyhteydet">
+<!ENTITY mailnewsTimeout.label            "Yhteyden aikakatkaisu:">
+<!ENTITY mailnewsTimeout.accesskey        "a">
+<!ENTITY mailnewsTimeoutSeconds.label     "sekuntia">
+<!ENTITY Diskspace                        "Levytilan käyttö">
+<!ENTITY offlineCompactFolders.label      "Tiivistä kaikki kansiot, jos niin säästetään yli">
+<!ENTITY offlineCompactFolders.accesskey  "T">
+<!ENTITY offlineCompactFoldersMB.label    "Mt yhteensä">

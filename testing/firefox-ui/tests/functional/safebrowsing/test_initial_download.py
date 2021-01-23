@@ -2,17 +2,17 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from __future__ import absolute_import
 import os
 
-from firefox_puppeteer import PuppeteerMixin
 from marionette_driver import Wait
 from marionette_harness import MarionetteTestCase
 
 
-class TestSafeBrowsingInitialDownload(PuppeteerMixin, MarionetteTestCase):
+class TestSafeBrowsingInitialDownload(MarionetteTestCase):
 
     v2_file_extensions = [
-        'pset',
+        'vlpset',
         'sbstore',
     ]
 
@@ -56,6 +56,10 @@ class TestSafeBrowsingInitialDownload(PuppeteerMixin, MarionetteTestCase):
 
         for pref_name in self.prefs_download_lists:
             base_names = self.marionette.get_pref(pref_name).split(',')
+
+            # moztest- lists are not saved to disk
+            base_names = filter(lambda x: not x.startswith('moztest-'), base_names)
+
             for ext in my_file_extensions:
                 files.extend(['{name}.{ext}'.format(name=f, ext=ext)
                               for f in base_names if f and f.endswith('-proto') == is_v4])
@@ -66,13 +70,15 @@ class TestSafeBrowsingInitialDownload(PuppeteerMixin, MarionetteTestCase):
         super(TestSafeBrowsingInitialDownload, self).setUp()
 
         self.safebrowsing_v2_files = self.get_safebrowsing_files(False)
-        if any(f.startswith('goog') for f in self.safebrowsing_v2_files):
+        if any(f.startswith('goog-') or f.startswith('googpub-')
+               for f in self.safebrowsing_v2_files):
             self.prefs_provider_update_time.update({
                 'browser.safebrowsing.provider.google.nextupdatetime': 1,
             })
 
         self.safebrowsing_v4_files = self.get_safebrowsing_files(True)
-        if any(f.startswith('goog') for f in self.safebrowsing_v4_files):
+        if any(f.startswith('goog-') or f.startswith('googpub-')
+               for f in self.safebrowsing_v4_files):
             self.prefs_provider_update_time.update({
                 'browser.safebrowsing.provider.google4.nextupdatetime': 1,
             })
@@ -88,7 +94,7 @@ class TestSafeBrowsingInitialDownload(PuppeteerMixin, MarionetteTestCase):
     def tearDown(self):
         try:
             # Restart with a fresh profile
-            self.restart(clean=True)
+            self.marionette.restart(clean=True)
         finally:
             super(TestSafeBrowsingInitialDownload, self).tearDown()
 

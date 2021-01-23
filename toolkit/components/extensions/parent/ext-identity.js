@@ -1,5 +1,9 @@
 /* -*- Mode: indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set sts=2 sw=2 et tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
 
 ChromeUtils.defineModuleGetter(
@@ -8,7 +12,7 @@ ChromeUtils.defineModuleGetter(
   "resource://gre/modules/Services.jsm"
 );
 
-XPCOMUtils.defineLazyGlobalGetters(this, ["XMLHttpRequest"]);
+XPCOMUtils.defineLazyGlobalGetters(this, ["XMLHttpRequest", "ChannelWrapper"]);
 
 var { promiseDocumentLoaded } = ExtensionUtils;
 
@@ -65,37 +69,61 @@ const openOAuthWindow = (details, redirectURI) => {
   );
 
   return new Promise((resolve, reject) => {
-    let wpl;
+    let httpActivityDistributor = Cc[
+      "@mozilla.org/network/http-activity-distributor;1"
+    ].getService(Ci.nsIHttpActivityDistributor);
 
-    // If the user just closes the window we need to reject
-    function unloadlistener() {
-      window.removeEventListener("unload", unloadlistener);
-      window.gBrowser.removeProgressListener(wpl);
-      reject({ message: "User cancelled or denied access." });
-    }
+    let unloadListener;
+    let httpObserver;
 
-    wpl = {
-      onStateChange(progress, request, flags, status) {
-        // "request" is now a RemoteWebProgressRequest and is not cancelable
-        // using request.cancel.  We can however, stop everything using
-        // webNavigation.
-        if (
-          request &&
-          request.URI &&
-          request.URI.spec.startsWith(redirectURI)
-        ) {
-          window.gBrowser.webNavigation.stop(Ci.nsIWebNavigation.STOP_ALL);
-          window.removeEventListener("unload", unloadlistener);
-          window.gBrowser.removeProgressListener(wpl);
-          window.close();
-          resolve(request.URI.spec);
+    const resolveIfRedirectURI = channel => {
+      const url = channel.URI && channel.URI.spec;
+      if (!url || !url.startsWith(redirectURI)) {
+        return;
+      }
+
+      // Early exit if channel isn't related to the oauth dialog.
+      let wrapper = ChannelWrapper.get(channel);
+      if (
+        !wrapper.browserElement &&
+        wrapper.browserElement !== window.gBrowser.selectedBrowser
+      ) {
+        return;
+      }
+
+      wrapper.cancel(Cr.NS_ERROR_ABORT, Ci.nsILoadInfo.BLOCKING_REASON_NONE);
+      window.gBrowser.webNavigation.stop(Ci.nsIWebNavigation.STOP_ALL);
+      window.removeEventListener("unload", unloadListener);
+      httpActivityDistributor.removeObserver(httpObserver);
+      window.close();
+      resolve(url);
+    };
+
+    httpObserver = {
+      observeActivity(channel, type, subtype, timestamp, sizeData, stringData) {
+        try {
+          channel.QueryInterface(Ci.nsIChannel);
+        } catch {
+          // Ignore activities for channels that doesn't implement nsIChannel
+          // (e.g. a NullHttpChannel).
+          return;
         }
+
+        resolveIfRedirectURI(channel);
       },
     };
 
+    httpActivityDistributor.addObserver(httpObserver);
+
+    // If the user just closes the window we need to reject
+    unloadListener = () => {
+      window.removeEventListener("unload", unloadListener);
+      httpActivityDistributor.removeObserver(httpObserver);
+      reject({ message: "User cancelled or denied access." });
+    };
+
     promiseDocumentLoaded(window.document).then(() => {
-      window.gBrowser.addProgressListener(wpl);
-      window.addEventListener("unload", unloadlistener);
+      window.addEventListener("unload", unloadListener);
     });
   });
 };

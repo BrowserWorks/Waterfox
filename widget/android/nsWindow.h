@@ -12,8 +12,9 @@
 #include "nsIIdleServiceInternal.h"
 #include "nsTArray.h"
 #include "EventDispatcher.h"
-#include "GeneratedJNIWrappers.h"
 #include "mozilla/EventForwards.h"
+#include "mozilla/java/GeckoBundleWrappers.h"
+#include "mozilla/MozPromise.h"
 #include "mozilla/Mutex.h"
 #include "mozilla/StaticPtr.h"
 #include "mozilla/TextRange.h"
@@ -58,6 +59,10 @@ class nsWindow final : public nsBaseWidget {
   static void InitNatives();
   void SetScreenId(uint32_t aScreenId) { mScreenId = aScreenId; }
   void OnGeckoViewReady();
+  RefPtr<mozilla::MozPromise<bool, bool, false>> OnLoadRequest(
+      nsIURI* aUri, int32_t aWindowType, int32_t aFlags,
+      nsIPrincipal* aTriggeringPrincipal, bool aHasUserGesture,
+      bool aIsTopLevel);
 
  private:
   uint32_t mScreenId;
@@ -220,15 +225,17 @@ class nsWindow final : public nsBaseWidget {
     return nullptr;
   }
 
+  void NotifyDisablingWebRender();
+
   //
   // nsIWidget
   //
 
   using nsBaseWidget::Create;  // for Create signature not overridden here
-  virtual MOZ_MUST_USE nsresult Create(nsIWidget* aParent,
-                                       nsNativeWidget aNativeParent,
-                                       const LayoutDeviceIntRect& aRect,
-                                       nsWidgetInitData* aInitData) override;
+  [[nodiscard]] virtual nsresult Create(nsIWidget* aParent,
+                                        nsNativeWidget aNativeParent,
+                                        const LayoutDeviceIntRect& aRect,
+                                        nsWidgetInitData* aInitData) override;
   virtual void Destroy() override;
   virtual nsresult ConfigureChildren(
       const nsTArray<nsIWidget::Configuration>&) override;
@@ -249,7 +256,7 @@ class nsWindow final : public nsBaseWidget {
   virtual void Enable(bool aState) override;
   virtual bool IsEnabled() const override;
   virtual void Invalidate(const LayoutDeviceIntRect& aRect) override;
-  virtual nsresult SetFocus(bool aRaise = false) override;
+  virtual void SetFocus(Raise, mozilla::dom::CallerType aCallerType) override;
   virtual LayoutDeviceIntRect GetScreenBounds() override;
   virtual LayoutDeviceIntPoint WidgetToScreenOffset() override;
   virtual nsresult DispatchEvent(mozilla::WidgetGUIEvent* aEvent,
@@ -263,7 +270,7 @@ class nsWindow final : public nsBaseWidget {
   void* GetNativeData(uint32_t aDataType) override;
   void SetNativeData(uint32_t aDataType, uintptr_t aVal) override;
   virtual nsresult SetTitle(const nsAString& aTitle) override { return NS_OK; }
-  virtual MOZ_MUST_USE nsresult GetAttention(int32_t aCycleCount) override {
+  [[nodiscard]] virtual nsresult GetAttention(int32_t aCycleCount) override {
     return NS_ERROR_NOT_IMPLEMENTED;
   }
 
@@ -320,9 +327,15 @@ class nsWindow final : public nsBaseWidget {
                               const CSSToScreenScale& aZoom) override;
   void RecvScreenPixels(mozilla::ipc::Shmem&& aMem,
                         const ScreenIntSize& aSize) override;
+  void UpdateDynamicToolbarMaxHeight(mozilla::ScreenIntCoord aHeight) override;
+  mozilla::ScreenIntCoord GetDynamicToolbarMaxHeight() const override {
+    return mDynamicToolbarMaxHeight;
+  }
 
-  nsresult SetPrefersReducedMotionOverrideForTest(bool aValue) override;
-  nsresult ResetPrefersReducedMotionOverrideForTest() override;
+  void UpdateDynamicToolbarOffset(mozilla::ScreenIntCoord aOffset);
+
+  virtual mozilla::ScreenIntMargin GetSafeAreaInsets() const override;
+  void UpdateSafeAreaInsets(const mozilla::ScreenIntMargin& aSafeAreaInsets);
 
  protected:
   void BringToFront();
@@ -339,12 +352,12 @@ class nsWindow final : public nsBaseWidget {
   nsTArray<nsWindow*> mChildren;
   nsWindow* mParent;
 
-  double mStartDist;
-  double mLastDist;
-
   nsCOMPtr<nsIIdleServiceInternal> mIdleService;
+  mozilla::ScreenIntCoord mDynamicToolbarMaxHeight;
+  mozilla::ScreenIntMargin mSafeAreaInsets;
 
   bool mIsFullScreen;
+  bool mIsDisablingWebRender;
 
   bool UseExternalCompositingSurface() const override { return true; }
 

@@ -18,13 +18,14 @@ class LayersIPCChannel;
 namespace gl {
 
 struct SurfaceCaps final {
-  bool any;
-  bool color, alpha;
-  bool bpp16;
-  bool depth, stencil;
-  bool antialias;
-  bool premultAlpha;
-  bool preserve;
+  bool any = false;
+  bool color = false;
+  bool alpha = false;
+  bool bpp16 = false;
+  bool depth = false;
+  bool stencil = false;
+  bool premultAlpha = true;
+  bool preserve = false;
 
   // The surface allocator that we want to create this
   // for.  May be null.
@@ -34,7 +35,7 @@ struct SurfaceCaps final {
   SurfaceCaps(const SurfaceCaps& other);
   ~SurfaceCaps();
 
-  void Clear();
+  void Clear() { *this = {}; }
 
   SurfaceCaps& operator=(const SurfaceCaps& other);
 
@@ -77,6 +78,7 @@ enum class SharedSurfaceType : uint8_t {
   GLXDrawable,
   SharedGLTexture,
   AndroidSurfaceTexture,
+  EGLSurfaceDMABUF,
 
   Max
 };

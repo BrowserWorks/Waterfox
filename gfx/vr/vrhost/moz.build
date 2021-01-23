@@ -5,18 +5,46 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 SOURCES += [
-  'vrhost.cpp'
+  '/gfx/vr/service/VRSession.cpp',
+  '/gfx/vr/VRShMem.cpp',
+  'vrhostapi.cpp'
+]
+
+# Since .def files do not support preprocessing, switch which file is used
+# to declare exports. See comments in the files for more info.
+if CONFIG['NIGHTLY_BUILD']:
+  DEFFILE = 'vrhostnightly.def'
+  SOURCES += [
+    'vrhosttest.cpp'
+  ]
+else:
+  DEFFILE = 'vrhost.def'
+
+LOCAL_INCLUDES += [
+  '/gfx/vr',
+  '/gfx/vr/external_api',
+  '/gfx/vr/service',
+  '/ipc/chromium/src',
 ]
 
 EXPORTS.vrhost = [
   'vrhostex.h'
 ]
 
-DEFFILE = 'vrhost.def'
-
 DIRS += [
   'testhost'
 ]
+
+# this is Windows-only for now
+DEFINES['XP_WIN'] = True
+# fixes "lld-link: error: undefined symbol: __imp_moz_xmalloc"
+DEFINES['MOZ_NO_MOZALLOC'] = True
+# fixes "STL code can only be used with infallible ::operator new()"
+DisableStlWrapping()
+
+# Define UNICODE for default support in this dll
+DEFINES['UNICODE'] = True
+DEFINES['_UNICODE'] = True
 
 # Use SharedLibrary to generate the dll
 SharedLibrary('vrhost')

@@ -1,10 +1,7 @@
 ﻿// © 2016 and later: Unicode, Inc. and others.
 // License & terms of use: http://www.unicode.org/copyright.html#License
-/**
- * ICU <specials> source: <path>/common/main/root.xml
- */
 root{
-    Version{"2.1.49.82"}
+    Version{"37"}
     durationUnits{
         hm{"h:mm"}
         hms{"h:mm:ss"}
@@ -18,7 +15,7 @@ root{
                 dnam{"g-force"}
                 other{"{0} G"}
             }
-            meter-per-second-squared{
+            meter-per-square-second{
                 dnam{"m/s²"}
                 other{"{0} m/s²"}
             }
@@ -94,6 +91,7 @@ root{
         }
         compound{
             per{"{0}/{1}"}
+            times{"{0}⋅{1}"}
         }
         concentr{
             karat{
@@ -112,10 +110,6 @@ root{
                 dnam{"mol"}
                 other{"{0} mol"}
             }
-            part-per-million{
-                dnam{"ppm"}
-                other{"{0} ppm"}
-            }
             percent{
                 dnam{"%"}
                 other{"{0}%"}
@@ -124,13 +118,17 @@ root{
                 dnam{"‰"}
                 other{"{0}‰"}
             }
+            permillion{
+                dnam{"ppm"}
+                other{"{0} ppm"}
+            }
             permyriad{
                 dnam{"‱"}
                 other{"{0}‱"}
             }
         }
         consumption{
-            liter-per-100kilometers{
+            liter-per-100-kilometer{
                 dnam{"L/100km"}
                 other{"{0} L/100km"}
             }
@@ -211,14 +209,18 @@ root{
                 per{"{0}/d"}
             }
             day-person:alias{"/LOCALE/unitsShort/duration/day"}
+            decade{
+                dnam{"dec"}
+                other{"{0} dec"}
+            }
             hour{
                 dnam{"hr"}
                 other{"{0} h"}
                 per{"{0}/h"}
             }
             microsecond{
-                dnam{"μs"}
-                other{"{0} μs"}
+                dnam{"µs"}
+                other{"{0} µs"}
             }
             millisecond{
                 dnam{"ms"}
@@ -308,6 +310,10 @@ root{
                 dnam{"kWh"}
                 other{"{0} kWh"}
             }
+            therm-us{
+                dnam{"US therm"}
+                other{"{0} US therm"}
+            }
         }
         force{
             newton{
@@ -335,6 +341,36 @@ root{
             megahertz{
                 dnam{"MHz"}
                 other{"{0} MHz"}
+            }
+        }
+        graphics{
+            dot-per-centimeter{
+                dnam{"dpcm"}
+                other{"{0} dpcm"}
+            }
+            dot-per-inch{
+                dnam{"dpi"}
+                other{"{0} dpi"}
+            }
+            em{
+                dnam{"em"}
+                other{"{0} em"}
+            }
+            megapixel{
+                dnam{"MP"}
+                other{"{0} MP"}
+            }
+            pixel{
+                dnam{"px"}
+                other{"{0} px"}
+            }
+            pixel-per-centimeter{
+                dnam{"ppcm"}
+                other{"{0} ppcm"}
+            }
+            pixel-per-inch{
+                dnam{"ppi"}
+                other{"{0} ppi"}
             }
         }
         length{
@@ -531,11 +567,15 @@ root{
                 dnam{"atm"}
                 other{"{0} atm"}
             }
+            bar{
+                dnam{"bar"}
+                other{"{0} bar"}
+            }
             hectopascal{
                 dnam{"hPa"}
                 other{"{0} hPa"}
             }
-            inch-hg{
+            inch-ofhg{
                 dnam{"inHg"}
                 other{"{0} inHg"}
             }
@@ -551,11 +591,15 @@ root{
                 dnam{"mbar"}
                 other{"{0} mbar"}
             }
-            millimeter-of-mercury{
+            millimeter-ofhg{
                 dnam{"mm Hg"}
                 other{"{0} mm Hg"}
             }
-            pound-per-square-inch{
+            pascal{
+                dnam{"Pa"}
+                other{"{0} Pa"}
+            }
+            pound-force-per-square-inch{
                 dnam{"psi"}
                 other{"{0} psi"}
             }
@@ -601,7 +645,7 @@ root{
                 dnam{"N⋅m"}
                 other{"{0} N⋅m"}
             }
-            pound-foot{
+            pound-force-foot{
                 dnam{"lbf⋅ft"}
                 other{"{0} lbf⋅ft"}
             }

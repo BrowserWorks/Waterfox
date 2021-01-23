@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migrationWizard.title           "Čarovnik za uvoz">
+
+<!ENTITY importAllFrom.label             "Uvozi vse podatke iz:">
+<!ENTITY importBookmarksFrom.label       "Uvozi zaznamke iz:">
+
+<!ENTITY importFromThunderbird.label     "Thunderbirda">
+<!ENTITY importFromThunderbird.accesskey "T">
+<!ENTITY importFromFile.label            "Datoteke">
+<!ENTITY importFromFile.accesskey        "D">
+<!ENTITY importFromNothing.label         "Ne uvozi ničesar">
+<!ENTITY importFromNothing.accesskey     "N">
+
+<!ENTITY importSource.title              "Uvoz nastavitev in podatkov">
+<!ENTITY importItems.title               "Možnosti uvoza">
+<!ENTITY importItems.label               "Izberite, kaj želite uvoziti:">
+
+<!ENTITY selectProfile.label             "Uvoz je možen iz naslednjih profilov:">
+
+<!ENTITY migrating.title                 "Uvažanje …">
+<!ENTITY migrating.label                 "Trenutno se uvaža ...">
+
+<!ENTITY done.title                      "Uvoz dokončan">
+<!ENTITY done.label                      "Naslednji predmeti so bili uspešno uvoženi:">

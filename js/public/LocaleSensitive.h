@@ -15,14 +15,11 @@
 
 #include "js/RootingAPI.h"  // JS::Handle, JS::MutableHandle
 #include "js/Utility.h"     // JS::UniqueChars
+#include "js/Value.h"       // JS::Value
 
 struct JS_PUBLIC_API JSContext;
 struct JS_PUBLIC_API JSRuntime;
 class JS_PUBLIC_API JSString;
-
-namespace JS {
-union JS_PUBLIC_API Value;
-}
 
 /**
  * Set the default locale for the ECMAScript Internationalization API
@@ -68,7 +65,7 @@ using JSLocaleToUnicode = bool (*)(JSContext* cx, const char* src,
  * used to implement locale-sensitive behaviors (such as those performed by
  * the various toLocaleString and toLocale{Date,Time}String functions).
  *
- * If SpiderMonkey is compiled --with-intl-api, then #if EXPOSE_INTL_API.  In
+ * If SpiderMonkey is compiled --with-intl-api, then #if JS_HAS_INTL_API.  In
  * this case, SpiderMonkey itself will implement ECMA-402-compliant behavior by
  * calling on ICU, and none of the fields in this struct will ever be used.
  * (You'll still be able to call the get/set-callbacks functions; they just

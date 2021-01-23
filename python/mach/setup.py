@@ -2,13 +2,14 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from __future__ import absolute_import
 try:
     from setuptools import setup
 except ImportError:
     from distutils.core import setup
 
 
-VERSION = '0.6'
+VERSION = '1.0.0'
 
 README = open('README.rst').read()
 
@@ -24,9 +25,11 @@ setup(
     version=VERSION,
     classifiers=[
         'Environment :: Console',
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 5 - Production/Stable',
         'License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)',
         'Natural Language :: English',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.5',
     ],
     install_requires=[
         'blessings',

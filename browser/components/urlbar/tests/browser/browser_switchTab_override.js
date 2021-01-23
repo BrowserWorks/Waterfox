@@ -27,15 +27,30 @@ add_task(async function test_switchtab_override() {
   });
 
   info("Wait for autocomplete");
-  await promiseAutocompleteResultPopup("dummy_page");
+  await UrlbarTestUtils.promiseAutocompleteResultPopup({
+    window,
+    waitForFocus: SimpleTest.waitForFocus,
+    value: "dummy_page",
+  });
 
   info("Select second autocomplete popup entry");
   EventUtils.synthesizeKey("KEY_ArrowDown");
   let result = await UrlbarTestUtils.getDetailsOfResultAt(
     window,
-    UrlbarTestUtils.getSelectedIndex(window)
+    UrlbarTestUtils.getSelectedRowIndex(window)
   );
   Assert.equal(result.type, UrlbarUtils.RESULT_TYPE.TAB_SWITCH);
+
+  // Check to see if the switchtab label is visible and
+  // all other labels are hidden
+  const allLabels = document.getElementById("urlbar-label-box").children;
+  for (let label of allLabels) {
+    if (label.id == "urlbar-label-switchtab") {
+      Assert.ok(BrowserTestUtils.is_visible(label));
+    } else {
+      Assert.ok(BrowserTestUtils.is_hidden(label));
+    }
+  }
 
   info("Override switch-to-tab");
   let deferred = PromiseUtils.defer();
@@ -53,16 +68,20 @@ add_task(async function test_switchtab_override() {
   );
 
   EventUtils.synthesizeKey("KEY_Shift", { type: "keydown" });
+
+  // Checks that all labels are hidden when Shift is held down on the SwitchToTab result
+  for (let label of allLabels) {
+    Assert.ok(BrowserTestUtils.is_hidden(label));
+  }
+
   registerCleanupFunction(() => {
     // Avoid confusing next tests by leaving a pending keydown.
     EventUtils.synthesizeKey("KEY_Shift", { type: "keyup" });
   });
 
-  let attribute = UrlbarPrefs.get("quantumbar")
-    ? "actionoverride"
-    : "noactions";
+  let attribute = "actionoverride";
   Assert.ok(
-    UrlbarTestUtils.getPanel(window).hasAttribute(attribute),
+    gURLBar.view.panel.hasAttribute(attribute),
     "We should be overriding"
   );
 
@@ -72,7 +91,7 @@ add_task(async function test_switchtab_override() {
 
   // Blurring the urlbar should have cleared the override.
   Assert.ok(
-    !UrlbarTestUtils.getPanel(window).hasAttribute(attribute),
+    !gURLBar.view.panel.hasAttribute(attribute),
     "We should not be overriding anymore"
   );
 

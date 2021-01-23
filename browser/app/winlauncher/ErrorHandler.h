@@ -8,7 +8,7 @@
 #define mozilla_ErrorHandler_h
 
 #include "mozilla/Assertions.h"
-#include "mozilla/LauncherResult.h"
+#include "mozilla/WinHeaderOnlyUtils.h"
 
 namespace mozilla {
 
@@ -28,7 +28,7 @@ inline void HandleLauncherError(const LauncherResult<T>& aResult) {
     return;
   }
 
-  HandleLauncherError(aResult.unwrapErr());
+  HandleLauncherError(aResult.inspectErr());
 }
 
 // This function is simply a convenience overload that unwraps the provided

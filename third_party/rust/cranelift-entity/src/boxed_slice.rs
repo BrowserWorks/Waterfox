@@ -3,10 +3,10 @@
 use crate::iter::{Iter, IterMut};
 use crate::keys::Keys;
 use crate::EntityRef;
+use alloc::boxed::Box;
 use core::marker::PhantomData;
 use core::ops::{Index, IndexMut};
 use core::slice;
-use std::boxed::Box;
 
 /// A slice mapping `K -> V` allocating dense entity references.
 ///
@@ -27,6 +27,10 @@ where
 {
     /// Create a new slice from a raw pointer. A safer way to create slices is
     /// to use `PrimaryMap::into_boxed_slice()`.
+    ///
+    /// # Safety
+    ///
+    /// This relies on `raw` pointing to a valid slice of `V`s.
     pub unsafe fn from_raw(raw: *mut [V]) -> Self {
         Self {
             elems: Box::from_raw(raw),
@@ -141,7 +145,7 @@ where
 mod tests {
     use super::*;
     use crate::primary::PrimaryMap;
-    use std::vec::Vec;
+    use alloc::vec::Vec;
 
     // `EntityRef` impl for testing.
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]

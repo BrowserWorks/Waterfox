@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+
+<!-- Tools menu -->
+<!ENTITY lightning.preferencesLabel "Awitay">
+
+<!-- New menu popup in File menu -->
+<!ENTITY lightning.menupopup.new.event.label    "Tadyant…">
+<!ENTITY lightning.menupopup.new.event.accesskey "d">
+<!ENTITY lightning.menupopup.new.task.label     "Tawuri…">
+<!ENTITY lightning.menupopup.new.task.accesskey "w">
+<!ENTITY lightning.menupopup.new.calendar.label "Awitay…">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "t">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.label               "Ldi">
+<!ENTITY lightning.menupopup.open.accesskey           "L">
+<!ENTITY lightning.menupopup.open.message.label       "Izen yettwakelsen…">
+<!ENTITY lightning.menupopup.open.message.accesskey   "z">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.calendar.label      "Afaylu n uwitay…">
+<!ENTITY lightning.menupopup.open.calendar.accesskey  "y">
+
+<!-- View Menu -->
+<!ENTITY lightning.menu.view.calendar.label            "Awitay">
+<!ENTITY lightning.menu.view.calendar.accesskey        "t">
+<!ENTITY lightning.menu.view.tasks.label               "Tawuri">
+<!ENTITY lightning.menu.view.tasks.accesskey           "r">
+
+<!-- Events and Tasks menu -->
+<!ENTITY lightning.menu.eventtask.label                "Tidyanin d twuriwin">
+<!ENTITY lightning.menu.eventtask.accesskey            "d">
+
+<!-- properties dialog, calendar creation wizard -->
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.email.label,
+     lightning.calendarproperties.forceEmailScheduling.label)
+     These strings are used in the calendar wizard and the calendar properties dialog, but are only
+     displayed when setting/using a caldav calendar -->
+<!ENTITY lightning.calendarproperties.email.label                           "Imayl:">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.label            "Fren aɣawas n yimaylen seg idis n umsaɣ">
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.forceEmailScheduling.tooltiptext1,
+     lightning.calendarproperties.forceEmailScheduling.tooltiptext2)
+     - tooltiptext1 is used in the calendar wizard when setting a new caldav calendar
+     - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "Akka tura, tzemreḍ kan ad tremdeḍ ayagi deffir uswel n uwitay-agi di tnaka n udiwenni n tmeẓliyin, ma yella aqeddac yessefrak aɣawas.">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "Aɣewwaṛ-agi yella kan ma yella aqeddac n uwitay yessefrak aɣawas. Armad ad yeǧǧ ad tuɣaleḍ ar uɣawas s yimayl deg umḍiq n tiǧǧin-is i uqaddac.">
+
+<!-- iMIP Bar (meeting support) -->
+<!ENTITY lightning.imipbar.btnAccept.label                                  "Qbel">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext                           "Qbel tinnubga n tedyant">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label                       "Qbel imeṛṛa">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences2.tooltiptext                "Qbel tinnubga n tedyant i tedyanin akk i d-yettuɣalen">
+<!ENTITY lightning.imipbar.btnAdd.label                                     "Rnu">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext                               "Rnu tadyant ɣer uwitay">
+<!ENTITY lightning.imipbar.btnDecline.label                                 "Agwi">
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext                          "Agwi tinnubga ɣer tadyant">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label                      "Agwi akk">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences2.tooltiptext               "Agwi tinnubga ɣer tedyant i tedyanin akk i d-yettuɣalen">
+<!ENTITY lightning.imipbar.btnDeclineCounter.label                          "Agwi">
+<!ENTITY lightning.imipbar.btnDeclineCounter.tooltiptext                    "Aggi amgal-asumer">
+<!ENTITY lightning.imipbar.btnDelete.label                                  "Kkes">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext                            "Kkes seg uwitay">
+<!ENTITY lightning.imipbar.btnDetails.label                                 "Talqayt…">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext                           "Sken talqayt n tedyant">
+<!ENTITY lightning.imipbar.btnDoNotShowImipBar.label                        "Ur yi-d-skan ara aya iznan-a">
+<!ENTITY lightning.imipbar.btnGoToCalendar.label                            "Awitay">
+<!ENTITY lightning.imipbar.btnGoToCalendar.tooltiptext                      "Ddu ɣer yiccer n uwitay">
+<!ENTITY lightning.imipbar.btnMore.label                                    "Ugar">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext                              "Sit akken ad twaliḍ ugar n iɣewwaṛen">
+<!ENTITY lightning.imipbar.btnReconfirm2.label                              "Sentem tikelt nniḍen">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext                         "Ad yazen asentem tikelt nniḍen i umsuddes">
+<!ENTITY lightning.imipbar.btnReschedule.label                              "Sɣiwes tikelt nniḍen">
+<!ENTITY lightning.imipbar.btnReschedule.tooltiptext                        "Sɣiwes tikkelt-nniḍen tadyant">
+<!ENTITY lightning.imipbar.btnSaveCopy.label                                "Sekles anɣel">
+<!ENTITY lightning.imipbar.btnSaveCopy.tooltiptext                          "Ad isekles anɣel n tedyant deg uwitay war ma tella tririt i umsuddes. Tabdart n imttekkiyen ad ttwasfeḍ.">
+<!ENTITY lightning.imipbar.btnTentative.label                               "Si tazwara">
+<!ENTITY lightning.imipbar.btnTentative2.tooltiptext                        "Qbel si tazwara tinnubga n tedyant ">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences.label                    "Si tazwara i meṛṛa">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences2.tooltiptext             "Qbel tinnubga n tedyant si tazwara i tuɣalin n tedyant">
+<!ENTITY lightning.imipbar.btnUpdate.label                                  "Leqqem">
+<!ENTITY lightning.imipbar.btnUpdate.tooltiptext                            "Snifel tadyant deg uwitay">
+<!ENTITY lightning.imipbar.description                                      "Izen-agi yegber tinnibga ɣer tedyant.">
+
+<!ENTITY lightning.imipbar.btnSend.label                                    "Azen tiririt tura">
+<!ENTITY lightning.imipbar.btnSend.tooltiptext                              "Azen tiririt i umsuddes">
+<!ENTITY lightning.imipbar.btnSendSeries.tooltiptext                        "Azen tiririt ɣef wahil meṛṛa n umsuddes">
+<!ENTITY lightning.imipbar.btnDontSend.label                                "UR ttazen ara tiririt">
+<!ENTITY lightning.imipbar.btnDontSend.tooltiptext                          "Ad ibeddel addad n uttekkki war ma yuzen tiririt i yimsuddes">
+<!ENTITY lightning.imipbar.btnDontSendSeries.tooltiptext                    "Ad ibeddel addad n uttekkki-ik i umazarar  war ma yuzen tiririt i yimsuddes">
+
+<!-- Lightning specific keybindings -->
+<!ENTITY lightning.keys.event.showCalendar.key "C">
+<!ENTITY lightning.keys.event.showTasks.key "D">
+<!ENTITY lightning.keys.event.new "I">
+<!ENTITY lightning.keys.todo.new "D">
+
+<!-- Account Central page -->
+<!ENTITY lightning.acctCentral.newCalendar.label "Rnu awitay amaynut">
+
+<!-- today-pane-specific -->
+<!ENTITY todaypane.showMinimonth.label "Sken aggur meẓẓiyen">
+<!ENTITY todaypane.showMinimonth.accesskey "g">
+<!ENTITY todaypane.showMiniday.label "Sken ass meẓẓiyen">
+<!ENTITY todaypane.showMiniday.accesskey  "ẓ">
+<!ENTITY todaypane.showNone.label "Ur skan kra">
+<!ENTITY todaypane.showNone.accesskey "r">
+<!ENTITY todaypane.showTodayPane.label "Sken agalis Ass-a">
+<!ENTITY todaypane.showTodayPane.accesskey "s">
+<!ENTITY todaypane.statusButton.label "Agalis Ass-a">

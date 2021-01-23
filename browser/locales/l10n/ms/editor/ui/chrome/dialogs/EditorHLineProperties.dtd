@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Sifat Garis Mengufuk">
+
+<!ENTITY dimensionsBox.label "Dimensi">
+<!ENTITY heightEditField.label "Tinggi:">
+<!ENTITY heightEditField.accessKey "T">
+<!ENTITY widthEditField.label "Lebar:">
+<!ENTITY widthEditField.accessKey "L">
+<!ENTITY pixelsPopup.value "piksel">
+<!ENTITY alignmentBox.label "Jajaran">
+<!ENTITY leftRadio.label "Kiri">
+<!ENTITY leftRadio.accessKey "K">
+<!ENTITY centerRadio.label "Tengah">
+<!ENTITY centerRadio.accessKey "T">
+<!ENTITY rightRadio.label "Kanan">
+<!ENTITY rightRadio.accessKey "K">
+
+<!ENTITY threeDShading.label "Naung 3-D">
+<!ENTITY threeDShading.accessKey "N">
+<!ENTITY saveSettings.label "Guna sebagai Piawai">
+<!ENTITY saveSettings.accessKey "P">
+<!ENTITY saveSettings.tooltip "Simpan tetapan berikut untuk digunakan apabila menyisipkan garis mengufuk yang baru">

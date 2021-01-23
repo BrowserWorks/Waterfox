@@ -85,6 +85,7 @@ class nsTableCellFrame : public nsContainerFrame,
   virtual void AppendFrames(ChildListID aListID,
                             nsFrameList& aFrameList) override;
   virtual void InsertFrames(ChildListID aListID, nsIFrame* aPrevFrame,
+                            const nsLineList::iterator* aPrevFrameLine,
                             nsFrameList& aFrameList) override;
   virtual void RemoveFrame(ChildListID aListID, nsIFrame* aOldFrame) override;
 #endif
@@ -108,7 +109,7 @@ class nsTableCellFrame : public nsContainerFrame,
 
   virtual nscoord GetMinISize(gfxContext* aRenderingContext) override;
   virtual nscoord GetPrefISize(gfxContext* aRenderingContext) override;
-  IntrinsicISizeOffsetData IntrinsicISizeOffsets(
+  IntrinsicSizeOffsetData IntrinsicISizeOffsets(
       nscoord aPercentageBasis = NS_UNCONSTRAINEDSIZE) override;
 
   virtual void Reflow(nsPresContext* aPresContext, ReflowOutput& aDesiredSize,
@@ -129,7 +130,8 @@ class nsTableCellFrame : public nsContainerFrame,
   virtual mozilla::StyleVerticalAlignKeyword GetVerticalAlign() const;
 
   bool HasVerticalAlignBaseline() const {
-    return GetVerticalAlign() == mozilla::StyleVerticalAlignKeyword::Baseline;
+    return GetVerticalAlign() == mozilla::StyleVerticalAlignKeyword::Baseline &&
+           !GetContentEmpty();
   }
 
   bool CellHasVisibleContent(nscoord aBSize, nsTableFrame* tableFrame,
@@ -206,9 +208,6 @@ class nsTableCellFrame : public nsContainerFrame,
 
   bool GetContentEmpty() const;
   void SetContentEmpty(bool aContentEmpty);
-
-  bool HasPctOverBSize();
-  void SetHasPctOverBSize(bool aValue);
 
   nsTableCellFrame* GetNextCell() const {
     nsIFrame* sibling = GetNextSibling();
@@ -299,18 +298,6 @@ inline void nsTableCellFrame::SetContentEmpty(bool aContentEmpty) {
     AddStateBits(NS_TABLE_CELL_CONTENT_EMPTY);
   } else {
     RemoveStateBits(NS_TABLE_CELL_CONTENT_EMPTY);
-  }
-}
-
-inline bool nsTableCellFrame::HasPctOverBSize() {
-  return HasAnyStateBits(NS_TABLE_CELL_HAS_PCT_OVER_BSIZE);
-}
-
-inline void nsTableCellFrame::SetHasPctOverBSize(bool aValue) {
-  if (aValue) {
-    AddStateBits(NS_TABLE_CELL_HAS_PCT_OVER_BSIZE);
-  } else {
-    RemoveStateBits(NS_TABLE_CELL_HAS_PCT_OVER_BSIZE);
   }
 }
 

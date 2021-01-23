@@ -40,26 +40,20 @@ TestProtocolHandler.prototype = {
     Ci.nsIProtocolHandler.URI_NORELATIVE |
     Ci.nsIProtocolHandler.ALLOWS_PROXY |
     Ci.nsIProtocolHandler.URI_DANGEROUS_TO_LOAD,
-  newURI: function(spec, originCharset, baseURI) {
-    return Cc["@mozilla.org/network/simple-uri-mutator;1"]
-      .createInstance(Ci.nsIURIMutator)
-      .setSpec(spec)
-      .finalize();
+  newChannel(uri, aLoadInfo) {
+    throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
   },
-  newChannel: function(uri, aLoadInfo) {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
-  },
-  allowPort: function(port, scheme) {
+  allowPort(port, scheme) {
     return true;
   },
 };
 
 function TestProtocolHandlerFactory() {}
 TestProtocolHandlerFactory.prototype = {
-  createInstance: function(delegate, iid) {
+  createInstance(delegate, iid) {
     return new TestProtocolHandler().QueryInterface(iid);
   },
-  lockFactory: function(lock) {},
+  lockFactory(lock) {},
 };
 
 function register_test_protocol_handler() {
@@ -104,7 +98,7 @@ TestFilter.prototype = {
   _flags: 0,
   _timeout: 0,
   QueryInterface: ChromeUtils.generateQI([Ci.nsIProtocolProxyFilter]),
-  applyFilter: function(pps, uri, pi, cb) {
+  applyFilter(uri, pi, cb) {
     var pi_tail = pps.newProxyInfo(
       this._type,
       this._host,
@@ -127,7 +121,7 @@ TestFilter.prototype = {
 function BasicFilter() {}
 BasicFilter.prototype = {
   QueryInterface: ChromeUtils.generateQI([Ci.nsIProtocolProxyFilter]),
-  applyFilter: function(pps, uri, pi, cb) {
+  applyFilter(uri, pi, cb) {
     cb.onProxyFilterResult(
       pps.newProxyInfo(
         "http",
@@ -146,7 +140,7 @@ BasicFilter.prototype = {
 function BasicChannelFilter() {}
 BasicChannelFilter.prototype = {
   QueryInterface: ChromeUtils.generateQI([Ci.nsIProtocolProxyChannelFilter]),
-  applyFilter: function(pps, channel, pi, cb) {
+  applyFilter(channel, pi, cb) {
     cb.onProxyFilterResult(
       pps.newProxyInfo(
         "http",
@@ -168,7 +162,7 @@ resolveCallback.prototype = {
 
   QueryInterface: ChromeUtils.generateQI([Ci.nsIProtocolProxyCallback]),
 
-  onProxyAvailable: function(req, channel, pi, status) {
+  onProxyAvailable(req, channel, pi, status) {
     this.nextFunction(pi);
   },
 };
@@ -986,7 +980,7 @@ var directFilterListener = {
     run_isresolvable_test();
   },
 
-  observe: function(subject, topic, data) {
+  observe(subject, topic, data) {
     if (
       topic === "http-on-modify-request" &&
       subject instanceof Ci.nsIHttpChannel &&

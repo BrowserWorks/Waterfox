@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-use euclid::{Angle, TypedSize2D};
+use euclid::{Angle, Size2D};
 use crate::parse_function::parse_function;
 use std::f32;
 use std::str::FromStr;
@@ -25,8 +25,8 @@ pub trait YamlHelper {
     fn as_transform(&self, transform_origin: &LayoutPoint) -> Option<LayoutTransform>;
     fn as_colorf(&self) -> Option<ColorF>;
     fn as_vec_colorf(&self) -> Option<Vec<ColorF>>;
-    fn as_px_to_au(&self) -> Option<Au>;
-    fn as_pt_to_au(&self) -> Option<Au>;
+    fn as_px_to_f32(&self) -> Option<f32>;
+    fn as_pt_to_f32(&self) -> Option<f32>;
     fn as_vec_string(&self) -> Option<Vec<String>>;
     fn as_border_radius_component(&self) -> LayoutSize;
     fn as_border_radius(&self) -> Option<BorderRadius>;
@@ -38,6 +38,10 @@ pub trait YamlHelper {
     fn as_vec_filter_op(&self) -> Option<Vec<FilterOp>>;
     fn as_filter_data(&self) -> Option<FilterData>;
     fn as_vec_filter_data(&self) -> Option<Vec<FilterData>>;
+    fn as_filter_input(&self) -> Option<FilterPrimitiveInput>;
+    fn as_filter_primitive(&self) -> Option<FilterPrimitive>;
+    fn as_vec_filter_primitive(&self) -> Option<Vec<FilterPrimitive>>;
+    fn as_color_space(&self) -> Option<ColorSpace>;
 }
 
 fn string_to_color(color: &str) -> Option<ColorF> {
@@ -152,6 +156,14 @@ define_string_enum!(
     ]
 );
 
+define_string_enum!(
+    ColorSpace,
+    [
+        Srgb = "srgb",
+        LinearRgb = "linear-rgb"
+    ]
+);
+
 // Rotate around `axis` by `degrees` angle
 fn make_rotation(
     origin: &LayoutPoint,
@@ -167,7 +179,7 @@ fn make_rotation(
     let transform =
         LayoutTransform::identity().pre_rotate(axis_x, axis_y, axis_z, Angle::radians(theta));
 
-    pre_transform.pre_mul(&transform).pre_mul(&post_transform)
+    pre_transform.pre_transform(&transform).pre_transform(&post_transform)
 }
 
 pub fn make_perspective(
@@ -177,7 +189,7 @@ pub fn make_perspective(
     let pre_transform = LayoutTransform::create_translation(origin.x, origin.y, 0.0);
     let post_transform = LayoutTransform::create_translation(-origin.x, -origin.y, -0.0);
     let transform = LayoutTransform::create_perspective(perspective);
-    pre_transform.pre_mul(&transform).pre_mul(&post_transform)
+    pre_transform.pre_transform(&transform).pre_transform(&post_transform)
 }
 
 // Create a skew matrix, specified in degrees.
@@ -255,18 +267,12 @@ impl YamlHelper for Yaml {
         }
     }
 
-    fn as_px_to_au(&self) -> Option<Au> {
-        match self.as_force_f32() {
-            Some(fv) => Some(Au::from_f32_px(fv)),
-            None => None,
-        }
+    fn as_px_to_f32(&self) -> Option<f32> {
+        self.as_force_f32()
     }
 
-    fn as_pt_to_au(&self) -> Option<Au> {
-        match self.as_force_f32() {
-            Some(fv) => Some(Au::from_f32_px(fv * 16. / 12.)),
-            None => None,
-        }
+    fn as_pt_to_f32(&self) -> Option<f32> {
+        self.as_force_f32().map(|fv| fv * 16. / 12.)
     }
 
     fn as_rect(&self) -> Option<LayoutRect> {
@@ -410,7 +416,7 @@ impl YamlHelper for Yaml {
                             break;
                         }
                     };
-                    transform = transform.post_mul(&mx);
+                    transform = transform.post_transform(&mx);
                 }
                 Some(transform)
             }
@@ -418,7 +424,7 @@ impl YamlHelper for Yaml {
                 let transform = array.iter().fold(
                     LayoutTransform::identity(),
                     |u, yaml| match yaml.as_transform(transform_origin) {
-                        Some(ref transform) => u.pre_mul(transform),
+                        Some(ref transform) => u.pre_transform(transform),
                         None => u,
                     },
                 );
@@ -485,7 +491,7 @@ impl YamlHelper for Yaml {
         if let Yaml::Integer(integer) = *self {
             return LayoutSize::new(integer as f32, integer as f32);
         }
-        self.as_size().unwrap_or(TypedSize2D::zero())
+        self.as_size().unwrap_or(Size2D::zero())
     }
 
     fn as_border_radius(&self) -> Option<BorderRadius> {
@@ -613,6 +619,12 @@ impl YamlHelper for Yaml {
                     matrix.clone_from_slice(&m);
                     Some(FilterOp::ColorMatrix(matrix))
                 }
+                ("flood", ref args, _) if args.len() == 1 => {
+                    let str = format!("---\ncolor: {}\n", args[0]);
+                    let mut yaml_doc = YamlLoader::load_from_str(&str).expect("Failed to parse flood");
+                    let yaml = yaml_doc.pop().unwrap();
+                    Some(FilterOp::Flood(yaml["color"].as_colorf().unwrap()))
+                }
                 (_, _, _) => None,
             }
         } else {
@@ -668,11 +680,138 @@ impl YamlHelper for Yaml {
         None
     }
 
+    fn as_filter_input(&self) -> Option<FilterPrimitiveInput> {
+        if let Some(input) = self.as_str() {
+            match input {
+                "original" => Some(FilterPrimitiveInput::Original),
+                "previous" => Some(FilterPrimitiveInput::Previous),
+                _ => None,
+            }
+        } else if let Some(index) = self.as_i64() {
+            if index >= 0 {
+                Some(FilterPrimitiveInput::OutputOfPrimitiveIndex(index as usize))
+            } else {
+                panic!("Filter input index cannot be negative");
+            }
+        } else {
+            panic!("Invalid filter input");
+        }
+    }
+
     fn as_vec_filter_data(&self) -> Option<Vec<FilterData>> {
         if let Some(v) = self.as_vec() {
             Some(v.iter().map(|x| x.as_filter_data().unwrap()).collect())
         } else {
             self.as_filter_data().map(|data| vec![data])
         }
+    }
+
+    fn as_filter_primitive(&self) -> Option<FilterPrimitive> {
+        if let Some(filter_type) = self["type"].as_str() {
+            let kind = match filter_type {
+                "identity" => {
+                    FilterPrimitiveKind::Identity(IdentityPrimitive {
+                        input: self["in"].as_filter_input().unwrap(),
+                    })
+                }
+                "blend" => {
+                    FilterPrimitiveKind::Blend(BlendPrimitive {
+                        input1: self["in1"].as_filter_input().unwrap(),
+                        input2: self["in2"].as_filter_input().unwrap(),
+                        mode: self["blend-mode"].as_mix_blend_mode().unwrap(),
+                    })
+                }
+                "flood" => {
+                    FilterPrimitiveKind::Flood(FloodPrimitive {
+                        color: self["color"].as_colorf().unwrap(),
+                    })
+                }
+                "blur" => {
+                    FilterPrimitiveKind::Blur(BlurPrimitive {
+                        input: self["in"].as_filter_input().unwrap(),
+                        radius: self["radius"].as_f32().unwrap(),
+                    })
+                }
+                "opacity" => {
+                    FilterPrimitiveKind::Opacity(OpacityPrimitive {
+                        input: self["in"].as_filter_input().unwrap(),
+                        opacity: self["opacity"].as_f32().unwrap(),
+                    })
+                }
+                "color-matrix" => {
+                    let m: Vec<f32> = self["matrix"].as_vec_f32().unwrap();
+                    let mut matrix: [f32; 20] = [0.0; 20];
+                    matrix.clone_from_slice(&m);
+
+                    FilterPrimitiveKind::ColorMatrix(ColorMatrixPrimitive {
+                        input: self["in"].as_filter_input().unwrap(),
+                        matrix,
+                    })
+                }
+                "drop-shadow" => {
+                    FilterPrimitiveKind::DropShadow(DropShadowPrimitive {
+                        input: self["in"].as_filter_input().unwrap(),
+                        shadow: Shadow {
+                            offset: self["offset"].as_vector().unwrap(),
+                            color: self["color"].as_colorf().unwrap(),
+                            blur_radius: self["radius"].as_f32().unwrap(),
+                        }
+                    })
+                }
+                "component-transfer" => {
+                    FilterPrimitiveKind::ComponentTransfer(ComponentTransferPrimitive {
+                        input: self["in"].as_filter_input().unwrap(),
+                    })
+                }
+                "offset" => {
+                    FilterPrimitiveKind::Offset(OffsetPrimitive {
+                        input: self["in"].as_filter_input().unwrap(),
+                        offset: self["offset"].as_vector().unwrap(),
+                    })
+                }
+                "composite" => {
+                    let operator = match self["operator"].as_str().unwrap() {
+                        "over" => CompositeOperator::Over,
+                        "in" => CompositeOperator::In,
+                        "out" => CompositeOperator::Out,
+                        "atop" => CompositeOperator::Atop,
+                        "xor" => CompositeOperator::Xor,
+                        "lighter" => CompositeOperator::Lighter,
+                        "arithmetic" => {
+                            let k_vals = self["k-values"].as_vec_f32().unwrap();
+                            assert!(k_vals.len() == 4, "Must be 4 k values for arithmetic composite operator");
+                            let k_vals = [k_vals[0], k_vals[1], k_vals[2], k_vals[3]];
+                            CompositeOperator::Arithmetic(k_vals)
+                        }
+                        _ => panic!("Invalid composite operator"),
+                    };
+                    FilterPrimitiveKind::Composite(CompositePrimitive {
+                        input1: self["in1"].as_filter_input().unwrap(),
+                        input2: self["in2"].as_filter_input().unwrap(),
+                        operator,
+                    })
+                }
+                _ => return None,
+            };
+
+            Some(FilterPrimitive {
+                kind,
+                color_space: self["color-space"].as_color_space().unwrap_or(ColorSpace::LinearRgb),
+            })
+        } else {
+            None
+        }
+    }
+
+    fn as_vec_filter_primitive(&self) -> Option<Vec<FilterPrimitive>> {
+        if let Some(v) = self.as_vec() {
+            Some(v.iter().map(|x| x.as_filter_primitive().unwrap()).collect())
+        } else {
+            self.as_filter_primitive().map(|data| vec![data])
+        }
+    }
+
+    fn as_color_space(&self) -> Option<ColorSpace> {
+        self.as_str().and_then(|x| StringEnum::from_str(x))
     }
 }

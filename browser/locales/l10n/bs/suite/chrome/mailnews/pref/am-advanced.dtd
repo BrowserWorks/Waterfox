@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpServer.label "Postavke odlaznog (SMTP) servera">
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpDescription.label "Prilikom upravljanja vašim identitetima možete koristiti server iz ove liste njegovim odabirom kao odlaznog servera (SMTP) ili možete koristiti izvorni server iz ove liste ako odaberete &quot;Koristi izvorni server&quot;.">
+
+<!ENTITY smtpListAdd.label  "Dodaj…">
+<!ENTITY smtpListEdit.label "Uredi…">
+<!ENTITY smtpListDelete.label "Ukloni">
+<!ENTITY smtpListSetDefault.label "Postavi kao glavno">
+
+<!ENTITY serverDetails.label "Detalji izabranog servera:">
+<!ENTITY serverDescription.label "Opis: ">
+<!ENTITY serverName.label "Naziv servera: ">
+<!ENTITY serverPort.label "Port: ">
+<!ENTITY userName.label   "Korisničko ime: ">
+<!ENTITY connectionSecurity.label "Sigurnost veze: ">
+<!ENTITY authMethod.label   "Metoda autentikacije: ">

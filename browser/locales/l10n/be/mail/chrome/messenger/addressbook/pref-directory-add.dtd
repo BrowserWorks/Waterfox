@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY directoryName.label "Назва:">
+<!ENTITY directoryName.accesskey "Н">
+<!ENTITY directoryHostname.label "Назва трымальніка:">
+<!ENTITY directoryHostname.accesskey "а">
+<!ENTITY directoryBaseDN.label "Базавая адрозная назва:">
+<!ENTITY directoryBaseDN.accesskey "А">
+<!ENTITY findButton.label "Знайсці">
+<!ENTITY findButton.accesskey "З">
+<!ENTITY directorySecure.label "Ужываць бяспечнае злучэнне (SSL)">
+<!ENTITY directorySecure.accesskey "ж">
+<!ENTITY directoryLogin.label "Адрозная назва прывязкі:">
+<!ENTITY directoryLogin.accesskey "р">
+<!ENTITY General.tab "Агульныя">
+<!ENTITY Offline.tab "Па-за сеткаю">
+<!ENTITY Advanced.tab "Пашыраны">
+<!ENTITY portNumber.label "Нумар порта:">
+<!ENTITY portNumber.accesskey "п">
+<!ENTITY searchFilter.label "Сіта пошуку:">
+<!ENTITY searchFilter.accesskey "С">
+<!ENTITY scope.label "Ахоп: ">
+<!ENTITY scope.accesskey "А">
+<!ENTITY scopeOneLevel.label "Адзін узровень">
+<!ENTITY scopeOneLevel.accesskey "У">
+<!ENTITY scopeSubtree.label "Паддрэва">
+<!ENTITY scopeSubtree.accesskey "д">
+<!ENTITY return.label "Не вяртаць болей чым">
+<!ENTITY return.accesskey "в">
+<!ENTITY results.label "вынікаў">
+<!ENTITY offlineText.label "Вы можаце загрузіць мясцовую копію гэтай дырэкторыі, таму яна будзе даступнаю для ўжывання пад час працы па-за сеткаю.">
+<!ENTITY saslMechanism.label "Метад уваходу:">
+<!ENTITY saslMechanism.accesskey "М">
+<!ENTITY saslOff.label "Просты">
+<!ENTITY saslOff.accesskey "П">
+<!ENTITY saslGSSAPI.label "Kerberos (GSSAPI)">
+<!ENTITY saslGSSAPI.accesskey "K">
+
+<!ENTITY newDirectoryWidth "42em">

@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Tapis Log">
+<!ENTITY viewLogInfo.text "Log Tapisan mendokumenkan tapisan yang telah dilaksanakan dalam akaun ini. Tandakan dalam kotak semakan di bawah untuk mengaktifkan log.">
+<!ENTITY clearLog.label "Buang Log">
+<!ENTITY clearLog.accesskey "B">
+<!ENTITY enableLog.label "Aktifkan Log Tapisan">
+<!ENTITY enableLog.accesskey "A">
+<!ENTITY closeLog.label "Tutup">
+<!ENTITY closeLog.accesskey "t">

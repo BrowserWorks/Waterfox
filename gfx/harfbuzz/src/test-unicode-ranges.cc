@@ -33,9 +33,9 @@ test (hb_codepoint_t cp, unsigned int bit)
   if (OT::_hb_ot_os2_get_unicode_range_bit (cp) != bit)
   {
     fprintf (stderr, "got incorrect bit (%d) for cp 0x%X. Should have been %d.",
-             OT::_hb_ot_os2_get_unicode_range_bit (cp),
-             cp,
-             bit);
+	     OT::_hb_ot_os2_get_unicode_range_bit (cp),
+	     cp,
+	     bit);
     abort();
   }
 }

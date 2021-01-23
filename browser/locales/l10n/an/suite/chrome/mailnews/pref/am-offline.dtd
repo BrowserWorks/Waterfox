@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "Ta cabidar espacio en disco, no descargar:">
+<!ENTITY doNotDownloadNntp.label "Ta cabidar espacio en disco, no descargar t'o suyo uso sin connexión:">
+<!ENTITY doNotDownloadImap.label "Ta cabidar espacio en disco, la descarga de mensaches d'o servidor y o suyo almacenamiento local ta uso sin connexión puede restrinchir por antiguidat u grandaria.">
+<!ENTITY allFoldersOffline.label "Conservar mensaches d'ista cuenta en este equipo">
+<!ENTITY allFoldersOffline.accesskey "o">
+<!ENTITY offlineNotDownload.label "Mensaches mayors de">
+<!ENTITY offlineNotDownload.accesskey "M">
+<!ENTITY autosyncNotDownload.label "No descargar mensaches mayores de">
+<!ENTITY autosyncNotDownload.accesskey "y">
+<!ENTITY kb.label "KB">
+<!ENTITY daysOld.label "días">
+<!ENTITY message.label "mensaches">
+<!ENTITY nntpNotDownloadRead.label "Mensaches leitos">
+<!ENTITY nntpNotDownloadRead.accesskey "l">
+<!ENTITY nntpDownloadMsg.label "Mensajes de mas de">
+<!ENTITY nntpDownloadMsg.accesskey "e">
+<!ENTITY retentionCleanup.label "Ta recuperar espacio en disco, os mensaches antigos se pueden eliminar permanentment.">
+<!ENTITY retentionCleanupImap.label "Ta recuperar espacio en disco, os mensaches antigos pueden eliminar permanentment, tanto las copias locals como os suyos orichinals en o servidor.">
+<!ENTITY retentionCleanupPop.label "Ta recuperar espacio en disco, os mensaches antigos pueden eliminar permanentment, incluindo os suyos orichinals en o servidor.">
+<!ENTITY retentionKeepMsg.label "Eliminar mensaches con mas de">
+<!ENTITY retentionKeepMsg.accesskey "a">
+<!ENTITY retentionKeepAll.label "No eliminar garra mensache">
+<!ENTITY retentionKeepAll.accesskey "N">
+<!ENTITY retentionKeepRecent.label "Eliminar totz yxcepto os mas recients">
+<!ENTITY retentionKeepRecent.accesskey "x">
+<!-- LOCALIZATION NOTE: Unhide with .keepUnreadOnly { display: -moz-box; } -->
+<!ENTITY retentionKeepUnreadHidden.label "Eliminar siempre mensaches leitos (prevale sobre a configuración d'antiguidat)">
+<!ENTITY retentionApplyToFlagged.label "Conservar siempre mensaches sinyalaus">
+<!ENTITY retentionApplyToFlagged.accesskey "C">
+<!ENTITY nntpRemoveMsgBody.label "Oiminar o cuerpo d'os mensaches de mas de">
+<!ENTITY nntpRemoveMsgBody.accesskey "i">
+<!ENTITY offlineSelectNntp.label "Selecc. grupos de noticias ta uso sin connexión…">
+<!ENTITY offlineSelectNntp.accesskey "S">
+<!ENTITY offlineImapAdvancedOffline.label "Abanzadas…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "d">
+<!ENTITY syncGroupTitle.label "Sincronización de mensaches">
+<!ENTITY diskspaceGroupTitle.label "Espacio en disco">
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+
+<!ENTITY allAutosync.label               "Sincronizar totz os mensaches localment sin importar su antiguidat">
+<!ENTITY allAutosync.accesskey           "u">
+<!ENTITY ageAutosyncBefore.label         "Sincronizar os">
+<!ENTITY ageAutosync.accesskey           "S">
+<!ENTITY ageAutosyncMiddle.label         "">
+<!ENTITY dayAgeInterval.label            "Días">
+<!ENTITY weekAgeInterval.label           "Semanas">
+<!ENTITY monthAgeInterval.label          "Meses">
+<!ENTITY yearAgeInterval.label           "Anyos">
+<!ENTITY ageAutosyncAfter.label          "mas recients">

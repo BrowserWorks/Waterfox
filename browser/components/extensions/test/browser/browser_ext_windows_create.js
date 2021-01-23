@@ -33,9 +33,7 @@ add_task(async function testWindowCreate() {
             // "maximized" states.
             browser.test.assertTrue(
               window.state == "normal" || window.state == "maximized",
-              `Expected window.state (currently ${
-                window.state
-              }) to be "normal" but will accept "maximized"`
+              `Expected window.state (currently ${window.state}) to be "normal" but will accept "maximized"`
             );
           } else {
             browser.test.assertEq(
@@ -172,7 +170,7 @@ add_task(async function testWindowCreate() {
     if (expected.chromeFlags) {
       let { chromeFlags } = latestWindow.docShell.treeOwner
         .QueryInterface(Ci.nsIInterfaceRequestor)
-        .getInterface(Ci.nsIXULWindow);
+        .getInterface(Ci.nsIAppWindow);
       for (let flag of expected.chromeFlags) {
         ok(
           chromeFlags & Ci.nsIWebBrowserChrome[flag],

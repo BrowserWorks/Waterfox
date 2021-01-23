@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Roghainnean a' chunntais">
+<!ENTITY accountName.label "Ainm a' chunntais:">
+<!ENTITY accountName.accesskey "n">
+<!ENTITY identityTitle.label "An dearbh-aithne bhunaiteach">
+<!ENTITY identityDesc.label "Tha dearbh-aithne aig gach cunntas; sin am fiosrachadh a chì daoine eile nuair a leughas iad do theachdaireachdan.">
+<!ENTITY name.label "D' ainm:">
+<!ENTITY name.accesskey "D">
+<!ENTITY email.label "Seòladh puist-dhealain:">
+<!ENTITY email.accesskey "e">
+<!ENTITY replyTo.label "An seòladh freagairt-gu:">
+<!ENTITY replyTo.accesskey "s">
+<!ENTITY replyTo.placeholder "Freagraidh na faightearan an seòladh eile seo">
+<!ENTITY organization.label "Buidheann:">
+<!ENTITY organization.accesskey "B">
+<!ENTITY signatureText.label "Teacsa an earr-sgrìobhaidh:">
+<!ENTITY signatureText.accesskey "T">
+<!ENTITY signatureHtml.label "Cleachd HTML (m.e. &lt;b&gt;bold&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "L">
+<!ENTITY signatureFile.label "Tog an t-earr-sgrìobhadh o fhaidhle (teacsa, HTML no dealbh):">
+<!ENTITY signatureFile.accesskey "T">
+<!ENTITY edit.label "Deasaich…">
+<!ENTITY choose.label "Tagh…">
+<!ENTITY choose.accesskey "T">
+<!ENTITY editVCard.label "Deasaich cairt…">
+<!ENTITY editVCard.accesskey "D">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Cuir am vCard agam ri teachdaireachdan">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "Rianaich na dearbh-aithnean…">
+<!ENTITY manageIdentities.accesskey "R">
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+
+<!ENTITY smtpName.label "Frithealaiche a-mach (SMTP):">
+<!ENTITY smtpName.accesskey "F">
+<!ENTITY smtpDefaultServer.label "Cleachd am frithealaiche bunaiteach">
+
+<!ENTITY smtpServerEdit.label "Deasaich am frithealaiche SMTP…">
+<!ENTITY smtpServerEdit.accesskey "P">

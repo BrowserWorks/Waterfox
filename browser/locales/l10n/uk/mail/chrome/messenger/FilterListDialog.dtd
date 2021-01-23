@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Фільтри повідомлень">
+<!ENTITY nameColumn.label "Назва фільтру">
+<!ENTITY activeColumn.label "Увімкнено">
+<!ENTITY newButton.label "Створити…">
+<!ENTITY newButton.accesskey "С">
+<!ENTITY newButton.popupCopy.label "Копіювати…">
+<!ENTITY newButton.popupCopy.accesskey "К">
+<!ENTITY editButton.label "Змінити…">
+<!ENTITY editButton.accesskey "м">
+<!ENTITY deleteButton.label "Видалити">
+<!ENTITY deleteButton.accesskey "и">
+<!ENTITY reorderTopButton "Перемістити вгору">
+<!ENTITY reorderTopButton.accessKey "г">
+<!ENTITY reorderTopButton.toolTip "Переставити фільтр так, щоб він виконувався перед усіма іншими">
+<!ENTITY reorderUpButton.label "Вгору">
+<!ENTITY reorderUpButton.accesskey "г">
+<!ENTITY reorderDownButton.label "Вниз">
+<!ENTITY reorderDownButton.accesskey "н">
+<!ENTITY reorderBottomButton "Перемістити донизу">
+<!ENTITY reorderBottomButton.accessKey "д">
+<!ENTITY reorderBottomButton.toolTip "Переставити фільтр так, щоб він виконувався після всіх інших">
+<!ENTITY filterHeader.label "Включені фільтри запускаються автоматично у вказаному нижче порядку.">
+<!ENTITY filtersForPrefix.label "Фільтри для:">
+<!ENTITY filtersForPrefix.accesskey "і">
+<!ENTITY viewLogButton.label "Журнал фільтрів">
+<!ENTITY viewLogButton.accesskey "Ж">
+<!ENTITY runFilters.label "Запустити">
+<!ENTITY runFilters.accesskey "З">
+<!ENTITY stopFilters.label "Стоп">
+<!ENTITY stopFilters.accesskey "С">
+<!ENTITY folderPickerPrefix.label "Запустити вибрані фільтр(и) в теці:">
+<!ENTITY folderPickerPrefix.accesskey "а">
+<!ENTITY helpButton.label "Довідка">
+<!ENTITY helpButton.accesskey "Д">
+<!ENTITY closeCmd.key "W">
+<!ENTITY searchBox.emptyText "Шукати фільтр за іменем…">

@@ -6,6 +6,7 @@
 #define mozilla_a11y_xpcAccessibilityService_h_
 
 #include "nsIAccessibilityService.h"
+#include "nsITimer.h"
 
 class xpcAccessibilityService : public nsIAccessibilityService {
  public:
@@ -35,7 +36,7 @@ class xpcAccessibilityService : public nsIAccessibilityService {
  private:
   // xpcAccessibilityService creation is controlled by friend
   // NS_GetAccessibilityService, keep constructor private.
-  xpcAccessibilityService(){};
+  xpcAccessibilityService() = default;
 
   nsCOMPtr<nsITimer> mShutdownTimer;
 

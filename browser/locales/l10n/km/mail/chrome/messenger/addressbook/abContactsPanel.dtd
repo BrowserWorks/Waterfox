@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY addressbookPicker.label            "Address Book:">
+<!ENTITY addressbookPicker.accesskey        "k">
+<!ENTITY SearchNameOrEmail.label            "Name or Email">
+
+<!ENTITY addtoToFieldMenu.label             "បន្ថែម​ទៅ​វាល​ជូន​ចំពោះ">
+<!ENTITY addtoToFieldMenu.accesskey         "A">
+<!ENTITY addtoCcFieldMenu.label             "បន្ថែម​ទៅ​វាល Cc">
+<!ENTITY addtoCcFieldMenu.accesskey         "C">
+<!ENTITY addtoBccFieldMenu.label            "បន្ថែម​ទៅ​វាល Bcc">
+<!ENTITY addtoBccFieldMenu.accesskey        "B">
+<!ENTITY deleteAddrBookCard.label           "លុប​">
+<!ENTITY deleteAddrBookCard.accesskey       "D">
+
+<!ENTITY toButton.label                     "Add to To:">
+<!ENTITY toButton.accesskey                 "A">
+<!ENTITY ccButton.label                     "Add to Cc:">
+<!ENTITY ccButton.accesskey                 "d">
+<!ENTITY bccButton.label                    "Add to Bcc:">
+<!ENTITY bccButton.accesskey                "B">

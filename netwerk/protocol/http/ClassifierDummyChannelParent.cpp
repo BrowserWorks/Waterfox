@@ -7,7 +7,6 @@
 #include "ClassifierDummyChannelParent.h"
 #include "mozilla/net/AsyncUrlChannelClassifier.h"
 #include "mozilla/Unused.h"
-#include "nsIChannel.h"
 #include "nsIPrincipal.h"
 #include "nsNetUtil.h"
 
@@ -38,7 +37,7 @@ void ClassifierDummyChannelParent::Init(nsIURI* aURI, nsIURI* aTopWindowURI,
   bool willCallback = NS_SUCCEEDED(AsyncUrlChannelClassifier::CheckChannel(
       channel, [self = std::move(self), channel]() {
         if (self->mIPCActive) {
-          Unused << Send__delete__(self, channel->ClassificationFlags());
+          Unused << Send__delete__(self, channel->GetClassificationFlags());
         }
       }));
 

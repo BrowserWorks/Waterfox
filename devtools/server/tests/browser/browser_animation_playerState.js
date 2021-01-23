@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -83,7 +82,7 @@ async function playerStateIsCorrect(walker, animations) {
   // transitions run only once
   is(state.iterationCount, 1, "Transition iteration count is correct");
   is(state.fill, "backwards", "Transition fill is correct");
-  is(state.easing, "linear", "Transition easing is correct");
+  is(state.easing, "ease-out", "Transition easing is correct");
   is(state.direction, "normal", "Transition direction is correct");
   is(state.playState, "running", "Transition playState is correct");
   is(state.playbackRate, 1, "Transition playbackRate is correct");
@@ -93,11 +92,7 @@ async function playerStateIsCorrect(walker, animations) {
   is(properties.length, 1, "Length of animated properties is correct");
   let keyframes = properties[0].values;
   is(keyframes.length, 2, "Transition length of keyframe is correct");
-  is(
-    keyframes[0].easing,
-    "ease-out",
-    "Transition kerframes's easing is correct"
-  );
+  is(keyframes[0].easing, "linear", "Transition keyframes's easing is correct");
 
   info("Checking the state of one of multiple animations on a node");
 
@@ -124,7 +119,7 @@ async function playerStateIsCorrect(walker, animations) {
   is(
     keyframes[0].easing,
     "ease-out",
-    "The 2nd animation's easing of kerframes is correct"
+    "The 2nd animation's easing of keyframes is correct"
   );
 
   info("Checking the state of an animation with delay");

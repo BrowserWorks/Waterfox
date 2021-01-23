@@ -46,9 +46,6 @@ _SUBDIR_CONFIG_ARGS="$ac_configure_args"
 dnl Set the version number of the libs included with mozilla
 dnl ========================================================
 MOZPNG=10635
-NSPR_VERSION=4
-NSPR_MINVER=4.21
-NSS_VERSION=3
 
 dnl Set the minimum version of toolkit libs used by mozilla
 dnl ========================================================
@@ -61,9 +58,7 @@ GTK2_VERSION=2.18.0
 GTK3_VERSION=3.4.0
 GDK_VERSION_MAX_ALLOWED=GDK_VERSION_3_4
 W32API_VERSION=3.14
-STARTUP_NOTIFICATION_VERSION=0.8
 DBUS_VERSION=0.60
-SQLITE_VERSION=3.28.0
 
 dnl Set various checks
 dnl ========================================================
@@ -83,20 +78,12 @@ fi # COMPILE_ENVIRONMENT
 
 case "$target" in
 *-android*|*-linuxandroid*)
-    AC_DEFINE(ANDROID)
     ;;
 *-linux*)
     AC_PATH_PROG(OBJCOPY,objcopy)
     ;;
 esac
 
-case "$target" in
-*-apple-darwin*)
-    MOZ_IOS_SDK
-    ;;
-esac
-
-AC_SUBST(ANDROID_SOURCE)
 AC_SUBST(ANDROID_PACKAGE_NAME)
 AC_SUBST(OBJCOPY)
 
@@ -141,8 +128,7 @@ case "$target" in
         _WIN32_MSVC=1
 
         # Make sure compilers are valid
-        CFLAGS="$CFLAGS -nologo"
-        CXXFLAGS="$CXXFLAGS -TP -nologo"
+        CXXFLAGS="$CXXFLAGS -TP"
         AC_LANG_SAVE
         AC_LANG_C
         AC_TRY_COMPILE([#include <stdio.h>],
@@ -164,8 +150,8 @@ case "$target" in
         AC_DEFINE(_USE_MATH_DEFINES) # Otherwise MSVC's math.h doesn't #define M_PI.
 
         _CC_SUITE=14
-        MSVC_C_RUNTIME_DLL=vcruntime140.dll
-        MSVC_CXX_RUNTIME_DLL=msvcp140.dll
+        MSVC_C_RUNTIME_DLL=vcruntime140*.dll
+        MSVC_CXX_RUNTIME_DLL=msvcp140*.dll
 
         # -Zc:sizedDealloc- disables C++14 global sized deallocation (see bug 1160146)
         CXXFLAGS="$CXXFLAGS -Zc:sizedDealloc-"
@@ -174,7 +160,7 @@ case "$target" in
           if test ! -d "$WIN_UCRT_REDIST_DIR"; then
             AC_MSG_ERROR([Invalid Windows UCRT Redist directory: ${WIN_UCRT_REDIST_DIR}])
           fi
-          WIN_UCRT_REDIST_DIR=`cd "$WIN_UCRT_REDIST_DIR" && pwd -W`
+          WIN_UCRT_REDIST_DIR=`cd "$WIN_UCRT_REDIST_DIR" && (pwd -W 2>/dev/null || pwd)`
         fi
 
         AC_SUBST(MSVC_C_RUNTIME_DLL)
@@ -186,7 +172,7 @@ case "$target" in
           if test ! -d "$WIN32_REDIST_DIR"; then
             AC_MSG_ERROR([Invalid Win32 Redist directory: ${WIN32_REDIST_DIR}])
           fi
-          WIN32_REDIST_DIR=`cd "$WIN32_REDIST_DIR" && pwd -W`
+          WIN32_REDIST_DIR=`cd "$WIN32_REDIST_DIR" && (pwd -W 2>/dev/null || pwd)`
         fi
 
         # Check linker version, except in lld builds
@@ -208,8 +194,6 @@ case "$target" in
 
         WRAP_STL_INCLUDES=1
         STL_FLAGS="-I${DIST}/stl_wrappers"
-        CFLAGS="$CFLAGS -D_HAS_EXCEPTIONS=0"
-        CXXFLAGS="$CXXFLAGS -D_HAS_EXCEPTIONS=0"
     else
         # Check w32api version
         _W32API_MAJOR_VERSION=`echo $W32API_VERSION | $AWK -F\. '{ print $1 }'`
@@ -230,6 +214,9 @@ case "$target" in
         # causing problems with local implementations with the same name.
         AC_DEFINE(STRSAFE_NO_DEPRECATE)
     fi # !GNU_CC
+
+    CFLAGS="$CFLAGS -D_HAS_EXCEPTIONS=0"
+    CXXFLAGS="$CXXFLAGS -D_HAS_EXCEPTIONS=0"
 
     AC_DEFINE_UNQUOTED(WINVER,0x$WINVER)
     AC_DEFINE_UNQUOTED(_WIN32_WINNT,0x$WINVER)
@@ -272,7 +259,7 @@ fi # COMPILE_ENVIRONMENT
 dnl ========================================================
 dnl set the defaults first
 dnl ========================================================
-MOZ_USER_DIR=".mozilla"
+MOZ_USER_DIR=".waterfox"
 
 MOZ_FIX_LINK_PATHS="-Wl,-rpath-link,${DIST}/bin -Wl,-rpath-link,${prefix}/lib"
 
@@ -310,15 +297,6 @@ if test -n "$COMPILE_ENVIRONMENT"; then
 fi
 
 dnl ========================================================
-dnl Add optional and non-optional hardening flags
-dnl ========================================================
-
-CFLAGS="$CFLAGS $MOZ_HARDENING_CFLAGS"
-CPPFLAGS="$CPPFLAGS $MOZ_HARDENING_CFLAGS"
-CXXFLAGS="$CXXFLAGS $MOZ_HARDENING_CFLAGS"
-LDFLAGS="$LDFLAGS $MOZ_HARDENING_LDFLAGS"
-
-dnl ========================================================
 dnl GNU specific defaults
 dnl ========================================================
 if test "$GNU_CC"; then
@@ -326,9 +304,7 @@ if test "$GNU_CC"; then
     SSE_FLAGS="-msse"
     SSE2_FLAGS="-msse2"
     SSSE3_FLAGS="-mssse3"
-    # FIXME: Let us build with strict aliasing. bug 414641.
     CFLAGS="$CFLAGS -fno-strict-aliasing"
-    WARNINGS_AS_ERRORS='-Werror'
     DSO_CFLAGS=''
 
     if test "$OS_ARCH" != "WINNT" -o -z "$CLANG_CC"; then
@@ -461,26 +437,14 @@ if test "$GNU_CC"; then
     fi
 
     _DEFINES_CFLAGS="-include $_objdir/mozilla-config.h -DMOZILLA_CLIENT"
-    _USE_CPP_INCLUDE_FLAG=1
 
     ASFLAGS="$ASFLAGS $_DEFINES_CFLAGS"
 fi
 
 if test "$GNU_CXX"; then
-    # FIXME: Let us build with strict aliasing. bug 414641.
     CXXFLAGS="$CXXFLAGS -fno-exceptions -fno-strict-aliasing"
 
     _DEFINES_CXXFLAGS="-DMOZILLA_CLIENT -include $_objdir/mozilla-config.h"
-    _USE_CPP_INCLUDE_FLAG=1
-fi
-
-# For profiling builds keep the symbol information
-if test "$MOZ_PROFILING" -a -z "$STRIP_FLAGS"; then
-    case "$OS_TARGET" in
-    Linux|DragonFly|FreeBSD|NetBSD|OpenBSD)
-        STRIP_FLAGS="--strip-debug"
-        ;;
-    esac
 fi
 
 dnl ========================================================
@@ -500,7 +464,7 @@ dnl ========================================================
 case "$host" in
 *mingw*)
     if test -n "$_WIN32_MSVC"; then
-        HOST_CFLAGS="$HOST_CFLAGS -nologo"
+        HOST_CFLAGS="$HOST_CFLAGS"
     else
         HOST_CFLAGS="$HOST_CFLAGS -mwindows"
     fi
@@ -548,26 +512,10 @@ case "$target" in
     MOZ_OPTIMIZE_FLAGS="-O3"
     CXXFLAGS="$CXXFLAGS -stdlib=libc++"
     DSO_LDOPTS=''
-    STRIP_FLAGS="$STRIP_FLAGS -x -S"
-    # Ensure that if we're targeting iOS an SDK was provided.
-    AC_CACHE_CHECK(for iOS target,
-                   ac_cv_ios_target,
-                   [AC_TRY_COMPILE([#include <TargetConditionals.h>
-#if !(TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR)
-#error not iOS
-#endif],
-                                   [],
-                                   ac_cv_ios_target="yes",
-                                   ac_cv_ios_target="no")])
-    if test "$ac_cv_ios_target" = "yes" -a -z $MOZ_IOS; then
-       AC_MSG_ERROR([targeting iOS but not using an iOS SDK?])
-    fi
-    if test -z "$MOZ_IOS"; then
-        # The ExceptionHandling framework is needed for Objective-C exception
-        # logging code in nsObjCExceptions.h. Currently we only use that in debug
-        # builds.
-        MOZ_DEBUG_LDFLAGS="$MOZ_DEBUG_LDFLAGS -framework ExceptionHandling";
-    fi
+    # The ExceptionHandling framework is needed for Objective-C exception
+    # logging code in nsObjCExceptions.h. Currently we only use that in debug
+    # builds.
+    MOZ_DEBUG_LDFLAGS="$MOZ_DEBUG_LDFLAGS -framework ExceptionHandling";
 
     dnl DTrace and -dead_strip don't interact well. See bug 403132.
     dnl ===================================================================
@@ -593,16 +541,14 @@ case "$target" in
     ;;
 
 *-android*|*-linuxandroid*)
-    AC_DEFINE(NO_PW_GECOS)
-
-    if test "$COMPILE_ENVIRONMENT"; then
+    if test "$COMPILE_ENVIRONMENT" -a -n "$MOZ_MEMORY"; then
         MOZ_LINKER=1
     fi
 
     MOZ_GFX_OPTIMIZE_MOBILE=1
     if test -z "$CLANG_CC"; then
         MOZ_OPTIMIZE_FLAGS="-freorder-blocks -fno-reorder-functions -Os"
-    else
+    elif test -n "$RELEASE_OR_BETA"; then
         # From https://github.com/android-ndk/ndk/issues/133#issuecomment-308549264
         # -Oz is smaller than -Os on clang.
         MOZ_OPTIMIZE_FLAGS="-Oz"
@@ -621,6 +567,8 @@ case "$target" in
             AC_TRY_LINK(,,[MOZ_OPTIMIZE_LDFLAGS="$MOZ_OPTIMIZE_LDFLAGS $DISABLE_OUTLINER"])
             LDFLAGS="$_SAVE_LDFLAGS"
         fi
+    else
+        MOZ_OPTIMIZE_FLAGS="-O2"
     fi
     ;;
 
@@ -650,11 +598,11 @@ case "$target" in
     # certain versions of cygwin's makedepend barf on the
     # #include <string> vs -I./dist/include/string issue so don't use it
     if test -n "$GNU_CC" -o -n "$CLANG_CC"; then
-        CC="$CC -mwindows"
-        CXX="$CXX -mwindows"
-        CPP="$CPP -mwindows"
-        CFLAGS="$CFLAGS -mms-bitfields"
-        CXXFLAGS="$CXXFLAGS -mms-bitfields"
+        # $GNU_CC will match gcc and clang; while $CLANG_CC will match only clang
+        if test -z "$CLANG_CC"; then
+            AC_MSG_ERROR(Firefox cannot be built with mingw-gcc and requires a mingw-clang toolchain to work)
+        fi
+
         DSO_LDOPTS='-shared'
         # Use temp file for windres (bug 213281)
         RCFLAGS='-O coff --use-temp-file'
@@ -667,24 +615,13 @@ case "$target" in
         WIN32_CONSOLE_EXE_LDFLAGS=-mconsole
         WIN32_GUI_EXE_LDFLAGS=-mwindows
 
-        if test -z "$CLANG_CC"; then
-            # Use static libgcc and libstdc++
-            LDFLAGS="$LDFLAGS -static"
-
-            # GCC/binutils can't link to a function if we try to include dllexport function
-            # in the same library as dllimport caller. To work around it, we build NSPR
-            # and NSS with -mnop-fun-dllimport flag. The drawback of this solution is that
-            # function thunks need to be generated for cross-DLL calls.
-            MOZ_FOLD_LIBS_FLAGS="-mnop-fun-dllimport"
-        else
-            # Silence problematic clang warnings
-            CXXFLAGS="$CXXFLAGS -Wno-incompatible-ms-struct"
-        fi
+        # Silence problematic clang warnings
+        CXXFLAGS="$CXXFLAGS -Wno-incompatible-ms-struct"
+        LDFLAGS="$LDFLAGS -Wl,--no-insert-timestamp"
     else
         TARGET_COMPILER_ABI=msvc
         RANLIB='echo not_ranlib'
         STRIP='echo not_strip'
-        PKG_SKIP_STRIP=1
         # aarch64 doesn't support subsystems below 6.02
         if test "$CPU_ARCH" = "aarch64"; then
             WIN32_SUBSYSTEM_VERSION=6.02
@@ -694,7 +631,6 @@ case "$target" in
         WIN32_CONSOLE_EXE_LDFLAGS=-SUBSYSTEM:CONSOLE,$WIN32_SUBSYSTEM_VERSION
         WIN32_GUI_EXE_LDFLAGS=-SUBSYSTEM:WINDOWS,$WIN32_SUBSYSTEM_VERSION
         DSO_LDOPTS=-SUBSYSTEM:WINDOWS,$WIN32_SUBSYSTEM_VERSION
-        _USE_CPP_INCLUDE_FLAG=1
         _DEFINES_CFLAGS="-FI $_objdir/mozilla-config.h -DMOZILLA_CLIENT"
         _DEFINES_CXXFLAGS="-FI $_objdir/mozilla-config.h -DMOZILLA_CLIENT"
         CFLAGS="$CFLAGS -W3 -Gy -Zc:inline"
@@ -787,6 +723,10 @@ case "$target" in
             # declare |delete| differently.  Therefore, suppress this
             # warning.
             CXXFLAGS="$CXXFLAGS -Wno-implicit-exception-spec-mismatch"
+            # Macros like STDMETHOD() and IFACEMETHOD() can declare
+            # __attribute__((nothrow)) on their respective method declarations,
+            # while the definitions are left without the matching attribute.
+            CXXFLAGS="$CXXFLAGS -Wno-microsoft-exception-spec"
             # At least one MSVC header and several headers in-tree have
             # unused typedefs, so turn this on.
             CXXFLAGS="$CXXFLAGS -Wno-unused-local-typedef"
@@ -802,9 +742,8 @@ case "$target" in
         fi
         # Silence VS2017 15.5+ TR1 deprecation warnings hit by older gtest versions
         CXXFLAGS="$CXXFLAGS -D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING"
-        LIBS="$LIBS kernel32.lib user32.lib gdi32.lib winmm.lib wsock32.lib advapi32.lib secur32.lib"
+        LIBS="$LIBS user32.lib gdi32.lib winmm.lib wsock32.lib advapi32.lib secur32.lib"
         MOZ_DEBUG_LDFLAGS='-DEBUG'
-        WARNINGS_AS_ERRORS='-WX'
         # Use a higher optimization level for clang-cl, so we can come closer
         # to MSVC's performance numbers (see bug 1443590).
         if test -n "$CLANG_CL"; then
@@ -829,7 +768,7 @@ case "$target" in
     dnl See http://support.microsoft.com/kb/143208 to use STL
     AC_DEFINE(NOMINMAX)
     BIN_SUFFIX='.exe'
-    MOZ_USER_DIR="Mozilla"
+    MOZ_USER_DIR="Waterfox"
 
     case "$host_os" in
     cygwin*|msvc*|mks*)
@@ -837,20 +776,12 @@ case "$target" in
         ;;
     esac
 
-    if test -n "$GNU_CC" -a -z "$CLANG_CC"; then
-        CFLAGS="$CFLAGS -fno-keep-inline-dllexport"
-        CXXFLAGS="$CXXFLAGS -fno-keep-inline-dllexport"
-    fi
-
     case "$target" in
     i*86-*)
         if test -n "$GNU_CC"; then
             CFLAGS="$CFLAGS -mstackrealign"
             CXXFLAGS="$CXXFLAGS -mstackrealign"
             LDFLAGS="$LDFLAGS -Wl,--large-address-aware"
-            if test -z "$CLANG_CC"; then
-                LDFLAGS="$LDFLAGS -Wl,--enable-stdcall-fixup"
-            fi
         else
             DSO_LDOPTS="$DSO_LDOPTS -MACHINE:X86"
             LDFLAGS="$LDFLAGS -SAFESEH"
@@ -932,7 +863,6 @@ fi
 if test -z "$COMPILE_ENVIRONMENT"; then
     SKIP_COMPILER_CHECKS=1
     SKIP_LIBRARY_CHECKS=1
-    PKG_SKIP_STRIP=1
     MOZ_DEBUGGING_OPTS
 else
     MOZ_COMPILER_OPTS
@@ -1025,19 +955,6 @@ AC_CACHE_CHECK(for sockaddr.sa_len,
 if test "$ac_cv_sockaddr_sa_len" = true ; then
   AC_DEFINE(HAVE_SA_LEN)
 fi
-
-MOZ_ARG_ENABLE_BOOL(dtrace,
-              [  --enable-dtrace         build with dtrace support if available (default=no)],
-              [enable_dtrace="yes"],)
-if test "x$enable_dtrace" = "xyes"; then
-  MOZ_CHECK_HEADER(sys/sdt.h, HAVE_DTRACE=1)
-  if test -n "$HAVE_DTRACE"; then
-      AC_DEFINE(INCLUDE_MOZILLA_DTRACE)
-  else
-      AC_MSG_ERROR([dtrace enabled but sys/sdt.h not found]);
-  fi
-fi
-AC_SUBST(HAVE_DTRACE)
 
 dnl Checks for libraries.
 dnl ========================================================
@@ -1240,6 +1157,7 @@ dnl availability attribute strict, so that compilation fails when the target is 
                                    clock_gettime(CLOCK_MONOTONIC, &ts); ],
                                  ac_cv_clock_monotonic=$libs
                                  LIBS="$_SAVE_LIBS"
+                                 CFLAGS="$_SAVE_CFLAGS"
                                  break,
                                  ac_cv_clock_monotonic=no)
                     LIBS="$_SAVE_LIBS"
@@ -1478,17 +1396,6 @@ dnl =
 dnl ========================================================
 MOZ_ARG_HEADER(External Packages)
 
-case "$OS_TARGET" in
-WINNT|Darwin|Android)
-  MOZ_FOLD_LIBS=1
-  ;;
-*)
-  MOZ_FOLD_LIBS=
-  ;;
-esac
-
-MOZ_CONFIG_NSPR()
-
 dnl ========================================================
 dnl system libevent Support
 dnl ========================================================
@@ -1526,35 +1433,6 @@ LDFLAGS=$_SAVE_LDFLAGS
 LIBS=$_SAVE_LIBS
 
 AC_SUBST(MOZ_SYSTEM_LIBEVENT)
-
-dnl ========================================================
-dnl = If NSS was not detected in the system,
-dnl = use the one in the source tree (mozilla/security/nss)
-dnl ========================================================
-
-MOZ_ARG_WITH_BOOL(system-nss,
-[  --with-system-nss       Use system installed NSS],
-    _USE_SYSTEM_NSS=1 )
-
-if test -n "$_USE_SYSTEM_NSS"; then
-    AM_PATH_NSS(3.44.4, [MOZ_SYSTEM_NSS=1], [AC_MSG_ERROR([you don't have NSS installed or your version is too old])])
-fi
-
-NSS_CFLAGS="$NSS_CFLAGS -I${DIST}/include/nss"
-if test -z "$MOZ_SYSTEM_NSS"; then
-   case "${OS_ARCH}" in
-        # Only few platforms have been tested with GYP
-        WINNT|Darwin|Linux|DragonFly|FreeBSD|NetBSD|OpenBSD|SunOS)
-            ;;
-        *)
-            AC_MSG_ERROR([building in-tree NSS is not supported on this platform. Use --with-system-nss])
-            ;;
-   esac
-fi
-
-dnl system ZLIB support
-dnl ========================================================
-MOZ_ZLIB_CHECK([1.2.3])
 
 if test -z "$SKIP_LIBRARY_CHECKS"; then
 
@@ -1617,16 +1495,12 @@ ENABLE_SYSTEM_EXTENSION_DIRS=1
 MOZ_BRANDING_DIRECTORY=
 MOZ_OFFICIAL_BRANDING=
 MOZ_AUTH_EXTENSION=1
-if test "$MOZ_IOS"; then
-   MOZ_AUTH_EXTENSION=
-fi
 MOZ_PREF_EXTENSIONS=1
 MOZ_SPELLCHECK=1
 MOZ_UNIVERSALCHARDET=1
 MOZ_XUL=1
 MOZ_ZIPWRITER=1
 MOZ_NO_SMART_CARDS=
-NECKO_COOKIES=1
 MOZ_USE_NATIVE_POPUP_WINDOWS=
 MOZ_EXCLUDE_HYPHENATION_DICTIONARIES=
 MOZ_SANDBOX=1
@@ -1678,19 +1552,6 @@ else
   AC_MSG_RESULT([no])
 fi
 
-# Allow influencing configure with a defines.sh script.
-. "${srcdir}/build/defines.sh"
-
-# If we're not building a release build, define EARLY_BETA_OR_EARLIER if it is
-# set in defines.sh
-if test "$BUILDING_RELEASE"; then
-  # Override value in defines.sh, if any
-  EARLY_BETA_OR_EARLIER=
-elif test "$EARLY_BETA_OR_EARLIER"; then
-  AC_DEFINE(EARLY_BETA_OR_EARLIER)
-fi
-AC_SUBST(EARLY_BETA_OR_EARLIER)
-
 # Allow someone to change MOZ_APP_NAME and MOZ_APP_BASENAME in mozconfig
 MOZ_ARG_WITH_STRING(app-name,
 [--with-app-name=APPNAME sets MOZ_APP_NAME to APPNAME],
@@ -1709,22 +1570,6 @@ WITH_APP_BASENAME=$withval,
 if test -n "$WITH_APP_BASENAME" ; then
     MOZ_APP_BASENAME="$WITH_APP_BASENAME"
 fi
-
-# Special cases where we need to AC_DEFINE something. Also a holdover for apps
-# that haven't made a confvars.sh yet. Don't add new stuff here, use
-# MOZ_BUILD_APP.
-case "$MOZ_BUILD_APP" in
-browser)
-  AC_DEFINE(MOZ_PHOENIX)
-  ;;
-esac
-
-# Graphene is a desktop runtime for running applications with a HTML UI.
-if test -n "$MOZ_GRAPHENE"; then
-    AC_DEFINE(MOZ_GRAPHENE)
-fi
-
-AC_SUBST(MOZ_PHOENIX)
 
 dnl ========================================================
 dnl Ensure Android SDK and build-tools versions depending on
@@ -1787,7 +1632,7 @@ gtk*)
 esac
 
 if test "$COMPILE_ENVIRONMENT"; then
-  if test "$MOZ_WIDGET_TOOLKIT" = gtk3; then
+  if test "$MOZ_WIDGET_TOOLKIT" = gtk; then
     PKG_CHECK_MODULES(MOZ_GTK3, gtk+-3.0 >= $GTK3_VERSION gtk+-unix-print-3.0 glib-2.0 gobject-2.0 gio-unix-2.0 $GDK_PACKAGES)
     MOZ_GTK3_CFLAGS="-I${_topsrcdir}/widget/gtk/compat-gtk3 $MOZ_GTK3_CFLAGS"
     TK_CFLAGS=$MOZ_GTK3_CFLAGS
@@ -1811,45 +1656,8 @@ fi # COMPILE_ENVIRONMENT
 
 AC_SUBST(MOZ_FS_LAYOUT)
 
-dnl ========================================================
-dnl = startup-notification support module
-dnl ========================================================
-
-if test "$MOZ_ENABLE_GTK"
-then
-    MOZ_ENABLE_STARTUP_NOTIFICATION=
-
-    MOZ_ARG_ENABLE_BOOL(startup-notification,
-    [  --enable-startup-notification
-                          Enable startup-notification support (default: disabled) ],
-        MOZ_ENABLE_STARTUP_NOTIFICATION=force,
-        MOZ_ENABLE_STARTUP_NOTIFICATION=)
-    if test "$MOZ_ENABLE_STARTUP_NOTIFICATION"
-    then
-        PKG_CHECK_MODULES(MOZ_STARTUP_NOTIFICATION,
-                          libstartup-notification-1.0 >= $STARTUP_NOTIFICATION_VERSION,
-        [MOZ_ENABLE_STARTUP_NOTIFICATION=1], [
-            if test "$MOZ_ENABLE_STARTUP_NOTIFICATION" = "force"
-            then
-                AC_MSG_ERROR([* * * Could not find startup-notification >= $STARTUP_NOTIFICATION_VERSION])
-            fi
-            MOZ_ENABLE_STARTUP_NOTIFICATION=
-        ])
-    fi
-
-    if test "$MOZ_ENABLE_STARTUP_NOTIFICATION"; then
-        AC_DEFINE(MOZ_ENABLE_STARTUP_NOTIFICATION)
-    fi
-
-    TK_LIBS="$TK_LIBS $MOZ_STARTUP_NOTIFICATION_LIBS"
-fi
-AC_SUBST(MOZ_ENABLE_STARTUP_NOTIFICATION)
-
 AC_SUBST_LIST(TK_CFLAGS)
 AC_SUBST_LIST(TK_LIBS)
-
-AC_SUBST(MOC)
-AC_SUBST(RCC)
 
 dnl ========================================================
 dnl =
@@ -1895,7 +1703,7 @@ MOZ_ARG_WITH_STRING(distribution-id,
     MOZ_DISTRIBUTION_ID="$val"])
 
 if test -z "$MOZ_DISTRIBUTION_ID"; then
-   MOZ_DISTRIBUTION_ID="org.mozilla"
+   MOZ_DISTRIBUTION_ID="net.waterfox"
 fi
 
 AC_DEFINE_UNQUOTED(MOZ_DISTRIBUTION_ID,"$MOZ_DISTRIBUTION_ID")
@@ -1996,10 +1804,6 @@ MOZ_ARG_DISABLE_BOOL(negotiateauth,
     MOZ_AUTH_EXTENSION=,
     MOZ_AUTH_EXTENSION=1 )
 
-if test -n "$MOZ_IOS" -a -n "$MOZ_AUTH_EXTENSION"; then
-   AC_MSG_ERROR([negotiateauth is not supported on iOS.])
-fi
-
 dnl ========================================================
 dnl Pref extensions (autoconfig)
 dnl ========================================================
@@ -2061,9 +1865,7 @@ i?86-*-mingw*|x86_64-*-mingw*|aarch64-*-mingw*)
   MOZ_CRASHREPORTER=1
   ;;
 i?86-apple-darwin*|x86_64-apple-darwin*)
-  if test -z "$MOZ_IOS"; then
-    MOZ_CRASHREPORTER=1
-  fi
+  MOZ_CRASHREPORTER=1
   ;;
 *-android*|*-linuxandroid*)
   dnl Android/arm is arm-unknown-linux-androideabi, so android condition should
@@ -2082,7 +1884,7 @@ MOZ_ARG_DISABLE_BOOL(crashreporter,
     [MOZ_CRASHREPORTER=],
     [MOZ_CRASHREPORTER=F # Force enable breakpad])
 
-if test "$OS_ARCH" != "$HOST_OS_ARCH" -a "$OS_ARCH" != "WINNT" -a "$OS_ARCH" != "Darwin"; then
+if test "$OS_ARCH" != "$HOST_OS_ARCH" -a "$OS_ARCH" != "WINNT" -a "$OS_ARCH" != "Darwin" -a "$MOZ_WIDGET_TOOLKIT" != "android"; then
   if test "$MOZ_CRASHREPORTER" = F; then
     AC_MSG_ERROR([Cannot --enable-crashreporter, as breakpad tools do not support compiling on $HOST_OS_ARCH while targeting $OS_ARCH.])
   fi
@@ -2152,34 +1954,8 @@ AC_CHECK_PROGS(WGET, wget, "")
 AC_SUBST(WGET)
 
 dnl ========================================================
-dnl Enable building the signmar program.
-dnl This option is much different than the --enable-verify-mar option.
-dnl --enable-verify-mar is for enabling the verification check on MAR
-dnl files in the updater.  The --enable-signmar option is for building
-dnl the signmar program.
-dnl ========================================================
-
-MOZ_ARG_ENABLE_BOOL(signmar,
-[  --enable-signmar     Enable building the signmar program],
-    MOZ_ENABLE_SIGNMAR=1,
-    MOZ_ENABLE_SIGNMAR= )
-
-if test -n "$MOZ_ENABLE_SIGNMAR"; then
-  if test -z "$COMPILE_ENVIRONMENT" ; then
-    AC_MSG_WARN([Cannot --enable-signmar with --disable-compile-environment])
-    MOZ_ENABLE_SIGNMAR=
-  else
-    AC_DEFINE(MOZ_ENABLE_SIGNMAR)
-  fi
-fi
-
-dnl ========================================================
 dnl Updater
 dnl ========================================================
-
-if test "$MOZ_IOS"; then
-  MOZ_UPDATER=
-fi
 
 MOZ_ARG_DISABLE_BOOL(updater,
 [  --disable-updater       Disable building of updater],
@@ -2263,35 +2039,11 @@ dnl =
 dnl ========================================================
 MOZ_ARG_HEADER(Individual module options)
 
-dnl ========================================================
-dnl Check for sqlite
-dnl ========================================================
-
-MOZ_SYSTEM_SQLITE=
-MOZ_ARG_ENABLE_BOOL(system-sqlite,
-[  --enable-system-sqlite  Use system sqlite (located with pkgconfig)],
-MOZ_SYSTEM_SQLITE=1,
-MOZ_SYSTEM_SQLITE= )
-
-if test -n "$MOZ_SYSTEM_SQLITE"
-then
-    dnl ============================
-    dnl === SQLite Version check ===
-    dnl ============================
-    dnl Check to see if the system SQLite package is new enough.
-    PKG_CHECK_MODULES(SQLITE, sqlite3 >= $SQLITE_VERSION)
-else
-    dnl ==============================
-    dnl === SQLite fdatasync check ===
-    dnl ==============================
-    dnl Check to see if fdatasync is available
-    AC_CHECK_FUNC(fdatasync)
-fi
-
-if test -n "$MOZ_SYSTEM_SQLITE"; then
-    AC_DEFINE(MOZ_SYSTEM_SQLITE)
-fi
-AC_SUBST(MOZ_SYSTEM_SQLITE)
+dnl ==============================
+dnl === SQLite fdatasync check ===
+dnl ==============================
+dnl Check to see if fdatasync is available and make use of it
+AC_CHECK_FUNC(fdatasync)
 
 dnl ========================================================
 dnl = Disable zipwriter
@@ -2345,8 +2097,6 @@ if test -n "${MOZ_CONFIGURE_OPTIMIZE_FLAGS}"; then
     MOZ_OPTIMIZE_FLAGS=${MOZ_CONFIGURE_OPTIMIZE_FLAGS}
 fi
 
-MOZ_SET_FRAMEPTR_FLAGS
-
 if test "$COMPILE_ENVIRONMENT"; then
 if test -n "$MOZ_OPTIMIZE"; then
     AC_MSG_CHECKING([for valid C compiler optimization flags])
@@ -2375,17 +2125,9 @@ if test -n "$MOZ_OPTIMIZE"; then
 fi
 fi # COMPILE_ENVIRONMENT
 
-AC_SUBST_LIST(MOZ_FRAMEPTR_FLAGS)
 AC_SUBST_LIST(MOZ_OPTIMIZE_FLAGS)
 AC_SUBST_LIST(MOZ_OPTIMIZE_LDFLAGS)
 AC_SUBST_LIST(MOZ_PGO_OPTIMIZE_FLAGS)
-
-dnl ========================================================
-dnl = Disable treating compiler warnings as errors
-dnl ========================================================
-if test -z "$MOZ_ENABLE_WARNINGS_AS_ERRORS"; then
-   WARNINGS_AS_ERRORS=''
-fi
 
 dnl ========================================================
 dnl = Enable runtime logging
@@ -2465,22 +2207,6 @@ MOZ_CONFIG_CLANG_PLUGIN
 fi # COMPILE_ENVIRONMENT
 
 dnl ========================================================
-dnl = Enable stripping of libs & executables
-dnl ========================================================
-MOZ_ARG_ENABLE_BOOL(strip,
-[  --enable-strip          Enable stripping of libs & executables ],
-    ENABLE_STRIP=1,
-    ENABLE_STRIP= )
-
-dnl ========================================================
-dnl = Enable stripping of libs & executables when packaging
-dnl ========================================================
-MOZ_ARG_ENABLE_BOOL(install-strip,
-[  --enable-install-strip  Enable stripping of libs & executables when packaging ],
-    PKG_SKIP_STRIP= ,
-    PKG_SKIP_STRIP=1)
-
-dnl ========================================================
 dnl = frontend JS debug mode
 dnl ========================================================
 
@@ -2541,23 +2267,6 @@ if test -z "$SKIP_LIBRARY_CHECKS"; then
 fi
 
 dnl ========================================================
-dnl JIT observers
-dnl ========================================================
-
-MOZ_ARG_WITH_STRING(jitreport-granularity,
-[  --jitreport-granularity=N
-                           Default granularity at which to report JIT code
-                           to external tools
-                             0 - no info
-                             1 - code ranges for whole functions only
-                             2 - per-line information
-                             3 - per-op information],
-  JITREPORT_GRANULARITY=$withval,
-  JITREPORT_GRANULARITY=3)
-
-AC_DEFINE_UNQUOTED(JS_DEFAULT_JITREPORT_GRANULARITY, $JITREPORT_GRANULARITY)
-
-dnl ========================================================
 dnl =
 dnl = Misc. Options
 dnl =
@@ -2601,7 +2310,6 @@ fi
 
 fi # ! SKIP_COMPILER_CHECKS
 
-AC_DEFINE(CPP_THROW_NEW, [throw()])
 AC_LANG_C
 
 if test "$COMPILE_ENVIRONMENT"; then
@@ -2616,7 +2324,7 @@ dnl ========================================================
 MOZ_ARG_HEADER(Static build options)
 
 if test -z "$MOZ_SYSTEM_ZLIB"; then
-if test -n "$JS_SHARED_LIBRARY" -o -n "$MOZ_LINKER"; then
+if test -n "$JS_SHARED_LIBRARY" -o -n "$MOZ_LINKER" -o "$MOZ_WIDGET_TOOLKIT" = android; then
   ZLIB_IN_MOZGLUE=1
   AC_DEFINE(ZLIB_IN_MOZGLUE)
 fi
@@ -2836,9 +2544,7 @@ if test "$MOZ_WIDGET_TOOLKIT"; then
 
   case "$OS_TARGET" in
     Darwin)
-      if test -z "$MOZ_IOS"; then
-	NECKO_WIFI=1
-      fi
+      NECKO_WIFI=1
       ;;
     DragonFly|FreeBSD|WINNT)
       NECKO_WIFI=1
@@ -2866,19 +2572,6 @@ fi
 AC_SUBST(NECKO_WIFI)
 AC_SUBST(NECKO_WIFI_DBUS)
 
-dnl
-dnl option to disable cookies
-dnl
-MOZ_ARG_DISABLE_BOOL(cookies,
-[  --disable-cookies       Disable cookie support],
-    NECKO_COOKIES=,
-    NECKO_COOKIES=1)
-AC_SUBST(NECKO_COOKIES)
-if test "$NECKO_COOKIES"; then
-    AC_DEFINE(NECKO_COOKIES)
-    _NON_GLOBAL_ACDEFINES="$_NON_GLOBAL_ACDEFINES NECKO_COOKIES"
-fi
-
 dnl ========================================================
 dnl =
 dnl = Maintainer debug option (no --enable equivalent)
@@ -2893,7 +2586,6 @@ AC_SUBST(FILTER)
 AC_SUBST(MOZ_AUTH_EXTENSION)
 AC_SUBST(MOZ_PREF_EXTENSIONS)
 AC_SUBST_LIST(MOZ_DEBUG_LDFLAGS)
-AC_SUBST(WARNINGS_AS_ERRORS)
 AC_SUBST_LIST(WARNINGS_CFLAGS)
 AC_SUBST_SET(MOZ_EXTENSIONS)
 
@@ -2903,15 +2595,11 @@ AC_SUBST(MOZ_ANDROID_ANR_REPORTER)
 AC_SUBST(MOZ_CRASHREPORTER)
 AC_SUBST(MOZ_CRASHREPORTER_INJECTOR)
 AC_SUBST(MOZ_STUB_INSTALLER)
-AC_SUBST(MOZ_ENABLE_SIGNMAR)
 AC_SUBST(MOZ_UPDATER)
 
 AC_SUBST(MOZ_ANDROID_APPLICATION_CLASS)
 AC_SUBST(MOZ_ANDROID_BROWSER_INTENT_CLASS)
 AC_SUBST(MOZ_EXCLUDE_HYPHENATION_DICTIONARIES)
-AC_SUBST(ENABLE_STRIP)
-AC_SUBST(PKG_SKIP_STRIP)
-AC_SUBST(STRIP_FLAGS)
 AC_SUBST(INCREMENTAL_LINKER)
 
 AC_SUBST_LIST(MOZ_FIX_LINK_PATHS)
@@ -3002,15 +2690,6 @@ AC_SUBST(MOZ_CHILD_PROCESS_BUNDLENAME)
 # "Profile" field, which controls profile location.
 # - MOZ_APP_ID: When set, used for application.ini's "ID" field, and
 # crash reporter server url.
-# - MOZ_APP_ANDROID_VERSION_CODE: On Android, "android:versionCode" for
-# the main application is set to the value of this variable.  If not
-# set, it falls back to a Mozilla-specific value derived from the
-# build ID.
-# - MOZ_ANDROID_SHARED_ID: On Android, "android:sharedUserId" for all Android
-# packages produced.
-# - MOZ_ANDROID_GCM_SENDERID: On Android, the Android GCM Sender ID used.  GCM
-# sender IDs are not sensitive: see, http://stackoverflow.com/a/18216063.
-# - MOZ_MMA_GCM_SENDERID: This GCM Sender ID is used for MMA integration.
 # - MOZ_PROFILE_MIGRATOR: When set, enables profile migrator.
 
 # The following environment variables used to have an effect, but don't anymore:
@@ -3043,16 +2722,8 @@ if test -z "$ANDROID_PACKAGE_NAME" ; then
    if test "$MOZ_APP_NAME" = "fennec"; then
       ANDROID_PACKAGE_NAME="org.mozilla.fennec_aurora"
    else
-      ANDROID_PACKAGE_NAME="org.mozilla.$MOZ_APP_NAME"
+      ANDROID_PACKAGE_NAME="net.waterfox.$MOZ_APP_NAME"
    fi
-fi
-
-# Mozilla released Firefox for Android {Release,Beta} and {Aurora,Nightly} to
-# the public with specific common shared IDs and we need to keep them
-# consistent forever.  The specific common values are set by per-channel
-# branding; all other channels use a generic sharedID, set below.
-if test -z "$MOZ_ANDROID_SHARED_ID" ; then
-   MOZ_ANDROID_SHARED_ID="${ANDROID_PACKAGE_NAME}.sharedID"
 fi
 
 # For extensions and langpacks, we require a max version that is compatible
@@ -3080,10 +2751,6 @@ AC_SUBST(MOZ_APP_BASENAME)
 AC_SUBST(MOZ_APP_VENDOR)
 AC_SUBST(MOZ_APP_PROFILE)
 AC_SUBST(MOZ_APP_ID)
-AC_SUBST(MOZ_APP_ANDROID_VERSION_CODE)
-AC_SUBST(MOZ_ANDROID_SHARED_ID)
-AC_SUBST(MOZ_ANDROID_GCM_SENDERID)
-AC_SUBST(MOZ_MMA_GCM_SENDERID)
 AC_SUBST(MAR_CHANNEL_ID)
 AC_SUBST(ACCEPTED_MAR_CHANNEL_IDS)
 AC_SUBST(MOZ_PROFILE_MIGRATOR)
@@ -3116,27 +2783,15 @@ AC_SUBST(MOZ_INCLUDE_SOURCE_INFO)
 dnl If we have any service that uploads data (and requires data submission
 dnl policy alert), set MOZ_DATA_REPORTING.
 dnl We need SUBST for build system and DEFINE for xul preprocessor.
-if test -n "$MOZ_TELEMETRY_REPORTING" || test -n "$MOZ_SERVICES_HEALTHREPORT" || test -n "$MOZ_CRASHREPORTER"; then
-  MOZ_DATA_REPORTING=1
-  AC_DEFINE(MOZ_DATA_REPORTING)
-  AC_SUBST(MOZ_DATA_REPORTING)
-fi
+dnl if test -n "$MOZ_TELEMETRY_REPORTING" || test -n "$MOZ_SERVICES_HEALTHREPORT" || test -n "$MOZ_CRASHREPORTER"  || test -n "$MOZ_NORMANDY"; then
+dnl  MOZ_DATA_REPORTING=1
+dnl  AC_DEFINE(MOZ_DATA_REPORTING)
+dnl  AC_SUBST(MOZ_DATA_REPORTING)
+dnl fi
 
 dnl win32 options
 AC_SUBST(WIN32_REDIST_DIR)
 AC_SUBST(WIN_UCRT_REDIST_DIR)
-
-dnl ========================================================
-dnl ICU Support
-dnl ========================================================
-
-_INTL_API=yes
-
-if test "$MOZ_WIDGET_TOOLKIT" = "cocoa"; then
-    USE_ICU=1
-fi
-
-MOZ_CONFIG_ICU()
 
 dnl Echo the CFLAGS to remove extra whitespace.
 CFLAGS=`echo \
@@ -3170,10 +2825,6 @@ AC_SUBST(MOZ_SYSTEM_PNG)
 
 AC_SUBST_LIST(MOZ_PNG_CFLAGS)
 AC_SUBST_LIST(MOZ_PNG_LIBS)
-
-AC_SUBST(MOZ_SYSTEM_NSPR)
-
-AC_SUBST(MOZ_SYSTEM_NSS)
 
 HOST_CMFLAGS="-x objective-c -fobjc-exceptions"
 HOST_CMMFLAGS="-x objective-c++ -fobjc-exceptions"
@@ -3230,8 +2881,6 @@ AC_SUBST(WIN32_GUI_EXE_LDFLAGS)
 AC_SUBST(MOZ_DEVTOOLS)
 
 AC_SUBST(MOZ_PACKAGE_JSSHELL)
-AC_SUBST(MOZ_FOLD_LIBS)
-AC_SUBST_LIST(MOZ_FOLD_LIBS_FLAGS)
 
 AC_SUBST(DMG_TOOL)
 
@@ -3307,7 +2956,6 @@ dnl ========================================================
 
 dnl The following defines are used by xpcom
 _NON_GLOBAL_ACDEFINES="$_NON_GLOBAL_ACDEFINES
-CPP_THROW_NEW
 HAVE_GETPAGESIZE
 HAVE_STATVFS64
 HAVE_STATVFS

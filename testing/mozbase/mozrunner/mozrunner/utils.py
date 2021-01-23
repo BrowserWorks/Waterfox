@@ -85,7 +85,7 @@ def _raw_log():
 
 
 def test_environment(xrePath, env=None, crashreporter=True, debugger=False,
-                     lsanPath=None, ubsanPath=None, log=None):
+                     useLSan=False, log=None):
     """
     populate OS environment variables for mochitest and reftests.
 
@@ -141,6 +141,9 @@ def test_environment(xrePath, env=None, crashreporter=True, debugger=False,
     env.setdefault('R_LOG_DESTINATION', 'stderr')
     env.setdefault('R_LOG_VERBOSE', '1')
 
+    # Ask NSS to use lower-security password encryption. See Bug 1594559
+    env.setdefault('NSS_MAX_MP_PBE_ITERATION_COUNT', '10')
+
     # ASan specific environment stuff
     asan = bool(mozinfo.info.get("asan"))
     if asan:
@@ -182,20 +185,12 @@ def test_environment(xrePath, env=None, crashreporter=True, debugger=False,
             else:
                 message = message % 'default memory'
 
-            if lsanPath:
+            if useLSan:
                 log.info("LSan enabled.")
                 asanOptions.append('detect_leaks=1')
                 lsanOptions = ["exitcode=0"]
                 # Uncomment out the next line to report the addresses of leaked objects.
                 # lsanOptions.append("report_objects=1")
-                suppressionsFile = os.path.join(
-                    lsanPath, 'lsan_suppressions.txt')
-                if os.path.exists(suppressionsFile):
-                    log.info("LSan using suppression file " + suppressionsFile)
-                    lsanOptions.append("suppressions=" + suppressionsFile)
-                else:
-                    log.info("WARNING | runtests.py | LSan suppressions file"
-                             " does not exist! " + suppressionsFile)
                 env["LSAN_OPTIONS"] = ':'.join(lsanOptions)
 
             if len(asanOptions):
@@ -224,23 +219,12 @@ def test_environment(xrePath, env=None, crashreporter=True, debugger=False,
 
     ubsan = bool(mozinfo.info.get("ubsan"))
     if ubsan and (mozinfo.isLinux or mozinfo.isMac):
-        if ubsanPath:
-            log.info("UBSan enabled.")
-            ubsanOptions = []
-            suppressionsFile = os.path.join(
-                ubsanPath, 'ubsan_suppressions.txt')
-            if os.path.exists(suppressionsFile):
-                log.info("UBSan using suppression file " + suppressionsFile)
-                ubsanOptions.append("suppressions=" + suppressionsFile)
-            else:
-                log.info("WARNING | runtests.py | UBSan suppressions file"
-                         " does not exist! " + suppressionsFile)
-            env["UBSAN_OPTIONS"] = ':'.join(ubsanOptions)
+        log.info("UBSan enabled.")
 
     return env
 
 
-def get_stack_fixer_function(utilityPath, symbolsPath):
+def get_stack_fixer_function(utilityPath, symbolsPath, hideErrors=False):
     """
     Return a stack fixing function, if possible, to use on output lines.
 
@@ -252,6 +236,10 @@ def get_stack_fixer_function(utilityPath, symbolsPath):
     if not mozinfo.info.get('debug'):
         return None
 
+    if os.getenv('MOZ_DISABLE_STACK_FIX', 0):
+        print("WARNING: No stack-fixing will occur because MOZ_DISABLE_STACK_FIX is set")
+        return None
+
     def import_stack_fixer_module(module_name):
         sys.path.insert(0, utilityPath)
         module = __import__(module_name, globals(), locals(), [])
@@ -259,35 +247,22 @@ def get_stack_fixer_function(utilityPath, symbolsPath):
         return module
 
     if symbolsPath and os.path.exists(symbolsPath):
-        # Run each line through a function in fix_stack_using_bpsyms.py (uses breakpad
-        # symbol files).
-        # This method is preferred for Tinderbox builds, since native
-        # symbols may have been stripped.
-        stack_fixer_module = import_stack_fixer_module(
-            'fix_stack_using_bpsyms')
+        # Run each line through fix_stacks.py, using breakpad symbol files.
+        # This method is preferred for automation, since native symbols may
+        # have been stripped.
+        stack_fixer_module = import_stack_fixer_module('fix_stacks')
 
         def stack_fixer_function(line):
-            return stack_fixer_module.fixSymbols(line, symbolsPath)
+            return stack_fixer_module.fixSymbols(
+                line, slowWarning=True, breakpadSymsDir=symbolsPath, hide_errors=hideErrors)
 
-    elif mozinfo.isMac:
-        # Run each line through fix_macosx_stack.py (uses atos).
-        # This method is preferred for developer machines, so we don't
-        # have to run "make buildsymbols".
-        stack_fixer_module = import_stack_fixer_module(
-            'fix_macosx_stack')
-
-        def stack_fixer_function(line):
-            return stack_fixer_module.fixSymbols(line)
-
-    elif mozinfo.isLinux:
-        # Run each line through fix_linux_stack.py (uses addr2line).
-        # This method is preferred for developer machines, so we don't
-        # have to run "make buildsymbols".
-        stack_fixer_module = import_stack_fixer_module(
-            'fix_linux_stack')
+    elif mozinfo.isLinux or mozinfo.isMac or mozinfo.isWin:
+        # Run each line through fix_stacks.py. This method is preferred for
+        # developer machines, so we don't have to run "mach buildsymbols".
+        stack_fixer_module = import_stack_fixer_module('fix_stacks')
 
         def stack_fixer_function(line):
-            return stack_fixer_module.fixSymbols(line)
+            return stack_fixer_module.fixSymbols(line, slowWarning=True, hide_errors=hideErrors)
 
     else:
         return None

@@ -21,68 +21,15 @@ jobs:
         run-on-projects: []
         shipping-phase: promote
         shipping-product: firefox
-        worker-type: b-linux
+        worker-type: succeed
         worker:
-            implementation: docker-worker
-            os: linux
-            docker-image: "ubuntu:16.10"
-            max-run-time: 600
-            command:
-                - /bin/bash
-                - -c
-                - echo "Dummy task"
-
+            implementation: succeed
     devedition-promote:
         name: post-beetmover-checksums-dummy
         description: Dummy task to deal with max_dependencies
         run-on-projects: []
         shipping-phase: promote
         shipping-product: devedition
-        worker-type: b-linux
+        worker-type: succeed
         worker:
-            implementation: docker-worker
-            os: linux
-            docker-image: "ubuntu:16.10"
-            max-run-time: 600
-            command:
-                - /bin/bash
-                - -c
-                - echo "Dummy task"
-
-    fennec-promote-beta:
-        attributes:
-            release-type: beta
-        name: post-beetmover-checksums-dummy
-        description: Dummy task to deal with max_dependencies
-        run-on-projects: []
-        shipping-phase: promote
-        shipping-product: fennec
-        worker-type: b-linux
-        worker:
-            implementation: docker-worker
-            os: linux
-            docker-image: "ubuntu:16.10"
-            max-run-time: 600
-            command:
-                - /bin/bash
-                - -c
-                - echo "Dummy task"
-
-    fennec-promote-release:
-        attributes:
-            release-type: release
-        name: post-beetmover-checksums-dummy
-        description: Dummy task to deal with max_dependencies
-        run-on-projects: []
-        shipping-phase: promote
-        shipping-product: fennec
-        worker-type: b-linux
-        worker:
-            implementation: docker-worker
-            os: linux
-            docker-image: "ubuntu:16.10"
-            max-run-time: 600
-            command:
-                - /bin/bash
-                - -c
-                - echo "Dummy task"
+            implementation: succeed

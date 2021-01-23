@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY adaptiveJunkLog.title "自适应垃圾邮件日志">
+<!ENTITY adaptiveJunkLogInfo.label "自适应垃圾邮件控制活动的日志。">
+<!ENTITY clearLog.label "清空日志">
+<!ENTITY clearLog.accesskey "C">
+<!ENTITY closeLog.label "关闭">
+<!ENTITY closeLog.accesskey "o">

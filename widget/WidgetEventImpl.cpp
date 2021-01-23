@@ -3,7 +3,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "gfxPrefs.h"
 #include "mozilla/BasicEvents.h"
 #include "mozilla/ContentEvents.h"
 #include "mozilla/EventStateManager.h"
@@ -11,12 +10,20 @@
 #include "mozilla/MiscEvents.h"
 #include "mozilla/MouseEvents.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/StaticPrefs_mousewheel.h"
+#include "mozilla/StaticPrefs_ui.h"
 #include "mozilla/TextEvents.h"
 #include "mozilla/TouchEvents.h"
 #include "mozilla/dom/KeyboardEventBinding.h"
+#include "nsCommandParams.h"
 #include "nsContentUtils.h"
 #include "nsIContent.h"
+#include "nsIDragSession.h"
 #include "nsPrintfCString.h"
+
+#if defined(XP_WIN)
+#  include "npapi.h"
+#endif
 
 namespace mozilla {
 
@@ -183,11 +190,8 @@ SelectionType ToSelectionType(TextRangeType aTextRangeType) {
 
 static nsDataHashtable<nsDepCharHashKey, Command>* sCommandHashtable = nullptr;
 
-Command GetInternalCommand(const char* aCommandName) {
-  return GetInternalCommand(aCommandName, EmptyString());
-}
-
-Command GetInternalCommand(const char* aCommandName, const nsAString& aParam) {
+Command GetInternalCommand(const char* aCommandName,
+                           const nsCommandParams* aCommandParams) {
   if (!aCommandName) {
     return Command::DoNothing;
   }
@@ -195,17 +199,36 @@ Command GetInternalCommand(const char* aCommandName, const nsAString& aParam) {
   // Special cases for "cmd_align".  It's mapped to multiple internal commands
   // with additional param.  Therefore, we cannot handle it with the hashtable.
   if (!strcmp(aCommandName, "cmd_align")) {
-    if (aParam.LowerCaseEqualsASCII("left")) {
+    if (!aCommandParams) {
+      // Note that if this is called by EditorCommand::IsCommandEnabled(),
+      // it cannot set aCommandParams.  So, don't warn in this case even though
+      // this is illegal case for DoCommandParams().
+      return Command::FormatJustify;
+    }
+    nsAutoCString cValue;
+    nsresult rv = aCommandParams->GetCString("state_attribute", cValue);
+    if (NS_FAILED(rv)) {
+      nsString value;  // Avoid copying the string buffer with using nsString.
+      rv = aCommandParams->GetString("state_attribute", value);
+      if (NS_FAILED(rv)) {
+        return Command::FormatJustifyNone;
+      }
+      cValue = NS_ConvertUTF16toUTF8(value);
+    }
+    if (cValue.LowerCaseEqualsASCII("left")) {
       return Command::FormatJustifyLeft;
     }
-    if (aParam.LowerCaseEqualsASCII("right")) {
+    if (cValue.LowerCaseEqualsASCII("right")) {
       return Command::FormatJustifyRight;
     }
-    if (aParam.LowerCaseEqualsASCII("center")) {
+    if (cValue.LowerCaseEqualsASCII("center")) {
       return Command::FormatJustifyCenter;
     }
-    if (aParam.LowerCaseEqualsASCII("justify")) {
+    if (cValue.LowerCaseEqualsASCII("justify")) {
       return Command::FormatJustifyFull;
+    }
+    if (cValue.IsEmpty()) {
+      return Command::FormatJustifyNone;
     }
     return Command::DoNothing;
   }
@@ -379,6 +402,14 @@ bool WidgetEvent::CanBeSentToRemoteProcess() const {
     case eDragExit:
     case eDrop:
       return true;
+#if defined(XP_WIN)
+    case ePluginInputEvent: {
+      auto evt = static_cast<const NPEvent*>(AsPluginEvent()->mPluginEvent);
+      return evt && evt->event == WM_SETTINGCHANGE &&
+             (evt->wParam == SPI_SETWHEELSCROLLLINES ||
+              evt->wParam == SPI_SETWHEELSCROLLCHARS);
+    }
+#endif
     default:
       return false;
   }
@@ -448,7 +479,7 @@ bool WidgetEvent::IsAllowedToDispatchDOMEvent() const {
       if (mMessage == eMouseTouchDrag) {
         return false;
       }
-      MOZ_FALLTHROUGH;
+      [[fallthrough]];
     case ePointerEventClass:
       // We want synthesized mouse moves to cause mouseover and mouseout
       // DOM events (EventStateManager::PreHandleEvent), but not mousemove
@@ -639,18 +670,69 @@ bool WidgetMouseEvent::IsMiddleClickPasteEnabled() {
 }
 
 /******************************************************************************
+ * mozilla::WidgetDragEvent (MouseEvents.h)
+ ******************************************************************************/
+
+void WidgetDragEvent::InitDropEffectForTests() {
+  MOZ_ASSERT(mFlags.mIsSynthesizedForTests);
+
+  nsCOMPtr<nsIDragSession> session = nsContentUtils::GetDragSession();
+  if (NS_WARN_IF(!session)) {
+    return;
+  }
+
+  uint32_t effectAllowed = session->GetEffectAllowedForTests();
+  uint32_t desiredDropEffect = nsIDragService::DRAGDROP_ACTION_NONE;
+#ifdef XP_MACOSX
+  if (IsAlt()) {
+    desiredDropEffect = IsMeta() ? nsIDragService::DRAGDROP_ACTION_LINK
+                                 : nsIDragService::DRAGDROP_ACTION_COPY;
+  }
+#else
+  // On Linux, we know user's intention from API, but we should use
+  // same modifiers as Windows for tests because GNOME on Ubuntu use
+  // them and that makes each test simpler.
+  if (IsControl()) {
+    desiredDropEffect = IsShift() ? nsIDragService::DRAGDROP_ACTION_LINK
+                                  : nsIDragService::DRAGDROP_ACTION_COPY;
+  } else if (IsShift()) {
+    desiredDropEffect = nsIDragService::DRAGDROP_ACTION_MOVE;
+  }
+#endif  // #ifdef XP_MACOSX #else
+  // First, use modifier state for preferring action which is explicitly
+  // specified by the synthesizer.
+  if (!(desiredDropEffect &= effectAllowed)) {
+    // Otherwise, use an action which is allowed at starting the session.
+    desiredDropEffect = effectAllowed;
+  }
+  if (desiredDropEffect & nsIDragService::DRAGDROP_ACTION_MOVE) {
+    session->SetDragAction(nsIDragService::DRAGDROP_ACTION_MOVE);
+  } else if (desiredDropEffect & nsIDragService::DRAGDROP_ACTION_COPY) {
+    session->SetDragAction(nsIDragService::DRAGDROP_ACTION_COPY);
+  } else if (desiredDropEffect & nsIDragService::DRAGDROP_ACTION_LINK) {
+    session->SetDragAction(nsIDragService::DRAGDROP_ACTION_LINK);
+  } else {
+    session->SetDragAction(nsIDragService::DRAGDROP_ACTION_NONE);
+  }
+}
+
+/******************************************************************************
  * mozilla::WidgetWheelEvent (MouseEvents.h)
  ******************************************************************************/
 
 /* static */
 double WidgetWheelEvent::ComputeOverriddenDelta(double aDelta,
                                                 bool aIsForVertical) {
-  if (!gfxPrefs::MouseWheelHasRootScrollDeltaOverride()) {
+  if (!StaticPrefs::
+          mousewheel_system_scroll_override_on_root_content_enabled()) {
     return aDelta;
   }
-  int32_t intFactor = aIsForVertical
-                          ? gfxPrefs::MouseWheelRootScrollVerticalFactor()
-                          : gfxPrefs::MouseWheelRootScrollHorizontalFactor();
+  int32_t intFactor =
+      aIsForVertical
+          ? StaticPrefs::
+                mousewheel_system_scroll_override_on_root_content_vertical_factor()
+          : StaticPrefs::
+                mousewheel_system_scroll_override_on_root_content_horizontal_factor();
   // Making the scroll speed slower doesn't make sense. So, ignore odd factor
   // which is less than 1.0.
   if (intFactor <= 100) {
@@ -715,24 +797,39 @@ void WidgetKeyboardEvent::InitAllEditCommands() {
   MOZ_ASSERT(!AreAllEditCommandsInitialized(),
              "Shouldn't be called two or more times");
 
-  InitEditCommandsFor(nsIWidget::NativeKeyBindingsForSingleLineEditor);
-  InitEditCommandsFor(nsIWidget::NativeKeyBindingsForMultiLineEditor);
-  InitEditCommandsFor(nsIWidget::NativeKeyBindingsForRichTextEditor);
+  DebugOnly<bool> okIgnored =
+      InitEditCommandsFor(nsIWidget::NativeKeyBindingsForSingleLineEditor);
+  NS_WARNING_ASSERTION(
+      okIgnored,
+      "InitEditCommandsFor(nsIWidget::NativeKeyBindingsForSingleLineEditor) "
+      "failed, but ignored");
+  okIgnored =
+      InitEditCommandsFor(nsIWidget::NativeKeyBindingsForMultiLineEditor);
+  NS_WARNING_ASSERTION(
+      okIgnored,
+      "InitEditCommandsFor(nsIWidget::NativeKeyBindingsForMultiLineEditor) "
+      "failed, but ignored");
+  okIgnored =
+      InitEditCommandsFor(nsIWidget::NativeKeyBindingsForRichTextEditor);
+  NS_WARNING_ASSERTION(
+      okIgnored,
+      "InitEditCommandsFor(nsIWidget::NativeKeyBindingsForRichTextEditor) "
+      "failed, but ignored");
 }
 
-void WidgetKeyboardEvent::InitEditCommandsFor(
+bool WidgetKeyboardEvent::InitEditCommandsFor(
     nsIWidget::NativeKeyBindingsType aType) {
   if (NS_WARN_IF(!mWidget) || NS_WARN_IF(!IsTrusted())) {
-    return;
+    return false;
   }
 
   bool& initialized = IsEditCommandsInitializedRef(aType);
   if (initialized) {
-    return;
+    return true;
   }
   nsTArray<CommandInt>& commands = EditCommandsRef(aType);
-  mWidget->GetEditCommands(aType, *this, commands);
-  initialized = true;
+  initialized = mWidget->GetEditCommands(aType, *this, commands);
+  return initialized;
 }
 
 bool WidgetKeyboardEvent::ExecuteEditCommands(
@@ -750,7 +847,9 @@ bool WidgetKeyboardEvent::ExecuteEditCommands(
     return false;
   }
 
-  InitEditCommandsFor(aType);
+  if (NS_WARN_IF(!InitEditCommandsFor(aType))) {
+    return false;
+  }
 
   const nsTArray<CommandInt>& commands = EditCommandsRef(aType);
   if (commands.IsEmpty()) {
@@ -988,7 +1087,7 @@ Modifiers WidgetKeyboardEvent::ModifiersForAccessKeyMatching() const {
 
 /* static */
 Modifiers WidgetKeyboardEvent::AccessKeyModifiers(AccessKeyType aType) {
-  switch (GenericAccessModifierKeyPref()) {
+  switch (StaticPrefs::ui_key_generalAccessKey()) {
     case -1:
       break;  // use the individual prefs
     case NS_VK_SHIFT:
@@ -1007,51 +1106,12 @@ Modifiers WidgetKeyboardEvent::AccessKeyModifiers(AccessKeyType aType) {
 
   switch (aType) {
     case AccessKeyType::eChrome:
-      return PrefFlagsToModifiers(ChromeAccessModifierMaskPref());
+      return PrefFlagsToModifiers(StaticPrefs::ui_key_chromeAccess());
     case AccessKeyType::eContent:
-      return PrefFlagsToModifiers(ContentAccessModifierMaskPref());
+      return PrefFlagsToModifiers(StaticPrefs::ui_key_contentAccess());
     default:
       return MODIFIER_NONE;
   }
-}
-
-/* static */
-int32_t WidgetKeyboardEvent::GenericAccessModifierKeyPref() {
-  static bool sInitialized = false;
-  static int32_t sValue = -1;
-  if (!sInitialized) {
-    nsresult rv =
-        Preferences::AddIntVarCache(&sValue, "ui.key.generalAccessKey", sValue);
-    sInitialized = NS_SUCCEEDED(rv);
-    MOZ_ASSERT(sInitialized);
-  }
-  return sValue;
-}
-
-/* static */
-int32_t WidgetKeyboardEvent::ChromeAccessModifierMaskPref() {
-  static bool sInitialized = false;
-  static int32_t sValue = 0;
-  if (!sInitialized) {
-    nsresult rv =
-        Preferences::AddIntVarCache(&sValue, "ui.key.chromeAccess", sValue);
-    sInitialized = NS_SUCCEEDED(rv);
-    MOZ_ASSERT(sInitialized);
-  }
-  return sValue;
-}
-
-/* static */
-int32_t WidgetKeyboardEvent::ContentAccessModifierMaskPref() {
-  static bool sInitialized = false;
-  static int32_t sValue = 0;
-  if (!sInitialized) {
-    nsresult rv =
-        Preferences::AddIntVarCache(&sValue, "ui.key.contentAccess", sValue);
-    sInitialized = NS_SUCCEEDED(rv);
-    MOZ_ASSERT(sInitialized);
-  }
-  return sValue;
 }
 
 /* static */

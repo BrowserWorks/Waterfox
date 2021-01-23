@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-colors.xul -->
+
+<!-- LOCALIZATION NOTE : FILE Color management prefs -->
+<!ENTITY pref.colors.title                 "Värit">
+<!ENTITY color                             "Teksti ja tausta">
+<!ENTITY textColor.label                   "Teksti:">
+<!ENTITY textColor.accesskey               "T">
+<!ENTITY backgroundColor.label             "Tausta:">
+<!ENTITY backgroundColor.accesskey         "a">
+<!ENTITY useSystemColors.label             "Käytä järjestelmän värejä">
+<!ENTITY useSystemColors.accesskey         "K">
+
+<!ENTITY underlineLinks.label              "Alleviivaa linkit">
+<!ENTITY underlineLinks.accesskey          "l">
+<!ENTITY links                             "Linkkien värit">
+<!ENTITY linkColor.label                   "Avaamattomat linkit:">
+<!ENTITY linkColor.accesskey               "v">
+<!ENTITY activeLinkColor.label             "Aktiiviset linkit:">
+<!ENTITY activeLinkColor.accesskey         "i">
+<!ENTITY visitedLinkColor.label            "Avatut linkit:">
+<!ENTITY visitedLinkColor.accesskey        "u">
+<!-- LOCALIZATION NOTE (someProvColors): This is the start of a sentence and will be followed by the following radio buttons. -->
+<!ENTITY someProvColors                    "Kun verkkosivu määrittää omat värit ja taustan">
+<!-- LOCALIZATION NOTE (alwaysUseDocColors.label): This is option one, and it appends to 'someProvColors' above. -->
+<!ENTITY alwaysUseDocumentColors.label     "Käytä aina verkkosivun määrittämiä värejä ja taustaa">
+<!ENTITY alwaysUseDocumentColors.accesskey "ä">
+<!-- LOCALIZATION NOTE (ignoreDocColors.label): This is option two, and it appends to 'someProvColors' above.  -->
+<!ENTITY useMyColors.label                 "Käytä itse valitsemiani värejä, jolloin väri- ja taustakuvamääritykset ohitetaan">
+<!ENTITY useMyColors.accesskey             "y">
+<!ENTITY automaticColors.label             "Ohita sivun värit vain käytettäessä High Contrast -teemaa">
+<!ENTITY automaticColors.accesskey         "O">

@@ -1,7 +1,7 @@
 ﻿// © 2016 and later: Unicode, Inc. and others.
 // License & terms of use: http://www.unicode.org/copyright.html#License
 sr{
-    Version{"2.1.49.82"}
+    Version{"37"}
     zoneStrings{
         "Africa:Abidjan"{
             ec{"Абиџан"}
@@ -274,7 +274,7 @@ sr{
             ec{"Куиаба"}
         }
         "America:Curacao"{
-            ec{"Кирасо"}
+            ec{"Курасао"}
         }
         "America:Danmarkshavn"{
             ec{"Данмарксхаген"}
@@ -811,7 +811,7 @@ sr{
             ec{"Катар"}
         }
         "Asia:Qostanay"{
-            ec{"Qostanay"}
+            ec{"Костанај"}
         }
         "Asia:Qyzylorda"{
             ec{"Кизилорда"}
@@ -1761,7 +1761,9 @@ sr{
             ls{"Ниуе време"}
         }
         "meta:Norfolk"{
-            ls{"Норфолк Острво време"}
+            ld{"Норфолк Острво, летње време"}
+            lg{"Норфолк Острво време"}
+            ls{"Норфолк Острво, стандардно време"}
         }
         "meta:Noronha"{
             ld{"Фернандо де Нороња, летње време"}

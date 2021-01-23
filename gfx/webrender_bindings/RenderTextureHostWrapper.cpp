@@ -7,15 +7,14 @@
 #include "RenderTextureHostWrapper.h"
 
 #include "mozilla/gfx/Logging.h"
-#include "mozilla/layers/ImageDataSerializer.h"
-#include "mozilla/layers/SourceSurfaceSharedData.h"
 #include "mozilla/webrender/RenderThread.h"
 
 namespace mozilla {
 namespace wr {
 
-RenderTextureHostWrapper::RenderTextureHostWrapper()
-    : mInited(false), mLocked(false) {
+RenderTextureHostWrapper::RenderTextureHostWrapper(
+    ExternalImageId aExternalImageId)
+    : mExternalImageId(aExternalImageId) {
   MOZ_COUNT_CTOR_INHERITED(RenderTextureHostWrapper, RenderTextureHost);
 }
 
@@ -26,11 +25,15 @@ RenderTextureHostWrapper::~RenderTextureHostWrapper() {
 wr::WrExternalImage RenderTextureHostWrapper::Lock(
     uint8_t aChannelIndex, gl::GLContext* aGL, wr::ImageRendering aRendering) {
   if (!mTextureHost) {
-    MOZ_ASSERT_UNREACHABLE("unexpected to happen");
-    return InvalidToWrExternalImage();
+    mTextureHost = RenderThread::Get()->GetRenderTexture(mExternalImageId);
+    MOZ_ASSERT(mTextureHost);
+    if (!mTextureHost) {
+      gfxCriticalNoteOnce << "Failed to get RenderTextureHost for extId:"
+                          << AsUint64(mExternalImageId);
+      return InvalidToWrExternalImage();
+    }
   }
 
-  mLocked = true;
   return mTextureHost->Lock(aChannelIndex, aGL, aRendering);
 }
 
@@ -38,22 +41,12 @@ void RenderTextureHostWrapper::Unlock() {
   if (mTextureHost) {
     mTextureHost->Unlock();
   }
-  mLocked = false;
 }
 
 void RenderTextureHostWrapper::ClearCachedResources() {
   if (mTextureHost) {
     mTextureHost->ClearCachedResources();
   }
-}
-
-void RenderTextureHostWrapper::UpdateRenderTextureHost(
-    RenderTextureHost* aTextureHost) {
-  MOZ_ASSERT(RenderThread::IsInRenderThread());
-  MOZ_RELEASE_ASSERT(!mLocked);
-
-  mInited = true;
-  mTextureHost = aTextureHost;
 }
 
 }  // namespace wr

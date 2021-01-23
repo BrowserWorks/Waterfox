@@ -1,0 +1,973 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY titledefault.label "&brandFullName;">
+<!ENTITY titleSeparator.label " - ">
+
+<!-- File Menu -->
+<!ENTITY newFolderCmd.label "Zarědnik…">
+<!ENTITY newFolderCmd.accesskey "Z">
+<!ENTITY closeTabCmd2.label "Rejtarik zacyniś">
+<!ENTITY closeTabCmd2.accesskey "R">
+<!ENTITY closeOtherTabsCmd2.label "Druge rejtariki zacyniś">
+<!ENTITY closeOtherTabsCmd2.accesskey "D">
+<!ENTITY recentlyClosedTabsCmd.label "Pśed krotkim zacynjone rejtariki">
+<!ENTITY recentlyClosedTabsCmd.accesskey "P">
+
+<!ENTITY undoCloseTabCmd.commandkey "T">
+<!-- LOCALIZATION NOTE (moveToNewWindow.label):
+     Menu option to cause the current tab to be migrated to a new Thunderbird
+     window.
+     -->
+<!ENTITY moveToNewWindow.label "Do nowego wokna pśesunuś">
+<!ENTITY moveToNewWindow.accesskey "w">
+<!ENTITY newVirtualFolderCmd.label "Skłaźone pytanje…">
+<!ENTITY newVirtualFolderCmd.accesskey "S">
+<!ENTITY newOtherAccountsCmd.label "Druge konta…">
+<!ENTITY newOtherAccountsCmd.accesskey "u">
+<!ENTITY newCreateEmailAccountCmd.label "Nowe e-mailowe konto wobstaraś…">
+<!ENTITY newCreateEmailAccountCmd.accesskey "N">
+<!ENTITY newExistingEmailAccountCmd.label "Eksistěrujuce e-mailowe konto…">
+<!ENTITY newExistingEmailAccountCmd.accesskey "E">
+<!ENTITY newIMAccountCmd.label "Chatowe konto…">
+<!ENTITY newIMAccountCmd.accesskey "C">
+<!ENTITY newFeedAccountCmd.label "Kanalowe konto…">
+<!ENTITY newFeedAccountCmd.accesskey "K">
+<!ENTITY newIMContactCmd.label "Chatowy kontakt…">
+<!ENTITY newIMContactCmd.accesskey "h">
+<!ENTITY  newMessageCmd2.key "N">
+<!ENTITY  newMessageCmd.key "M">
+<!ENTITY  newMessageCmd.label "Powěsć">
+<!ENTITY  newMessageCmd.accesskey "P">
+<!ENTITY  newContactCmd.label "Kontakt adresnika…">
+<!ENTITY  newContactCmd.accesskey "K">
+<!ENTITY openMenuCmd.label "Wócyniś">
+<!ENTITY openMenuCmd.accesskey "c">
+<!ENTITY openMessageFileCmd.label "Skłaźonu powěsć wócyniś…">
+<!ENTITY openMessageFileCmd.accesskey "k">
+<!ENTITY saveAsMenu.label "Składowaś ako">
+<!ENTITY saveAsMenu.accesskey "S">
+<!ENTITY saveAsFileCmd.label "Dataja">
+<!ENTITY saveAsFileCmd.accesskey "D">
+<!ENTITY saveAsFileCmd.key "s">
+<!ENTITY saveAsTemplateCmd.label "Pśedłoga">
+<!ENTITY saveAsTemplateCmd.accesskey "P">
+<!ENTITY getNewMsgForCmd.label "Nowe powěsći wótwołaś za">
+<!ENTITY getNewMsgForCmd.accesskey "N">
+<!ENTITY getAllNewMsgCmdPopupMenu.label "Wšykne konta">
+<!ENTITY getAllNewMsgCmdPopupMenu.accesskey "W">
+<!ENTITY getNewMsgCurrentAccountCmdPopupMenu.label "Aktualne konto">
+<!ENTITY getNewMsgCurrentAccountCmdPopupMenu.accesskey "A">
+<!ENTITY getNextNMsgCmd2.label "Pśiduce powěsći wobstaraś">
+<!ENTITY getNextNMsgCmd2.accesskey "b">
+<!ENTITY sendUnsentCmd.label "Njepósłane powěsći pósłaś">
+<!ENTITY sendUnsentCmd.accesskey "e">
+<!ENTITY subscribeCmd.label "Aboněrowaś…">
+<!ENTITY subscribeCmd.accesskey "b">
+<!ENTITY deleteFolder.label "Zarědnik lašowaś">
+<!ENTITY deleteFolder.accesskey "l">
+<!ENTITY renameFolder.label "Zarědnik pśemjeniś…">
+<!ENTITY renameFolder.accesskey "m">
+<!ENTITY renameFolder.key "VK_F2">
+<!ENTITY compactFolders.label "Kompaktne zarědniki">
+<!ENTITY compactFolders.accesskey "K">
+<!ENTITY emptyTrashCmd.label "Papjernik wuprozniś">
+<!ENTITY emptyTrashCmd.accesskey "u">
+<!ENTITY offlineMenu.label "Offline">
+<!ENTITY offlineMenu.accesskey "l">
+<!ENTITY offlineGoOfflineCmd.label "Offline źěłaś">
+<!ENTITY offlineGoOfflineCmd.accesskey "f">
+<!ENTITY synchronizeOfflineCmd.label "Něnto ześěgnuś/synchronizěrowaś…">
+<!ENTITY synchronizeOfflineCmd.accesskey "z">
+<!ENTITY settingsOfflineCmd2.label "Nastajenja offline">
+<!ENTITY settingsOfflineCmd2.accesskey "t">
+<!ENTITY downloadSelectedCmd.label "Wubrane powěsći wótwołaś">
+<!ENTITY downloadSelectedCmd.accesskey "u">
+<!ENTITY downloadStarredCmd.label "Powěsći z gwězdku wótwółaś">
+<!ENTITY downloadStarredCmd.accesskey "g">
+<!ENTITY printCmd.label "Śišćaś…">
+<!ENTITY printCmd.accesskey "i">
+<!ENTITY printCmd.key "p">
+<!ENTITY printPreviewCmd.label "Śišćarski pśeglěd">
+<!ENTITY printPreviewCmd.accesskey "a">
+<!ENTITY printSetupCmd.label "Bok zarědowaś…">
+<!ENTITY printSetupCmd.accesskey "B">
+
+<!-- Edit Menu -->
+<!ENTITY deleteMsgCmd.label "Powěsć lašowaś">
+<!ENTITY deleteMsgCmd.accesskey "l">
+<!ENTITY undeleteMsgCmd.label "Powěsć wótnowiś">
+<!ENTITY undeleteMsgCmd.accesskey "o">
+<!ENTITY deleteMsgsCmd.label "Wubrane powěsći lašowaś">
+<!ENTITY deleteMsgsCmd.accesskey "b">
+<!ENTITY undeleteMsgsCmd.label "Wubrane powěsći wótnowiś">
+<!ENTITY undeleteMsgsCmd.accesskey "u">
+<!ENTITY deleteFolderCmd.label "Zarědnik lašowaś">
+<!ENTITY deleteFolderCmd.accesskey "Z">
+<!ENTITY unsubscribeNewsgroupCmd.label "Wótskazaś">
+<!ENTITY unsubscribeNewsgroupCmd.accesskey "s">
+<!ENTITY selectMenu.label "Wubraś">
+<!ENTITY selectMenu.accesskey "b">
+<!ENTITY all.label "Wšykne">
+<!ENTITY all.accesskey "W">
+<!ENTITY selectThreadCmd.label "Nitka">
+<!ENTITY selectThreadCmd.accesskey "N">
+<!ENTITY selectThreadCmd.key "a">
+<!ENTITY selectFlaggedCmd.label "Powěsći z gwězdku">
+<!ENTITY selectFlaggedCmd.accesskey "g">
+<!ENTITY menuFavoriteFolder.label "Faworizěrowany zarědnik">
+<!ENTITY menuFavoriteFolder.accesskey "F">
+<!ENTITY folderPropsCmd2.label "Kakosći">
+<!ENTITY folderPropsFolderCmd2.label "Kakosći zarědnika">
+<!ENTITY folderPropsNewsgroupCmd2.label "Kakosći diskusijneje kupki">
+<!ENTITY folderPropsCmd.accesskey "o">
+<!ENTITY undoDeleteMsgCmd.label "Lašowanje powěsći slědk wześ">
+<!ENTITY redoDeleteMsgCmd.label "Lašowanje powěsći wóspjetowaś">
+<!ENTITY undoMoveMsgCmd.label "Pśesunjenje powěsći slědk wześ">
+<!ENTITY redoMoveMsgCmd.label "Pśesunjenje powěsći wóspjetowaś">
+<!ENTITY undoCopyMsgCmd.label "Kopěrowanje powěsći slědk wześ">
+<!ENTITY redoCopyMsgCmd.label "Kopěrowanje powěsći wóspjetowaś">
+<!ENTITY undoMarkAllCmd.label "Wšykne ako pśecytane markěrowaś slědk wześ">
+<!ENTITY redoMarkAllCmd.label "Wšykne ako pśecytane markěrowaś wóspjetowaś">
+<!ENTITY undoDefaultCmd.label "Slědk wześ">
+<!ENTITY undoDefaultCmd.accesskey "S">
+<!ENTITY redoDefaultCmd.label "Wóspjetowaś">
+<!ENTITY redoDefaultCmd.accesskey "W">
+
+<!-- View Menu -->
+<!ENTITY menubarCmd.label "Menijowa rědka">
+<!ENTITY menubarCmd.accesskey "M">
+<!ENTITY showMessengerToolbarCmd.label "E-mailowa rědka">
+<!ENTITY showMessengerToolbarCmd.accesskey "E">
+<!ENTITY customizeToolbar.label "Pśiměriś…">
+<!ENTITY customizeToolbar.accesskey "P">
+
+<!ENTITY messagePaneLayoutStyle.label "Wugótowanje">
+<!ENTITY messagePaneLayoutStyle.accesskey "W">
+<!ENTITY messagePaneClassic.label "Klasiski naglěd">
+<!ENTITY messagePaneClassic.accesskey "K">
+<!ENTITY messagePaneWide.label "Šyroki naglěd">
+<!ENTITY messagePaneWide.accesskey "y">
+<!ENTITY messagePaneVertical.label "Wertikalny naglěd">
+<!ENTITY messagePaneVertical.accesskey "W">
+<!ENTITY showFolderPaneCmd.label "Zarědnikowe pólo">
+<!ENTITY showFolderPaneCmd.accesskey "Z">
+<!ENTITY showFolderPaneColsCmd.label "Słupy wobcerka zarědnikow">
+<!ENTITY showFolderPaneColsCmd.accesskey "z">
+<!ENTITY showMessageCmd.label "Powěsćowe pólo">
+<!ENTITY showMessageCmd.accesskey "P">
+
+<!ENTITY folderView.label "Zarědniki">
+<!ENTITY folderView.accesskey "Z">
+<!ENTITY unifiedFolders.label "Zjadnośony">
+<!ENTITY unifiedFolders.accesskey "d">
+<!ENTITY allFolders.label "Wšykne">
+<!ENTITY allFolders.accesskey "W">
+<!ENTITY unreadFolders.label "Njepśecytane">
+<!ENTITY unreadFolders.accesskey "c">
+<!ENTITY favoriteFolders.label "Faworizěrowane">
+<!ENTITY favoriteFolders.accesskey "F">
+<!ENTITY recentFolders.label "Nejnowše">
+<!ENTITY recentFolders.accesskey "N">
+<!ENTITY compactVersion.label "Kompaktny naglěd">
+<!ENTITY compactVersion.accesskey "K">
+<!ENTITY folderPaneBar.label "Symbolowa rědka zarědnikowego wobcerka">
+<!ENTITY folderPaneBar.accesskey "S">
+
+<!-- Sort Menu -->
+<!ENTITY sortMenu.label "Sortěrowaś pó">
+<!ENTITY sortMenu.accesskey "S">
+<!ENTITY sortByDateCmd.label "Datumje">
+<!ENTITY sortByDateCmd.accesskey "D">
+<!ENTITY sortByReceivedCmd.label "Dostanych">
+<!ENTITY sortByReceivedCmd.accesskey "o">
+<!ENTITY sortByStarCmd.label "Gwězdce">
+<!ENTITY sortByStarCmd.accesskey "G">
+<!ENTITY sortByAttachmentsCmd.label "Pśidanki">
+<!ENTITY sortByAttachmentsCmd.accesskey "d">
+<!ENTITY sortByPriorityCmd.label "Prioriśe">
+<!ENTITY sortByPriorityCmd.accesskey "r">
+<!ENTITY sortBySizeCmd.label "Wjelikosći">
+<!ENTITY sortBySizeCmd.accesskey "l">
+<!ENTITY sortByStatusCmd.label "Statusu">
+<!ENTITY sortByStatusCmd.accesskey "u">
+<!ENTITY sortByTagsCmd.label "Wobznamjenjach">
+<!ENTITY sortByTagsCmd.accesskey "z">
+<!ENTITY sortByJunkStatusCmd.label "Cajkowem statusu">
+<!ENTITY sortByJunkStatusCmd.accesskey "C">
+<!ENTITY sortBySubjectCmd.label "Temje">
+<!ENTITY sortBySubjectCmd.accesskey "T">
+<!ENTITY sortByFromCmd.label "Wót">
+<!ENTITY sortByFromCmd.accesskey "W">
+<!ENTITY sortByRecipientCmd.label "Dostawaŕ">
+<!ENTITY sortByRecipientCmd.accesskey "o">
+<!ENTITY sortByCorrespondentCmd.label "Wótpósłarje">
+<!ENTITY sortByCorrespondentCmd.accesskey "s">
+<!ENTITY sortByUnreadCmd.label "Pśecytanych">
+<!ENTITY sortByUnreadCmd.accesskey "e">
+<!ENTITY sortByOrderReceivedCmd.label "Pó pórěźe dostaśa">
+<!ENTITY sortByOrderReceivedCmd.accesskey "d">
+<!ENTITY sortAscending.label "Stupajucy">
+<!ENTITY sortAscending.accesskey "S">
+<!ENTITY sortDescending.label "Wóstupujucy">
+<!ENTITY sortDescending.accesskey "u">
+<!ENTITY sortThreaded.label "Nitce">
+<!ENTITY sortThreaded.accesskey "t">
+<!ENTITY sortUnthreaded.label "Bźez nitki">
+<!ENTITY sortUnthreaded.accesskey "B">
+<!ENTITY groupBySort.label "Pó sortěrowanju zrědowany">
+<!ENTITY groupBySort.accesskey "s">
+<!ENTITY msgsMenu.label "Powěsći">
+<!ENTITY msgsMenu.accesskey "P">
+<!ENTITY threads.label "Nitki">
+<!ENTITY threads.accesskey "N">
+<!ENTITY allMsgsCmd.label "Wšykne">
+<!ENTITY allMsgsCmd.accesskey "k">
+<!ENTITY expandAllThreadsCmd.label "Wšykne nitki wócyniś">
+<!ENTITY expandAllThreadsCmd.accesskey "w">
+<!ENTITY expandAllThreadsCmd.key "*">
+<!ENTITY collapseAllThreadsCmd.label "Wšykne nitki zacyniś">
+<!ENTITY collapseAllThreadsCmd.accesskey "n">
+<!ENTITY collapseAllThreadsCmd.key "\">
+<!ENTITY unreadMsgsCmd.label "Njepśecytane">
+<!ENTITY unreadMsgsCmd.accesskey "N">
+<!ENTITY threadsWithUnreadCmd.label "Nitki z njepśecytanymi powěsćami">
+<!ENTITY threadsWithUnreadCmd.accesskey "t">
+<!ENTITY watchedThreadsWithUnreadCmd.label "Wobglědowne nitki z njepśecytanymi powěsćami">
+<!ENTITY watchedThreadsWithUnreadCmd.accesskey "W">
+<!ENTITY ignoredThreadsCmd.label "Ignorěrowane nitki">
+<!ENTITY ignoredThreadsCmd.accesskey "I">
+
+<!ENTITY headersMenu.label "Głowowe smužki">
+<!ENTITY headersMenu.accesskey "G">
+<!ENTITY headersAllCmd.label "Wšykne">
+<!ENTITY headersAllCmd.accesskey "W">
+<!ENTITY headersNormalCmd.label "Normalny">
+<!ENTITY headersNormalCmd.accesskey "N">
+<!ENTITY bodyMenu.label "Powěsćowe śěleso ako">
+<!ENTITY bodyMenu.accesskey "P">
+<!ENTITY bodyAllowHTML.label "Originalny HTML">
+<!ENTITY bodyAllowHTML.accesskey "H">
+<!ENTITY bodySanitized.label "Jadnory HTML">
+<!ENTITY bodySanitized.accesskey "J">
+<!ENTITY bodyAsPlaintext.label "Lutny tekst">
+<!ENTITY bodyAsPlaintext.accesskey "L">
+<!ENTITY bodyAllParts.label "Wšykne źěle śělesa">
+<!ENTITY bodyAllParts.accesskey "l">
+
+<!ENTITY bodyMenuFeed.label "Śěleso kanaloweje powěsći ako">
+<!ENTITY bodyMenuFeed.accesskey "k">
+<!ENTITY viewFeedWebPage.label "Webbok">
+<!ENTITY viewFeedWebPage.accesskey "W">
+<!ENTITY viewFeedSummary.label "Zespominanje">
+<!ENTITY viewFeedSummary.accesskey "Z">
+<!ENTITY viewFeedSummaryFeedPropsPref.label "Standardny format">
+<!ENTITY viewFeedSummaryFeedPropsPref.accesskey "S">
+
+<!ENTITY viewAttachmentsInlineCmd.label "Pśidanki zasajźone zwobrazniś">
+<!ENTITY viewAttachmentsInlineCmd.accesskey "a">
+
+<!ENTITY pageSourceCmd.label "Tekst powěsći">
+<!ENTITY pageSourceCmd.accesskey "o">
+<!ENTITY pageSourceCmd.key "u">
+<!ENTITY getNewMessagesCmd.key "y">
+<!ENTITY getAllNewMessagesCmd.key "Y">
+
+<!-- Search Menu -->
+<!ENTITY findMenu.label "Pytaś">
+<!ENTITY findMenu.accesskey "P">
+<!ENTITY findCmd.label "W toś tej powěsći pytaś…">
+<!ENTITY findCmd.accesskey "t">
+<!ENTITY findCmd.key "f">
+<!ENTITY findAgainCmd.label "Dalej pytaś">
+<!ENTITY findAgainCmd.accesskey "l">
+<!ENTITY findAgainCmd.key "g">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.key "g">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+<!ENTITY searchMailCmd.label "Powěsći pśepytaś…">
+<!ENTITY searchMailCmd.accesskey "P">
+<!ENTITY searchMailCmd.key "f">
+<!ENTITY glodaSearchCmd.label "Globalne pytanje…">
+<!ENTITY glodaSearchCmd.accesskey "G">
+<!ENTITY searchAddressesCmd.label "Adrese pśepytaś…">
+<!ENTITY searchAddressesCmd.accesskey "A">
+
+<!-- Go Menu -->
+<!ENTITY goMenu.label "Źi">
+<!ENTITY goMenu.accesskey "i">
+<!ENTITY nextMenu.label "Pśiducy">
+<!ENTITY nextMenu.accesskey "d">
+<!ENTITY nextMsgCmd.label "Powěsć">
+<!ENTITY nextMsgCmd.accesskey "P">
+<!ENTITY nextMsgCmd.key "f">
+<!ENTITY nextUnreadMsgCmd.label "Njepśecytana powěsć">
+<!ENTITY nextUnreadMsgCmd.accesskey "o">
+<!ENTITY nextUnreadMsgCmd.key "n">
+<!ENTITY nextStarredMsgCmd.label "Powěsć z gwězdku">
+<!ENTITY nextStarredMsgCmd.accesskey "g">
+<!ENTITY nextUnreadThread.label "Njepśecytana nitka">
+<!ENTITY nextUnreadThread.accesskey "N">
+<!ENTITY nextUnreadThread.key "t">
+<!ENTITY prevMenu.label "Pjerwjejšny">
+<!ENTITY prevMenu.accesskey "P">
+<!ENTITY prevMsgCmd.label "Powěsć">
+<!ENTITY prevMsgCmd.accesskey "o">
+<!ENTITY prevMsgCmd.key "b">
+<!ENTITY prevUnreadMsgCmd.label "Njepśecytana powěsć">
+<!ENTITY prevUnreadMsgCmd.accesskey "N">
+<!ENTITY prevUnreadMsgCmd.key "p">
+<!ENTITY goForwardCmd.label "Dalej pósrědniś">
+<!ENTITY goForwardCmd.accesskey "l">
+<!ENTITY goForwardCmd.commandKey "]">
+<!ENTITY goBackCmd.label "Slědk">
+<!ENTITY goBackCmd.accesskey "S">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goChatCmd.label "Chat">
+<!ENTITY goChatCmd.accesskey "C">
+<!ENTITY goChatCmd2.key "H">
+<!ENTITY prevStarredMsgCmd.label "Powěsć z gwězdku">
+<!ENTITY prevStarredMsgCmd.accesskey "g">
+<!ENTITY folderMenu.label "Zarědnik">
+<!ENTITY folderMenu.accesskey "Z">
+<!ENTITY goRecentlyClosedTabs.label "Pśed krotkim zacynjone rejtariki">
+<!ENTITY goRecentlyClosedTabs.accesskey "k">
+<!ENTITY startPageCmd.label "E-mailowy startowy bok">
+<!ENTITY startPageCmd.accesskey "E">
+
+<!-- Message Menu -->
+<!ENTITY msgMenu.label "Powěsć">
+<!ENTITY msgMenu.accesskey "P">
+<!ENTITY newMsgCmd.label "Nowa powěsć">
+<!ENTITY newMsgCmd.accesskey "N">
+<!ENTITY newNewMsgCmd.label "Powěsć">
+<!ENTITY newNewMsgCmd.accesskey "P">
+<!ENTITY archiveMsgCmd.label "Archiw">
+<!ENTITY archiveMsgCmd.accesskey "A">
+<!ENTITY archiveMsgCmd.key "a">
+<!ENTITY cancelNewsMsgCmd.label "Powěsć anulěrowaś">
+<!ENTITY cancelNewsMsgCmd.accesskey "a">
+<!ENTITY replyMsgCmd.label "Wótegroniś">
+<!ENTITY replyMsgCmd.accesskey "W">
+<!ENTITY replyMsgCmd.key "r">
+<!ENTITY replySenderCmd.label "Jano wótpósłarjeju wótegroniś">
+<!ENTITY replySenderCmd.accesskey "J">
+<!ENTITY replyNewsgroupCmd2.label "Diskusijnej kupce slědowaś">
+<!ENTITY replyNewsgroupCmd2.accesskey "d">
+<!ENTITY replyToAllMsgCmd.label "Wšym wótegroniś">
+<!ENTITY replyToAllMsgCmd.accesskey "w">
+<!ENTITY replyToAllMsgCmd.key "r">
+<!ENTITY replyToListMsgCmd.label "Lisćinje wótegroniś">
+<!ENTITY replyToListMsgCmd.accesskey "L">
+<!ENTITY replyToListMsgCmd.key "l">
+<!ENTITY forwardMsgCmd.label "Dalej pósrědniś">
+<!ENTITY forwardMsgCmd.accesskey "D">
+<!ENTITY forwardMsgCmd.key "l">
+<!ENTITY forwardAsMenu.label "Dalej pósrědniś ako">
+<!ENTITY forwardAsMenu.accesskey "l">
+<!ENTITY forwardAsInline.label "Zasajźony">
+<!ENTITY forwardAsInline.accesskey "Z">
+<!ENTITY forwardAsAttachmentCmd.label "Pśidank">
+<!ENTITY forwardAsAttachmentCmd.accesskey "P">
+<!ENTITY editAsNewMsgCmd.label "Powěsć ako nowu wobźěłaś">
+<!ENTITY editAsNewMsgCmd.accesskey "n">
+<!ENTITY editAsNewMsgCmd.key "e">
+<!ENTITY editDraftMsgCmd.label "Nacerjenje powěsći wobźěłaś">
+<!ENTITY editDraftMsgCmd.accesskey "N">
+<!ENTITY editTemplateMsgCmd.label "Pśedłogu wobźěłaś">
+<!ENTITY editTemplateMsgCmd.accesskey "P">
+<!ENTITY newMsgFromTemplateCmd.label "Nowa powěsć z pśedłogi">
+<!ENTITY newMsgFromTemplateCmd.keycode "VK_RETURN"><!-- do not change "VK_RETURN" -->
+<!ENTITY createFilter.label "Filter z powěsći napóraś…">
+<!ENTITY createFilter.accesskey "F">
+<!ENTITY moveMsgToMenu.label "Pśesunuś do">
+<!ENTITY moveMsgToMenu.accesskey "u">
+<!ENTITY moveCopyMsgRecentMenu.label "Nejnowšy">
+<!ENTITY moveCopyMsgRecentMenu.accesskey "N">
+<!ENTITY copyMessageLocation.label "Městno powěsći kopěrowaś">
+<!ENTITY copyMessageLocation.accesskey "M">
+<!ENTITY copyMsgToMenu.label "Kopěrowaś do">
+<!ENTITY copyMsgToMenu.accesskey "K">
+<!ENTITY moveToFolderAgain.label "Dalej pśesunuś">
+<!ENTITY moveToFolderAgain.accesskey "l">
+<!ENTITY moveToFolderAgainCmd.key "m">
+<!ENTITY killThreadMenu.label "Nitku ignorěrowaś">
+<!ENTITY killThreadMenu.accesskey "i">
+<!ENTITY killThreadMenu.key "k">
+<!ENTITY killSubthreadMenu.label "Pódnitku ignorěrowaś">
+<!ENTITY killSubthreadMenu.accesskey "P">
+<!ENTITY killSubthreadMenu.key "k">
+<!ENTITY watchThreadMenu.label "Nitku wobglědowaś">
+<!ENTITY watchThreadMenu.accesskey "w">
+<!ENTITY watchThreadMenu.key "w">
+<!ENTITY tagMenu.label "Etiket">
+<!ENTITY tagMenu.accesskey "E">
+<!ENTITY tagCmd0.key "0">
+<!ENTITY tagCmd1.key "1">
+<!ENTITY tagCmd2.key "2">
+<!ENTITY tagCmd3.key "3">
+<!ENTITY tagCmd4.key "4">
+<!ENTITY tagCmd5.key "5">
+<!ENTITY tagCmd6.key "6">
+<!ENTITY tagCmd7.key "7">
+<!ENTITY tagCmd8.key "8">
+<!ENTITY tagCmd9.key "9">
+<!ENTITY markMenu.label "Markěrowaś">
+<!ENTITY markMenu.accesskey "M">
+<!ENTITY toggleReadCmd.key "m">
+<!ENTITY markAsReadCmd.label "Ako pśecytany">
+<!ENTITY markAsReadCmd.accesskey "A">
+<!ENTITY markAsUnreadCmd.label "Ako njepśecytany">
+<!ENTITY markAsUnreadCmd.accesskey "n">
+<!ENTITY markThreadAsReadCmd.label "Nitku ako pśecytanu">
+<!ENTITY markThreadAsReadCmd.accesskey "N">
+<!ENTITY markThreadAsReadCmd.key "r">
+<!ENTITY markReadByDateCmd.label "Ako pó datumje pśecytany…">
+<!ENTITY markReadByDateCmd.accesskey "d">
+<!ENTITY markReadByDateCmd.key "c">
+<!ENTITY markAllReadCmd.label "Wšykne pśecytane">
+<!ENTITY markAllReadCmd.accesskey "W">
+<!ENTITY markAllReadCmd.key "c">
+<!ENTITY markStarredCmd.label "Gwězdku pśidaś">
+<!ENTITY markStarredCmd.accesskey "G">
+<!ENTITY markStarredCmd.key "S">
+<!ENTITY markAsJunkCmd.label "Ako cajk">
+<!ENTITY markAsJunkCmd.accesskey "c">
+<!ENTITY markAsJunkCmd.key "j">
+<!ENTITY markAsNotJunkCmd.label "Ako njecajk">
+<!ENTITY markAsNotJunkCmd.accesskey "n">
+<!ENTITY markAsNotJunkCmd.key "j">
+<!ENTITY recalculateJunkScoreCmd.label "Cajkowu kontrolu startowaś">
+<!ENTITY recalculateJunkScoreCmd.accesskey "C">
+<!ENTITY openMessageWindowCmd.label "Powěsć wócyniś">
+<!ENTITY openMessageWindowCmd.accesskey "o">
+<!ENTITY openMessageWindowCmd.key "o">
+<!ENTITY openInConversationCmd.label "W konwersaciji wócyniś">
+<!ENTITY openInConversationCmd.accesskey "k">
+<!ENTITY openInConversationCmd.key "o">
+<!ENTITY openAttachmentListCmd.label "Pśidanki">
+<!ENTITY openAttachmentListCmd.accesskey "d">
+<!ENTITY openFeedMessage1.label "Gaž kanalowe powěsće se wócynjaju">
+<!ENTITY openFeedMessage1.accesskey "G">
+<!ENTITY openFeedWebPage.label "Ako webbok wócyniś">
+<!ENTITY openFeedWebPage.accesskey "w">
+<!ENTITY openFeedSummary.label "Ako zespominanje wócynis">
+<!ENTITY openFeedSummary.accesskey "z">
+<!ENTITY openFeedWebPageInMP.label "Mjazy webbokom a zespominanim w powěsćowem pólu wótměnis">
+<!ENTITY openFeedWebPageInMP.accesskey "M">
+
+<!-- Windows Menu -->
+<!ENTITY windowMenu.label "Wokno">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label "Rědy">
+<!ENTITY tasksMenu.accesskey "R">
+<!ENTITY messengerCmd.label "E-mail a diskusijne kupki">
+<!ENTITY messengerCmd.accesskey "E">
+<!ENTITY addressBookCmd.label "Adresnik">
+<!ENTITY addressBookCmd.accesskey "A">
+<!ENTITY addressBookCmd.key "B">
+<!ENTITY addons.label "Dodanki">
+<!ENTITY addons.accesskey "D">
+<!ENTITY addonPrefs.label "Nastajenja dodanka">
+<!ENTITY addonPrefs.accesskey "N">
+<!ENTITY addonPrefsUnix.label "Nastajenja dodanka">
+<!ENTITY addonPrefsUnix.accesskey "N">
+<!ENTITY addonNoPrefs.label "Nastajenja dodanka njejsu se namakali.">
+<!ENTITY activitymanager.label "Zastojnik aktiwity">
+<!ENTITY activitymanager.accesskey "Z">
+<!ENTITY imAccountsStatus.label "Chatowy status">
+<!ENTITY imAccountsStatus.accesskey "C">
+<!ENTITY imStatus.available          "Stoj k dispoziciji">
+<!ENTITY imStatus.unavailable        "Njestoj k dispoziciji">
+<!ENTITY imStatus.offline            "Offline">
+<!ENTITY imStatus.showAccounts       "Konto pokazaś…">
+<!ENTITY joinChatCmd.label "Chat póstupiś…">
+<!ENTITY joinChatCmd.accesskey "s">
+<!ENTITY savedFiles.label "Skłaźone dataje">
+<!ENTITY savedFiles.accesskey "S">
+<!ENTITY savedFiles.key "j">
+<!ENTITY filtersCmd2.label "Powěsćowe filtry">
+<!ENTITY filtersCmd2.accesskey "f">
+<!ENTITY filtersApply.label "Filtry na zarědnik nałožyś">
+<!ENTITY filtersApply.accesskey "F">
+<!ENTITY filtersApplyToSelection.label "Filtry na wubrane powěsći nałožyś">
+<!ENTITY filtersApplyToSelection.accesskey "b">
+<!ENTITY filtersApplyToMessage.label "Filtry na powěsć nałožyś">
+<!ENTITY filtersApplyToMessage.accesskey "o">
+<!ENTITY runJunkControls.label "Kontrolu cajkoweje e-maile na zarědnik nałožyś">
+<!ENTITY runJunkControls.accesskey "c">
+<!ENTITY deleteJunk.label "E-mail markěrowanu ako cajk w zarědniku lašowaś">
+<!ENTITY deleteJunk.accesskey "E">
+<!ENTITY importCmd.label "Importěrowaś…">
+<!ENTITY importCmd.accesskey "m">
+<!ENTITY clearRecentHistory.label "Aktualnu historiju lašowaś…">
+<!ENTITY clearRecentHistory.accesskey "h">
+<!ENTITY accountManagerCmd2.label "Kontowe nastajenja">
+<!ENTITY accountManagerCmd2.accesskey "K">
+<!-- LOCALIZATION NOTE (accountManagerCmdUnix.accesskey):
+     Belongs to accountManagerCmd.label, which is placed under the Edit menu
+     on Unix systems
+  -->
+<!ENTITY accountManagerCmdUnix2.accesskey "K">
+
+<!-- Developer Tools Submenu -->
+<!ENTITY devtoolsMenu.label "Wuwijarske rědy">
+<!ENTITY devtoolsMenu.accesskey "u">
+<!ENTITY devToolboxCmd.label "Wuwijarski rědowy kašćik">
+<!ENTITY devToolboxCmd.accesskey "r">
+<!ENTITY devToolboxCmd.commandkey "i">
+<!ENTITY debugAddonsCmd.label "Dodanki za zmólkami pśepytowaś">
+<!ENTITY debugAddonsCmd.accesskey "D">
+<!ENTITY tabsDebugCmd.label "Pytanje za zmólkami za wopśimjeśowy wobłuk">
+<!ENTITY tabsDebugCmd.accesskey "m">
+<!ENTITY errorConsoleCmd.label "Zmólkowa konsola">
+<!ENTITY errorConsoleCmd.accesskey "Z">
+<!ENTITY errorConsoleCmd.commandkey "j">
+
+<!-- Mail Toolbar -->
+<!ENTITY getMsgButton1.label "Powěsći wobstaraś">
+<!ENTITY newMsgButton.label "Pisaś">
+<!ENTITY replyButton.label "Wótegroniś">
+<!ENTITY replyAllButton.label "Wšym wótegroniś">
+<!ENTITY replyListButton.label "Lisćinje wótegroniś">
+<!ENTITY forwardButton.label "Dalej pósrědniś">
+<!ENTITY fileButton.label "Dataja">
+<!ENTITY archiveButton.label "Archiw">
+<!ENTITY openConversationButton.label "Rozgrono">
+<!ENTITY nextButton.label "Pśidujuca">
+<!ENTITY nextButtonToolbarItem.label "Pśidujuca njepśecytana">
+<!ENTITY nextMsgButton.label "Pśidujuca">
+<!ENTITY previousButton.label "Pjerwjejšna">
+<!ENTITY previousButtonToolbarItem.label "Pjerwjejšna njepśecytana">
+<!ENTITY previousMsgButton.label "Pjerwjejšna">
+<!ENTITY backButton1.label "Slědk">
+<!ENTITY goForwardButton1.label "Doprědka">
+<!ENTITY deleteItem.title "Lašowaś">
+<!ENTITY deleteButton.label "Lašowaś">
+<!ENTITY undeleteButton.label "Wótnowiś">
+<!ENTITY markButton.label "Markěrowaś">
+<!ENTITY printButton.label "Śišćaś">
+<!ENTITY stopButton.label "Stoj">
+<!ENTITY throbberItem.title "Indikator aktiwity">
+<!ENTITY junkItem.title "Cajk">
+<!ENTITY junkButton.label "Cajk">
+<!ENTITY notJunkButton.label "Njecajk">
+<!ENTITY addressBookButton.label "Adresnik">
+<!ENTITY chatButton.label "Chat">
+<!ENTITY glodaSearch.title "Globalne pytanje">
+<!ENTITY searchItem.title "Malsne pytanje">
+<!ENTITY mailViewsToolbarItem.title "E-mailowe naglědy">
+<!ENTITY folderLocationToolbarItem.title "Městno zarědnika">
+<!ENTITY tagButton.label "Wobznamjenje">
+<!ENTITY compactButton.label "Kompaktny">
+<!ENTITY appmenuButton.label "Meni nałoženjow">
+
+<!-- Mail Toolbar Tooltips-->
+<!ENTITY advancedButton.tooltip "Rozšyrjone powěsćowe pytanje">
+<!ENTITY getMsgButton.tooltip "Nowe powěsći wótwołaś">
+<!ENTITY getAllNewMsgCmd.label "Wšykne nowe powěsći wótwołaś">
+<!ENTITY getAllNewMsgCmd.accesskey "W">
+<!ENTITY newMsgButton.tooltip "Nowu powěsć napóraś">
+<!ENTITY replyButton.tooltip "Na powěsć wótegroniś">
+<!ENTITY replyAllButton.tooltip "Wótpósłarjeju a wšym dostawarjam wótegroniś">
+<!ENTITY replyListButton.tooltip "Rozposłańska lisćina">
+<!ENTITY forwardButton.tooltip "Wubranu powěsć dalej pósrědniś">
+<!ENTITY forwardAsInline.tooltip "Wubranu powěsć ako zasajźony tekst dalej pósrědniś">
+<!ENTITY forwardAsAttachment.tooltip "Wubranu powěsć ako pśidank dalej pósrědniś">
+<!ENTITY fileButton.tooltip "Wubranu powěsć wótpołožyś">
+<!ENTITY archiveButton.tooltip "Wubrane powěsći archiwěrowaś">
+<!ENTITY openMsgConversationButton.tooltip "Rozgrono wubraneje powěsći pokazaś">
+<!ENTITY nextButton.tooltip "K pśidujucej njepśecytanej powěsći">
+<!ENTITY nextMsgButton.tooltip "K pśidujucej powěsći pśesunuś">
+<!ENTITY previousButton.tooltip "K pjerjwjejšnej njepśecytanej powěsći">
+<!ENTITY previousMsgButton.tooltip "K pjerwjejšnej powěsći pśesunuś">
+<!ENTITY goForwardButton.tooltip "Wó jadnu powěsć doprědka">
+<!ENTITY goBackButton.tooltip "Wó jadnu powěsć slědk">
+<!ENTITY deleteButton.tooltip "Wubranu powěsć abo wubrany zarědnik wulašowaś">
+<!ENTITY undeleteButton.tooltip "Wubranu powěsć wótnowiś">
+<!ENTITY markButton.tooltip "Powěsći markěrowaś">
+<!ENTITY printButton.tooltip "Toś tu powěsć śišćaś">
+<!ENTITY stopButton.tooltip "Aktualne pśenjasenje zastajiś">
+<!ENTITY junkButton.tooltip "Wubrane powěsći ako cajk markěrowaś">
+<!ENTITY notJunkButton.tooltip "Wubrane powěsći ako njecajk markěrowaś">
+<!ENTITY addressBookButton.tooltip "K adresnikoju">
+<!ENTITY chatButton.tooltip "Chatowy rejtarik pokazaś">
+<!ENTITY tagButton.tooltip "Powěsći wóznamjeniś">
+<!ENTITY compactButton.tooltip "Wulašowane powěsći z wubranego zarědnika wótpóraś">
+<!ENTITY appmenuButton1.tooltip "Meni &brandShortName; zwobrazniś">
+<!ENTITY addonsButton.tooltip "Zastojśo swóje dodanki">
+
+<!-- Toolbar Button Popup -->
+<!ENTITY buttonMenuForwardAsInline.label "Zasajźonu dalej pósrědnis">
+<!ENTITY buttonMenuForwardAsAttachment.label "Ako pśidank dalej pósrědniś">
+
+<!-- Remote Content Button Popup -->
+<!ENTITY remoteContentOptionsAllowForMsg.label "Daloke wopśimjeśe w toś tej powěsći pokazaś">
+<!ENTITY remoteContentOptionsAllowForMsg.accesskey "l">
+<!ENTITY editRemoteContentSettings.label "Nastajenja dalokego wopśimjeśa wobźěłaś…">
+<!ENTITY editRemoteContentSettings.accesskey "s">
+<!ENTITY editRemoteContentSettingsUnix.label "Nastajenja dalokego wopśimjeśa wobźěłaś…">
+<!ENTITY editRemoteContentSettingsUnix.accesskey "s">
+
+<!-- Phishing Button Popup -->
+<!ENTITY phishingOptionIgnore.label "Warnowanje za toś tu powěsć ignorěrowaś">
+<!ENTITY phishingOptionIgnore.accesskey "i">
+<!ENTITY phishingOptionSettings.label "Nastajenja za namakanje wobšudy wobźěłaś…">
+<!ENTITY phishingOptionSettings.accesskey "k">
+<!ENTITY phishingOptionSettingsUnix.label "Nastajenja za namakanje wobšudy wobźěłaś…">
+<!ENTITY phishingOptionSettingsUnix.accesskey "k">
+
+<!-- AppMenu Popup -->
+<!ENTITY appmenuNewMsgCmd.label "Nowa powěsć">
+<!ENTITY appmenuNewContactCmd.label "Kontakt adresnika…">
+<!ENTITY appmenuEditMenu.label "Wobźěłaś">
+<!ENTITY appmenuToolbarLayout.label "Wugótowanje symboloweje rědki…">
+<!ENTITY appmenuSelectThread.label "Nitku wubraś">
+<!ENTITY appmenuSelectFlagged.label "Powěsći z gwězdkami wubraś">
+
+<!-- Tags Menu Popup -->
+<!ENTITY addNewTag.label "Nowe wobznamjenje…">
+<!ENTITY addNewTag.accesskey "N">
+<!ENTITY manageTags.label "Wobznamjenja zastojaś…">
+<!ENTITY manageTags.accesskey "W">
+
+<!-- Folder Pane -->
+<!ENTITY folderNameColumn.label "Mě">
+<!ENTITY folderUnreadColumn.label "Njepśecytany">
+<!ENTITY folderTotalColumn.label "Dogromady">
+<!ENTITY folderSizeColumn.label "Wjelikosć">
+
+<!-- Folder Pane Context Menu -->
+<!ENTITY folderContextGetMessages.label "Powěsći wobstaraś">
+<!ENTITY folderContextGetMessages.accesskey "P">
+<!ENTITY folderContextMarkAllFoldersRead.label "Wšykne zarědniki ako pśecytane markěrowaś">
+<!ENTITY folderContextPauseAllUpdates.label "Wše aktualizacije zastajiś">
+<!ENTITY folderContextPauseUpdates.label "Aktualizacije zastajiś">
+<!ENTITY folderContextPauseUpdates.accesskey "A">
+<!ENTITY folderContextOpenInNewWindow.label "W nowem woknje wócyniś">
+<!ENTITY folderContextOpenInNewWindow.accesskey "o">
+<!ENTITY folderContextOpenNewTab.label "W nowem rejtariku wócyniś">
+<!ENTITY folderContextOpenNewTab.accesskey "r">
+<!ENTITY folderContextNew.label "Nowy pódzarědnik…">
+<!ENTITY folderContextNew.accesskey "N">
+<!ENTITY folderContextRename.label "Pśemjeniś">
+<!ENTITY folderContextRename.accesskey "P">
+<!ENTITY folderContextRemove.label "Wulašowaś">
+<!ENTITY folderContextRemove.accesskey "l">
+<!ENTITY folderContextCompact.label "Zgusćiś">
+<!ENTITY folderContextCompact.accesskey "Z">
+<!ENTITY folderContextEmptyTrash.label "Papjernik wuprozniś">
+<!ENTITY folderContextEmptyTrash.accesskey "u">
+<!ENTITY folderContextEmptyJunk.label "Cajk lašowaś">
+<!ENTITY folderContextEmptyJunk.accesskey "C">
+<!ENTITY folderContextSendUnsentMessages.label "Njepósłane powěsći pósłaś">
+<!ENTITY folderContextSendUnsentMessages.accesskey "N">
+<!ENTITY folderContextUnsubscribe.label "Wótskazaś">
+<!ENTITY folderContextUnsubscribe.accesskey "k">
+<!ENTITY folderContextMarkNewsgroupRead.label "Diskusijnu kupku ako pśecytanu markěrowaś">
+<!ENTITY folderContextMarkNewsgroupRead.accesskey "D">
+<!ENTITY folderContextMarkMailFolderRead.label "Zarědnik ako pśecytany markěrowaś">
+<!ENTITY folderContextMarkMailFolderRead.accesskey "r">
+<!ENTITY folderContextSubscribe.label "Aboněrowaś…">
+<!ENTITY folderContextSubscribe.accesskey "b">
+<!ENTITY folderContextSearchForMessages.label "Powěsći pytaś…">
+<!ENTITY folderContextSearchForMessages.accesskey "P">
+<!ENTITY folderContextProperties2.label "Kakosći">
+<!ENTITY folderContextProperties2.accesskey "K">
+<!ENTITY folderContextFavoriteFolder.label "Faworizěrowany zarědnik">
+<!ENTITY folderContextFavoriteFolder.accesskey "F">
+<!ENTITY folderContextSettings2.label "Nastajenja">
+<!ENTITY folderContextSettings2.accesskey "s">
+
+<!-- Search Bar -->
+<!ENTITY SearchNameOrEmail.label "Mě abo E-mail wopśimujo:">
+<!ENTITY SearchNameOrEmail.accesskey "M">
+
+<!-- Gloda Search Bar -->
+<!ENTITY glodaSearchBar.placeholder "Powěsći pytaś…">
+
+<!-- Quick Search Menu Bar -->
+<!ENTITY searchSubjectMenu.label "Tema">
+<!ENTITY searchFromMenu.label "Wót">
+<!ENTITY searchSubjectOrFromMenu.label "Tema abo Wót">
+<!ENTITY searchRecipient.label "Komu abo Kopija">
+<!ENTITY searchSubjectOrRecipientMenu.label "Tema, Komu abo Kopija">
+<!ENTITY searchMessageBody.label "Ceła powěsć">
+<!ENTITY saveAsVirtualFolderMenu.label "Pytanje ako zarědnik składowaś…">
+
+<!-- Thread Pane -->
+<!ENTITY selectColumn.label "Powěsći wubraś">
+<!ENTITY threadColumn.label "Nitka">
+<!ENTITY fromColumn.label "Wót">
+<!ENTITY recipientColumn.label "Dostawaŕ">
+<!ENTITY correspondentColumn.label "Wótpósłaŕ">
+<!ENTITY subjectColumn.label "Tema">
+<!ENTITY dateColumn.label "Datum">
+<!ENTITY priorityColumn.label "Priorita">
+<!ENTITY tagsColumn.label "Wobznamjenje">
+<!ENTITY accountColumn.label "Konto">
+<!ENTITY statusColumn.label "Status">
+<!ENTITY sizeColumn.label "Wjelikosć">
+<!ENTITY junkStatusColumn.label "Cajkowy status">
+<!ENTITY unreadColumn.label "Njepśecytany">
+<!ENTITY totalColumn.label "Dogromady">
+<!ENTITY readColumn.label "Pśecytany">
+<!ENTITY receivedColumn.label "Dostany">
+<!ENTITY starredColumn.label "Z gwězdku">
+<!ENTITY locationColumn.label "Městno">
+<!ENTITY idColumn.label "Pórěd dostaśa">
+<!ENTITY attachmentColumn.label "Pśidanki">
+
+<!ENTITY deleteColumn.label "Lašowaś">
+
+<!-- Thread Pane Tooltips -->
+<!ENTITY columnChooser2.tooltip "Wubjeŕśo słupy, kótarež maju se zwobrazniś">
+<!ENTITY selectColumn.tooltip "Wuběranje wšych powěsćow pśešaltowaś">
+<!ENTITY threadColumn2.tooltip "Powěsćowe nitki zwobrazniś">
+<!ENTITY fromColumn2.tooltip "Pó Wót sortěrowaś">
+<!ENTITY recipientColumn2.tooltip "Pó dostawarju sortěrowaś">
+<!ENTITY correspondentColumn2.tooltip "Pó wótpósłarjach sortěrowaś">
+<!ENTITY subjectColumn2.tooltip "Pó temje sortěrowaś">
+<!ENTITY dateColumn2.tooltip "Pó datumje sortěrowaś">
+<!ENTITY priorityColumn2.tooltip "Pó prioriśe sortěrowaś">
+<!ENTITY tagsColumn2.tooltip "Pó wobznamjenjach sortěrowaś">
+<!ENTITY accountColumn2.tooltip "Pó konśe sortěrowaś">
+<!ENTITY statusColumn2.tooltip "Pó statusu sortěrowaś">
+<!ENTITY sizeColumn2.tooltip "Pó wjelikosći sortěrowaś">
+<!ENTITY junkStatusColumn2.tooltip "Pó cajkowem statusu sortěrowaś">
+<!ENTITY unreadColumn2.tooltip "Licba njepśecytanych powěsćow w nitce">
+<!ENTITY totalColumn2.tooltip "Cełkowna licba powěsćow w nitce">
+<!ENTITY readColumn2.tooltip "Pó pśecytanych sortěrowaś">
+<!ENTITY receivedColumn2.tooltip "Pó datumje dostaśa sortěrowaś">
+<!ENTITY starredColumn2.tooltip "Pó gwězdku sortěrowaś">
+<!ENTITY locationColumn2.tooltip "Pó adresy sortěrowaś">
+<!ENTITY idColumn2.tooltip "Pó pórěźe dostawanja sortěrowaś">
+<!ENTITY attachmentColumn2.tooltip "Pó pśidankach sortěrowaś">
+
+<!ENTITY deleteColumn.tooltip "Powěsć lašowaś">
+
+<!-- Thread Pane Context Menu -->
+<!ENTITY contextNewMsgFromTemplate.label "Nowa powěsć z pśedłogi">
+<!ENTITY contextOpenNewWindow.label "Powěsć w nowem woknje wócyniś">
+<!ENTITY contextOpenNewWindow.accesskey "n">
+<!-- The contextOpenNewTab.accesskey ("T") potentially conflicts with
+     cutCmd.accessKey which is defined in textcontext.dtd from toolkit. Right
+     now, both menu items can't be visible at the same time, but should someone
+     enable copy/paste of message, this key would probably need to be changed. -->
+<!ENTITY contextOpenNewTab.label "Powěsć w nowem rejtariku wócyniś">
+<!ENTITY contextOpenNewTab.accesskey "r">
+<!ENTITY contextOpenConversation.label "Powěsć w konwersaciji wócyniś">
+<!ENTITY contextOpenConversation.accesskey "k">
+<!ENTITY contextOpenContainingFolder.label "Powěsć w jeje zarědniku wócyniś">
+<!ENTITY contextOpenContainingFolder.accesskey "z">
+<!ENTITY contextEditMsgAsNew.label "Ako nowu powěsć wobźěłaś">
+<!ENTITY contextEditMsgAsNew.accesskey "b">
+<!ENTITY contextEditDraftMsg.label "Nacerjenje powěsći wobźěłaś">
+<!ENTITY contextEditTemplate.label "Pśedłogu wobźěłaś">
+<!ENTITY contextEditTemplate.accesskey "P">
+<!ENTITY contextArchive.label "Archiw">
+<!ENTITY contextArchive.accesskey "h">
+<!ENTITY contextReplySender.label "Jano wótpósłarjeju wótegroniś">
+<!ENTITY contextReplySender.accesskey "J">
+<!ENTITY contextReplyNewsgroup2.label "Na diskusijnu kupku dalej pósrědniś">
+<!ENTITY contextReplyNewsgroup2.accesskey "d">
+<!ENTITY contextReplyAll.label "Wšym wótegroniś">
+<!ENTITY contextReplyAll.accesskey "w">
+<!ENTITY contextReplyList.label "Lisćinje wótegroniś">
+<!ENTITY contextReplyList.accesskey "L">
+<!ENTITY contextForward.label "Dalej pósrědniś">
+<!ENTITY contextForward.accesskey "l">
+<!ENTITY contextForwardAsMenu.label "Dalej pósrědniś ako">
+<!ENTITY contextForwardAsMenu.accesskey "l">
+<!ENTITY contextForwardAsInline.label "Zasajźony">
+<!ENTITY contextForwardAsInline.accesskey "Z">
+<!ENTITY contextForwardAsAttachmentItem.label "Pśidank">
+<!ENTITY contextForwardAsAttachmentItem.accesskey "d">
+<!ENTITY contextMultiForwardAsAttachment.label "Ako pśidanki dalej pósrědniś">
+<!ENTITY contextMultiForwardAsAttachment.accesskey "A">
+<!ENTITY contextMoveMsgMenu.label "Pśesunuś do">
+<!ENTITY contextMoveMsgMenu.accesskey "P">
+<!ENTITY contextMoveCopyMsgRecentMenu.label "Nejnowše">
+<!ENTITY contextMoveCopyMsgRecentMenu.accesskey "N">
+<!ENTITY contextMoveCopyMsgFavoritesMenu.label "Fawority">
+<!ENTITY contextMoveCopyMsgFavoritesMenu.accesskey "F">
+<!ENTITY contextCopyMsgMenu.label "Kopěrowaś do">
+<!ENTITY contextCopyMsgMenu.accesskey "K">
+<!ENTITY contextKillThreadMenu.label "Nitku ignorěrowaś">
+<!ENTITY contextKillSubthreadMenu.accesskey "d">
+<!ENTITY contextKillThreadMenu.accesskey "i">
+<!ENTITY contextKillSubthreadMenu.label "Pódnitku ignorěrowaś">
+<!ENTITY contextWatchThreadMenu.label "Nitku wobglědowaś">
+<!-- LOCALIZATION NOTE (contextWatchThreadMenu.accesskey):
+     In the en-US locale we ran out of access keys, so there is an empty access key for
+     Watch Thread. Localizers can pick a suitable key
+  -->
+<!ENTITY contextWatchThreadMenu.accesskey "">
+<!ENTITY contextSaveAs.label "Składowaś ako…">
+<!ENTITY contextSaveAs.accesskey "S">
+<!ENTITY contextPrint.label "Śišćaś…">
+<!ENTITY contextPrint.accesskey "i">
+<!ENTITY contextPrintPreview.label "Śišćarski pśeglěd">
+<!ENTITY contextPrintPreview.accesskey "e">
+
+<!-- LOCALIZATION NOTE (columnPicker.applyTo.label):
+     This option in the thread pane column picker pops up a sub-menu containing
+     the "columnPicker.applyToFolder.label" and
+     "columnPicker.applyToFolderAndChildren.label" options. This item indicates
+     a desire to apply the currently displayed set of columns to some other
+     folder(s). The sub-menu items indicate whether we want to apply it to just
+     a folder or also its children.
+  -->
+<!ENTITY columnPicker.applyTo.label "Słupy nałožyś na…">
+<!-- LOCALIZATION NOTE (columnPicker.applyToFolder.label):
+     This option in the thread pane column picker is found on a sub-menu beneath
+     the "columnPicker.applyTo.label" alongside
+     "columnPicker.applyToFolderAndChildren.label". It indicates a desire to
+     apply the currently display thread pane column settings to a single folder
+     that the user selects using the same widget as the move to/copy to
+     mechanism (via a series of popups).
+  -->
+<!ENTITY columnPicker.applyToFolder.label "Zarědnik…">
+<!-- LOCALIZATION NOTE (columnPicker.applyToFolderAndChildren.label):
+     This option in the thread pane column picker is found on a sub-menu beneath
+     the "columnPicker.applyTo.label" alongside
+     "columnPicker.applyToFolder.label". It indicates a desire to
+     apply the currently display thread pane column settings to a folder and all
+     of its descendents. The user selects the folder using the same widget as the
+     move to/copy to mechanism (via a series of popups).
+  -->
+<!ENTITY columnPicker.applyToFolderAndChildren.label "Zarědnik a jogo źiśi…">
+<!-- LOCALIZATION NOTE (columnPicker.thisFolder.label):
+     This is used in the folder selection widget for the
+     "columnPicker.applyToFolder.label" and
+     "columnPicker.applyToFolderAndChildren.label" menu options. Whenever
+     a folder has children, it results in a menu popup; the first menu item
+     in that popup is given this label to indicate that that folder should be
+     selected. For example, if folder "A" has two children, "B" and "C", then
+     when the user hovers over "A", a new popup menu will be displayed whose
+     items are "This folder", "B", and "C". This is the equivalent of the
+     "File here" option for the move to/copy to widget.
+  -->
+<!ENTITY columnPicker.thisFolder.label "Toś ten zarědnik">
+
+<!-- Media (video/audio) controls -->
+<!ENTITY contextPlay.label "Wótgraś">
+<!ENTITY contextPlay.accesskey "W">
+<!ENTITY contextPause.label "Zastajiś">
+<!ENTITY contextPause.accesskey "Z">
+<!ENTITY contextMute.label "Bźez zuka">
+<!ENTITY contextMute.accesskey "B">
+<!ENTITY contextUnmute.label "Ze zukom">
+<!ENTITY contextUnmute.accesskey "m">
+
+<!-- Quick Search Bar -->
+<!-- LOCALIZATION NOTE (quickSearchCmd.key):
+     This is actually the key used for the global message search box; we have
+     not changed
+  -->
+<!ENTITY quickSearchCmd.key "k">
+<!-- LOCALIZATION NOTE (search.label.base1):
+     This is the base of the empty text for the global search box. We replace
+     #1 with the contents of the appropriate search.keyLabel.* value for the
+     platform.
+     The goal is to convey to the user that typing in the box will allow them
+     to search for messages globally and that there is a hotkey they can press
+     to get to the box faster. If the global indexer is disabled, the search
+     box will be collapsed and the user will never see this message.
+  -->
+<!ENTITY search.label.base1 "Pytaś #1">
+<!-- LOCALIZATION NOTE (search.keyLabel.nonmac):
+     The description of the key-binding to get into the global search box on
+     windows and linux (which use the control key). We use the key defined in
+     the quickSearchCmd.key entity defined above, the letter should match it.
+  -->
+<!ENTITY search.keyLabel.nonmac "&lt;Strg+K&gt;">
+<!-- LOCALIZATION NOTE (search.keyLabel.mac):
+     The description of the key-binding to get into the global search box on mac
+     systems. We use the key defined in the quickSearchCmd.key entity defined
+     above, the letter should match it.
+  -->
+<!ENTITY search.keyLabel.mac "&lt;&#x2318;K&gt;">
+
+<!-- Message Header Context Menu -->
+<!ENTITY AddToAddressBook.label "Adresnikoju pśidaś…">
+<!ENTITY AddToAddressBook.accesskey "A">
+<!ENTITY AddDirectlyToAddressBook.label "Adresnikoju pśidaś">
+<!ENTITY AddDirectlyToAddressBook.accesskey "A">
+<!ENTITY EditContact1.label "Kontakt wobźěłaś">
+<!ENTITY EditContact1.accesskey "K">
+<!ENTITY ViewContact.label "Kontakt se woglědaś">
+<!ENTITY ViewContact.accesskey "l">
+<!ENTITY SubscribeToNewsgroup.label "Diskusijnu kupku aboněrowaś">
+<!ENTITY SubscribeToNewsgroup.accesskey "D">
+<!ENTITY SendMessageTo.label "Powěsć pisaś na">
+<!ENTITY SendMessageTo.accesskey "s">
+<!ENTITY CopyEmailAddress.label "E-mailowu adresu kopěrowaś">
+<!ENTITY CopyEmailAddress.accesskey "E">
+<!ENTITY CopyNameAndEmailAddress.label "Mě a e-mailowu adresu kopěrowaś">
+<!ENTITY CopyNameAndEmailAddress.accesskey "M">
+<!ENTITY CopyNewsgroupName.label "Mě diskusijneje kupki kopěrowaś">
+<!ENTITY CopyNewsgroupName.accesskey "M">
+<!ENTITY CopyNewsgroupURL.label "URL diskusijneje kupki kopěrowaś">
+<!ENTITY CopyNewsgroupURL.accesskey "U">
+<!ENTITY CreateFilterFrom.label "Filter napóraś z…">
+<!ENTITY CreateFilterFrom.accesskey "F">
+<!ENTITY reportPhishingURL.label "E-mailowu wobšudu k wěsći daś">
+<!ENTITY reportPhishingURL.accesskey "m">
+
+<!-- Spell checker context menu items -->
+<!ENTITY spellAddDictionaries.label "Słowniki pśidaś…">
+<!ENTITY spellAddDictionaries.accesskey "S">
+
+<!-- Content Pane Context Menu -->
+<!ENTITY saveLinkAsCmd.label "Wótkaz składowaś ako…">
+<!ENTITY saveLinkAsCmd.accesskey "t">
+<!ENTITY saveImageAsCmd.label "Wobraz składowaś ako…">
+<!ENTITY saveImageAsCmd.accesskey "b">
+<!ENTITY copyLinkCmd.label "Městno wótkaza kopěrowaś">
+<!ENTITY copyLinkCmd.accesskey "M">
+<!ENTITY copyImageAllCmd.label "Wobraz kopěrowaś">
+<!ENTITY copyImageAllCmd.accesskey "W">
+<!ENTITY copyEmailCmd.label "E-mailowu adresu kopěrowaś">
+<!ENTITY copyEmailCmd.accesskey "E">
+<!ENTITY stopCmd.label "Stoj">
+<!ENTITY stopCmd.accesskey "S">
+<!ENTITY reloadCmd.label "Znowego zacytaś">
+<!ENTITY reloadCmd.accesskey "Z">
+<!ENTITY openInBrowser.label "We wobglědowaku wócyniś">
+<!ENTITY openInBrowser.accesskey "o">
+<!ENTITY openLinkInBrowser.label "Wótkaz we wobglědowaku wócyniś">
+<!ENTITY openLinkInBrowser.accesskey "k">
+
+<!-- Statusbar -->
+<!ENTITY statusText.label "Gótowo">
+
+<!-- Mac OS X Window Menu -->
+<!ENTITY minimizeWindow.label "Miniměrowaś">
+<!ENTITY minimizeWindow.key "m">
+<!ENTITY bringAllToFront.label "Do prědka pśinjasć">
+<!ENTITY zoomWindow.label "Skalěrowanje">
+
+<!-- Mac OS X Application Menu (Cocoa widgets) -->
+<!ENTITY preferencesCmdMac2.label       "Nastajenja">
+<!ENTITY preferencesCmdMac.commandkey   ",">
+<!ENTITY preferencesCmdMac.modifiers    "accel">
+<!ENTITY servicesMenuMac.label          "Słužby">
+<!ENTITY hideThisAppCmdMac.label        "&brandShortName; schowaś">
+<!ENTITY hideThisAppCmdMac.commandkey   "H">
+<!ENTITY hideThisAppCmdMac.modifiers    "accel">
+<!ENTITY hideOtherAppsCmdMac.label      "Druge schowaś">
+<!ENTITY hideOtherAppsCmdMac.commandkey "H">
+<!ENTITY hideOtherAppsCmdMac.modifiers  "accel,alt">
+<!ENTITY showAllAppsCmdMac.label        "Wšykne pokazaś">
+
+<!-- Mac OS X Dock Icon pop-up menu -->
+<!ENTITY dockOptions.label              "Nastajenja nałožeńskich symbolow…">
+<!ENTITY writeNewMessageDock.label      "Nowu powěsć pisaś">
+<!ENTITY openAddressBookDock.label      "Adresnik wócyniś">
+
+<!-- Content tab Navigation buttons -->
+<!ENTITY browseBackButton.tooltip    "Jaden bok slědk">
+<!ENTITY browseForwardButton.tooltip "Jaden bok doprědka">

@@ -11,7 +11,6 @@
 #include "mozilla/Preferences.h"
 #include "mozilla/StartupTimeline.h"
 #include "mozilla/dom/Document.h"
-#include "nsAutoPtr.h"
 #include "nsGfxCIID.h"
 #include "nsView.h"
 #include "nsCOMPtr.h"
@@ -26,7 +25,6 @@
 #include "nsLayoutUtils.h"
 #include "Layers.h"
 #include "gfxPlatform.h"
-#include "gfxPrefs.h"
 
 /**
    XXX TODO XXX
@@ -172,16 +170,22 @@ void nsViewManager::GetWindowDimensions(nscoord* aWidth, nscoord* aHeight) {
   }
 }
 
-void nsViewManager::DoSetWindowDimensions(nscoord aWidth, nscoord aHeight) {
+void nsViewManager::DoSetWindowDimensions(nscoord aWidth, nscoord aHeight,
+                                          bool aDoReflow) {
   nsRect oldDim = mRootView->GetDimensions();
   nsRect newDim(0, 0, aWidth, aHeight);
   // We care about resizes even when one dimension is already zero.
-  if (!oldDim.IsEqualEdges(newDim)) {
-    // Don't resize the widget. It is already being set elsewhere.
-    mRootView->SetDimensions(newDim, true, false);
-    if (RefPtr<PresShell> presShell = mPresShell) {
-      presShell->ResizeReflow(aWidth, aHeight, oldDim.Width(), oldDim.Height());
+  if (oldDim.IsEqualEdges(newDim)) {
+    return;
+  }
+  // Don't resize the widget. It is already being set elsewhere.
+  mRootView->SetDimensions(newDim, true, false);
+  if (RefPtr<PresShell> presShell = mPresShell) {
+    auto options = ResizeReflowOptions::NoOption;
+    if (!aDoReflow) {
+      options |= ResizeReflowOptions::SuppressReflow;
     }
+    presShell->ResizeReflow(aWidth, aHeight, options);
   }
 }
 
@@ -214,7 +218,7 @@ void nsViewManager::SetWindowDimensions(nscoord aWidth, nscoord aHeight,
         FlushDelayedResize(false);
       }
       mDelayedResize.SizeTo(NSCOORD_NONE, NSCOORD_NONE);
-      DoSetWindowDimensions(aWidth, aHeight);
+      DoSetWindowDimensions(aWidth, aHeight, /* aDoReflow = */ true);
     } else {
       mDelayedResize.SizeTo(aWidth, aHeight);
       if (mPresShell) {
@@ -227,15 +231,9 @@ void nsViewManager::SetWindowDimensions(nscoord aWidth, nscoord aHeight,
 
 void nsViewManager::FlushDelayedResize(bool aDoReflow) {
   if (mDelayedResize != nsSize(NSCOORD_NONE, NSCOORD_NONE)) {
-    if (aDoReflow) {
-      DoSetWindowDimensions(mDelayedResize.width, mDelayedResize.height);
-      mDelayedResize.SizeTo(NSCOORD_NONE, NSCOORD_NONE);
-    } else if (mPresShell && !mPresShell->GetIsViewportOverridden()) {
-      nsPresContext* presContext = mPresShell->GetPresContext();
-      if (presContext) {
-        presContext->SetVisibleArea(nsRect(nsPoint(0, 0), mDelayedResize));
-      }
-    }
+    DoSetWindowDimensions(mDelayedResize.width, mDelayedResize.height,
+                          aDoReflow);
+    mDelayedResize.SizeTo(NSCOORD_NONE, NSCOORD_NONE);
   }
 }
 
@@ -1018,6 +1016,11 @@ void nsViewManager::ProcessPendingUpdates() {
     CallWillPaintOnObservers();
 
     ProcessPendingUpdatesForView(mRootView, true);
+    if (mPresShell) {
+      if (nsPresContext* pc = mPresShell->GetPresContext()) {
+        pc->RefreshDriver()->ClearHasScheduleFlush();
+      }
+    }
   }
 }
 

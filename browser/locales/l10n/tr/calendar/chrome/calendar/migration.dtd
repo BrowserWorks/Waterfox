@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migration.title "&brandFullName;: Veri İçe Aktarma">
+<!ENTITY migration.welcome "Hoş geldiniz">
+<!ENTITY migration.importing "İçe aktarılıyor">
+<!ENTITY migration.list.description "&brandShortName; birçok popüler uygulamadaki takvim verilerinizi içe aktarabilir. Bilgisayarınızda aşağıdaki uygulamalara ait veriler bulundu. Lütfen hangilerinden veri aktarmak istediğinizi seçin.">
+<!ENTITY migration.progress.description "Seçilen veriler içe aktarılıyor">

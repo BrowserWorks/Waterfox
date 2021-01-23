@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "Властивості таблиці">
+<!ENTITY applyButton.label                "Застосувати">
+<!ENTITY applyButton.accesskey            "З">
+<!ENTITY closeButton.label                "Закрити">
+<!ENTITY tableTab.label                   "Таблиця">
+<!ENTITY cellTab.label                    "Клітинки табл.">
+<!ENTITY tableRows.label                  "Рядки:">
+<!ENTITY tableRows.accessKey              "Р">
+<!ENTITY tableColumns.label               "Стовпці:">
+<!ENTITY tableColumns.accessKey           "т">
+<!ENTITY tableHeight.label                "Висота:">
+<!ENTITY tableHeight.accessKey            "В">
+<!ENTITY tableWidth.label                 "Ширина:">
+<!ENTITY tableWidth.accessKey             "Ш">
+<!ENTITY tableBorderSpacing.label         "Рамки і поля">
+<!ENTITY tableBorderWidth.label           "Рамка:">
+<!ENTITY tableBorderWidth.accessKey       "м">
+<!ENTITY tableSpacing.label               "Поля:">
+<!ENTITY tableSpacing.accessKey           "П">
+<!ENTITY tablePadding.label               "Внутрішній відступ:">
+<!ENTITY tablePadding.accessKey           "л">
+<!ENTITY tablePxBetwCells.label           "пікселів між клітинками">
+<!ENTITY tablePxBetwBrdrCellContent.label "пікселів між межею клітинки табл. і її вмістом">
+<!ENTITY tableAlignment.label             "Вирівнювання таблиці:">
+<!ENTITY tableAlignment.accessKey         "и">
+<!ENTITY tableCaption.label               "Заголовок:">
+<!ENTITY tableCaption.accessKey           "З">
+<!ENTITY tableCaptionAbove.label          "Над таблицею">
+<!ENTITY tableCaptionBelow.label          "Під таблицею">
+<!ENTITY tableCaptionLeft.label           "Зліва від таблиці">
+<!ENTITY tableCaptionRight.label          "Праворуч від таблиці">
+<!ENTITY tableCaptionNone.label           "Немає">
+<!ENTITY tableInheritColor.label           "(Буде видний фон сторінки)">
+
+<!ENTITY cellSelection.label              "Виділення">
+<!ENTITY cellSelectCell.label             "Клітинок">
+<!ENTITY cellSelectRow.label              "Строки">
+<!ENTITY cellSelectColumn.label           "Стовпців">
+<!ENTITY cellSelectNext.label             "Наступної">
+<!ENTITY cellSelectNext.accessKey         "Н">
+<!ENTITY cellSelectPrevious.label         "Попередньої">
+<!ENTITY cellSelectPrevious.accessKey     "П">
+<!ENTITY applyBeforeChange.label          "Поточні зміни будуть застосовані перед перетворенням виділення.">
+<!ENTITY cellContentAlignment.label       "Вирівнювання вмісту">
+<!ENTITY cellHorizontal.label             "Горизонтальне:">
+<!ENTITY cellHorizontal.accessKey         "Г">
+<!ENTITY cellVertical.label               "Вертикальне:">
+<!ENTITY cellVertical.accessKey           "В">
+<!ENTITY cellStyle.label                  "Стиль клітинки:">
+<!ENTITY cellStyle.accessKey              "С">
+<!ENTITY cellNormal.label                 "Звичайний">
+<!ENTITY cellHeader.label                 "Заголовок">
+<!ENTITY cellTextWrap.label               "Розбиття тексту на рядки:">
+<!ENTITY cellTextWrap.accessKey           "Р">
+<!ENTITY cellWrap.label                   "Розбити на рядки">
+<!ENTITY cellNoWrap.label                 "Не розбивати на рядки">
+<!ENTITY cellAlignTop.label               "Вгорі">
+<!ENTITY cellAlignMiddle.label            "Посередині">
+<!ENTITY cellAlignBottom.label            "Внизу">
+<!ENTITY cellAlignJustify.label           "Щодо інших об’єктів">
+<!ENTITY cellInheritColor.label           "(Буде видний фон таблиці)">
+<!ENTITY cellUseCheckboxHelp.label        "Встановіть прапорці, щоб визначити, які властивості будуть застосовані до всіх вибраних осередків">
+
+<!-- Used in both Table and Cell panels  -->
+<!ENTITY size.label                       "Размір">
+<!ENTITY pixels.label                     "пікселів">
+<!ENTITY backgroundColor.label            "Колір фону:">
+<!ENTITY backgroundColor.accessKey        "К">
+<!ENTITY AlignLeft.label                  "Вліво">
+<!ENTITY AlignCenter.label                "По центру">
+<!ENTITY AlignRight.label                 "Вправо">

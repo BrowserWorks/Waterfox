@@ -15,9 +15,10 @@ EXPORTS.mozilla.ipc += [
     'BackgroundUtils.h',
     'BrowserProcessSubThread.h',
     'ByteBuf.h',
+    'ByteBufUtils.h',
     'CrashReporterClient.h',
+    'CrashReporterHelper.h',
     'CrashReporterHost.h',
-    'CrashReporterMetadataShmem.h',
     'CrossProcessMutex.h',
     'CrossProcessSemaphore.h',
     'EnvironmentMap.h',
@@ -26,6 +27,8 @@ EXPORTS.mozilla.ipc += [
     'FileDescriptorSetParent.h',
     'FileDescriptorUtils.h',
     'GeckoChildProcessHost.h',
+    'IdleSchedulerChild.h',
+    'IdleSchedulerParent.h',
     'InProcessChild.h',
     'InProcessParent.h',
     'InputStreamUtils.h',
@@ -35,6 +38,7 @@ EXPORTS.mozilla.ipc += [
     'IPCStreamSource.h',
     'IPCStreamUtils.h',
     'IPDLParamTraits.h',
+    'LibrarySandboxPreload.h',
     'MessageChannel.h',
     'MessageLink.h',
     'Neutering.h',
@@ -44,8 +48,10 @@ EXPORTS.mozilla.ipc += [
     'SharedMemory.h',
     'SharedMemoryBasic.h',
     'Shmem.h',
+    'TaintingIPCUtils.h',
     'TaskFactory.h',
     'Transport.h',
+    'TransportSecurityInfoUtils.h',
     'URIUtils.h',
     'WindowsMessageLoop.h',
 ]
@@ -145,12 +151,11 @@ UNIFIED_SOURCES += [
     'BrowserProcessSubThread.cpp',
     'CrashReporterClient.cpp',
     'CrashReporterHost.cpp',
-    'CrashReporterMetadataShmem.cpp',
     'FileDescriptor.cpp',
     'FileDescriptorUtils.cpp',
-    'InProcessChild.cpp',
+    'IdleSchedulerChild.cpp',
+    'IdleSchedulerParent.cpp',
     'InProcessImpl.cpp',
-    'InProcessParent.cpp',
     'InputStreamUtils.cpp',
     'IPCMessageUtils.cpp',
     'IPCStreamChild.cpp',
@@ -158,6 +163,7 @@ UNIFIED_SOURCES += [
     'IPCStreamParent.cpp',
     'IPCStreamSource.cpp',
     'IPCStreamUtils.cpp',
+    'LibrarySandboxPreload.cpp',
     'MessageChannel.cpp',
     'MessageLink.cpp',
     'MessagePump.cpp',
@@ -168,6 +174,7 @@ UNIFIED_SOURCES += [
     'SharedMemory.cpp',
     'Shmem.cpp',
     'StringUtil.cpp',
+    'TransportSecurityInfoUtils.cpp',
     'URIUtils.cpp',
 ]
 
@@ -196,6 +203,7 @@ LOCAL_INCLUDES += [
     '/dom/storage',
     '/media/webrtc/trunk',
     '/media/webrtc/trunk/webrtc',
+    '/netwerk/base',
     '/xpcom/build',
 ]
 
@@ -207,11 +215,27 @@ IPDL_SOURCES = [
     'PBackgroundTest.ipdl',
     'PChildToParentStream.ipdl',
     'PFileDescriptorSet.ipdl',
+    'PIdleScheduler.ipdl',
     'PInProcess.ipdl',
     'PParentToChildStream.ipdl',
     'ProtocolTypes.ipdlh',
     'URIParams.ipdlh',
 ]
+
+if CONFIG['MOZ_ENABLE_FORKSERVER']:
+    EXPORTS.mozilla.ipc += [
+        'ForkServer.h',
+        'ForkServiceChild.h',
+        'MiniTransceiver.h',
+    ]
+    UNIFIED_SOURCES += [
+        'ForkServer.cpp',
+        'ForkServiceChild.cpp',
+        'MiniTransceiver.cpp',
+    ]
+    XPCOM_MANIFESTS += [
+        'components.conf',
+    ]
 
 LOCAL_INCLUDES += [
     '/dom/ipc',

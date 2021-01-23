@@ -9,7 +9,6 @@
 #include "nsIOfflineCacheUpdate.h"
 
 #include "nsCOMPtr.h"
-#include "nsAutoPtr.h"
 #include "nsString.h"
 #include "nsWeakReference.h"
 #include "mozilla/Attributes.h"
@@ -39,6 +38,10 @@ namespace docshell {
   NS_IMETHOD GetUpdateDomain(nsACString& aUpdateDomain) override {             \
     return !_to ? NS_ERROR_NULL_POINTER : _to->GetUpdateDomain(aUpdateDomain); \
   }                                                                            \
+  NS_IMETHOD GetLoadingPrincipal(nsIPrincipal** aLoadingPrincipal) override {  \
+    return !_to ? NS_ERROR_NULL_POINTER                                        \
+                : _to->GetLoadingPrincipal(aLoadingPrincipal);                 \
+  }                                                                            \
   NS_IMETHOD GetManifestURI(nsIURI** aManifestURI) override {                  \
     return !_to ? NS_ERROR_NULL_POINTER : _to->GetManifestURI(aManifestURI);   \
   }                                                                            \
@@ -48,10 +51,10 @@ namespace docshell {
   NS_IMETHOD InitPartial(nsIURI* aManifestURI, const nsACString& aClientID,    \
                          nsIURI* aDocumentURI,                                 \
                          nsIPrincipal* aLoadingPrincipal,                      \
-                         nsICookieSettings* aCookieSettings) override {        \
+                         nsICookieJarSettings* aCookieJarSettings) override {  \
     return !_to ? NS_ERROR_NULL_POINTER                                        \
                 : _to->InitPartial(aManifestURI, aClientID, aDocumentURI,      \
-                                   aLoadingPrincipal, aCookieSettings);        \
+                                   aLoadingPrincipal, aCookieJarSettings);     \
   }                                                                            \
   NS_IMETHOD InitForUpdateCheck(nsIURI* aManifestURI,                          \
                                 nsIPrincipal* aLoadingPrincipal,               \
@@ -112,7 +115,7 @@ class OfflineCacheUpdateGlue final : public nsSupportsWeakReference,
   RefPtr<mozilla::dom::Document> mDocument;
   nsCOMPtr<nsIURI> mDocumentURI;
   nsCOMPtr<nsIPrincipal> mLoadingPrincipal;
-  nsCOMPtr<nsICookieSettings> mCookieSettings;
+  nsCOMPtr<nsICookieJarSettings> mCookieJarSettings;
 };
 
 }  // namespace docshell

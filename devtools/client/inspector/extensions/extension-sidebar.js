@@ -10,17 +10,22 @@ const {
 } = require("devtools/client/shared/vendor/react");
 const EventEmitter = require("devtools/shared/event-emitter");
 const { Provider } = require("devtools/client/shared/vendor/react-redux");
-const ObjectClient = require("devtools/shared/client/object-client");
+
+const extensionsSidebarReducer = require("devtools/client/inspector/extensions/reducers/sidebar");
+const {
+  default: objectInspectorReducer,
+} = require("devtools/client/debugger/packages/devtools-reps/src/object-inspector/reducer");
+
 const ExtensionSidebarComponent = createFactory(
-  require("./components/ExtensionSidebar")
+  require("devtools/client/inspector/extensions/components/ExtensionSidebar")
 );
 
 const {
   updateExtensionPage,
   updateObjectTreeView,
-  updateObjectValueGripView,
+  updateExpressionResultView,
   removeExtensionSidebar,
-} = require("./actions/sidebar");
+} = require("devtools/client/inspector/extensions/actions/sidebar");
 
 /**
  * ExtensionSidebar instances represents Inspector sidebars installed by add-ons
@@ -46,8 +51,10 @@ class ExtensionSidebar {
     this.store = inspector.store;
     this.id = id;
     this.title = title;
-
     this.destroyed = false;
+
+    this.store.injectReducer("extensionsSidebar", extensionsSidebarReducer);
+    this.store.injectReducer("objectInspector", objectInspectorReducer);
   }
 
   /**
@@ -71,37 +78,27 @@ class ExtensionSidebar {
             this.emit("extension-page-unmount", containerEl);
           },
           serviceContainer: {
-            createObjectClient: object => {
-              return new ObjectClient(
-                this.inspector.toolbox.target.client,
-                object
-              );
-            },
-            releaseActor: actor => {
-              if (!actor) {
-                return;
-              }
-              this.inspector.toolbox.target.client.release(actor);
-            },
             highlightDomElement: async (grip, options = {}) => {
-              const { highlighter } = this.inspector;
-              const nodeFront = await this.inspector.walker.gripToNodeFront(
+              const nodeFront = await this.inspector.inspectorFront.getNodeFrontFromNodeGrip(
                 grip
               );
-              return highlighter.highlight(nodeFront, options);
+              return nodeFront.highlighterFront.highlight(nodeFront, options);
             },
-            unHighlightDomElement: (forceHide = false) => {
-              const { highlighter } = this.inspector;
-              return highlighter.unhighlight(forceHide);
+            unHighlightDomElement: async grip => {
+              const nodeFront = await this.inspector.inspectorFront.getNodeFrontFromNodeGrip(
+                grip
+              );
+              return nodeFront.highlighterFront.unhighlight();
             },
             openNodeInInspector: async grip => {
-              const { walker } = this.inspector;
-              const front = await walker.gripToNodeFront(grip);
+              const nodeFront = await this.inspector.inspectorFront.getNodeFrontFromNodeGrip(
+                grip
+              );
               const onInspectorUpdated = this.inspector.once(
                 "inspector-updated"
               );
               const onNodeFrontSet = this.inspector.toolbox.selection.setNodeFront(
-                front,
+                nodeFront,
                 {
                   reason: "inspector-extension-sidebar",
                 }
@@ -162,7 +159,7 @@ class ExtensionSidebar {
    * ObjectPreview React Component, which shows the passed value grip
    * in the sidebar.
    */
-  setObjectValueGrip(objectValueGrip, rootTitle) {
+  setExpressionResult(expressionResult, rootTitle) {
     if (this.removed) {
       throw new Error(
         "Unable to set an object preview on a removed ExtensionSidebar"
@@ -170,7 +167,7 @@ class ExtensionSidebar {
     }
 
     this.store.dispatch(
-      updateObjectValueGripView(this.id, objectValueGrip, rootTitle)
+      updateExpressionResultView(this.id, expressionResult, rootTitle)
     );
   }
 

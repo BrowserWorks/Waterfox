@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Account manager window for Instantbird -->
+<!ENTITY accounts.title                      "חשבונות - &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "מצב הודעות מיידיות">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "חשבון חדש">
+<!ENTITY accountManager.newAccount.accesskey "ח">
+<!ENTITY accountManager.close.label          "סגירה">
+<!ENTITY accountManager.close.accesskey      "ס">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "ח">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "טרם הוגדרו חשבונות">
+<!ENTITY accountManager.noAccount.description "יש ללחוץ על הכפתור &accountManager.newAccount.label; כדי לאפשר ל־&brandShortName; להנחות אותך בתהליך ההגדרה של אחד כזה.">
+<!ENTITY account.autoSignOn.label     "התחברות עם הכניסה">
+<!ENTITY account.autoSignOn.accesskey "כ">
+<!ENTITY account.connect.label        "התחברות">
+<!ENTITY account.connect.accesskey    "ח">
+<!ENTITY account.disconnect.label     "ניתוק">
+<!ENTITY account.disconnect.accesskey "נ">
+<!ENTITY account.delete.label         "מחיקה">
+<!ENTITY account.delete.accesskey     "ח">
+<!ENTITY account.edit.label           "מאפיינים">
+<!ENTITY account.edit.accesskey       "א">
+<!ENTITY account.moveup.label         "להזיז מעלה">
+<!ENTITY account.movedown.label       "להזיז מטה">
+<!ENTITY account.cancelReconnection.label         "ביטול התחברות מחדש">
+<!ENTITY account.cancelReconnection.accesskey     "ב">
+<!ENTITY account.copyDebugLog.label     "העתקת רישום ניפוי שגיאות">
+<!ENTITY account.copyDebugLog.accesskey "ע">
+<!ENTITY account.showDebugLog.label     "הצגת רישום ניפוי שגיאות">
+<!ENTITY account.showDebugLog.accesskey "צ">
+<!ENTITY account.connecting           "מתבצעת התחברות…">
+<!ENTITY account.disconnecting        "מתבצע ניתוק…">
+<!ENTITY account.disconnected         "לא מחובר">

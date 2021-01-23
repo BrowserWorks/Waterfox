@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Seleksielys-eienskappe">
+
+<!ENTITY Select.label "Seleksielys">
+<!ENTITY SelectName.label "Lysnaam:">
+<!ENTITY SelectName.accesskey "n">
+<!ENTITY SelectSize.label "Hoogte:">
+<!ENTITY SelectSize.accesskey "H">
+<!ENTITY SelectMultiple.label "Meervoudige seleksie">
+<!ENTITY SelectMultiple.accesskey "M">
+<!ENTITY SelectDisabled.label "Gedeaktiveer">
+<!ENTITY SelectDisabled.accesskey "G">
+<!ENTITY SelectTabIndex.label "Oortjie-indeks:">
+<!ENTITY SelectTabIndex.accesskey "i">
+
+<!ENTITY OptGroup.label "Opsiegroep">
+<!ENTITY OptGroupLabel.label "Etiket:">
+<!ENTITY OptGroupLabel.accesskey "E">
+<!ENTITY OptGroupDisabled.label "Gedeaktiveer">
+<!ENTITY OptGroupDisabled.accesskey "G">
+
+<!ENTITY Option.label "Opsie">
+<!ENTITY OptionText.label "Teks:">
+<!ENTITY OptionText.accesskey "T">
+<!ENTITY OptionValue.label "Waarde:">
+<!ENTITY OptionValue.accesskey "W">
+<!ENTITY OptionSelected.label "Aanvanklik gekies">
+<!ENTITY OptionSelected.accesskey "g">
+<!ENTITY OptionDisabled.label "Gedeaktiveer">
+<!ENTITY OptionDisabled.accesskey "G">
+
+<!ENTITY TextHeader.label "Teks">
+<!ENTITY ValueHeader.label "Waarde">
+<!ENTITY SelectedHeader.label "Gekies">
+
+<!ENTITY AddOption.label "Voeg opsie by">
+<!ENTITY AddOption.accesskey "o">
+<!ENTITY AddOptGroup.label "Voeg groep by">
+<!ENTITY AddOptGroup.accesskey "g">
+<!ENTITY RemoveElement.label "Verwyder">
+<!ENTITY RemoveElement.accesskey "V">
+<!ENTITY MoveElementUp.label "Skuif op">
+<!ENTITY MoveElementUp.accesskey "o">
+<!ENTITY MoveElementDown.label "Skuif af">
+<!ENTITY MoveElementDown.accesskey "a">

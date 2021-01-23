@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Perzhioù ar rolloù diuzañ">
+
+<!ENTITY Select.label "Roll diuzañ">
+<!ENTITY SelectName.label "Anv ar roll:">
+<!ENTITY SelectName.accesskey "A">
+<!ENTITY SelectSize.label "Uhelder:">
+<!ENTITY SelectSize.accesskey "U">
+<!ENTITY SelectMultiple.label "Diuz stroll">
+<!ENTITY SelectMultiple.accesskey "D">
+<!ENTITY SelectDisabled.label "Diweredekaet">
+<!ENTITY SelectDisabled.accesskey "i">
+<!ENTITY SelectTabIndex.label "Menegva taolennata:">
+<!ENTITY SelectTabIndex.accesskey "M">
+
+<!ENTITY OptGroup.label "Strollad dibarzhioù">
+<!ENTITY OptGroupLabel.label "Skritellig:">
+<!ENTITY OptGroupLabel.accesskey "S">
+<!ENTITY OptGroupDisabled.label "Diweredekaet">
+<!ENTITY OptGroupDisabled.accesskey "i">
+
+<!ENTITY Option.label "Dibarzh">
+<!ENTITY OptionText.label "Testenn:">
+<!ENTITY OptionText.accesskey "T">
+<!ENTITY OptionValue.label "Talvoud:">
+<!ENTITY OptionValue.accesskey "a">
+<!ENTITY OptionSelected.label "Diuz da gentañ">
+<!ENTITY OptionSelected.accesskey "D">
+<!ENTITY OptionDisabled.label "Diweredekaet">
+<!ENTITY OptionDisabled.accesskey "i">
+
+<!ENTITY TextHeader.label "Testenn">
+<!ENTITY ValueHeader.label "Talvoud">
+<!ENTITY SelectedHeader.label "Diuz">
+
+<!ENTITY AddOption.label "Ouzhpennañ un dibarzh">
+<!ENTITY AddOption.accesskey "O">
+<!ENTITY AddOptGroup.label "Ouzhpennañ ur strollad">
+<!ENTITY AddOptGroup.accesskey "u">
+<!ENTITY RemoveElement.label "Dilemel">
+<!ENTITY RemoveElement.accesskey "l">
+<!ENTITY MoveElementUp.label "Kas e krec'h">
+<!ENTITY MoveElementUp.accesskey "K">
+<!ENTITY MoveElementDown.label "Kas en traoñ">
+<!ENTITY MoveElementDown.accesskey "a">

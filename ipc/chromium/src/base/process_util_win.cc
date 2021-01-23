@@ -13,12 +13,18 @@
 #include <windows.h>
 #include <winternl.h>
 #include <psapi.h>
+#include <io.h>
+#ifndef STDOUT_FILENO
+#  define STDOUT_FILENO 1
+#endif
 
 #include "base/histogram.h"
 #include "base/logging.h"
 #include "base/win_util.h"
 
 #include <algorithm>
+#include <stdio.h>
+#include <stdlib.h>
 
 namespace {
 
@@ -306,7 +312,7 @@ bool LaunchApp(const std::wstring& cmdline, const LaunchOptions& options,
   ZeroMemory(&startup_info_ex, sizeof(startup_info_ex));
   STARTUPINFO& startup_info = startup_info_ex.StartupInfo;
   startup_info.cb = sizeof(startup_info);
-  startup_info.dwFlags = STARTF_USESHOWWINDOW;
+  startup_info.dwFlags = STARTF_USESHOWWINDOW | STARTF_FORCEOFFFEEDBACK;
   startup_info.wShowWindow = options.start_hidden ? SW_HIDE : SW_SHOW;
 
   // Per the comment in CreateThreadAttributeList, lpAttributeList will contain
@@ -386,6 +392,16 @@ bool LaunchApp(const CommandLine& cl, const LaunchOptions& options,
 }
 
 bool KillProcess(ProcessHandle process, int exit_code, bool wait) {
+  // INVALID_HANDLE_VALUE is not actually an invalid handle value, but
+  // instead is the value returned by GetCurrentProcess().  nullptr,
+  // in contrast, *is* an invalid handle value.  Both values are too
+  // easy to accidentally try to kill, and neither is legitimately
+  // used by this function's callers, so reject them.
+  if (!process || process == INVALID_HANDLE_VALUE) {
+    CHROMIUM_LOG(WARNING)
+        << "base::KillProcess refusing to terminate process handle " << process;
+    return false;
+  }
   bool result = (TerminateProcess(process, exit_code) != FALSE);
   if (result && wait) {
     // The process may not end immediately due to pending I/O
@@ -429,3 +445,35 @@ bool DidProcessCrash(bool* child_exited, ProcessHandle handle) {
 }
 
 }  // namespace base
+
+namespace mozilla {
+
+EnvironmentLog::EnvironmentLog(const char* varname, size_t len) {
+  wchar_t wvarname[len];
+  std::copy(varname, varname + len, wvarname);
+  const wchar_t* e = _wgetenv(wvarname);
+  if (e && *e) {
+    fname_ = e;
+  }
+}
+
+void EnvironmentLog::print(const char* format, ...) {
+  if (!fname_.size()) return;
+
+  FILE* f;
+  if (fname_.compare(L"-") == 0) {
+    f = fdopen(dup(STDOUT_FILENO), "a");
+  } else {
+    f = _wfopen(fname_.c_str(), L"a");
+  }
+
+  if (!f) return;
+
+  va_list a;
+  va_start(a, format);
+  vfprintf(f, format, a);
+  va_end(a);
+  fclose(f);
+}
+
+}  // namespace mozilla

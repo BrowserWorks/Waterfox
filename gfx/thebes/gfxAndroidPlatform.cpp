@@ -12,6 +12,7 @@
 #include "mozilla/intl/LocaleService.h"
 #include "mozilla/intl/OSPreferences.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/StaticPrefs_gfx.h"
 
 #include "gfx2DGlue.h"
 #include "gfxFT2FontList.h"
@@ -19,10 +20,8 @@
 #include "gfxTextRun.h"
 #include "nsXULAppAPI.h"
 #include "nsIScreen.h"
-#include "nsIScreenManager.h"
 #include "nsServiceManagerUtils.h"
 #include "nsUnicodeProperties.h"
-#include "gfxPrefs.h"
 #include "cairo.h"
 #include "VsyncSource.h"
 
@@ -30,7 +29,7 @@
 #include FT_FREETYPE_H
 #include FT_MODULE_H
 
-#include "GeneratedJNINatives.h"
+#include "mozilla/java/VsyncSourceNatives.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -93,7 +92,7 @@ gfxAndroidPlatform::gfxAndroidPlatform() {
   mOffscreenFormat = GetScreenDepth() == 16 ? SurfaceFormat::R5G6B5_UINT16
                                             : SurfaceFormat::X8R8G8B8_UINT32;
 
-  if (gfxPrefs::AndroidRGB16Force()) {
+  if (StaticPrefs::gfx_android_rgb16_force_AtStartup()) {
     mOffscreenFormat = SurfaceFormat::R5G6B5_UINT16;
   }
 }
@@ -123,7 +122,7 @@ static bool IsJapaneseLocale() {
     sInitialized = true;
 
     nsAutoCString appLocale;
-    LocaleService::GetInstance()->GetAppLocaleAsLangTag(appLocale);
+    LocaleService::GetInstance()->GetAppLocaleAsBCP47(appLocale);
 
     const nsDependentCSubstring lang(appLocale, 0, 2);
     if (lang.EqualsLiteral("ja")) {
@@ -225,11 +224,6 @@ void gfxAndroidPlatform::GetCommonFallbackFonts(
   aFontList.AppendElement("Droid Sans Fallback");
 }
 
-void gfxAndroidPlatform::GetSystemFontList(
-    InfallibleTArray<FontListEntry>* retValue) {
-  gfxFT2FontList::PlatformFontList()->GetSystemFontList(retValue);
-}
-
 gfxPlatformFontList* gfxAndroidPlatform::CreatePlatformFontList() {
   gfxPlatformFontList* list = new gfxFT2FontList();
   if (NS_SUCCEEDED(list->InitFontList())) {
@@ -239,15 +233,10 @@ gfxPlatformFontList* gfxAndroidPlatform::CreatePlatformFontList() {
   return nullptr;
 }
 
-gfxFontGroup* gfxAndroidPlatform::CreateFontGroup(
-    const FontFamilyList& aFontFamilyList, const gfxFontStyle* aStyle,
-    gfxTextPerfMetrics* aTextPerf, gfxUserFontSet* aUserFontSet,
-    gfxFloat aDevToCssSize) {
-  return new gfxFontGroup(aFontFamilyList, aStyle, aTextPerf, aUserFontSet,
-                          aDevToCssSize);
+void gfxAndroidPlatform::ReadSystemFontList(
+    nsTArray<SystemFontListEntry>* aFontList) {
+  gfxFT2FontList::PlatformFontList()->ReadSystemFontList(aFontList);
 }
-
-FT_Library gfxAndroidPlatform::GetFTLibrary() { return gPlatformFTLibrary; }
 
 bool gfxAndroidPlatform::FontHintingEnabled() {
   // In "mobile" builds, we sometimes use non-reflow-zoom, so we
@@ -359,8 +348,8 @@ class AndroidVsyncSource final : public VsyncSource {
   virtual ~AndroidVsyncSource() = default;
 
   static Display& GetDisplayInstance() {
-    static Display globalDisplay;
-    return globalDisplay;
+    static RefPtr<Display> globalDisplay = new Display();
+    return *globalDisplay;
   }
 };
 

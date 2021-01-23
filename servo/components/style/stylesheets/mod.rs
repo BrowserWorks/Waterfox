@@ -40,7 +40,7 @@ use std::fmt;
 use std::mem::{self, ManuallyDrop};
 use style_traits::ParsingMode;
 #[cfg(feature = "gecko")]
-use to_shmem::{SharedMemoryBuilder, ToShmem};
+use to_shmem::{self, SharedMemoryBuilder, ToShmem};
 
 pub use self::counter_style_rule::CounterStyleRule;
 pub use self::document_rule::DocumentRule;
@@ -58,15 +58,21 @@ pub use self::rule_parser::{InsertRuleContext, State, TopLevelRuleParser};
 pub use self::rules_iterator::{AllRules, EffectiveRules};
 pub use self::rules_iterator::{NestedRuleIterationCondition, RulesIterator};
 pub use self::style_rule::StyleRule;
+pub use self::stylesheet::{AllowImportRules, SanitizationData, SanitizationKind};
 pub use self::stylesheet::{DocumentStyleSheet, Namespaces, Stylesheet};
 pub use self::stylesheet::{StylesheetContents, StylesheetInDocument, UserAgentStylesheets};
-pub use self::stylesheet::{SanitizationData, SanitizationKind};
 pub use self::supports_rule::SupportsRule;
 pub use self::viewport_rule::ViewportRule;
 
-/// Extra data that the backend may need to resolve url values.
-#[cfg(not(feature = "gecko"))]
-pub type UrlExtraData = ::servo_url::ServoUrl;
+/// The CORS mode used for a CSS load.
+#[repr(u8)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, ToShmem)]
+pub enum CorsMode {
+    /// No CORS mode, so cross-origin loads can be done.
+    None,
+    /// Anonymous CORS request.
+    Anonymous,
+}
 
 /// Extra data that the backend may need to resolve url values.
 ///
@@ -83,7 +89,12 @@ pub type UrlExtraData = ::servo_url::ServoUrl;
 /// `from_ptr_ref` can work.
 #[cfg(feature = "gecko")]
 #[derive(PartialEq)]
+#[repr(C)]
 pub struct UrlExtraData(usize);
+
+/// Extra data that the backend may need to resolve url values.
+#[cfg(not(feature = "gecko"))]
+pub type UrlExtraData = ::servo_url::ServoUrl;
 
 #[cfg(feature = "gecko")]
 impl Clone for UrlExtraData {
@@ -106,20 +117,25 @@ impl Drop for UrlExtraData {
 
 #[cfg(feature = "gecko")]
 impl ToShmem for UrlExtraData {
-    fn to_shmem(&self, _builder: &mut SharedMemoryBuilder) -> ManuallyDrop<Self> {
+    fn to_shmem(&self, _builder: &mut SharedMemoryBuilder) -> to_shmem::Result<Self> {
         if self.0 & 1 == 0 {
             let shared_extra_datas = unsafe { &structs::URLExtraData_sShared };
             let self_ptr = self.as_ref() as *const _ as *mut _;
             let sheet_id = shared_extra_datas
                 .iter()
-                .position(|r| r.mRawPtr == self_ptr)
-                .expect(
-                    "ToShmem failed for UrlExtraData: expected sheet's URLExtraData to be in \
-                     URLExtraData::sShared",
-                );
-            ManuallyDrop::new(UrlExtraData((sheet_id << 1) | 1))
+                .position(|r| r.mRawPtr == self_ptr);
+            let sheet_id = match sheet_id {
+                Some(id) => id,
+                None => {
+                    return Err(String::from(
+                        "ToShmem failed for UrlExtraData: expected sheet's URLExtraData to be in \
+                         URLExtraData::sShared",
+                    ));
+                },
+            };
+            Ok(ManuallyDrop::new(UrlExtraData((sheet_id << 1) | 1)))
         } else {
-            ManuallyDrop::new(UrlExtraData(self.0))
+            Ok(ManuallyDrop::new(UrlExtraData(self.0)))
         }
     }
 }
@@ -171,17 +187,28 @@ impl UrlExtraData {
 #[cfg(feature = "gecko")]
 impl fmt::Debug for UrlExtraData {
     fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        struct DebugURI(*mut structs::nsIURI);
-        impl fmt::Debug for DebugURI {
-            fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                use nsstring::nsCString;
-                let mut spec = nsCString::new();
-                unsafe {
-                    bindings::Gecko_nsIURI_Debug(self.0, &mut spec);
+        macro_rules! define_debug_struct {
+            ($struct_name:ident, $gecko_class:ident, $debug_fn:ident) => {
+                struct $struct_name(*mut structs::$gecko_class);
+                impl fmt::Debug for $struct_name {
+                    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                        use nsstring::nsCString;
+                        let mut spec = nsCString::new();
+                        unsafe {
+                            bindings::$debug_fn(self.0, &mut spec);
+                        }
+                        spec.fmt(formatter)
+                    }
                 }
-                spec.fmt(formatter)
-            }
+            };
         }
+
+        define_debug_struct!(DebugURI, nsIURI, Gecko_nsIURI_Debug);
+        define_debug_struct!(
+            DebugReferrerInfo,
+            nsIReferrerInfo,
+            Gecko_nsIReferrerInfo_Debug
+        );
 
         formatter
             .debug_struct("URLExtraData")
@@ -192,7 +219,11 @@ impl fmt::Debug for UrlExtraData {
             )
             .field(
                 "referrer",
-                &DebugURI(self.as_ref().mReferrer.raw::<structs::nsIURI>()),
+                &DebugReferrerInfo(
+                    self.as_ref()
+                        .mReferrerInfo
+                        .raw::<structs::nsIReferrerInfo>(),
+                ),
             )
             .finish()
     }
@@ -342,7 +373,8 @@ impl CssRule {
         parent_stylesheet_contents: &StylesheetContents,
         shared_lock: &SharedRwLock,
         state: State,
-        loader: Option<&StylesheetLoader>,
+        loader: Option<&dyn StylesheetLoader>,
+        allow_import_rules: AllowImportRules,
     ) -> Result<Self, RulesMutateError> {
         let url_data = parent_stylesheet_contents.url_data.read();
         let context = ParserContext::new(
@@ -369,10 +401,13 @@ impl CssRule {
             dom_error: None,
             namespaces: &mut *guard,
             insert_rule_context: Some(insert_rule_context),
+            allow_import_rules,
         };
 
-        parse_one_rule(&mut input, &mut rule_parser)
-            .map_err(|_| rule_parser.dom_error.unwrap_or(RulesMutateError::Syntax))
+        match parse_one_rule(&mut input, &mut rule_parser) {
+            Ok((_, rule)) => Ok(rule),
+            Err(_) => Err(rule_parser.dom_error.unwrap_or(RulesMutateError::Syntax)),
+        }
     }
 }
 

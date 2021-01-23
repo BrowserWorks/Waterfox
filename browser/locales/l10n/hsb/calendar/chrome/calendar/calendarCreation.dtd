@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "Nowu protyku wutworić" >
+<!ENTITY wizard.label             "Nowu protyku wutworić" >
+<!ENTITY wizard.description       "Wašu protyku lokalizować" >
+
+<!ENTITY initialpage.description    "Waša protyka da so na wašim ličaku abo na serwerje składować, zo by na nju zdaloka přistup měł abo ju z wašimi přećelemi abo sobudźěłaćerjemi dźělił." >
+<!ENTITY initialpage.computer.label  "Na mojim ličaku">
+<!ENTITY initialpage.network.label  "W syći">
+
+<!ENTITY locationpage.description         "Stajće informacije wo tym k dispoziciji, štož je trěbne, zo by přistup na wašu zdalenu protyku měło" >
+<!ENTITY locationpage.login.description   "Na přeće: zapodajće wužiwarske mjeno a hesło" >
+<!ENTITY locationpage.username.label      "Wužiwarske mjeno:" >
+<!ENTITY locationpage.password.label      "Hesło:" >
+
+<!ENTITY custompage.shortdescription  "Wašu protyku přiměrić" >
+<!ENTITY custompage.longdescription   "Móžeće swojej protyce přimjeno dać a podawki z protyki zabarbić." >
+
+<!ENTITY finishpage.shortdescription  "Protyka je so wutworiła" >
+<!ENTITY finishpage.longdescription   "Waša protyka je so wutworiła." >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "Druhe">
+
+<!ENTITY buttons.create.label "Protyku wutworić">
+<!ENTITY buttons.create.accesskey "r">
+
+<!ENTITY buttons.find.label "Protyki pytać">
+<!ENTITY buttons.find.accesskey "P">
+
+<!ENTITY buttons.back.label "Wróćo">
+<!ENTITY buttons.back.accesskey "W">
+
+<!ENTITY buttons.subscribe.label "Abonować">
+<!ENTITY buttons.subscribe.accesskey "A">
+
+<!ENTITY calendartype.label "Protykowy typ:">
+<!ENTITY location.label "Městno:">
+<!ENTITY location.placeholder "URL abo mjeno hosta protykoweho serwera">
+
+<!ENTITY network.nocredentials.label "Tute městno přizjewjenske daty njetrjeba">
+<!ENTITY network.loading.description "Prošu čakajće, doniž waše protyki namakane njejsu.">
+<!ENTITY network.notfound.description "Protyki njedachu so na tutym městnje namakać. Prošu přepruwujće swoje nastajenja.">
+<!ENTITY network.authfail.description "Přizjewjenske daty, kotrež sće zapodał, njebuchu akceptowane. Prošu přepruwujće swoje nastajenja.">
+
+<!ENTITY network.subscribe.single.description "Prošu wubjerće protyki, kotrež byšće rady abonował.">
+<!ENTITY network.subscribe.multiple.description "Za tute městno su wjacore protykowe typy k dispoziciji. Prošu wubjerće protykowy typ a markěrujće potom protyki, kotrež chceće abonować.">

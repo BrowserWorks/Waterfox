@@ -4,54 +4,27 @@
 
 %include ../../../components/contextualidentity/content/usercontext.css
 
-:root {
-  --preference-selected-color: #0996f8;
-  --preference-unselected-color: #333;
-  --preference-active-color: #858585;
+.container-header-links {
+  font-size: 1.25rem;
+  margin-block-end: 15px;
 }
 
-.radio-buttons {
-  display: flex;
-  margin-inline-start: 0.35rem;
+[data-identity-icon] {
+  margin: 0;
+  margin-inline-end: 16px;
 }
 
-.radio-buttons > radio {
-  flex: auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  -moz-user-select: none;
-  outline: 2px solid transparent;
-  outline-offset: 4px;
-  -moz-outline-radius: 100%;
-  min-block-size: 24px;
-  min-inline-size: 24px;
-  border-radius: 50%;
-  padding: 2px;
-  margin: 9px;
+#containersView {
+  border: 0 none;
+  background: transparent;
 }
 
-.icon-buttons > radio > .userContext-icon {
-  fill: #4d4d4d;
+#containersView richlistitem {
+  padding-block: 4px;
+  border-block-end: 1px solid var(--in-content-box-border-color);
 }
 
-.radio-buttons > radio {
-  padding-inline-start: 2px;
-}
-
-radio > .userContext-icon {
-  inline-size: 22px;
-  block-size: 22px;
-}
-
-.radio-buttons > radio[selected=true] {
-  outline-color: var(--preference-unselected-color);
-}
-
-.radio-buttons > radio[focused=true] {
-  outline-color: var(--preference-selected-color);
-}
-
-.radio-buttons > radio:hover:active {
-  outline-color: var(--preference-active-color);
+#containersView richlistitem:last-of-type {
+  border-block-end: 0 none;
+  margin-block-end: 8px;
 }

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Importar catálogo de endereços">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Dados importados para o registro: ">
+<!ENTITY fieldMapImport.next.label "Próximo">
+<!ENTITY fieldMapImport.next.accesskey "P">
+<!ENTITY fieldMapImport.previous.label "Anterior">
+<!ENTITY fieldMapImport.previous.accesskey "A">
+<!ENTITY fieldMapImport.text "Use “Para cima” e “Para baixo” para associar os campos do catálogo da esquerda aos dados correspondentes da direita. Desmarque os itens que você não quer importar.">
+<!ENTITY fieldMapImport.up.label "Para cima">
+<!ENTITY fieldMapImport.up.accesskey "c">
+<!ENTITY fieldMapImport.down.label "Para baixo">
+<!ENTITY fieldMapImport.down.accesskey "b">
+<!ENTITY fieldMapImport.fieldListTitle "Campos do catálogo de endereços">
+<!ENTITY fieldMapImport.dataTitle "Dados do registro a importar">
+<!ENTITY fieldMapImport.skipFirstRecord.label "O primeiro registro contém o nome dos campos">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "O">

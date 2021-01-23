@@ -18,10 +18,7 @@ struct gfxFontStyle;
 
 struct LookAndFeelInt {
   int32_t id;
-  union {
-    int32_t value;
-    nscolor colorValue;
-  };
+  int32_t value;
 };
 
 namespace mozilla {
@@ -312,6 +309,29 @@ class LookAndFeel {
      * 'Coarse | Fine | Hover'.
      */
     eIntID_AllPointerCapabilities,
+    /**
+     * An Integer value that will represent the position of the Close button
+     * in GTK Client side decoration header. Its value will be between 0 and 2
+     * if it is on the left side of the tabbar, otherwise it will be between
+     * 3 and 5.
+     */
+    eLookAndFeel_GTKCSDCloseButtonPosition,
+
+    /**
+     * An Integer value that will represent the position of the Minimize button
+     * in GTK Client side decoration header. Its value will be between 0 and 2
+     * if it is on the left side of the tabbar, otherwise it will be between
+     * 3 and 5.
+     */
+    eLookAndFeel_GTKCSDMinimizeButtonPosition,
+
+    /**
+     * An Integer value that will represent the position of the Maximize button
+     * in GTK Client side decoration header. Its value will be between 0 and 2
+     * if it is on the left side of the tabbar, otherwise it will be between
+     * 3 and 5.
+     */
+    eLookAndFeel_GTKCSDMaximizeButtonPosition,
   };
 
   /**
@@ -366,7 +386,7 @@ class LookAndFeel {
   enum { eScrollThumbStyle_Normal, eScrollThumbStyle_Proportional };
 
   // When modifying this list, also modify nsXPLookAndFeel::sFloatPrefs
-  // in widget/xpwidgts/nsXPLookAndFeel.cpp.
+  // in widget/nsXPLookAndFeel.cpp.
   enum FloatID {
     eFloatID_IMEUnderlineRelativeSize,
     eFloatID_SpellCheckerUnderlineRelativeSize,
@@ -529,11 +549,7 @@ class LookAndFeel {
    */
   static nsTArray<LookAndFeelInt> GetIntCache();
   static void SetIntCache(const nsTArray<LookAndFeelInt>& aLookAndFeelIntCache);
-  /**
-   * Set a flag indicating whether the cache should be cleared in RefreshImpl()
-   * or not.
-   */
-  static void SetShouldRetainCacheForTest(bool aValue);
+  static void NotifyChangedAllWindows();
 };
 
 }  // namespace mozilla

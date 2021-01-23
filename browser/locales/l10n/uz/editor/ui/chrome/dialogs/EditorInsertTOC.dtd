@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title        "Sarlavhalar">
+<!ENTITY buildToc.label      "Sarlavhalar tuzish:">
+<!ENTITY tag.label           "Teg:">
+<!ENTITY class.label         "Sinf:">
+<!ENTITY header1.label       "1-bosqich">
+<!ENTITY header2.label       "2-bosqich">
+<!ENTITY header3.label       "3-bosqich">
+<!ENTITY header4.label       "4-bosqich">
+<!ENTITY header5.label       "5-bosqich">
+<!ENTITY header6.label       "6-bosqich">
+<!ENTITY makeReadOnly.label  "Sarlavhalarni faqat o‘qiydigan qilish">
+<!ENTITY orderedList.label   "Sarlavhalarga kiritilgan barcha miqdorlar">

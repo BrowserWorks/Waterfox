@@ -1,5 +1,9 @@
 /* -*- Mode: indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set sts=2 sw=2 et tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
 
 var { ExtensionParent } = ChromeUtils.import(
@@ -13,7 +17,7 @@ var { IconDetails } = ExtensionParent;
 // WeakMap[Extension -> SidebarAction]
 let sidebarActionMap = new WeakMap();
 
-const sidebarURL = "chrome://browser/content/webext-panels.xul";
+const sidebarURL = "chrome://browser/content/webext-panels.xhtml";
 
 /**
  * Responsible for the sidebar_action section of the manifest as well
@@ -417,6 +421,24 @@ this.sidebarAction = class extends ExtensionAPI {
   }
 
   /**
+   * Toogles this sidebar action for the given window
+   *
+   * @param {ChromeWindow} window
+   */
+  toggle(window) {
+    let { SidebarUI } = window;
+    if (!SidebarUI || !this.extension.canAccessWindow(window)) {
+      return;
+    }
+
+    if (!this.isOpen(window)) {
+      SidebarUI.show(this.id);
+    } else {
+      SidebarUI.hide();
+    }
+  }
+
+  /**
    * Checks whether this sidebar action is open in the given window.
    *
    * @param {ChromeWindow} window
@@ -481,6 +503,13 @@ this.sidebarAction = class extends ExtensionAPI {
           let window = windowTracker.topWindow;
           if (context.canAccessWindow(window)) {
             sidebarAction.close(window);
+          }
+        },
+
+        toggle() {
+          let window = windowTracker.topWindow;
+          if (context.canAccessWindow(window)) {
+            sidebarAction.toggle(window);
           }
         },
 

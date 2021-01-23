@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Dewin Cyfrif Sgwrsio">
+
+<!ENTITY accountProtocolTitle.label   "Rhwydwaith sgwrsio">
+<!ENTITY accountProtocolInfo.label    "Dewiswch rwydwaith eich cyfrif sgwrsio.">
+<!ENTITY accountProtocolField.label   "Rhwydwaith:">
+<!ENTITY accountProtocolGetMore.label "Estyn rhagor…">
+
+<!ENTITY accountUsernameTitle.label   "Enw Defnyddiwr">
+<!ENTITY accountUsernameDuplicate.label "Mae'r cyfrif yma wedi'i ffurfweddu yn barod!">
+
+<!ENTITY accountPasswordTitle.label   "Cyfrinair">
+<!ENTITY accountPasswordInfo.label    "Rhowch eich cyfrinair yn y blwch isod.">
+<!ENTITY accountPasswordField.label   "Cyfrinair:">
+<!ENTITY accountPasswordManager.label "Bydd y cyfrinair rhoddwyd yma yn cael ei gadw o fewn y Rheolwr Cyfrineiriau. Gadewch y blwch yn wag os ydych eisiau cael eich annog am eich cyfrinair bob tro mae'r cyfrif yn cael ei gysylltu.">
+
+<!ENTITY accountAdvancedTitle.label   "Dewisiadau Uwch">
+<!ENTITY accountAdvancedInfo.label    "Teimlwch yn rhydd i hepgor y cam yma.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Hysbysu am E-bost newydd">
+<!ENTITY accountAliasGroupbox.caption "Ffugenw Lleol">
+<!ENTITY accountAliasField.label      "Ffugenw:">
+<!ENTITY accountAliasInfo.label       "Dim ond pan fyddwch yn siarad yn ystod eich trafodaethau fydd hwn yn cael ei ddangos, ni fydd y cysylltiadau pell yn ei weld.">
+<!ENTITY accountProxySettings.caption "Gosodiadau'r Dirprwy">
+<!ENTITY accountProxySettings.change.label     "Newid…">
+<!ENTITY accountProxySettings.change.accessKey "N">
+
+<!ENTITY accountSummaryTitle.label   "Crynodeb">
+<!ENTITY accountSummaryInfo.label    "Mae crynodeb o'r wybodaeth rydych wedi'i gyflwyno'n cael ei ddangos isod. Gwiriwch y cynnwys cyn i'r cyfrif gael ei greu.">
+<!ENTITY accountSummary.connectNow.label "Cysylltu â'r cyfrif nawr.">

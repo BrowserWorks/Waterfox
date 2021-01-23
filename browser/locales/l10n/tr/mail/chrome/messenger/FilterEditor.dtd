@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Süzgeç Kuralları">
+<!ENTITY filterEditorDialog.dimensions "width: 100ch;">
+<!ENTITY filterName.label "Süzgeç adı:">
+<!ENTITY filterName.accesskey "S">
+
+<!ENTITY junk.label "Gereksiz">
+<!ENTITY notJunk.label "Gereksiz değil">
+
+<!ENTITY lowestPriorityCmd.label "En düşük">
+<!ENTITY lowPriorityCmd.label "Düşük">
+<!ENTITY normalPriorityCmd.label "Normal">
+<!ENTITY highPriorityCmd.label "Yüksek">
+<!ENTITY highestPriorityCmd.label "En yüksek">
+
+<!ENTITY contextDesc.label "Süzgecin uygulanma zamanı:">
+<!ENTITY contextIncomingMail.label "Yeni posta alırken:">
+<!ENTITY contextIncomingMail.accesskey "Y">
+<!ENTITY contextManual.label "Elle çalıştır">
+<!ENTITY contextManual.accesskey "E">
+<!ENTITY contextBeforeCls.label "Gereksiz sınıflandırmasından önce süz">
+<!ENTITY contextAfterCls.label "Gereksiz sınıflandırmasından sonra süz">
+<!ENTITY contextOutgoing.label "Gönderdikten sonra">
+<!ENTITY contextOutgoing.accesskey "s">
+<!ENTITY contextArchive.label "Arşivlerken">
+<!ENTITY contextArchive.accesskey "A">
+<!ENTITY contextPeriodic.accesskey "e">
+
+<!ENTITY filterActionDesc.label "Bu eylemleri uygula:">
+<!ENTITY filterActionDesc.accesskey "u">
+
+<!ENTITY filterActionOrderWarning.label "Not: Filtre eylemleri farklı bir sırayla çalıştırılacaktır.">
+<!ENTITY filterActionOrder.label "Çalıştırma sırasını gör">
+
+<!-- New Style Filter Rule Actions -->
+<!ENTITY moveMessage.label "İletiyi taşı">
+<!ENTITY copyMessage.label "İletiyi kopyala">
+<!ENTITY forwardTo.label "İlet">
+<!ENTITY replyWithTemplate.label "Şablonla yanıtla">
+<!ENTITY markMessageRead.label "Okundu olarak işaretle">
+<!ENTITY markMessageUnread.label "Okunmadı olarak işaretle">
+<!ENTITY markMessageStarred.label "Yıldız ekle">
+<!ENTITY setPriority.label "Öncelik ata">
+<!ENTITY addTag.label "İletiyi etiketle">
+<!ENTITY setJunkScore.label "Gereksiz durumunu ayarla">
+<!ENTITY deleteMessage.label "İletiyi sil">
+<!ENTITY deleteFromPOP.label "POP sunucusundan sil">
+<!ENTITY fetchFromPOP.label "POP sunucusundan indir">
+<!ENTITY ignoreThread.label "Diziyi görmezden gel">
+<!ENTITY ignoreSubthread.label "Alt diziyi görmezden gel">
+<!ENTITY watchThread.label "Diziyi takip et">
+<!ENTITY stopExecution.label "Süzgeci çalıştırmayı durdur">
+
+<!ENTITY addAction.tooltip "Yeni eylem ekle">
+<!ENTITY removeAction.tooltip "Bu eylemi kaldır">
+
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- Flex Attribute: https://developer.mozilla.org/docs/XUL/Attribute/flex -->
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">

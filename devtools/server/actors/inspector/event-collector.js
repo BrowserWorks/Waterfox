@@ -16,7 +16,9 @@ const {
   isNativeAnonymous,
 } = require("devtools/shared/layout/utils");
 const Debugger = require("Debugger");
-const ReplayInspector = require("devtools/server/actors/replay/inspector");
+const {
+  EXCLUDED_LISTENER,
+} = require("devtools/server/actors/inspector/constants");
 
 // eslint-disable-next-line
 const JQUERY_LIVE_REGEX = /return typeof \w+.*.event\.triggered[\s\S]*\.event\.(dispatch|handle).*arguments/;
@@ -255,6 +257,7 @@ class MainEventCollector {
    *         An array of unfiltered event listeners or an empty array
    */
   getDOMListeners(node) {
+    let listeners;
     if (
       typeof node.nodeName !== "undefined" &&
       node.nodeName.toLowerCase() === "html"
@@ -265,9 +268,15 @@ class MainEventCollector {
       const docListeners =
         Services.els.getListenerInfoFor(node.parentNode) || [];
 
-      return [...winListeners, ...docElementListeners, ...docListeners];
+      listeners = [...winListeners, ...docElementListeners, ...docListeners];
+    } else {
+      listeners = Services.els.getListenerInfoFor(node) || [];
     }
-    return Services.els.getListenerInfoFor(node) || [];
+
+    return listeners.filter(listener => {
+      const obj = this.unwrap(listener.listenerObject);
+      return !obj || !obj[EXCLUDED_LISTENER];
+    });
   }
 
   getJQuery(node) {
@@ -280,8 +289,7 @@ class MainEventCollector {
       return null;
     }
 
-    const hasJQuery =
-      global.jQuery && global.jQuery.fn && global.jQuery.fn.jquery;
+    const hasJQuery = global.jQuery?.fn?.jquery;
 
     if (hasJQuery) {
       return global.jQuery;
@@ -294,15 +302,22 @@ class MainEventCollector {
   }
 
   isChromeHandler(handler) {
-    const handlerPrincipal = Cu.getObjectPrincipal(handler);
+    try {
+      const handlerPrincipal = Cu.getObjectPrincipal(handler);
 
-    // Chrome codebase may register listeners on the page from a frame script or
-    // JSM <video> tags may also report internal listeners, but they won't be
-    // coming from the system principal. Instead, they will be using an expanded
-    // principal.
-    return (
-      handlerPrincipal.isSystemPrincipal || handlerPrincipal.isExpandedPrincipal
-    );
+      // Chrome codebase may register listeners on the page from a frame script or
+      // JSM <video> tags may also report internal listeners, but they won't be
+      // coming from the system principal. Instead, they will be using an expanded
+      // principal.
+      return (
+        handlerPrincipal.isSystemPrincipal ||
+        handlerPrincipal.isExpandedPrincipal
+      );
+    } catch (e) {
+      // Anything from a dead object to a CSP error can leave us here so let's
+      // return false so that we can fail gracefully.
+      return false;
+    }
   }
 }
 
@@ -392,6 +407,7 @@ class DOMEventCollector extends MainEventCollector {
  * Get or detect jQuery events.
  */
 class JQueryEventCollector extends MainEventCollector {
+  // eslint-disable-next-line complexity
   getListeners(node, { checkOnly } = {}) {
     const jQuery = this.getJQuery(node);
     const handlers = [];
@@ -489,6 +505,7 @@ class JQueryEventCollector extends MainEventCollector {
  * Get or detect jQuery live events.
  */
 class JQueryLiveEventCollector extends MainEventCollector {
+  // eslint-disable-next-line complexity
   getListeners(node, { checkOnly } = {}) {
     const jQuery = this.getJQuery(node);
     const handlers = [];
@@ -565,7 +582,7 @@ class JQueryLiveEventCollector extends MainEventCollector {
                 },
               };
 
-              if (!eventInfo.type && event.data && event.data.live) {
+              if (!eventInfo.type && event.data?.live) {
                 eventInfo.type = event.data.live;
               }
 
@@ -653,7 +670,7 @@ class ReactEventCollector extends MainEventCollector {
     if (props) {
       for (const [name, prop] of Object.entries(props)) {
         if (REACT_EVENT_NAMES.includes(name)) {
-          const listener = (prop && prop.__reactBoundMethod) || prop;
+          const listener = prop?.__reactBoundMethod || prop;
 
           if (typeof listener !== "function") {
             continue;
@@ -700,7 +717,7 @@ class ReactEventCollector extends MainEventCollector {
         if (value.memoizedProps) {
           return value.memoizedProps; // React 16
         }
-        return value && value._currentElement && value._currentElement.props; // React 15
+        return value?._currentElement?.props; // React 15
       }
     }
     return null;
@@ -882,24 +899,20 @@ class EventCollector {
    *             native: false
    *           }
    */
+  // eslint-disable-next-line complexity
   processHandlerForEvent(listenerArray, listener, dbg) {
     let globalDO;
 
     try {
       const { capturing, handler } = listener;
 
-      let listenerDO;
-      if (isReplaying) {
-        listenerDO = ReplayInspector.getDebuggerObject(handler);
-      } else {
-        const global = Cu.getGlobalForObject(handler);
+      const global = Cu.getGlobalForObject(handler);
 
-        // It is important that we recreate the globalDO for each handler because
-        // their global object can vary e.g. resource:// URLs on a video control. If
-        // we don't do this then all chrome listeners simply display "native code."
-        globalDO = dbg.addDebuggee(global);
-        listenerDO = globalDO.makeDebuggeeValue(handler);
-      }
+      // It is important that we recreate the globalDO for each handler because
+      // their global object can vary e.g. resource:// URLs on a video control. If
+      // we don't do this then all chrome listeners simply display "native code."
+      globalDO = dbg.addDebuggee(global);
+      let listenerDO = globalDO.makeDebuggeeValue(handler);
 
       const { normalizeListener } = listener;
 
@@ -914,6 +927,7 @@ class EventCollector {
       let dom0 = false;
       let functionSource = handler.toString();
       let line = 0;
+      let column = null;
       let native = false;
       let url = "";
       let sourceActor = "";
@@ -930,7 +944,7 @@ class EventCollector {
           listenerDO = listenerDO.proto;
         }
 
-        if (desc && desc.value) {
+        if (desc?.value) {
           listenerDO = desc.value;
         }
       }
@@ -953,8 +967,8 @@ class EventCollector {
         } else {
           dom0 = false;
         }
-
         line = script.startLine;
+        column = script.startColumn;
         url = script.url;
         const actor = this.targetActor.sources.getOrCreateSourceActor(
           script.source
@@ -1008,7 +1022,11 @@ class EventCollector {
       if (native) {
         origin = "[native code]";
       } else {
-        origin = url + (dom0 || line === 0 ? "" : ":" + line);
+        origin =
+          url +
+          (dom0 || line === 0
+            ? ""
+            : ":" + line + (column === null ? "" : ":" + column));
       }
 
       const eventObj = {

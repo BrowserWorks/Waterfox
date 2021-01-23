@@ -136,7 +136,7 @@ nsresult nsUrlClassifierStreamUpdater::FetchUpdate(
                      nsContentUtils::GetSystemPrincipal(),
                      nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
                      nsIContentPolicy::TYPE_OTHER,
-                     nullptr,  // nsICookieSettings
+                     nullptr,  // nsICookieJarSettings
                      nullptr,  // aPerformanceStorage
                      nullptr,  // aLoadGroup
                      this,     // aInterfaceRequestor
@@ -148,6 +148,8 @@ nsresult nsUrlClassifierStreamUpdater::FetchUpdate(
   mozilla::OriginAttributes attrs;
   attrs.mFirstPartyDomain.AssignLiteral(NECKO_SAFEBROWSING_FIRST_PARTY_DOMAIN);
   loadInfo->SetOriginAttributes(attrs);
+  // allow deprecated HTTP request from SystemPrincipal
+  loadInfo->SetAllowDeprecatedSystemRequests(true);
 
   mBeganStream = false;
 
@@ -177,9 +179,7 @@ nsresult nsUrlClassifierStreamUpdater::FetchUpdate(
   // Set the appropriate content type for file/data URIs, for unit testing
   // purposes.
   // This is only used for testing and should be deleted.
-  bool match;
-  if ((NS_SUCCEEDED(aUpdateUrl->SchemeIs("file", &match)) && match) ||
-      (NS_SUCCEEDED(aUpdateUrl->SchemeIs("data", &match)) && match)) {
+  if (aUpdateUrl->SchemeIs("file") || aUpdateUrl->SchemeIs("data")) {
     mChannel->SetContentType(
         NS_LITERAL_CSTRING("application/vnd.google.safebrowsing-update"));
   } else {

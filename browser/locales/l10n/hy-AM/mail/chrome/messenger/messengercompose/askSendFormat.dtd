@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+
+<!ENTITY windowTitle.label "HTML նամակի հարցը">
+
+<!ENTITY recipient.label "Որոշ ստացողներ նշված չեն որպես HTML նամակ ստացողներ։">
+
+<!ENTITY question.label "Ցանկանու՞մ եք փոխարկել նամակը սովորական տեքստի կամ ուղարկե՞լ HTML-ով։">
+
+<!ENTITY plainTextAndHtml.label "Ուղարկել Սովորական տեքստ և HTML ">
+<!ENTITY plainTextAndHtml.accesskey "a">
+<!ENTITY plainTextOnly.label "Ուղարկել որպես Սովորական տեքստով">
+<!ENTITY plainTextOnly.accesskey "P">
+<!ENTITY htmlOnly.label "Ուղարկել միայն HTML-ով">
+<!ENTITY htmlOnly.accesskey "H">
+
+<!ENTITY send.label "Ուղարկել">
+<!ENTITY send.accesskey "S">

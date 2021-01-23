@@ -16,6 +16,10 @@
 
 #include "gtest/gtest.h"
 
+#ifdef MOZ_PHC
+#  include "replace_malloc_bridge.h"
+#endif
+
 #if defined(DEBUG) && !defined(XP_WIN) && !defined(ANDROID)
 #  define HAS_GDB_SLEEP_DURATION 1
 extern unsigned int _gdb_sleep_duration;
@@ -46,6 +50,21 @@ static void DisableCrashReporter() {
 #endif
 
 using namespace mozilla;
+
+class AutoDisablePHCOnCurrentThread {
+ public:
+  AutoDisablePHCOnCurrentThread() {
+#ifdef MOZ_PHC
+    ReplaceMalloc::DisablePHCOnCurrentThread();
+#endif
+  }
+
+  ~AutoDisablePHCOnCurrentThread() {
+#ifdef MOZ_PHC
+    ReplaceMalloc::ReenablePHCOnCurrentThread();
+#endif
+  }
+};
 
 static inline void TestOne(size_t size) {
   size_t req = size;
@@ -126,7 +145,7 @@ TEST(Jemalloc, PtrInfo)
     ASSERT_TRUE(small.append(p));
     for (size_t j = 0; j < usable; j++) {
       jemalloc_ptr_info(&p[j], &info);
-      ASSERT_TRUE(InfoEq(info, TagLiveSmall, p, usable, arenaId));
+      ASSERT_TRUE(InfoEq(info, TagLiveAlloc, p, usable, arenaId));
     }
   }
 
@@ -137,7 +156,7 @@ TEST(Jemalloc, PtrInfo)
     ASSERT_TRUE(large.append(p));
     for (size_t j = 0; j < usable; j += 347) {
       jemalloc_ptr_info(&p[j], &info);
-      ASSERT_TRUE(InfoEq(info, TagLiveLarge, p, usable, arenaId));
+      ASSERT_TRUE(InfoEq(info, TagLiveAlloc, p, usable, arenaId));
     }
   }
 
@@ -148,7 +167,7 @@ TEST(Jemalloc, PtrInfo)
     ASSERT_TRUE(huge.append(p));
     for (size_t j = 0; j < usable; j += 567) {
       jemalloc_ptr_info(&p[j], &info);
-      ASSERT_TRUE(InfoEq(info, TagLiveHuge, p, usable, arenaId));
+      ASSERT_TRUE(InfoEq(info, TagLiveAlloc, p, usable, arenaId));
     }
   }
 
@@ -158,7 +177,7 @@ TEST(Jemalloc, PtrInfo)
   size_t len;
 
   // Free the small allocations and recheck them.
-  int isFreedSmall = 0, isFreedPage = 0;
+  int isFreedAlloc = 0, isFreedPage = 0;
   len = small.length();
   for (size_t i = 0, j = 0; i < len; i++, j = (j + 19) % len) {
     char* p = small[j];
@@ -167,8 +186,8 @@ TEST(Jemalloc, PtrInfo)
     for (size_t k = 0; k < usable; k++) {
       jemalloc_ptr_info(&p[k], &info);
       // There are two valid outcomes here.
-      if (InfoEq(info, TagFreedSmall, p, usable, arenaId)) {
-        isFreedSmall++;
+      if (InfoEq(info, TagFreedAlloc, p, usable, arenaId)) {
+        isFreedAlloc++;
       } else if (InfoEqFreedPage(info, &p[k], stats.page_size, arenaId)) {
         isFreedPage++;
       } else {
@@ -176,11 +195,11 @@ TEST(Jemalloc, PtrInfo)
       }
     }
   }
-  // There should be both FreedSmall and FreedPage results, but a lot more of
+  // There should be both FreedAlloc and FreedPage results, but a lot more of
   // the former.
-  ASSERT_TRUE(isFreedSmall != 0);
+  ASSERT_TRUE(isFreedAlloc != 0);
   ASSERT_TRUE(isFreedPage != 0);
-  ASSERT_TRUE(isFreedSmall / isFreedPage > 10);
+  ASSERT_TRUE(isFreedAlloc / isFreedPage > 10);
 
   // Free the large allocations and recheck them.
   len = large.length();
@@ -255,8 +274,7 @@ TEST(Jemalloc, PtrInfo)
     jemalloc_ptr_info(&chunk[i], &info);
   }
 
-  // Until Bug 1364359 is fixed it is unsafe to call moz_dispose_arena.
-  // moz_dispose_arena(arenaId);
+  moz_dispose_arena(arenaId);
 }
 
 size_t sSizes[] = {1,      42,      79,      918,     1.5_KiB,
@@ -274,8 +292,7 @@ TEST(Jemalloc, Arenas)
   ptr = moz_arena_calloc(arena, 24, 2);
   // For convenience, free can be used to free arena pointers.
   free(ptr);
-  // Until Bug 1364359 is fixed it is unsafe to call moz_dispose_arena.
-  // moz_dispose_arena(arena);
+  moz_dispose_arena(arena);
 
 #ifdef HAS_GDB_SLEEP_DURATION
   // Avoid death tests adding some unnecessary (long) delays.
@@ -312,10 +329,8 @@ TEST(Jemalloc, Arenas)
     }
   }
 
-  // Until Bug 1364359 is fixed it is unsafe to call moz_dispose_arena.
-  // moz_dispose_arena(arena2);
-  // Until Bug 1364359 is fixed it is unsafe to call moz_dispose_arena.
-  // moz_dispose_arena(arena);
+  moz_dispose_arena(arena2);
+  moz_dispose_arena(arena);
 
 #ifdef HAS_GDB_SLEEP_DURATION
   _gdb_sleep_duration = old_gdb_sleep_duration;
@@ -378,6 +393,12 @@ static bool IsSameRoundedHugeClass(size_t aSize1, size_t aSize2,
 
 static bool CanReallocInPlace(size_t aFromSize, size_t aToSize,
                               jemalloc_stats_t& aStats) {
+  // PHC allocations must be disabled because PHC reallocs differently to
+  // mozjemalloc.
+#ifdef MOZ_PHC
+  MOZ_RELEASE_ASSERT(!ReplaceMalloc::IsPHCEnabledOnCurrentThread());
+#endif
+
   if (aFromSize == malloc_good_size(aToSize)) {
     // Same size class: in-place.
     return true;
@@ -397,6 +418,10 @@ static bool CanReallocInPlace(size_t aFromSize, size_t aToSize,
 
 TEST(Jemalloc, InPlace)
 {
+  // Disable PHC allocations for this test, because CanReallocInPlace() isn't
+  // valid for PHC allocations.
+  AutoDisablePHCOnCurrentThread disable;
+
   jemalloc_stats_t stats;
   jemalloc_stats(&stats);
 
@@ -421,8 +446,7 @@ TEST(Jemalloc, InPlace)
     }
   }
 
-  // Until Bug 1364359 is fixed it is unsafe to call moz_dispose_arena.
-  // moz_dispose_arena(arena);
+  moz_dispose_arena(arena);
 }
 
 // Bug 1474254: disable this test for windows ccov builds because it leads to
@@ -430,6 +454,10 @@ TEST(Jemalloc, InPlace)
 #if !defined(XP_WIN) || !defined(MOZ_CODE_COVERAGE)
 TEST(Jemalloc, JunkPoison)
 {
+  // Disable PHC allocations for this test, because CanReallocInPlace() isn't
+  // valid for PHC allocations, and the testing UAFs aren't valid.
+  AutoDisablePHCOnCurrentThread disable;
+
   jemalloc_stats_t stats;
   jemalloc_stats(&stats);
 
@@ -616,13 +644,12 @@ TEST(Jemalloc, JunkPoison)
     }
   }
 
-  // Until Bug 1364359 is fixed it is unsafe to call moz_dispose_arena.
-  // moz_dispose_arena(arena);
+  moz_dispose_arena(arena);
 
   moz_arena_free(buf_arena, poison_buf);
   moz_arena_free(buf_arena, junk_buf);
-  // Until Bug 1364359 is fixed it is unsafe to call moz_dispose_arena.
-  // moz_dispose_arena(buf_arena);
+  moz_arena_free(buf_arena, fill_buf);
+  moz_dispose_arena(buf_arena);
 
 #  ifdef HAS_GDB_SLEEP_DURATION
   _gdb_sleep_duration = old_gdb_sleep_duration;
@@ -631,6 +658,10 @@ TEST(Jemalloc, JunkPoison)
 
 TEST(Jemalloc, GuardRegion)
 {
+  // Disable PHC allocations for this test, because even a single PHC
+  // allocation occurring can throw it off.
+  AutoDisablePHCOnCurrentThread disable;
+
   jemalloc_stats_t stats;
   jemalloc_stats(&stats);
 
@@ -660,7 +691,7 @@ TEST(Jemalloc, GuardRegion)
   jemalloc_ptr_info_t info;
   jemalloc_ptr_info(guard_page, &info);
   ASSERT_TRUE(jemalloc_ptr_is_freed_page(&info));
-  ASSERT_TRUE(info.tag == TagFreedPageDecommitted);
+  ASSERT_TRUE(info.tag == TagFreedPage);
 
   ASSERT_DEATH_WRAP(*(char*)guard_page = 0, "");
 
@@ -669,8 +700,57 @@ TEST(Jemalloc, GuardRegion)
   }
   moz_arena_free(arena, extra_ptr);
 
-  // Until Bug 1364359 is fixed it is unsafe to call moz_dispose_arena.
-  // moz_dispose_arena(arena);
+  moz_dispose_arena(arena);
+
+#  ifdef HAS_GDB_SLEEP_DURATION
+  _gdb_sleep_duration = old_gdb_sleep_duration;
+#  endif
+}
+
+TEST(Jemalloc, DisposeArena)
+{
+  jemalloc_stats_t stats;
+  jemalloc_stats(&stats);
+
+#  ifdef HAS_GDB_SLEEP_DURATION
+  // Avoid death tests adding some unnecessary (long) delays.
+  unsigned int old_gdb_sleep_duration = _gdb_sleep_duration;
+  _gdb_sleep_duration = 0;
+#  endif
+
+  arena_id_t arena = moz_create_arena();
+  void* ptr = moz_arena_malloc(arena, 42);
+  // Disposing of the arena when it's not empty is a MOZ_CRASH-worthy error.
+  ASSERT_DEATH_WRAP(moz_dispose_arena(arena), "");
+  moz_arena_free(arena, ptr);
+  moz_dispose_arena(arena);
+
+  arena = moz_create_arena();
+  ptr = moz_arena_malloc(arena, stats.page_size * 2);
+  // Disposing of the arena when it's not empty is a MOZ_CRASH-worthy error.
+  ASSERT_DEATH_WRAP(moz_dispose_arena(arena), "");
+  moz_arena_free(arena, ptr);
+  moz_dispose_arena(arena);
+
+  arena = moz_create_arena();
+  ptr = moz_arena_malloc(arena, stats.chunksize * 2);
+#  ifdef MOZ_DEBUG
+  // On debug builds, we do the expensive check that arenas are empty.
+  ASSERT_DEATH_WRAP(moz_dispose_arena(arena), "");
+  moz_arena_free(arena, ptr);
+  moz_dispose_arena(arena);
+#  else
+  // Currently, the allocator can't trivially check whether the arena is empty
+  // of huge allocations, so disposing of it works.
+  moz_dispose_arena(arena);
+  // But trying to free a pointer that belongs to it will MOZ_CRASH.
+  ASSERT_DEATH_WRAP(free(ptr), "");
+  // Likewise for realloc
+  ASSERT_DEATH_WRAP(ptr = realloc(ptr, stats.chunksize * 3), "");
+#  endif
+
+  // Using the arena after it's been disposed of is MOZ_CRASH-worthy.
+  ASSERT_DEATH_WRAP(moz_arena_malloc(arena, 42), "");
 
 #  ifdef HAS_GDB_SLEEP_DURATION
   _gdb_sleep_duration = old_gdb_sleep_duration;

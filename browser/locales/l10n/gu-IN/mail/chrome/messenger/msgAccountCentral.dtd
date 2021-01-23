@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "ઈમેલ"> 
+<!ENTITY readMsgsLink.label           "સંદેશાઓ વાંચો"> 
+<!ENTITY composeMsgLink.label         "નવો સંદેશો લખો"> 
+
+<!ENTITY newsSectionHdr.label         "સમાચારજૂથો"> 
+<!ENTITY subscribeNewsLink.label      "સમાચારજૂથ ઉમેદવારીની વ્યવસ્થા કરો"> 
+
+<!ENTITY accountsSectionHdr.label     "ખાતાઓ"> 
+
+<!ENTITY subscribeImapFolders.label   "ફોલ્ડર ઉમેદવારીની વ્યવસ્થા કરો">
+<!ENTITY settingsLink.label           "આ ખાતા માટે સુયોજનો જુઓ"> 
+
+<!ENTITY advFeaturesSectionHdr.label  "અદ્યતન લાક્ષણિકતાઓ"> 
+<!ENTITY searchMsgsLink.label         "શોધ સંદેશાઓ"> 
+<!ENTITY filtersLink.label            "સંદેશા ગાળકોની વ્યવસ્થા કરો">
+<!ENTITY junkSettings.label           "બગડેલ મેલ સુયોજનો">
+<!ENTITY offlineLink.label            "ઓફલાઈન સુયોજનો">
+

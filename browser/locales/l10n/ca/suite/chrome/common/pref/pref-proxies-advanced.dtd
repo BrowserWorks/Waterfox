@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE : FILE The Advanced Proxy Preferences dialog -->
+
+<!ENTITY  pref.proxies.advanced.title "Preferències avançades de servidor intermediari">
+<!ENTITY  protocols.caption           "Servidors intermediaris específics de protocol">
+<!ENTITY  protocols.description       "Normalment el mateix servidor intermediari pot gestionar tots els protocols que es llisten aquí.">
+<!ENTITY  http.label                  "Servidor intermediari d'HTTP:">
+<!ENTITY  http.accesskey              "T">
+<!ENTITY  ssl.label                   "Servidor intermediari de SSL:">
+<!ENTITY  ssl.accesskey               "S">
+<!ENTITY  ftp.label                   "Servidor intermediari d'FTP:">
+<!ENTITY  ftp.accesskey               "F">
+<!ENTITY  reuseProxy.label            "Utilitza els paràmetres del servidor intermediari d'HTTP per a tots els protocols">
+<!ENTITY  reuseProxy.accesskey        "U">
+<!ENTITY  port.label                  "Port:">
+<!ENTITY  HTTPPort.accesskey          "P">
+<!ENTITY  SSLPort.accesskey           "o">
+<!ENTITY  FTPPort.accesskey           "r">
+
+<!ENTITY  socks.caption               "Servidor intermediari genèric">
+<!ENTITY  socks.description           "Un servidor intermediari SOCKS és un de tipus genèric que s'acostuma utilitzar en entorns empresarials o similars.">
+<!ENTITY  socks.label                 "Servidor intermediari SOCKS:">
+<!ENTITY  socks.accesskey             "O">
+<!ENTITY  socks4.label                "SOCKS v4">
+<!ENTITY  socks4.accesskey            "C">
+<!ENTITY  socks5.label                "SOCKS v5">
+<!ENTITY  socks5.accesskey            "K">
+<!ENTITY  socksRemoteDNS.label        "Utilitza-ho per resoldre noms de servidors centrals (recomanable per a SOCKS v5)">
+<!ENTITY  socksRemoteDNS.accesskey    "e">
+<!ENTITY  SOCKSport.accesskey         "t">

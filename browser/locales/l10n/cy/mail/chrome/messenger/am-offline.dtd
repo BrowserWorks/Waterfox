@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "I arbed lle, peidio llwytho i lawr:">
+<!ENTITY doNotDownloadNntp.label "I arbed lle, peidio llwytho i lawr ar gyfer defnydd all-lein:">
+<!ENTITY doNotDownloadImap.label "I arbed lle ar ddisg, mae modd cyfyngu ar lwytho i lawr negeseuon o'r gweinydd a chadw copïau lleol yn ôl oed a maint.">
+<!ENTITY allFoldersOffline2.label "Cadw negesuon ym mhob ffolder ar gyfer y cyfrif yma ar y cyfrifiadur hwn">
+<!ENTITY allFoldersOffline2.accesskey "h">
+<!ENTITY allFoldersOfflineNote.label "Sylw: Bydd newid hwn yn effeithio ar holl ffolderi'r cyfrif hwn. I osod ffolderi unigol, defnyddiwch y botwm Uwch….">
+<!ENTITY offlineNotDownload.label "Negeseuon mwy na">
+<!ENTITY offlineNotDownload.accesskey "N">
+<!ENTITY autosyncNotDownload.label "Peidio llwytho i lawr negeseuon mwy na">
+<!ENTITY autosyncNotDownload.accesskey "P">
+<!ENTITY kb.label "KB">
+<!ENTITY daysOld.label "diwrnod oed">
+<!ENTITY message.label "negeseuon">
+<!ENTITY nntpNotDownloadRead.label "Darllen negeseuon">
+<!ENTITY nntpNotDownloadRead.accesskey "D">
+<!ENTITY nntpDownloadMsg.label "Negeseuon mwy na">
+<!ENTITY nntpDownloadMsg.accesskey "e">
+<!ENTITY retentionCleanup.label "I adfer lle ar ddisg, mae modd dileu hen negesuon yn barhaol.">
+<!ENTITY retentionCleanupImap.label "I adfer lle ar ddisg, mae modd dileu hen negeseuon yn barhaol yn gopïau lleol a'r gwreiddiol ar y gweinydd pell.">
+<!ENTITY retentionCleanupPop.label "I adfer lle ar ddisg, mae modd dileu hen negeseuon yn barhaol gan gynnwys y gwreiddiol ar y gweinydd pell.">
+<!ENTITY retentionKeepMsg.label "Dileu negeseuon sy'n fwy na">
+<!ENTITY retentionKeepMsg.accesskey "D">
+<!ENTITY retentionKeepAll.label "Peidio dileu unrhyw negeseuon">
+<!ENTITY retentionKeepAll.accesskey "e">
+<!ENTITY retentionKeepRecent.label "Dileu pob un heblaw'r mwyaf diweddar">
+<!ENTITY retentionKeepRecent.accesskey "i">
+<!ENTITY retentionApplyToFlagged.label "Cadw negeseuon serennog bob tro">
+<!ENTITY retentionApplyToFlagged.accesskey "s">
+<!ENTITY nntpRemoveMsgBody.label "Tynnu corff neges mwy na">
+<!ENTITY nntpRemoveMsgBody.accesskey "c">
+<!ENTITY offlineSelectNntp.label "Dewis grwpiau newyddion ar gyfer defnydd all-lein…">
+<!ENTITY offlineSelectNntp.accesskey "g">
+<!ENTITY offlineImapAdvancedOffline.label "Uwch…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "U">
+<!ENTITY syncGroupTitle.label "Cydweddu Negeseuon">
+<!ENTITY diskspaceGroupTitle.label "Lle ar Ddisg">
+
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+<!ENTITY allAutosync.label               "Cydweddu pob neges yn lleol beth bynnag yw eu hoed">
+<!ENTITY allAutosync.accesskey           "C">
+<!ENTITY ageAutosyncBefore.label         "Cydweddu'r mwyaf diweddar">
+<!ENTITY ageAutosync.accesskey           "z">
+<!ENTITY ageAutosyncMiddle.label         "">
+<!ENTITY dayAgeInterval.label            "Diwrnod">
+<!ENTITY weekAgeInterval.label           "Wythnos">
+<!ENTITY monthAgeInterval.label          "Mis">
+<!ENTITY yearAgeInterval.label           "Blwyddyn">
+<!ENTITY ageAutosyncAfter.label          "">

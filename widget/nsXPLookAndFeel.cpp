@@ -14,12 +14,19 @@
 #include "nsFont.h"
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/Services.h"
 #include "mozilla/ServoStyleSet.h"
+#include "mozilla/StaticPrefs_editor.h"
+#include "mozilla/StaticPrefs_findbar.h"
+#include "mozilla/StaticPrefs_fission.h"
+#include "mozilla/StaticPrefs_ui.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/widget/WidgetMessageUtils.h"
+#include "mozilla/Telemetry.h"
+#include "mozilla/TelemetryScalarEnums.h"
 
 #include "gfxPlatform.h"
-#include "gfxPrefs.h"
+
 #include "qcms.h"
 
 #ifdef DEBUG
@@ -141,6 +148,8 @@ const char nsXPLookAndFeel::sColorPrefs[][41] = {
     "ui.buttonshadow",
     "ui.buttontext",
     "ui.captiontext",
+    "ui.-moz-field",
+    "ui.-moz-fieldtext",
     "ui.graytext",
     "ui.highlight",
     "ui.highlighttext",
@@ -161,8 +170,8 @@ const char nsXPLookAndFeel::sColorPrefs[][41] = {
     "ui.windowframe",
     "ui.windowtext",
     "ui.-moz-buttondefault",
-    "ui.-moz-field",
-    "ui.-moz-fieldtext",
+    "ui.-moz-default-color",
+    "ui.-moz-default-background-color",
     "ui.-moz-dialog",
     "ui.-moz-dialogtext",
     "ui.-moz-dragtargetzone",
@@ -206,6 +215,9 @@ const char nsXPLookAndFeel::sColorPrefs[][41] = {
     "ui.-moz-win-mediatext",
     "ui.-moz-win-communicationstext",
     "ui.-moz-nativehyperlinktext",
+    "ui.-moz-hyperlinktext",
+    "ui.-moz-activehyperlinktext",
+    "ui.-moz-visitedhyperlinktext",
     "ui.-moz-comboboxtext",
     "ui.-moz-combobox",
     "ui.-moz-gtk-info-bar-text"};
@@ -214,10 +226,6 @@ int32_t nsXPLookAndFeel::sCachedColors[size_t(LookAndFeel::ColorID::End)] = {0};
 int32_t nsXPLookAndFeel::sCachedColorBits[COLOR_CACHE_SIZE] = {0};
 
 bool nsXPLookAndFeel::sInitialized = false;
-bool nsXPLookAndFeel::sUseNativeColors = true;
-bool nsXPLookAndFeel::sFindbarModalHighlight = false;
-bool nsXPLookAndFeel::sIsInPrefersReducedMotionForTest = false;
-bool nsXPLookAndFeel::sPrefersReducedMotionForTest = false;
 
 nsXPLookAndFeel* nsXPLookAndFeel::sInstance = nullptr;
 bool nsXPLookAndFeel::sShutdown = false;
@@ -248,9 +256,6 @@ void nsXPLookAndFeel::Shutdown() {
   sInstance = nullptr;
 }
 
-nsXPLookAndFeel::nsXPLookAndFeel()
-    : LookAndFeel(), mShouldRetainCacheForTest(false) {}
-
 // static
 void nsXPLookAndFeel::IntPrefChanged(nsLookAndFeelIntPref* data) {
   if (!data) {
@@ -260,13 +265,21 @@ void nsXPLookAndFeel::IntPrefChanged(nsLookAndFeelIntPref* data) {
   int32_t intpref;
   nsresult rv = Preferences::GetInt(data->name, &intpref);
   if (NS_FAILED(rv)) {
-    return;
-  }
-  data->intVar = intpref;
-  data->isSet = true;
+    data->isSet = false;
+
 #ifdef DEBUG_akkana
-  printf("====== Changed int pref %s to %d\n", data->name, data->intVar);
+    printf("====== Cleared int pref %s\n", data->name);
 #endif
+  } else {
+    data->intVar = intpref;
+    data->isSet = true;
+
+#ifdef DEBUG_akkana
+    printf("====== Changed int pref %s to %d\n", data->name, data->intVar);
+#endif
+  }
+
+  NotifyChangedAllWindows();
 }
 
 // static
@@ -278,13 +291,21 @@ void nsXPLookAndFeel::FloatPrefChanged(nsLookAndFeelFloatPref* data) {
   int32_t intpref;
   nsresult rv = Preferences::GetInt(data->name, &intpref);
   if (NS_FAILED(rv)) {
-    return;
-  }
-  data->floatVar = (float)intpref / 100.0f;
-  data->isSet = true;
+    data->isSet = false;
+
 #ifdef DEBUG_akkana
-  printf("====== Changed float pref %s to %f\n", data->name, data->floatVar);
+    printf("====== Cleared float pref %s\n", data->name);
 #endif
+  } else {
+    data->floatVar = (float)intpref / 100.0f;
+    data->isSet = true;
+
+#ifdef DEBUG_akkana
+    printf("====== Changed float pref %s to %f\n", data->name);
+#endif
+  }
+
+  NotifyChangedAllWindows();
 }
 
 // static
@@ -292,10 +313,7 @@ void nsXPLookAndFeel::ColorPrefChanged(unsigned int index,
                                        const char* prefName) {
   nsAutoString colorStr;
   nsresult rv = Preferences::GetString(prefName, colorStr);
-  if (NS_FAILED(rv)) {
-    return;
-  }
-  if (!colorStr.IsEmpty()) {
+  if (NS_SUCCEEDED(rv) && !colorStr.IsEmpty()) {
     nscolor thecolor;
     if (colorStr[0] == char16_t('#')) {
       if (NS_HexToRGBA(nsDependentString(colorStr, 1), nsHexColorType::NoAlpha,
@@ -315,7 +333,13 @@ void nsXPLookAndFeel::ColorPrefChanged(unsigned int index,
     // to force lookup when the color is next used
     int32_t id = NS_PTR_TO_INT32(index);
     CLEAR_COLOR_CACHE(id);
+
+#ifdef DEBUG_akkana
+    printf("====== Cleared color pref %s\n", prefName);
+#endif
   }
+
+  NotifyChangedAllWindows();
 }
 
 void nsXPLookAndFeel::InitFromPref(nsLookAndFeelIntPref* aPref) {
@@ -418,12 +442,6 @@ void nsXPLookAndFeel::Init() {
   for (i = 0; i < ArrayLength(sColorPrefs); ++i) {
     InitColorFromPref(i);
   }
-
-  Preferences::AddBoolVarCache(&sUseNativeColors, "ui.use_native_colors",
-                               sUseNativeColors);
-  Preferences::AddBoolVarCache(&sFindbarModalHighlight,
-                               "findbar.modalHighlight",
-                               sFindbarModalHighlight);
 
   if (XRE_IsContentProcess()) {
     mozilla::dom::ContentChild* cc = mozilla::dom::ContentChild::GetSingleton();
@@ -605,10 +623,10 @@ nscolor nsXPLookAndFeel::GetStandinForNativeColor(ColorID aID) {
     case ColorID::MozButtondefault:
       result = NS_RGB(0x69, 0x69, 0x69);
       break;
-    case ColorID::MozField:
+    case ColorID::Field:
       result = NS_RGB(0xFF, 0xFF, 0xFF);
       break;
-    case ColorID::MozFieldtext:
+    case ColorID::Fieldtext:
       result = NS_RGB(0x00, 0x00, 0x00);
       break;
     case ColorID::MozDialog:
@@ -813,8 +831,8 @@ nsresult nsXPLookAndFeel::GetColorImpl(ColorID aID,
         // from the CSS3 working draft (not yet finalized)
         // http://www.w3.org/tr/2000/wd-css3-userint-20000216.html#color
 
-      case ColorID::MozField:
-      case ColorID::MozFieldtext:
+      case ColorID::Field:
+      case ColorID::Fieldtext:
         aResult = NS_RGB(0xff, 0x00, 0xff);
         break;
 
@@ -852,7 +870,8 @@ nsresult nsXPLookAndFeel::GetColorImpl(ColorID aID,
 #endif
 
   if (aID == ColorID::TextSelectBackgroundAttention) {
-    if (sFindbarModalHighlight) {
+    if (StaticPrefs::findbar_modalHighlight() &&
+        !StaticPrefs::fission_autostart()) {
       aResult = NS_RGBA(0, 0, 0, 0);
       return NS_OK;
     }
@@ -877,28 +896,26 @@ nsresult nsXPLookAndFeel::GetColorImpl(ColorID aID,
     return NS_OK;
   }
 
-  if (sUseNativeColors && aUseStandinsForNativeColors) {
+  if (StaticPrefs::ui_use_native_colors() && aUseStandinsForNativeColors) {
     aResult = GetStandinForNativeColor(aID);
     return NS_OK;
   }
 
-  if (sUseNativeColors && NS_SUCCEEDED(NativeGetColor(aID, aResult))) {
+  if (StaticPrefs::ui_use_native_colors() &&
+      NS_SUCCEEDED(NativeGetColor(aID, aResult))) {
     if (!mozilla::ServoStyleSet::IsInServoTraversal()) {
       MOZ_ASSERT(NS_IsMainThread());
-      // Make sure the preferences are initialized. In the normal run,
-      // they would already be, because gfxPlatform would have been created,
-      // but with some addon, that is not the case. See Bug 1357307.
-      gfxPrefs::GetSingleton();
       if ((gfxPlatform::GetCMSMode() == eCMSMode_All) &&
           !IsSpecialColor(aID, aResult)) {
         qcms_transform* transform = gfxPlatform::GetCMSInverseRGBTransform();
         if (transform) {
-          uint8_t color[3];
+          uint8_t color[4];
           color[0] = NS_GET_R(aResult);
           color[1] = NS_GET_G(aResult);
           color[2] = NS_GET_B(aResult);
+          color[3] = NS_GET_A(aResult);
           qcms_transform_data(transform, color, color, 1);
-          aResult = NS_RGB(color[0], color[1], color[2]);
+          aResult = NS_RGBA(color[0], color[1], color[2], color[3]);
         }
       }
 
@@ -959,15 +976,46 @@ nsresult nsXPLookAndFeel::GetFloatImpl(FloatID aID, float& aResult) {
 void nsXPLookAndFeel::RefreshImpl() {
   // Wipe out our color cache.
   uint32_t i;
-  for (i = 0; i < uint32_t(ColorID::End); i++) sCachedColors[i] = 0;
-  for (i = 0; i < COLOR_CACHE_SIZE; i++) sCachedColorBits[i] = 0;
+  for (i = 0; i < uint32_t(ColorID::End); i++) {
+    sCachedColors[i] = 0;
+  }
+  for (i = 0; i < COLOR_CACHE_SIZE; i++) {
+    sCachedColorBits[i] = 0;
+  }
+
+  // Reinit color cache from prefs.
+  for (i = 0; i < uint32_t(ColorID::End); ++i) {
+    InitColorFromPref(i);
+  }
 }
 
 nsTArray<LookAndFeelInt> nsXPLookAndFeel::GetIntCacheImpl() {
   return nsTArray<LookAndFeelInt>();
 }
 
+static bool sRecordedLookAndFeelTelemetry = false;
+
+void nsXPLookAndFeel::RecordTelemetry() {
+  if (sRecordedLookAndFeelTelemetry) {
+    return;
+  }
+
+  sRecordedLookAndFeelTelemetry = true;
+
+  int32_t i;
+  Telemetry::ScalarSet(
+      Telemetry::ScalarID::WIDGET_DARK_MODE,
+      NS_SUCCEEDED(GetIntImpl(eIntID_SystemUsesDarkTheme, i)) && i != 0);
+}
+
 namespace mozilla {
+
+// static
+void LookAndFeel::NotifyChangedAllWindows() {
+  if (nsCOMPtr<nsIObserverService> obs = services::GetObserverService()) {
+    obs->NotifyObservers(nullptr, "look-and-feel-changed", nullptr);
+  }
+}
 
 // static
 nsresult LookAndFeel::GetColor(ColorID aID, nscolor* aResult) {
@@ -1002,12 +1050,19 @@ char16_t LookAndFeel::GetPasswordCharacter() {
 
 // static
 bool LookAndFeel::GetEchoPassword() {
+  if (StaticPrefs::editor_password_mask_delay() >= 0) {
+    return StaticPrefs::editor_password_mask_delay() > 0;
+  }
   return nsLookAndFeel::GetInstance()->GetEchoPasswordImpl();
 }
 
 // static
 uint32_t LookAndFeel::GetPasswordMaskDelay() {
-  return nsLookAndFeel::GetInstance()->GetPasswordMaskDelayImpl();
+  int32_t delay = StaticPrefs::editor_password_mask_delay();
+  if (delay < 0) {
+    return nsLookAndFeel::GetInstance()->GetPasswordMaskDelayImpl();
+  }
+  return delay;
 }
 
 // static
@@ -1025,11 +1080,6 @@ nsTArray<LookAndFeelInt> LookAndFeel::GetIntCache() {
 void LookAndFeel::SetIntCache(
     const nsTArray<LookAndFeelInt>& aLookAndFeelIntCache) {
   return nsLookAndFeel::GetInstance()->SetIntCacheImpl(aLookAndFeelIntCache);
-}
-
-// static
-void LookAndFeel::SetShouldRetainCacheForTest(bool aValue) {
-  nsLookAndFeel::GetInstance()->SetShouldRetainCacheImplForTest(aValue);
 }
 
 }  // namespace mozilla

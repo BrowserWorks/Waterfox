@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowtitle.label              "Poikkeukset">
+<!ENTITY treehead.sitename.label        "Sivusto">
+<!ENTITY treehead.status.label          "Tila">
+<!ENTITY remove.label                   "Poista sivusto">
+<!ENTITY remove.accesskey               "o">
+<!ENTITY removeall.label                "Poista kaikki sivustot">
+<!ENTITY removeall.accesskey            "k">
+<!ENTITY address.label                  "Sivuston osoite:">
+<!ENTITY address.accesskey              "i">
+<!ENTITY block.label                    "Estä">
+<!ENTITY block.accesskey                "E">
+<!ENTITY session.label                  "Salli istunnon ajaksi">
+<!ENTITY session.accesskey              "a">
+<!ENTITY allow.label                    "Salli">
+<!ENTITY allow.accesskey                "S">

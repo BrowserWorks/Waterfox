@@ -11,10 +11,8 @@
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/KeyboardEventBinding.h"
 #include "mozilla/dom/XULCommandEvent.h"
-#include "mozilla/Move.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/TextEvents.h"
-#include "nsAutoPtr.h"
 #include "nsContentUtils.h"
 #include "nsCRT.h"
 #include "nsGkAtoms.h"
@@ -580,6 +578,10 @@ nsMenuItem::UncheckSiblings()
     uint32_t count = parent->GetChildCount();
     for (uint32_t i = 0; i < count; ++i) {
         nsIContent *sibling = parent->GetChildAt_Deprecated(i);
+
+        if (sibling->IsComment()) {
+            continue;
+        }
 
         nsAutoString otherName;
         sibling->AsElement()->GetAttr(kNameSpaceID_None, nsGkAtoms::name,

@@ -1,7 +1,5 @@
-commit e227f54d01d29629d1f889118e8d3442c8640625
-Author: Leo Balter <leonardo.balter@gmail.com>
-Date:   Wed Mar 6 12:39:58 2019 -0500
+commit 4a8e49b3ca7f9f74a4cafe6621ff9ba548ccc353
+Author: Alexey Shvayka <shvaikalesh@gmail.com>
+Date:   Sat Apr 11 01:41:59 2020 +0300
 
-    Fix assertions previously not reached before
-    
-    Fix #2049
+    Add test for \0 in Unicode patterns (#2569)

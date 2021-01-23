@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" > %brandDTD;]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title>Prywatność i&nbsp;zabezpieczenia &mdash; Certyfikaty</title>
+	<link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+</head>
+
+<body>
+<h1 id="certificate_settings">Ustawienia certyfikatów</h1>
+
+<p>Niniejszy rozdział opisuje ustawienia dotyczące certyfikatów, Menedżera certyfikatów, Menedżera urządzeń zabezpieczających, a&nbsp;także okna dialogowe dotyczące certyfikatów.</p>
+
+<p>Więcej informacji na temat certyfikatów i&nbsp;zagadnień z&nbsp;nimi związanych zawiera rozdział <a href="using_certs_help.xhtml">Używanie certyfikatów</a>.</p>
+
+<div class="contentsBox">W&nbsp;tym rozdziale:
+  <ul>
+    <li><a href="#privacy_and_security_preferences_certificates">Preferencje certyfikatów</a></li>
+    <li><a href="certs_help.xhtml">Menedżer certyfikatów</a></li>
+    <li><a href="certs_help.xhtml#Security_Devices">Menedżer urządzeń zabezpieczających</a></li>
+    <li><a href="cert_dialog_help.xhtml">Certyfikaty &mdash; informacje i&nbsp;decyzje</a></li>
+  </ul>
+</div>
+
+<h2 id="privacy_and_security_preferences_certificates">Preferencje certyfikatów</h2>
+
+<p>Ten rozdział objaśnia używanie panelu preferencji certyfikatów. Aby wyświetlić panel, należy:</p>
+
+<ol>
+   <li>Z&nbsp;menu <span class="mac">&brandShortName;</span><span class="noMac">Edycja</span> wybrać Preferencje.</li>
+   <li>W&nbsp;kategorii Prywatność i&nbsp;zabezpieczenia wybrać Certyfikaty. (Jeśli podkategorie nie są widoczne, to aby rozwinąć listę, należy podwójnie kliknąć na Prywatność i&nbsp;zabezpieczenia.)</li>
+</ol>
+
+<h3 id="client_certificate_selection">Sposób wyboru certyfikatu</h3>
+
+<p>Niektóre witryny internetowe wymagają identyfikacji użytkowników przy pomocy certyfikatów. Poniższe opcje określają, w&nbsp;jaki sposób przeglądarka będzie identyfikowała certyfikaty w&nbsp;celu przekazania witrynie tego właściwego:</p>
+<ul>
+	<li><strong>Wybierz automatycznie</strong>: pozwala na automatyczny wybór odpowiedniego certyfikatu bez pytania użytkownika. Jest to domyślne ustawienie sposobu wyboru certyfikatu.</li>
+	<li><strong>Pytaj za każdym razem</strong>: powoduje wyświetlenie zapytania do użytkownika o&nbsp;właściwy certyfikat za każdym razem, gdy zażąda tego strona WWW.</li>
+</ul>
+
+<h3 id="manage_certificates">Menedżer certyfikatów</h3>
+
+<p>Certyfikaty są cyfrowymi odpowiednikami kart identyfikacyjnych &mdash; umożliwiają jednoznaczne stwierdzenie tożsamości użytkownika, witryny WWW&nbsp;lub organizacji.</p>
+
+<p>Aby sprawdzić lub skonfigurować posiadane certyfikaty, należy nacisnąć przycisk Menedżer certyfikatów. <!-- TODO: start localizing -->See <a href="using_certs_help.xhtml#managing_certificates">Managing Certificates</a> for further information on this dialog.<!-- TODO: stop localizing --></p>
+
+<h3 id="manage_security_devices">Menedżer urządzeń zabezpieczających</h3>
+
+<p>Urządzenie zabezpieczające (sprzętowe lub programowe) przechowuje certyfikaty i&nbsp;klucze użytkownika. Przykładowo, urządzeniem zabezpieczającym może być inteligentna karta magnetyczna lub chipowa. Nawigator posiada swoje własne, wbudowane urządzenie zabezpieczające, niemniej istnieje możliwość używania w&nbsp;tym samym czasie dodatkowych urządzeń, takich jak np. inteligentne karty.</p>
+
+<p>Aby sprawdzić lub zmienić ustawienia urządzenia zabezpieczającego, należy nacisnąć przycisk Menedżer urządzeń zabezpieczających. <!-- TODO: start localizing -->See <a href="using_certs_help.xhtml#managing_smart_cards_and_other_security_devices">Managing  Smart Cards and Other Security Devices</a> for further information on this dialog.</p>
+
+<h3 id="ocsp">OCSP</h3>
+
+<p>A certificate revocation list (CRL) is a list of revoked certificates that is generated and signed by a <a href="glossary.xhtml#certificate_authority">certificate authority (CA)</a>. The Online Certificate Status Protocol (OCSP) makes it possible for Certificate Manager to perform an online check of a certificate&apos;s validity each time the certificate is viewed or used. This process involves checking the certificate against a CRL maintained at a server specified by the CA of that certificate. Your computer must be online for OCSP to work.</p>
+
+<p>The following settings in the OCSP section of the Certificates preferences panel determine how Certificate Manager uses OCSP:</p>
+
+<ul>
+  <li><strong>Use the Online Certificate Status Protocol (OCSP) to confirm the current validity of certificates</strong>: Select this if you want Certificate Manager to perform an online status check each time it verifies a certificate. Certificate Manager makes sure that the certificate is listed as valid at the URL and checks validity period and trust settings.
+
+    <p><strong>Note</strong>: If this setting is not selected, Certificate Manager will only confirm the certificate&apos;s validity period and that it is correctly signed by a CA whose own CA certificate is both listed under the CA Certificates tab (in the main Certificate Manager window) and marked as trusted for issuing that kind of certificate.</p>
+  </li>
+  <li><strong>When an OCSP server connection fails, treat the certificate as invalid</strong>: Select this if you want the validation to fail if a connection to the OCSP server can&apos;t be established, thus enforcing that a certificate always must be positively validated for each use.</li>
+</ul>
+
+<p>For more detailed information on certificate validation, see <a href="using_certs_help.xhtml#controlling_validation">How Certificate Validation Works</a>.</p><!-- TODO: stop localizing -->
+
+</body>
+</html>

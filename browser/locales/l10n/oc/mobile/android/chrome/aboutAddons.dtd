@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "Moduls complementaris">
+<!ENTITY aboutAddons.header2                    "Vòstres moduls complementaris">
+
+<!ENTITY addonAction.enable                     "Activar">
+<!ENTITY addonAction.disable                    "Desactivar">
+<!ENTITY addonAction.uninstall                  "Desinstallar">
+<!ENTITY addonAction.undo                       "Anullar">
+<!ENTITY addonAction.update                     "Metre a jorn">
+
+<!ENTITY addonUnsigned.message                  "&brandShortName; a pas pogut verificar aqueste modul.">
+<!ENTITY addonUnsigned.learnMore                "Ne saber mai…">

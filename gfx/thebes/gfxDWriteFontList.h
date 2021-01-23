@@ -44,7 +44,7 @@ class gfxDWriteFontEntry;
 /**
  * \brief Class representing directwrite font family.
  */
-class gfxDWriteFontFamily : public gfxFontFamily {
+class gfxDWriteFontFamily final : public gfxFontFamily {
  public:
   typedef mozilla::FontStretch FontStretch;
   typedef mozilla::FontSlantStyle FontSlantStyle;
@@ -57,9 +57,10 @@ class gfxDWriteFontFamily : public gfxFontFamily {
    * \param aFamily IDWriteFontFamily object representing the directwrite
    * family object.
    */
-  gfxDWriteFontFamily(const nsACString& aName, IDWriteFontFamily* aFamily,
+  gfxDWriteFontFamily(const nsACString& aName, FontVisibility aVisibility,
+                      IDWriteFontFamily* aFamily,
                       bool aIsSystemFontFamily = false)
-      : gfxFontFamily(aName),
+      : gfxFontFamily(aName, aVisibility),
         mDWFamily(aFamily),
         mIsSystemFontFamily(aIsSystemFontFamily),
         mForceGDIClassic(false) {}
@@ -98,7 +99,7 @@ class gfxDWriteFontFamily : public gfxFontFamily {
 /**
  * \brief Class representing DirectWrite FontEntry (a unique font style/family)
  */
-class gfxDWriteFontEntry : public gfxFontEntry {
+class gfxDWriteFontEntry final : public gfxFontEntry {
  public:
   /**
    * Constructs a font entry.
@@ -357,7 +358,7 @@ class DWriteFontFallbackRenderer final : public IDWriteTextRenderer {
   nsCString mFamilyName;
 };
 
-class gfxDWriteFontList : public gfxPlatformFontList {
+class gfxDWriteFontList final : public gfxPlatformFontList {
  public:
   gfxDWriteFontList();
 
@@ -369,7 +370,10 @@ class gfxDWriteFontList : public gfxPlatformFontList {
   nsresult InitFontListForPlatform() override;
   void InitSharedFontListForPlatform() override;
 
-  gfxFontFamily* CreateFontFamily(const nsACString& aName) const override;
+  FontVisibility GetVisibilityForFamily(const nsACString& aName) const;
+
+  gfxFontFamily* CreateFontFamily(const nsACString& aName,
+                                  FontVisibility aVisibility) const override;
 
   gfxFontEntry* CreateFontEntry(
       mozilla::fontlist::Face* aFace,
@@ -425,7 +429,7 @@ class gfxDWriteFontList : public gfxPlatformFontList {
   gfxFontEntry* PlatformGlobalFontFallback(const uint32_t aCh,
                                            Script aRunScript,
                                            const gfxFontStyle* aMatchStyle,
-                                           FontFamily* aMatchedFamily) override;
+                                           FontFamily& aMatchedFamily) override;
 
  private:
   friend class gfxDWriteFontFamily;

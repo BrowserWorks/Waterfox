@@ -7,18 +7,22 @@
 #include "ImageBitmapRenderingContext.h"
 #include "ImageEncoder.h"
 #include "mozilla/dom/CanvasRenderingContext2D.h"
+#include "mozilla/GfxMessageUtils.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/UniquePtr.h"
+#include "mozilla/webgpu/CanvasContext.h"
 #include "MozFramebuffer.h"
 #include "nsContentUtils.h"
 #include "nsDOMJSUtils.h"
 #include "nsIScriptContext.h"
 #include "nsJSUtils.h"
-#include "WebGL1Context.h"
-#include "WebGL2Context.h"
+#include "ClientWebGLContext.h"
 
 namespace mozilla {
 namespace dom {
+
+CanvasRenderingContextHelper::CanvasRenderingContextHelper()
+    : mCurrentContextType(CanvasContextType::NoContext) {}
 
 void CanvasRenderingContextHelper::ToBlob(
     JSContext* aCx, nsIGlobalObject* aGlobal, BlobCallback& aCallback,
@@ -32,14 +36,19 @@ void CanvasRenderingContextHelper::ToBlob(
 
     // This is called on main thread.
     MOZ_CAN_RUN_SCRIPT
-    nsresult ReceiveBlob(already_AddRefed<Blob> aBlob) override {
-      RefPtr<Blob> blob = aBlob;
+    nsresult ReceiveBlobImpl(already_AddRefed<BlobImpl> aBlobImpl) override {
+      RefPtr<BlobImpl> blobImpl = aBlobImpl;
 
-      RefPtr<Blob> newBlob = Blob::Create(mGlobal, blob->Impl());
+      RefPtr<Blob> blob;
 
-      RefPtr<BlobCallback> callback(mBlobCallback.forget());
+      if (blobImpl) {
+        blob = Blob::Create(mGlobal, blobImpl);
+      }
+
+      RefPtr<BlobCallback> callback(std::move(mBlobCallback));
       ErrorResult rv;
-      callback->Call(newBlob, rv);
+
+      callback->Call(blob, rv);
 
       mGlobal = nullptr;
       MOZ_ASSERT(!mBlobCallback);
@@ -121,7 +130,7 @@ CanvasRenderingContextHelper::CreateContextHelper(
     case CanvasContextType::WebGL1:
       Telemetry::Accumulate(Telemetry::CANVAS_WEBGL_USED, 1);
 
-      ret = WebGL1Context::Create();
+      ret = new ClientWebGLContext(/*webgl2:*/ false);
       if (!ret) return nullptr;
 
       break;
@@ -129,7 +138,16 @@ CanvasRenderingContextHelper::CreateContextHelper(
     case CanvasContextType::WebGL2:
       Telemetry::Accumulate(Telemetry::CANVAS_WEBGL_USED, 1);
 
-      ret = WebGL2Context::Create();
+      ret = new ClientWebGLContext(/*webgl2:*/ true);
+      if (!ret) return nullptr;
+
+      break;
+
+    case CanvasContextType::WebGPU:
+      // TODO
+      // Telemetry::Accumulate(Telemetry::CANVAS_WEBGPU_USED, 1);
+
+      ret = new webgpu::CanvasContext();
       if (!ret) return nullptr;
 
       break;
@@ -168,7 +186,7 @@ already_AddRefed<nsISupports> CanvasRenderingContextHelper::GetContext(
       return nullptr;
     }
 
-    mCurrentContext = context.forget();
+    mCurrentContext = std::move(context);
     mCurrentContextType = contextType;
 
     nsresult rv = UpdateContext(aCx, aContextOptions, aRv);
@@ -180,12 +198,18 @@ already_AddRefed<nsISupports> CanvasRenderingContextHelper::GetContext(
         Telemetry::Accumulate(Telemetry::CANVAS_WEBGL_SUCCESS, 0);
       else if (contextType == CanvasContextType::WebGL2)
         Telemetry::Accumulate(Telemetry::CANVAS_WEBGL2_SUCCESS, 0);
+      else if (contextType == CanvasContextType::WebGPU) {
+        // Telemetry::Accumulate(Telemetry::CANVAS_WEBGPU_SUCCESS, 0);
+      }
       return nullptr;
     }
     if (contextType == CanvasContextType::WebGL1)
       Telemetry::Accumulate(Telemetry::CANVAS_WEBGL_SUCCESS, 1);
     else if (contextType == CanvasContextType::WebGL2)
       Telemetry::Accumulate(Telemetry::CANVAS_WEBGL2_SUCCESS, 1);
+    else if (contextType == CanvasContextType::WebGPU) {
+      // Telemetry::Accumulate(Telemetry::CANVAS_WEBGPU_SUCCESS, 1);
+    }
   } else {
     // We already have a context of some type.
     if (contextType != mCurrentContextType) return nullptr;

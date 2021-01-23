@@ -28,9 +28,11 @@
 #include "../../_psutil_common.h"
 #include "../../_psutil_posix.h"
 
+
 #define PSUTIL_TV2DOUBLE(t)    ((t).tv_sec + (t).tv_usec / 1000000.0)
 #define PSUTIL_BT2MSEC(bt) (bt.sec * 1000 + (((uint64_t) 1000000000 * (uint32_t) \
         (bt.frac >> 32) ) >> 32 ) / 1000000)
+#define DECIKELVIN_2_CELCIUS(t) (t - 2731) / 10
 #ifndef _PATH_DEVNULL
 #define _PATH_DEVNULL "/dev/null"
 #endif
@@ -42,7 +44,7 @@
 
 
 int
-psutil_kinfo_proc(const pid_t pid, struct kinfo_proc *proc) {
+psutil_kinfo_proc(pid_t pid, struct kinfo_proc *proc) {
     // Fills a kinfo_proc struct based on process pid.
     int mib[4];
     size_t size;
@@ -53,13 +55,13 @@ psutil_kinfo_proc(const pid_t pid, struct kinfo_proc *proc) {
 
     size = sizeof(struct kinfo_proc);
     if (sysctl((int *)mib, 4, proc, &size, NULL, 0) == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_PID)");
         return -1;
     }
 
     // sysctl stores 0 in the size if we can't find the process information.
     if (size == 0) {
-        NoSuchProcess("");
+        NoSuchProcess("sysctl (size = 0)");
         return -1;
     }
     return 0;
@@ -86,81 +88,42 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
     // Returns a list of all BSD processes on the system.  This routine
     // allocates the list and puts it in *procList and a count of the
     // number of entries in *procCount.  You are responsible for freeing
-    // this list (use "free" from System framework).
-    // On success, the function returns 0.
-    // On error, the function returns a BSD errno value.
+    // this list. On success returns 0, else 1 with exception set.
     int err;
-    struct kinfo_proc *result;
-    int done;
+    struct kinfo_proc *buf = NULL;
     int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_PROC, 0 };
-    size_t length;
+    size_t length = 0;
 
-    assert( procList != NULL);
+    assert(procList != NULL);
     assert(*procList == NULL);
     assert(procCount != NULL);
 
-    *procCount = 0;
-
-    /*
-     * We start by calling sysctl with result == NULL and length == 0.
-     * That will succeed, and set length to the appropriate length.
-     * We then allocate a buffer of that size and call sysctl again
-     * with that buffer.  If that succeeds, we're done.  If that fails
-     * with ENOMEM, we have to throw away our buffer and loop.  Note
-     * that the loop causes use to call sysctl with NULL again; this
-     * is necessary because the ENOMEM failure case sets length to
-     * the amount of data returned, not the amount of data that
-     * could have been returned.
-     */
-    result = NULL;
-    done = 0;
-    do {
-        assert(result == NULL);
-        // Call sysctl with a NULL buffer.
-        length = 0;
-        err = sysctl((int *)name, (sizeof(name) / sizeof(*name)) - 1,
-                     NULL, &length, NULL, 0);
-        if (err == -1)
-            err = errno;
-
-        // Allocate an appropriately sized buffer based on the results
-        // from the previous call.
-        if (err == 0) {
-            result = malloc(length);
-            if (result == NULL)
-                err = ENOMEM;
-        }
-
-        // Call sysctl again with the new buffer.  If we get an ENOMEM
-        // error, toss away our buffer and start again.
-        if (err == 0) {
-            err = sysctl((int *) name, (sizeof(name) / sizeof(*name)) - 1,
-                         result, &length, NULL, 0);
-            if (err == -1)
-                err = errno;
-            if (err == 0) {
-                done = 1;
-            }
-            else if (err == ENOMEM) {
-                assert(result != NULL);
-                free(result);
-                result = NULL;
-                err = 0;
-            }
-        }
-    } while (err == 0 && ! done);
-
-    // Clean up and establish post conditions.
-    if (err != 0 && result != NULL) {
-        free(result);
-        result = NULL;
+    // Call sysctl with a NULL buffer in order to get buffer length.
+    err = sysctl(name, 3, NULL, &length, NULL, 0);
+    if (err == -1) {
+        PyErr_SetFromOSErrnoWithSyscall("sysctl (null buffer)");
+        return 1;
     }
 
-    *procList = result;
-    *procCount = length / sizeof(struct kinfo_proc);
+    // Allocate an appropriately sized buffer based on the results
+    // from the previous call.
+    buf = malloc(length);
+    if (buf == NULL) {
+        PyErr_NoMemory();
+        return 1;
+    }
 
-    assert((err == 0) == (*procList != NULL));
-    return err;
+    // Call sysctl again with the new buffer.
+    err = sysctl(name, 3, buf, &length, NULL, 0);
+    if (err == -1) {
+        PyErr_SetFromOSErrnoWithSyscall("sysctl");
+        free(buf);
+        return 1;
+    }
+
+    *procList = buf;
+    *procCount = length / sizeof(struct kinfo_proc);
+    return 0;
 }
 
 
@@ -178,7 +141,7 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
  *      1 for insufficient privileges.
  */
 static char
-*psutil_get_cmd_args(long pid, size_t *argsize) {
+*psutil_get_cmd_args(pid_t pid, size_t *argsize) {
     int mib[4];
     int argmax;
     size_t size = sizeof(argmax);
@@ -208,7 +171,7 @@ static char
     size = argmax;
     if (sysctl(mib, 4, procargs, &size, NULL, 0) == -1) {
         free(procargs);
-        PyErr_SetFromErrno(PyExc_OSError);
+        PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_ARGS)");
         return NULL;
     }
 
@@ -220,7 +183,7 @@ static char
 
 // returns the command line as a python list object
 PyObject *
-psutil_get_cmdline(long pid) {
+psutil_get_cmdline(pid_t pid) {
     char *argstr = NULL;
     size_t pos = 0;
     size_t argsize = 0;
@@ -267,15 +230,14 @@ error:
  */
 PyObject *
 psutil_proc_exe(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     char pathname[PATH_MAX];
     int error;
     int mib[4];
     int ret;
     size_t size;
-    const char *encoding_errs;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
 
     mib[0] = CTL_KERN;
@@ -287,17 +249,20 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     error = sysctl(mib, 4, pathname, &size, NULL, 0);
     if (error == -1) {
         // see: https://github.com/giampaolo/psutil/issues/907
-        if (errno == ENOENT)
+        if (errno == ENOENT) {
             return PyUnicode_DecodeFSDefault("");
-        else
-            return PyErr_SetFromErrno(PyExc_OSError);
+        }
+        else {
+            return \
+                PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_PATHNAME)");
+        }
     }
     if (size == 0 || strlen(pathname) == 0) {
         ret = psutil_pid_exists(pid);
         if (ret == -1)
             return NULL;
         else if (ret == 0)
-            return NoSuchProcess("");
+            return NoSuchProcess("psutil_pid_exists");
         else
             strcpy(pathname, "");
     }
@@ -309,9 +274,9 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
 PyObject *
 psutil_proc_num_threads(PyObject *self, PyObject *args) {
     // Return number of threads used by process as a Python integer.
-    long pid;
+    pid_t pid;
     struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
@@ -326,7 +291,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     // Thanks to Robert N. M. Watson:
     // http://code.metager.de/source/xref/freebsd/usr.bin/procstat/
     //     procstat_threads.c
-    long pid;
+    pid_t pid;
     int mib[4];
     struct kinfo_proc *kip = NULL;
     struct kinfo_proc *kipp = NULL;
@@ -338,7 +303,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
 
     // we need to re-query for thread information, so don't use *kipp
@@ -350,11 +315,11 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     size = 0;
     error = sysctl(mib, 4, NULL, &size, NULL, 0);
     if (error == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_INC_THREAD)");
         goto error;
     }
     if (size == 0) {
-        NoSuchProcess("");
+        NoSuchProcess("sysctl (size = 0)");
         goto error;
     }
 
@@ -366,11 +331,11 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
 
     error = sysctl(mib, 4, kip, &size, NULL, 0);
     if (error == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_INC_THREAD)");
         goto error;
     }
     if (size == 0) {
-        NoSuchProcess("");
+        NoSuchProcess("sysctl (size = 0)");
         goto error;
     }
 
@@ -447,26 +412,38 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
 #endif
     size_t buffers_size = sizeof(buffers);
 
-    if (sysctlbyname("hw.physmem", &total, &size, NULL, 0))
-        goto error;
-    if (sysctlbyname("vm.stats.vm.v_active_count", &active, &size, NULL, 0))
-        goto error;
-    if (sysctlbyname("vm.stats.vm.v_inactive_count",
-                     &inactive, &size, NULL, 0))
-        goto error;
-    if (sysctlbyname("vm.stats.vm.v_wire_count", &wired, &size, NULL, 0))
-        goto error;
+    if (sysctlbyname("hw.physmem", &total, &size, NULL, 0)) {
+        return PyErr_SetFromOSErrnoWithSyscall("sysctlbyname('hw.physmem')");
+    }
+    if (sysctlbyname("vm.stats.vm.v_active_count", &active, &size, NULL, 0)) {
+        return PyErr_SetFromOSErrnoWithSyscall(
+            "sysctlbyname('vm.stats.vm.v_active_count')");
+    }
+    if (sysctlbyname("vm.stats.vm.v_inactive_count", &inactive, &size, NULL, 0))
+    {
+        return PyErr_SetFromOSErrnoWithSyscall(
+            "sysctlbyname('vm.stats.vm.v_inactive_count')");
+    }
+    if (sysctlbyname("vm.stats.vm.v_wire_count", &wired, &size, NULL, 0)) {
+        return PyErr_SetFromOSErrnoWithSyscall(
+            "sysctlbyname('vm.stats.vm.v_wire_count')");
+    }
     // https://github.com/giampaolo/psutil/issues/997
-    if (sysctlbyname("vm.stats.vm.v_cache_count", &cached, &size, NULL, 0))
+    if (sysctlbyname("vm.stats.vm.v_cache_count", &cached, &size, NULL, 0)) {
         cached = 0;
-    if (sysctlbyname("vm.stats.vm.v_free_count", &free, &size, NULL, 0))
-        goto error;
-    if (sysctlbyname("vfs.bufspace", &buffers, &buffers_size, NULL, 0))
-        goto error;
+    }
+    if (sysctlbyname("vm.stats.vm.v_free_count", &free, &size, NULL, 0)) {
+        return PyErr_SetFromOSErrnoWithSyscall(
+            "sysctlbyname('vm.stats.vm.v_free_count')");
+    }
+    if (sysctlbyname("vfs.bufspace", &buffers, &buffers_size, NULL, 0)) {
+        return PyErr_SetFromOSErrnoWithSyscall("sysctlbyname('vfs.bufspace')");
+    }
 
     size = sizeof(vm);
-    if (sysctl(mib, 2, &vm, &size, NULL, 0) != 0)
-        goto error;
+    if (sysctl(mib, 2, &vm, &size, NULL, 0) != 0) {
+        return PyErr_SetFromOSErrnoWithSyscall("sysctl(CTL_VM | VM_METER)");
+    }
 
     return Py_BuildValue("KKKKKKKK",
         (unsigned long long) total,
@@ -478,9 +455,6 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
         (unsigned long long) buffers,
         (unsigned long long) (vm.t_vmshr + vm.t_rmshr) * pagesize  // shared
     );
-
-error:
-    return PyErr_SetFromErrno(PyExc_OSError);
 }
 
 
@@ -491,6 +465,7 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     struct kvm_swap kvmsw[1];
     unsigned int swapin, swapout, nodein, nodeout;
     size_t size = sizeof(unsigned int);
+    int pagesize;
 
     kd = kvm_open(NULL, _PATH_DEVNULL, NULL, O_RDONLY, "kvm_open failed");
     if (kd == NULL) {
@@ -507,40 +482,53 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
 
     kvm_close(kd);
 
-    if (sysctlbyname("vm.stats.vm.v_swapin", &swapin, &size, NULL, 0) == -1)
-        goto error;
-    if (sysctlbyname("vm.stats.vm.v_swapout", &swapout, &size, NULL, 0) == -1)
-        goto error;
-    if (sysctlbyname("vm.stats.vm.v_vnodein", &nodein, &size, NULL, 0) == -1)
-        goto error;
-    if (sysctlbyname("vm.stats.vm.v_vnodeout", &nodeout, &size, NULL, 0) == -1)
-        goto error;
+    if (sysctlbyname("vm.stats.vm.v_swapin", &swapin, &size, NULL, 0) == -1) {
+        return PyErr_SetFromOSErrnoWithSyscall(
+            "sysctlbyname('vm.stats.vm.v_swapin)'");
+    }
+    if (sysctlbyname("vm.stats.vm.v_swapout", &swapout, &size, NULL, 0) == -1){
+        return PyErr_SetFromOSErrnoWithSyscall(
+            "sysctlbyname('vm.stats.vm.v_swapout)'");
+    }
+    if (sysctlbyname("vm.stats.vm.v_vnodein", &nodein, &size, NULL, 0) == -1) {
+        return PyErr_SetFromOSErrnoWithSyscall(
+            "sysctlbyname('vm.stats.vm.v_vnodein)'");
+    }
+    if (sysctlbyname("vm.stats.vm.v_vnodeout", &nodeout, &size, NULL, 0) == -1) {
+        return PyErr_SetFromOSErrnoWithSyscall(
+            "sysctlbyname('vm.stats.vm.v_vnodeout)'");
+    }
 
-    return Py_BuildValue("(iiiII)",
-                         kvmsw[0].ksw_total,                     // total
-                         kvmsw[0].ksw_used,                      // used
-                         kvmsw[0].ksw_total - kvmsw[0].ksw_used, // free
-                         swapin + swapout,                       // swap in
-                         nodein + nodeout);                      // swap out
+    pagesize = getpagesize();
+    if (pagesize <= 0) {
+        PyErr_SetString(PyExc_ValueError, "invalid getpagesize()");
+        return NULL;
+    }
 
-error:
-    return PyErr_SetFromErrno(PyExc_OSError);
+    return Py_BuildValue(
+        "(KKKII)",
+        (unsigned long long)kvmsw[0].ksw_total * pagesize,  // total
+        (unsigned long long)kvmsw[0].ksw_used * pagesize,  // used
+        (unsigned long long)kvmsw[0].ksw_total * pagesize - // free
+                                kvmsw[0].ksw_used * pagesize,
+        swapin + swapout,  // swap in
+        nodein + nodeout  // swap out
+    );
 }
 
 
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
 PyObject *
 psutil_proc_cwd(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     struct kinfo_file *freep = NULL;
     struct kinfo_file *kif;
     struct kinfo_proc kipp;
-    const char *encoding_errs;
     PyObject *py_path = NULL;
 
     int i, cnt;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
     if (psutil_kinfo_proc(pid, &kipp) == -1)
         goto error;
@@ -583,13 +571,13 @@ error:
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
 PyObject *
 psutil_proc_num_fds(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     int cnt;
 
     struct kinfo_file *freep;
     struct kinfo_proc kipp;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     if (psutil_kinfo_proc(pid, &kipp) == -1)
         return NULL;
@@ -625,7 +613,8 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     size = sizeof(maxcpus);
     if (sysctlbyname("kern.smp.maxcpus", &maxcpus, &size, NULL, 0) < 0) {
         Py_DECREF(py_retlist);
-        return PyErr_SetFromErrno(PyExc_OSError);
+        return PyErr_SetFromOSErrnoWithSyscall(
+            "sysctlbyname('kern.smp.maxcpus')");
     }
     long cpu_time[maxcpus][CPUSTATES];
 
@@ -634,14 +623,14 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     mib[1] = HW_NCPU;
     len = sizeof(ncpu);
     if (sysctl(mib, 2, &ncpu, &len, NULL, 0) == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        PyErr_SetFromOSErrnoWithSyscall("sysctl(HW_NCPU)");
         goto error;
     }
 
     // per-cpu info
     size = sizeof(cpu_time);
     if (sysctlbyname("kern.cp_times", &cpu_time, &size, NULL, 0) == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        PyErr_SetFromOSErrnoWithSyscall("sysctlbyname('kern.smp.maxcpus')");
         goto error;
     }
 
@@ -740,8 +729,8 @@ error:
 PyObject *
 psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     // Return a list of tuples for every process memory maps.
-    //'procstat' cmdline utility has been used as an example.
-    long pid;
+    // 'procstat' cmdline utility has been used as an example.
+    pid_t pid;
     int ptrwidth;
     int i, cnt;
     char addr[1000];
@@ -757,7 +746,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         goto error;
     if (psutil_kinfo_proc(pid, &kp) == -1)
         goto error;
@@ -857,14 +846,14 @@ psutil_proc_cpu_affinity_get(PyObject* self, PyObject* args) {
     // Get process CPU affinity.
     // Reference:
     // http://sources.freebsd.org/RELENG_9/src/usr.bin/cpuset/cpuset.c
-    long pid;
+    pid_t pid;
     int ret;
     int i;
     cpuset_t mask;
     PyObject* py_retlist;
     PyObject* py_cpu_num;
 
-    if (!PyArg_ParseTuple(args, "i", &pid))
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     ret = cpuset_getaffinity(CPU_LEVEL_WHICH, CPU_WHICH_PID, pid,
                              sizeof(mask), &mask);
@@ -899,7 +888,7 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
     // Set process CPU affinity.
     // Reference:
     // http://sources.freebsd.org/RELENG_9/src/usr.bin/cpuset/cpuset.c
-    long pid;
+    pid_t pid;
     int i;
     int seq_len;
     int ret;
@@ -907,7 +896,7 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
     PyObject *py_cpu_set;
     PyObject *py_cpu_seq = NULL;
 
-    if (!PyArg_ParseTuple(args, "lO", &pid, &py_cpu_set))
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID "O", &pid, &py_cpu_set))
         return NULL;
 
     py_cpu_seq = PySequence_Fast(py_cpu_set, "expected a sequence or integer");
@@ -956,16 +945,26 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     unsigned int v_swtch;
     size_t size = sizeof(v_soft);
 
-    if (sysctlbyname("vm.stats.sys.v_soft", &v_soft, &size, NULL, 0))
-        goto error;
-    if (sysctlbyname("vm.stats.sys.v_intr", &v_intr, &size, NULL, 0))
-        goto error;
-    if (sysctlbyname("vm.stats.sys.v_syscall", &v_syscall, &size, NULL, 0))
-        goto error;
-    if (sysctlbyname("vm.stats.sys.v_trap", &v_trap, &size, NULL, 0))
-        goto error;
-    if (sysctlbyname("vm.stats.sys.v_swtch", &v_swtch, &size, NULL, 0))
-        goto error;
+    if (sysctlbyname("vm.stats.sys.v_soft", &v_soft, &size, NULL, 0)) {
+        return PyErr_SetFromOSErrnoWithSyscall(
+            "sysctlbyname('vm.stats.sys.v_soft')");
+    }
+    if (sysctlbyname("vm.stats.sys.v_intr", &v_intr, &size, NULL, 0)) {
+        return PyErr_SetFromOSErrnoWithSyscall(
+            "sysctlbyname('vm.stats.sys.v_intr')");
+    }
+    if (sysctlbyname("vm.stats.sys.v_syscall", &v_syscall, &size, NULL, 0)) {
+        return PyErr_SetFromOSErrnoWithSyscall(
+            "sysctlbyname('vm.stats.sys.v_syscall')");
+    }
+    if (sysctlbyname("vm.stats.sys.v_trap", &v_trap, &size, NULL, 0)) {
+        return PyErr_SetFromOSErrnoWithSyscall(
+            "sysctlbyname('vm.stats.sys.v_trap')");
+    }
+    if (sysctlbyname("vm.stats.sys.v_swtch", &v_swtch, &size, NULL, 0)) {
+        return PyErr_SetFromOSErrnoWithSyscall(
+            "sysctlbyname('vm.stats.sys.v_swtch')");
+    }
 
     return Py_BuildValue(
         "IIIII",
@@ -975,9 +974,6 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         v_syscall,  // syscalls
         v_trap  // traps
     );
-
-error:
-    return PyErr_SetFromErrno(PyExc_OSError);
 }
 
 
@@ -1003,6 +999,78 @@ error:
     // see: https://github.com/giampaolo/psutil/issues/1074
     if (errno == ENOENT)
         PyErr_SetString(PyExc_NotImplementedError, "no battery");
+    else
+        PyErr_SetFromErrno(PyExc_OSError);
+    return NULL;
+}
+
+
+/*
+ * Return temperature information for a given CPU core number.
+ */
+PyObject *
+psutil_sensors_cpu_temperature(PyObject *self, PyObject *args) {
+    int current;
+    int tjmax;
+    int core;
+    char sensor[26];
+    size_t size = sizeof(current);
+
+    if (! PyArg_ParseTuple(args, "i", &core))
+        return NULL;
+    sprintf(sensor, "dev.cpu.%d.temperature", core);
+    if (sysctlbyname(sensor, &current, &size, NULL, 0))
+        goto error;
+    current = DECIKELVIN_2_CELCIUS(current);
+
+    // Return -273 in case of faliure.
+    sprintf(sensor, "dev.cpu.%d.coretemp.tjmax", core);
+    if (sysctlbyname(sensor, &tjmax, &size, NULL, 0))
+        tjmax = 0;
+    tjmax = DECIKELVIN_2_CELCIUS(tjmax);
+
+    return Py_BuildValue("ii", current, tjmax);
+
+error:
+    if (errno == ENOENT)
+        PyErr_SetString(PyExc_NotImplementedError, "no temperature sensors");
+    else
+        PyErr_SetFromErrno(PyExc_OSError);
+    return NULL;
+}
+
+
+/*
+ * Return frequency information of a given CPU.
+ * As of Dec 2018 only CPU 0 appears to be supported and all other
+ * cores match the frequency of CPU 0.
+ */
+PyObject *
+psutil_cpu_freq(PyObject *self, PyObject *args) {
+    int current;
+    int core;
+    char sensor[26];
+    char available_freq_levels[1000];
+    size_t size = sizeof(current);
+
+    if (! PyArg_ParseTuple(args, "i", &core))
+        return NULL;
+    // https://www.unix.com/man-page/FreeBSD/4/cpufreq/
+    sprintf(sensor, "dev.cpu.%d.freq", core);
+    if (sysctlbyname(sensor, &current, &size, NULL, 0))
+        goto error;
+
+    size = sizeof(available_freq_levels);
+    // https://www.unix.com/man-page/FreeBSD/4/cpufreq/
+    // In case of failure, an empty string is returned.
+    sprintf(sensor, "dev.cpu.%d.freq_levels", core);
+    sysctlbyname(sensor, &available_freq_levels, &size, NULL, 0);
+
+    return Py_BuildValue("is", current, available_freq_levels);
+
+error:
+    if (errno == ENOENT)
+        PyErr_SetString(PyExc_NotImplementedError, "unable to read frequency");
     else
         PyErr_SetFromErrno(PyExc_OSError);
     return NULL;

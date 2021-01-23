@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Փոստարկղի ընդլայնված կարգավորումներ">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "IMAP սպասարկիչի գրացուցակ.">
+<!ENTITY serverDirectory.accesskey "գ">
+<!ENTITY usingSubscription.label "Ցուցադրել միայն նշան. թղթապանակները.">
+<!ENTITY usingSubscription.accesskey "w">
+<!ENTITY dualUseFolders.label "Սպասարկիչը աջակցում է ենթաթղթապանակները և նամակները">
+<!ENTITY dualUseFolders.accesskey "f">
+<!ENTITY maximumConnectionsNumber.label "Սպասարկիչի առավելագույն կապակցումները պահոցին">
+<!ENTITY maximumConnectionsNumber.accesskey "M">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Այս նախապատվությունները որոշում են անվանադաշտերը Ձեր IMAP սպասարկիչում">
+<!ENTITY personalNamespace.label "Անձնական անվանադաշտ.">
+<!ENTITY personalNamespace.accesskey "P">
+<!ENTITY publicNamespace.label "Հասարակական.">
+<!ENTITY publicNamespace.accesskey "u">
+<!ENTITY otherUsersNamespace.label "Այլ օգտվողներ.">
+<!ENTITY otherUsersNamespace.accesskey "O">
+<!ENTITY overrideNamespaces.label "Թույլատրել սպասարկիչին կարգավորել այս անվանադաշտերը">
+<!ENTITY overrideNamespaces.accesskey "A">
+<!ENTITY pop3DeferringDesc.label "Հաշվի այս սպասարկիչից էլ. փոստ ներբեռնելիս նոր նամակները պահելու համար օգտագործեք հետևյալ թղթապանակը" >
+<!ENTITY accountInbox.label "Մուտքային՝ այս հաշվի համար">
+<!ENTITY accountInbox.accesskey "յ">
+<!ENTITY deferToServer.label "Այլ փոստարկղի Մուտքայինը">
+<!ENTITY deferToServer.accesskey "d">
+<!ENTITY deferGetNewMail.label "Ներառել այս սպասարկիչը՝ նոր նամակ ստանալիս">
+<!ENTITY deferGetNewMail.accesskey "I">

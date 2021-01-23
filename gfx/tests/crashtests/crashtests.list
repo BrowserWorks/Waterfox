@@ -4,7 +4,7 @@ load 157320-1.html
 load 199379-1.html
 load 206561-1.html
 load 248518-1.html
-skip-if(Android) load 306649-1.xml
+load 306649-1.xml
 load 306902-1.xml
 load 333861-1.html
 load 334735-1.html
@@ -22,7 +22,7 @@ load 377232-1.xhtml
 load 377461-1.xhtml
 load 383473-1.html
 load 383872-1.svg
-skip-if(Android&&smallScreen) load 385228-1.svg # bug 523255 / bug 385228, nexus-s Android 2.3.6
+load 385228-1.svg
 skip load 385228-2.svg  # bug 523255 / bug 385228
 load 385289-1.xhtml
 load 385417-1.html
@@ -72,8 +72,6 @@ load 467703-1.xhtml
 load 467873-1.html
 load 470418-1.html
 load 474410-1.html
-load 483120-1.xhtml
-load 483120-2.xhtml
 load 487549-1.html
 load 487724-1.html
 load 490777-1.html
@@ -88,7 +86,7 @@ load 580212-1.html
 load 580233-1.html
 load 580719-1.html
 load 593526.html
-load 593526.xul
+load chrome://reftest/content/crashtests/gfx/tests/crashtests/593526.xhtml
 load 594654-1.xhtml
 load 595042-1.html
 load 595727-1.html
@@ -125,7 +123,7 @@ load 783041-3.html
 load 783041-4.html
 load 798853.html # bug 868792
 load 805760-1.html
-skip-if(Android) load 815489.html # bug 1216304
+load 815489.html
 load 812826.html
 load 836225-1.html
 load 839745-1.html
@@ -159,11 +157,11 @@ load 1242822.html
 load 1248222.html
 load 1278305.html
 load 1308394.html
-load 1317403-1.html # bug 1331533
-load 1325159-1.html
-load 1331683.html
+skip-if(geckoview&&webrender) load 1317403-1.html # bug 1331533, 1630774
+skip-if(geckoview&&webrender) load 1325159-1.html # bug 1630774
+skip-if(geckoview&&webrender) load 1331683.html # bug 1630774
 skip-if(Android) pref(dom.disable_open_during_load,false) load 1343666.html
-load 1408078-1.html
+skip-if(geckoview&&webrender) load 1408078-1.html # bug 1630774
 load 1464243.html
 load 1467847-1.html
 load 1468020.html
@@ -184,4 +182,12 @@ load 1509123.html
 load 1494062-blob-image-wraplist-clip.html
 load texture-allocator-zero-region.html
 load 1524418.html
+pref(layout.css.individual-transform.enabled,true) load 1529149.html
 load 1541113.html
+pref(layout.css.individual-transform.enabled,true) load 1547169.html
+load 1535657.html
+load 1566206.html
+load 1615141.html
+load 1615091.html
+load 1620125.html
+load 1640401-1.html

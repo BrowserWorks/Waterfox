@@ -4,16 +4,18 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from __future__ import absolute_import, print_function
 import os
+import posixpath
 import sys
 import subprocess
+import traceback
 from zipfile import ZipFile
 import runcppunittests as cppunittests
 import mozcrash
 import mozfile
 import mozinfo
 import mozlog
-import posixpath
 from mozdevice import ADBDevice, ADBProcessError, ADBTimeoutError
 
 try:
@@ -39,7 +41,7 @@ class RemoteCPPUnitTests(cppunittests.CPPUnitTests):
             self.setup_bin(progs)
 
     def setup_bin(self, progs):
-        self.device.rm(self.remote_test_root, force=True, recursive=True)
+        self.device.rm(self.remote_test_root, force=True, recursive=True, root=True)
         self.device.mkdir(self.remote_home_dir, parents=True)
         self.device.mkdir(self.remote_tmp_dir)
         self.device.mkdir(self.remote_bin_dir)
@@ -54,7 +56,7 @@ class RemoteCPPUnitTests(cppunittests.CPPUnitTests):
 
                 for info in apk_contents.infolist():
                     if info.filename.endswith(".so"):
-                        print >> sys.stderr, "Pushing %s.." % info.filename
+                        print("Pushing %s.." % info.filename, file=sys.stderr)
                         remote_file = posixpath.join(
                             self.remote_bin_dir, os.path.basename(info.filename))
                         apk_contents.extract(info, tmpdir)
@@ -70,24 +72,24 @@ class RemoteCPPUnitTests(cppunittests.CPPUnitTests):
                         self.device.push(local_file, remote_file)
 
         elif self.options.local_lib:
-            for file in os.listdir(self.options.local_lib):
-                if file.endswith(".so"):
-                    print >> sys.stderr, "Pushing %s.." % file
-                    remote_file = posixpath.join(self.remote_bin_dir, file)
-                    local_file = os.path.join(self.options.local_lib, file)
+            for path in os.listdir(self.options.local_lib):
+                if path.endswith(".so"):
+                    print("Pushing {}..".format(path), file=sys.stderr)
+                    remote_file = posixpath.join(self.remote_bin_dir, path)
+                    local_file = os.path.join(self.options.local_lib, path)
                     self.device.push(local_file, remote_file)
             # Additional libraries may be found in a sub-directory such as
             # "lib/armeabi-v7a"
             for subdir in ["assets", "lib"]:
                 local_arm_lib = os.path.join(self.options.local_lib, subdir)
                 if os.path.isdir(local_arm_lib):
-                    for root, dirs, files in os.walk(local_arm_lib):
-                        for file in files:
-                            if (file.endswith(".so")):
-                                print >> sys.stderr, "Pushing %s.." % file
+                    for root, dirs, paths in os.walk(local_arm_lib):
+                        for path in paths:
+                            if path.endswith(".so"):
+                                print("Pushing {}..".format(path), file=sys.stderr)
                                 remote_file = posixpath.join(
-                                    self.remote_bin_dir, file)
-                                local_file = os.path.join(root, file)
+                                    self.remote_bin_dir, path)
+                                local_file = os.path.join(root, path)
                                 self.device.push(local_file, remote_file)
 
     def push_progs(self, progs):
@@ -96,8 +98,8 @@ class RemoteCPPUnitTests(cppunittests.CPPUnitTests):
                 self.remote_bin_dir, os.path.basename(local_file))
             self.device.push(local_file, remote_file)
 
-    def build_environment(self):
-        env = self.build_core_environment()
+    def build_environment(self, enable_webrender=False):
+        env = self.build_core_environment({}, enable_webrender)
         env['LD_LIBRARY_PATH'] = self.remote_bin_dir
         env["TMPDIR"] = self.remote_tmp_dir
         env["HOME"] = self.remote_home_dir
@@ -229,7 +231,8 @@ def run_test_harness(options, args):
                                                      mozinfo.info,
                                                      options.manifest_path)
     tester = RemoteCPPUnitTests(options, [item[0] for item in progs])
-    result = tester.run_tests(progs, options.xre_path, options.symbols_path)
+    result = tester.run_tests(progs, options.xre_path, options.symbols_path,
+                              enable_webrender=options.enable_webrender)
     return result
 
 
@@ -238,16 +241,16 @@ def main():
     mozlog.commandline.add_logging_group(parser)
     options, args = parser.parse_args()
     if not args:
-        print >>sys.stderr, """Usage: %s <test binary> [<test binary>...]""" % sys.argv[0]
+        print("""Usage: %s <test binary> [<test binary>...]""" % sys.argv[0], file=sys.stderr)
         sys.exit(1)
     if options.local_lib is not None and not os.path.isdir(options.local_lib):
-        print >>sys.stderr, """Error: --localLib directory %s not found""" % options.local_lib
+        print("""Error: --localLib directory %s not found""" % options.local_lib, file=sys.stderr)
         sys.exit(1)
     if options.local_apk is not None and not os.path.isfile(options.local_apk):
-        print >>sys.stderr, """Error: --apk file %s not found""" % options.local_apk
+        print("""Error: --apk file %s not found""" % options.local_apk, file=sys.stderr)
         sys.exit(1)
     if not options.xre_path:
-        print >>sys.stderr, """Error: --xre-path is required"""
+        print("""Error: --xre-path is required""", file=sys.stderr)
         sys.exit(1)
 
     log = mozlog.commandline.setup_logging("remotecppunittests", options,
@@ -256,6 +259,7 @@ def main():
         result = run_test_harness(options, args)
     except Exception as e:
         log.error(str(e))
+        traceback.print_exc()
         result = False
     sys.exit(0 if result else 1)
 

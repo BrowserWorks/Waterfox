@@ -1,0 +1,25 @@
+<!--
+# Reviewer(s):
+#
+# http://tomercohen.com/ <tomer.mozilla@tomercohen.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "מילון אישי">
+
+<!ENTITY wordEditField.label "מילה חדשה:">
+<!ENTITY wordEditField.accessKey "N">
+<!ENTITY AddButton.label "הוסף">
+<!ENTITY AddButton.accessKey "A">
+<!ENTITY DictionaryList.label "מילים במילון:">
+<!ENTITY DictionaryList.accessKey "מ">
+<!ENTITY RemoveButton.label "הסר">
+<!ENTITY RemoveButton.accessKey "ס">
+
+<!ENTITY CloseButton.label "סגירה">
+<!ENTITY CloseButton.accessKey "ס">
+

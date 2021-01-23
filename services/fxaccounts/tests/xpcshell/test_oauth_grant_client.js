@@ -96,18 +96,6 @@ add_test(function successfulResponse() {
   });
 });
 
-add_test(function successfulDestroy() {
-  let client = new FxAccountsOAuthGrantClient(CLIENT_OPTIONS);
-  let response = {
-    success: true,
-    status: STATUS_SUCCESS,
-    body: JSON.stringify({}),
-  };
-
-  client._Request = new mockResponse(response);
-  client.destroyToken("deadbeef").then(run_next_test);
-});
-
 add_test(function parseErrorResponse() {
   let client = new FxAccountsOAuthGrantClient(CLIENT_OPTIONS);
   let response = {
@@ -216,9 +204,15 @@ add_test(function incorrectErrno() {
 });
 
 add_test(function constructorTests() {
-  validationHelper(undefined, "Error: Missing configuration options");
-
-  validationHelper({}, "Error: Missing 'serverURL' parameter");
+  try {
+    Services.prefs.setCharPref(
+      "identity.fxaccounts.remote.oauth.uri",
+      "https://example.com/v1"
+    );
+    validationHelper({}, "Error: Missing 'client_id' parameter");
+  } finally {
+    Services.prefs.clearUserPref("identity.fxaccounts.remote.oauth.uri");
+  }
 
   validationHelper(
     { serverURL: "https://example.com" },
@@ -228,11 +222,6 @@ add_test(function constructorTests() {
   validationHelper(
     { serverURL: "https://example.com" },
     "Error: Missing 'client_id' parameter"
-  );
-
-  validationHelper(
-    { client_id: "123ABC" },
-    "Error: Missing 'serverURL' parameter"
   );
 
   validationHelper(

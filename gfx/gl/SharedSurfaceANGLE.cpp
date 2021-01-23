@@ -42,7 +42,8 @@ UniquePtr<SharedSurface_ANGLEShareHandle>
 SharedSurface_ANGLEShareHandle::Create(GLContext* gl, EGLConfig config,
                                        const gfx::IntSize& size,
                                        bool hasAlpha) {
-  auto* egl = gl::GLLibraryEGL::Get();
+  const auto& gle = GLContextEGL::Cast(gl);
+  const auto& egl = gle->mEgl;
   MOZ_ASSERT(egl);
   MOZ_ASSERT(egl->IsExtensionSupported(
       GLLibraryEGL::ANGLE_surface_d3d_texture_2d_share_handle));
@@ -150,7 +151,8 @@ bool SharedSurface_ANGLEShareHandle::ToSurfaceDescriptor(
   gfx::SurfaceFormat format =
       mHasAlpha ? gfx::SurfaceFormat::B8G8R8A8 : gfx::SurfaceFormat::B8G8R8X8;
   *out_descriptor = layers::SurfaceDescriptorD3D10(
-      (WindowsHandle)mShareHandle, format, mSize, gfx::YUVColorSpace::UNKNOWN);
+      (WindowsHandle)mShareHandle, format, mSize, gfx::YUVColorSpace::UNKNOWN,
+      gfx::ColorRange::FULL);
   return true;
 }
 
@@ -306,13 +308,14 @@ SurfaceFactory_ANGLEShareHandle::Create(
     GLContext* gl, const SurfaceCaps& caps,
     const RefPtr<layers::LayersIPCChannel>& allocator,
     const layers::TextureFlags& flags) {
-  auto* egl = gl::GLLibraryEGL::Get();
+  const auto& gle = GLContextEGL::Cast(gl);
+  const auto& egl = gle->mEgl;
   if (!egl) return nullptr;
 
   auto ext = GLLibraryEGL::ANGLE_surface_d3d_texture_2d_share_handle;
   if (!egl->IsExtensionSupported(ext)) return nullptr;
 
-  EGLConfig config = GLContextEGL::Cast(gl)->mConfig;
+  const auto& config = gle->mConfig;
 
   typedef SurfaceFactory_ANGLEShareHandle ptrT;
   UniquePtr<ptrT> ret(new ptrT(gl, caps, allocator, flags, egl, config));

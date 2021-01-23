@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Malfermi dosieron…">
+<!ENTITY openFileCmd.accesskey "M">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Malfermi retadreson…">
+<!ENTITY openRemoteCmd.accesskey "r">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Ĵusaj paĝoj">
+<!ENTITY fileRecentMenu.accesskey "p">
+<!ENTITY saveCmd.label "Konservi">
+<!ENTITY saveCmd.accesskey "K">
+<!ENTITY saveAsCmd.label "Konservi kiel…">
+<!ENTITY saveAsCmd.accesskey "i">
+<!ENTITY saveAsChangeEncodingCmd2.label "Konservi kaj ŝanĝi tekstan enkodigon">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "e">
+<!ENTITY publishCmd.label "Publikigi">
+<!ENTITY publishCmd.accesskey "P">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Publikigi kiel…">
+<!ENTITY publishAsCmd.accesskey "u">
+<!ENTITY fileRevert.label "Reiri al la lasta konservaĵo">
+<!ENTITY fileRevert.accesskey "R">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Agordoj de publikigo de retejoj…">
+<!ENTITY publishSettings.accesskey "A">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "Nova">
+<!ENTITY newToolbarCmd.tooltip "Krei novan redaktilan paĝon">
+<!ENTITY openToolbarCmd.label "Malfermi">
+<!ENTITY openToolbarCmd.tooltip "Malfermi lokan dosieron">
+<!ENTITY saveToolbarCmd.tooltip "Konservi dosieron loke">
+<!ENTITY publishToolbarCmd.tooltip "Alŝuti dosieron al fora loko">

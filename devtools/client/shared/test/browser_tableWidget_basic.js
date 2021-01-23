@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -12,7 +11,7 @@ const { TableWidget } = require("devtools/client/shared/widgets/TableWidget");
 
 add_task(async function() {
   await addTab("about:blank");
-  const [host, , doc] = await createHost("bottom", TEST_URI);
+  const { host, doc } = await createHost("bottom", TEST_URI);
 
   const table = new TableWidget(doc.querySelector("box"), {
     initialColumns: {
@@ -22,10 +21,13 @@ add_task(async function() {
       col4: "Column 4",
     },
     uniqueId: "col1",
-    emptyText: "This is dummy empty text",
+    emptyText: "dummy-text",
     highlightUpdated: true,
     removableColumns: true,
     firstColumn: "col4",
+    l10n: {
+      setAttributes: function() {},
+    },
   });
 
   startTests(doc, table);

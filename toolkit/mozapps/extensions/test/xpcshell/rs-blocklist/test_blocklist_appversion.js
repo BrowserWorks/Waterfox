@@ -3,6 +3,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+// useMLBF=true does not offer special support for filtering by application ID.
+// The same functionality is offered through filter_expression, which is tested
+// by services/settings/test/unit/test_remote_settings_jexl_filters.js and
+// test_blocklistchange.js.
+Services.prefs.setBoolPref("extensions.blocklist.useMLBF", false);
+
 const Cm = Components.manager.QueryInterface(Ci.nsIComponentRegistrar);
 
 var ADDONS = [
@@ -306,9 +312,7 @@ async function checkState(test, lastTest, callback) {
     equal(
       blocked,
       addon[test],
-      `Blocklist state should match expected for extension ${
-        addon.id
-      }, test ${test}`
+      `Blocklist state should match expected for extension ${addon.id}, test ${test}`
     );
   }
 
@@ -316,9 +320,7 @@ async function checkState(test, lastTest, callback) {
     equal(
       await plugin.isBlocklisted(),
       plugin[test],
-      `Blocklist state should match expected for plugin ${
-        plugin.name
-      }, test ${test}`
+      `Blocklist state should match expected for plugin ${plugin.name}, test ${test}`
     );
   }
 
@@ -328,9 +330,7 @@ async function checkState(test, lastTest, callback) {
       if (plugin[test] && !plugin[lastTest]) {
         ok(
           gNewBlocks.includes(`${plugin.name} ${plugin.version}`),
-          `Plugin ${
-            plugin.name
-          } should have been listed in the blocklist notification for test ${test}`
+          `Plugin ${plugin.name} should have been listed in the blocklist notification for test ${test}`
         );
         expected++;
       }

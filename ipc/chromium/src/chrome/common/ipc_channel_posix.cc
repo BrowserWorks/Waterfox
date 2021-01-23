@@ -9,7 +9,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
-#if defined(OS_MACOSX)
+#if defined(OS_MACOSX) || defined(OS_NETBSD)
 #  include <sched.h>
 #endif
 #include <stddef.h>
@@ -194,6 +194,8 @@ bool SetCloseOnExec(int fd) {
   return true;
 }
 
+bool ErrorIsBrokenPipe(int err) { return err == EPIPE || err == ECONNRESET; }
+
 }  // namespace
 //------------------------------------------------------------------------------
 
@@ -355,8 +357,10 @@ bool Channel::ChannelImpl::ProcessIncomingMessages() {
       if (errno == EAGAIN) {
         return true;
       } else {
-        CHROMIUM_LOG(ERROR)
-            << "pipe error (" << pipe_ << "): " << strerror(errno);
+        if (!ErrorIsBrokenPipe(errno)) {
+          CHROMIUM_LOG(ERROR)
+              << "pipe error (fd " << pipe_ << "): " << strerror(errno);
+        }
         return false;
       }
     } else if (bytes_read == 0) {
@@ -365,12 +369,6 @@ bool Channel::ChannelImpl::ProcessIncomingMessages() {
       return false;
     }
     DCHECK(bytes_read);
-
-    if (client_pipe_ != -1) {
-      PipeMap::instance().Remove(pipe_name_);
-      IGNORE_EINTR(close(client_pipe_));
-      client_pipe_ = -1;
-    }
 
     // a pointer to an array of |num_wire_fds| file descriptors from the read
     const int* wire_fds = NULL;
@@ -490,7 +488,7 @@ bool Channel::ChannelImpl::ProcessIncomingMessages() {
 
         // How much data from this message remains to be added to
         // incoming_message_?
-        MOZ_ASSERT(message_length > m.CurrentSize());
+        MOZ_DIAGNOSTIC_ASSERT(message_length > m.CurrentSize());
         uint32_t remaining = message_length - m.CurrentSize();
 
         // How much data from this message is stored in input_buf_?
@@ -622,7 +620,14 @@ bool Channel::ChannelImpl::ProcessOutgoingMessages() {
 
     if (partial_write_iter_.isNothing()) {
       Pickle::BufferList::IterImpl iter(msg->Buffers());
+      MOZ_DIAGNOSTIC_ASSERT(!iter.Done(), "empty message");
       partial_write_iter_.emplace(iter);
+    }
+
+    if (partial_write_iter_.ref().Done()) {
+      MOZ_DIAGNOSTIC_ASSERT(false, "partial_write_iter_ should not be null");
+      // report a send error to our caller, which will close the channel.
+      return false;
     }
 
     if (partial_write_iter_.value().Data() == msg->Buffers().Start() &&
@@ -632,6 +637,7 @@ bool Channel::ChannelImpl::ProcessOutgoingMessages() {
       const unsigned num_fds = msg->file_descriptor_set()->size();
 
       if (num_fds > FileDescriptorSet::MAX_DESCRIPTORS_PER_MESSAGE) {
+        MOZ_DIAGNOSTIC_ASSERT(false, "Too many file descriptors!");
         CHROMIUM_LOG(FATAL) << "Too many file descriptors!";
         // This should not be reached.
         return false;
@@ -700,13 +706,14 @@ bool Channel::ChannelImpl::ProcessOutgoingMessages() {
           // Not an error; the sendmsg would have blocked, so return to the
           // event loop and try again later.
           break;
-#if defined(OS_MACOSX)
+#if defined(OS_MACOSX) || defined(OS_NETBSD)
           // (Note: this comment is copied from https://crrev.com/86c3d9ef4fdf6;
           // see also bug 1142693 comment #73.)
           //
           // On OS X if sendmsg() is trying to send fds between processes and
           // there isn't enough room in the output buffer to send the fd
-          // structure over atomically then EMSGSIZE is returned.
+          // structure over atomically then EMSGSIZE is returned. The same
+          // applies to NetBSD as well.
           //
           // EMSGSIZE presents a problem since the system APIs can only call us
           // when there's room in the socket buffer and not when there is
@@ -724,7 +731,9 @@ bool Channel::ChannelImpl::ProcessOutgoingMessages() {
           break;
 #endif
         default:
-          CHROMIUM_LOG(ERROR) << "pipe error: " << strerror(errno);
+          if (!ErrorIsBrokenPipe(errno)) {
+            CHROMIUM_LOG(ERROR) << "pipe error: " << strerror(errno);
+          }
           return false;
       }
     }
@@ -732,8 +741,12 @@ bool Channel::ChannelImpl::ProcessOutgoingMessages() {
     if (static_cast<size_t>(bytes_written) != amt_to_write) {
       // If write() fails with EAGAIN then bytes_written will be -1.
       if (bytes_written > 0) {
+        MOZ_DIAGNOSTIC_ASSERT(static_cast<size_t>(bytes_written) <
+                              amt_to_write);
         partial_write_iter_.ref().AdvanceAcrossSegments(msg->Buffers(),
                                                         bytes_written);
+        // We should not hit the end of the buffer.
+        MOZ_DIAGNOSTIC_ASSERT(!partial_write_iter_.ref().Done());
       }
 
       // Tell libevent to call us back once things are unblocked.
@@ -843,6 +856,8 @@ void Channel::ChannelImpl::CloseDescriptors(uint32_t pending_fd_id) {
 #endif
 
 void Channel::ChannelImpl::OutputQueuePush(Message* msg) {
+  MOZ_DIAGNOSTIC_ASSERT(!closed_);
+  msg->AssertAsLargeAsHeader();
   output_queue_.push(msg);
   output_queue_length_++;
 }
@@ -850,6 +865,7 @@ void Channel::ChannelImpl::OutputQueuePush(Message* msg) {
 void Channel::ChannelImpl::OutputQueuePop() {
   output_queue_.pop();
   output_queue_length_--;
+  partial_write_iter_.reset();
 }
 
 // Called by libevent when we can write to the pipe without blocking.

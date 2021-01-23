@@ -13,6 +13,7 @@
 #include "mozilla/dom/HTMLLabelElementBinding.h"
 #include "mozilla/dom/MouseEventBinding.h"
 #include "nsFocusManager.h"
+#include "nsIFrame.h"
 #include "nsContentUtils.h"
 #include "nsQueryObject.h"
 #include "mozilla/dom/ShadowRoot.h"
@@ -24,7 +25,7 @@ NS_IMPL_NS_NEW_HTML_ELEMENT(Label)
 namespace mozilla {
 namespace dom {
 
-HTMLLabelElement::~HTMLLabelElement() {}
+HTMLLabelElement::~HTMLLabelElement() = default;
 
 JSObject* HTMLLabelElement::WrapNode(JSContext* aCx,
                                      JS::Handle<JSObject*> aGivenProto) {
@@ -51,16 +52,17 @@ HTMLFormElement* HTMLLabelElement::GetForm() const {
 }
 
 void HTMLLabelElement::Focus(const FocusOptions& aOptions,
+                             const CallerType aCallerType,
                              ErrorResult& aError) {
-  // retarget the focus method at the for content
-  nsIFocusManager* fm = nsFocusManager::GetFocusManager();
-  if (fm) {
-    RefPtr<Element> elem = GetLabeledElement();
-    if (elem) {
-      fm->SetFocus(
-          elem, nsIFocusManager::FLAG_BYELEMENTFOCUS |
-                    nsFocusManager::FocusOptionsToFocusManagerFlags(aOptions));
+  {
+    nsIFrame* frame = GetPrimaryFrame(FlushType::Frames);
+    if (frame && frame->IsFocusable()) {
+      return nsGenericHTMLElement::Focus(aOptions, aCallerType, aError);
     }
+  }
+
+  if (RefPtr<Element> elem = GetLabeledElement()) {
+    return elem->Focus(aOptions, aCallerType, aError);
   }
 }
 
@@ -109,7 +111,7 @@ nsresult HTMLLabelElement::PostHandleEvent(EventChainPostVisitor& aVisitor) {
           bool dragSelect = false;
           if (mouseDownPoint) {
             LayoutDeviceIntPoint dragDistance = *mouseDownPoint;
-            DeleteProperty(nsGkAtoms::labelMouseDownPtProperty);
+            RemoveProperty(nsGkAtoms::labelMouseDownPtProperty);
 
             dragDistance -= mouseEvent->mRefPoint;
             const int CLICK_DISTANCE = 2;
@@ -127,8 +129,7 @@ nsresult HTMLLabelElement::PostHandleEvent(EventChainPostVisitor& aVisitor) {
           // Only set focus on the first click of multiple clicks to prevent
           // to prevent immediate de-focus.
           if (mouseEvent->mClickCount <= 1) {
-            nsIFocusManager* fm = nsFocusManager::GetFocusManager();
-            if (fm) {
+            if (nsFocusManager* fm = nsFocusManager::GetFocusManager()) {
               // Use FLAG_BYMOVEFOCUS here so that the label is scrolled to.
               // Also, within HTMLInputElement::PostHandleEvent, inputs will
               // be selected only when focused via a key or when the navigation
@@ -144,7 +145,6 @@ nsresult HTMLLabelElement::PostHandleEvent(EventChainPostVisitor& aVisitor) {
                               MouseEvent_Binding::MOZ_SOURCE_TOUCH);
               fm->SetFocus(content,
                            nsIFocusManager::FLAG_BYMOVEFOCUS |
-                               nsIFocusManager::FLAG_BYELEMENTFOCUS |
                                (byMouse ? nsIFocusManager::FLAG_BYMOUSE : 0) |
                                (byTouch ? nsIFocusManager::FLAG_BYTOUCH : 0));
             }
@@ -194,7 +194,7 @@ bool HTMLLabelElement::PerformAccesskey(bool aKeyCausesActivation,
                            WidgetMouseEvent::eReal);
     event.mInputSource = MouseEvent_Binding::MOZ_SOURCE_KEYBOARD;
 
-    nsAutoPopupStatePusher popupStatePusher(
+    AutoPopupStatePusher popupStatePusher(
         aIsTrustedEvent ? PopupBlocker::openAllowed : PopupBlocker::openAbused);
 
     EventDispatcher::Dispatch(static_cast<nsIContent*>(this), presContext,

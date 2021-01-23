@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "Crea un calendari nou" >
+<!ENTITY wizard.label             "Crea un calendari nou" >
+<!ENTITY wizard.description       "Ubicació del calendari" >
+
+<!ENTITY initialpage.description    "Podeu emmagatzemar el calendari a l'ordinador o en un servidor per poder accedir-hi remotament o compartir-lo amb els vostres amics o companys de feina." >
+<!ENTITY initialpage.computer.label  "Al meu ordinador">
+<!ENTITY initialpage.network.label  "A la xarxa">
+
+<!ENTITY locationpage.description         "Proporcioneu la informació que calgui per accedir al calendari remot" >
+<!ENTITY locationpage.login.description   "Opcional: introduïu un nom d'usuari i contrasenya" >
+<!ENTITY locationpage.username.label      "Nom d'usuari:" >
+<!ENTITY locationpage.password.label      "Contrasenya:" >
+
+<!ENTITY custompage.shortdescription  "Personalitzeu el calendari" >
+<!ENTITY custompage.longdescription   "Podeu assignar un sobrenom al calendari i seleccionar el color de les cites." >
+
+<!ENTITY finishpage.shortdescription  "S'ha creat el calendari" >
+<!ENTITY finishpage.longdescription   "S'ha creat el calendari." >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "Altres">
+
+<!ENTITY buttons.create.label "Crea un calendari">
+<!ENTITY buttons.create.accesskey "r">
+
+<!ENTITY buttons.find.label "Cerca un calendari">
+<!ENTITY buttons.find.accesskey "C">
+
+<!ENTITY buttons.back.label "Enrere">
+<!ENTITY buttons.back.accesskey "E">
+
+<!ENTITY buttons.subscribe.label "Subscriu">
+<!ENTITY buttons.subscribe.accesskey "S">
+
+<!ENTITY calendartype.label "Tipus de calendari:">
+<!ENTITY location.label "Ubicació:">
+<!ENTITY location.placeholder "URL o nom del servidor del calendari">
+
+<!ENTITY network.nocredentials.label "Aquesta ubicació no requereix credencials">
+<!ENTITY network.loading.description "S'estan detectant els vostres calendaris. Espereu...">
+<!ENTITY network.notfound.description "No s'ha trobat cap calendari en aquesta ubicació. Comproveu els paràmetres.">
+<!ENTITY network.authfail.description "No s'han acceptat les credencials que heu introduït. Comproveu els paràmetres.">
+
+<!ENTITY network.subscribe.single.description "Seleccioneu els calendaris als quals us voleu subscriure.">
+<!ENTITY network.subscribe.multiple.description "Hi ha diversos tipus de calendari disponibles en aquesta ubicació. Seleccioneu el tipus de calendari i, a continuació, marqueu els calendaris als quals us voleu subscriure.">

@@ -1,0 +1,291 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY appmenu.tooltip                     "Malfermi menuon">
+<!ENTITY navbarOverflow.label                "Pli da iloj…">
+
+<!-- Tab context menu -->
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "Alpingli langeton">
+<!ENTITY  unpinTab.label                     "Depingli langeton">
+
+<!ENTITY  listAllTabs.label      "Listigi ĉiujn langetojn">
+
+<!ENTITY tabCmd.label "Nova langeto">
+<!ENTITY openFileCmd.label "Malfermi dosieron…">
+<!ENTITY printCmd.label "Presi…">
+
+<!ENTITY taskManagerCmd.label "Administrilo de taskoj">
+
+<!ENTITY menubarCmd.label "Strio de menuo">
+<!ENTITY menubarCmd.accesskey "m">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY navbar.accessibleLabel "Esplorado">
+<!ENTITY personalbarCmd.label "Ilaro de legosignoj">
+<!ENTITY personalbarCmd.accesskey "e">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY personalbar.accessibleLabel "Legosignoj">
+<!ENTITY bookmarksToolbarItem.label "Elementoj de ilaro de legosignoj">
+
+<!ENTITY fullScreenCmd.label "Plenekrane">
+
+
+<!ENTITY pictureInPictureHideToggle.label "Kaŝi butonon de bildo en bildo">
+<!ENTITY pictureInPictureHideToggle.accesskey "K">
+
+<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
+     for the Waterfox Account toolbar menu screen. The `Signed in as` text is
+     followed by the user's email. -->
+<!ENTITY fxa.menu.syncSettings2.label "Agordoj de &syncBrand.shortName.label;">
+<!ENTITY fxa.menu.connectAnotherDevice2.label "Konekti alian aparaton…">
+<!ENTITY fxa.menu.firefoxAccount "&syncBrand.fxAccount.label;">
+
+<!ENTITY fxa.menu.signin.label "Komenci seancon en &brandProductName;">
+<!ENTITY fxa.menu.turnOnSync.label "Ŝalti &syncBrand.shortName.label;">
+<!ENTITY fxa.menu.firefoxServices.label "Servoj de &brandProductName;">
+<!ENTITY fxa.menu.account.label "Konto">
+<!ENTITY fxa.menu.settings.label "Agordoj">
+<!ENTITY fxa.menu.accountSettings.label "Agordoj de konto">
+<!ENTITY fxa.menu.manageAccount2.label "Administri konton">
+<!ENTITY fxa.menu.signOut.label "Fini seancon…">
+<!ENTITY fxa.menu.setupSync.label "Agordoj de &syncBrand.shortName.label;…">
+
+<!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
+     for the Waterfox Account toolbar menu screen.  -->
+<!ENTITY fxa.service.sendTab.description "Sendi langeton tuj al iu ajn aparato, en kiu vi komencis seancon.">
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "videblas nun plenekrane">
+<!ENTITY fullscreenWarning.generic.label "Tiu ĉi dokumento videbas nun plenekrane">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "Eliri el plenekrana reĝimo (Esk)">
+<!ENTITY exitDOMFullscreenMac.button "Eliri el plenekrana reĝimo (esk)">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "regas vian musmontrilon. Premu Esk por repreni la regadon.">
+<!ENTITY pointerlockWarning.generic.label "Tiu ĉi dokumento regas vian musmontrilon. Premu Esk por repreni la regadon.">
+
+<!ENTITY showAllBookmarks2.label "Montri ĉiujn legosignojn">
+<!ENTITY recentBookmarks.label "Ĵusaj legosignoj">
+<!ENTITY bookmarksToolbarChevron.tooltip "Montri pliajn legosignojn">
+
+<!ENTITY printButton.label            "Presi">
+<!ENTITY printButton.tooltip          "Presi ĉi tiun paĝon">
+
+
+<!ENTITY searchItem.title             "Serĉi">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "Eka paĝo">
+<!ENTITY homeButton.defaultPage.tooltip "Eka paĝo de &brandShortName;">
+
+<!ENTITY bookmarksButton.label          "Legosignoj">
+
+<!ENTITY bookmarksSubview.label             "Legosignoj">
+<!ENTITY bookmarksMenuButton2.label         "Menuo de legosignoj">
+<!ENTITY bookmarksMenuButton.other.label    "Aliaj legosignoj">
+<!ENTITY bookmarksMenuButton.mobile.label   "Poŝaparataj legosignoj">
+<!ENTITY viewBookmarksSidebar2.label        "Montri flankan strion de legosignoj">
+<!ENTITY hideBookmarksSidebar.label         "Kaŝi flankan strion de legosignoj">
+<!ENTITY viewBookmarksToolbar.label         "Montri ilaron de legosignoj">
+<!ENTITY hideBookmarksToolbar.label         "Kaŝi ilaron de legosignoj">
+<!ENTITY searchBookmarks.label              "Serĉi legosignojn">
+<!ENTITY bookmarkingTools.label             "Iloj por legosignoj">
+<!ENTITY addBookmarksMenu.label             "Aldoni la menuon de legosignoj al la ilaro">
+<!ENTITY removeBookmarksMenu.label          "Forigi la menuon de legosignojn el la ilaro">
+
+<!ENTITY historyButton.label            "Historio">
+
+<!ENTITY downloads.label              "Elŝutoj">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "Elŝutoj">
+<!ENTITY addons.label                 "Aldonaĵoj">
+
+<!ENTITY webDeveloperMenu.label       "Teksaĵa programisto">
+
+<!ENTITY newNavigatorCmd.label        "Nova fenestro">
+<!ENTITY newPrivateWindow.label     "Nova privata fenestro">
+
+<!ENTITY editMenu.label         "Redakti">
+<!ENTITY preferencesCmd2.label       "Preferoj">
+<!ENTITY preferencesCmdUnix.label       "Preferoj">
+<!ENTITY logins.label                           "Akreditiloj kaj pasvortoj">
+
+<!ENTITY overflowCustomizeToolbar.label       "Personecigi ilaron…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "P">
+
+<!ENTITY historyMenu.label "Historio">
+<!ENTITY historyUndoMenu.label "Antaŭ nelonge fermitaj langetoj">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "Antaŭ nelonge fermitaj fenestroj">
+
+<!ENTITY appMenuHistory.showAll.label "Montri tutan historion">
+<!ENTITY appMenuHistory.clearRecent.label "Viŝi ĵusan historion…">
+<!ENTITY appMenuHistory.restoreSession.label "Restarigi antaŭan seancon">
+<!ENTITY appMenuHistory.viewSidebar.label "Montri la flankan strion de historio">
+<!ENTITY appMenuHistory.hideSidebar.label "Kaŝi la flankan strion de historio">
+<!ENTITY appMenuHistory.recentHistory.label "Ĵusa historio">
+<!ENTITY appMenuHelp.label "Helpo">
+
+<!ENTITY appMenuRemoteTabs.label "Spegulitaj langetoj">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Neniu spegulita langeto">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "Montri pli">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Montri pli da langetoj el tiu ĉi aparato">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Montri ĉiujn">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Montri ĉiujn langetojn el tiu ĉi aparato">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Ŝaltu la dividon de langetoj por vidi liston de langetoj en viaj aliaj aparatoj.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Waterfox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Ĉu vi volas vidi ĉi tie viajn langetojn el aliaj aparatoj?">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "Malfermi preferojn de spegulado">
+<!ENTITY appMenuRemoteTabs.welcome.label "Vidi liston de langetoj en viaj aliaj aparatoj.">
+<!ENTITY appMenuRemoteTabs.unverified.label "Via konto bezonas esti kontrolita.">
+<!ENTITY appMenuRemoteTabs.signintosync.label "Komenci seancon en &syncBrand.shortName.label;…">
+<!ENTITY appMenuRemoteTabs.turnonsync.label "Ŝalto de &syncBrand.shortName.label;…">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Administri aparatojn…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "Vidi flankan strion de spegulitaj langetoj">
+<!ENTITY appMenuRemoteTabs.hidesidebar.label "Kaŝi flankan strion de spegulitaj langetoj">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "Konekti alian aparaton">
+
+<!ENTITY appMenuRecentHighlights.label "Ĵusaj elstaraĵoj">
+
+<!ENTITY customizeMenu.addToToolbar.label "Aldoni al ilarstrio">
+<!ENTITY customizeMenu.addToToolbar.accesskey "A">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "Aldoni al ekstra menuo">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "A">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Depingli el ekstra menuo">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "D">
+<!ENTITY customizeMenu.removeFromToolbar.label "Forigi el ilarstrio">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "f">
+<!ENTITY customizeMenu.addMoreItems.label "Aldoni pli da elementoj…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "e">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "Pli">
+
+<!ENTITY contentSearchSubmit.tooltip  "Sendi serĉon">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "Serĉi">
+<!ENTITY searchIcon.tooltip           "Serĉi">
+
+<!ENTITY openLinkCmdInTab.accesskey   "l">
+
+<!ENTITY pageAction.copyLink.label    "Kopii ligilon">
+
+<!-- LOCALIZATION NOTE(pocket-button.tooltiptext, saveToPocketCmd.label, saveLinkToPocketCmd.label, pocketMenuitem.label):
+  "Pocket" is a brand name. -->
+<!ENTITY saveToPocketCmd.label        "Konservi paĝon en Pocket">
+<!ENTITY pocketMenuitem.label         "Vidi liston de Pocket">
+
+<!ENTITY emailPageCmd.label           "Sendi ligilon retpoŝte…">
+
+<!-- Media (video/audio) controls -->
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoom.label                 "Grandeco">
+
+<!ENTITY sidebarCloseButton.tooltip     "Fermi flankan strion">
+
+<!ENTITY quitApplicationCmdWin2.label       "Fini">
+<!ENTITY quitApplicationCmdWin2.accesskey   "F">
+<!ENTITY quitApplicationCmdWin2.tooltip     "Fini &brandShorterName;">
+<!ENTITY quitApplicationCmd.label       "Fini">
+<!ENTITY quitApplicationCmd.accesskey   "F">
+<!ENTITY quitApplicationCmdMac2.label   "Fini &brandShorterName;">
+
+<!ENTITY allowPopups.accesskey "p">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Modifi la preferojn de la blokilo de ŝprucfenestroj…">
+<!ENTITY editPopupSettings.label "Modifi la preferojn de la blokilo de ŝprucfenestroj…">
+<!ENTITY editPopupSettings.accesskey "M">
+<!ENTITY dontShowMessage.accesskey "N">
+
+<!ENTITY findOnCmd.label     "Serĉi en tiu ĉi paĝo…">
+
+<!ENTITY spellAddDictionaries.label "Aldoni vortarojn…">
+<!ENTITY spellAddDictionaries.accesskey "A">
+
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "Langetoj de retumilo">
+
+<!ENTITY syncBrand.shortName.label    "Spegulado">
+
+<!ENTITY customizeMode.autoHideDownloadsButton.label "Automate kaŝi">
+
+
+<!ENTITY uiTour.infoPanel.close "Fermi">
+
+<!ENTITY panicButton.thankyou.msg1                "Via ĵusa historio estis viŝita.">
+<!ENTITY panicButton.thankyou.msg2                "Sekura retumo!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Dankon!">
+
+<!ENTITY updateAvailable.panelUI.label "Elŝuti ĝisdatigon por &brandShorterName;">
+<!ENTITY updateManual.panelUI.label "Elŝuti freŝan kopion de &brandShorterName;">
+<!ENTITY updateUnsupported.panelUI.label "Vi ne povas plue ĝisdatigi">
+<!ENTITY updateRestart.panelUI.label2 "Restartigu por ĝisdatigi &brandShorterName;">
+
+<!ENTITY sendToDevice.syncNotReady.label "Aparatoj spegulataj…">
+
+<!ENTITY pageAction.shareUrl.label "Dividi">
+<!ENTITY pageAction.shareMore.label "Pli…">
+
+<!ENTITY libraryButton.tooltip "Vidi historion, konservitajn legosignojn kaj pli">
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+<!ENTITY accessibilityIndicator.tooltip "Alireblecaj trajtoj aktivaj">

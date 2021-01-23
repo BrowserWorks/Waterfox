@@ -28,8 +28,6 @@
 #include "nsHttpHandler.h"
 #include "nsHttpRequestHead.h"
 #include "nsIClassOfService.h"
-#include "nsIPipe.h"
-#include "nsISocketTransport.h"
 #include "nsStandardURL.h"
 #include "prnetdb.h"
 
@@ -185,19 +183,34 @@ nsresult Http2Stream::ReadSegments(nsAHttpSegmentReader* reader, uint32_t count,
       // Mark that we are blocked on read if the http transaction needs to
       // provide more of the request message body and there is nothing queued
       // for writing
-      if (rv == NS_BASE_STREAM_WOULD_BLOCK && !mTxInlineFrameUsed)
+      if (rv == NS_BASE_STREAM_WOULD_BLOCK && !mTxInlineFrameUsed) {
+        LOG(("Http2Stream %p mRequestBlockedOnRead = 1", this));
         mRequestBlockedOnRead = 1;
+      }
 
       // A transaction that had already generated its headers before it was
       // queued at the session level (due to concurrency concerns) may not call
       // onReadSegment off the ReadSegments() stack above.
-      if (mUpstreamState == GENERATING_HEADERS && NS_SUCCEEDED(rv)) {
+
+      // When mTransaction->ReadSegments returns NS_BASE_STREAM_WOULD_BLOCK it
+      // means it may have already finished providing all the request data
+      // necessary to generate open, calling OnReadSegment will drive sending
+      // the request; this may happen after dequeue of the stream.
+
+      if (mUpstreamState == GENERATING_HEADERS &&
+          (NS_SUCCEEDED(rv) || rv == NS_BASE_STREAM_WOULD_BLOCK)) {
         LOG3(
             ("Http2Stream %p ReadSegments forcing OnReadSegment call\n", this));
         uint32_t wasted = 0;
         mSegmentReader = reader;
-        Unused << OnReadSegment("", 0, &wasted);
+        nsresult rv2 = OnReadSegment("", 0, &wasted);
         mSegmentReader = nullptr;
+
+        LOG3(("  OnReadSegment returned 0x%08" PRIx32,
+              static_cast<uint32_t>(rv2)));
+        if (NS_SUCCEEDED(rv2)) {
+          mRequestBlockedOnRead = 0;
+        }
       }
 
       // If the sending flow control window is open (!mBlockedOnRwin) then
@@ -1038,12 +1051,12 @@ nsresult Http2Stream::ConvertResponseHeaders(Http2Decompressor* decompressor,
     if ((httpResponseCode / 100) != 2) {
       MapStreamToPlainText();
     }
-    MapStreamToHttpConnection(httpResponseCode);
+    MapStreamToHttpConnection(aHeadersOut, httpResponseCode);
     ClearTransactionsBlockedOnTunnel();
   } else if (mIsWebsocket) {
     LOG3(("Http2Stream %p websocket response code %d", this, httpResponseCode));
     if (httpResponseCode == 200) {
-      MapStreamToHttpConnection();
+      MapStreamToHttpConnection(aHeadersOut);
     }
   }
 
@@ -1498,7 +1511,7 @@ nsresult Http2Stream::OnReadSegment(const char* buf, uint32_t count,
       mRequestBodyLenRemaining -= dataLength;
       GenerateDataFrameHeader(dataLength, !mRequestBodyLenRemaining);
       ChangeState(SENDING_BODY);
-      MOZ_FALLTHROUGH;
+      [[fallthrough]];
 
     case SENDING_BODY:
       MOZ_ASSERT(mTxInlineFrameUsed, "OnReadSegment Send Data Header 0b");
@@ -1577,6 +1590,17 @@ nsresult Http2Stream::OnWriteSegment(char* buf, uint32_t count,
 
 /// connect tunnels
 
+nsCString& Http2Stream::RegistrationKey() {
+  if (mRegistrationKey.IsEmpty()) {
+    MOZ_ASSERT(Transaction());
+    MOZ_ASSERT(Transaction()->ConnectionInfo());
+
+    mRegistrationKey = Transaction()->ConnectionInfo()->HashKey();
+  }
+
+  return mRegistrationKey;
+}
+
 void Http2Stream::ClearTransactionsBlockedOnTunnel() {
   MOZ_ASSERT(OnSocketThread(), "not on socket thread");
 
@@ -1601,14 +1625,15 @@ void Http2Stream::MapStreamToPlainText() {
   qiTrans->ForcePlainText();
 }
 
-void Http2Stream::MapStreamToHttpConnection(int32_t httpResponseCode) {
+void Http2Stream::MapStreamToHttpConnection(const nsACString& aFlat407Headers,
+                                            int32_t aHttpResponseCode) {
   RefPtr<SpdyConnectTransaction> qiTrans(
       mTransaction->QuerySpdyConnectTransaction());
   MOZ_ASSERT(qiTrans);
 
-  qiTrans->MapStreamToHttpConnection(mSocketTransport,
-                                     mTransaction->ConnectionInfo(),
-                                     mIsTunnel ? httpResponseCode : -1);
+  qiTrans->MapStreamToHttpConnection(
+      mSocketTransport, mTransaction->ConnectionInfo(), aFlat407Headers,
+      mIsTunnel ? aHttpResponseCode : -1);
 }
 
 // -----------------------------------------------------------------------------

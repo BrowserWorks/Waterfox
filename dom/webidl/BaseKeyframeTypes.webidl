@@ -28,15 +28,18 @@ enum CompositeOperationOrAuto { "replace", "add", "accumulate", "auto" };
 // but we use it for manual JS->IDL and IDL->JS conversions in KeyframeEffect's
 // implementation.
 
+[GenerateInit]
 dictionary BasePropertyIndexedKeyframe {
   (double? or sequence<double?>) offset = [];
   (DOMString or sequence<DOMString>) easing = [];
   (CompositeOperationOrAuto or sequence<CompositeOperationOrAuto>) composite = [];
 };
 
+[GenerateInit]
 dictionary BaseKeyframe {
   double? offset = null;
   DOMString easing = "linear";
+  [Pref="dom.animations-api.compositing.enabled"]
   CompositeOperationOrAuto composite = "auto";
 
   // Non-standard extensions
@@ -53,6 +56,7 @@ dictionary BaseKeyframe {
   [ChromeOnly] boolean simulateComputeValuesFailure = false;
 };
 
+[GenerateConversionToJS]
 dictionary BaseComputedKeyframe : BaseKeyframe {
   double computedOffset;
 };

@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "සබැඳි (Online) සබඳතා">
+<!ENTITY offlineContactsHeader.label   "අසබැඳි (offline) සබඳතා ">
+<!ENTITY conversationsHeader.label     "සංවාද">
+<!ENTITY searchResultConversation.label "සෙවුම් ප්‍රතිඵල">
+<!ENTITY chat.noConv.title             "සංවාද (Conversations) මෙහි පෙන්වනු ඇත.">
+<!ENTITY chat.noConv.description       "සංවාදයක් ආරම්භ කිරීමට වම්පස ඇති සබඳතා ලැයිස්තුව ආරම්භ කරන්න.">
+<!ENTITY chat.noPreviousConv.description       "මෙම සබඳතාවය සඳහා පෙර සංවාද කිසිවක්  &brandShortName; තුළ ගබඩා වී නැත.">
+<!ENTITY chat.noAccount.title             "ඔබ තවම චැට් ගිණුමක් සකස් කර නැත.">
+<!ENTITY chat.noAccount.description       "ඔබගේ චැට් ගිණුම සකස් කර තැනීම සඳහා &brandShortName; ට ඔබට මඟ පෙන්වීමට ඉඩදෙන්න.">
+<!ENTITY chat.accountWizard.button       "ආරම්භ කරන්න">
+<!ENTITY chat.noConnectedAccount.title             "ඔබගේ චැට් ගිණුම් සම්බන්ධව නැත.">
+<!ENTITY chat.noConnectedAccount.description       "'Chat status' වෙතින් ඔබට ඒවා සම්බන්ධ කරගත හැකිය:">
+<!ENTITY chat.showAccountManager.button       "chat status පෙන්වන්න">
+
+<!ENTITY chat.participants             "සහභාගීවන්නන්:">
+<!ENTITY chat.previousConversations    "පෙර සංවාද:">
+<!ENTITY chat.ongoingConversation      "දැනට පවතින සංවාද">
+
+<!ENTITY openConversationCmd.label     "සංවාදයක් ආරම්භ කරන්න">
+<!ENTITY openConversationCmd.accesskey "c">
+<!ENTITY closeConversationCmd.label    "සංවාදය වසා දමන්න">
+<!ENTITY closeConversationCmd.accesskey "C">
+<!ENTITY aliasCmd.label                "යළි-නම්කරන්න">
+<!ENTITY aliasCmd.accesskey            "R">
+<!ENTITY deleteCmd.label               "සබඳතා ඉවත් කරන්න">
+<!ENTITY deleteCmd.accesskey           "v">
+
+<!ENTITY openConversationButton.tooltip  "සංවාදයක් ආරම්භ කරන්න">
+<!ENTITY closeConversationButton.tooltip "සංවාදය වසා දමන්න">
+
+<!ENTITY addBuddyButton.label          "සබඳතාවක් එක් කරන්න">
+<!ENTITY joinChatButton.label          "චැට් එකට සම්බන්ධවන්න">
+<!ENTITY chatAccountsButton.label      "ගිණුම් පෙන්වන්න">
+
+
+<!ENTITY status.available          "පවතින">
+<!ENTITY status.unavailable        "නොපවතින">
+<!ENTITY status.offline            "අසබැඳි (offline)">
+
+<!ENTITY openLinkCmd.label            "ඈඳුම විවෘත කරන්න…">
+<!ENTITY openLinkCmd.accesskey        "O">

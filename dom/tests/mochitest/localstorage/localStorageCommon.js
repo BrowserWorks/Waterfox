@@ -7,7 +7,7 @@ function localStorageFlush(cb) {
   }
 
   var ob = {
-    observe: function(sub, top, dat) {
+    observe(sub, top, dat) {
       os().removeObserver(ob, "domstorage-test-flushed");
       cb();
     },
@@ -67,7 +67,7 @@ function localStorageClearAll(callback) {
 
         let clearRequestCount = 0;
         for (let item of request.result) {
-          let principal = ssm.createCodebasePrincipalFromOrigin(item.origin);
+          let principal = ssm.createContentPrincipalFromOrigin(item.origin);
           let clearRequest = qms.clearStoragesForPrincipal(
             principal,
             "default",
@@ -121,7 +121,10 @@ function notify(top) {
 function localStorageEnableTestingMode(cb) {
   SpecialPowers.pushPrefEnv(
     {
-      set: [["dom.storage.testing", true], ["dom.quotaManager.testing", true]],
+      set: [
+        ["dom.storage.testing", true],
+        ["dom.quotaManager.testing", true],
+      ],
     },
     cb
   );

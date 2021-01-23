@@ -1,0 +1,121 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "اشکال در هنگام بارگیری">
+<!ENTITY retry.label "سعی دوباره">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "قادر به اتصال نیست">
+<!ENTITY connectionFailure.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY deniedPortAccess.title "این نشانی ممنوع است">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "کارگزار پیدا نشد">
+<!-- LOCALIZATION NOTE (dnsNotFound.longDesc4) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside tags should be localized.  Do not change the ids. -->
+<!ENTITY dnsNotFound.longDesc4 "<ul> <li>آدرس را بررسی کنید که اشتباه تایپی نداشته باشد. مثلا<strong>ww</strong>.example.com به جای <strong>www</strong>.example.com</li> <div id='searchbox'> <input id='searchtext' type='search'></input> <button id='searchbutton'>جستجو</button> </div> <li>اگر نمی‌توانید هیچ صفحه‌ای را باز کنید، اتصال Wi-Fi یا داده‌ی دستگاه خود را بررسی کنید. <button id='wifi'>فعال سازی Wi-Fi</button> </li> </ul>">
+
+<!ENTITY fileNotFound.title "پرونده پیدا نشد">
+<!ENTITY fileNotFound.longDesc "<ul> <li>صحتِ نام پرونده را برای احتمال وجود غلط املایی بررسی کنید. </li> <li>بررسی کنید که آیا پرونده جابه‌جا شده، تغییر نام یافته، یا پاک شده است.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "دسترسی به این پرونده رد می‌شود">
+<!ENTITY fileAccessDenied.longDesc "<ul><li>ممکن است حذف،‌منتقل شده باشد یا مجوز‌های آن از دسترسی جلوگیری‌ می‌کند.</li></ul>">
+
+<!ENTITY generic.title "اوخ.">
+<!ENTITY generic.longDesc "<p>&brandShortName; به دلایلی نمی‌تواند این صفحه را نمایش دهد.</p>">
+
+<!ENTITY malformedURI.title "این نشانی معتبر نمی‌باشد">
+<!-- LOCALIZATION NOTE (malformedURI.longDesc2) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY malformedURI.longDesc2 "<ul> <li>نشانی‌های وب معمولا به این صورت هستند: <strong>http://www.example.com/</strong></li> <div id='searchbox'> <input id='searchtext' type='search'></input> <button id='searchbutton'>جستجو</button> </div> <li>مطمئن شوید از علامت ممیز صحیحی استفاده می‌کنید (یعنی <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "اتصال مختل شد">
+<!ENTITY netInterrupt.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY notCached.title "نوشتار منقضی شده">
+<!ENTITY notCached.longDesc "<p>پرونده درخواستی در حافظه &brandShortName; موجود نیست.</p><ul><li>به عنوان یک احتیاط امنیتی، &brandShortName; به‌طور خودکار نوشتارهای حساس را مجددا درخواست نمی‌کند.</li><li>بر روی تلاش مجدد کلیک کنید تا نوشتار از پایگاه‌وب مجددا درخواست شود.</li></ul>">
+
+<!ENTITY netOffline.title "حالت منفصل">
+
+<!ENTITY contentEncodingError.title "خطای کدگذاری محتوا">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>لطفاً با صاحبان وب‌گاه تماس بگیرید و آنها را در جریان این مشکل قرار دهید.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "نوع پروندهٔ ناامن">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>لطفاً با صاحبان وب‌گاه تماس بگیرید و آنها را در جریان این مشکل قرار دهید.</li> </ul>">
+
+<!ENTITY netReset.title "اتصال قطع شد">
+<!ENTITY netReset.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY netTimeout.title "وقت اتصال تمام شد">
+<!ENTITY netTimeout.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY unknownProtocolFound.title "نشانی قابل فهم نبود">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>برای باز کردن این نشانی، ممکن است نیاز به نصب نرم‌افزار دیگری داشته باشید.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "کارگزار پیشکار از اتصال خودداری می‌کند.">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>صحت تنظیمات پیشکاررا جهت اطمینان بررسی کنید.</li><li> با مدیر شبکه خود جهت اطمینان از صحت کارکرد تنظیمات کارگزار پیشکار  خود تماس بگیرید.</li></ul>">
+
+<!ENTITY proxyResolveFailure.title "کارگزار پیشکار پیدا نمی‌شود">
+<!-- LOCALIZATION NOTE (proxyResolveFailure.longDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY proxyResolveFailure.longDesc3 "<ul> <li>تنظیمات پیشکار را بررسی کنید تا مطمئن شوید درست هستند.</li> <li>بررسی کنید که دستگاه شما یک اتصال داده یا وای-فای فعال دارد. <button id='wifi'>فعال‌سازی وای-فای</button> </li> </ul>">
+
+<!ENTITY redirectLoop.title "این صفحه درست تغییر مسیر نمی‌دهد">
+<!ENTITY redirectLoop.longDesc "<ul> <li>گاهی ممکن است این اشکال به دلیل غیر فعال بودن یا خودداری کردن از قبول کوکی‌ها باشد.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "جواب غیرمنتظره از کارگزار">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>مطمئن شوید که «مدیریت امنیت شخصی» (Personal Security Manager)بر روی سیستم شما نصب شده است.</li> <li>این اشکال ممکن است از پیکربندی غیر استاندارد کارگزار باشد.</li> </ul>">
+
+<!ENTITY nssFailure2.title "برقراری اتصال ایمن شکست خورد">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>صفحه‌ای که تلاش می‌کنید از آن بازدید کنید قابل نمایش نیست، زیرا تأیید اعتبار اطلاعات دریافتی امکان‌پذیر نیست.</li> <li>لطفاً با صاحبان این سایت تماس بگیرید و آنها را در جریان این مشکل قرار دهید.</li> </ul>">
+
+<!ENTITY nssBadCert.title "برقراری اتصال ایمن شکست خورد">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>علت می‌تواند اشکالی در تنظیم کارگزار، یا تلاش فردی برای وانمود کردن خود به جای این کارگزار باشد.</li> <li>اگر در گذشته با موفقیت به این کارگزار متصل شده‌اید، امکان دارد این اشکال موقتی باشد، و می‌توانید بعداً دوباره تلاش کنید.</li> </ul>">
+
+<!-- LOCALIZATION NOTE (sharedLongDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY sharedLongDesc3 "<ul> <li>سایت می‌تواند موقتا در دسترس نباشد یا خیلی شلوغ باشد. چند لحظه دیگر مجددا تلاش کنید.</li> <li>اگر شما نمی‌توانید هیچ صفحه‌ای را باز کنید، اتصال داده یا Wi-Fi دستگاه خود را بررسی کنید. <button id='wifi'>فعال‌سازی Wi-Fi</button> </li> </ul>">
+
+<!ENTITY cspBlocked.title "بلوکه شده بنا بر سیاست امنیتی محتوا">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; از بارگذاری این صفحه به این شکل جلوگیری کرد، زیرا که صفحه محتوایی دارد که سیاست امنیتی مانع آن می‌شود</p>">
+
+<!ENTITY corruptedContentErrorv2.title "خطای خرابی محتوا">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>صفحه‌ای که تلاش می‌کنید ببینید به دلیل وجود یک خطا در انتقال داده، نمی‌تواند نمایش داده شود.</p><ul><li> لطفا با مسئولین سایت تماس بگیرید و آنها را از این مشکل مطلع سازید.</li></ul>">
+
+<!ENTITY securityOverride.linkText "یا می‌توانید یک استثنا اضافه کنید…">
+<!ENTITY securityOverride.getMeOutOfHereButton "ترک این مکان!">
+<!ENTITY securityOverride.exceptionButtonLabel "افزودن استثنا…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <xul:button> tags.  The only language content is the label= field,
+which uses strings already defined above. The button is included here (instead of
+netError.xhtml) because it exposes functionality specific to firefox. -->
+
+<!ENTITY securityOverride.warningContent "<p>اگر از اتصال اینترنتی استفاده می‌کنید که کاملاً به آن اطمینان ندارید، یا اگر معمولاً در هنگام بازدید از این وب‌گاه اخطاری دریافت نمی‌کنید، نباید استثنائی اضافه کنید.</p>  <button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> <button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "XUL راه دور">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>لطفا با مسئولین سایت جهت مطلع کردن آنها از این مشکل تماس بگیرید.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "قادر به برقراری اتصال امن نمی‌باشد">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc "اطلاعات پیشرفته: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY weakCryptoUsed.title "اتصال شما امن نیست">
+<!-- LOCALIZATION NOTE (weakCryptoUsed.longDesc) - Do not translate
+     "SSL_ERROR_NO_CYPHER_OVERLAP". -->
+<!ENTITY weakCryptoUsed.longDesc "اطلاعات پیشرفته: ssl_error_no_cypher_overlap">
+
+<!ENTITY inadequateSecurityError.title "اتصال شما امن نیست">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> استفاده از تکنولوژی های امنیتی که تاریخ‌ آن‌ها گذشته است در برابر حملات آسیب پذیراست. و حمله کننده می ‌تواند به راحتی اطلاعاتی که شما تصویر می‌کنید امن است را فاش کند. مدیریت پایگاه وب نیاز دارد تا نخست کارگزار را قبل از بازدید پایگاه وب درست کند.</p><p> کد خطا: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY networkProtocolError.title "خطای پروتکل شبکه">
+<!ENTITY networkProtocolError.longDesc "<p>صفحه‌ای که می‌خواهید مشاهده کنید به خاطر خطایی که در پروتکل شبکه شناسایی شده قابل نمایش نیست.</p><ul><li>لطفا با صاحبان وب سایت تماس بگیرید تا آنها را درباره این مشکل مطلع سازید.</li></ul>">

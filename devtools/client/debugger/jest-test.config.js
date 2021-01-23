@@ -17,7 +17,11 @@ module.exports = {
     "package.json",
     "<rootDir>/packages",
   ],
-  modulePathIgnorePatterns: ["test/mochitest", "firefox"],
+  modulePathIgnorePatterns: [
+    "test/mochitest",
+    "<rootDir>/firefox/",
+    "<rootDir>/src/client/firefox/",
+  ],
   collectCoverageFrom: [
     "src/**/*.js",
     "!src/**/fixtures/*.js",
@@ -36,5 +40,10 @@ module.exports = {
   moduleNameMapper: {
     "\\.css$": "<rootDir>/src/test/__mocks__/styleMock.js",
     "\\.svg$": "<rootDir>/src/test/__mocks__/svgMock.js",
+    "^Services": "<rootDir>/src/test/fixtures/Services",
+    "^chrome": "<rootDir>/src/test/fixtures/Chrome",
+    "^ChromeUtils": "<rootDir>/src/test/fixtures/ChromeUtils",
+    // Map all require("devtools/...") to the real devtools root.
+    "^devtools\\/(.*)": "<rootDir>/../../$1",
   },
 };

@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label          "Ficheiro">
+<!ENTITY fileMenu.accesskey        "F">
+<!ENTITY newMenu.label            "Novo">
+<!ENTITY newMenu.accesskey          "o">
+
+<!ENTITY editMenu.label          "Editar">
+<!ENTITY editMenu.accesskey        "E">
+<!ENTITY undoCmd.label            "Desfacer">
+<!ENTITY undoCmd.accesskey          "D">
+<!ENTITY redoCmd.label            "Refacer">
+<!ENTITY redoCmd.accesskey          "r">
+<!ENTITY deleteCmd.label          "Eliminar">
+<!ENTITY deleteCmd.accesskey        "l">
+<!ENTITY preferencesCmd2.label "Opcións">
+<!ENTITY preferencesCmd2.accesskey "O">
+<!ENTITY preferencesCmdUnix.label       "Preferencias">
+<!ENTITY preferencesCmdUnix.accesskey     "f">
+
+<!ENTITY viewMenu.label          "Ver">
+<!ENTITY viewMenu.accesskey        "V">
+<!ENTITY viewToolbarsMenu.label        "Barras de ferramentas">
+<!ENTITY viewToolbarsMenu.accesskey      "t">
+<!ENTITY showTaskbarCmd.label          "Barra de estado">
+<!ENTITY showTaskbarCmd.accesskey        "d">
+
+<!ENTITY closeCmd.label      "Pechar">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "c">
+
+<!ENTITY quitApplicationCmd.label  "Saír">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "a">
+
+<!ENTITY quitApplicationCmdUnix.label  "Saír">
+<!ENTITY quitApplicationCmdUnix.accesskey  "a">
+
+<!ENTITY quitApplicationCmdMac.label  "Saír de &brandShortName;">
+<!ENTITY quitApplicationCmdMac.accesskey  "a">

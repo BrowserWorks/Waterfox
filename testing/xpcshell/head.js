@@ -22,6 +22,7 @@
 /* globals Cc, Ci */
 
 /* defined by this file but is defined as read-only for tests */
+// eslint-disable-next-line no-redeclare
 /* globals runningInParent: true */
 
 /* may be defined in test files */
@@ -33,6 +34,7 @@ var _tests_pending = 0;
 var _cleanupFunctions = [];
 var _pendingTimers = [];
 var _profileInitialized = false;
+var _fastShutdownDisabled = false;
 
 // Assigned in do_load_child_test_harness.
 var _XPCSHELL_PROCESS;
@@ -42,6 +44,11 @@ var _XPCSHELL_PROCESS;
 var _Services = ChromeUtils.import("resource://gre/modules/Services.jsm", null)
   .Services;
 _register_modules_protocol_handler();
+
+var _AppConstants = ChromeUtils.import(
+  "resource://gre/modules/AppConstants.jsm",
+  null
+).AppConstants;
 
 var _PromiseTestUtils = ChromeUtils.import(
   "resource://testing-common/PromiseTestUtils.jsm",
@@ -116,10 +123,6 @@ if (runningInParent && "mozIAsyncHistory" in Ci) {
 
 try {
   if (runningInParent) {
-    // disable necko IPC security checks for xpcshell, as they lack the
-    // docshells needed to pass them
-    _Services.prefs.setBoolPref("network.disable.ipc.security", true);
-
     // Disable IPv6 lookups for 'localhost' on windows.
     if ("@mozilla.org/windows-registry-key;1" in Cc) {
       _Services.prefs.setCharPref("network.dns.ipv4OnlyDomains", "localhost");
@@ -396,7 +399,7 @@ function _register_modules_protocol_handler() {
 
 /* Debugging support */
 // Used locally and by our self-tests.
-function _setupDebuggerServer(breakpointFiles, callback) {
+function _setupDevToolsServer(breakpointFiles, callback) {
   // Always allow remote debugging.
   _Services.prefs.setBoolPref("devtools.debugger.remote-enabled", true);
 
@@ -427,12 +430,12 @@ function _setupDebuggerServer(breakpointFiles, callback) {
         "See also https://bugzil.la/1215378."
     );
   }
-  let { DebuggerServer } = require("devtools/server/main");
-  DebuggerServer.init();
-  DebuggerServer.registerAllActors();
+  let { DevToolsServer } = require("devtools/server/devtools-server");
+  DevToolsServer.init();
+  DevToolsServer.registerAllActors();
   let { createRootActor } = require("resource://testing-common/dbg-actors.js");
-  DebuggerServer.setRootActor(createRootActor);
-  DebuggerServer.allowChromeProcess = true;
+  DevToolsServer.setRootActor(createRootActor);
+  DevToolsServer.allowChromeProcess = true;
 
   // An observer notification that tells us when we can "resume" script
   // execution.
@@ -460,12 +463,12 @@ function _setupDebuggerServer(breakpointFiles, callback) {
 
   const { SocketListener } = require("devtools/shared/security/socket");
 
-  return { DebuggerServer, SocketListener };
+  return { DevToolsServer, SocketListener };
 }
 
 function _initDebugging(port) {
   let initialized = false;
-  const { DebuggerServer, SocketListener } = _setupDebuggerServer(
+  const { DevToolsServer, SocketListener } = _setupDevToolsServer(
     _TEST_FILE,
     () => {
       initialized = true;
@@ -481,17 +484,17 @@ function _initDebugging(port) {
   info("*******************************************************************");
   info("");
 
-  const AuthenticatorType = DebuggerServer.Authenticators.get("PROMPT");
+  const AuthenticatorType = DevToolsServer.Authenticators.get("PROMPT");
   const authenticator = new AuthenticatorType.Server();
   authenticator.allowConnection = () => {
-    return DebuggerServer.AuthenticationResult.ALLOW;
+    return DevToolsServer.AuthenticationResult.ALLOW;
   };
   const socketOptions = {
     authenticator,
     portOrPath: port,
   };
 
-  const listener = new SocketListener(DebuggerServer, socketOptions);
+  const listener = new SocketListener(DevToolsServer, socketOptions);
   listener.open();
 
   // spin an event loop until the debugger connects.
@@ -537,6 +540,8 @@ function _execute_test() {
     ).CoverageCollector;
     coverageCollector = new _CoverageCollector(_JSCOV_DIR);
   }
+
+  let startTime = Cu.now();
 
   // _HEAD_FILES is dynamically defined by <runxpcshelltests.py>.
   _load_files(_HEAD_FILES);
@@ -629,6 +634,7 @@ function _execute_test() {
   };
 
   let complete = _cleanupFunctions.length == 0;
+  let cleanupStartTime = complete ? 0 : Cu.now();
   (async () => {
     for (let func of _cleanupFunctions.reverse()) {
       try {
@@ -645,6 +651,16 @@ function _execute_test() {
     .catch(reportCleanupError)
     .then(() => (complete = true));
   _Services.tm.spinEventLoopUntil(() => complete);
+  if (cleanupStartTime) {
+    ChromeUtils.addProfilerMarker(
+      "xpcshell-test",
+      cleanupStartTime,
+      "Cleanup functions"
+    );
+  }
+
+  ChromeUtils.addProfilerMarker("xpcshell-test", startTime, _TEST_NAME);
+  _Services.obs.notifyObservers(null, "test-complete");
 
   // Restore idle service to avoid leaks.
   _fakeIdleService.deactivate();
@@ -668,6 +684,28 @@ function _execute_test() {
     // It's important to terminate the module to avoid crashes on shutdown.
     _PromiseTestUtils.uninit();
   }
+
+  // Skip the normal shutdown path for optimized builds that don't do leak checking.
+  if (
+    runningInParent &&
+    !_AppConstants.RELEASE_OR_BETA &&
+    !_AppConstants.DEBUG &&
+    !_AppConstants.MOZ_CODE_COVERAGE &&
+    !_AppConstants.ASAN &&
+    !_AppConstants.TSAN
+  ) {
+    if (_fastShutdownDisabled) {
+      _testLogger.info("fast shutdown disabled by the test.");
+      return;
+    }
+
+    // Setting this pref is required for Cu.isInAutomation to return true.
+    _Services.prefs.setBoolPref(
+      "security.turn_off_all_security_so_that_viruses_can_take_over_this_computer",
+      true
+    );
+    Cu.exitIfInAutomation();
+  }
 }
 
 /**
@@ -678,7 +716,13 @@ function _execute_test() {
 function _load_files(aFiles) {
   function load_file(element, index, array) {
     try {
+      let startTime = Cu.now();
       load(element);
+      ChromeUtils.addProfilerMarker(
+        "xpcshell-test",
+        startTime,
+        "load " + element.replace(/.*\/_?tests\/xpcshell\//, "")
+      );
     } catch (e) {
       let extra = {
         source_file: element,
@@ -703,6 +747,7 @@ function _wrap_with_quotes_if_necessary(val) {
  * Prints a message to the output log.
  */
 function info(msg, data) {
+  ChromeUtils.addProfilerMarker("xpcshell-test", undefined, "INFO " + msg);
   msg = _wrap_with_quotes_if_necessary(msg);
   data = data ? data : null;
   _testLogger.info(msg, data);
@@ -1147,6 +1192,14 @@ function registerCleanupFunction(aFunction) {
 }
 
 /**
+ * Ensure the test finishes with a normal shutdown even when it could have
+ * otherwise used the fast Cu.exitIfInAutomation shutdown.
+ */
+function do_disable_fast_shutdown() {
+  _fastShutdownDisabled = true;
+}
+
+/**
  * Returns the directory for a temp dir, which is created by the
  * test harness. Every test gets its own temp dir.
  *
@@ -1561,9 +1614,15 @@ function run_next_test() {
 
       if (_properties.isTask) {
         _gTaskRunning = true;
+        let startTime = Cu.now();
         (async () => _gRunningTest())().then(
           result => {
             _gTaskRunning = false;
+            ChromeUtils.addProfilerMarker(
+              "xpcshell-test",
+              startTime,
+              _gRunningTest.name || "task"
+            );
             if (_isGenerator(result)) {
               Assert.ok(false, "Task returned a generator");
             }
@@ -1571,6 +1630,11 @@ function run_next_test() {
           },
           ex => {
             _gTaskRunning = false;
+            ChromeUtils.addProfilerMarker(
+              "xpcshell-test",
+              startTime,
+              _gRunningTest.name || "task"
+            );
             try {
               do_report_unexpected_exception(ex);
             } catch (error) {
@@ -1581,10 +1645,17 @@ function run_next_test() {
         );
       } else {
         // Exceptions do not kill asynchronous tests, so they'll time out.
+        let startTime = Cu.now();
         try {
           _gRunningTest();
         } catch (e) {
           do_throw(e);
+        } finally {
+          ChromeUtils.addProfilerMarker(
+            "xpcshell-test",
+            startTime,
+            _gRunningTest.name || undefined
+          );
         }
       }
     }
@@ -1608,6 +1679,38 @@ try {
     let prefsFile = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsIFile);
     prefsFile.initWithPath(_PREFS_FILE);
     _Services.prefs.readUserPrefsFromFile(prefsFile);
+  }
+} catch (e) {
+  do_throw(e);
+}
+
+/**
+ * Changing/Adding scalars or events to Telemetry is supported in build-faster/artifacts builds.
+ * These need to be loaded explicitly at start.
+ * It usually happens once all of Telemetry is initialized and set up.
+ * However in xpcshell tests Telemetry is not necessarily fully loaded,
+ * so we help out users by loading at least the dynamic-builtin probes.
+ */
+try {
+  // We only need to run this in the parent process.
+  // We only want to run this for local developer builds (which should have a "default" update channel).
+  if (runningInParent && _AppConstants.MOZ_UPDATE_CHANNEL == "default") {
+    let startTime = Cu.now();
+    let _TelemetryController = ChromeUtils.import(
+      "resource://gre/modules/TelemetryController.jsm",
+      null
+    ).TelemetryController;
+
+    let complete = false;
+    _TelemetryController.testRegisterJsProbes().finally(() => {
+      ChromeUtils.addProfilerMarker(
+        "xpcshell-test",
+        startTime,
+        "TelemetryController.testRegisterJsProbes"
+      );
+      complete = true;
+    });
+    _Services.tm.spinEventLoopUntil(() => complete);
   }
 } catch (e) {
   do_throw(e);

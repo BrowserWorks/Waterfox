@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title        "Съдържание">
+<!ENTITY buildToc.label      "Създаване на съдържание от:">
+<!ENTITY tag.label           "Етикет:">
+<!ENTITY class.label         "Клас:">
+<!ENTITY header1.label       "Ниво 1">
+<!ENTITY header2.label       "Ниво 2">
+<!ENTITY header3.label       "Ниво 3">
+<!ENTITY header4.label       "Ниво 4">
+<!ENTITY header5.label       "Ниво 5">
+<!ENTITY header6.label       "Ниво 6">
+<!ENTITY makeReadOnly.label  "Нека съдържанието да е само-за-четене">
+<!ENTITY orderedList.label   "Номериране на всички редове в съдържанието">

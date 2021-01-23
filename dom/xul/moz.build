@@ -10,14 +10,14 @@ with Files("**"):
 if CONFIG['MOZ_BUILD_APP'] == 'browser':
     DEFINES['MOZ_BREAK_XUL_OVERLAYS'] = True
 
-MOCHITEST_MANIFESTS += ['test/mochitest.ini']
-
 MOCHITEST_CHROME_MANIFESTS += ['test/chrome.ini']
+MOCHITEST_MANIFESTS += ['test/mochitest.ini']
 
 if CONFIG['MOZ_XUL']:
     EXPORTS += [
         'nsXULCommandDispatcher.h',
         'nsXULElement.h',
+        'nsXULPrototypeDocument.h',
         'nsXULSortService.h',
     ]
 
@@ -42,7 +42,6 @@ if CONFIG['MOZ_XUL']:
         'nsXULPrototypeDocument.cpp',
         'nsXULSortService.cpp',
         'XULBroadcastManager.cpp',
-        'XULDocument.cpp',
         'XULFrameElement.cpp',
         'XULMenuElement.cpp',
         'XULPersist.cpp',
@@ -53,13 +52,20 @@ if CONFIG['MOZ_XUL']:
     ]
 
 XPIDL_SOURCES += [
+    'nsIBrowserController.idl',
     'nsIController.idl',
     'nsIControllers.idl',
 ]
 
 XPIDL_MODULE = 'xul'
 
+EXPORTS.mozilla.dom += [
+    'ChromeObserver.h',
+]
+
+
 UNIFIED_SOURCES += [
+    'ChromeObserver.cpp',
     'nsXULControllers.cpp',
 ]
 
@@ -67,7 +73,6 @@ LOCAL_INCLUDES += [
     '/docshell/base',
     '/dom/base',
     '/dom/html',
-    '/dom/xbl',
     '/dom/xml',
     '/layout/base',
     '/layout/generic',
@@ -78,7 +83,7 @@ LOCAL_INCLUDES += [
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
-if 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk':
     LOCAL_INCLUDES += [
         '/widget/gtk',
     ]

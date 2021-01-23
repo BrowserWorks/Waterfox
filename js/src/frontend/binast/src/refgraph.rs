@@ -1,5 +1,9 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 use std::cell::RefCell;
-use std::collections::{ HashMap, HashSet };
+use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
 /// A node in the reference graph
@@ -36,7 +40,7 @@ pub struct ReferenceGraph {
 impl ReferenceGraph {
     pub fn new() -> Self {
         ReferenceGraph {
-            refnodes: HashMap::new()
+            refnodes: HashMap::new(),
         }
     }
 
@@ -53,8 +57,9 @@ impl ReferenceGraph {
             let mut next_edges: HashSet<Rc<String>> = HashSet::new();
 
             for edge in edges {
-                let refnode = self.refnodes.get(&edge)
-                    .unwrap_or_else(|| panic!("While computing dependencies, node {} doesn't exist", edge));
+                let refnode = self.refnodes.get(&edge).unwrap_or_else(|| {
+                    panic!("While computing dependencies, node {} doesn't exist", edge)
+                });
                 if *refnode.used.borrow() {
                     continue;
                 }
@@ -79,12 +84,13 @@ impl ReferenceGraph {
     pub fn is_used(&self, name: Rc<String>) -> bool {
         match self.refnodes.get(&name) {
             Some(refnode) => *refnode.used.borrow(),
-            None => false
+            None => false,
         }
     }
 
     /// Insert a node with `name` to the graph.
     pub fn insert(&mut self, name: Rc<String>, edges: HashSet<Rc<String>>) {
-        self.refnodes.insert(name, Rc::new(ReferenceGraphNode::new(edges)));
+        self.refnodes
+            .insert(name, Rc::new(ReferenceGraphNode::new(edges)));
     }
 }

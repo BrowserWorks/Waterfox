@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "সারণিতে রূপান্তর">
+<!ENTITY instructions1.label "নির্বাচিত প্রতিটি অনুচ্ছেদের জন্য রচনাকারক একটি নতুন সারণি সারি তৈরী করে।">
+<!ENTITY instructions2.label "কলামগুলোতে নির্বাচন আলাদা করতে ব্যবহৃত অক্ষর বেছে নিন:">
+<!ENTITY commaRadio.label "কমা">
+<!ENTITY spaceRadio.label "ফাঁকা স্থান">
+<!ENTITY otherRadio.label "অন্যান্য অক্ষর:">
+<!ENTITY deleteCharCheck.label "বিভাজক অক্ষর মুছে দেয়া হবে">
+<!ENTITY collapseSpaces.label "অতিরিক্ত ফাঁকা স্থান উপেক্ষা করা হবে">
+<!ENTITY collapseSpaces.tooltip "নিকটবর্তী একাধিক ফাঁকা স্থানকে একটি বিভাজকে পরিণত করা হবে">

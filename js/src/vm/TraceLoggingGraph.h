@@ -8,6 +8,7 @@
 #define TraceLoggingGraph_h
 
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/TimeStamp.h"
 
 #include "js/TypeDecls.h"
 #include "vm/MutexIDs.h"
@@ -185,7 +186,7 @@ class TraceLoggerGraph {
   };
 
  public:
-  TraceLoggerGraph() {}
+  TraceLoggerGraph() = default;
   ~TraceLoggerGraph();
 
   bool init(uint64_t timestamp, bool graphFileEnabled);

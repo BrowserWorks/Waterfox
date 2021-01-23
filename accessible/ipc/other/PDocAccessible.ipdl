@@ -6,6 +6,7 @@
 
 include protocol PFileDescriptorSet;
 include protocol PBrowser;
+include protocol PDocAccessiblePlatformExt;
 
 include "mozilla/GfxMessageUtils.h";
 
@@ -71,8 +72,10 @@ struct RelationTargets
 nested(upto inside_sync) sync protocol PDocAccessible
 {
   manager PBrowser;
+  manages PDocAccessiblePlatformExt;
 
 parent:
+  async PDocAccessiblePlatformExt();
   async Shutdown();
 
   /*
@@ -123,7 +126,7 @@ child:
   // Accessible
   nested(inside_sync) sync State(uint64_t aID) returns(uint64_t states);
   nested(inside_sync) sync NativeState(uint64_t aID) returns(uint64_t states);
-  nested(inside_sync) sync Name(uint64_t aID) returns(nsString name);
+  nested(inside_sync) sync Name(uint64_t aID) returns(nsString name, uint32_t flag);
   nested(inside_sync) sync Value(uint64_t aID) returns(nsString value);
   nested(inside_sync) sync Help(uint64_t aID) returns(nsString help);
   nested(inside_sync) sync Description(uint64_t aID) returns(nsString desc);
@@ -134,7 +137,8 @@ child:
   nested(inside_sync) sync IsSearchbox(uint64_t aID) returns(bool retval);
   nested(inside_sync) sync LandmarkRole(uint64_t aID) returns(nsString landmark);
   nested(inside_sync) sync ARIARoleAtom(uint64_t aID) returns(nsString ariaRole);
-  nested(inside_sync) sync GetLevelInternal(uint64_t aID) returns(int32_t aLevel);
+  nested(inside_sync) sync GroupPosition(uint64_t aID)
+    returns(int32_t groupLevel, int32_t similarItemsInGroup, int32_t positionInGroup);
   async ScrollTo(uint64_t aID, uint32_t aScrollType);
   async ScrollToPoint(uint64_t aID, uint32_t aScrollType, int32_t aX,
                       int32_t aY);
@@ -300,8 +304,8 @@ child:
   nested(inside_sync) sync MimeType(uint64_t aID) returns(nsString aMime);
   nested(inside_sync) sync URLDocTypeMimeType(uint64_t aID) returns(nsString aURL, nsString aDocType, nsString aMimeType);
 
-  nested(inside_sync) sync AccessibleAtPoint(uint64_t aID, int32_t aX, int32_t aY, bool aNeedsScreenCoords, uint32_t aWhich)
-    returns(uint64_t aResult, bool aOk);
+  nested(inside_sync) sync ChildAtPoint(uint64_t aID, int32_t aX, int32_t aY, uint32_t aWhich)
+    returns(nullable PDocAccessible aResultDoc, uint64_t aResultID);
 
   nested(inside_sync) sync Extents(uint64_t aID, bool aNeedsScreenCoords)
     returns(int32_t aX, int32_t aY, int32_t aWidth, int32_t aHeight);

@@ -8,10 +8,20 @@
 #ifndef __nsClipboard_h_
 #define __nsClipboard_h_
 
+#include "mozilla/UniquePtr.h"
 #include "nsIClipboard.h"
 #include "nsIObserver.h"
-#include "nsIBinaryOutputStream.h"
 #include <gtk/gtk.h>
+
+#ifdef MOZ_LOGGING
+#  include "mozilla/Logging.h"
+#  include "nsTArray.h"
+#  include "Units.h"
+extern mozilla::LazyLogModule gClipboardLog;
+#  define LOGCLIP(args) MOZ_LOG(gClipboardLog, mozilla::LogLevel::Debug, args)
+#else
+#  define LOGCLIP(args)
+#endif /* MOZ_LOGGING */
 
 class nsRetrievalContext {
  public:
@@ -29,7 +39,7 @@ class nsRetrievalContext {
 
   virtual bool HasSelectionSupport(void) = 0;
 
-  virtual ~nsRetrievalContext(){};
+  virtual ~nsRetrievalContext() = default;
 };
 
 class nsClipboard : public nsIClipboard, public nsIObserver {
@@ -52,9 +62,6 @@ class nsClipboard : public nsIClipboard, public nsIObserver {
  private:
   virtual ~nsClipboard();
 
-  // Save global clipboard content to gtk
-  nsresult Store(void);
-
   // Get our hands on the correct transferable, given a specific
   // clipboard
   nsITransferable* GetTransferable(int32_t aWhichClipboard);
@@ -64,17 +71,20 @@ class nsClipboard : public nsIClipboard, public nsIObserver {
                            const char* aClipboardData,
                            uint32_t aClipboardDataLength);
 
+  void ClearTransferable(int32_t aWhichClipboard);
+
   // Hang on to our owners and transferables so we can transfer data
   // when asked.
   nsCOMPtr<nsIClipboardOwner> mSelectionOwner;
   nsCOMPtr<nsIClipboardOwner> mGlobalOwner;
   nsCOMPtr<nsITransferable> mSelectionTransferable;
   nsCOMPtr<nsITransferable> mGlobalTransferable;
-  nsAutoPtr<nsRetrievalContext> mContext;
+  mozilla::UniquePtr<nsRetrievalContext> mContext;
 };
 
 extern const int kClipboardTimeout;
 
 GdkAtom GetSelectionAtom(int32_t aWhichClipboard);
+int GetGeckoClipboardType(GtkClipboard* aGtkClipboard);
 
 #endif /* __nsClipboard_h_ */

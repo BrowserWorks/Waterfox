@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "Complements">
+<!ENTITY aboutAddons.header2                    "Els vostres complements">
+
+<!ENTITY addonAction.enable                     "Habilita">
+<!ENTITY addonAction.disable                    "Inhabilita">
+<!ENTITY addonAction.uninstall                  "Desinstal·la">
+<!ENTITY addonAction.undo                       "Desfés">
+<!ENTITY addonAction.update                     "Actualitza">
+
+<!ENTITY addonUnsigned.message                  "El &brandShortName; no ha pogut verificar aquest complement.">
+<!ENTITY addonUnsigned.learnMore                "Més informació">

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startpage.title "&brandShortName; メールとニュースグループへようこそ">
+<!--# LOCALIZATION NOTE (headline.label): the URL for <a id="vendorURL"> is fetched from brand.properties -->
+<!ENTITY headline.label
+'ようこそ、<a id="vendorURL" href="">&brandShortName;</a> メールとニュースグループへ！'>
+<!ENTITY description.label
+"&brandShortName; メールとニュースグループはパワフルなオープンソースのメールとニュースクライアントです。先進の迷惑メール検知機能と多くの便利な機能をサポートしています。">
+
+<!ENTITY features.title		"特徴">
+<!ENTITY feat_multiacc.label	"マルチアカウントに対応">
+<!ENTITY feat_junk.label	"先進の迷惑メール検知機能">
+<!ENTITY feat_feeds.label	"フィード (RSS) リーダー">
+<!ENTITY feat_filters.label	"メッセージフィルター">
+<!ENTITY feat_htmlmsg.label	"HTML メールのサポート">
+<!ENTITY feat_abook.label	"アドレス帳">
+<!ENTITY feat_tags.label	"カスタマイズ可能なラベルとメール表示">
+<!ENTITY feat_integration.label
+"&brandShortName; アプリケーションスイートとの密接な統合">
+<!ENTITY dict.title		"辞書">
+<!ENTITY dict_intro.label	"辞書は、あなたのメールのスペルチェックに使用されます。">
+<!--# LOCALIZATION NOTE (dict_info.label): the URL for <a id="dictURL"> is fetched from brand.properties -->
+<!ENTITY dict_info.label2
+'<a href="addons.thunderbird.net/seamonkey/">SeaMonkey and Thunderbird Add-ons</a> から多くの
+<a id="dictURL" href="">スペルチェック用の辞書</a> がダウンロードできます。'>
+<!ENTITY info.title		"詳細情報">
+<!--# LOCALIZATION NOTE (info_bugs.label): the URL for <a id="releaseNotesURL"> is fetched from brand.properties -->
+<!ENTITY info_bugs.label
+'<a href="https://developer.mozilla.org/docs/Mozilla/Projects/MailNews">私たち</a> はバグ報告や新機能の提案を歓迎しています。
+ただし、<a href="https://bugzilla.mozilla.org/query.cgi">Bugzilla</a> にバグを報告する前に <a id="releaseNotesURL" href="">リリースノート</a> を確認することを忘れないでください。'>

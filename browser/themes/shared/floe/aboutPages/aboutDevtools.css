@@ -1,0 +1,36 @@
+/* Additional styling for Floe theme for Waterfox Current
+/* Author: Stefano Rosselli
+*/
+
+/* :::::: ABOUT DEVTOOLS :::::: */
+
+@-moz-document  url("about:devtools") {
+	
+  .title {
+    color: var(--wfx-lt-primary-color) !important;
+  }
+  
+  .left-pane {
+    display: none;
+  }
+  
+  #email {
+    padding: 8px 8px 8px 14px !important;
+    border-radius: var(--wfx-large-radius) !important;
+    border-color: transparent !important;
+    background-color: var(--wfx-gray-50) !important;
+  }
+  
+  .feature-icon {
+    filter: hue-rotate(-20deg);
+  }
+  
+  #privacy {
+    background-color: transparent !important;
+  }
+  
+  footer {
+    display: none !important;
+  }
+
+}

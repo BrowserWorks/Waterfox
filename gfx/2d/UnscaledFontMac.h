@@ -22,9 +22,8 @@ namespace gfx {
 class UnscaledFontMac final : public UnscaledFont {
  public:
   MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(UnscaledFontMac, override)
-  explicit UnscaledFontMac(CGFontRef aFont, bool aIsDataFont = false,
-                           bool aNeedsCairo = false)
-      : mFont(aFont), mIsDataFont(aIsDataFont), mNeedsCairo(aNeedsCairo) {
+  explicit UnscaledFontMac(CGFontRef aFont, bool aIsDataFont = false)
+      : mFont(aFont), mIsDataFont(aIsDataFont) {
     CFRetain(mFont);
   }
   virtual ~UnscaledFontMac() { CFRelease(mFont); }
@@ -42,16 +41,23 @@ class UnscaledFontMac final : public UnscaledFont {
       uint32_t aInstanceDataLength, const FontVariation* aVariations,
       uint32_t aNumVariations) override;
 
+  already_AddRefed<ScaledFont> CreateScaledFontFromWRFont(
+      Float aGlyphSize, const wr::FontInstanceOptions* aOptions,
+      const wr::FontInstancePlatformOptions* aPlatformOptions,
+      const FontVariation* aVariations, uint32_t aNumVariations) override;
+
   static CGFontRef CreateCGFontWithVariations(CGFontRef aFont,
                                               uint32_t aVariationCount,
                                               const FontVariation* aVariations);
 
-  bool GetWRFontDescriptor(WRFontDescriptorOutput aCb, void* aBaton) override;
+  bool GetFontDescriptor(FontDescriptorOutput aCb, void* aBaton) override;
+
+  static already_AddRefed<UnscaledFont> CreateFromFontDescriptor(
+      const uint8_t* aData, uint32_t aDataLength, uint32_t aIndex);
 
  private:
   CGFontRef mFont;
   bool mIsDataFont;
-  bool mNeedsCairo;
 };
 
 }  // namespace gfx

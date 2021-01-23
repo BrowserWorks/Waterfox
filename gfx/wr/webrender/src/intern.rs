@@ -50,11 +50,48 @@ struct Epoch(u64);
 
 /// A list of updates to be applied to the data store,
 /// provided by the interning structure.
+#[cfg_attr(feature = "capture", derive(Serialize))]
+#[cfg_attr(feature = "replay", derive(Deserialize))]
+#[derive(MallocSizeOf)]
 pub struct UpdateList<S> {
-    /// The additions and removals to apply.
-    updates: Vec<Update>,
-    /// Actual new data to insert.
-    data: Vec<S>,
+    /// Items to insert.
+    pub insertions: Vec<Insertion<S>>,
+
+    /// Items to remove.
+    pub removals: Vec<Removal>,
+}
+
+#[cfg_attr(feature = "capture", derive(Serialize))]
+#[cfg_attr(feature = "replay", derive(Deserialize))]
+#[derive(MallocSizeOf)]
+pub struct Insertion<S> {
+    pub index: usize,
+    pub uid: ItemUid,
+    pub value: S,
+}
+
+#[cfg_attr(feature = "capture", derive(Serialize))]
+#[cfg_attr(feature = "replay", derive(Deserialize))]
+#[derive(MallocSizeOf)]
+pub struct Removal {
+    pub index: usize,
+    pub uid: ItemUid,
+}
+
+impl<S> UpdateList<S> {
+    fn new() -> UpdateList<S> {
+        UpdateList {
+            insertions: Vec::new(),
+            removals: Vec::new(),
+        }
+    }
+
+    fn take_and_preallocate(&mut self) -> UpdateList<S> {
+        UpdateList {
+            insertions: self.insertions.take_and_preallocate(),
+            removals: self.removals.take_and_preallocate(),
+        }
+    }
 }
 
 lazy_static! {
@@ -73,6 +110,11 @@ impl ItemUid {
     pub fn next_uid() -> ItemUid {
         let uid = NEXT_UID.fetch_add(1, Ordering::Relaxed);
         ItemUid { uid }
+    }
+
+    // Intended for debug usage only
+    pub fn get_uid(&self) -> usize {
+        self.uid
     }
 }
 
@@ -105,22 +147,6 @@ impl<I> Handle<I> {
     }
 }
 
-#[cfg_attr(feature = "capture", derive(Serialize))]
-#[cfg_attr(feature = "replay", derive(Deserialize))]
-#[derive(MallocSizeOf)]
-pub enum UpdateKind {
-    Insert,
-    Remove,
-}
-
-#[cfg_attr(feature = "capture", derive(Serialize))]
-#[cfg_attr(feature = "replay", derive(Deserialize))]
-#[derive(MallocSizeOf)]
-pub struct Update {
-    index: usize,
-    kind: UpdateKind,
-}
-
 pub trait InternDebug {
     fn on_interned(&self, _uid: ItemUid) {}
 }
@@ -150,25 +176,18 @@ impl<I: Internable> DataStore<I> {
         update_list: UpdateList<I::Key>,
         profile_counter: &mut ResourceProfileCounter,
     ) {
-        let mut data_iter = update_list.data.into_iter();
-        for update in update_list.updates {
-            match update.kind {
-                UpdateKind::Insert => {
-                    let value = data_iter.next().unwrap().into();
-                    self.items
-                        .entry(update.index)
-                        .set(Some(value));
-                }
-                UpdateKind::Remove => {
-                    self.items[update.index] = None;
-                }
-            }
+        for insertion in update_list.insertions {
+            self.items
+                .entry(insertion.index)
+                .set(Some(insertion.value.into()));
+        }
+
+        for removal in update_list.removals {
+            self.items[removal.index] = None;
         }
 
         let per_item_size = mem::size_of::<I::Key>() + mem::size_of::<I::StoreData>();
         profile_counter.set(self.items.len(), per_item_size * self.items.len());
-
-        debug_assert!(data_iter.next().is_none());
     }
 }
 
@@ -202,9 +221,7 @@ pub struct Interner<I: Internable> {
     /// List of free slots in the data store for re-use.
     free_list: Vec<usize>,
     /// Pending list of updates that need to be applied.
-    updates: Vec<Update>,
-    /// Pending new data to insert.
-    update_data: Vec<I::Key>,
+    update_list: UpdateList<I::Key>,
     /// The current epoch for the interner.
     current_epoch: Epoch,
     /// The information associated with each interned
@@ -217,8 +234,7 @@ impl<I: Internable> Default for Interner<I> {
         Interner {
             map: FastHashMap::default(),
             free_list: Vec::new(),
-            updates: Vec::new(),
-            update_data: Vec::new(),
+            update_list: UpdateList::new(),
             current_epoch: Epoch(1),
             local_data: Vec::new(),
         }
@@ -254,18 +270,20 @@ impl<I: Internable> Interner<I> {
             None => self.local_data.len(),
         };
 
+        let uid = ItemUid::next_uid();
+
         // Add a pending update to insert the new data.
-        self.updates.push(Update {
+        self.update_list.insertions.push(Insertion {
             index,
-            kind: UpdateKind::Insert,
+            uid,
+            value: data.clone(),
         });
-        self.update_data.alloc().init(data.clone());
 
         // Generate a handle for access via the data store.
         let handle = Handle {
             index: index as u32,
             epoch: self.current_epoch,
-            uid: ItemUid::next_uid(),
+            uid,
             _marker: PhantomData,
         };
 
@@ -287,8 +305,7 @@ impl<I: Internable> Interner<I> {
     /// that need to be applied to the data store. Also run
     /// a GC step that removes old entries.
     pub fn end_frame_and_get_pending_updates(&mut self) -> UpdateList<I::Key> {
-        let mut updates = self.updates.take_and_preallocate();
-        let data = self.update_data.take_and_preallocate();
+        let mut update_list = self.update_list.take_and_preallocate();
 
         let free_list = &mut self.free_list;
         let current_epoch = self.current_epoch.0;
@@ -304,27 +321,23 @@ impl<I: Internable> Interner<I> {
             if handle.epoch.0 + 10 < current_epoch {
                 // To expire an item:
                 //  - Add index to the free-list for re-use.
-                //  - Add an update to the data store to invalidate this slow.
+                //  - Add an update to the data store to invalidate this slot.
                 //  - Remove from the hash map.
                 free_list.push(handle.index as usize);
-                updates.push(Update {
+                update_list.removals.push(Removal {
                     index: handle.index as usize,
-                    kind: UpdateKind::Remove,
+                    uid: handle.uid,
                 });
                 return false;
             }
 
             true
         });
-        let updates = UpdateList {
-            updates,
-            data,
-        };
 
         // Begin the next epoch
         self.current_epoch = Epoch(self.current_epoch.0 + 1);
 
-        updates
+        update_list
     }
 }
 

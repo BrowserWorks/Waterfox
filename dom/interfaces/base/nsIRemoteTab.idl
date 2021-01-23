@@ -21,6 +21,13 @@ interface nsIRemoteTab : nsISupports
   attribute boolean docShellIsActive;
 
   /**
+   * Manages the flag of the remote docshell, which is used to determine if the
+   * media element in that remote docshell should be suspended when the docshell
+   * is inactive.
+   */
+  attribute boolean suspendMediaWhenInactive;
+
+  /**
    * When set to true, this tells the child to paint and upload layers to
    * the compositor. When set to false, previous layers are cleared from
    * the compositor, but only if preserveLayers is also set to false.
@@ -32,13 +39,6 @@ interface nsIRemoteTab : nsISupports
    * receiving them.
    */
   readonly attribute boolean hasLayers;
-
-  /**
-   * Sends a message to the child ensuring that they paint as early as
-   * possible. This will send the message to paint even if renderLayers
-   * is already true.
-   */
-  void forceRepaint();
 
   /**
    * Adjusts the tab's active state in the process priority manager,
@@ -57,22 +57,18 @@ interface nsIRemoteTab : nsISupports
 
   readonly attribute uint64_t tabId;
 
+  readonly attribute uint64_t contentProcessId;
+
   /**
    * The OS level process Id of the related child process.
    */
   readonly attribute int32_t osPid;
 
-  readonly attribute boolean hasContentOpener;
   /**
    * True if we've previously received layers for this tab when switching to
    * it.
    */
   readonly attribute boolean hasPresented;
-
-  /**
-   * Gets all of the WindowGlobalParent actors for this remote tab.
-   */
-  readonly attribute Array<WindowGlobalParent> windowGlobalParents;
 
   /**
    * Ensures that the content process which has this remote tab has all of the
@@ -87,14 +83,9 @@ interface nsIRemoteTab : nsISupports
   readonly attribute boolean hasBeforeUnload;
 
   /**
-   * The frame element which currently embeds this nsIRemoteTab object.
-   */
-  readonly attribute Element ownerElement;
-
-  /**
    * Notify APZ to start autoscrolling.
    * (aAnchorX, aAnchorY) are the coordinates of the autoscroll anchor,
-   * in CSS coordinates relative to the screen. aScrollId and 
+   * in CSS coordinates relative to the screen. aScrollId and
    * aPresShellId identify the scroll frame that content chose to scroll.
    * Returns whether we were successfully able to notify APZ.
    * If this function returns true, APZ (which may live in another process)
@@ -110,23 +101,6 @@ interface nsIRemoteTab : nsISupports
    * autoscrolled.
    */
   void stopApzAutoscroll(in nsViewID aScrollId, in uint32_t aPresShellId);
-
-  /**
-   * Save a recording of the associated content process' behavior to the
-   * specified filename. Returns whether the process is being recorded.
-   */
-  bool saveRecording(in AString aFileName);
-
-  /**
-   * Asynchronously retrieve a JSON string representing a log of the
-   * content blocking events happened so far in the current tab from the
-   * content process.
-   *
-   * This returns a Promise which resolves to a string on success, and is
-   * rejected on failure.  For documentation on the string format, please
-   * see nsISecureBrowserUI.contentBlockingLogJSON.
-   */
-  Promise getContentBlockingLog();
 
   cenum NavigationType : 8 {
     NAVIGATE_BACK = 0,
@@ -144,4 +118,9 @@ interface nsIRemoteTab : nsISupports
   void maybeCancelContentJSExecution(
       in nsIRemoteTab_NavigationType aNavigationType,
       [optional] in jsval aCancelContentJSOptions);
+
+  /**
+   * Notify the remote tab that the resolution has changed.
+   */
+  [noscript] void notifyResolutionChanged();
 };

@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountWindow.title           "Proprietăți cont">
+<!ENTITY accountWindow.width           "300">
+<!ENTITY account.general               "Generale">
+<!ENTITY account.advanced              "Opțiuni avansate">
+<!ENTITY account.name                  "Nume de utilizator:">
+<!ENTITY account.password              "Parola:">
+<!ENTITY account.alias                 "Alias:">
+<!ENTITY account.newMailNotification   "Anunță-mă la un nou e-mail">
+<!ENTITY account.autojoin              "Canale cu înregistrare automată:">
+<!ENTITY account.proxySettings.caption "Setări proxy:">
+<!ENTITY account.proxySettings.change.label     "Schimbă…">
+<!ENTITY account.proxySettings.change.accessKey "c">

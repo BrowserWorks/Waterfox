@@ -47,6 +47,14 @@ class TabsListBase {
       case "TabClose":
         this._tabClose(event.target);
         break;
+      case "TabMove":
+        this._moveTab(event.target);
+        break;
+      case "TabPinned":
+        if (!this.filterFn(event.target)) {
+          this._tabClose(event.target);
+        }
+        break;
       case "command":
         this._selectTab(event.target.tab);
         break;
@@ -96,11 +104,15 @@ class TabsListBase {
     this.listenersRegistered = true;
     this.gBrowser.tabContainer.addEventListener("TabAttrModified", this);
     this.gBrowser.tabContainer.addEventListener("TabClose", this);
+    this.gBrowser.tabContainer.addEventListener("TabMove", this);
+    this.gBrowser.tabContainer.addEventListener("TabPinned", this);
   }
 
   _cleanupListeners() {
     this.gBrowser.tabContainer.removeEventListener("TabAttrModified", this);
     this.gBrowser.tabContainer.removeEventListener("TabClose", this);
+    this.gBrowser.tabContainer.removeEventListener("TabMove", this);
+    this.gBrowser.tabContainer.removeEventListener("TabPinned", this);
     this.listenersRegistered = false;
   }
 
@@ -119,7 +131,17 @@ class TabsListBase {
     }
   }
 
+  _moveTab(tab) {
+    let item = this.tabToElement.get(tab);
+    if (item) {
+      this._removeItem(item, tab);
+      this._addTab(tab);
+    }
+  }
   _addTab(newTab) {
+    if (!this.filterFn(newTab)) {
+      return;
+    }
     let newRow = this._createRow(newTab);
     let nextTab = newTab.nextElementSibling;
 
@@ -127,16 +149,15 @@ class TabsListBase {
       nextTab = nextTab.nextElementSibling;
     }
 
-    if (nextTab) {
-      // If we found a tab after this one in the list, insert the new row before it.
-      let nextRow = this.tabToElement.get(nextTab);
+    // If we found a tab after this one in the list, insert the new row before it.
+    let nextRow = this.tabToElement.get(nextTab);
+    if (nextRow) {
       nextRow.parentNode.insertBefore(newRow, nextRow);
     } else {
       // If there's no next tab then insert it as usual.
       this._addElement(newRow);
     }
   }
-
   _tabClose(tab) {
     let item = this.tabToElement.get(tab);
     if (item) {
@@ -185,6 +206,7 @@ class TabsPanel extends TabsListBase {
           event.target.tab.toggleMuteAudio();
           break;
         }
+      // fall through
       default:
         super.handleEvent(event);
         break;
@@ -220,6 +242,7 @@ class TabsPanel extends TabsListBase {
     let { doc } = this;
     let row = doc.createXULElement("toolbaritem");
     row.setAttribute("class", "all-tabs-item");
+    row.setAttribute("context", "tabContextMenu");
     if (this.className) {
       row.classList.add(this.className);
     }
@@ -271,23 +294,14 @@ class TabsPanel extends TabsListBase {
     setAttributes(secondaryButton, {
       muted: tab.muted,
       soundplaying: tab.soundPlaying,
+      pictureinpicture: tab.pictureinpicture,
       hidden: !(tab.muted || tab.soundPlaying),
     });
   }
 
   _setImageAttributes(row, tab) {
     let button = row.firstElementChild;
-    let image =
-      this.doc.getAnonymousElementByAttribute(
-        button,
-        "class",
-        "toolbarbutton-icon"
-      ) ||
-      this.doc.getAnonymousElementByAttribute(
-        button,
-        "class",
-        "toolbarbutton-icon tab-throbber-tabslist"
-      );
+    let image = button.icon;
 
     if (image) {
       let busy = tab.getAttribute("busy");

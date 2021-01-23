@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "Taɣaṛa n tfelwit">
+<!ENTITY applyButton.label                "Snes">
+<!ENTITY applyButton.accesskey            "S">
+<!ENTITY closeButton.label                "Mdel">
+<!ENTITY tableTab.label                   "Tafelwit">
+<!ENTITY cellTab.label                    "Tibniqin">
+<!ENTITY tableRows.label                  "Izirigen:">
+<!ENTITY tableRows.accessKey              "z">
+<!ENTITY tableColumns.label               "Tigejda:">
+<!ENTITY tableColumns.accessKey           "g">
+<!ENTITY tableHeight.label                "Teɣzi:">
+<!ENTITY tableHeight.accessKey            "e">
+<!ENTITY tableWidth.label                 "Tehri:">
+<!ENTITY tableWidth.accessKey             "h">
+<!ENTITY tableBorderSpacing.label         "Timiwa d tallunin">
+<!ENTITY tableBorderWidth.label           "Tama:">
+<!ENTITY tableBorderWidth.accessKey       "m">
+<!ENTITY tableSpacing.label               "Tallunt:">
+<!ENTITY tableSpacing.accessKey           "l">
+<!ENTITY tablePadding.label               "Asiẓi">
+<!ENTITY tablePadding.accessKey           "ẓ">
+<!ENTITY tablePxBetwCells.label           "ipiksilen gar tebniqin">
+<!ENTITY tablePxBetwBrdrCellContent.label "ipiksilen gar tama n tebniqt d ugbur">
+<!ENTITY tableAlignment.label             "Areyecc n tfelwit">
+<!ENTITY tableAlignment.accessKey         "y">
+<!ENTITY tableCaption.label               "Taneffust:">
+<!ENTITY tableCaption.accessKey           "n">
+<!ENTITY tableCaptionAbove.label          "Nig n tfelwit">
+<!ENTITY tableCaptionBelow.label          "Daw n tfelwit">
+<!ENTITY tableCaptionLeft.label           "Ɣef uẓelmaḍ n tfelwit">
+<!ENTITY tableCaptionRight.label          "Ɣef uyeffus n tfelwit">
+<!ENTITY tableCaptionNone.label           "Ula Yiwen">
+<!ENTITY tableInheritColor.label           "(Eǧǧ ini n usebter ad d-iban degs)">
+
+<!ENTITY cellSelection.label              "Afran">
+<!ENTITY cellSelectCell.label             "Tabniqt">
+<!ENTITY cellSelectRow.label              "Izirig">
+<!ENTITY cellSelectColumn.label           "Tigejdit">
+<!ENTITY cellSelectNext.label             "Ɣeṛ zdat">
+<!ENTITY cellSelectNext.accessKey         "z">
+<!ENTITY cellSelectPrevious.label         "Ɣeṛ deffir">
+<!ENTITY cellSelectPrevious.accessKey     "d">
+<!ENTITY applyBeforeChange.label          "Isnifal n tira ad ttwasenses send asnifel n tefrant.">
+<!ENTITY cellContentAlignment.label       "Areyyec n ugbur">
+<!ENTITY cellHorizontal.label             "Aglawan:">
+<!ENTITY cellHorizontal.accessKey         "l">
+<!ENTITY cellVertical.label               "Ubdid:">
+<!ENTITY cellVertical.accessKey           "b">
+<!ENTITY cellStyle.label                  "Aɣanib n tebniqt:">
+<!ENTITY cellStyle.accessKey              "b">
+<!ENTITY cellNormal.label                 "Amagnu">
+<!ENTITY cellHeader.label                 "Aqaṛṛu">
+<!ENTITY cellTextWrap.label               "Tuɣalin ɣer izirig:">
+<!ENTITY cellTextWrap.accessKey           "T">
+<!ENTITY cellWrap.label                   "Uɣal ɣer udur">
+<!ENTITY cellNoWrap.label                 "Ur ttuɣal ara ɣer udur">
+<!ENTITY cellAlignTop.label               "Afella">
+<!ENTITY cellAlignMiddle.label            "Alemmas">
+<!ENTITY cellAlignBottom.label            "Adda">
+<!ENTITY cellAlignJustify.label           "Jbed">
+<!ENTITY cellInheritColor.label           "(Eǧǧ ini n tfelwit ad d-iban degs)">
+<!ENTITY cellUseCheckboxHelp.label        "Seqdec tinakiwin n ṛṛcem aken ad tafeḍ anta timeẓliyin ara yettwasensen ɣef tebniqin yettwafernen">
+<!-- Used in both Table and Cell panels  -->
+
+<!ENTITY size.label                       "Teɣzi">
+<!ENTITY pixels.label                     "ipiksilen">
+<!ENTITY backgroundColor.label            "Ini n ugilal:">
+<!ENTITY backgroundColor.accessKey        "g">
+<!ENTITY AlignLeft.label                  "Aẓelmaḍ">
+<!ENTITY AlignCenter.label                "Talemmast">
+<!ENTITY AlignRight.label                 "Ayeffus">

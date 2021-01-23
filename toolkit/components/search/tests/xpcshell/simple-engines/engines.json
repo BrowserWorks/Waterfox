@@ -1,0 +1,23 @@
+{
+  "data": [
+    {
+      "webExtension": {
+        "id":"basic@search.waterfox.net"
+      },
+      "telemetryId": "telemetry",
+      "appliesTo": [{
+        "included": { "everywhere": true },
+        "default": "yes"
+      }]
+    },
+    {
+      "webExtension": {
+        "id":"simple@search.waterfox.net"
+      },
+      "appliesTo": [{
+        "included": { "everywhere": true },
+        "default": "yes"
+      }]
+    }
+  ]
+}

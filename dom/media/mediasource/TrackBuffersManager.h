@@ -12,15 +12,16 @@
 #include "mozilla/Mutex.h"
 #include "mozilla/NotNull.h"
 #include "mozilla/TaskQueue.h"
+#include "mozilla/dom/MediaDebugInfoBinding.h"
 
 #include "MediaContainerType.h"
 #include "MediaData.h"
 #include "MediaDataDemuxer.h"
 #include "MediaResult.h"
 #include "MediaSourceDecoder.h"
+#include "MediaSpan.h"
 #include "SourceBufferTask.h"
 #include "TimeUnits.h"
-#include "nsAutoPtr.h"
 #include "nsTArray.h"
 
 namespace mozilla {
@@ -34,7 +35,7 @@ class SourceBufferResource;
 
 class SourceBufferTaskQueue {
  public:
-  SourceBufferTaskQueue() {}
+  SourceBufferTaskQueue() = default;
 
   ~SourceBufferTaskQueue() {
     MOZ_ASSERT(mQueue.IsEmpty(), "All tasks must have been processed");
@@ -61,7 +62,7 @@ class SourceBufferTaskQueue {
 
 DDLoggedTypeDeclName(TrackBuffersManager);
 
-class TrackBuffersManager
+class TrackBuffersManager final
     : public DecoderDoctorLifeLogger<TrackBuffersManager> {
  public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(TrackBuffersManager);
@@ -165,13 +166,12 @@ class TrackBuffersManager
                                            const media::TimeUnit& aFuzz);
 
   void AddSizeOfResources(MediaSourceDecoder::ResourceSizes* aSizes) const;
+  void GetDebugInfo(dom::TrackBuffersManagerDebugInfo& aInfo);
 
  private:
   typedef MozPromise<bool, MediaResult, /* IsExclusive = */ true>
       CodedFrameProcessingPromise;
 
-  // for MediaSourceDemuxer::GetMozDebugReaderData
-  friend class MediaSourceDemuxer;
   ~TrackBuffersManager();
   // All following functions run on the taskqueue.
   RefPtr<AppendPromise> DoAppendData(already_AddRefed<MediaByteBuffer> aData,
@@ -203,7 +203,7 @@ class TrackBuffersManager
 
   // The input buffer as per
   // http://w3c.github.io/media-source/index.html#sourcebuffer-input-buffer
-  RefPtr<MediaByteBuffer> mInputBuffer;
+  Maybe<MediaSpan> mInputBuffer;
   // Buffer full flag as per
   // https://w3c.github.io/media-source/#sourcebuffer-buffer-full-flag. Accessed
   // on both the main thread and the task queue.
@@ -221,16 +221,17 @@ class TrackBuffersManager
   // Recreate the ContainerParser and if aReuseInitData is true then
   // feed it with the previous init segment found.
   void RecreateParser(bool aReuseInitData);
-  nsAutoPtr<ContainerParser> mParser;
+  UniquePtr<ContainerParser> mParser;
 
   // Demuxer objects and methods.
-  void AppendDataToCurrentInputBuffer(MediaByteBuffer* aData);
+  void AppendDataToCurrentInputBuffer(const MediaSpan& aData);
+
   RefPtr<MediaByteBuffer> mInitData;
   // Temporary input buffer to handle partial media segment header.
   // We store the current input buffer content into it should we need to
   // reinitialize the demuxer once we have some samples and a discontinuity is
   // detected.
-  RefPtr<MediaByteBuffer> mPendingInputBuffer;
+  Maybe<MediaSpan> mPendingInputBuffer;
   RefPtr<SourceBufferResource> mCurrentInputBuffer;
   RefPtr<MediaDataDemuxer> mInputDemuxer;
   // Length already processed in current media segment.

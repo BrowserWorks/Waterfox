@@ -103,7 +103,6 @@ async function promiseTagsFolderId() {
 const MATCH_ANYWHERE_UNMODIFIED =
   Ci.mozIPlacesAutoComplete.MATCH_ANYWHERE_UNMODIFIED;
 const BEHAVIOR_BOOKMARK = Ci.mozIPlacesAutoComplete.BEHAVIOR_BOOKMARK;
-const SQLITE_MAX_VARIABLE_NUMBER = 999;
 
 var Bookmarks = Object.freeze({
   /**
@@ -339,7 +338,9 @@ var Bookmarks = Object.freeze({
       // If it's a tag, notify OnItemChanged to all bookmarks for this URL.
       if (isTagging) {
         let observers = PlacesUtils.bookmarks.getObservers();
-        for (let entry of await fetchBookmarksByURL(item, true)) {
+        for (let entry of await fetchBookmarksByURL(item, {
+          concurrent: true,
+        })) {
           notify(observers, "onItemChanged", [
             entry._id,
             "tags",
@@ -913,7 +914,7 @@ var Bookmarks = Object.freeze({
             if (isTagging) {
               for (let entry of await fetchBookmarksByTags(
                 { tags: [updatedItem.title] },
-                true
+                { concurrent: true }
               )) {
                 notify(observers, "onItemChanged", [
                   entry._id,
@@ -1038,7 +1039,7 @@ var Bookmarks = Object.freeze({
 
           for (let guid of guids) {
             // Ensure the item exists.
-            let existingItem = await fetchBookmark({ guid }, false, db);
+            let existingItem = await fetchBookmark({ guid }, { db });
             if (!existingItem) {
               throw new Error("No bookmarks found for the provided GUID");
             }
@@ -1083,8 +1084,7 @@ var Bookmarks = Object.freeze({
 
           let newParent = await fetchBookmark(
             { guid: targetParentGuid },
-            false,
-            db
+            { db }
           );
 
           if (newParent._grandParentId == PlacesUtils.tagsFolderId) {
@@ -1272,7 +1272,9 @@ var Bookmarks = Object.freeze({
     return (async function() {
       let removeItems = [];
       for (let info of removeInfos) {
-        let item = await fetchBookmark(info);
+        // We must be able to remove a bookmark even if it has an invalid url.
+        // In that case the item won't have a url property.
+        let item = await fetchBookmark(info, { ignoreInvalidURLs: true });
         if (!item) {
           throw new Error("No bookmarks found for the provided GUID.");
         }
@@ -1285,28 +1287,28 @@ var Bookmarks = Object.freeze({
       // Notify onItemRemoved to listeners.
       for (let item of removeItems) {
         let observers = PlacesUtils.bookmarks.getObservers();
-        let uri = item.hasOwnProperty("url")
-          ? PlacesUtils.toURI(item.url)
-          : null;
         let isUntagging = item._grandParentId == PlacesUtils.tagsFolderId;
-        notify(
-          observers,
-          "onItemRemoved",
-          [
-            item._id,
-            item._parentId,
-            item.index,
-            item.type,
-            uri,
-            item.guid,
-            item.parentGuid,
-            options.source,
-          ],
-          { isTagging: isUntagging }
-        );
-
+        let url = "";
+        if (item.type == Bookmarks.TYPE_BOOKMARK) {
+          url = item.hasOwnProperty("url") ? item.url.href : null;
+        }
+        let notification = new PlacesBookmarkRemoved({
+          id: item._id,
+          url,
+          itemType: item.type,
+          parentId: item._parentId,
+          index: item.index,
+          guid: item.guid,
+          parentGuid: item.parentGuid,
+          source: options.source,
+          isTagging: isUntagging,
+          isDescendantRemoval: false,
+        });
+        PlacesObservers.notifyListeners([notification]);
         if (isUntagging) {
-          for (let entry of await fetchBookmarksByURL(item, true)) {
+          for (let entry of await fetchBookmarksByURL(item, {
+            concurrent: true,
+          })) {
             notify(observers, "onItemChanged", [
               entry._id,
               "tags",
@@ -1458,9 +1460,6 @@ var Bookmarks = Object.freeze({
    *       may be overwritten.
    */
   fetch(guidOrInfo, onResult = null, options = {}) {
-    if (!("concurrent" in options)) {
-      options.concurrent = false;
-    }
     if (onResult && typeof onResult != "function") {
       throw new Error("onResult callback must be a valid function");
     }
@@ -1495,6 +1494,12 @@ var Bookmarks = Object.freeze({
       }
     }
 
+    // Create a new options object with just the support properties, because
+    // we may augment it and hand it down to other methods.
+    options = {
+      concurrent: !!options.concurrent,
+    };
+
     let behavior = {};
     if (info.hasOwnProperty("parentGuid") || info.hasOwnProperty("index")) {
       behavior = {
@@ -1519,30 +1524,18 @@ var Bookmarks = Object.freeze({
     return (async function() {
       let results;
       if (fetchInfo.hasOwnProperty("url")) {
-        results = await fetchBookmarksByURL(
-          fetchInfo,
-          options && options.concurrent
-        );
+        results = await fetchBookmarksByURL(fetchInfo, options);
       } else if (fetchInfo.hasOwnProperty("guid")) {
-        results = await fetchBookmark(fetchInfo, options && options.concurrent);
+        results = await fetchBookmark(fetchInfo, options);
       } else if (
         fetchInfo.hasOwnProperty("parentGuid") &&
         fetchInfo.hasOwnProperty("index")
       ) {
-        results = await fetchBookmarkByPosition(
-          fetchInfo,
-          options && options.concurrent
-        );
+        results = await fetchBookmarkByPosition(fetchInfo, options);
       } else if (fetchInfo.hasOwnProperty("guidPrefix")) {
-        results = await fetchBookmarksByGUIDPrefix(
-          fetchInfo,
-          options && options.concurrent
-        );
+        results = await fetchBookmarksByGUIDPrefix(fetchInfo, options);
       } else if (fetchInfo.hasOwnProperty("tags")) {
-        results = await fetchBookmarksByTags(
-          fetchInfo,
-          options && options.concurrent
-        );
+        results = await fetchBookmarksByTags(fetchInfo, options);
       }
 
       if (!results) {
@@ -1828,7 +1821,6 @@ function notify(observers, notification, args = [], information = {}) {
 
     if (
       information.isDescendantRemoval &&
-      observer.skipDescendantsOnItemRemoval &&
       !PlacesUtils.bookmarks.userContentRoots.includes(information.parentGuid)
     ) {
       continue;
@@ -1869,7 +1861,7 @@ async function updateBookmark(
   if (info.hasOwnProperty("title")) {
     tuples.set("title", {
       value: info.title,
-      fragment: `title = NULLIF(:title, "")`,
+      fragment: `title = NULLIF(:title, '')`,
     });
   }
   if (info.hasOwnProperty("dateAdded")) {
@@ -2117,7 +2109,7 @@ function insertBookmark(item, parent) {
                                     dateAdded, lastModified, guid,
                                     syncChangeCounter, syncStatus)
          VALUES (CASE WHEN :url ISNULL THEN NULL ELSE (SELECT id FROM moz_places WHERE url_hash = hash(:url) AND url = :url) END,
-                 :type, :parent, :index, NULLIF(:title, ""), :date_added,
+                 :type, :parent, :index, NULLIF(:title, ''), :date_added,
                  :last_modified, :guid, :syncChangeCounter, :syncStatus)
         `,
           {
@@ -2215,19 +2207,16 @@ function insertBookmarkTree(items, source, parent, urls, lastAddedForParent) {
          VALUES (CASE WHEN :url ISNULL THEN NULL ELSE (SELECT id FROM moz_places WHERE url_hash = hash(:url) AND url = :url) END, :type,
          (SELECT id FROM moz_bookmarks WHERE guid = :parentGuid),
          IFNULL(:index, (SELECT count(*) FROM moz_bookmarks WHERE parent = :rootId)),
-         NULLIF(:title, ""), :date_added, :last_modified, :guid,
+         NULLIF(:title, ''), :date_added, :last_modified, :guid,
          :syncChangeCounter, :syncStatus)`,
           items
         );
 
         // Remove stale tombstones for new items.
-        for (let chunk of chunkArray(items, SQLITE_MAX_VARIABLE_NUMBER)) {
+        for (let chunk of PlacesUtils.chunkArray(items, db.variableLimit)) {
           await db.executeCached(
-            `DELETE FROM moz_bookmarks_deleted WHERE guid IN (${new Array(
-              chunk.length
-            )
-              .fill("?")
-              .join(",")})`,
+            `DELETE FROM moz_bookmarks_deleted
+             WHERE guid IN (${sqlBindPlaceholders(chunk)})`,
             chunk.map(item => item.guid)
           );
         }
@@ -2340,9 +2329,9 @@ async function queryBookmarks(info) {
       // are required to be in the result by the converting function
       // hence setting them to NULL
       let rows = await db.executeCached(
-        `SELECT b.guid, IFNULL(p.guid, "") AS parentGuid, b.position AS 'index',
+        `SELECT b.guid, IFNULL(p.guid, '') AS parentGuid, b.position AS 'index',
                 b.dateAdded, b.lastModified, b.type,
-                IFNULL(b.title, "") AS title, h.url AS url, b.parent, p.parent,
+                IFNULL(b.title, '') AS title, h.url AS url, b.parent, p.parent,
                 NULL AS _id,
                 NULL AS _childCount,
                 NULL AS _grandParentId,
@@ -2361,13 +2350,25 @@ async function queryBookmarks(info) {
   );
 }
 
-// Fetch implementation.
-
-async function fetchBookmark(info, concurrent, db) {
+/**
+ * Internal fetch implementation.
+ * @param {object} info
+ *        The bookmark item to remove.
+ * @param {object} options
+ *        An options object supporting the following properties:
+ * @param {object} [options.concurrent]
+ *        Whether to use the concurrent read-only connection.
+ * @param {object} [options.db]
+ *        A specific connection to be used.
+ * @param {object} [options.ignoreInvalidURLs]
+ *        Whether invalid URLs should be ignored or throw an exception.
+ *
+ */
+async function fetchBookmark(info, options = {}) {
   let query = async function(db) {
     let rows = await db.executeCached(
-      `SELECT b.guid, IFNULL(p.guid, "") AS parentGuid, b.position AS 'index',
-              b.dateAdded, b.lastModified, b.type, IFNULL(b.title, "") AS title,
+      `SELECT b.guid, IFNULL(p.guid, '') AS parentGuid, b.position AS 'index',
+              b.dateAdded, b.lastModified, b.type, IFNULL(b.title, '') AS title,
               h.url AS url, b.id AS _id, b.parent AS _parentId,
               (SELECT count(*) FROM moz_bookmarks WHERE parent = b.id) AS _childCount,
               p.parent AS _grandParentId, b.syncStatus AS _syncStatus
@@ -2379,14 +2380,16 @@ async function fetchBookmark(info, concurrent, db) {
       { guid: info.guid }
     );
 
-    return rows.length ? rowsToItemsArray(rows)[0] : null;
+    return rows.length
+      ? rowsToItemsArray(rows, !!options.ignoreInvalidURLs)[0]
+      : null;
   };
-  if (concurrent) {
+  if (options.concurrent) {
     let db = await PlacesUtils.promiseDBConnection();
     return query(db);
   }
-  if (db) {
-    return query(db);
+  if (options.db) {
+    return query(options.db);
   }
   return PlacesUtils.withConnectionWrapper(
     "Bookmarks.jsm: fetchBookmark",
@@ -2394,12 +2397,12 @@ async function fetchBookmark(info, concurrent, db) {
   );
 }
 
-async function fetchBookmarkByPosition(info, concurrent) {
+async function fetchBookmarkByPosition(info, options = {}) {
   let query = async function(db) {
     let index = info.index == Bookmarks.DEFAULT_INDEX ? null : info.index;
     let rows = await db.executeCached(
-      `SELECT b.guid, IFNULL(p.guid, "") AS parentGuid, b.position AS 'index',
-              b.dateAdded, b.lastModified, b.type, IFNULL(b.title, "") AS title,
+      `SELECT b.guid, IFNULL(p.guid, '') AS parentGuid, b.position AS 'index',
+              b.dateAdded, b.lastModified, b.type, IFNULL(b.title, '') AS title,
               h.url AS url, b.id AS _id, b.parent AS _parentId,
               (SELECT count(*) FROM moz_bookmarks WHERE parent = b.id) AS _childCount,
               p.parent AS _grandParentId, b.syncStatus AS _syncStatus
@@ -2416,7 +2419,7 @@ async function fetchBookmarkByPosition(info, concurrent) {
 
     return rows.length ? rowsToItemsArray(rows)[0] : null;
   };
-  if (concurrent) {
+  if (options.concurrent) {
     let db = await PlacesUtils.promiseDBConnection();
     return query(db);
   }
@@ -2426,11 +2429,11 @@ async function fetchBookmarkByPosition(info, concurrent) {
   );
 }
 
-async function fetchBookmarksByTags(info, concurrent) {
+async function fetchBookmarksByTags(info, options = {}) {
   let query = async function(db) {
     let rows = await db.executeCached(
-      `SELECT b.guid, IFNULL(p.guid, "") AS parentGuid, b.position AS 'index',
-              b.dateAdded, b.lastModified, b.type, IFNULL(b.title, "") AS title,
+      `SELECT b.guid, IFNULL(p.guid, '') AS parentGuid, b.position AS 'index',
+              b.dateAdded, b.lastModified, b.type, IFNULL(b.title, '') AS title,
               h.url AS url, b.id AS _id, b.parent AS _parentId,
               NULL AS _childCount,
               p.parent AS _grandParentId, b.syncStatus AS _syncStatus
@@ -2458,7 +2461,7 @@ async function fetchBookmarksByTags(info, concurrent) {
     return rows.length ? rowsToItemsArray(rows) : null;
   };
 
-  if (concurrent) {
+  if (options.concurrent) {
     let db = await PlacesUtils.promiseDBConnection();
     return query(db);
   }
@@ -2468,11 +2471,11 @@ async function fetchBookmarksByTags(info, concurrent) {
   );
 }
 
-async function fetchBookmarksByGUIDPrefix(info, concurrent) {
+async function fetchBookmarksByGUIDPrefix(info, options = {}) {
   let query = async function(db) {
     let rows = await db.executeCached(
-      `SELECT b.guid, IFNULL(p.guid, "") AS parentGuid, b.position AS 'index',
-              b.dateAdded, b.lastModified, b.type, IFNULL(b.title, "") AS title,
+      `SELECT b.guid, IFNULL(p.guid, '') AS parentGuid, b.position AS 'index',
+              b.dateAdded, b.lastModified, b.type, IFNULL(b.title, '') AS title,
               h.url AS url, b.id AS _id, b.parent AS _parentId,
               NULL AS _childCount,
               p.parent AS _grandParentId, b.syncStatus AS _syncStatus
@@ -2488,7 +2491,7 @@ async function fetchBookmarksByGUIDPrefix(info, concurrent) {
     return rows.length ? rowsToItemsArray(rows) : null;
   };
 
-  if (concurrent) {
+  if (options.concurrent) {
     let db = await PlacesUtils.promiseDBConnection();
     return query(db);
   }
@@ -2498,13 +2501,13 @@ async function fetchBookmarksByGUIDPrefix(info, concurrent) {
   );
 }
 
-async function fetchBookmarksByURL(info, concurrent) {
+async function fetchBookmarksByURL(info, options = {}) {
   let query = async function(db) {
     let tagsFolderId = await promiseTagsFolderId();
     let rows = await db.executeCached(
       `/* do not warn (bug no): not worth to add an index */
-      SELECT b.guid, IFNULL(p.guid, "") AS parentGuid, b.position AS 'index',
-              b.dateAdded, b.lastModified, b.type, IFNULL(b.title, "") AS title,
+      SELECT b.guid, IFNULL(p.guid, '') AS parentGuid, b.position AS 'index',
+              b.dateAdded, b.lastModified, b.type, IFNULL(b.title, '') AS title,
               h.url AS url, b.id AS _id, b.parent AS _parentId,
               NULL AS _childCount, /* Unused for now */
               p.parent AS _grandParentId, b.syncStatus AS _syncStatus
@@ -2521,7 +2524,7 @@ async function fetchBookmarksByURL(info, concurrent) {
     return rows.length ? rowsToItemsArray(rows) : null;
   };
 
-  if (concurrent) {
+  if (options.concurrent) {
     let db = await PlacesUtils.promiseDBConnection();
     return query(db);
   }
@@ -2537,9 +2540,9 @@ function fetchRecentBookmarks(numberOfItems) {
     async function(db) {
       let tagsFolderId = await promiseTagsFolderId();
       let rows = await db.executeCached(
-        `SELECT b.guid, IFNULL(p.guid, "") AS parentGuid, b.position AS 'index',
+        `SELECT b.guid, IFNULL(p.guid, '') AS parentGuid, b.position AS 'index',
                 b.dateAdded, b.lastModified, b.type,
-                IFNULL(b.title, "") AS title, h.url AS url, NULL AS _id,
+                IFNULL(b.title, '') AS title, h.url AS url, NULL AS _id,
                 NULL AS _parentId, NULL AS _childCount, NULL AS _grandParentId,
                 NULL AS _syncStatus
         FROM moz_bookmarks b
@@ -2566,8 +2569,8 @@ function fetchRecentBookmarks(numberOfItems) {
 
 async function fetchBookmarksByParent(db, info) {
   let rows = await db.executeCached(
-    `SELECT b.guid, IFNULL(p.guid, "") AS parentGuid, b.position AS 'index',
-            b.dateAdded, b.lastModified, b.type, IFNULL(b.title, "") AS title,
+    `SELECT b.guid, IFNULL(p.guid, '') AS parentGuid, b.position AS 'index',
+            b.dateAdded, b.lastModified, b.type, IFNULL(b.title, '') AS title,
             h.url AS url, b.id AS _id, b.parent AS _parentId,
             (SELECT count(*) FROM moz_bookmarks WHERE parent = b.id) AS _childCount,
             p.parent AS _grandParentId, b.syncStatus AS _syncStatus
@@ -2592,13 +2595,14 @@ function removeBookmarks(items, options) {
       let urls = [];
 
       await db.executeTransaction(async function transaction() {
-        let parentGuids = new Set();
+        // We use a map for its de-duplication properties.
+        let parents = new Map();
         let syncChangeDelta = PlacesSyncUtils.bookmarks.determineSyncChangeDelta(
           options.source
         );
 
         for (let item of items) {
-          parentGuids.add(item.parentGuid);
+          parents.set(item.parentGuid, item._parentId);
 
           // If it's a folder, remove its contents first.
           if (item.type == Bookmarks.TYPE_FOLDER) {
@@ -2614,7 +2618,7 @@ function removeBookmarks(items, options) {
           }
         }
 
-        for (let chunk of chunkArray(items, SQLITE_MAX_VARIABLE_NUMBER)) {
+        for (let chunk of PlacesUtils.chunkArray(items, db.variableLimit)) {
           // We don't go through the annotations service for this cause otherwise
           // we'd get a pointless onItemChanged notification and it would also
           // set lastModified to an unexpected value.
@@ -2622,22 +2626,50 @@ function removeBookmarks(items, options) {
 
           // Remove the bookmarks.
           await db.executeCached(
-            `DELETE FROM moz_bookmarks WHERE guid IN (${new Array(chunk.length)
-              .fill("?")
-              .join(",")})`,
+            `DELETE FROM moz_bookmarks
+             WHERE guid IN (${sqlBindPlaceholders(chunk)})`,
             chunk.map(item => item.guid)
           );
         }
 
-        for (let item of items) {
-          // Fix indices in the parent.
+        for (let [parentGuid, parentId] of parents.entries()) {
+          // Now recalculate the positions.
           await db.executeCached(
-            `UPDATE moz_bookmarks SET position = position - 1 WHERE
-           parent = :parentId AND position > :index
-          `,
-            { parentId: item._parentId, index: item.index }
+            `WITH positions(id, pos, seq) AS (
+            SELECT id, position AS pos,
+                   (row_number() OVER (ORDER BY position)) - 1 AS seq
+            FROM moz_bookmarks
+            WHERE parent = :parentId
+          )
+          UPDATE moz_bookmarks
+            SET position = (SELECT seq FROM positions WHERE positions.id = moz_bookmarks.id)
+            WHERE id IN (SELECT id FROM positions WHERE seq <> pos)
+        `,
+            { parentId }
           );
 
+          // Mark this parent as changed.
+          await setAncestorsLastModified(
+            db,
+            parentGuid,
+            new Date(),
+            syncChangeDelta
+          );
+        }
+
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          // For the notifications, we may need to adjust indexes if there are more
+          // than one of the same item in the folder. This makes sure that we notify
+          // the index of the item when it was removed, rather than the original index.
+          for (let j = i + 1; j < items.length; j++) {
+            if (
+              items[j]._parentId == item._parentId &&
+              items[j].index > item.index
+            ) {
+              items[j].index--;
+            }
+          }
           if (item._grandParentId == PlacesUtils.tagsFolderId) {
             // If we're removing a tag entry, increment the change counter for all
             // bookmarks with the tagged URL.
@@ -2654,11 +2686,6 @@ function removeBookmarks(items, options) {
             item.index,
             syncChangeDelta
           );
-        }
-
-        for (let guid of parentGuids) {
-          // Mark all affected parents as changed.
-          await setAncestorsLastModified(db, guid, new Date(), syncChangeDelta);
         }
 
         // Write tombstones for the removed items.
@@ -2899,11 +2926,14 @@ function removeSameValueProperties(dest, src) {
 /**
  * Convert an array of mozIStorageRow objects to an array of bookmark objects.
  *
- * @param rows
+ * @param {Array} rows
  *        the array of mozIStorageRow objects.
+ * @param {Boolean} ignoreInvalidURLs
+ *        whether to ignore invalid urls (leaving the url property undefined)
+ *        or throw.
  * @return an array of bookmark objects.
  */
-function rowsToItemsArray(rows) {
+function rowsToItemsArray(rows, ignoreInvalidURLs = false) {
   return rows.map(row => {
     let item = {};
     for (let prop of ["guid", "index", "type", "title"]) {
@@ -2921,7 +2951,13 @@ function rowsToItemsArray(rows) {
     }
     let url = row.getResultByName("url");
     if (url) {
-      item.url = new URL(url);
+      try {
+        item.url = new URL(url);
+      } catch (ex) {
+        if (!ignoreInvalidURLs) {
+          throw ex;
+        }
+      }
     }
 
     for (let prop of [
@@ -2970,8 +3006,7 @@ function validateBookmarkObject(name, input, behavior) {
  *        notification instead of sending one notification for every URL.
  */
 var updateFrecency = async function(db, urls, collapseNotifications = false) {
-  let urlQuery = 'hash("' + urls.map(url => url.href).join('"), hash("') + '")';
-
+  let hrefs = urls.map(url => url.href);
   let frecencyClause = "CALCULATE_FRECENCY(id)";
   if (!collapseNotifications) {
     frecencyClause =
@@ -2980,13 +3015,15 @@ var updateFrecency = async function(db, urls, collapseNotifications = false) {
       ", url, guid, hidden, last_visit_date)";
   }
   // We just use the hashes, since updating a few additional urls won't hurt.
-  await db.execute(
-    `UPDATE moz_places
-     SET hidden = (url_hash BETWEEN hash("place", "prefix_lo") AND hash("place", "prefix_hi")),
-         frecency = ${frecencyClause}
-     WHERE url_hash IN ( ${urlQuery} )
-    `
-  );
+  for (let chunk of PlacesUtils.chunkArray(hrefs, db.variableLimit)) {
+    await db.execute(
+      `UPDATE moz_places
+       SET hidden = (url_hash BETWEEN hash("place", "prefix_lo") AND hash("place", "prefix_hi")),
+           frecency = ${frecencyClause}
+       WHERE url_hash IN (${sqlBindPlaceholders(chunk, "hash(", ")")})`,
+      chunk
+    );
+  }
 
   // Trigger frecency updates for all affected origins.
   await db.executeCached(`DELETE FROM moz_updateoriginsupdate_temp`);
@@ -3031,9 +3068,11 @@ var removeOrphanAnnotations = async function(db) {
  */
 var removeAnnotationsForItems = async function(db, items) {
   // Remove the annotations.
-  let ids = sqlList(items.map(item => item._id));
+  let itemIds = items.map(item => item._id);
   await db.executeCached(
-    `DELETE FROM moz_items_annos WHERE item_id IN (${ids})`
+    `DELETE FROM moz_items_annos
+     WHERE item_id IN (${sqlBindPlaceholders(itemIds)})`,
+    itemIds
   );
   await db.executeCached(
     `DELETE FROM moz_anno_attributes
@@ -3126,7 +3165,7 @@ var removeFoldersContents = async function(db, folderGuids, options) {
        )
        SELECT b.id AS _id, b.parent AS _parentId, b.position AS 'index',
               b.type, url, b.guid, p.guid AS parentGuid, b.dateAdded,
-              b.lastModified, IFNULL(b.title, "") AS title,
+              b.lastModified, IFNULL(b.title, '') AS title,
               p.parent AS _grandParentId, NULL AS _childCount,
               b.syncStatus AS _syncStatus
        FROM descendants
@@ -3138,7 +3177,7 @@ var removeFoldersContents = async function(db, folderGuids, options) {
       { folderGuid }
     );
 
-    itemsRemoved = itemsRemoved.concat(rowsToItemsArray(rows));
+    itemsRemoved = itemsRemoved.concat(rowsToItemsArray(rows, true));
 
     await db.executeCached(
       `WITH RECURSIVE
@@ -3175,30 +3214,28 @@ var removeFoldersContents = async function(db, folderGuids, options) {
   // Notify listeners in reverse order to serve children before parents.
   let { source = Bookmarks.SOURCES.DEFAULT } = options;
   let observers = PlacesUtils.bookmarks.getObservers();
+  let notification = [];
   for (let item of itemsRemoved.reverse()) {
-    let uri = item.hasOwnProperty("url") ? PlacesUtils.toURI(item.url) : null;
-    notify(
-      observers,
-      "onItemRemoved",
-      [
-        item._id,
-        item._parentId,
-        item.index,
-        item.type,
-        uri,
-        item.guid,
-        item.parentGuid,
-        source,
-      ],
-      // Notify observers that this item is being
-      // removed as a descendent.
-      {
-        isDescendantRemoval: true,
-        parentGuid: item.parentGuid,
-      }
-    );
-
     let isUntagging = item._grandParentId == PlacesUtils.tagsFolderId;
+    let url = "";
+    if (item.type == Bookmarks.TYPE_BOOKMARK) {
+      url = item.hasOwnProperty("url") ? item.url.href : null;
+    }
+    notification = new PlacesBookmarkRemoved({
+      id: item._id,
+      url,
+      parentId: item._parentId,
+      index: item.index,
+      itemType: item.type,
+      guid: item.guid,
+      parentGuid: item.parentGuid,
+      source,
+      isTagging: isUntagging,
+      isDescendantRemoval: !PlacesUtils.bookmarks.userContentRoots.includes(
+        item.parentGuid
+      ),
+    });
+    PlacesObservers.notifyListeners([notification]);
     if (isUntagging) {
       for (let entry of await fetchBookmarksByURL(item, true)) {
         notify(observers, "onItemChanged", [
@@ -3345,21 +3382,14 @@ function adjustSeparatorsSyncCounter(
   );
 }
 
-function* chunkArray(array, chunkLength) {
-  if (array.length <= chunkLength) {
-    yield array;
-    return;
-  }
-  let startIndex = 0;
-  while (startIndex < array.length) {
-    yield array.slice(startIndex, (startIndex += chunkLength));
-  }
-}
-
 /**
- * Convert a list of strings or numbers to its SQL
- * representation as a string.
+ * Generates a list of "?" SQL bindings based on input array length.
+ * @param {array} values an array of values.
+ * @param {string} [prefix] a string to prefix to the placeholder.
+ * @param {string} [suffix] a string to suffix to the placeholder.
+ * @returns {string} placeholders is a string made of question marks and commas,
+ *          one per value.
  */
-function sqlList(list) {
-  return list.map(JSON.stringify).join();
+function sqlBindPlaceholders(values, prefix = "", suffix = "") {
+  return new Array(values.length).fill(prefix + "?" + suffix).join(",");
 }

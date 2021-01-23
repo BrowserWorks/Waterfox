@@ -1,4 +1,4 @@
-// |reftest| skip-if(!this.hasOwnProperty('Atomics')||!this.hasOwnProperty('BigInt')) -- Atomics,BigInt is not enabled unconditionally
+// |reftest| skip-if(!this.hasOwnProperty('Atomics')) -- Atomics is not enabled unconditionally
 // Copyright (C) 2018 Rick Waldron. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 /*---
@@ -15,4 +15,5 @@ testWithBigIntTypedArrayConstructors(function(TA) {
     Atomics.exchange(new TA(buffer), 0n, 0n);
   }, '`Atomics.exchange(new TA(buffer), 0n, 0n)` throws TypeError');
 });
+
 reportCompare(0, 0);

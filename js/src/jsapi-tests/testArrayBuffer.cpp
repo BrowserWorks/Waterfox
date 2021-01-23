@@ -5,7 +5,9 @@
 #include "jsfriendapi.h"
 
 #include "builtin/TestingFunctions.h"
+#include "js/Array.h"        // JS::NewArrayObject
 #include "js/ArrayBuffer.h"  // JS::{GetArrayBuffer{ByteLength,Data},IsArrayBufferObject,NewArrayBuffer{,WithContents},StealArrayBufferContents}
+#include "js/Exception.h"
 #include "js/MemoryFunctions.h"
 #include "jsapi-tests/tests.h"
 
@@ -260,10 +262,10 @@ BEGIN_TEST(testArrayBuffer_serializeExternal) {
 
   JS::RootedValue v(cx, JS::ObjectValue(*externalBuffer));
   JS::RootedObject transferMap(cx,
-                               JS_NewArrayObject(cx, JS::HandleValueArray(v)));
+                               JS::NewArrayObject(cx, JS::HandleValueArray(v)));
   CHECK(transferMap);
 
-  JS::AutoValueArray<2> args(cx);
+  JS::RootedValueArray<2> args(cx);
   args[0].setObject(*externalBuffer);
   args[1].setObject(*transferMap);
 
@@ -272,12 +274,11 @@ BEGIN_TEST(testArrayBuffer_serializeExternal) {
   CHECK(!JS::Call(cx, JS::UndefinedHandleValue, serializeValue,
                   JS::HandleValueArray(args), &v));
 
-  JS::RootedValue exn(cx);
-  CHECK(JS_GetPendingException(cx, &exn));
-  JS_ClearPendingException(cx);
+  JS::ExceptionStack exnStack(cx);
+  CHECK(JS::StealPendingExceptionStack(cx, &exnStack));
 
-  js::ErrorReport report(cx);
-  CHECK(report.init(cx, exn, js::ErrorReport::NoSideEffects));
+  JS::ErrorReportBuilder report(cx);
+  CHECK(report.init(cx, exnStack, JS::ErrorReportBuilder::NoSideEffects));
 
   CHECK_EQUAL(report.report()->errorNumber,
               static_cast<unsigned int>(JSMSG_SC_NOT_TRANSFERABLE));

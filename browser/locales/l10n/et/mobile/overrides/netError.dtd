@@ -1,0 +1,216 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Probleem lehe laadimisel">
+<!ENTITY retry.label "Proovi uuesti">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Viga ühendumisel">
+<!ENTITY connectionFailure.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY deniedPortAccess.title "See aadress on keelatud">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Serverit ei leitud">
+<!-- LOCALIZATION NOTE (dnsNotFound.longDesc4) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside tags should be localized.  Do not change the ids. -->
+<!ENTITY dnsNotFound.longDesc4 "
+<ul>
+  <li>Kontrolli, kas aadressis pole sisestusvigu, näiteks
+    <strong>www</strong>.eesti.ee asemel hoopis
+    <strong>ww</strong>.eesti.ee.</li>
+    <div id='searchbox'>
+      <input id='searchtext' type='search'></input>
+      <button id='searchbutton'>Otsi</button>
+    </div>
+  <li>Kui sa ei saa avada ühtegi lehte, siis kontrolli oma seadme andmeside või Wi-Fi ühendust.
+    <button id='wifi'>Luba Wi-Fi</button>
+</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.title "Faili ei leitud">
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>Kontrolli faili nimes olevaid suurtähti või muid sisestusvigu.</li>
+  <li>Kontrolli, kas faili pole mujale liigutatud, ümber nimetatud või kustutatud.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.title "Ligipääs failile keelati">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>Fail võib olla kustutatud, mujale liigutatud või on sellele seatud ligipääsu piiravad õigused.</li>
+</ul>
+">
+
+<!ENTITY generic.title "Ups.">
+<!ENTITY generic.longDesc "
+<p>&brandShortName;il pole mingil põhjusel selle lehe laadimine võimalik.</p>
+">
+
+<!ENTITY malformedURI.title "Aadress pole korrektne">
+<!-- LOCALIZATION NOTE (malformedURI.longDesc2) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY malformedURI.longDesc2 "
+<ul>
+  <li>Veebiaadressid on tavaliselt kirjutatud kujul
+    <strong>http://www.eesti.ee/</strong></li>
+    <div id='searchbox'>
+      <input id='searchtext' type='search'></input>
+      <button id='searchbutton'>Otsi</button>
+    </div>
+  <li>Kontrolli üle, et kasutad ikka õigetpidi kaldkriipse (näiteks
+    <strong>/</strong>).</li>
+</ul>
+">
+
+<!ENTITY netInterrupt.title "Ühendus katkes">
+<!ENTITY netInterrupt.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY notCached.title "Dokument aegus">
+<!ENTITY notCached.longDesc "<p>Nõutud dokument pole brauseri vahemälus saadaval.</p><ul><li>Turvalisuse ettevaatusabinõuna ei laadi brauser tundliku infoga dokumente automaatselt uuesti.</li><li>Klõpsa Proovi uuesti, et hankida dokumendi sisu veebilehelt uuesti.</li></ul>">
+
+<!ENTITY netOffline.title "Võrguta režiim">
+
+<!ENTITY contentEncodingError.title "Sisu kodeeringu viga">
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>Palun võta ühendust veebilehe omanikuga, et informeerida teda antud probleemist.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.title "Ohtlik faili tüüp">
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>Palun võta ühendust veebilehe omanikuga, et informeerida teda antud probleemist.</li>
+</ul>
+">
+
+<!ENTITY netReset.title "Ühendus katkestati">
+<!ENTITY netReset.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY netTimeout.title "Ühendus aegus">
+<!ENTITY netTimeout.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY unknownProtocolFound.title "Aadress jäi arusaamatuks">
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Selle aadressi avamiseks peaksid võib-olla paigaldama lisatarkvara.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.title "Puhverserver keeldub ühendustest">
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>Kontrolli puhverserveri sätteid, et teha kindlaks, kas need on õiged.</li>
+  <li>Võta ühendust oma võrguadministraatoriga, et teha kindlaks, kas puhverserver
+    töötab korralikult.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.title "Ei leitud puhverserverit">
+<!-- LOCALIZATION NOTE (proxyResolveFailure.longDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY proxyResolveFailure.longDesc3 "
+<ul>
+  <li>Kontrolli puhverserveri sätteid, et teha kindlaks, kas need on õiged.</li>
+  <li>Tee kindlaks, kas sinu seadme andmeside või Wi-Fi ühendus töötab korrektselt.
+    <button id='wifi'>Luba Wi-Fi</button>
+  </li>
+</ul>
+">
+
+<!ENTITY redirectLoop.title "Veebileht pole korralikult ümber suunatud">
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Probleemi võib mõnikord põhjustada küpsistest keeldumine või nende üldine
+    keelamine.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.title "Ootamatu vastus serverilt">
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>Kontrolli, et sinu süsteemi on paigaldatud personaalne turvalisuse
+    haldur.</li>
+  <li>See võib olla põhjustatud ebastandardsest serveri konfiguratsioonist.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.title "Turvalise ühenduse viga">
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>Soovitud veebilehte pole võimalik näidata, kuna saadud andmete autentsust polnud võimalik kontrollida.</li>
+  <li>Palun võta veebilehe omanikuga ühendust ja teavita teda probleemist.</li>
+</ul>
+">
+
+<!ENTITY nssBadCert.title "Turvalise ühenduse viga">
+<!ENTITY nssBadCert.longDesc2 "
+<ul>
+  <li>Tegemist võib olla serveri seadistuste probleemiga või siis üritab keegi antud
+serverina välja paista.</li>
+  <li>Kui sa oled varem selle serveriga edukalt ühendunud, siis võib olla tegemist ajutise veaga
+ja sa võid hiljem uuesti proovida.</li>
+</ul>
+">
+
+<!-- LOCALIZATION NOTE (sharedLongDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY sharedLongDesc3 "
+<ul>
+  <li>Veebileht võib olla ajutiselt kättesaamatu või liialt hõivatud. Proovi mõne aja pärast uuesti.</li>
+  <li>Kui sa ei saa avada ühtegi lehte, siis kontrolli oma seadme andmeside või Wi-Fi ühendust.
+    <button id='wifi'>Luba Wi-Fi</button>
+  </li>
+</ul>
+">
+
+<!ENTITY cspBlocked.title "Blokitud sisu kaitsva turvareegliga">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; keeldus lehe laadimisest sellisel moel, sest lehe sisu kaitsvate turvareeglite kohaselt on see keelatud.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Vigane sisu">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Andmete edastamisel esinenud vea tõttu pole soovitud lehte võimalik kuvada.</p><ul><li>Palun võta ühendust veebilehe omanikega, et teavitada neid sellest probleemist.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Või võid ka lisada erandi...">
+<!ENTITY securityOverride.getMeOutOfHereButton "Aita mind siit välja!">
+<!ENTITY securityOverride.exceptionButtonLabel "Lisa erand...">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <xul:button> tags.  The only language content is the label= field,
+which uses strings already defined above. The button is included here (instead of
+netError.xhtml) because it exposes functionality specific to firefox. -->
+
+<!ENTITY securityOverride.warningContent "
+<p>Erandit ei tohiks lisada, kui kasutad internetiühendust, mida sa täielikult ei usalda, või kui sa pole harjunud nägema hoiatusi selle serveri kohta.</p>
+
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button>
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>
+">
+
+<!ENTITY remoteXUL.title "Remote XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Palun võta ühendust veebilehe omanikega, et teavitada neid sellest probleemist.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Turvaline ühendumine pole võimalik">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc "Täpsem teave: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY weakCryptoUsed.title "Ühendus pole turvaline">
+<!-- LOCALIZATION NOTE (weakCryptoUsed.longDesc) - Do not translate
+     "SSL_ERROR_NO_CYPHER_OVERLAP". -->
+<!ENTITY weakCryptoUsed.longDesc "Täpsem teave: SSL_ERROR_NO_CYPHER_OVERLAP">
+
+<!ENTITY inadequateSecurityError.title "Ühendus pole turvaline">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> kasutab turvalisuse tehnoloogiaid, mis on aegunud ja avatud rünnakutele. Ründaja võib suurema vaevata pääseda ligi teabele, mis sinu arvates on kaitstud. Saidi külastamiseks peab saidi administraator selle serveri kõigepealt ära parandama.</p><p>Veakood: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY networkProtocolError.title "Võrguprotokolli viga">
+<!ENTITY networkProtocolError.longDesc "<p>Veebilehte, mida üritad vaadata, pole võimalik kuvada, kuna võrguprotokollis tuvastati viga.</p><ul><li>Palun võta ühendust saidi omanikuga, et teavitada teda sellest probleemist.</li></ul>">

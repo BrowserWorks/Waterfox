@@ -7,6 +7,7 @@
 #include "jit/mips64/Assembler-mips64.h"
 
 #include "mozilla/DebugOnly.h"
+#include "mozilla/Maybe.h"
 
 using mozilla::DebugOnly;
 
@@ -21,7 +22,8 @@ ABIArg ABIArgGenerator::next(MIRType type) {
     case MIRType::Int32:
     case MIRType::Int64:
     case MIRType::Pointer:
-    case MIRType::RefOrNull: {
+    case MIRType::RefOrNull:
+    case MIRType::StackResults: {
       Register destReg;
       if (GetIntArgReg(usedArgSlots_, &destReg)) {
         current_ = ABIArg(destReg);
@@ -74,23 +76,9 @@ uint32_t js::jit::SA(FloatRegister r) {
   return r.id() << SAShift;
 }
 
-// Used to patch jumps created by MacroAssemblerMIPS64Compat::jumpWithPatch.
-void jit::PatchJump(CodeLocationJump& jump_, CodeLocationLabel label) {
-  Instruction* inst = (Instruction*)jump_.raw();
-
-  Assembler::UpdateLoad64Value(inst, (uint64_t)label.raw());
-
-  // Six instructions used in load 64-bit imm.
-  AutoFlushICache::flush(uintptr_t(inst), 6 * sizeof(uint32_t));
-}
-
-void Assembler::executableCopy(uint8_t* buffer, bool flushICache) {
+void Assembler::executableCopy(uint8_t* buffer) {
   MOZ_ASSERT(isFinished);
   m_buffer.executableCopy(buffer);
-
-  if (flushICache) {
-    AutoFlushICache::setRange(uintptr_t(buffer), m_buffer.size());
-  }
 }
 
 uintptr_t Assembler::GetPointer(uint8_t* instPtr) {
@@ -112,36 +100,45 @@ void Assembler::TraceJumpRelocations(JSTracer* trc, JitCode* code,
   }
 }
 
-static void TraceOneDataRelocation(JSTracer* trc, Instruction* inst) {
+static void TraceOneDataRelocation(JSTracer* trc,
+                                   mozilla::Maybe<AutoWritableJitCode>& awjc,
+                                   JitCode* code, Instruction* inst) {
   void* ptr = (void*)Assembler::ExtractLoad64Value(inst);
   void* prior = ptr;
 
-  // All pointers on MIPS64 will have the top bits cleared. If those bits
-  // are not cleared, this must be a Value.
+  // Data relocations can be for Values or for raw pointers. If a Value is
+  // zero-tagged, we can trace it as if it were a raw pointer. If a Value
+  // is not zero-tagged, we have to interpret it as a Value to ensure that the
+  // tag bits are masked off to recover the actual pointer.
   uintptr_t word = reinterpret_cast<uintptr_t>(ptr);
   if (word >> JSVAL_TAG_SHIFT) {
+    // This relocation is a Value with a non-zero tag.
     Value v = Value::fromRawBits(word);
-    TraceManuallyBarrieredEdge(trc, &v, "ion-masm-value");
+    TraceManuallyBarrieredEdge(trc, &v, "jit-masm-value");
     ptr = (void*)v.bitsAsPunboxPointer();
   } else {
+    // This relocation is a raw pointer or a Value with a zero tag.
     // No barrier needed since these are constants.
     TraceManuallyBarrieredGenericPointerEdge(
-        trc, reinterpret_cast<gc::Cell**>(&ptr), "ion-masm-ptr");
+        trc, reinterpret_cast<gc::Cell**>(&ptr), "jit-masm-ptr");
   }
 
   if (ptr != prior) {
+    if (awjc.isNothing()) {
+      awjc.emplace(code);
+    }
     Assembler::UpdateLoad64Value(inst, uint64_t(ptr));
-    AutoFlushICache::flush(uintptr_t(inst), 6 * sizeof(uint32_t));
   }
 }
 
 /* static */
 void Assembler::TraceDataRelocations(JSTracer* trc, JitCode* code,
                                      CompactBufferReader& reader) {
+  mozilla::Maybe<AutoWritableJitCode> awjc;
   while (reader.more()) {
     size_t offset = reader.readUnsigned();
     Instruction* inst = (Instruction*)(code->raw() + offset);
-    TraceOneDataRelocation(trc, inst);
+    TraceOneDataRelocation(trc, awjc, code, inst);
   }
 }
 
@@ -210,7 +207,12 @@ void Assembler::bind(InstImm* inst, uintptr_t branch, uintptr_t target) {
     addLongJump(BufferOffset(branch), BufferOffset(target));
     Assembler::WriteLoad64Instructions(inst, ScratchRegister,
                                        LabelBase::INVALID_OFFSET);
+#ifdef MIPSR6
+    inst[4] =
+        InstReg(op_special, ScratchRegister, zero, zero, ff_jalr).encode();
+#else
     inst[4] = InstReg(op_special, ScratchRegister, zero, zero, ff_jr).encode();
+#endif
     // There is 1 nop after this.
   } else {
     // Handle long conditional jump.
@@ -219,78 +221,14 @@ void Assembler::bind(InstImm* inst, uintptr_t branch, uintptr_t target) {
     addLongJump(BufferOffset(branch + sizeof(uint32_t)), BufferOffset(target));
     Assembler::WriteLoad64Instructions(&inst[1], ScratchRegister,
                                        LabelBase::INVALID_OFFSET);
+#ifdef MIPSR6
+    inst[5] =
+        InstReg(op_special, ScratchRegister, zero, zero, ff_jalr).encode();
+#else
     inst[5] = InstReg(op_special, ScratchRegister, zero, zero, ff_jr).encode();
+#endif
     // There is 1 nop after this.
   }
-}
-
-void Assembler::bind(RepatchLabel* label) {
-  BufferOffset dest = nextOffset();
-  if (label->used() && !oom()) {
-    // If the label has a use, then change this use to refer to
-    // the bound label;
-    BufferOffset b(label->offset());
-    InstImm* inst = (InstImm*)editSrc(b);
-    InstImm inst_beq = InstImm(op_beq, zero, zero, BOffImm16(0));
-    uint64_t offset = dest.getOffset() - label->offset();
-
-    // If first instruction is lui, then this is a long jump.
-    // If second instruction is lui, then this is a loop backedge.
-    if (inst[0].extractOpcode() == (uint32_t(op_lui) >> OpcodeShift)) {
-      // For unconditional long branches generated by ma_liPatchable,
-      // such as under:
-      //     jumpWithpatch
-      addLongJump(BufferOffset(label->offset()), dest);
-    } else if (inst[1].extractOpcode() == (uint32_t(op_lui) >> OpcodeShift) ||
-               BOffImm16::IsInRange(offset)) {
-      // Handle code produced by:
-      //     backedgeJump
-      //     branchWithCode
-      MOZ_ASSERT(BOffImm16::IsInRange(offset));
-      MOZ_ASSERT(
-          inst[0].extractOpcode() == (uint32_t(op_beq) >> OpcodeShift) ||
-          inst[0].extractOpcode() == (uint32_t(op_bne) >> OpcodeShift) ||
-          inst[0].extractOpcode() == (uint32_t(op_blez) >> OpcodeShift) ||
-          inst[0].extractOpcode() == (uint32_t(op_bgtz) >> OpcodeShift) ||
-          (inst[0].extractOpcode() == (uint32_t(op_regimm) >> OpcodeShift) &&
-           inst[0].extractRT() == (uint32_t(rt_bltz) >> RTShift)));
-      inst[0].setBOffImm16(BOffImm16(offset));
-    } else if (inst[0].encode() == inst_beq.encode()) {
-      // Handle open long unconditional jumps created by
-      // MacroAssemblerMIPSShared::ma_b(..., wasm::Trap, ...).
-      // We need to add it to long jumps array here.
-      // See MacroAssemblerMIPS64::branchWithCode().
-      MOZ_ASSERT(inst[1].encode() == NopInst);
-      MOZ_ASSERT(inst[2].encode() == NopInst);
-      MOZ_ASSERT(inst[3].encode() == NopInst);
-      MOZ_ASSERT(inst[4].encode() == NopInst);
-      MOZ_ASSERT(inst[5].encode() == NopInst);
-      addLongJump(BufferOffset(label->offset()), dest);
-      Assembler::WriteLoad64Instructions(inst, ScratchRegister,
-                                         LabelBase::INVALID_OFFSET);
-      inst[4] =
-          InstReg(op_special, ScratchRegister, zero, zero, ff_jr).encode();
-    } else {
-      // Handle open long conditional jumps created by
-      // MacroAssemblerMIPSShared::ma_b(..., wasm::Trap, ...).
-      inst[0] = invertBranch(inst[0], BOffImm16(7 * sizeof(uint32_t)));
-      // No need for a "nop" here because we can clobber scratch.
-      // We need to add it to long jumps array here.
-      // See MacroAssemblerMIPS64::branchWithCode().
-      MOZ_ASSERT(inst[1].encode() == NopInst);
-      MOZ_ASSERT(inst[2].encode() == NopInst);
-      MOZ_ASSERT(inst[3].encode() == NopInst);
-      MOZ_ASSERT(inst[4].encode() == NopInst);
-      MOZ_ASSERT(inst[5].encode() == NopInst);
-      MOZ_ASSERT(inst[6].encode() == NopInst);
-      addLongJump(BufferOffset(label->offset() + sizeof(uint32_t)), dest);
-      Assembler::WriteLoad64Instructions(&inst[1], ScratchRegister,
-                                         LabelBase::INVALID_OFFSET);
-      inst[5] =
-          InstReg(op_special, ScratchRegister, zero, zero, ff_jr).encode();
-    }
-  }
-  label->bind(dest.getOffset());
 }
 
 void Assembler::processCodeLabels(uint8_t* rawCode) {
@@ -317,9 +255,6 @@ void Assembler::PatchWrite_NearCall(CodeLocationLabel start,
   Assembler::WriteLoad64Instructions(inst, ScratchRegister, (uint64_t)dest);
   inst[4] = InstReg(op_special, ScratchRegister, zero, ra, ff_jalr);
   inst[5] = InstNOP();
-
-  // Ensure everyone sees the code that was just written into memory.
-  AutoFlushICache::flush(uintptr_t(inst), PatchWrite_NearCallSize());
 }
 
 uint64_t Assembler::ExtractLoad64Value(Instruction* inst0) {
@@ -405,8 +340,6 @@ void Assembler::PatchDataWithValueCheck(CodeLocationLabel label,
 
   // Replace with new value
   Assembler::UpdateLoad64Value(inst, uint64_t(newValue.value));
-
-  AutoFlushICache::flush(uintptr_t(inst), 6 * sizeof(uint32_t));
 }
 
 uint64_t Assembler::ExtractInstructionImmediate(uint8_t* code) {
@@ -433,6 +366,4 @@ void Assembler::ToggleCall(CodeLocationLabel inst_, bool enabled) {
     InstNOP nop;
     *i4 = nop;
   }
-
-  AutoFlushICache::flush(uintptr_t(i4), sizeof(uint32_t));
 }

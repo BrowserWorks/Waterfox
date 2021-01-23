@@ -9,15 +9,11 @@ var EXPORTED_SYMBOLS = ["MainProcessTarget"];
 const { Target } = ChromeUtils.import(
   "chrome://remote/content/targets/Target.jsm"
 );
-const { Session } = ChromeUtils.import(
-  "chrome://remote/content/sessions/Session.jsm"
+const { MainProcessSession } = ChromeUtils.import(
+  "chrome://remote/content/sessions/MainProcessSession.jsm"
 );
 const { RemoteAgent } = ChromeUtils.import(
   "chrome://remote/content/RemoteAgent.jsm"
-);
-
-const UUIDGen = Cc["@mozilla.org/uuid-generator;1"].getService(
-  Ci.nsIUUIDGenerator
 );
 
 /**
@@ -31,12 +27,9 @@ class MainProcessTarget extends Target {
    * @param Targets targets
    */
   constructor(targets) {
-    super(targets, Session);
+    super(targets, MainProcessSession);
 
-    this.type = "main-process";
-    this.id = UUIDGen.generateUUID()
-      .toString()
-      .slice(1, -1);
+    this.type = "browser";
 
     // Define the HTTP path to query this target
     this.path = `/devtools/browser/${this.id}`;

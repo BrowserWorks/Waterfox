@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY spellAddToDictionary.label "Adaugă în dicționar">
+<!ENTITY spellAddToDictionary.accesskey "u">
+<!ENTITY spellUndoAddToDictionary.label "Anulează adăugarea la dicționar">
+<!ENTITY spellUndoAddToDictionary.accesskey "n">
+<!ENTITY spellCheckToggle.label "Verifică ortografia">
+<!ENTITY spellCheckToggle.accesskey "g">
+<!ENTITY spellNoSuggestions.label "(nicio sugestie de ortografie)">
+<!ENTITY spellDictionaries.label "Limbi">
+<!ENTITY spellDictionaries.accesskey "L">
+
+<!ENTITY searchTextBox.clear.label "Curăță">
+
+<!ENTITY fillLoginMenu.label          "Completează autentificarea">
+<!ENTITY fillLoginMenu.accesskey      "f">
+<!ENTITY fillPasswordMenu.label       "Completează parola">
+<!ENTITY fillPasswordMenu.accesskey   "r">
+<!ENTITY fillUsernameMenu.label       "Completează utilizatorul">
+<!ENTITY fillUsernameMenu.accesskey   "r">
+<!ENTITY noLoginSuggestions.label     "(nicio sugestie de autentificare)">
+<!ENTITY viewSavedLogins.label        "Vezi datele de autentificare salvate">

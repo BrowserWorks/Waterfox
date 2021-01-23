@@ -1,0 +1,114 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "Кімге">
+<!ENTITY fromField4.label "Кімнен">
+<!ENTITY senderField4.label "Жiберушi">
+<!ENTITY author.label "Авторы">
+<!ENTITY organizationField4.label "Ұйым">
+<!ENTITY replyToField4.label "Кімге жауап беру">
+
+<!ENTITY subjectField4.label "Тақырыбы">
+<!ENTITY ccField4.label "Көшірме">
+<!ENTITY bccField4.label "Жасырын көшірме">
+<!ENTITY newsgroupsField4.label "Жаңалықтар топтары">
+<!ENTITY followupToField4.label "Жаңалықтар тобына жауап жазу">
+<!ENTITY tagsHdr4.label "Тегтер">
+<!ENTITY dateField4.label "Күні">
+<!ENTITY userAgentField4.label "Пайдаланушы агенті">
+<!ENTITY referencesField4.label "Сiлтемелер">
+<!ENTITY messageIdField4.label "Идентификатор">
+<!ENTITY inReplyToField4.label "Келесіге жауап ретінде">
+<!ENTITY originalWebsite4.label "Веб сайты">
+
+<!ENTITY hdrArchiveButton1.label "Архивтеу">
+<!ENTITY hdrArchiveButton1.tooltip "Бұл хабарламаны архивтеу">
+<!ENTITY hdrSmartReplyButton1.label "Ақылды жауап беру">
+<!ENTITY hdrReplyButton1.label "Жауап беру">
+<!ENTITY hdrReplyButton2.tooltip "Бұл хабарламаның жіберушісіне жауап беру">
+<!ENTITY hdrReplyAllButton1.label "Барлығына жауап беру">
+<!ENTITY hdrReplyAllButton1.tooltip "Жіберуші және барлық алушыларға жауап беру">
+<!ENTITY hdrReplyListButton1.label "Тізімге жауап беру">
+<!ENTITY hdrReplyListButton1.tooltip "Эл. поштаны тарату тізіміне жауап беру">
+<!ENTITY hdrFollowupButton1.label "Жаңалықтар тобына жауап жазу">
+<!ENTITY hdrFollowupButton1.tooltip "Жаңалықтар тобына жауап жазу">
+<!ENTITY hdrForwardButton1.label "Қайта бағдарлау">
+<!ENTITY hdrForwardButton1.tooltip "Бұл хабарламаны қайта бағдарлау">
+<!ENTITY hdrJunkButton1.label "Спам">
+<!ENTITY hdrJunkButton1.tooltip "Бұл хабарламаны қоқыс ретінде белгілеу">
+<!ENTITY hdrTrashButton1.label "Өшіру">
+<!ENTITY hdrTrashButton1.tooltip "Бұл хабарламаны өшіру">
+
+<!ENTITY hdrViewToolbarShowFull.label "Таңбашалар және мәтінді көрсету">
+<!ENTITY hdrViewToolbarShowFull.accesskey "н">
+<!ENTITY hdrViewToolbarShowIcons.label "Тек таңбашаларды көрсету">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "т">
+<!ENTITY hdrViewToolbarShowText.label "Тек мәтінді көрсету">
+<!ENTITY hdrViewToolbarShowText.accesskey "т">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "Жіберушіге жауап беруді әрқашан көрсету">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "у">
+
+<!ENTITY otherActionsButton2.label "Көбірек">
+<!ENTITY otherActionsButton.tooltip "Көбірек әрекеттер">
+<!ENTITY otherActionsOpenConversation1.label "Сөйлесуде ашу">
+<!ENTITY otherActionsOpenConversation1.accesskey "С">
+<!ENTITY otherActionsOpenInNewWindow1.label "Жаңа терезеде ашу">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "р">
+<!ENTITY otherActionsOpenInNewTab1.label "Жаңа бетте ашу">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "т">
+<!ENTITY markAsReadMenuItem1.label "Оқылған ретінде белгілеу">
+<!ENTITY markAsReadMenuItem1.accesskey "ы">
+<!ENTITY markAsUnreadMenuItem1.label "Оқылмаған ретінде белгілеу">
+<!ENTITY markAsUnreadMenuItem1.accesskey "м">
+<!ENTITY saveAsMenuItem1.label "Қалайша сақтау…">
+<!ENTITY saveAsMenuItem1.accesskey "с">
+<!ENTITY viewSourceMenuItem1.label "Бастапқы кодын қарау">
+<!ENTITY viewSourceMenuItem1.accesskey "а">
+<!ENTITY otherActionsPrint1.label "Баспаға шығару…">
+<!ENTITY otherActionsPrint1.accesskey "п">
+
+<!-- Attachment bar context menu items -->
+<!ENTITY startExpandedCmd.label    "Басынан бастап салыным панелін көрсету">
+<!ENTITY startExpandedCmd.accesskey    "с">
+
+<!-- Attachment context menu items -->
+<!ENTITY openAttachmentCmd.label    "Ашу">
+<!ENTITY openAttachmentCmd.accesskey    "А">
+<!ENTITY saveAsAttachmentCmd.label    "Қалайша сақтау…">
+<!ENTITY saveAsAttachmentCmd.accesskey    "с">
+<!ENTITY detachAttachmentCmd.label    "Бөліп жіберу…">
+<!ENTITY detachAttachmentCmd.accesskey    "Б">
+<!ENTITY deleteAttachmentCmd.label    "Өшіру">
+<!ENTITY deleteAttachmentCmd.accesskey    "ш">
+<!ENTITY openAllAttachmentsCmd.label    "Барлығын ашу…">
+<!ENTITY openAllAttachmentsCmd.accesskey    "ш">
+<!ENTITY saveAllAttachmentsCmd.label    "Барлығын сақтау…">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "с">
+<!ENTITY detachAllAttachmentsCmd.label    "Барлығын бөліп жіберу…">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "Б">
+<!ENTITY deleteAllAttachmentsCmd.label    "Барлығын өшіру…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "ш">
+
+<!ENTITY openAttachment.tooltip "Тіркелген файлды ашу">
+
+<!ENTITY detachedAttachmentFolder.show.label        "Орналасқан бумасын ашу">
+<!ENTITY detachedAttachmentFolder.show.accesskey    "б">
+<!ENTITY detachedAttachmentFolder.showMac.label     "Finder ішінен көрсету">
+<!ENTITY detachedAttachmentFolder.showMac.accesskey "к">
+
+<!-- Attachment toolbar items -->
+<!ENTITY saveAttachmentButton1.label       "Сақтау">
+<!ENTITY saveAttachmentButton1.tooltip     "Тіркелген файлды сақтау">
+<!ENTITY saveAllAttachmentsButton1.label   "Барлығын сақтау">
+<!ENTITY saveAllAttachmentsButton1.tooltip "Барлық тіркелген файлдарды сақтау">
+
+<!ENTITY copyLinkCmd.label        "Сілтемені көшіріп алу">
+<!ENTITY copyLinkCmd.accesskey    "С">
+
+<!ENTITY CopyMessageId.label "Message-ID көшіріп алу">
+<!ENTITY CopyMessageId.accesskey "к">
+<!ENTITY OpenMessageForMsgId.label "ID үшін хабарламаны ашу">
+<!ENTITY OpenMessageForMsgId.accesskey "ш">
+<!ENTITY OpenBrowserWithMsgId.label "Message-ID бар браузерді ашу">
+<!ENTITY OpenBrowserWithMsgId.accesskey "б">

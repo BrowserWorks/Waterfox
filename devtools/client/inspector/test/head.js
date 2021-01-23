@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -49,25 +48,6 @@ registerCleanupFunction(function() {
   );
 });
 
-var navigateTo = async function(inspector, url) {
-  const markuploaded = inspector.once("markuploaded");
-  const onNewRoot = inspector.once("new-root");
-  const onUpdated = inspector.once("inspector-updated");
-
-  info("Navigating to: " + url);
-  const target = inspector.toolbox.target;
-  await target.navigateTo({ url });
-
-  info("Waiting for markup view to load after navigation.");
-  await markuploaded;
-
-  info("Waiting for new root.");
-  await onNewRoot;
-
-  info("Waiting for inspector to update after new-root event.");
-  await onUpdated;
-};
-
 /**
  * Start the element picker and focus the content window.
  * @param {Toolbox} toolbox
@@ -76,14 +56,24 @@ var navigateTo = async function(inspector, url) {
 var startPicker = async function(toolbox, skipFocus) {
   info("Start the element picker");
   toolbox.win.focus();
-  await toolbox.inspector.nodePicker.start();
+  await toolbox.nodePicker.start();
   if (!skipFocus) {
     // By default make sure the content window is focused since the picker may not focus
     // the content window by default.
-    await ContentTask.spawn(gBrowser.selectedBrowser, null, async function() {
+    await SpecialPowers.spawn(gBrowser.selectedBrowser, [], async function() {
       content.focus();
     });
   }
+};
+
+/**
+ * Start the eye dropper tool.
+ * @param {Toolbox} toolbox
+ */
+var startEyeDropper = async function(toolbox) {
+  info("Start the eye dropper tool");
+  toolbox.win.focus();
+  await toolbox.getPanel("inspector").showEyeDropper();
 };
 
 /**
@@ -129,7 +119,7 @@ function pickElement(inspector, testActor, selector, x, y) {
  */
 function hoverElement(inspector, testActor, selector, x, y) {
   info("Waiting for element " + selector + " to be hovered");
-  const onHovered = inspector.inspector.nodePicker.once("picker-node-hovered");
+  const onHovered = inspector.toolbox.nodePicker.once("picker-node-hovered");
   testActor.synthesizeMouse({ selector, x, y, options: { type: "mousemove" } });
   return onHovered;
 }
@@ -176,24 +166,6 @@ function clearCurrentNodeSelection(inspector) {
   const updated = inspector.once("inspector-updated");
   inspector.selection.setNodeFront(null);
   return updated;
-}
-
-/**
- * Open the inspector in a tab with given URL.
- * @param {string} url  The URL to open.
- * @param {String} hostType Optional hostType, as defined in Toolbox.HostType
- * @return A promise that is resolved once the tab and inspector have loaded
- *         with an object: { tab, toolbox, inspector }.
- */
-var openInspectorForURL = async function(url, hostType) {
-  const tab = await addTab(url);
-  const { inspector, toolbox, testActor } = await openInspector(hostType);
-  return { tab, inspector, toolbox, testActor };
-};
-
-async function getActiveInspector() {
-  const target = await TargetFactory.forTab(gBrowser.selectedTab);
-  return gDevTools.getToolbox(target).getPanel("inspector");
 }
 
 /**
@@ -245,6 +217,24 @@ var getNodeFrontInFrame = async function(selector, frameSelector, inspector) {
 };
 
 /**
+ * Get the NodeFront for the shadowRoot of a shadow host.
+ *
+ * @param {String|NodeFront} hostSelector
+ *        Selector or front of the element to which the shadow root is attached.
+ * @param {InspectorPanel} inspector
+ *        The instance of InspectorPanel currently loaded in the toolbox
+ * @return {Promise} Resolves the node front when the inspector is updated with the new
+ *         node.
+ */
+var getShadowRoot = async function(hostSelector, inspector) {
+  const hostFront = await getNodeFront(hostSelector, inspector);
+  const { nodes } = await inspector.walker.children(hostFront);
+
+  // Find the shadow root in the children of the host element.
+  return nodes.filter(node => node.isShadowRoot)[0];
+};
+
+/**
  * Get the NodeFront for a node that matches a given css selector inside a shadow root.
  *
  * @param {String} selector
@@ -261,11 +251,7 @@ var getNodeFrontInShadowDom = async function(
   hostSelector,
   inspector
 ) {
-  const hostFront = await getNodeFront(hostSelector, inspector);
-  const { nodes } = await inspector.walker.children(hostFront);
-
-  // Find the shadow root in the children of the host element.
-  const shadowRoot = nodes.filter(node => node.isShadowRoot)[0];
+  const shadowRoot = await getShadowRoot(hostSelector, inspector);
   if (!shadowRoot) {
     throw new Error(
       "Could not find a shadow root under selector: " + hostSelector
@@ -504,7 +490,7 @@ async function poll(check, desc, attempts = 10, timeBetweenAttempts = 200) {
  */
 const getHighlighterHelperFor = type =>
   async function({ inspector, testActor }) {
-    const front = inspector.inspector;
+    const front = inspector.inspectorFront;
     const highlighter = await front.getHighlighterByType(type);
 
     let prefix = "";
@@ -527,7 +513,8 @@ const getHighlighterHelperFor = type =>
 
         return {
           getComputedStyle: async function(options = {}) {
-            return inspector.pageStyle.getComputed(highlightedNode, options);
+            const pageStyle = highlightedNode.inspectorFront.pageStyle;
+            return pageStyle.getComputed(highlightedNode, options);
           },
         };
       },
@@ -760,6 +747,35 @@ var waitForTab = async function() {
   info("The tab load completed");
   return tab;
 };
+
+/**
+ * Wait for a predicate to return a result.
+ *
+ * @param {Function} condition
+ *        Invoked once in a while until it returns a truthy value. This should be an
+ *        idempotent function, since we have to run it a second time after it returns
+ *        true in order to return the value.
+ * @param {String} message [optional]
+ *        A message to output if the condition fails.
+ * @param {Number} interval [optional]
+ *        How often the predicate is invoked, in milliseconds.
+ * @return {Object}
+ *         A promise that is resolved with the result of the condition.
+ */
+async function waitFor(
+  condition,
+  message = "waitFor",
+  interval = 10,
+  maxTries = 500
+) {
+  await BrowserTestUtils.waitForCondition(
+    condition,
+    message,
+    interval,
+    maxTries
+  );
+  return condition();
+}
 
 /**
  * Simulate the key input for the given input in the window.

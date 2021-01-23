@@ -4,7 +4,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "nsIThreadManager.h"
 #include "nsCOMPtr.h"
 #include "nsIRunnable.h"
 #include "nsXPCOM.h"
@@ -38,7 +37,7 @@ class TestEvent final : public Runnable, nsIRunnablePriority {
   }
 
  private:
-  ~TestEvent() {}
+  ~TestEvent() = default;
 
   int* mCounter;
   std::function<void()> mCheck;
@@ -67,14 +66,14 @@ TEST(EventPriorities, IdleAfterNormal)
       SpinEventLoopUntil([&]() { return normalRan == 3 && idleRan == 3; }));
 }
 
-TEST(EventPriorities, InterleaveHighNormal)
+TEST(EventPriorities, HighNormal)
 {
   int normalRan = 0, highRan = 0;
 
   RefPtr<TestEvent> evNormal = new TestEvent(
-      &normalRan, [&] { ASSERT_TRUE(abs(normalRan - highRan) <= 1); });
+      &normalRan, [&] { ASSERT_TRUE((highRan - normalRan) >= 0); });
   RefPtr<TestEvent> evHigh = new TestEvent(
-      &highRan, [&] { ASSERT_TRUE(abs(normalRan - highRan) <= 1); },
+      &highRan, [&] { ASSERT_TRUE((highRan - normalRan) >= 0); },
       nsIRunnablePriority::PRIORITY_HIGH);
 
   NS_DispatchToMainThread(evNormal);

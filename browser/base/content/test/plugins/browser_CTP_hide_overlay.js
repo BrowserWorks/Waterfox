@@ -13,7 +13,6 @@ add_task(async function() {
       Ci.nsIPluginTag.STATE_ENABLED,
       "Second Test Plug-in"
     );
-    Services.prefs.clearUserPref("plugins.click_to_play");
     Services.prefs.clearUserPref("extensions.blocklist.suppressUI");
     gBrowser.removeCurrentTab();
     window.focus();
@@ -24,8 +23,6 @@ add_task(async function() {
   Services.prefs.setBoolPref("extensions.blocklist.suppressUI", true);
 
   gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
-
-  Services.prefs.setBoolPref("plugins.click_to_play", true);
 
   setTestPluginEnabledState(Ci.nsIPluginTag.STATE_CLICKTOPLAY, "Test Plug-in");
   setTestPluginEnabledState(
@@ -42,7 +39,7 @@ add_task(async function() {
   await promiseUpdatePluginBindings(gBrowser.selectedBrowser);
 
   // Tests that the overlay can be hidden for plugins using the close icon.
-  await ContentTask.spawn(gBrowser.selectedBrowser, null, async function() {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], async function() {
     let doc = content.document;
     let plugin = doc.getElementById("test");
     let overlay = plugin.openOrClosedShadowRoot.getElementById("main");
@@ -77,7 +74,7 @@ add_task(async function() {
   // Work around for delayed PluginBindingAttached
   await promiseUpdatePluginBindings(gBrowser.selectedBrowser);
 
-  await ContentTask.spawn(gBrowser.selectedBrowser, null, async function() {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], async function() {
     let doc = content.document;
     let plugin = doc.getElementById("test");
     let overlay = plugin.openOrClosedShadowRoot.getElementById("main");

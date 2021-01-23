@@ -5,9 +5,6 @@
 
 var EXPORTED_SYMBOLS = ["ClickHandlerChild"];
 
-const { ActorChild } = ChromeUtils.import(
-  "resource://gre/modules/ActorChild.jsm"
-);
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 ChromeUtils.defineModuleGetter(
@@ -31,7 +28,7 @@ ChromeUtils.defineModuleGetter(
   "resource://gre/modules/E10SUtils.jsm"
 );
 
-class ClickHandlerChild extends ActorChild {
+class ClickHandlerChild extends JSWindowActorChild {
   handleEvent(event) {
     if (
       !event.isTrusted ||
@@ -69,35 +66,19 @@ class ClickHandlerChild extends ActorChild {
 
     let [href, node, principal] = this._hrefAndLinkNodeForClickEvent(event);
 
-    // get referrer attribute from clicked link and parse it
-    // if per element referrer is enabled, the element referrer overrules
-    // the document wide referrer
-    let referrerPolicy = ownerDoc.referrerPolicy;
-    if (node) {
-      let referrerAttrValue = Services.netUtils.parseAttributePolicyString(
-        node.getAttribute("referrerpolicy")
-      );
-      if (referrerAttrValue !== Ci.nsIHttpChannel.REFERRER_POLICY_UNSET) {
-        referrerPolicy = referrerAttrValue;
-      }
-    }
-
-    // Bug 965637, query the CSP from the doc instead of the Principal
-    let csp = ownerDoc.nodePrincipal.csp;
+    let csp = ownerDoc.csp;
     if (csp) {
       csp = E10SUtils.serializeCSP(csp);
     }
 
-    let ReferrerInfo = Components.Constructor(
-      "@mozilla.org/referrer-info;1",
-      "nsIReferrerInfo",
-      "init"
+    let referrerInfo = Cc["@mozilla.org/referrer-info;1"].createInstance(
+      Ci.nsIReferrerInfo
     );
-    let referrerInfo = new ReferrerInfo(
-      referrerPolicy,
-      !BrowserUtils.linkHasNoReferrer(node),
-      ownerDoc.documentURIObject
-    );
+    if (node) {
+      referrerInfo.initWithElement(node);
+    } else {
+      referrerInfo.initWithDocument(ownerDoc);
+    }
     referrerInfo = E10SUtils.serializeReferrerInfo(referrerInfo);
     let frameOuterWindowID = WebNavigationFrames.getFrameId(
       ownerDoc.defaultView
@@ -138,7 +119,7 @@ class ClickHandlerChild extends ActorChild {
       // should we allow mixed content.
       json.allowMixedContent = false;
       let docshell = ownerDoc.defaultView.docShell;
-      if (this.mm.docShell.mixedContentChannel) {
+      if (this.docShell.mixedContentChannel) {
         const sm = Services.scriptSecurityManager;
         try {
           let targetURI = Services.io.newURI(href);
@@ -154,6 +135,7 @@ class ClickHandlerChild extends ActorChild {
         } catch (e) {}
       }
       json.originPrincipal = ownerDoc.nodePrincipal;
+      json.originStoragePrincipal = ownerDoc.effectiveStoragePrincipal;
       json.triggeringPrincipal = ownerDoc.nodePrincipal;
 
       // If a link element is clicked with middle button, user wants to open
@@ -166,13 +148,13 @@ class ClickHandlerChild extends ActorChild {
         event.preventMultipleActions();
       }
 
-      this.mm.sendAsyncMessage("Content:Click", json);
+      this.sendAsyncMessage("Content:Click", json);
       return;
     }
 
     // This might be middle mouse navigation.
     if (event.button == 1) {
-      this.mm.sendAsyncMessage("Content:Click", json);
+      this.sendAsyncMessage("Content:Click", json);
     }
   }
 
@@ -188,7 +170,7 @@ class ClickHandlerChild extends ActorChild {
    *       to behave like an <a> element, which SVG links (XLink) don't.
    */
   _hrefAndLinkNodeForClickEvent(event) {
-    let { content } = this.mm;
+    let content = this.contentWindow;
     function isHTMLLink(aNode) {
       // Be consistent with what nsContextMenu.js does.
       return (

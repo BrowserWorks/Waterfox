@@ -50,6 +50,52 @@ interface nsIEditor  : nsISupports
   const short eStrip = 0;
   const short eNoStrip = 1;
 
+  // only plain text entry is allowed via events
+  const long eEditorPlaintextMask       = 0x0001;
+  // enter key and CR-LF handled specially
+  const long eEditorSingleLineMask      = 0x0002;
+  // text is not entered into content, only a representative character
+  const long eEditorPasswordMask        = 0x0004;
+  // editing events are disabled.  Editor may still accept focus.
+  const long eEditorReadonlyMask        = 0x0008;
+  // text input is limited to certain character types, use mFilter
+  const long eEditorFilterInputMask     = 0x0010;
+  // use mail-compose editing rules
+  const long eEditorMailMask            = 0x0020;
+  // allow the editor to set font: monospace on the root node
+  const long eEditorEnableWrapHackMask  = 0x0040;
+  // bit for widgets (form elements)
+  const long eEditorWidgetMask          = 0x0080;
+  // this HTML editor should not create css styles
+  const long eEditorNoCSSMask           = 0x0100;
+  // whether HTML document specific actions are executed or not.
+  // e.g., if this flag is set, the editor doesn't handle Tab key.
+  // besides, anchors of HTML are not clickable.
+  const long eEditorAllowInteraction    = 0x0200;
+  // when this is set, the characters in password editor are always masked.
+  // see bug 530367 for the detail.
+  const long eEditorDontEchoPassword    = 0x0400;
+  // when this flag is set, the internal direction of the editor is RTL.
+  // if neither of the direction flags are set, the direction is determined
+  // from the text control's content node.
+  const long eEditorRightToLeft         = 0x0800;
+  // when this flag is set, the internal direction of the editor is LTR.
+  const long eEditorLeftToRight         = 0x1000;
+  // when this flag is set, the editor's text content is not spell checked.
+  const long eEditorSkipSpellCheck      = 0x2000;
+
+  /*
+   * The valid values for newlines handling.
+   * Can't change the values unless we remove
+   * use of the pref.
+   */
+  const long eNewlinesPasteIntact                = 0;
+  const long eNewlinesPasteToFirst               = 1;
+  const long eNewlinesReplaceWithSpaces          = 2;
+  const long eNewlinesStrip                      = 3;
+  const long eNewlinesReplaceWithCommas          = 4;
+  const long eNewlinesStripSurroundingWhitespace = 5;
+
   readonly attribute Selection selection;
 
   [can_run_script]
@@ -215,6 +261,7 @@ interface nsIEditor  : nsISupports
     * Calls to beginTransaction can be nested, as long as endTransaction
     * is called once per beginUpdate.
     */
+  [can_run_script]
   void beginTransaction();
 
   /** endTransaction is a signal to the editor that the caller is
@@ -274,9 +321,13 @@ interface nsIEditor  : nsISupports
   [can_run_script]
   void cut();
 
-  /** Can we cut? True if the doc is modifiable, and we have a non-
-    * collapsed selection.
-    */
+  /**
+   * canCut() returns true if selected content is allowed to be copied to the
+   * clipboard and to be removed.
+   * Note that this always returns true if the editor is in a non-chrome
+   * HTML/XHTML document.
+   * FYI: Current user in script is only BlueGriffon.
+   */
   boolean canCut();
 
   /** copy the currently selected text, putting it into the OS clipboard
@@ -286,13 +337,14 @@ interface nsIEditor  : nsISupports
     */
   void copy();
 
-  /** Can we copy? True if we have a non-collapsed selection.
-    */
+  /**
+   * canCopy() returns true if selected content is allowed to be copied to
+   * the clipboard.
+   * Note that this always returns true if the editor is in a non-chrome
+   * HTML/XHTML document.
+   * FYI: Current user in script is only BlueGriffon.
+   */
   boolean canCopy();
-
-  /** Can we delete? True if we have a non-collapsed selection.
-    */
-  boolean canDelete();
 
   /** paste the text in the OS clipboard at the cursor position, replacing
     * the selected text (if any)
@@ -350,20 +402,6 @@ interface nsIEditor  : nsISupports
                     in AString attvalue);
 
   /**
-   * getAttributeValue() retrieves the attribute's value for aElement.
-   *
-   * @param aElement      the content element to operate on
-   * @param aAttribute    the string representation of the attribute to get
-   * @param aResultValue  [OUT] the value of aAttribute.
-   *                      Only valid if aResultIsSet is PR_TRUE
-   * @return              PR_TRUE if aAttribute is set on the current node,
-   *                      PR_FALSE if it is not.
-   */
-  boolean getAttributeValue(in Element aElement,
-                            in AString attributestr,
-                            out AString resultValue);
-
-  /**
    * removeAttribute() deletes aAttribute from the attribute list of aElement.
    * If aAttribute is not an attribute of aElement, nothing is done.
    *
@@ -373,20 +411,6 @@ interface nsIEditor  : nsISupports
   [can_run_script]
   void removeAttribute(in Element aElement,
                        in AString aAttribute);
-
-  /**
-   * cloneAttribute() copies the attribute from the source node to
-   * the destination node and delete those not in the source.
-   *
-   * The supplied nodes MUST BE ELEMENTS (most callers are working with nodes)
-   * @param aAttribute     the name of the attribute to copy
-   * @param aDestElement   the destination element to operate on
-   * @param aSourceElement the source element to copy attributes from
-   * @exception NS_ERROR_NULL_POINTER at least one of the elements is null
-   */
-  [can_run_script]
-  void cloneAttribute(in AString aAttribute,
-                      in Element aDestElement, in Element aSourceElement);
 
   /**
    * cloneAttributes() is similar to Node::cloneNode(),
@@ -418,48 +442,11 @@ interface nsIEditor  : nsISupports
 
 
   /**
-   * splitNode() creates a new node identical to an existing node,
-   * and split the contents between the two nodes
-   * @param aExistingRightNode   the node to split.
-   *                             It will become the new node's next sibling.
-   * @param aOffset              the offset of aExistingRightNode's
-   *                             content|children to do the split at
-   * @param aNewLeftNode         [OUT] the new node resulting from the split,
-   *                             becomes aExistingRightNode's previous sibling.
-   */
-  [can_run_script]
-  void splitNode(in Node existingRightNode,
-                 in long offset,
-                 out Node newLeftNode);
-
-  /**
-   * joinNodes() takes 2 nodes and merge their content|children.
-   * @param aLeftNode     The left node.  It will be deleted.
-   * @param aRightNode    The right node. It will remain after the join.
-   * @param aParent       The parent of aExistingRightNode
-   *
-   *                      There is no requirement that the two nodes be
-   *                      of the same type.  However, a text node can be
-   *                      merged only with another text node.
-   */
-  [can_run_script]
-  void joinNodes(in Node leftNode,
-                 in Node rightNode,
-                 in Node parent);
-
-  /**
    * deleteNode removes aChild from aParent.
    * @param aChild    The node to delete
    */
   [can_run_script]
   void deleteNode(in Node child);
-
-  /**
-   * markNodeDirty() sets a special dirty attribute on the node.
-   * Usually this will be called immediately after creating a new node.
-   * @param aNode      The node for which to insert formatting.
-   */
-  void markNodeDirty(in Node node);
 
 /* ------------ Output methods -------------- */
 
@@ -477,9 +464,6 @@ interface nsIEditor  : nsISupports
 
   /** add an EditorObserver to the editors list of observers. */
   void addEditorObserver(in nsIEditorObserver observer);
-
-  /** Remove an EditorObserver from the editor's list of observers. */
-  void removeEditorObserver(in nsIEditorObserver observer);
 
   /** add an EditActionListener to the editors list of listeners. */
   void addEditActionListener(in nsIEditActionListener listener);
@@ -502,6 +486,107 @@ interface nsIEditor  : nsISupports
    * whether this editor has active IME transaction
    */
   readonly attribute boolean composing;
+
+  /**
+   * unmask() is available only when the editor is a passwrod field.  This
+   * unmasks characters in specified by aStart and aEnd.  If there have
+   * already unmasked characters, they are masked when this is called.
+   * Note that if you calls this without non-zero `aTimeout`, you bear
+   * responsibility for masking password with calling `mask()`.  I.e.,
+   * user inputting password won't be masked automacitally.  If user types
+   * a new character and echo is enabled, unmasked range is expanded to
+   * including it.
+   *
+   * @param aStart      Optional, first index to show the character.  If you
+   *                    specify middle of a surrogate pair, this expands the
+   *                    range to include the prceding high surrogate
+   *                    automatically.
+   *                    If omitted, it means that all characters of the
+   *                    password becomes unmasked.
+   * @param aEnd        Optional, next index of last unmasked character.  If
+   *                    you specify middle of a surrogate pair, the expands
+   *                    the range to include the following low surrogate.
+   *                    If omitted or negative value, it means unmasking all
+   *                    characters after aStart.  Specifying same index
+   *                    throws an exception.
+   * @param aTimeout    Optional, specify milliseconds to hide the unmasked
+   *                    characters if you want to show them temporarily.
+   *                    If omitted or 0, it means this won't mask the characters
+   *                    automatically.
+   */
+  [can_run_script, optional_argc] void unmask(
+      [optional] in unsigned long aStart,
+      [optional] in long long aEnd,
+      [optional] in unsigned long aTimeout);
+
+  /**
+   * mask() is available only when the editor is a password field.  This masks
+   * all unmasked characters immediately.
+   */
+  [can_run_script] void mask();
+
+  /**
+   * These attributes are available only when the editor is a password field.
+   * unmaskedStart is first unmasked character index, or 0 if there is no
+   * unmasked characters.
+   * unmaskedEnd is next index of the last unmasked character.  0 means there
+   * is no unmasked characters.
+   */
+  readonly attribute unsigned long unmaskedStart;
+  readonly attribute unsigned long unmaskedEnd;
+
+  /**
+   * autoMaskingEnabled is true if unmasked range and newly inputted characters
+   * are masked automatically.  That's the default state.  If false, until
+   * `mask()` is called, unmasked range and newly inputted characters are
+   * unmasked.
+   */
+  readonly attribute boolean autoMaskingEnabled;
+
+  /**
+   * passwordMask attribute is a mask character which is used to mask password.
+   */
+  readonly attribute AString passwordMask;
+
+  /**
+    * The length of the contents in characters.
+    * XXX change this type to 'unsigned long'
+    */
+  readonly attribute long textLength;
+
+  /** Get and set the body wrap width.
+    *
+    * Special values:
+    *    0 = wrap to window width
+    *   -1 = no wrap at all
+    */
+  attribute long wrapWidth;
+
+  /** Get and set newline handling.
+   *
+   *  Values are the constants defined above.
+   */
+  attribute long newlineHandling;
+
+  /**
+   * Inserts a string at the current location,
+   * given by the selection.
+   * If the selection is not collapsed, the selection is deleted
+   * and the insertion takes place at the resulting collapsed selection.
+   *
+   * @param aString   the string to be inserted
+   */
+   [can_run_script]
+   void insertText(in AString aStringToInsert);
+
+  /**
+   * Insert a line break into the content model.
+   * The interpretation of a break is up to the implementation:
+   * it may enter a character, split a node in the tree, etc.
+   * This may be more efficient than calling InsertText with a newline.
+   */
+  [can_run_script]
+  void insertLineBreak();
 
 %{C++
   /**

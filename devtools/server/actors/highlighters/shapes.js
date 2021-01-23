@@ -9,14 +9,16 @@ const {
   createSVGNode,
   createNode,
   getComputedStyle,
-} = require("./utils/markup");
+} = require("devtools/server/actors/highlighters/utils/markup");
 const {
   setIgnoreLayoutChanges,
   getCurrentZoom,
   getAdjustedQuads,
   getFrameOffsets,
 } = require("devtools/shared/layout/utils");
-const { AutoRefreshHighlighter } = require("./auto-refresh");
+const {
+  AutoRefreshHighlighter,
+} = require("devtools/server/actors/highlighters/auto-refresh");
 const {
   getDistance,
   clickedOnEllipseEdge,
@@ -497,7 +499,10 @@ class ShapesHighlighter extends AutoRefreshHighlighter {
       const nodeWin = this.currentNode.ownerGlobal;
       // Get bounding box of iframe document relative to global document.
       const bounds = nodeWin.document
-        .getBoxQuads({ relativeTo: win.document })[0]
+        .getBoxQuads({
+          relativeTo: win.document,
+          createFramesForSuppressedWhitespace: false,
+        })[0]
         .getBounds();
       xOffset = bounds.left - nodeWin.scrollX + win.scrollX;
       yOffset = bounds.top - nodeWin.scrollY + win.scrollY;
@@ -512,6 +517,7 @@ class ShapesHighlighter extends AutoRefreshHighlighter {
     this.viewport = { left, right, top, bottom, padding };
   }
 
+  // eslint-disable-next-line complexity
   handleEvent(event, id) {
     // No event handling if the highlighter is hidden
     if (this.areShapesHidden()) {
@@ -1081,9 +1087,7 @@ class ShapesHighlighter extends AutoRefreshHighlighter {
     newCy = round(newCy * ratioY, unitY);
 
     const centerStr = `${newCx}${unitX} ${newCy}${unitY}`;
-    const ellipseDef = `ellipse(${rx} ${ry} at ${centerStr}) ${
-      this.geometryBox
-    }`.trim();
+    const ellipseDef = `ellipse(${rx} ${ry} at ${centerStr}) ${this.geometryBox}`.trim();
     this.emit("highlighter-event", { type: "shape-change", value: ellipseDef });
   }
 
@@ -1115,9 +1119,7 @@ class ShapesHighlighter extends AutoRefreshHighlighter {
     newBottom = `${newBottom}${bottom.unit}`;
 
     let insetDef = this.insetRound
-      ? `inset(${newTop} ${newRight} ${newBottom} ${newLeft} round ${
-          this.insetRound
-        })`
+      ? `inset(${newTop} ${newRight} ${newBottom} ${newLeft} round ${this.insetRound})`
       : `inset(${newTop} ${newRight} ${newBottom} ${newLeft})`;
     insetDef += this.geometryBox ? this.geometryBox : "";
 
@@ -1311,9 +1313,7 @@ class ShapesHighlighter extends AutoRefreshHighlighter {
       const newCx = `${round(valueX + deltaX, unitX)}${unitX}`;
       const newCy = `${round(valueY + deltaY, unitY)}${unitY}`;
       // if not defined by the user, geometryBox will be an empty string; trim() cleans up
-      const circleDef = `circle(${radius} at ${newCx} ${newCy}) ${
-        this.geometryBox
-      }`.trim();
+      const circleDef = `circle(${radius} at ${newCx} ${newCy}) ${this.geometryBox}`.trim();
 
       this.emit("highlighter-event", {
         type: "shape-change",
@@ -1331,9 +1331,7 @@ class ShapesHighlighter extends AutoRefreshHighlighter {
       const delta = (newRadiusPx - origRadius) * ratio;
       const newRadius = `${round(value + delta, unit)}${unit}`;
 
-      const circleDef = `circle(${newRadius} at ${cx} ${cy}) ${
-        this.geometryBox
-      }`.trim();
+      const circleDef = `circle(${newRadius} at ${cx} ${cy}) ${this.geometryBox}`.trim();
 
       this.emit("highlighter-event", {
         type: "shape-change",
@@ -1427,9 +1425,7 @@ class ShapesHighlighter extends AutoRefreshHighlighter {
       const deltaY = (pageY - y) * ratioY;
       const newCx = `${round(valueX + deltaX, unitX)}${unitX}`;
       const newCy = `${round(valueY + deltaY, unitY)}${unitY}`;
-      const ellipseDef = `ellipse(${rx} ${ry} at ${newCx} ${newCy}) ${
-        this.geometryBox
-      }`.trim();
+      const ellipseDef = `ellipse(${rx} ${ry} at ${newCx} ${newCy}) ${this.geometryBox}`.trim();
 
       this.emit("highlighter-event", {
         type: "shape-change",
@@ -1442,9 +1438,7 @@ class ShapesHighlighter extends AutoRefreshHighlighter {
       const delta = ((newRadiusPercent / 100) * width - origRadius) * ratio;
       const newRadius = `${round(value + delta, unit)}${unit}`;
 
-      const ellipseDef = `ellipse(${newRadius} ${ry} at ${cx} ${cy}) ${
-        this.geometryBox
-      }`.trim();
+      const ellipseDef = `ellipse(${newRadius} ${ry} at ${cx} ${cy}) ${this.geometryBox}`.trim();
 
       this.emit("highlighter-event", {
         type: "shape-change",
@@ -1457,9 +1451,7 @@ class ShapesHighlighter extends AutoRefreshHighlighter {
       const delta = ((newRadiusPercent / 100) * height - origRadius) * ratio;
       const newRadius = `${round(value + delta, unit)}${unit}`;
 
-      const ellipseDef = `ellipse(${rx} ${newRadius} at ${cx} ${cy}) ${
-        this.geometryBox
-      }`.trim();
+      const ellipseDef = `ellipse(${rx} ${newRadius} at ${cx} ${cy}) ${this.geometryBox}`.trim();
 
       this.emit("highlighter-event", {
         type: "shape-change",
@@ -1976,6 +1968,7 @@ class ShapesHighlighter extends AutoRefreshHighlighter {
    * @returns {String} "top", "left", "right", or "bottom" if any of those edges were
    *          clicked. "" if none were clicked.
    */
+  // eslint-disable-next-line complexity
   getInsetPointAt(pageX, pageY) {
     const { top, left, right, bottom } = this.coordinates;
     const zoom = getCurrentZoom(this.win);
@@ -2193,9 +2186,9 @@ class ShapesHighlighter extends AutoRefreshHighlighter {
     if (!this.origCoordUnits) {
       this.origCoordUnits = this.coordUnits;
     }
-    // The computed value of circle() always has the keyword "at".
-    const values = definition.split(" at ");
-    let radius = values[0];
+
+    const values = definition.split("at");
+    let radius = values[0] ? values[0].trim() : "closest-side";
     const { width, height } = this.currentDimensions;
     const center = splitCoords(values[1]).map(
       this.convertCoordsToPercent.bind(this)
@@ -2282,19 +2275,14 @@ class ShapesHighlighter extends AutoRefreshHighlighter {
     if (!this.origCoordUnits) {
       this.origCoordUnits = this.coordUnits;
     }
-    let values = definition.split(" at ");
 
-    // Until Bug 1521508 is fixed, we need to shim the computed style value of empty
-    // ellipse() declarations because they're missing the "closest-side" default radii.
-    if (values[0] === definition) {
-      values = `closest-side closest-side ${definition}`.split(" at ");
-    }
-
+    const values = definition.split("at");
     const center = splitCoords(values[1]).map(
       this.convertCoordsToPercent.bind(this)
     );
 
-    const radii = splitCoords(values[0]).map((radius, i) => {
+    let radii = values[0] ? values[0].trim() : "closest-side closest-side";
+    radii = splitCoords(radii).map((radius, i) => {
       if (radius === "closest-side") {
         // radius is the distance from center to closest x/y side of reference box
         return i % 2 === 0
@@ -2657,13 +2645,25 @@ class ShapesHighlighter extends AutoRefreshHighlighter {
       // Shape renders for "circle()" and "ellipse()" use the same SVG nodes.
       this._updateEllipseShape(width, height, zoom);
       // Draw markers for center and radius points.
-      this._drawMarkers([[cx, cy], [cx + rx, cy]], width, height, zoom);
+      this._drawMarkers(
+        [
+          [cx, cy],
+          [cx + rx, cy],
+        ],
+        width,
+        height,
+        zoom
+      );
     } else if (this.shapeType === "ellipse") {
       const { rx, ry, cx, cy } = this.coordinates;
       this._updateEllipseShape(width, height, zoom);
       // Draw markers for center, horizontal radius and vertical radius points.
       this._drawMarkers(
-        [[cx, cy], [cx + rx, cy], [cx, cy + ry]],
+        [
+          [cx, cy],
+          [cx + rx, cy],
+          [cx, cy + ry],
+        ],
         width,
         height,
         zoom

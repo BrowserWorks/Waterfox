@@ -3,7 +3,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/Unused.h"
-#include "nsIPrintProgressParams.h"
 #include "nsIWebProgressListener.h"
 #include "PrintProgressDialogParent.h"
 
@@ -16,7 +15,7 @@ NS_IMPL_ISUPPORTS(PrintProgressDialogParent, nsIObserver)
 
 PrintProgressDialogParent::PrintProgressDialogParent() : mActive(true) {}
 
-PrintProgressDialogParent::~PrintProgressDialogParent() {}
+PrintProgressDialogParent::~PrintProgressDialogParent() = default;
 
 void PrintProgressDialogParent::SetWebProgressListener(
     nsIWebProgressListener* aListener) {

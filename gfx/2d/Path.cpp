@@ -32,7 +32,7 @@ struct PointD : public BasePoint<double, PointD> {
 };
 
 struct BezierControlPoints {
-  BezierControlPoints() {}
+  BezierControlPoints() = default;
   BezierControlPoints(const PointD& aCP1, const PointD& aCP2,
                       const PointD& aCP3, const PointD& aCP4)
       : mCP1(aCP1), mCP2(aCP2), mCP3(aCP3), mCP4(aCP4) {}
@@ -43,9 +43,9 @@ struct BezierControlPoints {
 void FlattenBezier(const BezierControlPoints& aPoints, PathSink* aSink,
                    double aTolerance);
 
-Path::Path() {}
+Path::Path() = default;
 
-Path::~Path() {}
+Path::~Path() = default;
 
 Float Path::ComputeLength() {
   EnsureFlattenedPath();
@@ -75,7 +75,7 @@ void FlattenedPath::MoveTo(const Point& aPoint) {
   op.mPoint = aPoint;
   mPathOps.push_back(op);
 
-  mLastMove = aPoint;
+  mBeginPoint = aPoint;
 }
 
 void FlattenedPath::LineTo(const Point& aPoint) {
@@ -109,7 +109,7 @@ void FlattenedPath::QuadraticBezierTo(const Point& aCP1, const Point& aCP2) {
 
 void FlattenedPath::Close() {
   MOZ_ASSERT(!mCalculatedLength);
-  LineTo(mLastMove);
+  LineTo(mBeginPoint);
 }
 
 void FlattenedPath::Arc(const Point& aOrigin, float aRadius, float aStartAngle,
@@ -276,11 +276,18 @@ static inline void FindInflectionApproximationRange(
   if (cp21.x == 0. && cp21.y == 0.) {
     // In this case s3 becomes lim[n->0] (cp41.x * n) / n - (cp41.y * n) / n =
     // cp41.x - cp41.y.
+    double s3 = cp41.x - cp41.y;
 
     // Use the absolute value so that Min and Max will correspond with the
     // minimum and maximum of the range.
-    *aMin = aT - CubicRoot(std::abs(aTolerance / (cp41.x - cp41.y)));
-    *aMax = aT + CubicRoot(std::abs(aTolerance / (cp41.x - cp41.y)));
+    if (s3 == 0) {
+      *aMin = -1.0;
+      *aMax = 2.0;
+    } else {
+      double r = CubicRoot(std::abs(aTolerance / s3));
+      *aMin = aT - r;
+      *aMax = aT + r;
+    }
     return;
   }
 

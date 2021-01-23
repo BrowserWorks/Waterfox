@@ -12,7 +12,7 @@
  */
 
 #include "APZTestCommon.h"
-#include "gfxPrefs.h"
+
 #include "mozilla/layers/APZSampler.h"
 #include "mozilla/layers/APZUpdater.h"
 
@@ -25,15 +25,14 @@ class APZCBasicTester : public APZCTesterBase {
 
  protected:
   virtual void SetUp() {
-    gfxPrefs::GetSingleton();
     APZThreadUtils::SetThreadAssertionsEnabled(false);
-    APZThreadUtils::SetControllerThread(MessageLoop::current());
+    APZThreadUtils::SetControllerThread(NS_GetCurrentThread());
 
     tm = new TestAPZCTreeManager(mcc);
     updater = new APZUpdater(tm, false);
     sampler = new APZSampler(tm, false);
-    apzc = new TestAsyncPanZoomController(
-        LayersId{0}, mcc, tm, wr::RenderRoot::Default, mGestureBehavior);
+    apzc =
+        new TestAsyncPanZoomController(LayersId{0}, mcc, tm, mGestureBehavior);
     apzc->SetFrameMetrics(TestFrameMetrics());
     apzc->GetScrollMetadata().SetIsLayersIdRoot(true);
   }

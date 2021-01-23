@@ -7,7 +7,13 @@
 #include "InterceptedHttpChannel.h"
 #include "nsContentSecurityManager.h"
 #include "nsEscape.h"
+#include "mozilla/SchedulerGroup.h"
+#include "mozilla/dom/ChannelInfo.h"
 #include "mozilla/dom/PerformanceStorage.h"
+#include "nsHttpChannel.h"
+#include "nsIRedirectResultListener.h"
+#include "nsStringStream.h"
+#include "nsStreamUtils.h"
 
 namespace mozilla {
 namespace net {
@@ -152,7 +158,7 @@ void InterceptedHttpChannel::AsyncOpenInternal() {
 
 bool InterceptedHttpChannel::ShouldRedirect() const {
   // Determine if the synthetic response requires us to perform a real redirect.
-  return nsHttpChannel::WillRedirect(mResponseHead) &&
+  return nsHttpChannel::WillRedirect(*mResponseHead) &&
          !mLoadInfo->GetDontFollowRedirects();
 }
 
@@ -204,7 +210,7 @@ nsresult InterceptedHttpChannel::FollowSyntheticRedirect() {
                                redirectFlags);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  mRedirectChannel = newChannel.forget();
+  mRedirectChannel = std::move(newChannel);
 
   rv = gHttpHandler->AsyncOnChannelRedirect(this, mRedirectChannel,
                                             redirectFlags);
@@ -230,10 +236,10 @@ nsresult InterceptedHttpChannel::RedirectForResponseURL(
   // We want to pass ownership of the body callback to the new synthesized
   // channel.  We need to hold a reference to the callbacks on the stack
   // as well, though, so we can call them if a failure occurs.
-  nsCOMPtr<nsIInterceptedBodyCallback> bodyCallback = mBodyCallback.forget();
+  nsCOMPtr<nsIInterceptedBodyCallback> bodyCallback = std::move(mBodyCallback);
 
   RefPtr<InterceptedHttpChannel> newChannel = CreateForSynthesis(
-      mResponseHead, mBodyReader, bodyCallback, mChannelCreationTime,
+      mResponseHead.get(), mBodyReader, bodyCallback, mChannelCreationTime,
       mChannelCreationTimestamp, mAsyncOpenTime);
 
   // If the response has been redirected, propagate all the URLs to content.
@@ -246,8 +252,7 @@ nsresult InterceptedHttpChannel::RedirectForResponseURL(
       CloneLoadInfoForRedirect(aResponseURI, flags);
 
   nsContentPolicyType contentPolicyType =
-      redirectLoadInfo ? redirectLoadInfo->GetExternalContentPolicyType()
-                       : nsIContentPolicy::TYPE_OTHER;
+      redirectLoadInfo->GetExternalContentPolicyType();
 
   rv = newChannel->Init(
       aResponseURI, mCaps, static_cast<nsProxyInfo*>(mProxyInfo.get()),
@@ -271,6 +276,10 @@ nsresult InterceptedHttpChannel::RedirectForResponseURL(
   NS_ENSURE_SUCCESS(rv, rv);
 
   mRedirectChannel = newChannel;
+
+  MOZ_ASSERT(mBodyReader);
+  MOZ_ASSERT(!mApplyConversion);
+  newChannel->SetApplyConversion(false);
 
   rv = gHttpHandler->AsyncOnChannelRedirect(this, mRedirectChannel, flags);
 
@@ -370,7 +379,8 @@ void InterceptedHttpChannel::MaybeCallStatusAndProgress() {
     nsCOMPtr<nsIRunnable> r = NewRunnableMethod(
         "InterceptedHttpChannel::MaybeCallStatusAndProgress", this,
         &InterceptedHttpChannel::MaybeCallStatusAndProgress);
-    MOZ_ALWAYS_SUCCEEDS(SystemGroup::Dispatch(TaskCategory::Other, r.forget()));
+    MOZ_ALWAYS_SUCCEEDS(
+        SchedulerGroup::Dispatch(TaskCategory::Other, r.forget()));
 
     return;
   }
@@ -405,16 +415,15 @@ void InterceptedHttpChannel::MaybeCallStatusAndProgress() {
     CopyUTF8toUTF16(host, mStatusHost);
   }
 
-  mProgressSink->OnStatus(this, nullptr, NS_NET_STATUS_READING,
-                          mStatusHost.get());
+  mProgressSink->OnStatus(this, NS_NET_STATUS_READING, mStatusHost.get());
 
-  mProgressSink->OnProgress(this, nullptr, progress, mSynthesizedStreamLength);
+  mProgressSink->OnProgress(this, progress, mSynthesizedStreamLength);
 
   mProgressReported = progress;
 }
 
 void InterceptedHttpChannel::MaybeCallBodyCallback() {
-  nsCOMPtr<nsIInterceptedBodyCallback> callback = mBodyCallback.forget();
+  nsCOMPtr<nsIInterceptedBodyCallback> callback = std::move(mBodyCallback);
   if (callback) {
     callback->BodyComplete(mStatus);
   }
@@ -448,7 +457,7 @@ InterceptedHttpChannel::CreateForSynthesis(
   RefPtr<InterceptedHttpChannel> ref = new InterceptedHttpChannel(
       aCreationTime, aCreationTimestamp, aAsyncOpenTimestamp);
 
-  ref->mResponseHead = new nsHttpResponseHead(*aHead);
+  ref->mResponseHead = MakeUnique<nsHttpResponseHead>(*aHead);
   ref->mBodyReader = aBody;
   ref->mBodyCallback = aBodyCallback;
 
@@ -647,7 +656,7 @@ InterceptedHttpChannel::ResetInterception(void) {
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
-  mRedirectChannel = newChannel.forget();
+  mRedirectChannel = std::move(newChannel);
 
   rv = gHttpHandler->AsyncOnChannelRedirect(this, mRedirectChannel, flags);
 
@@ -737,7 +746,7 @@ InterceptedHttpChannel::StartSynthesizedResponse(
     mSynthesizedResponseHead.reset(new nsHttpResponseHead());
   }
 
-  mResponseHead = mSynthesizedResponseHead.release();
+  mResponseHead = std::move(mSynthesizedResponseHead);
 
   if (ShouldRedirect()) {
     rv = FollowSyntheticRedirect();
@@ -1019,6 +1028,31 @@ InterceptedHttpChannel::OnStartRequest(nsIRequest* aRequest) {
     mPump->PeekStream(CallTypeSniffers, static_cast<nsIChannel*>(this));
   }
 
+  nsresult rv = ProcessCrossOriginEmbedderPolicyHeader();
+  if (NS_FAILED(rv)) {
+    mStatus = NS_ERROR_BLOCKED_BY_POLICY;
+    Cancel(mStatus);
+  }
+
+  rv = ProcessCrossOriginResourcePolicyHeader();
+  if (NS_FAILED(rv)) {
+    mStatus = NS_ERROR_DOM_CORP_FAILED;
+    Cancel(mStatus);
+  }
+
+  rv = ComputeCrossOriginOpenerPolicyMismatch();
+  if (rv == NS_ERROR_BLOCKED_BY_POLICY) {
+    mStatus = NS_ERROR_BLOCKED_BY_POLICY;
+    Cancel(mStatus);
+  }
+
+  rv = ValidateMIMEType();
+  if (NS_FAILED(rv)) {
+    mStatus = rv;
+    Cancel(mStatus);
+  }
+
+  mOnStartRequestCalled = true;
   if (mListener) {
     return mListener->OnStartRequest(this);
   }
@@ -1245,6 +1279,26 @@ InterceptedHttpChannel::GetAllowStaleCacheContent(
   if (mSynthesizedCacheInfo) {
     return mSynthesizedCacheInfo->GetAllowStaleCacheContent(
         aAllowStaleCacheContent);
+  }
+  return NS_ERROR_NOT_AVAILABLE;
+}
+
+NS_IMETHODIMP
+InterceptedHttpChannel::GetPreferCacheLoadOverBypass(
+    bool* aPreferCacheLoadOverBypass) {
+  if (mSynthesizedCacheInfo) {
+    return mSynthesizedCacheInfo->GetPreferCacheLoadOverBypass(
+        aPreferCacheLoadOverBypass);
+  }
+  return NS_ERROR_NOT_AVAILABLE;
+}
+
+NS_IMETHODIMP
+InterceptedHttpChannel::SetPreferCacheLoadOverBypass(
+    bool aPreferCacheLoadOverBypass) {
+  if (mSynthesizedCacheInfo) {
+    return mSynthesizedCacheInfo->SetPreferCacheLoadOverBypass(
+        aPreferCacheLoadOverBypass);
   }
   return NS_ERROR_NOT_AVAILABLE;
 }

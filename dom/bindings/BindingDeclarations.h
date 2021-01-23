@@ -26,14 +26,18 @@
 #include "nsString.h"
 #include "nsTArray.h"
 
+#include <type_traits>
+
 class nsIPrincipal;
 class nsWrapperCache;
 
 namespace mozilla {
 namespace dom {
 
+class BindingCallContext;
+
 // Struct that serves as a base class for all dictionaries.  Particularly useful
-// so we can use IsBaseOf to detect dictionary template arguments.
+// so we can use std::is_base_of to detect dictionary template arguments.
 struct DictionaryBase {
  protected:
   bool ParseJSON(JSContext* aCx, const nsAString& aJSON,
@@ -61,13 +65,13 @@ struct DictionaryBase {
 };
 
 template <typename T>
-inline typename EnableIf<IsBaseOf<DictionaryBase, T>::value, void>::Type
+inline std::enable_if_t<std::is_base_of<DictionaryBase, T>::value, void>
 ImplCycleCollectionUnlink(T& aDictionary) {
   aDictionary.UnlinkForCC();
 }
 
 template <typename T>
-inline typename EnableIf<IsBaseOf<DictionaryBase, T>::value, void>::Type
+inline std::enable_if_t<std::is_base_of<DictionaryBase, T>::value, void>
 ImplCycleCollectionTraverse(nsCycleCollectionTraversalCallback& aCallback,
                             T& aDictionary, const char* aName,
                             uint32_t aFlags = 0) {
@@ -75,12 +79,12 @@ ImplCycleCollectionTraverse(nsCycleCollectionTraversalCallback& aCallback,
 }
 
 // Struct that serves as a base class for all typed arrays and array buffers and
-// array buffer views.  Particularly useful so we can use IsBaseOf to detect
-// typed array/buffer/view template arguments.
+// array buffer views.  Particularly useful so we can use std::is_base_of to
+// detect typed array/buffer/view template arguments.
 struct AllTypedArraysBase {};
 
 // Struct that serves as a base class for all owning unions.
-// Particularly useful so we can use IsBaseOf to detect owning union
+// Particularly useful so we can use std::is_base_of to detect owning union
 // template arguments.
 struct AllOwningUnionBase {};
 
@@ -128,7 +132,7 @@ class MOZ_STACK_CLASS GlobalObject {
 template <typename T, typename InternalType>
 class Optional_base {
  public:
-  Optional_base() {}
+  Optional_base() = default;
 
   explicit Optional_base(const T& aValue) { mImpl.emplace(aValue); }
 
@@ -186,19 +190,19 @@ class Optional : public Optional_base<T, T> {
 };
 
 template <typename T>
-class Optional<JS::Handle<T> >
-    : public Optional_base<JS::Handle<T>, JS::Rooted<T> > {
+class Optional<JS::Handle<T>>
+    : public Optional_base<JS::Handle<T>, JS::Rooted<T>> {
  public:
   MOZ_ALLOW_TEMPORARY Optional()
-      : Optional_base<JS::Handle<T>, JS::Rooted<T> >() {}
+      : Optional_base<JS::Handle<T>, JS::Rooted<T>>() {}
 
   explicit Optional(JSContext* cx)
-      : Optional_base<JS::Handle<T>, JS::Rooted<T> >() {
+      : Optional_base<JS::Handle<T>, JS::Rooted<T>>() {
     this->Construct(cx);
   }
 
   Optional(JSContext* cx, const T& aValue)
-      : Optional_base<JS::Handle<T>, JS::Rooted<T> >(cx, aValue) {}
+      : Optional_base<JS::Handle<T>, JS::Rooted<T>>(cx, aValue) {}
 
   // Override the const Value() to return the right thing so we're not
   // returning references to temporaries.
@@ -215,7 +219,7 @@ class Optional<JS::Handle<T> >
 template <>
 class Optional<JSObject*> : public Optional_base<JSObject*, JSObject*> {
  public:
-  Optional() : Optional_base<JSObject*, JSObject*>() {}
+  Optional() = default;
 
   explicit Optional(JSObject* aValue)
       : Optional_base<JSObject*, JSObject*>(aValue) {}
@@ -247,7 +251,7 @@ class Optional<JS::Value> {
 template <typename U>
 class NonNull;
 template <typename T>
-class Optional<NonNull<T> > : public Optional_base<T, NonNull<T> > {
+class Optional<NonNull<T>> : public Optional_base<T, NonNull<T>> {
  public:
   // We want our Value to actually return a non-const reference, even
   // if we're const.  At least for things that are normally pointer
@@ -262,7 +266,7 @@ class Optional<NonNull<T> > : public Optional_base<T, NonNull<T> > {
 // A specialization of Optional for OwningNonNull that lets us get a
 // T& from Value()
 template <typename T>
-class Optional<OwningNonNull<T> > : public Optional_base<T, OwningNonNull<T> > {
+class Optional<OwningNonNull<T>> : public Optional_base<T, OwningNonNull<T>> {
  public:
   // We want our Value to actually return a non-const reference, even
   // if we're const.  At least for things that are normally pointer
@@ -280,29 +284,32 @@ class Optional<OwningNonNull<T> > : public Optional_base<T, OwningNonNull<T> > {
 // ToAStringPtr.
 
 namespace binding_detail {
+template <typename CharT>
 struct FakeString;
 }  // namespace binding_detail
 
-template <>
-class Optional<nsAString> {
+template <typename CharT>
+class Optional<nsTSubstring<CharT>> {
+  using AString = nsTSubstring<CharT>;
+
  public:
   Optional() : mStr(nullptr) {}
 
   bool WasPassed() const { return !!mStr; }
 
-  void operator=(const nsAString* str) {
+  void operator=(const AString* str) {
     MOZ_ASSERT(str);
     mStr = str;
   }
 
   // If this code ever goes away, remove the comment pointing to it in the
   // FakeString class in BindingUtils.h.
-  void operator=(const binding_detail::FakeString* str) {
+  void operator=(const binding_detail::FakeString<CharT>* str) {
     MOZ_ASSERT(str);
-    mStr = reinterpret_cast<const nsString*>(str);
+    mStr = reinterpret_cast<const nsTString<CharT>*>(str);
   }
 
-  const nsAString& Value() const {
+  const AString& Value() const {
     MOZ_ASSERT(WasPassed());
     return *mStr;
   }
@@ -312,7 +319,7 @@ class Optional<nsAString> {
   Optional(const Optional& other) = delete;
   const Optional& operator=(const Optional& other) = delete;
 
-  const nsAString* mStr;
+  const AString* mStr;
 };
 
 template <typename T>
@@ -407,6 +414,30 @@ template <typename T>
 class Sequence : public FallibleTArray<T> {
  public:
   Sequence() : FallibleTArray<T>() {}
+  MOZ_IMPLICIT Sequence(FallibleTArray<T>&& aArray)
+      : FallibleTArray<T>(std::move(aArray)) {}
+  MOZ_IMPLICIT Sequence(nsTArray<T>&& aArray)
+      : FallibleTArray<T>(std::move(aArray)) {}
+
+  Sequence(Sequence&&) = default;
+  Sequence& operator=(Sequence&&) = default;
+
+  // XXX(Bug 1631461) Codegen.py must be adapted to allow making Sequence
+  // uncopyable.
+  Sequence(const Sequence& aOther) {
+    if (!this->AppendElements(aOther, fallible)) {
+      MOZ_CRASH("Out of memory");
+    }
+  }
+  Sequence& operator=(const Sequence& aOther) {
+    if (this != &aOther) {
+      this->Clear();
+      if (!this->AppendElements(aOther, fallible)) {
+        MOZ_CRASH("Out of memory");
+      }
+    }
+    return *this;
+  }
 };
 
 inline nsWrapperCache* GetWrapperCache(nsWrapperCache* cache) { return cache; }

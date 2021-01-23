@@ -8,7 +8,10 @@
 
 #include <stdint.h>
 #include "mozilla/TypedEnumBits.h"
-#include "nsStyleConsts.h"
+
+namespace mozilla {
+enum class StyleGenericFontFamily : uint8_t;
+}
 
 typedef struct _cairo_surface cairo_surface_t;
 typedef struct _cairo_user_data_key cairo_user_data_key_t;
@@ -90,6 +93,7 @@ enum class gfxAlphaType {
  */
 struct FontMatchType {
   enum class Kind : uint8_t {
+    kUnspecified = 0,
     kFontGroup = 1,
     kPrefsFallback = 1 << 1,
     kSystemFallback = 1 << 2,
@@ -111,8 +115,8 @@ struct FontMatchType {
       : kind(aKind), generic(aGeneric) {}
 
   Kind kind = static_cast<Kind>(0);
-  mozilla::StyleGenericFontFamily generic =
-      mozilla::StyleGenericFontFamily::None;
+  // Using 0 to avoid pulling ServoStyleConsts.h everywhere.
+  mozilla::StyleGenericFontFamily generic = mozilla::StyleGenericFontFamily(0);
 };
 
 MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS(FontMatchType::Kind)
@@ -121,7 +125,7 @@ FontMatchType& FontMatchType::operator|=(const FontMatchType& aOther) {
   kind |= aOther.kind;
   // We only keep track of one generic.
   if (generic != aOther.generic) {
-    generic = mozilla::StyleGenericFontFamily::None;
+    generic = mozilla::StyleGenericFontFamily(0);
   }
   return *this;
 }

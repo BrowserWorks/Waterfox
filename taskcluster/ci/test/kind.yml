@@ -26,13 +26,20 @@ transforms:
 
 jobs-from:
     - awsy.yml
+    - browsertime-desktop.yml
+    - browsertime-mobile.yml
     - compiled.yml
     - firefox-ui.yml
     - marionette.yml
     - misc.yml
     - mochitest.yml
     - raptor.yml
+    - raptor-chrome.yml
     - raptor-chromium.yml
+    - raptor-fenix.yml
+    - raptor-fennec68.yml
+    - raptor-gve.yml
+    - raptor-refbrow.yml
     - reftest.yml
     - talos.yml
     - web-platform.yml
@@ -49,3 +56,19 @@ job-defaults:
                     .*-devedition/.*: false
                     default: true
             default: false
+    fetches:
+        toolchain:
+            by-test-platform:
+                win.*:
+                    - win32-minidump-stackwalk
+                    - win32-fix-stacks
+                macosx.*:
+                    - macosx64-minidump-stackwalk
+                    - macosx64-fix-stacks
+                android-em-7.*:
+                    - android-emulator-linux
+                    - linux64-minidump-stackwalk
+                    - linux64-fix-stacks
+                default:
+                    - linux64-minidump-stackwalk
+                    - linux64-fix-stacks

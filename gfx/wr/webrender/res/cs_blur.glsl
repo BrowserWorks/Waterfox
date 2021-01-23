@@ -18,13 +18,14 @@ flat varying int vSupport;
 #define DIR_HORIZONTAL  0
 #define DIR_VERTICAL    1
 
-in int aBlurRenderTaskAddress;
-in int aBlurSourceTaskAddress;
-in int aBlurDirection;
+PER_INSTANCE in int aBlurRenderTaskAddress;
+PER_INSTANCE in int aBlurSourceTaskAddress;
+PER_INSTANCE in int aBlurDirection;
 
 struct BlurTask {
     RenderTaskCommonData common_data;
     float blur_radius;
+    vec2 blur_region;
 };
 
 BlurTask fetch_blur_task(int address) {
@@ -32,7 +33,8 @@ BlurTask fetch_blur_task(int address) {
 
     BlurTask task = BlurTask(
         task_data.common_data,
-        task_data.user_data.x
+        task_data.user_data.x,
+        task_data.user_data.yz
     );
 
     return task;
@@ -72,7 +74,7 @@ void main(void) {
     }
 
     vUvRect = vec4(src_rect.p0 + vec2(0.5),
-                   src_rect.p0 + src_rect.size - vec2(0.5));
+                   src_rect.p0 + blur_task.blur_region - vec2(0.5));
     vUvRect /= texture_size.xyxy;
 
     vec2 pos = target_rect.p0 + target_rect.size * aPosition.xy;

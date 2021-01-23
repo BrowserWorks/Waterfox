@@ -8,6 +8,7 @@
 
 #include "jsapi.h"
 #include "jsfriendapi.h"
+#include "js/Array.h"  // JS::IsArrayObject
 #include "js/ArrayBuffer.h"
 #include "js/JSON.h"
 #include "js/TracingAPI.h"
@@ -59,7 +60,7 @@ AddonManagerStartup& AddonManagerStartup::GetSingleton() {
   return *singleton;
 }
 
-AddonManagerStartup::AddonManagerStartup() {}
+AddonManagerStartup::AddonManagerStartup() = default;
 
 nsIFile* AddonManagerStartup::ProfileDir() {
   if (!mProfileDir) {
@@ -160,7 +161,7 @@ static Result<nsCString, nsresult> DecodeLZ4(const nsACString& lz4,
 
   MOZ_DIAGNOSTIC_ASSERT(size == outputSize);
 
-  return result;
+  return std::move(result);
 }
 
 // Our zlib headers redefine this to MOZ_Z_compress, which breaks LZ4::compress
@@ -194,7 +195,7 @@ static Result<nsCString, nsresult> EncodeLZ4(const nsACString& data,
   if (!result.SetLength(off + size, fallible)) {
     return Err(NS_ERROR_OUT_OF_MEMORY);
   }
-  return result;
+  return std::move(result);
 }
 
 static_assert(sizeof STRUCTURED_CLONE_MAGIC % 8 == 0,
@@ -498,7 +499,7 @@ nsresult AddonManagerStartup::ReadStartupData(
   auto res = ReadFileLZ4(file);
   if (res.isOk()) {
     data = res.unwrap();
-  } else if (res.unwrapErr() != NS_ERROR_FILE_NOT_FOUND) {
+  } else if (res.inspectErr() != NS_ERROR_FILE_NOT_FOUND) {
     return res.unwrapErr();
   }
 
@@ -622,8 +623,8 @@ nsresult AddonManagerStartup::EnumerateJAR(nsIURI* uri,
     MOZ_TRY(ParseJARURI(jarURI, getter_AddRefs(fileURI), entry));
 
     MOZ_TRY_VAR(file, GetFile(fileURI));
-    MOZ_TRY(zipCache->GetInnerZip(file, Substring(entry, 1),
-                                  getter_AddRefs(zip)));
+    MOZ_TRY(
+        zipCache->GetInnerZip(file, Substring(entry, 1), getter_AddRefs(zip)));
   } else {
     MOZ_TRY_VAR(file, GetFile(uri));
     MOZ_TRY(zipCache->GetZip(file, getter_AddRefs(zip)));
@@ -677,11 +678,8 @@ namespace {
 static bool sObserverRegistered;
 
 struct ContentEntry final {
-  explicit ContentEntry(nsTArray<nsCString>& aArgs, uint8_t aFlags = 0)
-      : mArgs(aArgs), mFlags(aFlags) {}
-
-  ContentEntry(const ContentEntry& other)
-      : mArgs(other.mArgs), mFlags(other.mFlags) {}
+  explicit ContentEntry(nsTArray<nsCString>&& aArgs, uint8_t aFlags = 0)
+      : mArgs(std::move(aArgs)), mFlags(aFlags) {}
 
   AutoTArray<nsCString, 2> mArgs;
   uint8_t mFlags;
@@ -690,7 +688,7 @@ struct ContentEntry final {
 };  // anonymous namespace
 };  // namespace mozilla
 
-DECLARE_USE_COPY_CONSTRUCTORS(mozilla::ContentEntry);
+MOZ_DECLARE_RELOCATE_USING_MOVE_CONSTRUCTOR(mozilla::ContentEntry);
 
 namespace mozilla {
 namespace {
@@ -779,7 +777,7 @@ AddonManagerStartup::RegisterChrome(nsIURI* manifestURI,
                                     nsIJSRAIIHelper** result) {
   auto IsArray = [cx](JS::HandleValue val) -> bool {
     bool isArray;
-    return JS_IsArrayObject(cx, val, &isArray) && isArray;
+    return JS::IsArrayObject(cx, val, &isArray) && isArray;
   };
 
   NS_ENSURE_ARG_POINTER(manifestURI);
@@ -816,21 +814,21 @@ AddonManagerStartup::RegisterChrome(nsIURI* manifestURI,
 
     if (type.EqualsLiteral("override")) {
       NS_ENSURE_TRUE(vals.Length() == 2, NS_ERROR_INVALID_ARG);
-      overrides.AppendElement(vals);
+      overrides.AppendElement(std::move(vals));
     } else if (type.EqualsLiteral("content")) {
       if (vals.Length() == 3 &&
           vals[2].EqualsLiteral("contentaccessible=yes")) {
         NS_ENSURE_TRUE(xpc::IsInAutomation(), NS_ERROR_INVALID_ARG);
         vals.RemoveElementAt(2);
-        content.AppendElement(
-            ContentEntry(vals, nsChromeRegistry::CONTENT_ACCESSIBLE));
+        content.AppendElement(ContentEntry(
+            std::move(vals), nsChromeRegistry::CONTENT_ACCESSIBLE));
       } else {
         NS_ENSURE_TRUE(vals.Length() == 2, NS_ERROR_INVALID_ARG);
-        content.AppendElement(ContentEntry(vals));
+        content.AppendElement(ContentEntry(std::move(vals)));
       }
     } else if (type.EqualsLiteral("locale")) {
       NS_ENSURE_TRUE(vals.Length() == 3, NS_ERROR_INVALID_ARG);
-      locales.AppendElement(vals);
+      locales.AppendElement(std::move(vals));
     } else {
       return NS_ERROR_INVALID_ARG;
     }

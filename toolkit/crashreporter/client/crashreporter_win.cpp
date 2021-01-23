@@ -42,6 +42,7 @@
 
 using std::ifstream;
 using std::ios;
+using std::ios_base;
 using std::map;
 using std::ofstream;
 using std::set;
@@ -53,7 +54,7 @@ using namespace CrashReporter;
 
 typedef struct {
   HWND hDlg;
-  map<wstring, wstring> queryParameters;
+  Json::Value queryParameters;
   map<wstring, wstring> files;
   wstring sendURL;
 
@@ -81,9 +82,9 @@ static SendThreadData gSendData = {
     0,
 };
 static vector<string> gRestartArgs;
-static map<wstring, wstring> gQueryParameters;
-static wstring gCrashReporterKey(L"Software\\Mozilla\\Crash Reporter");
-static wstring gURLParameter;
+static Json::Value gQueryParameters;
+static wstring gCrashReporterKey(L"Software\\Waterfox\\Crash Reporter");
+static string gURLParameter;
 static int gCheckboxPadding = 6;
 static bool gRTLlayout = false;
 
@@ -350,9 +351,12 @@ static DWORD WINAPI SendThreadProc(LPVOID param) {
     finishedOk = false;
     LogMessage("No server URL, not sending report");
   } else {
+    Json::StreamWriterBuilder builder;
+    builder["indentation"] = "";
+    string parameters(Json::writeString(builder, td->queryParameters));
     google_breakpad::CrashReportSender sender(L"");
-    finishedOk = (sender.SendCrashReport(td->sendURL, td->queryParameters,
-                                         td->files, &td->serverResponse) ==
+    finishedOk = (sender.SendCrashReport(td->sendURL, parameters, td->files,
+                                         &td->serverResponse) ==
                   google_breakpad::RESULT_SUCCEEDED);
     if (finishedOk) {
       LogMessage("Crash report submitted successfully");
@@ -486,11 +490,19 @@ static void RestartApplication() {
 static void ShowReportInfo(HWND hwndDlg) {
   wstring description;
 
-  for (map<wstring, wstring>::const_iterator i = gQueryParameters.begin();
-       i != gQueryParameters.end(); i++) {
-    description += i->first;
+  for (Json::ValueConstIterator iter = gQueryParameters.begin();
+       iter != gQueryParameters.end(); ++iter) {
+    description += UTF8ToWide(iter.name());
     description += L": ";
-    description += i->second;
+    string value;
+    if (iter->isString()) {
+      value = iter->asString();
+    } else {
+      Json::StreamWriterBuilder builder;
+      builder["indentation"] = "";
+      value = Json::writeString(builder, *iter);
+    }
+    description += UTF8ToWide(value);
     description += L"\n";
   }
 
@@ -502,9 +514,9 @@ static void ShowReportInfo(HWND hwndDlg) {
 
 static void UpdateURL(HWND hwndDlg) {
   if (IsDlgButtonChecked(hwndDlg, IDC_INCLUDEURLCHECK)) {
-    gQueryParameters[L"URL"] = gURLParameter;
+    gQueryParameters["URL"] = gURLParameter;
   } else {
-    gQueryParameters.erase(L"URL");
+    gQueryParameters.removeMember("URL");
   }
 }
 
@@ -513,11 +525,11 @@ static void UpdateEmail(HWND hwndDlg) {
     wchar_t email[MAX_EMAIL_LENGTH];
     GetDlgItemTextW(hwndDlg, IDC_EMAILTEXT, email,
                     sizeof(email) / sizeof(email[0]));
-    gQueryParameters[L"Email"] = email;
+    gQueryParameters["Email"] = WideToUTF8(email);
     if (IsDlgButtonChecked(hwndDlg, IDC_SUBMITREPORTCHECK))
       EnableWindow(GetDlgItem(hwndDlg, IDC_EMAILTEXT), true);
   } else {
-    gQueryParameters.erase(L"Email");
+    gQueryParameters.removeMember("Email");
     EnableWindow(GetDlgItem(hwndDlg, IDC_EMAILTEXT), false);
   }
 }
@@ -527,9 +539,9 @@ static void UpdateComment(HWND hwndDlg) {
   GetDlgItemTextW(hwndDlg, IDC_COMMENTTEXT, comment,
                   sizeof(comment) / sizeof(comment[0]));
   if (wcslen(comment) > 0)
-    gQueryParameters[L"Comments"] = comment;
+    gQueryParameters["Comments"] = WideToUTF8(comment);
   else
-    gQueryParameters.erase(L"Comments");
+    gQueryParameters.removeMember("Comments");
 }
 
 /*
@@ -969,7 +981,7 @@ static BOOL CALLBACK CrashReporterDialogProc(HWND hwndDlg, UINT message,
       SendDlgItemMessage(hwndDlg, IDC_DESCRIPTIONTEXT, EM_REQUESTRESIZE, 0, 0);
 
       // if no URL was given, hide the URL checkbox
-      if (gQueryParameters.find(L"URL") == gQueryParameters.end()) {
+      if (!gQueryParameters.isMember("URL")) {
         RECT urlCheckRect, emailCheckRect;
         GetWindowRect(GetDlgItem(hwndDlg, IDC_INCLUDEURLCHECK), &urlCheckRect);
         GetWindowRect(GetDlgItem(hwndDlg, IDC_EMAILMECHECK), &emailCheckRect);
@@ -1199,7 +1211,7 @@ static bool CanUseMainCrashReportServer() {
           !IsWindowsVersionOrGreater(5, 2, 0));
 }
 
-bool UIShowCrashUI(const StringTable& files, const StringTable& queryParameters,
+bool UIShowCrashUI(const StringTable& files, const Json::Value& queryParameters,
                    const string& sendURL, const vector<string>& restartArgs) {
   gSendData.hDlg = nullptr;
   gSendData.sendURL = UTF8ToWide(sendURL);
@@ -1216,21 +1228,21 @@ bool UIShowCrashUI(const StringTable& files, const StringTable& queryParameters,
     gSendData.files[UTF8ToWide(i->first)] = UTF8ToWide(i->second);
   }
 
-  for (StringTable::const_iterator i = queryParameters.begin();
-       i != queryParameters.end(); i++) {
-    gQueryParameters[UTF8ToWide(i->first)] = UTF8ToWide(i->second);
-  }
+  gQueryParameters = queryParameters;
 
-  if (gQueryParameters.find(L"Vendor") != gQueryParameters.end()) {
+  if (gQueryParameters.isMember("Vendor")) {
     gCrashReporterKey = L"Software\\";
-    if (!gQueryParameters[L"Vendor"].empty()) {
-      gCrashReporterKey += gQueryParameters[L"Vendor"] + L"\\";
+    string vendor = gQueryParameters["Vendor"].asString();
+    if (!vendor.empty()) {
+      gCrashReporterKey += UTF8ToWide(vendor) + L"\\";
     }
-    gCrashReporterKey += gQueryParameters[L"ProductName"] + L"\\Crash Reporter";
+    string productName = gQueryParameters["ProductName"].asString();
+    gCrashReporterKey += UTF8ToWide(productName) + L"\\Crash Reporter";
   }
 
-  if (gQueryParameters.find(L"URL") != gQueryParameters.end())
-    gURLParameter = gQueryParameters[L"URL"];
+  if (gQueryParameters.isMember("URL")) {
+    gURLParameter = gQueryParameters["URL"].asString();
+  }
 
   gRestartArgs = restartArgs;
 
@@ -1333,14 +1345,7 @@ bool UIDeleteFile(const string& oldfile) {
   return DeleteFile(UTF8ToWide(oldfile).c_str()) == TRUE;
 }
 
-ifstream* UIOpenRead(const string& filename, bool binary) {
-  // adapted from breakpad's src/common/windows/http_upload.cc
-  std::ios_base::openmode mode = ios::in;
-
-  if (binary) {
-    mode = mode | ios::binary;
-  }
-
+ifstream* UIOpenRead(const string& filename, ios_base::openmode mode) {
 #if defined(_MSC_VER)
   ifstream* file = new ifstream();
   file->open(UTF8ToWide(filename).c_str(), mode);
@@ -1352,19 +1357,7 @@ ifstream* UIOpenRead(const string& filename, bool binary) {
   return file;
 }
 
-ofstream* UIOpenWrite(const string& filename,
-                      bool append,  // append=false
-                      bool binary)  // binary=false
-{
-  // adapted from breakpad's src/common/windows/http_upload.cc
-  std::ios_base::openmode mode = ios::out;
-  if (append) {
-    mode = mode | ios::app;
-  }
-  if (binary) {
-    mode = mode | ios::binary;
-  }
-
+ofstream* UIOpenWrite(const string& filename, ios_base::openmode mode) {
 #if defined(_MSC_VER)
   ofstream* file = new ofstream();
   file->open(UTF8ToWide(filename).c_str(), mode);

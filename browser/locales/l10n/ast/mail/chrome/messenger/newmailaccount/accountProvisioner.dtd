@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Bienllegáu a &brandShortName;">
+<!ENTITY header2.label "¿Prestaríate tener una direición de corréu nueva?">
+<!ENTITY other.languages "Amosamos namái los proveedores de direiciones nel to área.  Calca equí p'amosalos toos.">
+<!ENTITY error.line1 "Sentímoslo, nun podemos alcontrar suxerencies de direiciones de corréu.">
+<!ENTITY error.line2 "Pues intentar atopar nomatos o otru términu p'alcontrar más emails">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):error.suggest.before, error.suggest.middle, and error.suggest.after all go into one line with error.suggest.middle that links to a site which provides download of free account alternatives. -->
+<!ENTITY error.suggest.before "Tamién pues probar con una de les ">
+<!ENTITY error.suggest.middle "cuentes de corréu-e gratuítes alternatives">
+<!ENTITY error.suggest.after ".">
+
+<!ENTITY success.title.before "Hola ">
+<!ENTITY success.title.after ", les siguientes direiciones de corréu-e tán disponibles:">
+<!ENTITY success.tip "(Tamién pues intentar guetar nomatos o otru términu p'atopar más emails)">
+<!ENTITY partnership.description "En collaboración con otros fornidores, &brandShortName; pue ufrite una cuenta de corréu-e nueva. Pa entamar, namái rellena col to nome y apellíu, o otros términos que prefieras, nos campos anteriores.">
+<!ENTITY existing.header "¿Tienes yá una direición que quieras usar?">
+<!ENTITY tinyheader.title "¿Tienes una direición?">
+<!ENTITY tinyheader.existing "Saltar esti pasu y usar un corréu personal esistente">
+<!ENTITY content.close "Creo que voi configurar la mio cuenta más sero.">
+<!ENTITY successful.title "Norabona!">
+<!ENTITY successful.successMessage "Configuraste correctamente la to cuenta.">
+<!ENTITY successful.write "Escribi un mensaxe de corréu">
+<!ENTITY successful.write.desc "Informa a los tos collacios y familia de la to cuenta nueva.<br/> Pa eso ye que ficisti una, non?">
+<!ENTITY successful.customize "Personaliza &brandShortName; con dalgunos complementos útiles">
+<!ENTITY successful.customize.desc "Hai munchísimos complementos que van permitite personalizar &brandShortName; p'axustalu a les tos necesidaes.">
+<!ENTITY successful.attach "Axuntar una robla personal al mio corréu-e">
+<!ENTITY successful.attach.desc "Pues axuntar automáticamente una robla, fras o información tocante a ti mesmu, al final de cada mensaxe qu'unvies.">
+<!ENTITY successful.close "Zarrar esta ventana.">
+<!ENTITY input.namePlaceholder "El to nome, o nomatu">
+<!ENTITY input.search "Guetar">
+<!ENTITY search_engine.title "Personaliza'l to motor de gueta">
+<!ENTITY search_engine.message "El to fornidor de corréu tamién pue ufrite capacidaes nueves de gueta na web.">
+<!ENTITY search_engine.button "Finar">

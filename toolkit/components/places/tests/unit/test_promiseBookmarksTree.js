@@ -5,7 +5,10 @@
 async function check_has_child(aParentGuid, aChildGuid) {
   let parentTree = await PlacesUtils.promiseBookmarksTree(aParentGuid);
   Assert.ok("children" in parentTree);
-  Assert.notEqual(parentTree.children.find(e => e.guid == aChildGuid), null);
+  Assert.notEqual(
+    parentTree.children.find(e => e.guid == aChildGuid),
+    null
+  );
 }
 
 async function compareToNode(aItem, aNode, aIsRootItem, aExcludedGuids = []) {
@@ -46,13 +49,6 @@ async function compareToNode(aItem, aNode, aIsRootItem, aExcludedGuids = []) {
     check_unset("parentGuid");
   }
 
-  let expectedAnnos = await PlacesUtils.promiseAnnotationsForItem(aItem.id);
-  if (expectedAnnos.length > 0) {
-    Assert.deepEqual(aItem.annos, expectedAnnos);
-  } else {
-    check_unset("annos");
-  }
-
   const BOOKMARK_ONLY_PROPS = ["uri", "iconuri", "tags", "charset", "keyword"];
   const FOLDER_ONLY_PROPS = ["children", "root"];
 
@@ -83,7 +79,7 @@ async function compareToNode(aItem, aNode, aIsRootItem, aExcludedGuids = []) {
         expectedChildrenNodes.push(childNode);
       }
 
-      if (expectedChildrenNodes.length > 0) {
+      if (expectedChildrenNodes.length) {
         Assert.ok(Array.isArray(aItem.children));
         Assert.equal(aItem.children.length, expectedChildrenNodes.length);
         for (let i = 0; i < aItem.children.length; i++) {
@@ -194,7 +190,7 @@ async function test_promiseBookmarksTreeForEachNode(
   aOptions,
   aExcludedGuids
 ) {
-  Assert.ok(aNode.bookmarkGuid && aNode.bookmarkGuid.length > 0);
+  Assert.ok(aNode.bookmarkGuid && !!aNode.bookmarkGuid.length);
   let item = await PlacesUtils.promiseBookmarksTree(
     aNode.bookmarkGuid,
     aOptions

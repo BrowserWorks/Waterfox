@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "Редактор додаткових властивостей">
+<!ENTITY AttName.label                  "Атрибут:">
+<!ENTITY AttValue.label                 "Значення:">
+<!ENTITY PropertyName.label             "Властивість:">
+<!ENTITY currentattributesfor.label     "Поточні атрибути для:">
+<!ENTITY tree.attributeHeader.label     "Атрибут">
+<!ENTITY tree.propertyHeader.label      "Властивість">
+<!ENTITY tree.valueHeader.label         "Значення">
+<!ENTITY tabHTML.label                  "HTML-атрибути">
+<!ENTITY tabCSS.label                   "Стильове оформлення">
+<!ENTITY tabJSE.label                   "Події JavaScript">
+
+<!ENTITY editAttribute.label    "Клацніть по об’єкту вгорі, щоб змінити його значення">
+<!ENTITY removeAttribute.label  "Вилучити">

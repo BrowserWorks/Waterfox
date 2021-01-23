@@ -32,17 +32,6 @@
 
 #include "dav1d/headers.h"
 
-enum ObuType {
-    OBU_SEQ_HDR   = 1,
-    OBU_TD        = 2,
-    OBU_FRAME_HDR = 3,
-    OBU_TILE_GRP  = 4,
-    OBU_METADATA  = 5,
-    OBU_FRAME     = 6,
-    OBU_REDUNDANT_FRAME_HDR = 7,
-    OBU_PADDING   = 15,
-};
-
 enum ObuMetaType {
     OBU_META_HDR_CLL     = 1,
     OBU_META_HDR_MDCV    = 2,
@@ -107,17 +96,6 @@ enum TxfmType {
     N_TX_TYPES,
     WHT_WHT = N_TX_TYPES,
     N_TX_TYPES_PLUS_LL,
-};
-
-enum TxfmTypeSet {
-    TXTP_SET_DCT,
-    TXTP_SET_DCT_ID,
-    TXTP_SET_DT4_ID,
-    TXTP_SET_DT4_ID_1D,
-    TXTP_SET_DT9_ID_1D,
-    TXTP_SET_ALL,
-    TXTP_SET_LOSSLESS,
-    N_TXTP_SETS
 };
 
 enum TxClass {
@@ -230,6 +208,13 @@ enum InterPredMode {
     GLOBALMV,
     NEWMV,
     N_INTER_PRED_MODES,
+};
+
+enum DRL_PROXIMITY {
+    NEAREST_DRL,
+    NEARER_DRL,
+    NEAR_DRL,
+    NEARISH_DRL
 };
 
 enum CompInterPredMode {

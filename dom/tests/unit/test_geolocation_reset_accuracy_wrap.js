@@ -12,12 +12,12 @@ var provider = {
   ]),
   createInstance: function eventsink_ci(outer, iid) {
     if (outer) {
-      throw Cr.NS_ERROR_NO_AGGREGATION;
+      throw Components.Exception("", Cr.NS_ERROR_NO_AGGREGATION);
     }
     return this.QueryInterface(iid);
   },
   lockFactory: function eventsink_lockf(lock) {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+    throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
   },
   startup() {},
   watch() {},
@@ -55,7 +55,7 @@ function run_test() {
   );
 
   Services.prefs.setBoolPref("dom.testing.ignore_ipc_principal", true);
-  Services.prefs.setBoolPref("geo.wifi.scan", false);
+  Services.prefs.setBoolPref("geo.provider.network.scan", false);
 
   run_test_in_child("test_geolocation_reset_accuracy.js", check_results);
 }

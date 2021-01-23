@@ -11,7 +11,6 @@
 
 #include "nsGfxCIID.h"
 #include "nsIServiceManager.h"
-#include "nsIWebBrowserPrint.h"
 #include "nsWindowsHelpers.h"
 #include "ipc/IPCMessageUtils.h"
 
@@ -22,19 +21,9 @@ using namespace mozilla::embedding;
 
 NS_IMETHODIMP
 nsPrintSettingsServiceWin::SerializeToPrintData(nsIPrintSettings* aSettings,
-                                                nsIWebBrowserPrint* aWBP,
                                                 PrintData* data) {
-  nsresult rv =
-      nsPrintSettingsService::SerializeToPrintData(aSettings, aWBP, data);
+  nsresult rv = nsPrintSettingsService::SerializeToPrintData(aSettings, data);
   NS_ENSURE_SUCCESS(rv, rv);
-
-  // Windows wants this information for its print dialogs
-  if (aWBP) {
-    aWBP->GetIsFramesetDocument(&data->isFramesetDocument());
-    aWBP->GetIsFramesetFrameSelected(&data->isFramesetFrameSelected());
-    aWBP->GetIsIFrameSelected(&data->isIFrameSelected());
-    aWBP->GetIsRangeSelection(&data->isRangeSelection());
-  }
 
   nsCOMPtr<nsIPrintSettingsWin> psWin = do_QueryInterface(aSettings);
   if (!psWin) {

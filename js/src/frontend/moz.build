@@ -17,13 +17,19 @@ include('../js-cxxflags.mozbuild')
 
 
 # Generate frontend/ReservedWordsGenerated.h from frontend/ReservedWords.h
-GENERATED_FILES += ['ReservedWordsGenerated.h']
-ReservedWordsGenerated = GENERATED_FILES['ReservedWordsGenerated.h']
-ReservedWordsGenerated.script = 'GenerateReservedWords.py'
-ReservedWordsGenerated.inputs += ['ReservedWords.h']
+GeneratedFile('ReservedWordsGenerated.h', script='GenerateReservedWords.py',
+              inputs=['ReservedWords.h'])
 
+if CONFIG['JS_ENABLE_SMOOSH']:
+    GeneratedFile('smoosh_generated.h',
+                  script='/build/RunCbindgen.py',
+                  entry_point='generate_with_same_crate',
+                  inputs=[
+                      '/js/src/frontend/smoosh',
+                  ])
 
 UNIFIED_SOURCES += [
+    'AbstractScopePtr.cpp',
     'BytecodeCompiler.cpp',
     'BytecodeControlStructures.cpp',
     'BytecodeEmitter.cpp',
@@ -47,16 +53,27 @@ UNIFIED_SOURCES += [
     'NameFunctions.cpp',
     'NameOpEmitter.cpp',
     'ObjectEmitter.cpp',
+    'ObjLiteral.cpp',
+    'OptionalEmitter.cpp',
     'ParseContext.cpp',
     'ParseNode.cpp',
+    'ParseNodeVerify.cpp',
     'PropOpEmitter.cpp',
     'SharedContext.cpp',
+    'SourceNotes.cpp',
+    'Stencil.cpp',
     'SwitchEmitter.cpp',
     'TDZCheckCache.cpp',
     'TokenStream.cpp',
     'TryEmitter.cpp',
     'WhileEmitter.cpp',
 ]
+
+if CONFIG['JS_ENABLE_SMOOSH']:
+    UNIFIED_SOURCES += [
+        'Frontend2.cpp',
+    ]
+
 
 # Parser.cpp cannot be built in unified mode because of explicit
 #   template instantiations.
@@ -80,9 +97,10 @@ if CONFIG['JS_BUILD_BINAST']:
         'BinASTTokenReaderMultipart.cpp',
     ]
 
-    DIRS += [
-        'binast'
-    ]
+    if CONFIG['JS_STANDALONE']:
+        DIRS += [
+            'binast'
+        ]
 
     # Instrument BinAST files for fuzzing as we have a fuzzing target for BinAST.
     if CONFIG['FUZZING_INTERFACES'] and CONFIG['LIBFUZZER']:

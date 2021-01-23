@@ -36,8 +36,6 @@
 </pre>
 
 <script class="testbody" type="text/javascript">
-  /* import-globals-from ./test_utils.js */
-
   function start() {
     return navigator.serviceWorker.register("lifetime_worker.js", {scope: "./"})
     .then((swr) => ({registration: swr}));
@@ -327,11 +325,11 @@
           ["dom.serviceWorkers.idle_extended_timeout", 0],
         ],
         steps(context) {
-        return new Promise(function(res, rej) {
-          context.iframe.contentWindow.fetch("update");
-          res(context);
-        });
-      },
+          return new Promise(function(res, rej) {
+            context.iframe.contentWindow.navigator.serviceWorker.controller.postMessage("ping");
+            res(context);
+          });
+        },
       };
 
       // Test that service worker is closed when the extended timeout expired

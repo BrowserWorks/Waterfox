@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "احذف">
+<!ENTITY editContactPanelDeleteContact.accesskey "ذ">
+
+<!ENTITY editContactName.label "الاسم:">
+<!ENTITY editContactName.accesskey "س">
+
+<!ENTITY editContactEmail.label "البريد الإلكتروني:">
+<!ENTITY editContactEmail.accesskey "ك">
+
+<!ENTITY editContactAddressBook.label "دفتر العناوين:">
+<!ENTITY editContactAddressBook.accesskey "ف">
+
+<!ENTITY editContactPanelDone.label "تمّ">
+<!ENTITY editContactPanelDone.accesskey "ت">
+
+<!ENTITY contactMoveDisabledWarning.description "لا يمكنك تغيير دفتر العناوين لأن جهة الاتصال في قائمة بريدية.">

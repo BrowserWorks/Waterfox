@@ -10,13 +10,13 @@ function getWindowlessBrowser(url) {
 
   let uri = NetUtil.newURI(url);
 
-  let principal = ssm.createCodebasePrincipal(uri, {});
+  let principal = ssm.createContentPrincipal(uri, {});
 
   let webnav = Services.appShell.createWindowlessBrowser(false);
 
   let docShell = webnav.docShell;
 
-  docShell.createAboutBlankContentViewer(principal);
+  docShell.createAboutBlankContentViewer(principal, principal);
 
   return webnav;
 }

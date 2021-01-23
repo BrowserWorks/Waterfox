@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY filterListDialog.title "消息过滤器">
+<!ENTITY nameColumn.label "描述">
+<!ENTITY activeColumn.label "启用">
+<!ENTITY newButton.label "新建">
+<!ENTITY newButton.accesskey "N">
+<!ENTITY editButton.label "编辑…">
+<!ENTITY editButton.accesskey "E">
+<!ENTITY deleteButton.label "删除">
+<!ENTITY deleteButton.accesskey "t">
+<!ENTITY reorderUpButton.label "上移">
+<!ENTITY reorderUpButton.accesskey "U">
+<!ENTITY reorderDownButton.label "下移">
+<!ENTITY reorderDownButton.accesskey "D">
+<!ENTITY filterHeader.label "可用过滤器按如下显示的顺序运行。">
+<!ENTITY filtersForPrefix.label "此过滤器用于:">
+<!ENTITY filtersForPrefix.accesskey "F">
+<!ENTITY viewLogButton.label "过滤器日志">
+<!ENTITY viewLogButton.accesskey "L">
+<!ENTITY runFilters.label "立即执行">
+<!ENTITY runFilters.accesskey "R">
+<!ENTITY stopFilters.label "停止">
+<!ENTITY stopFilters.accesskey "S">
+<!ENTITY folderPickerPrefix.label "执行所选的过滤器，对于:">
+<!ENTITY folderPickerPrefix.accesskey "c">
+<!ENTITY choosethis.label "选择此文件夹">
+<!ENTITY choosethisnewsserver.label "选择此新闻服务器">

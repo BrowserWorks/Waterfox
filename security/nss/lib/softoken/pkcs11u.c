@@ -55,6 +55,38 @@ sftk_MapCryptError(int error)
     }
     return CKR_DEVICE_ERROR;
 }
+
+/*
+ * functions which adjust the mapping based on different contexts
+ * (Decrypt or Verify).
+ */
+
+/* used by Decrypt and UnwrapKey (indirectly) and Decrypt message */
+CK_RV
+sftk_MapDecryptError(int error)
+{
+    switch (error) {
+        /* usually a padding error, or aead tag mismatch */
+        case SEC_ERROR_BAD_DATA:
+            return CKR_ENCRYPTED_DATA_INVALID;
+        default:
+            return sftk_MapCryptError(error);
+    }
+}
+
+/*
+ * return CKR_SIGNATURE_INVALID instead of CKR_DEVICE_ERROR by default for
+ * backward compatibilty.
+ */
+CK_RV
+sftk_MapVerifyError(int error)
+{
+    CK_RV crv = sftk_MapCryptError(error);
+    if (crv == CKR_DEVICE_ERROR)
+        crv = CKR_SIGNATURE_INVALID;
+    return crv;
+}
+
 /*
  * ******************** Attribute Utilities *******************************
  */
@@ -141,7 +173,7 @@ sftk_DestroyAttribute(SFTKAttribute *attribute)
 void
 sftk_FreeAttribute(SFTKAttribute *attribute)
 {
-    if (attribute->freeAttr) {
+    if (attribute && attribute->freeAttr) {
         sftk_DestroyAttribute(attribute);
         return;
     }
@@ -694,7 +726,7 @@ sftk_modifyType(CK_ATTRIBUTE_TYPE type, CK_OBJECT_CLASS inClass)
         case CKA_VALUE_LEN:
         case CKA_ALWAYS_SENSITIVE:
         case CKA_NEVER_EXTRACTABLE:
-        case CKA_NETSCAPE_DB:
+        case CKA_NSS_DB:
             mtype = SFTK_NEVER;
             break;
 
@@ -1249,7 +1281,7 @@ sftk_DeleteObject(SFTKSession *session, SFTKObject *object)
         SFTKTokenObject *to = sftk_narrowToTokenObject(object);
         PORT_Assert(to);
 #endif
-        crv = sftkdb_DestroyObject(handle, object->handle);
+        crv = sftkdb_DestroyObject(handle, object->handle, object->objclass);
         sftk_freeDB(handle);
     }
     return crv;
@@ -1310,7 +1342,7 @@ static const CK_ULONG ecPubKeyAttrsCount =
 
 static const CK_ATTRIBUTE_TYPE commonPrivKeyAttrs[] = {
     CKA_DECRYPT, CKA_SIGN, CKA_SIGN_RECOVER, CKA_UNWRAP, CKA_SUBJECT,
-    CKA_SENSITIVE, CKA_EXTRACTABLE, CKA_NETSCAPE_DB, CKA_PUBLIC_KEY_INFO
+    CKA_SENSITIVE, CKA_EXTRACTABLE, CKA_NSS_DB, CKA_PUBLIC_KEY_INFO
 };
 static const CK_ULONG commonPrivKeyAttrsCount =
     sizeof(commonPrivKeyAttrs) / sizeof(commonPrivKeyAttrs[0]);
@@ -1354,13 +1386,13 @@ static const CK_ULONG trustAttrsCount =
     sizeof(trustAttrs) / sizeof(trustAttrs[0]);
 
 static const CK_ATTRIBUTE_TYPE smimeAttrs[] = {
-    CKA_SUBJECT, CKA_NETSCAPE_EMAIL, CKA_NETSCAPE_SMIME_TIMESTAMP, CKA_VALUE
+    CKA_SUBJECT, CKA_NSS_EMAIL, CKA_NSS_SMIME_TIMESTAMP, CKA_VALUE
 };
 static const CK_ULONG smimeAttrsCount =
     sizeof(smimeAttrs) / sizeof(smimeAttrs[0]);
 
 static const CK_ATTRIBUTE_TYPE crlAttrs[] = {
-    CKA_SUBJECT, CKA_VALUE, CKA_NETSCAPE_URL, CKA_NETSCAPE_KRL
+    CKA_SUBJECT, CKA_VALUE, CKA_NSS_URL, CKA_NSS_KRL
 };
 static const CK_ULONG crlAttrsCount =
     sizeof(crlAttrs) / sizeof(crlAttrs[0]);
@@ -1554,15 +1586,15 @@ sftk_CopyTokenObject(SFTKObject *destObject, SFTKObject *srcObject)
             crv = stfk_CopyTokenAttributes(destObject, src_to, certAttrs,
                                            certAttrsCount);
             break;
-        case CKO_NETSCAPE_TRUST:
+        case CKO_NSS_TRUST:
             crv = stfk_CopyTokenAttributes(destObject, src_to, trustAttrs,
                                            trustAttrsCount);
             break;
-        case CKO_NETSCAPE_SMIME:
+        case CKO_NSS_SMIME:
             crv = stfk_CopyTokenAttributes(destObject, src_to, smimeAttrs,
                                            smimeAttrsCount);
             break;
-        case CKO_NETSCAPE_CRL:
+        case CKO_NSS_CRL:
             crv = stfk_CopyTokenAttributes(destObject, src_to, crlAttrs,
                                            crlAttrsCount);
             break;
@@ -1813,7 +1845,6 @@ sftk_NewSession(CK_SLOT_ID slotID, CK_NOTIFY notify, CK_VOID_PTR pApplication,
         return NULL;
 
     session->next = session->prev = NULL;
-    session->refCount = 1;
     session->enc_context = NULL;
     session->hash_context = NULL;
     session->sign_context = NULL;
@@ -1837,11 +1868,10 @@ sftk_NewSession(CK_SLOT_ID slotID, CK_NOTIFY notify, CK_VOID_PTR pApplication,
 }
 
 /* free all the data associated with a session. */
-static void
+void
 sftk_DestroySession(SFTKSession *session)
 {
     SFTKObjectList *op, *next;
-    PORT_Assert(session->refCount == 0);
 
     /* clean out the attributes */
     /* since no one is referencing us, it's safe to walk the chain
@@ -1885,31 +1915,20 @@ sftk_SessionFromHandle(CK_SESSION_HANDLE handle)
 
     PZ_Lock(lock);
     sftkqueue_find(session, handle, slot->head, slot->sessHashSize);
-    if (session)
-        session->refCount++;
     PZ_Unlock(lock);
 
     return (session);
 }
 
 /*
- * release a reference to a session handle
+ * release a reference to a session handle. This method of using SFTKSessions
+ * is deprecated, but the pattern should be retained until a future effort
+ * to refactor all SFTKSession users at once is completed.
  */
 void
 sftk_FreeSession(SFTKSession *session)
 {
-    PRBool destroy = PR_FALSE;
-    SFTKSlot *slot = sftk_SlotFromSession(session);
-    PZLock *lock = SFTK_SESSION_LOCK(slot, session->handle);
-
-    PZ_Lock(lock);
-    if (session->refCount == 1)
-        destroy = PR_TRUE;
-    session->refCount--;
-    PZ_Unlock(lock);
-
-    if (destroy)
-        sftk_DestroySession(session);
+    return;
 }
 
 void
@@ -2022,4 +2041,77 @@ SFTKTokenObject *
 sftk_narrowToTokenObject(SFTKObject *obj)
 {
     return sftk_isToken(obj->handle) ? (SFTKTokenObject *)obj : NULL;
+}
+
+/* Constant time helper functions */
+
+/* sftk_CKRVToMask returns, in constant time, a mask value of
+ * all ones if rv == CKR_OK.  Otherwise it returns zero. */
+unsigned int
+sftk_CKRVToMask(CK_RV rv)
+{
+    PR_STATIC_ASSERT(CKR_OK == 0);
+    return ~PORT_CT_NOT_ZERO(rv);
+}
+
+/* sftk_CheckCBCPadding checks, in constant time, the padding validity and
+ * accordingly sets the pad length. */
+CK_RV
+sftk_CheckCBCPadding(CK_BYTE_PTR pBuf, unsigned int bufLen,
+                     unsigned int blockSize, unsigned int *outPadSize)
+{
+    PORT_Assert(outPadSize);
+
+    unsigned int padSize = (unsigned int)pBuf[bufLen - 1];
+
+    /* If padSize <= blockSize, set goodPad to all-1s and all-0s otherwise.*/
+    unsigned int goodPad = PORT_CT_DUPLICATE_MSB_TO_ALL(~(blockSize - padSize));
+    /* padSize should not be 0 */
+    goodPad &= PORT_CT_NOT_ZERO(padSize);
+
+    unsigned int i;
+    for (i = 0; i < blockSize; i++) {
+        /* If i < padSize, set loopMask to all-1s and all-0s otherwise.*/
+        unsigned int loopMask = PORT_CT_DUPLICATE_MSB_TO_ALL(~(padSize - 1 - i));
+        /* Get the padding value (should be padSize) from buffer */
+        unsigned int padVal = pBuf[bufLen - 1 - i];
+        /* Update goodPad only if i < padSize */
+        goodPad &= PORT_CT_SEL(loopMask, ~(padVal ^ padSize), goodPad);
+    }
+
+    /* If any of the final padding bytes had the wrong value, one or more
+     * of the lower eight bits of |goodPad| will be cleared. We AND the
+     * bottom 8 bits together and duplicate the result to all the bits. */
+    goodPad &= goodPad >> 4;
+    goodPad &= goodPad >> 2;
+    goodPad &= goodPad >> 1;
+    goodPad <<= sizeof(goodPad) * 8 - 1;
+    goodPad = PORT_CT_DUPLICATE_MSB_TO_ALL(goodPad);
+
+    /* Set outPadSize to padSize or 0 */
+    *outPadSize = PORT_CT_SEL(goodPad, padSize, 0);
+    /* Return OK if the pad is valid */
+    return PORT_CT_SEL(goodPad, CKR_OK, CKR_ENCRYPTED_DATA_INVALID);
+}
+
+void
+sftk_EncodeInteger(PRUint64 integer, CK_ULONG num_bits, CK_BBOOL littleEndian,
+                   CK_BYTE_PTR output, CK_ULONG_PTR output_len)
+{
+    if (output_len) {
+        *output_len = (num_bits / 8);
+    }
+
+    PR_ASSERT(num_bits > 0 && num_bits <= 64 && (num_bits % 8) == 0);
+
+    if (littleEndian == CK_TRUE) {
+        for (size_t offset = 0; offset < num_bits / 8; offset++) {
+            output[offset] = (unsigned char)((integer >> (offset * 8)) & 0xFF);
+        }
+    } else {
+        for (size_t offset = 0; offset < num_bits / 8; offset++) {
+            PRUint64 shift = num_bits - (offset + 1) * 8;
+            output[offset] = (unsigned char)((integer >> shift) & 0xFF);
+        }
+    }
 }

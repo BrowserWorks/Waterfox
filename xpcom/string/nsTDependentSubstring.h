@@ -10,6 +10,7 @@
 
 #include "nsTSubstring.h"
 #include "nsTLiteralString.h"
+#include "mozilla/Span.h"
 
 /**
  * nsTDependentSubstring_CharT
@@ -68,6 +69,9 @@ class nsTDependentSubstring : public nsTSubstring<T> {
       : substring_type(const_cast<char_type*>(aData), aLength, DataFlags(0),
                        ClassFlags(0)) {}
 
+  explicit nsTDependentSubstring(mozilla::Span<const char_type> aData)
+      : nsTDependentSubstring(aData.Elements(), aData.Length()) {}
+
   nsTDependentSubstring(const char_type* aStart, const char_type* aEnd);
 
 #if defined(MOZ_USE_CHAR16_WRAPPER)
@@ -90,8 +94,8 @@ class nsTDependentSubstring : public nsTSubstring<T> {
 
  private:
   // NOT USED
-  void operator=(
-      const self_type&);  // we're immutable, you can't assign into a substring
+  void operator=(const self_type&) =
+      delete;  // we're immutable, you can't assign into a substring
 };
 
 extern template class nsTDependentSubstring<char>;
@@ -125,6 +129,12 @@ inline const nsTDependentSubstring<T> Substring(const T* aData,
 
 template <typename T>
 const nsTDependentSubstring<T> Substring(const T* aStart, const T* aEnd);
+
+extern template const nsTDependentSubstring<char> Substring(const char* aStart,
+                                                            const char* aEnd);
+
+extern template const nsTDependentSubstring<char16_t> Substring(
+    const char16_t* aStart, const char16_t* aEnd);
 
 #if defined(MOZ_USE_CHAR16_WRAPPER)
 inline const nsTDependentSubstring<char16_t> Substring(char16ptr_t aData,

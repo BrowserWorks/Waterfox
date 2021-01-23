@@ -5,28 +5,36 @@
 
 #include "WebGLExtensions.h"
 
-#include "gfxPrefs.h"
 #include "GLContext.h"
 #include "mozilla/dom/WebGLRenderingContextBinding.h"
+#include "mozilla/StaticPrefs_webgl.h"
 #include "WebGLContext.h"
 
 namespace mozilla {
 
-WebGLExtensionBase::WebGLExtensionBase(WebGLContext* context)
-    : WebGLContextBoundObject(context), mIsLost(false) {}
-
-WebGLExtensionBase::~WebGLExtensionBase() {}
-
-void WebGLExtensionBase::MarkLost() {
-  mIsLost = true;
-
-  OnMarkLost();
+WebGLExtensionBlendMinMax::WebGLExtensionBlendMinMax(WebGLContext* webgl)
+    : WebGLExtensionBase(webgl) {
+  MOZ_ASSERT(IsSupported(webgl), "Don't construct extension if unsupported.");
 }
 
-NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE_0(WebGLExtensionBase)
+bool WebGLExtensionBlendMinMax::IsSupported(const WebGLContext* webgl) {
+  if (webgl->IsWebGL2()) return false;
 
-NS_IMPL_CYCLE_COLLECTION_ROOT_NATIVE(WebGLExtensionBase, AddRef)
-NS_IMPL_CYCLE_COLLECTION_UNROOT_NATIVE(WebGLExtensionBase, Release)
+  return webgl->GL()->IsSupported(gl::GLFeature::blend_minmax);
+}
+
+// -
+
+WebGLExtensionExplicitPresent::WebGLExtensionExplicitPresent(
+    WebGLContext* const webgl)
+    : WebGLExtensionBase(webgl) {
+  MOZ_ASSERT(IsSupported(webgl), "Don't construct extension if unsupported.");
+}
+
+bool WebGLExtensionExplicitPresent::IsSupported(
+    const WebGLContext* const webgl) {
+  return StaticPrefs::webgl_enable_draft_extensions();
+}
 
 // -
 
@@ -35,19 +43,16 @@ WebGLExtensionFloatBlend::WebGLExtensionFloatBlend(WebGLContext* const webgl)
   MOZ_ASSERT(IsSupported(webgl), "Don't construct extension if unsupported.");
 }
 
-WebGLExtensionFloatBlend::~WebGLExtensionFloatBlend() = default;
-
 bool WebGLExtensionFloatBlend::IsSupported(const WebGLContext* const webgl) {
   if (!WebGLExtensionColorBufferFloat::IsSupported(webgl) &&
       !WebGLExtensionEXTColorBufferFloat::IsSupported(webgl))
     return false;
 
   const auto& gl = webgl->gl;
-  return !gl->IsGLES() || gl->IsANGLE() ||
-         gl->IsExtensionSupported(gl::GLContext::EXT_float_blend);
+  if (!gl->IsGLES() && gl->Version() >= 300) return true;
+  if (gl->IsGLES() && gl->Version() >= 320) return true;
+  return gl->IsExtensionSupported(gl::GLContext::EXT_float_blend);
 }
-
-IMPL_WEBGL_EXTENSION_GOOP(WebGLExtensionFloatBlend, EXT_float_blend)
 
 // -
 
@@ -57,12 +62,9 @@ WebGLExtensionFBORenderMipmap::WebGLExtensionFBORenderMipmap(
   MOZ_ASSERT(IsSupported(webgl), "Don't construct extension if unsupported.");
 }
 
-WebGLExtensionFBORenderMipmap::~WebGLExtensionFBORenderMipmap() = default;
-
 bool WebGLExtensionFBORenderMipmap::IsSupported(
     const WebGLContext* const webgl) {
   if (webgl->IsWebGL2()) return false;
-  if (!gfxPrefs::WebGLDraftExtensionsEnabled()) return false;
 
   const auto& gl = webgl->gl;
   if (!gl->IsGLES()) return true;
@@ -70,6 +72,18 @@ bool WebGLExtensionFBORenderMipmap::IsSupported(
   return gl->IsExtensionSupported(gl::GLContext::OES_fbo_render_mipmap);
 }
 
-IMPL_WEBGL_EXTENSION_GOOP(WebGLExtensionFBORenderMipmap, OES_fbo_render_mipmap)
+// -
+
+WebGLExtensionMultiview::WebGLExtensionMultiview(WebGLContext* const webgl)
+    : WebGLExtensionBase(webgl) {
+  MOZ_ASSERT(IsSupported(webgl), "Don't construct extension if unsupported.");
+}
+
+bool WebGLExtensionMultiview::IsSupported(const WebGLContext* const webgl) {
+  if (!webgl->IsWebGL2()) return false;
+
+  const auto& gl = webgl->gl;
+  return gl->IsSupported(gl::GLFeature::multiview);
+}
 
 }  // namespace mozilla

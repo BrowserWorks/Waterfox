@@ -10,10 +10,11 @@
  * liability, trademark and document use rules apply.
  */
 
+[Exposed=Window]
 interface SVGFEImageElement : SVGElement {
   [Constant]
   readonly attribute SVGAnimatedPreserveAspectRatio preserveAspectRatio;
 };
 
-SVGFEImageElement implements SVGFilterPrimitiveStandardAttributes;
-SVGFEImageElement implements SVGURIReference;
+SVGFEImageElement includes SVGFilterPrimitiveStandardAttributes;
+SVGFEImageElement includes SVGURIReference;

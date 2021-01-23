@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressbookPicker.label            "Quasernet d'adreças :">
+<!ENTITY addressbookPicker.accesskey        "C">
+<!ENTITY SearchNameOrEmail.label            "Nom o adreça">
+
+<!ENTITY addtoToFieldMenu.label             "Apondre al camp Per">
+<!ENTITY addtoCcFieldMenu.label             "Apondre al camp Còpia a">
+<!ENTITY addtoBccFieldMenu.label            "Apondre al camp Còpia amagada a">
+
+<!ENTITY deleteAddrBookCard.label           "Suprimir">
+
+<!ENTITY toButton.label                     "Apondon Per :">
+<!ENTITY toButton.accesskey                 "A">
+<!ENTITY ccButton.label                     "Apondon Còpia a :">
+<!ENTITY ccButton.accesskey                 "o">
+<!ENTITY bccButton.label                    "Apondon Còpia amagada a :">
+<!ENTITY bccButton.accesskey                "u">

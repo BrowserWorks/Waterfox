@@ -19,6 +19,7 @@
 #include "mozilla/UniquePtr.h"
 #include "nsString.h"
 #include "mozpkix/pkixtypes.h"
+#include "sslt.h"
 
 #if defined(_MSC_VER)
 #  pragma warning(push)
@@ -78,6 +79,12 @@ enum DistrustedCAPolicy : uint32_t {
 // update this to account for new entries in DistrustedCAPolicy.
 const uint32_t DistrustedCAPolicyMaxAllowedValueMask = 0b0011;
 
+enum class CRLiteMode {
+  Disabled = 0,
+  TelemetryOnly = 1,
+  Enforce = 2,
+};
+
 enum class NetscapeStepUpPolicy : uint32_t;
 
 class PinningTelemetryInfo {
@@ -119,6 +126,45 @@ class CertificateTransparencyInfo {
   void Reset();
 };
 
+class DelegatedCredentialInfo {
+ public:
+  DelegatedCredentialInfo() : scheme(ssl_sig_none), authKeyBits(0) {}
+  DelegatedCredentialInfo(SSLSignatureScheme scheme, uint32_t authKeyBits)
+      : scheme(scheme), authKeyBits(authKeyBits) {}
+
+  // The signature scheme to be used in CertVerify. This tells us
+  // whether to interpret |authKeyBits| in an RSA or ECDSA context.
+  SSLSignatureScheme scheme;
+
+  // The size of the key, in bits.
+  uint32_t authKeyBits;
+};
+
+enum class CRLiteLookupResult {
+  NeverChecked = 0,
+  FilterNotAvailable = 1,
+  IssuerNotEnrolled = 2,
+  CertificateTooNew = 3,
+  CertificateValid = 4,
+  CertificateRevoked = 5,
+  LibraryFailure = 6,
+};
+
+class CRLiteTelemetryInfo {
+ public:
+  CRLiteTelemetryInfo() : mLookupResult(CRLiteLookupResult::NeverChecked) {}
+
+  void Reset() {
+    mLookupResult = CRLiteLookupResult::NeverChecked;
+    mCRLiteFasterThanOCSPMillis.reset();
+    mOCSPFasterThanCRLiteMillis.reset();
+  }
+
+  CRLiteLookupResult mLookupResult;
+  Maybe<double> mCRLiteFasterThanOCSPMillis;
+  Maybe<double> mOCSPFasterThanCRLiteMillis;
+};
+
 class NSSCertDBTrustDomain;
 
 class CertVerifier {
@@ -146,8 +192,11 @@ class CertVerifier {
       CERTCertificate* cert, SECCertificateUsage usage,
       mozilla::pkix::Time time, void* pinArg, const char* hostname,
       /*out*/ UniqueCERTCertList& builtChain, Flags flags = 0,
-      /*optional in*/ const SECItem* stapledOCSPResponse = nullptr,
-      /*optional in*/ const SECItem* sctsFromTLS = nullptr,
+      /*optional in*/
+      const Maybe<nsTArray<nsTArray<uint8_t>>>& extraCertificates = Nothing(),
+      /*optional in*/ const Maybe<nsTArray<uint8_t>>& stapledOCSPResponseArg =
+          Nothing(),
+      /*optional in*/ const Maybe<nsTArray<uint8_t>>& sctsFromTLS = Nothing(),
       /*optional in*/ const OriginAttributes& originAttributes =
           OriginAttributes(),
       /*optional out*/ SECOidTag* evOidPolicy = nullptr,
@@ -155,24 +204,31 @@ class CertVerifier {
       /*optional out*/ KeySizeStatus* keySizeStatus = nullptr,
       /*optional out*/ SHA1ModeResult* sha1ModeResult = nullptr,
       /*optional out*/ PinningTelemetryInfo* pinningTelemetryInfo = nullptr,
-      /*optional out*/ CertificateTransparencyInfo* ctInfo = nullptr);
+      /*optional out*/ CertificateTransparencyInfo* ctInfo = nullptr,
+      /*optional out*/ CRLiteTelemetryInfo* crliteInfo = nullptr);
 
   mozilla::pkix::Result VerifySSLServerCert(
-      const UniqueCERTCertificate& peerCert,
-      /*optional*/ const SECItem* stapledOCSPResponse,
-      /*optional*/ const SECItem* sctsFromTLS, mozilla::pkix::Time time,
-      /*optional*/ void* pinarg, const nsACString& hostname,
+      const UniqueCERTCertificate& peerCert, mozilla::pkix::Time time,
+      void* pinarg, const nsACString& hostname,
       /*out*/ UniqueCERTCertList& builtChain,
-      /*optional*/ bool saveIntermediatesInPermanentDatabase = false,
       /*optional*/ Flags flags = 0,
+      /*optional*/ const Maybe<nsTArray<nsTArray<uint8_t>>>& extraCertificates =
+          Nothing(),
+      /*optional*/ const Maybe<nsTArray<uint8_t>>& stapledOCSPResponse =
+          Nothing(),
+      /*optional*/ const Maybe<nsTArray<uint8_t>>& sctsFromTLS = Nothing(),
+      /*optional*/ const Maybe<DelegatedCredentialInfo>& dcInfo = Nothing(),
       /*optional*/ const OriginAttributes& originAttributes =
           OriginAttributes(),
+      /*optional*/ bool saveIntermediatesInPermanentDatabase = false,
       /*optional out*/ SECOidTag* evOidPolicy = nullptr,
       /*optional out*/ OCSPStaplingStatus* ocspStaplingStatus = nullptr,
       /*optional out*/ KeySizeStatus* keySizeStatus = nullptr,
       /*optional out*/ SHA1ModeResult* sha1ModeResult = nullptr,
       /*optional out*/ PinningTelemetryInfo* pinningTelemetryInfo = nullptr,
-      /*optional out*/ CertificateTransparencyInfo* ctInfo = nullptr);
+      /*optional out*/ CertificateTransparencyInfo* ctInfo = nullptr,
+      /*optional out*/ CRLiteTelemetryInfo* crliteInfo = nullptr,
+      /*optional out*/ bool* isBuiltCertChainRootBuiltInRoot = nullptr);
 
   enum PinningMode {
     pinningDisabled = 0,
@@ -207,7 +263,7 @@ class CertVerifier {
                SHA1Mode sha1Mode, BRNameMatchingPolicy::Mode nameMatchingMode,
                NetscapeStepUpPolicy netscapeStepUpPolicy,
                CertificateTransparencyMode ctMode,
-               DistrustedCAPolicy distrustedCAPolicy,
+               DistrustedCAPolicy distrustedCAPolicy, CRLiteMode crliteMode,
                const Vector<EnterpriseCert>& thirdPartyCerts);
   ~CertVerifier();
 
@@ -224,6 +280,7 @@ class CertVerifier {
   const NetscapeStepUpPolicy mNetscapeStepUpPolicy;
   const CertificateTransparencyMode mCTMode;
   const DistrustedCAPolicy mDistrustedCAPolicy;
+  const CRLiteMode mCRLiteMode;
 
  private:
   OCSPCache mOCSPCache;

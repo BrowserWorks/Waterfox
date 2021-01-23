@@ -19,9 +19,11 @@ function resolveDateTimeFormatInternals(lazyDateTimeFormatData) {
     //       {
     //         localeMatcher: "lookup" / "best fit",
     //
-    //         hour12: true / false,  // optional
+    //         ca: string matching a Unicode extension type, // optional
     //
-    //         hourCycle: "h11" / "h12" / "h23" / "h24", // optional
+    //         nu: string matching a Unicode extension type, // optional
+    //
+    //         hc: "h11" / "h12" / "h23" / "h24", // optional
     //       }
     //
     //     timeZone: IANA time zone name,
@@ -30,6 +32,8 @@ function resolveDateTimeFormatInternals(lazyDateTimeFormatData) {
     //       {
     //         // all the properties/values listed in Table 3
     //         // (weekday, era, year, month, day, &c.)
+    //
+    //         hour12: true / false,  // optional
     //       }
     //
     //     formatMatcher: "basic" / "best fit",
@@ -61,7 +65,7 @@ function resolveDateTimeFormatInternals(lazyDateTimeFormatData) {
     var localeData = DateTimeFormat.localeData;
 
     // Step 11.
-    var r = ResolveLocale(callFunction(DateTimeFormat.availableLocales, DateTimeFormat),
+    var r = ResolveLocale("DateTimeFormat",
                           lazyDateTimeFormatData.requestedLocales,
                           lazyDateTimeFormatData.localeOpt,
                           DateTimeFormat.relevantExtensionKeys,
@@ -75,6 +79,9 @@ function resolveDateTimeFormatInternals(lazyDateTimeFormatData) {
     // Compute formatting options.
     // Step 16.
     var dataLocale = r.dataLocale;
+
+    // Allow the calendar field to modify the pattern selection choice.
+    dataLocale = addUnicodeExtension(dataLocale, "-u-ca-" + r.ca);
 
     // Step 20.
     internalProps.timeZone = lazyDateTimeFormatData.timeZone;
@@ -193,7 +200,7 @@ function UnwrapDateTimeFormat(dtf) {
     if (IsObject(dtf) &&
         GuardToDateTimeFormat(dtf) === null &&
         !IsWrappedDateTimeFormat(dtf) &&
-        dtf instanceof GetDateTimeFormatConstructor())
+        dtf instanceof GetBuiltinConstructor("DateTimeFormat"))
     {
         dtf = dtf[intlFallbackSymbol()];
     }
@@ -303,6 +310,12 @@ function InitializeDateTimeFormat(dateTimeFormat, thisValue, locales, options, m
     //     localeOpt: // *first* opt computed in InitializeDateTimeFormat
     //       {
     //         localeMatcher: "lookup" / "best fit",
+    //
+    //         ca: string matching a Unicode extension type, // optional
+    //
+    //         nu: string matching a Unicode extension type, // optional
+    //
+    //         hc: "h11" / "h12" / "h23" / "h24", // optional
     //       }
     //
     //     timeZone: IANA time zone name,
@@ -313,7 +326,6 @@ function InitializeDateTimeFormat(dateTimeFormat, thisValue, locales, options, m
     //         // (weekday, era, year, month, day, &c.)
     //
     //         hour12: true / false,  // optional
-    //         hourCycle: "h11" / "h12" / "h23" / "h24", // optional
     //       }
     //
     //     formatMatcher: "basic" / "best fit",
@@ -341,6 +353,24 @@ function InitializeDateTimeFormat(dateTimeFormat, thisValue, locales, options, m
         GetOption(options, "localeMatcher", "string", ["lookup", "best fit"],
                   "best fit");
     localeOpt.localeMatcher = localeMatcher;
+
+    var calendar = GetOption(options, "calendar", "string", undefined, undefined);
+
+    if (calendar !== undefined) {
+        calendar = intl_ValidateAndCanonicalizeUnicodeExtensionType(calendar, "calendar", "ca");
+    }
+
+    localeOpt.ca = calendar;
+
+    var numberingSystem = GetOption(options, "numberingSystem", "string", undefined, undefined);
+
+    if (numberingSystem !== undefined) {
+        numberingSystem = intl_ValidateAndCanonicalizeUnicodeExtensionType(numberingSystem,
+                                                                           "numberingSystem",
+                                                                           "nu");
+    }
+
+    localeOpt.nu = numberingSystem;
 
     // Step 6.
     var hr12  = GetOption(options, "hour12", "boolean", undefined, undefined);
@@ -403,11 +433,19 @@ function InitializeDateTimeFormat(dateTimeFormat, thisValue, locales, options, m
     formatOpt.month = GetOption(options, "month", "string",
                                 ["2-digit", "numeric", "narrow", "short", "long"], undefined);
     formatOpt.day = GetOption(options, "day", "string", ["2-digit", "numeric"], undefined);
+#ifdef NIGHTLY_BUILD
+    formatOpt.dayPeriod = GetOption(options, "dayPeriod", "string", ["narrow", "short", "long"],
+                                    undefined);
+#endif
     formatOpt.hour = GetOption(options, "hour", "string", ["2-digit", "numeric"], undefined);
     formatOpt.minute = GetOption(options, "minute", "string", ["2-digit", "numeric"], undefined);
     formatOpt.second = GetOption(options, "second", "string", ["2-digit", "numeric"], undefined);
     formatOpt.timeZoneName = GetOption(options, "timeZoneName", "string", ["short", "long"],
                                        undefined);
+
+#ifdef NIGHTLY_BUILD
+    formatOpt.fractionalSecondDigits = GetNumberOption(options, "fractionalSecondDigits", 0, 3, 0);
+#endif
 
     // Steps 23-24 provided by ICU - see comment after this function.
 
@@ -439,7 +477,7 @@ function InitializeDateTimeFormat(dateTimeFormat, thisValue, locales, options, m
     // TODO: spec issue - The current spec doesn't have the IsObject check,
     // which means |Intl.DateTimeFormat.call(null)| is supposed to throw here.
     if (dateTimeFormat !== thisValue && IsObject(thisValue) &&
-        thisValue instanceof GetDateTimeFormatConstructor())
+        thisValue instanceof GetBuiltinConstructor("DateTimeFormat"))
     {
         _DefineDataProperty(thisValue, intlFallbackSymbol(), dateTimeFormat,
                             ATTR_NONENUMERABLE | ATTR_NONCONFIGURABLE | ATTR_NONWRITABLE);
@@ -520,6 +558,7 @@ function InitializeDateTimeFormat(dateTimeFormat, thisValue, locales, options, m
 // documentation at this point is in UTR 35:
 // http://unicode.org/reports/tr35/tr35-dates.html#Date_Format_Patterns
 
+/* eslint-disable complexity */
 /**
  * Returns an ICU pattern string for the given locale and representing the
  * specified options as closely as possible given available locale data.
@@ -609,6 +648,21 @@ function toBestICUPattern(locale, options) {
         skeleton += hourSkeletonChar;
         break;
     }
+#ifdef NIGHTLY_BUILD
+    // ICU requires that "B" is set after the "j" hour skeleton symbol.
+    // https://unicode-org.atlassian.net/browse/ICU-20731
+    switch (options.dayPeriod) {
+    case "narrow":
+        skeleton += "BBBBB";
+        break;
+    case "short":
+        skeleton += "B";
+        break;
+    case "long":
+        skeleton += "BBBB";
+        break;
+    }
+#endif
     switch (options.minute) {
     case "2-digit":
         skeleton += "mm";
@@ -625,6 +679,19 @@ function toBestICUPattern(locale, options) {
         skeleton += "s";
         break;
     }
+#ifdef NIGHTLY_BUILD
+    switch (options.fractionalSecondDigits) {
+    case 1:
+        skeleton += "S";
+        break;
+    case 2:
+        skeleton += "SS";
+        break;
+    case 3:
+        skeleton += "SSS";
+        break;
+    }
+#endif
     switch (options.timeZoneName) {
     case "short":
         skeleton += "z";
@@ -637,6 +704,7 @@ function toBestICUPattern(locale, options) {
     // Let ICU convert the ICU skeleton to an ICU pattern for the given locale.
     return intl_patternForSkeleton(locale, skeleton);
 }
+/* eslint-enable complexity */
 
 /**
  * Returns a new options object that includes the provided options (if any)
@@ -674,12 +742,20 @@ function ToDateTimeOptions(options, required, defaults) {
 
     // Step 5.
     if (required === "time" || required === "any") {
+#ifdef NIGHTLY_BUILD
+        if (options.dayPeriod !== undefined)
+            needDefaults = false;
+#endif
         if (options.hour !== undefined)
             needDefaults = false;
         if (options.minute !== undefined)
             needDefaults = false;
         if (options.second !== undefined)
             needDefaults = false;
+#ifdef NIGHTLY_BUILD
+        if (options.fractionalSecondDigits !== undefined)
+            needDefaults = false;
+#endif
     }
 
     // Step 6.
@@ -716,8 +792,7 @@ function Intl_DateTimeFormat_supportedLocalesOf(locales /*, options*/) {
     var options = arguments.length > 1 ? arguments[1] : undefined;
 
     // Step 1.
-    var availableLocales = callFunction(dateTimeFormatInternalProperties.availableLocales,
-                                        dateTimeFormatInternalProperties);
+    var availableLocales = "DateTimeFormat";
 
     // Step 2.
     var requestedLocales = CanonicalizeLocaleList(locales);
@@ -733,18 +808,7 @@ function Intl_DateTimeFormat_supportedLocalesOf(locales /*, options*/) {
  */
 var dateTimeFormatInternalProperties = {
     localeData: dateTimeFormatLocaleData,
-    _availableLocales: null,
-    availableLocales: function() // eslint-disable-line object-shorthand
-    {
-        var locales = this._availableLocales;
-        if (locales)
-            return locales;
-
-        locales = intl_DateTimeFormat_availableLocales();
-        addSpecialMissingLanguageTags(locales);
-        return (this._availableLocales = locales);
-    },
-    relevantExtensionKeys: ["ca", "nu", "hc"],
+    relevantExtensionKeys: ["ca", "hc", "nu"],
 };
 
 function dateTimeFormatLocaleData() {
@@ -765,23 +829,26 @@ function dateTimeFormatLocaleData() {
 }
 
 /**
- * Function to be bound and returned by Intl.DateTimeFormat.prototype.format.
+ * Create function to be cached and returned by Intl.DateTimeFormat.prototype.format.
  *
  * Spec: ECMAScript Internationalization API Specification, 12.1.5.
  */
-function dateTimeFormatFormatToBind(date) {
-    // Step 1.
-    var dtf = this;
+function createDateTimeFormatFormat(dtf) {
+    // This function is not inlined in $Intl_DateTimeFormat_format_get to avoid
+    // creating a call-object on each call to $Intl_DateTimeFormat_format_get.
+    return function(date) {
+        // Step 1 (implicit).
 
-    // Step 2.
-    assert(IsObject(dtf), "dateTimeFormatFormatToBind called with non-Object");
-    assert(GuardToDateTimeFormat(dtf) !== null, "dateTimeFormatFormatToBind called with non-DateTimeFormat");
+        // Step 2.
+        assert(IsObject(dtf), "dateTimeFormatFormatToBind called with non-Object");
+        assert(GuardToDateTimeFormat(dtf) !== null, "dateTimeFormatFormatToBind called with non-DateTimeFormat");
 
-    // Steps 3-4.
-    var x = (date === undefined) ? std_Date_now() : ToNumber(date);
+        // Steps 3-4.
+        var x = (date === undefined) ? std_Date_now() : ToNumber(date);
 
-    // Step 5.
-    return intl_FormatDateTime(dtf, x, /* formatToParts = */ false);
+        // Step 5.
+        return intl_FormatDateTime(dtf, x, /* formatToParts = */ false);
+    };
 }
 
 /**
@@ -806,11 +873,8 @@ function $Intl_DateTimeFormat_format_get() {
 
     // Step 4.
     if (internals.boundFormat === undefined) {
-        // Steps 4.a-b.
-        var F = callFunction(FunctionBind, dateTimeFormatFormatToBind, dtf);
-
-        // Step 4.c.
-        internals.boundFormat = F;
+        // Steps 4.a-c.
+        internals.boundFormat = createDateTimeFormatFormat(dtf);
     }
 
     // Step 5.
@@ -893,7 +957,8 @@ function Intl_DateTimeFormat_resolvedOptions() {
 function resolveICUPattern(pattern, result) {
     assert(IsObject(result), "resolveICUPattern");
 
-    var hourCycle, weekday, era, year, month, day, hour, minute, second, timeZoneName;
+    var hourCycle, weekday, era, year, month, day, dayPeriod, hour, minute, second,
+        fractionalSecondDigits, timeZoneName;
     var i = 0;
     while (i < pattern.length) {
         var c = pattern[i++];
@@ -914,6 +979,7 @@ function resolveICUPattern(pattern, result) {
             case "G":
             case "E":
             case "c":
+            case "B":
             case "z":
             case "v":
             case "V":
@@ -952,6 +1018,9 @@ function resolveICUPattern(pattern, result) {
                 else
                     value = "narrow";
                 break;
+            case "S":
+                value = count;
+                break;
             default:
                 // skip other pattern characters and literal text
             }
@@ -977,6 +1046,9 @@ function resolveICUPattern(pattern, result) {
             case "d":
                 day = value;
                 break;
+            case "B":
+                dayPeriod = value;
+                break;
             case "h":
                 hourCycle = "h12";
                 hour = value;
@@ -998,6 +1070,9 @@ function resolveICUPattern(pattern, result) {
                 break;
             case "s":
                 second = value;
+                break;
+            case "S":
+                fractionalSecondDigits = value;
                 break;
             case "z":
             case "v":
@@ -1027,6 +1102,11 @@ function resolveICUPattern(pattern, result) {
     if (day) {
         _DefineDataProperty(result, "day", day);
     }
+#ifdef NIGHTLY_BUILD
+    if (dayPeriod) {
+        _DefineDataProperty(result, "dayPeriod", dayPeriod);
+    }
+#endif
     if (hour) {
         _DefineDataProperty(result, "hour", hour);
     }
@@ -1036,6 +1116,11 @@ function resolveICUPattern(pattern, result) {
     if (second) {
         _DefineDataProperty(result, "second", second);
     }
+#ifdef NIGHTLY_BUILD
+    if (fractionalSecondDigits) {
+        _DefineDataProperty(result, "fractionalSecondDigits", fractionalSecondDigits);
+    }
+#endif
     if (timeZoneName) {
         _DefineDataProperty(result, "timeZoneName", timeZoneName);
     }

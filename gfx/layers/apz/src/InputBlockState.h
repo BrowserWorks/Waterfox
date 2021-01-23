@@ -10,6 +10,7 @@
 #include "InputData.h"           // for MultiTouchInput
 #include "mozilla/RefCounted.h"  // for RefCounted
 #include "mozilla/RefPtr.h"      // for RefPtr
+#include "mozilla/StaticPrefs_apz.h"
 #include "mozilla/gfx/Matrix.h"  // for Matrix4x4
 #include "mozilla/layers/APZUtils.h"
 #include "mozilla/layers/LayersTypes.h"  // for TouchBehaviorFlags
@@ -28,6 +29,7 @@ class TouchBlockState;
 class WheelBlockState;
 class DragBlockState;
 class PanGestureBlockState;
+class PinchGestureBlockState;
 class KeyboardBlockState;
 
 /**
@@ -58,6 +60,7 @@ class InputBlockState : public RefCounted<InputBlockState> {
   virtual WheelBlockState* AsWheelBlock() { return nullptr; }
   virtual DragBlockState* AsDragBlock() { return nullptr; }
   virtual PanGestureBlockState* AsPanGestureBlock() { return nullptr; }
+  virtual PinchGestureBlockState* AsPinchGestureBlock() { return nullptr; }
   virtual KeyboardBlockState* AsKeyboardBlock() { return nullptr; }
 
   virtual bool SetConfirmedTargetApzc(
@@ -107,9 +110,9 @@ class InputBlockState : public RefCounted<InputBlockState> {
 
   // The APZC that was actually scrolled by events in this input block.
   // This is used in configurations where a single input block is only
-  // allowed to scroll a single APZC (configurations where gfxPrefs::
-  // APZAllowImmediateHandoff() is false).
-  // Set the first time an input event in this block scrolls an APZC.
+  // allowed to scroll a single APZC (configurations where
+  // StaticPrefs::apz_allow_immediate_handoff() is false). Set the first time an
+  // input event in this block scrolls an APZC.
   RefPtr<AsyncPanZoomController> mScrolledApzc;
 
  protected:
@@ -354,6 +357,31 @@ class PanGestureBlockState : public CancelableBlockState {
   bool mInterrupted;
   bool mWaitingForContentResponse;
   ScrollDirections mAllowedScrollDirections;
+};
+
+/**
+ * A single block of pinch gesture events.
+ */
+class PinchGestureBlockState : public CancelableBlockState {
+ public:
+  PinchGestureBlockState(const RefPtr<AsyncPanZoomController>& aTargetApzc,
+                         TargetConfirmationFlags aFlags);
+
+  bool SetContentResponse(bool aPreventDefault) override;
+  bool HasReceivedAllContentNotifications() const override;
+  bool IsReadyForHandling() const override;
+  bool MustStayActive() override;
+  const char* Type() override;
+
+  PinchGestureBlockState* AsPinchGestureBlock() override { return this; }
+
+  bool WasInterrupted() const { return mInterrupted; }
+
+  void SetNeedsToWaitForContentResponse(bool aWaitForContentResponse);
+
+ private:
+  bool mInterrupted;
+  bool mWaitingForContentResponse;
 };
 
 /**

@@ -49,9 +49,8 @@ UsageResult::GetLastAccessed(uint64_t* aLastAccessed) {
   return NS_OK;
 }
 
-OriginUsageResult::OriginUsageResult(uint64_t aUsage, uint64_t aFileUsage,
-                                     uint64_t aLimit)
-    : mUsage(aUsage), mFileUsage(aFileUsage), mLimit(aLimit) {}
+OriginUsageResult::OriginUsageResult(uint64_t aUsage, uint64_t aFileUsage)
+    : mUsage(aUsage), mFileUsage(aFileUsage) {}
 
 NS_IMPL_ISUPPORTS(OriginUsageResult, nsIQuotaOriginUsageResult)
 
@@ -71,22 +70,24 @@ OriginUsageResult::GetFileUsage(uint64_t* aFileUsage) {
   return NS_OK;
 }
 
-NS_IMETHODIMP
-OriginUsageResult::GetLimit(uint64_t* aLimit) {
-  MOZ_ASSERT(aLimit);
+EstimateResult::EstimateResult(uint64_t aUsage, uint64_t aLimit)
+    : mUsage(aUsage), mLimit(aLimit) {}
 
-  *aLimit = mLimit;
+NS_IMPL_ISUPPORTS(EstimateResult, nsIQuotaEstimateResult)
+
+NS_IMETHODIMP
+EstimateResult::GetUsage(uint64_t* aUsage) {
+  MOZ_ASSERT(aUsage);
+
+  *aUsage = mUsage;
   return NS_OK;
 }
 
-InitializedOriginsResult::InitializedOriginsResult(const nsACString& aOrigin)
-    : mOrigin(aOrigin) {}
-
-NS_IMPL_ISUPPORTS(InitializedOriginsResult, nsIQuotaInitializedOriginsResult)
-
 NS_IMETHODIMP
-InitializedOriginsResult::GetOrigin(nsACString& aOrigin) {
-  aOrigin = mOrigin;
+EstimateResult::GetLimit(uint64_t* aLimit) {
+  MOZ_ASSERT(aLimit);
+
+  *aLimit = mLimit;
   return NS_OK;
 }
 

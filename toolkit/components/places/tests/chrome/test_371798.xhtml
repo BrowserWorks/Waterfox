@@ -1,0 +1,97 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin" type="text/css"?>
+<?xml-stylesheet
+  href="chrome://mochikit/content/tests/SimpleTest/test.css" type="text/css"?>
+<window title="Bug 371798"
+  xmlns:html="http://www.w3.org/1999/xhtml"
+  xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  <script src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"></script>
+
+  <body xmlns="http://www.w3.org/1999/xhtml" />
+
+<script type="application/javascript">
+<![CDATA[
+// Test the asynchronous live-updating of bookmarks query results
+SimpleTest.waitForExplicitFinish();
+
+ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {NetUtil} = ChromeUtils.import("resource://gre/modules/NetUtil.jsm");
+
+const {PlacesUtils} = ChromeUtils.import("resource://gre/modules/PlacesUtils.jsm");
+
+const TEST_URI = NetUtil.newURI("http://foo.com");
+
+function promiseOnItemChanged() {
+  return new Promise(resolve => {
+    PlacesUtils.bookmarks.addObserver({
+      onBeginUpdateBatch() {},
+      onEndUpdateBatch() {},
+      onItemRemoved() {},
+      onItemVisited() {},
+      onItemMoved() {},
+
+      onItemChanged() {
+        PlacesUtils.bookmarks.removeObserver(this);
+        resolve();
+      },
+
+      QueryInterface: ChromeUtils.generateQI([Ci.nsINavBookmarkObserver])
+    });
+  });
+}
+
+(async function() {
+  // add 2 bookmarks to the toolbar, same URI, different titles (set later)
+  let bm1 = await PlacesUtils.bookmarks.insert({
+    parentGuid: PlacesUtils.bookmarks.toolbarGuid,
+    url: TEST_URI
+  });
+
+  let bm2 = await PlacesUtils.bookmarks.insert({
+    parentGuid: PlacesUtils.bookmarks.toolbarGuid,
+    url: TEST_URI
+  });
+
+  // query for bookmarks
+  let rootNode = PlacesUtils.getFolderContents(PlacesUtils.bookmarks.toolbarGuid).root;
+
+  // set up observer
+  let promiseObserved = promiseOnItemChanged();
+
+  // modify the bookmark's title
+  await PlacesUtils.bookmarks.update({
+    guid: bm2.guid, title: "foo"
+  });
+
+  // wait for notification
+  await promiseObserved;
+
+  // Continue after our observer gets notified of onItemChanged
+  // which is triggered by updating the item's title.
+  // After receiving the notification, our original query should also
+  // have been live-updated, so we can iterate through its children,
+  // to check that only the modified bookmark has changed.
+
+  // result node should be updated
+  let cc = rootNode.childCount;
+  for (let i = 0; i < cc; ++i) {
+    let node = rootNode.getChild(i);
+    // test that bm1 does not have new title
+    if (node.bookmarkGuid == bm1.guid)
+      ok(node.title != "foo",
+         "Changing a bookmark's title did not affect the title of other bookmarks with the same URI");
+  }
+  rootNode.containerOpen = false;
+
+  // clean up
+  await PlacesUtils.bookmarks.remove(bm1);
+  await PlacesUtils.bookmarks.remove(bm2);
+})().catch(err => {
+  ok(false, `uncaught error: ${err}`);
+}).then(() => {
+  SimpleTest.finish();
+});
+]]>
+</script>
+
+</window>

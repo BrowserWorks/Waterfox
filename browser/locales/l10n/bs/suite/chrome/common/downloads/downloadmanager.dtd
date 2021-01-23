@@ -1,0 +1,60 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY downloadManager.title           "Menadžer preuzimanja">
+
+<!ENTITY menuBar.tooltip                 "Traka menija">
+<!ENTITY searchBar.tooltip               "Traka za pretragu">
+
+<!ENTITY search.placeholder              "Pretraži preuzimanja">
+<!ENTITY search.label                    "Pretraži preuzimanja">
+
+<!ENTITY cmd.clearList.label             "Očisti listu">
+<!ENTITY cmd.clearList.tooltip           "Uklanja završena, otkazana i neuspješna preuzimanja sa liste">
+
+<!ENTITY col.name.label                  "Naziv">
+<!ENTITY col.name.tooltip                "Naziv datoteke">
+<!ENTITY col.status.label                "Status">
+<!ENTITY col.status.tooltip              "Status">
+<!ENTITY col.actionPlay.label            "Pauziraj/Nastavi/Ponovi">
+<!ENTITY col.actionPlay.tooltip          "Pauziraj/Nastavi/Ponovi">
+<!ENTITY col.actionStop.label            "Otkaži/Ukloni">
+<!ENTITY col.actionStop.tooltip          "Otkaži/Ukloni">
+<!ENTITY col.progress.label              "Napredak">
+<!ENTITY col.progress.tooltip            "Napredak">
+<!ENTITY col.timeremaining.label         "Preostalo vrijeme">
+<!ENTITY col.timeremaining.tooltip       "Preostalo vrijeme">
+<!ENTITY col.transferred.label           "Prenešeno">
+<!ENTITY col.transferred.tooltip         "Prenešeno">
+<!ENTITY col.transferrate.label          "Brzina">
+<!ENTITY col.transferrate.tooltip        "Brzina">
+<!ENTITY col.timeelapsed.label           "Proteklo vrijeme">
+<!ENTITY col.timeelapsed.tooltip         "Proteklo vrijeme">
+<!ENTITY col.starttime.label             "Početno vrijeme">
+<!ENTITY col.starttime.tooltip           "Početno vrijeme">
+<!ENTITY col.endtime.label               "Završno vrijeme">
+<!ENTITY col.endtime.tooltip             "Završno vrijeme">
+<!ENTITY col.progresstext.label          "&#37;">
+<!ENTITY col.progresstext.accesskey      "&#37;">
+<!ENTITY col.progresstext.tooltip        "Napredak (&#37;)">
+<!ENTITY col.source.label                "Izvor">
+<!ENTITY col.source.tooltip              "Izvor">
+
+<!ENTITY view.columns.label              "Prikaži kolone">
+<!ENTITY view.sortBy.label               "Sortiraj po">
+
+<!ENTITY view.unsorted.label             "Nesortirano">
+<!ENTITY view.sortAscending.label        "A > Z Redoslijed">
+<!ENTITY view.sortDescending.label       "Z > A Redoslijed">
+
+<!ENTITY cmd.pause.label                 "Pauza">
+<!ENTITY cmd.resume.label                "Nastavi">
+<!ENTITY cmd.retry.label                 "Ponovi">
+<!ENTITY cmd.cancel.label                "Otkaži">
+<!ENTITY cmd.remove.label                "Ukloni sa liste">
+<!ENTITY cmd.open.label                  "Otvori">
+<!ENTITY cmd.show.label                  "Otvori sadržaj direktorija">
+<!ENTITY cmd.goToDownloadPage.label      "Idi na stranicu za preuzimanje">
+<!ENTITY cmd.copyDownloadLink.label      "Kopiraj link za preuzimanje">
+<!ENTITY cmd.properties.label            "Svojstva…">

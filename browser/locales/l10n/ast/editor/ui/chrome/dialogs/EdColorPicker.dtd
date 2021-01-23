@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY windowTitle.label "Color">
+<!ENTITY lastPickedColor.label "Caberu color esbilláu">
+<!ENTITY lastPickedColor.accessKey "L">
+<!ENTITY setColor1.label "Fai clic nun color o">
+<!ENTITY setColor2.label "introduz una cadena de color HTML">
+<!ENTITY setColor2.accessKey "H">
+<!ENTITY setColorExample.label "(p.ex: &quot;#0000ff&quot; ó &quot;blue&quot;):">
+<!ENTITY default.label "Predetermináu">
+<!ENTITY default.accessKey "D">
+<!ENTITY palette.label "Paleta:">
+<!ENTITY standardPalette.label "Estándar">
+<!ENTITY webPalette.label "Tolos colores web">
+<!ENTITY background.label "Fondu pa:">
+<!ENTITY background.accessKey "F">
+<!ENTITY table.label "Tabla">
+<!ENTITY table.accessKey "T">
+<!ENTITY cell.label "Caxella(es)">
+<!ENTITY cell.accessKey "C">

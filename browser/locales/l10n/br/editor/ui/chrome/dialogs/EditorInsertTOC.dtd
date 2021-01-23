@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title        "Taolenn ar pennadoù">
+<!ENTITY buildToc.label      "Sevel an daolennad adalek :">
+<!ENTITY tag.label           "Klav :">
+<!ENTITY class.label         "Klas :">
+<!ENTITY header1.label       "Live 1">
+<!ENTITY header2.label       "Live 2">
+<!ENTITY header3.label       "Live 3">
+<!ENTITY header4.label       "Live 4">
+<!ENTITY header5.label       "Live 5">
+<!ENTITY header6.label       "Live 6">
+<!ENTITY makeReadOnly.label  "Lakaat an daolennad e mod lenn nemetken">
+<!ENTITY orderedList.label   "Niverenniñ an holl venegoù eus an daolennad">

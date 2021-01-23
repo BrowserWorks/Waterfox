@@ -7,7 +7,9 @@
  * Tests if Request-Cookies and Response-Cookies are sorted in Cookies tab.
  */
 add_task(async function() {
-  const { tab, monitor } = await initNetMonitor(SIMPLE_UNSORTED_COOKIES_SJS);
+  const { tab, monitor } = await initNetMonitor(SIMPLE_UNSORTED_COOKIES_SJS, {
+    requestCount: 1,
+  });
   info("Starting test... ");
 
   const { document, store, windowRequire } = monitor.panelWin;
@@ -38,7 +40,6 @@ add_task(async function() {
 
   info("Check if Request-Cookies and Response-Cookies are sorted");
   const expectedLabelValues = [
-    "Response cookies",
     "bob",
     "httpOnly",
     "value",
@@ -48,7 +49,6 @@ add_task(async function() {
     "tom",
     "httpOnly",
     "value",
-    "Request cookies",
     "bob",
     "foo",
     "tom",

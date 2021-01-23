@@ -9,7 +9,7 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/dom/HTMLMediaElement.h"
-#include "mozilla/StaticPrefs.h"
+#include "mozilla/StaticPrefs_media.h"
 
 namespace mozilla {
 
@@ -21,6 +21,8 @@ class WakeLock;
 class VideoPlaybackQuality;
 
 class HTMLVideoElement final : public HTMLMediaElement {
+  class SecondaryVideoOutput;
+
  public:
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(HTMLVideoElement, HTMLMediaElement)
@@ -44,15 +46,12 @@ class HTMLVideoElement final : public HTMLMediaElement {
                               nsAttrValue& aResult) override;
   NS_IMETHOD_(bool) IsAttributeMapped(const nsAtom* aAttribute) const override;
 
-  static void InitStatics();
-
   virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction()
       const override;
 
   virtual nsresult Clone(NodeInfo*, nsINode** aResult) const override;
 
-  virtual void UnbindFromTree(bool aDeep = true,
-                              bool aNullParent = true) override;
+  virtual void UnbindFromTree(bool aNullParent = true) override;
 
   // Set size with the current video frame's height and width.
   // If there is no video frame, returns NS_ERROR_FAILURE.
@@ -63,17 +62,21 @@ class HTMLVideoElement final : public HTMLMediaElement {
   virtual nsresult SetAcceptHeader(nsIHttpChannel* aChannel) override;
 
   // Element
-  virtual bool IsInteractiveHTMLContent(bool aIgnoreTabindex) const override;
+  virtual bool IsInteractiveHTMLContent() const override;
 
   // WebIDL
 
-  uint32_t Width() const { return GetIntAttr(nsGkAtoms::width, 0); }
+  uint32_t Width() const {
+    return GetDimensionAttrAsUnsignedInt(nsGkAtoms::width, 0);
+  }
 
   void SetWidth(uint32_t aValue, ErrorResult& aRv) {
     SetUnsignedIntAttr(nsGkAtoms::width, aValue, 0, aRv);
   }
 
-  uint32_t Height() const { return GetIntAttr(nsGkAtoms::height, 0); }
+  uint32_t Height() const {
+    return GetDimensionAttrAsUnsignedInt(nsGkAtoms::height, 0);
+  }
 
   void SetHeight(uint32_t aValue, ErrorResult& aRv) {
     SetUnsignedIntAttr(nsGkAtoms::height, aValue, 0, aRv);
@@ -132,20 +135,22 @@ class HTMLVideoElement final : public HTMLMediaElement {
   already_AddRefed<VideoPlaybackQuality> GetVideoPlaybackQuality();
 
   bool MozOrientationLockEnabled() const {
-    return StaticPrefs::MediaVideocontrolsLockVideoOrientation();
+    return StaticPrefs::media_videocontrols_lock_video_orientation();
   }
 
   bool MozIsOrientationLocked() const { return mIsOrientationLocked; }
 
   void SetMozIsOrientationLocked(bool aLock) { mIsOrientationLocked = aLock; }
 
-  void CloneElementVisually(HTMLVideoElement& aTarget, ErrorResult& rv);
+  already_AddRefed<Promise> CloneElementVisually(HTMLVideoElement& aTarget,
+                                                 ErrorResult& rv);
 
   void StopCloningElementVisually();
 
   bool IsCloningElementVisually() const { return !!mVisualCloneTarget; }
 
-  void TogglePictureInPicture(ErrorResult& rv);
+  void OnSecondaryVideoContainerInstalled(
+      const RefPtr<VideoFrameContainer>& aSecondaryContainer) override;
 
  protected:
   virtual ~HTMLVideoElement();
@@ -171,8 +176,10 @@ class HTMLVideoElement final : public HTMLMediaElement {
   bool mIsOrientationLocked;
 
  private:
-  bool SetVisualCloneTarget(HTMLVideoElement* aCloneTarget);
-  bool SetVisualCloneSource(HTMLVideoElement* aCloneSource);
+  bool SetVisualCloneTarget(
+      RefPtr<HTMLVideoElement> aVisualCloneTarget,
+      RefPtr<Promise> aVisualCloneTargetPromise = nullptr);
+  bool SetVisualCloneSource(RefPtr<HTMLVideoElement> aVisualCloneSource);
 
   // For video elements, we can clone the frames being played to
   // a secondary video element. If we're doing that, we hold a
@@ -182,6 +189,14 @@ class HTMLVideoElement final : public HTMLMediaElement {
   // Please don't set this to non-nullptr values directly - use
   // SetVisualCloneTarget() instead.
   RefPtr<HTMLVideoElement> mVisualCloneTarget;
+  // Set when mVisualCloneTarget is set, and resolved (and unset) when the
+  // secondary container has been applied to the underlying resource.
+  RefPtr<Promise> mVisualCloneTargetPromise;
+  // Set when mVisualCloneTarget is set and we are playing a MediaStream with a
+  // video track. This is the output wrapping the VideoFrameContainer of
+  // mVisualCloneTarget, so the selected video track can render its frames to
+  // it.
+  RefPtr<SecondaryVideoOutput> mSecondaryVideoOutput;
   // If this video is the clone target of another video element,
   // then mVisualCloneSource points to that originating video
   // element.

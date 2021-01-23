@@ -8,7 +8,9 @@
 #include "RetainedDisplayListBuilder.h"
 
 #include "DisplayListChecker.h"
-#include "gfxPrefs.h"
+#include "mozilla/StaticPrefs_layout.h"
+#include "nsIFrame.h"
+#include "nsIFrameInlines.h"
 #include "nsPlaceholderFrame.h"
 #include "nsSubDocumentFrame.h"
 #include "nsViewManager.h"
@@ -114,6 +116,30 @@ static AnimatedGeometryRoot* SelectAGRForFrame(
   return data && data->mModifiedAGR ? data->mModifiedAGR.get() : nullptr;
 }
 
+void RetainedDisplayListBuilder::AddSizeOfIncludingThis(
+    nsWindowSizes& aSizes) const {
+  aSizes.mLayoutRetainedDisplayListSize += aSizes.mState.mMallocSizeOf(this);
+  mBuilder.AddSizeOfExcludingThis(aSizes);
+  mList.AddSizeOfExcludingThis(aSizes);
+}
+
+bool AnyContentAncestorModified(nsIFrame* aFrame, nsIFrame* aStopAtFrame) {
+  nsIFrame* f = aFrame;
+  while (f) {
+    if (f->IsFrameModified()) {
+      return true;
+    }
+
+    if (aStopAtFrame && f == aStopAtFrame) {
+      break;
+    }
+
+    f = nsLayoutUtils::GetDisplayListParent(f);
+  }
+
+  return false;
+}
+
 // Removes any display items that belonged to a frame that was deleted,
 // and mark frames that belong to a different AGR so that get their
 // items built again.
@@ -122,16 +148,17 @@ static AnimatedGeometryRoot* SelectAGRForFrame(
 // jump into those immediately rather than walking the entire thing.
 bool RetainedDisplayListBuilder::PreProcessDisplayList(
     RetainedDisplayList* aList, AnimatedGeometryRoot* aAGR,
-    PartialUpdateResult& aUpdated, uint32_t aCallerKey, uint32_t aNestingDepth,
-    bool aKeepLinked) {
+    PartialUpdateResult& aUpdated, nsIFrame* aOuterFrame, uint32_t aCallerKey,
+    uint32_t aNestingDepth, bool aKeepLinked) {
   // The DAG merging algorithm does not have strong mechanisms in place to keep
   // the complexity of the resulting DAG under control. In some cases we can
   // build up edges very quickly. Detect those cases and force a full display
   // list build if we hit them.
   static const uint32_t kMaxEdgeRatio = 5;
   const bool initializeDAG = !aList->mDAG.Length();
-  if (!aKeepLinked && !initializeDAG && aList->mDAG.mDirectPredecessorList.Length() >
-                            (aList->mDAG.mNodesInfo.Length() * kMaxEdgeRatio)) {
+  if (!aKeepLinked && !initializeDAG &&
+      aList->mDAG.mDirectPredecessorList.Length() >
+          (aList->mDAG.mNodesInfo.Length() * kMaxEdgeRatio)) {
     return false;
   }
 
@@ -178,14 +205,21 @@ bool RetainedDisplayListBuilder::PreProcessDisplayList(
       }
     }
 
-    if (!item->CanBeReused() || item->HasDeletedFrame()) {
+    if (!item->CanBeReused() || item->HasDeletedFrame() ||
+        AnyContentAncestorModified(item->FrameForInvalidation(), aOuterFrame)) {
       if (initializeOldItems) {
         aList->mOldItems.AppendElement(OldItemInfo(nullptr));
       } else {
         MOZ_RELEASE_ASSERT(aList->mOldItems[i].mItem == item);
         aList->mOldItems[i].mItem = nullptr;
       }
+
+      if (item->IsGlassItem() && item == mBuilder.GetGlassDisplayItem()) {
+        mBuilder.ClearGlassDisplayItem();
+      }
+
       item->Destroy(&mBuilder);
+      Metrics()->mRemovedItems++;
 
       i++;
       aUpdated = PartialUpdateResult::Updated;
@@ -224,10 +258,13 @@ bool RetainedDisplayListBuilder::PreProcessDisplayList(
         keepLinked = true;
       }
 
-      if (!PreProcessDisplayList(
-              item->GetChildren(), SelectAGRForFrame(f, aAGR), aUpdated,
-              item->GetPerFrameKey(), aNestingDepth + 1, keepLinked)) {
-        MOZ_RELEASE_ASSERT(!aKeepLinked, "Can't early return since we need to move the out list back");
+      if (!PreProcessDisplayList(item->GetChildren(),
+                                 SelectAGRForFrame(f, aAGR), aUpdated,
+                                 item->Frame(), item->GetPerFrameKey(),
+                                 aNestingDepth + 1, keepLinked)) {
+        MOZ_RELEASE_ASSERT(
+            !aKeepLinked,
+            "Can't early return since we need to move the out list back");
         return false;
       }
     }
@@ -286,23 +323,6 @@ void RetainedDisplayListBuilder::IncrementSubDocPresShellPaintCount(
   mBuilder.IncrementPresShellPaintCount(presShell);
 }
 
-bool AnyContentAncestorModified(nsIFrame* aFrame, nsIFrame* aStopAtFrame) {
-  nsIFrame* f = aFrame;
-  while (f) {
-    if (f->IsFrameModified()) {
-      return true;
-    }
-
-    if (aStopAtFrame && f == aStopAtFrame) {
-      break;
-    }
-
-    f = nsLayoutUtils::GetDisplayListParent(f);
-  }
-
-  return false;
-}
-
 static Maybe<const ActiveScrolledRoot*> SelectContainerASR(
     const DisplayItemClipChain* aClipChain, const ActiveScrolledRoot* aItemASR,
     Maybe<const ActiveScrolledRoot*>& aContainerASR) {
@@ -326,7 +346,7 @@ static void UpdateASR(nsDisplayItem* aItem,
 
   if (aItem->HasHitTestInfo()) {
     const HitTestInfo& info =
-        static_cast<nsDisplayHitTestInfoItem*>(aItem)->GetHitTestInfo();
+        static_cast<nsDisplayHitTestInfoBase*>(aItem)->GetHitTestInfo();
     asr = SelectContainerASR(info.mClipChain, info.mASR, aContainerASR);
   } else {
     asr = aContainerASR;
@@ -353,7 +373,7 @@ static void CopyASR(nsDisplayItem* aOld, nsDisplayItem* aNew) {
   if (aOld->HasHitTestInfo()) {
     MOZ_ASSERT(aNew->HasHitTestInfo());
     const HitTestInfo& info =
-        static_cast<nsDisplayHitTestInfoItem*>(aOld)->GetHitTestInfo();
+        static_cast<nsDisplayHitTestInfoBase*>(aOld)->GetHitTestInfo();
     hitTest = info.mASR;
   }
 
@@ -362,7 +382,7 @@ static void CopyASR(nsDisplayItem* aOld, nsDisplayItem* aNew) {
   // SetActiveScrolledRoot for most items will also set the hit-test info item's
   // asr, so we need to manually set that again to what we saved earlier.
   if (aOld->HasHitTestInfo()) {
-    static_cast<nsDisplayHitTestInfoItem*>(aNew)
+    static_cast<nsDisplayHitTestInfoBase*>(aNew)
         ->UpdateHitTestInfoActiveScrolledRoot(hitTest);
   }
 }
@@ -388,6 +408,7 @@ void OldItemInfo::Discard(RetainedDisplayListBuilder* aBuilder,
   if (mItem) {
     MOZ_ASSERT(mOwnsItem);
     mItem->Destroy(aBuilder->Builder());
+    aBuilder->Metrics()->mRemovedItems++;
   }
   mItem = nullptr;
 }
@@ -428,6 +449,7 @@ class MergeState {
                           HasModifiedFrame(aNewItem));
     if (!aNewItem->HasModifiedFrame() &&
         HasMatchingItemInOldList(aNewItem, &oldIndex)) {
+      mBuilder->Metrics()->mRebuiltItems++;
       nsDisplayItem* oldItem = mOldItems[oldIndex.val].mItem;
       MOZ_DIAGNOSTIC_ASSERT(oldItem->GetPerFrameKey() ==
                                 aNewItem->GetPerFrameKey() &&
@@ -446,6 +468,20 @@ class MergeState {
           oldItem->SetBuildingRect(aNewItem->GetBuildingRect());
         }
 
+        if (destItem == aNewItem) {
+          if (oldItem->IsGlassItem() &&
+              oldItem == mBuilder->Builder()->GetGlassDisplayItem()) {
+            mBuilder->Builder()->ClearGlassDisplayItem();
+          }
+        }  // aNewItem can't be the glass item on the builder yet.
+
+        if (destItem->IsGlassItem()) {
+          if (destItem != oldItem ||
+              destItem != mBuilder->Builder()->GetGlassDisplayItem()) {
+            mBuilder->Builder()->SetGlassDisplayItem(destItem);
+          }
+        }
+
         MergeChildLists(aNewItem, oldItem, destItem);
 
         AutoTArray<MergedListIndex, 2> directPredecessors =
@@ -462,6 +498,9 @@ class MergeState {
       }
     }
     mResultIsModified = true;
+    if (aNewItem->IsGlassItem()) {
+      mBuilder->Builder()->SetGlassDisplayItem(aNewItem);
+    }
     return Some(AddNewNode(aNewItem, Nothing(), Span<MergedListIndex>(),
                            aPreviousItem));
   }
@@ -595,10 +634,12 @@ class MergeState {
     return false;
   }
 
+#ifdef MOZ_DIAGNOSTIC_ASSERT_ENABLED
   bool HasModifiedFrame(nsDisplayItem* aItem) {
     nsIFrame* stopFrame = mOuterItem ? mOuterItem->Frame() : nullptr;
     return AnyContentAncestorModified(aItem->FrameForInvalidation(), stopFrame);
   }
+#endif
 
   void UpdateContainerASR(nsDisplayItem* aItem) {
     mContainerASR = SelectContainerASR(
@@ -626,6 +667,8 @@ class MergeState {
 #endif
 
     mMergedItems.AppendToTop(aItem);
+    mBuilder->Metrics()->mTotalItems++;
+
     MergedListIndex newIndex =
         mMergedDAG.AddNode(aDirectPredecessors, aExtraDirectPredecessor);
     return newIndex;
@@ -634,7 +677,12 @@ class MergeState {
   void ProcessOldNode(OldListIndex aNode,
                       nsTArray<MergedListIndex>&& aDirectPredecessors) {
     nsDisplayItem* item = mOldItems[aNode.val].mItem;
-    if (mOldItems[aNode.val].IsChanged() || HasModifiedFrame(item)) {
+    if (mOldItems[aNode.val].IsChanged()) {
+      if (item && item->IsGlassItem() &&
+          item == mBuilder->Builder()->GetGlassDisplayItem()) {
+        mBuilder->Builder()->ClearGlassDisplayItem();
+      }
+
       mOldItems[aNode.val].Discard(mBuilder, std::move(aDirectPredecessors));
       mResultIsModified = true;
     } else {
@@ -644,6 +692,7 @@ class MergeState {
         mBuilder->IncrementSubDocPresShellPaintCount(item);
       }
       item->SetReused(true);
+      mBuilder->Metrics()->mReusedItems++;
       mOldItems[aNode.val].AddedToMergedList(
           AddNewNode(item, Some(aNode), aDirectPredecessors, Nothing()));
     }
@@ -734,6 +783,19 @@ class MergeState {
   bool mResultIsModified;
 };
 
+#ifdef DEBUG
+void VerifyNotModified(nsDisplayList* aList) {
+  for (nsDisplayItem* item = aList->GetBottom(); item;
+       item = item->GetAbove()) {
+    MOZ_ASSERT(!AnyContentAncestorModified(item->FrameForInvalidation()));
+
+    if (item->GetChildren()) {
+      VerifyNotModified(item->GetChildren());
+    }
+  }
+}
+#endif
+
 /**
  * Takes two display lists and merges them into an output list.
  *
@@ -758,6 +820,9 @@ bool RetainedDisplayListBuilder::MergeDisplayLists(
     // can just use it directly, and throw any new items away.
 
     aNewList->DeleteAll(&mBuilder);
+#ifdef DEBUG
+    VerifyNotModified(aOldList);
+#endif
 
     if (aOldList != aOutList) {
       *aOutList = std::move(*aOldList);
@@ -770,6 +835,7 @@ bool RetainedDisplayListBuilder::MergeDisplayLists(
 
   Maybe<MergedListIndex> previousItemIndex;
   while (nsDisplayItem* item = aNewList->RemoveBottom()) {
+    Metrics()->mNewItems++;
     previousItemIndex = merge.ProcessItemFromNewList(item, previousItemIndex);
   }
 
@@ -777,43 +843,6 @@ bool RetainedDisplayListBuilder::MergeDisplayLists(
   aOutContainerASR = merge.mContainerASR;
   return merge.mResultIsModified;
 }
-
-static void TakeAndAddModifiedAndFramesWithPropsFromRootFrame(
-    nsDisplayListBuilder* aBuilder, nsTArray<nsIFrame*>* aModifiedFrames,
-    nsTArray<nsIFrame*>* aFramesWithProps, nsIFrame* aRootFrame) {
-  MOZ_ASSERT(aRootFrame);
-
-  RetainedDisplayListData* data = GetRetainedDisplayListData(aRootFrame);
-
-  if (!data) {
-    return;
-  }
-
-  for (auto it = data->Iterator(); !it.Done(); it.Next()) {
-    nsIFrame* frame = it.Key();
-    const RetainedDisplayListData::FrameFlags& flags = it.Data();
-
-    if (flags & RetainedDisplayListData::FrameFlags::Modified) {
-      aModifiedFrames->AppendElement(frame);
-    }
-
-    if (flags & RetainedDisplayListData::FrameFlags::HasProps) {
-      aFramesWithProps->AppendElement(frame);
-    }
-
-    if (flags & RetainedDisplayListData::FrameFlags::HadWillChange) {
-      aBuilder->RemoveFromWillChangeBudget(frame);
-    }
-  }
-
-  data->Clear();
-}
-
-struct CbData {
-  nsDisplayListBuilder* builder;
-  nsTArray<nsIFrame*>* modifiedFrames;
-  nsTArray<nsIFrame*>* framesWithProps;
-};
 
 static nsIFrame* GetRootFrameForPainting(nsDisplayListBuilder* aBuilder,
                                          Document& aDocument) {
@@ -856,20 +885,41 @@ static nsIFrame* GetRootFrameForPainting(nsDisplayListBuilder* aBuilder,
   return presShell ? presShell->GetRootFrame() : nullptr;
 }
 
-static bool SubDocEnumCb(Document& aDocument, void* aData) {
-  MOZ_ASSERT(aData);
+static void TakeAndAddModifiedAndFramesWithPropsFromRootFrame(
+    nsDisplayListBuilder* aBuilder, nsTArray<nsIFrame*>* aModifiedFrames,
+    nsTArray<nsIFrame*>* aFramesWithProps, nsIFrame* aRootFrame,
+    Document& aDoc) {
+  MOZ_ASSERT(aRootFrame);
 
-  auto* data = static_cast<CbData*>(aData);
+  if (RetainedDisplayListData* data = GetRetainedDisplayListData(aRootFrame)) {
+    for (auto it = data->Iterator(); !it.Done(); it.Next()) {
+      nsIFrame* frame = it.Key();
+      const RetainedDisplayListData::FrameFlags& flags = it.Data();
 
-  if (nsIFrame* rootFrame = GetRootFrameForPainting(data->builder, aDocument)) {
-    TakeAndAddModifiedAndFramesWithPropsFromRootFrame(
-        data->builder, data->modifiedFrames, data->framesWithProps, rootFrame);
+      if (flags & RetainedDisplayListData::FrameFlags::Modified) {
+        aModifiedFrames->AppendElement(frame);
+      }
 
-    if (Document* innerDoc = rootFrame->PresShell()->GetDocument()) {
-      innerDoc->EnumerateSubDocuments(SubDocEnumCb, aData);
+      if (flags & RetainedDisplayListData::FrameFlags::HasProps) {
+        aFramesWithProps->AppendElement(frame);
+      }
+
+      if (flags & RetainedDisplayListData::FrameFlags::HadWillChange) {
+        aBuilder->RemoveFromWillChangeBudgets(frame);
+      }
     }
+
+    data->Clear();
   }
-  return true;
+
+  auto recurse = [&](Document& aSubDoc) {
+    if (nsIFrame* rootFrame = GetRootFrameForPainting(aBuilder, aSubDoc)) {
+      TakeAndAddModifiedAndFramesWithPropsFromRootFrame(
+          aBuilder, aModifiedFrames, aFramesWithProps, rootFrame, aSubDoc);
+    }
+    return CallState::Continue;
+  };
+  aDoc.EnumerateSubDocuments(recurse);
 }
 
 static void GetModifiedAndFramesWithProps(
@@ -878,12 +928,9 @@ static void GetModifiedAndFramesWithProps(
   nsIFrame* rootFrame = aBuilder->RootReferenceFrame();
   MOZ_ASSERT(rootFrame);
 
+  Document* rootDoc = rootFrame->PresContext()->Document();
   TakeAndAddModifiedAndFramesWithPropsFromRootFrame(
-      aBuilder, aOutModifiedFrames, aOutFramesWithProps, rootFrame);
-
-  Document* rootdoc = rootFrame->PresContext()->Document();
-  CbData data = {aBuilder, aOutModifiedFrames, aOutFramesWithProps};
-  rootdoc->EnumerateSubDocuments(SubDocEnumCb, &data);
+      aBuilder, aOutModifiedFrames, aOutFramesWithProps, rootFrame, *rootDoc);
 }
 
 // ComputeRebuildRegion  debugging
@@ -915,9 +962,9 @@ static bool IsInPreserve3DContext(const nsIFrame* aFrame) {
 }
 
 static bool ProcessFrameInternal(nsIFrame* aFrame,
-                                 nsDisplayListBuilder& aBuilder,
+                                 nsDisplayListBuilder* aBuilder,
                                  AnimatedGeometryRoot** aAGR, nsRect& aOverflow,
-                                 nsIFrame* aStopAtFrame,
+                                 const nsIFrame* aStopAtFrame,
                                  nsTArray<nsIFrame*>& aOutFramesWithProps,
                                  const bool aStopAtStackingContext) {
   nsIFrame* currentFrame = aFrame;
@@ -957,7 +1004,7 @@ static bool ProcessFrameInternal(nsIFrame* aFrame,
       // Find a common ancestor frame to handle frame continuations.
       // TODO: It might be possible to write a more specific and efficient
       // function for this.
-      nsIFrame* ancestor = nsLayoutUtils::FindNearestCommonAncestorFrame(
+      const nsIFrame* ancestor = nsLayoutUtils::FindNearestCommonAncestorFrame(
           currentFrame->GetParent(), placeholder->GetParent());
 
       if (!ProcessFrameInternal(placeholder, aBuilder, &dummyAGR,
@@ -980,15 +1027,15 @@ static bool ProcessFrameInternal(nsIFrame* aFrame,
 
     MOZ_ASSERT(currentFrame);
 
-    if (nsLayoutUtils::FrameHasDisplayPort(currentFrame)) {
+    // Check whether the current frame is a scrollable frame with display port.
+    nsRect displayPort;
+    nsIScrollableFrame* sf = do_QueryFrame(currentFrame);
+    nsIContent* content = sf ? currentFrame->GetContent() : nullptr;
+
+    if (content && nsLayoutUtils::GetDisplayPort(content, &displayPort)) {
       CRR_LOG("Frame belongs to displayport frame %p\n", currentFrame);
-      nsIScrollableFrame* sf = do_QueryFrame(currentFrame);
-      MOZ_ASSERT(sf);
-      nsRect displayPort;
-      DebugOnly<bool> hasDisplayPort = nsLayoutUtils::GetDisplayPort(
-          currentFrame->GetContent(), &displayPort, RelativeTo::ScrollPort);
-      MOZ_ASSERT(hasDisplayPort);
-      // get it relative to the scrollport (from the scrollframe)
+
+      // Get overflow relative to the scrollport (from the scrollframe)
       nsRect r = aOverflow - sf->GetScrollPortRect().TopLeft();
       r.IntersectRect(r, displayPort);
       if (!r.IsEmpty()) {
@@ -1023,7 +1070,7 @@ static bool ProcessFrameInternal(nsIFrame* aFrame,
       break;
     }
 
-    if (currentFrame != aBuilder.RootReferenceFrame() &&
+    if (currentFrame != aBuilder->RootReferenceFrame() &&
         currentFrame->IsStackingContext() &&
         currentFrame->IsFixedPosContainingBlock()) {
       CRR_LOG("Frame belongs to stacking context frame %p\n", currentFrame);
@@ -1098,7 +1145,7 @@ static bool ProcessFrameInternal(nsIFrame* aFrame,
 }
 
 bool RetainedDisplayListBuilder::ProcessFrame(
-    nsIFrame* aFrame, nsDisplayListBuilder& aBuilder, nsIFrame* aStopAtFrame,
+    nsIFrame* aFrame, nsDisplayListBuilder* aBuilder, nsIFrame* aStopAtFrame,
     nsTArray<nsIFrame*>& aOutFramesWithProps, const bool aStopAtStackingContext,
     nsRect* aOutDirty, AnimatedGeometryRoot** aOutModifiedAGR) {
   if (aFrame->HasOverrideDirtyRegion()) {
@@ -1112,7 +1159,7 @@ bool RetainedDisplayListBuilder::ProcessFrame(
   // TODO: There is almost certainly a faster way of doing this, probably can be
   // combined with the ancestor walk for TransformFrameRectToAncestor.
   AnimatedGeometryRoot* agr =
-      aBuilder.FindAnimatedGeometryRootFor(aFrame)->GetAsyncAGR();
+      aBuilder->FindAnimatedGeometryRootFor(aFrame)->GetAsyncAGR();
 
   CRR_LOG("Processing frame %p with agr %p\n", aFrame, agr->mFrame);
 
@@ -1130,8 +1177,8 @@ bool RetainedDisplayListBuilder::ProcessFrame(
   // If the modified frame is also a caret frame, include the caret area.
   // This is needed because some frames (for example text frames without text)
   // might have an empty overflow rect.
-  if (aFrame == aBuilder.GetCaretFrame()) {
-    overflow.UnionRect(overflow, aBuilder.GetCaretRect());
+  if (aFrame == aBuilder->GetCaretFrame()) {
+    overflow.UnionRect(overflow, aBuilder->GetCaretRect());
   }
 
   if (!ProcessFrameInternal(aFrame, aBuilder, &agr, overflow, aStopAtFrame,
@@ -1179,9 +1226,10 @@ static void AddFramesForContainingBlock(nsIFrame* aBlock,
 // ancestors must also be visited).
 static void FindContainingBlocks(nsIFrame* aFrame,
                                  nsTArray<nsIFrame*>& aExtraFrames) {
-  for (nsIFrame* f = aFrame; f;
-       f = nsLayoutUtils::GetDisplayListParent(f)) {
-    if (f->ForceDescendIntoIfVisible()) return;
+  for (nsIFrame* f = aFrame; f; f = nsLayoutUtils::GetDisplayListParent(f)) {
+    if (f->ForceDescendIntoIfVisible()) {
+      return;
+    }
     f->SetForceDescendIntoIfVisible(true);
     CRR_LOG("Considering OOFs for %p\n", f);
 
@@ -1234,16 +1282,20 @@ bool RetainedDisplayListBuilder::ComputeRebuildRegion(
     mBuilder.AddFrameMarkedForDisplayIfVisible(f);
     FindContainingBlocks(f, extraFrames);
 
-    if (!ProcessFrame(f, mBuilder, mBuilder.RootReferenceFrame(),
+    if (!ProcessFrame(f, &mBuilder, mBuilder.RootReferenceFrame(),
                       aOutFramesWithProps, true, aOutDirty, aOutModifiedAGR)) {
       return false;
     }
   }
 
-  for (nsIFrame* f : extraFrames) {
-    mBuilder.MarkFrameModifiedDuringBuilding(f);
+  // Since we set modified to true on the extraFrames, add them to
+  // aModifiedFrames so that it will get reverted.
+  aModifiedFrames.AppendElements(extraFrames);
 
-    if (!ProcessFrame(f, mBuilder, mBuilder.RootReferenceFrame(),
+  for (nsIFrame* f : extraFrames) {
+    f->SetFrameIsModified(true);
+
+    if (!ProcessFrame(f, &mBuilder, mBuilder.RootReferenceFrame(),
                       aOutFramesWithProps, true, aOutDirty, aOutModifiedAGR)) {
       return false;
     }
@@ -1252,11 +1304,27 @@ bool RetainedDisplayListBuilder::ComputeRebuildRegion(
   return true;
 }
 
-/*
- * A simple early exit heuristic to avoid slow partial display list rebuilds.
- */
-static bool ShouldBuildPartial(nsTArray<nsIFrame*>& aModifiedFrames) {
-  if (aModifiedFrames.Length() > gfxPrefs::LayoutRebuildFrameLimit()) {
+bool RetainedDisplayListBuilder::ShouldBuildPartial(
+    nsTArray<nsIFrame*>& aModifiedFrames) {
+  if (mList.IsEmpty()) {
+    // Partial builds without a previous display list do not make sense.
+    Metrics()->mPartialUpdateFailReason = PartialUpdateFailReason::EmptyList;
+    return false;
+  }
+
+  if (aModifiedFrames.Length() >
+      StaticPrefs::layout_display_list_rebuild_frame_limit()) {
+    // Computing a dirty rect with too many modified frames can be slow.
+    Metrics()->mPartialUpdateFailReason = PartialUpdateFailReason::RebuildLimit;
+    return false;
+  }
+
+  // We don't support retaining with overlay scrollbars, since they require
+  // us to look at the display list and pick the highest z-index, which
+  // we can't do during partial building.
+  if (mBuilder.DisablePartialUpdates()) {
+    mBuilder.SetDisablePartialUpdates(false);
+    Metrics()->mPartialUpdateFailReason = PartialUpdateFailReason::Disabled;
     return false;
   }
 
@@ -1274,6 +1342,7 @@ static bool ShouldBuildPartial(nsTArray<nsIFrame*>& aModifiedFrames) {
     if (type == LayoutFrameType::Viewport ||
         type == LayoutFrameType::PageContent ||
         type == LayoutFrameType::Canvas || type == LayoutFrameType::Scrollbar) {
+      Metrics()->mPartialUpdateFailReason = PartialUpdateFailReason::FrameType;
       return false;
     }
   }
@@ -1281,12 +1350,29 @@ static bool ShouldBuildPartial(nsTArray<nsIFrame*>& aModifiedFrames) {
   return true;
 }
 
+void RetainedDisplayListBuilder::InvalidateCaretFramesIfNeeded() {
+  if (mPreviousCaret == mBuilder.GetCaretFrame()) {
+    // The current caret frame is the same as the previous one.
+    return;
+  }
+
+  if (mPreviousCaret) {
+    mPreviousCaret->MarkNeedsDisplayItemRebuild();
+  }
+
+  if (mBuilder.GetCaretFrame()) {
+    mBuilder.GetCaretFrame()->MarkNeedsDisplayItemRebuild();
+  }
+
+  mPreviousCaret = mBuilder.GetCaretFrame();
+}
+
 static void ClearFrameProps(nsTArray<nsIFrame*>& aFrames) {
   for (nsIFrame* f : aFrames) {
     if (f->HasOverrideDirtyRegion()) {
       f->SetHasOverrideDirtyRegion(false);
-      f->DeleteProperty(nsDisplayListBuilder::DisplayListBuildingRect());
-      f->DeleteProperty(
+      f->RemoveProperty(nsDisplayListBuilder::DisplayListBuildingRect());
+      f->RemoveProperty(
           nsDisplayListBuilder::DisplayListBuildingDisplayPortRect());
     }
 
@@ -1297,13 +1383,10 @@ static void ClearFrameProps(nsTArray<nsIFrame*>& aFrames) {
 class AutoClearFramePropsArray {
  public:
   explicit AutoClearFramePropsArray(size_t aCapacity) : mFrames(aCapacity) {}
-
   AutoClearFramePropsArray() = default;
-
   ~AutoClearFramePropsArray() { ClearFrameProps(mFrames); }
 
   nsTArray<nsIFrame*>& Frames() { return mFrames; }
-
   bool IsEmpty() const { return mFrames.IsEmpty(); }
 
  private:
@@ -1317,15 +1400,15 @@ void RetainedDisplayListBuilder::ClearFramesWithProps() {
                                 &framesWithProps.Frames());
 }
 
-auto RetainedDisplayListBuilder::AttemptPartialUpdate(
-    nscolor aBackstop, mozilla::DisplayListChecker* aChecker)
-    -> PartialUpdateResult {
+PartialUpdateResult RetainedDisplayListBuilder::AttemptPartialUpdate(
+    nscolor aBackstop, mozilla::DisplayListChecker* aChecker) {
   mBuilder.RemoveModifiedWindowRegions();
-  mBuilder.ClearWindowOpaqueRegion();
 
   if (mBuilder.ShouldSyncDecodeImages()) {
     MarkFramesWithItemsAndImagesModified(&mList);
   }
+
+  InvalidateCaretFramesIfNeeded();
 
   mBuilder.EnterPresShell(mBuilder.RootReferenceFrame());
 
@@ -1337,34 +1420,8 @@ auto RetainedDisplayListBuilder::AttemptPartialUpdate(
   GetModifiedAndFramesWithProps(&mBuilder, &modifiedFrames.Frames(),
                                 &framesWithProps.Frames());
 
-  // Do not allow partial builds if the retained display list is empty, or if
-  // ShouldBuildPartial heuristic fails.
-  bool shouldBuildPartial =
-      !mList.IsEmpty() && ShouldBuildPartial(modifiedFrames.Frames());
-
-  // We don't support retaining with overlay scrollbars, since they require
-  // us to look at the display list and pick the highest z-index, which
-  // we can't do during partial building.
-  if (mBuilder.DisablePartialUpdates()) {
-    shouldBuildPartial = false;
-    mBuilder.SetDisablePartialUpdates(false);
-  }
-
-  if (mPreviousCaret != mBuilder.GetCaretFrame()) {
-    if (mPreviousCaret) {
-      if (mBuilder.MarkFrameModifiedDuringBuilding(mPreviousCaret)) {
-        modifiedFrames.Frames().AppendElement(mPreviousCaret);
-      }
-    }
-
-    if (mBuilder.GetCaretFrame()) {
-      if (mBuilder.MarkFrameModifiedDuringBuilding(mBuilder.GetCaretFrame())) {
-        modifiedFrames.Frames().AppendElement(mBuilder.GetCaretFrame());
-      }
-    }
-
-    mPreviousCaret = mBuilder.GetCaretFrame();
-  }
+  // Do not allow partial builds if the |ShouldBuildPartial()| heuristic fails.
+  bool shouldBuildPartial = ShouldBuildPartial(modifiedFrames.Frames());
 
   nsRect modifiedDirty;
   AnimatedGeometryRoot* modifiedAGR = nullptr;
@@ -1373,6 +1430,7 @@ auto RetainedDisplayListBuilder::AttemptPartialUpdate(
       !ComputeRebuildRegion(modifiedFrames.Frames(), &modifiedDirty,
                             &modifiedAGR, framesWithProps.Frames()) ||
       !PreProcessDisplayList(&mList, modifiedAGR, result)) {
+    mBuilder.SetPartialBuildFailed(true);
     mBuilder.LeavePresShell(mBuilder.RootReferenceFrame(), nullptr);
     mList.DeleteAll(&mBuilder);
     return PartialUpdateResult::Failed;
@@ -1397,13 +1455,14 @@ auto RetainedDisplayListBuilder::AttemptPartialUpdate(
 
   mBuilder.SetDirtyRect(modifiedDirty);
   mBuilder.SetPartialUpdate(true);
+  mBuilder.SetPartialBuildFailed(false);
 
   nsDisplayList modifiedDL;
   mBuilder.RootReferenceFrame()->BuildDisplayListForStackingContext(
       &mBuilder, &modifiedDL);
   if (!modifiedDL.IsEmpty()) {
     nsLayoutUtils::AddExtraBackgroundItems(
-        mBuilder, modifiedDL, mBuilder.RootReferenceFrame(),
+        &mBuilder, &modifiedDL, mBuilder.RootReferenceFrame(),
         nsRect(nsPoint(0, 0), mBuilder.RootReferenceFrame()->GetSize()),
         mBuilder.RootReferenceFrame()->GetVisualOverflowRectRelativeToSelf(),
         aBackstop);
@@ -1411,10 +1470,10 @@ auto RetainedDisplayListBuilder::AttemptPartialUpdate(
   mBuilder.SetPartialUpdate(false);
 
   if (mBuilder.PartialBuildFailed()) {
-    mBuilder.SetPartialBuildFailed(false);
     mBuilder.LeavePresShell(mBuilder.RootReferenceFrame(), nullptr);
     mList.DeleteAll(&mBuilder);
     modifiedDL.DeleteAll(&mBuilder);
+    Metrics()->mPartialUpdateFailReason = PartialUpdateFailReason::Content;
     return PartialUpdateResult::Failed;
   }
 

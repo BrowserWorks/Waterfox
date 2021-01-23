@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Dewis Newidiadau Golygu">
+<!ENTITY conflictWarning.label "Mae'r dudalen hon wedi'i newid gan raglen arall, ond mae gennych hefyd newidiadau heb eu cadw yn y Cyfansoddwr.">
+<!ENTITY conflictResolve.label "Dewis pa fersiwn i'w chadw:">
+<!ENTITY keepCurrentPageButton.label "Cadw'r newidiadau cyfredol i'r dudalen">
+<!ENTITY useOtherPageButton.label "Newid y dudalen gyfredol gyda'r newidiadau eraill">

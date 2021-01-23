@@ -6,10 +6,10 @@
 
 #include "AnimationUtils.h"
 
+#include "mozilla/dom/Animation.h"
 #include "mozilla/dom/Document.h"
 #include "mozilla/dom/KeyframeEffect.h"
 #include "mozilla/EffectSet.h"
-#include "mozilla/Preferences.h"
 #include "nsDebug.h"
 #include "nsAtom.h"
 #include "nsIContent.h"
@@ -56,20 +56,6 @@ Document* AnimationUtils::GetDocumentFromGlobal(JSObject* aGlobalObject) {
     return nullptr;
   }
   return win->GetDoc();
-}
-
-/* static */
-bool AnimationUtils::IsOffscreenThrottlingEnabled() {
-  static bool sOffscreenThrottlingEnabled;
-  static bool sPrefCached = false;
-
-  if (!sPrefCached) {
-    sPrefCached = true;
-    Preferences::AddBoolVarCache(&sOffscreenThrottlingEnabled,
-                                 "dom.animations.offscreen-throttling");
-  }
-
-  return sOffscreenThrottlingEnabled;
 }
 
 /* static */

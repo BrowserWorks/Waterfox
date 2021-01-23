@@ -5,13 +5,14 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/dom/PermissionStatus.h"
+#include "mozilla/PermissionDelegateHandler.h"
 
 #include "mozilla/AsyncEventDispatcher.h"
+#include "mozilla/Permission.h"
 #include "mozilla/Services.h"
 #include "nsIPermissionManager.h"
 #include "PermissionObserver.h"
 #include "PermissionUtils.h"
-#include "nsPermission.h"
 
 namespace mozilla {
 namespace dom {
@@ -64,19 +65,26 @@ JSObject* PermissionStatus::WrapObject(JSContext* aCx,
 }
 
 nsresult PermissionStatus::UpdateState() {
-  nsCOMPtr<nsIPermissionManager> permMgr = services::GetPermissionManager();
-  if (NS_WARN_IF(!permMgr)) {
-    return NS_ERROR_FAILURE;
-  }
-
   nsCOMPtr<nsPIDOMWindowInner> window = GetOwner();
   if (NS_WARN_IF(!window)) {
     return NS_ERROR_FAILURE;
   }
 
+  RefPtr<Document> document = window->GetExtantDoc();
+  if (NS_WARN_IF(!document)) {
+    return NS_ERROR_FAILURE;
+  }
+
   uint32_t action = nsIPermissionManager::DENY_ACTION;
-  nsresult rv = permMgr->TestPermissionFromWindow(
-      window, PermissionNameToType(mName), &action);
+
+  PermissionDelegateHandler* permissionHandler =
+      document->GetPermissionDelegateHandler();
+  if (NS_WARN_IF(!permissionHandler)) {
+    return NS_ERROR_FAILURE;
+  }
+
+  nsresult rv = permissionHandler->GetPermissionForPermissionsAPI(
+      PermissionNameToType(mName), &action);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
@@ -97,7 +105,7 @@ already_AddRefed<nsIPrincipal> PermissionStatus::GetPrincipal() const {
   }
 
   nsCOMPtr<nsIPrincipal> principal =
-      nsPermission::ClonePrincipalForPermission(doc->NodePrincipal());
+      Permission::ClonePrincipalForPermission(doc->NodePrincipal());
   NS_ENSURE_TRUE(principal, nullptr);
 
   return principal.forget();

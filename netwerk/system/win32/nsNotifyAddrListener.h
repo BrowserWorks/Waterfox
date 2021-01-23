@@ -13,8 +13,12 @@
 #include "nsIRunnable.h"
 #include "nsIObserver.h"
 #include "nsThreadUtils.h"
+#include "nsThreadPool.h"
 #include "nsCOMPtr.h"
+#include "mozilla/Atomics.h"
 #include "mozilla/TimeStamp.h"
+#include "mozilla/Mutex.h"
+#include "mozilla/SHA1.h"
 
 class nsNotifyAddrListener : public nsINetworkLinkService,
                              public nsIRunnable,
@@ -31,35 +35,22 @@ class nsNotifyAddrListener : public nsINetworkLinkService,
 
   nsresult Init(void);
   void CheckLinkStatus(void);
+  static void HashSortedNetworkIds(const std::vector<GUID> nwGUIDS,
+                                   mozilla::SHA1Sum& sha1);
 
  protected:
-  class ChangeEvent : public mozilla::Runnable {
-   public:
-    NS_DECL_NSIRUNNABLE
-    ChangeEvent(nsINetworkLinkService* aService, const char* aEventID)
-        : Runnable("nsNotifyAddrListener::ChangeEvent"),
-          mService(aService),
-          mEventID(aEventID) {}
-
-   private:
-    nsCOMPtr<nsINetworkLinkService> mService;
-    const char* mEventID;
-  };
-
   bool mLinkUp;
   bool mStatusKnown;
   bool mCheckAttempted;
 
   nsresult Shutdown(void);
-  nsresult SendEvent(const char* aEventID);
+  nsresult NotifyObservers(const char* aTopic, const char* aData);
 
   DWORD CheckAdaptersAddresses(void);
 
-  // Checks for an Internet Connection Sharing (ICS) gateway.
-  bool CheckICSGateway(PIP_ADAPTER_ADDRESSES aAdapter);
-  bool CheckICSStatus(PWCHAR aAdapterName);
-
-  nsCOMPtr<nsIThread> mThread;
+  // This threadpool only ever holds 1 thread. It is a threadpool and not a
+  // regular thread so that we may call shutdownWithTimeout on it.
+  nsCOMPtr<nsIThreadPool> mThread;
 
  private:
   // Returns the new timeout period for coalescing (or INFINITE)
@@ -71,12 +62,19 @@ class nsNotifyAddrListener : public nsINetworkLinkService,
   // Figure out the current network identification
   void calculateNetworkId(void);
   bool findMac(char* gateway);
+
+  mozilla::Mutex mMutex;
   nsCString mNetworkId;
+  nsTArray<nsCString> mDnsSuffixList;
 
   HANDLE mCheckEvent;
 
   // set true when mCheckEvent means shutdown
-  bool mShutdown;
+  mozilla::Atomic<bool> mShutdown;
+
+  // Contains a set of flags that codify the reasons for which
+  // the platform indicates DNS should be used instead of TRR.
+  mozilla::Atomic<uint32_t, mozilla::Relaxed> mPlatformDNSIndications;
 
   // This is a checksum of various meta data for all network interfaces
   // considered UP at last check.
@@ -84,12 +82,6 @@ class nsNotifyAddrListener : public nsINetworkLinkService,
 
   // start time of the checking
   mozilla::TimeStamp mStartTime;
-
-  // Network changed events are enabled
-  bool mAllowChangedEvent;
-
-  // Check for IPv6 network changes
-  bool mIPv6Changes;
 
   // Flag set while coalescing change events
   bool mCoalescingActive;

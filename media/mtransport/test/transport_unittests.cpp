@@ -12,6 +12,12 @@
 #include <algorithm>
 #include <functional>
 
+#ifdef XP_MACOSX
+// ensure that Apple Security kit enum goes before "sslproto.h"
+#  include <CoreFoundation/CFAvailability.h>
+#  include <Security/CipherSuite.h>
+#endif
+
 #include "mozilla/UniquePtr.h"
 
 #include "sigslot.h"
@@ -95,7 +101,7 @@ class TransportLayerDummy : public TransportLayer {
 
 class Inspector {
  public:
-  virtual ~Inspector() {}
+  virtual ~Inspector() = default;
 
   virtual void Inspect(TransportLayer* layer, const unsigned char* data,
                        size_t len) = 0;
@@ -105,7 +111,7 @@ class Inspector {
 class TransportLayerLossy : public TransportLayer {
  public:
   TransportLayerLossy() : loss_mask_(0), packet_(0), inspector_(nullptr) {}
-  ~TransportLayerLossy() {}
+  ~TransportLayerLossy() = default;
 
   TransportResult SendPacket(MediaPacket& packet) override {
     MOZ_MTLOG(ML_NOTICE, LAYER_INFO << "SendPacket(" << packet.len() << ")");
@@ -222,7 +228,7 @@ class DtlsRecordParser {
     buffer_.Copy(data, len);
   }
 
-  bool NextRecord(uint8_t* ct, nsAutoPtr<MediaPacket>* buffer) {
+  bool NextRecord(uint8_t* ct, UniquePtr<MediaPacket>* buffer) {
     if (!remaining()) return false;
 
     CHECK_LENGTH(13U);
@@ -234,12 +240,12 @@ class DtlsRecordParser {
     consume(2);
 
     CHECK_LENGTH(length);
-    MediaPacket* db = new MediaPacket;
+    auto db = MakeUnique<MediaPacket>();
     db->Copy(ptr(), length);
     consume(length);
 
     *ct = *ctp;
-    *buffer = db;
+    *buffer = std::move(db);
 
     return true;
   }
@@ -262,7 +268,7 @@ class DtlsRecordInspector : public Inspector {
     DtlsRecordParser parser(data, len);
 
     uint8_t ct;
-    nsAutoPtr<MediaPacket> buf;
+    UniquePtr<MediaPacket> buf;
     while (parser.NextRecord(&ct, &buf)) {
       OnRecord(layer, ct, buf->data(), buf->len());
     }
@@ -436,7 +442,7 @@ class TransportTestPeer : public sigslot::has_slots<> {
         lossy_(new TransportLayerLossy()),
         dtls_(new TransportLayerDtls()),
         identity_(DtlsIdentity::Generate()),
-        ice_ctx_(NrIceCtx::Create(name)),
+        ice_ctx_(),
         streams_(),
         peer_(nullptr),
         gathering_complete_(false),
@@ -444,6 +450,8 @@ class TransportTestPeer : public sigslot::has_slots<> {
         enabled_cipersuites_(),
         disabled_cipersuites_(),
         test_utils_(utils) {
+    NrIceCtx::InitializeGlobals(NrIceCtx::GlobalConfig());
+    ice_ctx_ = NrIceCtx::Create(name, NrIceCtx::Config());
     std::vector<NrIceStunServer> stun_servers;
     UniquePtr<NrIceStunServer> server(NrIceStunServer::Create(
         std::string((char*)"stun.services.mozilla.com"), 3478));
@@ -634,7 +642,8 @@ class TransportTestPeer : public sigslot::has_slots<> {
 
   // New candidate
   void GotCandidate(NrIceMediaStream* stream, const std::string& candidate,
-                    const std::string& ufrag) {
+                    const std::string& ufrag, const std::string& mdns_addr,
+                    const std::string& actual_addr) {
     std::cerr << "Got candidate " << candidate << " (ufrag=" << ufrag << ")"
               << std::endl;
   }
@@ -676,8 +685,7 @@ class TransportTestPeer : public sigslot::has_slots<> {
 
     // Start checks on the other peer.
     test_utils_->sts_target()->Dispatch(
-        WrapRunnableRet(&res, peer_->ice_ctx_, &NrIceCtx::StartChecks,
-                        offerer_),
+        WrapRunnableRet(&res, peer_->ice_ctx_, &NrIceCtx::StartChecks),
         NS_DISPATCH_SYNC);
     ASSERT_TRUE(NS_SUCCEEDED(res));
   }

@@ -61,7 +61,15 @@ ToastNotification::Observe(nsISupports* aSubject, const char* aTopic,
   // Got quit-application
   // The handlers destructors will do the right thing (de-register with
   // Windows).
-  mActiveHandlers.Clear();
+  for (auto iter = mActiveHandlers.Iter(); !iter.Done(); iter.Next()) {
+    RefPtr<ToastNotificationHandler> handler = iter.UserData();
+    iter.Remove();
+
+    // Break the cycle between the handler and the MSCOM notification so the
+    // handler's destructor will be called.
+    handler->UnregisterHandler();
+  }
+
   return NS_OK;
 }
 
@@ -138,14 +146,22 @@ ToastNotification::ShowAlert(nsIAlertNotification* aAlert,
     return rv;
   }
 
+  RefPtr<ToastNotificationHandler> oldHandler = mActiveHandlers.Get(name);
+
   RefPtr<ToastNotificationHandler> handler = new ToastNotificationHandler(
       this, aAlertListener, name, cookie, title, text, hostPort, textClickable);
-  mActiveHandlers.Put(name, handler);
+  mActiveHandlers.Put(name, RefPtr{handler});
 
   rv = handler->InitAlertAsync(aAlert);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     mActiveHandlers.Remove(name);
+    handler->UnregisterHandler();
     return rv;
+  }
+
+  // If there was a previous handler with the same name then unregister it.
+  if (oldHandler) {
+    oldHandler->UnregisterHandler();
   }
 
   return NS_OK;
@@ -159,6 +175,7 @@ ToastNotification::CloseAlert(const nsAString& aAlertName,
     return NS_OK;
   }
   mActiveHandlers.Remove(aAlertName);
+  handler->UnregisterHandler();
   return NS_OK;
 }
 
@@ -180,6 +197,7 @@ void ToastNotification::RemoveHandler(const nsAString& aAlertName,
     // the hashtable .Remove() method. Wait until we have returned from there.
     RefPtr<ToastNotificationHandler> kungFuDeathGrip(aHandler);
     mActiveHandlers.Remove(aAlertName);
+    aHandler->UnregisterHandler();
   }
 }
 

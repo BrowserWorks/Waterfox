@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Lastnosti polj obrazca">
+<!ENTITY windowTitleImage.label "Lastnosti slik obrazca">
+
+<!ENTITY InputType.label "Vrsta polja">
+<!ENTITY InputType.accesskey "V">
+<!ENTITY text.value "Besedilo">
+<!ENTITY password.value "Geslo">
+<!ENTITY checkbox.value "Potrditveno polje">
+<!ENTITY radio.value "Izbirni gumb">
+<!ENTITY submit.value "Gumb Predloži">
+<!ENTITY reset.value "Gumb Ponastavi">
+<!ENTITY file.value "Datoteka">
+<!ENTITY hidden.value "Skrito">
+<!ENTITY image.value "Slika">
+<!ENTITY button.value "Gumb">
+
+<!ENTITY InputSettings.label "Nastavitve polja">
+<!ENTITY InputName.label "Ime polja:">
+<!ENTITY InputName.accesskey "I">
+<!ENTITY GroupName.label "Ime skupine:">
+<!ENTITY GroupName.accesskey "I">
+<!ENTITY InputValue.label "Vrednost polja:">
+<!ENTITY InputValue.accesskey "V">
+<!ENTITY InitialValue.label "Začetna vrednost:">
+<!ENTITY InitialValue.accesskey "Z">
+<!ENTITY InputChecked.label "Ob začetku potrjeno">
+<!ENTITY InputChecked.accesskey "O">
+<!ENTITY InputSelected.label "Ob začetku izbrano">
+<!ENTITY InputSelected.accesskey "O">
+<!ENTITY InputReadOnly.label "Samo za branje">
+<!ENTITY InputReadOnly.accesskey "S">
+<!ENTITY InputDisabled.label "Onemogočeno">
+<!ENTITY InputDisabled.accesskey "O">
+<!ENTITY tabIndex.label "Kazalo zavihkov:">
+<!ENTITY tabIndex.accesskey "K">
+<!ENTITY TextSize.label "Velikost polja:">
+<!ENTITY TextSize.accesskey "V">
+<!ENTITY TextLength.label "Največja dolžina:">
+<!ENTITY TextLength.accesskey "d">
+<!ENTITY AccessKey.label "Ključ za dostop:">
+<!ENTITY AccessKey.accesskey "K">
+<!ENTITY Accept.label "Sprejmi vrste:">
+<!ENTITY Accept.accesskey "S">
+
+<!ENTITY ImageProperties.label "Lastnosti slike …">
+<!ENTITY ImageProperties.accesskey "e">

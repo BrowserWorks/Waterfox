@@ -7,7 +7,6 @@
 #ifndef GFX_VR_DISPLAY_CLIENT_H
 #define GFX_VR_DISPLAY_CLIENT_H
 
-#include "nsIScreen.h"
 #include "nsCOMPtr.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/RefPtr.h"
@@ -16,6 +15,10 @@
 #include "gfxVR.h"
 
 namespace mozilla {
+namespace dom {
+enum class XRReferenceSpaceType : uint8_t;
+class XRSession;
+}  // namespace dom
 namespace gfx {
 class VRDisplayPresentation;
 class VRManagerChild;
@@ -33,11 +36,13 @@ class VRDisplayClient {
   virtual const VRHMDSensorState& GetSensorState() const;
   void GetSubmitFrameResult(VRSubmitFrameResultInfo& aResult);
 
-  virtual void ZeroSensor();
-
   already_AddRefed<VRDisplayPresentation> BeginPresentation(
       const nsTArray<dom::VRLayer>& aLayers, uint32_t aGroup);
+  void PresentationCreated();
   void PresentationDestroyed();
+
+  void SessionStarted(dom::XRSession* aSession);
+  void SessionEnded(dom::XRSession* aSession);
 
   bool GetIsConnected() const;
 
@@ -50,11 +55,17 @@ class VRDisplayClient {
   void StartVRNavigation();
   void StopVRNavigation(const TimeDuration& aTimeout);
 
+  bool IsPresenting();
+  bool IsReferenceSpaceTypeSupported(dom::XRReferenceSpaceType aType) const;
+  gfx::VRAPIMode GetXRAPIMode() const;
+  void SetXRAPIMode(gfx::VRAPIMode aMode);
+
  protected:
   virtual ~VRDisplayClient();
 
   MOZ_CAN_RUN_SCRIPT void FireEvents();
   void FireGamepadEvents();
+  MOZ_CAN_RUN_SCRIPT void StartFrame();
 
   VRDisplayInfo mDisplayInfo;
 
@@ -70,8 +81,20 @@ class VRDisplayClient {
   // updated.
   VRControllerState mLastEventControllerState[kVRControllerMaxCount];
 
+  /**
+   * mSessions is cleared in VRDisplayClient::SessionEnded.
+   * SessionEnded is guaranteed to be called by every XRSession
+   * when it is shutdown explicitly with the WebXR XRSession.end
+   * call, when all JS references on the XRSession are released, or
+   * when the window is closed.
+   */
+  nsTArray<RefPtr<dom::XRSession>> mSessions;
+
  private:
+  void GamepadMappingForWebVR(VRControllerState& aControllerState);
+
   VRSubmitFrameResultInfo mSubmitFrameResult;
+  gfx::VRAPIMode mAPIMode;
 };
 
 }  // namespace gfx

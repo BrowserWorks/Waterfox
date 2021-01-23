@@ -55,13 +55,13 @@ class Connector {
   }
 
   connectChrome(connection, actions, getState) {
-    const ChromeConnector = require("./chrome-connector");
+    const ChromeConnector = require("devtools/client/netmonitor/src/connector/chrome-connector");
     this.connector = new ChromeConnector();
     return this.connector.connect(connection, actions, getState);
   }
 
   connectFirefox(connection, actions, getState) {
-    const FirefoxConnector = require("./firefox-connector");
+    const FirefoxConnector = require("devtools/client/netmonitor/src/connector/firefox-connector");
     this.connector = new FirefoxConnector();
     return this.connector.connect(connection, actions, getState);
   }
@@ -96,12 +96,8 @@ class Connector {
     return this.connector.sendHTTPRequest(...arguments);
   }
 
-  blockRequest() {
-    return this.connector.blockRequest(...arguments);
-  }
-
-  unblockRequest() {
-    return this.connector.unblockRequest(...arguments);
+  setBlockedUrls() {
+    return this.connector.setBlockedUrls(...arguments);
   }
 
   setPreferences() {

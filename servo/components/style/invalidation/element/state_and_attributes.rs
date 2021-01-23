@@ -16,7 +16,7 @@ use crate::invalidation::element::invalidator::{Invalidation, InvalidationProces
 use crate::invalidation::element::restyle_hints::RestyleHint;
 use crate::selector_map::SelectorMap;
 use crate::selector_parser::Snapshot;
-use crate::stylesheets::origin::{Origin, OriginSet};
+use crate::stylesheets::origin::OriginSet;
 use crate::{Atom, WeakAtom};
 use selectors::attr::CaseSensitivity;
 use selectors::matching::matches_selector;
@@ -78,6 +78,39 @@ impl<'a, 'b: 'a, E: TElement + 'b> StateAndAttrInvalidationProcessor<'a, 'b, E> 
     }
 }
 
+/// Checks a dependency against a given element and wrapper, to see if something
+/// changed.
+pub fn check_dependency<E, W>(
+    dependency: &Dependency,
+    element: &E,
+    wrapper: &W,
+    mut context: &mut MatchingContext<'_, E::Impl>,
+) -> bool
+where
+    E: TElement,
+    W: selectors::Element<Impl = E::Impl>,
+{
+    let matches_now = matches_selector(
+        &dependency.selector,
+        dependency.selector_offset,
+        None,
+        element,
+        &mut context,
+        &mut |_, _| {},
+    );
+
+    let matched_then = matches_selector(
+        &dependency.selector,
+        dependency.selector_offset,
+        None,
+        wrapper,
+        &mut context,
+        &mut |_, _| {},
+    );
+
+    matched_then != matches_now
+}
+
 /// Whether we should process the descendants of a given element for style
 /// invalidation.
 pub fn should_process_descendants(data: &ElementData) -> bool {
@@ -89,7 +122,7 @@ pub fn invalidated_descendants<E>(element: E, child: E)
 where
     E: TElement,
 {
-    if child.get_data().is_none() {
+    if !child.has_data() {
         return;
     }
 
@@ -132,6 +165,14 @@ where
         true
     }
 
+    fn check_outer_dependency(&mut self, dependency: &Dependency, element: E) -> bool {
+        // We cannot assert about `element` having a snapshot here (in fact it
+        // most likely won't), because it may be an arbitrary descendant or
+        // later-sibling of the element we started invalidating with.
+        let wrapper = ElementWrapper::new(element, &*self.shared_context.snapshot_map);
+        check_dependency(dependency, &element, &wrapper, &mut self.matching_context)
+    }
+
     fn matching_context(&mut self) -> &mut MatchingContext<'a, E::Impl> {
         &mut self.matching_context
     }
@@ -158,7 +199,11 @@ where
         // If we the visited state changed, we force a restyle here. Matching
         // doesn't depend on the actual visited state at all, so we can't look
         // at matching results to decide what to do for this case.
-        if state_changes.intersects(ElementState::IN_VISITED_OR_UNVISITED_STATE) {
+        //
+        // TODO(emilio): This piece of code should be removed when
+        // layout.css.always-repaint-on-unvisited is true, since we cannot get
+        // into this situation in that case.
+        if state_changes.contains(ElementState::IN_VISITED_OR_UNVISITED_STATE) {
             trace!(" > visitedness change, force subtree restyle");
             // We can't just return here because there may also be attribute
             // changes as well that imply additional hints for siblings.
@@ -208,7 +253,9 @@ where
                     classes_added, classes_removed
                 );
             }
-            if snapshot.other_attr_changed() {
+            let mut attributes_changed = false;
+            snapshot.each_attr_changed(|_| { attributes_changed = true; });
+            if attributes_changed {
                 debug!(
                     " > attributes changed, old: {}",
                     snapshot.debug_list_attributes()
@@ -246,7 +293,7 @@ where
             };
 
             let document_origins = if !matches_document_author_rules {
-                Origin::UserAgent.into()
+                OriginSet::ORIGIN_USER_AGENT | OriginSet::ORIGIN_USER
             } else {
                 OriginSet::all()
             };
@@ -352,31 +399,18 @@ where
             }
         }
 
-        let should_examine_attribute_selector_map = self.snapshot.other_attr_changed() ||
-            (self.snapshot.class_changed() && map.has_class_attribute_selectors) ||
-            (self.snapshot.id_changed() && map.has_id_attribute_selectors);
-
-        if should_examine_attribute_selector_map {
-            self.collect_dependencies_in_map(&map.other_attribute_affecting_selectors)
-        }
+        self.snapshot.each_attr_changed(|attribute| {
+            if let Some(deps) = map.other_attribute_affecting_selectors.get(attribute) {
+                for dep in deps {
+                    self.scan_dependency(dep);
+                }
+            }
+        });
 
         let state_changes = self.state_changes;
         if !state_changes.is_empty() {
             self.collect_state_dependencies(&map.state_affecting_selectors, state_changes)
         }
-    }
-
-    fn collect_dependencies_in_map(&mut self, map: &'selectors SelectorMap<Dependency>) {
-        map.lookup_with_additional(
-            self.lookup_element,
-            self.matching_context.quirks_mode(),
-            self.removed_id,
-            self.classes_removed,
-            |dependency| {
-                self.scan_dependency(dependency);
-                true
-            },
-        );
     }
 
     fn collect_state_dependencies(
@@ -400,28 +434,9 @@ where
     }
 
     /// Check whether a dependency should be taken into account.
+    #[inline]
     fn check_dependency(&mut self, dependency: &Dependency) -> bool {
-        let element = &self.element;
-        let wrapper = &self.wrapper;
-        let matches_now = matches_selector(
-            &dependency.selector,
-            dependency.selector_offset,
-            None,
-            element,
-            &mut self.matching_context,
-            &mut |_, _| {},
-        );
-
-        let matched_then = matches_selector(
-            &dependency.selector,
-            dependency.selector_offset,
-            None,
-            wrapper,
-            &mut self.matching_context,
-            &mut |_, _| {},
-        );
-
-        matched_then != matches_now
+        check_dependency(dependency, &self.element, &self.wrapper, &mut self.matching_context)
     }
 
     fn scan_dependency(&mut self, dependency: &'selectors Dependency) {
@@ -444,7 +459,13 @@ where
 
         let invalidation_kind = dependency.invalidation_kind();
         if matches!(invalidation_kind, DependencyInvalidationKind::Element) {
-            self.invalidates_self = true;
+            if let Some(ref parent) = dependency.parent {
+                // We know something changed in the inner selector, go outwards
+                // now.
+                self.scan_dependency(parent);
+            } else {
+                self.invalidates_self = true;
+            }
             return;
         }
 
@@ -452,8 +473,8 @@ where
         debug_assert_ne!(dependency.selector_offset, dependency.selector.len());
 
         let invalidation = Invalidation::new(
-            &dependency.selector,
-            dependency.selector.len() - dependency.selector_offset + 1,
+            &dependency,
+            self.matching_context.current_host.clone(),
         );
 
         match invalidation_kind {
@@ -472,6 +493,9 @@ where
             DependencyInvalidationKind::Siblings => {
                 self.sibling_invalidations.push(invalidation);
             },
+            DependencyInvalidationKind::Parts => {
+                self.descendant_invalidations.parts.push(invalidation);
+            },
             DependencyInvalidationKind::SlottedElements => {
                 self.descendant_invalidations
                     .slotted_descendants
@@ -486,6 +510,7 @@ where
         match dependency.invalidation_kind() {
             DependencyInvalidationKind::Element => !self.invalidates_self,
             DependencyInvalidationKind::SlottedElements => self.element.is_html_slot_element(),
+            DependencyInvalidationKind::Parts => self.element.shadow_root().is_some(),
             DependencyInvalidationKind::ElementAndDescendants |
             DependencyInvalidationKind::Siblings |
             DependencyInvalidationKind::Descendants => true,

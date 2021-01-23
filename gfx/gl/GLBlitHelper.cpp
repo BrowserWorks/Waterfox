@@ -19,10 +19,10 @@
 #include "GPUVideoImage.h"
 
 #ifdef MOZ_WIDGET_ANDROID
-#  include "GeneratedJNIWrappers.h"
 #  include "AndroidSurfaceTexture.h"
 #  include "GLImages.h"
 #  include "GLLibraryEGL.h"
+#  include "mozilla/java/GeckoSurfaceTextureWrappers.h"
 #endif
 
 #ifdef XP_MACOSX
@@ -684,15 +684,23 @@ bool GLBlitHelper::BlitImageToFramebuffer(layers::Image* const srcImage,
       return BlitImage(static_cast<PlanarYCbCrImage*>(srcImage), destSize,
                        destOrigin);
 
-#ifdef MOZ_WIDGET_ANDROID
     case ImageFormat::SURFACE_TEXTURE:
+#ifdef MOZ_WIDGET_ANDROID
       return BlitImage(static_cast<layers::SurfaceTextureImage*>(srcImage),
                        destSize, destOrigin);
+#else
+      MOZ_ASSERT(false);
+      return false;
 #endif
-#ifdef XP_MACOSX
+
     case ImageFormat::MAC_IOSURFACE:
+#ifdef XP_MACOSX
       return BlitImage(srcImage->AsMacIOSurfaceImage(), destSize, destOrigin);
+#else
+      MOZ_ASSERT(false);
+      return false;
 #endif
+
 #ifdef XP_WIN
     case ImageFormat::GPU_VIDEO:
       return BlitImage(static_cast<layers::GPUVideoImage*>(srcImage), destSize,
@@ -705,12 +713,23 @@ bool GLBlitHelper::BlitImageToFramebuffer(layers::Image* const srcImage,
                        destSize, destOrigin);
     case ImageFormat::D3D9_RGB32_TEXTURE:
       return false;  // todo
-#endif
-    default:
-      gfxCriticalError() << "Unhandled srcImage->GetFormat(): "
-                         << uint32_t(srcImage->GetFormat());
+#else
+    case ImageFormat::GPU_VIDEO:
+    case ImageFormat::D3D11_SHARE_HANDLE_TEXTURE:
+    case ImageFormat::D3D11_YCBCR_IMAGE:
+    case ImageFormat::D3D9_RGB32_TEXTURE:
+      MOZ_ASSERT(false);
       return false;
+#endif
+    case ImageFormat::CAIRO_SURFACE:
+    case ImageFormat::NV_IMAGE:
+    case ImageFormat::OVERLAY_IMAGE:
+    case ImageFormat::SHARED_RGB:
+    case ImageFormat::TEXTURE_WRAPPER:
+    case ImageFormat::WAYLAND_DMABUF:
+      return false;  // todo
   }
+  return false;
 }
 
 // -------------------------------------
@@ -1008,7 +1027,7 @@ bool GLBlitHelper::BlitImage(layers::MacIOSurfaceImage* const srcImage,
       return false;
   }
 
-  if (pixelFormat == '2vuy') {
+  if (pixelFormat == kCVPixelFormatType_422YpCbCr8) {
     fragBody = kFragBody_CrYCb;
     // APPLE_rgb_422 adds RGB_RAW_422_APPLE for `internalFormat`, but only RGB
     // seems to work?
@@ -1085,23 +1104,23 @@ void GLBlitHelper::DrawBlitTextureToFramebuffer(const GLuint srcTex,
 
 // -----------------------------------------------------------------------------
 
-void GLBlitHelper::BlitFramebuffer(const gfx::IntSize& srcSize,
-                                   const gfx::IntSize& destSize,
+void GLBlitHelper::BlitFramebuffer(const gfx::IntRect& srcRect,
+                                   const gfx::IntRect& destRect,
                                    GLuint filter) const {
   MOZ_ASSERT(mGL->IsSupported(GLFeature::framebuffer_blit));
 
   const ScopedGLState scissor(mGL, LOCAL_GL_SCISSOR_TEST, false);
-  mGL->fBlitFramebuffer(0, 0, srcSize.width, srcSize.height, 0, 0,
-                        destSize.width, destSize.height,
-                        LOCAL_GL_COLOR_BUFFER_BIT, filter);
+  mGL->fBlitFramebuffer(srcRect.x, srcRect.y, srcRect.XMost(), srcRect.YMost(),
+                        destRect.x, destRect.y, destRect.XMost(),
+                        destRect.YMost(), LOCAL_GL_COLOR_BUFFER_BIT, filter);
 }
 
 // --
 
 void GLBlitHelper::BlitFramebufferToFramebuffer(const GLuint srcFB,
                                                 const GLuint destFB,
-                                                const gfx::IntSize& srcSize,
-                                                const gfx::IntSize& destSize,
+                                                const gfx::IntRect& srcRect,
+                                                const gfx::IntRect& destRect,
                                                 GLuint filter) const {
   MOZ_ASSERT(mGL->IsSupported(GLFeature::framebuffer_blit));
   MOZ_GL_ASSERT(mGL, !srcFB || mGL->fIsFramebuffer(srcFB));
@@ -1111,7 +1130,7 @@ void GLBlitHelper::BlitFramebufferToFramebuffer(const GLuint srcFB,
   mGL->fBindFramebuffer(LOCAL_GL_READ_FRAMEBUFFER, srcFB);
   mGL->fBindFramebuffer(LOCAL_GL_DRAW_FRAMEBUFFER, destFB);
 
-  BlitFramebuffer(srcSize, destSize, filter);
+  BlitFramebuffer(srcRect, destRect, filter);
 }
 
 void GLBlitHelper::BlitTextureToFramebuffer(GLuint srcTex,
@@ -1124,7 +1143,7 @@ void GLBlitHelper::BlitTextureToFramebuffer(GLuint srcTex,
     const ScopedFramebufferForTexture srcWrapper(mGL, srcTex, srcTarget);
     const ScopedBindFramebuffer bindFB(mGL);
     mGL->fBindFramebuffer(LOCAL_GL_READ_FRAMEBUFFER, srcWrapper.FB());
-    BlitFramebuffer(srcSize, destSize);
+    BlitFramebuffer(gfx::IntRect({}, srcSize), gfx::IntRect({}, destSize));
     return;
   }
 
@@ -1141,7 +1160,7 @@ void GLBlitHelper::BlitFramebufferToTexture(GLuint destTex,
     const ScopedFramebufferForTexture destWrapper(mGL, destTex, destTarget);
     const ScopedBindFramebuffer bindFB(mGL);
     mGL->fBindFramebuffer(LOCAL_GL_DRAW_FRAMEBUFFER, destWrapper.FB());
-    BlitFramebuffer(srcSize, destSize);
+    BlitFramebuffer(gfx::IntRect({}, srcSize), gfx::IntRect({}, destSize));
     return;
   }
 

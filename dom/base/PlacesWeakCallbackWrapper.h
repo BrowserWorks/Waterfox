@@ -9,7 +9,6 @@
 
 #include "mozilla/dom/PlacesObserversBinding.h"
 #include "mozilla/ErrorResult.h"
-#include "mozilla/Pair.h"
 #include "nsWrapperCache.h"
 
 namespace mozilla {
@@ -27,8 +26,7 @@ class PlacesWeakCallbackWrapper final
                                      PlacesEventCallback& aCallback);
 
   static already_AddRefed<PlacesWeakCallbackWrapper> Constructor(
-      const GlobalObject& aGlobal, PlacesEventCallback& aCallback,
-      ErrorResult& rv);
+      const GlobalObject& aGlobal, PlacesEventCallback& aCallback);
 
   nsISupports* GetParentObject() const;
 

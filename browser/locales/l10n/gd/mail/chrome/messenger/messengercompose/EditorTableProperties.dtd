@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "Roghainnean a' chlàir">
+<!ENTITY applyButton.label                "Cuir an sàs">
+<!ENTITY applyButton.accesskey            "a">
+<!ENTITY closeButton.label                "Dùin">
+<!ENTITY tableTab.label                   "Clàr">
+<!ENTITY cellTab.label                    "Ceallan">
+<!ENTITY tableRows.label                  "Sreathan:">
+<!ENTITY tableRows.accessKey              "r">
+<!ENTITY tableColumns.label               "Colbhan:">
+<!ENTITY tableColumns.accessKey           "C">
+<!ENTITY tableHeight.label                "Àirde:">
+<!ENTITY tableHeight.accessKey            "e">
+<!ENTITY tableWidth.label                 "Leud:">
+<!ENTITY tableWidth.accessKey             "L">
+<!ENTITY tableBorderSpacing.label         "Iomallan is beàrnadh">
+<!ENTITY tableBorderWidth.label           "Iomall:">
+<!ENTITY tableBorderWidth.accessKey       "I">
+<!ENTITY tableSpacing.label               "Beàrnadh:">
+<!ENTITY tableSpacing.accessKey           "B">
+<!ENTITY tablePadding.label               "Padadh:">
+<!ENTITY tablePadding.accessKey           "P">
+<!ENTITY tablePxBetwCells.label           "pixel eadar na ceallan">
+<!ENTITY tablePxBetwBrdrCellContent.label "pixel eadar iomall na cealla 's an t-susbaint">
+<!ENTITY tableAlignment.label             "Co-thaobhachadh a' chlàir:">
+<!ENTITY tableAlignment.accessKey         "t">
+<!ENTITY tableCaption.label               "Ceann-sgrìobhadh:">
+<!ENTITY tableCaption.accessKey           "n">
+<!ENTITY tableCaptionAbove.label          "Os cionn a' chlàir">
+<!ENTITY tableCaptionBelow.label          "Fon chlàr">
+<!ENTITY tableCaptionLeft.label           "Air taobh clì a' chlàir">
+<!ENTITY tableCaptionRight.label          "Air taobh deis a' chlàir">
+<!ENTITY tableCaptionNone.label           "Chan eil gin">
+<!ENTITY tableInheritColor.label           "(Leig le dath na duilleige a thighinn troimhe)">
+
+<!ENTITY cellSelection.label              "Na chaidh a thaghadh">
+<!ENTITY cellSelectCell.label             "Cealla">
+<!ENTITY cellSelectRow.label              "Sreath">
+<!ENTITY cellSelectColumn.label           "Colbh">
+<!ENTITY cellSelectNext.label             "Air adhart">
+<!ENTITY cellSelectNext.accessKey         "A">
+<!ENTITY cellSelectPrevious.label         "Air ais">
+<!ENTITY cellSelectPrevious.accessKey     "s">
+<!ENTITY applyBeforeChange.label          "Theid na h-atharrachaidhean làithreach a chur an sas mus dèid an taghadh atharrachadh.">
+<!ENTITY cellContentAlignment.label       "Co-thaobhachadh na susbainte">
+<!ENTITY cellHorizontal.label             "Còmhnard:">
+<!ENTITY cellHorizontal.accessKey         "m">
+<!ENTITY cellVertical.label               "Inghearach:">
+<!ENTITY cellVertical.accessKey           "I">
+<!ENTITY cellStyle.label                  "Stoidhle na cealla:">
+<!ENTITY cellStyle.accessKey              "c">
+<!ENTITY cellNormal.label                 "Àbhaisteach">
+<!ENTITY cellHeader.label                 "Bann-cinn">
+<!ENTITY cellTextWrap.label               "Pasgadh an teacsa:">
+<!ENTITY cellTextWrap.accessKey           "t">
+<!ENTITY cellWrap.label                   "Paisg">
+<!ENTITY cellNoWrap.label                 "Na paisg">
+<!ENTITY cellAlignTop.label               "Barr">
+<!ENTITY cellAlignMiddle.label            "Meadhan">
+<!ENTITY cellAlignBottom.label            "Bun">
+<!ENTITY cellAlignJustify.label           "Blocaich">
+<!ENTITY cellInheritColor.label           "(Leig le dath a' chlàir a thighinn troimhe)">
+<!ENTITY cellUseCheckboxHelp.label        "Tagh na roghainnean a thèid a chur an sàs airson nan ceallan a thagh thu le cromagan sna bogsaichean">
+<!-- Used in both Table and Cell panels  -->
+
+<!ENTITY size.label                       "Meud">
+<!ENTITY pixels.label                     "pixel">
+<!ENTITY backgroundColor.label            "Dath a' chùlaibh:">
+<!ENTITY backgroundColor.accessKey        "b">
+<!ENTITY AlignLeft.label                  "Clì">
+<!ENTITY AlignCenter.label                "Cuir sa mheadhan">
+<!ENTITY AlignRight.label                 "Deis">

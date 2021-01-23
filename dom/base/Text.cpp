@@ -13,15 +13,15 @@ namespace dom {
 
 already_AddRefed<Text> Text::SplitText(uint32_t aOffset, ErrorResult& aRv) {
   nsAutoString cutText;
-  uint32_t length = TextLength();
+  const uint32_t length = TextLength();
 
   if (aOffset > length) {
     aRv.Throw(NS_ERROR_DOM_INDEX_SIZE_ERR);
     return nullptr;
   }
 
-  uint32_t cutStartOffset = aOffset;
-  uint32_t cutLength = length - aOffset;
+  const uint32_t cutStartOffset = aOffset;
+  const uint32_t cutLength = length - aOffset;
   SubstringData(cutStartOffset, cutLength, cutText, aRv);
   if (aRv.Failed()) {
     return nullptr;
@@ -86,15 +86,6 @@ void Text::GetWholeText(nsAString& aWholeText, ErrorResult& aRv) {
   // Handle parent-less nodes
   if (!parent) {
     GetData(aWholeText);
-    return;
-  }
-
-  int32_t index = parent->ComputeIndexOf(this);
-  NS_WARNING_ASSERTION(index >= 0,
-                       "Trying to use .wholeText with an anonymous"
-                       "text node child of a binding parent?");
-  if (NS_WARN_IF(index < 0)) {
-    aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
     return;
   }
 

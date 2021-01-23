@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Properti Tombol">
+
+<!ENTITY Settings.label "Pengaturan">
+
+<!ENTITY ButtonType.label "Jenis">
+<!ENTITY ButtonType.accesskey "J">
+<!ENTITY submit.value "Kirim">
+<!ENTITY reset.value "Ulangi">
+<!ENTITY button.value "Tombol">
+
+<!ENTITY ButtonName.label "Nama:">
+<!ENTITY ButtonName.accesskey "N">
+<!ENTITY ButtonValue.label "Nilai:">
+<!ENTITY ButtonValue.accesskey "N">
+<!ENTITY tabIndex.label "Nomor Indeks Tab:">
+<!ENTITY tabIndex.accesskey "I">
+<!ENTITY ButtonDisabled.label "Non-aktif (Mati)">
+<!ENTITY ButtonDisabled.accesskey "N">
+<!ENTITY AccessKey.label "Kunci Akses:">
+<!ENTITY AccessKey.accesskey "K">
+
+<!ENTITY RemoveButton.label "Hapus Tombol">
+<!ENTITY RemoveButton.accesskey "H">

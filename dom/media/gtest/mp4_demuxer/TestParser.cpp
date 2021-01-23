@@ -62,7 +62,7 @@ class TestStream : public ByteStream,
   size_t mHighestSuccessfulEndOffset;
 
  protected:
-  virtual ~TestStream() {}
+  virtual ~TestStream() = default;
 
   const uint8_t* mBuffer;
   size_t mSize;
@@ -179,8 +179,6 @@ static const TestFileData testFiles[] = {
      0, false, false, 2},
     {"test_case_1181215.mp4", true, 0, false, -1, 0, 0, 0, -1, false, 0, false,
      false, 0},
-    {"test_case_1181220.mp4", false, 0, false, -1, 0, 0, 0, -1, false, 0, false,
-     false, 0},  // invalid audio 'sinf' box
     {"test_case_1181223.mp4", false, 0, false, 416666, 320, 240, 0, -1, false,
      0, false, false, 0},
     {"test_case_1181719.mp4", false, 0, false, -1, 0, 0, 0, -1, false, 0, false,
@@ -406,6 +404,7 @@ TEST(MP4Metadata, test_case_mp4_subsets) {
 }
 #endif
 
+#if !defined(XP_WIN) || !defined(MOZ_ASAN)  // OOMs on Windows ASan
 TEST(MoofParser, test_case_mp4)
 {
   const TestFileData* tests = nullptr;
@@ -495,6 +494,7 @@ TEST(MoofParser, test_case_sample_description_entries)
     }
   }
 }
+#endif  // !defined(XP_WIN) || !defined(MOZ_ASAN)
 
 // We should gracefully handle track_id 0 since Bug 1519617. We'd previously
 // used id 0 to trigger special handling in the MoofParser to read multiple

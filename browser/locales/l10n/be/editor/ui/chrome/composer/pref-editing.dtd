@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.editing.title "Наладжванні новых старонак">
+<!ENTITY authorName.label "Аўтар:">
+<!ENTITY authorName.accesskey "А">
+<!ENTITY pageColorHeader "Першапачатковы выгляд старонкі">
+<!ENTITY defaultColors.label "Змоўчныя колеры чытальніка (не выстаўляць колеры на старонцы)">
+<!ENTITY defaultColors.accesskey "ў">
+<!ENTITY customColors.label "Ужываць выбарачныя колеры:">
+<!ENTITY customColors.accesskey "к">
+<!ENTITY normalText.label "Звычайны тэкст">
+<!ENTITY normalText.accesskey "З">
+<!ENTITY linkText.label "Тэкст спасылкі">
+<!ENTITY linkText.accesskey "с">
+<!ENTITY activeLinkText.label "Тэкст актыўнай спасылкі">
+<!ENTITY activeLinkText.accesskey "к">
+<!ENTITY visitedLinkText.label "Тэкст наведанай спасылкі">
+<!ENTITY visitedLinkText.accesskey "н">
+<!ENTITY background.label "Фон:">
+<!ENTITY background.accesskey "Ф">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Фонавая выява:">
+<!ENTITY backgroundImage.accesskey "я">
+<!ENTITY chooseFile.label "Выбраць файл…">
+<!ENTITY chooseFile.accesskey "В">

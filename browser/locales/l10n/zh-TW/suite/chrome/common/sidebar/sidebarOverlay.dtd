@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sidebar.panels.label           "側邊欄">
+<!ENTITY sidebar.reload.label           "重新載入">
+<!ENTITY sidebar.reload.accesskey       "R">
+<!ENTITY sidebar.picker.label           "分頁">
+<!ENTITY sidebar.customize.label        "自訂側邊欄…">
+<!ENTITY sidebar.customize.accesskey    "u">
+<!ENTITY sidebar.hide.label             "隱藏面板">
+<!ENTITY sidebar.hide.accesskey         "H">
+<!ENTITY sidebar.switch.label           "切換至該分頁">
+<!ENTITY sidebar.switch.accesskey       "t">
+<!ENTITY sidebarCmd.label               "側邊欄">
+<!ENTITY sidebarCmd.accesskey           "b">
+<!ENTITY sidebar.loading.label          "載入中…">
+<!ENTITY sidebar.loadstopped.label      "載入中止">
+<!ENTITY sidebar.loading.stop.label     "停止">
+<!ENTITY sidebar.loading.stop.accesskey "S">
+
+<!-- LOCALIZATION NOTE (showHideSidebarCmd.key): This is only used on the
+     mac platform, other platforms use VK_F9. -->
+<!ENTITY showHideSidebarCmd.key         "S">
+
+<!ENTITY sidebar.no-panels.state     "側邊欄目前是空的。">
+<!ENTITY sidebar.no-panels.add       '您可以按「標籤」按鈕以加入新標籤。'>
+<!ENTITY sidebar.no-panels.hide      '如果您完全不想使用側邊欄，請從「檢視」選單當中的「顯示/隱藏」子選單選擇「側邊欄」。'>
+<!ENTITY sidebar.sbDirectory.label   "側邊欄目錄…">
+
+<!ENTITY sidebar.pagenotfound.label  "現在無法使用此面版。">
+<!ENTITY sidebar.close.tooltip       "關閉側邊欄">
+<!ENTITY sidebar.open.tooltip        "開啟側邊欄">
+
+<!ENTITY sidebar.search.label         "搜尋">
+<!ENTITY sidebar.client-bookmarks.label     "書籤">
+<!ENTITY sidebar.client-history.label       "瀏覽紀錄">
+<!ENTITY sidebar.client-addressbook.label   "通訊錄">

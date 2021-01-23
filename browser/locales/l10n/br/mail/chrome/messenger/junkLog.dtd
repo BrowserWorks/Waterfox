@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY adaptiveJunkLog.title "Kerzhlevr ar posteloù lastez">
+<!ENTITY adaptiveJunkLogInfo.label "Kerzhlevr an oberiantiz eus reoliañ azasaus ar posteloù lastez.">
+<!ENTITY clearLog.label "Skarzhañ ar c'herzhlevr">
+<!ENTITY clearLog.accesskey "k">
+<!ENTITY closeLog.label "Serriñ">
+<!ENTITY closeLog.accesskey "S">

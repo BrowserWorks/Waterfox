@@ -1,4 +1,3 @@
-/* vim:set ts=2 sw=2 sts=2 et: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -10,11 +9,13 @@
  *  +------------+--------------+------------------------+
  */
 .debug-target-info {
+  --border-inline-end-width: 1px;
+  --padding-inline-end-size: 24px;
   display: flex;
   background: var(--theme-tab-toolbar-background);
   border-bottom: 1px solid var(--theme-splitter-color);
   padding: 4px 0;
-  font-size: 1.2em;
+  font-size: 1.35em;
   color: var(--theme-toolbar-color);
 }
 
@@ -30,12 +31,12 @@
   grid-template-columns: 20px auto auto;
   grid-column-gap: 8px;
   align-items: center;
-  padding: 0 24px;
+  padding: 0 var(--padding-inline-end-size);
   white-space: nowrap;
 }
 
 .debug-target-info .iconized-label:not(:last-child) {
-  border-inline-end: 1px solid var(--theme-splitter-color);
+  border-inline-end: var(--border-inline-end-width) solid var(--theme-splitter-color);
 }
 
 .debug-target-info .iconized-label img {
@@ -46,6 +47,53 @@
 .debug-target-info img {
   -moz-context-properties: fill;
   fill: var(--theme-toolbar-color);
+}
+
+.debug-target-info .reload-button {
+  padding: 8px;
+  grid-column-gap: 0;
+  border: 0;
+  background: var(--theme-toolbarbutton-background);
+  --border-inline-end-width: 0;
+}
+
+.debug-target-info .reload-button:hover {
+  background-color: var(--toolbarbutton-hover-background);
+}
+
+.debug-target-info .reload-button:focus {
+  box-shadow: 0 0 0 1px #0a84ff inset, 0 0 0 1px #0a84ff, 0 0 0 4px rgba(10, 132, 255, 0.3)
+}
+
+.debug-target-info .reload-button:active {
+  background-color: var(--theme-toolbarbutton-active-background);
+}
+
+.debug-target-info .reload-button img {
+  fill: var(--theme-toolbarbutton-color);
+}
+
+.debug-target-info .reload-button:active img {
+  fill: var(--theme-toolbarbutton-active-color);
+}
+
+.debug-target-info .debug-target-url {
+  display: flex;
+  flex-grow: 1;
+  padding-inline-end: var(--padding-inline-end-size);
+  align-self: center;
+}
+
+.debug-target-info .debug-target-url-input {
+  border: 1px solid var(--theme-toolbarbutton-active-background);
+  border-radius: 2px;
+  height: 20px;
+  padding-inline-start: 10px;
+}
+
+.debug-target-info .debug-target-url-input,
+.debug-target-info .debug-target-url-form {
+  width: 100%;
 }
 
 /* Toolbox tabbar */
@@ -198,6 +246,62 @@
 
 /* Toolbox controls */
 
+.devtools-tabbar-button {
+  -moz-appearance: none;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  margin: 0;
+  padding: 4px;
+  border: none;
+  direction: ltr;
+  font-family: inherit;
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--theme-icon-color);
+  background-color: transparent;
+}
+
+/* Button icon style */
+.devtools-tabbar-button::before {
+  content: "";
+  flex: none;
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin: 0 1px;
+  -moz-context-properties: fill;
+  fill: currentColor;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.devtools-tabbar-button::-moz-focus-inner {
+  border: none;
+}
+
+.devtools-tabbar-button:focus {
+  outline: none;
+  background-color: var(--theme-toolbar-hover);
+}
+
+.devtools-tabbar-button:hover,
+.devtools-tabbar-button.checked {
+  background-color: var(--theme-toolbar-hover);
+}
+
+.devtools-tabbar-button.checked,
+.devtools-tabbar-button:active {
+  color: var(--theme-icon-checked-color);
+}
+
+.devtools-tabbar-button:disabled {
+  color: var(--theme-icon-dimmed-color) !important;
+  background-color: transparent !important;
+}
+
 #tools-chevron-menu-button::before {
   background-image: url("chrome://devtools/skin/images/command-chevron.svg");
 }
@@ -213,11 +317,11 @@
 }
 
 #toolbox-buttons-start > .devtools-separator {
-  --separator-inline-margin: 0;
+  margin-inline: 0;
 }
 
 #toolbox-buttons-end > .devtools-separator {
-  --separator-inline-margin: 5px;
+  margin-inline: 5px;
 }
 
 #toolbox-close::before {
@@ -244,6 +348,10 @@
   --menuitem-icon-image: url("chrome://devtools/skin/images/dock-undock.svg");
 }
 
+#toolbox-meatball-menu-dock-window:-moz-locale-dir(rtl) .label::before {
+  transform: scaleX(-1);
+}
+
 #toolbox-meatball-menu-splitconsole {
   --menuitem-icon-image: url("chrome://devtools/skin/images/command-console.svg");
 }
@@ -257,16 +365,6 @@
 }
 
 /* Command buttons */
-
-.command-button,
-#toolbox-controls > button,
-.toolbox-tabs-wrapper .tools-chevron-menu {
-  /* !important is needed to override .devtools-button rules in common.css */
-  margin: 0 !important;
-  border-radius: 0 !important;
-  position: relative;
-  min-width: 26px;
-}
 
 #command-button-pick {
   min-width: 32px;
@@ -304,23 +402,21 @@
   fill-opacity: 0.25;
 }
 
-#command-button-stop-replay::before,
-#command-button-replay::before {
-  background-image: url("chrome://devtools/skin/images/command-replay.svg");
+#command-button-fission-prefs::before {
+  content: "FIS";
+  width: auto;
+  font-weight: 600;
 }
 
-#command-button-replay,
-#command-button-stop-replay {
-  background-color: transparent;
-}
-
-#command-button-replay:hover,
-#command-button-stop-replay:hover {
-  background: var(--toolbarbutton-background);
-}
-
-#command-button-scratchpad::before {
-  background-image: url("chrome://devtools/skin/images/tool-scratchpad.svg");
+.fission-pref-icon::before {
+  content: "";
+  background-image: url("chrome://devtools/skin/images/help.svg");
+  -moz-context-properties: fill;
+  fill: var(--theme-body-color);
+  display: block;
+  background-size: 12px;
+  width: 12px;
+  height: 12px;
 }
 
 #command-button-rulers::before {
@@ -388,6 +484,15 @@
   -moz-user-focus: normal;
 }
 
+/* Let the component gain focus when a click hits an empty area */
+#toolbox-container {
+  -moz-user-focus: normal;
+}
+
+#toolbox-container:focus {
+  outline: 0;
+}
+
 /* Toolbox tabs reordering */
 #toolbox-container.tabs-reordering > .theme-body {
   pointer-events: none;
@@ -404,234 +509,4 @@
 #toolbox-container.tabs-reordering .devtools-tab.selected {
   background-color: var(--theme-toolbar-hover);
   z-index: 1;
-}
-
-/*. webreplay */
-
-.webreplay-player {
-  -moz-appearance: none;
-  background: var(--theme-tab-toolbar-background);
-  border-bottom: 1px solid var(--theme-splitter-color);
-  box-sizing: border-box;
-  min-height: 29px;
-
-  --progress-recording-background: hsl(0, 100%, 97%);
-  --progress-playing-background: hsl(207, 100%, 97%);
-
-  --progress-bar-transition: 200ms;
-
-  --recording-marker-background: hsl(14.9, 100%, 67%);
-  --recording-marker-background-hover: hsl(14.9, 100%, 47%);
-  --command-button-size: 14px;
-  --command-button-primary-size: 20px;
-}
-
-.webreplay-player .overlay-container {
-  display: flex;
-}
-
-.webreplay-player .progressBar {
-  position: relative;
-  width: 100%;
-  height: 20px;
-  background: #fff;
-  margin: 4px 10px 4px 0;
-  border: 1px solid #bfc9d2;
-  overflow: hidden;
-}
-
-.webreplay-player .progress {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background: var(--progress-playing-background);
-  transition-duration: var(--progress-bar-transition);
-}
-
-.webreplay-player #overlay:not(.recording) .progress::after {
-  background: var(--purple-50);
-  width: 1px;
-  height: 100%;
-  right: -0.5px;
-  opacity: 0.4;
-  display: block;
-  content: "";
-  position: absolute;
-}
-
-.webreplay-player .recording .progress {
-  background: var(--progress-recording-background);
-  transition-duration: var(--progress-bar-transition);
-}
-
-.webreplay-player .message {
-  position: absolute;
-  height: 100%;
-  width: 7px;
-  height: 7px;
-  border-radius: 4.5px;
-  top: calc(50% - 3.5px);
-  background: var(--blue-40);
-  transition-duration: 100ms;
-}
-
-.webreplay-player .message.overlayed {
-  border: 1px solid var(--progress-playing-background);
-  top: 5.5px;
-}
-
-.webreplay-player .message.overlayed.future {
-  border-color: #fff;
-}
-
-.webreplay-player .message.highlighted {
-  background-color: var(--blue-60);
-  transform: scale(1.25);
-  transition-duration: 100ms;
-}
-
-.webreplay-player .recording .message.highlighted {
-  background-color: var(--recording-marker-background-hover);
-}
-
-.webreplay-player .recording .message.overlayed {
-  border-color: var(--progress-recording-background);
-}
-
-.webreplay-player .recording .message {
-  background: var(--recording-marker-background);
-}
-
-.webreplay-player .recording .message:hover {
-  background: var(--recording-marker-background-hover);
-}
-
-.webreplay-player .message:hover {
-  background: var(--blue-60);
-  cursor: pointer;
-}
-
-.webreplay-player .message:hover::before {
-  transform: scale(0.1);
-}
-
-.webreplay-player .commands {
-  display: flex;
-}
-
-.webreplay-player .command-button {
-  display: flex;
-  min-width: 17px;
-  opacity: 0.7;
-}
-
-.webreplay-player .command-button.primary {
-  min-width: 24px;
-}
-
-.webreplay-player .btn {
-  width: var(--command-button-size);
-  height: var(--command-button-size);
-  mask-size: var(--command-button-size);
-  background: #6a6a6a;
-  align-self: center;
-  margin: 0 auto;
-}
-
-.webreplay-player .primary .btn {
-  width: var(--command-button-primary-size);
-  height: var(--command-button-primary-size);
-  mask-size: var(--command-button-primary-size);
-}
-
-.webreplay-player .command-button.active:hover {
-  background: #efefef;
-  cursor: pointer;
-}
-
-.webreplay-player .command-button.active {
-  opacity: 1;
-}
-
-.webreplay-player div.command-button .rewind {
-  transform: scaleX(-1);
-}
-
-.webreplay-player div.command-button .previous {
-  transform: scaleX(-1);
-  margin-left: 8px;
-}
-
-.webreplay-player div.command-button .next {
-  margin-right: 8px;
-}
-
-.webreplay-player .progress-line {
-  width: 0%;
-  height: 1px;
-  background: var(--blue-40);
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transition-duration: var(--progress-bar-transition);
-}
-
-.webreplay-player .progress-line.end {
-  opacity: 0.3;
-}
-
-.webreplay-player .recording .progress-line {
-  background: #d0021b;
-  opacity: 0.3;
-}
-
-.webreplay-player .tick {
-  position: absolute;
-  height: 100%;
-}
-
-.webreplay-player .tick::before,
-.webreplay-player .tick::after {
-  height: 1.5px;
-  width: 1px;
-  right: 0;
-  position: absolute;
-  content: "";
-  display: block;
-}
-
-.webreplay-player .recording .tick::before,
-.webreplay-player .recording .tick::after {
-  background: #d0021b;
-}
-
-.webreplay-player .tick.future::before,
-.webreplay-player .tick.future::after {
-  background: #bfc9d2;
-}
-
-.webreplay-player .tick::before,
-.webreplay-player .tick::after {
-  background: var(--blue-50);
-}
-
-.webreplay-player .tick::after {
-  bottom: 0;
-}
-
-.webreplay-player .tick::before {
-  top: 0;
-}
-
-
-.webreplay-player #overlay:hover .tick {
-  opacity: 1;
-}
-
-.webreplay-player #overlay .tick {
-  opacity: 0.5;
-}
-
-.webreplay-player #overlay .tick:hover ~ .tick {
-  opacity: 0.5;
 }

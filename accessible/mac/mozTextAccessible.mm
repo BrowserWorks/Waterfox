@@ -35,7 +35,6 @@ inline NSString* ToNSString(id aValue) {
 }
 
 @interface mozTextAccessible ()
-- (NSString*)subrole;
 - (NSString*)selectedText;
 - (NSValue*)selectedTextRange;
 - (NSValue*)visibleCharacterRange;
@@ -48,10 +47,6 @@ inline NSString* ToNSString(id aValue) {
 @end
 
 @implementation mozTextAccessible
-
-- (BOOL)accessibilityIsIgnored {
-  return ![self getGeckoAccessible] && ![self getProxyAccessible];
-}
 
 - (NSArray*)accessibilityAttributeNames {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NIL;
@@ -76,25 +71,32 @@ inline NSString* ToNSString(id aValue) {
 - (id)accessibilityAttributeValue:(NSString*)attribute {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NIL;
 
-  if ([attribute isEqualToString:NSAccessibilityNumberOfCharactersAttribute])
+  if ([attribute isEqualToString:NSAccessibilityNumberOfCharactersAttribute]) {
     return [NSNumber numberWithInt:[self textLength]];
+  }
 
-  if ([attribute isEqualToString:NSAccessibilityInsertionPointLineNumberAttribute])
+  if ([attribute isEqualToString:NSAccessibilityInsertionPointLineNumberAttribute]) {
     return [self caretLineNumber];
+  }
 
-  if ([attribute isEqualToString:NSAccessibilitySelectedTextRangeAttribute])
+  if ([attribute isEqualToString:NSAccessibilitySelectedTextRangeAttribute]) {
     return [self selectedTextRange];
+  }
 
-  if ([attribute isEqualToString:NSAccessibilitySelectedTextAttribute]) return [self selectedText];
+  if ([attribute isEqualToString:NSAccessibilitySelectedTextAttribute]) {
+    return [self selectedText];
+  }
 
-  if ([attribute isEqualToString:NSAccessibilityTitleAttribute]) return @"";
+  if ([attribute isEqualToString:NSAccessibilityTitleAttribute]) {
+    return @"";
+  }
 
   if ([attribute isEqualToString:NSAccessibilityValueAttribute]) {
     // Apple's SpeechSynthesisServer expects AXValue to return an AXStaticText
     // object's AXSelectedText attribute. See bug 674612 for details.
     // Also if there is no selected text, we return the full text.
     // See bug 369710 for details.
-    if ([[self role] isEqualToString:NSAccessibilityStaticTextRole]) {
+    if ([[self moxRole] isEqualToString:NSAccessibilityStaticTextRole]) {
       NSString* selectedText = [self selectedText];
       return (selectedText && [selectedText length]) ? selectedText : [self text];
     }
@@ -102,26 +104,59 @@ inline NSString* ToNSString(id aValue) {
     return [self text];
   }
 
-  if (AccessibleWrap* accWrap = [self getGeckoAccessible]) {
-    if ([attribute isEqualToString:@"AXRequired"]) {
-      return [NSNumber numberWithBool:!!(accWrap->State() & states::REQUIRED)];
-    }
-
-    if ([attribute isEqualToString:@"AXInvalid"]) {
-      return [NSNumber numberWithBool:!!(accWrap->State() & states::INVALID)];
-    }
-  } else if (ProxyAccessible* proxy = [self getProxyAccessible]) {
-    if ([attribute isEqualToString:@"AXRequired"]) {
-      return [NSNumber numberWithBool:!!(proxy->State() & states::REQUIRED)];
-    }
-
-    if ([attribute isEqualToString:@"AXInvalid"]) {
-      return [NSNumber numberWithBool:!!(proxy->State() & states::INVALID)];
-    }
+  if ([attribute isEqualToString:@"AXRequired"]) {
+    return [NSNumber numberWithBool:[self stateWithMask:states::REQUIRED] != 0];
   }
 
-  if ([attribute isEqualToString:NSAccessibilityVisibleCharacterRangeAttribute])
+  if ([attribute isEqualToString:@"AXInvalid"]) {
+    if ([self stateWithMask:states::INVALID] != 0) {
+      // If the attribute exists, it has one of four values: true, false,
+      // grammar, or spelling. We query the attribute value here in order
+      // to find the correct string to return.
+      if (Accessible* acc = mGeckoAccessible.AsAccessible()) {
+        HyperTextAccessible* text = acc->AsHyperText();
+        if (!text || !text->IsTextRole()) {
+          // we can't get the attribute, but we should still respect the
+          // invalid state flag
+          return @"true";
+        }
+        nsAutoString invalidStr;
+        nsCOMPtr<nsIPersistentProperties> attributes = text->DefaultTextAttributes();
+        nsAccUtils::GetAccAttr(attributes, nsGkAtoms::invalid, invalidStr);
+        if (invalidStr.IsEmpty()) {
+          // if the attribute had no value, we should still respect the
+          // invalid state flag.
+          return @"true";
+        }
+        return nsCocoaUtils::ToNSString(invalidStr);
+      } else {
+        ProxyAccessible* proxy = mGeckoAccessible.AsProxy();
+        // Similar to the acc case above, we iterate through our attributes
+        // to find the value for `invalid`.
+        AutoTArray<Attribute, 10> attrs;
+        proxy->DefaultTextAttributes(&attrs);
+        for (size_t i = 0; i < attrs.Length(); i++) {
+          if (attrs.ElementAt(i).Name() == "invalid") {
+            nsString invalidStr = attrs.ElementAt(i).Value();
+            if (invalidStr.IsEmpty()) {
+              break;
+            }
+            return nsCocoaUtils::ToNSString(invalidStr);
+          }
+        }
+        // if we iterated through our attributes and didn't find `invalid`,
+        // or if the invalid attribute had no value, we should still respect
+        // the invalid flag and return true.
+        return @"true";
+      }
+    }
+    // If the flag is not set, we return false.
+    return @"false";
+  }
+
+  if ([attribute isEqualToString:NSAccessibilityVisibleCharacterRangeAttribute]) {
     return [self visibleCharacterRange];
+  }
 
   // let mozAccessible handle all other attributes
   return [super accessibilityAttributeValue:attribute];
@@ -147,15 +182,17 @@ inline NSString* ToNSString(id aValue) {
 #endif
                         nil];
   }
-  return supportedParametrizedAttributes;
+  return [supportedParametrizedAttributes
+      arrayByAddingObject:[super accessibilityParameterizedAttributeNames]];
 }
 
 - (id)accessibilityAttributeValue:(NSString*)attribute forParameter:(id)parameter {
-  AccessibleWrap* accWrap = [self getGeckoAccessible];
-  ProxyAccessible* proxy = [self getProxyAccessible];
+  if ([self isExpired]) {
+    return nil;
+  }
 
-  HyperTextAccessible* textAcc = accWrap ? accWrap->AsHyperText() : nullptr;
-  if (!textAcc && !proxy) return nil;
+  Accessible* acc = mGeckoAccessible.AsAccessible();
+  ProxyAccessible* proxy = mGeckoAccessible.AsProxy();
 
   if ([attribute isEqualToString:NSAccessibilityStringForRangeParameterizedAttribute]) {
     NSRange range;
@@ -192,6 +229,11 @@ inline NSString* ToNSString(id aValue) {
   }
 
   if ([attribute isEqualToString:NSAccessibilityBoundsForRangeParameterizedAttribute]) {
+    HyperTextAccessible* textAcc = acc ? acc->AsHyperText() : nullptr;
+    if (!textAcc && !proxy) {
+      return nil;
+    }
+
     NSRange range;
     if (!ToNSRange(parameter, &range)) {
 #if DEBUG
@@ -212,11 +254,7 @@ inline NSString* ToNSString(id aValue) {
     return [NSValue valueWithRect:nsCocoaUtils::GeckoRectToCocoaRect(bounds)];
   }
 
-#if DEBUG
-  NSLog(@"unhandled attribute:%@ forParameter:%@", attribute, parameter);
-#endif
-
-  return nil;
+  return [super accessibilityAttributeValue:attribute forParameter:parameter];
 }
 
 - (BOOL)accessibilityIsAttributeSettable:(NSString*)attribute {
@@ -237,11 +275,12 @@ inline NSString* ToNSString(id aValue) {
 - (void)accessibilitySetValue:(id)value forAttribute:(NSString*)attribute {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK;
 
-  AccessibleWrap* accWrap = [self getGeckoAccessible];
-  ProxyAccessible* proxy = [self getProxyAccessible];
+  if ([self isExpired]) {
+    return;
+  }
 
-  HyperTextAccessible* textAcc = accWrap ? accWrap->AsHyperText() : nullptr;
-  if (!textAcc && !proxy) return;
+  Accessible* acc = mGeckoAccessible.AsAccessible();
+  ProxyAccessible* proxy = mGeckoAccessible.AsProxy();
 
   if ([attribute isEqualToString:NSAccessibilityValueAttribute]) {
     [self setText:ToNSString(value)];
@@ -250,6 +289,9 @@ inline NSString* ToNSString(id aValue) {
   }
 
   if ([attribute isEqualToString:NSAccessibilitySelectedTextAttribute]) {
+    HyperTextAccessible* textAcc = acc ? acc->AsHyperText() : nullptr;
+    if (!textAcc && !proxy) return;
+
     NSString* stringValue = ToNSString(value);
     if (!stringValue) return;
 
@@ -270,6 +312,9 @@ inline NSString* ToNSString(id aValue) {
   }
 
   if ([attribute isEqualToString:NSAccessibilitySelectedTextRangeAttribute]) {
+    HyperTextAccessible* textAcc = acc ? acc->AsHyperText() : nullptr;
+    if (!textAcc && !proxy) return;
+
     NSRange range;
     if (!ToNSRange(value, &range)) return;
 
@@ -282,6 +327,9 @@ inline NSString* ToNSString(id aValue) {
   }
 
   if ([attribute isEqualToString:NSAccessibilityVisibleCharacterRangeAttribute]) {
+    HyperTextAccessible* textAcc = acc ? acc->AsHyperText() : nullptr;
+    if (!textAcc && !proxy) return;
+
     NSRange range;
     if (!ToNSRange(value, &range)) return;
 
@@ -300,8 +348,16 @@ inline NSString* ToNSString(id aValue) {
   NS_OBJC_END_TRY_ABORT_BLOCK;
 }
 
-- (NSString*)subrole {
+- (NSString*)moxSubrole {
   if (mRole == roles::PASSWORD_TEXT) return NSAccessibilitySecureTextFieldSubrole;
+
+  if (mRole == roles::ENTRY) {
+    Accessible* acc = mGeckoAccessible.AsAccessible();
+    ProxyAccessible* proxy = mGeckoAccessible.AsProxy();
+    if ((acc && acc->IsSearchbox()) || (proxy && proxy->IsSearchbox())) {
+      return @"AXSearchField";
+    }
+  }
 
   return nil;
 }
@@ -311,28 +367,27 @@ inline NSString* ToNSString(id aValue) {
 - (BOOL)isReadOnly {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK_RETURN;
 
-  if ([[self role] isEqualToString:NSAccessibilityStaticTextRole]) return YES;
+  if ([self isExpired]) {
+    return NO;
+  }
 
-  AccessibleWrap* accWrap = [self getGeckoAccessible];
-  HyperTextAccessible* textAcc = accWrap ? accWrap->AsHyperText() : nullptr;
-  if (textAcc) return (accWrap->State() & states::READONLY) == 0;
+  if ([[self moxRole] isEqualToString:NSAccessibilityStaticTextRole]) {
+    return YES;
+  }
 
-  if (ProxyAccessible* proxy = [self getProxyAccessible])
-    return (proxy->State() & states::READONLY) == 0;
-
-  return NO;
+  return [self stateWithMask:states::READONLY] != 0;
 
   NS_OBJC_END_TRY_ABORT_BLOCK_RETURN(NO);
 }
 
 - (NSNumber*)caretLineNumber {
-  AccessibleWrap* accWrap = [self getGeckoAccessible];
-  HyperTextAccessible* textAcc = accWrap ? accWrap->AsHyperText() : nullptr;
+  Accessible* acc = mGeckoAccessible.AsAccessible();
+  HyperTextAccessible* textAcc = acc ? acc->AsHyperText() : nullptr;
 
   int32_t lineNumber = -1;
   if (textAcc) {
     lineNumber = textAcc->CaretLineNumber() - 1;
-  } else if (ProxyAccessible* proxy = [self getProxyAccessible]) {
+  } else if (ProxyAccessible* proxy = mGeckoAccessible.AsProxy()) {
     lineNumber = proxy->CaretLineNumber() - 1;
   }
 
@@ -342,14 +397,14 @@ inline NSString* ToNSString(id aValue) {
 - (void)setText:(NSString*)aNewString {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK;
 
-  AccessibleWrap* accWrap = [self getGeckoAccessible];
-  HyperTextAccessible* textAcc = accWrap ? accWrap->AsHyperText() : nullptr;
+  Accessible* acc = mGeckoAccessible.AsAccessible();
+  HyperTextAccessible* textAcc = acc ? acc->AsHyperText() : nullptr;
 
   nsString text;
   nsCocoaUtils::GetStringForNSString(aNewString, text);
   if (textAcc) {
     textAcc->ReplaceText(text);
-  } else if (ProxyAccessible* proxy = [self getProxyAccessible]) {
+  } else if (ProxyAccessible* proxy = mGeckoAccessible.AsProxy()) {
     proxy->ReplaceText(text);
   }
 
@@ -357,9 +412,9 @@ inline NSString* ToNSString(id aValue) {
 }
 
 - (NSString*)text {
-  AccessibleWrap* accWrap = [self getGeckoAccessible];
-  ProxyAccessible* proxy = [self getProxyAccessible];
-  HyperTextAccessible* textAcc = accWrap ? accWrap->AsHyperText() : nullptr;
+  Accessible* acc = mGeckoAccessible.AsAccessible();
+  ProxyAccessible* proxy = mGeckoAccessible.AsProxy();
+  HyperTextAccessible* textAcc = acc ? acc->AsHyperText() : nullptr;
   if (!textAcc && !proxy) return nil;
 
   // A password text field returns an empty value
@@ -378,9 +433,9 @@ inline NSString* ToNSString(id aValue) {
 - (long)textLength {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK_RETURN;
 
-  AccessibleWrap* accWrap = [self getGeckoAccessible];
-  ProxyAccessible* proxy = [self getProxyAccessible];
-  HyperTextAccessible* textAcc = accWrap ? accWrap->AsHyperText() : nullptr;
+  Accessible* acc = mGeckoAccessible.AsAccessible();
+  ProxyAccessible* proxy = mGeckoAccessible.AsProxy();
+  HyperTextAccessible* textAcc = acc ? acc->AsHyperText() : nullptr;
   if (!textAcc && !proxy) return 0;
 
   return textAcc ? textAcc->CharacterCount() : proxy->CharacterCount();
@@ -391,9 +446,9 @@ inline NSString* ToNSString(id aValue) {
 - (long)selectedTextLength {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK_RETURN;
 
-  AccessibleWrap* accWrap = [self getGeckoAccessible];
-  ProxyAccessible* proxy = [self getProxyAccessible];
-  HyperTextAccessible* textAcc = accWrap ? accWrap->AsHyperText() : nullptr;
+  Accessible* acc = mGeckoAccessible.AsAccessible();
+  ProxyAccessible* proxy = mGeckoAccessible.AsProxy();
+  HyperTextAccessible* textAcc = acc ? acc->AsHyperText() : nullptr;
   if (!textAcc && !proxy) return 0;
 
   int32_t start = 0, end = 0;
@@ -411,9 +466,9 @@ inline NSString* ToNSString(id aValue) {
 - (NSString*)selectedText {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NIL;
 
-  AccessibleWrap* accWrap = [self getGeckoAccessible];
-  ProxyAccessible* proxy = [self getProxyAccessible];
-  HyperTextAccessible* textAcc = accWrap ? accWrap->AsHyperText() : nullptr;
+  Accessible* acc = mGeckoAccessible.AsAccessible();
+  ProxyAccessible* proxy = mGeckoAccessible.AsProxy();
+  HyperTextAccessible* textAcc = acc ? acc->AsHyperText() : nullptr;
   if (!textAcc && !proxy) return nil;
 
   int32_t start = 0, end = 0;
@@ -435,9 +490,9 @@ inline NSString* ToNSString(id aValue) {
 - (NSValue*)selectedTextRange {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NIL;
 
-  AccessibleWrap* accWrap = [self getGeckoAccessible];
-  ProxyAccessible* proxy = [self getProxyAccessible];
-  HyperTextAccessible* textAcc = accWrap ? accWrap->AsHyperText() : nullptr;
+  Accessible* acc = mGeckoAccessible.AsAccessible();
+  ProxyAccessible* proxy = mGeckoAccessible.AsProxy();
+  HyperTextAccessible* textAcc = acc ? acc->AsHyperText() : nullptr;
 
   int32_t start = 0;
   int32_t end = 0;
@@ -473,35 +528,37 @@ inline NSString* ToNSString(id aValue) {
 - (NSValue*)visibleCharacterRange {
   // XXX this won't work with Textarea and such as we actually don't give
   // the visible character range.
-  AccessibleWrap* accWrap = [self getGeckoAccessible];
-  ProxyAccessible* proxy = [self getProxyAccessible];
-  HyperTextAccessible* textAcc = accWrap ? accWrap->AsHyperText() : nullptr;
+  Accessible* acc = mGeckoAccessible.AsAccessible();
+  ProxyAccessible* proxy = mGeckoAccessible.AsProxy();
+  HyperTextAccessible* textAcc = acc ? acc->AsHyperText() : nullptr;
   if (!textAcc && !proxy) return 0;
 
   return [NSValue
       valueWithRange:NSMakeRange(0, textAcc ? textAcc->CharacterCount() : proxy->CharacterCount())];
 }
 
-- (void)valueDidChange {
-  NS_OBJC_BEGIN_TRY_ABORT_BLOCK;
-
-  NSAccessibilityPostNotification(GetObjectOrRepresentedView(self),
-                                  NSAccessibilityValueChangedNotification);
-
-  NS_OBJC_END_TRY_ABORT_BLOCK;
-}
-
-- (void)selectedTextDidChange {
-  NSAccessibilityPostNotification(GetObjectOrRepresentedView(self),
-                                  NSAccessibilitySelectedTextChangedNotification);
+- (void)handleAccessibleEvent:(uint32_t)eventType {
+  switch (eventType) {
+    case nsIAccessibleEvent::EVENT_VALUE_CHANGE:
+    case nsIAccessibleEvent::EVENT_TEXT_VALUE_CHANGE:
+      [self moxPostNotification:NSAccessibilityValueChangedNotification];
+      break;
+    case nsIAccessibleEvent::EVENT_TEXT_CARET_MOVED:
+    case nsIAccessibleEvent::EVENT_TEXT_SELECTION_CHANGED:
+      [self moxPostNotification:NSAccessibilitySelectedTextChangedNotification];
+      break;
+    default:
+      [super handleAccessibleEvent:eventType];
+      break;
+  }
 }
 
 - (NSString*)stringFromRange:(NSRange*)range {
   MOZ_ASSERT(range, "no range");
 
-  AccessibleWrap* accWrap = [self getGeckoAccessible];
-  ProxyAccessible* proxy = [self getProxyAccessible];
-  HyperTextAccessible* textAcc = accWrap ? accWrap->AsHyperText() : nullptr;
+  Accessible* acc = mGeckoAccessible.AsAccessible();
+  ProxyAccessible* proxy = mGeckoAccessible.AsProxy();
+  HyperTextAccessible* textAcc = acc ? acc->AsHyperText() : nullptr;
   if (!textAcc && !proxy) return nil;
 
   nsAutoString text;
@@ -523,45 +580,24 @@ inline NSString* ToNSString(id aValue) {
   if (!supportedAttributes) {
     supportedAttributes = [[super accessibilityAttributeNames] mutableCopy];
     [supportedAttributes removeObject:NSAccessibilityChildrenAttribute];
+    // We remove our AXTitleUIElement here to avoid an IPC call in the
+    // parent class when locating values for our attributes.
+    [supportedAttributes removeObject:NSAccessibilityTitleUIElementAttribute];
   }
 
   return supportedAttributes;
 }
 
 - (id)accessibilityAttributeValue:(NSString*)attribute {
-  if ([attribute isEqualToString:NSAccessibilityTitleAttribute]) return @"";
+  if ([attribute isEqualToString:NSAccessibilityTitleAttribute]) return nil;
 
-  if ([attribute isEqualToString:NSAccessibilityValueAttribute]) return [self text];
+  if ([attribute isEqualToString:NSAccessibilityValueAttribute]) return [self moxTitle];
 
   return [super accessibilityAttributeValue:attribute];
 }
 
-- (NSString*)text {
-  if (AccessibleWrap* accWrap = [self getGeckoAccessible]) {
-    return nsCocoaUtils::ToNSString(accWrap->AsTextLeaf()->Text());
-  }
-
-  if (ProxyAccessible* proxy = [self getProxyAccessible]) {
-    nsString text;
-    proxy->Text(&text);
-    return nsCocoaUtils::ToNSString(text);
-  }
-
+- (NSString*)moxLabel {
   return nil;
-}
-
-- (long)textLength {
-  if (AccessibleWrap* accWrap = [self getGeckoAccessible]) {
-    return accWrap->AsTextLeaf()->Text().Length();
-  }
-
-  if (ProxyAccessible* proxy = [self getProxyAccessible]) {
-    nsString text;
-    proxy->Text(&text);
-    return text.Length();
-  }
-
-  return 0;
 }
 
 @end

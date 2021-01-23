@@ -8,8 +8,6 @@
 #define ApplicationReputation_h__
 
 #include "nsIApplicationReputation.h"
-#include "nsIRequestObserver.h"
-#include "nsIStreamListener.h"
 #include "nsISupports.h"
 
 #include "nsCOMPtr.h"
@@ -33,6 +31,7 @@ class ApplicationReputationService final
 #else
   static const char* const kBinaryFileExtensions[185];
 #endif
+
   static already_AddRefed<ApplicationReputationService> GetSingleton();
 
  private:

@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY converterDialog.title "Konvertering af lagertype for meddelelser">
+<!ENTITY converterDialog.continueButton "Fortsæt">
+<!ENTITY converterDialog.cancelButton "Annuller">
+<!ENTITY converterDialog.finishButton "Færdig">
+<!ENTITY converterDialog.complete "Konverteringen er fuldført. &brandShortName; genstarter nu.">
+<!ENTITY converterDialog.error "Konverteringen mislykkedes.">
+

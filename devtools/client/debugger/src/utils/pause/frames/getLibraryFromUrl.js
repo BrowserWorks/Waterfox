@@ -13,6 +13,10 @@ const libraryMap = [
     pattern: /backbone/i,
   },
   {
+    label: "Babel",
+    pattern: /node_modules\/@babel/i,
+  },
+  {
     label: "jQuery",
     pattern: /jquery/i,
   },
@@ -22,7 +26,7 @@ const libraryMap = [
   },
   {
     label: "React",
-    pattern: /(node_modules\/(?:react|react-dom)\/)|(react(\.[a-z]+)*\.js$)/,
+    pattern: /(node_modules\/(?:react(-dom)?(-dev)?\/))|(react(-dom)?(-dev)?(\.[a-z]+)*\.js$)/,
   },
   {
     label: "Immutable",
@@ -75,7 +79,7 @@ const libraryMap = [
   {
     label: "Angular",
     pattern: /angular(?!.*\/app\/)/i,
-    contextPattern: /(zone\.js)/,
+    contextPattern: /zone\.js/,
   },
   {
     label: "Redux",
@@ -103,13 +107,16 @@ const libraryMap = [
   },
 ];
 
-export function getLibraryFromUrl(frame: Frame, callStack: Array<Frame> = []) {
+export function getLibraryFromUrl(
+  frame: Frame,
+  callStack: Array<Frame> = []
+): ?string | void {
   // @TODO each of these fns calls getFrameUrl, just call it once
   // (assuming there's not more complex logic to identify a lib)
   const frameUrl = getFrameUrl(frame);
 
   // Let's first check if the frame match a defined pattern.
-  let match = libraryMap.find(o => frameUrl.match(o.pattern));
+  let match = libraryMap.find(o => o.pattern.test(frameUrl));
   if (match) {
     return match.label;
   }
@@ -121,7 +128,7 @@ export function getLibraryFromUrl(frame: Frame, callStack: Array<Frame> = []) {
   //  could be quite common and return false positive if evaluated alone. So we
   // only return Angular if there are other frames matching Angular).
   match = libraryMap.find(
-    o => o.contextPattern && frameUrl.match(o.contextPattern)
+    o => o.contextPattern && o.contextPattern.test(frameUrl)
   );
   if (match) {
     const contextMatch = callStack.some(f => {
@@ -130,7 +137,7 @@ export function getLibraryFromUrl(frame: Frame, callStack: Array<Frame> = []) {
         return false;
       }
 
-      return libraryMap.some(o => url.match(o.pattern));
+      return libraryMap.some(o => o.pattern.test(url));
     });
 
     if (contextMatch) {

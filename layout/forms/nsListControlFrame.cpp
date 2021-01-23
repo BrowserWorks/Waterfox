@@ -11,7 +11,6 @@
 #include "nsCheckboxRadioFrame.h"  // for COMPARE macro
 #include "nsGkAtoms.h"
 #include "nsComboboxControlFrame.h"
-#include "nsIXULRuntime.h"
 #include "nsFontMetrics.h"
 #include "nsIScrollableFrame.h"
 #include "nsCSSRendering.h"
@@ -32,6 +31,8 @@
 #include "mozilla/MouseEvents.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/PresShell.h"
+#include "mozilla/StaticPrefs_browser.h"
+#include "mozilla/StaticPrefs_ui.h"
 #include "mozilla/TextEvents.h"
 #include <algorithm>
 
@@ -45,13 +46,6 @@ const int32_t kNothingSelected = -1;
 // Static members
 nsListControlFrame* nsListControlFrame::mFocused = nullptr;
 nsString* nsListControlFrame::sIncrementalString = nullptr;
-
-// Using for incremental typing navigation
-#define INCREMENTAL_SEARCH_KEYPRESS_TIME 1000
-// XXX, kyle.yuan@sun.com, there are 4 definitions for the same purpose:
-//  nsMenuPopupFrame.h, nsListControlFrame.cpp, listbox.xml, tree.xml
-//  need to find a good place to put them together.
-//  if someone changes one, please also change the other.
 
 DOMTimeStamp nsListControlFrame::gLastKeyTime = 0;
 
@@ -74,7 +68,7 @@ class nsListEventListener final : public nsIDOMEventListener {
   NS_IMETHOD HandleEvent(Event* aEvent) override;
 
  private:
-  ~nsListEventListener() {}
+  ~nsListEventListener() = default;
 
   nsListControlFrame* mFrame;
 };
@@ -120,7 +114,7 @@ nsListControlFrame::~nsListControlFrame() { mComboboxFrame = nullptr; }
 
 static bool ShouldFireDropDownEvent() {
   return (XRE_IsContentProcess() &&
-          Preferences::GetBool("browser.tabs.remote.desktopbehavior", false)) ||
+          StaticPrefs::browser_tabs_remote_desktopbehavior()) ||
          Preferences::GetBool("dom.select_popup_in_parent.enabled", false);
 }
 
@@ -297,8 +291,10 @@ nscoord nsListControlFrame::CalcBSizeOfARow() {
   // either of which may be visible or invisible, may use different
   // fonts, etc.
   nscoord rowBSize(0);
-  if (!GetMaxRowBSize(GetOptionsContainer(), GetWritingMode(), &rowBSize)) {
+  if (StyleDisplay()->IsContainSize() ||
+      !GetMaxRowBSize(GetOptionsContainer(), GetWritingMode(), &rowBSize)) {
     // We don't have any <option>s or <optgroup> labels with a frame.
+    // (Or we're size-contained, which has the same outcome for our sizing.)
     float inflation = nsLayoutUtils::FontSizeInflationFor(this);
     rowBSize = CalcFallbackRowBSize(inflation);
   }
@@ -314,7 +310,9 @@ nscoord nsListControlFrame::GetPrefISize(gfxContext* aRenderingContext) {
   // dropdown, and standalone listboxes are overflow:scroll so they need
   // it too.
   WritingMode wm = GetWritingMode();
-  result = GetScrolledFrame()->GetPrefISize(aRenderingContext);
+  result = StyleDisplay()->IsContainSize()
+               ? 0
+               : GetScrolledFrame()->GetPrefISize(aRenderingContext);
   LogicalMargin scrollbarSize(
       wm, GetDesiredScrollbarSizes(PresContext(), aRenderingContext));
   result = NSCoordSaturatingAdd(result, scrollbarSize.IStartEnd(wm));
@@ -330,7 +328,9 @@ nscoord nsListControlFrame::GetMinISize(gfxContext* aRenderingContext) {
   // dropdown, and standalone listboxes are overflow:scroll so they need
   // it too.
   WritingMode wm = GetWritingMode();
-  result = GetScrolledFrame()->GetMinISize(aRenderingContext);
+  result = StyleDisplay()->IsContainSize()
+               ? 0
+               : GetScrolledFrame()->GetMinISize(aRenderingContext);
   LogicalMargin scrollbarSize(
       wm, GetDesiredScrollbarSizes(PresContext(), aRenderingContext));
   result += scrollbarSize.IStartEnd(wm);
@@ -549,7 +549,11 @@ void nsListControlFrame::ReflowAsDropdown(nsPresContext* aPresContext,
     // Looks like we have no options.  Just size us to a single row
     // block size.
     state.SetComputedBSize(blockSizeOfARow);
-    mNumDisplayRows = 1;
+    // mNumDisplayRows is used as the number of options to move for the page
+    // up/down keys. If we're in a content process, we can't calculate
+    // mNumDisplayRows properly, but the maximum number of rows is a lot more
+    // uesful for page up/down than 1.
+    mNumDisplayRows = XRE_IsContentProcess() ? kMaxDropDownRows : 1;
   } else {
     nsComboboxControlFrame* combobox =
         static_cast<nsComboboxControlFrame*>(mComboboxFrame);
@@ -1021,7 +1025,7 @@ void nsListControlFrame::SetComboboxFrame(nsIFrame* aComboboxFrame) {
 void nsListControlFrame::GetOptionText(uint32_t aIndex, nsAString& aStr) {
   aStr.Truncate();
   if (dom::HTMLOptionElement* optionElement = GetOption(aIndex)) {
-    optionElement->GetText(aStr);
+    optionElement->GetRenderedLabel(aStr);
   }
 }
 
@@ -1810,15 +1814,13 @@ void nsListControlFrame::ScrollToIndex(int32_t aIndex) {
 
 void nsListControlFrame::ScrollToFrame(dom::HTMLOptionElement& aOptElement) {
   // otherwise we find the content's frame and scroll to it
-  nsIFrame* childFrame = aOptElement.GetPrimaryFrame();
-  if (childFrame) {
+  if (nsIFrame* childFrame = aOptElement.GetPrimaryFrame()) {
     RefPtr<mozilla::PresShell> presShell = PresShell();
     presShell->ScrollFrameRectIntoView(
         childFrame, nsRect(nsPoint(0, 0), childFrame->GetSize()), ScrollAxis(),
         ScrollAxis(),
         ScrollFlags::ScrollOverflowHidden |
-            ScrollFlags::ScrollFirstAncestorOnly |
-            ScrollFlags::IgnoreMarginAndPadding);
+            ScrollFlags::ScrollFirstAncestorOnly);
   }
 }
 
@@ -1957,11 +1959,9 @@ nsresult nsListControlFrame::KeyDown(dom::Event* aKeyEvent) {
 
   AutoIncrementalSearchResetter incrementalSearchResetter;
 
-  // Don't check defaultPrevented value because other browsers don't prevent
-  // the key navigation of list control even if preventDefault() is called.
-  // XXXmats 2015-04-16: the above is not true anymore, Chrome prevents all
-  // XXXmats keyboard events, even tabbing, when preventDefault() is called
-  // XXXmats in onkeydown. That seems sub-optimal though.
+  if (aKeyEvent->DefaultPrevented()) {
+    return NS_OK;
+  }
 
   const WidgetKeyboardEvent* keyEvent =
       aKeyEvent->WidgetEventPtr()->AsKeyboardEvent();
@@ -1979,7 +1979,8 @@ nsresult nsListControlFrame::KeyDown(dom::Event* aKeyEvent) {
   dropDownMenuOnSpace = IsInDropDownMode() && !mComboboxFrame->IsDroppedDown();
 #endif
   bool withinIncrementalSearchTime =
-      keyEvent->mTime - gLastKeyTime <= INCREMENTAL_SEARCH_KEYPRESS_TIME;
+      keyEvent->mTime - gLastKeyTime <=
+      StaticPrefs::ui_menu_incremental_search_timeout();
   if ((dropDownMenuOnUpDown &&
        (keyEvent->mKeyCode == NS_VK_UP || keyEvent->mKeyCode == NS_VK_DOWN)) ||
       (dropDownMenuOnSpace && keyEvent->mKeyCode == NS_VK_SPACE &&
@@ -2198,11 +2199,12 @@ nsresult nsListControlFrame::KeyPress(dom::Event* aKeyEvent) {
   // XXX Why don't we check/modify timestamp first?
 
   // Incremental Search: if time elapsed is below
-  // INCREMENTAL_SEARCH_KEYPRESS_TIME, append this keystroke to the search
+  // ui.menu.incremental_search.timeout, append this keystroke to the search
   // string we will use to find options and start searching at the current
   // keystroke.  Otherwise, Truncate the string if it's been a long time
   // since our last keypress.
-  if (keyEvent->mTime - gLastKeyTime > INCREMENTAL_SEARCH_KEYPRESS_TIME) {
+  if (keyEvent->mTime - gLastKeyTime >
+      StaticPrefs::ui_menu_incremental_search_timeout()) {
     // If this is ' ' and we are at the beginning of the string, treat it as
     // "select this option" (bug 191543)
     if (keyEvent->mCharCode == ' ') {
@@ -2264,11 +2266,11 @@ nsresult nsListControlFrame::KeyPress(dom::Event* aKeyEvent) {
     }
 
     nsAutoString text;
-    optionElement->GetText(text);
+    optionElement->GetRenderedLabel(text);
     if (!StringBeginsWith(
             nsContentUtils::TrimWhitespace<
                 nsContentUtils::IsHTMLWhitespaceOrNBSP>(text, false),
-            incrementalString, nsCaseInsensitiveStringComparator())) {
+            incrementalString, nsCaseInsensitiveStringComparator)) {
       continue;
     }
 

@@ -17,8 +17,10 @@ dictionary AudioBufferOptions {
 };
 
 [Pref="dom.webaudio.enabled",
- Constructor(AudioBufferOptions options)]
+ Exposed=Window]
 interface AudioBuffer {
+    [Throws]
+    constructor(AudioBufferOptions options);
 
     readonly attribute float sampleRate;
     readonly attribute unsigned long length;

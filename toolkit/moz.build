@@ -4,12 +4,17 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+SPHINX_TREES['/toolkit'] = 'docs'
+
+EXTRA_COMPONENTS += [
+    'l10n-registry.manifest',
+]
+
 DIRS += [
     'actors',
     'components',
     'content',
     'crashreporter',
-    'forgetaboutsite',
     'locales',
     'modules',
     'mozapps/downloads',
@@ -17,9 +22,11 @@ DIRS += [
     'mozapps/preferences',
     'pluginproblem',
     'profile',
-    'recordreplay',
     'themes',
 ]
+
+if CONFIG['OS_ARCH'] == 'WINNT' and CONFIG['MOZ_DEFAULT_BROWSER_AGENT']:
+    DIRS += ['mozapps/defaultagent']
 
 if CONFIG['MOZ_UPDATER'] and CONFIG['MOZ_WIDGET_TOOLKIT'] != 'android':
     DIRS += ['mozapps/update']
@@ -34,11 +41,16 @@ if CONFIG['MOZ_MAINTENANCE_SERVICE']:
         'components/maintenanceservice'
     ]
 
+if CONFIG['MOZ_UPDATE_AGENT']:
+    DIRS += [
+        'components/updateagent'
+    ]
+
 DIRS += ['xre']
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] != 'android':
     DIRS += ['mozapps/handling']
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk3':
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk':
     DIRS += ['system/unixproxy']
 elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
     DIRS += ['system/osxproxy']
@@ -52,13 +64,13 @@ TEST_HARNESS_FILES.testing.mochitest.browser.toolkit.crashreporter.test.browser 
     'crashreporter/test/browser/crashreport.sjs',
 ]
 
+with Files('docs/**'):
+    BUG_COMPONENT = ('Toolkit', 'General')
+
 with Files('moz.*'):
     BUG_COMPONENT = ('Firefox Build System', 'General')
 
 with Files('toolkit.mozbuild'):
-    BUG_COMPONENT = ('Firefox Build System', 'General')
-
-with Files('nss.configure'):
     BUG_COMPONENT = ('Firefox Build System', 'General')
 
 with Files('library/**'):
@@ -72,3 +84,6 @@ with Files('mozapps/preferences/**'):
 
 with Files('pluginproblem/**'):
     BUG_COMPONENT = ('Core', 'Plug-ins')
+
+with Files('l10n-registry.manifest'):
+    BUG_COMPONENT = ('Core', 'Localization')

@@ -18,30 +18,24 @@ class SearchOneOffs {
     this.container.appendChild(
       MozXULElement.parseXULToFragment(
         `
-      <deck class="search-panel-one-offs-header search-panel-header search-panel-current-input">
-        <label class="searchbar-oneoffheader-search" value="&searchWithHeader.label;"/>
-        <hbox class="search-panel-searchforwith search-panel-current-input">
-          <label value="&searchFor.label;"/>
-          <label class="searchbar-oneoffheader-searchtext search-panel-input-value" flex="1" crop="end"/>
-          <label flex="10000" value="&searchWith.label;"/>
-        </hbox>
-        <hbox class="search-panel-searchonengine search-panel-current-input">
-          <label value="&search.label;"/>
-          <label class="searchbar-oneoffheader-engine search-panel-input-value" flex="1" crop="end"/>
-          <label flex="10000" value="&searchAfter.label;"/>
-        </hbox>
-      </deck>
-      <description role="group" class="search-panel-one-offs">
-        <button class="searchbar-engine-one-off-item search-setting-button-compact" tooltiptext="&changeSearchSettings.tooltip;"/>
-      </description>
+      <hbox class="search-panel-one-offs-header search-panel-header">
+        <label class="search-panel-one-offs-header-label" data-l10n-id="search-one-offs-with-title"/>
+      </hbox>
+      <box class="search-panel-one-offs-container">
+        <hbox class="search-panel-one-offs" role="group"/>
+        <hbox class="search-one-offs-spacer"/>
+        <button class="searchbar-engine-one-off-item search-setting-button-compact" data-l10n-id="search-one-offs-change-settings-compact-button"/>
+      </box>
       <vbox class="search-add-engines"/>
-      <button class="search-setting-button search-panel-header" label="&changeSearchSettings.button;"/>
-      <menupopup class="search-one-offs-context-menu">
-        <menuitem class="search-one-offs-context-open-in-new-tab" label="&searchInNewTab.label;" accesskey="&searchInNewTab.accesskey;"/>
-        <menuitem class="search-one-offs-context-set-default" label="&searchSetAsDefault.label;" accesskey="&searchSetAsDefault.accesskey;"/>
-      </menupopup>
-      `,
-        ["chrome://browser/locale/browser.dtd"]
+      <button class="search-setting-button" data-l10n-id="search-one-offs-change-settings-button"/>
+      <box>
+        <menupopup class="search-one-offs-context-menu">
+          <menuitem class="search-one-offs-context-open-in-new-tab" data-l10n-id="search-one-offs-context-open-new-tab"/>
+          <menuitem class="search-one-offs-context-set-default" data-l10n-id="search-one-offs-context-set-as-default"/>
+          <menuitem class="search-one-offs-context-set-default-private" data-l10n-id="search-one-offs-context-set-as-default-private"/>
+        </menupopup>
+      </box>
+      `
       )
     );
 
@@ -72,6 +66,8 @@ class SearchOneOffs {
     this.settingsButtonCompact = this.querySelector(
       ".search-setting-button-compact"
     );
+
+    this.spacerCompact = this.querySelector(".search-one-offs-spacer");
 
     this.contextMenuPopup = this.querySelector(".search-one-offs-context-menu");
 
@@ -122,11 +118,9 @@ class SearchOneOffs {
     this.contextMenuPopup.addEventListener("popupshowing", listener);
     this.contextMenuPopup.addEventListener("popuphiding", listener);
     this.contextMenuPopup.addEventListener("popupshown", aEvent => {
-      this._ignoreMouseEvents = true;
       aEvent.stopPropagation();
     });
     this.contextMenuPopup.addEventListener("popuphidden", aEvent => {
-      this._ignoreMouseEvents = false;
       aEvent.stopPropagation();
     });
 
@@ -179,42 +173,50 @@ class SearchOneOffs {
   }
 
   /**
-   * Width in pixels of the one-off buttons.  49px is the min-width of
-   * each search engine button, adapt this const when changing the css.
-   * It's actually 48px + 1px of right border.
+   * Width in pixels of the one-off buttons.
    */
   get buttonWidth() {
-    return 49;
+    return 48;
+  }
+
+  /**
+   * Height in pixels of the one-off buttons.
+   */
+  get buttonHeight() {
+    return 32;
   }
 
   /**
    * @param {UrlbarView} val
    */
   set view(val) {
+    if (this._view) {
+      this._view.controller.removeQueryListener(this);
+    }
     this._view = val;
-    this.popup = val && val.panel;
+    if (val) {
+      if (val.isOpen) {
+        this._rebuild();
+      }
+      val.controller.addQueryListener(this);
+    }
     return val;
   }
 
   /**
-   * The popup that contains the one-offs.  This is required, so it should
-   * never be null or undefined, except possibly before the one-offs are
-   * used.
+   * The popup that contains the one-offs.
    *
    * @param {DOMElement} val
    *        The new value to set.
    */
   set popup(val) {
-    let events = ["popupshowing", "popuphidden"];
     if (this._popup) {
-      for (let event of events) {
-        this._popup.removeEventListener(event, this);
-      }
+      this._popup.removeEventListener("popupshowing", this);
+      this._popup.removeEventListener("popuphidden", this);
     }
     if (val) {
-      for (let event of events) {
-        val.addEventListener(event, this);
-      }
+      val.addEventListener("popupshowing", this);
+      val.addEventListener("popuphidden", this);
     }
     this._popup = val;
 
@@ -273,7 +275,14 @@ class SearchOneOffs {
       (this._view && this._view.isOpen) ||
       (this.popup && this.popup.popupOpen)
     ) {
-      this._updateAfterQueryChanged();
+      let isOneOffSelected =
+        this.selectedButton &&
+        this.selectedButton.classList.contains("searchbar-engine-one-off-item");
+      // Typing de-selects the settings or opensearch buttons at the bottom
+      // of the search panel, as typing shows the user intends to search.
+      if (this.selectedButton && !isOneOffSelected) {
+        this.selectedButton = null;
+      }
     }
     return val;
   }
@@ -290,25 +299,32 @@ class SearchOneOffs {
    *        The selected one-off button. Null if no one-off is selected.
    */
   set selectedButton(val) {
-    if (val && val.classList.contains("dummy")) {
-      // Never select dummy buttons.
-      val = null;
-    }
     let previousButton = this._selectedButton;
     if (previousButton) {
       previousButton.removeAttribute("selected");
     }
     if (val) {
       val.setAttribute("selected", "true");
+      if (!val.engine) {
+        // If the button doesn't have an engine, then clear the popup's
+        // selection to indicate that pressing Return while the button is
+        // selected will do the button's command, not search.
+        this.selectedAutocompleteIndex = -1;
+      }
     }
     this._selectedButton = val;
-    this._updateStateForButton(null);
-    if (val && !val.engine) {
-      // If the button doesn't have an engine, then clear the popup's
-      // selection to indicate that pressing Return while the button is
-      // selected will do the button's command, not search.
-      this.selectedAutocompleteIndex = -1;
+
+    if (this.textbox) {
+      if (val) {
+        this.textbox.setAttribute("aria-activedescendant", val.id);
+      } else {
+        let active = this.textbox.getAttribute("aria-activedescendant");
+        if (active && active.includes("-engine-one-off-item-")) {
+          this.textbox.removeAttribute("aria-activedescendant");
+        }
+      }
     }
+
     let event = new CustomEvent("SelectedOneOffButtonChanged", {
       previousSelectedButton: previousButton,
     });
@@ -344,11 +360,17 @@ class SearchOneOffs {
   }
 
   get selectedAutocompleteIndex() {
-    return (this._view || this.popup).selectedIndex;
+    if (!this.compact) {
+      return this.popup.selectedIndex;
+    }
+    return this._view.selectedElementIndex;
   }
 
   set selectedAutocompleteIndex(val) {
-    return ((this._view || this.popup).selectedIndex = val);
+    if (!this.compact) {
+      return (this.popup.selectedIndex = val);
+    }
+    return (this._view.selectedElementIndex = val);
   }
 
   get compact() {
@@ -369,7 +391,12 @@ class SearchOneOffs {
     }
     let currentEngineNameToIgnore;
     if (!this.getAttribute("includecurrentengine")) {
-      currentEngineNameToIgnore = (await Services.search.getDefault()).name;
+      if (PrivateBrowsingUtils.isWindowPrivate(window)) {
+        currentEngineNameToIgnore = (await Services.search.getDefaultPrivate())
+          .name;
+      } else {
+        currentEngineNameToIgnore = (await Services.search.getDefault()).name;
+      }
     }
 
     let pref = Services.prefs.getStringPref("browser.search.hiddenOneOffs");
@@ -389,43 +416,6 @@ class SearchOneOffs {
   observe(aEngine, aTopic, aData) {
     // Make sure the engine list is refetched next time it's needed.
     this._engines = null;
-  }
-
-  /**
-   * Updates the parts of the UI that show the query string.
-   */
-  _updateAfterQueryChanged() {
-    let headerSearchText = this.querySelector(
-      ".searchbar-oneoffheader-searchtext"
-    );
-    headerSearchText.setAttribute("value", this.query);
-    let groupText;
-    let isOneOffSelected =
-      this.selectedButton &&
-      this.selectedButton.classList.contains("searchbar-engine-one-off-item");
-    // Typing de-selects the settings or opensearch buttons at the bottom
-    // of the search panel, as typing shows the user intends to search.
-    if (this.selectedButton && !isOneOffSelected) {
-      this.selectedButton = null;
-    }
-    if (this.query) {
-      groupText =
-        headerSearchText.previousElementSibling.value +
-        '"' +
-        headerSearchText.value +
-        '"' +
-        headerSearchText.nextElementSibling.value;
-      if (!isOneOffSelected) {
-        this.header.selectedIndex = 1;
-      }
-    } else {
-      let noSearchHeader = this.querySelector(".searchbar-oneoffheader-search");
-      groupText = noSearchHeader.value;
-      if (!isOneOffSelected) {
-        this.header.selectedIndex = 0;
-      }
-    }
-    this.buttons.setAttribute("aria-label", groupText);
   }
 
   /**
@@ -450,9 +440,6 @@ class SearchOneOffs {
    * Builds all the UI.
    */
   async __rebuild() {
-    // Update the 'Search for <keywords> with:" header.
-    this._updateAfterQueryChanged();
-
     // Handle opensearch items. This needs to be done before building the
     // list of one off providers, as that code will return early if all the
     // alternative engines are hidden.
@@ -461,14 +448,16 @@ class SearchOneOffs {
       this._rebuildAddEngineList();
     }
 
-    // Check if the one-off buttons really need to be rebuilt.
-    if (this._textbox) {
-      // We can't get a reliable value for the popup width without flushing,
-      // but the popup width won't change if the textbox width doesn't.
-      let DOMUtils = window.windowUtils;
-      let textboxWidth = DOMUtils.getBoundsWithoutFlushing(this._textbox).width;
-      // We can return early if neither the list of engines nor the panel
-      // width has changed.
+    // Return early if the list of engines has not changed.
+    if (!this.popup && this._engines) {
+      return;
+    }
+
+    // Return early if the engines and panel width have not changed.
+    if (this.popup && this._textbox) {
+      let textboxWidth = await window.promiseDocumentFlushed(() => {
+        return this._textbox.clientWidth;
+      });
       if (this._engines && this._textboxWidth == textboxWidth) {
         return;
       }
@@ -476,68 +465,80 @@ class SearchOneOffs {
     }
 
     // Finally, build the list of one-off buttons.
-    while (this.buttons.firstElementChild != this.settingsButtonCompact) {
+    while (this.buttons.firstElementChild) {
       this.buttons.firstElementChild.remove();
     }
 
-    // Remove the trailing empty text node introduced by the binding's
-    // content markup above.
-    if (this.settingsButtonCompact.nextElementSibling) {
-      this.settingsButtonCompact.nextElementSibling.remove();
-    }
+    let headerText = this.header.querySelector(
+      ".search-panel-one-offs-header-label"
+    );
+    headerText.id = this.telemetryOrigin + "-one-offs-header-label";
+    this.buttons.setAttribute("aria-labelledby", headerText.id);
 
     let engines = await this.getEngines();
-    let defaultEngine = await Services.search.getDefault();
+    let defaultEngine = PrivateBrowsingUtils.isWindowPrivate(window)
+      ? await Services.search.getDefaultPrivate()
+      : await Services.search.getDefault();
     let oneOffCount = engines.length;
-    let collapsed =
+    let hideOneOffs =
       !oneOffCount ||
       (oneOffCount == 1 && engines[0].name == defaultEngine.name);
 
-    // header is a xul:deck so collapsed doesn't work on it, see bug 589569.
-    this.header.hidden = this.buttons.collapsed = collapsed;
+    if (this.compact) {
+      this.container.hidden = hideOneOffs;
+    } else {
+      // Hide everything except the settings button.
+      this.header.hidden = this.buttons.hidden = hideOneOffs;
+    }
 
-    if (collapsed) {
+    if (hideOneOffs) {
       return;
     }
 
-    let panelWidth = parseInt(this.popup.clientWidth);
-
-    // There's one weird thing to guard against: when layout pixels
-    // aren't an integral multiple of device pixels, the last button
-    // of each row sometimes gets pushed to the next row, depending on the
-    // panel and button widths.
-    // This is likely because the clientWidth getter rounds the value, but
-    // the panel's border width is not an integer.
-    // As a workaround, decrement the width if the scale is not an integer.
-    let scale = window.windowUtils.screenPixelsPerCSSPixel;
-    if (Math.floor(scale) != scale) {
-      --panelWidth;
-    }
-
-    // The + 1 is because the last button doesn't have a right border.
-    let enginesPerRow = Math.floor((panelWidth + 1) / this.buttonWidth);
-    let buttonWidth = Math.floor(panelWidth / enginesPerRow);
-    // There will be an emtpy area of:
-    //   panelWidth - enginesPerRow * buttonWidth  px
-    // at the end of each row.
-
-    // If the <description> tag with the list of search engines doesn't have
-    // a fixed height, the panel will be sized incorrectly, causing the bottom
-    // of the suggestion <tree> to be hidden.
     if (this.compact) {
-      ++oneOffCount;
+      this.spacerCompact.setAttribute("flex", "1");
     }
-    let rowCount = Math.ceil(oneOffCount / enginesPerRow);
-    let height = rowCount * 33; // 32px per row, 1px border.
-    this.buttons.setAttribute("height", height + "px");
 
+    if (this.popup) {
+      let buttonsWidth = this.popup.clientWidth;
+
+      // There's one weird thing to guard against: when layout pixels
+      // aren't an integral multiple of device pixels, the last button
+      // of each row sometimes gets pushed to the next row, depending on the
+      // panel and button widths.
+      // This is likely because the clientWidth getter rounds the value, but
+      // the panel's border width is not an integer.
+      // As a workaround, decrement the width if the scale is not an integer.
+      let scale = window.windowUtils.screenPixelsPerCSSPixel;
+      if (Math.floor(scale) != scale) {
+        --buttonsWidth;
+      }
+
+      // If the header string is very long, then the searchbar buttons will
+      // overflow their container unless max-width is set.
+      this.buttons.style.setProperty("max-width", `${buttonsWidth}px`);
+
+      // In very narrow windows, we should always have at least one button
+      // per row.
+      buttonsWidth = Math.max(buttonsWidth, this.buttonWidth);
+
+      let enginesPerRow = Math.floor(buttonsWidth / this.buttonWidth);
+      // There will be an empty area of:
+      //   buttonsWidth - enginesPerRow * this.buttonWidth  px
+      // at the end of each row.
+
+      // If the <div> with the list of search engines doesn't have
+      // a fixed height, the panel will be sized incorrectly, causing the bottom
+      // of the suggestion <tree> to be hidden.
+      let rowCount = Math.ceil(oneOffCount / enginesPerRow);
+      let height = rowCount * this.buttonHeight;
+      this.buttons.style.setProperty("height", `${height}px`);
+    }
     // Ensure we can refer to the settings buttons by ID:
     let origin = this.telemetryOrigin;
     this.settingsButton.id = origin + "-anon-search-settings";
     this.settingsButtonCompact.id = origin + "-anon-search-settings-compact";
 
-    let dummyItems =
-      enginesPerRow - (oneOffCount % enginesPerRow || enginesPerRow);
     for (let i = 0; i < engines.length; ++i) {
       let engine = engines[i];
       let button = document.createXULElement("button");
@@ -549,54 +550,12 @@ class SearchOneOffs {
       button.setAttribute("image", uri);
       button.setAttribute("class", "searchbar-engine-one-off-item");
       button.setAttribute("tooltiptext", engine.name);
-      button.setAttribute("width", buttonWidth);
       button.engine = engine;
 
-      if ((i + 1) % enginesPerRow == 0) {
-        button.classList.add("last-of-row");
-      }
-
-      if (i + 1 == engines.length) {
-        button.classList.add("last-engine");
-      }
-
-      if (i >= oneOffCount + dummyItems - enginesPerRow) {
-        button.classList.add("last-row");
-      }
-
-      this.buttons.insertBefore(button, this.settingsButtonCompact);
+      this.buttons.appendChild(button);
     }
 
-    let hasDummyItems = !!dummyItems;
-    while (dummyItems) {
-      let button = document.createXULElement("button");
-      button.setAttribute(
-        "class",
-        "searchbar-engine-one-off-item dummy last-row"
-      );
-      button.setAttribute("width", buttonWidth);
-
-      if (!--dummyItems) {
-        button.classList.add("last-of-row");
-      }
-
-      this.buttons.insertBefore(button, this.settingsButtonCompact);
-    }
-
-    if (this.compact) {
-      this.settingsButtonCompact.setAttribute("width", buttonWidth);
-      if (rowCount == 1 && hasDummyItems) {
-        // When there's only one row, make the compact settings button
-        // hug the right edge of the panel.  It may not due to the panel's
-        // width not being an integral multiple of the button width.  (See
-        // the "There will be an emtpy area" comment above.)  Increase the
-        // width of the last dummy item by the remainder.
-        let remainder = panelWidth - enginesPerRow * buttonWidth;
-        let width = remainder + buttonWidth;
-        let lastDummyItem = this.settingsButtonCompact.previousElementSibling;
-        lastDummyItem.setAttribute("width", width);
-      }
-    }
+    this.dispatchEvent(new Event("rebuild"));
   }
 
   _rebuildAddEngineList() {
@@ -621,13 +580,10 @@ class SearchOneOffs {
     if (tooManyEngines) {
       // Make the top-level menu button.
       let button = document.createXULElement("toolbarbutton");
-      list.appendChild(button);
-      button.classList.add(
-        "addengine-menu-button",
-        "addengine-item",
-        "badged-button"
-      );
+      button.classList.add("addengine-menu-button", "addengine-item");
+      button.setAttribute("badged", "true");
       button.setAttribute("type", "menu");
+      button.setAttribute("wantdropmarker", "true");
       button.setAttribute(
         "label",
         this.bundle.GetStringFromName("cmd_addFoundEngineMenu")
@@ -642,6 +598,7 @@ class SearchOneOffs {
       if (engine.icon) {
         button.setAttribute("image", engine.icon);
       }
+      list.appendChild(button);
 
       // Now make the button's child menupopup.
       list = document.createXULElement("menupopup");
@@ -674,17 +631,15 @@ class SearchOneOffs {
       let button = document.createXULElement(eltType);
       button.classList.add("addengine-item");
       if (!tooManyEngines) {
-        button.classList.add("badged-button");
+        button.setAttribute("badged", "true");
       }
       button.id =
         this.telemetryOrigin +
         "-add-engine-" +
         this._fixUpEngineNameForID(engine.title);
-      let label = this.bundle.formatStringFromName(
-        "cmd_addFoundEngine",
-        [engine.title],
-        1
-      );
+      let label = this.bundle.formatStringFromName("cmd_addFoundEngine", [
+        engine.title,
+      ]);
       button.setAttribute("label", label);
       button.setAttribute("crop", "end");
       button.setAttribute("tooltiptext", engine.title + "\n" + engine.uri);
@@ -715,63 +670,8 @@ class SearchOneOffs {
   }
 
   _buttonForEngine(engine) {
-    if (this.telemetryOrigin == "urlbar" && !UrlbarPrefs.get("quantumbar")) {
-      return (
-        this._popup &&
-        document.getAnonymousElementByAttribute(
-          this._popup,
-          "id",
-          this._buttonIDForEngine(engine)
-        )
-      );
-    }
-
     let id = this._buttonIDForEngine(engine);
-    return this._popup && document.getElementById(id);
-  }
-
-  /**
-   * Updates the popup and textbox for the currently selected or moused-over
-   * button.
-   *
-   * @param {DOMElement} mousedOverButton
-   *        The currently moused-over button, or null if there isn't one.
-   */
-  _updateStateForButton(mousedOverButton) {
-    let button = mousedOverButton;
-
-    // Ignore dummy buttons.
-    if (button && button.classList.contains("dummy")) {
-      button = null;
-    }
-
-    // If there's no moused-over button, then the one-offs should reflect
-    // the selected button, if any.
-    button = button || this.selectedButton;
-
-    if (!button) {
-      this.header.selectedIndex = this.query ? 1 : 0;
-      if (this.textbox) {
-        this.textbox.removeAttribute("aria-activedescendant");
-      }
-      return;
-    }
-
-    if (
-      button.classList.contains("searchbar-engine-one-off-item") &&
-      button.engine
-    ) {
-      let headerEngineText = this.querySelector(
-        ".searchbar-oneoffheader-engine"
-      );
-      this.header.selectedIndex = 2;
-      headerEngineText.value = button.engine.name;
-    } else {
-      this.header.selectedIndex = this.query ? 1 : 0;
-    }
-    if (this.textbox) {
-      this.textbox.setAttribute("aria-activedescendant", button.id);
-    }
+    return document.getElementById(id);
   }
 
   getSelectableButtons(aIncludeNonEngineButtons) {
@@ -781,19 +681,7 @@ class SearchOneOffs {
       oneOff;
       oneOff = oneOff.nextElementSibling
     ) {
-      // oneOff may be a text node since the list xul:description contains
-      // whitespace and the compact settings button.  See the markup
-      // above.  _rebuild removes text nodes, but it may not have been
-      // called yet (because e.g. the popup hasn't been opened yet).
-      if (oneOff.nodeType == Node.ELEMENT_NODE) {
-        if (
-          oneOff.classList.contains("dummy") ||
-          oneOff.classList.contains("search-setting-button-compact")
-        ) {
-          break;
-        }
-        buttons.push(oneOff);
-      }
+      buttons.push(oneOff);
     }
 
     if (aIncludeNonEngineButtons) {
@@ -858,7 +746,7 @@ class SearchOneOffs {
    *        If true, the index is incremented, and if false, the index is
    *        decremented.
    * @param {boolean} aIncludeNonEngineButtons
-   *        If true, non-dummy buttons that do not have engines are included.
+   *        If true, buttons that do not have engines are included.
    *        These buttons include the OpenSearch and settings buttons.  For
    *        example, if the currently selected button is an engine button,
    *        the next button is the settings button, and you pass true for
@@ -920,11 +808,11 @@ class SearchOneOffs {
    *        to pass anything for this parameter.  (Pass undefined or null.)
    * @returns {boolean} True if the one-offs handled the key press.
    */
-  handleKeyPress(event, numListItems, allowEmptySelection, textboxUserValue) {
-    if (!this.popup) {
+  handleKeyDown(event, numListItems, allowEmptySelection, textboxUserValue) {
+    if (!this.popup && !this._view) {
       return false;
     }
-    let handled = this._handleKeyPress(
+    let handled = this._handleKeyDown(
       event,
       numListItems,
       allowEmptySelection,
@@ -937,8 +825,8 @@ class SearchOneOffs {
     return handled;
   }
 
-  _handleKeyPress(event, numListItems, allowEmptySelection, textboxUserValue) {
-    if (this.compact && this.buttons.collapsed) {
+  _handleKeyDown(event, numListItems, allowEmptySelection, textboxUserValue) {
+    if (this.compact && this.container.hidden) {
       return false;
     }
     if (
@@ -1058,16 +946,18 @@ class SearchOneOffs {
       }
       if (this.selectedAutocompleteIndex == numListItems - 1) {
         // Moving down from the last item in the list to the buttons.
+        if (!allowEmptySelection) {
+          this.selectedAutocompleteIndex = -1;
+          if (this.textbox && typeof textboxUserValue == "string") {
+            this.textbox.value = textboxUserValue;
+          }
+        }
         this.selectedButtonIndex = 0;
         if (allowEmptySelection) {
           // Let the autocomplete controller remove selection in the list
           // and revert the typed text in the textbox.
           return false;
         }
-        if (this.textbox && typeof textboxUserValue == "string") {
-          this.textbox.value = textboxUserValue;
-        }
-        this.selectedAutocompleteIndex = -1;
         return true;
       }
       if (this.selectedButton) {
@@ -1194,31 +1084,8 @@ class SearchOneOffs {
         target.classList.contains("addengine-item")) ||
       target.classList.contains("addengine-menu-button")
     ) {
-      let menuButton = this.querySelector(".addengine-menu-button");
-      this._updateStateForButton(menuButton);
       this._addEngineMenuShouldBeOpen = true;
       this._resetAddEngineMenuTimeout();
-      return;
-    }
-
-    if (target.localName != "button") {
-      return;
-    }
-
-    // Ignore mouse events when the context menu is open.
-    if (this._ignoreMouseEvents) {
-      return;
-    }
-
-    let isOneOff =
-      target.classList.contains("searchbar-engine-one-off-item") &&
-      !target.classList.contains("dummy");
-    if (
-      isOneOff ||
-      target.classList.contains("addengine-item") ||
-      target.classList.contains("search-setting-button")
-    ) {
-      this._updateStateForButton(target);
     }
   }
 
@@ -1231,22 +1098,9 @@ class SearchOneOffs {
         target.classList.contains("addengine-item")) ||
       target.classList.contains("addengine-menu-button")
     ) {
-      this._updateStateForButton(null);
       this._addEngineMenuShouldBeOpen = false;
       this._resetAddEngineMenuTimeout();
-      return;
     }
-
-    if (target.localName != "button") {
-      return;
-    }
-
-    // Don't update the mouseover state if the context menu is open.
-    if (this._ignoreMouseEvents) {
-      return;
-    }
-
-    this._updateStateForButton(null);
   }
 
   _on_click(event) {
@@ -1275,7 +1129,11 @@ class SearchOneOffs {
 
       // If the preference tab was already selected, the panel doesn't
       // close itself automatically.
-      this.popup.hidePopup();
+      if (this._view) {
+        this._view.close();
+      } else {
+        this.popup.hidePopup();
+      }
       return;
     }
 
@@ -1306,17 +1164,14 @@ class SearchOneOffs {
           );
           let text = searchBundle.formatStringFromName(
             "error_duplicate_engine_msg",
-            [brandName, target.getAttribute("uri")],
-            2
+            [brandName, target.getAttribute("uri")]
           );
-          Services.prompt.QueryInterface(Ci.nsIPromptFactory);
-          let prompt = Services.prompt.getPrompt(
-            gBrowser.contentWindow,
-            Ci.nsIPrompt
+          Services.prompt.alertBC(
+            gBrowser.selectedBrowser.browsingContext,
+            Ci.nsIPrompt.MODAL_TYPE_CONTENT,
+            title,
+            text
           );
-          prompt.QueryInterface(Ci.nsIWritablePropertyBag2);
-          prompt.setPropertyAsBool("allowTabModal", true);
-          prompt.alert(title, text);
         });
     }
 
@@ -1327,10 +1182,23 @@ class SearchOneOffs {
       this.handleSearchCommand(event, this._contextEngine, true);
     }
 
-    if (target.classList.contains("search-one-offs-context-set-default")) {
-      let currentEngine = Services.search.defaultEngine;
+    const isPrivateButton = target.classList.contains(
+      "search-one-offs-context-set-default-private"
+    );
+    if (
+      target.classList.contains("search-one-offs-context-set-default") ||
+      isPrivateButton
+    ) {
+      const engineType = isPrivateButton
+        ? "defaultPrivateEngine"
+        : "defaultEngine";
+      let currentEngine = Services.search[engineType];
 
-      if (!this.getAttribute("includecurrentengine")) {
+      const isPrivateWin = PrivateBrowsingUtils.isWindowPrivate(window);
+      if (
+        !this.getAttribute("includecurrentengine") &&
+        isPrivateButton == isPrivateWin
+      ) {
         // Make the target button of the context menu reflect the current
         // search engine first. Doing this as opposed to rebuilding all the
         // one-off buttons avoids flicker.
@@ -1345,7 +1213,7 @@ class SearchOneOffs {
         button.engine = currentEngine;
       }
 
-      Services.search.defaultEngine = this._contextEngine;
+      Services.search[engineType] = this._contextEngine;
     }
   }
 
@@ -1354,16 +1222,37 @@ class SearchOneOffs {
     // Prevent the context menu from appearing except on the one off buttons.
     if (
       !target.classList.contains("searchbar-engine-one-off-item") ||
-      target.classList.contains("search-setting-button-compact") ||
-      target.classList.contains("dummy")
+      target.classList.contains("search-setting-button-compact")
     ) {
       event.preventDefault();
       return;
     }
-    this.querySelector(".search-one-offs-context-set-default").setAttribute(
-      "disabled",
-      target.engine == Services.search.defaultEngine
+    this.contextMenuPopup
+      .querySelector(".search-one-offs-context-set-default")
+      .setAttribute(
+        "disabled",
+        target.engine == Services.search.defaultEngine.wrappedJSObject
+      );
+
+    const privateDefaultItem = this.contextMenuPopup.querySelector(
+      ".search-one-offs-context-set-default-private"
     );
+
+    if (
+      Services.prefs.getBoolPref(
+        "browser.search.separatePrivateDefault.ui.enabled",
+        false
+      ) &&
+      Services.prefs.getBoolPref("browser.search.separatePrivateDefault", false)
+    ) {
+      privateDefaultItem.hidden = false;
+      privateDefaultItem.setAttribute(
+        "disabled",
+        target.engine == Services.search.defaultPrivateEngine.wrappedJSObject
+      );
+    } else {
+      privateDefaultItem.hidden = true;
+    }
 
     this.contextMenuPopup.openPopupAtScreen(event.screenX, event.screenY, true);
     event.preventDefault();
@@ -1380,14 +1269,20 @@ class SearchOneOffs {
   }
 
   _on_popupshowing() {
-    this._rebuild();
+    this.onViewOpen();
   }
 
   _on_popuphidden() {
-    Services.tm.dispatchToMainThread(() => {
-      this.selectedButton = null;
-      this._contextEngine = null;
-    });
+    this.onViewClose();
+  }
+
+  onViewOpen() {
+    this._rebuild();
+  }
+
+  onViewClose() {
+    this.selectedButton = null;
+    this._contextEngine = null;
   }
 }
 

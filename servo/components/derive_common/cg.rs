@@ -7,7 +7,7 @@ use proc_macro2::{Span, TokenStream};
 use quote::TokenStreamExt;
 use syn::{self, AngleBracketedGenericArguments, Binding, DeriveInput, Field};
 use syn::{GenericArgument, GenericParam, Ident, Path};
-use syn::{PathArguments, PathSegment, QSelf, Type, TypeArray};
+use syn::{PathArguments, PathSegment, QSelf, Type, TypeArray, TypeGroup};
 use syn::{TypeParam, TypeParen, TypePath, TypeSlice, TypeTuple};
 use syn::{Variant, WherePredicate};
 use synstructure::{self, BindStyle, BindingInfo, VariantAst, VariantInfo};
@@ -26,7 +26,9 @@ use synstructure::{self, BindStyle, BindingInfo, VariantAst, VariantInfo};
 ///
 /// For example:
 ///
+/// ```ignore
 ///     <T as ToComputedValue>::ComputedValue: Zero,
+/// ```
 ///
 /// This needs to run before adding other bounds to the type parameters.
 pub fn propagate_clauses_to_output_type(
@@ -83,9 +85,22 @@ pub fn add_predicate(where_clause: &mut Option<syn::WhereClause>, pred: WherePre
         .push(pred);
 }
 
-pub fn fmap_match<F>(input: &DeriveInput, bind_style: BindStyle, mut f: F) -> TokenStream
+pub fn fmap_match<F>(input: &DeriveInput, bind_style: BindStyle, f: F) -> TokenStream
 where
-    F: FnMut(BindingInfo) -> TokenStream,
+    F: FnMut(&BindingInfo) -> TokenStream,
+{
+    fmap2_match(input, bind_style, f, |_| None)
+}
+
+pub fn fmap2_match<F, G>(
+    input: &DeriveInput,
+    bind_style: BindStyle,
+    mut f: F,
+    mut g: G,
+) -> TokenStream
+where
+    F: FnMut(&BindingInfo) -> TokenStream,
+    G: FnMut(&BindingInfo) -> Option<TokenStream>,
 {
     let mut s = synstructure::Structure::new(input);
     s.variants_mut().iter_mut().for_each(|v| {
@@ -93,12 +108,20 @@ where
     });
     s.each_variant(|variant| {
         let (mapped, mapped_fields) = value(variant, "mapped");
-        let fields_pairs = variant.bindings().iter().zip(mapped_fields);
+        let fields_pairs = variant.bindings().iter().zip(mapped_fields.iter());
         let mut computations = quote!();
         computations.append_all(fields_pairs.map(|(field, mapped_field)| {
-            let expr = f(field.clone());
+            let expr = f(field);
             quote! { let #mapped_field = #expr; }
         }));
+        computations.append_all(
+            mapped_fields
+                .iter()
+                .map(|mapped_field| match g(mapped_field) {
+                    Some(expr) => quote! { let #mapped_field = #expr; },
+                    None => quote!(),
+                }),
+        );
         computations.append_all(mapped);
         Some(computations)
     })
@@ -131,19 +154,19 @@ pub fn fmap_trait_output(input: &DeriveInput, trait_path: &Path, trait_output: &
     segment.into()
 }
 
-pub fn map_type_params<F>(ty: &Type, params: &[&TypeParam], f: &mut F) -> Type
+pub fn map_type_params<F>(ty: &Type, params: &[&TypeParam], self_type: &Path, f: &mut F) -> Type
 where
     F: FnMut(&Ident) -> Type,
 {
     match *ty {
         Type::Slice(ref inner) => Type::from(TypeSlice {
-            elem: Box::new(map_type_params(&inner.elem, params, f)),
+            elem: Box::new(map_type_params(&inner.elem, params, self_type, f)),
             ..inner.clone()
         }),
         Type::Array(ref inner) => {
             //ref ty, ref expr) => {
             Type::from(TypeArray {
-                elem: Box::new(map_type_params(&inner.elem, params, f)),
+                elem: Box::new(map_type_params(&inner.elem, params, self_type, f)),
                 ..inner.clone()
             })
         },
@@ -152,7 +175,7 @@ where
             elems: inner
                 .elems
                 .iter()
-                .map(|ty| map_type_params(&ty, params, f))
+                .map(|ty| map_type_params(&ty, params, self_type, f))
                 .collect(),
             ..inner.clone()
         }),
@@ -164,10 +187,16 @@ where
                 if params.iter().any(|ref param| &param.ident == ident) {
                     return f(ident);
                 }
+                if ident == "Self" {
+                    return Type::from(TypePath {
+                        qself: None,
+                        path: self_type.clone(),
+                    });
+                }
             }
             Type::from(TypePath {
                 qself: None,
-                path: map_type_params_in_path(path, params, f),
+                path: map_type_params_in_path(path, params, self_type, f),
             })
         },
         Type::Path(TypePath {
@@ -175,21 +204,25 @@ where
             ref path,
         }) => Type::from(TypePath {
             qself: qself.as_ref().map(|qself| QSelf {
-                ty: Box::new(map_type_params(&qself.ty, params, f)),
+                ty: Box::new(map_type_params(&qself.ty, params, self_type, f)),
                 position: qself.position,
                 ..qself.clone()
             }),
-            path: map_type_params_in_path(path, params, f),
+            path: map_type_params_in_path(path, params, self_type, f),
         }),
         Type::Paren(ref inner) => Type::from(TypeParen {
-            elem: Box::new(map_type_params(&inner.elem, params, f)),
+            elem: Box::new(map_type_params(&inner.elem, params, self_type, f)),
+            ..inner.clone()
+        }),
+        Type::Group(ref inner) => Type::from(TypeGroup {
+            elem: Box::new(map_type_params(&inner.elem, params, self_type, f)),
             ..inner.clone()
         }),
         ref ty => panic!("type {:?} cannot be mapped yet", ty),
     }
 }
 
-fn map_type_params_in_path<F>(path: &Path, params: &[&TypeParam], f: &mut F) -> Path
+fn map_type_params_in_path<F>(path: &Path, params: &[&TypeParam], self_type: &Path, f: &mut F) -> Path
 where
     F: FnMut(&Ident) -> Type,
 {
@@ -209,11 +242,11 @@ where
                                 .map(|arg| match arg {
                                     ty @ &GenericArgument::Lifetime(_) => ty.clone(),
                                     &GenericArgument::Type(ref data) => {
-                                        GenericArgument::Type(map_type_params(data, params, f))
+                                        GenericArgument::Type(map_type_params(data, params, self_type, f))
                                     },
                                     &GenericArgument::Binding(ref data) => {
                                         GenericArgument::Binding(Binding {
-                                            ty: map_type_params(&data.ty, params, f),
+                                            ty: map_type_params(&data.ty, params, self_type, f),
                                             ..data.clone()
                                         })
                                     },

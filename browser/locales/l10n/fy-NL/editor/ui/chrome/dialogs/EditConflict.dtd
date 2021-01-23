@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Selektearje ferzje">
+<!ENTITY conflictWarning.label "Dizze side is wizige troch in oar programma, wylst jo ek noch net-bewarre wizigingen yn Composer hawwe.">
+<!ENTITY conflictResolve.label "Selektearje hokker ferzje jo behâlde wolle:">
+<!ENTITY keepCurrentPageButton.label "Behâld de wiziging op dizze side">
+<!ENTITY useOtherPageButton.label "Pas de oare wizigings op dizze side ta">

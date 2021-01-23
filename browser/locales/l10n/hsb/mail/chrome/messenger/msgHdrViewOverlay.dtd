@@ -1,0 +1,114 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "Komu">
+<!ENTITY fromField4.label "Wot">
+<!ENTITY senderField4.label "Wotpósłar">
+<!ENTITY author.label "Awtor">
+<!ENTITY organizationField4.label "Organizacija">
+<!ENTITY replyToField4.label "Wotmołwić na">
+
+<!ENTITY subjectField4.label "Tema">
+<!ENTITY ccField4.label "Kopija">
+<!ENTITY bccField4.label "Schowna kopija">
+<!ENTITY newsgroupsField4.label "Diskusijne skupiny">
+<!ENTITY followupToField4.label "Dale sposrědkować do">
+<!ENTITY tagsHdr4.label "Znački">
+<!ENTITY dateField4.label "Datum">
+<!ENTITY userAgentField4.label "User agent">
+<!ENTITY referencesField4.label "Referency">
+<!ENTITY messageIdField4.label "ID powěsće">
+<!ENTITY inReplyToField4.label "Wotmołwjejo na">
+<!ENTITY originalWebsite4.label "Websydło">
+
+<!ENTITY hdrArchiveButton1.label "Archiwować">
+<!ENTITY hdrArchiveButton1.tooltip "Tutu powěsć archiwować">
+<!ENTITY hdrSmartReplyButton1.label "Inteligentna wotmołwa">
+<!ENTITY hdrReplyButton1.label "Wotmołwić">
+<!ENTITY hdrReplyButton2.tooltip "Wotpósłarjej tuteje powěsće wotmołwić">
+<!ENTITY hdrReplyAllButton1.label "Wšěm wotmołwić">
+<!ENTITY hdrReplyAllButton1.tooltip "Wotpósłarjej a wšěm přijimarjam wotmołwić">
+<!ENTITY hdrReplyListButton1.label "Lisćina wotmołwow">
+<!ENTITY hdrReplyListButton1.tooltip "Do rozesyłanskeje lisćiny wotmołwić">
+<!ENTITY hdrFollowupButton1.label "Powěsć slědować">
+<!ENTITY hdrFollowupButton1.tooltip "Dalesposrědkowanje na tutu diskusijnu skupinu pósłać">
+<!ENTITY hdrForwardButton1.label "Dale sposrědkować">
+<!ENTITY hdrForwardButton1.tooltip "Tute powěsć dale sposrědkować">
+<!ENTITY hdrJunkButton1.label "Čapor">
+<!ENTITY hdrJunkButton1.tooltip "Tutu powěsć jako čapor markěrować">
+<!ENTITY hdrTrashButton1.label "Zhašeć">
+<!ENTITY hdrTrashButton1.tooltip "Tutu powěsć zhašeć">
+
+<!ENTITY hdrViewToolbarShowFull.label "Symbole a tekst pokazać">
+<!ENTITY hdrViewToolbarShowFull.accesskey "l">
+<!ENTITY hdrViewToolbarShowIcons.label "Jenož symbole pokazać">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "s">
+<!ENTITY hdrViewToolbarShowText.label "Jenož tekst pokazać">
+<!ENTITY hdrViewToolbarShowText.accesskey "t">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "Wotmołwu přeco wotpósłarjej pokazać">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "W">
+
+<!ENTITY otherActionsButton2.label "Wjace">
+<!ENTITY otherActionsButton.tooltip "Dalše akcije">
+<!ENTITY otherActionsOpenConversation1.label "W konwersaciji wočinić">
+<!ENTITY otherActionsOpenConversation1.accesskey "k">
+<!ENTITY otherActionsOpenInNewWindow1.label "W nowym woknje wočinić">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "W">
+<!ENTITY otherActionsOpenInNewTab1.label "W nowym rajtarku wočinić">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "r">
+<!ENTITY markAsReadMenuItem1.label "Jako přečitany markěrować">
+<!ENTITY markAsReadMenuItem1.accesskey "J">
+<!ENTITY markAsUnreadMenuItem1.label "Jako njepřečitany markěrować">
+<!ENTITY markAsUnreadMenuItem1.accesskey "n">
+<!ENTITY saveAsMenuItem1.label "Składować jako…">
+<!ENTITY saveAsMenuItem1.accesskey "S">
+<!ENTITY viewSourceMenuItem1.label "Žórłowy tekst pokazać">
+<!ENTITY viewSourceMenuItem1.accesskey "t">
+<!ENTITY otherActionsPrint1.label "Ćišćeć…">
+<!ENTITY otherActionsPrint1.accesskey "i">
+
+<!-- Attachment bar context menu items -->
+<!ENTITY startExpandedCmd.label    "Wokno přiwěškow spočatnje pokazać">
+<!ENTITY startExpandedCmd.accesskey    "W">
+
+<!-- Attachment context menu items -->
+<!ENTITY openAttachmentCmd.label    "Wočinić">
+<!ENTITY openAttachmentCmd.accesskey    "W">
+<!ENTITY saveAsAttachmentCmd.label    "Składować jako…">
+<!ENTITY saveAsAttachmentCmd.accesskey    "S">
+<!ENTITY detachAttachmentCmd.label    "Wotpowěsnyć…">
+<!ENTITY detachAttachmentCmd.accesskey    "t">
+<!ENTITY deleteAttachmentCmd.label    "Zhašeć">
+<!ENTITY deleteAttachmentCmd.accesskey    "Z">
+<!ENTITY openAllAttachmentsCmd.label    "Wšě wočinić…">
+<!ENTITY openAllAttachmentsCmd.accesskey    "o">
+<!ENTITY saveAllAttachmentsCmd.label    "Wšě składować…">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "k">
+<!ENTITY detachAllAttachmentsCmd.label    "Wšě wotpowěsnyć…">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "n">
+<!ENTITY deleteAllAttachmentsCmd.label    "Wšě zhašeć…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "h">
+
+<!ENTITY openAttachment.tooltip "Připowěsnjenu dataju wočinić">
+
+<!ENTITY detachedAttachmentFolder.show.label        "Wobsahowacy rjadowak wočinić">
+<!ENTITY detachedAttachmentFolder.show.accesskey    "s">
+<!ENTITY detachedAttachmentFolder.showMac.label     "W Finder pokazać">
+<!ENTITY detachedAttachmentFolder.showMac.accesskey "F">
+
+<!-- Attachment toolbar items -->
+<!ENTITY saveAttachmentButton1.label       "Składować">
+<!ENTITY saveAttachmentButton1.tooltip     "Připowěsnjenu dataju składować">
+<!ENTITY saveAllAttachmentsButton1.label   "Wšě składować">
+<!ENTITY saveAllAttachmentsButton1.tooltip "Wšě připowěsnjene dataje składować">
+
+<!ENTITY copyLinkCmd.label        "Wotkazowu adresu kopěrować">
+<!ENTITY copyLinkCmd.accesskey    "k">
+
+<!ENTITY CopyMessageId.label "ID powěsće kopěrować">
+<!ENTITY CopyMessageId.accesskey "I">
+<!ENTITY OpenMessageForMsgId.label "Powěsć wočinić za ID">
+<!ENTITY OpenMessageForMsgId.accesskey "o">
+<!ENTITY OpenBrowserWithMsgId.label "Wobhladowak z ID powěsće wočinić">
+<!ENTITY OpenBrowserWithMsgId.accesskey "h">

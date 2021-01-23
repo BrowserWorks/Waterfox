@@ -8,8 +8,9 @@
 #include "mozilla/dom/RemoteWorkerTypes.h"
 #include "mozilla/ipc/BackgroundParent.h"
 #include "mozilla/ClearOnShutdown.h"
+#include "mozilla/SchedulerGroup.h"
 #include "mozilla/StaticMutex.h"
-#include "mozilla/SystemGroup.h"
+#include "nsIPrincipal.h"
 #include "nsProxyRelease.h"
 
 namespace mozilla {
@@ -23,51 +24,6 @@ namespace {
 StaticMutex sSharedWorkerMutex;
 
 StaticRefPtr<SharedWorkerService> sSharedWorkerService;
-
-nsresult PopulateContentSecurityPolicy(
-    nsIContentSecurityPolicy* aCSP,
-    const nsTArray<ContentSecurityPolicy>& aPolicies) {
-  MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(aCSP);
-  MOZ_ASSERT(!aPolicies.IsEmpty());
-
-  for (const ContentSecurityPolicy& policy : aPolicies) {
-    nsresult rv = aCSP->AppendPolicy(policy.policy(), policy.reportOnlyFlag(),
-                                     policy.deliveredViaMetaTagFlag());
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      return rv;
-    }
-  }
-
-  return NS_OK;
-}
-
-nsresult PopulatePrincipalContentSecurityPolicy(
-    nsIPrincipal* aPrincipal, const nsTArray<ContentSecurityPolicy>& aPolicies,
-    const nsTArray<ContentSecurityPolicy>& aPreloadPolicies) {
-  MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(aPrincipal);
-
-  if (!aPolicies.IsEmpty()) {
-    nsCOMPtr<nsIContentSecurityPolicy> csp;
-    aPrincipal->EnsureCSP(nullptr, getter_AddRefs(csp));
-    nsresult rv = PopulateContentSecurityPolicy(csp, aPolicies);
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      return rv;
-    }
-  }
-
-  if (!aPreloadPolicies.IsEmpty()) {
-    nsCOMPtr<nsIContentSecurityPolicy> preloadCsp;
-    aPrincipal->EnsurePreloadCSP(nullptr, getter_AddRefs(preloadCsp));
-    nsresult rv = PopulateContentSecurityPolicy(preloadCsp, aPreloadPolicies);
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      return rv;
-    }
-  }
-
-  return NS_OK;
-}
 
 class GetOrCreateWorkerManagerRunnable final : public Runnable {
  public:
@@ -98,7 +54,7 @@ class GetOrCreateWorkerManagerRunnable final : public Runnable {
   RefPtr<SharedWorkerParent> mActor;
   RemoteWorkerData mData;
   uint64_t mWindowID;
-  MessagePortIdentifier mPortIdentifier;
+  UniqueMessagePortId mPortIdentifier;
 };
 
 class WorkerManagerCreatedRunnable final : public Runnable {
@@ -106,13 +62,13 @@ class WorkerManagerCreatedRunnable final : public Runnable {
   WorkerManagerCreatedRunnable(
       already_AddRefed<SharedWorkerManagerWrapper> aManagerWrapper,
       SharedWorkerParent* aActor, const RemoteWorkerData& aData,
-      uint64_t aWindowID, const MessagePortIdentifier& aPortIdentifier)
+      uint64_t aWindowID, UniqueMessagePortId& aPortIdentifier)
       : Runnable("WorkerManagerCreatedRunnable"),
         mManagerWrapper(aManagerWrapper),
         mActor(aActor),
         mData(aData),
         mWindowID(aWindowID),
-        mPortIdentifier(aPortIdentifier) {}
+        mPortIdentifier(std::move(aPortIdentifier)) {}
 
   NS_IMETHOD
   Run() {
@@ -134,7 +90,7 @@ class WorkerManagerCreatedRunnable final : public Runnable {
   RefPtr<SharedWorkerParent> mActor;
   RemoteWorkerData mData;
   uint64_t mWindowID;
-  MessagePortIdentifier mPortIdentifier;
+  UniqueMessagePortId mPortIdentifier;
 };
 
 class ErrorPropagationRunnable final : public Runnable {
@@ -165,7 +121,7 @@ already_AddRefed<SharedWorkerService> SharedWorkerService::GetOrCreate() {
   if (!sSharedWorkerService) {
     sSharedWorkerService = new SharedWorkerService();
     // ClearOnShutdown can only be called on main thread
-    nsresult rv = SystemGroup::Dispatch(
+    nsresult rv = SchedulerGroup::Dispatch(
         TaskCategory::Other,
         NS_NewRunnableFunction("RegisterSharedWorkerServiceClearOnShutdown",
                                []() {
@@ -198,47 +154,38 @@ void SharedWorkerService::GetOrCreateWorkerManager(
       new GetOrCreateWorkerManagerRunnable(this, aActor, aData, aWindowID,
                                            aPortIdentifier);
 
-  nsCOMPtr<nsIEventTarget> target =
-      SystemGroup::EventTargetFor(TaskCategory::Other);
-  nsresult rv = target->Dispatch(r.forget(), NS_DISPATCH_NORMAL);
+  nsresult rv = SchedulerGroup::Dispatch(TaskCategory::Other, r.forget());
   Unused << NS_WARN_IF(NS_FAILED(rv));
 }
 
 void SharedWorkerService::GetOrCreateWorkerManagerOnMainThread(
     nsIEventTarget* aBackgroundEventTarget, SharedWorkerParent* aActor,
     const RemoteWorkerData& aData, uint64_t aWindowID,
-    const MessagePortIdentifier& aPortIdentifier) {
+    UniqueMessagePortId& aPortIdentifier) {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aBackgroundEventTarget);
   MOZ_ASSERT(aActor);
 
-  auto closeMessagePortIdentifier =
-      MakeScopeExit([&] { MessagePort::ForceClose(aPortIdentifier); });
-
-  nsresult rv = NS_OK;
-  nsCOMPtr<nsIPrincipal> storagePrincipal =
-      PrincipalInfoToPrincipal(aData.storagePrincipalInfo(), &rv);
-  if (NS_WARN_IF(!storagePrincipal)) {
-    ErrorPropagationOnMainThread(aBackgroundEventTarget, aActor, rv);
+  auto storagePrincipalOrErr =
+      PrincipalInfoToPrincipal(aData.storagePrincipalInfo());
+  if (NS_WARN_IF(storagePrincipalOrErr.isErr())) {
+    ErrorPropagationOnMainThread(aBackgroundEventTarget, aActor,
+                                 storagePrincipalOrErr.unwrapErr());
     return;
   }
 
-  nsCOMPtr<nsIPrincipal> loadingPrincipal =
-      PrincipalInfoToPrincipal(aData.loadingPrincipalInfo(), &rv);
-  if (NS_WARN_IF(!loadingPrincipal)) {
-    ErrorPropagationOnMainThread(aBackgroundEventTarget, aActor, rv);
-    return;
-  }
-
-  rv = PopulatePrincipalContentSecurityPolicy(
-      loadingPrincipal, aData.loadingPrincipalCsp(),
-      aData.loadingPrincipalPreloadCsp());
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    ErrorPropagationOnMainThread(aBackgroundEventTarget, aActor, rv);
+  auto loadingPrincipalOrErr =
+      PrincipalInfoToPrincipal(aData.loadingPrincipalInfo());
+  if (NS_WARN_IF(loadingPrincipalOrErr.isErr())) {
+    ErrorPropagationOnMainThread(aBackgroundEventTarget, aActor,
+                                 loadingPrincipalOrErr.unwrapErr());
     return;
   }
 
   RefPtr<SharedWorkerManagerHolder> managerHolder;
+
+  nsCOMPtr<nsIPrincipal> loadingPrincipal = loadingPrincipalOrErr.unwrap();
+  nsCOMPtr<nsIPrincipal> storagePrincipal = storagePrincipalOrErr.unwrap();
 
   // Let's see if there is already a SharedWorker to share.
   nsCOMPtr<nsIURI> resolvedScriptURL =
@@ -275,8 +222,6 @@ void SharedWorkerService::GetOrCreateWorkerManagerOnMainThread(
   RefPtr<WorkerManagerCreatedRunnable> r = new WorkerManagerCreatedRunnable(
       wrapper.forget(), aActor, aData, aWindowID, aPortIdentifier);
   aBackgroundEventTarget->Dispatch(r.forget(), NS_DISPATCH_NORMAL);
-
-  closeMessagePortIdentifier.release();
 }
 
 void SharedWorkerService::ErrorPropagationOnMainThread(

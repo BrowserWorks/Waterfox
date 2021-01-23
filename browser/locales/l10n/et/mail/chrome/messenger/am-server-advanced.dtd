@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Konto täpsemad sätted">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "IMAP-serveri kaust:">
+<!ENTITY serverDirectory.accesskey "M">
+<!ENTITY usingSubscription.label "Näidatakse ainult tellitud kaustu">
+<!ENTITY usingSubscription.accesskey "N">
+<!ENTITY dualUseFolders.label "Server toetab kaustu, mis sisaldavad sõnumeid ja alamkaustu">
+<!ENTITY dualUseFolders.accesskey "S">
+<!ENTITY maximumConnectionsNumber.label "Maksimaalne puhverdatavate serveriühenduste arv">
+<!ENTITY maximumConnectionsNumber.accesskey "M">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Need eelistused määravad nimeruumi sinu IMAP-serveris">
+<!ENTITY personalNamespace.label "Isiklik nimeruum:">
+<!ENTITY personalNamespace.accesskey "s">
+<!ENTITY publicNamespace.label "Avalik (jagatud):">
+<!ENTITY publicNamespace.accesskey "u">
+<!ENTITY otherUsersNamespace.label "Muud kasutajad:">
+<!ENTITY otherUsersNamespace.accesskey "M">
+<!ENTITY overrideNamespaces.label "Serveril lubatakse neid nimeruume mitte kasutada">
+<!ENTITY overrideNamespaces.accesskey "a">
+<!ENTITY pop3DeferringDesc.label "Selle konto serverist kirjade allalaadimisel kasutatakse uute kirjade salvestamiseks järgnevat kausta:" >
+<!ENTITY accountInbox.label "Selle konto saabuvate kirjade kaust">
+<!ENTITY accountInbox.accesskey "b">
+<!ENTITY deferToServer.label "Mõne muu konto saabuvate kirjade kaust">
+<!ENTITY deferToServer.accesskey "j">
+<!ENTITY deferGetNewMail.label "See server kaasatakse uute kirjade hankimisel">
+<!ENTITY deferGetNewMail.accesskey "S">

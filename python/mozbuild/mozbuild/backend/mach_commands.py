@@ -6,24 +6,21 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 import argparse
 import os
-import sys
 import subprocess
-import which
 
-from mozbuild.base import (
-    MachCommandBase,
-)
-
+from mozbuild.base import MachCommandBase
+from mozfile import which
 from mach.decorators import (
     CommandArgument,
     CommandProvider,
     Command,
 )
 
+
 @CommandProvider
 class MachCommands(MachCommandBase):
     @Command('ide', category='devenv',
-        description='Generate a project and launch an IDE.')
+             description='Generate a project and launch an IDE.')
     @CommandArgument('ide', choices=['eclipse', 'visualstudio'])
     @CommandArgument('args', nargs=argparse.REMAINDER)
     def eclipse(self, ide, args):
@@ -32,13 +29,10 @@ class MachCommands(MachCommandBase):
         elif ide == 'visualstudio':
             backend = 'VisualStudio'
 
-        if ide == 'eclipse':
-            try:
-                which.which('eclipse')
-            except which.WhichError:
-                print('Eclipse CDT 8.4 or later must be installed in your PATH.')
-                print('Download: http://www.eclipse.org/cdt/downloads.php')
-                return 1
+        if ide == 'eclipse' and not which('eclipse'):
+            print('Eclipse CDT 8.4 or later must be installed in your PATH.')
+            print('Download: http://www.eclipse.org/cdt/downloads.php')
+            return 1
 
         # Here we refresh the whole build. 'build export' is sufficient here and is probably more
         # correct but it's also nice having a single target to get a fully built and indexed
@@ -57,10 +51,12 @@ class MachCommands(MachCommandBase):
 
         if ide == 'eclipse':
             eclipse_workspace_dir = self.get_eclipse_workspace_path()
-            process = subprocess.check_call(['eclipse', '-data', eclipse_workspace_dir])
+            subprocess.check_call(['eclipse', '-data', eclipse_workspace_dir])
         elif ide == 'visualstudio':
             visual_studio_workspace_dir = self.get_visualstudio_workspace_path()
-            process = subprocess.check_call(['explorer.exe', visual_studio_workspace_dir])
+            subprocess.check_call(
+                ['explorer.exe', visual_studio_workspace_dir]
+            )
 
     def get_eclipse_workspace_path(self):
         from mozbuild.backend.cpp_eclipse import CppEclipseBackend

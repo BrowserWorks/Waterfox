@@ -12,7 +12,6 @@
 #include "AccessibleCaret.h"
 #include "AccessibleCaretManager.h"
 #include "mozilla/Preferences.h"
-#include "mozilla/StaticPrefs.h"
 
 using ::testing::_;
 using ::testing::DefaultValue;
@@ -118,10 +117,10 @@ class AccessibleCaretManagerTester : public ::testing::Test {
     DefaultValue<PositionChangedResult>::Set(PositionChangedResult::NotChanged);
 
     EXPECT_CALL(mManager.FirstCaret(), SetPosition(_, _))
-        .WillRepeatedly(Return(PositionChangedResult::Changed));
+        .WillRepeatedly(Return(PositionChangedResult::Position));
 
     EXPECT_CALL(mManager.SecondCaret(), SetPosition(_, _))
-        .WillRepeatedly(Return(PositionChangedResult::Changed));
+        .WillRepeatedly(Return(PositionChangedResult::Position));
   }
 
   AccessibleCaret::Appearance FirstCaretAppearance() {
@@ -586,7 +585,7 @@ MOZ_CAN_RUN_SCRIPT_FOR_DEFINITION {
 
     // After scroll ended, the caret is visible again.
     EXPECT_CALL(mManager.FirstCaret(), SetPosition(_, _))
-        .WillRepeatedly(Return(PositionChangedResult::Changed));
+        .WillRepeatedly(Return(PositionChangedResult::Position));
     EXPECT_CALL(mManager, DispatchCaretStateChangedEvent(
                               CaretChangedReason::Updateposition))
         .Times(1);
@@ -642,7 +641,7 @@ MOZ_CAN_RUN_SCRIPT_FOR_DEFINITION {
 
     // After scroll ended, the caret is visible again.
     EXPECT_CALL(mManager.FirstCaret(), SetPosition(_, _))
-        .WillRepeatedly(Return(PositionChangedResult::Changed));
+        .WillRepeatedly(Return(PositionChangedResult::Position));
     EXPECT_CALL(check, Call("scrollend2"));
   }
 

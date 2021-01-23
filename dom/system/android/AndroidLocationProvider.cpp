@@ -4,10 +4,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "nsGeolocation.h"
-#include "nsGeoPosition.h"
+#include "Geolocation.h"
+#include "GeolocationPosition.h"
 #include "AndroidLocationProvider.h"
-#include "GeneratedJNIWrappers.h"
+#include "mozilla/java/GeckoAppShellWrappers.h"
 
 using namespace mozilla;
 

@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- extracted from content/openLocation.xul -->
+
+<!ENTITY enter.label "Introduceți o adresă web (URL), sau specificați fișierul local pe care doriți să îl deschideți:">
+<!-- LOCALIZATION NOTE (enter.accesskey): should be present in both enter.label
+     as defined above and attachEnterLabel as defined in
+     openLocation.properties -->
+<!ENTITY enter.accesskey "e">
+<!ENTITY chooseFile.label "Alegere fișier…">
+<!ENTITY chooseFile.accesskey "A">
+<!ENTITY newWindow.label "New browser window">
+<!ENTITY newTab.label "New browser tab">
+<!ENTITY currentTab.label "Current browser tab">
+<!ENTITY editNewWindow.label "New Composer window">
+<!ENTITY open.label "Deschide">
+<!ENTITY caption.label "Deschidere adresă web">
+<!ENTITY openWhere.label "Deschide în:">
+<!ENTITY openWhere.accesskey "D">

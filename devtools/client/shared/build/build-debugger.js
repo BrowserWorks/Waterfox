@@ -1,7 +1,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
-/* globals process, __filename, __dirname */
 
 "use strict";
 
@@ -16,26 +15,28 @@ const EXCLUDED_FILES = {
   "devtools-launchpad": "devtools/shared/flags",
 };
 
-const mappings = Object.assign(
-  {
-    "./source-editor": "devtools/client/shared/sourceeditor/editor",
-    "../editor/source-editor": "devtools/client/shared/sourceeditor/editor",
-    "./test-flag": "devtools/shared/flags",
-    "./fronts-device": "devtools/shared/fronts/device",
-    immutable: "devtools/client/shared/vendor/immutable",
-    lodash: "devtools/client/shared/vendor/lodash",
-    react: "devtools/client/shared/vendor/react",
-    "react-dom": "devtools/client/shared/vendor/react-dom",
-    "react-dom-factories": "devtools/client/shared/vendor/react-dom-factories",
-    "react-redux": "devtools/client/shared/vendor/react-redux",
-    redux: "devtools/client/shared/vendor/redux",
-    "prop-types": "devtools/client/shared/vendor/react-prop-types",
-    "devtools-services": "Services",
-    "wasmparser/dist/WasmParser": "devtools/client/shared/vendor/WasmParser",
-    "wasmparser/dist/WasmDis": "devtools/client/shared/vendor/WasmDis",
-  },
-  EXCLUDED_FILES
-);
+const mappings = {
+  "./source-editor": "devtools/client/shared/sourceeditor/editor",
+  "../editor/source-editor": "devtools/client/shared/sourceeditor/editor",
+  "./test-flag": "devtools/shared/flags",
+  "./fronts-device": "devtools/client/fronts/device",
+  immutable: "devtools/client/shared/vendor/immutable",
+  lodash: "devtools/client/shared/vendor/lodash",
+  react: "devtools/client/shared/vendor/react",
+  "react-dom": "devtools/client/shared/vendor/react-dom",
+  "react-dom-factories": "devtools/client/shared/vendor/react-dom-factories",
+  "react-redux": "devtools/client/shared/vendor/react-redux",
+  redux: "devtools/client/shared/vendor/redux",
+  reselect: "devtools/client/shared/vendor/reselect",
+  "prop-types": "devtools/client/shared/vendor/react-prop-types",
+  "devtools-services": "Services",
+  "wasmparser/dist/WasmParser": "devtools/client/shared/vendor/WasmParser",
+  "wasmparser/dist/WasmDis": "devtools/client/shared/vendor/WasmDis",
+  "whatwg-url": "devtools/client/shared/vendor/whatwg-url",
+  "framework-actions": "devtools/client/framework/actions/index",
+  "inspector-shared-utils": "devtools/client/inspector/shared/utils",
+  ...EXCLUDED_FILES,
+};
 
 const mappingValues = Object.values(mappings);
 
@@ -63,13 +64,16 @@ const VENDORS = [
   "lodash-move",
   "react-aria-components/src/tabs",
   "react-transition-group/Transition",
-  "reselect",
   "Svg",
 ];
 
 const moduleMapping = {
   Telemetry: "devtools/client/shared/telemetry",
+  asyncStoreHelper: "devtools/client/shared/async-store-helper",
   asyncStorage: "devtools/shared/async-storage",
+  PluralForm: "devtools/shared/plural-form",
+  DevToolsUtils: "devtools/shared/DevToolsUtils",
+  AppConstants: "resource://gre/modules/AppConstants.jsm",
 };
 
 /*
@@ -103,6 +107,15 @@ function updateDevtoolsModulesImport(path, t) {
       }
     }
   }
+}
+
+function shouldLazyLoad(value) {
+  return (
+    !value.includes("vendors") &&
+    !value.includes("codemirror/") &&
+    !value.endsWith(".properties") &&
+    !value.startsWith("devtools/")
+  );
 }
 
 /**
@@ -140,7 +153,7 @@ function transformMC({ types: t }) {
           return;
         }
 
-        // Handle require() to loadash submodules
+        // Handle require() to lodash submodules
         // e.g. require("lodash/escapeRegExp")
         //   -> require("devtools/client/shared/vendor/lodash").escapeRegExp
         if (value.startsWith("lodash/")) {
@@ -190,9 +203,58 @@ function transformMC({ types: t }) {
         if (
           !exists &&
           !value.endsWith("index") &&
+          !value.endsWith(".jsm") &&
           !(value.startsWith("devtools") || mappingValues.includes(value))
         ) {
-          path.replaceWith(t.stringLiteral(`${value}/index`));
+          value = `${value}/index`;
+          path.replaceWith(t.stringLiteral(value));
+        }
+
+        if (shouldLazyLoad(value)) {
+          const requireCall = path.parentPath;
+          const declarator = requireCall.parentPath;
+          const declaration = declarator.parentPath;
+
+          // require()s that are not assigned to a variable cannot be safely lazily required
+          // since we lack anything to initiate the require (= the getter for the variable)
+          if (declarator.type !== "VariableDeclarator") {
+            return;
+          }
+
+          // update relative paths to be "absolute" (starting with devtools/)
+          // e.g. ./utils/source-queue
+          if (value.startsWith(".")) {
+            // Create full path
+            // e.g. z:\build\build\src\devtools\client\debugger\src\utils\source-queue
+            let newValue = _path.join(_path.dirname(filePath), value);
+
+            // Select the devtools portion of the path
+            // e.g. devtools\client\debugger\src\utils\source-queue
+            if (!newValue.startsWith("devtools")) {
+              newValue = newValue.match(/^(.*?)(devtools.*)/)[2];
+            }
+
+            // Replace forward slashes with back slashes
+            // e.g devtools/client/debugger/src/utils/source-queue
+            newValue = newValue.replace(/\\/g, "/");
+
+            value = newValue;
+          }
+
+          // rewrite to: loader.lazyRequireGetter(this, "variableName", "pathToFile")
+          const lazyRequire = t.callExpression(
+            t.memberExpression(
+              t.identifier("loader"),
+              t.identifier("lazyRequireGetter")
+            ),
+            [
+              t.thisExpression(),
+              t.stringLiteral(declarator.node.id.name || ""),
+              t.stringLiteral(value),
+            ]
+          );
+
+          declaration.replaceWith(lazyRequire);
         }
       },
     },
@@ -204,11 +266,10 @@ Babel.registerPlugin("transform-mc", transformMC);
 module.exports = function(filePath) {
   return [
     "transform-flow-strip-types",
-    "syntax-trailing-function-commas",
-    "transform-class-properties",
-    "transform-es2015-modules-commonjs",
+    "proposal-optional-chaining",
+    "proposal-class-properties",
+    "transform-modules-commonjs",
     "transform-react-jsx",
-    "syntax-object-rest-spread",
     ["transform-mc", { mappings, vendors: VENDORS, filePath }],
   ];
 };

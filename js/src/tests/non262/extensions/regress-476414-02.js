@@ -35,18 +35,12 @@ function tryRunning(f, code)
   } catch(runError) {}
 }
 var realFunction = Function;
-var realUneval = uneval;
 var realToString = toString;
-var realToSource = toSource;
 function tryEnsureSanity()
 {
   delete Function;
-  delete uneval;
-  delete toSource;
   delete toString;
   Function = realFunction;
-  uneval = realUneval;
-  toSource = realToSource;
   toString = realToString;
 }
 for (let iters = 0; iters < 2000; ++iters) { 

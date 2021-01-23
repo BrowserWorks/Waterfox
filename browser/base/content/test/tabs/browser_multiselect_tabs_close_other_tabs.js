@@ -1,9 +1,8 @@
-const PREF_MULTISELECT_TABS = "browser.tabs.multiselect";
 const PREF_WARN_ON_CLOSE = "browser.tabs.warnOnCloseOtherTabs";
 
 add_task(async function setPref() {
   await SpecialPowers.pushPrefEnv({
-    set: [[PREF_MULTISELECT_TABS, true], [PREF_WARN_ON_CLOSE, false]],
+    set: [[PREF_WARN_ON_CLOSE, false]],
   });
 });
 
@@ -51,7 +50,7 @@ add_task(async function withAMultiSelectedTab() {
   is(gBrowser.multiSelectedTabsCount, 2, "Two multiselected tabs");
   is(gBrowser.selectedTab, initialTab, "InitialTab is still the active tab");
 
-  gBrowser.clearMultiSelectedTabs(false);
+  gBrowser.clearMultiSelectedTabs({ isLastMultiSelectChange: false });
   BrowserTestUtils.removeTab(tab1);
   BrowserTestUtils.removeTab(tab4);
 });

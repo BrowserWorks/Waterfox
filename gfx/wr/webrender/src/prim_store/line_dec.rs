@@ -7,17 +7,19 @@ use api::{
     LineOrientation, LineStyle, PremultipliedColorF, Shadow,
 };
 use api::units::{Au, LayoutSizeAu, LayoutVector2D};
-use crate::display_list_flattener::{CreateShadow, IsVisible};
+use crate::scene_building::{CreateShadow, IsVisible};
 use crate::frame_builder::{FrameBuildingState};
 use crate::gpu_cache::GpuDataRequest;
 use crate::intern;
 use crate::internal_types::LayoutPrimitiveInfo;
 use crate::prim_store::{
-    PrimKey, PrimKeyCommonData, PrimTemplate, PrimTemplateCommonData,
-    InternablePrimitive, PrimitiveSceneData, PrimitiveStore,
+    PrimKey, PrimTemplate, PrimTemplateCommonData,
+    InternablePrimitive, PrimitiveStore,
 };
 use crate::prim_store::PrimitiveInstanceKind;
 
+/// Maximum resolution in device pixels at which line decorations are rasterized.
+pub const MAX_LINE_DECORATION_RESOLUTION: u32 = 4096;
 
 #[derive(Clone, Debug, Hash, MallocSizeOf, PartialEq, Eq)]
 #[cfg_attr(feature = "capture", derive(Serialize))]
@@ -50,9 +52,7 @@ impl LineDecorationKey {
         line_dec: LineDecoration,
     ) -> Self {
         LineDecorationKey {
-            common: PrimKeyCommonData::with_info(
-                info,
-            ),
+            common: info.into(),
             kind: line_dec,
         }
     }
@@ -125,7 +125,7 @@ pub type LineDecorationDataHandle = intern::Handle<LineDecoration>;
 impl intern::Internable for LineDecoration {
     type Key = LineDecorationKey;
     type StoreData = LineDecorationTemplate;
-    type InternData = PrimitiveSceneData;
+    type InternData = ();
 }
 
 impl InternablePrimitive for LineDecoration {
@@ -178,6 +178,6 @@ fn test_struct_sizes() {
     // (b) You made a structure larger. This is not necessarily a problem, but should only
     //     be done with care, and after checking if talos performance regresses badly.
     assert_eq!(mem::size_of::<LineDecoration>(), 20, "LineDecoration size changed");
-    assert_eq!(mem::size_of::<LineDecorationTemplate>(), 52, "LineDecorationTemplate size changed");
-    assert_eq!(mem::size_of::<LineDecorationKey>(), 32, "LineDecorationKey size changed");
+    assert_eq!(mem::size_of::<LineDecorationTemplate>(), 60, "LineDecorationTemplate size changed");
+    assert_eq!(mem::size_of::<LineDecorationKey>(), 40, "LineDecorationKey size changed");
 }

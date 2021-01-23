@@ -27,7 +27,7 @@ const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
  *         expected certificate's attribute names / values.
  */
 function readCertPrefs(aPrefBranch) {
-  if (Services.prefs.getBranch(aPrefBranch).getChildList("").length == 0) {
+  if (!Services.prefs.getBranch(aPrefBranch).getChildList("").length) {
     return null;
   }
 
@@ -36,7 +36,7 @@ function readCertPrefs(aPrefBranch) {
   while (true) {
     let prefBranchCert = Services.prefs.getBranch(aPrefBranch + counter + ".");
     let prefCertAttrs = prefBranchCert.getChildList("");
-    if (prefCertAttrs.length == 0) {
+    if (!prefCertAttrs.length) {
       break;
     }
 
@@ -70,7 +70,7 @@ function readCertPrefs(aPrefBranch) {
  */
 function validateCert(aCertificate, aCerts) {
   // If there are no certificate requirements then just exit
-  if (!aCerts || aCerts.length == 0) {
+  if (!aCerts || !aCerts.length) {
     return;
   }
 
@@ -169,8 +169,9 @@ function checkCert(aChannel, aAllowNonBuiltInCerts, aCerts) {
   }
 
   let issuerCert = null;
-  // eslint-disable-next-line no-empty
-  for (issuerCert of secInfo.succeededCertChain.getEnumerator()) {
+  if (secInfo.succeededCertChain.length) {
+    issuerCert =
+      secInfo.succeededCertChain[secInfo.succeededCertChain.length - 1];
   }
 
   const certNotBuiltInErr = "Certificate issuer is not built-in.";
@@ -184,9 +185,9 @@ function checkCert(aChannel, aAllowNonBuiltInCerts, aCerts) {
 }
 
 /**
- * This class implements nsIBadCertListener.  Its job is to prevent "bad cert"
- * security dialogs from being shown to the user.  It is better to simply fail
- * if the certificate is bad. See bug 304286.
+ * This class implements nsIChannelEventSink. Its job is to perform extra checks
+ * on the certificates used for some connections when those connections
+ * redirect.
  *
  * @param  aAllowNonBuiltInCerts (optional)
  *         When true certificates that aren't builtin are allowed. When false

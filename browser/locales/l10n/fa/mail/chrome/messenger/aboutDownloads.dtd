@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "پرونده‌های ذخیره شده">
+<!ENTITY aboutDownloads.empty                      "هیچ پرونده‌ی ذخیره شده‌ای وجود ندارد">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "باز کردن پوشه‌ی حاوی پرونده">
+<!ENTITY cmd.show.accesskey                        "پ">
+<!ENTITY cmd.showMac.label                         "نمایش در یابنده">
+<!ENTITY cmd.showMac.accesskey                     "ی">
+<!ENTITY cmd.open.label                            "باز کردن">
+<!ENTITY cmd.open.accesskey                        "ب">
+<!ENTITY cmd.removeFromHistory.label               "حذف از تاریخچه">
+<!ENTITY cmd.removeFromHistory.accesskey           "ح">
+<!ENTITY cmd.clearList.label                       "پاک‌سازی فهرست">
+<!ENTITY cmd.clearList.accesskey                   "پ">
+<!ENTITY cmd.clearList.tooltip                     "حذف همه‌ی ردیف‌ها از فهرست پرونده‌ها، به جز بارگذاری‌های خروجی.">
+<!ENTITY cmd.searchDownloads.label                 "جستجو...">
+

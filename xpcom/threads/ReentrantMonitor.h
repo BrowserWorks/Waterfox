@@ -39,9 +39,7 @@ class ReentrantMonitor : BlockingResourceBase {
    * ReentrantMonitor
    * @param aName A name which can reference this monitor
    */
-  explicit ReentrantMonitor(
-      const char* aName,
-      recordreplay::Behavior aRecorded = recordreplay::Behavior::Preserve)
+  explicit ReentrantMonitor(const char* aName)
       : BlockingResourceBase(aName, eReentrantMonitor)
 #ifdef DEBUG
         ,
@@ -49,12 +47,7 @@ class ReentrantMonitor : BlockingResourceBase {
 #endif
   {
     MOZ_COUNT_CTOR(ReentrantMonitor);
-    if (aRecorded == recordreplay::Behavior::Preserve) {
-      mReentrantMonitor = PR_NewMonitor();
-    } else {
-      recordreplay::AutoPassThroughThreadEvents pt;
-      mReentrantMonitor = PR_NewMonitor();
-    }
+    mReentrantMonitor = PR_NewMonitor();
     if (!mReentrantMonitor) {
       MOZ_CRASH("Can't allocate mozilla::ReentrantMonitor");
     }
@@ -192,7 +185,7 @@ class MOZ_STACK_CLASS ReentrantMonitorAutoEnter {
   ReentrantMonitorAutoEnter();
   ReentrantMonitorAutoEnter(const ReentrantMonitorAutoEnter&);
   ReentrantMonitorAutoEnter& operator=(const ReentrantMonitorAutoEnter&);
-  static void* operator new(size_t) CPP_THROW_NEW;
+  static void* operator new(size_t) noexcept(true);
 
   friend class ReentrantMonitorAutoExit;
 
@@ -238,7 +231,7 @@ class MOZ_STACK_CLASS ReentrantMonitorAutoExit {
   ReentrantMonitorAutoExit();
   ReentrantMonitorAutoExit(const ReentrantMonitorAutoExit&);
   ReentrantMonitorAutoExit& operator=(const ReentrantMonitorAutoExit&);
-  static void* operator new(size_t) CPP_THROW_NEW;
+  static void* operator new(size_t) noexcept(true);
 
   ReentrantMonitor* mReentrantMonitor;
 };

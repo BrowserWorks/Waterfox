@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpServer.label "Paràmetres del servidor de sortida (SMTP)">
+
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpDescription.label "Quan gestioneu les vostres identitats, podeu utilitzar un servidor d'aquesta llista seleccionant-lo com a «Servidor de sortida (SMTP)» o podeu utilitzar el servidor per defecte d'aquesta llista seleccionant «Utilitza el servidor per defecte».">
+
+<!ENTITY smtpListAdd.label  "Afegeix…">
+<!ENTITY smtpListAdd.accesskey  "f">
+<!ENTITY smtpListEdit.label "Edita…">
+<!ENTITY smtpListEdit.accesskey "E">
+<!ENTITY smtpListDelete.label "Suprimeix">
+<!ENTITY smtpListDelete.accesskey "m">
+<!ENTITY smtpListSetDefault.label "Defineix per defecte">
+<!ENTITY smtpListSetDefault.accesskey "t">
+
+<!ENTITY serverDetails.label "Detalls del servidor seleccionat:">
+<!ENTITY serverDescription.label "Descripció: ">
+<!ENTITY serverName.label "Nom del servidor: ">
+<!ENTITY serverPort.label "Port: ">
+<!ENTITY userName.label   "Nom d'usuari: ">
+<!ENTITY connectionSecurity.label "Seguretat de la connexió: ">
+<!ENTITY authMethod.label   "Mètode d'autenticació: ">

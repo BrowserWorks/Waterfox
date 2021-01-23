@@ -275,12 +275,9 @@ PK11SymKey *PK11_ImportSymKeyWithFlags(PK11SlotInfo *slot,
 PK11SymKey *PK11_SymKeyFromHandle(PK11SlotInfo *slot, PK11SymKey *parent,
                                   PK11Origin origin, CK_MECHANISM_TYPE type, CK_OBJECT_HANDLE keyID,
                                   PRBool owner, void *wincx);
+/* PK11_GetWrapKey and PK11_SetWrapKey are not thread safe. */
 PK11SymKey *PK11_GetWrapKey(PK11SlotInfo *slot, int wrap,
                             CK_MECHANISM_TYPE type, int series, void *wincx);
-/*
- * This function is not thread-safe.  It can only be called when only
- * one thread has a reference to wrapKey.
- */
 void PK11_SetWrapKey(PK11SlotInfo *slot, int wrap, PK11SymKey *wrapKey);
 CK_MECHANISM_TYPE PK11_GetMechanism(PK11SymKey *symKey);
 /*
@@ -365,6 +362,25 @@ SECStatus PK11_WrapSymKey(CK_MECHANISM_TYPE type, SECItem *params,
  * currently ignored */
 PK11SymKey *PK11_MoveSymKey(PK11SlotInfo *slot, CK_ATTRIBUTE_TYPE operation,
                             CK_FLAGS flags, PRBool perm, PK11SymKey *symKey);
+/*
+ * To do joint operations, we often need two keys in the same slot.
+ * Usually the PKCS #11 wrappers handle this correctly (like for PK11_WrapKey),
+ * but sometimes the wrappers don't know about mechanism specific keys in
+ * the Mechanism params. This function makes sure the two keys are in the
+ * same slot by copying one or both of the keys into a common slot. This
+ * functions makes sure the slot can handle the target mechanism. If the copy
+ * is warranted, this function will prefer to move the movingKey first, then
+ * the preferedKey. If the keys are moved, the new keys are returned in
+ * newMovingKey and/or newPreferedKey. The application is responsible
+ * for freeing those keys one the operation is complete.
+ */
+SECStatus PK11_SymKeysToSameSlot(CK_MECHANISM_TYPE mech,
+                                 CK_ATTRIBUTE_TYPE preferedOperation,
+                                 CK_ATTRIBUTE_TYPE movingOperation,
+                                 PK11SymKey *preferedKey, PK11SymKey *movingKey,
+                                 PK11SymKey **newPreferedKey,
+                                 PK11SymKey **newMovingKey);
+
 /*
  * derive a new key from the base key.
  *  PK11_Derive returns a key which can do exactly one operation, and is
@@ -744,6 +760,19 @@ SECStatus PK11_DigestOp(PK11Context *context, const unsigned char *in,
                         unsigned len);
 SECStatus PK11_CipherOp(PK11Context *context, unsigned char *out, int *outlen,
                         int maxout, const unsigned char *in, int inlen);
+/* application builds the mechanism specific params */
+SECStatus PK11_AEADRawOp(PK11Context *context, void *params, int paramslen,
+                         const unsigned char *aad, int aadlen,
+                         unsigned char *out, int *outlen,
+                         int maxout, const unsigned char *in, int inlen);
+/* NSS builds the mechanism specific params */
+SECStatus PK11_AEADOp(PK11Context *context, CK_GENERATOR_FUNCTION ivGen,
+                      int fixedbits, unsigned char *iv, int ivlen,
+                      const unsigned char *aad, int aadlen,
+                      unsigned char *out, int *outlen,
+                      int maxout, unsigned char *tag, int taglen,
+                      const unsigned char *in, int inlen);
+
 SECStatus PK11_Finalize(PK11Context *context);
 SECStatus PK11_DigestFinal(PK11Context *context, unsigned char *data,
                            unsigned int *outLen, unsigned int length);
@@ -864,8 +893,13 @@ PK11GenericObject *PK11_CreateGenericObject(PK11SlotInfo *slot,
  */
 SECStatus PK11_ReadRawAttribute(PK11ObjectType type, void *object,
                                 CK_ATTRIBUTE_TYPE attr, SECItem *item);
+SECStatus PK11_ReadRawAttributes(PLArenaPool *arena, PK11ObjectType type, void *object,
+                                 CK_ATTRIBUTE *pTemplate, unsigned int count);
 SECStatus PK11_WriteRawAttribute(PK11ObjectType type, void *object,
                                  CK_ATTRIBUTE_TYPE attr, SECItem *item);
+/* get the PKCS #11 handle and slot for a generic object */
+CK_OBJECT_HANDLE PK11_GetObjectHandle(PK11ObjectType objType, void *objSpec,
+                                      PK11SlotInfo **slotp);
 
 /*
  * PK11_GetAllSlotsForCert returns all the slots that a given certificate
@@ -874,6 +908,25 @@ SECStatus PK11_WriteRawAttribute(PK11ObjectType type, void *object,
  */
 PK11SlotList *
 PK11_GetAllSlotsForCert(CERTCertificate *cert, void *arg);
+
+/*
+ * Finds all certificates on the given slot with the given subject distinguished
+ * name and returns them as DER bytes. If no such certificates can be found,
+ * returns SECSuccess and sets *results to NULL. If a failure is encountered
+ * while fetching any of the matching certificates, SECFailure is returned and
+ * *results will be NULL.
+ */
+SECStatus
+PK11_FindRawCertsWithSubject(PK11SlotInfo *slot, SECItem *derSubject,
+                             CERTCertificateList **results);
+
+/*
+ * Finds and returns all certificates with a public key that matches the given
+ * private key. May return an empty list if no certificates match. Returns NULL
+ * if a failure is encountered.
+ */
+CERTCertList *
+PK11_GetCertsMatchingPrivateKey(SECKEYPrivateKey *privKey);
 
 /**********************************************************************
  * New functions which are already deprecated....
@@ -885,6 +938,17 @@ SECItem *
 PK11_GetLowLevelKeyIDForPrivateKey(SECKEYPrivateKey *key);
 
 PRBool SECMOD_HasRootCerts(void);
+
+/**********************************************************************
+ * Other Utilities
+ **********************************************************************/
+/* 
+ * Get the state of the system FIPS mode -
+ *  NSS uses this to force FIPS mode if the system bit is on. This returns
+ *  the system state independent of the database state and can be called
+ *  before NSS initializes.
+ */
+int SECMOD_GetSystemFIPSEnabled();
 
 SEC_END_PROTOS
 

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Importo Libër Adresash">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Të dhëna të importuara për Regjistrim: ">
+<!ENTITY fieldMapImport.next.label "Pasuesi">
+<!ENTITY fieldMapImport.next.accesskey "P">
+<!ENTITY fieldMapImport.previous.label "I mëparshmi">
+<!ENTITY fieldMapImport.previous.accesskey "m">
+<!ENTITY fieldMapImport.text "Përdorni Ngjitu dhe Zbrit për të përputhur fusha libri adresash majtas me të dhëna të sakta për t&apos;u importuar djathtas. Hiquni shenjën elementëve që nuk doni të importohen.">
+<!ENTITY fieldMapImport.up.label "Ngrije">
+<!ENTITY fieldMapImport.up.accesskey "i">
+<!ENTITY fieldMapImport.down.label "Poshtë">
+<!ENTITY fieldMapImport.down.accesskey "o">
+<!ENTITY fieldMapImport.fieldListTitle "Fusha Libri Adresash">
+<!ENTITY fieldMapImport.dataTitle "Të dhëna regjistrimi për t&apos;u importuar">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Regjistrimi i parë përmban emra fushe">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "R">

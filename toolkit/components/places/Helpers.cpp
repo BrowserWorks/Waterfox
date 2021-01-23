@@ -340,9 +340,10 @@ nsresult TokenizeQueryString(const nsACString& aQuery,
     if (query[i] == '&') {
       // new clause, save last one
       if (i - keyFirstIndex > 1) {
-        if (!aTokens->AppendElement(
-                QueryKeyValuePair(query, keyFirstIndex, equalsIndex, i)))
-          return NS_ERROR_OUT_OF_MEMORY;
+        // XXX(Bug 1631371) Check if this should use a fallible operation as it
+        // pretended earlier, or change the return type to void.
+        aTokens->AppendElement(
+            QueryKeyValuePair(query, keyFirstIndex, equalsIndex, i));
       }
       keyFirstIndex = equalsIndex = i + 1;
     } else if (query[i] == '=') {
@@ -352,9 +353,10 @@ nsresult TokenizeQueryString(const nsACString& aQuery,
 
   // handle last pair, if any
   if (query.Length() - keyFirstIndex > 1) {
-    if (!aTokens->AppendElement(QueryKeyValuePair(query, keyFirstIndex,
-                                                  equalsIndex, query.Length())))
-      return NS_ERROR_OUT_OF_MEMORY;
+    // XXX(Bug 1631371) Check if this should use a fallible operation as it
+    // pretended earlier, or change the return type to void.
+    aTokens->AppendElement(
+        QueryKeyValuePair(query, keyFirstIndex, equalsIndex, query.Length()));
   }
   return NS_OK;
 }
@@ -370,33 +372,6 @@ void TokensToQueryString(const nsTArray<QueryKeyValuePair>& aTokens,
     aQuery.AppendLiteral("=");
     aQuery.Append(aTokens[i].value);
   }
-}
-
-////////////////////////////////////////////////////////////////////////////////
-//// AsyncStatementCallbackNotifier
-
-NS_IMETHODIMP
-AsyncStatementCallbackNotifier::HandleCompletion(uint16_t aReason) {
-  if (aReason != mozIStorageStatementCallback::REASON_FINISHED)
-    return NS_ERROR_UNEXPECTED;
-
-  nsCOMPtr<nsIObserverService> obs = services::GetObserverService();
-  if (obs) {
-    (void)obs->NotifyObservers(nullptr, mTopic, nullptr);
-  }
-
-  return NS_OK;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-//// AsyncStatementCallbackNotifier
-
-NS_IMETHODIMP
-AsyncStatementTelemetryTimer::HandleCompletion(uint16_t aReason) {
-  if (aReason == mozIStorageStatementCallback::REASON_FINISHED) {
-    Telemetry::AccumulateTimeDelta(mHistogramId, mStart);
-  }
-  return NS_OK;
 }
 
 }  // namespace places

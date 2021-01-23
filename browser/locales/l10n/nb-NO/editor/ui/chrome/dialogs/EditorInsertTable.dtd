@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Sett inn tabell">
+
+<!ENTITY size.label "Størrelse">
+<!ENTITY numRowsEditField.label "Rader:">
+<!ENTITY numRowsEditField.accessKey "R">
+<!ENTITY numColumnsEditField.label "Kolonner:">
+<!ENTITY numColumnsEditField.accessKey "K">
+<!ENTITY widthEditField.label "Bredde:">
+<!ENTITY widthEditField.accessKey "B">
+<!ENTITY borderEditField.label "Kantlinje:">
+<!ENTITY borderEditField.accessKey "n">
+<!ENTITY borderEditField.tooltip "Skriv inn et tall for tabellens kantlinje, eller skriv null (0) for ingen kantlinje">
+<!ENTITY pixels.label "punkter">

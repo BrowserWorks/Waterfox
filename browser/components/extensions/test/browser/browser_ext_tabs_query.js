@@ -21,56 +21,38 @@ add_task(async function() {
       permissions: ["tabs"],
     },
 
-    background: function() {
-      browser.tabs.query(
-        {
-          lastFocusedWindow: true,
-        },
-        function(tabs) {
-          browser.test.assertEq(tabs.length, 3, "should have three tabs");
+    async background() {
+      let tabs = await browser.tabs.query({ lastFocusedWindow: true });
+      browser.test.assertEq(tabs.length, 3, "should have three tabs");
 
-          tabs.sort((tab1, tab2) => tab1.index - tab2.index);
+      tabs.sort((tab1, tab2) => tab1.index - tab2.index);
 
-          browser.test.assertEq(tabs[0].url, "about:blank", "first tab blank");
-          tabs.shift();
+      browser.test.assertEq(tabs[0].url, "about:blank", "first tab blank");
+      tabs.shift();
 
-          browser.test.assertTrue(tabs[0].active, "tab 0 active");
-          browser.test.assertFalse(tabs[1].active, "tab 1 inactive");
+      browser.test.assertTrue(tabs[0].active, "tab 0 active");
+      browser.test.assertFalse(tabs[1].active, "tab 1 inactive");
 
-          browser.test.assertFalse(tabs[0].pinned, "tab 0 unpinned");
-          browser.test.assertFalse(tabs[1].pinned, "tab 1 unpinned");
+      browser.test.assertFalse(tabs[0].pinned, "tab 0 unpinned");
+      browser.test.assertFalse(tabs[1].pinned, "tab 1 unpinned");
 
-          browser.test.assertEq(
-            tabs[0].url,
-            "about:robots",
-            "tab 0 url correct"
-          );
-          browser.test.assertEq(
-            tabs[1].url,
-            "about:config",
-            "tab 1 url correct"
-          );
+      browser.test.assertEq(tabs[0].url, "about:robots", "tab 0 url correct");
+      browser.test.assertEq(tabs[1].url, "about:config", "tab 1 url correct");
 
-          browser.test.assertEq(
-            tabs[0].status,
-            "complete",
-            "tab 0 status correct"
-          );
-          browser.test.assertEq(
-            tabs[1].status,
-            "complete",
-            "tab 1 status correct"
-          );
+      browser.test.assertEq(tabs[0].status, "complete", "tab 0 status correct");
+      browser.test.assertEq(tabs[1].status, "complete", "tab 1 status correct");
 
-          browser.test.assertEq(
-            tabs[0].title,
-            "Gort! Klaatu barada nikto!",
-            "tab 0 title correct"
-          );
-
-          browser.test.notifyPass("tabs.query");
-        }
+      browser.test.assertEq(
+        tabs[0].title,
+        "Gort! Klaatu barada nikto!",
+        "tab 0 title correct"
       );
+
+      tabs = await browser.tabs.query({ url: "about:blank" });
+      browser.test.assertEq(tabs.length, 1, "about:blank query finds one tab");
+      browser.test.assertEq(tabs[0].url, "about:blank", "with the correct url");
+
+      browser.test.notifyPass("tabs.query");
     },
   });
 
@@ -316,13 +298,13 @@ add_task(async function() {
 
   const RESOLUTION_PREF = "layout.css.devPixelsPerPx";
   registerCleanupFunction(() => {
-    SpecialPowers.clearUserPref(RESOLUTION_PREF);
+    Services.prefs.clearUserPref(RESOLUTION_PREF);
   });
 
   await Promise.all([extension.startup(), extension.awaitMessage("ready")]);
 
   for (let resolution of [2, 1]) {
-    SpecialPowers.setCharPref(RESOLUTION_PREF, String(resolution));
+    Services.prefs.setCharPref(RESOLUTION_PREF, String(resolution));
     is(
       window.devicePixelRatio,
       resolution,
@@ -342,7 +324,7 @@ add_task(async function() {
   BrowserTestUtils.removeTab(tab1);
   BrowserTestUtils.removeTab(tab2);
   BrowserTestUtils.removeTab(tab3);
-  SpecialPowers.clearUserPref(RESOLUTION_PREF);
+  Services.prefs.clearUserPref(RESOLUTION_PREF);
 });
 
 add_task(async function testQueryPermissions() {

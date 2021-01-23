@@ -13,9 +13,11 @@ const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
 const { KeyCodes } = require("devtools/client/shared/keycodes");
 const { LocalizationHelper } = require("devtools/shared/l10n");
 
-const BoxModelEditable = createFactory(require("./BoxModelEditable"));
+const BoxModelEditable = createFactory(
+  require("devtools/client/inspector/boxmodel/components/BoxModelEditable")
+);
 
-const Types = require("../types");
+const Types = require("devtools/client/inspector/boxmodel/types");
 
 const SHARED_STRINGS_URI = "devtools/client/locales/shared.properties";
 const SHARED_L10N = new LocalizationHelper(SHARED_STRINGS_URI);
@@ -338,7 +340,7 @@ class BoxModelMain extends PureComponent {
 
             this.setAriaActive(nextLayout);
 
-            if (target && target._editable) {
+            if (target?._editable) {
               target.blur();
             }
 
@@ -391,7 +393,7 @@ class BoxModelMain extends PureComponent {
     );
     this.setAriaActive(nextLayout);
 
-    if (target && target._editable) {
+    if (target?._editable) {
       target.blur();
     }
   }

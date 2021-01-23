@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -27,7 +25,7 @@ add_task(async function() {
   await selectNode("#i1", inspector);
 
   info("Navigating to a different page.");
-  await navigateTo(inspector, TEST_URL_2);
+  await navigateTo(TEST_URL_2);
 
   ok(true, "New page loaded");
   await selectNode("#i1", inspector);
@@ -56,7 +54,7 @@ add_task(async function() {
   await selectNode("img", inspector);
 
   info("Navigating to a different page.");
-  await navigateTo(inspector, TEST_URL_4);
+  await navigateTo(TEST_URL_4);
 
   ok(true, "New page loaded");
   await selectNode("#h1", inspector);

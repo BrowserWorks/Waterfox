@@ -7,21 +7,20 @@
 
 #include "base/thread.h"
 #include "mozilla/layers/SynchronousTask.h"
-#include "mozilla/StaticPrefs.h"
-#include "VideoDecoderChild.h"
-#include "VideoDecoderManagerChild.h"
+#include "mozilla/StaticPrefs_media.h"
+#include "RemoteVideoDecoder.h"
+#include "RemoteDecoderManagerChild.h"
 
 #include "RemoteMediaDataDecoder.h"
 
 namespace mozilla {
 
-using base::Thread;
 using namespace ipc;
 using namespace layers;
 using namespace gfx;
 
 nsresult GpuDecoderModule::Startup() {
-  if (!VideoDecoderManagerChild::GetManagerThread()) {
+  if (!RemoteDecoderManagerChild::GetManagerThread()) {
     return NS_ERROR_FAILURE;
   }
   return mWrapped->Startup();
@@ -45,22 +44,22 @@ static inline bool IsRemoteAcceleratedCompositor(KnowsCompositor* aKnows) {
 
 already_AddRefed<MediaDataDecoder> GpuDecoderModule::CreateVideoDecoder(
     const CreateDecoderParams& aParams) {
-  if (!StaticPrefs::MediaGpuProcessDecoder() || !aParams.mKnowsCompositor ||
+  if (!StaticPrefs::media_gpu_process_decoder() || !aParams.mKnowsCompositor ||
       !IsRemoteAcceleratedCompositor(aParams.mKnowsCompositor)) {
     return mWrapped->CreateVideoDecoder(aParams);
   }
 
-  RefPtr<VideoDecoderChild> child = new VideoDecoderChild();
+  RefPtr<GpuRemoteVideoDecoderChild> child = new GpuRemoteVideoDecoderChild();
   SynchronousTask task("InitIPDL");
   MediaResult result(NS_OK);
-  VideoDecoderManagerChild::GetManagerThread()->Dispatch(
+  RemoteDecoderManagerChild::GetManagerThread()->Dispatch(
       NS_NewRunnableFunction(
           "dom::GpuDecoderModule::CreateVideoDecoder",
           [&, child]() {
             AutoCompleteTask complete(&task);
             result = child->InitIPDL(
                 aParams.VideoConfig(), aParams.mRate.mValue, aParams.mOptions,
-                aParams.mKnowsCompositor->GetTextureFactoryIdentifier());
+                Some(aParams.mKnowsCompositor->GetTextureFactoryIdentifier()));
           }),
       NS_DISPATCH_NORMAL);
   task.Wait();
@@ -72,9 +71,7 @@ already_AddRefed<MediaDataDecoder> GpuDecoderModule::CreateVideoDecoder(
     return nullptr;
   }
 
-  RefPtr<RemoteMediaDataDecoder> object = new RemoteMediaDataDecoder(
-      child, VideoDecoderManagerChild::GetManagerThread(),
-      VideoDecoderManagerChild::GetManagerAbstractThread());
+  RefPtr<RemoteMediaDataDecoder> object = new RemoteMediaDataDecoder(child);
 
   return object.forget();
 }

@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "ფორმის პარამეტრები">
+
+<!ENTITY Settings.label "პარამეტრები">
+
+<!ENTITY FormName.label "ფორმის სახელი:">
+<!ENTITY FormName.accesskey "N">
+<!ENTITY FormAction.label "მისამართი URL:">
+<!ENTITY FormAction.accesskey "A">
+<!ENTITY FormMethod.label "მეთოდი:">
+<!ENTITY FormMethod.accesskey "M">
+<!ENTITY FormEncType.label "კოდირება:">
+<!ENTITY FormEncType.accesskey "c">
+<!ENTITY FormTarget.label "სასურველი ჩარჩო:">
+<!ENTITY FormTarget.accesskey "ე">
+
+<!ENTITY RemoveForm.label "შესავსები ფორმის მოცილება">
+<!ENTITY RemoveForm.accesskey "R">

@@ -13,7 +13,11 @@ add_task(async function() {
     "about:blank",
     false
   );
-  await promiseAutocompleteResultPopup("m");
+  await UrlbarTestUtils.promiseAutocompleteResultPopup({
+    window,
+    waitForFocus: SimpleTest.waitForFocus,
+    value: "m",
+  });
   assertOpen();
 
   let tab2 = await BrowserTestUtils.openNewForegroundTab(
@@ -21,7 +25,11 @@ add_task(async function() {
     "about:blank",
     false
   );
-  await promiseAutocompleteResultPopup("m");
+  await UrlbarTestUtils.promiseAutocompleteResultPopup({
+    window,
+    waitForFocus: SimpleTest.waitForFocus,
+    value: "m",
+  });
   assertOpen();
 
   BrowserTestUtils.removeTab(tab);
@@ -29,13 +37,5 @@ add_task(async function() {
 });
 
 function assertOpen() {
-  if (UrlbarPrefs.get("quantumbar")) {
-    Assert.equal(
-      gURLBar.view.panel.state,
-      "open",
-      "Should be showing the popup"
-    );
-  } else {
-    Assert.ok(gURLBar.popupOpen, "Should be showing the popup");
-  }
+  Assert.equal(gURLBar.view.isOpen, true, "Should be showing the popup");
 }

@@ -90,38 +90,17 @@ menuitem.bookmark-item {
 }
 
 .bookmark-item:not(.subviewbutton) > .menu-iconic-left {
-  margin-top: 0;
-  margin-bottom: 0;
+  margin-block: 0;
 }
 
 .bookmark-item > .menu-iconic-left > .menu-iconic-icon {
-  padding-inline-start: 0px;
+  padding-inline-start: 0;
 }
 
 /* Bookmark drag and drop styles */
 .bookmark-item[dragover-into="true"] {
   background: Highlight !important;
   color: HighlightText !important;
-}
-
-/* rules for menupopup drop indicators */
-.menupopup-drop-indicator-bar {
-  position: relative;
-  /* these two margins must together compensate the indicator's height */
-  margin-top: -1px;
-  margin-bottom: -1px;
-}
-
-.menupopup-drop-indicator {
-  list-style-image: none;
-  height: 2px;
-  margin-inline-end: -4em;
-  background-color: Highlight;
-}
-
-/* Bookmarks toolbar */
-#PlacesToolbarDropIndicator {
-  list-style-image: url(chrome://browser/skin/places/toolbarDropMarker.png);
 }
 
 .bookmark-item[cutting] > .toolbarbutton-icon,
@@ -195,81 +174,38 @@ menuitem.bookmark-item {
   background-color: #ff0039;
 }
 
-/* Location bar */
+/* Address bar */
 
 %include ../shared/urlbar-searchbar.inc.css
 
-#urlbar:not(:-moz-lwtheme):not([focused="true"]),
-#urlbar:not(:-moz-lwtheme).hidden-focus,
-.searchbar-textbox:not(:-moz-lwtheme):not([focused="true"]) {
+#urlbar,
+#searchbar {
+  font-size: 1.05em;
+}
+
+@supports -moz-bool-pref("browser.urlbar.update2.expandTextOnFocus") {
+  #urlbar[breakout-extend] {
+    font-size: 1.14em;
+  }
+}
+
+#urlbar:not(:-moz-lwtheme):not([focused="true"]) > #urlbar-background,
+#searchbar:not(:-moz-lwtheme):not(:focus-within) {
   border-color: ThreeDShadow;
 }
 
-/* ::::: URL Bar Zoom Reset Button ::::: */
-@keyframes urlbar-zoom-reset-pulse {
-  0% {
-    transform: scale(0);
-  }
-  75% {
-    transform: scale(1.5);
-  }
-  100% {
-    transform: scale(1.0);
-  }
-}
-
-#urlbar-zoom-button {
-  -moz-appearance: none;
-  color: inherit;
-}
-
-#urlbar-search-footer {
-  border-top: 1px solid var(--panel-separator-color);
-  background-color: var(--arrowpanel-dimmed);
-}
-
-#urlbar-search-settings {
-  -moz-appearance: none;
-  -moz-user-focus: ignore;
-  color: GrayText;
-  margin: 0;
-  border: 0;
-  padding: 8px 20px;
-  background: transparent;
-}
-
-#urlbar-search-settings:hover {
-  background-color: var(--arrowpanel-dimmed);
-}
-
-#urlbar-search-settings:hover:active {
-  background-color: var(--arrowpanel-dimmed-further);
-}
-
-#urlbar-display-box {
-  margin-top: -1px;
-  margin-bottom: -1px;
-}
-
-.urlbar-display {
-  margin-top: 0;
-  margin-bottom: 0;
-  margin-inline-start: 0;
-  color: GrayText;
-}
-
-%include ../shared/urlbarSearchSuggestionsNotification.inc.css
-
-#search-container {
-  min-width: calc(54px + 11ch);
-}
-
-/* identity box */
-
 %include ../shared/identity-block/identity-block.inc.css
-
 %include ../shared/notification-icons.inc.css
 %include ../shared/addon-notification.inc.css
+
+/* Address bar results view */
+
+%include ../shared/urlbarView.inc.css
+
+:root {
+  --urlbar-popup-url-color: -moz-nativehyperlinktext;
+  --urlbar-popup-action-color: -moz-nativehyperlinktext;
+}
 
 /* Translation infobar */
 
@@ -307,9 +243,8 @@ notification[value="translation"] button {
 
 notification[value="translation"] button,
 notification[value="translation"] menulist,
-notification[value="translation"] menulist > .menulist-label-box {
-  margin-inline-start: 1ch;
-  margin-inline-end: 1ch;
+notification[value="translation"] menulist::part(label-box) {
+  margin-inline: 1ch;
 }
 
 notification[value="translation"] button:hover,
@@ -341,34 +276,16 @@ notification[value="translation"] button:not([type="menu"]) > .button-box {
   margin-inline-end: 3ch;
 }
 
-notification[value="translation"] menulist > .menulist-dropmarker {
+notification[value="translation"] menulist::part(dropmarker) {
   display: block;
 }
 
 /* AutoComplete */
 
 %include ../shared/autocomplete.inc.css
-%include ../shared/urlbar-autocomplete.inc.css
-
-:root {
-  --urlbar-popup-url-color: -moz-nativehyperlinktext;
-  --urlbar-popup-action-color: -moz-nativehyperlinktext;
-}
 
 #PopupAutoComplete > richlistbox > richlistitem[originaltype~="datalist-first"] {
   border-top: 1px solid ThreeDShadow;
-}
-
-.ac-title,
-#urlbarView-results {
-  font-size: 1.05em;
-}
-
-.ac-separator,
-.ac-url,
-.ac-action,
-.ac-tags {
-  font-size: 0.9em;
 }
 
 /* Bookmarking panel */
@@ -458,20 +375,6 @@ notification[value="translation"] menulist > .menulist-dropmarker {
   list-style-image: url("moz-icon://stock/gtk-close?size=menu");
 }
 
-/* Tab drag and drop */
-.tab-drop-indicator {
-  list-style-image: url(chrome://browser/skin/tabbrowser/tabDragIndicator.png);
-  margin-bottom: -9px;
-  z-index: 3;
-}
-
-/* Tab bar scroll arrows */
-
-.tabbrowser-arrowscrollbox > .scrollbutton-up > .toolbarbutton-icon,
-.tabbrowser-arrowscrollbox > .scrollbutton-down > .toolbarbutton-icon {
-  -moz-appearance: none;
-}
-
 /* All tabs menupopup */
 
 .alltabs-item[selected="true"] {
@@ -488,6 +391,14 @@ notification[value="translation"] menulist > .menulist-dropmarker {
   border-top-style: solid;
   color: -moz-dialogText;
   text-shadow: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  #statuspanel-label {
+    background-color: hsl(240, 1%, 20%);
+    border-color: hsl(240, 1%, 40%);
+    color: rgb(249, 249, 250);
+  }
 }
 
 #statuspanel:not([mirror]) > #statuspanel-inner > #statuspanel-label:-moz-locale-dir(ltr),
@@ -540,7 +451,7 @@ notification[value="translation"] menulist > .menulist-dropmarker {
  * to the sides and bottom of the panel.
  */
 #UITourTooltipButtons {
-  margin-left: -10px;
+  margin-inline-start: -10px;
   margin-bottom: -10px;
 }
 
@@ -550,11 +461,6 @@ notification[value="translation"] menulist > .menulist-dropmarker {
   /* override toolkit/themes/linux/global/menu.css */
   padding-inline-end: 0 !important;
   margin-inline-end: 0 !important;
-}
-
-.browser-extension-panel > .panel-arrowcontainer > .panel-arrowcontent {
-  padding: 0;
-  overflow: hidden;
 }
 
 .webextension-popup-browser,
@@ -576,13 +482,13 @@ notification[value="translation"] menulist > .menulist-dropmarker {
     }
   }
 
-  :root[tabsintitlebar] > #navigator-toolbox > #titlebar {
+  :root[tabsintitlebar] #titlebar {
     -moz-appearance: -moz-window-titlebar-maximized;
   }
-  :root[tabsintitlebar][sizemode="normal"] > #navigator-toolbox > #titlebar {
+  :root[tabsintitlebar][sizemode="normal"]:not([gtktiledwindow="true"]) #titlebar {
     -moz-appearance: -moz-window-titlebar;
   }
-  :root[tabsintitlebar]:not([inDOMFullscreen]) > #navigator-toolbox > #titlebar:-moz-lwtheme {
+  :root[tabsintitlebar]:not([inDOMFullscreen]) #titlebar:-moz-lwtheme {
     visibility: hidden;
   }
   :root[tabsintitlebar]:not([inDOMFullscreen]):not([inFullscreen]) #toolbar-menubar:-moz-lwtheme,
@@ -639,11 +545,12 @@ notification[value="translation"] menulist > .menulist-dropmarker {
     .titlebar-max {
       -moz-appearance: -moz-window-button-maximize;
     }
-    :root[sizemode="maximized"] .titlebar-max {
+    .titlebar-restore {
       -moz-appearance: -moz-window-button-restore;
     }
   }
   @media (-moz-gtk-csd-maximize-button: 0) {
+    .titlebar-restore,
     .titlebar-max {
       display: none;
     }

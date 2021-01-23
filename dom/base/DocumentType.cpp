@@ -13,7 +13,6 @@
 #include "nsCOMPtr.h"
 #include "nsDOMString.h"
 #include "nsNodeInfoManager.h"
-#include "nsIXPConnect.h"
 #include "xpcpublic.h"
 #include "nsWrapperCacheInlines.h"
 #include "mozilla/dom/DocumentTypeBinding.h"
@@ -28,8 +27,9 @@ already_AddRefed<mozilla::dom::DocumentType> NS_NewDOMDocumentType(
       nsGkAtoms::documentTypeNodeName, nullptr, kNameSpaceID_None,
       nsINode::DOCUMENT_TYPE_NODE, aName);
 
-  RefPtr<mozilla::dom::DocumentType> docType = new mozilla::dom::DocumentType(
-      ni.forget(), aPublicId, aSystemId, aInternalSubset);
+  RefPtr<mozilla::dom::DocumentType> docType =
+      new (aNodeInfoManager) mozilla::dom::DocumentType(
+          ni.forget(), aPublicId, aSystemId, aInternalSubset);
   return docType.forget();
 }
 
@@ -76,8 +76,8 @@ void DocumentType::GetInternalSubset(nsAString& aInternalSubset) const {
 
 already_AddRefed<CharacterData> DocumentType::CloneDataNode(
     mozilla::dom::NodeInfo* aNodeInfo, bool aCloneText) const {
-  return do_AddRef(new DocumentType(do_AddRef(aNodeInfo), mPublicId, mSystemId,
-                                    mInternalSubset));
+  return do_AddRef(new (aNodeInfo->NodeInfoManager()) DocumentType(
+      do_AddRef(aNodeInfo), mPublicId, mSystemId, mInternalSubset));
 }
 
 }  // namespace dom

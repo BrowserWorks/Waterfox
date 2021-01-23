@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.formatting.title        "ფორმატის გაგზავნა">
+<!ENTITY sendMaildesc.label           "გაფორმებული (HTML) წერილის გაგზავნისას, როდესაც ერთზე მეტ მიმღებს, მისი გახსნა არ შეუძლია:">
+<!ENTITY askMe.label                  "შეკითხვა (საფოსტო პროგრამა შემოგთავაზებთ სხვადასხვა არჩევანს)">
+<!ENTITY askMe.accesskey              "k">
+<!ENTITY convertPlain2.label          "წერილის, ჩვეულებრივ ტექსტურ ფაილად გარდაქმნა (გაფორმება შესაძლოა დაიკარგოს)">
+<!ENTITY convertPlain2.accesskey      "ქ">
+<!ENTITY sendHTML2.label              "წერილის გაგზავნა, მხოლოდ HTML სახით (შესაძლოა, ხარვეზები ჰქონდეს ჩვენებისას)">
+<!ENTITY sendHTML2.accesskey          "ზ">
+<!ENTITY sendBoth2.label              "წერილის ორივე, HTML და ტექსტური სახით გაგზავნა (დიდი ზომის იქნება)">
+<!ENTITY sendBoth2.accesskey          "ო">
+
+<!-- Html and Plain Text Domains  -->
+<!ENTITY domain.title                 "HTML და ტექსტური დომენები">
+<!ENTITY domaindesc.label             "წერილის გაგზავნისას ერთერთ ქვემოთმოყვანილ დომენის მისამართზე, ფოსტა ავტომატურად დააგზავნის მათ უმჯობესი ფორმატით (დაფორმატებული ან ჩვეულებრივი ტექსტი).">
+<!ENTITY HTMLdomaintitle.label        "HTML დომენები">
+<!ENTITY HTMLdomaintitle.accesskey    "M">
+<!ENTITY PlainTexttitle.label         "ტექსტური დომენები">
+<!ENTITY PlainTexttitle.accesskey     "P">
+<!ENTITY AddButton.label              "დამატება...">
+<!ENTITY AddHtmlDomain.accesskey      "A">
+<!ENTITY AddPlainText.accesskey       "d">
+<!ENTITY DeleteButton.label           "წაშლა">
+<!ENTITY DeleteHtmlDomain.accesskey   "e">
+<!ENTITY DeletePlainText.accesskey    "t">
+
+<!-- Add Domain Name -->
+<!ENTITY add.htmltitle                "HTML დომენის სახელის დამატება">
+<!ENTITY add.htmldomain               "HTML დომენის სახელი:">
+<!ENTITY add.plaintexttitle           "ტექსტური დომენის სახელის დამატება">
+<!ENTITY add.plaintextdomain          "ტექსტური დომენის სახელი:">
+
+<!ENTITY domainnameError.title        "დომენის სახელის შეცდომა">
+<!-- LOCALIZATION NOTE: do not translate @string@ -->
+<!ENTITY invalidEntryError.label      "დომენის სახელი @string@ მცდარია და მხედველობაში არ მიიღება. დომენის მართებული სახელები უნდა შეიცავდეს წერტილის ნიშანს '.' და სიმბოლოებს მის ორივე მხარეს.">
+
+<!-- Global auto-detect switch -->
+<!ENTITY autoDowngrade.label          "წერილის ტექსტური სახით გაგზავნა, მნიშვნელოვანი გაფორმების არარსებობისას (გადაეწერება სხვა პარამეტრებს)">
+<!ENTITY autoDowngrade.accesskey      "ლ">

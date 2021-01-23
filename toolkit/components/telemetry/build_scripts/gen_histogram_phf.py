@@ -6,7 +6,7 @@ from __future__ import print_function
 from mozparsers.shared_telemetry_utils import ParserError
 from perfecthash import PerfectHash
 
-PHFSIZE = 512
+PHFSIZE = 1024
 
 from mozparsers import parse_histograms
 import sys
@@ -55,7 +55,7 @@ def main(output, *filenames):
     output.write(name_phf.cxx_codegen(
         name='HistogramIDByNameLookup',
         entry_type="uint32_t",
-        lower_entry=lambda (_, v): str(v),
+        lower_entry=lambda x: str(x[1]),
         key_type="const nsACString&",
         key_bytes="aKey.BeginReading()",
         key_length="aKey.Length()"))

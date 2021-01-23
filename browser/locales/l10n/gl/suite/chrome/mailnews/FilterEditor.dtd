@@ -1,0 +1,61 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Regras de filtraxe">
+<!ENTITY filterEditorDialog.dimensions "width: 105ch;">
+<!ENTITY filterName.label "Nome do filtro:">
+<!ENTITY filterName.accesskey "i">
+
+<!ENTITY junk.label "Correo lixo">
+<!ENTITY notJunk.label "Non é correo lixo">
+
+<!ENTITY lowestPriorityCmd.label "A máis baixa">
+<!ENTITY lowPriorityCmd.label "Baixa">
+<!ENTITY normalPriorityCmd.label "Normal">
+<!ENTITY highPriorityCmd.label "Alta">
+<!ENTITY highestPriorityCmd.label "A máis alta">
+
+<!ENTITY contextDesc.label "Aplicar filtro cando:">
+<!ENTITY contextIncomingMail.label "se reciba o correo novo:">
+<!ENTITY contextIncomingMail.accesskey "b">
+<!ENTITY contextManual.label "se execute manualmente">
+<!ENTITY contextManual.accesskey "x">
+<!ENTITY contextBeforeCls.label "Filtrar antes de identificar o correo lixo">
+<!ENTITY contextAfterCls.label "Filtrar despois de identificar o correo lixo">
+
+<!ENTITY filterActionDesc.label "Realizar estas accións:">
+<!ENTITY filterActionDesc.accesskey "R">
+
+<!ENTITY filterActionOrderWarning.label "Nota: As accións do filtro executáranse nunha orde diferente.">
+<!ENTITY filterActionOrder.label "Ver a orde de execución">
+
+<!-- New Style Filter Rule Actions -->
+<!ENTITY moveMessage.label "Mover mensaxe a">
+<!ENTITY copyMessage.label "Copiar mensaxe en">
+<!ENTITY forwardTo.label "Reenviar mensaxe a">
+<!ENTITY replyWithTemplate.label "Responder co modelo">
+<!ENTITY markMessageRead.label "Marcar como lido">
+<!ENTITY markMessageUnread.label "Marcar como non lido">
+<!ENTITY markMessageStarred.label "Marcar como sinalado">
+<!ENTITY setPriority.label "Definir prioridade en">
+<!ENTITY addTag.label "Etiquetar mensaxe">
+<!ENTITY setJunkScore.label "Definir estado de correo lixo en">
+<!ENTITY deleteMessage.label "Eliminar mensaxe">
+<!ENTITY deleteFromPOP.label "Eliminar do servidor POP">
+<!ENTITY fetchFromPOP.label "Descargar do servidor POP">
+<!ENTITY ignoreThread.label "Ignorar fío">
+<!ENTITY ignoreSubthread.label "Ignorar fío secundario">
+<!ENTITY watchThread.label "Amosar fío">
+<!ENTITY stopExecution.label "Deter a execución do filtro">
+
+<!ENTITY addAction.tooltip "Engadir unha nova acción">
+<!ENTITY removeAction.tooltip "Retirar esta acción">
+
+<!-- LOCALIZATION NOTE
+  The values below are used to control the widths of the filter action widgets.
+  Change the values only when the localized strings in the popup menus
+  are truncated in the widgets.
+ -->
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">

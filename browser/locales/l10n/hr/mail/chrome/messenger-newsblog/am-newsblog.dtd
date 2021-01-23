@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY biffAll.label                 "Omogućite ažuriranja za sve kanale">
+<!ENTITY biffAll.accesskey             "e">
+
+<!ENTITY newFeedSettings.label         "Zadane postavke za nove kanale">
+
+<!ENTITY manageSubscriptions.label     "Upravljanje pretplatama…">
+<!ENTITY manageSubscriptions.accesskey "m">
+
+<!ENTITY feedWindowTitle.label         "Čarobnjak računa kanala">
+<!ENTITY feeds.accountName             "Blogovi i vijesti">

@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "පාඨ පෙදෙසි ලක්ෂණ">
+
+<!ENTITY Settings.label "සැකසුම්">
+
+<!ENTITY TextAreaName.label "ක්ෂේත්‍ර නම:">
+<!ENTITY TextAreaName.accessKey "N">
+<!ENTITY TextAreaRows.label "පේළි:">
+<!ENTITY TextAreaRows.accessKey "R">
+<!ENTITY TextAreaCols.label "තීරු:">
+<!ENTITY TextAreaCols.accessKey "C">
+<!ENTITY TextAreaReadOnly.label "Read Only">
+<!ENTITY TextAreaReadOnly.accessKey "O">
+<!ENTITY TextAreaDisabled.label "අබලැති">
+<!ENTITY TextAreaDisabled.accessKey "D">
+<!ENTITY TextAreaTabIndex.label "ටැබ් දර්ශකය:">
+<!ENTITY TextAreaTabIndex.accessKey "I">
+<!ENTITY TextAreaAccessKey.label "ප්‍රවේශ යතුර (Access Key):">
+<!ENTITY TextAreaAccessKey.accessKey "K">
+<!ENTITY InitialText.label "ආරම්භක පාඨ:">
+<!ENTITY InitialText.accessKey "T">
+
+<!ENTITY TextAreaWrap.label "පේළි කැඩීම:">
+<!ENTITY TextAreaWrap.accessKey "W">
+<!ENTITY WrapDefault.value "පෙරනිමි">
+<!ENTITY WrapOff.value "එපා">
+<!ENTITY WrapHard.value "තද">
+<!ENTITY WrapSoft.value "මෘදු">
+<!ENTITY WrapPhysical.value "භෞතික">
+<!ENTITY WrapVirtual.value "අතාත්වික (Virtual)">

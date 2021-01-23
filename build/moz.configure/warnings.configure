@@ -8,10 +8,6 @@ js_option('--enable-warnings-as-errors', env='MOZ_ENABLE_WARNINGS_AS_ERRORS',
           default=depends('MOZ_AUTOMATION')(lambda x: bool(x)),
           help='{Enable|Disable} treating warnings as errors')
 
-add_old_configure_assignment(
-    'MOZ_ENABLE_WARNINGS_AS_ERRORS',
-    depends('--enable-warnings-as-errors')(lambda x: bool(x)))
-
 
 @depends('--enable-warnings-as-errors')
 def rust_warning_flags(warnings_as_errors):
@@ -25,6 +21,22 @@ def rust_warning_flags(warnings_as_errors):
         flags.extend(('--cap-lints', 'warn'))
 
     return flags
+
+c_warning_flag = dependable('-Werror')
+
+
+@depends('--enable-warnings-as-errors', c_warning_flag)
+def warnings_as_errors(warnings_as_errors, c_warning_flag):
+    if not warnings_as_errors:
+        return ''
+
+    return c_warning_flag
+
+set_config('WARNINGS_AS_ERRORS', warnings_as_errors)
+# We have a peculiar setup in old-configure.in where some compilation tests
+# depend on enabling warnings-as-errors even if it's disabled for Firefox
+# compilation.  We therefore need this assignment.
+add_old_configure_assignment('WARNINGS_AS_ERRORS', c_warning_flag)
 
 
 # GCC/Clang warnings:
@@ -71,6 +83,9 @@ add_gcc_warning('-Wno-invalid-offsetof', cxx_compiler)
 # catches objects passed by value to variadic functions.
 check_and_add_gcc_warning('-Wclass-varargs')
 
+# catches empty if/switch/for initialization statements that have no effect
+check_and_add_gcc_warning('-Wempty-init-stmt', cxx_compiler)
+
 # catches some implicit conversion of floats to ints
 check_and_add_gcc_warning('-Wfloat-overflow-conversion')
 check_and_add_gcc_warning('-Wfloat-zero-conversion')
@@ -79,7 +94,6 @@ check_and_add_gcc_warning('-Wfloat-zero-conversion')
 check_and_add_gcc_warning('-Wloop-analysis')
 
 # catches C++ version forward-compat issues
-check_and_add_gcc_warning('-Wc++1z-compat', cxx_compiler)
 check_and_add_gcc_warning('-Wc++2a-compat', cxx_compiler)
 
 # catches possible misuse of the comma operator
@@ -90,6 +104,10 @@ check_and_add_gcc_warning('-Wduplicated-cond')
 
 # catches unintentional switch case fallthroughs
 check_and_add_gcc_warning('-Wimplicit-fallthrough', cxx_compiler)
+
+# catches unused variable/function declarations
+check_and_add_gcc_warning('-Wunused-function', cxx_compiler)
+check_and_add_gcc_warning('-Wunused-variable', cxx_compiler)
 
 # catches expressions used as a null pointer constant
 # XXX: at the time of writing, the version of clang used on the OS X test
@@ -109,6 +127,8 @@ check_and_add_gcc_warning('-Wstring-conversion')
 check_and_add_gcc_warning('-Wtautological-overlap-compare')
 check_and_add_gcc_warning('-Wtautological-unsigned-enum-zero-compare')
 check_and_add_gcc_warning('-Wtautological-unsigned-zero-compare')
+# This can be triggered by certain patterns used deliberately in portable code
+check_and_add_gcc_warning('-Wno-error=tautological-type-limit-compare')
 
 # we inline 'new' and 'delete' in mozalloc
 check_and_add_gcc_warning('-Wno-inline-new-delete', cxx_compiler)
@@ -137,7 +157,7 @@ check_and_add_gcc_warning('-Wno-error=backend-plugin')
 check_and_add_gcc_warning('-Wno-error=free-nonheap-object')
 
 # Would be a pain to fix all occurrences, for very little gain
-check_and_add_gcc_warning('-Wno-error=multistatement-macros')
+check_and_add_gcc_warning('-Wno-multistatement-macros')
 
 # Disable the -Werror for return-std-move because of a false positive
 # on nsTAutoStringN: https://bugs.llvm.org/show_bug.cgi?id=37249
@@ -202,6 +222,11 @@ check_and_add_gcc_warning('-Wno-gnu-zero-variadic-macro-arguments')
 check_and_add_gcc_warning('-Wno-noexcept-type', cxx_compiler,
                           when=depends(build_project)
                           (lambda build_project: build_project == 'js'))
+
+# Disable broken missing-braces warning on old clang versions
+check_and_add_gcc_warning(
+    '-Wno-missing-braces',
+    when=depends(c_compiler)(lambda c: c.type == 'clang' and c.version < '6.0'))
 
 
 # Please keep these last in this file

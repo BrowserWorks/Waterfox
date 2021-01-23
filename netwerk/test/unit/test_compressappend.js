@@ -3,6 +3,8 @@
 // compressed by the cache compression feature - bug 648429.
 //
 
+"use strict";
+
 function write_and_check(str, data, len) {
   var written = str.write(data, len);
   if (written != len) {
@@ -28,7 +30,7 @@ TestAppend.prototype = {
   _compress: false,
   _callback: null,
 
-  run: function() {
+  run() {
     evict_cache_entries();
     asyncOpenCacheEntry(
       "http://data/",
@@ -39,7 +41,7 @@ TestAppend.prototype = {
     );
   },
 
-  writeData: function(status, entry) {
+  writeData(status, entry) {
     Assert.equal(status, Cr.NS_OK);
     if (this._compress) {
       entry.setMetaDataElement("uncompressed-len", "0");
@@ -57,7 +59,7 @@ TestAppend.prototype = {
     );
   },
 
-  appendData: function(status, entry) {
+  appendData(status, entry) {
     Assert.equal(status, Cr.NS_OK);
     var os = entry.openOutputStream(entry.storageDataSize, 5);
     write_and_check(os, "abcde", 5);
@@ -73,7 +75,7 @@ TestAppend.prototype = {
     );
   },
 
-  checkData: function(status, entry) {
+  checkData(status, entry) {
     Assert.equal(status, Cr.NS_OK);
     var self = this;
     pumpReadStream(entry.openInputStream(0), function(str) {

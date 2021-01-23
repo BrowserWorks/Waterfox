@@ -133,7 +133,6 @@ function main()
       testInverseInPlace,
       testTranslateInPlace,
       testScaleInPlace,
-      testScaleNonUniformInPlace,
       testRotateInPlace,
       testRotateFromVectorInPlace,
       testSkewXInPlace,
@@ -388,15 +387,6 @@ function testScaleInPlace()
     "Unexpected result after scale");
 }
 
-// DOMMatrix scaleNonUniform(in float scaleFactorX, in float scaleFactorY);
-function testScaleNonUniformInPlace()
-{
-  var m = createMatrix(2, 0, 0, 1, 120, 100);
-  m.scaleNonUniformSelf(0.5, -3);
-  roughCmpMatrix(m, [1, 0, 0, -3, 120, 100],
-    "Unexpected result after scaleNonUniform");
-}
-
 // DOMMatrix rotate(in float angle);
 function testRotateInPlace()
 {
@@ -462,7 +452,7 @@ function testCreateMatrix3D()
   // Should be initialised to identity
   cmpMatrix(m, [1, 0, 0, 1, 0, 0],
             "DOMMatrix should produce identity matrix");
-  is(m.is2D, true, "should not produce 3d matrix");
+  is(m.is2D, false, "should produce 3d matrix");
 
   m = new DOMMatrix([1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0]);
 
@@ -531,7 +521,7 @@ function Matrix3D() {
 }
 
 Matrix3D.prototype = {
-  translate: function(x, y, z, result) {
+  translate(x, y, z, result) {
     result = result || new Matrix3D();
     var m = result.m;
 
@@ -557,7 +547,7 @@ Matrix3D.prototype = {
 
     return result;
   },
-  inverse: function(matrix, result) {
+  inverse(matrix, result) {
     result = result || new Matrix3D();
     var m = matrix.m, r = result.m;
 
@@ -585,7 +575,7 @@ Matrix3D.prototype = {
     for (var i = 0; i < 16; i++) r[i] /= det;
     return result;
   },
-  multiply: function(left, result) {
+  multiply(left, result) {
     result = result || new Matrix3D();
     var a = this.m, b = left.m, r = result.m;
 
@@ -611,7 +601,7 @@ Matrix3D.prototype = {
 
     return result;
   },
-  scale: function(x, y, z, result) {
+  scale(x, y, z, result) {
     result = result || new Matrix3D();
     var m = result.m;
 
@@ -637,7 +627,7 @@ Matrix3D.prototype = {
 
     return result;
   },
-  rotate: function(a, x, y, z, result) {
+  rotate(a, x, y, z, result) {
     result = result || new Matrix3D();
     var m = result.m;
 
@@ -667,7 +657,7 @@ Matrix3D.prototype = {
 
     return result;
   },
-  swap: function(result) {
+  swap(result) {
     result = result || new Matrix3D();
     for (var x = 0; x < 16; x++)
       result.m[x] = this.m[Math.floor(x/4) + (x%4)*4];
@@ -682,7 +672,7 @@ function test3D()
   var m = new DOMMatrix()
   var m2 = new Matrix3D();
 
-  m.translateSelf(2,3,4).scaleNonUniformSelf(1.2, 2.3, 3.4, 0, 0, 0);
+  m.translateSelf(2,3,4).scaleSelf(1.2, 2.3, 3.4, 0, 0, 0);
   m2 = m2.multiply(m2.translate(2,3,4)).multiply(m2.scale(1.2, 2.3, 3.4)).swap();
 
   ok(CompareMatrix(m2, m), "translate + scale in 3d didn't match, expected: " + formatMatrix(m2.m) + ", got: " + formatMatrix(m));
@@ -698,7 +688,7 @@ function testParsing()
 {
   var m = new DOMMatrix("translate(10px, 20px) scale(.5, 2) rotate(45deg)");
   var m2 = new DOMMatrix();
-  m2.translateSelf(10, 20).scaleNonUniformSelf(.5,2).rotateSelf(45);
+  m2.translateSelf(10, 20).scaleSelf(.5,2).rotateSelf(45);
   ok(CompareDOMMatrix(m2, m), "string parsing didn't match");
 
   m = new DOMMatrix();

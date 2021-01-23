@@ -213,6 +213,7 @@ enum class ComponentType : uint8_t {
   NormUInt,  // RGBA8
   Float,     // RGBA32F
 };
+const char* ToString(ComponentType);
 
 enum class TextureBaseType : uint8_t {
   Int = uint8_t(ComponentType::Int),
@@ -275,29 +276,6 @@ struct FormatInfo {
   }
 };
 
-struct PackingInfo {
-  GLenum format;
-  GLenum type;
-
-  bool operator<(const PackingInfo& x) const {
-    if (format != x.format) return format < x.format;
-
-    return type < x.type;
-  }
-
-  bool operator==(const PackingInfo& x) const {
-    return (format == x.format && type == x.type);
-  }
-};
-
-struct DriverUnpackInfo {
-  GLenum internalFormat;
-  GLenum unpackFormat;
-  GLenum unpackType;
-
-  PackingInfo ToPacking() const { return {unpackFormat, unpackType}; }
-};
-
 //////////////////////////////////////////////////////////////////////////////////////////
 
 const FormatInfo* GetFormat(EffectiveFormat format);
@@ -309,11 +287,35 @@ GLenum ComponentType(const FormatInfo* format);
 */
 ////////////////////////////////////////
 
+struct FormatRenderableState final {
+ private:
+  enum class RenderableState {
+    Disabled,
+    Implicit,
+    Explicit,
+  };
+
+ public:
+  RenderableState state = RenderableState::Disabled;
+  WebGLExtensionID extid = WebGLExtensionID::Max;
+
+  static FormatRenderableState Explicit() {
+    return {RenderableState::Explicit};
+  }
+
+  static FormatRenderableState Implicit(WebGLExtensionID extid) {
+    return {RenderableState::Implicit, extid};
+  }
+
+  bool IsRenderable() const { return state != RenderableState::Disabled; }
+  bool IsExplicit() const { return state == RenderableState::Explicit; }
+};
+
 struct FormatUsageInfo {
   const FormatInfo* const format;
 
  private:
-  bool isRenderable = false;
+  FormatRenderableState renderableState;
 
  public:
   bool isFilterable = false;
@@ -338,8 +340,14 @@ struct FormatUsageInfo {
     }
   }
 
-  bool IsRenderable() const { return isRenderable; }
-  void SetRenderable();
+  bool IsRenderable() const { return renderableState.IsRenderable(); }
+  void SetRenderable(
+      const FormatRenderableState& state = FormatRenderableState::Explicit());
+  bool IsExplicitlyRenderable() const { return renderableState.IsExplicit(); }
+  WebGLExtensionID GetExtensionID() const {
+    MOZ_ASSERT(renderableState.extid != WebGLExtensionID::Max);
+    return renderableState.extid;
+  }
 
   bool IsUnpackValid(const PackingInfo& key,
                      const DriverUnpackInfo** const out_value) const;
@@ -372,7 +380,7 @@ class FormatUsageAuthority {
   static UniquePtr<FormatUsageAuthority> CreateForWebGL2(gl::GLContext* gl);
 
  private:
-  FormatUsageAuthority() {}
+  FormatUsageAuthority() = default;
 
  public:
   FormatUsageInfo* EditUsage(EffectiveFormat format);

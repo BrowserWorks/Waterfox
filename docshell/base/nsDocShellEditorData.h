@@ -12,7 +12,7 @@
 
 #include "mozilla/HTMLEditor.h"
 #include "mozilla/RefPtr.h"
-#include "nsIHTMLDocument.h"
+#include "mozilla/dom/Document.h"
 
 class nsIDocShell;
 class nsEditingSession;
@@ -45,9 +45,9 @@ class nsDocShellEditorData {
   // If this frame is editable, store HTML editor here. It's owned here.
   RefPtr<mozilla::HTMLEditor> mHTMLEditor;
 
-  // Backup for the corresponding nsIHTMLDocument's  editing state while
+  // Backup for the corresponding HTMLDocument's  editing state while
   // the editor is detached.
-  nsIHTMLDocument::EditingState mDetachedEditingState;
+  mozilla::dom::Document::EditingState mDetachedEditingState;
 
   // Indicates whether to make an editor after a url load.
   bool mMakeEditable;

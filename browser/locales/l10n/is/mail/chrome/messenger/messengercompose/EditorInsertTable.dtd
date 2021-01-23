@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Setja inn töflu">
+
+<!ENTITY size.label "Stærð">
+<!ENTITY numRowsEditField.label "Raðir:">
+<!ENTITY numRowsEditField.accessKey "R">
+<!ENTITY numColumnsEditField.label "Dálkar:">
+<!ENTITY numColumnsEditField.accessKey "D">
+<!ENTITY widthEditField.label "Breidd:">
+<!ENTITY widthEditField.accessKey "B">
+<!ENTITY borderEditField.label "Rammi:">
+<!ENTITY borderEditField.accessKey "a">
+<!ENTITY borderEditField.tooltip "Sláðu inn númer fyrir stærð töfluramma, eða sláðu inn núll (0) fyrir engan ramma">
+<!ENTITY pixels.label "punktar">

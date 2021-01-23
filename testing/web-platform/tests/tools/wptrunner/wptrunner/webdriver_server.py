@@ -8,9 +8,12 @@ import traceback
 
 import mozprocess
 
+from .process import cast_env
 
-__all__ = ["SeleniumServer", "ChromeDriverServer", "OperaDriverServer",
-           "GeckoDriverServer", "InternetExplorerDriverServer", "EdgeDriverServer",
+
+__all__ = ["SeleniumServer", "ChromeDriverServer", "CWTChromeDriverServer",
+           "EdgeChromiumDriverServer", "OperaDriverServer", "GeckoDriverServer",
+           "InternetExplorerDriverServer", "EdgeDriverServer",
            "ServoDriverServer", "WebKitDriverServer", "WebDriverServer"]
 
 
@@ -18,7 +21,6 @@ class WebDriverServer(object):
     __metaclass__ = abc.ABCMeta
 
     default_base_path = "/"
-    _used_ports = set()
 
     def __init__(self, logger, binary, host="127.0.0.1", port=None,
                  base_path="", env=None, args=None):
@@ -55,7 +57,7 @@ class WebDriverServer(object):
         self._proc = mozprocess.ProcessHandler(
             self._cmd,
             processOutputLine=self.on_output,
-            env=self.env,
+            env=cast_env(self.env),
             storeOutput=False)
 
         self.logger.debug("Starting WebDriver: %s" % ' '.join(self._cmd))
@@ -81,11 +83,14 @@ class WebDriverServer(object):
             self._proc.wait()
 
     def stop(self, force=False):
-        if self.is_alive:
-            return self._proc.kill()
-        return not self.is_alive
+        self.logger.debug("Stopping WebDriver")
+        if self.is_alive():
+            kill_result = self._proc.kill()
+            if force and kill_result != 0:
+                return self._proc.kill(9)
+            return kill_result
+        return not self.is_alive()
 
-    @property
     def is_alive(self):
         return hasattr(self._proc, "proc") and self._proc.poll() is None
 
@@ -106,14 +111,8 @@ class WebDriverServer(object):
     @property
     def port(self):
         if self._port is None:
-            self._port = self._find_next_free_port()
+            self._port = get_free_port()
         return self._port
-
-    @staticmethod
-    def _find_next_free_port():
-        port = get_free_port(4444, exclude=WebDriverServer._used_ports)
-        WebDriverServer._used_ports.add(port)
-        return port
 
 
 class SeleniumServer(WebDriverServer):
@@ -125,6 +124,25 @@ class SeleniumServer(WebDriverServer):
 
 class ChromeDriverServer(WebDriverServer):
     def __init__(self, logger, binary="chromedriver", port=None,
+                 base_path="", args=None):
+        WebDriverServer.__init__(
+            self, logger, binary, port=port, base_path=base_path, args=args)
+
+    def make_command(self):
+        return [self.binary,
+                cmd_arg("port", str(self.port)),
+                cmd_arg("url-base", self.base_path) if self.base_path else ""] + self._args
+
+class CWTChromeDriverServer(WebDriverServer):
+    def __init__(self, logger, binary, port=None, args=None):
+        WebDriverServer.__init__(self, logger, binary, port=port, args=args)
+
+    def make_command(self):
+        return [self.binary,
+                "--port=%s" % str(self.port)] + self._args
+
+class EdgeChromiumDriverServer(WebDriverServer):
+    def __init__(self, logger, binary="msedgedriver", port=None,
                  base_path="", args=None):
         WebDriverServer.__init__(
             self, logger, binary, port=port, base_path=base_path, args=args)
@@ -167,7 +185,11 @@ class GeckoDriverServer(WebDriverServer):
                  host="127.0.0.1", port=None, args=None):
         env = os.environ.copy()
         env["RUST_BACKTRACE"] = "1"
-        WebDriverServer.__init__(self, logger, binary, host=host, port=port, env=env, args=args)
+        WebDriverServer.__init__(self, logger, binary,
+                                 host=host,
+                                 port=port,
+                                 env=cast_env(env),
+                                 args=args)
         self.marionette_port = marionette_port
 
     def make_command(self):
@@ -192,7 +214,11 @@ class ServoDriverServer(WebDriverServer):
                  port=None, args=None):
         env = os.environ.copy()
         env["RUST_BACKTRACE"] = "1"
-        WebDriverServer.__init__(self, logger, binary, host=host, port=port, env=env, args=args)
+        WebDriverServer.__init__(self, logger, binary,
+                                 host=host,
+                                 port=port,
+                                 env=cast_env(env),
+                                 args=args)
         self.binary_args = binary_args
 
     def make_command(self):
@@ -221,29 +247,21 @@ def cmd_arg(name, value=None):
     return rv
 
 
-def get_free_port(start_port, exclude=None):
-    """Get the first port number after start_port (inclusive) that is
-    not currently bound.
-
-    :param start_port: Integer port number at which to start testing.
-    :param exclude: Set of port numbers to skip"""
-    port = start_port
+def get_free_port():
+    """Get a random unbound port"""
     while True:
-        if exclude and port in exclude:
-            port += 1
-            continue
         s = socket.socket()
         try:
-            s.bind(("127.0.0.1", port))
+            s.bind(("127.0.0.1", 0))
         except socket.error:
-            port += 1
+            continue
         else:
-            return port
+            return s.getsockname()[1]
         finally:
             s.close()
 
 
-def wait_for_service(addr, timeout=15):
+def wait_for_service(addr, timeout=60):
     """Waits until network service given as a tuple of (host, port) becomes
     available or the `timeout` duration is reached, at which point
     ``socket.error`` is raised."""
@@ -255,7 +273,7 @@ def wait_for_service(addr, timeout=15):
         except socket.timeout:
             pass
         except socket.error as e:
-            if e[0] != errno.ECONNREFUSED:
+            if e.errno != errno.ECONNREFUSED:
                 raise
         else:
             return True

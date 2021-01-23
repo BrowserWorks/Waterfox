@@ -18,10 +18,13 @@ pub enum Error {
     InvalidLocalRoots,
     InvalidRemoteRoots,
     Nsresult(nsresult),
+    UnknownItemType(i64),
     UnknownItemKind(i64),
     MalformedString(Box<dyn error::Error + Send + Sync + 'static>),
     MergeConflict,
+    StorageBusy,
     UnknownItemValidity(i64),
+    DidNotRun,
 }
 
 impl error::Error for Error {
@@ -65,13 +68,16 @@ impl From<Error> for nsresult {
                 dogear::ErrorKind::Abort => NS_ERROR_ABORT,
                 _ => NS_ERROR_FAILURE,
             },
-            Error::InvalidLocalRoots | Error::InvalidRemoteRoots => NS_ERROR_UNEXPECTED,
+            Error::InvalidLocalRoots | Error::InvalidRemoteRoots | Error::DidNotRun => {
+                NS_ERROR_UNEXPECTED
+            }
             Error::Storage(err) => err.into(),
             Error::Nsresult(result) => result.clone(),
-            Error::UnknownItemKind(_)
+            Error::UnknownItemType(_)
+            | Error::UnknownItemKind(_)
             | Error::MalformedString(_)
             | Error::UnknownItemValidity(_) => NS_ERROR_INVALID_ARG,
-            Error::MergeConflict => NS_ERROR_STORAGE_BUSY,
+            Error::MergeConflict | Error::StorageBusy => NS_ERROR_STORAGE_BUSY,
         }
     }
 }
@@ -86,12 +92,15 @@ impl fmt::Display for Error {
                 f.write_str("The roots in the mirror database are invalid")
             }
             Error::Nsresult(result) => write!(f, "Operation failed with {}", result.error_name()),
-            Error::UnknownItemKind(kind) => write!(f, "Unknown item kind {} in database", kind),
+            Error::UnknownItemType(typ) => write!(f, "Unknown item type {} in Places", typ),
+            Error::UnknownItemKind(kind) => write!(f, "Unknown item kind {} in mirror", kind),
             Error::MalformedString(err) => err.fmt(f),
             Error::MergeConflict => f.write_str("Local tree changed during merge"),
+            Error::StorageBusy => f.write_str("The database is busy"),
             Error::UnknownItemValidity(validity) => {
                 write!(f, "Unknown item validity {} in database", validity)
             }
+            Error::DidNotRun => write!(f, "Failed to run merge on storage thread"),
         }
     }
 }

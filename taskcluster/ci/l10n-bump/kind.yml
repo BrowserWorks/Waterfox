@@ -10,10 +10,7 @@ transforms:
 
 
 job-defaults:
-    worker-type:
-        by-project:
-            mozilla-(beta|central|esr.*): scriptworker-k8s/gecko-3-tree
-            default: scriptworker-k8s/gecko-1-tree
+    worker-type: tree
     worker:
         implementation: treescript
         tags: []
@@ -31,15 +28,6 @@ job-defaults:
                 default: https://hg.mozilla.org/mozilla-central
         l10n-bump-info:
             by-release-type:
-                esr.*:
-                    name: Fennec l10n changesets
-                    path: mobile/locales/l10n-changesets.json
-                    version-path: mobile/android/config/version-files/release/version.txt
-                    revision-url: "https://l10n.mozilla.org/shipping/l10n-changesets?av=fennec%(COMBINED_MAJOR_VERSION)s"
-                    platform-configs: [{
-                        "platforms": ["android-multilocale"],
-                        "path": "mobile/android/locales/maemo-locales",
-                    }]
                 beta:
                     name: Firefox l10n changesets
                     path: browser/locales/l10n-changesets.json
@@ -76,7 +64,6 @@ job-defaults:
                             "win64-aarch64-devedition",
                         ],
                         "path": "browser/locales/shipped-locales",
-                        "format": "shipped-locales",
                     }]
                 default:
                     name: Firefox l10n changesets

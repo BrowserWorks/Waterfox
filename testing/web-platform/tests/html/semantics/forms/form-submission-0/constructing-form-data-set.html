@@ -34,11 +34,13 @@ test(() => {
 }, 'FormData constructor always produces UTF-8 _charset_ value.');
 
 async_test(t => {
-  frame1.onload = t.step_func_done(() => {
-    assert_not_equals(frame1.contentDocument.URL.indexOf('_charset_=windows-1252'), -1);
+  frame1.onload = t.step_func(() => {
+    if (frame1.contentWindow.location.href == "about:blank") { return; }
+    assert_not_equals(frame1.contentDocument.URL.indexOf('_charset_=windows-1252'), -1,"should see _charset_=windows-1252 in "+frame1.contentDocument.URL);
+    t.done();
   });
   form1.submit();
-}, '_charset_ control sets the expected encoding name.');
+},'_charset_ control sets the expected encoding name.');
 
 async_test(t => {
   frame2.onload = t.step_func_done(() => {
@@ -111,4 +113,18 @@ t1.step(() => {
   });
   form.submit();
 });
+
+test(() => {
+  let form = populateForm('<input name=n1 value=v1><button type=submit name=n2 value=v2></button>');
+  let formDataInEvent = null;
+  let submitter = form.querySelector('button[type=submit]');
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    formDataInEvent = new FormData(e.target);
+  });
+
+  submitter.click();
+  assert_equals(formDataInEvent.get('n1'), 'v1');
+  assert_false(formDataInEvent.has('n2'));
+}, 'The constructed FormData object should not contain an entry for the submit button that was used to submit the form.');
 </script>

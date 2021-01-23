@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY threadColumn.label "Tópico">
+<!ENTITY fromColumn.label "De">
+<!ENTITY recipientColumn.label "Destinatário">
+<!ENTITY attachmentColumn.label "Anexos">
+<!ENTITY subjectColumn.label "Assunto">
+<!ENTITY dateColumn.label "Data">
+<!ENTITY priorityColumn.label "Prioridade">
+<!ENTITY tagsColumn.label "Etiqueta">
+<!ENTITY accountColumn.label "Conta">
+<!ENTITY statusColumn.label "Estado">
+<!ENTITY sizeColumn.label "Tamanho">
+<!ENTITY junkStatusColumn.label "Estado do lixo eletrónico">
+<!ENTITY unreadColumn.label "Não lidas no tópico">
+<!ENTITY totalColumn.label "Totais no tópico">
+<!ENTITY readColumn.label "Ler">
+<!ENTITY receivedColumn.label "Recebido">
+<!ENTITY flagColumn.label "Com Marca">
+<!ENTITY locationColumn.label "Localização">
+<!ENTITY idColumn.label "Ordem de receção">
+
+<!--Tooltips-->
+<!ENTITY columnChooser2.tooltip "Selecione as colunas a mostrar">
+<!ENTITY threadColumn2.tooltip "Mostrar tópicos da mensagem">
+<!ENTITY fromColumn2.tooltip "Ordenar por de">
+<!ENTITY recipientColumn2.tooltip "Ordenar por destinatário">
+<!ENTITY attachmentColumn2.tooltip "Ordenar por anexos">
+<!ENTITY subjectColumn2.tooltip "Ordenar por assunto">
+<!ENTITY dateColumn2.tooltip "Ordenar por data">
+<!ENTITY priorityColumn2.tooltip "Ordenar por prioridade">
+<!ENTITY tagsColumn2.tooltip "Ordenar por etiquetas">
+<!ENTITY accountColumn2.tooltip "Ordenar por conta">
+<!ENTITY statusColumn2.tooltip "Ordenar por estado">
+<!ENTITY sizeColumn2.tooltip "Ordenar por tamanho">
+<!ENTITY junkStatusColumn2.tooltip "Ordenar pelo estado do lixo">
+<!ENTITY unreadColumn2.tooltip "Número de mensagens não lidas do tópico">
+<!ENTITY totalColumn2.tooltip "Número total de mensagens neste tópico">
+<!ENTITY readColumn2.tooltip "Ordenar por lidas">
+<!ENTITY receivedColumn2.tooltip "Ordenar por data de receção">
+<!ENTITY flagColumn2.tooltip "Ordenar por marca">
+<!ENTITY locationColumn2.tooltip "Ordenar por localização">
+<!ENTITY idColumn2.tooltip "Ordenar por ordem de receção">

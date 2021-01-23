@@ -575,6 +575,10 @@ add_task(async function test_get_no_headers() {
     "pragma",
     "cache-control",
     "content-length",
+    "sec-fetch-dest",
+    "sec-fetch-mode",
+    "sec-fetch-site",
+    "sec-fetch-user",
   ];
   let request = new RESTRequest(server.baseURI + "/resource");
   await request.get();
@@ -843,7 +847,12 @@ add_task(async function test_not_sending_cookie() {
     Ci.nsICookieService
   );
   let uri = CommonUtils.makeURI(server.baseURI);
-  cookieSer.setCookieString(uri, null, "test=test; path=/;", null);
+  let channel = NetUtil.newChannel({
+    uri,
+    loadUsingSystemPrincipal: true,
+    contentPolicyType: Ci.nsIContentPolicy.TYPE_DOCUMENT,
+  });
+  cookieSer.setCookieStringFromHttp(uri, "test=test; path=/;", channel);
 
   let res = new RESTRequest(server.baseURI + "/test");
   let response = await res.get();

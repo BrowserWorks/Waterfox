@@ -167,6 +167,33 @@ createStorageSpec({
   methods: storageMethods,
 });
 
+types.addDictType("extensionobject", {
+  name: "nullable:string",
+  value: "nullable:longstring",
+  area: "string",
+  isValueEditable: "boolean",
+});
+
+types.addDictType("extensionstoreobject", {
+  total: "number",
+  offset: "number",
+  data: "array:nullable:extensionobject",
+});
+
+createStorageSpec({
+  typeName: "extensionStorage",
+  storeObjectType: "extensionstoreobject",
+  // Same as storageMethods except for addItem
+  methods: Object.assign({}, editRemoveMethods, {
+    removeAll: {
+      request: {
+        host: Arg(0, "string"),
+      },
+      response: {},
+    },
+  }),
+});
+
 types.addDictType("cacheobject", {
   url: "string",
   status: "string",

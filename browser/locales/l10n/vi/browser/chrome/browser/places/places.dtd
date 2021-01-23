@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Thư viện">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Quản lí">
+<!ENTITY organize.accesskey    "Q">
+<!ENTITY organize.tooltip      "Tổ chức dấu trang của bạn">
+
+<!ENTITY file.close.label               "Đóng">
+<!ENTITY file.close.accesskey           "C">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Xem">
+<!ENTITY views.accesskey                "V">
+<!ENTITY views.tooltip                  "Thay đổi cách nhìn của bạn">
+<!ENTITY view.columns.label             "Hiển thị cột">
+<!ENTITY view.columns.accesskey         "C">
+<!ENTITY view.sort.label                "Sắp xếp">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "Chưa sắp xếp">
+<!ENTITY view.unsorted.accesskey        "U">
+<!ENTITY view.sortAscending.label       "Sắp xếp từ A > Z">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Sắp xếp từ Z > A">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Nhập dấu trang từ HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "Xuất dấu trang sang HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "Nhập dữ liệu từ trình duyệt khác…">
+<!ENTITY importOtherBrowser.accesskey      "A">
+
+<!ENTITY cmd.backup.label               "Sao lưu…">
+<!ENTITY cmd.backup.accesskey           "B">
+<!ENTITY cmd.restore2.label             "Khôi phục">
+<!ENTITY cmd.restore2.accesskey         "R">
+<!ENTITY cmd.restoreFromFile.label      "Chọn tập tin…">
+<!ENTITY cmd.restoreFromFile.accesskey  "C">
+
+<!ENTITY col.name.label          "Tên">
+<!ENTITY col.tags.label          "Nhãn">
+<!ENTITY col.url.label           "Địa chỉ">
+<!ENTITY col.mostrecentvisit.label "Lần truy cập gần nhất">
+<!ENTITY col.visitcount.label    "Số lần xem">
+<!ENTITY col.dateadded.label     "Ngày thêm">
+<!ENTITY col.lastmodified.label  "Sửa đổi lần cuối">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Nhập và sao lưu">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "Nhập và sao lưu dấu trang của bạn">
+
+<!ENTITY backButton.tooltip  "Quay lại">
+
+<!ENTITY forwardButton.tooltip  "Tiến">
+
+<!ENTITY detailsPane.selectAnItemText.description "Chọn một mục để xem và chỉnh sửa thuộc tính của nó">
+

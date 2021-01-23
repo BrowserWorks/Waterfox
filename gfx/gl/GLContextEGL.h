@@ -9,6 +9,7 @@
 
 #include "GLContext.h"
 #include "GLLibraryEGL.h"
+#include "nsRegion.h"
 
 class gfxASurface;
 namespace mozilla {
@@ -21,12 +22,13 @@ class GLContextEGL : public GLContext {
   friend class TextureImageEGL;
 
   static already_AddRefed<GLContextEGL> CreateGLContext(
-      CreateContextFlags flags, const SurfaceCaps& caps, bool isOffscreen,
-      EGLConfig config, EGLSurface surface, nsACString* const out_failureId);
+      GLLibraryEGL*, CreateContextFlags flags, const SurfaceCaps& caps,
+      bool isOffscreen, EGLConfig config, EGLSurface surface,
+      const bool useGles, nsACString* const out_failureId);
 
  public:
   MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(GLContextEGL, override)
-  GLContextEGL(CreateContextFlags flags, const SurfaceCaps& caps,
+  GLContextEGL(GLLibraryEGL*, CreateContextFlags flags, const SurfaceCaps& caps,
                bool isOffscreen, EGLConfig config, EGLSurface surface,
                EGLContext context);
 
@@ -47,11 +49,8 @@ class GLContextEGL : public GLContext {
 
   void SetIsDoubleBuffered(bool aIsDB) { mIsDoubleBuffered = aIsDB; }
 
-  virtual bool IsANGLE() const override {
-    return GLLibraryEGL::Get()->IsANGLE();
-  }
-
-  virtual bool IsWARP() const override { return GLLibraryEGL::Get()->IsWARP(); }
+  virtual bool IsANGLE() const override { return mEgl->IsANGLE(); }
+  virtual bool IsWARP() const override { return mEgl->IsWARP(); }
 
   virtual bool BindTexImage() override;
 
@@ -72,6 +71,8 @@ class GLContextEGL : public GLContext {
 
   virtual bool SwapBuffers() override;
 
+  virtual void SetDamage(const nsIntRegion& aDamageRegion) override;
+
   virtual void GetWSIInfo(nsCString* const out) const override;
 
   // hold a reference to the given surface
@@ -80,7 +81,8 @@ class GLContextEGL : public GLContext {
 
   EGLSurface GetEGLSurface() const { return mSurface; }
 
-  EGLDisplay GetEGLDisplay() const { return GLLibraryEGL::Get()->Display(); }
+  bool HasBufferAge() const;
+  EGLint GetBufferAge() const;
 
   bool BindTex2DOffscreen(GLContext* aOffscreen);
   void UnbindTex2DOffscreen(GLContext* aOffscreen);
@@ -91,6 +93,10 @@ class GLContextEGL : public GLContext {
   static already_AddRefed<GLContextEGL> CreateEGLPBufferOffscreenContext(
       CreateContextFlags flags, const gfx::IntSize& size,
       const SurfaceCaps& minCaps, nsACString* const out_FailureId);
+  static already_AddRefed<GLContextEGL> CreateEGLPBufferOffscreenContextImpl(
+      CreateContextFlags flags, const gfx::IntSize& size,
+      const SurfaceCaps& minCaps, bool aUseGles,
+      nsACString* const out_FailureId);
 
 #if defined(MOZ_WAYLAND) || defined(MOZ_WIDGET_ANDROID)
   static EGLSurface CreateEGLSurfaceForCompositorWidget(
@@ -103,17 +109,14 @@ class GLContextEGL : public GLContext {
   virtual void OnMarkDestroyed() override;
 
  public:
-  const EGLConfig mConfig;
-
- protected:
   const RefPtr<GLLibraryEGL> mEgl;
-  EGLSurface mSurface;
-  const EGLSurface mFallbackSurface;
-
- public:
+  const EGLConfig mConfig;
   const EGLContext mContext;
 
  protected:
+  EGLSurface mSurface;
+  const EGLSurface mFallbackSurface;
+
   EGLSurface mSurfaceOverride = EGL_NO_SURFACE;
   RefPtr<gfxASurface> mThebesSurface;
   bool mBound = false;
@@ -124,10 +127,13 @@ class GLContextEGL : public GLContext {
   bool mShareWithEGLImage = false;
   bool mOwnsContext = true;
 
+  nsIntRegion mDamageRegion;
+
   static EGLSurface CreatePBufferSurfaceTryingPowerOfTwo(
-      EGLConfig config, EGLenum bindToTextureFormat, gfx::IntSize& pbsize);
+      GLLibraryEGL*, EGLConfig config, EGLenum bindToTextureFormat,
+      gfx::IntSize& pbsize);
 #if defined(MOZ_WAYLAND)
-  static EGLSurface CreateWaylandBufferSurface(EGLConfig config,
+  static EGLSurface CreateWaylandBufferSurface(GLLibraryEGL*, EGLConfig config,
                                                gfx::IntSize& pbsize);
 #endif
 #if defined(MOZ_WIDGET_ANDROID)
@@ -136,7 +142,8 @@ class GLContextEGL : public GLContext {
 #endif  // defined(MOZ_WIDGET_ANDROID)
 };
 
-bool CreateConfig(EGLConfig* config, int32_t depth, bool enableDepthBuffer);
+bool CreateConfig(GLLibraryEGL* const egl, EGLConfig* aConfig, int32_t depth,
+                  bool aEnableDepthBuffer, bool aUseGles);
 
 }  // namespace gl
 }  // namespace mozilla

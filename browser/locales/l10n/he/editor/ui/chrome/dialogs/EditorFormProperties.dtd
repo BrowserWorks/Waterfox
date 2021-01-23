@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "תכונות טפסים">
+
+<!ENTITY Settings.label "הגדרות">
+
+<!ENTITY FormName.label "שם טופס:">
+<!ENTITY FormName.accesskey "N">
+<!ENTITY FormAction.label "URL של פעולה:">
+<!ENTITY FormAction.accesskey "U">
+<!ENTITY FormMethod.label "שיטה:">
+<!ENTITY FormMethod.accesskey "M">
+<!ENTITY FormEncType.label "קידוד:">
+<!ENTITY FormEncType.accesskey "c">
+<!ENTITY FormTarget.label "מסגרת יעד:">
+<!ENTITY FormTarget.accesskey "T">
+
+<!ENTITY RemoveForm.label "הסר טופס">
+<!ENTITY RemoveForm.accesskey "R">
+
+

@@ -5,456 +5,460 @@
 
 from __future__ import absolute_import, print_function, unicode_literals
 
-import cPickle as pickle
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
+
+import json
 import os
 import re
 import shutil
 import tempfile
-import unittest
+from collections import defaultdict
 
+import pytest
 import mozpack.path as mozpath
 import mozunit
 from mozbuild.base import MozbuildObject
+from mozbuild.frontend.reader import BuildReader
+from mozbuild.test.common import MockConfig
 from mozfile import NamedTemporaryFile
 
 from moztest.resolve import (
-    TestMetadata,
+    BuildBackendLoader,
+    TestManifestLoader,
     TestResolver,
     TEST_SUITES,
 )
 
+here = os.path.abspath(os.path.dirname(__file__))
+data_path = os.path.join(here, 'data')
 
-ALL_TESTS = {
-    "accessible/tests/mochitest/actions/test_anchors.html": [
-        {
-            "dir_relpath": "accessible/tests/mochitest/actions",
-            "expected": "pass",
-            "file_relpath": "accessible/tests/mochitest/actions/test_anchors.html",
-            "flavor": "a11y",
-            "here": "/firefox/accessible/tests/mochitest/actions",
-            "manifest": "/firefox/accessible/tests/mochitest/actions/a11y.ini",
-            "name": "test_anchors.html",
-            "path": "/firefox/accessible/tests/mochitest/actions/test_anchors.html",
-            "relpath": "test_anchors.html"
-        }
-    ],
-    "services/common/tests/unit/test_async_chain.js": [
-        {
-            "dir_relpath": "services/common/tests/unit",
-            "file_relpath": "services/common/tests/unit/test_async_chain.js",
+
+@pytest.fixture(scope='module')
+def topsrcdir():
+    return mozpath.join(data_path, 'srcdir')
+
+
+@pytest.fixture(scope='module')
+def create_tests(topsrcdir):
+
+    def inner(*paths, **defaults):
+        tests = defaultdict(list)
+        for path in paths:
+            if isinstance(path, tuple):
+                path, kwargs = path
+            else:
+                kwargs = {}
+
+            path = mozpath.normpath(path)
+            manifest_name = kwargs.get('flavor', defaults.get('flavor', 'manifest'))
+            manifest = kwargs.pop('manifest', defaults.pop('manifest',
+                                  mozpath.join(mozpath.dirname(path), manifest_name + '.ini')))
+
+            manifest_abspath = mozpath.join(topsrcdir, manifest)
+            relpath = mozpath.relpath(path, mozpath.dirname(manifest))
+            test = {
+                'name': relpath,
+                'path': mozpath.join(topsrcdir, path),
+                'relpath': relpath,
+                'file_relpath': path,
+                'dir_relpath': mozpath.dirname(path),
+                'here': mozpath.dirname(manifest_abspath),
+                'manifest': manifest_abspath,
+                'manifest_relpath': manifest,
+            }
+            test.update(**defaults)
+            test.update(**kwargs)
+
+            # Normalize paths to ensure that the fixture matches reality.
+            for k in ['ancestor_manifest', 'manifest', 'manifest_relpath', 'path', 'relpath']:
+                p = test.get(k)
+                if p:
+                    test[k] = p.replace('/', os.path.sep)
+
+            tests[path].append(test)
+
+        # dump tests to stdout for easier debugging on failure
+        print("The 'create_tests' fixture returned:")
+        print(json.dumps(dict(tests), indent=2, sort_keys=True))
+        return tests
+
+    return inner
+
+
+@pytest.fixture(scope='module')
+def all_tests(create_tests):
+    return create_tests(*[
+        ("apple/test_a11y.html", {
+             "expected": "pass",
+             "flavor": "a11y",
+         }),
+        ("banana/currant/test_xpcshell_A.js", {
             "firefox-appdir": "browser",
             "flavor": "xpcshell",
             "head": "head_global.js head_helpers.js head_http.js",
-            "here": "/firefox/services/common/tests/unit",
-            "manifest": "/firefox/services/common/tests/unit/xpcshell.ini",
-            "name": "test_async_chain.js",
-            "path": "/firefox/services/common/tests/unit/test_async_chain.js",
-            "relpath": "test_async_chain.js",
-        }
-    ],
-    "services/common/tests/unit/test_async_querySpinningly.js": [
-        {
-            "dir_relpath": "services/common/tests/unit",
-            "file_relpath": "services/common/tests/unit/test_async_querySpinningly.js",
+         }),
+        ("banana/currant/test_xpcshell_B.js", {
             "firefox-appdir": "browser",
             "flavor": "xpcshell",
             "head": "head_global.js head_helpers.js head_http.js",
-            "here": "/firefox/services/common/tests/unit",
-            "manifest": "/firefox/services/common/tests/unit/xpcshell.ini",
-            "name": "test_async_querySpinningly.js",
-            "path": "/firefox/services/common/tests/unit/test_async_querySpinningly.js",
-            "relpath": "test_async_querySpinningly.js",
-        }
-    ],
-    "toolkit/mozapps/update/test/unit/test_0201_app_launch_apply_update.js": [
-        {
-            "dir_relpath": "toolkit/mozapps/update/test/unit",
-            "file_relpath": "toolkit/mozapps/update/test/unit/test_0201_app_launch_apply_update.js",
+         }),
+        ("carrot/test_included.js", {
+            "ancestor_manifest": "carrot/xpcshell-one.ini",
+            "manifest": "carrot/xpcshell-shared.ini",
+            "flavor": "xpcshell",
+            "stick": "one",
+         }),
+        ("carrot/test_included.js", {
+            "ancestor_manifest": "carrot/xpcshell-two.ini",
+            "manifest": "carrot/xpcshell-shared.ini",
+            "flavor": "xpcshell",
+            "stick": "two",
+         }),
+        ("dragonfruit/elderberry/test_xpcshell_C.js", {
             "flavor": "xpcshell",
             "generated-files": "head_update.js",
             "head": "head_update.js",
-            "here": "/firefox/toolkit/mozapps/update/test/unit",
-            "manifest": "/firefox/toolkit/mozapps/update/test/unit/xpcshell_updater.ini",
-            "name": "test_0201_app_launch_apply_update.js",
-            "path": "/firefox/toolkit/mozapps/update/test/unit/test_0201_app_launch_apply_update.js",
-            "reason": "bug 820380",
-            "relpath": "test_0201_app_launch_apply_update.js",
+            "manifest": "dragonfruit/xpcshell.ini",
+            "reason": "busted",
             "run-sequentially": "Launches application.",
             "skip-if": "os == 'android'",
-        },
-        {
-            "dir_relpath": "toolkit/mozapps/update/test/unit",
-            "file_relpath": "toolkit/mozapps/update/test/unit/test_0201_app_launch_apply_update.js",
+         }),
+        ("dragonfruit/elderberry/test_xpcshell_C.js", {
             "flavor": "xpcshell",
             "generated-files": "head_update.js",
             "head": "head_update.js head2.js",
-            "here": "/firefox/toolkit/mozapps/update/test/unit",
-            "manifest": "/firefox/toolkit/mozapps/update/test/unit/xpcshell_updater.ini",
-            "name": "test_0201_app_launch_apply_update.js",
-            "path": "/firefox/toolkit/mozapps/update/test/unit/test_0201_app_launch_apply_update.js",
-            "reason": "bug 820380",
-            "relpath": "test_0201_app_launch_apply_update.js",
+            "manifest": "dragonfruit/elderberry/xpcshell_updater.ini",
+            "reason": "don't work",
             "run-sequentially": "Launches application.",
             "skip-if": "os == 'android'",
-        }
-    ],
-    "mobile/android/tests/background/junit3/src/common/TestAndroidLogWriters.java": [
-        {
-            "dir_relpath": "mobile/android/tests/background/junit3/src/common",
-            "file_relpath": "mobile/android/tests/background/junit3/src/common/TestAndroidLogWriters.java",
+         }),
+        ("fig/grape/src/TestInstrumentationA.java", {
             "flavor": "instrumentation",
-            "here": "/firefox/mobile/android/tests/background/junit3",
-            "manifest": "/firefox/mobile/android/tests/background/junit3/instrumentation.ini",
-            "name": "src/common/TestAndroidLogWriters.java",
-            "path": "/firefox/mobile/android/tests/background/junit3/src/common/TestAndroidLogWriters.java",
-            "relpath": "src/common/TestAndroidLogWriters.java",
-            "subsuite": "background"
-        }
-    ],
-    "mobile/android/tests/browser/junit3/src/TestDistribution.java": [
-        {
-            "dir_relpath": "mobile/android/tests/browser/junit3/src",
-            "file_relpath": "mobile/android/tests/browser/junit3/src/TestDistribution.java",
+            "manifest": "fig/grape/instrumentation.ini",
+            "subsuite": "background",
+         }),
+        ("fig/huckleberry/src/TestInstrumentationB.java", {
             "flavor": "instrumentation",
-            "here": "/firefox/mobile/android/tests/browser/junit3",
-            "manifest": "/firefox/mobile/android/tests/browser/junit3/instrumentation.ini",
-            "name": "src/TestDistribution.java",
-            "path": "/firefox/mobile/android/tests/browser/junit3/src/TestDistribution.java",
-            "relpath": "src/TestDistribution.java",
-            "subsuite": "browser"
-        }
-    ],
-    "image/test/browser/browser_bug666317.js": [
-        {
-            "dir_relpath": "image/test/browser",
-            "file_relpath": "image/test/browser/browser_bug666317.js",
+            "manifest": "fig/huckleberry/instrumentation.ini",
+            "subsuite": "browser",
+         }),
+        ("juniper/browser_chrome.js", {
             "flavor": "browser-chrome",
-            "here": "/firefox/testing/mochitest/browser/image/test/browser",
-            "manifest": "/firefox/image/test/browser/browser.ini",
-            "name": "browser_bug666317.js",
-            "path": "/firefox/testing/mochitest/browser/image/test/browser/browser_bug666317.js",
-            "relpath": "image/test/browser/browser_bug666317.js",
-            "skip-if": "e10s # Bug 948194 - Decoded Images seem to not be discarded on memory-pressure notification with e10s enabled",
-            "subsuite": ""
-        }
-   ],
-   "devtools/client/markupview/test/browser_markupview_copy_image_data.js": [
-        {
-            "dir_relpath": "devtools/client/markupview/test",
-            "file_relpath": "devtools/client/markupview/test/browser_markupview_copy_image_data.js",
+            "manifest": "juniper/browser.ini",
+            "skip-if": "e10s  # broken",
+         }),
+        ("kiwi/browser_devtools.js", {
             "flavor": "browser-chrome",
-            "here": "/firefox/testing/mochitest/browser/devtools/client/markupview/test",
-            "manifest": "/firefox/devtools/client/markupview/test/browser.ini",
-            "name": "browser_markupview_copy_image_data.js",
-            "path": "/firefox/testing/mochitest/browser/devtools/client/markupview/test/browser_markupview_copy_image_data.js",
-            "relpath": "devtools/client/markupview/test/browser_markupview_copy_image_data.js",
+            "manifest": "kiwi/browser.ini",
             "subsuite": "devtools",
-            "tags": "devtools"
-        }
-   ]
-}
-
-TEST_DEFAULTS = {
-    "/firefox/toolkit/mozapps/update/test/unit/xpcshell_updater.ini": {"support-files": "\ndata/**\nxpcshell_updater.ini"}
-}
-
-TASK_LABELS = [
-    'test-linux64/opt-browser-screenshots-1',
-    'test-linux64/opt-browser-screenshots-e10s-1',
-    'test-linux64/opt-marionette',
-    'test-linux64/opt-mochitest',
-    'test-linux64/debug-mochitest-e10s',
-    'test-linux64/opt-mochitest-a11y',
-    'test-linux64/opt-mochitest-browser',
-    'test-linux64/opt-mochitest-browser-chrome',
-    'test-linux64/opt-mochitest-browser-chrome-e10s',
-    'test-linux64/opt-mochitest-browser-chrome-e10s-11',
-    'test-linux64/opt-mochitest-chrome',
-    'test-linux64/opt-mochitest-devtools',
-    'test-linux64/opt-mochitest-devtools-chrome',
-    'test-linux64/opt-mochitest-gpu',
-    'test-linux64/opt-mochitest-gpu-e10s',
-    'test-linux64/opt-mochitest-media-e10s-1',
-    'test-linux64/opt-mochitest-media-e10s-11',
-    'test-linux64/opt-mochitest-plain',
-    'test-linux64/opt-mochitest-screenshots-1',
-    'test-linux64/opt-reftest',
-    'test-linux64/debug-reftest-e10s-1',
-    'test-linux64/debug-reftest-e10s-11',
-    'test-linux64/opt-robocop',
-    'test-linux64/opt-robocop-1',
-    'test-linux64/opt-robocop-e10s',
-    'test-linux64/opt-robocop-e10s-1',
-    'test-linux64/opt-robocop-e10s-11',
-    'test-linux64/opt-web-platform-tests-e10s-1',
-    'test-linux64/opt-web-platform-tests-reftests-e10s-1',
-    'test-linux64/opt-web-platform-tests-reftest-e10s-1',
-    'test-linux64/opt-web-platform-tests-wdspec-e10s-1',
-    'test-linux64/opt-web-platform-tests-1',
-    'test-linux64/opt-web-platform-test-e10s-1',
-    'test-linux64/opt-xpcshell',
-    'test-linux64/opt-xpcshell-1',
-    'test-linux64/opt-xpcshell-2',
-]
+            "tags": "devtools",
+         }),
+    ])
 
 
-class Base(unittest.TestCase):
-    def setUp(self):
-        self._temp_files = []
+@pytest.fixture(scope='module')
+def defaults(topsrcdir):
+    def to_abspath(relpath):
+        # test-defaults.pkl uses absolute paths with platform-specific path separators.
+        # Use platform-specific separators if needed to avoid regressing on bug 1644223.
+        return os.path.normpath(os.path.join(topsrcdir, relpath))
 
-    def tearDown(self):
-        for f in self._temp_files:
-            del f
-
-        self._temp_files = []
-
-    def _get_test_metadata(self):
-        all_tests = NamedTemporaryFile(mode='wb')
-        pickle.dump(ALL_TESTS, all_tests)
-        all_tests.flush()
-        self._temp_files.append(all_tests)
-
-        test_defaults = NamedTemporaryFile(mode='wb')
-        pickle.dump(TEST_DEFAULTS, test_defaults)
-        test_defaults.flush()
-        self._temp_files.append(test_defaults)
-
-        rv = TestMetadata(all_tests.name, "/firefox/", test_defaults=test_defaults.name)
-        rv._wpt_loaded = True  # Don't try to load the wpt manifest
-        return rv
+    return {
+        (to_abspath("dragonfruit/elderberry/xpcshell_updater.ini")): {
+            "support-files": "\ndata/**\nxpcshell_updater.ini"
+        },
+        (to_abspath("carrot/xpcshell-one.ini"), to_abspath("carrot/xpcshell-shared.ini")): {
+            "head": "head_one.js",
+        },
+        (to_abspath("carrot/xpcshell-two.ini"), to_abspath("carrot/xpcshell-shared.ini")): {
+            "head": "head_two.js",
+        },
+    }
 
 
-class TestTestMetadata(Base):
-    def test_load(self):
-        t = self._get_test_metadata()
-        self.assertEqual(len(t._tests_by_path), 8)
+@pytest.fixture(params=[BuildBackendLoader, TestManifestLoader])
+def resolver(request, tmpdir, topsrcdir, all_tests, defaults):
+    topobjdir = tmpdir.mkdir("objdir").strpath
+    loader_cls = request.param
 
-        self.assertEqual(len(list(t.tests_with_flavor('xpcshell'))), 3)
-        self.assertEqual(len(list(t.tests_with_flavor('mochitest-plain'))), 0)
-
-    def test_resolve_all(self):
-        t = self._get_test_metadata()
-        self.assertEqual(len(list(t.resolve_tests())), 9)
-
-    def test_resolve_filter_flavor(self):
-        t = self._get_test_metadata()
-        self.assertEqual(len(list(t.resolve_tests(flavor='xpcshell'))), 4)
-
-    def test_resolve_by_dir(self):
-        t = self._get_test_metadata()
-        self.assertEqual(len(list(t.resolve_tests(paths=['services/common']))), 2)
-
-    def test_resolve_under_path(self):
-        t = self._get_test_metadata()
-        self.assertEqual(len(list(t.resolve_tests(under_path='services'))), 2)
-
-        self.assertEqual(len(list(t.resolve_tests(flavor='xpcshell',
-            under_path='services'))), 2)
-
-    def test_resolve_multiple_paths(self):
-        t = self._get_test_metadata()
-        result = list(t.resolve_tests(paths=['services', 'toolkit']))
-        self.assertEqual(len(result), 4)
-
-    def test_resolve_support_files(self):
-        expected_support_files = "\ndata/**\nxpcshell_updater.ini"
-        t = self._get_test_metadata()
-        result = list(t.resolve_tests(paths=['toolkit']))
-        self.assertEqual(len(result), 2)
-
-        for test in result:
-            self.assertEqual(test['support-files'],
-                             expected_support_files)
-
-    def test_resolve_path_prefix(self):
-        t = self._get_test_metadata()
-        result = list(t.resolve_tests(paths=['image']))
-        self.assertEqual(len(result), 1)
-
-
-class TestTestResolver(Base):
-    FAKE_TOPSRCDIR = '/firefox'
-
-    def setUp(self):
-        Base.setUp(self)
-
-        self._temp_dirs = []
-
-    def tearDown(self):
-        Base.tearDown(self)
-
-        for d in self._temp_dirs:
-            shutil.rmtree(d)
-
-    def _get_resolver(self):
-        topobjdir = tempfile.mkdtemp()
-        self._temp_dirs.append(topobjdir)
-
+    if loader_cls == BuildBackendLoader:
         with open(os.path.join(topobjdir, 'all-tests.pkl'), 'wb') as fh:
-            pickle.dump(ALL_TESTS, fh)
+            pickle.dump(all_tests, fh)
         with open(os.path.join(topobjdir, 'test-defaults.pkl'), 'wb') as fh:
-            pickle.dump(TEST_DEFAULTS, fh)
+            pickle.dump(defaults, fh)
 
-        o = MozbuildObject(self.FAKE_TOPSRCDIR, None, None, topobjdir=topobjdir)
+        # The mock data already exists, so prevent BuildBackendLoader from regenerating
+        # the build information from the whole gecko tree...
+        class BuildBackendLoaderNeverOutOfDate(BuildBackendLoader):
+            def backend_out_of_date(self, backend_file):
+                return False
+        loader_cls = BuildBackendLoaderNeverOutOfDate
 
-        # Monkey patch the test resolver to avoid tests failing to find make
-        # due to our fake topscrdir.
-        TestResolver._run_make = lambda *a, **b: None
+    resolver = TestResolver(topsrcdir, None, None, topobjdir=topobjdir, loader_cls=loader_cls)
+    resolver._puppeteer_loaded = True
+    resolver._wpt_loaded = True
 
-        return o._spawn(TestResolver)
+    if loader_cls == TestManifestLoader:
+        config = MockConfig(topsrcdir)
+        resolver.load_tests.reader = BuildReader(config)
+    return resolver
 
-    def test_cwd_children_only(self):
-        """If cwd is defined, only resolve tests under the specified cwd."""
-        r = self._get_resolver()
 
-        # Pretend we're under '/services' and ask for 'common'. This should
-        # pick up all tests from '/services/common'
-        tests = list(r.resolve_tests(paths=['common'], cwd=os.path.join(r.topsrcdir,
-            'services')))
+def test_load(resolver):
+    assert len(resolver.tests_by_path) == 9
 
-        self.assertEqual(len(tests), 2)
+    assert len(resolver.tests_by_flavor['xpcshell']) == 4
+    assert len(resolver.tests_by_flavor['mochitest-plain']) == 0
 
-        # Tests should be rewritten to objdir.
-        for t in tests:
-            self.assertEqual(t['here'], mozpath.join(r.topobjdir,
-                '_tests/xpcshell/services/common/tests/unit'))
 
-    def test_various_cwd(self):
-        """Test various cwd conditions are all equal."""
+def test_resolve_all(resolver):
+    assert len(list(resolver._resolve())) == 11
 
-        r = self._get_resolver()
 
-        expected = list(r.resolve_tests(paths=['services']))
-        actual = list(r.resolve_tests(paths=['services'], cwd='/'))
-        self.assertEqual(actual, expected)
+def test_resolve_filter_flavor(resolver):
+    assert len(list(resolver._resolve(flavor='xpcshell'))) == 6
 
-        actual = list(r.resolve_tests(paths=['services'], cwd=r.topsrcdir))
-        self.assertEqual(actual, expected)
 
-        actual = list(r.resolve_tests(paths=['services'], cwd=r.topobjdir))
-        self.assertEqual(actual, expected)
+def test_resolve_by_dir(resolver):
+    assert len(list(resolver._resolve(paths=['banana/currant']))) == 2
 
-    def test_subsuites(self):
-        """Test filtering by subsuite."""
 
-        r = self._get_resolver()
+def test_resolve_under_path(resolver):
+    assert len(list(resolver._resolve(under_path='banana'))) == 2
+    assert len(list(resolver._resolve(flavor='xpcshell', under_path='banana'))) == 2
 
-        tests = list(r.resolve_tests(paths=['mobile']))
-        self.assertEqual(len(tests), 2)
 
-        tests = list(r.resolve_tests(paths=['mobile'], subsuite='browser'))
-        self.assertEqual(len(tests), 1)
-        self.assertEqual(tests[0]['name'], 'src/TestDistribution.java')
+def test_resolve_multiple_paths(resolver):
+    result = list(resolver.resolve_tests(paths=['banana', 'dragonfruit']))
+    assert len(result) == 4
 
-        tests = list(r.resolve_tests(paths=['mobile'], subsuite='background'))
-        self.assertEqual(len(tests), 1)
-        self.assertEqual(tests[0]['name'], 'src/common/TestAndroidLogWriters.java')
 
-    def test_wildcard_patterns(self):
-        """Test matching paths by wildcard."""
+def test_resolve_support_files(resolver):
+    expected_support_files = "\ndata/**\nxpcshell_updater.ini"
+    tests = list(resolver.resolve_tests(paths=['dragonfruit']))
+    assert len(tests) == 2
 
-        r = self._get_resolver()
+    for test in tests:
+        if test['manifest'].endswith('xpcshell_updater.ini'):
+            assert test['support-files'] == expected_support_files
+        else:
+            assert 'support-files' not in test
 
-        tests = list(r.resolve_tests(paths=['mobile/**']))
-        self.assertEqual(len(tests), 2)
-        for t in tests:
-            self.assertTrue(t['file_relpath'].startswith('mobile'))
 
-        tests = list(r.resolve_tests(paths=['**/**.js', 'accessible/**']))
-        self.assertEqual(len(tests), 7)
-        for t in tests:
-            path = t['file_relpath']
-            self.assertTrue(path.startswith('accessible') or path.endswith('.js'))
+def test_resolve_path_prefix(resolver):
+    tests = list(resolver._resolve(paths=['juniper']))
+    assert len(tests) == 1
 
-    def test_resolve_metadata(self):
-        """Test finding metadata from outgoing files."""
-        r = self._get_resolver()
+    # relative manifest
+    tests = list(resolver._resolve(paths=['apple/a11y.ini']))
+    assert len(tests) == 1
+    assert tests[0]['name'] == 'test_a11y.html'
 
-        suites, tests = r.resolve_metadata(['bc'])
-        assert suites == {'mochitest-browser-chrome'}
-        assert tests == []
+    # absolute manifest
+    tests = list(resolver._resolve(paths=[os.path.join(resolver.topsrcdir, 'apple/a11y.ini')]))
+    assert len(tests) == 1
+    assert tests[0]['name'] == 'test_a11y.html'
 
-        suites, tests = r.resolve_metadata(['mochitest-a11y', '/browser', 'xpcshell'])
-        assert suites == {'mochitest-a11y', 'xpcshell'}
-        assert sorted(t['file_relpath'] for t in tests) == [
-            'devtools/client/markupview/test/browser_markupview_copy_image_data.js',
-            'image/test/browser/browser_bug666317.js',
-            'mobile/android/tests/browser/junit3/src/TestDistribution.java',
-        ]
 
-    def test_task_regexes(self):
-        """Test the task_regexes defined in TEST_SUITES."""
+def test_cwd_children_only(resolver):
+    """If cwd is defined, only resolve tests under the specified cwd."""
+    # Pretend we're under '/services' and ask for 'common'. This should
+    # pick up all tests from '/services/common'
+    tests = list(resolver.resolve_tests(paths=['currant'], cwd=os.path.join(resolver.topsrcdir,
+        'banana')))
 
-        test_cases = {
-            'mochitest-browser-chrome': [
-                'test-linux64/opt-mochitest-browser-chrome',
-                'test-linux64/opt-mochitest-browser-chrome-e10s',
-            ],
-            'mochitest-chrome': [
-                'test-linux64/opt-mochitest-chrome',
-            ],
-            'mochitest-devtools-chrome': [
-                'test-linux64/opt-mochitest-devtools-chrome',
-            ],
-            'mochitest-media': [
-                'test-linux64/opt-mochitest-media-e10s-1',
-            ],
-            'mochitest-plain': [
-                'test-linux64/opt-mochitest',
-                'test-linux64/debug-mochitest-e10s',
-                # this isn't a real task but the regex would match it if it were
-                'test-linux64/opt-mochitest-plain',
-            ],
-            'mochitest-plain-gpu': [
-                'test-linux64/opt-mochitest-gpu',
-                'test-linux64/opt-mochitest-gpu-e10s',
-            ],
-            'mochitest-browser-chrome-screenshots': [
-                'test-linux64/opt-browser-screenshots-1',
-                'test-linux64/opt-browser-screenshots-e10s-1',
-            ],
-            'reftest': [
-                'test-linux64/opt-reftest',
-                'test-linux64/debug-reftest-e10s-1',
-            ],
-            'robocop': [
-                'test-linux64/opt-robocop',
-                'test-linux64/opt-robocop-1',
-                'test-linux64/opt-robocop-e10s',
-                'test-linux64/opt-robocop-e10s-1',
-            ],
-            'web-platform-tests': [
-                'test-linux64/opt-web-platform-tests-e10s-1',
-                'test-linux64/opt-web-platform-tests-reftests-e10s-1',
-                'test-linux64/opt-web-platform-tests-reftest-e10s-1',
-                'test-linux64/opt-web-platform-tests-wdspec-e10s-1',
-                'test-linux64/opt-web-platform-tests-1',
-            ],
-            'web-platform-tests-testharness': [
-                'test-linux64/opt-web-platform-tests-e10s-1',
-                'test-linux64/opt-web-platform-tests-1',
-            ],
-            'web-platform-tests-reftest': [
-                'test-linux64/opt-web-platform-tests-reftests-e10s-1',
-            ],
-            'web-platform-tests-wdspec': [
-                'test-linux64/opt-web-platform-tests-wdspec-e10s-1',
-            ],
-            'xpcshell': [
-                'test-linux64/opt-xpcshell',
-                'test-linux64/opt-xpcshell-1',
-            ],
-        }
+    assert len(tests) == 2
 
-        regexes = []
+    # Tests should be rewritten to objdir.
+    for t in tests:
+        assert t['here'] == mozpath.join(resolver.topobjdir,
+                                         '_tests/xpcshell/banana/currant')
 
-        def match_task(task):
-            return any(re.search(pattern, task) for pattern in regexes)
+def test_various_cwd(resolver):
+    """Test various cwd conditions are all equal."""
+    expected = list(resolver.resolve_tests(paths=['banana']))
+    actual = list(resolver.resolve_tests(paths=['banana'], cwd='/'))
+    assert actual == expected
 
-        for suite, expected in sorted(test_cases.items()):
-            print(suite)
-            regexes = TEST_SUITES[suite]['task_regex']
-            assert set(filter(match_task, TASK_LABELS)) == set(expected)
+    actual = list(resolver.resolve_tests(paths=['banana'], cwd=resolver.topsrcdir))
+    assert actual == expected
+
+    actual = list(resolver.resolve_tests(paths=['banana'], cwd=resolver.topobjdir))
+    assert actual == expected
+
+
+def test_subsuites(resolver):
+    """Test filtering by subsuite."""
+    tests = list(resolver.resolve_tests(paths=['fig']))
+    assert len(tests) == 2
+
+    tests = list(resolver.resolve_tests(paths=['fig'], subsuite='browser'))
+    assert len(tests) == 1
+    assert tests[0]['name'] == 'src/TestInstrumentationB.java'
+
+    tests = list(resolver.resolve_tests(paths=['fig'], subsuite='background'))
+    assert len(tests) == 1
+    assert tests[0]['name'] == 'src/TestInstrumentationA.java'
+
+    # Resolve tests *without* a subsuite.
+    tests = list(resolver.resolve_tests(flavor='browser-chrome', subsuite='undefined'))
+    assert len(tests) == 1
+    assert tests[0]['name'] == 'browser_chrome.js'
+
+
+def test_wildcard_patterns(resolver):
+    """Test matching paths by wildcard."""
+    tests = list(resolver.resolve_tests(paths=['fig/**']))
+    assert len(tests) == 2
+    for t in tests:
+        assert t['file_relpath'].startswith('fig')
+
+    tests = list(resolver.resolve_tests(paths=['**/**.js', 'apple/**']))
+    assert len(tests) == 9
+    for t in tests:
+        path = t['file_relpath']
+        assert path.startswith('apple') or path.endswith('.js')
+
+
+def test_resolve_metadata(resolver):
+    """Test finding metadata from outgoing files."""
+    suites, tests = resolver.resolve_metadata(['bc'])
+    assert suites == {'mochitest-browser-chrome'}
+    assert tests == []
+
+    suites, tests = resolver.resolve_metadata(['mochitest-a11y', '/browser', 'xpcshell'])
+    assert suites == {'mochitest-a11y', 'xpcshell'}
+    assert sorted(t['file_relpath'] for t in tests) == [
+        'juniper/browser_chrome.js',
+        'kiwi/browser_devtools.js',
+    ]
+
+def test_ancestor_manifest_defaults(resolver, topsrcdir, defaults):
+    """Test that defaults from ancestor manifests are found."""
+    tests = list(resolver._resolve(paths=['carrot/test_included.js']))
+    assert len(tests) == 2
+
+    if tests[0]['ancestor_manifest'] == os.path.join('carrot', 'xpcshell-one.ini'):
+        [testOne, testTwo] = tests
+    else:
+        [testTwo, testOne] = tests
+
+    assert testOne['ancestor_manifest'] == os.path.join('carrot', 'xpcshell-one.ini')
+    assert testOne['manifest_relpath'] == os.path.join('carrot', 'xpcshell-shared.ini')
+    assert testOne['head'] == 'head_one.js'
+    assert testOne['stick'] == 'one'
+
+    assert testTwo['ancestor_manifest'] == os.path.join('carrot', 'xpcshell-two.ini')
+    assert testTwo['manifest_relpath'] == os.path.join('carrot', 'xpcshell-shared.ini')
+    assert testTwo['head'] == 'head_two.js'
+    assert testTwo['stick'] == 'two'
+
+
+def test_task_regexes():
+    """Test the task_regexes defined in TEST_SUITES."""
+    task_labels = [
+        'test-linux64/opt-browser-screenshots-1',
+        'test-linux64/opt-browser-screenshots-e10s-1',
+        'test-linux64/opt-marionette',
+        'test-linux64/opt-mochitest-plain',
+        'test-linux64/debug-mochitest-plain-e10s',
+        'test-linux64/opt-mochitest-a11y',
+        'test-linux64/opt-mochitest-browser',
+        'test-linux64/opt-mochitest-browser-chrome',
+        'test-linux64/opt-mochitest-browser-chrome-e10s',
+        'test-linux64/opt-mochitest-browser-chrome-e10s-11',
+        'test-linux64/opt-mochitest-chrome',
+        'test-linux64/opt-mochitest-devtools',
+        'test-linux64/opt-mochitest-devtools-chrome',
+        'test-linux64/opt-mochitest-gpu',
+        'test-linux64/opt-mochitest-gpu-e10s',
+        'test-linux64/opt-mochitest-media-e10s-1',
+        'test-linux64/opt-mochitest-media-e10s-11',
+        'test-linux64/opt-mochitest-screenshots-1',
+        'test-linux64/opt-reftest',
+        'test-linux64/debug-reftest-e10s-1',
+        'test-linux64/debug-reftest-e10s-11',
+        'test-linux64/opt-robocop',
+        'test-linux64/opt-robocop-1',
+        'test-linux64/opt-robocop-e10s',
+        'test-linux64/opt-robocop-e10s-1',
+        'test-linux64/opt-robocop-e10s-11',
+        'test-linux64/opt-web-platform-tests-e10s-1',
+        'test-linux64/opt-web-platform-tests-reftest-e10s-1',
+        'test-linux64/opt-web-platform-tests-wdspec-e10s-1',
+        'test-linux64/opt-web-platform-tests-1',
+        'test-linux64/opt-web-platform-test-e10s-1',
+        'test-linux64/opt-xpcshell',
+        'test-linux64/opt-xpcshell-1',
+        'test-linux64/opt-xpcshell-2',
+    ]
+
+    test_cases = {
+        'mochitest-browser-chrome': [
+            'test-linux64/opt-mochitest-browser-chrome',
+            'test-linux64/opt-mochitest-browser-chrome-e10s',
+        ],
+        'mochitest-chrome': [
+            'test-linux64/opt-mochitest-chrome',
+        ],
+        'mochitest-devtools-chrome': [
+            'test-linux64/opt-mochitest-devtools-chrome',
+        ],
+        'mochitest-media': [
+            'test-linux64/opt-mochitest-media-e10s-1',
+        ],
+        'mochitest-plain': [
+            'test-linux64/opt-mochitest-plain',
+            'test-linux64/debug-mochitest-plain-e10s',
+        ],
+        'mochitest-plain-gpu': [
+            'test-linux64/opt-mochitest-gpu',
+            'test-linux64/opt-mochitest-gpu-e10s',
+        ],
+        'mochitest-browser-chrome-screenshots': [
+            'test-linux64/opt-browser-screenshots-1',
+            'test-linux64/opt-browser-screenshots-e10s-1',
+        ],
+        'reftest': [
+            'test-linux64/opt-reftest',
+            'test-linux64/debug-reftest-e10s-1',
+        ],
+        'robocop': [
+            'test-linux64/opt-robocop',
+            'test-linux64/opt-robocop-1',
+            'test-linux64/opt-robocop-e10s',
+            'test-linux64/opt-robocop-e10s-1',
+        ],
+        'web-platform-tests': [
+            'test-linux64/opt-web-platform-tests-e10s-1',
+            'test-linux64/opt-web-platform-tests-reftest-e10s-1',
+            'test-linux64/opt-web-platform-tests-wdspec-e10s-1',
+            'test-linux64/opt-web-platform-tests-1',
+        ],
+        'web-platform-tests-reftest': [
+            'test-linux64/opt-web-platform-tests-reftest-e10s-1',
+        ],
+        'web-platform-tests-wdspec': [
+            'test-linux64/opt-web-platform-tests-wdspec-e10s-1',
+        ],
+        'xpcshell': [
+            'test-linux64/opt-xpcshell',
+            'test-linux64/opt-xpcshell-1',
+        ],
+    }
+
+    regexes = []
+
+    def match_task(task):
+        return any(re.search(pattern, task) for pattern in regexes)
+
+    for suite, expected in sorted(test_cases.items()):
+        print(suite)
+        regexes = TEST_SUITES[suite]['task_regex']
+        assert set(filter(match_task, task_labels)) == set(expected)
 
 
 if __name__ == '__main__':

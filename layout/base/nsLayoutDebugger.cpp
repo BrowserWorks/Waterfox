@@ -4,12 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/*
- * implementation of interface that allows layout-debug extension access
- * to some internals of layout
- */
-
-#include "nsILayoutDebugger.h"
+/* some layout debugging functions that ought to live in nsFrame.cpp */
 
 #include "nsAttrValue.h"
 #include "nsFrame.h"
@@ -21,66 +16,6 @@
 
 using namespace mozilla;
 using namespace mozilla::layers;
-
-#ifdef DEBUG
-class nsLayoutDebugger : public nsILayoutDebugger {
- public:
-  nsLayoutDebugger();
-
-  NS_DECL_ISUPPORTS
-
-  NS_IMETHOD SetShowFrameBorders(bool aEnable) override;
-
-  NS_IMETHOD GetShowFrameBorders(bool* aResult) override;
-
-  NS_IMETHOD SetShowEventTargetFrameBorder(bool aEnable) override;
-
-  NS_IMETHOD GetShowEventTargetFrameBorder(bool* aResult) override;
-
- protected:
-  virtual ~nsLayoutDebugger();
-};
-
-nsresult NS_NewLayoutDebugger(nsILayoutDebugger** aResult) {
-  MOZ_ASSERT(aResult, "null OUT ptr");
-  if (!aResult) {
-    return NS_ERROR_NULL_POINTER;
-  }
-  nsLayoutDebugger* it = new nsLayoutDebugger();
-  return it->QueryInterface(NS_GET_IID(nsILayoutDebugger), (void**)aResult);
-}
-
-nsLayoutDebugger::nsLayoutDebugger() {}
-
-nsLayoutDebugger::~nsLayoutDebugger() {}
-
-NS_IMPL_ISUPPORTS(nsLayoutDebugger, nsILayoutDebugger)
-
-NS_IMETHODIMP
-nsLayoutDebugger::SetShowFrameBorders(bool aEnable) {
-  nsFrame::ShowFrameBorders(aEnable);
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsLayoutDebugger::GetShowFrameBorders(bool* aResult) {
-  *aResult = nsFrame::GetShowFrameBorders();
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsLayoutDebugger::SetShowEventTargetFrameBorder(bool aEnable) {
-  nsFrame::ShowEventTargetFrameBorder(aEnable);
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsLayoutDebugger::GetShowEventTargetFrameBorder(bool* aResult) {
-  *aResult = nsFrame::GetShowEventTargetFrameBorder();
-  return NS_OK;
-}
-
-#endif
 
 static std::ostream& operator<<(std::ostream& os, const nsPrintfCString& rhs) {
   os << rhs.get();
@@ -182,7 +117,7 @@ static void PrintDisplayItemTo(nsDisplayListBuilder* aBuilder,
   }
 
   if (aItem->HasHitTestInfo()) {
-    auto* hitTestInfoItem = static_cast<nsDisplayHitTestInfoItem*>(aItem);
+    auto* hitTestInfoItem = static_cast<nsDisplayHitTestInfoBase*>(aItem);
 
     aStream << nsPrintfCString(" hitTestInfo(0x%x)",
                                hitTestInfoItem->HitTestFlags().serialize());
@@ -260,16 +195,23 @@ static void PrintDisplayListTo(nsDisplayListBuilder* aBuilder,
   }
 }
 
-void nsFrame::PrintDisplayList(nsDisplayListBuilder* aBuilder,
-                               const nsDisplayList& aList,
-                               std::stringstream& aStream, bool aDumpHtml) {
+void nsIFrame::PrintDisplayList(nsDisplayListBuilder* aBuilder,
+                                const nsDisplayList& aList, bool aDumpHtml) {
+  std::stringstream ss;
+  PrintDisplayList(aBuilder, aList, ss, aDumpHtml);
+  fprintf_stderr(stderr, "%s", ss.str().c_str());
+}
+
+void nsIFrame::PrintDisplayList(nsDisplayListBuilder* aBuilder,
+                                const nsDisplayList& aList,
+                                std::stringstream& aStream, bool aDumpHtml) {
   PrintDisplayListTo(aBuilder, aList, aStream, 0, aDumpHtml);
 }
 
-void nsFrame::PrintDisplayItem(nsDisplayListBuilder* aBuilder,
-                               nsDisplayItem* aItem, std::stringstream& aStream,
-                               uint32_t aIndent, bool aDumpSublist,
-                               bool aDumpHtml) {
+void nsIFrame::PrintDisplayItem(nsDisplayListBuilder* aBuilder,
+                                nsDisplayItem* aItem,
+                                std::stringstream& aStream, uint32_t aIndent,
+                                bool aDumpSublist, bool aDumpHtml) {
   PrintDisplayItemTo(aBuilder, aItem, aStream, aIndent, aDumpSublist,
                      aDumpHtml);
 }
@@ -307,9 +249,9 @@ static void PrintDisplayListSetItem(nsDisplayListBuilder* aBuilder,
   }
 }
 
-void nsFrame::PrintDisplayListSet(nsDisplayListBuilder* aBuilder,
-                                  const nsDisplayListSet& aSet,
-                                  std::stringstream& aStream, bool aDumpHtml) {
+void nsIFrame::PrintDisplayListSet(nsDisplayListBuilder* aBuilder,
+                                   const nsDisplayListSet& aSet,
+                                   std::stringstream& aStream, bool aDumpHtml) {
   if (aDumpHtml) {
     aStream << "<ul>";
   }

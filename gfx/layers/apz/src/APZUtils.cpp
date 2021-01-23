@@ -31,6 +31,35 @@ namespace apz {
   return (fabs(aAngle - (M_PI / 2)) < aThreshold);
 }
 
+/*static*/ gfxFloat IntervalOverlap(gfxFloat aTranslation, gfxFloat aMin,
+                                    gfxFloat aMax) {
+  if (aTranslation > 0) {
+    return std::max(0.0, std::min(aMax, aTranslation) - std::max(aMin, 0.0));
+  }
+
+  return std::min(0.0, std::max(aMin, aTranslation) - std::min(aMax, 0.0));
+}
+
+/*static*/ bool IsStuckAtBottom(gfxFloat aTranslation,
+                                const LayerRectAbsolute& aInnerRange,
+                                const LayerRectAbsolute& aOuterRange) {
+  // The item will be stuck at the bottom if the async scroll delta is in
+  // the range [aOuterRange.Y(), aInnerRange.Y()]. Since the translation
+  // is negated with repect to the async scroll delta (i.e. scrolling down
+  // produces a positive scroll delta and negative translation), we invert it
+  // and check to see if it falls in the specified range.
+  return aOuterRange.Y() <= -aTranslation && -aTranslation <= aInnerRange.Y();
+}
+
+/*static*/ bool IsStuckAtTop(gfxFloat aTranslation,
+                             const LayerRectAbsolute& aInnerRange,
+                             const LayerRectAbsolute& aOuterRange) {
+  // Same as IsStuckAtBottom, except we want to check for the range
+  // [aInnerRange.YMost(), aOuterRange.YMost()].
+  return aInnerRange.YMost() <= -aTranslation &&
+         -aTranslation <= aOuterRange.YMost();
+}
+
 }  // namespace apz
 }  // namespace layers
 }  // namespace mozilla

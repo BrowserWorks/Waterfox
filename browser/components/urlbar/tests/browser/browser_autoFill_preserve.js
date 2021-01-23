@@ -22,7 +22,12 @@ add_task(async function origin() {
     "http://example.com/",
     "http://mozilla.org/example",
   ]);
-  await promiseAutocompleteResultPopup("ExA", window, true);
+  await UrlbarTestUtils.promiseAutocompleteResultPopup({
+    window,
+    waitForFocus: SimpleTest.waitForFocus,
+    value: "ExA",
+    fireInputEvent: true,
+  });
   let details = await UrlbarTestUtils.getDetailsOfResultAt(window, 0);
   Assert.ok(details.autofill);
   Assert.equal(gURLBar.value, "ExAmple.com/");
@@ -44,7 +49,12 @@ add_task(async function originPort() {
     "http://example.com:8888/",
     "http://mozilla.org/example",
   ]);
-  await promiseAutocompleteResultPopup("ExA", window, true);
+  await UrlbarTestUtils.promiseAutocompleteResultPopup({
+    window,
+    waitForFocus: SimpleTest.waitForFocus,
+    value: "ExA",
+    fireInputEvent: true,
+  });
   let details = await UrlbarTestUtils.getDetailsOfResultAt(window, 0);
   Assert.ok(details.autofill);
   Assert.equal(gURLBar.value, "ExAmple.com:8888/");
@@ -66,7 +76,12 @@ add_task(async function originScheme() {
     "http://example.com/",
     "http://mozilla.org/example",
   ]);
-  await promiseAutocompleteResultPopup("http://ExA", window, true);
+  await UrlbarTestUtils.promiseAutocompleteResultPopup({
+    window,
+    waitForFocus: SimpleTest.waitForFocus,
+    value: "http://ExA",
+    fireInputEvent: true,
+  });
   let details = await UrlbarTestUtils.getDetailsOfResultAt(window, 0);
   Assert.ok(details.autofill);
   Assert.equal(gURLBar.value, "http://ExAmple.com/");
@@ -88,7 +103,12 @@ add_task(async function originPortScheme() {
     "http://example.com:8888/",
     "http://mozilla.org/example",
   ]);
-  await promiseAutocompleteResultPopup("http://ExA", window, true);
+  await UrlbarTestUtils.promiseAutocompleteResultPopup({
+    window,
+    waitForFocus: SimpleTest.waitForFocus,
+    value: "http://ExA",
+    fireInputEvents: true,
+  });
   let details = await UrlbarTestUtils.getDetailsOfResultAt(window, 0);
   Assert.ok(details.autofill);
   Assert.equal(gURLBar.value, "http://ExAmple.com:8888/");
@@ -111,7 +131,12 @@ add_task(async function url() {
     "http://example.com/foo",
     "http://example.com/fff",
   ]);
-  await promiseAutocompleteResultPopup("ExAmple.com/f", window, true);
+  await UrlbarTestUtils.promiseAutocompleteResultPopup({
+    window,
+    waitForFocus: SimpleTest.waitForFocus,
+    value: "ExAmple.com/f",
+    fireInputEvent: true,
+  });
   let details = await UrlbarTestUtils.getDetailsOfResultAt(window, 0);
   Assert.ok(details.autofill);
   Assert.equal(gURLBar.value, "ExAmple.com/foo");
@@ -134,7 +159,12 @@ add_task(async function urlPort() {
     "http://example.com:8888/foo",
     "http://example.com:8888/fff",
   ]);
-  await promiseAutocompleteResultPopup("ExAmple.com:8888/f", window, true);
+  await UrlbarTestUtils.promiseAutocompleteResultPopup({
+    window,
+    waitForFocus: SimpleTest.waitForFocus,
+    value: "ExAmple.com:8888/f",
+    fireInputEvents: true,
+  });
   let details = await UrlbarTestUtils.getDetailsOfResultAt(window, 0);
   Assert.ok(details.autofill);
   Assert.equal(gURLBar.value, "ExAmple.com:8888/foo");
@@ -160,7 +190,12 @@ add_task(async function tokenAlias() {
     let engine = Services.search.getEngineByName("Test");
     await Services.search.removeEngine(engine);
   });
-  await promiseAutocompleteResultPopup("@ExA", window, true);
+  await UrlbarTestUtils.promiseAutocompleteResultPopup({
+    window,
+    waitForFocus: SimpleTest.waitForFocus,
+    value: "@ExA",
+    fireInputEvent: true,
+  });
   let details = await UrlbarTestUtils.getDetailsOfResultAt(window, 0);
   Assert.ok(details.autofill);
   Assert.equal(gURLBar.value, "@ExAmple ");
@@ -181,7 +216,12 @@ add_task(async function backspaceNoAutofill() {
     "http://example.com/",
     "http://mozilla.org/example",
   ]);
-  await promiseAutocompleteResultPopup("ExA", window, true);
+  await UrlbarTestUtils.promiseAutocompleteResultPopup({
+    window,
+    waitForFocus: SimpleTest.waitForFocus,
+    value: "ExA",
+    fireInputEvent: true,
+  });
   let details = await UrlbarTestUtils.getDetailsOfResultAt(window, 0);
   Assert.ok(details.autofill);
   Assert.equal(gURLBar.value, "ExAmple.com/");
@@ -197,13 +237,6 @@ add_task(async function backspaceNoAutofill() {
   Assert.equal(gURLBar.selectionEnd, "ExA".length);
 
   let heuristicValue = "ExA";
-  if (!UrlbarPrefs.get("quantumbar")) {
-    heuristicValue = PlacesUtils.mozActionURI("searchengine", {
-      engineName: "Google",
-      searchQuery: "ExA",
-      input: "ExA",
-    });
-  }
 
   checkKeys([
     ["KEY_ArrowDown", "http://example.com/", 1],
@@ -222,8 +255,8 @@ add_task(async function backspaceNoAutofill() {
 function checkKeys(testTuples) {
   for (let [key, value, selectedIndex] of testTuples) {
     EventUtils.synthesizeKey(key);
-    Assert.equal(UrlbarTestUtils.getSelectedIndex(window), selectedIndex);
-    Assert.equal(gURLBar.value, value);
+    Assert.equal(UrlbarTestUtils.getSelectedRowIndex(window), selectedIndex);
+    Assert.equal(gURLBar.untrimmedValue, value);
   }
 }
 

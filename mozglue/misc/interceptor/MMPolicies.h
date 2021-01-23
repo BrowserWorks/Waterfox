@@ -8,30 +8,148 @@
 #define mozilla_interceptor_MMPolicies_h
 
 #include "mozilla/Assertions.h"
+#include "mozilla/CheckedInt.h"
+#include "mozilla/DynamicallyLinkedFunctionPtr.h"
+#include "mozilla/MathAlgorithms.h"
+#include "mozilla/Maybe.h"
+#include "mozilla/Span.h"
 #include "mozilla/TypedEnumBits.h"
 #include "mozilla/Types.h"
 #include "mozilla/WindowsMapRemoteView.h"
 
 #include <windows.h>
 
+// MinGW does not have these definitions yet
+#if defined(__MINGW32__)
+typedef struct _MEM_ADDRESS_REQUIREMENTS {
+  PVOID LowestStartingAddress;
+  PVOID HighestEndingAddress;
+  SIZE_T Alignment;
+} MEM_ADDRESS_REQUIREMENTS, *PMEM_ADDRESS_REQUIREMENTS;
+
+typedef enum MEM_EXTENDED_PARAMETER_TYPE {
+  MemExtendedParameterInvalidType = 0,
+  MemExtendedParameterAddressRequirements,
+  MemExtendedParameterNumaNode,
+  MemExtendedParameterPartitionHandle,
+  MemExtendedParameterUserPhysicalHandle,
+  MemExtendedParameterAttributeFlags,
+  MemExtendedParameterMax
+} MEM_EXTENDED_PARAMETER_TYPE,
+    *PMEM_EXTENDED_PARAMETER_TYPE;
+
+#  define MEM_EXTENDED_PARAMETER_TYPE_BITS 8
+
+typedef struct DECLSPEC_ALIGN(8) MEM_EXTENDED_PARAMETER {
+  struct {
+    DWORD64 Type : MEM_EXTENDED_PARAMETER_TYPE_BITS;
+    DWORD64 Reserved : 64 - MEM_EXTENDED_PARAMETER_TYPE_BITS;
+  } DUMMYSTRUCTNAME;
+
+  union {
+    DWORD64 ULong64;
+    PVOID Pointer;
+    SIZE_T Size;
+    HANDLE Handle;
+    DWORD ULong;
+  } DUMMYUNIONNAME;
+
+} MEM_EXTENDED_PARAMETER, *PMEM_EXTENDED_PARAMETER;
+#endif  // defined(__MINGW32__)
+
+#if (NTDDI_VERSION < NTDDI_WIN10_RS4) || defined(__MINGW32__)
+PVOID WINAPI VirtualAlloc2(HANDLE Process, PVOID BaseAddress, SIZE_T Size,
+                           ULONG AllocationType, ULONG PageProtection,
+                           MEM_EXTENDED_PARAMETER* ExtendedParameters,
+                           ULONG ParameterCount);
+PVOID WINAPI MapViewOfFile3(HANDLE FileMapping, HANDLE Process,
+                            PVOID BaseAddress, ULONG64 Offset, SIZE_T ViewSize,
+                            ULONG AllocationType, ULONG PageProtection,
+                            MEM_EXTENDED_PARAMETER* ExtendedParameters,
+                            ULONG ParameterCount);
+#endif  // (NTDDI_VERSION < NTDDI_WIN10_RS4) || defined(__MINGW32__)
+
 // _CRT_RAND_S is not defined everywhere, but we need it.
 #if !defined(_CRT_RAND_S)
 extern "C" errno_t rand_s(unsigned int* randomValue);
 #endif  // !defined(_CRT_RAND_S)
 
+// Declaring only the functions we need in NativeNt.h.  To include the entire
+// NativeNt.h causes circular dependency.
+namespace mozilla {
+namespace nt {
+SIZE_T WINAPI VirtualQueryEx(HANDLE aProcess, LPCVOID aAddress,
+                             PMEMORY_BASIC_INFORMATION aMemInfo,
+                             SIZE_T aMemInfoLen);
+
+SIZE_T WINAPI VirtualQuery(LPCVOID aAddress, PMEMORY_BASIC_INFORMATION aMemInfo,
+                           SIZE_T aMemInfoLen);
+}  // namespace nt
+}  // namespace mozilla
+
 namespace mozilla {
 namespace interceptor {
 
-enum class ReservationFlags : uint32_t {
-  eDefault = 0,
-  eForceFirst2GB = 1,
+// This class implements memory operations not involving any kernel32's
+// functions, so that derived classes can use them.
+class MOZ_TRIVIAL_CTOR_DTOR MMPolicyInProcessPrimitive {
+ protected:
+  bool ProtectInternal(decltype(&::VirtualProtect) aVirtualProtect,
+                       void* aVAddress, size_t aSize, uint32_t aProtFlags,
+                       uint32_t* aPrevProtFlags) const {
+    MOZ_ASSERT(aPrevProtFlags);
+    BOOL ok = aVirtualProtect(aVAddress, aSize, aProtFlags,
+                              reinterpret_cast<PDWORD>(aPrevProtFlags));
+    if (!ok && aPrevProtFlags) {
+      // VirtualProtect can fail but still set valid protection flags.
+      // Let's clear those upon failure.
+      *aPrevProtFlags = 0;
+    }
+
+    return !!ok;
+  }
+
+ public:
+  bool Read(void* aToPtr, const void* aFromPtr, size_t aLen) const {
+    ::memcpy(aToPtr, aFromPtr, aLen);
+    return true;
+  }
+
+  bool Write(void* aToPtr, const void* aFromPtr, size_t aLen) const {
+    ::memcpy(aToPtr, aFromPtr, aLen);
+    return true;
+  }
+
+  /**
+   * @return true if the page that hosts aVAddress is accessible.
+   */
+  bool IsPageAccessible(void* aVAddress) const {
+    MEMORY_BASIC_INFORMATION mbi;
+    SIZE_T result = nt::VirtualQuery(aVAddress, &mbi, sizeof(mbi));
+
+    return result && mbi.AllocationProtect && (mbi.Type & MEM_IMAGE) &&
+           mbi.State == MEM_COMMIT && mbi.Protect != PAGE_NOACCESS;
+  }
 };
 
-MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS(ReservationFlags)
+class MOZ_TRIVIAL_CTOR_DTOR MMPolicyBase {
+ protected:
+  static uintptr_t AlignDown(const uintptr_t aUnaligned,
+                             const uintptr_t aAlignTo) {
+    MOZ_ASSERT(IsPowerOfTwo(aAlignTo));
+#pragma warning(suppress : 4146)
+    return aUnaligned & (-aAlignTo);
+  }
 
-class MMPolicyBase {
+  static uintptr_t AlignUp(const uintptr_t aUnaligned,
+                           const uintptr_t aAlignTo) {
+    MOZ_ASSERT(IsPowerOfTwo(aAlignTo));
+#pragma warning(suppress : 4146)
+    return aUnaligned + ((-aUnaligned) & (aAlignTo - 1));
+  }
+
  public:
-  static DWORD ComputeAllocationSize(const uint32_t aRequestedSize) {
+  DWORD ComputeAllocationSize(const uint32_t aRequestedSize) const {
     MOZ_ASSERT(aRequestedSize);
     DWORD result = aRequestedSize;
 
@@ -45,7 +163,7 @@ class MMPolicyBase {
     return result;
   }
 
-  static DWORD GetAllocGranularity() {
+  DWORD GetAllocGranularity() const {
     static const DWORD kAllocGranularity = []() -> DWORD {
       SYSTEM_INFO sysInfo;
       ::GetSystemInfo(&sysInfo);
@@ -55,7 +173,7 @@ class MMPolicyBase {
     return kAllocGranularity;
   }
 
-  static DWORD GetPageSize() {
+  DWORD GetPageSize() const {
     static const DWORD kPageSize = []() -> DWORD {
       SYSTEM_INFO sysInfo;
       ::GetSystemInfo(&sysInfo);
@@ -65,104 +183,238 @@ class MMPolicyBase {
     return kPageSize;
   }
 
-#if defined(_M_X64)
+  uintptr_t GetMaxUserModeAddress() const {
+    static const uintptr_t kMaxUserModeAddr = []() -> uintptr_t {
+      SYSTEM_INFO sysInfo;
+      ::GetSystemInfo(&sysInfo);
+      return reinterpret_cast<uintptr_t>(sysInfo.lpMaximumApplicationAddress);
+    }();
+
+    return kMaxUserModeAddr;
+  }
+
+  static const uint8_t* GetLowerBound(const Span<const uint8_t>& aBounds) {
+    return &(*aBounds.cbegin());
+  }
+
+  static const uint8_t* GetUpperBoundIncl(const Span<const uint8_t>& aBounds) {
+    // We return an upper bound that is inclusive.
+    return &(*(aBounds.cend() - 1));
+  }
+
+  static const uint8_t* GetUpperBoundExcl(const Span<const uint8_t>& aBounds) {
+    // We return an upper bound that is exclusive by adding 1 to the inclusive
+    // upper bound.
+    return GetUpperBoundIncl(aBounds) + 1;
+  }
+
+  /**
+   * It is convenient for us to provide address range information based on a
+   * "pivot" and a distance from that pivot, as branch instructions operate
+   * within a range of the program counter. OTOH, to actually manage the
+   * regions of memory, it is easier to think about them in terms of their
+   * lower and upper bounds. This function converts from the former format to
+   * the latter format.
+   */
+  Maybe<Span<const uint8_t>> SpanFromPivotAndDistance(
+      const uint32_t aSize, const uintptr_t aPivotAddr,
+      const uint32_t aMaxDistanceFromPivot) const {
+    if (!aPivotAddr || !aMaxDistanceFromPivot) {
+      return Nothing();
+    }
+
+    // We don't allow regions below 1MB so that we're not allocating near any
+    // sensitive areas in our address space.
+    const uintptr_t kMinAllowableAddress = 0x100000;
+
+    const uintptr_t kGranularity(GetAllocGranularity());
+
+    // We subtract the max distance from the pivot to determine our lower bound.
+    CheckedInt<uintptr_t> lowerBound(aPivotAddr);
+    lowerBound -= aMaxDistanceFromPivot;
+    if (lowerBound.isValid()) {
+      // In this case, the subtraction has not underflowed, but we still want
+      // the lower bound to be at least kMinAllowableAddress.
+      lowerBound = std::max(lowerBound.value(), kMinAllowableAddress);
+    } else {
+      // In this case, we underflowed. Forcibly set the lower bound to
+      // kMinAllowableAddress.
+      lowerBound = CheckedInt<uintptr_t>(kMinAllowableAddress);
+    }
+
+    // Align up to the next unit of allocation granularity when necessary.
+    lowerBound = AlignUp(lowerBound.value(), kGranularity);
+    MOZ_ASSERT(lowerBound.isValid());
+    if (!lowerBound.isValid()) {
+      return Nothing();
+    }
+
+    // We must ensure that our region is below the maximum allowable user-mode
+    // address, or our reservation will fail.
+    const uintptr_t kMaxUserModeAddr = GetMaxUserModeAddress();
+
+    // We add the max distance from the pivot to determine our upper bound.
+    CheckedInt<uintptr_t> upperBound(aPivotAddr);
+    upperBound += aMaxDistanceFromPivot;
+    if (upperBound.isValid()) {
+      // In this case, the addition has not overflowed, but we still want
+      // the upper bound to be at most kMaxUserModeAddr.
+      upperBound = std::min(upperBound.value(), kMaxUserModeAddr);
+    } else {
+      // In this case, we overflowed. Forcibly set the upper bound to
+      // kMaxUserModeAddr.
+      upperBound = CheckedInt<uintptr_t>(kMaxUserModeAddr);
+    }
+
+    // Subtract the desired allocation size so that any chunk allocated in the
+    // region will be reachable.
+    upperBound -= aSize;
+    if (!upperBound.isValid()) {
+      return Nothing();
+    }
+
+    // Align down to the next unit of allocation granularity when necessary.
+    upperBound = AlignDown(upperBound.value(), kGranularity);
+    if (!upperBound.isValid()) {
+      return Nothing();
+    }
+
+    MOZ_ASSERT(lowerBound.value() < upperBound.value());
+    if (lowerBound.value() >= upperBound.value()) {
+      return Nothing();
+    }
+
+    // Return the result as a Span
+    return Some(MakeSpan(reinterpret_cast<const uint8_t*>(lowerBound.value()),
+                         upperBound.value() - lowerBound.value()));
+  }
 
   /**
    * This function locates a virtual memory region of |aDesiredBytesLen| that
-   * resides in the lowest 2GB of address space. We do this by scanning the
+   * resides in the interval [aRangeMin, aRangeMax). We do this by scanning the
    * virtual memory space for a block of unallocated memory that is sufficiently
-   * large. We must stay below the 2GB mark because a 10-byte patch uses movsxd
-   * (ie, sign extension) to expand the pointer to 64-bits, so bit 31 of the
-   * found region must be 0.
+   * large.
    */
-  static PVOID FindLowRegion(HANDLE aProcess, const size_t aDesiredBytesLen) {
-    const DWORD granularity = GetAllocGranularity();
-
-    MOZ_ASSERT(aDesiredBytesLen / granularity > 0);
+  PVOID FindRegion(HANDLE aProcess, const size_t aDesiredBytesLen,
+                   const uint8_t* aRangeMin, const uint8_t* aRangeMax) const {
+    const DWORD kGranularity = GetAllocGranularity();
+    MOZ_ASSERT(aDesiredBytesLen >= kGranularity);
     if (!aDesiredBytesLen) {
       return nullptr;
     }
 
+    MOZ_ASSERT(aRangeMin < aRangeMax);
+    if (aRangeMin >= aRangeMax) {
+      return nullptr;
+    }
+
     // Generate a randomized base address that falls within the interval
-    // [1MiB, 2GiB - aDesiredBytesLen]
+    // [aRangeMin, aRangeMax - aDesiredBytesLen]
     unsigned int rnd = 0;
     rand_s(&rnd);
 
     // Reduce rnd to a value that falls within the acceptable range
-    const uint64_t kMinAddress = 0x0000000000100000ULL;
-    const uint64_t kMaxAddress = 0x0000000080000000ULL;
-    uint64_t maxOffset =
-        (kMaxAddress - kMinAddress - aDesiredBytesLen) / granularity;
-    uint64_t offset = (uint64_t(rnd) % maxOffset) * granularity;
+    uintptr_t maxOffset =
+        (aRangeMax - aRangeMin - aDesiredBytesLen) / kGranularity;
+    uintptr_t offset = (uintptr_t(rnd) % maxOffset) * kGranularity;
 
     // Start searching at this address
-    char* address = reinterpret_cast<char*>(kMinAddress) + offset;
+    const uint8_t* address = aRangeMin + offset;
     // The max address needs to incorporate the desired length
-    char* const kMaxPtr =
-        reinterpret_cast<char*>(kMaxAddress) - aDesiredBytesLen;
+    const uint8_t* const kMaxPtr = aRangeMax - aDesiredBytesLen;
 
     MOZ_DIAGNOSTIC_ASSERT(address <= kMaxPtr);
 
-    MEMORY_BASIC_INFORMATION mbi = {};
+    MEMORY_BASIC_INFORMATION mbi;
     SIZE_T len = sizeof(mbi);
 
     // Scan the range for a free chunk that is at least as large as
     // aDesiredBytesLen
     while (address <= kMaxPtr &&
-           ::VirtualQueryEx(aProcess, address, &mbi, len)) {
+           nt::VirtualQueryEx(aProcess, address, &mbi, len)) {
       if (mbi.State == MEM_FREE && mbi.RegionSize >= aDesiredBytesLen) {
         return mbi.BaseAddress;
       }
 
-      address = reinterpret_cast<char*>(mbi.BaseAddress) + mbi.RegionSize;
+      address =
+          reinterpret_cast<const uint8_t*>(mbi.BaseAddress) + mbi.RegionSize;
     }
 
     return nullptr;
   }
 
-#endif  // defined(_M_X64)
+  /**
+   * This function reserves a |aSize| block of virtual memory.
+   *
+   * When |aBounds| is Nothing, it just calls |aReserveFn| and lets Windows
+   * choose the base address.
+   *
+   * Otherwise, it tries to call |aReserveRangeFn| to reserve the memory within
+   * the bounds provided by |aBounds|. It is advantageous to use this function
+   * because the OS's VM manager has better information as to which base
+   * addresses are the best to use.
+   *
+   * If |aReserveRangeFn| retuns Nothing, this means that the platform support
+   * is not available. In that case, we fall back to manually computing a region
+   * to use for reserving the memory by calling |FindRegion|.
+   */
+  template <typename ReserveFnT, typename ReserveRangeFnT>
+  PVOID Reserve(HANDLE aProcess, const uint32_t aSize,
+                const ReserveFnT& aReserveFn,
+                const ReserveRangeFnT& aReserveRangeFn,
+                const Maybe<Span<const uint8_t>>& aBounds) const {
+    if (!aBounds) {
+      // No restrictions, let the OS choose the base address
+      return aReserveFn(aProcess, nullptr, aSize);
+    }
 
-  template <typename ReserveFnT>
-  static PVOID Reserve(HANDLE aProcess, const uint32_t aSize,
-                       const ReserveFnT& aReserveFn,
-                       const ReservationFlags aFlags) {
-#if defined(_M_X64)
-    if (aFlags & ReservationFlags::eForceFirst2GB) {
-      size_t curAttempt = 0;
-      const size_t kMaxAttempts = 8;
+    const uint8_t* lowerBound = GetLowerBound(aBounds.ref());
+    const uint8_t* upperBoundExcl = GetUpperBoundExcl(aBounds.ref());
 
-      // We loop here because |FindLowRegion| may return a base address that
-      // is reserved elsewhere before we have had a chance to reserve it
-      // ourselves.
-      while (curAttempt < kMaxAttempts) {
-        PVOID base = FindLowRegion(aProcess, aSize);
-        if (!base) {
-          return nullptr;
-        }
+    Maybe<PVOID> result =
+        aReserveRangeFn(aProcess, aSize, lowerBound, upperBoundExcl);
+    if (result) {
+      return result.value();
+    }
 
-        PVOID result = aReserveFn(aProcess, base, aSize);
-        if (result) {
-          return result;
-        }
+    // aReserveRangeFn is not available on this machine. We'll do a manual
+    // search.
 
-        ++curAttempt;
+    size_t curAttempt = 0;
+    const size_t kMaxAttempts = 8;
+
+    // We loop here because |FindRegion| may return a base address that
+    // is reserved elsewhere before we have had a chance to reserve it
+    // ourselves.
+    while (curAttempt < kMaxAttempts) {
+      PVOID base = FindRegion(aProcess, aSize, lowerBound, upperBoundExcl);
+      if (!base) {
+        return nullptr;
       }
 
-      // If we run out of attempts, we fall through to the default case where
-      // the system chooses any base address it wants. In that case, the hook
-      // will be set on a best-effort basis.
+      result = Some(aReserveFn(aProcess, base, aSize));
+      if (result.value()) {
+        return result.value();
+      }
+
+      ++curAttempt;
     }
-#endif  // defined(_M_X64)
+
+    // If we run out of attempts, we fall through to the default case where
+    // the system chooses any base address it wants. In that case, the hook
+    // will be set on a best-effort basis.
 
     return aReserveFn(aProcess, nullptr, aSize);
   }
 };
 
-class MMPolicyInProcess : public MMPolicyBase {
+class MOZ_TRIVIAL_CTOR_DTOR MMPolicyInProcess
+    : public MMPolicyInProcessPrimitive,
+      public MMPolicyBase {
  public:
   typedef MMPolicyInProcess MMPolicyT;
 
-  explicit MMPolicyInProcess()
+  constexpr MMPolicyInProcess()
       : mBase(nullptr), mReservationSize(0), mCommitOffset(0) {}
 
   MMPolicyInProcess(const MMPolicyInProcess&) = delete;
@@ -186,25 +438,12 @@ class MMPolicyInProcess : public MMPolicyBase {
     return *this;
   }
 
-  // We always leak mBase
-  ~MMPolicyInProcess() = default;
-
   explicit operator bool() const { return !!mBase; }
 
   /**
    * Should we unhook everything upon destruction?
    */
   bool ShouldUnhookUponDestruction() const { return true; }
-
-  bool Read(void* aToPtr, const void* aFromPtr, size_t aLen) const {
-    ::memcpy(aToPtr, aFromPtr, aLen);
-    return true;
-  }
-
-  bool Write(void* aToPtr, const void* aFromPtr, size_t aLen) const {
-    ::memcpy(aToPtr, aFromPtr, aLen);
-    return true;
-  }
 
 #if defined(_M_IX86)
   bool WriteAtomic(void* aDestPtr, const uint16_t aValue) const {
@@ -215,27 +454,8 @@ class MMPolicyInProcess : public MMPolicyBase {
 
   bool Protect(void* aVAddress, size_t aSize, uint32_t aProtFlags,
                uint32_t* aPrevProtFlags) const {
-    MOZ_ASSERT(aPrevProtFlags);
-    BOOL ok = ::VirtualProtect(aVAddress, aSize, aProtFlags,
-                               reinterpret_cast<PDWORD>(aPrevProtFlags));
-    if (!ok && aPrevProtFlags) {
-      // VirtualProtect can fail but still set valid protection flags.
-      // Let's clear those upon failure.
-      *aPrevProtFlags = 0;
-    }
-
-    return !!ok;
-  }
-
-  /**
-   * @return true if the page that hosts aVAddress is accessible.
-   */
-  bool IsPageAccessible(void* aVAddress) const {
-    MEMORY_BASIC_INFORMATION mbi;
-    SIZE_T result = ::VirtualQuery(aVAddress, &mbi, sizeof(mbi));
-
-    return result && mbi.AllocationProtect && (mbi.Type & MEM_IMAGE) &&
-           mbi.State == MEM_COMMIT && mbi.Protect != PAGE_NOACCESS;
+    return ProtectInternal(::VirtualProtect, aVAddress, aSize, aProtFlags,
+                           aPrevProtFlags);
   }
 
   bool FlushInstructionCache() const {
@@ -262,7 +482,8 @@ class MMPolicyInProcess : public MMPolicyBase {
   /**
    * @return the effective number of bytes reserved, or 0 on failure
    */
-  uint32_t Reserve(const uint32_t aSize, const ReservationFlags aFlags) {
+  uint32_t Reserve(const uint32_t aSize,
+                   const Maybe<Span<const uint8_t>>& aBounds) {
     if (!aSize) {
       return 0;
     }
@@ -278,8 +499,32 @@ class MMPolicyInProcess : public MMPolicyBase {
       return ::VirtualAlloc(aBase, aSize, MEM_RESERVE, PAGE_NOACCESS);
     };
 
-    mBase = static_cast<uint8_t*>(MMPolicyBase::Reserve(
-        ::GetCurrentProcess(), mReservationSize, reserveFn, aFlags));
+    auto reserveWithinRangeFn =
+        [](HANDLE aProcess, uint32_t aSize, const uint8_t* aRangeMin,
+           const uint8_t* aRangeMaxExcl) -> Maybe<PVOID> {
+      static const StaticDynamicallyLinkedFunctionPtr<decltype(
+          &::VirtualAlloc2)>
+          pVirtualAlloc2(L"kernelbase.dll", "VirtualAlloc2");
+      if (!pVirtualAlloc2) {
+        return Nothing();
+      }
+
+      // NB: MEM_ADDRESS_REQUIREMENTS::HighestEndingAddress is *inclusive*
+      MEM_ADDRESS_REQUIREMENTS memReq = {
+          const_cast<uint8_t*>(aRangeMin),
+          const_cast<uint8_t*>(aRangeMaxExcl - 1)};
+
+      MEM_EXTENDED_PARAMETER memParam = {};
+      memParam.Type = MemExtendedParameterAddressRequirements;
+      memParam.Pointer = &memReq;
+
+      return Some(pVirtualAlloc2(aProcess, nullptr, aSize, MEM_RESERVE,
+                                 PAGE_NOACCESS, &memParam, 1));
+    };
+
+    mBase = static_cast<uint8_t*>(
+        MMPolicyBase::Reserve(::GetCurrentProcess(), mReservationSize,
+                              reserveFn, reserveWithinRangeFn, aBounds));
 
     if (!mBase) {
       return 0;
@@ -319,6 +564,51 @@ class MMPolicyInProcess : public MMPolicyBase {
   uint8_t* mBase;
   uint32_t mReservationSize;
   uint32_t mCommitOffset;
+};
+
+// This class manages in-process memory access without using functions
+// imported from kernel32.dll.  Instead, it uses functions in its own
+// function table that are provided from outside.
+class MMPolicyInProcessEarlyStage : public MMPolicyInProcessPrimitive {
+ public:
+  struct Kernel32Exports {
+    decltype(&::FlushInstructionCache) mFlushInstructionCache;
+    decltype(&::GetSystemInfo) mGetSystemInfo;
+    decltype(&::VirtualProtect) mVirtualProtect;
+  };
+
+ private:
+  static DWORD GetPageSize(const Kernel32Exports& aK32Exports) {
+    SYSTEM_INFO sysInfo;
+    aK32Exports.mGetSystemInfo(&sysInfo);
+    return sysInfo.dwPageSize;
+  }
+
+  const Kernel32Exports& mK32Exports;
+  const DWORD mPageSize;
+
+ public:
+  explicit MMPolicyInProcessEarlyStage(const Kernel32Exports& aK32Exports)
+      : mK32Exports(aK32Exports), mPageSize(GetPageSize(mK32Exports)) {}
+
+  // The pattern of constructing a local static variable with a lambda,
+  // which can be seen in MMPolicyBase, is compiled into code with the
+  // critical section APIs like EnterCriticalSection imported from kernel32.dll.
+  // Because this class needs to be able to run in a process's early stage
+  // when IAT is not yet resolved, we cannot use that patten, thus simply
+  // caching a value as a local member in the class.
+  DWORD GetPageSize() const { return mPageSize; }
+
+  bool Protect(void* aVAddress, size_t aSize, uint32_t aProtFlags,
+               uint32_t* aPrevProtFlags) const {
+    return ProtectInternal(mK32Exports.mVirtualProtect, aVAddress, aSize,
+                           aProtFlags, aPrevProtFlags);
+  }
+
+  bool FlushInstructionCache() const {
+    const HANDLE kCurrentProcess = reinterpret_cast<HANDLE>(-1);
+    return !!mK32Exports.mFlushInstructionCache(kCurrentProcess, nullptr, 0);
+  }
 };
 
 class MMPolicyOutOfProcess : public MMPolicyBase {
@@ -397,6 +687,8 @@ class MMPolicyOutOfProcess : public MMPolicyBase {
     return false;
   }
 
+  // This function reads as many bytes as |aLen| from the target process and
+  // succeeds only when the entire area to be read is accessible.
   bool Read(void* aToPtr, const void* aFromPtr, size_t aLen) const {
     MOZ_ASSERT(mProcess);
     if (!mProcess) {
@@ -406,6 +698,40 @@ class MMPolicyOutOfProcess : public MMPolicyBase {
     SIZE_T numBytes = 0;
     BOOL ok = ::ReadProcessMemory(mProcess, aFromPtr, aToPtr, aLen, &numBytes);
     return ok && numBytes == aLen;
+  }
+
+  // This function reads as many bytes as possible from the target process up
+  // to |aLen| bytes and returns the number of bytes which was actually read.
+  size_t TryRead(void* aToPtr, const void* aFromPtr, size_t aLen) const {
+    MOZ_ASSERT(mProcess);
+    if (!mProcess) {
+      return 0;
+    }
+
+    uint32_t pageSize = GetPageSize();
+    uintptr_t pageMask = pageSize - 1;
+
+    auto rangeStart = reinterpret_cast<uintptr_t>(aFromPtr);
+    auto rangeEnd = rangeStart + aLen;
+
+    while (rangeStart < rangeEnd) {
+      SIZE_T numBytes = 0;
+      BOOL ok = ::ReadProcessMemory(mProcess, aFromPtr, aToPtr,
+                                    rangeEnd - rangeStart, &numBytes);
+      if (ok) {
+        return numBytes;
+      }
+
+      // If ReadProcessMemory fails, try to read up to each page boundary from
+      // the end of the requested area one by one.
+      if (rangeEnd & pageMask) {
+        rangeEnd &= ~pageMask;
+      } else {
+        rangeEnd -= pageSize;
+      }
+    }
+
+    return 0;
   }
 
   bool Write(void* aToPtr, const void* aFromPtr, size_t aLen) const {
@@ -443,7 +769,7 @@ class MMPolicyOutOfProcess : public MMPolicyBase {
    */
   bool IsPageAccessible(void* aVAddress) const {
     MEMORY_BASIC_INFORMATION mbi;
-    SIZE_T result = ::VirtualQueryEx(mProcess, aVAddress, &mbi, sizeof(mbi));
+    SIZE_T result = nt::VirtualQueryEx(mProcess, aVAddress, &mbi, sizeof(mbi));
 
     return result && mbi.AllocationProtect && (mbi.Type & MEM_IMAGE) &&
            mbi.State == MEM_COMMIT && mbi.Protect != PAGE_NOACCESS;
@@ -471,7 +797,8 @@ class MMPolicyOutOfProcess : public MMPolicyBase {
   /**
    * @return the effective number of bytes reserved, or 0 on failure
    */
-  uint32_t Reserve(const uint32_t aSize, const ReservationFlags aFlags) {
+  uint32_t Reserve(const uint32_t aSize,
+                   const Maybe<Span<const uint8_t>>& aBounds) {
     if (!aSize || !mProcess) {
       return 0;
     }
@@ -502,8 +829,32 @@ class MMPolicyOutOfProcess : public MMPolicyBase {
                                           PAGE_EXECUTE_READ);
     };
 
-    mRemoteView =
-        MMPolicyBase::Reserve(mProcess, mReservationSize, reserveFn, aFlags);
+    auto reserveWithinRangeFn =
+        [mapping = mMapping](HANDLE aProcess, uint32_t aSize,
+                             const uint8_t* aRangeMin,
+                             const uint8_t* aRangeMaxExcl) -> Maybe<PVOID> {
+      static const StaticDynamicallyLinkedFunctionPtr<decltype(
+          &::MapViewOfFile3)>
+          pMapViewOfFile3(L"kernelbase.dll", "MapViewOfFile3");
+      if (!pMapViewOfFile3) {
+        return Nothing();
+      }
+
+      // NB: MEM_ADDRESS_REQUIREMENTS::HighestEndingAddress is *inclusive*
+      MEM_ADDRESS_REQUIREMENTS memReq = {
+          const_cast<uint8_t*>(aRangeMin),
+          const_cast<uint8_t*>(aRangeMaxExcl - 1)};
+
+      MEM_EXTENDED_PARAMETER memParam = {};
+      memParam.Type = MemExtendedParameterAddressRequirements;
+      memParam.Pointer = &memReq;
+
+      return Some(pMapViewOfFile3(mapping, aProcess, nullptr, 0, aSize, 0,
+                                  PAGE_EXECUTE_READ, &memParam, 1));
+    };
+
+    mRemoteView = MMPolicyBase::Reserve(mProcess, mReservationSize, reserveFn,
+                                        reserveWithinRangeFn, aBounds);
     if (!mRemoteView) {
       return 0;
     }

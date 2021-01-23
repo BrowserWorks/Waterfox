@@ -5,14 +5,10 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 with Files('**'):
-    BUG_COMPONENT = ('Core', 'Document Navigation')
+    BUG_COMPONENT = ('Core', 'DOM: Navigation')
 
 EXTRA_JS_MODULES += [
     'RemoteWebNavigation.jsm',
-]
-
-XPCOM_MANIFESTS += [
-    'components.conf',
 ]
 
 BROWSER_CHROME_MANIFESTS += ['tests/browser/browser.ini']

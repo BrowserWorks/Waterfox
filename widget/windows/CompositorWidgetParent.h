@@ -7,10 +7,15 @@
 #define widget_windows_CompositorWidgetParent_h
 
 #include "WinCompositorWidget.h"
+#include "mozilla/Maybe.h"
 #include "mozilla/widget/PCompositorWidgetParent.h"
 
 namespace mozilla {
 namespace widget {
+
+namespace remote_backbuffer {
+class Client;
+}
 
 class CompositorWidgetParent final : public PCompositorWidgetParent,
                                      public WinCompositorWidget {
@@ -19,6 +24,25 @@ class CompositorWidgetParent final : public PCompositorWidgetParent,
                                   const layers::CompositorOptions& aOptions);
   ~CompositorWidgetParent() override;
 
+  bool Initialize(const RemoteBackbufferHandles& aRemoteHandles);
+
+  bool PreRender(WidgetRenderingContext*) override;
+  void PostRender(WidgetRenderingContext*) override;
+  already_AddRefed<gfx::DrawTarget> StartRemoteDrawing() override;
+  void EndRemoteDrawing() override;
+  bool NeedsToDeferEndRemoteDrawing() override;
+  LayoutDeviceIntSize GetClientSize() override;
+  already_AddRefed<gfx::DrawTarget> GetBackBufferDrawTarget(
+      gfx::DrawTarget* aScreenTarget, const gfx::IntRect& aRect,
+      bool* aOutIsCleared) override;
+  already_AddRefed<gfx::SourceSurface> EndBackBufferDrawing() override;
+  bool InitCompositor(layers::Compositor* aCompositor) override;
+  bool IsHidden() const override;
+
+  bool HasGlass() const override;
+
+  mozilla::ipc::IPCResult RecvInitialize(
+      const RemoteBackbufferHandles& aRemoteHandles) override;
   mozilla::ipc::IPCResult RecvEnterPresentLock() override;
   mozilla::ipc::IPCResult RecvLeavePresentLock() override;
   mozilla::ipc::IPCResult RecvUpdateTransparency(
@@ -33,9 +57,24 @@ class CompositorWidgetParent final : public PCompositorWidgetParent,
   // PlatformCompositorWidgetDelegate Overrides
   void UpdateCompositorWnd(const HWND aCompositorWnd,
                            const HWND aParentWnd) override;
+  void SetRootLayerTreeID(const layers::LayersId& aRootLayerTreeId) override;
 
  private:
   RefPtr<VsyncObserver> mVsyncObserver;
+  Maybe<layers::LayersId> mRootLayerTreeID;
+
+  HWND mWnd;
+
+  gfx::CriticalSection mPresentLock;
+
+  // Transparency handling.
+  mozilla::Atomic<nsTransparencyMode, MemoryOrdering::Relaxed>
+      mTransparencyMode;
+
+  // Locked back buffer of BasicCompositor
+  uint8_t* mLockedBackBufferData;
+
+  std::unique_ptr<remote_backbuffer::Client> mRemoteBackbufferClient;
 };
 
 }  // namespace widget

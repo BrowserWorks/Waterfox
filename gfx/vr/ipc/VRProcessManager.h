@@ -8,8 +8,14 @@
 
 #include "VRProcessParent.h"
 
+#include "mozilla/ipc/ProtocolUtils.h"
+
 namespace mozilla {
 class MemoryReportingProcess;
+namespace ipc {
+template <typename T>
+class Endpoint;
+}
 namespace gfx {
 
 class VRManagerChild;
@@ -53,6 +59,7 @@ class VRProcessManager final : public VRProcessParent::Listener {
   bool CreateGPUVRManager(base::ProcessId aOtherProcess,
                           mozilla::ipc::Endpoint<PVRGPUChild>* aOutEndpoint);
   void OnXPCOMShutdown();
+  void OnPreferenceChange(const char16_t* aData);
   void CleanShutdown();
   void DestroyProcess();
 
@@ -64,10 +71,9 @@ class VRProcessManager final : public VRProcessParent::Listener {
     NS_DECL_ISUPPORTS
     NS_DECL_NSIOBSERVER
     explicit Observer(VRProcessManager* aManager);
-    void Unregister();
 
    protected:
-    ~Observer() {}
+    ~Observer() = default;
 
     VRProcessManager* mManager;
   };
@@ -76,6 +82,10 @@ class VRProcessManager final : public VRProcessParent::Listener {
   RefPtr<Observer> mObserver;
   VRProcessParent* mProcess;
   VRChild* mVRChild;
+  // Collects any pref changes that occur during process launch (after
+  // the initial map is passed in command-line arguments) to be sent
+  // when the process can receive IPC messages.
+  nsTArray<mozilla::dom::Pref> mQueuedPrefs;
 };
 
 }  // namespace gfx

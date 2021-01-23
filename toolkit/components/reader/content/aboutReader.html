@@ -1,8 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
 <!DOCTYPE html>
 <html>
 
 <head>
-  <meta http-equiv="Content-Security-Policy" content="default-src chrome:; img-src data: *; media-src *" />
+  <meta http-equiv="Content-Security-Policy" content="default-src chrome:; img-src data: *; media-src *; object-src 'none'" />
   <meta content="text/html; charset=UTF-8" http-equiv="content-type" />
   <meta name="viewport" content="width=device-width; user-scalable=0" />
   <link rel="stylesheet" href="chrome://global/skin/aboutReader.css" type="text/css"/>
@@ -10,6 +14,41 @@
 </head>
 
 <body>
+  <div class="top-anchor"></div>
+
+  <div id="toolbar" class="toolbar-container">
+    <div class="toolbar reader-toolbar">
+      <div class="reader-controls">
+        <button class="close-button button "></button>
+        <ul class="dropdown style-dropdown">
+          <li>
+            <button class="dropdown-toggle button style-button"></button>
+          </li>
+          <li class="dropdown-popup">
+            <div class="dropdown-arrow"></div>
+            <div class="font-type-buttons radiorow"></div>
+            <div class="font-size-buttons buttonrow">
+              <button class="minus-button"></button>
+              <span class="font-size-value"></span>
+              <button class="plus-button"/>
+            </div>
+            <div class="content-width-buttons buttonrow">
+               <button class="content-width-minus-button"></button>
+               <span class="content-width-value"></span>
+               <button class="content-width-plus-button"/>
+            </div>
+            <div class="line-height-buttons buttonrow">
+                <button class="line-height-minus-button"></button>
+                <span class="line-height-value"></span>
+                <button class="line-height-plus-button"/>
+            </div>
+            <div class="color-scheme-buttons radiorow"></div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
   <div class="container">
     <div class="header reader-header">
       <a class="domain reader-domain"></a>
@@ -30,37 +69,8 @@
     <div>
       <div class="reader-message"></div>
     </div>
+    <div aria-owns="toolbar"></div>
   </div>
-
-  <ul class="toolbar reader-toolbar">
-    <li><button class="button close-button"/></li>
-    <ul class="dropdown style-dropdown">
-      <li><button class="dropdown-toggle button style-button"/></li>
-      <li class="dropdown-popup">
-        <div class="font-type-buttons"></div>
-        <hr>
-        <div class="font-size-buttons">
-          <button class="minus-button"/>
-          <button class="font-size-sample"/>
-          <button class="plus-button"/>
-        </div>
-        <hr>
-        <div class="content-width-buttons">
-          <button class="content-width-minus-button"/>
-          <button class="content-width-plus-button"/>
-        </div>
-        <hr>
-        <div class="line-height-buttons">
-          <button class="line-height-minus-button"/>
-          <button class="line-height-plus-button"/>
-        </div>
-        <hr>
-        <div class="color-scheme-buttons"></div>
-        <div class="dropdown-arrow"/>
-      </li>
-    </ul>
-  </ul>
-
 </body>
 
 </html>

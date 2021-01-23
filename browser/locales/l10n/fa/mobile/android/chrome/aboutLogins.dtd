@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+   %brandDTD;
+<!ENTITY aboutLogins.title                       "ورود">
+<!ENTITY aboutLogins.update                      "به‌هنگام‌سازی">
+<!ENTITY aboutLogins.emptyLoginText              "از گذرواژه‌های خود محافظت کنید">
+<!ENTITY aboutLogins.emptyLoginHint              "ورود‌ها و گذرواژه‌های شما که با استفاده از &brandShortName; ذخیره می‌کنید در اینجا نمایش داده خواهند شد.">

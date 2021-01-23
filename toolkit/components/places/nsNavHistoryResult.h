@@ -45,7 +45,7 @@ class nsTrimInt64HashKey : public PLDHashEntryHdr {
   explicit nsTrimInt64HashKey(KeyTypePointer aKey) : mValue(*aKey) {}
   nsTrimInt64HashKey(const nsTrimInt64HashKey& toCopy)
       : mValue(toCopy.mValue) {}
-  ~nsTrimInt64HashKey() {}
+  ~nsTrimInt64HashKey() = default;
 
   KeyType GetKey() const { return mValue; }
   bool KeyEquals(KeyTypePointer aKey) const { return *aKey == mValue; }
@@ -189,8 +189,7 @@ class nsNavHistoryResult final
 
   void OnMobilePrefChanged();
 
-  static void OnMobilePrefChangedCallback(const char* prefName,
-                                          nsNavHistoryResult* self);
+  static void OnMobilePrefChangedCallback(const char* prefName, void* self);
 
  protected:
   virtual ~nsNavHistoryResult();
@@ -331,7 +330,7 @@ class nsNavHistoryResultNode : public nsINavHistoryResultNode {
   virtual nsresult OnMobilePrefChanged(bool newValue) { return NS_OK; };
 
  protected:
-  virtual ~nsNavHistoryResultNode() {}
+  virtual ~nsNavHistoryResultNode() = default;
 
  public:
   nsNavHistoryResult* GetResult();
@@ -539,8 +538,7 @@ class nsNavHistoryContainerResultNode
   nsresult ReverseUpdateStats(int32_t aAccessCountChange);
 
   // Sorting methods.
-  typedef nsCOMArray<nsNavHistoryResultNode>::nsCOMArrayComparatorFunc
-      SortComparator;
+  typedef nsCOMArray<nsNavHistoryResultNode>::TComparatorFunc SortComparator;
   virtual uint16_t GetSortType();
 
   static SortComparator GetSortingComparator(uint16_t aSortType);
@@ -689,6 +687,12 @@ class nsNavHistoryQueryResultNode final
                        uint16_t aItemType, nsIURI* aURI, PRTime aDateAdded,
                        const nsACString& aGUID, const nsACString& aParentGUID,
                        uint16_t aSource);
+
+  nsresult OnItemRemoved(int64_t aItemId, int64_t aParentFolder, int32_t aIndex,
+                         uint16_t aItemType, nsIURI* aURI,
+                         const nsACString& aGUID, const nsACString& aParentGUID,
+                         uint16_t aSource);
+
   // The internal version has an output aAdded parameter, it is incremented by
   // query nodes when the visited uri belongs to them. If no such query exists,
   // the history result creates a new query node dynamically.
@@ -770,7 +774,10 @@ class nsNavHistoryFolderResultNode final
                        uint16_t aItemType, nsIURI* aURI, PRTime aDateAdded,
                        const nsACString& aGUID, const nsACString& aParentGUID,
                        uint16_t aSource);
-
+  nsresult OnItemRemoved(int64_t aItemId, int64_t aParentFolder, int32_t aIndex,
+                         uint16_t aItemType, nsIURI* aURI,
+                         const nsACString& aGUID, const nsACString& aParentGUID,
+                         uint16_t aSource);
   virtual void OnRemoving() override;
 
   // this indicates whether the folder contents are valid, they don't go away

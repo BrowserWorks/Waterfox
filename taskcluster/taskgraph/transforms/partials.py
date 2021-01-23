@@ -8,9 +8,10 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 from taskgraph.transforms.base import TransformSequence
 from taskgraph.util.attributes import copy_attributes_from_dependent_job
-from taskgraph.util.partials import get_balrog_platform_name, get_builds
+from taskgraph.util.partials import get_builds
 from taskgraph.util.platforms import architecture
 from taskgraph.util.taskcluster import get_artifact_prefix
+from taskgraph.util.treeherder import inherit_treeherder_from_dep
 
 import logging
 logger = logging.getLogger(__name__)
@@ -37,6 +38,19 @@ def _generate_task_output_files(job, filenames, locale=None):
     return data
 
 
+def identify_desired_signing_keys(project, product):
+    if project in ["mozilla-central", "comm-central"]:
+        return "nightly"
+    elif project == "mozilla-beta":
+        if product == "devedition":
+            return "nightly"
+        return "release"
+    elif (project in ["mozilla-release", "comm-beta"] or
+          project.startswith("mozilla-esr") or project.startswith("comm-esr")):
+        return "release"
+    return "dep1"
+
+
 @transforms.add
 def make_task_description(config, jobs):
     # If no balrog release history, then don't generate partials
@@ -45,17 +59,10 @@ def make_task_description(config, jobs):
     for job in jobs:
         dep_job = job['primary-dependency']
 
-        treeherder = job.get('treeherder', {})
+        treeherder = inherit_treeherder_from_dep(job, dep_job)
         treeherder.setdefault('symbol', 'p(N)')
 
         label = job.get('label', "partials-{}".format(dep_job.label))
-        dep_th_platform = dep_job.task.get('extra', {}).get(
-            'treeherder', {}).get('machine', {}).get('platform', '')
-
-        treeherder.setdefault('platform',
-                              "{}/opt".format(dep_th_platform))
-        treeherder.setdefault('kind', 'build')
-        treeherder.setdefault('tier', 1)
 
         dependencies = {dep_job.kind: dep_job.label}
 
@@ -68,7 +75,8 @@ def make_task_description(config, jobs):
 
         build_locale = locale or 'en-US'
 
-        builds = get_builds(config.params['release_history'], dep_th_platform,
+        build_platform = attributes['build_platform']
+        builds = get_builds(config.params['release_history'], build_platform,
                             build_locale)
 
         # If the list is empty there's no available history for this platform
@@ -90,7 +98,6 @@ def make_task_description(config, jobs):
                 'locale': build_locale,
                 'from_mar': builds[build]['mar_url'],
                 'to_mar': {'artifact-reference': artifact_path},
-                'platform': get_balrog_platform_name(dep_th_platform),
                 'branch': config.params['project'],
                 'update_number': update_number,
                 'dest_mar': build,
@@ -104,17 +111,6 @@ def make_task_description(config, jobs):
             extra['funsize']['partials'].append(partial_info)
             update_number += 1
 
-        mar_channel_id = None
-        if config.params['project'] == 'mozilla-beta':
-            if 'devedition' in label:
-                mar_channel_id = 'firefox-mozilla-aurora'
-            else:
-                mar_channel_id = 'firefox-mozilla-beta'
-        elif config.params['project'] == 'mozilla-release':
-            mar_channel_id = 'firefox-mozilla-release'
-        elif 'esr' in config.params['project']:
-            mar_channel_id = 'firefox-mozilla-esr'
-
         level = config.params['level']
 
         worker = {
@@ -126,15 +122,12 @@ def make_task_description(config, jobs):
             'chain-of-trust': True,
             'taskcluster-proxy': True,
             'env': {
-                'SHA1_SIGNING_CERT': 'nightly_sha1',
-                'SHA384_SIGNING_CERT': 'nightly_sha384',
-                'DATADOG_API_SECRET':
-                    'project/releng/gecko/build/level-{}/datadog-api-key'.format(level),
-                'EXTRA_PARAMS': '--arch={}'.format(architecture(attributes['build_platform'])),
+                'SIGNING_CERT': identify_desired_signing_keys(config.params["project"],
+                                                              config.params['release_product']),
+                'EXTRA_PARAMS': '--arch={}'.format(architecture(build_platform)),
+                'MAR_CHANNEL_ID': attributes['mar-channel-id']
             }
         }
-        if mar_channel_id:
-            worker['env']['ACCEPTED_MAR_CHANNEL_IDS'] = mar_channel_id
         if config.params.release_level() == 'staging':
             worker['env']['FUNSIZE_ALLOW_STAGING_PREFIXES'] = 'true'
 
@@ -144,9 +137,7 @@ def make_task_description(config, jobs):
                 dep_job.task["metadata"]["description"]),
             'worker-type': 'b-linux',
             'dependencies': dependencies,
-            'scopes': [
-                'secrets:get:project/releng/gecko/build/level-%s/datadog-api-key' % level
-            ],
+            'scopes': [],
             'attributes': attributes,
             'run-on-projects': dep_job.attributes.get('run_on_projects'),
             'treeherder': treeherder,
@@ -156,7 +147,7 @@ def make_task_description(config, jobs):
 
         # We only want caching on linux/windows due to bug 1436977
         if int(level) == 3 \
-                and any([platform in dep_th_platform for platform in ['linux', 'windows']]):
+                and any([build_platform.startswith(prefix) for prefix in ['linux', 'win']]):
             task['scopes'].append(
                 'auth:aws-s3:read-write:tc-gp-private-1d-us-east-1/releng/mbsdiff-cache/')
 

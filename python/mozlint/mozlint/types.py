@@ -2,8 +2,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import, unicode_literals
-
 import os
 import re
 import sys
@@ -14,7 +12,7 @@ from mozlog.reader import LogHandler
 from mozpack.files import FileFinder
 
 from . import result
-from .pathutils import filterpaths, findobject
+from .pathutils import expand_exclusions, filterpaths, findobject
 
 
 class BaseType(object):
@@ -31,6 +29,8 @@ class BaseType(object):
                          the definition, but passed in by a consumer.
         :returns: A list of :class:`~result.Issue` objects.
         """
+        log = lintargs['log']
+
         if lintargs.get('use_filters', True):
             paths, exclude = filterpaths(
                 lintargs['root'],
@@ -44,12 +44,17 @@ class BaseType(object):
             del config['exclude']
 
         if not paths:
-            return
+            return []
+
+        log.debug("Passing the following paths:\n{paths}".format(
+            paths="  \n".join(paths),
+        ))
 
         if self.batch:
             return self._lint(paths, config, **lintargs)
 
         errors = []
+
         try:
             for p in paths:
                 result = self._lint(p, config, **lintargs)
@@ -96,7 +101,7 @@ class LineType(BaseType):
             return self._lint_dir(path, config, **lintargs)
 
         payload = config['payload']
-        with open(path, 'r') as fh:
+        with open(path, 'r', errors='replace') as fh:
             lines = fh.readlines()
 
         errors = []
@@ -134,6 +139,26 @@ class ExternalType(BaseType):
         return func(files, config, **lintargs)
 
 
+class GlobalType(ExternalType):
+    """Linter type that runs an external global linting function just once.
+
+    The function is responsible for properly formatting the results
+    into a list of :class:`~result.Issue` objects.
+    """
+    batch = True
+
+    def _lint(self, files, config, **lintargs):
+        # Global lints are expensive to invoke.  Try to avoid running
+        # them based on extensions and exclusions.
+        try:
+            next(expand_exclusions(files, config, lintargs['root']))
+        except StopIteration:
+            return []
+
+        func = findobject(config['payload'])
+        return func(config, **lintargs)
+
+
 class LintHandler(LogHandler):
     def __init__(self, config):
         self.config = config
@@ -168,6 +193,7 @@ supported_types = {
     'string': StringType(),
     'regex': RegexType(),
     'external': ExternalType(),
+    'global': GlobalType(),
     'structured_log': StructuredLogType()
 }
 """Mapping of type string to an associated instance."""

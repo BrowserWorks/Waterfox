@@ -5,8 +5,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "gc/Heap.h"
-#include "gc/Verifier.h"
+#include <algorithm>
+
 #include "gc/WeakMap.h"
 #include "gc/Zone.h"
 #include "js/Proxy.h"
@@ -14,6 +14,12 @@
 
 using namespace js;
 using namespace js::gc;
+
+static constexpr CellColor AllCellColors[] = {CellColor::White, CellColor::Gray,
+                                              CellColor::Black};
+
+static constexpr CellColor MarkedCellColors[] = {CellColor::Gray,
+                                                 CellColor::Black};
 
 namespace js {
 
@@ -155,22 +161,20 @@ bool TestMarking() {
   return true;
 }
 
-static const CellColor DontMark = CellColor::White;
+static constexpr CellColor DontMark = CellColor::White;
 
 enum MarkKeyOrDelegate : bool { MarkKey = true, MarkDelegate = false };
 
 bool TestJSWeakMaps() {
   for (auto keyOrDelegateColor : MarkedCellColors) {
     for (auto mapColor : MarkedCellColors) {
-      for (auto markKeyOrDelegate : { MarkKey, MarkDelegate }) {
-        CellColor expected = ExpectedWeakMapValueColor(keyOrDelegateColor,
-                                                       mapColor);
+      for (auto markKeyOrDelegate : {MarkKey, MarkDelegate}) {
+        CellColor expected = std::min(keyOrDelegateColor, mapColor);
         CHECK(TestJSWeakMap(markKeyOrDelegate, keyOrDelegateColor, mapColor,
                             expected));
 #ifdef JS_GC_ZEAL
-        CHECK(TestJSWeakMapWithGrayUnmarking(markKeyOrDelegate,
-                                             keyOrDelegateColor, mapColor,
-                                             expected));
+        CHECK(TestJSWeakMapWithGrayUnmarking(
+            markKeyOrDelegate, keyOrDelegateColor, mapColor, expected));
 #endif
       }
     }
@@ -187,16 +191,15 @@ bool TestInternalWeakMaps() {
         continue;
       }
 
-      CellColor keyOrDelegateColor =
-          ExpectedKeyAndDelegateColor(keyMarkColor, delegateMarkColor);
-      CellColor expected = ExpectedWeakMapValueColor(keyOrDelegateColor,
-                                                     CellColor::Black);
+      // The map is black. The delegate marks its key via wrapper preservation.
+      // The key maps its delegate and the value. Thus, all three end up the
+      // maximum of the key and delegate colors.
+      CellColor expected = std::max(keyMarkColor, delegateMarkColor);
       CHECK(TestInternalWeakMap(keyMarkColor, delegateMarkColor, expected));
 
 #ifdef JS_GC_ZEAL
       CHECK(TestInternalWeakMapWithGrayUnmarking(keyMarkColor,
-                                                 delegateMarkColor,
-                                                 expected));
+                                                 delegateMarkColor, expected));
 #endif
     }
   }
@@ -207,6 +210,8 @@ bool TestInternalWeakMaps() {
 bool TestJSWeakMap(MarkKeyOrDelegate markKey, CellColor weakMapMarkColor,
                    CellColor keyOrDelegateMarkColor,
                    CellColor expectedValueColor) {
+  using std::swap;
+
   // Test marking a JS WeakMap object.
   //
   // This marks the map and one of the key or delegate. The key/delegate and the
@@ -234,17 +239,17 @@ bool TestJSWeakMap(MarkKeyOrDelegate markKey, CellColor weakMapMarkColor,
                grayRoots.grayRoot2);
 
     if (markOrder != 0) {
-      mozilla::Swap(blackRoot1.get(), blackRoot2.get());
-      mozilla::Swap(grayRoots.grayRoot1, grayRoots.grayRoot2);
+      swap(blackRoot1.get(), blackRoot2.get());
+      swap(grayRoots.grayRoot1, grayRoots.grayRoot2);
     }
 
     JS_GC(cx);
 
     ClearGrayRoots();
 
-    CHECK(GetCellColor(weakMap) == weakMapMarkColor);
-    CHECK(GetCellColor(keyOrDelegate) == keyOrDelegateMarkColor);
-    CHECK(GetCellColor(value) == expectedValueColor);
+    CHECK(weakMap->color() == weakMapMarkColor);
+    CHECK(keyOrDelegate->color() == keyOrDelegateMarkColor);
+    CHECK(value->color() == expectedValueColor);
   }
 
   return true;
@@ -298,9 +303,9 @@ bool TestJSWeakMapWithGrayUnmarking(MarkKeyOrDelegate markKey,
 
     ClearGrayRoots();
 
-    CHECK(GetCellColor(weakMap) == weakMapMarkColor);
-    CHECK(GetCellColor(keyOrDelegate) == keyOrDelegateMarkColor);
-    CHECK(GetCellColor(value) == expectedValueColor);
+    CHECK(weakMap->color() == weakMapMarkColor);
+    CHECK(keyOrDelegate->color() == keyOrDelegateMarkColor);
+    CHECK(value->color() == expectedValueColor);
   }
 
   JS_UnsetGCZeal(cx, uint8_t(ZealMode::YieldWhileGrayMarking));
@@ -310,11 +315,11 @@ bool TestJSWeakMapWithGrayUnmarking(MarkKeyOrDelegate markKey,
 
 static void MaybeExposeObject(JSObject* object, CellColor color) {
   if (color == CellColor::Black) {
-      JS::ExposeObjectToActiveJS(object);
+    JS::ExposeObjectToActiveJS(object);
   }
 }
 
-#endif // JS_GC_ZEAL
+#endif  // JS_GC_ZEAL
 
 bool CreateJSWeakMapObjects(JSObject** weakMapOut, JSObject** keyOut,
                             JSObject** valueOut) {
@@ -338,6 +343,8 @@ bool CreateJSWeakMapObjects(JSObject** weakMapOut, JSObject** keyOut,
 
 bool TestInternalWeakMap(CellColor keyMarkColor, CellColor delegateMarkColor,
                          CellColor expectedColor) {
+  using std::swap;
+
   // Test marking for internal weakmaps (without an owning JSObject).
   //
   // All of the key, delegate and value are expected to end up the same color.
@@ -363,17 +370,17 @@ bool TestInternalWeakMap(CellColor keyMarkColor, CellColor delegateMarkColor,
     RootObject(delegate, delegateMarkColor, blackRoot2, grayRoots.grayRoot2);
 
     if (markOrder != 0) {
-      mozilla::Swap(blackRoot1.get(), blackRoot2.get());
-      mozilla::Swap(grayRoots.grayRoot1, grayRoots.grayRoot2);
+      swap(blackRoot1.get(), blackRoot2.get());
+      swap(grayRoots.grayRoot1, grayRoots.grayRoot2);
     }
 
     JS_GC(cx);
 
     ClearGrayRoots();
 
-    CHECK(GetCellColor(key) == expectedColor);
-    CHECK(GetCellColor(delegate) == expectedColor);
-    CHECK(GetCellColor(value) == expectedColor);
+    CHECK(key->color() == expectedColor);
+    CHECK(delegate->color() == expectedColor);
+    CHECK(value->color() == expectedColor);
   }
 
   return true;
@@ -423,9 +430,9 @@ bool TestInternalWeakMapWithGrayUnmarking(CellColor keyMarkColor,
 
     ClearGrayRoots();
 
-    CHECK(GetCellColor(key) == expectedColor);
-    CHECK(GetCellColor(delegate) == expectedColor);
-    CHECK(GetCellColor(value) == expectedColor);
+    CHECK(key->color() == expectedColor);
+    CHECK(delegate->color() == expectedColor);
+    CHECK(value->color() == expectedColor);
   }
 
   JS_UnsetGCZeal(cx, uint8_t(ZealMode::YieldWhileGrayMarking));
@@ -433,7 +440,7 @@ bool TestInternalWeakMapWithGrayUnmarking(CellColor keyMarkColor,
   return true;
 }
 
-#endif // JS_GC_ZEAL
+#endif  // JS_GC_ZEAL
 
 bool CreateInternalWeakMapObjects(UniquePtr<GCManagedObjectWeakMap>* weakMapOut,
                                   JSObject** keyOut, JSObject** valueOut) {
@@ -521,7 +528,7 @@ bool TestCCWs() {
 
   // Incremental zone GC started: the source is now unmarked.
   JS_SetGCParameter(cx, JSGC_MODE, JSGC_MODE_ZONE_INCREMENTAL);
-  JS::PrepareZoneForGC(wrapper->zone());
+  JS::PrepareZoneForGC(cx, wrapper->zone());
   budget = js::SliceBudget(js::WorkBudget(1));
   cx->runtime()->gc.startDebugGC(GC_NORMAL, budget);
   CHECK(JS::IsIncrementalGCInProgress(cx));
@@ -607,8 +614,8 @@ struct ColorCheckFunctor {
 
     // Shapes and symbols are never marked gray.
     jsid id = shape->propid();
-    if (JSID_IS_GCTHING(id) &&
-        !CheckCellColor(JSID_TO_GCTHING(id).asCell(), MarkColor::Black)) {
+    if (id.isGCThing() &&
+        !CheckCellColor(id.toGCCellPtr().asCell(), MarkColor::Black)) {
       return false;
     }
 
@@ -783,7 +790,7 @@ void EvictNursery() { cx->runtime()->gc.evictNursery(); }
 bool ZoneGC(JS::Zone* zone) {
   uint32_t oldMode = JS_GetGCParameter(cx, JSGC_MODE);
   JS_SetGCParameter(cx, JSGC_MODE, JSGC_MODE_ZONE);
-  JS::PrepareZoneForGC(zone);
+  JS::PrepareZoneForGC(cx, zone);
   cx->runtime()->gc.gc(GC_NORMAL, JS::GCReason::API);
   CHECK(!cx->runtime()->gc.isFullGc());
   JS_SetGCParameter(cx, JSGC_MODE, oldMode);

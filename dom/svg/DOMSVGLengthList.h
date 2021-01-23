@@ -14,6 +14,7 @@
 #include "SVGLengthList.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/ErrorResult.h"
+#include "mozilla/Unused.h"
 
 namespace mozilla {
 
@@ -120,6 +121,8 @@ class DOMSVGLengthList final : public nsISupports, public nsWrapperCache {
                                             ErrorResult& error) {
     return InsertItemBefore(newItem, LengthNoFlush(), error);
   }
+  void IndexedSetter(uint32_t index, DOMSVGLength& newValue,
+                     ErrorResult& error);
   uint32_t Length() const { return NumberOfItems(); }
 
  private:

@@ -1,3 +1,5 @@
+"use strict";
+
 const { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
 
 XPCOMUtils.defineLazyGetter(this, "URL", function() {
@@ -21,7 +23,6 @@ const responseBody = "response body";
 function redirectHandler(metadata, response) {
   response.setStatusLine(metadata.httpVersion, 301, "Moved");
   response.setHeader("Location", URL + "/content", false);
-  return;
 }
 
 function contentHandler(metadata, response) {

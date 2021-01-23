@@ -42,15 +42,14 @@ public final class GeckoRuntimeSettings extends RuntimeSettings {
         }
 
         /**
-         * Set the content process hint flag.
+         * Set whether multiprocess support should be enabled.
          *
-         * @param use If true, this will reload the content process for future use.
-         *            Default is false.
+         * @param use A flag determining whether multiprocess should be enabled.
+         *            Default is true.
          * @return This Builder instance.
-
          */
-        public @NonNull Builder useContentProcessHint(final boolean use) {
-            getSettings().mUseContentProcess = use;
+        public @NonNull Builder useMultiprocess(final boolean use) {
+            getSettings().mUseMultiprocess.set(use);
             return this;
         }
 
@@ -154,6 +153,22 @@ public final class GeckoRuntimeSettings extends RuntimeSettings {
          */
         public @NonNull Builder useMaxScreenDepth(final boolean enable) {
             getSettings().mUseMaxScreenDepth = enable;
+            return this;
+        }
+
+        /**
+         * Set whether web manifest support is enabled.
+         *
+         * This controls if Gecko actually downloads, or "obtains", web
+         * manifests and processes them. Without setting this pref, trying
+         * to obtain a manifest throws.
+         *
+         * @param enabled A flag determining whether Web Manifest processing support is
+         *                enabled.
+         * @return The builder instance.
+         */
+        public @NonNull Builder webManifest(final boolean enabled) {
+            getSettings().mWebManifest.set(enabled);
             return this;
         }
 
@@ -266,6 +281,20 @@ public final class GeckoRuntimeSettings extends RuntimeSettings {
         }
 
         /**
+         * Set whether login forms should be filled automatically if only one
+         * viable candidate is provided via
+         * {@link Autocomplete.LoginStorageDelegate#onLoginFetch onLoginFetch}.
+         *
+         * @param enabled A flag determining whether login autofill should be
+         *                enabled.
+         * @return The builder instance.
+         */
+        public @NonNull Builder loginAutofillEnabled(final boolean enabled) {
+            getSettings().setLoginAutofillEnabled(enabled);
+            return this;
+        }
+
+        /**
          * When set, the specified {@link android.app.Service} will be started by
          * an {@link android.content.Intent} with action {@link GeckoRuntime#ACTION_CRASHED} when
          * a crash is encountered. Crash details can be found in the Intent extras, such as
@@ -321,17 +350,6 @@ public final class GeckoRuntimeSettings extends RuntimeSettings {
         }
 
         /**
-         * Sets video autoplay mode.
-         * May be either {@link GeckoRuntimeSettings#AUTOPLAY_DEFAULT_ALLOWED} or {@link GeckoRuntimeSettings#AUTOPLAY_DEFAULT_BLOCKED}
-         * @param autoplay Allows or blocks video autoplay.
-         * @return This Builder instance.
-         */
-        public @NonNull Builder autoplayDefault(final @AutoplayDefault int autoplay) {
-            getSettings().mAutoplayDefault.set(autoplay);
-            return this;
-        }
-
-        /**
          * Sets the preferred color scheme override for web content.
          *
          * @param scheme The preferred color scheme. Must be one of the
@@ -369,16 +387,70 @@ public final class GeckoRuntimeSettings extends RuntimeSettings {
          * Sets the WebGL MSAA level.
          *
          * @param level number of MSAA samples, 0 if MSAA should be disabled.
-         * @return This GeckoRuntimeSettings instance.
+         * @return This Builder instance.
          */
         public @NonNull Builder glMsaaLevel(final int level) {
             getSettings().mGlMsaaLevel.set(level);
             return this;
         }
+
+        /**
+         * Add a {@link RuntimeTelemetry.Delegate} instance to this
+         * GeckoRuntime.  This delegate can be used by the app to receive
+         * streaming telemetry data from GeckoView.
+         *
+         * @param delegate the delegate that will handle telemetry
+         * @return The builder instance.
+         */
+        public @NonNull Builder telemetryDelegate(
+                final @NonNull RuntimeTelemetry.Delegate delegate) {
+            getSettings().mTelemetryProxy = new RuntimeTelemetry.Proxy(delegate);
+            getSettings().mTelemetryEnabled.set(true);
+            return this;
+        }
+
+        /**
+         * Enables GeckoView and Gecko Logging.
+         * Logging is on by default. Does not control all logging in Gecko.
+         * Logging done in Java code must be stripped out at build time.
+         *
+         * @param enable True if logging is enabled.
+         * @return This Builder instance.
+         */
+        public @NonNull Builder debugLogging(final boolean enable) {
+            getSettings().mDevToolsConsoleToLogcat.set(enable);
+            getSettings().mConsoleServiceToLogcat.set(enable);
+            getSettings().mGeckoViewLogLevel.set(enable ? "Debug" : "Fatal");
+            return this;
+        }
+
+        /**
+         * Sets whether or not about:config should be enabled. This is a page that allows
+         * users to directly modify Gecko preferences. Modification of some preferences may
+         * cause the app to break in unpredictable ways -- crashes, performance issues, security
+         * vulnerabilities, etc.
+         *
+         * @param flag True if about:config should be enabled, false otherwise.
+         * @return This Builder instance.
+         */
+        public @NonNull Builder aboutConfigEnabled(final boolean flag) {
+            getSettings().mAboutConfig.set(flag);
+            return this;
+        }
+
+        /**
+         * Sets whether or not pinch-zooming should be enabled when <code>user-scalable=no</code> is set on the viewport.
+         *
+         * @param flag True if force user scalable zooming should be enabled, false otherwise.
+         * @return This Builder instance.
+         */
+        public @NonNull Builder forceUserScalableEnabled(final boolean flag) {
+            getSettings().mForceUserScalable.set(flag);
+            return this;
+        }
     }
 
     private GeckoRuntime mRuntime;
-    /* package */ boolean mUseContentProcess;
     /* package */ String[] mArgs;
     /* package */ Bundle mExtras;
     /* package */ String mConfigFilePath;
@@ -389,6 +461,8 @@ public final class GeckoRuntimeSettings extends RuntimeSettings {
         return mContentBlocking;
     }
 
+    /* package */ final Pref<Boolean> mWebManifest = new Pref<Boolean>(
+        "dom.manifest.enabled", true);
     /* package */ final Pref<Boolean> mJavaScript = new Pref<Boolean>(
         "javascript.enabled", true);
     /* package */ final Pref<Boolean> mRemoteDebugging = new Pref<Boolean>(
@@ -397,8 +471,6 @@ public final class GeckoRuntimeSettings extends RuntimeSettings {
         "browser.display.use_document_fonts", 1);
     /* package */ final Pref<Boolean> mConsoleOutput = new Pref<Boolean>(
         "geckoview.console.enabled", false);
-    /* package */ final Pref<Integer> mAutoplayDefault = new Pref<Integer>(
-        "media.autoplay.default", AUTOPLAY_DEFAULT_BLOCKED);
     /* package */ final Pref<Integer> mFontSizeFactor = new Pref<>(
         "font.size.systemFontScale", 100);
     /* package */ final Pref<Integer> mFontInflationMinTwips = new Pref<>(
@@ -411,6 +483,22 @@ public final class GeckoRuntimeSettings extends RuntimeSettings {
             "apz.allow_double_tap_zooming", true);
     /* package */ final Pref<Integer> mGlMsaaLevel = new Pref<>(
             "gl.msaa-level", 0);
+    /* package */ final Pref<Boolean> mTelemetryEnabled = new Pref<>(
+            "toolkit.telemetry.geckoview.streaming", false);
+    /* package */ final Pref<String> mGeckoViewLogLevel = new Pref<>(
+            "geckoview.logging", "Debug");
+    /* package */ final Pref<Boolean> mConsoleServiceToLogcat = new Pref<>(
+            "consoleservice.logcat", true);
+    /* package */ final Pref<Boolean> mDevToolsConsoleToLogcat = new Pref<>(
+            "devtools.console.stdout.chrome", true);
+    /* package */ final Pref<Boolean> mAboutConfig = new Pref<>(
+            "general.aboutConfig.enable", false);
+    /* package */ final Pref<Boolean> mForceUserScalable = new Pref<>(
+            "browser.ui.zoom.force-user-scalable", false);
+    /* package */ final Pref<Boolean> mUseMultiprocess = new Pref<>(
+            "browser.tabs.remote.autostart", true);
+    /* package */ final Pref<Boolean> mAutofillLogins = new Pref<Boolean>(
+        "signon.autofillForms", true);
 
     /* package */ boolean mDebugPause;
     /* package */ boolean mUseMaxScreenDepth;
@@ -420,6 +508,7 @@ public final class GeckoRuntimeSettings extends RuntimeSettings {
     /* package */ int mScreenHeightOverride;
     /* package */ Class<? extends Service> mCrashHandler;
     /* package */ String[] mRequestedLocales;
+    /* package */ RuntimeTelemetry.Proxy mTelemetryProxy;
 
     /**
      * Attach and commit the settings to the given runtime.
@@ -456,7 +545,6 @@ public final class GeckoRuntimeSettings extends RuntimeSettings {
     private void updateSettings(final @NonNull GeckoRuntimeSettings settings) {
         updatePrefs(settings);
 
-        mUseContentProcess = settings.getUseContentProcessHint();
         mArgs = settings.getArguments().clone();
         mExtras = new Bundle(settings.getExtras());
         mContentBlocking = new ContentBlocking.Settings(
@@ -471,6 +559,7 @@ public final class GeckoRuntimeSettings extends RuntimeSettings {
         mCrashHandler = settings.mCrashHandler;
         mRequestedLocales = settings.mRequestedLocales;
         mConfigFilePath = settings.mConfigFilePath;
+        mTelemetryProxy = settings.mTelemetryProxy;
     }
 
     /* package */ void commit() {
@@ -479,13 +568,14 @@ public final class GeckoRuntimeSettings extends RuntimeSettings {
     }
 
     /**
-     * Get the content process hint flag.
+     * Whether multiprocess is enabled.
      *
-     * @return The content process hint flag.
+     * @return true if multiprocess is enabled, false otherwise.
      */
-    public boolean getUseContentProcessHint() {
-        return mUseContentProcess;
+    public boolean getUseMultiprocess() {
+        return mUseMultiprocess.get();
     }
+
 
     /**
      * Get the custom Gecko process arguments.
@@ -717,6 +807,28 @@ public final class GeckoRuntimeSettings extends RuntimeSettings {
     }
 
     /**
+     * Sets whether Web Manifest processing support is enabled.
+     *
+     * @param enabled A flag determining whether Web Manifest processing support is
+     *                enabled.
+     *
+     * @return This GeckoRuntimeSettings instance.
+     */
+    public @NonNull GeckoRuntimeSettings setWebManifestEnabled(final boolean enabled) {
+        mWebManifest.commit(enabled);
+        return this;
+    }
+
+    /**
+     * Get whether or not Web Manifest processing support is enabled.
+     *
+     * @return True if web manifest processing support is enabled.
+     */
+    public boolean getWebManifestEnabled() {
+        return mWebManifest.get();
+    }
+
+    /**
      * Set whether or not web console messages should go to logcat.
      *
      * Note: If enabled, Gecko performance may be negatively impacted if
@@ -743,10 +855,10 @@ public final class GeckoRuntimeSettings extends RuntimeSettings {
 
     /**
      * Set whether or not font sizes in web content should be automatically scaled according to
-     * the device's current system font scale setting.
-     * Disabling this setting will restore the previously used values for
-     * {@link GeckoRuntimeSettings#getFontSizeFactor()} and
-     * {@link GeckoRuntimeSettings#getFontInflationEnabled()}.
+     * the device's current system font scale setting. Enabling this will prevent modification of
+     * the {@link GeckoRuntimeSettings#setFontSizeFactor font size factor}.
+     * Disabling this setting will restore the previously used value for the
+     * {@link GeckoRuntimeSettings#getFontSizeFactor font size factor}.
      *
      * @param enabled A flag determining whether or not font sizes should be scaled automatically
      *                to match the device's system font scale.
@@ -765,41 +877,6 @@ public final class GeckoRuntimeSettings extends RuntimeSettings {
      */
     public boolean getAutomaticFontSizeAdjustment() {
         return GeckoFontScaleListener.getInstance().getEnabled();
-    }
-
-    // Sync values with dom/media/nsIAutoplay.idl.
-    @Retention(RetentionPolicy.SOURCE)
-    @IntDef({ AUTOPLAY_DEFAULT_ALLOWED, AUTOPLAY_DEFAULT_BLOCKED })
-    /* package */ @interface AutoplayDefault {}
-
-    /**
-     * Autoplay video is allowed.
-     */
-    public static final int AUTOPLAY_DEFAULT_ALLOWED = 0;
-
-    /**
-     * Autoplay video is blocked.
-     */
-    public static final int AUTOPLAY_DEFAULT_BLOCKED = 1;
-
-    /**
-     * Sets video autoplay mode.
-     * May be either {@link GeckoRuntimeSettings#AUTOPLAY_DEFAULT_ALLOWED} or {@link GeckoRuntimeSettings#AUTOPLAY_DEFAULT_BLOCKED}
-     * @param autoplay Allows or blocks video autoplay.
-     * @return This GeckoRuntimeSettings instance.
-     */
-    public @NonNull GeckoRuntimeSettings setAutoplayDefault(final @AutoplayDefault int autoplay) {
-        mAutoplayDefault.commit(autoplay);
-        return this;
-    }
-
-    /**
-     * Gets the current video autoplay mode.
-     * @return The current video autoplay mode. Will be either {@link GeckoRuntimeSettings#AUTOPLAY_DEFAULT_ALLOWED}
-     * or {@link GeckoRuntimeSettings#AUTOPLAY_DEFAULT_BLOCKED}
-     */
-    public @AutoplayDefault int getAutoplayDefault() {
-        return mAutoplayDefault.get();
     }
 
     private static final int FONT_INFLATION_BASE_VALUE = 120;
@@ -835,7 +912,7 @@ public final class GeckoRuntimeSettings extends RuntimeSettings {
         }
 
         final int fontSizePercentage = Math.round(fontSizeFactor * 100);
-        mFontSizeFactor.commit(Math.round(fontSizePercentage));
+        mFontSizeFactor.commit(fontSizePercentage);
         if (getFontInflationEnabled()) {
             final int scaledFontInflation = Math.round(FONT_INFLATION_BASE_VALUE * fontSizeFactor);
             mFontInflationMinTwips.commit(scaledFontInflation);
@@ -866,21 +943,10 @@ public final class GeckoRuntimeSettings extends RuntimeSettings {
      *
      * <p>Currently, any changes only take effect after a reload of the session.
      *
-     * <p>This setting cannot be modified while
-     * {@link GeckoRuntimeSettings#setAutomaticFontSizeAdjustment automatic font size adjustment}
-     * is enabled.
-     *
      * @param enabled A flag determining whether or not font inflation should be enabled.
      * @return This GeckoRuntimeSettings instance.
      */
     public @NonNull GeckoRuntimeSettings setFontInflationEnabled(final boolean enabled) {
-        if (getAutomaticFontSizeAdjustment()) {
-            throw new IllegalStateException("Not allowed when automatic font size adjustment is enabled");
-        }
-        return setFontInflationEnabledInternal(enabled);
-    }
-
-    /* package */ @NonNull GeckoRuntimeSettings setFontInflationEnabledInternal(final boolean enabled) {
         final int minTwips =
                 enabled ? Math.round(FONT_INFLATION_BASE_VALUE * getFontSizeFactor()) : 0;
         mFontInflationMinTwips.commit(minTwips);
@@ -990,11 +1056,81 @@ public final class GeckoRuntimeSettings extends RuntimeSettings {
         return this;
     }
 
+    public @Nullable RuntimeTelemetry.Delegate getTelemetryDelegate() {
+        return mTelemetryProxy.getDelegate();
+    }
+
+    /**
+     * Gets whether about:config is enabled or not.
+     *
+     * @return True if about:config is enabled, false otherwise.
+     */
+    public boolean getAboutConfigEnabled() {
+        return mAboutConfig.get();
+    }
+
+    /**
+     * Sets whether or not about:config should be enabled. This is a page that allows
+     * users to directly modify Gecko preferences. Modification of some preferences may
+     * cause the app to break in unpredictable ways -- crashes, performance issues, security
+     * vulnerabilities, etc.
+     *
+     * @param flag True if about:config should be enabled, false otherwise.
+     * @return This GeckoRuntimeSettings instance.
+     */
+    public @NonNull GeckoRuntimeSettings setAboutConfigEnabled(final boolean flag) {
+        mAboutConfig.commit(flag);
+        return this;
+    }
+
+    /**
+     * Gets whether or not force user scalable zooming should be enabled or not.
+     *
+     * @return True if force user scalable zooming should be enabled, false otherwise.
+     */
+    public boolean getForceUserScalableEnabled() {
+        return mForceUserScalable.get();
+    }
+
+    /**
+     * Sets whether or not pinch-zooming should be enabled when <code>user-scalable=no</code> is set on the viewport.
+     *
+     * @param flag True if force user scalable zooming should be enabled, false otherwise.
+     * @return This GeckoRuntimeSettings instance.
+     */
+    public @NonNull GeckoRuntimeSettings setForceUserScalableEnabled(final boolean flag) {
+        mForceUserScalable.commit(flag);
+        return this;
+    }
+
+    /**
+     * Get whether login form autofill is enabled.
+     *
+     * @return True if login autofill is enabled.
+     */
+    public boolean getLoginAutofillEnabled() {
+        return mAutofillLogins.get();
+    }
+
+    /**
+     * Set whether login forms should be filled automatically if only one
+     * viable candidate is provided via
+     * {@link Autocomplete.LoginStorageDelegate#onLoginFetch onLoginFetch}.
+     *
+     * @param enabled A flag determining whether login autofill should be
+     *                enabled.
+     * @return The builder instance.
+     */
+    public @NonNull GeckoRuntimeSettings setLoginAutofillEnabled(
+            final boolean enabled) {
+        mAutofillLogins.commit(enabled);
+        return this;
+    }
+
     @Override // Parcelable
     public void writeToParcel(final Parcel out, final int flags) {
         super.writeToParcel(out, flags);
 
-        ParcelableUtils.writeBoolean(out, mUseContentProcess);
         out.writeStringArray(mArgs);
         mExtras.writeToParcel(out, flags);
         ParcelableUtils.writeBoolean(out, mDebugPause);
@@ -1012,7 +1148,6 @@ public final class GeckoRuntimeSettings extends RuntimeSettings {
     public void readFromParcel(final @NonNull Parcel source) {
         super.readFromParcel(source);
 
-        mUseContentProcess = ParcelableUtils.readBoolean(source);
         mArgs = source.createStringArray();
         mExtras.readFromParcel(source);
         mDebugPause = ParcelableUtils.readBoolean(source);

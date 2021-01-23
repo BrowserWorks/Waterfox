@@ -23,7 +23,7 @@ struct App {}
 impl Example for App {
     fn render(
         &mut self,
-        api: &RenderApi,
+        api: &mut RenderApi,
         builder: &mut DisplayListBuilder,
         _txn: &mut Transaction,
         _device_size: DeviceIntSize,
@@ -41,12 +41,13 @@ impl Example for App {
         sub_builder.push_simple_stacking_context(
             sub_bounds.origin,
             space_and_clip.spatial_id,
-            true,
+            PrimitiveFlags::IS_BACKFACE_VISIBLE,
         );
 
         // green rect visible == success
         sub_builder.push_rect(
             &CommonItemProperties::new(sub_bounds, space_and_clip),
+            sub_bounds,
             ColorF::new(0.0, 1.0, 0.0, 1.0)
         );
         sub_builder.pop_stacking_context();
@@ -73,12 +74,13 @@ impl Example for App {
         builder.push_simple_stacking_context(
             sub_bounds.origin,
             space_and_clip.spatial_id,
-            true,
+            PrimitiveFlags::IS_BACKFACE_VISIBLE,
         );
 
         // red rect under the iframe: if this is visible, things have gone wrong
         builder.push_rect(
             &CommonItemProperties::new(sub_bounds, space_and_clip),
+            sub_bounds,
             ColorF::new(1.0, 0.0, 0.0, 1.0)
         );
         builder.push_iframe(sub_bounds, sub_bounds, &space_and_clip, sub_pipeline_id, false);

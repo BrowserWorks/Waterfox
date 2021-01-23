@@ -4,6 +4,7 @@
 
 SOURCES += [
     'TestDLLBlocklist.cpp',
+    'TestNativeNtGTest.cpp',
 ]
 
 FINAL_LIBRARY = 'xul-gtest'
@@ -12,5 +13,6 @@ TEST_DIRS += [
     'TestDllBlocklist_AllowByVersion',
     'TestDllBlocklist_MatchByName',
     'TestDllBlocklist_MatchByVersion',
+    'TestDllBlocklist_NoOpEntryPoint',
 ]
 

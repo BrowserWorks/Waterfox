@@ -22,7 +22,7 @@ MaskLayerImageCache::~MaskLayerImageCache() {
 
 void MaskLayerImageCache::Sweep() {
   for (auto iter = mMaskImageContainers.Iter(); !iter.Done(); iter.Next()) {
-    const MaskLayerImageCache::MaskLayerImageKey* key = iter.Get()->mKey;
+    const auto& key = iter.Get()->mKey;
     if (key->HasZeroLayerCount()) {
       iter.Remove();
     }
@@ -52,7 +52,8 @@ MaskLayerImageCache::MaskLayerImageKey::MaskLayerImageKey()
 
 MaskLayerImageCache::MaskLayerImageKey::MaskLayerImageKey(
     const MaskLayerImageKey& aKey)
-    : mRoundedClipRects(aKey.mRoundedClipRects), mLayerCount(aKey.mLayerCount) {
+    : mRoundedClipRects(aKey.mRoundedClipRects.Clone()),
+      mLayerCount(aKey.mLayerCount) {
   MOZ_COUNT_CTOR(MaskLayerImageKey);
 }
 

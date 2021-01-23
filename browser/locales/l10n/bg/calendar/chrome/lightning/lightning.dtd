@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+
+<!-- Tools menu -->
+<!ENTITY lightning.preferencesLabel "Календар">
+
+<!-- New menu popup in File menu -->
+<!ENTITY lightning.menupopup.new.event.label    "Събитие…">
+<!ENTITY lightning.menupopup.new.event.accesskey "С">
+<!ENTITY lightning.menupopup.new.task.label     "Задача…">
+<!ENTITY lightning.menupopup.new.task.accesskey "З">
+<!ENTITY lightning.menupopup.new.calendar.label "Календар…">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "К">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.label               "Отваряне">
+<!ENTITY lightning.menupopup.open.accesskey           "О">
+<!ENTITY lightning.menupopup.open.message.label       "Запазено писмо…">
+<!ENTITY lightning.menupopup.open.message.accesskey   "п">
+<!ENTITY lightning.menupopup.open.calendar.label      "Календар файл…">
+<!ENTITY lightning.menupopup.open.calendar.accesskey  "л">
+
+<!-- View Menu -->
+<!ENTITY lightning.menu.view.calendar.label            "Календар">
+<!ENTITY lightning.menu.view.calendar.accesskey        "К">
+<!ENTITY lightning.menu.view.tasks.label               "Задачи">
+<!ENTITY lightning.menu.view.tasks.accesskey           "д">
+
+<!-- Events and Tasks menu -->
+<!ENTITY lightning.menu.eventtask.label                "Събития и задачи">
+<!ENTITY lightning.menu.eventtask.accesskey            "б">
+
+<!-- properties dialog, calendar creation wizard -->
+<!ENTITY lightning.calendarproperties.email.label               "Мейл:">
+
+<!-- iMIP Bar (meeting support) -->
+<!ENTITY lightning.imipbar.btnAccept.label                                  "Приемане">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext                           "Приемане на поканата за събитие">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label                       "Приемане на всички">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences2.tooltiptext                "Приемане поканите за всички случвания на събитието">
+<!ENTITY lightning.imipbar.btnAdd.label                                     "Добавяне">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext                               "Добавяне на събитие към календара">
+<!ENTITY lightning.imipbar.btnDecline.label                                 "Отказване">
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext                          "Отказване на покана за събитие">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label                      "Отказване на всички">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences2.tooltiptext               "Отказване поканите за всички случвания на събитието">
+<!ENTITY lightning.imipbar.btnDeclineCounter.label                          "Отказване">
+<!ENTITY lightning.imipbar.btnDeclineCounter.tooltiptext                    "Отказване на контрапредложението">
+<!ENTITY lightning.imipbar.btnDelete.label                                  "Изтриване">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext                            "Изтриване от календара">
+<!ENTITY lightning.imipbar.btnDetails.label                                 "Подробности…">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext                           "Показване подробностите на събитието">
+<!ENTITY lightning.imipbar.btnMore.label                                    "Повече">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext                              "Щракнете за показване на повече възможности">
+<!ENTITY lightning.imipbar.btnReconfirm2.label                              "Препотвърждаване">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext                         "Изпращане на препотвърждаване до организатора">
+<!ENTITY lightning.imipbar.btnReschedule.label                              "Повторно планиране">
+<!ENTITY lightning.imipbar.btnReschedule.tooltiptext                        "Повторно планиране на събитието">
+<!ENTITY lightning.imipbar.btnSaveCopy.label                                "Запис на копие">
+<!ENTITY lightning.imipbar.btnSaveCopy.tooltiptext                          "Запис на копие на събитието в календара независимо от отговора към организатора. Списъскът с участници ще бъде изчистен.">
+<!ENTITY lightning.imipbar.btnTentative.label                               "Несигурен">
+<!ENTITY lightning.imipbar.btnTentative2.tooltiptext                        "Приемане на събитието като несигурно">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences.label                    "Всички са несигурни">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences2.tooltiptext             "Приемане на събитието като несигурно за всички случвания на събитието">
+<!ENTITY lightning.imipbar.btnUpdate.label                                  "Обновяване">
+<!ENTITY lightning.imipbar.btnUpdate.tooltiptext                            "Обновяване на събитието в календара">
+<!ENTITY lightning.imipbar.description                                      "Писмото съдържа покана за събитие.">
+
+<!-- Lightning specific keybindings -->
+<!ENTITY lightning.keys.event.showCalendar.key "C">
+<!ENTITY lightning.keys.event.showTasks.key "D">
+<!ENTITY lightning.keys.event.new "I">
+<!ENTITY lightning.keys.todo.new "D">
+
+<!-- Account Central page -->
+<!ENTITY lightning.acctCentral.newCalendar.label "Създаване на нов календар">
+
+<!-- today-pane-specific -->
+<!ENTITY todaypane.showMinimonth.label "Показване на мини-месец">
+<!ENTITY todaypane.showMinimonth.accesskey "м">
+<!ENTITY todaypane.showMiniday.label "Показване на мини-ден">
+<!ENTITY todaypane.showMiniday.accesskey  "д">
+<!ENTITY todaypane.showNone.label "Без показване">
+<!ENTITY todaypane.showNone.accesskey "в">
+<!ENTITY todaypane.showTodayPane.label "Показване на дневния график">
+<!ENTITY todaypane.showTodayPane.accesskey "к">
+<!ENTITY todaypane.statusButton.label "Дневен график">

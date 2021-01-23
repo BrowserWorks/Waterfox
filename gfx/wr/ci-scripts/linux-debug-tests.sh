@@ -15,10 +15,6 @@ set -o xtrace
 
 CARGOFLAGS=${CARGOFLAGS:-"--verbose"}  # default to --verbose if not set
 
-pushd webrender_api
-cargo test ${CARGOFLAGS} --features "ipc"
-popd
-
 pushd webrender
 cargo build ${CARGOFLAGS} --no-default-features
 cargo build ${CARGOFLAGS} --no-default-features --features capture
@@ -35,4 +31,6 @@ pushd examples
 cargo build ${CARGOFLAGS}
 popd
 
-cargo test ${CARGOFLAGS} --all
+cargo test ${CARGOFLAGS} \
+    --all --exclude compositor-windows --exclude compositor \
+    --exclude glsl-to-cxx --exclude swgl

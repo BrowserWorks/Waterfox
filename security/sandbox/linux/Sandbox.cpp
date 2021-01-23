@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
 #include <sys/prctl.h>
 #include <sys/ptrace.h>
 #include <sys/syscall.h>
@@ -226,14 +227,14 @@ static bool MOZ_MUST_USE InstallSyscallFilter(const sock_fprog* aProg,
                 SECCOMP_FILTER_FLAG_TSYNC, aProg) != 0) {
       SANDBOX_LOG_ERROR("thread-synchronized seccomp failed: %s",
                         strerror(errno));
-      MOZ_CRASH("prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER)");
+      MOZ_CRASH("seccomp+tsync failed, but kernel supports tsync");
     }
   } else {
     if (prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, (unsigned long)aProg, 0,
               0)) {
       SANDBOX_LOG_ERROR("prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER) failed: %s",
                         strerror(errno));
-      MOZ_CRASH("seccomp+tsync failed, but kernel supports tsync");
+      MOZ_CRASH("prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER)");
     }
   }
   return true;
@@ -284,7 +285,8 @@ static void SetThreadSandboxHandler(int signum) {
 }
 
 static void EnterChroot() {
-  if (!PR_GetEnv(kSandboxChrootEnvFlag)) {
+  const char* env = PR_GetEnv(kSandboxChrootEnvFlag);
+  if (!env || !*env || *env == '0') {
     return;
   }
   char msg = kSandboxChrootRequest;
@@ -499,6 +501,14 @@ void SandboxEarlyInit() {
   }
 }
 
+static void RunGlibcLazyInitializers() {
+  // Make glibc's lazy initialization of shm_open() run before sandboxing
+  int fd = shm_open("/dummy", O_RDONLY, 0);
+  if (fd > 0) {
+    close(fd);  // In the unlikely case we actually opened something
+  }
+}
+
 static void SandboxLateInit() {
 #ifdef NIGHTLY_BUILD
   gSandboxCrashOnError = true;
@@ -515,6 +525,8 @@ static void SandboxLateInit() {
       gSandboxCrashOnError = envVar[0] != '0';
     }
   }
+
+  RunGlibcLazyInitializers();
 }
 
 // Common code for sandbox startup.
@@ -640,9 +652,11 @@ void SetMediaPluginSandbox(const char* aFilePath) {
   auto files = new SandboxOpenedFiles();
   files->Add(std::move(plugin));
   files->Add("/dev/urandom", true);
+  files->Add("/etc/ld.so.cache");  // Needed for NSS in clearkey.
   files->Add("/sys/devices/system/cpu/cpu0/tsc_freq_khz");
   files->Add("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq");
   files->Add("/proc/cpuinfo");  // Info also available via CPUID instruction.
+  files->Add("/proc/sys/crypto/fips_enabled");  // Needed for NSS in clearkey.
 #ifdef __i386__
   files->Add("/proc/self/auxv");  // Info also in process's address space.
 #endif
@@ -670,6 +684,26 @@ void SetRemoteDataDecoderSandbox(int aBroker) {
   }
 
   SetCurrentProcessSandbox(GetDecoderSandboxPolicy(sBroker));
+}
+
+void SetSocketProcessSandbox(int aBroker) {
+  if (!SandboxInfo::Get().Test(SandboxInfo::kHasSeccompBPF) ||
+      PR_GetEnv("MOZ_DISABLE_SOCKET_PROCESS_SANDBOX")) {
+    if (aBroker >= 0) {
+      close(aBroker);
+    }
+    return;
+  }
+
+  gSandboxReporterClient =
+      new SandboxReporterClient(SandboxReport::ProcType::SOCKET_PROCESS);
+
+  static SandboxBrokerClient* sBroker;
+  if (aBroker >= 0) {
+    sBroker = new SandboxBrokerClient(aBroker);
+  }
+
+  SetCurrentProcessSandbox(GetSocketProcessSandboxPolicy(sBroker));
 }
 
 }  // namespace mozilla

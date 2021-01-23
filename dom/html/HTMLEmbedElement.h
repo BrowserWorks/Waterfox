@@ -26,7 +26,6 @@ class HTMLEmbedElement final : public nsGenericHTMLElement,
   // nsISupports
   NS_DECL_ISUPPORTS_INHERITED
   NS_IMPL_FROMNODE_HTML_WITH_TAG(HTMLEmbedElement, embed)
-  virtual int32_t TabIndexDefault() override;
 
 #ifdef XP_MACOSX
   // EventTarget
@@ -36,10 +35,8 @@ class HTMLEmbedElement final : public nsGenericHTMLElement,
   // EventTarget
   virtual void AsyncEventRunning(AsyncEventDispatcher* aEvent) override;
 
-  virtual nsresult BindToTree(Document* aDocument, nsIContent* aParent,
-                              nsIContent* aBindingParent) override;
-  virtual void UnbindFromTree(bool aDeep = true,
-                              bool aNullParent = true) override;
+  virtual nsresult BindToTree(BindContext&, nsINode& aParent) override;
+  virtual void UnbindFromTree(bool aNullParent = true) override;
 
   virtual bool IsHTMLFocusable(bool aWithMouse, bool* aIsFocusable,
                                int32_t* aTabIndex) override;
@@ -63,6 +60,8 @@ class HTMLEmbedElement final : public nsGenericHTMLElement,
   nsresult CopyInnerTo(HTMLEmbedElement* aDest);
 
   void StartObjectLoad() { StartObjectLoad(true, false); }
+
+  virtual bool IsInteractiveHTMLContent() const override { return true; }
 
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED_NO_UNLINK(HTMLEmbedElement,
                                                      nsGenericHTMLElement)

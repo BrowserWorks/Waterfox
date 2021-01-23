@@ -8,6 +8,7 @@
 #define mozilla_dom_localstorage_LSWriteOptimizer_h
 
 #include "mozilla/CheckedInt.h"
+#include "nsClassHashtable.h"
 
 namespace mozilla {
 namespace dom {
@@ -23,7 +24,7 @@ class LSWriteOptimizerBase {
   class DeleteItemInfo;
   class TruncateInfo;
 
-  nsAutoPtr<WriteInfo> mTruncateInfo;
+  UniquePtr<WriteInfo> mTruncateInfo;
   nsClassHashtable<nsStringHashKey, WriteInfo> mWriteInfos;
   CheckedUint64 mLastSerialNumber;
   int64_t mTotalDelta;

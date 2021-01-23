@@ -8,6 +8,7 @@
 
 #include "mozilla/dom/CaretPositionBinding.h"
 #include "mozilla/dom/DOMRect.h"
+#include "mozilla/ErrorResult.h"
 #include "nsRange.h"
 
 using namespace mozilla::dom;
@@ -15,7 +16,7 @@ using namespace mozilla::dom;
 nsDOMCaretPosition::nsDOMCaretPosition(nsINode* aNode, uint32_t aOffset)
     : mOffset(aOffset), mOffsetNode(aNode), mAnonymousContentNode(nullptr) {}
 
-nsDOMCaretPosition::~nsDOMCaretPosition() {}
+nsDOMCaretPosition::~nsDOMCaretPosition() = default;
 
 nsINode* nsDOMCaretPosition::GetOffsetNode() const { return mOffsetNode; }
 
@@ -24,27 +25,19 @@ already_AddRefed<DOMRect> nsDOMCaretPosition::GetClientRect() const {
     return nullptr;
   }
 
-  RefPtr<DOMRect> rect;
-  RefPtr<nsRange> domRange;
   nsCOMPtr<nsINode> node;
-
   if (mAnonymousContentNode) {
     node = mAnonymousContentNode;
   } else {
     node = mOffsetNode;
   }
 
-  nsresult creationRv = nsRange::CreateRange(node, mOffset, node, mOffset,
-                                             getter_AddRefs<nsRange>(domRange));
-  if (!NS_SUCCEEDED(creationRv)) {
+  RefPtr<nsRange> range =
+      nsRange::Create(node, mOffset, node, mOffset, mozilla::IgnoreErrors());
+  if (!range) {
     return nullptr;
   }
-
-  NS_ASSERTION(domRange,
-               "unable to retrieve valid dom range from CaretPosition");
-
-  rect = domRange->GetBoundingClientRect(false);
-
+  RefPtr<DOMRect> rect = range->GetBoundingClientRect(false);
   return rect.forget();
 }
 

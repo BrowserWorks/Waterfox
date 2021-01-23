@@ -44,11 +44,7 @@ describe("makeNodesForProperties", () => {
     expect(names).toEqual(["0", "length", "<prototype>"]);
 
     const paths = nodes.map(n => n.path.toString());
-    expect(paths).toEqual([
-      "Symbol(root/0)",
-      "Symbol(root/length)",
-      "Symbol(root/<prototype>)",
-    ]);
+    expect(paths).toEqual(["root◦0", "root◦length", "root◦<prototype>"]);
   });
 
   it("includes getters and setters", () => {
@@ -93,12 +89,12 @@ describe("makeNodesForProperties", () => {
     ]);
 
     expect(paths).toEqual([
-      "Symbol(root/bar)",
-      "Symbol(root/baz)",
-      "Symbol(root/foo)",
-      "Symbol(root/<get bar()>)",
-      "Symbol(root/<set baz()>)",
-      "Symbol(root/<prototype>)",
+      "root◦bar",
+      "root◦baz",
+      "root◦foo",
+      "root◦<get bar()>",
+      "root◦<set baz()>",
+      "root◦<prototype>",
     ]);
   });
 
@@ -143,12 +139,12 @@ describe("makeNodesForProperties", () => {
 
     expect(names).toEqual(["1", "2", "11", "_bar", "bar", "<prototype>"]);
     expect(paths).toEqual([
-      "Symbol(root/1)",
-      "Symbol(root/2)",
-      "Symbol(root/11)",
-      "Symbol(root/_bar)",
-      "Symbol(root/bar)",
-      "Symbol(root/<prototype>)",
+      "root◦1",
+      "root◦2",
+      "root◦11",
+      "root◦_bar",
+      "root◦bar",
+      "root◦<prototype>",
     ]);
   });
 
@@ -167,7 +163,7 @@ describe("makeNodesForProperties", () => {
     const paths = nodes.map(n => n.path.toString());
 
     expect(names).toEqual(["bar", "<prototype>"]);
-    expect(paths).toEqual(["Symbol(root/bar)", "Symbol(root/<prototype>)"]);
+    expect(paths).toEqual(["root◦bar", "root◦<prototype>"]);
 
     expect(nodeIsPrototype(nodes[1])).toBe(true);
   });
@@ -176,8 +172,16 @@ describe("makeNodesForProperties", () => {
     const nodes = makeNodesForProperties(
       {
         ownProperties: {
-          bar: { value: {} },
+          bar: {
+            value: {},
+            get: { type: "function" },
+            set: { type: "function" },
+          },
           location: { value: {} },
+          onload: {
+            get: { type: "function" },
+            set: { type: "function" },
+          },
         },
         class: "Window",
       },
@@ -188,15 +192,38 @@ describe("makeNodesForProperties", () => {
     );
 
     const names = nodes.map(n => n.name);
-    const paths = nodes.map(n => n.path.toString());
+    const paths = nodes.map(n => n.path);
 
-    expect(names).toEqual(["bar", "<default properties>"]);
+    expect(names).toEqual([
+      "bar",
+      "<default properties>",
+      "<get bar()>",
+      "<set bar()>",
+    ]);
     expect(paths).toEqual([
-      "Symbol(root/bar)",
-      "Symbol(root/<default properties>)",
+      "root◦bar",
+      "root◦<default properties>",
+      "root◦<get bar()>",
+      "root◦<set bar()>",
     ]);
 
-    expect(nodeIsDefaultProperties(nodes[1])).toBe(true);
+    const defaultPropertyNode = nodes[1];
+    expect(nodeIsDefaultProperties(defaultPropertyNode)).toBe(true);
+
+    const defaultPropNames = defaultPropertyNode.contents.map(n => n.name);
+    const defaultPropPath = defaultPropertyNode.contents.map(n => n.path);
+    expect(defaultPropNames).toEqual([
+      "location",
+      "onload",
+      "<get onload()>",
+      "<set onload()>",
+    ]);
+    expect(defaultPropPath).toEqual([
+      "root◦<default properties>◦location",
+      "root◦<default properties>◦onload",
+      "root◦<default properties>◦<get onload()>",
+      "root◦<default properties>◦<set onload()>",
+    ]);
   });
 
   it("object with entries", () => {
@@ -224,29 +251,10 @@ describe("makeNodesForProperties", () => {
     const paths = nodes.map(n => n.path.toString());
 
     expect(names).toEqual(["custom", "size", "<entries>"]);
-    expect(paths).toEqual([
-      "Symbol(root/custom)",
-      "Symbol(root/size)",
-      "Symbol(root/<entries>)",
-    ]);
+    expect(paths).toEqual(["root◦custom", "root◦size", "root◦<entries>"]);
 
     const entriesNode = nodes[2];
     expect(nodeIsEntries(entriesNode)).toBe(true);
-
-    const children = entriesNode.contents;
-
-    // There are 2 entries in the map.
-    expect(children).toHaveLength(2);
-    // And the 2 nodes created are typed as map entries.
-    expect(children.every(child => nodeIsMapEntry(child))).toBe(true);
-
-    const childrenNames = children.map(n => n.name);
-    const childrenPaths = children.map(n => n.path.toString());
-    expect(childrenNames).toEqual([0, 1]);
-    expect(childrenPaths).toEqual([
-      "Symbol(root/<entries>/0)",
-      "Symbol(root/<entries>/1)",
-    ]);
   });
 
   it("quotes property names", () => {
@@ -277,11 +285,11 @@ describe("makeNodesForProperties", () => {
       "<prototype>",
     ]);
     expect(paths).toEqual([
-      'Symbol(root/"")',
-      "Symbol(root/332217)",
-      'Symbol(root/"needs-quotes")',
-      "Symbol(root/unquoted)",
-      "Symbol(root/<prototype>)",
+      'root◦""',
+      "root◦332217",
+      'root◦"needs-quotes"',
+      "root◦unquoted",
+      "root◦<prototype>",
     ]);
   });
 });

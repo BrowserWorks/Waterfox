@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of 
+Netscape Communicator, Please translate using the brandname in respective 
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word 
+"&brandShortName;" below.
+-->
+
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "ইমপোর্ট">
+<!ENTITY importAll.label "সবকিছু ইমপোর্ট করুন (E)">
+<!ENTITY importAll.accesskey "E">
+<!ENTITY importMail.label "মেইল (M)">
+<!ENTITY importMail.accesskey "M">
+<!ENTITY importAddressbook.label "ঠিকানা বই (A)">
+<!ENTITY importAddressbook.accesskey "A">
+<!ENTITY importSettings.label "সেটিং (S)">
+<!ENTITY importSettings.accesskey "S">
+<!ENTITY importFilters.label "পরিশোধক (F)">
+<!ENTITY importFilters.accesskey "F">
+
+<!ENTITY window.width "40em">
+<!ENTITY window.macWidth "45em">
+
+<!ENTITY importTitle.label "&brandShortName; ইমপোর্ট উইজার্ড">
+<!ENTITY importShortDesc.label "অন্য প্রোগ্রাম থেকে মেইল, ঠিকানা বই, সেটিং, এবং পরিশোধক ইমপোর্ট করুন">
+
+<!ENTITY importDescription1.label "এই উইজার্ডটি অন্য মেইল প্রোগ্রাম এবং সাধারণ বিন্যাসের ঠিকানা বই থেকে মেইল বার্তা, ঠিকানা বইয়ের ভুক্তি, পছন্দসমূহ, এবং পরিশোধক &brandShortName;-এ ইমপোর্ট করবে।">
+<!ENTITY importDescription2.label "একবার ইমপোর্ট করা হয়ে গেলে, আপনি &brandShortName; এর ভিতর থেকে তা ব্যবহার করতে পারবেন।">
+
+<!ENTITY selectDescription.label "আপনি কি ধরনের ফাইল ইমপোর্ট করতে চান, অনুগ্রহ করে নির্বাচন করুন (P):">
+<!ENTITY selectDescription.accesskey "P">
+
+<!ENTITY back.label "&lt; পূর্ববর্তী">
+<!ENTITY forward.label "পরবর্তী &gt;">
+<!ENTITY finish.label "শেষ">
+<!ENTITY cancel.label "বাতিল">
+
+<!ENTITY select.label "বা যা ইমপোর্ট করতে চান তার ধরন নির্বাচন করুন:">
+
+<!ENTITY title.label "শিরোনাম">
+<!ENTITY processing.label "ইমপোর্ট করা হচ্ছে...">

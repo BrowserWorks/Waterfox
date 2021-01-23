@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Збережені файли">
+<!ENTITY aboutDownloads.empty                      "Немає збережених файлів">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "Відкрити теку розташування">
+<!ENTITY cmd.show.accesskey                        "т">
+<!ENTITY cmd.showMac.label                         "Показати у Finder">
+<!ENTITY cmd.showMac.accesskey                     "F">
+<!ENTITY cmd.open.label                            "Відкрити">
+<!ENTITY cmd.open.accesskey                        "В">
+<!ENTITY cmd.removeFromHistory.label               "Вилучити з історії">
+<!ENTITY cmd.removeFromHistory.accesskey           "л">
+<!ENTITY cmd.clearList.label                       "Очистити список">
+<!ENTITY cmd.clearList.accesskey                   "О">
+<!ENTITY cmd.clearList.tooltip                     "Вилучити всі записи зі списку збережених файлів, за виключенням поточних завантажень.">
+<!ENTITY cmd.searchDownloads.label                 "Пошук…">
+<!ENTITY cmd.searchDownloads.key                   "F">

@@ -80,7 +80,7 @@ async function setupBackgroundTabs(testFn) {
  *        background state.
  */
 async function crashBackgroundTabs(tabs) {
-  Assert.ok(tabs.length > 0, "Need to crash at least one tab.");
+  Assert.ok(!!tabs.length, "Need to crash at least one tab.");
   for (let tab of tabs) {
     Assert.ok(tab.linkedBrowser.isRemoteBrowser, "tab is remote");
   }
@@ -93,7 +93,7 @@ async function crashBackgroundTabs(tabs) {
     return promiseTabRestoring(t);
   });
 
-  await BrowserTestUtils.crashBrowser(tabs[0].linkedBrowser, false);
+  await BrowserTestUtils.crashFrame(tabs[0].linkedBrowser, false);
   await Promise.all(remotenessChangePromises);
   await Promise.all(tabsRevived);
 
@@ -244,9 +244,9 @@ add_task(async function test_preload_crash() {
   NewTabPagePreloading.removePreloadedBrowser(window);
 
   // Create a fresh preloaded browser
-  NewTabPagePreloading.maybeCreatePreloadedBrowser(window);
+  await BrowserTestUtils.maybeCreatePreloadedBrowser(gBrowser);
 
-  await BrowserTestUtils.crashBrowser(gBrowser.preloadedBrowser, false);
+  await BrowserTestUtils.crashFrame(gBrowser.preloadedBrowser, false);
 
   Assert.ok(!gBrowser.preloadedBrowser);
 });

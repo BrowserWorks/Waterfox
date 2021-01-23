@@ -8,6 +8,11 @@
 #include <gtk/gtk.h>
 #include "WidgetStyleCache.h"
 #include "gtkdrawing.h"
+#include "mozilla/Assertions.h"
+#include "mozilla/PodOperations.h"
+#include "nsDebug.h"
+#include "nsPrintfCString.h"
+#include "nsString.h"
 
 #define STATE_FLAG_DIR_LTR (1U << 7)
 #define STATE_FLAG_DIR_RTL (1U << 8)
@@ -25,6 +30,7 @@ static GtkStyleContext* GetCssNodeStyleInternal(WidgetNodeType aNodeType);
 
 static GtkWidget* CreateWindowWidget() {
   GtkWidget* widget = gtk_window_new(GTK_WINDOW_POPUP);
+  MOZ_RELEASE_ASSERT(widget, "We're missing GtkWindow widget!");
   gtk_widget_set_name(widget, "MozillaGtkWidget");
   return widget;
 }
@@ -445,9 +451,15 @@ static void CreateHeaderBarWidget(WidgetNodeType aAppearance) {
   GtkWidget* headerbar = sGtkHeaderBarNewPtr();
   sWidgetStorage[aAppearance] = headerbar;
 
-  GtkWidget* window = gtk_window_new(GTK_WINDOW_POPUP);
-  GtkStyleContext* style = gtk_widget_get_style_context(window);
+  GtkWidget* window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  static auto sGtkWindowSetTitlebar = (void (*)(GtkWindow*, GtkWidget*))dlsym(
+      RTLD_DEFAULT, "gtk_window_set_titlebar");
+  MOZ_ASSERT(sGtkWindowSetTitlebar,
+             "Missing gtk_window_set_titlebar(), old Gtk+ library?");
+  sGtkWindowSetTitlebar(GTK_WINDOW(window), headerbar);
+  gtk_widget_realize(window);
 
+  GtkStyleContext* style = gtk_widget_get_style_context(window);
   if (aAppearance == MOZ_GTK_HEADER_BAR_MAXIMIZED) {
     gtk_style_context_add_class(style, "maximized");
     MOZ_ASSERT(sWidgetStorage[MOZ_GTK_HEADERBAR_WINDOW_MAXIMIZED] == nullptr,
@@ -458,16 +470,6 @@ static void CreateHeaderBarWidget(WidgetNodeType aAppearance) {
                "Window widget is already created!");
     sWidgetStorage[MOZ_GTK_HEADERBAR_WINDOW] = window;
   }
-
-  // Headerbar has to be placed to window with csd or solid-csd style
-  // to properly draw the decorated.
-  GtkStyleContext* windowStyle = GetStyleContext(MOZ_GTK_WINDOW);
-  bool solidDecorations = gtk_style_context_has_class(windowStyle, "solid-csd");
-  gtk_style_context_add_class(style, solidDecorations ? "solid-csd" : "csd");
-
-  GtkWidget* fixed = gtk_fixed_new();
-  gtk_container_add(GTK_CONTAINER(window), fixed);
-  gtk_container_add(GTK_CONTAINER(fixed), headerbar);
 
   // Emulate what create_titlebar() at gtkwindow.c does.
   style = gtk_widget_get_style_context(headerbar);
@@ -605,11 +607,11 @@ static void CreateHeaderBarButton(GtkWidget* aParentWidget,
   LoadWidgetIconPixbuf(image);
 }
 
-static bool IsToolbarButtonEnabled(WidgetNodeType* aButtonLayout,
-                                   int aButtonNums,
+static bool IsToolbarButtonEnabled(ButtonLayout* aButtonLayout,
+                                   size_t aButtonNums,
                                    WidgetNodeType aAppearance) {
-  for (int i = 0; i < aButtonNums; i++) {
-    if (aButtonLayout[i] == aAppearance) {
+  for (size_t i = 0; i < aButtonNums; i++) {
+    if (aButtonLayout[i].mType == aAppearance) {
       return true;
     }
   }
@@ -632,10 +634,10 @@ static void CreateHeaderBarButtons() {
   gtk_style_context_add_class(gtk_widget_get_style_context(buttonBox),
                               GTK_STYLE_CLASS_LEFT);
 
-  WidgetNodeType buttonLayout[TOOLBAR_BUTTONS];
+  ButtonLayout buttonLayout[TOOLBAR_BUTTONS];
 
-  int activeButtons =
-      GetGtkHeaderBarButtonLayout(buttonLayout, TOOLBAR_BUTTONS, nullptr);
+  size_t activeButtons =
+      GetGtkHeaderBarButtonLayout(mozilla::MakeSpan(buttonLayout), nullptr);
 
   if (IsToolbarButtonEnabled(buttonLayout, activeButtons,
                              MOZ_GTK_HEADER_BAR_BUTTON_MINIMIZE)) {
@@ -762,7 +764,9 @@ GtkWidget* GetWidget(WidgetNodeType aAppearance) {
     widget = CreateWidget(aAppearance);
     // Some widgets (MOZ_GTK_COMBOBOX_SEPARATOR for instance) may not be
     // available or implemented.
-    if (!widget) return nullptr;
+    if (!widget) {
+      return nullptr;
+    }
     // In GTK versions prior to 3.18, automatic invalidation of style contexts
     // for widgets was delayed until the next resize event.  Gecko however,
     // typically uses the style context before the resize event runs and so an
@@ -1437,5 +1441,7 @@ void StyleContextSetScale(GtkStyleContext* style, gint aScaleFactor) {
   static auto sGtkStyleContextSetScalePtr =
       (void (*)(GtkStyleContext*, gint))dlsym(RTLD_DEFAULT,
                                               "gtk_style_context_set_scale");
-  sGtkStyleContextSetScalePtr(style, aScaleFactor);
+  if (sGtkStyleContextSetScalePtr && style) {
+    sGtkStyleContextSetScalePtr(style, aScaleFactor);
+  }
 }

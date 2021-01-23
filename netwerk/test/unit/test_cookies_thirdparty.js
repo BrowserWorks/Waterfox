@@ -5,11 +5,22 @@
 // 1) with null channel
 // 2) with channel, but with no docshell parent
 
-function run_test() {
+"use strict";
+
+add_task(async () => {
   Services.prefs.setBoolPref(
-    "network.cookieSettings.unblocked_for_testing",
+    "network.cookieJarSettings.unblocked_for_testing",
     true
   );
+
+  Services.prefs.setBoolPref(
+    "network.cookie.rejectForeignWithExceptions.enabled",
+    false
+  );
+
+  CookieXPCShellUtils.createServer({
+    hosts: ["foo.com", "bar.com", "third.com"],
+  });
 
   // Create URIs and channels pointing to foo.com and bar.com.
   // We will use these to put foo.com into first and third party contexts.
@@ -20,7 +31,10 @@ function run_test() {
 
   // test with cookies enabled
   {
-    Services.prefs.setIntPref("network.cookie.cookieBehavior", 0);
+    Services.prefs.setIntPref(
+      "network.cookie.cookieBehavior",
+      Ci.nsICookieService.BEHAVIOR_ACCEPT
+    );
 
     let channel1 = NetUtil.newChannel({
       uri: uri1,
@@ -31,15 +45,18 @@ function run_test() {
       loadUsingSystemPrincipal: true,
     });
 
-    do_set_cookies(uri1, channel1, true, [1, 2, 3, 4]);
+    await do_set_cookies(uri1, channel1, true, [1, 2]);
     Services.cookies.removeAll();
-    do_set_cookies(uri1, channel2, true, [1, 2, 3, 4]);
+    await do_set_cookies(uri1, channel2, true, [1, 2]);
     Services.cookies.removeAll();
   }
 
   // test with third party cookies blocked
   {
-    Services.prefs.setIntPref("network.cookie.cookieBehavior", 1);
+    Services.prefs.setIntPref(
+      "network.cookie.cookieBehavior",
+      Ci.nsICookieService.BEHAVIOR_REJECT_FOREIGN
+    );
 
     let channel1 = NetUtil.newChannel({
       uri: uri1,
@@ -50,9 +67,9 @@ function run_test() {
       loadUsingSystemPrincipal: true,
     });
 
-    do_set_cookies(uri1, channel1, true, [0, 0, 0, 0]);
+    await do_set_cookies(uri1, channel1, true, [0, 0]);
     Services.cookies.removeAll();
-    do_set_cookies(uri1, channel2, true, [0, 0, 0, 0]);
+    await do_set_cookies(uri1, channel2, true, [0, 0]);
     Services.cookies.removeAll();
   }
 
@@ -62,7 +79,10 @@ function run_test() {
 
   // test with cookies enabled
   {
-    Services.prefs.setIntPref("network.cookie.cookieBehavior", 0);
+    Services.prefs.setIntPref(
+      "network.cookie.cookieBehavior",
+      Ci.nsICookieService.BEHAVIOR_ACCEPT
+    );
 
     let channel1 = NetUtil.newChannel({
       uri: uri1,
@@ -78,15 +98,18 @@ function run_test() {
     let httpchannel2 = channel2.QueryInterface(Ci.nsIHttpChannelInternal);
     httpchannel2.forceAllowThirdPartyCookie = true;
 
-    do_set_cookies(uri1, channel1, true, [1, 2, 3, 4]);
+    await do_set_cookies(uri1, channel1, true, [1, 2]);
     Services.cookies.removeAll();
-    do_set_cookies(uri1, channel2, true, [1, 2, 3, 4]);
+    await do_set_cookies(uri1, channel2, true, [1, 2]);
     Services.cookies.removeAll();
   }
 
   // test with third party cookies blocked
   {
-    Services.prefs.setIntPref("network.cookie.cookieBehavior", 1);
+    Services.prefs.setIntPref(
+      "network.cookie.cookieBehavior",
+      Ci.nsICookieService.BEHAVIOR_REJECT_FOREIGN
+    );
 
     let channel1 = NetUtil.newChannel({
       uri: uri1,
@@ -102,15 +125,18 @@ function run_test() {
     let httpchannel2 = channel2.QueryInterface(Ci.nsIHttpChannelInternal);
     httpchannel2.forceAllowThirdPartyCookie = true;
 
-    do_set_cookies(uri1, channel1, true, [0, 1, 1, 2]);
+    await do_set_cookies(uri1, channel1, true, [0, 1]);
     Services.cookies.removeAll();
-    do_set_cookies(uri1, channel2, true, [0, 0, 0, 0]);
+    await do_set_cookies(uri1, channel2, true, [0, 0]);
     Services.cookies.removeAll();
   }
 
   // test with third party cookies limited
   {
-    Services.prefs.setIntPref("network.cookie.cookieBehavior", 3);
+    Services.prefs.setIntPref(
+      "network.cookie.cookieBehavior",
+      Ci.nsICookieService.BEHAVIOR_LIMIT_FOREIGN
+    );
 
     let channel1 = NetUtil.newChannel({
       uri: uri1,
@@ -126,12 +152,12 @@ function run_test() {
     let httpchannel2 = channel2.QueryInterface(Ci.nsIHttpChannelInternal);
     httpchannel2.forceAllowThirdPartyCookie = true;
 
-    do_set_cookies(uri1, channel1, true, [0, 1, 2, 3]);
+    await do_set_cookies(uri1, channel1, true, [0, 1]);
     Services.cookies.removeAll();
-    do_set_cookies(uri1, channel2, true, [0, 0, 0, 0]);
+    await do_set_cookies(uri1, channel2, true, [0, 0]);
     Services.cookies.removeAll();
     do_set_single_http_cookie(uri1, channel1, 1);
-    do_set_cookies(uri1, channel2, true, [2, 3, 4, 5]);
+    await do_set_cookies(uri1, channel2, true, [1, 2]);
     Services.cookies.removeAll();
   }
-}
+});

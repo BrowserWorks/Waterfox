@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dataman.windowTitle "Управление данными">
+
+<!ENTITY selectAll.key "a">
+
+<!ENTITY select.all.label "Все типы данных">
+<!ENTITY select.cookies.label "Только куки">
+<!ENTITY select.permissions.label "Только разрешения">
+<!ENTITY select.preferences.label "Только настройки">
+<!ENTITY select.passwords.label "Только пароли">
+<!ENTITY select.storage.label "Только хранилище">
+
+<!ENTITY domain.search.placeholder "Поиск доменов">
+<!ENTITY domain.search.key "f">
+
+<!ENTITY domain.tree.domain.label "Домен">
+
+<!ENTITY domain.ctx.forgetdomain.label "Забыть об этом домене">
+<!ENTITY domain.ctx.forgetdomain.accesskey "б">
+<!ENTITY domain.ctx.forgetglobal.label "Забыть глобальные данные">
+<!ENTITY domain.ctx.forgetglobal.accesskey "б">
+
+<!ENTITY data.search.key "k">
+
+<!ENTITY tab.cookies.label "Куки">
+<!ENTITY tab.permissions.label "Разрешения">
+<!ENTITY tab.preferences.label "Настройки">
+<!ENTITY tab.passwords.label "Пароли">
+<!ENTITY tab.storage.label "Хранилище">
+<!ENTITY tab.formdata.label "Данные форм">
+<!ENTITY tab.forget.label "Забыть">
+
+<!-- cookies -->
+<!ENTITY cookies.description "Этот домен сохранил на вашем компьютере следующие куки:">
+
+<!ENTITY cookies.tree.host.label "Веб-сайт">
+<!ENTITY cookies.tree.name.label "Имя куки">
+<!ENTITY cookies.tree.expires.label "Срок действия:">
+
+<!ENTITY cookies.infobox.label "Информация о выбранной куке">
+
+<!ENTITY cookies.info.name.label "Имя:">
+<!ENTITY cookies.info.value.label "Содержимое:">
+<!ENTITY cookies.info.host.label "Узел:">
+<!ENTITY cookies.info.domain.label "Домен:">
+<!ENTITY cookies.info.path.label "Путь:">
+<!ENTITY cookies.info.sendtype.label "Посылать при:">
+<!ENTITY cookies.info.expires.label "Срок действия:">
+
+<!ENTITY cookies.ctx.remove.label "Удалить">
+<!ENTITY cookies.ctx.remove.accesskey "д">
+<!ENTITY cookies.ctx.selectAll.label "Выделить всё">
+<!ENTITY cookies.ctx.selectAll.accesskey "ы">
+
+<!ENTITY cookies.button.remove.label "Удалить">
+<!ENTITY cookies.button.remove.accesskey "д">
+
+<!ENTITY cookies.blockOnRemove.label "При удалении, запретить перечисленным веб-сайтам в будущем устанавливать куки">
+<!ENTITY cookies.blockOnRemove.accesskey "р">
+
+<!-- permissions -->
+<!ENTITY perm.UseDefault "По умолчанию">
+<!ENTITY perm.AskAlways "Всегда спрашивать">
+<!ENTITY perm.NeverSave "Никогда не сохранять">
+<!ENTITY perm.Allow "Разрешить">
+<!ENTITY perm.AllowSameDomain "Разрешить для того же домена">
+<!ENTITY perm.AllowSession "Разрешить на сессию">
+<!ENTITY perm.Block "Блокировать">
+
+<!ENTITY perm.host.placeholder "Введите имя узла">
+<!ENTITY perm.button.add.label "Добавить">
+<!ENTITY perm.button.add.accesskey "б">
+
+<!-- preferences -->
+<!ENTITY prefs.description "Настройки содержимого — это способ, используемый &brandShortName; для сохранения своих настроек, например масштаба, специфичного для веб-сайта.">
+
+<!ENTITY prefs.tree.host.label "Веб-сайт">
+<!ENTITY prefs.tree.name.label "Имя настройки">
+<!ENTITY prefs.tree.value.label "Значение">
+
+<!ENTITY prefs.ctx.remove.label "Удалить">
+<!ENTITY prefs.ctx.remove.accesskey "д">
+<!ENTITY prefs.ctx.selectAll.label "Выделить всё">
+<!ENTITY prefs.ctx.selectAll.accesskey "ы">
+
+<!ENTITY prefs.button.remove.label "Удалить">
+<!ENTITY prefs.button.remove.accesskey "д">
+
+<!-- passwords -->
+<!ENTITY pwd.description "Для этого домена у вас хранятся следующие пароли:">
+
+<!ENTITY pwd.tree.host.label "Веб-сайт">
+<!ENTITY pwd.tree.username.label "Имя пользователя">
+<!ENTITY pwd.tree.password.label "Пароль">
+
+<!ENTITY pwd.ctx.remove.label "Удалить">
+<!ENTITY pwd.ctx.remove.accesskey "д">
+<!ENTITY pwd.ctx.copyPasswordCmd.label "Копировать пароль">
+<!ENTITY pwd.ctx.copyPasswordCmd.accesskey "п">
+<!ENTITY pwd.ctx.selectAll.label "Выделить всё">
+<!ENTITY pwd.ctx.selectAll.accesskey "ы">
+
+<!ENTITY pwd.button.remove.label "Удалить">
+<!ENTITY pwd.button.remove.accesskey "д">
+
+<!-- storage -->
+<!ENTITY storage.description "Этот домен использует следующие веб-хранилища на вашем компьютере:">
+
+<!ENTITY storage.tree.host.label "Веб-сайт">
+<!ENTITY storage.tree.type.label "Тип">
+<!ENTITY storage.tree.size.label "Размер">
+
+<!ENTITY storage.ctx.remove.label "Удалить">
+<!ENTITY storage.ctx.remove.accesskey "д">
+<!ENTITY storage.ctx.selectAll.label "Выделить всё">
+<!ENTITY storage.ctx.selectAll.accesskey "ы">
+
+<!ENTITY storage.button.remove.label "Удалить">
+<!ENTITY storage.button.remove.accesskey "д">
+
+<!-- form data -->
+<!ENTITY fdata.search.placeholder "Поиск данных полей">
+
+<!ENTITY fdata.tree.fieldname.label "Имя поля">
+<!ENTITY fdata.tree.value.label "Введённое значение">
+<!ENTITY fdata.tree.usecount.label "Счётчик использования">
+<!ENTITY fdata.tree.firstused.label "Первое использование">
+<!ENTITY fdata.tree.lastused.label "Последнее использование">
+
+<!ENTITY fdata.ctx.remove.label "Удалить">
+<!ENTITY fdata.ctx.remove.accesskey "д">
+<!ENTITY fdata.ctx.selectAll.label "Выделить всё">
+<!ENTITY fdata.ctx.selectAll.accesskey "ы">
+
+<!ENTITY fdata.button.remove.label "Удалить">
+<!ENTITY fdata.button.remove.accesskey "д">
+
+<!-- forget -->
+<!ENTITY forget.cookies.label "Куки">
+<!ENTITY forget.cookies.accesskey "у">
+<!ENTITY forget.permissions.label "Разрешения">
+<!ENTITY forget.permissions.accesskey "з">
+<!ENTITY forget.preferences.label "Настройки содержимого">
+<!ENTITY forget.preferences.accesskey "с">
+<!ENTITY forget.passwords.label "Пароли">
+<!ENTITY forget.passwords.accesskey "а">
+<!ENTITY forget.storage.label "Хранилище">
+<!ENTITY forget.storage.accesskey "и">
+<!ENTITY forget.formdata.label "Данные форм">
+<!ENTITY forget.formdata.accesskey "ф">
+
+<!ENTITY forget.button.label "Забыть эти данные">
+<!ENTITY forget.button.accesskey "б">

@@ -37,6 +37,10 @@ class DOMParser final : public nsISupports, public nsWrapperCache {
                                              SupportedType aType,
                                              ErrorResult& aRv);
 
+  // ChromeOnly API
+  already_AddRefed<Document> ParseFromSafeString(const nsAString& aStr,
+                                                 SupportedType aType,
+                                                 ErrorResult& aRv);
   // Sequence converts to Span, so we can use this overload for both
   // the Sequence case and our internal uses.
   already_AddRefed<Document> ParseFromBuffer(Span<const uint8_t> aBuf,
@@ -53,7 +57,12 @@ class DOMParser final : public nsISupports, public nsWrapperCache {
                                              SupportedType aType,
                                              ErrorResult& aRv);
 
-  void ForceEnableXULXBL() { mForceEnableXULXBL = true; }
+  void ForceEnableXULXBL() {
+    mForceEnableXULXBL = true;
+    ForceEnableDTD();
+  }
+
+  void ForceEnableDTD() { mForceEnableDTD = true; }
 
   nsIGlobalObject* GetParentObject() const { return mOwner; }
 
@@ -78,6 +87,7 @@ class DOMParser final : public nsISupports, public nsWrapperCache {
   nsCOMPtr<nsIURI> mBaseURI;
 
   bool mForceEnableXULXBL;
+  bool mForceEnableDTD;
 };
 
 }  // namespace dom

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.masterpass.title "Галоўныя паролі">
+<!ENTITY managepassword.caption "Часаспын галоўнага пароля">
+<!ENTITY managepassword.text "&brandShortName; запытае ў вас ваш галоўны пароль:">
+<!ENTITY managepassword.askfirsttime "Калі ў ім першы раз узнікне патрэба">
+<!ENTITY managepassword.askfirsttime.accesskey "п">
+<!ENTITY managepassword.askeverytime "Кожны раз, калі ён патрабуецца">
+<!ENTITY managepassword.askeverytime.accesskey "К">
+<!ENTITY managepassword.asktimeout "Калі ён не ўжываўся">
+<!ENTITY managepassword.asktimeout.accesskey "ж">
+<!ENTITY managepassword.timeout.unit "хвілінаў ці даўжэй">
+<!ENTITY changepassword.caption "Змяненне галоўнага пароля">
+<!ENTITY changepassword.text "Ваш галоўны пароль абараняе значныя звесткі, такія як паролі сеціва і пасведчанні.">
+<!ENTITY changepassword.button "Змяніць пароль…">
+<!ENTITY changepassword.accesskey "З">
+<!ENTITY resetpassword.caption "Скіданне галоўнага пароля">
+<!ENTITY resetpassword.text "Калі вы скінеце ваш галоўны пароль, усе вашы захаваныя паролі Сеціва і э-пошты, даныя формаў, асабовыя пасведчанні, прыватныя ключы згубяцца.">
+<!ENTITY resetpassword.button "Скінуць пароль">
+<!ENTITY resetpassword.accesskey "С">

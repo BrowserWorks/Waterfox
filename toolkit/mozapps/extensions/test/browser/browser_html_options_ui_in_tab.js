@@ -6,10 +6,7 @@
 
 add_task(async function enableHtmlViews() {
   await SpecialPowers.pushPrefEnv({
-    set: [
-      ["extensions.htmlaboutaddons.enabled", true],
-      ["extensions.htmlaboutaddons.inline-options.enabled", true],
-    ],
+    set: [["extensions.htmlaboutaddons.inline-options.enabled", true]],
   });
 });
 
@@ -52,8 +49,8 @@ async function testOptionsInTab({ id, options_ui_options }) {
   info("Open the preferences page from list");
   let tabLoaded = BrowserTestUtils.waitForNewTab(gBrowser, optionsUrl);
   prefsBtn.click();
-  BrowserTestUtils.removeTab(await tabLoaded);
   await extension.awaitMessage("options-loaded");
+  BrowserTestUtils.removeTab(await tabLoaded);
 
   info("Load details page");
   let loaded = waitForViewLoad(win);

@@ -1,4 +1,3 @@
-// |reftest| skip -- Intl.Locale is not supported
 // Copyright 2018 André Bargull; Igalia, S.L. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 
@@ -32,8 +31,8 @@ features: [Intl.Locale]
 const validRegionOptions = [
   [undefined, undefined],
   ['FR', 'en-FR'],
-  ['554', 'en-554'],
-  [554, 'en-554'],
+  ['554', 'en-NZ'],
+  [554, 'en-NZ'],
 ];
 for (const [region, expected] of validRegionOptions) {
   let options = { region };

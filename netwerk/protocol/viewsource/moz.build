@@ -15,9 +15,15 @@ UNIFIED_SOURCES += [
     'nsViewSourceHandler.cpp',
 ]
 
+EXPORTS += [
+  'nsViewSourceHandler.h',
+]
+
 FINAL_LIBRARY = 'xul'
 LOCAL_INCLUDES += [
     '/netwerk/base',
+    # For nsHttpChannel.h
+    '/netwerk/protocol/http',
 ]
 
 include('/ipc/chromium/chromium-config.mozbuild')

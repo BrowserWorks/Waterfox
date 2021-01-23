@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Rregullime për Të pavlera">
+<!ENTITY trainingDescription.label "Në u aktivizoftë, duhet së pari ta stërvitni &brandShortName;-in të identifikojë postë të pavlerë, duke përdorur butonin për të Pavlerat për shënim mesazhesh si të pavlerë ose jo. Lypset të identifikoni qoftë mesazhet e pavlerë, qoftë ata jo të pavlerë. Pas kësaj &brandShortName;-i do të jetë në gjendje të shënojë vetvetiu të pavlerat.">
+<!ENTITY level.label "Aktivizo kontrolle përshtatës poste të pavlerë për këtë llogari">
+<!ENTITY level.accesskey "A">
+
+<!ENTITY move.label "Mesazhet e rinj të pavlerë kaloji tek:">
+<!ENTITY move.accesskey "M">
+<!ENTITY junkFolderOn.label "Dosja &quot;Të pavlerë&quot; te:">
+<!ENTITY junkFolderOn.accesskey "D">
+<!ENTITY otherFolder.label "Tjetër:">
+<!ENTITY otherFolder.accesskey "T">
+<!ENTITY purge1.label "Fshi vetvetiu postë të pavlerë më të vjetër se">
+<!ENTITY purge1.accesskey "F">
+<!ENTITY purge2.label "ditë">
+
+<!ENTITY whitelistHeader.label "Mos e shëno si postë të pavlerë, nëse dërguesi është në: ">
+<!ENTITY whitelistHeader.accesskey "M">
+
+<!ENTITY ispHeadersWarning.label "Në u aktivizoftë, &brandShortName;-i vetvetiu do t&apos;i konsiderojë si të pavlerë mesazhet e treguar si të tillë nga ky klasifikues i jashtëm.">
+<!ENTITY ispHeaders.label "Zëru besë titujve për postë të pavlerë treguar si të tillë prej: ">
+<!ENTITY ispHeaders.accesskey "Z">
+
+<!ENTITY junkClassification.label "Përzgjedhje">
+<!ENTITY junkActions.label "Vendmbërritje dhe Mbajtje">
+
+<!ENTITY globalJunkPrefs.label "Parapëlqime Globale për Të pavlerat…">
+<!ENTITY globalJunkPrefs.accesskey "P">

@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY biffAll.label "Uaktualniaj wszystkie źródła aktualności">
+<!ENTITY biffAll.accesskey "U">
+
+<!ENTITY newFeedSettings.label "Domyślne ustawienia nowych źródeł aktualności">
+
+<!ENTITY manageSubscriptions.label "Menedżer źródeł aktualności…">
+<!ENTITY manageSubscriptions.accesskey "r">
+
+<!ENTITY feedWindowTitle.label "Kreator kont aktualności">
+<!ENTITY feeds.accountName "Aktualności">

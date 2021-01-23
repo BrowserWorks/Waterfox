@@ -4,8 +4,14 @@
 
 "use strict";
 
-const { getBounds, XULWindowInfobar } = require("./utils/accessibility");
-const { createNode, isNodeValid } = require("./utils/markup");
+const {
+  getBounds,
+  XULWindowInfobar,
+} = require("devtools/server/actors/highlighters/utils/accessibility");
+const {
+  createNode,
+  isNodeValid,
+} = require("devtools/server/actors/highlighters/utils/markup");
 const { getCurrentZoom, loadSheet } = require("devtools/shared/layout/utils");
 const { TEXT_NODE } = require("devtools/shared/dom-node-constants");
 
@@ -22,6 +28,8 @@ const ACCESSIBLE_BOUNDS_SHEET =
     --highlighter-bubble-arrow-size: 8px;
 
     --grey-40: #b1b1b3;
+    --red-40: #ff3b6b;
+    --yellow-60: #d7b600;
   }
 
   .accessible-bounds {
@@ -100,7 +108,13 @@ const ACCESSIBLE_BOUNDS_SHEET =
     color: hsl(210, 30%, 85%);
   }
 
-  .accessible-infobar-audit .accessible-contrast-ratio:not(:empty):before {
+  .accessible-infobar-audit .accessible-contrast-ratio:empty::before,
+  .accessible-infobar-audit .accessible-contrast-ratio:empty::after,
+  .accessible-infobar-name:empty {
+    display: none;
+  }
+
+  .accessible-infobar-audit .accessible-contrast-ratio::before {
     content: "";
     height: 8px;
     width: 8px;
@@ -113,39 +127,82 @@ const ACCESSIBLE_BOUNDS_SHEET =
     margin-inline-end: 9px;
   }
 
-  .accessible-infobar-audit .accessible-contrast-ratio:not(:empty):after {
+  .accessible-infobar-audit .accessible-contrast-ratio::after {
     margin-inline-start: 2px;
   }
 
-  .accessible-infobar-audit .accessible-contrast-ratio:not(:empty).AA:after,
-  .accessible-infobar-audit .accessible-contrast-ratio:not(:empty).AAA:after {
+  .accessible-infobar-audit .accessible-contrast-ratio.AA::after,
+  .accessible-infobar-audit .accessible-contrast-ratio.AAA::after {
     color: #90E274;
   }
 
-  .accessible-infobar-audit .accessible-contrast-ratio:not(:empty).fail:after {
-    color: #E57180;
-    content: "⚠️";
+  .accessible-infobar-audit .accessible-audit::before,
+  .accessible-infobar-audit .accessible-contrast-ratio.FAIL::after {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    content: "";
+    vertical-align: -2px;
+    background-position: center;
+    background-repeat: no-repeat;
+    -moz-context-properties: fill;
   }
 
-  .accessible-infobar-audit .accessible-contrast-ratio:not(:empty).AA:after {
+  .accessible-infobar-audit .accessible-contrast-ratio.FAIL:after {
+    color: #E57180;
+    margin-inline-start: 3px;
+    background-image: url(chrome://devtools/skin/images/error-small.svg);
+    fill: var(--red-40);
+  }
+
+  .accessible-infobar-audit .accessible-contrast-ratio.AA::after {
     content: "AA\u2713";
   }
 
-  .accessible-infobar-audit .accessible-contrast-ratio:not(:empty).AAA:after {
+  .accessible-infobar-audit .accessible-contrast-ratio.AAA::after {
     content: "AAA\u2713";
   }
 
   .accessible-infobar-audit .accessible-contrast-ratio-label,
-  .accessible-infobar-audit .accessible-contrast-ratio-separator:before {
+  .accessible-infobar-audit .accessible-contrast-ratio-separator::before {
     margin-inline-end: 3px;
   }
 
-  .accessible-infobar-audit .accessible-contrast-ratio-separator:before {
+  .accessible-infobar-audit .accessible-contrast-ratio-separator::before {
     content: "-";
     margin-inline-start: 3px;
   }
 
-  .accessible-infobar-name:not(:empty) {
+  .accessible-infobar-audit .accessible-audit {
+    display: block;
+    padding-block-end: 5px;
+  }
+
+  .accessible-infobar-audit .accessible-audit:last-child {
+    padding-block-end: 0;
+  }
+
+  .accessible-infobar-audit .accessible-audit::before {
+    margin-inline-end: 4px;
+    background-image: none;
+    fill: currentColor;
+  }
+
+  .accessible-infobar-audit .accessible-audit.FAIL::before {
+    background-image: url(chrome://devtools/skin/images/error-small.svg);
+    fill: var(--red-40);
+  }
+
+  .accessible-infobar-audit .accessible-audit.WARNING::before {
+    background-image: url(chrome://devtools/skin/images/alert-small.svg);
+    fill: var(--yellow-60);
+  }
+
+  .accessible-infobar-audit .accessible-audit.BEST_PRACTICES::before {
+    background-image: url(chrome://devtools/skin/images/info-small.svg);
+  }
+
+  .accessible-infobar-name {
     border-inline-start: 1px solid #5a6169;
     margin-inline-start: 6px;
     padding-inline-start: 6px;

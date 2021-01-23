@@ -40,11 +40,56 @@
 
 namespace mozilla {
 
-//----------------------------------------------------------------------
-
 ComputedStyle::ComputedStyle(PseudoStyleType aPseudoType,
                              ServoComputedDataForgotten aComputedValues)
     : mSource(aComputedValues), mPseudoType(aPseudoType) {}
+
+// If a struct returned nsChangeHint_UpdateContainingBlock, that means that one
+// property's influence on whether we're a containing block for abs-pos or
+// fixed-pos elements has changed.
+//
+// However, we only need to return the hint if the overall computation of
+// whether we establish a containing block has really changed.
+static bool ContainingBlockMayHaveChanged(const ComputedStyle& aOldStyle,
+                                          const ComputedStyle& aNewStyle) {
+  auto* oldDisp = aOldStyle.StyleDisplay();
+  auto* newDisp = aNewStyle.StyleDisplay();
+
+  if (oldDisp->IsAbsPosContainingBlockForNonSVGTextFrames() !=
+      newDisp->IsAbsPosContainingBlockForNonSVGTextFrames()) {
+    return true;
+  }
+
+  bool fixedCB =
+      oldDisp->IsFixedPosContainingBlockForNonSVGTextFrames(aOldStyle);
+  if (fixedCB !=
+      newDisp->IsFixedPosContainingBlockForNonSVGTextFrames(aNewStyle)) {
+    return true;
+  }
+  // If we were both before and after a fixed-pos containing-block that means
+  // that everything else doesn't matter, since all the other conditions are a
+  // subset of this.
+  if (fixedCB) {
+    return false;
+  }
+  // Note that neither of these two following sets of frames
+  // (transform-supporting and layout-and-paint-supporting frames) is a subset
+  // of the other, because table frames support contain: layout/paint but not
+  // transforms (which are instead inherited to the table wrapper), and quite a
+  // few frame types support transforms but not contain: layout/paint (e.g.,
+  // table rows and row groups, many SVG frames).
+  if (oldDisp->IsFixedPosContainingBlockForTransformSupportingFrames() !=
+      newDisp->IsFixedPosContainingBlockForTransformSupportingFrames()) {
+    return true;
+  }
+  if (oldDisp
+          ->IsFixedPosContainingBlockForContainLayoutAndPaintSupportingFrames() !=
+      newDisp
+          ->IsFixedPosContainingBlockForContainLayoutAndPaintSupportingFrames()) {
+    return true;
+  }
+  return false;
+}
 
 nsChangeHint ComputedStyle::CalcStyleDifference(const ComputedStyle& aNewStyle,
                                                 uint32_t* aEqualStructs) const {
@@ -107,7 +152,7 @@ nsChangeHint ComputedStyle::CalcStyleDifference(const ComputedStyle& aNewStyle,
   // FIXME: The order of these DO_STRUCT_DIFFERENCE calls is no longer
   // significant.  With a small amount of effort, we could replace them with a
   // #include "nsStyleStructList.h".
-  DO_STRUCT_DIFFERENCE(Display);
+  DO_STRUCT_DIFFERENCE_WITH_ARGS(Display, (, *StylePosition()));
   DO_STRUCT_DIFFERENCE(XUL);
   DO_STRUCT_DIFFERENCE(Column);
   DO_STRUCT_DIFFERENCE(Content);
@@ -129,7 +174,6 @@ nsChangeHint ComputedStyle::CalcStyleDifference(const ComputedStyle& aNewStyle,
   DO_STRUCT_DIFFERENCE(TextReset);
   DO_STRUCT_DIFFERENCE(Effects);
   DO_STRUCT_DIFFERENCE(Background);
-  DO_STRUCT_DIFFERENCE(Color);
 
 #undef DO_STRUCT_DIFFERENCE
 #undef DO_STRUCT_DIFFERENCE_WITH_ARGS
@@ -193,48 +237,7 @@ nsChangeHint ComputedStyle::CalcStyleDifference(const ComputedStyle& aNewStyle,
   }
 
   if (hint & nsChangeHint_UpdateContainingBlock) {
-    // If a struct returned nsChangeHint_UpdateContainingBlock, that
-    // means that one property's influence on whether we're a containing
-    // block for abs-pos or fixed-pos elements has changed.  However, we
-    // only need to return the hint if the overall computation of
-    // whether we establish a containing block has changed.
-
-    // This depends on data in nsStyleDisplay and nsStyleEffects, so we do it
-    // here
-
-    // Note that it's perhaps good for this test to be last because it
-    // doesn't use Peek* functions to get the structs on the old
-    // context.  But this isn't a big concern because these struct
-    // getters should be called during frame construction anyway.
-    const nsStyleDisplay* oldDisp = StyleDisplay();
-    const nsStyleDisplay* newDisp = aNewStyle.StyleDisplay();
-    bool isFixedCB;
-    if (oldDisp->IsAbsPosContainingBlockForNonSVGTextFrames() ==
-            newDisp->IsAbsPosContainingBlockForNonSVGTextFrames() &&
-        (isFixedCB =
-             oldDisp->IsFixedPosContainingBlockForNonSVGTextFrames(*this)) ==
-            newDisp->IsFixedPosContainingBlockForNonSVGTextFrames(aNewStyle) &&
-        // transform-supporting frames are a subcategory of non-SVG-text
-        // frames, so no need to test this if isFixedCB is true (both
-        // before and after the change)
-        (isFixedCB ||
-         oldDisp->IsFixedPosContainingBlockForTransformSupportingFrames() ==
-             newDisp
-                 ->IsFixedPosContainingBlockForTransformSupportingFrames()) &&
-        // contain-layout-and-paint-supporting frames are a subset of
-        // non-SVG-text frames, so no need to test this if isFixedCB is true
-        // (both before and after the change).
-        //
-        // Note, however, that neither of these last two sets is a
-        // subset of the other, because table frames support contain:
-        // layout/paint but not transforms (which are instead inherited
-        // to the table wrapper), and quite a few frame types support
-        // transforms but not contain: layout/paint (e.g., table rows
-        // and row groups, many SVG frames).
-        (isFixedCB ||
-         oldDisp->IsFixedPosContainingBlockForContainLayoutAndPaintSupportingFrames() ==
-             newDisp
-                 ->IsFixedPosContainingBlockForContainLayoutAndPaintSupportingFrames())) {
+    if (!ContainingBlockMayHaveChanged(*this, aNewStyle)) {
       // While some styles that cause the frame to be a containing block
       // has changed, the overall result cannot have changed (no matter
       // what the frame type is).
@@ -265,14 +268,14 @@ void ComputedStyle::List(FILE* out, int32_t aIndent) {
 #endif
 
 template <typename Func>
-static nscolor GetVisitedDependentColorInternal(ComputedStyle* aSc,
+static nscolor GetVisitedDependentColorInternal(const ComputedStyle& aStyle,
                                                 Func aColorFunc) {
   nscolor colors[2];
-  colors[0] = aColorFunc(aSc);
-  if (ComputedStyle* visitedStyle = aSc->GetStyleIfVisited()) {
-    colors[1] = aColorFunc(visitedStyle);
+  colors[0] = aColorFunc(aStyle);
+  if (const ComputedStyle* visitedStyle = aStyle.GetStyleIfVisited()) {
+    colors[1] = aColorFunc(*visitedStyle);
     return ComputedStyle::CombineVisitedColors(colors,
-                                               aSc->RelevantLinkVisited());
+                                               aStyle.RelevantLinkVisited());
   }
   return colors[0];
 }
@@ -297,24 +300,24 @@ static nscolor ExtractColor(const ComputedStyle& aStyle,
   return ExtractColor(aStyle, aColor.AsColor());
 }
 
-static nscolor ExtractColor(ComputedStyle& aStyle,
-                            const nsStyleSVGPaint& aPaintServer) {
-  return aPaintServer.Type() == eStyleSVGPaintType_Color
-             ? aPaintServer.GetColor(&aStyle)
+static nscolor ExtractColor(const ComputedStyle& aStyle,
+                            const StyleSVGPaint& aPaintServer) {
+  return aPaintServer.kind.IsColor()
+             ? ExtractColor(aStyle, aPaintServer.kind.AsColor())
              : NS_RGBA(0, 0, 0, 0);
 }
 
 #define STYLE_FIELD(struct_, field_) aField == &struct_::field_ ||
 #define STYLE_STRUCT(name_, fields_)                                           \
   template <>                                                                  \
-  nscolor ComputedStyle::GetVisitedDependentColor(                             \
-      decltype(nsStyle##name_::MOZ_ARG_1 fields_) nsStyle##name_::*aField) {   \
+  nscolor ComputedStyle::GetVisitedDependentColor(decltype(                    \
+      nsStyle##name_::MOZ_ARG_1 fields_) nsStyle##name_::*aField) const {      \
     MOZ_ASSERT(MOZ_FOR_EACH(STYLE_FIELD, (nsStyle##name_, ), fields_) false,   \
                "Getting visited-dependent color for a field in nsStyle" #name_ \
                " which is not listed in nsCSSVisitedDependentPropList.h");     \
     return GetVisitedDependentColorInternal(                                   \
-        this, [aField](ComputedStyle* sc) {                                    \
-          return ExtractColor(*sc, sc->Style##name_()->*aField);               \
+        *this, [aField](const ComputedStyle& aStyle) {                         \
+          return ExtractColor(aStyle, aStyle.Style##name_()->*aField);         \
         });                                                                    \
   }
 #include "nsCSSVisitedDependentPropList.h"
@@ -374,8 +377,6 @@ Maybe<StyleStructID> ComputedStyle::LookupStruct(const nsACString& aName) {
 ComputedStyle* ComputedStyle::GetCachedLazyPseudoStyle(
     PseudoStyleType aPseudo) const {
   MOZ_ASSERT(PseudoStyle::IsPseudoElement(aPseudo));
-  MOZ_ASSERT(!IsLazilyCascadedPseudoElement(),
-             "Lazy pseudos can't inherit lazy pseudos");
 
   if (nsCSSPseudoElements::PseudoElementSupportsUserActionState(aPseudo)) {
     return nullptr;
@@ -396,5 +397,18 @@ void ComputedStyle::AddSizeOfIncludingThis(nsWindowSizes& aSizes,
   mSource.AddSizeOfExcludingThis(aSizes);
   mCachedInheritingStyles.AddSizeOfIncludingThis(aSizes, aCVsSize);
 }
+
+#ifdef DEBUG
+bool ComputedStyle::EqualForCachedAnonymousContentStyle(
+    const ComputedStyle& aOther) const {
+  // One thing we can't add UA rules to prevent is different -x-lang
+  // values being inherited in.  So we use this FFI function function rather
+  // than rely on CalcStyleDifference, which can't tell us which specific
+  // properties have changed.
+  return Servo_ComputedValues_EqualForCachedAnonymousContentStyle(this,
+                                                                  &aOther);
+}
+
+#endif
 
 }  // namespace mozilla

@@ -17,8 +17,8 @@
 #include "jit/MacroAssembler.h"
 #include "jit/MIR.h"
 #include "jit/MIRGenerator.h"
-#include "jit/OptimizationTracking.h"
 #include "js/Conversions.h"
+#include "util/Memory.h"
 #include "vm/TraceLogging.h"
 
 #include "jit/JitFrames-inl.h"
@@ -45,6 +45,7 @@ MacroAssembler& CodeGeneratorShared::ensureMasm(MacroAssembler* masmArg) {
 CodeGeneratorShared::CodeGeneratorShared(MIRGenerator* gen, LIRGraph* graph,
                                          MacroAssembler* masmArg)
     : maybeMasm_(),
+      useWasmStackArgumentAbi_(false),
       masm(ensureMasm(masmArg)),
       gen(gen),
       graph(*graph),
@@ -57,7 +58,7 @@ CodeGeneratorShared::CodeGeneratorShared(MIRGenerator* gen, LIRGraph* graph,
 #endif
       lastOsiPointOffset_(0),
       safepoints_(graph->totalSlotCount(),
-                  (gen->info().nargs() + 1) * sizeof(Value)),
+                  (gen->outerInfo().nargs() + 1) * sizeof(Value)),
       returnLabel_(),
       nativeToBytecodeMap_(nullptr),
       nativeToBytecodeMapSize_(0),
@@ -65,11 +66,6 @@ CodeGeneratorShared::CodeGeneratorShared(MIRGenerator* gen, LIRGraph* graph,
       nativeToBytecodeNumRegions_(0),
       nativeToBytecodeScriptList_(nullptr),
       nativeToBytecodeScriptListLength_(0),
-      trackedOptimizationsMap_(nullptr),
-      trackedOptimizationsMapSize_(0),
-      trackedOptimizationsRegionTableOffset_(0),
-      trackedOptimizationsTypesTableOffset_(0),
-      trackedOptimizationsAttemptsTableOffset_(0),
       osrEntryOffset_(0),
       skipArgCheckEntryOffset_(0),
 #ifdef CHECK_OSIPOINT_REGISTERS
@@ -88,9 +84,14 @@ CodeGeneratorShared::CodeGeneratorShared(MIRGenerator* gen, LIRGraph* graph,
     MOZ_ASSERT(graph->argumentSlotCount() == 0);
     frameDepth_ += gen->wasmMaxStackArgBytes();
 
-    static_assert(!SupportsSimd,
-                  "we need padding so that local slots are SIMD-aligned and "
-                  "the stack must be kept SIMD-aligned too.");
+#ifdef ENABLE_WASM_SIMD
+#  ifdef JS_CODEGEN_X64
+    // On X64, we don't need alignment for Wasm SIMD at this time.
+#  else
+#    error \
+        "we may need padding so that local slots are SIMD-aligned and the stack must be kept SIMD-aligned too."
+#  endif
+#endif
 
     if (gen->needsStaticStackAlignment()) {
       // An MWasmCall does not align the stack pointer at calls sites but
@@ -119,11 +120,6 @@ bool CodeGeneratorShared::generatePrologue() {
   // If profiling, save the current frame pointer to a per-thread global field.
   if (isProfilerInstrumentationEnabled()) {
     masm.profilerEnterFrame(masm.getStackPointer(), CallTempReg0);
-  }
-
-  if (gen->info().trackRecordReplayProgress()) {
-    masm.inc64(
-        AbsoluteAddress(mozilla::recordreplay::ExecutionProgressCounter()));
   }
 
   // Ensure that the Ion frame is properly aligned.
@@ -286,7 +282,7 @@ bool CodeGeneratorShared::addNativeToBytecodeEntry(const BytecodeSite* site) {
 
 void CodeGeneratorShared::dumpNativeToBytecodeEntries() {
 #ifdef JS_JITSPEW
-  InlineScriptTree* topTree = gen->info().inlineScriptTree();
+  InlineScriptTree* topTree = gen->outerInfo().inlineScriptTree();
   JitSpewStart(JitSpew_Profiling, "Native To Bytecode Entries for %s:%u:%u\n",
                topTree->script()->filename(), topTree->script()->lineno(),
                topTree->script()->column());
@@ -312,9 +308,9 @@ void CodeGeneratorShared::dumpNativeToBytecodeEntry(uint32_t idx) {
     }
   }
   JitSpewStart(
-      JitSpew_Profiling, "    %08zx [+%-6d] => %-6ld [%-4d] {%-10s} (%s:%u:%u",
+      JitSpew_Profiling, "    %08zx [+%-6u] => %-6ld [%-4u] {%-10s} (%s:%u:%u",
       ref.nativeOffset.offset(), nativeDelta, (long)(ref.pc - script->code()),
-      pcDelta, CodeName[JSOp(*ref.pc)], script->filename(), script->lineno(),
+      pcDelta, CodeName(JSOp(*ref.pc)), script->filename(), script->lineno(),
       script->column());
 
   for (tree = tree->caller(); tree; tree = tree->caller()) {
@@ -324,55 +320,6 @@ void CodeGeneratorShared::dumpNativeToBytecodeEntry(uint32_t idx) {
   JitSpewCont(JitSpew_Profiling, ")");
   JitSpewFin(JitSpew_Profiling);
 #endif
-}
-
-bool CodeGeneratorShared::addTrackedOptimizationsEntry(
-    const TrackedOptimizations* optimizations) {
-  if (!isOptimizationTrackingEnabled()) {
-    return true;
-  }
-
-  MOZ_ASSERT(optimizations);
-
-  uint32_t nativeOffset = masm.currentOffset();
-
-  if (!trackedOptimizations_.empty()) {
-    NativeToTrackedOptimizations& lastEntry = trackedOptimizations_.back();
-    MOZ_ASSERT_IF(!masm.oom(), nativeOffset >= lastEntry.endOffset.offset());
-
-    // If we're still generating code for the same set of optimizations,
-    // we are done.
-    if (lastEntry.optimizations == optimizations) {
-      return true;
-    }
-  }
-
-  // If we're generating code for a new set of optimizations, add a new
-  // entry.
-  NativeToTrackedOptimizations entry;
-  entry.startOffset = CodeOffset(nativeOffset);
-  entry.endOffset = CodeOffset(nativeOffset);
-  entry.optimizations = optimizations;
-  return trackedOptimizations_.append(entry);
-}
-
-void CodeGeneratorShared::extendTrackedOptimizationsEntry(
-    const TrackedOptimizations* optimizations) {
-  if (!isOptimizationTrackingEnabled()) {
-    return;
-  }
-
-  uint32_t nativeOffset = masm.currentOffset();
-  NativeToTrackedOptimizations& entry = trackedOptimizations_.back();
-  MOZ_ASSERT(entry.optimizations == optimizations);
-  MOZ_ASSERT_IF(!masm.oom(), nativeOffset >= entry.endOffset.offset());
-
-  entry.endOffset = CodeOffset(nativeOffset);
-
-  // If we generated no code, remove the last entry.
-  if (nativeOffset == entry.startOffset.offset()) {
-    trackedOptimizations_.popBack();
-  }
 }
 
 // see OffsetOfFrameSlot
@@ -416,13 +363,18 @@ void CodeGeneratorShared::encodeAllocation(LSnapshot* snapshot,
 
       // Lambda should have a default value readable for iterating over the
       // inner frames.
-      if (mir->isLambda() || mir->isLambdaArrow()) {
-        MConstant* constant = mir->isLambda()
-                                  ? mir->toLambda()->functionOperand()
-                                  : mir->toLambdaArrow()->functionOperand();
+      MConstant* functionOperand = nullptr;
+      if (mir->isLambda()) {
+        functionOperand = mir->toLambda()->functionOperand();
+      } else if (mir->isLambdaArrow()) {
+        functionOperand = mir->toLambdaArrow()->functionOperand();
+      } else if (mir->isFunctionWithProto()) {
+        functionOperand = mir->toFunctionWithProto()->functionOperand();
+      }
+      if (functionOperand) {
         uint32_t cstIndex;
         masm.propagateOOM(
-            graph.addConstantToPool(constant->toJSValue(), &cstIndex));
+            graph.addConstantToPool(functionOperand->toJSValue(), &cstIndex));
         alloc = RValueAllocation::RecoverInstruction(index, cstIndex);
         break;
       }
@@ -471,13 +423,7 @@ void CodeGeneratorShared::encodeAllocation(LSnapshot* snapshot,
       break;
     }
     case MIRType::Float32:
-    case MIRType::Int8x16:
-    case MIRType::Int16x8:
-    case MIRType::Int32x4:
-    case MIRType::Float32x4:
-    case MIRType::Bool8x16:
-    case MIRType::Bool16x8:
-    case MIRType::Bool32x4: {
+    case MIRType::Simd128: {
       LAllocation* payload = snapshot->payloadOfSlot(*allocIndex);
       if (payload->isConstant()) {
         MConstant* constant = mir->toConstant();
@@ -674,14 +620,12 @@ bool CodeGeneratorShared::assignBailoutId(LSnapshot* snapshot) {
 }
 
 bool CodeGeneratorShared::encodeSafepoints() {
-  for (SafepointIndex& index : safepointIndices_) {
+  for (CodegenSafepointIndex& index : safepointIndices_) {
     LSafepoint* safepoint = index.safepoint();
 
     if (!safepoint->encoded()) {
       safepoints_.encode(safepoint);
     }
-
-    index.resolve();
   }
 
   return !safepoints_.oom();
@@ -689,7 +633,7 @@ bool CodeGeneratorShared::encodeSafepoints() {
 
 bool CodeGeneratorShared::createNativeToBytecodeScriptList(JSContext* cx) {
   js::Vector<JSScript*, 0, SystemAllocPolicy> scriptList;
-  InlineScriptTree* tree = gen->info().inlineScriptTree();
+  InlineScriptTree* tree = gen->outerInfo().inlineScriptTree();
   for (;;) {
     // Add script from current tree.
     bool found = false;
@@ -886,216 +830,6 @@ void CodeGeneratorShared::verifyCompactNativeToBytecodeMap(JitCode* code) {
 #endif  // DEBUG
 }
 
-bool CodeGeneratorShared::generateCompactTrackedOptimizationsMap(
-    JSContext* cx, JitCode* code, IonTrackedTypeVector* allTypes) {
-  MOZ_ASSERT(trackedOptimizationsMap_ == nullptr);
-  MOZ_ASSERT(trackedOptimizationsMapSize_ == 0);
-  MOZ_ASSERT(trackedOptimizationsRegionTableOffset_ == 0);
-  MOZ_ASSERT(trackedOptimizationsTypesTableOffset_ == 0);
-  MOZ_ASSERT(trackedOptimizationsAttemptsTableOffset_ == 0);
-
-  if (trackedOptimizations_.empty()) {
-    return true;
-  }
-
-  UniqueTrackedOptimizations unique(cx);
-
-  // Iterate through all entries to deduplicate their optimization attempts.
-  for (size_t i = 0; i < trackedOptimizations_.length(); i++) {
-    NativeToTrackedOptimizations& entry = trackedOptimizations_[i];
-    if (!unique.add(entry.optimizations)) {
-      return false;
-    }
-  }
-
-  // Sort the unique optimization attempts by frequency to stabilize the
-  // attempts' indices in the compact table we will write later.
-  if (!unique.sortByFrequency(cx)) {
-    return false;
-  }
-
-  // Write out the ranges and the table.
-  CompactBufferWriter writer;
-  uint32_t numRegions;
-  uint32_t regionTableOffset;
-  uint32_t typesTableOffset;
-  uint32_t attemptsTableOffset;
-  if (!WriteIonTrackedOptimizationsTable(
-          cx, writer, trackedOptimizations_.begin(),
-          trackedOptimizations_.end(), unique, &numRegions, &regionTableOffset,
-          &typesTableOffset, &attemptsTableOffset, allTypes)) {
-    return false;
-  }
-
-  MOZ_ASSERT(regionTableOffset > 0);
-  MOZ_ASSERT(typesTableOffset > 0);
-  MOZ_ASSERT(attemptsTableOffset > 0);
-  MOZ_ASSERT(typesTableOffset > regionTableOffset);
-  MOZ_ASSERT(attemptsTableOffset > typesTableOffset);
-
-  // Copy over the table out of the writer's buffer.
-  uint8_t* data = cx->pod_malloc<uint8_t>(writer.length());
-  if (!data) {
-    return false;
-  }
-
-  memcpy(data, writer.buffer(), writer.length());
-  trackedOptimizationsMap_ = data;
-  trackedOptimizationsMapSize_ = writer.length();
-  trackedOptimizationsRegionTableOffset_ = regionTableOffset;
-  trackedOptimizationsTypesTableOffset_ = typesTableOffset;
-  trackedOptimizationsAttemptsTableOffset_ = attemptsTableOffset;
-
-  verifyCompactTrackedOptimizationsMap(code, numRegions, unique, allTypes);
-
-  JitSpew(JitSpew_OptimizationTrackingExtended,
-          "== Compact Native To Optimizations Map [%p-%p] size %u", data,
-          data + trackedOptimizationsMapSize_, trackedOptimizationsMapSize_);
-  JitSpew(JitSpew_OptimizationTrackingExtended,
-          "     with type list of length %zu, size %zu", allTypes->length(),
-          allTypes->length() * sizeof(IonTrackedTypeWithAddendum));
-
-  return true;
-}
-
-#ifdef DEBUG
-class ReadTempAttemptsVectorOp
-    : public JS::ForEachTrackedOptimizationAttemptOp {
-  TempOptimizationAttemptsVector* attempts_;
-  bool oom_;
-
- public:
-  explicit ReadTempAttemptsVectorOp(TempOptimizationAttemptsVector* attempts)
-      : attempts_(attempts), oom_(false) {}
-
-  bool oom() { return oom_; }
-
-  void operator()(JS::TrackedStrategy strategy,
-                  JS::TrackedOutcome outcome) override {
-    if (!attempts_->append(OptimizationAttempt(strategy, outcome))) {
-      oom_ = true;
-    }
-  }
-};
-
-struct ReadTempTypeInfoVectorOp
-    : public IonTrackedOptimizationsTypeInfo::ForEachOp {
-  TempAllocator& alloc_;
-  TempOptimizationTypeInfoVector* types_;
-  TempTypeList accTypes_;
-  bool oom_;
-
- public:
-  ReadTempTypeInfoVectorOp(TempAllocator& alloc,
-                           TempOptimizationTypeInfoVector* types)
-      : alloc_(alloc), types_(types), accTypes_(alloc), oom_(false) {}
-
-  bool oom() { return oom_; }
-
-  void readType(const IonTrackedTypeWithAddendum& tracked) override {
-    if (!accTypes_.append(tracked.type)) {
-      oom_ = true;
-    }
-  }
-
-  void operator()(JS::TrackedTypeSite site, MIRType mirType) override {
-    OptimizationTypeInfo ty(alloc_, site, mirType);
-    for (uint32_t i = 0; i < accTypes_.length(); i++) {
-      if (!ty.trackType(accTypes_[i])) {
-        oom_ = true;
-      }
-    }
-    if (!types_->append(std::move(ty))) {
-      oom_ = true;
-    }
-    accTypes_.clear();
-  }
-};
-#endif  // DEBUG
-
-void CodeGeneratorShared::verifyCompactTrackedOptimizationsMap(
-    JitCode* code, uint32_t numRegions,
-    const UniqueTrackedOptimizations& unique,
-    const IonTrackedTypeVector* allTypes) {
-#ifdef DEBUG
-  MOZ_ASSERT(trackedOptimizationsMap_ != nullptr);
-  MOZ_ASSERT(trackedOptimizationsMapSize_ > 0);
-  MOZ_ASSERT(trackedOptimizationsRegionTableOffset_ > 0);
-  MOZ_ASSERT(trackedOptimizationsTypesTableOffset_ > 0);
-  MOZ_ASSERT(trackedOptimizationsAttemptsTableOffset_ > 0);
-
-  // Table pointers must all be 4-byte aligned.
-  const uint8_t* regionTableAddr =
-      trackedOptimizationsMap_ + trackedOptimizationsRegionTableOffset_;
-  const uint8_t* typesTableAddr =
-      trackedOptimizationsMap_ + trackedOptimizationsTypesTableOffset_;
-  const uint8_t* attemptsTableAddr =
-      trackedOptimizationsMap_ + trackedOptimizationsAttemptsTableOffset_;
-  MOZ_ASSERT(uintptr_t(regionTableAddr) % sizeof(uint32_t) == 0);
-  MOZ_ASSERT(uintptr_t(typesTableAddr) % sizeof(uint32_t) == 0);
-  MOZ_ASSERT(uintptr_t(attemptsTableAddr) % sizeof(uint32_t) == 0);
-
-  // Assert that the number of entries matches up for the tables.
-  const IonTrackedOptimizationsRegionTable* regionTable =
-      (const IonTrackedOptimizationsRegionTable*)regionTableAddr;
-  MOZ_ASSERT(regionTable->numEntries() == numRegions);
-  const IonTrackedOptimizationsTypesTable* typesTable =
-      (const IonTrackedOptimizationsTypesTable*)typesTableAddr;
-  MOZ_ASSERT(typesTable->numEntries() == unique.count());
-  const IonTrackedOptimizationsAttemptsTable* attemptsTable =
-      (const IonTrackedOptimizationsAttemptsTable*)attemptsTableAddr;
-  MOZ_ASSERT(attemptsTable->numEntries() == unique.count());
-
-  // Verify each region.
-  uint32_t trackedIdx = 0;
-  for (uint32_t regionIdx = 0; regionIdx < regionTable->numEntries();
-       regionIdx++) {
-    // Check reverse offsets are within bounds.
-    MOZ_ASSERT(regionTable->entryOffset(regionIdx) <=
-               trackedOptimizationsRegionTableOffset_);
-    MOZ_ASSERT_IF(regionIdx > 0, regionTable->entryOffset(regionIdx) <
-                                     regionTable->entryOffset(regionIdx - 1));
-
-    IonTrackedOptimizationsRegion region = regionTable->entry(regionIdx);
-
-    // Check the region range is covered by jitcode.
-    MOZ_ASSERT(region.startOffset() <= code->instructionsSize());
-    MOZ_ASSERT(region.endOffset() <= code->instructionsSize());
-
-    IonTrackedOptimizationsRegion::RangeIterator iter = region.ranges();
-    while (iter.more()) {
-      // Assert that the offsets are correctly decoded from the delta.
-      uint32_t startOffset, endOffset;
-      uint8_t index;
-      iter.readNext(&startOffset, &endOffset, &index);
-      NativeToTrackedOptimizations& entry = trackedOptimizations_[trackedIdx++];
-      MOZ_ASSERT(startOffset == entry.startOffset.offset());
-      MOZ_ASSERT(endOffset == entry.endOffset.offset());
-      MOZ_ASSERT(index == unique.indexOf(entry.optimizations));
-
-      // Assert that the type info and attempts vectors are correctly
-      // decoded. This is disabled for now if the types table might
-      // contain nursery pointers, in which case the types might not
-      // match, see bug 1175761.
-      JSRuntime* rt = code->runtimeFromMainThread();
-      if (!rt->gc.storeBuffer().cancelIonCompilations()) {
-        IonTrackedOptimizationsTypeInfo typeInfo = typesTable->entry(index);
-        TempOptimizationTypeInfoVector tvec(alloc());
-        ReadTempTypeInfoVectorOp top(alloc(), &tvec);
-        typeInfo.forEach(top, allTypes);
-        MOZ_ASSERT_IF(!top.oom(), entry.optimizations->matchTypes(tvec));
-      }
-
-      IonTrackedOptimizationsAttempts attempts = attemptsTable->entry(index);
-      TempOptimizationAttemptsVector avec(alloc());
-      ReadTempAttemptsVectorOp aop(&avec);
-      attempts.forEach(aop);
-      MOZ_ASSERT_IF(!aop.oom(), entry.optimizations->matchAttempts(avec));
-    }
-  }
-#endif
-}
-
 void CodeGeneratorShared::markSafepoint(LInstruction* ins) {
   markSafepointAt(masm.currentOffset(), ins);
 }
@@ -1104,8 +838,8 @@ void CodeGeneratorShared::markSafepointAt(uint32_t offset, LInstruction* ins) {
   MOZ_ASSERT_IF(
       !safepointIndices_.empty() && !masm.oom(),
       offset - safepointIndices_.back().displacement() >= sizeof(uint32_t));
-  masm.propagateOOM(
-      safepointIndices_.append(SafepointIndex(offset, ins->safepoint())));
+  masm.propagateOOM(safepointIndices_.append(
+      CodegenSafepointIndex(offset, ins->safepoint())));
 }
 
 void CodeGeneratorShared::ensureOsiSpace() {
@@ -1225,15 +959,12 @@ bool CodeGeneratorShared::omitOverRecursedCheck() const {
 }
 
 void CodeGeneratorShared::emitPreBarrier(Register elements,
-                                         const LAllocation* index,
-                                         int32_t offsetAdjustment) {
+                                         const LAllocation* index) {
   if (index->isConstant()) {
-    Address address(elements,
-                    ToInt32(index) * sizeof(Value) + offsetAdjustment);
+    Address address(elements, ToInt32(index) * sizeof(Value));
     masm.guardedCallPreBarrier(address, MIRType::Value);
   } else {
-    BaseObjectElementIndex address(elements, ToRegister(index),
-                                   offsetAdjustment);
+    BaseObjectElementIndex address(elements, ToRegister(index));
     masm.guardedCallPreBarrier(address, MIRType::Value);
   }
 }

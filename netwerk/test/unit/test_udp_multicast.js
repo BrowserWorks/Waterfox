@@ -1,4 +1,5 @@
 // Bug 960397: UDP multicast options
+"use strict";
 
 var { Constructor: CC } = Components;
 
@@ -48,13 +49,13 @@ function sendPing(socket, addr) {
 
   return new Promise((resolve, reject) => {
     socket.asyncListen({
-      onPacketReceived: function(s, message) {
+      onPacketReceived(s, message) {
         info("Received on port " + socket.port);
         Assert.equal(message.data, ping);
         socket.close();
         resolve(message.data);
       },
-      onStopListening: function(socket, status) {},
+      onStopListening(socket, status) {},
     });
 
     info("Multicast send to port " + socket.port);

@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title "అంతరంగిక విహారణ">
+
+<!-- Localisation note: the plus sign here is a shorthand way of expressing the word "and". Contextually the privatebrowsingpage.title.private string
+                        is used as a title, with the privatebrowsingpage.title string preceding it but on a separate line.
+                        So the final line will say "Private Browsing + Tracking Protection". -->
+<!ENTITY privatebrowsingpage.title.private "+ ట్రాకింగ్ సంరక్షణ">
+<!-- Localization note (privatebrowsingpage.title.normal1): "Private Browsing"
+     is capitalized in English to be consistent with our existing uses of the
+     term. -->
+<!ENTITY privatebrowsingpage.title.normal1 "మీరు ప్రైవేట్ బ్రౌజింగ్ లో లేరు">
+
+<!ENTITY privatebrowsingpage.description.trackingProtection "మీ విహరణ జాడ తెలుసుకునేందు ఈ పైజీపై వున్న భాగములను &brandShortName; నిరోధిస్తోంది.">
+<!ENTITY privatebrowsingpage.description.privateDetails "మేము ఏ చరిత్ర గుర్తు లేదు, కానీ ఫైళ్లకు మరియు కొత్త బుక్మార్క్లు ఇంకా మీ పరికరంలో సేవ్ చేయబడతాయి.">
+
+<!-- Localization note (privatebrowsingpage.description.normal2): "Private
+     Browsing is capitalized in English to be consistent with our existing uses
+     of the term. -->
+<!ENTITY privatebrowsingpage.description.normal2 "ప్రైవేట్ బ్రౌజింగ్ లో, మేము మీ బ్రౌజింగ్ చరిత్ర లేదా కుకీలను ఏ ఉంచరు. మీరు జోడించవచ్చు మరియు బుక్మార్క్లు ఫైళ్లు మీరు డౌన్లోడ్ ఇంకా మీ పరికరంలో సేవ్ చేయబడతాయి.">
+
+<!ENTITY privatebrowsingpage.link.private "ఇంకా తెలుసుకోవాలనుకుంటున్నారా?">
+<!ENTITY privatebrowsingpage.link.normal "కొత్త ప్రైవేట్ టాబ్ లో తెరువండి">

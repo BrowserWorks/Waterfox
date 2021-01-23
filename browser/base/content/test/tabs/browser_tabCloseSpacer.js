@@ -8,9 +8,8 @@
  * even when an underflow happens.
  */
 add_task(async function() {
-  await SpecialPowers.pushPrefEnv({
-    set: [["toolkit.cosmeticAnimations.enabled", false]],
-  });
+  // Disable tab animations
+  gReduceMotionOverride = true;
 
   let downButton = gBrowser.tabContainer.arrowScrollbox._scrollButtonDown;
   let closingTabsSpacer = gBrowser.tabContainer._closingTabsSpacer;
@@ -52,6 +51,12 @@ add_task(async function() {
 
 async function overflowTabs() {
   let arrowScrollbox = gBrowser.tabContainer.arrowScrollbox;
+  const originalSmoothScroll = arrowScrollbox.smoothScroll;
+  arrowScrollbox.smoothScroll = false;
+  registerCleanupFunction(() => {
+    arrowScrollbox.smoothScroll = originalSmoothScroll;
+  });
+
   let width = ele => ele.getBoundingClientRect().width;
   let tabMinWidth = parseInt(
     getComputedStyle(gBrowser.selectedTab, null).minWidth
@@ -65,16 +70,16 @@ async function overflowTabs() {
       index: 0,
     });
   }
-  await window.promiseDocumentFlushed(() => {});
+
+  // Make sure scrolling finished.
+  await new Promise(resolve => {
+    arrowScrollbox.addEventListener("scrollend", resolve, { once: true });
+  });
 }
 
 function getLastCloseButton() {
   let lastTab = gBrowser.tabs[gBrowser.tabs.length - 1];
-  return document.getAnonymousElementByAttribute(
-    lastTab,
-    "anonid",
-    "close-button"
-  );
+  return lastTab.closeButton;
 }
 
 function getLastCloseButtonLocation() {

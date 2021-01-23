@@ -23,8 +23,9 @@
  *
  * exported ManifestObtainer
  */
-/* globals Components, Task, PromiseMessage, XPCOMUtils, ManifestProcessor, BrowserUtils*/
 "use strict";
+
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 const { PromiseMessage } = ChromeUtils.import(
   "resource://gre/modules/PromiseMessage.jsm"
@@ -39,16 +40,22 @@ var ManifestObtainer = {
    * Public interface for obtaining a web manifest from a XUL browser, to use
    * on the parent process.
    * @param  {XULBrowser} The browser to check for the manifest.
+   * @param {Object} aOptions
+   * @param {Boolean} aOptions.checkConformance If spec conformance messages should be collected.
+   *                                            Adds proprietary moz_* members to manifest.
    * @return {Promise<Object>} The processed manifest.
    */
-  async browserObtainManifest(aBrowser) {
+  async browserObtainManifest(
+    aBrowser,
+    aOptions = { checkConformance: false }
+  ) {
     if (!isXULBrowser(aBrowser)) {
       throw new TypeError("Invalid input. Expected XUL browser.");
     }
     const mm = aBrowser.messageManager;
     const {
       data: { success, result },
-    } = await PromiseMessage.send(mm, "DOM:ManifestObtainer:Obtain");
+    } = await PromiseMessage.send(mm, "DOM:ManifestObtainer:Obtain", aOptions);
     if (!success) {
       const error = toError(result);
       throw error;
@@ -57,16 +64,29 @@ var ManifestObtainer = {
   },
   /**
    * Public interface for obtaining a web manifest from a XUL browser.
-   * @param  {Window} The content Window from which to extract the manifest.
+   * @param {Window} aContent A content Window from which to extract the manifest.
+   * @param {Object} aOptions
+   * @param {Boolean} aOptions.checkConformance If spec conformance messages should be collected.
+   *                                            Adds proprietary moz_* members to manifest.
    * @return {Promise<Object>} The processed manifest.
    */
-  contentObtainManifest(aContent) {
-    if (!aContent || isXULBrowser(aContent)) {
-      throw new TypeError("Invalid input. Expected a DOM Window.");
+  async contentObtainManifest(
+    aContent,
+    aOptions = { checkConformance: false }
+  ) {
+    if (!Services.prefs.getBoolPref("dom.manifest.enabled")) {
+      throw new Error(
+        "Obtaining manifest is disabled by pref: dom.manifest.enabled"
+      );
     }
-    return fetchManifest(aContent).then(response =>
-      processResponse(response, aContent)
-    );
+    if (!aContent || isXULBrowser(aContent)) {
+      const err = new TypeError("Invalid input. Expected a DOM Window.");
+      return Promise.reject(err);
+    }
+    const response = await fetchManifest(aContent);
+    const result = await processResponse(response, aContent, aOptions);
+    const clone = Cu.cloneInto(result, aContent);
+    return clone;
   },
 };
 
@@ -89,8 +109,9 @@ function isXULBrowser(aBrowser) {
   if (!aBrowser || !aBrowser.namespaceURI || !aBrowser.localName) {
     return false;
   }
-  const XUL = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
-  return aBrowser.namespaceURI === XUL && aBrowser.localName === "browser";
+  const XUL_NS =
+    "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+  return aBrowser.namespaceURI === XUL_NS && aBrowser.localName === "browser";
 }
 
 /**
@@ -100,12 +121,10 @@ function isXULBrowser(aBrowser) {
  * @param {Window} aContentWindow The content window.
  * @return {Promise<Object>} The processed manifest.
  */
-async function processResponse(aResp, aContentWindow) {
+async function processResponse(aResp, aContentWindow, aOptions) {
   const badStatus = aResp.status < 200 || aResp.status >= 300;
   if (aResp.type === "error" || badStatus) {
-    const msg = `Fetch error: ${aResp.status} - ${aResp.statusText} at ${
-      aResp.url
-    }`;
+    const msg = `Fetch error: ${aResp.status} - ${aResp.statusText} at ${aResp.url}`;
     throw new Error(msg);
   }
   const text = await aResp.text();
@@ -114,7 +133,8 @@ async function processResponse(aResp, aContentWindow) {
     manifestURL: aResp.url,
     docURL: aContentWindow.location.href,
   };
-  const manifest = ManifestProcessor.process(args);
+  const processingOptions = Object.assign({}, args, aOptions);
+  const manifest = ManifestProcessor.process(processingOptions);
   return manifest;
 }
 
@@ -136,6 +156,7 @@ async function fetchManifest(aWindow) {
   // Throws on malformed URLs
   const manifestURL = new aWindow.URL(elem.href, elem.baseURI);
   const reqInit = {
+    credentials: "omit",
     mode: "cors",
   };
   if (elem.crossOrigin === "use-credentials") {

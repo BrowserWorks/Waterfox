@@ -4,29 +4,30 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "mozilla/ArrayUtils.h"
 #include "mozilla/BackgroundHangMonitor.h"
+
+#include <utility>
+
+#include "GeckoProfiler.h"
+#include "HangDetails.h"
+#include "ThreadStackHelper.h"
+#include "mozilla/ArrayUtils.h"
 #include "mozilla/CPUUsageWatcher.h"
 #include "mozilla/LinkedList.h"
 #include "mozilla/Monitor.h"
-#include "mozilla/Move.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/Services.h"
 #include "mozilla/StaticPtr.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/ThreadLocal.h"
-#include "mozilla/SystemGroup.h"
 #include "mozilla/Unused.h"
-
-#include "prinrval.h"
-#include "prthread.h"
-#include "ThreadStackHelper.h"
-#include "nsIObserverService.h"
+#include "nsAppDirectoryServiceDefs.h"
 #include "nsIObserver.h"
-#include "mozilla/Services.h"
+#include "nsIObserverService.h"
 #include "nsThreadUtils.h"
 #include "nsXULAppAPI.h"
-#include "GeckoProfiler.h"
-#include "HangDetails.h"
+#include "prinrval.h"
+#include "prthread.h"
 
 #ifdef MOZ_GECKO_PROFILER
 #  include "ProfilerMarkerPayload.h"
@@ -104,6 +105,10 @@ class BackgroundHangManager : public nsIObserver {
   // Unwinding and reporting of hangs is despatched to this thread.
   nsCOMPtr<nsIThread> mHangProcessingThread;
 
+  // Used for recording a permahang in case we don't ever make it back to
+  // the main thread to record/send it.
+  nsCOMPtr<nsIFile> mPermahangFile;
+
   // Allows us to watch CPU usage and annotate hangs when the system is
   // under high external load.
   CPUUsageWatcher mCPUUsageWatcher;
@@ -131,13 +136,36 @@ NS_IMPL_ISUPPORTS(BackgroundHangManager, nsIObserver)
 NS_IMETHODIMP
 BackgroundHangManager::Observe(nsISupports* aSubject, const char* aTopic,
                                const char16_t* aData) {
-  NS_ENSURE_TRUE(!strcmp(aTopic, "profile-after-change"), NS_ERROR_UNEXPECTED);
-  BackgroundHangMonitor::DisableOnBeta();
+  if (!strcmp(aTopic, "browser-delayed-startup-finished")) {
+    MonitorAutoLock autoLock(mLock);
+    nsresult rv = NS_GetSpecialDirectory(NS_APP_USER_PROFILE_50_DIR,
+                                         getter_AddRefs(mPermahangFile));
+    if (NS_SUCCEEDED(rv)) {
+      mPermahangFile->AppendNative(NS_LITERAL_CSTRING("last_permahang.bin"));
+    } else {
+      mPermahangFile = nullptr;
+    }
 
-  nsCOMPtr<nsIObserverService> observerService =
-      mozilla::services::GetObserverService();
-  MOZ_ASSERT(observerService);
-  observerService->RemoveObserver(this, "profile-after-change");
+    if (mHangProcessingThread && mPermahangFile) {
+      nsCOMPtr<nsIRunnable> submitRunnable =
+          new SubmitPersistedPermahangRunnable(mPermahangFile);
+      mHangProcessingThread->Dispatch(submitRunnable.forget());
+    }
+    nsCOMPtr<nsIObserverService> observerService =
+        mozilla::services::GetObserverService();
+    MOZ_ASSERT(observerService);
+    observerService->RemoveObserver(BackgroundHangManager::sInstance,
+                                    "browser-delayed-startup-finished");
+  } else if (!strcmp(aTopic, "profile-after-change")) {
+    BackgroundHangMonitor::DisableOnBeta();
+    nsCOMPtr<nsIObserverService> observerService =
+        mozilla::services::GetObserverService();
+    MOZ_ASSERT(observerService);
+    observerService->RemoveObserver(BackgroundHangManager::sInstance,
+                                    "profile-after-change");
+  } else {
+    return NS_ERROR_UNEXPECTED;
+  }
 
   return NS_OK;
 }
@@ -216,7 +244,8 @@ class BackgroundHangThread : public LinkedListElement<BackgroundHangThread> {
 
   // Report a hang; aManager->mLock IS locked. The hang will be processed
   // off-main-thread, and will then be submitted back.
-  void ReportHang(TimeDuration aHangTime);
+  void ReportHang(TimeDuration aHangTime,
+                  PersistedToDisk aPersistedToDisk = PersistedToDisk::No);
   // Report a permanent hang; aManager->mLock IS locked
   void ReportPermaHang();
   // Called by BackgroundHangMonitor::NotifyActivity
@@ -468,38 +497,47 @@ BackgroundHangThread::~BackgroundHangThread() {
   }
 }
 
-void BackgroundHangThread::ReportHang(TimeDuration aHangTime) {
+void BackgroundHangThread::ReportHang(TimeDuration aHangTime,
+                                      PersistedToDisk aPersistedToDisk) {
   // Recovered from a hang; called on the monitor thread
   // mManager->mLock IS locked
 
-  HangDetails hangDetails(
-      aHangTime,
-      nsDependentCString(XRE_ChildProcessTypeToString(XRE_GetProcessType())),
-      VoidString(), mThreadName, mRunnableName, std::move(mHangStack),
-      std::move(mAnnotations));
+  HangDetails hangDetails(aHangTime,
+                          nsDependentCString(XRE_GetProcessTypeString()),
+                          VoidString(), mThreadName, mRunnableName,
+                          std::move(mHangStack), std::move(mAnnotations));
+
+  PersistedToDisk persistedToDisk = aPersistedToDisk;
+  if (aPersistedToDisk == PersistedToDisk::Yes && XRE_IsParentProcess() &&
+      mManager->mPermahangFile) {
+    auto res = WriteHangDetailsToFile(hangDetails, mManager->mPermahangFile);
+    persistedToDisk = res.isOk() ? PersistedToDisk::Yes : PersistedToDisk::No;
+  }
 
   // If the hang processing thread exists, we can process the native stack
   // on it. Otherwise, we are unable to report a native stack, so we just
   // report without one.
   if (mManager->mHangProcessingThread) {
     nsCOMPtr<nsIRunnable> processHangStackRunnable =
-        new ProcessHangStackRunnable(std::move(hangDetails));
+        new ProcessHangStackRunnable(std::move(hangDetails), persistedToDisk);
     mManager->mHangProcessingThread->Dispatch(
         processHangStackRunnable.forget());
   } else {
     NS_WARNING("Unable to report native stack without a BHR processing thread");
-    RefPtr<nsHangDetails> hd = new nsHangDetails(std::move(hangDetails));
+    RefPtr<nsHangDetails> hd =
+        new nsHangDetails(std::move(hangDetails), persistedToDisk);
     hd->Submit();
   }
 
   // If the profiler is enabled, add a marker.
 #ifdef MOZ_GECKO_PROFILER
-  if (profiler_is_active()) {
+  if (profiler_can_accept_markers()) {
     TimeStamp endTime = TimeStamp::Now();
     TimeStamp startTime = endTime - aHangTime;
+    AUTO_PROFILER_STATS(add_marker_with_HangMarkerPayload);
     profiler_add_marker_for_thread(
         mStackHelper.GetThreadId(), JS::ProfilingCategoryPair::OTHER,
-        "BHR-detected hang", MakeUnique<HangMarkerPayload>(startTime, endTime));
+        "BHR-detected hang", HangMarkerPayload(startTime, endTime));
   }
 #endif
 }
@@ -508,13 +546,11 @@ void BackgroundHangThread::ReportPermaHang() {
   // Permanently hanged; called on the monitor thread
   // mManager->mLock IS locked
 
-  // NOTE: We used to capture a native stack in this situation if one had not
-  // already been captured, but with the new ReportHang design that is less
-  // practical.
-  //
-  // We currently don't look at hang reports outside of nightly, and already
-  // collect native stacks eagerly on nightly, so this should be OK.
-  ReportHang(mMaxTimeout);
+  // The significance of a permahang is that it's likely that we won't ever
+  // recover and be allowed to submit this hang. On the parent thread, we
+  // compensate for this by writing the hang details to disk on this thread,
+  // and in our next session we'll try to read those details
+  ReportHang(mMaxTimeout, PersistedToDisk::Yes);
 }
 
 MOZ_ALWAYS_INLINE void BackgroundHangThread::Update() {
@@ -612,17 +648,16 @@ void BackgroundHangMonitor::Startup() {
     return;
   }
 
+  nsCOMPtr<nsIObserverService> observerService =
+      mozilla::services::GetObserverService();
+  MOZ_ASSERT(observerService);
+
   if (!strcmp(MOZ_STRINGIFY(MOZ_UPDATE_CHANNEL), "beta")) {
     if (XRE_IsParentProcess()) {  // cached ClientID hasn't been read yet
       BackgroundHangThread::Startup();
       BackgroundHangManager::sInstance = new BackgroundHangManager();
       Unused << NS_WARN_IF(
           BackgroundHangManager::sInstance->mCPUUsageWatcher.Init().isErr());
-
-      nsCOMPtr<nsIObserverService> observerService =
-          mozilla::services::GetObserverService();
-      MOZ_ASSERT(observerService);
-
       observerService->AddObserver(BackgroundHangManager::sInstance,
                                    "profile-after-change", false);
       return;
@@ -635,6 +670,10 @@ void BackgroundHangMonitor::Startup() {
   BackgroundHangManager::sInstance = new BackgroundHangManager();
   Unused << NS_WARN_IF(
       BackgroundHangManager::sInstance->mCPUUsageWatcher.Init().isErr());
+  if (XRE_IsParentProcess()) {
+    observerService->AddObserver(BackgroundHangManager::sInstance,
+                                 "browser-delayed-startup-finished", false);
+  }
 #endif
 }
 
@@ -686,8 +725,7 @@ BackgroundHangMonitor::BackgroundHangMonitor(const char* aName,
   }
 #  endif
 
-  if (!BackgroundHangManager::sDisabled && !mThread &&
-      !recordreplay::IsMiddleman()) {
+  if (!BackgroundHangManager::sDisabled && !mThread) {
     mThread =
         new BackgroundHangThread(aName, aTimeoutMs, aMaxTimeoutMs, aThreadType);
   }
@@ -703,7 +741,7 @@ BackgroundHangMonitor::BackgroundHangMonitor()
 #endif
 }
 
-BackgroundHangMonitor::~BackgroundHangMonitor() {}
+BackgroundHangMonitor::~BackgroundHangMonitor() = default;
 
 void BackgroundHangMonitor::NotifyActivity() {
 #ifdef MOZ_ENABLE_BACKGROUND_HANG_MONITOR

@@ -22,7 +22,8 @@
 #include "mozilla/dom/Promise.h"
 #include "mozilla/dom/ServiceWorkerGlobalScopeBinding.h"
 #include "mozilla/dom/WorkerPrivate.h"
-#include "mozilla/StaticPrefs.h"
+#include "mozilla/StaticPrefs_dom.h"
+#include "mozilla/StorageAccess.h"
 
 #ifdef XP_WIN
 #  undef PostMessage
@@ -110,7 +111,7 @@ ServiceWorker::ServiceWorker(nsIGlobalObject* aGlobal,
               global->GetOrCreateServiceWorkerRegistration(aDescriptor);
           self->MaybeAttachToRegistration(reg);
         },
-        [](ErrorResult& aRv) {
+        [](ErrorResult&& aRv) {
           // do nothing
           aRv.SuppressException();
         });
@@ -180,8 +181,8 @@ void ServiceWorker::PostMessage(JSContext* aCx, JS::Handle<JS::Value> aMessage,
     return;
   }
 
-  auto storageAllowed = nsContentUtils::StorageAllowedForWindow(window);
-  if (storageAllowed != nsContentUtils::StorageAccess::eAllow) {
+  auto storageAllowed = StorageAllowedForWindow(window);
+  if (storageAllowed != StorageAccess::eAllow) {
     ServiceWorkerManager::LocalizeAndReportToAllClients(
         mDescriptor.Scope(), "ServiceWorkerPostMessageStorageError",
         nsTArray<nsString>{NS_ConvertUTF8toUTF16(mDescriptor.Scope())});
@@ -204,7 +205,7 @@ void ServiceWorker::PostMessage(JSContext* aCx, JS::Handle<JS::Value> aMessage,
   }
 
   RefPtr<ServiceWorkerCloneData> data = new ServiceWorkerCloneData();
-  data->Write(aCx, aMessage, transferable, aRv);
+  data->Write(aCx, aMessage, transferable, JS::CloneDataPolicy(), aRv);
   if (aRv.Failed()) {
     return;
   }

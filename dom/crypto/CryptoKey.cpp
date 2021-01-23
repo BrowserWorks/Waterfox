@@ -13,32 +13,6 @@
 #include "nsNSSComponent.h"
 #include "pk11pub.h"
 
-// Templates taken from security/nss/lib/cryptohi/seckey.c
-// These would ideally be exported by NSS and until that
-// happens we have to keep our own copies.
-const SEC_ASN1Template SECKEY_DHPublicKeyTemplate[] = {
-    {
-        SEC_ASN1_INTEGER,
-        offsetof(SECKEYPublicKey, u.dh.publicValue),
-    },
-    {
-        0,
-    }};
-const SEC_ASN1Template SECKEY_DHParamKeyTemplate[] = {
-    {SEC_ASN1_SEQUENCE, 0, NULL, sizeof(SECKEYPublicKey)},
-    {
-        SEC_ASN1_INTEGER,
-        offsetof(SECKEYPublicKey, u.dh.prime),
-    },
-    {
-        SEC_ASN1_INTEGER,
-        offsetof(SECKEYPublicKey, u.dh.base),
-    },
-    {SEC_ASN1_SKIP_REST},
-    {
-        0,
-    }};
-
 namespace mozilla {
 namespace dom {
 
@@ -206,14 +180,6 @@ void CryptoKey::GetAlgorithm(JSContext* cx,
     case KeyAlgorithmProxy::EC:
       converted = ToJSValue(cx, mAlgorithm.mEc, &val);
       break;
-    case KeyAlgorithmProxy::DH: {
-      RootedDictionary<DhKeyAlgorithm> dh(cx);
-      converted = mAlgorithm.mDh.ToKeyAlgorithm(cx, dh);
-      if (converted) {
-        converted = ToJSValue(cx, dh, &val);
-      }
-      break;
-    }
   }
   if (!converted) {
     aRv.Throw(NS_ERROR_DOM_OPERATION_ERR);
@@ -483,22 +449,12 @@ UniqueSECKEYPublicKey CryptoKey::PublicKeyFromSpki(CryptoBuffer& aKeyData) {
 
   bool isECDHAlgorithm =
       SECITEM_ItemsAreEqual(&SEC_OID_DATA_EC_DH, &spki->algorithm.algorithm);
-  bool isDHAlgorithm = SECITEM_ItemsAreEqual(&SEC_OID_DATA_DH_KEY_AGREEMENT,
-                                             &spki->algorithm.algorithm);
 
-  // Check for |id-ecDH| and |dhKeyAgreement|. Per the WebCrypto spec we must
-  // support these OIDs but NSS does unfortunately not know about them. Let's
-  // change the algorithm to |id-ecPublicKey| or |dhPublicKey| to make NSS
-  // happy.
-  if (isECDHAlgorithm || isDHAlgorithm) {
-    SECOidTag oid = SEC_OID_UNKNOWN;
-    if (isECDHAlgorithm) {
-      oid = SEC_OID_ANSIX962_EC_PUBLIC_KEY;
-    } else if (isDHAlgorithm) {
-      oid = SEC_OID_X942_DIFFIE_HELMAN_KEY;
-    } else {
-      MOZ_ASSERT(false);
-    }
+  // Check for |id-ecDH|. Per old versions of the WebCrypto spec we must
+  // support this OID but NSS does unfortunately not know it. Let's
+  // change the algorithm to |id-ecPublicKey| to make NSS happy.
+  if (isECDHAlgorithm) {
+    SECOidTag oid = SEC_OID_ANSIX962_EC_PUBLIC_KEY;
 
     SECOidData* oidData = SECOID_FindOIDByTag(oid);
     if (!oidData) {
@@ -532,89 +488,13 @@ nsresult CryptoKey::PrivateKeyToPkcs8(SECKEYPrivateKey* aPrivKey,
   return NS_OK;
 }
 
-nsresult PublicDhKeyToSpki(SECKEYPublicKey* aPubKey,
-                           CERTSubjectPublicKeyInfo* aSpki) {
-  SECItem* params = ::SECITEM_AllocItem(aSpki->arena, nullptr, 0);
-  if (!params) {
-    return NS_ERROR_DOM_OPERATION_ERR;
-  }
-
-  SECItem* rvItem = SEC_ASN1EncodeItem(aSpki->arena, params, aPubKey,
-                                       SECKEY_DHParamKeyTemplate);
-  if (!rvItem) {
-    return NS_ERROR_DOM_OPERATION_ERR;
-  }
-
-  SECStatus rv = SECOID_SetAlgorithmID(aSpki->arena, &aSpki->algorithm,
-                                       SEC_OID_X942_DIFFIE_HELMAN_KEY, params);
-  if (rv != SECSuccess) {
-    return NS_ERROR_DOM_OPERATION_ERR;
-  }
-
-  rvItem = SEC_ASN1EncodeItem(aSpki->arena, &aSpki->subjectPublicKey, aPubKey,
-                              SECKEY_DHPublicKeyTemplate);
-  if (!rvItem) {
-    return NS_ERROR_DOM_OPERATION_ERR;
-  }
-
-  // The public value is a BIT_STRING encoded as an INTEGER. After encoding
-  // an INT we need to adjust the length to reflect the number of bits.
-  aSpki->subjectPublicKey.len <<= 3;
-
-  return NS_OK;
-}
-
 nsresult CryptoKey::PublicKeyToSpki(SECKEYPublicKey* aPubKey,
                                     CryptoBuffer& aRetVal) {
   UniqueCERTSubjectPublicKeyInfo spki;
 
-  // NSS doesn't support exporting DH public keys.
-  if (aPubKey->keyType == dhKey) {
-    // Mimic the behavior of SECKEY_CreateSubjectPublicKeyInfo() and create
-    // a new arena for the SPKI object.
-    UniquePLArenaPool arena(PORT_NewArena(DER_DEFAULT_CHUNKSIZE));
-    if (!arena) {
-      return NS_ERROR_DOM_OPERATION_ERR;
-    }
-
-    spki.reset(PORT_ArenaZNew(arena.get(), CERTSubjectPublicKeyInfo));
-    if (!spki) {
-      return NS_ERROR_DOM_OPERATION_ERR;
-    }
-
-    // Assign |arena| to |spki| and null the variable afterwards so that the
-    // arena created above that holds the SPKI object is free'd when |spki|
-    // goes out of scope, not when |arena| does.
-    spki->arena = arena.release();
-
-    nsresult rv = PublicDhKeyToSpki(aPubKey, spki.get());
-    NS_ENSURE_SUCCESS(rv, rv);
-  } else {
-    spki.reset(SECKEY_CreateSubjectPublicKeyInfo(aPubKey));
-    if (!spki) {
-      return NS_ERROR_DOM_OPERATION_ERR;
-    }
-  }
-
-  // Per WebCrypto spec we must export ECDH SPKIs with the algorithm OID
-  // id-ecDH (1.3.132.112) and DH SPKIs with OID dhKeyAgreement
-  // (1.2.840.113549.1.3.1). NSS doesn't know about these OIDs and there is
-  // no way to specify the algorithm to use when exporting a public key.
-  if (aPubKey->keyType == ecKey || aPubKey->keyType == dhKey) {
-    const SECItem* oidData = nullptr;
-    if (aPubKey->keyType == ecKey) {
-      oidData = &SEC_OID_DATA_EC_DH;
-    } else if (aPubKey->keyType == dhKey) {
-      oidData = &SEC_OID_DATA_DH_KEY_AGREEMENT;
-    } else {
-      MOZ_ASSERT(false);
-    }
-
-    SECStatus rv =
-        SECITEM_CopyItem(spki->arena, &spki->algorithm.algorithm, oidData);
-    if (rv != SECSuccess) {
-      return NS_ERROR_DOM_OPERATION_ERR;
-    }
+  spki.reset(SECKEY_CreateSubjectPublicKeyInfo(aPubKey));
+  if (!spki) {
+    return NS_ERROR_DOM_OPERATION_ERR;
   }
 
   const SEC_ASN1Template* tpl = SEC_ASN1_GET(CERT_SubjectPublicKeyInfoTemplate);
@@ -1036,45 +916,6 @@ nsresult CryptoKey::PublicKeyToJwk(SECKEYPublicKey* aPubKey,
   }
 }
 
-UniqueSECKEYPublicKey CryptoKey::PublicDhKeyFromRaw(
-    CryptoBuffer& aKeyData, const CryptoBuffer& aPrime,
-    const CryptoBuffer& aGenerator) {
-  UniquePLArenaPool arena(PORT_NewArena(DER_DEFAULT_CHUNKSIZE));
-  if (!arena) {
-    return nullptr;
-  }
-
-  SECKEYPublicKey* key = PORT_ArenaZNew(arena.get(), SECKEYPublicKey);
-  if (!key) {
-    return nullptr;
-  }
-
-  key->keyType = dhKey;
-  key->pkcs11Slot = nullptr;
-  key->pkcs11ID = CK_INVALID_HANDLE;
-
-  // Set DH public key params.
-  if (!aPrime.ToSECItem(arena.get(), &key->u.dh.prime) ||
-      !aGenerator.ToSECItem(arena.get(), &key->u.dh.base) ||
-      !aKeyData.ToSECItem(arena.get(), &key->u.dh.publicValue)) {
-    return nullptr;
-  }
-
-  key->u.dh.prime.type = siUnsignedInteger;
-  key->u.dh.base.type = siUnsignedInteger;
-  key->u.dh.publicValue.type = siUnsignedInteger;
-
-  return UniqueSECKEYPublicKey(SECKEY_CopyPublicKey(key));
-}
-
-nsresult CryptoKey::PublicDhKeyToRaw(SECKEYPublicKey* aPubKey,
-                                     CryptoBuffer& aRetVal) {
-  if (!aRetVal.Assign(&aPubKey->u.dh.publicValue)) {
-    return NS_ERROR_DOM_OPERATION_ERR;
-  }
-  return NS_OK;
-}
-
 UniqueSECKEYPublicKey CryptoKey::PublicECKeyFromRaw(
     CryptoBuffer& aKeyData, const nsString& aNamedCurve) {
   UniquePLArenaPool arena(PORT_NewArena(DER_DEFAULT_CHUNKSIZE));
@@ -1138,7 +979,8 @@ bool CryptoKey::PublicKeyValid(SECKEYPublicKey* aPubKey) {
   return (rv == SECSuccess);
 }
 
-bool CryptoKey::WriteStructuredClone(JSStructuredCloneWriter* aWriter) const {
+bool CryptoKey::WriteStructuredClone(JSContext* aCX,
+                                     JSStructuredCloneWriter* aWriter) const {
   // Write in five pieces
   // 1. Attributes
   // 2. Symmetric key as raw (if present)
@@ -1164,42 +1006,47 @@ bool CryptoKey::WriteStructuredClone(JSStructuredCloneWriter* aWriter) const {
          WriteBuffer(aWriter, pub) && mAlgorithm.WriteStructuredClone(aWriter);
 }
 
-bool CryptoKey::ReadStructuredClone(JSStructuredCloneReader* aReader) {
+// static
+already_AddRefed<CryptoKey> CryptoKey::ReadStructuredClone(
+    JSContext* aCx, nsIGlobalObject* aGlobal,
+    JSStructuredCloneReader* aReader) {
   // Ensure that NSS is initialized.
   if (!EnsureNSSInitializedChromeOrContent()) {
-    return false;
+    return nullptr;
   }
+
+  RefPtr<CryptoKey> key = new CryptoKey(aGlobal);
 
   uint32_t version;
   CryptoBuffer sym, priv, pub;
 
-  bool read = JS_ReadUint32Pair(aReader, &mAttributes, &version) &&
+  bool read = JS_ReadUint32Pair(aReader, &key->mAttributes, &version) &&
               (version == CRYPTOKEY_SC_VERSION) && ReadBuffer(aReader, sym) &&
               ReadBuffer(aReader, priv) && ReadBuffer(aReader, pub) &&
-              mAlgorithm.ReadStructuredClone(aReader);
+              key->mAlgorithm.ReadStructuredClone(aReader);
   if (!read) {
-    return false;
+    return nullptr;
   }
 
-  if (sym.Length() > 0 && !mSymKey.Assign(sym)) {
-    return false;
+  if (sym.Length() > 0 && !key->mSymKey.Assign(sym)) {
+    return nullptr;
   }
   if (priv.Length() > 0) {
-    mPrivateKey = CryptoKey::PrivateKeyFromPkcs8(priv);
+    key->mPrivateKey = CryptoKey::PrivateKeyFromPkcs8(priv);
   }
   if (pub.Length() > 0) {
-    mPublicKey = CryptoKey::PublicKeyFromSpki(pub);
+    key->mPublicKey = CryptoKey::PublicKeyFromSpki(pub);
   }
 
   // Ensure that what we've read is consistent
   // If the attributes indicate a key type, should have a key of that type
-  if (!((GetKeyType() == SECRET && mSymKey.Length() > 0) ||
-        (GetKeyType() == PRIVATE && mPrivateKey) ||
-        (GetKeyType() == PUBLIC && mPublicKey))) {
-    return false;
+  if (!((key->GetKeyType() == SECRET && key->mSymKey.Length() > 0) ||
+        (key->GetKeyType() == PRIVATE && key->mPrivateKey) ||
+        (key->GetKeyType() == PUBLIC && key->mPublicKey))) {
+    return nullptr;
   }
 
-  return true;
+  return key.forget();
 }
 
 }  // namespace dom

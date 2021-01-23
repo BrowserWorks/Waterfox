@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
+<!ENTITY pref.advanced.title              "Rozšírené">
+
+<!ENTITY systemPref.caption               "Systémové nastavenia">
+<!ENTITY systemPrefCheck.label            "Použiť nastavenia zo systému">
+<!ENTITY systemPrefCheck.accesskey        "u">
+<!ENTITY systemPref.desc                  "Po označení tejto možnosti &brandShortName; preberie nastavenia zo systému. Systémové nastavenia sú nadradené nad nastaveniami aplikácie &brandShortName;.">
+
+<!ENTITY prefCheckDefault.caption         "Integrácia do systému">
+<!ENTITY prefCheckDefaultClient.label     "Pri štarte kontrolovať nastavenia predvolenej aplikácie">
+<!ENTITY prefCheckDefaultClient.accesskey "k">
+
+<!ENTITY crashReports.caption             "Správy o zlyhaní">
+<!ENTITY submitCrashes.label              "Odosielať správy o zlyhaní">
+<!ENTITY submitCrashes.accesskey          "O">
+
+<!ENTITY devTools.caption                 "Vývojárske nástroje">
+<!ENTITY allowDebugger.label              "Umožniť programu ladenia pripojiť sa k &brandShortName;">
+<!ENTITY allowDebugger.accesskey          "m">
+<!ENTITY allowRemoteConnections.label     "Povoliť pripojenia z iných počítačov">
+<!ENTITY allowRemoteConnections.accesskey "v">
+<!ENTITY connectionPrompt.label           "Pýtať sa na prichádzajúce pripojenia">
+<!ENTITY connectionPrompt.accesskey       "t">
+<!ENTITY remoteDebuggerPort.label         "Číslo portu pre pripojenie:">
+<!ENTITY remoteDebuggerPort.accesskey     "s">

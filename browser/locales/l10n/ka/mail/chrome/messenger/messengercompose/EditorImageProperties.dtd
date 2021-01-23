@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "სურათის პარამეტრები">
+
+<!ENTITY pixelsPopup.value "პიქსელი">
+
+<!-- These are in the Location tab panel -->
+<!ENTITY locationEditField.label "სურათის მისამართი:">
+<!ENTITY locationEditField.accessKey "მ">
+<!ENTITY locationEditField.tooltip "მიუთითეთ სურათის სახელი ან მისამართი">
+<!ENTITY locationEditField.shortenedDataURI "შემოკლებული URI მონაცემები (ასლის გაკეთებისას სრული URI განთავსდება ბუფერში)">
+<!ENTITY title.label "მინიშნება:">
+<!ENTITY title.accessKey "ნ">
+<!ENTITY title.tooltip "html 'title' ატრიბუტი, რომელიც მინიშნებას უჩვენებს">
+<!ENTITY altText.label "დართული ტექსტი:">
+<!ENTITY altText.accessKey "დ">
+<!ENTITY altTextEditField.tooltip "სურათის ნაცვლად გამოსაჩენი ტექსტი">
+<!ENTITY noAltText.label "ტექსტის დართვის გარეშე">
+<!ENTITY noAltText.accessKey "გ">
+
+<!ENTITY previewBox.label "სურათის შეთვალიერება">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+<!ENTITY actualSize.label "საწყისი ზომა:">
+<!ENTITY actualSizeRadio.label "საწყისი ზომა">
+<!ENTITY actualSizeRadio.accessKey "ს">
+<!ENTITY actualSizeRadio.tooltip "სურათის საწყისი ზომის აღდგენა">
+<!ENTITY customSizeRadio.label "მითითებული ზომა">
+<!ENTITY customSizeRadio.accessKey "თ">
+<!ENTITY customSizeRadio.tooltip "სურათის იმ ზომაზე დაყენება, როგორც გვერდზეა ნაჩვენები">
+<!ENTITY heightEditField.label "სიმაღლე:">
+<!ENTITY heightEditField.accessKey "ღ">
+<!ENTITY widthEditField.label "სიგანე:">
+<!ENTITY widthEditField.accessKey "გ">
+<!ENTITY constrainCheckbox.label "ფარდობა">
+<!ENTITY constrainCheckbox.accessKey "ო">
+<!ENTITY constrainCheckbox.tooltip "სურათის გვერდების ფარდობის შენარჩუნება">
+
+<!-- These controls are in the Image Map box of the expanded area -->
+<!ENTITY imagemapBox.label "სურათის რუკა">
+<!ENTITY removeImageMapButton.label "მოცილება">
+<!ENTITY removeImageMapButton.accessKey "ც">
+
+<!-- These are the options for image alignment -->
+<!ENTITY alignment.label "ტექსტის გასწორება სურათის მიმართ">
+<!ENTITY bottomPopup.value "ქვემოდან">
+<!ENTITY topPopup.value "ზემოდან">
+<!ENTITY centerPopup.value "ცენტრში">
+<!ENTITY wrapRightPopup.value "მარჯვნიდან">
+<!ENTITY wrapLeftPopup.value "მარცხნიდან">
+
+<!-- These controls are in the Spacing Box -->
+<!ENTITY spacingBox.label "დაცილება">
+<!ENTITY leftRightEditField.label "მარცხნივ და მარჯვნივ :">
+<!ENTITY leftRightEditField.accessKey "ხ">
+<!ENTITY topBottomEditField.label "ზევით და ქვევით:">
+<!ENTITY topBottomEditField.accessKey "ზ">
+<!ENTITY borderEditField.label "სავსე ჩარჩო:">
+<!ENTITY borderEditField.accessKey "ჩ">
+
+<!-- These controls are in the Link Box -->
+<!ENTITY showImageLinkBorder.label "ჩარჩოს ჩვენება მიბმული სურათის გარშემო">
+<!ENTITY showImageLinkBorder.accessKey "ჩ">
+<!ENTITY LinkAdvancedEditButton.label "ბმულის ჩასწორება ვრცლად…">
+<!ENTITY LinkAdvancedEditButton.accessKey "ვ">
+<!ENTITY LinkAdvancedEditButton.tooltip "HTML ან სტილის ატრიბუტებისა და JavaScript-ის დამატება ან შეცვლა">
+
+<!-- These tabs are currently used in the image input dialog -->
+<!ENTITY imageInputTab.label "ფორმა">
+<!ENTITY imageLocationTab.label "მისამართი">
+<!ENTITY imageDimensionsTab.label "ზომები">
+<!ENTITY imageAppearanceTab.label "იერსახე">
+<!ENTITY imageLinkTab.label "ბმა">

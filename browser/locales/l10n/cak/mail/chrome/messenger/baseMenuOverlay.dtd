@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Help Menu -->
+<!ENTITY helpMenu.label "To'ïk">
+<!ENTITY helpMenu.accesskey "T">
+<!-- LOCALIZATION NOTE some localizations of Windows use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label "To'ïk">
+<!ENTITY helpMenuWin.accesskey "T">
+<!ENTITY aboutProduct2.label "Chi rij ri &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey "C">
+<!ENTITY helpTroubleshootingInfo.label     "Etamab'äl richin yesol taq k'ayewal">
+<!ENTITY helpTroubleshootingInfo.accesskey "Y">
+<!ENTITY helpSafeMode.label     "Titikirisäx chik kik'in ri chupül taq tz'aqat…">
+<!ENTITY helpSafeMode.accesskey "T">
+<!ENTITY helpSafeMode.stop.label     "Titikirisäx chik rik'in Tzijïl taq Tz'aqat">
+<!ENTITY helpSafeMode.stop.accesskey "c">
+<!ENTITY productHelp.label "&brandShortName; To'ïk">
+<!ENTITY productHelp.accesskey "T">
+<!ENTITY productHelp.commandkey "VK_F1">
+<!ENTITY productHelpMac.commandkey "?">
+<!ENTITY productHelpMac.modifiers "accel">
+
+<!ENTITY helpKeyboardShortcuts.label "Ruq'a' rub'ey Keyboard">
+<!ENTITY helpKeyboardShortcuts.accesskey "K">
+
+<!ENTITY helpFeedbackPage.label "Ketaq taq Rutzijol…">
+<!ENTITY helpFeedbackPage.accesskey "K">
+
+<!ENTITY helpShowTour2.label "&brandShorterName; B'enam">
+<!ENTITY helpShowTour2.accesskey "e">
+
+<!ENTITY helpGetInvolvedPage.label "Kak'uluman">
+<!ENTITY helpGetInvolvedPage.accesskey "K">
+
+<!ENTITY helpDonationsPage.label "Taya' jun Sipanïk">
+<!ENTITY helpDonationsPage.accesskey "T">

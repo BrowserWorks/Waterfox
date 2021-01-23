@@ -6,11 +6,12 @@
 #ifndef nsChromeRegistryChrome_h
 #define nsChromeRegistryChrome_h
 
+#include <utility>
+
 #include "nsCOMArray.h"
 #include "nsChromeRegistry.h"
-#include "nsTArray.h"
-#include "mozilla/Move.h"
 #include "nsClassHashtable.h"
+#include "nsTArray.h"
 
 namespace mozilla {
 namespace dom {
@@ -32,8 +33,7 @@ class nsChromeRegistryChrome : public nsChromeRegistry {
   NS_IMETHOD GetLocalesForPackage(const nsACString& aPackage,
                                   nsIUTF8StringEnumerator** aResult) override;
   NS_IMETHOD IsLocaleRTL(const nsACString& package, bool* aResult) override;
-  NS_IMETHOD GetSelectedLocale(const nsACString& aPackage, bool aAsBCP47,
-                               nsACString& aLocale) override;
+  nsresult GetSelectedLocale(const nsACString& aPackage, nsACString& aLocale);
   NS_IMETHOD Observe(nsISupports* aSubject, const char* aTopic,
                      const char16_t* someData) override;
 

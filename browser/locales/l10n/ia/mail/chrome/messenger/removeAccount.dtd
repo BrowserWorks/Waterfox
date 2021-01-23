@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "Remover conto e datos">
+<!ENTITY removeButton.label           "Remover">
+<!ENTITY removeButton.accesskey       "R">
+<!ENTITY removeAccount.label          "Remover informationes del conto">
+<!ENTITY removeAccount.accesskey      "c">
+<!ENTITY removeAccount.desc           "Remove solo le cognoscentia de &brandShortName; de iste conto. Non modifica le mesme conto sur le servitor.">
+<!ENTITY removeData.label             "Remover datos de messages">
+<!ENTITY removeData.accesskey         "d">
+<!ENTITY removeDataChat.label         "Remover datos de conversationes">
+<!ENTITY removeDataChat.accesskey     "d">
+<!ENTITY removeDataLocalAccount.desc  "Remove tote le messages, dossiers e filtros associate a iste conto de tu disco local. Isto non affice alcun messages que pote esser ancora presente sur le servitor. Non elige isto si tu vole archivar le datos local o reusar los in &brandShortName; plus tarde.">
+<!ENTITY removeDataServerAccount.desc "Remove tote le messages, dossiers e filtros associate a iste conto de tu disco local. Tu messages e dossiers se mantene ancora sur le servitor.">
+<!ENTITY removeDataChatAccount.desc   "Remove tote le registros de conversation immagazinate sur tu disco local pro iste conto.">
+<!ENTITY showData.label               "Monstrar loco del datos">
+<!ENTITY showData.accesskey           "M">
+<!ENTITY progressPending              "Removente le datos eligite…">
+<!ENTITY progressSuccess              "Le remotion succedeva.">
+<!ENTITY progressFailure              "Remotion fallite.">

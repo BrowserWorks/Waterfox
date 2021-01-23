@@ -16,12 +16,13 @@ namespace net {
 
 namespace {
 
-void OnPrefsChange(const char* aPrefName, nsTArray<nsCString>* aArray) {
-  MOZ_ASSERT(aArray);
+void OnPrefsChange(const char* aPrefName, void* aArray) {
+  auto array = static_cast<nsTArray<nsCString>*>(aArray);
+  MOZ_ASSERT(array);
 
   nsAutoCString value;
   Preferences::GetCString(aPrefName, value);
-  Classifier::SplitTables(value, *aArray);
+  Classifier::SplitTables(value, *array);
 }
 
 }  // namespace
@@ -121,7 +122,7 @@ UrlClassifierFeatureBase::GetTables(nsIUrlClassifierFeature::listType aListType,
     return NS_ERROR_INVALID_ARG;
   }
 
-  aTables = mTables[aListType];
+  aTables = mTables[aListType].Clone();
   return NS_OK;
 }
 

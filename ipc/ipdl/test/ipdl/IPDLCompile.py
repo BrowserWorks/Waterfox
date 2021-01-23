@@ -17,7 +17,7 @@ class IPDLCompile:
         self.returncode = None
 
     def run(self):
-        '''Run |self.specstring| through the IPDL compiler.'''
+        '''Run |self.specfilename| through the IPDL compiler.'''
         assert self.returncode is None
 
         tmpoutdir = tempfile.mkdtemp(prefix='ipdl_unit_test')
@@ -28,9 +28,9 @@ class IPDLCompile:
                 self.specfilename
             ])
 
-            proc = subprocess.Popen(args=self.argv,
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE)
+            proc = subprocess.Popen(
+                args=self.argv, stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE, universal_newlines=True)
             self.stdout, self.stderr = proc.communicate()
 
             self.returncode = proc.returncode

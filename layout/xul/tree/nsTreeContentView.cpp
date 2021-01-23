@@ -16,6 +16,7 @@
 #include "mozilla/ErrorResult.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/TreeContentViewBinding.h"
+#include "mozilla/dom/XULTreeElement.h"
 #include "nsServiceManagerUtils.h"
 #include "mozilla/dom/Document.h"
 
@@ -37,7 +38,7 @@ class Row {
         mSubtreeSize(0),
         mFlags(0) {}
 
-  ~Row() {}
+  ~Row() = default;
 
   void SetContainer(bool aContainer) {
     aContainer ? mFlags |= ROW_FLAG_CONTAINER : mFlags &= ~ROW_FLAG_CONTAINER;
@@ -146,7 +147,7 @@ nsTreeContentView::SetSelection(nsITreeSelection* aSelection) {
 void nsTreeContentView::SetSelection(nsITreeSelection* aSelection,
                                      ErrorResult& aError) {
   if (aSelection && !CanTrustTreeSelection(aSelection)) {
-    aError.Throw(NS_ERROR_DOM_SECURITY_ERR);
+    aError.ThrowSecurityError("Not allowed to set tree selection");
     return;
   }
 
@@ -215,7 +216,7 @@ void nsTreeContentView::GetColumnProperties(nsTreeColumn& aColumn,
   RefPtr<Element> element = aColumn.Element();
 
   if (element) {
-    element->GetAttribute(NS_LITERAL_STRING("properties"), aProperties);
+    element->GetAttr(nsGkAtoms::properties, aProperties);
   }
 }
 
@@ -520,7 +521,7 @@ nsTreeContentView::SetTree(XULTreeElement* aTree) {
 
     RefPtr<dom::Element> bodyElement = mTree->GetTreeBody();
     if (bodyElement) {
-      mBody = bodyElement.forget();
+      mBody = std::move(bodyElement);
       int32_t index = 0;
       Serialize(mBody, -1, &index, mRows);
     }
@@ -687,20 +688,6 @@ nsTreeContentView::SetCellText(int32_t aRow, nsTreeColumn* aCol,
   ErrorResult rv;
   SetCellText(aRow, *aCol, aValue, rv);
   return rv.StealNSResult();
-}
-
-NS_IMETHODIMP
-nsTreeContentView::PerformAction(const char16_t* aAction) { return NS_OK; }
-
-NS_IMETHODIMP
-nsTreeContentView::PerformActionOnRow(const char16_t* aAction, int32_t aRow) {
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsTreeContentView::PerformActionOnCell(const char16_t* aAction, int32_t aRow,
-                                       nsTreeColumn* aCol) {
-  return NS_OK;
 }
 
 Element* nsTreeContentView::GetItemAtIndex(int32_t aIndex,

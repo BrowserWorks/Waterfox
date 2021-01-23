@@ -8,9 +8,11 @@
 
 #include <limits>
 #include "base/histogram.h"
+#include "geckoview/streaming/GeckoViewStreamingTelemetry.h"
 #include "ipc/TelemetryIPCAccumulator.h"
 #include "jsapi.h"
 #include "jsfriendapi.h"
+#include "js/Array.h"  // JS::GetArrayLength, JS::IsArrayObject, JS::NewArrayObject
 #include "js/GCAPI.h"
 #include "mozilla/dom/ToJSValue.h"
 #include "mozilla/gfx/GPUProcessManager.h"
@@ -32,8 +34,8 @@ using base::CountHistogram;
 using base::FlagHistogram;
 using base::LinearHistogram;
 using mozilla::MakeTuple;
+using mozilla::StaticMutex;
 using mozilla::StaticMutexAutoLock;
-using mozilla::StaticMutexNotRecorded;
 using mozilla::Telemetry::HistogramAccumulation;
 using mozilla::Telemetry::HistogramCount;
 using mozilla::Telemetry::HistogramID;
@@ -42,6 +44,7 @@ using mozilla::Telemetry::KeyedHistogramAccumulation;
 using mozilla::Telemetry::ProcessID;
 using mozilla::Telemetry::Common::CanRecordDataset;
 using mozilla::Telemetry::Common::CanRecordProduct;
+using mozilla::Telemetry::Common::GetCurrentProduct;
 using mozilla::Telemetry::Common::GetIDForProcessName;
 using mozilla::Telemetry::Common::GetNameForProcessID;
 using mozilla::Telemetry::Common::IsExpiredVersion;
@@ -110,7 +113,7 @@ namespace TelemetryIPCAccumulator = mozilla::TelemetryIPCAccumulator;
 // a normal Mutex would show up as a leak in BloatView.  StaticMutex
 // also has the "OffTheBooks" property, so it won't show as a leak
 // in BloatView.
-static StaticMutexNotRecorded gTelemetryHistogramMutex;
+static StaticMutex gTelemetryHistogramMutex;
 
 ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////
@@ -153,8 +156,8 @@ struct HistogramInfo {
 // Structs used to keep information about the histograms for which a
 // snapshot should be created.
 struct HistogramSnapshotData {
-  nsTArray<base::Histogram::Sample> mBucketRanges;
-  nsTArray<base::Histogram::Count> mBucketCounts;
+  CopyableTArray<base::Histogram::Sample> mBucketRanges;
+  CopyableTArray<base::Histogram::Count> mBucketCounts;
   int64_t mSampleSum;  // Same type as base::Histogram::SampleSet::sum_
 };
 
@@ -694,6 +697,15 @@ nsresult internal_HistogramAdd(const StaticMutexAutoLock& aLock,
     return NS_OK;
   }
 
+  if (&histogram != gExpiredHistogram &&
+      GetCurrentProduct() == SupportedProduct::GeckoviewStreaming) {
+    const HistogramInfo& info = gHistogramInfos[id];
+    GeckoViewStreamingTelemetry::HistogramAccumulate(
+        nsDependentCString(info.name()),
+        info.histogramType == nsITelemetry::HISTOGRAM_CATEGORICAL, value);
+    return NS_OK;
+  }
+
   // The internal representation of a base::Histogram's buckets uses `int`.
   // Clamp large values of `value` to be INT_MAX so they continue to be treated
   // as large values (instead of negative ones).
@@ -735,20 +747,19 @@ nsresult internal_GetHistogramAndSamples(const StaticMutexAutoLock& aLock,
   // Convert the ranges of the buckets to a nsTArray.
   const size_t bucketCount = h->bucket_count();
   for (size_t i = 0; i < bucketCount; i++) {
-    if (!aSnapshot.mBucketRanges.AppendElement(h->ranges(i))) {
-      return NS_ERROR_FAILURE;
-    }
+    // XXX(Bug 1631371) Check if this should use a fallible operation as it
+    // pretended earlier, or change the return type to void.
+    aSnapshot.mBucketRanges.AppendElement(h->ranges(i));
   }
 
   // Get a snapshot of the samples.
-  base::Histogram::SampleSet ss;
-  h->SnapshotSample(&ss);
+  base::Histogram::SampleSet ss = h->SnapshotSample();
 
   // Get the number of samples in each bucket.
   for (size_t i = 0; i < bucketCount; i++) {
-    if (!aSnapshot.mBucketCounts.AppendElement(ss.counts(i))) {
-      return NS_ERROR_FAILURE;
-    }
+    // XXX(Bug 1631371) Check if this should use a fallible operation as it
+    // pretended earlier, or change the return type to void.
+    aSnapshot.mBucketCounts.AppendElement(ss.counts(i));
   }
 
   // Finally, save the |sum|. We don't need to reflect declared_min,
@@ -789,7 +800,7 @@ nsresult internal_ReflectHistogramAndSamples(
              "The number of buckets and the number of counts must match.");
 
   // Create the "range" property and add it to the final object.
-  JS::Rooted<JSObject*> rarray(cx, JS_NewArrayObject(cx, 2));
+  JS::Rooted<JSObject*> rarray(cx, JS::NewArrayObject(cx, 2));
   if (rarray == nullptr ||
       !JS_DefineProperty(cx, obj, "range", rarray, JSPROP_ENUMERATE)) {
     return NS_ERROR_FAILURE;
@@ -1386,7 +1397,7 @@ nsresult KeyedHistogram::GetSnapshot(const StaticMutexAutoLock& aLock,
 
   // Snapshot every key.
   for (auto iter = histogramMap->ConstIter(); !iter.Done(); iter.Next()) {
-    base::Histogram* keyData = iter.Data();
+    base::Histogram* keyData = iter.UserData();
     if (!keyData) {
       return NS_ERROR_FAILURE;
     }
@@ -1672,8 +1683,10 @@ bool internal_JSHistogram_CoerceValue(JSContext* aCx,
     nsresult rv = gHistogramInfos[aId].label_id(
         NS_ConvertUTF16toUTF8(label).get(), &aValue);
     if (NS_FAILED(rv)) {
+      nsPrintfCString msg("'%s' is an invalid string label",
+                          NS_ConvertUTF16toUTF8(label).get());
       LogToBrowserConsole(nsIScriptError::errorFlag,
-                          NS_LITERAL_STRING("Invalid string label"));
+                          NS_ConvertUTF8toUTF16(msg));
       return false;
     }
   } else if (!(aElement.isNumber() || aElement.isBoolean())) {
@@ -1733,7 +1746,7 @@ bool internal_JSHistogram_GetValueArray(JSContext* aCx, JS::CallArgs& args,
     JS::Rooted<JSObject*> arrayObj(aCx, &args[firstArgIndex].toObject());
 
     bool isArray = false;
-    JS_IsArrayObject(aCx, arrayObj, &isArray);
+    JS::IsArrayObject(aCx, arrayObj, &isArray);
 
     if (!isArray) {
       LogToBrowserConsole(
@@ -1744,7 +1757,7 @@ bool internal_JSHistogram_GetValueArray(JSContext* aCx, JS::CallArgs& args,
     }
 
     uint32_t arrayLength = 0;
-    if (!JS_GetArrayLength(aCx, arrayObj, &arrayLength)) {
+    if (!JS::GetArrayLength(aCx, arrayObj, &arrayLength)) {
       LogToBrowserConsole(
           nsIScriptError::errorFlag,
           NS_LITERAL_STRING("Failed while trying to get array length"));
@@ -2271,7 +2284,7 @@ bool internal_JSKeyedHistogram_Keys(JSContext* cx, unsigned argc,
     }
   }
 
-  JS::RootedObject jsKeys(cx, JS_NewArrayObject(cx, autoKeys));
+  JS::RootedObject jsKeys(cx, JS::NewArrayObject(cx, autoKeys));
   if (!jsKeys) {
     return false;
   }
@@ -2419,11 +2432,6 @@ void TelemetryHistogram::InitializeGlobalState(bool canRecordBase,
       "following in Histograms.json: GC_MINOR_REASON, GC_MINOR_REASON_LONG, "
       "GC_REASON_2");
 
-  static_assert((mozilla::StartupTimeline::MAX_EVENT_ID + 1) ==
-      gHistogramInfos[mozilla::Telemetry::STARTUP_MEASUREMENT_ERRORS].bucketCount,
-      "MAX_EVENT_ID is assumed to be a fixed value in Histograms.json.  If this"
-      " was an intentional change, update the n_values for the following in "
-      "Histograms.json: STARTUP_MEASUREMENT_ERRORS");
   // clang-format on
 
   gInitDone = true;
@@ -2489,9 +2497,7 @@ void TelemetryHistogram::InitHistogramRecordingEnabled() {
     mozilla::Telemetry::HistogramID id = mozilla::Telemetry::HistogramID(i);
     bool canRecordInProcess =
         CanRecordInProcess(h.record_in_processes, processType);
-    bool canRecordProduct = CanRecordProduct(h.products);
-    internal_SetHistogramRecordingEnabled(
-        locker, id, canRecordInProcess && canRecordProduct);
+    internal_SetHistogramRecordingEnabled(locker, id, canRecordInProcess);
   }
 
   for (auto recordingInitiallyDisabledID : kRecordingInitiallyDisabledIDs) {
@@ -3094,7 +3100,7 @@ nsresult internal_ParseHistogramData(
   JS::RootedValue countsArray(aCx);
   bool countsIsArray = false;
   if (!JS_GetProperty(aCx, histogramObj, "counts", &countsArray) ||
-      !JS_IsArrayObject(aCx, countsArray, &countsIsArray)) {
+      !JS::IsArrayObject(aCx, countsArray, &countsIsArray)) {
     JS_ClearPendingException(aCx);
     return NS_ERROR_FAILURE;
   }
@@ -3108,7 +3114,7 @@ nsresult internal_ParseHistogramData(
   // Get the length of the array.
   uint32_t countsLen = 0;
   JS::RootedObject countsArrayObj(aCx, &countsArray.toObject());
-  if (!JS_GetArrayLength(aCx, countsArrayObj, &countsLen)) {
+  if (!JS::GetArrayLength(aCx, countsArrayObj, &countsLen)) {
     JS_ClearPendingException(aCx);
     return NS_ERROR_FAILURE;
   }

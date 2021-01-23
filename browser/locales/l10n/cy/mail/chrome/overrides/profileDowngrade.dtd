@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE:
+ This UI can be most easily shown by modifying the version in compatibility.ini
+ to a newer version and then starting Thunderbird.
+ For this feature, "installation" is used to mean "this discrete download of
+ Thunderbird" and "version" is used to mean "the specific revision number of a
+ given Thunderbird channel". These terms are not synonymous.
+-->
+<!ENTITY window.title "Rydych chi wedi cychwyn fersiwn hŷn o &brandProductName;">
+<!ENTITY window.style "width: 490px;">
+
+<!ENTITY window.nosync2 "Efallai fod fersiwn mwy diweddar o &brandProductName; wedi gwneud newidiadau i'ch proffil nad ydynt bellach yn gydnaws â'r fersiwn hŷn hwn. Defnyddiwch y proffil hwn yn unig gyda'r fersiwn mwy newydd hwnnw, neu crëwch broffil newydd ar gyfer y gosodiad hwn o &brandShortName;. Er mwyn creu proffil newydd mae angen gosod eich cyfrifon, calendrau a'ch ychwanegion eto.">
+
+<!ENTITY window.moreinfo "Rhagor o wybodaeth…">
+<!ENTITY window.create "Creu Proffil Newydd">
+<!ENTITY window.quit-win "Gadael">
+<!ENTITY window.quit-nonwin "Gadael">

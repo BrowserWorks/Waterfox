@@ -70,7 +70,8 @@ Push.prototype = {
   askPermission() {
     console.debug("askPermission()");
 
-    let isHandlingUserInput = this._window.windowUtils.isHandlingUserInput;
+    let isHandlingUserInput = this._window.document
+      .hasValidTransientUserGestureActivation;
 
     return this.createPromise((resolve, reject) => {
       let permissionDenied = () => {
@@ -86,6 +87,7 @@ Push.prototype = {
         Services.prefs.getBoolPref("dom.push.testing.ignorePermission", false)
       ) {
         resolve();
+        return;
       }
 
       this._requestPermission(isHandlingUserInput, resolve, permissionDenied);
@@ -210,9 +212,6 @@ Push.prototype = {
       types: typeArray,
       principal: this._principal,
       isHandlingUserInput,
-      userHadInteractedWithDocument: this._window.document.userHasInteracted,
-      documentDOMContentLoadedTimestamp: this._window.performance.timing
-        .domContentLoadedEventEnd,
       topLevelPrincipal: this._topLevelPrincipal,
       allow: allowCallback,
       cancel: cancelCallback,

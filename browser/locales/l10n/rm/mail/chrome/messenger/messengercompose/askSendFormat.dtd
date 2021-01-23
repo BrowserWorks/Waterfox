@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+<!ENTITY windowTitle.label "Dumonda e-mail HTML">
+
+<!ENTITY recipient.label "In u plis destinaturs n'èn tenor la glista betg abels da retschaiver e-mails HTML.">
+
+<!ENTITY question.label "Vuls ti converter il messadi en text brut u tuttina trametter el sco HTML?">
+
+<!ENTITY plainTextAndHtml.label "Trametter en text brut e HTML">
+<!ENTITY plainTextAndHtml.accesskey "a">
+<!ENTITY plainTextOnly.label "Mo trametter en text brut">
+<!ENTITY plainTextOnly.accesskey "b">
+<!ENTITY htmlOnly.label "Mo trametter en HTML">
+<!ENTITY htmlOnly.accesskey "H">
+
+<!ENTITY send.label "Trametter">
+<!ENTITY send.accesskey "T">

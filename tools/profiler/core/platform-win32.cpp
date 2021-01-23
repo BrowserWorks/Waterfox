@@ -126,7 +126,7 @@ void Sampler::Disable(PSLockRef aLock) {}
 template <typename Func>
 void Sampler::SuspendAndSampleAndResumeThread(
     PSLockRef aLock, const RegisteredThread& aRegisteredThread,
-    const Func& aProcessRegs) {
+    const TimeStamp& aNow, const Func& aProcessRegs) {
   HANDLE profiled_thread =
       aRegisteredThread.GetPlatformData()->ProfiledThread();
   if (profiled_thread == nullptr) {
@@ -172,7 +172,7 @@ void Sampler::SuspendAndSampleAndResumeThread(
 
   Registers regs;
   PopulateRegsFromContext(regs, &context);
-  aProcessRegs(regs);
+  aProcessRegs(regs, aNow);
 
   //----------------------------------------------------------------//
   // Resume the target thread.
@@ -198,7 +198,7 @@ static unsigned int __stdcall ThreadEntry(void* aArg) {
 
 SamplerThread::SamplerThread(PSLockRef aLock, uint32_t aActivityGeneration,
                              double aIntervalMilliseconds)
-    : Sampler(aLock),
+    : mSampler(aLock),
       mActivityGeneration(aActivityGeneration),
       mIntervalMicroseconds(
           std::max(1, int(floor(aIntervalMilliseconds * 1000 + 0.5)))) {
@@ -228,6 +228,11 @@ SamplerThread::~SamplerThread() {
   if (mThread != kNoThread) {
     CloseHandle(mThread);
   }
+
+  // Just in the unlikely case some callbacks were added between the end of the
+  // thread and now.
+  InvokePostSamplingCallbacks(std::move(mPostSamplingCallbackList),
+                              SamplingState::JustStopped);
 }
 
 void SamplerThread::SleepMicro(uint32_t aMicroseconds) {
@@ -237,7 +242,7 @@ void SamplerThread::SleepMicro(uint32_t aMicroseconds) {
   if (mIntervalMicroseconds >= 1000) {
     ::Sleep(std::max(1u, aMicroseconds / 1000));
   } else {
-    TimeStamp start = TimeStamp::Now();
+    TimeStamp start = TimeStamp::NowUnfuzzed();
     TimeStamp end = start + TimeDuration::FromMicroseconds(aMicroseconds);
 
     // First, sleep for as many whole milliseconds as possible.
@@ -246,7 +251,7 @@ void SamplerThread::SleepMicro(uint32_t aMicroseconds) {
     }
 
     // Then, spin until enough time has passed.
-    while (TimeStamp::Now() < end) {
+    while (TimeStamp::NowUnfuzzed() < end) {
       YieldProcessor();
     }
   }
@@ -265,7 +270,7 @@ void SamplerThread::Stop(PSLockRef aLock) {
     ::timeEndPeriod(mIntervalMicroseconds / 1000);
   }
 
-  Sampler::Disable(aLock);
+  mSampler.Disable(aLock);
 }
 
 // END SamplerThread target specifics
@@ -282,43 +287,15 @@ void Registers::SyncPopulate() {
 #endif
 
 #if defined(GP_PLAT_amd64_windows)
-static WindowsDllInterceptor NtDllIntercept;
 
-typedef NTSTATUS(NTAPI* LdrUnloadDll_func)(HMODULE module);
-static WindowsDllInterceptor::FuncHookType<LdrUnloadDll_func> stub_LdrUnloadDll;
+// Use InitializeWin64ProfilerHooks from the base profiler.
 
-static NTSTATUS NTAPI patched_LdrUnloadDll(HMODULE module) {
-  // Prevent the stack walker from suspending this thread when LdrUnloadDll
-  // holds the RtlLookupFunctionEntry lock.
-  AutoSuppressStackWalking suppress;
-  return stub_LdrUnloadDll(module);
-}
+namespace mozilla {
+namespace baseprofiler {
+MFBT_API void InitializeWin64ProfilerHooks();
+}  // namespace baseprofiler
+}  // namespace mozilla
 
-// These pointers are disguised as PVOID to avoid pulling in obscure headers
-typedef PVOID(WINAPI* LdrResolveDelayLoadedAPI_func)(
-    PVOID ParentModuleBase, PVOID DelayloadDescriptor, PVOID FailureDllHook,
-    PVOID FailureSystemHook, PVOID ThunkAddress, ULONG Flags);
-static WindowsDllInterceptor::FuncHookType<LdrResolveDelayLoadedAPI_func>
-    stub_LdrResolveDelayLoadedAPI;
+using mozilla::baseprofiler::InitializeWin64ProfilerHooks;
 
-static PVOID WINAPI patched_LdrResolveDelayLoadedAPI(
-    PVOID ParentModuleBase, PVOID DelayloadDescriptor, PVOID FailureDllHook,
-    PVOID FailureSystemHook, PVOID ThunkAddress, ULONG Flags) {
-  // Prevent the stack walker from suspending this thread when
-  // LdrResolveDelayLoadAPI holds the RtlLookupFunctionEntry lock.
-  AutoSuppressStackWalking suppress;
-  return stub_LdrResolveDelayLoadedAPI(ParentModuleBase, DelayloadDescriptor,
-                                       FailureDllHook, FailureSystemHook,
-                                       ThunkAddress, Flags);
-}
-
-void InitializeWin64ProfilerHooks() {
-  NtDllIntercept.Init("ntdll.dll");
-  stub_LdrUnloadDll.Set(NtDllIntercept, "LdrUnloadDll", &patched_LdrUnloadDll);
-  if (IsWin8OrLater()) {  // LdrResolveDelayLoadedAPI was introduced in Win8
-    stub_LdrResolveDelayLoadedAPI.Set(NtDllIntercept,
-                                      "LdrResolveDelayLoadedAPI",
-                                      &patched_LdrResolveDelayLoadedAPI);
-  }
-}
 #endif  // defined(GP_PLAT_amd64_windows)

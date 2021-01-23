@@ -40,7 +40,7 @@ static void markNodesAsRecoveredOnBailout(MDefinition* def) {
 
 // Fold AddIs with one variable and two or more constants into one AddI.
 static void AnalyzeAdd(TempAllocator& alloc, MAdd* add) {
-  if (add->specialization() != MIRType::Int32 || add->isRecoveredOnBailout()) {
+  if (add->type() != MIRType::Int32 || add->isRecoveredOnBailout()) {
     return;
   }
 
@@ -69,8 +69,7 @@ static void AnalyzeAdd(TempAllocator& alloc, MAdd* add) {
   MInstruction* rhs = MConstant::New(alloc, Int32Value(sum.constant));
   add->block()->insertBefore(add, rhs);
 
-  MAdd* addNew =
-      MAdd::New(alloc, sum.term, rhs, MIRType::Int32, add->truncateKind());
+  MAdd* addNew = MAdd::New(alloc, sum.term, rhs, add->truncateKind());
 
   add->replaceAllLiveUsesWith(addNew);
   add->block()->insertBefore(add, addNew);

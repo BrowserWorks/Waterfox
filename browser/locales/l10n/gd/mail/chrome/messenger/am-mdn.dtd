@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Bannan-cuidhteis">
+<!ENTITY useGlobalPrefs.label         "Cleachd na roghainnean uile-choitcheann agam a thaobh nam bannan-cuidhteis airson a' chunntais seo">
+<!ENTITY useGlobalPrefs.accesskey     "u">
+<!ENTITY globalReceipts.label         "Roghainnean uile-choitcheann…">
+<!ENTITY globalReceipts.accesskey     "R">
+<!ENTITY useCustomPrefs.label         "Gnàthaich na bannan-cuidhteis airson a' chunntais seo">
+<!ENTITY useCustomPrefs.accesskey     "c">
+<!ENTITY requestReceipt.label         "Iarr bann-cuidhteas an-còmhnaidh nuair a chuireas mi teachdaireachd">
+<!ENTITY requestReceipt.accesskey     "I">
+<!ENTITY receiptArrive.label          "Nuair a thig bann-cuidhteis a-steach:">
+<!ENTITY leaveIt.label                "Fàg e sa bhogsa a-steach agam">
+<!ENTITY leaveIt.accesskey            "F">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "Gluais e do phasgan a&apos; phuist &quot;chuirte&quot; agam">
+<!ENTITY moveToSent.accesskey         "m">
+<!ENTITY requestMDN.label             "Nuair a thig iarrtas airson bann-cuidhteis a-steach:">
+<!ENTITY returnSome.label             "Ceadaich bannan-cuidhteis airson cuid de theachdaireachdan">
+<!ENTITY returnSome.accesskey         "e">
+<!ENTITY never.label                  "Na cuir bannan-cuidhteis idir">
+<!ENTITY never.accesskey              "N">
+<!ENTITY notInToCc.label              "Mur eil mi ann an raon &quot;Gu&quot; no &quot;Cc&quot; na teachdaireachd:">
+<!ENTITY notInToCc.accesskey          "t">
+<!ENTITY outsideDomain.label          "Ma bhios an seòladair taobh a-muigh na h-àrainne agam:">
+<!ENTITY outsideDomain.accesskey      "s">
+<!ENTITY otherCases.label             "Anns gach suidheachadh eile:">
+<!ENTITY otherCases.accesskey         "A">
+<!ENTITY askMe.label                  "Faighnich dhìom">
+<!ENTITY alwaysSend.label             "Cuir an-còmhnaidh">
+<!ENTITY neverSend.label              "Na cuir idir">

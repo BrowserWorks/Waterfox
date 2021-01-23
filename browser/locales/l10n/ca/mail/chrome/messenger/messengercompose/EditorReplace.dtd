@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from EdReplace.xul -->
+
+
+<!-- extracted from EdReplace.xhtml -->
+
+<!ENTITY replaceDialog.title "Cerca i reemplaça">
+<!ENTITY findField.label "Cerca el text:">
+<!ENTITY findField.accesskey "r">
+<!ENTITY replaceField.label "Reemplaça amb:">
+<!ENTITY replaceField.accesskey "m">
+<!ENTITY caseSensitiveCheckbox.label "Distingeix entre majúscules i minúscules">
+<!ENTITY caseSensitiveCheckbox.accesskey "m">
+<!ENTITY wrapCheckbox.label "Cerca a tot el text">
+<!ENTITY wrapCheckbox.accesskey "C">
+<!ENTITY backwardsCheckbox.label "Cerca cap enrere">
+<!ENTITY backwardsCheckbox.accesskey "C">
+<!ENTITY findNextButton.label "Cerca el següent">
+<!ENTITY findNextButton.accesskey "C">
+<!ENTITY replaceButton.label "Reemplaça">
+<!ENTITY replaceButton.accesskey "R">
+<!ENTITY replaceAndFindButton.label "Reemplaça i cerca">
+<!ENTITY replaceAndFindButton.accesskey "R">
+<!ENTITY replaceAllButton.label "Reemplaça-ho tot">
+<!ENTITY replaceAllButton.accesskey "t">
+<!ENTITY closeButton.label "Tanca">
+<!ENTITY closeButton.accesskey "T">

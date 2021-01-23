@@ -7,6 +7,9 @@
 const { SitePermissions } = ChromeUtils.import(
   "resource:///modules/SitePermissions.jsm"
 );
+const { PermissionTestUtils } = ChromeUtils.import(
+  "resource://testing-common/PermissionTestUtils.jsm"
+);
 
 const baseURL = getRootDirectory(gTestPath).replace(
   "chrome://mochitests/content",
@@ -14,6 +17,10 @@ const baseURL = getRootDirectory(gTestPath).replace(
 );
 const URL = baseURL + "popup_blocker2.html";
 const URI = Services.io.newURI(URL);
+const PRINCIPAL = Services.scriptSecurityManager.createContentPrincipal(
+  URI,
+  {}
+);
 
 function openIdentityPopup() {
   let promise = BrowserTestUtils.waitForEvent(
@@ -57,20 +64,20 @@ add_task(async function check_blocked_popup_indicator() {
   );
   Assert.equal(icon.hasAttribute("showing"), false);
 
-  await ContentTask.spawn(gBrowser.selectedBrowser, null, async () => {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], async () => {
     let open = content.document.getElementById("pop");
     open.click();
   });
 
   // Wait for popup block.
-  await BrowserTestUtils.waitForCondition(() =>
+  await TestUtils.waitForCondition(() =>
     gBrowser.getNotificationBox().getNotificationWithValue("popup-blocked")
   );
 
   // Check if blocked popup indicator text is visible in the identity popup. It should be visible.
   document.getElementById("identity-icon").click();
   await openIdentityPopup();
-  await BrowserTestUtils.waitForCondition(
+  await TestUtils.waitForCondition(
     () => document.getElementById("blocked-popup-indicator-item") !== null
   );
 
@@ -91,13 +98,13 @@ add_task(async function check_blocked_popup_indicator() {
 add_task(async function check_popup_showing() {
   let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, URL);
 
-  await ContentTask.spawn(gBrowser.selectedBrowser, null, async () => {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], async () => {
     let open = content.document.getElementById("pop");
     open.click();
   });
 
   // Wait for popup block.
-  await BrowserTestUtils.waitForCondition(() =>
+  await TestUtils.waitForCondition(() =>
     gBrowser.getNotificationBox().getNotificationWithValue("popup-blocked")
   );
 
@@ -115,7 +122,7 @@ add_task(async function check_popup_showing() {
   text.click();
 
   await BrowserTestUtils.waitForEvent(gBrowser.tabContainer, "TabOpen");
-  await BrowserTestUtils.waitForCondition(
+  await TestUtils.waitForCondition(
     () => popup.linkedBrowser.currentURI.spec != "about:blank"
   );
 
@@ -135,16 +142,17 @@ add_task(async function check_permission_state_change() {
   let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, URL);
 
   // Initially the permission state is BLOCK for popups (set by the prefs).
-  let state = SitePermissions.get(URI, "popup", gBrowser).state;
+  let state = SitePermissions.getForPrincipal(PRINCIPAL, "popup", gBrowser)
+    .state;
   Assert.equal(state, SitePermissions.BLOCK);
 
-  await ContentTask.spawn(gBrowser.selectedBrowser, null, async () => {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], async () => {
     let open = content.document.getElementById("pop");
     open.click();
   });
 
   // Wait for popup block.
-  await BrowserTestUtils.waitForCondition(() =>
+  await TestUtils.waitForCondition(() =>
     gBrowser.getNotificationBox().getNotificationWithValue("popup-blocked")
   );
 
@@ -156,7 +164,7 @@ add_task(async function check_permission_state_change() {
   menuitem.click();
   await closeIdentityPopup();
 
-  state = SitePermissions.get(URI, "popup", gBrowser).state;
+  state = SitePermissions.getForPrincipal(PRINCIPAL, "popup", gBrowser).state;
   Assert.equal(state, SitePermissions.ALLOW);
 
   // Store the popup that opens in this array.
@@ -167,13 +175,14 @@ add_task(async function check_permission_state_change() {
   gBrowser.tabContainer.addEventListener("TabOpen", onTabOpen);
 
   // Check if a popup opens.
-  await ContentTask.spawn(gBrowser.selectedBrowser, null, async () => {
-    let open = content.document.getElementById("pop");
-    open.click();
-  });
-
-  await BrowserTestUtils.waitForEvent(gBrowser.tabContainer, "TabOpen");
-  await BrowserTestUtils.waitForCondition(
+  await Promise.all([
+    SpecialPowers.spawn(gBrowser.selectedBrowser, [], () => {
+      let open = content.document.getElementById("pop");
+      open.click();
+    }),
+    BrowserTestUtils.waitForEvent(gBrowser.tabContainer, "TabOpen"),
+  ]);
+  await TestUtils.waitForCondition(
     () => popup.linkedBrowser.currentURI.spec != "about:blank"
   );
 
@@ -196,7 +205,7 @@ add_task(async function check_permission_state_change() {
 
   // Clicking on the "Block" menuitem should remove the permission object(same behavior as UNKNOWN state).
   // We have already confirmed that popups are blocked when the permission state is BLOCK.
-  state = SitePermissions.get(URI, "popup", gBrowser).state;
+  state = SitePermissions.getForPrincipal(PRINCIPAL, "popup", gBrowser).state;
   Assert.equal(state, SitePermissions.BLOCK);
 
   gBrowser.removeTab(tab);
@@ -209,7 +218,7 @@ add_task(async function check_explicit_default_permission() {
 
   // DENY only works if triggered through Services.perms (it's very edge-casey),
   // since SitePermissions.jsm considers setting default permissions to be removal.
-  Services.perms.add(URI, "popup", Ci.nsIPermissionManager.DENY_ACTION);
+  PermissionTestUtils.add(URI, "popup", Ci.nsIPermissionManager.DENY_ACTION);
 
   await openIdentityPopup();
   let menulist = document.getElementById("identity-popup-popup-menulist");
@@ -217,7 +226,7 @@ add_task(async function check_explicit_default_permission() {
   Assert.equal(menulist.label, "Block");
   await closeIdentityPopup();
 
-  SitePermissions.set(URI, "popup", SitePermissions.ALLOW);
+  PermissionTestUtils.add(URI, "popup", Services.perms.ALLOW_ACTION);
 
   await openIdentityPopup();
   menulist = document.getElementById("identity-popup-popup-menulist");
@@ -225,6 +234,6 @@ add_task(async function check_explicit_default_permission() {
   Assert.equal(menulist.label, "Allow");
   await closeIdentityPopup();
 
-  SitePermissions.remove(URI, "popup");
+  PermissionTestUtils.remove(URI, "popup");
   gBrowser.removeTab(tab);
 });

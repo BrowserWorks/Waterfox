@@ -1,0 +1,101 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+---
+loader: taskgraph.loader.transform:loader
+
+kind-dependencies:
+    - build
+    - toolchain
+
+transforms:
+    - taskgraph.transforms.build:transforms
+    - taskgraph.transforms.build_attrs:transforms
+    - taskgraph.transforms.build_lints:transforms
+    - taskgraph.transforms.build_fat_aar:transforms
+    - taskgraph.transforms.job:transforms
+    - taskgraph.transforms.task:transforms
+
+job-defaults:
+    attributes:
+        artifact_map: taskcluster/taskgraph/manifests/fennec_geckoview.yml
+    index:
+        product: mobile
+    worker-type: b-linux
+    worker:
+        docker-image: {in-tree: android-build}
+        max-run-time: 7200
+        env:
+            # Online in order to download the per-architecture AARs.
+            GRADLE_USER_HOME: "/builds/worker/checkouts/build/gecko/mobile/android/gradle/dotgradle-online"
+            TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android/releng.manifest"
+            MOZ_ANDROID_FAT_AAR_ARCHITECTURES: "armeabi-v7a,arm64-v8a,x86,x86_64"
+        artifacts:
+            - name: public/build/maven
+              path: /builds/worker/workspace/obj-build/gradle/build/mobile/android/geckoview/maven/
+              type: directory
+            - name: public/build
+              path: /builds/worker/artifacts/
+              type: directory
+    run:
+        using: mozharness
+        script: "mozharness/scripts/fx_desktop_build.py"
+        secrets: true
+        mozconfig-variant: null
+        tooltool-downloads: internal
+        custom-build-variant-cfg: api-16
+        # Note: These settings are only honored by nightly (i.e. shipping) builds
+        update-channel:
+            by-release-type:
+                nightly: nightly
+                nightly-oak: nightly-oak
+                beta:
+                    by-shipping-product:
+                        devedition: aurora
+                        default: beta
+                release.*: release
+                esr.*: esr
+                default:
+                    by-project:
+                        try: nightly-try
+                        default: null
+    fetches:
+        toolchain:
+            - android-gradle-dependencies
+            - android-ndk-linux
+            - android-sdk-linux
+            - linux64-clang
+            - linux64-rust-android
+            - linux64-rust-size
+            - linux64-cbindgen
+            - linux64-nasm
+            - linux64-node
+
+jobs:
+    android-geckoview-fat-aar-shippable/opt:
+        description: "Android GeckoView multi-architecture fat AAR Shippable"
+        attributes:
+            shippable: true
+            enable-full-crashsymbols: true
+            disable-push-apk: true
+        shipping-phase: build
+        shipping-product: fennec
+        index:
+            job-name: android-geckoview-fat-aar-opt
+            type: shippable-with-multi-l10n
+        treeherder:
+            platform: android-4-0-geckoview-fat-aar-shippable/opt
+            symbol: Bgv
+        dependencies:
+            android-x86-shippable: build-android-x86-shippable/opt
+            android-x86_64-shippable: build-android-x86_64-shippable/opt
+            android-api-16-shippable: build-android-api-16-shippable/opt
+            android-aarch64-shippable: build-android-aarch64-shippable/opt
+        worker:
+            env:
+                PERFHERDER_EXTRA_OPTIONS: android-geckoview-fat-aar-nightly
+        run:
+            actions: [get-secrets, build, multi-l10n]
+            config:
+                - builds/releng_base_android_64_builds.py
+                - taskcluster_nightly.py

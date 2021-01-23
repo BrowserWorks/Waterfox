@@ -26,9 +26,10 @@
 
 #include "hb.hh"
 
+#ifndef HB_NO_NAME
+
 #include "hb-ot-name-table.hh"
 
-#include "hb-ot-face.hh"
 #include "hb-utf.hh"
 
 
@@ -89,11 +90,11 @@ hb_ot_name_convert_utf (hb_bytes_t                       bytes,
       const typename in_utf_t::codepoint_t *src_next = in_utf_t::next (src, src_end, &unicode, replacement);
       typename out_utf_t::codepoint_t *dst_next = out_utf_t::encode (dst, dst_end, unicode);
       if (dst_next == dst)
-        break; /* Out-of-room. */
+	break; /* Out-of-room. */
 
       dst = dst_next;
       src = src_next;
-    };
+    }
 
     *text_size = dst - text;
     *dst = 0; /* NUL-terminate. */
@@ -105,7 +106,7 @@ hb_ot_name_convert_utf (hb_bytes_t                       bytes,
   {
     src = in_utf_t::next (src, src_end, &unicode, replacement);
     dst_len += out_utf_t::encode_len (unicode);
-  };
+  }
   return dst_len;
 }
 
@@ -222,3 +223,6 @@ hb_ot_name_get_utf32 (hb_face_t       *face,
 {
   return hb_ot_name_get_utf<hb_utf32_t> (face, name_id, language, text_size, text);
 }
+
+
+#endif

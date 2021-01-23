@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-scripts.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Scripts & Plugins' preferences dialog -->
+<!ENTITY pref.scripts.title              "Skripty a zásuvné moduly">
+
+<!ENTITY navigator.label                 "Prehliadač">
+<!ENTITY navigator.accesskey             "r">
+
+<!--LOCALIZATION NOTE (enableJavaScript.label): 'JavaScript' should never be translated -->
+<!ENTITY enableJavaScript.label          "Povoliť JavaScript pre">
+<!ENTITY allowScripts.label              "Povoliť skriptom:">
+<!ENTITY allowScripts.accesskey          "s">
+<!ENTITY allowWindowMoveResize.label     "Premiestnenie alebo zmena veľkosti existujúcich okien">
+<!ENTITY allowWindowFlip.label           "Premiestnenie okien do popredia alebo pozadia">
+<!ENTITY allowWindowStatusChange.label   "Zmeniť text v stavovom riadku">
+<!ENTITY allowContextmenuDisable.label   "Zakázať alebo nahradiť kontextovú ponuku">
+<!ENTITY allowHideStatusBar.label        "Skryť stavový riadok">
+
+<!ENTITY enableDrmMedia.label            "Povoliť správu digitálnych práv (DRM) pre">
+<!ENTITY enableEmeForSuite.label         "moduly tretích strán na dešifrovanie obsahu">
+<!ENTITY enableEmeForSuite.accesskey     "o">
+
+<!ENTITY enablePlugins.label             "Povoliť zásuvné moduly pre">
+<!ENTITY enablePluginForSuite.label      "Prehliadač">
+<!ENTITY enablePluginForSuite.accesskey  "h">
+
+<!ENTITY whenPageRequiresPlugins.label   "Keď stránka vyžaduje zásuvné moduly">
+<!ENTITY activateAllPlugins.label        "Predvolene aktivovať všetky zásuvné moduly">
+<!ENTITY activateAllPlugins.accesskey    "d">
+<!ENTITY warnPluginsRequired.label       "Upozorniť, ak je potrebné nainštalovať ďalšie zásuvné moduly">
+<!ENTITY warnPluginsRequired.accesskey   "U">

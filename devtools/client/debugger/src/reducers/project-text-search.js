@@ -11,10 +11,10 @@
  */
 
 import type { Action } from "../actions/types";
-import type { Cancellable } from "../types";
+import type { Cancellable, SourceId } from "../types";
 
 export type Search = {
-  +sourceId: string,
+  +sourceId: SourceId,
   +filepath: string,
   +matches: any[],
 };
@@ -40,7 +40,7 @@ export type ProjectTextSearchState = {
   +query: string,
   +ongoingSearch: ?SearchOperation,
   +results: ResultList,
-  +status: string,
+  +status: StatusType,
 };
 
 export function initialProjectTextSearchState(): ProjectTextSearchState {
@@ -61,7 +61,6 @@ function update(
       return { ...state, query: action.query };
 
     case "ADD_SEARCH_RESULT":
-      const results = state.results;
       if (action.result.matches.length === 0) {
         return state;
       }
@@ -71,7 +70,7 @@ function update(
         ...action.result,
         matches: action.result.matches.map(m => ({ type: "MATCH", ...m })),
       };
-      return { ...state, results: [...results, result] };
+      return { ...state, results: [...state.results, result] };
 
     case "UPDATE_STATUS":
       const ongoingSearch =

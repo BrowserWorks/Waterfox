@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Eiginleikar láréttrar línu">
+
+<!ENTITY dimensionsBox.label "Stærðir">
+<!ENTITY heightEditField.label "Hæð:">
+<!ENTITY heightEditField.accessKey "H">
+<!ENTITY widthEditField.label "Breidd:">
+<!ENTITY widthEditField.accessKey "B">
+<!ENTITY pixelsPopup.value "punktar">
+<!ENTITY alignmentBox.label "Stilling">
+<!ENTITY leftRadio.label "Vinstri">
+<!ENTITY leftRadio.accessKey "V">
+<!ENTITY centerRadio.label "Miðjað">
+<!ENTITY centerRadio.accessKey "M">
+<!ENTITY rightRadio.label "Hægri">
+<!ENTITY rightRadio.accessKey "r">
+
+<!ENTITY threeDShading.label "3-D skuggar">
+<!ENTITY threeDShading.accessKey "s">
+<!ENTITY saveSettings.label "Nota sem sjálfgefið">
+<!ENTITY saveSettings.accessKey "s">
+<!ENTITY saveSettings.tooltip "Vista þessar stillingar og nota þegar settar eru inn láréttar línur">

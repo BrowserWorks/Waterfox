@@ -22,13 +22,14 @@ struct AnimationPerformanceWarning {
     ContentTooLarge,
     ContentTooLargeArea,
     TransformBackfaceVisibilityHidden,
-    TransformPreserve3D,
     TransformSVG,
     TransformWithGeometricProperties,
     TransformWithSyncGeometricAnimations,
     TransformFrameInactive,
+    TransformIsBlockedByImportantRules,
     OpacityFrameInactive,
     HasRenderingObserver,
+    HasCurrentColor,
   };
 
   explicit AnimationPerformanceWarning(Type aType) : mType(aType) {
@@ -60,7 +61,7 @@ struct AnimationPerformanceWarning {
   Type mType;
 
   // Optional parameters that may be used for localization.
-  Maybe<nsTArray<int32_t>> mParams;
+  Maybe<CopyableTArray<int32_t>> mParams;
 
   bool ToLocalizedString(nsAString& aLocalizedString) const;
   template <uint32_t N>

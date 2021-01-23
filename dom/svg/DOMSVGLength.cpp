@@ -8,6 +8,7 @@
 
 #include "DOMSVGLengthList.h"
 #include "DOMSVGAnimatedLengthList.h"
+#include "mozAutoDocUpdate.h"
 #include "nsError.h"
 #include "nsMathUtils.h"
 #include "SVGAnimatedLength.h"
@@ -63,22 +64,23 @@ NS_INTERFACE_MAP_END
 // Helper class: AutoChangeLengthNotifier
 // Stack-based helper class to pair calls to WillChangeLengthList and
 // DidChangeLengthList.
-class MOZ_RAII AutoChangeLengthNotifier {
+class MOZ_RAII AutoChangeLengthNotifier : public mozAutoDocUpdate {
  public:
   explicit AutoChangeLengthNotifier(
       DOMSVGLength* aLength MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
-      : mLength(aLength) {
+      : mozAutoDocUpdate(aLength->Element()->GetComposedDoc(), true),
+        mLength(aLength) {
     MOZ_GUARD_OBJECT_NOTIFIER_INIT;
     MOZ_ASSERT(mLength, "Expecting non-null length");
     MOZ_ASSERT(mLength->HasOwner(),
                "Expecting list to have an owner for notification");
     mEmptyOrOldValue =
-        mLength->Element()->WillChangeLengthList(mLength->mAttrEnum);
+        mLength->Element()->WillChangeLengthList(mLength->mAttrEnum, *this);
   }
 
   ~AutoChangeLengthNotifier() {
     mLength->Element()->DidChangeLengthList(mLength->mAttrEnum,
-                                            mEmptyOrOldValue);
+                                            mEmptyOrOldValue, *this);
     // Null check mLength->mList, since DidChangeLengthList can run script,
     // potentially removing mLength from its list.
     if (mLength->mList && mLength->mList->IsAnimating()) {
@@ -213,10 +215,12 @@ float DOMSVGLength::GetValue(ErrorResult& aRv) {
     }
     return value;
   }
-  if (mUnit == SVGLength_Binding::SVG_LENGTHTYPE_NUMBER ||
-      mUnit == SVGLength_Binding::SVG_LENGTHTYPE_PX) {
-    return mValue;
+
+  float unitToPx;
+  if (UserSpaceMetrics::ResolveAbsoluteUnit(mUnit, unitToPx)) {
+    return mValue * unitToPx;
   }
+
   // else [SVGWG issue] Can't convert this length's value to user units
   // ReportToConsole
   aRv.Throw(NS_ERROR_FAILURE);
@@ -285,7 +289,9 @@ void DOMSVGLength::SetValueInSpecifiedUnits(float aValue, ErrorResult& aRv) {
   }
 
   if (mVal) {
-    mVal->SetBaseValueInSpecifiedUnits(aValue, mSVGElement, true);
+    MOZ_ASSERT(mSVGElement);
+    mozAutoDocUpdate updateBatch(mSVGElement->GetComposedDoc(), true);
+    mVal->SetBaseValueInSpecifiedUnits(aValue, mSVGElement, true, updateBatch);
     return;
   }
 

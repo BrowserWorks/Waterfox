@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 /* eslint no-unused-vars: [2, {"vars": "local"}] */
@@ -20,16 +19,26 @@ Services.scriptloader.loadSubScript(
   this
 );
 
-// Make sure only the flexbox layout accordion is opened, and the others are closed.
-Services.prefs.setBoolPref("devtools.layout.flexbox.opened", true);
-Services.prefs.setBoolPref("devtools.layout.boxmodel.opened", false);
-Services.prefs.setBoolPref("devtools.layout.grid.opened", false);
+const FLEXBOX_OPENED_PREF = "devtools.layout.flexbox.opened";
+const FLEX_CONTAINER_OPENED_PREF = "devtools.layout.flex-container.opened";
+const FLEX_ITEM_OPENED_PREF = "devtools.layout.flex-item.opened";
+const GRID_OPENED_PREF = "devtools.layout.grid.opened";
+const BOXMODEL_OPENED_PREF = "devtools.layout.boxmodel.opened";
+
+// Make sure only the flexbox layout accordions are opened, and the others are closed.
+Services.prefs.setBoolPref(FLEXBOX_OPENED_PREF, true);
+Services.prefs.setBoolPref(FLEX_CONTAINER_OPENED_PREF, true);
+Services.prefs.setBoolPref(FLEX_ITEM_OPENED_PREF, true);
+Services.prefs.setBoolPref(BOXMODEL_OPENED_PREF, false);
+Services.prefs.setBoolPref(GRID_OPENED_PREF, false);
 
 // Clear all set prefs.
 registerCleanupFunction(() => {
-  Services.prefs.clearUserPref("devtools.layout.flexbox.opened");
-  Services.prefs.clearUserPref("devtools.layout.boxmodel.opened");
-  Services.prefs.clearUserPref("devtools.layout.grid.opened");
+  Services.prefs.clearUserPref(FLEXBOX_OPENED_PREF);
+  Services.prefs.clearUserPref(FLEX_CONTAINER_OPENED_PREF);
+  Services.prefs.clearUserPref(FLEX_ITEM_OPENED_PREF);
+  Services.prefs.clearUserPref(BOXMODEL_OPENED_PREF);
+  Services.prefs.clearUserPref(GRID_OPENED_PREF);
 });
 
 /**

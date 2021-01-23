@@ -7,35 +7,31 @@ job-defaults:
     worker-type: b-linux
     worker:
         max-run-time: 1800
-    run:
-        resources:
-            - 'taskcluster/scripts/misc/tooltool-download.sh'
+    fetches:
+        fetch:
+            - cctools-port
+            - libtapi
 
 linux64-cctools-port:
     treeherder:
         symbol: TL(cctools)
     run:
         script: build-cctools-port.sh
-        tooltool-downloads: internal
         toolchain-artifact: public/build/cctools.tar.xz
-    toolchains:
-        - linux64-clang-8
-
-macosx64-cctools-port:
-    description: "cctools-port toolchain build"
-    treeherder:
-        symbol: TM(cctools)
-    worker:
-        env:
-            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/macosx64/cross-clang.manifest"
-    run-on-projects:
-        - trunk
-        - try
-    run:
-        script: build-cctools-port-macosx.sh
         tooltool-downloads: internal
-        toolchain-artifact: public/build/cctools.tar.bz2
-    toolchains:
-        - linux64-cctools-port
-        - linux64-clang-8
-        - linux64-node
+    fetches:
+        toolchain:
+            - linux64-clang-9
+            - linux64-binutils
+
+linux64-cctools-clang-10-port:
+    treeherder:
+        symbol: TL(cctools-clang-10)
+    run:
+        script: build-cctools-port.sh
+        toolchain-artifact: public/build/cctools.tar.xz
+        tooltool-downloads: internal
+    fetches:
+        toolchain:
+            - linux64-clang-10
+            - linux64-binutils

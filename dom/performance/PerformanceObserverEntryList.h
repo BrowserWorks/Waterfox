@@ -11,7 +11,6 @@
 #include "nsISupports.h"
 #include "nsTArray.h"
 #include "nsWrapperCache.h"
-#include "mozilla/dom/DOMPrefs.h"
 #include "mozilla/dom/PerformanceEntryBinding.h"
 
 namespace mozilla {
@@ -27,9 +26,9 @@ class PerformanceObserverEntryList final : public nsISupports,
   ~PerformanceObserverEntryList();
 
  public:
-  PerformanceObserverEntryList(nsISupports* aOwner,
-                               nsTArray<RefPtr<PerformanceEntry>>& aEntries)
-      : mOwner(aOwner), mEntries(aEntries) {}
+  PerformanceObserverEntryList(
+      nsISupports* aOwner, const nsTArray<RefPtr<PerformanceEntry>>& aEntries)
+      : mOwner(aOwner), mEntries(aEntries.Clone()) {}
 
   nsISupports* GetParentObject() const { return mOwner; }
 

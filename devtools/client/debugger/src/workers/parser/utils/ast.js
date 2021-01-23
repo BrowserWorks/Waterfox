@@ -10,6 +10,8 @@ import * as t from "@babel/types";
 import isEmpty from "lodash/isEmpty";
 import { getSource } from "../sources";
 
+import type { SourceId } from "../../../types";
+
 let ASTs = new Map();
 
 function _parse(code, opts) {
@@ -23,7 +25,11 @@ const sourceOptions = {
   generated: {
     sourceType: "unambiguous",
     tokens: true,
-    plugins: ["objectRestSpread"],
+    plugins: [
+      "objectRestSpread",
+      "optionalChaining",
+      "nullishCoalescingOperator",
+    ],
   },
   original: {
     sourceType: "unambiguous",
@@ -32,6 +38,8 @@ const sourceOptions = {
       "jsx",
       "flow",
       "doExpressions",
+      "optionalChaining",
+      "nullishCoalescingOperator",
       "decorators-legacy",
       "objectRestSpread",
       "classProperties",
@@ -65,7 +73,7 @@ export function parse(text: ?string, opts?: Object): any {
 // Custom parser for parse-script-tags that adapts its input structure to
 // our parser's signature
 function htmlParser({ source, line }) {
-  return parse(source, { startLine: line });
+  return parse(source, { startLine: line, ...sourceOptions.generated });
 }
 
 const VUE_COMPONENT_START = /^\s*</;
@@ -101,7 +109,12 @@ function parseVueScript(code) {
 export function parseConsoleScript(text: string, opts?: Object): Object | null {
   try {
     return _parse(text, {
-      plugins: ["objectRestSpread", "dynamicImport"],
+      plugins: [
+        "objectRestSpread",
+        "dynamicImport",
+        "nullishCoalescingOperator",
+        "optionalChaining",
+      ],
       ...opts,
       allowAwaitOutsideFunction: true,
     });
@@ -114,7 +127,7 @@ export function parseScript(text: string, opts?: Object) {
   return _parse(text, opts);
 }
 
-export function getAst(sourceId: string) {
+export function getAst(sourceId: SourceId) {
   if (ASTs.has(sourceId)) {
     return ASTs.get(sourceId);
   }
@@ -166,7 +179,11 @@ export function clearASTs() {
 }
 
 type Visitor = { enter: Function };
-export function traverseAst<T>(sourceId: string, visitor: Visitor, state?: T) {
+export function traverseAst<T>(
+  sourceId: SourceId,
+  visitor: Visitor,
+  state?: T
+) {
   const ast = getAst(sourceId);
   if (isEmpty(ast)) {
     return null;

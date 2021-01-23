@@ -36,6 +36,8 @@
 #include "nsColor.h"
 #include "nsFontMetrics.h"
 #include "mozilla/ServoUtils.h"
+#include "TextDrawTarget.h"
+#include "ThebesRLBoxTypes.h"
 
 typedef struct _cairo cairo_t;
 typedef struct _cairo_scaled_font cairo_scaled_font_t;
@@ -95,20 +97,20 @@ struct gfxFontStyle {
   // (3) are guaranteed to be mutually exclusive
 
   // custom opentype feature settings
-  nsTArray<gfxFontFeature> featureSettings;
+  CopyableTArray<gfxFontFeature> featureSettings;
 
   // Some font-variant property values require font-specific settings
   // defined via @font-feature-values rules.  These are resolved after
   // font matching occurs.
 
   // -- list of value tags for specific alternate features
-  nsTArray<gfxAlternateValue> alternateValues;
+  mozilla::StyleVariantAlternatesList variantAlternates;
 
   // -- object used to look these up once the font is matched
   RefPtr<gfxFontFeatureValueSet> featureValueLookup;
 
   // opentype variation settings
-  nsTArray<gfxFontVariation> variationSettings;
+  CopyableTArray<gfxFontVariation> variationSettings;
 
   // The logical size of the font, in pixels
   gfxFloat size;
@@ -226,7 +228,7 @@ struct gfxFontStyle {
            (*reinterpret_cast<const uint32_t*>(&sizeAdjust) ==
             *reinterpret_cast<const uint32_t*>(&other.sizeAdjust)) &&
            (featureSettings == other.featureSettings) &&
-           (alternateValues == other.alternateValues) &&
+           (variantAlternates == other.variantAlternates) &&
            (featureValueLookup == other.featureValueLookup) &&
            (variationSettings == other.variationSettings) &&
            (languageOverride == other.languageOverride) &&
@@ -345,7 +347,7 @@ class gfxFontCache final : private gfxFontCacheExpirationTracker {
 
  protected:
   class MemoryReporter final : public nsIMemoryReporter {
-    ~MemoryReporter() {}
+    ~MemoryReporter() = default;
 
    public:
     NS_DECL_ISUPPORTS
@@ -354,7 +356,7 @@ class gfxFontCache final : private gfxFontCacheExpirationTracker {
 
   // Observer for notifications that the font cache cares about
   class Observer final : public nsIObserver {
-    ~Observer() {}
+    ~Observer() = default;
 
    public:
     NS_DECL_ISUPPORTS
@@ -396,8 +398,6 @@ class gfxFontCache final : private gfxFontCacheExpirationTracker {
     // When constructing a new entry in the hashtable, we'll leave this
     // blank. The caller of Put() will fill this in.
     explicit HashEntry(KeyTypePointer aStr) : mFont(nullptr) {}
-    HashEntry(const HashEntry& toCopy) : mFont(toCopy.mFont) {}
-    ~HashEntry() {}
 
     bool KeyEquals(const KeyTypePointer aKey) const;
     static KeyTypePointer KeyToPointer(KeyType aKey) { return &aKey; }
@@ -1069,7 +1069,7 @@ class gfxShapedText {
   // starting at the given index.
   class DetailedGlyphStore {
    public:
-    DetailedGlyphStore() : mLastUsed(0) {}
+    DetailedGlyphStore() = default;
 
     // This is optimized for the most common calling patterns:
     // we rarely need random access to the records, access is most commonly
@@ -1167,7 +1167,7 @@ class gfxShapedText {
     // Records the most recently used index into mOffsetToIndex, so that
     // we can support sequential access more quickly than just doing
     // a binary search each time.
-    nsTArray<DGRec>::index_type mLastUsed;
+    nsTArray<DGRec>::index_type mLastUsed = 0;
   };
 
   mozilla::UniquePtr<DetailedGlyphStore> mDetailedGlyphs;
@@ -1389,7 +1389,6 @@ class gfxFont {
 
  protected:
   nsAutoRefCnt mRefCnt;
-  cairo_scaled_font_t* mScaledFont;
 
   void NotifyReleased() {
     gfxFontCache* cache = gfxFontCache::GetCache();
@@ -1405,8 +1404,7 @@ class gfxFont {
 
   gfxFont(const RefPtr<mozilla::gfx::UnscaledFont>& aUnscaledFont,
           gfxFontEntry* aFontEntry, const gfxFontStyle* aFontStyle,
-          AntialiasOption anAAOption = kAntialiasDefault,
-          cairo_scaled_font_t* aScaledFont = nullptr);
+          AntialiasOption anAAOption = kAntialiasDefault);
 
  public:
   virtual ~gfxFont();
@@ -1442,8 +1440,6 @@ class gfxFont {
 
   const nsCString& GetName() const { return mFontEntry->Name(); }
   const gfxFontStyle* GetStyle() const { return &mStyle; }
-
-  cairo_scaled_font_t* GetCairoScaledFont() { return mScaledFont; }
 
   virtual mozilla::UniquePtr<gfxFont> CopyWithAntialiasOption(
       AntialiasOption anAAOption) {
@@ -1518,6 +1514,9 @@ class gfxFont {
   // Work out whether cairo will snap inter-glyph spacing to pixels
   // when rendering to the given drawTarget.
   RoundingFlags GetRoundOffsetsToPixels(DrawTarget* aDrawTarget);
+
+  virtual bool ShouldHintMetrics() const { return true; }
+  virtual bool ShouldRoundXOffset(cairo_t* aCairo) const { return true; }
 
   // Font metrics
   struct Metrics {
@@ -1681,16 +1680,12 @@ class gfxFont {
   nsExpirationState* GetExpirationState() { return &mExpirationState; }
 
   // Get the glyphID of a space
-  virtual uint32_t GetSpaceGlyph() = 0;
+  uint16_t GetSpaceGlyph() { return mSpaceGlyph; }
 
   gfxGlyphExtents* GetOrCreateGlyphExtents(int32_t aAppUnitsPerDevUnit);
 
-  // You need to call SetupCairoFont on aDrawTarget just before calling this.
   void SetupGlyphExtents(DrawTarget* aDrawTarget, uint32_t aGlyphID,
                          bool aNeedTight, gfxGlyphExtents* aExtents);
-
-  // This is called by the default Draw() implementation above.
-  virtual bool SetupCairoFont(DrawTarget* aDrawTarget) = 0;
 
   virtual bool AllowSubpixelAA() { return true; }
 
@@ -1861,11 +1856,6 @@ class gfxFont {
   // glyphs. This does not add a reference to the returned font.
   gfxFont* GetSubSuperscriptFont(int32_t aAppUnitsPerDevPixel);
 
-  /**
-   * Return the reference cairo_t object from aDT.
-   */
-  static cairo_t* RefCairo(mozilla::gfx::DrawTarget* aDT);
-
  protected:
   virtual const Metrics& GetHorizontalMetrics() = 0;
 
@@ -1883,7 +1873,11 @@ class gfxFont {
   bool DrawGlyphs(const gfxShapedText* aShapedText,
                   uint32_t aOffset,  // offset in the textrun
                   uint32_t aCount,   // length of run to draw
-                  mozilla::gfx::Point* aPt, GlyphBufferAzure& aBuffer);
+                  mozilla::gfx::Point* aPt,
+                  // transform for mOffset field in DetailedGlyph records,
+                  // to account for rotations (may be null)
+                  const mozilla::gfx::Matrix* aOffsetMatrix,
+                  GlyphBufferAzure& aBuffer);
 
   // Output a single glyph at *aPt.
   // Normal glyphs are simply accumulated in aBuffer until it is full and
@@ -1891,7 +1885,7 @@ class gfxFont {
   // directly to the destination (found from the buffer's parameters).
   template <FontComplexityT FC>
   void DrawOneGlyph(uint32_t aGlyphID, const mozilla::gfx::Point& aPt,
-                    GlyphBufferAzure& aBuffer, bool* aEmittedGlyphs) const;
+                    GlyphBufferAzure& aBuffer, bool* aEmittedGlyphs);
 
   // Helper for DrawOneGlyph to handle missing glyphs, rendering either
   // nothing (for default-ignorables) or a missing-glyph hexbox.
@@ -1920,6 +1914,11 @@ class gfxFont {
   // point format.
   virtual int32_t GetGlyphWidth(uint16_t aGID) { return -1; }
 
+  virtual bool GetGlyphBounds(uint16_t aGID, gfxRect* aBounds,
+                              bool aTight = false) {
+    return false;
+  }
+
   bool IsSpaceGlyphInvisible(DrawTarget* aRefDrawTarget,
                              const gfxTextRun* aTextRun);
 
@@ -1930,7 +1929,10 @@ class gfxFont {
   bool HasSubstitutionRulesWithSpaceLookups(Script aRunScript);
 
   // do spaces participate in shaping rules? if so, can't used word cache
-  bool SpaceMayParticipateInShaping(Script aRunScript);
+  // Note that this function uses HasGraphiteSpaceContextuals, so it can only
+  // return a "hint" to the correct answer. The  calling code must ensure it
+  // performs safe actions independent of the value returned.
+  tainted_boolean_hint SpaceMayParticipateInShaping(Script aRunScript);
 
   // For 8-bit text, expand to 16-bit and then call the following method.
   bool ShapeText(DrawTarget* aContext, const uint8_t* aText,
@@ -2049,10 +2051,10 @@ class gfxFont {
     // When constructing a new entry in the hashtable, the caller of Put()
     // will fill us in.
     explicit CacheHashEntry(KeyTypePointer aKey) {}
-    CacheHashEntry(const CacheHashEntry& toCopy) {
-      NS_ERROR("Should not be called");
-    }
-    ~CacheHashEntry() {}
+    CacheHashEntry(const CacheHashEntry&) = delete;
+    CacheHashEntry& operator=(const CacheHashEntry&) = delete;
+    CacheHashEntry(CacheHashEntry&&) = default;
+    CacheHashEntry& operator=(CacheHashEntry&&) = default;
 
     bool KeyEquals(const KeyTypePointer aKey) const;
 
@@ -2112,6 +2114,9 @@ class gfxFont {
 
   nsExpirationState mExpirationState;
 
+  // Glyph ID of the font's <space> glyph, zero if missing
+  uint16_t mSpaceGlyph = 0;
+
   // the AA setting requested for this font - may affect glyph bounds
   AntialiasOption mAntialiasOption;
 
@@ -2144,14 +2149,19 @@ class gfxFont {
   // if this font has bad underline offset, aIsBadUnderlineFont should be true.
   void SanitizeMetrics(Metrics* aMetrics, bool aIsBadUnderlineFont);
 
-  bool RenderSVGGlyph(gfxContext* aContext, mozilla::gfx::Point aPoint,
-                      uint32_t aGlyphId, SVGContextPaint* aContextPaint) const;
-  bool RenderSVGGlyph(gfxContext* aContext, mozilla::gfx::Point aPoint,
-                      uint32_t aGlyphId, SVGContextPaint* aContextPaint,
+  bool RenderSVGGlyph(gfxContext* aContext,
+                      mozilla::layout::TextDrawTarget* aTextDrawer,
+                      mozilla::gfx::Point aPoint, uint32_t aGlyphId,
+                      SVGContextPaint* aContextPaint) const;
+  bool RenderSVGGlyph(gfxContext* aContext,
+                      mozilla::layout::TextDrawTarget* aTextDrawer,
+                      mozilla::gfx::Point aPoint, uint32_t aGlyphId,
+                      SVGContextPaint* aContextPaint,
                       gfxTextRunDrawCallbacks* aCallbacks,
                       bool& aEmittedGlyphs) const;
 
   bool RenderColorGlyph(DrawTarget* aDrawTarget, gfxContext* aContext,
+                        mozilla::layout::TextDrawTarget* aTextDrawer,
                         mozilla::gfx::ScaledFont* scaledFont,
                         mozilla::gfx::DrawOptions drawOptions,
                         const mozilla::gfx::Point& aPoint,

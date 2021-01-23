@@ -323,7 +323,7 @@ function executeAsync(statement, onResult) {
 
 function executeMultipleStatementsAsync(db, statements, onResult) {
   return new Promise((resolve, reject) => {
-    db.executeAsync(statements, statements.length, {
+    db.executeAsync(statements, {
       handleError(error) {
         reject(error);
       },

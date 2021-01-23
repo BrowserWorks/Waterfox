@@ -49,6 +49,8 @@ class nsCycleCollectionISupports {
 NS_DEFINE_STATIC_IID_ACCESSOR(nsCycleCollectionISupports,
                               NS_CYCLECOLLECTIONISUPPORTS_IID)
 
+class nsWrapperCache;
+
 namespace JS {
 template <class T>
 class Heap;
@@ -66,7 +68,7 @@ struct TraceCallbacks {
                      void* aClosure) const = 0;
   virtual void Trace(JS::Heap<JSObject*>* aPtr, const char* aName,
                      void* aClosure) const = 0;
-  virtual void Trace(JSObject** aPtr, const char* aName,
+  virtual void Trace(nsWrapperCache* aPtr, const char* aName,
                      void* aClosure) const = 0;
   virtual void Trace(JS::TenuredHeap<JSObject*>* aPtr, const char* aName,
                      void* aClosure) const = 0;
@@ -94,7 +96,7 @@ struct TraceCallbackFunc : public TraceCallbacks {
                      void* aClosure) const override;
   virtual void Trace(JS::Heap<JSObject*>* aPtr, const char* aName,
                      void* aClosure) const override;
-  virtual void Trace(JSObject** aPtr, const char* aName,
+  virtual void Trace(nsWrapperCache* aPtr, const char* aName,
                      void* aClosure) const override;
   virtual void Trace(JS::TenuredHeap<JSObject*>* aPtr, const char* aName,
                      void* aClosure) const override;
@@ -114,9 +116,17 @@ struct TraceCallbackFunc : public TraceCallbacks {
  */
 class NS_NO_VTABLE nsCycleCollectionParticipant {
  public:
-  constexpr explicit nsCycleCollectionParticipant(
-      bool aSkip, bool aTraverseShouldTrace = false)
-      : mMightSkip(aSkip), mTraverseShouldTrace(aTraverseShouldTrace) {}
+  using Flags = uint8_t;
+  static constexpr Flags FlagMightSkip = 1u << 0;
+  static constexpr Flags FlagTraverseShouldTrace = 1u << 1;
+  static constexpr Flags FlagMultiZoneJSHolder = 1u << 2;
+  static constexpr Flags AllFlags =
+      FlagMightSkip | FlagTraverseShouldTrace | FlagMultiZoneJSHolder;
+
+  constexpr explicit nsCycleCollectionParticipant(Flags aFlags)
+      : mFlags(aFlags) {
+    MOZ_ASSERT((aFlags & ~AllFlags) == 0);
+  }
 
   NS_IMETHOD TraverseNative(void* aPtr,
                             nsCycleCollectionTraversalCallback& aCb) = 0;
@@ -124,7 +134,7 @@ class NS_NO_VTABLE nsCycleCollectionParticipant {
   nsresult TraverseNativeAndJS(void* aPtr,
                                nsCycleCollectionTraversalCallback& aCb) {
     nsresult rv = TraverseNative(aPtr, aCb);
-    if (mTraverseShouldTrace) {
+    if (TraverseShouldTrace()) {
       // Note, we always call Trace, even if Traverse returned
       // NS_SUCCESS_INTERRUPTED_TRAVERSE.
       TraceCallbackFunc noteJsChild(&nsCycleCollectionParticipant::NoteJSChild);
@@ -159,7 +169,7 @@ class NS_NO_VTABLE nsCycleCollectionParticipant {
   // outgoing edges at all in the cycle collection graph (because then they
   // can't be parts of a cycle) or they know for sure they're alive.
   bool CanSkip(void* aPtr, bool aRemovingAllowed) {
-    return mMightSkip ? CanSkipReal(aPtr, aRemovingAllowed) : false;
+    return MightSkip() ? CanSkipReal(aPtr, aRemovingAllowed) : false;
   }
 
   // CanSkipInCC is called during construction of the initial set of roots for
@@ -178,17 +188,17 @@ class NS_NO_VTABLE nsCycleCollectionParticipant {
   // outgoing edges at all in the cycle collection graph or they know for sure
   // they're alive _and_ none of their outgoing edges are to gray (in the GC
   // sense) gcthings.  See also nsWrapperCache::HasNothingToTrace and
-  // nsWrapperCache::IsBlackAndDoesNotNeedTracing.  The restriction on not
-  // having outgoing edges to gray gcthings is because if we _do_ have them that
-  // means we have a "strong" edge to a JS thing and since we're alive we need
-  // to trace through it and mark keep them alive.  Outgoing edges to C++ things
-  // don't matter here, because the criteria for when a CC participant is
-  // considered alive are slightly different for JS and C++ things: JS things
-  // are only considered alive when reachable via an edge from a live thing,
-  // while C++ things are also considered alive when their refcount exceeds the
-  // number of edges via which they are reachable.
+  // nsWrapperCache::HasKnownLiveWrapperAndDoesNotNeedTracing. The restriction
+  // on not having outgoing edges to gray gcthings is because if we _do_ have
+  // them that means we have a "strong" edge to a JS thing and since we're alive
+  // we need to trace through it and mark keep them alive.  Outgoing edges to
+  // C++ things don't matter here, because the criteria for when a CC
+  // participant is considered alive are slightly different for JS and C++
+  // things: JS things are only considered alive when reachable via an edge from
+  // a live thing, while C++ things are also considered alive when their
+  // refcount exceeds the number of edges via which they are reachable.
   bool CanSkipInCC(void* aPtr) {
-    return mMightSkip ? CanSkipInCCReal(aPtr) : false;
+    return MightSkip() ? CanSkipInCCReal(aPtr) : false;
   }
 
   // CanSkipThis is called during construction of the cycle collector graph,
@@ -207,10 +217,12 @@ class NS_NO_VTABLE nsCycleCollectionParticipant {
   // graph during root set construction.  An object should never have
   // CanSkipThis called on it if it has outgoing strong references to JS things.
   bool CanSkipThis(void* aPtr) {
-    return mMightSkip ? CanSkipThisReal(aPtr) : false;
+    return MightSkip() ? CanSkipThisReal(aPtr) : false;
   }
 
   NS_IMETHOD_(void) DeleteCycleCollectable(void* aPtr) = 0;
+
+  bool IsMultiZoneJSHolder() const { return mFlags & FlagMultiZoneJSHolder; }
 
  protected:
   NS_IMETHOD_(bool) CanSkipReal(void* aPtr, bool aRemovingAllowed) {
@@ -227,14 +239,16 @@ class NS_NO_VTABLE nsCycleCollectionParticipant {
   }
 
  private:
-  const bool mMightSkip;
-  const bool mTraverseShouldTrace;
+  bool MightSkip() const { return mFlags & FlagMightSkip; }
+  bool TraverseShouldTrace() const { return mFlags & FlagTraverseShouldTrace; }
+
+  const Flags mFlags;
 };
 
 class NS_NO_VTABLE nsScriptObjectTracer : public nsCycleCollectionParticipant {
  public:
-  constexpr explicit nsScriptObjectTracer(bool aSkip)
-      : nsCycleCollectionParticipant(aSkip, true) {}
+  constexpr explicit nsScriptObjectTracer(Flags aFlags)
+      : nsCycleCollectionParticipant(aFlags | FlagTraverseShouldTrace) {}
 
   NS_IMETHOD_(void)
   Trace(void* aPtr, const TraceCallbacks& aCb, void* aClosure) override = 0;
@@ -243,8 +257,8 @@ class NS_NO_VTABLE nsScriptObjectTracer : public nsCycleCollectionParticipant {
 class NS_NO_VTABLE nsXPCOMCycleCollectionParticipant
     : public nsScriptObjectTracer {
  public:
-  constexpr explicit nsXPCOMCycleCollectionParticipant(bool aSkip)
-      : nsScriptObjectTracer(aSkip) {}
+  constexpr explicit nsXPCOMCycleCollectionParticipant(Flags aFlags)
+      : nsScriptObjectTracer(aFlags) {}
 
   NS_DECLARE_STATIC_IID_ACCESSOR(NS_XPCOMCYCLECOLLECTIONPARTICIPANT_IID)
 
@@ -345,7 +359,7 @@ NS_DEFINE_STATIC_IID_ACCESSOR(nsXPCOMCycleCollectionParticipant,
 
 // The default implementation of this class template is empty, because it
 // should never be used: see the partial specializations below.
-template <typename T, bool IsXPCOM = mozilla::IsBaseOf<nsISupports, T>::value>
+template <typename T, bool IsXPCOM = std::is_base_of<nsISupports, T>::value>
 struct DowncastCCParticipantImpl {};
 
 // Specialization for XPCOM CC participants
@@ -597,19 +611,19 @@ T* DowncastCCParticipant(void* aPtr) {
 #  define NOT_INHERITED_CANT_OVERRIDE
 #endif
 
-#define NS_DECL_CYCLE_COLLECTION_CLASS_AMBIGUOUS(_class, _base)           \
-  class NS_CYCLE_COLLECTION_INNERCLASS                                    \
-      : public nsXPCOMCycleCollectionParticipant {                        \
-   public:                                                                \
-    constexpr explicit NS_CYCLE_COLLECTION_INNERCLASS(bool aSkip = false) \
-        : nsXPCOMCycleCollectionParticipant(aSkip) {}                     \
-                                                                          \
-   private:                                                               \
-    NS_DECL_CYCLE_COLLECTION_CLASS_BODY(_class, _base)                    \
-    NS_IMPL_GET_XPCOM_CYCLE_COLLECTION_PARTICIPANT(_class)                \
-  };                                                                      \
-  NS_CHECK_FOR_RIGHT_PARTICIPANT_IMPL(_class)                             \
-  static NS_CYCLE_COLLECTION_INNERCLASS NS_CYCLE_COLLECTION_INNERNAME;    \
+#define NS_DECL_CYCLE_COLLECTION_CLASS_AMBIGUOUS(_class, _base)         \
+  class NS_CYCLE_COLLECTION_INNERCLASS                                  \
+      : public nsXPCOMCycleCollectionParticipant {                      \
+   public:                                                              \
+    constexpr explicit NS_CYCLE_COLLECTION_INNERCLASS(Flags aFlags = 0) \
+        : nsXPCOMCycleCollectionParticipant(aFlags) {}                  \
+                                                                        \
+   private:                                                             \
+    NS_DECL_CYCLE_COLLECTION_CLASS_BODY(_class, _base)                  \
+    NS_IMPL_GET_XPCOM_CYCLE_COLLECTION_PARTICIPANT(_class)              \
+  };                                                                    \
+  NS_CHECK_FOR_RIGHT_PARTICIPANT_IMPL(_class)                           \
+  static NS_CYCLE_COLLECTION_INNERCLASS NS_CYCLE_COLLECTION_INNERNAME;  \
   NOT_INHERITED_CANT_OVERRIDE
 
 #define NS_DECL_CYCLE_COLLECTION_CLASS(_class) \
@@ -621,8 +635,8 @@ T* DowncastCCParticipant(void* aPtr) {
       : public nsXPCOMCycleCollectionParticipant {                          \
    public:                                                                  \
     constexpr explicit NS_CYCLE_COLLECTION_INNERCLASS(                      \
-        bool aSkip = true) /* Ignore aSkip: we always want skippability. */ \
-        : nsXPCOMCycleCollectionParticipant(true) {}                        \
+        Flags aFlags = FlagMightSkip) /* We always want skippability. */    \
+        : nsXPCOMCycleCollectionParticipant(aFlags | FlagMightSkip) {}      \
                                                                             \
    private:                                                                 \
     NS_DECL_CYCLE_COLLECTION_CLASS_BODY(_class, _base)                      \
@@ -642,8 +656,8 @@ T* DowncastCCParticipant(void* aPtr) {
   class NS_CYCLE_COLLECTION_INNERCLASS                                        \
       : public nsXPCOMCycleCollectionParticipant {                            \
    public:                                                                    \
-    constexpr explicit NS_CYCLE_COLLECTION_INNERCLASS(bool aSkip = false)     \
-        : nsXPCOMCycleCollectionParticipant(aSkip) {}                         \
+    constexpr explicit NS_CYCLE_COLLECTION_INNERCLASS(Flags aFlags = 0)       \
+        : nsXPCOMCycleCollectionParticipant(aFlags) {}                        \
                                                                               \
    private:                                                                   \
     NS_DECL_CYCLE_COLLECTION_CLASS_BODY(_class, _base)                        \
@@ -661,8 +675,8 @@ T* DowncastCCParticipant(void* aPtr) {
       : public nsXPCOMCycleCollectionParticipant {                          \
    public:                                                                  \
     constexpr explicit NS_CYCLE_COLLECTION_INNERCLASS(                      \
-        bool aSkip = true) /* Ignore aSkip: we always want skippability. */ \
-        : nsXPCOMCycleCollectionParticipant(true) {}                        \
+        Flags aFlags = FlagMightSkip) /* We always want skippability. */    \
+        : nsXPCOMCycleCollectionParticipant(aFlags | FlagMightSkip) {}      \
                                                                             \
    private:                                                                 \
     NS_DECL_CYCLE_COLLECTION_CLASS_BODY(_class, _base)                      \
@@ -681,25 +695,26 @@ T* DowncastCCParticipant(void* aPtr) {
   NS_DECL_CYCLE_COLLECTION_SKIPPABLE_SCRIPT_HOLDER_CLASS_AMBIGUOUS(_class, \
                                                                    _class)
 
-#define NS_DECL_CYCLE_COLLECTION_SKIPPABLE_SCRIPT_HOLDER_CLASS_INHERITED(   \
-    _class, _base_class)                                                    \
-  class NS_CYCLE_COLLECTION_INNERCLASS                                      \
-      : public NS_CYCLE_COLLECTION_CLASSNAME(_base_class) {                 \
-   public:                                                                  \
-    constexpr explicit NS_CYCLE_COLLECTION_INNERCLASS(                      \
-        bool aSkip = true) /* Ignore aSkip: we always want skippability. */ \
-        : NS_CYCLE_COLLECTION_CLASSNAME(_base_class)(true) {}               \
-                                                                            \
-   private:                                                                 \
-    NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED_BODY(_class, _base_class)      \
-    NS_IMETHOD_(void)                                                       \
-    Trace(void* p, const TraceCallbacks& cb, void* closure) override;       \
-    NS_IMETHOD_(bool) CanSkipReal(void* p, bool aRemovingAllowed) override; \
-    NS_IMETHOD_(bool) CanSkipInCCReal(void* p) override;                    \
-    NS_IMETHOD_(bool) CanSkipThisReal(void* p) override;                    \
-    NS_IMPL_GET_XPCOM_CYCLE_COLLECTION_PARTICIPANT(_class)                  \
-  };                                                                        \
-  NS_CHECK_FOR_RIGHT_PARTICIPANT_IMPL_INHERITED(_class)                     \
+#define NS_DECL_CYCLE_COLLECTION_SKIPPABLE_SCRIPT_HOLDER_CLASS_INHERITED(      \
+    _class, _base_class)                                                       \
+  class NS_CYCLE_COLLECTION_INNERCLASS                                         \
+      : public NS_CYCLE_COLLECTION_CLASSNAME(_base_class) {                    \
+   public:                                                                     \
+    constexpr explicit NS_CYCLE_COLLECTION_INNERCLASS(                         \
+        Flags aFlags = FlagMightSkip) /* We always want skippability. */       \
+        : NS_CYCLE_COLLECTION_CLASSNAME(_base_class)(aFlags | FlagMightSkip) { \
+    }                                                                          \
+                                                                               \
+   private:                                                                    \
+    NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED_BODY(_class, _base_class)         \
+    NS_IMETHOD_(void)                                                          \
+    Trace(void* p, const TraceCallbacks& cb, void* closure) override;          \
+    NS_IMETHOD_(bool) CanSkipReal(void* p, bool aRemovingAllowed) override;    \
+    NS_IMETHOD_(bool) CanSkipInCCReal(void* p) override;                       \
+    NS_IMETHOD_(bool) CanSkipThisReal(void* p) override;                       \
+    NS_IMPL_GET_XPCOM_CYCLE_COLLECTION_PARTICIPANT(_class)                     \
+  };                                                                           \
+  NS_CHECK_FOR_RIGHT_PARTICIPANT_IMPL_INHERITED(_class)                        \
   static NS_CYCLE_COLLECTION_INNERCLASS NS_CYCLE_COLLECTION_INNERNAME;
 
 #define NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(_class) \
@@ -720,34 +735,34 @@ T* DowncastCCParticipant(void* aPtr) {
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED_BODY_NO_UNLINK(_class, _base_class) \
   NS_IMETHOD_(void) Unlink(void* p) override;
 
-#define NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(_class, _base_class)     \
-  class NS_CYCLE_COLLECTION_INNERCLASS                                    \
-      : public NS_CYCLE_COLLECTION_CLASSNAME(_base_class) {               \
-   public:                                                                \
-    constexpr explicit NS_CYCLE_COLLECTION_INNERCLASS(bool aSkip = false) \
-        : NS_CYCLE_COLLECTION_CLASSNAME(_base_class)(aSkip) {}            \
-                                                                          \
-   private:                                                               \
-    NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED_BODY(_class, _base_class)    \
-    NS_IMPL_GET_XPCOM_CYCLE_COLLECTION_PARTICIPANT(_class)                \
-  };                                                                      \
-  NS_CHECK_FOR_RIGHT_PARTICIPANT_IMPL_INHERITED(_class)                   \
+#define NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(_class, _base_class)   \
+  class NS_CYCLE_COLLECTION_INNERCLASS                                  \
+      : public NS_CYCLE_COLLECTION_CLASSNAME(_base_class) {             \
+   public:                                                              \
+    constexpr explicit NS_CYCLE_COLLECTION_INNERCLASS(Flags aFlags = 0) \
+        : NS_CYCLE_COLLECTION_CLASSNAME(_base_class)(aFlags) {}         \
+                                                                        \
+   private:                                                             \
+    NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED_BODY(_class, _base_class)  \
+    NS_IMPL_GET_XPCOM_CYCLE_COLLECTION_PARTICIPANT(_class)              \
+  };                                                                    \
+  NS_CHECK_FOR_RIGHT_PARTICIPANT_IMPL_INHERITED(_class)                 \
   static NS_CYCLE_COLLECTION_INNERCLASS NS_CYCLE_COLLECTION_INNERNAME;
 
-#define NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED_NO_UNLINK(_class,        \
-                                                           _base_class)   \
-  class NS_CYCLE_COLLECTION_INNERCLASS                                    \
-      : public NS_CYCLE_COLLECTION_CLASSNAME(_base_class) {               \
-   public:                                                                \
-    constexpr explicit NS_CYCLE_COLLECTION_INNERCLASS(bool aSkip = false) \
-        : NS_CYCLE_COLLECTION_CLASSNAME(_base_class)(aSkip) {}            \
-                                                                          \
-   private:                                                               \
-    NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED_BODY_NO_UNLINK(_class,       \
-                                                            _base_class)  \
-    NS_IMPL_GET_XPCOM_CYCLE_COLLECTION_PARTICIPANT(_class)                \
-  };                                                                      \
-  NS_CHECK_FOR_RIGHT_PARTICIPANT_IMPL_INHERITED(_class)                   \
+#define NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED_NO_UNLINK(_class,       \
+                                                           _base_class)  \
+  class NS_CYCLE_COLLECTION_INNERCLASS                                   \
+      : public NS_CYCLE_COLLECTION_CLASSNAME(_base_class) {              \
+   public:                                                               \
+    constexpr explicit NS_CYCLE_COLLECTION_INNERCLASS(Flags aFlags = 0)  \
+        : NS_CYCLE_COLLECTION_CLASSNAME(_base_class)(aFlags) {}          \
+                                                                         \
+   private:                                                              \
+    NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED_BODY_NO_UNLINK(_class,      \
+                                                            _base_class) \
+    NS_IMPL_GET_XPCOM_CYCLE_COLLECTION_PARTICIPANT(_class)               \
+  };                                                                     \
+  NS_CHECK_FOR_RIGHT_PARTICIPANT_IMPL_INHERITED(_class)                  \
   static NS_CYCLE_COLLECTION_INNERCLASS NS_CYCLE_COLLECTION_INNERNAME;
 
 #define NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS_INHERITED(_class,      \
@@ -755,8 +770,8 @@ T* DowncastCCParticipant(void* aPtr) {
   class NS_CYCLE_COLLECTION_INNERCLASS                                      \
       : public NS_CYCLE_COLLECTION_CLASSNAME(_base_class) {                 \
    public:                                                                  \
-    constexpr explicit NS_CYCLE_COLLECTION_INNERCLASS(bool aSkip = false)   \
-        : NS_CYCLE_COLLECTION_CLASSNAME(_base_class)(aSkip) {}              \
+    constexpr explicit NS_CYCLE_COLLECTION_INNERCLASS(Flags aFlags = 0)     \
+        : NS_CYCLE_COLLECTION_CLASSNAME(_base_class)(aFlags) {}             \
                                                                             \
    private:                                                                 \
     NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED_BODY(_class, _base_class)      \
@@ -789,8 +804,8 @@ T* DowncastCCParticipant(void* aPtr) {
   void DeleteCycleCollectable(void) { delete this; }                           \
   class NS_CYCLE_COLLECTION_INNERCLASS : public nsCycleCollectionParticipant { \
    public:                                                                     \
-    constexpr explicit NS_CYCLE_COLLECTION_INNERCLASS(bool aSkip = false)      \
-        : nsCycleCollectionParticipant(aSkip) {}                               \
+    constexpr explicit NS_CYCLE_COLLECTION_INNERCLASS(Flags aFlags = 0)        \
+        : nsCycleCollectionParticipant(aFlags) {}                              \
                                                                                \
    private:                                                                    \
     NS_DECL_CYCLE_COLLECTION_NATIVE_CLASS_BODY(_class)                         \
@@ -805,8 +820,8 @@ T* DowncastCCParticipant(void* aPtr) {
   class NS_CYCLE_COLLECTION_INNERCLASS : public nsCycleCollectionParticipant { \
    public:                                                                     \
     constexpr explicit NS_CYCLE_COLLECTION_INNERCLASS(                         \
-        bool aSkip = true) /* Ignore aSkip: we always want skippability. */    \
-        : nsCycleCollectionParticipant(true) {}                                \
+        Flags aFlags = FlagMightSkip) /* We always want skippability. */       \
+        : nsCycleCollectionParticipant(aFlags | FlagMightSkip) {}              \
                                                                                \
    private:                                                                    \
     NS_DECL_CYCLE_COLLECTION_NATIVE_CLASS_BODY(_class)                         \
@@ -837,21 +852,21 @@ T* DowncastCCParticipant(void* aPtr) {
   };                                                                           \
   static NS_CYCLE_COLLECTION_INNERCLASS NS_CYCLE_COLLECTION_INNERNAME;
 
-#define NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_NATIVE_CLASS(_class)       \
-  void DeleteCycleCollectable(void) { delete this; }                      \
-  class NS_CYCLE_COLLECTION_INNERCLASS : public nsScriptObjectTracer {    \
-   public:                                                                \
-    constexpr explicit NS_CYCLE_COLLECTION_INNERCLASS(bool aSkip = false) \
-        : nsScriptObjectTracer(aSkip) {}                                  \
-                                                                          \
-   private:                                                               \
-    NS_DECL_CYCLE_COLLECTION_NATIVE_CLASS_BODY(_class)                    \
-    NS_IMETHOD_(void)                                                     \
-    Trace(void* p, const TraceCallbacks& cb, void* closure) override;     \
-    static constexpr nsScriptObjectTracer* GetParticipant() {             \
-      return &_class::NS_CYCLE_COLLECTION_INNERNAME;                      \
-    }                                                                     \
-  };                                                                      \
+#define NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_NATIVE_CLASS(_class)     \
+  void DeleteCycleCollectable(void) { delete this; }                    \
+  class NS_CYCLE_COLLECTION_INNERCLASS : public nsScriptObjectTracer {  \
+   public:                                                              \
+    constexpr explicit NS_CYCLE_COLLECTION_INNERCLASS(Flags aFlags = 0) \
+        : nsScriptObjectTracer(aFlags) {}                               \
+                                                                        \
+   private:                                                             \
+    NS_DECL_CYCLE_COLLECTION_NATIVE_CLASS_BODY(_class)                  \
+    NS_IMETHOD_(void)                                                   \
+    Trace(void* p, const TraceCallbacks& cb, void* closure) override;   \
+    static constexpr nsScriptObjectTracer* GetParticipant() {           \
+      return &_class::NS_CYCLE_COLLECTION_INNERNAME;                    \
+    }                                                                   \
+  };                                                                    \
   static NS_CYCLE_COLLECTION_INNERCLASS NS_CYCLE_COLLECTION_INNERNAME;
 
 #define NS_IMPL_CYCLE_COLLECTION_ROOT_NATIVE(_class, _root_function) \
@@ -870,6 +885,14 @@ T* DowncastCCParticipant(void* aPtr) {
 
 #define NS_IMPL_CYCLE_COLLECTION_CLASS(_class) \
   _class::NS_CYCLE_COLLECTION_INNERCLASS _class::NS_CYCLE_COLLECTION_INNERNAME;
+
+// Most JS holder classes should only contain pointers to JS GC things in a
+// single JS zone, but there are some exceptions. Such classes should use this
+// macro to tell the system about this.
+#define NS_IMPL_CYCLE_COLLECTION_MULTI_ZONE_JSHOLDER_CLASS(_class) \
+  _class::NS_CYCLE_COLLECTION_INNERCLASS                           \
+      _class::NS_CYCLE_COLLECTION_INNERNAME(                       \
+          nsCycleCollectionParticipant::FlagMultiZoneJSHolder);
 
 // NB: This is not something you usually want to use.  It is here to allow
 // adding things to the CC graph to help debugging via CC logs, but it does not

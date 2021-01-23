@@ -114,10 +114,16 @@ static bool ToNrIceCandidate(const nr_ice_candidate& candc,
 
   if (!ToNrIceAddr(cand->addr, &out->cand_addr)) return false;
 
+  if (cand->mdns_addr) {
+    out->mdns_addr = cand->mdns_addr;
+  }
+
   if (cand->isock) {
     nr_transport_addr addr;
     r = nr_socket_getaddr(cand->isock->sock, &addr);
     if (r) return false;
+
+    out->is_proxied = addr.is_proxied;
 
     if (!ToNrIceAddr(addr, &out->local_addr)) return false;
   }
@@ -206,14 +212,19 @@ nsresult NrIceMediaStream::ConnectToPeer(
   MOZ_ASSERT(stream_);
 
   if (Matches(old_stream_, ufrag, pwd)) {
-    // Roll back to old stream, since we apparently aren't using the new one
     // (We swap before we close so we never have stream_ == nullptr)
+    MOZ_MTLOG(ML_DEBUG,
+              "Rolling back to old stream ufrag=" << ufrag << " " << name_);
     std::swap(stream_, old_stream_);
     CloseStream(&old_stream_);
   } else if (old_stream_) {
     // Right now we wait for ICE to complete before closing the old stream.
     // It might be worth it to close it sooner, but we don't want to close it
     // right away.
+    MOZ_MTLOG(ML_DEBUG,
+              "ICE restart committed, marking old stream as obsolete, "
+              "beginning switchover to ufrag="
+                  << ufrag << " " << name_);
     nr_ice_media_stream_set_obsolete(old_stream_);
   }
 
@@ -247,6 +258,10 @@ nsresult NrIceMediaStream::SetIceCredentials(const std::string& ufrag,
     return NS_OK;
   }
 
+  if (Matches(old_stream_, ufrag, pwd)) {
+    return NS_OK;
+  }
+
   MOZ_MTLOG(ML_DEBUG, "Setting ICE credentials for " << name_ << " - " << ufrag
                                                      << ":" << pwd);
   CloseStream(&old_stream_);
@@ -270,18 +285,20 @@ nsresult NrIceMediaStream::SetIceCredentials(const std::string& ufrag,
 
 // Parse trickle ICE candidate
 nsresult NrIceMediaStream::ParseTrickleCandidate(const std::string& candidate,
-                                                 const std::string& ufrag) {
+                                                 const std::string& ufrag,
+                                                 const std::string& mdns_addr) {
   nr_ice_media_stream* stream = GetStreamForRemoteUfrag(ufrag);
   if (!stream) {
     return NS_ERROR_FAILURE;
   }
 
-  MOZ_MTLOG(ML_DEBUG, "NrIceCtx(" << ctx_->label << ")/STREAM(" << name()
-                                  << ") : parsing trickle candidate "
-                                  << candidate);
+  MOZ_MTLOG(ML_INFO, "NrIceCtx(" << ctx_->label << ")/STREAM(" << name()
+                                 << ") : parsing trickle candidate "
+                                 << candidate);
 
   int r = nr_ice_peer_ctx_parse_trickle_candidate(
-      ctx_peer_, stream, const_cast<char*>(candidate.c_str()));
+      ctx_peer_, stream, const_cast<char*>(candidate.c_str()),
+      mdns_addr.c_str());
 
   if (r) {
     if (r == R_ALREADY) {

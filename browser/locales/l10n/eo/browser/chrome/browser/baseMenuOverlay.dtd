@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProduct2.label      "Pri &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "P">
+
+<!ENTITY preferencesCmdMac.label        "Preferoj…">
+
+<!ENTITY servicesMenuMac.label          "Servoj">
+
+<!ENTITY hideThisAppCmdMac2.label       "Kaŝi &brandShorterName;">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Kaŝi aliajn">
+
+<!ENTITY showAllAppsCmdMac.label        "Montri ĉion">
+
+<!ENTITY touchBarCmdMac.label           "Personecigi la tuŝan strion…">

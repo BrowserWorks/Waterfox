@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import, print_function
+from __future__ import absolute_import, print_function, unicode_literals
 
 r'''This module contains code for managing clobbering of the tree.'''
 
@@ -16,7 +16,7 @@ from textwrap import TextWrapper
 
 
 CLOBBER_MESSAGE = ''.join([TextWrapper().fill(line) + '\n' for line in
-'''
+                           '''
 The CLOBBER file has been updated, indicating that an incremental build since \
 your last build will probably not work. A full/clobber build is required.
 
@@ -39,8 +39,9 @@ Well, are ya? -- you can ignore this clobber requirement by running:
  $ touch {clobber_file}
 '''.splitlines()])
 
+
 class Clobberer(object):
-    def __init__(self, topsrcdir, topobjdir):
+    def __init__(self, topsrcdir, topobjdir, substs=None):
         """Create a new object to manage clobbering the tree.
 
         It is bound to a top source directory and to a specific object
@@ -53,6 +54,10 @@ class Clobberer(object):
         self.topobjdir = os.path.normpath(topobjdir)
         self.src_clobber = os.path.join(topsrcdir, 'CLOBBER')
         self.obj_clobber = os.path.join(topobjdir, 'CLOBBER')
+        if substs:
+            self.substs = substs
+        else:
+            self.substs = dict()
 
         # Try looking for mozilla/CLOBBER, for comm-central
         if not os.path.isfile(self.src_clobber):
@@ -69,7 +74,7 @@ class Clobberer(object):
 
         # Object directory clobber older than current is fine.
         if os.path.getmtime(self.src_clobber) <= \
-            os.path.getmtime(self.obj_clobber):
+                os.path.getmtime(self.obj_clobber):
 
             return False
 
@@ -94,39 +99,27 @@ class Clobberer(object):
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.STDOUT)
             return p.wait() == 1 and p.stdout.read().startswith('winrm')
-        except:
+        except Exception:
             return False
 
-    def remove_objdir(self, full=True):
-        """Remove the object directory.
+    def collect_subdirs(self, root, exclude):
+        """Gathers a list of subdirectories excluding specified items."""
+        paths = []
+        try:
+            for p in os.listdir(root):
+                if p not in exclude:
+                    paths.append(os.path.join(root, p))
+        except OSError as e:
+            if e.errno != errno.ENOENT:
+                raise
 
-        ``full`` controls whether to fully delete the objdir. If False,
-        some directories (e.g. Visual Studio Project Files) will not be
-        deleted.
-        """
-        # Top-level files and directories to not clobber by default.
-        no_clobber = {
-            '.mozbuild',
-            'msvc',
-        }
+        return paths
 
-        if full:
-            # mozfile doesn't like unicode arguments (bug 818783).
-            paths = [self.topobjdir.encode('utf-8')]
-        else:
-            try:
-                paths = []
-                for p in os.listdir(self.topobjdir):
-                    if p not in no_clobber:
-                        paths.append(os.path.join(self.topobjdir, p).encode('utf-8'))
-            except OSError as e:
-                if e.errno != errno.ENOENT:
-                    raise
-                return
-
+    def delete_dirs(self, root, paths_to_delete):
+        """Deletes the given subdirectories in an optimal way."""
         procs = []
-        for p in sorted(paths):
-            path = os.path.join(self.topobjdir, p)
+        for p in sorted(paths_to_delete):
+            path = os.path.join(root, p)
             if sys.platform.startswith('win') and self.have_winrm() and os.path.isdir(path):
                 procs.append(subprocess.Popen(['winrm', '-rf', path]))
             else:
@@ -136,19 +129,42 @@ class Clobberer(object):
         for p in procs:
             p.wait()
 
-    def ensure_objdir_state(self):
-        """Ensure the CLOBBER file in the objdir exists.
+    def remove_objdir(self, full=True):
+        """Remove the object directory.
 
-        This is called as part of the build to ensure the clobber information
-        is configured properly for the objdir.
+        ``full`` controls whether to fully delete the objdir. If False,
+        some directories (e.g. Visual Studio Project Files) will not be
+        deleted.
         """
-        if not os.path.exists(self.topobjdir):
-            os.makedirs(self.topobjdir)
+        # Determine where cargo build artifacts are stored
+        RUST_TARGET_VARS = ('RUST_HOST_TARGET', 'RUST_TARGET')
+        rust_targets = set([self.substs[x] for x in RUST_TARGET_VARS if x in self.substs])
+        rust_build_kind = 'release'
+        if self.substs.get('MOZ_DEBUG_RUST'):
+            rust_build_kind = 'debug'
 
-        if not os.path.exists(self.obj_clobber):
-            # Simply touch the file.
-            with open(self.obj_clobber, 'a'):
-                pass
+        # Top-level files and directories to not clobber by default.
+        no_clobber = {
+            '.mozbuild',
+            'msvc',
+        }
+
+        # Hold off on clobbering cargo build artifacts
+        no_clobber |= rust_targets
+
+        if full:
+            paths = [self.topobjdir]
+        else:
+            paths = self.collect_subdirs(self.topobjdir, no_clobber)
+
+        self.delete_dirs(self.topobjdir, paths)
+
+        # Now handle cargo's build artifacts and skip removing the incremental
+        # compilation cache.
+        for target in rust_targets:
+            cargo_path = os.path.join(self.topobjdir, target, rust_build_kind)
+            paths = self.collect_subdirs(cargo_path, {'incremental', })
+            self.delete_dirs(cargo_path, paths)
 
     def maybe_do_clobber(self, cwd, allow_auto=False, fh=sys.stderr):
         """Perform a clobber if it is required. Maybe.
@@ -169,7 +185,6 @@ class Clobberer(object):
 
         if not self.clobber_needed():
             print('Clobber not needed.', file=fh)
-            self.ensure_objdir_state()
             return False, False, None
 
         # So a clobber is needed. We only perform a clobber if we are
@@ -182,8 +197,8 @@ class Clobberer(object):
         if not allow_auto:
             return True, False, \
                self._message('Automatic clobbering is not enabled\n'
-                              '  (add "mk_add_options AUTOCLOBBER=1" to your '
-                              'mozconfig).')
+                             '  (add "mk_add_options AUTOCLOBBER=1" to your '
+                             'mozconfig).')
 
         if cwd.startswith(self.topobjdir) and cwd != self.topobjdir:
             return True, False, self._message(
@@ -193,7 +208,6 @@ class Clobberer(object):
         print('Automatically clobbering %s' % objdir, file=fh)
         try:
             self.remove_objdir(False)
-            self.ensure_objdir_state()
             print('Successfully completed auto clobber.', file=fh)
             return True, True, None
         except (IOError) as error:
@@ -204,4 +218,4 @@ class Clobberer(object):
         lines = [' ' + line for line in self.clobber_cause()]
 
         return CLOBBER_MESSAGE.format(clobber_reason='\n'.join(lines),
-            no_reason='  ' + reason, clobber_file=self.obj_clobber)
+                                      no_reason='  ' + reason, clobber_file=self.obj_clobber)

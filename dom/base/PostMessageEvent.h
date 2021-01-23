@@ -38,31 +38,37 @@ class PostMessageEvent final : public Runnable {
   PostMessageEvent(BrowsingContext* aSource, const nsAString& aCallerOrigin,
                    nsGlobalWindowOuter* aTargetWindow,
                    nsIPrincipal* aProvidedPrincipal, uint64_t aCallerWindowID,
-                   nsIURI* aCallerDocumentURI)
+                   nsIURI* aCallerURI, const nsCString& aScriptLocation,
+                   const Maybe<nsID>& aCallerAgentClusterId)
       : PostMessageEvent(aSource, aCallerOrigin, aTargetWindow,
-                         aProvidedPrincipal, Some(aCallerWindowID),
-                         aCallerDocumentURI, false) {}
+                         aProvidedPrincipal, aCallerWindowID, aCallerURI,
+                         aScriptLocation, false, aCallerAgentClusterId) {}
 
-  // To be used if there is no WindowID for the PostMessage caller's window (for
-  // example because it lives in a different process).
+  // To be used when the caller's window lives in a different process.
   PostMessageEvent(BrowsingContext* aSource, const nsAString& aCallerOrigin,
                    nsGlobalWindowOuter* aTargetWindow,
-                   nsIPrincipal* aProvidedPrincipal, nsIURI* aCallerDocumentURI,
+                   nsIPrincipal* aProvidedPrincipal, uint64_t aCallerWindowID,
+                   nsIURI* aCallerURI, const nsCString& aScriptLocation,
                    bool aIsFromPrivateWindow)
       : PostMessageEvent(aSource, aCallerOrigin, aTargetWindow,
-                         aProvidedPrincipal, Nothing(), aCallerDocumentURI,
-                         aIsFromPrivateWindow) {}
+                         aProvidedPrincipal, aCallerWindowID, aCallerURI,
+                         aScriptLocation, aIsFromPrivateWindow, Nothing()) {}
 
   void Write(JSContext* aCx, JS::Handle<JS::Value> aMessage,
-             JS::Handle<JS::Value> aTransfer, ErrorResult& aError) {
+             JS::Handle<JS::Value> aTransfer,
+             const JS::CloneDataPolicy& aClonePolicy, ErrorResult& aError) {
     mHolder.construct<StructuredCloneHolder>(
         StructuredCloneHolder::CloningSupported,
         StructuredCloneHolder::TransferringSupported,
-        JS::StructuredCloneScope::SameProcessSameThread);
+        JS::StructuredCloneScope::SameProcess);
     mHolder.ref<StructuredCloneHolder>().Write(aCx, aMessage, aTransfer,
-                                               JS::CloneDataPolicy(), aError);
+                                               aClonePolicy, aError);
   }
-  void UnpackFrom(const ClonedMessageData& aMessageData) {
+  void UnpackFrom(const ClonedOrErrorMessageData& aMessageData) {
+    if (aMessageData.type() != ClonedOrErrorMessageData::TClonedMessageData) {
+      return;
+    }
+
     mHolder.construct<ipc::StructuredCloneData>();
     // FIXME Want to steal!
     //       See https://bugzilla.mozilla.org/show_bug.cgi?id=1516349.
@@ -70,12 +76,15 @@ class PostMessageEvent final : public Runnable {
         aMessageData);
   }
 
+  void DispatchToTargetThread(ErrorResult& aError);
+
  private:
   PostMessageEvent(BrowsingContext* aSource, const nsAString& aCallerOrigin,
                    nsGlobalWindowOuter* aTargetWindow,
-                   nsIPrincipal* aProvidedPrincipal,
-                   const Maybe<uint64_t>& aCallerWindowID,
-                   nsIURI* aCallerDocumentURI, bool aIsFromPrivateWindow);
+                   nsIPrincipal* aProvidedPrincipal, uint64_t aCallerWindowID,
+                   nsIURI* aCallerURI, const nsCString& aScriptLocation,
+                   bool aIsFromPrivateWindow,
+                   const Maybe<nsID>& aCallerAgentClusterId);
   ~PostMessageEvent();
 
   void Dispatch(nsGlobalWindowInner* aTargetWindow, Event* aEvent);
@@ -91,8 +100,12 @@ class PostMessageEvent final : public Runnable {
   // separate process then mHolder will contain a StructuredCloneData, else
   // it'll contain a StructuredCloneHolder.
   MaybeOneOf<StructuredCloneHolder, ipc::StructuredCloneData> mHolder;
-  Maybe<uint64_t> mCallerWindowID;
-  nsCOMPtr<nsIURI> mCallerDocumentURI;
+  uint64_t mCallerWindowID;
+  const Maybe<nsID> mCallerAgentClusterId;
+  nsCOMPtr<nsIURI> mCallerURI;
+  // if callerURI is null, then we can use script location for reporting errors
+  // to console
+  const Maybe<nsCString> mScriptLocation;
   // This is only set to a relevant value if mCallerWindowID doesn't contain a
   // value.
   bool mIsFromPrivateWindow;

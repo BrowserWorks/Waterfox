@@ -13,9 +13,9 @@
 #include "imgIContainer.h"
 #include "imgIRequest.h"
 #include "nsGenericHTMLElement.h"
+#include "mozilla/dom/BrowsingContext.h"
 #include "mozilla/dom/Document.h"
 #include "nsIImageLoadingContent.h"
-#include "nsIServiceManager.h"
 #include "nsIPersistentProperties2.h"
 #include "nsPIDOMWindow.h"
 #include "nsIURI.h"
@@ -49,13 +49,30 @@ uint64_t ImageAccessible::NativeState() const {
     content->GetRequest(nsIImageLoadingContent::CURRENT_REQUEST,
                         getter_AddRefs(imageRequest));
 
-  nsCOMPtr<imgIContainer> imgContainer;
-  if (imageRequest) imageRequest->GetImage(getter_AddRefs(imgContainer));
+  if (imageRequest) {
+    nsCOMPtr<imgIContainer> imgContainer;
+    imageRequest->GetImage(getter_AddRefs(imgContainer));
+    if (imgContainer) {
+      bool animated = false;
+      imgContainer->GetAnimated(&animated);
+      if (animated) {
+        state |= states::ANIMATED;
+      }
+    }
 
-  if (imgContainer) {
-    bool animated = false;
-    imgContainer->GetAnimated(&animated);
-    if (animated) state |= states::ANIMATED;
+    nsIFrame* frame = GetFrame();
+    MOZ_ASSERT(!frame || frame->AccessibleType() == eImageType ||
+               frame->AccessibleType() == a11y::eHTMLImageMapType);
+    if (frame && !(frame->GetStateBits() & IMAGE_SIZECONSTRAINED)) {
+      uint32_t status = imgIRequest::STATUS_NONE;
+      imageRequest->GetImageStatus(&status);
+      if (!(status & imgIRequest::STATUS_SIZE_AVAILABLE)) {
+        // The size of this image hasn't been constrained and we haven't loaded
+        // enough of the image to know its size yet. This means it currently
+        // has 0 width and height.
+        state |= states::INVISIBLE;
+      }
+    }
   }
 
   return state;
@@ -109,7 +126,7 @@ bool ImageAccessible::DoAction(uint8_t aIndex) const {
   nsCOMPtr<nsPIDOMWindowOuter> piWindow = document->GetWindow();
   if (!piWindow) return false;
 
-  nsCOMPtr<nsPIDOMWindowOuter> tmp;
+  RefPtr<mozilla::dom::BrowsingContext> tmp;
   return NS_SUCCEEDED(piWindow->Open(spec, EmptyString(), EmptyString(),
                                      /* aLoadInfo = */ nullptr,
                                      /* aForceNoOpener = */ false,
@@ -152,10 +169,10 @@ already_AddRefed<nsIURI> ImageAccessible::GetLongDescURI() const {
         longdesc.FindChar('\r') != -1 || longdesc.FindChar('\n') != -1) {
       return nullptr;
     }
-    nsCOMPtr<nsIURI> baseURI = mContent->GetBaseURI();
     nsCOMPtr<nsIURI> uri;
     nsContentUtils::NewURIWithDocumentCharset(getter_AddRefs(uri), longdesc,
-                                              mContent->OwnerDoc(), baseURI);
+                                              mContent->OwnerDoc(),
+                                              mContent->GetBaseURI());
     return uri.forget();
   }
 

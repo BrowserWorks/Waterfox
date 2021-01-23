@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "คุณสมบัติหน้า">
+<!ENTITY location.label "ตำแหน่งที่ตั้ง:">
+<!ENTITY lastModified.label "วันที่เปลี่ยนแปลงล่าสุด:">
+<!ENTITY titleInput.label "ชื่อเรื่อง:">
+<!ENTITY titleInput.accessKey "ช">
+<!ENTITY authorInput.label "ผู้สร้าง:">
+<!ENTITY authorInput.accessKey "ผ">
+<!ENTITY descriptionInput.label "คำอธิบาย:">
+<!ENTITY descriptionInput.accessKey "ค">
+<!ENTITY locationNewPage.label "[หน้าใหม่ที่ยังไม่ได้บันทึก]">
+<!ENTITY EditHEADSource1.label "ผู้ใช้ขั้นสูง:">
+<!ENTITY EditHEADSource2.label "หากต้องการแก้ไขเนื้อหาอื่น ๆ ที่อยู่ในบริเวณ &lt;head&gt; ให้ใช้ &quot;ซอร์ส HTML&quot; ในเมนูมุมมองหรือแถบเครื่องมือโหมดแก้ไข">

@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+
+
+
+
+
+
+
+<!ENTITY addressbookPicker.label            "Adresboek:">
+<!ENTITY addressbookPicker.accesskey        "b">
+
+
+<!ENTITY SearchNameOrEmail.label            "Naam of e-pos">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY toButton.label                     "Voeg by Aan:">
+<!ENTITY toButton.accesskey                 "V">
+
+
+<!ENTITY bccButton.label                    "Voeg by BCC:">
+<!ENTITY bccButton.accesskey                "B">

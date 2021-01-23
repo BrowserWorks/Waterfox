@@ -9,7 +9,6 @@
 #include "nsCOMArray.h"
 #include "nsUnicharInputStream.h"
 #include "nsPrintfCString.h"
-#include "nsAutoPtr.h"
 
 #include "nsPersistentProperties.h"
 #include "nsIProperties.h"
@@ -181,7 +180,7 @@ bool nsPropertiesParser::ParseValueCharacter(char16_t aChar,
             aTokenStart = aCur + 1;
             break;
           }
-          MOZ_FALLTHROUGH;
+          [[fallthrough]];
 
         case '\r':
           // we're done! We have a key and value
@@ -408,7 +407,7 @@ nsPersistentProperties::nsPersistentProperties()
       mTable(&property_HashTableOps, sizeof(PropertyTableEntry), 16),
       mArena() {}
 
-nsPersistentProperties::~nsPersistentProperties() {}
+nsPersistentProperties::~nsPersistentProperties() = default;
 
 size_t nsPersistentProperties::SizeOfIncludingThis(
     mozilla::MallocSizeOf aMallocSizeOf) const {

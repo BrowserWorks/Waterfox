@@ -6,7 +6,7 @@ add_task(async function() {
   );
   await SimpleTest.promiseFocus(win);
 
-  let tab = win.gBrowser.tabContainer.firstElementChild;
+  let tab = win.gBrowser.tabs[0];
   await promiseTabLoadEvent(
     tab,
     getRootDirectory(gTestPath) + "test_bug462673.html"
@@ -36,7 +36,7 @@ add_task(async function() {
   );
   await SimpleTest.promiseFocus(win);
 
-  let tab = win.gBrowser.tabContainer.firstElementChild;
+  let tab = win.gBrowser.tabs[0];
   await promiseTabLoadEvent(
     tab,
     getRootDirectory(gTestPath) + "test_bug462673.html"
@@ -47,7 +47,7 @@ add_task(async function() {
   win.gBrowser.removeTab(tab);
   ok(!win.closed, "Window stays open");
   if (!win.closed) {
-    is(win.gBrowser.tabContainer.childElementCount, 1, "Window has one tab");
+    is(win.gBrowser.tabs.length, 1, "Window has one tab");
     is(win.gBrowser.browsers.length, 1, "Window has one browser");
     is(win.gBrowser.selectedTab, newTab, "Remaining tab is selected");
     is(

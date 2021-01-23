@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY windowTitle.label "Propiedaes de la imaxe">
+<!ENTITY pixelsPopup.value "píxeles">
+<!ENTITY locationEditField.label "URL de la imaxe:">
+<!ENTITY locationEditField.accessKey "L">
+<!ENTITY locationEditField.tooltip "Escribi'l nome del ficheru de la imaxe o el so allugamientu">
+<!ENTITY title.label "Conseyu:">
+<!ENTITY title.accessKey "C">
+<!ENTITY title.tooltip "L'atributu HTML 'title' que s'amuesa como conseyu">
+<!ENTITY altText.label "Testu alternativu:">
+<!ENTITY altText.accessKey "A">
+<!ENTITY altTextEditField.tooltip "Escribi'l testu a amosar en cuenta de la imaxe">
+<!ENTITY noAltText.label "Nun usar testu alternativu">
+<!ENTITY noAltText.accessKey "n">
+<!ENTITY previewBox.label "Vista preliminar">
+<!ENTITY actualSize.label "Tamañu real:">
+<!ENTITY actualSizeRadio.label "Tamañu real">
+<!ENTITY actualSizeRadio.accessKey "A">
+<!ENTITY actualSizeRadio.tooltip "Restablecer al tamañu real de la imaxe">
+<!ENTITY customSizeRadio.label "Tamañu personalizáu">
+<!ENTITY customSizeRadio.accessKey "S">
+<!ENTITY customSizeRadio.tooltip "Camudar el tamañu de la imaxe al afitáu na páxina">
+<!ENTITY heightEditField.label "Altor:">
+<!ENTITY heightEditField.accessKey "o">
+<!ENTITY widthEditField.label "Anchor:">
+<!ENTITY widthEditField.accessKey "n">
+<!ENTITY constrainCheckbox.label "Caltener aspeutu">
+<!ENTITY constrainCheckbox.accessKey "C">
+<!ENTITY constrainCheckbox.tooltip "Caltener la proporción nel aspeutu de la imaxe">
+<!ENTITY imagemapBox.label "Mapa d'imaxe">
+<!ENTITY removeImageMapButton.label "Desaniciar">
+<!ENTITY removeImageMapButton.accessKey "D">
+<!ENTITY alignment.label "Alliniar el testu cola imaxe">
+<!ENTITY bottomPopup.value "Na parte inferior">
+<!ENTITY topPopup.value "Na parte superior">
+<!ENTITY centerPopup.value "Nel centru">
+<!ENTITY wrapRightPopup.value "El testu flúi pela derecha">
+<!ENTITY wrapLeftPopup.value "El testu flúi pela izquierda">
+<!ENTITY spacingBox.label "Espaciu">
+<!ENTITY leftRightEditField.label "Izquierda y derecha:">
+<!ENTITY leftRightEditField.accessKey "I">
+<!ENTITY topBottomEditField.label "Parte superior y parte inferior:">
+<!ENTITY topBottomEditField.accessKey "T">
+<!ENTITY borderEditField.label "Berbesu sólidu:">
+<!ENTITY borderEditField.accessKey "B">
+<!ENTITY showImageLinkBorder.label "Amosar el berbesu alredor de la imaxe-enllaz">
+<!ENTITY showImageLinkBorder.accessKey "B">
+<!ENTITY LinkAdvancedEditButton.label "Edición avanzada del enllaz…">
+<!ENTITY LinkAdvancedEditButton.accessKey "E">
+<!ENTITY LinkAdvancedEditButton.tooltip "Amiesta o modifica atributos HTML, atributos d'estilu y JavaScript">
+<!ENTITY imageInputTab.label "Formulariu">
+<!ENTITY imageLocationTab.label "Llocalización">
+<!ENTITY imageDimensionsTab.label "Dimensiones">
+<!ENTITY imageAppearanceTab.label "Aspeutu">
+<!ENTITY imageLinkTab.label "Enllaz">

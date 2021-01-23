@@ -1,0 +1,28 @@
+<!ENTITY pref.editing.title "नयाँ पृष्ठ सेटिङ">
+
+<!ENTITY authorName.label "लेखक:">
+<!ENTITY authorName.accesskey "u">
+<!ENTITY pageColorHeader "पूर्वनिर्धारित पृष्ठ देखावट">
+
+<!ENTITY defaultColorsRadio.label "रिडरको पूर्वनिर्धारित रङ (पृष्ठमा रङ सेट नगर्नुहोस्)">
+<!ENTITY defaultColors.accesskey "d">
+<!ENTITY customColorsRadio.label "अनुकूल रङ प्रयोग गर्नुहोस्:">
+<!ENTITY customColors.accesskey "c">
+
+<!ENTITY normalText.label "सामान्य पाठ">
+<!ENTITY normalText.accesskey "N">
+<!ENTITY linkText.label "लिङ्क पाठ">
+<!ENTITY linkText.accesskey "L">
+<!ENTITY activeLinkText.label "सक्रिय लिङ्क पाठ">
+<!ENTITY activeLinkText.accesskey "A">
+<!ENTITY visitedLinkText.label "अवलोकन गरिएको लिङ्क पाठ">
+<!ENTITY visitedLinkText.accesskey "V">
+<!ENTITY background.label "पृष्ठभूमि:">
+<!ENTITY background.accesskey "B">
+<!ENTITY colon.character ":">
+
+<!ENTITY backgroundImage.label "पृष्ठभूमि छवि:">
+<!ENTITY backgroundImage.accesskey "m">
+<!ENTITY chooseFile.label "फाइल रोज्नुहोस्...">
+<!ENTITY chooseFile.accesskey "o">
+

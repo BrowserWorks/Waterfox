@@ -4,6 +4,12 @@
 
 var EXPORTED_SYMBOLS = ["MockFilePicker"];
 
+ChromeUtils.defineModuleGetter(
+  this,
+  "WrapPrivileged",
+  "resource://specialpowers/WrapPrivileged.jsm"
+);
+
 const Cm = Components.manager;
 
 const CONTRACT_ID = "@mozilla.org/filepicker;1";
@@ -15,9 +21,10 @@ ChromeUtils.defineModuleGetter(
 );
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
-// Allow stuff from this scope to be accessed from non-privileged scopes. This
-// would crash if used outside of automation.
-Cu.forcePermissiveCOWs();
+/* globals __URI__ */
+if (__URI__.includes("specialpowers")) {
+  Cu.crashIfNotInAutomation();
+}
 
 var registrar = Cm.QueryInterface(Ci.nsIComponentRegistrar);
 var oldClassID;
@@ -28,12 +35,12 @@ var newFactory = function(window) {
   return {
     createInstance(aOuter, aIID) {
       if (aOuter) {
-        throw Cr.NS_ERROR_NO_AGGREGATION;
+        throw Components.Exception("", Cr.NS_ERROR_NO_AGGREGATION);
       }
       return new MockFilePickerInstance(window).QueryInterface(aIID);
     },
     lockFactory(aLock) {
-      throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+      throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
     },
     QueryInterface: ChromeUtils.generateQI([Ci.nsIFactory]),
   };
@@ -107,7 +114,10 @@ var MockFilePicker = {
     file.append("testfile");
     file.createUnique(Ci.nsIFile.NORMAL_FILE_TYPE, 0o644);
     let promise = this.window.File.createFromNsIFile(file)
-      .then(domFile => domFile, () => null)
+      .then(
+        domFile => domFile,
+        () => null
+      )
       // domFile can be null.
       .then(domFile => {
         this.returnData = [this.internalFileData({ nsIFile: file, domFile })];
@@ -167,6 +177,8 @@ var MockFilePicker = {
 
 function MockFilePickerInstance(window) {
   this.window = window;
+  this.showCallback = null;
+  this.showCallbackWrapped = null;
 }
 MockFilePickerInstance.prototype = {
   QueryInterface: ChromeUtils.generateQI([Ci.nsIFilePicker]),
@@ -244,7 +256,7 @@ MockFilePickerInstance.prototype = {
   },
   open(aFilePickerShownCallback) {
     MockFilePicker.showing = true;
-    this.window.setTimeout(() => {
+    Services.tm.dispatchToMainThread(() => {
       // Maybe all the pending promises are already resolved, but we want to be sure.
       Promise.all(MockFilePicker.pendingPromises)
         .then(
@@ -267,8 +279,19 @@ MockFilePickerInstance.prototype = {
           MockFilePicker.displaySpecialDirectory = this.displaySpecialDirectory;
           MockFilePicker.shown = true;
           if (typeof MockFilePicker.showCallback == "function") {
+            if (MockFilePicker.showCallback != this.showCallback) {
+              this.showCallback = MockFilePicker.showCallback;
+              if (Cu.isXrayWrapper(this.window)) {
+                this.showCallbackWrapped = WrapPrivileged.wrapCallback(
+                  MockFilePicker.showCallback,
+                  this.window
+                );
+              } else {
+                this.showCallbackWrapped = this.showCallback;
+              }
+            }
             try {
-              var returnValue = MockFilePicker.showCallback(this);
+              var returnValue = this.showCallbackWrapped(this);
               if (typeof returnValue != "undefined") {
                 return returnValue;
               }
@@ -299,9 +322,9 @@ MockFilePickerInstance.prototype = {
           }
 
           if (typeof MockFilePicker.afterOpenCallback == "function") {
-            this.window.setTimeout(() => {
+            Services.tm.dispatchToMainThread(() => {
               MockFilePicker.afterOpenCallback(this);
-            }, 0);
+            });
           }
         });
     });

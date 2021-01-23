@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY tapToPlayPlugin                                     "Pulse aquí para activar o engadido.">
+<!ENTITY clickToActivatePlugin                               "Activar o engadido.">
+<!ENTITY checkForUpdates                                     "Buscar actualizacións…">
+<!ENTITY blockedPlugin.label                                 "Bloqueouse este engadido por protección.">
+<!ENTITY hidePluginBtn.label                                 "Agochar engadido">
+<!ENTITY managePlugins                                       "Xestionar engadidos…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "Recargar a páxina">
+<!ENTITY reloadPlugin.post                                   " para tentar de novo.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Enviar un informe de erro">
+<!ENTITY report.submitting                                   "Enviando informe…">
+<!ENTITY report.submitted                                    "Enviouse un informe de erro.">
+<!ENTITY report.disabled                                     "Informe de erros desactivado.">
+<!ENTITY report.failed                                       "Produciuse un fallo no envío.">
+<!ENTITY report.unavailable                                  "Ningún informe dispoñíbel.">
+<!ENTITY report.comment                                      "Engadir un comentario (os comentarios son visíbeis publicamente)">
+<!ENTITY report.pageURL                                      "Incluír o URL da páxina">
+
+<!ENTITY plugin.file                                         "Ficheiro">
+<!ENTITY plugin.mimeTypes                                    "Tipos MIME">
+<!ENTITY plugin.flashProtectedMode.label                     "Activar o modo protexido de Adobe Flash">
+<!ENTITY plugin.enableBlocklists.label                       "Bloquear contido Flash perigoso e intrusivo">

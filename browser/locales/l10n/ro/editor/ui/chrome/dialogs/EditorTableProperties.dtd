@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "Proprietăți tabel">
+<!ENTITY applyButton.label                "Aplică">
+<!ENTITY applyButton.accesskey            "A">
+<!ENTITY closeButton.label                "Închide">
+<!ENTITY tableTab.label                   "Tabel">
+<!ENTITY cellTab.label                    "Celule">
+<!ENTITY tableRows.label                  "Rânduri:">
+<!ENTITY tableRows.accessKey              "R">
+<!ENTITY tableColumns.label               "Coloane:">
+<!ENTITY tableColumns.accessKey           "C">
+<!ENTITY tableHeight.label                "Înălțime:">
+<!ENTITY tableHeight.accessKey            "n">
+<!ENTITY tableWidth.label                 "Lățime:">
+<!ENTITY tableWidth.accessKey             "L">
+<!ENTITY tableBorderSpacing.label         "Borduri și spațiere">
+<!ENTITY tableBorderWidth.label           "Bordură:">
+<!ENTITY tableBorderWidth.accessKey       "B">
+<!ENTITY tableSpacing.label               "Spațiere:">
+<!ENTITY tableSpacing.accessKey           "S">
+<!ENTITY tablePadding.label               "Spațiu de umplere:">
+<!ENTITY tablePadding.accessKey           "p">
+<!ENTITY tablePxBetwCells.label           "pixeli între celule">
+<!ENTITY tablePxBetwBrdrCellContent.label "pixeli între marginea și conținutul celulei">
+<!ENTITY tableAlignment.label             "Aliniamentul tabelului:">
+<!ENTITY tableAlignment.accessKey         "A">
+<!ENTITY tableCaption.label               "Legendă:">
+<!ENTITY tableCaption.accessKey           "x">
+<!ENTITY tableCaptionAbove.label          "Deasupra tabelului">
+<!ENTITY tableCaptionBelow.label          "Sub tabel">
+<!ENTITY tableCaptionLeft.label           "La stânga tabelului">
+<!ENTITY tableCaptionRight.label          "La dreapta tabelului">
+<!ENTITY tableCaptionNone.label           "Niciuna">
+<!ENTITY tableInheritColor.label           "(Lasă să se vadă culoarea paginii)">
+
+<!ENTITY cellSelection.label              "Selecție">
+<!ENTITY cellSelectCell.label             "Celulă">
+<!ENTITY cellSelectRow.label              "Rând">
+<!ENTITY cellSelectColumn.label           "Coloană">
+<!ENTITY cellSelectNext.label             "Înainte">
+<!ENTITY cellSelectNext.accessKey         "i">
+<!ENTITY cellSelectPrevious.label         "Înapoi">
+<!ENTITY cellSelectPrevious.accessKey     "p">
+<!ENTITY applyBeforeChange.label          "Schimbările actuale vor fi aplicate înainte de schimbarea selecției.">
+<!ENTITY cellContentAlignment.label       "Aliniamentul conținutului">
+<!ENTITY cellHorizontal.label             "Orizontală:">
+<!ENTITY cellHorizontal.accessKey         "z">
+<!ENTITY cellVertical.label               "Verticală:">
+<!ENTITY cellVertical.accessKey           "V">
+<!ENTITY cellStyle.label                  "Stil celulă:">
+<!ENTITY cellStyle.accessKey              "S">
+<!ENTITY cellNormal.label                 "Normală">
+<!ENTITY cellHeader.label                 "Antet">
+<!ENTITY cellTextWrap.label               "Încadrare text:">
+<!ENTITY cellTextWrap.accessKey           "t">
+<!ENTITY cellWrap.label                   "Încadrează">
+<!ENTITY cellNoWrap.label                 "Nu încadra">
+<!ENTITY cellAlignTop.label               "Sus">
+<!ENTITY cellAlignMiddle.label            "Mijloc">
+<!ENTITY cellAlignBottom.label            "Jos">
+<!ENTITY cellAlignJustify.label           "Îndreptat">
+<!ENTITY cellInheritColor.label           "(Lasă să se vadă culoarea tabelului)">
+<!ENTITY cellUseCheckboxHelp.label        "Folosește casetele de validare pentru a indica ce proprietăți se aplică celulelor selectate">
+
+<!-- Used in both Table and Cell panels  -->
+<!ENTITY size.label                       "Mărime">
+<!ENTITY pixels.label                     "pixeli">
+<!ENTITY backgroundColor.label            "Culoare fundal:">
+<!ENTITY backgroundColor.accessKey        "f">
+<!ENTITY AlignLeft.label                  "Stânga">
+<!ENTITY AlignCenter.label                "Centru">
+<!ENTITY AlignRight.label                 "Dreapta">

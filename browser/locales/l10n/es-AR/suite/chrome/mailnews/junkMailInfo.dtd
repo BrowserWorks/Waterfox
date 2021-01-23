@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Sobre el correo basura">
+<!ENTITY window.width  "450">
+<!ENTITY info1a.label  "El programa de correo detectó mensajes que parecen ser correo basura (también conocido como spam). Los mensajes que parecen spam llevarán un ícono que los identifique">
+<!ENTITY info1b.label  ".">
+<!ENTITY info2.label   "Al principio deberás entrenar al programa de correo para que identifique el correo basura usando el botón de basura de la barra de herramientas para marcar los mensajes que son basura.">
+<!ENTITY info3.label   "Una vez que el programa de correo identifique correctamente el correo basura, puede usar los controles de correo basura para mover automáticamente el correo basura que recibe a la carpeta de basura.">
+<!ENTITY info4.label   "Para más información, pulse Ayuda.">

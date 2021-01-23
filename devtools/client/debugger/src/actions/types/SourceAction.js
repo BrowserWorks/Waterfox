@@ -4,14 +4,21 @@
 
 // @flow
 
-import type { SourceId, Source, SourceLocation, Context } from "../../types";
+import type {
+  Source,
+  SourceId,
+  SourceLocation,
+  Context,
+  URL,
+} from "../../types";
 import type { PromiseAction } from "../utils/middleware/promise";
+import type { SourceBase } from "../../reducers/sources";
 
 export type LoadSourceAction = PromiseAction<
   {|
     +type: "LOAD_SOURCE_TEXT",
     +cx: Context,
-    +sourceId: string,
+    +sourceId: SourceId,
     +epoch: number,
   |},
   {
@@ -24,17 +31,12 @@ export type SourceAction =
   | {|
       +type: "ADD_SOURCE",
       +cx: Context,
-      +source: Source,
+      +source: SourceBase,
     |}
   | {|
       +type: "ADD_SOURCES",
       +cx: Context,
-      +sources: Array<Source>,
-    |}
-  | {|
-      +type: "CLEAR_SOURCE_MAP_URL",
-      +cx: Context,
-      +sourceId: SourceId,
+      +sources: Array<SourceBase>,
     |}
   | {|
       +type: "SET_SELECTED_LOCATION",
@@ -45,7 +47,7 @@ export type SourceAction =
   | {|
       +type: "SET_PENDING_SELECTED_LOCATION",
       +cx: Context,
-      +url: string,
+      +url: URL,
       +line?: number,
       +column?: number,
     |}
@@ -60,24 +62,37 @@ export type SourceAction =
         +isBlackBoxed: boolean,
       |}
     >
+  | PromiseAction<
+      {|
+        +type: "BLACKBOX_SOURCES",
+        +cx: Context,
+        +shouldBlackBox: boolean,
+      |},
+      {|
+        +sources: Source[],
+      |}
+    >
   | {|
       +type: "MOVE_TAB",
-      +url: string,
+      +url: URL,
+      +tabIndex: number,
+    |}
+  | {|
+      +type: "MOVE_TAB_BY_SOURCE_ID",
+      +sourceId: SourceId,
       +tabIndex: number,
     |}
   | {|
       +type: "CLOSE_TAB",
-      +url: string,
-      +tabs: any,
+      +source: Source,
     |}
   | {|
       +type: "CLOSE_TABS",
       +sources: Array<Source>,
-      +tabs: any,
     |}
   | {|
-      type: "SET_BREAKABLE_LINES",
+      type: "SET_ORIGINAL_BREAKABLE_LINES",
       +cx: Context,
       breakableLines: number[],
-      sourceId: string,
+      sourceId: SourceId,
     |};

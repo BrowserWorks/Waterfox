@@ -14,7 +14,7 @@
 namespace mozilla {
 namespace dom {
 
-NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(FeaturePolicy, mParentNode)
+NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(FeaturePolicy)
 NS_IMPL_CYCLE_COLLECTING_ADDREF(FeaturePolicy)
 NS_IMPL_CYCLE_COLLECTING_RELEASE(FeaturePolicy)
 
@@ -32,9 +32,20 @@ void FeaturePolicy::InheritPolicy(FeaturePolicy* aParentPolicy) {
 
   RefPtr<FeaturePolicy> dest = this;
   RefPtr<FeaturePolicy> src = aParentPolicy;
+
+  // Inherit origins which explicitly declared policy in chain
+  for (const Feature& featureInChain :
+       aParentPolicy->mDeclaredFeaturesInAncestorChain) {
+    dest->AppendToDeclaredAllowInAncestorChain(featureInChain);
+  }
+
   FeaturePolicyUtils::ForEachFeature([dest, src](const char* aFeatureName) {
     nsString featureName;
     featureName.AppendASCII(aFeatureName);
+    // Store unsafe allows all (allow=*)
+    if (src->HasFeatureUnsafeAllowsAll(featureName)) {
+      dest->mParentAllowedAllFeatures.AppendElement(featureName);
+    }
 
     // If the destination has a declared feature (via the HTTP header or 'allow'
     // attribute) we allow the feature if the destination allows it and the
@@ -76,21 +87,81 @@ bool FeaturePolicy::HasDeclaredFeature(const nsAString& aFeatureName) const {
   return false;
 }
 
+bool FeaturePolicy::HasFeatureUnsafeAllowsAll(
+    const nsAString& aFeatureName) const {
+  for (const Feature& feature : mFeatures) {
+    if (feature.AllowsAll() && feature.Name().Equals(aFeatureName)) {
+      return true;
+    }
+  }
+
+  // We should look into parent too (for example, document of iframe which
+  // allows all, would be unsafe)
+  return mParentAllowedAllFeatures.Contains(aFeatureName);
+}
+
+void FeaturePolicy::AppendToDeclaredAllowInAncestorChain(
+    const Feature& aFeature) {
+  for (Feature& featureInChain : mDeclaredFeaturesInAncestorChain) {
+    if (featureInChain.Name().Equals(aFeature.Name())) {
+      MOZ_ASSERT(featureInChain.HasAllowList());
+
+      nsTArray<nsCOMPtr<nsIPrincipal>> list;
+      aFeature.GetAllowList(list);
+
+      for (nsIPrincipal* principal : list) {
+        featureInChain.AppendToAllowList(principal);
+      }
+      continue;
+    }
+  }
+
+  mDeclaredFeaturesInAncestorChain.AppendElement(aFeature);
+}
+
+bool FeaturePolicy::IsSameOriginAsSrc(nsIPrincipal* aPrincipal) const {
+  MOZ_ASSERT(aPrincipal);
+
+  if (!mSrcOrigin) {
+    return false;
+  }
+
+  return BasePrincipal::Cast(mSrcOrigin)
+      ->Subsumes(aPrincipal, BasePrincipal::ConsiderDocumentDomain);
+}
+
 void FeaturePolicy::SetDeclaredPolicy(Document* aDocument,
                                       const nsAString& aPolicyString,
                                       nsIPrincipal* aSelfOrigin,
                                       nsIPrincipal* aSrcOrigin) {
   ResetDeclaredPolicy();
 
+  mDeclaredString = aPolicyString;
+  mSelfOrigin = aSelfOrigin;
+  mSrcOrigin = aSrcOrigin;
+
   Unused << NS_WARN_IF(!FeaturePolicyParser::ParseString(
       aPolicyString, aDocument, aSelfOrigin, aSrcOrigin, mFeatures));
+
+  // Only store explicitly declared allowlist
+  for (const Feature& feature : mFeatures) {
+    if (feature.HasAllowList()) {
+      AppendToDeclaredAllowInAncestorChain(feature);
+    }
+  }
 }
 
-void FeaturePolicy::ResetDeclaredPolicy() { mFeatures.Clear(); }
+void FeaturePolicy::ResetDeclaredPolicy() {
+  mFeatures.Clear();
+  mDeclaredString.Truncate();
+  mSelfOrigin = nullptr;
+  mSrcOrigin = nullptr;
+  mDeclaredFeaturesInAncestorChain.Clear();
+}
 
 JSObject* FeaturePolicy::WrapObject(JSContext* aCx,
                                     JS::Handle<JSObject*> aGivenProto) {
-  return Policy_Binding::Wrap(aCx, this, aGivenProto);
+  return FeaturePolicy_Binding::Wrap(aCx, this, aGivenProto);
 }
 
 bool FeaturePolicy::AllowsFeature(const nsAString& aFeatureName,
@@ -102,7 +173,7 @@ bool FeaturePolicy::AllowsFeature(const nsAString& aFeatureName,
     if (NS_FAILED(rv)) {
       return false;
     }
-    origin = BasePrincipal::CreateCodebasePrincipal(
+    origin = BasePrincipal::CreateContentPrincipal(
         uri, BasePrincipal::Cast(mDefaultOrigin)->OriginAttributesRef());
   } else {
     origin = mDefaultOrigin;
@@ -113,6 +184,19 @@ bool FeaturePolicy::AllowsFeature(const nsAString& aFeatureName,
   }
 
   return AllowsFeatureInternal(aFeatureName, origin);
+}
+
+bool FeaturePolicy::AllowsFeatureExplicitlyInAncestorChain(
+    const nsAString& aFeatureName, nsIPrincipal* aOrigin) const {
+  MOZ_ASSERT(aOrigin);
+
+  for (const Feature& feature : mDeclaredFeaturesInAncestorChain) {
+    if (feature.Name().Equals(aFeatureName)) {
+      return feature.AllowListContains(aOrigin);
+    }
+  }
+
+  return false;
 }
 
 bool FeaturePolicy::AllowsFeatureInternal(const nsAString& aFeatureName,
@@ -146,6 +230,16 @@ bool FeaturePolicy::AllowsFeatureInternal(const nsAString& aFeatureName,
   }
 
   return false;
+}
+
+void FeaturePolicy::Features(nsTArray<nsString>& aFeatures) {
+  RefPtr<FeaturePolicy> self = this;
+  FeaturePolicyUtils::ForEachFeature(
+      [self, &aFeatures](const char* aFeatureName) {
+        nsString featureName;
+        featureName.AppendASCII(aFeatureName);
+        aFeatures.AppendElement(featureName);
+      });
 }
 
 void FeaturePolicy::AllowedFeatures(nsTArray<nsString>& aAllowedFeatures) {
@@ -215,7 +309,13 @@ void FeaturePolicy::GetAllowlistForFeature(const nsAString& aFeatureName,
 }
 
 void FeaturePolicy::MaybeSetAllowedPolicy(const nsAString& aFeatureName) {
-  MOZ_ASSERT(FeaturePolicyUtils::IsSupportedFeature(aFeatureName));
+  MOZ_ASSERT(FeaturePolicyUtils::IsSupportedFeature(aFeatureName) ||
+             FeaturePolicyUtils::IsExperimentalFeature(aFeatureName));
+  // Skip if feature is in experimental phase
+  if (!StaticPrefs::dom_security_featurePolicy_experimental_enabled() &&
+      FeaturePolicyUtils::IsExperimentalFeature(aFeatureName)) {
+    return;
+  }
 
   if (HasDeclaredFeature(aFeatureName)) {
     return;

@@ -14,7 +14,6 @@ import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
 
-import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.mozglue.SafeIntent;
 
 import java.net.URISyntaxException;
@@ -119,10 +118,6 @@ public class IntentUtils {
      */
     private static Uri normalizeUriScheme(final Uri uri) {
         final String scheme = uri.getScheme();
-        if (scheme == null) {
-            return uri;
-        }
-
         final String lower  = scheme.toLowerCase(Locale.US);
         if (lower.equals(scheme)) {
             return uri;
@@ -195,12 +190,6 @@ public class IntentUtils {
         try {
             intent = Intent.parseUri(aUri.toString(), 0);
         } catch (final URISyntaxException e) {
-            return null;
-        }
-
-        final String packageName = GeckoAppShell.getApplicationContext().getPackageName();
-        if (packageName != null && packageName.equals(aUri.getAuthority())) {
-            // Ignore intents that would open in the browser itself
             return null;
         }
 

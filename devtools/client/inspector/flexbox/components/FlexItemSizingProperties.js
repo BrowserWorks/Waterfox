@@ -9,7 +9,38 @@ const dom = require("devtools/client/shared/vendor/react-dom-factories");
 const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
 const { getStr } = require("devtools/client/inspector/layout/utils/l10n");
 
-const Types = require("../types");
+const Types = require("devtools/client/inspector/flexbox/types");
+
+const getFlexibilityReasons = ({
+  lineGrowthState,
+  computedFlexGrow,
+  computedFlexShrink,
+  grew,
+  shrank,
+}) => {
+  const reasons = [];
+
+  // Tell users whether the item was set to grow or shrink.
+  if (computedFlexGrow && lineGrowthState === "growing") {
+    reasons.push(getStr("flexbox.itemSizing.setToGrow"));
+  }
+  if (computedFlexShrink && lineGrowthState === "shrinking") {
+    reasons.push(getStr("flexbox.itemSizing.setToShrink"));
+  }
+  if (!computedFlexGrow && !grew && !shrank && lineGrowthState === "growing") {
+    reasons.push(getStr("flexbox.itemSizing.notSetToGrow"));
+  }
+  if (
+    !computedFlexShrink &&
+    !grew &&
+    !shrank &&
+    lineGrowthState === "shrinking"
+  ) {
+    reasons.push(getStr("flexbox.itemSizing.notSetToShrink"));
+  }
+
+  return reasons;
+};
 
 class FlexItemSizingProperties extends PureComponent {
   static get propTypes() {
@@ -132,31 +163,13 @@ class FlexItemSizingProperties extends PureComponent {
     const definedFlexShrink = properties["flex-shrink"];
     const computedFlexShrink = computedStyle.flexShrink;
 
-    const reasons = [];
-
-    // Tell users whether the item was set to grow or shrink.
-    if (computedFlexGrow && lineGrowthState === "growing") {
-      reasons.push(getStr("flexbox.itemSizing.setToGrow"));
-    }
-    if (computedFlexShrink && lineGrowthState === "shrinking") {
-      reasons.push(getStr("flexbox.itemSizing.setToShrink"));
-    }
-    if (
-      !computedFlexGrow &&
-      !grew &&
-      !shrank &&
-      lineGrowthState === "growing"
-    ) {
-      reasons.push(getStr("flexbox.itemSizing.notSetToGrow"));
-    }
-    if (
-      !computedFlexShrink &&
-      !grew &&
-      !shrank &&
-      lineGrowthState === "shrinking"
-    ) {
-      reasons.push(getStr("flexbox.itemSizing.notSetToShrink"));
-    }
+    const reasons = getFlexibilityReasons({
+      lineGrowthState,
+      computedFlexGrow,
+      computedFlexShrink,
+      grew,
+      shrank,
+    });
 
     let property = null;
 

@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -89,12 +87,12 @@ add_task(async function() {
 
   // Only select the iframe after we are able to select an element from the top
   // level document.
-  const newRoot = toolbox.getPanel("inspector").once("new-root");
+  const onInspectorReloaded = toolbox.getPanel("inspector").once("reloaded");
   info("Select the iframe");
   iframeBtn.click();
 
   await willNavigate;
-  await newRoot;
+  await onInspectorReloaded;
   await onTitleChanged;
 
   info("Navigation to the iframe is done, the inspector should be back up");

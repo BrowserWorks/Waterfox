@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Net-winske-berjochteynstellingen">
+<!ENTITY trainingDescription.label "As aktivearre, moat &brandShortName; earst traind wurde yn it identifisearjen fan net winske berjochten. Dit bart troch mei de arkbalkeknop “Net winske” oan te jaan oft berjochten wol of net net winske binne. Jo moatte sawol net-winske as winske berjochten identifisearje. Dêrnei sil &brandShortName; net-winske berjochten automatysk markearje kinne.">
+<!ENTITY level.label "Selslearende net-winske-berjochtedeteksje foar dizze account aktifearje">
+<!ENTITY level.accesskey "a">
+
+<!ENTITY move.label "Nije net-winske berjochten ferpleatse nei:">
+<!ENTITY move.accesskey "N">
+<!ENTITY junkFolderOn.label "map &quot;Net-winske&quot; yn:">
+<!ENTITY junkFolderOn.accesskey "N">
+<!ENTITY otherFolder.label "Oars:">
+<!ENTITY otherFolder.accesskey "r">
+<!ENTITY purge1.label "Net-winske berjochten âlder as">
+<!ENTITY purge1.accesskey "a">
+<!ENTITY purge2.label "dagen automatysk út dizze map fuortsmite">
+
+<!ENTITY whitelistHeader.label "Berjochten net automatysk as net-winske markearje as de ôfstjoerder foarkomt yn myn: ">
+<!ENTITY whitelistHeader.accesskey "m">
+
+<!ENTITY ispHeadersWarning.label "As aktivearre, sil &brandShortName; automatysk berjochten markearre troch dizze eksterne klassifisearder oerwaagje as net-winske.">
+<!ENTITY ispHeaders.label "Net-winske-berjochtkoppen fertrouwe dy't ynsteld binne troch: ">
+<!ENTITY ispHeaders.accesskey "f">
+
+<!ENTITY junkClassification.label "Seleksje">
+<!ENTITY junkActions.label "Doel en behâld">
+
+<!ENTITY globalJunkPrefs.label "Globale net-winskeberjochtenynstellingen…">
+<!ENTITY globalJunkPrefs.accesskey "G">

@@ -15,6 +15,8 @@
 namespace mozilla {
 namespace dom {
 
+class BrowsingContext;
+
 /**
  * Base class for RemoteObjectProxy. Implements the pieces of the handler that
  * don't depend on properties/methods of the specific WebIDL interface that this
@@ -43,11 +45,6 @@ class RemoteObjectProxyBase : public js::BaseProxyHandler,
   bool delete_(JSContext* aCx, JS::Handle<JSObject*> aProxy,
                JS::Handle<jsid> aId, JS::ObjectOpResult& aResult) const final;
 
-  bool getPrototype(JSContext* aCx, JS::Handle<JSObject*> aProxy,
-                    JS::MutableHandle<JSObject*> aProtop) const final;
-  bool setPrototype(JSContext* aCx, JS::Handle<JSObject*> aProxy,
-                    JS::Handle<JSObject*> aProto,
-                    JS::ObjectOpResult& aResult) const final;
   bool getPrototypeIfOrdinary(JSContext* aCx, JS::Handle<JSObject*> aProxy,
                               bool* aIsOrdinary,
                               JS::MutableHandle<JSObject*> aProtop) const final;
@@ -65,8 +62,6 @@ class RemoteObjectProxyBase : public js::BaseProxyHandler,
            JS::ObjectOpResult& aResult) const final;
 
   // SpiderMonkey extensions
-  bool hasOwn(JSContext* aCx, JS::Handle<JSObject*> aProxy,
-              JS::Handle<jsid> aId, bool* aBp) const override;
   bool getOwnEnumerablePropertyKeys(
       JSContext* aCx, JS::Handle<JSObject*> aProxy,
       JS::MutableHandleVector<jsid> aProps) const override;
@@ -114,12 +109,14 @@ class RemoteObjectProxyBase : public js::BaseProxyHandler,
    * failed after creating the object.
    */
   void GetOrCreateProxyObject(JSContext* aCx, void* aNative,
-                              const js::Class* aClasp,
+                              const JSClass* aClasp,
+                              JS::Handle<JSObject*> aTransplantTo,
                               JS::MutableHandle<JSObject*> aProxy,
                               bool& aNewObjectCreated) const;
 
   const prototypes::ID mPrototypeID;
 
+  friend struct SetDOMProxyInformation;
   static const char sCrossOriginProxyFamily;
 };
 
@@ -146,9 +143,11 @@ class RemoteObjectProxy : public RemoteObjectProxyBase {
   }
 
   void GetProxyObject(JSContext* aCx, Native* aNative,
+                      JS::Handle<JSObject*> aTransplantTo,
                       JS::MutableHandle<JSObject*> aProxy) const {
     bool objectCreated = false;
-    GetOrCreateProxyObject(aCx, aNative, &sClass, aProxy, objectCreated);
+    GetOrCreateProxyObject(aCx, aNative, &sClass, aTransplantTo, aProxy,
+                           objectCreated);
     if (objectCreated) {
       NS_ADDREF(aNative);
     }
@@ -164,7 +163,7 @@ class RemoteObjectProxy : public RemoteObjectProxyBase {
         aCx, aProxy, /* slot = */ 0, P, F, aHolder);
   }
 
-  static const js::Class sClass;
+  static const JSClass sClass;
 };
 
 /**
@@ -172,8 +171,7 @@ class RemoteObjectProxy : public RemoteObjectProxyBase {
  * represents an object implementing the WebIDL interface for
  * aProtoID.
  */
-static inline bool IsRemoteObjectProxy(JSObject* aObj,
-                                       prototypes::ID aProtoID) {
+inline bool IsRemoteObjectProxy(JSObject* aObj, prototypes::ID aProtoID) {
   if (!js::IsProxy(aObj)) {
     return false;
   }
@@ -184,12 +182,18 @@ static inline bool IsRemoteObjectProxy(JSObject* aObj,
  * Returns true if aObj is a cross-process proxy object, no matter
  * which WebIDL interface it corresponds to.
  */
-static inline bool IsRemoteObjectProxy(JSObject* aObj) {
+inline bool IsRemoteObjectProxy(JSObject* aObj) {
   if (!js::IsProxy(aObj)) {
     return false;
   }
   return RemoteObjectProxyBase::IsRemoteObjectProxy(aObj);
 }
+
+/**
+ * Return the browsing context for this remote outer window proxy.
+ * Only call this function on remote outer window proxies.
+ */
+BrowsingContext* GetBrowsingContext(JSObject* aProxy);
 
 }  // namespace dom
 }  // namespace mozilla

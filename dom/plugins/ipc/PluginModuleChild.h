@@ -70,15 +70,14 @@ class PluginModuleChild : public PPluginModuleChild {
       Endpoint<PFunctionBrokerChild>&& endpoint);
 
   PPluginInstanceChild* AllocPPluginInstanceChild(
-      const nsCString& aMimeType, const InfallibleTArray<nsCString>& aNames,
-      const InfallibleTArray<nsCString>& aValues);
+      const nsCString& aMimeType, const nsTArray<nsCString>& aNames,
+      const nsTArray<nsCString>& aValues);
 
   bool DeallocPPluginInstanceChild(PPluginInstanceChild* aActor);
 
   mozilla::ipc::IPCResult RecvPPluginInstanceConstructor(
       PPluginInstanceChild* aActor, const nsCString& aMimeType,
-      InfallibleTArray<nsCString>&& aNames,
-      InfallibleTArray<nsCString>&& aValues) override;
+      nsTArray<nsCString>&& aNames, nsTArray<nsCString>&& aValues) override;
   mozilla::ipc::IPCResult AnswerNP_Shutdown(NPError* rv);
 
   mozilla::ipc::IPCResult AnswerOptionalFunctionsSupported(
@@ -98,7 +97,7 @@ class PluginModuleChild : public PPluginModuleChild {
   mozilla::ipc::IPCResult RecvSetParentHangTimeout(const uint32_t& aSeconds);
 
   mozilla::ipc::IPCResult AnswerInitCrashReporter(
-      Shmem&& aShmem, mozilla::dom::NativeThreadId* aId);
+      mozilla::dom::NativeThreadId* aId);
 
   virtual void ActorDestroy(ActorDestroyReason why) override;
 
@@ -122,7 +121,7 @@ class PluginModuleChild : public PPluginModuleChild {
   // aPluginFilename is UTF8, not native-charset!
   bool InitForChrome(const std::string& aPluginFilename,
                      base::ProcessId aParentPid, MessageLoop* aIOLoop,
-                     IPC::Channel* aChannel);
+                     UniquePtr<IPC::Channel> aChannel);
 
   bool InitForContent(Endpoint<PPluginModuleChild>&& aEndpoint);
 

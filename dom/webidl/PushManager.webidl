@@ -15,22 +15,28 @@ dictionary PushSubscriptionOptionsInit {
 // The main thread JS implementation. Please see comments in
 // dom/push/PushManager.h for the split between PushManagerImpl and PushManager.
 [JSImplementation="@mozilla.org/push/PushManager;1",
- ChromeOnly, Constructor(DOMString scope)]
+ ChromeOnly,
+ Exposed=Window]
 interface PushManagerImpl {
-  Promise<PushSubscription>    subscribe(optional PushSubscriptionOptionsInit options);
+  [Throws]
+  constructor(DOMString scope);
+
+  Promise<PushSubscription>    subscribe(optional PushSubscriptionOptionsInit options = {});
   Promise<PushSubscription?>   getSubscription();
-  Promise<PushPermissionState> permissionState(optional PushSubscriptionOptionsInit options);
+  Promise<PushPermissionState> permissionState(optional PushSubscriptionOptionsInit options = {});
 };
 
-[Exposed=(Window,Worker), Func="mozilla::dom::DOMPrefs::dom_push_enabled",
- ChromeConstructor(DOMString scope)]
+[Exposed=(Window,Worker), Pref="dom.push.enabled"]
 interface PushManager {
+  [Throws, ChromeOnly]
+  constructor(DOMString scope);
+
   [Throws, UseCounter]
-  Promise<PushSubscription>    subscribe(optional PushSubscriptionOptionsInit options);
+  Promise<PushSubscription>    subscribe(optional PushSubscriptionOptionsInit options = {});
   [Throws]
   Promise<PushSubscription?>   getSubscription();
   [Throws]
-  Promise<PushPermissionState> permissionState(optional PushSubscriptionOptionsInit options);
+  Promise<PushPermissionState> permissionState(optional PushSubscriptionOptionsInit options = {});
 };
 
 enum PushPermissionState

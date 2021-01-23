@@ -1,0 +1,127 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "Hesap Sihirbazı">
+<!ENTITY accountWizard.size "width: 40em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!ENTITY accountSetupInfo2.label "İleti almak için öncelikle bir hesap kurmalısınız.">
+<!ENTITY accountTypeTitle.label "Yeni Hesap Kurulumu">
+<!ENTITY accountTypeDesc2.label "Bu sihirbaz, hesap kurulumu için gereken bilgileri toplayacak. İstenen bilgilere sahip değilseniz lütfen sistem yöneticiniz veya internet servis sağlayıcınızla iletişime geçin.">
+<!ENTITY accountTypeDirections.label "Eklemek istediğiniz hesap türünü seçin:">
+<!ENTITY accountTypeMail.label "E-posta hesabı">
+<!ENTITY accountTypeMail.accesskey "E">
+<!ENTITY accountTypeNews.label "Haber grubu hesabı">
+<!ENTITY accountTypeNews.accesskey "H">
+<!-- LOCALIZATION NOTE(accountTypeMovemail.label): do not translate 'Movemail' -->
+<!ENTITY accountTypeMovemail.label "Unix Mailspool (Movemail)">
+<!ENTITY accountTypeMovemail.accesskey "U">
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "Kimlik">
+<!ENTITY identityDesc.label "Her hesabın bir kimliği vardır. Postanızı alan kişi sizi bu kimlikteki bilgilerden tanır.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "Giden iletilerinizin &quot;Gönderen&quot; kısmında görünmesini istediğiniz adı girin">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(örnek: &quot;Kemal Sunal&quot;).">
+<!ENTITY fullnameLabel.label "Adınız:">
+<!ENTITY fullnameLabel.accesskey "A">
+
+<!ENTITY emailLabel.label "E-posta adresi:">
+<!ENTITY emailLabel.accesskey "E">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "Gelen Sunucu Bilgisi">
+<!ENTITY incomingServerTypeDesc.label "Kullandığınız gelen posta sunucusunun türünü seçin.">
+<!-- LOCALIZATION NOTE (imapType.label) : Do not translate "IMAP" in below line -->
+<!ENTITY imapType.label "IMAP">
+<!ENTITY imapType.accesskey "I">
+<!-- LOCALIZATION NOTE (popType.label) : Do not translate "POP" in below line -->
+<!ENTITY popType.label "POP">
+<!ENTITY popType.accesskey "P">
+<!ENTITY leaveMsgsOnSrvr.label "İletileri sunucuda bırak">
+<!ENTITY leaveMsgsOnSrvr.accesskey "s">
+<!ENTITY portNum.label "Bağlantı Noktası:">
+<!ENTITY portNum.accesskey "B">
+<!ENTITY defaultPortLabel.label "Varsayılan:">
+<!ENTITY defaultPortValue.label "">
+<!-- LOCALIZATION NOTE (incomingServerNameDesc.label) : Do not translate "&quot;pop.example.net&quot;" in below line -->
+<!ENTITY incomingServer.description "Gelen posta sunucunuzun adını girin. (örnek: &quot;mail.ornekadres.com&quot;)">
+<!ENTITY incomingServer.label "Gelen Posta Sunucusu:">
+<!ENTITY incomingServer.accesskey "s">
+<!-- LOCALIZATION NOTE (incomingUsername.description) : do not translate "&quot;jsmith&quot;" in below line -->
+<!ENTITY incomingUsername.description "E-posta sağlayıcınız tarafından verilen gelen kullanıcı adını girin (örneğin &quot;mkemal&quot;).">
+<!ENTITY incomingUsername.label "Kullanıcı Adı:">
+<!ENTITY incomingUsername.accesskey "K">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Haber sunucunuzun (NNTP) adını girin. (örnek: &quot;news.ornekadres.net&quot;)">
+<!ENTITY newsServerLabel.label "Haber Grubu Sunucusu:">
+<!ENTITY newsServerLabel.accesskey "H">
+
+<!-- Entities for Outgoing Server page -->
+
+<!ENTITY outgoingTitle.label "Giden Sunucu Bilgisi">
+<!-- LOCALIZATION NOTE (outgoingServer.description) : Do not translate "SMTP" and "&quot;smtp.example.net&quot;" in below line -->
+<!ENTITY outgoingServer.description "Giden posta sunucunuzun (SMTP) adını girin. (örnek: &quot;smtp.ornek.net&quot;)">
+<!ENTITY outgoingServer.label "Giden Posta Sunucusu:">
+<!ENTITY outgoingServer.accesskey "s">
+<!ENTITY outgoingUsername.description "E-posta sağlayıcınız tarafından size verilen giden posta kullanıcı adınızı girin. (Genellikle gelen sunucusu kullanıcı adıyla aynıdır.)">
+<!ENTITY outgoingUsername.label "Giden Sunucusu Kullanıcı Adı:">
+<!ENTITY outgoingUsername.accesskey "u">
+
+<!-- LOCALIZATION NOTE (modifyOutgoing.suffix) : This string will be appended after each of
+     haveSmtp1.suffix3, haveSmtp2.suffix3, haveSmtp3.suffix3 .
+-->
+<!ENTITY modifyOutgoing.suffix "Giden posta sunucularına hesap ayarlarından değiştirebilirsiniz.">
+<!-- LOCALIZATION NOTE (haveSmtp1.prefix and haveSmtp1.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp1.prefix and haveSmtp1.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp1.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp1.prefix "Mevcut giden posta sunucunuz (SMTP) &quot;">
+<!ENTITY haveSmtp1.suffix3 "&quot; kullanılacak.">
+<!-- LOCALIZATION NOTE (haveSmtp2.prefix and haveSmtp2.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp2.prefix and haveSmtp2.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp2.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp2.prefix "Mevcut giden posta (SMTP) kullanıcı adınız &quot;">
+<!ENTITY haveSmtp2.suffix3 "&quot; kullanılacak.">
+<!-- LOCALIZATION NOTE (haveSmtp3.prefix and haveSmtp3.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp3.prefix and haveSmtp3.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp3.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp3.prefix "Giden posta (SMTP) sunucunuz &quot;">
+<!ENTITY haveSmtp3.suffix3 "&quot; gelen posta sunucunuzla birebir aynı. Erişim için gelen sunucusundaki kullanıcı adınız kullanılacak.">
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "Hesap adı">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Bu hesabı tanımlayan bir isim girin. (örnek: &quot;İş Hesabı&quot;, &quot;Ev Hesabı&quot; veya &quot;Haber Grubu Hesabı&quot;)">
+<!ENTITY accnameLabel.label "Hesap adı:">
+<!ENTITY accnameLabel.accesskey "a">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "Tebrikler!">
+<!ENTITY completionText.label "Lütfen aşağıdaki bilgilerin doğruluğunu kontrol edin.">
+<!ENTITY serverTypePrefix.label "Gelen Sunucusu Türü:">
+<!ENTITY serverNamePrefix.label "Gelen Sunucusu Adı:">
+<!ENTITY smtpServerNamePrefix.label "Giden Sunucusu Adı (SMTP):">
+<!ENTITY newsServerNamePrefix.label "Haber Sunucusu Adı (NNTP):">
+<!ENTITY downloadOnLogin.label "İletileri şimdi indir">
+<!ENTITY downloadOnLogin.accesskey "d">
+<!ENTITY deferStorageDesc.label "Bu hesaba ait e-postaları kendi dizininde saklamak istiyorsanız bu kutuyu işaretlemeyin. Böylece bu hesap üst seviye hesap olarak görünecektir. Aksi takdirde Yerel Dizinler Küresel Gelen Kutusu hesabının parçası olacaktır.">
+<!ENTITY deferStorage.label "Küresel Gelen Kutusu'nu kullan (postalar Yerel Dizinler'de depolanır)">
+<!ENTITY deferStorage.accesskey "K">
+<!ENTITY clickFinish.label "Bu ayarları kaydederek Hesap Sihirbazı'ndan çıkmak için Bitir'e tıklayın.">
+<!ENTITY clickFinish.labelMac "Bu ayarları kaydederek Hesap Sihirbazı'ndan çıkmak için Bitir'e tıklayın.">

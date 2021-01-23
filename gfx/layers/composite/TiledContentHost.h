@@ -46,7 +46,7 @@ class TileHost {
   // TiledLayerBuffer for more information on what this is used for;
   // essentially, this is a sentinel used to represent an invalid or blank
   // tile.
-  TileHost() {}
+  TileHost() = default;
 
   // Constructs a TileHost from a TextureReadLock and TextureHost.
   TileHost(TextureReadLock* aSharedLock, TextureHost* aTextureHost,
@@ -235,7 +235,7 @@ class TiledContentHost : public ContentHost {
  private:
   void RenderLayerBuffer(TiledLayerBufferComposite& aLayerBuffer,
                          Compositor* aCompositor,
-                         const gfx::Color* aBackgroundColor,
+                         const gfx::DeviceColor* aBackgroundColor,
                          EffectChain& aEffectChain, float aOpacity,
                          const gfx::SamplingFilter aSamplingFilter,
                          const gfx::IntRect& aClipRect, nsIntRegion aMaskRegion,

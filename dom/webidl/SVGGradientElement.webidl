@@ -10,6 +10,7 @@
  * liability, trademark and document use rules apply.
  */
 
+[Exposed=Window]
 interface SVGGradientElement : SVGElement {
 
   // Spread Method Types
@@ -26,4 +27,4 @@ interface SVGGradientElement : SVGElement {
   readonly attribute SVGAnimatedEnumeration spreadMethod;
 };
 
-SVGGradientElement implements SVGURIReference;
+SVGGradientElement includes SVGURIReference;

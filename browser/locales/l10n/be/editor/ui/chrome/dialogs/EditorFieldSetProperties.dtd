@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Уласцівасці сукупнасці палёў">
+<!ENTITY Legend.label "Паданне">
+<!ENTITY Legend.accesskey "П">
+<!ENTITY EditLegendText.label "Рэдагаваць паданне:">
+<!ENTITY EditLegendText.accesskey "Р">
+<!ENTITY LegendAlign.label "Выраўноўванне падання:">
+<!ENTITY LegendAlign.accesskey "р">
+<!ENTITY AlignDefault.label "Змоўчнае">
+<!ENTITY AlignLeft.label "Улева">
+<!ENTITY AlignCenter.label "Пасярэдзіне">
+<!ENTITY AlignRight.label "Направа">
+<!ENTITY RemoveFieldSet.label "Выдаліць сукупнасць палёў">
+<!ENTITY RemoveFieldSet.accesskey "д">

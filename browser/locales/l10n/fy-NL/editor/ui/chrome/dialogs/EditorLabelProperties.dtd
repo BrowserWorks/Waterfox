@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Labeleigenskippen">
+
+<!ENTITY Settings.label "Ynstellings">
+<!ENTITY Settings.accesskey "S">
+
+<!ENTITY EditLabelText.label "Tekst bewurkje:">
+<!ENTITY EditLabelText.accesskey "T">
+<!ENTITY LabelFor.label "Foar aksje:">
+<!ENTITY LabelFor.accesskey "a">
+<!ENTITY AccessKey.label "Fluchtoets:">
+<!ENTITY AccessKey.accesskey "F">
+
+<!ENTITY RemoveLabel.label "Label fuortsmite">
+<!ENTITY RemoveLabel.accesskey "f">

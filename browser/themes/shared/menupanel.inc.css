@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 /* Menu panel and palette styles */
 
 #appMenu-new-window-button {
@@ -16,16 +20,19 @@
   list-style-image: url(chrome://browser/skin/library.svg);
 }
 
-#appMenu-logins-button {
+#appMenu-logins-button,
+#PanelUI-fxa-menu-logins-button {
   list-style-image: url(chrome://browser/skin/login.svg);
 }
 
 #appMenu-addons-button {
-  list-style-image: url(chrome://mozapps/skin/extensions/extensionGeneric-16.svg);
+  list-style-image: url(chrome://mozapps/skin/extensions/extension.svg);
 }
 
+#PanelUI-fxa-menu-sync-prefs-button,
+#PanelUI-fxa-menu-account-devices-button,
 #appMenu-preferences-button {
-  list-style-image: url(chrome://browser/skin/settings.svg);
+  list-style-image: url(chrome://global/skin/icons/settings.svg);
 }
 
 #appMenu-customize-button {
@@ -37,8 +44,16 @@
   list-style-image: url(chrome://browser/skin/search-glass.svg);
 }
 
+#appMenu_help_importFromAnotherBrowser {
+  list-style-image: url(chrome://browser/skin/import.svg);
+}
+
 #appMenu-taskmanager-button {
   list-style-image: url(chrome://global/skin/icons/performance.svg);
+}
+
+#appMenu-whatsnew-button {
+  list-style-image: url(chrome://browser/skin/whatsnew.svg);
 }
 
 #appMenu-help-button {
@@ -92,6 +107,7 @@
 }
 
 #PanelUI-fxa-menu-syncnow-button,
+#PanelUI-fxa-menu-setup-sync-button,
 #PanelUI-remotetabs-syncnow {
   list-style-image: url("chrome://browser/skin/sync.svg");
 }
@@ -160,6 +176,12 @@ toolbarpaletteitem[place="palette"] > #bookmarks-menu-button,
 
 #appMenu-library-downloads-show-button {
   list-style-image: url("chrome://browser/skin/folder.svg");
+}
+
+.panel-subview-body .ssb-uninstall > .toolbarbutton-icon {
+  list-style-image: url("chrome://global/skin/icons/close.svg");
+  -moz-context-properties: fill, fill-opacity;
+  fill-opacity: 0;
 }
 
 #appMenu-restart-button {

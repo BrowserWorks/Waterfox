@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.cookies.title             "Kolačići">
+
+<!-- cookies -->
+
+<!ENTITY cookiePolicy.label             "Pravila prihvatanja kolačića">
+
+<!ENTITY disableCookies.label           "Blokiraj kolačiće">
+
+<!ENTITY accNo3rdPartyCookies.label     "Dozvolite kolačiće samo s originalne web stranice (ne kolačiće trećih strana)">
+
+<!ENTITY acc3rdPartyVisited.label       "Dozvolite kolačiće trećih strana samo za prethodno posjećene web stranice">
+
+<!ENTITY accAllCookies.label            "Dozvolite sve kolačiće">
+
+<!ENTITY cookieRetentionPolicy.label    "Pravila zadržavanja kolačića">
+
+<!ENTITY acceptNormally.label           "Prihvati kolačiće normalno">
+
+<!ENTITY acceptForSession.label         "Prihvati samo za trenutnu sesiju">
+
+<!ENTITY acceptforNDays.label           "Prihvati kolačiće za">
+<!ENTITY days.label                     "dana">
+
+<!ENTITY manageCookies.label            "Upravljanje kolačićima i stranicama">
+<!ENTITY manageCookiesDescription.label "Dozvoljava vam da vidite i upravljate pohranjenim kolačićima i postavkama po web stranici za prihvatanje i odbacivanje kolačića. Postavke po web stranici će nadjačati postavke iznad.">
+
+<!ENTITY viewCookies.label              "Menadžer kolačića">
+

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+  - License, v. 2.0. If a copy of the MPL was not distributed with this
+  - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Labels -->
+<!ENTITY newFolderDialog.title      "નવું ફોલ્ડર">
+<!ENTITY name.label                 "નામ:">
+<!ENTITY name.accesskey             "n">
+<!ENTITY description.label          "ના ઉપફોલ્ડર તરીકે બનાવો:">
+<!ENTITY description.accesskey      "c">
+<!ENTITY folderRestriction1.label   "આ સર્વર બે વિશિષ્ટ પ્રકારના ફોલ્ડરો પર બંધન લગાડે છે.">
+<!ENTITY folderRestriction2.label   "તમારા નવા ફોલ્ડરને આને સમાવવા માટે પરવાનગી આપો:">
+<!ENTITY foldersOnly.label          "માત્ર ફોલ્ડરો">
+<!ENTITY messagesOnly.label         "માત્ર સંદેશાઓ">

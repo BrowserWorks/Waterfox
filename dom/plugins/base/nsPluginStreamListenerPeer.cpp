@@ -6,21 +6,16 @@
 #include "nsPluginStreamListenerPeer.h"
 #include "nsIContentPolicy.h"
 #include "nsContentPolicyUtils.h"
-#include "nsIStreamConverterService.h"
-#include "nsIStreamLoader.h"
 #include "nsIHttpChannel.h"
 #include "nsIHttpChannelInternal.h"
 #include "nsIFileChannel.h"
 #include "nsMimeTypes.h"
-#include "nsISupportsPrimitives.h"
 #include "nsNetCID.h"
 #include "nsPluginInstanceOwner.h"
 #include "nsPluginLogging.h"
 #include "nsIURI.h"
-#include "nsIURL.h"
 #include "nsPluginHost.h"
 #include "nsIMultiPartChannel.h"
-#include "nsIInputStreamTee.h"
 #include "nsPrintfCString.h"
 #include "nsIScriptGlobalObject.h"
 #include "mozilla/dom/Document.h"
@@ -231,7 +226,6 @@ nsPluginStreamListenerPeer::OnStartRequest(nsIRequest* request) {
 }
 
 NS_IMETHODIMP nsPluginStreamListenerPeer::OnProgress(nsIRequest* request,
-                                                     nsISupports* aContext,
                                                      int64_t aProgress,
                                                      int64_t aProgressMax) {
   nsresult rv = NS_OK;
@@ -239,7 +233,6 @@ NS_IMETHODIMP nsPluginStreamListenerPeer::OnProgress(nsIRequest* request,
 }
 
 NS_IMETHODIMP nsPluginStreamListenerPeer::OnStatus(nsIRequest* request,
-                                                   nsISupports* aContext,
                                                    nsresult aStatus,
                                                    const char16_t* aStatusArg) {
   return NS_OK;
@@ -533,7 +526,7 @@ class ChannelRedirectProxyCallback : public nsIAsyncVerifyRedirectCallback {
         mOldChannel(oldChannel),
         mNewChannel(newChannel) {}
 
-  ChannelRedirectProxyCallback() {}
+  ChannelRedirectProxyCallback() = default;
 
   NS_DECL_ISUPPORTS
 
@@ -548,7 +541,7 @@ class ChannelRedirectProxyCallback : public nsIAsyncVerifyRedirectCallback {
   }
 
  private:
-  virtual ~ChannelRedirectProxyCallback() {}
+  virtual ~ChannelRedirectProxyCallback() = default;
 
   nsWeakPtr mWeakListener;
   nsCOMPtr<nsIAsyncVerifyRedirectCallback> mParent;

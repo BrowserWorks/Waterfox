@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY time.midnight "Ttnaṣfa n yiḍ" >
+<!ENTITY time.noon "Ttnasfa n uzal" >
+
+<!-- Day Names -->
+<!-- LOCALIZATION NOTE : Accesskeys for day.1.Ddd to day.7.Ddd are currently
+     only used in Preferences > Views > Workweek groupbox -->
+<!ENTITY day.1.Ddd "Sed" >
+<!ENTITY day.1.Ddd.accesskey "S">
+<!ENTITY day.2.Ddd "Ari" >
+<!ENTITY day.2.Ddd.accesskey "r">
+<!ENTITY day.3.Ddd "Ara" >
+<!ENTITY day.3.Ddd.accesskey "a">
+<!ENTITY day.4.Ddd "Aha" >
+<!ENTITY day.4.Ddd.accesskey "h">
+<!ENTITY day.5.Ddd "Amh" >
+<!ENTITY day.5.Ddd.accesskey "m">
+<!ENTITY day.6.Ddd "Sem" >
+<!ENTITY day.6.Ddd.accesskey "e">
+<!ENTITY day.7.Ddd "Sed" >
+<!ENTITY day.7.Ddd.accesskey "d">
+
+<!ENTITY day.1.name "Acer" >
+<!ENTITY day.2.name "Arim" >
+<!ENTITY day.3.name "Aram" >
+<!ENTITY day.4.name "Ahad" >
+<!ENTITY day.5.name "Amhad" >
+<!ENTITY day.6.name "Sem" >
+<!ENTITY day.7.name "Sed" >
+
+<!ENTITY month.1.name "Yennayer" >
+<!ENTITY month.2.name "Fuṛaṛ" >
+<!ENTITY month.3.name "Meɣres" >
+<!ENTITY month.4.name "Yebrir" >
+<!ENTITY month.5.name "Maggu" >
+<!ENTITY month.6.name "Yunyu" >
+<!ENTITY month.7.name "Yulyu" >
+<!ENTITY month.8.name "Ɣuct" >
+<!ENTITY month.9.name "Cṭambeṛ" >
+<!ENTITY month.10.name "Tubeṛ" >
+<!ENTITY month.11.name "Wambeṛ" >
+<!ENTITY month.12.name "Dujambeṛ" >
+
+<!ENTITY onemonthbackward.tooltip "Yiwen n waggur ɣer deffir" >
+<!ENTITY onemonthforward.tooltip "Yiwen n waggur ɣer zdat" >
+<!ENTITY oneyearbackward.tooltip "Yiwen n useggas ɣer deffir" >
+<!ENTITY oneyearforward.tooltip "Yiwen n useggas ɣer zdat" >
+<!ENTITY showToday.tooltip "Ddu ɣer Ass-a">
+<!ENTITY onedayforward.tooltip "Yiwen n wass ɣer zdat">
+<!ENTITY onedaybackward.tooltip "Yiwen n wass ɣer deffir">
+<!ENTITY showselectedday.tooltip "Sken tidyanin deg ussan yettwafernen">

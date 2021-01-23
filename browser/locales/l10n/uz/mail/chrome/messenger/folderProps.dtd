@@ -1,0 +1,70 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Xossalari">
+
+<!ENTITY generalInfo.label                       "Umumiy ma’lumot">
+<!ENTITY folderCharsetFallback2.label            "Matnni shifrlashdan qochish:">
+<!ENTITY folderCharsetFallback2.accesskey        "E">
+<!ENTITY folderCharsetEnforce2.label             "Jild ichidagi barcha xabarlarni shifrlashni qo‘llash (individual xabar matnini shifrlash sozlamalari va avto aniqlash e’tiborsiz qoldiriladi)">
+<!ENTITY folderCharsetEnforce2.accesskey         "q">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Xulosa fayli indeksini qayta tuzish">
+<!ENTITY folderRebuildSummaryFile2.label         "Tuzatish jildi">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "T">
+<!ENTITY folderRebuildSummaryFile.explanation    "Ba’zida jild indeks (.msf) fayli buzilgan bo‘ladi va xabarlar yo‘q deb ko‘rsatiladi yoki o‘chirilgan fayllarni ko‘rsatishda davom etadi. Jildni tuzatishdan foydalansangiz, bu muammolar bartarf etilishi mumkin.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Xalqaro qidiruv natijalari ichidagi bu jilldagi xabarlarni qo‘shish">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "X">
+
+<!ENTITY retention.label "Saqlab qolish siyosati">
+<!ENTITY retentionUseAccount.label  "Hisobim sozlamalaridan foydalansin">
+<!ENTITY retentionUseAccount.accesskey "f">
+<!ENTITY daysOld.label "kun oldin">
+<!ENTITY message.label "xabarlar">
+<!ENTITY retentionCleanup.label "Diskdan bo‘sh joy ochishda eski xabarlar butunlay o‘chirib tashlanishi mumkin.">
+<!ENTITY retentionCleanupImap.label "Diskdan bo‘sh joy ochishda eski xabarlar butunlay o‘chirib tashlanishi mumkin. Bunday holda kompyuter va masofadagi serverda joylashgan asl xabar ham o‘chiriladi.">
+<!ENTITY retentionCleanupPop.label "Diskdan bo‘sh joy ochishda masofadagi serverda joylashgan asl xabar bilan birga kompyuterdagi eski xabarlar ham butunlay o‘chirib tashlanishi mumkin.">
+<!ENTITY retentionDeleteMsg.label "Ushbu qiymatdan oshgan xabarlar o‘chirilsin">
+<!ENTITY retentionDeleteMsg.accesskey "x">
+<!ENTITY retentionKeepAll.label "Hech qanday xabar o‘chirilmasin">
+<!ENTITY retentionKeepAll.accesskey "H">
+<!ENTITY retentionKeepRecent.label "Eng so‘nggi xabarlardan boshqalari o‘chirilsin">
+<!ENTITY retentionKeepRecent.accesskey "o">
+<!ENTITY retentionApplyToFlagged.label "Yulduzcha qo‘yilgan xabarlar doimo saqlansin">
+<!ENTITY retentionApplyToFlagged.accesskey "s">
+
+<!ENTITY folderSynchronizationTab.label          "Sinxronizatsiya">
+<!ENTITY folderCheckForNewMessages2.label         "Bu hisob uchun yangi xabarlar olganingizda, doimo mana bu jildni tekshiring">
+<!ENTITY folderCheckForNewMessages2.accesskey     "c">
+
+<!ENTITY offlineFolder.check.label               "Oflayn foydalanish uchun bu jildni tanlang">
+<!ENTITY offlineFolder.check.accesskey           "t">
+<!ENTITY offlineFolder.button.label              "Hozir yuklab olinsin">
+<!ENTITY offlineFolder.button.accesskey          "y">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Oflayn foydalanish uchun yangiliklar to‘plamini tanlang">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "y">
+<!ENTITY offlineNewsgroup.button.label           "Hozir yuklab olinsin">
+<!ENTITY offlineNewsgroup.button.accesskey       "y">
+
+<!ENTITY folderProps.name.label                  "Nomi:">
+<!ENTITY folderProps.name.accesskey              "N">
+<!ENTITY folderProps.location.label              "Manzili">
+<!ENTITY folderProps.location.accesskey          "M">
+
+<!ENTITY folderSharingTab.label                  "Bo‘lishish">
+<!ENTITY privileges.button.label                 "Imtiyozlar…">
+<!ENTITY privileges.button.accesskey             "I">
+<!ENTITY permissionsDesc.label                   "Sizga quyidagi ruxsatlar berilgan:">
+<!ENTITY folderType.label                        "Jild turi:">
+
+<!ENTITY folderQuotaTab.label                    "Kvota">
+<!ENTITY folderQuotaUsage.label                  "Sarf:">
+<!ENTITY folderQuotaStatus.label                 "Holati:">
+
+<!ENTITY numberOfMessages.label                  "Xabarlar soni:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "noma’lum">
+<!ENTITY sizeOnDisk.label                        "Disk sig‘imi:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "noma’lum">

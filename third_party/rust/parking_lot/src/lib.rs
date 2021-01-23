@@ -10,17 +10,15 @@
 //! standard library. It also provides a `ReentrantMutex` type.
 
 #![warn(missing_docs)]
-#![cfg_attr(feature = "nightly", feature(const_fn))]
-#![cfg_attr(feature = "nightly", feature(integer_atomics))]
-#![cfg_attr(feature = "nightly", feature(asm))]
-
-extern crate lock_api;
-extern crate parking_lot_core;
+#![warn(rust_2018_idioms)]
+#![cfg_attr(feature = "nightly", feature(llvm_asm))]
 
 mod condvar;
 mod elision;
+mod fair_mutex;
 mod mutex;
 mod once;
+mod raw_fair_mutex;
 mod raw_mutex;
 mod raw_rwlock;
 mod remutex;
@@ -32,13 +30,19 @@ pub mod deadlock;
 #[cfg(not(feature = "deadlock_detection"))]
 mod deadlock;
 
-pub use condvar::{Condvar, WaitTimeoutResult};
-pub use mutex::{MappedMutexGuard, Mutex, MutexGuard};
-pub use once::{Once, OnceState, ONCE_INIT};
-pub use raw_mutex::RawMutex;
-pub use raw_rwlock::RawRwLock;
-pub use remutex::{MappedReentrantMutexGuard, RawThreadId, ReentrantMutex, ReentrantMutexGuard};
-pub use rwlock::{
-    MappedRwLockReadGuard, MappedRwLockWriteGuard, RwLock, RwLockReadGuard,
+pub use self::condvar::{Condvar, WaitTimeoutResult};
+pub use self::fair_mutex::{const_fair_mutex, FairMutex, FairMutexGuard, MappedFairMutexGuard};
+pub use self::mutex::{const_mutex, MappedMutexGuard, Mutex, MutexGuard};
+pub use self::once::{Once, OnceState};
+pub use self::raw_fair_mutex::RawFairMutex;
+pub use self::raw_mutex::RawMutex;
+pub use self::raw_rwlock::RawRwLock;
+pub use self::remutex::{
+    const_reentrant_mutex, MappedReentrantMutexGuard, RawThreadId, ReentrantMutex,
+    ReentrantMutexGuard,
+};
+pub use self::rwlock::{
+    const_rwlock, MappedRwLockReadGuard, MappedRwLockWriteGuard, RwLock, RwLockReadGuard,
     RwLockUpgradableReadGuard, RwLockWriteGuard,
 };
+pub use ::lock_api;

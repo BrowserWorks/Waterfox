@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Tuo">
+<!ENTITY importAll.label          "Tuo kaikki">
+<!ENTITY importAll.accesskey      "k">
+<!ENTITY importMail.label         "Sähköposti">
+<!ENTITY importMail.accesskey     "S">
+<!ENTITY importFeeds.label        "Tilatut syötteet">
+<!ENTITY importFeeds.accesskey    "T">
+<!ENTITY importAddressbook.label  "Osoitekirjat">
+<!ENTITY importAddressbook.accesskey "O">
+<!ENTITY importSettings.label     "Asetukset">
+<!ENTITY importSettings.accesskey "A">
+<!ENTITY importFilters.label      "Viestisuodattimet">
+<!ENTITY importFilters.accesskey  "V">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "&brandShortName;in ohjattu tietojen tuonti">
+<!ENTITY importShortDesc.label    "Tuo sähköposti, osoitekirjat, asetukset ja viestisuodattimet muista ohjelmista">
+
+<!ENTITY importDescription1.label "Tämä ohjattu toiminto tuo &brandShortName;iin sähköpostiviestit, osoitekirjan, viestisuodattimet tai asetukset muista sähköpostiohjelmista ja yleisistä osoitekirjan muodoista.">
+<!ENTITY importDescription2.label "Tuonnin valmistuttua,  tuodut kohteet ovat käytettävissä &brandShortName;issä tai Osoitekirjassa.">
+
+<!ENTITY selectDescription.label  "Valitse ohjelma, josta haluat tuoda tietoja:">
+<!ENTITY selectDescriptionB.label "Valitse olemassa oleva tili tai luo uusi tili:">
+<!ENTITY selectDescription.accesskey "V">
+<!ENTITY acctName.label           "Nimi:">
+<!ENTITY acctName.accesskey       "N">
+<!ENTITY noModulesFound.label     "Yhtään ohjelmaa tai tiedostoa, josta olisi voitu tuoda tietoja, ei löytynyt.">
+
+<!ENTITY back.label               "&lt; Edellinen">
+<!ENTITY forward.label            "Seuraava &gt;">
+<!ENTITY finish.label             "Valmis">
+<!ENTITY cancel.label             "Peruuta">
+
+<!ENTITY select.label             "tai valitse tuotavan aineiston tyyppi:">
+
+<!ENTITY title.label              "Otsikko">
+<!ENTITY processing.label         "Tuodaan…">

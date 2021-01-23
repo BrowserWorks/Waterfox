@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY settings.caption "Nastavenie">
+<!ENTITY security.caption "Zabezpečenie a overenie">
+<!ENTITY serverName.label "Názov servera:">
+<!ENTITY serverName.accesskey "N">
+<!ENTITY serverDescription.label "Popis:">
+<!ENTITY serverDescription.accesskey "P">
+<!ENTITY serverPort.label "Port:">
+<!ENTITY serverPort.accesskey "o">
+<!ENTITY userName.label "Používateľské meno:">
+<!ENTITY userName.accesskey "m">
+<!ENTITY connectionSecurity.label "Zabezpečenie pripojenia:">
+<!ENTITY connectionSecurity.accesskey "a">
+<!ENTITY connectionSecurityType-0.label "žiadne">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, ak je k dispozícii">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY smtpEditTitle.label "Server SMTP">
+<!ENTITY serverPortDefault.label "Štandardný:">
+<!ENTITY authMethod.label "Metóda overenia:">
+<!ENTITY authMethod.accesskey "e">

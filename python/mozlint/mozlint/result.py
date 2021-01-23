@@ -2,17 +2,23 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import
-
 from collections import defaultdict
 from json import dumps, JSONEncoder
+import os
+import mozpack.path as mozpath
 
 
 class ResultSummary(object):
     """Represents overall result state from an entire lint run."""
+    root = None
 
-    def __init__(self):
+    def __init__(self, root):
         self.reset()
+
+        # Store the repository root folder to be able to build
+        # Issues relative paths to that folder
+        if ResultSummary.root is None:
+            ResultSummary.root = mozpath.normpath(root)
 
     def reset(self):
         self.issues = defaultdict(list)
@@ -63,33 +69,61 @@ class Issue(object):
     :param rule: name of the rule that was violated (optional)
     :param lineoffset: denotes an error spans multiple lines, of the form
                        (<lineno offset>, <num lines>) (optional)
+    :param diff: a diff describing the changes that need to be made to the code
     """
 
     __slots__ = (
-        'linter',
-        'path',
-        'message',
-        'lineno',
-        'column',
-        'hint',
-        'source',
-        'level',
-        'rule',
-        'lineoffset',
+        "linter",
+        "path",
+        "message",
+        "lineno",
+        "column",
+        "hint",
+        "source",
+        "level",
+        "rule",
+        "lineoffset",
+        "diff",
+        "relpath",
     )
 
-    def __init__(self, linter, path, message, lineno, column=None, hint=None,
-                 source=None, level=None, rule=None, lineoffset=None):
-        self.path = path
+    def __init__(
+        self,
+        linter,
+        path,
+        message,
+        lineno,
+        column=None,
+        hint=None,
+        source=None,
+        level=None,
+        rule=None,
+        lineoffset=None,
+        diff=None,
+        relpath=None,
+    ):
         self.message = message
         self.lineno = int(lineno) if lineno else 0
         self.column = int(column) if column else column
         self.hint = hint
         self.source = source
-        self.level = level or 'error'
+        self.level = level or "error"
         self.linter = linter
         self.rule = rule
         self.lineoffset = lineoffset
+        self.diff = diff
+
+        root = ResultSummary.root
+        assert root is not None, 'Missing ResultSummary.root'
+        if os.path.isabs(path):
+            self.path = mozpath.normpath(path)
+            if self.path.startswith(root):
+                self.relpath = mozpath.relpath(self.path, root)
+            else:
+                self.relpath = self.path
+        else:
+            self.path = mozpath.join(root, path)
+            self.relpath = mozpath.normpath(path)
 
     def __repr__(self):
         s = dumps(self, cls=IssueEncoder, indent=2)
@@ -124,10 +158,10 @@ def from_config(config, **kwargs):
     for attr in Issue.__slots__:
         attrs[attr] = kwargs.get(attr, config.get(attr))
 
-    if not attrs['linter']:
-        attrs['linter'] = config.get('name')
+    if not attrs["linter"]:
+        attrs["linter"] = config.get("name")
 
-    if not attrs['message']:
-        attrs['message'] = config.get('description')
+    if not attrs["message"]:
+        attrs["message"] = config.get("description")
 
     return Issue(**attrs)

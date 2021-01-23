@@ -1,0 +1,68 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Pravila za filtriranje">
+<!ENTITY filterEditorDialog.dimensions "width: 100ch;">
+<!ENTITY filterName.label "Ime filtra:">
+<!ENTITY filterName.accesskey "m">
+
+<!ENTITY junk.label "Neželeno">
+<!ENTITY notJunk.label "Ni neželeno">
+
+<!ENTITY lowestPriorityCmd.label "Najnižje">
+<!ENTITY lowPriorityCmd.label "Nizko">
+<!ENTITY normalPriorityCmd.label "Običajno">
+<!ENTITY highPriorityCmd.label "Visoko">
+<!ENTITY highestPriorityCmd.label "Najvišje">
+
+<!ENTITY contextDesc.label "Uporabi filter:">
+<!ENTITY contextIncomingMail.label "ob prejemu nove pošte:">
+<!ENTITY contextIncomingMail.accesskey "o">
+<!ENTITY contextManual.label "ob ročnem zagonu">
+<!ENTITY contextManual.accesskey "č">
+<!ENTITY contextBeforeCls.label "Filtriraj pred razvrščanjem neželene pošte">
+<!ENTITY contextAfterCls.label "Filtriraj po razvrščanju neželene pošte">
+<!ENTITY contextOutgoing.label "po pošiljanju">
+<!ENTITY contextOutgoing.accesskey "š">
+<!ENTITY contextArchive.label "ob arhiviranju">
+<!ENTITY contextArchive.accesskey "a">
+
+<!ENTITY contextPeriodic.accesskey "e">
+
+<!ENTITY filterActionDesc.label "Izvedi ta dejanja:">
+<!ENTITY filterActionDesc.accesskey "z">
+
+<!ENTITY filterActionOrderWarning.label "Opomba: Dejanja filtra se bodo izvajala v drugačnem vrstnem redu.">
+<!ENTITY filterActionOrder.label "Vrstni red izvajanja">
+
+<!-- New Style Filter Rule Actions -->
+<!ENTITY moveMessage.label "Premakni sporočilo v">
+<!ENTITY copyMessage.label "Kopiraj sporočilo v">
+<!ENTITY forwardTo.label "Posreduj sporočilo v">
+<!ENTITY replyWithTemplate.label "Odgovori s predlogo">
+<!ENTITY markMessageRead.label "Označi kot prebrano">
+<!ENTITY markMessageUnread.label "Označi kot neprebrano">
+<!ENTITY markMessageStarred.label "Dodaj zvezdico">
+<!ENTITY setPriority.label "Nastavi prednost na">
+<!ENTITY addTag.label "Označi sporočilo">
+<!ENTITY setJunkScore.label "Nastavi stanje Neželeno na">
+<!ENTITY deleteMessage.label "Izbriši sporočilo">
+<!ENTITY deleteFromPOP.label "Izbriši s strežnika POP">
+<!ENTITY fetchFromPOP.label "Prenesi s strežnika POP">
+<!ENTITY ignoreThread.label "Prezri nit">
+<!ENTITY ignoreSubthread.label "Prezri podnit">
+<!ENTITY watchThread.label "Spremljaj nit">
+<!ENTITY stopExecution.label "Ustavi izvajanje filtra">
+
+<!ENTITY addAction.tooltip "Dodaj novo dejanje">
+<!ENTITY removeAction.tooltip "Odstrani to dejanje">
+
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- Flex Attribute: https://developer.mozilla.org/docs/XUL/Attribute/flex -->
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">

@@ -12,6 +12,7 @@
 #include "nsString.h"                      // nsString members
 
 class nsAtom;
+class nsStyledElement;
 
 namespace mozilla {
 
@@ -25,29 +26,31 @@ class Element;
  */
 class ChangeStyleTransaction final : public EditTransactionBase {
  protected:
-  ChangeStyleTransaction(dom::Element& aElement, nsAtom& aProperty,
+  ChangeStyleTransaction(nsStyledElement& aStyledElement, nsAtom& aProperty,
                          const nsAString& aValue, bool aRemove);
 
  public:
   /**
    * Creates a change style transaction.  This never returns nullptr.
    *
-   * @param aNode       The node whose style attribute will be changed.
-   * @param aProperty   The name of the property to change.
-   * @param aValue      New value for aProperty.
+   * @param aStyledElement  The node whose style attribute will be changed.
+   * @param aProperty       The name of the property to change.
+   * @param aValue          New value for aProperty.
    */
   static already_AddRefed<ChangeStyleTransaction> Create(
-      dom::Element& aElement, nsAtom& aProperty, const nsAString& aValue);
+      nsStyledElement& aStyledElement, nsAtom& aProperty,
+      const nsAString& aValue);
 
   /**
    * Creates a change style transaction.  This never returns nullptr.
    *
-   * @param aNode       The node whose style attribute will be changed.
-   * @param aProperty   The name of the property to change.
-   * @param aValue      The value to remove from aProperty.
+   * @param aStyledElement  The node whose style attribute will be changed.
+   * @param aProperty       The name of the property to change.
+   * @param aValue          The value to remove from aProperty.
    */
   static already_AddRefed<ChangeStyleTransaction> CreateToRemove(
-      dom::Element& aElement, nsAtom& aProperty, const nsAString& aValue);
+      nsStyledElement& aStyledElement, nsAtom& aProperty,
+      const nsAString& aValue);
 
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(ChangeStyleTransaction,
                                            EditTransactionBase)
@@ -55,8 +58,9 @@ class ChangeStyleTransaction final : public EditTransactionBase {
   NS_DECL_ISUPPORTS_INHERITED
 
   NS_DECL_EDITTRANSACTIONBASE
+  NS_DECL_EDITTRANSACTIONBASE_GETASMETHODS_OVERRIDE(ChangeStyleTransaction)
 
-  NS_IMETHOD RedoTransaction() override;
+  MOZ_CAN_RUN_SCRIPT NS_IMETHOD RedoTransaction() override;
 
   /**
    * Returns true if the list of white-space separated values contains aValue
@@ -69,7 +73,7 @@ class ChangeStyleTransaction final : public EditTransactionBase {
                             const nsAString& aValue);
 
  private:
-  virtual ~ChangeStyleTransaction();
+  virtual ~ChangeStyleTransaction() = default;
 
   /*
    * Adds the value aNewValue to list of white-space separated values aValues.
@@ -103,10 +107,11 @@ class ChangeStyleTransaction final : public EditTransactionBase {
    * is empty, remove the property from element's styles. If the boolean
    * is false, just remove the style attribute.
    */
-  nsresult SetStyle(bool aAttributeWasSet, nsAString& aValue);
+  MOZ_CAN_RUN_SCRIPT nsresult SetStyle(bool aAttributeWasSet,
+                                       nsAString& aValue);
 
   // The element to operate upon.
-  nsCOMPtr<dom::Element> mElement;
+  RefPtr<nsStyledElement> mStyledElement;
 
   // The CSS property to change.
   RefPtr<nsAtom> mProperty;
@@ -114,13 +119,14 @@ class ChangeStyleTransaction final : public EditTransactionBase {
   // The value to set the property to (ignored if mRemoveProperty==true).
   nsString mValue;
 
-  // true if the operation is to remove mProperty from mElement.
-  bool mRemoveProperty;
-
   // The value to set the property to for undo.
   nsString mUndoValue;
   // The value to set the property to for redo.
   nsString mRedoValue;
+
+  // true if the operation is to remove mProperty from mElement.
+  bool mRemoveProperty;
+
   // True if the style attribute was present and not empty before DoTransaction.
   bool mUndoAttributeWasSet;
   // True if the style attribute is present and not empty after DoTransaction.

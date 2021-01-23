@@ -6,21 +6,20 @@ import os
 import pytest
 import sys
 
+from six.moves.urllib.parse import parse_qs, urlsplit
+
 # need this so raptor imports work both from /raptor and via mach
 here = os.path.abspath(os.path.dirname(__file__))
-if os.environ.get('SCRIPTSPATH', None) is not None:
-    # in production it is env SCRIPTS_PATH
-    mozharness_dir = os.environ['SCRIPTSPATH']
-else:
-    # locally it's in source tree
-    mozharness_dir = os.path.join(here, '../../mozharness')
-sys.path.insert(1, mozharness_dir)
 
 raptor_dir = os.path.join(os.path.dirname(here), 'raptor')
 sys.path.insert(0, raptor_dir)
 
-from manifest import get_browser_test_list, validate_test_ini, get_raptor_test_list
-
+from manifest import (
+    add_test_url_params,
+    get_browser_test_list,
+    get_raptor_test_list,
+    validate_test_ini,
+)
 
 # some test details (test INIs)
 VALID_MANIFESTS = [{
@@ -30,7 +29,7 @@ VALID_MANIFESTS = [{
     'apps': 'firefox',
     'lower_is_better': True,
     'manifest': 'valid_details_0',
-    'measure': 'fnbpaint, fcp',
+    'measure': ['fnbpaint', 'fcp'],
     'page_cycles': 25,
     'playback': 'mitmproxy',
     'playback_binary_manifest': 'binary.manifest',
@@ -59,7 +58,6 @@ VALID_MANIFESTS = [{
     'alert_threshold': 2.0,
     'apps': 'geckoview',
     'browser_cycles': 10,
-    'cold': True,
     'lower_is_better': False,
     'manifest': 'valid_details_2',
     'measure': 'fcp',
@@ -164,10 +162,10 @@ def test_get_raptor_test_list_firefox(create_args):
     args = create_args(browser_cycles=1)
 
     test_list = get_raptor_test_list(args, mozinfo.os)
-    assert len(test_list) == 3
+    assert len(test_list) == 4
 
-    subtests = ['raptor-tp6-google-firefox', 'raptor-tp6-amazon-firefox',
-                'raptor-tp6-facebook-firefox', 'raptor-tp6-youtube-firefox']
+    subtests = ['raptor-tp6-unittest-google-firefox', 'raptor-tp6-unittest-amazon-firefox',
+                'raptor-tp6-unittest-facebook-firefox', 'raptor-tp6-unittest-youtube-firefox']
 
     for next_subtest in test_list:
         assert next_subtest['name'] in subtests
@@ -270,6 +268,18 @@ def test_get_raptor_test_list_debug_mode(create_args):
     assert test_list[0]['page_cycles'] == 2
 
 
+def test_get_raptor_test_list_using_live_sites(create_args):
+    args = create_args(test="raptor-tp6-amazon-firefox",
+                       live_sites=True,
+                       browser_cycles=1)
+
+    test_list = get_raptor_test_list(args, mozinfo.os)
+    assert len(test_list) == 1
+    assert test_list[0]['name'] == 'raptor-tp6-amazon-firefox'
+    assert test_list[0]['use_live_sites'] == 'true'
+    assert test_list[0]['playback'] is None
+
+
 def test_get_raptor_test_list_override_page_cycles(create_args):
     args = create_args(test="raptor-tp6-google-firefox",
                        page_cycles=99,
@@ -292,6 +302,18 @@ def test_get_raptor_test_list_override_page_timeout(create_args):
     assert test_list[0]['page_timeout'] == 9999
 
 
+def test_get_raptor_test_list_add_test_url_params(create_args):
+    args = create_args(test="raptor-tp6-google-firefox",
+                       test_url_params='c=4',
+                       browser_cycles=1)
+
+    test_list = get_raptor_test_list(args, mozinfo.os)
+    assert len(test_list) == 1
+    assert test_list[0]['name'] == 'raptor-tp6-google-firefox'
+    query_params = parse_qs(urlsplit(test_list[0]['test_url']).query)
+    assert query_params.get('c') == ['4']
+
+
 def test_get_raptor_test_list_refbrow(create_args):
     args = create_args(app="refbrow",
                        test="raptor-speedometer",
@@ -309,7 +331,62 @@ def test_get_raptor_test_list_fenix(create_args):
 
     test_list = get_raptor_test_list(args, mozinfo.os)
     # we don't have any actual fenix tests yet
-    assert len(test_list) == 0
+    assert len(test_list) == 1
+
+
+def test_add_test_url_params_with_single_extra_param():
+    initial_test_url = 'http://test.com?a=1&b=2'
+    extra_params = 'c=3'
+
+    result = add_test_url_params(initial_test_url, extra_params)
+
+    expected_params = {'a': ['1'], 'b': ['2'], 'c': ['3']}
+    actual_params = parse_qs(urlsplit(result).query)
+    assert actual_params == expected_params
+
+
+def test_add_test_url_params_with_multiple_extra_param():
+    initial_test_url = 'http://test.com?a=1&b=2'
+    extra_params = 'c=3&d=4'
+
+    result = add_test_url_params(initial_test_url, extra_params)
+
+    expected_params = {'a': ['1'], 'b': ['2'], 'c': ['3'], 'd': ['4']}
+    actual_params = parse_qs(urlsplit(result).query)
+    assert actual_params == expected_params
+
+
+def test_add_test_url_params_without_params_in_url():
+    initial_test_url = 'http://test.com'
+    extra_params = 'c=3'
+
+    result = add_test_url_params(initial_test_url, extra_params)
+
+    expected_params = {'c': ['3']}
+    actual_params = parse_qs(urlsplit(result).query)
+    assert actual_params == expected_params
+
+
+def test_add_test_url_params_overwrites_single_param():
+    initial_test_url = 'http://test.com?a=1&b=2'
+    extra_params = 'b=3'
+
+    result = add_test_url_params(initial_test_url, extra_params)
+
+    expected_params = {'a': ['1'], 'b': ['3']}
+    actual_params = parse_qs(urlsplit(result).query)
+    assert actual_params == expected_params
+
+
+def test_add_test_url_params_overwrites_multiple_param():
+    initial_test_url = 'http://test.com?a=1&b=2&c=3'
+    extra_params = 'c=4&b=5'
+
+    result = add_test_url_params(initial_test_url, extra_params)
+
+    expected_params = {'a': ['1'], 'b': ['5'], 'c': ['4']}
+    actual_params = parse_qs(urlsplit(result).query)
+    assert actual_params == expected_params
 
 
 if __name__ == '__main__':

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "Pašalinti">
+<!ENTITY editContactPanelDeleteContact.accesskey "š">
+
+<!ENTITY editContactName.label "Vardas:">
+<!ENTITY editContactName.accesskey "V">
+
+<!ENTITY editContactEmail.label "El. paštas:">
+<!ENTITY editContactEmail.accesskey "p">
+
+<!ENTITY editContactAddressBook.label "Adresų knyga:">
+<!ENTITY editContactAddressBook.accesskey "k">
+
+<!ENTITY editContactPanelDone.label "Įrašyti">
+<!ENTITY editContactPanelDone.accesskey "r">
+
+<!ENTITY contactMoveDisabledWarning.description "Perkelti adresato į kitą adresų knygą negalima, nes jis yra įtrauktas į bent vieną sąrašą.">

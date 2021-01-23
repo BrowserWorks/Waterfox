@@ -34,7 +34,7 @@ class VP8TrackEncoder : public VideoTrackEncoder {
 
   already_AddRefed<TrackMetadataBase> GetMetadata() final;
 
-  nsresult GetEncodedTrack(EncodedFrameContainer& aData) final;
+  nsresult GetEncodedTrack(nsTArray<RefPtr<EncodedFrame>>& aData) final;
 
  protected:
   nsresult Init(int32_t aWidth, int32_t aHeight, int32_t aDisplayWidth,
@@ -43,12 +43,14 @@ class VP8TrackEncoder : public VideoTrackEncoder {
  private:
   // Get the EncodeOperation for next target frame.
   EncodeOperation GetNextEncodeOperation(TimeDuration aTimeElapsed,
-                                         StreamTime aProcessedDuration);
+                                         TrackTime aProcessedDuration);
 
   // Get the encoded data from encoder to aData.
-  // Return value: false if the vpx_codec_get_cx_data returns null
-  //               for EOS detection.
-  nsresult GetEncodedPartitions(EncodedFrameContainer& aData);
+  // Return value: NS_ERROR_NOT_AVAILABABLE if the vpx_codec_get_cx_data returns
+  //                                        null for EOS detection.
+  //               NS_OK if some data was appended to aData.
+  //               An error nsresult otherwise.
+  nsresult GetEncodedPartitions(nsTArray<RefPtr<EncodedFrame>>& aData);
 
   // Prepare the input data to the mVPXImageWrapper for encoding.
   nsresult PrepareRawFrame(VideoChunk& aChunk);
@@ -66,7 +68,7 @@ class VP8TrackEncoder : public VideoTrackEncoder {
                                   vpx_codec_enc_cfg_t& config);
 
   // Encoded timestamp.
-  StreamTime mEncodedTimestamp = 0;
+  TrackTime mEncodedTimestamp = 0;
 
   // Total duration in mTrackRate extracted by GetEncodedPartitions().
   CheckedInt64 mExtractedDuration;
@@ -84,7 +86,7 @@ class VP8TrackEncoder : public VideoTrackEncoder {
   /**
    * A duration of non-key frames in milliseconds.
    */
-  StreamTime mDurationSinceLastKeyframe = 0;
+  TrackTime mDurationSinceLastKeyframe = 0;
 
   /**
    * A local segment queue which takes the raw data out from mRawSegment in the
@@ -94,9 +96,9 @@ class VP8TrackEncoder : public VideoTrackEncoder {
 
   // VP8 relative members.
   // Codec context structure.
-  nsAutoPtr<vpx_codec_ctx_t> mVPXContext;
+  UniquePtr<vpx_codec_ctx_t> mVPXContext;
   // Image Descriptor.
-  nsAutoPtr<vpx_image_t> mVPXImageWrapper;
+  UniquePtr<vpx_image_t> mVPXImageWrapper;
 };
 
 }  // namespace mozilla

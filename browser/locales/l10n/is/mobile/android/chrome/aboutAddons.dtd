@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "Viðbætur">
+<!ENTITY aboutAddons.header2                    "Viðbæturnar þínar">
+
+<!ENTITY addonAction.enable                     "Virkja">
+<!ENTITY addonAction.disable                    "Óvirkja">
+<!ENTITY addonAction.uninstall                  "Taka út">
+<!ENTITY addonAction.undo                       "Hætta við">
+<!ENTITY addonAction.update                     "Uppfæra">
+
+<!ENTITY addonUnsigned.message                  "Ekki var hægt að sannreyna þessa viðbót af &brandShortName;.">
+<!ENTITY addonUnsigned.learnMore                "Fræðast meira">

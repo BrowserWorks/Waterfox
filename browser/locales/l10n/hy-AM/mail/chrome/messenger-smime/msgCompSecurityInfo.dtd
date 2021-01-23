@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSecurityInfo.dtd UI for viewing security status when composing a message -->
+
+
+<!ENTITY title.label "Նամակի անվտանգությունը">
+<!ENTITY subject.plaintextWarning "Հիշեք. Նամակի բովանդակության տողերը չեն կոդավորվել:">
+<!ENTITY status.heading "Նամակի բովանդակությունը կուղարկվի որպես`">
+<!ENTITY status.signed "Թվային ստորագրմամբ.">
+<!ENTITY status.encrypted "Գաղտնագրված.">
+<!ENTITY status.certificates "Հավաստագրերը.">
+<!ENTITY view.label "Տեսք">
+<!ENTITY view.accesskey "Տ">
+<!ENTITY tree.recipient "Ստացողը">
+<!ENTITY tree.status "Վիճակ">
+<!ENTITY tree.issuedDate "Տրված">
+<!ENTITY tree.expiresDate "Ավարտվում է">

@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -12,7 +10,9 @@ loader.lazyRequireGetter(
   true
 );
 
-const { getSourceForDisplay } = require("../utils/changes-utils");
+const {
+  getSourceForDisplay,
+} = require("devtools/client/inspector/changes/utils/changes-utils");
 
 /**
  * In the Redux state, changed CSS rules are grouped by source (stylesheet) and stored in

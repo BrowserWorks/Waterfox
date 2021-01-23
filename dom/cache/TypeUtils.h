@@ -10,6 +10,7 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/dom/BindingUtils.h"
 #include "mozilla/dom/InternalHeaders.h"
+#include "mozilla/dom/SafeRefPtr.h"
 #include "nsError.h"
 
 class nsIGlobalObject;
@@ -47,7 +48,7 @@ class TypeUtils {
 
   enum SchemeAction { IgnoreInvalidScheme, TypeErrorOnInvalidScheme };
 
-  ~TypeUtils() {}
+  ~TypeUtils() = default;
   virtual nsIGlobalObject* GetGlobalObject() const = 0;
 #ifdef DEBUG
   virtual void AssertOwningThread() const = 0;
@@ -61,16 +62,17 @@ class TypeUtils {
   // GetIPCManager().
   virtual mozilla::ipc::PBackgroundChild* GetIPCManager() = 0;
 
-  already_AddRefed<InternalRequest> ToInternalRequest(
-      JSContext* aCx, const RequestOrUSVString& aIn, BodyAction aBodyAction,
-      ErrorResult& aRv);
+  SafeRefPtr<InternalRequest> ToInternalRequest(JSContext* aCx,
+                                                const RequestOrUSVString& aIn,
+                                                BodyAction aBodyAction,
+                                                ErrorResult& aRv);
 
-  already_AddRefed<InternalRequest> ToInternalRequest(
+  SafeRefPtr<InternalRequest> ToInternalRequest(
       JSContext* aCx, const OwningRequestOrUSVString& aIn,
       BodyAction aBodyAction, ErrorResult& aRv);
 
   void ToCacheRequest(
-      CacheRequest& aOut, InternalRequest* aIn, BodyAction aBodyAction,
+      CacheRequest& aOut, const InternalRequest& aIn, BodyAction aBodyAction,
       SchemeAction aSchemeAction,
       nsTArray<UniquePtr<mozilla::ipc::AutoIPCStream>>& aStreamCleanupList,
       ErrorResult& aRv);
@@ -87,9 +89,9 @@ class TypeUtils {
 
   already_AddRefed<Response> ToResponse(const CacheResponse& aIn);
 
-  already_AddRefed<InternalRequest> ToInternalRequest(const CacheRequest& aIn);
+  SafeRefPtr<InternalRequest> ToInternalRequest(const CacheRequest& aIn);
 
-  already_AddRefed<Request> ToRequest(const CacheRequest& aIn);
+  SafeRefPtr<Request> ToRequest(const CacheRequest& aIn);
 
   // static methods
   static already_AddRefed<InternalHeaders> ToInternalHeaders(
@@ -115,11 +117,11 @@ class TypeUtils {
                          nsACString* aUrlQueryOut, ErrorResult& aRv);
 
  private:
-  void CheckAndSetBodyUsed(JSContext* aCx, Request* aRequest,
+  void CheckAndSetBodyUsed(JSContext* aCx, Request& aRequest,
                            BodyAction aBodyAction, ErrorResult& aRv);
 
-  already_AddRefed<InternalRequest> ToInternalRequest(const nsAString& aIn,
-                                                      ErrorResult& aRv);
+  SafeRefPtr<InternalRequest> ToInternalRequest(const nsAString& aIn,
+                                                ErrorResult& aRv);
 
   void SerializeCacheStream(
       nsIInputStream* aStream, Maybe<CacheReadStream>* aStreamOut,

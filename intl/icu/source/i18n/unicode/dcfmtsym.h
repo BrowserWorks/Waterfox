@@ -28,10 +28,12 @@
 #define DCFMTSYM_H
 
 #include "unicode/utypes.h"
-#include "unicode/uchar.h"
+
+#if U_SHOW_CPLUSPLUS_API
 
 #if !UCONFIG_NO_FORMATTING
 
+#include "unicode/uchar.h"
 #include "unicode/uobject.h"
 #include "unicode/locid.h"
 #include "unicode/numsys.h"
@@ -289,6 +291,17 @@ public:
      */
     void setSymbol(ENumberFormatSymbol symbol, const UnicodeString &value, const UBool propogateDigits);
 
+#ifndef U_HIDE_INTERNAL_API
+    /**
+     * Loads symbols for the specified currency into this instance.
+     *
+     * This method is internal. If you think it should be public, file a ticket.
+     *
+     * @internal
+     */
+    void setCurrency(const UChar* currency, UErrorCode& status);
+#endif  // U_HIDE_INTERNAL_API
+
     /**
      * Returns the locale for which this object was constructed.
      * @stable ICU 2.6
@@ -372,8 +385,6 @@ private:
      */
     void initialize();
 
-    void setCurrencyForSymbols();
-
 public:
 
 #ifndef U_HIDE_INTERNAL_API
@@ -455,13 +466,11 @@ private:
      * to non-resource bundle strings,
      * then regular UnicodeString copies must be used instead of fastCopyFrom().
      *
-     * @internal
      */
     UnicodeString fSymbols[kFormatSymbolCount];
 
     /**
      * Non-symbol variable for getConstSymbol(). Always empty.
-     * @internal
      */
     UnicodeString fNoSymbol;
 
@@ -581,6 +590,8 @@ DecimalFormatSymbols::getCurrencyPattern() const {
 U_NAMESPACE_END
 
 #endif /* #if !UCONFIG_NO_FORMATTING */
+
+#endif /* U_SHOW_CPLUSPLUS_API */
 
 #endif // _DCFMTSYM
 //eof

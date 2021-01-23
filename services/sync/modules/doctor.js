@@ -120,9 +120,7 @@ var Doctor = {
 
       if (nowSeconds - lastValidation < validationInterval) {
         log.info(
-          `Skipping validation of ${
-            e.name
-          }: too recent since last validation attempt`
+          `Skipping validation of ${e.name}: too recent since last validation attempt`
         );
         continue;
       }
@@ -204,12 +202,8 @@ var Doctor = {
 
       // Let's do it!
       Services.console.logStringMessage(
-        `Sync is about to run a consistency check of ${
-          engine.name
-        }. This may be slow, and ` +
-          `can be controlled using the pref "services.sync.${
-            engine.name
-          }.validation.enabled".\n` +
+        `Sync is about to run a consistency check of ${engine.name}. This may be slow, and ` +
+          `can be controlled using the pref "services.sync.${engine.name}.validation.enabled".\n` +
           `If you encounter any problems because of this, please file a bug.`
       );
 
@@ -221,7 +215,17 @@ var Doctor = {
         // if we don't end up repairing?
         log.info(`Running validator for ${engine.name}`);
         let result = await validator.validate(engine);
-        Observers.notify("weave:engine:validate:finish", result, engine.name);
+        let { problems, version, duration, recordCount } = result;
+        Observers.notify(
+          "weave:engine:validate:finish",
+          {
+            version,
+            checked: recordCount,
+            took: duration,
+            problems: problems ? problems.getSummary(true) : null,
+          },
+          engine.name
+        );
         // And see if we should repair.
         await this._maybeCure(engine, result, flowID);
       } catch (ex) {

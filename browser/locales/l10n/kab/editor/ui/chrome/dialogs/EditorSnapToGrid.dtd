@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Reyyec ɣer iẓiki">
+
+<!ENTITY enableSnapToGrid.label "Rmed areyyec ɣer iẓiki">
+<!ENTITY enableSnapToGrid.accessKey "m">
+
+<!ENTITY sizeEditField.label "Teɣzi:">
+<!ENTITY sizeEditField.accessKey "T">
+
+<!ENTITY pixelsLabel.value "ipiksilen">

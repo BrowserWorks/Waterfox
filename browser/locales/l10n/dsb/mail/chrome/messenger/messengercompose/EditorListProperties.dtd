@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Lisćinowe kakosći">
+
+<!ENTITY ListType.label "Lisćinowy typ">
+<!ENTITY bulletStyle.label "Stil naliceńskego znamuška:">
+<!ENTITY startingNumber.label "Zachopiś pśi:">
+<!ENTITY startingNumber.accessKey "Z">
+<!ENTITY none.value "Žedna">
+<!ENTITY bulletList.value "Naliceńska (njenumerěrowana lisćina) lisćina">
+<!ENTITY numberList.value "Numerěrowana lisćina">
+<!ENTITY definitionList.value "Definiciska lisćina">
+<!ENTITY changeEntireListRadio.label "Cełu lisćinu změniś">
+<!ENTITY changeEntireListRadio.accessKey "C">
+<!ENTITY changeSelectedRadio.label "Jano wubrane zapiski změniś">
+<!ENTITY changeSelectedRadio.accessKey "J">

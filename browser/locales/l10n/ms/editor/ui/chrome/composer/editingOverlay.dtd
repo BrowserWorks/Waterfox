@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Buka Fail…">
+<!ENTITY openFileCmd.accesskey "B">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Buka Lokasi Web…">
+<!ENTITY openRemoteCmd.accesskey "L">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "HalamanTerkini">
+<!ENTITY fileRecentMenu.accesskey "T">
+<!ENTITY saveCmd.label "Simpan">
+<!ENTITY saveCmd.accesskey "S">
+<!ENTITY saveAsCmd.label "Simpan Sebagai…">
+<!ENTITY saveAsCmd.accesskey "S">
+<!ENTITY saveAsChangeEncodingCmd2.label "Simpan Dan Tukar Pengekodan Teks">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "P">
+<!ENTITY publishCmd.label "Terbitkan">
+<!ENTITY publishCmd.accesskey "b">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Terbitkan Sebagai…">
+<!ENTITY publishAsCmd.accesskey "k">
+<!ENTITY fileRevert.label "Balikan">
+<!ENTITY fileRevert.accesskey "l">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Tetapan Laman Penerbitan…">
+<!ENTITY publishSettings.accesskey "b">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "Baru">
+<!ENTITY newToolbarCmd.tooltip "Cipta halaman Pengarang baru">
+<!ENTITY openToolbarCmd.label "Buka">
+<!ENTITY openToolbarCmd.tooltip "Buka fail lokal">
+<!ENTITY saveToolbarCmd.tooltip "Simpan fail dalam lokasi lokal">
+<!ENTITY publishToolbarCmd.tooltip "Muat naik fail ke lokasi jauh">

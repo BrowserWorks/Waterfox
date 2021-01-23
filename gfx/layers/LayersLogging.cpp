@@ -35,10 +35,19 @@ void AppendToString(std::stringstream& aStream, ScrollableLayerGuid::ViewID n,
   aStream << sfx;
 }
 
-void AppendToString(std::stringstream& aStream, const Color& c, const char* pfx,
-                    const char* sfx) {
+void AppendToString(std::stringstream& aStream, const sRGBColor& c,
+                    const char* pfx, const char* sfx) {
   aStream << pfx;
   aStream << nsPrintfCString("rgba(%d, %d, %d, %f)", uint8_t(c.r * 255.f),
+                             uint8_t(c.g * 255.f), uint8_t(c.b * 255.f), c.a)
+                 .get();
+  aStream << sfx;
+}
+
+void AppendToString(std::stringstream& aStream, const DeviceColor& c,
+                    const char* pfx, const char* sfx) {
+  aStream << pfx;
+  aStream << nsPrintfCString("dev_rgba(%d, %d, %d, %f)", uint8_t(c.r * 255.f),
                              uint8_t(c.g * 255.f), uint8_t(c.b * 255.f), c.a)
                  .get();
   aStream << sfx;
@@ -215,6 +224,7 @@ void AppendToString(std::stringstream& aStream, const FrameMetrics& m,
   AppendToString(aStream, m.GetCompositionBounds(), "{ [cb=");
   AppendToString(aStream, m.GetScrollableRect(), "] [sr=");
   AppendToString(aStream, m.GetScrollOffset(), "] [s=");
+  AppendToString(aStream, m.GetVisualViewportOffset(), "] [vs=");
   if (m.GetDoSmoothScroll()) {
     AppendToString(aStream, m.GetSmoothScrollOffset(), "] [ss=");
   }
@@ -237,9 +247,10 @@ void AppendToString(std::stringstream& aStream, const FrameMetrics& m,
     AppendToString(aStream, m.GetCumulativeResolution(), " cr=");
     AppendToString(aStream, m.GetZoom(), " z=");
     AppendToString(aStream, m.GetExtraResolution(), " er=");
-    aStream << nsPrintfCString(")] [u=(%d %d %" PRIu32 ")",
-                               m.GetScrollUpdateType(), m.GetDoSmoothScroll(),
-                               m.GetScrollGeneration())
+    aStream << nsPrintfCString(")] [u=(%d %d %d %" PRIu32 ")",
+                               m.GetScrollUpdateType(),
+                               m.GetVisualScrollUpdateType(),
+                               m.GetDoSmoothScroll(), m.GetScrollGeneration())
                    .get();
     aStream << nsPrintfCString("] [i=(%" PRIu32 " %" PRIu64 " %d)] }",
                                m.GetPresShellId(), m.GetScrollId(),
@@ -256,13 +267,6 @@ void AppendToString(std::stringstream& aStream, const ScrollableLayerGuid& s,
                              uint64_t(s.mLayersId), s.mPresShellId, s.mScrollId)
                  .get()
           << sfx;
-}
-
-void AppendToString(std::stringstream& aStream, const SLGuidAndRenderRoot& s,
-                    const char* pfx, const char* sfx) {
-  aStream << pfx << "{ ";
-  AppendToString(aStream, s.mScrollableLayerGuid, "s=");
-  aStream << nsPrintfCString(", r=%d }", (int)s.mRenderRoot).get() << sfx;
 }
 
 void AppendToString(std::stringstream& aStream, const ZoomConstraints& z,
@@ -434,11 +438,20 @@ void AppendToString(std::stringstream& aStream, gfx::SurfaceType aType,
     case SurfaceType::RECORDING:
       aStream << "SurfaceType::RECORDING";
       break;
+    case SurfaceType::WRAP_AND_RECORD:
+      aStream << "SurfaceType::WRAP_AND_RECORD";
+      break;
     case SurfaceType::TILED:
       aStream << "SurfaceType::TILED";
       break;
     case SurfaceType::DATA_SHARED:
       aStream << "SurfaceType::DATA_SHARED";
+      break;
+    case SurfaceType::DATA_RECYCLING_SHARED:
+      aStream << "SurfaceType::DATA_RECYCLING_SHARED";
+      break;
+    case SurfaceType::DATA_ALIGNED:
+      aStream << "SurfaceType::DATA_ALIGNED";
       break;
     default:
       NS_ERROR("unknown surface type");

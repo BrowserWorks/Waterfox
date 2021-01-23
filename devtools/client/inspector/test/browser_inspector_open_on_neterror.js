@@ -16,9 +16,9 @@ add_task(async function() {
     "data:text/html,empty"
   ));
   await BrowserTestUtils.browserLoaded(tab.linkedBrowser);
-  await ContentTask.spawn(
+  await SpecialPowers.spawn(
     tab.linkedBrowser,
-    { url: TEST_URL_1 },
+    [{ url: TEST_URL_1 }],
     async function({ url }) {
       // Also, the neterror being privileged, the DOMContentLoaded only fires on
       // the chromeEventHandler.
@@ -43,7 +43,7 @@ add_task(async function() {
   );
 
   info("Navigate to a valid url");
-  await navigateTo(inspector, TEST_URL_2);
+  await navigateTo(TEST_URL_2);
 
   is(
     await getDisplayedNodeTextContent("body", inspector),

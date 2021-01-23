@@ -12,7 +12,7 @@
 
 "use strict";
 
-var EXPORTED_SYMBOLS = ["LoginHelper"];
+const EXPORTED_SYMBOLS = ["LoginHelper"];
 
 // Globals
 
@@ -20,25 +20,38 @@ const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { XPCOMUtils } = ChromeUtils.import(
   "resource://gre/modules/XPCOMUtils.jsm"
 );
+ChromeUtils.defineModuleGetter(
+  this,
+  "OSKeyStore",
+  "resource://gre/modules/OSKeyStore.jsm"
+);
 
 /**
  * Contains functions shared by different Login Manager components.
  */
-var LoginHelper = {
+this.LoginHelper = {
   debug: null,
   enabled: null,
+  storageEnabled: null,
   formlessCaptureEnabled: null,
+  generationAvailable: null,
+  generationConfidenceThreshold: null,
+  generationEnabled: null,
+  includeOtherSubdomainsInLookup: null,
   insecureAutofill: null,
-  managementURI: null,
   privateBrowsingCaptureEnabled: null,
   schemeUpgrades: null,
   showAutoCompleteFooter: null,
+  showAutoCompleteImport: null,
+  testOnlyUserHasInteractedWithDocument: null,
+  userInputRequiredToCapture: null,
 
   init() {
     // Watch for pref changes to update cached pref values.
     Services.prefs.addObserver("signon.", () => this.updateSignonPrefs());
     this.updateSignonPrefs();
     Services.telemetry.setEventRecordingEnabled("pwmgr", true);
+    Services.telemetry.setEventRecordingEnabled("form_autocomplete", true);
   },
 
   updateSignonPrefs() {
@@ -48,15 +61,30 @@ var LoginHelper = {
     );
     this.debug = Services.prefs.getBoolPref("signon.debug");
     this.enabled = Services.prefs.getBoolPref("signon.rememberSignons");
+    this.storageEnabled = Services.prefs.getBoolPref(
+      "signon.storeSignons",
+      true
+    );
     this.formlessCaptureEnabled = Services.prefs.getBoolPref(
       "signon.formlessCapture.enabled"
+    );
+    this.generationAvailable = Services.prefs.getBoolPref(
+      "signon.generation.available"
+    );
+    this.generationConfidenceThreshold = parseFloat(
+      Services.prefs.getStringPref("signon.generation.confidenceThreshold")
+    );
+    this.generationEnabled = Services.prefs.getBoolPref(
+      "signon.generation.enabled"
     );
     this.insecureAutofill = Services.prefs.getBoolPref(
       "signon.autofillForms.http"
     );
-    this.managementURI = Services.prefs.getStringPref(
-      "signon.management.overrideURI",
-      null
+    this.includeOtherSubdomainsInLookup = Services.prefs.getBoolPref(
+      "signon.includeOtherSubdomainsInLookup"
+    );
+    this.passwordEditCaptureEnabled = Services.prefs.getBoolPref(
+      "signon.passwordEditCapture.enabled"
     );
     this.privateBrowsingCaptureEnabled = Services.prefs.getBoolPref(
       "signon.privateBrowsingCapture.enabled"
@@ -65,8 +93,42 @@ var LoginHelper = {
     this.showAutoCompleteFooter = Services.prefs.getBoolPref(
       "signon.showAutoCompleteFooter"
     );
+
+    // Only enable experiment telemetry for specific pref-controlled branches.
+    this.showAutoCompleteImport = Services.prefs.getStringPref(
+      "signon.showAutoCompleteImport",
+      ""
+    );
+    if (["control", "import"].includes(this.showAutoCompleteImport)) {
+      Services.telemetry.setEventRecordingEnabled("exp_import", true);
+    } else {
+      Services.telemetry.setEventRecordingEnabled("exp_import", false);
+    }
+
     this.storeWhenAutocompleteOff = Services.prefs.getBoolPref(
       "signon.storeWhenAutocompleteOff"
+    );
+
+    if (
+      Services.prefs.getBoolPref(
+        "signon.testOnlyUserHasInteractedByPrefValue",
+        false
+      )
+    ) {
+      this.testOnlyUserHasInteractedWithDocument = Services.prefs.getBoolPref(
+        "signon.testOnlyUserHasInteractedWithDocument",
+        false
+      );
+      log.debug(
+        "updateSignonPrefs, using pref value for testOnlyUserHasInteractedWithDocument",
+        this.testOnlyUserHasInteractedWithDocument
+      );
+    } else {
+      this.testOnlyUserHasInteractedWithDocument = null;
+    }
+
+    this.userInputRequiredToCapture = Services.prefs.getBoolPref(
+      "signon.userInputRequiredToCapture.enabled"
     );
   },
 
@@ -96,21 +158,21 @@ var LoginHelper = {
   /**
    * Due to the way the signons2.txt file is formatted, we need to make
    * sure certain field values or characters do not cause the file to
-   * be parsed incorrectly.  Reject hostnames that we can't store correctly.
+   * be parsed incorrectly.  Reject origins that we can't store correctly.
    *
    * @throws String with English message in case validation failed.
    */
-  checkHostnameValue(aHostname) {
+  checkOriginValue(aOrigin) {
     // Nulls are invalid, as they don't round-trip well.  Newlines are also
-    // invalid for any field stored as plaintext, and a hostname made of a
+    // invalid for any field stored as plaintext, and an origin made of a
     // single dot cannot be stored in the legacy format.
     if (
-      aHostname == "." ||
-      aHostname.includes("\r") ||
-      aHostname.includes("\n") ||
-      aHostname.includes("\0")
+      aOrigin == "." ||
+      aOrigin.includes("\r") ||
+      aOrigin.includes("\n") ||
+      aOrigin.includes("\0")
     ) {
-      throw new Error("Invalid hostname");
+      throw new Error("Invalid origin");
     }
   },
 
@@ -124,9 +186,9 @@ var LoginHelper = {
   checkLoginValues(aLogin) {
     function badCharacterPresent(l, c) {
       return (
-        (l.formSubmitURL && l.formSubmitURL.includes(c)) ||
+        (l.formActionOrigin && l.formActionOrigin.includes(c)) ||
         (l.httpRealm && l.httpRealm.includes(c)) ||
-        l.hostname.includes(c) ||
+        l.origin.includes(c) ||
         l.usernameField.includes(c) ||
         l.passwordField.includes(c)
       );
@@ -155,15 +217,15 @@ var LoginHelper = {
     }
 
     // A line with just a "." can have special meaning.
-    if (aLogin.usernameField == "." || aLogin.formSubmitURL == ".") {
+    if (aLogin.usernameField == "." || aLogin.formActionOrigin == ".") {
       throw new Error("login values can't be periods");
     }
 
-    // A hostname with "\ \(" won't roundtrip.
+    // An origin with "\ \(" won't roundtrip.
     // eg host="foo (", realm="bar" --> "foo ( (bar)"
     // vs host="foo", realm=" (bar" --> "foo ( (bar)"
-    if (aLogin.hostname.includes(" (")) {
-      throw new Error("bad parens in hostname");
+    if (aLogin.origin.includes(" (")) {
+      throw new Error("bad parens in origin");
     }
   },
 
@@ -195,6 +257,7 @@ var LoginHelper = {
   /**
    * Helper to avoid the property bags when calling
    * Services.logins.searchLogins from JS.
+   * @deprecated Use Services.logins.searchLoginsAsync instead.
    *
    * @param {Object} aSearchOptions - A regular JS object to copy to a property bag before searching
    * @return {nsILoginInfo[]} - The result of calling searchLogins.
@@ -230,6 +293,7 @@ var LoginHelper = {
       if (allowJS && uri.scheme == "javascript") {
         return "javascript:";
       }
+      // TODO: Bug 1559205 - Add support for moz-proxy
 
       // Build this manually instead of using prePath to avoid including the userPass portion.
       realm = uri.scheme + "://" + uri.displayHostPort;
@@ -257,7 +321,7 @@ var LoginHelper = {
 
   /**
    * @param {String} aLoginOrigin - An origin value from a stored login's
-   *                                hostname or formSubmitURL properties.
+   *                                origin or formActionOrigin properties.
    * @param {String} aSearchOrigin - The origin that was are looking to match
    *                                 with aLoginOrigin. This would normally come
    *                                 from a form or page that we are considering.
@@ -272,6 +336,7 @@ var LoginHelper = {
     aOptions = {
       schemeUpgrades: false,
       acceptWildcardMatch: false,
+      acceptDifferentSubdomains: false,
     }
   ) {
     if (aLoginOrigin == aSearchOrigin) {
@@ -286,21 +351,42 @@ var LoginHelper = {
       return true;
     }
 
-    if (aOptions.schemeUpgrades) {
-      try {
-        let loginURI = Services.io.newURI(aLoginOrigin);
-        let searchURI = Services.io.newURI(aSearchOrigin);
+    // We can only match logins now if either of these flags are true, so
+    // avoid doing the work of constructing URL objects if neither is true.
+    if (!aOptions.acceptDifferentSubdomains && !aOptions.schemeUpgrades) {
+      return false;
+    }
+
+    try {
+      let loginURI = Services.io.newURI(aLoginOrigin);
+      let searchURI = Services.io.newURI(aSearchOrigin);
+      let schemeMatches =
+        loginURI.scheme == "http" && searchURI.scheme == "https";
+
+      if (aOptions.acceptDifferentSubdomains) {
+        let loginBaseDomain = Services.eTLD.getBaseDomain(loginURI);
+        let searchBaseDomain = Services.eTLD.getBaseDomain(searchURI);
         if (
-          loginURI.scheme == "http" &&
-          searchURI.scheme == "https" &&
-          loginURI.hostPort == searchURI.hostPort
+          loginBaseDomain == searchBaseDomain &&
+          (loginURI.scheme == searchURI.scheme ||
+            (aOptions.schemeUpgrades && schemeMatches))
         ) {
           return true;
         }
-      } catch (ex) {
-        // newURI will throw for some values e.g. chrome://FirefoxAccounts
-        return false;
       }
+
+      if (
+        aOptions.schemeUpgrades &&
+        loginURI.host == searchURI.host &&
+        schemeMatches &&
+        loginURI.port == searchURI.port
+      ) {
+        return true;
+      }
+    } catch (ex) {
+      // newURI will throw for some values e.g. chrome://FirefoxAccounts
+      // uri.host and uri.port will throw for some values e.g. javascript:
+      return false;
     }
 
     return false;
@@ -323,30 +409,30 @@ var LoginHelper = {
     }
 
     if (ignoreSchemes) {
-      let login1HostPort = this.maybeGetHostPortForURL(aLogin1.hostname);
-      let login2HostPort = this.maybeGetHostPortForURL(aLogin2.hostname);
+      let login1HostPort = this.maybeGetHostPortForURL(aLogin1.origin);
+      let login2HostPort = this.maybeGetHostPortForURL(aLogin2.origin);
       if (login1HostPort != login2HostPort) {
         return false;
       }
 
       if (
-        aLogin1.formSubmitURL != "" &&
-        aLogin2.formSubmitURL != "" &&
-        this.maybeGetHostPortForURL(aLogin1.formSubmitURL) !=
-          this.maybeGetHostPortForURL(aLogin2.formSubmitURL)
+        aLogin1.formActionOrigin != "" &&
+        aLogin2.formActionOrigin != "" &&
+        this.maybeGetHostPortForURL(aLogin1.formActionOrigin) !=
+          this.maybeGetHostPortForURL(aLogin2.formActionOrigin)
       ) {
         return false;
       }
     } else {
-      if (aLogin1.hostname != aLogin2.hostname) {
+      if (aLogin1.origin != aLogin2.origin) {
         return false;
       }
 
-      // If either formSubmitURL is blank (but not null), then match.
+      // If either formActionOrigin is blank (but not null), then match.
       if (
-        aLogin1.formSubmitURL != "" &&
-        aLogin2.formSubmitURL != "" &&
-        aLogin1.formSubmitURL != aLogin2.formSubmitURL
+        aLogin1.formActionOrigin != "" &&
+        aLogin2.formActionOrigin != "" &&
+        aLogin1.formActionOrigin != aLogin2.formActionOrigin
       ) {
         return false;
       }
@@ -387,8 +473,8 @@ var LoginHelper = {
       // with the replacement nsILoginInfo data from the new login.
       newLogin = aOldStoredLogin.clone();
       newLogin.init(
-        aNewLoginData.hostname,
-        aNewLoginData.formSubmitURL,
+        aNewLoginData.origin,
+        aNewLoginData.formActionOrigin,
         aNewLoginData.httpRealm,
         aNewLoginData.username,
         aNewLoginData.password,
@@ -418,15 +504,15 @@ var LoginHelper = {
 
       for (let prop of aNewLoginData.enumerator) {
         switch (prop.name) {
-          // nsILoginInfo
-          case "hostname":
+          // nsILoginInfo (fall through)
+          case "origin":
           case "httpRealm":
-          case "formSubmitURL":
+          case "formActionOrigin":
           case "username":
           case "password":
           case "usernameField":
           case "passwordField":
-          // nsILoginMetaInfo
+          // nsILoginMetaInfo (fall through)
           case "guid":
           case "timeCreated":
           case "timeLastUsed":
@@ -450,8 +536,8 @@ var LoginHelper = {
     }
 
     // Sanity check the login
-    if (newLogin.hostname == null || newLogin.hostname.length == 0) {
-      throw new Error("Can't add a login with a null or empty hostname.");
+    if (newLogin.origin == null || !newLogin.origin.length) {
+      throw new Error("Can't add a login with a null or empty origin.");
     }
 
     // For logins w/o a username, set to "", not null.
@@ -459,28 +545,28 @@ var LoginHelper = {
       throw new Error("Can't add a login with a null username.");
     }
 
-    if (newLogin.password == null || newLogin.password.length == 0) {
+    if (newLogin.password == null || !newLogin.password.length) {
       throw new Error("Can't add a login with a null or empty password.");
     }
 
-    if (newLogin.formSubmitURL || newLogin.formSubmitURL == "") {
+    if (newLogin.formActionOrigin || newLogin.formActionOrigin == "") {
       // We have a form submit URL. Can't have a HTTP realm.
       if (newLogin.httpRealm != null) {
         throw new Error(
-          "Can't add a login with both a httpRealm and formSubmitURL."
+          "Can't add a login with both a httpRealm and formActionOrigin."
         );
       }
     } else if (newLogin.httpRealm) {
       // We have a HTTP realm. Can't have a form submit URL.
-      if (newLogin.formSubmitURL != null) {
+      if (newLogin.formActionOrigin != null) {
         throw new Error(
-          "Can't add a login with both a httpRealm and formSubmitURL."
+          "Can't add a login with both a httpRealm and formActionOrigin."
         );
       }
     } else {
       // Need one or the other!
       throw new Error(
-        "Can't add a login without a httpRealm or formSubmitURL."
+        "Can't add a login without a httpRealm or formActionOrigin."
       );
     }
 
@@ -488,6 +574,62 @@ var LoginHelper = {
     this.checkLoginValues(newLogin);
 
     return newLogin;
+  },
+
+  /**
+   * Remove http: logins when there is an https: login with the same username and hostPort.
+   * Sort order is preserved.
+   *
+   * @param {nsILoginInfo[]} logins
+   *        A list of logins we want to process for shadowing.
+   * @returns {nsILoginInfo[]} A subset of of the passed logins.
+   */
+  shadowHTTPLogins(logins) {
+    /**
+     * Map a (hostPort, username) to a boolean indicating whether `logins`
+     * contains an https: login for that combo.
+     */
+    let hasHTTPSByHostPortUsername = new Map();
+    for (let login of logins) {
+      let key = this.getUniqueKeyForLogin(login, ["hostPort", "username"]);
+      let hasHTTPSlogin = hasHTTPSByHostPortUsername.get(key) || false;
+      let loginURI = Services.io.newURI(login.origin);
+      hasHTTPSByHostPortUsername.set(
+        key,
+        loginURI.scheme == "https" || hasHTTPSlogin
+      );
+    }
+
+    return logins.filter(login => {
+      let key = this.getUniqueKeyForLogin(login, ["hostPort", "username"]);
+      let loginURI = Services.io.newURI(login.origin);
+      if (loginURI.scheme == "http" && hasHTTPSByHostPortUsername.get(key)) {
+        // If this is an http: login and we have an https: login for the
+        // (hostPort, username) combo then remove it.
+        return false;
+      }
+      return true;
+    });
+  },
+
+  /**
+   * Generate a unique key string from a login.
+   * @param {nsILoginInfo} login
+   * @param {string[]} uniqueKeys containing nsILoginInfo attribute names or "hostPort"
+   * @returns {string} to use as a key in a Map
+   */
+  getUniqueKeyForLogin(login, uniqueKeys) {
+    const KEY_DELIMITER = ":";
+    return uniqueKeys.reduce((prev, key) => {
+      let val = null;
+      if (key == "hostPort") {
+        val = Services.io.newURI(login.origin).hostPort;
+      } else {
+        val = login[key];
+      }
+
+      return prev + KEY_DELIMITER + val;
+    }, "");
   },
 
   /**
@@ -522,13 +664,19 @@ var LoginHelper = {
     preferredOrigin = undefined,
     preferredFormActionOrigin = undefined
   ) {
-    const KEY_DELIMITER = ":";
-
-    if (!preferredOrigin && resolveBy.includes("scheme")) {
-      throw new Error(
-        "dedupeLogins: `preferredOrigin` is required in order to " +
-          "prefer schemes which match it."
-      );
+    if (!preferredOrigin) {
+      if (resolveBy.includes("scheme")) {
+        throw new Error(
+          "dedupeLogins: `preferredOrigin` is required in order to " +
+            "prefer schemes which match it."
+        );
+      }
+      if (resolveBy.includes("subdomain")) {
+        throw new Error(
+          "dedupeLogins: `preferredOrigin` is required in order to " +
+            "prefer subdomains which match it."
+        );
+      }
     }
 
     let preferredOriginScheme;
@@ -550,14 +698,6 @@ var LoginHelper = {
     // We use a Map to easily lookup logins by their unique keys.
     let loginsByKeys = new Map();
 
-    // Generate a unique key string from a login.
-    function getKey(login, uniqueKeys) {
-      return uniqueKeys.reduce(
-        (prev, key) => prev + KEY_DELIMITER + login[key],
-        ""
-      );
-    }
-
     /**
      * @return {bool} whether `login` is preferred over its duplicate (considering `uniqueKeys`)
      *                `existingLogin`.
@@ -566,7 +706,7 @@ var LoginHelper = {
      * over the existingLogin.
      */
     function isLoginPreferred(existingLogin, login) {
-      if (!resolveBy || resolveBy.length == 0) {
+      if (!resolveBy || !resolveBy.length) {
         // If there is no preference, prefer the existing login.
         return false;
       }
@@ -579,12 +719,12 @@ var LoginHelper = {
             }
             if (
               LoginHelper.isOriginMatching(
-                existingLogin.formSubmitURL,
+                existingLogin.formActionOrigin,
                 preferredFormActionOrigin,
                 { schemeUpgrades: LoginHelper.schemeUpgrades }
               ) &&
               !LoginHelper.isOriginMatching(
-                login.formSubmitURL,
+                login.formActionOrigin,
                 preferredFormActionOrigin,
                 { schemeUpgrades: LoginHelper.schemeUpgrades }
               )
@@ -599,9 +739,9 @@ var LoginHelper = {
             }
 
             try {
-              // Only `hostname` is currently considered
-              let existingLoginURI = Services.io.newURI(existingLogin.hostname);
-              let loginURI = Services.io.newURI(login.hostname);
+              // Only `origin` is currently considered
+              let existingLoginURI = Services.io.newURI(existingLogin.origin);
+              let loginURI = Services.io.newURI(login.origin);
               // If the schemes of the two logins are the same or neither match the
               // preferredOriginScheme then we have no preference and look at the next resolveBy.
               if (
@@ -617,12 +757,39 @@ var LoginHelper = {
               // Some URLs aren't valid nsIURI (e.g. chrome://FirefoxAccounts)
               log.debug(
                 "dedupeLogins/shouldReplaceExisting: Error comparing schemes:",
-                existingLogin.hostname,
-                login.hostname,
+                existingLogin.origin,
+                login.origin,
                 "preferredOrigin:",
                 preferredOrigin,
                 ex
               );
+            }
+            break;
+          }
+          case "subdomain": {
+            // Replace the existing login only if the new login is an exact match on the host.
+            let existingLoginURI = Services.io.newURI(existingLogin.origin);
+            let newLoginURI = Services.io.newURI(login.origin);
+            let preferredOriginURI = Services.io.newURI(preferredOrigin);
+            if (
+              existingLoginURI.hostPort != preferredOriginURI.hostPort &&
+              newLoginURI.hostPort == preferredOriginURI.hostPort
+            ) {
+              return true;
+            }
+            if (
+              existingLoginURI.host != preferredOriginURI.host &&
+              newLoginURI.host == preferredOriginURI.host
+            ) {
+              return true;
+            }
+            // if the existing login host *is* a match and the new one isn't
+            // we explicitly want to keep the existing one
+            if (
+              existingLoginURI.host == preferredOriginURI.host &&
+              newLoginURI.host != preferredOriginURI.host
+            ) {
+              return false;
             }
             break;
           }
@@ -653,7 +820,7 @@ var LoginHelper = {
     }
 
     for (let login of logins) {
-      let key = getKey(login, uniqueKeys);
+      let key = this.getUniqueKeyForLogin(login, uniqueKeys);
 
       if (loginsByKeys.has(key)) {
         if (!isLoginPreferred(loginsByKeys.get(key), login)) {
@@ -683,27 +850,50 @@ var LoginHelper = {
    *                 The name of the entry point, used for telemetry
    */
   openPasswordManager(window, { filterString = "", entryPoint = "" } = {}) {
-    Services.telemetry.recordEvent("pwmgr", "open_management", entryPoint);
-    if (this.managementURI && window.openTrustedLinkIn) {
-      let managementURL = this.managementURI.replace(
-        "%DOMAIN%",
-        window.encodeURIComponent(filterString)
-      );
-      window.openTrustedLinkIn(managementURL, "tab");
-      return;
+    const params = new URLSearchParams({
+      ...(filterString && { filter: filterString }),
+      ...(entryPoint && { entryPoint }),
+    });
+    const separator = params.toString() ? "?" : "";
+    const destination = `about:logins${separator}${params}`;
+
+    // We assume that managementURL has a '?' already
+    window.openTrustedLinkIn(destination, "tab");
+  },
+
+  /**
+   * Checks if a field type is password compatible.
+   *
+   * @param {Element} element
+   *                  the field we want to check.
+   *
+   * @returns {Boolean} true if the field can
+   *                    be treated as a password input
+   */
+  isPasswordFieldType(element) {
+    if (ChromeUtils.getClassName(element) !== "HTMLInputElement") {
+      return false;
     }
-    let win = Services.wm.getMostRecentWindow("Toolkit:PasswordManager");
-    if (win) {
-      win.setFilter(filterString);
-      win.focus();
-    } else {
-      window.openDialog(
-        "chrome://passwordmgr/content/passwordManager.xul",
-        "Toolkit:PasswordManager",
-        "",
-        { filterString }
-      );
+
+    if (!element.isConnected) {
+      // If the element isn't connected then it isn't visible to the user so
+      // shouldn't be considered. It must have been connected in the past.
+      return false;
     }
+
+    if (!element.hasBeenTypePassword) {
+      return false;
+    }
+
+    // Ensure the element is of a type that could have autocomplete.
+    // These include the types with user-editable values. If not, even if it used to be
+    // a type=password, we can't treat it as a password input now
+    let acInfo = element.getAutocompleteInfo();
+    if (!acInfo) {
+      return false;
+    }
+
+    return true;
   },
 
   /**
@@ -723,6 +913,10 @@ var LoginHelper = {
     if (!element.isConnected) {
       // If the element isn't connected then it isn't visible to the user so
       // shouldn't be considered. It must have been connected in the past.
+      return false;
+    }
+
+    if (element.hasBeenTypePassword) {
       return false;
     }
 
@@ -775,8 +969,8 @@ var LoginHelper = {
         Ci.nsILoginInfo
       );
       login.init(
-        loginData.hostname,
-        loginData.formSubmitURL ||
+        loginData.origin,
+        loginData.formActionOrigin ||
           (typeof loginData.httpRealm == "string" ? null : ""),
         typeof loginData.httpRealm == "string" ? loginData.httpRealm : null,
         loginData.username,
@@ -804,9 +998,9 @@ var LoginHelper = {
       // First, we need to check the logins that we've already decided to add, to
       // see if this is a duplicate. This should mirror the logic below for
       // existingLogins, but only for the array of logins we're adding.
-      let newLogins = loginMap.get(login.hostname) || [];
+      let newLogins = loginMap.get(login.origin) || [];
       if (!newLogins) {
-        loginMap.set(login.hostname, newLogins);
+        loginMap.set(login.origin, newLogins);
       } else {
         if (newLogins.some(l => login.matches(l, false /* ignorePassword */))) {
           continue;
@@ -833,11 +1027,11 @@ var LoginHelper = {
         }
       }
 
-      // While here we're passing formSubmitURL and httpRealm, they could be empty/null and get
+      // While here we're passing formActionOrigin and httpRealm, they could be empty/null and get
       // ignored in that case, leading to multiple logins for the same username.
       let existingLogins = Services.logins.findLogins(
-        login.hostname,
-        login.formSubmitURL,
+        login.origin,
+        login.formActionOrigin,
         login.httpRealm
       );
       // Check for an existing login that matches *including* the password.
@@ -918,8 +1112,8 @@ var LoginHelper = {
       Ci.nsILoginInfo
     );
     formLogin.init(
-      login.hostname,
-      login.formSubmitURL,
+      login.origin,
+      login.formActionOrigin,
       login.httpRealm,
       login.username,
       login.password,
@@ -959,6 +1153,113 @@ var LoginHelper = {
   },
 
   /**
+   * Shows the Master Password prompt if enabled, or the
+   * OS auth dialog otherwise.
+   * @param {Element} browser
+   *        The <browser> that the prompt should be shown on
+   * @param OSReauthEnabled Boolean indicating if OS reauth should be tried
+   * @param expirationTime Optional timestamp indicating next required re-authentication
+   * @param messageText Formatted and localized string to be displayed when the OS auth dialog is used.
+   * @param captionText Formatted and localized string to be displayed when the OS auth dialog is used.
+   */
+  async requestReauth(
+    browser,
+    OSReauthEnabled,
+    expirationTime,
+    messageText,
+    captionText
+  ) {
+    let isAuthorized = false;
+    let telemetryEvent;
+
+    // This does no harm if master password isn't set.
+    let tokendb = Cc["@mozilla.org/security/pk11tokendb;1"].createInstance(
+      Ci.nsIPK11TokenDB
+    );
+    let token = tokendb.getInternalKeyToken();
+
+    // Do we have a recent authorization?
+    if (expirationTime && Date.now() < expirationTime) {
+      isAuthorized = true;
+      telemetryEvent = {
+        object: token.hasPassword ? "master_password" : "os_auth",
+        method: "reauthenticate",
+        value: "success_no_prompt",
+      };
+      return {
+        isAuthorized,
+        telemetryEvent,
+      };
+    }
+
+    // Default to true if there is no master password and OS reauth is not available
+    if (!token.hasPassword && !OSReauthEnabled) {
+      isAuthorized = true;
+      telemetryEvent = {
+        object: "os_auth",
+        method: "reauthenticate",
+        value: "success_disabled",
+      };
+      return {
+        isAuthorized,
+        telemetryEvent,
+      };
+    }
+    // Use the OS auth dialog if there is no master password
+    if (!token.hasPassword && OSReauthEnabled) {
+      let result = await OSKeyStore.ensureLoggedIn(
+        messageText,
+        captionText,
+        browser.ownerGlobal,
+        false
+      );
+      isAuthorized = result.authenticated;
+      telemetryEvent = {
+        object: "os_auth",
+        method: "reauthenticate",
+        value: result.auth_details,
+        extra: result.auth_details_extra,
+      };
+      return {
+        isAuthorized,
+        telemetryEvent,
+      };
+    }
+    // We'll attempt to re-auth via Master Password, force a log-out
+    token.checkPassword("");
+
+    // If a master password prompt is already open, just exit early and return false.
+    // The user can re-trigger it after responding to the already open dialog.
+    if (Services.logins.uiBusy) {
+      isAuthorized = false;
+      return {
+        isAuthorized,
+        telemetryEvent,
+      };
+    }
+
+    // So there's a master password. But since checkPassword didn't succeed, we're logged out (per nsIPK11Token.idl).
+    try {
+      // Relogin and ask for the master password.
+      token.login(true); // 'true' means always prompt for token password. User will be prompted until
+      // clicking 'Cancel' or entering the correct password.
+    } catch (e) {
+      // An exception will be thrown if the user cancels the login prompt dialog.
+      // User is also logged out of Software Security Device.
+    }
+    isAuthorized = token.isLoggedIn();
+    telemetryEvent = {
+      object: "master_password",
+      method: "reauthenticate",
+      value: isAuthorized ? "success" : "fail",
+    };
+    return {
+      isAuthorized,
+      telemetryEvent,
+    };
+  },
+
+  /**
    * Send a notification when stored data is changed.
    */
   notifyStorageChanged(changeType, data) {
@@ -983,9 +1284,70 @@ var LoginHelper = {
       changeType
     );
   },
-};
 
-LoginHelper.init();
+  isUserFacingLogin(login) {
+    return login.origin != "chrome://FirefoxAccounts"; // FXA_PWDMGR_HOST
+  },
+
+  async getAllUserFacingLogins() {
+    try {
+      let logins = await Services.logins.getAllLoginsAsync();
+      return logins.filter(this.isUserFacingLogin);
+    } catch (e) {
+      if (e.result == Cr.NS_ERROR_ABORT) {
+        // If the user cancels the MP prompt then return no logins.
+        return [];
+      }
+      throw e;
+    }
+  },
+
+  createLoginAlreadyExistsError(guid) {
+    // The GUID is stored in an nsISupportsString here because we cannot pass
+    // raw JS objects within Components.Exception due to bug 743121.
+    let guidSupportsString = Cc[
+      "@mozilla.org/supports-string;1"
+    ].createInstance(Ci.nsISupportsString);
+    guidSupportsString.data = guid;
+    return Components.Exception("This login already exists.", {
+      data: guidSupportsString,
+    });
+  },
+
+  /**
+   * Determine the <browser> that a prompt should be shown on.
+   *
+   * Some sites pop up a temporary login window, which disappears
+   * upon submission of credentials. We want to put the notification
+   * prompt in the opener window if this seems to be happening.
+   *
+   * @param {Element} browser
+   *        The <browser> that a prompt was triggered for
+   * @returns {Element} The <browser> that the prompt should be shown on,
+   *                    which could be in a different window.
+   */
+  getBrowserForPrompt(browser) {
+    let chromeWindow = browser.ownerGlobal;
+    let openerBrowsingContext = browser.browsingContext.opener;
+    let openerBrowser = openerBrowsingContext
+      ? openerBrowsingContext.top.embedderElement
+      : null;
+    if (openerBrowser) {
+      let chromeDoc = chromeWindow.document.documentElement;
+
+      // Check to see if the current window was opened with chrome
+      // disabled, and if so use the opener window. But if the window
+      // has been used to visit other pages (ie, has a history),
+      // assume it'll stick around and *don't* use the opener.
+      if (chromeDoc.getAttribute("chromehidden") && !browser.canGoBack) {
+        log.debug("Using opener window for prompt.");
+        return openerBrowser;
+      }
+    }
+
+    return browser;
+  },
+};
 
 XPCOMUtils.defineLazyPreferenceGetter(
   LoginHelper,
@@ -994,6 +1356,11 @@ XPCOMUtils.defineLazyPreferenceGetter(
 );
 
 XPCOMUtils.defineLazyGetter(this, "log", () => {
-  let logger = LoginHelper.createLogger("LoginHelper");
-  return logger;
+  let processName =
+    Services.appinfo.processType === Services.appinfo.PROCESS_TYPE_DEFAULT
+      ? "Main"
+      : "Content";
+  return LoginHelper.createLogger(`LoginHelper(${processName})`);
 });
+
+LoginHelper.init();

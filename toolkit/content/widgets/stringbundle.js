@@ -59,8 +59,7 @@
       try {
         return this.stringBundle.formatStringFromName(
           aStringKey,
-          aStringsArray,
-          aStringsArray.length
+          aStringsArray
         );
       } catch (e) {
         dump(

@@ -11,6 +11,8 @@
 #include "mozilla/AbstractEventQueue.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/Mutex.h"
+#include "nsIThreadInternal.h"
+#include "nsCOMPtr.h"
 #include "nsTObserverArray.h"
 
 class nsIEventTarget;
@@ -51,13 +53,15 @@ class ThreadTargetSink {
       mozilla::MallocSizeOf aMallocSizeOf) const = 0;
 
  protected:
-  virtual ~ThreadTargetSink() {}
+  virtual ~ThreadTargetSink() = default;
 };
 
 class SynchronizedEventQueue : public ThreadTargetSink {
  public:
   virtual already_AddRefed<nsIRunnable> GetEvent(
-      bool aMayWait, EventQueuePriority* aPriority) = 0;
+      bool aMayWait, EventQueuePriority* aPriority,
+      mozilla::TimeDuration* aLastEventDelay = nullptr) = 0;
+  virtual void DidRunEvent() = 0;
   virtual bool HasPendingEvent() = 0;
 
   virtual bool HasPendingHighPriorityEvents() = 0;
@@ -113,7 +117,7 @@ class SynchronizedEventQueue : public ThreadTargetSink {
   virtual void PopEventQueue(nsIEventTarget* aTarget) = 0;
 
  protected:
-  virtual ~SynchronizedEventQueue() {}
+  virtual ~SynchronizedEventQueue() = default;
 
  private:
   nsTObserverArray<nsCOMPtr<nsIThreadObserver>> mEventObservers;

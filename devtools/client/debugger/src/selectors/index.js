@@ -9,7 +9,7 @@ export * from "../reducers/sources";
 export * from "../reducers/tabs";
 export * from "../reducers/event-listeners";
 export * from "../reducers/pause";
-export * from "../reducers/debuggee";
+export * from "../reducers/threads";
 export * from "../reducers/breakpoints";
 export * from "../reducers/pending-breakpoints";
 export * from "../reducers/ui";
@@ -33,8 +33,10 @@ export {
 } from "../reducers/quick-open";
 
 export {
+  getClosestBreakpoint,
   getBreakpointAtLocation,
   getBreakpointsAtLine,
+  getClosestBreakpointPosition,
 } from "./breakpointAtLocation";
 export {
   getVisibleBreakpoints,
@@ -44,6 +46,7 @@ export { inComponent } from "./inComponent";
 export { isSelectedFrameVisible } from "./isSelectedFrameVisible";
 export { getCallStackFrames } from "./getCallStackFrames";
 export { getBreakpointSources } from "./breakpointSources";
+export { isLineInScope } from "./isLineInScope";
 export { getXHRBreakpoints, shouldPauseOnAnyXHR } from "./breakpoints";
 export * from "./visibleColumnBreakpoints";
 export {

@@ -5,11 +5,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
 #include <set>
 
-#include "gtest/gtest.h"
 #include "ChunkSet.h"
 #include "mozilla/ArrayUtils.h"
+
+#include "Common.h"
 
 TEST(UrlClassifierChunkSet, Empty)
 {
@@ -188,7 +190,7 @@ TEST(UrlClassifierChunkSet, Stress)
   }
 
   mozilla::safebrowsing::ChunkSet origSet;
-  origSet = chunkSet;
+  origSet = chunkSet.InfallibleClone();
 
   chunkSet.Merge(mergeSet);
   refSet.insert(refMergeSet.begin(), refMergeSet.end());

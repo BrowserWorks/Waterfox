@@ -10,8 +10,6 @@
 #include "CacheIndexIterator.h"
 #include "CacheIndexContextIterator.h"
 #include "nsThreadUtils.h"
-#include "nsISimpleEnumerator.h"
-#include "nsIDirectoryEnumerator.h"
 #include "nsISizeOf.h"
 #include "nsPrintfCString.h"
 #include "mozilla/DebugOnly.h"
@@ -26,7 +24,7 @@
 #define kMinUnwrittenChanges 300
 #define kMinDumpInterval 20000  // in milliseconds
 #define kMaxBufSize 16384
-#define kIndexVersion 0x00000008
+#define kIndexVersion 0x00000009
 #define kUpdateIndexStartDelay 50000  // in milliseconds
 #define kTelemetryReportBytesLimit (2U * 1024U * 1024U * 1024U)  // 2GB
 
@@ -89,7 +87,7 @@ class CacheIndexEntryAutoManage {
     const CacheIndexEntry* entry = FindEntry();
     mIndex->mIndexStats.BeforeChange(entry);
     if (entry && entry->IsInitialized() && !entry->IsRemoved()) {
-      mOldRecord = entry->mRec;
+      mOldRecord = entry->mRec.get();
       mOldFrecency = entry->mRec->mFrecency;
     }
   }
@@ -104,28 +102,29 @@ class CacheIndexEntryAutoManage {
     }
 
     if (entry && !mOldRecord) {
-      mIndex->mFrecencyArray.AppendRecord(entry->mRec);
-      mIndex->AddRecordToIterators(entry->mRec);
+      mIndex->mFrecencyArray.AppendRecord(entry->mRec.get());
+      mIndex->AddRecordToIterators(entry->mRec.get());
     } else if (!entry && mOldRecord) {
       mIndex->mFrecencyArray.RemoveRecord(mOldRecord);
       mIndex->RemoveRecordFromIterators(mOldRecord);
     } else if (entry && mOldRecord) {
-      if (entry->mRec != mOldRecord) {
+      auto rec = entry->mRec.get();
+      if (rec != mOldRecord) {
         // record has a different address, we have to replace it
-        mIndex->ReplaceRecordInIterators(mOldRecord, entry->mRec);
+        mIndex->ReplaceRecordInIterators(mOldRecord, rec);
 
         if (entry->mRec->mFrecency == mOldFrecency) {
           // If frecency hasn't changed simply replace the pointer
-          mIndex->mFrecencyArray.ReplaceRecord(mOldRecord, entry->mRec);
+          mIndex->mFrecencyArray.ReplaceRecord(mOldRecord, rec);
         } else {
           // Remove old pointer and insert the new one at the end of the array
           mIndex->mFrecencyArray.RemoveRecord(mOldRecord);
-          mIndex->mFrecencyArray.AppendRecord(entry->mRec);
+          mIndex->mFrecencyArray.AppendRecord(rec);
         }
       } else if (entry->mRec->mFrecency != mOldFrecency) {
         // Move the element at the end of the array
-        mIndex->mFrecencyArray.RemoveRecord(entry->mRec);
-        mIndex->mFrecencyArray.AppendRecord(entry->mRec);
+        mIndex->mFrecencyArray.RemoveRecord(rec);
+        mIndex->mFrecencyArray.AppendRecord(rec);
       }
     } else {
       // both entries were removed or not initialized, do nothing
@@ -148,7 +147,7 @@ class CacheIndexEntryAutoManage {
         if (!mDoNotSearchInUpdates) {
           entry = mIndex->mPendingUpdates.GetEntry(*mHash);
         }
-        MOZ_FALLTHROUGH;
+        [[fallthrough]];
       case CacheIndex::BUILDING:
       case CacheIndex::UPDATING:
       case CacheIndex::READY:
@@ -294,7 +293,7 @@ nsresult CacheIndex::Init(nsIFile* aCacheDirectory) {
   nsresult rv = idx->InitInternal(aCacheDirectory);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  gInstance = idx.forget();
+  gInstance = std::move(idx);
   return NS_OK;
 }
 
@@ -448,7 +447,7 @@ nsresult CacheIndex::Shutdown() {
   switch (oldState) {
     case WRITING:
       index->FinishWrite(false);
-      MOZ_FALLTHROUGH;
+      [[fallthrough]];
     case READY:
       if (index->mIndexOnDiskIsValid && !index->mDontMarkIndexClean) {
         if (!sanitize && NS_FAILED(index->WriteLogToDisk())) {
@@ -927,26 +926,23 @@ nsresult CacheIndex::RemoveEntry(const SHA1Sum::Hash* aHash) {
 }
 
 // static
-nsresult CacheIndex::UpdateEntry(
-    const SHA1Sum::Hash* aHash, const uint32_t* aFrecency,
-    const bool* aHasAltData, const uint16_t* aOnStartTime,
-    const uint16_t* aOnStopTime, const uint8_t* aContentType,
-    const uint16_t* aBaseDomainAccessCount, const uint32_t aTelemetryReportID,
-    const uint32_t* aSize) {
+nsresult CacheIndex::UpdateEntry(const SHA1Sum::Hash* aHash,
+                                 const uint32_t* aFrecency,
+                                 const bool* aHasAltData,
+                                 const uint16_t* aOnStartTime,
+                                 const uint16_t* aOnStopTime,
+                                 const uint8_t* aContentType,
+                                 const uint32_t* aSize) {
   LOG(
       ("CacheIndex::UpdateEntry() [hash=%08x%08x%08x%08x%08x, "
        "frecency=%s, hasAltData=%s, onStartTime=%s, onStopTime=%s, "
-       "contentType=%s, baseDomainAccessCount=%s, telemetryReportID=%u, "
-       "size=%s]",
+       "contentType=%s, size=%s]",
        LOGSHA1(aHash), aFrecency ? nsPrintfCString("%u", *aFrecency).get() : "",
        aHasAltData ? (*aHasAltData ? "true" : "false") : "",
        aOnStartTime ? nsPrintfCString("%u", *aOnStartTime).get() : "",
        aOnStopTime ? nsPrintfCString("%u", *aOnStopTime).get() : "",
        aContentType ? nsPrintfCString("%u", *aContentType).get() : "",
-       aBaseDomainAccessCount
-           ? nsPrintfCString("%u", *aBaseDomainAccessCount).get()
-           : "",
-       aTelemetryReportID, aSize ? nsPrintfCString("%u", *aSize).get() : ""));
+       aSize ? nsPrintfCString("%u", *aSize).get() : ""));
 
   MOZ_ASSERT(CacheFileIOManager::IsOnIOThread());
 
@@ -967,19 +963,6 @@ nsresult CacheIndex::UpdateEntry(
 
     CacheIndexEntry* entry = index->mIndex.GetEntry(*aHash);
 
-    uint16_t baseDomainAccessCount = 0;
-    if (aBaseDomainAccessCount) {
-      if (aTelemetryReportID != CacheObserver::TelemetryReportID()) {
-        // Telemetry report ID has changed and the value is no longer valid.
-        // Reset the count to 0.
-        LOG(
-            ("CacheIndex::UpdateEntry() - Telemetry report ID has changed, "
-             "setting baseDomainAccessCount to 0."));
-      } else {
-        baseDomainAccessCount = *aBaseDomainAccessCount;
-      }
-    }
-
     if (entry && entry->IsRemoved()) {
       entry = nullptr;
     }
@@ -996,11 +979,8 @@ nsresult CacheIndex::UpdateEntry(
         return NS_ERROR_UNEXPECTED;
       }
 
-      if (!HasEntryChanged(
-              entry, aFrecency, aHasAltData, aOnStartTime, aOnStopTime,
-              aContentType,
-              aBaseDomainAccessCount ? &baseDomainAccessCount : nullptr,
-              aSize)) {
+      if (!HasEntryChanged(entry, aFrecency, aHasAltData, aOnStartTime,
+                           aOnStopTime, aContentType, aSize)) {
         return NS_OK;
       }
 
@@ -1026,10 +1006,6 @@ nsresult CacheIndex::UpdateEntry(
 
       if (aContentType) {
         entry->SetContentType(*aContentType);
-      }
-
-      if (aBaseDomainAccessCount) {
-        entry->SetBaseDomainAccessCount(baseDomainAccessCount);
       }
 
       if (aSize) {
@@ -1080,10 +1056,6 @@ nsresult CacheIndex::UpdateEntry(
 
       if (aContentType) {
         updated->SetContentType(*aContentType);
-      }
-
-      if (aBaseDomainAccessCount) {
-        updated->SetBaseDomainAccessCount(baseDomainAccessCount);
       }
 
       if (aSize) {
@@ -1227,7 +1199,7 @@ nsresult CacheIndex::HasEntry(
     case READING:
     case WRITING:
       entry = index->mPendingUpdates.GetEntry(hash);
-      MOZ_FALLTHROUGH;
+      [[fallthrough]];
     case BUILDING:
     case UPDATING:
     case READY:
@@ -1282,6 +1254,25 @@ nsresult CacheIndex::GetEntryForEviction(bool aIgnoreEmptyEntries,
     return NS_ERROR_NOT_AVAILABLE;
   }
 
+  if (index->mIndexStats.Size() == 0) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  int32_t mediaUsage =
+      round(static_cast<double>(index->mIndexStats.SizeByType(
+                nsICacheEntry::CONTENT_TYPE_MEDIA)) *
+            100.0 / static_cast<double>(index->mIndexStats.Size()));
+  int32_t mediaUsageLimit =
+      StaticPrefs::browser_cache_disk_content_type_media_limit();
+  bool evictMedia = false;
+  if (mediaUsage > mediaUsageLimit) {
+    LOG(
+        ("CacheIndex::GetEntryForEviction() - media content type is over the "
+         "limit [mediaUsage=%d, mediaUsageLimit=%d]",
+         mediaUsage, mediaUsageLimit));
+    evictMedia = true;
+  }
+
   SHA1Sum::Hash hash;
   CacheIndexRecord* foundRecord = nullptr;
   uint32_t skipped = 0;
@@ -1296,6 +1287,11 @@ nsresult CacheIndex::GetEntryForEviction(bool aIgnoreEmptyEntries,
 
     ++skipped;
 
+    if (evictMedia && CacheIndexEntry::GetContentType(rec) !=
+                          nsICacheEntry::CONTENT_TYPE_MEDIA) {
+      continue;
+    }
+
     if (IsForcedValidEntry(&hash)) {
       continue;
     }
@@ -1304,7 +1300,7 @@ nsresult CacheIndex::GetEntryForEviction(bool aIgnoreEmptyEntries,
       continue;
     }
 
-    if (aIgnoreEmptyEntries && !CacheIndexEntry::GetFileSize(rec)) {
+    if (aIgnoreEmptyEntries && !CacheIndexEntry::GetFileSize(*rec)) {
       continue;
     }
 
@@ -1318,9 +1314,10 @@ nsresult CacheIndex::GetEntryForEviction(bool aIgnoreEmptyEntries,
   *aCnt = skipped;
 
   LOG(
-      ("CacheIndex::GetEntryForEviction() - returning entry from frecency "
-       "array [hash=%08x%08x%08x%08x%08x, cnt=%u, frecency=%u]",
-       LOGSHA1(&hash), *aCnt, foundRecord->mFrecency));
+      ("CacheIndex::GetEntryForEviction() - returning entry "
+       "[hash=%08x%08x%08x%08x%08x, cnt=%u, frecency=%u, contentType=%u]",
+       LOGSHA1(&hash), *aCnt, foundRecord->mFrecency,
+       CacheIndexEntry::GetContentType(foundRecord)));
 
   memcpy(aHash, &hash, sizeof(SHA1Sum::Hash));
 
@@ -1405,7 +1402,7 @@ nsresult CacheIndex::GetCacheStats(nsILoadContextInfo* aInfo, uint32_t* aSize,
     if (aInfo && !CacheIndexEntry::RecordMatchesLoadContextInfo(record, aInfo))
       continue;
 
-    *aSize += CacheIndexEntry::GetFileSize(record);
+    *aSize += CacheIndexEntry::GetFileSize(*record);
     ++*aCount;
   }
 
@@ -1571,8 +1568,7 @@ bool CacheIndex::IsCollision(CacheIndexEntry* aEntry,
 bool CacheIndex::HasEntryChanged(
     CacheIndexEntry* aEntry, const uint32_t* aFrecency, const bool* aHasAltData,
     const uint16_t* aOnStartTime, const uint16_t* aOnStopTime,
-    const uint8_t* aContentType, const uint16_t* aBaseDomainAccessCount,
-    const uint32_t* aSize) {
+    const uint8_t* aContentType, const uint32_t* aSize) {
   if (aFrecency && *aFrecency != aEntry->GetFrecency()) {
     return true;
   }
@@ -1590,11 +1586,6 @@ bool CacheIndex::HasEntryChanged(
   }
 
   if (aContentType && *aContentType != aEntry->GetContentType()) {
-    return true;
-  }
-
-  if (aBaseDomainAccessCount &&
-      *aBaseDomainAccessCount != aEntry->GetBaseDomainAccessCount()) {
     return true;
   }
 
@@ -1896,32 +1887,22 @@ nsresult CacheIndex::GetFile(const nsACString& aName, nsIFile** _retval) {
   return NS_OK;
 }
 
-nsresult CacheIndex::RemoveFile(const nsACString& aName) {
+void CacheIndex::RemoveFile(const nsACString& aName) {
   MOZ_ASSERT(mState == SHUTDOWN);
 
   nsresult rv;
 
   nsCOMPtr<nsIFile> file;
   rv = GetFile(aName, getter_AddRefs(file));
-  NS_ENSURE_SUCCESS(rv, rv);
+  NS_ENSURE_SUCCESS_VOID(rv);
 
-  bool exists;
-  rv = file->Exists(&exists);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  if (exists) {
-    rv = file->Remove(false);
-    if (NS_FAILED(rv)) {
-      LOG(
-          ("CacheIndex::RemoveFile() - Cannot remove old entry file from disk."
-           "[name=%s]",
-           PromiseFlatCString(aName).get()));
-      NS_WARNING("Cannot remove old entry file from the disk");
-      return rv;
-    }
+  rv = file->Remove(false);
+  if (NS_FAILED(rv) && rv != NS_ERROR_FILE_NOT_FOUND) {
+    LOG(
+        ("CacheIndex::RemoveFile() - Cannot remove old entry file from disk "
+         "[rv=0x%08" PRIx32 ", name=%s]",
+         static_cast<uint32_t>(rv), PromiseFlatCString(aName).get()));
   }
-
-  return NS_OK;
 }
 
 void CacheIndex::RemoveAllIndexFiles() {
@@ -2675,9 +2656,7 @@ nsresult CacheIndex::InitEntryFromDiskData(CacheIndexEntry* aEntry,
   aEntry->Init(GetOriginAttrsHash(aMetaData->OriginAttributes()),
                aMetaData->IsAnonymous(), aMetaData->Pinned());
 
-  uint32_t frecency;
-  aMetaData->GetFrecency(&frecency);
-  aEntry->SetFrecency(frecency);
+  aEntry->SetFrecency(aMetaData->GetFrecency());
 
   const char* altData = aMetaData->GetElement(CacheFileUtils::kAltDataKey);
   bool hasAltData = altData ? true : false;
@@ -2713,15 +2692,6 @@ nsresult CacheIndex::InitEntryFromDiskData(CacheIndexEntry* aEntry,
     contentType = n64;
   }
   aEntry->SetContentType(contentType);
-
-  uint32_t trID = CacheObserver::TelemetryReportID();
-  const char* siteIDInfo = aMetaData->GetElement("eTLD1Access");
-  uint16_t siteIDCount = 0;
-  if (siteIDInfo) {
-    CacheFileUtils::ParseBaseDomainAccessInfo(siteIDInfo, trID, nullptr,
-                                              nullptr, &siteIDCount);
-  }
-  aEntry->SetBaseDomainAccessCount(siteIDCount);
 
   aEntry->SetFileSize(static_cast<uint32_t>(std::min(
       static_cast<int64_t>(PR_UINT32_MAX), (aFileSize + 0x3FF) >> 10)));
@@ -3508,14 +3478,13 @@ nsresult CacheIndex::Run() {
   return NS_OK;
 }
 
-nsresult CacheIndex::OnFileOpenedInternal(FileOpenHelper* aOpener,
-                                          CacheFileHandle* aHandle,
-                                          nsresult aResult) {
+void CacheIndex::OnFileOpenedInternal(FileOpenHelper* aOpener,
+                                      CacheFileHandle* aHandle,
+                                      nsresult aResult) {
   LOG(
       ("CacheIndex::OnFileOpenedInternal() [opener=%p, handle=%p, "
        "result=0x%08" PRIx32 "]",
        aOpener, aHandle, static_cast<uint32_t>(aResult)));
-
   MOZ_ASSERT(CacheFileIOManager::IsOnIOThread());
 
   nsresult rv;
@@ -3525,7 +3494,7 @@ nsresult CacheIndex::OnFileOpenedInternal(FileOpenHelper* aOpener,
   MOZ_RELEASE_ASSERT(IsIndexUsable());
 
   if (mState == READY && mShuttingDown) {
-    return NS_OK;
+    return;
   }
 
   switch (mState) {
@@ -3612,8 +3581,6 @@ nsresult CacheIndex::OnFileOpenedInternal(FileOpenHelper* aOpener,
     default:
       MOZ_ASSERT(false, "Unexpected state!");
   }
-
-  return NS_OK;
 }
 
 nsresult CacheIndex::OnFileOpened(CacheFileHandle* aHandle, nsresult aResult) {
@@ -3942,98 +3909,19 @@ void CacheIndex::DoTelemetryReport() {
           NS_LITERAL_CSTRING("MEDIA"),      NS_LITERAL_CSTRING("STYLESHEET"),
           NS_LITERAL_CSTRING("WASM")};
 
-  // size in kB of all entries
-  uint32_t size = 0;
-  // increase of size in kB that would be caused by first party isolation
-  uint32_t sizeInc = 0;
-  // count of all entries
-  uint32_t count = 0;
-  // increase of count that would be caused by first party isolation
-  uint32_t countInc = 0;
-
-  // the same stats as above split by content type
-  uint32_t sizeByType[nsICacheEntry::CONTENT_TYPE_LAST];
-  uint32_t sizeIncByType[nsICacheEntry::CONTENT_TYPE_LAST];
-  uint32_t countByType[nsICacheEntry::CONTENT_TYPE_LAST];
-  uint32_t countIncByType[nsICacheEntry::CONTENT_TYPE_LAST];
-
-  memset(&sizeByType, 0, sizeof(sizeByType));
-  memset(&sizeIncByType, 0, sizeof(sizeIncByType));
-  memset(&countByType, 0, sizeof(countByType));
-  memset(&countIncByType, 0, sizeof(countIncByType));
-
-  for (auto iter = mIndex.Iter(); !iter.Done(); iter.Next()) {
-    CacheIndexEntry* entry = iter.Get();
-    if (entry->IsRemoved() || !entry->IsInitialized() || entry->IsFileEmpty()) {
-      entry->SetBaseDomainAccessCount(0);
-      continue;
-    }
-
-    uint32_t entrySize = entry->GetFileSize();
-    uint32_t accessCnt = entry->GetBaseDomainAccessCount();
-    uint8_t contentType = entry->GetContentType();
-    entry->SetBaseDomainAccessCount(0);
-
-    ++count;
-    ++countByType[contentType];
-    size += entrySize;
-    sizeByType[contentType] += entrySize;
-
-    if (accessCnt > 1) {
-      countInc += accessCnt - 1;
-      countIncByType[contentType] += accessCnt - 1;
-      sizeInc += (accessCnt - 1) * entrySize;
-      sizeIncByType[contentType] += (accessCnt - 1) * entrySize;
-    }
-
-    Telemetry::Accumulate(
-        Telemetry::NETWORK_CACHE_ISOLATION_UNIQUE_SITE_ACCESS_COUNT,
-        contentTypeNames[contentType], accessCnt);
-  }
-
-  if (size > 0) {
-    Telemetry::Accumulate(Telemetry::NETWORK_CACHE_ISOLATION_SIZE_INCREASE,
-                          NS_LITERAL_CSTRING("ALL"),
-                          round(static_cast<double>(sizeInc) * 100.0 /
-                                static_cast<double>(size)));
-  }
-
-  if (count > 0) {
-    Telemetry::Accumulate(
-        Telemetry::NETWORK_CACHE_ISOLATION_ENTRY_COUNT_INCREASE,
-        NS_LITERAL_CSTRING("ALL"),
-        round(static_cast<double>(countInc) * 100.0 /
-              static_cast<double>(count)));
-  }
-
   for (uint32_t i = 0; i < nsICacheEntry::CONTENT_TYPE_LAST; ++i) {
-    if (sizeByType[i] > 0) {
-      Telemetry::Accumulate(Telemetry::NETWORK_CACHE_ISOLATION_SIZE_INCREASE,
-                            contentTypeNames[i],
-                            round(static_cast<double>(sizeIncByType[i]) *
-                                  100.0 / static_cast<double>(sizeByType[i])));
-    }
-
-    if (countByType[i] > 0) {
+    if (mIndexStats.Size() > 0) {
       Telemetry::Accumulate(
-          Telemetry::NETWORK_CACHE_ISOLATION_ENTRY_COUNT_INCREASE,
-          contentTypeNames[i],
-          round(static_cast<double>(countIncByType[i]) * 100.0 /
-                static_cast<double>(countByType[i])));
+          Telemetry::NETWORK_CACHE_SIZE_SHARE, contentTypeNames[i],
+          round(static_cast<double>(mIndexStats.SizeByType(i)) * 100.0 /
+                static_cast<double>(mIndexStats.Size())));
     }
 
-    if (size > 0) {
-      Telemetry::Accumulate(Telemetry::NETWORK_CACHE_SIZE_SHARE,
-                            contentTypeNames[i],
-                            round(static_cast<double>(sizeByType[i]) * 100.0 /
-                                  static_cast<double>(size)));
-    }
-
-    if (count > 0) {
-      Telemetry::Accumulate(Telemetry::NETWORK_CACHE_ENTRY_COUNT_SHARE,
-                            contentTypeNames[i],
-                            round(static_cast<double>(countByType[i]) * 100.0 /
-                                  static_cast<double>(count)));
+    if (mIndexStats.Count() > 0) {
+      Telemetry::Accumulate(
+          Telemetry::NETWORK_CACHE_ENTRY_COUNT_SHARE, contentTypeNames[i],
+          round(static_cast<double>(mIndexStats.CountByType(i)) * 100.0 /
+                static_cast<double>(mIndexStats.Count())));
     }
   }
 
@@ -4043,12 +3931,10 @@ void CacheIndex::DoTelemetryReport() {
   } else {
     probeKey = NS_LITERAL_CSTRING("USERDEFINEDSIZE");
   }
-  Telemetry::Accumulate(Telemetry::NETWORK_CACHE_ENTRY_COUNT, probeKey, count);
-  Telemetry::Accumulate(Telemetry::NETWORK_CACHE_SIZE, probeKey, size >> 10);
-
-  // Change telemetry report ID. This will invalidate eTLD+1 access data stored
-  // in all cache entries.
-  CacheObserver::SetTelemetryReportID(CacheObserver::TelemetryReportID() + 1);
+  Telemetry::Accumulate(Telemetry::NETWORK_CACHE_ENTRY_COUNT, probeKey,
+                        mIndexStats.Count());
+  Telemetry::Accumulate(Telemetry::NETWORK_CACHE_SIZE, probeKey,
+                        mIndexStats.Size() >> 10);
 }
 
 // static

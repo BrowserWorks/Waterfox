@@ -20,7 +20,8 @@ SECStatus SSLInt_IncrementClientHandshakeVersion(PRFileDesc *fd);
 SECStatus SSLInt_UpdateSSLv2ClientRandom(PRFileDesc *fd, uint8_t *rnd,
                                          size_t rnd_len, uint8_t *msg,
                                          size_t msg_len);
-
+SECStatus SSLInt_GetHandshakeRandoms(PRFileDesc *fd, SSL3Random client_random,
+                                     SSL3Random server_random);
 PRBool SSLInt_ExtensionNegotiated(PRFileDesc *fd, PRUint16 ext);
 void SSLInt_ClearSelfEncryptKey();
 void SSLInt_SetSelfEncryptMacKey(PK11SymKey *key);
@@ -40,8 +41,11 @@ SECStatus SSLInt_AdvanceReadSeqNum(PRFileDesc *fd, PRUint64 to);
 SECStatus SSLInt_AdvanceWriteSeqByAWindow(PRFileDesc *fd, PRInt32 extra);
 SSLKEAType SSLInt_GetKEAType(SSLNamedGroup group);
 SECStatus SSLInt_HasPendingHandshakeData(PRFileDesc *fd, PRBool *pending);
-void SSLInt_SetTicketLifetime(uint32_t lifetime);
 SECStatus SSLInt_SetSocketMaxEarlyDataSize(PRFileDesc *fd, uint32_t size);
-void SSLInt_RolloverAntiReplay(void);
+SECStatus SSLInt_TweakChannelInfoForDC(PRFileDesc *fd, PRBool changeAuthKeyBits,
+                                       PRBool changeScheme);
+SECStatus SSLInt_SetDCAdvertisedSigSchemes(PRFileDesc *fd,
+                                           const SSLSignatureScheme *schemes,
+                                           uint32_t num_sig_schemes);
 
 #endif  // ndef libssl_internals_h_

@@ -9,13 +9,18 @@
  */
 
 add_task(async function() {
-  const { tab, monitor } = await initNetMonitor(CYRILLIC_URL);
+  const { tab, monitor } = await initNetMonitor(CYRILLIC_URL, {
+    requestCount: 1,
+  });
   info("Starting test... ");
 
   const { document, store, windowRequire } = monitor.panelWin;
+  const Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
   const { getDisplayedRequests, getSortedRequests } = windowRequire(
     "devtools/client/netmonitor/src/selectors/index"
   );
+
+  store.dispatch(Actions.batchEnable(false));
 
   let wait = waitForNetworkEvents(monitor, 1);
   tab.linkedBrowser.reload();
@@ -26,11 +31,12 @@ add_task(async function() {
   requestItem.scrollIntoView();
   EventUtils.sendMouseEvent({ type: "mouseover" }, requestsListStatus);
   await waitUntil(() => requestsListStatus.title);
+  await waitForDOMIfNeeded(requestItem, ".requests-list-timings-total");
 
   verifyRequestItemTarget(
     document,
     getDisplayedRequests(store.getState()),
-    getSortedRequests(store.getState()).get(0),
+    getSortedRequests(store.getState())[0],
     "GET",
     CYRILLIC_URL,
     {
@@ -45,11 +51,19 @@ add_task(async function() {
     document.querySelectorAll(".request-list-item")[0]
   );
   await wait;
-  wait = waitForDOM(document, "#response-panel .CodeMirror-code");
+
+  wait = waitForDOM(document, "#response-panel .accordion-item", 2);
   EventUtils.sendMouseEvent(
     { type: "click" },
     document.querySelector("#response-tab")
   );
+  await wait;
+
+  wait = waitForDOM(document, "#response-panel .CodeMirror-code");
+  const header = document.querySelector(
+    "#response-panel .accordion-item:last-child .accordion-header"
+  );
+  clickElement(header, monitor);
   await wait;
 
   // CodeMirror will only load lines currently in view to the DOM. getValue()

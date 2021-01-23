@@ -21,7 +21,6 @@
 #include "nsString.h"
 #include "mozilla/dom/NodeInfo.h"
 #include "mozilla/ClearOnShutdown.h"
-#include "mozilla/dom/XBLChildrenElement.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/Preferences.h"
 
@@ -59,9 +58,8 @@ bool nsNameSpaceManager::Init() {
   rv = AddDisabledNameSpace(dont_AddRef(uri), id); \
   NS_ENSURE_SUCCESS(rv, false)
 
-  mozilla::Preferences::RegisterCallbacks(
-      PREF_CHANGE_METHOD(nsNameSpaceManager::PrefChanged), kObservedNSPrefs,
-      this);
+  mozilla::Preferences::RegisterCallbacks(nsNameSpaceManager::PrefChanged,
+                                          kObservedNSPrefs, this);
 
   PrefChanged(nullptr);
 
@@ -73,7 +71,6 @@ bool nsNameSpaceManager::Init() {
   REGISTER_NAMESPACE(nsGkAtoms::nsuri_xhtml, kNameSpaceID_XHTML);
   REGISTER_NAMESPACE(nsGkAtoms::nsuri_xlink, kNameSpaceID_XLink);
   REGISTER_NAMESPACE(nsGkAtoms::nsuri_xslt, kNameSpaceID_XSLT);
-  REGISTER_NAMESPACE(nsGkAtoms::nsuri_xbl, kNameSpaceID_XBL);
   REGISTER_NAMESPACE(nsGkAtoms::nsuri_mathml, kNameSpaceID_MathML);
   REGISTER_NAMESPACE(nsGkAtoms::nsuri_rdf, kNameSpaceID_RDF);
   REGISTER_NAMESPACE(nsGkAtoms::nsuri_xul, kNameSpaceID_XUL);
@@ -165,6 +162,17 @@ int32_t nsNameSpaceManager::GetNameSpaceID(nsAtom* aURI, bool aInChromeDoc) {
   return kNameSpaceID_Unknown;
 }
 
+// static
+const char* nsNameSpaceManager::GetNameSpaceDisplayName(uint32_t aNameSpaceID) {
+  static const char* kNSURIs[] = {"([none])", "(xmlns)", "(xml)",    "(xhtml)",
+                                  "(XLink)",  "(XSLT)",  "(MathML)", "(RDF)",
+                                  "(XUL)",    "(SVG)"};
+  if (aNameSpaceID < ArrayLength(kNSURIs)) {
+    return kNSURIs[aNameSpaceID];
+  }
+  return "";
+}
+
 nsresult NS_NewElement(Element** aResult,
                        already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo,
                        FromParser aFromParser, const nsAString* aIs) {
@@ -203,10 +211,6 @@ nsresult NS_NewElement(Element** aResult,
                                            kNameSpaceID_disabled_SVG,
                                            ni->NodeType(), ni->GetExtraName());
     return NS_NewXMLElement(aResult, genericXMLNI.forget());
-  }
-  if (ns == kNameSpaceID_XBL && ni->Equals(nsGkAtoms::children)) {
-    NS_ADDREF(*aResult = new XBLChildrenElement(ni.forget()));
-    return NS_OK;
   }
 
   return NS_NewXMLElement(aResult, ni.forget());
@@ -249,6 +253,11 @@ nsresult nsNameSpaceManager::AddDisabledNameSpace(already_AddRefed<nsAtom> aURI,
   mDisabledURIToIDTable.Put(mURIArray.LastElement(), aNameSpaceID);
 
   return NS_OK;
+}
+
+// static
+void nsNameSpaceManager::PrefChanged(const char* aPref, void* aSelf) {
+  static_cast<nsNameSpaceManager*>(aSelf)->PrefChanged(aPref);
 }
 
 void nsNameSpaceManager::PrefChanged(const char* aPref) {

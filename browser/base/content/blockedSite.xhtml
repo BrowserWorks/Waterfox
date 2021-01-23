@@ -6,7 +6,7 @@
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="Content-Security-Policy" content="default-src chrome:" />
+    <meta http-equiv="Content-Security-Policy" content="default-src chrome:; object-src 'none'" />
     <link rel="stylesheet" href="chrome://browser/skin/blockedSite.css" type="text/css" media="all" />
     <link rel="icon" type="image/png" id="favicon" href="chrome://global/skin/icons/blocklist_favicon.png"/>
     <link rel="localization" href="branding/brand.ftl"/>
@@ -37,7 +37,7 @@
         <!-- Action buttons -->
         <div id="buttons" class="button-container">
           <!-- Commands handled in browser.js -->
-          <button id="goBackButton" data-l10n-id="safeb-palm-accept-label"></button>
+          <button id="goBackButton" class="primary" data-l10n-id="safeb-palm-accept-label"></button>
           <button id="seeDetailsButton" data-l10n-id="safeb-palm-see-details-label"></button>
         </div>
       </div>

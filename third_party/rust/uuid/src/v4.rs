@@ -1,8 +1,8 @@
-use prelude::*;
+use crate::prelude::*;
 use rand;
 
 impl Uuid {
-    /// Creates a random [`Uuid`].
+    /// Creates a random UUID.
     ///
     /// This uses the [`rand`] crate's default task RNG as the source of random
     /// numbers. If you'd like to use a custom generator, don't use this
@@ -22,7 +22,6 @@ impl Uuid {
     /// ```
     ///
     /// [`rand`]: https://crates.io/crates/rand
-    /// [`Uuid`]: ../struct.Uuid.html
     pub fn new_v4() -> Self {
         use rand::RngCore;
 
@@ -31,13 +30,16 @@ impl Uuid {
 
         rng.fill_bytes(&mut bytes);
 
-        Self::from_random_bytes(bytes)
+        Builder::from_bytes(bytes)
+            .set_variant(Variant::RFC4122)
+            .set_version(Version::Random)
+            .build()
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use prelude::*;
+    use crate::prelude::*;
 
     #[test]
     fn test_new() {

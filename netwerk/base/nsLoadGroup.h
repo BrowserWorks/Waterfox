@@ -8,6 +8,7 @@
 
 #include "nsILoadGroup.h"
 #include "nsILoadGroupChild.h"
+#include "nsIObserver.h"
 #include "nsCOMPtr.h"
 #include "nsWeakReference.h"
 #include "nsISupportsPriority.h"
@@ -23,6 +24,7 @@ namespace net {
 
 class nsLoadGroup : public nsILoadGroup,
                     public nsILoadGroupChild,
+                    public nsIObserver,
                     public nsISupportsPriority,
                     public nsSupportsWeakReference {
  public:
@@ -45,11 +47,16 @@ class nsLoadGroup : public nsILoadGroup,
   NS_DECL_NSISUPPORTSPRIORITY
 
   ////////////////////////////////////////////////////////////////////////////
+  // nsIObserver methods:
+  NS_DECL_NSIOBSERVER
+
+  ////////////////////////////////////////////////////////////////////////////
   // nsLoadGroup methods:
 
   nsLoadGroup();
 
   nsresult Init();
+  nsresult InitWithRequestContextId(const uint64_t& aRequestContextId);
 
  protected:
   virtual ~nsLoadGroup();
@@ -61,6 +68,9 @@ class nsLoadGroup : public nsILoadGroup,
   void TelemetryReport();
   void TelemetryReportChannel(nsITimedChannel* timedChannel,
                               bool defaultRequest);
+
+  nsresult RemoveRequestFromHashtable(nsIRequest* aRequest, nsresult aStatus);
+  nsresult NotifyRemovalObservers(nsIRequest* aRequest, nsresult aStatus);
 
  protected:
   uint32_t mForegroundCount;
@@ -82,13 +92,13 @@ class nsLoadGroup : public nsILoadGroup,
   nsresult mStatus;
   bool mIsCanceling;
   bool mDefaultLoadIsTimed;
+  bool mBrowsingContextDiscarded;
+  bool mExternalRequestContext;
 
   /* Telemetry */
   mozilla::TimeStamp mDefaultRequestCreationTime;
   uint32_t mTimedRequests;
   uint32_t mCachedRequests;
-
-  nsCString mUserAgentOverrideCache;
 };
 
 }  // namespace net

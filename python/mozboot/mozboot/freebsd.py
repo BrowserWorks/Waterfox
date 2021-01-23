@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function, unicode_literals
 import sys
 
 from mozboot.base import BaseBootstrapper
@@ -28,7 +28,6 @@ class FreeBSDBootstrapper(BaseBootstrapper):
 
         self.browser_packages = [
             'dbus-glib',
-            'gconf2',
             'gtk2',
             'gtk3',
             'libXt',

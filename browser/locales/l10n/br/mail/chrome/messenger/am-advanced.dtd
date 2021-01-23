@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!ENTITY smtpServer.label "Arventennoù an dafariad kas (SMTP)">
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+
+<!ENTITY smtpDescription.label "Pa&apos;z emaoc&apos;h oc&apos;h ardeiñ ho pivelezhioù e c&apos;hellit arverañ un dafariad eus ar roll-mañ en ur ziuzañ anezhañ evel ho tafariad kas (SMTP) pe e c&apos;hellit arverañ an dafariad dre ziouer eus ar roll-mañ en ur ziuzañ &quot;Arverañ an dafariad dre ziouer&quot;.">
+
+<!ENTITY smtpListAdd.label  "Ouzhpennañ …">
+<!ENTITY smtpListAdd.accesskey  "O">
+<!ENTITY smtpListEdit.label "Embann…">
+<!ENTITY smtpListEdit.accesskey "E">
+<!ENTITY smtpListDelete.label "Dilemel">
+<!ENTITY smtpListDelete.accesskey "D">
+<!ENTITY smtpListSetDefault.label "Dre ziouer">
+<!ENTITY smtpListSetDefault.accesskey "z">
+
+<!ENTITY serverDetails.label "Munudoù an dafariad bet diuzet :">
+<!ENTITY serverDescription.label "Deskrivadenn :">
+<!ENTITY serverName.label "Anv dafariad :">
+<!ENTITY serverPort.label "Porzh :">
+<!ENTITY userName.label   "Anv arveriad :">
+<!ENTITY connectionSecurity.label "Diogelroez ar c'hennask: ">
+<!ENTITY authMethod.label   "Hentenn dilesa: ">

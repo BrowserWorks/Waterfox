@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identityListDesc.label "Configurar le parametros pro iste identitate:">
+
+<!ENTITY settingsTab.label       "Parametros">
+<!ENTITY copiesFoldersTab.label "Copias e dossiers">
+<!ENTITY addressingTab.label    "Composition e adresses">
+
+<!ENTITY publicData.label        "Datos public">
+<!ENTITY privateData.label       "Datos private">
+<!ENTITY identityAlias.label     "Etiquetta de identitate:">
+<!ENTITY identityAlias.accesskey "t">

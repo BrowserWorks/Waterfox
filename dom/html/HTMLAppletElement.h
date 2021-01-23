@@ -16,8 +16,8 @@
 namespace mozilla {
 namespace dom {       
 
-class HTMLAppletElement final : public nsGenericHTMLElement,
-                                public nsObjectLoadingContent   
+class HTMLAppletElement final : public nsGenericHTMLElement
+                                    , public nsObjectLoadingContent
 {
 public:
   explicit HTMLAppletElement(already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo,
@@ -25,8 +25,10 @@ public:
 
   // nsISupports
   NS_DECL_ISUPPORTS_INHERITED
-  NS_IMPL_FROMNODE_HTML_WITH_TAG(HTMLAppletElement, applet)
+
   virtual int32_t TabIndexDefault() override;
+
+  NS_IMPL_FROMNODE_HTML_WITH_TAG(HTMLAppletElement, applet)
 
 #ifdef XP_MACOSX
   // nsIDOMEventTarget
@@ -36,10 +38,14 @@ public:
   // EventTarget
   virtual void AsyncEventRunning(AsyncEventDispatcher* aEvent) override;
 
-  virtual nsresult BindToTree(Document *aDocument, nsIContent *aParent,
-                              nsIContent *aBindingParent) override;
-  virtual void UnbindFromTree(bool aDeep = true,
-                              bool aNullParent = true) override;
+  //virtual nsresult BindToTree(Document *aDocument, nsIContent *aParent,
+  //                            nsIContent *aBindingParent) override;
+  //virtual void UnbindFromTree(bool aDeep = true,
+  //                            bool aNullParent = true) override;
+
+  virtual nsresult BindToTree(BindContext&, nsINode& aParent) override;
+  virtual void UnbindFromTree(bool aNullParent = true) override;
+
 
   virtual bool IsHTMLFocusable(bool aWithMouse, bool *aIsFocusable, int32_t *aTabIndex) override;
   virtual IMEState GetDesiredIMEState() override;

@@ -1,0 +1,220 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressbookWindow.title                        "دفتر العناوين">
+<!ENTITY blankResultsPaneMessage.label                  "لا يعرض دفتر العناوين هذا جهات الاتصال إلا بعد البحث">
+<!ENTITY localResultsOnlyMessage.label                  "جهات الاتصال من دفاتر العناوين البعيدة لا تظهر إلا بعد البحث">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label                                 "ملف">
+<!ENTITY fileMenu.accesskey                             "م">
+<!ENTITY newMenu.label                                  "جديد">
+<!ENTITY newMenu.accesskey                              "ج">
+<!ENTITY newContact.label                               "جهة اتصال دفتر العناوين…">
+<!ENTITY newContact.accesskey                           "و">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "قائمة بريدية…">
+<!ENTITY newListCmd.accesskey                           "ب">
+<!ENTITY newAddressBookCmd.label                        "دفتر العناوين…">
+<!ENTITY newAddressBookCmd.accesskey                    "د">
+<!ENTITY newLDAPDirectoryCmd.label                      "دليل LDAP…">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "D">
+<!ENTITY newMessageCmd.label                            "رسالة">
+<!ENTITY newMessageCmd.key                              "M">
+<!ENTITY newMessageCmd.accesskey                        "ر">
+<!-- LOCALIZATION NOTE (osxAddressBook) : These entities are only used on Mac -->
+<!ENTITY osxAddressBook.label                           "استخدم دفتر عناوين ماك أس إكس">
+<!ENTITY osxAddressBook.accesskey                       "س">
+<!ENTITY closeCmd.label                                 "أغلق">
+<!ENTITY closeCmd.key                                   "W">
+<!ENTITY closeCmd.accesskey                             "غ">
+<!ENTITY printSetupCmd.label                            "إعداد الصفحة…">
+<!ENTITY printSetupCmd.accesskey                        "ع">
+<!ENTITY printPreviewContactCmd.label                   "عاين طباعة جهة الاتصال">
+<!ENTITY printPreviewContactCmd.accesskey               "ط">
+<!ENTITY printPreviewAddressBook.label                  "عاين طباعة دفتر العناوين">
+<!ENTITY printPreviewAddressBook.accesskey              "و">
+<!ENTITY printContactCmd.label                          "اطبع جهة الاتصال…">
+<!ENTITY printContactCmd.accesskey                      "ت">
+<!ENTITY printContactCmd.key                            "P">
+<!ENTITY printAddressBook.label                         "اطبع دفتر العناوين…">
+<!ENTITY printAddressBook.accesskey                     "د">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label                                 "تحرير">
+<!ENTITY editMenu.accesskey                             "ح">
+<!ENTITY deleteCmd.label                                "احذف">
+<!ENTITY deleteAbCmd.label                              "احذف دفتر العناوين">
+<!ENTITY deleteContactCmd.label                         "احذف جهة الاتصال">
+<!ENTITY deleteContactsCmd.label                        "احذف جهات الاتصال">
+<!ENTITY deleteListCmd.label                            "احذف القائمة">
+<!ENTITY deleteListsCmd.label                           "احذف القوائم">
+<!ENTITY deleteItemsCmd.label                           "احذف العناصر">
+<!ENTITY searchAddressesCmd.key                         "f">
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+<!ENTITY propertiesMenu.label                           "الخصائص">
+<!ENTITY propertiesMenu.accesskey                       "خ">
+<!ENTITY propertiesCmd.key                              "i">
+<!ENTITY abPropertiesMenu.label                         "خصائص دفتر العناوين">
+<!ENTITY abPropertiesMenu.accesskey                     "ص">
+<!ENTITY contactPropertiesMenu.label                    "خصائص جهة الاتصال">
+<!ENTITY contactPropertiesMenu.accesskey                "ص">
+<!ENTITY mailingListPropertiesMenu.label                "خصائص القائمة البريدية">
+<!ENTITY mailingListPropertiesMenu.accesskey            "ق">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label                                 "اعرض">
+<!ENTITY viewMenu.accesskey                             "ع">
+<!ENTITY viewToolbarsMenu.label                         "أشرطة الأدوات">
+<!ENTITY viewToolbarsMenu.accesskey                     "ش">
+<!ENTITY menubarCmd.label                               "شريط القائمة">
+<!ENTITY menubarCmd.accesskey                           "ئ">
+<!ENTITY showAbToolbarCmd.label                         "شريط أدوات دفتر العناوين">
+<!ENTITY showAbToolbarCmd.accesskey                     "ش">
+<!ENTITY showTaskbarCmd.label                           "شريط الحالة">
+<!ENTITY showTaskbarCmd.accesskey                       "ش">
+<!ENTITY customizeToolbar.label                         "خصّص…">
+<!ENTITY customizeToolbar.accesskey                     "خ">
+<!ENTITY layoutMenu.label                               "التخطيط">
+<!ENTITY layoutMenu.accesskey                           "ت">
+<!ENTITY showDirectoryPane.label                        "لوحة المجلدات">
+<!ENTITY showDirectoryPane.accesskey                    "ح">
+<!ENTITY showContactPane2.label                         "لوحة المراسلين">
+<!ENTITY showContactPane2.accesskey                     "س">
+<!ENTITY menu_ShowNameAs.label                          "اعرض الاسم ك‍">
+<!ENTITY menu_ShowNameAs.accesskey                      "ك">
+<!-- LOCALIZATION NOTE (firstLastCmd2.label): We're not including a comma here
+because displayed names don't have the comma in between. -->
+<!ENTITY firstLastCmd2.label                            "الاسم الكنية">
+<!ENTITY firstLastCmd2.accesskey                        "م">
+<!ENTITY lastFirstCmd.label                             "الأخير، الأول">
+<!ENTITY lastFirstCmd.accesskey                         "و">
+<!ENTITY displayNameCmd.label                           "اسم العرض">
+<!ENTITY displayNameCmd.accesskey                       "س">
+<!ENTITY sortMenu.label                                 "رتّب حسب">
+<!ENTITY sortMenu.accesskey                             "ر">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label                                "أدوات">
+<!ENTITY tasksMenu.accesskey                            "د">
+<!ENTITY messengerCmd.label                             "البريد و مجموعات الأخبار">
+<!ENTITY messengerCmd.accesskey                         "ب">
+<!ENTITY messengerCmd.commandkey                        "1">
+<!ENTITY addressBookCmd.label                           "دفتر العناوين">
+<!ENTITY addressBookCmd.accesskey                       "د">
+<!ENTITY addressBookCmd.key                             "B">
+<!ENTITY searchAddressesCmd.label                       "ابحث في العناوين…">
+<!ENTITY searchAddressesCmd.accesskey                   "ع">
+<!ENTITY importCmd.label                                "استورد…">
+<!ENTITY importCmd.accesskey                            "س">
+<!ENTITY exportCmd.label                                "صدِّر…">
+<!ENTITY exportCmd.accesskey                            "ص">
+<!ENTITY preferencesCmd2.label                          "الخيارات">
+<!ENTITY preferencesCmd2.accesskey                      "خ">
+<!ENTITY preferencesCmdUnix.label                       "التفضيلات">
+<!ENTITY preferencesCmdUnix.accesskey                   "ف">
+
+<!-- Address Book Toolbar and Context Menus -->
+<!ENTITY newContactButton.label                         "جهة اتصال جديدة">
+<!ENTITY newContactButton.accesskey                     "ج">
+<!ENTITY newlistButton.label                            "قائمة جديدة">
+<!ENTITY newlistButton.accesskey                        "ق">
+<!ENTITY showAsDefault.label                            "مجلد بدأ التشغيل المبدئي">
+<!ENTITY showAsDefault.accesskey                        "د">
+<!ENTITY editPropertiesButton.label                     "حرّر">
+<!ENTITY propertiesContext.label                        "الخصائص">
+<!ENTITY propertiesContext.accesskey                    "خ">
+<!ENTITY abPropertiesContext.label                      "الخصائص">
+<!ENTITY abPropertiesContext.accesskey                  "خ">
+<!ENTITY editContactContext.label                       "حرر جهة الاتصال">
+<!ENTITY editContactContext.accesskey                   "ح">
+<!ENTITY editMailingListContext.label                   "حرر القائمة">
+<!ENTITY editMailingListContext.accesskey               "ح">
+<!ENTITY newmsgButton.label                             "اكتب">
+<!ENTITY newmsgButton.accesskey                         "ك">
+<!ENTITY newIM.label                                    "رسالة فورية">
+<!ENTITY newIM.accesskey                                "ف">
+<!ENTITY printButton.label                              "اطبع…">
+<!ENTITY printButton.accesskey                          "ط">
+<!ENTITY deleteButton2.label                            "احذف">
+<!ENTITY deleteButton2.accesskey                        "ح">
+
+<!-- Address Book Toolbar Tooltips -->
+<!ENTITY newContactButton.tooltip                       "أنشئ جهة اتصال جديدة في دفتر العناوين">
+<!ENTITY newlistButton.tooltip                          "أنشئ قائمة جديدة">
+<!ENTITY editPropertiesButton.tooltip                   "حرّر العنصر المُختار">
+<!ENTITY editAbPropertiesButton.tooltip                 "حرر خصائص دفتر العناوين المُحدّد">
+<!ENTITY editContactPropertiesButton.tooltip            "حرّر جهة الاتصال المُحدّدة">
+<!ENTITY editMailingListPropertiesButton.tooltip        "حرّر القائمة البريدية المُحدّدة">
+<!ENTITY newmsgButton.tooltip                           "أرسِل رسالة بريد">
+<!ENTITY newIM.tooltip                                  "أرسِل رسالة فورية أو دردشة">
+<!ENTITY deleteButton2.tooltip                          "احذف العنصر المُختار">
+
+<!-- Search Bar -->
+<!ENTITY SearchNameOrEmail.label                        "الاسم أو البريد">
+<!ENTITY SearchNameOrEmail.accesskey                    "س">
+<!ENTITY advancedButton.tooltip                         "بحث متقدم في العناوين">
+<!ENTITY quickSearchCmd.key                             "k">
+<!ENTITY searchItem.title "بحث سريع">
+
+<!-- Results Pane -->
+<!ENTITY Addrbook.label                                 "دفتر العناوين">
+<!ENTITY Addrbook.accesskey                             "د">
+<!ENTITY GeneratedName.label                            "الاسم">
+<!ENTITY GeneratedName.accesskey                        "س">
+<!ENTITY PrimaryEmail.label                             "البريد">
+<!ENTITY PrimaryEmail.accesskey                         "ب">
+<!ENTITY ChatName.label                                 "اسم الدردشة">
+<!ENTITY ChatName.accesskey                             "ش">
+<!ENTITY Company.label                                  "المنظّمة">
+<!ENTITY Company.accesskey                              "م">
+<!ENTITY NickName.label                                 "الاسم المستعار">
+<!ENTITY NickName.accesskey                             "م">
+<!ENTITY SecondEmail.label                              "البريد الإضافي">
+<!ENTITY SecondEmail.accesskey                          "ب">
+<!ENTITY Department.label                               "القِسْم">
+<!ENTITY Department.accesskey                           "ق">
+<!ENTITY JobTitle.label                                 "المُسمّى الوظيفي">
+<!ENTITY JobTitle.accesskey                             "م">
+<!ENTITY CellularNumber.label                           "المحمول">
+<!ENTITY CellularNumber.accesskey                       "م">
+<!ENTITY PagerNumber.label                              "جهاز الاستدعاء">
+<!ENTITY PagerNumber.accesskey                          "ج">
+<!ENTITY FaxNumber.label                                "الفاكس">
+<!ENTITY FaxNumber.accesskey                            "ف">
+<!ENTITY HomePhone.label                                "هاتف المنزل">
+<!ENTITY HomePhone.accesskey                            "ه">
+<!ENTITY WorkPhone.label                                "هاتف العمل">
+<!ENTITY WorkPhone.accesskey                            "ع">
+<!ENTITY sortAscending.label                            "تصاعدي">
+<!ENTITY sortAscending.accesskey                        "ص">
+<!ENTITY sortDescending.label                           "تنازلي">
+<!ENTITY sortDescending.accesskey                       "ن">
+<!ENTITY _PhoneticName.label                            "الاسم الصوتي">
+<!ENTITY _PhoneticName.accesskey                        "و">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "جهة اتصال">
+<!ENTITY home.heading                                   "المنزل">
+<!ENTITY other.heading                                  "أخرى">
+<!ENTITY chat.heading                                   "الدردشة">
+<!ENTITY phone.heading                                  "الهاتف">
+<!ENTITY work.heading                                   "العمل">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "الوصف">
+<!ENTITY addresses.heading                              "العناوين">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "اجلب الخريطة">
+<!ENTITY mapIt.tooltip                                  "اعرض خريطة لهذا العنوان من الوب">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label                               "">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY windowMenu.label                               "نافذة">
+<!ENTITY minimizeWindow.label                           "صغّر">
+<!ENTITY minimizeWindow.key                             "m">
+<!ENTITY bringAllToFront.label                          "اجلب الكل للمقدمة">
+<!ENTITY zoomWindow.label                               "قرّب">

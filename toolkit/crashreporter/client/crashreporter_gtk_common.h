@@ -11,6 +11,8 @@
 #include <string>
 #include <vector>
 
+#include "json/json.h"
+
 const char kIniFile[] = "crashreporter.ini";
 
 extern GtkWidget* gWindow;
@@ -27,7 +29,7 @@ extern GThread* gSendThreadID;
 extern bool gInitialized;
 extern bool gDidTrySend;
 extern StringTable gFiles;
-extern StringTable gQueryParameters;
+extern Json::Value gQueryParameters;
 extern std::string gHttpProxy;
 extern std::string gAuth;
 extern std::string gCACertificateFile;
@@ -42,5 +44,6 @@ void SubmitReportChecked(GtkButton* sender, gpointer userData);
 void IncludeURLClicked(GtkButton* sender, gpointer userData);
 void CloseClicked(GtkButton* button, gpointer userData);
 void RestartClicked(GtkButton* button, gpointer userData);
+void SaveSettings(void);
 
 #endif  // CRASHREPORTER_GTK_COMMON_H__

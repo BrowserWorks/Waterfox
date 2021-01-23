@@ -11,15 +11,16 @@
 #  error This code is NOT for internal Gecko use!
 #endif  // defined(MOZILLA_INTERNAL_API)
 
-#include "mozilla/Attributes.h"
-#include "mozilla/DebugOnly.h"
-#include "mozilla/Move.h"
-#include "mozilla/RefPtr.h"
-#include "mozilla/StaticPtr.h"
-#include "Module.h"
-
 #include <objbase.h>
 #include <unknwn.h>
+
+#include <utility>
+
+#include "Module.h"
+#include "mozilla/Attributes.h"
+#include "mozilla/DebugOnly.h"
+#include "mozilla/RefPtr.h"
+#include "mozilla/StaticPtr.h"
 
 /* WARNING! The code in this file may be loaded into the address spaces of other
    processes! It MUST NOT link against xul.dll or other Gecko binaries! Only
@@ -31,13 +32,14 @@ namespace mscom {
 template <typename T>
 class MOZ_NONHEAP_CLASS Factory : public IClassFactory {
   template <typename... Args>
-  HRESULT DoCreate(Args... args) {
+  HRESULT DoCreate(Args&&... args) {
     MOZ_DIAGNOSTIC_ASSERT(false, "This should not be executed");
     return E_NOTIMPL;
   }
 
   template <typename... Args>
-  HRESULT DoCreate(HRESULT (*aFnPtr)(IUnknown*, REFIID, void**), Args... args) {
+  HRESULT DoCreate(HRESULT (*aFnPtr)(IUnknown*, REFIID, void**),
+                   Args&&... args) {
     return aFnPtr(std::forward<Args>(args)...);
   }
 

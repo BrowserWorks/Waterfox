@@ -9,6 +9,7 @@
 
 #include "mozilla/dom/indexedDB/IDBResult.h"
 
+#include "js/Array.h"  // JS::GetArrayLength
 #include "js/RootingAPI.h"
 #include "jsapi.h"
 #include "mozilla/ErrorResult.h"
@@ -49,7 +50,7 @@ class Key {
 
   Key() { Unset(); }
 
-  explicit Key(const nsACString& aBuffer) : mBuffer(aBuffer) {}
+  explicit Key(nsCString aBuffer) : mBuffer(std::move(aBuffer)) {}
 
   Key& operator=(int64_t aInt) {
     SetFromInteger(aInt);
@@ -57,37 +58,43 @@ class Key {
   }
 
   bool operator==(const Key& aOther) const {
-    Assert(!mBuffer.IsVoid() && !aOther.mBuffer.IsVoid());
+    MOZ_ASSERT(!mBuffer.IsVoid());
+    MOZ_ASSERT(!aOther.mBuffer.IsVoid());
 
     return mBuffer.Equals(aOther.mBuffer);
   }
 
   bool operator!=(const Key& aOther) const {
-    Assert(!mBuffer.IsVoid() && !aOther.mBuffer.IsVoid());
+    MOZ_ASSERT(!mBuffer.IsVoid());
+    MOZ_ASSERT(!aOther.mBuffer.IsVoid());
 
     return !mBuffer.Equals(aOther.mBuffer);
   }
 
   bool operator<(const Key& aOther) const {
-    Assert(!mBuffer.IsVoid() && !aOther.mBuffer.IsVoid());
+    MOZ_ASSERT(!mBuffer.IsVoid());
+    MOZ_ASSERT(!aOther.mBuffer.IsVoid());
 
     return Compare(mBuffer, aOther.mBuffer) < 0;
   }
 
   bool operator>(const Key& aOther) const {
-    Assert(!mBuffer.IsVoid() && !aOther.mBuffer.IsVoid());
+    MOZ_ASSERT(!mBuffer.IsVoid());
+    MOZ_ASSERT(!aOther.mBuffer.IsVoid());
 
     return Compare(mBuffer, aOther.mBuffer) > 0;
   }
 
   bool operator<=(const Key& aOther) const {
-    Assert(!mBuffer.IsVoid() && !aOther.mBuffer.IsVoid());
+    MOZ_ASSERT(!mBuffer.IsVoid());
+    MOZ_ASSERT(!aOther.mBuffer.IsVoid());
 
     return Compare(mBuffer, aOther.mBuffer) <= 0;
   }
 
   bool operator>=(const Key& aOther) const {
-    Assert(!mBuffer.IsVoid() && !aOther.mBuffer.IsVoid());
+    MOZ_ASSERT(!mBuffer.IsVoid());
+    MOZ_ASSERT(!aOther.mBuffer.IsVoid());
 
     return Compare(mBuffer, aOther.mBuffer) >= 0;
   }
@@ -107,26 +114,26 @@ class Key {
   bool IsArray() const { return !IsUnset() && *BufferStart() >= eArray; }
 
   double ToFloat() const {
-    Assert(IsFloat());
-    const unsigned char* pos = BufferStart();
+    MOZ_ASSERT(IsFloat());
+    const EncodedDataType* pos = BufferStart();
     double res = DecodeNumber(pos, BufferEnd());
-    Assert(pos >= BufferEnd());
+    MOZ_ASSERT(pos >= BufferEnd());
     return res;
   }
 
   double ToDateMsec() const {
-    Assert(IsDate());
-    const unsigned char* pos = BufferStart();
+    MOZ_ASSERT(IsDate());
+    const EncodedDataType* pos = BufferStart();
     double res = DecodeNumber(pos, BufferEnd());
-    Assert(pos >= BufferEnd());
+    MOZ_ASSERT(pos >= BufferEnd());
     return res;
   }
 
   void ToString(nsString& aString) const {
-    Assert(IsString());
-    const unsigned char* pos = BufferStart();
+    MOZ_ASSERT(IsString());
+    const EncodedDataType* pos = BufferStart();
     DecodeString(pos, BufferEnd(), aString);
-    Assert(pos >= BufferEnd());
+    MOZ_ASSERT(pos >= BufferEnd());
   }
 
   IDBResult<void, IDBSpecialValue::Invalid> SetFromString(
@@ -153,7 +160,7 @@ class Key {
       JSContext* aCx, bool aFirstOfArray, JS::Handle<JS::Value> aVal,
       ErrorResult& aRv);
 
-  IDBResult<void, IDBSpecialValue::Invalid> ToLocaleBasedKey(
+  IDBResult<void, IDBSpecialValue::Invalid> ToLocaleAwareKey(
       Key& aTarget, const nsCString& aLocale, ErrorResult& aRv) const;
 
   void FinishArray() { TrimBuffer(); }
@@ -189,7 +196,7 @@ class Key {
       ArrayConversionPolicy&& aPolicy, ErrorResult& aRv) {
     // 1. Let `len` be ? ToLength( ? Get(`input`, "length")).
     uint32_t len;
-    if (!JS_GetArrayLength(aCx, aObject, &len)) {
+    if (!JS::GetArrayLength(aCx, aObject, &len)) {
       aRv.Throw(NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR);
       return Exception;
     }
@@ -252,12 +259,15 @@ class Key {
  private:
   class MOZ_STACK_CLASS ArrayValueEncoder;
 
-  const unsigned char* BufferStart() const {
-    return reinterpret_cast<const unsigned char*>(mBuffer.BeginReading());
+  using EncodedDataType = unsigned char;
+
+  const EncodedDataType* BufferStart() const {
+    // TODO it would be nicer if mBuffer was also using EncodedDataType
+    return reinterpret_cast<const EncodedDataType*>(mBuffer.BeginReading());
   }
 
-  const unsigned char* BufferEnd() const {
-    return reinterpret_cast<const unsigned char*>(mBuffer.EndReading());
+  const EncodedDataType* BufferEnd() const {
+    return reinterpret_cast<const EncodedDataType*>(mBuffer.EndReading());
   }
 
   // Encoding helper. Trims trailing zeros off of mBuffer as a post-processing
@@ -303,40 +313,57 @@ class Key {
                                                          ErrorResult& aRv);
 
   // Decoding functions. aPos points into mBuffer and is adjusted to point
-  // past the consumed value.
-  static nsresult DecodeJSVal(const unsigned char*& aPos,
-                              const unsigned char* aEnd, JSContext* aCx,
+  // past the consumed value. (Note: this may be beyond aEnd).
+  static nsresult DecodeJSVal(const EncodedDataType*& aPos,
+                              const EncodedDataType* aEnd, JSContext* aCx,
                               JS::MutableHandle<JS::Value> aVal);
 
-  static void DecodeString(const unsigned char*& aPos,
-                           const unsigned char* aEnd, nsString& aString);
+  static void DecodeString(const EncodedDataType*& aPos,
+                           const EncodedDataType* aEnd, nsString& aString);
 
-  static double DecodeNumber(const unsigned char*& aPos,
-                             const unsigned char* aEnd);
+  static double DecodeNumber(const EncodedDataType*& aPos,
+                             const EncodedDataType* aEnd);
 
-  static JSObject* DecodeBinary(const unsigned char*& aPos,
-                                const unsigned char* aEnd, JSContext* aCx);
+  static JSObject* DecodeBinary(const EncodedDataType*& aPos,
+                                const EncodedDataType* aEnd, JSContext* aCx);
+
+  // Returns the size of the decoded data for stringy (string or binary),
+  // excluding a null terminator.
+  // On return, aOutSectionEnd points to the last byte behind the current
+  // encoded section, i.e. either aEnd, or the eTerminator.
+  // T is the base type for the decoded data.
+  template <typename T>
+  static uint32_t CalcDecodedStringySize(
+      const EncodedDataType* aBegin, const EncodedDataType* aEnd,
+      const EncodedDataType** aOutEncodedSectionEnd);
+
+  static uint32_t LengthOfEncodedBinary(const EncodedDataType* aPos,
+                                        const EncodedDataType* aEnd);
+
+  template <typename T>
+  static void DecodeAsStringy(const EncodedDataType* aEncodedSectionBegin,
+                              const EncodedDataType* aEncodedSectionEnd,
+                              uint32_t aDecodedLength, T* aOut);
+
+  template <EncodedDataType TypeMask, typename T, typename AcquireBuffer,
+            typename AcquireEmpty>
+  static void DecodeStringy(const EncodedDataType*& aPos,
+                            const EncodedDataType* aEnd,
+                            const AcquireBuffer& acquireBuffer,
+                            const AcquireEmpty& acquireEmpty);
 
   IDBResult<void, IDBSpecialValue::Invalid> EncodeJSValInternal(
       JSContext* aCx, JS::Handle<JS::Value> aVal, uint8_t aTypeOffset,
       uint16_t aRecursionDepth, ErrorResult& aRv);
 
-  static nsresult DecodeJSValInternal(const unsigned char*& aPos,
-                                      const unsigned char* aEnd, JSContext* aCx,
-                                      uint8_t aTypeOffset,
+  static nsresult DecodeJSValInternal(const EncodedDataType*& aPos,
+                                      const EncodedDataType* aEnd,
+                                      JSContext* aCx, uint8_t aTypeOffset,
                                       JS::MutableHandle<JS::Value> aVal,
                                       uint16_t aRecursionDepth);
 
   template <typename T>
   nsresult SetFromSource(T* aSource, uint32_t aIndex);
-
-  void Assert(bool aCondition) const
-#ifdef DEBUG
-      ;
-#else
-  {
-  }
-#endif
 };
 
 }  // namespace indexedDB

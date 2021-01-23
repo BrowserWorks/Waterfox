@@ -5,10 +5,32 @@
 
 #include "AudioStreamTrack.h"
 
+#include "MediaTrackGraph.h"
 #include "nsContentUtils.h"
 
 namespace mozilla {
 namespace dom {
+
+void AudioStreamTrack::AddAudioOutput(void* aKey) {
+  if (Ended()) {
+    return;
+  }
+  mTrack->AddAudioOutput(aKey);
+}
+
+void AudioStreamTrack::RemoveAudioOutput(void* aKey) {
+  if (Ended()) {
+    return;
+  }
+  mTrack->RemoveAudioOutput(aKey);
+}
+
+void AudioStreamTrack::SetAudioOutputVolume(void* aKey, float aVolume) {
+  if (Ended()) {
+    return;
+  }
+  mTrack->SetAudioOutputVolume(aKey, aVolume);
+}
 
 void AudioStreamTrack::GetLabel(nsAString& aLabel, CallerType aCallerType) {
   if (nsContentUtils::ResistFingerprinting(aCallerType)) {
@@ -16,6 +38,11 @@ void AudioStreamTrack::GetLabel(nsAString& aLabel, CallerType aCallerType) {
     return;
   }
   MediaStreamTrack::GetLabel(aLabel, aCallerType);
+}
+
+already_AddRefed<MediaStreamTrack> AudioStreamTrack::CloneInternal() {
+  return do_AddRef(new AudioStreamTrack(mWindow, mInputTrack, mSource,
+                                        ReadyState(), Muted(), mConstraints));
 }
 
 }  // namespace dom

@@ -5,19 +5,18 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "gfxCrashReporterUtils.h"
-#include <string.h>              // for strcmp
-#include "mozilla/Assertions.h"  // for MOZ_ASSERT_HELPER2
-#include "mozilla/Services.h"    // for GetObserverService
+#include <string.h>                  // for strcmp
+#include "mozilla/Assertions.h"      // for MOZ_ASSERT_HELPER2
+#include "mozilla/SchedulerGroup.h"  // for SchedulerGroup
+#include "mozilla/Services.h"        // for GetObserverService
 #include "mozilla/StaticMutex.h"
-#include "mozilla/SystemGroup.h"  // for SystemGroup
-#include "mozilla/mozalloc.h"     // for operator new, etc
-#include "mozilla/RefPtr.h"       // for RefPtr
-#include "MainThreadUtils.h"      // for NS_IsMainThread
-#include "nsCOMPtr.h"             // for nsCOMPtr
-#include "nsError.h"              // for NS_OK, NS_FAILED, nsresult
-#include "nsExceptionHandler.h"   // for AppendAppNotesToCrashReport
+#include "mozilla/mozalloc.h"    // for operator new, etc
+#include "mozilla/RefPtr.h"      // for RefPtr
+#include "MainThreadUtils.h"     // for NS_IsMainThread
+#include "nsCOMPtr.h"            // for nsCOMPtr
+#include "nsError.h"             // for NS_OK, NS_FAILED, nsresult
+#include "nsExceptionHandler.h"  // for AppendAppNotesToCrashReport
 #include "nsID.h"
-#include "nsIEventTarget.h"      // for NS_DISPATCH_NORMAL
 #include "nsIObserver.h"         // for nsIObserver, etc
 #include "nsIObserverService.h"  // for nsIObserverService
 #include "nsIRunnable.h"         // for nsIRunnable
@@ -35,7 +34,7 @@ class ObserverToDestroyFeaturesAlreadyReported final : public nsIObserver {
   NS_DECL_ISUPPORTS
   NS_DECL_NSIOBSERVER
 
-  ObserverToDestroyFeaturesAlreadyReported() {}
+  ObserverToDestroyFeaturesAlreadyReported() = default;
 
  private:
   virtual ~ObserverToDestroyFeaturesAlreadyReported() = default;
@@ -101,7 +100,7 @@ void ScopedGfxFeatureReporter::WriteAppNote(char statusChar,
   if (!gFeaturesAlreadyReported) {
     gFeaturesAlreadyReported = new nsTArray<nsCString>;
     nsCOMPtr<nsIRunnable> r = new RegisterObserverRunnable();
-    SystemGroup::Dispatch(TaskCategory::Other, r.forget());
+    SchedulerGroup::Dispatch(TaskCategory::Other, r.forget());
   }
 
   nsAutoCString featureString;
@@ -122,7 +121,7 @@ void ScopedGfxFeatureReporter::AppNote(const nsACString& aMessage) {
     CrashReporter::AppendAppNotesToCrashReport(aMessage);
   } else {
     nsCOMPtr<nsIRunnable> r = new AppendAppNotesRunnable(aMessage);
-    SystemGroup::Dispatch(TaskCategory::Other, r.forget());
+    SchedulerGroup::Dispatch(TaskCategory::Other, r.forget());
   }
 }
 

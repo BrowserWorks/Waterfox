@@ -251,7 +251,6 @@ void LIRGeneratorShared::defineReturn(LInstruction* lir, MDefinition* mir) {
   lir->setMir(mir);
 
   MOZ_ASSERT(lir->isCall());
-  gen->setNeedsStaticStackAlignment();
 
   uint32_t vreg = getVirtualRegister();
 
@@ -292,62 +291,30 @@ void LIRGeneratorShared::defineReturn(LInstruction* lir, MDefinition* mir) {
       lir->setDef(0, LDefinition(vreg, LDefinition::DOUBLE,
                                  LFloatReg(ReturnDoubleReg)));
       break;
-    case MIRType::Int8x16:
-    case MIRType::Int16x8:
-    case MIRType::Int32x4:
-    case MIRType::Bool8x16:
-    case MIRType::Bool16x8:
-    case MIRType::Bool32x4:
-      lir->setDef(0, LDefinition(vreg, LDefinition::SIMD128INT,
-                                 LFloatReg(ReturnSimd128Reg)));
-      break;
-    case MIRType::Float32x4:
-      lir->setDef(0, LDefinition(vreg, LDefinition::SIMD128FLOAT,
+    case MIRType::Simd128:
+      lir->setDef(0, LDefinition(vreg, LDefinition::SIMD128,
                                  LFloatReg(ReturnSimd128Reg)));
       break;
     default:
       LDefinition::Type type = LDefinition::TypeFrom(mir->type());
-      MOZ_ASSERT(type != LDefinition::DOUBLE && type != LDefinition::FLOAT32);
-      lir->setDef(0, LDefinition(vreg, type, LGeneralReg(ReturnReg)));
+      switch (type) {
+        case LDefinition::GENERAL:
+        case LDefinition::INT32:
+        case LDefinition::OBJECT:
+        case LDefinition::SLOTS:
+        case LDefinition::STACKRESULTS:
+          lir->setDef(0, LDefinition(vreg, type, LGeneralReg(ReturnReg)));
+          break;
+        case LDefinition::DOUBLE:
+        case LDefinition::FLOAT32:
+        case LDefinition::SIMD128:
+          MOZ_CRASH("Float cases must have been handled earlier");
+        default:
+          MOZ_CRASH("Unexpected type");
+      }
       break;
   }
 
-  mir->setVirtualRegister(vreg);
-  add(lir);
-}
-
-template <size_t Ops, size_t Temps>
-void LIRGeneratorShared::defineSinCos(LInstructionHelper<2, Ops, Temps>* lir,
-                                      MDefinition* mir,
-                                      LDefinition::Policy policy) {
-  MOZ_ASSERT(lir->isCall());
-
-  uint32_t vreg = getVirtualRegister();
-  lir->setDef(
-      0, LDefinition(vreg, LDefinition::DOUBLE, LFloatReg(ReturnDoubleReg)));
-#if defined(JS_CODEGEN_ARM)
-  lir->setDef(1, LDefinition(vreg + VREG_INCREMENT, LDefinition::DOUBLE,
-                             LFloatReg(FloatRegister(FloatRegisters::d1,
-                                                     FloatRegister::Double))));
-#elif defined(JS_CODEGEN_ARM64)
-  lir->setDef(1, LDefinition(vreg + VREG_INCREMENT, LDefinition::DOUBLE,
-                             LFloatReg(FloatRegister(FloatRegisters::d1,
-                                                     FloatRegisters::Double))));
-#elif defined(JS_CODEGEN_MIPS32) || defined(JS_CODEGEN_MIPS64)
-  lir->setDef(1, LDefinition(vreg + VREG_INCREMENT, LDefinition::DOUBLE,
-                             LFloatReg(f2)));
-#elif defined(JS_CODEGEN_NONE)
-  MOZ_CRASH();
-#elif defined(JS_CODEGEN_X86) || defined(JS_CODEGEN_X64)
-  lir->setDef(1, LDefinition(vreg + VREG_INCREMENT, LDefinition::DOUBLE,
-                             LFloatReg(xmm1)));
-#else
-#  error "Unsupported architecture for SinCos"
-#endif
-
-  getVirtualRegister();
-
-  lir->setMir(mir);
   mir->setVirtualRegister(vreg);
   add(lir);
 }
@@ -365,30 +332,6 @@ static inline bool IsCompatibleLIRCoercion(MIRType to, MIRType from) {
     return true;
   }
   return false;
-}
-
-// We can redefine the sin(x) and cos(x) function to return the sincos result.
-void LIRGeneratorShared::redefine(MDefinition* def, MDefinition* as,
-                                  MMathFunction::Function func) {
-  MOZ_ASSERT(def->isMathFunction());
-  MOZ_ASSERT(def->type() == MIRType::Double &&
-             as->type() == MIRType::SinCosDouble);
-  MOZ_ASSERT(MMathFunction::Sin == func || MMathFunction::Cos == func);
-
-  ensureDefined(as);
-  MMathFunction* math = def->toMathFunction();
-
-  MOZ_ASSERT(math->function() == MMathFunction::Cos ||
-             math->function() == MMathFunction::Sin);
-
-  // The sincos returns two values:
-  // - VREG: it returns the sin's value of the sincos;
-  // - VREG + VREG_INCREMENT: it returns the cos' value of the sincos.
-  if (math->function() == MMathFunction::Sin) {
-    def->setVirtualRegister(as->virtualRegister());
-  } else {
-    def->setVirtualRegister(as->virtualRegister() + VREG_INCREMENT);
-  }
 }
 
 void LIRGeneratorShared::redefine(MDefinition* def, MDefinition* as) {
@@ -640,6 +583,12 @@ LDefinition LIRGeneratorShared::tempDouble() {
   return temp(LDefinition::DOUBLE);
 }
 
+#ifdef ENABLE_WASM_SIMD
+LDefinition LIRGeneratorShared::tempSimd128() {
+  return temp(LDefinition::SIMD128);
+}
+#endif
+
 LDefinition LIRGeneratorShared::tempCopy(MDefinition* input,
                                          uint32_t reusedInput) {
   MOZ_ASSERT(input->virtualRegister());
@@ -663,6 +612,10 @@ void LIRGeneratorShared::add(T* ins, MInstruction* mir) {
     ins->setMir(mir);
   }
   annotate(ins);
+  if (ins->isCall()) {
+    gen->setNeedsOverrecursedCheck();
+    gen->setNeedsStaticStackAlignment();
+  }
 }
 
 #ifdef JS_NUNBOX32

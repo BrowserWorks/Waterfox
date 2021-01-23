@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title		"設定移行ウィザード">
+
+<!ENTITY importFromWin.label		"オプション、アカウント設定、アドレス帳、フィルター、その他のデータのインポートする対象を選んでください:">
+<!ENTITY importFromNonWin.label		"設定、アカウント設定、アドレス帳、フィルター、その他のデータのインポートする対象を選んでください:">
+<!ENTITY importSourceNotFound.label	"データのインポート元のアプリケーションが見つかりませんでした。">
+
+<!ENTITY importFromNothing.label	"設定をインポートしない">
+<!ENTITY importFromNothing.accesskey	"D">
+<!ENTITY importFromSeamonkey3.label	"SeaMonkey 2 以降">
+<!ENTITY importFromSeamonkey3.accesskey	"S">
+<!ENTITY importFromOutlook.label	"Outlook">
+<!ENTITY importFromOutlook.accesskey	"O">
+
+<!ENTITY importSource.title		"設定とデータのインポート元">
+<!ENTITY importItems.title		"インポートする項目">
+<!ENTITY importItems.label		"インポートする項目を選択してください:">
+
+<!ENTITY migrating.title		"インポートしています...">
+<!ENTITY migrating.label		"次の項目を現在インポートしています...">
+
+<!ENTITY selectProfile.title		"プロファイルの選択">
+<!ENTITY selectProfile.label		"インポートするプロファイルを選択してください:">
+
+<!ENTITY done.title			"インポート完了">
+<!ENTITY done.label			"次のデータが正常にインポートされました:">

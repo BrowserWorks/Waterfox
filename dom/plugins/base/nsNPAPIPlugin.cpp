@@ -20,7 +20,6 @@
 #include "nsNPAPIPluginInstance.h"
 #include "nsNPAPIPluginStreamListener.h"
 #include "nsPluginStreamListenerPeer.h"
-#include "nsIServiceManager.h"
 #include "nsThreadUtils.h"
 #include "mozilla/CycleCollectedJSContext.h"  // for nsAutoMicroTask
 #include "mozilla/Preferences.h"
@@ -43,10 +42,8 @@
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/dom/ToJSValue.h"
-#include "nsIXULRuntime.h"
 #include "nsIXPConnect.h"
 
-#include "nsIObserverService.h"
 #include <prinrval.h>
 
 #ifdef MOZ_WIDGET_COCOA
@@ -68,10 +65,6 @@
 
 #include "nsJSUtils.h"
 #include "nsJSNPRuntime.h"
-#include "nsIHttpAuthManager.h"
-#include "nsICookieService.h"
-#include "nsILoadContext.h"
-#include "nsIDocShell.h"
 
 #include "nsNetUtil.h"
 #include "nsNetCID.h"
@@ -96,7 +89,6 @@ using mozilla::plugins::PluginModuleContentParent;
 #  endif
 #endif
 
-#include "nsIAudioChannelAgent.h"
 #include "AudioChannelService.h"
 
 using namespace mozilla;
@@ -150,7 +142,7 @@ static NPNetscapeFuncs sBrowserFuncs = {
     _pushpopupsenabledstate,
     _poppopupsenabledstate,
     _enumerate,
-    _pluginthreadasynccall,
+    _pluginthreadasynccall,  
     _construct,
     _getvalueforurl,
     _setvalueforurl,
@@ -179,25 +171,24 @@ void NS_NotifyBeginPluginCall(NSPluginCallReentry aReentryState) {
   nsNPAPIPluginInstance::BeginPluginCall(aReentryState);
 }
 
+static void CheckClassInitialized()
+{
+  static bool initialized = false;
+
+  if (initialized)
+    return;
+
+  if (!sPluginThreadAsyncCallLock)
+    sPluginThreadAsyncCallLock = new Mutex("nsNPAPIPlugin.sPluginThreadAsyncCallLock");
+
+  initialized = true;
+
+  NPN_PLUGIN_LOG(PLUGIN_LOG_NORMAL, ("NPN callbacks initialized\n"));
+}
+
 void NS_NotifyPluginCall(NSPluginCallReentry aReentryState) {
   nsNPAPIPluginInstance::EndPluginCall(aReentryState);
 }
-
-static void CheckClassInitialized()
-{
-    static bool initialized = false;
-
-    if (initialized)
-      return;
-
-    if (!sPluginThreadAsyncCallLock)
-      sPluginThreadAsyncCallLock = new Mutex("nsNPAPIPlugin.sPluginThreadAsyncCallLock");
-
-    initialized = true;
-
-    NPN_PLUGIN_LOG(PLUGIN_LOG_NORMAL, ("NPN callbacks initialized\n"));
-}
-
 
 nsNPAPIPlugin::nsNPAPIPlugin() {
   memset((void*)&mPluginFuncs, 0, sizeof(mPluginFuncs));
@@ -212,10 +203,10 @@ nsNPAPIPlugin::~nsNPAPIPlugin() {
   mLibrary = nullptr;
 }
 
-void nsNPAPIPlugin::PluginCrashed(const nsAString& pluginDumpID,
-                                  const nsAString& browserDumpID) {
+void nsNPAPIPlugin::PluginCrashed(const nsAString& aPluginDumpID,
+                                  const nsACString& aAdditionalMinidumps) {
   RefPtr<nsPluginHost> host = nsPluginHost::GetInst();
-  host->PluginCrashed(this, pluginDumpID, browserDumpID);
+  host->PluginCrashed(this, aPluginDumpID, aAdditionalMinidumps);
 }
 
 inline PluginLibrary* GetNewPluginLibrary(nsPluginTag* aPluginTag) {
@@ -415,31 +406,31 @@ namespace {
 static char* gNPPException;
 
 class nsPluginThreadRunnable : public Runnable,
-    public PRCList
+  public PRCList
 {
 public:
-    nsPluginThreadRunnable(NPP instance, PluginThreadCallback func,
-        void *userData);
-    ~nsPluginThreadRunnable() override;
+  nsPluginThreadRunnable(NPP instance, PluginThreadCallback func,
+    void *userData);
+  ~nsPluginThreadRunnable() override;
 
-    NS_IMETHOD Run() override;
+  NS_IMETHOD Run() override;
 
-    bool IsForInstance(NPP instance){
-      return (mInstance == instance);
-    }
+  bool IsForInstance(NPP instance) {
+    return (mInstance == instance);
+  }
 
-    void Invalidate(){
-      mFunc = nullptr;
-    }
+  void Invalidate() {
+    mFunc = nullptr;
+  }
 
-    bool IsValid(){
-      return (mFunc != nullptr);
-    }
+  bool IsValid() {
+    return (mFunc != nullptr);
+  }
 
 private:
-    NPP mInstance;
-    PluginThreadCallback mFunc;
-    void *mUserData;
+  NPP mInstance;
+  PluginThreadCallback mFunc;
+  void *mUserData;
 };
 
 static Document* GetDocumentFromNPP(NPP npp) {
@@ -514,12 +505,12 @@ void PopException() {
 }
 
 nsPluginThreadRunnable::nsPluginThreadRunnable(NPP instance,
-    PluginThreadCallback func,
-    void *userData)
-    : Runnable("nsPluginThreadRunnable"),
-    mInstance(instance),
-    mFunc(func),
-    mUserData(userData)
+  PluginThreadCallback func,
+  void *userData)
+  : Runnable("nsPluginThreadRunnable"),
+  mInstance(instance),
+  mFunc(func),
+  mUserData(userData)
 {
   if (!sPluginThreadAsyncCallLock) {
     // Failed to create lock, not much we can do here then...
@@ -564,7 +555,7 @@ NS_IMETHODIMP nsPluginThreadRunnable::Run()
     PluginDestructionGuard guard(mInstance);
 
     NS_TRY_SAFE_CALL_VOID(mFunc(mUserData), nullptr,
-    NS_PLUGIN_CALL_SAFE_TO_REENTER_GECKO);
+      NS_PLUGIN_CALL_SAFE_TO_REENTER_GECKO);
   }
 
   return NS_OK;
@@ -588,7 +579,7 @@ OnPluginDestroy(NPP instance)
 
     do {
       if (r->IsForInstance(instance)) {
-              r->Invalidate();
+        r->Invalidate();
       }
 
       r = (nsPluginThreadRunnable *)PR_NEXT_LINK(r);
@@ -600,10 +591,10 @@ void
 OnShutdown()
 {
   NS_ASSERTION(PR_CLIST_IS_EMPTY(&sPendingAsyncCalls),
-        "Pending async plugin call list not cleaned up!");
+    "Pending async plugin call list not cleaned up!");
 
   if (sPluginThreadAsyncCallLock) {
-      delete sPluginThreadAsyncCallLock;
+    delete sPluginThreadAsyncCallLock;
 
     sPluginThreadAsyncCallLock = nullptr;
   }
@@ -623,13 +614,12 @@ AsyncCallbackAutoLock::~AsyncCallbackAutoLock()
   }
 }
 
+
 //
 // Static callbacks that get routed back through the new C++ API
 //
 
-namespace mozilla {
-namespace plugins {
-namespace parent {
+namespace mozilla::plugins::parent {
 
 NPError _geturl(NPP npp, const char* relativeURL, const char* target) {
   if (!NS_IsMainThread()) {
@@ -914,7 +904,7 @@ NPUTF8* _utf8fromidentifier(NPIdentifier id) {
 
   JSString* str = NPIdentifierToString(id);
   nsAutoString autoStr;
-  AssignJSFlatString(autoStr, JS_ASSERT_STRING_IS_FLAT(str));
+  AssignJSLinearString(autoStr, JS_ASSERT_STRING_IS_LINEAR(str));
 
   return ToNewUTF8String(autoStr);
 }
@@ -1002,18 +992,6 @@ NPObject* _retainobject(NPObject* npobj) {
 void _releaseobject(NPObject* npobj) {
   // If nothing is passed, just return, even if we're on the wrong thread.
   if (!npobj) {
-    return;
-  }
-
-  // THIS IS A KNOWN LEAK. SEE BUG 1221448.
-  // If releaseobject is called off the main thread and we have a valid pointer,
-  // we at least know it was created on the main thread (see _createobject
-  // implementation). However, forwarding the deletion back to the main thread
-  // without careful checking could cause bad memory management races. So, for
-  // now, we leak by warning and then just returning early. But it should fix
-  // java 7 crashes.
-  if (!NS_IsMainThread()) {
-    NPN_PLUGIN_LOG(PLUGIN_LOG_ALWAYS,("NPN_releaseobject called from the wrong thread\n"));
     return;
   }
 
@@ -1121,16 +1099,13 @@ bool _evaluate(NPP npp, NPObject* npobj, NPString* script, NPVariant* result) {
 
   nsIPrincipal* principal = doc->NodePrincipal();
 
-  nsAutoCString specStr;
+  nsCString specStr;
   const char* spec;
 
-  nsCOMPtr<nsIURI> uri;
-  principal->GetURI(getter_AddRefs(uri));
+  principal->GetAsciiSpec(specStr);
+  spec = specStr.get();
 
-  if (uri) {
-    uri->GetSpec(specStr);
-    spec = specStr.get();
-  } else {
+  if (specStr.IsEmpty()) {
     // No URI in a principal means it's the system principal. If the
     // document URI is a chrome:// URI, pass that in as the URI of the
     // script, else pass in null for the filename as there's no way to
@@ -1138,11 +1113,8 @@ bool _evaluate(NPP npp, NPObject* npobj, NPString* script, NPVariant* result) {
     // also means that the script gets treated by XPConnect as if it
     // needs additional protection, which is what we want for unknown
     // chrome code anyways.
-
-    uri = doc->GetDocumentURI();
-    bool isChrome = false;
-
-    if (uri && NS_SUCCEEDED(uri->SchemeIs("chrome", &isChrome)) && isChrome) {
+    nsCOMPtr<nsIURI> uri = doc->GetDocumentURI();
+    if (uri && uri->SchemeIs("chrome")) {
       uri->GetSpec(specStr);
       spec = specStr.get();
     } else {
@@ -1202,88 +1174,6 @@ bool _getproperty(NPP npp, NPObject* npobj, NPIdentifier property,
                   npp, npobj, property));
 
   if (!npobj->_class->getProperty(npobj, property, result)) return false;
-
-  // If a Java plugin tries to get the document.URL or document.documentURI
-  // property from us, don't pass back a value that Java won't be able to
-  // understand -- one that will make the URL(String) constructor throw a
-  // MalformedURL exception.  Passing such a value causes Java Plugin2 to
-  // crash (to throw a RuntimeException in Plugin2Manager.getDocumentBase()).
-  // Also don't pass back a value that Java is likely to mishandle.
-
-  nsNPAPIPluginInstance* inst = (nsNPAPIPluginInstance*) npp->ndata;
-  if (!inst)
-    return false;
-  nsNPAPIPlugin* plugin = inst->GetPlugin();
-  if (!plugin)
-    return false;
-  RefPtr<nsPluginHost> host = nsPluginHost::GetInst();
-  nsPluginTag* pluginTag = host->TagForPlugin(plugin);
-  if (!pluginTag->mIsJavaPlugin)
-    return true;
-
-  if (!NPVARIANT_IS_STRING(*result))
-    return true;
-
-  NPUTF8* propertyName = _utf8fromidentifier(property);
-  if (!propertyName)
-    return true;
-  bool notURL =
-    (PL_strcasecmp(propertyName, "URL") &&
-     PL_strcasecmp(propertyName, "documentURI"));
-  _memfree(propertyName);
-  if (notURL)
-    return true;
-
-  NPObject* window_obj = _getwindowobject(npp);
-  if (!window_obj)
-    return true;
-
-  NPVariant doc_v;
-  NPObject* document_obj = nullptr;
-  NPIdentifier doc_id = _getstringidentifier("document");
-  bool ok = npobj->_class->getProperty(window_obj, doc_id, &doc_v);
-  _releaseobject(window_obj);
-  if (ok) {
-    if (NPVARIANT_IS_OBJECT(doc_v)) {
-      document_obj = NPVARIANT_TO_OBJECT(doc_v);
-    } else {
-      _releasevariantvalue(&doc_v);
-      return true;
-    }
-  } else {
-    return true;
-  }
-  _releaseobject(document_obj);
-  if (document_obj != npobj)
-    return true;
-
-  NPString urlnp = NPVARIANT_TO_STRING(*result);
-  nsCString url;
-  url.Assign(urlnp.UTF8Characters, urlnp.UTF8Length);
-
-  bool javaCompatible = false;
-  if (NS_FAILED(NS_CheckIsJavaCompatibleURLString(url, &javaCompatible)))
-    javaCompatible = false;
-  if (javaCompatible)
-    return true;
-
-  // If Java won't be able to interpret the original value of document.URL or
-  // document.documentURI, or is likely to mishandle it, pass back something
-  // that Java will understand but won't be able to use to access the network,
-  // and for which same-origin checks will always fail.
-
-  if (inst->mFakeURL.IsVoid()) {
-    // Abort (do an error return) if NS_MakeRandomInvalidURLString() fails.
-    if (NS_FAILED(NS_MakeRandomInvalidURLString(inst->mFakeURL))) {
-      _releasevariantvalue(result);
-      return false;
-    }
-  }
-
-  // _releasevariantvalue(result);
-  // char* fakeurl = (char *) _memalloc(inst->mFakeURL.Length() + 1);
-  // strcpy(fakeurl, inst->mFakeURL);
-  // STRINGZ_TO_NPVARIANT(fakeurl, *result);
 
   return true;
 }
@@ -1525,17 +1415,17 @@ NPError _getvalue(NPP npp, NPNVariable variable, void* result) {
         }
       }
 #if (MOZ_WIDGET_GTK == 2)
-    // adobe nppdf calls XtGetApplicationNameAndClass(display,
-    // &instance, &class) we have to init Xt toolkit before get
-    // XtDisplay just call gtk_xtbin_new(w,0) once
-    static GtkWidget *gtkXtBinHolder = 0;
-    if (!gtkXtBinHolder) {
-      gtkXtBinHolder = gtk_xtbin_new(gdk_get_default_root_window(), 0);
-      // it crashes on destroy, let it leak
-      // gtk_widget_destroy(gtkXtBinHolder);
+      // adobe nppdf calls XtGetApplicationNameAndClass(display,
+      // &instance, &class) we have to init Xt toolkit before get
+      // XtDisplay just call gtk_xtbin_new(w,0) once
+      static GtkWidget *gtkXtBinHolder = 0;
+      if (!gtkXtBinHolder) {
+        gtkXtBinHolder = gtk_xtbin_new(gdk_get_default_root_window(), 0);
+        // it crashes on destroy, let it leak
+        // gtk_widget_destroy(gtkXtBinHolder);
   }
-    (*(Display **)result) = GTK_XTBIN(gtkXtBinHolder)->xtdisplay;
-    return NPERR_NO_ERROR;
+      (*(Display **)result) = GTK_XTBIN(gtkXtBinHolder)->xtdisplay;
+      return NPERR_NO_ERROR;
 #endif
 
 #  endif
@@ -1773,7 +1663,7 @@ NPError _getvalue(NPP npp, NPNVariable variable, void* result) {
       // old XPCOM objects, no longer supported, but null out the out
       // param to avoid crashing plugins that still try to use this.
       *(nsISupports**)result = nullptr;
-      MOZ_FALLTHROUGH;
+      [[fallthrough]];
 
     default:
       NPN_PLUGIN_LOG(PLUGIN_LOG_NORMAL,
@@ -1884,46 +1774,46 @@ NPError _setvalue(NPP npp, NPPVariable variable, void* result) {
 NPError
 _requestread(NPStream *pstream, NPByteRange *rangeList)
 {
-    if (!NS_IsMainThread()) {
-      NPN_PLUGIN_LOG(PLUGIN_LOG_ALWAYS, ("NPN_requestread called from the wrong thread\n"));
-      return NPERR_INVALID_PARAM;
-    }
-    NPN_PLUGIN_LOG(PLUGIN_LOG_NORMAL, ("NPN_RequestRead: stream=%p\n",
-        (void*)pstream));
+  if (!NS_IsMainThread()) {
+    NPN_PLUGIN_LOG(PLUGIN_LOG_ALWAYS, ("NPN_requestread called from the wrong thread\n"));
+    return NPERR_INVALID_PARAM;
+  }
+  NPN_PLUGIN_LOG(PLUGIN_LOG_NORMAL, ("NPN_RequestRead: stream=%p\n",
+    (void*)pstream));
 
 #ifdef PLUGIN_LOGGING
-    for (NPByteRange * range = rangeList; range != nullptr; range = range->next)
-      MOZ_LOG(nsPluginLogging::gNPNLog, PLUGIN_LOG_NOISY,
-      ("%i-%i", range->offset, range->offset + range->length - 1));
+  for (NPByteRange * range = rangeList; range != nullptr; range = range->next)
+    MOZ_LOG(nsPluginLogging::gNPNLog, PLUGIN_LOG_NOISY,
+    ("%i-%i", range->offset, range->offset + range->length - 1));
 
-    MOZ_LOG(nsPluginLogging::gNPNLog, PLUGIN_LOG_NOISY, ("\n\n"));
-    PR_LogFlush();
+  MOZ_LOG(nsPluginLogging::gNPNLog, PLUGIN_LOG_NOISY, ("\n\n"));
+  PR_LogFlush();
 #endif
 
-    if (!pstream || !rangeList || !pstream->ndata)
-      return NPERR_INVALID_PARAM;
-    #if 0   //tma todo
-    nsNPAPIStreamWrapper* streamWrapper = static_cast<nsNPAPIStreamWrapper*>(pstream->ndata);
-    nsNPAPIPluginStreamListener* streamlistener = streamWrapper->GetStreamListener();
-    if (!streamlistener) {
-      return NPERR_GENERIC_ERROR;
-    }
+  if (!pstream || !rangeList || !pstream->ndata)
+    return NPERR_INVALID_PARAM;
+#if 0   //tma todo
+  nsNPAPIStreamWrapper* streamWrapper = static_cast<nsNPAPIStreamWrapper*>(pstream->ndata);
+  nsNPAPIPluginStreamListener* streamlistener = streamWrapper->GetStreamListener();
+  if (!streamlistener) {
+    return NPERR_GENERIC_ERROR;
+  }
 
-    int32_t streamtype = NP_NORMAL;
+  int32_t streamtype = NP_NORMAL;
 
-    streamlistener->GetStreamType(&streamtype);
+  streamlistener->GetStreamType(&streamtype);
 
-    if (streamtype != NP_SEEK)
-      return NPERR_STREAM_NOT_SEEKABLE;
+  if (streamtype != NP_SEEK)
+    return NPERR_STREAM_NOT_SEEKABLE;
 
-    if (!streamlistener->mStreamListenerPeer)
-      return NPERR_GENERIC_ERROR;
+  if (!streamlistener->mStreamListenerPeer)
+    return NPERR_GENERIC_ERROR;
 
-    nsresult rv = streamlistener->mStreamListenerPeer->RequestRead((NPByteRange *)rangeList);
-    if (NS_FAILED(rv))
-      return NPERR_GENERIC_ERROR;
-    #endif
-    return NPERR_NO_ERROR;
+  nsresult rv = streamlistener->mStreamListenerPeer->RequestRead((NPByteRange *)rangeList);
+  if (NS_FAILED(rv))
+    return NPERR_GENERIC_ERROR;
+#endif
+  return NPERR_NO_ERROR;
 }
 
 // Deprecated, only stubbed out
@@ -2001,18 +1891,18 @@ void _poppopupsenabledstate(NPP npp) {
 
 void _pluginthreadasynccall(NPP instance, PluginThreadCallback func, void *userData)
 {
-    if (NS_IsMainThread()) {
-      NPN_PLUGIN_LOG(PLUGIN_LOG_NOISY, ("NPN_pluginthreadasynccall called from the main thread\n"));
-    }
-    else {
-      NPN_PLUGIN_LOG(PLUGIN_LOG_NOISY, ("NPN_pluginthreadasynccall called from a non main thread\n"));
-    }
-    RefPtr<nsPluginThreadRunnable> evt =
-      new nsPluginThreadRunnable(instance, func, userData);
+  if (NS_IsMainThread()) {
+    NPN_PLUGIN_LOG(PLUGIN_LOG_NOISY, ("NPN_pluginthreadasynccall called from the main thread\n"));
+  }
+  else {
+    NPN_PLUGIN_LOG(PLUGIN_LOG_NOISY, ("NPN_pluginthreadasynccall called from a non main thread\n"));
+  }
+  RefPtr<nsPluginThreadRunnable> evt =
+    new nsPluginThreadRunnable(instance, func, userData);
 
-    if (evt && evt->IsValid()) {
-      NS_DispatchToMainThread(evt);
-    }
+  if (evt && evt->IsValid()) {
+    NS_DispatchToMainThread(evt);
+  }
 }
 
 NPError _getvalueforurl(NPP instance, NPNURLVariable variable, const char* url,
@@ -2221,6 +2111,4 @@ void _setcurrentasyncsurface(NPP instance, NPAsyncSurface* surface,
   inst->SetCurrentAsyncSurface(surface, changed);
 }
 
-} /* namespace parent */
-} /* namespace plugins */
-} /* namespace mozilla */
+}  // namespace mozilla::plugins::parent

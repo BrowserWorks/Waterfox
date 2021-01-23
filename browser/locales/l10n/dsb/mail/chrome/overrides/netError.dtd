@@ -1,0 +1,109 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Zmólka pśi cytanju boka">
+<!ENTITY retry.label "Hyšći raz wopytaś">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Zwisk njejo móžny">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Toś ta adresa jo wobgranicowana">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Serwer njejo se namakał">
+<!ENTITY dnsNotFound.longDesc "<ul> <li>Pśeglědajśo adresu za pisańskimi zmólkami kaž <strong>ww</strong>.example.com město <strong>www</strong>.example.com.</li> <li>Jolic njamóžośo někotare boki cytaś, pśekontrolujśo seśowy zwisk swójogo licadła.</li> <li>Jolic wašo licadło abo seś šćita se z wognjoweju murju abo proksy, zawěsććo, až &brandShortName; smějo pśistup k weboju měś.</li> </ul>">
+
+<!ENTITY fileNotFound.title "Dataja njejo se namakała">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Pśeglědajśo datajowe mě za wjelikopisańskimi abo hynakšymi pisańskimi zmólkami.</li> <li>Pśeglědjśo, lěc dataja jo se pśesunuła, pśemjeniła abo wulašowała.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "Pśistup k dataji jo se wótpokazał">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Snaź jo se wótpórała, pśesunuła, abo datajowe pšawa zajźuju pśistupoju.</li> </ul>">
+
+<!ENTITY generic.title "Hopla.">
+<!ENTITY generic.longDesc "<p>&brandShortName; njamóžo toś ten bok z někakeje pśicyny cytaś.</p>">
+
+<!ENTITY malformedURI.title "Adresa njejo płaśiwa">
+<!ENTITY malformedURI.longDesc "<ul> <li>Webadrese piše se normalnje ako <strong>http://www.example.com/</strong></li> <li>Zawěsććo, až wužywaśo normalne nakósne smužki (t.j. <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "Zwisk jo se pśetergnuł">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Dokument spadnył">
+<!ENTITY notCached.longDesc "<p>Pominany dokumenta njestoj k dispoziciji w pufrowaku.</p><ul><li>Ako wěstotnu napšawu &brandShortName; njewótwołujo delikatne dokumenty awtomatiski znowego.</li><li>Klikniśo na Hyšći raz, aby dokument hyšći raz z websedła wótwołał.</li></ul>">
+
+<!ENTITY netOffline.title "Offline-modus">
+<!ENTITY netOffline.longDesc2 "<ul> <li>Tłocćo &quot;Hyšći raz&quot;, aby do online-modusa šaltował a bok znowego zacytał.</li> </ul>">
+
+<!ENTITY contentEncodingError.title "Zmólka pśi koděrowanju wopśimjeśa">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Pšosym stajśo se z wobsejźarjami websedła do zwiska, aby wy jich wó toś tom problemje informěrował.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Njewěsty datajowy typ">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Pšosym stajśo se z wobsejźarjami websedła do zwiska, abyš wy jich wó toś tom problemje informěrował.</li> </ul>">
+
+<!ENTITY netReset.title "Zwisk jo se slědk stajił">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Zwisk jo cas pśekšocył">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Adresa njejo se zrozměła">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Snaź musyśo druge programy instalěrowaś, aby se toś ta adresa wócyniła.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "Proksy-serwer wótpokazujo zwiski">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Pśekontrolěrujśo proksy-nastajenja, aby zawěsćił, až wóne su korektne.</li> <li>Stajśo ze swójm seśowym administratorom do zwiska, aby zawěsćił, až proksy-serwer źěła.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "Njejo móžno, proksy-serwer namakaś">
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Pśeglědajśo proksy-nastajenja, aby zawěsćił, až su korektne.</li> <li>Pśekontrolěrujśo, lěc wašo licadło ma funkcioněrujucy seśowy zwisk.</li> <li>Jolic wašo licadło abo seś šćita se z wognjoweju murju abo proksy, zawěsććo, až &brandShortName; smějo pśistup k weboju měś.</li> </ul>">
+
+<!ENTITY redirectLoop.title "Bok njepósrědnja pórědnje">
+<!ENTITY redirectLoop.longDesc "<ul> <li>Toś ten problem zawinujo se wótergi pśez zmóžnjanje abo znjemóžnjanje cookiejow.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "Njewócakane wótegrono ze serwera">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Kontrolěrujśo, lěc Personal Security Manager jo instalěrowany na wašom systemje.</li> <li>Pśicyna jo snaź njestandardna konfiguracija na wašom serwerje.</li> </ul>">
+
+<!ENTITY nssFailure2.title "Wěsty zwisk njejo móžny">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Bok, kótaryž cośo se woglědaś, njedajo se pokazaś, dokulaž awtentiskosć dostanych datow njedajo se kontrolěrowaś.</li> <li>Pśosym stajśo z wobsejźarjami websedła do zwiska, aby wy jich wó toś tom problemje informěrował.</li> </ul>">
+
+<!ENTITY nssBadCert.title "Wěsty zwisk njemóžno">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>To by mógło problem z konfiguraciju serwera byś, abo by mógło byś, až něchten wopytujo serwer imitěrowaś.</li> <li>Jolic sćo ze serwerom w zachadnosći wuspěšnje zwězany był, by mógła zmólka snaź nachylna byś a móžośo pózdźej hyšći raz wopytaś.</li> </ul>">
+
+<!ENTITY sharedLongDesc "<ul> <li>Sedło njeby mógło nachylnje k dispoziciji staś abo pśeśěžone byś. Wopytajśo za mało wokognuśow hyšći raz.</li> <li>Jolic njamóžośo někotare boki cytaś, pśekontrolěrujśo zwisk wašeje licadłoweje seśe.</li> <li>Jolic wašo licadło abo seś šćita se z wognjoweju murju abo proksy, zawěsććo, až &brandShortName; smějo pśistup k weboju měś.</li> </ul>">
+
+<!ENTITY cspBlocked.title "Pśez wěstotne pšawidła za wopśimjeśe zablokěrowany">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; jo zacytowanjeju toś togo boka na toś ten nałog zajźował, dokulaž bok ma wěstotne pšawidła za wopśimjeśe, kótarež to njedowóluju.</p>">
+
+<!ENTITY xfoBlocked.title "Pśez pšawidła X-Frame-Options zablokěrowane">
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; jo zacytanjeju toś togo boka w toś tom konteksće zajźował, dokulaž bok ma pšawidła X-Frame-Options, kótarež to njedowóluju.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Zmólka - wobškóźone wopśimjeśe">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Bok, kótaryž cośo se woglědaś, njedajo se pokazaś, dokulaž jo se zmólka pśi pśenosowanju datow namakała.</p><ul><li>Pšosym stajśo se z wobsejźarjami websedła do zwiska, aby je wó toś tom problemje informěrował.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Abo móžośo wuwześe pśidaś…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Cu how wen!">
+<!ENTITY securityOverride.exceptionButtonLabel "Wuwześe pśidaś…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <button> tags. It uses strings already defined above. The
+button is included here (instead of netError.xhtml) because it exposes
+functionality specific to thunderbird. -->
+
+<!ENTITY securityOverride.warningContent "<p>Njeby wy měł wuwześe pśidaś, jolic wužywaśo internetny zwisk, kótaremuž cele njedowěriśo abo jolic njewiźiśo warnowanje za toś ten serwer.</p>  <button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> <button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "Daloki XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Pšosym stajśo se z wobsejźarjami websedła do zwiska, aby jich wó toś tom problemje informěrował.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "Waš zwisk njejo wěsty">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> wužywa wěstotnu technologiju, kótaraž jo zestarjona a sensibelna za napady. Napadowaŕ by mógał informacije lažko namakaś, kótarež maśo za wěste. Websedłowy administrator musy problem na serwerje rozwězaś, nježli až móžośo se k sedłoju woglědaś.</p><p>Zmólkowy kod: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Zablokěrowany bok">
+
+<!ENTITY networkProtocolError.title "Zmólka seśowego protokola">
+<!ENTITY networkProtocolError.longDesc "<p>Bok, kótaryž cośo se woglědaś, njedajo se pokazaś, dokulaž jo se zmólka w seśowem protokolu namakała.</p><ul><li>Pšosym stajśo se z wobsejźarjami websedła do zwiska, aby je wó toś tom problemje informěrował.</li></ul>">

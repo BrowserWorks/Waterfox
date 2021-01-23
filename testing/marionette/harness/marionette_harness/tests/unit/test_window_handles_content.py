@@ -5,15 +5,17 @@
 from __future__ import absolute_import
 
 import types
-import urllib
+
+import six
+from six.moves.urllib.parse import quote
 
 from marionette_driver import errors
 
-from marionette_harness import MarionetteTestCase, skip_if_mobile, WindowManagerMixin
+from marionette_harness import MarionetteTestCase, WindowManagerMixin
 
 
 def inline(doc):
-    return "data:text/html;charset=utf-8,{}".format(urllib.quote(doc))
+    return "data:text/html;charset=utf-8,{}".format(quote(doc))
 
 
 class TestWindowHandles(WindowManagerMixin, MarionetteTestCase):
@@ -21,7 +23,7 @@ class TestWindowHandles(WindowManagerMixin, MarionetteTestCase):
     def setUp(self):
         super(TestWindowHandles, self).setUp()
 
-        self.xul_dialog = "chrome://marionette/content/test_dialog.xul"
+        self.chrome_dialog = "chrome://marionette/content/test_dialog.xhtml"
 
     def tearDown(self):
         self.close_all_tabs()
@@ -30,12 +32,12 @@ class TestWindowHandles(WindowManagerMixin, MarionetteTestCase):
 
     def assert_window_handles(self):
         try:
-            self.assertIsInstance(self.marionette.current_window_handle, types.StringTypes)
+            self.assertIsInstance(self.marionette.current_window_handle, six.string_types)
         except errors.NoSuchWindowException:
             pass
 
         for handle in self.marionette.window_handles:
-            self.assertIsInstance(handle, types.StringTypes)
+            self.assertIsInstance(handle,  six.string_types)
 
     def tst_window_handles_after_opening_new_tab(self):
         new_tab = self.open_tab()
@@ -78,9 +80,8 @@ class TestWindowHandles(WindowManagerMixin, MarionetteTestCase):
         self.assert_window_handles()
         self.assertEqual(self.marionette.current_window_handle, self.start_tab)
 
-    @skip_if_mobile("Fennec doesn't support other chrome windows")
     def tst_window_handles_after_opening_new_non_browser_window(self):
-        new_window = self.open_chrome_window(self.xul_dialog)
+        new_window = self.open_chrome_window(self.chrome_dialog)
         self.assert_window_handles()
         self.assertEqual(len(self.marionette.window_handles), len(self.start_tabs))
         self.assertEqual(self.marionette.current_window_handle, self.start_tab)

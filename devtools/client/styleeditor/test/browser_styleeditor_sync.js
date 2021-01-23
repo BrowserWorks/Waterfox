@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 "use strict";
@@ -63,9 +62,9 @@ add_task(async function() {
 
   // For the time being, the actor does not update the style's owning
   // node's textContent.  See bug 1205380.
-  const textContent = await ContentTask.spawn(
+  const textContent = await SpecialPowers.spawn(
     gBrowser.selectedBrowser,
-    null,
+    [],
     async function() {
       return content.document.querySelector("style").textContent;
     }

@@ -18,12 +18,10 @@ ChromeUtils.defineModuleGetter(
   "ExtensionSettingsStore",
   "resource://gre/modules/ExtensionSettingsStore.jsm"
 );
-
-XPCOMUtils.defineLazyServiceGetter(
+ChromeUtils.defineModuleGetter(
   this,
-  "aboutNewTabService",
-  "@mozilla.org/browser/aboutnewtab-service;1",
-  "nsIAboutNewTabService"
+  "AboutNewTab",
+  "resource:///modules/AboutNewTab.jsm"
 );
 
 const STORE_TYPE = "url_overrides";
@@ -44,10 +42,10 @@ XPCOMUtils.defineLazyGetter(this, "newTabPopup", () => {
     learnMoreMessageId: "newTabControlled.learnMore",
     learnMoreLink: "extension-home",
     onObserverAdded() {
-      aboutNewTabService.willNotifyUser = true;
+      AboutNewTab.willNotifyUser = true;
     },
     onObserverRemoved() {
-      aboutNewTabService.willNotifyUser = false;
+      AboutNewTab.willNotifyUser = false;
     },
     async beforeDisableAddon(popup, win) {
       // ExtensionControlledPopup will disable the add-on once this function completes.
@@ -62,7 +60,7 @@ XPCOMUtils.defineLazyGetter(this, "newTabPopup", () => {
       Services.obs.addObserver(
         {
           async observe() {
-            await replaceUrlInTab(gBrowser, tab, aboutNewTabService.newTabURL);
+            await replaceUrlInTab(gBrowser, tab, AboutNewTab.newTabURL);
             // Now that the New Tab is loading, try to open the popup again. This
             // will only open the popup if a new extension is controlling the New Tab.
             popup.open();
@@ -90,7 +88,7 @@ function setNewTabURL(extensionId, url) {
     Services.prefs.clearUserPref(NEW_TAB_EXTENSION_CONTROLLED);
   }
   if (url) {
-    aboutNewTabService.newTabURL = url;
+    AboutNewTab.newTabURL = url;
   }
 }
 
@@ -100,43 +98,41 @@ ExtensionParent.apiManager.on(
   async (eventName, setting) => {
     let extensionId, url;
     if (setting.type === STORE_TYPE && setting.key === NEW_TAB_SETTING_NAME) {
-      if (setting.action === "enable" || setting.item) {
-        let { item } = setting;
-        // If setting.item exists, it is the new value.  If it doesn't exist, and an
-        // extension is being enabled, we use the id.
-        extensionId = (item && item.id) || setting.id;
-        url = item && (item.value || item.initialValue);
+      // If the actual setting has changed in some way, we will have
+      // setting.item which is what the setting has been changed to.  If
+      // we have an item, we always want to update the newTabUrl values.
+      let { item } = setting;
+      if (item) {
+        // If we're resetting, id will be undefined.
+        extensionId = item.id;
+        url = item.value || item.initialValue;
+        setNewTabURL(extensionId, url);
       }
     }
-    setNewTabURL(extensionId, url);
   }
 );
+
+async function processSettings(action, id) {
+  await ExtensionSettingsStore.initialize();
+  if (ExtensionSettingsStore.hasSetting(id, STORE_TYPE, NEW_TAB_SETTING_NAME)) {
+    ExtensionSettingsStore[action](id, STORE_TYPE, NEW_TAB_SETTING_NAME);
+  }
+}
 
 this.urlOverrides = class extends ExtensionAPI {
   static async onDisable(id) {
     newTabPopup.clearConfirmation(id);
-    await ExtensionSettingsStore.initialize();
-    if (
-      ExtensionSettingsStore.hasSetting(id, STORE_TYPE, NEW_TAB_SETTING_NAME)
-    ) {
-      ExtensionSettingsStore.disable(id, STORE_TYPE, NEW_TAB_SETTING_NAME);
-    }
+    await processSettings("disable", id);
+  }
+
+  static async onEnabling(id) {
+    await processSettings("enable", id);
   }
 
   static async onUninstall(id) {
     // TODO: This can be removed once bug 1438364 is fixed and all data is cleaned up.
     newTabPopup.clearConfirmation(id);
-
-    await ExtensionSettingsStore.initialize();
-    if (
-      ExtensionSettingsStore.hasSetting(id, STORE_TYPE, NEW_TAB_SETTING_NAME)
-    ) {
-      ExtensionSettingsStore.removeSetting(
-        id,
-        STORE_TYPE,
-        NEW_TAB_SETTING_NAME
-      );
-    }
+    await processSettings("removeSetting", id);
   }
 
   static async onUpdate(id, manifest) {
@@ -161,17 +157,16 @@ this.urlOverrides = class extends ExtensionAPI {
     let { extension } = this;
     let { manifest } = extension;
 
-    await ExtensionSettingsStore.initialize();
-
     if (manifest.chrome_url_overrides.newtab) {
       let url = extension.baseURI.resolve(manifest.chrome_url_overrides.newtab);
 
+      await ExtensionSettingsStore.initialize();
       let item = await ExtensionSettingsStore.addSetting(
         extension.id,
         STORE_TYPE,
         NEW_TAB_SETTING_NAME,
         url,
-        () => aboutNewTabService.newTabURL
+        () => AboutNewTab.newTabURL
       );
 
       // Set the newTabURL to the current value of the setting.

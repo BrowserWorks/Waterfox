@@ -12,10 +12,18 @@ interface nsIASN1Object;
 interface nsICertVerificationListener;
 
 %{ C++
+namespace IPC {
+  class Message;
+}
+class PickleIterator;
+
  /* forward declaration */
  typedef struct CERTCertificateStr CERTCertificate;
 %}
+
 [ptr] native CERTCertificatePtr(CERTCertificate);
+[ptr] native IpcMessagePtr(IPC::Message);
+[ptr] native PickleIteratorPtr(PickleIterator);
 
 /**
  * This represents a X.509 certificate.
@@ -43,12 +51,10 @@ interface nsIX509Cert : nsISupports {
    *  Obtain a list of all email addresses
    *  contained in the certificate.
    *
-   *  @param length The number of strings in the returned array.
    *  @return An array of email addresses.
    */
   [must_use]
-  void getEmailAddresses(out unsigned long length,
-                         [retval, array, size_is(length)] out wstring addresses);
+  Array<AString> getEmailAddresses();
 
   /**
    *  Check whether a given address is contained in the certificate.
@@ -195,12 +201,19 @@ interface nsIX509Cert : nsISupports {
    *  Obtain a raw binary encoding of this certificate
    *  in DER format.
    *
-   *  @param length The number of bytes in the binary encoding.
-   *  @param data The bytes representing the DER encoded certificate.
+   *  @return The bytes representing the DER encoded certificate.
    */
   [must_use]
-  void getRawDER(out unsigned long length,
-	               [retval, array, size_is(length)] out octet data);
+  Array<octet> getRawDER();
+
+  /**
+   *  Obtain a base 64 string representation of this certificate
+   *  in DER format.
+   *
+   *  @return The DER encoded certificate as a string.
+   */
+  [must_use]
+  ACString getBase64DERString();
 
   /**
    *  Test whether two certificate instances represent the
@@ -230,4 +243,10 @@ interface nsIX509Cert : nsISupports {
    */
   [must_use]
   void markForPermDeletion();
+
+  [notxpcom, noscript]
+  void SerializeToIPC(in IpcMessagePtr aMsg);
+
+  [notxpcom, noscript]
+  bool DeserializeFromIPC([const] in IpcMessagePtr aMsg, in PickleIteratorPtr aIter);
 };

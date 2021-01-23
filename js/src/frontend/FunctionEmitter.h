@@ -11,16 +11,16 @@
 
 #include <stdint.h>  // uint16_t, uint32_t
 
-#include "frontend/DefaultEmitter.h"       // DefaultEmitter
-#include "frontend/DestructuringFlavor.h"  // DestructuringFlavor
-#include "frontend/EmitterScope.h"         // EmitterScope
-#include "frontend/SharedContext.h"        // FunctionBox
-#include "frontend/TDZCheckCache.h"        // TDZCheckCache
-#include "frontend/TryEmitter.h"           // TryEmitter
-#include "gc/Rooting.h"                    // JS::Rooted, JS::Handle
-#include "vm/BytecodeUtil.h"               // JSOp
-#include "vm/JSAtom.h"                     // JSAtom
-#include "vm/JSFunction.h"                 // JSFunction
+#include "frontend/DefaultEmitter.h"      // DefaultEmitter
+#include "frontend/EmitterScope.h"        // EmitterScope
+#include "frontend/FunctionSyntaxKind.h"  // FunctionSyntaxKind
+#include "frontend/SharedContext.h"       // FunctionBox, TopLevelFunction
+#include "frontend/TDZCheckCache.h"       // TDZCheckCache
+#include "frontend/TryEmitter.h"          // TryEmitter
+#include "gc/Rooting.h"                   // JS::Rooted, JS::Handle
+#include "vm/BytecodeUtil.h"              // JSOp
+#include "vm/JSAtom.h"                    // JSAtom
+#include "vm/JSFunction.h"                // JSFunction
 
 namespace js {
 namespace frontend {
@@ -69,9 +69,6 @@ class MOZ_STACK_CLASS FunctionEmitter {
   BytecodeEmitter* bce_;
 
   FunctionBox* funbox_;
-
-  // Function linked from funbox_.
-  JS::Rooted<JSFunction*> fun_;
 
   // Function's explicit name.
   JS::Rooted<JSAtom*> name_;
@@ -132,9 +129,6 @@ class MOZ_STACK_CLASS FunctionEmitter {
   MOZ_MUST_USE bool emitAsmJSModule();
 
  private:
-  // Common code for non-lazy and lazy functions.
-  MOZ_MUST_USE bool interpretedCommon();
-
   // Emit the function declaration, expression, method etc.
   // This leaves function object on the stack for expression etc,
   // and doesn't for declaration.
@@ -168,7 +162,7 @@ class MOZ_STACK_CLASS FunctionEmitter {
 //
 //     // Do NameFunctions operation here if needed.
 //
-//     fse.initScript();
+//     fse.intoStencil();
 //
 class MOZ_STACK_CLASS FunctionScriptEmitter {
  private:
@@ -211,7 +205,7 @@ class MOZ_STACK_CLASS FunctionScriptEmitter {
   //                                                       |
   //     +-------------------------------------------------+
   //     |
-  //     | initScript  +-----+
+  //     | intoStencil +-----+
   //     +------------>| End |
   //                   +-----+
   enum class State {
@@ -227,7 +221,7 @@ class MOZ_STACK_CLASS FunctionScriptEmitter {
     // After calling emitEndBody.
     EndBody,
 
-    // After calling initScript.
+    // After calling intoStencil.
     End
   };
   State state_ = State::Start;
@@ -254,12 +248,8 @@ class MOZ_STACK_CLASS FunctionScriptEmitter {
   MOZ_MUST_USE bool prepareForBody();
   MOZ_MUST_USE bool emitEndBody();
 
-  // Initialize JSScript for this function.
-  // WARNING: There shouldn't be any fallible operation for the function
-  //          compilation after `initScript` call.
-  //          See the comment inside JSScript::fullyInitFromEmitter for
-  //          more details.
-  MOZ_MUST_USE bool initScript();
+  // Generate the ScriptStencil using the bytecode emitter data.
+  MOZ_MUST_USE bool intoStencil(TopLevelFunction isTopLevel);
 
  private:
   MOZ_MUST_USE bool emitExtraBodyVarScope();
@@ -318,10 +308,6 @@ class MOZ_STACK_CLASS FunctionParamsEmitter {
 
   // DefaultEmitter for default parameter.
   mozilla::Maybe<DefaultEmitter> default_;
-
-  // Scope for each parameter expression.
-  // Populated only when there's `eval` in parameters.
-  mozilla::Maybe<EmitterScope> paramExprVarEmitterScope_;
 
 #ifdef DEBUG
   // The state of this emitter.
@@ -440,13 +426,7 @@ class MOZ_STACK_CLASS FunctionParamsEmitter {
   MOZ_MUST_USE bool prepareForDestructuringRest();
   MOZ_MUST_USE bool emitDestructuringRestEnd();
 
-  MOZ_MUST_USE DestructuringFlavor getDestructuringFlavor();
-
  private:
-  // Enter/leave var scope for `eval` if necessary.
-  MOZ_MUST_USE bool enterParameterExpressionVarScope();
-  MOZ_MUST_USE bool leaveParameterExpressionVarScope();
-
   MOZ_MUST_USE bool prepareForInitializer();
   MOZ_MUST_USE bool emitInitializerEnd();
 

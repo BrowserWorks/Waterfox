@@ -10,19 +10,18 @@
 
 #include "base/task.h"
 #include "gfxPlatform.h"
-#include "gfxPrefs.h"
 #include "GeckoProfiler.h"
 #include "mozilla/layers/CompositorBridgeChild.h"
 #include "mozilla/layers/ShadowLayers.h"
 #include "mozilla/layers/SyncObject.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/StaticPrefs_layers.h"
 #include "mozilla/SharedThreadPool.h"
 #include "mozilla/SyncRunnable.h"
 #ifdef XP_MACOSX
-#include "nsCocoaFeatures.h"
+#  include "nsCocoaFeatures.h"
 #endif
-#include "nsIPropertyBag2.h"
 #include "nsIThreadManager.h"
 #include "nsServiceManagerUtils.h"
 #include "prsystem.h"
@@ -43,7 +42,7 @@ StaticAutoPtr<PaintThread> PaintThread::sSingleton;
 StaticRefPtr<nsIThread> PaintThread::sThread;
 PlatformThreadId PaintThread::sThreadId;
 
-PaintThread::PaintThread() {}
+PaintThread::PaintThread() = default;
 
 void PaintThread::Release() {}
 
@@ -52,7 +51,7 @@ void PaintThread::AddRef() {}
 /* static */
 int32_t PaintThread::CalculatePaintWorkerCount() {
   int32_t cpuCores = PR_GetNumberOfProcessors();
-  int32_t workerCount = gfxPrefs::LayersOMTPPaintWorkers();
+  int32_t workerCount = StaticPrefs::layers_omtp_paint_workers_AtStartup();
 
   // If not manually specified, default to (cpuCores * 3) / 4, and clamp
   // between 1 and 4. If a user wants more, they can manually specify it
@@ -80,9 +79,10 @@ static uint32_t GetPaintThreadStackSize() {
   // Workaround bug 1578075 by increasing the stack size of paint threads
   if (nsCocoaFeatures::OnCatalinaOrLater()) {
     static const uint32_t kCatalinaPaintThreadStackSize = 512 * 1024;
-    static_assert(kCatalinaPaintThreadStackSize >= nsIThreadManager::DEFAULT_STACK_SIZE,
-                  "update default stack size of paint "
-                  "workers");
+    static_assert(
+        kCatalinaPaintThreadStackSize >= nsIThreadManager::DEFAULT_STACK_SIZE,
+        "update default stack size of paint "
+        "workers");
     return kCatalinaPaintThreadStackSize;
   }
   return nsIThreadManager::DEFAULT_STACK_SIZE;
@@ -184,7 +184,7 @@ void PaintThread::QueuePaintTask(UniquePtr<PaintTask>&& aTask) {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aTask);
 
-  if (gfxPrefs::LayersOMTPDumpCapture() && aTask->mCapture) {
+  if (StaticPrefs::layers_omtp_dump_capture() && aTask->mCapture) {
     aTask->mCapture->Dump();
   }
 
@@ -229,13 +229,13 @@ void PaintThread::AsyncPaintTask(CompositorBridgeChild* aBridge,
     target->Flush();
   }
 
-  if (gfxPrefs::LayersOMTPReleaseCaptureOnMainThread()) {
+  if (StaticPrefs::layers_omtp_release_capture_on_main_thread()) {
     // This should ensure the capture drawtarget, which may hold on to
     // UnscaledFont objects, gets destroyed on the main thread (See bug
     // 1404742). This assumes (unflushed) target DrawTargets do not themselves
     // hold on to UnscaledFonts.
-    NS_ReleaseOnMainThreadSystemGroup("PaintTask::DrawTargetCapture",
-                                      aTask->mCapture.forget());
+    NS_ReleaseOnMainThread("PaintTask::DrawTargetCapture",
+                           aTask->mCapture.forget());
   }
 
   if (aBridge->NotifyFinishedAsyncWorkerPaint(aTask)) {

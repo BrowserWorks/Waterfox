@@ -31,6 +31,8 @@ class ActiveLayerTracker {
    * We track style changes to selected styles:
    *   eCSSProperty_transform, eCSSProperty_translate,
    *   eCSSProperty_rotate, eCSSProperty_scale
+   *   eCSSProperty_offset_path, eCSSProperty_offset_distance,
+   *   eCSSProperty_offset_rotate, eCSSProperty_offset_anchor,
    *   eCSSProperty_opacity
    *   eCSSProperty_left, eCSSProperty_top,
    *   eCSSProperty_right, eCSSProperty_bottom
@@ -57,7 +59,7 @@ class ActiveLayerTracker {
    * value has changed.
    */
   static void NotifyAnimated(nsIFrame* aFrame, nsCSSPropertyID aProperty,
-                             const nsAString& aNewValue,
+                             const nsACString& aNewValue,
                              nsDOMCSSDeclaration* aDOMCSSDecl);
   /**
    * Notify aFrame as being known to have an animation of aProperty through an
@@ -76,7 +78,7 @@ class ActiveLayerTracker {
    */
   static void NotifyInlineStyleRuleModified(nsIFrame* aFrame,
                                             nsCSSPropertyID aProperty,
-                                            const nsAString& aNewValue,
+                                            const nsACString& aNewValue,
                                             nsDOMCSSDeclaration* aDOMCSSDecl);
   /**
    * Notify that a frame needs to be repainted. This is important for layering

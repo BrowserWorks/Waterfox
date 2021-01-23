@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+
+<!ENTITY windowTitle.label "HTML пошта сұрағы">
+
+<!ENTITY recipient.label "Кейбір хат алушылар HTML хатын қабылдауға кабілетті ретінде тізімде көрсетілмеген.">
+
+<!ENTITY question.label "Хабарламаны жай мәтінге айналдыруды немесе HTML түрінде жіберуді қалайсыз ба?">
+
+<!ENTITY plainTextAndHtml.label "Жай мәтін және HTML түрінде жіберу">
+<!ENTITY plainTextAndHtml.accesskey "а">
+<!ENTITY plainTextOnly.label "Тек жай мәтін түрінде жіберу">
+<!ENTITY plainTextOnly.accesskey "а">
+<!ENTITY htmlOnly.label "Тек HTML түрінде жіберу">
+<!ENTITY htmlOnly.accesskey "H">
+
+<!ENTITY send.label "Жіберу">
+<!ENTITY send.accesskey "Ж">

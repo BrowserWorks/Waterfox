@@ -97,6 +97,11 @@ function onLoad() {
 
       SimpleTest.finish();
     }).catch((e) => {
+      // Expected early return
+      if(e === true) {
+        SimpleTest.finish();
+        return;
+      }
       ok(false, "throwing " + e);
     });
   };

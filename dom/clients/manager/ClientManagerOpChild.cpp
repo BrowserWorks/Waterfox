@@ -15,7 +15,9 @@ namespace dom {
 void ClientManagerOpChild::ActorDestroy(ActorDestroyReason aReason) {
   mClientManager = nullptr;
   if (mPromise) {
-    mPromise->Reject(NS_ERROR_ABORT, __func__);
+    CopyableErrorResult rv;
+    rv.ThrowAbortError("Client aborted");
+    mPromise->Reject(rv, __func__);
     mPromise = nullptr;
   }
 }
@@ -23,9 +25,9 @@ void ClientManagerOpChild::ActorDestroy(ActorDestroyReason aReason) {
 mozilla::ipc::IPCResult ClientManagerOpChild::Recv__delete__(
     const ClientOpResult& aResult) {
   mClientManager = nullptr;
-  if (aResult.type() == ClientOpResult::Tnsresult &&
-      NS_FAILED(aResult.get_nsresult())) {
-    mPromise->Reject(aResult.get_nsresult(), __func__);
+  if (aResult.type() == ClientOpResult::TCopyableErrorResult &&
+      aResult.get_CopyableErrorResult().Failed()) {
+    mPromise->Reject(aResult.get_CopyableErrorResult(), __func__);
     mPromise = nullptr;
     return IPC_OK();
   }

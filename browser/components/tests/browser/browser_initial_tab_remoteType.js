@@ -9,18 +9,18 @@
 
 "use strict";
 
-const PRIVILEGED_PROCESS_PREF =
+const PRIVILEGEDABOUT_PROCESS_PREF =
   "browser.tabs.remote.separatePrivilegedContentProcess";
-const PRIVILEGED_PROCESS_ENABLED = Services.prefs.getBoolPref(
-  PRIVILEGED_PROCESS_PREF
+const PRIVILEGEDABOUT_PROCESS_ENABLED = Services.prefs.getBoolPref(
+  PRIVILEGEDABOUT_PROCESS_PREF
 );
 
 const REMOTE_BROWSER_SHOWN = "remote-browser-shown";
 
 // When the privileged content process is enabled, we expect about:home
 // to load in it. Otherwise, it's in a normal web content process.
-const EXPECTED_ABOUTHOME_REMOTE_TYPE = PRIVILEGED_PROCESS_ENABLED
-  ? E10SUtils.PRIVILEGED_REMOTE_TYPE
+const EXPECTED_ABOUTHOME_REMOTE_TYPE = PRIVILEGEDABOUT_PROCESS_ENABLED
+  ? E10SUtils.PRIVILEGEDABOUT_REMOTE_TYPE
   : E10SUtils.DEFAULT_REMOTE_TYPE;
 
 /**
@@ -65,7 +65,14 @@ async function assertOneRemoteBrowserShown(
 
   Services.obs.removeObserver(observer, REMOTE_BROWSER_SHOWN);
 
-  Assert.equal(newWin.gBrowser.selectedBrowser.remoteType, aRemoteType);
+  if (aRemoteType == E10SUtils.WEB_REMOTE_TYPE) {
+    Assert.ok(
+      E10SUtils.isWebRemoteType(newWin.gBrowser.selectedBrowser.remoteType)
+    );
+  } else {
+    Assert.equal(newWin.gBrowser.selectedBrowser.remoteType, aRemoteType);
+  }
+
   Assert.equal(
     shownRemoteBrowsers,
     1,
@@ -97,7 +104,7 @@ function constructOnePageCmdLine(aURL) {
       if (aIndex == 0 && this._argCount) {
         return this._arg;
       }
-      throw Cr.NS_ERROR_INVALID_ARG;
+      throw Components.Exception("", Cr.NS_ERROR_INVALID_ARG);
     },
 
     findFlag() {
@@ -105,11 +112,11 @@ function constructOnePageCmdLine(aURL) {
     },
 
     removeArguments() {
-      throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+      throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
     },
 
     handleFlag() {
-      throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+      throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
     },
 
     handleFlagWithParam() {
@@ -132,15 +139,15 @@ function constructOnePageCmdLine(aURL) {
     preventDefault: false,
 
     get workingDirectory() {
-      throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+      throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
     },
 
     get windowContext() {
-      throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+      throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
     },
 
     resolveFile() {
-      throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+      throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
     },
 
     resolveURI() {

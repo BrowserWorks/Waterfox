@@ -16,10 +16,8 @@
 #include "nsIScriptContext.h"
 #include "nsIScriptObjectPrincipal.h"
 #include "nsIScriptContext.h"
-#include "nsIClassInfo.h"
 #include "nsDocShell.h"
 #include "nsCOMArray.h"
-#include "nsIRunnable.h"
 #include "nsWeakReference.h"
 
 namespace mozilla {
@@ -47,14 +45,7 @@ class InProcessBrowserChildMessageManager final
 
  public:
   static already_AddRefed<InProcessBrowserChildMessageManager> Create(
-      nsDocShell* aShell, nsIContent* aOwner, nsFrameMessageManager* aChrome) {
-    RefPtr<InProcessBrowserChildMessageManager> mm =
-        new InProcessBrowserChildMessageManager(aShell, aOwner, aChrome);
-
-    NS_ENSURE_TRUE(mm->Init(), nullptr);
-
-    return mm.forget();
-  }
+      nsDocShell* aShell, nsIContent* aOwner, nsFrameMessageManager* aChrome);
 
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS_INHERITED(
@@ -82,16 +73,11 @@ class InProcessBrowserChildMessageManager final
   /**
    * MessageManagerCallback methods that we override.
    */
-  virtual bool DoSendBlockingMessage(JSContext* aCx, const nsAString& aMessage,
-                                     StructuredCloneData& aData,
-                                     JS::Handle<JSObject*> aCpows,
-                                     nsIPrincipal* aPrincipal,
-                                     nsTArray<StructuredCloneData>* aRetVal,
-                                     bool aIsSync) override;
-  virtual nsresult DoSendAsyncMessage(JSContext* aCx, const nsAString& aMessage,
-                                      StructuredCloneData& aData,
-                                      JS::Handle<JSObject*> aCpows,
-                                      nsIPrincipal* aPrincipal) override;
+  virtual bool DoSendBlockingMessage(
+      const nsAString& aMessage, StructuredCloneData& aData,
+      nsTArray<StructuredCloneData>* aRetVal) override;
+  virtual nsresult DoSendAsyncMessage(const nsAString& aMessage,
+                                      StructuredCloneData& aData) override;
 
   void GetEventTargetParent(EventChainPreVisitor& aVisitor) override;
 

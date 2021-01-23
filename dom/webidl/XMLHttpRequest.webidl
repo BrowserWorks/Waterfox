@@ -42,14 +42,17 @@ dictionary MozXMLHttpRequestParameters
   boolean mozSystem = false;
 };
 
-[Constructor(optional MozXMLHttpRequestParameters params),
- // There are apparently callers, specifically CoffeeScript, who do
- // things like this:
- //   c = new(window.ActiveXObject || XMLHttpRequest)("Microsoft.XMLHTTP")
- // To handle that, we need a constructor that takes a string.
- Constructor(DOMString ignored),
- Exposed=(Window,DedicatedWorker,SharedWorker)]
+[Exposed=(Window,DedicatedWorker,SharedWorker)]
 interface XMLHttpRequest : XMLHttpRequestEventTarget {
+  [Throws]
+  constructor(optional MozXMLHttpRequestParameters params = {});
+  // There are apparently callers, specifically CoffeeScript, who do
+  // things like this:
+  //   c = new(window.ActiveXObject || XMLHttpRequest)("Microsoft.XMLHTTP")
+  // To handle that, we need a constructor that takes a string.
+  [Throws]
+  constructor(DOMString ignored);
+
   // event handler
   attribute EventHandler onreadystatechange;
 
@@ -126,7 +129,7 @@ interface XMLHttpRequest : XMLHttpRequestEventTarget {
   any getInterface(any iid);
 
   [ChromeOnly, Exposed=Window]
-  void setOriginAttributes(optional OriginAttributesDictionary originAttributes);
+  void setOriginAttributes(optional OriginAttributesDictionary originAttributes = {});
 
   [ChromeOnly, Throws]
   void sendInputStream(InputStream body);

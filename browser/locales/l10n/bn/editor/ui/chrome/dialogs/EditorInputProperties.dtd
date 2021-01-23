@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "ফরম ক্ষেত্রের বৈশিষ্ট্য">
+<!ENTITY windowTitleImage.label "ফরম ছবির বৈশিষ্ট্য">
+
+<!ENTITY InputType.label "ক্ষেত্রের ধরন (T)">
+<!ENTITY InputType.accesskey "T">
+<!ENTITY text.value "পাঠ্য">
+<!ENTITY password.value "পাসওয়ার্ড">
+<!ENTITY checkbox.value "চেক বাক্স">
+<!ENTITY radio.value "রেডিও বোতাম">
+<!ENTITY submit.value "জমা দেয়ার বোতাম">
+<!ENTITY reset.value "পুনঃনির্ধারণ বোতাম">
+<!ENTITY file.value "ফাইল">
+<!ENTITY hidden.value "লুকানো">
+<!ENTITY image.value "ছবি">
+<!ENTITY button.value "বোতাম">
+
+<!ENTITY InputSettings.label "ক্ষেত্রের সেটিং">
+<!ENTITY InputName.label "ক্ষেত্রের নাম (N):">
+<!ENTITY InputName.accesskey "N">
+<!ENTITY GroupName.label "গ্রুপের নাম (N):">
+<!ENTITY GroupName.accesskey "N">
+<!ENTITY InputValue.label "ক্ষেত্রের মান (V):">
+<!ENTITY InputValue.accesskey "V">
+<!ENTITY InitialValue.label "প্রাথমিক মান (V):">
+<!ENTITY InitialValue.accesskey "V">
+<!ENTITY InputChecked.label "প্রাথমিকভাবে পরীক্ষা করা হয়েছে (C)">
+<!ENTITY InputChecked.accesskey "C">
+<!ENTITY InputSelected.label "প্রাথমিকভাবে নির্বাচন করা হয়েছে (S)">
+<!ENTITY InputSelected.accesskey "S">
+<!ENTITY InputReadOnly.label "শুধুমাত্র পাঠযোগ্য (R)">
+<!ENTITY InputReadOnly.accesskey "R">
+<!ENTITY InputDisabled.label "নিষ্ক্রিয় (D)">
+<!ENTITY InputDisabled.accesskey "D">
+<!ENTITY tabIndex.label "ট্যাব সূচী (I):">
+<!ENTITY tabIndex.accesskey "I">
+<!ENTITY TextSize.label "ক্ষেত্রের আকার (F):">
+<!ENTITY TextSize.accesskey "F">
+<!ENTITY TextLength.label "সর্বোচ্চ দৈর্ঘ্য (L):">
+<!ENTITY TextLength.accesskey "L">
+<!ENTITY AccessKey.label "প্রবেশের কী (K):">
+<!ENTITY AccessKey.accesskey "K">
+<!ENTITY Accept.label "গ্রহণ করার ধরণ (A):">
+<!ENTITY Accept.accesskey "A">
+
+<!ENTITY ImageProperties.label "ছবির বৈশিষ্ট্য... (e)">
+<!ENTITY ImageProperties.accesskey "e">

@@ -10,10 +10,13 @@
 #include "mozilla/gfx/Point.h"
 #include "Units.h"
 
+class nsIWidget;
+
 namespace mozilla {
 namespace layers {
 
 class CompositorOptions;
+class LayerManager;
 
 // A CompositorSession where both the child and parent CompositorBridge reside
 // in the same process.
@@ -34,13 +37,12 @@ class InProcessCompositorSession final : public CompositorSession {
   void NotifySessionLost();
 
  private:
-  InProcessCompositorSession(widget::CompositorWidget* aWidget,
-                             nsBaseWidget* baseWidget,
+  InProcessCompositorSession(nsBaseWidget* aWidget,
+                             widget::CompositorWidget* aCompositorWidget,
                              CompositorBridgeChild* aChild,
                              CompositorBridgeParent* aParent);
 
  private:
-  nsBaseWidget* mWidget;
   RefPtr<CompositorBridgeParent> mCompositorBridgeParent;
   RefPtr<CompositorWidget> mCompositorWidget;
 };

@@ -1,0 +1,88 @@
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is Mozilla Communicator client code, released
+   - March 31, 1998.
+   -
+   - The Initial Developer of the Original Code is
+   - Netscape Communications Corporation.
+   - Portions created by the Initial Developer are Copyright (C) 1998-1999
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either of the GNU General Public License Version 2 or later (the "GPL"),
+   - or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the GPL or the LGPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Papasha Ikhasi">
+<!ENTITY windowTitleSettings.label "Papasha Imimiselo">
+
+<!ENTITY publishTab.label "Papasha">
+<!ENTITY settingsTab.label "Imimiselo">
+
+<!ENTITY publishButton.label "Papasha">
+<!-- Publish Tab Panel -->
+
+<!ENTITY siteList.label "Igama Lesiza:">
+<!ENTITY siteList.tooltip "Khetha isiza osifunela ukupapasha">
+<!ENTITY newSiteButton.label "Isiza Esitsha">
+<!ENTITY siteDirList.label "Khetha okanye chwetheza igama likavimba weefayili kwisiza sakho sokupapasha:">
+<!ENTITY siteDirList.tooltip "Khetha okanye ngenisa igama likavimba weefayili owonganyelweyo nokude opapashela kuye">
+<!ENTITY docDirList.label "Isiza sikavimba weefayili weli khasi:">
+<!ENTITY publishImgCheckbox.label "Bandakanya imifuziselo nezinye iifayili">
+<!ENTITY publishImgCheckbox.tooltip "Papasha imifuziselo nezinye iifayili ezalathwe leli khasi">
+<!ENTITY sameLocationRadio.label "Sebenzisa kwayona le ndawo njengekhasi">
+<!ENTITY sameLocationRadio.tooltip "Papasha iifayili kuyo le ndawo njengekhasi">
+<!ENTITY useSubdirRadio.label "Sebenzisa esi siza sikavimba weefayili owonganyelweyo:">
+<!ENTITY useSubdir.tooltip "Khetha okanye ngenisa igama likavimba weefayili owonganyelweyo nelikude apho iifayili zipapashwa khona">
+<!ENTITY chooseDirButton.label "Khetha...">
+<!ENTITY pageTitle.label "Isihloko Sekhasi:">
+<!ENTITY pageTitle.tooltip "Ngenisa isihloko ukuze lichongeke ikhasi kwifestile nakwizalathisi eziphawulayo">
+<!ENTITY pageTitleExample.label "umzk.: &quot;Ikhasi Lam Lothungelwano&quot;">
+<!ENTITY filename.label "Igama lefayili:">
+<!ENTITY filename.tooltip "Ngenisa igama lale fayili, kubandakanywa i-'.html' ukwenzela ikhasi lothungelwano">
+<!ENTITY filenameExample.label "umzk.: &quot;ikhasi-lam.html&quot;">
+<!ENTITY relatedDocs.label "Ezinye iifayili zokupapasha">
+<!ENTITY setDefaultButton.label "Misela Njengokuhlala Kukho">
+<!ENTITY setDefSiteAndDir.label "Misela Njengesiza Sokuhlala Kukho Novimba Weefayili">
+<!ENTITY removeButton.label "Susa Isiza">
+<!-- Settings Tab Panel -->
+
+<!ENTITY publishSites.label "Iziza Zokupapasha">
+<!ENTITY serverInfo.label "Ulwazi Ngeseva">
+<!ENTITY loginInfo.label "Ulwazi Ngokungena">
+<!ENTITY siteName.label "Igama Lesiza:">
+<!ENTITY siteName.tooltip "Igama lesiqhulo eliphawula esi siza sokupapasha (umzk.: 'Isiza Sam')">
+<!ENTITY siteUrl.label "Idilesi yokupapasha (umzk.: 'ftp://ftp.myisp.com/igama_lam_lomsebenzisi'):">
+<!ENTITY siteUrl.tooltip "Idilesi ye-FTP:// okanye i-HTTP:// enikwe yi-ISP yakho okanye inkonzo yokwamkela kuthungelwano">
+<!ENTITY browseUrl.label "Idilesi ye-HTTP yekhasi lasekhaya lakho (umzk.: 'http://www.myisp.com/igama_lam_lomsebenzisi'):">
+<!ENTITY browseUrl.tooltip "Idilesi ye-HTTP:// kavimba weefayili zakho zasekhaya (ungalibandakanyi igama lefayili)">
+<!ENTITY username.label "Igama lomsebenzisi:">
+<!ENTITY username.tooltip "Igama lomsebenzisi olisebenzisela ukungena kwi-ISP yakho okanye kwinkonzo eyamkela uthungelwano">
+<!ENTITY password.label "Igama lokugqithisa:">
+<!ENTITY password.tooltip "Igama lokuthisa elinxulumene negama lakho lomsebenzisi">
+<!ENTITY savePassword.label "Gcina Igama Lokugqithisa">
+<!ENTITY savePassword.tooltip "Khetha oku ukuze ugcine igama lakho lokugqithisa ngokhuseleko ngokusebenzisa Umphathi Wegama Lokugqithisa">

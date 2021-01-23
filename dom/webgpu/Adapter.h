@@ -3,44 +3,51 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef WEBGPU_Adapter_H_
-#define WEBGPU_Adapter_H_
+#ifndef GPU_Adapter_H_
+#define GPU_Adapter_H_
 
 #include "mozilla/AlreadyAddRefed.h"
+#include "mozilla/webgpu/WebGPUTypes.h"
 #include "nsString.h"
 #include "ObjectModel.h"
 
 namespace mozilla {
 namespace dom {
-struct WebGPUDeviceDescriptor;
-struct WebGPUExtensions;
-struct WebGPUFeatures;
+class Promise;
+struct GPUDeviceDescriptor;
+struct GPUExtensions;
+struct GPUFeatures;
 }  // namespace dom
 
 namespace webgpu {
 class Device;
 class Instance;
+class WebGPUChild;
 
-class Adapter final : public ChildOf<Instance> {
+class Adapter final : public ObjectBase, public ChildOf<Instance> {
  public:
-  WEBGPU_DECL_GOOP(Adapter)
+  GPU_DECL_CYCLE_COLLECTION(Adapter)
+  GPU_DECL_JS_WRAP(Adapter)
 
-  const nsString mName;
+  RefPtr<WebGPUChild> mBridge;
 
  private:
   Adapter() = delete;
-  virtual ~Adapter();
+  ~Adapter();
+  void Cleanup();
+
+  const RawId mId;
+  const nsString mName;
 
  public:
+  explicit Adapter(Instance* const aParent, RawId aId);
   void GetName(nsString& out) const { out = mName; }
 
-  void Extensions(dom::WebGPUExtensions& out) const;
-  void Features(dom::WebGPUFeatures& out) const;
-  already_AddRefed<Device> CreateDevice(
-      const dom::WebGPUDeviceDescriptor& desc) const;
+  already_AddRefed<dom::Promise> RequestDevice(
+      const dom::GPUDeviceDescriptor& aDesc, ErrorResult& aRv);
 };
 
 }  // namespace webgpu
 }  // namespace mozilla
 
-#endif  // WEBGPU_Adapter_H_
+#endif  // GPU_Adapter_H_

@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Ingxelo Yolwazi Ngesihluzi">
+<!ENTITY viewLogInfo.text "Ingxelo Yolwazi Ngezihluzi igcina amaxwebhu ngezihluzi eziqhutyelwe phambili malunga nale akhawunti. Sebenzisa ibhokisi yokuqwalasela engezantsi ukunika isakhono sokungena.">
+<!ENTITY clearLog.label "Sula Isixhobo Sokufumanisa Imposiso">
+<!ENTITY clearLog.accesskey "S">
+<!ENTITY enableLog.label "Nika Isakhono Kwingxelo Yolwazi Ngezihluzi">
+<!ENTITY enableLog.accesskey "N">
+<!ENTITY closeLog.label "Vala">
+<!ENTITY closeLog.accesskey "a">

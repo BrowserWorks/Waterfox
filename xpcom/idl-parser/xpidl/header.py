@@ -7,12 +7,12 @@
 
 """Print a C++ header file for the IDL files specified on the command line"""
 
-import sys
+from __future__ import absolute_import
+
 import os.path
 import re
-import xpidl
+from xpidl import xpidl
 import itertools
-import glob
 
 printdoccomments = False
 
@@ -71,9 +71,11 @@ def attributeReturnType(a, getter, macro):
         ret = "MOZ_MUST_USE " + ret
     # Ideally, we'd set MOZ_CAN_RUN_SCRIPT in the "scriptable and not
     # builtinclass" case too, so we'd just have memberCanRunScript() check
-    # can_explicitly_run_script and call it here.  But that would likely require
-    # a fair amount of Gecko-side annotation work.  See bug 1534292.
-    if a.explicit_can_run_script:
+    # explicit_setter_can_run_script/explicit_setter_can_run_script and call it
+    # here.  But that would likely require a fair amount of Gecko-side
+    # annotation work.  See bug 1534292.
+    if ((a.explicit_getter_can_run_script and getter) or
+        (a.explicit_setter_can_run_script and not getter)):
         ret = "MOZ_CAN_RUN_SCRIPT " + ret
     return ret
 
@@ -123,7 +125,7 @@ def methodReturnType(m, macro):
         ret = "MOZ_MUST_USE " + ret
     # Ideally, we'd set MOZ_CAN_RUN_SCRIPT in the "scriptable and not
     # builtinclass" case too, so we'd just have memberCanRunScript() check
-    # can_explicitly_run_script and call it here.  But that would likely require
+    # explicit_can_run_script and call it here.  But that would likely require
     # a fair amount of Gecko-side annotation work.  See bug 1534292.
     if m.explicit_can_run_script:
         ret = "MOZ_CAN_RUN_SCRIPT " + ret
@@ -146,12 +148,9 @@ def paramlistAsNative(m, empty='void'):
         l.append('uint8_t _argc')
 
     if not m.notxpcom and m.realtype.name != 'void':
-        l.append(paramAsNative(xpidl.Param(paramtype='out',
-                                           type=None,
-                                           name='_retval',
-                                           attlist=[],
-                                           location=None,
-                                           realtype=m.realtype)))
+        l.append(paramAsNative(xpidl.Param(
+            paramtype='out', type=None, name='_retval', attlist=[],
+            location=None, realtype=m.realtype)))
 
     # Set any optional out params to default to nullptr. Skip if we just added
     # extra non-optional args to l.
@@ -208,7 +207,7 @@ def paramlistNames(m):
 
 
 header = """/*
- * DO NOT EDIT.  THIS FILE IS GENERATED FROM %(filename)s
+ * DO NOT EDIT.  THIS FILE IS GENERATED FROM $SRCDIR/%(relpath)s
  */
 
 #ifndef __gen_%(basename)s_h__
@@ -255,8 +254,8 @@ def idl_basename(f):
     return os.path.basename(f).rpartition('.')[0]
 
 
-def print_header(idl, fd, filename):
-    fd.write(header % {'filename': filename,
+def print_header(idl, fd, filename, relpath):
+    fd.write(header % {'relpath': relpath,
                        'basename': idl_basename(filename)})
 
     foundinc = False
@@ -473,7 +472,7 @@ def write_interface(iface, fd):
 
     names = uuid_decoder.match(iface.attributes.uuid).groupdict()
     m3str = names['m3'] + names['m4']
-    names['m3joined'] = ", ".join(["0x%s" % m3str[i:i+2] for i in xrange(0, 16, 2)])
+    names['m3joined'] = ", ".join(["0x%s" % m3str[i:i+2] for i in range(0, 16, 2)])
 
     if iface.name[2] == 'I':
         implclass = iface.name[:2] + iface.name[3:]
@@ -591,19 +590,7 @@ def write_interface(iface, fd):
 
 
 def main(outputfile):
-    cachedir = os.path.dirname(outputfile.name if outputfile else '') or '.'
-    if not os.path.isdir(cachedir):
-        os.mkdir(cachedir)
-    sys.path.append(cachedir)
-
-    # Delete the lex/yacc files.  Ply is too stupid to regenerate them
-    # properly
-    for fileglobs in [os.path.join(cachedir, f) for f in ["xpidllex.py*", "xpidlyacc.py*"]]:
-        for filename in glob.glob(fileglobs):
-            os.remove(filename)
-
-    # Instantiate the parser.
-    xpidl.IDLParser(outputdir=cachedir)
+    xpidl.IDLParser()
 
 
 if __name__ == '__main__':

@@ -5,12 +5,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "ChannelMediaDecoder.h"
+#include "ChannelMediaResource.h"
 #include "DecoderTraits.h"
 #include "MediaDecoderStateMachine.h"
 #include "MediaFormatReader.h"
 #include "BaseMediaResource.h"
 #include "MediaShutdownManager.h"
-#include "mozilla/StaticPrefs.h"
+#include "mozilla/StaticPrefs_media.h"
 #include "VideoUtils.h"
 
 namespace mozilla {
@@ -154,7 +155,6 @@ void ChannelMediaDecoder::ResourceCallback::NotifySuspendedStatusChanged(
            "suspended_status_changed", aSuspendedByCache);
   MediaDecoderOwner* owner = GetMediaOwner();
   if (owner) {
-    AbstractThread::AutoEnter context(owner->AbstractMainThread());
     owner->NotifySuspendedByCache(aSuspendedByCache);
   }
 }
@@ -176,11 +176,6 @@ already_AddRefed<ChannelMediaDecoder> ChannelMediaDecoder::Create(
   if (DecoderTraits::IsSupportedType(type)) {
     decoder = new ChannelMediaDecoder(aInit);
     return decoder.forget();
-  }
-
-  if (DecoderTraits::IsHttpLiveStreamingType(type)) {
-    // We don't have an HLS decoder.
-    Telemetry::Accumulate(Telemetry::MEDIA_HLS_DECODER_SUCCESS, false);
   }
 
   return nullptr;
@@ -225,11 +220,24 @@ void ChannelMediaDecoder::Shutdown() {
   mResourceCallback->Disconnect();
   MediaDecoder::Shutdown();
 
-  // Force any outstanding seek and byterange requests to complete
-  // to prevent shutdown from deadlocking.
   if (mResource) {
-    mResource->Close();
+    // Force any outstanding seek and byterange requests to complete
+    // to prevent shutdown from deadlocking.
+    mResourceClosePromise = mResource->Close();
   }
+}
+
+void ChannelMediaDecoder::ShutdownInternal() {
+  if (!mResourceClosePromise) {
+    MediaShutdownManager::Instance().Unregister(this);
+    return;
+  }
+
+  mResourceClosePromise->Then(
+      AbstractMainThread(), __func__,
+      [self = RefPtr<ChannelMediaDecoder>(this)] {
+        MediaShutdownManager::Instance().Unregister(self);
+      });
 }
 
 nsresult ChannelMediaDecoder::Load(nsIChannel* aChannel,
@@ -238,7 +246,6 @@ nsresult ChannelMediaDecoder::Load(nsIChannel* aChannel,
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(!mResource);
   MOZ_ASSERT(aStreamListener);
-  AbstractThread::AutoEnter context(AbstractMainThread());
 
   mResource = BaseMediaResource::Create(mResourceCallback, aChannel,
                                         aIsPrivateBrowsing);
@@ -266,7 +273,6 @@ nsresult ChannelMediaDecoder::Load(nsIChannel* aChannel,
 nsresult ChannelMediaDecoder::Load(BaseMediaResource* aOriginal) {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(!mResource);
-  AbstractThread::AutoEnter context(AbstractMainThread());
 
   mResource = aOriginal->CloneData(mResourceCallback);
   if (!mResource) {
@@ -290,7 +296,6 @@ nsresult ChannelMediaDecoder::Load(BaseMediaResource* aOriginal) {
 void ChannelMediaDecoder::NotifyDownloadEnded(nsresult aStatus) {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_DIAGNOSTIC_ASSERT(!IsShutdown());
-  AbstractThread::AutoEnter context(AbstractMainThread());
 
   LOG("NotifyDownloadEnded, status=%" PRIx32, static_cast<uint32_t>(aStatus));
 
@@ -357,7 +362,6 @@ void ChannelMediaDecoder::OnPlaybackEvent(MediaPlaybackEvent&& aEvent) {
 
 void ChannelMediaDecoder::DurationChanged() {
   MOZ_ASSERT(NS_IsMainThread());
-  AbstractThread::AutoEnter context(AbstractMainThread());
   MediaDecoder::DurationChanged();
   // Duration has changed so we should recompute playback rate
   nsCOMPtr<nsIRunnable> r = NS_NewRunnableFunction(
@@ -467,7 +471,7 @@ bool ChannelMediaDecoder::ShouldThrottleDownload(
 
   int64_t length = aStats.mTotalBytes;
   if (length > 0 &&
-      length <= int64_t(StaticPrefs::MediaMemoryCacheMaxSize()) * 1024) {
+      length <= int64_t(StaticPrefs::media_memory_cache_max_size()) * 1024) {
     // Don't throttle the download of small resources. This is to speed
     // up seeking, as seeks into unbuffered ranges would require starting
     // up a new HTTP transaction, which adds latency.
@@ -500,6 +504,11 @@ already_AddRefed<nsIPrincipal> ChannelMediaDecoder::GetCurrentPrincipal() {
   return mResource ? mResource->GetCurrentPrincipal() : nullptr;
 }
 
+bool ChannelMediaDecoder::HadCrossOriginRedirects() {
+  MOZ_ASSERT(NS_IsMainThread());
+  return mResource ? mResource->HadCrossOriginRedirects() : false;
+}
+
 bool ChannelMediaDecoder::IsTransportSeekable() {
   MOZ_ASSERT(NS_IsMainThread());
   return mResource->IsTransportSeekable();
@@ -517,6 +526,7 @@ void ChannelMediaDecoder::Suspend() {
   if (mResource) {
     mResource->Suspend(true);
   }
+  MediaDecoder::Suspend();
 }
 
 void ChannelMediaDecoder::Resume() {
@@ -524,6 +534,7 @@ void ChannelMediaDecoder::Resume() {
   if (mResource) {
     mResource->Resume();
   }
+  MediaDecoder::Resume();
 }
 
 void ChannelMediaDecoder::MetadataLoaded(
@@ -535,12 +546,11 @@ void ChannelMediaDecoder::MetadataLoaded(
   mResource->SetReadMode(MediaCacheStream::MODE_PLAYBACK);
 }
 
-nsCString ChannelMediaDecoder::GetDebugInfo() {
-  nsCString str = MediaDecoder::GetDebugInfo();
+void ChannelMediaDecoder::GetDebugInfo(dom::MediaDecoderDebugInfo& aInfo) {
+  MediaDecoder::GetDebugInfo(aInfo);
   if (mResource) {
-    AppendStringIfNotEmpty(str, mResource->GetDebugInfo());
+    mResource->GetDebugInfo(aInfo.mResource);
   }
-  return str;
 }
 
 }  // namespace mozilla

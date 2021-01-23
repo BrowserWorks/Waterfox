@@ -51,6 +51,14 @@
     }                                                \
   }
 
+/*1201d357-8417-4926-a694-e6408fbedcf8*/
+#define NS_SHAREPICKER_CID                           \
+  {                                                  \
+    0x1201d357, 0x8417, 0x4926, {                    \
+      0xa6, 0x94, 0xe6, 0x40, 0x8f, 0xbe, 0xdc, 0xf8 \
+    }                                                \
+  }
+
 /* XXX the following CID's are not in order. This needs
    to be fixed. */
 
@@ -87,6 +95,14 @@
   {                                                  \
     0x2451BAED, 0x8DC3, 0x46D9, {                    \
       0x9E, 0x30, 0x96, 0xE1, 0xBA, 0xA0, 0x36, 0x66 \
+    }                                                \
+  }
+
+// {74EA4101-A5BB-49BC-9984-66DA8B225A37}
+#define NS_MACFINDERPROGRESS_CID                     \
+  {                                                  \
+    0x74EA4101, 0xA5BB, 0x49BC, {                    \
+      0x99, 0x84, 0x66, 0xDA, 0x8B, 0x22, 0x5A, 0x37 \
     }                                                \
   }
 

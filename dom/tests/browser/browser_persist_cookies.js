@@ -68,6 +68,13 @@ function createTemporarySaveDirectory() {
 }
 
 add_task(async function() {
+  // Use nsICookieService.BEHAVIOR_REJECT_TRACKER to avoid cookie partitioning.
+  // In this test case, if the cookie is partitioned, there will be no cookie
+  // nsICookieServicebeing sent to compare.
+  await SpecialPowers.pushPrefEnv({
+    set: [["network.cookie.cookieBehavior", 4]],
+  });
+
   await BrowserTestUtils.withNewTab("about:blank", async function(browser) {
     Services.obs.addObserver(checkRequest, "http-on-modify-request");
     BrowserTestUtils.loadURI(
@@ -98,7 +105,7 @@ add_task(async function() {
       info("done showCallback");
     };
     saveBrowser(browser);
-    await new Promise(async resolve => {
+    await new Promise(async (resolve, reject) => {
       let dls = await Downloads.getList(Downloads.PUBLIC);
       dls.addView({
         onDownloadChanged(download) {
@@ -106,6 +113,8 @@ add_task(async function() {
             dls.removeView(this);
             dls.removeFinished();
             resolve();
+          } else if (download.error) {
+            reject("Download failed");
           }
         },
       });

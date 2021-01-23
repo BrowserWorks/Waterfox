@@ -5,9 +5,12 @@
  */
 
 [Pref="dom.gamepad.non_standard_events.enabled",
- Constructor(DOMString type, optional GamepadAxisMoveEventInit eventInitDict)]
+ Exposed=Window]
 interface GamepadAxisMoveEvent : GamepadEvent
 {
+  constructor(DOMString type,
+              optional GamepadAxisMoveEventInit eventInitDict = {});
+
   readonly attribute unsigned long axis;
   readonly attribute double value;
 };

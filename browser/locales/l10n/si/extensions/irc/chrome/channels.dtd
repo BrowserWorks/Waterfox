@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "චැනලයකට සම්බන්ධ වීම">
+
+<!ENTITY qsearch.label     "ක්ෂණික සෙවුම:">
+<!ENTITY qsearch.accesskey "S">
+
+<!ENTITY topics.label     "මාතෘකා සහ චැනල නම් සෙවීම">
+<!ENTITY topics.accesskey "t">
+
+<!ENTITY join.label     "සම්බන්ධ වන්න">
+<!ENTITY join.accesskey "J">
+
+<!ENTITY minusers.label     "අවම පරිශීලකයින්:">
+<!ENTITY minusers.accesskey "n">
+
+<!ENTITY maxusers.label     "උපරිම පරිශීලකයින්:">
+<!ENTITY maxusers.accesskey "x">
+
+<!ENTITY refresh.label     "දැන් නැවුම් කරන්න">
+<!ENTITY refresh.accesskey "">
+
+<!ENTITY col.name  "නම">
+<!ENTITY col.users "පරිශීලකයින්">
+<!ENTITY col.topic "මාතෘකාව">

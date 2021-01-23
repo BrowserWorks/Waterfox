@@ -12,6 +12,7 @@
 
 #include "Accessible-inl.h"
 #include "DocAccessible-inl.h"
+#include "mozilla/a11y/DocAccessibleParent.h"
 #include "nsAccessibilityService.h"
 #include "nsAccUtils.h"
 #include "nsCoreUtils.h"
@@ -27,8 +28,8 @@
 #include "mozilla/dom/CustomEvent.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/ScriptSettings.h"
+#include "mozilla/dom/BrowserHost.h"
 
-#include "nsIDocShellTreeItem.h"
 #include "nsIDocShellTreeOwner.h"
 #include "mozilla/dom/Event.h"
 #include "mozilla/dom/EventTarget.h"
@@ -36,7 +37,6 @@
 #include "mozilla/dom/Document.h"
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsIPropertyBag2.h"
-#include "nsIServiceManager.h"
 #include "nsPIDOMWindow.h"
 #include "nsIWebBrowserChrome.h"
 #include "nsReadableUtils.h"
@@ -44,7 +44,7 @@
 #include "nsGlobalWindow.h"
 
 #ifdef MOZ_XUL
-#  include "nsIXULWindow.h"
+#  include "nsIAppWindow.h"
 #endif
 
 using namespace mozilla;
@@ -81,33 +81,23 @@ ENameValueFlag RootAccessible::Name(nsString& aName) const {
   return eNameOK;
 }
 
-role RootAccessible::NativeRole() const {
-  // If it's a <dialog> or <wizard>, use roles::DIALOG instead
-  dom::Element* rootElm = mDocumentNode->GetRootElement();
-  if (rootElm &&
-      rootElm->IsAnyOfXULElements(nsGkAtoms::dialog, nsGkAtoms::wizard))
-    return roles::DIALOG;
-
-  return DocAccessibleWrap::NativeRole();
-}
-
 // RootAccessible protected member
 #ifdef MOZ_XUL
 uint32_t RootAccessible::GetChromeFlags() const {
   // Return the flag set for the top level window as defined
   // by nsIWebBrowserChrome::CHROME_WINDOW_[FLAGNAME]
-  // Not simple: nsIXULWindow is not just a QI from nsIDOMWindow
+  // Not simple: nsIAppWindow is not just a QI from nsIDOMWindow
   nsCOMPtr<nsIDocShell> docShell = nsCoreUtils::GetDocShellFor(mDocumentNode);
   NS_ENSURE_TRUE(docShell, 0);
   nsCOMPtr<nsIDocShellTreeOwner> treeOwner;
   docShell->GetTreeOwner(getter_AddRefs(treeOwner));
   NS_ENSURE_TRUE(treeOwner, 0);
-  nsCOMPtr<nsIXULWindow> xulWin(do_GetInterface(treeOwner));
-  if (!xulWin) {
+  nsCOMPtr<nsIAppWindow> appWin(do_GetInterface(treeOwner));
+  if (!appWin) {
     return 0;
   }
   uint32_t chromeFlags;
-  xulWin->GetChromeFlags(&chromeFlags);
+  appWin->GetChromeFlags(&chromeFlags);
   return chromeFlags;
 }
 #endif
@@ -155,7 +145,7 @@ const char* const kEventTypes[] = {
     // HTMLInputElement.cpp & radio.js)
     "RadioStateChange", "popupshown", "popuphiding", "DOMMenuInactive",
     "DOMMenuItemActive", "DOMMenuItemInactive", "DOMMenuBarActive",
-    "DOMMenuBarInactive"};
+    "DOMMenuBarInactive", "scroll"};
 
 nsresult RootAccessible::AddEventListeners() {
   // EventTarget interface allows to register event listeners to
@@ -233,13 +223,23 @@ RootAccessible::HandleEvent(Event* aDOMEvent) {
       GetAccService()->GetDocAccessible(origTargetNode->OwnerDoc());
 
   if (document) {
-    // Root accessible exists longer than any of its descendant documents so
-    // that we are guaranteed notification is processed before root accessible
-    // is destroyed.
-    // For shadow DOM, GetOriginalTarget on the Event returns null if we
-    // process the event async, so we must pass the target node as well.
-    document->HandleNotification<RootAccessible, Event, nsINode>(
-        this, &RootAccessible::ProcessDOMEvent, aDOMEvent, origTargetNode);
+    nsAutoString eventType;
+    aDOMEvent->GetType(eventType);
+    if (eventType.EqualsLiteral("scroll")) {
+      // We don't put this in the notification queue for 2 reasons:
+      // 1. We will flood the queue with repetitive events.
+      // 2. Since this doesn't necessarily touch layout, we are not
+      //    guaranteed to have a WillRefresh tick any time soon.
+      document->HandleScroll(origTargetNode);
+    } else {
+      // Root accessible exists longer than any of its descendant documents so
+      // that we are guaranteed notification is processed before root accessible
+      // is destroyed.
+      // For shadow DOM, GetOriginalTarget on the Event returns null if we
+      // process the event async, so we must pass the target node as well.
+      document->HandleNotification<RootAccessible, Event, nsINode>(
+          this, &RootAccessible::ProcessDOMEvent, aDOMEvent, origTargetNode);
+    }
   }
 
   return NS_OK;
@@ -511,6 +511,25 @@ void RootAccessible::HandlePopupShownEvent(Accessible* aAccessible) {
           new AccStateChangeEvent(combobox, states::EXPANDED, true);
       if (event) nsEventShell::FireEvent(event);
     }
+
+    // If aria-activedescendant is present, redirect focus.
+    // This is needed for parent process <select> dropdowns, which use a
+    // menulist containing div elements instead of XUL menuitems. XUL menuitems
+    // fire DOMMenuItemActive events from layout instead.
+    MOZ_ASSERT(aAccessible->Elm());
+    if (aAccessible->Elm()->HasAttr(kNameSpaceID_None,
+                                    nsGkAtoms::aria_activedescendant)) {
+      Accessible* activeDescendant = aAccessible->CurrentItem();
+      if (activeDescendant) {
+        FocusMgr()->ActiveItemChanged(activeDescendant, false);
+#ifdef A11Y_LOG
+        if (logging::IsEnabled(logging::eFocus)) {
+          logging::ActiveItemChangeCausedBy("ARIA activedescendant on popup",
+                                            activeDescendant);
+        }
+#endif
+      }
+    }
   }
 }
 
@@ -678,12 +697,12 @@ ProxyAccessible* RootAccessible::GetPrimaryRemoteTopLevelContentDoc() const {
   mDocumentNode->GetDocShell()->GetTreeOwner(getter_AddRefs(owner));
   NS_ENSURE_TRUE(owner, nullptr);
 
-  nsCOMPtr<nsIRemoteTab> browserParent;
-  owner->GetPrimaryRemoteTab(getter_AddRefs(browserParent));
-  if (!browserParent) {
+  nsCOMPtr<nsIRemoteTab> remoteTab;
+  owner->GetPrimaryRemoteTab(getter_AddRefs(remoteTab));
+  if (!remoteTab) {
     return nullptr;
   }
 
-  auto tab = static_cast<dom::BrowserParent*>(browserParent.get());
+  auto tab = static_cast<dom::BrowserHost*>(remoteTab.get());
   return tab->GetTopLevelDocAccessible();
 }

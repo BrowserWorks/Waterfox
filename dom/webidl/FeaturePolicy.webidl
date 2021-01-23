@@ -4,17 +4,20 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * For more information on this interface, please see
- * https://wicg.github.io/feature-policy/#policy
+ * https://w3c.github.io/webappsec-feature-policy/#idl-index
  */
 
-[NoInterfaceObject]
-interface Policy {
+[NoInterfaceObject,
+ Exposed=Window]
+interface FeaturePolicy {
   boolean allowsFeature(DOMString feature, optional DOMString origin);
+  sequence<DOMString> features();
   sequence<DOMString> allowedFeatures();
   sequence<DOMString> getAllowlistForFeature(DOMString feature);
 };
 
-[Func="mozilla::dom::DOMPrefs::dom_reporting_featurePolicy_enabled"]
+[Pref="dom.reporting.featurePolicy.enabled",
+ Exposed=Window]
 interface FeaturePolicyViolationReportBody : ReportBody {
   readonly attribute DOMString featureId;
   readonly attribute DOMString? sourceFile;

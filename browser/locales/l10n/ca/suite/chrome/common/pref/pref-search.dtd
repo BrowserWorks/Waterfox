@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-search.xul -->
+<!-- LOCALIZATION NOTE : FILE The Search prefs dialog -->
+
+
+
+<!ENTITY pref.search.title                "Cerca a Internet">
+<!ENTITY legendHeader                     "Motor de cerca per defecte">
+<!ENTITY defaultSearchEngine.label        "Utilitzant:">
+<!ENTITY defaultSearchEngine.accesskey    "U">
+
+<!ENTITY engineManager.label              "Gestiona els motors de cerca…">
+
+<!ENTITY searchResults.label              "Resultats de la cerca">
+
+<!ENTITY openInTab.label                  "Obre pestanyes noves per als resultats de la barra lateral de cerca">
+<!ENTITY openInTab.accesskey              "n">
+<!ENTITY openContextSearchTab.label       "Obre una pestanya en comptes d'una finestra per a les cerques web des del menú contextual">
+<!ENTITY openContextSearchTab.accesskey   "t">
+<!ENTITY openSidebarSearchPanel.label     "Obre la pestanya de cerca de la barra lateral quan els resultats estiguin disponibles">
+<!ENTITY openSidebarSearchPanel.accesskey "O">

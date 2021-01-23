@@ -7,8 +7,9 @@ if the entry does not already exist.
 
 Usage: buildlist.py <filename> <entry> [<entry> ...]
 '''
-from __future__ import absolute_import, print_function
+from __future__ import absolute_import, print_function, unicode_literals
 
+import io
 import sys
 import os
 
@@ -17,32 +18,33 @@ from mozbuild.util import (
     lock_file,
 )
 
+
 def addEntriesToListFile(listFile, entries):
-  """Given a file |listFile| containing one entry per line,
-  add each entry in |entries| to the file, unless it is already
-  present."""
-  ensureParentDir(listFile)
-  lock = lock_file(listFile + ".lck")
-  try:
-    if os.path.exists(listFile):
-      f = open(listFile)
-      existing = set(x.strip() for x in f.readlines())
-      f.close()
-    else:
-      existing = set()
-    for e in entries:
-      if e not in existing:
-        existing.add(e)
-    with open(listFile, 'wb') as f:
-      f.write("\n".join(sorted(existing))+"\n")
-  finally:
-    lock = None
+    """Given a file |listFile| containing one entry per line,
+    add each entry in |entries| to the file, unless it is already
+    present."""
+    ensureParentDir(listFile)
+    lock = lock_file(listFile + '.lck')
+    try:
+        if os.path.exists(listFile):
+            f = io.open(listFile)
+            existing = set(x.strip() for x in f.readlines())
+            f.close()
+        else:
+            existing = set()
+        for e in entries:
+            if e not in existing:
+                existing.add(e)
+        with io.open(listFile, 'w', newline='\n') as f:
+            f.write('\n'.join(sorted(existing)) + '\n')
+    finally:
+        del lock  # Explicitly release the lock_file to free it
 
 
 def main(args):
     if len(args) < 2:
         print("Usage: buildlist.py <list file> <entry> [<entry> ...]",
-            file=sys.stderr)
+              file=sys.stderr)
         return 1
 
     return addEntriesToListFile(args[0], args[1:])

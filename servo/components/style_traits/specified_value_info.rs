@@ -27,7 +27,7 @@ pub mod CssType {
 }
 
 /// See SpecifiedValueInfo::collect_completion_keywords.
-pub type KeywordsCollectFn<'a> = &'a mut FnMut(&[&'static str]);
+pub type KeywordsCollectFn<'a> = &'a mut dyn FnMut(&[&'static str]);
 
 /// Information of values of a given specified value type.
 ///
@@ -82,6 +82,7 @@ impl SpecifiedValueInfo for i32 {}
 impl SpecifiedValueInfo for u8 {}
 impl SpecifiedValueInfo for u16 {}
 impl SpecifiedValueInfo for u32 {}
+impl SpecifiedValueInfo for usize {}
 impl SpecifiedValueInfo for str {}
 impl SpecifiedValueInfo for String {}
 impl SpecifiedValueInfo for crate::owned_str::OwnedStr {}

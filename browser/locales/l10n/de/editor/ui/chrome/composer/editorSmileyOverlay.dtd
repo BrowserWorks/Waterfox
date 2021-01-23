@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Smiley Menu items -->
+<!ENTITY insertSmiley.label "Smiley">
+<!ENTITY insertSmiley.accesskey "S">
+
+<!ENTITY smiley1Cmd.label "Lächeln">
+<!ENTITY smiley1Cmd.accesskey "ä">
+<!ENTITY smiley1Cmd.tooltip "Ein lächelndes Gesicht einfügen">
+<!ENTITY smiley2Cmd.label "Stirn runzeln">
+<!ENTITY smiley2Cmd.accesskey "S">
+<!ENTITY smiley2Cmd.tooltip "Ein Stirn runzelndes Gesicht einfügen">
+<!ENTITY smiley3Cmd.label "Zwinkern">
+<!ENTITY smiley3Cmd.accesskey "Z">
+<!ENTITY smiley3Cmd.tooltip "Ein zwinkerndes Gesicht einfügen">
+<!ENTITY smiley4Cmd.label "Zunge raus">
+<!ENTITY smiley4Cmd.accesskey "r">
+<!ENTITY smiley4Cmd.tooltip "Ein Gesicht mit herausgestreckter Zunge einfügen">
+<!ENTITY smiley5Cmd.label "Lachen">
+<!ENTITY smiley5Cmd.accesskey "L">
+<!ENTITY smiley5Cmd.tooltip "Ein lachendes Gesicht einfügen">
+<!ENTITY smiley6Cmd.label "Verlegen">
+<!ENTITY smiley6Cmd.accesskey "V">
+<!ENTITY smiley6Cmd.tooltip "Ein verlegen schauendes Gesicht einfügen">
+<!ENTITY smiley7Cmd.label "Unentschlossen">
+<!ENTITY smiley7Cmd.accesskey "e">
+<!ENTITY smiley7Cmd.tooltip "Ein unentschlossenes Gesicht einfügen">
+<!ENTITY smiley8Cmd.label "Überrascht">
+<!ENTITY smiley8Cmd.accesskey "Ü">
+<!ENTITY smiley8Cmd.tooltip "Ein überraschtes Gesicht einfügen">
+<!ENTITY smiley9Cmd.label "Kuss">
+<!ENTITY smiley9Cmd.accesskey "K">
+<!ENTITY smiley9Cmd.tooltip "Ein küssendes Gesicht einfügen">
+<!ENTITY smiley10Cmd.label "Schreien">
+<!ENTITY smiley10Cmd.accesskey "r">
+<!ENTITY smiley10Cmd.tooltip "Ein schreiendes Gesicht einfügen">
+<!ENTITY smiley11Cmd.label "Cool">
+<!ENTITY smiley11Cmd.accesskey "C">
+<!ENTITY smiley11Cmd.tooltip "Ein cooles Gesicht einfügen">
+<!ENTITY smiley12Cmd.label "Geldmund">
+<!ENTITY smiley12Cmd.accesskey "G">
+<!ENTITY smiley12Cmd.tooltip "Ein Gesicht mit Geldmund einfügen">
+<!ENTITY smiley13Cmd.label "Fuß-im-Mund">
+<!ENTITY smiley13Cmd.accesskey "M">
+<!ENTITY smiley13Cmd.tooltip "Ein Gesicht mit Fuß im Mund einfügen">
+<!ENTITY smiley14Cmd.label "Unschuldig">
+<!ENTITY smiley14Cmd.accesskey "U">
+<!ENTITY smiley14Cmd.tooltip "Ein unschuldiges Gesicht einfügen">
+<!ENTITY smiley15Cmd.label "Weinen">
+<!ENTITY smiley15Cmd.accesskey "W">
+<!ENTITY smiley15Cmd.tooltip "Ein weinendes Gesicht einfügen">
+<!ENTITY smiley16Cmd.label "Lippen verschlossen">
+<!ENTITY smiley16Cmd.accesskey "i">
+<!ENTITY smiley16Cmd.tooltip "Ein Gesicht mit verschlossenen Lippen einfügen">
+<!ENTITY SmileButton.tooltip "Einen Smiley einfügen">
+

@@ -22,7 +22,7 @@ namespace mozilla {
 // to create cycles that keep alive the holder.
 //
 // JSObjectHolder is ISupports to make it usable with
-// NS_ReleaseOnMainThreadSystemGroup.
+// NS_ReleaseOnMainThread.
 class JSObjectHolder final : public nsISupports {
  public:
   JSObjectHolder(JSContext* aCx, JSObject* aObject) : mJSObject(aCx, aObject) {}
@@ -32,7 +32,7 @@ class JSObjectHolder final : public nsISupports {
   JSObject* GetJSObject() { return mJSObject; }
 
  private:
-  ~JSObjectHolder() {}
+  ~JSObjectHolder() = default;
 
   JS::PersistentRooted<JSObject*> mJSObject;
 };

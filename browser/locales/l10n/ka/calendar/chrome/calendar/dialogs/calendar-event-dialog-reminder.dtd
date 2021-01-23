@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "შეხსენებების გამართვა">
+<!ENTITY reminder.add.label                                "დამატება">
+<!ENTITY reminder.add.accesskey                            "A">
+<!ENTITY reminder.remove.label                             "მოცილება">
+<!ENTITY reminder.remove.accesskey                         "R">
+
+<!ENTITY reminder.reminderDetails.label                    "შეხსენების დეტალები">
+<!ENTITY reminder.action.label                             "შეხსენების ქმედების შერჩევა">
+
+<!ENTITY reminder.action.alert.label                       "შეტყობინების ჩვენება">
+<!ENTITY reminder.action.email.label                       "ელფოსტის გაგზავნა">
+
+<!ENTITY alarm.units.minutes                               "წუთით" >
+<!ENTITY alarm.units.hours                                 "საათით" >
+<!ENTITY alarm.units.days                                  "დღით" >

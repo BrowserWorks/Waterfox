@@ -20,6 +20,7 @@ NetMonitorPanel.prototype = {
     await app.bootstrap({
       toolbox: this.toolbox,
       document: this.panelWin.document,
+      win: this.panelWin,
     });
 
     // Ready to go!
@@ -29,10 +30,9 @@ NetMonitorPanel.prototype = {
     return this;
   },
 
-  async destroy() {
-    await this.panelWin.Netmonitor.destroy();
+  destroy() {
+    this.panelWin.Netmonitor.destroy();
     this.emit("destroyed");
-    return this;
   },
 };
 

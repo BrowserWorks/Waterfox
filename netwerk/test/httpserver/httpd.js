@@ -36,6 +36,7 @@ var EXPORTED_SYMBOLS = [
   "HTTP_505",
   "HttpError",
   "HttpServer",
+  "NodeServer",
 ];
 
 const CC = Components.Constructor;
@@ -346,10 +347,7 @@ function printObj(o, showMembers) {
   var s = "******************************\n";
   s += "o = {\n";
   for (var i in o) {
-    if (
-      typeof i != "string" ||
-      (showMembers || (i.length > 0 && i[0] != "_"))
-    ) {
+    if (typeof i != "string" || showMembers || (i.length > 0 && i[0] != "_")) {
       s += "      " + i + ": " + o[i] + ",\n";
     }
   }
@@ -860,10 +858,6 @@ nsHttpServer.prototype = {
     if (!this._hasOpenConnections() && this._socketClosed) {
       this._notifyStopped();
     }
-    // Bug 508125: Add a GC here else we'll use gigabytes of memory running
-    // mochitests. We can't rely on xpcshell doing an automated GC, as that
-    // would interfere with testing GC stuff...
-    Cu.forceGC();
   },
 
   /**
@@ -877,6 +871,98 @@ nsHttpServer.prototype = {
 };
 
 var HttpServer = nsHttpServer;
+
+class NodeServer {
+  // Executes command in the context of a node server.
+  // See handler in moz-http2.js
+  //
+  // Example use:
+  // let id = NodeServer.fork(); // id is a random string
+  // await NodeServer.execute(id, `"hello"`)
+  // > "hello"
+  // await NodeServer.execute(id, `(() => "hello")()`)
+  // > "hello"
+  // await NodeServer.execute(id, `(() => var_defined_on_server)()`)
+  // > "0"
+  // await NodeServer.execute(id, `var_defined_on_server`)
+  // > "0"
+  // function f(param) { if (param) return param; return "bla"; }
+  // await NodeServer.execute(id, f); // Defines the function on the server
+  // await NodeServer.execute(id, `f()`) // executes defined function
+  // > "bla"
+  // let result = await NodeServer.execute(id, `f("test")`);
+  // > "test"
+  // await NodeServer.kill(id); // shuts down the server
+
+  // Forks a new node server using moz-http2-child.js as a starting point
+  static fork() {
+    return this.sendCommand("", "/fork");
+  }
+  // Executes command in the context of the node server indicated by `id`
+  static execute(id, command) {
+    return this.sendCommand(command, `/execute/${id}`);
+  }
+  // Shuts down the server
+  static kill(id) {
+    return this.sendCommand("", `/kill/${id}`);
+  }
+
+  // Issues a request to the node server (handler defined in moz-http2.js)
+  // This method should not be called directly.
+  static sendCommand(command, path) {
+    let env = Cc["@mozilla.org/process/environment;1"].getService(
+      Ci.nsIEnvironment
+    );
+    let h2Port = env.get("MOZNODE_EXEC_PORT");
+    if (!h2Port) {
+      throw new Error("Could not find MOZNODE_EXEC_PORT");
+    }
+
+    let req = new XMLHttpRequest();
+    req.open("POST", `http://127.0.0.1:${h2Port}${path}`);
+
+    // Passing a function to NodeServer.execute will define that function
+    // in node. It can be called in a later execute command.
+    let isFunction = function(obj) {
+      return !!(obj && obj.constructor && obj.call && obj.apply);
+    };
+    let payload = command;
+    if (isFunction(command)) {
+      payload = `${command.name} = ${command.toString()};`;
+    }
+
+    return new Promise((resolve, reject) => {
+      req.onload = () => {
+        let x = null;
+
+        if (req.statusText != "OK") {
+          reject(`XHR request failed: ${req.statusText}`);
+          return;
+        }
+
+        try {
+          x = JSON.parse(req.responseText);
+        } catch (e) {
+          reject(`Failed to parse ${req.responseText} - ${e}`);
+          return;
+        }
+
+        if (x.error) {
+          let e = new Error(x.error, "", 0);
+          e.stack = x.errorStack;
+          reject(e);
+          return;
+        }
+        resolve(x.result);
+      };
+      req.onerror = e => {
+        reject(e);
+      };
+
+      req.send(payload.toString());
+    });
+  }
+}
 
 //
 // RFC 2396 section 3.2.2:
@@ -1532,9 +1618,10 @@ RequestReader.prototype = {
             " excess=" +
             (data.length - count)
         );
+        data.length = count;
 
         var bos = new BinaryOutputStream(this._metadata._bodyOutputStream);
-        bos.writeByteArray(data, count);
+        bos.writeByteArray(data);
         this._contentLength -= count;
       }
 
@@ -2465,6 +2552,13 @@ ServerHandler.prototype = {
   // see nsIHttpServer.registerPathHandler
   //
   registerPathHandler(path, handler) {
+    if (path.length == 0) {
+      throw Components.Exception(
+        "Handler path cannot be empty",
+        Cr.NS_ERROR_INVALID_ARG
+      );
+    }
+
     // XXX true path validation!
     if (path.charAt(0) != "/" && path != "CONNECT") {
       throw Components.Exception("", Cr.NS_ERROR_INVALID_ARG);
@@ -2861,7 +2955,7 @@ ServerHandler.prototype = {
                 ", expected " +
                 chunkSize
             );
-            output.writeByteArray(data, data.length);
+            output.writeByteArray(data);
             if (count === 0) {
               fis.close();
               response.finish();
@@ -3023,7 +3117,7 @@ ServerHandler.prototype = {
           return this._mimeMappings[ext];
         }
       }
-      return Cc["@mozilla.org/uriloader/external-helper-app-service;1"]
+      return Cc["@mozilla.org/mime;1"]
         .getService(Ci.nsIMIMEService)
         .getTypeFromFile(file);
     } catch (e) {

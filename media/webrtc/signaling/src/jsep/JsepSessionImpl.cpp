@@ -4,33 +4,30 @@
 
 #include "signaling/src/jsep/JsepSessionImpl.h"
 
-#include <iterator>
-#include <string>
-#include <set>
-#include <bitset>
 #include <stdlib.h>
 
+#include <bitset>
+#include <iterator>
+#include <set>
+#include <string>
+#include <utility>
+
+#include "logging.h"
+#include "mozilla/Preferences.h"
+#include "mozilla/Telemetry.h"
+#include "mozilla/UniquePtr.h"
+#include "mozilla/net/DataChannelProtocol.h"
+#include "nsDebug.h"
 #include "nspr.h"
 #include "nss.h"
 #include "pk11pub.h"
-#include "nsDebug.h"
-#include "logging.h"
-
-#include "mozilla/Move.h"
-#include "mozilla/UniquePtr.h"
-#include "mozilla/Preferences.h"
-#include "mozilla/Telemetry.h"
 
 #include "webrtc/api/rtpparameters.h"
 
 #include "signaling/src/jsep/JsepTrack.h"
 #include "signaling/src/jsep/JsepTransport.h"
-#include "signaling/src/sdp/RsdparsaSdpParser.h"
-#include "signaling/src/sdp/Sdp.h"
+#include "signaling/src/sdp/HybridSdpParser.h"
 #include "signaling/src/sdp/SipccSdp.h"
-#include "signaling/src/sdp/SipccSdpParser.h"
-#include "mozilla/net/DataChannelProtocol.h"
-#include "signaling/src/sdp/ParsingResultComparer.h"
 
 namespace mozilla {
 
@@ -83,11 +80,6 @@ nsresult JsepSessionImpl::Init() {
   SetupDefaultCodecs();
   SetupDefaultRtpExtensions();
 
-  mRunRustParser =
-      Preferences::GetBool("media.peerconnection.sdp.rust.enabled", false);
-  mRunSdpComparer =
-      Preferences::GetBool("media.peerconnection.sdp.rust.compare", false);
-
   mEncodeTrackId =
       Preferences::GetBool("media.peerconnection.sdp.encode_track_id", true);
 
@@ -102,7 +94,7 @@ nsresult JsepSessionImpl::AddTransceiver(RefPtr<JsepTransceiver> transceiver) {
 
   if (transceiver->GetMediaType() != SdpMediaSection::kApplication) {
     // Make sure we have an ssrc. Might already be set.
-    transceiver->mSendTrack.EnsureSsrcs(mSsrcGenerator);
+    transceiver->mSendTrack.EnsureSsrcs(mSsrcGenerator, 1U);
     transceiver->mSendTrack.SetCNAME(mCNAME);
 
     // Make sure we have identifiers for send track, just in case.
@@ -121,7 +113,8 @@ nsresult JsepSessionImpl::AddTransceiver(RefPtr<JsepTransceiver> transceiver) {
     // of asserting.
     transceiver->mJsDirection = SdpDirectionAttribute::kSendrecv;
 #ifdef DEBUG
-    for (auto& transceiver : mTransceivers) {
+    for (const auto& [id, transceiver] : mTransceivers) {
+      (void)id;  // Lame, but no better way to do this right now.
       MOZ_ASSERT(transceiver->GetMediaType() != SdpMediaSection::kApplication);
     }
 #endif
@@ -131,7 +124,7 @@ nsresult JsepSessionImpl::AddTransceiver(RefPtr<JsepTransceiver> transceiver) {
   transceiver->mRecvTrack.PopulateCodecs(mSupportedCodecs);
   // We do not set mLevel yet, we do that either on createOffer, or setRemote
 
-  mTransceivers.push_back(transceiver);
+  mTransceivers[mTransceiverIdCounter++] = transceiver;
   return NS_OK;
 }
 
@@ -413,6 +406,11 @@ std::vector<SdpExtmapAttributeList::Extmap> JsepSessionImpl::GetRtpExtensions(
         // TODO: Would it be worth checking that the direction is sane?
         AddVideoRtpExtension(webrtc::RtpExtension::kRtpStreamIdUri,
                              SdpDirectionAttribute::kSendonly);
+
+        if (Preferences::GetBool("media.peerconnection.video.use_rtx", false)) {
+          AddVideoRtpExtension(webrtc::RtpExtension::kRepairedRtpStreamIdUri,
+                               SdpDirectionAttribute::kSendonly);
+        }
       }
       break;
     default:;
@@ -659,7 +657,6 @@ JsepSession::Result JsepSessionImpl::SetLocalDescription(
                        << GetStateStr(mState));
         return dom::PCError::InvalidStateError;
       }
-      mIsOfferer = true;
       break;
     case kJsepStateHaveRemoteOffer:
       if (type != kJsepSdpAnswer && type != kJsepSdpPranswer) {
@@ -699,8 +696,8 @@ JsepSession::Result JsepSessionImpl::SetLocalDescription(
   if (type == kJsepSdpOffer) {
     // Save in case we need to rollback
     mOldTransceivers.clear();
-    for (const auto& transceiver : mTransceivers) {
-      mOldTransceivers.push_back(new JsepTransceiver(*transceiver));
+    for (const auto& [id, transceiver] : mTransceivers) {
+      mOldTransceivers[id] = new JsepTransceiver(*transceiver);
     }
   }
 
@@ -743,6 +740,7 @@ JsepSession::Result JsepSessionImpl::SetLocalDescription(
 nsresult JsepSessionImpl::SetLocalDescriptionOffer(UniquePtr<Sdp> offer) {
   MOZ_ASSERT(mState == kJsepStateStable);
   mPendingLocalDescription = std::move(offer);
+  mIsPendingOfferer = Some(true);
   SetState(kJsepStateHaveLocalOffer);
   return NS_OK;
 }
@@ -758,8 +756,9 @@ nsresult JsepSessionImpl::SetLocalDescriptionAnswer(JsepSdpType type,
 
   mCurrentRemoteDescription = std::move(mPendingRemoteDescription);
   mCurrentLocalDescription = std::move(mPendingLocalDescription);
-  MOZ_ASSERT(!mIsOfferer);
-  mWasOffererLastTime = false;
+  MOZ_ASSERT(mIsPendingOfferer.isSome() && !*mIsPendingOfferer);
+  mIsPendingOfferer.reset();
+  mIsCurrentOfferer = Some(false);
 
   SetState(kJsepStateStable);
   return NS_OK;
@@ -800,7 +799,6 @@ JsepSession::Result JsepSessionImpl::SetRemoteDescription(
                        << GetStateStr(mState));
         return dom::PCError::InvalidStateError;
       }
-      mIsOfferer = false;
       break;
     case kJsepStateHaveLocalOffer:
     case kJsepStateHaveRemotePranswer:
@@ -870,8 +868,8 @@ JsepSession::Result JsepSessionImpl::SetRemoteDescription(
   // Save in case we need to rollback.
   if (type == kJsepSdpOffer) {
     mOldTransceivers.clear();
-    for (const auto& transceiver : mTransceivers) {
-      mOldTransceivers.push_back(new JsepTransceiver(*transceiver));
+    for (const auto& [id, transceiver] : mTransceivers) {
+      mOldTransceivers[id] = new JsepTransceiver(*transceiver);
       if (!transceiver->IsNegotiated()) {
         // We chose a level for this transceiver, but never negotiated it.
         // Discard this state.
@@ -918,9 +916,9 @@ nsresult JsepSessionImpl::HandleNegotiatedSession(
   bool remoteIceLite =
       remote->GetAttributeList().HasAttribute(SdpAttribute::kIceLiteAttribute);
 
-  mIceControlling = remoteIceLite || mIsOfferer;
+  mIceControlling = remoteIceLite || *mIsPendingOfferer;
 
-  const Sdp& answer = mIsOfferer ? *remote : *local;
+  const Sdp& answer = *mIsPendingOfferer ? *remote : *local;
 
   SdpHelper::BundledMids bundledMids;
   nsresult rv = mSdpHelper.GetBundledMids(answer, &bundledMids);
@@ -966,7 +964,8 @@ nsresult JsepSessionImpl::HandleNegotiatedSession(
   }
 
   std::vector<JsepTrack*> remoteTracks;
-  for (const RefPtr<JsepTransceiver>& transceiver : mTransceivers) {
+  for (const auto& [id, transceiver] : mTransceivers) {
+    (void)id;  // Lame, but no better way to do this right now.
     remoteTracks.push_back(&transceiver->mRecvTrack);
   }
   JsepTrack::SetUniquePayloadTypes(remoteTracks);
@@ -982,14 +981,14 @@ nsresult JsepSessionImpl::HandleNegotiatedSession(
 nsresult JsepSessionImpl::MakeNegotiatedTransceiver(
     const SdpMediaSection& remote, const SdpMediaSection& local,
     JsepTransceiver* transceiver) {
-  const SdpMediaSection& answer = mIsOfferer ? remote : local;
+  const SdpMediaSection& answer = *mIsPendingOfferer ? remote : local;
 
   bool sending = false;
   bool receiving = false;
 
   // JS could stop the transceiver after the answer was created.
   if (!transceiver->IsStopped()) {
-    if (mIsOfferer) {
+    if (*mIsPendingOfferer) {
       receiving = answer.IsSending();
       sending = answer.IsReceiving();
     } else {
@@ -1050,11 +1049,6 @@ nsresult JsepSessionImpl::MakeNegotiatedTransceiver(
     MOZ_MTLOG(ML_DEBUG, "[" << mName << "]: RTCP-MUX is off");
   }
 
-  if (local.GetMediaType() != SdpMediaSection::kApplication) {
-    Telemetry::Accumulate(Telemetry::WEBRTC_RTCP_MUX,
-                          transceiver->mTransport.mComponents == 1);
-  }
-
   return NS_OK;
 }
 
@@ -1104,11 +1098,11 @@ nsresult JsepSessionImpl::FinalizeTransport(const SdpAttributeList& remote,
     // We do sanity-checking for these in ParseSdp
     ice->mUfrag = remote.GetIceUfrag();
     ice->mPwd = remote.GetIcePwd();
-    if (remote.HasAttribute(SdpAttribute::kCandidateAttribute)) {
-      ice->mCandidates = remote.GetCandidate();
-    }
-
     transport->mIce = std::move(ice);
+  }
+
+  if (remote.HasAttribute(SdpAttribute::kCandidateAttribute)) {
+    transport->mIce->mCandidates = remote.GetCandidate();
   }
 
   if (!transport->mDtls) {
@@ -1128,10 +1122,10 @@ nsresult JsepSessionImpl::FinalizeTransport(const SdpAttributeList& remote,
     UniquePtr<JsepDtlsTransport> dtls = MakeUnique<JsepDtlsTransport>();
     dtls->mFingerprints = remote.GetFingerprint();
     if (!answer.HasAttribute(mozilla::SdpAttribute::kSetupAttribute)) {
-      dtls->mRole = mIsOfferer ? JsepDtlsTransport::kJsepDtlsServer
-                               : JsepDtlsTransport::kJsepDtlsClient;
+      dtls->mRole = *mIsPendingOfferer ? JsepDtlsTransport::kJsepDtlsServer
+                                       : JsepDtlsTransport::kJsepDtlsClient;
     } else {
-      if (mIsOfferer) {
+      if (*mIsPendingOfferer) {
         dtls->mRole = (answer.GetSetup().mRole == SdpSetupAttribute::kActive)
                           ? JsepDtlsTransport::kJsepDtlsServer
                           : JsepDtlsTransport::kJsepDtlsClient;
@@ -1199,26 +1193,15 @@ nsresult JsepSessionImpl::CopyPreviousTransportParams(
 
 nsresult JsepSessionImpl::ParseSdp(const std::string& sdp,
                                    UniquePtr<Sdp>* parsedp) {
-  UniquePtr<Sdp> parsed = mSipccParser.Parse(sdp);
+  auto results = mParser->Parse(sdp);
+  auto parsed = std::move(results->Sdp());
+  auto errors = results->Errors();
   if (!parsed) {
-    std::string error = "Failed to parse SDP: ";
-    mSdpHelper.appendSdpParseErrors(mSipccParser.GetParseErrors(), &error);
+    std::string error = results->ParserName() + " Failed to parse SDP: ";
+    mSdpHelper.appendSdpParseErrors(errors, &error);
     JSEP_SET_ERROR(error);
     return NS_ERROR_INVALID_ARG;
   }
-
-  if (mRunRustParser) {
-    UniquePtr<Sdp> rustParsed = mRsdparsaParser.Parse(sdp);
-    if (mRunSdpComparer) {
-      ParsingResultComparer comparer;
-      if (rustParsed) {
-        comparer.Compare(*rustParsed, *parsed, sdp);
-      } else {
-        comparer.TrackRustParsingFailed(mSipccParser.GetParseErrors().size());
-      }
-    }
-  }
-
   // Verify that the JSEP rules for all SDP are followed
   for (size_t i = 0; i < parsed->GetMediaSectionCount(); ++i) {
     if (mSdpHelper.MsectionIsDisabled(parsed->GetMediaSection(i))) {
@@ -1271,6 +1254,28 @@ nsresult JsepSessionImpl::ParseSdp(const std::string& sdp,
       return NS_ERROR_INVALID_ARG;
     }
 
+    if (mediaAttrs.HasAttribute(SdpAttribute::kExtmapAttribute)) {
+      std::set<uint16_t> extIds;
+      for (const auto& ext : mediaAttrs.GetExtmap().mExtmaps) {
+        uint16_t id = ext.entry;
+
+        if (id < 1 || id > 14) {
+          JSEP_SET_ERROR("Description contains invalid extension id "
+                         << id << " on level " << i
+                         << " which is unsupported until 2-byte rtp"
+                            " header extensions are supported in webrtc.org");
+          return NS_ERROR_INVALID_ARG;
+        }
+
+        if (extIds.find(id) != extIds.end()) {
+          JSEP_SET_ERROR("Description contains duplicate extension id "
+                         << id << " on level " << i);
+          return NS_ERROR_INVALID_ARG;
+        }
+        extIds.insert(id);
+      }
+    }
+
     static const std::bitset<128> forbidden = GetForbiddenSdpPayloadTypes();
     if (msection.GetMediaType() == SdpMediaSection::kAudio ||
         msection.GetMediaType() == SdpMediaSection::kVideo) {
@@ -1305,6 +1310,7 @@ nsresult JsepSessionImpl::SetRemoteDescriptionOffer(UniquePtr<Sdp> offer) {
   MOZ_ASSERT(mState == kJsepStateStable);
 
   mPendingRemoteDescription = std::move(offer);
+  mIsPendingOfferer = Some(false);
 
   SetState(kJsepStateHaveRemoteOffer);
   return NS_OK;
@@ -1323,15 +1329,17 @@ nsresult JsepSessionImpl::SetRemoteDescriptionAnswer(JsepSdpType type,
 
   mCurrentRemoteDescription = std::move(mPendingRemoteDescription);
   mCurrentLocalDescription = std::move(mPendingLocalDescription);
-  MOZ_ASSERT(mIsOfferer);
-  mWasOffererLastTime = true;
+  MOZ_ASSERT(mIsPendingOfferer.isSome() && *mIsPendingOfferer);
+  mIsPendingOfferer.reset();
+  mIsCurrentOfferer = Some(true);
 
   SetState(kJsepStateStable);
   return NS_OK;
 }
 
 JsepTransceiver* JsepSessionImpl::GetTransceiverForLevel(size_t level) {
-  for (RefPtr<JsepTransceiver>& transceiver : mTransceivers) {
+  for (auto& [id, transceiver] : mTransceivers) {
+    (void)id;  // Lame, but no better way to do this right now.
     if (transceiver->HasLevel() && (transceiver->GetLevel() == level)) {
       return transceiver.get();
     }
@@ -1341,7 +1349,8 @@ JsepTransceiver* JsepSessionImpl::GetTransceiverForLevel(size_t level) {
 }
 
 JsepTransceiver* JsepSessionImpl::GetTransceiverForMid(const std::string& mid) {
-  for (RefPtr<JsepTransceiver>& transceiver : mTransceivers) {
+  for (auto& [id, transceiver] : mTransceivers) {
+    (void)id;  // Lame, but no better way to do this right now.
     if (transceiver->IsAssociated() && (transceiver->GetMid() == mid)) {
       return transceiver.get();
     }
@@ -1371,7 +1380,8 @@ JsepTransceiver* JsepSessionImpl::GetTransceiverForLocal(size_t level) {
   // There is no transceiver for |level| right now.
 
   // Look for an RTP transceiver
-  for (RefPtr<JsepTransceiver>& transceiver : mTransceivers) {
+  for (auto& [id, transceiver] : mTransceivers) {
+    (void)id;  // Lame, but no better way to do this right now.
     if (transceiver->GetMediaType() != SdpMediaSection::kApplication &&
         !transceiver->IsStopped() && !transceiver->HasLevel()) {
       transceiver->SetLevel(level);
@@ -1380,7 +1390,8 @@ JsepTransceiver* JsepSessionImpl::GetTransceiverForLocal(size_t level) {
   }
 
   // Ok, look for a datachannel
-  for (RefPtr<JsepTransceiver>& transceiver : mTransceivers) {
+  for (auto& [id, transceiver] : mTransceivers) {
+    (void)id;  // Lame, but no better way to do this right now.
     if (!transceiver->IsStopped() && !transceiver->HasLevel()) {
       transceiver->SetLevel(level);
       return transceiver.get();
@@ -1417,12 +1428,13 @@ JsepTransceiver* JsepSessionImpl::GetTransceiverForRemote(
   newTransceiver->SetCreatedBySetRemote();
   nsresult rv = AddTransceiver(newTransceiver);
   NS_ENSURE_SUCCESS(rv, nullptr);
-  return mTransceivers.back().get();
+  return newTransceiver.get();
 }
 
 JsepTransceiver* JsepSessionImpl::GetTransceiverWithTransport(
     const std::string& transportId) {
-  for (const auto& transceiver : mTransceivers) {
+  for (const auto& [id, transceiver] : mTransceivers) {
+    (void)id;  // Lame, but no better way to do this right now.
     if (transceiver->HasOwnTransport() &&
         (transceiver->mTransport.mTransportId == transportId)) {
       MOZ_ASSERT(transceiver->HasLevel(),
@@ -1446,7 +1458,10 @@ nsresult JsepSessionImpl::UpdateTransceiversFromRemoteDescription(
     }
 
     if (!mSdpHelper.MsectionIsDisabled(msection)) {
-      transceiver->Associate(msection.GetAttributeList().GetMid());
+      if (msection.GetAttributeList().HasAttribute(
+              SdpAttribute::kMidAttribute)) {
+        transceiver->Associate(msection.GetAttributeList().GetMid());
+      }
       if (!transceiver->IsAssociated()) {
         transceiver->Associate(GetNewMid());
       } else {
@@ -1482,7 +1497,8 @@ nsresult JsepSessionImpl::UpdateTransceiversFromRemoteDescription(
 JsepTransceiver* JsepSessionImpl::FindUnassociatedTransceiver(
     SdpMediaSection::MediaType type, bool magic) {
   // Look through transceivers that are not mapped to an m-section
-  for (RefPtr<JsepTransceiver>& transceiver : mTransceivers) {
+  for (auto& [id, transceiver] : mTransceivers) {
+    (void)id;  // Lame, but no better way to do this right now.
     if (type == SdpMediaSection::kApplication &&
         type == transceiver->GetMediaType()) {
       transceiver->RestartDatachannelTransceiver();
@@ -1499,10 +1515,10 @@ JsepTransceiver* JsepSessionImpl::FindUnassociatedTransceiver(
 }
 
 void JsepSessionImpl::RollbackLocalOffer() {
-  for (size_t i = 0; i < mTransceivers.size(); ++i) {
-    RefPtr<JsepTransceiver>& transceiver(mTransceivers[i]);
-    if (i < mOldTransceivers.size()) {
-      transceiver->Rollback(*mOldTransceivers[i], false);
+  for (auto& [id, transceiver] : mTransceivers) {
+    if (mOldTransceivers.count(id)) {
+      transceiver->Rollback(*mOldTransceivers[id], false);
+      mOldTransceivers[id] = transceiver;
       continue;
     }
 
@@ -1511,16 +1527,18 @@ void JsepSessionImpl::RollbackLocalOffer() {
     temp->mSendTrack.PopulateCodecs(mSupportedCodecs);
     temp->mRecvTrack.PopulateCodecs(mSupportedCodecs);
     transceiver->Rollback(*temp, false);
+    mOldTransceivers[id] = transceiver;
   }
 
-  mOldTransceivers.clear();
+  mTransceivers = std::move(mOldTransceivers);
 }
 
 void JsepSessionImpl::RollbackRemoteOffer() {
-  for (size_t i = 0; i < mTransceivers.size(); ++i) {
-    RefPtr<JsepTransceiver>& transceiver(mTransceivers[i]);
-    if (i < mOldTransceivers.size()) {
-      transceiver->Rollback(*mOldTransceivers[i], true);
+  for (auto& [id, transceiver] : mTransceivers) {
+    if (mOldTransceivers.count(id)) {
+      // Some stuff cannot be rolled back. Save this information.
+      transceiver->Rollback(*mOldTransceivers[id], true);
+      mOldTransceivers[id] = transceiver;
       continue;
     }
 
@@ -1539,12 +1557,12 @@ void JsepSessionImpl::RollbackRemoteOffer() {
     if (shouldRemove) {
       transceiver->Stop();
       transceiver->SetRemoved();
-      mTransceivers.erase(mTransceivers.begin() + i);
-      --i;
+    } else {
+      mOldTransceivers[id] = transceiver;
     }
   }
 
-  mOldTransceivers.clear();
+  mTransceivers = std::move(mOldTransceivers);
 }
 
 nsresult JsepSessionImpl::ValidateLocalDescription(const Sdp& description,
@@ -1670,7 +1688,8 @@ nsresult JsepSessionImpl::ValidateRemoteDescription(const Sdp& description) {
 
     bool differ = mSdpHelper.IceCredentialsDiffer(newMsection, oldMsection);
 
-    if (mIsOfferer && differ && !IsIceRestarting()) {
+    if (mIsPendingOfferer.isSome() && *mIsPendingOfferer && differ &&
+        !IsIceRestarting()) {
       JSEP_SET_ERROR(
           "Remote description indicates ICE restart but offer did not "
           "request ICE restart (new remote description changes either "
@@ -1929,6 +1948,8 @@ void JsepSessionImpl::SetupDefaultCodecs() {
   mSupportedCodecs.emplace_back(
       new JsepAudioCodecDescription("101", "telephone-event", 8000, 1));
 
+  bool useRtx =
+      Preferences::GetBool("media.peerconnection.video.use_rtx", false);
   // Supported video codecs.
   // Note: order here implies priority for building offers!
   UniquePtr<JsepVideoCodecDescription> vp8(
@@ -1936,6 +1957,9 @@ void JsepSessionImpl::SetupDefaultCodecs() {
   // Defaults for mandatory params
   vp8->mConstraints.maxFs = 12288;  // Enough for 2048x1536
   vp8->mConstraints.maxFps = 60;
+  if (useRtx) {
+    vp8->EnableRtx("124");
+  }
   mSupportedCodecs.push_back(std::move(vp8));
 
   UniquePtr<JsepVideoCodecDescription> vp9(
@@ -1943,6 +1967,9 @@ void JsepSessionImpl::SetupDefaultCodecs() {
   // Defaults for mandatory params
   vp9->mConstraints.maxFs = 12288;  // Enough for 2048x1536
   vp9->mConstraints.maxFps = 60;
+  if (useRtx) {
+    vp9->EnableRtx("125");
+  }
   mSupportedCodecs.push_back(std::move(vp9));
 
   UniquePtr<JsepVideoCodecDescription> h264_1(
@@ -1950,6 +1977,9 @@ void JsepSessionImpl::SetupDefaultCodecs() {
   h264_1->mPacketizationMode = 1;
   // Defaults for mandatory params
   h264_1->mProfileLevelId = 0x42E00D;
+  if (useRtx) {
+    h264_1->EnableRtx("127");
+  }
   mSupportedCodecs.push_back(std::move(h264_1));
 
   UniquePtr<JsepVideoCodecDescription> h264_0(
@@ -1957,6 +1987,9 @@ void JsepSessionImpl::SetupDefaultCodecs() {
   h264_0->mPacketizationMode = 0;
   // Defaults for mandatory params
   h264_0->mProfileLevelId = 0x42E00D;
+  if (useRtx) {
+    h264_0->EnableRtx("98");
+  }
   mSupportedCodecs.push_back(std::move(h264_0));
 
   UniquePtr<JsepVideoCodecDescription> ulpfec(new JsepVideoCodecDescription(
@@ -1993,6 +2026,12 @@ void JsepSessionImpl::SetupDefaultRtpExtensions() {
                        SdpDirectionAttribute::Direction::kSendrecv);
   AddVideoRtpExtension(webrtc::RtpExtension::kTimestampOffsetUri,
                        SdpDirectionAttribute::Direction::kSendrecv);
+  AddVideoRtpExtension(webrtc::RtpExtension::kPlayoutDelayUri,
+                       SdpDirectionAttribute::Direction::kRecvonly);
+  if (Preferences::GetBool("media.navigator.video.use_transport_cc", false)) {
+    AddVideoRtpExtension(webrtc::RtpExtension::kTransportSequenceNumberUri,
+                         SdpDirectionAttribute::Direction::kSendrecv);
+  }
 }
 
 void JsepSessionImpl::SetState(JsepSignalingState state) {
@@ -2077,22 +2116,18 @@ nsresult JsepSessionImpl::AddLocalIceCandidate(const std::string& candidate,
                                                std::string* mid,
                                                bool* skipped) {
   mLastError.clear();
+  *skipped = true;
   if (!mCurrentLocalDescription && !mPendingLocalDescription) {
     JSEP_SET_ERROR("Cannot add ICE candidate when there is no local SDP");
     return NS_ERROR_UNEXPECTED;
   }
 
   JsepTransceiver* transceiver = GetTransceiverWithTransport(transportId);
-  *skipped = !transceiver;
-  if (*skipped) {
+  if (!transceiver || !transceiver->IsAssociated()) {
     // mainly here to make some testing less complicated, but also just in case
     return NS_OK;
   }
 
-  MOZ_ASSERT(
-      transceiver->IsAssociated(),
-      "ICE candidate was gathered before the transceiver was associated! "
-      "This should never happen.");
   *level = transceiver->GetLevel();
   *mid = transceiver->GetMid();
 
@@ -2109,6 +2144,7 @@ nsresult JsepSessionImpl::AddLocalIceCandidate(const std::string& candidate,
                                       *level, ufrag);
   }
 
+  *skipped = false;
   return rv;
 }
 
@@ -2126,7 +2162,8 @@ nsresult JsepSessionImpl::UpdateDefaultCandidate(
     return NS_ERROR_UNEXPECTED;
   }
 
-  for (const auto& transceiver : mTransceivers) {
+  for (const auto& [id, transceiver] : mTransceivers) {
+    (void)id;  // Lame, but no better way to do this right now.
     // We set the default address for bundled m-sections, but not candidate
     // attributes. Ugh.
     if (transceiver->mTransport.mTransportId == transportId) {
@@ -2193,8 +2230,9 @@ mozilla::Sdp* JsepSessionImpl::GetParsedRemoteDescription(
 }
 
 const Sdp* JsepSessionImpl::GetAnswer() const {
-  return mWasOffererLastTime ? mCurrentRemoteDescription.get()
-                             : mCurrentLocalDescription.get();
+  return (mIsCurrentOfferer.isSome() && *mIsCurrentOfferer)
+             ? mCurrentRemoteDescription.get()
+             : mCurrentLocalDescription.get();
 }
 
 void JsepSessionImpl::SetIceRestarting(bool restarting) {
@@ -2228,7 +2266,8 @@ const std::string JsepSessionImpl::GetLastError() const { return mLastError; }
 bool JsepSessionImpl::CheckNegotiationNeeded() const {
   MOZ_ASSERT(mState == kJsepStateStable);
 
-  for (const auto& transceiver : mTransceivers) {
+  for (const auto& [id, transceiver] : mTransceivers) {
+    (void)id;  // Lame, but no better way to do this right now.
     if (transceiver->IsStopped()) {
       if (transceiver->IsAssociated()) {
         MOZ_MTLOG(ML_DEBUG, "[" << mName
@@ -2276,7 +2315,7 @@ bool JsepSessionImpl::CheckNegotiationNeeded() const {
       return true;
     }
 
-    if (IsOfferer()) {
+    if (mIsCurrentOfferer.isSome() && *mIsCurrentOfferer) {
       if ((local.GetDirection() != transceiver->mJsDirection) &&
           reverse(remote.GetDirection()) != transceiver->mJsDirection) {
         MOZ_MTLOG(ML_DEBUG, "[" << mName

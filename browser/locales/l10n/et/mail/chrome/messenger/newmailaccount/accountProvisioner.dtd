@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title                  "Tere tulemast &brandShortName;i">
+<!ENTITY header2.label                 "Kas soovid uut e-posti aadressi?">
+<!ENTITY other.languages               "Kuvatud on ainult sinu piirkonnas aadressi pakkuvad teenusepakkujad.  Kõigi teenusepakkujate nägemiseks klõpsa siia.">
+<!ENTITY error.line1                   "Vabandust, ühtegi soovitatavat e-posti aadressi ei leitud.">
+<!ENTITY error.line2                   "Sa võid enamate aadresside leidmiseks proovida otsida hüüdnime või midagi muud.">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before          "Võid proovida ka mõnda ">
+<!ENTITY error.suggest.middle          "alternatiivset tasuta e-posti kontot">
+<!ENTITY error.suggest.after           ".">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before          "Tere ">
+<!ENTITY success.title.after           ", saadaval on järgnevad e-posti aadressid:">
+<!ENTITY success.tip                   "(Sa võid proovida otsida hüüdnime või midagi muud, et leida rohkem aadresse)">
+<!ENTITY partnership.description       "Koostöös mitmete teenusepakkujatega saab &brandShortName; pakkuda sulle e-posti kontot. Lihtsalt sisesta ülalolevale väljale oma ees- ja perekonnanimi või mõni muu sõna, mis sulle meeldib, ning tee algust.">
+<!ENTITY existing.header               "Kas sul on aadress juba olemas?">
+<!ENTITY tinyheader.title              "Kas aadress on olemas?">
+<!ENTITY tinyheader.existing           "Jäta see vahele ja kasuta olemasolevat e-posti">
+<!ENTITY content.close                 "Seadista konto hiljem.">
+<!ENTITY successful.title              "Õnnitlused!">
+<!ENTITY successful.successMessage     "Konto on edukalt üles seatud.">
+<!ENTITY successful.write              "Saada kirju">
+<!ENTITY successful.write.desc         "Anna sõpradele ja perele oma uuest aadressist teada.<br/> Selleks sa selle konto ju lõid, kas pole?">
+<!ENTITY successful.customize          "Kohanda &brandShortName;i lahedate lisadega">
+<!ENTITY successful.customize.desc     "Olemas on tuhandeid lisasid, mis lasevad kohandada &brandShortName;i sinu vajadustele vastavaks.">
+<!ENTITY successful.attach             "Lisa kirjadele personaalne signatuur">
+<!ENTITY successful.attach.desc        "Sa võid automaatselt lisada iga saadetava kirja lõppu tsitaadi või muud infot enda kohta.">
+<!ENTITY successful.close              "Sulge see aken.">
+<!ENTITY input.namePlaceholder         "Sinu nimi või hüüdnimi">
+<!ENTITY input.search                  "Otsi">
+<!ENTITY search_engine.title           "Kohanda otsingumootoreid">
+<!ENTITY search_engine.message         "E-posti vahendaja võib pakkuda ka veebist otsimise võimalusi.">
+<!ENTITY search_engine.button          "Lõpeta">

@@ -1,5 +1,6 @@
 // This file tests async handling of a channel suspended in DoAuthRetry
 // notifying http-on-modify-request and http-on-before-connect observers.
+"use strict";
 
 var CC = Components.Constructor;
 
@@ -30,12 +31,7 @@ AuthPrompt.prototype = {
   user: "guest",
   pass: "guest",
 
-  QueryInterface: function authprompt_qi(iid) {
-    if (iid.equals(Ci.nsISupports) || iid.equals(Ci.nsIAuthPrompt)) {
-      return this;
-    }
-    throw Cr.NS_ERROR_NO_INTERFACE;
-  },
+  QueryInterface: ChromeUtils.generateQI(["nsIAuthPrompt"]),
 
   prompt: function ap1_prompt(title, text, realm, save, defaultText, result) {
     do_throw("unexpected prompt call");
@@ -77,14 +73,9 @@ requestListenerObserver.prototype = {
   resumeOnBeforeConnect: false,
   gotOnModifyRequest: false,
   resumeOnModifyRequest: false,
-  QueryInterface: function queryinterface(iid) {
-    if (iid.equals(Ci.nsISupports) || iid.equals(Ci.nsIObserver)) {
-      return this;
-    }
-    throw Cr.NS_ERROR_NO_INTERFACE;
-  },
+  QueryInterface: ChromeUtils.generateQI(["nsIObserver"]),
 
-  observe: function(subject, topic, data) {
+  observe(subject, topic, data) {
     if (
       topic === "http-on-before-connect" &&
       subject instanceof Ci.nsIHttpChannel
@@ -118,12 +109,7 @@ requestListenerObserver.prototype = {
 function Requestor() {}
 
 Requestor.prototype = {
-  QueryInterface: function requestor_qi(iid) {
-    if (iid.equals(Ci.nsISupports) || iid.equals(Ci.nsIInterfaceRequestor)) {
-      return this;
-    }
-    throw Cr.NS_ERROR_NO_INTERFACE;
-  },
+  QueryInterface: ChromeUtils.generateQI(["nsIInterfaceRequestor"]),
 
   getInterface: function requestor_gi(iid) {
     if (iid.equals(Ci.nsIAuthPrompt)) {
@@ -134,7 +120,7 @@ Requestor.prototype = {
       return this.prompt;
     }
 
-    throw Cr.NS_ERROR_NO_INTERFACE;
+    throw Components.Exception("", Cr.NS_ERROR_NO_INTERFACE);
   },
 
   prompt: null,
@@ -159,7 +145,7 @@ var listener = {
     } catch (e) {
       do_throw("Unexpected exception: " + e);
     }
-    throw Cr.NS_ERROR_ABORT;
+    throw Components.Exception("", Cr.NS_ERROR_ABORT);
   },
 
   onDataAvailable: function test_ODA() {
@@ -191,7 +177,7 @@ function makeChan(url, loadingUrl) {
   var ssm = Cc["@mozilla.org/scriptsecuritymanager;1"].getService(
     Ci.nsIScriptSecurityManager
   );
-  var principal = ssm.createCodebasePrincipal(ios.newURI(loadingUrl), {});
+  var principal = ssm.createContentPrincipal(ios.newURI(loadingUrl), {});
   return NetUtil.newChannel({
     uri: url,
     loadingPrincipal: principal,

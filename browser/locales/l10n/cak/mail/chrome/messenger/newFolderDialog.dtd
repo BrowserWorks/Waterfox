@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Labels -->
+<!ENTITY newFolderDialog.title      "K'ak'a' Yakwuj">
+<!ENTITY name.label                 "B'i'aj:">
+<!ENTITY name.accesskey             "b">
+<!ENTITY description.label          "Titz'uk achi'el jun rachyakwuj:">
+<!ENTITY description.accesskey      "t">
+<!ENTITY folderRestriction1.label   "Re k'uxasamaj re' nuq'ät ri kiyakwuj ka'i' nimaläj taq ruwäch.">
+<!ENTITY folderRestriction2.label   "Tiya' q'ij chi ri k'ak'a' ruyakwuj tuk'waj:">
+<!ENTITY foldersOnly.label          "Xa xe taq Yakwuj">
+<!ENTITY messagesOnly.label         "Xa xe taq Tzijol">
+<!ENTITY accept.label               "Titz'uk Yakwuj">
+<!ENTITY accept.accesskey           "z">

@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title "ការ​រក​មើល​ឯកជន">
+<!-- Localisation note: the plus sign here is a shorthand way of expressing the word "and". Contextually the privatebrowsingpage.title.private string
+                        is used as a title, with the privatebrowsingpage.title string preceding it but on a separate line.
+                        So the final line will say "Private Browsing + Tracking Protection". -->
+
+<!ENTITY privatebrowsingpage.title.private "+ ការ​ទប់ស្កាត់​ការ​តាមដាន">
+<!-- Localization note (privatebrowsingpage.title.normal1): "Private Browsing"
+     is capitalized in English to be consistent with our existing uses of the
+     term. -->
+<!ENTITY privatebrowsingpage.title.normal1 "អ្នក​មិន​ស្ថិត​នៅ​ក្នុង​ការ​រក​មើល​ជា​ឯកជន​ទេ">
+
+<!ENTITY privatebrowsingpage.description.trackingProtection "&brandShortName; ទប់ស្កាត់​ផ្នែក​នានា​នៃ​ទំព័រ​ទាំងឡាយ​ណា​ដែល​អាច​តាមដាន​សកម្មភាព​ប្រើប្រាស់​អ៊ីនធឺណិត​របស់​អ្នក។">
+<!ENTITY privatebrowsingpage.description.privateDetails "យើង​មិន​ចងចាំ​ប្រវត្តិ​ណា​មួយ​នៅ​ក្នុង​ការ​ប្រើប្រាស់​ទេ ប៉ុន្តែ​ឯកសារ​ដែល​បាន​ទាញ​យក​និង​ចំណាំ​ថ្មីៗ​ដែល​បាន​បង្កើត នឹង​នៅតែ​ត្រូវ​រក្សាទុក​ក្នុង​ឧបករណ៍​របស់​អ្នក។">
+<!-- Localization note (privatebrowsingpage.description.normal2): "Private
+     Browsing is capitalized in English to be consistent with our existing uses
+     of the term. -->
+
+<!ENTITY privatebrowsingpage.description.normal2 "នៅ​ក្នុង​ការ​រក​មើល​ជា​ឯកជន យើង​នឹង​មិន​រក្សាទុក​ប្រវត្តិ​រក​មើល​ ឬ​ខូគី​របស់​អ្នក​​ឡើយ។ ការ​ចំណាំ​ដែល​អ្នក​បន្ថែម និង​ឯកសារ​ដែល​អ្នក​​ទាញ​យក​នឹង​មិន​ត្រូវ​បាន​រក្សាទុក​នៅ​លើ​ឧបករណ៍​របស់​អ្នក​ទេ។">
+
+<!ENTITY privatebrowsingpage.link.private "ចង់​ស្វែងយល់​បន្ថែម?">
+<!ENTITY privatebrowsingpage.link.normal "បើក​ផ្ទាំង​ឯកជន​ថ្មី">

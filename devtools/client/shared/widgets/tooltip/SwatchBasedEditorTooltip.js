@@ -11,6 +11,13 @@ const {
 } = require("devtools/client/shared/widgets/tooltip/HTMLTooltip");
 const InlineTooltip = require("devtools/client/shared/widgets/tooltip/InlineTooltip");
 
+loader.lazyRequireGetter(
+  this,
+  "KeyCodes",
+  "devtools/client/shared/keycodes",
+  true
+);
+
 const INLINE_TOOLTIP_CLASS = "inline-tooltip-container";
 
 /**
@@ -48,7 +55,7 @@ class SwatchBasedEditorTooltip {
     // By default, swatch-based editor tooltips revert value change on <esc> and
     // commit value change on <enter>
     this.shortcuts = new KeyShortcuts({
-      window: this.tooltip.topWindow,
+      window: this.tooltip.doc.defaultView,
     });
     this.shortcuts.on("Escape", event => {
       if (!this.tooltip.isVisible()) {
@@ -78,6 +85,7 @@ class SwatchBasedEditorTooltip {
     this.activeSwatch = null;
 
     this._onSwatchClick = this._onSwatchClick.bind(this);
+    this._onSwatchKeyDown = this._onSwatchKeyDown.bind(this);
   }
 
   /**
@@ -105,14 +113,10 @@ class SwatchBasedEditorTooltip {
    *         immediately if there is no currently active swatch.
    */
   show() {
-    const tooltipAnchor = this.useInline
-      ? this.activeSwatch.closest(`.${INLINE_TOOLTIP_CLASS}`)
-      : this.activeSwatch;
-
-    if (tooltipAnchor) {
+    if (this.tooltipAnchor) {
       const onShown = this.tooltip.once("shown");
 
-      this.tooltip.show(tooltipAnchor);
+      this.tooltip.show(this.tooltipAnchor);
       this.tooltip.once("hidden", () => this.onTooltipHidden());
 
       return onShown;
@@ -138,6 +142,11 @@ class SwatchBasedEditorTooltip {
   }
 
   hide() {
+    if (this.swatchActivatedWithKeyboard) {
+      this.activeSwatch.focus();
+      this.swatchActivatedWithKeyboard = null;
+    }
+
     this.tooltip.hide();
   }
 
@@ -176,6 +185,7 @@ class SwatchBasedEditorTooltip {
       callbacks: callbacks,
     });
     swatchEl.addEventListener("click", this._onSwatchClick);
+    swatchEl.addEventListener("keydown", this._onSwatchKeyDown);
   }
 
   removeSwatch(swatchEl) {
@@ -185,19 +195,39 @@ class SwatchBasedEditorTooltip {
         this.activeSwatch = null;
       }
       swatchEl.removeEventListener("click", this._onSwatchClick);
+      swatchEl.removeEventListener("keydown", this._onSwatchKeyDown);
       this.swatches.delete(swatchEl);
     }
   }
 
-  _onSwatchClick(event) {
-    const swatch = this.swatches.get(event.target);
+  _onSwatchKeyDown(event) {
+    if (
+      event.keyCode === KeyCodes.DOM_VK_RETURN ||
+      event.keyCode === KeyCodes.DOM_VK_SPACE
+    ) {
+      event.preventDefault();
+      event.stopPropagation();
+      this._onSwatchClick(event);
+    }
+  }
 
-    if (event.shiftKey) {
+  _onSwatchClick(event) {
+    const { shiftKey, clientX, clientY, target } = event;
+
+    // If mouse coordinates are 0, the event listener could have been triggered
+    // by a keybaord
+    this.swatchActivatedWithKeyboard =
+      event.key && clientX === 0 && clientY === 0;
+
+    if (shiftKey) {
       event.stopPropagation();
       return;
     }
+
+    const swatch = this.swatches.get(target);
+
     if (swatch) {
-      this.activeSwatch = event.target;
+      this.activeSwatch = target;
       this.show();
       swatch.callbacks.onShow();
       event.stopPropagation();
@@ -235,6 +265,12 @@ class SwatchBasedEditorTooltip {
       const swatch = this.swatches.get(this.activeSwatch);
       swatch.callbacks.onCommit();
     }
+  }
+
+  get tooltipAnchor() {
+    return this.useInline
+      ? this.activeSwatch.closest(`.${INLINE_TOOLTIP_CLASS}`)
+      : this.activeSwatch;
   }
 
   destroy() {

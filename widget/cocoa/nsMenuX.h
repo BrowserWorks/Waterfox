@@ -83,9 +83,9 @@ class nsMenuX : public nsMenuObjectX, public nsChangeObserver {
   nsMenuObjectX* mParent;              // [weak]
   nsMenuGroupOwnerX* mMenuGroupOwner;  // [weak]
   // The icon object should never outlive its creating nsMenuX object.
-  RefPtr<nsMenuItemIconX> mIcon;
-  GeckoNSMenu* mNativeMenu;     // [strong]
-  MenuDelegate* mMenuDelegate;  // [strong]
+  RefPtr<nsMenuItemIconX> mIcon;  // [strong]
+  GeckoNSMenu* mNativeMenu;       // [strong]
+  MenuDelegate* mMenuDelegate;    // [strong]
   // nsMenuX objects should always have a valid native menu item.
   NSMenuItem* mNativeMenuItem;  // [strong]
   bool mIsEnabled;
@@ -93,7 +93,6 @@ class nsMenuX : public nsMenuObjectX, public nsChangeObserver {
   bool mNeedsRebuild;
   bool mConstructed;
   bool mVisible;
-  bool mXBLAttached;
 };
 
 #endif  // nsMenuX_h_

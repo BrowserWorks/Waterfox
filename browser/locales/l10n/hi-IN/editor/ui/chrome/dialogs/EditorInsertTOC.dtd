@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title        "विषयवस्तु तालिका">
+<!ENTITY buildToc.label      "इससे विषयवस्तु तालिका बनायें:">
+<!ENTITY style.label         "शैली:">
+<!ENTITY tag.label           "टैग:">
+<!ENTITY class.label         "वर्ग:">
+<!ENTITY header1.label       "स्तर 1">
+<!ENTITY header2.label       "स्तर 2">
+<!ENTITY header3.label       "स्तर 3">
+<!ENTITY header4.label       "स्तर 4">
+<!ENTITY header5.label       "स्तर 5">
+<!ENTITY header6.label       "स्तर 6">
+<!ENTITY makeReadOnly.label  "विषयवस्तु तालिका सिर्फ पढने के लिये बनायें">
+<!ENTITY orderedList.label   "विषयवस्तु तालिका में सारे प्रविष्टि को क्रमांकित करें">

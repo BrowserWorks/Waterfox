@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.popups.title              "Finestras emerchents">
+
+<!ENTITY pref.popups.caption            "Finestras emerchents">
+
+<!ENTITY popupBlock.label               "Bloquiar finestras emerchents no solicitadas">
+<!ENTITY popupBlock.accesskey           "B">
+
+<!ENTITY viewPermissions.label          "Administrar permisos">
+<!ENTITY viewPermissions.accesskey      "d">
+
+<!ENTITY whenBlock.description          "Quan s'ha bloquiau una finestra emerchent:">
+<!ENTITY playSound.label                "Reproducir un son:">
+<!ENTITY playSound.accesskey            "R">
+<!ENTITY systemSound.label              "Pitido d'o sistema">
+<!ENTITY systemSound.accesskey          "s">
+<!ENTITY customSound.label              "Fichero de son personalizau">
+<!ENTITY customSound.accesskey          "F">
+
+<!ENTITY selectSound.label              "Seleccionar…">
+<!ENTITY selectSound.accesskey          "o">
+<!ENTITY playSoundButton.label          "Reproducir">
+<!ENTITY playSoundButton.accesskey      "c">
+
+<!ENTITY displayIcon.label              "Amostrar un icono en a barra d'estau d'o navegador">
+<!ENTITY displayIcon.accesskey          "A">
+
+<!ENTITY displayNotification.label      "Amostrar una barra de notificación en a parte superior de l'aria de conteniu">
+<!ENTITY displayNotification.accesskey  "n">
+
+<!ENTITY popupNote.description          "Nota: bloquiar todas as finestras emerchents puede impedir que funcionen caracteristicas importants de qualques puestos web, como finestras d'encieto de sesión de bancos y puestos de compra en linia. Ta detalles sobre cómo permitir usar finestras emerchents a puestos web especificos sin deixar de bloquiar-las t'a resta, prete Aduya. Mesmo con o bloqueo activado, qualques puestos web pueden usar atros metodos ta amostrar finestras emerchents.">
+

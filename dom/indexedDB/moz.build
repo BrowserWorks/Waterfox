@@ -5,7 +5,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 with Files("**"):
-    BUG_COMPONENT = ("Core", "DOM: IndexedDB")
+    BUG_COMPONENT = ("Core", "Storage: IndexedDB")
 
 MOCHITEST_MANIFESTS += [
     'test/mochitest-intl-api.ini',
@@ -24,7 +24,10 @@ XPCSHELL_TESTS_MANIFESTS += [
 TEST_DIRS += ['test/gtest']
 
 EXPORTS.mozilla.dom += [
+    'FileInfoFwd.h',
+    'FlippedOnce.h',
     'IDBCursor.h',
+    'IDBCursorType.h',
     'IDBDatabase.h',
     'IDBEvents.h',
     'IDBFactory.h',
@@ -38,11 +41,12 @@ EXPORTS.mozilla.dom += [
     'IDBTransaction.h',
     'IndexedDatabase.h',
     'IndexedDatabaseManager.h',
+    'SafeRefPtr.h',
 ]
 
 EXPORTS.mozilla.dom.indexedDB += [
+    'ActorsChild.h',
     'ActorsParent.h',
-    'FileSnapshot.h',
     'IDBResult.h',
     'Key.h',
     'KeyPath.h',
@@ -53,8 +57,8 @@ EXPORTS.mozilla.dom.indexedDB += [
 UNIFIED_SOURCES += [
     'ActorsChild.cpp',
     'FileInfo.cpp',
-    'FileSnapshot.cpp',
     'IDBCursor.cpp',
+    'IDBCursorType.cpp',
     'IDBDatabase.cpp',
     'IDBEvents.cpp',
     'IDBFactory.cpp',
@@ -66,6 +70,7 @@ UNIFIED_SOURCES += [
     'IDBObjectStore.cpp',
     'IDBRequest.cpp',
     'IDBTransaction.cpp',
+    'IndexedDatabase.cpp',
     'IndexedDatabaseManager.cpp',
     'KeyPath.cpp',
     'PermissionRequestBase.cpp',
@@ -103,10 +108,10 @@ if CONFIG['CC_TYPE'] in ('clang', 'gcc'):
     CXXFLAGS += ['-Wno-error=shadow']
 
 LOCAL_INCLUDES += [
-    '/db/sqlite3/src',
     '/dom/base',
     '/dom/storage',
     '/ipc/glue',
+    '/third_party/sqlite3/src',
     '/xpcom/build',
 ]
 

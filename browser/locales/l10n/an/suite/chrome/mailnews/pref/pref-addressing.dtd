@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.addressing.title                 "Adrezas">
+<!ENTITY emailCollectiontitle.label            "Recopilación d'adrezas de correu">
+<!ENTITY emailCollectionPicker.label           "Adhibir adrezas a a mía:">
+<!ENTITY emailCollectionPicker.accesskey       "a">
+<!ENTITY emailCollectiontext.label             "As adrezas de correu d'os mensaches salientes pueden adhibir automaticament a una libreta d'adrezas local.">
+<!-- Autocompletion -->
+
+<!ENTITY addressingTitle.label                 "Autocompletado d'adrezas">
+<!ENTITY highlightNonMatches.label             "Resaltar adrezas que no s'autocompletan">
+<!ENTITY highlightNonMatches.accesskey         "a">
+<!ENTITY addressingEnable.label                "Libretas d'adrezas locals">
+<!ENTITY addressingEnable.accesskey            "L">
+<!ENTITY autocompleteText.label                "Al escribir una adreza, buscar coincidencias en:">
+<!ENTITY directories.label                     "Servidor de directorio:">
+<!ENTITY directories.accesskey                 "d">
+<!ENTITY directoriesNone.label                 "Garra">
+<!ENTITY editDirectories.label                 "Editar directorios…">
+<!ENTITY editDirectories.accesskey             "E">

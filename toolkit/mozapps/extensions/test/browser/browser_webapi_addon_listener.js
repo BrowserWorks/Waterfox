@@ -1,12 +1,13 @@
 const TESTPAGE = `${SECURE_TESTROOT}webapi_addon_listener.html`;
 
-Services.prefs.setBoolPref("extensions.webapi.testing", true);
-registerCleanupFunction(() => {
-  Services.prefs.clearUserPref("extensions.webapi.testing");
+add_task(async function setup() {
+  await SpecialPowers.pushPrefEnv({
+    set: [["extensions.webapi.testing", true]],
+  });
 });
 
 async function getListenerEvents(browser) {
-  let result = await ContentTask.spawn(browser, null, async function() {
+  let result = await SpecialPowers.spawn(browser, [], async function() {
     return content.document.getElementById("result").textContent;
   });
 
@@ -17,7 +18,7 @@ const RESTARTLESS_ID = "restartless@tests.mozilla.org";
 const INSTALL_ID = "install@tests.mozilla.org";
 const CANCEL_ID = "cancel@tests.mozilla.org";
 
-let provider = new MockProvider(false);
+let provider = new MockProvider();
 provider.createAddons([
   {
     id: RESTARTLESS_ID,

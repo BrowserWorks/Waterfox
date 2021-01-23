@@ -83,6 +83,16 @@ function continue_test() {
   }
 }
 
+var gTestContinuation = null;
+function continueAsync() {
+  setTimeout(function() { gTestContinuation.next(); })
+}
+
+function continueOnPopState() {
+  // Use continueAsync to avoid recursion within sync popstate listener.
+  window.addEventListener("popstate", continueAsync, { once: true });
+}
+
 function* test_basic_inner_navigation() {
   // Navigate the inner frame a few times
   yield loadContent(URL1);
@@ -118,25 +128,35 @@ function* test_state_navigation() {
   is(getContent(), "Test2", "Page should be correct");
 
   window.history.back();
+  continueOnPopState();
+  yield;
 
   is(gState, "STATE1", "State should be correct");
   is(getURL(), URL2, "URL should be correct");
   is(getContent(), "Test2", "Page should be correct");
 
   window.history.forward();
+  continueOnPopState();
+  yield;
 
   is(gState, "STATE2", "State should be correct");
   is(getURL(), URL2, "URL should be correct");
   is(getContent(), "Test2", "Page should be correct");
 
   window.history.back();
+  continueOnPopState();
+  yield;
   window.history.back();
+  continueOnPopState();
+  yield;
 
   is(gState, "START", "State should be correct");
   is(getURL(), URL2, "URL should be correct");
   is(getContent(), "Test2", "Page should be correct");
 
   window.history.back();
+  continueAsync();
+  yield;
   is(gState, "START", "State should be correct");
   yield waitForLoad();
 
@@ -144,6 +164,8 @@ function* test_state_navigation() {
   is(getContent(), "Test1", "Page should be correct");
 
   window.history.back();
+  continueAsync();
+  yield;
   is(gState, "START", "State should be correct after going back twice");
   yield waitForLoad();
 

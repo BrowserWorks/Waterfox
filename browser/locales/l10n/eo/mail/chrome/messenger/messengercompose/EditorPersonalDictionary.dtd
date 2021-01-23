@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Persona vortaro">
+
+<!ENTITY wordEditField.label "Nova vorto:">
+<!ENTITY wordEditField.accessKey "N">
+<!ENTITY AddButton.label "Aldoni">
+<!ENTITY AddButton.accessKey "A">
+<!ENTITY DictionaryList.label "Vortoj en vortaro:">
+<!ENTITY DictionaryList.accessKey "V">
+<!ENTITY RemoveButton.label "Forigi">
+<!ENTITY RemoveButton.accessKey "F">
+
+<!ENTITY CloseButton.label "Fermi">
+<!ENTITY CloseButton.accessKey "i">

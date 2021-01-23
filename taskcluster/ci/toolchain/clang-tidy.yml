@@ -10,7 +10,7 @@ job-defaults:
     worker:
         max-run-time: 3600
     run:
-        toolchain-artifact: public/build/clang-tidy.tar.xz
+        toolchain-artifact: public/build/clang-tidy.tar.zst
         resources:
             - 'build/clang-plugin/**/*.cpp'
             - 'build/clang-plugin/**/*.h'
@@ -21,7 +21,9 @@ job-defaults:
             - 'build/build-clang/build-clang.py'
     run-on-projects:
         - trunk
-        - try
+    fetches:
+        fetch:
+            - clang-10
 
 linux64-clang-tidy:
     index:
@@ -29,12 +31,15 @@ linux64-clang-tidy:
     treeherder:
         symbol: TL(clang-tidy)
     run:
-        script: build-clang-tidy-linux.sh
+        script: build-clang.sh
+        arguments:
+            - 'build/build-clang/clang-tidy-linux64.json'
         resources:
             - 'build/build-clang/clang-tidy-linux64.json'
-            - 'taskcluster/scripts/misc/tooltool-download.sh'
-    toolchains:
-        - linux64-gcc-6
+    fetches:
+        toolchain:
+            - linux64-binutils
+            - linux64-gcc-7
 
 macosx64-clang-tidy:
     index:
@@ -44,19 +49,23 @@ macosx64-clang-tidy:
     worker-type: b-linux-large
     worker:
         env:
-            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/macosx64/cross-clang.manifest"
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/macosx64/cross-releng.manifest"
     run:
         using: toolchain-script
-        script: build-clang-tidy-macosx.sh
+        script: build-clang.sh
         tooltool-downloads: internal
+        arguments:
+            - 'build/build-clang/clang-tidy-macosx64.json'
         resources:
             - 'build/build-clang/clang-tidy-macosx64.json'
             - 'taskcluster/scripts/misc/tooltool-download.sh'
-    toolchains:
-        - linux64-cctools-port
-        - linux64-clang-8
-        - linux64-gcc-6
-        - linux64-node
+    fetches:
+        toolchain:
+            - linux64-binutils
+            - linux64-cctools-clang-10-port
+            - linux64-clang-10
+            - linux64-gcc-7
+            - linux64-node
 
 win64-clang-tidy:
     description: "Clang-tidy toolchain build"
@@ -69,11 +78,15 @@ win64-clang-tidy:
     worker:
         max-run-time: 7200
         env:
-            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/win32/build-clang-cl.manifest"
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/win64/vs2017.manifest"
     run:
-        script: build-clang-tidy64-windows.sh
+        script: build-clang.sh
+        arguments:
+            - 'build/build-clang/clang-tidy-win64.json'
         resources:
             - 'build/build-clang/clang-tidy-win64.json'
-            - 'taskcluster/scripts/misc/build-clang-windows-helper64.sh'
-        toolchain-artifact: public/build/clang-tidy.tar.bz2
         tooltool-downloads: internal
+    fetches:
+        fetch:
+            - cmake
+            - ninja

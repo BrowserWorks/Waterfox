@@ -15,6 +15,9 @@
 
 #include "jsfriendapi.h"  // for GetErrorMessage, JSMSG_INTERNAL_INTL_ERROR
 
+#include "gc/GCEnum.h"
+#include "gc/Zone.h"
+#include "gc/ZoneAllocator.h"
 #include "js/Value.h"
 #include "vm/JSContext.h"
 #include "vm/JSObject.h"
@@ -88,6 +91,13 @@ void js::intl::ReportInternalError(JSContext* cx) {
                             JSMSG_INTERNAL_INTL_ERROR);
 }
 
+const js::intl::OldStyleLanguageTagMapping
+    js::intl::oldStyleLanguageTagMappings[] = {
+        {"pa-PK", "pa-Arab-PK"}, {"zh-CN", "zh-Hans-CN"},
+        {"zh-HK", "zh-Hant-HK"}, {"zh-SG", "zh-Hans-SG"},
+        {"zh-TW", "zh-Hant-TW"},
+};
+
 js::UniqueChars js::intl::EncodeLocale(JSContext* cx, JSString* locale) {
   MOZ_ASSERT(locale->length() > 0);
 
@@ -110,38 +120,20 @@ js::UniqueChars js::intl::EncodeLocale(JSContext* cx, JSString* locale) {
   return chars;
 }
 
-bool js::intl::GetAvailableLocales(JSContext* cx, CountAvailable countAvailable,
-                                   GetAvailable getAvailable,
-                                   JS::MutableHandle<JS::Value> result) {
-  RootedObject locales(cx, NewObjectWithGivenProto<PlainObject>(cx, nullptr));
-  if (!locales) {
-    return false;
-  }
+void js::intl::AddICUCellMemory(JSObject* obj, size_t nbytes) {
+  // Account the (estimated) number of bytes allocated by an ICU object against
+  // the JSObject's zone.
+  AddCellMemory(obj, nbytes, MemoryUse::ICUObject);
 
-#if ENABLE_INTL_API
-  RootedAtom a(cx);
-  uint32_t count = countAvailable();
-  for (uint32_t i = 0; i < count; i++) {
-    const char* locale = getAvailable(i);
-    auto lang = DuplicateString(cx, locale);
-    if (!lang) {
-      return false;
-    }
-    char* p;
-    while ((p = strchr(lang.get(), '_'))) {
-      *p = '-';
-    }
-    a = Atomize(cx, lang.get(), strlen(lang.get()));
-    if (!a) {
-      return false;
-    }
-    if (!DefineDataProperty(cx, locales, a->asPropertyName(),
-                            TrueHandleValue)) {
-      return false;
-    }
-  }
-#endif
+  // Manually trigger malloc zone GCs in case there's memory pressure and
+  // collecting any unreachable Intl objects could free ICU allocated memory.
+  //
+  // (ICU allocations use the system memory allocator, so we can't rely on
+  // ZoneAllocPolicy to call |maybeMallocTriggerZoneGC|.)
+  obj->zone()->maybeMallocTriggerZoneGC();
+}
 
-  result.setObject(*locales);
-  return true;
+void js::intl::RemoveICUCellMemory(JSFreeOp* fop, JSObject* obj,
+                                   size_t nbytes) {
+  fop->removeCellMemory(obj, nbytes, MemoryUse::ICUObject);
 }

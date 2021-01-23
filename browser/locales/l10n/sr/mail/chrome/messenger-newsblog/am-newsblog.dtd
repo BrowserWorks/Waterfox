@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY biffAll.label                 "Омогући ажурирања за све доводе">
+<!ENTITY biffAll.accesskey             "г">
+
+<!ENTITY newFeedSettings.label         "Подразумевана подешавања за нове доводе">
+
+<!ENTITY manageSubscriptions.label     "Управљајте претплатама…">
+<!ENTITY manageSubscriptions.accesskey "У">
+
+<!ENTITY feedWindowTitle.label         "Чаробњак за налоге довода">
+<!ENTITY feeds.accountName             "Блогови и доводи вести">

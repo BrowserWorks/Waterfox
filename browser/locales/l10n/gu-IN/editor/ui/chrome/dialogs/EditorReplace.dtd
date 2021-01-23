@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from EdReplace.xul -->
+
+<!ENTITY replaceDialog.title "શોધો અને બદલો">
+<!ENTITY findField.label "લખાણ શોધો:">
+<!ENTITY findField.accesskey "n">
+<!ENTITY replaceField.label "આની સાથે બદલો:">
+<!ENTITY replaceField.accesskey "e">
+<!ENTITY caseSensitiveCheckbox.label "મોટા/નાના કેસ સરખાવો">
+<!ENTITY caseSensitiveCheckbox.accesskey "c">
+<!ENTITY wrapCheckbox.label "ની ફરતે લપેટો">
+<!ENTITY wrapCheckbox.accesskey "W">
+<!ENTITY backwardsCheckbox.label "ઉલટું શોધો">
+<!ENTITY backwardsCheckbox.accesskey "b">
+<!ENTITY findNextButton.label "આગળ શોોધો">
+<!ENTITY findNextButton.accesskey "F">
+<!ENTITY replaceButton.label "બદલો">
+<!ENTITY replaceButton.accesskey "R">
+<!ENTITY replaceAndFindButton.label "બદલો અને શોધો">
+<!ENTITY replaceAndFindButton.accesskey "d">
+<!ENTITY replaceAllButton.label "બધું બદલો">
+<!ENTITY replaceAllButton.accesskey "A">
+<!ENTITY closeButton.label "બંધ કરો">
+<!ENTITY notFoundWarning.label "તમે દાખલ કરેલ લખાણ મળ્યું ન હતું.">

@@ -22,7 +22,6 @@
 #include "mozilla/PresShell.h"
 #include "mozilla/UniquePtr.h"
 #include "gfx2DGlue.h"
-#include "imgIEncoder.h"
 #include "nsLayoutUtils.h"
 #include "mozilla/EnumeratedArray.h"
 #include "FilterSupport.h"
@@ -61,6 +60,10 @@ class CanvasRenderingContext2DUserData;
 class CanvasDrawObserver;
 class CanvasShutdownObserver;
 
+class DOMMatrix;
+class DOMMatrixReadOnly;
+struct DOMMatrix2DInit;
+
 /**
  ** CanvasRenderingContext2D
  **/
@@ -91,8 +94,12 @@ class CanvasRenderingContext2D final : public nsICanvasRenderingContextInternal,
   void Translate(double aX, double aY, mozilla::ErrorResult& aError) override;
   void Transform(double aM11, double aM12, double aM21, double aM22, double aDx,
                  double aDy, mozilla::ErrorResult& aError) override;
+  already_AddRefed<DOMMatrix> GetTransform(
+      mozilla::ErrorResult& aError) override;
   void SetTransform(double aM11, double aM12, double aM21, double aM22,
                     double aDx, double aDy,
+                    mozilla::ErrorResult& aError) override;
+  void SetTransform(const DOMMatrix2DInit& aInit,
                     mozilla::ErrorResult& aError) override;
   void ResetTransform(mozilla::ErrorResult& aError) override;
 
@@ -374,7 +381,7 @@ class CanvasRenderingContext2D final : public nsICanvasRenderingContextInternal,
   }
 
   void DrawWindow(nsGlobalWindowInner& aWindow, double aX, double aY, double aW,
-                  double aH, const nsAString& aBgColor, uint32_t aFlags,
+                  double aH, const nsACString& aBgColor, uint32_t aFlags,
                   mozilla::ErrorResult& aError);
 
   // Eventually this should be deprecated. Keeping for now to keep the binding
@@ -409,13 +416,7 @@ class CanvasRenderingContext2D final : public nsICanvasRenderingContextInternal,
                             nsIInputStream** aStream) override;
 
   already_AddRefed<mozilla::gfx::SourceSurface> GetSurfaceSnapshot(
-      gfxAlphaType* aOutAlphaType = nullptr) override {
-    EnsureTarget();
-    if (aOutAlphaType) {
-      *aOutAlphaType = (mOpaque ? gfxAlphaType::Opaque : gfxAlphaType::Premult);
-    }
-    return mTarget->Snapshot();
-  }
+      gfxAlphaType* aOutAlphaType = nullptr) override;
 
   virtual void SetOpaqueValueFromOpaqueAttr(bool aOpaqueAttrValue) override;
   bool GetIsOpaque() override { return mOpaque; }
@@ -560,13 +561,14 @@ class CanvasRenderingContext2D final : public nsICanvasRenderingContextInternal,
                        Style aWhichStyle);
 
   // Returns whether a color was successfully parsed.
-  bool ParseColor(const nsAString& aString, nscolor* aColor);
+  bool ParseColor(const nsACString& aString, nscolor* aColor);
 
   static void StyleColorToString(const nscolor& aColor, nsAString& aStr);
 
   // Returns whether a filter was successfully parsed.
   bool ParseFilter(const nsAString& aString,
-                   nsTArray<nsStyleFilter>& aFilterChain, ErrorResult& aError);
+                   StyleOwnedSlice<StyleFilter>& aFilterChain,
+                   ErrorResult& aError);
 
   // Returns whether the font was successfully updated.
   bool SetFontInternal(const nsAString& aFont, mozilla::ErrorResult& aError);
@@ -876,10 +878,12 @@ class CanvasRenderingContext2D final : public nsICanvasRenderingContextInternal,
   /**
    * Implementation of the fillText, strokeText, and measure functions with
    * the operation abstracted to a flag.
+   * Returns a TextMetrics object _only_ if the operation is measure;
+   * drawing operations (fill or stroke) always return nullptr.
    */
-  nsresult DrawOrMeasureText(const nsAString& aText, float aX, float aY,
-                             const Optional<double>& aMaxWidth,
-                             TextDrawOperation aOp, float* aWidth);
+  TextMetrics* DrawOrMeasureText(const nsAString& aText, float aX, float aY,
+                                 const Optional<double>& aMaxWidth,
+                                 TextDrawOperation aOp, ErrorResult& aError);
 
   // A clip or a transform, recorded and restored in order.
   struct ClipState {
@@ -966,7 +970,7 @@ class CanvasRenderingContext2D final : public nsICanvasRenderingContextInternal,
     mozilla::gfx::JoinStyle lineJoin = mozilla::gfx::JoinStyle::MITER_OR_BEVEL;
 
     nsString filterString = nsString(u"none");
-    nsTArray<nsStyleFilter> filterChain;
+    StyleOwnedSlice<StyleFilter> filterChain;
     // RAII object that we obtain when we start to observer SVG filter elements
     // for rendering changes.  When released we stop observing the SVG elements.
     nsCOMPtr<nsISupports> autoSVGFiltersObserver;
@@ -1039,6 +1043,7 @@ class CanvasRenderingContext2D final : public nsICanvasRenderingContextInternal,
   bool IsWriteOnly() const { return mWriteOnly; }
 
   bool mWriteOnly;
+  bool mClipsNeedConverting = false;
 };
 
 size_t BindingJSObjectMallocBytes(CanvasRenderingContext2D* aContext);

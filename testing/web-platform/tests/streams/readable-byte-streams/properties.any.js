@@ -1,4 +1,4 @@
-// META: global=worker,jsshell
+// META: global=window,worker,jsshell
 // META: script=../resources/rs-utils.js
 'use strict';
 
@@ -14,9 +14,9 @@ test(() => {
 
 test(() => {
 
-  assert_throws(new TypeError(), () => new ReadableStreamBYOBReader('potato'));
-  assert_throws(new TypeError(), () => new ReadableStreamBYOBReader({}));
-  assert_throws(new TypeError(), () => new ReadableStreamBYOBReader());
+  assert_throws_js(TypeError, () => new ReadableStreamBYOBReader('potato'));
+  assert_throws_js(TypeError, () => new ReadableStreamBYOBReader({}));
+  assert_throws_js(TypeError, () => new ReadableStreamBYOBReader());
 
 }, 'ReadableStreamBYOBReader constructor should get a ReadableStream object as argument');
 

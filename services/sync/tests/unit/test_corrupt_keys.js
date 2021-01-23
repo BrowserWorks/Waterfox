@@ -40,7 +40,9 @@ add_task(async function test_locally_changed_keys() {
     Service.clusterURL = Service.identity._token.endpoint;
 
     await Service.engineManager.register(HistoryEngine);
+    // Disable addon sync because AddonManager won't be initialized here.
     await Service.engineManager.unregister("addons");
+    await Service.engineManager.unregister("extension-storage");
 
     async function corrupt_local_keys() {
       Service.collectionKeys._default.keyPair = [
@@ -131,8 +133,12 @@ add_task(async function test_locally_changed_keys() {
 
     _("HMAC error count: " + hmacErrorCount);
     // Now syncing should succeed, after one HMAC error.
-    let ping = await wait_for_ping(() => Service.sync(), true);
-    equal(ping.engines.find(e => e.name == "history").incoming.applied, 5);
+    await sync_and_validate_telem(ping => {
+      Assert.equal(
+        ping.engines.find(e => e.name == "history").incoming.applied,
+        5
+      );
+    });
 
     Assert.equal(hmacErrorCount, 1);
     _(
@@ -187,12 +193,13 @@ add_task(async function test_locally_changed_keys() {
     Service.lastHMACEvent = 0;
 
     _("Syncing...");
-    ping = await sync_and_validate_telem(true);
+    await sync_and_validate_telem(ping => {
+      Assert.equal(
+        ping.engines.find(e => e.name == "history").incoming.failed,
+        5
+      );
+    });
 
-    Assert.equal(
-      ping.engines.find(e => e.name == "history").incoming.failed,
-      5
-    );
     _(
       "Keys now: " + Service.collectionKeys.keyForCollection("history").keyPair
     );

@@ -30,12 +30,13 @@ function windowObserver(win, topic) {
     function() {
       if (
         win.document.documentURI ===
-        "chrome://mozapps/content/downloads/unknownContentType.xul"
+        "chrome://mozapps/content/downloads/unknownContentType.xhtml"
       ) {
         executeSoon(function() {
-          var button = win.document.documentElement.getButton("accept");
+          let dialog = win.document.getElementById("unknownContentType");
+          let button = dialog.getButton("accept");
           button.disabled = false;
-          win.document.documentElement.acceptDialog();
+          dialog.acceptDialog();
         });
       }
     },

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE:
+ This UI can be most easily shown by modifying the version in compatibility.ini
+ to a newer version and then starting Thunderbird.
+ For this feature, "installation" is used to mean "this discrete download of
+ Thunderbird" and "version" is used to mean "the specific revision number of a
+ given Thunderbird channel". These terms are not synonymous.
+-->
+<!ENTITY window.title "您啟動了舊版的 &brandProductName;">
+<!ENTITY window.style "width: 490px;">
+
+<!ENTITY window.nosync2 "新版的 &brandProductName; 可能修改了您的設定檔，造成其已無法於此舊版相容。請於該新版本程式中使用本設定檔，或是為這一套舊版的 &brandShortName; 建立新設定檔使用。建立新設定檔後，必須重新設定郵件帳號、行事曆並安裝附加元件。">
+
+<!ENTITY window.moreinfo "更多資訊…">
+<!ENTITY window.create "建立新設定檔">
+<!ENTITY window.quit-win "結束">
+<!ENTITY window.quit-nonwin "離開">

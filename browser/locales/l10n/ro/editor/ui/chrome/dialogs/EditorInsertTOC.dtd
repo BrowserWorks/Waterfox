@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title        "Cuprins">
+<!ENTITY buildToc.label      "Construiește cuprinsul după:">
+<!ENTITY tag.label           "Etichetă:">
+<!ENTITY class.label         "Clasă:">
+<!ENTITY header1.label       "Nivel 1">
+<!ENTITY header2.label       "Nivel 2">
+<!ENTITY header3.label       "Nivel 3">
+<!ENTITY header4.label       "Nivel 4">
+<!ENTITY header5.label       "Nivel 5">
+<!ENTITY header6.label       "Nivel 6">
+<!ENTITY makeReadOnly.label  "Fă cuprinsul numai cu drept de citire">
+<!ENTITY orderedList.label   "Numerotează toate pozițiile din cuprins">

@@ -64,7 +64,10 @@ var snapshotFormatters = {
     $("application-box").textContent = data.name;
     $("useragent-box").textContent = data.userAgent;
     $("os-box").textContent = data.osVersion;
-    $("binary-box").textContent = Services.dirsvc.get("XREExeF", Ci.nsIFile).path;
+    $("binary-box").textContent = Services.dirsvc.get(
+      "XREExeF",
+      Ci.nsIFile
+    ).path;
     $("supportLink").href = data.supportURL;
     let version = AppConstants.MOZ_APP_VERSION_DISPLAY;
     if (data.vendor) {
@@ -72,8 +75,15 @@ var snapshotFormatters = {
     }
     $("version-box").textContent = version;
     $("buildid-box").textContent = data.buildID;
+    $("distributionid-box").textContent = data.distributionID;
     if (data.updateChannel) {
       $("updatechannel-box").textContent = data.updateChannel;
+    }
+    if (AppConstants.MOZ_UPDATER && AppConstants.platform != "android") {
+      $("update-dir-box").textContent = Services.dirsvc.get(
+        "UpdRootD",
+        Ci.nsIFile
+      ).path;
     }
     $("profile-dir-box").textContent = Services.dirsvc.get(
       "ProfD",
@@ -359,7 +369,14 @@ var snapshotFormatters = {
     let apzInfo = [];
     let formatApzInfo = function(info) {
       let out = [];
-      for (let type of ["Wheel", "Touch", "Drag", "Keyboard", "Autoscroll"]) {
+      for (let type of [
+        "Wheel",
+        "Touch",
+        "Drag",
+        "Keyboard",
+        "Autoscroll",
+        "Zooming",
+      ]) {
         let key = "Apz" + type + "Input";
 
         if (!(key in info)) {
@@ -411,10 +428,9 @@ var snapshotFormatters = {
       apzInfo = formatApzInfo(data.info);
 
       let trs = sortedArrayFromObject(data.info).map(function([prop, val]) {
-        return $.new("tr", [
-          $.new("th", prop, "column"),
-          $.new("td", String(val)),
-        ]);
+        let td = $.new("td", String(val));
+        td.style["word-break"] = "break-all";
+        return $.new("tr", [$.new("th", prop, "column"), td]);
       });
       addRows("diagnostics", trs);
 
@@ -560,11 +576,13 @@ var snapshotFormatters = {
       apzInfo.length
         ? [
             new Text(
-              (await document.l10n.formatValues(
-                apzInfo.map(id => {
-                  return { id };
-                })
-              )).join("; ")
+              (
+                await document.l10n.formatValues(
+                  apzInfo.map(id => {
+                    return { id };
+                  })
+                )
+              ).join("; ")
             ),
           ]
         : "apz-none"
@@ -583,6 +601,7 @@ var snapshotFormatters = {
       ["supportsHardwareH264", "hardware-h264"],
       ["direct2DEnabled", "#Direct2D"],
       ["windowProtocol", "graphics-window-protocol"],
+      ["desktopEnvironment", "graphics-desktop-environment"],
       "usesTiling",
       "contentUsesTiling",
       "offMainThreadPaintEnabled",
@@ -631,10 +650,10 @@ var snapshotFormatters = {
         if (value === undefined || value === "") {
           continue;
         }
-        trs.push(buildRow(key, value));
+        trs.push(buildRow(key, [new Text(value)]));
       }
 
-      if (trs.length == 0) {
+      if (!trs.length) {
         $("graphics-" + id + "-tbody").style.display = "none";
         return;
       }
@@ -660,25 +679,15 @@ var snapshotFormatters = {
     let featureLog = data.featureLog;
     delete data.featureLog;
 
-    let features = [];
-    for (let feature of featureLog.features) {
-      // Only add interesting decisions - ones that were not automatic based on
-      // all.js/gfxPrefs defaults.
-      if (feature.log.length > 1 || feature.log[0].status != "available") {
-        features.push(feature);
-      }
-    }
-
-    if (features.length) {
-      for (let feature of features) {
+    if (featureLog.features.length) {
+      for (let feature of featureLog.features) {
         let trs = [];
         for (let entry of feature.log) {
-          if (entry.type == "default" && entry.status == "available") {
-            continue;
-          }
-
           let contents;
-          if (entry.message.length > 0 && entry.message[0] == "#") {
+          if (!entry.hasOwnProperty("message")) {
+            // This is a default entry.
+            contents = entry.status + " by " + entry.type;
+          } else if (entry.message.length && entry.message[0] == "#") {
             // This is a failure ID. See nsIGfxInfo.idl.
             let m = /#BLOCKLIST_FEATURE_FAILURE_BUG_(\d+)/.exec(entry.message);
             if (m) {
@@ -856,20 +865,106 @@ var snapshotFormatters = {
       $.append($("media-" + side + "-devices-tbody"), rows);
     }
 
+    function insertEnumerateDatabase() {
+      if (
+        !Services.prefs.getBoolPref("media.mediacapabilities.from-database")
+      ) {
+        $("media-capabilities-tbody").style.display = "none";
+        return;
+      }
+      let button = $("enumerate-database-button");
+      if (button) {
+        button.addEventListener("click", function(event) {
+          let { KeyValueService } = ChromeUtils.import(
+            "resource://gre/modules/kvstore.jsm"
+          );
+          let currProfDir = Services.dirsvc.get("ProfD", Ci.nsIFile);
+          currProfDir.append("mediacapabilities");
+          let path = currProfDir.path;
+
+          function enumerateDatabase(name) {
+            KeyValueService.getOrCreate(path, name)
+              .then(database => {
+                return database.enumerate();
+              })
+              .then(enumerator => {
+                var logs = [];
+                logs.push(`${name}:`);
+                while (enumerator.hasMoreElements()) {
+                  const { key, value } = enumerator.getNext();
+                  logs.push(`${key}: ${value}`);
+                }
+                $("enumerate-database-result").textContent +=
+                  logs.join("\n") + "\n";
+              })
+              .catch(err => {
+                $("enumerate-database-result").textContent += `${name}:\n`;
+              });
+          }
+
+          $("enumerate-database-result").style.display = "block";
+          $("enumerate-database-result").classList.remove("no-copy");
+          $("enumerate-database-result").textContent = "";
+
+          enumerateDatabase("video/av1");
+          enumerateDatabase("video/vp8");
+          enumerateDatabase("video/vp9");
+          enumerateDatabase("video/avc");
+          enumerateDatabase("video/theora");
+        });
+      }
+    }
+
+    function roundtripAudioLatency() {
+      insertBasicInfo("roundtrip-latency", "...");
+      window.windowUtils
+        .defaultDevicesRoundTripLatency()
+        .then(latency => {
+          var latencyString = `${(latency[0] * 1000).toFixed(2)}ms (${(
+            latency[1] * 1000
+          ).toFixed(2)})`;
+          data.defaultDevicesRoundTripLatency = latencyString;
+          document.querySelector(
+            'th[data-l10n-id="roundtrip-latency"]'
+          ).nextSibling.textContent = latencyString;
+        })
+        .catch(e => {});
+    }
+
     // Basic information
     insertBasicInfo("audio-backend", data.currentAudioBackend);
     insertBasicInfo("max-audio-channels", data.currentMaxAudioChannels);
     insertBasicInfo("sample-rate", data.currentPreferredSampleRate);
+
+    if (AppConstants.platform == "macosx") {
+      var micStatus = {};
+      let permission = Cc["@mozilla.org/ospermissionrequest;1"].getService(
+        Ci.nsIOSPermissionRequest
+      );
+      permission.getAudioCapturePermissionState(micStatus);
+      if (micStatus.value == permission.PERMISSION_STATE_AUTHORIZED) {
+        roundtripAudioLatency();
+      }
+    } else {
+      roundtripAudioLatency();
+    }
 
     // Output devices information
     insertDeviceInfo("output", data.audioOutputDevices);
 
     // Input devices information
     insertDeviceInfo("input", data.audioInputDevices);
+
+    // Media Capabilitites
+    insertEnumerateDatabase();
   },
 
-  javaScript(data) {
-    $("javascript-incremental-gc").textContent = data.incrementalGCEnabled;
+  remoteAgent(data) {
+    if (!AppConstants.ENABLE_REMOTE_AGENT) {
+      return;
+    }
+    $("remote-debugging-accepting-connections").textContent = data.listening;
+    $("remote-debugging-url").textContent = data.url;
   },
 
   accessibility(data) {
@@ -885,6 +980,14 @@ var snapshotFormatters = {
     if (a11yInstantiator) {
       a11yInstantiator.textContent = data.instantiator;
     }
+  },
+
+  startupCache(data) {
+    $("startup-cache-disk-cache-path").textContent = data.DiskCachePath;
+    $("startup-cache-ignore-disk-cache").textContent = data.IgnoreDiskCache;
+    $("startup-cache-found-disk-cache-on-init").textContent =
+      data.FoundDiskCacheOnInit;
+    $("startup-cache-wrote-to-disk-cache").textContent = data.WroteToDiskCache;
   },
 
   libraryVersions(data) {
@@ -1272,7 +1375,7 @@ Serializer.prototype = {
         colHeadings[i] = this._nodeText(col).trim();
       }
     }
-    let hasColHeadings = Object.keys(colHeadings).length > 0;
+    let hasColHeadings = !!Object.keys(colHeadings).length;
     if (!hasColHeadings) {
       tableHeadingElem = null;
     }
@@ -1392,16 +1495,7 @@ function safeModeRestart() {
  * Set up event listeners for buttons.
  */
 function setupEventListeners() {
-  let button = $("show-update-history-button");
-  if (button) {
-    button.addEventListener("click", function(event) {
-      var prompter = Cc["@mozilla.org/updates/update-prompt;1"].createInstance(
-        Ci.nsIUpdatePrompt
-      );
-      prompter.showUpdateHistory(window);
-    });
-  }
-  button = $("reset-box-button");
+  let button = $("reset-box-button");
   if (button) {
     button.addEventListener("click", function(event) {
       ResetProfile.openConfirmationDialog(window);
@@ -1420,6 +1514,36 @@ function setupEventListeners() {
         safeModeRestart();
       }
     });
+  }
+  if (AppConstants.MOZ_UPDATER) {
+    button = $("update-dir-button");
+    if (button) {
+      button.addEventListener("click", function(event) {
+        // Get the update directory.
+        let updateDir = Services.dirsvc.get("UpdRootD", Ci.nsIFile);
+        if (!updateDir.exists()) {
+          updateDir.create(Ci.nsIFile.DIRECTORY_TYPE, 0o755);
+        }
+        let updateDirPath = updateDir.path;
+        // Show the update directory.
+        let nsLocalFile = Components.Constructor(
+          "@mozilla.org/file/local;1",
+          "nsIFile",
+          "initWithPath"
+        );
+        new nsLocalFile(updateDirPath).reveal();
+      });
+    }
+    button = $("show-update-history-button");
+    if (button) {
+      button.addEventListener("click", function(event) {
+        window.docShell.rootTreeItem.domWindow.openDialog(
+          "chrome://mozapps/content/update/history.xhtml",
+          "Update:History",
+          "centerscreen,resizable=no,titlebar,modal"
+        );
+      });
+    }
   }
   button = $("verify-place-integrity-button");
   if (button) {

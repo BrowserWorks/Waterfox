@@ -7,6 +7,7 @@
 #include "KeyedStackCapturer.h"
 
 #include "jsapi.h"
+#include "js/Array.h"  // JS::NewArrayObject
 #include "mozilla/StackWalk.h"
 #include "nsPrintfCString.h"
 #include "ProcessedStack.h"
@@ -56,8 +57,7 @@ bool IsKeyValid(const nsACString& aKey) {
 
 }  // anonymous namespace
 
-namespace mozilla {
-namespace Telemetry {
+namespace mozilla::Telemetry {
 
 void KeyedStackCapturer::Capture(const nsACString& aKey) {
   MutexAutoLock captureStackMutex(mStackCapturerMutex);
@@ -112,7 +112,7 @@ KeyedStackCapturer::ReflectCapturedStacks(JSContext* cx,
     return NS_ERROR_FAILURE;
   }
 
-  JS::RootedObject keysArray(cx, JS_NewArrayObject(cx, 0));
+  JS::RootedObject keysArray(cx, JS::NewArrayObject(cx, 0));
   if (!keysArray) {
     return NS_ERROR_FAILURE;
   }
@@ -126,9 +126,9 @@ KeyedStackCapturer::ReflectCapturedStacks(JSContext* cx,
   size_t keyIndex = 0;
   for (auto iter = mStackInfos.ConstIter(); !iter.Done();
        iter.Next(), ++keyIndex) {
-    const StackFrequencyInfo* info = iter.Data();
+    const StackFrequencyInfo* info = iter.UserData();
 
-    JS::RootedObject infoArray(cx, JS_NewArrayObject(cx, 0));
+    JS::RootedObject infoArray(cx, JS::NewArrayObject(cx, 0));
     if (!keysArray) {
       return NS_ERROR_FAILURE;
     }
@@ -161,5 +161,4 @@ size_t KeyedStackCapturer::SizeOfExcludingThis(
   return n;
 }
 
-}  // namespace Telemetry
-}  // namespace mozilla
+}  // namespace mozilla::Telemetry

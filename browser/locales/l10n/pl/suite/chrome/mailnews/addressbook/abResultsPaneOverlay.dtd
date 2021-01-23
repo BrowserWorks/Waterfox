@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY GeneratedName.label "Imię i nazwisko">
+<!ENTITY GeneratedName.accesskey "N">
+<!ENTITY PrimaryEmail.label "E-mail">
+<!ENTITY PrimaryEmail.accesskey "E">
+<!ENTITY Company.label "Firma/Organizacja">
+<!ENTITY Company.accesskey "O">
+<!ENTITY _PhoneticName.label "Wymowa">
+<!ENTITY _PhoneticName.accesskey "O">
+<!ENTITY NickName.label "Pseudonim">
+<!ENTITY NickName.accesskey "i">
+<!ENTITY SecondEmail.label "Dodatkowy e-mail">
+<!ENTITY SecondEmail.accesskey "y">
+<!ENTITY Department.label "Dział">
+<!ENTITY Department.accesskey "z">
+<!ENTITY JobTitle.label "Tytuł">
+<!ENTITY JobTitle.accesskey "T">
+<!ENTITY CellularNumber.label "Telefon komórkowy">
+<!ENTITY CellularNumber.accesskey "k">
+<!ENTITY PagerNumber.label "Pager">
+<!ENTITY PagerNumber.accesskey "P">
+<!ENTITY FaxNumber.label "Faks">
+<!ENTITY FaxNumber.accesskey "F">
+<!ENTITY HomePhone.label "Telefon domowy">
+<!ENTITY HomePhone.accesskey "d">
+<!ENTITY WorkPhone.label "Telefon służbowy">
+<!ENTITY WorkPhone.accesskey "s">
+<!ENTITY ScreenName.label "Identyfikator">
+<!ENTITY ScreenName.accesskey "I">
+<!ENTITY sortAscending.label "Rosnąco">
+<!ENTITY sortAscending.accesskey "R">
+<!ENTITY sortDescending.label "Malejąco">
+<!ENTITY sortDescending.accesskey "M">
+
+<!-- context menu -->
+<!ENTITY composeEmail.label "Napisz wiadomość do">
+<!ENTITY composeEmail.accesskey "N">
+<!ENTITY copyAddress.label "Kopiuj adres e-mail">
+<!ENTITY copyAddress.accesskey "A">
+<!ENTITY deleteAddrBookCard.label "Usuń">
+<!ENTITY deleteAddrBookCard.accesskey "U">
+<!ENTITY newAddrBookCard.label "Nowa wizytówka…">
+<!ENTITY newAddrBookCard.accesskey "w">
+<!ENTITY newAddrBookMailingList.label "Nowa lista dystrybucyjna…">
+<!ENTITY newAddrBookMailingList.accesskey "l">
+<!ENTITY addrBookCardProperties.label "Właściwości">
+<!ENTITY addrBookCardProperties.accesskey "W">

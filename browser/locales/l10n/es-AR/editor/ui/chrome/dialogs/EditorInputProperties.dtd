@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Propiedades de campo de formulario">
+<!ENTITY windowTitleImage.label "Propiedades de imagen de formulario">
+
+<!ENTITY InputType.label "Tipo de campo">
+<!ENTITY InputType.accesskey "T">
+<!ENTITY text.value "Texto">
+<!ENTITY password.value "Contraseña">
+<!ENTITY checkbox.value "Check Box">
+<!ENTITY radio.value "Botón radio">
+<!ENTITY submit.value "Botón enviar">
+<!ENTITY reset.value "Reset Button">
+<!ENTITY file.value "Archivo">
+<!ENTITY hidden.value "Oculto">
+<!ENTITY image.value "Imagen">
+<!ENTITY button.value "Botón">
+
+<!ENTITY InputSettings.label "Opciones de campos">
+<!ENTITY InputName.label "Nombre de campo:">
+<!ENTITY InputName.accesskey "N">
+<!ENTITY GroupName.label "Nombre de grupo:">
+<!ENTITY GroupName.accesskey "b">
+<!ENTITY InputValue.label "Valor de campo:">
+<!ENTITY InputValue.accesskey "V">
+<!ENTITY InitialValue.label "Valor inicial:">
+<!ENTITY InitialValue.accesskey "a">
+<!ENTITY InputChecked.label "Verificado inicialmente">
+<!ENTITY InputChecked.accesskey "c">
+<!ENTITY InputSelected.label "Inicialmente seleccionado">
+<!ENTITY InputSelected.accesskey "s">
+<!ENTITY InputReadOnly.label "Sólo lectura">
+<!ENTITY InputReadOnly.accesskey "l">
+<!ENTITY InputDisabled.label "Deshabilitado">
+<!ENTITY InputDisabled.accesskey "D">
+<!ENTITY tabIndex.label "Índice de tabulación:">
+<!ENTITY tabIndex.accesskey "i">
+<!ENTITY TextSize.label "Tamaño de campo:">
+<!ENTITY TextSize.accesskey "m">
+<!ENTITY TextLength.label "Longitud máxima:">
+<!ENTITY TextLength.accesskey "L">
+<!ENTITY AccessKey.label "Tecla de acceso:">
+<!ENTITY AccessKey.accesskey "T">
+<!ENTITY Accept.label "Aceptar tipos:">
+<!ENTITY Accept.accesskey "A">
+
+<!ENTITY ImageProperties.label "Propiedades de imagen...">
+<!ENTITY ImageProperties.accesskey "e">

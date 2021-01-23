@@ -21,7 +21,7 @@ this.ContentSearchUIController = (function() {
    *
    * @param inputElement
    *        Search suggestions will be based on the text in this text box.
-   *        Assumed to be an html:input.  xul:textbox is untested but might work.
+   *        Assumed to be an html:input.
    * @param tableParent
    *        The suggestion table is appended as a child to this element.  Since
    *        the table is absolutely positioned and its top and left values are set
@@ -48,6 +48,7 @@ this.ContentSearchUIController = (function() {
     this._idPrefix = idPrefix;
     this._healthReportKey = healthReportKey;
     this._searchPurpose = searchPurpose;
+    this._isPrivateWindow = false;
 
     let tableID = idPrefix + "searchSuggestionTable";
     this.input.autocomplete = "off";
@@ -93,6 +94,7 @@ this.ContentSearchUIController = (function() {
       this._defaultEngine = {
         name: engine.name,
         icon,
+        isAppProvided: engine.isAppProvided,
       };
       this._updateDefaultEngineHeader();
       this._updateDefaultEngineIcon();
@@ -628,16 +630,27 @@ this.ContentSearchUIController = (function() {
     },
 
     _onMsgState(state) {
+      // Not all state messages broadcast the windows' privateness info.
+      if ("isPrivateWindow" in state) {
+        this._isPrivateWindow = state.isPrivateWindow;
+      }
+
       this.engines = state.engines;
+
+      let currentEngine = state.currentEngine;
+      if (this._isPrivateWindow) {
+        currentEngine = state.currentPrivateEngine;
+      }
+
       // No point updating the default engine (and the header) if there's no change.
       if (
         this.defaultEngine &&
-        this.defaultEngine.name == state.currentEngine.name &&
-        this.defaultEngine.icon == state.currentEngine.icon
+        this.defaultEngine.name == currentEngine.name &&
+        this.defaultEngine.icon == currentEngine.icon
       ) {
         return;
       }
-      this.defaultEngine = state.currentEngine;
+      this.defaultEngine = currentEngine;
     },
 
     _onMsgCurrentState(state) {
@@ -645,6 +658,17 @@ this.ContentSearchUIController = (function() {
     },
 
     _onMsgCurrentEngine(engine) {
+      if (this._isPrivateWindow) {
+        return;
+      }
+      this.defaultEngine = engine;
+      this._pendingOneOffRefresh = true;
+    },
+
+    _onMsgCurrentPrivateEngine(engine) {
+      if (!this._isPrivateWindow) {
+        return;
+      }
       this.defaultEngine = engine;
       this._pendingOneOffRefresh = true;
     },
@@ -659,12 +683,11 @@ this.ContentSearchUIController = (function() {
     },
 
     _updateDefaultEngineIcon() {
-      let eng = this._engines.find(
-        engine => engine.name === this.defaultEngine.name
-      );
       // We only show the engines icon for default engines, otherwise show
-      // a default; default engines have an identifier
-      let icon = eng.identifier ? this.defaultEngine.icon : DEFAULT_INPUT_ICON;
+      // a default; default engines have isAppProvided
+      let icon = this.defaultEngine.isAppProvided
+        ? this.defaultEngine.icon
+        : DEFAULT_INPUT_ICON;
       document.body.style.setProperty(
         "--newtab-search-icon",
         "url(" + icon + ")"

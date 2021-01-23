@@ -13,6 +13,7 @@
 interface Principal;
 interface URI;
 
+[Exposed=Window]
 interface Node : EventTarget {
   const unsigned short ELEMENT_NODE = 1;
   const unsigned short ATTRIBUTE_NODE = 2; // historical
@@ -39,7 +40,7 @@ interface Node : EventTarget {
   [Pure]
   readonly attribute Document? ownerDocument;
   [Pure]
-  Node getRootNode(optional GetRootNodeOptions options);
+  Node getRootNode(optional GetRootNodeOptions options = {});
   [Pure]
   readonly attribute Node? parentNode;
   [Pure]
@@ -110,6 +111,12 @@ interface Node : EventTarget {
   DOMString generateXPath();
   [ChromeOnly, Pure, BinaryName="flattenedTreeParentNodeNonInline"]
   readonly attribute Node? flattenedTreeParentNode;
+  [ChromeOnly, Pure, BinaryName="isInNativeAnonymousSubtree"]
+  readonly attribute boolean isNativeAnonymous;
+
+  // Maybe this would be useful to authors? https://github.com/whatwg/dom/issues/826
+  [Func="IsChromeOrUAWidget", Pure, BinaryName="containingShadow"]
+  readonly attribute ShadowRoot? containingShadowRoot;
 
   // Mozilla devtools-specific stuff
   /**

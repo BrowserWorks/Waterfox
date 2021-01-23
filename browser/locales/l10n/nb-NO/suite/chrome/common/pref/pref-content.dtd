@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Appearance > Content prefs dialog.  -->
+
+<!ENTITY pref.content.title                     "Innhold">
+<!ENTITY pref.content.description               "Disse innstillingene bestemmer hvordan nettside- og meldingstekst presenteres i &brandShortName;.">
+
+<!ENTITY siteIcons.label                        "Nettsideikoner">
+<!ENTITY useSiteIcons.label                     "Vis nettsideikoner">
+<!ENTITY useSiteIcons.accesskey                 "V">
+<!ENTITY useFavIcons2.label                     "Prøv å bruk serverens ikon (favicon) når nettsiden ikke definerer et ikon">
+<!ENTITY useFavIcons2.accesskey                 "b">
+
+<!ENTITY scrolling.label                        "Rulling">
+<!ENTITY useAutoScroll.label                    "Bruk automatisk rulling">
+<!ENTITY useAutoScroll.accesskey                "t">
+<!ENTITY useSmoothScroll.label                  "Bruk jevn rulling">
+<!ENTITY useSmoothScroll.accesskey              "B">
+
+<!ENTITY zoomPrefs.label                        "Skaleringsvalg">
+<!-- LOCALIZATION NOTE (minZoom.label, maxZoom.label, percent.label):
+     single hbox with minZoom.label preceding the minZoom control and
+     maxZoom.label preceding the maxZoom control; percent.label shows
+     the ASCII '%' character at the end of that string -->
+<!ENTITY minZoom.label                          "Område fra">
+<!ENTITY minZoom.accesskey                      "f">
+<!ENTITY maxZoom.label                          "til">
+<!ENTITY maxZoom.accesskey                      "i">
+<!ENTITY percent.label                          "&#37;">
+
+<!ENTITY siteSpecific.label                     "Husk zoom-nivåer for hvert nettsted">
+<!ENTITY siteSpecific.accesskey                 "H">
+<!ENTITY textZoomOnly.label                     "Forstørr/forminsk tekst istedenfor hele nettsider">
+<!ENTITY textZoomOnly.accesskey                 "o">
+<!ENTITY enableAutomaticImageResizing.label     "Forandre størrelse på store bilder til å passe i nettleservinduet">
+<!ENTITY enableAutomaticImageResizing.accesskey "F">
+
+<!ENTITY allowHWAccel.label                     "Bruk maskinvareakselerasjon når tilgjengelig">
+<!ENTITY allowHWAccel.accesskey                 "k">
+<!ENTITY blockAutoRefresh.label                 "Advar når nettsider forsøker å omdirigere eller laste siden på nytt">
+<!ENTITY blockAutoRefresh.accesskey             "d">
+
+<!ENTITY showZoomStatusPanel.label              "Vis skaleringskontroller i statuslinjen">

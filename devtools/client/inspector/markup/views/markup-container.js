@@ -10,8 +10,14 @@ const {
   flashElementOff,
 } = require("devtools/client/inspector/markup/utils");
 
-const DRAG_DROP_MIN_INITIAL_DISTANCE = 10;
+loader.lazyRequireGetter(
+  this,
+  "wrapMoveFocus",
+  "devtools/client/shared/focus",
+  true
+);
 
+const DRAG_DROP_MIN_INITIAL_DISTANCE = 10;
 const TYPES = {
   TEXT_CONTAINER: "textcontainer",
   ELEMENT_CONTAINER: "elementcontainer",
@@ -102,6 +108,11 @@ MarkupContainer.prototype = {
     this.tagLine.setAttribute("aria-level", this.level);
     this.tagLine.setAttribute("aria-grabbed", this.isDragging);
     this.elt.appendChild(this.tagLine);
+
+    this.mutationMarker = this.win.document.createElement("div");
+    this.mutationMarker.classList.add("markup-tag-mutation-marker");
+    this.mutationMarker.style.setProperty("--markup-level", this.level);
+    this.tagLine.appendChild(this.mutationMarker);
 
     this.tagState = this.win.document.createElement("span");
     this.tagState.classList.add("tag-state");
@@ -472,30 +483,6 @@ MarkupContainer.prototype = {
     return false;
   },
 
-  /**
-   * Move keyboard focus to a next/previous focusable element inside container
-   * that is not part of its children (only if current focus is on first or last
-   * element).
-   *
-   * @param  {DOMNode} current  currently focused element
-   * @param  {Boolean} back     direction
-   * @return {DOMNode}          newly focused element if any
-   */
-  _wrapMoveFocus: function(current, back) {
-    const elms = this.focusableElms;
-    let next;
-    if (back) {
-      if (elms.indexOf(current) === 0) {
-        next = elms[elms.length - 1];
-        next.focus();
-      }
-    } else if (elms.indexOf(current) === elms.length - 1) {
-      next = elms[0];
-      next.focus();
-    }
-    return next;
-  },
-
   _onKeyDown: function(event) {
     const { target, keyCode, shiftKey } = event;
     const isInput = this.markup._isInputOrTextarea(target);
@@ -511,7 +498,11 @@ MarkupContainer.prototype = {
         // Only handle 'Tab' if tabbable element is on the edge (first or last).
         if (isInput) {
           // Corresponding tabbable element is editor's next sibling.
-          const next = this._wrapMoveFocus(target.nextSibling, shiftKey);
+          const next = wrapMoveFocus(
+            this.focusableElms,
+            target.nextSibling,
+            shiftKey
+          );
           if (next) {
             event.preventDefault();
             // Keep the editing state if possible.
@@ -522,7 +513,7 @@ MarkupContainer.prototype = {
             }
           }
         } else {
-          const next = this._wrapMoveFocus(target, shiftKey);
+          const next = wrapMoveFocus(this.focusableElms, target, shiftKey);
           if (next) {
             event.preventDefault();
           }
@@ -571,6 +562,15 @@ MarkupContainer.prototype = {
       event.preventDefault();
     }
 
+    // Middle clicks will trigger the scroll lock feature to turn on.
+    // The toolbox is normally responsible for calling preventDefault when
+    // needed, but we prevent markup-view mousedown events from bubbling up (via
+    // stopPropagation). So we have to preventDefault here as well in order to
+    // avoid this issue.
+    if (isMiddleClick) {
+      event.preventDefault();
+    }
+
     // Follow attribute links if middle or meta click.
     if (isMiddleClick || isMetaClick) {
       const link = target.dataset.link;
@@ -600,17 +600,13 @@ MarkupContainer.prototype = {
     if (this.isDragging) {
       this.cancelDragging();
 
-      const dropTargetNodes = this.markup.dropTargetNodes;
-
-      if (!dropTargetNodes) {
+      if (!this.markup.dropTargetNodes) {
         return;
       }
 
-      await this.markup.walker.insertBefore(
-        this.node,
-        dropTargetNodes.parent,
-        dropTargetNodes.nextSibling
-      );
+      const { nextSibling, parent } = this.markup.dropTargetNodes;
+      const { walkerFront } = parent;
+      await walkerFront.insertBefore(this.node, parent, nextSibling);
       this.markup.emit("drop-completed");
     }
   },
@@ -670,13 +666,19 @@ MarkupContainer.prototype = {
    */
   flashMutation: function() {
     if (!this.selected) {
-      flashElementOn(this.tagState, { foregroundElt: this.editor.elt });
+      flashElementOn(this.tagState, {
+        foregroundElt: this.editor.elt,
+        backgroundClass: "theme-bg-contrast",
+      });
       if (this._flashMutationTimer) {
         clearTimeout(this._flashMutationTimer);
         this._flashMutationTimer = null;
       }
       this._flashMutationTimer = setTimeout(() => {
-        flashElementOff(this.tagState, { foregroundElt: this.editor.elt });
+        flashElementOff(this.tagState, {
+          foregroundElt: this.editor.elt,
+          backgroundClass: "theme-bg-contrast",
+        });
       }, this.markup.CONTAINER_FLASHING_DURATION);
     }
   },
@@ -753,6 +755,16 @@ MarkupContainer.prototype = {
       this.elt.classList.add("pseudoclass-locked");
     } else {
       this.elt.classList.remove("pseudoclass-locked");
+    }
+
+    // Show and hide icon for DOM Mutation Breakpoints
+    const hasMutationBreakpoint = Object.values(
+      this.node.mutationBreakpoints
+    ).some(Boolean);
+    if (hasMutationBreakpoint) {
+      this.mutationMarker.classList.add("has-mutations");
+    } else {
+      this.mutationMarker.classList.remove("has-mutations");
     }
 
     this.updateIsDisplayed();

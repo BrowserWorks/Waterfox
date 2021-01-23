@@ -2,18 +2,17 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include rect,render_task,gpu_cache,snap,transform
+#include rect,render_task,gpu_cache,transform
 
 #ifdef WR_VERTEX_SHADER
 
-in ivec2 aTransformIds;
-in ivec4 aClipDataResourceAddress;
-in vec2 aClipLocalPos;
-in vec4 aClipTileRect;
-in vec4 aClipDeviceArea;
-in vec4 aClipSnapOffsets;
-in vec4 aClipOrigins;
-in float aDevicePixelScale;
+PER_INSTANCE in ivec2 aTransformIds;
+PER_INSTANCE in ivec4 aClipDataResourceAddress;
+PER_INSTANCE in vec2 aClipLocalPos;
+PER_INSTANCE in vec4 aClipTileRect;
+PER_INSTANCE in vec4 aClipDeviceArea;
+PER_INSTANCE in vec4 aClipOrigins;
+PER_INSTANCE in float aDevicePixelScale;
 
 struct ClipMaskInstance {
     int clip_transform_id;
@@ -23,7 +22,6 @@ struct ClipMaskInstance {
     vec2 local_pos;
     RectWithSize tile_rect;
     RectWithSize sub_rect;
-    vec4 snap_offsets;
     vec2 task_origin;
     vec2 screen_origin;
     float device_pixel_scale;
@@ -39,7 +37,6 @@ ClipMaskInstance fetch_clip_item() {
     cmi.local_pos = aClipLocalPos;
     cmi.tile_rect = RectWithSize(aClipTileRect.xy, aClipTileRect.zw);
     cmi.sub_rect = RectWithSize(aClipDeviceArea.xy, aClipDeviceArea.zw);
-    cmi.snap_offsets = aClipSnapOffsets;
     cmi.task_origin = aClipOrigins.xy;
     cmi.screen_origin = aClipOrigins.zw;
     cmi.device_pixel_scale = aDevicePixelScale;
@@ -48,7 +45,7 @@ ClipMaskInstance fetch_clip_item() {
 }
 
 struct ClipVertexInfo {
-    vec3 local_pos;
+    vec4 local_pos;
     RectWithSize clipped_local_rect;
 };
 
@@ -57,37 +54,32 @@ RectWithSize intersect_rect(RectWithSize a, RectWithSize b) {
     return RectWithSize(p.xy, max(vec2(0.0), p.zw - p.xy));
 }
 
+
 // The transformed vertex function that always covers the whole clip area,
 // which is the intersection of all clip instances of a given primitive
 ClipVertexInfo write_clip_tile_vertex(RectWithSize local_clip_rect,
                                       Transform prim_transform,
                                       Transform clip_transform,
                                       RectWithSize sub_rect,
-                                      vec4 snap_offsets,
                                       vec2 task_origin,
                                       vec2 screen_origin,
                                       float device_pixel_scale) {
     vec2 device_pos = screen_origin + sub_rect.p0 + aPosition.xy * sub_rect.size;
-
-    // If the primitive we are drawing a clip mask for was snapped, then
-    // remove the effect of that snapping, so that the local position
-    // interpolation below works correctly relative to the clip item.
-    vec2 snap_offset = mix(
-        snap_offsets.xy,
-        snap_offsets.zw,
-        aPosition.xy
-    );
-
-    device_pos -= snap_offset;
-
     vec2 world_pos = device_pos / device_pixel_scale;
 
     vec4 pos = prim_transform.m * vec4(world_pos, 0.0, 1.0);
     pos.xyz /= pos.w;
 
     vec4 p = get_node_pos(pos.xy, clip_transform);
-    vec3 local_pos = p.xyw * pos.w;
+    vec4 local_pos = p * pos.w;
 
+    //TODO: Interpolate in clip space, where "local_pos.w" contains
+    // the W of the homogeneous transform *from* clip space into the world.
+    //    float interpolate_w = 1.0 / local_pos.w;
+    // This is problematic today, because the W<=0 hemisphere is going to be
+    // clipped, while we currently want this shader to fill out the whole rect.
+    // We can therefore simplify this when the clip construction is rewritten
+    // to only affect the areas touched by a clip.
     vec4 vertex_pos = vec4(
         task_origin + sub_rect.p0 + aPosition.xy * sub_rect.size,
         0.0,

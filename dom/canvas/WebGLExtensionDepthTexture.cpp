@@ -37,8 +37,6 @@ WebGLExtensionDepthTexture::WebGLExtensionDepthTexture(
         LOCAL_GL_UNSIGNED_INT_24_8);
 }
 
-WebGLExtensionDepthTexture::~WebGLExtensionDepthTexture() = default;
-
 bool WebGLExtensionDepthTexture::IsSupported(const WebGLContext* const webgl) {
   if (webgl->IsWebGL2()) return false;
 
@@ -49,7 +47,5 @@ bool WebGLExtensionDepthTexture::IsSupported(const WebGLContext* const webgl) {
   return gl->IsSupported(gl::GLFeature::depth_texture) ||
          gl->IsExtensionSupported(gl::GLContext::ANGLE_depth_texture);
 }
-
-IMPL_WEBGL_EXTENSION_GOOP(WebGLExtensionDepthTexture, WEBGL_depth_texture)
 
 }  // namespace mozilla

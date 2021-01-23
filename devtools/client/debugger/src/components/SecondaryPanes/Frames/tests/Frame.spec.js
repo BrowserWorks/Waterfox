@@ -24,10 +24,11 @@ function frameProperties(frame, selectedFrame: any, overrides = {}) {
     copyStackTrace: jest.fn(),
     contextTypes: {},
     selectFrame: jest.fn(),
+    selectLocation: jest.fn(),
     toggleBlackBox: jest.fn(),
     displayFullUrl: false,
     frameworkGroupingOn: false,
-    selectable: true,
+    panel: "webconsole",
     toggleFrameworkGrouping: null,
     ...overrides,
   };
@@ -88,6 +89,19 @@ describe("Frame", () => {
     expect(component.text()).toBe(`    renderFoo ${url}:10`);
   });
 
+  it("renders asyncCause", () => {
+    const url = `https://example.com/async.js`;
+    const source = makeMockSource(url);
+    const frame = makeMockFrame("1", source, undefined, 10, "timeoutFn");
+    frame.asyncCause = "setTimeout handler";
+
+    const props = frameProperties(frame);
+    const component = mount(<Frame {...props} />, { context: { l10n: L10N } });
+    expect(component.find(".location-async-cause").text()).toBe(
+      `    (Async: setTimeout handler)`
+    );
+  });
+
   it("getFrameTitle", () => {
     const url = `https://${"a".repeat(100)}.com/assets/src/js/foo-view.js`;
     const source = makeMockSource(url);
@@ -115,7 +129,12 @@ describe("Frame", () => {
 
     it("calls FrameMenu on right click", () => {
       const { component, props } = render();
-      const { copyStackTrace, toggleFrameworkGrouping, toggleBlackBox } = props;
+      const {
+        copyStackTrace,
+        toggleFrameworkGrouping,
+        toggleBlackBox,
+        cx,
+      } = props;
       const mockEvent = "mockEvent";
       component.simulate("contextmenu", mockEvent);
 
@@ -127,7 +146,8 @@ describe("Frame", () => {
           toggleFrameworkGrouping,
           toggleBlackBox,
         },
-        mockEvent
+        mockEvent,
+        cx
       );
     });
   });

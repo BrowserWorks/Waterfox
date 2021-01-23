@@ -8,10 +8,6 @@
 
 "use strict";
 
-const { AddonTestUtils } = ChromeUtils.import(
-  "resource://testing-common/AddonTestUtils.jsm"
-);
-
 function getPostDataString(aIS) {
   if (!aIS) {
     return null;
@@ -181,19 +177,6 @@ var testData = [
   [{ keyword: "http://gavinsharp.com" }, new keywordResult(null, null, true)],
 ];
 
-AddonTestUtils.init(this, false);
-AddonTestUtils.overrideCertDB();
-AddonTestUtils.createAppInfo(
-  "xpcshell@tests.mozilla.org",
-  "XPCShell",
-  "1",
-  "42"
-);
-
-add_task(async function setup() {
-  await AddonTestUtils.promiseStartupManager();
-});
-
 add_task(async function test_getshortcutoruri() {
   await setupKeywords();
 
@@ -251,14 +234,11 @@ async function setupKeywords() {
     }
 
     if (data instanceof searchKeywordData) {
-      await Services.search.addEngineWithDetails(
-        data.keyword,
-        "",
-        data.keyword,
-        "",
-        data.method,
-        data.uri.spec
-      );
+      await Services.search.addEngineWithDetails(data.keyword, {
+        alias: data.keyword,
+        method: data.method,
+        template: data.uri.spec,
+      });
       let addedEngine = Services.search.getEngineByName(data.keyword);
       if (data.postData) {
         let [paramName, paramValue] = data.postData.split("=");

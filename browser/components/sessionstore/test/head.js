@@ -15,17 +15,6 @@ const HTTPROOT = ROOT.replace(
   "chrome://mochitests/content/",
   "http://example.com/"
 );
-const FRAME_SCRIPTS = [ROOT + "content.js", ROOT + "content-forms.js"];
-
-for (let script of FRAME_SCRIPTS) {
-  Services.mm.loadFrameScript(script, true);
-}
-
-registerCleanupFunction(() => {
-  for (let script of FRAME_SCRIPTS) {
-    Services.mm.removeDelayedFrameScript(script, true);
-  }
-});
 
 const { SessionSaver } = ChromeUtils.import(
   "resource:///modules/sessionstore/SessionSaver.jsm"
@@ -150,7 +139,7 @@ function waitForBrowserState(aState, aSetStateCallback) {
   // coming from them when creating a multi-window state.
   function windowObserver(aSubject, aTopic, aData) {
     if (aTopic == "domwindowopened") {
-      let newWindow = aSubject.QueryInterface(Ci.nsIDOMWindow);
+      let newWindow = aSubject;
       newWindow.addEventListener(
         "load",
         function() {
@@ -242,27 +231,6 @@ async function setWindowState(win, state, overwrite = false) {
     overwrite
   );
   await promiseWindowRestored(win);
-}
-
-/**
- * Wait for a content -> chrome message.
- */
-function promiseContentMessage(browser, name) {
-  let mm = browser.messageManager;
-
-  return new Promise(resolve => {
-    function removeListener() {
-      mm.removeMessageListener(name, listener);
-    }
-
-    function listener(msg) {
-      removeListener();
-      resolve(msg.data);
-    }
-
-    mm.addMessageListener(name, listener);
-    registerCleanupFunction(removeListener);
-  });
 }
 
 function waitForTopic(aTopic, aTimeout, aCallback) {
@@ -556,43 +524,16 @@ function promiseDelayedStartupFinished(aWindow) {
   return new Promise(resolve => whenDelayedStartupFinished(aWindow, resolve));
 }
 
+function promiseOnHistoryReplaceEntry(tab) {
+  return BrowserTestUtils.waitForEvent(tab, "SSHistoryReplaceEntry");
+}
+
 function promiseTabRestored(tab) {
   return BrowserTestUtils.waitForEvent(tab, "SSTabRestored");
 }
 
 function promiseTabRestoring(tab) {
   return BrowserTestUtils.waitForEvent(tab, "SSTabRestoring");
-}
-
-function sendMessage(browser, name, data = {}) {
-  browser.messageManager.sendAsyncMessage(name, data);
-  return promiseContentMessage(browser, name);
-}
-
-// This creates list of functions that we will map to their corresponding
-// ss-test:* messages names. Those will be sent to the frame script and
-// be used to read and modify form data.
-/* global getTextContent, getInputValue, setInputValue, getInputChecked
-          setInputChecked, getSelectedIndex, setSelectedIndex,
-          getMultipleSelected, setMultipleSelected, getFileNameArray,
-          setFileNameArray */
-const FORM_HELPERS = [
-  "getTextContent",
-  "getInputValue",
-  "setInputValue",
-  "getInputChecked",
-  "setInputChecked",
-  "getSelectedIndex",
-  "setSelectedIndex",
-  "getMultipleSelected",
-  "setMultipleSelected",
-  "getFileNameArray",
-  "setFileNameArray",
-];
-
-for (let name of FORM_HELPERS) {
-  let msg = "ss-test:" + name;
-  this[name] = (browser, data) => sendMessage(browser, msg, data);
 }
 
 // Removes the given tab immediately and returns a promise that resolves when
@@ -605,9 +546,9 @@ function promiseRemoveTabAndSessionState(tab) {
 
 // Write DOMSessionStorage data to the given browser.
 function modifySessionStorage(browser, storageData, storageOptions = {}) {
-  return ContentTask.spawn(
+  return SpecialPowers.spawn(
     browser,
-    [storageData, storageOptions],
+    [[storageData, storageOptions]],
     async function([data, options]) {
       let frame = content;
       if (options && "frameIndex" in options) {
@@ -619,7 +560,7 @@ function modifySessionStorage(browser, storageData, storageOptions = {}) {
       let storage = frame.sessionStorage;
 
       return new Promise(resolve => {
-        addEventListener(
+        docShell.chromeEventHandler.addEventListener(
           "MozSessionStorageChanged",
           function onStorageChanged(event) {
             if (event.storageArea == storage) {
@@ -627,7 +568,7 @@ function modifySessionStorage(browser, storageData, storageOptions = {}) {
             }
 
             if (keys.size == 0) {
-              removeEventListener(
+              docShell.chromeEventHandler.removeEventListener(
                 "MozSessionStorageChanged",
                 onStorageChanged,
                 true
@@ -658,6 +599,26 @@ function popPrefs() {
   return SpecialPowers.popPrefEnv();
 }
 
+function setScrollPosition(bc, x, y) {
+  return SpecialPowers.spawn(bc, [x, y], (childX, childY) => {
+    return new Promise(resolve => {
+      content.addEventListener(
+        "mozvisualscroll",
+        function onScroll(event) {
+          if (content.document.ownerGlobal.visualViewport == event.target) {
+            content.removeEventListener("mozvisualscroll", onScroll, {
+              mozSystemGroup: true,
+            });
+            resolve();
+          }
+        },
+        { mozSystemGroup: true }
+      );
+      content.scrollTo(childX, childY);
+    });
+  });
+}
+
 async function checkScroll(tab, expected, msg) {
   let browser = tab.linkedBrowser;
   await TabStateFlusher.flush(browser);
@@ -671,4 +632,60 @@ function whenDomWindowClosedHandled(aCallback) {
     Services.obs.removeObserver(observer, aTopic);
     aCallback();
   }, "sessionstore-debug-domwindowclosed-handled");
+}
+
+function getPropertyOfFormField(browserContext, selector, propName) {
+  return SpecialPowers.spawn(
+    browserContext,
+    [selector, propName],
+    (selectorChild, propNameChild) => {
+      return content.document.querySelector(selectorChild)[propNameChild];
+    }
+  );
+}
+
+function setPropertyOfFormField(browserContext, selector, propName, newValue) {
+  return SpecialPowers.spawn(
+    browserContext,
+    [selector, propName, newValue],
+    (selectorChild, propNameChild, newValueChild) => {
+      let node = content.document.querySelector(selectorChild);
+      node[propNameChild] = newValueChild;
+
+      let event = node.ownerDocument.createEvent("UIEvents");
+      event.initUIEvent("input", true, true, node.ownerGlobal, 0);
+      node.dispatchEvent(event);
+    }
+  );
+}
+
+function promiseOnHistoryReplaceEntryInChild(browser) {
+  return SpecialPowers.spawn(browser, [], () => {
+    return new Promise(resolve => {
+      var historyListener = {
+        OnHistoryNewEntry() {},
+        OnHistoryGotoIndex() {},
+        OnHistoryPurge() {},
+        OnHistoryReload() {
+          return true;
+        },
+
+        OnHistoryReplaceEntry() {
+          resolve();
+        },
+
+        QueryInterface: ChromeUtils.generateQI([
+          Ci.nsISHistoryListener,
+          Ci.nsISupportsWeakReference,
+        ]),
+      };
+
+      var { sessionHistory } = this.docShell.QueryInterface(
+        Ci.nsIWebNavigation
+      );
+      if (sessionHistory) {
+        sessionHistory.legacySHistory.addSHistoryListener(historyListener);
+      }
+    });
+  });
 }

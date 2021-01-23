@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from EdReplace.xul -->
+
+<!-- extracted from EdReplace.xhtml -->
+
+<!ENTITY replaceDialog.title "Cari dan Ganti">
+<!ENTITY findField.label "Cari teks:">
+<!ENTITY findField.accesskey "r">
+<!ENTITY replaceField.label "Ganti dengan:">
+<!ENTITY replaceField.accesskey "t">
+<!ENTITY caseSensitiveCheckbox.label "Padanan huruf tepat">
+<!ENTITY caseSensitiveCheckbox.accesskey "P">
+<!ENTITY wrapCheckbox.label "Balut keliling">
+<!ENTITY wrapCheckbox.accesskey "B">
+<!ENTITY backwardsCheckbox.label "Carian mengundur">
+<!ENTITY backwardsCheckbox.accesskey "m">
+<!ENTITY findNextButton.label "Cari Berikut">
+<!ENTITY findNextButton.accesskey "C">
+<!ENTITY replaceButton.label "Ganti">
+<!ENTITY replaceButton.accesskey "G">
+<!ENTITY replaceAndFindButton.label "Ganti dan Cari">
+<!ENTITY replaceAndFindButton.accesskey "d">
+<!ENTITY replaceAllButton.label "Ganti Semua">
+<!ENTITY replaceAllButton.accesskey "S">
+<!ENTITY closeButton.label "Tutup">
+<!ENTITY closeButton.accesskey "T">

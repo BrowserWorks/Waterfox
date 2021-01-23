@@ -1,9 +1,9 @@
 // This file tests authentication prompt callbacks
 // TODO NIT use do_check_eq(expected, actual) consistently, not sometimes eq(actual, expected)
 
-const { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
+"use strict";
 
-Cu.importGlobalProperties(["XMLHttpRequest"]);
+const { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
 
 // Turn off the authentication dialog blocking for this test.
 var prefs = Cc["@mozilla.org/preferences-service;1"].getService(
@@ -40,12 +40,7 @@ AuthPrompt1.prototype = {
 
   expectedRealm: "secret",
 
-  QueryInterface: function authprompt_qi(iid) {
-    if (iid.equals(Ci.nsISupports) || iid.equals(Ci.nsIAuthPrompt)) {
-      return this;
-    }
-    throw Cr.NS_ERROR_NO_INTERFACE;
-  },
+  QueryInterface: ChromeUtils.generateQI(["nsIAuthPrompt"]),
 
   prompt: function ap1_prompt(title, text, realm, save, defaultText, result) {
     do_throw("unexpected prompt call");
@@ -67,10 +62,8 @@ AuthPrompt1.prototype = {
       if (!text.includes(this.expectedRealm)) {
         do_throw("Text must indicate the realm");
       }
-    } else {
-      if (text.includes(this.expectedRealm)) {
-        do_throw("There should not be realm for cross origin");
-      }
+    } else if (text.includes(this.expectedRealm)) {
+      do_throw("There should not be realm for cross origin");
     }
     if (!text.includes("localhost")) {
       do_throw("Text must indicate the hostname");
@@ -120,12 +113,7 @@ AuthPrompt2.prototype = {
 
   expectedRealm: "secret",
 
-  QueryInterface: function authprompt2_qi(iid) {
-    if (iid.equals(Ci.nsISupports) || iid.equals(Ci.nsIAuthPrompt2)) {
-      return this;
-    }
-    throw Cr.NS_ERROR_NO_INTERFACE;
-  },
+  QueryInterface: ChromeUtils.generateQI(["nsIAuthPrompt2"]),
 
   promptAuth: function ap2_promptAuth(channel, level, authInfo) {
     var isNTLM = channel.URI.pathQueryRef.includes("ntlm");
@@ -195,7 +183,7 @@ AuthPrompt2.prototype = {
   },
 
   asyncPromptAuth: function ap2_async(chan, cb, ctx, lvl, info) {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+    throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
   },
 };
 
@@ -205,12 +193,7 @@ function Requestor(flags, versions) {
 }
 
 Requestor.prototype = {
-  QueryInterface: function requestor_qi(iid) {
-    if (iid.equals(Ci.nsISupports) || iid.equals(Ci.nsIInterfaceRequestor)) {
-      return this;
-    }
-    throw Cr.NS_ERROR_NO_INTERFACE;
-  },
+  QueryInterface: ChromeUtils.generateQI(["nsIInterfaceRequestor"]),
 
   getInterface: function requestor_gi(iid) {
     if (this.versions & 1 && iid.equals(Ci.nsIAuthPrompt)) {
@@ -228,7 +211,7 @@ Requestor.prototype = {
       return this.prompt2;
     }
 
-    throw Cr.NS_ERROR_NO_INTERFACE;
+    throw Components.Exception("", Cr.NS_ERROR_NO_INTERFACE);
   },
 
   prompt1: null,
@@ -238,23 +221,17 @@ Requestor.prototype = {
 function RealmTestRequestor() {}
 
 RealmTestRequestor.prototype = {
-  QueryInterface: function realmtest_qi(iid) {
-    if (
-      iid.equals(Ci.nsISupports) ||
-      iid.equals(Ci.nsIInterfaceRequestor) ||
-      iid.equals(Ci.nsIAuthPrompt2)
-    ) {
-      return this;
-    }
-    throw Cr.NS_ERROR_NO_INTERFACE;
-  },
+  QueryInterface: ChromeUtils.generateQI([
+    "nsIInterfaceRequestor",
+    "nsIAuthPrompt2",
+  ]),
 
   getInterface: function realmtest_interface(iid) {
     if (iid.equals(Ci.nsIAuthPrompt2)) {
       return this;
     }
 
-    throw Cr.NS_ERROR_NO_INTERFACE;
+    throw Components.Exception("", Cr.NS_ERROR_NO_INTERFACE);
   },
 
   promptAuth: function realmtest_checkAuth(channel, level, authInfo) {
@@ -264,7 +241,7 @@ RealmTestRequestor.prototype = {
   },
 
   asyncPromptAuth: function realmtest_async(chan, cb, ctx, lvl, info) {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+    throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
   },
 };
 
@@ -288,7 +265,7 @@ var listener = {
       do_throw("Unexpected exception: " + e);
     }
 
-    throw Cr.NS_ERROR_ABORT;
+    throw Components.Exception("", Cr.NS_ERROR_ABORT);
   },
 
   onDataAvailable: function test_ODA() {
@@ -307,7 +284,7 @@ function makeChan(url, loadingUrl) {
   var ssm = Cc["@mozilla.org/scriptsecuritymanager;1"].getService(
     Ci.nsIScriptSecurityManager
   );
-  var principal = ssm.createCodebasePrincipal(ios.newURI(loadingUrl), {});
+  var principal = ssm.createContentPrincipal(ios.newURI(loadingUrl), {});
   return NetUtil.newChannel({
     uri: url,
     loadingPrincipal: principal,
@@ -713,7 +690,6 @@ function authShortDigest(metadata, response) {
   // no header, send one
   response.setStatusLine(metadata.httpVersion, 401, "Unauthorized");
   response.setHeader("WWW-Authenticate", "Digest", false);
-  body = "failed, no header";
 }
 
 let buildLargePayload = (function() {

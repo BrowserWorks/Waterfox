@@ -4,7 +4,6 @@
 
 #include "mozilla/net/HttpAuthUtils.h"
 #include "mozilla/Tokenizer.h"
-#include "nsIPrefService.h"
 #include "nsIURI.h"
 #include "nsNetUtil.h"
 #include "nsUnicharUtils.h"
@@ -42,10 +41,9 @@ bool MatchesBaseURI(const nsACString& matchScheme, const nsACString& matchHost,
 
     nsDependentCSubstring ipv6Literal;
     t.Claim(ipv6Literal, mozilla::Tokenizer::INCLUDE_LAST);
-    if (!matchHost.Equals(ipv6Literal,
-                          nsCaseInsensitiveUTF8StringComparator()) &&
+    if (!matchHost.Equals(ipv6Literal, nsCaseInsensitiveUTF8StringComparator) &&
         !matchHost.Equals(ipv6BareLiteral,
-                          nsCaseInsensitiveUTF8StringComparator())) {
+                          nsCaseInsensitiveUTF8StringComparator)) {
       return false;
     }
 
@@ -75,7 +73,7 @@ bool MatchesBaseURI(const nsACString& matchScheme, const nsACString& matchHost,
            result:     accept        accept       reject       accept     reject
           */
           if (!StringEndsWith(matchHost, hostName,
-                              nsCaseInsensitiveUTF8StringComparator())) {
+                              nsCaseInsensitiveUTF8StringComparator)) {
             return false;
           }
           if (matchHost.Length() > hostName.Length() &&

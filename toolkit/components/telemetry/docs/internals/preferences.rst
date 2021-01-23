@@ -28,7 +28,7 @@ mozconfig Defines
 
   When Defined (which it is on most platforms):
 
-  * includes ``toolkit/components/telemetry/healthreport-prefs.js`` (which sets ``datareporting.healthreport.{infoURL|uploadEnabled}``)
+  * Sets ``datareporting.healthreport.{infoURL|uploadEnabled}`` in ``modules/libpref/init/all.js``.
 
 ``MOZ_DATA_REPORTING``
 
@@ -39,7 +39,7 @@ mozconfig Defines
   When Not Defined:
 
   * Disables ``app.shield.optoutstudies.enabled``
-  * Removes the Data Collection Preferences UI in ``privacy.xul``
+  * Removes the Data Collection Preferences UI in ``privacy.xhtml``
 
 ``MOZILLA_OFFICIAL``
 
@@ -179,6 +179,10 @@ Preferences
   sending them to the parent process.
   Default is 2000 (milliseconds).
 
+``toolkit.telemetry.pioneerId``
+
+  If a user has opted into the Pioneer program, this will contain their Pioneer ID.
+
 ``toolkit.telemetry.prioping.enabled``
 
   Whether the :doc:`../data/prio-ping` is enabled.
@@ -233,11 +237,28 @@ GeckoView
 
 ``toolkit.telemetry.isGeckoViewMode``
 
-   Whether or not Telemetry needs to run in :doc:`GeckoView <../internals/geckoview>` mode. If true, measurements persistence is enabled. Defaults to false on all products except GeckoView.
+   Whether or not Telemetry needs to run in :doc:`GeckoView <../internals/geckoview>` mode. If true, and ``toolkit.telemetry.geckoview.streaming`` is false,  measurements persistence is enabled. Defaults to false on all products except GeckoView.
 
 ``toolkit.telemetry.geckoPersistenceTimeout``
 
    The interval that governs how frequently measurements are saved to disk, in milliseconds. Defaults to 60000 (60 seconds).
+
+``toolkit.telemetry.geckoview.streaming``
+
+   Whether the GeckoView mode we're running in is the variety that uses the :doc:`GeckoView Streaming Telemetry API <../internals/geckoview-streaming>` or not.
+   Defaults to false.
+
+``toolkit.telemetry.geckoview.batchDurationMS``
+
+   The duration in milliseconds over which :doc:`GeckoView Streaming Telemetry <../internals/geckoview-streaming>` will batch accumulations before passing it on to its delegate.
+   Defaults to 5000.
+
+``toolkit.telemetry.geckoview.maxBatchStalenessMS``
+
+   The maximum time (in milliseconds) between flushes of the
+   :doc:`GeckoView Streaming Telemetry <../internals/geckoview-streaming>`
+   batch to its delegate.
+   Defaults to 60000.
 
 Testing
 -------
@@ -291,3 +312,7 @@ The following prefs are for testing purpose only.
 ``toolkit.telemetry.testing.disableFuzzingDelay``
 
   If true, ping sending is not delayed when sending between 0am and 1am local time.
+
+``toolkit.telemetry.testing.overrideProductsCheck``
+
+  If true, allow all probes to be recorded no matter what the current product is.

@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "தேடு">
+
+<!ENTITY newPref.namePlaceholder       "பெயர்">
+
+<!ENTITY newPref.valueBoolean          "பூலியன்">
+<!ENTITY newPref.valueString           "சரம்">
+<!ENTITY newPref.valueInteger          "முழுஎண்">
+
+<!ENTITY newPref.stringPlaceholder     "ஒரு சரத்தை உள்ளிடு">
+<!ENTITY newPref.numberPlaceholder     "ஒரு எண்ணை உள்ளிடு">
+
+<!ENTITY newPref.toggleButton          "நிலைமாற்று">
+<!ENTITY newPref.cancelButton          "ரத்து">
+
+<!ENTITY contextMenu.copyPrefName      "பெயரை படியெடு">
+<!ENTITY contextMenu.copyPrefValue     "மதிப்பை படியெடு">

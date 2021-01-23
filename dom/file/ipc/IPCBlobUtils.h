@@ -47,6 +47,12 @@
  * parent process and sent to content (a FilePicker creates Blobs and it runs on
  * the parent process).
  *
+ * DocumentLoadListener uses blobs to serialize the POST data back to the
+ * content process (for insertion into session history). This lets it correclty
+ * handle OS files by reference, and avoid copying the underlying buffer data
+ * unless it is read. This can hopefully be removed once SessionHistory is
+ * handled in the parent process.
+ *
  * Child to Parent Blob Serialization
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  *
@@ -224,6 +230,7 @@ namespace dom {
 class IPCBlob;
 class ContentChild;
 class ContentParent;
+class PIPCBlobInputStreamParent;
 
 namespace IPCBlobUtils {
 
@@ -244,6 +251,14 @@ nsresult Serialize(BlobImpl* aBlobImpl,
                    mozilla::ipc::PBackgroundParent* aManager,
                    IPCBlob& aIPCBlob);
 
+nsresult SerializeInputStream(nsIInputStream* aInputStream, uint64_t aSize,
+                              PIPCBlobInputStreamParent*& aActorParent,
+                              ContentParent* aManager);
+
+nsresult SerializeInputStream(nsIInputStream* aInputStream, uint64_t aSize,
+                              PIPCBlobInputStreamParent*& aActorParent,
+                              mozilla::ipc::PBackgroundParent* aManager);
+
 // WARNING: If you pass any actor which does not have P{Content,Background} as
 // its toplevel protocol, this method will MOZ_CRASH.
 nsresult SerializeUntyped(BlobImpl* aBlobImpl, mozilla::ipc::IProtocol* aActor,
@@ -258,7 +273,7 @@ namespace ipc {
 // sent over the wire. When Read()-ing a BlobImpl,
 // __always make sure to handle null!__
 template <>
-struct IPDLParamTraits<mozilla::dom::BlobImpl> {
+struct IPDLParamTraits<mozilla::dom::BlobImpl*> {
   static void Write(IPC::Message* aMsg, IProtocol* aActor,
                     mozilla::dom::BlobImpl* aParam);
   static bool Read(const IPC::Message* aMsg, PickleIterator* aIter,

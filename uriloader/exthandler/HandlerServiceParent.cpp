@@ -1,3 +1,9 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 #include "mozilla/ipc/ProtocolUtils.h"
 #include "mozilla/Logging.h"
 #include "HandlerServiceParent.h"
@@ -99,9 +105,9 @@ NS_IMETHODIMP ProxyHandlerInfo::GetDefaultDescription(
 }
 
 /* void launchWithURI (in nsIURI aURI,
-                       [optional] in nsIInterfaceRequestor aWindowContext); */
+                       [optional] in BrowsingContext aBrowsingContext); */
 NS_IMETHODIMP ProxyHandlerInfo::LaunchWithURI(
-    nsIURI* aURI, nsIInterfaceRequestor* aWindowContext) {
+    nsIURI* aURI, mozilla::dom::BrowsingContext* aBrowsingContext) {
   return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -164,13 +170,18 @@ NS_IMETHODIMP ProxyMIMEInfo::SetFileExtensions(const nsACString& aExtensions) {
 /* boolean extensionExists (in AUTF8String aExtension); */
 NS_IMETHODIMP ProxyMIMEInfo::ExtensionExists(const nsACString& aExtension,
                                              bool* _retval) {
-  *_retval = mProxyHandlerInfo->Extensions().Contains(aExtension);
+  *_retval = mProxyHandlerInfo->Extensions().Contains(
+      aExtension, nsCaseInsensitiveCStringArrayComparator());
   return NS_OK;
 }
 
 /* void appendExtension (in AUTF8String aExtension); */
 NS_IMETHODIMP ProxyMIMEInfo::AppendExtension(const nsACString& aExtension) {
-  mProxyHandlerInfo->Extensions().AppendElement(aExtension);
+  if (!aExtension.IsEmpty() &&
+      !mProxyHandlerInfo->Extensions().Contains(
+          aExtension, nsCaseInsensitiveCStringArrayComparator())) {
+    mProxyHandlerInfo->Extensions().AppendElement(aExtension);
+  }
   return NS_OK;
 }
 
@@ -179,6 +190,7 @@ NS_IMETHODIMP ProxyMIMEInfo::GetPrimaryExtension(
     nsACString& aPrimaryExtension) {
   const auto& extensions = mProxyHandlerInfo->Extensions();
   if (extensions.IsEmpty()) {
+    aPrimaryExtension.Truncate();
     return NS_ERROR_FAILURE;
   }
   aPrimaryExtension = extensions[0];
@@ -208,6 +220,11 @@ NS_IMETHODIMP ProxyMIMEInfo::GetPossibleLocalHandlers(
 
 /* void launchWithFile (in nsIFile aFile); */
 NS_IMETHODIMP ProxyMIMEInfo::LaunchWithFile(nsIFile* aFile) {
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+/* boolean isCurrentAppOSDefault(); */
+NS_IMETHODIMP ProxyMIMEInfo::IsCurrentAppOSDefault(bool* _retval) {
   return NS_ERROR_NOT_IMPLEMENTED;
 }
 

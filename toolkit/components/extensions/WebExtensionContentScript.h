@@ -47,7 +47,7 @@ class MOZ_STACK_CLASS DocInfo final {
   nsIPrincipal* Principal() const;
 
   // Returns the URL of the document's principal. Note that this must *only*
-  // be called for codebase principals.
+  // be called for content principals.
   const URLInfo& PrincipalURL() const;
 
   bool IsTopLevel() const;
@@ -176,6 +176,15 @@ class MozDocumentMatcher : public nsISupports, public nsWrapperCache {
       aOutput.SetNull();
     } else {
       aOutput.SetValue(aInput.Value());
+    }
+  }
+
+  template <typename T, typename U>
+  void ToNullable(const Nullable<T>& aInput, Nullable<nsTArray<U>>& aOutput) {
+    if (aInput.IsNull()) {
+      aOutput.SetNull();
+    } else {
+      aOutput.SetValue(aInput.Value().Clone());
     }
   }
 };

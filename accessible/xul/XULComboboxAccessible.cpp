@@ -12,9 +12,7 @@
 #include "Role.h"
 #include "States.h"
 
-#include "nsIAutoCompleteInput.h"
 #include "nsIDOMXULMenuListElement.h"
-#include "nsIDOMXULSelectCntrlItemEl.h"
 
 using namespace mozilla::a11y;
 
@@ -25,23 +23,10 @@ using namespace mozilla::a11y;
 XULComboboxAccessible::XULComboboxAccessible(nsIContent* aContent,
                                              DocAccessible* aDoc)
     : AccessibleWrap(aContent, aDoc) {
-  if (mContent->AsElement()->AttrValueIs(kNameSpaceID_None, nsGkAtoms::type,
-                                         nsGkAtoms::autocomplete, eIgnoreCase))
-    mGenericTypes |= eAutoComplete;
-  else
-    mGenericTypes |= eCombobox;
-
-  // The XUL <textbox type="autocomplete"> uses XULComboboxAccessible. We need
-  // to walk the anonymous children for these so that the entry field is a
-  // child. Otherwise no XBL children.
-  if (!mContent->NodeInfo()->Equals(nsGkAtoms::textbox, kNameSpaceID_XUL)) {
-    mStateFlags |= eNoXBLKids;
-  }
+  mGenericTypes |= eCombobox;
 }
 
-role XULComboboxAccessible::NativeRole() const {
-  return IsAutoComplete() ? roles::AUTOCOMPLETE : roles::COMBOBOX;
-}
+role XULComboboxAccessible::NativeRole() const { return roles::COMBOBOX; }
 
 uint64_t XULComboboxAccessible::NativeState() const {
   // As a nsComboboxAccessible we can have the following states:
@@ -73,7 +58,7 @@ void XULComboboxAccessible::Description(nsString& aDescription) {
   nsCOMPtr<nsIDOMXULMenuListElement> menuListElm = Elm()->AsXULMenuList();
   if (!menuListElm) return;
 
-  nsCOMPtr<Element> focusedOptionItem;
+  nsCOMPtr<dom::Element> focusedOptionItem;
   menuListElm->GetSelectedItem(getter_AddRefs(focusedOptionItem));
   if (focusedOptionItem && mDoc) {
     Accessible* focusedOptionAcc = mDoc->GetAccessible(focusedOptionItem);
@@ -126,8 +111,7 @@ void XULComboboxAccessible::ActionNameAt(uint8_t aIndex, nsAString& aName) {
 // Widgets
 
 bool XULComboboxAccessible::IsActiveWidget() const {
-  if (IsAutoComplete() ||
-      mContent->AsElement()->AttrValueIs(kNameSpaceID_None, nsGkAtoms::editable,
+  if (mContent->AsElement()->AttrValueIs(kNameSpaceID_None, nsGkAtoms::editable,
                                          nsGkAtoms::_true, eIgnoreCase)) {
     int32_t childCount = mChildren.Length();
     for (int32_t idx = 0; idx < childCount; idx++) {
@@ -142,17 +126,6 @@ bool XULComboboxAccessible::IsActiveWidget() const {
 }
 
 bool XULComboboxAccessible::AreItemsOperable() const {
-  if (IsAutoComplete()) {
-    nsCOMPtr<nsIAutoCompleteInput> autoCompleteInputElm =
-        do_QueryInterface(mContent);
-    if (autoCompleteInputElm) {
-      bool isOpen = false;
-      autoCompleteInputElm->GetPopupOpen(&isOpen);
-      return isOpen;
-    }
-    return false;
-  }
-
   nsCOMPtr<nsIDOMXULMenuListElement> menuListElm = Elm()->AsXULMenuList();
   if (menuListElm) {
     bool isOpen = false;

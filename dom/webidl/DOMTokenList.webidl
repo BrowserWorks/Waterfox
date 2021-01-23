@@ -4,15 +4,19 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * The origin of this IDL file is
- * http://www.w3.org/TR/2012/WD-dom-20120105/
+ * https://dom.spec.whatwg.org/#interface-domtokenlist
  *
  * Copyright © 2012 W3C® (MIT, ERCIM, Keio), All Rights Reserved. W3C
  * liability, trademark and document use rules apply.
  */
 
+[Exposed=Window]
 interface DOMTokenList {
+  [Pure]
   readonly attribute unsigned long length;
+  [Pure]
   getter DOMString? item(unsigned long index);
+  [Pure]
   boolean contains(DOMString token);
   [CEReactions, Throws]
   void add(DOMString... tokens);
@@ -24,8 +28,7 @@ interface DOMTokenList {
   boolean toggle(DOMString token, optional boolean force);
   [Throws]
   boolean supports(DOMString token);
-  [CEReactions, SetterThrows]
-  attribute DOMString value;
-  stringifier DOMString ();
+  [CEReactions, SetterThrows, Pure]
+  stringifier attribute DOMString value;
   iterable<DOMString?>;
 };

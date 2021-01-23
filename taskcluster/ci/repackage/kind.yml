@@ -7,7 +7,6 @@ loader: taskgraph.loader.single_dep:loader
 transforms:
     - taskgraph.transforms.name_sanity:transforms
     - taskgraph.transforms.repackage:transforms
-    - taskgraph.transforms.use_toolchains:transforms
     - taskgraph.transforms.repackage_routes:transforms
     - taskgraph.transforms.job:transforms
     - taskgraph.transforms.task:transforms
@@ -18,35 +17,32 @@ kind-dependencies:
 
 only-for-build-platforms:
     - linux-shippable/opt
-    - linux-nightly/opt
-    - linux-devedition-nightly/opt
+    - linux-devedition/opt
     - linux/opt
     - linux64-shippable/opt
-    - linux64-nightly/opt
-    - linux64-devedition-nightly/opt
-    - linux64-asan-reporter-nightly/opt
+    - linux64-devedition/opt
+    - linux64-asan-reporter-shippable/opt
     - linux64/opt
     - linux64-pgo/opt
     - macosx64-shippable/opt
-    - macosx64-nightly/opt
-    - macosx64-devedition-nightly/opt
+    - macosx64-devedition/opt
     - macosx64/opt
     - win32-shippable/opt
-    - win32-nightly/opt
-    - win32-devedition-nightly/opt
+    - win32-devedition/opt
     - win32/opt
     - win32-pgo/opt
     - win64-shippable/opt
-    - win64-nightly/opt
-    - win64-devedition-nightly/opt
+    - win64-devedition/opt
     - win64-aarch64-shippable/opt
-    - win64-aarch64-nightly/opt
-    - win64-aarch64-devedition-nightly/opt
+    - win64-aarch64-devedition/opt
     - win64/opt
     - win64-pgo/opt
-    - win64-asan-reporter-nightly/opt
+    - win64-asan-reporter-shippable/opt
 
 job-template:
+    worker-type: 'b-linux'
+    worker:
+        docker-image: {"in-tree": "debian8-amd64-build"}
     mozharness:
         config:
             by-build-platform:
@@ -73,7 +69,7 @@ job-template:
                     - repackage/win64_signed.py
     package-formats:
         by-release-type:
-            esr(60|68):
+            esr.*:
                 by-build-platform:
                     linux.*: [mar]
                     linux4\b.*: [mar]
@@ -87,3 +83,7 @@ job-template:
                     macosx64\b.*: [mar, dmg]
                     win32\b.*: [mar, installer]
                     win64\b.*: [mar, installer]
+    fetches:
+        toolchain:
+            - linux64-mar-tools
+            - linux64-upx

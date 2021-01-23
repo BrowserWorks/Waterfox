@@ -22,8 +22,6 @@ WebGLExtensionCompressedTexturePVRTC::WebGLExtensionCompressedTexturePVRTC(
     auto usage = fua->EditUsage(effFormat);
     usage->isFilterable = true;
     fua->AllowSizedTexFormat(sizedFormat, usage);
-
-    webgl_->mCompressedTextureFormats.AppendElement(sizedFormat);
   };
 
 #define FOO(x) LOCAL_GL_##x, webgl::EffectiveFormat::x
@@ -35,10 +33,5 @@ WebGLExtensionCompressedTexturePVRTC::WebGLExtensionCompressedTexturePVRTC(
 
 #undef FOO
 }
-
-WebGLExtensionCompressedTexturePVRTC::~WebGLExtensionCompressedTexturePVRTC() {}
-
-IMPL_WEBGL_EXTENSION_GOOP(WebGLExtensionCompressedTexturePVRTC,
-                          WEBGL_compressed_texture_pvrtc)
 
 }  // namespace mozilla

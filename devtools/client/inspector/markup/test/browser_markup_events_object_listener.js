@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 /* import-globals-from helper_events_test_runner.js */
@@ -19,7 +18,7 @@ const TEST_DATA = [ // eslint-disable-line
     expected: [
       {
         type: "click",
-        filename: TEST_URL + ":17",
+        filename: TEST_URL + ":20:23",
         attributes: ["Bubbling", "DOM2"],
         handler: `() => {\n` + `  console.log("handleEvent");\n` + `}`,
       },
@@ -30,7 +29,7 @@ const TEST_DATA = [ // eslint-disable-line
     expected: [
       {
         type: "click",
-        filename: TEST_URL + ":24",
+        filename: TEST_URL + ":27:23",
         attributes: ["Bubbling", "DOM2"],
         handler: `() => {\n` + `  console.log("handleEvent");\n` + `}`,
       },

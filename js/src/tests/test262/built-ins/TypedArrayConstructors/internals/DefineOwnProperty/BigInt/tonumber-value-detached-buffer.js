@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('BigInt')) -- BigInt is not enabled unconditionally
 // Copyright (C) 2017 Mozilla Corporation. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 
@@ -37,7 +36,7 @@ testWithBigIntTypedArrayConstructors(function(TA) {
     {
       value: {
         valueOf: function() {
-          $262.detachArrayBuffer(ta.buffer);
+          $DETACHBUFFER(ta.buffer);
           return 42n;
         }
       }

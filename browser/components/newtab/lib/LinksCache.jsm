@@ -28,7 +28,12 @@ this.LinksCache = class LinksCache {
    * @param {function} shouldRefresh Optional callback receiving the old and new
    *                                 options to refresh even when not expired.
    */
-  constructor(linkObject, linkProperty, properties = [], shouldRefresh = () => {}) {
+  constructor(
+    linkObject,
+    linkProperty,
+    properties = [],
+    shouldRefresh = () => {}
+  ) {
     this.clear();
 
     // Allow getting links from both methods and array properties
@@ -67,52 +72,61 @@ this.LinksCache = class LinksCache {
   async request(options = {}) {
     // Update the cache if the data has been expired
     const now = Date.now();
-    if (this.lastUpdate === undefined ||
-        now > this.lastUpdate + EXPIRATION_TIME ||
-        // Allow custom rules around refreshing based on options
-        this.shouldRefresh(this.lastOptions, options)) {
+    if (
+      this.lastUpdate === undefined ||
+      now > this.lastUpdate + EXPIRATION_TIME ||
+      // Allow custom rules around refreshing based on options
+      this.shouldRefresh(this.lastOptions, options)
+    ) {
       // Update request state early so concurrent requests can refer to it
       this.lastOptions = options;
       this.lastUpdate = now;
 
       // Save a promise before awaits, so other requests wait for correct data
-      this.cache = new Promise(async resolve => {
-        // Allow fast lookup of old links by url that might need to migrate
-        const toMigrate = new Map();
-        for (const oldLink of await this.cache) {
-          if (oldLink) {
-            toMigrate.set(oldLink.url, oldLink);
-          }
-        }
-
-        // Update the cache with migrated links without modifying source objects
-        resolve((await this.linkGetter(options)).map(link => {
-          // Keep original array hole positions
-          if (!link) {
-            return link;
-          }
-
-          // Migrate data to the new link copy if we have an old link
-          const newLink = Object.assign({}, link);
-          const oldLink = toMigrate.get(newLink.url);
-          if (oldLink) {
-            for (const property of this.migrateProperties) {
-              const oldValue = oldLink[property];
-              if (oldValue !== undefined) {
-                newLink[property] = oldValue;
-              }
+      // eslint-disable-next-line no-async-promise-executor
+      this.cache = new Promise(async (resolve, reject) => {
+        try {
+          // Allow fast lookup of old links by url that might need to migrate
+          const toMigrate = new Map();
+          for (const oldLink of await this.cache) {
+            if (oldLink) {
+              toMigrate.set(oldLink.url, oldLink);
             }
-          } else {
-            // Share data among link copies and new links from future requests
-            newLink.__sharedCache = {};
           }
-          // Provide a helper to update the cached link
-          newLink.__sharedCache.updateLink = (property, value) => {
-            newLink[property] = value;
-          };
 
-          return newLink;
-        }));
+          // Update the cache with migrated links without modifying source objects
+          resolve(
+            (await this.linkGetter(options)).map(link => {
+              // Keep original array hole positions
+              if (!link) {
+                return link;
+              }
+
+              // Migrate data to the new link copy if we have an old link
+              const newLink = Object.assign({}, link);
+              const oldLink = toMigrate.get(newLink.url);
+              if (oldLink) {
+                for (const property of this.migrateProperties) {
+                  const oldValue = oldLink[property];
+                  if (oldValue !== undefined) {
+                    newLink[property] = oldValue;
+                  }
+                }
+              } else {
+                // Share data among link copies and new links from future requests
+                newLink.__sharedCache = {};
+              }
+              // Provide a helper to update the cached link
+              newLink.__sharedCache.updateLink = (property, value) => {
+                newLink[property] = value;
+              };
+
+              return newLink;
+            })
+          );
+        } catch (error) {
+          reject(error);
+        }
       });
     }
 

@@ -5,7 +5,7 @@
 /* ownerGlobal doesn't exist in content privileged windows. */
 /* eslint-disable mozilla/use-ownerGlobal */
 
-var EXPORTED_SYMBOLS = ["InsecurePasswordUtils"];
+const EXPORTED_SYMBOLS = ["InsecurePasswordUtils"];
 
 const STRINGS_URI = "chrome://global/locale/security/security.properties";
 
@@ -40,7 +40,7 @@ XPCOMUtils.defineLazyGetter(this, "log", () => {
  * A module that provides utility functions for form security.
  *
  */
-var InsecurePasswordUtils = {
+this.InsecurePasswordUtils = {
   _formRootsWarned: new WeakMap(),
 
   /**
@@ -95,12 +95,12 @@ var InsecurePasswordUtils = {
       let uri = Services.io.newURI(
         aForm.rootElement.action || aForm.rootElement.baseURI
       );
-      let principal = gScriptSecurityManager.createCodebasePrincipal(uri, {});
+      let principal = gScriptSecurityManager.createContentPrincipal(uri, {});
 
       if (uri.schemeIs("http")) {
         isFormSubmitHTTP = true;
         if (
-          gContentSecurityManager.isOriginPotentiallyTrustworthy(principal) ||
+          principal.isOriginPotentiallyTrustworthy ||
           // Ignore sites with local IP addresses pointing to local forms.
           (this._isPrincipalForLocalIPAddress(
             aForm.rootElement.nodePrincipal
@@ -152,9 +152,16 @@ var InsecurePasswordUtils = {
       let isLocalIP = this._isPrincipalForLocalIPAddress(
         aForm.rootElement.nodePrincipal
       );
-      let topWindow = aForm.ownerDocument.defaultView.top;
+      // XXXndeakin fix this: bug 1582499 - top document not accessible in OOP frame
+      // So for now, just use the current document if access to top fails.
+      let topDocument;
+      try {
+        topDocument = aForm.ownerDocument.defaultView.top.document;
+      } catch (ex) {
+        topDocument = aForm.ownerDocument.defaultView.document;
+      }
       let topIsLocalIP = this._isPrincipalForLocalIPAddress(
-        topWindow.document.nodePrincipal
+        topDocument.nodePrincipal
       );
 
       // Only consider the page safe if the top window has a local IP address
@@ -228,7 +235,7 @@ var InsecurePasswordUtils = {
 };
 
 XPCOMUtils.defineLazyPreferenceGetter(
-  this.InsecurePasswordUtils,
+  InsecurePasswordUtils,
   "_ignoreLocalIPAddress",
   "security.insecure_field_warning.ignore_local_ip_address",
   true

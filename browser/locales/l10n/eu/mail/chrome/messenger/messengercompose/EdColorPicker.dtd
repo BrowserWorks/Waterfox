@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Kolorea">
+<!ENTITY lastPickedColor.label "Azkenez hautatutako kolorea">
+<!ENTITY lastPickedColor.accessKey "A">
+<!ENTITY chooseColor1.label "Aukeratu kolorea:">
+<!ENTITY chooseColor2.label "Sartu HTML kolore-kate bat">
+<!ENTITY chooseColor2.accessKey "H">
+<!ENTITY setColorExample.label "(adib.: &quot;#0000ff&quot; edo &quot;urdin&quot;):">
+<!ENTITY default.label "Lehenetsia">
+<!ENTITY default.accessKey "L">
+<!ENTITY palette.label "Paleta:">
+<!ENTITY standardPalette.label "Estandarra">
+<!ENTITY webPalette.label "Web kolore guztiak">
+<!ENTITY background.label "Honen atzeko planoa:">
+<!ENTITY background.accessKey "H">
+<!ENTITY table.label "Taula">
+<!ENTITY table.accessKey "T">
+<!ENTITY cell.label "Gelaxka(k)">
+<!ENTITY cell.accessKey "G">

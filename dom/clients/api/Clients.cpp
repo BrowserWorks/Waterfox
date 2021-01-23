@@ -15,13 +15,15 @@
 #include "mozilla/dom/ServiceWorkerManager.h"
 #include "mozilla/dom/WorkerPrivate.h"
 #include "mozilla/ipc/BackgroundUtils.h"
-#include "mozilla/SystemGroup.h"
+#include "mozilla/SchedulerGroup.h"
+#include "mozilla/StorageAccess.h"
 #include "nsIGlobalObject.h"
 #include "nsString.h"
 
 namespace mozilla {
 namespace dom {
 
+using mozilla::ipc::CSPInfo;
 using mozilla::ipc::PrincipalInfo;
 
 NS_IMPL_CYCLE_COLLECTING_ADDREF(Clients);
@@ -88,8 +90,7 @@ already_AddRefed<Promise> Clients::Get(const nsAString& aClientID,
             NS_ENSURE_TRUE_VOID(holder->GetParentObject());
             RefPtr<Client> client = new Client(
                 holder->GetParentObject(), aResult.get_ClientInfoAndState());
-            if (client->GetStorageAccess() ==
-                nsContentUtils::StorageAccess::eAllow) {
+            if (client->GetStorageAccess() == StorageAccess::eAllow) {
               outerPromise->MaybeResolve(std::move(client));
               return;
             }
@@ -99,10 +100,10 @@ already_AddRefed<Promise> Clients::Get(const nsAString& aClientID,
                       scope, "ServiceWorkerGetClientStorageError",
                       nsTArray<nsString>());
                 });
-            SystemGroup::Dispatch(TaskCategory::Other, r.forget());
+            SchedulerGroup::Dispatch(TaskCategory::Other, r.forget());
             outerPromise->MaybeResolveWithUndefined();
           },
-          [outerPromise, holder](nsresult aResult) {
+          [outerPromise, holder](const CopyableErrorResult& aResult) {
             holder->Complete();
             outerPromise->MaybeResolveWithUndefined();
           })
@@ -169,8 +170,7 @@ already_AddRefed<Promise> Clients::MatchAll(const ClientQueryOptions& aOptions,
         for (const ClientInfoAndState& value :
              aResult.get_ClientList().values()) {
           RefPtr<Client> client = new Client(global, value);
-          if (client->GetStorageAccess() !=
-              nsContentUtils::StorageAccess::eAllow) {
+          if (client->GetStorageAccess() != StorageAccess::eAllow) {
             storageDenied = true;
             continue;
           }
@@ -183,12 +183,15 @@ already_AddRefed<Promise> Clients::MatchAll(const ClientQueryOptions& aOptions,
                     scope, "ServiceWorkerGetClientStorageError",
                     nsTArray<nsString>());
               });
-          SystemGroup::Dispatch(TaskCategory::Other, r.forget());
+          SchedulerGroup::Dispatch(TaskCategory::Other, r.forget());
         }
         clientList.Sort(MatchAllComparator());
         outerPromise->MaybeResolve(clientList);
       },
-      [outerPromise](nsresult aResult) { outerPromise->MaybeReject(aResult); });
+      [outerPromise](const CopyableErrorResult& aResult) {
+        // MaybeReject needs a non-const-ref result, so make a copy.
+        outerPromise->MaybeReject(CopyableErrorResult(aResult));
+      });
 
   return outerPromise.forget();
 }
@@ -207,8 +210,10 @@ already_AddRefed<Promise> Clients::OpenWindow(const nsAString& aURL,
   }
 
   if (aURL.EqualsLiteral("about:blank")) {
-    // TODO: Improve this error in bug 1412856.
-    outerPromise->MaybeReject(NS_ERROR_DOM_TYPE_ERR);
+    CopyableErrorResult rv;
+    rv.ThrowTypeError(
+        "Passing \"about:blank\" to Clients.openWindow is not allowed");
+    outerPromise->MaybeReject(std::move(rv));
     return outerPromise.forget();
   }
 
@@ -218,11 +223,10 @@ already_AddRefed<Promise> Clients::OpenWindow(const nsAString& aURL,
   }
 
   const PrincipalInfo& principalInfo = workerPrivate->GetPrincipalInfo();
-  const nsTArray<mozilla::ipc::ContentSecurityPolicy>& cspInfos =
-      workerPrivate->GetCSPInfos();
+  const CSPInfo& cspInfo = workerPrivate->GetCSPInfo();
   nsCString baseURL = workerPrivate->GetLocationInfo().mHref;
 
-  ClientOpenWindowArgs args(principalInfo, cspInfos,
+  ClientOpenWindowArgs args(principalInfo, Some(cspInfo),
                             NS_ConvertUTF16toUTF8(aURL), baseURL);
 
   nsCOMPtr<nsIGlobalObject> global = mGlobal;
@@ -238,10 +242,9 @@ already_AddRefed<Promise> Clients::OpenWindow(const nsAString& aURL,
             new Client(global, aResult.get_ClientInfoAndState());
         outerPromise->MaybeResolve(client);
       },
-      [outerPromise](nsresult aResult) {
-        // TODO: Improve this error in bug 1412856.  Ideally we should throw
-        //       the TypeError in the child process and pass it back to here.
-        outerPromise->MaybeReject(NS_ERROR_TYPE_ERR);
+      [outerPromise](const CopyableErrorResult& aResult) {
+        // MaybeReject needs a non-const-ref result, so make a copy.
+        outerPromise->MaybeReject(CopyableErrorResult(aResult));
       });
 
   return outerPromise.forget();
@@ -264,7 +267,7 @@ already_AddRefed<Promise> Clients::Claim(ErrorResult& aRv) {
 
   if (serviceWorker.State() != ServiceWorkerState::Activating &&
       serviceWorker.State() != ServiceWorkerState::Activated) {
-    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
+    aRv.ThrowInvalidStateError("Service worker is not active");
     return outerPromise.forget();
   }
 
@@ -273,7 +276,10 @@ already_AddRefed<Promise> Clients::Claim(ErrorResult& aRv) {
       [outerPromise](const ClientOpResult& aResult) {
         outerPromise->MaybeResolveWithUndefined();
       },
-      [outerPromise](nsresult aResult) { outerPromise->MaybeReject(aResult); });
+      [outerPromise](const CopyableErrorResult& aResult) {
+        // MaybeReject needs a non-const-ref result, so make a copy.
+        outerPromise->MaybeReject(CopyableErrorResult(aResult));
+      });
 
   return outerPromise.forget();
 }

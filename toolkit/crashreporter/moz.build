@@ -9,10 +9,6 @@ SPHINX_TREES['crashreporter'] = 'docs'
 with Files('docs/**'):
     SCHEDULES.exclusive = ['docs']
 
-GENERATED_FILES += [
-    'CrashAnnotations.h',
-]
-
 EXPORTS += [
     '!CrashAnnotations.h',
     'nsExceptionHandler.h',
@@ -34,9 +30,6 @@ if CONFIG['MOZ_CRASHREPORTER']:
             'google-breakpad/src/processor',
             'breakpad-windows-libxul',
         ]
-
-        if CONFIG['WIN_DIA_SDK_BIN_DIR']:
-            DIRS += ['google-breakpad/src/tools/windows/dump_syms']
 
         if CONFIG['MOZ_CRASHREPORTER_INJECTOR']:
             DIRS += ['breakpad-windows-standalone']
@@ -60,9 +53,10 @@ if CONFIG['MOZ_CRASHREPORTER']:
             'google-breakpad/src/common',
             'google-breakpad/src/common/linux',
             'google-breakpad/src/processor',
-            'google-breakpad/src/tools/linux/dump_syms',
             'rust',
         ]
+        if CONFIG['HOST_OS_ARCH'] == 'Linux':
+            DIRS += ['google-breakpad/src/tools/linux/dump_syms']
 
 
     DIRS += [
@@ -95,7 +89,6 @@ if CONFIG['MOZ_CRASHREPORTER']:
     EXTRA_JS_MODULES += [
         'CrashReports.jsm',
         'CrashSubmit.jsm',
-        'KeyValueParser.jsm',
     ]
 
     include('/ipc/chromium/chromium-config.mozbuild')
@@ -113,6 +106,9 @@ if CONFIG['MOZ_CRASHREPORTER']:
 
     DEFINES['UNICODE'] = True
     DEFINES['_UNICODE'] = True
+
+    if CONFIG['MOZ_PHC']:
+        DEFINES['MOZ_PHC'] = True
 
     LOCAL_INCLUDES += [
         'google-breakpad/src',
@@ -132,12 +128,11 @@ else:
     ]
 
 # Generate CrashAnnotations.h
-crash_annotations = GENERATED_FILES['CrashAnnotations.h']
-crash_annotations.script = 'generate_crash_reporter_sources.py:emit_header'
-crash_annotations.inputs = [
-    'CrashAnnotations.h.in',
-    'CrashAnnotations.yaml',
-]
+GeneratedFile('CrashAnnotations.h', script='generate_crash_reporter_sources.py',
+              entry_point='emit_header', inputs=[
+                  'CrashAnnotations.h.in',
+                  'CrashAnnotations.yaml',
+              ])
 
 with Files('**'):
     BUG_COMPONENT = ('Toolkit', 'Crash Reporting')

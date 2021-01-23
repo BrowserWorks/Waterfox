@@ -19,6 +19,7 @@
 #include "mozilla/gfx/Point.h"  // for IntSize
 #include "mozilla/gfx/Rect.h"   // for Rect
 #include "mozilla/gfx/Types.h"  // for SurfaceFormat
+#include "mozilla/layers/CompositionRecorder.h"
 #include "mozilla/layers/CompositorTypes.h"
 #include "mozilla/layers/Effects.h"  // for EffectChain
 #include "mozilla/layers/LayersMessages.h"
@@ -53,7 +54,6 @@ namespace layers {
 class CanvasLayerComposite;
 class ColorLayerComposite;
 class Compositor;
-class CompositionRecorder;
 class ContainerLayerComposite;
 class Diagnostics;
 struct EffectChain;
@@ -160,11 +160,6 @@ class HostLayerManager : public LayerManager {
     }
   }
 
-  // Indicate that we need to composite even if nothing in our layers has
-  // changed, so that the widget can draw something different in its window
-  // overlay.
-  void SetWindowOverlayChanged() { mWindowOverlayChanged = true; }
-
   void SetPaintTime(const TimeDuration& aPaintTime) {
     mLastPaintTime = aPaintTime;
   }
@@ -183,6 +178,7 @@ class HostLayerManager : public LayerManager {
       mCompositeUntilTime = TimeStamp();
     }
   }
+
   void CompositeUntil(TimeStamp aTimeStamp) {
     if (mCompositeUntilTime.IsNull() || mCompositeUntilTime < aTimeStamp) {
       mCompositeUntilTime = aTimeStamp;
@@ -199,9 +195,18 @@ class HostLayerManager : public LayerManager {
     mCompositorBridgeID = aID;
   }
 
-  void SetCompositionRecorder(CompositionRecorder* aRecorder) {
-    mCompositionRecorder = aRecorder;
+  void SetCompositionRecorder(UniquePtr<CompositionRecorder> aRecorder) {
+    mCompositionRecorder = std::move(aRecorder);
   }
+
+  /**
+   * Write the frames collected by the |CompositionRecorder| to disk.
+   *
+   * If there is not currently a |CompositionRecorder|, this is a no-op.
+   */
+  void WriteCollectedFrames();
+
+  Maybe<CollectedFrames> GetCollectedFrames();
 
  protected:
   bool mDebugOverlayWantsNextFrame;
@@ -213,10 +218,9 @@ class HostLayerManager : public LayerManager {
   UniquePtr<Diagnostics> mDiagnostics;
   uint64_t mCompositorBridgeID;
 
-  bool mWindowOverlayChanged;
   TimeDuration mLastPaintTime;
   TimeStamp mRenderStartTime;
-  CompositionRecorder* mCompositionRecorder = nullptr;
+  UniquePtr<CompositionRecorder> mCompositionRecorder = nullptr;
 
   // Render time for the current composition.
   TimeStamp mCompositionTime;
@@ -406,8 +410,10 @@ class LayerManagerComposite final : public HostLayerManager {
 
   /**
    * Render the current layer tree to the active target.
+   * Returns true if the current invalid region can be cleared, false if
+   * rendering was canceled.
    */
-  void Render(const nsIntRegion& aInvalidRegion,
+  bool Render(const nsIntRegion& aInvalidRegion,
               const nsIntRegion& aOpaqueRegion);
 #if defined(MOZ_WIDGET_ANDROID)
   void RenderToPresentationSurface();
@@ -431,10 +437,35 @@ class LayerManagerComposite final : public HostLayerManager {
    */
   void RenderDebugOverlay(const gfx::IntRect& aBounds);
 
+  void DrawBorder(const gfx::IntRect& aOuter, int32_t aBorderWidth,
+                  const gfx::DeviceColor& aColor,
+                  const gfx::Matrix4x4& aTransform);
+  void DrawTranslationWarningOverlay(const gfx::IntRect& aBounds);
+
+  void UpdateDebugOverlayNativeLayers();
+
   RefPtr<CompositingRenderTarget> PushGroupForLayerEffects();
   void PopGroupForLayerEffects(RefPtr<CompositingRenderTarget> aPreviousTarget,
                                gfx::IntRect aClipRect, bool aGrayscaleEffect,
                                bool aInvertEffect, float aContrastEffect);
+
+  /**
+   * Create or recycle native layers to cover aRegion or aRect.
+   * This method takes existing layers from the front of aLayersToRecycle (or
+   * creates new layers if no layers are left to recycle) and appends them to
+   * the end of mNativeLayers. The "take from front, add to back" approach keeps
+   * the layer to rect assignment stable between frames.
+   * Updates the rect and opaqueness on the layers. For layers that moved or
+   * resized, *aWindowInvalidRegion is updated to include the area impacted by
+   * the move.
+   * Any layers left in aLayersToRecycle are not needed and can be disposed of.
+   */
+  void PlaceNativeLayers(const gfx::IntRegion& aRegion, bool aOpaque,
+                         std::deque<RefPtr<NativeLayer>>* aLayersToRecycle,
+                         gfx::IntRegion* aWindowInvalidRegion);
+  void PlaceNativeLayer(const gfx::IntRect& aRect, bool aOpaque,
+                        std::deque<RefPtr<NativeLayer>>* aLayersToRecycle,
+                        gfx::IntRegion* aWindowInvalidRegion);
 
   bool mUnusedApzTransformWarning;
   bool mDisabledApzWarning;
@@ -455,6 +486,12 @@ class LayerManagerComposite final : public HostLayerManager {
   RefPtr<CompositingRenderTarget> mTwoPassTmpTarget;
   CompositorScreenshotGrabber mProfilerScreenshotGrabber;
   RefPtr<TextRenderer> mTextRenderer;
+  RefPtr<NativeLayerRoot> mNativeLayerRoot;
+  RefPtr<SurfacePoolHandle> mSurfacePoolHandle;
+  std::deque<RefPtr<NativeLayer>> mNativeLayers;
+  RefPtr<NativeLayer> mGPUStatsLayer;
+  RefPtr<NativeLayer> mUnusedTransformWarningLayer;
+  RefPtr<NativeLayer> mDisabledApzWarningLayer;
 
 #ifdef USE_SKIA
   /**

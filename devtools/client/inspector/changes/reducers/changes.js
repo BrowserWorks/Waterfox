@@ -4,9 +4,10 @@
 
 "use strict";
 
-const { getSourceHash, getRuleHash } = require("../utils/changes-utils");
-
-const { RESET_CHANGES, TRACK_CHANGE } = require("../actions/index");
+const {
+  RESET_CHANGES,
+  TRACK_CHANGE,
+} = require("devtools/client/inspector/changes/actions/index");
 
 /**
  * Return a deep clone of the given state object.
@@ -80,9 +81,7 @@ function createRule(ruleData, rules) {
           ];
         }
 
-        // Bug 1525326: Remove getRuleHash() in Firefox 70. Until then, we fallback
-        // to the custom hashing method if the server did not provide a rule with an id.
-        return rule.id || getRuleHash(rule);
+        return rule.id;
       })
       // Then, create new entries in the rules collection and assign dependencies.
       .map((ruleId, index, array) => {
@@ -202,6 +201,7 @@ const reducers = {
    * - when changes cancel each other out leaving the rule unchanged, the rule is removed
    *   from the store. Its parent rule is removed as well if it too ends up unchanged.
    */
+  // eslint-disable-next-line complexity
   [TRACK_CHANGE](state, { change }) {
     const defaults = {
       selector: null,
@@ -215,11 +215,8 @@ const reducers = {
     state = cloneState(state);
 
     const { selector, ancestors, ruleIndex } = change;
-    // Bug 1525326: remove getSourceHash() and getRuleHash() in Firefox 70 after we no
-    // longer support old servers which do not implement the id for the rule and source.
-    const sourceId = change.source.id || getSourceHash(change.source);
-    const ruleId =
-      change.id || getRuleHash({ selectors: [selector], ancestors, ruleIndex });
+    const sourceId = change.source.id;
+    const ruleId = change.id;
 
     // Copy or create object identifying the source (styelsheet/element) for this change.
     const source = Object.assign({}, state[sourceId], change.source);
@@ -252,7 +249,7 @@ const reducers = {
       rule.selectors.push(selector);
     }
 
-    if (change.remove && change.remove.length) {
+    if (change.remove?.length) {
       for (const decl of change.remove) {
         // Find the position of any added declaration which matches the incoming
         // declaration to be removed.
@@ -310,7 +307,7 @@ const reducers = {
       }
     }
 
-    if (change.add && change.add.length) {
+    if (change.add?.length) {
       for (const decl of change.add) {
         // Find the position of any removed declaration which matches the incoming
         // declaration to be added.

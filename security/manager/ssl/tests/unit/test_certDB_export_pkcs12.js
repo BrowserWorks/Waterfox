@@ -18,7 +18,7 @@ const TEST_CERT_PASSWORD = "黒い";
 const TEST_OUTPUT_PASSWORD = "other password";
 
 function findCertByCommonName(commonName) {
-  for (let cert of gCertDB.getCerts().getEnumerator()) {
+  for (let cert of gCertDB.getCerts()) {
     if (cert.commonName == commonName) {
       return cert;
     }
@@ -41,7 +41,7 @@ function run_test() {
   let output = do_get_tempdir();
   output.append("output.p12");
   ok(!output.exists(), "output shouldn't exist before exporting PKCS12 file");
-  errorCode = gCertDB.exportPKCS12File(output, 1, [cert], TEST_CERT_PASSWORD);
+  errorCode = gCertDB.exportPKCS12File(output, [cert], TEST_CERT_PASSWORD);
   equal(errorCode, Ci.nsIX509CertDB.Success, "cert should be exported");
   ok(output.exists(), "output should exist after exporting PKCS12 file");
 

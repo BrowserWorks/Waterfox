@@ -5,9 +5,15 @@
  * Must be included from a file that has a uri of the image to test defined in
  * var uri.
  */
+/* import-globals-from image_load_helpers.js */
 
 const { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
 const { NetUtil } = ChromeUtils.import("resource://gre/modules/NetUtil.jsm");
+const ReferrerInfo = Components.Constructor(
+  "@mozilla.org/referrer-info;1",
+  "nsIReferrerInfo",
+  "init"
+);
 
 var server = new HttpServer();
 server.registerDirectory("/", do_get_file(""));
@@ -17,6 +23,7 @@ server.start(-1);
 load("image_load_helpers.js");
 
 var requests = [];
+/* global uri */
 
 // Return a closure that holds on to the listener from the original
 // imgIRequest, and compares its results to the cloned one.
@@ -94,12 +101,16 @@ function checkSecondLoad() {
   var outer = Cc["@mozilla.org/image/tools;1"]
     .getService(Ci.imgITools)
     .createScriptedObserver(listener);
+  var referrerInfo = new ReferrerInfo(
+    Ci.nsIReferrerInfo.NO_REFERRER_WHEN_DOWNGRADE,
+    true,
+    null
+  );
   requests.push({
     request: gCurrentLoader.loadImageXPCOM(
       uri,
       null,
-      null,
-      "default",
+      referrerInfo,
       null,
       null,
       outer,
@@ -207,12 +218,16 @@ function startImageCallback(otherCb) {
     var outer = Cc["@mozilla.org/image/tools;1"]
       .getService(Ci.imgITools)
       .createScriptedObserver(listener2);
+    var referrerInfo = new ReferrerInfo(
+      Ci.nsIReferrerInfo.NO_REFERRER_WHEN_DOWNGRADE,
+      true,
+      null
+    );
     requests.push({
       request: gCurrentLoader.loadImageXPCOM(
         uri,
         null,
-        null,
-        "default",
+        referrerInfo,
         null,
         null,
         outer,
@@ -257,11 +272,15 @@ function run_test() {
   var outer = Cc["@mozilla.org/image/tools;1"]
     .getService(Ci.imgITools)
     .createScriptedObserver(listener);
+  var referrerInfo = new ReferrerInfo(
+    Ci.nsIReferrerInfo.NO_REFERRER_WHEN_DOWNGRADE,
+    true,
+    null
+  );
   var req = gCurrentLoader.loadImageXPCOM(
     uri,
     null,
-    null,
-    "default",
+    referrerInfo,
     null,
     null,
     outer,

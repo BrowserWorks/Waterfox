@@ -2,12 +2,12 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import, print_function, unicode_literals
-
 import argparse
+import copy
 import os
 
 from mozbuild.base import (
+    BuildEnvironmentNotFoundException,
     MachCommandBase,
 )
 
@@ -20,8 +20,18 @@ from mach.decorators import (
 
 
 here = os.path.abspath(os.path.dirname(__file__))
-THIRD_PARTY_PATHS = os.path.join('tools', 'rewriting', 'ThirdPartyPaths.txt')
+EXCLUSION_FILES = [
+    os.path.join('tools', 'rewriting', 'Generated.txt'),
+    os.path.join('tools', 'rewriting', 'ThirdPartyPaths.txt'),
+]
+
+EXCLUSION_FILES_OPTIONAL = []
+thunderbird_excludes = os.path.join('comm', 'tools', 'lint', 'GlobalExclude.txt')
+if os.path.exists(thunderbird_excludes):
+    EXCLUSION_FILES_OPTIONAL.append(thunderbird_excludes)
+
 GLOBAL_EXCLUDES = [
+    'node_modules',
     'tools/lint/test/files',
 ]
 
@@ -39,9 +49,9 @@ def get_global_excludes(topsrcdir):
     excludes.extend([name for name in os.listdir(topsrcdir)
                      if name.startswith('obj') and os.path.isdir(name)])
 
-    # exclude third party paths
-    with open(os.path.join(topsrcdir, THIRD_PARTY_PATHS), 'r') as fh:
-        excludes.extend([f.strip() for f in fh.readlines()])
+    for path in EXCLUSION_FILES + EXCLUSION_FILES_OPTIONAL:
+        with open(os.path.join(topsrcdir, path), 'r') as fh:
+            excludes.extend([f.strip() for f in fh.readlines()])
 
     return excludes
 
@@ -58,10 +68,20 @@ class MachCommands(MachCommandBase):
         self._activate_virtualenv()
         from mozlint import cli, parser
 
+        try:
+            buildargs = {}
+            buildargs['substs'] = copy.deepcopy(dict(self.substs))
+            buildargs['defines'] = copy.deepcopy(dict(self.defines))
+            buildargs['topobjdir'] = self.topobjdir
+            lintargs.update(buildargs)
+        except BuildEnvironmentNotFoundException:
+            pass
+
         lintargs.setdefault('root', self.topsrcdir)
         lintargs['exclude'] = get_global_excludes(lintargs['root'])
-        cli.SEARCH_PATHS.append(here)
-        parser.GLOBAL_SUPPORT_FILES.append(os.path.join(self.topsrcdir, THIRD_PARTY_PATHS))
+        lintargs['config_paths'].insert(0, here)
+        for path in EXCLUSION_FILES:
+            parser.GLOBAL_SUPPORT_FILES.append(os.path.join(self.topsrcdir, path))
         return cli.run(*runargs, **lintargs)
 
     @Command('eslint', category='devenv',

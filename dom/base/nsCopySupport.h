@@ -33,9 +33,9 @@ class nsCopySupport {
   /**
    * @param aDoc Needs to be not nullptr.
    */
-  static nsresult HTMLCopy(mozilla::dom::Selection* aSel,
-                           mozilla::dom::Document* aDoc, int16_t aClipboardID,
-                           bool aWithRubyAnnotation);
+  static nsresult EncodeDocumentWithContextAndPutToClipboard(
+      mozilla::dom::Selection* aSel, mozilla::dom::Document* aDoc,
+      int16_t aClipboardID, bool aWithRubyAnnotation);
 
   // Get the selection, or entire document, in the format specified by the mime
   // type (text/html or text/plain). If aSel is non-null, use it, otherwise get
@@ -47,8 +47,7 @@ class nsCopySupport {
   static nsresult ImageCopy(nsIImageLoadingContent* aImageElement,
                             nsILoadContext* aLoadContext, int32_t aCopyFlags);
 
-  // Get the selection as a transferable. Similar to HTMLCopy except does
-  // not deal with the clipboard.
+  // Get the selection as a transferable.
   // @param aSelection Can be nullptr.
   // @param aDocument Needs to be not nullptr.
   // @param aTransferable Needs to be not nullptr.
@@ -70,8 +69,8 @@ class nsCopySupport {
    * and this focused content node returned. Otherwise, aSelection will be
    * set to the document's selection and null will be returned.
    */
-  static nsIContent* GetSelectionForCopy(mozilla::dom::Document* aDocument,
-                                         mozilla::dom::Selection** aSelection);
+  static already_AddRefed<mozilla::dom::Selection> GetSelectionForCopy(
+      mozilla::dom::Document* aDocument);
 
   /**
    * Returns true if a copy operation is currently permitted based on the

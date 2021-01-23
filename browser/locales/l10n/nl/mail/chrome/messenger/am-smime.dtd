@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY e2eTitle.label "End-to-end-versleuteling">
+<!ENTITY e2eLearnMore.label "Meer info">
+
+<!ENTITY e2eEnc.description "Zonder end-to-end-versleuteling wordt de inhoud van berichten gemakkelijk zichtbaar voor uw e-mailprovider en voor groepstoezicht.">
+<!ENTITY e2eeReqWarning.description "Als u versleuteling nodig heeft, moet u voor het verzenden van een bericht de publieke sleutel of het certificaat van elke ontvanger hebben.">
+
+<!ENTITY e2eSigning.description "Met een digitale handtekening kunnen ontvangers controleren of het bericht door u is verzonden en of de inhoud niet is gewijzigd.">
+<!ENTITY e2eTechPref.description "Voorkeur versleuteltechnologie:">
+
+<!ENTITY doNotEncrypt.label "Versleuteling standaard niet inschakelen">
+<!ENTITY doNotEncrypt.accesskey "N">
+<!ENTITY requireEncryptMessage.label "Versleuteling standaard vereisen">
+<!ENTITY requireEncryptMessage.accesskey "u">
+<!ENTITY encryptionCert2.message "Persoonlijk versleutelingscertificaat:">
+<!ENTITY digitalSign.certificate.button "Selecteren…">
+<!ENTITY digitalSign.certificate.accesskey "S">
+<!ENTITY digitalSign.certificate_clear.button "Wissen">
+<!ENTITY digitalSign.certificate_clear.accesskey "W">
+<!ENTITY encryption.certificate.button "Selecteren…">
+<!ENTITY encryption.certificate.accesskey "e">
+<!ENTITY encryption.certificate_clear.button "Wissen">
+<!ENTITY encryption.certificate_clear.accesskey "i">
+<!ENTITY signingGroupTitle.label "Digitaal ondertekenen">
+<!ENTITY signMessage2.label "Mijn digitale handtekening standaard toevoegen">
+<!ENTITY signMessage.accesskey "a">
+<!ENTITY signingCert2.message "Persoonlijk certificaat voor digitaal ondertekenen:">
+
+<!ENTITY sendingDefaults.label "Standaardinstellingen voor het verzenden van berichten">
+
+<!ENTITY technologyAutomatic.label "Automatisch selecteren op basis van beschikbare sleutels of certificaten">
+
+<!ENTITY certificates2.label "S/MIME">
+<!ENTITY manageCerts3.label "S/MIME-certificaten beheren">
+<!ENTITY manageCerts3.accesskey "M">
+<!ENTITY manageDevices2.label "S/MIME-beveiligingsapparaten">
+<!ENTITY manageDevices2.accesskey "v">
+
+<!ENTITY technologySMIME.label "Voorkeur voor S/MIME">
+<!ENTITY technologyOpenPGP.label "Voorkeur voor OpenPGP">
+
+<!ENTITY openpgpKeys.label "OpenPGP">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Certificaat selecteren">
+<!ENTITY certPicker.info  "Certificaat:">
+<!ENTITY certPicker.detailsLabel "Details van geselecteerde certificaat:">
+
+<!ENTITY openpgpKey.message "Persoonlijke sleutel voor versleuteling en digitale ondertekening:">
+<!ENTITY openpgpKey.button "Persoonlijke sleutel instellen…">
+<!ENTITY openpgpKey.accesskey "o">

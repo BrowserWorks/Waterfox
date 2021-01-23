@@ -1,0 +1,127 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "Krijues Llogarie">
+<!ENTITY accountWizard.size "width: 40em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!ENTITY accountSetupInfo2.label "Që të mund të merrni mesazhe, lypset së pari të rregulloni një llogari.">
+<!ENTITY accountTypeTitle.label "Rregullime Llogarie të Re">
+<!ENTITY accountTypeDesc2.label "Ky Krijues do të mbledhë të dhënat e nevojshme për rregullimin e një llogarie. Nëse nuk i dini të dhënat e kërkuara, ju lutemi lidhuni me Përgjegjësin e Sistemit tuaj ose Furnizuesin e Shërbimit Internet (ISP).">
+<!ENTITY accountTypeDirections.label "Përzgjidhni llojin e llogarisë që doni të rregulloni:">
+<!ENTITY accountTypeMail.label "Llogari email">
+<!ENTITY accountTypeMail.accesskey "e">
+<!ENTITY accountTypeNews.label "Llogari Grupi Lajmesh">
+<!ENTITY accountTypeNews.accesskey "G">
+<!-- LOCALIZATION NOTE(accountTypeMovemail.label): do not translate 'Movemail' -->
+<!ENTITY accountTypeMovemail.label "Unix Mailspool (Movemail)">
+<!ENTITY accountTypeMovemail.accesskey "U">
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "Identitet">
+<!ENTITY identityDesc.label "Çdo llogari ka identitetin e vet, i cili përbëhet nga të dhënat që ju identifikojnë kundrejt të tjerëve kur këta marrin mesazhet tuaj.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "Jepni emrin që do të donit të shfaqet në zonën &quot;Prej&quot; të mesazheve të dërguar">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(për shembull, &quot;Gjon Shpella&quot;).">
+<!ENTITY fullnameLabel.label "Emri Juaj:">
+<!ENTITY fullnameLabel.accesskey "E">
+
+<!ENTITY emailLabel.label "Adresë Email:">
+<!ENTITY emailLabel.accesskey "A">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "Të dhëna Shërbyesi Për Ardhësen">
+<!ENTITY incomingServerTypeDesc.label "Përzgjidhni llojin e shërbyesit marrës që po përdorni.">
+<!-- LOCALIZATION NOTE (imapType.label) : Do not translate "IMAP" in below line -->
+<!ENTITY imapType.label "IMAP">
+<!ENTITY imapType.accesskey "I">
+<!-- LOCALIZATION NOTE (popType.label) : Do not translate "POP" in below line -->
+<!ENTITY popType.label "POP">
+<!ENTITY popType.accesskey "P">
+<!ENTITY leaveMsgsOnSrvr.label "Lëri mesazhet në shërbyes">
+<!ENTITY leaveMsgsOnSrvr.accesskey "L">
+<!ENTITY portNum.label "Portë:">
+<!ENTITY portNum.accesskey "o">
+<!ENTITY defaultPortLabel.label "Parazgjedhje:">
+<!ENTITY defaultPortValue.label "">
+<!-- LOCALIZATION NOTE (incomingServerNameDesc.label) : Do not translate "&quot;pop.example.net&quot;" in below line -->
+<!ENTITY incomingServer.description "Jepni emrin e shërbyesit tuaj për postë ardhëse (për shembull, &quot;mail.example.net&quot;).">
+<!ENTITY incomingServer.label "Shërbyes për Ardhësen:">
+<!ENTITY incomingServer.accesskey "A">
+<!-- LOCALIZATION NOTE (incomingUsername.description) : do not translate "&quot;jsmith&quot;" in below line -->
+<!ENTITY incomingUsername.description "Jepni emër përdoruesi për postën ardhëse, siç ju është dhënë nga furnizuesi juaj i shërbimit email (për shembull, &quot;matokodra&quot;).">
+<!ENTITY incomingUsername.label "Emër Përdoruesi:">
+<!ENTITY incomingUsername.accesskey "E">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Jepni emrin e shërbyesit tuaj të lajmeve (NNTP) (për shembull, &quot;news.example.net&quot;).">
+<!ENTITY newsServerLabel.label "Shërbyes Grupi Lajmesh:">
+<!ENTITY newsServerLabel.accesskey "L">
+
+<!-- Entities for Outgoing Server page -->
+
+<!ENTITY outgoingTitle.label "Të dhëna Shërbyesi për të Dërguarën">
+<!-- LOCALIZATION NOTE (outgoingServer.description) : Do not translate "SMTP" and "&quot;smtp.example.net&quot;" in below line -->
+<!ENTITY outgoingServer.description "Jepni emrin e shërbyesit tuaj për postën e dërguar (SMTP) (për shembull, &quot;smtp.example.net&quot;).">
+<!ENTITY outgoingServer.label "Shërbyesi Dërgues:">
+<!ENTITY outgoingServer.accesskey "S">
+<!ENTITY outgoingUsername.description "Jepni emër përdoruesi për dërguesin ashtu si ju është dhënë nga furnizuesi juaj i shërbimit email (zakonisht ky është i njëjtë me emrin tuaj të përdoruesit për postën ardhëse).">
+<!ENTITY outgoingUsername.label "Emër Përdoruesi për Dërguesin:">
+<!ENTITY outgoingUsername.accesskey "D">
+
+<!-- LOCALIZATION NOTE (modifyOutgoing.suffix) : This string will be appended after each of
+     haveSmtp1.suffix3, haveSmtp2.suffix3, haveSmtp3.suffix3 .
+-->
+<!ENTITY modifyOutgoing.suffix "Shërbyesit dërgues mund t&apos;i ndryshoni te rregullimet e llogarisë.">
+<!-- LOCALIZATION NOTE (haveSmtp1.prefix and haveSmtp1.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp1.prefix and haveSmtp1.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp1.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp1.prefix "Do të përdoret shërbyesi juaj ekzistues dërgues (SMTP), &quot;">
+<!ENTITY haveSmtp1.suffix3 "&quot;.">
+<!-- LOCALIZATION NOTE (haveSmtp2.prefix and haveSmtp2.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp2.prefix and haveSmtp2.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp2.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp2.prefix "Do të përdoret emri juaj ekzistues i përdoruesit për dërguesin (SMTP), &quot;">
+<!ENTITY haveSmtp2.suffix3 "&quot;.">
+<!-- LOCALIZATION NOTE (haveSmtp3.prefix and haveSmtp3.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp3.prefix and haveSmtp3.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp3.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp3.prefix "Shërbyesi juaj dërgues (SMTP), &quot;">
+<!ENTITY haveSmtp3.suffix3 "&quot;, është identik me shërbyesin tuaj marrës. Për hyrje në të do të përdoret emri juaj i përdoruesit për marrësin..">
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "Emër Llogarie">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Jepni emrin me të cilin do të donit t&apos;i referoheni kësaj llogarie (për shembull, &quot;Llogari Pune&quot;, &quot;Llogari Shtëpie&quot; ose &quot;Llogari Lajmesh&quot;).">
+<!ENTITY accnameLabel.label "Emër Llogarie:">
+<!ENTITY accnameLabel.accesskey "E">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "Përgëzime!">
+<!ENTITY completionText.label "Ju lutemi, sigurohuni që të dhënat e mëposhtme janë të sakta.">
+<!ENTITY serverTypePrefix.label "Lloj Shërbyesi Marrës:">
+<!ENTITY serverNamePrefix.label "Emër Shërbyesi Marrës:">
+<!ENTITY smtpServerNamePrefix.label "Emër Shërbyesi Dërgues (SMTP):">
+<!ENTITY newsServerNamePrefix.label "Emër Shërbyesi Lajmesh (NNTP):">
+<!ENTITY downloadOnLogin.label "Shkarkoji mesazhet tani">
+<!ENTITY downloadOnLogin.accesskey "K">
+<!ENTITY deferStorageDesc.label "Hiqini shenjën kutizës nëse doni të ruani postën për këtë llogari te drejtoria e vet. Kjo do të bëjë që kjo llogari të duket si llogaria më e sipërme. Përndryshe, do të jetë pjesë e llogarisë së Përgjithshme Të marrë te Dosje Vendore">
+<!ENTITY deferStorage.label "Përdor Të marrë të Përgjithshëm (ruaj postë në Dosje Vendore)">
+<!ENTITY deferStorage.accesskey "P">
+<!ENTITY clickFinish.label "Klikoni mbi Përfundoje që të ruhen këto rregullime dhe të dilet nga Krijuesi i Llogarive.">
+<!ENTITY clickFinish.labelMac "Klikoni mbi Përfundoje që të ruhen këto rregullime dhe të dilet nga Krijuesi i Llogarive.">

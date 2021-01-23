@@ -7,6 +7,7 @@ Transform the release-sign-and-push task into an actual task description.
 
 from __future__ import absolute_import, print_function, unicode_literals
 
+from six import text_type
 from taskgraph.loader.single_dep import schema
 from taskgraph.transforms.base import TransformSequence
 from taskgraph.util.attributes import copy_attributes_from_dependent_job
@@ -18,11 +19,11 @@ from voluptuous import Any, Required
 transforms = TransformSequence()
 
 langpack_sign_push_description_schema = schema.extend({
-    Required('label'): basestring,
-    Required('description'): basestring,
-    Required('worker-type'): optionally_keyed_by('release-level', basestring),
+    Required('label'): text_type,
+    Required('description'): text_type,
+    Required('worker-type'): optionally_keyed_by('release-level', text_type),
     Required('worker'): {
-        Required('implementation'): 'sign-and-push-addons',
+        Required('implementation'): 'push-addons',
         Required('channel'): optionally_keyed_by(
             'project',
             optionally_keyed_by('platform', Any('listed', 'unlisted'))),
@@ -30,7 +31,7 @@ langpack_sign_push_description_schema = schema.extend({
     },
 
     Required('run-on-projects'): [],
-    Required('scopes'): optionally_keyed_by('release-level', [basestring]),
+    Required('scopes'): optionally_keyed_by('release-level', [text_type]),
     Required('shipping-phase'): task_description_schema['shipping-phase'],
     Required('shipping-product'): task_description_schema['shipping-product'],
 })
@@ -39,7 +40,7 @@ langpack_sign_push_description_schema = schema.extend({
 @transforms.add
 def set_label(config, jobs):
     for job in jobs:
-        label = 'sign-and-push-langpacks-{}'.format(job['primary-dependency'].label)
+        label = 'push-langpacks-{}'.format(job['primary-dependency'].label)
         job['label'] = label
 
         yield job
@@ -83,18 +84,15 @@ def filter_out_macos_jobs_but_mac_only_locales(config, jobs):
     for job in jobs:
         build_platform = job['primary-dependency'].attributes.get('build_platform')
 
-        if build_platform in (
-                'linux64-nightly', 'linux64-devedition-nightly',
-                'linux64-shippable'):
+        if build_platform in ('linux64-devedition', 'linux64-shippable'):
             yield job
-        elif build_platform in (
-                'macosx64-nightly', 'macosx64-devedition-nightly',
-                'macosx64-shippable') and \
+        elif build_platform in ('macosx64-devedition', 'macosx64-shippable') and \
                 'ja-JP-mac' in job['attributes']['chunk_locales']:
             # Other locales of the same job shouldn't be processed
             job['attributes']['chunk_locales'] = ['ja-JP-mac']
             job['label'] = job['label'].replace(
-                job['attributes']['l10n_chunk'], 'ja-JP-mac'
+                # Guard against a chunk 10 or chunk 1 (latter on try) weird munging
+                "-{}/".format(job['attributes']['l10n_chunk']), '-ja-JP-mac/'
             )
             yield job
 
@@ -135,7 +133,7 @@ def generate_upstream_artifacts(upstream_task_ref, locales):
 @transforms.add
 def make_task_worker(config, jobs):
     for job in jobs:
-        upstream_task_ref = get_upstream_task_ref(job, expected_kinds=('build', 'nightly-l10n'))
+        upstream_task_ref = get_upstream_task_ref(job, expected_kinds=('build', 'shippable-l10n'))
 
         job['worker']['upstream-artifacts'] = generate_upstream_artifacts(
             upstream_task_ref, job['attributes']['chunk_locales']

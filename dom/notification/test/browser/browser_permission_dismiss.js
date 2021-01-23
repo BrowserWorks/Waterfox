@@ -1,5 +1,9 @@
 "use strict";
 
+const { PermissionTestUtils } = ChromeUtils.import(
+  "resource://testing-common/PermissionTestUtils.jsm"
+);
+
 const ORIGIN_URI = Services.io.newURI("https://example.com");
 const PERMISSION_NAME = "desktop-notification";
 const PROMPT_ALLOW_BUTTON = -1;
@@ -45,7 +49,7 @@ function clickDoorhangerButton(aButtonIndex) {
  *                   closes.
  */
 function tabWithRequest(task, permission) {
-  Services.perms.remove(ORIGIN_URI, PERMISSION_NAME);
+  PermissionTestUtils.remove(ORIGIN_URI, PERMISSION_NAME);
 
   return BrowserTestUtils.withNewTab(
     {
@@ -53,11 +57,13 @@ function tabWithRequest(task, permission) {
       url: TEST_URL,
     },
     async function(browser) {
-      let requestPromise = ContentTask.spawn(
+      let requestPromise = SpecialPowers.spawn(
         browser,
-        {
-          permission,
-        },
+        [
+          {
+            permission,
+          },
+        ],
         async function({ permission }) {
           function requestCallback(perm) {
             is(
@@ -92,9 +98,16 @@ add_task(async function setup() {
     "dom.webnotifications.requireuserinteraction",
     false
   );
+  Services.prefs.setBoolPref(
+    "permissions.desktop-notification.notNow.enabled",
+    true
+  );
   SimpleTest.registerCleanupFunction(() => {
     Services.prefs.clearUserPref("dom.webnotifications.requireuserinteraction");
-    Services.perms.remove(ORIGIN_URI, PERMISSION_NAME);
+    Services.prefs.clearUserPref(
+      "permissions.desktop-notification.notNow.enabled"
+    );
+    PermissionTestUtils.remove(ORIGIN_URI, PERMISSION_NAME);
   });
 });
 
@@ -109,7 +122,7 @@ add_task(async function test_requestPermission_granted() {
   );
 
   is(
-    Services.perms.testPermission(ORIGIN_URI, PERMISSION_NAME),
+    PermissionTestUtils.testPermission(ORIGIN_URI, PERMISSION_NAME),
     Services.perms.ALLOW_ACTION,
     "Check permission in perm. manager"
   );
@@ -126,7 +139,7 @@ add_task(async function test_requestPermission_denied_temporarily() {
   );
 
   is(
-    Services.perms.testPermission(ORIGIN_URI, PERMISSION_NAME),
+    PermissionTestUtils.testPermission(ORIGIN_URI, PERMISSION_NAME),
     Services.perms.UNKNOWN_ACTION,
     "Check permission in perm. manager"
   );
@@ -143,7 +156,7 @@ add_task(async function test_requestPermission_denied_permanently() {
   );
 
   is(
-    Services.perms.testPermission(ORIGIN_URI, PERMISSION_NAME),
+    PermissionTestUtils.testPermission(ORIGIN_URI, PERMISSION_NAME),
     Services.perms.DENY_ACTION,
     "Check permission in perm. manager"
   );

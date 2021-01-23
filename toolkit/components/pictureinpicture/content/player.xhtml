@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
 <!-- This Source Code Form is subject to the terms of the Mozilla Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-<!DOCTYPE html [
-  <!ENTITY % htmlDTD PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "DTD/xhtml1-strict.dtd">
-  %htmlDTD;
-]>
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
       windowtype="Toolkit:PictureInPicture"
@@ -14,21 +11,26 @@
     <meta charset="utf-8"/>
     <link rel="stylesheet" type="text/css"
           href="chrome://global/skin/pictureinpicture/player.css"/>
+    <link rel="localization" href="toolkit/pictureinpicture/pictureinpicture.ftl"/>
     <script src="chrome://global/content/pictureinpicture/player.js"></script>
+    <title data-l10n-id="pictureinpicture-player-title"></title>
   </head>
 
   <body>
     <div class="player-holder">
-      <xul:browser type="content" primary="true" remote="true" remoteType="web" id="browser"></xul:browser>
+      <xul:browser type="content" primary="true" remote="true" remoteType="web" id="browser" tabindex="-1"></xul:browser>
     </div>
     <div id="controls">
-      <div id="close" class="control-item"></div>
+      <button id="close" class="control-item" data-l10n-id="pictureinpicture-close" tabindex="3"></button>
 
       <div id="controls-bottom">
-        <div id="unpip" class="control-item"></div>
-        <div id="gap"></div>
-        <div id="pause" class="control-item"></div>
-        <div id="play" class="control-item"></div>
+        <button id="unpip" class="control-item" data-l10n-id="pictureinpicture-unpip" tabindex="2"></button>
+        <div class="gap"></div>
+        <button id="playpause" class="control-item" tabindex="1" autofocus="true"
+                data-l10n-id="pictureinpicture-pause"/>
+        <div class="gap" hidden="true"></div>
+        <button id="audio" class="control-item" hidden="true" tabindex="1"
+                data-l10n-id="pictureinpicture-mute"/>
       </div>
     </div>
   </body>

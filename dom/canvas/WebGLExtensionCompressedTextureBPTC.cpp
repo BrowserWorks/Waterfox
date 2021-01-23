@@ -23,8 +23,6 @@ WebGLExtensionCompressedTextureBPTC::WebGLExtensionCompressedTextureBPTC(
     auto usage = fua->EditUsage(effFormat);
     usage->isFilterable = true;
     fua->AllowSizedTexFormat(sizedFormat, usage);
-
-    webgl->mCompressedTextureFormats.AppendElement(sizedFormat);
   };
 
 #define _(X) LOCAL_GL_##X, webgl::EffectiveFormat::X
@@ -41,8 +39,5 @@ bool WebGLExtensionCompressedTextureBPTC::IsSupported(
     const WebGLContext* const webgl) {
   return webgl->gl->IsSupported(gl::GLFeature::texture_compression_bptc);
 }
-
-IMPL_WEBGL_EXTENSION_GOOP(WebGLExtensionCompressedTextureBPTC,
-                          EXT_texture_compression_bptc)
 
 }  // namespace mozilla

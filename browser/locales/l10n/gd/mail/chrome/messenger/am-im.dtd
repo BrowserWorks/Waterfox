@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountWindow.title           "Roghainnean a' chunntais">
+<!ENTITY accountWindow.width           "300">
+<!ENTITY account.general               "Coitcheann">
+<!ENTITY account.advanced              "Roghainnean adhartach">
+<!ENTITY account.name                  "Ainm-cleachdaiche:">
+<!ENTITY account.password              "Facal-faire:">
+<!ENTITY account.alias                 "Ainm-brèige:">
+<!ENTITY account.newMailNotification   "Innis dhomh ma thig post ùr a-steach">
+<!ENTITY account.autojoin              "Seanailean Auto-Joined:">
+<!ENTITY account.proxySettings.caption "Roghainnean progsaidh:">
+<!ENTITY account.proxySettings.change.label     "Atharraich…">
+<!ENTITY account.proxySettings.change.accessKey "A">

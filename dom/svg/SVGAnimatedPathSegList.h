@@ -11,7 +11,6 @@
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/SMILAttr.h"
 #include "mozilla/UniquePtr.h"
-#include "nsAutoPtr.h"
 #include "SVGPathData.h"
 
 namespace mozilla {
@@ -40,8 +39,8 @@ class SVGElement;
  */
 class SVGAnimatedPathSegList final {
   // friends so that they can get write access to mBaseVal and mAnimVal
-  friend class DOMSVGPathSeg;
-  friend class DOMSVGPathSegList;
+  friend class dom::DOMSVGPathSeg;
+  friend class dom::DOMSVGPathSegList;
 
  public:
   SVGAnimatedPathSegList() = default;
@@ -95,7 +94,7 @@ class SVGAnimatedPathSegList final {
   // the empty string (<set to="">).
 
   SVGPathData mBaseVal;
-  nsAutoPtr<SVGPathData> mAnimVal;
+  UniquePtr<SVGPathData> mAnimVal;
 
   struct SMILAnimatedPathSegList : public SMILAttr {
    public:

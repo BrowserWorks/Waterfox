@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "Avanseard bewurkje...">
+<!ENTITY AdvancedEditButton.accessKey "s">
+<!ENTITY AdvancedEditButton.tooltip "Tafoegje of oanpasse fan HTML-attributen, stylattributen en JavaSkript">
+<!ENTITY chooseFileButton.label "Bestân kieze...">
+<!ENTITY chooseFileButton.accessKey "k">
+<!ENTITY chooseFileLinkButton.label "Bestân kieze...">
+<!ENTITY chooseFileLinkButton.accessKey "i">
+<!ENTITY makeUrlRelative.label "URL is relatyf tsjinoer de sidelokaasje">
+<!ENTITY makeUrlRelative.accessKey "U">
+<!ENTITY makeUrlRelative.tooltip "Wikselje tusken relatieve en absolute URL. Jo moatte de side earst bewarje om hjirtusken wikseljen te kinne.">
+
+<!ENTITY LinkURLEditField2.label "Fier de lokaasje yn fan in webside, lokaal bestân of selektearje in ankerferwizing of kop fan it fjild syn kontekstmenu:">
+<!ENTITY LinkURLEditField2.accessKey "w">

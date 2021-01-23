@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY settings.caption "Ezarpenak">
+<!ENTITY security.caption "Segurtasuna eta autentifikazioa">
+<!ENTITY serverName.label "Zerbitzari-izena:">
+<!ENTITY serverName.accesskey "Z">
+<!ENTITY serverDescription.label "Azalpena:">
+<!ENTITY serverDescription.accesskey "A">
+<!ENTITY serverPort.label "Ataka:">
+<!ENTITY serverPort.accesskey "A">
+<!ENTITY userName.label "Erabiltzaile-izena:">
+<!ENTITY userName.accesskey "n">
+<!ENTITY connectionSecurity.label "Konexioaren segurtasuna:">
+<!ENTITY connectionSecurity.accesskey "n">
+<!ENTITY connectionSecurityType-0.label "Bat ere ez">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, erabilgarri badago">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY smtpEditTitle.label "SMTP zerbitzaria">
+<!ENTITY serverPortDefault.label "Lehenetsia:">
+<!ENTITY authMethod.label "Autentifikazio metodoa:">
+<!ENTITY authMethod.accesskey "i">

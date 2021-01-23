@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -29,8 +28,12 @@ add_task(async function() {
   info("Test click on color swatch while editing property name");
 
   await selectNode("#testid", inspector);
-  const ruleEditor = getRuleViewRuleEditor(view, 1);
-  const propEditor = ruleEditor.rule.textProps[1].editor;
+  const prop = getTextProperty(view, 1, {
+    background:
+      "linear-gradient( 90deg, rgb(183,222,237), rgb(33,180,226), rgb(31,170,217), rgba(200,170,140,0.5))",
+  });
+  const propEditor = prop.editor;
+
   const swatchSpan = propEditor.valueSpan.querySelectorAll(
     ".ruleview-colorswatch"
   )[3];

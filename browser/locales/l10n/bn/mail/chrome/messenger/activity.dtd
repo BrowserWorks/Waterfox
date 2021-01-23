@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (window.width2, window.height): These values should be
+close to the golden ratio (1.618:1) while making sure it's wide enough for long
+file names and tall enough to hint that there are more activities in the list -->
+<!ENTITY window.width2 "485">
+<!ENTITY window.height "300">
+
+<!ENTITY activity.title "কার্যক্রম ব্যবস্থাপক">
+
+<!ENTITY cmd.pause.label "বিরতি (P)">
+<!ENTITY cmd.pause.accesskey "P">
+<!ENTITY cmd.resume.label "পুনরায় আরম্ভ (R)">
+<!ENTITY cmd.resume.accesskey "R">
+<!ENTITY cmd.cancel.label "বাতিল (C)">
+<!ENTITY cmd.cancel.accesskey "C">
+<!ENTITY cmd.undo.label "পূর্বাবস্থায় ফেরানো (U)">
+<!ENTITY cmd.undo.accesskey "U">
+<!ENTITY cmd.recover.label "পুনরুদ্ধার (v)">
+<!ENTITY cmd.recover.accesskey "v">
+<!ENTITY cmd.retry.label "পুনরায় চেষ্টা (R)">
+<!ENTITY cmd.retry.accesskey "R">
+<!ENTITY cmd.removeFromList.label "তালিকা থেকে অপসারণ (e)">
+<!ENTITY cmd.removeFromList.accesskey "e">
+
+<!ENTITY cmd.close.commandkey "w">
+<!ENTITY cmd.close2.commandkey "j">
+<!ENTITY cmd.close2Unix.commandkey "y">
+<!ENTITY cmd.clearList.label "তালিকা পরিষ্কার (C)">
+<!ENTITY cmd.clearList.tooltip "তালিকা থেকে সম্পন্ন, বাতিলকৃত, এবং ব্যর্থ আইটেমসমূহ মুছে ফেলে">
+<!ENTITY cmd.clearList.accesskey "C">
+<!ENTITY cmd.find.commandkey "f">
+<!ENTITY cmd.search.commandkey "k">
+
+<!ENTITY searchBox.label "অনুসন্ধান…">

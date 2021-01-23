@@ -22,7 +22,7 @@ test(function () {
 test(() => {
     var params = new URLSearchParams(DOMException);
     assert_equals(params.toString(), "INDEX_SIZE_ERR=1&DOMSTRING_SIZE_ERR=2&HIERARCHY_REQUEST_ERR=3&WRONG_DOCUMENT_ERR=4&INVALID_CHARACTER_ERR=5&NO_DATA_ALLOWED_ERR=6&NO_MODIFICATION_ALLOWED_ERR=7&NOT_FOUND_ERR=8&NOT_SUPPORTED_ERR=9&INUSE_ATTRIBUTE_ERR=10&INVALID_STATE_ERR=11&SYNTAX_ERR=12&INVALID_MODIFICATION_ERR=13&NAMESPACE_ERR=14&INVALID_ACCESS_ERR=15&VALIDATION_ERR=16&TYPE_MISMATCH_ERR=17&SECURITY_ERR=18&NETWORK_ERR=19&ABORT_ERR=20&URL_MISMATCH_ERR=21&QUOTA_EXCEEDED_ERR=22&TIMEOUT_ERR=23&INVALID_NODE_TYPE_ERR=24&DATA_CLONE_ERR=25")
-    assert_throws(new TypeError(), () => new URLSearchParams(DOMException.prototype),
+    assert_throws_js(TypeError, () => new URLSearchParams(DOMException.prototype),
                   "Constructing a URLSearchParams from DOMException.prototype should throw due to branding checks");
 }, "URLSearchParams constructor, DOMException as argument")
 
@@ -72,6 +72,23 @@ test(function() {
     params.append('g', 'h');
     assert_false(seed.has('g'));
 }, 'URLSearchParams constructor, object.');
+
+test(function() {
+    var formData = new FormData()
+    formData.append('a', 'b')
+    formData.append('c', 'd')
+    var params = new URLSearchParams(formData);
+    assert_true(params != null, 'constructor returned non-null value.');
+    assert_equals(params.get('a'), 'b');
+    assert_equals(params.get('c'), 'd');
+    assert_false(params.has('d'));
+    // The name-value pairs are copied when created; later updates
+    // should not be observable.
+    formData.append('e', 'f');
+    assert_false(params.has('e'));
+    params.append('g', 'h');
+    assert_false(formData.has('g'));
+}, 'URLSearchParams constructor, FormData.');
 
 test(function() {
     var params = new URLSearchParams('a=b+c');
@@ -153,8 +170,8 @@ test(function() {
     params = new URLSearchParams([['a', 'b'], ['c', 'd']]);
     assert_equals(params.get("a"), "b");
     assert_equals(params.get("c"), "d");
-    assert_throws(new TypeError(), function() { new URLSearchParams([[1]]); });
-    assert_throws(new TypeError(), function() { new URLSearchParams([[1,2,3]]); });
+    assert_throws_js(TypeError, function() { new URLSearchParams([[1]]); });
+    assert_throws_js(TypeError, function() { new URLSearchParams([[1,2,3]]); });
 }, "Constructor with sequence of sequences of strings");
 
 [

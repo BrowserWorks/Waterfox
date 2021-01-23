@@ -58,11 +58,7 @@ add_task(async function test_overflow() {
   }
   Assert.ok(
     visibleNodes.length < gToolbarContent.children.length,
-    `The number of visible nodes (${
-      visibleNodes.length
-    }) should be smaller than the number of built nodes (${
-      gToolbarContent.children.length
-    })`
+    `The number of visible nodes (${visibleNodes.length}) should be smaller than the number of built nodes (${gToolbarContent.children.length})`
   );
 
   await test_index(
@@ -132,7 +128,7 @@ add_task(async function test_separator_first() {
   await promiseReady;
 
   let children = gToolbarContent.children;
-  Assert.ok(children.length > 2, "Multiple elements are visible");
+  Assert.greater(children.length, 2, "Multiple elements are visible");
   Assert.equal(
     children[1]._placesNode.uri,
     "http://test.places.0/",

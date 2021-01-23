@@ -17,6 +17,7 @@ let VALUES = [null,
               ["abracadabra"],
               1337,
               13.37,
+              37n,
               "hi",
               Symbol("status"),
               () => 1337];
@@ -38,7 +39,7 @@ let VALUES = [null,
 
 for (let v of VALUES)
 {
-    let g = new WebAssembly.Global({value: "anyref"}, v);
+    let g = new WebAssembly.Global({value: "externref"}, v);
     assertEq(g.value, v);
 }
 
@@ -46,7 +47,7 @@ for (let v of VALUES)
 
 for (let v of VALUES)
 {
-    let g = new WebAssembly.Global({value: "anyref", mutable: true});
+    let g = new WebAssembly.Global({value: "externref", mutable: true});
     g.value = v;
     assertEq(g.value, v);
 }
@@ -55,10 +56,10 @@ for (let v of VALUES)
 
 for (let v of VALUES)
 {
-    let g = new WebAssembly.Global({value: "anyref"}, v);
+    let g = new WebAssembly.Global({value: "externref"}, v);
     let ins = wasmEvalText(
         `(module
-           (import $glob "m" "g" (global anyref))
+           (import "m" "g" (global $glob anyref))
            (func (export "f") (result anyref)
              (global.get $glob)))`,
         {m:{g}});
@@ -69,10 +70,10 @@ for (let v of VALUES)
 
 for (let v of VALUES)
 {
-    let g = new WebAssembly.Global({value: "anyref", mutable: true});
+    let g = new WebAssembly.Global({value: "externref", mutable: true});
     let ins = wasmEvalText(
         `(module
-           (import $glob "m" "g" (global (mut anyref)))
+           (import "m" "g" (global $glob (mut anyref)))
            (func (export "f") (param $v anyref)
              (global.set $glob (local.get $v))))`,
         {m:{g}});
@@ -84,8 +85,8 @@ for (let v of VALUES)
 //
 // - through WebAssembly.Table.prototype.set()
 // - through the table.set, table.copy, and table.grow instructions
-// - unimplemented: through table.fill
-// - unimplemented: through WebAssembly.Table.prototype.grow()
+// - through table.fill
+// - through WebAssembly.Table.prototype.grow()
 //
 // Their values can be read in several ways:
 //
@@ -98,7 +99,7 @@ for (let v of VALUES)
 
 for (let v of VALUES)
 {
-    let t = new WebAssembly.Table({element: "anyref", initial: 10});
+    let t = new WebAssembly.Table({element: "externref", initial: 10});
     t.set(3, v);
     assertEq(t.get(3), v);
 }
@@ -107,10 +108,10 @@ for (let v of VALUES)
 
 for (let v of VALUES)
 {
-    let t = new WebAssembly.Table({element: "anyref", initial: 10});
+    let t = new WebAssembly.Table({element: "externref", initial: 10});
     let ins = wasmEvalText(
         `(module
-           (import $t "m" "t" (table 10 anyref))
+           (import "m" "t" (table $t 10 anyref))
            (func (export "f") (param $v anyref)
              (table.set $t (i32.const 3) (local.get $v))))`,
         {m:{t}});
@@ -122,10 +123,10 @@ for (let v of VALUES)
 
 for (let v of VALUES)
 {
-    let t = new WebAssembly.Table({element: "anyref", initial: 10});
+    let t = new WebAssembly.Table({element: "externref", initial: 10});
     let ins = wasmEvalText(
         `(module
-           (import $t "m" "t" (table 10 anyref))
+           (import "m" "t" (table $t 10 anyref))
            (func (export "f") (result anyref)
              (table.get $t (i32.const 3))))`,
         {m:{t}});
@@ -142,8 +143,8 @@ for (let v of VALUES)
     let receiver = function (w) { assertEq(w, v); };
     let ins = wasmEvalText(
         `(module
-           (import $returner "m" "returner" (func (result anyref)))
-           (import $receiver "m" "receiver" (func (param anyref)))
+           (import "m" "returner" (func $returner (result anyref)))
+           (import "m" "receiver" (func $receiver (param anyref)))
            (func (export "test_returner") (result anyref)
              (call $returner))
            (func (export "test_receiver") (param $v anyref)

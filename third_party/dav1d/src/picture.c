@@ -27,7 +27,6 @@
 
 #include "config.h"
 
-#include <assert.h>
 #include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -53,17 +52,24 @@ int dav1d_default_picture_alloc(Dav1dPicture *const p, void *const cookie) {
     const int has_chroma = p->p.layout != DAV1D_PIXEL_LAYOUT_I400;
     const int ss_ver = p->p.layout == DAV1D_PIXEL_LAYOUT_I420;
     const int ss_hor = p->p.layout != DAV1D_PIXEL_LAYOUT_I444;
-    p->stride[0] = aligned_w << hbd;
-    p->stride[1] = has_chroma ? (aligned_w >> ss_hor) << hbd : 0;
-    const size_t y_sz = p->stride[0] * aligned_h;
-    const size_t uv_sz = p->stride[1] * (aligned_h >> ss_ver);
-    const size_t pic_size = y_sz + 2 * uv_sz;
-
-    uint8_t *data = dav1d_alloc_aligned(pic_size + DAV1D_PICTURE_ALIGNMENT,
-                                        DAV1D_PICTURE_ALIGNMENT);
-    if (data == NULL) {
-        return DAV1D_ERR(ENOMEM);
-    }
+    ptrdiff_t y_stride = aligned_w << hbd;
+    ptrdiff_t uv_stride = has_chroma ? y_stride >> ss_hor : 0;
+    /* Due to how mapping of addresses to sets works in most L1 and L2 cache
+     * implementations, strides of multiples of certain power-of-two numbers
+     * may cause multiple rows of the same superblock to map to the same set,
+     * causing evictions of previous rows resulting in a reduction in cache
+     * hit rate. Avoid that by slightly padding the stride when necessary. */
+    if (!(y_stride & 1023))
+        y_stride += DAV1D_PICTURE_ALIGNMENT;
+    if (!(uv_stride & 1023) && has_chroma)
+        uv_stride += DAV1D_PICTURE_ALIGNMENT;
+    p->stride[0] = y_stride;
+    p->stride[1] = uv_stride;
+    const size_t y_sz = y_stride * aligned_h;
+    const size_t uv_sz = uv_stride * (aligned_h >> ss_ver);
+    const size_t pic_size = y_sz + 2 * uv_sz + DAV1D_PICTURE_ALIGNMENT;
+    uint8_t *data = dav1d_alloc_aligned(pic_size, DAV1D_PICTURE_ALIGNMENT);
+    if (!data) return DAV1D_ERR(ENOMEM);
 
     p->data[0] = data;
     p->data[1] = has_chroma ? data + y_sz : NULL;
@@ -104,6 +110,7 @@ static int picture_alloc_with_edges(Dav1dContext *const c, Dav1dPicture *const p
                                     Dav1dFrameHeader *frame_hdr,  Dav1dRef *frame_hdr_ref,
                                     Dav1dContentLightLevel *content_light, Dav1dRef *content_light_ref,
                                     Dav1dMasteringDisplay *mastering_display, Dav1dRef *mastering_display_ref,
+                                    Dav1dITUTT35 *itut_t35, Dav1dRef *itut_t35_ref,
                                     const int bpc, const Dav1dDataProps *props,
                                     Dav1dPicAllocator *const p_allocator,
                                     const size_t extra, void **const extra_ptr)
@@ -125,6 +132,7 @@ static int picture_alloc_with_edges(Dav1dContext *const c, Dav1dPicture *const p
     p->frame_hdr = frame_hdr;
     p->content_light = content_light;
     p->mastering_display = mastering_display;
+    p->itut_t35 = itut_t35;
     p->p.layout = seq_hdr->layout;
     p->p.bpc = bpc;
     dav1d_data_props_set_defaults(&p->m);
@@ -161,6 +169,9 @@ static int picture_alloc_with_edges(Dav1dContext *const c, Dav1dPicture *const p
     p->mastering_display_ref = mastering_display_ref;
     if (mastering_display_ref) dav1d_ref_inc(mastering_display_ref);
 
+    p->itut_t35_ref = itut_t35_ref;
+    if (itut_t35_ref) dav1d_ref_inc(itut_t35_ref);
+
     return 0;
 }
 
@@ -176,10 +187,15 @@ int dav1d_thread_picture_alloc(Dav1dContext *const c, Dav1dFrameContext *const f
                                  f->frame_hdr, f->frame_hdr_ref,
                                  c->content_light, c->content_light_ref,
                                  c->mastering_display, c->mastering_display_ref,
+                                 c->itut_t35, c->itut_t35_ref,
                                  bpc, &f->tile[0].data.m, &c->allocator,
                                  p->t != NULL ? sizeof(atomic_int) * 2 : 0,
                                  (void **) &p->progress);
     if (res) return res;
+
+    // Must be removed from the context after being attached to the frame
+    dav1d_ref_dec(&c->itut_t35_ref);
+    c->itut_t35 = NULL;
 
     p->visible = f->frame_hdr->show_frame;
     if (p->t) {
@@ -198,6 +214,7 @@ int dav1d_picture_alloc_copy(Dav1dContext *const c, Dav1dPicture *const dst, con
                                              src->frame_hdr, src->frame_hdr_ref,
                                              src->content_light, src->content_light_ref,
                                              src->mastering_display, src->mastering_display_ref,
+                                             src->itut_t35, src->itut_t35_ref,
                                              src->p.bpc, &src->m, &pic_ctx->allocator,
                                              0, NULL);
     return res;
@@ -216,6 +233,7 @@ void dav1d_picture_ref(Dav1dPicture *const dst, const Dav1dPicture *const src) {
         if (src->m.user_data.ref) dav1d_ref_inc(src->m.user_data.ref);
         if (src->content_light_ref) dav1d_ref_inc(src->content_light_ref);
         if (src->mastering_display_ref) dav1d_ref_inc(src->mastering_display_ref);
+        if (src->itut_t35_ref) dav1d_ref_inc(src->itut_t35_ref);
     }
     *dst = *src;
 }
@@ -252,6 +270,7 @@ void dav1d_picture_unref_internal(Dav1dPicture *const p) {
         dav1d_ref_dec(&p->m.user_data.ref);
         dav1d_ref_dec(&p->content_light_ref);
         dav1d_ref_dec(&p->mastering_display_ref);
+        dav1d_ref_dec(&p->itut_t35_ref);
     }
     memset(p, 0, sizeof(*p));
 }

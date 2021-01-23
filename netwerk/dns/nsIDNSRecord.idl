@@ -32,6 +32,9 @@ interface nsIDNSRecord : nsISupports
      * the record was not fetched with the RESOLVE_CANONICAL_NAME flag.
      *
      * e.g., www.mozilla.org --> rheet.mozilla.org
+     *
+     * That the result, if IDN will be returned as punycode.
+     * e.g., élève.w3c-test.org --> xn--lve-6lad.w3c-test.org
      */
     readonly attribute ACString canonicalName;
 
@@ -102,4 +105,22 @@ interface nsIDNSRecord : nsISupports
      * Record retreived with TRR.
      */
     bool IsTRR();
+
+    /**
+     * This attribute is only set if TRR is used and it measures time between
+     * asyncOpen on a channel and the time parsing of response if done.
+     * Thee time is measured in milliseconds.
+     */
+    readonly attribute double trrFetchDuration;
+
+    /**
+     * This attribute is only set if TRR is used and it measures time between
+     * sending a request and the time response is received from the network.
+     * This time is similat to the time above, but exludes a time needed to
+     * make a connection and a time neededto parse results (this also does not
+     * include delays that may be introduce because parsing is perform on the main
+     * thread).
+     * Thee time is measured in milliseconds.
+     */
+    readonly attribute double trrFetchDurationNetworkOnly;
 };

@@ -1,5 +1,9 @@
 /* -*- Mode: indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set sts=2 sw=2 et tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
 
 /**
@@ -25,44 +29,7 @@ function getDevToolsPrefBranchName(extensionId) {
 }
 
 /**
- * Retrieve the devtools target for the devtools extension proxy context
- * (lazily cloned from the target of the toolbox associated to the context
- * the first time that it is accessed).
- *
- * @param {DevToolsExtensionPageContextParent} context
- *   A devtools extension proxy context.
- *
- * @returns {Promise<TabTarget>}
- *   The cloned devtools target associated to the context.
- */
-global.getDevToolsTargetForContext = async context => {
-  if (!context.devToolsTargetPromise) {
-    if (!context.devToolsToolbox || !context.devToolsToolbox.target) {
-      throw new Error(
-        "Unable to get a Target for a context not associated to any toolbox"
-      );
-    }
-
-    if (!context.devToolsToolbox.target.isLocalTab) {
-      throw new Error(
-        "Unexpected target type: only local tabs are currently supported."
-      );
-    }
-
-    const tab = context.devToolsToolbox.target.tab;
-    context.devToolsTargetPromise = DevToolsShim.createTargetForTab(tab);
-  }
-
-  const target = await context.devToolsTargetPromise;
-  await target.attach();
-
-  return target;
-};
-
-/**
- * Retrieve the devtools target for the devtools extension proxy context
- * (lazily cloned from the target of the toolbox associated to the context
- * the first time that it is accessed).
+ * Retrieve the tabId for the given devtools toolbox.
  *
  * @param {Toolbox} toolbox
  *   A devtools toolbox instance.
@@ -79,8 +46,10 @@ global.getTargetTabIdForToolbox = toolbox => {
     );
   }
 
-  let parentWindow = target.tab.linkedBrowser.ownerGlobal;
-  let tab = parentWindow.gBrowser.getTabForBrowser(target.tab.linkedBrowser);
+  let parentWindow = target.localTab.linkedBrowser.ownerGlobal;
+  let tab = parentWindow.gBrowser.getTabForBrowser(
+    target.localTab.linkedBrowser
+  );
 
   return tabTracker.getId(tab);
 };
@@ -88,17 +57,13 @@ global.getTargetTabIdForToolbox = toolbox => {
 // Create an InspectedWindowFront instance for a given context (used in devtoools.inspectedWindow.eval
 // and in sidebar.setExpression API methods).
 global.getInspectedWindowFront = async function(context) {
-  // If there is not yet a front instance, then a lazily cloned target for the context is
-  // retrieved using the DevtoolsParentContextsManager helper (which is an asynchronous operation,
-  // because the first time that the target has been cloned, it is not ready to be used to create
-  // the front instance until it is connected to the remote debugger successfully).
-  const clonedTarget = await getDevToolsTargetForContext(context);
-  return DevToolsShim.createWebExtensionInspectedWindowFront(clonedTarget);
+  const target = await context.getCurrentDevToolsTarget();
+  return DevToolsShim.createWebExtensionInspectedWindowFront(target);
 };
 
 // Get the WebExtensionInspectedWindowActor eval options (needed to provide the $0 and inspect
 // binding provided to the evaluated js code).
-global.getToolboxEvalOptions = function(context) {
+global.getToolboxEvalOptions = async function(context) {
   const options = {};
   const toolbox = context.devToolsToolbox;
   const selectedNode = toolbox.selection;
@@ -110,7 +75,8 @@ global.getToolboxEvalOptions = function(context) {
   }
 
   // Provide the console actor ID to implement the "inspect" binding.
-  options.toolboxConsoleActorID = toolbox.target.activeConsole.actor;
+  const consoleFront = await toolbox.target.getFront("console");
+  options.toolboxConsoleActorID = consoleFront.actor;
 
   return options;
 };
@@ -194,7 +160,7 @@ class DevToolsPage extends HiddenExtensionPage {
     this.closed = true;
 
     // Unregister the devtools page instance from the devtools page definition.
-    this.devToolsPageDefinition.forgetForTarget(this.toolbox.target);
+    this.devToolsPageDefinition.forgetForToolbox(this.toolbox);
 
     // Unregister it from the resources to cleanup when the context has been closed.
     if (this.topLevelContext) {
@@ -234,8 +200,8 @@ class DevToolsPageDefinition {
     this.url = url;
     this.extension = extension;
 
-    // Map[TabTarget -> DevToolsPage]
-    this.devtoolsPageForTarget = new Map();
+    // Map[Toolbox -> DevToolsPage]
+    this.devtoolsPageForToolbox = new Map();
   }
 
   onThemeChanged(themeName) {
@@ -245,13 +211,13 @@ class DevToolsPageDefinition {
   }
 
   buildForToolbox(toolbox) {
-    if (!this.extension.canAccessWindow(toolbox.target.tab.ownerGlobal)) {
+    if (!this.extension.canAccessWindow(toolbox.target.localTab.ownerGlobal)) {
       // We should never create a devtools page for a toolbox related to a private browsing window
       // if the extension is not allowed to access it.
       return;
     }
 
-    if (this.devtoolsPageForTarget.has(toolbox.target)) {
+    if (this.devtoolsPageForToolbox.has(toolbox)) {
       return Promise.reject(
         new Error("DevtoolsPage has been already created for this toolbox")
       );
@@ -264,36 +230,37 @@ class DevToolsPageDefinition {
     });
 
     // If this is the first DevToolsPage, subscribe to the theme-changed event
-    if (this.devtoolsPageForTarget.size === 0) {
+    if (this.devtoolsPageForToolbox.size === 0) {
       DevToolsShim.on("theme-changed", this.onThemeChanged);
     }
-    this.devtoolsPageForTarget.set(toolbox.target, devtoolsPage);
+    this.devtoolsPageForToolbox.set(toolbox, devtoolsPage);
 
     return devtoolsPage.build();
   }
 
-  shutdownForTarget(target) {
-    if (this.devtoolsPageForTarget.has(target)) {
-      const devtoolsPage = this.devtoolsPageForTarget.get(target);
+  shutdownForToolbox(toolbox) {
+    if (this.devtoolsPageForToolbox.has(toolbox)) {
+      const devtoolsPage = this.devtoolsPageForToolbox.get(toolbox);
       devtoolsPage.close();
 
       // `devtoolsPage.close()` should remove the instance from the map,
       // raise an exception if it is still there.
-      if (this.devtoolsPageForTarget.has(target)) {
+      if (this.devtoolsPageForToolbox.has(toolbox)) {
         throw new Error(
-          `Leaked DevToolsPage instance for target "${target.toString()}"`
+          `Leaked DevToolsPage instance for target "${toolbox.target.descriptorFront.url}", extension "${this.extension.policy.debugName}"`
         );
       }
 
       // If this was the last DevToolsPage, unsubscribe from the theme-changed event
-      if (this.devtoolsPageForTarget.size === 0) {
+      if (this.devtoolsPageForToolbox.size === 0) {
         DevToolsShim.off("theme-changed", this.onThemeChanged);
       }
+      this.extension.emit("devtools-page-shutdown", toolbox);
     }
   }
 
-  forgetForTarget(target) {
-    this.devtoolsPageForTarget.delete(target);
+  forgetForToolbox(toolbox) {
+    this.devtoolsPageForToolbox.delete(toolbox);
   }
 
   /**
@@ -306,7 +273,7 @@ class DevToolsPageDefinition {
     for (let toolbox of DevToolsShim.getToolboxes()) {
       if (
         !toolbox.target.isLocalTab ||
-        !this.extension.canAccessWindow(toolbox.target.tab.ownerGlobal)
+        !this.extension.canAccessWindow(toolbox.target.localTab.ownerGlobal)
       ) {
         // Skip any non-local tab and private browsing windows if the extension
         // is not allowed to access them.
@@ -327,15 +294,13 @@ class DevToolsPageDefinition {
    * Shutdown all the devtools_page instances.
    */
   shutdown() {
-    for (let target of this.devtoolsPageForTarget.keys()) {
-      this.shutdownForTarget(target);
+    for (let toolbox of this.devtoolsPageForToolbox.keys()) {
+      this.shutdownForToolbox(toolbox);
     }
 
-    if (this.devtoolsPageForTarget.size > 0) {
+    if (this.devtoolsPageForToolbox.size > 0) {
       throw new Error(
-        `Leaked ${
-          this.devtoolsPageForTarget.size
-        } DevToolsPage instances in devtoolsPageForTarget Map`
+        `Leaked ${this.devtoolsPageForToolbox.size} DevToolsPage instances in devtoolsPageForToolbox Map`
       );
     }
   }
@@ -345,11 +310,33 @@ this.devtools = class extends ExtensionAPI {
   constructor(extension) {
     super(extension);
 
+    this._initialized = false;
+
     // DevToolsPageDefinition instance (created in onManifestEntry).
     this.pageDefinition = null;
 
     this.onToolboxCreated = this.onToolboxCreated.bind(this);
     this.onToolboxDestroy = this.onToolboxDestroy.bind(this);
+
+    /* eslint-disable mozilla/balanced-listeners */
+    extension.on("add-permissions", (ignoreEvent, permissions) => {
+      if (permissions.permissions.includes("devtools")) {
+        this._initialize();
+      }
+    });
+    extension.on("remove-permissions", (ignoreEvent, permissions) => {
+      Services.prefs.setBoolPref(
+        `${getDevToolsPrefBranchName(extension.id)}.enabled`,
+        false
+      );
+      if (permissions.permissions.includes("devtools")) {
+        this._uninitialize();
+      }
+    });
+  }
+
+  onManifestEntry() {
+    this._initialize();
   }
 
   static onUninstall(extensionId) {
@@ -361,8 +348,12 @@ this.devtools = class extends ExtensionAPI {
     prefBranch.deleteBranch("");
   }
 
-  onManifestEntry(entryName) {
+  _initialize() {
     const { extension } = this;
+
+    if (!extension.hasPermission("devtools") || this._initialized) {
+      return;
+    }
 
     this.initDevToolsPref();
 
@@ -380,9 +371,17 @@ this.devtools = class extends ExtensionAPI {
 
     DevToolsShim.on("toolbox-created", this.onToolboxCreated);
     DevToolsShim.on("toolbox-destroy", this.onToolboxDestroy);
+    this._initialized = true;
   }
 
-  onShutdown() {
+  _uninitialize() {
+    // devtoolsPrefBranch is set in onManifestEntry, and nullified
+    // later in onShutdown.  If it isn't set, then onManifestEntry
+    // did not initialize devtools for the extension.
+    if (!this._initialized) {
+      return;
+    }
+
     DevToolsShim.off("toolbox-created", this.onToolboxCreated);
     DevToolsShim.off("toolbox-destroy", this.onToolboxDestroy);
 
@@ -396,6 +395,11 @@ this.devtools = class extends ExtensionAPI {
     }
 
     this.uninitDevToolsPref();
+    this._initialized = false;
+  }
+
+  onShutdown() {
+    this._uninitialize();
   }
 
   getAPI(context) {
@@ -407,7 +411,7 @@ this.devtools = class extends ExtensionAPI {
   onToolboxCreated(toolbox) {
     if (
       !toolbox.target.isLocalTab ||
-      !this.extension.canAccessWindow(toolbox.target.tab.ownerGlobal)
+      !this.extension.canAccessWindow(toolbox.target.localTab.ownerGlobal)
     ) {
       // Skip any non-local (as remote tabs are not yet supported, see Bug 1304378 for additional details
       // related to remote targets support), and private browsing windows if the extension
@@ -428,14 +432,14 @@ this.devtools = class extends ExtensionAPI {
     }
   }
 
-  onToolboxDestroy(target) {
-    if (!target.isLocalTab) {
+  onToolboxDestroy(toolbox) {
+    if (!toolbox.target.isLocalTab) {
       // Only local tabs are currently supported (See Bug 1304378 for additional details
       // related to remote targets support).
       return;
     }
 
-    this.pageDefinition.shutdownForTarget(target);
+    this.pageDefinition.shutdownForToolbox(toolbox);
   }
 
   /**

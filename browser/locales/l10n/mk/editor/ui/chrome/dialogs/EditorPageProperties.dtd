@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Својства на страницата">
+<!ENTITY location.label "Локација:">
+<!ENTITY lastModified.label "Последна промена:">
+<!ENTITY titleInput.label "Наслов:">
+<!ENTITY titleInput.accessKey "Н">
+<!ENTITY authorInput.label "Автор:">
+<!ENTITY authorInput.accessKey "А">
+<!ENTITY descriptionInput.label "Опис:">
+<!ENTITY descriptionInput.accessKey "О">
+<!ENTITY locationNewPage.label "[Нова страница која сè уште не е снимена]">
+<!ENTITY EditHEADSource1.label "Напредни корисници:">
+<!ENTITY EditHEADSource2.label "За да ја измените содржината на &lt;head&gt; регионот, користете го &quot;HTML код&quot; во менито Поглед или алатникот за режим на уредување.">

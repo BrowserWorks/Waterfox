@@ -14,13 +14,18 @@ from __future__ import absolute_import, print_function, unicode_literals
 import copy
 import logging
 import json
-import os
+import six
+from six import text_type
+
+import mozpack.path as mozpath
 
 from taskgraph.transforms.base import TransformSequence
+from taskgraph.transforms.cached_tasks import order_tasks
 from taskgraph.util.schema import (
     validate_schema,
     Schema,
 )
+from taskgraph.util.python_path import import_sibling_modules
 from taskgraph.util.taskcluster import get_artifact_prefix
 from taskgraph.util.workertypes import worker_type_implementation
 from taskgraph.transforms.task import task_description_schema
@@ -38,8 +43,8 @@ job_description_schema = Schema({
     # The name of the job and the job's label.  At least one must be specified,
     # and the label will be generated from the name if necessary, by prepending
     # the kind.
-    Optional('name'): basestring,
-    Optional('label'): basestring,
+    Optional('name'): text_type,
+    Optional('label'): text_type,
 
     # the following fields are passed directly through to the task description,
     # possibly modified by the run implementation.  See
@@ -74,14 +79,14 @@ job_description_schema = Schema({
         # This task only needs to be run if a file matching one of the given
         # patterns has changed in the push.  The patterns use the mozpack
         # match function (python/mozbuild/mozpack/path.py).
-        Optional('files-changed'): [basestring],
+        Optional('files-changed'): [text_type],
     },
 
     # A list of artifacts to install from 'fetch' tasks.
     Optional('fetches'): {
-        basestring: [basestring, {
-            Required('artifact'): basestring,
-            Optional('dest'): basestring,
+        text_type: [text_type, {
+            Required('artifact'): text_type,
+            Optional('dest'): text_type,
             Optional('extract'): bool,
         }],
     },
@@ -89,10 +94,10 @@ job_description_schema = Schema({
     # A description of how to run this job.
     'run': {
         # The key to a job implementation in a peer module to this one
-        'using': basestring,
+        'using': text_type,
 
         # Base work directory used to set up the task.
-        Optional('workdir'): basestring,
+        Optional('workdir'): text_type,
 
         # Any remaining content is verified against that job implementation's
         # own schema.
@@ -146,6 +151,18 @@ def set_implementation(config, jobs):
         yield job
 
 
+@transforms.add
+def set_label(config, jobs):
+    for job in jobs:
+        if 'label' not in job:
+            if 'name' not in job:
+                raise Exception("job has neither a name nor a label")
+            job['label'] = '{}-{}'.format(config.kind, job['name'])
+        if job.get('name'):
+            del job['name']
+        yield job
+
+
 def get_attribute(dict, key, attributes, attribute_name):
     '''Get `attribute_name` from the given `attributes` dict, and if there
     is a corresponding value, set `key` in `dict` to that value.'''
@@ -157,6 +174,18 @@ def get_attribute(dict, key, attributes, attribute_name):
 @transforms.add
 def use_fetches(config, jobs):
     artifact_names = {}
+    aliases = {}
+
+    if config.kind in ('toolchain', 'fetch'):
+        jobs = list(jobs)
+        for job in jobs:
+            run = job.get('run', {})
+            label = job['label']
+            get_attribute(
+                artifact_names, label, run, 'toolchain-artifact')
+            value = run.get('{}-alias'.format(config.kind))
+            if value:
+                aliases['{}-{}'.format(config.kind, value)] = label
 
     for task in config.kind_dependencies_tasks:
         if task.kind in ('fetch', 'toolchain'):
@@ -164,9 +193,15 @@ def use_fetches(config, jobs):
                 artifact_names, task.label, task.attributes,
                 '{kind}-artifact'.format(kind=task.kind),
             )
+            value = task.attributes.get('{}-alias'.format(task.kind))
+            if value:
+                aliases['{}-{}'.format(task.kind, value)] = task.label
 
-    for job in jobs:
-        fetches = job.pop('fetches', None)
+    artifact_prefixes = {}
+    for job in order_tasks(config, jobs):
+        artifact_prefixes[job["label"]] = get_artifact_prefix(job)
+
+        fetches = job.pop("fetches", None)
         if not fetches:
             yield job
             continue
@@ -174,20 +209,18 @@ def use_fetches(config, jobs):
         job_fetches = []
         name = job.get('name', job.get('label'))
         dependencies = job.setdefault('dependencies', {})
+        worker = job.setdefault('worker', {})
         prefix = get_artifact_prefix(job)
         for kind, artifacts in fetches.items():
             if kind in ('fetch', 'toolchain'):
                 for fetch_name in artifacts:
                     label = '{kind}-{name}'.format(kind=kind, name=fetch_name)
+                    label = aliases.get(label, label)
                     if label not in artifact_names:
                         raise Exception('Missing fetch job for {kind}-{name}: {fetch}'.format(
                             kind=config.kind, name=name, fetch=fetch_name))
 
                     path = artifact_names[label]
-                    if not path.startswith('public/'):
-                        raise Exception(
-                            'Non-public artifacts not supported for {kind}-{name}: '
-                            '{fetch}'.format(kind=config.kind, name=name, fetch=fetch_name))
 
                     dependencies[label] = label
                     job_fetches.append({
@@ -195,13 +228,39 @@ def use_fetches(config, jobs):
                         'task': '<{label}>'.format(label=label),
                         'extract': True,
                     })
+
+                    if kind == 'toolchain' and fetch_name.endswith('-sccache'):
+                        job['needs-sccache'] = True
             else:
                 if kind not in dependencies:
                     raise Exception("{name} can't fetch {kind} artifacts because "
                                     "it has no {kind} dependencies!".format(name=name, kind=kind))
+                dep_label = dependencies[kind]
+                if dep_label in artifact_prefixes:
+                    prefix = artifact_prefixes[dep_label]
+                else:
+                    dep_tasks = [
+                        task
+                        for task in config.kind_dependencies_tasks
+                        if task.label == dep_label
+                    ]
+                    if len(dep_tasks) != 1:
+                        raise Exception(
+                            "{name} can't fetch {kind} artifacts because "
+                            "there are {tasks} with label {label} in kind dependencies!".format(
+                                name=name,
+                                kind=kind,
+                                label=dependencies[kind],
+                                tasks="no tasks"
+                                if len(dep_tasks) == 0
+                                else "multiple tasks",
+                            )
+                        )
+
+                    prefix = get_artifact_prefix(dep_tasks[0])
 
                 for artifact in artifacts:
-                    if isinstance(artifact, basestring):
+                    if isinstance(artifact, text_type):
                         path = artifact
                         dest = None
                         extract = True
@@ -211,7 +270,8 @@ def use_fetches(config, jobs):
                         extract = artifact.get('extract', True)
 
                     fetch = {
-                        'artifact': '{prefix}/{path}'.format(prefix=prefix, path=path),
+                        'artifact': '{prefix}/{path}'.format(prefix=prefix, path=path)
+                                    if not path.startswith('/') else path[1:],
                         'task': '<{dep}>'.format(dep=kind),
                         'extract': extract,
                     }
@@ -219,14 +279,27 @@ def use_fetches(config, jobs):
                         fetch['dest'] = dest
                     job_fetches.append(fetch)
 
-        env = job.setdefault('worker', {}).setdefault('env', {})
-        env['MOZ_FETCHES'] = {'task-reference': json.dumps(job_fetches, sort_keys=True)}
+        job_artifact_prefixes = {
+            mozpath.dirname(fetch["artifact"])
+            for fetch in job_fetches
+            if not fetch["artifact"].startswith("public/")
+        }
+        if job_artifact_prefixes:
+            # Use taskcluster-proxy and request appropriate scope.  For example, add
+            # 'scopes: [queue:get-artifact:path/to/*]' for 'path/to/artifact.tar.xz'.
+            worker["taskcluster-proxy"] = True
+            for prefix in sorted(job_artifact_prefixes):
+                scope = "queue:get-artifact:{}/*".format(prefix)
+                if scope not in job.setdefault("scopes", []):
+                    job["scopes"].append(scope)
 
-        if job['worker']['os'] in ('windows', 'macosx'):
-            env.setdefault('MOZ_FETCHES_DIR', 'fetches')
-        else:
-            workdir = job['run'].get('workdir', '/builds/worker')
-            env.setdefault('MOZ_FETCHES_DIR', '{}/fetches'.format(workdir))
+        env = worker.setdefault('env', {})
+        env['MOZ_FETCHES'] = {
+            'task-reference': six.ensure_text(json.dumps(job_fetches,
+                                                         sort_keys=True))
+        }
+        # The path is normalized to an absolute path in run-task
+        env.setdefault('MOZ_FETCHES_DIR', 'fetches')
 
         yield job
 
@@ -235,15 +308,9 @@ def use_fetches(config, jobs):
 def make_task_description(config, jobs):
     """Given a build description, create a task description"""
     # import plugin modules first, before iterating over jobs
-    import_all()
-    for job in jobs:
-        if 'label' not in job:
-            if 'name' not in job:
-                raise Exception("job has neither a name nor a label")
-            job['label'] = '{}-{}'.format(config.kind, job['name'])
-        if job.get('name'):
-            del job['name']
+    import_sibling_modules(exceptions=('common.py',))
 
+    for job in jobs:
         # always-optimized tasks never execute, so have no workdir
         if job['run']['using'] != 'always-optimized':
             job['run'].setdefault('workdir', '/builds/worker')
@@ -321,11 +388,3 @@ def configure_taskdesc_for_run(config, job, taskdesc, worker_implementation):
                 "In job.run using {!r}/{!r} for job {!r}:".format(
                     job['run']['using'], worker_implementation, job['label']))
     func(config, job, taskdesc)
-
-
-def import_all():
-    """Import all modules that are siblings of this one, triggering the decorator
-    above in the process."""
-    for f in os.listdir(os.path.dirname(__file__)):
-        if f.endswith('.py') and f not in ('commmon.py', '__init__.py'):
-            __import__('taskgraph.transforms.job.' + f[:-3])

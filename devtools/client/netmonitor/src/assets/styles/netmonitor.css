@@ -5,6 +5,7 @@
 @import "resource://devtools/client/shared/components/SidebarToggle.css";
 @import "resource://devtools/client/shared/components/splitter/SplitBox.css";
 @import "resource://devtools/client/shared/components/tree/TreeView.css";
+@import "resource://devtools/client/shared/components/Accordion.css";
 @import "resource://devtools/client/shared/components/tabs/Tabs.css";
 @import "chrome://devtools/skin/components-frame.css";
 @import "chrome://devtools/content/shared/sourceeditor/codemirror/lib/codemirror.css";
@@ -17,10 +18,16 @@
 @import "chrome://devtools/content/netmonitor/src/assets/styles/Toolbar.css";
 @import "chrome://devtools/content/netmonitor/src/assets/styles/StatusBar.css";
 @import "chrome://devtools/content/netmonitor/src/assets/styles/RequestList.css";
-@import "chrome://devtools/content/netmonitor/src/assets/styles/NetworkDetailsPanel.css";
+@import "chrome://devtools/content/netmonitor/src/assets/styles/NetworkActionBar.css";
+@import "chrome://devtools/content/netmonitor/src/assets/styles/RequestBlockingPanel.css";
+@import "chrome://devtools/content/netmonitor/src/assets/styles/NetworkDetailsBar.css";
 @import "chrome://devtools/content/netmonitor/src/assets/styles/StatisticsPanel.css";
 @import "chrome://devtools/content/netmonitor/src/assets/styles/CustomRequestPanel.css";
 @import "chrome://devtools/content/netmonitor/src/assets/styles/StatusCode.css";
+@import "chrome://devtools/content/netmonitor/src/assets/styles/websockets.css";
+@import "chrome://devtools/content/netmonitor/src/assets/styles/search.css";
+@import "chrome://devtools/content/netmonitor/src/assets/styles/UrlPreview.css";
+@import "chrome://devtools/content/netmonitor/src/assets/styles/HeadersPanel.css";
 
 /* General */
 
@@ -57,10 +64,7 @@ body,
   justify-content: center;
   position: absolute;
   text-align: center;
-  top: 25px;
-  right: 25px;
-  bottom: 25px;
-  left: 25px;
+  inset: 25px;
   z-index: 100;
   font-size: 3.5rem;
   color: gray;

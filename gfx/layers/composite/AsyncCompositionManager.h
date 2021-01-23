@@ -128,6 +128,14 @@ class AsyncCompositionManager final {
 
   typedef std::map<Layer*, ClipParts> ClipPartsCache;
 
+  /**
+   * Compute the translation that should be applied to a layer that's fixed
+   * at |eFixedSides|, to respect the fixed layer margins |aFixedMargins|.
+   */
+  static ScreenPoint ComputeFixedMarginsOffset(
+      const ScreenMargin& aFixedMargins, SideBits eFixedSides,
+      const ScreenMargin& aGeckoFixedLayerMargins);
+
  private:
   // Return true if an AsyncPanZoomController content transform was
   // applied for |aLayer|. |*aOutFoundRoot| is set to true on Android only, if
@@ -165,10 +173,12 @@ class AsyncCompositionManager final {
    */
   void AlignFixedAndStickyLayers(
       Layer* aTransformedSubtreeRoot, Layer* aStartTraversalAt,
-      ScrollableLayerGuid::ViewID aTransformScrollId,
+      SideBits aStuckSides, ScrollableLayerGuid::ViewID aTransformScrollId,
       const LayerToParentLayerMatrix4x4& aPreviousTransformForRoot,
       const LayerToParentLayerMatrix4x4& aCurrentTransformForRoot,
-      const ScreenMargin& aFixedLayerMargins, ClipPartsCache& aClipPartsCache);
+      const ScreenMargin& aCompositorFixedLayerMargins,
+      ClipPartsCache& aClipPartsCache,
+      const ScreenMargin& aGeckoFixedLayerMargins);
 
   /**
    * Helper function for AlignFixedAndStickyLayers() to perform a transform
@@ -177,10 +187,12 @@ class AsyncCompositionManager final {
    */
   void AdjustFixedOrStickyLayer(
       Layer* aTransformedSubtreeRoot, Layer* aFixedOrSticky,
-      ScrollableLayerGuid::ViewID aTransformScrollId,
+      SideBits aStuckSides, ScrollableLayerGuid::ViewID aTransformScrollId,
       const LayerToParentLayerMatrix4x4& aPreviousTransformForRoot,
       const LayerToParentLayerMatrix4x4& aCurrentTransformForRoot,
-      const ScreenMargin& aFixedLayerMargins, ClipPartsCache& aClipPartsCache);
+      const ScreenMargin& aCompositorFixedLayerMargins,
+      ClipPartsCache& aClipPartsCache,
+      const ScreenMargin& aGeckoFixedLayerMargins);
 
   /**
    * DRAWING PHASE ONLY
@@ -208,6 +220,8 @@ class AsyncCompositionManager final {
   // layer
   void RecordShadowTransforms(Layer* aLayer);
 
+  bool SampleAnimations(Layer* aLayer, TimeStamp aCurrentFrameTime);
+
   TargetConfig mTargetConfig;
   CSSRect mContentRect;
 
@@ -234,11 +248,14 @@ class AsyncCompositionManager final {
 
   MOZ_NON_OWNING_REF CompositorBridgeParent* mCompositorBridge;
 
-#ifdef MOZ_WIDGET_ANDROID
  public:
   void SetFixedLayerMargins(ScreenIntCoord aTop, ScreenIntCoord aBottom);
   ScreenMargin GetFixedLayerMargins() const;
 
+ private:
+  ScreenMargin mFixedLayerMargins;
+
+#ifdef MOZ_WIDGET_ANDROID
  private:
   // This calculates whether frame metrics should be sent to Java.
   bool FrameMetricsHaveUpdated(const FrameMetrics& aMetrics);
@@ -249,7 +266,6 @@ class AsyncCompositionManager final {
   // then we need to reposition the gecko scrollbar to deal with the
   // dynamic toolbar shifting content around.
   ScrollableLayerGuid::ViewID mRootScrollableId;
-  ScreenMargin mFixedLayerMargins;
 #endif
 };
 

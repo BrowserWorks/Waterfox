@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -28,7 +27,8 @@ add_task(async function() {
   await selectNode("#testid", inspector);
 
   const ruleEditor = getRuleViewRuleEditor(view, 1);
-  const propEditor = ruleEditor.rule.textProps[1].editor;
+  const propEditor = getTextProperty(view, 1, { "background-color": "blue" })
+    .editor;
 
   await focusEditableField(view, propEditor.valueSpan);
 
@@ -43,10 +43,6 @@ add_task(async function() {
   await sendKeysAndWaitForFocus(view, ruleEditor.element, ["RETURN"]);
   await onRuleViewChanged;
 
-  isnot(
-    ruleEditor.rule.textProps[1].editor.nameSpan.style.display,
-    "none",
-    "The name span is visible"
-  );
+  isnot(propEditor.nameSpan.style.display, "none", "The name span is visible");
   is(ruleEditor.rule.textProps.length, 2, "Correct number of props");
 });

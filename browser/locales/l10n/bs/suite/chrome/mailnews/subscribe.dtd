@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "Preplati se">
+<!ENTITY subscribeButton.label        "Preplati se">
+<!ENTITY unsubscribeButton.label      "Ukini pretplatu">
+<!ENTITY newGroupsTab.label           "Nove grupe">
+<!ENTITY refreshButton.label          "Osvježi">
+<!ENTITY stopButton.label             "Zaustavi">
+<!ENTITY server.label                 "Račun:">
+<!ENTITY subscribedHeader.label       "Preplati se">
+<!-- commenting out until bug 38906 is fixed 
+<!ENTITY messagesHeader.label         "Messages"> -->
+<!ENTITY namefield.label              "Prikaži stavke koje sadrže:">

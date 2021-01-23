@@ -39,7 +39,7 @@ CompositionEvent::CompositionEvent(EventTarget* aOwner,
 // static
 already_AddRefed<CompositionEvent> CompositionEvent::Constructor(
     const GlobalObject& aGlobal, const nsAString& aType,
-    const CompositionEventInit& aParam, ErrorResult& aRv) {
+    const CompositionEventInit& aParam) {
   nsCOMPtr<EventTarget> t = do_QueryInterface(aGlobal.GetAsSupports());
   RefPtr<CompositionEvent> e = new CompositionEvent(t, nullptr, nullptr);
   bool trusted = e->Init(t);
@@ -80,7 +80,7 @@ void CompositionEvent::InitCompositionEvent(const nsAString& aType,
 void CompositionEvent::GetRanges(TextClauseArray& aRanges) {
   // If the mRanges is not empty, we return the cached value.
   if (!mRanges.IsEmpty()) {
-    aRanges = mRanges;
+    aRanges = mRanges.Clone();
     return;
   }
   RefPtr<TextRangeArray> textRangeArray = mEvent->AsCompositionEvent()->mRanges;
@@ -93,7 +93,7 @@ void CompositionEvent::GetRanges(TextClauseArray& aRanges) {
     const TextRange& range = textRangeArray->ElementAt(i);
     mRanges.AppendElement(new TextClause(window, range, targetRange));
   }
-  aRanges = mRanges;
+  aRanges = mRanges.Clone();
 }
 
 }  // namespace dom

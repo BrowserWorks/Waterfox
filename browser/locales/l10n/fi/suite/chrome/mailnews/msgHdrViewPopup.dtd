@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Message Header View Popup -->
+<!ENTITY AddToAddressBook.label            "Lisää osoitekirjaan…">
+<!ENTITY AddToAddressBook.accesskey        "i">
+<!ENTITY EditContact.label                 "Muokkaa yhteystietoja…">
+<!ENTITY EditContact.accesskey             "M">
+<!ENTITY ViewContact.label                 "Näytä yhteystiedot">
+<!ENTITY ViewContact.accesskey             "N">
+<!ENTITY SendMailTo.label                  "Kirjoita viesti…">
+<!ENTITY SendMailTo.accesskey              "K">
+<!ENTITY CopyEmailAddress.label            "Kopioi sähköpostiosoite">
+<!ENTITY CopyEmailAddress.accesskey        "o">
+<!ENTITY CopyNameAndEmailAddress.label     "Kopioi nimi ja sähköpostiosoite">
+<!ENTITY CopyNameAndEmailAddress.accesskey "n">
+<!ENTITY CreateFilterFrom.label            "Luo suodatin…">
+<!ENTITY CreateFilterFrom.accesskey        "L">
+<!ENTITY openInBrowser.label               "Avaa selaimessa">
+<!ENTITY openInBrowser.accesskey           "A">
+<!ENTITY bookmarkLinkCmd.label             "Lisää kohde kirjanmerkkeihin…">
+<!ENTITY bookmarkLinkCmd.accesskey         "s">
+<!ENTITY copyLinkCmd.label                 "Kopioi linkin osoite">
+<!ENTITY copyLinkCmd.accesskey             "K">
+<!ENTITY CopyMessageId.label               "Kopioi viestin tunnus">
+<!ENTITY CopyMessageId.accesskey           "K">
+<!ENTITY OpenMessageForMsgId.label         "Avaa viesti tällä tunnuksella">
+<!ENTITY OpenMessageForMsgId.accesskey     "A">
+<!ENTITY OpenBrowserWithMsgId.label        "Avaa selain viestin tunnuksella">
+<!ENTITY OpenBrowserWithMsgId.accesskey    "s">

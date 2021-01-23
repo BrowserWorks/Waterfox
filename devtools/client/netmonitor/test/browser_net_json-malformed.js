@@ -9,7 +9,9 @@
 
 add_task(async function() {
   const { L10N } = require("devtools/client/netmonitor/src/utils/l10n");
-  const { tab, monitor } = await initNetMonitor(JSON_MALFORMED_URL);
+  const { tab, monitor } = await initNetMonitor(JSON_MALFORMED_URL, {
+    requestCount: 1,
+  });
   info("Starting test... ");
 
   const { document, store, windowRequire } = monitor.panelWin;
@@ -27,11 +29,12 @@ add_task(async function() {
   const requestsListStatus = requestItem.querySelector(".status-code");
   EventUtils.sendMouseEvent({ type: "mouseover" }, requestsListStatus);
   await waitUntil(() => requestsListStatus.title);
+  await waitForDOMIfNeeded(requestItem, ".requests-list-timings-total");
 
   verifyRequestItemTarget(
     document,
     getDisplayedRequests(store.getState()),
-    getSortedRequests(store.getState()).get(0),
+    getSortedRequests(store.getState())[0],
     "GET",
     CONTENT_TYPE_SJS + "?fmt=json-malformed",
     {
@@ -42,7 +45,7 @@ add_task(async function() {
     }
   );
 
-  wait = waitForDOM(document, "#response-panel .CodeMirror-code");
+  const wait = waitForDOM(document, "#response-panel .CodeMirror-code");
   store.dispatch(Actions.toggleNetworkDetails());
   EventUtils.sendMouseEvent(
     { type: "click" },

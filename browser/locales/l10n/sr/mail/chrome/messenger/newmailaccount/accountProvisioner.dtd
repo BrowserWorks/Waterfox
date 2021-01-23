@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Добродошли у &brandShortName;">
+<!ENTITY header2.label "Да ли желите нову мејл адресу?">
+<!ENTITY other.languages "Приказујемо вам само провајдере који пружају адресе у вашој области.  Кликните овде да бисте видели све провајдере.">
+<!ENTITY error.line1 "Нажалост, нисмо могли наћи ниједну од предложених мејл адреса.">
+<!ENTITY error.line2 "Можете пробати да потражите надимке или неки други појам да бисте нашли више мејлова.">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before "Такође, можете пробати један од ">
+<!ENTITY error.suggest.middle "алтернативних бесплатних мејл налога">
+<!ENTITY error.suggest.after ".">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before "Здраво ">
+<!ENTITY success.title.after ", следеће мејл адресе су вам доступне:">
+<!ENTITY success.tip "(Такође, можете потражити надимке или неки други појам да бисте нашли више мејл адреса)">
+<!ENTITY partnership.description "У сарадњи са неколико провајдера, &brandShortName; вам може понудити нову мејл адресу. Само унесите ваше име и презиме, или неку другу реч коју желите, у поља изнад да бисмо почели прављење налога.">
+<!ENTITY existing.header "Да ли већ имате адресу коју желите да користите?">
+<!ENTITY tinyheader.title "Имате већ адресу?">
+<!ENTITY tinyheader.existing "Прескочи ово и искористи моју постојећу мејл адресу">
+<!ENTITY content.close "Мислим да ћу подесити мој налог касније.">
+<!ENTITY successful.title "Честитамо!">
+<!ENTITY successful.successMessage "Успешно сте подесили свој налог.">
+<!ENTITY successful.write "Напишите неку поруку">
+<!ENTITY successful.write.desc "Нека ваши пријатељи и породица сазнају за вашу нову адресу.<br/> Зато сте и направили овај нови налог, зар не?">
+<!ENTITY successful.customize "Прилагодите &brandShortName; уз неке моћне додатке">
+<!ENTITY successful.customize.desc "Постоје хиљаде додатака који вам омогућавају да прилагодите &brandShortName; тако да одговара вашим специфичним потребама.">
+<!ENTITY successful.attach "Закачи лични потпис на моју мејл адресу">
+<!ENTITY successful.attach.desc "Можете аутоматски качити цитат или неке податке о себи на крај сваке поруке коју пошаљете.">
+<!ENTITY successful.close "Затвори овај прозор.">
+<!ENTITY input.namePlaceholder "Ваше име, или надимак">
+<!ENTITY input.search "Претрага">
+<!ENTITY search_engine.title "Прилагодите ваш претраживач">
+<!ENTITY search_engine.message "Ваш провајдер поште вам такође може пружити веб претрагу.">
+<!ENTITY search_engine.button "Заврши">

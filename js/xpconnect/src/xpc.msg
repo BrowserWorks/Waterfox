@@ -62,7 +62,6 @@ XPC_MSG_DEF(NS_ERROR_XPC_BAD_INITIALIZER_NAME           , "Bad initializer name 
 XPC_MSG_DEF(NS_ERROR_XPC_HAS_BEEN_SHUTDOWN              , "Operation failed because the XPConnect subsystem has been shutdown")
 XPC_MSG_DEF(NS_ERROR_XPC_CANT_MODIFY_PROP_ON_WN         , "Cannot modify properties of a WrappedNative")
 XPC_MSG_DEF(NS_ERROR_XPC_BAD_CONVERT_JS_ZERO_ISNOT_NULL , "Could not convert JavaScript argument - 0 was passed, expected object. Did you mean null?")
-XPC_MSG_DEF(NS_ERROR_XPC_CANT_PASS_CPOW_TO_NATIVE       , "It's illegal to pass a CPOW to native code")
 
 
 /* common global codes (from nsError.h) */
@@ -144,11 +143,18 @@ XPC_MSG_DEF(NS_ERROR_FIRST_HEADER_FIELD_COMPONENT_EMPTY, "Couldn't extract first
 XPC_MSG_DEF(NS_ERROR_ALREADY_CONNECTED              , "The connection is already established")
 XPC_MSG_DEF(NS_ERROR_NOT_CONNECTED                  , "The connection does not exist")
 XPC_MSG_DEF(NS_ERROR_CONNECTION_REFUSED             , "The connection was refused")
-XPC_MSG_DEF(NS_ERROR_PROXY_CONNECTION_REFUSED       , "The connection to the proxy server was refused")
-XPC_MSG_DEF(NS_ERROR_PROXY_AUTHENTICATION_FAILED    , "The proxy requires authentication")
-XPC_MSG_DEF(NS_ERROR_PROXY_BAD_GATEWAY              , "The request failed on the proxy")
-XPC_MSG_DEF(NS_ERROR_PROXY_GATEWAY_TIMEOUT          , "The request timed out on the proxy")
-XPC_MSG_DEF(NS_ERROR_TOO_MANY_REQUESTS              , "Sending too many requests to a proxy")
+
+/* Error codes return from the proxy */
+XPC_MSG_DEF(NS_ERROR_PROXY_CONNECTION_REFUSED           , "The connection to the proxy server was refused")
+XPC_MSG_DEF(NS_ERROR_PROXY_AUTHENTICATION_FAILED        , "The proxy requires authentication")
+XPC_MSG_DEF(NS_ERROR_PROXY_BAD_GATEWAY                  , "The request failed on the proxy")
+XPC_MSG_DEF(NS_ERROR_PROXY_GATEWAY_TIMEOUT              , "The request timed out on the proxy")
+XPC_MSG_DEF(NS_ERROR_PROXY_TOO_MANY_REQUESTS            , "Sending too many requests to a proxy")
+XPC_MSG_DEF(NS_ERROR_PROXY_VERSION_NOT_SUPPORTED        , "The proxy does not support the version of the HTTP request")
+XPC_MSG_DEF(NS_ERROR_PROXY_FORBIDDEN                    , "The user is banned from the proxy")
+XPC_MSG_DEF(NS_ERROR_PROXY_SERVICE_UNAVAILABLE          , "The proxy is not available")
+XPC_MSG_DEF(NS_ERROR_PROXY_UNAVAILABLE_FOR_LEGAL_REASONS, "The desired destination is unavailable for legal reasons")
+
 XPC_MSG_DEF(NS_ERROR_NET_TIMEOUT                    , "The connection has timed out")
 XPC_MSG_DEF(NS_ERROR_OFFLINE                        , "The requested action could not be completed in the offline state")
 XPC_MSG_DEF(NS_ERROR_PORT_ACCESS_NOT_ALLOWED        , "Establishing a connection to an unsafe or otherwise banned port was prohibited")
@@ -245,6 +251,7 @@ XPC_MSG_DEF(NS_ERROR_BLOCKED_URI                      , "The URI is blocked")
 XPC_MSG_DEF(NS_ERROR_HARMFUL_URI                      , "The URI is harmful")
 XPC_MSG_DEF(NS_ERROR_FINGERPRINTING_URI               , "The URI is fingerprinting")
 XPC_MSG_DEF(NS_ERROR_CRYPTOMINING_URI                 , "The URI is cryptomining")
+XPC_MSG_DEF(NS_ERROR_SOCIALTRACKING_URI               , "The URI is social tracking")
 
 /* Profile manager error codes */
 XPC_MSG_DEF(NS_ERROR_DATABASE_CHANGED                 , "Flushing the profiles to disk would have overwritten changes made elsewhere.")

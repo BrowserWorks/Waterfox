@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-fonts.xul -->
+
+<!-- LOCALIZATION NOTE : FILE 'Fonts' prefs dialog -->
+<!ENTITY  pref.fonts.title                        "Fon">
+
+<!ENTITY  language.label                          "Fon untuk:">
+<!ENTITY  language.accesskey                      "t">
+
+<!ENTITY  typefaces.label                         "Muka taip">
+<!ENTITY  sizes.label                             "Saiz (piksel)">
+
+<!ENTITY  proportional.label                      "Berkadaran:">
+<!ENTITY  proportional.accesskey                  "B">
+
+<!ENTITY  serif.label                             "Serif:">
+<!ENTITY  serif.accesskey                         "S">
+<!ENTITY  sans-serif.label                        "Sans-serif:">
+<!ENTITY  sans-serif.accesskey                    "n">
+<!ENTITY  monospace.label                         "Monospace:">
+<!ENTITY  monospace.accesskey                     "M">
+<!-- LOCALIZATION NOTE (fantasy.label): 'Fantasy' means 'Ornate' -->
+<!ENTITY  fantasy.label                           "Fantasy:">
+<!ENTITY  fantasy.accesskey                       "F">
+<!ENTITY  cursive.label                           "Cursive:">
+<!ENTITY  cursive.accesskey                       "C">
+
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of
+     the Latin language. -->
+<!ENTITY  font.langGroup.latin                    "Latin">
+<!ENTITY  font.langGroup.japanese                 "Japanese">
+<!ENTITY  font.langGroup.trad-chinese             "Traditional Chinese(Taiwan)">
+<!ENTITY  font.langGroup.simpl-chinese            "Simplified Chinese">
+<!ENTITY  font.langGroup.trad-chinese-hk          "Traditional Chinese(Hong Kong)">
+<!ENTITY  font.langGroup.korean                   "Korean">
+<!ENTITY  font.langGroup.cyrillic                 "Cyrillic">
+<!ENTITY  font.langGroup.el                       "Greek">
+<!ENTITY  font.langGroup.thai                     "Thai">
+<!ENTITY  font.langGroup.hebrew                   "Hebrew">
+<!ENTITY  font.langGroup.arabic                   "Arabic">
+<!ENTITY  font.langGroup.devanagari               "Devanagari">
+<!ENTITY  font.langGroup.tamil                    "Tamil">
+<!ENTITY  font.langGroup.armenian                 "Armenian">
+<!ENTITY  font.langGroup.bengali                  "Bengali">
+<!ENTITY  font.langGroup.canadian                 "Unified Canadian Syllabary">
+<!ENTITY  font.langGroup.ethiopic                 "Ethiopic">
+<!ENTITY  font.langGroup.georgian                 "Georgian">
+<!ENTITY  font.langGroup.gujarati                 "Gujarati">
+<!ENTITY  font.langGroup.gurmukhi                 "Gurmukhi">
+<!ENTITY  font.langGroup.khmer                    "Khmer">
+<!ENTITY  font.langGroup.malayalam                "Malayalam">
+<!ENTITY  font.langGroup.math                     "Mathematics">
+<!ENTITY  font.langGroup.odia                     "Odia">
+<!ENTITY  font.langGroup.telugu                   "Telugu">
+<!ENTITY  font.langGroup.kannada                  "Kannada">
+<!ENTITY  font.langGroup.sinhala                  "Sinhala">
+<!ENTITY  font.langGroup.tibetan                  "Tibetan">
+<!ENTITY  font.langGroup.other                    "Sistem Penulisan Lain">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "Saiz fon minimum:">
+<!ENTITY minSize.accesskey                        "z">
+<!ENTITY minSize.none                             "Tiada">
+
+<!-- default font type -->
+<!ENTITY  useDefaultFontSerif.label               "Serif">
+<!ENTITY  useDefaultFontSansSerif.label           "Sans Serif">
+
+<!ENTITY  useDocumentFonts.label                  "Izinkan dokumen menggunakan fon lain">
+<!ENTITY  useDocumentFonts.accesskey              "o">
+
+<!-- leaving this stuff in for now -->
+
+<!ENTITY  header2                                 "Apabila laman web memilih fon sendiri">
+<!ENTITY  useDefaultFont.label                    "Gunakan fon piawai saya, abaikan fon yang dipilih oleh halaman">
+<!ENTITY  useDefaultFont.accesskey                "G">

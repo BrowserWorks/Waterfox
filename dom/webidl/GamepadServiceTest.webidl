@@ -2,7 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-[Pref="dom.gamepad.test.enabled"]
+[Pref="dom.gamepad.test.enabled",
+ Exposed=Window]
 interface GamepadServiceTest
 {
   readonly attribute GamepadMappingType noMapping;
@@ -17,7 +18,9 @@ interface GamepadServiceTest
                                     GamepadHand hand,
                                     unsigned long numButtons,
                                     unsigned long numAxes,
-                                    unsigned long numHaptics);
+                                    unsigned long numHaptics,
+                                    unsigned long numLightIndicator,
+                                    unsigned long numTouchEvents);
 
   void removeGamepad(unsigned long index);
 
@@ -42,4 +45,8 @@ interface GamepadServiceTest
                    Float32Array? angAcceleration,
                    Float32Array? linVelocity,
                    Float32Array? linAcceleration);
+  
+  void newTouch(unsigned long index, unsigned long aTouchArrayIndex,
+                unsigned long touchId, octet surfaceId,
+                Float32Array position, Float32Array? surfaceDimension);
 };

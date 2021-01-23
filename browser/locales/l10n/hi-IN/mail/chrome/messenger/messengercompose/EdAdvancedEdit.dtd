@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "उन्नत गुण संपादक">
+<!ENTITY AttName.label                  "गुण: ">
+<!ENTITY AttValue.label                 "मान: ">
+<!ENTITY PropertyName.label             "संपत्ति: ">
+<!ENTITY currentattributesfor.label     "इसके लिये मौजूदा गुण: ">
+<!ENTITY tree.attributeHeader.label     "गुण">
+<!ENTITY tree.propertyHeader.label      "गुण">
+<!ENTITY tree.valueHeader.label         "मान">
+<!ENTITY tabHTML.label                  "HTML विशेषता">
+<!ENTITY tabCSS.label                   "इनलाइन शेली">
+<!ENTITY tabJSE.label                   "JavaScript घटना">
+
+<!ENTITY editAttribute.label    "इस मान के संपादन के लिये एक मद पर क्लिक करें">
+<!ENTITY removeAttribute.label  "हटायें">

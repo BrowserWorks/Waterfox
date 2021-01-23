@@ -10,7 +10,6 @@
 #include "gfxTypes.h"
 #include "ImageTypes.h"
 #include "mozilla/Assertions.h"  // for MOZ_ASSERT, etc
-#include "mozilla/Pair.h"        // for Pair
 #include "mozilla/RefPtr.h"      // for RefPtr
 #include "mozilla/gfx/Matrix.h"  // for Matrix4x4
 #include "mozilla/gfx/Rect.h"    // for Rect
@@ -40,6 +39,7 @@ enum ShaderFeatures {
   ENABLE_DEAA = 0x2000,
   ENABLE_DYNAMIC_GEOMETRY = 0x4000,
   ENABLE_MASK_TEXTURE_RECT = 0x8000,
+  ENABLE_TEXTURE_NV12_GA_SWITCH = 0x10000,
 };
 
 class KnownUniform {

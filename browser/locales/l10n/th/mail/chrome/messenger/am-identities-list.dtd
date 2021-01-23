@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identitiesListManageDesc.label "จัดการข้อมูลประจำตัวสำหรับบัญชีนี้ ข้อมูลประจำตัวแรกจะถูกใช้ตามค่าเริ่มต้น">
+<!ENTITY identitiesListAdd.label  "เพิ่ม…">
+<!ENTITY identitiesListAdd.accesskey  "พ">
+<!ENTITY identitiesListEdit.label "แก้ไข…">
+<!ENTITY identitiesListEdit.accesskey "ก">
+<!ENTITY identitiesListDefault.label "ตั้งเป็นค่าเริ่มต้น">
+<!ENTITY identitiesListDefault.accesskey "ต">
+<!ENTITY identitiesListDelete.label "ลบ">
+<!ENTITY identitiesListDelete.accesskey "ล">
+<!ENTITY identitiesListClose.label "ปิด">
+<!ENTITY identitiesListClose.accesskey "ป">

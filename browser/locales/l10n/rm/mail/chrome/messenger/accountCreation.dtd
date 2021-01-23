@@ -1,0 +1,112 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailWizard.title               "Configurar tia adressa dad e-mail existenta">
+<!ENTITY emailWizard.caption             "Utilisar tia adressa dad e-mail actuala">
+<!ENTITY name.label                      "Tes num:">
+<!ENTITY name.accesskey                  "n">
+<!ENTITY fullname.placeholder            "Tes num cumplet">
+<!ENTITY name.text                       "Tes num, uschia co el duai vegnir mussà ad auters">
+<!ENTITY name.error                      "Endatescha per plaschair tes num">
+<!ENTITY email.label                     "Adressa dad e-mail:">
+<!ENTITY email.accesskey                 "a">
+<!ENTITY email3.placeholder              "Tia adressa dad e-mail">
+<!ENTITY email.text                      "Tia adressa dad e-mail existenta">
+<!ENTITY email.error                     "Adressa dad e-mail nunvalida">
+<!ENTITY password.label                  "Pled-clav:">
+<!ENTITY password.accesskey              "P">
+<!ENTITY password.placeholder            "Pled-clav">
+<!ENTITY password.text                   "Opziunal, vegn mo utilisà per validar il num d'utilisader">
+<!ENTITY password.toggle                 "Mussar/zuppentar il pled-clav">
+<!ENTITY rememberPassword.label          "Memorisar il pled-clav">
+<!ENTITY rememberPassword.accesskey      "M">
+<!ENTITY usernameEx.label                "Tias infurmaziuns d'annunzia:">
+<!ENTITY usernameEx.accesskey            "i">
+<!-- LOCALIZATION NOTE(usernameEx.placeholder): YOURDOMAIN refers to the Windows domain in ActiveDirectory. yourusername refers to the user's account name in Windows. -->
+<!ENTITY usernameEx.placeholder          "TIADOMENA\tesnumd'utilisader">
+<!-- LOCALIZATION NOTE(usernameEx.text): Domain refers to the Windows domain in ActiveDirectory. We mean the user's login in Windows at the local corporate network. -->
+<!ENTITY usernameEx.text                 "Infurmaziun d'annunzia da la domena">
+
+<!ENTITY protocol.label                  "Protocol:">
+<!ENTITY imapLong.label                  "IMAP (memorisar ils e-mails sin il server)">
+<!ENTITY pop3Long.label                  "POP3 (memorisar ils e-mails sin quest computer)">
+
+<!ENTITY manualConfigTable.summary       "Parameters dal server">
+<!ENTITY incoming.label                  "Entrada:">
+<!ENTITY incomingColumn.label            "Posta che entra">
+<!ENTITY outgoing.label                  "Sortida:">
+<!ENTITY outgoingColumn.label            "Posta che sorta">
+<!ENTITY username.label                  "Num d'utilisader:">
+<!ENTITY serverRow.label                 "Server:">
+<!ENTITY portRow.label                   "Port:">
+<!ENTITY sslRow.label                    "SSL:">
+<!ENTITY auth.label                      "Autentificaziun">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label                      "POP3">
+<!-- LOCALIZATION NOTE(exchange.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange.label                  "Exchange">
+<!ENTITY smtp.label                      "SMTP">
+<!ENTITY autodetect.label                "Determinaziun automatica">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "Nagina">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!-- LOCALIZATION NOTE(exchange-hostname.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange-hostname.label         "Server dad Exchange:">
+
+<!ENTITY advancedSetup.label             "Configuraziun avanzada">
+<!ENTITY advancedSetup.accesskey         "C">
+<!ENTITY cancel.label                    "Interrumper">
+<!ENTITY cancel.accesskey                "I">
+<!ENTITY continue.label                  "Vinavant">
+<!ENTITY continue.accesskey              "V">
+<!ENTITY stop.label                      "Fermar">
+<!ENTITY stop.accesskey                  "F">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual config mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "Retestar">
+<!ENTITY half-manual-test.accesskey      "t">
+<!ENTITY manual-config.label             "Configurar manualmain…">
+<!ENTITY manual-config.accesskey         "M">
+<!ENTITY open-provisioner.label          "Ir per ina nova adressa dad e-mail…">
+<!ENTITY open-provisioner.accesskey      "o">
+
+
+<!ENTITY get-help.label                  "Ir per agid">
+<!ENTITY get-help.accesskey              "A">
+
+
+<!ENTITY warning.label                   "Attenziun!">
+<!ENTITY incomingSettings.label          "Parameters da l'entrada:">
+<!ENTITY outgoingSettings.label          "Parameters da la sortida:">
+<!ENTITY technicaldetails.label          "Detagls tecnics">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "Jau chapesch las ristgas.">
+<!ENTITY confirmWarning.accesskey        "u">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "Terminar">
+<!ENTITY doneAccount.accesskey           "T">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "Midar ils parameters">
+<!ENTITY changeSettings.accesskey        "S">
+
+<!ENTITY contactYourProvider.description "&brandShortName; po ta permetter dad acceder a tes e-mails cun la configuraziun messa a disposiziun. Tuttina vegn recumandà da contactar tes administratur u il purschider da servetschs dad e-mail areguard questas connexiuns nunadattadas. Vesair il FAQ (dumondas frequentas) da Thunderbird per ulteriuras infurmaziuns.">
+
+<!ENTITY insecureServer.tooltip.title    "Attenziun! Quai è in server betg segir.">
+<!ENTITY insecureServer.tooltip.details  "Cliccar sin il rudè per ulteriurs detagls.">
+
+<!ENTITY insecureUnencrypted.description "Tes e-mail e l'autentificaziun vegnan tramess a moda betg criptada, uschia che tes pled-clav (e tes messadi) pudessan vegnir legids facilmain dad autras persunas. Igl è pussaivel da retschaiver e-mails cun &brandShortName; en quella moda, ma ti stuessas contactar tes purschider da servetschs dad e-mail areguard la configuraziun da ses server cun ina connexiun segira.">
+<!ENTITY insecureSelfSigned.description  "Il server utilisescha in certificat betg fidà. Per quest motiv na po betg vegnir garantì che nagin intercepteschia la communicaziun tranter &brandShortName; e tes server. Igl è pussaivel da retschaiver e-mails cun &brandShortName; en quella moda, ma ti stuessas infurmar tes purschider da servetschs dad e-mail per ch'el possia configurar ses server cun in certificat fidà.">
+<!ENTITY secureServer.description        "Gratulaziun! Quai è in server segir.">

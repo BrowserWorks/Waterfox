@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-offlineapps.xul -->
+
+<!--LOCALIZATION NOTE : FILE Offline Apps prefs dialog -->
+<!ENTITY pref.offlineapps.title             "Aplikasi Web Luar talian">
+<!ENTITY pref.offlineCache.caption          "Data Kandungan Web Luar talian dan Pengguna">
+
+<!ENTITY clearOfflineAppCache.label         "Buang">
+<!ENTITY clearOfflineAppCache.accesskey     "B">
+
+<!ENTITY offlineAlwaysAllow.label           "Izinkan semua laman web menyimpan data bagi kegunaan luar talian">
+<!ENTITY offlineAlwaysAllow.accesskey       "I">
+<!ENTITY offlineExplicit.label              "Hanya izinkan laman web yang ada keizinan eksplisit">
+<!ENTITY offlineExplicit.accesskey          "H">
+<!ENTITY offlineNotifyAsk.label             "Maklumkan saya apabila laman web mahu menyimpan data bagi kegunaan luar talian">
+<!ENTITY offlineNotifyAsk.accesskey         "M">
+<!ENTITY offlineNotifyPermissions.label     "Urus Keizinan">
+<!ENTITY offlineNotifyPermissions.accesskey "K">
+
+<!ENTITY offlineAppsUsage.label             "Laman web berikut menggunakan storan luar talian:">
+<!ENTITY offlineAppsListRemove.label        "Buang Data…">
+<!ENTITY offlineAppsListRemove.accesskey    "D">

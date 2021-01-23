@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "Նոր էջի կարգավորում">
+
+<!ENTITY  authorName.label          "Հեղինակ.">
+<!ENTITY  authorName.accesskey      "ե">
+<!ENTITY  pageColorHeader           "Հիմնական էջի տեսքը">
+
+<!ENTITY defaultColors.label        "Հիմնական գույները (Չնշել գույները էջում)">
+<!ENTITY defaultColors.accesskey    "ա">
+<!ENTITY customColors.label         "Օգտագործել ընտրված գույներ.">
+<!ENTITY customColors.accesskey     "c">
+
+<!ENTITY normalText.label           "Նորմալ տեքստ">
+<!ENTITY normalText.accesskey       "N">
+<!ENTITY linkText.label             "Հղման տեքստ">
+<!ENTITY linkText.accesskey         "L">
+<!ENTITY activeLinkText.label       "Ակտիվ հղման տեքստ">
+<!ENTITY activeLinkText.accesskey   "A">
+<!ENTITY visitedLinkText.label      "Այցելած հղման տեքստը">
+<!ENTITY visitedLinkText.accesskey  "V">
+<!ENTITY background.label           "Խորապատկերը.">
+<!ENTITY background.accesskey       "B">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "Խորապատկերի նկարը.">
+<!ENTITY backgroundImage.accesskey  "m">
+<!ENTITY chooseFile.label           "Ընտրել ֆայլը...">
+<!ENTITY chooseFile.accesskey       "o">
+

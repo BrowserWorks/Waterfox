@@ -1,0 +1,170 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Context Menu -->
+<!ENTITY popupWindowRejectCmd.label     "Tillåt inte webbplatsen att öppna extrafönster">
+<!ENTITY popupWindowRejectCmd.accesskey "i">
+<!ENTITY popupWindowAllowCmd.label      "Tillåt webbplatsen att öppna extrafönster">
+<!ENTITY popupWindowAllowCmd.accesskey  "e">
+<!ENTITY openLinkCmdInTab.label       "Öppna länken i en ny flik">
+<!ENTITY openLinkCmdInTab.accesskey   "f">
+<!ENTITY openLinkCmd.label            "Öppna länken i ett nytt fönster">
+<!ENTITY openLinkCmd.accesskey        "Ö">
+<!ENTITY openLinkCmdInPrivateWindow.label     "Öppna länken i ett privat fönster">
+<!ENTITY openLinkCmdInPrivateWindow.accesskey "v">
+<!ENTITY openLinkInWindowCmd.label    "Öppna">
+<!ENTITY openLinkInWindowCmd.accesskey "p">
+<!ENTITY openFrameCmd.label           "Öppna ramen i ett nytt fönster">
+<!ENTITY openFrameCmd.accesskey       "Ö">
+<!ENTITY openFrameCmdInTab.label      "Öppna ramen i en ny flik">
+<!ENTITY openFrameCmdInTab.accesskey  "f">
+<!ENTITY keywordfield.label           "Lägg till ett nyckelord för denna sökning…">
+<!ENTITY keywordfield.accesskey       "L">
+<!ENTITY showOnlyThisFrameCmd.label     "Visa endast denna ram">
+<!ENTITY showOnlyThisFrameCmd.accesskey "V">
+<!ENTITY goBackCmd.label              "Bakåt">
+<!ENTITY goBackCmd.accesskey          "a">
+<!ENTITY goForwardCmd.label           "Framåt">
+<!ENTITY goForwardCmd.accesskey       "F">
+<!ENTITY goUpCmd.label                "Upp">
+<!ENTITY goUpCmd.accesskey            "U">
+<!ENTITY reloadCmd.label              "Uppdatera">
+<!ENTITY reloadCmd.accesskey          "U">
+<!ENTITY reloadCmd.commandkey         "r">
+<!ENTITY stopCmd.label                "Stopp">
+<!ENTITY stopCmd.accesskey            "p">
+<!ENTITY reloadFrameCmd.label         "Uppdatera ram">
+<!ENTITY reloadFrameCmd.accesskey     "r">
+<!ENTITY viewPartialSourceForSelectionCmd.label "Visa källkoden för markerat område">
+<!ENTITY viewPartialSourceForMathMLCmd.label    "Visa MathML-källkoden">
+<!ENTITY viewPartialSourceCmd.accesskey "e">
+<!ENTITY viewPageSourceCmd.label      "Sidans källkod">
+<!ENTITY viewPageSourceCmd.accesskey  "k">
+<!ENTITY viewFrameSourceCmd.label     "Ramens källkod">
+<!ENTITY viewFrameSourceCmd.accesskey "k">
+<!ENTITY viewPageInfoCmd.label        "Sidinformation">
+<!ENTITY viewPageInfoCmd.accesskey    "S">
+<!ENTITY viewFrameInfoCmd.label       "Raminformation">
+<!ENTITY viewFrameInfoCmd.accesskey   "i">
+<!ENTITY fitImageCmd.label            "Anpassa bilden till fönstret">
+<!ENTITY fitImageCmd.accesskey        "f">
+<!ENTITY reloadImageCmd.label         "Uppdatera bild">
+<!ENTITY reloadImageCmd.accesskey     "d">
+<!ENTITY viewImageCmd.label           "Visa bild">
+<!ENTITY viewImageCmd.accesskey       "i">
+<!ENTITY viewImageInfoCmd.label       "Visa bildinfo">
+<!ENTITY viewImageInfoCmd.accesskey   "f">
+<!ENTITY viewVideoCmd.label           "Visa video">
+<!ENTITY viewVideoCmd.accesskey       "a">
+<!ENTITY viewBGImageCmd.label         "Visa bakgrundsbild">
+<!ENTITY viewBGImageCmd.accesskey     "g">
+<!ENTITY setDesktopBackgroundCmd.label     "Använd som skrivbordsbakgrund…">
+<!ENTITY setDesktopBackgroundCmd.accesskey "s">
+<!ENTITY bookmarkPageCmd.label        "Bokmärke till denna sida">
+<!ENTITY bookmarkPageCmd.accesskey    "B">
+<!ENTITY bookmarkLinkCmd.label        "Bokmärke till denna länk">
+<!ENTITY bookmarkLinkCmd.accesskey    "o">
+<!ENTITY bookmarkFrameCmd.label       "Bokmärke till denna ram">
+<!ENTITY bookmarkFrameCmd.accesskey   "r">
+<!ENTITY savePageAsCmd.label          "Spara sida som…">
+<!ENTITY savePageCmd.label            "Spara sida">
+<!ENTITY savePageCmd.accesskey        "r">
+<!ENTITY savePageCmd.commandkey       "s">
+<!ENTITY saveFrameAsCmd.label         "Spara ram som…">
+<!ENTITY saveFrameCmd.label           "Spara ram">
+<!ENTITY saveFrameCmd.accesskey       "r">
+<!ENTITY printFrameCmd.label          "Skriv ut ram…">
+<!ENTITY printFrameCmd.accesskey      "u">
+<!ENTITY saveLinkAsCmd.label          "Spara länk som…">
+<!ENTITY saveLinkCmd.label            "Spara länk">
+<!ENTITY saveLinkCmd.accesskey        "l">
+<!ENTITY saveImageAsCmd.label         "Spara bild som…">
+<!ENTITY saveImageCmd.label           "Spara bild">
+<!ENTITY saveImageCmd.accesskey       "d">
+<!ENTITY saveVideoCmd.label           "Spara video som…">
+<!ENTITY saveVideoCmd.accesskey       "d">
+<!ENTITY saveAudioCmd.label           "Spara audio som…">
+<!ENTITY saveAudioCmd.accesskey       "d">
+<!ENTITY copyLinkCmd.label            "Kopiera länkadress">
+<!ENTITY copyLinkCmd.accesskey        "K">
+<!ENTITY copyImageCmd.label           "Kopiera bild">
+<!ENTITY copyImageCmd.accesskey       "o">
+<!ENTITY copyVideoURLCmd.label        "Kopiera videoadress">
+<!ENTITY copyVideoURLCmd.accesskey    "o">
+<!ENTITY copyAudioURLCmd.label        "Kopiera audioadress">
+<!ENTITY copyAudioURLCmd.accesskey    "o">
+<!ENTITY metadataCmd.label            "Egenskaper">
+<!ENTITY metadataCmd.accesskey        "E">
+<!ENTITY copyEmailCmd.label           "Kopiera e-postadress">
+<!ENTITY copyEmailCmd.accesskey       "e">
+<!ENTITY thisFrameMenu.label          "Denna ram">
+<!ENTITY thisFrameMenu.accesskey      "d">
+<!ENTITY mediaPlay.label              "Spela">
+<!ENTITY mediaPlay.accesskey          "p">
+<!ENTITY mediaPause.label             "Paus">
+<!ENTITY mediaPause.accesskey         "P">
+<!ENTITY mediaMute.label              "Ljud av">
+<!ENTITY mediaMute.accesskey          "a">
+<!ENTITY mediaUnmute.label            "Ljud på">
+<!ENTITY mediaUnmute.accesskey        "p">
+<!ENTITY mediaPlaybackRate.label        "Uppspelningshastighet">
+<!ENTITY mediaPlaybackRate.accesskey    "p">
+<!ENTITY mediaPlaybackRate050.label     "Slow Motion (½×)">
+<!ENTITY mediaPlaybackRate050.accesskey "S">
+<!ENTITY mediaPlaybackRate100.label     "Normal hastighet">
+<!ENTITY mediaPlaybackRate100.accesskey "N">
+<!ENTITY mediaPlaybackRate125.label     "Ökad hastighet (1¼×)">
+<!ENTITY mediaPlaybackRate125.accesskey "h">
+<!ENTITY mediaPlaybackRate150.label     "Högre hastighet (1½×)">
+<!ENTITY mediaPlaybackRate150.accesskey "H">
+<!ENTITY mediaPlaybackRate200.label     "Dubbel hastighet">
+<!ENTITY mediaPlaybackRate200.accesskey "D">
+<!ENTITY mediaLoop.label              "Loopa">
+<!ENTITY mediaLoop.accesskey          "o">
+<!-- LOCALIZATION NOTE: The access keys for "Show Controls" and
+"Hide Controls" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaShowControls.label      "Visa mediakontroller">
+<!ENTITY mediaShowControls.accesskey  "a">
+<!ENTITY mediaHideControls.label      "Dölj mediakontroller">
+<!ENTITY mediaHideControls.accesskey  "a">
+<!ENTITY videoFullScreen.label        "Helskärm">
+<!ENTITY videoFullScreen.accesskey    "H">
+<!ENTITY videoSaveImage.label         "Spara stillbild som…">
+<!ENTITY videoSaveImage.accesskey     "S">
+<!ENTITY videoShowStats.label         "Visa statistik">
+<!ENTITY videoShowStats.accesskey     "t">
+<!ENTITY videoHideStats.label         "Dölj statistik">
+<!ENTITY videoHideStats.accesskey     "t">
+<!ENTITY search.accesskey             "W">
+<!ENTITY bidiSwitchPageDirectionItem.label        "Byt sidriktning">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey    "g">
+<!ENTITY bidiSwitchTextDirectionItem.label        "Byt textriktning">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey    "y">
+<!ENTITY spellAddToDictionary.label     "Lägg till i ordlista">
+<!ENTITY spellAddToDictionary.accesskey "t">
+<!ENTITY spellUndoAddToDictionary.label      "Ångra lägg till i ordlista">
+<!ENTITY spellUndoAddToDictionary.accesskey  "l">
+<!ENTITY spellIgnoreWord.label          "Ignorera ord">
+<!ENTITY spellIgnoreWord.accesskey      "I">
+<!ENTITY spellCheckEnable.label         "Kontrollera stavning">
+<!ENTITY spellCheckEnable.accesskey     "s">
+<!ENTITY spellNoSuggestions.label       "(Inga stavningsförslag)">
+<!ENTITY spellDictionaries.label        "Språk">
+<!ENTITY spellDictionaries.accesskey    "å">
+<!ENTITY spellAddDictionaries.label     "Hämta fler ordlistor…">
+<!ENTITY spellAddDictionaries.accesskey "ä">
+
+<!ENTITY fillLoginMenu.label          "Fyll i inloggning">
+<!ENTITY fillLoginMenu.accesskey      "F">
+<!ENTITY fillPasswordMenu.label       "Fyll i lösenord">
+<!ENTITY fillPasswordMenu.accesskey   "F">
+<!ENTITY fillUsernameMenu.label       "Fyll i användarnamn">
+<!ENTITY fillUsernameMenu.accesskey   "F">
+<!ENTITY noLoginSuggestions.label     "(Inga inloggningsförslag)">
+<!ENTITY viewSavedLogins.label        "Visa sparade inloggningar">
+
+<!-- Developer Tools -->
+<!ENTITY devtoolsInspect.label          "Inspektera element">
+<!ENTITY devtoolsInspect.accesskey      "n">

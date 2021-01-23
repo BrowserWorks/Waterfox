@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE pref-receipts.dtd: UI for Mail/News Return Receipts prefs -->
+
+<!ENTITY pref.receipts.title          "Confirmações de leitura">
+<!ENTITY prefReceipts.caption         "Confirmações de leitura">
+<!ENTITY requestReceipt.label         "Sempre solicitar uma confirmação de leitura">
+<!ENTITY requestReceipt.accesskey     "S">
+<!ENTITY receiptArrive.label          "Ao receber uma confirmação que eu solicitei:">
+<!ENTITY leaveIt.label                "Deixar na pasta Entrada">
+<!ENTITY leaveIt.accesskey            "D">
+<!ENTITY moveToSent.label             "Mover para a pasta de mensagens enviadas">
+<!ENTITY moveToSent.accesskey         "M">
+<!ENTITY requestMDN.label             "Se alguém me solicitar uma confirmação de leitura:">
+<!ENTITY returnSome.label             "Permitir confirmações de leitura nestas situações:">
+<!ENTITY returnSome.accesskey         "P">
+<!ENTITY never.label                  "Não enviar">
+<!ENTITY never.accesskey              "N">
+<!ENTITY notInToCc.label              "Eu não estou em &quot;Para&quot; ou &quot;CC&quot;:">
+<!ENTITY notInToCc.accesskey          "E">
+<!ENTITY outsideDomain.label          "Remetente está fora do meu domínio:">
+<!ENTITY outsideDomain.accesskey      "r">
+<!ENTITY otherCases.label             "Nos demais casos:">
+<!ENTITY otherCases.accesskey         "d">
+<!ENTITY askMe.label                  "Perguntar">
+<!ENTITY alwaysSend.label             "Sempre enviar">
+<!ENTITY neverSend.label              "Nunca enviar">

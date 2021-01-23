@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-media.xul -->
+
+<!-- LOCALIZATION NOTE : FILE Media management prefs -->
+<!ENTITY pref.media.title               "Media">
+<!ENTITY mediaHTML5Preferences.label    "Audio/Video">
+<!ENTITY allowMediaAutoplay.label       "Dayakan Automain kandungan media HTML5">
+<!ENTITY allowMediaAutoplay.accesskey   "A">
+
+<!ENTITY enableDrmMedia.label           "Dayakan Digital Rights Management untuk">
+<!ENTITY enableEmeForSuite.label        "Modul Dekripsi Kandungan Pihak-ketiga">
+<!ENTITY enableEmeForSuite.accesskey    "K">
+
+<!ENTITY animLoopingTitle.label         "Imej animasi perlu gelung">
+<!ENTITY animLoopAsSpecified.label      "Mengikut bilangan yang ditentukan imej">
+<!ENTITY animLoopAsSpecified.accesskey  "m">
+<!ENTITY animLoopOnce.label             "Sekali">
+<!ENTITY animLoopOnce.accesskey         "S">
+<!ENTITY animLoopNever.label            "Jangan sesekali">
+<!ENTITY animLoopNever.accesskey        "s">

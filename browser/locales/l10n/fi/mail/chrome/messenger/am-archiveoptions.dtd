@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-archiveoptions.xul -->
+
+<!-- extracted from am-archiveoptions.xhtml -->
+
+<!ENTITY dialogTitle.label "Arkistointiasetukset">
+<!ENTITY archiveGranularityPrefix.label "Tallenna arkistoitavat viestit:">
+<!ENTITY archiveFlat.label "Yhteen kansioon">
+<!ENTITY archiveFlat.accesskey "Y">
+<!ENTITY archiveYearly.label "Vuosittaisiin arkistokansioihin">
+<!ENTITY archiveYearly.accesskey "V">
+<!ENTITY archiveMonthly.label "Kuukausittaisiin arkistokansioihin">
+<!ENTITY archiveMonthly.accesskey "K">
+<!ENTITY keepFolderStructure.label "Säilytä nykyinen arkistointikansioiden rakenne">
+<!ENTITY keepFolderStructure.accesskey "S">
+<!ENTITY archiveExample.label "Esimerkki">
+<!-- LOCALIZATION NOTE (archiveFolderName.label): this should match the default
+     name for the "Archives" folder -->
+<!ENTITY archiveFolderName.label "Arkistokansio">
+<!-- LOCALIZATION NOTE (inboxFolderName.label): this should match the default
+     name for the "Inbox" folder -->
+<!ENTITY inboxFolderName.label "Saapuneet">

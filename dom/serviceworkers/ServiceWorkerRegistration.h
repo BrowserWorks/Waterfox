@@ -8,7 +8,6 @@
 #define mozilla_dom_ServiceWorkerRegistration_h
 
 #include "mozilla/DOMEventTargetHelper.h"
-#include "mozilla/dom/DOMPrefs.h"
 #include "mozilla/dom/ServiceWorkerBinding.h"
 #include "mozilla/dom/ServiceWorkerRegistrationBinding.h"
 #include "mozilla/dom/ServiceWorkerRegistrationDescriptor.h"
@@ -46,7 +45,8 @@ class ServiceWorkerRegistration final : public DOMEventTargetHelper {
     virtual void ClearServiceWorkerRegistration(
         ServiceWorkerRegistration* aReg) = 0;
 
-    virtual void Update(ServiceWorkerRegistrationCallback&& aSuccessCB,
+    virtual void Update(const nsCString& aNewestWorkerScriptUrl,
+                        ServiceWorkerRegistrationCallback&& aSuccessCB,
                         ServiceWorkerFailureCallback&& aFailureCB) = 0;
 
     virtual void Unregister(ServiceWorkerBoolCallback&& aSuccessCB,
@@ -73,7 +73,7 @@ class ServiceWorkerRegistration final : public DOMEventTargetHelper {
 
   void DisconnectFromOwner() override;
 
-  void RegistrationRemoved();
+  void RegistrationCleared();
 
   already_AddRefed<ServiceWorker> GetInstalling() const;
 

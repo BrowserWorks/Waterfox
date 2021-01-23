@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/openLocation.xul -->
+
+<!ENTITY enter.label "Masukkan lokasi web (URL), atau nyatakan fail lokal yang anda mahu buka:">
+<!-- LOCALIZATION NOTE (enter.accesskey): should be present in both enter.label
+     as defined above and attachEnterLabel as defined in
+     openLocation.properties -->
+<!ENTITY enter.accesskey "M">
+<!ENTITY chooseFile.label "Pilih Fail…">
+<!ENTITY chooseFile.accesskey "P">
+<!ENTITY newPrivate.label "Tetingkap peribadi baru">
+<!ENTITY newWindow.label "Tetingkap pelayar baru">
+<!ENTITY newTab.label "Tab pelayar baru">
+<!ENTITY currentTab.label "Tab pelayar semasa">
+<!ENTITY editNewWindow.label "Tetingkap Pengarang baru">
+<!ENTITY open.label "Buka">
+<!ENTITY caption.label "Buka Lokasi Web">
+<!ENTITY openWhere.label "Buka dalam:">
+<!ENTITY openWhere.accesskey "B">

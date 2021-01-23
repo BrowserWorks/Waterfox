@@ -36,9 +36,7 @@ class HTMLButtonElement final : public nsGenericHTMLFormElementWithState,
   NS_IMPL_FROMNODE_HTML_WITH_TAG(HTMLButtonElement, button)
 
   // Element
-  virtual bool IsInteractiveHTMLContent(bool aIgnoreTabindex) const override {
-    return true;
-  }
+  virtual bool IsInteractiveHTMLContent() const override { return true; }
 
   // overriden nsIFormControl methods
   NS_IMETHOD Reset() override;
@@ -60,10 +58,8 @@ class HTMLButtonElement final : public nsGenericHTMLFormElementWithState,
                              JS::Handle<JSObject*> aGivenProto) override;
 
   // nsIContent
-  virtual nsresult BindToTree(Document* aDocument, nsIContent* aParent,
-                              nsIContent* aBindingParent) override;
-  virtual void UnbindFromTree(bool aDeep = true,
-                              bool aNullParent = true) override;
+  virtual nsresult BindToTree(BindContext&, nsINode& aParent) override;
+  virtual void UnbindFromTree(bool aNullParent = true) override;
   virtual void DoneCreatingElement() override;
 
   void UpdateBarredFromConstraintValidation();

@@ -1,5 +1,4 @@
 platform-tools
-build-tools;27.0.3
-platforms;android-28
+build-tools;29.0.3
+platforms;android-29
 emulator
-docs

@@ -240,4 +240,97 @@ TEST(AudioSegment, Test)
   TestDownmixStereo<int16_t>();
 }
 
+template <class T, uint32_t Channels>
+void fillChunk(AudioChunk* aChunk, int aDuration) {
+  static_assert(Channels != 0, "Filling 0 channels is a no-op");
+
+  aChunk->mDuration = aDuration;
+
+  AutoTArray<nsTArray<T>, Channels> buffer;
+  buffer.SetLength(Channels);
+  aChunk->mChannelData.ClearAndRetainStorage();
+  aChunk->mChannelData.SetCapacity(Channels);
+  for (nsTArray<T>& channel : buffer) {
+    T* ch = channel.AppendElements(aDuration);
+    for (int i = 0; i < aDuration; ++i) {
+      ch[i] = GetHighValue<T>();
+    }
+    aChunk->mChannelData.AppendElement(ch);
+  }
+
+  aChunk->mBuffer = new mozilla::SharedChannelArrayBuffer<T>(&buffer);
+  aChunk->mBufferFormat = AudioSampleTypeToFormat<T>::Format;
+}
+
+TEST(AudioSegment, FlushAfter_ZeroDuration)
+{
+  AudioChunk c;
+  fillChunk<float, 2>(&c, 10);
+
+  AudioSegment s;
+  s.AppendAndConsumeChunk(&c);
+  s.FlushAfter(0);
+  EXPECT_EQ(s.GetDuration(), 0);
+}
+
+TEST(AudioSegment, FlushAfter_SmallerDuration)
+{
+  // It was crashing when the first chunk was silence (null) and FlushAfter
+  // was called for a duration, smaller or equal to the duration of the
+  // first chunk.
+  TrackTime duration = 10;
+  TrackTime smaller_duration = 8;
+  AudioChunk c1;
+  c1.SetNull(duration);
+  AudioChunk c2;
+  fillChunk<float, 2>(&c2, duration);
+
+  AudioSegment s;
+  s.AppendAndConsumeChunk(&c1);
+  s.AppendAndConsumeChunk(&c2);
+  s.FlushAfter(smaller_duration);
+  EXPECT_EQ(s.GetDuration(), smaller_duration) << "Check new duration";
+
+  TrackTime chunkByChunkDuration = 0;
+  for (AudioSegment::ChunkIterator iter(s); !iter.IsEnded(); iter.Next()) {
+    chunkByChunkDuration += iter->GetDuration();
+  }
+  EXPECT_EQ(s.GetDuration(), chunkByChunkDuration)
+      << "Confirm duration chunk by chunk";
+}
+
+TEST(AudioSegment, MemoizedOutputChannelCount)
+{
+  AudioSegment s;
+  EXPECT_EQ(s.MaxChannelCount(), 0U) << "0 channels on init";
+
+  s.AppendNullData(1);
+  EXPECT_EQ(s.MaxChannelCount(), 0U) << "Null data has 0 channels";
+
+  s.Clear();
+  EXPECT_EQ(s.MaxChannelCount(), 0U) << "Still 0 after clearing";
+
+  AudioChunk c;
+  fillChunk<float, 1>(&c, 1);
+  s.AppendAndConsumeChunk(&c);
+  EXPECT_EQ(s.MaxChannelCount(), 1U) << "A single chunk's channel count";
+
+  fillChunk<float, 2>(&c, 1);
+  s.AppendAndConsumeChunk(&c);
+  EXPECT_EQ(s.MaxChannelCount(), 2U) << "The max of two chunks' channel count";
+
+  s.ForgetUpTo(2);
+  EXPECT_EQ(s.MaxChannelCount(), 2U) << "Memoized value with null chunks";
+
+  s.Clear();
+  EXPECT_EQ(s.MaxChannelCount(), 2U) << "Still memoized after clearing";
+
+  fillChunk<float, 1>(&c, 1);
+  s.AppendAndConsumeChunk(&c);
+  EXPECT_EQ(s.MaxChannelCount(), 1U) << "Real chunk trumps memoized value";
+
+  s.Clear();
+  EXPECT_EQ(s.MaxChannelCount(), 1U) << "Memoized value was updated";
+}
+
 }  // namespace audio_segment

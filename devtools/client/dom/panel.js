@@ -1,12 +1,9 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
 const { Cu } = require("chrome");
-const ObjectClient = require("devtools/shared/client/object-client");
 
 const EventEmitter = require("devtools/shared/event-emitter");
 loader.lazyRequireGetter(
@@ -25,6 +22,7 @@ function DomPanel(iframeWindow, toolbox) {
   this._toolbox = toolbox;
 
   this.onTabNavigated = this.onTabNavigated.bind(this);
+  this.onTargetAvailable = this.onTargetAvailable.bind(this);
   this.onContentMessage = this.onContentMessage.bind(this);
   this.onPanelVisibilityChange = this.onPanelVisibilityChange.bind(this);
 
@@ -40,8 +38,15 @@ DomPanel.prototype = {
    * @return object
    *         A promise that is resolved when the DOM panel completes opening.
    */
-  open() {
+  async open() {
+    // Wait for the retrieval of root object properties before resolving open
+    const onGetProperties = new Promise(resolve => {
+      this._resolveOpen = resolve;
+    });
+
     this.initialize();
+
+    await onGetProperties;
 
     this.isReady = true;
     this.emit("ready");
@@ -58,35 +63,40 @@ DomPanel.prototype = {
       true
     );
 
-    this.target.on("navigate", this.onTabNavigated);
     this._toolbox.on("select", this.onPanelVisibilityChange);
+
+    this._toolbox.targetList.watchTargets(
+      [this._toolbox.targetList.TYPES.FRAME],
+      this.onTargetAvailable
+    );
 
     // Export provider object with useful API for DOM panel.
     const provider = {
       getToolbox: this.getToolbox.bind(this),
       getPrototypeAndProperties: this.getPrototypeAndProperties.bind(this),
       openLink: this.openLink.bind(this),
+      // Resolve DomPanel.open once the object properties are fetched
+      onPropertiesFetched: () => {
+        if (this._resolveOpen) {
+          this._resolveOpen();
+          this._resolveOpen = null;
+        }
+      },
     };
 
     exportIntoContentScope(this.panelWin, provider, "DomProvider");
-
-    this.shouldRefresh = true;
   },
 
   destroy() {
-    if (this._destroying) {
-      return this._destroying;
+    if (this._destroyed) {
+      return;
     }
+    this._destroyed = true;
 
-    this._destroying = new Promise(resolve => {
-      this.target.off("navigate", this.onTabNavigated);
-      this._toolbox.off("select", this.onPanelVisibilityChange);
+    this.currentTarget.off("navigate", this.onTabNavigated);
+    this._toolbox.off("select", this.onPanelVisibilityChange);
 
-      this.emit("destroyed");
-      resolve();
-    });
-
-    return this._destroying;
+    this.emit("destroyed");
   },
 
   // Events
@@ -111,13 +121,27 @@ DomPanel.prototype = {
   },
 
   /**
-   * Make sure the panel is refreshed when the page is reloaded.
-   * The panel is refreshed immediately if it's currently selected
-   * or lazily  when the user actually selects it.
+   * Make sure the panel is refreshed when navigation occurs.
+   * The panel is refreshed immediately if it's currently selected or lazily when the user
+   * actually selects it.
    */
   onTabNavigated: function() {
     this.shouldRefresh = true;
     this.refresh();
+  },
+
+  onTargetAvailable: function({ targetFront }) {
+    // Only care about top-level targets.
+    if (!targetFront.isTopLevel) {
+      return;
+    }
+
+    this.shouldRefresh = true;
+    this.refresh();
+
+    // Whenever a new target is available, listen to navigate events on it so we can
+    // refresh the panel when we navigate within the same process.
+    this.currentTarget.on("navigate", this.onTabNavigated);
   },
 
   /**
@@ -136,29 +160,28 @@ DomPanel.prototype = {
     return this._toolbox.currentToolId === "dom";
   },
 
-  getPrototypeAndProperties: async function(grip) {
-    if (!grip.actor) {
-      console.error("No actor!", grip);
-      throw new Error("Failed to get actor from grip.");
+  getPrototypeAndProperties: async function(objectFront) {
+    if (!objectFront.actorID) {
+      console.error("No actor!", objectFront);
+      throw new Error("Failed to get object front.");
     }
 
     // Bail out if target doesn't exist (toolbox maybe closed already).
-    if (!this.target) {
+    if (!this.currentTarget) {
       return null;
     }
 
     // Check for a previously stored request for grip.
-    let request = this.pendingRequests.get(grip.actor);
+    let request = this.pendingRequests.get(objectFront.actorID);
 
     // If no request is in progress create a new one.
     if (!request) {
-      const client = new ObjectClient(this.target.client, grip);
-      request = client.getPrototypeAndProperties();
-      this.pendingRequests.set(grip.actor, request);
+      request = objectFront.getPrototypeAndProperties();
+      this.pendingRequests.set(objectFront.actorID, request);
     }
 
     const response = await request;
-    this.pendingRequests.delete(grip.actor);
+    this.pendingRequests.delete(objectFront.actorID);
 
     // Fire an event about not having any pending requests.
     if (!this.pendingRequests.size) {
@@ -175,9 +198,8 @@ DomPanel.prototype = {
   getRootGrip: async function() {
     // Attach Console. It might involve RDP communication, so wait
     // asynchronously for the result
-    const { result } = await this.target.activeConsole.evaluateJSAsync(
-      "window"
-    );
+    const consoleFront = await this.currentTarget.getFront("console");
+    const { result } = await consoleFront.evaluateJSAsync("window");
     return result;
   },
 
@@ -208,7 +230,7 @@ DomPanel.prototype = {
     return this._toolbox;
   },
 
-  get target() {
+  get currentTarget() {
     return this._toolbox.target;
   },
 };

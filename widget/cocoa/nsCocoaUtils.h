@@ -262,10 +262,29 @@ class nsCocoaUtils {
       @param aWhichFrame the frame to extract (see imgIContainer FRAME_*)
       @param aResult the resulting NSImage
       @param scaleFactor the desired scale factor of the NSImage (2 for a retina display)
+      @param aIsEntirelyBlack an outparam that, if non-null, will be set to a
+                              bool that indicates whether the RGB values on all
+                              pixels are zero
       @return NS_OK if the conversion worked, NS_ERROR_FAILURE otherwise
    */
   static nsresult CreateNSImageFromImageContainer(imgIContainer* aImage, uint32_t aWhichFrame,
-                                                  NSImage** aResult, CGFloat scaleFactor);
+                                                  NSImage** aResult, CGFloat scaleFactor,
+                                                  bool* aIsEntirelyBlack = nullptr);
+
+  /** Creates a Cocoa <code>NSImage</code> from a frame of an <code>imgIContainer</code>.
+      The new <code>NSImage</code> will have both a regular and HiDPI representation.
+      The caller owns the <code>NSImage</code>.
+      @param aImage the image to extract a frame from
+      @param aWhichFrame the frame to extract (see imgIContainer FRAME_*)
+      @param aResult the resulting NSImage
+      @param aIsEntirelyBlack an outparam that, if non-null, will be set to a
+                              bool that indicates whether the RGB values on all
+                              pixels are zero
+      @return NS_OK if the conversion worked, NS_ERROR_FAILURE otherwise
+   */
+  static nsresult CreateDualRepresentationNSImageFromImageContainer(
+      imgIContainer* aImage, uint32_t aWhichFrame, NSImage** aResult,
+      bool* aIsEntirelyBlack = nullptr);
 
   /**
    * Returns nsAString for aSrc.
@@ -276,6 +295,11 @@ class nsCocoaUtils {
    * Makes NSString instance for aString.
    */
   static NSString* ToNSString(const nsAString& aString);
+
+  /**
+   * Makes NSString instance for aCString.
+   */
+  static NSString* ToNSString(const nsACString& aCString);
 
   /**
    * Returns NSRect for aGeckoRect.
@@ -365,6 +389,18 @@ class nsCocoaUtils {
   static mozilla::TimeStamp GetEventTimeStamp(NSTimeInterval aEventTime);
 
   /**
+   * Check whether double clicking on the titlebar should cause the window to
+   * zoom (maximize).
+   */
+  static bool ShouldZoomOnTitlebarDoubleClick();
+
+  /**
+   * Check whether double clicking on the titlebar should cause the window to
+   * minimize.
+   */
+  static bool ShouldMinimizeOnTitlebarDoubleClick();
+
+  /**
    * Get the current video capture permission status.
    * Returns NS_ERROR_NOT_IMPLEMENTED on 10.13 and earlier macOS versions.
    */
@@ -375,6 +411,12 @@ class nsCocoaUtils {
    * Returns NS_ERROR_NOT_IMPLEMENTED on 10.13 and earlier macOS versions.
    */
   static nsresult GetAudioCapturePermissionState(uint16_t& aPermissionState);
+
+  /**
+   * Get the current screen capture permission status.
+   * Returns NS_ERROR_NOT_IMPLEMENTED on 10.14 and earlier macOS versions.
+   */
+  static nsresult GetScreenCapturePermissionState(uint16_t& aPermissionState);
 
   /**
    * Request video capture permission from the OS. Caller must be running
@@ -389,6 +431,11 @@ class nsCocoaUtils {
    * Returns NS_ERROR_NOT_IMPLEMENTED on 10.13 and earlier macOS versions.
    */
   static nsresult RequestAudioCapturePermission(RefPtr<Promise>& aPromise);
+
+  /**
+   * Request screen capture permission from the OS using an unreliable method.
+   */
+  static nsresult MaybeRequestScreenCapturePermission();
 
  private:
   /**

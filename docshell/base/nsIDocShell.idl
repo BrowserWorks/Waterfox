@@ -43,10 +43,10 @@ class ClientSource;
 interface nsIURI;
 interface nsIChannel;
 interface nsIContentViewer;
+interface nsIContentSecurityPolicy;
 interface nsIDocShellLoadInfo;
 interface nsIEditor;
 interface nsIEditingSession;
-interface nsISimpleEnumerator;
 interface nsIInputStream;
 interface nsIRequest;
 interface nsISHEntry;
@@ -83,9 +83,11 @@ interface nsIDocShell : nsIDocShellTreeItem
    * however, the URL dispatcher will go through its normal process of content
    * loading.
    *
-   * @param loadState   - This is the extended load info for this load.
+   * @param aLoadState This is the extended load info for this load.
+   * @param aSetNavigating If we should set isNavigating to true while initiating
+   *                       the load.
    */
-  [noscript]void loadURI(in nsDocShellLoadStatePtr loadState);
+  [noscript]void loadURI(in nsDocShellLoadStatePtr aLoadState, in boolean aSetNavigating);
 
   /**
    * Do either a history.pushState() or history.replaceState() operation,
@@ -242,16 +244,7 @@ interface nsIDocShell : nsIDocShellTreeItem
   [infallible] attribute boolean allowContentRetargetingOnChildren;
 
   /**
-   * True if this docShell should inherit the private browsing ID from
-   * its parent when reparented.
-   *
-   * NOTE: This should *not* be set false in new code, or for docShells
-   * inserted anywhere other than as children of panels.
-   */
-  [infallible] attribute boolean inheritPrivateBrowsingId;
-
-  /**
-   * Get an enumerator over this docShell and its children.
+   * Get an array of this docShell and its children.
    *
    * @param aItemType  - Only include docShells of this type, or if typeAll,
    *                     include all child shells.
@@ -264,8 +257,8 @@ interface nsIDocShell : nsIDocShellTreeItem
     ENUMERATE_BACKWARDS = 1
   };
 
-  nsISimpleEnumerator getDocShellEnumerator(in long aItemType,
-                                            in nsIDocShell_DocShellEnumeratorDirection aDirection);
+  Array<nsIDocShell> getAllDocShellsInSubtree(in long aItemType,
+                                              in nsIDocShell_DocShellEnumeratorDirection aDirection);
 
   /**
    * The type of application that created this window.
@@ -299,22 +292,6 @@ interface nsIDocShell : nsIDocShellTreeItem
    * no zoom.
    */
   attribute float zoom;
-
-  /*
-   * The size, in CSS pixels, of the horizontal margins for the <body> of an
-   * HTML document in this docshell; used to implement the marginwidth attribute
-   * on HTML <frame>/<iframe> elements.  A value smaller than zero indicates
-   * that the attribute was not set.
-   */
-  attribute long marginWidth;
-
-  /*
-   * The size, in CSS pixels, of the vertical margins for the <body> of an HTML
-   * document in this docshell; used to implement the marginheight attribute on
-   * HTML <frame>/<iframe> elements.  A value smaller than zero indicates that
-   * the attribute was not set.
-   */
-  attribute long marginHeight;
 
   /*
    * Tells the docshell to offer focus to its tree owner.
@@ -376,20 +353,12 @@ interface nsIDocShell : nsIDocShellTreeItem
 
   attribute nsILayoutHistoryState layoutHistoryState;
 
-  readonly attribute boolean shouldSaveLayoutState;
-
-  /**
-   * The SecureBrowserUI object for this docshell.  This is set by XUL
-   * <browser> or nsWebBrowser for their root docshell.
-   */
-  attribute nsISecureBrowserUI securityUI;
-
   /**
    * Object used to delegate URI loading to an upper context.
    * Currently only set for GeckoView to allow handling of load requests
    * at the application level.
    */
-  attribute nsILoadURIDelegate loadURIDelegate;
+  readonly attribute nsILoadURIDelegate loadURIDelegate;
 
   /**
    * Cancel the XPCOM timers for each meta-refresh URI in this docshell,
@@ -423,6 +392,8 @@ interface nsIDocShell : nsIDocShellTreeItem
    * beginRestore().
    */
   void finishRestore();
+
+  void clearCachedUserAgent();
 
   /* Track whether we're currently restoring a document presentation. */
   readonly attribute boolean restoringDocument;
@@ -490,51 +461,6 @@ interface nsIDocShell : nsIDocShellTreeItem
   readonly attribute boolean isInUnload;
 
   /**
-   * This attribute determines whether Mixed Active Content is loaded on the
-   * document. When it is true, mixed active content was not blocked and has
-   * loaded (or is about to load) on the page. When it is false, mixed active content
-   * has not loaded on the page, either because there was no mixed active content
-   * requests on the page or such requests were blocked by nsMixedContentBlocker.
-   * This boolean is set to true in nsMixedContentBlocker if Mixed Active Content
-   * is allowed (either explicitly on the page by the user or when the about:config
-   * setting security.mixed_content.block_active_content is set to false).
-   */
-  [infallible] readonly attribute boolean hasMixedActiveContentLoaded;
-
-   /**
-   * This attribute determines whether a document has Mixed Active Content
-   * that has been blocked from loading. When it is true, there is definitely
-   * mixed active content on a page that has been blocked by
-   * nsMixedContentBlocker.  When it is false, there may or may not be mixed
-   * active content on a page, but if there is, it will load. Note that if the
-   * about:config setting security.mixed_content.block_active_content is set
-   * false, this boolean will be false, since blocking active content has been
-   * disabled.
-   */
-  [infallible] readonly attribute boolean hasMixedActiveContentBlocked;
-
-  /**
-   * This attribute determines whether Mixed Display Content is loaded on the
-   * document. When it is true, mixed display content was not blocked and has
-   * loaded (or is about to load) on the page. Similar behavior to
-   * hasMixedActiveContentLoaded.
-   */
-  [infallible] readonly attribute boolean hasMixedDisplayContentLoaded;
-
-   /**
-   * This attribute determines whether a document has Mixed Display Content
-   * that has been blocked from loading. Similar behavior to
-   * hasMixedActiveContentBlocked.
-   */
-  [infallible] readonly attribute boolean hasMixedDisplayContentBlocked;
-
-   /**
-   * This attribute determines whether a document has Tracking Content
-   * that has been blocked from loading.
-   */
-  [infallible] readonly attribute boolean hasTrackingContentBlocked;
-
-  /**
    * Disconnects this docshell's editor from its window, and stores the
    * editor data in the open document's session history entry.  This
    * should be called only during page transitions.
@@ -590,7 +516,14 @@ interface nsIDocShell : nsIDocShellTreeItem
    * visible, and thus is not a good candidate for certain optimizations
    * like image frame discarding. Docshells are active unless told otherwise.
    */
-  attribute boolean isActive;
+  [infallible] attribute boolean isActive;
+
+  /**
+   * Set if the media element in this docShell should be suspended when the
+   * docShell is inactive.
+   */
+  [infallible] attribute boolean suspendMediaWhenInactive;
+
 
   /**
    * The ID of the docshell in the session history.
@@ -612,8 +545,12 @@ interface nsIDocShell : nsIDocShellTreeItem
   /**
    * Create a new about:blank document and content viewer.
    * @param aPrincipal the principal to use for the new document.
+   * @param aStoragePrincipal the storage principal to use for the new document.
+   * @param aCsp the CSP to use for the new document.
    */
-  void createAboutBlankContentViewer(in nsIPrincipal aPrincipal);
+  void createAboutBlankContentViewer(in nsIPrincipal aPrincipal,
+                                     in nsIPrincipal aStoragePrincipal,
+                                     [optional] in nsIContentSecurityPolicy aCSP);
 
   /**
    * Upon getting, returns the canonical encoding label of the document
@@ -715,108 +652,23 @@ interface nsIDocShell : nsIDocShellTreeItem
   [noscript] void notifyScrollObservers();
 
   /**
-   * The type of iframe that this docshell lives.
-   */
-  cenum FrameType : 8 {
-    FRAME_TYPE_REGULAR = 0,
-    FRAME_TYPE_BROWSER = 1,
-  };
-  [infallible] attribute nsIDocShell_FrameType frameType;
-
-  /**
-   * Returns true if this docshell corresponds to an <iframe mozbrowser>.
-   * <xul:browser> returns false here.
-   */
-  [infallible] readonly attribute boolean isMozBrowser;
-
-  /**
-   * Returns true if this docshell corresponds to an isolated <iframe
-   * mozbrowser>.
-   *
-   * <xul:browser> is not considered to be a mozbrowser element.
-   * <iframe mozbrowser noisolation> does not count as isolated since
-   * isolation is disabled.  Isolation can only be disabled if the
-   * containing document is chrome.
-   */
-  [infallible] readonly attribute boolean isIsolatedMozBrowserElement;
-
-  /**
-   * Returns true if this docshell corresponds to an isolated <iframe
-   * mozbrowser> or if the docshell is contained in an isolated <iframe
-   * mozbrowser>.
-   *
-   * <xul:browser> is not considered to be a mozbrowser element. <iframe
-   * mozbrowser noisolation> does not count as isolated since isolation is
-   * disabled.  Isolation can only be disabled if the containing document is
-   * chrome.
-   *
-   * Our notion here of "contained in" means: Walk up the docshell hierarchy in
-   * this process until we hit an <iframe mozbrowser> (or until the hierarchy
-   * ends).  Return true iff the docshell we stopped on has
-   * isIsolatedMozBrowserElement == true.
-   */
-  [infallible] readonly attribute boolean isInIsolatedMozBrowserElement;
-
-  /**
-   * Returns true if this docshell corresponds to an <iframe mozbrowser>, or
-   * if this docshell is contained in an <iframe mozbrowser>. <xul:browser>
-   * returns false here.
-   *
-   * To compute this value, we walk up the docshell hierarchy.  If we encounter
-   * a docshell with isMozBrowser before we hit the end of the hierarchy,
-   * we return true.  Otherwise, we return false.
-   */
-  [infallible] readonly attribute boolean isInMozBrowser;
-
-  /**
    * Returns true if this docshell is the top level content docshell.
    */
   [infallible] readonly attribute boolean isTopLevelContentDocShell;
 
   /**
    * Like nsIDocShellTreeItem::GetSameTypeParent, except this ignores <iframe
-   * mozbrowser> boundaries.
+   * mozbrowser> boundaries. Which no longer exist.
+   *
+   * @deprecated: Use `BrowsingContext::GetParent()` in the future.
    */
-  nsIDocShell getSameTypeParentIgnoreBrowserBoundaries();
-
-  /**
-   * Like nsIDocShellTreeItem::GetSameTypeRootTreeItem, except this ignores
-   * <iframe mozbrowser> boundaries.
-   */
-  nsIDocShell getSameTypeRootTreeItemIgnoreBrowserBoundaries();
+  nsIDocShell getSameTypeInProcessParentIgnoreBrowserBoundaries();
 
   /**
    * True iff asynchronous panning and zooming is enabled for this
    * docshell.
    */
   readonly attribute bool asyncPanZoomEnabled;
-
-  /**
-   * The sandbox flags on the docshell. These reflect the value of the sandbox
-   * attribute of the associated IFRAME or CSP-protectable content, if
-   * existent. See the HTML5 spec for more details.
-   * These flags on the docshell reflect the current state of the sandbox
-   * attribute, which is modifiable. They are only used when loading new
-   * content, sandbox flags are also immutably set on the document when it is
-   * loaded.
-   * The sandbox flags of a document depend on the sandbox flags on its
-   * docshell and of its parent document, if any.
-   * See nsSandboxFlags.h for the possible flags.
-   */
-  attribute unsigned long sandboxFlags;
-
-  /**
-   * When a new browsing context is opened by a sandboxed document, it needs to
-   * keep track of the browsing context that opened it, so that it can be
-   * navigated by it.  This is the "one permitted sandboxed navigator".
-   */
-  attribute nsIDocShell onePermittedSandboxedNavigator;
-
-  /**
-   * Returns true if we are sandboxed from aTargetDocShell.
-   * aTargetDocShell - the browsing context we are attempting to navigate.
-   */
-  [noscript,notxpcom,nostdcall] bool isSandboxedFrom(in nsIDocShell aTargetDocShell);
 
   /**
    * This member variable determines whether a document has Mixed Active Content that
@@ -836,16 +688,6 @@ interface nsIDocShell : nsIDocShellTreeItem
    * been disabled and hence mMixedContentChannel will never be set.
    */
   attribute nsIChannel mixedContentChannel;
-
-  /**
-   * Checks whether the channel associated with the root docShell is equal to
-   * mMixedContentChannel. If they are the same, allowMixedContent is set to true.
-   * Checks if the root document has a secure connection. If it is, sets
-   * rootHasSecureConnection to true. If the docShell is the root doc shell,
-   * isRootDocShell is set to true.
-   */
-  void GetAllowMixedContentAndConnectionData(out boolean rootHasSecureConnection, out boolean allowMixedContent, out boolean isRootDocShell);
-
 
   /**
    * Are plugins allowed in the current document loaded in this docshell ?
@@ -868,11 +710,6 @@ interface nsIDocShell : nsIDocShellTreeItem
    */
   [infallible] readonly attribute boolean fullscreenAllowed;
 
-  void setFullscreenAllowed(in boolean allowed);
-
-  [notxpcom] uint32_t orientationLock();
-  [notxpcom] void setOrientationLock(in uint32_t orientationLock);
-
   [noscript, infallible] attribute boolean affectPrivateSessionLifetime;
 
   /**
@@ -880,6 +717,11 @@ interface nsIDocShell : nsIDocShellTreeItem
    * must disable the menu when this property is false.
    */
   [infallible] readonly attribute boolean mayEnableCharacterEncodingMenu;
+
+  /**
+   * Indicates that the character encoding was autodetected.
+   */
+  [infallible] readonly attribute boolean charsetAutodetected;
 
            attribute  nsIEditor editor;
   readonly attribute  boolean   editable;             /* this docShell is editable */
@@ -894,10 +736,6 @@ interface nsIDocShell : nsIDocShellTreeItem
    */
   void makeEditable(in boolean inWaitForUriLoad);
 
-  /**
-   * Get the SHEntry associated with a child docshell
-   */
-  nsISHEntry getChildSHEntry(in long aChildOffset);
 
   /**
    * Add a Child SHEntry for a frameset page, given the child's loadtype.
@@ -909,11 +747,6 @@ interface nsIDocShell : nsIDocShellTreeItem
                        in long aChildOffset,
                        in unsigned long aLoadType,
                        in boolean aCloneChilden);
-
-  /**
-   * Whether this docshell should save entries in global history.
-   */
-  attribute boolean useGlobalHistory;
 
   /**
    * Removes nsISHEntry objects related to this docshell from session history.
@@ -955,6 +788,8 @@ interface nsIDocShell : nsIDocShellTreeItem
 */
   [noscript,notxpcom,nostdcall] nsIScriptGlobalObject GetScriptGlobalObject();
 
+  [noscript,notxpcom,nostdcall] Document getExtantDocument();
+
   /**
    * If deviceSizeIsPageSize is set to true, device-width/height media queries
    * will be calculated from the page size, not the device size.
@@ -968,22 +803,13 @@ interface nsIDocShell : nsIDocShellTreeItem
   [infallible] attribute boolean deviceSizeIsPageSize;
 
   /**
-   * Regarding setOpener / getOpener - We can't use XPIDL's "attribute"
-   * for notxpcom, so we're relegated to using explicit gets / sets. This
-   * should be fine, considering that these methods should only ever be
-   * called from native code.
-   */
-  [noscript,notxpcom,nostdcall] void setOpener(in nsIRemoteTab aOpener);
-  [noscript,notxpcom,nostdcall] nsIRemoteTab getOpener();
-
-  /**
    * Notify DocShell when the browser is about to start executing JS, and after
    * that execution has stopped.  This only occurs when the Timeline devtool
    * is collecting information.
    */
   [noscript,notxpcom,nostdcall] void notifyJSRunToCompletionStart(in string aReason,
-                                                                  in wstring functionName,
-                                                                  in wstring fileName,
+                                                                  in AString functionName,
+                                                                  in AString fileName,
                                                                   in unsigned long lineNumber,
                                                                   in jsval asyncStack,
                                                                   in string asyncCause);
@@ -1079,20 +905,6 @@ interface nsIDocShell : nsIDocShellTreeItem
   [infallible] attribute nsIDocShell_MetaViewportOverride metaViewportOverride;
 
   /**
-   * This value is `true` if its corresponding unit of related browsing contexts
-   * (TabGroup) contains only 1 toplevel window, and that window is the outer
-   * window corresponding to this docshell.
-   *
-   * The value is `false` otherwise. This is the case if the docshell is an
-   * iframe, has window.opener set, or another window with window.opener
-   * referring to this window exists.
-   *
-   * If this value is `false`, it would be web content visible for a load
-   * occuring in this docshell to be performed within a different docshell.
-   */
-  [infallible] readonly attribute boolean isOnlyToplevelInTabGroup;
-
-  /**
    * Returns `true` if this docshell was created due to a Large-Allocation
    * header, and has not seen the initiating load yet.
    */
@@ -1125,17 +937,15 @@ interface nsIDocShell : nsIDocShellTreeItem
   [noscript, nostdcall, notxpcom]
   UniqueClientSource TakeInitialClientSource();
 
-  void setColorMatrix([array, size_is(aMatrixLen)] in float aMatrix,
-                      [optional] in unsigned long aMatrixLen);
-
-  void getColorMatrix([optional] out unsigned long aMatrixLen,
-                      [array, size_is(aMatrixLen), retval] out float aMatrix);
+  void setColorMatrix(in Array<float> aMatrix);
 
   /**
-   * Initialize session history for this docshell. The docshell must be the root
-   * docshell.
+   * Returns true if the current load is a forced reload,
+   * e.g. started by holding shift whilst triggering reload.
    */
-  void initSessionHistory();
+  readonly attribute bool isForceReloading;
+
+  Array<float> getColorMatrix();
 
 %{C++
   /**
@@ -1145,11 +955,6 @@ interface nsIDocShell : nsIDocShellTreeItem
   mozilla::HTMLEditor* GetHTMLEditor();
   nsresult SetHTMLEditor(mozilla::HTMLEditor* aHTMLEditor);
 %}
-
-  /**
-   * BrowsingContext associated with the DocShell.
-   */
-  readonly attribute BrowsingContext browsingContext;
 
   /**
    * Allowed CSS display modes. This needs to be kept in
@@ -1174,16 +979,12 @@ interface nsIDocShell : nsIDocShellTreeItem
    */
   [infallible] readonly attribute ContentFrameMessageManager messageManager;
 
-  /**
-   * Asynchronously retrieve a JSON string representing a log of the
-   * content blocking events happened so far in the current tab from the
-   * content process.
-   *
-   * This returns a Promise which resolves to a string on success, and is
-   * rejected on failure.  For documentation on the string format, please
-   * see nsISecureBrowserUI.contentBlockingLogJSON.
+   /**
+   * This returns a Promise which resolves to a boolean. True when the
+   * document has Tracking Content that has been blocked from loading, false
+   * otherwise.
    */
-  Promise getContentBlockingLog();
+  Promise getHasTrackingContentBlocked();
 
   /**
    * Return whether this docshell is "attempting to navigate" in the
@@ -1191,8 +992,31 @@ interface nsIDocShell : nsIDocShellTreeItem
    */
   [notxpcom, nostdcall] readonly attribute boolean isAttemptingToNavigate;
 
-  /**
-   * Whether developer tools are watching activity in this docshell.
+  /*
+   * Whether or not this docshell is executing a nsIWebNavigation navigation
+   * method.
+   *
+   * This will be true when the following methods are executing:
+   *   nsIWebNavigation.binaryLoadURI
+   *   nsIWebNavigation.goBack
+   *   nsIWebNavigation.goForward
+   *   nsIWebNavigation.gotoIndex
+   *   nsIWebNavigation.loadURI
    */
-  [infallible] attribute boolean watchedByDevtools;
+  [infallible] readonly attribute boolean isNavigating;
+
+  /**
+   * @see nsISHEntry synchronizeLayoutHistoryState().
+   */
+  void synchronizeLayoutHistoryState();
+
+  /**
+   * This attempts to save any applicable layout history state (like
+   * scroll position) in the nsISHEntry. This is normally done
+   * automatically when transitioning from page to page in the
+   * same process. We expose this function to support transitioning
+   * from page to page across processes as a workaround for bug 1630234
+   * until session history state is moved into the parent process.
+   */
+  void persistLayoutHistoryState();
 };

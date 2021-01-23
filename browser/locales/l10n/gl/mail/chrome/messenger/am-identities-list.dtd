@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identitiesListManageDesc.label "Xestiona as identidades para esta conta. A primeira identidade usase como predeterminada.">
+<!ENTITY identitiesListAdd.label  "Engadir…">
+<!ENTITY identitiesListAdd.accesskey  "a">
+<!ENTITY identitiesListEdit.label "Editar…">
+<!ENTITY identitiesListEdit.accesskey "E">
+<!ENTITY identitiesListDefault.label "Estabelecer como predeterminada">
+<!ENTITY identitiesListDefault.accesskey "s">
+<!ENTITY identitiesListDelete.label "Eliminar">
+<!ENTITY identitiesListDelete.accesskey "m">
+<!ENTITY identitiesListClose.label "Pechar">
+<!ENTITY identitiesListClose.accesskey "c">

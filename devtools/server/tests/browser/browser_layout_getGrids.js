@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -40,18 +39,21 @@ const GRID_FRAGMENT_DATA = {
         names: ["col-1", "col-start-1", "sidebar-start"],
         number: 1,
         start: 0,
+        type: "explicit",
       },
       {
         breadth: 0,
         names: ["col-2", "header-start", "sidebar-end", "content-start"],
         number: 2,
         start: 100,
+        type: "explicit",
       },
       {
         breadth: 0,
         names: ["header-end", "content-end"],
         number: 3,
         start: 200,
+        type: "explicit",
       },
     ],
     tracks: [
@@ -76,18 +78,21 @@ const GRID_FRAGMENT_DATA = {
         names: ["header-start"],
         number: 1,
         start: 0,
+        type: "explicit",
       },
       {
         breadth: 0,
         names: ["header-end", "sidebar-start", "content-start"],
         number: 2,
         start: 100,
+        type: "explicit",
       },
       {
         breadth: 0,
         names: ["sidebar-end", "content-end"],
         number: 3,
         start: 200,
+        type: "explicit",
       },
     ],
     tracks: [

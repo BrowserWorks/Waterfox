@@ -11,8 +11,8 @@
 #include "mozilla/Atomics.h"
 #include "mozilla/FloatingPoint.h"
 #include "mozilla/LazyIdleThread.h"
-#include "mozilla/dom/PositionErrorBinding.h"
-#include "nsGeoPosition.h"
+#include "mozilla/dom/GeolocationPositionErrorBinding.h"
+#include "GeolocationPosition.h"
 #include "nsProxyRelease.h"
 #include "nsThreadUtils.h"
 
@@ -162,7 +162,7 @@ class GpsdLocationProvider::PollRunnable final : public Runnable {
         err = PollLoop5();
         break;
       default:
-        err = PositionError_Binding::POSITION_UNAVAILABLE;
+        err = GeolocationPositionError_Binding::POSITION_UNAVAILABLE;
         break;
     }
 
@@ -234,7 +234,7 @@ class GpsdLocationProvider::PollRunnable final : public Runnable {
           if (!IsNaN(gpsData.fix.altitude)) {
             alt = gpsData.fix.altitude;
           }
-          MOZ_FALLTHROUGH;
+          [[fallthrough]];
         case MODE_2D:
           if (!IsNaN(gpsData.fix.latitude)) {
             lat = gpsData.fix.latitude;
@@ -277,24 +277,24 @@ class GpsdLocationProvider::PollRunnable final : public Runnable {
 
     return err;
 #else
-    return PositionError_Binding::POSITION_UNAVAILABLE;
+    return GeolocationPositionError_Binding::POSITION_UNAVAILABLE;
 #endif  // GPSD_MAJOR_API_VERSION
   }
 
   static int ErrnoToError(int aErrno) {
     switch (aErrno) {
       case EACCES:
-        MOZ_FALLTHROUGH;
+        [[fallthrough]];
       case EPERM:
-        MOZ_FALLTHROUGH;
+        [[fallthrough]];
       case EROFS:
-        return PositionError_Binding::PERMISSION_DENIED;
+        return GeolocationPositionError_Binding::PERMISSION_DENIED;
       case ETIME:
-        MOZ_FALLTHROUGH;
+        [[fallthrough]];
       case ETIMEDOUT:
-        return PositionError_Binding::TIMEOUT;
+        return GeolocationPositionError_Binding::TIMEOUT;
       default:
-        return PositionError_Binding::POSITION_UNAVAILABLE;
+        return GeolocationPositionError_Binding::POSITION_UNAVAILABLE;
     }
   }
 

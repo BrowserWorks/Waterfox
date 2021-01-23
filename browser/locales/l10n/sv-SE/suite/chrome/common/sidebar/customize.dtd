@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from ./customize.xul -->
+
+<!-- LOCALIZATION NOTE  sidebar.customize.title.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.title.label          "Anpassa &sidebarName;">
+<!-- LOCALIZATION NOTE  sidebar.customize.current.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.current.label        "Flikar i &sidebarName;:">
+<!ENTITY sidebar.customize.current.accesskey    "F">
+
+<!ENTITY sidebar.customize.title                "Anpassa sidofält">
+<!ENTITY sidebar.customize.current2.label       "Flikar i sidofält:">
+<!ENTITY sidebar.customize.current2.accesskey   "F">
+<!ENTITY sidebar.customize.customize.label      "Anpassa flik…">
+<!ENTITY sidebar.customize.customize.accesskey  "A">
+<!ENTITY sidebar.customize.remove.label         "Ta bort">
+<!ENTITY sidebar.customize.remove.accesskey     "T">
+<!ENTITY sidebar.customize.additional.label     "Tillgängliga flikar:">
+<!ENTITY sidebar.customize.additional.accesskey "ä">
+<!ENTITY sidebar.customize.add.label            "Lägg till">
+<!ENTITY sidebar.customize.add.accesskey        "L">
+<!ENTITY sidebar.customize.preview.label        "Förhandsgranska…">
+<!ENTITY sidebar.customize.preview.accesskey    "h">
+<!ENTITY sidebar.customize.up.label             "Upp">
+<!ENTITY sidebar.customize.up.accesskey         "u">
+<!ENTITY sidebar.customize.down.label           "Ned">
+<!ENTITY sidebar.customize.down.accesskey       "n">
+<!ENTITY sidebar.more.label                     "Hitta fler flikar…">
+<!ENTITY sidebar.more.accesskey                 "i">

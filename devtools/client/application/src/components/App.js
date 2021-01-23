@@ -7,59 +7,38 @@
 const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
 const {
   createFactory,
-  Component,
+  PureComponent,
 } = require("devtools/client/shared/vendor/react");
-const { connect } = require("devtools/client/shared/vendor/react-redux");
 const { main } = require("devtools/client/shared/vendor/react-dom-factories");
 
 const FluentReact = require("devtools/client/shared/vendor/fluent-react");
 const LocalizationProvider = createFactory(FluentReact.LocalizationProvider);
 
-const WorkerList = createFactory(require("./WorkerList"));
-const WorkerListEmpty = createFactory(require("./WorkerListEmpty"));
+const PageSwitcher = createFactory(
+  require("devtools/client/application/src/components/routing/PageSwitcher")
+);
+const Sidebar = createFactory(
+  require("devtools/client/application/src/components/routing/Sidebar")
+);
 
 /**
  * This is the main component for the application panel.
  */
-class App extends Component {
+class App extends PureComponent {
   static get propTypes() {
     return {
-      client: PropTypes.object.isRequired,
-      workers: PropTypes.array.isRequired,
-      serviceContainer: PropTypes.object.isRequired,
-      domain: PropTypes.string.isRequired,
       fluentBundles: PropTypes.array.isRequired,
     };
   }
 
   render() {
-    let {
-      workers,
-      domain,
-      client,
-      serviceContainer,
-      fluentBundles,
-    } = this.props;
-
-    // Filter out workers from other domains
-    workers = workers.filter(x => new URL(x.url).hostname === domain);
-    const isEmpty = workers.length === 0;
+    const { fluentBundles } = this.props;
 
     return LocalizationProvider(
-      { messages: fluentBundles },
-      main(
-        { className: `application ${isEmpty ? "application--empty" : ""}` },
-        isEmpty
-          ? WorkerListEmpty({ serviceContainer })
-          : WorkerList({ workers, client })
-      )
+      { bundles: fluentBundles },
+      main({ className: `app` }, Sidebar({}), PageSwitcher({}))
     );
   }
 }
 
-// Exports
-
-module.exports = connect(state => ({
-  workers: state.workers.list,
-  domain: state.page.domain,
-}))(App);
+module.exports = App;

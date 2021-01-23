@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Testenioù-degemer">
+<!ENTITY useGlobalPrefs.label         "Ober gant ma gwellvezioù hollek evit ardeiñ an testenioù-degemer">
+<!ENTITY useGlobalPrefs.accesskey     "b">
+<!ENTITY globalReceipts.label         "Gwellvezioù hollek…">
+<!ENTITY globalReceipts.accesskey     "G">
+<!ENTITY useCustomPrefs.label         "Personelaat an testenioù-degemer evit ar gont-mañ">
+<!ENTITY useCustomPrefs.accesskey     "t">
+<!ENTITY requestReceipt.label         "Atav goulenn un testeni-degemer pa gasan kemennadennoù">
+<!ENTITY requestReceipt.accesskey     "A">
+<!ENTITY receiptArrive.label          "P'en em gav un testeni-degemer :">
+<!ENTITY leaveIt.label                "Leuskel anezhañ em boestad-lizheroù">
+<!ENTITY leaveIt.accesskey            "i">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "Dilec&apos;hiañ anezhañ em zeuliad &quot;Kaset&quot;">
+<!ENTITY moveToSent.accesskey         "D">
+<!ENTITY requestMDN.label             "Pa resevan un azgoulenn evit un testeni-degemer :">
+<!ENTITY returnSome.label             "Aotren an testenioù-degemer evit kemennadennoù zo">
+<!ENTITY returnSome.accesskey         "e">
+<!ENTITY never.label                  "Chom hep kas testeni-degemer atav">
+<!ENTITY never.accesskey              "h">
+<!ENTITY notInToCc.label              "Ma n'on ket e maezienn Da pe Cc ar gemennadenn :">
+<!ENTITY notInToCc.accesskey          "t">
+<!ENTITY outsideDomain.label          "Ma 'z eo ar c'hasour a-ziavaez ma domani :">
+<!ENTITY outsideDomain.accesskey      "s">
+<!ENTITY otherCases.label             "A-hend-all :">
+<!ENTITY otherCases.accesskey         "A">
+<!ENTITY askMe.label                  "Goulenn ganin">
+<!ENTITY alwaysSend.label             "Kas bepred">
+<!ENTITY neverSend.label              "Chom hep kas atav">

@@ -7,14 +7,12 @@
 #ifndef mozilla_AnimationCollection_h
 #define mozilla_AnimationCollection_h
 
-#include "mozilla/dom/Animation.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/LinkedList.h"
 #include "mozilla/RefPtr.h"
 #include "nsCSSPseudoElements.h"
-#include "nsDOMMutationObserver.h"
-#include "nsTArray.h"
+#include "nsTArrayForwardDeclare.h"
 
 class nsAtom;
 class nsIFrame;
@@ -52,7 +50,7 @@ class AnimationCollection
     mCalledDestroy = true;
 
     // This will call our destructor.
-    mElement->DeleteProperty(mElementProperty);
+    mElement->RemoveProperty(mElementProperty);
   }
 
   static void PropertyDtor(void* aObject, nsAtom* aPropertyName,
@@ -86,13 +84,13 @@ class AnimationCollection
   // i.e., in an atom list)
   nsAtom* mElementProperty;
 
-  InfallibleTArray<RefPtr<AnimationType>> mAnimations;
+  nsTArray<RefPtr<AnimationType>> mAnimations;
 
  private:
   static nsAtom* GetPropertyAtomForPseudoType(PseudoStyleType aPseudoType);
 
   // We distinguish between destroying this by calling Destroy() vs directly
-  // calling DeleteProperty on an element.
+  // calling RemoveProperty on an element.
   //
   // The former case represents regular updating due to style changes and should
   // trigger subsequent restyles.

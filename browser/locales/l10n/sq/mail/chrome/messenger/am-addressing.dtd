@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "Hartim &amp; Adresim">
+<!ENTITY addressingGroupTitle.label "Adresim">
+<!ENTITY addressingText.label      "Kur kërkohen adresa:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Përdor parapëlqimet e mia të përgjithshme LDAP për këtë llogari">
+<!ENTITY useGlobal.accesskey       "a">
+<!ENTITY editDirectories.label     "Përpunoni Drejtori…">
+<!ENTITY editDirectories.accesskey "D">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Përdor një tjetër shërbyes LDAP:">
+<!ENTITY directories.accesskey     "t">
+<!ENTITY directoriesNone.label     "Asnjë">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "Hartim">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Harto mesazhe në format HTML">
+<!ENTITY useHtml.accesskey                    "H">
+<!ENTITY autoQuote.label                      "Citoje vetvetiu mesazhin origjinal kur përgjigjesh">
+<!ENTITY autoQuote.accesskey                  "C">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "Gjatë citimesh,">
+<!ENTITY quoting.accesskey                    "c">
+<!ENTITY aboveQuote.label                     "fillo përgjigjen time mbi citim">
+<!ENTITY belowQuote.label                     "fillo përgjigjen time nën citim">
+<!ENTITY selectAndQuote.label                 "përzgjidhe citimin">
+<!ENTITY place.label                          "dhe vendose nënshkrimin tim">
+<!ENTITY place.accesskey                      "v">
+<!ENTITY belowText.label                      "nën citimin (e këshilluar)">
+<!ENTITY aboveText.label                      "nën përgjigjen time (mbi citim)">
+<!ENTITY includeSigOnReply.label              "Përfshi nënshkrim te përgjigjet">
+<!ENTITY includeSigOnReply.accesskey          "g">
+<!ENTITY includeSigOnForward.label            "Përfshi nënshkrim te përcjelljet">
+<!ENTITY includeSigOnForward.accesskey        "ë">
+
+<!ENTITY globalComposingPrefs.label           "Parapëlqime Globale Hartimi…">
+<!ENTITY globalComposingPrefs.accesskey       "G">
+
+<!ENTITY globalAddressingPrefs.label          "Parapëlqime Globale Adresimi…">
+<!ENTITY globalAddressingPrefs.accesskey      "P">

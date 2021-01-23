@@ -19,8 +19,8 @@
 
 using namespace mozilla::gfx;
 
-gfxPattern::gfxPattern(const Color& aColor) : mExtend(ExtendMode::CLAMP) {
-  mGfxPattern.InitColorPattern(ToDeviceColor(aColor));
+gfxPattern::gfxPattern(const DeviceColor& aColor) : mExtend(ExtendMode::CLAMP) {
+  mGfxPattern.InitColorPattern(aColor);
 }
 
 // linear
@@ -37,6 +37,14 @@ gfxPattern::gfxPattern(gfxFloat cx0, gfxFloat cy0, gfxFloat radius0,
                                         radius0, radius1, nullptr);
 }
 
+// conic
+gfxPattern::gfxPattern(gfxFloat cx, gfxFloat cy, gfxFloat angle,
+                       gfxFloat startOffset, gfxFloat endOffset)
+    : mExtend(ExtendMode::CLAMP) {
+  mGfxPattern.InitConicGradientPattern(Point(cx, cy), angle, startOffset,
+                                       endOffset, nullptr);
+}
+
 // Azure
 gfxPattern::gfxPattern(SourceSurface* aSurface,
                        const Matrix& aPatternToUserSpace)
@@ -46,9 +54,10 @@ gfxPattern::gfxPattern(SourceSurface* aSurface,
       mozilla::gfx::SamplingFilter::GOOD);
 }
 
-void gfxPattern::AddColorStop(gfxFloat offset, const Color& c) {
+void gfxPattern::AddColorStop(gfxFloat offset, const DeviceColor& c) {
   if (mGfxPattern.GetPattern()->GetType() != PatternType::LINEAR_GRADIENT &&
-      mGfxPattern.GetPattern()->GetType() != PatternType::RADIAL_GRADIENT) {
+      mGfxPattern.GetPattern()->GetType() != PatternType::RADIAL_GRADIENT &&
+      mGfxPattern.GetPattern()->GetType() != PatternType::CONIC_GRADIENT) {
     return;
   }
 
@@ -56,7 +65,7 @@ void gfxPattern::AddColorStop(gfxFloat offset, const Color& c) {
 
   GradientStop stop;
   stop.offset = offset;
-  stop.color = ToDeviceColor(c);
+  stop.color = c;
   mStopsList.AppendElement(stop);
 }
 
@@ -136,6 +145,13 @@ Pattern* gfxPattern::GetPattern(const DrawTarget* aTarget,
       radialGradientPattern->mStops = mStops;
       break;
     }
+    case PatternType::CONIC_GRADIENT: {
+      ConicGradientPattern* conicGradientPattern =
+          static_cast<ConicGradientPattern*>(mGfxPattern.GetPattern());
+      conicGradientPattern->mMatrix = patternToUser;
+      conicGradientPattern->mStops = mStops;
+      break;
+    }
     default:
       /* Reassure the compiler we are handling all the enum values.  */
       break;
@@ -178,7 +194,7 @@ SamplingFilter gfxPattern::SamplingFilter() const {
       ->mSamplingFilter;
 }
 
-bool gfxPattern::GetSolidColor(Color& aColorOut) {
+bool gfxPattern::GetSolidColor(DeviceColor& aColorOut) {
   if (mGfxPattern.GetPattern()->GetType() == PatternType::COLOR) {
     aColorOut = static_cast<ColorPattern*>(mGfxPattern.GetPattern())->mColor;
     return true;

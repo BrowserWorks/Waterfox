@@ -5,7 +5,7 @@
 # This file contains miscellaneous utility functions that don't belong anywhere
 # in particular.
 
-from __future__ import absolute_import, unicode_literals, print_function
+from __future__ import absolute_import, print_function, unicode_literals
 
 import argparse
 import collections
@@ -14,33 +14,27 @@ import difflib
 import errno
 import functools
 import hashlib
+import io
 import itertools
 import os
+import pprint
 import re
 import stat
 import sys
 import time
-import types
-
 from collections import (
-    defaultdict,
-    Iterable,
     OrderedDict,
 )
-from io import (
-    StringIO,
-    BytesIO,
-)
+from io import (BytesIO, StringIO)
 
-
-if sys.version_info[0] == 3:
-    str_type = str
-else:
-    str_type = basestring
+import six
 
 if sys.platform == 'win32':
     _kernel32 = ctypes.windll.kernel32
     _FILE_ATTRIBUTE_NOT_CONTENT_INDEXED = 0x2000
+    system_encoding = 'mbcs'
+else:
+    system_encoding = 'utf-8'
 
 
 def exec_(object, globals=None, locals=None):
@@ -57,6 +51,12 @@ def exec_(object, globals=None, locals=None):
     which happen with older versions of python 2.7.
     """
     exec(object, globals, locals)
+
+
+def _open(path, mode):
+    if 'b' in mode:
+        return io.open(path, mode)
+    return io.open(path, mode, encoding='utf-8', newline='\n')
 
 
 def hash_file(path, hasher=None):
@@ -78,21 +78,23 @@ def hash_file(path, hasher=None):
     return h.hexdigest()
 
 
-class EmptyValue(unicode):
+class EmptyValue(six.text_type):
     """A dummy type that behaves like an empty string and sequence.
 
     This type exists in order to support
     :py:class:`mozbuild.frontend.reader.EmptyConfig`. It should likely not be
     used elsewhere.
     """
+
     def __init__(self):
         super(EmptyValue, self).__init__()
 
 
 class ReadOnlyNamespace(object):
     """A class for objects with immutable attributes set at initialization."""
+
     def __init__(self, **kwargs):
-        for k, v in kwargs.iteritems():
+        for k, v in six.iteritems(kwargs):
             super(ReadOnlyNamespace, self).__setattr__(k, v)
 
     def __delattr__(self, key):
@@ -114,6 +116,7 @@ class ReadOnlyNamespace(object):
 
 class ReadOnlyDict(dict):
     """A read-only dictionary."""
+
     def __init__(self, *args, **kwargs):
         dict.__init__(self, *args, **kwargs)
 
@@ -136,6 +139,7 @@ undefined = undefined_default()
 
 class ReadOnlyDefaultDict(ReadOnlyDict):
     """A read-only dictionary that supports default values on retrieval."""
+
     def __init__(self, default_factory, *args, **kwargs):
         ReadOnlyDict.__init__(self, *args, **kwargs)
         self._default_factory = default_factory
@@ -171,7 +175,7 @@ def mkdir(path, not_indexed=False):
 
     if not_indexed:
         if sys.platform == 'win32':
-            if isinstance(path, str_type):
+            if isinstance(path, six.string_types):
                 fn = _kernel32.SetFileAttributesW
             else:
                 fn = _kernel32.SetFileAttributesA
@@ -215,18 +219,21 @@ class FileAvoidWrite(BytesIO):
     out, but reports whether the file was existing and would have been updated
     still occur, as well as diff capture if requested.
     """
-    def __init__(self, filename, capture_diff=False, dry_run=False, mode='rU'):
+
+    def __init__(self, filename, capture_diff=False, dry_run=False, readmode='rU'):
         BytesIO.__init__(self)
         self.name = filename
+        assert type(capture_diff) == bool
+        assert type(dry_run) == bool
+        assert 'r' in readmode
         self._capture_diff = capture_diff
         self._write_to_file = not dry_run
         self.diff = None
-        self.mode = mode
+        self.mode = readmode
+        self._binary_mode = 'b' in readmode
 
     def write(self, buf):
-        if isinstance(buf, unicode):
-            buf = buf.encode('utf-8')
-        BytesIO.write(self, buf)
+        BytesIO.write(self, six.ensure_binary(buf))
 
     def avoid_writing_to_file(self):
         self._write_to_file = False
@@ -242,13 +249,16 @@ class FileAvoidWrite(BytesIO):
         underlying file was changed, ``.diff`` will be populated with the diff
         of the result.
         """
-        buf = self.getvalue()
+        # Use binary data if the caller explicitly asked for it.
+        ensure = six.ensure_binary if self._binary_mode else six.ensure_text
+        buf = ensure(self.getvalue())
+
         BytesIO.close(self)
         existed = False
         old_content = None
 
         try:
-            existing = open(self.name, self.mode)
+            existing = _open(self.name, self.mode)
             existed = True
         except IOError:
             pass
@@ -267,31 +277,62 @@ class FileAvoidWrite(BytesIO):
             # Maintain 'b' if specified.  'U' only applies to modes starting with
             # 'r', so it is dropped.
             writemode = 'w'
-            if 'b' in self.mode:
+            if self._binary_mode:
                 writemode += 'b'
-            with open(self.name, writemode) as file:
+                buf = six.ensure_binary(buf)
+            else:
+                buf = six.ensure_text(buf)
+            with _open(self.name, writemode) as file:
                 file.write(buf)
 
-        if self._capture_diff:
-            try:
-                old_lines = old_content.splitlines() if existed else None
-                new_lines = buf.splitlines()
-
-                self.diff = simple_diff(self.name, old_lines, new_lines)
-            # FileAvoidWrite isn't unicode/bytes safe. So, files with non-ascii
-            # content or opened and written in different modes may involve
-            # implicit conversion and this will make Python unhappy. Since
-            # diffing isn't a critical feature, we just ignore the failure.
-            # This can go away once FileAvoidWrite uses io.BytesIO and
-            # io.StringIO. But that will require a lot of work.
-            except (UnicodeDecodeError, UnicodeEncodeError):
-                self.diff = ['Binary or non-ascii file changed: %s' %
-                             self.name]
+        self._generate_diff(buf, old_content)
 
         return existed, True
 
+    def _generate_diff(self, new_content, old_content):
+        """Generate a diff for the changed contents if `capture_diff` is True.
+
+        If the changed contents could not be decoded as utf-8 then generate a
+        placeholder message instead of a diff.
+
+        Args:
+            new_content: Str or bytes holding the new file contents.
+            old_content: Str or bytes holding the original file contents. Should be
+                None if no old content is being overwritten.
+        """
+        if not self._capture_diff:
+            return
+
+        try:
+            if old_content is None:
+                old_lines = None
+            else:
+                if self._binary_mode:
+                    # difflib doesn't work with bytes.
+                    old_content = old_content.decode('utf-8')
+
+                old_lines = old_content.splitlines()
+
+            if self._binary_mode:
+                # difflib doesn't work with bytes.
+                new_content = new_content.decode('utf-8')
+
+            new_lines = new_content.splitlines()
+
+            self.diff = simple_diff(self.name, old_lines, new_lines)
+        # FileAvoidWrite isn't unicode/bytes safe. So, files with non-ascii
+        # content or opened and written in different modes may involve
+        # implicit conversion and this will make Python unhappy. Since
+        # diffing isn't a critical feature, we just ignore the failure.
+        # This can go away once FileAvoidWrite uses io.BytesIO and
+        # io.StringIO. But that will require a lot of work.
+        except (UnicodeDecodeError, UnicodeEncodeError):
+            self.diff = ['Binary or non-ascii file changed: %s' %
+                         self.name]
+
     def __enter__(self):
         return self
+
     def __exit__(self, type, value, traceback):
         if not self.closed:
             self.close()
@@ -359,7 +400,14 @@ def resolve_target_to_make(topobjdir, target):
         reldir = os.path.dirname(reldir)
 
 
-class ListMixin(object):
+class List(list):
+    """A list specialized for moz.build environments.
+
+    We overload the assignment and append operations to require that the
+    appended thing is a list. This avoids bad surprises coming from appending
+    a string to a list, which would just add each letter of the string.
+    """
+
     def __init__(self, iterable=None, **kwargs):
         if iterable is None:
             iterable = []
@@ -367,24 +415,37 @@ class ListMixin(object):
             raise ValueError('List can only be created from other list instances.')
 
         self._kwargs = kwargs
-        return super(ListMixin, self).__init__(iterable, **kwargs)
+        return super(List, self).__init__(iterable)
 
     def extend(self, l):
         if not isinstance(l, list):
             raise ValueError('List can only be extended with other list instances.')
 
-        return super(ListMixin, self).extend(l)
+        return super(List, self).extend(l)
+
+    def __setitem__(self, key, val):
+        if isinstance(key, slice):
+            if not isinstance(val, list):
+                raise ValueError('List can only be sliced with other list '
+                                 'instances.')
+            if key.step:
+                raise ValueError('List cannot be sliced with a nonzero step '
+                                 'value')
+            # Python 2 and Python 3 do this differently for some reason.
+            if six.PY2:
+                return super(List, self).__setslice__(key.start, key.stop,
+                                                      val)
+            else:
+                return super(List, self).__setitem__(key, val)
+        return super(List, self).__setitem__(key, val)
 
     def __setslice__(self, i, j, sequence):
-        if not isinstance(sequence, list):
-            raise ValueError('List can only be sliced with other list instances.')
-
-        return super(ListMixin, self).__setslice__(i, j, sequence)
+        return self.__setitem__(slice(i, j), sequence)
 
     def __add__(self, other):
         # Allow None and EmptyValue is a special case because it makes undefined
         # variable references in moz.build behave better.
-        other = [] if isinstance(other, (types.NoneType, EmptyValue)) else other
+        other = [] if isinstance(other, (type(None), EmptyValue)) else other
         if not isinstance(other, list):
             raise ValueError('Only lists can be appended to lists.')
 
@@ -393,20 +454,11 @@ class ListMixin(object):
         return new_list
 
     def __iadd__(self, other):
-        other = [] if isinstance(other, (types.NoneType, EmptyValue)) else other
+        other = [] if isinstance(other, (type(None), EmptyValue)) else other
         if not isinstance(other, list):
             raise ValueError('Only lists can be appended to lists.')
 
-        return super(ListMixin, self).__iadd__(other)
-
-
-class List(ListMixin, list):
-    """A list specialized for moz.build environments.
-
-    We overload the assignment and append operations to require that the
-    appended thing is a list. This avoids bad surprises coming from appending
-    a string to a list, which would just add each letter of the string.
-    """
+        return super(List, self).__iadd__(other)
 
 
 class UnsortedError(Exception):
@@ -428,14 +480,20 @@ class UnsortedError(Exception):
 
         s.write('An attempt was made to add an unsorted sequence to a list. ')
         s.write('The incoming list is unsorted starting at element %d. ' %
-            self.i)
+                self.i)
         s.write('We expected "%s" but got "%s"' % (
             self.sorted[self.i], self.original[self.i]))
 
         return s.getvalue()
 
 
-class StrictOrderingOnAppendListMixin(object):
+class StrictOrderingOnAppendList(List):
+    """A list specialized for moz.build environments.
+
+    We overload the assignment and append operations to require that incoming
+    elements be ordered. This enforces cleaner style in moz.build files.
+    """
+
     @staticmethod
     def ensure_sorted(l):
         if isinstance(l, StrictOrderingOnAppendList):
@@ -454,43 +512,35 @@ class StrictOrderingOnAppendListMixin(object):
         if iterable is None:
             iterable = []
 
-        StrictOrderingOnAppendListMixin.ensure_sorted(iterable)
+        StrictOrderingOnAppendList.ensure_sorted(iterable)
 
-        super(StrictOrderingOnAppendListMixin, self).__init__(iterable, **kwargs)
+        super(StrictOrderingOnAppendList, self).__init__(iterable, **kwargs)
 
     def extend(self, l):
-        StrictOrderingOnAppendListMixin.ensure_sorted(l)
+        StrictOrderingOnAppendList.ensure_sorted(l)
 
-        return super(StrictOrderingOnAppendListMixin, self).extend(l)
+        return super(StrictOrderingOnAppendList, self).extend(l)
 
-    def __setslice__(self, i, j, sequence):
-        StrictOrderingOnAppendListMixin.ensure_sorted(sequence)
-
-        return super(StrictOrderingOnAppendListMixin, self).__setslice__(i, j,
-            sequence)
+    def __setitem__(self, key, val):
+        if isinstance(key, slice):
+            StrictOrderingOnAppendList.ensure_sorted(val)
+        return super(StrictOrderingOnAppendList, self).__setitem__(key, val)
 
     def __add__(self, other):
-        StrictOrderingOnAppendListMixin.ensure_sorted(other)
+        StrictOrderingOnAppendList.ensure_sorted(other)
 
-        return super(StrictOrderingOnAppendListMixin, self).__add__(other)
+        return super(StrictOrderingOnAppendList, self).__add__(other)
 
     def __iadd__(self, other):
-        StrictOrderingOnAppendListMixin.ensure_sorted(other)
+        StrictOrderingOnAppendList.ensure_sorted(other)
 
-        return super(StrictOrderingOnAppendListMixin, self).__iadd__(other)
+        return super(StrictOrderingOnAppendList, self).__iadd__(other)
 
-
-class StrictOrderingOnAppendList(ListMixin, StrictOrderingOnAppendListMixin,
-        list):
-    """A list specialized for moz.build environments.
-
-    We overload the assignment and append operations to require that incoming
-    elements be ordered. This enforces cleaner style in moz.build files.
-    """
 
 class ImmutableStrictOrderingOnAppendList(StrictOrderingOnAppendList):
     """Like StrictOrderingOnAppendList, but not allowing mutations of the value.
     """
+
     def append(self, elt):
         raise Exception("cannot use append on this type")
 
@@ -507,48 +557,61 @@ class ImmutableStrictOrderingOnAppendList(StrictOrderingOnAppendList):
         raise Exception("cannot use += on this type")
 
 
-class ListWithActionMixin(object):
-    """Mixin to create lists with pre-processing. See ListWithAction."""
-    def __init__(self, iterable=None, action=None):
-        if iterable is None:
-            iterable = []
-        if not callable(action):
-            raise ValueError('A callabe action is required to construct '
-                             'a ListWithAction')
-
-        self._action = action
-        iterable = [self._action(i) for i in iterable]
-        super(ListWithActionMixin, self).__init__(iterable)
-
-    def extend(self, l):
-        l = [self._action(i) for i in l]
-        return super(ListWithActionMixin, self).extend(l)
-
-    def __setslice__(self, i, j, sequence):
-        sequence = [self._action(item) for item in sequence]
-        return super(ListWithActionMixin, self).__setslice__(i, j, sequence)
-
-    def __iadd__(self, other):
-        other = [self._action(i) for i in other]
-        return super(ListWithActionMixin, self).__iadd__(other)
-
-class StrictOrderingOnAppendListWithAction(StrictOrderingOnAppendListMixin,
-    ListMixin, ListWithActionMixin, list):
+class StrictOrderingOnAppendListWithAction(StrictOrderingOnAppendList):
     """An ordered list that accepts a callable to be applied to each item.
 
     A callable (action) passed to the constructor is run on each item of input.
     The result of running the callable on each item will be stored in place of
     the original input, but the original item must be used to enforce sortedness.
-    Note that the order of superclasses is therefore significant.
     """
 
-class ListWithAction(ListMixin, ListWithActionMixin, list):
-    """A list that accepts a callable to be applied to each item.
+    def __init__(self, iterable=(), action=None):
+        if not callable(action):
+            raise ValueError('A callable action is required to construct '
+                             'a StrictOrderingOnAppendListWithAction')
 
-    A callable (action) may optionally be passed to the constructor to run on
-    each item of input. The result of calling the callable on each item will be
-    stored in place of the original input.
-    """
+        self._action = action
+        if not isinstance(iterable, (tuple, list)):
+            raise ValueError(
+                'StrictOrderingOnAppendListWithAction can only be initialized '
+                'with another list')
+        iterable = [self._action(i) for i in iterable]
+        super(StrictOrderingOnAppendListWithAction, self).__init__(
+            iterable, action=action)
+
+    def extend(self, l):
+        if not isinstance(l, list):
+            raise ValueError(
+                'StrictOrderingOnAppendListWithAction can only be extended '
+                'with another list')
+        l = [self._action(i) for i in l]
+        return super(StrictOrderingOnAppendListWithAction, self).extend(l)
+
+    def __setitem__(self, key, val):
+        if isinstance(key, slice):
+            if not isinstance(val, list):
+                raise ValueError(
+                    'StrictOrderingOnAppendListWithAction can only be sliced '
+                    'with another list')
+            val = [self._action(item) for item in val]
+        return super(StrictOrderingOnAppendListWithAction, self).__setitem__(
+            key, val)
+
+    def __add__(self, other):
+        if not isinstance(other, list):
+            raise ValueError(
+                'StrictOrderingOnAppendListWithAction can only be added with '
+                'another list')
+        return super(StrictOrderingOnAppendListWithAction, self).__add__(other)
+
+    def __iadd__(self, other):
+        if not isinstance(other, list):
+            raise ValueError(
+                'StrictOrderingOnAppendListWithAction can only be added with '
+                'another list')
+        other = [self._action(i) for i in other]
+        return super(StrictOrderingOnAppendListWithAction, self).__iadd__(other)
+
 
 class MozbuildDeletionError(Exception):
     pass
@@ -571,7 +634,7 @@ def FlagsFactory(flags):
         _flags = flags
 
         def update(self, **kwargs):
-            for k, v in kwargs.iteritems():
+            for k, v in six.iteritems(kwargs):
                 setattr(self, k, v)
 
         def __getattr__(self, name):
@@ -640,8 +703,17 @@ def StrictOrderingOnAppendListWithFlagsFactory(flags):
             return self._flags[name]
 
         def __setitem__(self, name, value):
-            raise TypeError("'%s' object does not support item assignment" %
-                            self.__class__.__name__)
+            if not isinstance(name, slice):
+                raise TypeError("'%s' object does not support item assignment" %
+                                self.__class__.__name__)
+            result = super(StrictOrderingOnAppendListWithFlagsSpecialization,
+                           self).__setitem__(name, value)
+            # We may have removed items.
+            for k in set(self._flags.keys()) - set(self):
+                del self._flags[k]
+            if isinstance(value, StrictOrderingOnAppendListWithFlags):
+                self._update_flags(value)
+            return result
 
         def _update_flags(self, other):
             if self._flags_type._flags != other._flags_type._flags:
@@ -649,27 +721,22 @@ def StrictOrderingOnAppendListWithFlagsFactory(flags):
                                  (self._flags_type._flags, other._flags_type._flags))
             intersection = set(self._flags.keys()) & set(other._flags.keys())
             if intersection:
-                raise ValueError('Cannot update flags: both lists of strings with flags configure %s' %
-                                 intersection)
+                raise ValueError(
+                    'Cannot update flags: both lists of strings with flags configure %s' %
+                    intersection
+                    )
             self._flags.update(other._flags)
 
         def extend(self, l):
-            result = super(StrictOrderingOnAppendList, self).extend(l)
+            result = super(StrictOrderingOnAppendListWithFlagsSpecialization,
+                           self).extend(l)
             if isinstance(l, StrictOrderingOnAppendListWithFlags):
                 self._update_flags(l)
             return result
 
-        def __setslice__(self, i, j, sequence):
-            result = super(StrictOrderingOnAppendList, self).__setslice__(i, j, sequence)
-            # We may have removed items.
-            for name in set(self._flags.keys()) - set(self):
-                del self._flags[name]
-            if isinstance(sequence, StrictOrderingOnAppendListWithFlags):
-                self._update_flags(sequence)
-            return result
-
         def __add__(self, other):
-            result = super(StrictOrderingOnAppendList, self).__add__(other)
+            result = super(StrictOrderingOnAppendListWithFlagsSpecialization,
+                           self).__add__(other)
             if isinstance(other, StrictOrderingOnAppendListWithFlags):
                 # Result has flags from other but not from self, since
                 # internally we duplicate self and then extend with other, and
@@ -681,7 +748,8 @@ def StrictOrderingOnAppendListWithFlagsFactory(flags):
             return result
 
         def __iadd__(self, other):
-            result = super(StrictOrderingOnAppendList, self).__iadd__(other)
+            result = super(StrictOrderingOnAppendListWithFlagsSpecialization,
+                           self).__iadd__(other)
             if isinstance(other, StrictOrderingOnAppendListWithFlags):
                 self._update_flags(other)
             return result
@@ -807,7 +875,7 @@ class HierarchicalStringList(object):
         if not isinstance(value, list):
             raise ValueError('Expected a list of strings, not %s' % type(value))
         for v in value:
-            if not isinstance(v, str_type):
+            if not isinstance(v, six.string_types):
                 raise ValueError(
                     'Expected a list of strings, not an element of %s' % type(v))
 
@@ -839,7 +907,7 @@ class LockFile(object):
                     raise
 
 
-def lock_file(lockfile, max_wait = 600):
+def lock_file(lockfile, max_wait=600):
     """Create and hold a lockfile of the given name, with the given timeout.
 
     To release the lock, delete the returned object.
@@ -867,8 +935,8 @@ def lock_file(lockfile, max_wait = 600):
             s = os.stat(lockfile)
         except EnvironmentError as e:
             if e.errno == errno.ENOENT or e.errno == errno.EACCES:
-            # We didn't create the lockfile, so it did exist, but it's
-            # gone now. Just try again
+                # We didn't create the lockfile, so it did exist, but it's
+                # gone now. Just try again
                 continue
 
             raise Exception('{0} exists but stat() failed: {1}'.format(
@@ -880,7 +948,7 @@ def lock_file(lockfile, max_wait = 600):
         if now - s[stat.ST_MTIME] > max_wait:
             pid = f.readline().rstrip()
             raise Exception('{0} has been locked for more than '
-                '{1} seconds (PID {2})'.format(lockfile, max_wait, pid))
+                            '{1} seconds (PID {2})'.format(lockfile, max_wait, pid))
 
         # It's not been locked too long, wait a while and retry
         f.close()
@@ -897,6 +965,7 @@ def lock_file(lockfile, max_wait = 600):
 
 class OrderedDefaultDict(OrderedDict):
     '''A combination of OrderedDict and defaultdict.'''
+
     def __init__(self, default_factory, *args, **kwargs):
         OrderedDict.__init__(self, *args, **kwargs)
         self._default_factory = default_factory
@@ -909,6 +978,7 @@ class OrderedDefaultDict(OrderedDict):
 class KeyedDefaultDict(dict):
     '''Like a defaultdict, but the default_factory function takes the key as
     argument'''
+
     def __init__(self, default_factory, *args, **kwargs):
         dict.__init__(self, *args, **kwargs)
         self._default_factory = default_factory
@@ -929,6 +999,7 @@ class memoize(dict):
     Both functions and instance methods are handled, although in the
     instance method case, the results are cache in the instance itself.
     '''
+
     def __init__(self, func):
         self.func = func
         functools.update_wrapper(self, func)
@@ -956,6 +1027,7 @@ class memoized_property(object):
     '''A specialized version of the memoize decorator that works for
     class instance properties.
     '''
+
     def __init__(self, func):
         self.func = func
 
@@ -1007,54 +1079,11 @@ def TypedNamedTuple(name, fields):
                 if not isinstance(value, ftype):
                     raise TypeError('field in tuple not of proper type: %s; '
                                     'got %s, expected %s' % (fname,
-                                    type(value), ftype))
-
-            super(TypedTuple, self).__init__(*args, **kwargs)
+                                                             type(value), ftype))
 
     TypedTuple._fields = fields
 
     return TypedTuple
-
-
-class TypedListMixin(object):
-    '''Mixin for a list with type coercion. See TypedList.'''
-
-    def _ensure_type(self, l):
-        if isinstance(l, self.__class__):
-            return l
-
-        return [self.normalize(e) for e in l]
-
-    def __init__(self, iterable=None, **kwargs):
-        if iterable is None:
-            iterable = []
-        iterable = self._ensure_type(iterable)
-
-        super(TypedListMixin, self).__init__(iterable, **kwargs)
-
-    def extend(self, l):
-        l = self._ensure_type(l)
-
-        return super(TypedListMixin, self).extend(l)
-
-    def __setslice__(self, i, j, sequence):
-        sequence = self._ensure_type(sequence)
-
-        return super(TypedListMixin, self).__setslice__(i, j,
-            sequence)
-
-    def __add__(self, other):
-        other = self._ensure_type(other)
-
-        return super(TypedListMixin, self).__add__(other)
-
-    def __iadd__(self, other):
-        other = self._ensure_type(other)
-
-        return super(TypedListMixin, self).__iadd__(other)
-
-    def append(self, other):
-        self += [other]
 
 
 @memoize
@@ -1069,14 +1098,51 @@ def TypedList(type, base_class=List):
 
        TypedList(unicode, StrictOrderingOnAppendList)
     '''
-    class _TypedList(TypedListMixin, base_class):
+    class _TypedList(base_class):
         @staticmethod
         def normalize(e):
             if not isinstance(e, type):
                 e = type(e)
             return e
 
+        def _ensure_type(self, l):
+            if isinstance(l, self.__class__):
+                return l
+
+            return [self.normalize(e) for e in l]
+
+        def __init__(self, iterable=None, **kwargs):
+            if iterable is None:
+                iterable = []
+            iterable = self._ensure_type(iterable)
+
+            super(_TypedList, self).__init__(iterable, **kwargs)
+
+        def extend(self, l):
+            l = self._ensure_type(l)
+
+            return super(_TypedList, self).extend(l)
+
+        def __setitem__(self, key, val):
+            val = self._ensure_type(val)
+
+            return super(_TypedList, self).__setitem__(key, val)
+
+        def __add__(self, other):
+            other = self._ensure_type(other)
+
+            return super(_TypedList, self).__add__(other)
+
+        def __iadd__(self, other):
+            other = self._ensure_type(other)
+
+            return super(_TypedList, self).__iadd__(other)
+
+        def append(self, other):
+            self += [other]
+
     return _TypedList
+
 
 def group_unified_files(files, unified_prefix, unified_suffix,
                         files_per_unified_file):
@@ -1098,18 +1164,19 @@ def group_unified_files(files, unified_prefix, unified_suffix,
     files = sorted(files)
 
     # Our last returned list of source filenames may be short, and we
-    # don't want the fill value inserted by izip_longest to be an
+    # don't want the fill value inserted by zip_longest to be an
     # issue.  So we do a little dance to filter it out ourselves.
     dummy_fill_value = ("dummy",)
+
     def filter_out_dummy(iterable):
-        return itertools.ifilter(lambda x: x != dummy_fill_value,
-                                 iterable)
+        return six.moves.filter(lambda x: x != dummy_fill_value,
+                                iterable)
 
     # From the itertools documentation, slightly modified:
     def grouper(n, iterable):
         "grouper(3, 'ABCDEFG', 'x') --> ABC DEF Gxx"
         args = [iter(iterable)] * n
-        return itertools.izip_longest(fillvalue=dummy_fill_value, *args)
+        return six.moves.zip_longest(fillvalue=dummy_fill_value, *args)
 
     for i, unified_group in enumerate(grouper(files_per_unified_file,
                                               files)):
@@ -1126,7 +1193,21 @@ def pair(iterable):
         [(1,2), (3,4), (5,6)]
     '''
     i = iter(iterable)
-    return itertools.izip_longest(i, i)
+    return six.moves.zip_longest(i, i)
+
+
+def pairwise(iterable):
+    '''Given an iterable, returns an iterable of overlapped pairs of
+    its items. Based on the Python itertools documentation.
+
+    For example,
+        list(pairwise([1,2,3,4,5,6]))
+    returns
+        [(1,2), (2,3), (3,4), (4,5), (5,6)]
+    '''
+    a, b = itertools.tee(iterable)
+    next(b, None)
+    return zip(a, b)
 
 
 VARIABLES_RE = re.compile('\$\((\w+)\)')
@@ -1144,7 +1225,7 @@ def expand_variables(s, variables):
         value = variables.get(name)
         if not value:
             continue
-        if not isinstance(value, types.StringTypes):
+        if not isinstance(value, six.string_types):
             value = ' '.join(value)
         result += value
     return result
@@ -1152,6 +1233,7 @@ def expand_variables(s, variables):
 
 class DefinesAction(argparse.Action):
     '''An ArgumentParser action to handle -Dvar[=value] type of arguments.'''
+
     def __call__(self, parser, namespace, values, option_string):
         defines = getattr(namespace, self.dest)
         if defines is None:
@@ -1171,7 +1253,7 @@ class EnumStringComparisonError(Exception):
     pass
 
 
-class EnumString(unicode):
+class EnumString(six.text_type):
     '''A string type that only can have a limited set of values, similarly to
     an Enum, and can only be compared against that set of values.
 
@@ -1180,6 +1262,7 @@ class EnumString(unicode):
     subclasses.
     '''
     POSSIBLE_VALUES = ()
+
     def __init__(self, value):
         if value not in self.POSSIBLE_VALUES:
             raise ValueError("'%s' is not a valid value for %s"
@@ -1195,6 +1278,9 @@ class EnumString(unicode):
     def __ne__(self, other):
         return not (self == other)
 
+    def __hash__(self):
+        return super(EnumString, self).__hash__()
+
     @staticmethod
     def subclass(*possible_values):
         class EnumStringSubclass(EnumString):
@@ -1207,28 +1293,36 @@ def _escape_char(c):
     # quoting could be done with either ' or ".
     if c == "'":
         return "\\'"
-    return unicode(c.encode('unicode_escape'))
-
-# Mapping table between raw characters below \x80 and their escaped
-# counterpart, when they differ
-_INDENTED_REPR_TABLE = {
-    c: e
-    for c, e in map(lambda x: (x, _escape_char(x)),
-                    map(unichr, range(128)))
-    if c != e
-}
-# Regexp matching all characters to escape.
-_INDENTED_REPR_RE = re.compile(
-    '([' + ''.join(_INDENTED_REPR_TABLE.values()) + ']+)')
+    return six.text_type(c.encode('unicode_escape'))
 
 
-def indented_repr(o, indent=4):
-    '''Similar to repr(), but returns an indented representation of the object
+if six.PY2:  # Delete when we get rid of Python 2.
+    # Mapping table between raw characters below \x80 and their escaped
+    # counterpart, when they differ
+    _INDENTED_REPR_TABLE = {
+        c: e
+        for c, e in map(lambda x: (x, _escape_char(x)),
+                        map(unichr, range(128)))
+        if c != e
+    }
+    # Regexp matching all characters to escape.
+    _INDENTED_REPR_RE = re.compile(
+        '([' + ''.join(_INDENTED_REPR_TABLE.values()) + ']+)')
+
+
+def write_indented_repr(f, o, indent=4):
+    '''Write an indented representation (similar to repr()) of the object to the
+    given file `f`.
 
     One notable difference with repr is that the returned representation
     assumes `from __future__ import unicode_literals`.
     '''
+    if six.PY3:
+        pprint.pprint(o, stream=f, indent=indent)
+        return
+    # Delete everything below when we get rid of Python 2.
     one_indent = ' ' * indent
+
     def recurse_indented_repr(o, level):
         if isinstance(o, dict):
             yield '{\n'
@@ -1245,7 +1339,7 @@ def indented_repr(o, indent=4):
         elif isinstance(o, bytes):
             yield 'b'
             yield repr(o)
-        elif isinstance(o, unicode):
+        elif isinstance(o, six.text_type):
             yield "'"
             # We want a readable string (non escaped unicode), but some
             # special characters need escaping (e.g. \n, \t, etc.)
@@ -1267,23 +1361,8 @@ def indented_repr(o, indent=4):
             yield ']'
         else:
             yield repr(o)
-    return ''.join(recurse_indented_repr(o, 0))
-
-
-def encode(obj, encoding='utf-8'):
-    '''Recursively encode unicode strings with the given encoding.'''
-    if isinstance(obj, dict):
-        return {
-            encode(k, encoding): encode(v, encoding)
-            for k, v in obj.iteritems()
-        }
-    if isinstance(obj, bytes):
-        return obj
-    if isinstance(obj, unicode):
-        return obj.encode(encoding)
-    if isinstance(obj, Iterable):
-        return [encode(i, encoding) for i in obj]
-    return obj
+    result = ''.join(recurse_indented_repr(o, 0)) + '\n'
+    f.write(result)
 
 
 def patch_main():
@@ -1305,7 +1384,12 @@ def patch_main():
     See also: http://bugs.python.org/issue19946
     And: https://bugzilla.mozilla.org/show_bug.cgi?id=914563
     '''
-    if sys.platform == 'win32':
+    # XXX In Python 3.4 the multiprocessing module was re-written and the below
+    # code is no longer valid. The Python issue19946 also claims to be fixed in
+    # this version. It's not clear whether this hack is still needed in 3.4+ or
+    # not, but at least some basic mach commands appear to work without it. So
+    # skip it in 3.4+ until we determine it's still needed.
+    if sys.platform == 'win32' and sys.version_info < (3, 4):
         import inspect
         import os
         from multiprocessing import forking
@@ -1329,6 +1413,7 @@ def patch_main():
             import os
             import sys
             orig_find_module = imp.find_module
+
             def my_find_module(name, dirs):
                 if name == main_module_name:
                     path = os.path.join(dirs[0], main_file_name)
@@ -1338,6 +1423,7 @@ def patch_main():
 
             # Don't allow writing bytecode file for the main module.
             orig_load_module = imp.load_module
+
             def my_load_module(name, file, path, description):
                 # multiprocess.forking invokes imp.load_module manually and
                 # hard-codes the name __parents_main__ as the module name.
@@ -1353,7 +1439,8 @@ def patch_main():
 
             imp.find_module = my_find_module
             imp.load_module = my_load_module
-            from multiprocessing.forking import main; main()
+            from multiprocessing.forking import main
+            main()
 
         def my_get_command_line():
             fork_code, lineno = inspect.getsourcelines(fork_interpose)
@@ -1367,3 +1454,38 @@ def patch_main():
             return cmdline
         orig_command_line = forking.get_command_line
         forking.get_command_line = my_get_command_line
+
+
+def ensure_bytes(value, encoding='utf-8'):
+    if isinstance(value, six.text_type):
+        return value.encode(encoding)
+    return value
+
+
+def ensure_unicode(value, encoding='utf-8'):
+    if isinstance(value, six.binary_type):
+        return value.decode(encoding)
+    return value
+
+
+def ensure_subprocess_env(env, encoding='utf-8'):
+    """Ensure the environment is in the correct format for the `subprocess`
+    module.
+
+    This will convert all keys and values to bytes on Python 2, and text on
+    Python 3.
+
+    Args:
+        env (dict): Environment to ensure.
+        encoding (str): Encoding to use when converting to/from bytes/text
+                        (default: utf-8).
+    """
+    ensure = ensure_bytes if sys.version_info[0] < 3 else ensure_unicode
+    return {ensure(k, encoding): ensure(v, encoding) for k, v in six.iteritems(env)}
+
+
+def process_time():
+    if six.PY2:
+        return time.clock()
+    else:
+        return time.process_time()

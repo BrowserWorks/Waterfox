@@ -14,11 +14,11 @@ SpeechRecognitionError::SpeechRecognitionError(
     WidgetEvent* aEvent)
     : Event(aOwner, aPresContext, aEvent), mError() {}
 
-SpeechRecognitionError::~SpeechRecognitionError() {}
+SpeechRecognitionError::~SpeechRecognitionError() = default;
 
 already_AddRefed<SpeechRecognitionError> SpeechRecognitionError::Constructor(
     const GlobalObject& aGlobal, const nsAString& aType,
-    const SpeechRecognitionErrorInit& aParam, ErrorResult& aRv) {
+    const SpeechRecognitionErrorInit& aParam) {
   nsCOMPtr<mozilla::dom::EventTarget> t =
       do_QueryInterface(aGlobal.GetAsSupports());
   RefPtr<SpeechRecognitionError> e =

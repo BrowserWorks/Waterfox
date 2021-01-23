@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tabs.otherComputers.label): Keep this in sync with syncTabsMenu.label from navigator.dtd -->
+<!ENTITY tabs.otherComputers.label "Diğer bilgisayarlardaki sekmeler">
+
+<!ENTITY tabs.searchText.label "Sekme bulmak için buraya yazın...">
+<!-- LOCALIZATION NOTE (tabs.context.openTab.accesskey, tabs.context.openMultipleTabs.accesskey;
+     tabs.context.bookmarkSingleTab.accesskey, tabs.context.bookmarkMultipleTabs.accesskey):
+     Only one of each of these pairs will show at a time (based on selection), so reusing accesskey is ok. -->
+
+<!ENTITY tabs.context.openTab.label "Bu sekmeyi aç">
+<!ENTITY tabs.context.openTab.accesskey "B">
+<!ENTITY tabs.context.openMultipleTabs.label "Seçilen sekmeleri aç">
+<!ENTITY tabs.context.openMultipleTabs.accesskey "S">
+<!ENTITY tabs.context.bookmarkSingleTab.label "Sekmeyi yer imlerine ekle...">
+<!ENTITY tabs.context.bookmarkSingleTab.accesskey "e">
+<!ENTITY tabs.context.bookmarkMultipleTabs.label "Seçilen sekmeleri yer imlerine ekle...">
+<!ENTITY tabs.context.bookmarkMultipleTabs.accesskey "k">
+<!ENTITY tabs.context.refreshList.label "Listeyi tazele">
+<!ENTITY tabs.context.refreshList.accesskey "t">

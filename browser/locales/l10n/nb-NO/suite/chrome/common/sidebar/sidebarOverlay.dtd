@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sidebar.panels.label           "Sidestolpe">
+<!ENTITY sidebar.reload.label           "Oppdater">
+<!ENTITY sidebar.reload.accesskey       "O">
+<!ENTITY sidebar.picker.label           "Faner">
+<!ENTITY sidebar.customize.label        "Tilpass sidestolpe…">
+<!ENTITY sidebar.customize.accesskey    "n">
+<!ENTITY sidebar.hide.label             "Skjul fane">
+<!ENTITY sidebar.hide.accesskey         "S">
+<!ENTITY sidebar.switch.label           "Gå til fane">
+<!ENTITY sidebar.switch.accesskey       "G">
+<!ENTITY sidebarCmd.label               "Sidestolpe">
+<!ENTITY sidebarCmd.accesskey           "t">
+<!ENTITY sidebar.loading.label          "Laster …">
+<!ENTITY sidebar.loadstopped.label      "Stoppet">
+<!ENTITY sidebar.loading.stop.label     "Stopp">
+<!ENTITY sidebar.loading.stop.accesskey "S">
+
+<!-- LOCALIZATION NOTE (showHideSidebarCmd.key): This is only used on the
+     mac platform, other platforms use VK_F9. -->
+<!ENTITY showHideSidebarCmd.key         "S">
+
+<!ENTITY sidebar.no-panels.state     "Sidestolpen er tom.">
+<!ENTITY sidebar.no-panels.add       'Du kan legge til faner ved å trykke på «Faner»-knappen ovenfor.'>
+<!ENTITY sidebar.no-panels.hide      'Hvis du vil skjule sidestolpen kan du trykke på «Vis»-menyen ovenfor, og velge «Sidestolpe» fra «Vis/skjul»-undermenyen.'>
+<!ENTITY sidebar.sbDirectory.label   "Vis katalog …">
+
+<!ENTITY sidebar.pagenotfound.label  "Denne fanen er ikke tilgjengelig akkurat nå.">
+<!ENTITY sidebar.close.tooltip       "Lukk sidestolpe">
+<!ENTITY sidebar.open.tooltip        "Åpne sidestolpe">
+
+<!ENTITY sidebar.search.label         "Søk">
+<!ENTITY sidebar.client-bookmarks.label     "Bokmerker">
+<!ENTITY sidebar.client-history.label       "Historikk">
+<!ENTITY sidebar.client-addressbook.label   "Adressebok">

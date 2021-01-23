@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "ახალი კალენდრის შექმნა" >
+<!ENTITY wizard.label             "ახალი კალენდრის შექმნა" >
+<!ENTITY wizard.description       "კალენდრის განთავსება" >
+
+<!ENTITY initialpage.description    "თქვენი კალენდრის შენახვა შესაძლებელია როგორც თქვენს კომპიუტერზე ისე სერვერზე რათა გარედან იყოს მისაწვდომი და მისი მეგობრებთან და თანამშრომლებთან გაზიარება შეძლოთ." >
+<!ENTITY initialpage.computer.label  "ჩემს კომპიუტერში">
+<!ENTITY initialpage.network.label  "ქსელში">
+
+<!ENTITY locationpage.description         "მიუთითეთ ინფორმაცია თუ რაა საჭირო გარე კალენდრის წვდომისთვის" >
+<!ENTITY locationpage.login.description   "დამხმარე: მიუთითეთ სახელი და პაროლი" >
+<!ENTITY locationpage.username.label      "სახელი:" >
+<!ENTITY locationpage.password.label      "პაროლი:" >
+
+<!ENTITY custompage.shortdescription  "კალენდრის მორგება" >
+<!ENTITY custompage.longdescription   "შეგიძლიათ კალენდარს შეურჩიოთ მეტსახელი და შეაფერადოთ ღონისძიების აღნიშვნები." >
+
+<!ENTITY finishpage.shortdescription  "კალენდარი შეიქმნა" >
+<!ENTITY finishpage.longdescription   "თქვენი კალენდარი შეიქმნა." >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "სხვა">
+
+<!ENTITY buttons.create.label "კალენდრის შექმნა…">
+<!ENTITY buttons.create.accesskey "რ">
+
+<!ENTITY buttons.find.label "კალენდრის პოვნა…">
+<!ENTITY buttons.find.accesskey "პ">
+
+<!ENTITY buttons.back.label "უკან">
+<!ENTITY buttons.back.accesskey "უ">
+
+<!ENTITY buttons.subscribe.label "გამოწერა">
+<!ENTITY buttons.subscribe.accesskey "გ">
+
+<!ENTITY calendartype.label "კალენდრის სახეობა:">
+<!ENTITY location.label "მდებარეობა:">
+<!ENTITY location.placeholder "კალენდრის სერვერის URL ან ჰოსტის სახელი">
+
+<!ENTITY network.nocredentials.label "ეს მისამართი არ საჭიროებს ანგარიშის მონაცემებს">
+<!ENTITY network.loading.description "გთხოვთ, მოითმინოთ სანამ თქვენი კალენდრები მოინახება.">
+<!ENTITY network.notfound.description "ამ მისამართზე კალენდრები არ მოიძებნა. გთხოვთ, გადაამოწმოთ თქვენი პარამეტრები.">
+<!ENTITY network.authfail.description "თქვენ მიერ შეყვანილი ანგარიშის მონაცემები არაა მიღებული. გთხოვთ, გადაამოწმოთ თქვენი პარამეტრები.">
+
+<!ENTITY network.subscribe.single.description "გთხოვთ, მიუთითოთ კალენდრები, რომელთა გამოწერაც გსურთ.">
+<!ENTITY network.subscribe.multiple.description "ამ მისამართზე, მრავალი სხვადასხვა სახის კალენდარია ხელმისაწვდომი. გთხოვთ, აირჩიოთ სასურველი სახის კალენდარი და შემდეგ მონიშნოთ ის კალენდრები, რომელთა გამოწერაც გსურთ.">

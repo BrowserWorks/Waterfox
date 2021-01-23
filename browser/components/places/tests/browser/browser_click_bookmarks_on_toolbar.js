@@ -137,21 +137,6 @@ add_task(async function clickWithPrefSet() {
   });
   await promise;
 
-  let placesContext = document.getElementById("placesContext");
-  promise = BrowserTestUtils.waitForEvent(placesContext, "popupshown");
-  EventUtils.synthesizeMouseAtCenter(gBookmarkElements[1], {
-    button: 2,
-    type: "contextmenu",
-  });
-  await promise;
-
-  promise = waitForLoad(gBrowser.selectedBrowser, TEST_PAGES[1]);
-  let open = document.getElementById("placesContext_open");
-  EventUtils.synthesizeMouseAtCenter(open, {
-    button: 0,
-  });
-  await promise;
-
   // With loadBookmarksInTabs, reuse current tab if blank
   for (let button of [0, 1]) {
     await BrowserTestUtils.withNewTab({ gBrowser }, async tab => {
@@ -162,6 +147,32 @@ add_task(async function clickWithPrefSet() {
       await promise;
     });
   }
+
+  await SpecialPowers.popPrefEnv();
+});
+
+add_task(async function openInSameTabWithPrefSet() {
+  await SpecialPowers.pushPrefEnv({
+    set: [[PREF_LOAD_BOOKMARKS_IN_TABS, true]],
+  });
+
+  let placesContext = document.getElementById("placesContext");
+  let popupPromise = BrowserTestUtils.waitForEvent(placesContext, "popupshown");
+  EventUtils.synthesizeMouseAtCenter(gBookmarkElements[0], {
+    button: 2,
+    type: "contextmenu",
+  });
+  info("Waiting for context menu");
+  await popupPromise;
+
+  let openItem = document.getElementById("placesContext_open");
+  ok(BrowserTestUtils.is_visible(openItem), "Open item should be visible");
+
+  info("Waiting for page to load");
+  let promise = waitForLoad(gBrowser.selectedBrowser, TEST_PAGES[0]);
+  openItem.doCommand();
+  placesContext.hidePopup();
+  await promise;
 
   await SpecialPowers.popPrefEnv();
 });
@@ -189,7 +200,7 @@ add_task(async function quickContextMenu() {
   await promise;
 
   Assert.ok(
-    !document.getElementById("placesContext_open").disabled,
+    !document.getElementById("placesContext_open:newtab").disabled,
     "Commands in context menu are enabled"
   );
 

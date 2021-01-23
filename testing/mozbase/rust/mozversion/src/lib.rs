@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 extern crate ini;
 extern crate regex;
 extern crate semver;
@@ -114,7 +116,7 @@ impl FromStr for Version {
 
     fn from_str(version_string: &str) -> Result<Version, Error> {
         let mut version: Version = Default::default();
-        let version_re = Regex::new(r"^(?P<major>\d+)\.(?P<minor>\d+)(?:\.(?P<patch>\d+))?(?:(?P<pre0>[a-z]+)(?P<pre1>\d*))?$").unwrap();
+        let version_re = Regex::new(r"^(?P<major>[[:digit:]]+)\.(?P<minor>[[:digit:]]+)(?:\.(?P<patch>[[:digit:]]+))?(?:(?P<pre0>[a-z]+)(?P<pre1>[[:digit:]]*))?$").unwrap();
         if let Some(captures) = version_re.captures(version_string) {
             match captures
                 .name("major")
@@ -255,15 +257,7 @@ impl From<semver::ReqParseError> for Error {
 }
 
 impl error::Error for Error {
-    fn description(&self) -> &str {
-        match *self {
-            Error::VersionError(ref x) => &*x,
-            Error::MetadataError(ref x) => &*x,
-            Error::SemVerError(ref e) => e.description(),
-        }
-    }
-
-    fn cause(&self) -> Option<&error::Error> {
+    fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
             Error::SemVerError(ref e) => Some(e),
             Error::VersionError(_) | Error::MetadataError(_) => None,

@@ -11,6 +11,7 @@
 
 from __future__ import absolute_import
 
+import codecs
 import os
 import sys
 import tempfile
@@ -23,6 +24,7 @@ import mozversion
 
 from mozprofile import Profile
 from mozrunner import Runner, FennecEmulatorRunner
+import six
 from six import reraise
 
 from . import errors
@@ -42,8 +44,6 @@ class GeckoInstance(object):
         "apz.content_response_timeout": 60000,
 
         # Do not send Firefox health reports to the production server
-        # removed in Firefox 59
-        "datareporting.healthreport.about.reportUrl": "http://%(server)s/dummy/abouthealthreport/",
         "datareporting.healthreport.documentServerURI": "http://%(server)s/dummy/healthreport/",
 
         # Do not show datareporting policy notifications which can interfer with tests
@@ -59,6 +59,9 @@ class GeckoInstance(object):
         "dom.max_chrome_script_run_time": 0,
         "dom.max_script_run_time": 0,
 
+        # DOM Push
+        "dom.push.connection.enabled": False,
+
         # Only load extensions from the application and user profile
         # AddonManager.SCOPE_PROFILE + AddonManager.SCOPE_APPLICATION
         "extensions.autoDisableScopes": 0,
@@ -67,17 +70,12 @@ class GeckoInstance(object):
         "extensions.getAddons.cache.enabled": False,
         # Disable intalling any distribution add-ons
         "extensions.installDistroAddons": False,
-        # Make sure Shield doesn't hit the network.
-        # Removed in Firefox 60.
-        "extensions.shield-recipe-client.api_url": "",
-        # Disable extensions compatibility dialogue.
-        # Removed in Firefox 61.
-        "extensions.showMismatchUI": False,
+
         # Turn off extension updates so they don't bother tests
         "extensions.update.enabled": False,
         "extensions.update.notifyUser": False,
         # Make sure opening about:addons won"t hit the network
-        "extensions.webservice.discoverURL": "http://%(server)s/dummy/discoveryURL",
+        "extensions.getAddons.discovery.api_url": "data:, ",
 
         # Allow the application to have focus even it runs in the background
         "focusmanager.testmode": True,
@@ -93,8 +91,6 @@ class GeckoInstance(object):
 
         "javascript.options.showInConsole": True,
 
-        # Enable Marionette component
-        "marionette.enabled": True,
         # (deprecated and can be removed when Firefox 60 ships)
         "marionette.defaultPrefs.enabled": True,
 
@@ -108,13 +104,13 @@ class GeckoInstance(object):
 
         # Do not prompt for temporary redirects
         "network.http.prompt-temp-redirect": False,
-        # Disable speculative connections so they aren"t reported as leaking when they"re
-        # hanging around
-        "network.http.speculative-parallel-limit": 0,
         # Do not automatically switch between offline and online
         "network.manage-offline-status": False,
         # Make sure SNTP requests don't hit the network
         "network.sntp.pools": "%(server)s",
+
+        # Privacy and Tracking Protection
+        "privacy.trackingprotection.enabled": False,
 
         # Don't do network connections for mitm priming
         "security.certerrors.mitm.priming.enabled": False,
@@ -141,7 +137,7 @@ class GeckoInstance(object):
 
     def __init__(self, host=None, port=None, bin=None, profile=None, addons=None,
                  app_args=None, symbols_path=None, gecko_log=None, prefs=None,
-                 workspace=None, verbose=0, headless=False):
+                 workspace=None, verbose=0, headless=False, enable_webrender=False):
         self.runner_class = Runner
         self.app_args = app_args or []
         self.runner = None
@@ -160,6 +156,7 @@ class GeckoInstance(object):
         self._gecko_log = None
         self.verbose = verbose
         self.headless = headless
+        self.enable_webrender = enable_webrender
 
         # keep track of errors to decide whether instance is unresponsive
         self.unresponsive_count = 0
@@ -220,7 +217,7 @@ class GeckoInstance(object):
             profile_path = profile
 
             # If a path to a profile is given then clone it
-            if isinstance(profile_path, basestring):
+            if isinstance(profile_path, six.string_types):
                 profile_args["path_from"] = profile_path
                 profile_args["path_to"] = tempfile.mkdtemp(
                     suffix=u".{}".format(profile_name or os.path.basename(profile_path)),
@@ -299,8 +296,8 @@ class GeckoInstance(object):
             instance_class = apps[app]
         except (IOError, KeyError):
             exc, val, tb = sys.exc_info()
-            msg = 'Application "{0}" unknown (should be one of {1})'
-            reraise(NotImplementedError, msg.format(app, apps.keys()), tb)
+            msg = 'Application "{0}" unknown (should be one of {1})'.format(app, apps.keys())
+            reraise(NotImplementedError, NotImplementedError(msg), tb)
 
         return instance_class(*args, **kwargs)
 
@@ -312,10 +309,14 @@ class GeckoInstance(object):
     def _get_runner_args(self):
         process_args = {
             "processOutputLine": [NullOutput()],
+            "universal_newlines": True,
         }
 
         if self.gecko_log == "-":
-            process_args["stream"] = sys.stdout
+            if six.PY2:
+                process_args["stream"] = codecs.getwriter('utf-8')(sys.stdout)
+            else:
+                process_args["stream"] = codecs.getwriter('utf-8')(sys.stdout.buffer)
         else:
             process_args["logfile"] = self.gecko_log
 
@@ -324,6 +325,12 @@ class GeckoInstance(object):
         if self.headless:
             env["MOZ_HEADLESS"] = "1"
             env["DISPLAY"] = "77"  # Set a fake display.
+
+        if self.enable_webrender:
+            env["MOZ_WEBRENDER"] = "1"
+            env["MOZ_ACCELERATED"] = "1"
+        else:
+            env["MOZ_WEBRENDER"] = "0"
 
         # environment variables needed for crashreporting
         # https://developer.mozilla.org/docs/Environment_variables_affecting_crash_reporting
@@ -441,10 +448,10 @@ class FennecInstance(GeckoInstance):
             if self.connect_to_running_emulator:
                 self.runner.device.connect()
             self.runner.start()
-        except Exception as e:
-            exc, val, tb = sys.exc_info()
-            message = "Error possibly due to runner or device args: {}"
-            reraise(exc, message.format(e.message), tb)
+        except Exception:
+            exc_cls, exc, tb = sys.exc_info()
+            reraise(exc_cls, exc_cls(
+                "Error possibly due to runner or device args: {}".format(exc)), tb)
 
         # forward marionette port
         self.runner.device.device.forward(
@@ -454,14 +461,21 @@ class FennecInstance(GeckoInstance):
     def _get_runner_args(self):
         process_args = {
             "processOutputLine": [NullOutput()],
+            "universal_newlines": True,
         }
+
+        env = {} if self.env is None else self.env.copy()
+        if self.enable_webrender:
+            env["MOZ_WEBRENDER"] = "1"
+        else:
+            env["MOZ_WEBRENDER"] = "0"
 
         runner_args = {
             "app": self.package_name,
             "avd_home": self.avd_home,
             "adb_path": self.adb_path,
             "binary": self.emulator_binary,
-            "env": self.env,
+            "env": env,
             "profile": self.profile,
             "cmdargs": ["-marionette"] + self.app_args,
             "symbols_path": self.symbols_path,
@@ -510,6 +524,7 @@ class DesktopInstance(GeckoInstance):
 
         # Don't show the content blocking introduction panel
         # We use a larger number than the default 22 to have some buffer
+        # This can be removed once Firefox 69 and 68 ESR and are no longer supported.
         "browser.contentblocking.introCount": 99,
 
         # Enable output for dump() and chrome console API
@@ -546,9 +561,6 @@ class DesktopInstance(GeckoInstance):
         # Don't check for the default web browser during startup
         "browser.shell.checkDefaultBrowser": False,
 
-        # Disable e10s by default
-        "browser.tabs.remote.autostart": False,
-
         # Needed for branded builds to prevent opening a second tab on startup
         "browser.startup.homepage_override.mstone": "ignore",
         # Start with a blank page by default
@@ -577,10 +589,6 @@ class DesktopInstance(GeckoInstance):
         # connections.
         "browser.urlbar.suggest.searches": False,
 
-        # Turn off the location bar search suggestions opt-in.  It interferes with
-        # tests that don't expect it to be there.
-        "browser.urlbar.userMadeSearchSuggestionsChoice": True,
-
         # Don't warn when exiting the browser
         "browser.warnOnQuit": False,
 
@@ -597,6 +605,21 @@ class DesktopInstance(GeckoInstance):
         self.required_prefs.update(required_prefs)
 
 
+class ThunderbirdInstance(GeckoInstance):
+    def __init__(self, *args, **kwargs):
+        super(ThunderbirdInstance, self).__init__(*args, **kwargs)
+        try:
+            # Copied alongside in the test archive
+            from .thunderbirdinstance import thunderbird_prefs
+        except ImportError:
+            try:
+                # Coming from source tree through virtualenv
+                from thunderbirdinstance import thunderbird_prefs
+            except ImportError:
+                thunderbird_prefs = {}
+        self.required_prefs.update(thunderbird_prefs)
+
+
 class NullOutput(object):
     def __call__(self, line):
         pass
@@ -605,9 +628,11 @@ class NullOutput(object):
 apps = {
     'fennec': FennecInstance,
     'fxdesktop': DesktopInstance,
+    'thunderbird': ThunderbirdInstance,
 }
 
 app_ids = {
     '{aa3c5121-dab2-40e2-81ca-7ea25febc110}': 'fennec',
     '{ec8030f7-c20a-464f-9b0e-13a3a9e97384}': 'fxdesktop',
+    '{3550f703-e582-4d05-9a08-453d09bdfdc6}': 'thunderbird',
 }

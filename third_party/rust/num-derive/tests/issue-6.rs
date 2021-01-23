@@ -1,11 +1,11 @@
 #![deny(trivial_numeric_casts)]
-extern crate num;
+
 #[macro_use]
 extern crate num_derive;
 
 #[derive(FromPrimitive, ToPrimitive)]
 pub enum SomeEnum {
-    A = 1
+    A = 1,
 }
 
 #[test]

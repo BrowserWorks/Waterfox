@@ -10,6 +10,7 @@
 #include "mozilla/ErrorResult.h"
 #include "mozilla/dom/BindingDeclarations.h"
 #include "mozilla/dom/NonRefcountedDOMObject.h"
+#include "mozilla/dom/TestFunctionsBinding.h"
 #include "nsString.h"
 
 namespace mozilla {
@@ -21,7 +22,7 @@ class WrapperCachedNonISupportsTestInterface;
 
 class TestFunctions : public NonRefcountedDOMObject {
  public:
-  static TestFunctions* Constructor(GlobalObject& aGlobal, ErrorResult& aRv);
+  static TestFunctions* Constructor(GlobalObject& aGlobal);
 
   static void ThrowUncatchableException(GlobalObject& aGlobal,
                                         ErrorResult& aRv);
@@ -39,6 +40,16 @@ class TestFunctions : public NonRefcountedDOMObject {
   void GetStringDataAsDOMString(const Optional<uint32_t>& aLength,
                                 DOMString& aString);
 
+  void GetShortLiteralString(nsAString& aString);
+  void GetMediumLiteralString(nsAString& aString);
+  void GetLongLiteralString(nsAString& aString);
+
+  void GetStringbufferString(const nsAString& aInput, nsAString& aRetval);
+
+  StringType GetStringType(const nsAString& aString);
+
+  bool StringbufferMatchesStored(const nsAString& aString);
+
   void TestThrowNsresult(ErrorResult& aError);
   void TestThrowNsresultFromNative(ErrorResult& aError);
   static already_AddRefed<Promise> ThrowToRejectPromise(GlobalObject& aGlobal,
@@ -46,6 +57,58 @@ class TestFunctions : public NonRefcountedDOMObject {
 
   int32_t One() const;
   int32_t Two() const;
+
+  void SetClampedNullableOctet(const Nullable<uint8_t>& aOctet);
+  Nullable<uint8_t> GetClampedNullableOctet() const;
+  void SetEnforcedNullableOctet(const Nullable<uint8_t>& aOctet);
+  Nullable<uint8_t> GetEnforcedNullableOctet() const;
+
+  void SetArrayBufferView(const ArrayBufferView& aBuffer);
+  void GetArrayBufferView(JSContext* aCx, JS::Handle<JSObject*> aObj,
+                          JS::MutableHandle<JSObject*> aRetval,
+                          ErrorResult& aError);
+  void SetAllowSharedArrayBufferView(const ArrayBufferView& aBuffer);
+  void GetAllowSharedArrayBufferView(JSContext* aCx, JS::Handle<JSObject*> aObj,
+                                     JS::MutableHandle<JSObject*> aRetval,
+                                     ErrorResult& aError);
+  void SetSequenceOfArrayBufferView(const Sequence<ArrayBufferView>& aBuffers);
+  void GetSequenceOfArrayBufferView(JSContext* aCx, JS::Handle<JSObject*> aObj,
+                                    nsTArray<JSObject*>& aRetval,
+                                    ErrorResult& aError);
+  void SetSequenceOfAllowSharedArrayBufferView(
+      const Sequence<ArrayBufferView>& aBuffers);
+  void GetSequenceOfAllowSharedArrayBufferView(JSContext* aCx,
+                                               JS::Handle<JSObject*> aObj,
+                                               nsTArray<JSObject*>& aRetval,
+                                               ErrorResult& aError);
+  void SetArrayBuffer(const ArrayBuffer& aBuffer);
+  void GetArrayBuffer(JSContext* aCx, JS::Handle<JSObject*> aObj,
+                      JS::MutableHandle<JSObject*> aRetval,
+                      ErrorResult& aError);
+  void SetAllowSharedArrayBuffer(const ArrayBuffer& aBuffer);
+  void GetAllowSharedArrayBuffer(JSContext* aCx, JS::Handle<JSObject*> aObj,
+                                 JS::MutableHandle<JSObject*> aRetval,
+                                 ErrorResult& aError);
+  void SetSequenceOfArrayBuffer(const Sequence<ArrayBuffer>& aBuffers);
+  void GetSequenceOfArrayBuffer(JSContext* aCx, JS::Handle<JSObject*> aObj,
+                                nsTArray<JSObject*>& aRetval,
+                                ErrorResult& aError);
+  void SetSequenceOfAllowSharedArrayBuffer(
+      const Sequence<ArrayBuffer>& aBuffers);
+  void GetSequenceOfAllowSharedArrayBuffer(JSContext* aCx,
+                                           JS::Handle<JSObject*> aObj,
+                                           nsTArray<JSObject*>& aRetval,
+                                           ErrorResult& aError);
+  void TestNotAllowShared(const ArrayBufferView& aBuffer);
+  void TestNotAllowShared(const ArrayBuffer& aBuffer);
+  void TestNotAllowShared(const nsAString& aBuffer);
+  void TestAllowShared(const ArrayBufferView& aBuffer);
+  void TestAllowShared(const ArrayBuffer& aBuffer);
+  void TestDictWithAllowShared(const DictWithAllowSharedBufferSource& aDict);
+  void TestUnionOfBuffferSource(
+      const ArrayBufferOrArrayBufferViewOrString& aUnion);
+  void TestUnionOfAllowSharedBuffferSource(
+      const MaybeSharedArrayBufferOrMaybeSharedArrayBufferView& aUnion);
 
   static bool ObjectFromAboutBlank(JSContext* aCx, JSObject* aObj);
 
@@ -58,6 +121,9 @@ class TestFunctions : public NonRefcountedDOMObject {
   nsString mStringData;
   RefPtr<WrapperCachedNonISupportsTestInterface>
       mWrapperCachedNonISupportsTestInterface;
+
+  Nullable<uint8_t> mClampedNullableOctet;
+  Nullable<uint8_t> mEnforcedNullableOctet;
 };
 
 }  // namespace dom

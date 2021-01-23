@@ -9,6 +9,7 @@
 #include "nsStreamUtils.h"
 #include "nsNetCID.h"
 #include "nsIClassInfoImpl.h"
+#include "mozilla/DebugOnly.h"
 #include "mozilla/ipc/InputStreamUtils.h"
 #include <algorithm>
 
@@ -38,6 +39,7 @@ static struct {
 #endif
 
 using namespace mozilla::ipc;
+using mozilla::DebugOnly;
 using mozilla::Maybe;
 using mozilla::MutexAutoLock;
 using mozilla::Nothing;
@@ -75,7 +77,7 @@ nsresult nsBufferedStream::Init(nsISupports* aStream, uint32_t bufferSize) {
   return NS_OK;
 }
 
-nsresult nsBufferedStream::Close() {
+void nsBufferedStream::Close() {
   // Drop the reference from nsBufferedStream::Init()
   mStream = nullptr;
   if (mBuffer) {
@@ -113,7 +115,6 @@ nsresult nsBufferedStream::Close() {
     }
   }
 #endif
-  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -129,9 +130,7 @@ nsBufferedStream::Seek(int32_t whence, int64_t offset) {
   nsresult rv;
   nsCOMPtr<nsISeekableStream> ras = do_QueryInterface(mStream, &rv);
   if (NS_FAILED(rv)) {
-#ifdef DEBUG
     NS_WARNING("mStream doesn't QI to nsISeekableStream");
-#endif
     return rv;
   }
 
@@ -276,7 +275,16 @@ NS_IMPL_CLASSINFO(nsBufferedInputStream, nullptr, nsIClassInfo::THREADSAFE,
                   NS_BUFFEREDINPUTSTREAM_CID)
 
 NS_INTERFACE_MAP_BEGIN(nsBufferedInputStream)
-  NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsIInputStream, nsIBufferedInputStream)
+  // Unfortunately there isn't a macro that combines ambiguous and conditional,
+  // and as far as I can tell, no other class would need such a macro.
+  if (mIsAsyncInputStream && aIID.Equals(NS_GET_IID(nsIInputStream))) {
+    foundInterface =
+        static_cast<nsIInputStream*>(static_cast<nsIAsyncInputStream*>(this));
+  } else if (!mIsAsyncInputStream && aIID.Equals(NS_GET_IID(nsIInputStream))) {
+    foundInterface = static_cast<nsIInputStream*>(
+        static_cast<nsIBufferedInputStream*>(this));
+  } else
+    NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIBufferedInputStream)
   NS_INTERFACE_MAP_ENTRY(nsIBufferedInputStream)
   NS_INTERFACE_MAP_ENTRY(nsIStreamBufferAccess)
   NS_INTERFACE_MAP_ENTRY_CONDITIONAL(nsIIPCSerializableInputStream,
@@ -348,34 +356,33 @@ nsBufferedInputStream::Init(nsIInputStream* stream, uint32_t bufferSize) {
   return NS_OK;
 }
 
+already_AddRefed<nsIInputStream> nsBufferedInputStream::GetInputStream() {
+  // A non-null mStream implies Init() has been called.
+  MOZ_ASSERT(mStream);
+
+  nsIInputStream* out = nullptr;
+  DebugOnly<nsresult> rv = QueryInterface(NS_GET_IID(nsIInputStream),
+                                          reinterpret_cast<void**>(&out));
+  MOZ_ASSERT(NS_SUCCEEDED(rv));
+  MOZ_ASSERT(out);
+
+  return already_AddRefed<nsIInputStream>(out);
+}
+
 NS_IMETHODIMP
 nsBufferedInputStream::Close() {
-  nsresult rv1 = NS_OK, rv2;
+  nsresult rv = NS_OK;
   if (mStream) {
-    rv1 = Source()->Close();
-#ifdef DEBUG
-    if (NS_FAILED(rv1)) {
+    rv = Source()->Close();
+    if (NS_FAILED(rv)) {
       NS_WARNING(
-          "(debug) Error: Source()->Close() returned error (rv1) in "
+          "(debug) Error: Source()->Close() returned error in "
           "bsBuffedInputStream::Close().");
-    };
-#endif
+    }
   }
 
-  rv2 = nsBufferedStream::Close();
-
-#ifdef DEBUG
-  if (NS_FAILED(rv2)) {
-    NS_WARNING(
-        "(debug) Error: nsBufferedStream::Close() returned error (rv2) within "
-        "nsBufferedInputStream::Close().");
-  };
-#endif
-
-  if (NS_FAILED(rv1)) {
-    return rv1;
-  }
-  return rv2;
+  nsBufferedStream::Close();
+  return rv;
 }
 
 NS_IMETHODIMP
@@ -583,38 +590,18 @@ nsBufferedInputStream::GetUnbufferedStream(nsISupports** aStream) {
   return NS_OK;
 }
 
-void nsBufferedInputStream::Serialize(InputStreamParams& aParams,
-                                      FileDescriptorArray& aFileDescriptors,
-                                      bool aDelayedStart, uint32_t aMaxSize,
-                                      uint32_t* aSizeUsed,
-                                      mozilla::dom::ContentChild* aManager) {
+void nsBufferedInputStream::Serialize(
+    InputStreamParams& aParams, FileDescriptorArray& aFileDescriptors,
+    bool aDelayedStart, uint32_t aMaxSize, uint32_t* aSizeUsed,
+    mozilla::ipc::ParentToChildStreamActorManager* aManager) {
   SerializeInternal(aParams, aFileDescriptors, aDelayedStart, aMaxSize,
                     aSizeUsed, aManager);
 }
 
-void nsBufferedInputStream::Serialize(InputStreamParams& aParams,
-                                      FileDescriptorArray& aFileDescriptors,
-                                      bool aDelayedStart, uint32_t aMaxSize,
-                                      uint32_t* aSizeUsed,
-                                      PBackgroundChild* aManager) {
-  SerializeInternal(aParams, aFileDescriptors, aDelayedStart, aMaxSize,
-                    aSizeUsed, aManager);
-}
-
-void nsBufferedInputStream::Serialize(InputStreamParams& aParams,
-                                      FileDescriptorArray& aFileDescriptors,
-                                      bool aDelayedStart, uint32_t aMaxSize,
-                                      uint32_t* aSizeUsed,
-                                      mozilla::dom::ContentParent* aManager) {
-  SerializeInternal(aParams, aFileDescriptors, aDelayedStart, aMaxSize,
-                    aSizeUsed, aManager);
-}
-
-void nsBufferedInputStream::Serialize(InputStreamParams& aParams,
-                                      FileDescriptorArray& aFileDescriptors,
-                                      bool aDelayedStart, uint32_t aMaxSize,
-                                      uint32_t* aSizeUsed,
-                                      PBackgroundParent* aManager) {
+void nsBufferedInputStream::Serialize(
+    InputStreamParams& aParams, FileDescriptorArray& aFileDescriptors,
+    bool aDelayedStart, uint32_t aMaxSize, uint32_t* aSizeUsed,
+    mozilla::ipc::ChildToParentStreamActorManager* aManager) {
   SerializeInternal(aParams, aFileDescriptors, aDelayedStart, aMaxSize,
                     aSizeUsed, aManager);
 }
@@ -764,7 +751,9 @@ nsBufferedInputStream::Clone(nsIInputStream** aResult) {
   rv = bis->Init(clonedStream, mBufferSize);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  bis.forget(aResult);
+  *aResult =
+      static_cast<nsBufferedInputStream*>(bis.get())->GetInputStream().take();
+
   return NS_OK;
 }
 
@@ -850,7 +839,7 @@ nsBufferedOutputStream::Init(nsIOutputStream* stream, uint32_t bufferSize) {
 
 NS_IMETHODIMP
 nsBufferedOutputStream::Close() {
-  nsresult rv1, rv2 = NS_OK, rv3;
+  nsresult rv1, rv2 = NS_OK;
 
   rv1 = Flush();
 
@@ -875,15 +864,7 @@ nsBufferedOutputStream::Close() {
     }
 #endif
   }
-  rv3 = nsBufferedStream::Close();
-
-#ifdef DEBUG
-  if (NS_FAILED(rv3)) {
-    NS_WARNING(
-        "(debug) nsBufferedStream:Close() inside "
-        "nsBufferedOutputStream::Close() returned error (rv3).");
-  }
-#endif
+  nsBufferedStream::Close();
 
   if (NS_FAILED(rv1)) {
     return rv1;
@@ -891,7 +872,7 @@ nsBufferedOutputStream::Close() {
   if (NS_FAILED(rv2)) {
     return rv2;
   }
-  return rv3;
+  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -901,7 +882,7 @@ nsBufferedOutputStream::Write(const char* buf, uint32_t count,
   uint32_t written = 0;
   *result = 0;
   if (!mStream) {
-    // We special case this situtaion.
+    // We special case this situation.
     // We should catch the failure, NS_BASE_STREAM_CLOSED ASAP, here.
     // If we don't, eventually Flush() is called in the while loop below
     // after so many writes.
@@ -976,7 +957,7 @@ NS_IMETHODIMP
 nsBufferedOutputStream::Finish() {
   // flush the stream, to write out any buffered data...
   nsresult rv1 = nsBufferedOutputStream::Flush();
-  nsresult rv2 = NS_OK, rv3;
+  nsresult rv2 = NS_OK;
 
   if (NS_FAILED(rv1)) {
     NS_WARNING(
@@ -1000,7 +981,7 @@ nsBufferedOutputStream::Finish() {
 
   // ... and close the buffered stream, so any further attempts to flush/close
   // the buffered stream won't cause errors.
-  rv3 = nsBufferedStream::Close();
+  nsBufferedStream::Close();
 
   // We want to return the errors precisely from Finish()
   // and mimick the existing error handling in
@@ -1012,7 +993,7 @@ nsBufferedOutputStream::Finish() {
   if (NS_FAILED(rv2)) {
     return rv2;
   }
-  return rv3;
+  return NS_OK;
 }
 
 static nsresult nsReadFromInputStream(nsIOutputStream* outStr, void* closure,

@@ -10,7 +10,7 @@
 #include "unicode/numberformatter.h"
 #include "number_types.h"
 #include "number_decimalquantity.h"
-#include "number_stringbuilder.h"
+#include "formatted_string_builder.h"
 #include "formattedval_impl.h"
 
 U_NAMESPACE_BEGIN namespace number {
@@ -30,10 +30,12 @@ const DecimalQuantity* validateUFormattedNumberToDecimalQuantity(
  *
  * The DecimalQuantity is not currently being used by FormattedNumber, but at some point it could be used
  * to add a toDecNumber() or similar method.
+ *
+ * Exported as U_I18N_API for tests
  */
-class UFormattedNumberData : public FormattedValueNumberStringBuilderImpl {
+class U_I18N_API UFormattedNumberData : public FormattedValueStringBuilderImpl {
 public:
-    UFormattedNumberData() : FormattedValueNumberStringBuilderImpl(0) {}
+    UFormattedNumberData() : FormattedValueStringBuilderImpl(kUndefinedField) {}
     virtual ~UFormattedNumberData();
 
     DecimalQuantity quantity;

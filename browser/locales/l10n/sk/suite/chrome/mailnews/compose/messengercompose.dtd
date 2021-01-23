@@ -1,0 +1,140 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "Nová správa: (žiadny predmet)">
+
+<!ENTITY fromAddr.label "Od:">
+<!ENTITY fromAddr.accesskey "O">
+<!ENTITY toAddr.label "Komu:">
+<!ENTITY ccAddr.label "Kópia:">
+<!ENTITY bccAddr.label "Skrytá kópia:">
+<!ENTITY replyAddr.label "Odpovedať na:">
+<!ENTITY newsgroupsAddr.label "Diskusná skupina:">
+<!ENTITY followupAddr.label "Sledovanie pre:">
+<!ENTITY subject.label "Predmet:">
+<!ENTITY subject.accesskey "d">
+<!ENTITY attachments.label "Prílohy:">
+<!ENTITY attachments.accesskey "r">
+
+<!-- menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- File menu items -->
+<!ENTITY saveCmd.label "Uložiť">
+<!ENTITY saveCmd.accesskey "U">
+<!ENTITY saveAsCmd.label "Uložiť ako">
+<!ENTITY saveAsCmd.accesskey "k">
+<!ENTITY saveAsFileCmd.label "Súbor…">
+<!ENTITY saveAsFileCmd.accesskey "S">
+<!ENTITY saveAsDraftCmd.label "Koncept">
+<!ENTITY saveAsDraftCmd.accesskey "N">
+<!ENTITY saveAsTemplateCmd.label "Šablónu">
+<!ENTITY saveAsTemplateCmd.accesskey "b">
+<!ENTITY attachMenu.label "Pripojiť">
+<!ENTITY attachMenu.accesskey "i">
+<!ENTITY attachFileCmd.label "Súbor…">
+<!ENTITY attachFileCmd.accesskey "S">
+<!ENTITY attachPageCmd.label "Webovú stránku…">
+<!ENTITY attachPageCmd.accesskey "W">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "Vizitku (vCard)">
+<!ENTITY attachVCardCmd.accesskey "V">
+<!ENTITY sendNowCmd.label "Odoslať">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "O">
+<!ENTITY sendLaterCmd.label "Odoslať neskôr">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "d">
+
+<!-- Edit menu items -->
+<!ENTITY editRewrapCmd.label "Zalomiť znovu">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY editRewrapCmd.accesskey  "m">
+<!ENTITY accountManagerCmd.label "Nastavenia účtov pre Poštu a diskusné skupiny…">
+<!ENTITY accountManagerCmd.accesskey "N">
+
+<!-- View menu items -->
+<!ENTITY showComposeToolbarCmd.label "Panel nástrojov Pošty">
+<!ENTITY showComposeToolbarCmd.accesskey "n">
+<!ENTITY showFormatToolbarCmd.label "Panel Formátovanie">
+<!ENTITY showFormatToolbarCmd.accesskey "F">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "Formát">
+<!ENTITY formatMenu.accesskey "F">
+
+<!-- Options menu items -->
+<!ENTITY optionsMenu.label "Možnosti">
+<!ENTITY optionsMenu.accesskey "M">
+
+<!ENTITY quoteCmd.label "Citovať správu">
+<!ENTITY quoteCmd.accesskey "C">
+<!ENTITY selectAddressCmd.label "Vybrať adresy…">
+<!ENTITY selectAddressCmd.key "">
+<!ENTITY selectAddressCmd.accesskey "r">
+
+<!ENTITY priorityMenu.label "Priorita">
+<!ENTITY priorityMenu.accesskey "P">
+<!ENTITY lowestPriorityCmd.label "Najnižšia">
+<!ENTITY lowestPriorityCmd.accesskey "a">
+<!ENTITY lowPriorityCmd.label "Nízka">
+<!ENTITY lowPriorityCmd.accesskey "N">
+<!ENTITY normalPriorityCmd.label "Normálna">
+<!ENTITY normalPriorityCmd.accesskey "o">
+<!ENTITY highPriorityCmd.label "Vysoká">
+<!ENTITY highPriorityCmd.accesskey "s">
+<!ENTITY highestPriorityCmd.label "Najvyššia">
+<!ENTITY highestPriorityCmd.accesskey "v">
+
+<!ENTITY returnReceiptMenu.label "Potvrdenie o prečítaní">
+<!ENTITY returnReceiptMenu.accesskey "d">
+<!ENTITY dsnMenu.label "Notifikácia o stave doručenia">
+<!ENTITY dsnMenu.accesskey "N">
+
+<!ENTITY outputFormatMenu.label "Formát">
+<!ENTITY outputFormatMenu.accesskey  "F">
+<!ENTITY autoFormatCmd.label "Automaticky">
+<!ENTITY autoFormatCmd.accesskey "A">
+<!ENTITY plainTextFormatCmd.label "Len text">
+<!ENTITY plainTextFormatCmd.accesskey "L">
+<!ENTITY htmlFormatCmd.label "Len HTML">
+<!ENTITY htmlFormatCmd.accesskey "H">
+<!ENTITY bothFormatCmd.label "Text a HTML">
+<!ENTITY bothFormatCmd.accesskey "T">
+
+<!ENTITY fileCarbonCopyCmd.label "Uložiť kópiu do">
+<!ENTITY fileCarbonCopyCmd.accesskey "U">
+<!ENTITY fileHereMenu.label "Uložiť sem">
+
+<!--LOCALIZATION NOTE Toolbar items Don't change any "chrome://" URLs -->
+<!-- Toolbar items -->
+<!ENTITY sendButton.label "Odoslať">
+<!ENTITY addressButton.label "Adresa">
+<!ENTITY attachButton.label "Priložiť">
+<!ENTITY spellingButton.label "Pravopis">
+<!ENTITY saveButton.label "Uložiť">
+<!ENTITY stopButton.label "Zastaviť">
+
+<!--tooltips-->
+<!-- We already inherit &menuBar.tooltip and &mailToolbar.tooltip from messenger.dtd -->
+<!ENTITY addressBar.tooltip "Panel s adresou">
+<!ENTITY formatToolbar.tooltip "Panel Formátovanie">
+<!ENTITY sendButton.tooltip "Odoslať správu"> 
+<!ENTITY sendlaterButton.tooltip "Odoslať túto správu neskôr"> 
+<!ENTITY addressButton.tooltip "Vybrať adresáta z Adresára"> 
+<!ENTITY attachButton.tooltip "Priložiť súbor"> 
+<!ENTITY saveButton.tooltip "Uložiť túto správu"> 
+<!ENTITY stopButton.tooltip "Zastaviť aktuálny prenos"> 
+
+<!-- context menu items -->
+<!ENTITY openAttachment.label "Otvoriť">
+<!ENTITY openAttachment.accesskey "O">
+<!ENTITY renameAttachment.label "Premenovať…">
+<!ENTITY renameAttachment.accesskey "P">
+<!ENTITY deleteAttachment.accesskey "d">
+<!ENTITY selectAllAttachments.accesskey "a">
+<!ENTITY attachFile.label "Priložiť súbor…">
+<!ENTITY attachFile.accesskey "s">
+<!ENTITY attachPage.label "Priložiť webovú stránku…">
+<!ENTITY attachPage.accesskey "w">

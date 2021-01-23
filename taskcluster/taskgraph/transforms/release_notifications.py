@@ -7,12 +7,25 @@ Add notifications via taskcluster-notify for release tasks
 
 from __future__ import absolute_import, print_function, unicode_literals
 
+from string import Formatter
 from taskgraph.transforms.base import TransformSequence
 from taskgraph.util.scriptworker import get_release_config
 from taskgraph.util.schema import resolve_keyed_by
 
 
 transforms = TransformSequence()
+
+
+class TitleCaseFormatter(Formatter):
+    """Support title formatter for strings"""
+    def convert_field(self, value, conversion):
+        if conversion == 't':
+            return str(value).title()
+        super(TitleCaseFormatter, self).convert_field(value, conversion)
+        return value
+
+
+titleformatter = TitleCaseFormatter()
 
 
 @transforms.add
@@ -22,7 +35,7 @@ def add_notifications(config, jobs):
     for job in jobs:
         label = '{}-{}'.format(config.kind, job['name'])
 
-        notifications = job.get('notifications')
+        notifications = job.pop('notifications')
         if notifications:
             resolve_keyed_by(notifications, 'emails', label, project=config.params['project'])
             emails = notifications['emails']
@@ -31,11 +44,9 @@ def add_notifications(config, jobs):
                 config=config.__dict__,
                 release_config=release_config,
             )
-            subject = notifications['subject'].format(**format_kwargs)
-            message = notifications['message'].format(**format_kwargs)
+            subject = titleformatter.format(notifications['subject'], **format_kwargs)
+            message = titleformatter.format(notifications['message'], **format_kwargs)
             emails = [email.format(**format_kwargs) for email in emails]
-            # Don't need this any more
-            del job['notifications']
 
             # We only send mail on success to avoid messages like 'blah is in the
             # candidates dir' when cancelling graphs, dummy job failure, etc

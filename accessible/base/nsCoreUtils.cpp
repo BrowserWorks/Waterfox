@@ -39,6 +39,11 @@
 
 using namespace mozilla;
 
+using mozilla::dom::DOMRect;
+using mozilla::dom::Element;
+using mozilla::dom::Selection;
+using mozilla::dom::XULTreeElement;
+
 ////////////////////////////////////////////////////////////////////////////////
 // nsCoreUtils
 ////////////////////////////////////////////////////////////////////////////////
@@ -234,7 +239,7 @@ nsresult nsCoreUtils::ScrollSubstringTo(nsIFrame* aFrame, nsRange* aRange,
       selCon->GetSelection(nsISelectionController::SELECTION_ACCESSIBILITY);
 
   selection->RemoveAllRanges(IgnoreErrors());
-  selection->AddRange(*aRange, IgnoreErrors());
+  selection->AddRangeAndSelectFramesAndNotifyListeners(*aRange, IgnoreErrors());
 
   selection->ScrollIntoView(nsISelectionController::SELECTION_ANCHOR_REGION,
                             aVertical, aHorizontal,
@@ -342,7 +347,7 @@ bool nsCoreUtils::IsRootDocument(Document* aDocument) {
   NS_ASSERTION(docShellTreeItem, "No document shell for document!");
 
   nsCOMPtr<nsIDocShellTreeItem> parentTreeItem;
-  docShellTreeItem->GetParent(getter_AddRefs(parentTreeItem));
+  docShellTreeItem->GetInProcessParent(getter_AddRefs(parentTreeItem));
 
   return !parentTreeItem;
 }
@@ -358,23 +363,23 @@ bool nsCoreUtils::IsTabDocument(Document* aDocumentNode) {
   nsCOMPtr<nsIDocShellTreeItem> treeItem(aDocumentNode->GetDocShell());
 
   nsCOMPtr<nsIDocShellTreeItem> parentTreeItem;
-  treeItem->GetParent(getter_AddRefs(parentTreeItem));
+  treeItem->GetInProcessParent(getter_AddRefs(parentTreeItem));
 
   // Tab document running in own process doesn't have parent.
   if (XRE_IsContentProcess()) return !parentTreeItem;
 
   // Parent of docshell for tab document running in chrome process is root.
   nsCOMPtr<nsIDocShellTreeItem> rootTreeItem;
-  treeItem->GetRootTreeItem(getter_AddRefs(rootTreeItem));
+  treeItem->GetInProcessRootTreeItem(getter_AddRefs(rootTreeItem));
 
   return parentTreeItem == rootTreeItem;
 }
 
 bool nsCoreUtils::IsErrorPage(Document* aDocument) {
   nsIURI* uri = aDocument->GetDocumentURI();
-  bool isAboutScheme = false;
-  uri->SchemeIs("about", &isAboutScheme);
-  if (!isAboutScheme) return false;
+  if (!uri->SchemeIs("about")) {
+    return false;
+  }
 
   nsAutoCString path;
   uri->GetPathQueryRef(path);
@@ -435,9 +440,15 @@ XULTreeElement* nsCoreUtils::GetTree(nsIContent* aContent) {
 }
 
 already_AddRefed<nsTreeColumn> nsCoreUtils::GetFirstSensibleColumn(
-    XULTreeElement* aTree) {
-  RefPtr<nsTreeColumns> cols = aTree->GetColumns();
-  if (!cols) return nullptr;
+    XULTreeElement* aTree, FlushType aFlushType) {
+  if (!aTree) {
+    return nullptr;
+  }
+
+  RefPtr<nsTreeColumns> cols = aTree->GetColumns(aFlushType);
+  if (!cols) {
+    return nullptr;
+  }
 
   RefPtr<nsTreeColumn> column = cols->GetFirstColumn();
   if (column && IsColumnHidden(column)) return GetNextSensibleColumn(column);
@@ -447,9 +458,14 @@ already_AddRefed<nsTreeColumn> nsCoreUtils::GetFirstSensibleColumn(
 
 uint32_t nsCoreUtils::GetSensibleColumnCount(XULTreeElement* aTree) {
   uint32_t count = 0;
+  if (!aTree) {
+    return count;
+  }
 
   RefPtr<nsTreeColumns> cols = aTree->GetColumns();
-  if (!cols) return count;
+  if (!cols) {
+    return count;
+  }
 
   nsTreeColumn* column = cols->GetFirstColumn();
 
@@ -464,6 +480,10 @@ uint32_t nsCoreUtils::GetSensibleColumnCount(XULTreeElement* aTree) {
 
 already_AddRefed<nsTreeColumn> nsCoreUtils::GetSensibleColumnAt(
     XULTreeElement* aTree, uint32_t aIndex) {
+  if (!aTree) {
+    return nullptr;
+  }
+
   uint32_t idx = aIndex;
 
   nsCOMPtr<nsTreeColumn> column = GetFirstSensibleColumn(aTree);
@@ -479,6 +499,10 @@ already_AddRefed<nsTreeColumn> nsCoreUtils::GetSensibleColumnAt(
 
 already_AddRefed<nsTreeColumn> nsCoreUtils::GetNextSensibleColumn(
     nsTreeColumn* aColumn) {
+  if (!aColumn) {
+    return nullptr;
+  }
+
   RefPtr<nsTreeColumn> nextColumn = aColumn->GetNext();
 
   while (nextColumn && IsColumnHidden(nextColumn)) {
@@ -490,6 +514,10 @@ already_AddRefed<nsTreeColumn> nsCoreUtils::GetNextSensibleColumn(
 
 already_AddRefed<nsTreeColumn> nsCoreUtils::GetPreviousSensibleColumn(
     nsTreeColumn* aColumn) {
+  if (!aColumn) {
+    return nullptr;
+  }
+
   RefPtr<nsTreeColumn> prevColumn = aColumn->GetPrevious();
 
   while (prevColumn && IsColumnHidden(prevColumn)) {
@@ -500,6 +528,10 @@ already_AddRefed<nsTreeColumn> nsCoreUtils::GetPreviousSensibleColumn(
 }
 
 bool nsCoreUtils::IsColumnHidden(nsTreeColumn* aColumn) {
+  if (!aColumn) {
+    return false;
+  }
+
   Element* element = aColumn->Element();
   return element->AttrValueIs(kNameSpaceID_None, nsGkAtoms::hidden,
                               nsGkAtoms::_true, eCaseMatters);
@@ -544,4 +576,9 @@ void nsCoreUtils::DispatchAccEvent(RefPtr<nsIAccessibleEvent> event) {
   NS_ENSURE_TRUE_VOID(obsService);
 
   obsService->NotifyObservers(event, NS_ACCESSIBLE_EVENT_TOPIC, nullptr);
+}
+
+bool nsCoreUtils::IsDisplayContents(nsIContent* aContent) {
+  return aContent && aContent->IsElement() &&
+         aContent->AsElement()->IsDisplayContents();
 }

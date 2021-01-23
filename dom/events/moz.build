@@ -5,7 +5,21 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 with Files("**"):
+    BUG_COMPONENT = ("Core", "DOM: UI Events & Focus Handling")
+
+with Files("Event*"):
     BUG_COMPONENT = ("Core", "DOM: Events")
+
+if CONFIG['OS_ARCH'] == 'WINNT':
+    DIRS += ['win']
+elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
+    DIRS += ['mac']
+elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
+    DIRS += ['android']
+elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk':
+    DIRS += ['unix']
+else:
+    DIRS += ['emacs']
 
 BROWSER_CHROME_MANIFESTS += [
   'test/browser.ini',
@@ -33,14 +47,18 @@ EXPORTS.mozilla += [
     'EventNameList.h',
     'EventStateManager.h',
     'EventStates.h',
+    'GlobalKeyListener.h',
     'IMEContentObserver.h',
     'IMEStateManager.h',
+    'InputEventOptions.h',
     'InputTypeList.h',
     'InternalMutationEvent.h',
     'JSEventHandler.h',
+    'KeyEventHandler.h',
     'KeyNameList.h',
     'PendingFullscreenEvent.h',
     'PhysicalKeyCodeNameList.h',
+    'ShortcutKeys.h',
     'TextComposition.h',
     'VirtualKeyCodeList.h',
     'WheelHandlingHelper.h',
@@ -74,6 +92,7 @@ EXPORTS.mozilla.dom += [
     'PaintRequest.h',
     'PointerEvent.h',
     'PointerEventHandler.h',
+    'RemoteDragStartData.h',
     'ScrollAreaEvent.h',
     'SimpleGestureEvent.h',
     'StorageEvent.h',
@@ -112,12 +131,14 @@ UNIFIED_SOURCES += [
     'EventListenerService.cpp',
     'EventTarget.cpp',
     'FocusEvent.cpp',
+    'GlobalKeyListener.cpp',
     'ImageCaptureError.cpp',
     'IMEContentObserver.cpp',
     'IMEStateManager.cpp',
     'InputEvent.cpp',
     'JSEventHandler.cpp',
     'KeyboardEvent.cpp',
+    'KeyEventHandler.cpp',
     'MessageEvent.cpp',
     'MouseEvent.cpp',
     'MouseScrollEvent.cpp',
@@ -126,7 +147,9 @@ UNIFIED_SOURCES += [
     'PaintRequest.cpp',
     'PointerEvent.cpp',
     'PointerEventHandler.cpp',
+    'RemoteDragStartData.cpp',
     'ScrollAreaEvent.cpp',
+    'ShortcutKeys.cpp',
     'SimpleGestureEvent.cpp',
     'StorageEvent.cpp',
     'TextClause.cpp',

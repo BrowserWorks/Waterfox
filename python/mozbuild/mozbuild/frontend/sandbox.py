@@ -17,9 +17,10 @@ KeyError are machine parseable. This machine-friendly data is used to present
 user-friendly error messages in the case of errors.
 """
 
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import, print_function, unicode_literals
 
 import os
+import six
 import sys
 import weakref
 
@@ -34,12 +35,12 @@ from mozpack.files import FileFinder
 default_finder = FileFinder('/')
 
 
-def alphabetical_sorted(iterable, cmp=None, key=lambda x: x.lower(),
+def alphabetical_sorted(iterable, key=lambda x: x.lower(),
                         reverse=False):
     """sorted() replacement for the sandbox, ordering alphabetically by
     default.
     """
-    return sorted(iterable, cmp, key, reverse)
+    return sorted(iterable, key=key, reverse=reverse)
 
 
 class SandboxError(Exception):
@@ -53,6 +54,7 @@ class SandboxExecutionError(SandboxError):
     This is a simple container exception. It's purpose is to capture state
     so something else can report on it.
     """
+
     def __init__(self, file_stack, exc_type, exc_value, trace):
         SandboxError.__init__(self, file_stack)
 
@@ -69,6 +71,7 @@ class SandboxLoadError(SandboxError):
     a file. If so, the file_stack will be non-empty and the file that caused
     the load will be on top of the stack.
     """
+
     def __init__(self, file_stack, trace, illegal_path=None, read_error=None):
         SandboxError.__init__(self, file_stack)
 
@@ -152,10 +155,10 @@ class Sandbox(dict):
         assert os.path.isabs(path)
 
         try:
-            source = self._finder.get(path).read()
-        except Exception as e:
+            source = six.ensure_text(self._finder.get(path).read())
+        except Exception:
             raise SandboxLoadError(self._context.source_stack,
-                sys.exc_info()[2], read_error=path)
+                                   sys.exc_info()[2], read_error=path)
 
         self.exec_source(source, path)
 
@@ -225,7 +228,7 @@ class Sandbox(dict):
             raise SandboxExecutionError(source_stack, type(actual), actual,
                                         sys.exc_info()[2])
 
-        except Exception as e:
+        except Exception:
             # Need to copy the stack otherwise we get a reference and that is
             # mutated during the finally.
             exc = sys.exc_info()
@@ -288,7 +291,7 @@ class Sandbox(dict):
                 raise KeyError('global_ns', 'reassign', key)
 
             if (key not in self._context and isinstance(value, (list, dict))
-               and not value):
+                and not value):
                 raise KeyError('Variable %s assigned an empty value.' % key)
 
             self._context[key] = value
@@ -296,9 +299,6 @@ class Sandbox(dict):
             dict.__setitem__(self, key, value)
 
     def get(self, key, default=None):
-        raise NotImplementedError('Not supported')
-
-    def __len__(self):
         raise NotImplementedError('Not supported')
 
     def __iter__(self):

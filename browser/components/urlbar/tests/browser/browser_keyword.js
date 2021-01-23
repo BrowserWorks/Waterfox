@@ -8,36 +8,25 @@
  */
 
 async function promise_first_result(inputText) {
-  await promiseAutocompleteResultPopup(inputText);
+  await UrlbarTestUtils.promiseAutocompleteResultPopup({
+    window,
+    waitForFocus: SimpleTest.waitForFocus,
+    value: inputText,
+  });
 
   return UrlbarTestUtils.getDetailsOfResultAt(window, 0);
 }
 
 function assertURL(result, expectedUrl, keyword, input, postData) {
-  if (UrlbarPrefs.get("quantumbar")) {
-    Assert.equal(result.url, expectedUrl, "Should have the correct URL");
-    if (postData) {
-      Assert.equal(
-        NetUtil.readInputStreamToString(
-          result.postData,
-          result.postData.available()
-        ),
-        postData,
-        "Should have the correct postData"
-      );
-    }
-  } else {
-    // We need to make a real URI out of this to ensure it's normalised for
-    // comparison.
+  Assert.equal(result.url, expectedUrl, "Should have the correct URL");
+  if (postData) {
     Assert.equal(
-      result.url,
-      PlacesUtils.mozActionURI("keyword", {
-        url: expectedUrl,
-        keyword,
-        input,
-        postData,
-      }),
-      "Expect correct url"
+      NetUtil.readInputStreamToString(
+        result.postData,
+        result.postData.available()
+      ),
+      postData,
+      "Should have the correct postData"
     );
   }
 }
@@ -97,14 +86,12 @@ add_task(async function test_display_keyword_without_query() {
   );
   Assert.equal(
     result.displayed.title,
-    "example.com",
-    "Node should contain the name of the bookmark"
+    "https://example.com/browser/browser/components/urlbar/tests/browser/print_postdata.sjs?q=",
+    "Node should contain the url of the bookmark"
   );
   Assert.equal(
     result.displayed.action,
-    Services.strings
-      .createBundle("chrome://global/locale/autocomplete.properties")
-      .GetStringFromName("visit"),
+    UrlbarUtils.strings.GetStringFromName("visit"),
     "Should have visit indicated"
   );
 });
@@ -132,16 +119,6 @@ add_task(async function test_keyword_using_get() {
   assertURL(result, TEST_URL + "?q=something", "get", "get something");
 
   let element = await UrlbarTestUtils.waitForAutocompleteResultAt(window, 0);
-
-  if (!UrlbarPrefs.get("quantumbar")) {
-    // QuantumBar doesn't have separate boxes for items.
-    let urlHbox = element._urlText.parentNode.parentNode;
-    Assert.ok(
-      urlHbox.classList.contains("ac-url"),
-      "URL hbox element sanity check"
-    );
-    BrowserTestUtils.is_hidden(urlHbox, "URL element should be hidden");
-  }
 
   // Click on the result
   info("Normal click on result");
@@ -214,9 +191,9 @@ add_task(async function test_keyword_using_post() {
     "Tab should have loaded from clicking on result"
   );
 
-  let postData = await ContentTask.spawn(
+  let postData = await SpecialPowers.spawn(
     tab.linkedBrowser,
-    null,
+    [],
     async function() {
       return content.document.body.textContent;
     }

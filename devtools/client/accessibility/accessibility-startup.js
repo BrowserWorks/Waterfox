@@ -4,6 +4,10 @@
 
 "use strict";
 
+const {
+  AccessibilityProxy,
+} = require("devtools/client/accessibility/accessibility-proxy");
+
 /**
  * Component responsible for all accessibility panel startup steps before the panel is
  * actually opened.
@@ -16,64 +20,6 @@ class AccessibilityStartup {
 
     // Creates accessibility front.
     this.initAccessibility();
-  }
-
-  get target() {
-    return this.toolbox.target;
-  }
-
-  /**
-   * Get the accessibility front for the toolbox.
-   */
-  get accessibility() {
-    return this._accessibility;
-  }
-
-  get walker() {
-    return this._walker;
-  }
-
-  /**
-   * Determine which features are supported based on the version of the server. Also, sync
-   * the state of the accessibility front/actor.
-   * @return {Promise}
-   *         A promise that returns true when accessibility front is fully in sync with
-   *         the actor.
-   */
-  async prepareAccessibility() {
-    // We must call a method on an accessibility front here (such as getWalker), in
-    // oreder to be able to check actor's backward compatibility via actorHasMethod.
-    // See targe.js@getActorDescription for more information.
-    try {
-      this._walker = await this._accessibility.getWalker();
-      this._supports = {};
-      // Only works with FF61+ targets
-      this._supports.enableDisable = await this.target.actorHasMethod(
-        "accessibility",
-        "enable"
-      );
-
-      if (this._supports.enableDisable) {
-        [
-          this._supports.relations,
-          this._supports.snapshot,
-          this._supports.audit,
-          this._supports.hydration,
-        ] = await Promise.all([
-          this.target.actorHasMethod("accessible", "getRelations"),
-          this.target.actorHasMethod("accessible", "snapshot"),
-          this.target.actorHasMethod("accessible", "audit"),
-          this.target.actorHasMethod("accessible", "hydrate"),
-        ]);
-
-        await this._accessibility.bootstrap();
-      }
-
-      return true;
-    } catch (e) {
-      // toolbox may be destroyed during this step.
-      return false;
-    }
   }
 
   /**
@@ -90,23 +36,24 @@ class AccessibilityStartup {
           this.toolbox.once("accessibility-init"),
         ]);
 
-        this._accessibility = await this.target.getFront("accessibility");
+        this.accessibilityProxy = new AccessibilityProxy(this.toolbox);
         // When target is being destroyed (for example on remoteness change), it
-        // destroy accessibility front. In case when a11y is not fully initialized, that
-        // may result in unresolved promises.
-        const prepared = await Promise.race([
-          this.prepareAccessibility(),
-          this.target.once("close"), // does not have a value.
+        // destroy accessibility related fronts. In case when a11y is not fully
+        // initialized, that may result in unresolved promises.
+        const initialized = await Promise.race([
+          this.accessibilityProxy.initialize(),
+          this.toolbox.target.once("close"), // does not have a value.
         ]);
         // If the target is being destroyed, no need to continue.
-        if (!prepared) {
+        if (!initialized) {
           return;
         }
 
         this._updateToolHighlight();
-
-        this._accessibility.on("init", this._updateToolHighlight);
-        this._accessibility.on("shutdown", this._updateToolHighlight);
+        this.accessibilityProxy.startListeningForLifecycleEvents({
+          init: this._updateToolHighlight,
+          shutdown: this._updateToolHighlight,
+        });
       }.bind(this)();
     }
 
@@ -125,7 +72,7 @@ class AccessibilityStartup {
     }
 
     this._destroyingAccessibility = async function() {
-      if (!this._accessibility) {
+      if (!this.accessibilityProxy) {
         return;
       }
 
@@ -133,12 +80,13 @@ class AccessibilityStartup {
       // conditions in the initialization process can throw errors.
       await this._initAccessibility;
 
-      this._accessibility.off("init", this._updateToolHighlight);
-      this._accessibility.off("shutdown", this._updateToolHighlight);
+      this.accessibilityProxy.stopListeningForLifecycleEvents({
+        init: this._updateToolHighlight,
+        shutdown: this._updateToolHighlight,
+      });
 
-      await this._walker.destroy();
-      this._accessibility = null;
-      this._walker = null;
+      this.accessibilityProxy.destroy();
+      this.accessibilityProxy = null;
     }.bind(this)();
     return this._destroyingAccessibility;
   }
@@ -148,10 +96,16 @@ class AccessibilityStartup {
    * accessibility service is initialized or shutdown.
    */
   async _updateToolHighlight() {
+    // Only update the tab highlighted state when the panel can be
+    // enabled/disabled manually.
+    if (this.accessibilityProxy.supports.autoInit) {
+      return;
+    }
+
     const isHighlighted = await this.toolbox.isToolHighlighted("accessibility");
-    if (this._accessibility.enabled && !isHighlighted) {
+    if (this.accessibilityProxy.enabled && !isHighlighted) {
       this.toolbox.highlightTool("accessibility");
-    } else if (!this._accessibility.enabled && isHighlighted) {
+    } else if (!this.accessibilityProxy.enabled && isHighlighted) {
       this.toolbox.unhighlightTool("accessibility");
     }
   }

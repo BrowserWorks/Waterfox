@@ -4,19 +4,19 @@
 
 const { require } = ChromeUtils.import("resource://devtools/shared/Loader.jsm");
 
-const { DebuggerClient } = require("devtools/shared/client/debugger-client");
-const { DebuggerServer } = require("devtools/server/main");
+const { DevToolsClient } = require("devtools/client/devtools-client");
+const { DevToolsServer } = require("devtools/server/devtools-server");
 const { gDevTools } = require("devtools/client/framework/devtools");
 const { Toolbox } = require("devtools/client/framework/toolbox");
 
 async function setupToolboxTest(extensionId) {
-  DebuggerServer.init();
-  DebuggerServer.registerAllActors();
-  const transport = DebuggerServer.connectPipe();
-  const client = new DebuggerClient(transport);
+  DevToolsServer.init();
+  DevToolsServer.registerAllActors();
+  const transport = DevToolsServer.connectPipe();
+  const client = new DevToolsClient(transport);
   await client.connect();
   const addonFront = await client.mainRoot.getAddon({ id: extensionId });
-  const target = await addonFront.connect();
+  const target = await addonFront.getTarget();
   const toolbox = await gDevTools.showToolbox(
     target,
     null,
@@ -30,9 +30,7 @@ async function setupToolboxTest(extensionId) {
     }
   }
 
-  const console = await toolbox.selectTool("webconsole");
-  const { hud } = console;
-  const { jsterm } = hud;
+  const consoleFront = await toolbox.target.getFront("console");
 
   const netmonitor = await toolbox.selectTool("netmonitor");
 
@@ -40,7 +38,7 @@ async function setupToolboxTest(extensionId) {
 
   // Call a function defined in the target extension to make it
   // fetch from an expected http url.
-  await jsterm.execute(`doFetchHTTPRequest("${expectedURL}");`);
+  await consoleFront.evaluateJSAsync(`doFetchHTTPRequest("${expectedURL}");`);
 
   await waitFor(() => {
     return !netmonitor.panelWin.document.querySelector(
@@ -65,12 +63,12 @@ async function setupToolboxTest(extensionId) {
       filterRequest
     );
 
-    return requests.length > 0;
+    return !!requests.length;
   });
 
   // Call a function defined in the target extension to make assertions
   // on the network requests collected by the netmonitor panel.
-  await jsterm.execute(
+  await consoleFront.evaluateJSAsync(
     `testNetworkRequestReceived(${JSON.stringify(requests)});`
   );
 

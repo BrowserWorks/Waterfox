@@ -1,3 +1,5 @@
+"use strict";
+
 const { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
 
 XPCOMUtils.defineLazyGetter(this, "URL", function() {
@@ -26,19 +28,13 @@ var progressCallback = {
   _got_onstatus_after_onstartrequest: false,
   _last_callback_handled: null,
 
-  QueryInterface: function(iid) {
-    if (
-      iid.equals(Ci.nsISupports) ||
-      iid.equals(Ci.nsIProgressEventSink) ||
-      iid.equals(Ci.nsIStreamListener) ||
-      iid.equals(Ci.nsIRequestObserver)
-    ) {
-      return this;
-    }
-    throw Cr.NS_ERROR_NO_INTERFACE;
-  },
+  QueryInterface: ChromeUtils.generateQI([
+    "nsIProgressEventSink",
+    "nsIStreamListener",
+    "nsIRequestObserver",
+  ]),
 
-  getInterface: function(iid) {
+  getInterface(iid) {
     if (
       iid.equals(Ci.nsIProgressEventSink) ||
       iid.equals(Ci.nsIStreamListener) ||
@@ -46,10 +42,10 @@ var progressCallback = {
     ) {
       return this;
     }
-    throw Cr.NS_ERROR_NO_INTERFACE;
+    throw Components.Exception("", Cr.NS_ERROR_NO_INTERFACE);
   },
 
-  onStartRequest: function(request) {
+  onStartRequest(request) {
     Assert.equal(this._last_callback_handled, TYPE_ONSTATUS);
     this._got_onstartrequest = true;
     this._last_callback_handled = TYPE_ONSTARTREQUEST;
@@ -58,14 +54,14 @@ var progressCallback = {
     this._listener.onStartRequest(request);
   },
 
-  onDataAvailable: function(request, data, offset, count) {
+  onDataAvailable(request, data, offset, count) {
     Assert.equal(this._last_callback_handled, TYPE_ONPROGRESS);
     this._last_callback_handled = TYPE_ONDATAAVAILABLE;
 
     this._listener.onDataAvailable(request, data, offset, count);
   },
 
-  onStopRequest: function(request, status) {
+  onStopRequest(request, status) {
     Assert.equal(this._last_callback_handled, TYPE_ONDATAAVAILABLE);
     Assert.ok(this._got_onstatus_after_onstartrequest);
     this._last_callback_handled = TYPE_ONSTOPREQUEST;
@@ -74,16 +70,16 @@ var progressCallback = {
     delete this._listener;
   },
 
-  onProgress: function(request, context, progress, progressMax) {
+  onProgress(request, progress, progressMax) {
     Assert.equal(this._last_callback_handled, TYPE_ONSTATUS);
     this._last_callback_handled = TYPE_ONPROGRESS;
 
-    Assert.equal(mStatus, STATUS_RECEIVING_FROM);
+    Assert.equal(this.mStatus, STATUS_RECEIVING_FROM);
     last = progress;
     max = progressMax;
   },
 
-  onStatus: function(request, context, status, statusArg) {
+  onStatus(request, status, statusArg) {
     if (!this._got_onstartrequest) {
       // Ensure that all messages before onStartRequest are onStatus
       if (this._last_callback_handled) {
@@ -97,7 +93,7 @@ var progressCallback = {
     this._last_callback_handled = TYPE_ONSTATUS;
 
     Assert.equal(statusArg, "localhost");
-    mStatus = status;
+    this.mStatus = status;
   },
 
   mStatus: 0,

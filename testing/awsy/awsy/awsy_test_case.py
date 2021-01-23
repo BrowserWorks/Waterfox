@@ -4,21 +4,25 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from __future__ import absolute_import
+
 import fnmatch
 import glob
 import gzip
 import json
 import os
-import sys
-import time
 import shutil
+import sys
 import tempfile
+import time
 
-from marionette_harness import MarionetteTestCase
+import mozlog.structured
+
+from marionette_driver import Wait
 from marionette_driver.legacy_actions import Actions
 from marionette_driver.errors import JavascriptException, ScriptTimeoutException
-import mozlog.structured
 from marionette_driver.keys import Keys
+from marionette_harness import MarionetteTestCase
 
 AWSY_PATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 if AWSY_PATH not in sys.path:
@@ -129,9 +133,12 @@ class AwsyTestCase(MarionetteTestCase):
         tmp_files = os.listdir(tmpdir)
         for f in fnmatch.filter(tmp_files, "dmd-*.json.gz"):
             f = os.path.join(tmpdir, f)
-            self.logger.info("Fixing stacks for %s, this may take a while" % f)
-            isZipped = True
-            fixStackTraces(f, isZipped, gzip.open)
+            # We don't fix stacks on Windows, even though we could, due to the
+            # tale of woe in bug 1626272.
+            if not sys.platform.startswith('win'):
+                self.logger.info("Fixing stacks for %s, this may take a while" % f)
+                isZipped = True
+                fixStackTraces(f, isZipped, gzip.open)
             shutil.move(f, self._resultsDir)
 
         # Also attempt to cleanup the unified memory reports.
@@ -174,7 +181,7 @@ class AwsyTestCase(MarionetteTestCase):
         try:
             result = self.marionette.execute_async_script(
                 gc_script, script_timeout=180000)
-        except JavascriptException, e:
+        except JavascriptException as e:
             self.logger.error("GC JavaScript error: %s" % e)
         except ScriptTimeoutException:
             self.logger.error("GC timed out")
@@ -224,7 +231,7 @@ class AwsyTestCase(MarionetteTestCase):
                 checkpoint_script, script_timeout=60000)
             if finished:
                 checkpoint = checkpoint_path
-        except JavascriptException, e:
+        except JavascriptException as e:
             self.logger.error("Checkpoint JavaScript error: %s" % e)
         except ScriptTimeoutException:
             self.logger.error("Memory report timed out")
@@ -292,7 +299,7 @@ class AwsyTestCase(MarionetteTestCase):
                 for f in incomplete:
                     os.remove(os.path.join(tmpdir, f))
 
-        except JavascriptException, e:
+        except JavascriptException as e:
             self.logger.error("DMD JavaScript error: %s" % e)
         except ScriptTimeoutException:
             self.logger.error("DMD timed out")
@@ -321,8 +328,10 @@ class AwsyTestCase(MarionetteTestCase):
 
             self.marionette.execute_script(open_tab_script, script_timeout=60000)
 
-            self.wait_for_condition(lambda mn: len(
-                mn.window_handles) == tabs_loaded + 1)
+            Wait(self.marionette).until(
+                lambda mn: len(mn.window_handles) == tabs_loaded + 1,
+                message="No new tab has been opened"
+            )
 
             # NB: The tab list isn't sorted, so we do a set diff to determine
             #     which is the new tab

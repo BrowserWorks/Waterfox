@@ -31,7 +31,9 @@ var gSetBackground = {
       this._canvas.width + "px";
 
     if (AppConstants.platform == "macosx") {
-      document.documentElement.getButton("accept").hidden = true;
+      document
+        .getElementById("SetDesktopBackgroundDialog")
+        .getButton("accept").hidden = true;
     } else {
       let multiMonitors = false;
       if (AppConstants.platform == "linux") {
@@ -245,6 +247,6 @@ if (AppConstants.platform != "macosx") {
   };
 
   gSetBackground.showDesktopPrefs = function() {
-    this._shell.openApplication(Ci.nsIMacShellService.APPLICATION_DESKTOP);
+    this._shell.QueryInterface(Ci.nsIMacShellService).showDesktopPreferences();
   };
 }

@@ -13,7 +13,6 @@
 #include "mozilla/CheckedInt.h"
 #include "mozilla/MathAlgorithms.h"
 #include "mozilla/Mutex.h"
-#include "mozilla/SystemGroup.h"
 
 #include "base/basictypes.h"
 
@@ -94,7 +93,7 @@ class nsMultiplexInputStream final : public nsIMultiplexInputStream,
   Mutex& GetLock() { return mLock; }
 
  private:
-  ~nsMultiplexInputStream() {}
+  ~nsMultiplexInputStream() = default;
 
   nsresult AsyncWaitInternal();
 
@@ -249,7 +248,7 @@ nsMultiplexInputStream::AppendStream(nsIInputStream* aStream) {
     nsresult rv = NS_NewBufferedInputStream(getter_AddRefs(bufferedStream),
                                             stream.forget(), 4096);
     NS_ENSURE_SUCCESS(rv, rv);
-    stream = bufferedStream.forget();
+    stream = std::move(bufferedStream);
     buffered = true;
   }
 
@@ -990,38 +989,18 @@ nsresult nsMultiplexInputStreamConstructor(nsISupports* aOuter, REFNSIID aIID,
   return inst->QueryInterface(aIID, aResult);
 }
 
-void nsMultiplexInputStream::Serialize(InputStreamParams& aParams,
-                                       FileDescriptorArray& aFileDescriptors,
-                                       bool aDelayedStart, uint32_t aMaxSize,
-                                       uint32_t* aSizeUsed,
-                                       mozilla::dom::ContentChild* aManager) {
+void nsMultiplexInputStream::Serialize(
+    InputStreamParams& aParams, FileDescriptorArray& aFileDescriptors,
+    bool aDelayedStart, uint32_t aMaxSize, uint32_t* aSizeUsed,
+    mozilla::ipc::ParentToChildStreamActorManager* aManager) {
   SerializeInternal(aParams, aFileDescriptors, aDelayedStart, aMaxSize,
                     aSizeUsed, aManager);
 }
 
-void nsMultiplexInputStream::Serialize(InputStreamParams& aParams,
-                                       FileDescriptorArray& aFileDescriptors,
-                                       bool aDelayedStart, uint32_t aMaxSize,
-                                       uint32_t* aSizeUsed,
-                                       PBackgroundChild* aManager) {
-  SerializeInternal(aParams, aFileDescriptors, aDelayedStart, aMaxSize,
-                    aSizeUsed, aManager);
-}
-
-void nsMultiplexInputStream::Serialize(InputStreamParams& aParams,
-                                       FileDescriptorArray& aFileDescriptors,
-                                       bool aDelayedStart, uint32_t aMaxSize,
-                                       uint32_t* aSizeUsed,
-                                       mozilla::dom::ContentParent* aManager) {
-  SerializeInternal(aParams, aFileDescriptors, aDelayedStart, aMaxSize,
-                    aSizeUsed, aManager);
-}
-
-void nsMultiplexInputStream::Serialize(InputStreamParams& aParams,
-                                       FileDescriptorArray& aFileDescriptors,
-                                       bool aDelayedStart, uint32_t aMaxSize,
-                                       uint32_t* aSizeUsed,
-                                       PBackgroundParent* aManager) {
+void nsMultiplexInputStream::Serialize(
+    InputStreamParams& aParams, FileDescriptorArray& aFileDescriptors,
+    bool aDelayedStart, uint32_t aMaxSize, uint32_t* aSizeUsed,
+    mozilla::ipc::ChildToParentStreamActorManager* aManager) {
   SerializeInternal(aParams, aFileDescriptors, aDelayedStart, aMaxSize,
                     aSizeUsed, aManager);
 }
@@ -1039,7 +1018,7 @@ void nsMultiplexInputStream::SerializeInternal(
 
   uint32_t streamCount = mStreams.Length();
   if (streamCount) {
-    InfallibleTArray<InputStreamParams>& streams = params.streams();
+    nsTArray<InputStreamParams>& streams = params.streams();
 
     streams.SetCapacity(streamCount);
     for (uint32_t index = 0; index < streamCount; index++) {
@@ -1081,7 +1060,7 @@ bool nsMultiplexInputStream::Deserialize(
   const MultiplexInputStreamParams& params =
       aParams.get_MultiplexInputStreamParams();
 
-  const InfallibleTArray<InputStreamParams>& streams = params.streams();
+  const nsTArray<InputStreamParams>& streams = params.streams();
 
   uint32_t streamCount = streams.Length();
   for (uint32_t index = 0; index < streamCount; index++) {

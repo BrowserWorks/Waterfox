@@ -70,6 +70,13 @@ nsFTPDirListingConv::AsyncConvertData(const char* aFromType,
   return NS_OK;
 }
 
+NS_IMETHODIMP
+nsFTPDirListingConv::GetConvertedType(const nsACString& aFromType,
+                                      nsIChannel* aChannel,
+                                      nsACString& aToType) {
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
 // nsIStreamListener implementation
 NS_IMETHODIMP
 nsFTPDirListingConv::OnDataAvailable(nsIRequest* request, nsIInputStream* inStr,
@@ -294,7 +301,7 @@ char* nsFTPDirListingConv::DigestBufferLines(char* aBuffer,
     // the application/http-index-format specs
     // viewers of such a format can then reformat this into the
     // current locale (or anything else they choose)
-    PR_FormatTimeUSEnglish(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S",
+    PR_FormatTimeUSEnglish(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S GMT",
                            &result.fe_time);
 
     nsAutoCString escaped;
@@ -329,9 +336,7 @@ nsresult NS_NewFTPDirListingConv(nsFTPDirListingConv** aFTPDirListingConv) {
   MOZ_ASSERT(aFTPDirListingConv != nullptr, "null ptr");
   if (!aFTPDirListingConv) return NS_ERROR_NULL_POINTER;
 
-  *aFTPDirListingConv = new nsFTPDirListingConv();
-  if (!*aFTPDirListingConv) return NS_ERROR_OUT_OF_MEMORY;
-
-  NS_ADDREF(*aFTPDirListingConv);
+  RefPtr<nsFTPDirListingConv> conv = new nsFTPDirListingConv();
+  conv.forget(aFTPDirListingConv);
   return NS_OK;
 }

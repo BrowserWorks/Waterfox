@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "„Firefox“ paskyros">
+<!ENTITY aboutAccounts.connected.description "Esate prisijungę kaip">
+<!ENTITY aboutAccounts.syncPreferences.label "Bakstelėkite čia, norėdami patikrinti „Sync“ nustatymus">
+
+<!ENTITY aboutAccounts.noConnection.title "Nėra ryšio su internetu">
+<!ENTITY aboutAccounts.retry.label "Bandyti vėl">
+
+<!ENTITY aboutAccounts.restrictedError.title "Apribota">
+<!ENTITY aboutAccounts.restrictedError.description "Su šiuo profiliu negalite tvarkyti „Firefox“ paskyrų.">

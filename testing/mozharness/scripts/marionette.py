@@ -77,18 +77,19 @@ class MarionetteTest(TestingMixin, MercurialScript, TransferMixin,
          "dest": "total_chunks",
          "help": "Number of total chunks",
          }
-     ], [
+    ], [
         ["--this-chunk"],
         {"action": "store",
          "dest": "this_chunk",
          "help": "Number of this chunk",
          }
-     ], [
-        ["--disable-e10s"],
-        {"action": "store_false",
-         "dest": "e10s",
-         "default": True,
-         "help": "Run tests without multiple processes (e10s). (Desktop builds only)",
+    ], [
+        ["--setpref"],
+        {"action": "append",
+         "metavar": "PREF=VALUE",
+         "dest": "extra_prefs",
+         "default": [],
+         "help": "Extra user prefs.",
          }
     ], [
         ["--headless"],
@@ -123,7 +124,7 @@ class MarionetteTest(TestingMixin, MercurialScript, TransferMixin,
        {"action": "store_true",
         "dest": "enable_webrender",
         "default": False,
-        "help": "Tries to enable the WebRender compositor."
+        "help": "Enable the WebRender compositor in Gecko."
         }
      ]] + copy.deepcopy(testing_config_options) \
         + copy.deepcopy(code_coverage_config_options)
@@ -168,8 +169,8 @@ class MarionetteTest(TestingMixin, MercurialScript, TransferMixin,
     def _pre_config_lock(self, rw_config):
         super(MarionetteTest, self)._pre_config_lock(rw_config)
         if not self.config.get('emulator') and not self.config.get('marionette_address'):
-                self.fatal("You need to specify a --marionette-address for non-emulator tests! "
-                           "(Try --marionette-address localhost:2828 )")
+            self.fatal("You need to specify a --marionette-address for non-emulator tests! "
+                       "(Try --marionette-address localhost:2828 )")
 
     def _query_tests_dir(self):
         dirs = self.query_abs_dirs()
@@ -208,25 +209,12 @@ class MarionetteTest(TestingMixin, MercurialScript, TransferMixin,
         requirements = os.path.join(dirs['abs_test_install_dir'],
                                     'config',
                                     'marionette_requirements.txt')
-        if os.access(requirements, os.F_OK):
-            self.register_virtualenv_module(requirements=[requirements],
-                                            two_pass=True)
-        else:
-            # XXX Bug 879765: Dependent modules need to be listed before parent
-            # modules, otherwise they will get installed from the pypi server.
-            # XXX Bug 908356: This block can be removed as soon as the
-            # in-tree requirements files propagate to all active trees.
-            mozbase_dir = os.path.join('tests', 'mozbase')
-            self.register_virtualenv_module(
-                'manifestparser', os.path.join(mozbase_dir, 'manifestdestiny'))
-            for m in ('mozfile', 'mozlog', 'mozinfo', 'moznetwork', 'mozhttpd',
-                      'mozcrash', 'mozinstall', 'mozdevice', 'mozprofile',
-                      'mozprocess', 'mozrunner'):
-                self.register_virtualenv_module(
-                    m, os.path.join(mozbase_dir, m))
+        if not os.path.isfile(requirements):
+            self.fatal(
+                "Could not find marionette requirements file: {}".format(requirements)
+            )
 
-            self.register_virtualenv_module(
-                'marionette', os.path.join('tests', 'marionette'))
+        self.register_virtualenv_module(requirements=[requirements], two_pass=True)
 
     def _get_test_suite(self, is_emulator):
         """
@@ -303,8 +291,10 @@ class MarionetteTest(TestingMixin, MercurialScript, TransferMixin,
         if self.config.get('app_arg'):
             config_fmt_args['app_arg'] = self.config['app_arg']
 
-        if not self.config['e10s']:
-            cmd.append('--disable-e10s')
+        if self.config['enable_webrender']:
+            cmd.append('--enable-webrender')
+
+        cmd.extend(['--setpref={}'.format(p) for p in self.config['extra_prefs']])
 
         cmd.append('--gecko-log=-')
 
@@ -340,9 +330,6 @@ class MarionetteTest(TestingMixin, MercurialScript, TransferMixin,
 
         if self.config['allow_software_gl_layers']:
             env['MOZ_LAYERS_ALLOW_SOFTWARE_GL'] = '1'
-        if self.config['enable_webrender']:
-            env['MOZ_WEBRENDER'] = '1'
-            env['MOZ_ACCELERATED'] = '1'
 
         if self.config['headless']:
             env['MOZ_HEADLESS'] = '1'

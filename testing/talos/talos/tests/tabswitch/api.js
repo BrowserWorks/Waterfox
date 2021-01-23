@@ -7,6 +7,12 @@ const { RemotePages } = ChromeUtils.import(
   "resource://gre/modules/remotepagemanager/RemotePageManagerParent.jsm"
 );
 
+ChromeUtils.defineModuleGetter(
+  this,
+  "AboutNewTab",
+  "resource:///modules/AboutNewTab.jsm"
+);
+
 let context = {};
 let TalosParentProfiler;
 
@@ -103,6 +109,7 @@ async function switchToTab(tab) {
 
   await switchDone;
   let finish = await finishPromise;
+
   return finish - start;
 }
 
@@ -318,6 +325,11 @@ async function test(window) {
   });
 }
 
+// This just has to match up with the make_talos_domain function in talos.py
+function makeTalosDomain(host) {
+  return host + "-talos";
+}
+
 function handleFile(win, file) {
   let localFile = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsIFile);
   localFile.initWithPath(file);
@@ -327,17 +339,19 @@ function handleFile(win, file) {
   req.send(null);
 
   let testURLs = [];
-  let server = Services.prefs.getCharPref("addon.test.tabswitch.webserver");
   let maxurls = Services.prefs.getIntPref("addon.test.tabswitch.maxurls");
-  let parent = server + "/tests/";
   let lines = req.responseText.split('<a href="');
   testURLs = [];
   if (maxurls && maxurls > 0) {
     lines.splice(maxurls, lines.length);
   }
   lines.forEach(function(a) {
-    if (a.split('"')[0] != "") {
-      testURLs.push(parent + "tp5n/" + a.split('"')[0]);
+    let url = a.split('"')[0];
+    if (url != "") {
+      let domain = url.split("/")[0];
+      if (domain != "") {
+        testURLs.push(`http://${makeTalosDomain(domain)}/fis/tp5n/${url}`);
+      }
     }
   });
 
@@ -351,10 +365,7 @@ this.tabswitch = class extends ExtensionAPI {
     return {
       tabswitch: {
         setup({ processScriptPath }) {
-          const AboutNewTabService = Cc[
-            "@mozilla.org/browser/aboutnewtab-service;1"
-          ].getService(Ci.nsIAboutNewTabService);
-          AboutNewTabService.newTabURL = "about:blank";
+          AboutNewTab.newTabURL = "about:blank";
 
           const processScriptURL = context.extension.baseURI.resolve(
             processScriptPath
@@ -370,7 +381,7 @@ this.tabswitch = class extends ExtensionAPI {
           return () => {
             Services.ppmm.sendAsyncMessage("Tabswitch:Teardown");
             remotePage.destroy();
-            AboutNewTabService.resetNewTabURL();
+            AboutNewTab.resetNewTabURL();
           };
         },
       },

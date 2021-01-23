@@ -10,7 +10,6 @@ add_task(async function() {
   let arrowScrollbox = gBrowser.tabContainer.arrowScrollbox;
   let scrollbox = arrowScrollbox.scrollbox;
   let originalSmoothScroll = arrowScrollbox.smoothScroll;
-  let tabs = gBrowser.tabs;
   let tabMinWidth = parseInt(
     getComputedStyle(gBrowser.selectedTab, null).minWidth
   );
@@ -29,7 +28,7 @@ add_task(async function() {
   let elementFromPoint = x => arrowScrollbox._elementFromPoint(x);
   let nextLeftElement = () => elementFromPoint(left(scrollbox) - 1);
   let nextRightElement = () => elementFromPoint(right(scrollbox) + 1);
-  let firstScrollable = () => tabs[gBrowser._numPinnedTabs];
+  let firstScrollable = () => gBrowser.tabs[gBrowser._numPinnedTabs];
   let waitForNextFrame = async function() {
     await window.promiseDocumentFlushed(() => {});
     await new Promise(resolve => Services.tm.dispatchToMainThread(resolve));
@@ -40,18 +39,18 @@ add_task(async function() {
     arrowScrollbox.smoothScroll = originalSmoothScroll;
   });
 
-  while (tabs.length < tabCountForOverflow) {
+  while (gBrowser.tabs.length < tabCountForOverflow) {
     BrowserTestUtils.addTab(gBrowser, "about:blank", { skipAnimation: true });
   }
 
-  gBrowser.pinTab(tabs[0]);
+  gBrowser.pinTab(gBrowser.tabs[0]);
 
   await BrowserTestUtils.waitForCondition(() => {
     return Array.from(gBrowser.tabs).every(tab => tab._fullyOpen);
   });
 
   ok(
-    !scrollbox.hasAttribute("notoverflowing"),
+    arrowScrollbox.hasAttribute("overflowing"),
     "Tab strip should be overflowing"
   );
 
@@ -75,7 +74,7 @@ add_task(async function() {
   await waitForNextFrame();
   isRight(element, "Scrolled one tab to the right with a single click");
 
-  gBrowser.selectedTab = tabs[tabs.length - 1];
+  gBrowser.selectedTab = gBrowser.tabs[gBrowser.tabs.length - 1];
   await waitForNextFrame();
   ok(
     right(gBrowser.selectedTab) <= right(scrollbox),
@@ -116,7 +115,7 @@ add_task(async function() {
       ")"
   );
 
-  while (tabs.length > 1) {
+  while (gBrowser.tabs.length > 1) {
     BrowserTestUtils.removeTab(gBrowser.tabs[0]);
   }
 });

@@ -4,9 +4,13 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-[Constructor(DOMString type, optional FrameCrashedEventInit eventInitDict), ChromeOnly]
+[ChromeOnly,
+ Exposed=Window]
 interface FrameCrashedEvent : Event
 {
+  constructor(DOMString type,
+              optional FrameCrashedEventInit eventInitDict = {});
+
   /**
    * The browsingContextId of the frame that crashed.
    */
@@ -21,5 +25,5 @@ interface FrameCrashedEvent : Event
 dictionary FrameCrashedEventInit : EventInit
 {
   unsigned long long browsingContextId = 0;
-  boolean isTopFrame = false;
+  boolean isTopFrame = true;
 };

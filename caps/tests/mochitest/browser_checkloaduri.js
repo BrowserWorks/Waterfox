@@ -300,7 +300,7 @@ add_task(async function() {
     if (sourceString.startsWith("about:test-chrome-privs")) {
       source = ssm.getSystemPrincipal();
     } else {
-      source = ssm.createCodebasePrincipal(makeURI(sourceString), {});
+      source = ssm.createContentPrincipal(makeURI(sourceString), {});
     }
     for (let [
       target,
@@ -331,7 +331,7 @@ add_task(async function() {
   await BrowserTestUtils.withNewTab("http://www.example.com/", async function(
     browser
   ) {
-    await ContentTask.spawn(browser, testURL.toString(), async function(
+    await SpecialPowers.spawn(browser, [testURL.toString()], async function(
       testURLFn
     ) {
       // eslint-disable-next-line no-shadow , no-eval

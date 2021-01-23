@@ -7,14 +7,13 @@
 
 #include "nsIndexedDBProtocolHandler.h"
 
-#include "nsIURIMutator.h"
 #include "nsStandardURL.h"
 
 using namespace mozilla::net;
 
-nsIndexedDBProtocolHandler::nsIndexedDBProtocolHandler() {}
+nsIndexedDBProtocolHandler::nsIndexedDBProtocolHandler() = default;
 
-nsIndexedDBProtocolHandler::~nsIndexedDBProtocolHandler() {}
+nsIndexedDBProtocolHandler::~nsIndexedDBProtocolHandler() = default;
 
 NS_IMPL_ISUPPORTS(nsIndexedDBProtocolHandler, nsIProtocolHandler,
                   nsISupportsWeakReference)
@@ -35,18 +34,6 @@ NS_IMETHODIMP nsIndexedDBProtocolHandler::GetProtocolFlags(
   *aProtocolFlags = URI_STD | URI_DANGEROUS_TO_LOAD | URI_DOES_NOT_RETURN_DATA |
                     URI_NON_PERSISTABLE;
   return NS_OK;
-}
-
-NS_IMETHODIMP nsIndexedDBProtocolHandler::NewURI(const nsACString& aSpec,
-                                                 const char* aOriginCharset,
-                                                 nsIURI* aBaseURI,
-                                                 nsIURI** _retval) {
-  nsCOMPtr<nsIURI> baseURI(aBaseURI);
-  return NS_MutateURI(new nsStandardURL::Mutator())
-      .Apply(NS_MutatorMethod(
-          &nsIStandardURLMutator::Init, nsIStandardURL::URLTYPE_AUTHORITY, 0,
-          nsCString(aSpec), aOriginCharset, baseURI, nullptr))
-      .Finalize(_retval);
 }
 
 NS_IMETHODIMP

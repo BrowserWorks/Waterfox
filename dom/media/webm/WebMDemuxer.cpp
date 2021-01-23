@@ -232,13 +232,12 @@ already_AddRefed<MediaTrackDemuxer> WebMDemuxer::GetTrackDemuxer(
   return e.forget();
 }
 
-nsresult WebMDemuxer::Reset(TrackInfo::TrackType aType) {
+void WebMDemuxer::Reset(TrackInfo::TrackType aType) {
   if (aType == TrackInfo::kVideoTrack) {
     mVideoPackets.Reset();
   } else {
     mAudioPackets.Reset();
   }
-  return NS_OK;
 }
 
 nsresult WebMDemuxer::ReadMetadata() {
@@ -461,7 +460,7 @@ void WebMDemuxer::EnsureUpToDateIndex() {
       Resource(TrackInfo::kVideoTrack).GetResource());
   MediaByteRangeSet byteRanges;
   nsresult rv = resource->GetCachedRanges(byteRanges);
-  if (NS_FAILED(rv) || !byteRanges.Length()) {
+  if (NS_FAILED(rv) || byteRanges.IsEmpty()) {
     return;
   }
   mBufferedState->UpdateIndex(byteRanges, resource);
@@ -899,9 +898,7 @@ nsresult WebMDemuxer::SeekInternal(TrackInfo::TrackType aType,
   uint32_t trackToSeek = mHasVideo ? mVideoTrack : mAudioTrack;
   uint64_t target = aTarget.ToNanoseconds();
 
-  if (NS_FAILED(Reset(aType))) {
-    return NS_ERROR_FAILURE;
-  }
+  Reset(aType);
 
   if (mSeekPreroll) {
     uint64_t startTime = 0;
@@ -1102,15 +1099,19 @@ RefPtr<WebMTrackDemuxer::SamplesPromise> WebMTrackDemuxer::GetSamples(
     if (mNeedKeyframe && !sample->mKeyframe) {
       continue;
     }
+    if (!sample->HasValidTime()) {
+      return SamplesPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_DEMUXER_ERR,
+                                             __func__);
+    }
     mNeedKeyframe = false;
-    samples->mSamples.AppendElement(sample);
+    samples->AppendSample(sample);
     aNumSamples--;
   }
 
-  if (samples->mSamples.IsEmpty()) {
+  if (samples->GetSamples().IsEmpty()) {
     return SamplesPromise::CreateAndReject(rv, __func__);
   } else {
-    UpdateSamples(samples->mSamples);
+    UpdateSamples(samples->GetSamples());
     return SamplesPromise::CreateAndResolve(samples, __func__);
   }
 }
@@ -1177,7 +1178,7 @@ void WebMTrackDemuxer::Reset() {
   mSamples.Reset();
   media::TimeIntervals buffered = GetBuffered();
   mNeedKeyframe = true;
-  if (buffered.Length()) {
+  if (!buffered.IsEmpty()) {
     WEBM_DEBUG("Seek to start point: %f", buffered.Start(0).ToSeconds());
     mParent->SeekInternal(mType, buffered.Start(0));
     SetNextKeyFrameTime();
@@ -1186,7 +1187,8 @@ void WebMTrackDemuxer::Reset() {
   }
 }
 
-void WebMTrackDemuxer::UpdateSamples(nsTArray<RefPtr<MediaRawData>>& aSamples) {
+void WebMTrackDemuxer::UpdateSamples(
+    const nsTArray<RefPtr<MediaRawData>>& aSamples) {
   for (const auto& sample : aSamples) {
     if (sample->mCrypto.IsEncrypted()) {
       UniquePtr<MediaRawDataWriter> writer(sample->CreateWriter());
@@ -1254,6 +1256,6 @@ int64_t WebMTrackDemuxer::GetEvictionOffset(const TimeUnit& aTime) {
 
   return offset;
 }
+}  // namespace mozilla
 
 #undef WEBM_DEBUG
-}  // namespace mozilla

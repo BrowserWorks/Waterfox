@@ -10,10 +10,11 @@
 // These declarations are highly likely to change in the future. Depend on them
 // at your own risk.
 
+#include "mozilla/Maybe.h"
 #include "mozilla/MemoryReporting.h"
-#include "mozilla/TypeTraits.h"
 
 #include <string.h>
+#include <type_traits>
 
 #include "jspubtd.h"
 
@@ -28,37 +29,39 @@ class nsISupports;  // Needed for ObjectPrivateVisitor.
 namespace JS {
 
 struct TabSizes {
-  enum Kind { Objects, Strings, Private, Other };
+  TabSizes() = default;
 
-  TabSizes() : objects(0), strings(0), private_(0), other(0) {}
+  enum Kind { Objects, Strings, Private, Other };
 
   void add(Kind kind, size_t n) {
     switch (kind) {
       case Objects:
-        objects += n;
+        objects_ += n;
         break;
       case Strings:
-        strings += n;
+        strings_ += n;
         break;
       case Private:
         private_ += n;
         break;
       case Other:
-        other += n;
+        other_ += n;
         break;
       default:
         MOZ_CRASH("bad TabSizes kind");
     }
   }
 
-  size_t objects;
-  size_t strings;
-  size_t private_;
-  size_t other;
+  size_t objects_ = 0;
+  size_t strings_ = 0;
+  size_t private_ = 0;
+  size_t other_ = 0;
 };
 
 /** These are the measurements used by Servo. */
 struct ServoSizes {
+  ServoSizes() = default;
+
   enum Kind {
     GCHeapUsed,
     GCHeapUnused,
@@ -68,8 +71,6 @@ struct ServoSizes {
     NonHeap,
     Ignore
   };
-
-  ServoSizes() = default;
 
   void add(Kind kind, size_t n) {
     switch (kind) {
@@ -148,9 +149,7 @@ struct InefficientNonFlatteningStringHashPolicy {
 // In some classes, one or more of the macro arguments aren't used.  We use '_'
 // for those.
 //
-#define DECL_SIZE(tabKind, servoKind, mSize) size_t mSize;
-#define ZERO_SIZE(tabKind, servoKind, mSize) mSize(0),
-#define COPY_OTHER_SIZE(tabKind, servoKind, mSize) mSize(other.mSize),
+#define DECL_SIZE_ZERO(tabKind, servoKind, mSize) size_t mSize = 0;
 #define ADD_OTHER_SIZE(tabKind, servoKind, mSize) mSize += other.mSize;
 #define SUB_OTHER_SIZE(tabKind, servoKind, mSize) \
   MOZ_ASSERT(mSize >= other.mSize);               \
@@ -158,8 +157,8 @@ struct InefficientNonFlatteningStringHashPolicy {
 #define ADD_SIZE_TO_N(tabKind, servoKind, mSize) n += mSize;
 #define ADD_SIZE_TO_N_IF_LIVE_GC_THING(tabKind, servoKind, mSize)     \
   /* Avoid self-comparison warnings by comparing enums indirectly. */ \
-  n += (mozilla::IsSame<int[ServoSizes::servoKind],                   \
-                        int[ServoSizes::GCHeapUsed]>::value)          \
+  n += (std::is_same_v<int[ServoSizes::servoKind],                    \
+                       int[ServoSizes::GCHeapUsed]>)                  \
            ? mSize                                                    \
            : 0;
 #define ADD_TO_TAB_SIZES(tabKind, servoKind, mSize) \
@@ -183,15 +182,15 @@ struct ClassInfo {
   MACRO(Objects, NonHeap, objectsNonHeapElementsWasm)         \
   MACRO(Objects, NonHeap, objectsNonHeapCodeWasm)
 
-  ClassInfo() : FOR_EACH_SIZE(ZERO_SIZE) wasmGuardPages(0) {}
+  ClassInfo() = default;
 
-  void add(const ClassInfo& other) { FOR_EACH_SIZE(ADD_OTHER_SIZE) }
+  void add(const ClassInfo& other) { FOR_EACH_SIZE(ADD_OTHER_SIZE); }
 
-  void subtract(const ClassInfo& other){FOR_EACH_SIZE(SUB_OTHER_SIZE)}
+  void subtract(const ClassInfo& other) { FOR_EACH_SIZE(SUB_OTHER_SIZE); }
 
   size_t sizeOfAllThings() const {
     size_t n = 0;
-    FOR_EACH_SIZE(ADD_SIZE_TO_N)
+    FOR_EACH_SIZE(ADD_SIZE_TO_N);
     return n;
   }
 
@@ -202,16 +201,19 @@ struct ClassInfo {
 
   size_t sizeOfLiveGCThings() const {
     size_t n = 0;
-    FOR_EACH_SIZE(ADD_SIZE_TO_N_IF_LIVE_GC_THING)
+    FOR_EACH_SIZE(ADD_SIZE_TO_N_IF_LIVE_GC_THING);
     return n;
   }
 
-  void addToTabSizes(TabSizes* sizes) const { FOR_EACH_SIZE(ADD_TO_TAB_SIZES) }
+  void addToTabSizes(TabSizes* sizes) const { FOR_EACH_SIZE(ADD_TO_TAB_SIZES); }
 
   void addToServoSizes(ServoSizes* sizes) const {
-      FOR_EACH_SIZE(ADD_TO_SERVO_SIZES)}
+    FOR_EACH_SIZE(ADD_TO_SERVO_SIZES);
+  }
 
-  FOR_EACH_SIZE(DECL_SIZE) size_t wasmGuardPages;
+  FOR_EACH_SIZE(DECL_SIZE_ZERO);
+
+  size_t wasmGuardPages = 0;
 
 #undef FOR_EACH_SIZE
 };
@@ -223,33 +225,33 @@ struct ShapeInfo {
   MACRO(Other, GCHeapUsed, shapesGCHeapBase)           \
   MACRO(Other, MallocHeap, shapesMallocHeapTreeTables) \
   MACRO(Other, MallocHeap, shapesMallocHeapDictTables) \
-  MACRO(Other, MallocHeap, shapesMallocHeapTreeKids)
+  MACRO(Other, MallocHeap, shapesMallocHeapTreeChildren)
 
-  ShapeInfo() : FOR_EACH_SIZE(ZERO_SIZE) dummy() {}
+  ShapeInfo() = default;
 
-  void add(const ShapeInfo& other) { FOR_EACH_SIZE(ADD_OTHER_SIZE) }
+  void add(const ShapeInfo& other) { FOR_EACH_SIZE(ADD_OTHER_SIZE); }
 
-  void subtract(const ShapeInfo& other){FOR_EACH_SIZE(SUB_OTHER_SIZE)}
+  void subtract(const ShapeInfo& other) { FOR_EACH_SIZE(SUB_OTHER_SIZE); }
 
   size_t sizeOfAllThings() const {
     size_t n = 0;
-    FOR_EACH_SIZE(ADD_SIZE_TO_N)
+    FOR_EACH_SIZE(ADD_SIZE_TO_N);
     return n;
   }
 
   size_t sizeOfLiveGCThings() const {
     size_t n = 0;
-    FOR_EACH_SIZE(ADD_SIZE_TO_N_IF_LIVE_GC_THING)
+    FOR_EACH_SIZE(ADD_SIZE_TO_N_IF_LIVE_GC_THING);
     return n;
   }
 
-  void addToTabSizes(TabSizes* sizes) const { FOR_EACH_SIZE(ADD_TO_TAB_SIZES) }
+  void addToTabSizes(TabSizes* sizes) const { FOR_EACH_SIZE(ADD_TO_TAB_SIZES); }
 
   void addToServoSizes(ServoSizes* sizes) const {
-      FOR_EACH_SIZE(ADD_TO_SERVO_SIZES)}
+    FOR_EACH_SIZE(ADD_TO_SERVO_SIZES);
+  }
 
-  FOR_EACH_SIZE(DECL_SIZE) int dummy;  // present just to absorb the trailing
-                                       // comma from FOR_EACH_SIZE(ZERO_SIZE)
+  FOR_EACH_SIZE(DECL_SIZE_ZERO);
 
 #undef FOR_EACH_SIZE
 };
@@ -263,17 +265,13 @@ struct ShapeInfo {
  * holds a copy of the filename.
  */
 struct NotableClassInfo : public ClassInfo {
-  NotableClassInfo();
-  NotableClassInfo(const char* className, const ClassInfo& info);
-  NotableClassInfo(NotableClassInfo&& info);
-  NotableClassInfo& operator=(NotableClassInfo&& info);
-
-  ~NotableClassInfo() { js_free(className_); }
-
-  char* className_;
-
- private:
+  NotableClassInfo() = default;
+  NotableClassInfo(NotableClassInfo&&) = default;
   NotableClassInfo(const NotableClassInfo& info) = delete;
+
+  NotableClassInfo(const char* className, const ClassInfo& info);
+
+  UniqueChars className_ = nullptr;
 };
 
 /** Data for tracking JIT-code memory usage. */
@@ -285,13 +283,13 @@ struct CodeSizes {
   MACRO(_, NonHeap, other)    \
   MACRO(_, NonHeap, unused)
 
-  CodeSizes() : FOR_EACH_SIZE(ZERO_SIZE) dummy() {}
+  CodeSizes() = default;
 
   void addToServoSizes(ServoSizes* sizes) const {
-      FOR_EACH_SIZE(ADD_TO_SERVO_SIZES)}
+    FOR_EACH_SIZE(ADD_TO_SERVO_SIZES);
+  }
 
-  FOR_EACH_SIZE(DECL_SIZE) int dummy;  // present just to absorb the trailing
-                                       // comma from FOR_EACH_SIZE(ZERO_SIZE)
+  FOR_EACH_SIZE(DECL_SIZE_ZERO);
 
 #undef FOR_EACH_SIZE
 };
@@ -310,13 +308,13 @@ struct GCSizes {
   MACRO(_, MallocHeap, storeBufferWholeCells)  \
   MACRO(_, MallocHeap, storeBufferGenerics)
 
-  GCSizes() : FOR_EACH_SIZE(ZERO_SIZE) dummy() {}
+  GCSizes() = default;
 
   void addToServoSizes(ServoSizes* sizes) const {
-      FOR_EACH_SIZE(ADD_TO_SERVO_SIZES)}
+    FOR_EACH_SIZE(ADD_TO_SERVO_SIZES);
+  }
 
-  FOR_EACH_SIZE(DECL_SIZE) int dummy;  // present just to absorb the trailing
-                                       // comma from FOR_EACH_SIZE(ZERO_SIZE)
+  FOR_EACH_SIZE(DECL_SIZE_ZERO);
 
 #undef FOR_EACH_SIZE
 };
@@ -335,7 +333,7 @@ struct StringInfo {
   MACRO(Strings, MallocHeap, mallocHeapLatin1) \
   MACRO(Strings, MallocHeap, mallocHeapTwoByte)
 
-  StringInfo() : FOR_EACH_SIZE(ZERO_SIZE) numCopies(0) {}
+  StringInfo() = default;
 
   void add(const StringInfo& other) {
     FOR_EACH_SIZE(ADD_OTHER_SIZE);
@@ -350,23 +348,25 @@ struct StringInfo {
   bool isNotable() const {
     static const size_t NotabilityThreshold = 16 * 1024;
     size_t n = 0;
-    FOR_EACH_SIZE(ADD_SIZE_TO_N)
+    FOR_EACH_SIZE(ADD_SIZE_TO_N);
     return n >= NotabilityThreshold;
   }
 
   size_t sizeOfLiveGCThings() const {
     size_t n = 0;
-    FOR_EACH_SIZE(ADD_SIZE_TO_N_IF_LIVE_GC_THING)
+    FOR_EACH_SIZE(ADD_SIZE_TO_N_IF_LIVE_GC_THING);
     return n;
   }
 
-  void addToTabSizes(TabSizes* sizes) const { FOR_EACH_SIZE(ADD_TO_TAB_SIZES) }
+  void addToTabSizes(TabSizes* sizes) const { FOR_EACH_SIZE(ADD_TO_TAB_SIZES); }
 
   void addToServoSizes(ServoSizes* sizes) const {
-      FOR_EACH_SIZE(ADD_TO_SERVO_SIZES)}
+    FOR_EACH_SIZE(ADD_TO_SERVO_SIZES);
+  }
 
-  FOR_EACH_SIZE(DECL_SIZE)
-      uint32_t numCopies;  // How many copies of the string have we seen?
+  FOR_EACH_SIZE(DECL_SIZE_ZERO);
+
+  uint32_t numCopies = 0;  // How many copies of the string have we seen?
 
 #undef FOR_EACH_SIZE
 };
@@ -381,18 +381,14 @@ struct StringInfo {
 struct NotableStringInfo : public StringInfo {
   static const size_t MAX_SAVED_CHARS = 1024;
 
-  NotableStringInfo();
+  NotableStringInfo() = default;
+  NotableStringInfo(NotableStringInfo&&) = default;
+  NotableStringInfo(const NotableStringInfo&) = delete;
+
   NotableStringInfo(JSString* str, const StringInfo& info);
-  NotableStringInfo(NotableStringInfo&& info);
-  NotableStringInfo& operator=(NotableStringInfo&& info);
 
-  ~NotableStringInfo() { js_free(buffer); }
-
-  char* buffer;
-  size_t length;
-
- private:
-  NotableStringInfo(const NotableStringInfo& info) = delete;
+  UniqueChars buffer = nullptr;
+  size_t length = 0;
 };
 
 /**
@@ -402,33 +398,34 @@ struct NotableStringInfo : public StringInfo {
 struct ScriptSourceInfo {
 #define FOR_EACH_SIZE(MACRO) MACRO(_, MallocHeap, misc)
 
-  ScriptSourceInfo() : FOR_EACH_SIZE(ZERO_SIZE) numScripts(0) {}
+  ScriptSourceInfo() = default;
 
   void add(const ScriptSourceInfo& other) {
-    FOR_EACH_SIZE(ADD_OTHER_SIZE)
+    FOR_EACH_SIZE(ADD_OTHER_SIZE);
     numScripts++;
   }
 
   void subtract(const ScriptSourceInfo& other) {
-    FOR_EACH_SIZE(SUB_OTHER_SIZE)
+    FOR_EACH_SIZE(SUB_OTHER_SIZE);
     numScripts--;
   }
 
   void addToServoSizes(ServoSizes* sizes) const {
-    FOR_EACH_SIZE(ADD_TO_SERVO_SIZES)
+    FOR_EACH_SIZE(ADD_TO_SERVO_SIZES);
   }
 
   bool isNotable() const {
     static const size_t NotabilityThreshold = 16 * 1024;
     size_t n = 0;
-    FOR_EACH_SIZE(ADD_SIZE_TO_N)
+    FOR_EACH_SIZE(ADD_SIZE_TO_N);
     return n >= NotabilityThreshold;
   }
 
-  FOR_EACH_SIZE(DECL_SIZE)
-  uint32_t numScripts;  // How many ScriptSources come from this file? (It
-                        // can be more than one in XML files that have
-                        // multiple scripts in CDATA sections.)
+  FOR_EACH_SIZE(DECL_SIZE_ZERO);
+
+  uint32_t numScripts = 0;  // How many ScriptSources come from this file? (It
+                            // can be more than one in XML files that have
+                            // multiple scripts in CDATA sections.)
 #undef FOR_EACH_SIZE
 };
 
@@ -441,33 +438,28 @@ struct ScriptSourceInfo {
  * class holds a copy of the filename.
  */
 struct NotableScriptSourceInfo : public ScriptSourceInfo {
-  NotableScriptSourceInfo();
+  NotableScriptSourceInfo() = default;
+  NotableScriptSourceInfo(NotableScriptSourceInfo&&) = default;
+  NotableScriptSourceInfo(const NotableScriptSourceInfo&) = delete;
+
   NotableScriptSourceInfo(const char* filename, const ScriptSourceInfo& info);
-  NotableScriptSourceInfo(NotableScriptSourceInfo&& info);
-  NotableScriptSourceInfo& operator=(NotableScriptSourceInfo&& info);
 
-  ~NotableScriptSourceInfo() { js_free(filename_); }
-
-  char* filename_;
-
- private:
-  NotableScriptSourceInfo(const NotableScriptSourceInfo& info) = delete;
+  UniqueChars filename_ = nullptr;
 };
 
 struct HelperThreadStats {
-#define FOR_EACH_SIZE(MACRO)       \
-  MACRO(_, MallocHeap, stateData)  \
-  MACRO(_, MallocHeap, parseTask)  \
-  MACRO(_, MallocHeap, ionBuilder) \
+#define FOR_EACH_SIZE(MACRO)           \
+  MACRO(_, MallocHeap, stateData)      \
+  MACRO(_, MallocHeap, parseTask)      \
+  MACRO(_, MallocHeap, ionCompileTask) \
   MACRO(_, MallocHeap, wasmCompile)
 
-  explicit HelperThreadStats()
-      : FOR_EACH_SIZE(ZERO_SIZE) idleThreadCount(0), activeThreadCount(0) {}
+  HelperThreadStats() = default;
 
-  FOR_EACH_SIZE(DECL_SIZE)
+  FOR_EACH_SIZE(DECL_SIZE_ZERO);
 
-  unsigned idleThreadCount;
-  unsigned activeThreadCount;
+  unsigned idleThreadCount = 0;
+  unsigned activeThreadCount = 0;
 
 #undef FOR_EACH_SIZE
 };
@@ -479,9 +471,9 @@ struct GlobalStats {
 #define FOR_EACH_SIZE(MACRO) MACRO(_, MallocHeap, tracelogger)
 
   explicit GlobalStats(mozilla::MallocSizeOf mallocSizeOf)
-      : FOR_EACH_SIZE(ZERO_SIZE) mallocSizeOf_(mallocSizeOf) {}
+      : mallocSizeOf_(mallocSizeOf) {}
 
-  FOR_EACH_SIZE(DECL_SIZE)
+  FOR_EACH_SIZE(DECL_SIZE_ZERO);
 
   HelperThreadStats helperThread;
 
@@ -510,38 +502,21 @@ struct RuntimeSizes {
   MACRO(_, MallocHeap, wasmRuntime)                 \
   MACRO(_, MallocHeap, jitLazyLink)
 
-  RuntimeSizes()
-      : FOR_EACH_SIZE(ZERO_SIZE) scriptSourceInfo(),
-        code(),
-        gc(),
-        notableScriptSources() {
-    allScriptSources = js_new<ScriptSourcesHashMap>();
-    if (!allScriptSources) {
-      MOZ_CRASH("oom");
-    }
-  }
-
-  ~RuntimeSizes() {
-    // |allScriptSources| is usually deleted and set to nullptr before this
-    // destructor runs. But there are failure cases due to OOMs that may
-    // prevent that, so it doesn't hurt to try again here.
-    js_delete(allScriptSources);
-  }
+  RuntimeSizes() { allScriptSources.emplace(); }
 
   void addToServoSizes(ServoSizes* sizes) const {
-    FOR_EACH_SIZE(ADD_TO_SERVO_SIZES)
+    FOR_EACH_SIZE(ADD_TO_SERVO_SIZES);
     scriptSourceInfo.addToServoSizes(sizes);
-    code.addToServoSizes(sizes);
     gc.addToServoSizes(sizes);
   }
+
+  FOR_EACH_SIZE(DECL_SIZE_ZERO);
 
   // The script source measurements in |scriptSourceInfo| are initially for
   // all script sources.  At the end, if the measurement granularity is
   // FineGrained, we subtract the measurements of the notable script sources
   // and move them into |notableScriptSources|.
-  FOR_EACH_SIZE(DECL_SIZE)
   ScriptSourceInfo scriptSourceInfo;
-  CodeSizes code;
   GCSizes gc;
 
   typedef js::HashMap<const char*, ScriptSourceInfo, mozilla::CStringHasher,
@@ -552,7 +527,7 @@ struct RuntimeSizes {
   // it is filled with info about every script source in the runtime.  It's
   // then used to fill in |notableScriptSources| (which actually gets
   // reported), and immediately discarded afterwards.
-  ScriptSourcesHashMap* allScriptSources;
+  mozilla::Maybe<ScriptSourcesHashMap> allScriptSources;
   js::Vector<NotableScriptSourceInfo, 0, js::SystemAllocPolicy>
       notableScriptSources;
 
@@ -563,7 +538,6 @@ struct UnusedGCThingSizes {
 #define FOR_EACH_SIZE(MACRO)              \
   MACRO(Other, GCHeapUnused, object)      \
   MACRO(Other, GCHeapUnused, script)      \
-  MACRO(Other, GCHeapUnused, lazyScript)  \
   MACRO(Other, GCHeapUnused, shape)       \
   MACRO(Other, GCHeapUnused, baseShape)   \
   MACRO(Other, GCHeapUnused, objectGroup) \
@@ -574,10 +548,8 @@ struct UnusedGCThingSizes {
   MACRO(Other, GCHeapUnused, scope)       \
   MACRO(Other, GCHeapUnused, regExpShared)
 
-  UnusedGCThingSizes() : FOR_EACH_SIZE(ZERO_SIZE) dummy() {}
-
-  UnusedGCThingSizes(UnusedGCThingSizes&& other)
-      : FOR_EACH_SIZE(COPY_OTHER_SIZE) dummy() {}
+  UnusedGCThingSizes() = default;
+  UnusedGCThingSizes(UnusedGCThingSizes&& other) = default;
 
   void addToKind(JS::TraceKind kind, intptr_t n) {
     switch (kind) {
@@ -605,9 +577,6 @@ struct UnusedGCThingSizes {
       case JS::TraceKind::JitCode:
         jitcode += n;
         break;
-      case JS::TraceKind::LazyScript:
-        lazyScript += n;
-        break;
       case JS::TraceKind::ObjectGroup:
         objectGroup += n;
         break;
@@ -622,23 +591,25 @@ struct UnusedGCThingSizes {
     }
   }
 
-  void addSizes(const UnusedGCThingSizes& other){FOR_EACH_SIZE(ADD_OTHER_SIZE)}
+  void addSizes(const UnusedGCThingSizes& other) {
+    FOR_EACH_SIZE(ADD_OTHER_SIZE);
+  }
 
   size_t totalSize() const {
     size_t n = 0;
-    FOR_EACH_SIZE(ADD_SIZE_TO_N)
+    FOR_EACH_SIZE(ADD_SIZE_TO_N);
     return n;
   }
 
   void addToTabSizes(JS::TabSizes* sizes) const {
-    FOR_EACH_SIZE(ADD_TO_TAB_SIZES)
+    FOR_EACH_SIZE(ADD_TO_TAB_SIZES);
   }
 
   void addToServoSizes(JS::ServoSizes* sizes) const {
-      FOR_EACH_SIZE(ADD_TO_SERVO_SIZES)}
+    FOR_EACH_SIZE(ADD_TO_SERVO_SIZES);
+  }
 
-  FOR_EACH_SIZE(DECL_SIZE) int dummy;  // present just to absorb the trailing
-                                       // comma from FOR_EACH_SIZE(ZERO_SIZE)
+  FOR_EACH_SIZE(DECL_SIZE_ZERO);
 
 #undef FOR_EACH_SIZE
 };
@@ -649,8 +620,6 @@ struct ZoneStats {
   MACRO(Other, GCHeapUsed, bigIntsGCHeap)                  \
   MACRO(Other, MallocHeap, bigIntsMallocHeap)              \
   MACRO(Other, GCHeapAdmin, gcHeapArenaAdmin)              \
-  MACRO(Other, GCHeapUsed, lazyScriptsGCHeap)              \
-  MACRO(Other, MallocHeap, lazyScriptsMallocHeap)          \
   MACRO(Other, GCHeapUsed, jitCodesGCHeap)                 \
   MACRO(Other, GCHeapUsed, objectGroupsGCHeap)             \
   MACRO(Other, MallocHeap, objectGroupsMallocHeap)         \
@@ -662,47 +631,21 @@ struct ZoneStats {
   MACRO(Other, MallocHeap, regexpZone)                     \
   MACRO(Other, MallocHeap, jitZone)                        \
   MACRO(Other, MallocHeap, baselineStubsOptimized)         \
-  MACRO(Other, MallocHeap, cachedCFG)                      \
   MACRO(Other, MallocHeap, uniqueIdMap)                    \
   MACRO(Other, MallocHeap, shapeTables)                    \
   MACRO(Other, MallocHeap, compartmentObjects)             \
   MACRO(Other, MallocHeap, crossCompartmentWrappersTables) \
-  MACRO(Other, MallocHeap, compartmentsPrivateData)
+  MACRO(Other, MallocHeap, compartmentsPrivateData)        \
+  MACRO(Other, MallocHeap, scriptCountsMap)
 
-  ZoneStats()
-      : FOR_EACH_SIZE(ZERO_SIZE) unusedGCThings(),
-        stringInfo(),
-        shapeInfo(),
-        extra(),
-        allStrings(nullptr),
-        notableStrings(),
-        isTotals(true) {}
+  ZoneStats() = default;
+  ZoneStats(ZoneStats&& other) = default;
 
-  ZoneStats(ZoneStats&& other)
-      : FOR_EACH_SIZE(COPY_OTHER_SIZE)
-            unusedGCThings(std::move(other.unusedGCThings)),
-        stringInfo(std::move(other.stringInfo)),
-        shapeInfo(std::move(other.shapeInfo)),
-        extra(other.extra),
-        allStrings(other.allStrings),
-        notableStrings(std::move(other.notableStrings)),
-        isTotals(other.isTotals) {
-    other.allStrings = nullptr;
-    MOZ_ASSERT(!other.isTotals);
-  }
-
-  ~ZoneStats() {
-    // |allStrings| is usually deleted and set to nullptr before this
-    // destructor runs. But there are failure cases due to OOMs that may
-    // prevent that, so it doesn't hurt to try again here.
-    js_delete(allStrings);
-  }
-
-  bool initStrings();
+  void initStrings();
 
   void addSizes(const ZoneStats& other) {
     MOZ_ASSERT(isTotals);
-    FOR_EACH_SIZE(ADD_OTHER_SIZE)
+    FOR_EACH_SIZE(ADD_OTHER_SIZE);
     unusedGCThings.addSizes(other.unusedGCThings);
     stringInfo.add(other.stringInfo);
     shapeInfo.add(other.shapeInfo);
@@ -711,7 +654,7 @@ struct ZoneStats {
   size_t sizeOfLiveGCThings() const {
     MOZ_ASSERT(isTotals);
     size_t n = 0;
-    FOR_EACH_SIZE(ADD_SIZE_TO_N_IF_LIVE_GC_THING)
+    FOR_EACH_SIZE(ADD_SIZE_TO_N_IF_LIVE_GC_THING);
     n += stringInfo.sizeOfLiveGCThings();
     n += shapeInfo.sizeOfLiveGCThings();
     return n;
@@ -719,7 +662,7 @@ struct ZoneStats {
 
   void addToTabSizes(JS::TabSizes* sizes) const {
     MOZ_ASSERT(isTotals);
-    FOR_EACH_SIZE(ADD_TO_TAB_SIZES)
+    FOR_EACH_SIZE(ADD_TO_TAB_SIZES);
     unusedGCThings.addToTabSizes(sizes);
     stringInfo.addToTabSizes(sizes);
     shapeInfo.addToTabSizes(sizes);
@@ -727,21 +670,24 @@ struct ZoneStats {
 
   void addToServoSizes(JS::ServoSizes* sizes) const {
     MOZ_ASSERT(isTotals);
-    FOR_EACH_SIZE(ADD_TO_SERVO_SIZES)
+    FOR_EACH_SIZE(ADD_TO_SERVO_SIZES);
     unusedGCThings.addToServoSizes(sizes);
     stringInfo.addToServoSizes(sizes);
     shapeInfo.addToServoSizes(sizes);
+    code.addToServoSizes(sizes);
   }
+
+  FOR_EACH_SIZE(DECL_SIZE_ZERO);
 
   // These string measurements are initially for all strings.  At the end,
   // if the measurement granularity is FineGrained, we subtract the
   // measurements of the notable script sources and move them into
   // |notableStrings|.
-  FOR_EACH_SIZE(DECL_SIZE)
   UnusedGCThingSizes unusedGCThings;
   StringInfo stringInfo;
   ShapeInfo shapeInfo;
-  void* extra;  // This field can be used by embedders.
+  CodeSizes code;
+  void* extra = nullptr;  // This field can be used by embedders.
 
   typedef js::HashMap<JSString*, StringInfo,
                       js::InefficientNonFlatteningStringHashPolicy,
@@ -752,9 +698,9 @@ struct ZoneStats {
   // filled with info about every string in the zone.  It's then used to fill
   // in |notableStrings| (which actually gets reported), and immediately
   // discarded afterwards.
-  StringsHashMap* allStrings;
+  mozilla::Maybe<StringsHashMap> allStrings;
   js::Vector<NotableStringInfo, 0, js::SystemAllocPolicy> notableStrings;
-  bool isTotals;
+  bool isTotals = true;
 
 #undef FOR_EACH_SIZE
 };
@@ -771,59 +717,36 @@ struct RealmStats {
   MACRO(Other, MallocHeap, baselineData)                      \
   MACRO(Other, MallocHeap, baselineStubsFallback)             \
   MACRO(Other, MallocHeap, ionData)                           \
-  MACRO(Other, MallocHeap, typeInferenceTypeScripts)          \
+  MACRO(Other, MallocHeap, jitScripts)                        \
   MACRO(Other, MallocHeap, typeInferenceAllocationSiteTables) \
   MACRO(Other, MallocHeap, typeInferenceArrayTypeTables)      \
   MACRO(Other, MallocHeap, typeInferenceObjectTypeTables)     \
   MACRO(Other, MallocHeap, realmObject)                       \
   MACRO(Other, MallocHeap, realmTables)                       \
   MACRO(Other, MallocHeap, innerViewsTable)                   \
-  MACRO(Other, MallocHeap, lazyArrayBuffersTable)             \
   MACRO(Other, MallocHeap, objectMetadataTable)               \
   MACRO(Other, MallocHeap, savedStacksSet)                    \
   MACRO(Other, MallocHeap, varNamesSet)                       \
   MACRO(Other, MallocHeap, nonSyntacticLexicalScopesTable)    \
-  MACRO(Other, MallocHeap, jitRealm)                          \
-  MACRO(Other, MallocHeap, scriptCountsMap)
+  MACRO(Other, MallocHeap, jitRealm)
 
-  RealmStats()
-      : FOR_EACH_SIZE(ZERO_SIZE) classInfo(),
-        extra(),
-        allClasses(nullptr),
-        notableClasses(),
-        isTotals(true) {}
-
-  RealmStats(RealmStats&& other)
-      : FOR_EACH_SIZE(COPY_OTHER_SIZE) classInfo(std::move(other.classInfo)),
-        extra(other.extra),
-        allClasses(other.allClasses),
-        notableClasses(std::move(other.notableClasses)),
-        isTotals(other.isTotals) {
-    other.allClasses = nullptr;
-    MOZ_ASSERT(!other.isTotals);
-  }
+  RealmStats() = default;
+  RealmStats(RealmStats&& other) = default;
 
   RealmStats(const RealmStats&) = delete;  // disallow copying
 
-  ~RealmStats() {
-    // |allClasses| is usually deleted and set to nullptr before this
-    // destructor runs. But there are failure cases due to OOMs that may
-    // prevent that, so it doesn't hurt to try again here.
-    js_delete(allClasses);
-  }
-
-  bool initClasses();
+  void initClasses();
 
   void addSizes(const RealmStats& other) {
     MOZ_ASSERT(isTotals);
-    FOR_EACH_SIZE(ADD_OTHER_SIZE)
+    FOR_EACH_SIZE(ADD_OTHER_SIZE);
     classInfo.add(other.classInfo);
   }
 
   size_t sizeOfLiveGCThings() const {
     MOZ_ASSERT(isTotals);
     size_t n = 0;
-    FOR_EACH_SIZE(ADD_SIZE_TO_N_IF_LIVE_GC_THING)
+    FOR_EACH_SIZE(ADD_SIZE_TO_N_IF_LIVE_GC_THING);
     n += classInfo.sizeOfLiveGCThings();
     return n;
   }
@@ -840,21 +763,22 @@ struct RealmStats {
     classInfo.addToServoSizes(sizes);
   }
 
+  FOR_EACH_SIZE(DECL_SIZE_ZERO);
+
   // The class measurements in |classInfo| are initially for all classes.  At
   // the end, if the measurement granularity is FineGrained, we subtract the
   // measurements of the notable classes and move them into |notableClasses|.
-  FOR_EACH_SIZE(DECL_SIZE)
   ClassInfo classInfo;
-  void* extra;  // This field can be used by embedders.
+  void* extra = nullptr;  // This field can be used by embedders.
 
   typedef js::HashMap<const char*, ClassInfo, mozilla::CStringHasher,
                       js::SystemAllocPolicy>
       ClassesHashMap;
 
   // These are similar to |allStrings| and |notableStrings| in ZoneStats.
-  ClassesHashMap* allClasses;
+  mozilla::Maybe<ClassesHashMap> allClasses;
   js::Vector<NotableClassInfo, 0, js::SystemAllocPolicy> notableClasses;
-  bool isTotals;
+  bool isTotals = true;
 
 #undef FOR_EACH_SIZE
 };
@@ -877,13 +801,7 @@ struct RuntimeStats {
   MACRO(_, Ignore, gcHeapGCThings)
 
   explicit RuntimeStats(mozilla::MallocSizeOf mallocSizeOf)
-      : FOR_EACH_SIZE(ZERO_SIZE) runtime(),
-        realmTotals(),
-        zTotals(),
-        realmStatsVector(),
-        zoneStatsVector(),
-        currZoneStats(nullptr),
-        mallocSizeOf_(mallocSizeOf) {}
+      : mallocSizeOf_(mallocSizeOf) {}
 
   // Here's a useful breakdown of the GC heap.
   //
@@ -909,11 +827,11 @@ struct RuntimeStats {
   // multiple of the chunk size, which is good.
 
   void addToServoSizes(ServoSizes* sizes) const {
-    FOR_EACH_SIZE(ADD_TO_SERVO_SIZES)
+    FOR_EACH_SIZE(ADD_TO_SERVO_SIZES);
     runtime.addToServoSizes(sizes);
   }
 
-  FOR_EACH_SIZE(DECL_SIZE)
+  FOR_EACH_SIZE(DECL_SIZE_ZERO);
 
   RuntimeSizes runtime;
 
@@ -923,7 +841,7 @@ struct RuntimeStats {
   RealmStatsVector realmStatsVector;
   ZoneStatsVector zoneStatsVector;
 
-  ZoneStats* currZoneStats;
+  ZoneStats* currZoneStats = nullptr;
 
   mozilla::MallocSizeOf mallocSizeOf_;
 
@@ -976,9 +894,7 @@ extern JS_PUBLIC_API bool AddServoSizeOf(JSContext* cx,
 
 }  // namespace JS
 
-#undef DECL_SIZE
-#undef ZERO_SIZE
-#undef COPY_OTHER_SIZE
+#undef DECL_SIZE_ZERO
 #undef ADD_OTHER_SIZE
 #undef SUB_OTHER_SIZE
 #undef ADD_SIZE_TO_N

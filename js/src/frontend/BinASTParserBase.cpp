@@ -8,14 +8,11 @@
 
 #include "vm/JSContext-inl.h"
 
-namespace js {
-namespace frontend {
+namespace js::frontend {
 
-BinASTParserBase::BinASTParserBase(JSContext* cx, LifoAlloc& alloc,
-                                   UsedNameTracker& usedNames,
-                                   HandleScriptSourceObject sourceObject)
-    : ParserSharedBase(cx, alloc, usedNames, sourceObject,
+BinASTParserBase::BinASTParserBase(JSContext* cx,
+                                   CompilationInfo& compilationInfo)
+    : ParserSharedBase(cx, compilationInfo,
                        ParserSharedBase::Kind::BinASTParser) {}
 
-}  // namespace frontend
-}  // namespace js
+}  // namespace js::frontend

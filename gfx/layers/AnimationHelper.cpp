@@ -13,6 +13,7 @@
 #include "mozilla/layers/CompositorThread.h"  // for CompositorThreadHolder
 #include "mozilla/layers/LayerAnimationUtils.h"  // for TimingFunctionToComputedTimingFunction
 #include "mozilla/LayerAnimationInfo.h"  // for GetCSSPropertiesFor()
+#include "mozilla/MotionPathUtils.h"     // for ResolveMotionPath()
 #include "mozilla/ServoBindings.h"  // for Servo_ComposeAnimationSegment, etc
 #include "mozilla/StyleAnimationValue.h"  // for StyleAnimationValue, etc
 #include "nsDeviceContext.h"              // for AppUnitsPerCSSPixel
@@ -26,7 +27,6 @@ void CompositorAnimationStorage::Clear() {
 
   mAnimatedValues.Clear();
   mAnimations.Clear();
-  mAnimationRenderRoots.Clear();
 }
 
 void CompositorAnimationStorage::ClearById(const uint64_t& aId) {
@@ -34,7 +34,6 @@ void CompositorAnimationStorage::ClearById(const uint64_t& aId) {
 
   mAnimatedValues.Remove(aId);
   mAnimations.Remove(aId);
-  mAnimationRenderRoots.Remove(aId);
 }
 
 AnimatedValue* CompositorAnimationStorage::GetAnimatedValue(
@@ -76,62 +75,58 @@ OMTAValue CompositorAnimationStorage::GetOMTAValue(const uint64_t& aId) const {
 }
 
 void CompositorAnimationStorage::SetAnimatedValue(
-    uint64_t aId, gfx::Matrix4x4&& aTransformInDevSpace,
-    gfx::Matrix4x4&& aFrameTransform, const TransformData& aData) {
+    uint64_t aId, AnimatedValue* aPreviousValue,
+    gfx::Matrix4x4&& aTransformInDevSpace, gfx::Matrix4x4&& aFrameTransform,
+    const TransformData& aData) {
   MOZ_ASSERT(CompositorThreadHolder::IsInCompositorThread());
-  auto count = mAnimatedValues.Count();
-  AnimatedValue* value = mAnimatedValues.LookupOrAdd(
-      aId, std::move(aTransformInDevSpace), std::move(aFrameTransform), aData);
-  if (count == mAnimatedValues.Count()) {
-    MOZ_ASSERT(value->Is<AnimationTransform>());
-    *value = AnimatedValue(std::move(aTransformInDevSpace),
-                           std::move(aFrameTransform), aData);
+  if (!aPreviousValue) {
+    MOZ_ASSERT(!mAnimatedValues.Contains(aId));
+    mAnimatedValues.Put(
+        aId, MakeUnique<AnimatedValue>(std::move(aTransformInDevSpace),
+                                       std::move(aFrameTransform), aData));
+    return;
   }
-}
+  MOZ_ASSERT(aPreviousValue->Is<AnimationTransform>());
+  MOZ_ASSERT(aPreviousValue == GetAnimatedValue(aId));
 
-void CompositorAnimationStorage::SetAnimatedValue(
-    uint64_t aId, gfx::Matrix4x4&& aTransformInDevSpace) {
-  MOZ_ASSERT(CompositorThreadHolder::IsInCompositorThread());
-  const TransformData dontCare = {};
-  SetAnimatedValue(aId, std::move(aTransformInDevSpace), gfx::Matrix4x4(),
-                   dontCare);
+  aPreviousValue->SetTransform(std::move(aTransformInDevSpace),
+                               std::move(aFrameTransform), aData);
 }
 
 void CompositorAnimationStorage::SetAnimatedValue(uint64_t aId,
+                                                  AnimatedValue* aPreviousValue,
                                                   nscolor aColor) {
   MOZ_ASSERT(CompositorThreadHolder::IsInCompositorThread());
-  auto count = mAnimatedValues.Count();
-  AnimatedValue* value = mAnimatedValues.LookupOrAdd(aId, aColor);
-  if (count == mAnimatedValues.Count()) {
-    MOZ_ASSERT(value->Is<nscolor>());
-    *value = AnimatedValue(aColor);
+  if (!aPreviousValue) {
+    MOZ_ASSERT(!mAnimatedValues.Contains(aId));
+    mAnimatedValues.Put(aId, MakeUnique<AnimatedValue>(aColor));
+    return;
   }
+
+  MOZ_ASSERT(aPreviousValue->Is<nscolor>());
+  MOZ_ASSERT(aPreviousValue == GetAnimatedValue(aId));
+  aPreviousValue->SetColor(aColor);
 }
 
 void CompositorAnimationStorage::SetAnimatedValue(uint64_t aId,
-                                                  const float& aOpacity) {
+                                                  AnimatedValue* aPreviousValue,
+                                                  float aOpacity) {
   MOZ_ASSERT(CompositorThreadHolder::IsInCompositorThread());
-  auto count = mAnimatedValues.Count();
-  AnimatedValue* value = mAnimatedValues.LookupOrAdd(aId, aOpacity);
-  if (count == mAnimatedValues.Count()) {
-    MOZ_ASSERT(value->Is<float>());
-    *value = AnimatedValue(aOpacity);
+  if (!aPreviousValue) {
+    MOZ_ASSERT(!mAnimatedValues.Contains(aId));
+    mAnimatedValues.Put(aId, MakeUnique<AnimatedValue>(aOpacity));
+    return;
   }
-}
 
-nsTArray<PropertyAnimationGroup>* CompositorAnimationStorage::GetAnimations(
-    const uint64_t& aId) const {
-  MOZ_ASSERT(CompositorThreadHolder::IsInCompositorThread());
-  return mAnimations.Get(aId);
+  MOZ_ASSERT(aPreviousValue->Is<float>());
+  MOZ_ASSERT(aPreviousValue == GetAnimatedValue(aId));
+  aPreviousValue->SetOpacity(aOpacity);
 }
 
 void CompositorAnimationStorage::SetAnimations(uint64_t aId,
-                                               const AnimationArray& aValue,
-                                               wr::RenderRoot aRenderRoot) {
+                                               const AnimationArray& aValue) {
   MOZ_ASSERT(CompositorThreadHolder::IsInCompositorThread());
-  mAnimations.Put(aId, new nsTArray<PropertyAnimationGroup>(
-                           AnimationHelper::ExtractAnimations(aValue)));
-  mAnimationRenderRoots.Put(aId, aRenderRoot);
+  mAnimations.Put(aId, AnimationHelper::ExtractAnimations(aValue));
 }
 
 enum class CanSkipCompose {
@@ -319,14 +314,33 @@ AnimationHelper::SampleResult AnimationHelper::SampleAnimationForEachNode(
   MOZ_ASSERT(aAnimationValues.IsEmpty(),
              "Should be called with empty aAnimationValues");
 
+  nsTArray<RefPtr<RawServoAnimationValue>> nonAnimatingValues;
   for (PropertyAnimationGroup& group : aPropertyAnimationGroups) {
     // Initialize animation value with base style.
     RefPtr<RawServoAnimationValue> currValue = group.mBaseStyle;
 
-    CanSkipCompose canSkipCompose = aPropertyAnimationGroups.Length() == 1 &&
-                                            group.mAnimations.Length() == 1
-                                        ? CanSkipCompose::IfPossible
-                                        : CanSkipCompose::No;
+    CanSkipCompose canSkipCompose =
+        aPreviousValue && aPropertyAnimationGroups.Length() == 1 &&
+                group.mAnimations.Length() == 1
+            ? CanSkipCompose::IfPossible
+            : CanSkipCompose::No;
+
+    MOZ_ASSERT(
+        !group.mAnimations.IsEmpty() ||
+            nsCSSPropertyIDSet::TransformLikeProperties().HasProperty(
+                group.mProperty),
+        "Only transform-like properties can have empty PropertyAnimation list");
+
+    // For properties which are not animating (i.e. their values are always the
+    // same), we store them in a different array, and then merge them into the
+    // final result (a.k.a. aAnimationValues) because we shouldn't take them
+    // into account for SampleResult. (In other words, these properties
+    // shouldn't affect the optimization.)
+    if (group.mAnimations.IsEmpty()) {
+      nonAnimatingValues.AppendElement(std::move(currValue));
+      continue;
+    }
+
     SampleResult result = SampleAnimationForProperty(
         aPreviousFrameTime, aCurrentFrameTime, aPreviousValue, canSkipCompose,
         group.mAnimations, currValue);
@@ -349,33 +363,12 @@ AnimationHelper::SampleResult AnimationHelper::SampleAnimationForEachNode(
     aAnimationValues.AppendElement(std::move(currValue));
   }
 
-#ifdef DEBUG
-  // Sanity check that all of animation data are the same.
-  const Maybe<TransformData>& lastData =
-      aPropertyAnimationGroups.LastElement().mAnimationData;
-  for (const PropertyAnimationGroup& group : aPropertyAnimationGroups) {
-    const Maybe<TransformData>& data = group.mAnimationData;
-    MOZ_ASSERT(data.isSome() == lastData.isSome(),
-               "The type of AnimationData should be the same");
-    if (data.isNothing()) {
-      continue;
-    }
-
-    MOZ_ASSERT(data.isSome());
-    const TransformData& transformData = data.ref();
-    const TransformData& lastTransformData = lastData.ref();
-    MOZ_ASSERT(transformData.origin() == lastTransformData.origin() &&
-                   transformData.transformOrigin() ==
-                       lastTransformData.transformOrigin() &&
-                   transformData.bounds() == lastTransformData.bounds() &&
-                   transformData.appUnitsPerDevPixel() ==
-                       lastTransformData.appUnitsPerDevPixel(),
-               "All of members of TransformData should be the same");
+  SampleResult rv =
+      aAnimationValues.IsEmpty() ? SampleResult::None : SampleResult::Sampled;
+  if (rv == SampleResult::Sampled) {
+    aAnimationValues.AppendElements(std::move(nonAnimatingValues));
   }
-#endif
-
-  return aAnimationValues.IsEmpty() ? SampleResult::None
-                                    : SampleResult::Sampled;
+  return rv;
 }
 
 static dom::FillMode GetAdjustedFillMode(const Animation& aAnimation) {
@@ -408,9 +401,28 @@ static dom::FillMode GetAdjustedFillMode(const Animation& aAnimation) {
   return fillMode;
 }
 
-nsTArray<PropertyAnimationGroup> AnimationHelper::ExtractAnimations(
+#ifdef DEBUG
+static bool HasTransformLikeAnimations(const AnimationArray& aAnimations) {
+  nsCSSPropertyIDSet transformSet =
+      nsCSSPropertyIDSet::TransformLikeProperties();
+
+  for (const Animation& animation : aAnimations) {
+    if (animation.isNotAnimating()) {
+      continue;
+    }
+
+    if (transformSet.HasProperty(animation.property())) {
+      return true;
+    }
+  }
+
+  return false;
+}
+#endif
+
+AnimationStorageData AnimationHelper::ExtractAnimations(
     const AnimationArray& aAnimations) {
-  nsTArray<PropertyAnimationGroup> propertyAnimationGroupArray;
+  AnimationStorageData storageData;
 
   nsCSSPropertyID prevID = eCSSProperty_UNKNOWN;
   PropertyAnimationGroup* currData = nullptr;
@@ -422,9 +434,14 @@ nsTArray<PropertyAnimationGroup> AnimationHelper::ExtractAnimations(
     // knowing this is a new group.
     if (prevID != animation.property()) {
       // Got a different group, we should create a different array.
-      currData = propertyAnimationGroupArray.AppendElement();
+      currData = storageData.mAnimation.AppendElement();
       currData->mProperty = animation.property();
-      currData->mAnimationData = animation.data();
+      if (animation.transformData()) {
+        MOZ_ASSERT(!storageData.mTransformData,
+                   "Only one entry has TransformData");
+        storageData.mTransformData = animation.transformData();
+      }
+
       prevID = animation.property();
 
       // Reset the debug pointer.
@@ -439,6 +456,36 @@ nsTArray<PropertyAnimationGroup> AnimationHelper::ExtractAnimations(
       currData->mBaseStyle = AnimationValue::FromAnimatable(
           animation.property(), animation.baseStyle());
       currBaseStyle = &animation.baseStyle();
+    }
+
+    // If this layers::Animation sets isNotAnimating to true, it only has
+    // base style and doesn't have any animation information, so we can skip
+    // the rest steps. (And so its PropertyAnimationGroup::mAnimation will be
+    // an empty array.)
+    if (animation.isNotAnimating()) {
+      MOZ_ASSERT(nsCSSPropertyIDSet::TransformLikeProperties().HasProperty(
+                     animation.property()),
+                 "Only transform-like properties could set this true");
+
+      if (animation.property() == eCSSProperty_offset_path) {
+        MOZ_ASSERT(currData->mBaseStyle,
+                   "Fixed offset-path should have base style");
+        MOZ_ASSERT(HasTransformLikeAnimations(aAnimations));
+
+        AnimationValue value{currData->mBaseStyle};
+        const StyleOffsetPath& offsetPath = value.GetOffsetPathProperty();
+        if (offsetPath.IsPath()) {
+          MOZ_ASSERT(!storageData.mCachedMotionPath,
+                     "Only one offset-path: path() is set");
+
+          RefPtr<gfx::PathBuilder> builder =
+              MotionPathUtils::GetCompositorPathBuilder();
+          storageData.mCachedMotionPath =
+              MotionPathUtils::BuildPath(offsetPath.AsPath(), builder);
+        }
+      }
+
+      continue;
     }
 
     PropertyAnimation* propertyAnimation =
@@ -482,9 +529,9 @@ nsTArray<PropertyAnimationGroup> AnimationHelper::ExtractAnimations(
 #ifdef DEBUG
   // Sanity check that the grouped animation data is correct by looking at the
   // property set.
-  if (!propertyAnimationGroupArray.IsEmpty()) {
+  if (!storageData.mAnimation.IsEmpty()) {
     nsCSSPropertyIDSet seenProperties;
-    for (const auto& group : propertyAnimationGroupArray) {
+    for (const auto& group : storageData.mAnimation) {
       nsCSSPropertyID id = group.mProperty;
 
       MOZ_ASSERT(!seenProperties.HasProperty(id), "Should be a new property");
@@ -500,10 +547,21 @@ nsTArray<PropertyAnimationGroup> AnimationHelper::ExtractAnimations(
                 DisplayItemType::TYPE_BACKGROUND_COLOR)),
         "The property set of output should be the subset of transform-like "
         "properties, opacity, or background_color.");
+
+    if (seenProperties.IsSubsetOf(LayerAnimationInfo::GetCSSPropertiesFor(
+            DisplayItemType::TYPE_TRANSFORM))) {
+      MOZ_ASSERT(storageData.mTransformData, "Should have TransformData");
+    }
+
+    if (seenProperties.HasProperty(eCSSProperty_offset_path)) {
+      MOZ_ASSERT(storageData.mTransformData, "Should have TransformData");
+      MOZ_ASSERT(storageData.mTransformData->motionPathData(),
+                 "Should have MotionPathData");
+    }
   }
 #endif
 
-  return propertyAnimationGroupArray;
+  return storageData;
 }
 
 uint64_t AnimationHelper::GetNextCompositorAnimationsId() {
@@ -530,8 +588,8 @@ bool AnimationHelper::SampleAnimations(CompositorAnimationStorage* aStorage,
   // Sample the animations in CompositorAnimationStorage
   for (auto iter = aStorage->ConstAnimationsTableIter(); !iter.Done();
        iter.Next()) {
-    auto& propertyAnimationGroups = *iter.UserData();
-    if (propertyAnimationGroups.IsEmpty()) {
+    auto& animationStorageData = iter.Data();
+    if (animationStorageData.mAnimation.IsEmpty()) {
       continue;
     }
 
@@ -541,46 +599,55 @@ bool AnimationHelper::SampleAnimations(CompositorAnimationStorage* aStorage,
     AnimationHelper::SampleResult sampleResult =
         AnimationHelper::SampleAnimationForEachNode(
             aPreviousFrameTime, aCurrentFrameTime, previousValue,
-            propertyAnimationGroups, animationValues);
+            animationStorageData.mAnimation, animationValues);
 
     if (sampleResult != AnimationHelper::SampleResult::Sampled) {
       continue;
     }
 
     const PropertyAnimationGroup& lastPropertyAnimationGroup =
-        propertyAnimationGroups.LastElement();
+        animationStorageData.mAnimation.LastElement();
 
     // Store the AnimatedValue
     switch (lastPropertyAnimationGroup.mProperty) {
+      case eCSSProperty_background_color: {
+        aStorage->SetAnimatedValue(
+            iter.Key(), previousValue,
+            Servo_AnimationValue_GetColor(animationValues[0],
+                                          NS_RGBA(0, 0, 0, 0)));
+        break;
+      }
       case eCSSProperty_opacity: {
         MOZ_ASSERT(animationValues.Length() == 1);
         aStorage->SetAnimatedValue(
-            iter.Key(), Servo_AnimationValue_GetOpacity(animationValues[0]));
+            iter.Key(), previousValue,
+            Servo_AnimationValue_GetOpacity(animationValues[0]));
         break;
       }
       case eCSSProperty_rotate:
       case eCSSProperty_scale:
       case eCSSProperty_translate:
-      case eCSSProperty_transform: {
-        const TransformData& transformData =
-            lastPropertyAnimationGroup.mAnimationData.ref();
+      case eCSSProperty_transform:
+      case eCSSProperty_offset_path:
+      case eCSSProperty_offset_distance:
+      case eCSSProperty_offset_rotate:
+      case eCSSProperty_offset_anchor: {
+        MOZ_ASSERT(animationStorageData.mTransformData);
 
-        gfx::Matrix4x4 transform =
-            ServoAnimationValueToMatrix4x4(animationValues, transformData);
+        const TransformData& transformData =
+            *animationStorageData.mTransformData;
+        MOZ_ASSERT(transformData.origin() == nsPoint());
+
+        gfx::Matrix4x4 transform = ServoAnimationValueToMatrix4x4(
+            animationValues, transformData,
+            animationStorageData.mCachedMotionPath);
         gfx::Matrix4x4 frameTransform = transform;
-        // If the parent has perspective transform, then the offset into
-        // reference frame coordinates is already on this transform. If not,
-        // then we need to ask for it to be added here.
-        if (!transformData.hasPerspectiveParent()) {
-          nsLayoutUtils::PostTranslate(transform, transformData.origin(),
-                                       transformData.appUnitsPerDevPixel(),
-                                       true);
-        }
 
         transform.PostScale(transformData.inheritedXScale(),
                             transformData.inheritedYScale(), 1);
 
-        aStorage->SetAnimatedValue(iter.Key(), std::move(transform),
+        aStorage->SetAnimatedValue(iter.Key(), previousValue,
+                                   std::move(transform),
                                    std::move(frameTransform), transformData);
         break;
       }
@@ -594,7 +661,9 @@ bool AnimationHelper::SampleAnimations(CompositorAnimationStorage* aStorage,
 
 gfx::Matrix4x4 AnimationHelper::ServoAnimationValueToMatrix4x4(
     const nsTArray<RefPtr<RawServoAnimationValue>>& aValues,
-    const TransformData& aTransformData) {
+    const TransformData& aTransformData, gfx::Path* aCachedMotionPath) {
+  using nsStyleTransformMatrix::TransformReferenceBox;
+
   // This is a bit silly just to avoid the transform list copy from the
   // animation transform list.
   auto noneTranslate = StyleTranslate::None();
@@ -606,8 +675,11 @@ gfx::Matrix4x4 AnimationHelper::ServoAnimationValueToMatrix4x4(
   const StyleRotate* rotate = nullptr;
   const StyleScale* scale = nullptr;
   const StyleTransform* transform = nullptr;
+  const StyleOffsetPath* path = nullptr;
+  const StyleLengthPercentage* distance = nullptr;
+  const StyleOffsetRotate* offsetRotate = nullptr;
+  const StylePositionOrAuto* anchor = nullptr;
 
-  // TODO: Bug 1429305: Support compositor animations for motion-path.
   for (const auto& value : aValues) {
     MOZ_ASSERT(value);
     nsCSSPropertyID id = Servo_AnimationValue_GetPropertyId(value);
@@ -628,20 +700,41 @@ gfx::Matrix4x4 AnimationHelper::ServoAnimationValueToMatrix4x4(
         MOZ_ASSERT(!scale);
         scale = Servo_AnimationValue_GetScale(value);
         break;
+      case eCSSProperty_offset_path:
+        MOZ_ASSERT(!path);
+        path = Servo_AnimationValue_GetOffsetPath(value);
+        break;
+      case eCSSProperty_offset_distance:
+        MOZ_ASSERT(!distance);
+        distance = Servo_AnimationValue_GetOffsetDistance(value);
+        break;
+      case eCSSProperty_offset_rotate:
+        MOZ_ASSERT(!offsetRotate);
+        offsetRotate = Servo_AnimationValue_GetOffsetRotate(value);
+        break;
+      case eCSSProperty_offset_anchor:
+        MOZ_ASSERT(!anchor);
+        anchor = Servo_AnimationValue_GetOffsetAnchor(value);
+        break;
       default:
         MOZ_ASSERT_UNREACHABLE("Unsupported transform-like property");
     }
   }
+
+  TransformReferenceBox refBox(nullptr, aTransformData.bounds());
+  Maybe<ResolvedMotionPathData> motion = MotionPathUtils::ResolveMotionPath(
+      path, distance, offsetRotate, anchor, aTransformData.motionPathData(),
+      refBox, aCachedMotionPath);
+
   // We expect all our transform data to arrive in device pixels
   gfx::Point3D transformOrigin = aTransformData.transformOrigin();
   nsDisplayTransform::FrameTransformProperties props(
       translate ? *translate : noneTranslate, rotate ? *rotate : noneRotate,
       scale ? *scale : noneScale, transform ? *transform : noneTransform,
-      transformOrigin);
+      motion, transformOrigin);
 
   return nsDisplayTransform::GetResultingTransformMatrix(
-      props, aTransformData.origin(), aTransformData.appUnitsPerDevPixel(), 0,
-      &aTransformData.bounds());
+      props, refBox, aTransformData.appUnitsPerDevPixel());
 }
 
 }  // namespace layers

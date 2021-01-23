@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 "use strict";
@@ -66,7 +65,7 @@ add_task(async function() {
   await testActor.isNodeCorrectlyHighlighted(iframeBodySelector, is);
 
   info("Waiting for the element picker to deactivate.");
-  await inspector.inspector.nodePicker.stop();
+  await toolbox.nodePicker.stop();
 
   function moveMouseOver(selector, x, y) {
     info("Waiting for element " + selector + " to be highlighted");
@@ -76,6 +75,6 @@ add_task(async function() {
       y,
       options: { type: "mousemove" },
     });
-    return inspector.inspector.nodePicker.once("picker-node-hovered");
+    return toolbox.nodePicker.once("picker-node-hovered");
   }
 });

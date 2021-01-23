@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountWindow.title           "ანგარიშის პარამეტრები">
+<!ENTITY accountWindow.width           "320">
+<!ENTITY account.general               "ძირითადი">
+<!ENTITY account.advanced              "გაფართოებული პარამეტრები">
+<!ENTITY account.name                  "სახელი:">
+<!ENTITY account.password              "პაროლი:">
+<!ENTITY account.alias                 "ფსევდონიმი:">
+<!ENTITY account.newMailNotification   "ახალი ფოსტის შეტყობინება">
+<!ENTITY account.autojoin              "თვითმიერთება არხებზე:">
+<!ENTITY account.proxySettings.caption "პროქსის პარამეტრები:">
+<!ENTITY account.proxySettings.change.label     "შეცვლა…">
+<!ENTITY account.proxySettings.change.accessKey "ც">

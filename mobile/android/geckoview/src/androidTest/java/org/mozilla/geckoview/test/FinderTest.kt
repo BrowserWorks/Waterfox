@@ -5,11 +5,9 @@
 package org.mozilla.geckoview.test
 
 import org.mozilla.geckoview.GeckoSession
-import org.mozilla.geckoview.test.rule.GeckoSessionTestRule.ReuseSession
-import org.mozilla.geckoview.test.rule.GeckoSessionTestRule.WithDevToolsAPI
 
-import android.support.test.filters.MediumTest
-import android.support.test.runner.AndroidJUnit4
+import androidx.test.filters.MediumTest
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.hamcrest.Matchers.*
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -18,7 +16,6 @@ import org.junit.runner.RunWith
 @MediumTest
 class FinderTest : BaseSessionTest() {
 
-    @ReuseSession(false) // "wrapped" in the first result depends on a fresh session.
     @Test fun find() {
         mainSession.loadTestPath(LOREM_IPSUM_HTML_PATH)
         mainSession.waitForPageStop()
@@ -27,8 +24,7 @@ class FinderTest : BaseSessionTest() {
         var result = sessionRule.waitForResult(mainSession.finder.find("dolore", 0))
 
         assertThat("Should be found", result.found, equalTo(true))
-        // "wrapped" is true for the first found result of a new session.
-        assertThat("Should have wrapped", result.wrapped, equalTo(true))
+        assertThat("Should not have wrapped", result.wrapped, equalTo(false))
         assertThat("Current count should be correct", result.current, equalTo(1))
         assertThat("Total count should be correct", result.total, equalTo(2))
         assertThat("Search string should be correct",
@@ -148,7 +144,6 @@ class FinderTest : BaseSessionTest() {
                    result.flags, equalTo(GeckoSession.FINDER_FIND_LINKS_ONLY))
     }
 
-    @WithDevToolsAPI
     @Test fun clear() {
         mainSession.loadTestPath(LOREM_IPSUM_HTML_PATH)
         mainSession.waitForPageStop()

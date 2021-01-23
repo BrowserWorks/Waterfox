@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "වි.තැපැල්"> 
+<!ENTITY readMsgsLink.label           "ලිපි කියවීම"> 
+<!ENTITY composeMsgLink.label         "නව ලිපියක් ලිවීම"> 
+
+<!ENTITY newsSectionHdr.label         "පුවත්සමූහ"> 
+<!ENTITY subscribeNewsLink.label      "දායකත්වයන් කළමණාකරණය දායකත්වයන් කළමණාකරණය"> 
+
+<!ENTITY feedsSectionHdr.label        "පෝෂක">
+<!ENTITY subscribeFeeds.label         "දායකත්වයන් කළමණාකරණය">
+
+<!ENTITY accountsSectionHdr.label     "ගිණුම්"> 
+<!ENTITY subscribeImapFolders.label   "ෆෝල්ඩර දායකත්වයන් කළමණාකරණය">
+<!ENTITY settingsLink.label           "මෙම ගිණුමේ සැකසුම් පෙන්වීම"> 
+
+<!ENTITY advFeaturesSectionHdr.label  "වැඩිමනත් අංගෝපාංග"> 
+<!ENTITY searchMsgsLink.label         "ලිපි සෙවීම"> 
+<!ENTITY filtersLink.label            "ලිපි පෙරහණ කළමණාකරණය">
+<!ENTITY junkSettings.label           "නිසරුලිපි සැකසුම්">
+<!ENTITY offlineLink.label            "අසම්බන්ධිත සැකසුම්">
+

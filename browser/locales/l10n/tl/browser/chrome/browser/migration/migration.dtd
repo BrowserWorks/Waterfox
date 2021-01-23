@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Import Wizard">
+
+<!ENTITY importFrom.label               "Mag-import ng mga Option, Bookmark, Kasaysayan, Password at iba pang data mula sa:">
+<!ENTITY importFromUnix.label           "I-import ang mga Kagustuhan, Bookmarks, History, Passwords atbp. mula sa:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromEdgeLegacy.label     "Microsoft Edge Legacy">
+<!ENTITY importFromEdgeLegacy.accesskey "L">
+<!ENTITY importFromEdgeBeta.label       "Microsoft Edge Beta">
+<!ENTITY importFromEdgeBeta.accesskey   "d">
+<!ENTITY importFromNothing.label        "Don't import anything">
+<!ENTITY importFromNothing.accesskey    "D">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromeBeta.label     "Chrome Beta">
+<!ENTITY importFromChromeBeta.accesskey "B">
+<!ENTITY importFromChromeDev.label      "Chrome Dev">
+<!ENTITY importFromChromeDev.accesskey  "D">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromFirefox.label        "Firefox">
+<!ENTITY importFromFirefox.accesskey    "x">
+<!ENTITY importFrom360se.label          "360 Ligtas na Browser">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "Walang mahanap na application na naglalaman ng bookmark, history o password data.">
+
+<!ENTITY importSource.title             "Mag-import ng mga Setting at Data">
+<!ENTITY importItems.title              "Mga item na Iimport">
+<!ENTITY importItems.label              "Pumili kung aling item ang i-import:">
+
+<!ENTITY migrating.title                "Ini-import...">
+<!ENTITY migrating.label                "Ang mga sumusunod na mga bagay ay kasalukuyang inaangkat">
+
+<!ENTITY selectProfile.title            "Piliin ang Profile">
+<!ENTITY selectProfile.label            "Ang mga sumusunod na mga profile ay pweden i-import mula sa:">
+
+<!ENTITY done.title                     "Nakumpleto na ang Pag-angkat">
+<!ENTITY done.label                     "Ang mga sumusunod na mga bagay ay matagumpay na naiangkat :">
+
+<!ENTITY closeSourceBrowser.label       "Siguruhing ang piniling browser ay nakasara bago magpatuloy.">

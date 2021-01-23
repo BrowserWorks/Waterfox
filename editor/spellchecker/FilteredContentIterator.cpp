@@ -5,16 +5,17 @@
 
 #include "FilteredContentIterator.h"
 
-#include "mozilla/ContentIterator.h"
-#include "mozilla/Move.h"
-#include "mozilla/mozalloc.h"
+#include <utility>
 
+#include "mozilla/ContentIterator.h"
+#include "mozilla/dom/AbstractRange.h"
+#include "mozilla/mozalloc.h"
+#include "nsAtom.h"
 #include "nsComponentManagerUtils.h"
 #include "nsComposeTxtSrvFilter.h"
 #include "nsContentUtils.h"
 #include "nsDebug.h"
 #include "nsError.h"
-#include "nsAtom.h"
 #include "nsIContent.h"
 #include "nsINode.h"
 #include "nsISupportsBase.h"
@@ -22,6 +23,8 @@
 #include "nsRange.h"
 
 namespace mozilla {
+
+using namespace dom;
 
 FilteredContentIterator::FilteredContentIterator(
     UniquePtr<nsComposeTxtSrvFilter> aFilter)
@@ -45,7 +48,7 @@ nsresult FilteredContentIterator::Init(nsINode* aRoot) {
   mDirection = eForward;
   mCurrentIterator = &mPreIterator;
 
-  mRange = new nsRange(aRoot);
+  mRange = nsRange::Create(aRoot);
   mRange->SelectNode(*aRoot, IgnoreErrors());
 
   nsresult rv = mPreIterator.Init(mRange);
@@ -53,17 +56,19 @@ nsresult FilteredContentIterator::Init(nsINode* aRoot) {
   return mPostIterator.Init(mRange);
 }
 
-nsresult FilteredContentIterator::Init(nsRange* aRange) {
-  if (NS_WARN_IF(!aRange)) {
+nsresult FilteredContentIterator::Init(const AbstractRange* aAbstractRange) {
+  if (NS_WARN_IF(!aAbstractRange)) {
     return NS_ERROR_INVALID_ARG;
   }
 
-  if (NS_WARN_IF(!aRange->IsPositioned())) {
+  if (NS_WARN_IF(!aAbstractRange->IsPositioned())) {
     return NS_ERROR_INVALID_ARG;
   }
 
-  mRange = aRange->CloneRange();
-
+  mRange = nsRange::Create(aAbstractRange, IgnoreErrors());
+  if (NS_WARN_IF(!mRange)) {
+    return NS_ERROR_FAILURE;
+  }
   return InitWithRange();
 }
 
@@ -75,17 +80,16 @@ nsresult FilteredContentIterator::Init(nsINode* aStartContainer,
               RawRangeBoundary(aEndContainer, aEndOffset));
 }
 
-nsresult FilteredContentIterator::Init(const RawRangeBoundary& aStart,
-                                       const RawRangeBoundary& aEnd) {
-  RefPtr<nsRange> range;
-  nsresult rv = nsRange::CreateRange(aStart, aEnd, getter_AddRefs(range));
-  if (NS_WARN_IF(NS_FAILED(rv)) || NS_WARN_IF(!range) ||
-      NS_WARN_IF(!range->IsPositioned())) {
+nsresult FilteredContentIterator::Init(const RawRangeBoundary& aStartBoundary,
+                                       const RawRangeBoundary& aEndBoundary) {
+  RefPtr<nsRange> range =
+      nsRange::Create(aStartBoundary, aEndBoundary, IgnoreErrors());
+  if (NS_WARN_IF(!range) || NS_WARN_IF(!range->IsPositioned())) {
     return NS_ERROR_INVALID_ARG;
   }
 
-  MOZ_ASSERT(range->StartRef() == aStart);
-  MOZ_ASSERT(range->EndRef() == aEnd);
+  MOZ_ASSERT(range->StartRef() == aStartBoundary);
+  MOZ_ASSERT(range->EndRef() == aEndBoundary);
 
   mRange = std::move(range);
 
@@ -221,11 +225,12 @@ static bool ContentIsInTraversalRange(nsIContent* aContent, bool aIsPreMode,
 
   if (!aIsPreMode) ++indx;
 
-  int32_t startRes = nsContentUtils::ComparePoints(
+  const Maybe<int32_t> startRes = nsContentUtils::ComparePoints(
       aStartContainer, aStartOffset, parentNode, indx);
-  int32_t endRes = nsContentUtils::ComparePoints(aEndContainer, aEndOffset,
-                                                 parentNode, indx);
-  return (startRes <= 0) && (endRes >= 0);
+  const Maybe<int32_t> endRes = nsContentUtils::ComparePoints(
+      aEndContainer, aEndOffset, parentNode, indx);
+  return !NS_WARN_IF(!startRes || !endRes) && (*startRes <= 0) &&
+         (*endRes >= 0);
 }
 
 static bool ContentIsInTraversalRange(nsRange* aRange, nsIContent* aNextContent,

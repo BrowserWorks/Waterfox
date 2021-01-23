@@ -52,14 +52,21 @@ class NavigateLoadListener final : public nsIWebProgressListener,
 
     nsCOMPtr<nsIChannel> channel = do_QueryInterface(aRequest);
     if (!channel) {
-      mPromise->Reject(NS_ERROR_DOM_INVALID_STATE_ERR, __func__);
+      // This is not going to happen; how could it?
+      CopyableErrorResult result;
+      result.ThrowInvalidStateError("Bad request");
+      mPromise->Reject(result, __func__);
       return NS_OK;
     }
 
     nsCOMPtr<nsIURI> channelURL;
     nsresult rv = NS_GetFinalChannelURI(channel, getter_AddRefs(channelURL));
     if (NS_FAILED(rv)) {
-      mPromise->Reject(rv, __func__);
+      CopyableErrorResult result;
+      // XXXbz We can't actually get here; NS_GetFinalChannelURI never fails in
+      // practice!
+      result.Throw(rv);
+      mPromise->Reject(result, __func__);
       return NS_OK;
     }
 
@@ -73,7 +80,7 @@ class NavigateLoadListener final : public nsIWebProgressListener,
     // console you also need to update the 'aFromPrivateWindow' argument.
     rv = ssm->CheckSameOriginURI(mBaseURL, channelURL, false, false);
     if (NS_FAILED(rv)) {
-      mPromise->Resolve(NS_OK, __func__);
+      mPromise->Resolve(CopyableErrorResult(), __func__);
       return NS_OK;
     }
 
@@ -158,14 +165,16 @@ RefPtr<ClientOpPromise> ClientNavigateOpChild::DoNavigate(
 
     ClientSource* target = targetActor->GetSource();
     if (!target) {
-      return ClientOpPromise::CreateAndReject(NS_ERROR_DOM_INVALID_STATE_ERR,
-                                              __func__);
+      CopyableErrorResult rv;
+      rv.ThrowInvalidStateError("Unknown Client");
+      return ClientOpPromise::CreateAndReject(rv, __func__);
     }
 
     window = target->GetInnerWindow();
     if (!window) {
-      return ClientOpPromise::CreateAndReject(NS_ERROR_DOM_INVALID_STATE_ERR,
-                                              __func__);
+      CopyableErrorResult rv;
+      rv.ThrowInvalidStateError("Client load for a destroyed Window");
+      return ClientOpPromise::CreateAndReject(rv, __func__);
     }
   }
 
@@ -180,7 +189,11 @@ RefPtr<ClientOpPromise> ClientNavigateOpChild::DoNavigate(
   nsCOMPtr<nsIURI> baseURL;
   nsresult rv = NS_NewURI(getter_AddRefs(baseURL), aArgs.baseURL());
   if (NS_FAILED(rv)) {
-    return ClientOpPromise::CreateAndReject(rv, __func__);
+    // This is rather unexpected: This is the worker URL we passed from the
+    // parent, so we expect this to parse fine!
+    CopyableErrorResult result;
+    result.ThrowInvalidStateError("Invalid worker URL");
+    return ClientOpPromise::CreateAndReject(result, __func__);
   }
 
   // There is an edge case for view-source url here. According to the wpt test
@@ -201,53 +214,62 @@ RefPtr<ClientOpPromise> ClientNavigateOpChild::DoNavigate(
   rv = NS_NewURI(getter_AddRefs(url), aArgs.url(), nullptr,
                  shouldUseBaseURL ? baseURL.get() : nullptr);
   if (NS_FAILED(rv)) {
-    return ClientOpPromise::CreateAndReject(rv, __func__);
+    // Per https://w3c.github.io/ServiceWorker/#dom-windowclient-navigate step
+    // 2, if the URL fails to parse, we reject with a TypeError.
+    nsPrintfCString err("Invalid URL \"%s\"", aArgs.url().get());
+    CopyableErrorResult result;
+    result.ThrowTypeError(err);
+    return ClientOpPromise::CreateAndReject(result, __func__);
   }
 
   if (url->GetSpecOrDefault().EqualsLiteral("about:blank")) {
-    return ClientOpPromise::CreateAndReject(NS_ERROR_FAILURE, __func__);
+    CopyableErrorResult result;
+    result.ThrowTypeError("Navigation to \"about:blank\" is not allowed");
+    return ClientOpPromise::CreateAndReject(result, __func__);
   }
 
   RefPtr<Document> doc = window->GetExtantDoc();
   if (!doc || !doc->IsActive()) {
-    return ClientOpPromise::CreateAndReject(NS_ERROR_DOM_INVALID_STATE_ERR,
-                                            __func__);
+    CopyableErrorResult result;
+    result.ThrowInvalidStateError("Document is not active.");
+    return ClientOpPromise::CreateAndReject(result, __func__);
   }
 
   nsCOMPtr<nsIPrincipal> principal = doc->NodePrincipal();
-  if (!principal) {
-    return ClientOpPromise::CreateAndReject(rv, __func__);
-  }
 
   nsCOMPtr<nsIDocShell> docShell = window->GetDocShell();
   nsCOMPtr<nsIWebProgress> webProgress = do_GetInterface(docShell);
   if (!docShell || !webProgress) {
-    return ClientOpPromise::CreateAndReject(NS_ERROR_DOM_INVALID_STATE_ERR,
-                                            __func__);
+    CopyableErrorResult result;
+    result.ThrowInvalidStateError(
+        "Document's browsing context has been discarded");
+    return ClientOpPromise::CreateAndReject(result, __func__);
   }
 
   RefPtr<nsDocShellLoadState> loadState = new nsDocShellLoadState(url);
-  nsCOMPtr<nsIReferrerInfo> referrerInfo =
-      new ReferrerInfo(doc->GetDocumentURI(), doc->GetReferrerPolicy());
   loadState->SetTriggeringPrincipal(principal);
 
-  // Currently we query the CSP from the principal, which is the
-  // doc->NodePrincipal(). After Bug 965637 we can query the CSP
-  // from the doc directly.
-  if (principal) {
-    nsCOMPtr<nsIContentSecurityPolicy> csp;
-    principal->GetCsp(getter_AddRefs(csp));
-    loadState->SetCsp(csp);
-  }
+  loadState->SetCsp(doc->GetCsp());
 
+  auto referrerInfo = MakeRefPtr<ReferrerInfo>(*doc);
   loadState->SetReferrerInfo(referrerInfo);
   loadState->SetLoadType(LOAD_STOP_CONTENT);
-  loadState->SetSourceDocShell(docShell);
+  loadState->SetSourceBrowsingContext(docShell->GetBrowsingContext());
   loadState->SetLoadFlags(nsIWebNavigation::LOAD_FLAGS_NONE);
   loadState->SetFirstParty(true);
-  rv = docShell->LoadURI(loadState);
+  loadState->SetHasValidUserGestureActivation(
+      doc->HasValidTransientUserGestureActivation());
+  rv = docShell->LoadURI(loadState, false);
   if (NS_FAILED(rv)) {
-    return ClientOpPromise::CreateAndReject(rv, __func__);
+    /// There are tests that try sending file:/// and mixed-content URLs
+    /// in here and expect them to reject with a TypeError.  This does not match
+    /// the spec, but does match the current behavior of both us and Chrome.
+    /// https://github.com/w3c/ServiceWorker/issues/1500 tracks sorting that
+    /// out.
+    nsPrintfCString err("Invalid URL \"%s\"", aArgs.url().get());
+    CopyableErrorResult result;
+    result.ThrowTypeError(err);
+    return ClientOpPromise::CreateAndReject(result, __func__);
   }
 
   RefPtr<ClientOpPromise::Private> promise =
@@ -259,8 +281,11 @@ RefPtr<ClientOpPromise> ClientNavigateOpChild::DoNavigate(
   rv = webProgress->AddProgressListener(listener,
                                         nsIWebProgress::NOTIFY_STATE_DOCUMENT);
   if (NS_FAILED(rv)) {
-    promise->Reject(rv, __func__);
-    return promise.forget();
+    CopyableErrorResult result;
+    // XXXbz Can we throw something better here?
+    result.Throw(rv);
+    promise->Reject(result, __func__);
+    return promise;
   }
 
   return promise->Then(
@@ -293,7 +318,7 @@ void ClientNavigateOpChild::Init(const ClientNavigateOpConstructorArgs& aArgs) {
             mPromiseRequestHolder.Complete();
             PClientNavigateOpChild::Send__delete__(this, aResult);
           },
-          [this](nsresult aResult) {
+          [this](const CopyableErrorResult& aResult) {
             mPromiseRequestHolder.Complete();
             PClientNavigateOpChild::Send__delete__(this, aResult);
           })

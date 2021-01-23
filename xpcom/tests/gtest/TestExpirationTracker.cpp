@@ -9,13 +9,11 @@
 #include <prthread.h>
 #include "nsExpirationTracker.h"
 #include "nsMemory.h"
-#include "nsAutoPtr.h"
 #include "nsString.h"
 #include "nsDirectoryServiceDefs.h"
 #include "nsDirectoryServiceUtils.h"
 #include "nsComponentManagerUtils.h"
 #include "nsXPCOM.h"
-#include "nsIFile.h"
 #include "prinrval.h"
 #include "nsThreadUtils.h"
 #include "mozilla/UniquePtr.h"

@@ -1,0 +1,128 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "Kontoveiviser">
+<!ENTITY accountWizard.size "width: 40em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!ENTITY accountSetupInfo2.label "For å motta meldinger må du først lage en konto.">
+<!ENTITY accountTypeTitle.label "Innstillinger for ny konto">
+<!ENTITY accountTypeDesc2.label "Denne veiviseren samler inn informasjon som er nødvendig for å lage en konto. Dersom du ikke har informasjonen det spørres etter må du kontakte systemansvarlig eller Internett-leverandøren din.">
+<!ENTITY accountTypeDirections.label "Velg kontotype">
+<!ENTITY accountTypeMail.label "E-post">
+<!ENTITY accountTypeMail.accesskey "E">
+<!ENTITY accountTypeNews.label "Nyhetsgrupper">
+<!ENTITY accountTypeNews.accesskey "N">
+
+<!-- LOCALIZATION NOTE(accountTypeMovemail.label): do not translate 'Movemail' -->
+<!ENTITY accountTypeMovemail.label "Unix Mailspool (Movemail)">
+<!ENTITY accountTypeMovemail.accesskey "U">
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "Identitet">
+<!ENTITY identityDesc.label "Hver konto kan ha sin egen identitet, som er den informasjonen som identifiserer deg til andre når de mottar meldinger fra deg.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "Skriv inn navnet du vil vise i «Fra»-feltet på meldinger du sender">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(for eksempel «Ola Nordmann»).">
+<!ENTITY fullnameLabel.label "Navnet ditt:">
+<!ENTITY fullnameLabel.accesskey "N">
+
+<!ENTITY emailLabel.label "E-postadresse:">
+<!ENTITY emailLabel.accesskey "E">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "Info om innkommende server">
+<!ENTITY incomingServerTypeDesc.label "Velg hvilken type e-postserver du bruker for å hente e-post.">
+<!-- LOCALIZATION NOTE (imapType.label) : Do not translate "IMAP" in below line -->
+<!ENTITY imapType.label "IMAP">
+<!ENTITY imapType.accesskey "M">
+<!-- LOCALIZATION NOTE (popType.label) : Do not translate "POP" in below line -->
+<!ENTITY popType.label "POP">
+<!ENTITY popType.accesskey "P">
+<!ENTITY leaveMsgsOnSrvr.label "La meldinger forbli på serveren">
+<!ENTITY leaveMsgsOnSrvr.accesskey "L">
+<!ENTITY portNum.label "Port:">
+<!ENTITY portNum.accesskey "o">
+<!ENTITY defaultPortLabel.label "Standard:">
+<!ENTITY defaultPortValue.label "">
+<!-- LOCALIZATION NOTE (incomingServerNameDesc.label) : Do not translate "&quot;pop.example.net&quot;" in below line -->
+<!ENTITY incomingServer.description "Skriv inn navnet på den innkommende serveren (for eksempel «mail.example.net»).">
+<!ENTITY incomingServer.label "Innkommende server:">
+<!ENTITY incomingServer.accesskey "s">
+<!-- LOCALIZATION NOTE (incomingUsername.description) : do not translate "&quot;jsmith&quot;" in below line -->
+<!ENTITY incomingUsername.description "Skriv inn innkommende brukernavn som ble gitt til deg av e-posttilbyderen (for eksempel «jsmith»).">
+<!ENTITY incomingUsername.label "Brukernavn:">
+<!ENTITY incomingUsername.accesskey "u">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Skriv inn navnet på nyhetsgruppeserveren (NNTP) (for eksempel «news.example.net»).">
+<!ENTITY newsServerLabel.label "Nyhetsgruppeserver:">
+<!ENTITY newsServerLabel.accesskey "s">
+
+<!-- Entities for Outgoing Server page -->
+
+<!ENTITY outgoingTitle.label "Info om utgående server">
+<!-- LOCALIZATION NOTE (outgoingServer.description) : Do not translate "SMTP" and "&quot;smtp.example.net&quot;" in below line -->
+<!ENTITY outgoingServer.description "Skriv inn navnet på den utgående serveren (SMTP) (for eksempel «smtp.example.net»).">
+<!ENTITY outgoingServer.label "Utgående server:">
+<!ENTITY outgoingServer.accesskey "U">
+<!ENTITY outgoingUsername.description "Skriv inn det utgående brukernavnet gitt til deg av e-posttilbyderen (dette er vanligvis det samme som innkommende brukernavn).">
+<!ENTITY outgoingUsername.label "Utgående brukernavn:">
+<!ENTITY outgoingUsername.accesskey "n">
+
+<!-- LOCALIZATION NOTE (modifyOutgoing.suffix) : This string will be appended after each of
+     haveSmtp1.suffix3, haveSmtp2.suffix3, haveSmtp3.suffix3 .
+-->
+<!ENTITY modifyOutgoing.suffix "Du kan endre utgående servere i kontoinnstillingene.">
+<!-- LOCALIZATION NOTE (haveSmtp1.prefix and haveSmtp1.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp1.prefix and haveSmtp1.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp1.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp1.prefix "Den nåværende utgående serveren (SMTP), «">
+<!ENTITY haveSmtp1.suffix3 "» vil bli brukt.">
+<!-- LOCALIZATION NOTE (haveSmtp2.prefix and haveSmtp2.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp2.prefix and haveSmtp2.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp2.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp2.prefix "Ditt valgte utgående (SMTP) brukernavn, «">
+<!ENTITY haveSmtp2.suffix3 "» vil bli brukt.">
+<!-- LOCALIZATION NOTE (haveSmtp3.prefix and haveSmtp3.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp3.prefix and haveSmtp3.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp3.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp3.prefix "Den utgående serveren (SMTP), «">
+<!ENTITY haveSmtp3.suffix3 "» er identisk til din innkommende server, og ditt innkommende brukernavn vil bli brukt for å få tilgang til den.">
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "Kontonavn">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Skriv inn navnet du vil gi til denne kontoen (for eksempel «Arbeidskonto», «Hjemmekonto» eller «Nyhetskonto»).">
+<!ENTITY accnameLabel.label "Kontonavn:">
+<!ENTITY accnameLabel.accesskey "K">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "Gratulerer!">
+<!ENTITY completionText.label "Kontroller at informasjonen under er er riktig.">
+<!ENTITY serverTypePrefix.label "Type:">
+<!ENTITY serverNamePrefix.label "Innkommende server:">
+<!ENTITY smtpServerNamePrefix.label "Utgående servernavn (SMTP):">
+<!ENTITY newsServerNamePrefix.label "Nyhetsgruppeserver (NNTP):">
+<!ENTITY downloadOnLogin.label "Last ned meldinger nå">
+<!ENTITY downloadOnLogin.accesskey "L">
+<!ENTITY deferStorageDesc.label "Fjern avkryssing fra denne boksen for å lagre e-post i egen mappe. Det vil gjøre at denne kontoen blir synlig i mappelisten. Dersom den er avkrysset vil kontoen bli en del av kontoen «Lokale mapper».">
+<!ENTITY deferStorage.label "Bruk global innboks (lagre e-post i kontoen «Lokale mapper»)">
+<!ENTITY deferStorage.accesskey "B">
+<!ENTITY clickFinish.label "Trykk Fullfør for å opprette kontoen og lukke veiviseren.">
+<!ENTITY clickFinish.labelMac "Trykk Fullfør for å opprette kontoen og lukke veiviseren.">

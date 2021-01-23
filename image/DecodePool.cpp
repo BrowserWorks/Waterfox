@@ -10,17 +10,15 @@
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/Monitor.h"
+#include "mozilla/SchedulerGroup.h"
+#include "mozilla/StaticPrefs_image.h"
 #include "mozilla/TimeStamp.h"
 #include "nsCOMPtr.h"
 #include "nsIObserverService.h"
-#include "nsIThreadPool.h"
 #include "nsThreadManager.h"
 #include "nsThreadUtils.h"
 #include "nsXPCOMCIDInternal.h"
 #include "prsystem.h"
-#include "nsIXULRuntime.h"
-
-#include "gfxPrefs.h"
 
 #include "Decoder.h"
 #include "IDecodingTask.h"
@@ -74,13 +72,15 @@ class DecodePoolImpl {
 
   /// Shut down the provided decode pool thread.
   void ShutdownThread(nsIThread* aThisThread, bool aShutdownIdle) {
+    bool removed = false;
+
     {
       // If this is an idle thread shutdown, then we need to remove it from the
       // worker array. Process shutdown will move the entire array.
       MonitorAutoLock lock(mMonitor);
       if (!mShuttingDown) {
         ++mAvailableThreads;
-        DebugOnly<bool> removed = mThreads.RemoveElement(aThisThread);
+        removed = mThreads.RemoveElement(aThisThread);
         MOZ_ASSERT(aShutdownIdle);
         MOZ_ASSERT(mAvailableThreads < mThreads.Capacity());
         MOZ_ASSERT(removed);
@@ -88,11 +88,15 @@ class DecodePoolImpl {
     }
 
     // Threads have to be shut down from another thread, so we'll ask the
-    // main thread to do it for us.
-    SystemGroup::Dispatch(
-        TaskCategory::Other,
-        NewRunnableMethod("DecodePoolImpl::ShutdownThread", aThisThread,
-                          &nsIThread::AsyncShutdown));
+    // main thread to do it for us, but only if we removed it from our thread
+    // pool explicitly. Otherwise we could try to shut down the same thread
+    // twice.
+    if (removed) {
+      SchedulerGroup::Dispatch(
+          TaskCategory::Other,
+          NewRunnableMethod("DecodePoolImpl::ShutdownThread", aThisThread,
+                            &nsIThread::AsyncShutdown));
+    }
   }
 
   /**
@@ -294,6 +298,11 @@ class DecodePoolWorker final : public Runnable {
   bool mShutdownIdle;
 };
 
+/// dav1d (used for AVIF decoding) crashes when decoding some images if the
+/// stack is too small. See related issue for AV1 decoding: bug 1474684.
+static constexpr uint32_t DECODE_POOL_STACK_SIZE =
+    std::max(nsIThreadManager::kThreadPoolStackSize, 512u * 1024u);
+
 bool DecodePoolImpl::CreateThread() {
   mMonitor.AssertCurrentThreadOwns();
   MOZ_ASSERT(mAvailableThreads > 0);
@@ -301,13 +310,15 @@ bool DecodePoolImpl::CreateThread() {
   bool shutdownIdle = mThreads.Length() >= mMaxIdleThreads;
   nsCOMPtr<nsIRunnable> worker = new DecodePoolWorker(this, shutdownIdle);
   nsCOMPtr<nsIThread> thread;
-  nsresult rv = NS_NewNamedThread(mThreadNaming.GetNextThreadName("ImgDecoder"),
-                                  getter_AddRefs(thread), worker,
-                                  nsIThreadManager::kThreadPoolStackSize);
+  nsresult rv =
+      NS_NewNamedThread(mThreadNaming.GetNextThreadName("ImgDecoder"),
+                        getter_AddRefs(thread), worker, DECODE_POOL_STACK_SIZE);
+
   if (NS_FAILED(rv) || !thread) {
     MOZ_ASSERT_UNREACHABLE("Should successfully create image decoding threads");
     return false;
   }
+  thread->SetNameForWakeupTelemetry(NS_LITERAL_CSTRING("ImgDecoder (all)"));
 
   mThreads.AppendElement(std::move(thread));
   --mAvailableThreads;
@@ -354,7 +365,8 @@ class IOThreadIniter final : public Runnable {
 
 DecodePool::DecodePool() : mMutex("image::IOThread") {
   // Determine the number of threads we want.
-  int32_t prefLimit = gfxPrefs::ImageMTDecodingLimit();
+  int32_t prefLimit =
+      StaticPrefs::image_multithreaded_decoding_limit_AtStartup();
   uint32_t limit;
   if (prefLimit <= 0) {
     int32_t numCores = NumberOfCores();
@@ -384,7 +396,8 @@ DecodePool::DecodePool() : mMutex("image::IOThread") {
   uint32_t idleLimit;
 
   // The timeout period before shutting down idle threads.
-  int32_t prefIdleTimeout = gfxPrefs::ImageMTDecodingIdleTimeout();
+  int32_t prefIdleTimeout =
+      StaticPrefs::image_multithreaded_decoding_idle_timeout_AtStartup();
   TimeDuration idleTimeout;
   if (prefIdleTimeout <= 0) {
     idleTimeout = TimeDuration::Forever();

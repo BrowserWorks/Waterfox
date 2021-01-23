@@ -8,7 +8,7 @@
 
 /**
  * Customization handler prepares this browser window for entering and exiting
- * customization mode by handling customizationstarting and customizationending
+ * customization mode by handling customizationstarting and aftercustomization
  * events.
  */
 var CustomizationHandler = {
@@ -17,8 +17,8 @@ var CustomizationHandler = {
       case "customizationstarting":
         this._customizationStarting();
         break;
-      case "customizationending":
-        this._customizationEnding(aEvent.detail);
+      case "aftercustomization":
+        this._afterCustomization();
         break;
     }
   },
@@ -40,22 +40,16 @@ var CustomizationHandler = {
     UpdateUrlbarSearchSplitterState();
 
     PlacesToolbarHelper.customizeStart();
-
-    gURLBarHandler.customizeStart();
   },
 
-  _customizationEnding(aDetails) {
+  _afterCustomization() {
     // Update global UI elements that may have been added or removed
-    if (aDetails.changed && AppConstants.platform != "macosx") {
+    if (AppConstants.platform != "macosx") {
       updateEditUIVisibility();
     }
 
     PlacesToolbarHelper.customizeDone();
 
-    UpdateUrlbarSearchSplitterState();
-
-    // Update the urlbar
-    URLBarSetURI();
     XULBrowserWindow.asyncUpdateUI();
 
     // Re-enable parts of the UI we disabled during the dialog
@@ -68,7 +62,9 @@ var CustomizationHandler = {
 
     gBrowser.selectedBrowser.focus();
 
-    gURLBarHandler.customizeEnd();
+    // Update the urlbar
+    gURLBar.setURI();
+    UpdateUrlbarSearchSplitterState();
   },
 };
 

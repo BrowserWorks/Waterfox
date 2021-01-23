@@ -62,11 +62,25 @@
 // NotNull is an alternative that can be used in any of the above cases except
 // for the last one, where the handle type is |void|. See below.
 
-#include "mozilla/Assertions.h"
-#include "mozilla/Move.h"
 #include <stddef.h>
 
+#include <type_traits>
+#include <utility>
+
+#include "mozilla/Assertions.h"
+
 namespace mozilla {
+
+namespace detail {
+template <typename T>
+struct CopyablePtr {
+  T mPtr;
+  explicit CopyablePtr(T aPtr) : mPtr{std::move(aPtr)} {}
+};
+}  // namespace detail
+
+template <typename T>
+class MovingNotNull;
 
 // NotNull can be used to wrap a "base" pointer (raw or smart) to indicate it
 // is not null. Some examples:
@@ -103,14 +117,80 @@ template <typename T>
 class NotNull {
   template <typename U>
   friend constexpr NotNull<U> WrapNotNull(U aBasePtr);
+  template <typename U>
+  friend constexpr NotNull<U> WrapNotNullUnchecked(U aBasePtr);
   template <typename U, typename... Args>
   friend constexpr NotNull<U> MakeNotNull(Args&&... aArgs);
+  template <typename U>
+  friend class NotNull;
 
-  T mBasePtr;
+  detail::CopyablePtr<T> mBasePtr;
 
   // This constructor is only used by WrapNotNull() and MakeNotNull<U>().
   template <typename U>
-  constexpr explicit NotNull(U aBasePtr) : mBasePtr(aBasePtr) {}
+  constexpr explicit NotNull(U aBasePtr) : mBasePtr(T{std::move(aBasePtr)}) {
+    static_assert(sizeof(T) == sizeof(NotNull<T>),
+                  "NotNull must have zero space overhead.");
+    static_assert(offsetof(NotNull<T>, mBasePtr) == 0,
+                  "mBasePtr must have zero offset.");
+  }
+
+ public:
+  // Disallow default construction.
+  NotNull() = delete;
+
+  // Construct/assign from another NotNull with a compatible base pointer type.
+  template <typename U>
+  constexpr MOZ_IMPLICIT NotNull(const NotNull<U>& aOther)
+      : mBasePtr(aOther.mBasePtr) {}
+
+  template <typename U>
+  constexpr MOZ_IMPLICIT NotNull(MovingNotNull<U>&& aOther)
+      : mBasePtr(std::move(aOther)) {}
+
+  // Disallow null checks, which are unnecessary for this type.
+  explicit operator bool() const = delete;
+
+  // Explicit conversion to a base pointer. Use only to resolve ambiguity or to
+  // get a castable pointer.
+  constexpr const T& get() const { return mBasePtr.mPtr; }
+
+  // Implicit conversion to a base pointer. Preferable to get().
+  constexpr operator const T&() const { return get(); }
+
+  // Dereference operators.
+  constexpr auto* operator->() const MOZ_NONNULL_RETURN {
+    return mBasePtr.mPtr.operator->();
+  }
+  constexpr decltype(*mBasePtr.mPtr) operator*() const {
+    return *mBasePtr.mPtr;
+  }
+
+  // NotNull can be copied, but not moved. Moving a NotNull with a smart base
+  // pointer would leave a nullptr NotNull behind. The move operations must not
+  // be explicitly deleted though, since that would cause overload resolution to
+  // fail in situations where a copy is possible.
+  NotNull(const NotNull&) = default;
+  NotNull& operator=(const NotNull&) = default;
+};
+
+// Specialization for T* to allow adding MOZ_NONNULL_RETURN attributes.
+template <typename T>
+class NotNull<T*> {
+  template <typename U>
+  friend constexpr NotNull<U> WrapNotNull(U aBasePtr);
+  template <typename U>
+  friend constexpr NotNull<U*> WrapNotNullUnchecked(U* aBasePtr);
+  template <typename U, typename... Args>
+  friend constexpr NotNull<U> MakeNotNull(Args&&... aArgs);
+  template <typename U>
+  friend class NotNull;
+
+  T* mBasePtr;
+
+  // This constructor is only used by WrapNotNull() and MakeNotNull<U>().
+  template <typename U>
+  constexpr explicit NotNull(U* aBasePtr) : mBasePtr(aBasePtr) {}
 
  public:
   // Disallow default construction.
@@ -120,38 +200,129 @@ class NotNull {
   template <typename U>
   constexpr MOZ_IMPLICIT NotNull(const NotNull<U>& aOther)
       : mBasePtr(aOther.get()) {
-    static_assert(sizeof(T) == sizeof(NotNull<T>),
+    static_assert(sizeof(T*) == sizeof(NotNull<T*>),
                   "NotNull must have zero space overhead.");
-    static_assert(offsetof(NotNull<T>, mBasePtr) == 0,
+    static_assert(offsetof(NotNull<T*>, mBasePtr) == 0,
                   "mBasePtr must have zero offset.");
   }
 
-  // Default copy/move construction and assignment.
-  NotNull(const NotNull<T>&) = default;
-  NotNull<T>& operator=(const NotNull<T>&) = default;
-  NotNull(NotNull<T>&&) = default;
-  NotNull<T>& operator=(NotNull<T>&&) = default;
+  template <typename U>
+  constexpr MOZ_IMPLICIT NotNull(MovingNotNull<U>&& aOther)
+      : mBasePtr(NotNull{std::move(aOther)}) {}
 
   // Disallow null checks, which are unnecessary for this type.
   explicit operator bool() const = delete;
 
   // Explicit conversion to a base pointer. Use only to resolve ambiguity or to
   // get a castable pointer.
-  constexpr const T& get() const { return mBasePtr; }
+  constexpr T* get() const MOZ_NONNULL_RETURN { return mBasePtr; }
 
   // Implicit conversion to a base pointer. Preferable to get().
-  constexpr operator const T&() const { return get(); }
+  constexpr operator T*() const MOZ_NONNULL_RETURN { return get(); }
 
   // Dereference operators.
-  constexpr const T& operator->() const { return get(); }
-  constexpr decltype(*mBasePtr) operator*() const { return *mBasePtr; }
+  constexpr T* operator->() const MOZ_NONNULL_RETURN { return get(); }
+  constexpr T& operator*() const { return *mBasePtr; }
 };
 
 template <typename T>
-constexpr NotNull<T> WrapNotNull(const T aBasePtr) {
-  NotNull<T> notNull(aBasePtr);
+constexpr NotNull<T> WrapNotNull(T aBasePtr) {
   MOZ_RELEASE_ASSERT(aBasePtr);
-  return notNull;
+  return NotNull<T>{std::move(aBasePtr)};
+}
+
+// WrapNotNullUnchecked should only be used in situations, where it is
+// statically known that aBasePtr is non-null, and redundant release assertions
+// should be avoided. It is only defined for raw base pointers, since it is only
+// needed for those right now. There is no fundamental reason not to allow
+// arbitrary base pointers here.
+template <typename T>
+constexpr NotNull<T> WrapNotNullUnchecked(T aBasePtr) {
+  return NotNull<T>{std::move(aBasePtr)};
+}
+
+template <typename T>
+MOZ_NONNULL(1)
+constexpr NotNull<T*> WrapNotNullUnchecked(T* const aBasePtr) {
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wpointer-bool-conversion"
+#elif defined(__GNUC__)
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wnonnull-compare"
+#endif
+  MOZ_ASSERT(aBasePtr);
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#  pragma GCC diagnostic pop
+#endif
+  return NotNull<T*>{aBasePtr};
+}
+
+// A variant of NotNull that can be used as a return value or parameter type and
+// moved into both NotNull and non-NotNull targets. This is not possible with
+// NotNull, as it is not movable. MovingNotNull can therefore not guarantee it
+// is always non-nullptr, but it can't be dereferenced, and there are debug
+// assertions that ensure it is only moved once.
+template <typename T>
+class MOZ_NON_AUTOABLE MovingNotNull {
+  template <typename U>
+  friend constexpr MovingNotNull<U> WrapMovingNotNullUnchecked(U aBasePtr);
+
+  T mBasePtr;
+#ifdef DEBUG
+  bool mConsumed = false;
+#endif
+
+  // This constructor is only used by WrapNotNull() and MakeNotNull<U>().
+  template <typename U>
+  constexpr explicit MovingNotNull(U aBasePtr) : mBasePtr{std::move(aBasePtr)} {
+#ifndef DEBUG
+    static_assert(sizeof(T) == sizeof(MovingNotNull<T>),
+                  "NotNull must have zero space overhead.");
+#endif
+    static_assert(offsetof(MovingNotNull<T>, mBasePtr) == 0,
+                  "mBasePtr must have zero offset.");
+  }
+
+ public:
+  MovingNotNull() = delete;
+
+  MOZ_IMPLICIT MovingNotNull(const NotNull<T>& aSrc) : mBasePtr(aSrc) {}
+
+  template <typename U>
+  MOZ_IMPLICIT MovingNotNull(const NotNull<U>& aSrc) : mBasePtr(aSrc) {}
+
+  MOZ_IMPLICIT operator T() && { return std::move(*this).unwrapBasePtr(); }
+
+  MOZ_IMPLICIT operator NotNull<T>() && { return std::move(*this).unwrap(); }
+
+  NotNull<T> unwrap() && {
+    return WrapNotNullUnchecked(std::move(*this).unwrapBasePtr());
+  }
+
+  T unwrapBasePtr() && {
+#ifdef DEBUG
+    MOZ_ASSERT(!mConsumed);
+    mConsumed = true;
+#endif
+    return std::move(mBasePtr);
+  }
+
+  MovingNotNull(MovingNotNull&&) = default;
+  MovingNotNull& operator=(MovingNotNull&&) = default;
+};
+
+template <typename T>
+constexpr MovingNotNull<T> WrapMovingNotNullUnchecked(T aBasePtr) {
+  return MovingNotNull<T>{std::move(aBasePtr)};
+}
+
+template <typename T>
+constexpr MovingNotNull<T> WrapMovingNotNull(T aBasePtr) {
+  MOZ_RELEASE_ASSERT(aBasePtr);
+  return WrapMovingNotNullUnchecked(std::move(aBasePtr));
 }
 
 namespace detail {
@@ -162,13 +333,14 @@ namespace detail {
 template <typename Pointer>
 struct PointedTo {
   // Remove the reference that dereferencing operators may return.
-  using Type = typename RemoveReference<decltype(*DeclVal<Pointer>())>::Type;
-  using NonConstType = typename RemoveConst<Type>::Type;
+  using Type = std::remove_reference_t<decltype(*std::declval<Pointer>())>;
+  using NonConstType = std::remove_const_t<Type>;
 };
 
 // Specializations for raw pointers.
 // This is especially required because VS 2017 15.6 (March 2018) started
-// rejecting the above `decltype(*DeclVal<Pointer>())` trick for raw pointers.
+// rejecting the above `decltype(*std::declval<Pointer>())` trick for raw
+// pointers.
 // See bug 1443367.
 template <typename T>
 struct PointedTo<T*> {
@@ -190,7 +362,7 @@ struct PointedTo<const T*> {
 template <typename T, typename... Args>
 constexpr NotNull<T> MakeNotNull(Args&&... aArgs) {
   using Pointee = typename detail::PointedTo<T>::NonConstType;
-  static_assert(!IsArray<Pointee>::value,
+  static_assert(!std::is_array_v<Pointee>,
                 "MakeNotNull cannot construct an array");
   return NotNull<T>(new Pointee(std::forward<Args>(aArgs)...));
 }

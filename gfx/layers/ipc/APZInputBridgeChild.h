@@ -14,15 +14,13 @@ namespace mozilla {
 namespace layers {
 
 class APZInputBridgeChild : public PAPZInputBridgeChild, public APZInputBridge {
-  NS_INLINE_DECL_REFCOUNTING(APZInputBridgeChild)
+  NS_INLINE_DECL_REFCOUNTING(APZInputBridgeChild, final)
 
  public:
   APZInputBridgeChild();
   void Destroy();
 
-  nsEventStatus ReceiveInputEvent(InputData& aEvent,
-                                  ScrollableLayerGuid* aOutTargetGuid,
-                                  uint64_t* aOutInputBlockId) override;
+  APZEventResult ReceiveInputEvent(InputData& aEvent) override;
 
  protected:
   void ProcessUnhandledEvent(LayoutDeviceIntPoint* aRefPoint,

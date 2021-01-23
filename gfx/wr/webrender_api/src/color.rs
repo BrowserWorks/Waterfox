@@ -2,6 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+use peek_poke::PeekPoke;
 use std::cmp;
 use std::hash::{Hash, Hasher};
 
@@ -37,7 +38,7 @@ impl PremultipliedColorF {
 /// All components must be between 0.0 and 1.0.
 /// An alpha value of 1.0 is opaque while 0.0 is fully transparent.
 #[repr(C)]
-#[derive(Clone, Copy, Debug, Deserialize, MallocSizeOf, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Default, Deserialize, MallocSizeOf, PartialEq, Serialize, PeekPoke)]
 pub struct ColorF {
     pub r: f32,
     pub g: f32,
@@ -94,6 +95,8 @@ impl Ord for PremultipliedColorF {
         self.partial_cmp(other).unwrap_or(cmp::Ordering::Equal)
     }
 }
+
+#[cfg_attr(feature = "cargo-clippy", allow(clippy::derive_hash_xor_eq))]
 impl Hash for PremultipliedColorF {
     fn hash<H: Hasher>(&self, state: &mut H) {
         // Note: this is inconsistent with the Eq impl for -0.0 (don't care).

@@ -12,19 +12,14 @@
 
 namespace mozilla {
 
-void WebGL2Context::GetInternalformatParameter(JSContext* cx, GLenum target,
-                                               GLenum internalformat,
-                                               GLenum pname,
-                                               JS::MutableHandleValue retval,
-                                               ErrorResult& out_rv) {
+Maybe<std::vector<int32_t>> WebGL2Context::GetInternalformatParameter(
+    GLenum target, GLenum internalformat, GLenum pname) const {
   const FuncScope funcScope(*this, "getInternalfomratParameter");
-  retval.setObjectOrNull(nullptr);
-
-  if (IsContextLost()) return;
+  if (IsContextLost()) return Nothing();
 
   if (target != LOCAL_GL_RENDERBUFFER) {
     ErrorInvalidEnum("`target` must be RENDERBUFFER.");
-    return;
+    return Nothing();
   }
 
   // GLES 3.0.4 $4.4.4 p212:
@@ -55,31 +50,25 @@ void WebGL2Context::GetInternalformatParameter(JSContext* cx, GLenum target,
         "`internalformat` must be color-, depth-, or stencil-renderable, was: "
         "0x%04x.",
         internalformat);
-    return;
+    return Nothing();
   }
 
   if (pname != LOCAL_GL_SAMPLES) {
     ErrorInvalidEnum("`pname` must be SAMPLES.");
-    return;
-  }
-  std::vector<GLint> samples;
-  const auto maxSamples = usage->MaxSamples(*gl);
-  if (maxSamples) {  // It might be force-set to 0 for validation reasons!
-    GLint sampleCount = 0;
-    gl->fGetInternalformativ(LOCAL_GL_RENDERBUFFER, internalformat,
-                             LOCAL_GL_NUM_SAMPLE_COUNTS, 1, &sampleCount);
-    samples.resize(uint32_t(sampleCount));
-    gl->fGetInternalformativ(LOCAL_GL_RENDERBUFFER, internalformat,
-                             LOCAL_GL_SAMPLES, samples.size(), samples.data());
+    return Nothing();
   }
 
-  JSObject* obj =
-      dom::Int32Array::Create(cx, this, samples.size(), samples.data());
-  if (!obj) {
-    out_rv = NS_ERROR_OUT_OF_MEMORY;
+  std::vector<int32_t> ret;
+  GLint sampleCount = 0;
+  gl->fGetInternalformativ(LOCAL_GL_RENDERBUFFER, internalformat,
+                           LOCAL_GL_NUM_SAMPLE_COUNTS, 1, &sampleCount);
+  if (sampleCount) {
+    ret.resize(sampleCount);
+    gl->fGetInternalformativ(LOCAL_GL_RENDERBUFFER, internalformat,
+                             LOCAL_GL_SAMPLES, ret.size(), ret.data());
   }
 
-  retval.setObjectOrNull(obj);
+  return Some(ret);
 }
 
 }  // namespace mozilla

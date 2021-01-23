@@ -5,6 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include <iostream>
+#include <type_traits>
 
 #include "gtest/gtest.h"
 #include "mozilla/DbgMacro.h"
@@ -12,26 +13,23 @@
 
 using namespace mozilla;
 
-#define TEST_MOZ_DBG_TYPE_IS(type_, expression_...)                   \
-  static_assert(IsSame<type_, decltype(MOZ_DBG(expression_))>::value, \
+#define TEST_MOZ_DBG_TYPE_IS(type_, expression_...)                    \
+  static_assert(std::is_same_v<type_, decltype(MOZ_DBG(expression_))>, \
                 "MOZ_DBG should return the indicated type")
 
-#define TEST_MOZ_DBG_TYPE_SAME(expression_...)                                \
-  static_assert(                                                              \
-      IsSame<decltype((expression_)), decltype(MOZ_DBG(expression_))>::value, \
+#define TEST_MOZ_DBG_TYPE_SAME(expression_...)                                 \
+  static_assert(                                                               \
+      std::is_same_v<decltype((expression_)), decltype(MOZ_DBG(expression_))>, \
       "MOZ_DBG should return the same type")
 
 struct Number {
   explicit Number(int aValue) : mValue(aValue) {}
 
-  Number(const Number& aOther) : mValue(aOther.mValue) {}
+  Number(const Number& aOther) = default;
 
   Number(Number&& aOther) : mValue(aOther.mValue) { aOther.mValue = 0; }
 
-  Number& operator=(const Number& aOther) {
-    mValue = aOther.mValue;
-    return *this;
-  }
+  Number& operator=(const Number& aOther) = default;
 
   Number& operator=(Number&& aOther) {
     mValue = aOther.mValue;
@@ -53,10 +51,7 @@ struct MoveOnly {
 
   MoveOnly(MoveOnly&& aOther) : mValue(aOther.mValue) { aOther.mValue = 0; }
 
-  MoveOnly& operator=(MoveOnly& aOther) {
-    mValue = aOther.mValue;
-    return *this;
-  }
+  MoveOnly& operator=(MoveOnly& aOther) = default;
 
   MoveOnly& operator=(MoveOnly&& aOther) {
     mValue = aOther.mValue;

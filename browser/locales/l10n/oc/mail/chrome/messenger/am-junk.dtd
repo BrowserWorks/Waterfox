@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Paramètres pels indesirables">
+<!ENTITY level.label "Activar los contraròtles adaptatius de corrièrs indesirables per aqueste compte">
+<!ENTITY level.accesskey "A">
+
+<!ENTITY move.label "Desplaçar los corrièrs indesirables novèls cap a :">
+<!ENTITY move.accesskey "D">
+<!ENTITY junkFolderOn.label "Dorsièr « Indesirables » sus :">
+<!ENTITY junkFolderOn.accesskey "I">
+<!ENTITY otherFolder.label "Autre :">
+<!ENTITY otherFolder.accesskey "u">
+<!ENTITY purge1.label "Suprimir automaticament los corrièrs indesirables qu'an mai de ">
+<!ENTITY purge1.accesskey "S">
+<!ENTITY purge2.label "jorns">
+
+<!ENTITY ispHeaders.label "Se fisar de las entèstas de corrièr indesirable plaçats per : ">
+<!ENTITY ispHeaders.accesskey "f">
+

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY tapToPlayPlugin                                     "Pro spuštění zásuvného modulu klepněte zde.">
+<!ENTITY clickToActivatePlugin                               "Spustit zásuvný modul.">
+<!ENTITY checkForUpdates                                     "Zkontrolovat aktualizace…">
+<!ENTITY blockedPlugin.label                                 "Tento zásuvný modul byl z důvodů vaší ochrany zablokován.">
+<!ENTITY hidePluginBtn.label                                 "Skrýt zásuvný modul">
+<!ENTITY managePlugins                                       "Spravovat zásuvné moduly…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "Pro opakování ">
+<!ENTITY reloadPlugin.middle                                 "znovu načtěte stránku">
+<!ENTITY reloadPlugin.post                                   ".">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "Odeslat hlášení o pádu">
+<!ENTITY report.submitting                                   "Odesílání hlášení…">
+<!ENTITY report.submitted                                    "Hlášení o pádu odesláno.">
+<!ENTITY report.disabled                                     "Hlášení o pádech je zakázáno.">
+<!ENTITY report.failed                                       "Odeslání selhalo.">
+<!ENTITY report.unavailable                                  "Není dostupné žádné hlášení.">
+<!ENTITY report.comment                                      "Přidat komentář (komentáře jsou veřejně dostupné)">
+<!ENTITY report.pageURL                                      "Zahrnout URL adresu stránky">
+
+<!ENTITY plugin.file                                         "Soubor">
+<!ENTITY plugin.mimeTypes                                    "Typy MIME">
+<!ENTITY plugin.flashProtectedMode.label                     "Povolit chráněný režim Adobe Flash">
+<!ENTITY plugin.enableBlocklists.label                       "Blokovat nebezpečný a dotěrný obsah">

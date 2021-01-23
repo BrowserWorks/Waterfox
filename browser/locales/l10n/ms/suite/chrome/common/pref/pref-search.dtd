@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-search.xul -->
+
+<!-- LOCALIZATION NOTE : FILE The Search prefs dialog -->
+
+<!ENTITY pref.search.title                "Carian Internet">
+<!ENTITY legendHeader                     "Enjin Carian Piawai">
+<!ENTITY defaultSearchEngine.label        "Cari menggunakan:">
+<!ENTITY defaultSearchEngine.accesskey    "C">
+
+<!ENTITY engineManager.label              "Urus Enjin Carian…">
+
+<!ENTITY searchResults.label              "Hasil Carian">
+
+<!ENTITY openInTab.label                  "Buka tab baru untuk hasil carian bar sisi">
+<!ENTITY openInTab.accesskey              "n">
+<!ENTITY openContextSearchTab.label       "Buka tab, bukan tetingkap untuk carian web menu konteks">
+<!ENTITY openContextSearchTab.accesskey   "t">
+<!ENTITY openSidebarSearchPanel.label     "Buka tab Carian dalam bar sisi apabila carian dibatalkan">
+<!ENTITY openSidebarSearchPanel.accesskey "B">

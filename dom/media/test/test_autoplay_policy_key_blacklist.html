@@ -19,7 +19,7 @@
         // audible autoplay.
 
         gTestPrefs.push(["media.autoplay.default", SpecialPowers.Ci.nsIAutoplay.BLOCKED],
-          ["media.autoplay.enabled.user-gestures-needed", true]);
+          ["media.autoplay.blocking_policy", 0]);
 
         SpecialPowers.pushPrefEnv({ 'set': gTestPrefs }, () => {
           runTest();
@@ -33,7 +33,7 @@
           let child = window.open(child_url, "", "width=500,height=500");
           await once(child, "load");
           child.postMessage("run test", window.origin);
-          let result = await nextWindowMessage();
+          await nextWindowMessage();
           child.close();
           SimpleTest.finish();
         }

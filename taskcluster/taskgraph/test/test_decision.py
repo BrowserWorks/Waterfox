@@ -7,19 +7,18 @@ from __future__ import absolute_import, print_function, unicode_literals
 import os
 import json
 import shutil
+import sys
 import unittest
 import tempfile
 
+import pytest
 from mock import patch
 from mozunit import main, MockedOpen
 from taskgraph import decision
 from taskgraph.util.yaml import load_yaml
 
 
-FAKE_GRAPH_CONFIG = {
-    'product-dir': 'browser',
-    'version-directory': 'browser/config/',
-}
+FAKE_GRAPH_CONFIG = {'product-dir': 'browser', 'taskgraph': {}}
 
 
 class TestDecision(unittest.TestCase):
@@ -62,28 +61,35 @@ class TestGetDecisionParameters(unittest.TestCase):
             'head_ref': 'ef01',
             'message': '',
             'project': 'mozilla-central',
-            'pushlog_id': 143,
+            'pushlog_id': '143',
             'pushdate': 1503691511,
             'owner': 'nobody@mozilla.com',
             'tasks_for': 'hg-push',
-            'level': 3,
+            'level': '3',
         }
 
+    @pytest.mark.xfail(
+        sys.version_info >= (3, 0), reason="python3 migration is not complete"
+    )
     @patch('taskgraph.decision.get_hg_revision_branch')
     def test_simple_options(self, mock_get_hg_revision_branch):
         mock_get_hg_revision_branch.return_value = 'default'
         with MockedOpen({self.ttc_file: None}):
             params = decision.get_decision_parameters(FAKE_GRAPH_CONFIG, self.options)
-        self.assertEqual(params['pushlog_id'], 143)
+        self.assertEqual(params['pushlog_id'], '143')
         self.assertEqual(params['build_date'], 1503691511)
         self.assertEqual(params['hg_branch'], 'default')
         self.assertEqual(params['moz_build_date'], '20170825200511')
         self.assertEqual(params['try_mode'], None)
         self.assertEqual(params['try_options'], None)
-        self.assertEqual(params['try_task_config'], None)
+        self.assertEqual(params['try_task_config'], {})
 
+    @pytest.mark.xfail(
+        sys.version_info >= (3, 0), reason="python3 migration is not complete"
+    )
     @patch('taskgraph.decision.get_hg_revision_branch')
-    def test_no_email_owner(self, _):
+    def test_no_email_owner(self, mock_get_hg_revision_branch):
+        mock_get_hg_revision_branch.return_value = 'default'
         self.options['owner'] = 'ffxbld'
         with MockedOpen({self.ttc_file: None}):
             params = decision.get_decision_parameters(FAKE_GRAPH_CONFIG, self.options)
@@ -91,21 +97,27 @@ class TestGetDecisionParameters(unittest.TestCase):
 
     @patch('taskgraph.decision.get_hg_revision_branch')
     @patch('taskgraph.decision.get_hg_commit_message')
-    def test_try_options(self, mock_get_hg_commit_message, _):
-        mock_get_hg_commit_message.return_value = 'try: -b do -t all'
+    def test_try_options(self, mock_get_hg_commit_message, mock_get_hg_revision_branch):
+        mock_get_hg_commit_message.return_value = 'try: -b do -t all --artifact'
+        mock_get_hg_revision_branch.return_value = 'default'
         self.options['project'] = 'try'
         with MockedOpen({self.ttc_file: None}):
             params = decision.get_decision_parameters(FAKE_GRAPH_CONFIG, self.options)
         self.assertEqual(params['try_mode'], 'try_option_syntax')
         self.assertEqual(params['try_options']['build_types'], 'do')
         self.assertEqual(params['try_options']['unittests'], 'all')
-        self.assertEqual(params['try_task_config'], None)
+        self.assertEqual(params['try_task_config'], {
+            'gecko-profile': False,
+            'use-artifact-builds': True,
+            'env': {},
+        })
 
     @patch('taskgraph.decision.get_hg_revision_branch')
     @patch('taskgraph.decision.get_hg_commit_message')
-    def test_try_task_config(self, mock_get_hg_commit_message, _):
+    def test_try_task_config(self, mock_get_hg_commit_message, mock_get_hg_revision_branch):
         mock_get_hg_commit_message.return_value = 'Fuzzy query=foo'
-        ttc = {'tasks': ['a', 'b'], 'templates': {}}
+        mock_get_hg_revision_branch.return_value = 'default'
+        ttc = {'tasks': ['a', 'b']}
         self.options['project'] = 'try'
         with MockedOpen({self.ttc_file: json.dumps(ttc)}):
             params = decision.get_decision_parameters(FAKE_GRAPH_CONFIG, self.options)

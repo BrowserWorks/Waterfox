@@ -5,6 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "HTMLBodyElement.h"
+#include "mozilla/dom/BindContext.h"
 #include "mozilla/dom/HTMLBodyElementBinding.h"
 #include "mozilla/MappedDeclarations.h"
 #include "mozilla/HTMLEditor.h"
@@ -15,6 +16,7 @@
 #include "nsPresContext.h"
 #include "mozilla/dom/Document.h"
 #include "DocumentInlines.h"
+#include "nsDocShell.h"
 #include "nsHTMLStyleSheet.h"
 #include "nsMappedAttributes.h"
 #include "nsIDocShell.h"
@@ -27,7 +29,7 @@ namespace dom {
 
 //----------------------------------------------------------------------
 
-HTMLBodyElement::~HTMLBodyElement() {}
+HTMLBodyElement::~HTMLBodyElement() = default;
 
 JSObject* HTMLBodyElement::WrapNode(JSContext* aCx,
                                     JS::Handle<JSObject*> aGivenProto) {
@@ -52,7 +54,7 @@ bool HTMLBodyElement::ParseAttribute(int32_t aNamespaceID, nsAtom* aAttribute,
         aAttribute == nsGkAtoms::bottommargin ||
         aAttribute == nsGkAtoms::leftmargin ||
         aAttribute == nsGkAtoms::rightmargin) {
-      return aResult.ParseIntWithBounds(aValue, 0);
+      return aResult.ParseNonNegativeIntValue(aValue);
     }
   }
 
@@ -159,12 +161,10 @@ void HTMLBodyElement::MapAttributesIntoRule(
   // if marginwidth or marginheight is set in the <frame> and not set in the
   // <body> reflect them as margin in the <body>
   if (bodyMarginWidth == -1 || bodyMarginHeight == -1) {
-    nsCOMPtr<nsIDocShell> docShell(aDecls.Document()->GetDocShell());
-    if (docShell) {
-      nscoord frameMarginWidth = -1;                // default value
-      nscoord frameMarginHeight = -1;               // default value
-      docShell->GetMarginWidth(&frameMarginWidth);  // -1 indicates not set
-      docShell->GetMarginHeight(&frameMarginHeight);
+    if (nsDocShell* ds = nsDocShell::Cast(aDecls.Document()->GetDocShell())) {
+      CSSIntSize margins = ds->GetFrameMargins();
+      int32_t frameMarginWidth = margins.width;
+      int32_t frameMarginHeight = margins.height;
 
       if (bodyMarginWidth == -1 && frameMarginWidth >= 0) {
         if (bodyLeftMargin == -1) {
@@ -283,12 +283,10 @@ bool HTMLBodyElement::IsEventAttributeNameInternal(nsAtom* aName) {
       aName, EventNameType_HTML | EventNameType_HTMLBodyOrFramesetOnly);
 }
 
-nsresult HTMLBodyElement::BindToTree(Document* aDocument, nsIContent* aParent,
-                                     nsIContent* aBindingParent) {
-  nsresult rv =
-      nsGenericHTMLElement::BindToTree(aDocument, aParent, aBindingParent);
+nsresult HTMLBodyElement::BindToTree(BindContext& aContext, nsINode& aParent) {
+  nsresult rv = nsGenericHTMLElement::BindToTree(aContext, aParent);
   NS_ENSURE_SUCCESS(rv, rv);
-  return mAttrs.ForceMapped(this, OwnerDoc());
+  return mAttrs.ForceMapped(this, &aContext.OwnerDoc());
 }
 
 nsresult HTMLBodyElement::AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,

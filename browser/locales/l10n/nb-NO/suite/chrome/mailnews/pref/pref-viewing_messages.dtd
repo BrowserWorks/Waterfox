@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.viewing.messages.title      "Meldingsvisning">
+<!ENTITY style.label                      "Stil:">
+<!ENTITY style.accesskey                  "S">
+<!ENTITY regular.label                    "Vanlig">
+<!ENTITY bold.label                       "Fet">
+<!ENTITY italic.label                     "Kursiv">
+<!ENTITY boldItalic.label                 "Fet kursiv">
+<!ENTITY size.label                       "Størrelse:">
+<!ENTITY size.accesskey                   "S">
+<!ENTITY bigger.label                     "Større">
+<!ENTITY smaller.label                    "Mindre">
+<!ENTITY color.label                      "Farge">
+<!ENTITY color.accesskey                  "F">
+<!ENTITY displayPlainText.caption         "Ren tekst-meldinger">
+<!ENTITY fontPlainText.label              "Skrifttype:">
+<!ENTITY fontPlainText.accesskey          "S">
+<!ENTITY displayQuoted.label              "Innstillinger for siterte meldinger:">
+<!ENTITY wrapInMsg.label                  "Bryt teksten til å passe i vinduet">
+<!ENTITY wrapInMsg.accesskey              "B">
+<!-- LOCALIZATION NOTE : (convertEmoticons.label) 'Emoticons' are also known as 'Smileys', e.g. :-)   -->
+<!ENTITY convertEmoticons.label           "Vis smileansikter som grafikk">
+<!ENTITY convertEmoticons.accesskey       "e">
+<!ENTITY generalMessageDisplay.caption    "Generelt">
+<!ENTITY autoMarkAsRead.label             "Automatisk merk meldinger som lest">
+<!ENTITY autoMarkAsRead.accesskey         "A">
+<!-- LOCALIZATION NOTE (markAsReadAfter.label): This will concatenate to
+     "Only after displaying for [___] seconds",
+     using (markAsReadAfter.label) and a number (secondsLabel.label). -->
+<!ENTITY markAsReadAfter.label            "Etter de er vist i">
+<!ENTITY markAsReadAfter.accesskey        "E">
+<!ENTITY secondsLabel.label               "sekunder">
+
+<!ENTITY openingMessages.label            "Ved åpning av meldinger, vis dem i:">
+<!ENTITY newWindowRadio.label             "Et nytt vindu">
+<!ENTITY newWindowRadio.accesskey         "n">
+<!ENTITY existingWindowRadio.label        "Et eksisterende vindu">
+<!ENTITY existingWindowRadio.accesskey    "E">
+<!ENTITY disableContent.label             "Blokker bilder og annet innhold fra Internett">
+<!ENTITY disableContent.accesskey         "B">
+<!ENTITY showCondensedAddresses.label     "Vis bare navnet for personer i adresseboken">
+<!ENTITY showCondensedAddresses.accesskey "V">
+<!ENTITY closeMsgWindowOnDelete.label     "Lukk meldingsvinduet når meldingen slettes">
+<!ENTITY closeMsgWindowOnDelete.accesskey "L">

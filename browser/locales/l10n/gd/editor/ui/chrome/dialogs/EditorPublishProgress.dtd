@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY siteUrl.label         "URL na làraich:">
+<!ENTITY docSubdir.label       "Fo-phasgan na duilleige:">
+<!ENTITY otherSubdir.label     "Fo-phasgan an deilbh:">
+
+<!ENTITY status.label          "'Ga fhoillseachadh…">
+<!ENTITY fileList.label        "Cor an fhoillseachaidh">
+<!ENTITY succeeded.label       "Soirbheachail">
+<!ENTITY failed.label          "Dh'fhàillig e">
+
+<!ENTITY keepOpen              "Cum an uinneag seo fosgailte nuair a bhios am foillseachadh deiseil.">
+<!ENTITY closeButton.label     "Dùin">

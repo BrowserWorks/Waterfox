@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY directoryName.label               "Enw: ">
+<!ENTITY directoryName.accesskey           "E">
+<!ENTITY directoryHostname.label           "Enw Gwesteiwr: ">
+<!ENTITY directoryHostname.accesskey       "G">
+<!ENTITY directoryBaseDN.label             "DN Bôn: ">
+<!ENTITY directoryBaseDN.accesskey         "B">
+<!ENTITY findButton.label                  "Canfod">
+<!ENTITY findButton.accesskey              "f">
+<!ENTITY directorySecure.label             "Defnyddio cysylltiad diogel (SSL)">
+<!ENTITY directorySecure.accesskey         "D">
+<!ENTITY directoryLogin.label              "Rhwymo DN: ">
+<!ENTITY directoryLogin.accesskey          "R">
+<!ENTITY General.tab                       "Cyffredinol">
+<!ENTITY Offline.tab                       "All-lein">
+<!ENTITY Advanced.tab                      "Uwch">
+<!ENTITY portNumber.label                  "Rhif porth: ">
+<!ENTITY portNumber.accesskey              "p">
+<!ENTITY searchFilter.label                "Hidl chwilio: ">
+<!ENTITY searchFilter.accesskey            "H">
+<!ENTITY scope.label                       "Amrediad: ">
+<!ENTITY scope.accesskey                   "A">
+<!ENTITY scopeOneLevel.label               "Un Lefel">
+<!ENTITY scopeOneLevel.accesskey           "U">
+<!ENTITY scopeSubtree.label                "Is-goeden">
+<!ENTITY scopeSubtree.accesskey            "I">
+<!ENTITY return.label                      "Peidio dychwelyd mwy na">
+<!ENTITY return.accesskey                  "P">
+<!ENTITY results.label                     "canlyniadau">
+<!ENTITY offlineText.label                 "Gallwch lwytho i lawr copi lleol o'r cyfeiriadur hwn ar gyfer defnydd all-lein.">
+<!ENTITY saslMechanism.label               "Dull mewngofnodi: ">
+<!ENTITY saslMechanism.accesskey           "m">
+<!ENTITY saslOff.label                     "Syml">
+<!ENTITY saslOff.accesskey                 "S">
+<!ENTITY saslGSSAPI.label                  "Kerberos (GSSAPI)">
+<!ENTITY saslGSSAPI.accesskey              "K">
+<!-- Localization note: this is here because the width of the dialog 
+     is determined by the width of the base DN box; and that is likely
+     to vary somewhat with the language.
+-->
+
+<!ENTITY newDirectoryWidth                 "36em">

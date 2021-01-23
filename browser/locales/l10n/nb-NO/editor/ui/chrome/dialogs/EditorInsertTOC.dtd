@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title        "Innholdsfortegnelse">
+<!ENTITY buildToc.label      "Bygg opp innholdsfortegnelse fra:">
+<!ENTITY tag.label           "Tagger:">
+<!ENTITY class.label         "Klasse:">
+<!ENTITY header1.label       "Nivå 1">
+<!ENTITY header2.label       "Nivå 2">
+<!ENTITY header3.label       "Nivå 3">
+<!ENTITY header4.label       "Nivå 4">
+<!ENTITY header5.label       "Nivå 5">
+<!ENTITY header6.label       "Nivå 6">
+<!ENTITY makeReadOnly.label  "Gjør innholdsfortegnelsen bare lesbar">
+<!ENTITY orderedList.label   "Nummerer alle elementer i innholdsfortegnelsen">

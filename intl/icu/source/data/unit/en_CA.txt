@@ -2,7 +2,7 @@
 // License & terms of use: http://www.unicode.org/copyright.html#License
 en_CA{
     %%Parent{"en_001"}
-    Version{"2.1.47.86"}
+    Version{"37"}
     units{
         concentr{
             karat{
@@ -14,6 +14,7 @@ en_CA{
         energy{
             kilowatt-hour{
                 one{"{0} kilowatt-hour"}
+                other{"{0} kilowatt-hours"}
             }
         }
         torque{
@@ -45,7 +46,7 @@ en_CA{
             }
         }
         consumption{
-            liter-per-100kilometers{
+            liter-per-100-kilometer{
                 dnam{"L/100km"}
                 one{"{0}L/100km"}
                 other{"{0}L/100km"}
@@ -157,7 +158,7 @@ en_CA{
     }
     unitsShort{
         acceleration{
-            meter-per-second-squared{
+            meter-per-square-second{
                 dnam{"metres/sec.²"}
             }
         }
@@ -226,7 +227,7 @@ en_CA{
             }
         }
         consumption{
-            liter-per-100kilometers{
+            liter-per-100-kilometer{
                 dnam{"L/100 km"}
                 one{"{0} L/100 km"}
                 other{"{0} L/100 km"}
@@ -250,6 +251,11 @@ en_CA{
             }
             day{
                 per{"{0}/day"}
+            }
+            decade{
+                dnam{"dec."}
+                one{"{0} dec."}
+                other{"{0} dec."}
             }
             hour{
                 dnam{"hrs."}
@@ -400,7 +406,7 @@ en_CA{
             }
         }
         pressure{
-            inch-hg{
+            inch-ofhg{
                 dnam{"inHg"}
             }
         }

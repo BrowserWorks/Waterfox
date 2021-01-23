@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.history.title                "Chronik">
+
+<!ENTITY  pref.history.caption              "Browser-Chronik">
+<!ENTITY  historyPages.label                "Die Chronik ist eine Liste von zuvor besuchten Seiten.">
+<!ENTITY  enableHistory.label               "Besuchte Seiten speichern">
+<!ENTITY  enableHistory.accesskey           "B">
+<!ENTITY  clearHistory.label                "Chronik löschen">
+<!ENTITY  clearHistory.accesskey            "o">
+
+<!ENTITY  locationBarHistory.caption        "Adressleisten-Chronik">
+<!ENTITY  urlBarHistoryEnabled.caption      "Adresszeilen-Chronik aktivieren">
+<!ENTITY  urlBarHistoryEnabled.accesskey    "C">
+<!ENTITY  clearLocationBar.label            "Die Liste von Seiten, die im Adressleisten-Menü gespeichert werden, löschen.">
+<!ENTITY  clearLocationBarButton.label      "Adressleisten-Chronik löschen">
+<!ENTITY  clearLocationBarButton.accesskey  "d">
+<!ENTITY  formfillHistory.caption           "Formular- und Such-Chronik">
+<!ENTITY  enableFormfill.label              "Formular- und Such-Chronik aktivieren">
+<!ENTITY  enableFormfill.accesskey          "F">
+<!ENTITY  formfillExpire.label              "Formular- und Such-Chronik für bis zu">
+<!ENTITY  formfillExpire.accesskey          "m">
+<!ENTITY  formfillDays.label                "Tage speichern">

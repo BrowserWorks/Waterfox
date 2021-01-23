@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Qo‘shimcha hisob sozlamalari">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "IMAP server direktoriyasi:">
+<!ENTITY serverDirectory.accesskey "d">
+<!ENTITY usingSubscription.label "Faqat obuna bo‘lingan jildlarni ko‘rsatish">
+<!ENTITY usingSubscription.accesskey "k">
+<!ENTITY dualUseFolders.label "Server faqat ichida jildlari va xabarlari bo‘lgan jildlar bilan ishlay oladi">
+<!ENTITY dualUseFolders.accesskey "j">
+<!ENTITY maximumConnectionsNumber.label "Keshga ulangan serverlarning maksimal miqdori">
+<!ENTITY maximumConnectionsNumber.accesskey "m">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Ushbu parametrlar IMAP serverdagi nom maydonchalarini ko‘rsatadi">
+<!ENTITY personalNamespace.label "Shaxsiy nom maydonchasi:">
+<!ENTITY personalNamespace.accesskey "S">
+<!ENTITY publicNamespace.label "Ommaviy (bo‘lishilgan):">
+<!ENTITY publicNamespace.accesskey "O">
+<!ENTITY otherUsersNamespace.label "Boshqa foydalanuvchilar:">
+<!ENTITY otherUsersNamespace.accesskey "o">
+<!ENTITY overrideNamespaces.label "Serverga nom maydonchalarini almashtirishga ruxsat berish">
+<!ENTITY overrideNamespaces.accesskey "r">
+<!ENTITY pop3DeferringDesc.label "Ushbu hisobning serveridan xatni yuklab olayotganda yangi xabarlarni saqlash uchun quyidagi jilddan foydalaning:" >
+<!ENTITY accountInbox.label "Ushbu hisob uchun Kiruvchi xatlar">
+<!ENTITY accountInbox.accesskey "U">
+<!ENTITY deferToServer.label "Boshqa hisob uchun &quot;Kiruvchi xatlar&quot;">
+<!ENTITY deferToServer.accesskey "B">
+<!ENTITY deferGetNewMail.label "Yangi xat olinganda ushbu serverni qo‘shish">
+<!ENTITY deferGetNewMail.accesskey "q">

@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -13,8 +11,12 @@ define(function(require, exports, module) {
   const { createFactories } = require("devtools/client/shared/react-utils");
   const { div } = require("devtools/client/shared/vendor/react-dom-factories");
 
-  const { SearchBox } = createFactories(require("./SearchBox"));
-  const { Toolbar, ToolbarButton } = createFactories(require("./reps/Toolbar"));
+  const { SearchBox } = createFactories(
+    require("devtools/client/jsonview/components/SearchBox")
+  );
+  const { Toolbar, ToolbarButton } = createFactories(
+    require("devtools/client/jsonview/components/reps/Toolbar")
+  );
 
   /* 100kB file */
   const EXPAND_THRESHOLD = 100 * 1024;
@@ -71,12 +73,12 @@ define(function(require, exports, module) {
           { className: "btn collapse", onClick: this.onCollapse },
           JSONView.Locale["jsonViewer.CollapseAll"]
         ),
-        this.props.dataSize > EXPAND_THRESHOLD
-          ? undefined
-          : ToolbarButton(
-              { className: "btn expand", onClick: this.onExpand },
-              JSONView.Locale["jsonViewer.ExpandAll"]
-            ),
+        ToolbarButton(
+          { className: "btn expand", onClick: this.onExpand },
+          this.props.dataSize > EXPAND_THRESHOLD
+            ? JSONView.Locale["jsonViewer.ExpandAllSlow"]
+            : JSONView.Locale["jsonViewer.ExpandAll"]
+        ),
         div({ className: "devtools-separator" }),
         SearchBox({
           actions: this.props.actions,

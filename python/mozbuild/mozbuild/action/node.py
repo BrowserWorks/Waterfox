@@ -8,6 +8,7 @@ import buildconfig
 import pipes
 import subprocess
 import sys
+import six
 
 SCRIPT_ALLOWLIST = [
         buildconfig.topsrcdir + "/devtools/client/shared/build/build.js"
@@ -19,7 +20,8 @@ in SCRIPT_ALLOWLIST in python/mozbuild/mozbuild/action/node.py.
 Using NodeJS from moz.build is currently in beta, and node
 scripts to be executed need to be added to the allowlist and
 reviewed by a build peer so that we can get a better sense of
-how support should evolve.
+how support should evolve. (To consult a build peer, raise a
+question in the #build channel at https://chat.mozilla.org.)
 '''
 
 
@@ -71,6 +73,7 @@ def execute_node_cmd(node_cmd_list):
         # (intentionally or inadvertently) remove deps.  Do we want this?
         deps = []
         for line in stdout.splitlines():
+            line = six.ensure_text(line)
             if 'dep:' in line:
                 deps.append(line.replace('dep:', ''))
             else:
@@ -111,7 +114,8 @@ def generate(output, node_script, *files):
             and building again.""", file=sys.stderr)
         sys.exit(1)
 
-    if not isinstance(node_script, (str, unicode)):
+    node_script = six.ensure_text(node_script)
+    if not isinstance(node_script, six.text_type):
         print("moz.build file didn't pass a valid node script name to execute",
               file=sys.stderr)
         sys.exit(1)

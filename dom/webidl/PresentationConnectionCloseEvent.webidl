@@ -21,11 +21,13 @@ enum PresentationConnectionClosedReason
   "wentaway"
 };
 
-[Constructor(DOMString type,
-             PresentationConnectionCloseEventInit eventInitDict),
- Pref="dom.presentation.enabled"]
+[Pref="dom.presentation.enabled",
+ Exposed=Window]
 interface PresentationConnectionCloseEvent : Event
 {
+  constructor(DOMString type,
+              PresentationConnectionCloseEventInit eventInitDict);
+
   readonly attribute PresentationConnectionClosedReason reason;
 
   // The message is a human readable description of

@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label "Tölvupóstur">
+<!ENTITY readMsgsLink.label "Lesinn póstur">
+<!ENTITY composeMsgLink.label "Skrifa nýjan póst">
+
+<!ENTITY newsSectionHdr.label "Fréttahópar">
+<!ENTITY subscribeNewsLink.label "Sýsla með áskriftir að fréttahópum">
+
+<!ENTITY feedsSectionHdr.label "Straumar">
+<!ENTITY subscribeFeeds.label "Stilla áskriftir">
+
+<!ENTITY chat.label "Spjall">
+<!ENTITY movemail.label "Flytja póst">
+
+<!ENTITY accountsSectionHdr.label "Reikningar">
+<!ENTITY subscribeImapFolders.label "Sýsla með áskriftir að möppum">
+<!ENTITY settingsLink.label "Skoða stillingar fyrir þennan reikning">
+
+<!ENTITY advFeaturesSectionHdr.label "Ítarlegri stillingar">
+<!ENTITY searchMsgsLink.label "Leita í pósti">
+<!ENTITY filtersLink.label "Sýsla með póstsíur">
+<!ENTITY junkSettings.label "Ruslpósts stillingar">
+<!ENTITY offlineLink.label "Stillingar fyrir ónettengda notkun">

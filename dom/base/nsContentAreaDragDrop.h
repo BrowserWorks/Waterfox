@@ -9,8 +9,8 @@
 
 #include "nsCOMPtr.h"
 
-#include "nsIDOMEventListener.h"
 #include "nsITransferable.h"
+#include "nsIContentSecurityPolicy.h"
 
 class nsPIDOMWindowOuter;
 class nsITransferable;
@@ -48,6 +48,8 @@ class nsContentAreaDragDrop {
    *             drag occurred on another element.
    * aPrincipal - [out] set to the triggering principal of the drag, or null if
    *                    it's from browser chrome or OS
+   * aCSP       - [out] set to the CSP of the Drag, or null if
+   *                    it's from browser chrome or OS
    */
   static nsresult GetDragData(nsPIDOMWindowOuter* aWindow, nsIContent* aTarget,
                               nsIContent* aSelectionTargetNode,
@@ -55,15 +57,15 @@ class nsContentAreaDragDrop {
                               mozilla::dom::DataTransfer* aDataTransfer,
                               bool* aCanDrag,
                               mozilla::dom::Selection** aSelection,
-                              nsIContent** aDragNode,
-                              nsIPrincipal** aPrincipal);
+                              nsIContent** aDragNode, nsIPrincipal** aPrincipal,
+                              nsIContentSecurityPolicy** aCsp);
 };
 
 // this is used to save images to disk lazily when the image data is asked for
 // during the drop instead of when it is added to the drag data transfer. This
 // ensures that the image data is only created when an image drop is allowed.
 class nsContentAreaDragDropDataProvider : public nsIFlavorDataProvider {
-  virtual ~nsContentAreaDragDropDataProvider() {}
+  virtual ~nsContentAreaDragDropDataProvider() = default;
 
  public:
   NS_DECL_ISUPPORTS
@@ -71,8 +73,7 @@ class nsContentAreaDragDropDataProvider : public nsIFlavorDataProvider {
 
   nsresult SaveURIToFile(nsIURI* inSourceURI,
                          nsIPrincipal* inTriggeringPrincipal,
-                         nsIFile* inDestFile,
-                         nsContentPolicyType inPolicyType,
+                         nsIFile* inDestFile, nsContentPolicyType inPolicyType,
                          bool isPrivate);
 };
 

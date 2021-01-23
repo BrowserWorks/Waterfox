@@ -9,6 +9,8 @@
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/dom/BlobURL.h"
+#include "mozilla/net/DefaultURI.h"
+#include "mozilla/net/SubstitutingURL.h"
 #include "mozilla/NullPrincipalURI.h"
 #include "nsComponentManagerUtils.h"
 #include "nsDebug.h"
@@ -69,7 +71,11 @@ already_AddRefed<nsIURI> DeserializeURI(const URIParams& aParams) {
       break;
 
     case URIParams::TStandardURLParams:
-      mutator = do_CreateInstance(kStandardURLMutatorCID);
+      if (aParams.get_StandardURLParams().isSubstituting()) {
+        mutator = new net::SubstitutingURL::Mutator();
+      } else {
+        mutator = do_CreateInstance(kStandardURLMutatorCID);
+      }
       break;
 
     case URIParams::TJARURIParams:
@@ -94,6 +100,10 @@ already_AddRefed<nsIURI> DeserializeURI(const URIParams& aParams) {
 
     case URIParams::THostObjectURIParams:
       mutator = new mozilla::dom::BlobURL::Mutator();
+      break;
+
+    case URIParams::TDefaultURIParams:
+      mutator = new mozilla::net::DefaultURI::Mutator();
       break;
 
     default:

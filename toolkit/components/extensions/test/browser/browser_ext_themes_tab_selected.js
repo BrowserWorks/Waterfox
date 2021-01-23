@@ -24,21 +24,13 @@ add_task(async function test_tab_background_color_property() {
   let openTab = document.querySelector(
     ".tabbrowser-tab[visuallyselected=true]"
   );
-  let openTabBackground = document.getAnonymousElementByAttribute(
-    openTab,
-    "class",
-    "tab-background"
-  );
+  let openTabBackground = openTab.querySelector(".tab-background");
 
   let selectedTab = await BrowserTestUtils.openNewForegroundTab(
     gBrowser,
     "about:blank"
   );
-  let selectedTabBackground = document.getAnonymousElementByAttribute(
-    selectedTab,
-    "class",
-    "tab-background"
-  );
+  let selectedTabBackground = selectedTab.querySelector(".tab-background");
 
   let openTabGradient = window
     .getComputedStyle(openTabBackground)

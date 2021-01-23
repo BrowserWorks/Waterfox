@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -56,6 +55,15 @@ async function testEditableFieldFocus(
     const propEditor = textProp.editor;
 
     await focusNextField(view, ruleEditor, commitKey, options);
+    if (
+      ["background-color", "color"].includes(propEditor.nameSpan.textContent)
+    ) {
+      // background-color and color property value spans have inner focusable elements
+      // and so, focus needs to move to the inplace editor field where enter needs to be
+      // pressed to trigger click event on it
+      await focusNextField(view, ruleEditor, commitKey, options);
+      EventUtils.sendKey("Return");
+    }
     await assertEditor(
       view,
       propEditor.valueSpan,

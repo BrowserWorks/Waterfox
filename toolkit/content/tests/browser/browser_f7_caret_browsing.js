@@ -40,7 +40,7 @@ function promiseCaretPromptOpened() {
     function observer(subject, topic, data) {
       if (topic == "domwindowopened") {
         Services.ww.unregisterNotification(observer);
-        let win = subject.QueryInterface(Ci.nsIDOMWindow);
+        let win = subject;
         BrowserTestUtils.waitForEvent(
           win,
           "load",
@@ -90,7 +90,7 @@ function syncToggleCaretNoDialog(expected) {
 }
 
 function waitForFocusOnInput(browser) {
-  return ContentTask.spawn(browser, null, async function() {
+  return SpecialPowers.spawn(browser, [], async function() {
     let textEl = content.document.getElementById("in");
     return ContentTaskUtils.waitForCondition(() => {
       return content.document.activeElement == textEl;
@@ -99,7 +99,7 @@ function waitForFocusOnInput(browser) {
 }
 
 function focusInput(browser) {
-  return ContentTask.spawn(browser, null, async function() {
+  return SpecialPowers.spawn(browser, [], async function() {
     let textEl = content.document.getElementById("in");
     textEl.focus();
   });
@@ -113,18 +113,15 @@ add_task(async function checkTogglingCaretBrowsing() {
   hitF7();
   let prompt = await promiseGotKey;
   let doc = prompt.document;
-  is(
-    doc.documentElement.defaultButton,
-    "cancel",
-    "No button should be the default"
-  );
+  let dialog = doc.getElementById("commonDialog");
+  is(dialog.defaultButton, "cancel", "No button should be the default");
   ok(
     !doc.getElementById("checkbox").checked,
     "Checkbox shouldn't be checked by default."
   );
   let promiseDialogUnloaded = BrowserTestUtils.waitForEvent(prompt, "unload");
 
-  doc.documentElement.cancelDialog();
+  dialog.cancelDialog();
   await promiseDialogUnloaded;
   info("Dialog unloaded");
   await waitForFocusOnInput(tab.linkedBrowser);
@@ -138,18 +135,15 @@ add_task(async function checkTogglingCaretBrowsing() {
   prompt = await promiseGotKey;
 
   doc = prompt.document;
-  is(
-    doc.documentElement.defaultButton,
-    "cancel",
-    "No button should be the default"
-  );
+  dialog = doc.getElementById("commonDialog");
+  is(dialog.defaultButton, "cancel", "No button should be the default");
   ok(
     !doc.getElementById("checkbox").checked,
     "Checkbox shouldn't be checked by default."
   );
   promiseDialogUnloaded = BrowserTestUtils.waitForEvent(prompt, "unload");
 
-  doc.documentElement.acceptDialog();
+  dialog.acceptDialog();
   await promiseDialogUnloaded;
   info("Dialog unloaded");
   await waitForFocusOnInput(tab.linkedBrowser);
@@ -164,19 +158,16 @@ add_task(async function checkTogglingCaretBrowsing() {
   hitF7();
   prompt = await promiseGotKey;
   doc = prompt.document;
+  dialog = doc.getElementById("commonDialog");
 
-  is(
-    doc.documentElement.defaultButton,
-    "cancel",
-    "No button should be the default"
-  );
+  is(dialog.defaultButton, "cancel", "No button should be the default");
   ok(
     !doc.getElementById("checkbox").checked,
     "Checkbox shouldn't be checked by default."
   );
 
   promiseDialogUnloaded = BrowserTestUtils.waitForEvent(prompt, "unload");
-  doc.documentElement.cancelDialog();
+  dialog.cancelDialog();
   await promiseDialogUnloaded;
   info("Dialog unloaded");
   await waitForFocusOnInput(tab.linkedBrowser);
@@ -201,11 +192,8 @@ add_task(async function toggleCheckboxNoCaretBrowsing() {
   hitF7();
   let prompt = await promiseGotKey;
   let doc = prompt.document;
-  is(
-    doc.documentElement.defaultButton,
-    "cancel",
-    "No button should be the default"
-  );
+  let dialog = doc.getElementById("commonDialog");
+  is(dialog.defaultButton, "cancel", "No button should be the default");
   let checkbox = doc.getElementById("checkbox");
   ok(!checkbox.checked, "Checkbox shouldn't be checked by default.");
 
@@ -215,7 +203,7 @@ add_task(async function toggleCheckboxNoCaretBrowsing() {
   let promiseDialogUnloaded = BrowserTestUtils.waitForEvent(prompt, "unload");
 
   // Say no:
-  doc.documentElement.getButton("cancel").click();
+  dialog.getButton("cancel").click();
 
   await promiseDialogUnloaded;
   info("Dialog unloaded");
@@ -250,11 +238,8 @@ add_task(async function toggleCheckboxWantCaretBrowsing() {
   hitF7();
   let prompt = await promiseGotKey;
   let doc = prompt.document;
-  is(
-    doc.documentElement.defaultButton,
-    "cancel",
-    "No button should be the default"
-  );
+  let dialog = doc.getElementById("commonDialog");
+  is(dialog.defaultButton, "cancel", "No button should be the default");
   let checkbox = doc.getElementById("checkbox");
   ok(!checkbox.checked, "Checkbox shouldn't be checked by default.");
 
@@ -264,7 +249,7 @@ add_task(async function toggleCheckboxWantCaretBrowsing() {
   let promiseDialogUnloaded = BrowserTestUtils.waitForEvent(prompt, "unload");
 
   // Say yes:
-  doc.documentElement.acceptDialog();
+  dialog.acceptDialog();
   await promiseDialogUnloaded;
   info("Dialog unloaded");
   await waitForFocusOnInput(tab.linkedBrowser);

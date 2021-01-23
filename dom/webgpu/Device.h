@@ -3,114 +3,137 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef WEBGPU_DEVICE_H_
-#define WEBGPU_DEVICE_H_
+#ifndef GPU_DEVICE_H_
+#define GPU_DEVICE_H_
 
+#include "mozilla/MozPromise.h"
 #include "mozilla/RefPtr.h"
-#include "ObjectModel.h"
+#include "mozilla/webgpu/WebGPUTypes.h"
+#include "mozilla/webrender/WebRenderAPI.h"
+#include "mozilla/DOMEventTargetHelper.h"
 
 namespace mozilla {
 namespace dom {
-struct WebGPUExtensions;
-struct WebGPUFeatures;
-struct WebGPULimits;
+struct GPUExtensions;
+struct GPUFeatures;
+struct GPULimits;
+struct GPUExtent3DDict;
 
-struct WebGPUBufferDescriptor;
-struct WebGPUTextureDescriptor;
-struct WebGPUSamplerDescriptor;
-struct WebGPUBindGroupLayoutDescriptor;
-struct WebGPUPipelineLayoutDescriptor;
-struct WebGPUBindGroupDescriptor;
-struct WebGPUBlendStateDescriptor;
-struct WebGPUDepthStencilStateDescriptor;
-struct WebGPUInputStateDescriptor;
-struct WebGPUShaderModuleDescriptor;
-struct WebGPUAttachmentStateDescriptor;
-struct WebGPUComputePipelineDescriptor;
-struct WebGPURenderPipelineDescriptor;
-struct WebGPUCommandEncoderDescriptor;
+struct GPUBufferDescriptor;
+struct GPUTextureDescriptor;
+struct GPUSamplerDescriptor;
+struct GPUBindGroupLayoutDescriptor;
+struct GPUPipelineLayoutDescriptor;
+struct GPUBindGroupDescriptor;
+struct GPUBlendStateDescriptor;
+struct GPUDepthStencilStateDescriptor;
+struct GPUInputStateDescriptor;
+struct GPUShaderModuleDescriptor;
+struct GPUAttachmentStateDescriptor;
+struct GPUComputePipelineDescriptor;
+struct GPURenderBundleEncoderDescriptor;
+struct GPURenderPipelineDescriptor;
+struct GPUCommandEncoderDescriptor;
+struct GPUSwapChainDescriptor;
 
+class EventHandlerNonNull;
 class Promise;
-class WebGPUBufferOrWebGPUTexture;
-class WebGPULogCallback;
+template <typename T>
+class Sequence;
+class GPUBufferOrGPUTexture;
+enum class GPUErrorFilter : uint8_t;
+class GPULogCallback;
 }  // namespace dom
+namespace ipc {
+enum class ResponseRejectReason;
+class Shmem;
+}  // namespace ipc
 
 namespace webgpu {
 class Adapter;
-class AttachmentState;
 class BindGroup;
 class BindGroupLayout;
-class BlendState;
 class Buffer;
 class CommandEncoder;
 class ComputePipeline;
-class DepthStencilState;
 class Fence;
 class InputState;
 class PipelineLayout;
 class Queue;
+class RenderBundleEncoder;
 class RenderPipeline;
 class Sampler;
 class ShaderModule;
 class Texture;
+class WebGPUChild;
 
-class Device final : public ChildOf<Adapter> {
+typedef MozPromise<ipc::Shmem, ipc::ResponseRejectReason, true> MappingPromise;
+
+class Device final : public DOMEventTargetHelper {
  public:
-  WEBGPU_DECL_GOOP(Device)
+  NS_DECL_ISUPPORTS_INHERITED
+  NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(Device, DOMEventTargetHelper)
+  GPU_DECL_JS_WRAP(Device)
+
+  explicit Device(Adapter* const aParent, RawId aId);
+
+  RefPtr<WebGPUChild> GetBridge();
+  static JSObject* CreateExternalArrayBuffer(JSContext* aCx, size_t aSize,
+                                             ipc::Shmem& aShmem);
+  RefPtr<MappingPromise> MapBufferForReadAsync(RawId aId, size_t aSize,
+                                               ErrorResult& aRv);
+  void UnmapBuffer(RawId aId, UniquePtr<ipc::Shmem> aShmem, bool aFlush);
+  already_AddRefed<Texture> InitSwapChain(
+      const dom::GPUSwapChainDescriptor& aDesc,
+      const dom::GPUExtent3DDict& aExtent3D,
+      wr::ExternalImageId aExternalImageId, gfx::SurfaceFormat aFormat);
 
  private:
-  Device() = delete;
-  virtual ~Device();
+  ~Device();
+  void Cleanup();
+
+  RefPtr<WebGPUChild> mBridge;
+  const RawId mId;
+  bool mValid = true;
+  nsString mLabel;
+  RefPtr<Queue> mQueue;
 
  public:
-  already_AddRefed<webgpu::Adapter> Adapter() const;
+  void GetLabel(nsAString& aValue) const;
+  void SetLabel(const nsAString& aLabel);
 
-  void Extensions(dom::WebGPUExtensions& out) const;
-  void Features(dom::WebGPUFeatures& out) const;
-  void Limits(dom::WebGPULimits& out) const;
+  Queue* DefaultQueue() const;
 
-  already_AddRefed<Buffer> CreateBuffer(
-      const dom::WebGPUBufferDescriptor& desc) const;
+  already_AddRefed<Buffer> CreateBuffer(const dom::GPUBufferDescriptor& aDesc);
+  void CreateBufferMapped(JSContext* aCx, const dom::GPUBufferDescriptor& aDesc,
+                          nsTArray<JS::Value>& aSequence, ErrorResult& aRv);
+
   already_AddRefed<Texture> CreateTexture(
-      const dom::WebGPUTextureDescriptor& desc) const;
+      const dom::GPUTextureDescriptor& aDesc);
   already_AddRefed<Sampler> CreateSampler(
-      const dom::WebGPUSamplerDescriptor& desc) const;
-
-  already_AddRefed<BindGroupLayout> CreateBindGroupLayout(
-      const dom::WebGPUBindGroupLayoutDescriptor& desc) const;
-  already_AddRefed<PipelineLayout> CreatePipelineLayout(
-      const dom::WebGPUPipelineLayoutDescriptor& desc) const;
-  already_AddRefed<BindGroup> CreateBindGroup(
-      const dom::WebGPUBindGroupDescriptor& desc) const;
-
-  already_AddRefed<BlendState> CreateBlendState(
-      const dom::WebGPUBlendStateDescriptor& desc) const;
-  already_AddRefed<DepthStencilState> CreateDepthStencilState(
-      const dom::WebGPUDepthStencilStateDescriptor& desc) const;
-  already_AddRefed<InputState> CreateInputState(
-      const dom::WebGPUInputStateDescriptor& desc) const;
-  already_AddRefed<ShaderModule> CreateShaderModule(
-      const dom::WebGPUShaderModuleDescriptor& desc) const;
-  already_AddRefed<AttachmentState> CreateAttachmentState(
-      const dom::WebGPUAttachmentStateDescriptor& desc) const;
-  already_AddRefed<ComputePipeline> CreateComputePipeline(
-      const dom::WebGPUComputePipelineDescriptor& desc) const;
-  already_AddRefed<RenderPipeline> CreateRenderPipeline(
-      const dom::WebGPURenderPipelineDescriptor& desc) const;
+      const dom::GPUSamplerDescriptor& aDesc);
 
   already_AddRefed<CommandEncoder> CreateCommandEncoder(
-      const dom::WebGPUCommandEncoderDescriptor& desc) const;
+      const dom::GPUCommandEncoderDescriptor& aDesc);
 
-  already_AddRefed<Queue> GetQueue() const;
+  already_AddRefed<BindGroupLayout> CreateBindGroupLayout(
+      const dom::GPUBindGroupLayoutDescriptor& aDesc);
+  already_AddRefed<PipelineLayout> CreatePipelineLayout(
+      const dom::GPUPipelineLayoutDescriptor& aDesc);
+  already_AddRefed<BindGroup> CreateBindGroup(
+      const dom::GPUBindGroupDescriptor& aDesc);
 
-  RefPtr<dom::WebGPULogCallback> OnLog() const;
-  void SetOnLog(const dom::WebGPULogCallback& callback) const;
+  already_AddRefed<ShaderModule> CreateShaderModule(
+      const dom::GPUShaderModuleDescriptor& aDesc);
+  already_AddRefed<ComputePipeline> CreateComputePipeline(
+      const dom::GPUComputePipelineDescriptor& aDesc);
+  already_AddRefed<RenderPipeline> CreateRenderPipeline(
+      const dom::GPURenderPipelineDescriptor& aDesc);
 
-  already_AddRefed<dom::Promise> GetObjectStatus(
-      const dom::WebGPUBufferOrWebGPUTexture& obj) const;
+  // IMPL_EVENT_HANDLER(uncapturederror)
 };
 
 }  // namespace webgpu
 }  // namespace mozilla
 
-#endif  // WEBGPU_DEVICE_H_
+#endif  // GPU_DEVICE_H_

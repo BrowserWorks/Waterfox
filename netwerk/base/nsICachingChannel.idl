@@ -24,7 +24,7 @@ interface nsICachingChannel : nsICacheInfoChannel
      * Set/get the cache token... uniquely identifies the data in the cache.
      * Holding a reference to this token prevents the cached data from being
      * removed.
-     * 
+     *
      * A cache token retrieved from a particular instance of nsICachingChannel
      * could be set on another instance of nsICachingChannel provided the
      * underlying implementations are compatible.  The implementation of
@@ -79,9 +79,7 @@ interface nsICachingChannel : nsICacheInfoChannel
      * cause validation of the cache entry via the network.
      *
      * Combining this flag with LOAD_BYPASS_LOCAL_CACHE will cause all
-     * loads to fail. This flag differs from LOAD_ONLY_FROM_CACHE in that
-     * this flag fails the load if validation is required while
-     * LOAD_ONLY_FROM_CACHE skips validation where possible.
+     * loads to fail.
      */
     const unsigned long LOAD_NO_NETWORK_IO = 1 << 26;
 

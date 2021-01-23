@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "Fo-sgrìobh">
+<!ENTITY subscribeButton.label        "Fo-sgrìobh">
+<!ENTITY subscribeButton.accesskey    "s">
+<!ENTITY unsubscribeButton.label      "Sguir dhen fho-sgrìobhadh">
+<!ENTITY unsubscribeButton.accesskey  "u">
+<!ENTITY newGroupsTab.label           "Buidhnean ùra">
+<!ENTITY newGroupsTab.accesskey       "n">
+<!ENTITY refreshButton.label          "Ath-ùraich">
+<!ENTITY refreshButton.accesskey      "r">
+<!ENTITY stopButton.label             "Sguir dheth">
+<!ENTITY stopButton.accesskey         "t">
+<!ENTITY server.label                 "Cunntas:">
+<!ENTITY server.accesskey             "a">
+<!ENTITY subscribedHeader.label       "Fo-sgrìobh">
+<!-- commenting out until bug 38906 is fixed 
+<!ENTITY messagesHeader.label         "Messages"> -->
+<!ENTITY namefield.label              "Seall rudan anns a bheil:">
+<!ENTITY namefield.accesskey          "S">

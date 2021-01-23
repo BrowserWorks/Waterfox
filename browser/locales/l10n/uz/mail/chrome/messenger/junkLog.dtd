@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY adaptiveJunkLog.title "Adaptiv spam xatlar jurnali">
+<!ENTITY adaptiveJunkLogInfo.label "Adaptiv spam xabarni boshqarish faoliyati jurnali.">
+<!ENTITY clearLog.label "Jurnalni tozalash">
+<!ENTITY clearLog.accesskey "t">
+<!ENTITY closeLog.label "Yopish">
+<!ENTITY closeLog.accesskey "o">

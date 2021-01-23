@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Title -->
+
+<!ENTITY mailListWindowAdd.title        "Novi popis primatelja">
+<!-- Labels and Access Keys -->
+
+<!ENTITY addToAddressBook.label         "Dodaj u: ">
+<!ENTITY addToAddressBook.accesskey     "D">
+<!ENTITY ListName.label                 "Naziv liste: ">
+<!ENTITY ListName.accesskey             "l">
+<!ENTITY ListNickName.label             "Nadimak liste: ">
+<!ENTITY ListNickName.accesskey         "N">
+<!ENTITY ListDescription.label          "Opis: ">
+<!ENTITY ListDescription.accesskey      "O">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "Upišite adrese e-pošte da biste ih dodali na popis primatelja:">
+<!ENTITY AddressTitle.accesskey         "m">
+<!ENTITY UpButton.label                 "Pomakni gore">
+<!ENTITY DownButton.label               "Pomakni dolje">
+

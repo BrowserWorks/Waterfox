@@ -109,6 +109,7 @@ RTCPReceiver::RTCPReceiver(
     bool receiver_only,
     RtcpPacketTypeCounterObserver* packet_type_counter_observer,
     RtcpBandwidthObserver* rtcp_bandwidth_observer,
+    RtcpEventObserver* rtcp_event_observer,
     RtcpIntraFrameObserver* rtcp_intra_frame_observer,
     TransportFeedbackObserver* transport_feedback_observer,
     VideoBitrateAllocationObserver* bitrate_allocation_observer,
@@ -117,6 +118,7 @@ RTCPReceiver::RTCPReceiver(
       receiver_only_(receiver_only),
       rtp_rtcp_(owner),
       rtcp_bandwidth_observer_(rtcp_bandwidth_observer),
+      rtcp_event_observer_(rtcp_event_observer),
       rtcp_intra_frame_observer_(rtcp_intra_frame_observer),
       transport_feedback_observer_(transport_feedback_observer),
       bitrate_allocation_observer_(bitrate_allocation_observer),
@@ -256,6 +258,7 @@ bool RTCPReceiver::NTP(uint32_t* received_ntp_secs,
 
 void RTCPReceiver::RemoteRTCPSenderInfo(uint32_t* packet_count,
                                         uint32_t* octet_count) const {
+  rtc::CritScope lock(&rtcp_receiver_lock_);
   *packet_count = remote_sender_packet_count_;
   *octet_count = remote_sender_octet_count_;
 }
@@ -555,6 +558,9 @@ bool RTCPReceiver::RtcpRrTimeout(int64_t rtcp_interval_ms) {
   if (clock_->TimeInMilliseconds() > last_received_rb_ms_ + time_out_ms) {
     // Reset the timer to only trigger one log.
     last_received_rb_ms_ = 0;
+    if (rtcp_event_observer_) {
+      rtcp_event_observer_->OnRtcpTimeout();
+    }
     return true;
   }
   return false;
@@ -570,6 +576,9 @@ bool RTCPReceiver::RtcpRrSequenceNumberTimeout(int64_t rtcp_interval_ms) {
       last_increased_sequence_number_ms_ + time_out_ms) {
     // Reset the timer to only trigger one log.
     last_increased_sequence_number_ms_ = 0;
+    if (rtcp_event_observer_) {
+      rtcp_event_observer_->OnRtcpTimeout();
+    }
     return true;
   }
   return false;
@@ -672,6 +681,10 @@ void RTCPReceiver::HandleBye(const CommonHeader& rtcp_block) {
   if (!bye.Parse(rtcp_block)) {
     ++num_skipped_packets_;
     return;
+  }
+
+  if (rtcp_event_observer_) {
+    rtcp_event_observer_->OnRtcpBye();
   }
 
   // Clear our lists.

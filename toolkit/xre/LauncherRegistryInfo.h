@@ -7,10 +7,8 @@
 #ifndef mozilla_LauncherRegistryInfo_h
 #define mozilla_LauncherRegistryInfo_h
 
-#include "mozilla/CmdLineAndEnvUtils.h"
-#include "mozilla/LauncherResult.h"
 #include "mozilla/Maybe.h"
-#include "mozilla/UniquePtr.h"
+#include "mozilla/WinHeaderOnlyUtils.h"
 #include "nsWindowsHelpers.h"
 
 #include <string>
@@ -26,10 +24,10 @@ class LauncherRegistryInfo final {
  public:
   enum class ProcessType { Launcher, Browser };
 
-  enum class EnabledState : uint32_t {
-    Enabled = 0,
-    FailDisabled = 1,
-    ForceDisabled = 2,
+  enum class EnabledState {
+    Enabled,
+    FailDisabled,
+    ForceDisabled,
   };
 
   enum class CheckOption {
@@ -38,36 +36,50 @@ class LauncherRegistryInfo final {
   };
 
   LauncherRegistryInfo() : mBinPath(GetFullBinaryPath().get()) {}
+  ~LauncherRegistryInfo() { Abort(); }
 
   LauncherVoidResult ReflectPrefToRegistry(const bool aEnable);
   LauncherResult<EnabledState> IsEnabled();
   LauncherResult<bool> IsTelemetryEnabled();
   LauncherVoidResult ReflectTelemetryPrefToRegistry(const bool aEnable);
-  LauncherResult<ProcessType> Check(const ProcessType aDesiredType,
-                                    const CheckOption aOption =
-                                      CheckOption::Default);
+  LauncherResult<ProcessType> Check(
+      const ProcessType aDesiredType,
+      const CheckOption aOption = CheckOption::Default);
   LauncherVoidResult DisableDueToFailure();
+  LauncherVoidResult Commit();
+  void Abort();
 
  private:
   enum class Disposition { CreatedNew, OpenedExisting };
 
  private:
-  LauncherResult<Disposition> Open();
-  LauncherVoidResult WriteStartTimestamp(
-      ProcessType aProcessType, const Maybe<uint64_t>& aValue = Nothing());
-  LauncherResult<DWORD> GetCurrentImageTimestamp();
-  LauncherVoidResult WriteImageTimestamp(DWORD aTimestamp);
-  LauncherResult<bool> ClearStartTimestamp(ProcessType aProcessType);
-  LauncherVoidResult ClearStartTimestamps();
-  LauncherResult<DWORD> GetSavedImageTimestamp();
-  LauncherResult<uint64_t> GetStartTimestamp(ProcessType aProcessType);
-  LauncherResult<bool> GetTelemetrySetting();
+  // This flag is to prevent the disabled state from being accidentally
+  // re-enabled by another instance.
+  static bool sAllowCommit;
 
-  LauncherResult<std::wstring> ResolveValueName(ProcessType aProcessType);
-  std::wstring ResolveImageTimestampValueName();
-  std::wstring ResolveTelemetryValueName();
+  static EnabledState GetEnabledState(const Maybe<uint64_t>& aLauncherTs,
+                                      const Maybe<uint64_t>& aBrowserTs);
+
+  LauncherResult<Disposition> Open();
+  LauncherVoidResult WriteLauncherStartTimestamp(uint64_t aValue);
+  LauncherVoidResult WriteBrowserStartTimestamp(uint64_t aValue);
+  LauncherVoidResult WriteImageTimestamp(DWORD aTimestamp);
+  LauncherResult<bool> ClearLauncherStartTimestamp();
+  LauncherResult<bool> ClearBrowserStartTimestamp();
+  LauncherVoidResult ClearStartTimestamps();
+  LauncherResult<Maybe<DWORD>> GetSavedImageTimestamp();
+  LauncherResult<Maybe<uint64_t>> GetLauncherStartTimestamp();
+  LauncherResult<Maybe<uint64_t>> GetBrowserStartTimestamp();
+
+  const std::wstring& ResolveLauncherValueName();
+  const std::wstring& ResolveBrowserValueName();
+  const std::wstring& ResolveImageTimestampValueName();
+  const std::wstring& ResolveTelemetryValueName();
 
  private:
+  Maybe<uint64_t> mLauncherTimestampToWrite;
+  Maybe<uint64_t> mBrowserTimestampToWrite;
+
   nsAutoRegKey mRegKey;
   std::wstring mBinPath;
   std::wstring mImageValueName;

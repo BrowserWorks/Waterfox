@@ -23,8 +23,6 @@ const { debug, warn } = GeckoViewUtils.initLogging(
 
 var EXPORTED_SYMBOLS = ["GeckoViewTelemetryController"];
 
-/* global debug warn */
-
 // Persistent data loading topic - see TelemetryGeckoViewPersistence.cpp.
 const LOAD_COMPLETE_TOPIC = "internal-telemetry-geckoview-load-complete";
 
@@ -37,9 +35,7 @@ const GeckoViewTelemetryController = {
     TelemetryUtils.setTelemetryRecordingFlags();
 
     debug`setup -
-           canRecordPrereleaseData ${
-             Services.telemetry.canRecordPrereleaseData
-           },
+           canRecordPrereleaseData ${Services.telemetry.canRecordPrereleaseData},
            canRecordReleaseData ${Services.telemetry.canRecordReleaseData}`;
 
     if (GeckoViewUtils.IS_PARENT_PROCESS) {

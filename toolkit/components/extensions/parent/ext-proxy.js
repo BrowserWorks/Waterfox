@@ -8,13 +8,8 @@
 
 ChromeUtils.defineModuleGetter(
   this,
-  "ProxyScriptContext",
-  "resource://gre/modules/ProxyScriptContext.jsm"
-);
-ChromeUtils.defineModuleGetter(
-  this,
   "ProxyChannelFilter",
-  "resource://gre/modules/ProxyScriptContext.jsm"
+  "resource://gre/modules/ProxyChannelFilter.jsm"
 );
 var { ExtensionPreferencesManager } = ChromeUtils.import(
   "resource://gre/modules/ExtensionPreferencesManager.jsm"
@@ -22,9 +17,6 @@ var { ExtensionPreferencesManager } = ChromeUtils.import(
 
 var { ExtensionError } = ExtensionUtils;
 var { getSettingsAPI } = ExtensionPreferencesManager;
-
-// WeakMap[Extension -> ProxyScriptContext]
-const proxyScriptContextMap = new WeakMap();
 
 const proxySvc = Ci.nsIProtocolProxyService;
 
@@ -44,6 +36,7 @@ const DEFAULT_PORTS = new Map([
 ]);
 
 ExtensionPreferencesManager.addSetting("proxy.settings", {
+  permission: "proxy",
   prefNames: [
     "network.proxy.type",
     "network.proxy.http",
@@ -60,6 +53,7 @@ ExtensionPreferencesManager.addSetting("proxy.settings", {
     "network.proxy.no_proxies_on",
     "network.proxy.autoconfig_url",
     "signon.autologin.proxy",
+    "network.http.proxy.respect-be-conservative",
   ],
 
   setCallback(value) {
@@ -71,6 +65,7 @@ ExtensionPreferencesManager.addSetting("proxy.settings", {
       "network.proxy.share_proxy_settings": value.httpProxyAll,
       "network.proxy.socks_version": value.socksVersion,
       "network.proxy.no_proxies_on": value.passthrough,
+      "network.http.proxy.respect-be-conservative": value.respectBeConservative,
     };
 
     for (let prop of ["http", "ftp", "ssl", "socks"]) {
@@ -81,9 +76,6 @@ ExtensionPreferencesManager.addSetting("proxy.settings", {
         let [, rawPort] = value[prop].split(":");
         let port = parseInt(rawPort, 10) || DEFAULT_PORTS.get(prop);
         prefs[`network.proxy.${prop}_port`] = port;
-      } else {
-        prefs[`network.proxy.${prop}`] = undefined;
-        prefs[`network.proxy.${prop}_port`] = undefined;
       }
     }
 
@@ -136,16 +128,6 @@ function registerProxyFilterEvent(
 }
 
 this.proxy = class extends ExtensionAPI {
-  onShutdown() {
-    let { extension } = this;
-
-    let proxyScriptContext = proxyScriptContextMap.get(extension);
-    if (proxyScriptContext) {
-      proxyScriptContext.unload();
-      proxyScriptContextMap.delete(extension);
-    }
-  }
-
   primeListener(extension, event, fire, params) {
     if (event === "onRequest") {
       return registerProxyFilterEvent(undefined, extension, fire, ...params);
@@ -155,45 +137,8 @@ this.proxy = class extends ExtensionAPI {
   getAPI(context) {
     let { extension } = context;
 
-    // Leaving as non-persistent.  By itself it's not useful since proxy-error
-    // is emitted from the proxy filter.
-    let onError = new EventManager({
-      context,
-      name: "proxy.onError",
-      register: fire => {
-        let listener = (name, error) => {
-          fire.async(error);
-        };
-        extension.on("proxy-error", listener);
-        return () => {
-          extension.off("proxy-error", listener);
-        };
-      },
-    }).api();
-
     return {
       proxy: {
-        register(url) {
-          this.unregister();
-
-          let proxyScriptContext = new ProxyScriptContext(extension, url);
-          if (proxyScriptContext.load()) {
-            proxyScriptContextMap.set(extension, proxyScriptContext);
-          }
-        },
-
-        unregister() {
-          // Unload the current proxy script if one is loaded.
-          if (proxyScriptContextMap.has(extension)) {
-            proxyScriptContextMap.get(extension).unload();
-            proxyScriptContextMap.delete(extension);
-          }
-        },
-
-        registerProxyScript(url) {
-          this.register(url);
-        },
-
         onRequest: new EventManager({
           context,
           name: `proxy.onRequest`,
@@ -212,16 +157,27 @@ this.proxy = class extends ExtensionAPI {
           },
         }).api(),
 
-        onError,
-
-        // TODO Bug 1388619 deprecate onProxyError.
-        onProxyError: onError,
+        // Leaving as non-persistent.  By itself it's not useful since proxy-error
+        // is emitted from the proxy filter.
+        onError: new EventManager({
+          context,
+          name: "proxy.onError",
+          register: fire => {
+            let listener = (name, error) => {
+              fire.async(error);
+            };
+            extension.on("proxy-error", listener);
+            return () => {
+              extension.off("proxy-error", listener);
+            };
+          },
+        }).api(),
 
         settings: Object.assign(
-          getSettingsAPI(
-            extension.id,
-            "proxy.settings",
-            () => {
+          getSettingsAPI({
+            context,
+            name: "proxy.settings",
+            callback() {
               let prefValue = Services.prefs.getIntPref("network.proxy.type");
               let proxyConfig = {
                 proxyType: Array.from(PROXY_TYPES_MAP.entries()).find(
@@ -245,6 +201,12 @@ this.proxy = class extends ExtensionAPI {
                 ),
               };
 
+              if (extension.isPrivileged) {
+                proxyConfig.respectBeConservative = Services.prefs.getBoolPref(
+                  "network.http.proxy.respect-be-conservative"
+                );
+              }
+
               for (let prop of ["http", "ftp", "ssl", "socks"]) {
                 let host = Services.prefs.getCharPref(`network.proxy.${prop}`);
                 let port = Services.prefs.getIntPref(
@@ -256,16 +218,14 @@ this.proxy = class extends ExtensionAPI {
               return proxyConfig;
             },
             // proxy.settings is unsupported on android.
-            undefined,
-            false,
-            () => {
+            validate() {
               if (AppConstants.platform == "android") {
                 throw new ExtensionError(
                   `proxy.settings is not supported on android.`
                 );
               }
-            }
-          ),
+            },
+          }),
           {
             set: details => {
               if (AppConstants.platform === "android") {
@@ -303,7 +263,7 @@ this.proxy = class extends ExtensionAPI {
                 // Match what about:preferences does with proxy settings
                 // since the proxy service does not check the value
                 // of share_proxy_settings.
-                for (let prop of ["ftp", "ssl", "socks"]) {
+                for (let prop of ["ftp", "ssl"]) {
                   value[prop] = value.http;
                 }
               }
@@ -332,9 +292,7 @@ this.proxy = class extends ExtensionAPI {
                   new URL(value.autoConfigUrl);
                 } catch (e) {
                   throw new ExtensionError(
-                    `${
-                      value.autoConfigUrl
-                    } is not a valid value for autoConfigUrl.`
+                    `${value.autoConfigUrl} is not a valid value for autoConfigUrl.`
                   );
                 }
               }
@@ -346,11 +304,21 @@ this.proxy = class extends ExtensionAPI {
                   value.socksVersion > 5
                 ) {
                   throw new ExtensionError(
-                    `${
-                      value.socksVersion
-                    } is not a valid value for socksVersion.`
+                    `${value.socksVersion} is not a valid value for socksVersion.`
                   );
                 }
+              }
+
+              if (
+                value.respectBeConservative !== undefined &&
+                !extension.isPrivileged &&
+                Services.prefs.getBoolPref(
+                  "network.http.proxy.respect-be-conservative"
+                ) != value.respectBeConservative
+              ) {
+                throw new ExtensionError(
+                  `respectBeConservative can be set by privileged extensions only.`
+                );
               }
 
               return ExtensionPreferencesManager.setSetting(

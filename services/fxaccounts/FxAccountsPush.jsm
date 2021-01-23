@@ -8,7 +8,6 @@ const {
   FXA_PUSH_SCOPE_ACCOUNT_UPDATE,
   ONLOGOUT_NOTIFICATION,
   ON_ACCOUNT_DESTROYED_NOTIFICATION,
-  ON_ACCOUNT_STATE_CHANGE_NOTIFICATION,
   ON_COLLECTION_CHANGED_NOTIFICATION,
   ON_COMMAND_RECEIVED_NOTIFICATION,
   ON_DEVICE_CONNECTED_NOTIFICATION,
@@ -51,9 +50,9 @@ FxAccountsPushService.prototype = {
    */
   pushService: null,
   /**
-   * Instance of FxAccounts or a mocked object.
+   * Instance of FxAccountsInternal or a mocked object.
    */
-  fxAccounts: null,
+  fxai: null,
   /**
    * Component ID of this service, helps register this component.
    */
@@ -82,14 +81,14 @@ FxAccountsPushService.prototype = {
       );
     }
 
-    if (options.fxAccounts) {
-      this.fxAccounts = options.fxAccounts;
+    if (options.fxai) {
+      this.fxai = options.fxai;
     } else {
-      ChromeUtils.defineModuleGetter(
-        this,
-        "fxAccounts",
-        "resource://gre/modules/FxAccounts.jsm"
+      let { fxAccounts } = ChromeUtils.import(
+        "resource://gre/modules/FxAccounts.jsm",
+        {}
       );
+      this.fxai = fxAccounts._internal;
     }
 
     this.asyncObserver = Async.asyncObserver(this, this.log);
@@ -167,7 +166,6 @@ FxAccountsPushService.prototype = {
           } catch (err) {
             this.log.error("Error during unsubscribe", err);
           }
-        default:
           break;
       }
     } catch (err) {
@@ -186,14 +184,14 @@ FxAccountsPushService.prototype = {
     if (!message.data) {
       // Use the empty signal to check the verification state of the account right away
       this.log.debug("empty push message - checking account status");
-      this.fxAccounts.checkVerificationStatus();
+      this.fxai.checkVerificationStatus();
       return;
     }
     let payload = message.data.json();
     this.log.debug(`push command: ${payload.command}`);
     switch (payload.command) {
       case ON_COMMAND_RECEIVED_NOTIFICATION:
-        await this.fxAccounts.commands.pollDeviceCommands(payload.data.index);
+        await this.fxai.commands.pollDeviceCommands(payload.data.index);
         break;
       case ON_DEVICE_CONNECTED_NOTIFICATION:
         Services.obs.notifyObservers(
@@ -203,7 +201,7 @@ FxAccountsPushService.prototype = {
         );
         break;
       case ON_DEVICE_DISCONNECTED_NOTIFICATION:
-        this.fxAccounts.handleDeviceDisconnection(payload.data.id);
+        this.fxai._handleDeviceDisconnection(payload.data.id);
         return;
       case ON_PROFILE_UPDATED_NOTIFICATION:
         // We already have a "profile updated" notification sent via WebChannel,
@@ -215,7 +213,7 @@ FxAccountsPushService.prototype = {
         this._onPasswordChanged();
         return;
       case ON_ACCOUNT_DESTROYED_NOTIFICATION:
-        this.fxAccounts.handleAccountDestroyed(payload.data.uid);
+        this.fxai._handleAccountDestroyed(payload.data.uid);
         return;
       case ON_COLLECTION_CHANGED_NOTIFICATION:
         Services.obs.notifyObservers(
@@ -243,11 +241,10 @@ FxAccountsPushService.prototype = {
    * @returns {Promise}
    * @private
    */
-  async _onPasswordChanged() {
-    if (!(await this.fxAccounts.sessionStatus())) {
-      await this.fxAccounts.resetCredentials();
-      Services.obs.notifyObservers(null, ON_ACCOUNT_STATE_CHANGE_NOTIFICATION);
-    }
+  _onPasswordChanged() {
+    return this.fxai.withCurrentAccountState(async state => {
+      return this.fxai.checkAccountStatus(state);
+    });
   },
   /**
    * Fired when the Push server drops a subscription, or the subscription identifier changes.
@@ -259,7 +256,7 @@ FxAccountsPushService.prototype = {
    */
   _onPushSubscriptionChange() {
     this.log.trace("FxAccountsPushService _onPushSubscriptionChange");
-    return this.fxAccounts.updateDeviceRegistration();
+    return this.fxai.updateDeviceRegistration();
   },
   /**
    * Unsubscribe from the Push server

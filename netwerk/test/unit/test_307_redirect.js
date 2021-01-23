@@ -1,3 +1,5 @@
+"use strict";
+
 const { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
 
 XPCOMUtils.defineLazyGetter(this, "URL", function() {
@@ -23,7 +25,6 @@ const requestBody = "request body";
 function redirectHandler(metadata, response) {
   response.setStatusLine(metadata.httpVersion, 307, "Moved Temporarily");
   response.setHeader("Location", noRedirectURI, false);
-  return;
 }
 
 function contentHandler(metadata, response) {

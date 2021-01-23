@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "E-mail">
+<!ENTITY readMsgsLink.label           "Powěsći cytaś">
+<!ENTITY composeMsgLink.label         "Nowu powěsć pisaś">
+
+<!ENTITY newsSectionHdr.label         "Diskusijne kupki">
+<!ENTITY subscribeNewsLink.label      "Abonementy diskusijnych kupkow zastojaś">
+
+<!ENTITY feedsSectionHdr.label        "Kanale">
+<!ENTITY subscribeFeeds.label         "Abonomenty zastojaś">
+
+<!ENTITY chat.label                   "Chat">
+<!ENTITY movemail.label               "Movemail">
+
+<!ENTITY accountsSectionHdr.label     "Konta">
+<!ENTITY subscribeImapFolders.label   "Abonementy zarědnikow zastojaś">
+<!ENTITY settingsLink.label           "Nastajenja za toś to konto pokazaś">
+<!ENTITY setupNewAcct.label           "Konto konfigurěrowaś:">
+
+<!ENTITY advFeaturesSectionHdr.label  "Rozšyrjone funkcije">
+<!ENTITY searchMsgsLink.label         "Powěsći pytaś">
+<!ENTITY filtersLink.label            "Powěsćowe filtry zastojaś">
+<!ENTITY junkSettings.label           "Nastajenja cajkowego posta">
+<!ENTITY offlineLink.label            "Nastajenja offline">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Novo spremljene mape za pretraživanje">
+<!ENTITY name.label                 "Naziv:">
+<!ENTITY name.accesskey             "N">
+<!ENTITY description.label          "Stvori kao podmapu od:">
+<!ENTITY description.accesskey      "S">
+
+<!ENTITY searchTermCaption.label "Podesi kriterij pretraživanja koji se koristi za ovu spremljenu mapu pretraživanja: ">
+
+<!ENTITY folderSelectionCaption.label "Odaberite mape za pretraživanje: ">
+<!ENTITY chooseFoldersButton.label "Odaberi…">
+<!ENTITY chooseFoldersButton.accesskey "O">
+
+<!ENTITY searchOnline.label "Pretraži na mreži (daje najnovije rezultate za IMAP i mape interesnih grupa, ali povećava vrijeme potrebno za otvaranje mape)">
+<!ENTITY searchOnline.accesskey "P">
+<!ENTITY newFolderButton.label       "Stvori">
+<!ENTITY newFolderButton.accesskey   "r">
+<!ENTITY editFolderButton.label      "Ažuriraj">
+<!ENTITY editFolderButton.accesskey  "u">

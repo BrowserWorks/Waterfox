@@ -153,7 +153,8 @@ function chooseProfileFolder() {
 
 // Checks the current user input for validity and triggers an error message accordingly.
 function checkCurrentInput(currentInput) {
-  var finishButton = document.documentElement.getButton("finish");
+  let wizard = document.querySelector("wizard");
+  var finishButton = wizard.getButton("finish");
   var finishText = document.getElementById("finishText");
   var canAdvance;
 
@@ -177,7 +178,7 @@ function checkCurrentInput(currentInput) {
     canAdvance = false;
   }
 
-  document.documentElement.canAdvance = canAdvance;
+  wizard.canAdvance = canAdvance;
   finishButton.disabled = !canAdvance;
 
   updateProfileDisplay();
@@ -226,7 +227,7 @@ function profileExists(aName) {
 
 // Called when the first wizard page is shown.
 function enableNextButton() {
-  document.documentElement.canAdvance = true;
+  document.querySelector("wizard").canAdvance = true;
 }
 
 function onFinish(event) {
@@ -253,11 +254,9 @@ function onFinish(event) {
     return;
   }
 
-  // window.opener is false if the Create Profile Wizard was opened from the
-  // command line.
-  if (window.opener) {
+  if (window.arguments && window.arguments[1]) {
     // Add new profile to the list in the Profile Manager.
-    window.opener.CreateProfile(profile);
+    window.arguments[1].CreateProfile(profile);
   } else {
     // Use the newly created Profile.
     var profileLock = profile.lock(null);

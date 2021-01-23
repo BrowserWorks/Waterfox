@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+
+<!ENTITY fileMenu.label          "Faidhle">
+<!ENTITY fileMenu.accesskey        "F">
+<!ENTITY newMenu.label            "Ùr">
+<!ENTITY newMenu.accesskey          "r">
+
+<!ENTITY editMenu.label          "Deasaich">
+<!ENTITY editMenu.accesskey        "e">
+<!ENTITY undoCmd.label            "Neo-dhèan">
+<!ENTITY undoCmd.accesskey          "N">
+<!ENTITY redoCmd.label            "Ath-dhèan">
+<!ENTITY redoCmd.accesskey          "A">
+<!ENTITY deleteCmd.label          "Sguab às">
+<!ENTITY deleteCmd.accesskey        "S">
+<!ENTITY preferencesCmd2.label "Roghainnean">
+<!ENTITY preferencesCmd2.accesskey "o">
+<!ENTITY preferencesCmdUnix.label       "Roghainnean">
+<!ENTITY preferencesCmdUnix.accesskey     "n">
+
+<!ENTITY viewMenu.label          "Sealladh">
+<!ENTITY viewMenu.accesskey        "S">
+<!ENTITY viewToolbarsMenu.label        "Na bàraichean-inneal">
+<!ENTITY viewToolbarsMenu.accesskey      "N">
+<!ENTITY showTaskbarCmd.label          "Bàr na staide">
+<!ENTITY showTaskbarCmd.accesskey        "B">
+
+<!ENTITY closeCmd.label      "Dùin">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "D">
+
+<!ENTITY quitApplicationCmd.label  "Fàg an-seo">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "F">
+
+<!ENTITY quitApplicationCmdUnix.label  "Fàg an-seo">
+<!ENTITY quitApplicationCmdUnix.accesskey  "F">
+
+<!ENTITY quitApplicationCmdMac.label  "Fàg &brandShortName;">
+<!ENTITY quitApplicationCmdMac.accesskey  "F">

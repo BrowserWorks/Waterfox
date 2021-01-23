@@ -1,4 +1,7 @@
 #! /usr/bin/env python
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this file,
+# You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from __future__ import absolute_import, print_function
 
@@ -60,6 +63,20 @@ TRANSFORMS = [
             'pref("app.update.channel", "release");\n',
             'pref("app.update.channel", "beta");\n',
         ],
+    },
+    {
+        # Warning comments from bug 1576546
+        # When updating from a pre-70.0 build to 70.0+ this removes the new comments in
+        # the target side. In the 70.0+ --> 70.0+ case with a RC we won't need this, and
+        # the channel munging above will make channel-prefs.js identical, allowing the code
+        # to break before applying this transform.
+        'files': [
+            'defaults/pref/channel-prefs.js',
+            'Contents/Resources/defaults/pref/channel-prefs.js',
+        ],
+        'channel_prefix': ['aurora', 'beta', 'release', 'esr'],
+        'side': 'target',
+        'deletion': '//',
     },
     # update-settings.ini
     {

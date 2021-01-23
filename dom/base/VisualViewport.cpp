@@ -15,8 +15,8 @@
 #include "nsRefreshDriver.h"
 #include "DocumentInlines.h"
 
-#define VVP_LOG(...)
-// #define VVP_LOG(...) printf_stderr("VVP: " __VA_ARGS__)
+static mozilla::LazyLogModule sVvpLog("visualviewport");
+#define VVP_LOG(...) MOZ_LOG(sVvpLog, LogLevel::Debug, (__VA_ARGS__))
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -71,7 +71,12 @@ CSSSize VisualViewport::VisualViewportSize() const {
   // Fetch the pres shell after the layout flush, as it might have destroyed it.
   if (PresShell* presShell = GetPresShell()) {
     if (presShell->IsVisualViewportSizeSet()) {
-      size = CSSRect::FromAppUnits(presShell->GetVisualViewportSize());
+      DynamicToolbarState state = presShell->GetDynamicToolbarState();
+      size = CSSRect::FromAppUnits(
+          (state == DynamicToolbarState::InTransition ||
+           state == DynamicToolbarState::Collapsed)
+              ? presShell->GetVisualViewportSizeUpdatedByDynamicToolbar()
+              : presShell->GetVisualViewportSize());
     } else {
       nsIScrollableFrame* sf = presShell->GetRootScrollFrameAsScrollable();
       if (sf) {

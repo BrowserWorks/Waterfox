@@ -13,27 +13,30 @@ namespace mozilla {
 
 namespace wr {
 
+/**
+ * RenderTextureHost of GPUVideoTextureHost.
+ *
+ * GPUVideoTextureHost wraps TextureHost. This class wraps RenderTextureHost of
+ * the wrapped TextureHost. Lifetime of the wrapped TextureHost is usually
+ * longer than GPUVideoTextureHost and the wrapped TextureHost is used by
+ * multiple GPUVideoTextureHosts. This class is used to reduce recreations of
+ * the wrappded RenderTextureHost. Initializations of some
+ * RenderTextureHosts(RenderDXGITextureHostOGL and
+ * RenderDXGIYCbCrTextureHostOGL) have overhead.
+ */
 class RenderTextureHostWrapper final : public RenderTextureHost {
  public:
-  explicit RenderTextureHostWrapper();
+  explicit RenderTextureHostWrapper(ExternalImageId aExternalImageId);
 
   wr::WrExternalImage Lock(uint8_t aChannelIndex, gl::GLContext* aGL,
                            wr::ImageRendering aRendering) override;
   void Unlock() override;
   void ClearCachedResources() override;
 
-  RenderTextureHostWrapper* AsRenderTextureHostWrapper() override {
-    return this;
-  }
-
-  void UpdateRenderTextureHost(RenderTextureHost* aTextureHost);
-  bool IsInited() { return mInited; }
-
  private:
-  virtual ~RenderTextureHostWrapper();
+  ~RenderTextureHostWrapper() override;
 
-  bool mInited;
-  bool mLocked;
+  const ExternalImageId mExternalImageId;
   RefPtr<RenderTextureHost> mTextureHost;
 };
 

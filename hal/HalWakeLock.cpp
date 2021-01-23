@@ -8,7 +8,6 @@
 #include "mozilla/HalWakeLock.h"
 #include "mozilla/Services.h"
 #include "mozilla/StaticPtr.h"
-#include "nsAutoPtr.h"
 #include "nsClassHashtable.h"
 #include "nsDataHashtable.h"
 #include "nsHashKeys.h"
@@ -24,7 +23,7 @@ struct LockCount {
   LockCount() : numLocks(0), numHidden(0) {}
   uint32_t numLocks;
   uint32_t numHidden;
-  nsTArray<uint64_t> processes;
+  CopyableTArray<uint64_t> processes;
 };
 
 typedef nsDataHashtable<nsUint64HashKey, LockCount> ProcessLockTable;
@@ -109,7 +108,7 @@ CleanupOnContentShutdown::Observe(nsISupports* aSubject, const char* aTopic,
       props->GetPropertyAsUint64(NS_LITERAL_STRING("childID"), &childID);
   if (NS_SUCCEEDED(rv)) {
     for (auto iter = sLockTable->Iter(); !iter.Done(); iter.Next()) {
-      nsAutoPtr<ProcessLockTable>& table = iter.Data();
+      auto table = iter.UserData();
 
       if (table->Get(childID, nullptr)) {
         table->Remove(childID);

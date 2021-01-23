@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.navigator.title           "Prohlížeč">
+
+<!ENTITY navRadio.label                 "Zobrazit">
+<!ENTITY navRadio.accesskey             "Z">
+<!ENTITY navStartPageMenu.label         "při spuštění">
+<!ENTITY newWinPageMenu.label           "v novém okně">
+<!ENTITY newTabPageMenu.label           "v novém panelu">
+
+<!ENTITY blankPageRadio.label           "Prázdná stránka">
+<!ENTITY blankPageRadio.accesskey       "P">
+<!ENTITY homePageRadio.label            "Domovská stránka">
+<!ENTITY homePageRadio.accesskey        "D">
+<!ENTITY lastPageRadio.label            "Naposledy navštívená stránka">
+<!ENTITY lastPageRadio.accesskey        "N">
+<!ENTITY restoreSessionRadio.label      "Obnovit předchozí relaci">
+<!ENTITY restoreSessionRadio.accesskey  "r">
+
+<!ENTITY restoreSessionIntro.label      "Při obnovení relace a oken">
+<!ENTITY restoreImmediately.label       "Obnovit všechny panely">
+<!ENTITY restoreImmediately.accesskey   "O">
+<!-- LOCALIZATION NOTE (restoreTabs.label): This will concatenate to
+     "Restore [___] tab(s) at a time",
+     using (restoreTabs.label) and a number (restoreTabsAtATime.label). -->
+<!ENTITY restoreTabs.label              "Obnovit">
+<!ENTITY restoreTabs.accesskey          "b">
+<!ENTITY restoreTabsAtATime.label       "panelů najednou">
+<!ENTITY restoreDeferred.label          "Obnovit panely až když jsou potřeba">
+<!ENTITY restoreDeferred.accesskey      "n">
+
+<!ENTITY homePageIntro.label            "Na tuto stránku přejdete klepnutím na tlačítko Domů.">
+<!ENTITY useCurrent.label               "Použít aktuální stránku">
+<!ENTITY useCurrent.accesskey           "a">
+<!ENTITY useCurrentGroup.label          "Použít aktuální skupinu">
+<!ENTITY useCurrentGroup.accesskey      "k">
+<!ENTITY browseFile.label               "Vybrat soubor…">
+<!ENTITY browseFile.accesskey           "b">
+<!ENTITY useDefault.label               "Obnovit výchozí">
+<!ENTITY useDefault.accesskey           "O">
+
+<!ENTITY defaultBrowserGroup.label      "Výchozí prohlížeč">
+<!ENTITY defaultBrowserButton.label     "Nastavit výchozí prohlížeč">
+<!ENTITY defaultBrowserButton.accesskey "s">
+<!ENTITY alreadyDefaultText             "Aplikace &brandShortName; už je nastavena jako výchozí prohlížeč.">
+<!ENTITY defaultPendingText             "&brandShortName; bude nastavena jako výchozí prohlížeč po klepnutí na tlačítko OK.">
+<!ENTITY wasMadeDefaultText             "&brandShortName; byla nastavena jako výchozí prohlížeč.">
+<!ENTITY makeDefaultText                "Nastavit &brandShortName; jako výchozí prohlížeč">

@@ -7,11 +7,11 @@ from __future__ import absolute_import
 from setuptools import setup
 
 PACKAGE_NAME = 'mozprofile'
-PACKAGE_VERSION = '2.2.0'
+PACKAGE_VERSION = '2.5.0'
 
 deps = [
     'mozfile>=1.2',
-    'mozlog~=4.1',
+    'mozlog>=6.0',
     'six>=1.10.0,<2',
 ]
 
@@ -38,7 +38,7 @@ setup(name=PACKAGE_NAME,
       zip_safe=False,
       install_requires=deps,
       extras_require={'manifest': ['manifestparser >= 0.6']},
-      tests_require=['mozhttpd'],
+      tests_require=['wptserve'],
       entry_points="""
       # -*- Entry points: -*-
       [console_scripts]

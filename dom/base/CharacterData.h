@@ -62,10 +62,14 @@ enum {
   // This bit is set if the node may be modified frequently.  This is typically
   // specified if the instance is in <input> or <textarea>.
   NS_MAYBE_MODIFIED_FREQUENTLY = CHARACTER_DATA_FLAG_BIT(6),
+
+  // This bit is set if the node may be masked because of being in a password
+  // field.
+  NS_MAYBE_MASKED = CHARACTER_DATA_FLAG_BIT(7),
 };
 
 // Make sure we have enough space for those bits
-ASSERT_NODE_FLAGS_SPACE(NODE_TYPE_SPECIFIC_BITS_OFFSET + 7);
+ASSERT_NODE_FLAGS_SPACE(NODE_TYPE_SPECIFIC_BITS_OFFSET + 8);
 
 #undef CHARACTER_DATA_FLAG_BIT
 
@@ -87,6 +91,7 @@ class CharacterData : public nsIContent {
   void MarkAsMaybeModifiedFrequently() {
     SetFlags(NS_MAYBE_MODIFIED_FREQUENTLY);
   }
+  void MarkAsMaybeMasked() { SetFlags(NS_MAYBE_MASKED); }
 
   NS_IMPL_FROMNODE_HELPER(CharacterData, IsCharacterData())
 
@@ -107,20 +112,19 @@ class CharacterData : public nsIContent {
   }
 
   // Implementation for nsIContent
-  nsresult BindToTree(Document* aDocument, nsIContent* aParent,
-                      nsIContent* aBindingParent) override;
+  nsresult BindToTree(BindContext&, nsINode& aParent) override;
 
-  void UnbindFromTree(bool aDeep = true, bool aNullParent = true) override;
+  void UnbindFromTree(bool aNullParent = true) override;
 
   already_AddRefed<nsINodeList> GetChildren(uint32_t aFilter) final {
     return nullptr;
   }
 
   const nsTextFragment* GetText() override { return &mText; }
+  uint32_t TextLength() const final { return TextDataLength(); }
 
   const nsTextFragment& TextFragment() const { return mText; }
-
-  uint32_t TextLength() const final { return TextDataLength(); }
+  uint32_t TextDataLength() const { return mText.GetLength(); }
 
   /**
    * Set the text to the given value. If aNotify is true then
@@ -165,8 +169,6 @@ class CharacterData : public nsIContent {
   void DumpContent(FILE* out, int32_t aIndent, bool aDumpAll) const override {}
 #endif
 
-  nsXBLBinding* DoGetXBLBinding() const final { return nullptr; }
-
   bool IsNodeOfType(uint32_t aFlags) const override { return false; }
 
   bool IsLink(nsIURI** aURI) const final {
@@ -196,8 +198,6 @@ class CharacterData : public nsIContent {
   void DeleteData(uint32_t aOffset, uint32_t aCount, ErrorResult& rv);
   void ReplaceData(uint32_t aOffset, uint32_t aCount, const nsAString& aData,
                    ErrorResult& rv);
-
-  uint32_t TextDataLength() const { return mText.GetLength(); }
 
   //----------------------------------------
 

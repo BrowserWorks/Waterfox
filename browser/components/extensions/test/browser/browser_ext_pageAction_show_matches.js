@@ -2,6 +2,8 @@
 /* vim: set sts=2 sw=2 et tw=80: */
 "use strict";
 
+PromiseTestUtils.whitelistRejectionsGlobally(/packaging errors/);
+
 function getExtension(page_action) {
   return ExtensionTestUtils.loadExtension({
     manifest: {
@@ -245,7 +247,10 @@ add_task(async function test_pageAction_all_urls() {
     show_matches: ["*://mochi.test/*"],
     hide_matches: ["<all_urls>"],
   });
-  let rejects = await extension.startup().then(() => false, () => true);
+  let rejects = await extension.startup().then(
+    () => false,
+    () => true
+  );
   is(rejects, true, "startup failed");
 });
 

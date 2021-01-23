@@ -13,6 +13,7 @@
 #include <vector>
 
 #include <mozilla/UniquePtr.h>
+#include "mozilla/Preferences.h"
 #include "nsError.h"
 
 #include "signaling/src/jsep/JsepTrackEncoding.h"
@@ -20,17 +21,19 @@
 #include "signaling/src/sdp/Sdp.h"
 #include "signaling/src/sdp/SdpAttribute.h"
 #include "signaling/src/sdp/SdpMediaSection.h"
-
+#include "signaling/src/media-conduit/RtpRtcpConfig.h"
 namespace mozilla {
 
 class JsepTrackNegotiatedDetails {
  public:
-  JsepTrackNegotiatedDetails() : mTias(0) {}
+  JsepTrackNegotiatedDetails()
+      : mTias(0), mRtpRtcpConf(webrtc::RtcpMode::kCompound) {}
 
   JsepTrackNegotiatedDetails(const JsepTrackNegotiatedDetails& orig)
       : mExtmap(orig.mExtmap),
         mUniquePayloadTypes(orig.mUniquePayloadTypes),
-        mTias(orig.mTias) {
+        mTias(orig.mTias),
+        mRtpRtcpConf(orig.mRtpRtcpConf) {
     for (const auto& encoding : orig.mEncodings) {
       mEncodings.emplace_back(new JsepTrackEncoding(*encoding));
     }
@@ -66,6 +69,8 @@ class JsepTrackNegotiatedDetails {
 
   uint32_t GetTias() const { return mTias; }
 
+  RtpRtcpConfig GetRtpRtcpConfig() const { return mRtpRtcpConf; }
+
  private:
   friend class JsepTrack;
 
@@ -73,6 +78,7 @@ class JsepTrackNegotiatedDetails {
   std::vector<uint8_t> mUniquePayloadTypes;
   std::vector<UniquePtr<JsepTrackEncoding>> mEncodings;
   uint32_t mTias;  // bits per second
+  RtpRtcpConfig mRtpRtcpConf;
 };
 
 class JsepTrack {
@@ -117,6 +123,31 @@ class JsepTrack {
         mSsrcs.push_back(ssrcAttr.ssrc);
       }
     }
+
+    // Use FID ssrc-group to associate rtx ssrcs with "regular" ssrcs. Despite
+    // not being part of RFC 4588, this is how rtx is negotiated by libwebrtc
+    // and jitsi.
+    mSsrcToRtxSsrc.clear();
+    if (msection.GetAttributeList().HasAttribute(
+            SdpAttribute::kSsrcGroupAttribute)) {
+      for (const auto& group :
+           msection.GetAttributeList().GetSsrcGroup().mSsrcGroups) {
+        if (group.semantics == SdpSsrcGroupAttributeList::kFid &&
+            group.ssrcs.size() == 2) {
+          // Ensure we have a "regular" ssrc for each rtx ssrc.
+          if (std::find(mSsrcs.begin(), mSsrcs.end(), group.ssrcs[0]) !=
+              mSsrcs.end()) {
+            mSsrcToRtxSsrc[group.ssrcs[0]] = group.ssrcs[1];
+
+            // Remove rtx ssrcs from mSsrcs
+            auto res = std::remove_if(
+                mSsrcs.begin(), mSsrcs.end(),
+                [group](uint32_t ssrc) { return ssrc == group.ssrcs[1]; });
+            mSsrcs.erase(res, mSsrcs.end());
+          }
+        }
+      }
+    }
   }
 
   JsepTrack(const JsepTrack& orig) { *this = orig; }
@@ -133,6 +164,7 @@ class JsepTrack {
       mDirection = rhs.mDirection;
       mJsEncodeConstraints = rhs.mJsEncodeConstraints;
       mSsrcs = rhs.mSsrcs;
+      mSsrcToRtxSsrc = rhs.mSsrcToRtxSsrc;
       mActive = rhs.mActive;
       mRemoteSetSendBit = rhs.mRemoteSetSendBit;
 
@@ -164,7 +196,17 @@ class JsepTrack {
 
   virtual const std::vector<uint32_t>& GetSsrcs() const { return mSsrcs; }
 
-  virtual void EnsureSsrcs(SsrcGenerator& ssrcGenerator);
+  virtual std::vector<uint32_t> GetRtxSsrcs() const {
+    std::vector<uint32_t> result;
+    if (Preferences::GetBool("media.peerconnection.video.use_rtx", false)) {
+      std::for_each(
+          mSsrcToRtxSsrc.begin(), mSsrcToRtxSsrc.end(),
+          [&result](const auto& pair) { result.push_back(pair.second); });
+    }
+    return result;
+  }
+
+  virtual void EnsureSsrcs(SsrcGenerator& ssrcGenerator, size_t aNumber);
 
   bool GetActive() const { return mActive; }
 
@@ -216,9 +258,11 @@ class JsepTrack {
 
   struct JsConstraints {
     std::string rid;
+    bool paused = false;
     EncodingConstraints constraints;
     bool operator==(const JsConstraints& other) const {
-      return rid == other.rid && constraints == other.constraints;
+      return rid == other.rid && paused == other.paused &&
+             constraints == other.constraints;
     }
   };
 
@@ -232,7 +276,7 @@ class JsepTrack {
 
   void AddToMsection(const std::vector<JsConstraints>& constraintsList,
                      sdp::Direction direction, SsrcGenerator& ssrcGenerator,
-                     SdpMediaSection* msection);
+                     bool requireRtxSsrcs, SdpMediaSection* msection);
 
  private:
   std::vector<UniquePtr<JsepCodecDescription>> GetCodecClones() const;
@@ -243,8 +287,9 @@ class JsepTrack {
       std::vector<uint16_t>* pts);
   void AddToMsection(const std::vector<UniquePtr<JsepCodecDescription>>& codecs,
                      SdpMediaSection* msection);
-  void GetRids(const SdpMediaSection& msection, sdp::Direction direction,
-               std::vector<SdpRidAttributeList::Rid>* rids) const;
+  void GetRids(
+      const SdpMediaSection& msection, sdp::Direction direction,
+      std::vector<std::pair<SdpRidAttributeList::Rid, bool>>* rids) const;
   void CreateEncodings(
       const SdpMediaSection& remote,
       const std::vector<UniquePtr<JsepCodecDescription>>& negotiatedCodecs,
@@ -256,9 +301,13 @@ class JsepTrack {
   JsConstraints* FindConstraints(
       const std::string& rid,
       std::vector<JsConstraints>& constraintsList) const;
-  void NegotiateRids(const std::vector<SdpRidAttributeList::Rid>& rids,
-                     std::vector<JsConstraints>* constraints) const;
+  void NegotiateRids(
+      const std::vector<std::pair<SdpRidAttributeList::Rid, bool>>& rids,
+      std::vector<JsConstraints>* constraints) const;
   void UpdateSsrcs(SsrcGenerator& ssrcGenerator, size_t encodings);
+  void PruneSsrcs(size_t aNumSsrcs);
+  bool IsRtxEnabled(
+      const std::vector<UniquePtr<JsepCodecDescription>>& codecs) const;
 
   mozilla::SdpMediaSection::MediaType mType;
   // These are the ids that everyone outside of JsepSession care about
@@ -273,6 +322,7 @@ class JsepTrack {
   std::vector<JsConstraints> mJsEncodeConstraints;
   UniquePtr<JsepTrackNegotiatedDetails> mNegotiatedDetails;
   std::vector<uint32_t> mSsrcs;
+  std::map<uint32_t, uint32_t> mSsrcToRtxSsrc;
   bool mActive;
   bool mRemoteSetSendBit;
 };

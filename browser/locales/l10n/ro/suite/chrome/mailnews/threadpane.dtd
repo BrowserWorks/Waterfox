@@ -1,0 +1,60 @@
+<!--
+# Translator(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+# stas <stas@nerd.ro>
+# janimo <jani@ubuntu.com>
+# turcan <nicturcan@gmail.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY threadColumn.label "Thread">
+<!ENTITY fromColumn.label "Expeditor">
+<!ENTITY recipientColumn.label "Destinatar">
+<!ENTITY attachmentColumn.label "Atașamente">
+<!ENTITY subjectColumn.label "Subiectul">
+<!ENTITY dateColumn.label "Data">
+<!ENTITY priorityColumn.label "prioritatea">
+<!ENTITY tagsColumn.label "Tag-uri">
+<!ENTITY accountColumn.label "Contul meu">
+<!ENTITY statusColumn.label "Situația">
+<!ENTITY sizeColumn.label "Mărimea">
+<!ENTITY junkStatusColumn.label "Statut de spam">
+<!ENTITY unreadColumn.label "Unread in Thread">
+<!ENTITY totalColumn.label "Total in Thread">
+<!ENTITY readColumn.label "Citite">
+<!ENTITY receivedColumn.label "Recepționat">
+<!ENTITY flagColumn.label "Steag">
+<!ENTITY locationColumn.label "Locul de desfășurare">
+<!ENTITY idColumn.label "Ordine de primire">
+
+<!--Tooltips-->
+<!ENTITY columnChooser.tooltip "Clic pentru a selecta coloanele de afișat">
+<!ENTITY threadColumn.tooltip "Clic pentru a grupa mesajele în conversații"> 
+<!ENTITY fromColumn.tooltip "Clic pentru sortare după expeditor">
+<!ENTITY recipientColumn.tooltip "Clic pentru a sorta după destinatar">
+<!ENTITY attachmentColumn.tooltip "Clic pentru a sorta după anexe">
+<!ENTITY subjectColumn.tooltip "Clic pentru a sorta după subiect">
+<!ENTITY dateColumn.tooltip "Clic pentru a sorta după dată">
+<!ENTITY priorityColumn.tooltip "Clic pentru a sorta după prioritate">
+<!ENTITY tagsColumn.tooltip "Clic pentru a sorta după etichete">
+<!ENTITY accountColumn.tooltip "Clic pentru a sorta după cont">
+<!ENTITY statusColumn.tooltip "Clic pentru a sorta după stare">
+<!ENTITY sizeColumn.tooltip "Apăsați pentru a sorta după mărime">
+<!ENTITY junkStatusColumn.tooltip "Clic pentru a sorta după statutul de spam">
+<!ENTITY unreadColumn.tooltip "Numărul de mesaje necitite din conversație">
+<!ENTITY totalColumn.tooltip "Numărul total de mesaje din conversație">
+<!ENTITY readColumn.tooltip "Clic pentru a sorta după citire">
+<!ENTITY receivedColumn.tooltip "Clic pentru sortare după data primirii">
+<!ENTITY flagColumn.tooltip "Click to sort by flag">
+<!ENTITY locationColumn.tooltip "Clic pentru a sorta după amplasare">
+<!ENTITY idColumn.tooltip "Clic pentru a sorta după ordinea în care au fost primite">

@@ -63,6 +63,13 @@ types.addDictType("netevent.timings", {
   timings: "netevent.timings.data",
   totalTime: "number",
   offsets: "netevent.timings.data",
+  serverTimings: "array:netevent.timings.serverTiming",
+});
+
+types.addDictType("netevent.timings.serverTiming", {
+  name: "string",
+  description: "string",
+  duration: "number",
 });
 
 // See NetworkHelper.parseCertificateInfo for more details
@@ -142,6 +149,8 @@ const networkEventSpec = generateActorSpec({
       encoding: Option(1, "string"),
       transferredSize: Option(1, "number"),
       discardResponseBody: Option(1, "boolean"),
+      blockedReason: Option(1, "number"),
+      blockingExtension: Option(1, "string"),
     },
 
     "network-event-update:event-timings": {

@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY directoryName.label               "Аты: ">
+<!ENTITY directoryName.accesskey           "А">
+<!ENTITY directoryHostname.label           "Хост аты: ">
+<!ENTITY directoryHostname.accesskey       "о">
+<!ENTITY directoryBaseDN.label             "Негізгі DN: ">
+<!ENTITY directoryBaseDN.accesskey         "Н">
+<!ENTITY findButton.label                  "Табу">
+<!ENTITY findButton.accesskey              "Т">
+<!ENTITY directorySecure.label             "Қорғалған байланысты қолдану (SSL)">
+<!ENTITY directorySecure.accesskey         "о">
+<!ENTITY directoryLogin.label              "Байланыс DN: ">
+<!ENTITY directoryLogin.accesskey          "й">
+<!ENTITY General.tab                       "Жалпы">
+<!ENTITY Offline.tab                       "Желіде емес">
+<!ENTITY Advanced.tab                      "Кеңейтілген">
+<!ENTITY portNumber.label                  "Порт нөмірі: ">
+<!ENTITY portNumber.accesskey              "П">
+<!ENTITY searchFilter.label                "Іздеу сүзгісі: ">
+<!ENTITY searchFilter.accesskey            "с">
+<!ENTITY scope.label                       "Іздеу аумағы: ">
+<!ENTITY scope.accesskey                   "м">
+<!ENTITY scopeOneLevel.label               "Бір деңгей">
+<!ENTITY scopeOneLevel.accesskey           "д">
+<!ENTITY scopeSubtree.label                "Ішкі ағаш">
+<!ENTITY scopeSubtree.accesskey            "ш">
+<!ENTITY return.label                      "Келесіден артық нәтиже қайтармау">
+<!ENTITY return.accesskey                  "р">
+<!ENTITY results.label                     "нәтиже">
+<!ENTITY offlineText.label                 "Желіден тыс жұмыс жасаған кезде бұл каталог қолжетерлік болуы үшін, оның көшірмесін жүктеп алуға болады.">
+<!ENTITY saslMechanism.label               "Кіру тәсілі: ">
+<!ENTITY saslMechanism.accesskey           "т">
+<!ENTITY saslOff.label                     "Қарапайым">
+<!ENTITY saslOff.accesskey                 "п">
+<!ENTITY saslGSSAPI.label                  "Kerberos (GSSAPI)">
+<!ENTITY saslGSSAPI.accesskey              "K">
+<!-- Localization note: this is here because the width of the dialog 
+     is determined by the width of the base DN box; and that is likely
+     to vary somewhat with the language.
+-->
+
+<!ENTITY newDirectoryWidth                 "36em">

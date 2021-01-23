@@ -24,6 +24,7 @@
 == flexbox-align-self-baseline-horiz-005.xhtml flexbox-align-self-baseline-horiz-005-ref.xhtml
 == flexbox-align-self-baseline-horiz-006.xhtml flexbox-align-self-baseline-horiz-006-ref.xhtml
 == flexbox-align-self-baseline-horiz-007.xhtml flexbox-align-self-baseline-horiz-007-ref.xhtml
+== flexbox-align-self-baseline-horiz-008.xhtml flexbox-align-self-baseline-horiz-008-ref.xhtml
 
 == flexbox-align-self-stretch-vert-001.html flexbox-align-self-stretch-vert-001-ref.html
 == flexbox-align-self-stretch-vert-002.html flexbox-align-self-stretch-vert-002-ref.html
@@ -189,7 +190,7 @@
 == flexbox-mbp-horiz-002b.xhtml            flexbox-mbp-horiz-002-ref.xhtml
 == flexbox-mbp-horiz-002v.xhtml            flexbox-mbp-horiz-002-ref.xhtml
 == flexbox-mbp-horiz-003.xhtml             flexbox-mbp-horiz-003-ref.xhtml
-== flexbox-mbp-horiz-003v.xhtml            flexbox-mbp-horiz-003-ref.xhtml
+== flexbox-mbp-horiz-003v.xhtml flexbox-mbp-horiz-003-ref.xhtml
 == flexbox-mbp-horiz-003-reverse.xhtml     flexbox-mbp-horiz-003-reverse-ref.xhtml
 == flexbox-mbp-horiz-004.xhtml             flexbox-mbp-horiz-004-ref.xhtml
 

@@ -6,12 +6,13 @@
 
 const {
   UPDATE_ADD_RULE_ENABLED,
+  UPDATE_COLOR_SCHEME_SIMULATION_HIDDEN,
   UPDATE_HIGHLIGHTED_SELECTOR,
   UPDATE_PRINT_SIMULATION_HIDDEN,
   UPDATE_RULES,
   UPDATE_SOURCE_LINK_ENABLED,
   UPDATE_SOURCE_LINK,
-} = require("./index");
+} = require("devtools/client/inspector/rules/actions/index");
 
 module.exports = {
   /**
@@ -24,6 +25,19 @@ module.exports = {
     return {
       type: UPDATE_ADD_RULE_ENABLED,
       enabled,
+    };
+  },
+
+  /**
+   * Updates whether or not the color scheme simulation button is hidden.
+   *
+   * @param  {Boolean} hidden
+   *         Whether or not the color scheme simulation button is hidden.
+   */
+  updateColorSchemeSimulationHidden(hidden) {
+    return {
+      type: UPDATE_COLOR_SCHEME_SIMULATION_HIDDEN,
+      hidden,
     };
   },
 

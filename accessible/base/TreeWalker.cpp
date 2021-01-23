@@ -28,8 +28,7 @@ TreeWalker::TreeWalker(Accessible* aContext)
       mChildFilter(nsIContent::eSkipPlaceholderContent),
       mFlags(0),
       mPhase(eAtStart) {
-  mChildFilter |=
-      mContext->NoXBLKids() ? nsIContent::eAllButXBL : nsIContent::eAllChildren;
+  mChildFilter |= nsIContent::eAllChildren;
 
   mAnchorNode = mContext->IsDoc() ? mDoc->DocumentNode()->GetRootElement()
                                   : mContext->GetContent();
@@ -50,8 +49,7 @@ TreeWalker::TreeWalker(Accessible* aContext, nsIContent* aAnchorNode,
              "This constructor cannot be used for tree creation");
   MOZ_ASSERT(aAnchorNode, "No anchor node for the accessible tree walker");
 
-  mChildFilter |=
-      mContext->NoXBLKids() ? nsIContent::eAllButXBL : nsIContent::eAllChildren;
+  mChildFilter |= nsIContent::eAllChildren;
 
   MOZ_COUNT_CTOR(TreeWalker);
 }
@@ -101,10 +99,16 @@ bool TreeWalker::Seek(nsIContent* aChildNode) {
   nsINode* parentNode = aChildNode;
   do {
     childNode = parentNode->AsContent();
-    parentNode = childNode->HasFlag(NODE_MAY_BE_IN_BINDING_MNGR) &&
-                         (mChildFilter & nsIContent::eAllButXBL)
-                     ? childNode->GetParentNode()
-                     : childNode->GetFlattenedTreeParent();
+    parentNode = childNode->GetFlattenedTreeParent();
+
+    // Handle the special case of XBL binding child under a shadow root.
+    if (parentNode && parentNode->IsShadowRoot()) {
+      parentNode = childNode->GetFlattenedTreeParent();
+      if (parentNode == mAnchorNode) {
+        return true;
+      }
+      continue;
+    }
 
     if (!parentNode || !parentNode->IsElement()) {
       return false;

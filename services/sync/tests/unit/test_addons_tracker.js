@@ -19,7 +19,7 @@ AddonTestUtils.overrideCertDB();
 
 Services.prefs.setCharPref("extensions.minCompatibleAppVersion", "0");
 Services.prefs.setCharPref("extensions.minCompatiblePlatformVersion", "0");
-Services.prefs.setBoolPref("extensions.legacy.enabled", true);
+Services.prefs.setBoolPref("extensions.experiments.enabled", true);
 
 AddonTestUtils.awaitPromise(AddonTestUtils.promiseStartupManager());
 Svc.Prefs.set("engine.addons", true);
@@ -61,9 +61,6 @@ add_task(async function setup() {
   reconciler = engine._reconciler;
   store = engine._store;
   tracker = engine._tracker;
-
-  // Don't write out by default.
-  tracker.persistChangedIDs = false;
 
   await cleanup();
 });

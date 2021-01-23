@@ -7,9 +7,31 @@
 #include "mozilla/Preferences.h"
 #include "mozilla/intl/LocaleService.h"
 #include "mozilla/intl/MozLocale.h"
-#include "nsIToolkitChromeRegistry.h"
 
 using namespace mozilla::intl;
+
+TEST(Intl_Locale_LocaleService, CanonicalizeLanguageId)
+{
+  nsCString locale("en-US.POSIX");
+  ASSERT_TRUE(LocaleService::CanonicalizeLanguageId(locale));
+  ASSERT_TRUE(locale.EqualsLiteral("en-US"));
+
+  locale.AssignLiteral("en-US_POSIX");
+  ASSERT_TRUE(LocaleService::CanonicalizeLanguageId(locale));
+  ASSERT_TRUE(locale.EqualsLiteral("en-US-posix"));
+
+  locale.AssignLiteral("en-US-POSIX");
+  ASSERT_TRUE(LocaleService::CanonicalizeLanguageId(locale));
+  ASSERT_TRUE(locale.EqualsLiteral("en-US-posix"));
+
+  locale.AssignLiteral("C");
+  ASSERT_FALSE(LocaleService::CanonicalizeLanguageId(locale));
+  ASSERT_TRUE(locale.EqualsLiteral("und"));
+
+  locale.AssignLiteral("");
+  ASSERT_FALSE(LocaleService::CanonicalizeLanguageId(locale));
+  ASSERT_TRUE(locale.EqualsLiteral("und"));
+}
 
 TEST(Intl_Locale_LocaleService, GetAppLocalesAsBCP47)
 {

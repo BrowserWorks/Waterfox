@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title             "&brandShortName; sikker modus">
+<!ENTITY window.width                     "37em">
+
+<!ENTITY safeModeDescription.label        "&brandShortName; kjører nå i sikker modus, som midlertidig slår av egendefinerte innstillinger, temaer og utvidelser.">
+<!ENTITY safeModeDescription2.label       "Du kan gjøre noen eller alle av disse endringene permanente:">
+
+<!ENTITY disableAddons.label              "Slå av alle utvidelser">
+<!ENTITY disableAddons.accesskey          "S">
+
+<!ENTITY resetToolbars.label              "Tilbakestill verktøylinjer og kontroller">
+<!ENTITY resetToolbars.accesskey          "T">
+
+<!ENTITY changeAndRestartButton.label     "Gjør endringer og start på nytt">
+<!ENTITY changeAndRestartButton.accesskey "G">
+
+<!ENTITY continueButton.label             "Fortsett i sikker modus">
+<!ENTITY continueButton.accesskey         "F">

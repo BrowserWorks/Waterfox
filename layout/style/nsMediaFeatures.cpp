@@ -8,7 +8,6 @@
 
 #include "nsMediaFeatures.h"
 #include "nsGkAtoms.h"
-#include "nsCSSKeywords.h"
 #include "nsStyleConsts.h"
 #include "nsPresContext.h"
 #include "nsCSSProps.h"
@@ -66,19 +65,18 @@ static nsSize GetSize(const Document* aDocument) {
   return pc->GetVisibleArea().Size();
 }
 
-static bool IsDeviceSizePageSize(const Document* aDocument) {
-  nsIDocShell* docShell = aDocument->GetDocShell();
-  if (!docShell) {
-    return false;
-  }
-  return docShell->GetDeviceSizeIsPageSize();
-}
-
 // A helper for three features below.
 static nsSize GetDeviceSize(const Document* aDocument) {
-  if (nsContentUtils::ShouldResistFingerprinting(aDocument) ||
-      IsDeviceSizePageSize(aDocument)) {
+  if (nsContentUtils::ShouldResistFingerprinting(aDocument)) {
     return GetSize(aDocument);
+  }
+
+  // Media queries in documents in an RDM pane should use the simulated
+  // device size.
+  Maybe<CSSIntSize> deviceSize =
+      nsGlobalWindowOuter::GetRDMDeviceSize(*aDocument);
+  if (deviceSize.isSome()) {
+    return CSSPixel::ToAppUnits(deviceSize.value());
   }
 
   nsPresContext* pc = aDocument->GetPresContext();
@@ -166,7 +164,7 @@ float Gecko_MediaFeatures_GetResolution(const Document* aDocument) {
 
 static const Document* TopDocument(const Document* aDocument) {
   const Document* current = aDocument;
-  while (const Document* parent = current->GetParentDocument()) {
+  while (const Document* parent = current->GetInProcessParentDocument()) {
     current = parent;
   }
   return current;
@@ -244,28 +242,7 @@ bool Gecko_MediaFeatures_PrefersReducedMotion(const Document* aDocument) {
 
 StylePrefersColorScheme Gecko_MediaFeatures_PrefersColorScheme(
     const Document* aDocument) {
-  if (nsContentUtils::ShouldResistFingerprinting(aDocument)) {
-    return StylePrefersColorScheme::Light;
-  }
-  if (nsPresContext* pc = aDocument->GetPresContext()) {
-    if (pc->IsPrintingOrPrintPreview()) {
-      return StylePrefersColorScheme::Light;
-    }
-  }
-  // If LookAndFeel::eIntID_SystemUsesDarkTheme fails then return 2
-  // (no-preference)
-  switch (LookAndFeel::GetInt(LookAndFeel::eIntID_SystemUsesDarkTheme, 2)) {
-    case 0:
-      return StylePrefersColorScheme::Light;
-    case 1:
-      return StylePrefersColorScheme::Dark;
-    case 2:
-      return StylePrefersColorScheme::NoPreference;
-    default:
-      // This only occurs if the user has set the ui.systemUsesDarkTheme pref to
-      // an invalid value.
-      return StylePrefersColorScheme::Light;
-  }
+  return aDocument->PrefersColorScheme();
 }
 
 static PointerCapabilities GetPointerCapabilities(const Document* aDocument,
@@ -283,9 +260,14 @@ static PointerCapabilities GetPointerCapabilities(const Document* aDocument,
     }
   }
 
-  // The default value is mouse-type pointer.
+  // The default value for Desktop is mouse-type pointer, and for Android
+  // a coarse pointer.
   const PointerCapabilities kDefaultCapabilities =
+#ifdef ANDROID
+      PointerCapabilities::Coarse;
+#else
       PointerCapabilities::Fine | PointerCapabilities::Hover;
+#endif
 
   if (nsContentUtils::ShouldResistFingerprinting(aDocument)) {
     return kDefaultCapabilities;

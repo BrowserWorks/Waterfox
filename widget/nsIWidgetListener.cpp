@@ -8,14 +8,14 @@
 #include "nsRegion.h"
 #include "nsView.h"
 #include "nsIWidget.h"
-#include "nsIXULWindow.h"
+#include "nsIAppWindow.h"
 
 #include "mozilla/BasicEvents.h"
 #include "mozilla/PresShell.h"
 
 using namespace mozilla;
 
-nsIXULWindow* nsIWidgetListener::GetXULWindow() { return nullptr; }
+nsIAppWindow* nsIWidgetListener::GetAppWindow() { return nullptr; }
 
 nsView* nsIWidgetListener::GetView() { return nullptr; }
 
@@ -33,7 +33,16 @@ bool nsIWidgetListener::WindowResized(nsIWidget* aWidget, int32_t aWidth,
 
 void nsIWidgetListener::SizeModeChanged(nsSizeMode aSizeMode) {}
 
+void nsIWidgetListener::SafeAreaInsetsChanged(const mozilla::ScreenIntMargin&) {
+}
+
 void nsIWidgetListener::UIResolutionChanged() {}
+
+#if defined(MOZ_WIDGET_ANDROID)
+void nsIWidgetListener::DynamicToolbarMaxHeightChanged(ScreenIntCoord aHeight) {
+}
+void nsIWidgetListener::DynamicToolbarOffsetChanged(ScreenIntCoord aOffset) {}
+#endif
 
 void nsIWidgetListener::FullscreenWillChange(bool aInFullscreen) {}
 

@@ -267,15 +267,15 @@ TexUnpackBlob::TexUnpackBlob(const WebGLContext* webgl, TexImageTarget target,
                              uint32_t rowLength, uint32_t width,
                              uint32_t height, uint32_t depth,
                              gfxAlphaType srcAlphaType)
-    : mAlignment(webgl->mPixelStore_UnpackAlignment),
+    : mAlignment(webgl->mPixelStore.mUnpackAlignment),
       mRowLength(rowLength),
       mImageHeight(FallbackOnZero(
-          ZeroOn2D(target, webgl->mPixelStore_UnpackImageHeight), height))
+          ZeroOn2D(target, webgl->mPixelStore.mUnpackImageHeight), height))
 
       ,
-      mSkipPixels(webgl->mPixelStore_UnpackSkipPixels),
-      mSkipRows(webgl->mPixelStore_UnpackSkipRows),
-      mSkipImages(ZeroOn2D(target, webgl->mPixelStore_UnpackSkipImages))
+      mSkipPixels(webgl->mPixelStore.mUnpackSkipPixels),
+      mSkipRows(webgl->mPixelStore.mUnpackSkipRows),
+      mSkipImages(ZeroOn2D(target, webgl->mPixelStore.mUnpackSkipImages))
 
       ,
       mWidth(width),
@@ -321,7 +321,7 @@ bool TexUnpackBlob::ConvertIfNeeded(
   if (!rowLength || !rowCount) return true;
 
   const auto srcIsPremult = (mSrcAlphaType == gfxAlphaType::Premult);
-  const auto& dstIsPremult = webgl->mPixelStore_PremultiplyAlpha;
+  const auto& dstIsPremult = webgl->mPixelStore.mPremultiplyAlpha;
   const auto fnHasPremultMismatch = [&]() {
     if (mSrcAlphaType == gfxAlphaType::Opaque) return false;
 
@@ -330,8 +330,9 @@ bool TexUnpackBlob::ConvertIfNeeded(
     return srcIsPremult != dstIsPremult;
   };
 
-  const auto srcOrigin = (webgl->mPixelStore_FlipY ? gl::OriginPos::TopLeft
-                                                   : gl::OriginPos::BottomLeft);
+  const auto srcOrigin =
+      (webgl->mPixelStore.mFlipY ? gl::OriginPos::TopLeft
+                                 : gl::OriginPos::BottomLeft);
   const auto dstOrigin = gl::OriginPos::BottomLeft;
 
   if (srcFormat != dstFormat) {
@@ -403,7 +404,7 @@ TexUnpackBytes::TexUnpackBytes(const WebGLContext* webgl, TexImageTarget target,
                                bool isClientData, const uint8_t* ptr,
                                size_t availBytes)
     : TexUnpackBlob(webgl, target,
-                    FallbackOnZero(webgl->mPixelStore_UnpackRowLength, width),
+                    FallbackOnZero(webgl->mPixelStore.mUnpackRowLength, width),
                     width, height, depth, gfxAlphaType::NonPremult),
       mIsClientData(isClientData),
       mPtr(ptr),
@@ -434,15 +435,15 @@ bool TexUnpackBytes::TexOrSubImage(bool isSubImage, bool needsRespec,
   do {
     if (!mIsClientData || !mPtr) break;
 
-    if (!webgl->mPixelStore_FlipY && !webgl->mPixelStore_PremultiplyAlpha) {
+    if (!webgl->mPixelStore.mFlipY && !webgl->mPixelStore.mPremultiplyAlpha) {
       break;
     }
 
-    if (webgl->mPixelStore_UnpackImageHeight ||
-        webgl->mPixelStore_UnpackSkipImages ||
-        webgl->mPixelStore_UnpackRowLength ||
-        webgl->mPixelStore_UnpackSkipRows ||
-        webgl->mPixelStore_UnpackSkipPixels) {
+    if (webgl->mPixelStore.mUnpackImageHeight ||
+        webgl->mPixelStore.mUnpackSkipImages ||
+        webgl->mPixelStore.mUnpackRowLength ||
+        webgl->mPixelStore.mUnpackSkipRows ||
+        webgl->mPixelStore.mUnpackSkipPixels) {
       webgl->ErrorInvalidOperation(
           "Non-DOM-Element uploads with alpha-premult"
           " or y-flip do not support subrect selection.");
@@ -563,15 +564,15 @@ bool TexUnpackBytes::TexOrSubImage(bool isSubImage, bool needsRespec,
 
   // Reset all our modified state.
   gl->fPixelStorei(LOCAL_GL_UNPACK_ALIGNMENT,
-                   webgl->mPixelStore_UnpackAlignment);
+                   webgl->mPixelStore.mUnpackAlignment);
   gl->fPixelStorei(LOCAL_GL_UNPACK_IMAGE_HEIGHT,
-                   webgl->mPixelStore_UnpackImageHeight);
+                   webgl->mPixelStore.mUnpackImageHeight);
   gl->fPixelStorei(LOCAL_GL_UNPACK_ROW_LENGTH,
-                   webgl->mPixelStore_UnpackRowLength);
+                   webgl->mPixelStore.mUnpackRowLength);
   gl->fPixelStorei(LOCAL_GL_UNPACK_SKIP_IMAGES,
-                   webgl->mPixelStore_UnpackSkipImages);
+                   webgl->mPixelStore.mUnpackSkipImages);
   gl->fPixelStorei(LOCAL_GL_UNPACK_SKIP_ROWS,
-                   webgl->mPixelStore_UnpackSkipRows);
+                   webgl->mPixelStore.mUnpackSkipRows);
 
   return true;
 }
@@ -587,7 +588,7 @@ TexUnpackImage::TexUnpackImage(const WebGLContext* webgl, TexImageTarget target,
                     srcAlphaType),
       mImage(image) {}
 
-TexUnpackImage::~TexUnpackImage() {}
+TexUnpackImage::~TexUnpackImage() = default;
 
 bool TexUnpackImage::Validate(WebGLContext* webgl,
                               const webgl::PackingInfo& pi) {
@@ -628,9 +629,9 @@ bool TexUnpackImage::TexOrSubImage(bool isSubImage, bool needsRespec,
       break;
     }
 
-    if (webgl->mPixelStore_UnpackSkipPixels ||
-        webgl->mPixelStore_UnpackSkipRows ||
-        webgl->mPixelStore_UnpackSkipImages) {
+    if (webgl->mPixelStore.mUnpackSkipPixels ||
+        webgl->mPixelStore.mUnpackSkipRows ||
+        webgl->mPixelStore.mUnpackSkipImages) {
       fallbackReason = "non-zero UNPACK_SKIP_* not yet supported";
       break;
     }
@@ -639,7 +640,7 @@ bool TexUnpackImage::TexOrSubImage(bool isSubImage, bool needsRespec,
       if (mSrcAlphaType == gfxAlphaType::Opaque) return false;
 
       const bool srcIsPremult = (mSrcAlphaType == gfxAlphaType::Premult);
-      const auto& dstIsPremult = webgl->mPixelStore_PremultiplyAlpha;
+      const auto& dstIsPremult = webgl->mPixelStore.mPremultiplyAlpha;
       if (srcIsPremult == dstIsPremult) return false;
 
       if (dstIsPremult) {
@@ -686,8 +687,8 @@ bool TexUnpackImage::TexOrSubImage(bool isSubImage, bool needsRespec,
 
     const gfx::IntSize dstSize(mWidth, mHeight);
     const auto dstOrigin =
-        (webgl->mPixelStore_FlipY ? gl::OriginPos::TopLeft
-                                  : gl::OriginPos::BottomLeft);
+        (webgl->mPixelStore.mFlipY ? gl::OriginPos::TopLeft
+                                   : gl::OriginPos::BottomLeft);
     if (!gl->BlitHelper()->BlitImageToFramebuffer(mImage, dstSize, dstOrigin)) {
       fallbackReason = "likely bug: failed to blit";
       break;
@@ -702,7 +703,7 @@ bool TexUnpackImage::TexOrSubImage(bool isSubImage, bool needsRespec,
       "Failed to hit GPU-copy fast-path: %s (src type %u)", fallbackReason,
       uint32_t(mImage->GetFormat()));
 
-  if (webgl->mPixelStore_RequireFastPath) {
+  if (webgl->mPixelStore.mRequireFastPath) {
     webgl->ErrorInvalidOperation("%s", perfMsg.BeginReading());
     return false;
   }
@@ -885,10 +886,10 @@ bool TexUnpackSurface::TexOrSubImage(
                       yOffset, zOffset, mWidth, mHeight, mDepth, dstBegin);
 
   gl->fPixelStorei(LOCAL_GL_UNPACK_ALIGNMENT,
-                   webgl->mPixelStore_UnpackAlignment);
+                   webgl->mPixelStore.mUnpackAlignment);
   if (webgl->IsWebGL2()) {
     gl->fPixelStorei(LOCAL_GL_UNPACK_ROW_LENGTH,
-                     webgl->mPixelStore_UnpackRowLength);
+                     webgl->mPixelStore.mUnpackRowLength);
   }
 
   return true;

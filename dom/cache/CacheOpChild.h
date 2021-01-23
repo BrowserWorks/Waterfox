@@ -31,15 +31,15 @@ class CacheOpChild final : public PCacheOpChild,
  private:
   // This class must be constructed by CacheChild or CacheStorageChild using
   // their ExecuteOp() factory method.
-  CacheOpChild(CacheWorkerHolder* aWorkerHolder, nsIGlobalObject* aGlobal,
+  CacheOpChild(SafeRefPtr<CacheWorkerRef> aWorkerRef, nsIGlobalObject* aGlobal,
                nsISupports* aParent, Promise* aPromise);
   ~CacheOpChild();
 
   // PCacheOpChild methods
   virtual void ActorDestroy(ActorDestroyReason aReason) override;
 
-  virtual mozilla::ipc::IPCResult Recv__delete__(
-      const ErrorResult& aRv, const CacheOpResult& aResult) override;
+  mozilla::ipc::IPCResult Recv__delete__(ErrorResult&& aRv,
+                                         const CacheOpResult& aResult);
 
   // ActorChild methods
   virtual void StartDestroy() override;

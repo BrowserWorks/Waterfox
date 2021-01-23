@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Descargas">
+<!ENTITY aboutDownloads.header                     "Tus descargas">
+<!ENTITY aboutDownloads.empty                      "No hay descargas">
+
+<!ENTITY aboutDownloads.open                       "Abrir">
+<!ENTITY aboutDownloads.remove                     "Borrar">
+<!ENTITY aboutDownloads.removeAll                  "Borrar todo">
+<!ENTITY aboutDownloads.pause                      "Pausar">
+<!ENTITY aboutDownloads.resume                     "Continuar">
+<!ENTITY aboutDownloads.cancel                     "Cancelar">
+<!ENTITY aboutDownloads.retry                      "Reintentar">

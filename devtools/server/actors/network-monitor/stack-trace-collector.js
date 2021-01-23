@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft= javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -21,6 +19,12 @@ loader.lazyRequireGetter(
   "devtools/server/actors/network-monitor/network-observer",
   true
 );
+loader.lazyRequireGetter(
+  this,
+  "WebConsoleUtils",
+  "devtools/server/actors/webconsole/utils",
+  true
+);
 
 function StackTraceCollector(filters, netmonitors) {
   this.filters = filters;
@@ -31,6 +35,7 @@ function StackTraceCollector(filters, netmonitors) {
 StackTraceCollector.prototype = {
   init() {
     Services.obs.addObserver(this, "http-on-opening-request");
+    Services.obs.addObserver(this, "document-on-opening-request");
     Services.obs.addObserver(this, "network-monitor-alternate-stack");
     ChannelEventSinkFactory.getService().registerCollector(this);
     this.onGetStack = this.onGetStack.bind(this);
@@ -44,6 +49,7 @@ StackTraceCollector.prototype = {
 
   destroy() {
     Services.obs.removeObserver(this, "http-on-opening-request");
+    Services.obs.removeObserver(this, "document-on-opening-request");
     Services.obs.removeObserver(this, "network-monitor-alternate-stack");
     ChannelEventSinkFactory.getService().unregisterCollector(this);
     for (const { messageManager } of this.netmonitors) {
@@ -65,6 +71,8 @@ StackTraceCollector.prototype = {
       messageManager.sendAsyncMessage("debug:request-stack-available", {
         channelId: id,
         stacktrace: stacktrace && stacktrace.length > 0,
+        lastFrame:
+          stacktrace && stacktrace.length > 0 ? stacktrace[0] : undefined,
       });
     }
     this.stacktracesById.set(id, stacktrace);
@@ -73,16 +81,30 @@ StackTraceCollector.prototype = {
   observe(subject, topic, data) {
     let channel, id;
     try {
+      // We need to QI nsIHttpChannel in order to load the interface's
+      // methods / attributes for later code that could assume we are dealing
+      // with a nsIHttpChannel.
       channel = subject.QueryInterface(Ci.nsIHttpChannel);
       id = channel.channelId;
-    } catch (e) {
-      // WebSocketChannels do not have IDs, so use the URL. When a WebSocket is
-      // opened in a content process, a channel is created locally but the HTTP
-      // channel for the connection lives entirely in the parent process. When
-      // the server code running in the parent sees that HTTP channel, it will
-      // look for the creation stack using the websocket's URL.
-      channel = subject.QueryInterface(Ci.nsIWebSocketChannel);
-      id = channel.URI.spec;
+    } catch (e1) {
+      try {
+        channel = subject.QueryInterface(Ci.nsIIdentChannel);
+        id = channel.channelId;
+      } catch (e2) {
+        // WebSocketChannels do not have IDs, so use the URL. When a WebSocket is
+        // opened in a content process, a channel is created locally but the HTTP
+        // channel for the connection lives entirely in the parent process. When
+        // the server code running in the parent sees that HTTP channel, it will
+        // look for the creation stack using the websocket's URL.
+        try {
+          channel = subject.QueryInterface(Ci.nsIWebSocketChannel);
+        } catch (e3) {
+          // Channels which don't implement the above interfaces can appear here,
+          // such as nsIFileChannel. Ignore these channels.
+          return;
+        }
+        id = channel.URI.spec;
+      }
     }
 
     if (!matchRequest(channel, this.filters)) {
@@ -91,14 +113,15 @@ StackTraceCollector.prototype = {
 
     const stacktrace = [];
     switch (topic) {
-      case "http-on-opening-request": {
+      case "http-on-opening-request":
+      case "document-on-opening-request": {
         // The channel is being opened on the main thread, associate the current
         // stack with it.
         //
         // Convert the nsIStackFrame XPCOM objects to a nice JSON that can be
         // passed around through message managers etc.
         let frame = components.stack;
-        if (frame && frame.caller) {
+        if (frame?.caller) {
           frame = frame.caller;
           while (frame) {
             stacktrace.push({
@@ -167,7 +190,7 @@ StackTraceCollector.prototype = {
   getStackTrace(channelId) {
     const trace = this.stacktracesById.get(channelId);
     this.stacktracesById.delete(channelId);
-    return trace;
+    return WebConsoleUtils.removeFramesAboveDebuggerEval(trace);
   },
 
   onGetStack(msg) {

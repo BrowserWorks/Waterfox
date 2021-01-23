@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Αποθηκευμένα αρχεία">
+<!ENTITY aboutDownloads.empty                      "Κανένα αποθηκευμένο αρχείο">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "Άνοιγμα φακέλου λήψης">
+<!ENTITY cmd.show.accesskey                        "λ">
+<!ENTITY cmd.showMac.label                         "Εμφάνιση στο Finder">
+<!ENTITY cmd.showMac.accesskey                     "F">
+<!ENTITY cmd.open.label                            "Άνοιγμα">
+<!ENTITY cmd.open.accesskey                        "Ά">
+<!ENTITY cmd.removeFromHistory.label               "Αφαίρεση από το ιστορικό">
+<!ENTITY cmd.removeFromHistory.accesskey           "ι">
+<!ENTITY cmd.clearList.label                       "Απαλοιφή λίστας">
+<!ENTITY cmd.clearList.accesskey                   "Α">
+<!ENTITY cmd.clearList.tooltip                     "Αφαίρεση όλων των καταχωρήσεων από τη λίστα αποθηκευμένων αρχείων, εκτός από τις λήψεις σε εξέλιξη.">
+<!ENTITY cmd.searchDownloads.label                 "Αναζήτηση…">
+<!ENTITY cmd.searchDownloads.key                   "F">

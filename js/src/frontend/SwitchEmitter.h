@@ -7,21 +7,22 @@
 #ifndef frontend_SwitchEmitter_h
 #define frontend_SwitchEmitter_h
 
-#include "mozilla/Attributes.h"
-#include "mozilla/Maybe.h"
+#include "mozilla/Assertions.h"  // MOZ_ASSERT
+#include "mozilla/Attributes.h"  // MOZ_STACK_CLASS, MOZ_MUST_USE
+#include "mozilla/Maybe.h"       // mozilla::Maybe
 
-#include <stddef.h>
-#include <stdint.h>
+#include <stddef.h>  // size_t
+#include <stdint.h>  // int32_t, uint32_t
 
-#include "frontend/BytecodeControlStructures.h"
-#include "frontend/EmitterScope.h"
-#include "frontend/JumpList.h"
-#include "frontend/TDZCheckCache.h"
-#include "gc/Rooting.h"
-#include "js/AllocPolicy.h"
-#include "js/Value.h"
-#include "js/Vector.h"
-#include "vm/Scope.h"
+#include "frontend/BytecodeControlStructures.h"  // BreakableControl
+#include "frontend/EmitterScope.h"               // EmitterScope
+#include "frontend/JumpList.h"                   // JumpList, JumpTarget
+#include "frontend/TDZCheckCache.h"              // TDZCheckCache
+#include "gc/Rooting.h"                          // Handle
+#include "js/AllocPolicy.h"                      // SystemAllocPolicy
+#include "js/Value.h"                            // JSVAL_INT_MAX, JSVAL_INT_MIN
+#include "js/Vector.h"                           // Vector
+#include "vm/Scope.h"                            // LexicalScope
 
 namespace js {
 namespace frontend {
@@ -173,54 +174,53 @@ struct BytecodeEmitter;
 class MOZ_STACK_CLASS SwitchEmitter {
   // Bytecode for each case.
   //
-  // Cond Switch
+  // Cond Switch (uses an equality comparison for each case)
   //     {discriminant}
-  //     JSOP_CONDSWITCH
   //
   //     {c1_expr}
-  //     JSOP_CASE c1
+  //     JSOp::Case c1
   //
-  //     JSOP_JUMPTARGET
+  //     JSOp::JumpTarget
   //     {c2_expr}
-  //     JSOP_CASE c2
+  //     JSOp::Case c2
   //
   //     ...
   //
-  //     JSOP_JUMPTARGET
-  //     JSOP_DEFAULT default
+  //     JSOp::JumpTarget
+  //     JSOp::Default default
   //
   //   c1:
-  //     JSOP_JUMPTARGET
+  //     JSOp::JumpTarget
   //     {c1_body}
-  //     JSOP_GOTO end
+  //     JSOp::Goto end
   //
   //   c2:
-  //     JSOP_JUMPTARGET
+  //     JSOp::JumpTarget
   //     {c2_body}
-  //     JSOP_GOTO end
+  //     JSOp::Goto end
   //
   //   default:
   //   end:
-  //     JSOP_JUMPTARGET
+  //     JSOp::JumpTarget
   //
   // Table Switch
   //     {discriminant}
-  //     JSOP_TABLESWITCH c1, c2, ...
+  //     JSOp::TableSwitch c1, c2, ...
   //
   //   c1:
-  //     JSOP_JUMPTARGET
+  //     JSOp::JumpTarget
   //     {c1_body}
-  //     JSOP_GOTO end
+  //     JSOp::Goto end
   //
   //   c2:
-  //     JSOP_JUMPTARGET
+  //     JSOp::JumpTarget
   //     {c2_body}
-  //     JSOP_GOTO end
+  //     JSOp::Goto end
   //
   //   ...
   //
   //   end:
-  //     JSOP_JUMPTARGET
+  //     JSOp::JumpTarget
 
  public:
   enum class Kind { Table, Cond };
@@ -298,12 +298,6 @@ class MOZ_STACK_CLASS SwitchEmitter {
   // True if there's explicit default case.
   bool hasDefault_ = false;
 
-  // The source note index for SRC_CONDSWITCH.
-  unsigned noteIndex_ = 0;
-
-  // Source note index of the previous SRC_NEXTCASE.
-  unsigned caseNoteIndex_ = 0;
-
   // The number of cases in the switch statement, excluding the default case.
   uint32_t caseCount_ = 0;
 
@@ -311,15 +305,15 @@ class MOZ_STACK_CLASS SwitchEmitter {
   uint32_t caseIndex_ = 0;
 
   // Bytecode offset after emitting `discriminant`.
-  ptrdiff_t top_ = 0;
+  BytecodeOffset top_;
 
-  // Bytecode offset of the previous JSOP_CASE.
-  ptrdiff_t lastCaseOffset_ = 0;
+  // Bytecode offset of the previous JSOp::Case.
+  BytecodeOffset lastCaseOffset_;
 
-  // Bytecode offset of the JSOP_JUMPTARGET for default body.
-  JumpTarget defaultJumpTargetOffset_ = {-1};
+  // Bytecode offset of the JSOp::JumpTarget for default body.
+  JumpTarget defaultJumpTargetOffset_;
 
-  // Bytecode offset of the JSOP_DEFAULT.
+  // Bytecode offset of the JSOp::Default.
   JumpList condSwitchDefaultOffset_;
 
   // Instantiated when there's lexical scope for entire switch.
@@ -335,10 +329,10 @@ class MOZ_STACK_CLASS SwitchEmitter {
   mozilla::Maybe<uint32_t> switchPos_;
 
   // Cond Switch:
-  //   Offset of each JSOP_CASE.
+  //   Offset of each JSOp::Case.
   // Table Switch:
-  //   Offset of each JSOP_JUMPTARGET for case.
-  js::Vector<ptrdiff_t, 32, SystemAllocPolicy> caseOffsets_;
+  //   Offset of each JSOp::JumpTarget for case.
+  js::Vector<BytecodeOffset, 32, SystemAllocPolicy> caseOffsets_;
 
   // The state of this emitter.
   //

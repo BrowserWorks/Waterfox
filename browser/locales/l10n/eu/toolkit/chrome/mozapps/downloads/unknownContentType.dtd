@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "Ondorengoa irekitzea aukeratu duzu:">
+<!ENTITY  from.label                  "nondik:">
+<!ENTITY  actionQuestion.label        "Zer egin behar du &brandShortName;(e)k fitxategi honekin?">
+
+<!ENTITY  openWith.label              "Ireki honekin">
+<!ENTITY  openWith.accesskey          "I">
+<!ENTITY  other.label                 "Besterik…">
+
+<!ENTITY  saveFile.label              "Gorde fitxategia">
+<!ENTITY  saveFile.accesskey          "G">
+
+<!ENTITY  rememberChoice.label        "Egin hau automatikoki hau bezelako fitxategiekin aurrerantzean.">
+<!ENTITY  rememberChoice.accesskey    "a">
+
+<!ENTITY  whichIs.label              "hau da:">
+
+<!ENTITY  chooseHandlerMac.label      "Aukeratu…">
+<!ENTITY  chooseHandlerMac.accesskey  "k">
+<!ENTITY  chooseHandler.label         "Arakatu…">
+<!ENTITY  chooseHandler.accesskey     "A">
+
+<!ENTITY  unknownPromptText.label     "Fitxategi hau gorde nahi duzu?">

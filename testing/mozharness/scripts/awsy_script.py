@@ -44,23 +44,17 @@ class AWSY(TestingMixin, MercurialScript, TooltoolMixin, CodeCoverageMixin):
           "default": True,
           "help": "Run tests without multiple processes (e10s). (Desktop builds only)",
           }],
-        [["--single-stylo-traversal"],
-         {"action": "store_true",
-          "dest": "single_stylo_traversal",
-          "default": False,
-          "help": "Set STYLO_THREADS=1.",
+        [["--setpref"],
+         {"action": "append",
+          "dest": "extra_prefs",
+          "default": [],
+          "help": "Extra user prefs.",
           }],
         [["--enable-webrender"],
          {"action": "store_true",
           "dest": "enable_webrender",
           "default": False,
-          "help": "Tries to enable the WebRender compositor.",
-          }],
-        [["--disable-webrender"],
-         {"action": "store_true",
-          "dest": "disable_webrender",
-          "default": False,
-          "help": "Force-disables the WebRender compositor.",
+          "help": "Enable the WebRender compositor in Gecko.",
           }],
         [["--base"],
          {"action": "store_true",
@@ -231,6 +225,7 @@ class AWSY(TestingMixin, MercurialScript, TooltoolMixin, CodeCoverageMixin):
         cmd.append("--profile=%s" % (os.path.join(dirs['abs_work_dir'], 'profile')))
         if not self.config['e10s']:
             cmd.append('--disable-e10s')
+        cmd.extend(['--setpref={}'.format(p) for p in self.config['extra_prefs']])
         cmd.append('--gecko-log=%s' % os.path.join(dirs["abs_blob_upload_dir"],
                                                    'gecko.log'))
         # TestingMixin._download_and_extract_symbols() should set
@@ -249,25 +244,13 @@ class AWSY(TestingMixin, MercurialScript, TooltoolMixin, CodeCoverageMixin):
 
         cmd.append("--preferences=%s" % os.path.join(self.awsy_path, "conf", prefs_file))
         if dmd_enabled:
-            cmd.append("--pref=security.sandbox.content.level:0")
+            cmd.append("--setpref=security.sandbox.content.level=0")
         cmd.append(test_file)
 
-        if self.config['single_stylo_traversal']:
-            env['STYLO_THREADS'] = '1'
-        else:
-            env['STYLO_THREADS'] = '4'
-
-        # TODO: consider getting rid of this as stylo is enabled by default
-        env['STYLO_FORCE_ENABLED'] = '1'
-
         if self.config['enable_webrender']:
-            env['MOZ_WEBRENDER'] = '1'
-            env['MOZ_ACCELERATED'] = '1'
+            cmd.append('--enable-webrender')
 
-        # Allow explicitly disabling webrender, so that we don't run WR on non-QR
-        # test platforms just because they run on qualified hardware.
-        if self.config['disable_webrender']:
-            env['MOZ_WEBRENDER'] = '0'
+        env['STYLO_THREADS'] = '4'
 
         env['MOZ_UPLOAD_DIR'] = dirs['abs_blob_upload_dir']
         if not os.path.isdir(env['MOZ_UPLOAD_DIR']):

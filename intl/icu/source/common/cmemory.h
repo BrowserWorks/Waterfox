@@ -65,37 +65,36 @@ U_CAPI void * U_EXPORT2
 uprv_calloc(size_t num, size_t size) U_MALLOC_ATTR U_ALLOC_SIZE_ATTR2(1,2);
 
 /**
- * This should align the memory properly on any machine.
- * This is very useful for the safeClone functions.
- */
-typedef union {
-    long    t1;
-    double  t2;
-    void   *t3;
-} UAlignedMemory;
-
-/**
  * Get the least significant bits of a pointer (a memory address).
  * For example, with a mask of 3, the macro gets the 2 least significant bits,
  * which will be 0 if the pointer is 32-bit (4-byte) aligned.
  *
- * ptrdiff_t is the most appropriate integer type to cast to.
- * size_t should work too, since on most (or all?) platforms it has the same
- * width as ptrdiff_t.
+ * uintptr_t is the most appropriate integer type to cast to.
  */
-#define U_POINTER_MASK_LSB(ptr, mask) (((ptrdiff_t)(char *)(ptr)) & (mask))
+#define U_POINTER_MASK_LSB(ptr, mask) ((uintptr_t)(ptr) & (mask))
 
 /**
- * Get the amount of bytes that a pointer is off by from
- * the previous UAlignedMemory-aligned pointer.
+ * Create & return an instance of "type" in statically allocated storage.
+ * e.g.
+ *    static std::mutex *myMutex = STATIC_NEW(std::mutex);
+ * To destroy an object created in this way, invoke the destructor explicitly, e.g.
+ *    myMutex->~mutex();
+ * DO NOT use delete.
+ * DO NOT use with class UMutex, which has specific support for static instances.
+ *
+ * STATIC_NEW is intended for use when
+ *   - We want a static (or global) object.
+ *   - We don't want it to ever be destructed, or to explicitly control destruction,
+ *     to avoid use-after-destruction problems.
+ *   - We want to avoid an ordinary heap allocated object,
+ *     to avoid the possibility of memory allocation failures, and
+ *     to avoid memory leak reports, from valgrind, for example.
+ * This is defined as a macro rather than a template function because each invocation
+ * must define distinct static storage for the object being returned.
  */
-#define U_ALIGNMENT_OFFSET(ptr) U_POINTER_MASK_LSB(ptr, sizeof(UAlignedMemory) - 1)
-
-/**
- * Get the amount of bytes to add to a pointer
- * in order to get the next UAlignedMemory-aligned address.
- */
-#define U_ALIGNMENT_OFFSET_UP(ptr) (sizeof(UAlignedMemory) - U_ALIGNMENT_OFFSET(ptr))
+#define STATIC_NEW(type) [] () { \
+    alignas(type) static char storage[sizeof(type)]; \
+    return new(storage) type();} ()
 
 /**
   *  Heap clean up function, called from u_cleanup()
@@ -275,7 +274,10 @@ inline T *LocalMemory<T>::allocateInsteadAndCopy(int32_t newCapacity, int32_t le
  *
  * WARNING: MaybeStackArray only works with primitive (plain-old data) types.
  * It does NOT know how to call a destructor! If you work with classes with
- * destructors, consider LocalArray in localpointer.h or MemoryPool.
+ * destructors, consider:
+ *
+ * - LocalArray in localpointer.h if you know the length ahead of time
+ * - MaybeStackVector if you know the length at runtime
  */
 template<typename T, int32_t stackCapacity>
 class MaybeStackArray {
@@ -685,26 +687,26 @@ inline H *MaybeStackHeaderAndArray<H, T, stackCapacity>::orphanOrClone(int32_t l
 template<typename T, int32_t stackCapacity = 8>
 class MemoryPool : public UMemory {
 public:
-    MemoryPool() : count(0), pool() {}
+    MemoryPool() : fCount(0), fPool() {}
 
     ~MemoryPool() {
-        for (int32_t i = 0; i < count; ++i) {
-            delete pool[i];
+        for (int32_t i = 0; i < fCount; ++i) {
+            delete fPool[i];
         }
     }
 
     MemoryPool(const MemoryPool&) = delete;
     MemoryPool& operator=(const MemoryPool&) = delete;
 
-    MemoryPool(MemoryPool&& other) U_NOEXCEPT : count(other.count),
-                                                pool(std::move(other.pool)) {
-        other.count = 0;
+    MemoryPool(MemoryPool&& other) U_NOEXCEPT : fCount(other.fCount),
+                                                fPool(std::move(other.fPool)) {
+        other.fCount = 0;
     }
 
     MemoryPool& operator=(MemoryPool&& other) U_NOEXCEPT {
-        count = other.count;
-        pool = std::move(other.pool);
-        other.count = 0;
+        fCount = other.fCount;
+        fPool = std::move(other.fPool);
+        other.fCount = 0;
         return *this;
     }
 
@@ -717,19 +719,100 @@ public:
      */
     template<typename... Args>
     T* create(Args&&... args) {
-        int32_t capacity = pool.getCapacity();
-        if (count == capacity &&
-            pool.resize(capacity == stackCapacity ? 4 * capacity : 2 * capacity,
-                        capacity) == nullptr) {
+        int32_t capacity = fPool.getCapacity();
+        if (fCount == capacity &&
+            fPool.resize(capacity == stackCapacity ? 4 * capacity : 2 * capacity,
+                         capacity) == nullptr) {
             return nullptr;
         }
-        return pool[count++] = new T(std::forward<Args>(args)...);
+        return fPool[fCount++] = new T(std::forward<Args>(args)...);
     }
 
-private:
-    int32_t count;
-    MaybeStackArray<T*, stackCapacity> pool;
+    /**
+     * @return Number of elements that have been allocated.
+     */
+    int32_t count() const {
+        return fCount;
+    }
+
+protected:
+    int32_t fCount;
+    MaybeStackArray<T*, stackCapacity> fPool;
 };
+
+/**
+ * An internal Vector-like implementation based on MemoryPool.
+ *
+ * Heap-allocates each element and stores pointers.
+ *
+ * To append an item to the vector, use emplaceBack.
+ *
+ *     MaybeStackVector<MyType> vector;
+ *     MyType* element = vector.emplaceBack();
+ *     if (!element) {
+ *         status = U_MEMORY_ALLOCATION_ERROR;
+ *     }
+ *     // do stuff with element
+ *
+ * To loop over the vector, use a for loop with indices:
+ *
+ *     for (int32_t i = 0; i < vector.length(); i++) {
+ *         MyType* element = vector[i];
+ *     }
+ */
+template<typename T, int32_t stackCapacity = 8>
+class MaybeStackVector : protected MemoryPool<T, stackCapacity> {
+public:
+    using MemoryPool<T, stackCapacity>::MemoryPool;
+    using MemoryPool<T, stackCapacity>::operator=;
+
+    template<typename... Args>
+    T* emplaceBack(Args&&... args) {
+        return this->create(args...);
+    }
+
+    int32_t length() const {
+        return this->fCount;
+    }
+
+    T** getAlias() {
+        return this->fPool.getAlias();
+    }
+
+    /**
+     * Array item access (read-only).
+     * No index bounds check.
+     * @param i array index
+     * @return reference to the array item
+     */
+    const T* operator[](ptrdiff_t i) const {
+        return this->fPool[i];
+    }
+
+    /**
+     * Array item access (writable).
+     * No index bounds check.
+     * @param i array index
+     * @return reference to the array item
+     */
+    T* operator[](ptrdiff_t i) {
+        return this->fPool[i];
+    }
+
+    /**
+     * Append all the items from another MaybeStackVector to this one.
+     */
+    void appendAll(const MaybeStackVector& other, UErrorCode& status) {
+        for (int32_t i = 0; i < other.fCount; i++) {
+            T* item = emplaceBack(*other[i]);
+            if (!item) {
+                status = U_MEMORY_ALLOCATION_ERROR;
+                return;
+            }
+        }
+    }
+};
+
 
 U_NAMESPACE_END
 

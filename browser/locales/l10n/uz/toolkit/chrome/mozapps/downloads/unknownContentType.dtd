@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "Ochish uchun tanladingiz:">
+<!ENTITY  from.label                  "Manba:">
+<!ENTITY  actionQuestion.label        "Ushbu fayl bilan &brandShortName; nima qilsin?">
+
+<!ENTITY  openWith.label              "Ochish:">
+<!ENTITY  openWith.accesskey          "O">
+<!ENTITY  other.label                 "Boshqa">
+
+<!ENTITY  saveFile.label              "Faylni saqlash">
+<!ENTITY  saveFile.accesskey          "s">
+
+<!ENTITY  rememberChoice.label        "Hozirdan shunga oʻxshagan  fayllarda avtomatik bajarilsin.">
+<!ENTITY  rememberChoice.accesskey    "a">
+
+<!ENTITY  whichIs.label              " - ">
+
+<!ENTITY  chooseHandlerMac.label      "Tanlash">
+<!ENTITY  chooseHandlerMac.accesskey  "T">
+<!ENTITY  chooseHandler.label         "Koʻrish…">
+<!ENTITY  chooseHandler.accesskey     "K">
+
+<!ENTITY  unknownPromptText.label     "Ushbu faylni saqlashni xohlaysizmi?">

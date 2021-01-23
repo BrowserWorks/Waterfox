@@ -3,14 +3,15 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 use api::{BorderRadius, BorderSide, BorderStyle, ColorF, ColorU};
-use api::{NormalBorder as ApiNormalBorder, RepeatMode};
+use api::{NormalBorder as ApiNormalBorder, RepeatMode, EdgeAaSegmentMask};
 use api::units::*;
+use crate::clip::ClipChainId;
 use crate::ellipse::Ellipse;
 use euclid::vec2;
-use crate::display_list_flattener::DisplayListFlattener;
+use crate::scene_building::SceneBuilder;
+use crate::spatial_tree::SpatialNodeIndex;
 use crate::gpu_types::{BorderInstance, BorderSegment, BrushFlags};
 use crate::prim_store::{BorderSegmentInfo, BrushSegment, NinePatchDescriptor};
-use crate::prim_store::{EdgeAaSegmentMask, ScrollNodeAndClipChain};
 use crate::prim_store::borders::{NormalBorderPrim, NormalBorderData};
 use crate::util::{lerp, RectHelpers};
 use crate::internal_types::LayoutPrimitiveInfo;
@@ -208,19 +209,21 @@ pub fn ensure_no_corner_overlap(
     }
 }
 
-impl<'a> DisplayListFlattener<'a> {
+impl<'a> SceneBuilder<'a> {
     pub fn add_normal_border(
         &mut self,
         info: &LayoutPrimitiveInfo,
         border: &ApiNormalBorder,
         widths: LayoutSideOffsets,
-        clip_and_scroll: ScrollNodeAndClipChain,
+        spatial_node_index: SpatialNodeIndex,
+        clip_chain_id: ClipChainId,
     ) {
         let mut border = *border;
         ensure_no_corner_overlap(&mut border.radius, info.rect.size);
 
         self.add_primitive(
-            clip_and_scroll,
+            spatial_node_index,
+            clip_chain_id,
             info,
             Vec::new(),
             NormalBorderPrim {
@@ -1065,14 +1068,14 @@ fn add_corner_segment(
     }
 
     let segment_rect = image_rect.intersection(&non_overlapping_rect)
-        .unwrap_or(LayoutRect::zero());
+        .unwrap_or_else(LayoutRect::zero);
 
     if segment_rect.size.width <= 0. || segment_rect.size.height <= 0. {
         return;
     }
 
     let texture_rect = segment_rect
-        .translate(&-image_rect.origin.to_vector())
+        .translate(-image_rect.origin.to_vector())
         .scale(1.0 / image_rect.size.width, 1.0 / image_rect.size.height);
 
     brush_segments.push(
@@ -1349,40 +1352,47 @@ impl NinePatchDescriptor {
             rect: LayoutRect,
             uv_rect: TexelRect,
             repeat_horizontal: RepeatMode,
-            repeat_vertical: RepeatMode
+            repeat_vertical: RepeatMode,
+            extra_flags: BrushFlags,
         ) {
-            if uv_rect.uv1.x > uv_rect.uv0.x &&
-               uv_rect.uv1.y > uv_rect.uv0.y {
-
-                // Use segment relative interpolation for all
-                // instances in this primitive.
-                let mut brush_flags =
-                    BrushFlags::SEGMENT_RELATIVE |
-                    BrushFlags::SEGMENT_TEXEL_RECT;
-
-                // Enable repeat modes on the segment.
-                if repeat_horizontal == RepeatMode::Repeat {
-                    brush_flags |= BrushFlags::SEGMENT_REPEAT_X;
-                }
-                if repeat_vertical == RepeatMode::Repeat {
-                    brush_flags |= BrushFlags::SEGMENT_REPEAT_Y;
-                }
-
-                let segment = BrushSegment::new(
-                    rect,
-                    true,
-                    EdgeAaSegmentMask::empty(),
-                    [
-                        uv_rect.uv0.x,
-                        uv_rect.uv0.y,
-                        uv_rect.uv1.x,
-                        uv_rect.uv1.y,
-                    ],
-                    brush_flags,
-                );
-
-                segments.push(segment);
+            if uv_rect.uv1.x <= uv_rect.uv0.x || uv_rect.uv1.y <= uv_rect.uv0.y {
+                return;
             }
+
+            // Use segment relative interpolation for all
+            // instances in this primitive.
+            let mut brush_flags =
+                BrushFlags::SEGMENT_RELATIVE |
+                BrushFlags::SEGMENT_TEXEL_RECT |
+                extra_flags;
+
+            // Enable repeat modes on the segment.
+            if repeat_horizontal == RepeatMode::Repeat {
+                brush_flags |= BrushFlags::SEGMENT_REPEAT_X;
+            } else if repeat_horizontal == RepeatMode::Round {
+                brush_flags |= BrushFlags::SEGMENT_REPEAT_X | BrushFlags::SEGMENT_REPEAT_X_ROUND;
+            }
+
+            if repeat_vertical == RepeatMode::Repeat {
+                brush_flags |= BrushFlags::SEGMENT_REPEAT_Y;
+            } else if repeat_vertical == RepeatMode::Round {
+                brush_flags |= BrushFlags::SEGMENT_REPEAT_Y | BrushFlags::SEGMENT_REPEAT_Y_ROUND;
+            }
+
+            let segment = BrushSegment::new(
+                rect,
+                true,
+                EdgeAaSegmentMask::empty(),
+                [
+                    uv_rect.uv0.x,
+                    uv_rect.uv0.y,
+                    uv_rect.uv1.x,
+                    uv_rect.uv1.y,
+                ],
+                brush_flags,
+            );
+
+            segments.push(segment);
         }
 
         // Build the list of image segments
@@ -1394,7 +1404,8 @@ impl NinePatchDescriptor {
             LayoutRect::from_floats(tl_outer.x, tl_outer.y, tl_inner.x, tl_inner.y),
             TexelRect::new(px0, py0, px1, py1),
             RepeatMode::Stretch,
-            RepeatMode::Stretch
+            RepeatMode::Stretch,
+            BrushFlags::empty(),
         );
         // Top right
         add_segment(
@@ -1402,7 +1413,8 @@ impl NinePatchDescriptor {
             LayoutRect::from_floats(tr_inner.x, tr_outer.y, tr_outer.x, tr_inner.y),
             TexelRect::new(px2, py0, px3, py1),
             RepeatMode::Stretch,
-            RepeatMode::Stretch
+            RepeatMode::Stretch,
+            BrushFlags::empty(),
         );
         // Bottom right
         add_segment(
@@ -1410,7 +1422,8 @@ impl NinePatchDescriptor {
             LayoutRect::from_floats(br_inner.x, br_inner.y, br_outer.x, br_outer.y),
             TexelRect::new(px2, py2, px3, py3),
             RepeatMode::Stretch,
-            RepeatMode::Stretch
+            RepeatMode::Stretch,
+            BrushFlags::empty(),
         );
         // Bottom left
         add_segment(
@@ -1418,7 +1431,8 @@ impl NinePatchDescriptor {
             LayoutRect::from_floats(bl_outer.x, bl_inner.y, bl_inner.x, bl_outer.y),
             TexelRect::new(px0, py2, px1, py3),
             RepeatMode::Stretch,
-            RepeatMode::Stretch
+            RepeatMode::Stretch,
+            BrushFlags::empty(),
         );
 
         // Center
@@ -1428,7 +1442,8 @@ impl NinePatchDescriptor {
                 LayoutRect::from_floats(tl_inner.x, tl_inner.y, tr_inner.x, bl_inner.y),
                 TexelRect::new(px1, py1, px2, py2),
                 self.repeat_horizontal,
-                self.repeat_vertical
+                self.repeat_vertical,
+                BrushFlags::SEGMENT_NINEPATCH_MIDDLE,
             );
         }
 
@@ -1441,6 +1456,7 @@ impl NinePatchDescriptor {
             TexelRect::new(px1, py0, px2, py1),
             self.repeat_horizontal,
             RepeatMode::Stretch,
+            BrushFlags::empty(),
         );
         // Bottom
         add_segment(
@@ -1449,6 +1465,7 @@ impl NinePatchDescriptor {
             TexelRect::new(px1, py2, px2, py3),
             self.repeat_horizontal,
             RepeatMode::Stretch,
+            BrushFlags::empty(),
         );
         // Left
         add_segment(
@@ -1457,6 +1474,7 @@ impl NinePatchDescriptor {
             TexelRect::new(px0, py1, px1, py2),
             RepeatMode::Stretch,
             self.repeat_vertical,
+            BrushFlags::empty(),
         );
         // Right
         add_segment(
@@ -1465,6 +1483,7 @@ impl NinePatchDescriptor {
             TexelRect::new(px2, py1, px3, py2),
             RepeatMode::Stretch,
             self.repeat_vertical,
+            BrushFlags::empty(),
         );
 
         segments

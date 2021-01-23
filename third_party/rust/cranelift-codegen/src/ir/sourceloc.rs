@@ -4,6 +4,8 @@
 //! location when instructions are transformed.
 
 use core::fmt;
+#[cfg(feature = "enable-serde")]
+use serde::{Deserialize, Serialize};
 
 /// A source location.
 ///
@@ -13,12 +15,13 @@ use core::fmt;
 /// The default source location uses the all-ones bit pattern `!0`. It is used for instructions
 /// that can't be given a real source location.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "enable-serde", derive(Serialize, Deserialize))]
 pub struct SourceLoc(u32);
 
 impl SourceLoc {
     /// Create a new source location with the given bits.
     pub fn new(bits: u32) -> Self {
-        SourceLoc(bits)
+        Self(bits)
     }
 
     /// Is this the default source location?
@@ -34,7 +37,7 @@ impl SourceLoc {
 
 impl Default for SourceLoc {
     fn default() -> Self {
-        SourceLoc(!0)
+        Self(!0)
     }
 }
 
@@ -51,7 +54,7 @@ impl fmt::Display for SourceLoc {
 #[cfg(test)]
 mod tests {
     use crate::ir::SourceLoc;
-    use std::string::ToString;
+    use alloc::string::ToString;
 
     #[test]
     fn display() {

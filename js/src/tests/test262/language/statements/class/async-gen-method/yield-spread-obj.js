@@ -1,3 +1,4 @@
+// |reftest| async
 // This file was procedurally generated from the following sources:
 // - src/async-generators/yield-spread-obj.case
 // - src/async-generators/default/async-class-decl-method.template
@@ -6,7 +7,6 @@ description: Use yield value in a object spread position (Async Generator method
 esid: prod-AsyncGeneratorMethod
 features: [object-spread, async-iteration]
 flags: [generated, async]
-includes: [compareArray.js]
 info: |
     ClassElement :
       MethodDefinition

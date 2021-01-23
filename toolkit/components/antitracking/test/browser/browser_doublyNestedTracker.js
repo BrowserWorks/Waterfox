@@ -4,8 +4,6 @@ add_task(async function() {
   await SpecialPowers.flushPrefEnv();
   await SpecialPowers.pushPrefEnv({
     set: [
-      ["browser.contentblocking.allowlist.annotations.enabled", true],
-      ["browser.contentblocking.allowlist.storage.enabled", true],
       [
         "network.cookie.cookieBehavior",
         Ci.nsICookieService.BEHAVIOR_REJECT_TRACKER,
@@ -68,9 +66,14 @@ add_task(async function() {
     });
   }
 
-  await ContentTask.spawn(
+  // We need to use the same scheme in Fission test.
+  let testAnotherThirdPartyPage = SpecialPowers.useRemoteSubframes
+    ? TEST_ANOTHER_3RD_PARTY_PAGE_HTTPS
+    : TEST_ANOTHER_3RD_PARTY_PAGE;
+
+  await SpecialPowers.spawn(
     browser,
-    { page: TEST_ANOTHER_3RD_PARTY_PAGE, callback: loadSubpage.toString() },
+    [{ page: testAnotherThirdPartyPage, callback: loadSubpage.toString() }],
     async function(obj) {
       await new content.Promise(resolve => {
         let ifr = content.document.createElement("iframe");

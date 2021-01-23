@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Осыдан кеткім келеді!">
+<!ENTITY safeb.palm.decline.label "Осы ескертуді елемеу">
+<!ENTITY safeb.palm.reportPage.label "Бұл парақ неге блокталған?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Ұсынысты берген <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "Хабарланған шабуылшы парақ!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Бұл веб <span id='malware_sitename'/> парағы шабуылшы ретінде белгілі, және сіздің қауіпсіздік баптауларыңызға сәйкес блокталған.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Шабуылшы парақтар жеке ақпаратты ұрлайтын, компьютеріңізді басқа компьютерлерге шабуыл жасауға қолданатын, не жүйеңізді зақымдайтын бағдарламаларды орнатқысы келеді.</p><p>Кейбір шабуылшы парақтар зиянды бағдарламаларды әдейі таратады, бірақ, кейбір парақтар өздерінің иелері білмейтіндей және олардың рұқсаты жоқ жағдайға әдейі келтірілген.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "Фишингті сайт!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "Бұл веб <span id='phishing_sitename'/> парағы фишингті сайт ретінде белгілі, және сіздің қауіпсіздік баптауларыңызға сәйкес блокталған.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>Фишингті сайттар сізді алдап, қауіпті әрекетті жасатуға, мысалы, БҚ орнату, немесе, парольдер, телефон нөмірлері немесе несие карта ақпаратын анықтап, жинауға арналған.</p><p>Бұл веб парақта қандай болса да ақпаратты енгізу сіздің кім екеніңізді анықтауға немесе басқа да алаяқты әрекеттерге әкеп соғуы мүмкін.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Осы сайт ұнамсыз бағдарламалық қамтаманы тарататыны туралы ақпарат бар!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Бұл веб <span id='unwanted_sitename'/> парағы ұнамсыз бағдарламалық қамтаманы тарататыны ретінде белгілі, және сіздің қауіпсіздік баптауларыңызға сәйкес блокталған.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "Ұнамсыз бағдарламалық қамтамасы бар беттер жүйеге зақым келтіре алатын және жүйенінің күтпеген жақтарына жағымсыз әсерін тигізетін БҚ-ны орнатқысы келеді.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "Келесі вебсайтта зиянкес БҚ бар болуы мүмкін">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; бұл парақты блоктады, өйткені ол сіздің ақпаратыңызды ұрлайтын немесе өшіре алатын (мысалы, фото, парольдер, хабарламалар және несие карталарды) қолданбаларды орнату талабын жасауы мүмкін.">

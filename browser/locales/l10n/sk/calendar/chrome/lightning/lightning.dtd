@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+
+<!-- Tools menu -->
+<!ENTITY lightning.preferencesLabel "Kalendár">
+
+<!-- New menu popup in File menu -->
+<!ENTITY lightning.menupopup.new.event.label    "Udalosť…">
+<!ENTITY lightning.menupopup.new.event.accesskey "U">
+<!ENTITY lightning.menupopup.new.task.label     "Úloha…">
+<!ENTITY lightning.menupopup.new.task.accesskey "h">
+<!ENTITY lightning.menupopup.new.calendar.label "Kalendár…">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "a">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.label               "Otvoriť">
+<!ENTITY lightning.menupopup.open.accesskey           "O">
+<!ENTITY lightning.menupopup.open.message.label       "Uloženú správu…">
+<!ENTITY lightning.menupopup.open.message.accesskey   "U">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.calendar.label      "Súbor kalendára…">
+<!ENTITY lightning.menupopup.open.calendar.accesskey  "k">
+
+<!-- View Menu -->
+<!ENTITY lightning.menu.view.calendar.label            "Kalendár">
+<!ENTITY lightning.menu.view.calendar.accesskey        "n">
+<!ENTITY lightning.menu.view.tasks.label               "Úlohy">
+<!ENTITY lightning.menu.view.tasks.accesskey           "o">
+
+<!-- Events and Tasks menu -->
+<!ENTITY lightning.menu.eventtask.label                "Udalosti a úlohy">
+<!ENTITY lightning.menu.eventtask.accesskey            "d">
+
+<!-- properties dialog, calendar creation wizard -->
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.email.label,
+     lightning.calendarproperties.forceEmailScheduling.label)
+     These strings are used in the calendar wizard and the calendar properties dialog, but are only
+     displayed when setting/using a caldav calendar -->
+<!ENTITY lightning.calendarproperties.email.label                           "E-mail:">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.label            "Uprednostniť plánovanie e-mailov na strane klienta">
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.forceEmailScheduling.tooltiptext1,
+     lightning.calendarproperties.forceEmailScheduling.tooltiptext2)
+     - tooltiptext1 is used in the calendar wizard when setting a new caldav calendar
+     - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "Toto môžete povoliť len po nastavení vlastností kalendára a ak kalendárový server podporuje plánovanie.">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "Táto možnosť je dostupná iba ak kalendárový server podporuje plánovanie. Povolenie tejto možnosti umožní použiť štandardné plánovanie pomocou e-mailov namiesto servera.">
+
+<!-- iMIP Bar (meeting support) -->
+<!ENTITY lightning.imipbar.btnAccept.label                                  "Prijať">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext                           "Prijať pozvánku na udalosť">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label                       "Prijať všetky">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences2.tooltiptext                "Prijať pozvánku na všetky opakovania udalosti">
+<!ENTITY lightning.imipbar.btnAdd.label                                     "Pridať">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext                               "Pridať udalosť do kalendára">
+<!ENTITY lightning.imipbar.btnDecline.label                                 "Odmietnuť">
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext                          "Odmietnuť pozvánku na udalosť">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label                      "Odmietnuť všetky">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences2.tooltiptext               "Odmietnuť pozvánku na všetky opakovania udalosti">
+<!ENTITY lightning.imipbar.btnDeclineCounter.label                          "Odmietnuť">
+<!ENTITY lightning.imipbar.btnDeclineCounter.tooltiptext                    "Odmietnuť protinávrh">
+<!ENTITY lightning.imipbar.btnDelete.label                                  "Vymazať">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext                            "Odstrániť z kalendára">
+<!ENTITY lightning.imipbar.btnDetails.label                                 "Podrobnosti…">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext                           "Zobraziť podrobnosti o udalosti">
+<!ENTITY lightning.imipbar.btnDoNotShowImipBar.label                        "Nabudúce nezobrazovať">
+<!ENTITY lightning.imipbar.btnGoToCalendar.label                            "Kalendár">
+<!ENTITY lightning.imipbar.btnGoToCalendar.tooltiptext                      "Prejsť na kartu Kalendár">
+<!ENTITY lightning.imipbar.btnMore.label                                    "Ďalšie">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext                              "Ďalšie možnosti">
+<!ENTITY lightning.imipbar.btnReconfirm2.label                              "Opäť potvrdiť">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext                         "Odošlať opätovné potvrdenie organizátorovi">
+<!ENTITY lightning.imipbar.btnReschedule.label                              "Preplánovať">
+<!ENTITY lightning.imipbar.btnReschedule.tooltiptext                        "Preplánovať udalosť">
+<!ENTITY lightning.imipbar.btnSaveCopy.label                                "Uložiť kópiu">
+<!ENTITY lightning.imipbar.btnSaveCopy.tooltiptext                          "Uložiť kópiu udalosti do kalendára nezávisle na odpovedi organizátorovi. Zoznam účastníkov bude vymazaný.">
+<!ENTITY lightning.imipbar.btnTentative.label                               "Predbežne prijať">
+<!ENTITY lightning.imipbar.btnTentative2.tooltiptext                        "Predbežne prijať pozvánku na udalosť">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences.label                    "Predbežne prijať všetky">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences2.tooltiptext             "Predbežne prijať pozvánku na všetky opakovania udalosti">
+<!ENTITY lightning.imipbar.btnUpdate.label                                  "Aktualizovať">
+<!ENTITY lightning.imipbar.btnUpdate.tooltiptext                            "Aktualizovať udalosť v kalendári">
+<!ENTITY lightning.imipbar.description                                      "Táto správa obsahuje pozvánku na udalosť">
+
+<!ENTITY lightning.imipbar.btnSend.label                                    "Odoslať odpoveď">
+<!ENTITY lightning.imipbar.btnSend.tooltiptext                              "Odošle odpoveď organizátorovi">
+<!ENTITY lightning.imipbar.btnSendSeries.tooltiptext                        "Odošle organizátorovi odpoveď na celú sériu">
+<!ENTITY lightning.imipbar.btnDontSend.label                                "Neodoslať odpoveď">
+<!ENTITY lightning.imipbar.btnDontSend.tooltiptext                          "Zmení stav vašej účasti bez odoslania odpovede organizátorovi">
+<!ENTITY lightning.imipbar.btnDontSendSeries.tooltiptext                    "Zmení stav vašej účasti pre celú sériu bez odoslania odpovede organizátorovi">
+
+<!-- Lightning specific keybindings -->
+<!ENTITY lightning.keys.event.showCalendar.key "C">
+<!ENTITY lightning.keys.event.showTasks.key "D">
+<!ENTITY lightning.keys.event.new "U">
+<!ENTITY lightning.keys.todo.new "h">
+
+<!-- Account Central page -->
+<!ENTITY lightning.acctCentral.newCalendar.label "Vytvoriť nový kalendár">
+
+<!-- today-pane-specific -->
+<!ENTITY todaypane.showMinimonth.label "Zobraziť Mini Mesiac">
+<!ENTITY todaypane.showMinimonth.accesskey "M">
+<!ENTITY todaypane.showMiniday.label "Zobraziť Mini Deň">
+<!ENTITY todaypane.showMiniday.accesskey  "d">
+<!ENTITY todaypane.showNone.label "Nezobrazovať nič">
+<!ENTITY todaypane.showNone.accesskey "N">
+<!ENTITY todaypane.showTodayPane.label "Zobraziť panel Dnes">
+<!ENTITY todaypane.showTodayPane.accesskey "o">
+<!ENTITY todaypane.statusButton.label "Panel Dnes">

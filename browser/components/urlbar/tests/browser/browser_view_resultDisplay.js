@@ -26,7 +26,11 @@ async function testResult(input, expected) {
     title: input.title,
   });
 
-  await promiseAutocompleteResultPopup(input.query);
+  await UrlbarTestUtils.promiseAutocompleteResultPopup({
+    window,
+    waitForFocus: SimpleTest.waitForFocus,
+    value: input.query,
+  });
 
   let result = await UrlbarTestUtils.getDetailsOfResultAt(window, 1);
   Assert.equal(result.url, ESCAPED_URL, "Should have the correct url to load");
@@ -87,7 +91,7 @@ add_task(async function test_url_result() {
     {
       query: "\u6e2C\u8a66",
       title: "The \u6e2C\u8a66 URL",
-      url: "http://example.com/\u6e2C\u8a66test",
+      url: "https://example.com/\u6e2C\u8a66test",
     },
     {
       displayedUrl: "example.com/\u6e2C\u8a66test",
@@ -100,6 +104,44 @@ add_task(async function test_url_result() {
         ["example.com/", false],
         ["\u6e2C\u8a66", true],
         ["test", false],
+      ],
+    }
+  );
+});
+
+add_task(async function test_url_result_no_path() {
+  await testResult(
+    {
+      query: "ample",
+      title: "The Title",
+      url: "https://example.com/",
+    },
+    {
+      displayedUrl: "example.com",
+      highlightedTitle: [["The Title", false]],
+      highlightedUrl: [
+        ["ex", false],
+        ["ample", true],
+        [".com", false],
+      ],
+    }
+  );
+});
+
+add_task(async function test_url_result_www() {
+  await testResult(
+    {
+      query: "ample",
+      title: "The Title",
+      url: "https://www.example.com/",
+    },
+    {
+      displayedUrl: "example.com",
+      highlightedTitle: [["The Title", false]],
+      highlightedUrl: [
+        ["ex", false],
+        ["ample", true],
+        [".com", false],
       ],
     }
   );
@@ -137,7 +179,7 @@ add_task(async function test_case_insensitive_highlights_1() {
     {
       query: "exam",
       title: "The examPLE URL EXAMple",
-      url: "http://example.com/ExAm",
+      url: "https://example.com/ExAm",
     },
     {
       displayedUrl: "example.com/ExAm",
@@ -148,7 +190,11 @@ add_task(async function test_case_insensitive_highlights_1() {
         ["EXAM", true],
         ["ple", false],
       ],
-      highlightedUrl: [["exam", true], ["ple.com/", false], ["ExAm", true]],
+      highlightedUrl: [
+        ["exam", true],
+        ["ple.com/", false],
+        ["ExAm", true],
+      ],
     }
   );
 });
@@ -158,7 +204,7 @@ add_task(async function test_case_insensitive_highlights_2() {
     {
       query: "EXAM",
       title: "The examPLE URL EXAMple",
-      url: "http://example.com/ExAm",
+      url: "https://example.com/ExAm",
     },
     {
       displayedUrl: "example.com/ExAm",
@@ -169,7 +215,11 @@ add_task(async function test_case_insensitive_highlights_2() {
         ["EXAM", true],
         ["ple", false],
       ],
-      highlightedUrl: [["exam", true], ["ple.com/", false], ["ExAm", true]],
+      highlightedUrl: [
+        ["exam", true],
+        ["ple.com/", false],
+        ["ExAm", true],
+      ],
     }
   );
 });
@@ -179,7 +229,7 @@ add_task(async function test_case_insensitive_highlights_3() {
     {
       query: "eXaM",
       title: "The examPLE URL EXAMple",
-      url: "http://example.com/ExAm",
+      url: "https://example.com/ExAm",
     },
     {
       displayedUrl: "example.com/ExAm",
@@ -190,7 +240,11 @@ add_task(async function test_case_insensitive_highlights_3() {
         ["EXAM", true],
         ["ple", false],
       ],
-      highlightedUrl: [["exam", true], ["ple.com/", false], ["ExAm", true]],
+      highlightedUrl: [
+        ["exam", true],
+        ["ple.com/", false],
+        ["ExAm", true],
+      ],
     }
   );
 });
@@ -200,7 +254,7 @@ add_task(async function test_case_insensitive_highlights_4() {
     {
       query: "ExAm",
       title: "The examPLE URL EXAMple",
-      url: "http://example.com/ExAm",
+      url: "https://example.com/ExAm",
     },
     {
       displayedUrl: "example.com/ExAm",
@@ -211,7 +265,11 @@ add_task(async function test_case_insensitive_highlights_4() {
         ["EXAM", true],
         ["ple", false],
       ],
-      highlightedUrl: [["exam", true], ["ple.com/", false], ["ExAm", true]],
+      highlightedUrl: [
+        ["exam", true],
+        ["ple.com/", false],
+        ["ExAm", true],
+      ],
     }
   );
 });
@@ -221,7 +279,7 @@ add_task(async function test_case_insensitive_highlights_5() {
     {
       query: "exam foo",
       title: "The examPLE URL foo EXAMple FOO",
-      url: "http://example.com/ExAm/fOo",
+      url: "https://example.com/ExAm/fOo",
     },
     {
       displayedUrl: "example.com/ExAm/fOo",
@@ -251,7 +309,7 @@ add_task(async function test_case_insensitive_highlights_6() {
     {
       query: "EXAM FOO",
       title: "The examPLE URL foo EXAMple FOO",
-      url: "http://example.com/ExAm/fOo",
+      url: "https://example.com/ExAm/fOo",
     },
     {
       displayedUrl: "example.com/ExAm/fOo",

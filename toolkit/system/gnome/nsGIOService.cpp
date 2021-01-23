@@ -8,12 +8,11 @@
 #include "nsIURI.h"
 #include "nsTArray.h"
 #include "nsStringEnumerator.h"
-#include "nsAutoPtr.h"
 #include "nsIMIMEInfo.h"
 #include "nsComponentManagerUtils.h"
 #include "nsArray.h"
-#include "nsIFile.h"
 #include "nsPrintfCString.h"
+#include "mozilla/Preferences.h"
 
 #include <gio/gio.h>
 #include <gtk/gtk.h>
@@ -22,10 +21,12 @@
 #  include <dbus/dbus-glib-lowlevel.h>
 #endif
 
+using namespace mozilla;
+
 // We use the same code as gtk_should_use_portal() to detect if we're in flatpak
 // env
 // https://github.com/GNOME/gtk/blob/e0ce028c88858b96aeda9e41734a39a3a04f705d/gtk/gtkprivate.c#L272
-static bool GetShouldUseFlatpakPortal() {
+static bool GetFlatpakPortalEnv() {
   bool shouldUsePortal;
   char* path;
   path = g_build_filename(g_get_user_runtime_dir(), "flatpak-info", nullptr);
@@ -38,9 +39,11 @@ static bool GetShouldUseFlatpakPortal() {
   return shouldUsePortal;
 }
 
-static bool ShouldUseFlatpakPortalImpl() {
-  static bool sShouldUseFlatpakPortal = GetShouldUseFlatpakPortal();
-  return sShouldUseFlatpakPortal;
+static bool GetShouldUseFlatpakPortal() {
+  static bool sFlatpakPortalEnv = GetFlatpakPortalEnv();
+  return Preferences::HasUserValue("widget.use-xdg-desktop-portal")
+             ? Preferences::GetBool("widget.use-xdg-desktop-portal", false)
+             : sFlatpakPortalEnv;
 }
 
 class nsFlatpakHandlerApp : public nsIHandlerApp {
@@ -84,8 +87,8 @@ nsFlatpakHandlerApp::Equals(nsIHandlerApp* aHandlerApp, bool* _retval) {
 }
 
 NS_IMETHODIMP
-nsFlatpakHandlerApp::LaunchWithURI(nsIURI* aUri,
-                                   nsIInterfaceRequestor* aRequestor) {
+nsFlatpakHandlerApp::LaunchWithURI(
+    nsIURI* aUri, mozilla::dom::BrowsingContext* aBrowsingContext) {
   nsCString spec;
   aUri->GetSpec(spec);
   GError* error = nullptr;
@@ -231,7 +234,8 @@ nsGIOMimeApp::Equals(nsIHandlerApp* aHandlerApp, bool* _retval) {
 }
 
 NS_IMETHODIMP
-nsGIOMimeApp::LaunchWithURI(nsIURI* aUri, nsIInterfaceRequestor* aRequestor) {
+nsGIOMimeApp::LaunchWithURI(nsIURI* aUri,
+                            mozilla::dom::BrowsingContext* aBrowsingContext) {
   GList uris = {0};
   nsCString spec;
   aUri->GetSpec(spec);
@@ -300,9 +304,9 @@ nsGIOMimeApp::GetSupportedURISchemes(nsIUTF8StringEnumerator** aSchemes) {
   const gchar* const* uri_schemes = g_vfs_get_supported_uri_schemes(gvfs);
 
   while (*uri_schemes != nullptr) {
-    if (!array->mStrings.AppendElement(*uri_schemes)) {
-      return NS_ERROR_OUT_OF_MEMORY;
-    }
+    // XXX(Bug 1631371) Check if this should use a fallible operation as it
+    // pretended earlier.
+    array->mStrings.AppendElement(*uri_schemes);
     uri_schemes++;
   }
 
@@ -422,7 +426,7 @@ nsGIOService::GetAppForURIScheme(const nsACString& aURIScheme,
   // Application in flatpak sandbox does not have access to the list
   // of installed applications on the system. We use generic
   // nsFlatpakHandlerApp which forwards launch call to the system.
-  if (ShouldUseFlatpakPortalImpl()) {
+  if (GetShouldUseFlatpakPortal()) {
     nsFlatpakHandlerApp* mozApp = new nsFlatpakHandlerApp();
     NS_ADDREF(*aApp = mozApp);
     return NS_OK;
@@ -480,7 +484,7 @@ nsGIOService::GetAppForMimeType(const nsACString& aMimeType,
 
   // Flatpak does not reveal installed application to the sandbox,
   // we need to create generic system handler.
-  if (ShouldUseFlatpakPortalImpl()) {
+  if (GetShouldUseFlatpakPortal()) {
     nsFlatpakHandlerApp* mozApp = new nsFlatpakHandlerApp();
     NS_ADDREF(*aApp = mozApp);
     return NS_OK;
@@ -497,7 +501,19 @@ nsGIOService::GetAppForMimeType(const nsACString& aMimeType,
     return NS_ERROR_NOT_AVAILABLE;
   }
 
+#if defined(__OpenBSD__) && defined(MOZ_SANDBOX)
+  // g_app_info_get_default_for_type will fail on OpenBSD's veiled filesystem
+  // since we most likely don't have direct access to the binaries that are
+  // registered as defaults for this type.  Fake it up by just executing
+  // xdg-open via gio-launch-desktop (which we do have access to) and letting
+  // it figure out which program to execute for this MIME type
+  GAppInfo* app_info = g_app_info_create_from_commandline(
+      "/usr/local/bin/xdg-open",
+      nsPrintfCString("System default for %s", content_type).get(),
+      G_APP_INFO_CREATE_NONE, NULL);
+#else
   GAppInfo* app_info = g_app_info_get_default_for_type(content_type, false);
+#endif
   if (app_info) {
     nsGIOMimeApp* mozApp = new nsGIOMimeApp(app_info);
     NS_ENSURE_TRUE(mozApp, NS_ERROR_OUT_OF_MEMORY);
@@ -716,6 +732,6 @@ nsGIOService::CreateAppFromCommand(nsACString const& cmd,
 
 NS_IMETHODIMP
 nsGIOService::ShouldUseFlatpakPortal(bool* aRes) {
-  *aRes = ShouldUseFlatpakPortalImpl();
+  *aRes = GetShouldUseFlatpakPortal();
   return NS_OK;
 }

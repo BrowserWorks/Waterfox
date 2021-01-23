@@ -34,9 +34,6 @@ class gfxEnv final {
   // Debugging inside of ContainerLayerComposite
   DECL_GFX_ENV("DUMP_DEBUG", DumpDebug);
 
-  // Use WR recording
-  DECL_GFX_ENV("ENABLE_WR_RECORDING", EnableWebRenderRecording);
-
   // OpenGL shader debugging in OGLShaderProgram, in DEBUG only
   DECL_GFX_ENV("MOZ_DEBUG_SHADERS", DebugShaders);
 
@@ -89,6 +86,9 @@ class gfxEnv final {
   // Very noisy GLContext and GLContextProviderEGL
   DECL_GFX_ENV("MOZ_GL_SPEW", GlSpew);
 
+  //
+  DECL_GFX_ENV("MOZ_GPU_SWITCHING_SPEW", GpuSwitchingSpew);
+
   // Do extra work before and after each GLX call in GLContextProviderGLX
   DECL_GFX_ENV("MOZ_GLX_DEBUG", GlxDebug);
 
@@ -121,8 +121,9 @@ class gfxEnv final {
     return (val != 0 && *val != '\0');
   }
 
-  gfxEnv(){};
-  ~gfxEnv(){};
+  gfxEnv() = default;
+  ~gfxEnv() = default;
+
   gfxEnv(const gfxEnv&) = delete;
   gfxEnv& operator=(const gfxEnv&) = delete;
 };

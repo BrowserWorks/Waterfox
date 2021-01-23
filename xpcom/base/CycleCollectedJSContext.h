@@ -17,6 +17,7 @@
 #include "mozilla/dom/AtomList.h"
 #include "mozilla/dom/Promise.h"
 #include "jsapi.h"
+#include "js/GCVector.h"
 #include "js/Promise.h"
 
 #include "nsCOMPtr.h"
@@ -84,10 +85,7 @@ class MicroTaskRunnable {
   virtual ~MicroTaskRunnable() = default;
 };
 
-class CycleCollectedJSContext
-    : dom::PerThreadAtomCache,
-      public LinkedListElement<CycleCollectedJSContext>,
-      private JS::JobQueue {
+class CycleCollectedJSContext : dom::PerThreadAtomCache, private JS::JobQueue {
   friend class CycleCollectedJSRuntime;
 
  protected:
@@ -95,21 +93,13 @@ class CycleCollectedJSContext
   virtual ~CycleCollectedJSContext();
 
   MOZ_IS_CLASS_INIT
-  nsresult Initialize(JSRuntime* aParentRuntime, uint32_t aMaxBytes,
-                      uint32_t aMaxNurseryBytes);
-
-  // See explanation in mIsPrimaryContext.
-  MOZ_IS_CLASS_INIT
-  nsresult InitializeNonPrimary(CycleCollectedJSContext* aPrimaryContext);
+  nsresult Initialize(JSRuntime* aParentRuntime, uint32_t aMaxBytes);
 
   virtual CycleCollectedJSRuntime* CreateRuntime(JSContext* aCx) = 0;
 
   size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
 
  private:
-  MOZ_IS_CLASS_INIT
-  void InitializeCommon();
-
   static JSObject* GetIncumbentGlobalCallback(JSContext* aCx);
   static bool EnqueuePromiseJobCallback(JSContext* aCx,
                                         JS::HandleObject aPromise,
@@ -118,7 +108,7 @@ class CycleCollectedJSContext
                                         JS::HandleObject aIncumbentGlobal,
                                         void* aData);
   static void PromiseRejectionTrackerCallback(
-      JSContext* aCx, JS::HandleObject aPromise,
+      JSContext* aCx, bool aMutedErrors, JS::HandleObject aPromise,
       JS::PromiseRejectionHandlingState state, void* aData);
 
   void AfterProcessMicrotasks();
@@ -247,6 +237,12 @@ class CycleCollectedJSContext
 
   virtual bool IsSystemCaller() const = 0;
 
+  // Unused on main thread.  Used by AutoJSAPI on Worker and Worklet threads.
+  virtual void ReportError(JSErrorReport* aReport,
+                           JS::ConstUTF8CharsZ aToStringResult) {
+    MOZ_ASSERT_UNREACHABLE("Not supported");
+  }
+
  private:
   // JS::JobQueue implementation: see js/public/Promise.h.
   // SpiderMonkey uses some of these methods to enqueue promise resolution jobs.
@@ -266,13 +262,11 @@ class CycleCollectedJSContext
   class SavedMicroTaskQueue;
   js::UniquePtr<SavedJobQueue> saveJobQueue(JSContext*) override;
 
- private:
-  // A primary context owns the mRuntime. Non-main-thread contexts should always
-  // be primary. On the main thread, the primary context should be the first one
-  // created and the last one destroyed. Non-primary contexts are used for
-  // cooperatively scheduled threads.
-  bool mIsPrimaryContext;
+  static void CleanupFinalizationRegistryCallback(JSObject* aRegistry,
+                                                  void* aData);
+  void QueueFinalizationRegistryForCleanup(JSObject* aRegistry);
 
+ private:
   CycleCollectedJSRuntime* mRuntime;
 
   JSContext* mJSContext;
@@ -345,6 +339,15 @@ class CycleCollectedJSContext
     CycleCollectedJSContext* mCx;
     PromiseArray mUnhandledRejections;
   };
+
+  // Support for JS FinalizationRegistry objects.
+  //
+  // These allow a JS callback to be registered that is called when an object
+  // dies. The browser part of the implementation keeps a vector of
+  // FinalizationRegistries with pending callbacks here.
+  friend class CleanupFinalizationRegistriesRunnable;
+  using ObjectVector = JS::GCVector<JSObject*, 0, InfallibleAllocPolicy>;
+  JS::PersistentRooted<ObjectVector> mFinalizationRegistriesToCleanUp;
 };
 
 class MOZ_STACK_CLASS nsAutoMicroTask {

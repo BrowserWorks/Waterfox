@@ -153,9 +153,13 @@ function getLDAPAttributes(host, base, filter, attribs, isSecure) {
       gVersion = Ci.nsILDAPConnection.VERSION3;
     }
     // user supplied method
-    processLDAPValues(ldapquery.getQueryResults(url, gVersion));
+    if ("processLDAPValues" in gSandbox) {
+      gSandbox.processLDAPValues(ldapquery.getQueryResults(url, gVersion));
+    } else {
+      processLDAPValues(ldapquery.getQueryResults(url, gVersion));
+    }
   } catch (e) {
-    displayError("getLDAPAttibutes", e);
+    displayError("getLDAPAttributes", e);
   }
 }
 
@@ -196,7 +200,7 @@ function displayError(funcname, message) {
       .createBundle("chrome://autoconfig/locale/autoconfig.properties");
 
     var title = bundle.GetStringFromName("autoConfigTitle");
-    var msg = bundle.formatStringFromName("autoConfigMsg", [funcname], 1);
+    var msg = bundle.formatStringFromName("autoConfigMsg", [funcname]);
     promptService.alert(null, title, msg + " " + message);
   } catch (e) {}
 }

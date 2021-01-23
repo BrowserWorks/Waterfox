@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title             "&brandShortName; Ütz Rub'anikil">
+<!ENTITY window.width                     "37em">
+
+<!ENTITY safeModeDescription.label        "&brandShortName; nisamäj wakami pa Ütz Rub'anikil, ri nuchüp jumej ri ichinan runuk'ulem, taq wachinïk chuqa' taq k'amal.">
+<!ENTITY safeModeDescription2.label       "Yatikïr nab'än jutaqil chi ke ri jujun o konojel re taq jaloj re':">
+
+<!ENTITY disableAddons.label              "Kechup konojel ri taq tz'aqat">
+<!ENTITY disableAddons.accesskey          "K">
+
+<!ENTITY resetToolbars.label              "Ketikirisäx chik kikajtz'ik samajib'äl chuqa' taq chajib'äl">
+<!ENTITY resetToolbars.accesskey          "K">
+
+<!ENTITY changeAndRestartButton.label     "Tijal chuqa' Titikirisäx chik">
+<!ENTITY changeAndRestartButton.accesskey "T">
+
+<!ENTITY continueButton.label             "Tik'oje' na pa Ütz Rub'anikil">
+<!ENTITY continueButton.accesskey         "T">

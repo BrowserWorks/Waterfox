@@ -5806,6 +5806,7 @@ structLocale:table(nofallback){
         mn{""}
         mnc{""}
         mni{""}
+        mo{""}
         moh{""}
         mos{""}
         mr{""}
@@ -5868,6 +5869,7 @@ structLocale:table(nofallback){
         pap{""}
         pau{""}
         pcd{""}
+        pcm{""}
         pdc{""}
         pdt{""}
         peo{""}
@@ -6057,6 +6059,10 @@ structLocale:table(nofallback){
         zza{""}
     }
     Languages%long{
+        zh{""}
+    }
+    Languages%menu{
+        yue{""}
         zh{""}
     }
     Languages%secondary{
@@ -24700,6 +24706,23 @@ structLocale:table(nofallback){
                     d{""}
                     y{""}
                 }
+                GyMMMM{
+                    G{""}
+                    M{""}
+                    y{""}
+                }
+                GyMMMMEd{
+                    G{""}
+                    M{""}
+                    d{""}
+                    y{""}
+                }
+                GyMMMMd{
+                    G{""}
+                    M{""}
+                    d{""}
+                    y{""}
+                }
                 GyMMMd{
                     G{""}
                     M{""}
@@ -25144,6 +25167,23 @@ structLocale:table(nofallback){
                     y{""}
                 }
                 GyMMMEd{
+                    G{""}
+                    M{""}
+                    d{""}
+                    y{""}
+                }
+                GyMMMM{
+                    G{""}
+                    M{""}
+                    y{""}
+                }
+                GyMMMMEd{
+                    G{""}
+                    M{""}
+                    d{""}
+                    y{""}
+                }
+                GyMMMMd{
                     G{""}
                     M{""}
                     d{""}
@@ -28041,7 +28081,7 @@ structLocale:table(nofallback){
                 many{""}
                 other{""}
             }
-            meter-per-second-squared{
+            meter-per-square-second{
                 dnam{""}
                 zero{""}
                 one{""}
@@ -28981,7 +29021,7 @@ structLocale:table(nofallback){
                 many{""}
                 other{""}
             }
-            inch-hg{
+            inch-ofhg{
                 dnam{""}
                 zero{""}
                 one{""}
@@ -28999,7 +29039,7 @@ structLocale:table(nofallback){
                 many{""}
                 other{""}
             }
-            millimeter-of-mercury{
+            millimeter-ofhg{
                 dnam{""}
                 zero{""}
                 one{""}
@@ -29008,7 +29048,7 @@ structLocale:table(nofallback){
                 many{""}
                 other{""}
             }
-            pound-per-square-inch{
+            pound-force-per-square-inch{
                 dnam{""}
                 zero{""}
                 one{""}
@@ -29299,7 +29339,7 @@ structLocale:table(nofallback){
                 many{""}
                 other{""}
             }
-            meter-per-second-squared{
+            meter-per-square-second{
                 dnam{""}
                 zero{""}
                 one{""}
@@ -30239,7 +30279,7 @@ structLocale:table(nofallback){
                 many{""}
                 other{""}
             }
-            inch-hg{
+            inch-ofhg{
                 dnam{""}
                 zero{""}
                 one{""}
@@ -30257,7 +30297,7 @@ structLocale:table(nofallback){
                 many{""}
                 other{""}
             }
-            millimeter-of-mercury{
+            millimeter-ofhg{
                 dnam{""}
                 zero{""}
                 one{""}
@@ -30266,7 +30306,7 @@ structLocale:table(nofallback){
                 many{""}
                 other{""}
             }
-            pound-per-square-inch{
+            pound-force-per-square-inch{
                 dnam{""}
                 zero{""}
                 one{""}
@@ -30557,7 +30597,7 @@ structLocale:table(nofallback){
                 many{""}
                 other{""}
             }
-            meter-per-second-squared{
+            meter-per-square-second{
                 dnam{""}
                 zero{""}
                 one{""}
@@ -31497,7 +31537,7 @@ structLocale:table(nofallback){
                 many{""}
                 other{""}
             }
-            inch-hg{
+            inch-ofhg{
                 dnam{""}
                 zero{""}
                 one{""}
@@ -31515,7 +31555,7 @@ structLocale:table(nofallback){
                 many{""}
                 other{""}
             }
-            millimeter-of-mercury{
+            millimeter-ofhg{
                 dnam{""}
                 zero{""}
                 one{""}
@@ -31524,7 +31564,7 @@ structLocale:table(nofallback){
                 many{""}
                 other{""}
             }
-            pound-per-square-inch{
+            pound-force-per-square-inch{
                 dnam{""}
                 zero{""}
                 one{""}

@@ -14,7 +14,7 @@ The serialized scalar data is submitted with the :doc:`main pings <../data/main-
 
 .. important::
 
-    Every new data collection in Firefox needs a `data collection review <https://wiki.mozilla.org/Firefox/Data_Collection#Requesting_Approval>`_ from a data collection peer. Just set the feedback? flag for one of the data peers. We try to reply within a business day.
+    Every new or changed data collection in Firefox needs a `data collection review <https://wiki.mozilla.org/Firefox/Data_Collection>`__ from a Data Steward.
 
 The API
 =======
@@ -64,7 +64,7 @@ After registration, the scalars can be recorded through the usual scalar JS API.
 
 .. note::
 
-    Accumulating in dynamic scalars only works in content child processes and in the parent process. All the accumulations (parent and content chldren) are aggregated together .
+    Accumulating in dynamic scalars only works in content child processes and in the parent process. All the accumulations (parent and content children) are aggregated together .
 
 New scalars registered here are subject to the same :ref:`limitations <scalar-limitations>` as the ones registered through ``Scalars.yaml``, e.g. the length of the category name or the allowed characters.
 
@@ -159,6 +159,12 @@ Required Fields
 - ``expires``: The version number in which the scalar expires, e.g. "30"; a version number of type "N" is automatically converted to "N.0a1" in order to expire the scalar also in the development channels. A telemetry probe acting on an expired scalar will print a warning into the browser console. For scalars that never expire the value ``never`` can be used.
 - ``kind``: A string representing the scalar type. Allowed values are ``uint``, ``string`` and ``boolean``.
 - ``notification_emails``: A list of email addresses to notify with alerts of expiring probes. More importantly, these are used by the data steward to verify that the probe is still useful.
+- ``products``: A list of products the scalar can be recorded on. Currently supported values are:
+
+  - ``firefox`` - Collected in Firefox Desktop for submission via Firefox Telemetry.
+  - ``fennec`` - Collected in Firefox for Android for submission via Firefox Mobile Telemetry.
+  - ``geckoview`` - *deprecated* Will be removed in Firefox 79. (see `bug 1620395 <https://bugzilla.mozilla.org/show_bug.cgi?id=1620395>`__)
+
 - ``record_in_processes``: A list of processes the scalar is allowed to record in. Currently supported values are:
 
   - ``main``;
@@ -171,14 +177,8 @@ Optional Fields
 ---------------
 
 - ``release_channel_collection``: This can be either ``opt-in`` (default) or ``opt-out``. With the former the scalar is submitted by default on pre-release channels, unless the user has opted out. With the latter the scalar is submitted by default on release and pre-release channels, unless the user has opted out.
-- ``keyed``: A boolean that determines whether this is a keyed scalar. It defaults to ``False``.
-- ``products``: A list of products the scalar can be recorded on. It defaults to ``all``. Currently supported values are:
-
-  - ``firefox``
-  - ``fennec``
-  - ``geckoview``
-  - ``all`` (record on all products)
-
+- ``keyed``: A boolean that determines whether this is a keyed scalar. It defaults to ``false``.
+- ``keys``: A string list. Only valid for *keyed scalars*. Defines a case insensitive list of allowed keys that can be used for this scalar. The list is limited to 100 keys with a maximum length of 72 characters each. When using a key that is not in the list, an error is returned.
 - ``record_into_store``: A list of stores this scalar should be recorded into. It defaults to ``[main]``.
 - ``operating_systems``: This field restricts recording to certain operating systems only. Use that in-place of previous ``cpp_guards`` to avoid inclusion on not-specified operating systems. It defaults to ``all``. Currently supported values are:
 

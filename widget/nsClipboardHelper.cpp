@@ -10,7 +10,7 @@
 #include "nsCOMPtr.h"
 #include "nsXPCOM.h"
 #include "nsISupportsPrimitives.h"
-#include "nsIServiceManager.h"
+#include "nsServiceManagerUtils.h"
 
 // helpers
 #include "nsIClipboard.h"
@@ -24,7 +24,7 @@ NS_IMPL_ISUPPORTS(nsClipboardHelper, nsIClipboardHelper)
  * nsClipboardHelper ctor / dtor
  *****************************************************************************/
 
-nsClipboardHelper::nsClipboardHelper() {}
+nsClipboardHelper::nsClipboardHelper() = default;
 
 nsClipboardHelper::~nsClipboardHelper() {
   // no members, nothing to destroy

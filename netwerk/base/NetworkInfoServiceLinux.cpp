@@ -17,8 +17,7 @@
 
 #include "NetworkInfoServiceImpl.h"
 
-namespace mozilla {
-namespace net {
+namespace mozilla::net {
 
 static nsresult ListInterfaceAddresses(int aFd, const char* aIface,
                                        AddrMapType& aAddrMap);
@@ -70,8 +69,7 @@ static nsresult ListInterfaceAddresses(int aFd, const char* aInterface,
   }
 
   char host[128];
-  int family;
-  switch (family = ifreq.ifr_addr.sa_family) {
+  switch (ifreq.ifr_addr.sa_family) {
     case AF_INET:
     case AF_INET6:
       getnameinfo(&ifreq.ifr_addr, sizeof(ifreq.ifr_addr), host, sizeof(host),
@@ -95,5 +93,4 @@ static nsresult ListInterfaceAddresses(int aFd, const char* aInterface,
   return NS_OK;
 }
 
-}  // namespace net
-}  // namespace mozilla
+}  // namespace mozilla::net

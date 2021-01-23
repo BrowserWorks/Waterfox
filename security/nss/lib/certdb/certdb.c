@@ -2889,15 +2889,8 @@ void
 CERT_UnlockCertRefCount(CERTCertificate *cert)
 {
     PORT_Assert(certRefCountLock != NULL);
-
-#ifdef DEBUG
-    {
-        PRStatus prstat = PZ_Unlock(certRefCountLock);
-        PORT_Assert(prstat == PR_SUCCESS);
-    }
-#else
-    PZ_Unlock(certRefCountLock);
-#endif
+    PRStatus prstat = PZ_Unlock(certRefCountLock);
+    PORT_AssertArg(prstat == PR_SUCCESS);
 }
 
 static PZLock *certTrustLock = NULL;
@@ -3001,15 +2994,8 @@ void
 CERT_UnlockCertTrust(const CERTCertificate *cert)
 {
     PORT_Assert(certTrustLock != NULL);
-
-#ifdef DEBUG
-    {
-        PRStatus prstat = PZ_Unlock(certTrustLock);
-        PORT_Assert(prstat == PR_SUCCESS);
-    }
-#else
-    PZ_Unlock(certTrustLock);
-#endif
+    PRStatus prstat = PZ_Unlock(certTrustLock);
+    PORT_AssertArg(prstat == PR_SUCCESS);
 }
 
 /*
@@ -3019,14 +3005,8 @@ void
 CERT_UnlockCertTempPerm(const CERTCertificate *cert)
 {
     PORT_Assert(certTempPermLock != NULL);
-#ifdef DEBUG
-    {
-        PRStatus prstat = PZ_Unlock(certTempPermLock);
-        PORT_Assert(prstat == PR_SUCCESS);
-    }
-#else
-    (void)PZ_Unlock(certTempPermLock);
-#endif
+    PRStatus prstat = PZ_Unlock(certTempPermLock);
+    PORT_AssertArg(prstat == PR_SUCCESS);
 }
 
 /*

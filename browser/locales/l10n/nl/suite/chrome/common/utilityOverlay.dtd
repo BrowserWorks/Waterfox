@@ -1,0 +1,209 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- these things need to move into utilityOverlay.xul -->
+<!ENTITY  offlineGoOfflineCmd.label                 "Offline werken">
+<!ENTITY  offlineGoOfflineCmd.accesskey             "f">
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label                   "Bestand">
+<!ENTITY fileMenu.accesskey               "B">
+<!ENTITY newMenu.label                    "Nieuw">
+<!ENTITY newMenu.accesskey                "N">
+<!ENTITY newBlankPageCmd.label            "Composer-pagina">
+<!ENTITY newBlankPageCmd.accesskey        "o">
+<!ENTITY newBlankPageCmd.key              "n">
+<!ENTITY newPageFromTemplateCmd.label "Webpagina op basis van sjabloon">
+<!ENTITY newPageFromTemplateCmd.accesskey "s">
+<!ENTITY newPageFromDraftCmd.label "Webpagina op basis van concept">
+<!ENTITY newPageFromDraftCmd.accesskey "c">
+<!ENTITY newNavigatorCmd.label "Browservenster">
+<!ENTITY newNavigatorCmd.key "N">
+<!ENTITY newNavigatorCmd.accesskey "v">
+<!ENTITY newPrivateWindowCmd.label "Privévenster">
+<!ENTITY newPrivateWindowCmd.key "B">
+<!ENTITY newPrivateWindowCmd.accesskey "P">
+<!ENTITY closeCmd.label "Sluiten">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "C">
+<!ENTITY printSetupCmd.label "Pagina-instellingen…">
+<!ENTITY printSetupCmd.accesskey "i">
+<!ENTITY printPreviewCmd.label "Afdrukvoorbeeld">
+<!ENTITY printPreviewCmd.accesskey "v">
+<!ENTITY printCmd.label "Afdrukken…">
+<!ENTITY printCmd.accesskey "d">
+<!ENTITY printCmd.key "P">
+
+<!-- LOCALIZATION NOTE (.modifiers): The following entites are for the
+     application menu. Never change the modifiers unless you are 100% sure that
+     they are different on your locale (should be very rare). -->
+<!ENTITY preferencesCmdMac.label          "Voorkeuren…">
+<!ENTITY preferencesCmdMac.key            ",">
+<!ENTITY preferencesCmdMac.modifiers      "accel">
+<!ENTITY servicesMenu.label               "Services">
+<!ENTITY hideThisAppCmd.label             "&brandShortName; verbergen">
+<!ENTITY hideThisAppCmd.key               "H">
+<!ENTITY hideThisAppCmd.modifiers         "accel">
+<!ENTITY hideOtherAppsCmd.label           "Verberg andere">
+<!ENTITY hideOtherAppsCmd.key             "H">
+<!ENTITY hideOtherAppsCmd.modifiers       "accel,alt">
+<!ENTITY showAllAppsCmd.label             "Alle tonen">
+<!ENTITY openHelpCmdMac.label             "&brandShortName; Help">
+<!ENTITY openHelpCmdMac.accesskey         "H">
+<!ENTITY openHelpCmdMac.key               "?">
+<!ENTITY openHelpCmdMac.modifiers         "accel">
+
+<!ENTITY quitApplicationCmd.label         "Afsluiten">
+<!ENTITY quitApplicationCmd.key           "Q">
+<!ENTITY quitApplicationCmd.accesskey     "A">
+<!ENTITY quitApplicationCmdMac.label      "&brandShortName; afsluiten">
+<!ENTITY quitApplicationCmdMac.accesskey  "a">
+<!ENTITY quitApplicationCmdUnix.label     "Afsluiten">
+<!ENTITY quitApplicationCmdUnix.accesskey "A">
+
+<!ENTITY editMenu.label                   "Bewerken">
+<!ENTITY editMenu.accesskey               "w">
+<!ENTITY undoCmd.label                    "Ongedaan maken">
+<!ENTITY undoCmd.key                      "Z">
+<!ENTITY undoCmd.accesskey                "O">
+<!ENTITY redoCmd.label                    "Opnieuw uitvoeren">
+<!ENTITY redoCmd.key                      "Y">
+<!ENTITY redoCmdMac.key                   "Z">
+<!ENTITY redoCmd.accesskey                "u">
+<!ENTITY cutCmd.label                     "Knippen">
+<!ENTITY cutCmd.key                       "X">
+<!ENTITY cutCmd.accesskey                 "n">
+<!ENTITY copyCmd.label                    "Kopiëren">
+<!ENTITY copyCmd.key                      "C">
+<!ENTITY copyCmd.accesskey                "K">
+<!ENTITY pasteCmd.label                   "Plakken">
+<!ENTITY pasteCmd.key                     "V">
+<!ENTITY pasteCmd.accesskey               "P">
+<!ENTITY pasteGoCmd.label                 "Plakken &amp; gaan">
+<!ENTITY pasteGoCmd.accesskey             "e">
+
+<!-- LOCALIZATION NOTE (pasteSearchCmd): "Search" is a verb, this is the
+     search bar equivalent to the url bar's "Paste & Go"  -->
+<!ENTITY pasteSearchCmd.label             "Plakken &amp; Zoeken">
+<!ENTITY pasteSearchCmd.accesskey         "e">
+<!ENTITY deleteCmd.label                  "Verwijderen">
+<!ENTITY deleteCmd.accesskey              "V">
+<!ENTITY selectAllCmd.label               "Alles selecteren">
+<!ENTITY selectAllCmd.key                 "A">
+<!ENTITY selectAllCmd.accesskey           "A">
+<!ENTITY clearHistoryCmd.label            "Zoekgeschiedenis wissen">
+<!ENTITY clearHistoryCmd.accesskey        "Z">
+<!ENTITY showSuggestionsCmd.label         "Suggesties tonen">
+<!ENTITY showSuggestionsCmd.accesskey     "S">
+<!ENTITY preferencesCmd.label             "Voorkeuren…">
+<!ENTITY preferencesCmd.key               "E">
+<!ENTITY preferencesCmd.accesskey         "r">
+<!ENTITY findBarCmd.key "F">
+<!-- LOCALIZATION NOTE (findBarCmd.accesskey): This accesskey should be within
+     findBarCmd.label found in editorOverlay.dtd, findCmd.label in messenger.dtd
+     and messengercompose.dtd and findOnCmd.label found in navigatorOverlay.dtd -->
+<!ENTITY findBarCmd.accesskey "Z">
+<!ENTITY findCmd.key2 "VK_F19">
+<!ENTITY findReplaceCmd.key "H">
+<!ENTITY findReplaceCmdMac.key "F">
+<!ENTITY findReplaceCmd.accesskey "e">
+<!ENTITY findAgainCmd.label "Opnieuw zoeken">
+<!ENTITY findAgainCmd.key "G">
+<!ENTITY findAgainCmd.accesskey "w">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "Vorige zoeken">
+<!ENTITY findPrevCmd.key "G">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.accesskey "i">
+<!ENTITY findTypeTextCmd.label "Tekst zoeken terwijl u typt">
+<!ENTITY findTypeTextCmd.key "/">
+<!ENTITY findTypeTextCmd.accesskey "T">
+<!ENTITY findTypeLinksCmd.label "Koppelingen zoeken terwijl u typt">
+<!ENTITY findTypeLinksCmd.key "'">
+<!ENTITY findTypeLinksCmd.accesskey "l">
+
+<!ENTITY viewMenu.label                   "Beeld">
+<!ENTITY viewMenu.accesskey               "l">
+<!ENTITY viewToolbarsMenu.label           "Tonen/verbergen">
+<!ENTITY viewToolbarsMenu.accesskey       "T">
+<!ENTITY showTaskbarCmd.label             "Statusbalk">
+<!ENTITY showTaskbarCmd.accesskey         "S">
+
+<!ENTITY helpMenu.label                   "Help">
+<!ENTITY helpMenu.accesskey               "H">
+
+<!-- LOCALIZATION NOTE some localizations of Windows use "?"
+     for the help button in the menubar. -->
+<!ENTITY helpMenuWin.label                "Help">
+<!ENTITY helpMenuWin.accesskey            "H">
+<!ENTITY openHelpCmd.label                "Helpinhoud">
+<!ENTITY openHelpCmd.accesskey            "H">
+<!ENTITY openHelpCmd.key                  "VK_F1">
+
+<!ENTITY helpForIEUsers.label               "Voor Internet Explorer-gebruikers">
+<!ENTITY helpForIEUsers.accesskey           "I">
+<!ENTITY helpTroubleshootingInfo.label      "Probleemoplossingsinformatie">
+<!ENTITY helpTroubleshootingInfo.accesskey  "P">
+<!ENTITY releaseCmd.label                   "Uitgaveopmerkingen">
+<!ENTITY releaseCmd.accesskey               "U">
+<!ENTITY helpSafeMode.label                 "Herstarten met uitgeschakelde add-ons">
+<!ENTITY helpSafeMode.accesskey             "r">
+<!ENTITY updateCmd.label                    "Controleren op updates…">
+<!ENTITY updateCmd.accesskey                "C">
+<!ENTITY aboutCmd.label                     "Over &brandShortName;">
+<!ENTITY aboutCmd.accesskey                 "S">
+<!ENTITY aboutCommPluginsCmd.label          "Over plug-ins">
+<!ENTITY aboutCommPluginsCmd.accesskey      "l">
+
+<!ENTITY direct.label                             "Online (proxy: geen)">
+<!ENTITY direct.accesskey                         "n">
+<!ENTITY manual.label                             "Online (proxy: handmatig)">
+<!ENTITY manual.accesskey                         "h">
+<!ENTITY pac.label                                "Online (proxy: auto-URL)">
+<!ENTITY pac.accesskey                            "a">
+<!ENTITY wpad.label                               "Online (proxy: autodetectie)">
+<!ENTITY wpad.accesskey                           "d">
+<!ENTITY system.label                             "Online (proxy: systeemproxy)">
+<!ENTITY system.accesskey                         "s">
+
+<!ENTITY proxy.label                              "Proxyconfiguratie…">
+<!ENTITY proxy.accesskey                          "P">
+
+<!ENTITY bidiSwitchTextDirectionItem.label        "Tekstrichting omkeren">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey    "s">
+<!ENTITY bidiSwitchTextDirectionItem.commandkey   "X">
+
+<!ENTITY menubarCmd.label                         "Menubalk">
+<!ENTITY menubarCmd.accesskey                     "M">
+
+<!ENTITY customizeToolbarContext.label            "Aanpassen…">
+<!ENTITY customizeToolbarContext.accesskey        "A">
+
+<!ENTITY customizeToolbar.toolbarmode.label       "Instellingen voor deze werkbalk">
+<!ENTITY customizeToolbar.toolbarmode.accesskey   "I">
+<!ENTITY customizeToolbar.iconsAndText.label      "Pictogrammen en tekst">
+<!ENTITY customizeToolbar.iconsAndText.accesskey  "e">
+<!ENTITY customizeToolbar.icons.label             "Pictogrammen">
+<!ENTITY customizeToolbar.icons.accesskey         "P">
+<!ENTITY customizeToolbar.text.label              "Tekst">
+<!ENTITY customizeToolbar.text.accesskey          "T">
+<!ENTITY customizeToolbar.useSmallIcons.label     "Kleine pictogrammen gebruiken">
+<!ENTITY customizeToolbar.useSmallIcons.accesskey "K">
+<!ENTITY customizeToolbar.labelAlignEnd.label     "Tekst naast pictogram tonen">
+<!ENTITY customizeToolbar.labelAlignEnd.accesskey "n">
+<!ENTITY customizeToolbar.useDefault.label        "Standaardinstelling terugzetten">
+<!ENTITY customizeToolbar.useDefault.accesskey    "S">
+
+<!-- Popup Blocked notification menu -->
+<!ENTITY allowPopups.accesskey        "P">
+<!ENTITY showPopupManager.label       "Pop-ups beheren">
+<!ENTITY showPopupManager.accesskey   "b">
+<!ENTITY dontShowMessage.label        "Dit bericht niet tonen wanneer pop-ups worden geblokkeerd">
+<!ENTITY dontShowMessage.accesskey    "D">
+
+<!ENTITY throbber.title "Throbber">
+<!ENTITY throbber.tooltip2 "Naar de &brandShortName;-startpagina gaan">
+
+<!ENTITY syncToolbarButton.label "Sync">

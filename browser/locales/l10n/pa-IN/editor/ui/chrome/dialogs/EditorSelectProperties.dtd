@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "ਚੋਣ ਲਿਸਟ ਵਿਸ਼ੇਸ਼ਤਾ">
+
+<!ENTITY Select.label "ਚੋਣ ਲਿਸਟ">
+<!ENTITY SelectName.label "ਲਿਸਟ ਨਾਂ:">
+<!ENTITY SelectName.accesskey "N">
+<!ENTITY SelectSize.label "ਉਚਾਈ:">
+<!ENTITY SelectSize.accesskey "H">
+<!ENTITY SelectMultiple.label "ਬਹੁ ਚੋਣ">
+<!ENTITY SelectMultiple.accesskey "M">
+<!ENTITY SelectDisabled.label "ਆਯੋਗ">
+<!ENTITY SelectDisabled.accesskey "D">
+<!ENTITY SelectTabIndex.label "ਟੈਬ ਇੰਡੈਕਸ:">
+<!ENTITY SelectTabIndex.accesskey "I">
+
+<!ENTITY OptGroup.label "ਚੋਣ ਗਰੁੱਪ">
+<!ENTITY OptGroupLabel.label "ਲੇਬਲ:">
+<!ENTITY OptGroupLabel.accesskey "L">
+<!ENTITY OptGroupDisabled.label "ਆਯੋਗ">
+<!ENTITY OptGroupDisabled.accesskey "D">
+
+<!ENTITY Option.label "ਚੋਣ">
+<!ENTITY OptionText.label "ਟੈਕਸਟ:">
+<!ENTITY OptionText.accesskey "T">
+<!ENTITY OptionValue.label "ਮੁੱਲ:">
+<!ENTITY OptionValue.accesskey "V">
+<!ENTITY OptionSelected.label "ਸ਼ੁਰੂਆਤੀ ਚੋਣ">
+<!ENTITY OptionSelected.accesskey "S">
+<!ENTITY OptionDisabled.label "ਆਯੋਗ">
+<!ENTITY OptionDisabled.accesskey "D">
+
+<!ENTITY TextHeader.label "ਟੈਕਸਟ">
+<!ENTITY ValueHeader.label "ਮੁੱਲ">
+<!ENTITY SelectedHeader.label "ਚੁਣਿਆ">
+
+<!ENTITY AddOption.label "ਚੋਣ ਸ਼ਾਮਿਲ">
+<!ENTITY AddOption.accesskey "O">
+<!ENTITY AddOptGroup.label "ਗਰੁੱਪ ਸ਼ਾਮਲ">
+<!ENTITY AddOptGroup.accesskey "G">
+<!ENTITY RemoveElement.label "ਹਟਾਓ">
+<!ENTITY RemoveElement.accesskey "R">
+<!ENTITY MoveElementUp.label "ਉੱਤੇ ਭੇਜੋ">
+<!ENTITY MoveElementUp.accesskey "U">
+<!ENTITY MoveElementDown.label "ਹੇਠਾਂ ਭੇਜੋ">
+<!ENTITY MoveElementDown.accesskey "D">

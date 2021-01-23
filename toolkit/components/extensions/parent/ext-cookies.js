@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
 
 ChromeUtils.defineModuleGetter(
@@ -11,9 +15,9 @@ ChromeUtils.defineModuleGetter(
 var { ExtensionError } = ExtensionUtils;
 
 const SAME_SITE_STATUSES = [
-  "no_restriction", // Index 0 = Ci.nsICookie2.SAMESITE_UNSET
-  "lax", // Index 1 = Ci.nsICookie2.SAMESITE_LAX
-  "strict", // Index 2 = Ci.nsICookie2.SAMESITE_STRICT
+  "no_restriction", // Index 0 = Ci.nsICookie.SAMESITE_NONE
+  "lax", // Index 1 = Ci.nsICookie.SAMESITE_LAX
+  "strict", // Index 2 = Ci.nsICookie.SAMESITE_STRICT
 ];
 
 const isIPv4 = host => {
@@ -91,7 +95,7 @@ const checkSetCookiePermissions = (extension, uri, cookie) => {
   // follows. So instead, we follow the rules used by the cookie
   // service.
   //
-  // See source/netwerk/cookie/nsCookieService.cpp, in particular
+  // See source/netwerk/cookie/CookieService.cpp, in particular
   // CheckDomain() and SetCookieInternal().
 
   if (uri.scheme != "http" && uri.scheme != "https") {
@@ -220,7 +224,7 @@ const query = function*(detailsIn, props, context) {
   }
 
   // We can use getCookiesFromHost for faster searching.
-  let enumerator;
+  let cookies;
   let host;
   let url;
   let originAttributes = {
@@ -245,15 +249,15 @@ const query = function*(detailsIn, props, context) {
   if (host && "firstPartyDomain" in originAttributes) {
     // getCookiesFromHost is more efficient than getCookiesWithOriginAttributes
     // if the host and all origin attributes are known.
-    enumerator = Services.cookies.getCookiesFromHost(host, originAttributes);
+    cookies = Services.cookies.getCookiesFromHost(host, originAttributes);
   } else {
-    enumerator = Services.cookies.getCookiesWithOriginAttributes(
+    cookies = Services.cookies.getCookiesWithOriginAttributes(
       JSON.stringify(originAttributes),
       host
     );
   }
 
-  // Based on nsCookieService::GetCookieStringInternal
+  // Based on CookieService::GetCookieStringFromHttp
   function matches(cookie) {
     function domainMatches(host) {
       return (
@@ -324,7 +328,7 @@ const query = function*(detailsIn, props, context) {
     return true;
   }
 
-  for (const cookie of enumerator) {
+  for (const cookie of cookies) {
     if (matches(cookie)) {
       yield { cookie, isPrivate, storeId };
     }
@@ -495,7 +499,6 @@ this.cookies = class extends ExtensionAPI {
               cookie.host,
               cookie.name,
               cookie.path,
-              false,
               cookie.originAttributes
             );
 
@@ -537,7 +540,7 @@ this.cookies = class extends ExtensionAPI {
           register: fire => {
             let observer = (subject, topic, data) => {
               let notify = (removed, cookie, cause) => {
-                cookie.QueryInterface(Ci.nsICookie2);
+                cookie.QueryInterface(Ci.nsICookie);
 
                 if (extension.whiteListedHosts.matchesCookie(cookie)) {
                   fire.async({
@@ -566,7 +569,7 @@ this.cookies = class extends ExtensionAPI {
                 case "batch-deleted":
                   subject.QueryInterface(Ci.nsIArray);
                   for (let i = 0; i < subject.length; i++) {
-                    let cookie = subject.queryElementAt(i, Ci.nsICookie2);
+                    let cookie = subject.queryElementAt(i, Ci.nsICookie);
                     if (
                       !cookie.isSession &&
                       cookie.expiry * 1000 <= Date.now()

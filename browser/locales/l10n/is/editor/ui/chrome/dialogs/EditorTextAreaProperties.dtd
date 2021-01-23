@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Eiginleikar textasvæðis">
+<!ENTITY Settings.label "Stillingar">
+<!ENTITY TextAreaName.label "Nafn svæðis:">
+<!ENTITY TextAreaName.accessKey "N">
+<!ENTITY TextAreaRows.label "Raðir:">
+<!ENTITY TextAreaRows.accessKey "R">
+<!ENTITY TextAreaCols.label "Dálkar:">
+<!ENTITY TextAreaCols.accessKey "D">
+<!ENTITY TextAreaReadOnly.label "Skrifvarin">
+<!ENTITY TextAreaReadOnly.accessKey "S">
+<!ENTITY TextAreaDisabled.label "Óvirkt">
+<!ENTITY TextAreaDisabled.accessKey "v">
+<!ENTITY TextAreaTabIndex.label "Dálk tilvísun:">
+<!ENTITY TextAreaTabIndex.accessKey "i">
+<!ENTITY TextAreaAccessKey.label "Aðgangslykill:">
+<!ENTITY TextAreaAccessKey.accessKey "k">
+<!ENTITY InitialText.label "Upphaflegur texti:">
+<!ENTITY InitialText.accessKey "t">
+<!ENTITY TextAreaWrap.label "Textaskiptingarhamur:">
+<!ENTITY TextAreaWrap.accessKey "T">
+<!ENTITY WrapDefault.value "Sjálfgefið">
+<!ENTITY WrapOff.value "Óvirkt">
+<!ENTITY WrapHard.value "Erfitt">
+<!ENTITY WrapSoft.value "Fljótandi">
+<!ENTITY WrapPhysical.value "Raunverulegur">
+<!ENTITY WrapVirtual.value "Sýndar">

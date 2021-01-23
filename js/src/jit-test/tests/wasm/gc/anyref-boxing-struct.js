@@ -1,4 +1,4 @@
-// |jit-test| skip-if: !wasmGcEnabled() || wasmCompileMode() != 'baseline'
+// |jit-test| skip-if: !wasmReftypesEnabled() || !wasmGcEnabled() || wasmCompileMode() != 'baseline'
 
 // Moving a JS value through a wasm anyref is a pair of boxing/unboxing
 // conversions that leaves the value unchanged.  There are many cases,
@@ -19,6 +19,7 @@ let VALUES = [null,
               1337,
               13.37,
               "hi",
+              37n,
               Symbol("status"),
               () => 1337];
 
@@ -43,7 +44,6 @@ for (let v of VALUES)
 {
     let ins = wasmEvalText(
         `(module
-           (gc_feature_opt_in 3)
            (type $S (struct (field $S.x (mut anyref))))
            (func (export "make") (param $v anyref) (result anyref)
              (struct.new $S (local.get $v))))`);
@@ -57,12 +57,11 @@ for (let v of VALUES)
 {
     let ins = wasmEvalText(
         `(module
-           (gc_feature_opt_in 3)
            (type $S (struct (field $S.x (mut anyref))))
            (func (export "make") (result anyref)
-             (struct.new $S (ref.null)))
+             (struct.new $S (ref.null extern)))
            (func (export "get") (param $o anyref) (result anyref)
-             (struct.get $S 0 (struct.narrow anyref (ref $S) (local.get $o)))))`);
+             (struct.get $S 0 (struct.narrow anyref (ref opt $S) (local.get $o)))))`);
     let x = ins.exports.make();
     x._0 = v;
     assertEq(ins.exports.get(x), v);
@@ -74,12 +73,11 @@ for (let v of VALUES)
 {
     let ins = wasmEvalText(
         `(module
-           (gc_feature_opt_in 3)
            (type $S (struct (field $S.x (mut anyref))))
            (func (export "make") (result anyref)
-             (struct.new $S (ref.null)))
+             (struct.new $S (ref.null extern)))
            (func (export "get") (param $o anyref) (result anyref)
-             (struct.get $S 0 (struct.narrow anyref (ref $S) (local.get $o)))))`);
+             (struct.get $S 0 (struct.narrow anyref (ref opt $S) (local.get $o)))))`);
     let constructor = ins.exports.make().constructor;
     let x = new constructor({_0: v});
     assertEq(ins.exports.get(x), v);
@@ -108,10 +106,9 @@ for (let v of VALUES) {
 {
     let ins = wasmEvalText(
         `(module
-           (gc_feature_opt_in 3)
            (type $S (struct (field $S.x (mut anyref))))
            (func (export "make") (result anyref)
-             (struct.new $S (ref.null))))`);
+             (struct.new $S (ref.null extern))))`);
     let constructor = ins.exports.make().constructor;
     let x = new constructor();
     assertEq(x._0, null);
@@ -123,10 +120,9 @@ for (let v of VALUES) {
 {
     let ins = wasmEvalText(
         `(module
-           (gc_feature_opt_in 3)
            (type $S (struct (field $S.x (mut anyref))))
            (func (export "make") (result anyref)
-             (struct.new $S (ref.null))))`);
+             (struct.new $S (ref.null extern))))`);
     let constructor = ins.exports.make().constructor;
     let x = new constructor({});
     assertEq(x._0, undefined);
@@ -149,7 +145,6 @@ for (let v of VALUES) {
     let params = iota(10).map((i) => `(param $${i} anyref)`).join(' ');
     let args = iota(10).map((i) => `(local.get $${i})`).join(' ');
     let txt = `(module
-                 (gc_feature_opt_in 3)
                  (type $S (struct ${fields}))
                  (func (export "make") ${params} (result anyref)
                    (struct.new $S ${args})))`;

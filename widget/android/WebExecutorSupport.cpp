@@ -13,16 +13,25 @@
 #include "nsIHttpHeaderVisitor.h"
 #include "nsIInputStream.h"
 #include "nsIInterfaceRequestor.h"
-#include "nsIStreamLoader.h"
 #include "nsINSSErrorsService.h"
+#include "nsITransportSecurityInfo.h"
 #include "nsIUploadChannel2.h"
+#include "nsIWebProgressListener.h"
+#include "nsIX509Cert.h"
 
 #include "nsIDNSService.h"
 #include "nsIDNSListener.h"
 #include "nsIDNSRecord.h"
 
+#include "mozilla/java/GeckoInputStreamNatives.h"
+#include "mozilla/java/GeckoResultWrappers.h"
+#include "mozilla/java/GeckoWebExecutorWrappers.h"
+#include "mozilla/java/WebMessageWrappers.h"
+#include "mozilla/java/WebRequestErrorWrappers.h"
+#include "mozilla/java/WebResponseWrappers.h"
 #include "mozilla/net/DNS.h"  // for NetAddr
-#include "mozilla/net/CookieSettings.h"
+#include "mozilla/net/CookieJarSettings.h"
+#include "mozilla/Preferences.h"
 
 #include "nsNetUtil.h"  // for NS_NewURI, NS_NewChannel, NS_NewStreamLoader
 
@@ -34,8 +43,35 @@ using namespace net;
 
 namespace widget {
 
+static jni::ByteArray::LocalRef CertificateFromChannel(nsIChannel* aChannel) {
+  MOZ_ASSERT(aChannel);
+
+  nsCOMPtr<nsISupports> securityInfo;
+  aChannel->GetSecurityInfo(getter_AddRefs(securityInfo));
+  if (!securityInfo) {
+    return nullptr;
+  }
+
+  nsresult rv;
+  nsCOMPtr<nsITransportSecurityInfo> tsi = do_QueryInterface(securityInfo, &rv);
+  NS_ENSURE_SUCCESS(rv, nullptr);
+
+  nsCOMPtr<nsIX509Cert> cert;
+  tsi->GetServerCert(getter_AddRefs(cert));
+  if (!cert) {
+    return nullptr;
+  }
+
+  nsTArray<uint8_t> derBytes;
+  rv = cert->GetRawDER(derBytes);
+  NS_ENSURE_SUCCESS(rv, nullptr);
+
+  return jni::ByteArray::New(
+      reinterpret_cast<const int8_t*>(derBytes.Elements()), derBytes.Length());
+}
+
 static void CompleteWithError(java::GeckoResult::Param aResult,
-                              nsresult aStatus) {
+                              nsresult aStatus, nsIChannel* aChannel) {
   nsCOMPtr<nsINSSErrorsService> errSvc =
       do_GetService("@mozilla.org/nss_errors_service;1");
   MOZ_ASSERT(errSvc);
@@ -46,10 +82,20 @@ static void CompleteWithError(java::GeckoResult::Param aResult,
     errorClass = 0;
   }
 
+  jni::ByteArray::LocalRef certBytes;
+  if (aChannel) {
+    certBytes = CertificateFromChannel(aChannel);
+  }
+
   java::WebRequestError::LocalRef error = java::WebRequestError::FromGeckoError(
-      int64_t(aStatus), NS_ERROR_GET_MODULE(aStatus), errorClass);
+      int64_t(aStatus), NS_ERROR_GET_MODULE(aStatus), errorClass, certBytes);
 
   aResult->CompleteExceptionally(error.Cast<jni::Throwable>());
+}
+
+static void CompleteWithError(java::GeckoResult::Param aResult,
+                              nsresult aStatus) {
+  CompleteWithError(aResult, aStatus, nullptr);
 }
 
 class ByteBufferStream final : public nsIInputStream {
@@ -143,14 +189,24 @@ class StreamSupport final
  public:
   typedef java::GeckoInputStream::Support::Natives<StreamSupport> Base;
   using Base::AttachNative;
-  using Base::DisposeNative;
   using Base::GetNative;
 
-  explicit StreamSupport(nsIRequest* aRequest) : mRequest(aRequest) {}
+  explicit StreamSupport(java::GeckoInputStream::Support::Param aInstance,
+                         nsIRequest* aRequest)
+      : mInstance(aInstance), mRequest(aRequest) {}
+
+  void Close() {
+    mRequest->Cancel(NS_ERROR_ABORT);
+    mRequest->Resume();
+
+    // This is basically `delete this`, so don't run anything else!
+    Base::DisposeNative(mInstance);
+  }
 
   void Resume() { mRequest->Resume(); }
 
  private:
+  java::GeckoInputStream::Support::GlobalRef mInstance;
   nsCOMPtr<nsIRequest> mRequest;
 };
 
@@ -161,8 +217,10 @@ class LoaderListener final : public nsIStreamListener,
   NS_DECL_THREADSAFE_ISUPPORTS
 
   explicit LoaderListener(java::GeckoResult::Param aResult,
-                          bool aAllowRedirects)
-      : mResult(aResult), mAllowRedirects(aAllowRedirects) {
+                          bool aAllowRedirects, bool testStreamFailure)
+      : mResult(aResult),
+        mTestStreamFailure(testStreamFailure),
+        mAllowRedirects(aAllowRedirects) {
     MOZ_ASSERT(mResult);
   }
 
@@ -173,7 +231,8 @@ class LoaderListener final : public nsIStreamListener,
     nsresult status;
     aRequest->GetStatus(&status);
     if (NS_FAILED(status)) {
-      CompleteWithError(mResult, status);
+      nsCOMPtr<nsIChannel> channel = do_QueryInterface(aRequest);
+      CompleteWithError(mResult, status, channel);
       return NS_OK;
     }
 
@@ -181,8 +240,8 @@ class LoaderListener final : public nsIStreamListener,
 
     // We're expecting data later via OnDataAvailable, so create the stream now.
     mSupport = java::GeckoInputStream::Support::New();
-    StreamSupport::AttachNative(mSupport,
-                                mozilla::MakeUnique<StreamSupport>(aRequest));
+    StreamSupport::AttachNative(
+        mSupport, mozilla::MakeUnique<StreamSupport>(mSupport, aRequest));
 
     mStream = java::GeckoInputStream::New(mSupport);
 
@@ -192,7 +251,8 @@ class LoaderListener final : public nsIStreamListener,
 
     nsresult rv = HandleWebResponse(aRequest);
     if (NS_FAILED(rv)) {
-      CompleteWithError(mResult, rv);
+      nsCOMPtr<nsIChannel> channel = do_QueryInterface(aRequest);
+      CompleteWithError(mResult, rv, channel);
       return NS_OK;
     }
 
@@ -202,7 +262,11 @@ class LoaderListener final : public nsIStreamListener,
   NS_IMETHOD
   OnStopRequest(nsIRequest* aRequest, nsresult aStatusCode) override {
     if (mStream) {
-      mStream->SendEof();
+      if (NS_FAILED(aStatusCode)) {
+        mStream->SendError();
+      } else {
+        mStream->SendEof();
+      }
     }
     return NS_OK;
   }
@@ -211,6 +275,10 @@ class LoaderListener final : public nsIStreamListener,
   OnDataAvailable(nsIRequest* aRequest, nsIInputStream* aInputStream,
                   uint64_t aOffset, uint32_t aCount) override {
     MOZ_ASSERT(mStream);
+
+    if (mTestStreamFailure) {
+      return NS_ERROR_UNEXPECTED;
+    }
 
     // We only need this for the ReadSegments call, the value is unused.
     uint32_t countRead;
@@ -265,7 +333,8 @@ class LoaderListener final : public nsIStreamListener,
   NS_IMETHOD
   HandleWebResponse(nsIRequest* aRequest) {
     nsresult rv;
-    nsCOMPtr<nsIHttpChannel> channel = do_QueryInterface(aRequest, &rv);
+
+    nsCOMPtr<nsIChannel> channel = do_QueryInterface(aRequest, &rv);
     NS_ENSURE_SUCCESS(rv, rv);
 
     // URI
@@ -280,26 +349,56 @@ class LoaderListener final : public nsIStreamListener,
     java::WebResponse::Builder::LocalRef builder =
         java::WebResponse::Builder::New(spec);
 
-    // Status code
-    uint32_t statusCode;
-    rv = channel->GetResponseStatus(&statusCode);
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    builder->StatusCode(statusCode);
-
-    // Headers
-    RefPtr<HeaderVisitor> visitor = new HeaderVisitor(builder);
-    rv = channel->VisitResponseHeaders(visitor);
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    // Redirected
-    nsCOMPtr<nsILoadInfo> loadInfo = channel->LoadInfo();
-
-    builder->Redirected(!loadInfo->RedirectChain().IsEmpty());
-
     // Body stream
     if (mStream) {
       builder->Body(mStream);
+    }
+
+    // Redirected
+    nsCOMPtr<nsILoadInfo> loadInfo = channel->LoadInfo();
+    builder->Redirected(!loadInfo->RedirectChain().IsEmpty());
+
+    // Secure status
+    nsCOMPtr<nsISupports> securityInfo;
+    channel->GetSecurityInfo(getter_AddRefs(securityInfo));
+    if (securityInfo) {
+      nsCOMPtr<nsITransportSecurityInfo> tsi =
+          do_QueryInterface(securityInfo, &rv);
+      NS_ENSURE_SUCCESS(rv, rv);
+
+      uint32_t securityState = 0;
+      tsi->GetSecurityState(&securityState);
+      builder->IsSecure(securityState ==
+                        nsIWebProgressListener::STATE_IS_SECURE);
+
+      nsCOMPtr<nsIX509Cert> cert;
+      tsi->GetServerCert(getter_AddRefs(cert));
+      if (cert) {
+        nsTArray<uint8_t> derBytes;
+        rv = cert->GetRawDER(derBytes);
+        NS_ENSURE_SUCCESS(rv, rv);
+
+        auto bytes = jni::ByteArray::New(
+            reinterpret_cast<const int8_t*>(derBytes.Elements()),
+            derBytes.Length());
+        rv = builder->CertificateBytes(bytes);
+        NS_ENSURE_SUCCESS(rv, rv);
+      }
+    }
+
+    // We might need some additional settings for response to http/https request
+    nsCOMPtr<nsIHttpChannel> httpChannel(do_QueryInterface(channel, &rv));
+    if (httpChannel) {
+      // Status code
+      uint32_t statusCode;
+      rv = httpChannel->GetResponseStatus(&statusCode);
+      NS_ENSURE_SUCCESS(rv, rv);
+      builder->StatusCode(statusCode);
+
+      // Headers
+      RefPtr<HeaderVisitor> visitor = new HeaderVisitor(builder);
+      rv = httpChannel->VisitResponseHeaders(visitor);
+      NS_ENSURE_SUCCESS(rv, rv);
     }
 
     mResult->Complete(builder->Build());
@@ -311,6 +410,7 @@ class LoaderListener final : public nsIStreamListener,
   const java::GeckoResult::GlobalRef mResult;
   java::GeckoInputStream::GlobalRef mStream;
   java::GeckoInputStream::Support::GlobalRef mSupport;
+  const bool mTestStreamFailure;
 
   bool mAllowRedirects;
 };
@@ -346,13 +446,6 @@ class DNSListener final : public nsIDNSListener {
     java::sdk::UnknownHostException::LocalRef error =
         java::sdk::UnknownHostException::New();
     mResult->CompleteExceptionally(error.Cast<jni::Throwable>());
-  }
-
-  NS_IMETHOD
-  OnLookupByTypeComplete(nsICancelable* aRequest, nsIDNSByTypeRecord* aRecord,
-                         nsresult aStatus) override {
-    MOZ_ASSERT_UNREACHABLE("unxpected nsIDNSListener callback");
-    return NS_ERROR_UNEXPECTED;
   }
 
  private:
@@ -420,6 +513,79 @@ static nsresult ConvertCacheMode(int32_t mode, int32_t& result) {
   return NS_OK;
 }
 
+static nsresult SetupHttpChannel(nsIHttpChannel* aHttpChannel,
+                                 nsIChannel* aChannel,
+                                 java::WebRequest::Param aRequest) {
+  const auto req = java::WebRequest::LocalRef(aRequest);
+  const auto reqBase = java::WebMessage::LocalRef(req.Cast<java::WebMessage>());
+
+  // Method
+  nsresult rv = aHttpChannel->SetRequestMethod(aRequest->Method()->ToCString());
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  // Headers
+  const auto keys = reqBase->GetHeaderKeys();
+  const auto values = reqBase->GetHeaderValues();
+  auto contentType = EmptyCString();
+  for (size_t i = 0; i < keys->Length(); i++) {
+    const auto key = jni::String::LocalRef(keys->GetElement(i))->ToCString();
+    const auto value =
+        jni::String::LocalRef(values->GetElement(i))->ToCString();
+
+    if (key.LowerCaseEqualsASCII("content-type")) {
+      contentType = value;
+    }
+
+    // We clobber any duplicate keys here because we've already merged them
+    // in the upstream WebRequest.
+    rv = aHttpChannel->SetRequestHeader(key, value, false /* merge */);
+    NS_ENSURE_SUCCESS(rv, rv);
+  }
+
+  // Body
+  const auto body = req->Body();
+  if (body) {
+    nsCOMPtr<nsIInputStream> stream = new ByteBufferStream(body);
+
+    nsCOMPtr<nsIUploadChannel2> uploadChannel(do_QueryInterface(aChannel, &rv));
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    rv = uploadChannel->ExplicitSetUploadStream(
+        stream, contentType, -1, aRequest->Method()->ToCString(), false);
+    NS_ENSURE_SUCCESS(rv, rv);
+  }
+
+  // Referrer
+  RefPtr<nsIURI> referrerUri;
+  const auto referrer = req->Referrer();
+  if (referrer) {
+    rv = NS_NewURI(getter_AddRefs(referrerUri), referrer->ToString());
+    NS_ENSURE_SUCCESS(rv, NS_ERROR_MALFORMED_URI);
+  }
+
+  nsCOMPtr<nsIReferrerInfo> referrerInfo = new dom::ReferrerInfo(referrerUri);
+  rv = aHttpChannel->SetReferrerInfoWithoutClone(referrerInfo);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  // Cache mode
+  nsCOMPtr<nsIHttpChannelInternal> internalChannel(
+      do_QueryInterface(aChannel, &rv));
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  int32_t cacheMode;
+  rv = ConvertCacheMode(req->CacheMode(), cacheMode);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  rv = internalChannel->SetFetchCacheMode(cacheMode);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  // We don't have any UI
+  rv = internalChannel->SetBlockAuthPrompt(true);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  return NS_OK;
+}
+
 nsresult WebExecutorSupport::CreateStreamLoader(
     java::WebRequest::Param aRequest, int32_t aFlags,
     java::GeckoResult::Param aResult) {
@@ -441,90 +607,34 @@ nsresult WebExecutorSupport::CreateStreamLoader(
     channel->SetLoadFlags(nsIRequest::LOAD_ANONYMOUS);
   }
 
-  nsCOMPtr<nsICookieSettings> cookieSettings = CookieSettings::Create();
-  MOZ_ASSERT(cookieSettings);
+  nsCOMPtr<nsICookieJarSettings> cookieJarSettings =
+      CookieJarSettings::Create();
+  MOZ_ASSERT(cookieJarSettings);
 
   nsCOMPtr<nsILoadInfo> loadInfo = channel->LoadInfo();
-  loadInfo->SetCookieSettings(cookieSettings);
+  loadInfo->SetCookieJarSettings(cookieJarSettings);
 
+  // setup http/https specific things
   nsCOMPtr<nsIHttpChannel> httpChannel(do_QueryInterface(channel, &rv));
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  // Method
-  rv = httpChannel->SetRequestMethod(aRequest->Method()->ToCString());
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  // Headers
-  const auto keys = reqBase->GetHeaderKeys();
-  const auto values = reqBase->GetHeaderValues();
-  auto contentType = EmptyCString();
-  for (size_t i = 0; i < keys->Length(); i++) {
-    const auto key = jni::String::LocalRef(keys->GetElement(i))->ToCString();
-    const auto value =
-        jni::String::LocalRef(values->GetElement(i))->ToCString();
-
-    if (key.LowerCaseEqualsASCII("content-type")) {
-      contentType = value;
-    }
-
-    // We clobber any duplicate keys here because we've already merged them
-    // in the upstream WebRequest.
-    rv = httpChannel->SetRequestHeader(key, value, false /* merge */);
+  if (httpChannel) {
+    rv = SetupHttpChannel(httpChannel, channel, aRequest);
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
-  // Body
-  const auto body = req->Body();
-  if (body) {
-    nsCOMPtr<nsIInputStream> stream = new ByteBufferStream(body);
-
-    nsCOMPtr<nsIUploadChannel2> uploadChannel(do_QueryInterface(channel, &rv));
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    rv = uploadChannel->ExplicitSetUploadStream(
-        stream, contentType, -1, aRequest->Method()->ToCString(), false);
-    NS_ENSURE_SUCCESS(rv, rv);
-  }
-
-  // Referrer
-  RefPtr<nsIURI> referrerUri;
-  const auto referrer = req->Referrer();
-  if (referrer) {
-    rv = NS_NewURI(getter_AddRefs(referrerUri), referrer->ToString());
-    NS_ENSURE_SUCCESS(rv, NS_ERROR_MALFORMED_URI);
-  }
-
-  nsCOMPtr<nsIReferrerInfo> referrerInfo = new dom::ReferrerInfo(referrerUri);
-  rv = httpChannel->SetReferrerInfoWithoutClone(referrerInfo);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  // Cache mode
-  nsCOMPtr<nsIHttpChannelInternal> internalChannel(
-      do_QueryInterface(channel, &rv));
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  int32_t cacheMode;
-  rv = ConvertCacheMode(req->CacheMode(), cacheMode);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  rv = internalChannel->SetFetchCacheMode(cacheMode);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  // We don't have any UI
-  rv = internalChannel->SetBlockAuthPrompt(true);
-  NS_ENSURE_SUCCESS(rv, rv);
-
+  // set up the listener
   const bool allowRedirects =
       !(aFlags & java::GeckoWebExecutor::FETCH_FLAGS_NO_REDIRECTS);
+  const bool testStreamFailure =
+      (aFlags & java::GeckoWebExecutor::FETCH_FLAGS_STREAM_FAILURE_TEST);
 
-  // All done, set up the listener
-  RefPtr<LoaderListener> listener = new LoaderListener(aResult, allowRedirects);
+  RefPtr<LoaderListener> listener =
+      new LoaderListener(aResult, allowRedirects, testStreamFailure);
 
   rv = channel->SetNotificationCallbacks(listener);
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Finally, open the channel
-  rv = httpChannel->AsyncOpen(listener);
+  rv = channel->AsyncOpen(listener);
 
   return NS_OK;
 }

@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "Адрасная кніга">
+<!ENTITY Addrbook.accesskey                    "А">
+<!ENTITY GeneratedName.label                   "Імя">
+<!ENTITY GeneratedName.accesskey               "І">
+<!ENTITY PrimaryEmail.label                    "Эл.пошта">
+<!ENTITY PrimaryEmail.accesskey                "Э">
+<!ENTITY Company.label                         "Установа">
+<!ENTITY Company.accesskey                     "о">
+<!ENTITY _PhoneticName.label                   "Вымаўленне імя">
+<!ENTITY _PhoneticName.accesskey               "ы">
+<!ENTITY NickName.label                        "Псеўданім">
+<!ENTITY NickName.accesskey                    "с">
+<!ENTITY SecondEmail.label                     "Дадатковая эл.пошта">
+<!ENTITY SecondEmail.accesskey                 "д">
+<!ENTITY Department.label                      "Аддзел">
+<!ENTITY Department.accesskey                  "л">
+<!ENTITY JobTitle.label                        "Загаловак">
+<!ENTITY JobTitle.accesskey                    "З">
+<!ENTITY CellularNumber.label                  "Мабільны">
+<!ENTITY CellularNumber.accesskey              "М">
+<!ENTITY PagerNumber.label                     "Пэйджар">
+<!ENTITY PagerNumber.accesskey                 "П">
+<!ENTITY FaxNumber.label                       "Факс">
+<!ENTITY FaxNumber.accesskey                   "Ф">
+<!ENTITY HomePhone.label                       "Хатні тэлефон">
+<!ENTITY HomePhone.accesskey                   "Х">
+<!ENTITY WorkPhone.label                       "Працоўны тэлефон">
+<!ENTITY WorkPhone.accesskey                   "П">
+<!ENTITY ChatName.label                        "Імя ў чаце">
+<!ENTITY ChatName.accesskey                    "І">
+<!ENTITY sortAscending.label                   "Па ўзрастанню">
+<!ENTITY sortAscending.accesskey               "П">
+<!ENTITY sortDescending.label                  "Па змяншэнню">
+<!ENTITY sortDescending.accesskey              "П">

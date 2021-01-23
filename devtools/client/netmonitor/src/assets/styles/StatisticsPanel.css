@@ -9,16 +9,20 @@
 .statistics-panel {
   display: flex;
   height: 100vh;
+  overflow: auto;
 }
 
-.statistics-panel .devtools-toolbarbutton.back-button {
-  min-width: 4em;
-  margin: 0;
-  padding: 0;
-  border-radius: 0;
-  border-top: none;
-  border-bottom: none;
-  border-inline-start: none;
+.statistics-panel .back-button {
+  height: -moz-fit-content;
+  position: absolute;
+  padding: 7px 5px;
+  margin: 0px;
+  top: 8px;
+  inset-inline-start: 8px;
+}
+
+.theme-light .statistics-panel .back-button {
+  background-color: var(--grey-20);
 }
 
 .statistics-panel .splitter {

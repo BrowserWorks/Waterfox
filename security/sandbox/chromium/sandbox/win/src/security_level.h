@@ -9,9 +9,21 @@
 
 namespace sandbox {
 
-// List of all the integrity levels supported in the sandbox. This is used
-// only on Windows Vista and newer. You can't set the integrity level of the
-// process in the sandbox to a level higher than yours.
+// List of all the integrity levels supported in the sandbox.
+// The integrity level of the sandboxed process can't be set to a level higher
+// than the broker process.
+//
+// Note: These levels map to SIDs under the hood.
+// INTEGRITY_LEVEL_SYSTEM:      "S-1-16-16384" System Mandatory Level
+// INTEGRITY_LEVEL_HIGH:        "S-1-16-12288" High Mandatory Level
+// INTEGRITY_LEVEL_MEDIUM:      "S-1-16-8192"  Medium Mandatory Level
+// INTEGRITY_LEVEL_MEDIUM_LOW:  "S-1-16-6144"
+// INTEGRITY_LEVEL_LOW:         "S-1-16-4096"  Low Mandatory Level
+// INTEGRITY_LEVEL_BELOW_LOW:   "S-1-16-2048"
+// INTEGRITY_LEVEL_UNTRUSTED:   "S-1-16-0"     Untrusted Mandatory Level
+//
+// Not defined:                 "S-1-16-20480" Protected Process Mandatory Level
+// Not defined:                 "S-1-16-28672" Secure Process Mandatory Level
 enum IntegrityLevel {
   INTEGRITY_LEVEL_SYSTEM,
   INTEGRITY_LEVEL_HIGH,
@@ -70,14 +82,14 @@ enum IntegrityLevel {
 //  broker is process might be started by a user that belongs to the Admins
 //  or power users groups.
 enum TokenLevel {
-   USER_LOCKDOWN = 0,
-   USER_RESTRICTED,
-   USER_LIMITED,
-   USER_INTERACTIVE,
-   USER_NON_ADMIN,
-   USER_RESTRICTED_SAME_ACCESS,
-   USER_UNPROTECTED,
-   USER_LAST
+  USER_LOCKDOWN = 0,
+  USER_RESTRICTED,
+  USER_LIMITED,
+  USER_INTERACTIVE,
+  USER_NON_ADMIN,
+  USER_RESTRICTED_SAME_ACCESS,
+  USER_UNPROTECTED,
+  USER_LAST
 };
 
 // The Job level specifies a set of decreasing security profiles for the
@@ -254,6 +266,21 @@ const MitigationFlags MITIGATION_IMAGE_LOAD_NO_LOW_LABEL = 0x00080000;
 //   executable search path.
 // PROCESS_CREATION_MITIGATION_POLICY_IMAGE_LOAD_PREFER_SYSTEM32_ALWAYS_ON.
 const MitigationFlags MITIGATION_IMAGE_LOAD_PREFER_SYS32 = 0x00100000;
+
+// Prevents hyperthreads from interfering with indirect branch predictions.
+// (SPECTRE Variant 2 mitigation.)  Corresponds to
+// PROCESS_CREATION_MITIGATION_POLICY2_RESTRICT_INDIRECT_BRANCH_PREDICTION_ALWAYS_ON.
+const MitigationFlags MITIGATION_RESTRICT_INDIRECT_BRANCH_PREDICTION =
+    0x00200000;
+
+// Begin Mozilla-added flags.
+// Working down from the high bit to avoid conflict with new upstream flags.
+
+// Disable Control Flow Guard. This may seem more like an anti-mitigation, but
+// this flag allows code to make targeted changes to CFG to avoid bugs, while
+// leaving it enabled in the common case. Corresponds to
+// PROCESS_CREATION_MITIGATION_POLICY_CONTROL_FLOW_GUARD_ALWAYS_ON.
+const MitigationFlags MITIGATION_CONTROL_FLOW_GUARD_DISABLE = 0x80000000;
 
 }  // namespace sandbox
 

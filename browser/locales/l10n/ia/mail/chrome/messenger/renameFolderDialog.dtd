@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY renameFolderDialog.title          "Renominar dossier">
+<!ENTITY rename.label                      "Inserer le nove nomine pro le dossier:">
+<!ENTITY rename.accesskey                  "I">
+<!ENTITY accept.label                      "Renominar">
+<!ENTITY accept.accesskey                  "R">

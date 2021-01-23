@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Quita-me d'aquí!">
+<!ENTITY safeb.palm.decline.label "Ignorar ista alvertencia">
+<!ENTITY safeb.palm.reportPage.label "Por qué s'ha blocau ista pachina?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Consello de <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "S'ha informau que iste puesto ye enrestindo!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "S'ha reportau que o puesto web en <span id='malware_sitename'/> sería enrestindo, y ye estau bloquiau d'alcuerdo con as suyas preferencias de seguranza.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Os puestos enrestidors miran d'instalar programas que rapan información privada, fan servir o suyo ordinador ta enrestir atros u fer mal a o suyo sistema.</p><p>Qualques puestos enrestidors distribuyen intencionalment software maligno, pero muitos son compromesos sin a conoixencia u permiso d'os suyos propietarios.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "Puesto malicioso!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "S'ha reportau que o puesto web en <span id='phishing_sitename'/> sería malicioso, y s'ha blocau seguntes las suyas preferencias de seguranza.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>Los puestos web maliciosos son disenyaus pa enganyar-le y que faiga bella acción periglosa, como instalar software u revelar la suya información personal, ya contrasenyas, numeros de telefono u tarchetas de credito.</p><p>Introducir-ie qualsequier mena d'información puet resultar en una suplantación d'identidat u atra mena de fraus.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "S'ha reportau como puesto de Software no demandau.">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "S'ha reportau que o puesto web <span id='unwanted_sitename'/> sería enrestindo, y s'ha bloquiau d'alcuerdo con as suyas preferencias de seguranza.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "Bellas pachinas de software no deseyadas pueden mirar d'instalar software enganyoso y afectar a o suyo sistema en formas no asperadas.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "Este puesto puede contener software perchudicial">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; ha blocau esta pachina perque podría instalar aplicacions periglosas que pueden rapar u borrar la tuya información (per eixemplo, fotos, claus, mensaches y tarchetas de credito).">

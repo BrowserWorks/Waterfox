@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY selectAddressWindow.title           "選擇地址">
+
+<!-- Buttons -->
+<!ENTITY toButton.label                      "收件者->"> 
+<!ENTITY toButton.accesskey                  "T"> 
+<!ENTITY ccButton.label                      "副本 (Cc)->"> 
+<!ENTITY ccButton.accesskey                  "C"> 
+<!ENTITY bccButton.label                     "密件副本 (Bcc)->">  
+<!ENTITY bccButton.accesskey                 "B">  
+<!ENTITY newButton.label                     "新增…"> 
+<!ENTITY newButton.accesskey                 "N"> 
+<!ENTITY editButton.label                    "編輯…"> 
+<!ENTITY editButton.accesskey                "E">
+<!ENTITY removeButton.label                  "移除"> 
+<!ENTITY removeButton.accesskey              "R"> 
+<!ENTITY lookIn.label                        "尋找:"> 
+<!ENTITY lookIn.accesskey                    "L"> 
+<!ENTITY for.label                           ":"> 
+<!ENTITY for.accesskey                       "f"> 
+<!ENTITY for.placeholder                     "姓名 或 Email">
+<!ENTITY addressMessageTo.label              "寄信給:"> 
+
+<!-- Tooltips items -->  
+<!ENTITY addressPickerNewButton.tooltip      "建立新的通訊錄"> 
+<!ENTITY addressPickerEditButton.tooltip     "編輯選取的名片卡"> 
+
+

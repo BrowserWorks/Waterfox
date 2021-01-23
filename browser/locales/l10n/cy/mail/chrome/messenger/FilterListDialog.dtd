@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Hidlau Negeseuon">
+<!ENTITY nameColumn.label "Enw Hidl">
+<!ENTITY activeColumn.label "Galluogwyd">
+<!ENTITY newButton.label "Newydd…">
+<!ENTITY newButton.accesskey "N">
+<!ENTITY newButton.popupCopy.label "Copïo…">
+<!ENTITY newButton.popupCopy.accesskey "C">
+<!ENTITY editButton.label "Golygu…">
+<!ENTITY editButton.accesskey "G">
+<!ENTITY deleteButton.label "Dileu">
+<!ENTITY deleteButton.accesskey "D">
+<!ENTITY reorderTopButton "Symud i'r Brig">
+<!ENTITY reorderTopButton.accessKey "B">
+<!ENTITY reorderTopButton.toolTip "Ad-drefnu'r hidl fel ei fod yn gweithredu cyn pob un arall">
+<!ENTITY reorderUpButton.label "Symud i Fyny">
+<!ENTITY reorderUpButton.accesskey "F">
+<!ENTITY reorderDownButton.label "Symud i Lawr">
+<!ENTITY reorderDownButton.accesskey "L">
+<!ENTITY reorderBottomButton "Symud i'r Gwaelod">
+<!ENTITY reorderBottomButton.accessKey "w">
+<!ENTITY reorderBottomButton.toolTip "Ad-drefnu'r hidl fel ei fod yn gweithredu ar ôl pob un arall">
+<!ENTITY filterHeader.label "Bydd hidlau sydd wedi'u galluogi yn rhedeg yn awtomatig yn ôl y drefn â nodir isod.">
+<!ENTITY filtersForPrefix.label "Hidlau ar gyfer:">
+<!ENTITY filtersForPrefix.accesskey "H">
+<!ENTITY viewLogButton.label "Cofnod Hidl">
+<!ENTITY viewLogButton.accesskey "C">
+<!ENTITY runFilters.label "Rhedeg Nawr">
+<!ENTITY runFilters.accesskey "R">
+<!ENTITY stopFilters.label "Atal">
+<!ENTITY stopFilters.accesskey "A">
+<!ENTITY folderPickerPrefix.label "Rhedeg yr hidl(au) ar:">
+<!ENTITY folderPickerPrefix.accesskey "R">
+<!ENTITY helpButton.label "Cymorth">
+<!ENTITY helpButton.accesskey "y">
+<!ENTITY closeCmd.key "W"> 
+<!ENTITY searchBox.emptyText "Chwilio yn ôl enw…">
+

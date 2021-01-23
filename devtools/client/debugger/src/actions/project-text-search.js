@@ -26,8 +26,11 @@ import {
 } from "../reducers/project-text-search";
 
 import type { Action, ThunkArgs } from "./types";
-import type { Context } from "../types";
-import type { SearchOperation } from "../reducers/project-text-search";
+import type { Context, SourceId } from "../types";
+import type {
+  SearchOperation,
+  StatusType,
+} from "../reducers/project-text-search";
 
 export function addSearchQuery(cx: Context, query: string): Action {
   return { type: "ADD_QUERY", cx, query };
@@ -42,7 +45,7 @@ export function addOngoingSearch(
 
 export function addSearchResult(
   cx: Context,
-  sourceId: string,
+  sourceId: SourceId,
   filepath: string,
   matches: Object[]
 ): Action {
@@ -61,7 +64,7 @@ export function clearSearch(cx: Context): Action {
   return { type: "CLEAR_SEARCH", cx };
 }
 
-export function updateSearchStatus(cx: Context, status: string): Action {
+export function updateSearchStatus(cx: Context, status: StatusType): Action {
   return { type: "UPDATE_STATUS", cx, status };
 }
 
@@ -113,7 +116,7 @@ export function searchSources(cx: Context, query: string) {
   return search;
 }
 
-export function searchSource(cx: Context, sourceId: string, query: string) {
+export function searchSource(cx: Context, sourceId: SourceId, query: string) {
   return async ({ dispatch, getState }: ThunkArgs) => {
     const source = getSource(getState(), sourceId);
     if (!source) {

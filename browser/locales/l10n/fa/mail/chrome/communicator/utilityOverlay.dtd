@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+
+<!ENTITY fileMenu.label          "پرونده">
+<!ENTITY fileMenu.accesskey        "پ">
+<!ENTITY newMenu.label            "جدید">
+<!ENTITY newMenu.accesskey          "ج">
+
+<!ENTITY editMenu.label          "ویرایش">
+<!ENTITY editMenu.accesskey        "و">
+<!ENTITY undoCmd.label            "واگرد">
+<!ENTITY undoCmd.accesskey          "و">
+<!ENTITY redoCmd.label            "از نو">
+<!ENTITY redoCmd.accesskey          "ز">
+<!ENTITY deleteCmd.label          "حذف">
+<!ENTITY deleteCmd.accesskey        "ح">
+<!ENTITY preferencesCmd2.label "گزینه‌ها">
+<!ENTITY preferencesCmd2.accesskey "گ">
+<!ENTITY preferencesCmdUnix.label       "ترجیحات">
+<!ENTITY preferencesCmdUnix.accesskey     "ت">
+
+<!ENTITY viewMenu.label          "نما">
+<!ENTITY viewMenu.accesskey        "ن">
+<!ENTITY viewToolbarsMenu.label        "نوار ابزار">
+<!ENTITY viewToolbarsMenu.accesskey      "ن">
+<!ENTITY showTaskbarCmd.label          "نوار وضعیت">
+<!ENTITY showTaskbarCmd.accesskey        "ن">
+
+<!ENTITY closeCmd.label      "بستن">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "ب">
+
+<!ENTITY quitApplicationCmd.label  "خروج">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "خ">
+
+<!ENTITY quitApplicationCmdUnix.label  "ترک">
+<!ENTITY quitApplicationCmdUnix.accesskey  "ت">
+
+<!ENTITY quitApplicationCmdMac.label  "ترک &brandShortName;">
+<!ENTITY quitApplicationCmdMac.accesskey  "ت">

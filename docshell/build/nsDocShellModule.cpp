@@ -22,9 +22,6 @@ nsresult InitDocShellModule() {
   return NS_OK;
 }
 
-void UnloadDocShellModule() {
-  nsSHistory::Shutdown();
-  nsSHEntryShared::Shutdown();
-}
+void UnloadDocShellModule() { nsSHistory::Shutdown(); }
 
 }  // namespace mozilla

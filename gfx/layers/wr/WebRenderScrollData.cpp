@@ -21,10 +21,11 @@ WebRenderLayerScrollData::WebRenderLayerScrollData()
     : mDescendantCount(-1),
       mTransformIsPerspective(false),
       mEventRegionsOverride(EventRegionsOverride::NoOverride),
+      mFixedPositionSides(mozilla::SideBits::eNone),
       mFixedPosScrollContainerId(ScrollableLayerGuid::NULL_SCROLL_ID),
-      mRenderRoot(wr::RenderRoot::Default) {}
+      mStickyPosScrollContainerId(ScrollableLayerGuid::NULL_SCROLL_ID) {}
 
-WebRenderLayerScrollData::~WebRenderLayerScrollData() {}
+WebRenderLayerScrollData::~WebRenderLayerScrollData() = default;
 
 void WebRenderLayerScrollData::InitializeRoot(int32_t aDescendantCount) {
   mDescendantCount = aDescendantCount;
@@ -33,13 +34,11 @@ void WebRenderLayerScrollData::InitializeRoot(int32_t aDescendantCount) {
 void WebRenderLayerScrollData::Initialize(
     WebRenderScrollData& aOwner, nsDisplayItem* aItem, int32_t aDescendantCount,
     const ActiveScrolledRoot* aStopAtAsr,
-    const Maybe<gfx::Matrix4x4>& aAncestorTransform,
-    wr::RenderRoot aRenderRoot) {
+    const Maybe<gfx::Matrix4x4>& aAncestorTransform) {
   MOZ_ASSERT(aDescendantCount >= 0);  // Ensure value is valid
   MOZ_ASSERT(mDescendantCount ==
              -1);  // Don't allow re-setting an already set value
   mDescendantCount = aDescendantCount;
-  mRenderRoot = aRenderRoot;
 
   MOZ_ASSERT(aItem);
   aItem->UpdateScrollData(&aOwner, this);
@@ -134,8 +133,16 @@ void WebRenderLayerScrollData::Dump(const WebRenderScrollData& aOwner) const {
   printf_stderr("  scrollbar type: %d animation: %" PRIx64 "\n",
                 (int)mScrollbarData.mScrollbarLayerType,
                 mScrollbarAnimationId.valueOr(0));
-  printf_stderr("  fixed pos container: %" PRIu64 "\n",
-                mFixedPosScrollContainerId);
+  printf_stderr("  fixed container: %" PRIu64 " animation %" PRIx64 "\n",
+                mFixedPosScrollContainerId,
+                mFixedPositionAnimationId.valueOr(0));
+  printf_stderr("  sticky container: %" PRIu64 " animation %" PRIx64
+                " inner: %s outer: %s\n",
+                mStickyPosScrollContainerId,
+                mStickyPositionAnimationId.valueOr(0),
+                Stringify(mStickyScrollRangeInner).c_str(),
+                Stringify(mStickyScrollRangeOuter).c_str());
+  printf_stderr("  fixed/sticky side bits: 0x%x\n", (int)mFixedPositionSides);
 }
 
 WebRenderScrollData::WebRenderScrollData()
@@ -150,13 +157,14 @@ WebRenderLayerManager* WebRenderScrollData::GetManager() const {
 
 size_t WebRenderScrollData::AddMetadata(const ScrollMetadata& aMetadata) {
   ScrollableLayerGuid::ViewID scrollId = aMetadata.GetMetrics().GetScrollId();
-  auto insertResult = mScrollIdMap.insert(std::make_pair(scrollId, 0));
-  if (insertResult.second) {
-    // Insertion took place, therefore it's a scrollId we hadn't seen before
-    insertResult.first->second = mScrollMetadatas.Length();
+  auto p = mScrollIdMap.lookupForAdd(scrollId);
+  if (!p) {
+    // It's a scrollId we hadn't seen before
+    bool ok = mScrollIdMap.add(p, scrollId, mScrollMetadatas.Length());
+    MOZ_RELEASE_ASSERT(ok);
     mScrollMetadatas.AppendElement(aMetadata);
   }  // else we didn't insert, because it already existed
-  return insertResult.first->second;
+  return p->value();
 }
 
 size_t WebRenderScrollData::AddLayerData(
@@ -185,8 +193,8 @@ const ScrollMetadata& WebRenderScrollData::GetScrollMetadata(
 
 Maybe<size_t> WebRenderScrollData::HasMetadataFor(
     const ScrollableLayerGuid::ViewID& aScrollId) const {
-  auto it = mScrollIdMap.find(aScrollId);
-  return (it == mScrollIdMap.end() ? Nothing() : Some(it->second));
+  auto ptr = mScrollIdMap.lookup(aScrollId);
+  return (ptr ? Some(ptr->value()) : Nothing());
 }
 
 void WebRenderScrollData::SetIsFirstPaint() { mIsFirstPaint = true; }
@@ -202,12 +210,11 @@ uint32_t WebRenderScrollData::GetPaintSequenceNumber() const {
   return mPaintSequenceNumber;
 }
 
-void WebRenderScrollData::ApplyUpdates(const ScrollUpdatesMap& aUpdates,
+void WebRenderScrollData::ApplyUpdates(ScrollUpdatesMap& aUpdates,
                                        uint32_t aPaintSequenceNumber) {
-  for (const auto& update : aUpdates) {
-    if (Maybe<size_t> index = HasMetadataFor(update.first)) {
-      mScrollMetadatas[*index].GetMetrics().UpdatePendingScrollInfo(
-          update.second);
+  for (auto it = aUpdates.Iter(); !it.Done(); it.Next()) {
+    if (Maybe<size_t> index = HasMetadataFor(it.Key())) {
+      mScrollMetadatas[*index].GetMetrics().UpdatePendingScrollInfo(it.Data());
     }
   }
   mPaintSequenceNumber = aPaintSequenceNumber;
@@ -226,7 +233,8 @@ bool WebRenderScrollData::RepopulateMap() {
   for (size_t i = 0; i < mScrollMetadatas.Length(); i++) {
     ScrollableLayerGuid::ViewID scrollId =
         mScrollMetadatas[i].GetMetrics().GetScrollId();
-    mScrollIdMap.emplace(scrollId, i);
+    bool ok = mScrollIdMap.putNew(scrollId, i);
+    MOZ_RELEASE_ASSERT(ok);
   }
   return true;
 }

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "Ջնջել">
+<!ENTITY editContactPanelDeleteContact.accesskey "l">
+
+<!ENTITY editContactName.label "Անունը.">
+<!ENTITY editContactName.accesskey "N">
+
+<!ENTITY editContactEmail.label "Էլ. փոստ.">
+<!ENTITY editContactEmail.accesskey "Է">
+
+<!ENTITY editContactAddressBook.label "Հասցեագիրք.">
+<!ENTITY editContactAddressBook.accesskey "Հ">
+
+<!ENTITY editContactPanelDone.label "Պատրաստ է">
+<!ENTITY editContactPanelDone.accesskey "D">
+
+<!ENTITY contactMoveDisabledWarning.description "Չեք կարող փոփոխել Հասցեագիրքը, որովհետև հասցեն նամաների ցանկում է։">

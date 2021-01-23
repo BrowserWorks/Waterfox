@@ -7,20 +7,28 @@
 #ifndef frontend_SharedContext_h
 #define frontend_SharedContext_h
 
-#include "jspubtd.h"
+#include "mozilla/Assertions.h"
+#include "mozilla/Attributes.h"
+#include "mozilla/Maybe.h"
+
 #include "jstypes.h"
 
-#include "ds/InlineTable.h"
+#include "frontend/AbstractScopePtr.h"
+#include "frontend/FunctionSyntaxKind.h"  // FunctionSyntaxKind
 #include "frontend/ParseNode.h"
-#include "vm/BytecodeUtil.h"
+#include "frontend/Stencil.h"
+#include "vm/FunctionFlags.h"          // js::FunctionFlags
+#include "vm/GeneratorAndAsyncKind.h"  // js::GeneratorKind, js::FunctionAsyncKind
 #include "vm/JSFunction.h"
 #include "vm/JSScript.h"
+#include "vm/Scope.h"
+#include "vm/SharedStencil.h"
 
 namespace js {
 namespace frontend {
 
 class ParseContext;
-class ParseNode;
+struct ScopeContext;
 
 enum class StatementKind : uint8_t {
   Label,
@@ -40,13 +48,15 @@ enum class StatementKind : uint8_t {
   Class,
 
   // Used only by BytecodeEmitter.
-  Spread
+  Spread,
+  YieldStar,
 };
 
 static inline bool StatementKindIsLoop(StatementKind kind) {
   return kind == StatementKind::ForLoop || kind == StatementKind::ForInLoop ||
          kind == StatementKind::ForOfLoop || kind == StatementKind::DoLoop ||
-         kind == StatementKind::WhileLoop || kind == StatementKind::Spread;
+         kind == StatementKind::WhileLoop || kind == StatementKind::Spread ||
+         kind == StatementKind::YieldStar;
 }
 
 static inline bool StatementKindIsUnlabeledBreakTarget(StatementKind kind) {
@@ -82,12 +92,27 @@ class Directives {
 
 // The kind of this-binding for the current scope. Note that arrow functions
 // have a lexical this-binding so their ThisBinding is the same as the
-// ThisBinding of their enclosing scope and can be any value.
-enum class ThisBinding : uint8_t { Global, Function, Module };
+// ThisBinding of their enclosing scope and can be any value. Derived
+// constructors require TDZ checks when accessing the binding.
+enum class ThisBinding : uint8_t {
+  Global,
+  Module,
+  Function,
+  DerivedConstructor
+};
 
 class GlobalSharedContext;
 class EvalSharedContext;
 class ModuleSharedContext;
+
+#define FLAG_GETTER_SETTER(enumName, enumEntry, lowerName, name)  \
+ public:                                                          \
+  bool lowerName() const { return hasFlag(enumName::enumEntry); } \
+  void set##name() { setFlag(enumName::enumEntry); }              \
+  void set##name(bool b) { setFlag(enumName::enumEntry, b); }
+
+#define IMMUTABLE_FLAG_GETTER_SETTER(lowerName, name) \
+  FLAG_GETTER_SETTER(ImmutableFlags, name, lowerName, name)
 
 /*
  * The struct SharedContext is part of the current parser context (see
@@ -99,137 +124,121 @@ class SharedContext {
   JSContext* const cx_;
 
  protected:
-  enum class Kind : uint8_t { FunctionBox, Global, Eval, Module };
+  CompilationInfo& compilationInfo_;
 
-  Kind kind_;
-
-  ThisBinding thisBinding_;
+  // See: BaseScript::immutableFlags_
+  ImmutableScriptFlags immutableFlags_ = {};
 
  public:
-  bool strictScript : 1;
-  bool localStrict : 1;
-  bool extraWarnings : 1;
+  // The location of this script in the source. Note that the value here differs
+  // from the final BaseScript for the case of standalone functions.
+  SourceExtent extent = {};
 
  protected:
+  // See: ThisBinding
+  ThisBinding thisBinding_ = ThisBinding::Global;
+
+  // These flags do not have corresponding script flags and may be inherited
+  // from the scope chain in the case of eval and arrows.
   bool allowNewTarget_ : 1;
   bool allowSuperProperty_ : 1;
   bool allowSuperCall_ : 1;
   bool allowArguments_ : 1;
   bool inWith_ : 1;
-  bool needsThisTDZChecks_ : 1;
+
+  // See `strict()` below.
+  bool localStrict : 1;
 
   // True if "use strict"; appears in the body instead of being inherited.
   bool hasExplicitUseStrict_ : 1;
 
-  // The (static) bindings of this script need to support dynamic name
-  // read/write access. Here, 'dynamic' means dynamic dictionary lookup on
-  // the scope chain for a dynamic set of keys. The primary examples are:
-  //  - direct eval
-  //  - function::
-  //  - with
-  // since both effectively allow any name to be accessed. Non-examples are:
-  //  - upvars of nested functions
-  //  - function statement
-  // since the set of assigned name is known dynamically.
-  //
-  // Note: access through the arguments object is not considered dynamic
-  // binding access since it does not go through the normal name lookup
-  // mechanism. This is debatable and could be changed (although care must be
-  // taken not to turn off the whole 'arguments' optimization). To answer the
-  // more general "is this argument aliased" question, script->needsArgsObj
-  // should be tested (see JSScript::argIsAliased).
-  bool bindingsAccessedDynamically_ : 1;
+  // End of fields.
 
-  // Whether this script, or any of its inner scripts contains a debugger
-  // statement which could potentially read or write anywhere along the
-  // scope chain.
-  bool hasDebuggerStatement_ : 1;
+  enum class Kind : uint8_t { FunctionBox, Global, Eval, Module };
 
-  // A direct eval occurs in the body of the script.
-  bool hasDirectEval_ : 1;
+  // Alias enum into SharedContext
+  using ImmutableFlags = ImmutableScriptFlagsEnum;
 
-  void computeAllowSyntax(Scope* scope);
-  void computeInWith(Scope* scope);
-  void computeThisBinding(Scope* scope);
+  MOZ_MUST_USE bool hasFlag(ImmutableFlags flag) const {
+    return immutableFlags_.hasFlag(flag);
+  }
+  void setFlag(ImmutableFlags flag, bool b = true) {
+    immutableFlags_.setFlag(flag, b);
+  }
 
  public:
-  SharedContext(JSContext* cx, Kind kind, Directives directives,
-                bool extraWarnings)
-      : cx_(cx),
-        kind_(kind),
-        thisBinding_(ThisBinding::Global),
-        strictScript(directives.strict()),
-        localStrict(false),
-        extraWarnings(extraWarnings),
-        allowNewTarget_(false),
-        allowSuperProperty_(false),
-        allowSuperCall_(false),
-        allowArguments_(true),
-        inWith_(false),
-        needsThisTDZChecks_(false),
-        hasExplicitUseStrict_(false),
-        bindingsAccessedDynamically_(false),
-        hasDebuggerStatement_(false),
-        hasDirectEval_(false) {}
+  SharedContext(JSContext* cx, Kind kind, CompilationInfo& compilationInfo,
+                Directives directives, SourceExtent extent);
 
   // If this is the outermost SharedContext, the Scope that encloses
   // it. Otherwise nullptr.
   virtual Scope* compilationEnclosingScope() const = 0;
 
-  bool isFunctionBox() const { return kind_ == Kind::FunctionBox; }
+  IMMUTABLE_FLAG_GETTER_SETTER(isForEval, IsForEval)
+  IMMUTABLE_FLAG_GETTER_SETTER(isModule, IsModule)
+  IMMUTABLE_FLAG_GETTER_SETTER(isFunction, IsFunction)
+  IMMUTABLE_FLAG_GETTER_SETTER(selfHosted, SelfHosted)
+  IMMUTABLE_FLAG_GETTER_SETTER(forceStrict, ForceStrict)
+  IMMUTABLE_FLAG_GETTER_SETTER(hasNonSyntacticScope, HasNonSyntacticScope)
+  IMMUTABLE_FLAG_GETTER_SETTER(noScriptRval, NoScriptRval)
+  IMMUTABLE_FLAG_GETTER_SETTER(treatAsRunOnce, TreatAsRunOnce)
+  // Strict: custom logic below
+  IMMUTABLE_FLAG_GETTER_SETTER(hasModuleGoal, HasModuleGoal)
+  IMMUTABLE_FLAG_GETTER_SETTER(hasInnerFunctions, HasInnerFunctions)
+  IMMUTABLE_FLAG_GETTER_SETTER(hasDirectEval, HasDirectEval)
+  IMMUTABLE_FLAG_GETTER_SETTER(bindingsAccessedDynamically,
+                               BindingsAccessedDynamically)
+  IMMUTABLE_FLAG_GETTER_SETTER(hasCallSiteObj, HasCallSiteObj)
+
+  bool isFunctionBox() const { return isFunction(); }
   inline FunctionBox* asFunctionBox();
-  bool isModuleContext() const { return kind_ == Kind::Module; }
+  bool isModuleContext() const { return isModule(); }
   inline ModuleSharedContext* asModuleContext();
-  bool isGlobalContext() const { return kind_ == Kind::Global; }
+  bool isGlobalContext() const {
+    return !(isFunction() || isModule() || isForEval());
+  }
   inline GlobalSharedContext* asGlobalContext();
-  bool isEvalContext() const { return kind_ == Kind::Eval; }
+  bool isEvalContext() const { return isForEval(); }
   inline EvalSharedContext* asEvalContext();
 
-  bool isTopLevelContext() const {
-    switch (kind_) {
-      case Kind::Module:
-      case Kind::Global:
-      case Kind::Eval:
-        return true;
-      case Kind::FunctionBox:
-        break;
-    }
-    MOZ_ASSERT(kind_ == Kind::FunctionBox);
-    return false;
-  }
+  bool isTopLevelContext() const { return !isFunction(); }
+
+  CompilationInfo& compilationInfo() const { return compilationInfo_; }
 
   ThisBinding thisBinding() const { return thisBinding_; }
+  bool hasFunctionThisBinding() const {
+    return thisBinding() == ThisBinding::Function ||
+           thisBinding() == ThisBinding::DerivedConstructor;
+  }
+  bool needsThisTDZChecks() const {
+    return thisBinding() == ThisBinding::DerivedConstructor;
+  }
 
+  bool isSelfHosted() const { return selfHosted(); }
   bool allowNewTarget() const { return allowNewTarget_; }
   bool allowSuperProperty() const { return allowSuperProperty_; }
   bool allowSuperCall() const { return allowSuperCall_; }
   bool allowArguments() const { return allowArguments_; }
   bool inWith() const { return inWith_; }
-  bool needsThisTDZChecks() const { return needsThisTDZChecks_; }
 
   bool hasExplicitUseStrict() const { return hasExplicitUseStrict_; }
-  bool bindingsAccessedDynamically() const {
-    return bindingsAccessedDynamically_;
-  }
-  bool hasDebuggerStatement() const { return hasDebuggerStatement_; }
-  bool hasDirectEval() const { return hasDirectEval_; }
-
   void setExplicitUseStrict() { hasExplicitUseStrict_ = true; }
-  void setBindingsAccessedDynamically() { bindingsAccessedDynamically_ = true; }
-  void setHasDebuggerStatement() { hasDebuggerStatement_ = true; }
-  void setHasDirectEval() { hasDirectEval_ = true; }
+
+  ImmutableScriptFlags immutableFlags() { return immutableFlags_; }
 
   inline bool allBindingsClosedOver();
 
-  bool strict() const { return strictScript || localStrict; }
+  // The ImmutableFlag tracks if the entire script is strict, while the
+  // localStrict flag indicates the current region (such as class body) should
+  // be treated as strict. The localStrict flag will always be reset to false
+  // before the end of the script.
+  bool strict() const { return hasFlag(ImmutableFlags::Strict) || localStrict; }
+  void setStrictScript() { setFlag(ImmutableFlags::Strict); }
   bool setLocalStrictMode(bool strict) {
     bool retVal = localStrict;
     localStrict = strict;
     return retVal;
   }
-
-  // JSOPTION_EXTRA_WARNINGS warnings or strict mode errors.
-  bool needStrictChecks() const { return strict() || extraWarnings; }
 };
 
 class MOZ_STACK_CLASS GlobalSharedContext : public SharedContext {
@@ -238,14 +247,15 @@ class MOZ_STACK_CLASS GlobalSharedContext : public SharedContext {
  public:
   Rooted<GlobalScope::Data*> bindings;
 
-  GlobalSharedContext(JSContext* cx, ScopeKind scopeKind, Directives directives,
-                      bool extraWarnings)
-      : SharedContext(cx, Kind::Global, directives, extraWarnings),
+  GlobalSharedContext(JSContext* cx, ScopeKind scopeKind,
+                      CompilationInfo& compilationInfo, Directives directives,
+                      SourceExtent extent)
+      : SharedContext(cx, Kind::Global, compilationInfo, directives, extent),
         scopeKind_(scopeKind),
         bindings(cx) {
     MOZ_ASSERT(scopeKind == ScopeKind::Global ||
                scopeKind == ScopeKind::NonSyntactic);
-    thisBinding_ = ThisBinding::Global;
+    MOZ_ASSERT(thisBinding_ == ThisBinding::Global);
   }
 
   Scope* compilationEnclosingScope() const override { return nullptr; }
@@ -264,9 +274,9 @@ class MOZ_STACK_CLASS EvalSharedContext : public SharedContext {
  public:
   Rooted<EvalScope::Data*> bindings;
 
-  EvalSharedContext(JSContext* cx, JSObject* enclosingEnv,
+  EvalSharedContext(JSContext* cx, CompilationInfo& compilationInfo,
                     Scope* enclosingScope, Directives directives,
-                    bool extraWarnings);
+                    SourceExtent extent);
 
   Scope* compilationEnclosingScope() const override { return enclosingScope_; }
 };
@@ -276,11 +286,15 @@ inline EvalSharedContext* SharedContext::asEvalContext() {
   return static_cast<EvalSharedContext*>(this);
 }
 
-enum class HasHeritage : bool { No, Yes };
+enum class HasHeritage { No, Yes };
+enum class TopLevelFunction { No, Yes };
 
-class FunctionBox : public ObjectBox, public SharedContext {
-  // The parser handles tracing the fields below via the TraceListNode linked
-  // list.
+class FunctionBox : public SharedContext {
+  friend struct GCThingList;
+
+  // The parser handles tracing the fields below via the FunctionBox linked
+  // list represented by |traceLink_|.
+  FunctionBox* traceLink_ = nullptr;
 
   // This field is used for two purposes:
   //   * If this FunctionBox refers to the function being compiled, this field
@@ -288,115 +302,88 @@ class FunctionBox : public ObjectBox, public SharedContext {
   //   * If this FunctionBox refers to a lazy child of the function being
   //     compiled, this field holds the child's immediately enclosing scope.
   //     Once compilation succeeds, we will store it in the child's
-  //     LazyScript.  (Debugger may become confused if LazyScripts refer to
+  //     BaseScript.  (Debugger may become confused if lazy scripts refer to
   //     partially initialized enclosing scopes, so we must avoid storing the
-  //     scope in the LazyScript until compilation has completed
+  //     scope in the BaseScript until compilation has completed
   //     successfully.)
-  Scope* enclosingScope_;
+  AbstractScopePtr enclosingScope_ = {};
 
   // Names from the named lambda scope, if a named lambda.
-  LexicalScope::Data* namedLambdaBindings_;
+  LexicalScope::Data* namedLambdaBindings_ = nullptr;
 
   // Names from the function scope.
-  FunctionScope::Data* functionScopeBindings_;
+  FunctionScope::Data* functionScopeBindings_ = nullptr;
 
   // Names from the extra 'var' scope of the function, if the parameter list
   // has expressions.
-  VarScope::Data* extraVarScopeBindings_;
+  VarScope::Data* extraVarScopeBindings_ = nullptr;
 
-  void initWithEnclosingScope(Scope* enclosingScope);
+  // The explicit or implicit name of the function. The FunctionFlags indicate
+  // the kind of name.
+  JSAtom* atom_ = nullptr;
+
+  // Index into CompilationInfo::funcData, which contains the function
+  // information, either a JSFunction* (for a FunctionBox representing a real
+  // function) or a ScriptStencilBase.
+  size_t funcDataIndex_ = (size_t)(-1);
 
  public:
   // Back pointer used by asm.js for error messages.
-  FunctionNode* functionNode;
+  FunctionNode* functionNode = nullptr;
 
-  uint32_t bufStart;
-  uint32_t bufEnd;
-  uint32_t startLine;
-  uint32_t startColumn;
-  uint32_t toStringStart;
-  uint32_t toStringEnd;
-  uint16_t length;
+  // See: PrivateScriptData::fieldInitializers_
+  mozilla::Maybe<FieldInitializers> fieldInitializers = {};
 
-  bool isGenerator_ : 1;         /* generator function or async generator */
-  bool isAsync_ : 1;             /* async function or async generator */
-  bool hasDestructuringArgs : 1; /* parameter list contains destructuring
-                                    expression */
-  bool hasParameterExprs : 1;    /* parameter list contains expressions */
-  bool hasDirectEvalInParameterExpr : 1; /* parameter list contains direct eval
-                                          */
-  bool hasDuplicateParameters : 1; /* parameter list contains duplicate names */
-  bool useAsm : 1;                 /* see useAsmOrInsideUseAsm */
-  bool isAnnexB : 1;   /* need to emit a synthesized Annex B assignment */
-  bool wasEmitted : 1; /* Bytecode has been emitted for this function. */
+  FunctionFlags flags_ = {};  // See: FunctionFlags
+  uint16_t length = 0;        // See: ImmutableScriptData::funLength
+  uint16_t nargs_ = 0;        // JSFunction::nargs_
 
-  // Fields for use in heuristics.
-  bool declaredArguments : 1; /* the Parser declared 'arguments' */
-  bool usesArguments : 1;     /* contains a free use of 'arguments' */
-  bool usesApply : 1;         /* contains an f.apply() call */
-  bool usesThis : 1;          /* contains 'this' */
-  bool usesReturn : 1;        /* contains a 'return' statement */
-  bool hasRest_ : 1;          /* has rest parameter */
-  bool hasExprBody_ : 1;      /* arrow function with expression
-                               * body like: () => 1
-                               * Only used by Reflect.parse */
+  // True if bytecode will be emitted for this function in the current
+  // compilation.
+  bool emitBytecode : 1;
 
-  // This function does something that can extend the set of bindings in its
-  // call objects --- it does a direct eval in non-strict code, or includes a
-  // function statement (as opposed to a function definition).
-  //
-  // This flag is *not* inherited by enclosed or enclosing functions; it
-  // applies only to the function in whose flags it appears.
-  //
-  bool hasExtensibleScope_ : 1;
+  // This is set by the BytecodeEmitter of the enclosing script when a reference
+  // to this function is generated. This is also used to determine a hoisted
+  // function already is referenced by the bytecode.
+  bool wasEmitted : 1;
 
-  // Technically, every function has a binding named 'arguments'. Internally,
-  // this binding is only added when 'arguments' is mentioned by the function
-  // body. This flag indicates whether 'arguments' has been bound either
-  // through implicit use:
-  //   function f() { return arguments }
-  // or explicit redeclaration:
-  //   function f() { var arguments; return arguments }
-  //
-  // Note 1: overwritten arguments (function() { arguments = 3 }) will cause
-  // this flag to be set but otherwise require no special handling:
-  // 'arguments' is just a local variable and uses of 'arguments' will just
-  // read the local's current slot which may have been assigned. The only
-  // special semantics is that the initial value of 'arguments' is the
-  // arguments object (not undefined, like normal locals).
-  //
-  // Note 2: if 'arguments' is bound as a formal parameter, there will be an
-  // 'arguments' in Bindings, but, as the "LOCAL" in the name indicates, this
-  // flag will not be set. This is because, as a formal, 'arguments' will
-  // have no special semantics: the initial value is unconditionally the
-  // actual argument (or undefined if nactual < nformal).
-  //
-  bool argumentsHasLocalBinding_ : 1;
+  // This function should be marked as a singleton. It is expected to be defined
+  // at most once. This is a heuristic only and does not affect correctness.
+  bool isSingleton : 1;
 
-  // In many cases where 'arguments' has a local binding (as described above)
-  // we do not need to actually create an arguments object in the function
-  // prologue: instead we can analyze how 'arguments' is used (using the
-  // simple dataflow analysis in analyzeSSA) to determine that uses of
-  // 'arguments' can just read from the stack frame directly. However, the
-  // dataflow analysis only looks at how JSOP_ARGUMENTS is used, so it will
-  // be unsound in several cases. The frontend filters out such cases by
-  // setting this flag which eagerly sets script->needsArgsObj to true.
-  //
-  bool definitelyNeedsArgsObj_ : 1;
+  // Need to emit a synthesized Annex B assignment
+  bool isAnnexB : 1;
 
-  bool needsHomeObject_ : 1;
-  bool isDerivedClassConstructor_ : 1;
+  // Track if we saw "use asm" and if we successfully validated.
+  bool useAsm : 1;
+  bool isAsmJSModule_ : 1;
 
-  // Whether this function has a .this binding. If true, we need to emit
-  // JSOP_FUNCTIONTHIS in the prologue to initialize it.
-  bool hasThisBinding_ : 1;
+  // Analysis of parameter list
+  bool hasParameterExprs : 1;
+  bool hasDestructuringArgs : 1;
+  bool hasDuplicateParameters : 1;
 
-  // Whether this function has nested functions.
-  bool hasInnerFunctions_ : 1;
+  // Arrow function with expression body like: `() => 1`.
+  bool hasExprBody_ : 1;
 
-  FunctionBox(JSContext* cx, TraceListNode* traceListHead, JSFunction* fun,
-              uint32_t toStringStart, Directives directives, bool extraWarnings,
-              GeneratorKind generatorKind, FunctionAsyncKind asyncKind);
+  // Analysis for use in heuristics.
+  bool usesApply : 1;   // Contains an f.apply() call
+  bool usesThis : 1;    // Contains 'this'
+  bool usesReturn : 1;  // Contains a 'return' statement
+
+  // End of fields.
+
+  FunctionBox(JSContext* cx, FunctionBox* traceListHead, SourceExtent extent,
+              CompilationInfo& compilationInfo, Directives directives,
+              GeneratorKind generatorKind, FunctionAsyncKind asyncKind,
+              JSAtom* explicitName, FunctionFlags flags, size_t index);
+
+  JSFunction* createFunction(JSContext* cx);
+
+  MutableHandle<ScriptStencil> functionStencil() const;
+
+  bool hasFunctionStencil() const;
+  bool hasFunction() const;
 
 #ifdef DEBUG
   bool atomsAreKept();
@@ -420,73 +407,78 @@ class FunctionBox : public ObjectBox, public SharedContext {
         &extraVarScopeBindings_);
   }
 
-  void initFromLazyFunction();
-  void initStandaloneFunction(Scope* enclosingScope);
-  void initWithEnclosingParseContext(ParseContext* enclosing,
-                                     FunctionSyntaxKind kind);
-  void initFieldInitializer(ParseContext* enclosing, HasHeritage hasHeritage);
+  void initFromLazyFunction(JSFunction* fun);
 
-  inline bool isLazyFunctionWithoutEnclosingScope() const {
-    return function()->isInterpretedLazy() &&
-           !function()->lazyScript()->hasEnclosingScope();
-  }
-  void setEnclosingScopeForInnerLazyFunction(Scope* enclosingScope);
+  void initWithEnclosingScope(ScopeContext& scopeContext, Scope* enclosingScope,
+                              FunctionFlags flags, FunctionSyntaxKind kind);
+
+  void initWithEnclosingParseContext(ParseContext* enclosing,
+                                     FunctionFlags flags,
+                                     FunctionSyntaxKind kind);
+
+  void setEnclosingScopeForInnerLazyFunction(
+      const AbstractScopePtr& enclosingScope);
   void finish();
 
-  JSFunction* function() const { return &object()->as<JSFunction>(); }
-  void clobberFunction(JSFunction* function) { gcThing = function; }
+  JSFunction* function() const;
+
+  // Initialize FunctionBox with a deferred allocation Function
+  void initializeFunction(JSFunction* fun) { clobberFunction(fun); }
+
+  void setAsmJSModule(JSFunction* function);
+  bool isAsmJSModule() { return isAsmJSModule_; }
+
+  void clobberFunction(JSFunction* function);
 
   Scope* compilationEnclosingScope() const override {
-    // This method is used to distinguish the outermost SharedContext. If
-    // a FunctionBox is the outermost SharedContext, it must be a lazy
-    // function.
+    // This is used when emitting code for the current FunctionBox and therefore
+    // the enclosingScope_ must have be set correctly during initalization.
 
-    // If the function is lazy and it has enclosing scope, the function is
-    // being delazified.  In that case the enclosingScope_ field is copied
-    // from the lazy function at the beginning of delazification and should
-    // keep pointing the same scope.
-    MOZ_ASSERT_IF(
-        function()->isInterpretedLazy() &&
-            function()->lazyScript()->hasEnclosingScope(),
-        enclosingScope_ == function()->lazyScript()->enclosingScope());
-
-    // If this FunctionBox is a lazy child of the function we're actually
-    // compiling, then it is not the outermost SharedContext, so this
-    // method should return nullptr."
-    if (isLazyFunctionWithoutEnclosingScope()) {
-      return nullptr;
-    }
-
-    return enclosingScope_;
+    MOZ_ASSERT(enclosingScope_);
+    return enclosingScope_.scope();
   }
+
+  IMMUTABLE_FLAG_GETTER_SETTER(isAsync, IsAsync)
+  IMMUTABLE_FLAG_GETTER_SETTER(isGenerator, IsGenerator)
+  IMMUTABLE_FLAG_GETTER_SETTER(funHasExtensibleScope, FunHasExtensibleScope)
+  IMMUTABLE_FLAG_GETTER_SETTER(functionHasThisBinding, FunctionHasThisBinding)
+  // NeedsHomeObject: custom logic below.
+  // IsDerivedClassConstructor: custom logic below.
+  // IsFieldInitializer: custom logic below.
+  IMMUTABLE_FLAG_GETTER_SETTER(hasRest, HasRest)
+  IMMUTABLE_FLAG_GETTER_SETTER(needsFunctionEnvironmentObjects,
+                               NeedsFunctionEnvironmentObjects)
+  IMMUTABLE_FLAG_GETTER_SETTER(functionHasExtraBodyVarScope,
+                               FunctionHasExtraBodyVarScope)
+  IMMUTABLE_FLAG_GETTER_SETTER(shouldDeclareArguments, ShouldDeclareArguments)
+  IMMUTABLE_FLAG_GETTER_SETTER(argumentsHasVarBinding, ArgumentsHasVarBinding)
+  // AlwaysNeedsArgsObj: custom logic below.
+  // HasMappedArgsObj: custom logic below.
+  // IsLikelyConstructorWrapper: custom logic below.
 
   bool needsCallObjectRegardlessOfBindings() const {
-    return hasExtensibleScope() || needsHomeObject() ||
-           isDerivedClassConstructor() || isGenerator() || isAsync();
-  }
+    // Always create a CallObject if:
+    // - The scope is extensible at runtime due to sloppy eval.
+    // - The function is a generator or async function. (The debugger reads the
+    //   generator object directly from the frame.)
 
-  bool hasExtraBodyVarScope() const {
-    return hasParameterExprs &&
-           (extraVarScopeBindings_ ||
-            needsExtraBodyVarEnvironmentRegardlessOfBindings());
+    return funHasExtensibleScope() || isGenerator() || isAsync();
   }
 
   bool needsExtraBodyVarEnvironmentRegardlessOfBindings() const {
     MOZ_ASSERT(hasParameterExprs);
-    return hasExtensibleScope() || needsDotGeneratorName();
+    return funHasExtensibleScope();
   }
 
   bool isLikelyConstructorWrapper() const {
-    return usesArguments && usesApply && usesThis && !usesReturn;
+    return argumentsHasVarBinding() && usesApply && usesThis && !usesReturn;
   }
 
-  bool isGenerator() const { return isGenerator_; }
   GeneratorKind generatorKind() const {
     return isGenerator() ? GeneratorKind::Generator
                          : GeneratorKind::NotGenerator;
   }
 
-  bool isAsync() const { return isAsync_; }
   FunctionAsyncKind asyncKind() const {
     return isAsync() ? FunctionAsyncKind::AsyncFunction
                      : FunctionAsyncKind::SyncFunction;
@@ -497,10 +489,8 @@ class FunctionBox : public ObjectBox, public SharedContext {
   bool needsIteratorResult() const { return isGenerator() && !isAsync(); }
   bool needsPromiseResult() const { return isAsync() && !isGenerator(); }
 
-  bool isArrow() const { return function()->isArrow(); }
-
-  bool hasRest() const { return hasRest_; }
-  void setHasRest() { hasRest_ = true; }
+  bool isArrow() const { return flags_.isArrow(); }
+  bool isLambda() const { return flags_.isLambda(); }
 
   bool hasExprBody() const { return hasExprBody_; }
   void setHasExprBody() {
@@ -508,30 +498,69 @@ class FunctionBox : public ObjectBox, public SharedContext {
     hasExprBody_ = true;
   }
 
-  bool hasExtensibleScope() const { return hasExtensibleScope_; }
-  bool hasThisBinding() const { return hasThisBinding_; }
-  bool argumentsHasLocalBinding() const { return argumentsHasLocalBinding_; }
-  bool definitelyNeedsArgsObj() const { return definitelyNeedsArgsObj_; }
-  bool needsHomeObject() const { return needsHomeObject_; }
-  bool isDerivedClassConstructor() const { return isDerivedClassConstructor_; }
-  bool hasInnerFunctions() const { return hasInnerFunctions_; }
+  bool isNamedLambda() const {
+    return flags_.isNamedLambda(explicitName() != nullptr);
+  }
+  bool isGetter() const { return flags_.isGetter(); }
+  bool isSetter() const { return flags_.isSetter(); }
+  bool isMethod() const { return flags_.isMethod(); }
+  bool isClassConstructor() const { return flags_.isClassConstructor(); }
 
-  void setHasExtensibleScope() { hasExtensibleScope_ = true; }
-  void setHasThisBinding() { hasThisBinding_ = true; }
-  void setArgumentsHasLocalBinding() { argumentsHasLocalBinding_ = true; }
-  void setDefinitelyNeedsArgsObj() {
-    MOZ_ASSERT(argumentsHasLocalBinding_);
-    definitelyNeedsArgsObj_ = true;
+  bool isInterpreted() const { return flags_.hasBaseScript(); }
+  void setIsInterpreted(bool interpreted) {
+    flags_.setFlags(FunctionFlags::BASESCRIPT, interpreted);
+  }
+
+  FunctionFlags::FunctionKind kind() { return flags_.kind(); }
+
+  bool hasInferredName() const { return flags_.hasInferredName(); }
+  bool hasGuessedAtom() const { return flags_.hasGuessedAtom(); }
+
+  JSAtom* displayAtom() const { return atom_; }
+  JSAtom* explicitName() const {
+    return (hasInferredName() || hasGuessedAtom()) ? nullptr : atom_;
+  }
+
+  // NOTE: We propagate to any existing functions for now. This handles both the
+  // delazification case where functions already exist, and also handles
+  // code-coverage which is not yet deferred.
+  void setInferredName(JSAtom* atom) {
+    atom_ = atom;
+    flags_.setInferredName();
+  }
+  void setGuessedAtom(JSAtom* atom) {
+    atom_ = atom;
+    flags_.setGuessedAtom();
+  }
+
+  void setAlwaysNeedsArgsObj() {
+    MOZ_ASSERT(argumentsHasVarBinding());
+    setFlag(ImmutableFlags::AlwaysNeedsArgsObj);
+  }
+
+  bool needsHomeObject() const {
+    return hasFlag(ImmutableFlags::NeedsHomeObject);
   }
   void setNeedsHomeObject() {
-    MOZ_ASSERT(function()->allowSuperProperty());
-    needsHomeObject_ = true;
+    MOZ_ASSERT(flags_.allowSuperProperty());
+    setFlag(ImmutableFlags::NeedsHomeObject);
+  }
+
+  bool isDerivedClassConstructor() const {
+    return hasFlag(ImmutableFlags::IsDerivedClassConstructor);
   }
   void setDerivedClassConstructor() {
-    MOZ_ASSERT(function()->isClassConstructor());
-    isDerivedClassConstructor_ = true;
+    MOZ_ASSERT(flags_.isClassConstructor());
+    setFlag(ImmutableFlags::IsDerivedClassConstructor);
   }
-  void setHasInnerFunctions() { hasInnerFunctions_ = true; }
+
+  bool isFieldInitializer() const {
+    return hasFlag(ImmutableFlags::IsFieldInitializer);
+  }
+  void setFieldInitializer() {
+    MOZ_ASSERT(flags_.isMethod());
+    setFlag(ImmutableFlags::IsFieldInitializer);
+  }
 
   bool hasSimpleParameterList() const {
     return !hasRest() && !hasParameterExprs && !hasDestructuringArgs;
@@ -539,6 +568,15 @@ class FunctionBox : public ObjectBox, public SharedContext {
 
   bool hasMappedArgsObj() const {
     return !strict() && hasSimpleParameterList();
+  }
+
+  bool shouldSuppressRunOnce() const {
+    // These heuristics suppress the run-once optimization if we expect that
+    // script-cloning will have more impact than TI type-precision would gain.
+    //
+    // See also: Bug 864218
+    return explicitName() || argumentsHasVarBinding() || isGenerator() ||
+           isAsync();
   }
 
   // Return whether this or an enclosing function is being parsed and
@@ -549,20 +587,42 @@ class FunctionBox : public ObjectBox, public SharedContext {
   bool useAsmOrInsideUseAsm() const { return useAsm; }
 
   void setStart(uint32_t offset, uint32_t line, uint32_t column) {
-    bufStart = offset;
-    startLine = line;
-    startColumn = column;
+    extent.sourceStart = offset;
+    extent.lineno = line;
+    extent.column = column;
   }
 
   void setEnd(uint32_t end) {
     // For all functions except class constructors, the buffer and
     // toString ending positions are the same. Class constructors override
     // the toString ending position with the end of the class definition.
-    bufEnd = toStringEnd = end;
+    extent.sourceEnd = end;
+    extent.toStringEnd = end;
   }
 
-  void trace(JSTracer* trc) override;
+  void setArgCount(uint16_t args) { nargs_ = args; }
+
+  size_t nargs() { return nargs_; }
+
+  // Flush the acquired argCount to the associated function.
+  void synchronizeArgCount() { function()->setArgCount(nargs_); }
+
+  bool setTypeForScriptedFunction(JSContext* cx) {
+    RootedFunction fun(cx, function());
+    return JSFunction::setTypeForScriptedFunction(cx, fun, isSingleton);
+  }
+
+  size_t index() { return funcDataIndex_; }
+
+  void trace(JSTracer* trc);
+
+  static void TraceList(JSTracer* trc, FunctionBox* listHead);
+
+  FunctionBox* traceLink() { return traceLink_; }
 };
+
+#undef FLAG_GETTER_SETTER
+#undef IMMUTABLE_FLAG_GETTER_SETTER
 
 inline FunctionBox* SharedContext::asFunctionBox() {
   MOZ_ASSERT(isFunctionBox());

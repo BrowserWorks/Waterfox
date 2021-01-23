@@ -78,7 +78,7 @@ class ProfileAutoCompleteResult {
     // The result code of this result object.
     if (resultCode) {
       this.searchResult = resultCode;
-    } else if (matchingProfiles.length > 0) {
+    } else if (matchingProfiles.length) {
       this.searchResult = Ci.nsIAutoCompleteResult.RESULT_SUCCESS;
     } else {
       this.searchResult = Ci.nsIAutoCompleteResult.RESULT_NOMATCH;
@@ -196,10 +196,8 @@ class ProfileAutoCompleteResult {
   /**
    * Removes a result from the resultset
    * @param {number} index The index of the result to remove
-   * @param {boolean} removeFromDatabase TRUE for removing data from DataBase
-   *                                     as well.
    */
-  removeValueAt(index, removeFromDatabase) {
+  removeValueAt(index) {
     // There is no plan to support removing profiles via autocomplete.
   }
 }
@@ -392,8 +390,7 @@ class CreditCardResult extends ProfileAutoCompleteResult {
       return [
         FormAutofillUtils.stringBundle.formatStringFromName(
           "insecureFieldWarningDescription",
-          [brandName],
-          1
+          [brandName]
         ),
       ];
     }

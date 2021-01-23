@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "Щоб заощадити місце на диску, не завантажувати:">
+<!ENTITY doNotDownloadNntp.label "Щоб заощадити місце на диску, не завантажувати для роботи в автономному режимі:">
+<!ENTITY doNotDownloadImap.label "Щоб заощадити місце на диску, на завантаження повідомлень з сервера та зберігання локальних копій може бути накладене обмеження за віком та розміром.">
+<!ENTITY allFoldersOffline2.label "Зберігати повідомлення в усіх теках для цього облікового запису на цьому комп'ютері">
+<!ENTITY allFoldersOffline2.accesskey "З">
+<!ENTITY allFoldersOfflineNote.label 'Примітка: Ця зміна стосується всіх тек для цього облікового запису. Щоб налаштувати окремі теки, скористайтеся кнопкою "Додатково…".'>
+<!ENTITY offlineNotDownload.label "Повідомлення понад">
+<!ENTITY offlineNotDownload.accesskey "Б">
+<!ENTITY autosyncNotDownload.label "Не завантажувати повідомлення понад">
+<!ENTITY autosyncNotDownload.accesskey "Б">
+<!ENTITY kb.label "Кбайт">
+<!ENTITY daysOld.label "днів">
+<!ENTITY message.label "повідомлень">
+<!ENTITY nntpNotDownloadRead.label "Читати повідомлення">
+<!ENTITY nntpNotDownloadRead.accesskey "З">
+<!ENTITY nntpDownloadMsg.label "Повідомлення понад">
+<!ENTITY nntpDownloadMsg.accesskey "о">
+<!ENTITY retentionCleanup.label "Для звільнення місця на диску старі повідомлення може бути вилучено.">
+<!ENTITY retentionCleanupImap.label "Щоб вивільнити місце на диску, старі повідомлення можна стерти назавжди, як локальні копії, так і оригінали на віддаленому сервері.">
+<!ENTITY retentionCleanupPop.label "Щоб вивільнити місце на диску, старі повідомлення можна стерти назавжди, включно з оригіналами на віддаленому сервері.">
+<!ENTITY retentionKeepMsg.label "Видаляти повідомлення давніші за">
+<!ENTITY retentionKeepMsg.accesskey "д">
+<!ENTITY retentionKeepAll.label "Не видаляти повідомлення">
+<!ENTITY retentionKeepAll.accesskey "Н">
+<!ENTITY retentionKeepRecent.label "Видаляти всі, крім останніх">
+<!ENTITY retentionKeepRecent.accesskey "к">
+<!ENTITY retentionApplyToFlagged.label "Зберігати повідомлення з зірочкою завжди">
+<!ENTITY retentionApplyToFlagged.accesskey "з">
+<!ENTITY nntpRemoveMsgBody.label "Вилучати вміст повідомлень понад">
+<!ENTITY nntpRemoveMsgBody.accesskey "б">
+<!ENTITY offlineSelectNntp.label "Виберіть групи новин для роботи в автономному режимі…">
+<!ENTITY offlineSelectNntp.accesskey "В">
+<!ENTITY offlineImapAdvancedOffline.label "Додатково…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "о">
+<!ENTITY syncGroupTitle.label "Синхронізація повідомлень">
+<!ENTITY diskspaceGroupTitle.label "Дисковий простір">
+
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+<!ENTITY allAutosync.label               "Синхронізувати всі повідомлення локально, попри вік">
+<!ENTITY allAutosync.accesskey           "С">
+<!ENTITY ageAutosyncBefore.label         "Синхронізувати за останні">
+<!ENTITY ageAutosync.accesskey           "о">
+<!ENTITY ageAutosyncMiddle.label         "">
+<!ENTITY dayAgeInterval.label            "Днів">
+<!ENTITY weekAgeInterval.label           "Тижнів">
+<!ENTITY monthAgeInterval.label          "Місяців">
+<!ENTITY yearAgeInterval.label           "Років">
+<!ENTITY ageAutosyncAfter.label          "">

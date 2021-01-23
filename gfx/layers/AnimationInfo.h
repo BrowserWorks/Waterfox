@@ -7,23 +7,42 @@
 #ifndef GFX_ANIMATIONINFO_H
 #define GFX_ANIMATIONINFO_H
 
-#include "nsAutoPtr.h"
 #include "nsCSSPropertyIDSet.h"
 #include "nsDisplayItemTypes.h"
 #include "mozilla/Array.h"
+#include "mozilla/UniquePtr.h"
+#include "mozilla/FunctionRef.h"
+#include "mozilla/layers/AnimationStorageData.h"
+#include "mozilla/layers/LayersMessages.h"  // for TransformData
 
 struct RawServoAnimationValue;
 class nsIContent;
 class nsIFrame;
+class nsDisplayListBuilder;
+class nsDisplayItem;
 
 namespace mozilla {
+
+class EffectSet;
+struct AnimationProperty;
+
+namespace dom {
+class Animation;
+}  // namespace dom
+
+namespace gfx {
+class Path;
+}  // namespace gfx
+
 namespace layers {
 
 class Animation;
 class CompositorAnimations;
 class Layer;
 class LayerManager;
+struct CompositorAnimationData;
 struct PropertyAnimationGroup;
+enum class LayersBackend : int8_t;
 
 class AnimationInfo final {
   typedef nsTArray<Animation> AnimationArray;
@@ -67,10 +86,15 @@ class AnimationInfo final {
   // always return an empty array on the compositor thread.
   AnimationArray& GetAnimations() { return mAnimations; }
   nsTArray<PropertyAnimationGroup>& GetPropertyAnimationGroups() {
-    return mPropertyAnimationGroups;
+    return mStorageData.mAnimation;
+  }
+  const Maybe<TransformData>& GetTransformData() const {
+    return mStorageData.mTransformData;
   }
   bool ApplyPendingUpdatesForThisTransaction();
   bool HasTransformAnimation() const;
+
+  gfx::Path* CachedMotionPath() { return mStorageData.mCachedMotionPath; }
 
   // In case of continuation, |aFrame| must be the first or the last
   // continuation frame, otherwise this function might return Nothing().
@@ -80,7 +104,7 @@ class AnimationInfo final {
   using CompositorAnimatableDisplayItemTypes =
       Array<DisplayItemType,
             nsCSSPropertyIDSet::CompositorAnimatableDisplayItemCount()>;
-  using AnimationGenerationCallback = std::function<bool(
+  using AnimationGenerationCallback = FunctionRef<bool(
       const Maybe<uint64_t>& aGeneration, DisplayItemType aDisplayItemType)>;
   // Enumerates animation generations on |aFrame| for the given display item
   // types and calls |aCallback| with the animation generation.
@@ -89,7 +113,33 @@ class AnimationInfo final {
   static void EnumerateGenerationOnFrame(
       const nsIFrame* aFrame, const nsIContent* aContent,
       const CompositorAnimatableDisplayItemTypes& aDisplayItemTypes,
-      const AnimationGenerationCallback& aCallback);
+      AnimationGenerationCallback);
+
+  void AddAnimationsForDisplayItem(nsIFrame* aFrame,
+                                   nsDisplayListBuilder* aBuilder,
+                                   nsDisplayItem* aItem, DisplayItemType aType,
+                                   LayersBackend aLayersBackend);
+
+ private:
+  enum class Send {
+    NextTransaction,
+    Immediate,
+  };
+  void AddAnimationForProperty(nsIFrame* aFrame,
+                               const AnimationProperty& aProperty,
+                               dom::Animation* aAnimation,
+                               const Maybe<TransformData>& aTransformData,
+                               Send aSendFlag);
+
+  bool AddAnimationsForProperty(
+      nsIFrame* aFrame, const EffectSet* aEffects,
+      const nsTArray<RefPtr<dom::Animation>>& aCompositorAnimations,
+      const Maybe<TransformData>& aTransformData, nsCSSPropertyID aProperty,
+      Send aSendFlag);
+
+  void AddNonAnimatingTransformLikePropertiesStyles(
+      const nsCSSPropertyIDSet& aNonAnimatingProperties, nsIFrame* aFrame,
+      Send aSendFlag);
 
  protected:
   // mAnimations (and mPendingAnimations) are only set on the main thread.
@@ -100,15 +150,11 @@ class AnimationInfo final {
   // readily use for sampling and then store it in mPropertyAnimationGroups
   // (below) or CompositorAnimationStorage.mAnimations for WebRender.
   AnimationArray mAnimations;
-  nsAutoPtr<AnimationArray> mPendingAnimations;
+  UniquePtr<AnimationArray> mPendingAnimations;
 
   uint64_t mCompositorAnimationsId;
   // The extracted data produced by AnimationHelper::ExtractAnimations().
-  //
-  // Each entry in the array represents an animation list for one property.  For
-  // transform-like properties (e.g. transform, rotate etc.), there may be
-  // multiple entries depending on how many transform-like properties we have.
-  nsTArray<PropertyAnimationGroup> mPropertyAnimationGroups;
+  AnimationStorageData mStorageData;
   // If this layer is used for OMTA, then this counter is used to ensure we
   // stay in sync with the animation manager
   Maybe<uint64_t> mAnimationGeneration;

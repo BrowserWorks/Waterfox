@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-offline.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Offline' preferences dialog -->
+<!ENTITY pref.network.title               "Nettverk og lagring">
+<!ENTITY pref.offline.caption             "Frakoblet">
+<!ENTITY textStartUp                      "Ved oppstart:">
+<!ENTITY textStartUp.accesskey            "V">
+<!ENTITY menuitemRememberPrevState        "Husk forrige tilkoblingstilstand">
+<!ENTITY menuitemAskMe                    "Spør meg for tilkoblingstilstand ved oppstart">
+<!ENTITY menuitemAlwaysOnline             "Alltid start opp i tilkoblet modus">
+<!ENTITY menuitemAlwaysOffline            "Alltid start opp i frakoblet modus">
+<!ENTITY menuitemAutomatic                "Oppdag automatisk (dersom tilgjengelig)">
+<!ENTITY textGoingOnline                  "Send usendte meldinger når jeg kobler til?">
+<!ENTITY radioAutoSend                    "Ja">
+<!ENTITY radioAutoSend.accesskey          "u">
+<!ENTITY radioNotSend                     "Nei">
+<!ENTITY radioNotSend.accesskey           "D">
+<!ENTITY radioAskUnsent                   "Spør meg">
+<!ENTITY radioAskUnsent.accesskey         "S">
+<!ENTITY textGoingOffline                 "Laste ned meldinger når jeg kobler fra?">
+<!ENTITY radioAutoDownload                "Ja">
+<!ENTITY radioAutoDownload.accesskey      "J">
+<!ENTITY radioNotDownload                 "Nei">
+<!ENTITY radioNotDownload.accesskey       "N">
+<!ENTITY radioAskDownload                 "Spør meg">
+<!ENTITY radioAskDownload.accesskey       "e">
+<!ENTITY mailConnections.caption          "E-posttilkoblinger">
+<!ENTITY mailnewsTimeout.label            "Tidsavbrudd:">
+<!ENTITY mailnewsTimeout.accesskey        "T">
+<!ENTITY mailnewsTimeoutSeconds.label     "sekunder">
+<!ENTITY Diskspace                        "Diskplass">
+<!ENTITY offlineCompactFolders.label      "Komprimer alle mapper når det vil spare mer enn">
+<!ENTITY offlineCompactFolders.accesskey  "K">
+<!ENTITY offlineCompactFoldersMB.label    " MB totalt">

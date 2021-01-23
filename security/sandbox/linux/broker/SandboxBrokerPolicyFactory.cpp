@@ -27,6 +27,7 @@
 #include "nsReadableUtils.h"
 #include "nsIFileStreams.h"
 #include "nsILineInputStream.h"
+
 #include "nsNetCID.h"
 
 #ifdef ANDROID
@@ -107,30 +108,54 @@ static void AddMesaSysfsPaths(SandboxBroker::Policy* aPolicy) {
   }
 }
 
+static void JoinPathIfRelative(const nsACString& aCwd, const nsACString& inPath,
+                               nsACString& outPath) {
+  if (inPath.Length() < 1) {
+    outPath.Assign(aCwd);
+    SANDBOX_LOG_ERROR("Unjoinable path: %s", PromiseFlatCString(aCwd).get());
+    return;
+  }
+  const char* startChar = inPath.BeginReading();
+  if (*startChar != '/') {
+    // Relative path, copy basepath in front
+    outPath.Assign(aCwd);
+    outPath.Append("/");
+    outPath.Append(inPath);
+  } else {
+    // Absolute path, it's ok like this
+    outPath.Assign(inPath);
+  }
+}
+
 static void AddPathsFromFile(SandboxBroker::Policy* aPolicy,
-                             nsACString& aPath) {
+                             const nsACString& aPath);
+
+static void AddPathsFromFileInternal(SandboxBroker::Policy* aPolicy,
+                                     const nsACString& aCwd,
+                                     const nsACString& aPath) {
   nsresult rv;
   nsCOMPtr<nsIFile> ldconfig(do_CreateInstance(NS_LOCAL_FILE_CONTRACTID, &rv));
   if (NS_FAILED(rv)) {
     return;
   }
   rv = ldconfig->InitWithNativePath(aPath);
-  if (NS_FAILED(rv)) {
+  if (NS_WARN_IF(NS_FAILED(rv))) {
     return;
   }
   nsCOMPtr<nsIFileInputStream> fileStream(
       do_CreateInstance(NS_LOCALFILEINPUTSTREAM_CONTRACTID, &rv));
-  if (NS_FAILED(rv)) {
+  if (NS_WARN_IF(NS_FAILED(rv))) {
     return;
   }
   rv = fileStream->Init(ldconfig, -1, -1, 0);
-  if (NS_FAILED(rv)) {
+  if (NS_WARN_IF(NS_FAILED(rv))) {
     return;
   }
   nsCOMPtr<nsILineInputStream> lineStream(do_QueryInterface(fileStream, &rv));
-  if (NS_FAILED(rv)) {
+  if (NS_WARN_IF(NS_FAILED(rv))) {
     return;
   }
+
   nsAutoCString line;
   bool more = true;
   do {
@@ -160,8 +185,11 @@ static void AddPathsFromFile(SandboxBroker::Policy* aPolicy,
     if (FindInReadable(NS_LITERAL_CSTRING("include "), start, token_end)) {
       nsAutoCString includes(Substring(token_end, end));
       for (const nsACString& includeGlob : includes.Split(' ')) {
+        // Glob path might be relative, so add cwd if so.
+        nsAutoCString includeFile;
+        JoinPathIfRelative(aCwd, includeGlob, includeFile);
         glob_t globbuf;
-        if (!glob(PromiseFlatCString(includeGlob).get(), GLOB_NOSORT, nullptr,
+        if (!glob(PromiseFlatCString(includeFile).get(), GLOB_NOSORT, nullptr,
                   &globbuf)) {
           for (size_t fileIdx = 0; fileIdx < globbuf.gl_pathc; fileIdx++) {
             nsAutoCString filePath(globbuf.gl_pathv[fileIdx]);
@@ -171,10 +199,7 @@ static void AddPathsFromFile(SandboxBroker::Policy* aPolicy,
         }
       }
     }
-    // Skip anything left over that isn't an absolute path
-    if (line.First() != '/') {
-      continue;
-    }
+
     // Cut off anything behind an = sign, used by dirname=TYPE directives
     int32_t equals = line.FindChar('=');
     if (equals >= 0) {
@@ -188,9 +213,61 @@ static void AddPathsFromFile(SandboxBroker::Policy* aPolicy,
   } while (more);
 }
 
+static void AddPathsFromFile(SandboxBroker::Policy* aPolicy,
+                             const nsACString& aPath) {
+  // Find the new base path where that file sits in.
+  nsresult rv;
+  nsCOMPtr<nsIFile> includeFile(
+      do_CreateInstance(NS_LOCAL_FILE_CONTRACTID, &rv));
+  if (NS_FAILED(rv)) {
+    return;
+  }
+  rv = includeFile->InitWithNativePath(aPath);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return;
+  }
+  if (SandboxInfo::Get().Test(SandboxInfo::kVerbose)) {
+    SANDBOX_LOG_ERROR("Adding paths from %s to policy.",
+                      PromiseFlatCString(aPath).get());
+  }
+
+  // Find the parent dir where this file sits in.
+  nsCOMPtr<nsIFile> parentDir;
+  rv = includeFile->GetParent(getter_AddRefs(parentDir));
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return;
+  }
+  nsAutoCString parentPath;
+  rv = parentDir->GetNativePath(parentPath);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return;
+  }
+  if (SandboxInfo::Get().Test(SandboxInfo::kVerbose)) {
+    SANDBOX_LOG_ERROR("Parent path is %s",
+                      PromiseFlatCString(parentPath).get());
+  }
+  AddPathsFromFileInternal(aPolicy, parentPath, aPath);
+}
+
 static void AddLdconfigPaths(SandboxBroker::Policy* aPolicy) {
-  nsAutoCString ldconfigPath(NS_LITERAL_CSTRING("/etc/ld.so.conf"));
-  AddPathsFromFile(aPolicy, ldconfigPath);
+  nsAutoCString ldConfig(NS_LITERAL_CSTRING("/etc/ld.so.conf"));
+  AddPathsFromFile(aPolicy, ldConfig);
+}
+
+static void AddLdLibraryEnvPaths(SandboxBroker::Policy* aPolicy) {
+  nsAutoCString LdLibraryEnv(PR_GetEnv("LD_LIBRARY_PATH"));
+  // The items in LD_LIBRARY_PATH can be separated by either colons or
+  // semicolons, according to the ld.so(8) man page, and empirically it
+  // seems to be allowed to mix them (i.e., a:b;c is a list with 3 elements).
+  // There is no support for escaping the delimiters, fortunately (for us).
+  LdLibraryEnv.ReplaceChar(';', ':');
+  for (const nsACString& libPath : LdLibraryEnv.Split(':')) {
+    char* resolvedPath = realpath(PromiseFlatCString(libPath).get(), nullptr);
+    if (resolvedPath) {
+      aPolicy->AddDir(rdonly, resolvedPath);
+      free(resolvedPath);
+    }
+  }
 }
 
 static void AddSharedMemoryPaths(SandboxBroker::Policy* aPolicy, pid_t aPid) {
@@ -212,6 +289,9 @@ SandboxBrokerPolicyFactory::SandboxBrokerPolicyFactory() {
   // Bug 1312678: radeonsi/Intel with DRI when using WebGL
   policy->AddDir(rdwr, "/dev/dri");
 
+  // Bug 1575985: WASM library sandbox needs RW access to /dev/null
+  policy->AddPath(rdwr, "/dev/null");
+
   // Read permissions
   policy->AddPath(rdonly, "/dev/urandom");
   policy->AddPath(rdonly, "/proc/cpuinfo");
@@ -231,9 +311,11 @@ SandboxBrokerPolicyFactory::SandboxBrokerPolicyFactory() {
   policy->AddDir(rdonly, "/nix/store");
   policy->AddDir(rdonly, "/run/host/fonts");
   policy->AddDir(rdonly, "/run/host/user-fonts");
+  policy->AddDir(rdonly, "/var/cache/fontconfig");
 
   AddMesaSysfsPaths(policy);
   AddLdconfigPaths(policy);
+  AddLdLibraryEnvPaths(policy);
 
   // Bug 1385715: NVIDIA PRIME support
   policy->AddPath(rdonly, "/proc/modules");
@@ -264,12 +346,13 @@ SandboxBrokerPolicyFactory::SandboxBrokerPolicyFactory() {
     policy->AddDir(rdonly, PromiseFlatCString(fontPath).get());
   }
 
-  // Extra configuration dirs in the homedir that we want to allow read
+  // Extra configuration/cache dirs in the homedir that we want to allow read
   // access to.
-  mozilla::Array<const char*, 3> extraConfDirs = {
+  mozilla::Array<const char*, 4> extraConfDirs = {
       ".config",  // Fallback if XDG_CONFIG_PATH isn't set
       ".themes",
       ".fonts",
+      ".cache/fontconfig",
   };
 
   nsCOMPtr<nsIFile> homeDir;
@@ -587,6 +670,50 @@ SandboxBrokerPolicyFactory::GetUtilityPolicy(int aPid) {
   auto policy = MakeUnique<SandboxBroker::Policy>();
 
   AddSharedMemoryPaths(policy.get(), aPid);
+
+  if (policy->IsEmpty()) {
+    policy = nullptr;
+  }
+  return policy;
+}
+
+/* static */ UniquePtr<SandboxBroker::Policy>
+SandboxBrokerPolicyFactory::GetSocketProcessPolicy(int aPid) {
+  auto policy = MakeUnique<SandboxBroker::Policy>();
+
+  policy->AddPath(rdonly, "/dev/urandom");
+  policy->AddPath(rdonly, "/proc/cpuinfo");
+  policy->AddPath(rdonly, "/proc/meminfo");
+  policy->AddDir(rdonly, "/sys/devices/cpu");
+  policy->AddDir(rdonly, "/sys/devices/system/cpu");
+  policy->AddDir(rdonly, "/lib");
+  policy->AddDir(rdonly, "/lib64");
+  policy->AddDir(rdonly, "/usr/lib");
+  policy->AddDir(rdonly, "/usr/lib32");
+  policy->AddDir(rdonly, "/usr/lib64");
+  policy->AddDir(rdonly, "/usr/share");
+  policy->AddDir(rdonly, "/usr/local/share");
+
+  AddLdconfigPaths(policy.get());
+
+  // Socket process sandbox needs to allow shmem in order to support
+  // profiling.  See Bug 1626385.
+  AddSharedMemoryPaths(policy.get(), aPid);
+
+  // Firefox binary dir.
+  // Note that unlike the previous cases, we use NS_GetSpecialDirectory
+  // instead of GetSpecialSystemDirectory. The former requires a working XPCOM
+  // system, which may not be the case for some tests. For querying for the
+  // location of XPCOM things, we can use it anyway.
+  nsCOMPtr<nsIFile> ffDir;
+  nsresult rv = NS_GetSpecialDirectory(NS_GRE_DIR, getter_AddRefs(ffDir));
+  if (NS_SUCCEEDED(rv)) {
+    nsAutoCString tmpPath;
+    rv = ffDir->GetNativePath(tmpPath);
+    if (NS_SUCCEEDED(rv)) {
+      policy->AddDir(rdonly, tmpPath.get());
+    }
+  }
 
   if (policy->IsEmpty()) {
     policy = nullptr;

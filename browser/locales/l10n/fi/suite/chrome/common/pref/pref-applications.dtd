@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Applications prefs dialog -->
+<!ENTITY pref.applications.title "Apuohjelmat">
+
+<!ENTITY typeColumn.label        "Sisältötyyppi">
+<!ENTITY typeColumn.accesskey    "S">
+
+<!ENTITY actionColumn2.label     "Toiminto">
+<!ENTITY actionColumn2.accesskey "T">
+
+<!ENTITY search.placeholder      "Etsi">
+
+<!ENTITY useAppChooser.label     "Käytä sisäänrakennettua sovelluksenvalitsinta, jos mahdollista">
+<!ENTITY useAppChooser.accesskey "K">

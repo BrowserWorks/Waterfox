@@ -14,8 +14,6 @@
 #include "mozilla/dom/indexedDB/PermissionRequestBase.h"
 #include "mozilla/dom/PBrowserParent.h"
 
-template <class>
-struct already_AddRefed;
 class nsIPrincipal;
 
 namespace mozilla {
@@ -37,7 +35,7 @@ class LoggingInfo;
 class PBackgroundIDBFactoryParent;
 class PBackgroundIndexedDBUtilsParent;
 
-PBackgroundIDBFactoryParent* AllocPBackgroundIDBFactoryParent(
+already_AddRefed<PBackgroundIDBFactoryParent> AllocPBackgroundIDBFactoryParent(
     const LoggingInfo& aLoggingInfo);
 
 bool RecvPBackgroundIDBFactoryConstructor(PBackgroundIDBFactoryParent* aActor,
@@ -52,7 +50,7 @@ bool DeallocPBackgroundIndexedDBUtilsParent(
 
 bool RecvFlushPendingFileDeletions();
 
-already_AddRefed<mozilla::dom::quota::Client> CreateQuotaClient();
+RefPtr<mozilla::dom::quota::Client> CreateQuotaClient();
 
 FileHandleThreadPool* GetFileHandleThreadPool();
 
@@ -72,8 +70,6 @@ class PermissionRequestHelper final : public PermissionRequestBase {
 
   void OnPromptComplete(PermissionValue aPermissionValue) override;
 };
-
-nsresult AsyncDeleteFile(FileManager* aFileManager, int64_t aFileId);
 
 }  // namespace indexedDB
 }  // namespace dom

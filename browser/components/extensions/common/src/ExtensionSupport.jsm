@@ -15,7 +15,7 @@ const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const {NetUtil} = ChromeUtils.import("resource://gre/modules/NetUtil.jsm");
 
 var { fixIterator } = ChromeUtils.import("resource:///modules/iteratorUtils.jsm");
-const {IOUtils} = ChromeUtils.import("resource:///modules/IOUtils.js");
+const {IOUtils} = ChromeUtils.import("resource:///modules/IOUtils.jsm");
 
 var extensionHooks = new Map();
 var legacyExtensions = new Map();

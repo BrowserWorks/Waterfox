@@ -200,7 +200,7 @@ stubs.set("base-loader Error", {
     name: "Error",
     message: "Error message",
     stack:
-      "onPacket@resource://devtools/shared/base-loader.js -> resource://devtools/shared/client/debugger-client.js:856:9\n" +
+      "onPacket@resource://devtools/shared/base-loader.js -> resource://devtools/client/debugger-client.js:856:9\n" +
       "send/<@resource://devtools/shared/base-loader.js -> resource://devtools/shared/transport/transport.js:569:13\n" +
       "exports.makeInfallible/<@resource://devtools/shared/base-loader.js -> resource://devtools/shared/ThreadSafeDevToolsUtils.js:109:14\n" +
       "exports.makeInfallible/<@resource://devtools/shared/base-loader.js -> resource://devtools/shared/ThreadSafeDevToolsUtils.js:109:14\n",
@@ -290,6 +290,66 @@ stubs.set("Error with invalid stack", {
     fileName: "http://moz.com/script.js:1:2",
     lineNumber: 1,
     columnNumber: 2,
+  },
+});
+
+stubs.set("Error with undefined-grip stack", {
+  type: "object",
+  actor: "server0.conn0.child1/obj88",
+  class: "Error",
+  extensible: true,
+  frozen: false,
+  sealed: false,
+  ownPropertyLength: 4,
+  preview: {
+    kind: "Error",
+    name: "InternalError",
+    message: "too much recursion",
+    stack: {
+      type: "undefined",
+    },
+    fileName: "debugger eval code",
+    lineNumber: 13,
+    columnNumber: 13,
+  },
+});
+
+stubs.set("Error with undefined-grip name", {
+  type: "object",
+  actor: "server0.conn0.child1/obj88",
+  class: "Error",
+  extensible: true,
+  frozen: false,
+  sealed: false,
+  ownPropertyLength: 4,
+  preview: {
+    kind: "Error",
+    name: {
+      type: "undefined",
+    },
+    message: "too much recursion",
+    stack: "@debugger eval code:16:13\n",
+    fileName: "debugger eval code",
+    lineNumber: 13,
+    columnNumber: 13,
+  },
+});
+
+stubs.set("Error with undefined-grip message", {
+  type: "object",
+  actor: "server0.conn0.child1/obj88",
+  class: "Error",
+  extensible: true,
+  frozen: false,
+  sealed: false,
+  ownPropertyLength: 4,
+  preview: {
+    kind: "Error",
+    message: { type: "undefined" },
+    stack: "@debugger eval code:16:13\n",
+    fileName: "debugger eval code",
+    lineNumber: 13,
+    columnNumber: 13,
   },
 });
 

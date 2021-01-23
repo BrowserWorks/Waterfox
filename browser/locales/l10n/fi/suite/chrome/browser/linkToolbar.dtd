@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Link Toolbar Title -->
+<!ENTITY linkToolbar.label "Sivustonavigaatiopalkki">
+<!ENTITY linkToolbar.accesskey "S">
+<!ENTITY linkToolbar.tooltip "Sivustonavigaatiopalkki">
+
+<!-- Link Toolbar visibility options -->
+<!ENTITY linkToolbarAlways.label "Näytä aina">
+<!ENTITY linkToolbarAlways.accesskey "N">
+<!ENTITY linkToolbarAsNeeded.label "Näytä vain tarvittaessa">
+<!ENTITY linkToolbarAsNeeded.accesskey "v">
+<!ENTITY linkToolbarNever.label "Älä näytä">
+<!ENTITY linkToolbarNever.accesskey "Ä">
+
+<!-- Toolbar buttons, menus, and menuitems -->
+<!ENTITY topButton.label "Alkuun">
+<!ENTITY upButton.label "Ylös">
+<!ENTITY firstButton.label "Ensimmäinen">
+<!ENTITY prevButton.label "Edellinen">
+<!ENTITY nextButton.label "Seuraava">
+<!ENTITY lastButton.label "Viimeinen">
+
+<!ENTITY documentButton.label "Asiakirja">
+
+<!ENTITY tocButton.label "Sisällysluettelo">
+<!ENTITY chapterButton.label "Luvut">
+<!ENTITY sectionButton.label "Jaksot">
+<!ENTITY subSectionButton.label "Kohdat">
+<!ENTITY appendixButton.label "Liitteet">
+<!ENTITY glossaryButton.label "Sanasto">
+<!ENTITY indexButton.label "Hakemisto">
+
+<!ENTITY moreButton.label "Lisää">
+
+<!ENTITY helpButton.label "Ohje">
+<!ENTITY searchButton.label "Hae">
+
+<!ENTITY authorButton.label "Tekijä(t)">
+<!ENTITY copyrightButton.label "Tekijänoikeudet">
+
+<!ENTITY bookmarkButton.label "Kirjanmerkit">
+
+<!ENTITY alternateButton.label "Muut versiot">
+
+<!ENTITY feedButton.label "Tilaa">

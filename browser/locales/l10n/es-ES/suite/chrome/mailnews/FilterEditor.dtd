@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Reglas de filtrado">
+<!ENTITY filterEditorDialog.dimensions "width: 105ch;">
+<!ENTITY filterName.label "Nombre del filtro:">
+<!ENTITY filterName.accesskey "f">
+<!ENTITY recentFolders.label "Reciente">
+<!ENTITY junk.label "Basura">
+<!ENTITY notJunk.label "No es basura">
+<!ENTITY lowestPriorityCmd.label "La menor">
+<!ENTITY lowPriorityCmd.label "Baja">
+<!ENTITY normalPriorityCmd.label "Normal">
+<!ENTITY highPriorityCmd.label "Alta">
+<!ENTITY highestPriorityCmd.label "La mayor">
+<!ENTITY contextDesc.label "Aplicar filtro cuando:">
+<!ENTITY contextIncomingMail.label "Al recuperar el correo nuevo:">
+<!ENTITY contextIncomingMail.accesskey "A">
+<!ENTITY contextManual.label "se ejecute manualmente">
+<!ENTITY contextManual.accesskey "s">
+<!ENTITY contextBeforeCls.label "Filtrar antes de identificar el correo basura">
+<!ENTITY contextAfterCls.label "Filtrar tras identificar el correo basura">
+<!ENTITY contextOutgoing.label "Tras enviar">
+<!ENTITY contextOutgoing.accesskey "T">
+<!ENTITY contextArchive.label "Archivado">
+<!ENTITY contextArchive.accesskey "c">
+<!ENTITY contextPeriodic.accesskey "P">
+<!ENTITY filterActionDesc.label "Realizar estas acciones:">
+<!ENTITY filterActionDesc.accesskey "R">
+<!ENTITY filterActionOrderWarning.label "Nota: las acciones del filtro se ejecutarán en un orden diferente.">
+<!ENTITY filterActionOrder.label "Ver orden de ejecución">
+<!ENTITY moveMessage.label "Mover mensaje a">
+<!ENTITY copyMessage.label "Copiar mensaje a">
+<!ENTITY forwardTo.label "Reenviar mensaje a:">
+<!ENTITY replyWithTemplate.label "Responder con plantilla">
+<!ENTITY markMessageRead.label "Marcar como leído">
+<!ENTITY markMessageUnread.label "Marcar como no leído">
+<!ENTITY markMessageStarred.label "Marcar como señalado">
+<!ENTITY setPriority.label "Establecer prioridad en">
+<!ENTITY addTag.label "Etiquetar mensaje">
+<!ENTITY setJunkScore.label "Establecer estado de correo basura en">
+<!ENTITY deleteMessage.label "Eliminar mensaje">
+<!ENTITY deleteFromPOP.label "Eliminar del servidor POP">
+<!ENTITY fetchFromPOP.label "Recoger del servidor POP">
+<!ENTITY ignoreThread.label "Ignorar conversación">
+<!ENTITY ignoreSubthread.label "Ignorar sub-conversación">
+<!ENTITY watchThread.label "Observar conversación">
+<!ENTITY stopExecution.label "Detener ejecución de los filtros">
+<!ENTITY addAction.tooltip "Añadir una acción nueva">
+<!ENTITY removeAction.tooltip "Eliminar esta acción">
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">

@@ -29,13 +29,13 @@ class SocketProcessBridgeParent final : public PSocketProcessBridgeParent {
   void ActorDestroy(ActorDestroyReason aWhy) override;
   void DeferredDestroy();
 
-  dom::PMediaTransportParent* AllocPMediaTransportParent();
-  bool DeallocPMediaTransportParent(dom::PMediaTransportParent* aActor);
+  bool Closed() const { return mClosed; }
 
  private:
   ~SocketProcessBridgeParent();
 
   ProcessId mId;
+  bool mClosed;
 };
 
 }  // namespace net

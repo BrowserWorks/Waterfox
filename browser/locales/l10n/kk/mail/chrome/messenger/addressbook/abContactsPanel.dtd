@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label               "Қасиеттері">
+<!ENTITY propertiesMenu.accesskey           "и">
+<!ENTITY propertiesCmd.key                  "и">
+<!ENTITY abPropertiesMenu.label             "Адрестік кітапша қасиеттері">
+<!ENTITY abPropertiesMenu.accesskey         "и">
+<!ENTITY contactPropertiesMenu.label        "Контакт қасиеттері">
+<!ENTITY contactPropertiesMenu.accesskey    "и">
+<!ENTITY mailingListPropertiesMenu.label    "Хаттарды тарату тізімінің қасиеттері">
+<!ENTITY mailingListPropertiesMenu.accesskey "т">
+
+<!ENTITY abContextMenuButton.tooltip        "Адрестік кітапшаның контекст мәзірін көрсету">
+<!ENTITY addressbookPicker.label            "Адрестік кітапша:">
+<!ENTITY addressbookPicker.accesskey        "к">
+<!ENTITY searchContacts.label               "Контакттарды іздеу:">
+<!ENTITY searchContacts.accesskey           "н">
+<!ENTITY SearchNameOrEmail.label            "Аты немесе эл. поштасы">
+
+<!ENTITY addtoToFieldMenu.label             "&quot;Кімге&quot; өрісіне қосу">
+<!ENTITY addtoToFieldMenu.accesskey         "о">
+<!ENTITY addtoCcFieldMenu.label             "&quot;Көшірмесі&quot; өрісіне қосу">
+<!ENTITY addtoCcFieldMenu.accesskey         "ш">
+<!ENTITY addtoBccFieldMenu.label            "&quot;Жасырын көшірме&quot; өрісіне қосу">
+<!ENTITY addtoBccFieldMenu.accesskey        "ы">
+<!ENTITY deleteAddrBookCard.label           "Өшіру">
+<!ENTITY deleteAddrBookCard.accesskey       "р">
+<!ENTITY propertiesContext.label            "Қасиеттері">
+<!ENTITY propertiesContext.accesskey        "и">
+<!ENTITY abPropertiesContext.label          "Қасиеттері">
+<!ENTITY abPropertiesContext.accesskey      "и">
+<!ENTITY editContactContext.label           "Контактты түзету">
+<!ENTITY editContactContext.accesskey       "е">
+<!ENTITY editMailingListContext.label       "Тізімді түзету">
+<!ENTITY editMailingListContext.accesskey   "е">
+
+<!ENTITY newContactAbContext.label          "Жаңа контакт">
+<!ENTITY newContactAbContext.accesskey      "к">
+<!ENTITY newListAbContext.label             "Жаңа тізім">
+<!ENTITY newListAbContext.accesskey         "т">
+
+<!ENTITY toButton.label                     "&quot;Кімге&quot; ішіне қосу:">
+<!ENTITY toButton.accesskey                 "о">
+<!ENTITY ccButton.label                     "&quot;Көшірмесі&quot; ішіне қосу:">
+<!ENTITY ccButton.accesskey                 "ш">
+<!ENTITY bccButton.label                    "&quot;Жасырын көшірме&quot; ішіне қосу:">
+<!ENTITY bccButton.accesskey                "ы">

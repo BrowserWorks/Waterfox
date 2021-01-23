@@ -5,9 +5,11 @@
 
 "use strict";
 
-/* exported attachUpdateHandler, gBrowser, getBrowserElement, isCorrectlySigned,
- *          isDisabledUnsigned, loadReleaseNotes, openOptionsInTab,
- *          promiseEvent, shouldShowPermissionsPrompt, showPermissionsPrompt */
+/* exported attachUpdateHandler, gBrowser, getBrowserElement,
+ *          installAddonsFromFilePicker, isCorrectlySigned, isDisabledUnsigned,
+ *          isDiscoverEnabled, isPending, loadReleaseNotes, openOptionsInTab,
+ *          promiseEvent, shouldShowPermissionsPrompt, showPermissionsPrompt,
+ *          PREF_UI_LASTCATEGORY */
 
 const { AddonSettings } = ChromeUtils.import(
   "resource://gre/modules/addons/AddonSettings.jsm"
@@ -16,6 +18,8 @@ var { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 var { XPCOMUtils } = ChromeUtils.import(
   "resource://gre/modules/XPCOMUtils.jsm"
 );
+
+const HTML_NS = "http://www.w3.org/1999/xhtml";
 
 XPCOMUtils.defineLazyPreferenceGetter(
   this,
@@ -29,6 +33,30 @@ ChromeUtils.defineModuleGetter(
   "Extension",
   "resource://gre/modules/Extension.jsm"
 );
+
+XPCOMUtils.defineLazyPreferenceGetter(
+  this,
+  "XPINSTALL_ENABLED",
+  "xpinstall.enabled",
+  true
+);
+
+const PREF_DISCOVER_ENABLED = "extensions.getAddons.showPane";
+const PREF_UI_LASTCATEGORY = "extensions.ui.lastCategory";
+
+function isDiscoverEnabled() {
+  try {
+    if (!Services.prefs.getBoolPref(PREF_DISCOVER_ENABLED)) {
+      return false;
+    }
+  } catch (e) {}
+
+  if (!XPINSTALL_ENABLED) {
+    return false;
+  }
+
+  return true;
+}
 
 function getBrowserElement() {
   return window.docShell.chromeEventHandler;
@@ -57,7 +85,7 @@ function attachUpdateHandler(install) {
     let difference = Extension.comparePermissions(oldPerms, newPerms);
 
     // If there are no new permissions, just proceed
-    if (difference.origins.length == 0 && difference.permissions.length == 0) {
+    if (!difference.origins.length && !difference.permissions.length) {
       return Promise.resolve();
     }
 
@@ -68,7 +96,7 @@ function attachUpdateHandler(install) {
           info: {
             type: "update",
             addon: info.addon,
-            icon: info.addon.icon,
+            icon: info.addon.iconURL,
             // Reference to the related AddonInstall object (used in
             // AMTelemetry to link the recorded event to the other events from
             // the same install flow).
@@ -104,7 +132,7 @@ async function loadReleaseNotes(uri) {
     ParserUtils.SanitizerDropForms;
 
   // Sanitize and parse the content to a fragment.
-  const context = document.createElement("div");
+  const context = document.createElementNS(HTML_NS, "div");
   return ParserUtils.parseFragment(text, flags, false, uri, context);
 }
 
@@ -126,7 +154,7 @@ function shouldShowPermissionsPrompt(addon) {
   }
 
   const { origins, permissions } = addon.userPermissions;
-  return origins.length > 0 || permissions.length > 0;
+  return !!origins.length || !!permissions.length;
 }
 
 function showPermissionsPrompt(addon) {
@@ -198,4 +226,53 @@ function isDisabledUnsigned(addon) {
       ? AddonSettings.LANGPACKS_REQUIRE_SIGNING
       : AddonSettings.REQUIRE_SIGNING;
   return signingRequired && !isCorrectlySigned(addon);
+}
+
+function isPending(addon, action) {
+  const amAction = AddonManager["PENDING_" + action.toUpperCase()];
+  return !!(addon.pendingOperations & amAction);
+}
+
+async function installAddonsFromFilePicker() {
+  let [dialogTitle, filterName] = await document.l10n.formatMessages([
+    { id: "addon-install-from-file-dialog-title" },
+    { id: "addon-install-from-file-filter-name" },
+  ]);
+  const nsIFilePicker = Ci.nsIFilePicker;
+  var fp = Cc["@mozilla.org/filepicker;1"].createInstance(nsIFilePicker);
+  fp.init(window, dialogTitle.value, nsIFilePicker.modeOpenMultiple);
+  try {
+    fp.appendFilter(filterName.value, "*.xpi;*.jar;*.zip");
+    fp.appendFilters(nsIFilePicker.filterAll);
+  } catch (e) {}
+
+  return new Promise(resolve => {
+    fp.open(async result => {
+      if (result != nsIFilePicker.returnOK) {
+        return;
+      }
+
+      let installTelemetryInfo = {
+        source: "about:addons",
+        method: "install-from-file",
+      };
+
+      let browser = getBrowserElement();
+      let installs = [];
+      for (let file of fp.files) {
+        let install = await AddonManager.getInstallForFile(
+          file,
+          null,
+          installTelemetryInfo
+        );
+        AddonManager.installAddonFromAOM(
+          browser,
+          document.documentURIObject,
+          install
+        );
+        installs.push(install);
+      }
+      resolve(installs);
+    });
+  });
 }

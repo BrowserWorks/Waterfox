@@ -66,41 +66,6 @@ void WebGL2Context::BlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1,
                                     dstY0, dstX1, dstY1, mask, filter);
 }
 
-void WebGL2Context::FramebufferTextureLayer(GLenum target, GLenum attachment,
-                                            WebGLTexture* texture, GLint level,
-                                            GLint layer) {
-  const FuncScope funcScope(*this, "framebufferTextureLayer");
-  if (IsContextLost()) return;
-
-  if (!ValidateFramebufferTarget(target)) return;
-
-  WebGLFramebuffer* fb;
-  switch (target) {
-    case LOCAL_GL_FRAMEBUFFER:
-    case LOCAL_GL_DRAW_FRAMEBUFFER:
-      fb = mBoundDrawFramebuffer;
-      break;
-
-    case LOCAL_GL_READ_FRAMEBUFFER:
-      fb = mBoundReadFramebuffer;
-      break;
-
-    default:
-      MOZ_CRASH("GFX: Bad target.");
-  }
-
-  if (!fb) return ErrorInvalidOperation("Cannot modify framebuffer 0.");
-
-  fb->FramebufferTextureLayer(attachment, texture, level, layer);
-}
-
-JS::Value WebGL2Context::GetFramebufferAttachmentParameter(
-    JSContext* cx, GLenum target, GLenum attachment, GLenum pname,
-    ErrorResult& out_error) {
-  return WebGLContext::GetFramebufferAttachmentParameter(cx, target, attachment,
-                                                         pname, out_error);
-}
-
 ////
 
 static bool ValidateBackbufferAttachmentEnum(WebGLContext* webgl,
@@ -141,8 +106,8 @@ static bool ValidateFramebufferAttachmentEnum(WebGLContext* webgl,
 }
 
 bool WebGLContext::ValidateInvalidateFramebuffer(
-    GLenum target, const dom::Sequence<GLenum>& attachments,
-    ErrorResult* const out_rv, std::vector<GLenum>* const scopedVector,
+    GLenum target, const Range<const GLenum>& attachments,
+    std::vector<GLenum>* const scopedVector,
     GLsizei* const out_glNumAttachments,
     const GLenum** const out_glAttachments) {
   if (IsContextLost()) return false;
@@ -174,8 +139,8 @@ bool WebGLContext::ValidateInvalidateFramebuffer(
   }
   DoBindFB(fb, target);
 
-  *out_glNumAttachments = attachments.Length();
-  *out_glAttachments = attachments.Elements();
+  *out_glNumAttachments = attachments.length();
+  *out_glAttachments = attachments.begin().get();
 
   if (fb) {
     for (const auto& attachment : attachments) {
@@ -188,7 +153,7 @@ bool WebGLContext::ValidateInvalidateFramebuffer(
 
     if (!isDefaultFB) {
       MOZ_ASSERT(scopedVector->empty());
-      scopedVector->reserve(attachments.Length());
+      scopedVector->reserve(attachments.length());
       for (const auto& attachment : attachments) {
         switch (attachment) {
           case LOCAL_GL_COLOR:
@@ -218,13 +183,13 @@ bool WebGLContext::ValidateInvalidateFramebuffer(
 }
 
 void WebGL2Context::InvalidateFramebuffer(
-    GLenum target, const dom::Sequence<GLenum>& attachments, ErrorResult& rv) {
+    GLenum target, const Range<const GLenum>& attachments) {
   const FuncScope funcScope(*this, "invalidateFramebuffer");
 
   std::vector<GLenum> scopedVector;
   GLsizei glNumAttachments;
   const GLenum* glAttachments;
-  if (!ValidateInvalidateFramebuffer(target, attachments, &rv, &scopedVector,
+  if (!ValidateInvalidateFramebuffer(target, attachments, &scopedVector,
                                      &glNumAttachments, &glAttachments)) {
     return;
   }
@@ -245,14 +210,14 @@ void WebGL2Context::InvalidateFramebuffer(
 }
 
 void WebGL2Context::InvalidateSubFramebuffer(
-    GLenum target, const dom::Sequence<GLenum>& attachments, GLint x, GLint y,
-    GLsizei width, GLsizei height, ErrorResult& rv) {
+    GLenum target, const Range<const GLenum>& attachments, GLint x, GLint y,
+    GLsizei width, GLsizei height) {
   const FuncScope funcScope(*this, "invalidateSubFramebuffer");
 
   std::vector<GLenum> scopedVector;
   GLsizei glNumAttachments;
   const GLenum* glAttachments;
-  if (!ValidateInvalidateFramebuffer(target, attachments, &rv, &scopedVector,
+  if (!ValidateInvalidateFramebuffer(target, attachments, &scopedVector,
                                      &glNumAttachments, &glAttachments)) {
     return;
   }

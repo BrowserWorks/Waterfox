@@ -10,7 +10,7 @@
  */
 
 const HTML_NS = "http://www.w3.org/1999/xhtml";
-const TEST_URI = CHROME_URL_ROOT + "doc_html_tooltip.xul";
+const TEST_URI = CHROME_URL_ROOT + "doc_html_tooltip.xhtml";
 
 const {
   HTMLTooltip,
@@ -21,7 +21,7 @@ let useXulWrapper;
 
 add_task(async function() {
   await addTab("about:blank");
-  const [, , doc] = await createHost("bottom", TEST_URI);
+  const { doc } = await createHost("bottom", TEST_URI);
 
   info("Run tests for a Tooltip without using a XUL panel");
   useXulWrapper = false;
@@ -42,24 +42,38 @@ async function runTests(doc) {
   info("Set tooltip content using width:auto and height:auto");
   tooltip.panel.appendChild(tooltipContent);
 
-  info("Show the tooltip and check the tooltip panel dimensions.");
+  info("Show the tooltip and check the tooltip container dimensions.");
   await showTooltip(tooltip, doc.getElementById("box1"));
 
-  let panelRect = tooltip.panel.getBoundingClientRect();
-  is(panelRect.width, 300, "Tooltip panel has the expected width.");
-  is(panelRect.height, 150, "Tooltip panel has the expected width.");
+  let panelRect = tooltip.container.getBoundingClientRect();
+  is(panelRect.width, 300, "Tooltip container has the expected width.");
+  is(panelRect.height, 150, "Tooltip container has the expected height.");
 
   await hideTooltip(tooltip);
 
   info("Set tooltip content using fixed width and height:auto");
-  tooltipContent.style.cssText = "width: auto; height: 200px; background: red;";
+  tooltipContent.style.cssText = "width: auto; height: 160px; background: red;";
   tooltip.setContentSize({ width: 400 });
 
-  info("Show the tooltip and check the tooltip panel height.");
+  info("Show the tooltip and check the tooltip container height.");
   await showTooltip(tooltip, doc.getElementById("box1"));
 
-  panelRect = tooltip.panel.getBoundingClientRect();
-  is(panelRect.height, 200, "Tooltip panel has the expected width.");
+  panelRect = tooltip.container.getBoundingClientRect();
+  is(panelRect.height, 160, "Tooltip container has the expected height.");
+
+  await hideTooltip(tooltip);
+
+  info("Update the height and show the tooltip again");
+  tooltipContent.style.cssText = "width: auto; height: 165px; background: red;";
+
+  await showTooltip(tooltip, doc.getElementById("box1"));
+
+  panelRect = tooltip.container.getBoundingClientRect();
+  is(
+    panelRect.height,
+    165,
+    "Tooltip container has the expected updated height."
+  );
 
   await hideTooltip(tooltip);
 

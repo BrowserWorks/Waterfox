@@ -12,10 +12,11 @@
 
 #include "HLSUtils.h"
 #include "MediaCodec.h"
+#include "mozilla/java/GeckoAudioInfoWrappers.h"
+#include "mozilla/java/GeckoHLSDemuxerWrapperNatives.h"
+#include "mozilla/java/GeckoVideoInfoWrappers.h"
 #include "mozilla/Unused.h"
 #include "nsPrintfCString.h"
-
-using namespace mozilla::java;
 
 namespace mozilla {
 
@@ -61,11 +62,12 @@ static mozilla::StereoMode getStereoMode(int aMode) {
 // We ensure the callback will never be invoked after
 // HLSDemuxerCallbacksSupport::DisposeNative has been called in ~HLSDemuxer.
 class HLSDemuxer::HLSDemuxerCallbacksSupport
-    : public GeckoHLSDemuxerWrapper::Callbacks::Natives<
+    : public java::GeckoHLSDemuxerWrapper::Callbacks::Natives<
           HLSDemuxerCallbacksSupport> {
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(HLSDemuxerCallbacksSupport)
  public:
-  typedef GeckoHLSDemuxerWrapper::Callbacks::Natives<HLSDemuxerCallbacksSupport>
+  typedef java::GeckoHLSDemuxerWrapper::Callbacks::Natives<
+      HLSDemuxerCallbacksSupport>
       NativeCallbacks;
   using NativeCallbacks::AttachNative;
   using NativeCallbacks::DisposeNative;
@@ -129,14 +131,14 @@ HLSDemuxer::HLSDemuxer(int aPlayerId)
                                /* aSupportsTailDispatch = */ false)) {
   MOZ_ASSERT(NS_IsMainThread());
   HLSDemuxerCallbacksSupport::Init();
-  mJavaCallbacks = GeckoHLSDemuxerWrapper::Callbacks::New();
+  mJavaCallbacks = java::GeckoHLSDemuxerWrapper::Callbacks::New();
   MOZ_ASSERT(mJavaCallbacks);
 
   mCallbackSupport = new HLSDemuxerCallbacksSupport(this);
   HLSDemuxerCallbacksSupport::AttachNative(mJavaCallbacks, mCallbackSupport);
 
   mHLSDemuxerWrapper =
-      GeckoHLSDemuxerWrapper::Create(aPlayerId, mJavaCallbacks);
+      java::GeckoHLSDemuxerWrapper::Create(aPlayerId, mJavaCallbacks);
   MOZ_ASSERT(mHLSDemuxerWrapper);
 }
 
@@ -287,7 +289,7 @@ RefPtr<HLSTrackDemuxer::SamplesPromise> HLSTrackDemuxer::DoGetSamples(
                                              __func__);
     }
     MOZ_ASSERT(mQueuedSample->mKeyframe, "mQueuedSample must be a keyframe");
-    samples->mSamples.AppendElement(mQueuedSample);
+    samples->AppendSample(mQueuedSample);
     mQueuedSample = nullptr;
     aNumSamples--;
   }
@@ -313,7 +315,7 @@ RefPtr<HLSTrackDemuxer::SamplesPromise> HLSTrackDemuxer::DoGetSamples(
     java::GeckoHLSSample::LocalRef sample(std::move(demuxedSample));
     if (sample->IsEOS()) {
       HLS_DEBUG("HLSTrackDemuxer", "Met BUFFER_FLAG_END_OF_STREAM.");
-      if (samples->mSamples.IsEmpty()) {
+      if (samples->GetSamples().IsEmpty()) {
         return SamplesPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_END_OF_STREAM,
                                                __func__);
       }
@@ -325,11 +327,16 @@ RefPtr<HLSTrackDemuxer::SamplesPromise> HLSTrackDemuxer::DoGetSamples(
     if (!mrd) {
       return SamplesPromise::CreateAndReject(NS_ERROR_OUT_OF_MEMORY, __func__);
     }
-    samples->mSamples.AppendElement(mrd);
+    if (!mrd->HasValidTime()) {
+      return SamplesPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_DEMUXER_ERR,
+                                             __func__);
+    }
+    samples->AppendSample(mrd);
   }
   if (mType == TrackInfo::kVideoTrack &&
       (mNextKeyframeTime.isNothing() ||
-       samples->mSamples.LastElement()->mTime >= mNextKeyframeTime.value())) {
+       samples->GetSamples().LastElement()->mTime >=
+           mNextKeyframeTime.value())) {
     // Only need to find NextKeyFrame for Video
     UpdateNextKeyFrameTime();
   }
@@ -358,8 +365,7 @@ void HLSTrackDemuxer::UpdateMediaInfo(int index) {
     audioInfo->mBitDepth = audioInfoObj->BitDepth();
     audioInfo->mMimeType =
         NS_ConvertUTF16toUTF8(audioInfoObj->MimeType()->ToString());
-    audioInfo->mDuration =
-        TimeUnit::FromMicroseconds(audioInfoObj->Duration());
+    audioInfo->mDuration = TimeUnit::FromMicroseconds(audioInfoObj->Duration());
     jni::ByteArray::LocalRef csdBytes = audioInfoObj->CodecSpecificData();
     if (csdBytes) {
       auto&& csd = csdBytes->GetElements();
@@ -384,11 +390,9 @@ void HLSTrackDemuxer::UpdateMediaInfo(int index) {
     videoInfo->mDisplay.height = videoInfoObj->PictureHeight();
     videoInfo->mMimeType =
         NS_ConvertUTF16toUTF8(videoInfoObj->MimeType()->ToString());
-    videoInfo->mDuration =
-        TimeUnit::FromMicroseconds(videoInfoObj->Duration());
-    HLS_DEBUG("HLSTrackDemuxer",
-              "Update video info (%d) / I(%dx%d) / D(%dx%d)", index,
-              videoInfo->mImage.width, videoInfo->mImage.height,
+    videoInfo->mDuration = TimeUnit::FromMicroseconds(videoInfoObj->Duration());
+    HLS_DEBUG("HLSTrackDemuxer", "Update video info (%d) / I(%dx%d) / D(%dx%d)",
+              index, videoInfo->mImage.width, videoInfo->mImage.height,
               videoInfo->mDisplay.width, videoInfo->mDisplay.height);
   }
 }
@@ -442,11 +446,10 @@ CryptoSample HLSTrackDemuxer::ExtractCryptoSample(
       msg = "Error when extracting clear data.";
       break;
     }
-    // Data in mPlainSizes is uint16_t, NumBytesOfClearData is int32_t
-    // , so need a for loop to copy
-    for (const auto& b : clearData->GetElements()) {
-      crypto.mPlainSizes.AppendElement(b);
-    }
+    auto&& clearArr = clearData->GetElements();
+    // Data in mPlainSizes is uint32_t, NumBytesOfClearData is int32_t
+    crypto.mPlainSizes.AppendElements(reinterpret_cast<uint32_t*>(&clearArr[0]),
+                                      clearArr.Length());
 
     mozilla::jni::IntArray::LocalRef encryptedData;
     if (NS_FAILED(aCryptoInfo->NumBytesOfEncryptedData(&encryptedData))) {
@@ -575,11 +578,19 @@ HLSTrackDemuxer::DoSkipToNextRandomAccessPoint(const TimeUnit& aTimeThreshold) {
     if (sample->IsKeyFrame()) {
       java::sdk::BufferInfo::LocalRef info = sample->Info();
       int64_t presentationTimeUs = 0;
-      bool ok = NS_SUCCEEDED(info->PresentationTimeUs(&presentationTimeUs));
-      if (ok &&
+      if (NS_SUCCEEDED(info->PresentationTimeUs(&presentationTimeUs)) &&
           TimeUnit::FromMicroseconds(presentationTimeUs) >= aTimeThreshold) {
+        RefPtr<MediaRawData> rawData = ConvertToMediaRawData(sample);
+        if (!rawData) {
+          result = NS_ERROR_OUT_OF_MEMORY;
+          break;
+        }
+        if (!rawData->HasValidTime()) {
+          result = NS_ERROR_DOM_MEDIA_DEMUXER_ERR;
+          break;
+        }
         found = true;
-        mQueuedSample = ConvertToMediaRawData(sample);
+        mQueuedSample = rawData;
         break;
       }
     }

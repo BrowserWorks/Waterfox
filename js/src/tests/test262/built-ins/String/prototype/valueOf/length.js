@@ -2,7 +2,7 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-es6id: 21.1.3.26
+esid: sec-string.prototype.valueof
 description: >
   String.prototype.valueOf.length is 0.
 info: |
@@ -22,10 +22,11 @@ info: |
 includes: [propertyHelper.js]
 ---*/
 
-assert.sameValue(String.prototype.valueOf.length, 0);
-
-verifyNotEnumerable(String.prototype.valueOf, "length");
-verifyNotWritable(String.prototype.valueOf, "length");
-verifyConfigurable(String.prototype.valueOf, "length");
+verifyProperty(String.prototype.valueOf, 'length', {
+  value: 0,
+  writable: false,
+  enumerable: false,
+  configurable: true,
+});
 
 reportCompare(0, 0);

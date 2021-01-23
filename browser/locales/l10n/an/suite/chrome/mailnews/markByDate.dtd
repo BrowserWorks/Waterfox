@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageMarkByDate.label "Marcar mensaches como leitos por calendata">
+<!ENTITY markByDateLower.label "Marcar mensaches como leyédos dende:">
+<!ENTITY markByDateLower.accesskey "d">
+<!ENTITY markByDateUpper.accesskey "t">
+<!ENTITY markByDateUpper.label "Hasta:">

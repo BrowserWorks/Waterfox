@@ -52,7 +52,7 @@ FormAutofillPreferences.prototype = {
   /**
    * Create the Form Autofill preference group.
    *
-   * @param   {XULDocument} document
+   * @param   {HTMLDocument} document
    * @returns {XULElement}
    */
   init(document) {
@@ -73,7 +73,7 @@ FormAutofillPreferences.prototype = {
   /**
    * Create Form Autofill preference group
    *
-   * @param  {XULDocument} document
+   * @param  {HTMLDocument} document
    */
   createPreferenceGroup(document) {
     let learnMoreURL =
@@ -142,7 +142,7 @@ FormAutofillPreferences.prototype = {
       addressAutofillCheckbox.setAttribute("checked", true);
     }
 
-    addressAutofillCheckboxGroup.align = "center";
+    addressAutofillCheckboxGroup.setAttribute("align", "center");
     addressAutofillCheckboxGroup.flex = 1;
 
     formAutofillGroupBoxLabel.appendChild(formAutofillGroupBoxLabelHeading);
@@ -213,7 +213,7 @@ FormAutofillPreferences.prototype = {
         creditCardAutofillCheckbox.setAttribute("checked", true);
       }
 
-      creditCardAutofillCheckboxGroup.align = "center";
+      creditCardAutofillCheckboxGroup.setAttribute("align", "center");
       creditCardAutofillCheckboxGroup.flex = 1;
 
       formAutofillGroup.appendChild(creditCardAutofill);

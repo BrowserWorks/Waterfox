@@ -38,7 +38,7 @@ nsScreen::nsScreen(nsPIDOMWindowInner* aWindow)
     : DOMEventTargetHelper(aWindow),
       mScreenOrientation(new ScreenOrientation(aWindow, this)) {}
 
-nsScreen::~nsScreen() {}
+nsScreen::~nsScreen() = default;
 
 // QueryInterface implementation for nsScreen
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(nsScreen)
@@ -86,6 +86,22 @@ nsresult nsScreen::GetRect(nsRect& aRect) {
     return GetWindowInnerRect(aRect);
   }
 
+  // Here we manipulate the value of aRect to represent the screen size,
+  // if in RDM.
+  nsCOMPtr<nsPIDOMWindowInner> owner = GetOwner();
+  if (owner) {
+    mozilla::dom::Document* doc = owner->GetExtantDoc();
+    if (doc) {
+      Maybe<mozilla::CSSIntSize> deviceSize =
+          nsGlobalWindowOuter::GetRDMDeviceSize(*doc);
+      if (deviceSize.isSome()) {
+        const mozilla::CSSIntSize& size = deviceSize.value();
+        aRect.SetRect(0, 0, size.width, size.height);
+        return NS_OK;
+      }
+    }
+  }
+
   nsDeviceContext* context = GetDeviceContext();
 
   if (!context) {
@@ -111,6 +127,22 @@ nsresult nsScreen::GetAvailRect(nsRect& aRect) {
   // Return window inner rect to prevent fingerprinting.
   if (ShouldResistFingerprinting()) {
     return GetWindowInnerRect(aRect);
+  }
+
+  // Here we manipulate the value of aRect to represent the screen size,
+  // if in RDM.
+  nsCOMPtr<nsPIDOMWindowInner> owner = GetOwner();
+  if (owner) {
+    mozilla::dom::Document* doc = owner->GetExtantDoc();
+    if (doc) {
+      Maybe<mozilla::CSSIntSize> deviceSize =
+          nsGlobalWindowOuter::GetRDMDeviceSize(*doc);
+      if (deviceSize.isSome()) {
+        const mozilla::CSSIntSize& size = deviceSize.value();
+        aRect.SetRect(0, 0, size.width, size.height);
+        return NS_OK;
+      }
+    }
   }
 
   nsDeviceContext* context = GetDeviceContext();
@@ -174,14 +206,12 @@ static void UpdateDocShellOrientationLock(nsPIDOMWindowInner* aWindow,
     return;
   }
 
-  nsCOMPtr<nsIDocShellTreeItem> root;
-  docShell->GetSameTypeRootTreeItem(getter_AddRefs(root));
-  nsCOMPtr<nsIDocShell> rootShell(do_QueryInterface(root));
-  if (!rootShell) {
+  RefPtr<BrowsingContext> bc = docShell->GetBrowsingContext();
+  bc = bc ? bc->Top() : nullptr;
+  if (!bc) {
     return;
   }
-
-  rootShell->SetOrientationLock(aOrientation);
+  bc->SetOrientationLock(aOrientation);
 }
 
 bool nsScreen::MozLockOrientation(const nsAString& aOrientation,
@@ -250,16 +280,6 @@ void nsScreen::MozUnlockOrientation() {
   }
   UpdateDocShellOrientationLock(GetOwner(), hal::eScreenOrientation_None);
   mScreenOrientation->UnlockDeviceOrientation();
-}
-
-bool nsScreen::IsDeviceSizePageSize() {
-  if (nsPIDOMWindowInner* owner = GetOwner()) {
-    nsIDocShell* docShell = owner->GetDocShell();
-    if (docShell) {
-      return docShell->GetDeviceSizeIsPageSize();
-    }
-  }
-  return false;
 }
 
 /* virtual */

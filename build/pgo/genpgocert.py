@@ -16,7 +16,7 @@ import subprocess
 import sys
 import distutils
 
-from mozbuild.base import MozbuildObject
+from mozbuild.base import MozbuildObject, BinaryNotFoundException
 from mozfile import NamedTemporaryFile, TemporaryDirectory
 from mozprofile.permissions import ServerLocations
 
@@ -77,6 +77,9 @@ def writeCertspecForServerLocations(fd):
             customCertOption = True
             break
 
+        if "ipV4Address" in loc.options:
+            loc.host = "ip4:" + loc.host
+
         if not customCertOption:
             SAN.append(loc.host)
 
@@ -86,8 +89,12 @@ def writeCertspecForServerLocations(fd):
 
 
 def constructCertDatabase(build, srcDir):
-    certutil = build.get_binary_path(what="certutil")
-    pk12util = build.get_binary_path(what="pk12util")
+    try:
+        certutil = build.get_binary_path(what="certutil")
+        pk12util = build.get_binary_path(what="pk12util")
+    except BinaryNotFoundException as e:
+        print('{}\n\n{}\n'.format(e, e.help()))
+        return 1
     openssl = distutils.spawn.find_executable("openssl")
     pycert = os.path.join(build.topsrcdir, "security", "manager", "ssl", "tests",
                           "unit", "pycert.py")

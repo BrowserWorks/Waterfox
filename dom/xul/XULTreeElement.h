@@ -41,7 +41,7 @@ class XULTreeElement final : public nsXULElement {
   nsTreeBodyFrame* GetTreeBodyFrame(FlushType = FlushType::Frames);
   nsTreeBodyFrame* GetCachedTreeBodyFrame() { return mTreeBody; }
 
-  already_AddRefed<nsTreeColumns> GetColumns();
+  already_AddRefed<nsTreeColumns> GetColumns(FlushType = FlushType::Frames);
 
   already_AddRefed<nsITreeView> GetView(CallerType /* unused */) {
     return GetView();
@@ -100,7 +100,7 @@ class XULTreeElement final : public nsXULElement {
   void EndUpdateBatch(void);
   void ClearStyleAndImageCaches(void);
 
-  virtual void UnbindFromTree(bool aDeep, bool aNullParent) override;
+  virtual void UnbindFromTree(bool aNullParent) override;
   virtual void DestroyContent() override;
 
   void BodyDestroyed(int32_t aFirstVisibleRow) {
@@ -116,7 +116,7 @@ class XULTreeElement final : public nsXULElement {
   nsTreeBodyFrame* mTreeBody;
   nsCOMPtr<nsITreeView> mView;
 
-  virtual ~XULTreeElement() {}
+  virtual ~XULTreeElement() = default;
 
   JSObject* WrapNode(JSContext* aCx,
                      JS::Handle<JSObject*> aGivenProto) override;

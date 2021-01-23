@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgViewPickerOverlay.dtd UI for showing various views on a folder -->
+
+
+<!ENTITY viewPicker.label "Տեսք.">
+<!ENTITY viewPicker.accesskey "ե">
+<!ENTITY viewAll.label "Բոլորը">
+<!ENTITY viewAll.accesskey "A">
+<!ENTITY viewUnread.label "Չընթերցված">
+<!ENTITY viewUnread.accesskey "U">
+<!ENTITY viewNotDeleted.label "Չջնջված">
+<!ENTITY viewNotDeleted.accesskey "D">
+<!ENTITY viewTags.label "Պիտակներ">
+<!ENTITY viewTags.accesskey "T">
+<!ENTITY viewCustomViews.label "Ընտրված տեսքով">
+<!ENTITY viewCustomViews.accesskey "V">
+<!ENTITY viewVirtualFolder.label "Պահպանել տեսքը որպես թղթապանակ...">
+<!ENTITY viewVirtualFolder.accesskey "Պ">
+<!ENTITY viewCustomizeView.label "Կարգավորել…">
+<!ENTITY viewCustomizeView.accesskey "C">

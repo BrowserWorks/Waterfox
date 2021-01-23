@@ -8,7 +8,12 @@
 #include "Accessible-inl.h"
 #include "nsAccUtils.h"
 #include "DocAccessible-inl.h"
+#include "mozilla/a11y/DocAccessibleChild.h"
 #include "mozilla/a11y/DocAccessibleParent.h"
+#if defined(XP_WIN)
+#  include "mozilla/a11y/ProxyWrappers.h"
+#endif
+#include "mozilla/dom/BrowserBridgeChild.h"
 #include "mozilla/dom/BrowserParent.h"
 #include "Role.h"
 #include "States.h"
@@ -35,6 +40,14 @@ OuterDocAccessible::OuterDocAccessible(nsIContent* aContent,
   }
 #endif
 
+  if (IPCAccessibilityActive()) {
+    auto bridge = dom::BrowserBridgeChild::GetFrom(aContent);
+    if (bridge) {
+      // This is an iframe which will be rendered in another process.
+      SendEmbedderAccessible(bridge);
+    }
+  }
+
   // Request document accessible for the content document to make sure it's
   // created. It will appended to outerdoc accessible children asynchronously.
   dom::Document* outerDoc = mContent->GetUncomposedDoc();
@@ -45,6 +58,20 @@ OuterDocAccessible::OuterDocAccessible(nsIContent* aContent,
 }
 
 OuterDocAccessible::~OuterDocAccessible() {}
+
+void OuterDocAccessible::SendEmbedderAccessible(
+    dom::BrowserBridgeChild* aBridge) {
+  MOZ_ASSERT(mDoc);
+  DocAccessibleChild* ipcDoc = mDoc->IPCDoc();
+  if (ipcDoc) {
+    uint64_t id = reinterpret_cast<uintptr_t>(UniqueID());
+#if defined(XP_WIN)
+    ipcDoc->SetEmbedderOnBridge(aBridge, id);
+#else
+    aBridge->SendSetEmbedderAccessible(ipcDoc, id);
+#endif
+  }
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Accessible public (DON'T add methods here)
@@ -61,8 +88,17 @@ Accessible* OuterDocAccessible::ChildAtPoint(int32_t aX, int32_t aY,
   Accessible* child = GetChildAt(0);
   NS_ENSURE_TRUE(child, nullptr);
 
-  if (aWhichChild == eDeepestChild)
+  if (aWhichChild == eDeepestChild) {
+#if defined(XP_WIN)
+    // On Windows, OuterDocAccessible::GetChildAt can return a proxy wrapper
+    // for a remote document. These aren't real Accessibles and
+    // shouldn't be returned except to the Windows a11y code (which doesn't use
+    // eDeepestChild). Calling ChildAtPoint on these will crash!
+    return nullptr;
+#else
     return child->ChildAtPoint(aX, aY, eDeepestChild);
+#endif  // defined(XP_WIN)
+  }
   return child;
 }
 
@@ -156,13 +192,33 @@ bool OuterDocAccessible::IsAcceptableChild(nsIContent* aEl) const {
 
 #if defined(XP_WIN)
 
+Accessible* OuterDocAccessible::RemoteChildDocAccessible() const {
+  ProxyAccessible* docProxy = RemoteChildDoc();
+  if (docProxy) {
+    // We're in the parent process, but we're embedding a remote document.
+    return WrapperFor(docProxy);
+  }
+
+  if (IPCAccessibilityActive()) {
+    auto bridge = dom::BrowserBridgeChild::GetFrom(mContent);
+    if (bridge) {
+      // We're an iframe in a content process and we're embedding a remote
+      // document (in another content process). The COM proxy for the embedded
+      // document accessible was sent to us from the parent via PBrowserBridge.
+      return bridge->GetEmbeddedDocAccessible();
+    }
+  }
+
+  return nullptr;
+}
+
 // On Windows e10s, since we don't cache in the chrome process, these next two
 // functions must be implemented so that we properly cross the chrome-to-content
 // boundary when traversing.
 
 uint32_t OuterDocAccessible::ChildCount() const {
   uint32_t result = mChildren.Length();
-  if (!result && RemoteChildDoc()) {
+  if (!result && RemoteChildDocAccessible()) {
     result = 1;
   }
   return result;
@@ -175,11 +231,7 @@ Accessible* OuterDocAccessible::GetChildAt(uint32_t aIndex) const {
   }
   // If we are asking for child 0 and GetChildAt doesn't return anything, try
   // to get the remote child doc and return that instead.
-  ProxyAccessible* remoteChild = RemoteChildDoc();
-  if (!remoteChild) {
-    return nullptr;
-  }
-  return WrapperFor(remoteChild);
+  return RemoteChildDocAccessible();
 }
 
 #endif  // defined(XP_WIN)

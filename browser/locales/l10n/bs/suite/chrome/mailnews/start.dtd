@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY startpage.title "Dobrodošli u &brandShortName; poštu i interesne grupe">
+<!--# LOCALIZATION NOTE (headline.label): the URL for <a id="vendorURL"> is fetched from brand.properties -->
+<!ENTITY headline.label
+'Dobrodošli u <a id="vendorURL" href="">&brandShortName;</a> poštu i interesne grupe!'>
+<!ENTITY description.label
+"&brandShortName; pošta i interesne grupe je moćan klijent pošte i vijesti otvorenog koda, koji podržava napredno otkrivanje neželjene pošte i druge korisne funkcije.">
+<!ENTITY features.title "Funkcije">
+<!ENTITY feat_multiacc.label "Podrška za više računa">
+<!ENTITY feat_junk.label "Otkrivanje neželjene pošte">
+<!ENTITY feat_feeds.label "Čitač kanala">
+<!ENTITY feat_filters.label "Filteri poruke">
+<!ENTITY feat_htmlmsg.label "Podrška za HTML poruke">
+<!ENTITY feat_abook.label "Adresar">
+<!ENTITY feat_tags.label "Prilagođene oznake i prikazi pošte">
+<!ENTITY feat_integration.label
+"Uska integracija sa &brandShortName; aplikacijskim paketom">
+<!ENTITY dict.title "Rječnici">
+<!ENTITY dict_intro.label "Rječnici su korišteni za provjeru spelovanja vaših poruka.">
+<!--# LOCALIZATION NOTE (dict_info.label): the URL for <a id="dictURL"> is fetched from brand.properties -->
+<!ENTITY dict_info.label
+'Mnogi dodatni jezici mogu biti instalirani iz sekcije
+<a id="dictURL" href="">rječnika</a> na serveru
+<a href="https://addons.mozilla.org/seamonkey/">Mozilla dodataka</a>.'>
+<!ENTITY info.title "Više informacija">
+<!--# LOCALIZATION NOTE (info_bugs.label): the URL for <a id="releaseNotesURL"> is fetched from brand.properties -->
+<!ENTITY info_bugs.label
+'<a href="https://developer.mozilla.org/docs/Mozilla/Projects/MailNews">Mi</a> pohvaljujemo
+prijave i zahtjeve za funkcijama,
+ali molimo prvo pročitajte <a id="releaseNotesURL" href="">bilješke o izdanju</a> i upit na <a href="https://bugzilla.mozilla.org/query.cgi">Bugzilla</a>.'>

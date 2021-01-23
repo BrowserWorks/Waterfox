@@ -7,11 +7,12 @@
  * Tests if the POST requests display the correct information in the UI,
  * for raw payloads with content-type headers attached to the upload stream.
  */
-
 add_task(async function() {
   const { L10N } = require("devtools/client/netmonitor/src/utils/l10n");
 
-  const { tab, monitor } = await initNetMonitor(POST_RAW_WITH_HEADERS_URL);
+  const { tab, monitor } = await initNetMonitor(POST_RAW_WITH_HEADERS_URL, {
+    requestCount: 1,
+  });
   info("Starting test... ");
 
   const { document, store, windowRequire } = monitor.panelWin;
@@ -23,7 +24,7 @@ add_task(async function() {
   await performRequests(monitor, tab, 1);
 
   // Wait for all tree view updated by react
-  wait = waitForDOM(document, "#headers-panel .tree-section .treeLabel", 3);
+  let wait = waitForDOM(document, "#headers-panel .accordion-item", 3);
   store.dispatch(Actions.toggleNetworkDetails());
   EventUtils.sendMouseEvent(
     { type: "click" },
@@ -33,13 +34,14 @@ add_task(async function() {
 
   let tabpanel = document.querySelector("#headers-panel");
   is(
-    tabpanel.querySelectorAll(".tree-section .treeLabel").length,
+    tabpanel.querySelectorAll(".accordion-item").length,
     3,
     "There should be 3 header sections displayed in this tabpanel."
   );
 
   is(
-    tabpanel.querySelectorAll(".tree-section .treeLabel")[2].textContent,
+    tabpanel.querySelectorAll(".accordion-item .accordion-header-label")[2]
+      .textContent,
     L10N.getStr("requestHeadersFromUpload") +
       " (" +
       L10N.getFormatStr("networkMenu.sizeB", 74) +
@@ -47,12 +49,8 @@ add_task(async function() {
     "The request headers from upload section doesn't have the correct title."
   );
 
-  let labels = tabpanel.querySelectorAll(
-    ".properties-view tr:not(.tree-section) .treeLabelCell .treeLabel"
-  );
-  let values = tabpanel.querySelectorAll(
-    ".properties-view tr:not(.tree-section) .treeValueCell .objectBox"
-  );
+  let labels = tabpanel.querySelectorAll("tr .treeLabelCell .treeLabel");
+  let values = tabpanel.querySelectorAll("tr .treeValueCell .objectBox");
 
   is(
     labels[labels.length - 2].textContent,
@@ -76,14 +74,14 @@ add_task(async function() {
   );
 
   // Wait for all tree sections updated by react
-  wait = waitForDOM(document, "#params-panel .tree-section");
+  wait = waitForDOM(document, "#request-panel .accordion-item", 2);
   EventUtils.sendMouseEvent(
     { type: "click" },
-    document.querySelector("#params-tab")
+    document.querySelector("#request-tab")
   );
   await wait;
 
-  tabpanel = document.querySelector("#params-panel");
+  tabpanel = document.querySelector("#request-panel");
 
   ok(
     tabpanel.querySelector(".treeTable"),
@@ -95,17 +93,14 @@ add_task(async function() {
   );
 
   is(
-    tabpanel.querySelector(".tree-section .treeLabel").textContent,
+    tabpanel.querySelector(".accordion-item .accordion-header-label")
+      .textContent,
     L10N.getStr("paramsFormData"),
     "The form data section doesn't have the correct title."
   );
 
-  labels = tabpanel.querySelectorAll(
-    "tr:not(.tree-section) .treeLabelCell .treeLabel"
-  );
-  values = tabpanel.querySelectorAll(
-    "tr:not(.tree-section) .treeValueCell .objectBox"
-  );
+  labels = tabpanel.querySelectorAll("tr .treeLabelCell .treeLabel");
+  values = tabpanel.querySelectorAll("tr .treeValueCell .objectBox");
 
   is(
     labels[0].textContent,
@@ -114,7 +109,7 @@ add_task(async function() {
   );
   is(
     values[0].textContent,
-    "bar",
+    `"bar"`,
     "The first payload param value was incorrect."
   );
   is(
@@ -124,7 +119,7 @@ add_task(async function() {
   );
   is(
     values[1].textContent,
-    "123",
+    `"123"`,
     "The second payload param value was incorrect."
   );
 

@@ -6,7 +6,6 @@
 
 DevToolsModules(
     'accessibility.js',
-    'actor-registry-utils.js',
     'actor-registry.js',
     'breakpoint-actor-map.js',
     'css-grid-utils.js',
@@ -14,10 +13,13 @@ DevToolsModules(
     'event-breakpoints.js',
     'event-loop.js',
     'inactive-property-helper.js',
+    'logEvent.js',
     'make-debugger.js',
     'shapes-utils.js',
+    'source-map-utils.js',
     'stack.js',
     'TabSources.js',
     'track-change-emitter.js',
     'walker-search.js',
+    'watchpoint-map.js',
 )

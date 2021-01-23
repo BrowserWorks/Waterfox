@@ -8,25 +8,67 @@
 #define _NSSYSTEMINFO_H_
 
 #include "nsHashPropertyBag.h"
-#if defined(XP_WIN)
-#  include "nsIObserver.h"
-#endif  // defined(XP_WIN)
+#include "nsISystemInfo.h"
+#include "mozilla/MozPromise.h"
+#include "mozilla/LazyIdleThread.h"
 
 #ifdef MOZ_WIDGET_ANDROID
 #  include "mozilla/dom/PContent.h"
 #endif  // MOZ_WIDGET_ANDROID
 
-class nsSystemInfo final : public nsHashPropertyBag
-#if defined(XP_WIN)
-    ,
-                           public nsIObserver
-#endif  // defined(XP_WIN)
-{
+struct FolderDiskInfo {
+  nsCString model;
+  nsCString revision;
+  bool isSSD;
+};
+
+struct DiskInfo {
+  FolderDiskInfo binary;
+  FolderDiskInfo profile;
+  FolderDiskInfo system;
+};
+
+struct OSInfo {
+  uint32_t installYear;
+  bool hasSuperfetch;
+  bool hasPrefetch;
+};
+
+struct ProcessInfo {
+  bool isWow64;
+  bool isWowARM64;
+  int32_t cpuCount;
+  int32_t cpuCores;
+  nsCString cpuVendor;
+  int32_t cpuFamily;
+  int32_t cpuModel;
+  int32_t cpuStepping;
+  int32_t l2cacheKB;
+  int32_t l3cacheKB;
+  int32_t cpuSpeed;
+};
+
+typedef mozilla::MozPromise<DiskInfo, nsresult, /* IsExclusive */ false>
+    DiskInfoPromise;
+
+typedef mozilla::MozPromise<nsAutoString, nsresult, /* IsExclusive */ false>
+    CountryCodePromise;
+
+typedef mozilla::MozPromise<OSInfo, nsresult, /* IsExclusive */ false>
+    OSInfoPromise;
+
+typedef mozilla::MozPromise<ProcessInfo, nsresult, /* IsExclusive */ false>
+    ProcessInfoPromise;
+
+// Synchronous info collection, avoid calling it from the main thread, consider
+// using the promise-based `nsISystemInfo::GetProcessInfo()` instead.
+// Note that only known fields will be written.
+nsresult CollectProcessInfo(ProcessInfo& info);
+
+class nsSystemInfo final : public nsISystemInfo, public nsHashPropertyBag {
  public:
-#if defined(XP_WIN)
   NS_DECL_ISUPPORTS_INHERITED
-  NS_DECL_NSIOBSERVER
-#endif  // defined(XP_WIN)
+  NS_DECL_NSISYSTEMINFO
 
   nsSystemInfo();
 
@@ -51,9 +93,12 @@ class nsSystemInfo final : public nsHashPropertyBag
  private:
   ~nsSystemInfo();
 
-#if defined(XP_WIN)
-  nsresult GetProfileHDDInfo();
-#endif  // defined(XP_WIN)
+  RefPtr<DiskInfoPromise> mDiskInfoPromise;
+  RefPtr<CountryCodePromise> mCountryCodePromise;
+  RefPtr<OSInfoPromise> mOSInfoPromise;
+  RefPtr<ProcessInfoPromise> mProcessInfoPromise;
+  RefPtr<nsISerialEventTarget> mBackgroundET;
+  RefPtr<nsISerialEventTarget> GetBackgroundTarget();
 };
 
 #define NS_SYSTEMINFO_CONTRACTID "@mozilla.org/system-info;1"

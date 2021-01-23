@@ -12,6 +12,12 @@
 #include "nsNetUtil.h"
 #include "mozilla/BasePrincipal.h"
 
+class nsIContentSecurityPolicy;
+
+namespace Json {
+class Value;
+}
+
 class ExpandedPrincipal : public nsIExpandedPrincipal,
                           public mozilla::BasePrincipal {
  public:
@@ -41,16 +47,27 @@ class ExpandedPrincipal : public nsIExpandedPrincipal,
   NS_IMETHOD SetDomain(nsIURI* aDomain) override;
   NS_IMETHOD GetBaseDomain(nsACString& aBaseDomain) override;
   NS_IMETHOD GetAddonId(nsAString& aAddonId) override;
+  NS_IMETHOD IsThirdPartyURI(nsIURI* uri, bool* aRes) override;
   virtual bool AddonHasPermission(const nsAtom* aPerm) override;
   virtual nsresult GetScriptLocation(nsACString& aStr) override;
 
   bool AddonAllowsLoad(nsIURI* aURI, bool aExplicit = false);
+
+  void SetCsp(nsIContentSecurityPolicy* aCSP);
 
   // Returns the principal to inherit when this principal requests the given
   // URL. See BasePrincipal::PrincipalToInherit.
   nsIPrincipal* PrincipalToInherit(nsIURI* aRequestedURI = nullptr);
 
   nsresult GetSiteIdentifier(mozilla::SiteIdentifier& aSite) override;
+
+  virtual nsresult PopulateJSONObject(Json::Value& aObject) override;
+  // Serializable keys are the valid enum fields the serialization supports
+  enum SerializableKeys : uint8_t { eSpecs = 0, eSuffix, eMax = eSuffix };
+  typedef mozilla::BasePrincipal::KeyValT<SerializableKeys> KeyVal;
+
+  static already_AddRefed<BasePrincipal> FromProperties(
+      nsTArray<ExpandedPrincipal::KeyVal>& aFields);
 
  protected:
   explicit ExpandedPrincipal(nsTArray<nsCOMPtr<nsIPrincipal>>& aAllowList);
@@ -64,6 +81,7 @@ class ExpandedPrincipal : public nsIExpandedPrincipal,
 
  private:
   nsTArray<nsCOMPtr<nsIPrincipal>> mPrincipals;
+  nsCOMPtr<nsIContentSecurityPolicy> mCSP;
 };
 
 #define NS_EXPANDEDPRINCIPAL_CONTRACTID "@mozilla.org/expandedprincipal;1"

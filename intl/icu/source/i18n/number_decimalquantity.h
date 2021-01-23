@@ -146,14 +146,37 @@ class U_I18N_API DecimalQuantity : public IFixedDecimal, public UMemory {
      */
     int32_t getMagnitude() const;
 
-    /** @return Whether the value represented by this {@link DecimalQuantity} is zero. */
-    bool isZero() const;
+    /**
+     * @return The value of the (suppressed) exponent after the number has been
+     * put into a notation with exponents (ex: compact, scientific).  Ex: given
+     * the number 1000 as "1K" / "1E3", the return value will be 3 (positive).
+     */
+    int32_t getExponent() const;
+
+    /**
+     * Adjusts the value for the (suppressed) exponent stored when using
+     * notation with exponents (ex: compact, scientific).
+     *
+     * <p>Adjusting the exponent is decoupled from {@link #adjustMagnitude} in
+     * order to allow flexibility for {@link StandardPlural} to be selected in
+     * formatting (ex: for compact notation) either with or without the exponent
+     * applied in the value of the number.
+     * @param delta
+     *             The value to adjust the exponent by.
+     */
+    void adjustExponent(int32_t delta);
+
+    /**
+     * @return Whether the value represented by this {@link DecimalQuantity} is
+     * zero, infinity, or NaN.
+     */
+    bool isZeroish() const;
 
     /** @return Whether the value represented by this {@link DecimalQuantity} is less than zero. */
     bool isNegative() const;
 
-    /** @return -1 if the value is negative; 1 if positive; or 0 if zero. */
-    int8_t signum() const;
+    /** @return The appropriate value from the Signum enum. */
+    Signum signum() const;
 
     /** @return Whether the value represented by this {@link DecimalQuantity} is infinite. */
     bool isInfinite() const U_OVERRIDE;
@@ -161,9 +184,19 @@ class U_I18N_API DecimalQuantity : public IFixedDecimal, public UMemory {
     /** @return Whether the value represented by this {@link DecimalQuantity} is not a number. */
     bool isNaN() const U_OVERRIDE;
 
-    /** @param truncateIfOverflow if false and the number does NOT fit, fails with an assertion error. */
+    /**  
+     * Note: this method incorporates the value of {@code exponent}
+     * (for cases such as compact notation) to return the proper long value
+     * represented by the result.
+     * @param truncateIfOverflow if false and the number does NOT fit, fails with an assertion error. 
+     */
     int64_t toLong(bool truncateIfOverflow = false) const;
 
+    /**
+     * Note: this method incorporates the value of {@code exponent}
+     * (for cases such as compact notation) to return the proper long value
+     * represented by the result.
+     */
     uint64_t toFractionLong(bool includeTrailingZeros) const;
 
     /**
@@ -348,6 +381,10 @@ class U_I18N_API DecimalQuantity : public IFixedDecimal, public UMemory {
     int32_t lReqPos = 0;
     int32_t rReqPos = 0;
 
+    // The value of the (suppressed) exponent after the number has been put into
+    // a notation with exponents (ex: compact, scientific).
+    int32_t exponent = 0;
+
     /**
      * The BCD of the 16 digits of the number represented by this object. Every 4 bits of the long map
      * to one digit. For example, the number "12345" in BCD is "0x12345".
@@ -420,7 +457,7 @@ class U_I18N_API DecimalQuantity : public IFixedDecimal, public UMemory {
 
     /**
      * Sets the internal representation to zero. Clears any values stored in scale, precision,
-     * hasDouble, origDouble, origDelta, and BCD data.
+     * hasDouble, origDouble, origDelta, exponent, and BCD data.
      */
     void setBcdToZero();
 

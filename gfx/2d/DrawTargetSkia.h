@@ -24,6 +24,7 @@
 namespace mozilla {
 namespace gfx {
 
+class DataSourceSurface;
 class SourceSurfaceSkia;
 class BorrowedCGContext;
 
@@ -38,6 +39,7 @@ class DrawTargetSkia : public DrawTarget {
     return BackendType::SKIA;
   }
   virtual already_AddRefed<SourceSurface> Snapshot() override;
+  already_AddRefed<SourceSurface> GetBackingSurface() override;
   virtual IntSize GetSize() const override { return mSize; };
   virtual bool LockBits(uint8_t** aData, IntSize* aSize, int32_t* aStride,
                         SurfaceFormat* aFormat,
@@ -52,7 +54,8 @@ class DrawTargetSkia : public DrawTarget {
                           const Point& aDestPoint,
                           const DrawOptions& aOptions = DrawOptions()) override;
   virtual void DrawSurfaceWithShadow(SourceSurface* aSurface,
-                                     const Point& aDest, const Color& aColor,
+                                     const Point& aDest,
+                                     const DeviceColor& aColor,
                                      const Point& aOffset, Float aSigma,
                                      CompositionOp aOperator) override;
   virtual void ClearRect(const Rect& aRect) override;
@@ -115,6 +118,9 @@ class DrawTargetSkia : public DrawTarget {
       const IntSize& aSize, SurfaceFormat aFormat) const override;
   virtual bool CanCreateSimilarDrawTarget(const IntSize& aSize,
                                           SurfaceFormat aFormat) const override;
+  virtual RefPtr<DrawTarget> CreateClippedDrawTarget(
+      const Rect& aBounds, SurfaceFormat aFormat) override;
+
   virtual already_AddRefed<PathBuilder> CreatePathBuilder(
       FillRule aFillRule = FillRule::FILL_WINDING) const override;
   virtual already_AddRefed<GradientStops> CreateGradientStops(
@@ -129,6 +135,7 @@ class DrawTargetSkia : public DrawTarget {
   bool Init(unsigned char* aData, const IntSize& aSize, int32_t aStride,
             SurfaceFormat aFormat, bool aUninitialized = false);
   bool Init(SkCanvas* aCanvas);
+  bool Init(RefPtr<DataSourceSurface>&& aSurface);
 
   // Skia assumes that texture sizes fit in 16-bit signed integers.
   static size_t GetMaxSurfaceSize() { return 32767; }
@@ -142,9 +149,9 @@ class DrawTargetSkia : public DrawTarget {
  private:
   friend class SourceSurfaceSkia;
 
-  void MarkChanged();
+  static void ReleaseMappedSkSurface(void* aPixels, void* aContext);
 
-  bool ShouldLCDRenderText(FontType aFontType, AntialiasMode aAntialiasMode);
+  void MarkChanged();
 
   void DrawGlyphs(ScaledFont* aFont, const GlyphBuffer& aBuffer,
                   const Pattern& aPattern,
@@ -162,6 +169,7 @@ class DrawTargetSkia : public DrawTarget {
   IntSize mSize;
   sk_sp<SkSurface> mSurface;
   SkCanvas* mCanvas;
+  RefPtr<DataSourceSurface> mBackingSurface;
   RefPtr<SourceSurfaceSkia> mSnapshot;
   Mutex mSnapshotLock;
 

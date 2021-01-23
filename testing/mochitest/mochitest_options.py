@@ -11,6 +11,7 @@ from urlparse import urlparse
 import json
 import os
 import tempfile
+import sys
 
 from mozprofile import DEFAULT_PORTS
 import mozinfo
@@ -45,7 +46,7 @@ ALL_FLAVORS = {
     'chrome': {
         'suite': 'chrome',
         'aliases': ('chrome', 'mochitest-chrome'),
-        'enabled_apps': ('firefox', 'android'),
+        'enabled_apps': ('firefox'),
         'extra_args': {
             'flavor': 'chrome',
         }
@@ -393,6 +394,12 @@ class MochitestArguments(ArgumentContainer):
           "default": False,
           "help": "Start the browser JS debugger before running the test. Implies --no-autorun.",
           }],
+        [["--jsdebugger-path"],
+         {"default": None,
+          "dest": "jsdebuggerPath",
+          "help": "Path to a Firefox binary that will be used to run the toolbox. Should "
+                  "be used together with --jsdebugger."
+          }],
         [["--debug-on-failure"],
          {"action": "store_true",
           "default": False,
@@ -405,6 +412,11 @@ class MochitestArguments(ArgumentContainer):
           "default": True,
           "dest": "e10s",
           "help": "Run tests with electrolysis preferences and test filtering disabled.",
+          }],
+        [["--enable-fission"],
+         {"action": "store_true",
+          "default": False,
+          "help": "Run tests with fission (site isolation) enabled.",
           }],
         [["--store-chrome-manifest"],
          {"action": "store",
@@ -420,11 +432,6 @@ class MochitestArguments(ArgumentContainer):
                   "JS_CODE_COVERAGE_OUTPUT_DIR in the environment.",
           "default": None,
           "suppress": True,
-          }],
-        [["--nested_oop"],
-         {"action": "store_true",
-          "default": False,
-          "help": "Run tests with nested_oop preferences and test filtering enabled.",
           }],
         [["--dmd"],
          {"action": "store_true",
@@ -510,11 +517,6 @@ class MochitestArguments(ArgumentContainer):
           "default": None,
           "help": "Arguments to pass to the debugger.",
           }],
-        [["--save-recordings"],
-         {"dest": "recordingPath",
-          "default": None,
-          "help": "Directory to save Web Replay recordings in.",
-          }],
         [["--valgrind"],
          {"default": None,
           "help": "Valgrind binary to run tests with. Program name or path.",
@@ -543,12 +545,6 @@ class MochitestArguments(ArgumentContainer):
           "default": None,
           "help": "Filter out tests that don't have the given tag. Can be used multiple "
                   "times in which case the test must contain at least one of the given tags.",
-          }],
-        [["--enable-cpow-warnings"],
-         {"action": "store_true",
-          "dest": "enableCPOWWarnings",
-          "help": "Enable logging of unsafe CPOW usage, which is disabled by default for tests",
-          "suppress": True,
           }],
         [["--marionette"],
          {"default": None,
@@ -600,6 +596,28 @@ class MochitestArguments(ArgumentContainer):
           "default": 3600,
           "help": "Maximum time, in seconds, to run in --verify mode.",
           }],
+        [["--enable-webrender"],
+         {"action": "store_true",
+          "dest": "enable_webrender",
+          "default": False,
+          "help": "Enable the WebRender compositor in Gecko.",
+          }],
+        [["--profiler"],
+         {"action": "store_true",
+          "dest": "profiler",
+          "default": False,
+          "help": "Run the Firefox Profiler and get a performance profile of the "
+                  "mochitest. This is useful to find performance issues, and also "
+                  "to see what exactly the test is doing. To get profiler options run: "
+                  "`MOZ_PROFILER_HELP=1 ./mach run`"
+          }],
+        [["--profiler-save-only"],
+         {"action": "store_true",
+          "dest": "profilerSaveOnly",
+          "default": False,
+          "help": "Run the Firefox Profiler and save it to the path specified by the "
+                  "MOZ_UPLOAD_DIR environment variable."
+          }],
     ]
 
     defaults = {
@@ -621,14 +639,16 @@ class MochitestArguments(ArgumentContainer):
     def validate(self, parser, options, context):
         """Validate generic options."""
 
-        # for test manifest parsing.
-        mozinfo.update({"nested_oop": options.nested_oop})
-
         # and android doesn't use 'app' the same way, so skip validation
         if parser.app != 'android':
             if options.app is None:
                 if build_obj:
-                    options.app = build_obj.get_binary_path()
+                    from mozbuild.base import BinaryNotFoundException
+                    try:
+                        options.app = build_obj.get_binary_path()
+                    except BinaryNotFoundException as e:
+                        print('{}\n\n{}\n'.format(e, e.help()))
+                        sys.exit(1)
                 else:
                     parser.error(
                         "could not find the application path, --appname must be specified")
@@ -719,6 +739,10 @@ class MochitestArguments(ArgumentContainer):
             parser.error(
                 "--debug-on-failure requires --jsdebugger.")
 
+        if options.jsdebuggerPath and not options.jsdebugger:
+            parser.error(
+                "--jsdebugger-path requires --jsdebugger.")
+
         if options.debuggerArgs and not options.debugger:
             parser.error(
                 "--debugger-args requires --debugger.")
@@ -808,12 +832,13 @@ class MochitestArguments(ArgumentContainer):
                     '--use-test-media-devices is only supported on Linux currently')
 
             gst01 = spawn.find_executable("gst-launch-0.1")
+            gst010 = spawn.find_executable("gst-launch-0.10")
             gst10 = spawn.find_executable("gst-launch-1.0")
             pactl = spawn.find_executable("pactl")
 
-            if not (gst01 or gst10):
+            if not (gst01 or gst10 or gst010):
                 parser.error(
-                    'Missing gst-launch-{0.1,1.0}, required for '
+                    'Missing gst-launch-{0.1,0.10,1.0}, required for '
                     '--use-test-media-devices')
 
             if not pactl:
@@ -821,17 +846,20 @@ class MochitestArguments(ArgumentContainer):
                     'Missing binary pactl required for '
                     '--use-test-media-devices')
 
-        if options.nested_oop:
-            options.e10s = True
-
         # The a11y and chrome flavors can't run with e10s.
         if options.flavor in ('a11y', 'chrome') and options.e10s:
             parser.error("mochitest-{} does not support e10s, try again with "
                          "--disable-e10s.".format(options.flavor))
 
+        if options.enable_fission:
+            options.extraPrefs.append("fission.autostart=true")
+            options.extraPrefs.append("dom.serviceWorkers.parent_intercept=true")
+            options.extraPrefs.append("browser.tabs.documentchannel=true")
+
         options.leakThresholds = {
             "default": options.defaultLeakThreshold,
             "tab": options.defaultLeakThreshold,
+            "forkserver": options.defaultLeakThreshold,
             # GMP rarely gets a log, but when it does, it leaks a little.
             "gmplugin": 20000,
             "rdd": 400,
@@ -857,6 +885,11 @@ class AndroidArguments(ArgumentContainer):
     """Android specific arguments."""
 
     args = [
+        [["--no-install"],
+         {"action": "store_true",
+          "default": False,
+          "help": "Skip the installation of the APK.",
+          }],
         [["--deviceSerial"],
          {"dest": "deviceSerial",
           "help": "adb serial number of remote device. This is required "
@@ -887,11 +920,6 @@ class AndroidArguments(ArgumentContainer):
           "help": "ssl port of the remote web server.",
           "suppress": True,
           }],
-        [["--robocop-apk"],
-         {"dest": "robocopApk",
-          "default": "",
-          "help": "Name of the robocop APK to use.",
-          }],
         [["--remoteTestRoot"],
          {"dest": "remoteTestRoot",
           "default": None,
@@ -903,7 +931,7 @@ class AndroidArguments(ArgumentContainer):
          {"action": "store_true",
           "default": False,
           "help": "Enable collecting code coverage information when running "
-                  "robocop tests.",
+                  "junit tests.",
           }],
         [["--coverage-output-dir"],
          {"action": "store",
@@ -945,10 +973,7 @@ class AndroidArguments(ArgumentContainer):
         options.webServer = options.remoteWebServer
 
         if options.app is None:
-            if build_obj:
-                options.app = build_obj.substs['ANDROID_PACKAGE_NAME']
-            else:
-                parser.error("You must specify either appPath or app")
+            options.app = "org.mozilla.geckoview.test"
 
         if build_obj and 'MOZ_HOST_BIN' in os.environ:
             options.xrePath = os.environ['MOZ_HOST_BIN']
@@ -964,18 +989,6 @@ class AndroidArguments(ArgumentContainer):
             f = open(options.pidFile, 'w')
             f.write("%s" % os.getpid())
             f.close()
-
-        if not options.robocopApk and build_obj:
-            apk = build_obj.substs.get('GRADLE_ANDROID_APP_ANDROIDTEST_APK')
-            if apk and os.path.exists(apk):
-                options.robocopApk = apk
-
-        if options.robocopApk != "":
-            if not os.path.exists(options.robocopApk):
-                parser.error(
-                    "Unable to find robocop APK '%s'" %
-                    options.robocopApk)
-            options.robocopApk = os.path.abspath(options.robocopApk)
 
         if options.coverage_output_dir and not options.enable_coverage:
             parser.error("--coverage-output-dir must be used with --enable-coverage")
@@ -993,7 +1006,7 @@ class AndroidArguments(ArgumentContainer):
                     parent_dir)
 
         # allow us to keep original application around for cleanup while
-        # running robocop via 'am'
+        # running tests
         options.remoteappname = options.app
         return options
 

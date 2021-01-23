@@ -15,10 +15,13 @@ namespace dom {
 class AudioParamMap;
 struct AudioWorkletNodeOptions;
 class MessagePort;
+struct NamedAudioParamTimeline;
+struct ProcessorErrorDetails;
 
 class AudioWorkletNode : public AudioNode {
  public:
   NS_DECL_ISUPPORTS_INHERITED
+  NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(AudioWorkletNode, AudioNode)
 
   IMPL_EVENT_HANDLER(processorerror)
 
@@ -29,7 +32,7 @@ class AudioWorkletNode : public AudioNode {
 
   AudioParamMap* GetParameters(ErrorResult& aRv) const;
 
-  MessagePort* GetPort(ErrorResult& aRv) const;
+  MessagePort* Port() const { return mPort; };
 
   JSObject* WrapObject(JSContext* aCx,
                        JS::Handle<JSObject*> aGivenProto) override;
@@ -38,6 +41,7 @@ class AudioWorkletNode : public AudioNode {
   uint16_t NumberOfInputs() const override { return mInputCount; }
   uint16_t NumberOfOutputs() const override { return mOutputCount; }
   const char* NodeType() const override { return "AudioWorkletNode"; }
+  void DispatchProcessorErrorEvent(const ProcessorErrorDetails& aDetails);
 
   size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override;
   size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override;
@@ -46,8 +50,14 @@ class AudioWorkletNode : public AudioNode {
   AudioWorkletNode(AudioContext* aAudioContext, const nsAString& aName,
                    const AudioWorkletNodeOptions& aOptions);
   ~AudioWorkletNode() = default;
+  void InitializeParameters(nsTArray<NamedAudioParamTimeline>* aParamTimelines,
+                            ErrorResult& aRv);
+  void SendParameterData(
+      const Optional<Record<nsString, double>>& aParameterData);
 
   nsString mNodeName;
+  RefPtr<MessagePort> mPort;
+  RefPtr<AudioParamMap> mParameters;
   uint16_t mInputCount;
   uint16_t mOutputCount;
 };

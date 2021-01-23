@@ -15,14 +15,14 @@ if (!this.SharedArrayBuffer) {
 }
 
 let x = new SharedArrayBuffer(1);
-let y = serialize(x);
+let y = serialize(x, [], {SharedArrayBuffer: 'allow'});
 x = null;
 
 // If the bug is present this loop usually crashes quickly during
 // deserialization because the memory has become unmapped.
 
 for (let i=0 ; i < 50 ; i++ ) {
-    let obj = deserialize(y);
+    let obj = deserialize(y, {SharedArrayBuffer: 'allow'});
     let z = new Int8Array(obj);
     z[0] = 0;
 }

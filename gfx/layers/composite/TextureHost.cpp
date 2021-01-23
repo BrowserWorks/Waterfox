@@ -11,11 +11,13 @@
 #include "LayersLogging.h"   // for AppendToString
 #include "mozilla/gfx/2D.h"  // for DataSourceSurface, Factory
 #include "mozilla/gfx/gfxVars.h"
-#include "mozilla/ipc/Shmem.h"                             // for Shmem
+#include "mozilla/ipc/Shmem.h"  // for Shmem
+#include "mozilla/layers/AsyncImagePipelineManager.h"
 #include "mozilla/layers/CompositableTransactionParent.h"  // for CompositableParentManager
 #include "mozilla/layers/CompositorBridgeParent.h"
 #include "mozilla/layers/Compositor.h"         // for Compositor
 #include "mozilla/layers/ISurfaceAllocator.h"  // for ISurfaceAllocator
+#include "mozilla/layers/ImageBridgeParent.h"  // for ImageBridgeParent
 #include "mozilla/layers/LayersSurfaces.h"     // for SurfaceDescriptor, etc
 #include "mozilla/layers/TextureHostBasic.h"
 #include "mozilla/layers/TextureHostOGL.h"  // for TextureHostOGL
@@ -26,6 +28,7 @@
 #endif
 #include "mozilla/layers/GPUVideoTextureHost.h"
 #include "mozilla/layers/WebRenderTextureHost.h"
+#include "mozilla/StaticPrefs_layers.h"
 #include "mozilla/webrender/RenderBufferTextureHost.h"
 #include "mozilla/webrender/RenderThread.h"
 #include "mozilla/webrender/WebRenderAPI.h"
@@ -36,7 +39,7 @@
 #include "mozilla/Unused.h"
 #include <limits>
 #include "../opengl/CompositorOGL.h"
-#include "gfxPrefs.h"
+
 #include "gfxUtils.h"
 #include "IPDLActor.h"
 
@@ -182,6 +185,7 @@ already_AddRefed<TextureHost> TextureHost::Create(
     case SurfaceDescriptor::TEGLImageDescriptor:
     case SurfaceDescriptor::TSurfaceTextureDescriptor:
     case SurfaceDescriptor::TSurfaceDescriptorSharedGLTexture:
+    case SurfaceDescriptor::TSurfaceDescriptorDMABuf:
       result = CreateTextureHostOGL(aDesc, aDeallocator, aBackend, aFlags);
       break;
 
@@ -216,8 +220,27 @@ already_AddRefed<TextureHost> TextureHost::Create(
       result = CreateTextureHostD3D11(aDesc, aDeallocator, aBackend, aFlags);
       break;
 #endif
+    case SurfaceDescriptor::TSurfaceDescriptorRecorded: {
+      const SurfaceDescriptorRecorded& desc =
+          aDesc.get_SurfaceDescriptorRecorded();
+      UniquePtr<SurfaceDescriptor> realDesc =
+          aDeallocator->AsCompositorBridgeParentBase()
+              ->LookupSurfaceDescriptorForClientDrawTarget(desc.drawTarget());
+      if (!realDesc) {
+        NS_WARNING("Failed to get descriptor for recorded texture.");
+        return nullptr;
+      }
+
+      result = TextureHost::Create(*realDesc, aReadLock, aDeallocator, aBackend,
+                                   aFlags, aExternalImageId);
+      return result.forget();
+    }
     default:
       MOZ_CRASH("GFX: Unsupported Surface type host");
+  }
+
+  if (!result) {
+    gfxCriticalNote << "TextureHost creation failure type=" << aDesc.type();
   }
 
   if (result && WrapWithWebRenderTextureHost(aDeallocator, aBackend, aFlags)) {
@@ -308,6 +331,21 @@ already_AddRefed<TextureHost> CreateBackendIndependentTextureHost(
       break;
     }
     case SurfaceDescriptor::TSurfaceDescriptorGPUVideo: {
+      if (aDesc.get_SurfaceDescriptorGPUVideo().type() ==
+          SurfaceDescriptorGPUVideo::TSurfaceDescriptorPlugin) {
+        MOZ_ASSERT(aDeallocator && aDeallocator->UsesImageBridge());
+        auto ibpBase = static_cast<ImageBridgeParent*>(aDeallocator);
+        result =
+            ibpBase->LookupTextureHost(aDesc.get_SurfaceDescriptorGPUVideo());
+        if (!result) {
+          return nullptr;
+        }
+        MOZ_ASSERT(aFlags == result->GetFlags());
+        break;
+      }
+
+      MOZ_ASSERT(aDesc.get_SurfaceDescriptorGPUVideo().type() ==
+                 SurfaceDescriptorGPUVideo::TSurfaceDescriptorRemoteDecoder);
       result = GPUVideoTextureHost::CreateFromDescriptor(
           aFlags, aDesc.get_SurfaceDescriptorGPUVideo());
       break;
@@ -356,6 +394,8 @@ TextureHost::~TextureHost() {
 }
 
 void TextureHost::Finalize() {
+  MaybeDestroyRenderTexture();
+
   if (!(GetFlags() & TextureFlags::DEALLOCATE_CLIENT)) {
     DeallocateSharedData();
     DeallocateDeviceData();
@@ -417,6 +457,39 @@ void TextureHost::CallNotifyNotUsed() {
   static_cast<TextureParent*>(mActor)->NotifyNotUsed(mFwdTransactionId);
 }
 
+void TextureHost::MaybeDestroyRenderTexture() {
+  if (mExternalImageId.isNothing()) {
+    // RenderTextureHost was not created
+    return;
+  }
+  // When TextureHost created RenderTextureHost, delete it here.
+  TextureHost::DestroyRenderTexture(mExternalImageId.ref());
+}
+
+void TextureHost::DestroyRenderTexture(
+    const wr::ExternalImageId& aExternalImageId) {
+  wr::RenderThread::Get()->UnregisterExternalImage(
+      wr::AsUint64(aExternalImageId));
+}
+
+void TextureHost::EnsureRenderTexture(
+    const wr::MaybeExternalImageId& aExternalImageId) {
+  if (aExternalImageId.isNothing()) {
+    // TextureHost is wrapped by GPUVideoTextureHost.
+    if (mExternalImageId.isSome()) {
+      // RenderTextureHost was already created.
+      return;
+    }
+    mExternalImageId =
+        Some(AsyncImagePipelineManager::GetNextExternalImageId());
+  } else {
+    // TextureHost is wrapped by WebRenderTextureHost.
+    MOZ_ASSERT(mExternalImageId.isNothing());
+    mExternalImageId = aExternalImageId;
+  }
+  CreateRenderTexture(mExternalImageId.ref());
+}
+
 void TextureHost::PrintInfo(std::stringstream& aStream, const char* aPrefix) {
   aStream << aPrefix;
   aStream << nsPrintfCString("%s (0x%p)", Name(), this).get();
@@ -429,7 +502,7 @@ void TextureHost::PrintInfo(std::stringstream& aStream, const char* aPrefix) {
   }
   AppendToString(aStream, mFlags, " [flags=", "]");
 #ifdef MOZ_DUMP_PAINTING
-  if (gfxPrefs::LayersDumpTexture()) {
+  if (StaticPrefs::layers_dump_texture()) {
     nsAutoCString pfx(aPrefix);
     pfx += "  ";
 
@@ -449,7 +522,7 @@ void TextureHost::Updated(const nsIntRegion* aRegion) {
 
 TextureSource::TextureSource() : mCompositableCount(0) {}
 
-TextureSource::~TextureSource() {}
+TextureSource::~TextureSource() = default;
 BufferTextureHost::BufferTextureHost(const BufferDescriptor& aDesc,
                                      TextureFlags aFlags)
     : TextureHost(aFlags),
@@ -485,7 +558,7 @@ BufferTextureHost::BufferTextureHost(const BufferDescriptor& aDesc,
   }
 }
 
-BufferTextureHost::~BufferTextureHost() {}
+BufferTextureHost::~BufferTextureHost() = default;
 
 void BufferTextureHost::UpdatedInternal(const nsIntRegion* aRegion) {
   ++mUpdateSerial;
@@ -568,7 +641,7 @@ void BufferTextureHost::CreateRenderTexture(
                                                  texture.forget());
 }
 
-uint32_t BufferTextureHost::NumSubTextures() const {
+uint32_t BufferTextureHost::NumSubTextures() {
   if (GetFormat() == gfx::SurfaceFormat::YUV) {
     return 3;
   }
@@ -582,7 +655,7 @@ void BufferTextureHost::PushResourceUpdates(
   auto method = aOp == TextureHost::ADD_IMAGE
                     ? &wr::TransactionBuilder::AddExternalImage
                     : &wr::TransactionBuilder::UpdateExternalImage;
-  auto bufferType = wr::WrExternalImageBufferType::ExternalBuffer;
+  auto imageType = wr::ExternalImageType::Buffer();
 
   if (GetFormat() != gfx::SurfaceFormat::YUV) {
     MOZ_ASSERT(aImageKeys.length() == 1);
@@ -591,7 +664,7 @@ void BufferTextureHost::PushResourceUpdates(
         GetSize(),
         ImageDataSerializer::ComputeRGBStride(GetFormat(), GetSize().width),
         GetFormat());
-    (aResources.*method)(aImageKeys[0], descriptor, aExtID, bufferType, 0);
+    (aResources.*method)(aImageKeys[0], descriptor, aExtID, imageType, 0);
   } else {
     MOZ_ASSERT(aImageKeys.length() == 3);
 
@@ -602,27 +675,33 @@ void BufferTextureHost::PushResourceUpdates(
     wr::ImageDescriptor cbcrDescriptor(
         desc.cbCrSize(), desc.cbCrStride(),
         SurfaceFormatForColorDepth(desc.colorDepth()));
-    (aResources.*method)(aImageKeys[0], yDescriptor, aExtID, bufferType, 0);
-    (aResources.*method)(aImageKeys[1], cbcrDescriptor, aExtID, bufferType, 1);
-    (aResources.*method)(aImageKeys[2], cbcrDescriptor, aExtID, bufferType, 2);
+    (aResources.*method)(aImageKeys[0], yDescriptor, aExtID, imageType, 0);
+    (aResources.*method)(aImageKeys[1], cbcrDescriptor, aExtID, imageType, 1);
+    (aResources.*method)(aImageKeys[2], cbcrDescriptor, aExtID, imageType, 2);
   }
 }
 
-void BufferTextureHost::PushDisplayItems(
-    wr::DisplayListBuilder& aBuilder, const wr::LayoutRect& aBounds,
-    const wr::LayoutRect& aClip, wr::ImageRendering aFilter,
-    const Range<wr::ImageKey>& aImageKeys) {
+void BufferTextureHost::PushDisplayItems(wr::DisplayListBuilder& aBuilder,
+                                         const wr::LayoutRect& aBounds,
+                                         const wr::LayoutRect& aClip,
+                                         wr::ImageRendering aFilter,
+                                         const Range<wr::ImageKey>& aImageKeys,
+                                         const bool aPreferCompositorSurface) {
   if (GetFormat() != gfx::SurfaceFormat::YUV) {
     MOZ_ASSERT(aImageKeys.length() == 1);
     aBuilder.PushImage(aBounds, aClip, true, aFilter, aImageKeys[0],
-                       !(mFlags & TextureFlags::NON_PREMULTIPLIED));
+                       !(mFlags & TextureFlags::NON_PREMULTIPLIED),
+                       wr::ColorF{1.0f, 1.0f, 1.0f, 1.0f},
+                       aPreferCompositorSurface);
   } else {
     MOZ_ASSERT(aImageKeys.length() == 3);
     const YCbCrDescriptor& desc = mDescriptor.get_YCbCrDescriptor();
-    aBuilder.PushYCbCrPlanarImage(
-        aBounds, aClip, true, aImageKeys[0], aImageKeys[1], aImageKeys[2],
-        wr::ToWrColorDepth(desc.colorDepth()),
-        wr::ToWrYuvColorSpace(desc.yUVColorSpace()), aFilter);
+    aBuilder.PushYCbCrPlanarImage(aBounds, aClip, true, aImageKeys[0],
+                                  aImageKeys[1], aImageKeys[2],
+                                  wr::ToWrColorDepth(desc.colorDepth()),
+                                  wr::ToWrYuvColorSpace(desc.yUVColorSpace()),
+                                  wr::ToWrColorRange(desc.colorRange()),
+                                  aFilter, aPreferCompositorSurface);
   }
 }
 
@@ -887,6 +966,14 @@ gfx::ColorDepth BufferTextureHost::GetColorDepth() const {
     return desc.colorDepth();
   }
   return gfx::ColorDepth::COLOR_8;
+}
+
+gfx::ColorRange BufferTextureHost::GetColorRange() const {
+  if (mFormat == gfx::SurfaceFormat::YUV) {
+    const YCbCrDescriptor& desc = mDescriptor.get_YCbCrDescriptor();
+    return desc.colorRange();
+  }
+  return TextureHost::GetColorRange();
 }
 
 bool BufferTextureHost::UploadIfNeeded() {

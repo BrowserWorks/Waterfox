@@ -21,9 +21,11 @@
 #include "mozilla/TypeTraits.h"
 #include "mozilla/Variant.h"
 #include "Units.h"
-#include "nsStyleConsts.h"
 
 namespace mozilla {
+
+enum class StyleBorderStyle : uint8_t;
+enum class StyleBorderImageRepeat : uint8_t;
 
 namespace ipc {
 class ByteBuf;
@@ -44,7 +46,9 @@ typedef wr::WrImageKey ImageKey;
 typedef wr::WrFontKey FontKey;
 typedef wr::WrFontInstanceKey FontInstanceKey;
 typedef wr::WrEpoch Epoch;
-typedef wr::WrExternalImageId ExternalImageId;
+
+class RenderedFrameIdType {};
+typedef layers::BaseTransactionId<RenderedFrameIdType> RenderedFrameId;
 
 typedef mozilla::Maybe<mozilla::wr::IdNamespace> MaybeIdNamespace;
 typedef mozilla::Maybe<mozilla::wr::ImageMask> MaybeImageMask;
@@ -60,83 +64,6 @@ struct ExternalImageKeyPair {
 
 /* Generate a brand new window id and return it. */
 WindowId NewWindowId();
-
-MOZ_DEFINE_ENUM_CLASS_WITH_BASE(
-    RenderRoot, uint8_t,
-    (
-        // The default render root - within the parent process, this refers
-        // to everything within the top chrome area (urlbar, tab strip, etc.).
-        // Within the content process, this refers to the content area. Any
-        // system that multiplexes data streams from different processes is
-        // responsible for converting RenderRoot::Default into
-        // RenderRoot::Content (or whatever value is appropriate)
-        Default,
-
-        // Everything below the chrome - even if it is not coming from a content
-        // process. For example. the devtools, sidebars, and status panel are
-        // traditionally part of the "chrome," but are assigned a renderroot of
-        // RenderRoot::Content because they occupy screen space in the "content"
-        // area of the browser (visually situated below the "chrome" area).
-        Content));
-
-typedef EnumSet<RenderRoot, uint8_t> RenderRootSet;
-
-// For simple iteration of all render roots
-const Array<RenderRoot, kRenderRootCount> kRenderRoots(RenderRoot::Default,
-                                                       RenderRoot::Content);
-
-const Array<RenderRoot, kRenderRootCount - 1> kNonDefaultRenderRoots(
-    RenderRoot::Content);
-
-template <typename T>
-class RenderRootArray : public Array<T, kRenderRootCount> {
-  typedef Array<T, kRenderRootCount> Super;
-
- public:
-  RenderRootArray() {
-    if (IsPod<T>::value) {
-      // Ensure primitive types get initialized to 0/false.
-      PodArrayZero(*this);
-    }  // else C++ will default-initialize the array elements for us
-  }
-
-  T& operator[](wr::RenderRoot aIndex) {
-    return (*(Super*)this)[(size_t)aIndex];
-  }
-
-  const T& operator[](wr::RenderRoot aIndex) const {
-    return (*(Super*)this)[(size_t)aIndex];
-  }
-
-  T& operator[](size_t aIndex) = delete;
-  const T& operator[](size_t aIndex) const = delete;
-};
-
-template <typename T>
-class NonDefaultRenderRootArray : public Array<T, kRenderRootCount - 1> {
-  typedef Array<T, kRenderRootCount - 1> Super;
-
- public:
-  NonDefaultRenderRootArray() {
-    // See RenderRootArray constructor
-    if (IsPod<T>::value) {
-      PodArrayZero(*this);
-    }
-  }
-
-  T& operator[](wr::RenderRoot aIndex) {
-    return (*(Super*)this)[(size_t)aIndex - 1];
-  }
-
-  const T& operator[](wr::RenderRoot aIndex) const {
-    return (*(Super*)this)[(size_t)aIndex - 1];
-  }
-
-  T& operator[](size_t aIndex) = delete;
-  const T& operator[](size_t aIndex) const = delete;
-};
-
-RenderRoot RenderRootFromId(DocumentId id);
 
 inline DebugFlags NewDebugFlags(uint32_t aFlags) { return {aFlags}; }
 
@@ -189,36 +116,47 @@ struct ImageDescriptor : public wr::WrImageDescriptor {
     height = 0;
     stride = 0;
     opacity = OpacityType::HasAlphaChannel;
+    prefer_compositor_surface = false;
   }
 
-  ImageDescriptor(const gfx::IntSize& aSize, gfx::SurfaceFormat aFormat) {
+  ImageDescriptor(const gfx::IntSize& aSize, gfx::SurfaceFormat aFormat,
+                  bool aPreferCompositorSurface = false) {
     format = wr::SurfaceFormatToImageFormat(aFormat).value();
     width = aSize.width;
     height = aSize.height;
     stride = 0;
     opacity = gfx::IsOpaque(aFormat) ? OpacityType::Opaque
                                      : OpacityType::HasAlphaChannel;
+    prefer_compositor_surface = aPreferCompositorSurface;
   }
 
   ImageDescriptor(const gfx::IntSize& aSize, uint32_t aByteStride,
-                  gfx::SurfaceFormat aFormat) {
+                  gfx::SurfaceFormat aFormat,
+                  bool aPreferCompositorSurface = false) {
     format = wr::SurfaceFormatToImageFormat(aFormat).value();
     width = aSize.width;
     height = aSize.height;
     stride = aByteStride;
     opacity = gfx::IsOpaque(aFormat) ? OpacityType::Opaque
                                      : OpacityType::HasAlphaChannel;
+    prefer_compositor_surface = aPreferCompositorSurface;
   }
 
   ImageDescriptor(const gfx::IntSize& aSize, uint32_t aByteStride,
-                  gfx::SurfaceFormat aFormat, OpacityType aOpacity) {
+                  gfx::SurfaceFormat aFormat, OpacityType aOpacity,
+                  bool aPreferCompositorSurface = false) {
     format = wr::SurfaceFormatToImageFormat(aFormat).value();
     width = aSize.width;
     height = aSize.height;
     stride = aByteStride;
     opacity = aOpacity;
+    prefer_compositor_surface = aPreferCompositorSurface;
   }
 };
+
+inline uint64_t AsUint64(const NativeSurfaceId& aId) {
+  return static_cast<uint64_t>(aId._0);
+}
 
 // Whenever possible, use wr::WindowId instead of manipulating uint64_t.
 inline uint64_t AsUint64(const WindowId& aId) {
@@ -341,7 +279,7 @@ static inline MixBlendMode ToMixBlendMode(gfx::CompositionOp compositionOp) {
   }
 }
 
-static inline wr::ColorF ToColorF(const gfx::Color& color) {
+static inline wr::ColorF ToColorF(const gfx::DeviceColor& color) {
   wr::ColorF c;
   c.r = color.r;
   c.g = color.g;
@@ -350,7 +288,7 @@ static inline wr::ColorF ToColorF(const gfx::Color& color) {
   return c;
 }
 
-static inline wr::ColorU ToColorU(const gfx::Color& color) {
+static inline wr::ColorU ToColorU(const gfx::DeviceColor& color) {
   wr::ColorU c;
   c.r = uint8_t(color.r * 255.0f);
   c.g = uint8_t(color.g * 255.0f);
@@ -370,13 +308,6 @@ static inline wr::LayoutPoint ToLayoutPoint(
 static inline wr::LayoutPoint ToLayoutPoint(
     const mozilla::LayoutDeviceIntPoint& point) {
   return ToLayoutPoint(LayoutDevicePoint(point));
-}
-
-static inline wr::LayoutPoint ToRoundedLayoutPoint(
-    const mozilla::LayoutDevicePoint& point) {
-  mozilla::LayoutDevicePoint rounded = point;
-  rounded.Round();
-  return ToLayoutPoint(rounded);
 }
 
 static inline wr::WorldPoint ToWorldPoint(const mozilla::ScreenPoint& point) {
@@ -442,13 +373,6 @@ static inline wr::LayoutIntRect ToLayoutIntRect(
 static inline wr::LayoutRect ToLayoutRect(
     const mozilla::LayoutDeviceIntRect& rect) {
   return ToLayoutRect(IntRectToRect(rect));
-}
-
-static inline wr::LayoutRect ToRoundedLayoutRect(
-    const mozilla::LayoutDeviceRect& aRect) {
-  auto rect = aRect;
-  rect.Round();
-  return wr::ToLayoutRect(rect);
 }
 
 static inline wr::LayoutRect IntersectLayoutRect(const wr::LayoutRect& aRect,
@@ -534,36 +458,10 @@ static inline wr::LayoutTransform ToLayoutTransform(
   return transform;
 }
 
-static inline wr::BorderStyle ToBorderStyle(const StyleBorderStyle& style) {
-  switch (style) {
-    case StyleBorderStyle::None:
-      return wr::BorderStyle::None;
-    case StyleBorderStyle::Solid:
-      return wr::BorderStyle::Solid;
-    case StyleBorderStyle::Double:
-      return wr::BorderStyle::Double;
-    case StyleBorderStyle::Dotted:
-      return wr::BorderStyle::Dotted;
-    case StyleBorderStyle::Dashed:
-      return wr::BorderStyle::Dashed;
-    case StyleBorderStyle::Hidden:
-      return wr::BorderStyle::Hidden;
-    case StyleBorderStyle::Groove:
-      return wr::BorderStyle::Groove;
-    case StyleBorderStyle::Ridge:
-      return wr::BorderStyle::Ridge;
-    case StyleBorderStyle::Inset:
-      return wr::BorderStyle::Inset;
-    case StyleBorderStyle::Outset:
-      return wr::BorderStyle::Outset;
-    default:
-      MOZ_ASSERT(false);
-  }
-  return wr::BorderStyle::None;
-}
+wr::BorderStyle ToBorderStyle(StyleBorderStyle style);
 
-static inline wr::BorderSide ToBorderSide(const gfx::Color& color,
-                                          const StyleBorderStyle& style) {
+static inline wr::BorderSide ToBorderSide(const gfx::DeviceColor& color,
+                                          StyleBorderStyle style) {
   wr::BorderSide bs;
   bs.color = ToColorF(color);
   bs.style = ToBorderStyle(style);
@@ -592,8 +490,8 @@ static inline wr::BorderRadius ToBorderRadius(
 static inline wr::ComplexClipRegion ToComplexClipRegion(
     const nsRect& aRect, const nscoord* aRadii, int32_t aAppUnitsPerDevPixel) {
   wr::ComplexClipRegion ret;
-  ret.rect = ToRoundedLayoutRect(
-      LayoutDeviceRect::FromAppUnits(aRect, aAppUnitsPerDevPixel));
+  ret.rect =
+      ToLayoutRect(LayoutDeviceRect::FromAppUnits(aRect, aAppUnitsPerDevPixel));
   ret.radii = ToBorderRadius(
       LayoutDeviceSize::FromAppUnits(
           nsSize(aRadii[eCornerTopLeftX], aRadii[eCornerTopLeftY]),
@@ -621,11 +519,11 @@ static inline wr::LayoutSideOffsets ToBorderWidths(float top, float right,
   return bw;
 }
 
-static inline wr::SideOffsets2D<int32_t> ToSideOffsets2D_i32(int32_t top,
-                                                             int32_t right,
-                                                             int32_t bottom,
-                                                             int32_t left) {
-  SideOffsets2D<int32_t> offset;
+static inline wr::DeviceIntSideOffsets ToDeviceIntSideOffsets(int32_t top,
+                                                              int32_t right,
+                                                              int32_t bottom,
+                                                              int32_t left) {
+  wr::DeviceIntSideOffsets offset;
   offset.top = top;
   offset.right = right;
   offset.bottom = bottom;
@@ -633,11 +531,10 @@ static inline wr::SideOffsets2D<int32_t> ToSideOffsets2D_i32(int32_t top,
   return offset;
 }
 
-static inline wr::SideOffsets2D<float> ToSideOffsets2D_f32(float top,
-                                                           float right,
-                                                           float bottom,
-                                                           float left) {
-  SideOffsets2D<float> offset;
+static inline wr::LayoutSideOffsets ToLayoutSideOffsets(float top, float right,
+                                                        float bottom,
+                                                        float left) {
+  wr::LayoutSideOffsets offset;
   offset.top = top;
   offset.right = right;
   offset.bottom = bottom;
@@ -645,30 +542,14 @@ static inline wr::SideOffsets2D<float> ToSideOffsets2D_f32(float top,
   return offset;
 }
 
-static inline wr::RepeatMode ToRepeatMode(
-    mozilla::StyleBorderImageRepeat repeatMode) {
-  switch (repeatMode) {
-    case mozilla::StyleBorderImageRepeat::Stretch:
-      return wr::RepeatMode::Stretch;
-    case mozilla::StyleBorderImageRepeat::Repeat:
-      return wr::RepeatMode::Repeat;
-    case mozilla::StyleBorderImageRepeat::Round:
-      return wr::RepeatMode::Round;
-    case mozilla::StyleBorderImageRepeat::Space:
-      return wr::RepeatMode::Space;
-    default:
-      MOZ_ASSERT(false);
-  }
-
-  return wr::RepeatMode::Stretch;
-}
+wr::RepeatMode ToRepeatMode(StyleBorderImageRepeat);
 
 template <class S, class T>
 static inline wr::WrTransformProperty ToWrTransformProperty(
     uint64_t id, const gfx::Matrix4x4Typed<S, T>& transform) {
   wr::WrTransformProperty prop;
   prop.id = id;
-  prop.transform = ToLayoutTransform(transform);
+  prop.value = ToLayoutTransform(transform);
   return prop;
 }
 
@@ -676,18 +557,26 @@ static inline wr::WrOpacityProperty ToWrOpacityProperty(uint64_t id,
                                                         const float opacity) {
   wr::WrOpacityProperty prop;
   prop.id = id;
-  prop.opacity = opacity;
+  prop.value = opacity;
+  return prop;
+}
+
+static inline wr::WrColorProperty ToWrColorProperty(
+    uint64_t id, const gfx::DeviceColor& color) {
+  wr::WrColorProperty prop;
+  prop.id = id;
+  prop.value = ToColorF(color);
   return prop;
 }
 
 // Whenever possible, use wr::ExternalImageId instead of manipulating uint64_t.
 inline uint64_t AsUint64(const ExternalImageId& aId) {
-  return static_cast<uint64_t>(aId.mHandle);
+  return static_cast<uint64_t>(aId._0);
 }
 
 static inline ExternalImageId ToExternalImageId(uint64_t aID) {
   ExternalImageId Id;
-  Id.mHandle = aID;
+  Id._0 = aID;
   return Id;
 }
 
@@ -763,11 +652,19 @@ struct Vec<uint8_t> final {
     inner.length = 0;
   }
 
+  uint8_t* Data() { return inner.data; }
+
   size_t Length() { return inner.length; }
+
+  size_t Capacity() { return inner.capacity; }
+
+  Range<uint8_t> GetRange() { return Range<uint8_t>(Data(), Length()); }
 
   void PushBytes(Range<uint8_t> aBytes) {
     wr_vec_u8_push_bytes(&inner, RangeToByteSlice(aBytes));
   }
+
+  void Reserve(size_t aLength) { wr_vec_u8_reserve(&inner, aLength); }
 
   ~Vec() {
     if (inner.data) {
@@ -869,6 +766,7 @@ enum class WebRenderError : int8_t {
   INITIALIZE = 0,
   MAKE_CURRENT,
   RENDER,
+  NEW_SURFACE,
 
   Sentinel /* this must be last for serialization purposes. */
 };
@@ -902,6 +800,18 @@ static inline wr::WrColorDepth ToWrColorDepth(gfx::ColorDepth aColorDepth) {
       MOZ_ASSERT_UNREACHABLE("Tried to convert invalid color depth value.");
   }
   return wr::WrColorDepth::Color8;
+}
+
+static inline wr::WrColorRange ToWrColorRange(gfx::ColorRange aColorRange) {
+  switch (aColorRange) {
+    case gfx::ColorRange::LIMITED:
+      return wr::WrColorRange::Limited;
+    case gfx::ColorRange::FULL:
+      return wr::WrColorRange::Full;
+    default:
+      MOZ_ASSERT_UNREACHABLE("Tried to convert invalid color range value.");
+      return wr ::WrColorRange::Limited;
+  }
 }
 
 static inline wr::SyntheticItalics DegreesToSyntheticItalics(float aDegrees) {

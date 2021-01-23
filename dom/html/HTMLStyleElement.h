@@ -8,15 +8,15 @@
 #define mozilla_dom_HTMLStyleElement_h
 
 #include "mozilla/Attributes.h"
+#include "mozilla/dom/LinkStyle.h"
 #include "nsGenericHTMLElement.h"
-#include "nsStyleLinkElement.h"
 #include "nsStubMutationObserver.h"
 
 namespace mozilla {
 namespace dom {
 
 class HTMLStyleElement final : public nsGenericHTMLElement,
-                               public nsStyleLinkElement,
+                               public LinkStyle,
                                public nsStubMutationObserver {
  public:
   explicit HTMLStyleElement(
@@ -38,10 +38,8 @@ class HTMLStyleElement final : public nsGenericHTMLElement,
                                       nsIPrincipal* aSubjectPrincipal,
                                       mozilla::ErrorResult& aError) override;
 
-  virtual nsresult BindToTree(Document* aDocument, nsIContent* aParent,
-                              nsIContent* aBindingParent) override;
-  virtual void UnbindFromTree(bool aDeep = true,
-                              bool aNullParent = true) override;
+  virtual nsresult BindToTree(BindContext&, nsINode& aParent) override;
+  virtual void UnbindFromTree(bool aNullParent = true) override;
   virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
                                 const nsAttrValue* aValue,
                                 const nsAttrValue* aOldValue,
@@ -73,6 +71,8 @@ class HTMLStyleElement final : public nsGenericHTMLElement,
  protected:
   virtual ~HTMLStyleElement();
 
+  nsIContent& AsContent() final { return *this; }
+  const LinkStyle* AsLinkStyle() const final { return this; }
   Maybe<SheetInfo> GetStyleSheetInfo() final;
 
   /**

@@ -18,6 +18,7 @@
 #include "Http2HuffmanOutgoing.h"
 #include "mozilla/StaticPtr.h"
 #include "nsCharSeparatedTokenizer.h"
+#include "nsIMemoryReporter.h"
 #include "nsHttpHandler.h"
 
 namespace mozilla {
@@ -544,7 +545,7 @@ nsresult Http2Decompressor::OutputHeader(const nsACString& name,
 
   // Status comes first
   if (name.EqualsLiteral(":status")) {
-    nsAutoCString status(NS_LITERAL_CSTRING("HTTP/2.0 "));
+    nsAutoCString status(NS_LITERAL_CSTRING("HTTP/2 "));
     status.Append(value);
     status.AppendLiteral("\r\n");
     mOutput->Insert(status, 0);

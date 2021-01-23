@@ -13,18 +13,22 @@ using namespace mozilla;
 #include <CoreFoundation/CoreFoundation.h>
 #include <LocalAuthentication/LocalAuthentication.h>
 
-nsresult ReauthenticateUserMacOS(const nsACString& aPrompt,
-                                 /* out */ bool& aReauthenticated) {
+static const int32_t kPasswordNotSetErrorCode = -1000;
+
+nsresult ReauthenticateUserMacOS(const nsAString& aPrompt,
+                                 /* out */ bool& aReauthenticated,
+                                 /* out */ bool& aIsBlankPassword) {
   // The idea here is that we ask to be authorized to unlock the user's session.
   // This should cause a prompt to come up for the user asking them for their
   // password. If they correctly enter it, we'll set aReauthenticated to true.
 
   LAContext* context = [[LAContext alloc] init];
-  NSString* prompt = nsCocoaUtils::ToNSString(NS_ConvertUTF8toUTF16(aPrompt));
+  NSString* prompt = nsCocoaUtils::ToNSString(aPrompt);
 
   dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 
-  __block BOOL biometricSuccess;  // mark variable r/w across the block
+  __block BOOL biometricSuccess = NO;     // mark variable r/w across the block
+  __block BOOL errorPasswordNotSet = NO;  // mark variable r/w across the block
 
   // Note: This is an async callback in an already-async Promise chain.
   [context evaluatePolicy:LAPolicyDeviceOwnerAuthentication
@@ -34,8 +38,10 @@ nsresult ReauthenticateUserMacOS(const nsACString& aPrompt,
                         // error is not particularly useful in this context, and we have no
                         // mechanism to really return it. We could use it to set the nsresult,
                         // but this is a best-effort mechanism and there's no particular case for
-                        // propagating up XPCOM.
-                        biometricSuccess = success;
+                        // propagating up XPCOM. The one exception being a user account that
+                        // has no passcode set, which we handle below.
+                        errorPasswordNotSet = error && [error code] == kPasswordNotSetErrorCode;
+                        biometricSuccess = success || errorPasswordNotSet;
                         dispatch_semaphore_signal(sema);
                       });
                     }];
@@ -47,6 +53,7 @@ nsresult ReauthenticateUserMacOS(const nsACString& aPrompt,
   sema = NULL;
 
   aReauthenticated = biometricSuccess;
+  aIsBlankPassword = errorPasswordNotSet;
 
   [context release];
   return NS_OK;

@@ -6,10 +6,9 @@
 #ifndef NS_HTML5_PARSER
 #define NS_HTML5_PARSER
 
-#include "nsAutoPtr.h"
+#include "mozilla/UniquePtr.h"
 #include "nsIParser.h"
 #include "nsDeque.h"
-#include "nsIURL.h"
 #include "nsParserCIID.h"
 #include "nsITokenizer.h"
 #include "nsIContentSink.h"
@@ -18,8 +17,6 @@
 #include "nsCOMArray.h"
 #include "nsContentSink.h"
 #include "nsCycleCollectionParticipant.h"
-#include "nsIInputStream.h"
-#include "nsDetectionConfident.h"
 #include "nsHtml5OwningUTF16Buffer.h"
 #include "nsHtml5TreeOpExecutor.h"
 #include "nsHtml5StreamParser.h"
@@ -135,13 +132,9 @@ class nsHtml5Parser final : public nsIParser, public nsSupportsWeakReference {
    *
    * @param   aSourceBuffer the argument of document.write (empty for .close())
    * @param   aKey a key unique to the script element that caused this call
-   * @param   aContentType "text/html" for HTML mode, else text/plain mode
    * @param   aLastCall true if .close() false if .write()
-   * @param   aMode ignored (for interface compat only)
    */
-  nsresult Parse(const nsAString& aSourceBuffer, void* aKey,
-                 const nsACString& aContentType, bool aLastCall,
-                 nsDTDMode aMode = eDTDMode_autodetect);
+  nsresult Parse(const nsAString& aSourceBuffer, void* aKey, bool aLastCall);
 
   /**
    * Stops the parser prematurely
@@ -221,7 +214,7 @@ class nsHtml5Parser final : public nsIParser, public nsSupportsWeakReference {
   virtual nsresult Initialize(mozilla::dom::Document* aDoc, nsIURI* aURI,
                               nsISupports* aContainer, nsIChannel* aChannel);
 
-  inline nsHtml5Tokenizer* GetTokenizer() { return mTokenizer; }
+  inline nsHtml5Tokenizer* GetTokenizer() { return mTokenizer.get(); }
 
   void InitializeDocWriteParserState(nsAHtml5TreeBuilderState* aState,
                                      int32_t aLine);
@@ -253,6 +246,13 @@ class nsHtml5Parser final : public nsIParser, public nsSupportsWeakReference {
    * Parse until pending data is exhausted or a script blocks the parser
    */
   nsresult ParseUntilBlocked();
+
+  /**
+   * Start our executor.  This is meant to be used from document.open() _only_
+   * and does some work similar to what nsHtml5StreamParser::OnStartRequest does
+   * for normal parses.
+   */
+  nsresult StartExecutor();
 
  private:
   virtual ~nsHtml5Parser();
@@ -328,22 +328,22 @@ class nsHtml5Parser final : public nsIParser, public nsSupportsWeakReference {
   /**
    * The HTML5 tree builder
    */
-  const nsAutoPtr<nsHtml5TreeBuilder> mTreeBuilder;
+  const mozilla::UniquePtr<nsHtml5TreeBuilder> mTreeBuilder;
 
   /**
    * The HTML5 tokenizer
    */
-  const nsAutoPtr<nsHtml5Tokenizer> mTokenizer;
+  const mozilla::UniquePtr<nsHtml5Tokenizer> mTokenizer;
 
   /**
    * Another HTML5 tree builder for preloading document.written content.
    */
-  nsAutoPtr<nsHtml5TreeBuilder> mDocWriteSpeculativeTreeBuilder;
+  mozilla::UniquePtr<nsHtml5TreeBuilder> mDocWriteSpeculativeTreeBuilder;
 
   /**
    * Another HTML5 tokenizer for preloading document.written content.
    */
-  nsAutoPtr<nsHtml5Tokenizer> mDocWriteSpeculativeTokenizer;
+  mozilla::UniquePtr<nsHtml5Tokenizer> mDocWriteSpeculativeTokenizer;
 
   /**
    * The stream listener holding the stream parser.

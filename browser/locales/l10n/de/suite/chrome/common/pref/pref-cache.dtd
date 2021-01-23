@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-cache.xul -->
+
+<!--LOCALIZATION NOTE : FILE Cache prefs dialog -->
+<!ENTITY pref.cache.title                "Cache">
+<!ENTITY pref.cache.caption              "Cache-Optionen setzen">
+<!ENTITY cachePara                       "Der Cache behält Kopien häufig besuchter Webseiten auf Ihrer Festplatte. (Wenn Sie &quot;Neu laden&quot; klicken, wird immer die aktuellste Version einer Seite angezeigt.)">
+<!ENTITY cacheCheck.label                "Größe des Caches von &brandShortName; verwalten lassen">
+<!ENTITY cacheCheck.accesskey            "G">
+<!ENTITY diskCacheUpTo.label             "Bis zu">
+<!ENTITY diskCacheUpTo.accesskey         "B">
+<!ENTITY spaceMbytes                     "MB am Datenträger für den Cache verwenden">
+<!ENTITY diskCacheFolder.label           "Cache-Ordner:">
+<!ENTITY clearDiskCache.label            "Cache löschen">
+<!ENTITY clearDiskCache.accesskey        "l">
+<!ENTITY chooseDiskCacheFolder.label     "Ordner wählen…">
+<!ENTITY chooseDiskCacheFolder.accesskey "O">
+<!ENTITY diskCacheFolderExplanation      "Cache-Dateien werden in einem Unterordner namens &quot;Cache&quot; im angegebenen Ordner gespeichert. Starten Sie &brandShortName; neu, um diese Änderungen zu aktivieren.">
+<!ENTITY docCache.label                  "Vergleichen der Seite im Cache mit jener am Netzwerk:">
+<!ENTITY docCache.accesskey              "e">
+<!ENTITY checkOncePerSession.label       "Ein Mal pro Sitzung">
+<!ENTITY checkEveryTime.label            "Bei jedem Besuch der Seite">
+<!ENTITY checkNever.label                "Nie">
+<!ENTITY checkAutomatically.label        "Wenn die Seite veraltet ist">
+
+<!ENTITY prefetchTitle.label             "Links im Voraus laden:">
+<!ENTITY enablePrefetch.label            "Webseiten im Voraus laden, wenn nichts zu tun ist, sodass Links in Webseiten, die für das Laden in Voraus bestimmt sind, schneller geladen werden können">
+<!ENTITY enablePrefetch.accesskey        "V">

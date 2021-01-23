@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "כדי לחסוך שטח דיסק, אל תוריד:">
+<!ENTITY doNotDownloadNntp.label "כדי לשמור שטח דיסק, אל תוריד לשימוש לא־מקוון:">
+<!ENTITY doNotDownloadImap.label "כדי לשמור שטח דיסק, הורדת הודעות מהשרת ושמירת עותקים מקומיים לשימוש לא מקוון יכולים להיות מוגבלים לפי גיל או גודל הודעה">
+<!ENTITY allFoldersOffline2.accesskey "ש">
+<!ENTITY offlineNotDownload.label "הודעות גדולות מאשר">
+<!ENTITY offlineNotDownload.accesskey "ג">
+<!ENTITY autosyncNotDownload.label "אל תוריד הודעות גדולות מ־">
+<!ENTITY autosyncNotDownload.accesskey "ג">
+<!ENTITY kb.label "ק״ב">
+<!ENTITY daysOld.label "ימים">
+<!ENTITY message.label "ההודעות האחרונות">
+<!ENTITY nntpNotDownloadRead.label "הודעות שנקראו">
+<!ENTITY nntpNotDownloadRead.accesskey "נ">
+<!ENTITY nntpDownloadMsg.label "הודעות מלפני יותר מאשר">
+<!ENTITY nntpDownloadMsg.accesskey "י">
+<!ENTITY retentionCleanup.label "כדי להשיג שטח דיסק, הודעות ישנות יכולות להימחק לצמיתות">
+<!ENTITY retentionCleanupImap.label "כדי לשמר שטח דיסק, הודעות ישנות יכולות להימחק לצמיתות, גם העותק המקומי וגם המקור על השרת המרוחק.">
+<!ENTITY retentionCleanupPop.label "כדי לשמר שטח דיסק, הודעות ישנות יכולות להימחק לצמיתות, כולל הודעות המקור בשרת המרוחק.">
+<!ENTITY retentionKeepMsg.label "מחק הודעות מלפני">
+<!ENTITY retentionKeepMsg.accesskey "ל">
+<!ENTITY retentionKeepAll.label "אל תמחק שום הודעה">
+<!ENTITY retentionKeepAll.accesskey "ש">
+<!ENTITY retentionKeepRecent.label "מחק הכול מלבד">
+<!ENTITY retentionKeepRecent.accesskey "מ">
+<!ENTITY retentionApplyToFlagged.label "שמור תמיד הודעות מסומנות">
+<!ENTITY retentionApplyToFlagged.accesskey "ס">
+<!ENTITY nntpRemoveMsgBody.label "הסר גוף בהודעות בנות יותר מאשר">
+<!ENTITY nntpRemoveMsgBody.accesskey "י">
+<!ENTITY offlineSelectNntp.label "בחר קבוצות דיון לשימוש לא־מקוון">
+<!ENTITY offlineSelectNntp.accesskey "ב">
+<!ENTITY offlineImapAdvancedOffline.label "מתקדם…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "מ">
+<!ENTITY syncGroupTitle.label "סנכרון הודעות">
+<!ENTITY diskspaceGroupTitle.label "שטח דיסק">
+
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+<!ENTITY allAutosync.label               "סנכרן את כל ההודעות מקומית ללא התחשבות בגיל">
+<!ENTITY allAutosync.accesskey           "ל">
+<!ENTITY ageAutosyncBefore.label         "סנכרן הודעות מ־">
+<!ENTITY ageAutosync.accesskey           "ס">
+<!ENTITY ageAutosyncMiddle.label         "">
+<!ENTITY dayAgeInterval.label            "ימים">
+<!ENTITY weekAgeInterval.label           "שבועות">
+<!ENTITY monthAgeInterval.label          "חודשים">
+<!ENTITY yearAgeInterval.label           "שנים">
+<!ENTITY ageAutosyncAfter.label          "">

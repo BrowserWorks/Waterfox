@@ -3,27 +3,26 @@
 
 const SUGGESTIONS_ENGINE_NAME = "engine-suggestions.xml";
 
+/**
+ * Tests search engine aliases. See
+ * browser/components/urlbar/tests/browser/browser_tokenAlias.js for tests of
+ * the token alias list (i.e. showing all aliased engines on a "@" query).
+ */
 // Basic test that uses two engines, a GET engine and a POST engine, neither
 // providing search suggestions.
 add_task(async function basicGetAndPost() {
   // Note that head_autocomplete.js has already added a MozSearch engine.
   // Here we add another engine with a search alias.
-  await Services.search.addEngineWithDetails(
-    "AliasedGETMozSearch",
-    "",
-    "get",
-    "",
-    "GET",
-    "http://s.example.com/search"
-  );
-  await Services.search.addEngineWithDetails(
-    "AliasedPOSTMozSearch",
-    "",
-    "post",
-    "",
-    "POST",
-    "http://s.example.com/search"
-  );
+  await Services.search.addEngineWithDetails("AliasedGETMozSearch", {
+    alias: "get",
+    method: "GET",
+    template: "http://s.example.com/search",
+  });
+  await Services.search.addEngineWithDetails("AliasedPOSTMozSearch", {
+    alias: "post",
+    method: "POST",
+    template: "http://s.example.com/search",
+  });
 
   await PlacesTestUtils.addVisits("http://s.example.com/search?q=firefox");
   let historyMatch = {
@@ -137,155 +136,5 @@ add_task(async function basicGetAndPost() {
       });
     }
   }
-
-  await cleanup();
-});
-
-// Uses an engine that provides search suggestions.
-add_task(async function engineWithSuggestions() {
-  let engine = await addTestSuggestionsEngine();
-
-  // History matches should not appear with @ aliases, so this visit/match
-  // should not appear when searching with the @ alias below.
-  let historyTitle = "fire";
-  await PlacesTestUtils.addVisits({
-    uri: engine.searchForm,
-    title: historyTitle,
-  });
-  let historyMatch = {
-    value: "http://localhost:9000/search",
-    comment: historyTitle,
-  };
-
-  // Search in both a non-private and private context.
-  for (let private of [false, true]) {
-    let searchParam = "enable-actions";
-    if (private) {
-      searchParam += " private-window";
-    }
-
-    // Use a normal alias and then one with an "@".  For the @ alias, the only
-    // matches should be the search suggestions -- no history matches.
-    for (let alias of ["moz", "@moz"]) {
-      engine.alias = alias;
-      Assert.equal(engine.alias, alias);
-
-      // Search for "alias"
-      let expectedMatches = [
-        makeSearchMatch(`${alias} `, {
-          engineName: SUGGESTIONS_ENGINE_NAME,
-          alias,
-          searchQuery: "",
-          heuristic: true,
-        }),
-      ];
-      if (alias[0] != "@") {
-        expectedMatches.push(historyMatch);
-      }
-      await check_autocomplete({
-        search: alias,
-        searchParam,
-        matches: expectedMatches,
-      });
-
-      // Search for "alias " (trailing space)
-      expectedMatches = [
-        makeSearchMatch(`${alias} `, {
-          engineName: SUGGESTIONS_ENGINE_NAME,
-          alias,
-          searchQuery: "",
-          heuristic: true,
-        }),
-      ];
-      if (alias[0] != "@") {
-        expectedMatches.push(historyMatch);
-      }
-      await check_autocomplete({
-        search: `${alias} `,
-        searchParam,
-        matches: expectedMatches,
-      });
-
-      // Search for "alias historyTitle" -- Include the history title so that
-      // the history result is eligible to be shown.  Whether or not it's
-      // actually shown depends on the alias: If it's an @ alias, it shouldn't
-      // be shown.
-      expectedMatches = [
-        makeSearchMatch(`${alias} ${historyTitle}`, {
-          engineName: SUGGESTIONS_ENGINE_NAME,
-          alias,
-          searchQuery: historyTitle,
-          heuristic: true,
-        }),
-      ];
-      // Suggestions should be shown in a non-private context but not in a
-      // private context.
-      if (!private) {
-        expectedMatches.push(
-          makeSearchMatch(`${alias} ${historyTitle} foo`, {
-            engineName: SUGGESTIONS_ENGINE_NAME,
-            alias,
-            searchQuery: historyTitle,
-            searchSuggestion: `${historyTitle} foo`,
-          }),
-          makeSearchMatch(`${alias} ${historyTitle} bar`, {
-            engineName: SUGGESTIONS_ENGINE_NAME,
-            alias,
-            searchQuery: historyTitle,
-            searchSuggestion: `${historyTitle} bar`,
-          })
-        );
-      }
-      if (alias[0] != "@") {
-        expectedMatches.push(historyMatch);
-      }
-      await check_autocomplete({
-        search: `${alias} ${historyTitle}`,
-        searchParam,
-        matches: expectedMatches,
-      });
-    }
-  }
-
-  engine.alias = "";
-  await cleanup();
-});
-
-// When the search is simply "@", the results should be a list of all the "@"
-// alias engines.
-add_task(async function tokenAliasEngines() {
-  let tokenEngines = [];
-  for (let engine of await Services.search.getEngines()) {
-    let aliases = [];
-    if (engine.alias) {
-      aliases.push(engine.alias);
-    }
-    aliases.push(...engine.wrappedJSObject._internalAliases);
-    let tokenAliases = aliases.filter(a => a.startsWith("@"));
-    if (tokenAliases.length) {
-      tokenEngines.push({ engine, tokenAliases });
-    }
-  }
-  if (!tokenEngines.length) {
-    Assert.ok(true, "No token alias engines, skipping task.");
-    return;
-  }
-  info(
-    "Got token alias engines: " + tokenEngines.map(({ engine }) => engine.name)
-  );
-
-  await check_autocomplete({
-    search: "@",
-    searchParam: "enable-actions",
-    matches: tokenEngines.map(({ engine, tokenAliases }) => {
-      let alias = tokenAliases[0];
-      return makeSearchMatch(alias + " ", {
-        engineName: engine.name,
-        alias,
-        searchQuery: "",
-      });
-    }),
-  });
-
   await cleanup();
 });

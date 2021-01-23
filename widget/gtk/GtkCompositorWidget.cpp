@@ -27,9 +27,10 @@ GtkCompositorWidget::GtkCompositorWidget(
   }
 
 #ifdef MOZ_WAYLAND
-  if (!mXDisplay) {
-    MOZ_RELEASE_ASSERT(
-        aWindow, "We're running on Wayland and but without valid nsWindow.");
+  if (!aInitData.IsX11Display()) {
+    if (!aWindow) {
+      NS_WARNING("GtkCompositorWidget: We're missing nsWindow!");
+    }
     mProvider.Initialize(aWindow);
   } else
 #endif
@@ -74,7 +75,7 @@ GtkCompositorWidget::StartRemoteDrawingInRegion(
 }
 
 void GtkCompositorWidget::EndRemoteDrawingInRegion(
-    gfx::DrawTarget* aDrawTarget, LayoutDeviceIntRegion& aInvalidRegion) {
+    gfx::DrawTarget* aDrawTarget, const LayoutDeviceIntRegion& aInvalidRegion) {
   mProvider.EndRemoteDrawingInRegion(aDrawTarget, aInvalidRegion);
 }
 
@@ -85,18 +86,6 @@ void GtkCompositorWidget::NotifyClientSizeChanged(
   mClientSize = aClientSize;
 }
 
-#ifdef MOZ_WAYLAND
-void GtkCompositorWidget::RequestsUpdatingEGLSurface() {
-  mWaylandRequestsUpdatingEGLSurface = true;
-}
-
-bool GtkCompositorWidget::WaylandRequestsUpdatingEGLSurface() {
-  bool ret = mWaylandRequestsUpdatingEGLSurface;
-  mWaylandRequestsUpdatingEGLSurface = false;
-  return ret;
-}
-#endif
-
 LayoutDeviceIntSize GtkCompositorWidget::GetClientSize() { return mClientSize; }
 
 uintptr_t GtkCompositorWidget::GetWidgetKey() {
@@ -104,8 +93,19 @@ uintptr_t GtkCompositorWidget::GetWidgetKey() {
 }
 
 EGLNativeWindowType GtkCompositorWidget::GetEGLNativeWindow() {
-  return (EGLNativeWindowType)mWidget->GetNativeData(NS_NATIVE_EGL_WINDOW);
+  return mWidget
+             ? (EGLNativeWindowType)mWidget->GetNativeData(NS_NATIVE_EGL_WINDOW)
+             : nullptr;
 }
+
+#ifdef MOZ_WAYLAND
+void GtkCompositorWidget::SetEGLNativeWindowSize(
+    const LayoutDeviceIntSize& aEGLWindowSize) {
+  if (mWidget) {
+    mWidget->SetEGLNativeWindowSize(aEGLWindowSize);
+  }
+}
+#endif
 
 }  // namespace widget
 }  // namespace mozilla

@@ -5,12 +5,16 @@
 # and do not need to be listed here. Their external dependencies are vendored
 # into `third_party/rust` by `mach vendor rust`.
 members = [
+  "js/rust",
   "js/src",
+  "js/src/frontend/smoosh",
+  "js/src/frontend/binast", # Code generator.
   "js/src/rust",
   "js/src/wasm/cranelift",
-  "js/rust",
-  "js/src/frontend/binast", # Code generator.
+  "netwerk/test/http3server",
+  "security/manager/ssl/osclientcerts",
   "testing/geckodriver",
+  "toolkit/components/updateagent",
   "toolkit/crashreporter/rust",
   "toolkit/library/gtest/rust",
   "toolkit/library/rust/",
@@ -19,12 +23,16 @@ members = [
 # Excluded crates may be built as dependencies, but won't be considered members
 # of the workspace and their dev-dependencies won't be included.
 exclude = [
+  # Excluded because it's for a toolchain task
+  "build/liblowercase",
+
   # Exclude third-party code vendored into mozilla-central.
   "servo",
   "third_party/rust",
 
   # Excluded because these crates have their own Cargo workspaces so they can't
   # be included in the top-level one.
+  "gfx/wgpu",
   "gfx/wr",
   "media/audioipc",
   "media/cubeb-rs",
@@ -35,8 +43,9 @@ exclude = [
   "gfx/webrender_bindings",
   "media/mp4parse-rust/mp4parse",
   "media/mp4parse-rust/mp4parse_capi",
-  "media/mp4parse-rust/mp4parse_fallible",
   "xpcom/rust/gkrust_utils",
+  "tools/lint/test/files/clippy",
+  "tools/fuzzing/rust",
 ]
 
 # Explicitly specify what our profiles use.  The opt-level setting here is
@@ -54,18 +63,21 @@ opt-level = 2
 rpath = false
 debug-assertions = false
 panic = "abort"
-codegen-units = 1
 
 [patch.crates-io]
 libudev-sys = { path = "dom/webauthn/libudev-sys" }
-serde_derive = { git = "https://github.com/servo/serde", branch = "deserialize_from_enums10" }
-winapi = { git = "https://github.com/froydnj/winapi-rs", branch = "aarch64" }
-packed_simd = { git = "https://github.com/hsivonen/packed_simd", branch = "rust_1_32" }
+packed_simd = { git = "https://github.com/hsivonen/packed_simd", rev="0917fe780032a6bbb23d71be545f9c1834128d75" }
+rlbox_lucet_sandbox = { git = "https://github.com/PLSysSec/rlbox_lucet_sandbox/", rev="d510da5999a744c563b0acd18056069d1698273f" }
+nix = { git = "https://github.com/shravanrn/nix/", branch = "r0.13.1", rev="4af6c367603869a30fddb5ffb0aba2b9477ba92e" }
+spirv_cross = { git = "https://github.com/kvark/spirv_cross", branch = "wgpu3", rev = "20191ad2f370afd6d247edcb9ff9da32d3bedb9c" }
+# failure's backtrace feature might break our builds, see bug 1608157.
+failure = { git = "https://github.com/badboy/failure", rev = "64af847bc5fdcb6d2438bec8a6030812a80519a5" }
+failure_derive = { git = "https://github.com/badboy/failure", rev = "64af847bc5fdcb6d2438bec8a6030812a80519a5" }
 
 [patch.crates-io.cranelift-codegen]
-git = "https://github.com/CraneStation/Cranelift"
-rev = "cc216b46b35a797d03c0f3e8b16a2096f1c6db61"
+git = "https://github.com/bytecodealliance/wasmtime"
+rev = "b7cfd39b531680217537cfcf5294a22077a0a58d"
 
 [patch.crates-io.cranelift-wasm]
-git = "https://github.com/CraneStation/Cranelift"
-rev = "cc216b46b35a797d03c0f3e8b16a2096f1c6db61"
+git = "https://github.com/bytecodealliance/wasmtime"
+rev = "b7cfd39b531680217537cfcf5294a22077a0a58d"

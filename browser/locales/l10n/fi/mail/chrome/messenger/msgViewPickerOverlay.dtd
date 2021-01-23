@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgViewPickerOverlay.dtd UI for showing various views on a folder -->
+
+<!ENTITY viewPicker.label  "Näytä:">
+<!ENTITY viewPicker.accesskey  "y">
+<!ENTITY viewAll.label "Kaikki">
+<!ENTITY viewAll.accesskey "K">
+<!ENTITY viewUnread.label "Lukematta">
+<!ENTITY viewUnread.accesskey "L">
+<!ENTITY viewNotDeleted.label "Ei poistettu">
+<!ENTITY viewNotDeleted.accesskey "E">
+<!ENTITY viewTags.label "Tunnukset">
+<!ENTITY viewTags.accesskey "T">
+<!ENTITY viewCustomViews.label "Omat näkymät">
+<!ENTITY viewCustomViews.accesskey "O">
+<!ENTITY viewVirtualFolder.label "Tallenna näkymä kansiona…">
+<!ENTITY viewVirtualFolder.accesskey "a">
+<!ENTITY viewCustomizeView.label "Muokkaa…">
+<!ENTITY viewCustomizeView.accesskey "M">

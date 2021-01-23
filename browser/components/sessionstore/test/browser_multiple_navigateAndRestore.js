@@ -18,7 +18,7 @@ add_task(async function() {
   BrowserTestUtils.loadURI(browser, PAGE_1);
   browser.stop();
   BrowserTestUtils.loadURI(browser, PAGE_2);
-  await BrowserTestUtils.browserLoaded(browser);
+  await BrowserTestUtils.browserLoaded(browser, false, PAGE_2);
 
   ok(browser.isRemoteBrowser, "Should have switched remoteness");
   await TabStateFlusher.flush(browser);
@@ -32,7 +32,7 @@ add_task(async function() {
     "Should have PAGE_2 as the browser currentURI"
   );
 
-  await ContentTask.spawn(browser, PAGE_2, async function(expectedURL) {
+  await SpecialPowers.spawn(browser, [PAGE_2], async function(expectedURL) {
     docShell.QueryInterface(Ci.nsIWebNavigation);
     Assert.equal(
       docShell.currentURI.spec,

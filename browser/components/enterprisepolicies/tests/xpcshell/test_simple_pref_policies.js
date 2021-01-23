@@ -151,6 +151,10 @@ const POLICIES_TESTS = [
           SPNEGO: true,
           NTLM: true,
         },
+        AllowProxies: {
+          SPNEGO: false,
+          NTLM: false,
+        },
         PrivateBrowsing: true,
         Locked: false,
       },
@@ -161,6 +165,8 @@ const POLICIES_TESTS = [
       "network.automatic-ntlm-auth.trusted-uris": "a.com, b.com",
       "network.automatic-ntlm-auth.allow-non-fqdn": true,
       "network.negotiate-auth.allow-non-fqdn": true,
+      "network.automatic-ntlm-auth.allow-proxies": false,
+      "network.negotiate-auth.allow-proxies": false,
       "network.auth.private-browsing-sso": true,
     },
   },
@@ -568,6 +574,18 @@ const POLICIES_TESTS = [
   {
     policies: {
       UserMessaging: {
+        WhatsNew: false,
+        Locked: true,
+      },
+    },
+    lockedPrefs: {
+      "browser.messaging-system.whatsNewPanel.enabled": false,
+    },
+  },
+
+  {
+    policies: {
+      UserMessaging: {
         ExtensionRecommendations: false,
       },
     },
@@ -628,6 +646,32 @@ const POLICIES_TESTS = [
     },
   },
 
+  // POLICY: LegacySameSiteCookieBehaviorEnabled
+
+  {
+    policies: {
+      LegacySameSiteCookieBehaviorEnabled: true,
+    },
+    unlockedPrefs: {
+      "network.cookie.sameSite.laxByDefault": false,
+    },
+  },
+
+  // POLICY: LegacySameSiteCookieBehaviorEnabledForDomainList
+
+  {
+    policies: {
+      LegacySameSiteCookieBehaviorEnabledForDomainList: [
+        "example.com",
+        "example.org",
+      ],
+    },
+    unlockedPrefs: {
+      "network.cookie.sameSite.laxByDefault.disabledHosts":
+        "example.com,example.org",
+    },
+  },
+
   // POLICY: EncryptedMediaExtensions
 
   {
@@ -639,6 +683,35 @@ const POLICIES_TESTS = [
     },
     lockedPrefs: {
       "media.eme.enabled": false,
+    },
+  },
+
+  // POLICY: PDFjs
+
+  {
+    policies: {
+      PDFjs: {
+        Enabled: false,
+        EnablePermissions: true,
+      },
+    },
+    lockedPrefs: {
+      "pdfjs.disabled": true,
+      "pdfjs.enablePermissions": true,
+    },
+  },
+
+  // POLICY: PictureInPicture
+
+  {
+    policies: {
+      PictureInPicture: {
+        Enabled: false,
+        Locked: true,
+      },
+    },
+    lockedPrefs: {
+      "media.videocontrols.picture-in-picture.video-toggle.enabled": false,
     },
   },
 
@@ -655,6 +728,8 @@ const POLICIES_TESTS = [
         TLS_RSA_WITH_AES_128_CBC_SHA: false,
         TLS_RSA_WITH_AES_256_CBC_SHA: false,
         TLS_RSA_WITH_3DES_EDE_CBC_SHA: false,
+        TLS_RSA_WITH_AES_128_GCM_SHA256: false,
+        TLS_RSA_WITH_AES_256_GCM_SHA384: false,
       },
     },
     lockedPrefs: {
@@ -667,6 +742,8 @@ const POLICIES_TESTS = [
       "security.ssl3.rsa_aes_128_sha": true,
       "security.ssl3.rsa_aes_256_sha": true,
       "security.ssl3.rsa_des_ede3_sha": true,
+      "security.ssl3.rsa_aes_128_gcm_sha256": true,
+      "security.ssl3.rsa_aes_256_gcm_sha384": true,
     },
   },
 
@@ -682,6 +759,8 @@ const POLICIES_TESTS = [
         TLS_RSA_WITH_AES_128_CBC_SHA: true,
         TLS_RSA_WITH_AES_256_CBC_SHA: true,
         TLS_RSA_WITH_3DES_EDE_CBC_SHA: true,
+        TLS_RSA_WITH_AES_128_GCM_SHA256: true,
+        TLS_RSA_WITH_AES_256_GCM_SHA384: true,
       },
     },
     lockedPrefs: {
@@ -694,6 +773,8 @@ const POLICIES_TESTS = [
       "security.ssl3.rsa_aes_128_sha": false,
       "security.ssl3.rsa_aes_256_sha": false,
       "security.ssl3.rsa_des_ede3_sha": false,
+      "security.ssl3.rsa_aes_128_gcm_sha256": false,
+      "security.ssl3.rsa_aes_256_gcm_sha384": false,
     },
   },
 ];

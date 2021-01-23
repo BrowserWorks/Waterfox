@@ -10,7 +10,6 @@
 #include "mozilla/TelemetryProcessEnums.h"
 #include "mozilla/Unused.h"
 #include "nsJSUtils.h"  // nsAutoJSString
-#include "nsITelemetry.h"
 #include "nsThreadUtils.h"
 #include "TelemetryFixture.h"
 #include "TelemetryTestHelpers.h"
@@ -61,6 +60,40 @@ TEST_F(TelemetryTestFixture, ScalarUnsigned) {
   GetScalarsSnapshot(false, cx.GetJSContext(), &scalarsSnapshot);
   CheckUintScalar("telemetry.test.unsigned_int_kind", cx.GetJSContext(),
                   scalarsSnapshot, kExpectedUintMaximum);
+}
+
+// Test that the AutoScalarTimer records a proper uint32_t value to a
+// scalar once it goes out of scope.
+TEST_F(TelemetryTestFixture, AutoScalarTimer) {
+  AutoJSContextWithGlobal cx(mCleanGlobal);
+
+  // Make sure we don't get scalars from other tests.
+  Unused << mTelemetry->ClearScalars();
+  {
+    Telemetry::AutoScalarTimer<
+        Telemetry::ScalarID::TELEMETRY_TEST_UNSIGNED_INT_KIND>
+        timer;
+  }
+
+  const char* kScalarName = "telemetry.test.unsigned_int_kind";
+
+  // Check that there's a recorded value that is greater than 0. Since
+  // this is a timer, we'll not check the non-deterministic value - just
+  // that it exists.
+  JS::RootedValue scalarsSnapshot(cx.GetJSContext());
+  GetScalarsSnapshot(false, cx.GetJSContext(), &scalarsSnapshot);
+
+  // Validate the value of the test scalar.
+  JS::RootedValue value(cx.GetJSContext());
+  JS::RootedObject scalarObj(cx.GetJSContext(), &scalarsSnapshot.toObject());
+  ASSERT_TRUE(JS_GetProperty(cx.GetJSContext(), scalarObj, kScalarName, &value))
+  << "The test scalar must be reported.";
+
+  JS_GetProperty(cx.GetJSContext(), scalarObj, kScalarName, &value);
+  ASSERT_TRUE(value.isInt32())
+  << "The scalar value must be of the correct type.";
+  ASSERT_TRUE(value.toInt32() >= 0)
+  << "The uint scalar type must contain a value >= 0.";
 }
 
 // Test that we can properly write boolean scalars using the C++ API.
@@ -418,4 +451,43 @@ TEST_F(TelemetryTestFixture, WrongKeyedScalarOperator) {
                        cx.GetJSContext(), scalarsSnapshot, kExpectedUint);
   CheckKeyedBoolScalar("telemetry.test.keyed_boolean_kind", "key2",
                        cx.GetJSContext(), scalarsSnapshot, true);
+}
+
+TEST_F(TelemetryTestFixture, TestKeyedScalarAllowedKeys) {
+  AutoJSContextWithGlobal cx(mCleanGlobal);
+  // Make sure we don't get scalars from other tests.
+  Unused << mTelemetry->ClearScalars();
+
+  const uint32_t kExpectedUint = 1172017;
+
+  Telemetry::ScalarSet(Telemetry::ScalarID::TELEMETRY_TEST_KEYED_WITH_KEYS,
+                       NS_LITERAL_STRING("only"), kExpectedUint);
+  Telemetry::ScalarSet(Telemetry::ScalarID::TELEMETRY_TEST_KEYED_WITH_KEYS,
+                       NS_LITERAL_STRING("meant"), kExpectedUint);
+  Telemetry::ScalarSet(Telemetry::ScalarID::TELEMETRY_TEST_KEYED_WITH_KEYS,
+                       NS_LITERAL_STRING("for"), kExpectedUint);
+  Telemetry::ScalarSet(Telemetry::ScalarID::TELEMETRY_TEST_KEYED_WITH_KEYS,
+                       NS_LITERAL_STRING("testing"), kExpectedUint);
+
+  Telemetry::ScalarSet(Telemetry::ScalarID::TELEMETRY_TEST_KEYED_WITH_KEYS,
+                       NS_LITERAL_STRING("invalid"), kExpectedUint);
+  Telemetry::ScalarSet(Telemetry::ScalarID::TELEMETRY_TEST_KEYED_WITH_KEYS,
+                       NS_LITERAL_STRING("not-valid"), kExpectedUint);
+
+  JS::RootedValue scalarsSnapshot(cx.GetJSContext());
+  GetScalarsSnapshot(true, cx.GetJSContext(), &scalarsSnapshot);
+  CheckKeyedUintScalar("telemetry.test.keyed_with_keys", "only",
+                       cx.GetJSContext(), scalarsSnapshot, kExpectedUint);
+  CheckKeyedUintScalar("telemetry.test.keyed_with_keys", "meant",
+                       cx.GetJSContext(), scalarsSnapshot, kExpectedUint);
+  CheckKeyedUintScalar("telemetry.test.keyed_with_keys", "for",
+                       cx.GetJSContext(), scalarsSnapshot, kExpectedUint);
+  CheckKeyedUintScalar("telemetry.test.keyed_with_keys", "testing",
+                       cx.GetJSContext(), scalarsSnapshot, kExpectedUint);
+  CheckNumberOfProperties("telemetry.test.keyed_with_keys", cx.GetJSContext(),
+                          scalarsSnapshot, 4);
+
+  CheckKeyedUintScalar("telemetry.keyed_scalars_unknown_keys",
+                       "telemetry.test.keyed_with_keys", cx.GetJSContext(),
+                       scalarsSnapshot, 2);
 }

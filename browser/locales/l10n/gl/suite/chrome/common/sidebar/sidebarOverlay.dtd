@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sidebar.panels.label           "Barra lateral">
+<!ENTITY sidebar.reload.label           "Recargar">
+<!ENTITY sidebar.reload.accesskey       "R">
+<!ENTITY sidebar.picker.label           "Lapelas">
+<!ENTITY sidebar.customize.label        "Personalizar barra lateral…">
+<!ENTITY sidebar.customize.accesskey    "P">
+<!ENTITY sidebar.hide.label             "Ocultar lapela">
+<!ENTITY sidebar.hide.accesskey         "l">
+<!ENTITY sidebar.switch.label           "Cambiar á lapela">
+<!ENTITY sidebar.switch.accesskey       "b">
+<!ENTITY sidebarCmd.label               "Barra lateral">
+<!ENTITY sidebarCmd.accesskey           "B">
+<!ENTITY sidebar.loading.label          "Cargando…">
+<!ENTITY sidebar.loadstopped.label      "Carga detida">
+<!ENTITY sidebar.loading.stop.label     "Deter">
+<!ENTITY sidebar.loading.stop.accesskey "D">
+
+<!ENTITY sidebar.no-panels.state     "Neste momento a barra lateral está baleira.">
+<!ENTITY sidebar.no-panels.add       'Pode engadir lapelas premendo no botón &quot;Lapelas&quot; que está enriba.'>
+<!ENTITY sidebar.no-panels.hide      'Se desexa ocultar por completo a barra lateral, prema no menú &quot;Ver&quot; da parte superior, e seleccione &quot;Barra lateral&quot; desde o submenú &quot;Mostrar/Ocultar&quot;.'>
+<!ENTITY sidebar.sbDirectory.label   "Cartafol da barra lateral…">
+
+<!ENTITY sidebar.pagenotfound.label  "Esta lapela non está dispoñíbel neste momento.">
+<!ENTITY sidebar.close.tooltip       "Pechar a barra lateral">
+<!ENTITY sidebar.open.tooltip        "Abrir a barra lateral">
+
+<!ENTITY sidebar.search.label         "Buscar">
+<!ENTITY sidebar.client-bookmarks.label     "Marcadores">
+<!ENTITY sidebar.client-history.label       "Historial">
+<!ENTITY sidebar.client-addressbook.label   "Axenda de enderezos">

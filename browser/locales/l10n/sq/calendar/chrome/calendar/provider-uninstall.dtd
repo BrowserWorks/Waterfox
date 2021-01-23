@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Çinstaloni një Furnizues">
+<!ENTITY providerUninstall.accept.label                    "Shpajtomë Prej të Përzgjedhurve">
+<!ENTITY providerUninstall.accept.accesskey                "S">
+<!ENTITY providerUninstall.cancel.label                    "Mbaje Shtesën">
+<!ENTITY providerUninstall.cancel.accesskey                "M">
+<!ENTITY providerUninstall.preName.label                   "Keni kërkuar që të çinstalohet ose çaktivizohet:">
+<!ENTITY providerUninstall.postName.label                  "Kjo do të shkaktojë çaktivizimin e kalendarëve më poshtë.">
+<!ENTITY providerUninstall.reinstallNote.label             "Hiq rastin kur keni në plan të instaloni sërish këtë furnizues, mund të zgjidhni shpajtimin nga kalendarë të këtij furnizuesi.">

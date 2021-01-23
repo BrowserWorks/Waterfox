@@ -1,23 +1,15 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-// This test is two fold:
-// a) if security.data_uri.unique_opaque_origin == false, then
-//    this tests that session restore component does restore the right
-//    content security policy with the document. (The policy being
-//    tested disallows inline scripts).
-// b) if security.data_uri.unique_opaque_origin == true, then
-//    this tests that data: URIs do not inherit the CSP from
-//    it's enclosing context.
+// This test tests that session restore component does restore the right
+// content security policy with the document. (The policy being tested
+// disallows inline scripts).
 
 add_task(async function test() {
   // allow top level data: URI navigations, otherwise clicking a data: link fails
   await SpecialPowers.pushPrefEnv({
     set: [["security.data_uri.block_toplevel_data_uri_navigations", false]],
   });
-  let dataURIPref = Services.prefs.getBoolPref(
-    "security.data_uri.unique_opaque_origin"
-  );
   // create a tab that has a CSP
   let testURL =
     "http://mochi.test:8888/browser/browser/components/sessionstore/test/browser_911547_sample.html";
@@ -35,38 +27,25 @@ add_task(async function test() {
   );
 
   let loadedPromise = promiseBrowserLoaded(browser);
-  await ContentTask.spawn(browser, null, function() {
+  await SpecialPowers.spawn(browser, [], function() {
     is(
       content.document.getElementById("test_id1").value,
       "id1_initial",
       "CSP should block the inline script that modifies test_id"
     );
-
-    // (a) if security.data_uri.unique_opaque_origin == false:
-    //     attempt to click a link to a data: URI (will inherit the CSP of
-    //     the origin document) and navigate to the data URI in the link.
-    // (b) if security.data_uri.unique_opaque_origin == true:
-    //     attempt to click a link to a data: URI (will *not* inherit the CSP of
-    //     the origin document) and navigate to the data URI in the link.
     content.document.getElementById("test_data_link").click();
   });
 
   await loadedPromise;
 
-  await ContentTask.spawn(browser, {dataURIPref}, function( {dataURIPref}) { // eslint-disable-line
-    if (dataURIPref) {
-      is(
-        content.document.getElementById("test_id2").value,
-        "id2_modified",
-        "data: URI should *not* inherit the CSP of the enclosing context"
-      );
-    } else {
-      is(
-        content.document.getElementById("test_id2").value,
-        "id2_initial",
-        "CSP should block the script loaded by the clicked data URI"
-      );
-    }
+  await SpecialPowers.spawn(browser, [], function() {
+    // eslint-disable-line
+    // the data: URI inherits the CSP and the inline script needs to be blocked
+    is(
+      content.document.getElementById("test_id2").value,
+      "id2_initial",
+      "CSP should block the script loaded by the clicked data URI"
+    );
   });
 
   // close the tab
@@ -77,20 +56,15 @@ add_task(async function test() {
   await promiseTabRestored(tab);
   browser = tab.linkedBrowser;
 
-  await ContentTask.spawn(browser, {dataURIPref}, function({dataURIPref}) { // eslint-disable-line
-    if (dataURIPref) {
-      is(
-        content.document.getElementById("test_id2").value,
-        "id2_modified",
-        "data: URI should *not* inherit the CSP of the enclosing context"
-      );
-    } else {
-      is(
-        content.document.getElementById("test_id2").value,
-        "id2_initial",
-        "CSP should block the script loaded by the clicked data URI after restore"
-      );
-    }
+  await SpecialPowers.spawn(browser, [], function() {
+    // eslint-disable-line
+    // the data: URI should be restored including the inherited CSP and the
+    // inline script should be blocked.
+    is(
+      content.document.getElementById("test_id2").value,
+      "id2_initial",
+      "CSP should block the script loaded by the clicked data URI after restore"
+    );
   });
 
   // clean up
@@ -99,7 +73,7 @@ add_task(async function test() {
 
 // injects an inline script element (with a text body)
 function injectInlineScript(browser, scriptText) {
-  return ContentTask.spawn(browser, scriptText, function(text) {
+  return SpecialPowers.spawn(browser, [scriptText], function(text) {
     let scriptElt = content.document.createElement("script");
     scriptElt.type = "text/javascript";
     scriptElt.text = text;

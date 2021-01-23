@@ -23,11 +23,6 @@ const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { MessageListener, MessagePort } = ChromeUtils.import(
   "resource://gre/modules/remotepagemanager/MessagePort.jsm"
 );
-ChromeUtils.defineModuleGetter(
-  this,
-  "FxAccounts",
-  "resource://gre/modules/FxAccounts.jsm"
-);
 
 /**
  * Creates a RemotePages object which listens for new remote pages of some
@@ -249,10 +244,6 @@ class ChromeMessagePort extends MessagePort {
 
   // Called when the content process is requesting some data.
   async handleRequest(name, data) {
-    if (name == "FxAccountsEndpoint") {
-      return FxAccounts.config.promiseEmailFirstURI(data);
-    }
-
     throw new Error(`Unknown request ${name}.`);
   }
 
@@ -262,6 +253,7 @@ class ChromeMessagePort extends MessagePort {
       target: this.publicPort,
       name: messagedata.name,
       data: messagedata.data,
+      browsingContextID: messagedata.browsingContextID,
     };
     this.listener.callListeners(message);
 

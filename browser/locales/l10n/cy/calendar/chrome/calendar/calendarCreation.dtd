@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "Creu Calendr Newydd" >
+<!ENTITY wizard.label             "Creu calendr newydd" >
+<!ENTITY wizard.description       "Lleoli eich calendr" >
+
+<!ENTITY initialpage.description    "Mae modd gosod eich calendr ar eich cyfrifiadur neu ar weinydd fel bod modd i chi gael mynediad o bell neu ei rannu gyda'ch ffrindiau a'ch cydweithwyr." >
+<!ENTITY initialpage.computer.label  "Ar Fy Nghyfrifiadur">
+<!ENTITY initialpage.network.label  "Ar y Rhwydwaith">
+
+<!ENTITY locationpage.description         "Darparwch y wybodaeth angenrheidiol ar gyfer cael mynediad at eich calendr pell" >
+<!ENTITY locationpage.login.description   "Dewisol: rhowch enw defnyddiwr a chyfrinair" >
+<!ENTITY locationpage.username.label      "Enw defnyddiwr:" >
+<!ENTITY locationpage.password.label      "Cyfrinair:" >
+
+<!ENTITY custompage.shortdescription  "Cyfaddasu eich calendr" >
+<!ENTITY custompage.longdescription   "Mae modd rhoi enw i'r calendr a lliwio digwyddiadau'r calendr." >
+
+<!ENTITY finishpage.shortdescription  "Crëwyd y Calendr" >
+<!ENTITY finishpage.longdescription   "Mae eich calendr wedi'i greu." >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "Arall">
+
+<!ENTITY buttons.create.label "Creu Calendr">
+<!ENTITY buttons.create.accesskey "r">
+
+<!ENTITY buttons.find.label "Canfod Calendrau">
+<!ENTITY buttons.find.accesskey "f">
+
+<!ENTITY buttons.back.label "Nôl">
+<!ENTITY buttons.back.accesskey "N">
+
+<!ENTITY buttons.subscribe.label "Tanysgrifio">
+<!ENTITY buttons.subscribe.accesskey "T">
+
+<!ENTITY calendartype.label "Math o Galendr:">
+<!ENTITY location.label "Lleoliad:">
+<!ENTITY location.placeholder "URL neu enw gwesteiwr gweinydd y calendr">
+
+<!ENTITY network.nocredentials.label "Nid yw'r lleoliad hwn angen dilysiad">
+<!ENTITY network.loading.description "Arhoswch tra bod eich calendrau yn cael eu darganfod.">
+<!ENTITY network.notfound.description "Heb ganfod calendrau yn y lleoliad hwn. Gwiriwch eich gosodiadau.">
+<!ENTITY network.authfail.description "Nid yw'r manylion rydych wedi'u cynnig wedi eu derbyn. Gwiriwch eich gosodiadau.">
+
+<!ENTITY network.subscribe.single.description "Dewiswch y calendrau'r hoffech danysgrifio iddynt.">
+<!ENTITY network.subscribe.multiple.description "Mae mathau calendr lluosog ar gael; ar gyfer y lleoliad hwn. Dewiswch y math o galendr, yna mario'r calendrau yr hoffech chi danysgrifio iddyn nhw.">

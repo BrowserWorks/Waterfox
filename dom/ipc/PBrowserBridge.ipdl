@@ -5,14 +5,22 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 include protocol PBrowser;
+#ifdef ACCESSIBILITY
+include protocol PDocAccessible;
+#endif
 
 include DOMTypes;
 
-using ScreenIntSize from "Units.h";
-using nsSizeMode from "nsIWidgetListener.h";
 using mozilla::layers::LayersObserverEpoch from "mozilla/layers/LayersTypes.h";
-using mozilla::layers::LayersId from "mozilla/layers/LayersTypes.h";
 using mozilla::WidgetMouseEvent from "ipc/nsGUIEventIPC.h";
+using mozilla::a11y::IDispatchHolder from "mozilla/a11y/IPCTypes.h";
+using mozilla::dom::EffectsInfo from "mozilla/dom/TabMessageUtils.h";
+using mozilla::ScrollAxis from "mozilla/PresShellForwards.h";
+using mozilla::ScrollFlags from "mozilla/PresShellForwards.h";
+using struct nsRect from "nsRect.h";
+using CallerType from "mozilla/dom/BindingDeclarations.h";
+using nsIntRect from "nsRect.h";
+using mozilla::dom::EmbedderElementEventType from "mozilla/dom/TabMessageUtils.h";
 
 namespace mozilla {
 namespace dom {
@@ -24,18 +32,16 @@ namespace dom {
  * See `dom/docs/Fission-IPC-Diagram.svg` for an overview of the DOM IPC
  * actors.
  */
-async protocol PBrowserBridge {
+async refcounted protocol PBrowserBridge {
   manager PBrowser;
 
 child:
-  async SetLayersId(LayersId layersId);
-
   /**
    * Request that the IPC child / Web parent process move focus to the
    * browser's frame. If canRaise is true, the window can be raised if
    * it is inactive.
    */
-  async RequestFocus(bool canRaise);
+  async RequestFocus(bool canRaise, CallerType aCallerType);
 
   /**
    * When IPC parent / Web child sends this message, the IPC child / Web parent
@@ -43,18 +49,40 @@ child:
    */
   async MoveFocus(bool forward, bool forDocumentNavigation);
 
+  /**
+   * Send the child the COM proxy for the embedded document accessible.
+   */
+  async SetEmbeddedDocAccessibleCOMProxy(IDispatchHolder aCOMProxy);
+
+  /**
+   * Called once this PBrowserBridge's OOP subdoc no longer blocks its
+   * embedding element's and embedding doc's 'load' events.
+   */
+  async MaybeFireEmbedderLoadEvents(EmbedderElementEventType aFireEventAtEmbeddingElement);
+
+  async ScrollRectIntoView(nsRect aRect, ScrollAxis aVertical,
+                           ScrollAxis aHorizontal, ScrollFlags aScrollFlags,
+                           int32_t aAppUnitsPerDevPixel);
+
+  async SubFrameCrashed();
+
+  async AddBlockedNodeByClassifier();
+
 parent:
   // Destroy the remote web browser due to the nsFrameLoader going away.
   async __delete__();
 
   // DocShell messaging.
-  async LoadURL(nsCString aSpec);
+  async LoadURL(nsCString aSpec, nsIPrincipal aTriggeringPrincipal);
   async ResumeLoad(uint64_t aPendingSwitchID);
 
   // Out of process rendering.
-  async Show(ScreenIntSize size, bool parentIsActive, nsSizeMode sizeMode);
-  async UpdateDimensions(DimensionInfo dimensions) compressall;
-  async RenderLayers(bool aEnabled, bool aForceRepaint, LayersObserverEpoch aEpoch);
+  async Show(OwnerShowInfo info);
+  async ScrollbarPreferenceChanged(ScrollbarPreference pref);
+  async UpdateDimensions(nsIntRect rect, ScreenIntSize size) compressall;
+  async RenderLayers(bool aEnabled, LayersObserverEpoch aEpoch);
+
+  async UpdateEffects(EffectsInfo aEffects);
 
   /**
    * Navigate by key (Tab/Shift+Tab/F6/Shift+f6).
@@ -75,7 +103,17 @@ parent:
 
   async SetIsUnderHiddenEmbedderElement(bool aIsUnderHiddenEmbedderElement);
 
-  async SkipBrowsingContextDetach();
+  async WillChangeProcess();
+
+#ifdef ACCESSIBILITY
+  /**
+   * Tell the parent the accessible for this iframe's embedder
+   * OuterDocAccessible.
+   * aDoc is the actor for the containing document.
+   * aID is the unique id of the embedder accessible within that document.
+   */
+  async SetEmbedderAccessible(PDocAccessible aDoc, uint64_t aID);
+#endif
 };
 
 }  // namespace dom

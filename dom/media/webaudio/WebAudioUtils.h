@@ -9,7 +9,7 @@
 
 #include <cmath>
 #include <limits>
-#include "mozilla/TypeTraits.h"
+#include <type_traits>
 #include "mozilla/FloatingPoint.h"
 #include "MediaSegment.h"
 
@@ -18,7 +18,7 @@ typedef struct SpeexResamplerState_ SpeexResamplerState;
 
 namespace mozilla {
 
-class AudioNodeStream;
+class AudioNodeTrack;
 
 extern LazyLogModule gWebAudioAPILog;
 #define WEB_AUDIO_API_LOG(...) \
@@ -38,26 +38,20 @@ const size_t MaxChannelCount = 32;
 const uint32_t MinSampleRate = 8000;
 const uint32_t MaxSampleRate = 192000;
 
-inline bool FuzzyEqual(float v1, float v2) {
-  using namespace std;
-  return fabsf(v1 - v2) < 1e-7f;
-}
-inline bool FuzzyEqual(double v1, double v2) {
-  using namespace std;
-  return fabs(v1 - v2) < 1e-7;
-}
+inline bool FuzzyEqual(float v1, float v2) { return fabsf(v1 - v2) < 1e-7f; }
+inline bool FuzzyEqual(double v1, double v2) { return fabs(v1 - v2) < 1e-7; }
 
 /**
  * Converts an AudioTimelineEvent's floating point time values to tick values
- * with respect to a destination AudioNodeStream.
+ * with respect to a destination AudioNodeTrack.
  *
  * This needs to be called for each AudioTimelineEvent that gets sent to an
  * AudioNodeEngine, on the engine side where the AudioTimlineEvent is
  * received.  This means that such engines need to be aware of their
- * destination streams as well.
+ * destination tracks as well.
  */
 void ConvertAudioTimelineEventToTicks(AudioTimelineEvent& aEvent,
-                                      AudioNodeStream* aDest);
+                                      AudioNodeTrack* aDest);
 
 /**
  * Converts a linear value to decibels.  Returns aMinDecibels if the linear
@@ -160,11 +154,10 @@ inline bool IsTimeValid(double aTime) {
  */
 template <typename IntType, typename FloatType>
 IntType TruncateFloatToInt(FloatType f) {
-  using namespace std;
-
-  static_assert(mozilla::IsIntegral<IntType>::value == true,
+  using std::numeric_limits;
+  static_assert(std::is_integral_v<IntType> == true,
                 "IntType must be an integral type");
-  static_assert(mozilla::IsFloatingPoint<FloatType>::value == true,
+  static_assert(std::is_floating_point_v<FloatType> == true,
                 "FloatType must be a floating point type");
 
   if (mozilla::IsNaN(f)) {

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "ਮਾਹਰ ਅਕਾਊਂਟ ਸੈਟਿੰਗ">
+<!-- LOCALIZATION NOTE (serverDirectory.label): DONT_TRANSLATE "IMAP" -->
+
+<!ENTITY serverDirectory.label "IMAP ਸਰਵਰ ਡਾਇਰੈਕਟਰੀ:">
+<!ENTITY serverDirectory.accesskey "d">
+<!ENTITY usingSubscription.label "ਮਨਜ਼ੂਰ ਫੋਲਡਰ ਹੀ ਵੇਖਾਓ">
+<!ENTITY usingSubscription.accesskey "w">
+<!ENTITY dualUseFolders.label "ਸਰਵਰ ਉਹਨਾਂ ਫੋਲਡਰਾਂ ਲਈ ਸਹਾਇਕ ਹੈ, ਜੋ ਕਿ ਸਬ-ਫੋਲਡਰ ਤੇ ਸੁਨੇਹੇ ਰੱਖਦੇ ਹਨ">
+<!ENTITY dualUseFolders.accesskey "f">
+<!ENTITY maximumConnectionsNumber.label "ਕੈਸ ਲਈ ਵੱਧੋ-ਵੱਧ ਸਰਵਰ ਕੁਨੈਕਸ਼ਨਾਂ ਦੀ ਗਿਣਤੀ">
+<!ENTITY maximumConnectionsNumber.accesskey "M">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): DONT_TRANSLATE "IMAP" -->
+<!ENTITY namespaceDesc.label "ਇਹ ਪਸੰਦ ਤੁਹਾਡੇ IMAP ਸਰਵਰ ਅਤੇ ਨਾਂ-ਥਾਂ ਨਿਰਧਾਰਿਤ ਕਰਦੀ ਹੈ">
+<!ENTITY personalNamespace.label "ਨਿੱਜੀ ਨਾਂ:">
+<!ENTITY personalNamespace.accesskey "P">
+<!ENTITY publicNamespace.label "ਪਬਲਿਕ (ਸਾਂਝਾ):">
+<!ENTITY publicNamespace.accesskey "u">
+<!ENTITY otherUsersNamespace.label "ਹੋਰ ਯੂਜ਼ਰ:">
+<!ENTITY otherUsersNamespace.accesskey "O">
+<!ENTITY overrideNamespaces.label "ਸਰਵਰ ਨੂੰ ਇਹਨਾਂ ਨਾਂ-ਥਾਂ ਨੂੰ ਅਣਡਿੱਠਾ ਕਰਨ ਦਿਓ">
+<!ENTITY overrideNamespaces.accesskey "A">
+
+<!ENTITY deferToServer.label "ਵੱਖਰੇ ਅਕਾਊਂਟ ਲਈ Inbox">
+<!ENTITY deferToServer.accesskey "D">
+<!ENTITY deferGetNewMail.label "ਨਵੇਂ ਮੇਲ ਪ੍ਰਾਪਤ ਕਰਨ ਲਈ ਇਸ ਸਰਵਰ ਨੂੰ ਸ਼ਾਮਿਲ ਕਰੋ">
+<!ENTITY deferGetNewMail.accesskey "I">

@@ -1,0 +1,92 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY name.label                      "Nomo:">
+<!ENTITY name.accesskey                  "N">
+<!ENTITY name.text                       "Via nomo, kiu estos montrata al aliuloj">
+<!ENTITY email.label                     "Retpoŝta adreso">
+<!ENTITY email.accesskey                 "a">
+<!ENTITY email.text                      "Via ekzistanta retpoŝta adreso">
+<!ENTITY password.label                  "Pasvorto:">
+<!ENTITY password.accesskey              "P">
+<!ENTITY password.placeholder            "Pasvorto">
+<!ENTITY password.text                   "Malnepra, estos uzita nur por kontroli la uzantnomon">
+<!ENTITY rememberPassword.label          "Memori pasvorton">
+<!ENTITY rememberPassword.accesskey      "m">
+<!ENTITY usernameEx.label                "Via salutnomo:">
+<!ENTITY usernameEx.accesskey            "s">
+<!-- LOCALIZATION NOTE(usernameEx.placeholder): YOURDOMAIN refers to the Windows domain in ActiveDirectory. yourusername refers to the user's account name in Windows. -->
+<!ENTITY usernameEx.placeholder          "YOURDOMAIN\salutnomo">
+<!-- LOCALIZATION NOTE(usernameEx.text): Domain refers to the Windows domain in ActiveDirectory. We mean the user's login in Windows at the local corporate network. -->
+<!ENTITY usernameEx.text                 "Nomregna salutnomo">
+
+<!ENTITY imapLong.label                  "IMAP (foraj mesaĝujoj)">
+<!ENTITY pop3Long.label                  "POP3 (retpoŝto loke en via komputilo)">
+
+<!ENTITY incoming.label                  "Enira servilo:">
+<!ENTITY outgoing.label                  "Elira servilo:">
+<!ENTITY username.label                  "Salutnomo:">
+<!ENTITY auth.label                      "Aŭtentigo">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label                      "POP3">
+<!-- LOCALIZATION NOTE(exchange.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange.label                  "Exchange">
+<!ENTITY smtp.label                      "SMTP">
+<!ENTITY autodetect.label                "Aŭtomate eltrovi">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "Sen ĉifrado">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!-- LOCALIZATION NOTE(exchange-hostname.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange-hostname.label         "Servilo Exchange:">
+
+<!ENTITY advancedSetup.label             "Spertulaj agordoj">
+<!ENTITY advancedSetup.accesskey         "S">
+<!ENTITY cancel.label                    "Nuligi">
+<!ENTITY cancel.accesskey                "N">
+<!ENTITY continue.label                  "Pluigi">
+<!ENTITY continue.accesskey              "P">
+<!ENTITY stop.label                      "Haltigi">
+<!ENTITY stop.accesskey                  "H">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual edit mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "Eltrovi ree">
+<!ENTITY half-manual-test.accesskey      "E">
+<!ENTITY open-provisioner.label          "Akiri novan retpoŝtan adreson…">
+<!ENTITY open-provisioner.accesskey      "n">
+
+
+<!ENTITY warning.label                   "Averto!">
+<!ENTITY incomingSettings.label          "Agordoj de enira poŝto:">
+<!ENTITY outgoingSettings.label          "Agordoj de elira poŝto:">
+<!ENTITY technicaldetails.label          "Teĥnikaj detaloj">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "Mi komprenas la riskon.">
+<!ENTITY confirmWarning.accesskey        "k">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "Farita">
+<!ENTITY doneAccount.accesskey           "F">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "Ŝanĝi agordojn">
+<!ENTITY changeSettings.accesskey        "a">
+
+<!ENTITY contactYourProvider.description "&brandShortName; povas uzi liveritajn agordojn por konekti al via retpoŝto, tamen vi kontaktu vian administranton aŭ retpoŝt‑provizanton pri tiuj malĝustaj konektoj. Pli da informo troviĝas en la dokumentaro de &brandShortName;.">
+
+<!ENTITY insecureServer.tooltip.title    "Averto! Tiu ĉi servilo estas malsekura.">
+<!ENTITY insecureServer.tooltip.details  "Alklaku por pli da informo.">
+
+<!ENTITY insecureUnencrypted.description "La konekto estas malĉifrita, do via pasvorto kaj retleteroj povas esti facile legeblaj de aliuloj. &brandShortName; ebligos al vi uzi tiun ĉi konton, sed vi devus kontakti vian retpoŝt‑provizanton pri agordi la servilon kun sekura konekto.">
+<!ENTITY insecureSelfSigned.description  "La servilo uzas nefidindan atestilon, do ne eblas certigi, ke neniu interkaptas datumtrafikon inter &brandShortName; kaj la servilo. &brandShortName; ebligos al vi agordi vian retpoŝton, sed vi devus kontakti vian retpoŝt‑provizanton pri agordi la servilon kun fidinda atestilo.">
+<!ENTITY secureServer.description        "Gratulon! Tiu ĉi servilo estas sekura.">

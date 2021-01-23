@@ -41,10 +41,12 @@ def unwrap_rustup(prog, name):
     # "+stable" file. We'll examine the error output to try and distinguish
     # between failing rustup and failing rustc.
     @depends(prog, dependable(name))
-    @imports('subprocess')
     @imports(_from='__builtin__', _import='open')
     @imports('os')
     def unwrap(prog, name):
+        if not prog:
+            return
+
         def from_rustup_which():
             out = check_cmd_output('rustup', 'which', name,
                                    executable=prog).rstrip()
@@ -90,20 +92,26 @@ set_config('RUSTC', rustc)
 @depends_if(rustc)
 @checking('rustc version', lambda info: info.version)
 def rustc_info(rustc):
+    if not rustc:
+        return
     out = check_cmd_output(rustc, '--version', '--verbose').splitlines()
     info = dict((s.strip() for s in line.split(':', 1)) for line in out[1:])
     return namespace(
         version=Version(info.get('release', '0')),
         commit=info.get('commit-hash', 'unknown'),
         host=info['host'],
+        llvm_version=Version(info.get('LLVM version', '0')),
     )
 
-set_config('RUSTC_VERSION', depends(rustc_info)(lambda info: str(info.version)))
+set_config('RUSTC_VERSION', depends(rustc_info)(
+    lambda info: str(info.version) if info else None))
 
 @depends_if(cargo)
 @checking('cargo version', lambda info: info.version)
 @imports('re')
 def cargo_info(cargo):
+    if not cargo:
+        return
     out = check_cmd_output(cargo, '--version', '--verbose').splitlines()
     info = dict((s.strip() for s in line.split(':', 1)) for line in out[1:])
     version = info.get('release')
@@ -138,11 +146,10 @@ def rust_compiler(rustc_info, cargo_info, build_project):
         or by directly running the installer from https://rustup.rs/
         '''))
     if build_project == 'tools/crashreporter':
-        rustc_min_version = Version('1.22.0')
-        cargo_min_version = Version('0.23.0')
+        rustc_min_version = Version('1.38.0')
     else:
-        rustc_min_version = Version('1.34.0')
-        cargo_min_version = rustc_min_version
+        rustc_min_version = Version('1.41.0')
+    cargo_min_version = rustc_min_version
 
     version = rustc_info.version
     if version < rustc_min_version:
@@ -212,7 +219,7 @@ def rust_supported_targets(rustc):
 
 
 @template
-def rust_triple_alias(host_or_target):
+def rust_triple_alias(host_or_target, host_or_target_c_compiler):
     """Template defining the alias used for rustc's --target flag.
     `host_or_target` is either `host` or `target` (the @depends functions
     from init.configure).
@@ -221,13 +228,13 @@ def rust_triple_alias(host_or_target):
 
     host_or_target_str = {host: 'host', target: 'target'}[host_or_target]
 
-    @depends(rustc, host_or_target, c_compiler, rust_supported_targets,
-             arm_target, when=rust_compiler)
+    @depends(rustc, host_or_target, host_or_target_c_compiler,
+             rust_supported_targets, arm_target, when=rust_compiler)
     @checking('for rust %s triplet' % host_or_target_str)
     @imports('os')
-    @imports('subprocess')
     @imports(_from='mozbuild.configure.util', _import='LineIO')
     @imports(_from='mozbuild.shellutil', _import='quote')
+    @imports(_from='six', _import='ensure_binary')
     @imports(_from='tempfile', _import='mkstemp')
     @imports(_from='textwrap', _import='dedent')
     def rust_target(rustc, host_or_target, compiler_info,
@@ -354,7 +361,7 @@ def rust_triple_alias(host_or_target):
         # Check to see whether our rustc has a reasonably functional stdlib
         # for our chosen target.
         target_arg = '--target=' + rustc_target
-        in_fd, in_path = mkstemp(prefix='conftest', suffix='.rs')
+        in_fd, in_path = mkstemp(prefix='conftest', suffix='.rs', text=True)
         out_fd, out_path = mkstemp(prefix='conftest', suffix='.rlib')
         os.close(out_fd)
         try:
@@ -363,7 +370,7 @@ def rust_triple_alias(host_or_target):
             with LineIO(lambda l: log.debug('| %s', l)) as out:
                 out.write(source)
 
-            os.write(in_fd, source)
+            os.write(in_fd, ensure_binary(source))
             os.close(in_fd)
 
             cmd = [
@@ -395,8 +402,8 @@ def rust_triple_alias(host_or_target):
     return rust_target
 
 
-rust_target_triple = rust_triple_alias(target)
-rust_host_triple = rust_triple_alias(host)
+rust_target_triple = rust_triple_alias(target, c_compiler)
+rust_host_triple = rust_triple_alias(host, host_c_compiler)
 
 
 @depends(host, rust_host_triple, rustc_info.host)
@@ -446,9 +453,10 @@ def rustc_natvis_ldflags(target, compiler_info, rustc):
         sysroot = check_cmd_output(rustc, '--print', 'sysroot').strip()
         etc = os.path.join(sysroot, 'lib/rustlib/etc')
         ldflags = []
-        for f in os.listdir(etc):
-            if f.endswith('.natvis'):
-                ldflags.append('-NATVIS:' + normsep(os.path.join(etc, f)))
+        if os.path.isdir(etc):
+            for f in os.listdir(etc):
+                if f.endswith('.natvis'):
+                    ldflags.append('-NATVIS:' + normsep(os.path.join(etc, f)))
         return ldflags
 
 

@@ -11,9 +11,13 @@
  */
 
 [Pref="media.webspeech.synth.enabled",
- Constructor,
- Constructor(DOMString text)]
+ Exposed=Window]
 interface SpeechSynthesisUtterance : EventTarget {
+  [Throws]
+  constructor();
+  [Throws]
+  constructor(DOMString text);
+
   attribute DOMString text;
   attribute DOMString lang;
   attribute SpeechSynthesisVoice? voice;

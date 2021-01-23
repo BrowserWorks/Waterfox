@@ -142,7 +142,7 @@ const EXPECTED_REQUESTS = [
 ];
 
 add_task(async function() {
-  const { monitor } = await initNetMonitor(FILTERING_URL);
+  const { monitor } = await initNetMonitor(FILTERING_URL, { requestCount: 1 });
   const { document, store, windowRequire } = monitor.panelWin;
   const Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
   const { getDisplayedRequests, getSortedRequests } = windowRequire(
@@ -379,22 +379,22 @@ add_task(async function() {
     // displayed requests reach final state.
     await waitUntil(() => {
       visibleItems = getDisplayedRequests(store.getState());
-      return visibleItems.size === visibility.filter(e => e).length;
+      return visibleItems.length === visibility.filter(e => e).length;
     });
 
     is(
-      items.size,
+      items.length,
       visibility.length,
       "There should be a specific amount of items in the requests menu."
     );
     is(
-      visibleItems.size,
+      visibleItems.length,
       visibility.filter(e => e).length,
       "There should be a specific amount of visible items in the requests menu."
     );
 
     for (let i = 0; i < visibility.length; i++) {
-      const itemId = items.get(i).id;
+      const itemId = items[i].id;
       const shouldBeVisible = !!visibility[i];
       let isThere = visibleItems.some(r => r.id == itemId);
 
@@ -420,6 +420,7 @@ add_task(async function() {
       const requestsListStatus = requestItem.querySelector(".status-code");
       EventUtils.sendMouseEvent({ type: "mouseover" }, requestsListStatus);
       await waitUntil(() => requestsListStatus.title);
+      await waitForDOMIfNeeded(requestItem, ".requests-list-timings-total");
     }
 
     for (let i = 0; i < visibility.length; i++) {
@@ -430,7 +431,7 @@ add_task(async function() {
         verifyRequestItemTarget(
           document,
           getDisplayedRequests(store.getState()),
-          getSortedRequests(store.getState()).get(i),
+          getSortedRequests(store.getState())[i],
           method,
           url,
           data

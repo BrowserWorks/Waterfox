@@ -3,6 +3,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
+from __future__ import absolute_import
 import os
 import re
 from setuptools import setup, find_packages
@@ -43,6 +44,5 @@ setup(name='firefox-ui-harness',
       entry_points="""
         [console_scripts]
         firefox-ui-functional = firefox_ui_harness.cli_functional:cli
-        firefox-ui-update = firefox_ui_harness.cli_update:cli
       """,
       )

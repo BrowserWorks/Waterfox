@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -33,9 +31,9 @@ var Server = (exports.Server = {});
  * something more convenient, such as displaying a QR code.
  *
  * @param host string
- *        The host name or IP address of the debugger server.
+ *        The host name or IP address of the devtools server.
  * @param port number
- *        The port number of the debugger server.
+ *        The port number of the devtools server.
  * @param cert object (optional)
  *        The server's cert details.
  * @param authResult AuthenticationResult
@@ -105,7 +103,7 @@ Client.defaultSendOOB = ({ authResult, oob }) => {
 
 /**
  * Prompt the user to accept or decline the incoming connection.  This is the
- * default implementation that products embedding the debugger server may
+ * default implementation that products embedding the devtools server may
  * choose to override.  This can be overridden via |allowConnection| on the
  * socket's authenticator instance.
  *

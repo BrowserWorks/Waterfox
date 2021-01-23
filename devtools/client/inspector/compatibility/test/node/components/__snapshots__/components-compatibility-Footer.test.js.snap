@@ -1,0 +1,38 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Footer component renders 1`] = `
+<footer
+  className="compatibility-footer"
+>
+  <button
+    className="compatibility-footer__button"
+    onClick={[Function]}
+    title="Settings"
+  >
+    <img
+      className="compatibility-footer__icon"
+      src="chrome://devtools/skin/images/settings.svg"
+    />
+    <label
+      className="compatibility-footer__label"
+    >
+      Settings
+    </label>
+  </button>
+  <button
+    className="compatibility-footer__button"
+    onClick={[Function]}
+    title="Feedback"
+  >
+    <img
+      className="compatibility-footer__icon"
+      src="chrome://devtools/skin/images/report.svg"
+    />
+    <label
+      className="compatibility-footer__label"
+    >
+      Feedback
+    </label>
+  </button>
+</footer>
+`;

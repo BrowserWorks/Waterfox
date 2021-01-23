@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "ලිපි බාගත කිරීම සහ සම්මුහුර්තකරණය (Synchronise)">
+<!ENTITY MsgSelect.label "අසම්බන්ධිතව භාවිතයට අයිතමයන්">
+<!ENTITY MsgSyncDesc.label "ඔබ දැනටම අසම්බන්ධිතව භාවිතයට ලිපි ෆෝල්ඩර හා පුවත්සමූහ තෝරා ඇත්නම්, බාගත කිරීම සහ/හෝ සම්මුහුර්තකරණය (synchronisation) දැන් කළ හැකිය. නොඑසේනම්, &quot;තෝරන්න&quot; බොත්තම භාවිතයෙන් අසම්බන්ධිතව භාවිතයට ලිපි ෆෝල්ඩර හා පුවත්සමූහ තෝරන්න.">
+<!ENTITY MsgSyncDirections.label "පහත ඒවා බාගත කිරීම සහ/හෝ සම්මුහුර්තකරණය (synchronise) කරන්න:">
+<!ENTITY syncTypeMail.label "ලිපි">
+<!ENTITY syncTypeMail.accesskey "M">
+<!ENTITY syncTypeNews.label "පුවත්සමූහ ලිපි">
+<!ENTITY syncTypeNews.accesskey "N">
+<!ENTITY sendMessage.label "නොයැවූ ලිපි යවන්න">
+<!ENTITY sendMessage.accesskey "S">
+<!ENTITY workOffline.label "බාගත කිරීම සහ/හෝ සම්මුහුර්තකරණය (synchronisation) සම්පූර්ණ වූ වහාම අසම්බන්ධිතව වැඩ කරන්න">
+<!ENTITY workOffline.accesskey "W">
+<!ENTITY selectButton.label "තෝරන්න...">
+<!ENTITY selectButton.accesskey "E">
+<!ENTITY MsgSelectDesc.label "අසම්බන්ධිතව භාවිතයට ලිපි ෆෝල්ඩර හා පුවත්සමූහ තෝරන්න.">
+<!ENTITY MsgSelectInd.label "බාගත කරන්න">
+<!ENTITY MsgSelectItems.label "ෆෝල්ඩර සහ පුවත්සමූහ">

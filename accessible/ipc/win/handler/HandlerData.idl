@@ -55,6 +55,10 @@ typedef struct _DynamicIA2Data
   long              mRowExtent;
   long              mColumnExtent;
   boolean           mCellIsSelected;
+  long mNRowHeaderCells;
+  [size_is(mNRowHeaderCells)] long* mRowHeaderCellIds;
+  long mNColumnHeaderCells;
+  [size_is(mNColumnHeaderCells)] long* mColumnHeaderCellIds;
   // From IAccessible2
   long              mUniqueId;
 } DynamicIA2Data;
@@ -143,7 +147,7 @@ interface IHandlerControl : IUnknown
                        [in] IA2TextSegment* aText);
 }
 
-typedef struct _IARelationData 
+typedef struct _IARelationData
 {
   BSTR mType;
   long mNTargets;

@@ -4,13 +4,20 @@
 /// Refer to the [`parse` module] documentation for more details about parsing
 /// in Syn.
 ///
-/// [`parse` module]: parse/index.html
+/// [`parse` module]: crate::rustdoc_workaround::parse_module
+///
+/// <br>
 ///
 /// # Intended usage
 ///
-/// ```edition2018
-/// extern crate proc_macro;
+/// This macro must be called from a function that returns
+/// `proc_macro::TokenStream`. Usually this will be your proc macro entry point,
+/// the function that has the #\[proc_macro\] / #\[proc_macro_derive\] /
+/// #\[proc_macro_attribute\] attribute.
 ///
+/// ```
+/// # extern crate proc_macro;
+/// #
 /// use proc_macro::TokenStream;
 /// use syn::{parse_macro_input, Result};
 /// use syn::parse::{Parse, ParseStream};
@@ -36,7 +43,31 @@
 /// #   "".parse().unwrap()
 /// }
 /// ```
-#[macro_export(local_inner_macros)]
+///
+/// <br>
+///
+/// # Expansion
+///
+/// `parse_macro_input!($variable as $Type)` expands to something like:
+///
+/// ```no_run
+/// # extern crate proc_macro;
+/// #
+/// # macro_rules! doc_test {
+/// #     ($variable:ident as $Type:ty) => {
+/// match syn::parse::<$Type>($variable) {
+///     Ok(syntax_tree) => syntax_tree,
+///     Err(err) => return proc_macro::TokenStream::from(err.to_compile_error()),
+/// }
+/// #     };
+/// # }
+/// #
+/// # fn test(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+/// #     let _ = doc_test!(input as syn::Ident);
+/// #     proc_macro::TokenStream::new()
+/// # }
+/// ```
+#[macro_export]
 macro_rules! parse_macro_input {
     ($tokenstream:ident as $ty:ty) => {
         match $crate::parse_macro_input::parse::<$ty>($tokenstream) {
@@ -47,14 +78,14 @@ macro_rules! parse_macro_input {
         }
     };
     ($tokenstream:ident) => {
-        parse_macro_input!($tokenstream as _)
+        $crate::parse_macro_input!($tokenstream as _)
     };
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // Can parse any type that implements Parse.
 
-use parse::{Parse, ParseStream, Parser, Result};
+use crate::parse::{Parse, ParseStream, Parser, Result};
 use proc_macro::TokenStream;
 
 // Not public API.
@@ -79,7 +110,7 @@ impl<T: Parse> ParseMacroInput for T {
 // Any other types that we want `parse_macro_input!` to be able to parse.
 
 #[cfg(any(feature = "full", feature = "derive"))]
-use AttributeArgs;
+use crate::AttributeArgs;
 
 #[cfg(any(feature = "full", feature = "derive"))]
 impl ParseMacroInput for AttributeArgs {

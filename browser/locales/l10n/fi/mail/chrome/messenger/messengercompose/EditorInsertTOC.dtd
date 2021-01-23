@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title         "Sisällysluettelo">
+<!ENTITY buildToc.label       "Koosta sisällysluettelo kohteista:">
+<!ENTITY tag.label            "HTML-tunnus:">
+<!ENTITY class.label          "Luokka:">
+<!ENTITY header1.label        "Taso 1">
+<!ENTITY header2.label        "Taso 2">
+<!ENTITY header3.label        "Taso 3">
+<!ENTITY header4.label        "Taso 4">
+<!ENTITY header5.label        "Taso 5">
+<!ENTITY header6.label        "Taso 6">
+<!ENTITY makeReadOnly.label   "Anna sisällysluettelolle vain lukuoikeudet">
+<!ENTITY orderedList.label    "Numeroi sisällysluettelon kaikki kohdat">

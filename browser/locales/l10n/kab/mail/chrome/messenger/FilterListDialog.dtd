@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Imzizdigen n yizen">
+<!ENTITY nameColumn.label "Isem n imzizdig">
+<!ENTITY activeColumn.label "Irmed">
+<!ENTITY newButton.label "Amaynut…">
+<!ENTITY newButton.accesskey "m">
+<!ENTITY newButton.popupCopy.label "Nɣel…">
+<!ENTITY newButton.popupCopy.accesskey "N">
+<!ENTITY editButton.label "Ẓreg…">
+<!ENTITY editButton.accesskey "g">
+<!ENTITY deleteButton.label "Kkes">
+<!ENTITY deleteButton.accesskey "k">
+<!ENTITY reorderTopButton "Senkez s afella">
+<!ENTITY reorderTopButton.accessKey "o">
+<!ENTITY reorderTopButton.toolTip "Seggem imzizdigen akken ad ttwaselkmen wa deffir wa">
+<!ENTITY reorderUpButton.label "Ali">
+<!ENTITY reorderUpButton.accesskey "A">
+<!ENTITY reorderDownButton.label "Ader">
+<!ENTITY reorderDownButton.accesskey "d">
+<!ENTITY reorderBottomButton "Senkez s adda">
+<!ENTITY reorderBottomButton.accessKey "B">
+<!ENTITY reorderBottomButton.toolTip "Seggem imzizdigen akken ad ttwaselkmen wa deffir wa">
+<!ENTITY filterHeader.label "Imzizdigen yettwaremden ttwaselkamen s wudem awurman deg umizzwer d-yettwaseknen daw-a.">
+<!ENTITY filtersForPrefix.label "Imzizdigen i:">
+<!ENTITY filtersForPrefix.accesskey "I">
+<!ENTITY viewLogButton.label "Zizdeg aɣmis">
+<!ENTITY viewLogButton.accesskey "m">
+<!ENTITY runFilters.label "Selkem tura">
+<!ENTITY runFilters.accesskey "R">
+<!ENTITY stopFilters.label "Seḥbes">
+<!ENTITY stopFilters.accesskey "S">
+<!ENTITY folderPickerPrefix.label "Selkem imzizdeg (i-en) yettwafernen di:">
+<!ENTITY folderPickerPrefix.accesskey "w">
+<!ENTITY helpButton.label "Tallalt">
+<!ENTITY helpButton.accesskey "l">
+<!ENTITY closeCmd.key "W"> 
+<!ENTITY searchBox.emptyText "Nadi imzizdigen s yisem...">
+

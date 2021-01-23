@@ -8,8 +8,6 @@
  * around the results list.
  */
 
-const ONEOFF_URLBAR_PREF = "browser.urlbar.oneOffSearches";
-
 function repeat(limit, func) {
   for (let i = 0; i < limit; i++) {
     func(i);
@@ -18,13 +16,13 @@ function repeat(limit, func) {
 
 function assertSelected(index) {
   Assert.equal(
-    UrlbarTestUtils.getSelectedIndex(window),
+    UrlbarTestUtils.getSelectedRowIndex(window),
     index,
     "Should have selected the correct item"
   );
   // Also check the "selected" attribute, to ensure it is not a "fake" selection
   // due to binding misbehaviors.
-  let element = UrlbarTestUtils.getSelectedElement(window);
+  let element = UrlbarTestUtils.getSelectedRow(window);
   Assert.ok(
     element.hasAttribute("selected"),
     "Should have the selected attribute on the row element"
@@ -49,7 +47,7 @@ function assertSelected_one_off(index) {
   // This is true because although both the listbox and the one-offs can have
   // selections, the test doesn't check that.
   Assert.equal(
-    UrlbarTestUtils.getSelectedIndex(window),
+    UrlbarTestUtils.getSelectedRowIndex(window),
     -1,
     "A one-off is selected, so the listbox should not have a selection"
   );
@@ -57,14 +55,12 @@ function assertSelected_one_off(index) {
 
 add_task(async function() {
   let maxResults = Services.prefs.getIntPref("browser.urlbar.maxRichResults");
-  Services.prefs.setBoolPref(ONEOFF_URLBAR_PREF, true);
   let tab = await BrowserTestUtils.openNewForegroundTab(
     gBrowser,
     "about:mozilla"
   );
   registerCleanupFunction(async function() {
     await PlacesUtils.history.clear();
-    Services.prefs.clearUserPref(ONEOFF_URLBAR_PREF);
     BrowserTestUtils.removeTab(tab);
   });
 
@@ -76,11 +72,12 @@ add_task(async function() {
   });
   await PlacesTestUtils.addVisits(visits);
 
-  await promiseAutocompleteResultPopup(
-    "example.com/autocomplete",
+  await UrlbarTestUtils.promiseAutocompleteResultPopup({
     window,
-    true
-  );
+    waitForFocus: SimpleTest.waitForFocus,
+    value: "example.com/autocomplete",
+    fireInputEvent: true,
+  });
 
   let resultCount = await UrlbarTestUtils.getResultCount(window);
 

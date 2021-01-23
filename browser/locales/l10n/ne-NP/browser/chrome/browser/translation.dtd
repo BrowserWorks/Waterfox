@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (translation.thisPageIsIn.label,
+  -                     translation.translateThisPage.label):
+  -  These 2 strings are used to construct a sentence that contains a dropdown
+  -  showing the detected language of the current web page.
+  -  In en-US it looks like this:
+  -    This page is in [detected language] Translate this page?
+  -  "detected language" here is a language name coming from the
+  -  global/languageNames.properties file; for some locales it may not be in
+  -  the correct grammar case to keep the same structure of the original
+  -  sentence. -->
+<!ENTITY translation.thisPageIsIn.label         "यो पेज निम्न मा छ">
+<!ENTITY translation.translateThisPage.label    "यो पृष्ठ अनुवाद गर्नुहोस् ?">
+<!ENTITY translation.translate.button           "अनुवाद गर्नहोस्">
+<!ENTITY translation.notNow.button              "अहिले होइन">
+
+<!ENTITY translation.translatingContent.label   "पृष्ठ सामग्री अनुवाद गर्दै…">
+
+<!-- LOCALIZATION NOTE (translation.translatedFrom.label,
+  -                     translation.translatedTo.label,
+  -                     translation.translatedToSuffix.label):
+  -  These 3 strings are used to construct a sentence that contains 2 dropdowns
+  -  showing the source and target language of a translated web page.
+  -  In en-US it looks like this:
+  -    This page has been translated from [from language] to [to language]
+  -  "from language" and "to language" here are language names coming from the
+  -  global/languageNames.properties file; for some locales they may not be in
+  -  the correct grammar case to keep the same structure of the original
+  -  sentence.
+  -
+  -  translation.translatedToSuffix.label (empty in en-US) is for locales that
+  -  need to display some text after the second drop down for the sentence to
+  -  be grammatically correct. -->
+<!ENTITY translation.translatedFrom.label       "यस पृष्ठ यो बाट अनुवाद गरिएको छ">
+<!ENTITY translation.translatedTo.label         "लाई">
+<!ENTITY translation.translatedToSuffix.label   "">
+
+<!ENTITY translation.showOriginal.button        "मूलरूप देखाउनुहोस्">
+<!ENTITY translation.showTranslation.button     "अनुवाद देखाउनुहोस्">
+
+<!ENTITY translation.errorTranslating.label     "यो पेज अनुवाद गर्दा त्रुटि भएको छ।">
+<!ENTITY translation.tryAgain.button            "पुनःप्रयास गर्नुहोस्">
+
+<!ENTITY translation.serviceUnavailable.label   "अनुवाद अहिले उपलब्ध छैन। केहि समय पछि पुनः प्रयास गर्नुहोला।">
+
+<!ENTITY translation.options.menu               "विकल्पहरू">
+<!-- LOCALIZATION NOTE (translation.options.neverForSite.accesskey,
+  -                     translation.options.preferences.accesskey):
+  -  The accesskey values used here should not clash with the value used for
+  -  translation.options.neverForLanguage.accesskey in translation.properties
+  -->
+<!ENTITY translation.options.neverForSite.label "यस पृष्ठ कहिल्यै अनुवाद नगर्ने">
+<!ENTITY translation.options.neverForSite.accesskey "e">
+<!ENTITY translation.options.preferences.label  "अनुवाद अभिरूचीहरू">
+<!ENTITY translation.options.preferences.accesskey "T">
+

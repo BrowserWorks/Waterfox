@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Tập tin đã lưu">
+<!ENTITY aboutDownloads.empty                      "Không có tập tin đã lưu">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "Mở thư mục chứa">
+<!ENTITY cmd.show.accesskey                        "F">
+<!ENTITY cmd.showMac.label                         "Hiển thị trong Finder">
+<!ENTITY cmd.showMac.accesskey                     "F">
+<!ENTITY cmd.open.label                            "Mở">
+<!ENTITY cmd.open.accesskey                        "O">
+<!ENTITY cmd.removeFromHistory.label               "Xóa khỏi lịch sử">
+<!ENTITY cmd.removeFromHistory.accesskey           "e">
+<!ENTITY cmd.clearList.label                       "Xóa danh sách">
+<!ENTITY cmd.clearList.accesskey                   "C">
+<!ENTITY cmd.clearList.tooltip                     "Xóa tất cả các mục khỏi danh sách các tập tin đã lưu, ngoại trừ các bản tải xuống đang diễn ra.">
+<!ENTITY cmd.searchDownloads.label                 "Tìm kiếm…">
+<!ENTITY cmd.searchDownloads.key                   "F">

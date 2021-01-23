@@ -16,8 +16,7 @@
 using namespace mozilla;
 using namespace mozilla::widget;
 
-HANDLE
-nsUXThemeData::sThemes[eUXNumClasses];
+nsUXThemeData::ThemeHandle nsUXThemeData::sThemes[eUXNumClasses];
 
 const int NUM_COMMAND_BUTTONS = 3;
 SIZE nsUXThemeData::sCommandButtonMetrics[NUM_COMMAND_BUTTONS];
@@ -30,21 +29,36 @@ bool nsUXThemeData::sFlatMenus = false;
 bool nsUXThemeData::sTitlebarInfoPopulatedAero = false;
 bool nsUXThemeData::sTitlebarInfoPopulatedThemed = false;
 
-void nsUXThemeData::Teardown() { Invalidate(); }
+nsUXThemeData::ThemeHandle::~ThemeHandle() { Close(); }
 
-void nsUXThemeData::Initialize() {
-  ::ZeroMemory(sThemes, sizeof(sThemes));
+void nsUXThemeData::ThemeHandle::OpenOnce(HWND aWindow, LPCWSTR aClassList) {
+  if (mHandle.isSome()) {
+    return;
+  }
 
-  CheckForCompositor(true);
-  Invalidate();
+  mHandle = Some(OpenThemeData(aWindow, aClassList));
 }
 
+void nsUXThemeData::ThemeHandle::Close() {
+  if (mHandle.isNothing() || !mHandle.value()) {
+    return;
+  }
+
+  CloseThemeData(mHandle.value());
+  mHandle = Nothing();
+}
+
+nsUXThemeData::ThemeHandle::operator HANDLE() {
+  return mHandle.isSome() ? mHandle.value() : nullptr;
+}
+
+void nsUXThemeData::Teardown() { Invalidate(); }
+
+void nsUXThemeData::Initialize() { Invalidate(); }
+
 void nsUXThemeData::Invalidate() {
-  for (int i = 0; i < eUXNumClasses; i++) {
-    if (sThemes[i]) {
-      CloseThemeData(sThemes[i]);
-      sThemes[i] = nullptr;
-    }
+  for (auto& theme : sThemes) {
+    theme.Close();
   }
   BOOL useFlat = FALSE;
   sFlatMenus =
@@ -54,9 +68,7 @@ void nsUXThemeData::Invalidate() {
 HANDLE
 nsUXThemeData::GetTheme(nsUXThemeClass cls) {
   NS_ASSERTION(cls < eUXNumClasses, "Invalid theme class!");
-  if (!sThemes[cls]) {
-    sThemes[cls] = OpenThemeData(nullptr, GetClassName(cls));
-  }
+  sThemes[cls].OpenOnce(nullptr, GetClassName(cls));
   return sThemes[cls];
 }
 
@@ -164,7 +176,8 @@ void nsUXThemeData::EnsureCommandButtonBoxMetrics() {
 void nsUXThemeData::UpdateTitlebarInfo(HWND aWnd) {
   if (!aWnd) return;
 
-  if (!sTitlebarInfoPopulatedAero && nsUXThemeData::CheckForCompositor()) {
+  if (!sTitlebarInfoPopulatedAero &&
+      gfxWindowsPlatform::GetPlatform()->DwmCompositionEnabled()) {
     RECT captionButtons;
     if (SUCCEEDED(DwmGetWindowAttribute(aWnd, DWMWA_CAPTION_BUTTON_BOUNDS,
                                         &captionButtons,
@@ -214,7 +227,7 @@ void nsUXThemeData::UpdateTitlebarInfo(HWND aWnd) {
   // get the wrong information if the window isn't activated, so we have to:
   if (sThemeId == LookAndFeel::eWindowsTheme_AeroLite ||
       (sThemeId == LookAndFeel::eWindowsTheme_Aero &&
-       !nsUXThemeData::CheckForCompositor())) {
+       !gfxWindowsPlatform::GetPlatform()->DwmCompositionEnabled())) {
     showType = SW_SHOW;
   }
   ShowWindow(hWnd, showType);
@@ -286,15 +299,6 @@ LookAndFeel::WindowsTheme nsUXThemeData::GetNativeThemeId() { return sThemeId; }
 bool nsUXThemeData::IsDefaultWindowTheme() { return sIsDefaultWindowsTheme; }
 
 bool nsUXThemeData::IsHighContrastOn() { return sIsHighContrastOn; }
-
-// static
-bool nsUXThemeData::CheckForCompositor(bool aUpdateCache) {
-  static BOOL sCachedValue = FALSE;
-  if (aUpdateCache) {
-    DwmIsCompositionEnabled(&sCachedValue);
-  }
-  return sCachedValue;
-}
 
 // static
 void nsUXThemeData::UpdateNativeThemeInfo() {

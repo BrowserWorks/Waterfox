@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -83,7 +82,7 @@ async function runTest(inspector, toolbox, selector, contentMethod) {
     "Call the content method that should attach a custom element definition"
   );
   const mutated = waitForMutation(inspector, "customElementDefined");
-  ContentTask.spawn(gBrowser.selectedBrowser, { contentMethod }, function(
+  SpecialPowers.spawn(gBrowser.selectedBrowser, [{ contentMethod }], function(
     args
   ) {
     content.wrappedJSObject[args.contentMethod]();

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "პარამეტრების დეტალური ჩასწორება">
+<!ENTITY AttName.label                  "ატრიბუტი: ">
+<!ENTITY AttValue.label                 "მნიშვნელობა: ">
+<!ENTITY PropertyName.label             "პარამეტრი: ">
+<!ENTITY currentattributesfor.label     "მიმდინარე ატრიბუტები: ">
+<!ENTITY tree.attributeHeader.label     "ატრიბუტი">
+<!ENTITY tree.propertyHeader.label      "პარამეტრი">
+<!ENTITY tree.valueHeader.label         "მნიშვნელობა">
+<!ENTITY tabHTML.label                  "HTML ატრიბუტები">
+<!ENTITY tabCSS.label                   "ჩადგმული სტილი">
+<!ENTITY tabJSE.label                   "JavaScript ქმედებები">
+
+<!ENTITY editAttribute.label    "მნიშვნელობის შესაცვლელად დაწკაპეთ ელემენტი">
+<!ENTITY removeAttribute.label  "მოცილება">

@@ -1,0 +1,28 @@
+<!-- ***** BEGIN LICENSE BLOCK *****
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY openAttachmentCmd.label "Dobrir">
+<!ENTITY openAttachmentCmd.accesskey "O">
+<!ENTITY saveAsAttachmentCmd.label "Enregistrar jos…">
+<!ENTITY saveAsAttachmentCmd.accesskey "E">
+<!ENTITY detachAttachmentCmd.label "Destacar…">
+<!ENTITY deleteAttachmentCmd.label "Suprimir">
+<!ENTITY saveAllAttachmentsCmd.label "Enregistrar tot…">
+<!ENTITY saveAllAttachmentsCmd.accesskey "T">
+<!ENTITY detachAllAttachmentsCmd.label "Destacar tot…">
+<!ENTITY detachAllAttachmentsCmd.accesskey "D">
+<!ENTITY deleteAllAttachmentsCmd.label "Suprimir tot…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey "s">
+
+<!ENTITY copyLinkCmd.label "Copiar l'adreça del ligam">
+<!ENTITY copyLinkCmd.accesskey "C">
+
+<!ENTITY CopyMessageId.label "Copiar l'identificant del messatge">
+<!ENTITY OpenMessageForMsgId.label "Dobrir lo messatge per l'identificant">
+<!ENTITY OpenBrowserWithMsgId.label "Dobrir lo navegador amb l'identificant de messatge">

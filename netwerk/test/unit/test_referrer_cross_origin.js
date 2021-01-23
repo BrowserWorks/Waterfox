@@ -1,6 +1,7 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
+"use strict";
 
 const ReferrerInfo = Components.Constructor(
   "@mozilla.org/referrer-info;1",
@@ -32,14 +33,14 @@ function test_policy(test) {
   }
 
   let referrer = NetUtil.newURI(test.referrer);
-  let triggeringPrincipal = Services.scriptSecurityManager.createCodebasePrincipal(
+  let triggeringPrincipal = Services.scriptSecurityManager.createContentPrincipal(
     referrer,
     {}
   );
   let chan = NetUtil.newChannel({
     uri: test.url,
     loadingPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
-    triggeringPrincipal: triggeringPrincipal,
+    triggeringPrincipal,
     contentPolicyType: Ci.nsIContentPolicy.TYPE_OTHER,
     securityFlags: Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
   });
@@ -58,44 +59,44 @@ function test_policy(test) {
   }
 }
 
-const nsIHttpChannel = Ci.nsIHttpChannel;
+const nsIReferrerInfo = Ci.nsIReferrerInfo;
 var gTests = [
   // Test same origin policy w/o cross origin
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_SAME_ORIGIN,
+    policy: nsIReferrerInfo.SAME_ORIGIN,
     url: "https://test.example/foo?a",
     referrer: "https://test.example/foo?a",
     expectedReferrerSpec: "https://test.example/foo?a",
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_SAME_ORIGIN,
+    policy: nsIReferrerInfo.SAME_ORIGIN,
     url: "https://test.example/foo?a",
     referrer: "https://foo.example/foo?a",
     expectedReferrerSpec: undefined,
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_SAME_ORIGIN,
+    policy: nsIReferrerInfo.SAME_ORIGIN,
     trimmingPolicy: 1,
     url: "https://test.example/foo?a",
     referrer: "https://test.example/foo?a",
     expectedReferrerSpec: "https://test.example/foo",
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_SAME_ORIGIN,
+    policy: nsIReferrerInfo.SAME_ORIGIN,
     trimmingPolicy: 1,
     url: "https://test.example/foo?a",
     referrer: "https://foo.example/foo?a",
     expectedReferrerSpec: undefined,
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_SAME_ORIGIN,
+    policy: nsIReferrerInfo.SAME_ORIGIN,
     trimmingPolicy: 2,
     url: "https://test.example/foo?a",
     referrer: "https://test.example/foo?a",
     expectedReferrerSpec: "https://test.example/",
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_SAME_ORIGIN,
+    policy: nsIReferrerInfo.SAME_ORIGIN,
     trimmingPolicy: 2,
     url: "https://test.example/foo?a",
     referrer: "https://foo.example/foo?a",
@@ -104,68 +105,68 @@ var gTests = [
 
   // Test origin when xorigin policy w/o cross origin
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_ORIGIN_WHEN_XORIGIN,
+    policy: nsIReferrerInfo.ORIGIN_WHEN_CROSS_ORIGIN,
     url: "https://test.example/foo?a",
     referrer: "https://test.example/foo?a",
     expectedReferrerSpec: "https://test.example/foo?a",
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_ORIGIN_WHEN_XORIGIN,
+    policy: nsIReferrerInfo.ORIGIN_WHEN_CROSS_ORIGIN,
     url: "https://test.example/foo?a",
     referrer: "https://foo.example/foo?a",
     expectedReferrerSpec: "https://foo.example/",
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_ORIGIN_WHEN_XORIGIN,
+    policy: nsIReferrerInfo.ORIGIN_WHEN_CROSS_ORIGIN,
     trimmingPolicy: 1,
     url: "https://test.example/foo?a",
     referrer: "https://test.example/foo?a",
     expectedReferrerSpec: "https://test.example/foo",
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_ORIGIN_WHEN_XORIGIN,
+    policy: nsIReferrerInfo.ORIGIN_WHEN_CROSS_ORIGIN,
     trimmingPolicy: 1,
     url: "https://test.example/foo?a",
     referrer: "https://foo.example/foo?a",
     expectedReferrerSpec: "https://foo.example/",
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_ORIGIN_WHEN_XORIGIN,
+    policy: nsIReferrerInfo.ORIGIN_WHEN_CROSS_ORIGIN,
     trimmingPolicy: 2,
     url: "https://test.example/foo?a",
     referrer: "https://test.example/foo?a",
     expectedReferrerSpec: "https://test.example/",
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_ORIGIN_WHEN_XORIGIN,
+    policy: nsIReferrerInfo.ORIGIN_WHEN_CROSS_ORIGIN,
     trimmingPolicy: 2,
     url: "https://test.example/foo?a",
     referrer: "https://foo.example/foo?a",
     expectedReferrerSpec: "https://foo.example/",
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_ORIGIN_WHEN_XORIGIN,
+    policy: nsIReferrerInfo.ORIGIN_WHEN_CROSS_ORIGIN,
     XOriginTrimmingPolicy: 1,
     url: "https://test.example/foo?a",
     referrer: "https://test.example/foo?a",
     expectedReferrerSpec: "https://test.example/foo?a",
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_ORIGIN_WHEN_XORIGIN,
+    policy: nsIReferrerInfo.ORIGIN_WHEN_CROSS_ORIGIN,
     XOriginTrimmingPolicy: 1,
     url: "https://test.example/foo?a",
     referrer: "https://foo.example/foo?a",
     expectedReferrerSpec: "https://foo.example/",
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_ORIGIN_WHEN_XORIGIN,
+    policy: nsIReferrerInfo.ORIGIN_WHEN_CROSS_ORIGIN,
     XOriginTrimmingPolicy: 2,
     url: "https://test.example/foo?a",
     referrer: "https://test.example/foo?a",
     expectedReferrerSpec: "https://test.example/foo?a",
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_ORIGIN_WHEN_XORIGIN,
+    policy: nsIReferrerInfo.ORIGIN_WHEN_CROSS_ORIGIN,
     XOriginTrimmingPolicy: 2,
     url: "https://test.example/foo?a",
     referrer: "https://foo.example/foo?a",
@@ -174,102 +175,102 @@ var gTests = [
 
   // Test strict origin when xorigin policy w/o cross origin
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_STRICT_ORIGIN_WHEN_XORIGIN,
+    policy: nsIReferrerInfo.STRICT_ORIGIN_WHEN_CROSS_ORIGIN,
     url: "https://test.example/foo?a",
     referrer: "https://test.example/foo?a",
     expectedReferrerSpec: "https://test.example/foo?a",
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_STRICT_ORIGIN_WHEN_XORIGIN,
+    policy: nsIReferrerInfo.STRICT_ORIGIN_WHEN_CROSS_ORIGIN,
     url: "https://test.example/foo?a",
     referrer: "https://foo.example/foo?a",
     expectedReferrerSpec: "https://foo.example/",
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_STRICT_ORIGIN_WHEN_XORIGIN,
+    policy: nsIReferrerInfo.STRICT_ORIGIN_WHEN_CROSS_ORIGIN,
     url: "http://test.example/foo?a",
     referrer: "https://foo.example/foo?a",
     expectedReferrerSpec: undefined,
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_STRICT_ORIGIN_WHEN_XORIGIN,
+    policy: nsIReferrerInfo.STRICT_ORIGIN_WHEN_CROSS_ORIGIN,
     trimmingPolicy: 1,
     url: "https://test.example/foo?a",
     referrer: "https://test.example/foo?a",
     expectedReferrerSpec: "https://test.example/foo",
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_STRICT_ORIGIN_WHEN_XORIGIN,
+    policy: nsIReferrerInfo.STRICT_ORIGIN_WHEN_CROSS_ORIGIN,
     trimmingPolicy: 1,
     url: "https://test.example/foo?a",
     referrer: "https://foo.example/foo?a",
     expectedReferrerSpec: "https://foo.example/",
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_STRICT_ORIGIN_WHEN_XORIGIN,
+    policy: nsIReferrerInfo.STRICT_ORIGIN_WHEN_CROSS_ORIGIN,
     trimmingPolicy: 1,
     url: "http://test.example/foo?a",
     referrer: "https://foo.example/foo?a",
     expectedReferrerSpec: undefined,
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_STRICT_ORIGIN_WHEN_XORIGIN,
+    policy: nsIReferrerInfo.STRICT_ORIGIN_WHEN_CROSS_ORIGIN,
     trimmingPolicy: 2,
     url: "https://test.example/foo?a",
     referrer: "https://test.example/foo?a",
     expectedReferrerSpec: "https://test.example/",
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_STRICT_ORIGIN_WHEN_XORIGIN,
+    policy: nsIReferrerInfo.STRICT_ORIGIN_WHEN_CROSS_ORIGIN,
     trimmingPolicy: 2,
     url: "https://test.example/foo?a",
     referrer: "https://foo.example/foo?a",
     expectedReferrerSpec: "https://foo.example/",
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_STRICT_ORIGIN_WHEN_XORIGIN,
+    policy: nsIReferrerInfo.STRICT_ORIGIN_WHEN_CROSS_ORIGIN,
     trimmingPolicy: 2,
     url: "http://test.example/foo?a",
     referrer: "https://foo.example/foo?a",
     expectedReferrerSpec: undefined,
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_STRICT_ORIGIN_WHEN_XORIGIN,
+    policy: nsIReferrerInfo.STRICT_ORIGIN_WHEN_CROSS_ORIGIN,
     XOriginTrimmingPolicy: 1,
     url: "https://test.example/foo?a",
     referrer: "https://test.example/foo?a",
     expectedReferrerSpec: "https://test.example/foo?a",
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_STRICT_ORIGIN_WHEN_XORIGIN,
+    policy: nsIReferrerInfo.STRICT_ORIGIN_WHEN_CROSS_ORIGIN,
     XOriginTrimmingPolicy: 1,
     url: "https://test.example/foo?a",
     referrer: "https://foo.example/foo?a",
     expectedReferrerSpec: "https://foo.example/",
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_STRICT_ORIGIN_WHEN_XORIGIN,
+    policy: nsIReferrerInfo.STRICT_ORIGIN_WHEN_CROSS_ORIGIN,
     XOriginTrimmingPolicy: 1,
     url: "http://test.example/foo?a",
     referrer: "https://foo.example/foo?a",
     expectedReferrerSpec: undefined,
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_STRICT_ORIGIN_WHEN_XORIGIN,
+    policy: nsIReferrerInfo.STRICT_ORIGIN_WHEN_CROSS_ORIGIN,
     XOriginTrimmingPolicy: 2,
     url: "https://test.example/foo?a",
     referrer: "https://test.example/foo?a",
     expectedReferrerSpec: "https://test.example/foo?a",
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_STRICT_ORIGIN_WHEN_XORIGIN,
+    policy: nsIReferrerInfo.STRICT_ORIGIN_WHEN_CROSS_ORIGIN,
     XOriginTrimmingPolicy: 2,
     url: "https://test.example/foo?a",
     referrer: "https://foo.example/foo?a",
     expectedReferrerSpec: "https://foo.example/",
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_STRICT_ORIGIN_WHEN_XORIGIN,
+    policy: nsIReferrerInfo.STRICT_ORIGIN_WHEN_CROSS_ORIGIN,
     XOriginTrimmingPolicy: 2,
     url: "http://test.example/foo?a",
     referrer: "https://foo.example/foo?a",
@@ -278,7 +279,7 @@ var gTests = [
 
   // Test mix and choose max of XOriginTrimmingPolicy and trimmingPolicy
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_UNSAFE_URL,
+    policy: nsIReferrerInfo.UNSAFE_URL,
     XOriginTrimmingPolicy: 2,
     trimmingPolicy: 1,
     url: "https://test.example/foo?a",
@@ -286,7 +287,7 @@ var gTests = [
     expectedReferrerSpec: "https://test1.example/",
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_UNSAFE_URL,
+    policy: nsIReferrerInfo.UNSAFE_URL,
     XOriginTrimmingPolicy: 2,
     trimmingPolicy: 1,
     url: "https://test.example/foo?a",
@@ -294,7 +295,7 @@ var gTests = [
     expectedReferrerSpec: "https://test.example/foo",
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_UNSAFE_URL,
+    policy: nsIReferrerInfo.UNSAFE_URL,
     XOriginTrimmingPolicy: 1,
     trimmingPolicy: 2,
     url: "https://test.example/foo?a",
@@ -302,7 +303,7 @@ var gTests = [
     expectedReferrerSpec: "https://test.example/",
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_UNSAFE_URL,
+    policy: nsIReferrerInfo.UNSAFE_URL,
     XOriginTrimmingPolicy: 1,
     trimmingPolicy: 0,
     url: "https://test.example/foo?a",

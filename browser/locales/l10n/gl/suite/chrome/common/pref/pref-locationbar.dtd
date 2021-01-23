@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Location Bar prefs panel -->
+<!ENTITY pref.locationBar.title                "Barra de localización">
+
+<!ENTITY autoComplete.label                    "Completado automático">
+<!ENTITY enableAutoComplete.label              "Completado automático desde o historial de navegación mentres escribe">
+<!ENTITY enableAutoComplete.accesskey          "a">
+<!ENTITY autoCompleteAutoFill.label            "Completar automaticamente coa mellor coincidencia">
+<!ENTITY autoCompleteAutoFill.accesskey        "u">
+<!ENTITY autoCompleteShowPopup.label           "Mostrar unha lista cos resultados coincidentes">
+<!ENTITY autoCompleteShowPopup.accesskey       "s">
+<!ENTITY autoCompleteMatchOnlyTyped.label      "Só coincidir cos sitios web escritos anteriormente">
+<!ENTITY autoCompleteMatchOnlyTyped.accesskey  "o">
+<!ENTITY autoCompleteMatchOnlyURLs.label       "Só coincidir nas localizacións, non nos títulos dos sitios web">
+<!ENTITY autoCompleteMatchOnlyURLs.accesskey   "n">
+<!--LOCALIZATION NOTE (autoCompleteMatch.label): This is the common leading
+  part of the menulist items listed below, mainly to make the control available
+  via the accesskey
+-->
+<!ENTITY autoCompleteMatch.label               "Coincidir">
+<!ENTITY autoCompleteMatch.accesskey           "C">
+<!ENTITY autoCompleteMatchAnywhere             "En calquera parte da localización ou do título">
+<!ENTITY autoCompleteMatchWordsFirst           "En calquera parte pero preferibelmente ao comezo da palabra">
+<!ENTITY autoCompleteMatchWords                "Só no comezo das palabras">
+<!ENTITY autoCompleteMatchStart                "Só no comezo da localización ou do título">
+
+<!ENTITY formatting.label                      "Formato">
+<!ENTITY domainFormatting.label                "Realzar o nome do dominio para os sitios web e os servidores FTP">
+<!ENTITY domainFormatting.accesskey            "d">
+
+<!ENTITY searchEngine.label                    "Motor de busca de Internet">
+<!ENTITY showSearchEngine.label                "Mostrar o buscador predeterminado">
+<!ENTITY showSearchEngine.accesskey            "e">
+
+<!ENTITY unknownLocations.label                "Localizacións descoñecidas">
+<!ENTITY domainGuessing.label                  "Engadir &quot;www.&quot; e &quot;.com&quot; á localización se non se atopa unha páxina web">
+<!ENTITY domainGuessing.accesskey              "w">
+<!ENTITY keywords.label                        "Realizar unha busca na web cando o texto introducido non sexa un enderezo web">
+<!ENTITY keywords.accesskey                    "z">

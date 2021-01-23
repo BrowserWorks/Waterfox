@@ -284,7 +284,7 @@ impl<'a> Drop for nsAStringBulkWriteHandle<'a> {
         // https://www.unicode.org/reports/tr36/#Substituting_for_Ill_Formed_Subsequences
         // for closely related scenario.
         unsafe {
-            let mut this = self.string.as_repr();
+            let mut this = self.string.as_repr_mut();
             this.as_mut().length = 1u32;
             *(this.as_mut().data.as_mut()) = 0xFFFDu16;
             *(this.as_mut().data.as_ptr().offset(1isize)) = 0;
@@ -313,7 +313,7 @@ impl<'a> Drop for nsACStringBulkWriteHandle<'a> {
         // https://www.unicode.org/reports/tr36/#Substituting_for_Ill_Formed_Subsequences
         // for closely related scenario.
         unsafe {
-            let mut this = self.string.as_repr();
+            let mut this = self.string.as_repr_mut();
             if self.capacity >= 3 {
                 this.as_mut().length = 3u32;
                 *(this.as_mut().data.as_mut()) = 0xEFu8;
@@ -379,7 +379,7 @@ macro_rules! define_string_types {
                     data: unsafe { ptr::NonNull::new_unchecked(&NUL as *const _ as *mut _) },
                     length: 0,
                     dataflags: DataFlags::TERMINATED | DataFlags::LITERAL,
-                    classflags: classflags,
+                    classflags,
                 }
             }
         }
@@ -415,7 +415,7 @@ macro_rules! define_string_types {
 
         impl<'a> $BulkWriteHandle<'a> {
             fn new(string: &'a mut $AString, capacity: usize) -> Self {
-                $BulkWriteHandle{ string: string, capacity: capacity }
+                $BulkWriteHandle{ string, capacity }
             }
 
             pub unsafe fn restart_bulk_write(&mut self,
@@ -449,7 +449,7 @@ macro_rules! define_string_types {
                     }
                 }
                 unsafe {
-                    let mut this = self.string.as_repr();
+                    let mut this = self.string.as_repr_mut();
                     this.as_mut().length = length as u32;
                     *(this.as_mut().data.as_ptr().offset(length as isize)) = 0;
                     if cfg!(debug_assertions) {
@@ -473,7 +473,7 @@ macro_rules! define_string_types {
 
             pub fn as_mut_slice(&mut self) -> &mut [$char_t] {
                 unsafe {
-                    let mut this = self.string.as_repr();
+                    let mut this = self.string.as_repr_mut();
                     slice::from_raw_parts_mut(this.as_mut().data.as_ptr(), self.capacity)
                 }
             }
@@ -657,29 +657,35 @@ macro_rules! define_string_types {
                 }
             }
 
-            fn as_repr(&mut self) -> ptr::NonNull<$StringRepr> {
+            fn as_repr(&self) -> &$StringRepr {
+                // All $AString values point to a struct prefix which is
+                // identical to $StringRepr, this we can transmute `self`
+                // into $StringRepr to get the reference to the underlying
+                // data.
+                unsafe {
+                    &*(self as *const _ as *const $StringRepr)
+                }
+            }
+
+            fn as_repr_mut(&mut self) -> ptr::NonNull<$StringRepr> {
                 unsafe { ptr::NonNull::new_unchecked(self as *mut _ as *mut $StringRepr)}
             }
 
-            /// If this is an autostring, returns the capacity (excluding the zero
-            /// terminator) of the inline buffer within `Some()`. Otherwise returns
-            /// `None`.
-            pub fn inline_capacity(&self) -> Option<usize> {
-                if unsafe {
-                    // All $AString values point to a struct prefix which is
-                    // identical to $StringRepr, this we can transmute `self`
-                    // into $StringRepr to get the reference to the underlying
-                    // data.
-                    let this: &$StringRepr = mem::transmute(self);
-                    this.classflags.contains(ClassFlags::INLINE)
-                } {
-                    unsafe {
-                        let this: &$AutoStringRepr = mem::transmute(self);
-                        Some(this.inline_capacity as usize)
-                    }
-                } else {
-                    None
+            fn as_auto_string_repr(&self) -> Option<&$AutoStringRepr> {
+                if !self.as_repr().classflags.contains(ClassFlags::INLINE) {
+                    return None;
                 }
+
+                unsafe {
+                    Some(&*(self as *const _ as *const $AutoStringRepr))
+                }
+            }
+
+            /// If this is an autostring, returns the capacity (excluding the
+            /// zero terminator) of the inline buffer within `Some()`. Otherwise
+            /// returns `None`.
+            pub fn inline_capacity(&self) -> Option<usize> {
+                Some(self.as_auto_string_repr()?.inline_capacity as usize)
             }
         }
 
@@ -1086,8 +1092,20 @@ define_string_types! {
 }
 
 impl nsACString {
+    /// Gets a CString as an utf-8 str or a String, trying to avoid copies, and
+    /// replacing invalid unicode sequences with replacement characters.
+    #[inline]
+    pub fn to_utf8(&self) -> borrow::Cow<str> {
+        String::from_utf8_lossy(&self[..])
+    }
+
+    #[inline]
     pub unsafe fn as_str_unchecked(&self) -> &str {
-        str::from_utf8_unchecked(self)
+        if cfg!(debug_assertions) {
+            str::from_utf8(self).expect("Should be utf-8")
+        } else {
+            str::from_utf8_unchecked(self)
+        }
     }
 }
 
@@ -1137,13 +1155,13 @@ impl fmt::Write for nsACString {
 
 impl fmt::Display for nsACString {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        fmt::Display::fmt(&String::from_utf8_lossy(&self[..]), f)
+        fmt::Display::fmt(&self.to_utf8(), f)
     }
 }
 
 impl fmt::Debug for nsACString {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        fmt::Debug::fmt(&String::from_utf8_lossy(&self[..]), f)
+        fmt::Debug::fmt(&self.to_utf8(), f)
     }
 }
 
@@ -1240,15 +1258,26 @@ impl fmt::Write for nsAString {
     }
 }
 
+impl nsAString {
+    /// Turns this utf-16 string into a string, replacing invalid unicode
+    /// sequences with replacement characters.
+    ///
+    /// This is needed because the default ToString implementation goes through
+    /// fmt::Display, and thus allocates the string twice.
+    pub fn to_string(&self) -> String {
+        String::from_utf16_lossy(&self[..])
+    }
+}
+
 impl fmt::Display for nsAString {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        fmt::Display::fmt(&String::from_utf16_lossy(&self[..]), f)
+        fmt::Display::fmt(&self.to_string(), f)
     }
 }
 
 impl fmt::Debug for nsAString {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        fmt::Debug::fmt(&String::from_utf16_lossy(&self[..]), f)
+        fmt::Debug::fmt(&self.to_string(), f)
     }
 }
 
@@ -1329,7 +1358,7 @@ pub mod test_helpers {
         ($T:ty, $fname:ident) => {
             #[no_mangle]
             #[allow(non_snake_case)]
-            pub extern fn $fname(size: *mut usize, align: *mut usize) {
+            pub extern "C" fn $fname(size: *mut usize, align: *mut usize) {
                 unsafe {
                     *size = mem::size_of::<$T>();
                     *align = mem::align_of::<$T>();
@@ -1339,7 +1368,7 @@ pub mod test_helpers {
         ($T:ty, $U:ty, $V:ty, $fname:ident) => {
             #[no_mangle]
             #[allow(non_snake_case)]
-            pub extern fn $fname(size: *mut usize, align: *mut usize) {
+            pub extern "C" fn $fname(size: *mut usize, align: *mut usize) {
                 unsafe {
                     *size = mem::size_of::<$T>();
                     *align = mem::align_of::<$T>();
@@ -1350,13 +1379,21 @@ pub mod test_helpers {
                     assert_eq!(*align, mem::align_of::<$V>());
                 }
             }
-        }
+        };
     }
 
-    size_align_check!(nsStringRepr, nsString, nsStr<'static>,
-                      Rust_Test_ReprSizeAlign_nsString);
-    size_align_check!(nsCStringRepr, nsCString, nsCStr<'static>,
-                      Rust_Test_ReprSizeAlign_nsCString);
+    size_align_check!(
+        nsStringRepr,
+        nsString,
+        nsStr<'static>,
+        Rust_Test_ReprSizeAlign_nsString
+    );
+    size_align_check!(
+        nsCStringRepr,
+        nsCString,
+        nsCStr<'static>,
+        Rust_Test_ReprSizeAlign_nsCString
+    );
 
     /// Generates a $[no_mangle] extern "C" function which returns the size,
     /// alignment and offset in the parent struct of a given member, with the
@@ -1365,89 +1402,114 @@ pub mod test_helpers {
     /// This method can trigger Undefined Behavior if the accessing the member
     /// $member on a given type would use that type's `Deref` implementation.
     macro_rules! member_check {
-        ($T:ty, $member:ident, $method:ident) => {
-            #[no_mangle]
-            #[allow(non_snake_case)]
-            pub extern fn $method(size: *mut usize,
-                                  align: *mut usize,
-                                  offset: *mut usize) {
-                unsafe {
-                    // Create a temporary value of type T to get offsets, sizes
-                    // and aligns off of
-                    let tmp: $T = mem::zeroed();
-                    *size = mem::size_of_val(&tmp.$member);
-                    *align = mem::align_of_val(&tmp.$member);
-                    *offset =
-                        (&tmp.$member as *const _ as usize) -
-                        (&tmp as *const _ as usize);
-                    mem::forget(tmp);
-                }
-            }
-        };
         ($T:ty, $U:ty, $V:ty, $member:ident, $method:ident) => {
             #[no_mangle]
             #[allow(non_snake_case)]
-            pub extern fn $method(size: *mut usize,
-                                  align: *mut usize,
-                                  offset: *mut usize) {
+            pub extern "C" fn $method(size: *mut usize, align: *mut usize, offset: *mut usize) {
                 unsafe {
                     // Create a temporary value of type T to get offsets, sizes
                     // and alignments from.
-                    let tmp: $T = mem::zeroed();
+                    let tmp: mem::MaybeUninit<$T> = mem::MaybeUninit::uninit();
+                    // FIXME: This should use &raw references when available,
+                    // this is technically UB as it creates a reference to
+                    // uninitialized memory, but there's no better way to do
+                    // this right now.
+                    let tmp = &*tmp.as_ptr();
                     *size = mem::size_of_val(&tmp.$member);
                     *align = mem::align_of_val(&tmp.$member);
-                    *offset =
-                        (&tmp.$member as *const _ as usize) -
-                        (&tmp as *const _ as usize);
-                    mem::forget(tmp);
+                    *offset = (&tmp.$member as *const _ as usize) - (tmp as *const $T as usize);
 
-                    let tmp: $U = mem::zeroed();
+                    let tmp: mem::MaybeUninit<$U> = mem::MaybeUninit::uninit();
+                    let tmp = &*tmp.as_ptr();
                     assert_eq!(*size, mem::size_of_val(&tmp.hdr.$member));
                     assert_eq!(*align, mem::align_of_val(&tmp.hdr.$member));
-                    assert_eq!(*offset,
-                               (&tmp.hdr.$member as *const _ as usize) -
-                               (&tmp as *const _ as usize));
-                    mem::forget(tmp);
+                    assert_eq!(
+                        *offset,
+                        (&tmp.hdr.$member as *const _ as usize) - (tmp as *const $U as usize)
+                    );
 
-                    let tmp: $V = mem::zeroed();
+                    let tmp: mem::MaybeUninit<$V> = mem::MaybeUninit::uninit();
+                    let tmp = &*tmp.as_ptr();
                     assert_eq!(*size, mem::size_of_val(&tmp.hdr.$member));
                     assert_eq!(*align, mem::align_of_val(&tmp.hdr.$member));
-                    assert_eq!(*offset,
-                               (&tmp.hdr.$member as *const _ as usize) -
-                               (&tmp as *const _ as usize));
-                    mem::forget(tmp);
+                    assert_eq!(
+                        *offset,
+                        (&tmp.hdr.$member as *const _ as usize) - (tmp as *const $V as usize)
+                    );
                 }
             }
-        }
+        };
     }
 
-    member_check!(nsStringRepr, nsString, nsStr<'static>,
-                  data, Rust_Test_Member_nsString_mData);
-    member_check!(nsStringRepr, nsString, nsStr<'static>,
-                  length, Rust_Test_Member_nsString_mLength);
-    member_check!(nsStringRepr, nsString, nsStr<'static>,
-                  dataflags, Rust_Test_Member_nsString_mDataFlags);
-    member_check!(nsStringRepr, nsString, nsStr<'static>,
-                  classflags, Rust_Test_Member_nsString_mClassFlags);
-    member_check!(nsCStringRepr, nsCString, nsCStr<'static>,
-                  data, Rust_Test_Member_nsCString_mData);
-    member_check!(nsCStringRepr, nsCString, nsCStr<'static>,
-                  length, Rust_Test_Member_nsCString_mLength);
-    member_check!(nsCStringRepr, nsCString, nsCStr<'static>,
-                  dataflags, Rust_Test_Member_nsCString_mDataFlags);
-    member_check!(nsCStringRepr, nsCString, nsCStr<'static>,
-                  classflags, Rust_Test_Member_nsCString_mClassFlags);
+    member_check!(
+        nsStringRepr,
+        nsString,
+        nsStr<'static>,
+        data,
+        Rust_Test_Member_nsString_mData
+    );
+    member_check!(
+        nsStringRepr,
+        nsString,
+        nsStr<'static>,
+        length,
+        Rust_Test_Member_nsString_mLength
+    );
+    member_check!(
+        nsStringRepr,
+        nsString,
+        nsStr<'static>,
+        dataflags,
+        Rust_Test_Member_nsString_mDataFlags
+    );
+    member_check!(
+        nsStringRepr,
+        nsString,
+        nsStr<'static>,
+        classflags,
+        Rust_Test_Member_nsString_mClassFlags
+    );
+    member_check!(
+        nsCStringRepr,
+        nsCString,
+        nsCStr<'static>,
+        data,
+        Rust_Test_Member_nsCString_mData
+    );
+    member_check!(
+        nsCStringRepr,
+        nsCString,
+        nsCStr<'static>,
+        length,
+        Rust_Test_Member_nsCString_mLength
+    );
+    member_check!(
+        nsCStringRepr,
+        nsCString,
+        nsCStr<'static>,
+        dataflags,
+        Rust_Test_Member_nsCString_mDataFlags
+    );
+    member_check!(
+        nsCStringRepr,
+        nsCString,
+        nsCStr<'static>,
+        classflags,
+        Rust_Test_Member_nsCString_mClassFlags
+    );
 
     #[no_mangle]
     #[allow(non_snake_case)]
-    pub extern fn Rust_Test_NsStringFlags(f_terminated: *mut u16,
-                                          f_voided: *mut u16,
-                                          f_refcounted: *mut u16,
-                                          f_owned: *mut u16,
-                                          f_inline: *mut u16,
-                                          f_literal: *mut u16,
-                                          f_class_inline: *mut u16,
-                                          f_class_null_terminated: *mut u16) {
+    pub extern "C" fn Rust_Test_NsStringFlags(
+        f_terminated: *mut u16,
+        f_voided: *mut u16,
+        f_refcounted: *mut u16,
+        f_owned: *mut u16,
+        f_inline: *mut u16,
+        f_literal: *mut u16,
+        f_class_inline: *mut u16,
+        f_class_null_terminated: *mut u16,
+    ) {
         unsafe {
             *f_terminated = DataFlags::TERMINATED.bits();
             *f_voided = DataFlags::VOIDED.bits();
@@ -1462,10 +1524,12 @@ pub mod test_helpers {
 
     #[no_mangle]
     #[allow(non_snake_case)]
-    pub extern fn Rust_InlineCapacityFromRust(cstring: *const nsACString,
-                                              string: *const nsAString,
-                                              cstring_capacity: *mut usize,
-                                              string_capacity: *mut usize) {
+    pub extern "C" fn Rust_InlineCapacityFromRust(
+        cstring: *const nsACString,
+        string: *const nsAString,
+        cstring_capacity: *mut usize,
+        string_capacity: *mut usize,
+    ) {
         unsafe {
             *cstring_capacity = (*cstring).inline_capacity().unwrap();
             *string_capacity = (*string).inline_capacity().unwrap();

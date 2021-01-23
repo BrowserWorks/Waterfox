@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Jadvalga aylantirish">
+<!ENTITY instructions1.label   "Composer har bir tanlangan ichidagi paragraf uchun yangi jadval qatorini yaratadi.">
+<!ENTITY instructions2.label   "Tanlanganlarni ustunlarga ajratishda foydalaniladigan belgilarni tanlang:">
+<!ENTITY commaRadio.label      "Vergul">
+<!ENTITY spaceRadio.label      "Bo‘sh joy">
+<!ENTITY otherRadio.label      "Boshqa belgi:">
+<!ENTITY deleteCharCheck.label "Ajratkich belgisini o‘chirish">
+<!ENTITY collapseSpaces.label  "Ortiqcha bo‘sh joylarni e’tiborsiz qoldirish">
+<!ENTITY collapseSpaces.tooltip "Yaqin bo‘sh joylarni bitta ajratkichga aylantirish">

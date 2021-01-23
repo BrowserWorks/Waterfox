@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title           "ChatZilla の設定">
+
+<!ENTITY loading.label          "お待ちください。読み込んでいます...">
+
+<!ENTITY homepage.url           "http://chatzilla.hacksrus.com/">
+<!ENTITY homepage.label         "ChatZilla ホームページ">
+
+<!ENTITY object.add.label       "追加...">
+<!ENTITY object.add.hint        "新しいネットワーク、チャンネル、またはユーザーを追加して環境設定">
+<!ENTITY object.add.accesskey   "A">
+
+<!ENTITY object.del.label       "削除">
+<!ENTITY object.del.hint        "現在のオブジェクトを削除して、その環境設定のすべてを削除">
+<!ENTITY object.del.accesskey   "R">
+
+<!ENTITY object.reset.label     "リセット">
+<!ENTITY object.reset.hint      "このオブジェクトの環境設定を既定値にリセット">
+<!ENTITY object.reset.accesskey "s">
+
+<!ENTITY dialog.apply           "適用">
+
+<!ENTITY network                "ネットワーク">
+<!ENTITY channel                "チャンネル">
+<!ENTITY user                   "ユーザー">
+
+<!ENTITY config.add.title       "環境設定のオブジェクトの追加">
+
+<!ENTITY config.type.label        "種類:">
+<!ENTITY config.type.hint         "環境設定を追加するオブジェクトの種類">
+<!ENTITY config.type.accesskey    "T">
+<!ENTITY config.network.label     "ネットワーク:">
+<!ENTITY config.network.hint      "ネットワークの既知の名前、またはサーバー名">
+<!ENTITY config.network.accesskey "N">
+<!ENTITY config.target.label      "対象:">
+<!ENTITY config.target.hint       "対象のチャンネルまたはユーザー名">
+<!ENTITY config.target.accesskey  "g">

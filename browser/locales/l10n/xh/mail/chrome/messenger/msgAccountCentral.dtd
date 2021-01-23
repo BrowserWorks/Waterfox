@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "Imeyile">
+<!ENTITY readMsgsLink.label           "Funda imiyalezo">
+<!ENTITY composeMsgLink.label         "Bhala umyalezo omtsha">
+
+<!ENTITY newsSectionHdr.label         "Amaqela eendaba">
+<!ENTITY subscribeNewsLink.label      "Lawula imirhumo yamaqela eendaba">
+
+<!ENTITY feedsSectionHdr.label        "Feeds">
+<!ENTITY subscribeFeeds.label         "Manage subscriptions">
+
+<!ENTITY chat.label                   "Chat">
+<!ENTITY movemail.label               "Movemail">
+
+<!ENTITY accountsSectionHdr.label     "Iiakhawunti">
+<!ENTITY subscribeImapFolders.label   "Lawula imirhumo yesiqulathi seefayili">
+<!ENTITY settingsLink.label           "Jonga imimiselo yale akhawunti">
+
+<!ENTITY advFeaturesSectionHdr.label  "Iimpawu Esezikwinqanaba Eliphambili">
+<!ENTITY searchMsgsLink.label         "Zingela imiyalezo">
+<!ENTITY filtersLink.label            "Lawula izihluzi zomyalezo">
+<!ENTITY junkSettings.label           "Imimiselo yemeyile yengxubevange">
+<!ENTITY offlineLink.label            "Imimiselo Yemo Engeyo Yokusebenza">

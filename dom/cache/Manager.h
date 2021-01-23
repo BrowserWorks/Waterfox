@@ -7,10 +7,11 @@
 #ifndef mozilla_dom_cache_Manager_h
 #define mozilla_dom_cache_Manager_h
 
+#include "mozilla/RefPtr.h"
+#include "mozilla/dom/SafeRefPtr.h"
 #include "mozilla/dom/cache/Types.h"
 #include "nsCOMPtr.h"
 #include "nsISupportsImpl.h"
-#include "mozilla/RefPtr.h"
 #include "nsString.h"
 #include "nsTArray.h"
 
@@ -19,6 +20,7 @@ class nsIThread;
 
 namespace mozilla {
 
+class AbstractThread;
 class ErrorResult;
 
 namespace dom {
@@ -62,7 +64,7 @@ class StreamList;
 // As an invariant, all Manager objects must cease all IO before shutdown.  This
 // is enforced by the Manager::Factory.  If content still holds references to
 // Cache DOM objects during shutdown, then all operations will begin rejecting.
-class Manager final {
+class Manager final : public SafeRefCounted<Manager> {
  public:
   // Callback interface implemented by clients of Manager, such as CacheParent
   // and CacheStorageParent.  In general, if you call a Manager method you
@@ -93,31 +95,35 @@ class Manager final {
 
     void OnOpComplete(ErrorResult&& aRv, const CacheOpResult& aResult,
                       const SavedResponse& aSavedResponse,
-                      StreamList* aStreamList);
+                      StreamList& aStreamList);
 
     void OnOpComplete(ErrorResult&& aRv, const CacheOpResult& aResult,
                       const nsTArray<SavedResponse>& aSavedResponseList,
-                      StreamList* aStreamList);
+                      StreamList& aStreamList);
 
     void OnOpComplete(ErrorResult&& aRv, const CacheOpResult& aResult,
                       const nsTArray<SavedRequest>& aSavedRequestList,
-                      StreamList* aStreamList);
+                      StreamList& aStreamList);
+
+    struct StreamInfo {
+      const nsTArray<SavedResponse>& mSavedResponseList;
+      const nsTArray<SavedRequest>& mSavedRequestList;
+      StreamList& mStreamList;
+    };
 
     // interface to be implemented
     virtual void OnOpComplete(ErrorResult&& aRv, const CacheOpResult& aResult,
                               CacheId aOpenedCacheId,
-                              const nsTArray<SavedResponse>& aSavedResponseList,
-                              const nsTArray<SavedRequest>& aSavedRequestList,
-                              StreamList* aStreamList) {}
+                              const Maybe<StreamInfo>& aStreamInfo) {}
 
    protected:
-    ~Listener() {}
+    ~Listener() = default;
   };
 
   enum State { Open, Closing };
 
-  static nsresult GetOrCreate(ManagerId* aManagerId, Manager** aManagerOut);
-  static already_AddRefed<Manager> Get(ManagerId* aManagerId);
+  static Result<SafeRefPtr<Manager>, nsresult> AcquireCreateIfNonExistent(
+      const SafeRefPtr<ManagerId>& aManagerId);
 
   // Synchronously shutdown.  This spins the event loop.
   static void ShutdownAll();
@@ -129,7 +135,7 @@ class Manager final {
   void RemoveListener(Listener* aListener);
 
   // Must be called by Context objects before they are destroyed.
-  void RemoveContext(Context* aContext);
+  void RemoveContext(Context& aContext);
 
   // Marks the Manager "invalid".  Once the Context completes no new operations
   // will be permitted with this Manager.  New actors will get a new Manager.
@@ -148,7 +154,7 @@ class Manager final {
   void AddRefBodyId(const nsID& aBodyId);
   void ReleaseBodyId(const nsID& aBodyId);
 
-  already_AddRefed<ManagerId> GetManagerId() const;
+  const ManagerId& GetManagerId() const;
 
   // Methods to allow a StreamList to register themselves with the Manager.
   // StreamList objects must call RemoveStreamList() before they are destroyed.
@@ -193,9 +199,7 @@ class Manager final {
 
   typedef uint64_t ListenerId;
 
-  Manager(ManagerId* aManagerId, nsIThread* aIOThread);
-  ~Manager();
-  void Init(Manager* aOldManager);
+  void Init(Maybe<Manager&> aOldManager);
   void Shutdown();
 
   void Abort();
@@ -209,8 +213,9 @@ class Manager final {
 
   void MaybeAllowContextToClose();
 
-  RefPtr<ManagerId> mManagerId;
+  SafeRefPtr<ManagerId> mManagerId;
   nsCOMPtr<nsIThread> mIOThread;
+  const RefPtr<AbstractThread> mIOAbstractThread;
 
   // Weak reference cleared by RemoveContext() in Context destructor.
   Context* MOZ_NON_OWNING_REF mContext;
@@ -264,8 +269,15 @@ class Manager final {
   };
   nsTArray<BodyIdRefCounter> mBodyIdRefs;
 
+  struct ConstructorGuard {};
+
  public:
-  NS_INLINE_DECL_REFCOUNTING(cache::Manager)
+  Manager(SafeRefPtr<ManagerId> aManagerId,
+          already_AddRefed<nsIThread> aIOThread, const ConstructorGuard&);
+  ~Manager();
+
+  NS_DECL_OWNINGTHREAD
+  MOZ_DECLARE_REFCOUNTED_TYPENAME(cache::Manager)
 };
 
 }  // namespace cache

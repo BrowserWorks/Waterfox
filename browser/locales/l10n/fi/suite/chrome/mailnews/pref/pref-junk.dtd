@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.junk.title "Roska- ja huijausposti">
+<!ENTITY junkSettings.caption "Yleiset roskapostiasetukset">
+<!ENTITY junkMail.intro "Voit muokata tilikohtaisia roskapostiasetuksia tilien asetuksista.">
+
+<!-- Junk Mail Controls -->
+<!ENTITY manualMark.label               "Kun merkitsen viestin roskapostiksi:">
+<!ENTITY manualMark.accesskey           "K">
+<!ENTITY manualMarkModeMove.label       "Siirrä se tilin roskapostikansioon">
+<!ENTITY manualMarkModeMove.accesskey   "S">
+<!ENTITY manualMarkModeDelete.label     "Poista se">
+<!ENTITY manualMarkModeDelete.accesskey "P">
+
+<!ENTITY markAsRead.intro               "Merkitse viesti luetuksi:">
+<!ENTITY autoMarkAsRead.label           "Kun &brandShortName; epäilee sen olevan roskapostia">
+<!ENTITY autoMarkAsRead.accesskey       "u">
+<!ENTITY manualMarkAsRead.label         "Kun minä itse merkitsen sen roskapostiksi">
+<!ENTITY manualMarkAsRead.accesskey     "m">
+
+<!ENTITY enableJunkLogging.label        "Pidä lokia roskapostisuodattimen toiminnasta">
+<!ENTITY enableJunkLogging.accesskey    "d">
+<!ENTITY openJunkLog.label              "Näytä loki">
+<!ENTITY openJunkLog.accesskey          "N">
+<!ENTITY resetTrainingData.label        "Nollaa harjoitustiedot">
+<!ENTITY resetTrainingData.accesskey    "o">
+
+<!ENTITY pref.suspectMail.caption       "Epäilyttävät viestit">
+
+<!-- Phishing Detector -->
+<!ENTITY pref.phishing.caption            "Huijausviestit">
+<!ENTITY enablePhishingDetector.label     "Näytä varoitus epäillyistä sähköpostihuijauksista">
+<!ENTITY enablePhishingDetector.accesskey "ä">
+
+<!-- Anti Virus -->
+<!ENTITY pref.antivirus.caption           "Virustentorjunta">
+<!ENTITY antiVirus.label                  "Salli virustentorjuntaohjelman tarkastaa saapuvat viestit helpommin">
+<!ENTITY antiVirus.accesskey              "a">

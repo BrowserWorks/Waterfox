@@ -8,9 +8,9 @@
   sendAsyncMessage */
 
 /*
- * Frame script that listens for requests to start a `DebuggerServer` for a frame in a
+ * Frame script that listens for requests to start a `DevToolsServer` for a frame in a
  * content process.  Loaded into content process frames by the main process during
- * `DebuggerServer.connectToFrame`.
+ * frame-connector.js' connectToFrame.
  */
 
 try {
@@ -29,8 +29,9 @@ try {
       const { DevToolsLoader } = ChromeUtils.import(
         "resource://devtools/shared/Loader.jsm"
       );
-      loader = new DevToolsLoader();
-      loader.invisibleToDebugger = true;
+      loader = new DevToolsLoader({
+        invisibleToDebugger: true,
+      });
       customLoader = true;
     } else {
       // Otherwise, use the shared loader.
@@ -40,14 +41,14 @@ try {
 
     const DevToolsUtils = require("devtools/shared/DevToolsUtils");
     const { dumpn } = DevToolsUtils;
-    const { DebuggerServer } = require("devtools/server/main");
+    const { DevToolsServer } = require("devtools/server/devtools-server");
     const { ActorPool } = require("devtools/server/actors/common");
 
-    DebuggerServer.init();
+    DevToolsServer.init();
     // We want a special server without any root actor and only target-scoped actors.
     // We are going to spawn a FrameTargetActor instance in the next few lines,
     // it is going to act like a root actor without being one.
-    DebuggerServer.registerActors({ target: true });
+    DevToolsServer.registerActors({ target: true });
 
     const connections = new Map();
 
@@ -58,7 +59,7 @@ try {
       const prefix = msg.data.prefix;
       const addonId = msg.data.addonId;
 
-      const conn = DebuggerServer.connectToParent(prefix, mm);
+      const conn = DevToolsServer.connectToParent(prefix, mm);
       conn.parentMessageManager = mm;
       connections.set(prefix, conn);
 
@@ -78,10 +79,13 @@ try {
         const {
           FrameTargetActor,
         } = require("devtools/server/actors/targets/frame");
-        actor = new FrameTargetActor(conn, chromeGlobal);
+        const { docShell } = chromeGlobal;
+        // For a script loaded via loadFrameScript, the global is the content
+        // message manager.
+        actor = new FrameTargetActor(conn, docShell);
       }
 
-      const actorPool = new ActorPool(conn);
+      const actorPool = new ActorPool(conn, "frame-script");
       actorPool.addActor(actor);
       conn.addActorPool(actorPool);
 
@@ -91,7 +95,7 @@ try {
     addMessageListener("debug:connect", onConnect);
 
     // Allows executing module setup helper from the parent process.
-    // See also: DebuggerServer.setupInChild()
+    // See also: DevToolsServer.setupInChild()
     const onSetupInChild = DevToolsUtils.makeInfallible(msg => {
       const { module, setupChild, args } = msg.data;
       let m;
@@ -135,8 +139,8 @@ try {
       }
 
       removeMessageListener("debug:disconnect", onDisconnect);
-      // Call DebuggerServerConnection.close to destroy all child actors. It should end up
-      // calling DebuggerServerConnection.onClosed that would actually cleanup all actor
+      // Call DevToolsServerConnection.close to destroy all child actors. It should end up
+      // calling DevToolsServerConnection.onClosed that would actually cleanup all actor
       // pools.
       conn.close();
       connections.delete(prefix);
@@ -158,18 +162,18 @@ try {
     function destroyServer() {
       // Only destroy the server if there is no more connections to it. It may be used
       // to debug another tab running in the same process.
-      if (DebuggerServer.hasConnection() || DebuggerServer.keepAlive) {
+      if (DevToolsServer.hasConnection() || DevToolsServer.keepAlive) {
         return;
       }
-      DebuggerServer.off("connectionchange", destroyServer);
-      DebuggerServer.destroy();
+      DevToolsServer.off("connectionchange", destroyServer);
+      DevToolsServer.destroy();
 
       // When debugging chrome pages, we initialized a dedicated loader, also destroy it
       if (customLoader) {
         loader.destroy();
       }
     }
-    DebuggerServer.on("connectionchange", destroyServer);
+    DevToolsServer.on("connectionchange", destroyServer);
   })();
 } catch (e) {
   dump(`Exception in DevTools frame startup: ${e}\n`);

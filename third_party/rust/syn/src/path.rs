@@ -1,10 +1,10 @@
 use super::*;
-use punctuated::Punctuated;
+use crate::punctuated::Punctuated;
 
 ast_struct! {
-    /// A path at which a named item is exported: `std::collections::HashMap`.
+    /// A path at which a named item is exported (e.g. `std::collections::HashMap`).
     ///
-    /// *This type is available if Syn is built with the `"derive"` or `"full"`
+    /// *This type is available only if Syn is built with the `"derive"` or `"full"`
     /// feature.*
     pub struct Path {
         pub leading_colon: Option<Token![::]>,
@@ -29,7 +29,7 @@ where
 ast_struct! {
     /// A segment of a path together with any path arguments on that segment.
     ///
-    /// *This type is available if Syn is built with the `"derive"` or `"full"`
+    /// *This type is available only if Syn is built with the `"derive"` or `"full"`
     /// feature.*
     pub struct PathSegment {
         pub ident: Ident,
@@ -52,7 +52,7 @@ where
 ast_enum! {
     /// Angle bracketed or parenthesized arguments of a path segment.
     ///
-    /// *This type is available if Syn is built with the `"derive"` or `"full"`
+    /// *This type is available only if Syn is built with the `"derive"` or `"full"`
     /// feature.*
     ///
     /// ## Angle bracketed
@@ -79,9 +79,9 @@ impl Default for PathArguments {
 
 impl PathArguments {
     pub fn is_empty(&self) -> bool {
-        match *self {
+        match self {
             PathArguments::None => true,
-            PathArguments::AngleBracketed(ref bracketed) => bracketed.args.is_empty(),
+            PathArguments::AngleBracketed(bracketed) => bracketed.args.is_empty(),
             PathArguments::Parenthesized(_) => false,
         }
     }
@@ -98,7 +98,7 @@ impl PathArguments {
 ast_enum! {
     /// An individual generic argument, like `'a`, `T`, or `Item = T`.
     ///
-    /// *This type is available if Syn is built with the `"derive"` or `"full"`
+    /// *This type is available only if Syn is built with the `"derive"` or `"full"`
     /// feature.*
     pub enum GenericArgument {
         /// A lifetime argument.
@@ -122,7 +122,7 @@ ast_struct! {
     /// Angle bracketed arguments of a path segment: the `<K, V>` in `HashMap<K,
     /// V>`.
     ///
-    /// *This type is available if Syn is built with the `"derive"` or `"full"`
+    /// *This type is available only if Syn is built with the `"derive"` or `"full"`
     /// feature.*
     pub struct AngleBracketedGenericArguments {
         pub colon2_token: Option<Token![::]>,
@@ -135,7 +135,7 @@ ast_struct! {
 ast_struct! {
     /// A binding (equality constraint) on an associated type: `Item = u8`.
     ///
-    /// *This type is available if Syn is built with the `"derive"` or `"full"`
+    /// *This type is available only if Syn is built with the `"derive"` or `"full"`
     /// feature.*
     pub struct Binding {
         pub ident: Ident,
@@ -147,7 +147,7 @@ ast_struct! {
 ast_struct! {
     /// An associated type bound: `Iterator<Item: Display>`.
     ///
-    /// *This type is available if Syn is built with the `"derive"` or `"full"`
+    /// *This type is available only if Syn is built with the `"derive"` or `"full"`
     /// feature.*
     pub struct Constraint {
         pub ident: Ident,
@@ -160,7 +160,7 @@ ast_struct! {
     /// Arguments of a function path segment: the `(A, B) -> C` in `Fn(A,B) ->
     /// C`.
     ///
-    /// *This type is available if Syn is built with the `"derive"` or `"full"`
+    /// *This type is available only if Syn is built with the `"derive"` or `"full"`
     /// feature.*
     pub struct ParenthesizedGenericArguments {
         pub paren_token: token::Paren,
@@ -189,7 +189,7 @@ ast_struct! {
     ///  ty       position = 0
     /// ```
     ///
-    /// *This type is available if Syn is built with the `"derive"` or `"full"`
+    /// *This type is available only if Syn is built with the `"derive"` or `"full"`
     /// feature.*
     pub struct QSelf {
         pub lt_token: Token![<],
@@ -205,9 +205,9 @@ pub mod parsing {
     use super::*;
 
     #[cfg(feature = "full")]
-    use expr;
-    use ext::IdentExt;
-    use parse::{Parse, ParseStream, Result};
+    use crate::expr;
+    use crate::ext::IdentExt;
+    use crate::parse::{Parse, ParseStream, Result};
 
     impl Parse for Path {
         fn parse(input: ParseStream) -> Result<Self> {
@@ -232,7 +232,7 @@ pub mod parsing {
                 }
 
                 if input.peek(Lit) {
-                    let lit = input.call(expr::parsing::expr_lit)?;
+                    let lit = input.parse()?;
                     return Ok(GenericArgument::Const(Expr::Lit(lit)));
                 }
 
@@ -291,22 +291,22 @@ pub mod parsing {
 
     impl PathSegment {
         fn parse_helper(input: ParseStream, expr_style: bool) -> Result<Self> {
-            if input.peek(Token![super])
-                || input.peek(Token![self])
-                || input.peek(Token![Self])
-                || input.peek(Token![crate])
-                || input.peek(Token![extern])
-            {
+            if input.peek(Token![super]) || input.peek(Token![self]) || input.peek(Token![crate]) {
                 let ident = input.call(Ident::parse_any)?;
                 return Ok(PathSegment::from(ident));
             }
 
-            let ident = input.parse()?;
+            let ident = if input.peek(Token![Self]) {
+                input.call(Ident::parse_any)?
+            } else {
+                input.parse()?
+            };
+
             if !expr_style && input.peek(Token![<]) && !input.peek(Token![<=])
                 || input.peek(Token![::]) && input.peek3(Token![<])
             {
                 Ok(PathSegment {
-                    ident: ident,
+                    ident,
                     arguments: PathArguments::AngleBracketed(input.parse()?),
                 })
             } else {
@@ -354,12 +354,12 @@ pub mod parsing {
     impl Path {
         /// Parse a `Path` containing no path arguments on any of its segments.
         ///
-        /// *This function is available if Syn is built with the `"parsing"`
+        /// *This function is available only if Syn is built with the `"parsing"`
         /// feature.*
         ///
         /// # Example
         ///
-        /// ```edition2018
+        /// ```
         /// use syn::{Path, Result, Token};
         /// use syn::parse::{Parse, ParseStream};
         ///
@@ -396,7 +396,6 @@ pub mod parsing {
                             && !input.peek(Token![self])
                             && !input.peek(Token![Self])
                             && !input.peek(Token![crate])
-                            && !input.peek(Token![extern])
                         {
                             break;
                         }
@@ -426,26 +425,62 @@ pub mod parsing {
         /// - the path has no leading colon,
         /// - the number of path segments is 1,
         /// - the first path segment has no angle bracketed or parenthesized
-        ///   path arguments
-        /// - and the ident of the first path segment is equal to the given one.
+        ///   path arguments, and
+        /// - the ident of the first path segment is equal to the given one.
         ///
-        /// *This function is available if Syn is built with the `"parsing"`
+        /// *This function is available only if Syn is built with the `"parsing"`
         /// feature.*
-        pub fn is_ident<I>(&self, ident: I) -> bool
+        ///
+        /// # Example
+        ///
+        /// ```
+        /// use syn::{Attribute, Error, Meta, NestedMeta, Result};
+        /// # use std::iter::FromIterator;
+        ///
+        /// fn get_serde_meta_items(attr: &Attribute) -> Result<Vec<NestedMeta>> {
+        ///     if attr.path.is_ident("serde") {
+        ///         match attr.parse_meta()? {
+        ///             Meta::List(meta) => Ok(Vec::from_iter(meta.nested)),
+        ///             bad => Err(Error::new_spanned(bad, "unrecognized attribute")),
+        ///         }
+        ///     } else {
+        ///         Ok(Vec::new())
+        ///     }
+        /// }
+        /// ```
+        pub fn is_ident<I: ?Sized>(&self, ident: &I) -> bool
         where
             Ident: PartialEq<I>,
         {
-            self.leading_colon.is_none()
+            match self.get_ident() {
+                Some(id) => id == ident,
+                None => false,
+            }
+        }
+
+        /// If this path consists of a single ident, returns the ident.
+        ///
+        /// A path is considered an ident if:
+        ///
+        /// - the path has no leading colon,
+        /// - the number of path segments is 1, and
+        /// - the first path segment has no angle bracketed or parenthesized
+        ///   path arguments.
+        ///
+        /// *This function is available only if Syn is built with the `"parsing"`
+        /// feature.*
+        pub fn get_ident(&self) -> Option<&Ident> {
+            if self.leading_colon.is_none()
                 && self.segments.len() == 1
                 && self.segments[0].arguments.is_none()
-                && self.segments[0].ident == ident
+            {
+                Some(&self.segments[0].ident)
+            } else {
+                None
+            }
         }
 
         fn parse_helper(input: ParseStream, expr_style: bool) -> Result<Self> {
-            if input.peek(Token![dyn]) {
-                return Err(input.error("expected path"));
-            }
-
             Ok(Path {
                 leading_colon: input.parse()?,
                 segments: {
@@ -503,11 +538,11 @@ pub mod parsing {
                 }
             };
             let qself = QSelf {
-                lt_token: lt_token,
+                lt_token,
                 ty: Box::new(this),
-                position: position,
-                as_token: as_token,
-                gt_token: gt_token,
+                position,
+                as_token,
+                gt_token,
             };
             Ok((Some(qself), path))
         } else {
@@ -524,7 +559,7 @@ mod printing {
     use proc_macro2::TokenStream;
     use quote::ToTokens;
 
-    use print::TokensOrDefault;
+    use crate::print::TokensOrDefault;
 
     impl ToTokens for Path {
         fn to_tokens(&self, tokens: &mut TokenStream) {
@@ -542,12 +577,12 @@ mod printing {
 
     impl ToTokens for PathArguments {
         fn to_tokens(&self, tokens: &mut TokenStream) {
-            match *self {
+            match self {
                 PathArguments::None => {}
-                PathArguments::AngleBracketed(ref arguments) => {
+                PathArguments::AngleBracketed(arguments) => {
                     arguments.to_tokens(tokens);
                 }
-                PathArguments::Parenthesized(ref arguments) => {
+                PathArguments::Parenthesized(arguments) => {
                     arguments.to_tokens(tokens);
                 }
             }
@@ -555,14 +590,14 @@ mod printing {
     }
 
     impl ToTokens for GenericArgument {
-        #[cfg_attr(feature = "cargo-clippy", allow(match_same_arms))]
+        #[allow(clippy::match_same_arms)]
         fn to_tokens(&self, tokens: &mut TokenStream) {
-            match *self {
-                GenericArgument::Lifetime(ref lt) => lt.to_tokens(tokens),
-                GenericArgument::Type(ref ty) => ty.to_tokens(tokens),
-                GenericArgument::Binding(ref tb) => tb.to_tokens(tokens),
-                GenericArgument::Constraint(ref tc) => tc.to_tokens(tokens),
-                GenericArgument::Const(ref e) => match *e {
+            match self {
+                GenericArgument::Lifetime(lt) => lt.to_tokens(tokens),
+                GenericArgument::Type(ty) => ty.to_tokens(tokens),
+                GenericArgument::Binding(tb) => tb.to_tokens(tokens),
+                GenericArgument::Constraint(tc) => tc.to_tokens(tokens),
+                GenericArgument::Const(e) => match *e {
                     Expr::Lit(_) => e.to_tokens(tokens),
 
                     // NOTE: We should probably support parsing blocks with only
@@ -664,8 +699,8 @@ mod printing {
 
     impl private {
         pub fn print_path(tokens: &mut TokenStream, qself: &Option<QSelf>, path: &Path) {
-            let qself = match *qself {
-                Some(ref qself) => qself,
+            let qself = match qself {
+                Some(qself) => qself,
                 None => {
                     path.to_tokens(tokens);
                     return;

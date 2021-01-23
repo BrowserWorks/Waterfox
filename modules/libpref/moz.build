@@ -24,21 +24,118 @@ XPIDL_SOURCES += [
 
 XPIDL_MODULE = 'pref'
 
+pref_groups = [
+    'accessibility',
+    'apz',
+    'beacon',
+    'bidi',
+    'browser',
+    'canvas',
+    'channelclassifier',
+    'clipboard',
+    'content',
+    'datareporting',
+    'device',
+    'devtools',
+    'docshell',
+    'dom',
+    'editor',
+    'extensions',
+    'findbar',
+    'fission',
+    'font',
+    'full_screen_api',
+    'general',
+    'geo',
+    'gfx',
+    'gl',
+    'html5',
+    'idle_period',
+    'image',
+    'intl',
+    'javascript',
+    'layers',
+    'layout',
+    'mathml',
+    'media',
+    'mousewheel',
+    'network',
+    'nglayout',
+    'page_load',
+    'permissions',
+    'plain_text',
+    'plugin',
+    'plugins',
+    'preferences',
+    'print',
+    'privacy',
+    'prompts',
+    'security',
+    'slider',
+    'svg',
+    'telemetry',
+    'test',
+    'threads',
+    'toolkit',
+    'ui',
+    'view_source',
+    'webgl',
+    'widget',
+    'xul',
+    'zoom',
+]
+if CONFIG['OS_TARGET'] == 'Android':
+    pref_groups += [
+        'android',
+        'consoleservice',
+    ]
+if CONFIG['FUZZING']:
+    pref_groups += [
+        'fuzzing'
+    ]
+pref_groups = tuple(sorted(pref_groups))
+
+# Note: generate_static_pref_list.py relies on StaticPrefListAll.h being first.
+gen_h = ['init/StaticPrefListAll.h']
+gen_h += ['StaticPrefsAll.h']
+gen_h += ['init/StaticPrefList_{}.h'.format(pg) for pg in pref_groups]
+gen_h += ['StaticPrefs_{}.h'.format(pg) for pg in pref_groups]
+
+gen_cpp = ['init/StaticPrefsCGetters.cpp']
+
+gen_rs = ['static_prefs.rs']
+
 EXPORTS.mozilla += [
-    'init/StaticPrefList.h',
+    'init/StaticPrefListBegin.h',
+    'init/StaticPrefListEnd.h',
     'nsRelativeFilePref.h',
     'Preferences.h',
-    'StaticPrefs.h',
+    'StaticPrefsBase.h',
 ]
+EXPORTS.mozilla += sorted(['!' + g for g in gen_h])
 
 UNIFIED_SOURCES += [
     'Preferences.cpp',
     'SharedPrefMap.cpp',
 ]
 
+gen_all_tuple = tuple(gen_h + gen_cpp + gen_rs)
+
+GENERATED_FILES += [gen_all_tuple]
+
+static_pref_list = GENERATED_FILES[gen_all_tuple]
+static_pref_list.script = 'init/generate_static_pref_list.py:emit_code'
+static_pref_list.inputs = ['init/StaticPrefList.yaml']
+
+PYTHON_UNITTEST_MANIFESTS += [
+    'test/python.ini',
+]
+
 XPCOM_MANIFESTS += [
     'components.conf',
 ]
+
+SPHINX_TREES['/modules/libpref'] = 'docs'
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
@@ -46,9 +143,24 @@ FINAL_LIBRARY = 'xul'
 
 DEFINES['OS_ARCH'] = CONFIG['OS_ARCH']
 DEFINES['MOZ_WIDGET_TOOLKIT'] = CONFIG['MOZ_WIDGET_TOOLKIT']
-if CONFIG['MOZ_ENABLE_WEBRENDER']:
-    DEFINES['MOZ_ENABLE_WEBRENDER'] = True
 
-FINAL_TARGET_PP_FILES += [
-    'greprefs.js',
-]
+if CONFIG['MOZ_SERVICES_SYNC']:
+  DEFINES['MOZ_SERVICES_SYNC'] = True
+
+if CONFIG['MOZ_BUILD_APP'] == 'browser':
+    DEFINES['MOZ_BUILD_APP_IS_BROWSER'] = True
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
+    if not CONFIG['MOZ_ANDROID_FAT_AAR_ARCHITECTURES']:
+        FINAL_TARGET_PP_FILES[CONFIG['ANDROID_CPU_ARCH']] += [
+            'greprefs.js',
+        ]
+    else:
+        for arch in CONFIG['MOZ_ANDROID_FAT_AAR_ARCHITECTURES']:
+            FINAL_TARGET_FILES[arch] += [
+                 '!/dist/fat-aar/output/{arch}/greprefs.js'.format(arch=arch),
+            ]
+else:
+    FINAL_TARGET_PP_FILES += [
+        'greprefs.js',
+    ]

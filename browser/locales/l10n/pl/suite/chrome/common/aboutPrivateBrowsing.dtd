@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: where ".private" and ".normal" variants exist,
+   - the former is shown in a private browsing window and the latter in
+   - a regular (non-private) browsing window. -->
+
+<!ENTITY privatebrowsingpage.title.private "Okno z aktywnym trybem prywatnym.">
+<!ENTITY privatebrowsingpage.title.normal "Czy rozpocząć przeglądanie w trybie prywatnym?">
+
+<!ENTITY privatebrowsingpage.status.private "&brandShortName; nie zapamięta historii przeglądania dla tego okna.">
+<!ENTITY privatebrowsingpage.status.normal "Okno bez aktywnego trybu prywatnego.">
+
+<!ENTITY privatebrowsingpage.common.description "Historia przeglądanych stron, historia wyszukiwania, historia pobierania plików, dane formularzy, ciasteczka oraz pliki pamięci podręcznej pochodzące z okna w trybie prywatnym nie zostaną zachowane przez program &brandShortName;. Należy jednak pamiętać, że wszystkie pobrane pliki i dodane zakładki zostaną zachowane.">
+<!ENTITY privatebrowsingpage.track.warn "Na tym komputerze nie pozostaną ślady historii przeglądania, ale pracodawca lub dostawca usług internetowych może w dalszym ciągu monitorować odwiedzane strony.">
+<!ENTITY privatebrowsingpage.learnmore.label "Więcej informacji">
+<!ENTITY privatebrowsingpage.learnmore.accesskey "W">
+
+<!ENTITY privatebrowsingpage.close.info "Aby opuścić tryb prywatny, wystarczy zamknąć to okno.">
+<!ENTITY privatebrowsingpage.close.label "Zamknij to okno teraz">
+<!ENTITY privatebrowsingpage.close.accesskey "k">
+
+<!ENTITY privatebrowsingpage.start.info "Aby przejść do trybu prywatnego, należy nacisnąć przycisk poniżej lub wybrać Plik ▶ Nowy ▶ Okno prywatne w menu.">
+<!ENTITY privatebrowsingpage.private.label "Otwórz nowe okno prywatne">
+<!ENTITY privatebrowsingpage.private.accesskey "O">

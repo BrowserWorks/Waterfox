@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Adressbuch importieren">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Importierte Daten für Eintrag:">
+<!ENTITY fieldMapImport.next.label "Nächster">
+<!ENTITY fieldMapImport.next.accesskey "N">
+<!ENTITY fieldMapImport.previous.label "Vorheriger">
+<!ENTITY fieldMapImport.previous.accesskey "V">
+<!ENTITY fieldMapImport.text "Verwenden Sie &quot;Nach oben&quot; und &quot;Nach unten&quot;, um die Adressbuchfelder links mit den korrekten Import-Daten rechts übereinzustimmen. Wählen Sie Einträge ab, die nicht importiert werden sollen.">
+<!ENTITY fieldMapImport.up.label "Nach oben">
+<!ENTITY fieldMapImport.up.accesskey "N">
+<!ENTITY fieldMapImport.down.label "Nach unten">
+<!ENTITY fieldMapImport.down.accesskey "N">
+<!ENTITY fieldMapImport.fieldListTitle "Adressbuch-Felder">
+<!ENTITY fieldMapImport.dataTitle "Zu importierende Felddaten">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Erster Eintrag enthält Feldnamen">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "E">
+
+

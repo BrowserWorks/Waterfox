@@ -8,9 +8,6 @@
 with Files('**'):
     BUG_COMPONENT = ('Firefox Build System', 'General')
 
-with Files('PyECC/**'):
-    BUG_COMPONENT = ('Core', 'Security: PSM')
-
 with Files('attrs/**'):
     BUG_COMPONENT = ('Firefox Build System', 'Task Configuration')
 
@@ -20,26 +17,24 @@ with Files('blessings/**'):
 with Files('compare-locales/**'):
     BUG_COMPONENT = ('Localization Infrastructure and Tools', 'compare-locales')
 
-with Files('configobj/**'):
-    BUG_COMPONENT = ('Firefox Build System', 'General')
-
 with Files('dlmanager/**'):
     BUG_COMPONENT = ('Firefox Build System', 'General')
 
 with Files('enum34/**'):
-    BUG_COMPONENT = ('Release Engineering', 'General Automation')
+    BUG_COMPONENT = ('Release Engineering', 'General')
+
+with Files('fluent.migrate/**'):
+    BUG_COMPONENT = ('Localization Infrastructure and Tools', 'Fluent Migration')
+
+# Actually, https://github.com/projectfluent/python-fluent/issues
+with Files('fluent.syntax/**'):
+    BUG_COMPONENT = ('Localization Infrastructure and Tools', 'General')
 
 with Files('futures/**'):
     BUG_COMPONENT = ('Firefox Build System', 'General')
 
-with Files('gdbpp/**'):
-    BUG_COMPONENT = ('Firefox Build System', 'General')
-
 with Files('jsmin/**'):
-    BUG_COMPONENT = ('Firefox for Android', 'Build Config & IDE Support')
-
-with Files('lldbutils/**'):
-    BUG_COMPONENT = ('Core', 'General')
+    BUG_COMPONENT = ('GeckoView', 'General')
 
 with Files('mock-1.0.0/**'):
     BUG_COMPONENT = ('Firefox Build System', 'General')
@@ -48,7 +43,7 @@ with Files('mohawk/**'):
     BUG_COMPONENT = ('Taskcluster', 'Platform Libraries')
 
 with Files('mozilla-version/**'):
-    BUG_COMPONENT = ('Release Engineering', 'General Automation')
+    BUG_COMPONENT = ('Release Engineering', 'General')
 
 with Files('psutil/**'):
     BUG_COMPONENT = ('Firefox Build System', 'General')
@@ -57,7 +52,7 @@ with Files('py/**'):
     BUG_COMPONENT = ('Firefox Build System', 'General')
 
 with Files('pyasn1/**'):
-    BUG_COMPONENT = ('Release Engineering', 'General Automation')
+    BUG_COMPONENT = ('Release Engineering', 'General')
 
 with Files('pyasn1-modules/**'):
     BUG_COMPONENT = ('Core', 'Security: PSM')
@@ -100,6 +95,3 @@ with Files('virtualenv/**'):
 
 with Files('voluptuous/**'):
     BUG_COMPONENT = ('Firefox Build System', 'Task Configuration')
-
-with Files('which/**'):
-    BUG_COMPONENT = ('Firefox Build System', 'General')

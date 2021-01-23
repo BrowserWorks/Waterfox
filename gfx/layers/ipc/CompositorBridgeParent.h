@@ -15,10 +15,11 @@
 //       which the deadline will be 15ms + throttle threshold
 //#define COMPOSITOR_PERFORMANCE_WARNING
 
-#include <stdint.h>              // for uint64_t
-#include "Layers.h"              // for Layer
-#include "mozilla/Assertions.h"  // for MOZ_ASSERT_HELPER2
-#include "mozilla/Attributes.h"  // for override
+#include <stdint.h>                   // for uint64_t
+#include "Layers.h"                   // for Layer
+#include "mozilla/Assertions.h"       // for MOZ_ASSERT_HELPER2
+#include "mozilla/Attributes.h"       // for override
+#include "mozilla/GfxMessageUtils.h"  // for WebGLVersion
 #include "mozilla/Maybe.h"
 #include "mozilla/Monitor.h"    // for Monitor
 #include "mozilla/RefPtr.h"     // for RefPtr
@@ -27,13 +28,14 @@
 #include "mozilla/gfx/Point.h"  // for IntSize
 #include "mozilla/ipc/ProtocolUtils.h"
 #include "mozilla/ipc/SharedMemory.h"
+#include "mozilla/layers/CompositionRecorder.h"
 #include "mozilla/layers/CompositorController.h"
 #include "mozilla/layers/CompositorOptions.h"
 #include "mozilla/layers/CompositorVsyncSchedulerOwner.h"
-#include "mozilla/layers/GeckoContentController.h"
-#include "mozilla/layers/ISurfaceAllocator.h"  // for ShmemAllocator
+#include "mozilla/layers/ISurfaceAllocator.h"  // for IShmemAllocator
 #include "mozilla/layers/LayersMessages.h"     // for TargetConfig
 #include "mozilla/layers/MetricsSharingController.h"
+#include "mozilla/layers/PCompositorBridgeTypes.h"
 #include "mozilla/layers/PCompositorBridgeParent.h"
 #include "mozilla/layers/APZTestData.h"
 #include "mozilla/webrender/WebRenderTypes.h"
@@ -44,12 +46,15 @@
 #include "mozilla/layers/UiCompositorControllerParent.h"
 #include "mozilla/VsyncDispatcher.h"
 
-class MessageLoop;
 class nsIWidget;
 
 namespace mozilla {
 
 class CancelableRunnable;
+
+namespace dom {
+class WebGLParent;
+}  // namespace dom
 
 namespace gfx {
 class DrawTarget;
@@ -64,6 +69,11 @@ class ProtocolFuzzerHelper;
 #endif
 }  // namespace ipc
 
+namespace webgpu {
+class PWebGPUParent;
+class WebGPUParent;
+}  // namespace webgpu
+
 namespace layers {
 
 class APZCTreeManager;
@@ -72,12 +82,12 @@ class APZSampler;
 class APZUpdater;
 class AsyncCompositionManager;
 class AsyncImagePipelineManager;
-class CompositionRecorder;
 class Compositor;
 class CompositorAnimationStorage;
 class CompositorBridgeParent;
 class CompositorManagerParent;
 class CompositorVsyncScheduler;
+class GeckoContentController;
 class HostLayerManager;
 class IAPZCTreeManager;
 class LayerTransactionParent;
@@ -85,6 +95,7 @@ class PAPZParent;
 class ContentCompositorBridgeParent;
 class CompositorThreadHolder;
 class InProcessCompositorSession;
+class TextureData;
 class WebRenderBridgeParent;
 
 struct ScopedLayerTreeRegistration {
@@ -99,7 +110,7 @@ struct ScopedLayerTreeRegistration {
 
 class CompositorBridgeParentBase : public PCompositorBridgeParent,
                                    public HostIPCAllocator,
-                                   public ShmemAllocator,
+                                   public mozilla::ipc::IShmemAllocator,
                                    public MetricsSharingController {
   friend class PCompositorBridgeParent;
 
@@ -126,23 +137,23 @@ class CompositorBridgeParentBase : public PCompositorBridgeParent,
   virtual void ApplyAsyncProperties(LayerTransactionParent* aLayerTree,
                                     TransformsToSkip aSkip) = 0;
   virtual void SetTestAsyncScrollOffset(
-      const WRRootId& aWrRootId, const ScrollableLayerGuid::ViewID& aScrollId,
+      const LayersId& aLayersId, const ScrollableLayerGuid::ViewID& aScrollId,
       const CSSPoint& aPoint) = 0;
-  virtual void SetTestAsyncZoom(const WRRootId& aWrRootId,
+  virtual void SetTestAsyncZoom(const LayersId& aLayersId,
                                 const ScrollableLayerGuid::ViewID& aScrollId,
                                 const LayerToParentLayerScale& aZoom) = 0;
-  virtual void FlushApzRepaints(const WRRootId& aWrRootId) = 0;
-  virtual void GetAPZTestData(const WRRootId& aWrRootId,
+  virtual void FlushApzRepaints(const LayersId& aLayersId) = 0;
+  virtual void GetAPZTestData(const LayersId& aLayersId,
                               APZTestData* aOutData) {}
   virtual void SetConfirmedTargetAPZC(
       const LayersId& aLayersId, const uint64_t& aInputBlockId,
-      const nsTArray<SLGuidAndRenderRoot>& aTargets) = 0;
+      const nsTArray<ScrollableLayerGuid>& aTargets) = 0;
   virtual void UpdatePaintTime(LayerTransactionParent* aLayerTree,
                                const TimeDuration& aPaintTime) {}
   virtual void RegisterPayloads(LayerTransactionParent* aLayerTree,
                                 const nsTArray<CompositionPayload>& aPayload) {}
 
-  ShmemAllocator* AsShmemAllocator() override { return this; }
+  IShmemAllocator* AsShmemAllocator() override { return this; }
 
   CompositorBridgeParentBase* AsCompositorBridgeParentBase() override {
     return this;
@@ -161,16 +172,16 @@ class CompositorBridgeParentBase : public PCompositorBridgeParent,
   void NotifyNotUsed(PTextureParent* aTexture,
                      uint64_t aTransactionId) override;
   void SendAsyncMessage(
-      const InfallibleTArray<AsyncParentMessageData>& aMessage) override;
+      const nsTArray<AsyncParentMessageData>& aMessage) override;
 
-  // ShmemAllocator
+  // IShmemAllocator
   bool AllocShmem(size_t aSize,
                   mozilla::ipc::SharedMemory::SharedMemoryType aType,
                   mozilla::ipc::Shmem* aShmem) override;
   bool AllocUnsafeShmem(size_t aSize,
                         mozilla::ipc::SharedMemory::SharedMemoryType aType,
                         mozilla::ipc::Shmem* aShmem) override;
-  void DeallocShmem(mozilla::ipc::Shmem& aShmem) override;
+  bool DeallocShmem(mozilla::ipc::Shmem& aShmem) override;
 
   // MetricsSharingController
   NS_IMETHOD_(MozExternalRefCountType) AddRef() override {
@@ -187,6 +198,11 @@ class CompositorBridgeParentBase : public PCompositorBridgeParent,
                           uint32_t aApzcId) override;
 
   virtual bool IsRemote() const { return false; }
+
+  virtual UniquePtr<SurfaceDescriptor>
+  LookupSurfaceDescriptorForClientDrawTarget(const uintptr_t aDrawTarget) {
+    MOZ_CRASH("Should only be called on ContentCompositorBridgeParent.");
+  }
 
   virtual void ForceComposeToTarget(gfx::DrawTarget* aTarget,
                                     const gfx::IntRect* aRect = nullptr) {
@@ -225,6 +241,9 @@ class CompositorBridgeParentBase : public PCompositorBridgeParent,
   virtual bool DeallocPWebRenderBridgeParent(
       PWebRenderBridgeParent* aActor) = 0;
 
+  virtual webgpu::PWebGPUParent* AllocPWebGPUParent() = 0;
+  virtual bool DeallocPWebGPUParent(webgpu::PWebGPUParent* aActor) = 0;
+
   virtual PCompositorWidgetParent* AllocPCompositorWidgetParent(
       const CompositorWidgetInitData& aInitData) = 0;
   virtual bool DeallocPCompositorWidgetParent(
@@ -239,15 +258,20 @@ class CompositorBridgeParentBase : public PCompositorBridgeParent,
   virtual mozilla::ipc::IPCResult RecvRequestNotifyAfterRemotePaint() = 0;
   virtual mozilla::ipc::IPCResult RecvAllPluginsCaptured() = 0;
   virtual mozilla::ipc::IPCResult RecvBeginRecording(
-      const TimeStamp& aRecordingStart) = 0;
-  virtual mozilla::ipc::IPCResult RecvEndRecording() = 0;
+      const TimeStamp& aRecordingStart, BeginRecordingResolver&& aResolve) = 0;
+  virtual mozilla::ipc::IPCResult RecvEndRecordingToDisk(
+      EndRecordingToDiskResolver&& aResolve) = 0;
+  virtual mozilla::ipc::IPCResult RecvEndRecordingToMemory(
+      EndRecordingToMemoryResolver&& aResolve) = 0;
   virtual mozilla::ipc::IPCResult RecvInitialize(
       const LayersId& rootLayerTreeId) = 0;
   virtual mozilla::ipc::IPCResult RecvGetFrameUniformity(
       FrameUniformityData* data) = 0;
   virtual mozilla::ipc::IPCResult RecvWillClose() = 0;
   virtual mozilla::ipc::IPCResult RecvPause() = 0;
+  virtual mozilla::ipc::IPCResult RecvRequestFxrOutput() = 0;
   virtual mozilla::ipc::IPCResult RecvResume() = 0;
+  virtual mozilla::ipc::IPCResult RecvResumeAsync() = 0;
   virtual mozilla::ipc::IPCResult RecvNotifyChildCreated(
       const LayersId& id, CompositorOptions* compositorOptions) = 0;
   virtual mozilla::ipc::IPCResult RecvMapAndNotifyChildCreated(
@@ -265,6 +289,19 @@ class CompositorBridgeParentBase : public PCompositorBridgeParent,
       const uint32_t& startIndex, nsTArray<float>* intervals) = 0;
   virtual mozilla::ipc::IPCResult RecvCheckContentOnlyTDR(
       const uint32_t& sequenceNum, bool* isContentOnlyTDR) = 0;
+  virtual mozilla::ipc::IPCResult RecvInitPCanvasParent(
+      Endpoint<PCanvasParent>&& aEndpoint) = 0;
+  virtual mozilla::ipc::IPCResult RecvReleasePCanvasParent() = 0;
+
+  virtual mozilla::ipc::IPCResult RecvSupportsAsyncDXGISurface(bool* value) {
+    return IPC_FAIL_NO_REASON(this);
+  }
+  virtual mozilla::ipc::IPCResult RecvPreferredDXGIAdapter(
+      DxgiAdapterDesc* desc) {
+    return IPC_FAIL_NO_REASON(this);
+  }
+
+  virtual already_AddRefed<PWebGLParent> AllocPWebGLParent() = 0;
 
   bool mCanSend;
 
@@ -311,7 +348,9 @@ class CompositorBridgeParent final : public CompositorBridgeParentBase,
       FrameUniformityData* aOutData) override;
   mozilla::ipc::IPCResult RecvWillClose() override;
   mozilla::ipc::IPCResult RecvPause() override;
+  mozilla::ipc::IPCResult RecvRequestFxrOutput() override;
   mozilla::ipc::IPCResult RecvResume() override;
+  mozilla::ipc::IPCResult RecvResumeAsync() override;
   mozilla::ipc::IPCResult RecvNotifyChildCreated(
       const LayersId& child, CompositorOptions* aOptions) override;
   mozilla::ipc::IPCResult RecvMapAndNotifyChildCreated(
@@ -332,7 +371,7 @@ class CompositorBridgeParent final : public CompositorBridgeParentBase,
   mozilla::ipc::IPCResult RecvStartFrameTimeRecording(
       const int32_t& aBufferSize, uint32_t* aOutStartIndex) override;
   mozilla::ipc::IPCResult RecvStopFrameTimeRecording(
-      const uint32_t& aStartIndex, InfallibleTArray<float>* intervals) override;
+      const uint32_t& aStartIndex, nsTArray<float>* intervals) override;
 
   mozilla::ipc::IPCResult RecvCheckContentOnlyTDR(
       const uint32_t& sequenceNum, bool* isContentOnlyTDR) override {
@@ -347,8 +386,12 @@ class CompositorBridgeParent final : public CompositorBridgeParentBase,
 
   mozilla::ipc::IPCResult RecvAllPluginsCaptured() override;
   mozilla::ipc::IPCResult RecvBeginRecording(
-      const TimeStamp& aRecordingStart) override;
-  mozilla::ipc::IPCResult RecvEndRecording() override;
+      const TimeStamp& aRecordingStart,
+      BeginRecordingResolver&& aResolve) override;
+  mozilla::ipc::IPCResult RecvEndRecordingToDisk(
+      EndRecordingToDiskResolver&& aResolve) override;
+  mozilla::ipc::IPCResult RecvEndRecordingToMemory(
+      EndRecordingToMemoryResolver&& aResolve) override;
 
   void NotifyMemoryPressure() override;
   void AccumulateMemoryReport(wr::MemoryReport*) override;
@@ -364,22 +407,23 @@ class CompositorBridgeParent final : public CompositorBridgeParentBase,
   void ApplyAsyncProperties(LayerTransactionParent* aLayerTree,
                             TransformsToSkip aSkip) override;
   CompositorAnimationStorage* GetAnimationStorage();
-  void SetTestAsyncScrollOffset(const WRRootId& aWrRootId,
+  void SetTestAsyncScrollOffset(const LayersId& aLayersId,
                                 const ScrollableLayerGuid::ViewID& aScrollId,
                                 const CSSPoint& aPoint) override;
-  void SetTestAsyncZoom(const WRRootId& aWrRootId,
+  void SetTestAsyncZoom(const LayersId& aLayersId,
                         const ScrollableLayerGuid::ViewID& aScrollId,
                         const LayerToParentLayerScale& aZoom) override;
-  void FlushApzRepaints(const WRRootId& aWrRootId) override;
-  void GetAPZTestData(const WRRootId& aWrRootId,
+  void FlushApzRepaints(const LayersId& aLayersId) override;
+  void GetAPZTestData(const LayersId& aLayersId,
                       APZTestData* aOutData) override;
   void SetConfirmedTargetAPZC(
       const LayersId& aLayersId, const uint64_t& aInputBlockId,
-      const nsTArray<SLGuidAndRenderRoot>& aTargets) override;
+      const nsTArray<ScrollableLayerGuid>& aTargets) override;
   AsyncCompositionManager* GetCompositionManager(
       LayerTransactionParent* aLayerTree) override {
     return mCompositionManager;
   }
+  void SetFixedLayerMargins(ScreenIntCoord aTop, ScreenIntCoord aBottom);
 
   PTextureParent* AllocPTextureParent(
       const SurfaceDescriptor& aSharedData, const ReadLockDescriptor& aReadLock,
@@ -388,17 +432,23 @@ class CompositorBridgeParent final : public CompositorBridgeParentBase,
       const wr::MaybeExternalImageId& aExternalImageId) override;
   bool DeallocPTextureParent(PTextureParent* actor) override;
 
+  mozilla::ipc::IPCResult RecvInitPCanvasParent(
+      Endpoint<PCanvasParent>&& aEndpoint) final;
+
+  mozilla::ipc::IPCResult RecvReleasePCanvasParent() final;
+
   bool IsSameProcess() const override;
 
   void NotifyWebRenderContextPurge();
+  void NotifyWebRenderDisableNativeCompositor();
+
   void NotifyPipelineRendered(const wr::PipelineId& aPipelineId,
                               const wr::Epoch& aEpoch,
                               const VsyncId& aCompositeStartId,
                               TimeStamp& aCompositeStart,
                               TimeStamp& aRenderStart, TimeStamp& aCompositeEnd,
                               wr::RendererStats* aStats = nullptr);
-  void NotifyDidSceneBuild(const nsTArray<wr::RenderRoot>& aRenderRoots,
-                           RefPtr<wr::WebRenderPipelineInfo> aInfo);
+  void NotifyDidSceneBuild(RefPtr<const wr::WebRenderPipelineInfo> aInfo);
   RefPtr<AsyncImagePipelineManager> GetAsyncImagePipelineManager() const;
 
   PCompositorWidgetParent* AllocPCompositorWidgetParent(
@@ -424,8 +474,7 @@ class CompositorBridgeParent final : public CompositorBridgeParentBase,
   void AsyncRender();
 
   // Can be called from any thread
-  void ScheduleRenderOnCompositorThread(
-      const wr::RenderRootSet& aRenderRoots) override;
+  void ScheduleRenderOnCompositorThread() override;
   void SchedulePauseOnCompositorThread();
   void InvalidateOnCompositorThread();
   /**
@@ -435,8 +484,7 @@ class CompositorBridgeParent final : public CompositorBridgeParentBase,
   bool ScheduleResumeOnCompositorThread();
   bool ScheduleResumeOnCompositorThread(int x, int y, int width, int height);
 
-  void ScheduleComposition(
-      const wr::RenderRootSet& aRenderRoots = wr::RenderRootSet());
+  void ScheduleComposition();
 
   void NotifyShadowTreeTransaction(LayersId aId, bool aIsFirstPaint,
                                    const FocusTarget& aFocusTarget,
@@ -457,6 +505,8 @@ class CompositorBridgeParent final : public CompositorBridgeParentBase,
   void ScheduleRotationOnCompositorThread(const TargetConfig& aTargetConfig,
                                           bool aIsFirstPaint);
 
+  static void ScheduleForcedComposition(const LayersId& aLayersId);
+
   /**
    * Returns the unique layer tree identifier that corresponds to the root
    * tree of this compositor.
@@ -471,6 +521,11 @@ class CompositorBridgeParent final : public CompositorBridgeParentBase,
    * This must be called on the compositor thread.
    */
   void InvalidateRemoteLayers();
+
+  /**
+   * Initialize statics.
+   */
+  static void InitializeStatics();
 
   /**
    * Returns a pointer to the CompositorBridgeParent corresponding to the given
@@ -592,14 +647,11 @@ class CompositorBridgeParent final : public CompositorBridgeParentBase,
   // ContentCompositorBridgeParent.
   void AllocateAPZCTreeManagerParent(
       const MonitorAutoLock& aProofOfLayerTreeStateLock,
-      const WRRootId& aWrRootId, LayerTreeState& aLayerTreeStateToUpdate);
+      const LayersId& aLayersId, LayerTreeState& aLayerTreeStateToUpdate);
 
   PAPZParent* AllocPAPZParent(const LayersId& aLayersId) override;
   bool DeallocPAPZParent(PAPZParent* aActor) override;
 
-#if defined(MOZ_WIDGET_ANDROID)
-  AndroidDynamicToolbarAnimator* GetAndroidDynamicToolbarAnimator();
-#endif
   RefPtr<APZSampler> GetAPZSampler();
   RefPtr<APZUpdater> GetAPZUpdater();
 
@@ -617,6 +669,9 @@ class CompositorBridgeParent final : public CompositorBridgeParentBase,
   RefPtr<WebRenderBridgeParent> GetWebRenderBridgeParent() const;
   Maybe<TimeStamp> GetTestingTimeStamp() const;
 
+  webgpu::PWebGPUParent* AllocPWebGPUParent() override;
+  bool DeallocPWebGPUParent(webgpu::PWebGPUParent* aActor) override;
+
   static CompositorBridgeParent* GetCompositorBridgeParentFromLayersId(
       const LayersId& aLayersId);
   static RefPtr<CompositorBridgeParent> GetCompositorBridgeParentFromWindowId(
@@ -630,11 +685,14 @@ class CompositorBridgeParent final : public CompositorBridgeParentBase,
   static already_AddRefed<IAPZCTreeManager> GetAPZCTreeManager(
       LayersId aLayersId);
 
-#if defined(MOZ_WIDGET_ANDROID)
-  gfx::IntSize GetEGLSurfaceSize() { return mEGLSurfaceSize; }
-#endif  // defined(MOZ_WIDGET_ANDROID)
-
   WebRenderBridgeParent* GetWrBridge() { return mWrBridge; }
+  webgpu::WebGPUParent* GetWebGPUBridge() { return mWebGPUBridge; }
+
+  already_AddRefed<PWebGLParent> AllocPWebGLParent() override {
+    MOZ_ASSERT_UNREACHABLE(
+        "This message is CrossProcessCompositorBridgeParent only");
+    return nullptr;
+  }
 
  private:
   void Initialize();
@@ -652,6 +710,31 @@ class CompositorBridgeParent final : public CompositorBridgeParentBase,
    */
   static void DeallocateLayerTreeId(LayersId aId);
 
+  /**
+   * Notify the compositor the quality settings have been updated.
+   */
+  static void UpdateQualitySettings();
+
+  /**
+   * Notify the compositor the debug flags have been updated.
+   */
+  static void UpdateDebugFlags();
+
+  /**
+   * Notify the compositor the debug flags have been updated.
+   */
+  static void UpdateWebRenderMultithreading();
+
+  /**
+   * Notify the compositor webrender batching parameters have been updated.
+   */
+  static void UpdateWebRenderBatchingParameters();
+
+  /**
+   * Wrap the data structure to be sent over IPC.
+   */
+  Maybe<CollectedFramesParams> WrapCollectedFrames(CollectedFrames&& aFrames);
+
  protected:
   // Protected destructor, to discourage deletion outside of Release():
   virtual ~CompositorBridgeParent();
@@ -663,7 +746,6 @@ class CompositorBridgeParent final : public CompositorBridgeParentBase,
       const LayersId& aId) override;
   bool DeallocPLayerTransactionParent(
       PLayerTransactionParent* aLayers) override;
-  virtual void ScheduleTask(already_AddRefed<CancelableRunnable>, int);
 
   void SetEGLSurfaceRect(int x, int y, int width, int height);
 
@@ -674,6 +756,7 @@ class CompositorBridgeParent final : public CompositorBridgeParentBase,
   void ResumeComposition();
   void ResumeCompositionAndResize(int x, int y, int width, int height);
   void Invalidate();
+  bool IsPaused() { return mPaused; }
 
  protected:
   void ForceComposition();
@@ -726,11 +809,17 @@ class CompositorBridgeParent final : public CompositorBridgeParentBase,
   template <typename Lambda>
   inline void ForEachIndirectLayerTree(const Lambda& aCallback);
 
+  // The indirect layer tree lock must be held before calling this function.
+  // Callback should take (LayerTreeState* aState, const LayersId& aLayersId)
+  template <typename Lambda>
+  static inline void ForEachWebRenderBridgeParent(const Lambda& aCallback);
+
   RefPtr<HostLayerManager> mLayerManager;
   RefPtr<Compositor> mCompositor;
   RefPtr<AsyncCompositionManager> mCompositionManager;
   RefPtr<AsyncImagePipelineManager> mAsyncImageManager;
   RefPtr<WebRenderBridgeParent> mWrBridge;
+  RefPtr<webgpu::WebGPUParent> mWebGPUBridge;
   widget::CompositorWidget* mWidget;
   Maybe<TimeStamp> mTestTime;
   CSSToLayoutDeviceScale mScale;
@@ -742,6 +831,8 @@ class CompositorBridgeParent final : public CompositorBridgeParentBase,
   TimeStamp mFwdTime;
 
   bool mPaused;
+  bool mHaveCompositionRecorder;
+  bool mIsForcedFirstPaint;
 
   bool mUseExternalSurfaceSize;
   gfx::IntSize mEGLSurfaceSize;
@@ -767,7 +858,6 @@ class CompositorBridgeParent final : public CompositorBridgeParentBase,
   // mSelfRef is cleared in DeferredDestroy which is scheduled by ActorDestroy.
   RefPtr<CompositorBridgeParent> mSelfRef;
   RefPtr<CompositorAnimationStorage> mAnimationStorage;
-  UniquePtr<CompositionRecorder> mCompositionRecorder;
 
   TimeDuration mPaintTime;
 

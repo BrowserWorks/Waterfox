@@ -35,7 +35,6 @@ function NarrateControls(mm, win, languagePromise) {
   win.document.head.appendChild(style);
 
   let elemL10nMap = {
-    ".narrate-toggle": "narrate",
     ".narrate-skip-previous": "back",
     ".narrate-start-stop": "start",
     ".narrate-skip-next": "forward",
@@ -48,6 +47,12 @@ function NarrateControls(mm, win, languagePromise) {
   let toggle = win.document.createElement("li");
   let toggleButton = win.document.createElement("button");
   toggleButton.className = "dropdown-toggle button narrate-toggle";
+  let tip = win.document.createElement("span");
+  let labelText = gStrings.GetStringFromName("listen");
+  tip.textContent = labelText;
+  tip.className = "hover-label";
+  toggleButton.append(tip);
+  toggleButton.setAttribute("aria-label", labelText);
   toggleButton.hidden = true;
   dropdown.appendChild(toggle);
   toggle.appendChild(toggleButton);
@@ -123,7 +128,7 @@ function NarrateControls(mm, win, languagePromise) {
 
   this._setupVoices();
 
-  let tb = win.document.querySelector(".reader-toolbar");
+  let tb = win.document.querySelector(".reader-controls");
   tb.appendChild(dropdown);
 }
 
@@ -287,20 +292,18 @@ NarrateControls.prototype = {
         // On Linux, the name is usually the unlocalized language name.
         // Use a localized language name, and have the language tag in
         // parenthisis. This is to avoid six languages called "English".
-        return gStrings.formatStringFromName(
-          "voiceLabel",
-          [this._getLanguageName(voice.lang) || voice.name, voice.lang],
-          2
-        );
+        return gStrings.formatStringFromName("voiceLabel", [
+          this._getLanguageName(voice.lang) || voice.name,
+          voice.lang,
+        ]);
       default:
         // On Mac the language is not included in the name, find a localized
         // language name or show the tag if none exists.
         // This is the ideal naming scheme so it is also the "default".
-        return gStrings.formatStringFromName(
-          "voiceLabel",
-          [voice.name, this._getLanguageName(voice.lang) || voice.lang],
-          2
-        );
+        return gStrings.formatStringFromName("voiceLabel", [
+          voice.name,
+          this._getLanguageName(voice.lang) || voice.lang,
+        ]);
     }
   },
 

@@ -814,7 +814,6 @@ system_headers = [
     'synch.h',
     'syncmgr.h',
     'sys/atomic_op.h',
-    'sys/auxv.h',
     'sys/bitypes.h',
     'sys/byteorder.h',
     'syscall.h',
@@ -1268,16 +1267,6 @@ if CONFIG['MOZ_SYSTEM_ZLIB']:
         'zlib.h',
     ]
 
-if CONFIG['MOZ_ENABLE_STARTUP_NOTIFICATION']:
-    system_headers += [
-        'libsn/sn-common.h',
-        'libsn/sn.h',
-        'libsn/sn-launchee.h',
-        'libsn/sn-launcher.h',
-        'libsn/sn-monitor.h',
-        'libsn/sn-util.h',
-    ]
-
 if CONFIG['MOZ_SYSTEM_LIBEVENT']:
     system_headers += [
         'event2/event_compat.h',
@@ -1295,15 +1284,6 @@ if CONFIG['MOZ_ENABLE_LIBPROXY']:
         'proxy.h',
     ]
 
-if CONFIG['MOZ_ENABLE_CONTENTMANAGER']:
-    system_headers += [
-        'QtSparql/qsparqlconnection.h',
-        'QtSparql/qsparqlquery.h',
-        'QtSparql/qsparqlresult.h',
-        'SelectMultipleContentItemsPage.h',
-        'SelectSingleContentItemPage.h',
-    ]
-
 if CONFIG['MOZ_SYSTEM_LIBVPX']:
     system_headers += [
         'vpx_mem/vpx_mem.h',
@@ -1317,7 +1297,9 @@ if CONFIG['MOZ_SYSTEM_LIBVPX']:
 
 if CONFIG['MOZ_SYSTEM_ICU']:
     system_headers += [
+        'unicode/datefmt.h',
         'unicode/locid.h',
+        'unicode/numberformatter.h',
         'unicode/numsys.h',
         'unicode/plurrule.h',
         'unicode/putil.h',
@@ -1326,15 +1308,24 @@ if CONFIG['MOZ_SYSTEM_ICU']:
         'unicode/uchar.h',
         'unicode/uclean.h',
         'unicode/ucol.h',
+        'unicode/ucurr.h',
         'unicode/udat.h',
+        'unicode/udata.h',
         'unicode/udatpg.h',
         'unicode/udisplaycontext.h',
+        'unicode/uldnames.h',
+        'unicode/ulistformatter.h',
         'unicode/uenum.h',
+        'unicode/uformattedvalue.h',
+        'unicode/umachine.h',
+        'unicode/uniset.h',
         'unicode/unistr.h',
         'unicode/unorm.h',
         'unicode/unum.h',
+        'unicode/unumberformatter.h',
         'unicode/upluralrules.h',
         'unicode/ureldatefmt.h',
+        'unicode/ures.h',
         'unicode/ustring.h',
         'unicode/utypes.h',
     ]
@@ -1347,7 +1338,15 @@ if CONFIG['MOZ_WAYLAND']:
         'wayland-util.h',
     ]
 
+if CONFIG['OS_TARGET'] in ('Android', 'Linux', 'FreeBSD'):
+    system_headers += [
+        'sys/auxv.h',
+    ]
+
 if CONFIG['OS_TARGET'] == 'Linux' and CONFIG['CPU_ARCH'].startswith('mips'):
     system_headers += [
         'sys/cachectl.h',
     ]
+
+if CONFIG['MOZ_APP_SYSTEM_HEADERS']:
+    include("../" + CONFIG['MOZ_BUILD_APP'] + "/app-system-headers.mozbuild")

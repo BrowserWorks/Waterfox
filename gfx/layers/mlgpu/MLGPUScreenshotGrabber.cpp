@@ -13,6 +13,7 @@
 #include "mozilla/layers/ProfilerScreenshots.h"
 #include "mozilla/gfx/Point.h"
 #include "mozilla/gfx/Swizzle.h"
+#include "GeckoProfiler.h"
 #include "SharedBufferMLGPU.h"
 #include "ShaderDefinitionsMLGPU.h"
 #include "nsTArray.h"
@@ -72,7 +73,9 @@ class MLGPUScreenshotGrabberImpl final {
   const IntSize mReadbackTextureSize;
 };
 
-MLGPUScreenshotGrabber::~MLGPUScreenshotGrabber() {}
+MLGPUScreenshotGrabber::MLGPUScreenshotGrabber() = default;
+
+MLGPUScreenshotGrabber::~MLGPUScreenshotGrabber() = default;
 
 void MLGPUScreenshotGrabber::MaybeGrabScreenshot(MLGDevice* aDevice,
                                                  MLGTexture* aTexture) {
@@ -101,8 +104,8 @@ void MLGPUScreenshotGrabber::MaybeProcessQueue() {
 
 void MLGPUScreenshotGrabber::NotifyEmptyFrame() {
 #ifdef MOZ_GECKO_PROFILER
-  profiler_add_marker("NoCompositorScreenshot because nothing changed",
-                      JS::ProfilingCategoryPair::GRAPHICS);
+  PROFILER_ADD_MARKER("NoCompositorScreenshot because nothing changed",
+                      GRAPHICS);
 #endif
 }
 
@@ -271,7 +274,7 @@ void MLGPUScreenshotGrabberImpl::GrabScreenshot(MLGDevice* aDevice,
   // main memory until the next frame. If we did it in this frame, we'd block on
   // the GPU.
   mCurrentFrameQueueItem =
-      Some(QueueItem{TimeStamp::Now(), readbackTexture.forget(), scaledSize,
+      Some(QueueItem{TimeStamp::Now(), std::move(readbackTexture), scaledSize,
                      aTexture->GetSize(), aDevice,
                      reinterpret_cast<uintptr_t>(static_cast<void*>(this))});
 }

@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- Calendar Subscriptions Dialog -->
+<!ENTITY calendar.subscriptions.dialog.title                            "ਕੈਲੰਡਰ ਲਈ ਮੈਂਬਰ ਬਣੋ">
+<!ENTITY calendar.subscriptions.dialog.search.label.value               "ਕੈਲੰਡਰ ਵੇਖੋ, ਜੋ ਰੱਖਦਾ ਹੈ:">
+<!ENTITY calendar.subscriptions.dialog.search.button.label              "ਖੋਜ">
+<!ENTITY calendar.subscriptions.dialog.select.label.value               "ਮੈਂਬਰ ਬਣਨ ਲਈ ਕੈਲੰਡਰ ਚੁਣੋ:">
+<!ENTITY calendar.subscriptions.dialog.subscribe.button.label           "ਮੈਂਬਰ ਬਣਾਓ">
+<!ENTITY calendar.subscriptions.dialog.unsubscribe.button.label         "ਮੈਂਬਰੀ ਹਟਾਓ">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.busy.label         "ਖੋਜ…">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.nomatches.label    "ਕੋਈ ਮੇਲ ਨਹੀਂ ਲੱਭਿਆ।">

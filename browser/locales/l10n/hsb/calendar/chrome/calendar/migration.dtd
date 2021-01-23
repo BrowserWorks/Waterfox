@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migration.title "&brandFullName;: Import datow">
+<!ENTITY migration.welcome "Witajće">
+<!ENTITY migration.importing "Importowanje">
+<!ENTITY migration.list.description "&brandShortName; móže protykowe daty z wjele woblubowanych nałoženjow importować. Daty ze slědowacych nałoženjow su so na wašim ličaku namakali. Prošu wubjerće, z kotrych z nich chceće daty importować.">
+<!ENTITY migration.progress.description "Wubrane daty so importuja">

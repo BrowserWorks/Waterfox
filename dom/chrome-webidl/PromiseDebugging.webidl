@@ -29,16 +29,18 @@ enum PromiseDebuggingState { "pending", "fulfilled", "rejected" };
  * this interface are responsible for presenting the information
  * in a meaningful manner.
  */
+[Exposed=Window]
 callback interface UncaughtRejectionObserver {
   /**
    * A Promise has been left in `rejected` state and is the
-   * last in its chain.
+   * last in its chain. If this callback returns true, the rejection
+   * will not be reported.
    *
    * @param p A currently uncaught Promise. If `p` is is eventually
    * caught, i.e. if its `then` callback is called, `onConsumed` will
    * be called.
    */
-  void onLeftUncaught(object p);
+  boolean onLeftUncaught(object p);
 
   /**
    * A Promise previously left uncaught is not the last in its
@@ -51,7 +53,7 @@ callback interface UncaughtRejectionObserver {
 };
 
 [ChromeOnly, Exposed=Window]
-interface PromiseDebugging {
+namespace PromiseDebugging {
   /**
    * The various functions on this interface all expect to take promises but
    * don't want the WebIDL behavior of assimilating random passed-in objects
@@ -65,21 +67,21 @@ interface PromiseDebugging {
    * Get the current state of the given promise.
    */
   [Throws]
-  static PromiseDebuggingStateHolder getState(object p);
+  PromiseDebuggingStateHolder getState(object p);
 
   /**
    * Return an identifier for a promise. This identifier is guaranteed
    * to be unique to the current process.
    */
   [Throws]
-  static DOMString getPromiseID(object p);
+  DOMString getPromiseID(object p);
 
   /**
    * Return the stack to the promise's allocation point.  This can
    * return null if the promise was not created from script.
    */
   [Throws]
-  static object? getAllocationStack(object p);
+  object? getAllocationStack(object p);
 
   /**
    * Return the stack to the promise's rejection point, if the
@@ -87,7 +89,7 @@ interface PromiseDebugging {
    * promise has not been rejected or was not rejected from script.
    */
   [Throws]
-  static object? getRejectionStack(object p);
+  object? getRejectionStack(object p);
 
   /**
    * Return the stack to the promise's fulfillment point, if the
@@ -95,7 +97,7 @@ interface PromiseDebugging {
    * promise has not been fulfilled or was not fulfilled from script.
    */
   [Throws]
-  static object? getFullfillmentStack(object p);
+  object? getFullfillmentStack(object p);
 
   /**
    * Watching uncaught rejections on the current thread.
@@ -103,6 +105,6 @@ interface PromiseDebugging {
    * Adding an observer twice will cause it to be notified twice
    * of events.
    */
-  static void addUncaughtRejectionObserver(UncaughtRejectionObserver o);
-  static boolean removeUncaughtRejectionObserver(UncaughtRejectionObserver o);
+  void addUncaughtRejectionObserver(UncaughtRejectionObserver o);
+  boolean removeUncaughtRejectionObserver(UncaughtRejectionObserver o);
 };

@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "Telecargar e sincronizar los messatges">
+<!ENTITY MsgSelect.label "Elements per una utilizacion fòra linha">
+<!ENTITY MsgSyncDesc.label "S'avètz ja seleccionat un dorsièr de corrièr o un grop per una utilizacion fòra linha, los podètz telecargar e/o los sincronizar ara. Siquenon, utilizar lo boton « Seleccionar » per causir los dorsièrs o gropes d'utilizar.">
+<!ENTITY MsgSyncDirections.label "Telecargar e/o sincronizar aquò :">
+<!ENTITY syncTypeMail.label "Corrièrs">
+<!ENTITY syncTypeMail.accesskey "C">
+<!ENTITY syncTypeNews.label "Messatges dels gropes">
+<!ENTITY syncTypeNews.accesskey "F">
+<!ENTITY sendMessage.label "Mandar los messatges en espèra">
+<!ENTITY sendMessage.accesskey "E">
+<!ENTITY workOffline.label "Se desconnectar a la fin del telecargament e/o de la sincronizacion.">
+<!ENTITY workOffline.accesskey "D">
+<!ENTITY selectButton.label "Seleccionar…">
+<!ENTITY selectButton.accesskey "S">
+<!ENTITY MsgSelectDesc.label "Causir los dorsièrs de corrièr e los gropes d'utilizar fòra linha.">
+<!ENTITY MsgSelectInd.label "Telecargar">
+<!ENTITY MsgSelectItems.label "Dorsièrs e gropes">

@@ -36,11 +36,6 @@ loader.lazyGetter(this, "MenuList", function() {
     require("devtools/client/shared/components/menu/MenuList")
   );
 });
-loader.lazyGetter(this, "WebReplayPlayer", function() {
-  return createFactory(
-    require("devtools/client/webreplay/components/WebReplayPlayer")
-  );
-});
 
 loader.lazyRequireGetter(
   this,
@@ -78,10 +73,10 @@ class ToolboxToolbar extends Component {
         })
       ),
       // Current docking type. Typically one of the position values in
-      // |hostTypes| but this is not always the case (e.g. when it is "custom").
+      // |hostTypes| but this is not always the case (e.g. for "browsertoolbox").
       currentHostType: PropTypes.string,
       // Are docking options enabled? They are not enabled in certain situations
-      // like when they are in the WebIDE.
+      // like when the toolbox is opened in a tab.
       areDockOptionsEnabled: PropTypes.bool,
       // Do we need to add UI for closing the toolbox? We don't when the
       // toolbox is undocked, for example.
@@ -222,10 +217,8 @@ class ToolboxToolbar extends Component {
         id,
         title: description,
         disabled,
-        className:
-          "command-button devtools-button " +
-          (buttonClass || "") +
-          (isChecked ? " checked" : ""),
+        className: `devtools-tabbar-button command-button ${buttonClass ||
+          ""} ${isChecked ? "checked" : ""}`,
         onClick: event => {
           onClick(event);
           focusButton(id);
@@ -266,15 +259,18 @@ class ToolboxToolbar extends Component {
         id,
         disabled,
         menuId: id + "-panel",
-        doc: toolbox.doc,
-        className: `devtools-button command-button ${
+        toolboxDoc: toolbox.doc,
+        className: `devtools-tabbar-button command-button ${
           isChecked ? "checked" : ""
         }`,
         ref: "frameMenuButton",
         title: description,
-        onCloseButton: async () => {
-          await toolbox.initInspector();
-          toolbox.highlighter.unhighlight();
+        onCloseButton: () => {
+          // Only try to unhighlight if the highlighter has been started
+          const inspectorFront = toolbox.target.getCachedFront("inspector");
+          if (inspectorFront) {
+            inspectorFront.highlighter.unhighlight();
+          }
         },
       },
       this.createFrameList
@@ -349,8 +345,8 @@ class ToolboxToolbar extends Component {
    * @param {string} props.currentHostType
    *        The current docking configuration.
    * @param {boolean} props.areDockOptionsEnabled
-   *        They are not enabled in certain situations like when they are in the
-   *        WebIDE.
+   *        They are not enabled in certain situations like when the toolbox is
+   *        in a tab.
    * @param {boolean} props.canCloseToolbox
    *        Do we need to add UI for closing the toolbox? We don't when the
    *        toolbox is undocked, for example.
@@ -399,9 +395,9 @@ class ToolboxToolbar extends Component {
       {
         id: meatballMenuButtonId,
         menuId: meatballMenuButtonId + "-panel",
-        doc: toolbox.doc,
+        toolboxDoc: toolbox.doc,
         onFocus: () => focusButton(meatballMenuButtonId),
-        className: "devtools-button",
+        className: "devtools-tabbar-button",
         title: L10N.getStr("toolbox.meatballMenu.button.tooltip"),
         tabIndex: focusedButton === meatballMenuButtonId ? "0" : "-1",
         ref: "meatballMenuButton",
@@ -421,7 +417,7 @@ class ToolboxToolbar extends Component {
       ? button({
           id: closeButtonId,
           onFocus: () => focusButton(closeButtonId),
-          className: "devtools-button",
+          className: "devtools-tabbar-button",
           title: L10N.getStr("toolbox.closebutton.tooltip"),
           onClick: () => closeToolbox(),
           tabIndex: focusedButton === "toolbox-close" ? "0" : "-1",
@@ -463,17 +459,6 @@ class ToolboxToolbar extends Component {
     const debugTargetInfo = debugTargetData
       ? DebugTargetInfo({ debugTargetData, L10N, toolbox })
       : null;
-
-    if (toolbox.target.canRewind) {
-      return div(
-        {},
-        WebReplayPlayer({
-          toolbox: toolbox,
-        }),
-        debugTargetInfo,
-        toolbar
-      );
-    }
 
     return div({}, debugTargetInfo, toolbar);
   }

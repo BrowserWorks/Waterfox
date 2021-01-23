@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- for SearchDialog.xul -->
+
+<!ENTITY searchHeading.label         "Cerca missatges a:">
+<!ENTITY searchHeading.accesskey     "r">
+<!ENTITY searchSubfolders.label      "Cerca en subcarpetes">
+<!ENTITY searchSubfolders.accesskey  "e">
+<!ENTITY searchOnHeading.label       "Executa les operacions de cerca a:">
+<!ENTITY searchOnHeading.accesskey   "x">
+<!ENTITY searchOnRemote.label        "Servidor remot">
+<!ENTITY searchOnLocal.label         "Sistema local">
+<!ENTITY resetButton.label           "Buida">
+<!ENTITY resetButton.accesskey       "B">
+<!ENTITY openButton.label            "Obre">
+<!ENTITY openButton.accesskey        "O">
+<!ENTITY deleteButton.label          "Suprimeix">
+<!ENTITY deleteButton.accesskey      "u">
+<!ENTITY searchDialogTitle.label     "Cerca de missatges">
+<!ENTITY results.label               "Resultats">
+<!ENTITY moveHereMenu.label          "Mou aquí">
+<!ENTITY moveHereMenu.accesskey      "q">
+<!ENTITY moveButton.label            "Mou a">
+<!ENTITY moveButton.accesskey        "a">
+<!ENTITY goToFolderButton.label      "Vés a la carpeta de missatges">
+<!ENTITY goToFolderButton.accesskey  "V">
+<!ENTITY saveAsVFButton.label        "Desa com una carpeta de cerca">
+<!ENTITY saveAsVFButton.accesskey    "D">
+<!-- for ABSearchDialog.xul -->
+
+<!ENTITY abSearchHeading.label       "Cerca a:">
+<!ENTITY abSearchHeading.accesskey   "e">
+<!ENTITY propertiesButton.label      "Propietats...">
+<!ENTITY propertiesButton.accesskey  "P">
+<!ENTITY composeButton.label         "Redacta">
+<!ENTITY composeButton.accesskey     "d">
+<!ENTITY abSearchDialogTitle.label   "Cerca avançada de la llibreta d'adreces">

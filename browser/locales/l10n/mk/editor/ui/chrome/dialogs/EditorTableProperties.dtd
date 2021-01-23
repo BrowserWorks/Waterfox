@@ -1,0 +1,83 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title "Својства на табелата">
+<!ENTITY applyButton.label "Примени">
+<!ENTITY applyButton.accesskey "и">
+<!ENTITY closeButton.label "Затвори">
+<!ENTITY tableTab.label "Табела">
+<!ENTITY cellTab.label "Ќелии">
+<!ENTITY tableRows.label "Редици:">
+<!ENTITY tableRows.accessKey "Р">
+<!ENTITY tableColumns.label "Колони:">
+<!ENTITY tableColumns.accessKey "К">
+<!ENTITY tableHeight.label "Висина:">
+<!ENTITY tableHeight.accessKey "с">
+<!ENTITY tableWidth.label "Ширина:">
+<!ENTITY tableWidth.accessKey "р">
+<!ENTITY tableBorderSpacing.label "Граници и место">
+<!ENTITY tableBorderWidth.label "Граница:">
+<!ENTITY tableBorderWidth.accessKey "Г">
+<!ENTITY tableSpacing.label "Празен простор:">
+<!ENTITY tableSpacing.accessKey "с">
+<!ENTITY tablePadding.label "Padding:">
+<!ENTITY tablePadding.accessKey "P">
+<!ENTITY tablePxBetwCells.label "пиксели помеѓу ќелии">
+<!ENTITY tablePxBetwBrdrCellContent.label "пиксели помеѓу границата на ќелијата и содржината">
+<!ENTITY tableAlignment.label "Порамнување на табелата:">
+<!ENTITY tableAlignment.accessKey "т">
+<!ENTITY tableCaption.label "Наслов:">
+<!ENTITY tableCaption.accessKey "Н">
+<!ENTITY tableCaptionAbove.label "Над табела">
+<!ENTITY tableCaptionBelow.label "Под табела">
+<!ENTITY tableCaptionLeft.label "Лево од табела">
+<!ENTITY tableCaptionRight.label "Десно од табела">
+<!ENTITY tableCaptionNone.label "Ништо">
+<!ENTITY tableInheritColor.label "(Дозволи да се покажува бојата на страницата)">
+
+<!ENTITY cellPercent.label "проценти од табела">
+<!ENTITY cellSelection.label "Избор">
+<!ENTITY cellSelectCell.label "Ќелија">
+<!ENTITY cellSelectRow.label "Редица">
+<!ENTITY cellSelectColumn.label "Колона">
+<!ENTITY cellSelectNext.label "Напред">
+<!ENTITY cellSelectNext.accessKey "Н">
+<!ENTITY cellSelectPrevious.label "Претходна">
+<!ENTITY cellSelectPrevious.accessKey "р">
+<!ENTITY cellApplyBeforeMove.label "Примени ги промените пред да го промениш изборот">
+<!ENTITY cellKeepCurrentData.label "Чувај ги актуелните поставки">
+<!-- LOCALIZATION NOTE Next 2 form 1 sentence (we don't want to use HTML tag to wrap) -->
+<!ENTITY applyBeforeChange1.label "Актуелните промени ќе бидат применети">
+<!ENTITY applyBeforeChange2.label "пред да се промени изборот.">
+<!ENTITY cellRowSpan.label "Row Span:">
+<!ENTITY cellColSpan.label "Column Span:">
+<!ENTITY cellContentAlignment.label "Порамнување на содржина">
+<!ENTITY cellHorizontal.label "Хоризонтално:">
+<!ENTITY cellHorizontal.accessKey "з">
+<!ENTITY cellVertical.label "Вертикално:">
+<!ENTITY cellVertical.accessKey "В">
+<!ENTITY cellStyle.label "Стил на ќелија:">
+<!ENTITY cellStyle.accessKey "т">
+<!ENTITY cellNormal.label "Нормално">
+<!ENTITY cellHeader.label "Заглавје">
+<!ENTITY cellTextWrap.label "Кратење на текст:">
+<!ENTITY cellTextWrap.accessKey "т">
+<!ENTITY cellWrap.label "Скрати">
+<!ENTITY cellNoWrap.label "Не крати">
+<!ENTITY cellAlignTop.label "Врв">
+<!ENTITY cellAlignMiddle.label "Средина">
+<!ENTITY cellAlignBottom.label "Дно">
+<!ENTITY cellAlignJustify.label "Порамни од двете страни">
+<!ENTITY cellAlignAtChar.label "Кај знакот:">
+<!ENTITY cellInheritColor.label "(Дозволи да се покажува бојата на табелата)">
+<!ENTITY cellUseCheckboxHelp.label "Користете ги куќичките за да одредите кој својства се применуваат на сите избрани ќелии">
+<!-- Used in both Table and Cell panels  -->
+
+<!ENTITY size.label "Големина">
+<!ENTITY pixels.label "пиксели">
+<!ENTITY backgroundColor.label "Позадинска боја:">
+<!ENTITY backgroundColor.accessKey "б">
+<!ENTITY AlignLeft.label "Лево">
+<!ENTITY AlignCenter.label "Централно">
+<!ENTITY AlignRight.label "Десно">

@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-composer.xul -->
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+
+
+
+<!ENTITY  pref.composer.title           "Composer">
+<!ENTITY  recentFiles.title             "So‘nggi sahifalar menyusi">
+<!ENTITY  documentsInMenu.label         "Ro‘yxatda keltirilgan sahifalar maksimal miqdori:">
+<!ENTITY  documentsInMenu.accesskey     "m">
+<!ENTITY  savingFiles.title             "Sahifalar saqlanayotgan yoki e’lon qilinayotganda:">
+<!ENTITY  preserveExisting.label        "Asl manba formatini saqlab qo‘yish">
+<!ENTITY  preserveExisting.accesskey    "s">
+<!ENTITY  preserveExisting.tooltip      "Sahi asl formati va bo‘lingan qatorlarni &amp;saqlab qo‘yadi">
+<!ENTITY  saveAssociatedFiles.label     "Saqlanayotgan sahifalar bilan bog‘liq fayllar va rasmlarni saqlash">
+<!ENTITY  saveAssociatedFiles.accesskey "s">
+<!ENTITY  showPublishDialog.label       "Sahifalar e’lon qilinayotgan vaqtda E’lon qilish oynasi doimo ko‘rsatilsin">
+<!ENTITY  showPublishDialog.accesskey   "d">
+<!ENTITY  composerEditing.label         "Tahrirlash">
+<!ENTITY  maintainStructure.label       "Kataklar kiritilganda yoki o‘chirilganda asosiy jadval tartibi">
+<!ENTITY  maintainStructure.tooltip     "Kataklar kiritilgan yoki o‘chirilganidan so‘ng jadvalning to‘rtburchak shakllari avtomatik tarzda kataklarni qo‘shish bilan nusxasini saqlab qo‘yadi">
+<!ENTITY  maintainStructure.accesskey   "a">
+<!ENTITY  useCSS.label                  "HTML elementlari va qiymatlari o‘rniga CSS uslubdan foydalanish">
+<!ENTITY  useCSS.accesskey              "f">
+<!ENTITY  crInPCreatesNewP.label        "Paragrafga qaytish, doimo yangi paragrafni yaratadi">
+<!ENTITY  crInPCreatesNewP.accesskey    "q">

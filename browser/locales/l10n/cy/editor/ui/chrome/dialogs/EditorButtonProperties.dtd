@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Priodweddau Botwm">
+
+<!ENTITY Settings.label "Gosodiadau">
+
+<!ENTITY ButtonType.label "Math">
+<!ENTITY ButtonType.accesskey "t">
+<!ENTITY submit.value "Cyflwyno">
+<!ENTITY reset.value "Ailosod">
+<!ENTITY button.value "Botwm">
+
+<!ENTITY ButtonName.label "Enw:">
+<!ENTITY ButtonName.accesskey "E">
+<!ENTITY ButtonValue.label "Gwerth:">
+<!ENTITY ButtonValue.accesskey "G">
+<!ENTITY tabIndex.label "Mynegai Tab:">
+<!ENTITY tabIndex.accesskey "M">
+<!ENTITY ButtonDisabled.label "Anablwyd">
+<!ENTITY ButtonDisabled.accesskey "A">
+<!ENTITY AccessKey.label "Allwedd Mynediad:">
+<!ENTITY AccessKey.accesskey "A">
+
+<!ENTITY RemoveButton.label "Botwm Tynnu">
+<!ENTITY RemoveButton.accesskey "B">

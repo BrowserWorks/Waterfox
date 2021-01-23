@@ -16,30 +16,51 @@
 
 #include "ClearKeyUtils.h"
 
-#include <algorithm>
 #include <assert.h>
-#include <stdlib.h>
-#include <cctype>
 #include <ctype.h>
 #include <memory.h>
-#include <sstream>
 #include <stdarg.h>
+// This include is required in order for content_decryption_module to work // on
+// Unix systems.
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
+
+#include <algorithm>
+#include <cctype>
+#include <memory>
+#include <sstream>
 #include <vector>
 
 #include "ArrayUtils.h"
 #include "BigEndian.h"
 #include "ClearKeyBase64.h"
-// This include is required in order for content_decryption_module to work
-// on Unix systems.
-#include "stddef.h"
-#include "content_decryption_module.h"
-#include "openaes/oaes_lib.h"
+#include "pk11pub.h"
+#include "prerror.h"
 #include "psshparser/PsshParser.h"
+#include "secmodt.h"
 
 using namespace cdm;
-using namespace std;
+using std::string;
+using std::stringstream;
+using std::vector;
+
+struct DeleteHelper {
+  void operator()(PK11Context* value) { PK11_DestroyContext(value, true); }
+  void operator()(PK11SlotInfo* value) { PK11_FreeSlot(value); }
+  void operator()(PK11SymKey* value) { PK11_FreeSymKey(value); }
+};
+
+template <class T>
+struct MaybeDeleteHelper {
+  void operator()(T* ptr) {
+    if (ptr) {
+      DeleteHelper del;
+      del(ptr);
+    }
+  }
+};
 
 void CK_Log(const char* aFmt, ...) {
   FILE* out = stdout;
@@ -65,8 +86,8 @@ void CK_Log(const char* aFmt, ...) {
 }
 
 static bool PrintableAsString(const uint8_t* aBytes, uint32_t aLength) {
-  return all_of(aBytes, aBytes + aLength,
-                [](uint8_t c) { return isprint(c) == 1; });
+  return std::all_of(aBytes, aBytes + aLength,
+                     [](uint8_t c) { return isprint(c) == 1; });
 }
 
 void CK_LogArray(const char* prepend, const uint8_t* aData,
@@ -79,39 +100,107 @@ void CK_LogArray(const char* prepend, const uint8_t* aData,
   CK_LOGD("%s%s", prepend, data.c_str());
 }
 
-static void IncrementIV(vector<uint8_t>& aIV) {
-  using mozilla::BigEndian;
+/* static */
+bool ClearKeyUtils::DecryptCbcs(const vector<uint8_t>& aKey,
+                                const vector<uint8_t>& aIV,
+                                mozilla::Span<uint8_t> aSubsample,
+                                uint32_t aCryptByteBlock,
+                                uint32_t aSkipByteBlock) {
+  assert(aKey.size() == CENC_KEY_LEN);
+  assert(aIV.size() == CENC_KEY_LEN);
+  assert(aCryptByteBlock <= 0xFF);
+  assert(aSkipByteBlock <= 0xFF);
 
-  assert(aIV.size() == 16);
-  BigEndian::writeUint64(&aIV[8], BigEndian::readUint64(&aIV[8]) + 1);
+  std::unique_ptr<PK11SlotInfo, MaybeDeleteHelper<PK11SlotInfo>> slot(
+      PK11_GetInternalKeySlot());
+
+  if (!slot.get()) {
+    CK_LOGE("Failed to get internal PK11 slot");
+    return false;
+  }
+
+  SECItem keyItem = {siBuffer, (unsigned char*)&aKey[0], CENC_KEY_LEN};
+  SECItem ivItem = {siBuffer, (unsigned char*)&aIV[0], CENC_KEY_LEN};
+
+  std::unique_ptr<PK11SymKey, MaybeDeleteHelper<PK11SymKey>> key(
+      PK11_ImportSymKey(slot.get(), CKM_AES_CBC, PK11_OriginUnwrap, CKA_DECRYPT,
+                        &keyItem, nullptr));
+
+  if (!key.get()) {
+    CK_LOGE("Failed to import sym key");
+    return false;
+  }
+
+  std::unique_ptr<PK11Context, MaybeDeleteHelper<PK11Context>> ctx(
+      PK11_CreateContextBySymKey(CKM_AES_CBC, CKA_DECRYPT, key.get(), &ivItem));
+
+  uint8_t* encryptedSubsample = &aSubsample[0];
+  const uint32_t BLOCK_SIZE = 16;
+  const uint32_t skipBytes = aSkipByteBlock * BLOCK_SIZE;
+  const uint32_t totalBlocks = aSubsample.Length() / BLOCK_SIZE;
+  uint32_t blocksProcessed = 0;
+
+  while (blocksProcessed < totalBlocks) {
+    uint32_t blocksToDecrypt = aCryptByteBlock <= totalBlocks - blocksProcessed
+                                   ? aCryptByteBlock
+                                   : totalBlocks - blocksProcessed;
+    uint32_t bytesToDecrypt = blocksToDecrypt * BLOCK_SIZE;
+    int outLen;
+    SECStatus rv;
+    rv = PK11_CipherOp(ctx.get(), encryptedSubsample, &outLen, bytesToDecrypt,
+                       encryptedSubsample, bytesToDecrypt);
+    if (rv != SECSuccess) {
+      CK_LOGE("PK11_CipherOp() failed");
+      return false;
+    }
+
+    encryptedSubsample += skipBytes + bytesToDecrypt;
+    blocksProcessed += aSkipByteBlock + blocksToDecrypt;
+  }
+
+  return true;
 }
 
 /* static */
-void ClearKeyUtils::DecryptAES(const vector<uint8_t>& aKey,
+bool ClearKeyUtils::DecryptAES(const vector<uint8_t>& aKey,
                                vector<uint8_t>& aData, vector<uint8_t>& aIV) {
   assert(aIV.size() == CENC_KEY_LEN);
   assert(aKey.size() == CENC_KEY_LEN);
 
-  OAES_CTX* aes = oaes_alloc();
-  oaes_key_import_data(aes, &aKey[0], aKey.size());
-  oaes_set_option(aes, OAES_OPTION_ECB, nullptr);
-
-  for (size_t i = 0; i < aData.size(); i += CENC_KEY_LEN) {
-    size_t encLen;
-    oaes_encrypt(aes, &aIV[0], CENC_KEY_LEN, nullptr, &encLen);
-
-    vector<uint8_t> enc(encLen);
-    oaes_encrypt(aes, &aIV[0], CENC_KEY_LEN, &enc[0], &encLen);
-
-    assert(encLen >= 2 * OAES_BLOCK_SIZE + CENC_KEY_LEN);
-    size_t blockLen = min(aData.size() - i, CENC_KEY_LEN);
-    for (size_t j = 0; j < blockLen; j++) {
-      aData[i + j] ^= enc[2 * OAES_BLOCK_SIZE + j];
-    }
-    IncrementIV(aIV);
+  PK11SlotInfo* slot = PK11_GetInternalKeySlot();
+  if (!slot) {
+    CK_LOGE("Failed to get internal PK11 slot");
+    return false;
   }
 
-  oaes_free(&aes);
+  SECItem keyItem = {siBuffer, (unsigned char*)&aKey[0], CENC_KEY_LEN};
+  PK11SymKey* key = PK11_ImportSymKey(slot, CKM_AES_CTR, PK11_OriginUnwrap,
+                                      CKA_ENCRYPT, &keyItem, nullptr);
+  PK11_FreeSlot(slot);
+  if (!key) {
+    CK_LOGE("Failed to import sym key");
+    return false;
+  }
+
+  CK_AES_CTR_PARAMS params;
+  params.ulCounterBits = 32;
+  memcpy(&params.cb, &aIV[0], CENC_KEY_LEN);
+  SECItem paramItem = {siBuffer, (unsigned char*)&params,
+                       sizeof(CK_AES_CTR_PARAMS)};
+
+  unsigned int outLen = 0;
+  auto rv = PK11_Decrypt(key, CKM_AES_CTR, &paramItem, &aData[0], &outLen,
+                         aData.size(), &aData[0], aData.size());
+
+  aData.resize(outLen);
+  PK11_FreeSymKey(key);
+
+  if (rv != SECSuccess) {
+    CK_LOGE("PK11_Decrypt() failed");
+    return false;
+  }
+
+  return true;
 }
 
 /**

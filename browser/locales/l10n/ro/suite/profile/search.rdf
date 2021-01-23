@@ -1,0 +1,39 @@
+<?xml version="1.0"?> <!-- -*- Mode: SGML -*- -->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE RDF 
+[
+<!ENTITY search.category.web		"Web">
+]
+>
+
+
+<RDF:RDF xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:NC="http://home.netscape.com/NC-rdf#">
+
+
+<!-- search categories (under the "NC:SearchCategoryRoot" node) -->
+<!-- Note: these names SHOULD be localized via a DTD -->
+
+  <RDF:Seq about="NC:SearchCategoryRoot">
+  	<RDF:li>
+  		<RDF:Description about="urn:search:category:1">
+			<NC:title>&search.category.web;</NC:title>
+  		</RDF:Description>
+  	</RDF:li>
+  </RDF:Seq>
+
+
+<!-- engines per category (Note that specific prefixes are required) -->
+
+
+  <RDF:Seq about="NC:SearchCategory?category=urn:search:category:1">
+    <RDF:li resource="NC:SearchCategory?engine=urn:search:engine:google.src" />
+    <RDF:li resource="NC:SearchCategory?engine=urn:search:engine:dmoz.src" />
+    <RDF:li resource="NC:SearchCategory?engine=urn:search:engine:jeeves.src" />
+  </RDF:Seq>
+
+</RDF:RDF>

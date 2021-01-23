@@ -14,18 +14,19 @@
 #include "mozilla/BasePrincipal.h"
 #include "mozilla/Mutex.h"
 #include "mozilla/RefPtr.h"
+#include "mozilla/ipc/TransportSecurityInfoUtils.h"
+#include "mozpkix/pkixtypes.h"
 #include "nsDataHashtable.h"
 #include "nsIClassInfo.h"
 #include "nsIInterfaceRequestor.h"
 #include "nsITransportSecurityInfo.h"
 #include "nsNSSCertificate.h"
 #include "nsString.h"
-#include "mozpkix/pkixtypes.h"
 
 namespace mozilla {
 namespace psm {
 
-enum class EVStatus {
+enum class EVStatus : uint8_t {
   NotEV = 0,
   EV = 1,
 };
@@ -35,7 +36,7 @@ class TransportSecurityInfo : public nsITransportSecurityInfo,
                               public nsISerializable,
                               public nsIClassInfo {
  protected:
-  virtual ~TransportSecurityInfo() {}
+  virtual ~TransportSecurityInfo() = default;
 
  public:
   TransportSecurityInfo();
@@ -72,16 +73,29 @@ class TransportSecurityInfo : public nsITransportSecurityInfo,
 
   void SetStatusErrorBits(nsNSSCertificate* cert, uint32_t collected_errors);
 
-  nsresult SetFailedCertChain(UniqueCERTCertList certList);
+  nsresult SetFailedCertChain(nsTArray<nsTArray<uint8_t>>&& certList);
 
   void SetServerCert(nsNSSCertificate* aServerCert, EVStatus aEVStatus);
 
-  nsresult SetSucceededCertChain(mozilla::UniqueCERTCertList certList);
+  nsresult SetSucceededCertChain(nsTArray<nsTArray<uint8_t>>&& certList);
 
   bool HasServerCert() { return mServerCert != nullptr; }
 
-  void SetCertificateTransparencyInfo(
+  static uint16_t ConvertCertificateTransparencyInfoToStatus(
       const mozilla::psm::CertificateTransparencyInfo& info);
+
+  static nsTArray<nsTArray<uint8_t>> CreateCertBytesArray(
+      const UniqueCERTCertList& aCertChain);
+
+  // Use errorCode == 0 to indicate success;
+  virtual void SetCertVerificationResult(PRErrorCode errorCode){};
+
+  void SetCertificateTransparencyStatus(
+      uint16_t aCertificateTransparencyStatus) {
+    mCertificateTransparencyStatus = aCertificateTransparencyStatus;
+  }
+
+  void SetResumed(bool aResumed);
 
   uint16_t mCipherSuite;
   uint16_t mProtocolVersion;
@@ -89,6 +103,7 @@ class TransportSecurityInfo : public nsITransportSecurityInfo,
   nsCString mKeaGroup;
   nsCString mSignatureSchemeName;
 
+  bool mIsDelegatedCredential;
   bool mIsDomainMismatch;
   bool mIsNotValidAtThisTime;
   bool mIsUntrusted;
@@ -107,10 +122,15 @@ class TransportSecurityInfo : public nsITransportSecurityInfo,
   // on the original TransportSecurityInfo).
   Atomic<bool> mCanceled;
 
+ protected:
   mutable ::mozilla::Mutex mMutex;
 
- protected:
   nsCOMPtr<nsIInterfaceRequestor> mCallbacks;
+  nsTArray<RefPtr<nsIX509Cert>> mSucceededCertChain;
+  bool mNPNCompleted;
+  nsCString mNegotiatedNPN;
+  bool mResumed;
+  bool mIsBuiltCertChainRootBuiltInRoot;
 
  private:
   uint32_t mSecurityState;
@@ -122,12 +142,19 @@ class TransportSecurityInfo : public nsITransportSecurityInfo,
   OriginAttributes mOriginAttributes;
 
   nsCOMPtr<nsIX509Cert> mServerCert;
-  nsCOMPtr<nsIX509CertList> mSucceededCertChain;
 
   /* Peer cert chain for failed connections (for error reporting) */
-  nsCOMPtr<nsIX509CertList> mFailedCertChain;
+  nsTArray<RefPtr<nsIX509Cert>> mFailedCertChain;
 
   nsresult ReadSSLStatus(nsIObjectInputStream* aStream);
+
+  // This function is used to read the binary that are serialized
+  // by using nsIX509CertList
+  nsresult ReadCertList(nsIObjectInputStream* aStream,
+                        nsTArray<RefPtr<nsIX509Cert>>& aCertList);
+  nsresult ReadCertificatesFromStream(nsIObjectInputStream* aStream,
+                                      uint32_t aSize,
+                                      nsTArray<RefPtr<nsIX509Cert>>& aCertList);
 };
 
 class RememberCertErrorsTable {

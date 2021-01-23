@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "Golygu Uwch…">
+<!ENTITY AdvancedEditButton.accessKey "G">
+<!ENTITY AdvancedEditButton.tooltip "Ychwanegu neu newid Priodweddau HTML, priodweddau arddulliau a JavaScript">
+<!ENTITY chooseFileButton.label "Dewis Ffeil...">
+<!ENTITY chooseFileButton.accessKey "D">
+<!ENTITY chooseFileLinkButton.label "Dewis Ffeil...">
+<!ENTITY chooseFileLinkButton.accessKey "D">
+<!ENTITY makeUrlRelative.label "Mae'r URL yn berthynol i'r lleoliad tudalen">
+<!ENTITY makeUrlRelative.accessKey "U">
+<!ENTITY makeUrlRelative.tooltip "Newid rhwng URL absoliwt a pherthynol. Rhaid cadw'r dudalen yn gyntaf cyn gwneud hyn.">
+
+<!ENTITY LinkURLEditField2.label "Rhowch leoliad tudalen gwe, ffeil leol neu ddewis Angor a Enwyd neu Bennawd o feysydd y ddewislen cyd-destun:">
+<!ENTITY LinkURLEditField2.accessKey "w">

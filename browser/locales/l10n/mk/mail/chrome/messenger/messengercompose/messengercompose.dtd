@@ -1,0 +1,230 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "Составувај: (без тема)">
+<!-- File Menu -->
+
+<!ENTITY fileMenu.label "Датотека">
+<!ENTITY fileMenu.accesskey "Д">
+<!ENTITY newMenu.label "Нова">
+<!ENTITY newMenu.accesskey "Н">
+<!ENTITY newMessage.label "Порака">
+<!ENTITY newMessage.key "M">
+<!ENTITY newMessageCmd2.key "N">
+<!ENTITY newMessage.accesskey "П">
+<!ENTITY attachMenu.label "Приложи">
+<!ENTITY attachMenu.accesskey "л">
+<!ENTITY attachFileCmd.label "Датотеки…">
+<!ENTITY attachFileCmd.accesskey "а">
+<!ENTITY attachPageCmd.label "Мрежна страница…">
+<!ENTITY attachPageCmd.accesskey "М">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "Лична карта (vCard)">
+<!ENTITY attachVCardCmd.accesskey "р">
+<!ENTITY closeCmd.label "Затвори">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "т">
+<!ENTITY saveCmd.label "Сними">
+<!ENTITY saveCmd.key "S">
+<!ENTITY saveCmd.accesskey "С">
+<!ENTITY saveAsCmd.label "Сними како">
+<!ENTITY saveAsCmd.accesskey "а">
+<!ENTITY saveAsFileCmd.label "Датотека…">
+<!ENTITY saveAsFileCmd.accesskey "Д">
+<!ENTITY saveAsDraftCmd.label "Скица">
+<!ENTITY saveAsDraftCmd.accesskey "к">
+<!ENTITY saveAsTemplateCmd.label "Шаблон">
+<!ENTITY saveAsTemplateCmd.accesskey "б">
+<!ENTITY sendNowCmd.label "Испрати сега">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "т">
+<!ENTITY sendLaterCmd.label "Испрати подоцна">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "д">
+<!ENTITY printSetupCmd.label "Поставување на страницата…">
+<!ENTITY printSetupCmd.accesskey "у">
+<!ENTITY printCmd.label "Печати…">
+<!ENTITY printCmd.key "P">
+<!ENTITY printCmd.accesskey "П">
+<!-- Edit Menu -->
+
+<!ENTITY editMenu.label "Уредување">
+<!ENTITY editMenu.accesskey "е">
+<!ENTITY undoCmd.label "Врати">
+<!ENTITY undoCmd.key "Z">
+<!ENTITY undoCmd.accesskey "В">
+<!ENTITY redoCmd.label "Повтори">
+<!ENTITY redoCmd.key "Y">
+<!ENTITY redoCmd.accesskey "р">
+<!ENTITY cutCmd.key "X">
+<!ENTITY copyCmd.key "C">
+<!ENTITY pasteCmd.key "V">
+<!ENTITY editRewrapCmd.accesskey "в">
+<!ENTITY deleteCmd.label "Избриши">
+<!ENTITY deleteCmd.accesskey "з">
+<!ENTITY editRewrapCmd.label "Скрати повторно">
+<!ENTITY selectAllCmd.accesskey "с">
+<!ENTITY findAgainCmd.label "Пронајди повторно">
+<!ENTITY findAgainCmd.accesskey "П">
+<!ENTITY findAgainCmd.key "G">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "Пронајди претходно">
+<!ENTITY findPrevCmd.accesskey "т">
+<!-- View Menu -->
+
+<!ENTITY findPrevCmd.key "G">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+
+<!ENTITY viewMenu.label "Поглед">
+<!ENTITY viewMenu.accesskey "г">
+<!ENTITY viewToolbarsMenuNew.label "Алатници">
+<!ENTITY viewToolbarsMenuNew.accesskey "т">
+<!ENTITY showTaskbarCmd.label "Статусна лента">
+<!ENTITY showTaskbarCmd.accesskey "С">
+<!ENTITY customizeToolbar.label "Прилагоди…">
+<!ENTITY customizeToolbar.accesskey "р">
+
+<!ENTITY addressSidebar.label "Странична лента со контакти">
+<!ENTITY addressSidebar.accesskey "о">
+<!-- Format Menu -->
+
+<!ENTITY formatMenu.label "Формат">
+<!ENTITY formatMenu.accesskey "Ф">
+<!-- Options Menu -->
+
+<!ENTITY optionsMenu.label "Опции">
+<!ENTITY optionsMenu.accesskey "п">
+<!ENTITY enableInlineSpellChecker.label "Проверувај додека пишувам">
+<!ENTITY enableInlineSpellChecker.accesskey "в">
+<!ENTITY quoteCmd.label "Цитирај ја пораката">
+<!ENTITY quoteCmd.accesskey "Ц">
+<!--LOCALIZATION NOTE attachVCard.label Don't translate the term 'vCard' -->
+
+<!ENTITY attachVCard.label "Приложи лична каритчка (vCard)">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY returnReceiptMenu.label "Повратна пошта">
+<!ENTITY returnReceiptMenu.accesskey "т">
+<!ENTITY autoFormatCmd.label "Авто-детектирај">
+<!ENTITY autoFormatCmd.accesskey "А">
+<!ENTITY plainTextFormatCmd.label "Само обичен текст">
+<!ENTITY plainTextFormatCmd.accesskey "о">
+<!ENTITY htmlFormatCmd.label "Само богат текст (HTML)">
+<!ENTITY htmlFormatCmd.accesskey "б">
+<!ENTITY bothFormatCmd.label "Обичен и богат (HTML) текст">
+<!ENTITY bothFormatCmd.accesskey "l">
+<!ENTITY priorityMenu.label "Приоритет">
+<!ENTITY priorityMenu.accesskey "П">
+<!ENTITY priorityButton.label "Приоритет:">
+<!ENTITY lowestPriorityCmd.label "Најнизок">
+<!ENTITY lowestPriorityCmd.accesskey "ј">
+<!ENTITY lowPriorityCmd.label "Низок">
+<!ENTITY lowPriorityCmd.accesskey "о">
+<!ENTITY normalPriorityCmd.label "Нормална">
+<!ENTITY normalPriorityCmd.accesskey "о">
+<!ENTITY highPriorityCmd.label "Висок">
+<!ENTITY highPriorityCmd.accesskey "и">
+<!ENTITY highestPriorityCmd.label "Највисок">
+<!ENTITY highestPriorityCmd.accesskey "а">
+<!ENTITY fileCarbonCopyCmd.label "Испрати копија до">
+<!ENTITY fileCarbonCopyCmd.accesskey "д">
+<!ENTITY fileHereMenu.label "Сними овде">
+<!-- Tools Menu -->
+
+<!ENTITY tasksMenu.label "Алатки">
+<!ENTITY tasksMenu.accesskey "т">
+<!ENTITY messengerCmd.label "Пошта и дискусиони групи">
+<!ENTITY messengerCmd.accesskey "П">
+<!ENTITY messengerCmd.commandkey "1">
+<!ENTITY addressBookCmd.label "Адресар">
+<!ENTITY addressBookCmd.accesskey "А">
+<!ENTITY preferencesCmdUnix.label "Преференции">
+<!ENTITY preferencesCmdUnix.accesskey "ф">
+<!--  Mac OS X Window Menu -->
+
+<!ENTITY minimizeWindow.key "m">
+<!ENTITY minimizeWindow.label "Минимизирај">
+<!ENTITY bringAllToFront.label "Донеси ги сите напред">
+<!ENTITY zoomWindow.label "Зумирај">
+<!ENTITY windowMenu.label "Прозорец">
+<!-- Help Menu -->
+
+<!-- Mail Toolbar -->
+
+<!ENTITY sendButton.label "Испрати">
+<!ENTITY quoteButton.label "Цитирај">
+<!ENTITY addressButton.label "Контакти">
+<!ENTITY attachButton.label "Приложи">
+<!ENTITY spellingButton.label "Правопис">
+<!ENTITY saveButton.label "Сними">
+<!-- Mail Toolbar Tooltips -->
+
+<!ENTITY sendButton.tooltip "Ја испраќа оваа порака веднаш">
+<!ENTITY sendlaterButton.tooltip "Ја испраќа оваа порака подоцна">
+<!ENTITY quoteButton.tooltip "Ја цитира претходната порака">
+<!ENTITY addressButton.tooltip "Изберете примач од адресарот">
+<!ENTITY saveButton.tooltip "Ја снима оваа порака">
+<!ENTITY cutButton.tooltip "Отсекува">
+<!ENTITY copyButton.tooltip "Копира">
+<!ENTITY pasteButton.tooltip "Вметнува">
+
+<!-- Headers -->
+
+<!ENTITY fromAddr.accesskey "О">
+<!ENTITY subject.accesskey "Т">
+<!-- Format Toolbar, imported from editorAppShell.xul -->
+<!--LOCALIZATION NOTE formatToolbar. Don't change any of these Style Characters -->
+
+<!ENTITY SmileButton.tooltip "Внесува насмеано лице">
+<!ENTITY smiley1Cmd.label "Насмевка">
+<!ENTITY smiley2Cmd.label "Незадоволно">
+<!ENTITY smiley3Cmd.label "Намигни">
+<!ENTITY smiley4Cmd.label "Исплазен јазик">
+<!ENTITY smiley5Cmd.label "Се смеам">
+<!ENTITY smiley6Cmd.label "Засрамено">
+<!ENTITY smiley7Cmd.label "Неодлучно">
+<!ENTITY smiley8Cmd.label "Изненадување">
+<!ENTITY smiley9Cmd.label "Бакнеж">
+<!ENTITY smiley10Cmd.label "Викај">
+<!ENTITY smiley11Cmd.label "Кул">
+<!ENTITY smiley12Cmd.label "Уста полна пари">
+<!ENTITY smiley13Cmd.label "Нога во уста">
+<!ENTITY smiley14Cmd.label "Невино">
+<!ENTITY smiley15Cmd.label "Плачи">
+<!ENTITY smiley16Cmd.label "Залепени усни">
+<!-- Message Pane Context Menu -->
+
+<!ENTITY spellCheckNoSuggestions.label "Не пронајдов предлози">
+<!ENTITY spellCheckIgnoreWord.label "Игнорирај го зборот">
+<!ENTITY spellCheckIgnoreWord.accesskey "И">
+<!ENTITY spellCheckAddToDictionary.label "Додај во речник">
+<!ENTITY spellCheckAddToDictionary.accesskey "Д">
+<!ENTITY undo.label "Врати">
+<!ENTITY undo.accesskey "В">
+<!ENTITY cut.label "Отсечи">
+<!ENTITY cut.accesskey "с">
+<!ENTITY copy.label "Копирај">
+<!ENTITY copy.accesskey "К">
+<!ENTITY paste.label "Залепи">
+<!ENTITY paste.accesskey "п">
+<!ENTITY pasteQuote.label "Залепи како цитат">
+<!ENTITY pasteQuote.accesskey "ц">
+
+<!ENTITY openAttachment.label "Отвори">
+<!ENTITY openAttachment.accesskey "О">
+<!ENTITY delete.label "Избриши">
+<!ENTITY delete.accesskey "з">
+<!ENTITY selectAll.label "Избери сè">
+<!ENTITY selectAll.accesskey "с">
+<!ENTITY attachFile.label "Приложи датотеки…">
+<!ENTITY attachFile.accesskey "д">
+<!ENTITY attachPage.label "Приложи мрежна страница…">
+<!ENTITY attachPage.accesskey "в">
+<!-- Title for the address picker panel -->
+
+<!-- Attachment Pane Header Bar Context Menu -->
+
+<!ENTITY addressesSidebarTitle.label "Контакти">
+

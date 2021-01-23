@@ -1,6 +1,4 @@
-function run_test() {
-  run_next_test();
-}
+"use strict";
 
 var CC = Components.Constructor;
 

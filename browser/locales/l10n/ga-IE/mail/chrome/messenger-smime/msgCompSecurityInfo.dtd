@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSecurityInfo.dtd UI for viewing security status when composing a message -->
+
+
+<!ENTITY title.label "Slándáil na dTeachtaireachtaí">
+<!ENTITY subject.plaintextWarning "Tabhair faoi deara: ní dhéantar criptiúchán riamh ar línte ábhair na dteachtaireachtaí ríomhphoist.">
+<!ENTITY status.heading "Seolfar inneachar do theachtaireachta mar seo:">
+<!ENTITY status.signed "Sínithe go digiteach:">
+<!ENTITY status.encrypted "Criptithe:">
+<!ENTITY status.certificates "Teastais:">
+<!ENTITY view.label "Amharc">
+<!ENTITY view.accesskey "A">
+<!ENTITY tree.recipient "Faighteoir">
+<!ENTITY tree.status "Stádas">
+<!ENTITY tree.issuedDate "Eisithe">
+<!ENTITY tree.expiresDate "As feidhm">

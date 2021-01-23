@@ -14,8 +14,6 @@
 #include "nsIClassInfoImpl.h"
 #include "Variant.h"
 
-#include "mozIStorageError.h"
-
 #include "mozStorageBindingParams.h"
 #include "mozStorageConnection.h"
 #include "mozStorageAsyncStatementJSHelper.h"
@@ -120,7 +118,7 @@ nsresult AsyncStatement::initialize(Connection* aDBConnection,
   // escapeStringForLIKE instead of just trusting user input.  The idea to
   // check to see if they are binding a parameter after like instead of just
   // using a string.  We only do this in debug builds because it's expensive!
-  const nsCaseInsensitiveCStringComparator c;
+  auto c = nsCaseInsensitiveCStringComparator;
   nsACString::const_iterator start, end, e;
   aSQLStatement.BeginReading(start);
   aSQLStatement.EndReading(end);

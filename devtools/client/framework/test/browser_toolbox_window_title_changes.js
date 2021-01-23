@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -53,7 +51,7 @@ function test() {
       .then(async function() {
         const onTitleChanged = waitForTitleChange(toolbox);
         const waitForReloaded = panel.once("reloaded");
-        BrowserTestUtils.loadURI(gBrowser, URL_2);
+        await navigateTo(URL_2);
         await waitForReloaded;
         return onTitleChanged;
       })
@@ -63,7 +61,7 @@ function test() {
       .then(async () => {
         const onTitleChanged = waitForTitleChange(toolbox);
         const waitForReloaded = panel.once("reloaded");
-        BrowserTestUtils.loadURI(gBrowser, URL_3);
+        await navigateTo(URL_3);
         await waitForReloaded;
         return onTitleChanged;
       })

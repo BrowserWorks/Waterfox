@@ -6,11 +6,11 @@
 
 #include "CheckerboardReportService.h"
 
-#include "gfxPrefs.h"                 // for gfxPrefs
 #include "jsapi.h"                    // for JS_Now
 #include "MainThreadUtils.h"          // for NS_IsMainThread
 #include "mozilla/Assertions.h"       // for MOZ_ASSERT
 #include "mozilla/ClearOnShutdown.h"  // for ClearOnShutdown
+#include "mozilla/StaticPrefs_apz.h"
 #include "mozilla/Unused.h"
 #include "mozilla/dom/CheckerboardReportServiceBinding.h"  // for dom::CheckerboardReports
 #include "mozilla/gfx/GPUParent.h"
@@ -166,8 +166,7 @@ bool CheckerboardReportService::IsEnabled(JSContext* aCtx, JSObject* aGlobal) {
 
 /*static*/
 already_AddRefed<CheckerboardReportService>
-CheckerboardReportService::Constructor(const dom::GlobalObject& aGlobal,
-                                       ErrorResult& aRv) {
+CheckerboardReportService::Constructor(const dom::GlobalObject& aGlobal) {
   RefPtr<CheckerboardReportService> ces =
       new CheckerboardReportService(aGlobal.GetAsSupports());
   return ces.forget();
@@ -192,11 +191,11 @@ void CheckerboardReportService::GetReports(
 }
 
 bool CheckerboardReportService::IsRecordingEnabled() const {
-  return gfxPrefs::APZRecordCheckerboarding();
+  return StaticPrefs::apz_record_checkerboarding();
 }
 
 void CheckerboardReportService::SetRecordingEnabled(bool aEnabled) {
-  gfxPrefs::SetAPZRecordCheckerboarding(aEnabled);
+  Preferences::SetBool("apz.record_checkerboarding", aEnabled);
 }
 
 void CheckerboardReportService::FlushActiveReports() {

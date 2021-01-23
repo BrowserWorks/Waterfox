@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "Täpsem redigeerimine...">
+<!ENTITY AdvancedEditButton.accessKey "T">
+<!ENTITY AdvancedEditButton.tooltip "Redigeeri või lisa HTML-i atribuute, stiili elemente ning JavaScripti">
+<!ENTITY chooseFileButton.label "Vali fail...">
+<!ENTITY chooseFileButton.accessKey "f">
+<!ENTITY chooseFileLinkButton.label "Vali fail...">
+<!ENTITY chooseFileLinkButton.accessKey "a">
+<!ENTITY makeUrlRelative.label "URL on suhteline ja sõltub lehe asukohast">
+<!ENTITY makeUrlRelative.accessKey "r">
+<!ENTITY makeUrlRelative.tooltip "Valik suhtelise ja absoluutse aadressi vahel. Muudetav leht peab selle valiku tegemiseks olema kettale salvestatud.">
+
+<!ENTITY LinkURLEditField2.label "Sisesta veebilehe aadress, kohalik fail või vali välja kontekstimenüüst nimeankur või pealkiri:">
+<!ENTITY LinkURLEditField2.accessKey "v">

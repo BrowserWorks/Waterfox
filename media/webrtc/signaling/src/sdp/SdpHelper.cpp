@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -534,6 +536,13 @@ nsresult SdpHelper::CopyStickyParams(const SdpMediaSection& source,
                                                   sourceAttrs.GetMid()));
   }
 
+  // Keep RTCP mode setting
+  if (sourceAttrs.HasAttribute(SdpAttribute::kRtcpRsizeAttribute) &&
+      source.GetMediaType() == SdpMediaSection::kVideo) {
+    destAttrs.SetAttribute(
+        new SdpFlagAttribute(SdpAttribute::kRtcpRsizeAttribute));
+  }
+
   return NS_OK;
 }
 
@@ -544,7 +553,6 @@ bool SdpHelper::HasRtcp(SdpMediaSection::Protocol proto) const {
     case SdpMediaSection::kDccpRtpSavpf:
     case SdpMediaSection::kRtpSavpf:
     case SdpMediaSection::kUdpTlsRtpSavpf:
-    case SdpMediaSection::kTcpTlsRtpSavpf:
     case SdpMediaSection::kTcpDtlsRtpSavpf:
     case SdpMediaSection::kDccpTlsRtpSavpf:
       return true;
@@ -566,7 +574,6 @@ bool SdpHelper::HasRtcp(SdpMediaSection::Protocol proto) const {
     case SdpMediaSection::kDccpRtpAvp:
     case SdpMediaSection::kDccpRtpSavp:
     case SdpMediaSection::kUdpTlsRtpSavp:
-    case SdpMediaSection::kTcpTlsRtpSavp:
     case SdpMediaSection::kTcpDtlsRtpSavp:
     case SdpMediaSection::kDccpTlsRtpSavp:
     case SdpMediaSection::kUdpMbmsFecRtpAvp:

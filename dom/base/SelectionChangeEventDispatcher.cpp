@@ -11,6 +11,8 @@
 #include "SelectionChangeEventDispatcher.h"
 
 #include "mozilla/AsyncEventDispatcher.h"
+#include "mozilla/BasePrincipal.h"
+#include "mozilla/StaticPrefs_dom.h"
 #include "nsCOMPtr.h"
 #include "nsContentUtils.h"
 #include "mozilla/dom/Document.h"
@@ -24,29 +26,28 @@ using namespace dom;
 
 SelectionChangeEventDispatcher::RawRangeData::RawRangeData(
     const nsRange* aRange) {
-  mozilla::ErrorResult rv;
-  mStartContainer = aRange->GetStartContainer(rv);
-  rv.SuppressException();
-  mEndContainer = aRange->GetEndContainer(rv);
-  rv.SuppressException();
-  mStartOffset = aRange->GetStartOffset(rv);
-  rv.SuppressException();
-  mEndOffset = aRange->GetEndOffset(rv);
-  rv.SuppressException();
+  if (aRange->IsPositioned()) {
+    mStartContainer = aRange->GetStartContainer();
+    mEndContainer = aRange->GetEndContainer();
+    mStartOffset = aRange->StartOffset();
+    mEndOffset = aRange->EndOffset();
+  } else {
+    mStartContainer = nullptr;
+    mEndContainer = nullptr;
+    mStartOffset = 0;
+    mEndOffset = 0;
+  }
 }
 
 bool SelectionChangeEventDispatcher::RawRangeData::Equals(
     const nsRange* aRange) {
-  mozilla::ErrorResult rv;
-  bool eq = mStartContainer == aRange->GetStartContainer(rv);
-  rv.SuppressException();
-  eq = eq && mEndContainer == aRange->GetEndContainer(rv);
-  rv.SuppressException();
-  eq = eq && mStartOffset == aRange->GetStartOffset(rv);
-  rv.SuppressException();
-  eq = eq && mEndOffset == aRange->GetEndOffset(rv);
-  rv.SuppressException();
-  return eq;
+  if (!aRange->IsPositioned()) {
+    return !mStartContainer;
+  }
+  return mStartContainer == aRange->GetStartContainer() &&
+         mEndContainer == aRange->GetEndContainer() &&
+         mStartOffset == aRange->StartOffset() &&
+         mEndOffset == aRange->EndOffset();
 }
 
 inline void ImplCycleCollectionTraverse(
@@ -76,8 +77,8 @@ void SelectionChangeEventDispatcher::OnSelectionChange(Document* aDoc,
                                                        Selection* aSel,
                                                        int16_t aReason) {
   Document* doc = aSel->GetParentObject();
-  if (!(doc && nsContentUtils::IsSystemPrincipal(doc->NodePrincipal())) &&
-      !nsFrameSelection::sSelectionEventsEnabled) {
+  if (!(doc && doc->NodePrincipal()->IsSystemPrincipal()) &&
+      !StaticPrefs::dom_select_events_enabled()) {
     return;
   }
 
@@ -123,7 +124,7 @@ void SelectionChangeEventDispatcher::OnSelectionChange(Document* aDoc,
   // controls, so for now we only support doing that under a pref, disabled by
   // default.
   // See https://github.com/w3c/selection-api/issues/53.
-  if (nsFrameSelection::sSelectionEventsOnTextControlsEnabled) {
+  if (StaticPrefs::dom_select_events_textcontrols_enabled()) {
     nsCOMPtr<nsINode> target;
 
     // Check if we should be firing this event to a different node than the
@@ -137,7 +138,7 @@ void SelectionChangeEventDispatcher::OnSelectionChange(Document* aDoc,
           root = root->GetParent();
         }
 
-        target = root.forget();
+        target = std::move(root);
       }
     }
 

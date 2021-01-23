@@ -5,15 +5,9 @@
 job-defaults:
     suite: marionette
     mozharness:
-        script:
-            by-test-platform:
-                android-em.*: android_emulator_unittest.py
-                default: marionette.py
+        script: marionette.py
         config:
             by-test-platform:
-                android-em.*:
-                    - android/android_common.py
-                    - android/androidx86_7_0.py
                 macosx.*:
                     - marionette/prod_config.py
                     - marionette/mac_taskcluster_config.py
@@ -22,14 +16,13 @@ job-defaults:
                 default:
                     - marionette/prod_config.py
                     - remove_executables.py
-    run-on-projects:
-        by-test-platform:
-            windows10-aarch64/opt: ['try', 'mozilla-central']
-            default: built-projects
-    tier:
-        by-test-platform:
-            windows10-aarch64.*: 2
-            default: default
+        extra-options:
+            - --setpref=toolkit.asyncshutdown.log=true
+
+    run-on-projects: built-projects
+    tier: default
+    fission-tier: 2
+    variants: ["fission"]
 
 marionette:
     description: "Marionette unittest run"
@@ -60,13 +53,3 @@ marionette-gpu:
         by-test-platform:
             windows10-64.*: virtual-with-gpu
             default: virtual
-
-marionette-media:
-    description: "Marionette DOM media test run"
-    treeherder-symbol: MnM
-    max-run-time: 5400
-    instance-size: default
-    tier: 2
-    mozharness:
-        extra-options:
-            - --test-manifest=stream-tests.ini

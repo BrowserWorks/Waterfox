@@ -8,8 +8,9 @@
 #include "mozilla/dom/TouchEvent.h"
 #include "mozilla/dom/Touch.h"
 #include "mozilla/dom/TouchListBinding.h"
+#include "mozilla/BasePrincipal.h"
 #include "mozilla/Preferences.h"
-#include "mozilla/StaticPrefs.h"
+#include "mozilla/StaticPrefs_dom.h"
 #include "mozilla/TouchEvents.h"
 #include "nsContentUtils.h"
 #include "nsIDocShell.h"
@@ -206,7 +207,8 @@ bool TouchEvent::PlatformSupportsTouch() {
   // On Windows and GTK3 we auto-detect based on device support.
   if (!sDidCheckTouchDeviceSupport) {
     sDidCheckTouchDeviceSupport = true;
-    sIsTouchDeviceSupportPresent = WidgetUtils::IsTouchDeviceSupportPresent();
+    sIsTouchDeviceSupportPresent =
+        widget::WidgetUtils::IsTouchDeviceSupportPresent();
     // But touch events are only actually supported if APZ is enabled. If
     // APZ is disabled globally, we can check that once and incorporate that
     // into the cached state. If APZ is enabled, we need to further check
@@ -221,18 +223,11 @@ bool TouchEvent::PlatformSupportsTouch() {
 
 // static
 bool TouchEvent::PrefEnabled(nsIDocShell* aDocShell) {
-  static bool sPrefCached = false;
-  static int32_t sPrefCacheValue = 0;
+  MOZ_DIAGNOSTIC_ASSERT(NS_IsMainThread());
 
   auto touchEventsOverride = nsIDocShell::TOUCHEVENTS_OVERRIDE_NONE;
   if (aDocShell) {
     touchEventsOverride = aDocShell->GetTouchEventsOverride();
-  }
-
-  if (!sPrefCached) {
-    sPrefCached = true;
-    Preferences::AddIntVarCache(&sPrefCacheValue,
-                                "dom.w3c_touch_events.enabled");
   }
 
   bool enabled = false;
@@ -242,7 +237,8 @@ bool TouchEvent::PrefEnabled(nsIDocShell* aDocShell) {
              nsIDocShell::TOUCHEVENTS_OVERRIDE_DISABLED) {
     enabled = false;
   } else {
-    if (sPrefCacheValue == 2) {
+    const int32_t prefValue = StaticPrefs::dom_w3c_touch_events_enabled();
+    if (prefValue == 2) {
       enabled = PlatformSupportsTouch();
 
       static bool firstTime = true;
@@ -265,7 +261,7 @@ bool TouchEvent::PrefEnabled(nsIDocShell* aDocShell) {
       }
 #endif
     } else {
-      enabled = !!sPrefCacheValue;
+      enabled = !!prefValue;
     }
   }
 
@@ -278,7 +274,7 @@ bool TouchEvent::PrefEnabled(nsIDocShell* aDocShell) {
 // static
 bool TouchEvent::LegacyAPIEnabled(JSContext* aCx, JSObject* aGlobal) {
   nsIPrincipal* principal = nsContentUtils::SubjectPrincipal(aCx);
-  bool isSystem = principal && nsContentUtils::IsSystemPrincipal(principal);
+  bool isSystem = principal && principal->IsSystemPrincipal();
 
   nsIDocShell* docShell = nullptr;
   if (aGlobal) {
@@ -303,7 +299,7 @@ bool TouchEvent::LegacyAPIEnabled(nsIDocShell* aDocShell,
 // static
 already_AddRefed<TouchEvent> TouchEvent::Constructor(
     const GlobalObject& aGlobal, const nsAString& aType,
-    const TouchEventInit& aParam, ErrorResult& aRv) {
+    const TouchEventInit& aParam) {
   nsCOMPtr<EventTarget> t = do_QueryInterface(aGlobal.GetAsSupports());
   RefPtr<TouchEvent> e = new TouchEvent(t, nullptr, nullptr);
   bool trusted = e->Init(t);

@@ -4,59 +4,10 @@
 
 "use strict";
 
-const { getFormatStr, getStr } = require("./l10n");
-
-/**
- * Generate a hash that uniquely identifies a stylesheet or element style attribute.
- *
- * @param {Object} source
- *        Information about a stylesheet or element style attribute:
- *        {
- *          type:  {String}
- *                 One of "stylesheet", "inline" or "element".
- *          index: {Number|String}
- *                 Position of the styleshet in the list of stylesheets in the document.
- *                 If `type` is "element", `index` is the generated selector which
- *                 uniquely identifies the element in the document.
- *          href:  {String}
- *                 URL of the stylesheet or of the document when `type` is "element" or
- *                 "inline".
- *        }
- * @return {String}
- */
-function getSourceHash(source) {
-  const { type, index, href } = source;
-
-  return `${type}${index}${href}`;
-}
-
-/**
- * Generate a hash that uniquely identifies a CSS rule.
- *
- * @param {Object} ruleData
- *        Information about a CSS rule:
- *        {
- *          selectors: {Array}
- *                     Array of CSS selector text
- *          ancestors: {Array}
- *                     Flattened CSS rule tree of the rule's ancestors with the root rule
- *                     at the beginning of the array and the leaf rule at the end.
- *          ruleIndex: {Array}
- *                     Indexes of each ancestor rule within its parent rule.
- *        }
- * @return {String}
- */
-function getRuleHash(ruleData) {
-  const { selectors = [], ancestors = [], ruleIndex } = ruleData;
-  const atRules = ancestors.reduce((acc, rule) => {
-    acc += `${rule.typeName} ${rule.conditionText ||
-      rule.name ||
-      rule.keyText}`;
-    return acc;
-  }, "");
-
-  return `${atRules}${selectors}${ruleIndex}`;
-}
+const {
+  getFormatStr,
+  getStr,
+} = require("devtools/client/inspector/changes/utils/l10n");
 
 /**
  * Get a human-friendly style source path to display in the Changes panel.
@@ -91,5 +42,3 @@ function getSourceForDisplay(source) {
 }
 
 module.exports.getSourceForDisplay = getSourceForDisplay;
-module.exports.getSourceHash = getSourceHash;
-module.exports.getRuleHash = getRuleHash;

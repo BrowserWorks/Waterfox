@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Soscripciones a canales">
+<!ENTITY learnMore.label             "Deprendi más tocante a los feeds">
+
+<!ENTITY feedTitle.label             "Títulu:">
+<!ENTITY feedTitle.accesskey         "T">
+
+<!ENTITY feedLocation.label          "URL de la canal:">
+<!ENTITY feedLocation.accesskey      "L">
+<!ENTITY locationValidate.label      "Validar">
+<!ENTITY validateText.label          "Comprobar validación y recuperar una URL válida.">
+
+<!ENTITY feedFolder.label            "Guardar artículos en:">
+<!ENTITY feedFolder.accesskey        "G">
+
+<!ENTITY quickMode.label             "Amosar el resume del artículu en cuenta de la páxina web">
+<!ENTITY quickMode.accesskey         "M">
+
+<!ENTITY autotagEnable.label         "Crear etiquetes automáticamente a partir de los conteníos &lt;category&gt; de les canales">
+<!ENTITY autotagEnable.accesskey     "d">
+<!ENTITY autotagUsePrefix.label      "Poner a les etiquetes el prefixu:">
+<!ENTITY autotagUsePrefix.accesskey  "P">
+<!ENTITY autoTagPrefix.placeholder   "Introduz un prefixu d'etiqueta">
+
+<!ENTITY button.addFeed.label        "Amestar">
+<!ENTITY button.addFeed.accesskey    "A">
+<!ENTITY button.removeFeed.label     "Desaniciar">
+<!ENTITY button.removeFeed.accesskey "R">
+<!ENTITY button.importOPML.label     "Importar">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "Esportar">
+<!ENTITY button.exportOPML.accesskey "S">
+<!ENTITY button.exportOPML.tooltip   "Esportar canales cola estructura de canales; ctrl clic o ctrl enter pa esportar les canales como una llista">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Zarrar">

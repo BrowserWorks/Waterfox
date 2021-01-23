@@ -1,0 +1,112 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailWizard.title               "Tabana' Runuk'ulem jun Rochochib'al Taqoya'l K'o Wi">
+<!ENTITY emailWizard.caption             "Tokisäx ri rochochib'al taqoya'l k'o wakami">
+<!ENTITY name.label                      "Ab'i':">
+<!ENTITY name.accesskey                  "b">
+<!ENTITY fullname.placeholder            "Tz'aqät b'i'aj">
+<!ENTITY name.text                       "Ab'i', ri xtikitz'ët ri ch'aqa' chik">
+<!ENTITY name.error                      "Tatz'ib'aj ab'i'">
+<!ENTITY email.label                     "Kochochib'al taqoya'l:">
+<!ENTITY email.accesskey                 "t">
+<!ENTITY email3.placeholder              "Rochochib'al ataqoya'l">
+<!ENTITY email.text                      "K'o chik ri rochochib'al ataqoya'l">
+<!ENTITY email.error                     "Man okel ta rochochib'al taqoya'l">
+<!ENTITY password.label                  "Ewan tzij:">
+<!ENTITY password.accesskey              "E">
+<!ENTITY password.placeholder            "Ewan tzij">
+<!ENTITY password.text                   "Cha'el, xa xe xtokisäx richin nijikib'äx rub'i' ri winäq">
+<!ENTITY password.toggle                 "Tik'ut/Hide ewan tzij">
+<!ENTITY rememberPassword.label          "Tinatäx ri ewan tzij">
+<!ENTITY rememberPassword.accesskey      "n">
+<!ENTITY usernameEx.label                "Rutikirib'al molojri'ïl:">
+<!ENTITY usernameEx.accesskey            "l">
+<!-- LOCALIZATION NOTE(usernameEx.placeholder): YOURDOMAIN refers to the Windows domain in ActiveDirectory. yourusername refers to the user's account name in Windows. -->
+<!ENTITY usernameEx.placeholder          "YOURDOMAIN\rub'i'okisanel">
+<!-- LOCALIZATION NOTE(usernameEx.text): Domain refers to the Windows domain in ActiveDirectory. We mean the user's login in Windows at the local corporate network. -->
+<!ENTITY usernameEx.text                 "Rutikirisaxik tominyo">
+
+<!ENTITY protocol.label                  "Rub'eyal Samaj:">
+<!ENTITY imapLong.label                  "IMAP (näj taq yakwuj)">
+<!ENTITY pop3Long.label                  "POP3 (tiyake' taqoya'l pan akematz'ib')">
+
+<!ENTITY manualConfigTable.summary       "Kinuk'ulem k'uxasamaj">
+<!ENTITY incoming.label                  "Tajin nok:">
+<!ENTITY incomingColumn.label            "Nok">
+<!ENTITY outgoing.label                  "Tajin nel:">
+<!ENTITY outgoingColumn.label            "Nel">
+<!ENTITY username.label                  "Rub'i' winäq:">
+<!ENTITY serverRow.label                 "Ruk'u'x samaj:">
+<!ENTITY portRow.label                   "B'ey:">
+<!ENTITY sslRow.label                    "SSL:">
+<!ENTITY auth.label                      "Jikib'anïk">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label                      "POP3">
+<!-- LOCALIZATION NOTE(exchange.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange.label                  "Exchange">
+<!ENTITY smtp.label                      "SMTP">
+<!ENTITY autodetect.label                "Ruyon titz'et">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "Majun">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!-- LOCALIZATION NOTE(exchange-hostname.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange-hostname.label         "Ruk'u'x rusamaj Exchange:">
+
+<!ENTITY advancedSetup.label             "Xq'ax chi nuk'ulem">
+<!ENTITY advancedSetup.accesskey         "q">
+<!ENTITY cancel.label                    "Tiq'at">
+<!ENTITY cancel.accesskey                "a">
+<!ENTITY continue.label                  "Titikïr chik el">
+<!ENTITY continue.accesskey              "c">
+<!ENTITY stop.label                      "Tiq'at">
+<!ENTITY stop.accesskey                  "q">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual config mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "Titojtob'ëx-chik">
+<!ENTITY half-manual-test.accesskey      "t">
+<!ENTITY manual-config.label             "Tib'an runuk'ulem chi q'ab'aj…">
+<!ENTITY manual-config.accesskey         "q">
+<!ENTITY open-provisioner.label          "Tik'ul jun k'ak'a' rochochib'al taqoya'l…">
+<!ENTITY open-provisioner.accesskey      "k">
+
+
+<!ENTITY get-help.label                  "Tk'ul To'ïk">
+<!ENTITY get-help.accesskey              "T">
+
+
+<!ENTITY warning.label                   "¡Rutzijol k'ayewal!">
+<!ENTITY incomingSettings.label          "Tajin nok nuk'ulem:">
+<!ENTITY outgoingSettings.label          "Tajin nel nuk'ulem:">
+<!ENTITY technicaldetails.label          "Etamanel taq B'anikil">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "Nino' pa nuwi' ri k'ayewal.">
+<!ENTITY confirmWarning.accesskey        "u">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "Xk'is">
+<!ENTITY doneAccount.accesskey           "X">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "Kejal taq Nuk'ulem">
+<!ENTITY changeSettings.accesskey        "K">
+
+<!ENTITY contactYourProvider.description "&brandShortName; nuya' q'ij chawe nak'ül ataqoya'l akuchi' nawokisaj ri anuk'ulem. Po k'o ta chi yatzijon rik'in ri anuk'samajel o aya'öl ataqoya'l chi kij ri improper taq okem. Ke'atz'eta' ri taq Thunderbird FAQ richin nawetamaj ch'aqa' chik.">
+
+<!ENTITY insecureServer.tooltip.title    "¡Rutzijol k'ayewal! Re re' man ütz ta chi k'uxasamaj.">
+<!ENTITY insecureServer.tooltip.details  "Tapitz'a' pa ri setesïk richin ch'aqa' chik rub'anikil.">
+
+<!ENTITY insecureUnencrypted.description "Ri taqoya'l chuqa' ri jikib'anïk man ewan ta kisik'ixik toq yetaq, ruma ri' toq ri ewan atzij (chuqa' atzijol) man k'ayew ta richin xkesik'ïx kuma juley chik winaqi'. &brandShortName; xtuya' q'ij chawe richin nak'ül ri ataqoya'l, po k'atzinel yatzijon rik'in ri ya'öl ataqoya'l richin tub'ana' runuk'ulem ri k'uxasamaj rik'in jun ütz okem.">
+<!ENTITY insecureSelfSigned.description  "Ri k'uxasamaj nrokisaj jun iqitzijib'äl, ri man niqakuqub'a' ta qak'u'x chi rij, ruma ri' toq man yojtikïr ta niqajikib'a' chi k'o ri niq'eleb'en kitzij chi kikojol ri &brandShortName; chuqa' ri ak'uxasamaj. &brandShortName; xtuya' q'ij richin xtak'ül ri ataqoya'l, po k'o ta chi nak'utuj chi ri ya'öl ataqoya'l chi tub'ana' runuk'ulem ri iqitzijib'äl rik'in jun jikïl iqitzijib'äl.">
+<!ENTITY secureServer.description        "¡Kakiköt! Re re' jun jikïl chi k'uxasamaj.">

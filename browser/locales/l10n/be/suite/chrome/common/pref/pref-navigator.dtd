@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.navigator.title "Азіральнік">
+<!ENTITY navRadio.label "Адлюстроўваць на">
+<!ENTITY navRadio.accesskey "н">
+<!ENTITY navStartPageMenu.label "Пры запуску азіральніка">
+<!ENTITY newWinPageMenu.label "У новым акне">
+<!ENTITY newTabPageMenu.label "У новай устаўцы">
+<!ENTITY blankPageRadio.label "Пустую старонку">
+<!ENTITY blankPageRadio.accesskey "у">
+<!ENTITY homePageRadio.label "Хатнюю старонку">
+<!ENTITY homePageRadio.accesskey "Х">
+<!ENTITY lastPageRadio.label "Апошнюю наведаную старонку">
+<!ENTITY lastPageRadio.accesskey "А">
+<!ENTITY restoreSessionRadio.label "Аднавіць папярэднюю сэсію">
+<!ENTITY restoreSessionRadio.accesskey "А">
+<!ENTITY restoreSessionIntro.label "Падчас аднаўлення сэсіяў і вокнаў">
+<!ENTITY restoreImmediately.label "Аднаўляць усе ўстаўкі адразу">
+<!ENTITY restoreImmediately.accesskey "А">
+<!ENTITY restoreTabs.label "Аднавіць">
+<!ENTITY restoreTabs.accesskey "н">
+<!ENTITY restoreTabsAtATime.label "устаўка (-кі) ў час">
+<!ENTITY restoreDeferred.label "Аднаўляць устаўкі толькі калі яны парабуюцца">
+<!ENTITY restoreDeferred.accesskey "п">
+<!ENTITY homePageIntro.label "Пстрыканне па кнопцы Дадому накіруе вас на гэтую старонку ці групу старонак:">
+<!ENTITY useCurrent.label "Цяперашняя старонка">
+<!ENTITY useCurrent.accesskey "Ц">
+<!ENTITY useCurrentGroup.label "Цяперашняя група">
+<!ENTITY useCurrentGroup.accesskey "Г">
+<!ENTITY browseFile.label "Выбраць файл…">
+<!ENTITY browseFile.accesskey "Ф">
+<!ENTITY useDefault.label "Першапачатковая">
+<!ENTITY useDefault.accesskey "П">
+<!ENTITY defaultBrowserGroup.label "Змоўчны азіральнік">
+<!ENTITY defaultBrowserButton.label "Прызначыць змоўчным азіральнікам">
+<!ENTITY defaultBrowserButton.accesskey "з">
+<!ENTITY alreadyDefaultText "&brandShortName; ужо з'яўляецца вашым змоўчным азіральнікам.">
+<!ENTITY defaultPendingText "&brandShortName; будзе прызначаны вашым змоўчным азіральнікам, калі вы пстрыкніце Добра.">
+<!ENTITY wasMadeDefaultText "&brandShortName; прызначаны вашым змоўчным азіральнікам.">
+<!ENTITY makeDefaultText "Прызначыць &brandShortName; вашым змоўчным азіральнікам.">

@@ -26,7 +26,7 @@ enum WordBreakClass : uint8_t {
   kWbClassKatakanaLetter,
   kWbClassHiraganaLetter,
   kWbClassHWKatakanaLetter,
-  kWbClassThaiLetter
+  kWbClassScriptioContinua
 };
 
 class WordBreaker {
@@ -44,7 +44,7 @@ class WordBreaker {
   static WordBreakClass GetClass(char16_t aChar);
 
  private:
-  ~WordBreaker() {}
+  ~WordBreaker() = default;
 };
 
 }  // namespace intl

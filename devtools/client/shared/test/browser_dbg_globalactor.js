@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -9,15 +7,15 @@
 
 "use strict";
 
-var { DebuggerServer } = require("devtools/server/main");
+var { DevToolsServer } = require("devtools/server/devtools-server");
 var { ActorRegistry } = require("devtools/server/actors/utils/actor-registry");
-var { DebuggerClient } = require("devtools/shared/client/debugger-client");
+var { DevToolsClient } = require("devtools/client/devtools-client");
 
 const ACTORS_URL = EXAMPLE_URL + "testactors.js";
 
 add_task(async function() {
-  DebuggerServer.init();
-  DebuggerServer.registerAllActors();
+  DevToolsServer.init();
+  DevToolsServer.registerAllActors();
 
   ActorRegistry.registerModule(ACTORS_URL, {
     prefix: "testOne",
@@ -25,8 +23,8 @@ add_task(async function() {
     type: { global: true },
   });
 
-  const transport = DebuggerServer.connectPipe();
-  const client = new DebuggerClient(transport);
+  const transport = DevToolsServer.connectPipe();
+  const client = new DevToolsClient(transport);
   const [type] = await client.connect();
   is(type, "browser", "Root actor should identify itself as a browser.");
 
@@ -35,7 +33,7 @@ add_task(async function() {
   ok(globalActor, "Found the test global actor.");
   ok(
     globalActor.includes("testOne"),
-    "testGlobalActor1's actorPrefix should be used."
+    "testGlobalActor1's typeName should be used."
   );
 
   response = await client.request({ to: globalActor, type: "ping" });
@@ -48,13 +46,13 @@ add_task(async function() {
   // Make sure that lazily-created actors are created only once.
   let count = 0;
   for (const connID of Object.getOwnPropertyNames(
-    DebuggerServer._connections
+    DevToolsServer._connections
   )) {
-    const conn = DebuggerServer._connections[connID];
-    const actorPrefix = conn._prefix + "testOne";
+    const conn = DevToolsServer._connections[connID];
+    const computedPrefix = conn._prefix + "testOne";
     for (const pool of conn._extraPools) {
       for (const actor of pool.poolChildren()) {
-        if (actor.actorID.startsWith(actorPrefix)) {
+        if (actor.actorID.startsWith(computedPrefix)) {
           count++;
         }
       }

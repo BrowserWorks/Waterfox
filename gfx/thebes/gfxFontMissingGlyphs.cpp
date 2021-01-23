@@ -83,12 +83,12 @@ static const Float BOX_BORDER_OPACITY = 0.5;
 static RefPtr<DrawTarget> gGlyphDrawTarget;
 static RefPtr<SourceSurface> gGlyphMask;
 static RefPtr<SourceSurface> gGlyphAtlas;
-static Color gGlyphColor;
+static DeviceColor gGlyphColor;
 
 /**
  * Generates a new colored mini-font atlas from the mini-font mask.
  */
-static bool MakeGlyphAtlas(const Color& aColor) {
+static bool MakeGlyphAtlas(const DeviceColor& aColor) {
   gGlyphAtlas = nullptr;
   if (!gGlyphDrawTarget) {
     gGlyphDrawTarget =
@@ -123,10 +123,10 @@ static bool MakeGlyphAtlas(const Color& aColor) {
  * it.
  */
 static inline already_AddRefed<SourceSurface> GetGlyphAtlas(
-    const Color& aColor) {
+    const DeviceColor& aColor) {
   // Get the opaque color, ignoring any transparency which will be handled
   // later.
-  Color color(aColor.r, aColor.g, aColor.b);
+  DeviceColor color(aColor.r, aColor.g, aColor.b);
   if ((gGlyphAtlas && gGlyphColor == color) || MakeGlyphAtlas(color)) {
     return do_AddRef(gGlyphAtlas);
   }
@@ -164,12 +164,7 @@ class WRUserData : public layers::LayerUserData,
   static UserDataKey sWRUserDataKey;
 };
 
-// If we add more render roots, this will need to be updated to accomodate
-// more than two render roots, at which point simply adding a bit to an
-// array index is probably not how we want to do things.
-static const int CONTENT_RECT_GLYPH_ATLAS = 8;
-
-static RefPtr<SourceSurface> gWRGlyphAtlas[16];
+static RefPtr<SourceSurface> gWRGlyphAtlas[8];
 static LinkedList<WRUserData> gWRUsers;
 UserDataKey WRUserData::sWRUserDataKey;
 
@@ -210,7 +205,8 @@ static already_AddRefed<SourceSurface> MakeWRGlyphAtlas(const Matrix* aMat) {
   if (!mask) {
     return nullptr;
   }
-  dt->MaskSurface(ColorPattern(Color(1.0f, 1.0f, 1.0f)), mask, Point(0, 0));
+  dt->MaskSurface(ColorPattern(DeviceColor::MaskOpaqueWhite()), mask,
+                  Point(0, 0));
   return dt->Snapshot();
 }
 
@@ -223,17 +219,13 @@ static void PurgeWRGlyphAtlas() {
   // from the layer manager.
   for (WRUserData* user : gWRUsers) {
     auto* manager = user->mManager;
-    for (size_t i = 0; i < 16; i++) {
+    for (size_t i = 0; i < 8; i++) {
       if (gWRGlyphAtlas[i]) {
         uint32_t handle = (uint32_t)(uintptr_t)gWRGlyphAtlas[i]->GetUserData(
             reinterpret_cast<UserDataKey*>(manager));
         if (handle) {
-          wr::RenderRoot renderRoot = (i & CONTENT_RECT_GLYPH_ATLAS)
-                                          ? wr::RenderRoot::Content
-                                          : wr::RenderRoot::Default;
-          manager->GetRenderRootStateManager(renderRoot)
-              ->AddImageKeyForDiscard(
-                  wr::ImageKey{manager->WrBridge()->GetNamespace(), handle});
+          manager->GetRenderRootStateManager()->AddImageKeyForDiscard(
+              wr::ImageKey{manager->WrBridge()->GetNamespace(), handle});
         }
       }
     }
@@ -244,7 +236,7 @@ static void PurgeWRGlyphAtlas() {
     gWRUsers.popFirst()->Remove();
   }
   // Finally, clear out the atlases.
-  for (size_t i = 0; i < 16; i++) {
+  for (size_t i = 0; i < 8; i++) {
     gWRGlyphAtlas[i] = nullptr;
   }
 }
@@ -258,7 +250,7 @@ WRUserData::~WRUserData() {
   // When the layer manager is destroyed, we need go through each
   // atlas and remove any assigned image keys.
   if (isInList()) {
-    for (size_t i = 0; i < 16; i++) {
+    for (size_t i = 0; i < 8; i++) {
       if (gWRGlyphAtlas[i]) {
         gWRGlyphAtlas[i]->RemoveUserData(
             reinterpret_cast<UserDataKey*>(mManager));
@@ -278,12 +270,6 @@ static already_AddRefed<SourceSurface> GetWRGlyphAtlas(DrawTarget& aDrawTarget,
       key |= (aMat->_11 < 0 ? 1 : 0) | (aMat->_22 < 0 ? 2 : 0);
     }
   }
-  // The atlas may exist, but an image key may not be assigned for it to
-  // the given layer manager.
-  auto* tdt = static_cast<layout::TextDrawTarget*>(&aDrawTarget);
-  if (tdt->GetRenderRoot() == wr::RenderRoot::Content) {
-    key |= CONTENT_RECT_GLYPH_ATLAS;
-  }
 
   // Check if an atlas was already created, or create one if necessary.
   RefPtr<SourceSurface> atlas = gWRGlyphAtlas[key];
@@ -292,6 +278,9 @@ static already_AddRefed<SourceSurface> GetWRGlyphAtlas(DrawTarget& aDrawTarget,
     gWRGlyphAtlas[key] = atlas;
   }
 
+  // The atlas may exist, but an image key may not be assigned for it to
+  // the given layer manager.
+  auto* tdt = static_cast<layout::TextDrawTarget*>(&aDrawTarget);
   auto* manager = tdt->WrLayerManager();
   if (!atlas->GetUserData(reinterpret_cast<UserDataKey*>(manager))) {
     // No image key, so we need to map the atlas' data for transfer to WR.
@@ -321,7 +310,8 @@ static already_AddRefed<SourceSurface> GetWRGlyphAtlas(DrawTarget& aDrawTarget,
 
 static void DrawHexChar(uint32_t aDigit, Float aLeft, Float aTop,
                         DrawTarget& aDrawTarget, SourceSurface* aAtlas,
-                        const Color& aColor, const Matrix* aMat = nullptr) {
+                        const DeviceColor& aColor,
+                        const Matrix* aMat = nullptr) {
   Rect dest(aLeft, aTop, MINIFONT_WIDTH, MINIFONT_HEIGHT);
   if (aDrawTarget.GetBackendType() == BackendType::WEBRENDER_TEXT) {
     // For WR, we need to get the image key assigned to the given WR layer
@@ -393,9 +383,9 @@ void gfxFontMissingGlyphs::DrawMissingGlyph(uint32_t aChar, const Rect& aRect,
 
   // If we're currently drawing with some kind of pattern, we just draw the
   // missing-glyph data in black.
-  Color color = aPattern.GetType() == PatternType::COLOR
-                    ? static_cast<const ColorPattern&>(aPattern).mColor
-                    : ToDeviceColor(Color(0.f, 0.f, 0.f, 1.f));
+  DeviceColor color = aPattern.GetType() == PatternType::COLOR
+                          ? static_cast<const ColorPattern&>(aPattern).mColor
+                          : ToDeviceColor(sRGBColor::OpaqueBlack());
 
   // Stroke a rectangle so that the stroke's left edge is inset one pixel
   // from the left edge of the glyph box and the stroke's right edge

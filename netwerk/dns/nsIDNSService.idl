@@ -3,6 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsISupports.idl"
+#include "nsIRequest.idl"
 
 %{ C++
 #include "mozilla/BasePrincipal.h"
@@ -65,6 +66,48 @@ interface nsIDNSService : nsISupports
                                 in nsIEventTarget    aListenerTarget,
                                 in OriginAttributes  aOriginAttributes,
                                 out nsICancelable    aResult);
+
+    /**
+     * kicks off an asynchronous host lookup with a specific TRR server to be
+     * used. This request will not be cached.
+     *
+     * @param aHostName
+     *        the hostname or IP-address-literal to resolve.
+     * @param aTrrServer
+     *        the uri of a trr server to be used.
+     * @param aFlags
+     *        a bitwise OR of the RESOLVE_ prefixed constants defined below.
+     * @param aListener
+     *        the listener to be notified when the result is available.
+     * @param aListenerTarget
+     *        optional parameter (may be null).  if non-null, this parameter
+     *        specifies the nsIEventTarget of the thread on which the
+     *        listener's onLookupComplete should be called.  however, if this
+     *        parameter is null, then onLookupComplete will be called on an
+     *        unspecified thread (possibly recursively).
+     * @param aOriginAttributes
+     *        the originAttribute for this resolving, the DNS cache will be
+     *        separated according to this originAttributes. This attribute is
+     *        optional to avoid breaking add-ons.
+     *
+     * @return An object that can be used to cancel the host lookup.
+     */
+    [implicit_jscontext, optional_argc]
+    nsICancelable asyncResolveWithTrrServer(in AUTF8String       aHostName,
+                                            in AUTF8String       aTrrServer,
+                                            in unsigned long     aFlags,
+                                            in nsIDNSListener    aListener,
+                                            in nsIEventTarget    aListenerTarget,
+                                 [optional] in jsval aOriginAttributes);
+
+    [notxpcom]
+    nsresult asyncResolveWithTrrServerNative(in AUTF8String       aHostName,
+                                             in AUTF8String       aTrrServer,
+                                             in unsigned long     aFlags,
+                                             in nsIDNSListener    aListener,
+                                             in nsIEventTarget    aListenerTarget,
+                                             in OriginAttributes  aOriginAttributes,
+                                             out nsICancelable    aResult);
 
     /**
       * kicks off an asynchronous host lookup by type, e.g. TXT.
@@ -137,6 +180,41 @@ interface nsIDNSService : nsISupports
                                       in nsIDNSListener    aListener,
                                       in nsresult          aReason,
                                       in OriginAttributes  aOriginAttributes);
+
+    /**
+     * Attempts to cancel a previously requested async DNS lookup
+     *
+     * @param aHostName
+     *        the hostname or IP-address-literal to resolve.
+     * @param aTrrServer
+     *        the uri of a trr server to be used.
+     * @param aFlags
+     *        a bitwise OR of the RESOLVE_ prefixed constants defined below.
+     * @param aListener
+     *        the original listener which was to be notified about the host lookup
+     *        result - used to match request information to requestor.
+     * @param aReason
+     *        nsresult reason for the cancellation
+     * @param aOriginAttributes
+     *        the originAttribute for this resolving. This attribute is optional
+     *        to avoid breaking add-ons.
+     */
+    [implicit_jscontext, optional_argc]
+    void cancelAsyncResolveWithTrrServer(in AUTF8String       aHostName,
+                                         in AUTF8String       aTrrServer,
+                                         in unsigned long     aFlags,
+                                         in nsIDNSListener    aListener,
+                                         in nsresult          aReason,
+                              [optional] in jsval             aOriginAttributes);
+
+
+    [notxpcom]
+    nsresult cancelAsyncResolveWithTrrServerNative(in AUTF8String       aHostName,
+                                                   in AUTF8String       aTrrServer,
+                                                   in unsigned long     aFlags,
+                                                   in nsIDNSListener    aListener,
+                                                   in nsresult          aReason,
+                                                   in OriginAttributes  aOriginAttributes);
 
     /**
      * Attempts to cancel a previously requested async DNS lookup
@@ -224,6 +302,28 @@ interface nsIDNSService : nsISupports
     void clearCache(in boolean aTrrToo);
 
     /**
+     * The method is used only for test purpose. We use this to recheck if
+     * parental control is enabled or not.
+     */
+    void reloadParentalControlEnabled();
+
+    /**
+     * Notifies the TRR service of a TRR that was automatically detected based
+     * on network preferences.
+     */
+    void setDetectedTrrURI(in AUTF8String aURI);
+
+    /**
+     * Returns a string containing the URI currently used by the TRR service.
+     */
+    readonly attribute AUTF8String currentTrrURI;
+
+    /**
+     * Returns the value of the TRR Service's current default mode.
+     */
+    readonly attribute unsigned long currentTrrMode;
+
+    /**
      * @return the hostname of the operating system.
      */
     readonly attribute AUTF8String myHostName;
@@ -289,10 +389,44 @@ interface nsIDNSService : nsISupports
     const unsigned long RESOLVE_REFRESH_CACHE = (1 << 10);
 
     /**
+     * These two bits encode the TRR mode of the request.
+     * Use the static helper methods convert between the TRR mode and flags.
+     */
+    const unsigned long RESOLVE_TRR_MODE_MASK = (1 << 11) | (1 << 12);
+
+%{C++
+    static uint32_t GetFlagsFromTRRMode(nsIRequest::TRRMode aMode) {
+        return static_cast<uint32_t>(aMode) << 11;
+    }
+
+    static nsIRequest::TRRMode GetTRRModeFromFlags(uint32_t aFlags) {
+        return static_cast<nsIRequest::TRRMode>((aFlags & RESOLVE_TRR_MODE_MASK) >> 11);
+    }
+%}
+
+    /**
      * This ure dns request types that are currently supported.
      * RESOLVE_TYPE_DEFAULT is standard A/AAAA lookup
      * The others (currently only TXT supported) are wireformat types
      */
     const unsigned long RESOLVE_TYPE_DEFAULT = 0;
     const unsigned long RESOLVE_TYPE_TXT = 16;
+    const unsigned long RESOLVE_TYPE_HTTPSSVC = 65345;
 };
+
+%{C++
+
+/**
+ * An observer notification for this topic is sent whenever the URI that the
+ * TRR service is using has changed.
+ */
+#define NS_NETWORK_TRR_URI_CHANGED_TOPIC "network:trr-uri-changed"
+
+/**
+ * An observer notification for this topic is sent whenever the mode that the
+ * TRR service is using has changed.
+ */
+#define NS_NETWORK_TRR_MODE_CHANGED_TOPIC "network:trr-mode-changed"
+
+%}
+

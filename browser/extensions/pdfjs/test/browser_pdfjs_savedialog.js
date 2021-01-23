@@ -10,7 +10,7 @@ function test() {
   // Test: "Open with" dialog comes up when pdf.js is not selected as the default
   // handler.
   addWindowListener(
-    "chrome://mozapps/content/downloads/unknownContentType.xul",
+    "chrome://mozapps/content/downloads/unknownContentType.xhtml",
     finish
   );
 
@@ -39,9 +39,6 @@ function changeMimeHandler(preferredAction, alwaysAskBeforeHandling) {
   handlerInfo.alwaysAskBeforeHandling = alwaysAskBeforeHandling;
   handlerInfo.preferredAction = preferredAction;
   handlerService.store(handlerInfo);
-
-  Services.obs.notifyObservers(null, "pdfjs:handlerChanged");
-  Services.ppmm.sharedData.flush();
 
   // Refresh data
   handlerInfo = mimeService.getFromTypeAndExtension("application/pdf", "pdf");

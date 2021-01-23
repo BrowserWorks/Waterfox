@@ -10,14 +10,14 @@
 add_task(async function() {
   const { L10N } = require("devtools/client/netmonitor/src/utils/l10n");
 
-  const { monitor, tab } = await initNetMonitor(SIMPLE_URL);
+  const { monitor } = await initNetMonitor(SIMPLE_URL, { requestCount: 1 });
   info("Starting test... ");
 
   const { document, windowRequire } = monitor.panelWin;
   const { Chart } = windowRequire("devtools/client/shared/widgets/Chart");
 
   const wait = waitForNetworkEvents(monitor, 1);
-  BrowserTestUtils.loadURI(tab.linkedBrowser, SIMPLE_URL);
+  await navigateTo(SIMPLE_URL);
   await wait;
 
   const chart = Chart.PieTable(document, {
@@ -52,7 +52,7 @@ add_task(async function() {
   ok(chart.pie, "The pie chart proxy is accessible.");
   ok(chart.table, "The table chart proxy is accessible.");
 
-  const node = chart.node;
+  const { node } = chart;
   const rows = node.querySelectorAll(".table-chart-row");
   const sums = node.querySelectorAll(".table-chart-summary-label");
 

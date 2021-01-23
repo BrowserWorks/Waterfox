@@ -1,4 +1,9 @@
-var callbacks = new Array();
+/* import-globals-from head_cache.js */
+/* import-globals-from head_channels.js */
+
+"use strict";
+
+var callbacks = [];
 
 // Expect an existing entry
 const NORMAL = 0;
@@ -67,8 +72,8 @@ function pumpReadStream(inputStream, goon) {
     var data = "";
     pump.asyncRead(
       {
-        onStartRequest: function(aRequest) {},
-        onDataAvailable: function(aRequest, aInputStream, aOffset, aCount) {
+        onStartRequest(aRequest) {},
+        onDataAvailable(aRequest, aInputStream, aOffset, aCount) {
           var wrapper = Cc[
             "@mozilla.org/scriptableinputstream;1"
           ].createInstance(Ci.nsIScriptableInputStream);
@@ -77,7 +82,7 @@ function pumpReadStream(inputStream, goon) {
           LOG_C2("reading data '" + str.substring(0, 5) + "'");
           data += str;
         },
-        onStopRequest: function(aRequest, aStatusCode) {
+        onStopRequest(aRequest, aStatusCode) {
           LOG_C2("done reading data: " + aStatusCode);
           Assert.equal(aStatusCode, Cr.NS_OK);
           goon(data);
@@ -93,16 +98,8 @@ function pumpReadStream(inputStream, goon) {
 }
 
 OpenCallback.prototype = {
-  QueryInterface: function listener_qi(iid) {
-    if (
-      iid.equals(Ci.nsISupports) ||
-      iid.equals(Ci.nsICacheEntryOpenCallback)
-    ) {
-      return this;
-    }
-    throw Cr.NS_ERROR_NO_INTERFACE;
-  },
-  onCacheEntryCheck: function(entry, appCache) {
+  QueryInterface: ChromeUtils.generateQI(["nsICacheEntryOpenCallback"]),
+  onCacheEntryCheck(entry, appCache) {
     LOG_C2(this, "onCacheEntryCheck");
     Assert.ok(!this.onCheckPassed);
     this.onCheckPassed = true;
@@ -147,7 +144,7 @@ OpenCallback.prototype = {
     LOG_C2(this, "onCacheEntryCheck DONE, return ENTRY_WANTED");
     return Ci.nsICacheEntryOpenCallback.ENTRY_WANTED;
   },
-  onCacheEntryAvailable: function(entry, isnew, appCache, status) {
+  onCacheEntryAvailable(entry, isnew, appCache, status) {
     if (this.behavior & MAYBE_NEW && isnew) {
       this.behavior |= NEW;
     }
@@ -268,21 +265,21 @@ OpenCallback.prototype = {
       });
     }
   },
-  selfCheck: function() {
+  selfCheck() {
     LOG_C2(this, "selfCheck");
 
     Assert.ok(this.onCheckPassed || this.behavior & MAYBE_NEW);
     Assert.ok(this.onAvailPassed);
     Assert.ok(this.onDataCheckPassed || this.behavior & MAYBE_NEW);
   },
-  throwAndNotify: function(entry) {
+  throwAndNotify(entry) {
     LOG_C2(this, "Throwing");
     var self = this;
     executeSoon(function() {
       LOG_C2(self, "Notifying");
       self.goon(entry);
     });
-    throw Cr.NS_ERROR_FAILURE;
+    throw Components.Exception("", Cr.NS_ERROR_FAILURE);
   },
 };
 
@@ -302,13 +299,8 @@ function OpenCallback(behavior, workingMetadata, workingData, goon) {
 }
 
 VisitCallback.prototype = {
-  QueryInterface: function listener_qi(iid) {
-    if (iid.equals(Ci.nsISupports) || iid.equals(Ci.nsICacheStorageVisitor)) {
-      return this;
-    }
-    throw Cr.NS_ERROR_NO_INTERFACE;
-  },
-  onCacheStorageInfo: function(num, consumption) {
+  QueryInterface: ChromeUtils.generateQI(["nsICacheStorageVisitor"]),
+  onCacheStorageInfo(num, consumption) {
     LOG_C2(this, "onCacheStorageInfo: num=" + num + ", size=" + consumption);
     Assert.equal(this.num, num);
     Assert.equal(this.consumption, consumption);
@@ -316,7 +308,7 @@ VisitCallback.prototype = {
       this.notify();
     }
   },
-  onCacheEntryInfo: function(
+  onCacheEntryInfo(
     aURI,
     aIdEnhance,
     aDataSize,
@@ -353,20 +345,20 @@ VisitCallback.prototype = {
 
     this.entries.splice(index, 1);
   },
-  onCacheEntryVisitCompleted: function() {
+  onCacheEntryVisitCompleted() {
     LOG_C2(this, "onCacheEntryVisitCompleted");
     if (this.entries) {
       Assert.equal(this.entries.length, 0);
     }
     this.notify();
   },
-  notify: function() {
+  notify() {
     Assert.ok(!!this.goon);
     var goon = this.goon;
     this.goon = null;
     executeSoon(goon);
   },
-  selfCheck: function() {
+  selfCheck() {
     Assert.ok(!this.entries || !this.entries.length);
   },
 };
@@ -381,20 +373,12 @@ function VisitCallback(num, consumption, entries, goon) {
 }
 
 EvictionCallback.prototype = {
-  QueryInterface: function listener_qi(iid) {
-    if (
-      iid.equals(Ci.nsISupports) ||
-      iid.equals(Ci.nsICacheEntryDoomCallback)
-    ) {
-      return this;
-    }
-    throw Cr.NS_ERROR_NO_INTERFACE;
-  },
-  onCacheEntryDoomed: function(result) {
+  QueryInterface: ChromeUtils.generateQI(["nsICacheEntryDoomCallback"]),
+  onCacheEntryDoomed(result) {
     Assert.equal(this.expectedSuccess, result == Cr.NS_OK);
     this.goon();
   },
-  selfCheck: function() {},
+  selfCheck() {},
 };
 
 function EvictionCallback(success, goon) {
@@ -405,7 +389,7 @@ function EvictionCallback(success, goon) {
 }
 
 MultipleCallbacks.prototype = {
-  fired: function() {
+  fired() {
     if (--this.pending == 0) {
       var self = this;
       if (this.delayed) {
@@ -417,7 +401,7 @@ MultipleCallbacks.prototype = {
       }
     }
   },
-  add: function() {
+  add() {
     ++this.pending;
   },
 };
@@ -432,9 +416,10 @@ function wait_for_cache_index(continue_func) {
   // This callback will not fire before the index is in the ready state.  nsICacheStorage.exists() will
   // no longer throw after this point.
   get_cache_service().asyncGetDiskConsumption({
-    onNetworkCacheDiskConsumption: function() {
+    onNetworkCacheDiskConsumption() {
       continue_func();
     },
+    // eslint-disable-next-line mozilla/use-chromeutils-generateqi
     QueryInterface() {
       return this;
     },

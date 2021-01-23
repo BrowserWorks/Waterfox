@@ -13,7 +13,7 @@
 PR_*
 PL_*
 #endif
-#include ../db/sqlite3/src/sqlite.symbols
+#include ../third_party/sqlite3/src/sqlite.symbols
 ATOB_AsciiToData
 ATOB_AsciiToData_Util
 ATOB_ConvertAsciiToItem_Util
@@ -109,6 +109,7 @@ CERT_FreeNicknames
 CERT_GenTime2FormattedAscii_Util
 CERT_GetCertChainFromCert
 CERT_GetCertEmailAddress
+CERT_GetCertificateDer
 CERT_GetCertificateRequestExtensions
 CERT_GetCertKeyType
 CERT_GetCertTimes
@@ -156,6 +157,7 @@ CERT_TimeChoiceTemplate @DATA@
 CERT_VerifyCertificate
 CERT_VerifySignedDataWithPublicKeyInfo
 DER_AsciiToTime_Util
+DER_DecodeTimeChoice
 DER_DecodeTimeChoice_Util
 DER_Encode
 DER_EncodeTimeChoice_Util
@@ -318,6 +320,7 @@ PK11_FindCertsFromNickname
 PK11_FindKeyByAnyCert
 PK11_FindKeyByDERCert
 PK11_FindKeyByKeyID
+PK11_FindRawCertsWithSubject
 PK11_FindSlotByName
 PK11_FindSlotsByNames
 PK11_FreeSlot
@@ -335,6 +338,7 @@ PK11_GetBestSlot
 PK11_GetBestSlotMultiple
 PK11_GetBlockSize
 PK11_GetCertFromPrivateKey
+PK11_GetCertsMatchingPrivateKey
 PK11_GetDefaultArray
 PK11_GetDefaultFlags
 PK11_GetDisabledReason
@@ -413,6 +417,7 @@ PK11_PubWrapSymKey
 PK11_RandomUpdate
 PK11_ReadRawAttribute
 PK11_ReferenceSlot
+PK11_ReferenceSymKey
 PK11_ResetToken
 PK11SDR_Decrypt
 PK11SDR_Encrypt
@@ -637,6 +642,7 @@ SGN_DestroyDigestInfo_Util
 SGN_End
 SGN_NewContext
 SGN_Update
+SSL_AlertSentCallback
 SSL_AuthCertificateComplete
 SSL_AuthCertificateHook
 SSL_CipherPrefGet
@@ -645,6 +651,7 @@ SSL_CipherPrefSetDefault
 SSL_ClearSessionCache
 SSL_ConfigSecureServer
 SSL_ConfigSecureServerWithCertChain
+SSL_ConfigServerCert
 SSL_ConfigServerSessionIDCache
 SSL_ExportKeyingMaterial
 SSL_ForceHandshake
@@ -666,6 +673,7 @@ SSL_NamedGroupConfig
 SSL_NumImplementedCiphers @DATA@
 SSL_OptionGet
 SSL_OptionSet
+SSL_OptionGetDefault
 SSL_OptionSetDefault
 SSL_PeerCertificate
 SSL_PeerCertificateChain

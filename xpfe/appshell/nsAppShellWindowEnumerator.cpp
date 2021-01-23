@@ -8,11 +8,9 @@
 #include "nsIContentViewer.h"
 #include "nsIDocShell.h"
 #include "mozilla/dom/Document.h"
-#include "nsIDOMWindow.h"
-#include "nsIFactory.h"
 #include "nsIInterfaceRequestor.h"
 #include "nsIInterfaceRequestorUtils.h"
-#include "nsIXULWindow.h"
+#include "nsIAppWindow.h"
 #include "mozilla/dom/Element.h"
 
 #include "nsWindowMediator.h"
@@ -24,9 +22,9 @@ using mozilla::dom::Element;
 // static helper functions
 //
 
-static void GetAttribute(nsIXULWindow* inWindow, const nsAString& inAttribute,
+static void GetAttribute(nsIAppWindow* inWindow, const nsAString& inAttribute,
                          nsAString& outValue);
-static void GetWindowType(nsIXULWindow* inWindow, nsString& outType);
+static void GetWindowType(nsIAppWindow* inWindow, nsString& outType);
 
 static Element* GetElementFromDocShell(nsIDocShell* aShell) {
   nsCOMPtr<nsIContentViewer> cv;
@@ -42,7 +40,7 @@ static Element* GetElementFromDocShell(nsIDocShell* aShell) {
 }
 
 // generic "retrieve the value of a XUL attribute" function
-void GetAttribute(nsIXULWindow* inWindow, const nsAString& inAttribute,
+void GetAttribute(nsIAppWindow* inWindow, const nsAString& inAttribute,
                   nsAString& outValue) {
   nsCOMPtr<nsIDocShell> shell;
   if (inWindow && NS_SUCCEEDED(inWindow->GetDocShell(getter_AddRefs(shell)))) {
@@ -55,7 +53,7 @@ void GetAttribute(nsIXULWindow* inWindow, const nsAString& inAttribute,
 
 // retrieve the window type, stored as the value of a particular
 // attribute in its XUL window tag
-void GetWindowType(nsIXULWindow* aWindow, nsString& outType) {
+void GetWindowType(nsIAppWindow* aWindow, nsString& outType) {
   GetAttribute(aWindow, NS_LITERAL_STRING("windowtype"), outType);
 }
 
@@ -63,10 +61,10 @@ void GetWindowType(nsIXULWindow* aWindow, nsString& outType) {
 // nsWindowInfo
 //
 
-nsWindowInfo::nsWindowInfo(nsIXULWindow* inWindow, int32_t inTimeStamp)
+nsWindowInfo::nsWindowInfo(nsIAppWindow* inWindow, int32_t inTimeStamp)
     : mWindow(inWindow),
       mTimeStamp(inTimeStamp),
-      mZLevel(nsIXULWindow::normalZ) {
+      mZLevel(nsIAppWindow::normalZ) {
   ReferenceSelf(true, true);
 }
 
@@ -188,16 +186,16 @@ NS_IMETHODIMP nsASDOMWindowEnumerator::GetNext(nsISupports** retval) {
 }
 
 //
-// nsASXULWindowEnumerator
+// nsASAppWindowEnumerator
 //
 
-nsASXULWindowEnumerator::nsASXULWindowEnumerator(const char16_t* aTypeString,
+nsASAppWindowEnumerator::nsASAppWindowEnumerator(const char16_t* aTypeString,
                                                  nsWindowMediator& aMediator)
     : nsAppShellWindowEnumerator(aTypeString, aMediator) {}
 
-nsASXULWindowEnumerator::~nsASXULWindowEnumerator() {}
+nsASAppWindowEnumerator::~nsASAppWindowEnumerator() {}
 
-NS_IMETHODIMP nsASXULWindowEnumerator::GetNext(nsISupports** retval) {
+NS_IMETHODIMP nsASAppWindowEnumerator::GetNext(nsISupports** retval) {
   if (!retval) return NS_ERROR_INVALID_ARG;
 
   *retval = nullptr;
@@ -226,7 +224,7 @@ nsWindowInfo* nsASDOMWindowEarlyToLateEnumerator::FindNext() {
   nsWindowInfo *info, *listEnd;
   bool allWindows = mType.IsEmpty();
 
-  // see nsXULWindowEarlyToLateEnumerator::FindNext
+  // see AppWindowEarlyToLateEnumerator::FindNext
   if (!mCurrentPosition) return nullptr;
 
   info = mCurrentPosition->mYounger;
@@ -241,19 +239,19 @@ nsWindowInfo* nsASDOMWindowEarlyToLateEnumerator::FindNext() {
 }
 
 //
-// nsASXULWindowEarlyToLateEnumerator
+// nsASAppWindowEarlyToLateEnumerator
 //
 
-nsASXULWindowEarlyToLateEnumerator::nsASXULWindowEarlyToLateEnumerator(
+nsASAppWindowEarlyToLateEnumerator::nsASAppWindowEarlyToLateEnumerator(
     const char16_t* aTypeString, nsWindowMediator& aMediator)
-    : nsASXULWindowEnumerator(aTypeString, aMediator) {
+    : nsASAppWindowEnumerator(aTypeString, aMediator) {
   mCurrentPosition = aMediator.mOldestWindow;
   AdjustInitialPosition();
 }
 
-nsASXULWindowEarlyToLateEnumerator::~nsASXULWindowEarlyToLateEnumerator() {}
+nsASAppWindowEarlyToLateEnumerator::~nsASAppWindowEarlyToLateEnumerator() {}
 
-nsWindowInfo* nsASXULWindowEarlyToLateEnumerator::FindNext() {
+nsWindowInfo* nsASAppWindowEarlyToLateEnumerator::FindNext() {
   nsWindowInfo *info, *listEnd;
   bool allWindows = mType.IsEmpty();
 
@@ -278,23 +276,23 @@ nsWindowInfo* nsASXULWindowEarlyToLateEnumerator::FindNext() {
 }
 
 //
-// nsASXULWindowFrontToBackEnumerator
+// nsASAppWindowFrontToBackEnumerator
 //
 
-nsASXULWindowFrontToBackEnumerator::nsASXULWindowFrontToBackEnumerator(
+nsASAppWindowFrontToBackEnumerator::nsASAppWindowFrontToBackEnumerator(
     const char16_t* aTypeString, nsWindowMediator& aMediator)
-    : nsASXULWindowEnumerator(aTypeString, aMediator) {
+    : nsASAppWindowEnumerator(aTypeString, aMediator) {
   mCurrentPosition = aMediator.mTopmostWindow;
   AdjustInitialPosition();
 }
 
-nsASXULWindowFrontToBackEnumerator::~nsASXULWindowFrontToBackEnumerator() {}
+nsASAppWindowFrontToBackEnumerator::~nsASAppWindowFrontToBackEnumerator() {}
 
-nsWindowInfo* nsASXULWindowFrontToBackEnumerator::FindNext() {
+nsWindowInfo* nsASAppWindowFrontToBackEnumerator::FindNext() {
   nsWindowInfo *info, *listEnd;
   bool allWindows = mType.IsEmpty();
 
-  // see nsXULWindowEarlyToLateEnumerator::FindNext
+  // see AppWindowEarlyToLateEnumerator::FindNext
   if (!mCurrentPosition) return nullptr;
 
   info = mCurrentPosition->mLower;
@@ -309,24 +307,24 @@ nsWindowInfo* nsASXULWindowFrontToBackEnumerator::FindNext() {
 }
 
 //
-// nsASXULWindowBackToFrontEnumerator
+// nsASAppWindowBackToFrontEnumerator
 //
 
-nsASXULWindowBackToFrontEnumerator::nsASXULWindowBackToFrontEnumerator(
+nsASAppWindowBackToFrontEnumerator::nsASAppWindowBackToFrontEnumerator(
     const char16_t* aTypeString, nsWindowMediator& aMediator)
-    : nsASXULWindowEnumerator(aTypeString, aMediator) {
+    : nsASAppWindowEnumerator(aTypeString, aMediator) {
   mCurrentPosition =
       aMediator.mTopmostWindow ? aMediator.mTopmostWindow->mHigher : nullptr;
   AdjustInitialPosition();
 }
 
-nsASXULWindowBackToFrontEnumerator::~nsASXULWindowBackToFrontEnumerator() {}
+nsASAppWindowBackToFrontEnumerator::~nsASAppWindowBackToFrontEnumerator() {}
 
-nsWindowInfo* nsASXULWindowBackToFrontEnumerator::FindNext() {
+nsWindowInfo* nsASAppWindowBackToFrontEnumerator::FindNext() {
   nsWindowInfo *info, *listEnd;
   bool allWindows = mType.IsEmpty();
 
-  // see nsXULWindowEarlyToLateEnumerator::FindNext
+  // see AppWindowEarlyToLateEnumerator::FindNext
   if (!mCurrentPosition) return nullptr;
 
   info = mCurrentPosition->mHigher;

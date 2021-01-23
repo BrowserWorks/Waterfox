@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label "Э-пошта">
+<!ENTITY readMsgsLink.label "Чытанне лістоў">
+<!ENTITY composeMsgLink.label "Стварыць новы ліст">
+<!ENTITY newsSectionHdr.label "Навінакупы">
+<!ENTITY subscribeNewsLink.label "Кіраваць падпіскамі на навінакупы">
+<!ENTITY accountsSectionHdr.label "Рахункі">
+<!ENTITY subscribeImapFolders.label "Кіраваць падпіскамі на папкі">
+<!ENTITY settingsLink.label "Праглядзець наладжванні гэтага рахунку">
+<!ENTITY newAcctLink.label "Стварыць новы рахунак">
+<!ENTITY advFeaturesSectionHdr.label "Пашыраныя ўласцівасці">
+<!ENTITY searchMsgsLink.label "Пошук лістоў">
+<!ENTITY filtersLink.label "Кіраваць сітамі лістоў">
+<!ENTITY junkSettings.label "Наладжванні пошты-лухты">
+<!ENTITY offlineLink.label "Па-за сеткавыя наладжванні">
+<!ENTITY feedsSectionHdr.label "Жывільнікі">
+<!ENTITY subscribeFeeds.label "Кіраваць падпіскамі">

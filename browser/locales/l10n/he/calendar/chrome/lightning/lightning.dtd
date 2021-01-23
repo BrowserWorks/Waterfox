@@ -1,0 +1,68 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+
+<!-- Tools menu -->
+
+<!-- New menu popup in File menu -->
+<!ENTITY lightning.menupopup.new.event.label    "אירוע…">
+<!ENTITY lightning.menupopup.new.event.accesskey "א">
+<!ENTITY lightning.menupopup.new.task.label     "משימה…">
+<!ENTITY lightning.menupopup.new.task.accesskey "מ">
+<!ENTITY lightning.menupopup.new.calendar.label "לוח שנה…">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "ל">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.calendar.label      "קובץ לוח שנה…">
+<!ENTITY lightning.menupopup.open.calendar.accesskey  "ל">
+
+<!-- View Menu -->
+<!ENTITY lightning.menu.view.calendar.label            "לוח שנה">
+<!ENTITY lightning.menu.view.calendar.accesskey        "ל">
+<!ENTITY lightning.menu.view.tasks.label               "משימות">
+<!ENTITY lightning.menu.view.tasks.accesskey           "ש">
+
+<!-- Events and Tasks menu -->
+<!ENTITY lightning.menu.eventtask.label                "אירועים ומשימות">
+<!ENTITY lightning.menu.eventtask.accesskey            "ר">
+
+<!-- properties dialog, calendar creation wizard -->
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.email.label,
+     lightning.calendarproperties.forceEmailScheduling.label)
+     These strings are used in the calendar wizard and the calendar properties dialog, but are only
+     displayed when setting/using a caldav calendar -->
+<!ENTITY lightning.calendarproperties.email.label                           "דוא״ל">
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.forceEmailScheduling.tooltiptext1,
+     lightning.calendarproperties.forceEmailScheduling.tooltiptext2)
+     - tooltiptext1 is used in the calendar wizard when setting a new caldav calendar
+     - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
+
+<!-- iMIP Bar (meeting support) -->
+<!ENTITY lightning.imipbar.btnMore.label                                    "עוד">
+<!ENTITY lightning.imipbar.description                                      "הודעה זו כוללת הזמנה לאירוע.">
+
+
+<!-- Lightning specific keybindings -->
+<!ENTITY lightning.keys.event.showCalendar.key "C">
+<!ENTITY lightning.keys.event.showTasks.key "D">
+<!ENTITY lightning.keys.event.new "I">
+<!ENTITY lightning.keys.todo.new "D">
+
+<!-- Account Central page -->
+<!ENTITY lightning.acctCentral.newCalendar.label "צור לוח שנה חדש">
+
+<!-- today-pane-specific -->
+<!ENTITY todaypane.showMinimonth.label "הצג חודש מוקטן">
+<!ENTITY todaypane.showMinimonth.accesskey "ח">
+<!ENTITY todaypane.showMiniday.label "הצג יום מוקטן">
+<!ENTITY todaypane.showMiniday.accesskey  "י">
+<!ENTITY todaypane.showNone.label "אל תציג דבר">
+<!ENTITY todaypane.showNone.accesskey "א">
+<!ENTITY todaypane.showTodayPane.label "הצג את לוח היום">
+<!ENTITY todaypane.showTodayPane.accesskey "צ">
+<!ENTITY todaypane.statusButton.label "לוח היום">

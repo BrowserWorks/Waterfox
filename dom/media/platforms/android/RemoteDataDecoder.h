@@ -6,9 +6,9 @@
 #define RemoteDataDecoder_h_
 
 #include "AndroidDecoderModule.h"
-#include "FennecJNIWrappers.h"
 #include "SurfaceTexture.h"
 #include "TimeUnits.h"
+#include "mozilla/java/CodecProxyWrappers.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/Monitor.h"
 

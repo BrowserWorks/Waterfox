@@ -11,10 +11,7 @@ transforms:
 
 job-defaults:
     description: release bouncer submission job
-    worker-type:
-        by-release-level:
-            production: scriptworker-k8s/gecko-3-bouncer
-            staging: scriptworker-k8s/gecko-1-bouncer
+    worker-type: bouncer
     worker:
         implementation: bouncer-submission
     scopes:
@@ -41,32 +38,12 @@ jobs:
         treeherder:
             platform: devedition-release/opt
 
-    fennec-beta:
-        bouncer-platforms: ['android', 'android-x86']
-        bouncer-products: ['apk']
-        shipping-product: fennec
-        locales-file: mobile/locales/l10n-changesets.json
-        treeherder:
-            platform: fennec-beta/opt
-        attributes:
-            release-type: beta
-
-    fennec-release:
-        bouncer-platforms: ['android', 'android-x86']
-        bouncer-products: ['apk']
-        shipping-product: fennec
-        locales-file: mobile/locales/l10n-changesets.json
-        treeherder:
-            platform: fennec-release/opt
-        attributes:
-            release-type: release
-
     firefox:
         bouncer-platforms: ['linux', 'linux64', 'osx', 'win', 'win64', 'win64-aarch64']
         bouncer-products:
             by-release-type:
                 default: ['complete-mar', 'installer', 'installer-ssl', 'partial-mar', 'stub-installer', 'msi', 'pkg']
-                esr68: ['complete-mar', 'installer', 'installer-ssl', 'partial-mar', 'msi', 'pkg']
+                esr78: ['complete-mar', 'installer', 'installer-ssl', 'partial-mar', 'msi', 'pkg']
         shipping-product: firefox
         treeherder:
             platform: firefox-release/opt

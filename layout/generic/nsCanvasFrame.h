@@ -16,7 +16,6 @@
 #include "nsIPopupContainer.h"
 #include "nsDisplayList.h"
 #include "nsIAnonymousContentCreator.h"
-#include "gfxPrefs.h"
 
 class nsPresContext;
 class gfxContext;
@@ -35,6 +34,8 @@ class nsCanvasFrame final : public nsContainerFrame,
                             public nsIScrollPositionListener,
                             public nsIAnonymousContentCreator,
                             public nsIPopupContainer {
+  using Element = mozilla::dom::Element;
+
  public:
   explicit nsCanvasFrame(ComputedStyle* aStyle, nsPresContext* aPresContext)
       : nsContainerFrame(aStyle, aPresContext, kClassID),
@@ -58,6 +59,7 @@ class nsCanvasFrame final : public nsContainerFrame,
   virtual void AppendFrames(ChildListID aListID,
                             nsFrameList& aFrameList) override;
   virtual void InsertFrames(ChildListID aListID, nsIFrame* aPrevFrame,
+                            const nsLineList::iterator* aPrevFrameLine,
                             nsFrameList& aFrameList) override;
 #ifdef DEBUG
   virtual void RemoveFrame(ChildListID aListID, nsIFrame* aOldFrame) override;
@@ -79,9 +81,7 @@ class nsCanvasFrame final : public nsContainerFrame,
   virtual void AppendAnonymousContentTo(nsTArray<nsIContent*>& aElements,
                                         uint32_t aFilter) override;
 
-  mozilla::dom::Element* GetCustomContentContainer() const {
-    return mCustomContentContainer;
-  }
+  Element* GetCustomContentContainer() const { return mCustomContentContainer; }
 
   /**
    * Unhide the CustomContentContainer. This call only has an effect if
@@ -118,20 +118,16 @@ class nsCanvasFrame final : public nsContainerFrame,
   nsRect CanvasArea() const;
 
  protected:
-  // Utility function to propagate the WritingMode from our first child to
-  // 'this' and all its ancestors.
-  void MaybePropagateRootElementWritingMode();
-
   // Data members
   bool mDoPaintFocus;
   bool mAddedScrollPositionListener;
 
-  nsCOMPtr<mozilla::dom::Element> mCustomContentContainer;
+  nsCOMPtr<Element> mCustomContentContainer;
 
  private:
   nsPopupSetFrame* mPopupSetFrame;
-  nsCOMPtr<mozilla::dom::Element> mPopupgroupContent;
-  nsCOMPtr<mozilla::dom::Element> mTooltipContent;
+  nsCOMPtr<Element> mPopupgroupContent;
+  nsCOMPtr<Element> mTooltipContent;
 };
 
 /**
@@ -184,9 +180,8 @@ class nsDisplayCanvasBackgroundColor final : public nsDisplaySolidColorBase {
   void SetExtraBackgroundColor(nscolor aColor) { mColor = aColor; }
 
   NS_DISPLAY_DECL_NAME("CanvasBackgroundColor", TYPE_CANVAS_BACKGROUND_COLOR)
-#ifdef MOZ_DUMP_PAINTING
+
   virtual void WriteDebugInfo(std::stringstream& aStream) override;
-#endif
 };
 
 class nsDisplayCanvasBackgroundImage : public nsDisplayBackgroundImage {

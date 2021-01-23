@@ -1,0 +1,158 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- these things need to move into utilityOverlay.xul -->
+
+<!ENTITY  offlineGoOfflineCmd.label                 "Treballa fora de línia">
+<!ENTITY  offlineGoOfflineCmd.accesskey             "b">
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items --> 
+
+
+<!ENTITY fileMenu.label                   "Fitxer">
+<!ENTITY fileMenu.accesskey               "F">
+<!ENTITY newMenu.label                    "Nou">
+<!ENTITY newMenu.accesskey                "N">
+<!ENTITY newBlankPageCmd.label            "Pàgina del redactor">
+<!ENTITY newBlankPageCmd.accesskey        "P">
+<!ENTITY newBlankPageCmd.key              "n">
+<!ENTITY newPageFromTemplateCmd.label "Pàgina utilitzant una plantilla">
+<!ENTITY newPageFromTemplateCmd.accesskey "t">
+<!ENTITY newPageFromDraftCmd.label "Pàgina utilitzant un esborrany">
+<!ENTITY newPageFromDraftCmd.accesskey "y">
+<!ENTITY newNavigatorCmd.label "Finestra del Navegador">
+<!ENTITY newNavigatorCmd.key "N">
+<!ENTITY newNavigatorCmd.accesskey "N">
+<!ENTITY newPrivateWindowCmd.label "Finestra privada">
+<!ENTITY newPrivateWindowCmd.key "P">
+<!ENTITY newPrivateWindowCmd.accesskey "F">
+<!ENTITY printSetupCmd.label "Configuració de la pàgina...">
+<!ENTITY printSetupCmd.accesskey "p">
+<!ENTITY printPreviewCmd.label "Exemple d'impressió">
+<!ENTITY printPreviewCmd.accesskey "E">
+<!ENTITY printCmd.label "Imprimeix...">
+<!ENTITY printCmd.accesskey "I">
+<!ENTITY printCmd.key "P">
+
+<!ENTITY editMenu.label                   "Edita">
+<!ENTITY editMenu.accesskey               "E">
+<!ENTITY undoCmd.label                    "Desfés">
+<!ENTITY undoCmd.key                      "Z">
+<!ENTITY undoCmd.accesskey                "D">
+<!ENTITY redoCmd.label                    "Refés">
+<!ENTITY redoCmd.key                      "Y">
+<!ENTITY redoCmd.accesskey                "R">
+<!ENTITY cutCmd.label                     "Retalla">
+<!ENTITY cutCmd.key                       "X">
+<!ENTITY cutCmd.accesskey                 "t">
+<!ENTITY copyCmd.label                    "Copia">
+<!ENTITY copyCmd.key                      "C">
+<!ENTITY copyCmd.accesskey                "C">
+<!ENTITY pasteCmd.label                   "Enganxa">
+<!ENTITY pasteCmd.key                     "V">
+<!ENTITY pasteCmd.accesskey               "x">
+<!ENTITY pasteGoCmd.label                 "Enganxa i vés-hi">
+<!ENTITY pasteGoCmd.accesskey             "g">
+<!-- LOCALIZATION NOTE (pasteSearchCmd): "Search" is a verb, this is the
+     search bar equivalent to the url bar's "Paste & Go"  -->
+
+<!ENTITY pasteSearchCmd.label             "Enganxa i cerca-ho">
+<!ENTITY pasteSearchCmd.accesskey         "E">
+<!ENTITY deleteCmd.label                  "Suprimeix">
+<!ENTITY deleteCmd.accesskey              "u">
+<!ENTITY selectAllCmd.label               "Selecciona-ho tot">
+<!ENTITY selectAllCmd.key                 "A">
+<!ENTITY selectAllCmd.accesskey           "a">
+<!ENTITY clearHistoryCmd.label    "Neteja l'historial de cerca">  
+<!ENTITY clearHistoryCmd.accesskey   "h"> 
+<!ENTITY showSuggestionsCmd.label   "Mostra suggeriments">  
+<!ENTITY showSuggestionsCmd.accesskey  "s"> 
+<!ENTITY preferencesCmd.label    "Preferències…">
+<!ENTITY preferencesCmd.key     "E">  
+<!ENTITY preferencesCmd.accesskey   "e"> 
+<!ENTITY findBarCmd.key "F">
+<!-- LOCALIZATION NOTE (findBarCmd.accesskey): This accesskey should be within
+     findBarCmd.label found in editorOverlay.dtd, findCmd.label in messenger.dtd
+     and messengercompose.dtd and findOnCmd.label found in navigatorOverlay.dtd -->
+<!ENTITY findBarCmd.accesskey "C">
+<!ENTITY findReplaceCmd.key "H">
+<!ENTITY findReplaceCmd.accesskey "l">
+<!ENTITY findAgainCmd.label "Torna a cercar">
+<!ENTITY findAgainCmd.key "G">
+<!ENTITY findAgainCmd.accesskey "o">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "Cerca l'anterior">
+<!ENTITY findPrevCmd.key "G">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.accesskey "n">
+<!ENTITY findTypeTextCmd.label "Cerca text a mesura que s'escriu">
+<!ENTITY findTypeTextCmd.accesskey "q">
+<!ENTITY findTypeLinksCmd.label "Cerca enllaços a mesura que s'escriu">
+<!ENTITY findTypeLinksCmd.accesskey "l">
+
+<!ENTITY viewMenu.label     "Visualitza"> 
+<!ENTITY viewMenu.accesskey               "V">
+<!ENTITY viewToolbarsMenu.label    "Mostra/Amaga"> 
+<!ENTITY viewToolbarsMenu.accesskey   "g"> 
+<!ENTITY showTaskbarCmd.label     "Barra d'estat">  
+<!ENTITY showTaskbarCmd.accesskey    "s"> 
+
+<!ENTITY helpMenu.label     "Ajuda"> 
+<!ENTITY helpMenu.accesskey    "j"> 
+
+<!ENTITY helpTroubleshootingInfo.label      "Informació de resolució de problemes">
+<!ENTITY helpTroubleshootingInfo.accesskey  "r">
+<!ENTITY releaseCmd.label                   "Notes de la versió">
+<!ENTITY releaseCmd.accesskey               "v">
+<!ENTITY helpSafeMode.label                 "Reinicia amb els complements inhabilitats">
+<!ENTITY helpSafeMode.accesskey             "R">
+<!ENTITY updateCmd.label                    "Cerca actualitzacions…">
+<!ENTITY updateCmd.accesskey                "C">
+<!ENTITY aboutCmd.label     "Quant al &brandShortName;">
+<!ENTITY aboutCmd.accesskey    "a">
+<!ENTITY aboutCommPluginsCmd.label   "Quant als connectors">
+<!ENTITY aboutCommPluginsCmd.accesskey   "l">
+
+<!ENTITY direct.label                                   "En línia (servidor intermediari: cap)">
+<!ENTITY direct.accesskey                               "c">
+<!ENTITY manual.label                                   "En línia (servidor intermediari: manual)">
+<!ENTITY manual.accesskey                               "m">
+<!ENTITY pac.label                                      "En línia (servidor intermediari: automàtic)">
+<!ENTITY pac.accesskey                                  "i">
+<!ENTITY wpad.label                                     "En línia (servidor intermediari: descobriment automàtic)">
+<!ENTITY wpad.accesskey                                 "d">
+<!ENTITY system.label                                   "En línia (servidor intermediari: propi del sistema)">
+<!ENTITY system.accesskey                               "s">
+
+<!ENTITY proxy.label                                    "Configuració del servidor intermediari…">
+<!ENTITY proxy.accesskey                                "C">
+
+<!ENTITY bidiSwitchTextDirectionItem.label        "Commuta la direcció del text">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey    "x">
+<!ENTITY bidiSwitchTextDirectionItem.commandkey   "X">
+
+<!ENTITY customizeToolbarContext.label            "Personalitza…">
+<!ENTITY customizeToolbarContext.accesskey        "P">
+
+<!ENTITY customizeToolbar.toolbarmode.label       "Paràmetres d'aquesta barra d'eines">
+<!ENTITY customizeToolbar.toolbarmode.accesskey   "t">
+<!ENTITY customizeToolbar.iconsAndText.label      "Icones i text">
+<!ENTITY customizeToolbar.iconsAndText.accesskey  "e">
+<!ENTITY customizeToolbar.icons.label             "Icones">
+<!ENTITY customizeToolbar.icons.accesskey         "I">
+<!ENTITY customizeToolbar.text.label              "Text">
+<!ENTITY customizeToolbar.text.accesskey          "T">
+<!ENTITY customizeToolbar.useSmallIcons.label     "Utilitza icones petites">
+<!ENTITY customizeToolbar.useSmallIcons.accesskey "s">
+<!ENTITY customizeToolbar.labelAlignEnd.label     "Mostra el text al costat de les icones">
+<!ENTITY customizeToolbar.labelAlignEnd.accesskey "c">
+<!ENTITY customizeToolbar.useDefault.label        "Utilitza els paràmetres per defecte">
+<!ENTITY customizeToolbar.useDefault.accesskey    "d">
+<!-- Popup Blocked notification menu -->
+
+<!ENTITY allowPopups.accesskey        "e">
+<!ENTITY showPopupManager.label       "Gestiona les finestres emergents">
+<!ENTITY showPopupManager.accesskey   "G">
+<!ENTITY dontShowMessage.label        "No mostris aquests missatges quan es bloquin emergents">
+<!ENTITY dontShowMessage.accesskey    "N">
+
+<!ENTITY syncToolbarButton.label "Sync">

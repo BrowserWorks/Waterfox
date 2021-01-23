@@ -10,6 +10,7 @@
  * liability, trademark and document use rules apply.
  */
 
+[Exposed=Window]
 interface SVGFESpecularLightingElement : SVGElement {
   [Constant]
   readonly attribute SVGAnimatedString in1;
@@ -25,4 +26,4 @@ interface SVGFESpecularLightingElement : SVGElement {
   readonly attribute SVGAnimatedNumber kernelUnitLengthY;
 };
 
-SVGFESpecularLightingElement implements SVGFilterPrimitiveStandardAttributes;
+SVGFESpecularLightingElement includes SVGFilterPrimitiveStandardAttributes;

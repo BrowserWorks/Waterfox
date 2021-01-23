@@ -26,9 +26,10 @@ exports[`calls updateTree.js adds one source 1`] = `
                 \\"isBlackBoxed\\": false,
                 \\"isPrettyPrinted\\": false,
                 \\"relativeUrl\\": \\"https://davidwalsh.name/\\",
-                \\"introductionUrl\\": null,
                 \\"isWasm\\": false,
-                \\"isExtension\\": false
+                \\"extensionName\\": null,
+                \\"isExtension\\": false,
+                \\"isOriginal\\": false
               }
             },
             {
@@ -41,9 +42,10 @@ exports[`calls updateTree.js adds one source 1`] = `
                 \\"isBlackBoxed\\": false,
                 \\"isPrettyPrinted\\": false,
                 \\"relativeUrl\\": \\"https://davidwalsh.name/source1.js\\",
-                \\"introductionUrl\\": null,
                 \\"isWasm\\": false,
-                \\"isExtension\\": false
+                \\"extensionName\\": null,
+                \\"isExtension\\": false,
+                \\"isOriginal\\": false
               }
             }
           ]
@@ -80,9 +82,10 @@ exports[`calls updateTree.js adds two sources 1`] = `
                 \\"isBlackBoxed\\": false,
                 \\"isPrettyPrinted\\": false,
                 \\"relativeUrl\\": \\"https://davidwalsh.name/\\",
-                \\"introductionUrl\\": null,
                 \\"isWasm\\": false,
-                \\"isExtension\\": false
+                \\"extensionName\\": null,
+                \\"isExtension\\": false,
+                \\"isOriginal\\": false
               }
             },
             {
@@ -95,9 +98,10 @@ exports[`calls updateTree.js adds two sources 1`] = `
                 \\"isBlackBoxed\\": false,
                 \\"isPrettyPrinted\\": false,
                 \\"relativeUrl\\": \\"https://davidwalsh.name/source1.js\\",
-                \\"introductionUrl\\": null,
                 \\"isWasm\\": false,
-                \\"isExtension\\": false
+                \\"extensionName\\": null,
+                \\"isExtension\\": false,
+                \\"isOriginal\\": false
               }
             },
             {
@@ -110,9 +114,10 @@ exports[`calls updateTree.js adds two sources 1`] = `
                 \\"isBlackBoxed\\": false,
                 \\"isPrettyPrinted\\": false,
                 \\"relativeUrl\\": \\"https://davidwalsh.name/source2.js\\",
-                \\"introductionUrl\\": null,
                 \\"isWasm\\": false,
-                \\"isExtension\\": false
+                \\"extensionName\\": null,
+                \\"isExtension\\": false,
+                \\"isOriginal\\": false
               }
             }
           ]
@@ -149,9 +154,26 @@ exports[`calls updateTree.js shows all the sources 1`] = `
                 \\"isBlackBoxed\\": false,
                 \\"isPrettyPrinted\\": false,
                 \\"relativeUrl\\": \\"https://davidwalsh.name/\\",
-                \\"introductionUrl\\": null,
                 \\"isWasm\\": false,
-                \\"isExtension\\": false
+                \\"extensionName\\": null,
+                \\"isExtension\\": false,
+                \\"isOriginal\\": false
+              }
+            },
+            {
+              \\"type\\": \\"source\\",
+              \\"name\\": \\"source1.js\\",
+              \\"path\\": \\"FakeThread/davidwalsh.name/source1.js\\",
+              \\"contents\\": {
+                \\"id\\": \\"server1.conn13.child1/37\\",
+                \\"url\\": \\"https://davidwalsh.name/source1.js\\",
+                \\"isBlackBoxed\\": false,
+                \\"isPrettyPrinted\\": false,
+                \\"relativeUrl\\": \\"https://davidwalsh.name/source1.js\\",
+                \\"isWasm\\": false,
+                \\"extensionName\\": null,
+                \\"isExtension\\": false,
+                \\"isOriginal\\": false
               }
             }
           ]

@@ -47,18 +47,25 @@ for stlfile in ['jsdate.*', 'jsnum.*']:
 with Files('builtin/intl/*'):
     BUG_COMPONENT = component_intl
 
-if CONFIG['JS_BUNDLED_EDITLINE']:
-    DIRS += ['editline']
+if CONFIG['ENABLE_WASM_CRANELIFT']:
+    CONFIGURE_SUBST_FILES += ['rust/extra-bindgen-flags']
 
 if not CONFIG['JS_DISABLE_SHELL']:
-    DIRS += ['shell']
-
-TEST_DIRS += ['jsapi-tests', 'tests', 'gdb']
-
-if CONFIG['FUZZING_INTERFACES']:
-    TEST_DIRS += [
-        'fuzz-tests',
+    DIRS += [
+        'rust',
+        'shell',
     ]
+
+    TEST_DIRS += [
+        'gdb',
+        'jsapi-tests',
+        'tests',
+    ]
+
+    if CONFIG['FUZZING_INTERFACES']:
+        TEST_DIRS += [
+            'fuzz-tests',
+        ]
 
 if CONFIG['FUZZING_INTERFACES'] and CONFIG['LIBFUZZER']:
     # In addition to regular coverage provided by trace-pc-guard,
@@ -98,8 +105,7 @@ CONFIGURE_DEFINE_FILES += [
 ]
 
 if CONFIG['HAVE_DTRACE']:
-    GENERATED_FILES += ['javascript-trace.h']
-
+    GeneratedFile('javascript-trace.h')
     EXPORTS += ['!javascript-trace.h']
 
 # Changes to internal header files, used externally, massively slow down
@@ -112,17 +118,22 @@ EXPORTS += [
     'jsfriendapi.h',
     'jspubtd.h',
     'jstypes.h',
-    'perf/jsperf.h',
 ]
 
 EXPORTS.js += [
+    '../public/AllocationRecording.h',
     '../public/AllocPolicy.h',
+    '../public/Array.h',
     '../public/ArrayBuffer.h',
+    '../public/ArrayBufferMaybeShared.h',
+    '../public/BigInt.h',
+    '../public/BinASTFormat.h',
     '../public/BuildId.h',
     '../public/CallArgs.h',
     '../public/CallNonGenericMethod.h',
     '../public/CharacterEncoding.h',
     '../public/Class.h',
+    '../public/ComparisonOperators.h',
     '../public/CompilationAndEvaluation.h',
     '../public/CompileOptions.h',
     '../public/ContextOptions.h',
@@ -131,11 +142,13 @@ EXPORTS.js += [
     '../public/Debug.h',
     '../public/Equality.h',
     '../public/ErrorReport.h',
+    '../public/Exception.h',
     '../public/ForOfIterator.h',
     '../public/GCAnnotations.h',
     '../public/GCAPI.h',
     '../public/GCHashTable.h',
     '../public/GCPolicyAPI.h',
+    '../public/GCTypeMacros.h',
     '../public/GCVariant.h',
     '../public/GCVector.h',
     '../public/HashTable.h',
@@ -146,6 +159,7 @@ EXPORTS.js += [
     '../public/LocaleSensitive.h',
     '../public/MemoryFunctions.h',
     '../public/MemoryMetrics.h',
+    '../public/Modules.h',
     '../public/OffThreadScriptCompilation.h',
     '../public/Principals.h',
     '../public/Printf.h',
@@ -177,7 +191,6 @@ EXPORTS.js += [
     '../public/TraceKind.h',
     '../public/TraceLoggerAPI.h',
     '../public/TracingAPI.h',
-    '../public/TrackedOptimizationInfo.h',
     '../public/Transcoding.h',
     '../public/TypeDecls.h',
     '../public/UbiNode.h',
@@ -190,6 +203,7 @@ EXPORTS.js += [
     '../public/UniquePtr.h',
     '../public/Utility.h',
     '../public/Value.h',
+    '../public/ValueArray.h',
     '../public/Vector.h',
     '../public/Warnings.h',
     '../public/WeakMapPtr.h',
@@ -197,6 +211,7 @@ EXPORTS.js += [
 ]
 
 EXPORTS.js.experimental += [
+    '../public/experimental/CodeCoverage.h',
     '../public/experimental/SourceHook.h',
 ]
 
@@ -207,14 +222,7 @@ UNIFIED_SOURCES += [
     'builtin/Boolean.cpp',
     'builtin/DataViewObject.cpp',
     'builtin/Eval.cpp',
-    'builtin/intl/Collator.cpp',
-    'builtin/intl/CommonFunctions.cpp',
-    'builtin/intl/DateTimeFormat.cpp',
-    'builtin/intl/IntlObject.cpp',
-    'builtin/intl/NumberFormat.cpp',
-    'builtin/intl/PluralRules.cpp',
-    'builtin/intl/RelativeTimeFormat.cpp',
-    'builtin/intl/SharedIntlData.cpp',
+    'builtin/FinalizationRegistryObject.cpp',
     'builtin/JSON.cpp',
     'builtin/MapObject.cpp',
     'builtin/ModuleObject.cpp',
@@ -224,29 +232,42 @@ UNIFIED_SOURCES += [
     'builtin/Reflect.cpp',
     'builtin/ReflectParse.cpp',
     'builtin/Stream.cpp',
+    'builtin/streams/MiscellaneousOperations.cpp',
+    'builtin/streams/PipeToState.cpp',
+    'builtin/streams/PullIntoDescriptor.cpp',
+    'builtin/streams/QueueingStrategies.cpp',
+    'builtin/streams/QueueWithSizes.cpp',
+    'builtin/streams/ReadableStream.cpp',
+    'builtin/streams/ReadableStreamBYOBReader.cpp',
+    'builtin/streams/ReadableStreamDefaultController.cpp',
+    'builtin/streams/ReadableStreamDefaultControllerOperations.cpp',
+    'builtin/streams/ReadableStreamDefaultReader.cpp',
+    'builtin/streams/ReadableStreamInternals.cpp',
+    'builtin/streams/ReadableStreamOperations.cpp',
+    'builtin/streams/ReadableStreamReader.cpp',
+    'builtin/streams/StreamAPI.cpp',
+    'builtin/streams/TeeState.cpp',
+    'builtin/streams/WritableStream.cpp',
+    'builtin/streams/WritableStreamDefaultController.cpp',
+    'builtin/streams/WritableStreamDefaultControllerOperations.cpp',
+    'builtin/streams/WritableStreamDefaultWriter.cpp',
+    'builtin/streams/WritableStreamOperations.cpp',
+    'builtin/streams/WritableStreamWriterOperations.cpp',
     'builtin/String.cpp',
     'builtin/Symbol.cpp',
     'builtin/TestingFunctions.cpp',
     'builtin/TypedObject.cpp',
     'builtin/WeakMapObject.cpp',
+    'builtin/WeakRefObject.cpp',
     'builtin/WeakSetObject.cpp',
     'ds/Bitmap.cpp',
     'ds/LifoAlloc.cpp',
     'ds/MemoryProtectionExceptionHandler.cpp',
-    'irregexp/NativeRegExpMacroAssembler.cpp',
-    'irregexp/RegExpAST.cpp',
-    'irregexp/RegExpCharacters.cpp',
-    'irregexp/RegExpEngine.cpp',
-    'irregexp/RegExpInterpreter.cpp',
-    'irregexp/RegExpMacroAssembler.cpp',
-    'irregexp/RegExpParser.cpp',
-    'irregexp/RegExpStack.cpp',
     'jsapi.cpp',
     'jsdate.cpp',
     'jsexn.cpp',
     'jsfriendapi.cpp',
     'jsnum.cpp',
-    'perf/jsperf.cpp',
     'proxy/BaseProxyHandler.cpp',
     'proxy/CrossCompartmentWrapper.cpp',
     'proxy/DeadObjectProxy.cpp',
@@ -257,6 +278,7 @@ UNIFIED_SOURCES += [
     'proxy/Wrapper.cpp',
     'threading/Mutex.cpp',
     'threading/ProtectedData.cpp',
+    'threading/Thread.cpp',
     'util/AllocPolicy.cpp',
     'util/CompleteFile.cpp',
     'util/NativeStack.cpp',
@@ -265,13 +287,16 @@ UNIFIED_SOURCES += [
     'util/StructuredSpewer.cpp',
     'util/Text.cpp',
     'util/Unicode.cpp',
+    'vm/Activation.cpp',
     'vm/ArgumentsObject.cpp',
     'vm/ArrayBufferObject.cpp',
+    'vm/ArrayBufferObjectMaybeShared.cpp',
     'vm/ArrayBufferViewObject.cpp',
     'vm/AsyncFunction.cpp',
     'vm/AsyncIteration.cpp',
     'vm/BigIntType.cpp',
     'vm/BuildId.cpp',
+    'vm/BytecodeLocation.cpp',
     'vm/BytecodeUtil.cpp',
     'vm/Caches.cpp',
     'vm/CallNonGenericMethod.cpp',
@@ -281,20 +306,23 @@ UNIFIED_SOURCES += [
     'vm/CompilationAndEvaluation.cpp',
     'vm/Compression.cpp',
     'vm/DateTime.cpp',
-    'vm/Debugger.cpp',
-    'vm/DebuggerMemory.cpp',
     'vm/EnvironmentObject.cpp',
     'vm/EqualityOperations.cpp',
     'vm/ErrorObject.cpp',
     'vm/ErrorReporting.cpp',
+    'vm/Exception.cpp',
     'vm/ForOfIterator.cpp',
+    'vm/FrameIter.cpp',
+    'vm/FunctionFlags.cpp',
     'vm/GeckoProfiler.cpp',
     'vm/GeneratorObject.cpp',
     'vm/GlobalObject.cpp',
     'vm/HelperThreads.cpp',
     'vm/Id.cpp',
     'vm/Initialization.cpp',
+    'vm/Instrumentation.cpp',
     'vm/Iteration.cpp',
+    'vm/JitActivation.cpp',
     'vm/JSAtom.cpp',
     'vm/JSContext.cpp',
     'vm/JSFunction.cpp',
@@ -304,12 +332,16 @@ UNIFIED_SOURCES += [
     'vm/JSScript.cpp',
     'vm/List.cpp',
     'vm/MemoryMetrics.cpp',
+    'vm/Modules.cpp',
     'vm/NativeObject.cpp',
     'vm/ObjectGroup.cpp',
+    'vm/OffThreadPromiseRuntimeState.cpp',
     'vm/OffThreadScriptCompilation.cpp',
     'vm/PIC.cpp',
+    'vm/PlainObject.cpp',
     'vm/Printer.cpp',
     'vm/Probes.cpp',
+    'vm/PromiseLookup.cpp',
     'vm/ProxyObject.cpp',
     'vm/Realm.cpp',
     'vm/ReceiverGuard.cpp',
@@ -327,7 +359,9 @@ UNIFIED_SOURCES += [
     'vm/StringType.cpp',
     'vm/SymbolType.cpp',
     'vm/TaggedProto.cpp',
+    'vm/ThrowMsgKind.cpp',
     'vm/Time.cpp',
+    'vm/ToSource.cpp',
     'vm/TypedArrayObject.cpp',
     'vm/TypeInference.cpp',
     'vm/UbiNode.cpp',
@@ -342,27 +376,36 @@ UNIFIED_SOURCES += [
 #   win32 test slowdowns
 # jsmath.cpp cannot be built in unified mode because it needs to re-#define the
 #   RtlGenRandom declaration's calling convention in <ntsecapi.h> on Windows.
-# jsutil.cpp cannot be built in unified mode because it is needed for
-#   check-vanilla-allocations.
-# perf/ProfilingStack.cpp cannot be built in unified mode because we want to
-#   suppress warnings due to usage of the system allocator, and this allows it
-#   to have a deterministic object name.
 # util/DoubleToString.cpp cannot be built in unified mode because we want to
 #   suppress compiler warnings in third-party dtoa.c.
+# util/Utility.cpp cannot be built in unified mode because it is needed for
+#   check-vanilla-allocations.
 # vm/Interpreter.cpp is gigantic and destroys incremental build times for any
 #   files unlucky enough to be unified with it.
 SOURCES += [
     'builtin/RegExp.cpp',
     'jsmath.cpp',
-    'jsutil.cpp',
     'util/DoubleToString.cpp',
+    'util/Utility.cpp',
     'vm/Interpreter.cpp',
     'vm/ProfilingStack.cpp',
 ]
 
-if CONFIG['JS_POSIX_NSPR']:
+if CONFIG['JS_HAS_INTL_API']:
     UNIFIED_SOURCES += [
-        'vm/PosixNSPR.cpp',
+        'builtin/intl/Collator.cpp',
+        'builtin/intl/CommonFunctions.cpp',
+        'builtin/intl/DateTimeFormat.cpp',
+        'builtin/intl/DisplayNames.cpp',
+        'builtin/intl/IntlObject.cpp',
+        'builtin/intl/LanguageTag.cpp',
+        'builtin/intl/LanguageTagGenerated.cpp',
+        'builtin/intl/ListFormat.cpp',
+        'builtin/intl/Locale.cpp',
+        'builtin/intl/NumberFormat.cpp',
+        'builtin/intl/PluralRules.cpp',
+        'builtin/intl/RelativeTimeFormat.cpp',
+        'builtin/intl/SharedIntlData.cpp',
     ]
 
 if CONFIG['MOZ_INSTRUMENTS']:
@@ -380,12 +423,12 @@ if CONFIG['ENABLE_TRACE_LOGGING']:
 if CONFIG['OS_ARCH'] == 'WINNT':
     UNIFIED_SOURCES += [
         'threading/windows/CpuCount.cpp',
-        'threading/windows/Thread.cpp',
+        'threading/windows/WindowsThread.cpp',
     ]
 else:
     UNIFIED_SOURCES += [
         'threading/posix/CpuCount.cpp',
-        'threading/posix/Thread.cpp',
+        'threading/posix/PosixThread.cpp',
     ]
 
 if CONFIG['JS_HAS_CTYPES']:
@@ -405,34 +448,42 @@ if CONFIG['MOZ_VTUNE']:
         'vtune/jitprofiling.c',
         'vtune/VTuneWrapper.cpp',
     ]
-    SOURCES['vtune/ittnotify_static.c'].flags += ['-Wno-varargs', '-Wno-unknown-pragmas']
+    SOURCES['vtune/ittnotify_static.c'].flags += [
+        '-Wno-varargs',
+        '-Wno-unknown-pragmas'
+    ]
+    if CONFIG['CC_TYPE'] == 'gcc':
+        SOURCES['vtune/ittnotify_static.c'].flags += [
+            '-Wno-stringop-overflow'
+        ]
 
-if CONFIG['HAVE_LINUX_PERF_EVENT_H']:
-    SOURCES += [
-        'perf/pm_linux.cpp'
-    ]
-    if CONFIG['LINUX_HEADERS_INCLUDES']:
-        SOURCES['perf/pm_linux.cpp'].flags += [CONFIG['LINUX_HEADERS_INCLUDES']]
-else:
-    SOURCES += [
-        'perf/pm_stub.cpp'
-    ]
+if not CONFIG['ENABLE_NEW_REGEXP']:
+    UNIFIED_SOURCES += [
+        'irregexp/NativeRegExpMacroAssembler.cpp',
+        'irregexp/RegExpAST.cpp',
+        'irregexp/RegExpCharacters.cpp',
+        'irregexp/RegExpEngine.cpp',
+        'irregexp/RegExpInterpreter.cpp',
+        'irregexp/RegExpMacroAssembler.cpp',
+        'irregexp/RegExpParser.cpp',
+        'irregexp/RegExpStack.cpp',
+        ]
 
 DIRS += [
     'build',
+    'debugger',
     'frontend',
     'gc',
     'jit',
     'wasm',
-]
+] + (['new-regexp'] if CONFIG['ENABLE_NEW_REGEXP'] else [])
+
+if CONFIG['JS_JITSPEW']:
+    DIRS += ['zydis']
 
 FINAL_LIBRARY = 'js'
 
-# Prepare self-hosted JS code for embedding
-GENERATED_FILES += [('selfhosted.out.h', 'selfhosted.js')]
-selfhosted = GENERATED_FILES[('selfhosted.out.h', 'selfhosted.js')]
-selfhosted.script = 'builtin/embedjs.py:generate_selfhosted'
-selfhosted.inputs = [
+selfhosted_inputs = [
     'js.msg',
     'builtin/TypedObjectConstants.h',
     'builtin/SelfHostingDefines.h',
@@ -440,20 +491,12 @@ selfhosted.inputs = [
     'builtin/Array.js',
     'builtin/AsyncFunction.js',
     'builtin/AsyncIteration.js',
+    'builtin/BigInt.js',
     'builtin/Classes.js',
     'builtin/Date.js',
     'builtin/Error.js',
     'builtin/Function.js',
     'builtin/Generator.js',
-    'builtin/intl/Collator.js',
-    'builtin/intl/CommonFunctions.js',
-    'builtin/intl/CurrencyDataGenerated.js',
-    'builtin/intl/DateTimeFormat.js',
-    'builtin/intl/IntlObject.js',
-    'builtin/intl/LangTagMappingsGenerated.js',
-    'builtin/intl/NumberFormat.js',
-    'builtin/intl/PluralRules.js',
-    'builtin/intl/RelativeTimeFormat.js',
     'builtin/Iterator.js',
     'builtin/Map.js',
     'builtin/Module.js',
@@ -471,7 +514,25 @@ selfhosted.inputs = [
     'builtin/TypedObject.js',
     'builtin/WeakMap.js',
     'builtin/WeakSet.js'
-]
+] + ([
+    'builtin/intl/Collator.js',
+    'builtin/intl/CommonFunctions.js',
+    'builtin/intl/CurrencyDataGenerated.js',
+    'builtin/intl/DateTimeFormat.js',
+    'builtin/intl/DisplayNames.js',
+    'builtin/intl/IntlObject.js',
+    'builtin/intl/ListFormat.js',
+    'builtin/intl/NumberFormat.js',
+    'builtin/intl/PluralRules.js',
+    'builtin/intl/RelativeTimeFormat.js',
+    'builtin/intl/SanctionedSimpleUnitIdentifiersGenerated.js',
+] if CONFIG['JS_HAS_INTL_API'] else [])
+
+# Prepare self-hosted JS code for embedding
+GeneratedFile('selfhosted.out.h', 'selfhosted.js',
+              script='builtin/embedjs.py',
+              entry_point='generate_selfhosted',
+              inputs=selfhosted_inputs)
 
 if CONFIG['JS_HAS_CTYPES']:
     if CONFIG['MOZ_SYSTEM_FFI']:

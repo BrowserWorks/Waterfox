@@ -13,12 +13,15 @@
 #include "mozilla/Compiler.h"
 #include "mozilla/FloatingPoint.h"
 #include "mozilla/MathAlgorithms.h"
-#include "mozilla/TypeTraits.h"
 #include "mozilla/WrappingOperations.h"
 
-#include <math.h>
+#include <cmath>
+#include <stddef.h>  // size_t
+#include <stdint.h>  // {u,}int{8,16,32,64}_t
+#include <type_traits>
 
 #include "jspubtd.h"
+#include "jstypes.h"  // JS_PUBLIC_API
 
 #include "js/RootingAPI.h"
 #include "js/Value.h"
@@ -136,10 +139,13 @@ MOZ_ALWAYS_INLINE bool ToNumber(JSContext* cx, HandleValue v, double* out) {
   return js::ToNumberSlow(cx, v, out);
 }
 
-/* ES6 draft 20141224, ToInteger (specialized for doubles). */
+// ES2020 draft rev 6b05bc56ba4e3c7a2b9922c4282d9eb844426d9b
+// 7.1.5 ToInteger ( argument )
+//
+// Specialized for double values.
 inline double ToInteger(double d) {
   if (d == 0) {
-    return d;
+    return 0;
   }
 
   if (!mozilla::IsFinite(d)) {
@@ -149,7 +155,7 @@ inline double ToInteger(double d) {
     return d;
   }
 
-  return d < 0 ? ceil(d) : floor(d);
+  return std::trunc(d) + (+0.0);  // Add zero to convert -0 to +0.
 }
 
 /* ES6 draft 20141224, 7.1.5. */
@@ -281,7 +287,7 @@ inline JSObject* ToObject(JSContext* cx, HandleValue v) {
  */
 template <typename UnsignedInteger>
 inline UnsignedInteger ToUnsignedInteger(double d) {
-  static_assert(mozilla::IsUnsigned<UnsignedInteger>::value,
+  static_assert(std::is_unsigned_v<UnsignedInteger>,
                 "UnsignedInteger must be an unsigned type");
 
   uint64_t bits = mozilla::BitwiseCast<uint64_t>(d);
@@ -361,10 +367,10 @@ inline UnsignedInteger ToUnsignedInteger(double d) {
 
 template <typename SignedInteger>
 inline SignedInteger ToSignedInteger(double d) {
-  static_assert(mozilla::IsSigned<SignedInteger>::value,
+  static_assert(std::is_signed_v<SignedInteger>,
                 "SignedInteger must be a signed type");
 
-  using UnsignedInteger = typename mozilla::MakeUnsigned<SignedInteger>::Type;
+  using UnsignedInteger = std::make_unsigned_t<SignedInteger>;
   UnsignedInteger u = ToUnsignedInteger<UnsignedInteger>(d);
 
   return mozilla::WrapToSigned(u);
@@ -507,7 +513,7 @@ inline int32_t ToSignedInteger<int32_t>(double d) {
 namespace detail {
 
 template <typename IntegerType,
-          bool IsUnsigned = mozilla::IsUnsigned<IntegerType>::value>
+          bool IsUnsigned = std::is_unsigned_v<IntegerType>>
 struct ToSignedOrUnsignedInteger;
 
 template <typename IntegerType>
@@ -553,6 +559,31 @@ inline int64_t ToInt64(double d) { return ToSignedInteger<int64_t>(d); }
 
 /* WEBIDL 4.2.11 */
 inline uint64_t ToUint64(double d) { return ToUnsignedInteger<uint64_t>(d); }
+
+/**
+ * An amount of space large enough to store the null-terminated result of
+ * |ToString| on any Number.
+ *
+ * The <https://tc39.es/ecma262/#sec-tostring-applied-to-the-number-type>
+ * |NumberToString| algorithm is specified in terms of results, not an
+ * algorithm.  It is extremely unclear from the algorithm's definition what its
+ * longest output can be.  |-(2**-19 - 2**-72)| requires 25 + 1 characters and
+ * is believed to be at least *very close* to the upper bound, so we round that
+ * *very generously* upward to a 64-bit pointer-size boundary (to be extra
+ * cautious) and assume that's adequate.
+ *
+ * If you can supply better reasoning for a tighter bound, file a bug to improve
+ * this!
+ */
+static constexpr size_t MaximumNumberToStringLength = 31 + 1;
+
+/**
+ * Store in |out| the null-terminated, base-10 result of |ToString| applied to
+ * |d| per <https://tc39.es/ecma262/#sec-tostring-applied-to-the-number-type>.
+ * (This will produce "NaN", "-Infinity", or "Infinity" for non-finite |d|.)
+ */
+extern JS_PUBLIC_API void NumberToString(
+    double d, char (&out)[MaximumNumberToStringLength]);
 
 }  // namespace JS
 

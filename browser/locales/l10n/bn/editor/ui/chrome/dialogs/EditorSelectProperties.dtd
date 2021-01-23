@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "নির্বাচন তালিকার বৈশিষ্ট্য">
+
+<!ENTITY Select.label "নির্বাচন তালিকা">
+<!ENTITY SelectName.label "তালিকার নাম (N):">
+<!ENTITY SelectName.accesskey "N">
+<!ENTITY SelectSize.label "উচ্চতা (H):">
+<!ENTITY SelectSize.accesskey "H">
+<!ENTITY SelectMultiple.label "বহু নির্বাচন (M)">
+<!ENTITY SelectMultiple.accesskey "M">
+<!ENTITY SelectDisabled.label "নিষ্ক্রিয় (D)">
+<!ENTITY SelectDisabled.accesskey "D">
+<!ENTITY SelectTabIndex.label "ট্যাব সূচী (I):">
+<!ENTITY SelectTabIndex.accesskey "I">
+
+<!ENTITY OptGroup.label "অপশন গ্রুপ">
+<!ENTITY OptGroupLabel.label "লেবেল (L):">
+<!ENTITY OptGroupLabel.accesskey "L">
+<!ENTITY OptGroupDisabled.label "নিষ্ক্রিয় (D)">
+<!ENTITY OptGroupDisabled.accesskey "D">
+
+<!ENTITY Option.label "অপশন">
+<!ENTITY OptionText.label "পাঠ্য (T):">
+<!ENTITY OptionText.accesskey "T">
+<!ENTITY OptionValue.label "মান (V):">
+<!ENTITY OptionValue.accesskey "V">
+<!ENTITY OptionSelected.label "প্রাথমিকভাবে নির্বাচিত (S)">
+<!ENTITY OptionSelected.accesskey "S">
+<!ENTITY OptionDisabled.label "নিষ্ক্রিয় (D)">
+<!ENTITY OptionDisabled.accesskey "D">
+
+<!ENTITY TextHeader.label "পাঠ্য">
+<!ENTITY ValueHeader.label "মান">
+<!ENTITY SelectedHeader.label "নির্বাচিত">
+
+<!ENTITY AddOption.label "অপশন যোগ করুন (O)">
+<!ENTITY AddOption.accesskey "O">
+<!ENTITY AddOptGroup.label "গ্রুপ যোগ করুন (G)">
+<!ENTITY AddOptGroup.accesskey "G">
+<!ENTITY RemoveElement.label "সরিয়ে ফেলুন (R)">
+<!ENTITY RemoveElement.accesskey "R">
+<!ENTITY MoveElementUp.label "উপরে সরানো (U)">
+<!ENTITY MoveElementUp.accesskey "U">
+<!ENTITY MoveElementDown.label "নিচে সরানো (D)">
+<!ENTITY MoveElementDown.accesskey "D">

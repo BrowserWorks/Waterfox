@@ -7,6 +7,7 @@
 #ifndef mozilla_dom_cache_Context_h
 #define mozilla_dom_cache_Context_h
 
+#include "mozilla/dom/SafeRefPtr.h"
 #include "mozilla/dom/cache/Types.h"
 #include "nsCOMPtr.h"
 #include "nsISupportsImpl.h"
@@ -62,35 +63,33 @@ class Manager;
 // As an invariant, all Context objects must be destroyed before permitting
 // the "profile-before-change" shutdown event to complete.  This is ensured
 // via the code in ShutdownObserver.cpp.
-class Context final {
+class Context final : public SafeRefCounted<Context> {
   typedef mozilla::dom::quota::DirectoryLock DirectoryLock;
 
  public:
   // Define a class allowing other threads to hold the Context alive.  This also
   // allows these other threads to safely close or cancel the Context.
-  class ThreadsafeHandle final {
+  class ThreadsafeHandle final : public AtomicSafeRefCounted<ThreadsafeHandle> {
     friend class Context;
 
    public:
+    explicit ThreadsafeHandle(SafeRefPtr<Context> aContext);
+    ~ThreadsafeHandle();
+
+    MOZ_DECLARE_REFCOUNTED_TYPENAME(cache::Context::ThreadsafeHandle)
+
     void AllowToClose();
     void InvalidateAndAllowToClose();
 
    private:
-    explicit ThreadsafeHandle(Context* aContext);
-    ~ThreadsafeHandle();
-
-    // disallow copying
-    ThreadsafeHandle(const ThreadsafeHandle&) = delete;
-    ThreadsafeHandle& operator=(const ThreadsafeHandle&) = delete;
-
     void AllowToCloseOnOwningThread();
     void InvalidateAndAllowToCloseOnOwningThread();
 
-    void ContextDestroyed(Context* aContext);
+    void ContextDestroyed(Context& aContext);
 
     // Cleared to allow the Context to close.  Only safe to access on
     // owning thread.
-    RefPtr<Context> mStrongRef;
+    SafeRefPtr<Context> mStrongRef;
 
     // Used to support cancelation even while the Context is already allowed
     // to close.  Cleared by ~Context() calling ContextDestroyed().  Only
@@ -98,8 +97,6 @@ class Context final {
     Context* mWeakRef;
 
     nsCOMPtr<nsISerialEventTarget> mOwningEventTarget;
-
-    NS_INLINE_DECL_THREADSAFE_REFCOUNTING(cache::Context::ThreadsafeHandle)
   };
 
   // Different objects hold references to the Context while some work is being
@@ -116,10 +113,10 @@ class Context final {
   // Create a Context attached to the given Manager.  The given Action
   // will run on the QuotaManager IO thread.  Note, this Action must
   // be execute synchronously.
-  static already_AddRefed<Context> Create(Manager* aManager,
-                                          nsISerialEventTarget* aTarget,
-                                          Action* aInitAction,
-                                          Context* aOldContext);
+  static SafeRefPtr<Context> Create(SafeRefPtr<Manager> aManager,
+                                    nsISerialEventTarget* aTarget,
+                                    Action* aInitAction,
+                                    Maybe<Context&> aOldContext);
 
   // Execute given action on the target once the quota manager has been
   // initialized.
@@ -177,22 +174,19 @@ class Context final {
     RefPtr<Action> mAction;
   };
 
-  Context(Manager* aManager, nsISerialEventTarget* aTarget,
-          Action* aInitAction);
-  ~Context();
-  void Init(Context* aOldContext);
+  void Init(Maybe<Context&> aOldContext);
   void Start();
   void DispatchAction(Action* aAction, bool aDoomData = false);
   void OnQuotaInit(nsresult aRv, const QuotaInfo& aQuotaInfo,
                    already_AddRefed<DirectoryLock> aDirectoryLock);
 
-  already_AddRefed<ThreadsafeHandle> CreateThreadsafeHandle();
+  SafeRefPtr<ThreadsafeHandle> CreateThreadsafeHandle();
 
-  void SetNextContext(Context* aNextContext);
+  void SetNextContext(SafeRefPtr<Context> aNextContext);
 
   void DoomTargetData();
 
-  RefPtr<Manager> mManager;
+  SafeRefPtr<Manager> mManager;
   nsCOMPtr<nsISerialEventTarget> mTarget;
   RefPtr<Data> mData;
   State mState;
@@ -210,13 +204,19 @@ class Context final {
   // The ThreadsafeHandle may have a strong ref back to us.  This creates
   // a ref-cycle that keeps the Context alive.  The ref-cycle is broken
   // when ThreadsafeHandle::AllowToClose() is called.
-  RefPtr<ThreadsafeHandle> mThreadsafeHandle;
+  SafeRefPtr<ThreadsafeHandle> mThreadsafeHandle;
 
   RefPtr<DirectoryLock> mDirectoryLock;
-  RefPtr<Context> mNextContext;
+  SafeRefPtr<Context> mNextContext;
 
  public:
-  NS_INLINE_DECL_REFCOUNTING(cache::Context)
+  // XXX Consider adding a private guard parameter.
+  Context(SafeRefPtr<Manager> aManager, nsISerialEventTarget* aTarget,
+          Action* aInitAction);
+  ~Context();
+
+  NS_DECL_OWNINGTHREAD
+  MOZ_DECLARE_REFCOUNTED_TYPENAME(cache::Context)
 };
 
 }  // namespace cache

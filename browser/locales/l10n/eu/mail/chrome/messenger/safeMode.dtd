@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title             "&brandShortName;(r)en modu segurua">
+<!ENTITY window.width                     "45em">
+
+<!ENTITY safeModeDescription.label        "&brandShortName; modu seguruan ari da exekutatzen eta behin-behinean zure ezarpen pertsonalizatuak, itxurak eta hedapenak desgaituko dira.">
+<!ENTITY safeModeDescription2.label       "Ondorengo ekintzetatik batzuk betirako ezar ditzakezu:">
+
+<!ENTITY disableAddons.label              "Desgaitu gehigarri guztiak">
+<!ENTITY disableAddons.accesskey          "D">
+
+<!ENTITY resetToolbars.label              "Garbitu tresna-barra eta kontrolak">
+<!ENTITY resetToolbars.accesskey          "G">
+
+<!ENTITY changeAndRestartButton.label     "Aldaketak egin eta berrabiarazi">
+<!ENTITY changeAndRestartButton.accesskey "A">
+
+<!ENTITY continueButton.label             "Jarraitu modu seguruan">
+<!ENTITY continueButton.accesskey         "J">

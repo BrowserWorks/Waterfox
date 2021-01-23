@@ -20,6 +20,7 @@
 #ifndef mozilla_EnumeratedRange_h
 #define mozilla_EnumeratedRange_h
 
+#include <limits>
 #include <type_traits>
 
 #include "mozilla/ReverseIterator.h"
@@ -34,7 +35,8 @@ class EnumeratedIterator {
   typedef typename std::underlying_type<EnumTypeT>::type IntTypeT;
 
   template <typename EnumType>
-  explicit EnumeratedIterator(EnumType aCurrent) : mCurrent(aCurrent) {}
+  constexpr explicit EnumeratedIterator(EnumType aCurrent)
+      : mCurrent(aCurrent) {}
 
   template <typename EnumType>
   explicit EnumeratedIterator(const EnumeratedIterator<EnumType>& aOther)
@@ -133,7 +135,7 @@ class EnumeratedRange {
   typedef ReverseIterator<const_iterator> const_reverse_iterator;
 
   template <typename EnumType>
-  EnumeratedRange(EnumType aBegin, EnumType aEnd)
+  constexpr EnumeratedRange(EnumType aBegin, EnumType aEnd)
       : mBegin(aBegin), mEnd(aEnd) {}
 
   iterator begin() const { return iterator(mBegin); }
@@ -162,8 +164,8 @@ class EnumeratedRange {
 
 // Create a range to iterate from aBegin to aEnd, exclusive.
 template <typename EnumType>
-inline detail::EnumeratedRange<EnumType> MakeEnumeratedRange(EnumType aBegin,
-                                                             EnumType aEnd) {
+constexpr detail::EnumeratedRange<EnumType> MakeEnumeratedRange(EnumType aBegin,
+                                                                EnumType aEnd) {
   MOZ_ASSERT(aBegin <= aEnd, "Cannot generate invalid, unbounded range!");
   return detail::EnumeratedRange<EnumType>(aBegin, aEnd);
 }
@@ -171,8 +173,27 @@ inline detail::EnumeratedRange<EnumType> MakeEnumeratedRange(EnumType aBegin,
 // Create a range to iterate from EnumType(0) to aEnd, exclusive. EnumType(0)
 // should exist, but note that there is no way for us to ensure that it does!
 template <typename EnumType>
-inline detail::EnumeratedRange<EnumType> MakeEnumeratedRange(EnumType aEnd) {
+constexpr detail::EnumeratedRange<EnumType> MakeEnumeratedRange(EnumType aEnd) {
   return MakeEnumeratedRange(EnumType(0), aEnd);
+}
+
+// Create a range to iterate from aBegin to aEnd, inclusive.
+//
+// NOTE: This internally constructs a value that is one past `aEnd`, so the
+// enumeration needs to either have a fixed underlying type, or `aEnd + 1` must
+// be inside the range of the enumeration, in order to not be undefined
+// behavior.
+//
+// See bug 1614512.
+template <typename EnumType>
+constexpr detail::EnumeratedRange<EnumType> MakeInclusiveEnumeratedRange(
+    EnumType aBegin, EnumType aEnd) {
+  using EnumUnderlyingType = typename std::underlying_type_t<EnumType>;
+  const auto end = static_cast<EnumUnderlyingType>(aEnd);
+
+  MOZ_ASSERT(end != std::numeric_limits<EnumUnderlyingType>::max(),
+             "aEnd shouldn't overflow!");
+  return MakeEnumeratedRange(aBegin, static_cast<EnumType>(end + 1));
 }
 
 #ifdef __GNUC__

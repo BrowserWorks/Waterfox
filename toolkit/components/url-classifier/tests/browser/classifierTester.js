@@ -10,10 +10,10 @@ var classifierTester = {
   FLASHBLOCK_ENABLE_PREF: "plugins.flashBlock.enabled",
   FLASH_PLUGIN_USER_SETTING_PREF: "plugin.state.flash",
   URLCLASSIFIER_DISALLOW_COMPLETIONS_PREF: "urlclassifier.disallow_completions",
+  FISSION_PREF: "fission.autostart",
   NEVER_ACTIVATE_PREF_VALUE: 0,
   ASK_TO_ACTIVATE_PREF_VALUE: 1,
   ALWAYS_ACTIVATE_PREF_VALUE: 2,
-  ALLOW_CTA_PREF: "plugins.click_to_play",
 
   dbUrls: [
     {
@@ -79,7 +79,6 @@ var classifierTester = {
       classifierTester.FLASH_PLUGIN_USER_SETTING_PREF,
       flashSetting
     );
-    Services.prefs.setBoolPref(classifierTester.ALLOW_CTA_PREF, true);
   },
 
   unsetPrefs() {
@@ -94,7 +93,6 @@ var classifierTester = {
     Services.prefs.clearUserPref(
       classifierTester.FLASH_PLUGIN_USER_SETTING_PREF
     );
-    Services.prefs.clearUserPref(classifierTester.ALLOW_CTA_PREF);
   },
 
   // The |domains| property describes the domains of the nested documents making
@@ -323,10 +321,10 @@ var classifierTester = {
           url
         );
 
-        ContentTask.spawn(
+        await SpecialPowers.spawn(
           tab.linkedBrowser,
-          { iframeId: classifierTester.IFRAME_ID, url, depth },
-          async function({ iframeId, url, depth }) {
+          [classifierTester.IFRAME_ID, url, depth],
+          (iframeId, url, depth) => {
             let doc = content.document;
             for (let i = 0; i < depth; ++i) {
               doc = doc.getElementById(iframeId).contentDocument;
@@ -342,35 +340,60 @@ var classifierTester = {
     })();
   },
 
-  getPluginInfo(browser, depth) {
-    return ContentTask.spawn(
-      browser,
-      { iframeId: classifierTester.IFRAME_ID, depth },
-      async function({ iframeId, depth }) {
-        let doc = content.document;
-        let win = content.window;
-        for (let i = 0; i < depth; ++i) {
-          let frame = doc.getElementById(iframeId);
-          doc = frame.contentDocument;
-          win = frame.contentWindow;
-        }
+  async getPluginInfo(browser, depth) {
+    async function fn(frame, iframeId, depth) {
+      return SpecialPowers.spawn(
+        frame,
+        [iframeId, depth, fn.toString()],
+        async (iframeId, depth, fnSource) => {
+          // eslint-disable-next-line no-eval
+          let fnGetIframePluginInfo = eval(`(() => (${fnSource}))()`);
 
-        let pluginObj = doc.getElementById("testObject");
-        if (!(pluginObj instanceof Ci.nsIObjectLoadingContent)) {
-          throw new Error("Unable to find plugin!");
+          let doc = content.document;
+          let win = content.window;
+          let frame = doc.getElementById(iframeId);
+          if (!frame) {
+            throw new Error("Unable to find iframe!");
+          }
+          if (depth != 0) {
+            return fnGetIframePluginInfo(
+              frame.contentWindow,
+              iframeId,
+              --depth
+            );
+          }
+
+          let pluginObj = doc.getElementById("testObject");
+          if (!(pluginObj instanceof Ci.nsIObjectLoadingContent)) {
+            throw new Error("Unable to find plugin!");
+          }
+
+          return {
+            pluginFallbackType: pluginObj.pluginFallbackType,
+            activated: pluginObj.activated,
+            hasRunningPlugin: pluginObj.hasRunningPlugin,
+            listed: "Shockwave Flash" in win.navigator.plugins,
+            flashClassification: doc.documentFlashClassification,
+          };
         }
-        return {
-          pluginFallbackType: pluginObj.pluginFallbackType,
-          activated: pluginObj.activated,
-          hasRunningPlugin: pluginObj.hasRunningPlugin,
-          listed: "Shockwave Flash" in win.navigator.plugins,
-          flashClassification: doc.documentFlashClassification,
-        };
-      }
-    );
+      );
+    }
+
+    return fn(browser, classifierTester.IFRAME_ID, depth);
   },
 
   checkPluginInfo(pluginInfo, expectedClassification, flashSetting) {
+    // Flashblocking is disabled when fission is enabled, so all the classifications
+    // should be "unknown"
+    if (Services.prefs.getBoolPref(classifierTester.FISSION_PREF)) {
+      expectedClassification = "unknown";
+    }
+
+    // We've stopped allowing flash to be always activated, so check
+    // existing tests that attempt to do so get treated as using ask-to-activate.
+    if (flashSetting == classifierTester.ALWAYS_ACTIVATE_PREF_VALUE) {
+      flashSetting = classifierTester.ASK_TO_ACTIVATE_PREF_VALUE;
+    }
     is(
       pluginInfo.flashClassification,
       expectedClassification,

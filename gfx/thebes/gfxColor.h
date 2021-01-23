@@ -6,33 +6,8 @@
 #ifndef GFX_COLOR_H
 #define GFX_COLOR_H
 
-#include "mozilla/Attributes.h"   // for MOZ_ALWAYS_INLINE
-#include "mozilla/EndianUtils.h"  // for mozilla::NativeEndian::swapToBigEndian
-
-/**
- * GFX_BLOCK_RGB_TO_FRGB(from,to)
- *   sizeof(*from) == sizeof(char)
- *   sizeof(*to)   == sizeof(uint32_t)
- *
- * Copy 4 pixels at a time, reading blocks of 12 bytes (RGB x4)
- *   and writing blocks of 16 bytes (FRGB x4)
- */
-#define GFX_BLOCK_RGB_TO_FRGB(from, to)                                       \
-  PR_BEGIN_MACRO                                                              \
-  uint32_t m0 = ((uint32_t*)from)[0], m1 = ((uint32_t*)from)[1],              \
-           m2 = ((uint32_t*)from)[2],                                         \
-           rgbr = mozilla::NativeEndian::swapToBigEndian(m0),                 \
-           gbrg = mozilla::NativeEndian::swapToBigEndian(m1),                 \
-           brgb = mozilla::NativeEndian::swapToBigEndian(m2), p0, p1, p2, p3; \
-  p0 = 0xFF000000 | ((rgbr) >> 8);                                            \
-  p1 = 0xFF000000 | ((rgbr) << 16) | ((gbrg) >> 16);                          \
-  p2 = 0xFF000000 | ((gbrg) << 8) | ((brgb) >> 24);                           \
-  p3 = 0xFF000000 | (brgb);                                                   \
-  to[0] = p0;                                                                 \
-  to[1] = p1;                                                                 \
-  to[2] = p2;                                                                 \
-  to[3] = p3;                                                                 \
-  PR_END_MACRO
+#include "mozilla/Attributes.h"  // for MOZ_ALWAYS_INLINE
+#include "mozilla/gfx/Types.h"   // for mozilla::gfx::SurfaceFormatBit
 
 /**
  * Fast approximate division by 255. It has the property that
@@ -60,7 +35,10 @@ uint8_t MOZ_ALWAYS_INLINE gfxPreMultiply(uint8_t c, uint8_t a) {
  */
 uint32_t MOZ_ALWAYS_INLINE gfxPackedPixelNoPreMultiply(uint8_t a, uint8_t r,
                                                        uint8_t g, uint8_t b) {
-  return (((a) << 24) | ((r) << 16) | ((g) << 8) | (b));
+  return (((a) << mozilla::gfx::SurfaceFormatBit::OS_A) |
+          ((r) << mozilla::gfx::SurfaceFormatBit::OS_R) |
+          ((g) << mozilla::gfx::SurfaceFormatBit::OS_G) |
+          ((b) << mozilla::gfx::SurfaceFormatBit::OS_B));
 }
 
 /**
@@ -74,8 +52,10 @@ uint32_t MOZ_ALWAYS_INLINE gfxPackedPixel(uint8_t a, uint8_t r, uint8_t g,
   else if (a == 0xFF) {
     return gfxPackedPixelNoPreMultiply(a, r, g, b);
   } else {
-    return ((a) << 24) | (gfxPreMultiply(r, a) << 16) |
-           (gfxPreMultiply(g, a) << 8) | (gfxPreMultiply(b, a));
+    return ((a) << mozilla::gfx::SurfaceFormatBit::OS_A) |
+           (gfxPreMultiply(r, a) << mozilla::gfx::SurfaceFormatBit::OS_R) |
+           (gfxPreMultiply(g, a) << mozilla::gfx::SurfaceFormatBit::OS_G) |
+           (gfxPreMultiply(b, a) << mozilla::gfx::SurfaceFormatBit::OS_B);
   }
 }
 

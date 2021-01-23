@@ -1,0 +1,73 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Propietats">
+
+<!ENTITY generalInfo.label                       "Informació general">
+<!ENTITY folderCharsetFallback.label             "Codificació de caràcters alternativa:">
+<!ENTITY folderCharsetFallback.accesskey         "e">
+<!ENTITY folderCharsetEnforce.label              "Aplica la codificació a tots els missatges de la carpeta (omet la detecció automàtica i la codificació de caràcters específica de cada missatge)">
+<!ENTITY folderCharsetEnforce.accesskey          "A">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Reconstrueix l'índex del fitxer resum">
+<!ENTITY folderRebuildSummaryFile2.label         "Repara la carpeta">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "R">
+<!ENTITY folderRebuildSummaryFile.explanation    "De vegades s'espatlla el fitxer que fa d'índex de la carpeta (.msf) i alguns missatges que haurien de ser-hi sembla que hagin desaparegut o d'altres que s'havien esborrat tornen a aparèixer; tots aquests problemes es solucionaran si es repara la carpeta.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Inclou els missatges d'aquesta carpeta als resultats de la cerca global">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "g">
+
+<!ENTITY retention.label "Política de retenció">
+<!ENTITY retentionUseAccount.label "Utilitza els paràmetres del meu compte">
+<!ENTITY retentionUseAccount.accesskey "U">
+<!ENTITY daysOld.label "dies d'antiguitat">
+<!ENTITY message.label "missatges">
+<!ENTITY retentionCleanup.label "Per recuperar espai de disc, es poden suprimir permanentment els missatges antics:">
+<!ENTITY retentionCleanupImap.label "Per recuperar espai de disc, es poden suprimir permanentment els missatges antics, tant les còpies locals com els originals del servidor remot:">
+<!ENTITY retentionCleanupPop.label "Per recuperar espai de disc, es poden suprimir permanentment els missatges antics, inclosos els originals del servidor remot:">
+<!ENTITY retentionDeleteMsg.label "Suprimeix els missatges de més de">
+<!ENTITY retentionDeleteMsg.accesskey "m">
+<!ENTITY retentionKeepAll.label "No suprimeixis cap missatge">
+<!ENTITY retentionKeepAll.accesskey "a">
+<!ENTITY retentionKeepRecent.label "Suprimeix-los tots excepte els més nous">
+<!ENTITY retentionKeepRecent.accesskey "x">
+<!-- LOCALIZATION NOTE: Unhide with .keepUnreadOnly { display: -moz-box; } -->
+<!ENTITY retentionKeepUnreadHidden.label "Suprimeix sempre els missatges llegits (sobreescriu els paràmetres d'antiguitat)">
+<!ENTITY retentionApplyToFlagged.label "Conserva sempre els missatges destacats">
+<!ENTITY retentionApplyToFlagged.accesskey "e">
+
+<!ENTITY folderSynchronizationTab.label          "Sincronització">
+<!ENTITY folderCheckForNewMessages2.label        "Quan es cerquin missatges nous per aquest compte, comprova sempre aquesta carpeta">
+<!ENTITY folderCheckForNewMessages2.accesskey    "c">
+
+<!ENTITY offlineFolder.check.label               "Selecciona aquesta carpeta per al seu ús fora de línia">
+<!ENTITY offlineFolder.check.accesskey           "S">
+<!ENTITY offlineFolder.button.label              "Baixa-ho ara">
+<!ENTITY offlineFolder.button.accesskey          "B">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Selecciona aquest grup de discussió per al seu ús fora de línia">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "o">
+<!ENTITY offlineNewsgroup.button.label           "Baixa-ho ara">
+<!ENTITY offlineNewsgroup.button.accesskey       "B">
+
+<!ENTITY folderProps.name.label                  "Nom:">
+<!ENTITY folderProps.name.accesskey              "N">
+<!ENTITY folderProps.location.label              "Ubicació:">
+<!ENTITY folderProps.location.accesskey          "U">
+
+<!ENTITY folderSharingTab.label                  "Compartició">
+<!ENTITY privileges.button.label                 "Privilegis…">
+<!ENTITY privileges.button.accesskey             "P">
+<!ENTITY permissionsDesc.label                   "Teniu els permisos següents:">
+<!ENTITY folderType.label                        "Tipus de carpeta:">
+
+<!ENTITY folderQuotaTab.label                    "Quota">
+<!ENTITY folderQuotaRoot.label                   "Arrel de la quota:">
+<!ENTITY folderQuotaUsage.label                  "Utilització:">
+<!ENTITY folderQuotaStatus.label                 "Estat:">
+
+<!ENTITY numberOfMessages.label                  "Nombre de missatges:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "desconegut">
+<!ENTITY sizeOnDisk.label                        "Mida al disc:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "desconegut">

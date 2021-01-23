@@ -25,7 +25,7 @@ struct ChildNPObject : NPObject {
     MOZ_COUNT_CTOR(ChildNPObject);
   }
 
-  ~ChildNPObject() { MOZ_COUNT_DTOR(ChildNPObject); }
+  MOZ_COUNTED_DTOR(ChildNPObject)
 
   // |parent| is always valid as long as the actor is alive. Once the actor is
   // destroyed this will be set to null.
@@ -50,10 +50,10 @@ class PluginScriptableObjectChild : public PPluginScriptableObjectChild {
                                           bool* aHasMethod);
 
   mozilla::ipc::IPCResult AnswerInvoke(const PluginIdentifier& aId,
-                                       InfallibleTArray<Variant>&& aArgs,
+                                       nsTArray<Variant>&& aArgs,
                                        Variant* aResult, bool* aSuccess);
 
-  mozilla::ipc::IPCResult AnswerInvokeDefault(InfallibleTArray<Variant>&& aArgs,
+  mozilla::ipc::IPCResult AnswerInvokeDefault(nsTArray<Variant>&& aArgs,
                                               Variant* aResult, bool* aSuccess);
 
   mozilla::ipc::IPCResult AnswerHasProperty(const PluginIdentifier& aId,
@@ -73,9 +73,9 @@ class PluginScriptableObjectChild : public PPluginScriptableObjectChild {
                                                bool* aSuccess);
 
   mozilla::ipc::IPCResult AnswerEnumerate(
-      InfallibleTArray<PluginIdentifier>* aProperties, bool* aSuccess);
+      nsTArray<PluginIdentifier>* aProperties, bool* aSuccess);
 
-  mozilla::ipc::IPCResult AnswerConstruct(InfallibleTArray<Variant>&& aArgs,
+  mozilla::ipc::IPCResult AnswerConstruct(nsTArray<Variant>&& aArgs,
                                           Variant* aResult, bool* aSuccess);
 
   mozilla::ipc::IPCResult RecvProtect();
@@ -143,7 +143,7 @@ class PluginScriptableObjectChild : public PPluginScriptableObjectChild {
       MOZ_COUNT_CTOR(StoredIdentifier);
     }
 
-    ~StoredIdentifier() { MOZ_COUNT_DTOR(StoredIdentifier); }
+    MOZ_COUNTED_DTOR(StoredIdentifier)
   };
 
  public:

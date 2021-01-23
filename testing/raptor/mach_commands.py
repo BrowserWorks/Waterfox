@@ -8,33 +8,43 @@
 
 from __future__ import absolute_import, print_function, unicode_literals
 
-import os
-import sys
 import json
+import logging
+import os
 import shutil
 import socket
 import subprocess
+import sys
 
 import mozfile
-from mach.decorators import CommandProvider, Command
+from mach.decorators import Command, CommandProvider
 from mozboot.util import get_state_dir
-from mozbuild.base import MozbuildObject, MachCommandBase
-from mozbuild.base import MachCommandConditions as conditions
+from mozbuild.base import (
+    MachCommandBase,
+    MozbuildObject,
+    BinaryNotFoundException,
+)
+from mozbuild.base import MachCommandConditions as Conditions
 
 HERE = os.path.dirname(os.path.realpath(__file__))
+
 BENCHMARK_REPOSITORY = 'https://github.com/mozilla/perf-automation'
-BENCHMARK_REVISION = '2720cdc790828952964524bb44ce8b4c14670e90'
+BENCHMARK_REVISION = 'e19a0865c946ae2f9a64dd25614b1c275a3996b2'
+
+ANDROID_BROWSERS = ["fennec", "geckoview", "refbrow", "fenix", "chrome-m"]
 
 
 class RaptorRunner(MozbuildObject):
+
     def run_test(self, raptor_args, kwargs):
-        """
+        """Setup and run mozharness.
+
         We want to do a few things before running Raptor:
+
         1. Clone mozharness
         2. Make the config for Raptor mozharness
         3. Run mozharness
         """
-
         self.init_variables(raptor_args, kwargs)
         self.setup_benchmarks()
         self.make_config()
@@ -43,25 +53,36 @@ class RaptorRunner(MozbuildObject):
         return self.run_mozharness()
 
     def init_variables(self, raptor_args, kwargs):
-        self.raptor_dir = os.path.join(self.topsrcdir, 'testing', 'raptor')
-        self.mozharness_dir = os.path.join(self.topsrcdir, 'testing',
-                                           'mozharness')
-        self.config_file_path = os.path.join(self._topobjdir, 'testing',
-                                             'raptor-in_tree_conf.json')
-        self.binary_path = self.get_binary_path() if kwargs['app'] not in \
-            ['geckoview', 'fennec', 'refbrow', 'fenix'] else None
-        self.virtualenv_script = os.path.join(self.topsrcdir, 'third_party', 'python',
-                                              'virtualenv', 'virtualenv.py')
-        self.virtualenv_path = os.path.join(self._topobjdir, 'testing',
-                                            'raptor-venv')
-        self.python_interp = sys.executable
         self.raptor_args = raptor_args
-        if kwargs.get('host', None) == 'HOST_IP':
+
+        if kwargs.get('host') == 'HOST_IP':
             kwargs['host'] = os.environ['HOST_IP']
         self.host = kwargs['host']
-        self.power_test = kwargs['power_test']
-        self.memory_test = kwargs['memory_test']
         self.is_release_build = kwargs['is_release_build']
+        self.memory_test = kwargs['memory_test']
+        self.power_test = kwargs['power_test']
+        self.cpu_test = kwargs['cpu_test']
+        self.live_sites = kwargs['live_sites']
+        self.disable_perf_tuning = kwargs['disable_perf_tuning']
+        self.conditioned_profile_scenario = kwargs['conditioned_profile_scenario']
+        self.device_name = kwargs['device_name']
+
+        if Conditions.is_android(self) or kwargs["app"] in ANDROID_BROWSERS:
+            self.binary_path = None
+        else:
+            self.binary_path = kwargs.get("binary") or self.get_binary_path()
+
+        self.python = sys.executable
+
+        self.raptor_dir = os.path.join(self.topsrcdir, 'testing', 'raptor')
+        self.mozharness_dir = os.path.join(self.topsrcdir, 'testing', 'mozharness')
+        self.config_file_path = os.path.join(
+            self._topobjdir, 'testing', 'raptor-in_tree_conf.json')
+
+        self.virtualenv_script = os.path.join(
+            self.topsrcdir, 'third_party', 'python', 'virtualenv', 'virtualenv.py')
+        self.virtualenv_path = os.path.join(
+            self._topobjdir, 'testing', 'raptor-venv')
 
     def setup_benchmarks(self):
         """Make sure benchmarks are linked to the proper location in the objdir.
@@ -69,10 +90,10 @@ class RaptorRunner(MozbuildObject):
         Benchmarks can either live in-tree or in an external repository. In the latter
         case also clone/update the repository if necessary.
         """
-        print("Updating external benchmarks from {}".format(BENCHMARK_REPOSITORY))
-
-        # Set up the external repo
         external_repo_path = os.path.join(get_state_dir(), 'performance-tests')
+
+        print("Updating external benchmarks from {}".format(BENCHMARK_REPOSITORY))
+        print("Cloning the benchmarks to {}".format(external_repo_path))
 
         try:
             subprocess.check_output(['git', '--version'])
@@ -132,8 +153,8 @@ class RaptorRunner(MozbuildObject):
             'pypi_url': 'http://pypi.org/simple',
             'base_work_dir': self.mozharness_dir,
             'exes': {
-                'python': self.python_interp,
-                'virtualenv': [self.python_interp, self.virtualenv_script],
+                'python': self.python,
+                'virtualenv': [self.python, self.virtualenv_script],
             },
             'title': socket.gethostname(),
             'default_actions': default_actions,
@@ -141,8 +162,28 @@ class RaptorRunner(MozbuildObject):
             'host': self.host,
             'power_test': self.power_test,
             'memory_test': self.memory_test,
+            'cpu_test': self.cpu_test,
+            'live_sites': self.live_sites,
+            'disable_perf_tuning': self.disable_perf_tuning,
+            'conditioned_profile_scenario': self.conditioned_profile_scenario,
             'is_release_build': self.is_release_build,
+            'device_name': self.device_name,
         }
+
+        sys.path.insert(0, os.path.join(self.topsrcdir, 'tools', 'browsertime'))
+        try:
+            import mach_commands as browsertime
+            # We don't set `browsertime_{chromedriver,geckodriver} -- those will be found by
+            # browsertime in its `node_modules` directory, which is appropriate for local builds.
+            # We don't set `browsertime_ffmpeg` yet: it will need to be on the path.  There is code
+            # to configure the environment including the path in
+            # `tools/browsertime/mach_commands.py` but integrating it here will take more effort.
+            self.config.update({
+                'browsertime_node': browsertime.node_path(),
+                'browsertime_browsertimejs': browsertime.browsertime_path(),
+            })
+        finally:
+            sys.path = sys.path[1:]
 
     def make_args(self):
         self.args = {
@@ -176,19 +217,25 @@ def create_parser():
 
 @CommandProvider
 class MachRaptor(MachCommandBase):
-    @Command('raptor-test', category='testing',
-             description='Run raptor performance tests.',
+    @Command('raptor', category='testing',
+             description='Run Raptor performance tests.',
              parser=create_parser)
-    def run_raptor_test(self, **kwargs):
+    def run_raptor(self, **kwargs):
+        # Defers this import so that a transitive dependency doesn't
+        # stop |mach bootstrap| from running
+        from raptor.power import enable_charging, disable_charging
 
-        build_obj = MozbuildObject.from_environment(cwd=HERE)
+        build_obj = self
 
-        firefox_android_browsers = ["fennec", "geckoview", "refbrow", "fenix"]
+        is_android = Conditions.is_android(build_obj) or \
+            kwargs['app'] in ANDROID_BROWSERS
 
-        if conditions.is_android(build_obj) or kwargs['app'] in firefox_android_browsers:
-            from mozrunner.devices.android_device import verify_android_device
-            from mozdevice import ADBAndroid, ADBHost
-            if not verify_android_device(build_obj, install=True, app=kwargs['binary'],
+        if is_android:
+            from mozrunner.devices.android_device import (verify_android_device, InstallIntent)
+            from mozdevice import ADBAndroid
+            install = InstallIntent.NO if kwargs.pop('noinstall', False) else InstallIntent.YES
+            if not verify_android_device(build_obj, install=install,
+                                         app=kwargs['binary'],
                                          xre=True):  # Equivalent to 'run_local' = True.
                 return 1
 
@@ -197,30 +244,30 @@ class MachRaptor(MachCommandBase):
             sys.argv.remove(debug_command)
 
         raptor = self._spawn(RaptorRunner)
+        device = None
 
         try:
-            if kwargs['app'] in firefox_android_browsers and kwargs['power_test']:
+            if kwargs['power_test'] and is_android:
                 device = ADBAndroid(verbose=True)
-                adbhost = ADBHost(verbose=True)
-                device_serial = "%s:5555" % device.get_ip_address()
-                device.command_output(["tcpip", "5555"])
-                raw_input("Please disconnect your device from USB then press Enter/return...")
-                adbhost.command_output(["connect", device_serial])
-                while len(adbhost.devices()) > 1:
-                    raw_input("You must disconnect your device from USB before continuing.")
-                # must reset the environment DEVICE_SERIAL which was set during
-                # verify_android_device to match our new tcpip value.
-                os.environ["DEVICE_SERIAL"] = device_serial
+                disable_charging(device)
             return raptor.run_test(sys.argv[2:], kwargs)
+        except BinaryNotFoundException as e:
+            self.log(logging.ERROR, 'raptor',
+                     {'error': str(e)},
+                     'ERROR: {error}')
+            self.log(logging.INFO, 'raptor',
+                     {'help': e.help()},
+                     '{help}')
+            return 1
         except Exception as e:
             print(repr(e))
             return 1
         finally:
-            try:
-                if kwargs['app'] in firefox_android_browsers and kwargs['power_test']:
-                    raw_input("Connect device via USB and press Enter/return...")
-                    device = ADBAndroid(device=device_serial, verbose=True)
-                    device.command_output(["usb"])
-                    adbhost.command_output(["disconnect", device_serial])
-            except Exception:
-                adbhost.command_output(["kill-server"])
+            if kwargs['power_test'] and device:
+                enable_charging(device)
+
+    @Command('raptor-test', category='testing',
+             description='Run Raptor performance tests.',
+             parser=create_parser)
+    def run_raptor_test(self, **kwargs):
+        return self.run_raptor(**kwargs)

@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY biffAll.label                 "Titzij taq kik'exoj konojel ri taq q'asab'äl">
+<!ENTITY biffAll.accesskey             "t">
+
+<!ENTITY newFeedSettings.label         "Nuk'ulem K'o wi kichin ri K'ak'a' taq Q'asab'äl">
+
+<!ENTITY manageSubscriptions.label     "Kenuk'samajïx taq Tz'ib'anïk B'i'aj…">
+<!ENTITY manageSubscriptions.accesskey "K">
+
+<!ENTITY feedWindowTitle.label         "Kito'onel taq Rutaqoya'l Q'asab'äl">
+<!ENTITY feeds.accountName             "Ichinya'l &amp; Kiq'asab'al taq Rutzijol">

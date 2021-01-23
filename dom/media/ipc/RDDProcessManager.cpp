@@ -8,8 +8,12 @@
 #include "mozilla/MemoryReportingProcess.h"
 #include "mozilla/RemoteDecoderManagerChild.h"
 #include "mozilla/RemoteDecoderManagerParent.h"
-#include "mozilla/StaticPrefs.h"
-
+#include "mozilla/Preferences.h"
+#include "mozilla/StaticPrefs_media.h"
+#include "mozilla/dom/ContentParent.h"
+#include "mozilla/gfx/GPUProcessManager.h"
+#include "mozilla/layers/VideoBridgeParent.h"
+#include "mozilla/layers/CompositorThread.h"
 #include "nsAppRunner.h"
 #include "nsContentUtils.h"
 #include "RDDChild.h"
@@ -17,7 +21,8 @@
 
 namespace mozilla {
 
-using namespace mozilla::layers;
+using namespace gfx;
+using namespace layers;
 
 static StaticAutoPtr<RDDProcessManager> sRDDSingleton;
 
@@ -37,9 +42,6 @@ RDDProcessManager::RDDProcessManager()
       mProcessToken(0),
       mRDDChild(nullptr) {
   MOZ_COUNT_CTOR(RDDProcessManager);
-
-  mObserver = new Observer(this);
-  nsContentUtils::RegisterShutdownObserver(mObserver);
 }
 
 RDDProcessManager::~RDDProcessManager() {
@@ -62,6 +64,8 @@ RDDProcessManager::Observer::Observe(nsISupports* aSubject, const char* aTopic,
                                      const char16_t* aData) {
   if (!strcmp(aTopic, NS_XPCOM_SHUTDOWN_OBSERVER_ID)) {
     mManager->OnXPCOMShutdown();
+  } else if (!strcmp(aTopic, "nsPref:changed")) {
+    mManager->OnPreferenceChange(aData);
   }
   return NS_OK;
 }
@@ -69,15 +73,43 @@ RDDProcessManager::Observer::Observe(nsISupports* aSubject, const char* aTopic,
 void RDDProcessManager::OnXPCOMShutdown() {
   if (mObserver) {
     nsContentUtils::UnregisterShutdownObserver(mObserver);
+    Preferences::RemoveObserver(mObserver, "");
     mObserver = nullptr;
   }
 
   CleanShutdown();
 }
 
-void RDDProcessManager::LaunchRDDProcess() {
-  if (mProcess) {
+void RDDProcessManager::OnPreferenceChange(const char16_t* aData) {
+  // A pref changed. If it's not on the blacklist, inform child processes.
+  if (!dom::ContentParent::ShouldSyncPreference(aData)) {
     return;
+  }
+
+  // We know prefs are ASCII here.
+  NS_LossyConvertUTF16toASCII strData(aData);
+
+  mozilla::dom::Pref pref(strData, /* isLocked */ false, Nothing(), Nothing());
+  Preferences::GetPreference(&pref);
+  if (!!mRDDChild) {
+    MOZ_ASSERT(mQueuedPrefs.IsEmpty());
+    mRDDChild->SendPreferenceUpdate(pref);
+  } else if (IsRDDProcessLaunching()) {
+    mQueuedPrefs.AppendElement(pref);
+  }
+}
+
+bool RDDProcessManager::LaunchRDDProcess() {
+  if (mProcess) {
+    return true;
+  }
+
+  // Start listening for pref changes so we can
+  // forward them to the process once it is running.
+  if (!mObserver) {
+    mObserver = new Observer(this);
+    nsContentUtils::RegisterShutdownObserver(mObserver);
+    Preferences::AddStrongObserver(mObserver, "");
   }
 
   mNumProcessAttempts++;
@@ -92,30 +124,29 @@ void RDDProcessManager::LaunchRDDProcess() {
   mProcess = new RDDProcessHost(this);
   if (!mProcess->Launch(extraArgs)) {
     DestroyProcess();
+    return false;
   }
+  if (!EnsureRDDReady()) {
+    return false;
+  }
+
+  return CreateVideoBridge();
+}
+
+bool RDDProcessManager::IsRDDProcessLaunching() {
+  MOZ_ASSERT(NS_IsMainThread());
+  return !!mProcess && !mRDDChild;
 }
 
 bool RDDProcessManager::EnsureRDDReady() {
-  if (mProcess && !mProcess->IsConnected()) {
-    if (!mProcess->WaitForLaunch()) {
-      // If this fails, we should have fired OnProcessLaunchComplete and
-      // removed the process.
-      MOZ_ASSERT(!mProcess && !mRDDChild);
-      return false;
-    }
+  if (mProcess && !mProcess->IsConnected() && !mProcess->WaitForLaunch()) {
+    // If this fails, we should have fired OnProcessLaunchComplete and
+    // removed the process.
+    MOZ_ASSERT(!mProcess && !mRDDChild);
+    return false;
   }
 
-  if (mRDDChild) {
-    if (mRDDChild->EnsureRDDReady()) {
-      return true;
-    }
-
-    // If the initialization above fails, we likely have a RDD process teardown
-    // waiting in our message queue (or will soon).
-    DestroyProcess();
-  }
-
-  return false;
+  return true;
 }
 
 void RDDProcessManager::OnProcessLaunchComplete(RDDProcessHost* aHost) {
@@ -128,6 +159,13 @@ void RDDProcessManager::OnProcessLaunchComplete(RDDProcessHost* aHost) {
 
   mRDDChild = mProcess->GetActor();
   mProcessToken = mProcess->GetProcessToken();
+
+  // Flush any pref updates that happened during launch and weren't
+  // included in the blobs set up in LaunchRDDProcess.
+  for (const mozilla::dom::Pref& pref : mQueuedPrefs) {
+    Unused << NS_WARN_IF(!mRDDChild->SendPreferenceUpdate(pref));
+  }
+  mQueuedPrefs.Clear();
 
   CrashReporter::AnnotateCrashReport(
       CrashReporter::Annotation::RDDProcessStatus,
@@ -180,6 +218,7 @@ void RDDProcessManager::DestroyProcess() {
   mProcessToken = 0;
   mProcess = nullptr;
   mRDDChild = nullptr;
+  mQueuedPrefs.Clear();
 
   CrashReporter::AnnotateCrashReport(
       CrashReporter::Annotation::RDDProcessStatus,
@@ -189,10 +228,6 @@ void RDDProcessManager::DestroyProcess() {
 bool RDDProcessManager::CreateContentBridge(
     base::ProcessId aOtherProcess,
     ipc::Endpoint<PRemoteDecoderManagerChild>* aOutRemoteDecoderManager) {
-  if (!EnsureRDDReady() || !StaticPrefs::MediaRddProcessEnabled()) {
-    return false;
-  }
-
   ipc::Endpoint<PRemoteDecoderManagerParent> parentPipe;
   ipc::Endpoint<PRemoteDecoderManagerChild> childPipe;
 
@@ -207,6 +242,39 @@ bool RDDProcessManager::CreateContentBridge(
   mRDDChild->SendNewContentRemoteDecoderManager(std::move(parentPipe));
 
   *aOutRemoteDecoderManager = std::move(childPipe);
+  return true;
+}
+
+bool RDDProcessManager::CreateVideoBridge() {
+  ipc::Endpoint<PVideoBridgeParent> parentPipe;
+  ipc::Endpoint<PVideoBridgeChild> childPipe;
+
+  GPUProcessManager* gpuManager = GPUProcessManager::Get();
+  base::ProcessId gpuProcessPid = gpuManager ? gpuManager->GPUProcessPid() : -1;
+
+  // The child end is the producer of video frames; the parent end is the
+  // consumer.
+  base::ProcessId childPid = RDDProcessPid();
+  base::ProcessId parentPid =
+      gpuProcessPid != -1 ? gpuProcessPid : base::GetCurrentProcId();
+
+  nsresult rv = PVideoBridge::CreateEndpoints(parentPid, childPid, &parentPipe,
+                                              &childPipe);
+  if (NS_FAILED(rv)) {
+    MOZ_LOG(sPDMLog, LogLevel::Debug,
+            ("Could not create video bridge: %d", int(rv)));
+    DestroyProcess();
+    return false;
+  }
+
+  mRDDChild->SendInitVideoBridge(std::move(childPipe));
+  if (gpuProcessPid != -1) {
+    gpuManager->InitVideoBridge(std::move(parentPipe));
+  } else {
+    VideoBridgeParent::Open(std::move(parentPipe),
+                            VideoBridgeSource::RddProcess);
+  }
+
   return true;
 }
 

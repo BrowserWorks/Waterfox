@@ -5,7 +5,7 @@ const CHROME_BASE =
 Services.scriptloader.loadSubScript(CHROME_BASE + "head.js", this);
 /* import-globals-from ../../../../../browser/base/content/test/general/head.js */
 
-async function testOnWindow(private, expectedReferrer, rp) {
+async function openAWindow(private) {
   info("Creating a new " + (private ? "private" : "normal") + " window");
   let win = OpenBrowserWindow({ private });
   await TestUtils.topicObserved(
@@ -13,14 +13,17 @@ async function testOnWindow(private, expectedReferrer, rp) {
     subject => subject == win
   ).then(() => win);
   await BrowserTestUtils.firstBrowserLoaded(win);
+  return win;
+}
 
+async function testOnWindowBody(win, expectedReferrer, rp) {
   let browser = win.gBrowser;
   let tab = browser.selectedTab;
   let b = browser.getBrowserForTab(tab);
   await promiseTabLoadEvent(tab, TEST_TOP_PAGE);
 
   info("Loading tracking scripts and tracking images");
-  await ContentTask.spawn(b, { rp }, async function({ rp }) {
+  let referrer = await SpecialPowers.spawn(b, [{ rp }], async function({ rp }) {
     {
       let src = content.document.createElement("script");
       let p = new content.Promise(resolve => {
@@ -48,7 +51,31 @@ async function testOnWindow(private, expectedReferrer, rp) {
         "https://tracking.example.org/browser/toolkit/components/antitracking/test/browser/referrer.sjs?what=image";
       await p;
     }
+
+    {
+      let iframe = content.document.createElement("iframe");
+      let p = new content.Promise(resolve => {
+        iframe.onload = resolve;
+      });
+      content.document.body.appendChild(iframe);
+      if (rp) {
+        iframe.referrerPolicy = rp;
+      }
+      iframe.src =
+        "https://tracking.example.org/browser/toolkit/components/antitracking/test/browser/referrer.sjs?what=iframe";
+      await p;
+
+      p = new content.Promise(resolve => {
+        content.onmessage = event => {
+          resolve(event.data);
+        };
+      });
+      iframe.contentWindow.postMessage("ping", "*");
+      return p;
+    }
   });
+
+  is(referrer, expectedReferrer, "The correct referrer must be read from DOM");
 
   await fetch(
     "https://tracking.example.org/browser/toolkit/components/antitracking/test/browser/referrer.sjs?result&what=script"
@@ -66,7 +93,124 @@ async function testOnWindow(private, expectedReferrer, rp) {
       is(text, expectedReferrer, "We sent the correct Referer header");
     });
 
+  await fetch(
+    "https://tracking.example.org/browser/toolkit/components/antitracking/test/browser/referrer.sjs?result&what=iframe"
+  )
+    .then(r => r.text())
+    .then(text => {
+      is(text, expectedReferrer, "We sent the correct Referer header");
+    });
+}
+
+async function closeAWindow(win) {
   await BrowserTestUtils.closeWindow(win);
+}
+
+let gRecording = true;
+let gScenarios = [];
+let gRPs = [];
+let gTests = { private: [], nonPrivate: [] };
+const kPBPref = "network.http.referer.defaultPolicy.trackers.pbmode";
+const kNonPBPref = "network.http.referer.defaultPolicy.trackers";
+
+function recordScenario(private, expectedReferrer, rp) {
+  if (!gRPs.includes(rp)) {
+    gRPs.push(rp);
+  }
+  gScenarios.push({
+    private,
+    expectedReferrer,
+    rp,
+    pbPref: Services.prefs.getIntPref(kPBPref),
+    nonPBPref: Services.prefs.getIntPref(kNonPBPref),
+  });
+}
+
+async function testOnWindow(private, expectedReferrer, rp) {
+  if (gRecording) {
+    recordScenario(private, expectedReferrer, rp);
+  }
+}
+
+function compileScenarios() {
+  let keys = { false: [], true: [] };
+  for (let s of gScenarios) {
+    let key = {
+      rp: s.rp,
+      pbPref: s.pbPref,
+      nonPBPref: s.nonPBPref,
+    };
+    let skip = false;
+    for (let k of keys[s.private]) {
+      if (
+        key.rp == k.rp &&
+        key.pbPref == k.pbPref &&
+        key.nonPBPref == k.nonPBPref
+      ) {
+        skip = true;
+        break;
+      }
+    }
+    if (!skip) {
+      keys[s.private].push(key);
+      gTests[s.private ? "private" : "nonPrivate"].push({
+        rp: s.rp,
+        pbPref: s.pbPref,
+        nonPBPref: s.nonPBPref,
+        expectedReferrer: s.expectedReferrer,
+      });
+    }
+  }
+
+  // Verify that all scenarios are checked
+  let counter = 1;
+  for (let s of gScenarios) {
+    let checked = false;
+    for (let tt in gTests) {
+      let private = tt == "private";
+      for (let t of gTests[tt]) {
+        if (
+          private == s.private &&
+          t.rp == s.rp &&
+          t.pbPref == s.pbPref &&
+          t.nonPBPref == s.nonPBPref &&
+          t.expectedReferrer == s.expectedReferrer
+        ) {
+          checked = true;
+          break;
+        }
+      }
+    }
+    ok(checked, `Scenario number ${counter++} checked`);
+  }
+}
+
+async function executeTests() {
+  compileScenarios();
+
+  gRecording = false;
+  for (let mode in gTests) {
+    info(`Open a ${mode} window`);
+    let win = await openAWindow(mode == "private");
+
+    while (gTests[mode].length) {
+      let test = gTests[mode].shift();
+      info(`Running test ${test.toSource()}`);
+
+      await SpecialPowers.pushPrefEnv({
+        set: [
+          ["network.http.referer.defaultPolicy.trackers", test.nonPBPref],
+          ["network.http.referer.defaultPolicy.trackers.pbmode", test.pbPref],
+        ],
+      });
+      await testOnWindowBody(win, test.expectedReferrer, test.rp);
+    }
+
+    await closeAWindow(win);
+  }
+
+  Services.prefs.clearUserPref(kPBPref);
+  Services.prefs.clearUserPref(kNonPBPref);
 }
 
 function pn(name, private) {
@@ -287,19 +431,16 @@ add_task(async function() {
   await SpecialPowers.flushPrefEnv();
   await SpecialPowers.pushPrefEnv({
     set: [
-      ["browser.contentblocking.allowlist.annotations.enabled", true],
-      ["browser.contentblocking.allowlist.storage.enabled", true],
       [
         "network.cookie.cookieBehavior",
         Ci.nsICookieService.BEHAVIOR_REJECT_TRACKER,
       ],
+      ["network.http.referer.defaultPolicy", 3],
       ["privacy.trackingprotection.enabled", false],
       ["privacy.trackingprotection.pbmode.enabled", false],
       ["privacy.trackingprotection.annotate_channels", true],
     ],
   });
-
-  await UrlClassifierTestUtils.addTestTrackers();
 
   // no-referrer-when-downgrade
   await SpecialPowers.pushPrefEnv({
@@ -409,6 +550,14 @@ add_task(async function() {
   Services.prefs.clearUserPref(
     "network.http.referer.defaultPolicy.trackers.pbmode"
   );
+});
+
+add_task(async function() {
+  await UrlClassifierTestUtils.addTestTrackers();
+
+  await executeTests();
+
+  UrlClassifierTestUtils.cleanupTestTrackers();
 });
 
 add_task(async function() {

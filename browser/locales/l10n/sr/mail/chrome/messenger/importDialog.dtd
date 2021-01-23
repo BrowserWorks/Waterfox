@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of 
+Netscape Communicator, Please translate using the brandname in respective 
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word 
+"&brandShortName;" below.
+-->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Увези">
+<!ENTITY importAll.label          "Увези све">
+<!ENTITY importAll.accesskey      "з">
+<!ENTITY importMail.label         "Пошта">
+<!ENTITY importMail.accesskey     "П">
+<!ENTITY importFeeds.label        "Пријаве на доводе">
+<!ENTITY importFeeds.accesskey    "д">
+<!ENTITY importAddressbook.label  "Именици">
+<!ENTITY importAddressbook.accesskey "И">
+<!ENTITY importSettings.label     "Подешавања">
+<!ENTITY importSettings.accesskey "в">
+<!ENTITY importFilters.label      "Филтери">
+<!ENTITY importFilters.accesskey  "Ф">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "&brandShortName;-ов чаробњак за увоз">
+<!ENTITY importShortDesc.label    "Увезите пошту, именике, подешавања и филтере из других програма">
+
+<!ENTITY importDescription1.label "Овај чаробњак ће извршити увоз е-порука, уноса из именика, пријава на доводе, поставке и/или филтере из других поштанских програма и честих формата именика у &brandShortName;.">
+<!ENTITY importDescription2.label "Након увоза, моћи ћете да им приступите унутар програма &brandShortName;.">
+
+<!ENTITY selectDescription.label  "Изаберите врсту датотеке коју желите да увезете:">
+<!ENTITY selectDescriptionB.label "Изаберите већ постојећи налог или направите нови налог:">
+<!ENTITY selectDescription.accesskey "И">
+<!ENTITY acctName.label           "Име:">
+<!ENTITY acctName.accesskey       "м">
+<!ENTITY noModulesFound.label     "Није нађен ниједан програм или датотека из којих би био могућ увоз података.">
+
+<!ENTITY back.label               "&lt; Назад">
+<!ENTITY forward.label            "Следеће &gt;">
+<!ENTITY finish.label             "Готово">
+<!ENTITY cancel.label             "Откажи">
+
+<!ENTITY select.label             "или изаберите врсту материјала за увоз:">
+
+<!ENTITY title.label              "Наслов">
+<!ENTITY processing.label         "Увоз у току…">

@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.findAsYouType.title "Cerca a mesura que s'escriu">
+<!ENTITY findAsYouTypeBehavior.label "Cerca a mesura que s'escriu">
+<!ENTITY findAsYouTypeTip.label "Consell: per iniciar manualment la «cerca a mesura que s'escriu», escriviu / per cercar text o ' per cercar enllaços i, a continuació, el text que voleu cercar. ">
+<!ENTITY findAsYouTypeTimeout.label "Buida la cerca en curs després d'uns segons d'inactivitat">
+<!ENTITY findAsYouTypeTimeout.accesskey "B">
+<!ENTITY findAsYouTypeSound.label "Reprodueix un so quan el text que es cercava no es trobi ">
+<!ENTITY findAsYouTypeSound.accesskey "R">
+<!ENTITY findAsYouTypeEnableAuto.label "Cerca automàticament en escriure dins d'una pàgina web:">
+<!ENTITY findAsYouTypeEnableAuto.accesskey "C">
+<!ENTITY findAsYouTypeAutoText.label "Qualsevol text de la pàgina">
+<!ENTITY findAsYouTypeAutoText.accesskey "Q">
+<!ENTITY findAsYouTypeAutoLinks.label "Només els enllaços">
+<!ENTITY findAsYouTypeAutoLinks.accesskey "N">
+
+<!ENTITY findAsYouTypeFindbarEnable.label "Mostra la barra de cerca mentre duri la cerca a mesura que s'escriu">
+<!ENTITY findAsYouTypeFindbarEnable.accesskey "s">
+<!ENTITY findAsYouTypeFindbarEnableTip.label "Nota: si s'utilitza la «cerca a mesura que s'escriu» sense mostrar la barra de cerca, no es poden escriure caràcters internacionals.">

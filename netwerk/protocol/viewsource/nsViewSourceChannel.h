@@ -6,18 +6,19 @@
 #ifndef nsViewSourceChannel_h___
 #define nsViewSourceChannel_h___
 
-#include "nsString.h"
-#include "nsCOMPtr.h"
-#include "nsIViewSourceChannel.h"
-#include "nsIURI.h"
-#include "nsIStreamListener.h"
-#include "nsIHttpChannel.h"
-#include "nsIHttpChannelInternal.h"
-#include "nsICachingChannel.h"
-#include "nsIApplicationCacheChannel.h"
-#include "nsIFormPOSTActionChannel.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/net/NeckoChannelParams.h"
+#include "nsCOMPtr.h"
+#include "nsIApplicationCacheChannel.h"
+#include "nsICachingChannel.h"
+#include "nsIFormPOSTActionChannel.h"
+#include "nsIHttpChannel.h"
+#include "nsIHttpChannelInternal.h"
+#include "nsIStreamListener.h"
+#include "nsIURI.h"
+#include "nsIViewSourceChannel.h"
+#include "nsIChildChannel.h"
+#include "nsString.h"
 
 class nsViewSourceChannel final : public nsIViewSourceChannel,
                                   public nsIStreamListener,
@@ -25,15 +26,22 @@ class nsViewSourceChannel final : public nsIViewSourceChannel,
                                   public nsIHttpChannelInternal,
                                   public nsICachingChannel,
                                   public nsIApplicationCacheChannel,
-                                  public nsIFormPOSTActionChannel {
+                                  public nsIFormPOSTActionChannel,
+                                  public nsIChildChannel,
+                                  public nsIInterfaceRequestor,
+                                  public nsIChannelEventSink {
  public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSIREQUEST
   NS_DECL_NSICHANNEL
+  NS_DECL_NSIIDENTCHANNEL
   NS_DECL_NSIVIEWSOURCECHANNEL
   NS_DECL_NSISTREAMLISTENER
   NS_DECL_NSIREQUESTOBSERVER
   NS_DECL_NSIHTTPCHANNEL
+  NS_DECL_NSICHILDCHANNEL
+  NS_DECL_NSIINTERFACEREQUESTOR
+  NS_DECL_NSICHANNELEVENTSINK
   NS_FORWARD_SAFE_NSICACHEINFOCHANNEL(mCacheInfoChannel)
   NS_FORWARD_SAFE_NSICACHINGCHANNEL(mCachingChannel)
   NS_FORWARD_SAFE_NSIAPPLICATIONCACHECHANNEL(mApplicationCacheChannel)
@@ -44,13 +52,16 @@ class nsViewSourceChannel final : public nsIViewSourceChannel,
 
   // nsViewSourceChannel methods:
   nsViewSourceChannel()
-      : mIsDocument(false), mOpened(false), mIsSrcdocChannel(false) {}
+      : mIsDocument(false),
+        mOpened(false),
+        mIsSrcdocChannel(false),
+        mReplaceRequest(true) {}
 
-  MOZ_MUST_USE nsresult Init(nsIURI* uri);
+  [[nodiscard]] nsresult Init(nsIURI* uri, nsILoadInfo* aLoadInfo);
 
-  MOZ_MUST_USE nsresult InitSrcdoc(nsIURI* aURI, nsIURI* aBaseURI,
-                                   const nsAString& aSrcdoc,
-                                   nsILoadInfo* aLoadInfo);
+  [[nodiscard]] nsresult InitSrcdoc(nsIURI* aURI, nsIURI* aBaseURI,
+                                    const nsAString& aSrcdoc,
+                                    nsILoadInfo* aLoadInfo);
 
   // Updates or sets the result principal URI of the underlying channel's
   // loadinfo to be prefixed with the "view-source:" schema as:
@@ -61,11 +72,14 @@ class nsViewSourceChannel final : public nsIViewSourceChannel,
 
  protected:
   ~nsViewSourceChannel() = default;
+  void ReleaseListeners();
+
   nsTArray<mozilla::net::PreferredAlternativeDataTypeParams> mEmptyArray;
 
   // Clones aURI and prefixes it with "view-source:" schema,
   nsresult BuildViewSourceURI(nsIURI* aURI, nsIURI** aResult);
 
+  nsCOMPtr<nsIInterfaceRequestor> mCallbacks;
   nsCOMPtr<nsIChannel> mChannel;
   nsCOMPtr<nsIHttpChannel> mHttpChannel;
   nsCOMPtr<nsIHttpChannelInternal> mHttpChannelInternal;
@@ -74,6 +88,7 @@ class nsViewSourceChannel final : public nsIViewSourceChannel,
   nsCOMPtr<nsIApplicationCacheChannel> mApplicationCacheChannel;
   nsCOMPtr<nsIUploadChannel> mUploadChannel;
   nsCOMPtr<nsIFormPOSTActionChannel> mPostChannel;
+  nsCOMPtr<nsIChildChannel> mChildChannel;
   nsCOMPtr<nsIStreamListener> mListener;
   nsCOMPtr<nsIURI> mOriginalURI;
   nsCOMPtr<nsIURI> mBaseURI;
@@ -81,6 +96,7 @@ class nsViewSourceChannel final : public nsIViewSourceChannel,
   bool mIsDocument;  // keeps track of the LOAD_DOCUMENT_URI flag
   bool mOpened;
   bool mIsSrcdocChannel;
+  bool mReplaceRequest;
 };
 
 #endif /* nsViewSourceChannel_h___ */

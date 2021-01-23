@@ -1,0 +1,115 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dataman.windowTitle "Кіраўнік здаткаў">
+<!ENTITY selectAll.key "a">
+<!ENTITY select.all.label "Усе тыпы здаткаў">
+<!ENTITY select.cookies.label "Толькі біркі">
+<!ENTITY select.permissions.label "Толькі дазволы">
+<!ENTITY select.preferences.label "Толькі перавагі">
+<!ENTITY select.passwords.label "Толькі паролі">
+<!ENTITY select.storage.label "Толькі сховішча">
+<!ENTITY domain.search.placeholder "Пошук даменаў">
+<!ENTITY domain.search.key "f">
+<!ENTITY domain.tree.domain.label "Дамен">
+<!ENTITY domain.ctx.forgetdomain.label "Забыць пра гэты дамен">
+<!ENTITY domain.ctx.forgetdomain.accesskey "З">
+<!ENTITY domain.ctx.forgetglobal.label "Забыць агульныя здаткі">
+<!ENTITY domain.ctx.forgetglobal.accesskey "З">
+<!ENTITY data.search.key "k">
+<!ENTITY tab.cookies.label "Біркі">
+<!ENTITY tab.permissions.label "Дазволы">
+<!ENTITY tab.preferences.label "Перавагі">
+<!ENTITY tab.passwords.label "Паролі">
+<!ENTITY tab.storage.label "Сховішча">
+<!ENTITY tab.formdata.label "Здаткі формаў">
+<!ENTITY tab.forget.label "Забыць">
+<!ENTITY cookies.description "Гэты дамен захаваў наступныя звесткі на вашым кампутары:">
+<!ENTITY cookies.tree.host.label "Пляцоўка Сеціва">
+<!ENTITY cookies.tree.name.label "Назва біркі">
+<!ENTITY cookies.tree.expires.label "Высільваецца">
+<!ENTITY cookies.infobox.label "Звесткі аб вылучанай бірцы">
+<!ENTITY cookies.info.name.label "Назва:">
+<!ENTITY cookies.info.value.label "Змесціва:">
+<!ENTITY cookies.info.host.label "Трымальнік:">
+<!ENTITY cookies.info.domain.label "Дамен:">
+<!ENTITY cookies.info.path.label "Шлях:">
+<!ENTITY cookies.info.sendtype.label "Дасылаецца праз:">
+<!ENTITY cookies.info.expires.label "Высільваецца:">
+<!ENTITY cookies.ctx.remove.label "Выдаліць">
+<!ENTITY cookies.ctx.remove.accesskey "д">
+<!ENTITY cookies.ctx.selectAll.label "Вылучыць усё">
+<!ENTITY cookies.ctx.selectAll.accesskey "у">
+<!ENTITY cookies.button.remove.label "Выдаліць">
+<!ENTITY cookies.button.remove.accesskey "д">
+<!ENTITY cookies.blockOnRemove.label "Пасля выдалення забараніць пералічаным сеціўныя пляцоўкам усталёўваць біркі ізноў">
+<!ENTITY cookies.blockOnRemove.accesskey "П">
+<!ENTITY perm.UseDefault "Ужываць змоўчныя">
+<!ENTITY perm.AskAlways "Заўсёды пытаць">
+<!ENTITY perm.NeverSave "Ніколі не захоўваць">
+<!ENTITY perm.Allow "Дазволіць">
+<!ENTITY perm.AllowSameDomain "Дазволіць для дамену">
+<!ENTITY perm.AllowSession "Дазволіць на час сэсіі">
+<!ENTITY perm.Block "Блакаваць">
+<!ENTITY perm.host.placeholder "Увядзіце назву трымальніка">
+<!ENTITY perm.button.add.label "Дадаць">
+<!ENTITY perm.button.add.accesskey "Д">
+<!ENTITY prefs.description "Перавагі змесціва ўжываюцца &brandShortName; для захавання яго наладжванняў, такіх як узровень павялічэння, асабліва для сеціўных пляцовак.">
+<!ENTITY prefs.tree.host.label "Пляцоўка Сеціва">
+<!ENTITY prefs.tree.name.label "Назва перавагі">
+<!ENTITY prefs.tree.value.label "Значэнне">
+<!ENTITY prefs.ctx.remove.label "Выдаліць">
+<!ENTITY prefs.ctx.remove.accesskey "д">
+<!ENTITY prefs.ctx.selectAll.label "Вылучыць усё">
+<!ENTITY prefs.ctx.selectAll.accesskey "у">
+<!ENTITY prefs.button.remove.label "Выдаліць">
+<!ENTITY prefs.button.remove.accesskey "д">
+<!ENTITY pwd.description "Вы маеце наступныя паролі, захаваныя для гэтага дамену:">
+<!ENTITY pwd.tree.host.label "Пляцоўка Сеціва">
+<!ENTITY pwd.tree.username.label "Імя карыстальніка">
+<!ENTITY pwd.tree.password.label "Пароль">
+<!ENTITY pwd.ctx.remove.label "Выдаліць">
+<!ENTITY pwd.ctx.remove.accesskey "д">
+<!ENTITY pwd.ctx.copyPasswordCmd.label "Скапіяваць пароль">
+<!ENTITY pwd.ctx.copyPasswordCmd.accesskey "к">
+<!ENTITY pwd.ctx.selectAll.label "Вылучыць усё">
+<!ENTITY pwd.ctx.selectAll.accesskey "у">
+<!ENTITY pwd.button.remove.label "Выдаліць">
+<!ENTITY pwd.button.remove.accesskey "д">
+<!ENTITY storage.description "Гэты дамен ужывае наступныя сеціўныя сховішчы на вашым кампутары:">
+<!ENTITY storage.tree.host.label "Пляцоўка Сеціва">
+<!ENTITY storage.tree.type.label "Тып">
+<!ENTITY storage.tree.size.label "Памер">
+<!ENTITY storage.ctx.remove.label "Выдаліць">
+<!ENTITY storage.ctx.remove.accesskey "д">
+<!ENTITY storage.ctx.selectAll.label "Вылучыць усё">
+<!ENTITY storage.ctx.selectAll.accesskey "у">
+<!ENTITY storage.button.remove.label "Выдаліць">
+<!ENTITY storage.button.remove.accesskey "д">
+<!ENTITY fdata.search.placeholder "Шукаць здаткі поля">
+<!ENTITY fdata.tree.fieldname.label "Назва поля">
+<!ENTITY fdata.tree.value.label "Уведзенае значэнне">
+<!ENTITY fdata.tree.usecount.label "Колькасць ужыванняў">
+<!ENTITY fdata.tree.firstused.label "Першае ўжыванне">
+<!ENTITY fdata.tree.lastused.label "Апошняе ўжыванне">
+<!ENTITY fdata.ctx.remove.label "Выдаліць">
+<!ENTITY fdata.ctx.remove.accesskey "д">
+<!ENTITY fdata.ctx.selectAll.label "Вылучыць усё">
+<!ENTITY fdata.ctx.selectAll.accesskey "у">
+<!ENTITY fdata.button.remove.label "Выдаліць">
+<!ENTITY fdata.button.remove.accesskey "д">
+<!ENTITY forget.cookies.label "Біркі">
+<!ENTITY forget.cookies.accesskey "Б">
+<!ENTITY forget.permissions.label "Дазволы">
+<!ENTITY forget.permissions.accesskey "Д">
+<!ENTITY forget.preferences.label "Перавагі змесціва">
+<!ENTITY forget.preferences.accesskey "з">
+<!ENTITY forget.passwords.label "Паролі">
+<!ENTITY forget.passwords.accesskey "П">
+<!ENTITY forget.storage.label "Сховішча">
+<!ENTITY forget.storage.accesskey "С">
+<!ENTITY forget.formdata.label "Здаткі формаў">
+<!ENTITY forget.formdata.accesskey "ф">
+<!ENTITY forget.button.label "Забыць гэтыя здаткі">
+<!ENTITY forget.button.accesskey "З">

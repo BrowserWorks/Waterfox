@@ -7,11 +7,12 @@
 import type { Command } from "../../reducers/types";
 import type {
   Expression,
-  LoadedObject,
   Frame,
   Scope,
   Why,
   ThreadContext,
+  Previews,
+  HighlightedCalls,
 } from "../../types";
 
 import type { PromiseAction } from "../utils/middleware/promise";
@@ -36,9 +37,13 @@ export type PauseAction =
       +thread: string,
       +why: Why,
       +scopes: Scope,
-      +frames: Frame[],
-      +selectedFrameId: string,
-      +loadedObjects: LoadedObject[],
+      +frame: Frame,
+    |}
+  | {|
+      type: "FETCHED_FRAMES",
+      frames: Frame[],
+      cx: ThreadContext,
+      thread: string,
     |}
   | {|
       +type: "PAUSE_ON_EXCEPTIONS",
@@ -130,6 +135,12 @@ export type PauseAction =
       +frames: Frame[],
       +selectedFrameId: string,
     |}
+  | {|
+      +type: "MAP_FRAME_DISPLAY_NAMES",
+      +cx: ThreadContext,
+      +thread: string,
+      +frames: Frame[],
+    |}
   | PromiseAction<
       {|
         +type: "ADD_SCOPES",
@@ -147,4 +158,24 @@ export type PauseAction =
   | {|
       +type: "TOGGLE_MAP_SCOPES",
       +mapScopes: boolean,
+    |}
+  | {|
+      +type: "SET_EXPANDED_SCOPE",
+      +cx: ThreadContext,
+      +thread: string,
+      +path: string,
+      +expanded: boolean,
+    |}
+  | {|
+      +type: "ADD_INLINE_PREVIEW",
+      +thread: string,
+      +frame: Frame,
+      +previews: Previews,
+    |}
+  | {|
+      +type: "HIGHLIGHT_CALLS",
+      +highlightedCalls: HighlightedCalls,
+    |}
+  | {|
+      +type: "UNHIGHLIGHT_CALLS",
     |};

@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Link Toolbar Title -->
+
+<!ENTITY linkToolbar.label "Navigációs eszköztár">
+<!ENTITY linkToolbar.accesskey "N">
+<!ENTITY linkToolbar.tooltip "Navigációs eszköztár">
+<!-- Link Toolbar visibility options -->
+
+<!ENTITY linkToolbarAlways.label "Mindig megjelenik">
+<!ENTITY linkToolbarAlways.accesskey "M">
+<!ENTITY linkToolbarAsNeeded.label "Szükség esetén megjelenik">
+<!ENTITY linkToolbarAsNeeded.accesskey "S">
+<!ENTITY linkToolbarNever.label "Elrejtés">
+<!ENTITY linkToolbarNever.accesskey "E">
+<!-- Toolbar buttons, menus, and menuitems -->
+
+<!ENTITY topButton.label "Tetejére">
+<!ENTITY upButton.label "Fel">
+<!ENTITY firstButton.label "Első">
+<!ENTITY prevButton.label "Előző">
+<!ENTITY nextButton.label "Következő">
+<!ENTITY lastButton.label "Utolsó">
+
+<!ENTITY documentButton.label "Dokumentum">
+
+<!ENTITY tocButton.label "Tartalomjegyzék">
+<!ENTITY chapterButton.label "Kötetek">
+<!ENTITY sectionButton.label "Fejezetek">
+<!ENTITY subSectionButton.label "Alfejezet">
+<!ENTITY appendixButton.label "Függelékek">
+<!ENTITY glossaryButton.label "Fogalomtár">
+<!ENTITY indexButton.label "Tárgymutató">
+
+<!ENTITY moreButton.label "Tovább">
+
+<!ENTITY helpButton.label "Súgó">
+<!ENTITY searchButton.label "Keresés">
+
+<!ENTITY authorButton.label "Szerzők">
+<!ENTITY copyrightButton.label "Copyright">
+
+<!ENTITY bookmarkButton.label "Könyvjelzők">
+
+<!ENTITY alternateButton.label "Más változatok">
+
+<!ENTITY feedButton.label "Feliratkozás">

@@ -7,12 +7,13 @@ use tokio_executor::Enter;
 
 #[derive(Clone)]
 pub(crate) struct Callback {
-    f: Arc<Fn(&Worker, &mut Enter) + Send + Sync>,
+    f: Arc<dyn Fn(&Worker, &mut Enter) + Send + Sync>,
 }
 
 impl Callback {
     pub fn new<F>(f: F) -> Self
-        where F: Fn(&Worker, &mut Enter) + Send + Sync + 'static
+    where
+        F: Fn(&Worker, &mut Enter) + Send + Sync + 'static,
     {
         Callback { f: Arc::new(f) }
     }

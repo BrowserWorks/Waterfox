@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY navigatorCmd.label "Азіральнік">
+<!ENTITY navigatorCmd.accesskey "А">
+<!ENTITY navigatorCmd.commandkey "1">
+<!ENTITY editorCmd.label "Укладальнік">
+<!ENTITY editorCmd.accesskey "У">
+<!ENTITY editorCmd.commandkey "4">
+<!ENTITY errorConsoleCmd.label "Кансоль памылак">
+<!ENTITY errorConsoleCmd.accesskey "К">
+<!ENTITY errorConsoleCmd.commandkey "j">
+<!ENTITY taskNavigator.tooltip "Азіральнік">
+<!ENTITY taskComposer.tooltip "Укладальнік">
+<!ENTITY webDevelopment.label "Распрацоўкі Сеціва">
+<!ENTITY webDevelopment.accesskey "С">
+<!ENTITY windowMenu.label "Акно">
+<!ENTITY windowMenu.accesskey "А">
+<!ENTITY tasksMenu.label "Прылады">
+<!ENTITY tasksMenu.accesskey "л">
+<!ENTITY datamanCmd.label "Кіраўнік здаткаў">
+<!ENTITY datamanCmd.accesskey "т">
+<!ENTITY passwordManagerCmd.label "Кіраўнік пароляў">
+<!ENTITY passwordManagerCmd.accesskey "п">
+<!ENTITY passwordDisplayCmd.label "Кіраваць захаванымі паролямі">
+<!ENTITY passwordDisplayCmd.accesskey "К">
+<!ENTITY passwordExpireCmd.label "Выйсці">
+<!ENTITY passwordExpireCmd.accesskey "В">
+<!ENTITY downloadManagerCmd.label "Кіраўнік загрузак">
+<!ENTITY downloadManagerCmd.accesskey "З">
+<!ENTITY downloadManagerCmd.commandkey "j">
+<!ENTITY addOnsManagerCmd.label "Кіраўнік дадаткаў">
+<!ENTITY addOnsManagerCmd.accesskey "д">
+<!ENTITY addOnsManagerCmd.commandkey "a">
+<!ENTITY switchProfileCmd.label "Змяніць профіль…">
+<!ENTITY switchProfileCmd.accesskey "З">
+<!ENTITY syncBrand.shortName.label "Sync">
+<!ENTITY syncSetup.label "Уладкаваць Sync…">
+<!ENTITY syncSetup.accesskey "S">
+<!ENTITY syncSyncNowItem.label "Сінхранізаваць зараз ">
+<!ENTITY syncSyncNowItem.accesskey "С">

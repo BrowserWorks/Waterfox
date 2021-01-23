@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/openLocation.xul -->
+
+<!ENTITY enter.label "Skriv inn adressen (URL), eller angi en lokal fil du vil åpne:">  
+<!-- LOCALIZATION NOTE (enter.accesskey): should be present in both enter.label
+     as defined above and attachEnterLabel as defined in
+     openLocation.properties -->
+<!ENTITY enter.accesskey "S">
+<!ENTITY chooseFile.label "Velg fil …">
+<!ENTITY chooseFile.accesskey "V">
+<!ENTITY newPrivate.label "Nytt privat vindu">
+<!ENTITY newWindow.label "Nytt vindu">
+<!ENTITY newTab.label "Ny fane">
+<!ENTITY currentTab.label "Aktiv nettleserfane">
+<!ENTITY editNewWindow.label "Åpne for redigering">
+<!ENTITY open.label "Åpne">
+<!ENTITY caption.label "Åpne nettadresse">
+<!ENTITY openWhere.label "Åpne i:">
+<!ENTITY openWhere.accesskey "Å">

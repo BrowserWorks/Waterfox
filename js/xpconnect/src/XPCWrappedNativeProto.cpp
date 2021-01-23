@@ -15,10 +15,13 @@ using namespace mozilla;
 int32_t XPCWrappedNativeProto::gDEBUG_LiveProtoCount = 0;
 #endif
 
-XPCWrappedNativeProto::XPCWrappedNativeProto(
-    XPCWrappedNativeScope* Scope, nsIClassInfo* ClassInfo,
-    already_AddRefed<XPCNativeSet>&& Set)
-    : mScope(Scope), mJSProtoObject(nullptr), mClassInfo(ClassInfo), mSet(Set) {
+XPCWrappedNativeProto::XPCWrappedNativeProto(XPCWrappedNativeScope* Scope,
+                                             nsIClassInfo* ClassInfo,
+                                             RefPtr<XPCNativeSet>&& Set)
+    : mScope(Scope),
+      mJSProtoObject(nullptr),
+      mClassInfo(ClassInfo),
+      mSet(std::move(Set)) {
   // This native object lives as long as its associated JSObject - killed
   // by finalization of the JSObject (or explicitly if Init fails).
 
@@ -28,8 +31,6 @@ XPCWrappedNativeProto::XPCWrappedNativeProto(
 #ifdef DEBUG
   gDEBUG_LiveProtoCount++;
 #endif
-
-  RecordReplayRegisterDeferredFinalizeThing(nullptr, nullptr, mClassInfo);
 }
 
 XPCWrappedNativeProto::~XPCWrappedNativeProto() {
@@ -52,8 +53,7 @@ bool XPCWrappedNativeProto::Init(JSContext* cx, nsIXPCScriptable* scriptable) {
   mScriptable = scriptable;
 
   JS::RootedObject proto(cx, JS::GetRealmObjectPrototype(cx));
-  mJSProtoObject = JS_NewObjectWithUniqueType(
-      cx, js::Jsvalify(&XPC_WN_Proto_JSClass), proto);
+  mJSProtoObject = JS_NewObjectWithUniqueType(cx, &XPC_WN_Proto_JSClass, proto);
 
   bool success = !!mJSProtoObject;
   if (success) {
@@ -63,7 +63,7 @@ bool XPCWrappedNativeProto::Init(JSContext* cx, nsIXPCScriptable* scriptable) {
   return success;
 }
 
-void XPCWrappedNativeProto::JSProtoObjectFinalized(js::FreeOp* fop,
+void XPCWrappedNativeProto::JSProtoObjectFinalized(JSFreeOp* fop,
                                                    JSObject* obj) {
   MOZ_ASSERT(obj == mJSProtoObject, "huh?");
 
@@ -116,9 +116,9 @@ XPCWrappedNativeProto* XPCWrappedNativeProto::GetNewOrUsed(
     return nullptr;
   }
 
-  proto = new XPCWrappedNativeProto(scope, classInfo, set.forget());
+  proto = new XPCWrappedNativeProto(scope, classInfo, std::move(set));
 
-  if (!proto || !proto->Init(cx, scriptable)) {
+  if (!proto->Init(cx, scriptable)) {
     delete proto.get();
     return nullptr;
   }

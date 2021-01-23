@@ -1,5 +1,3 @@
-export MOZ_PGO=1
-
 . "$topsrcdir/build/mozconfig.win-common"
 . "$topsrcdir/browser/config/mozconfigs/win64/common-win64"
 . "$topsrcdir/browser/config/mozconfigs/win64/common-opt"
@@ -8,8 +6,5 @@ export MOZ_PGO=1
 MOZ_REQUIRE_SIGNING=0
 
 ac_add_options --with-branding=browser/branding/aurora
-
-# Enable MOZ_ALLOW_LEGACY_EXTENSIONS
-ac_add_options "MOZ_ALLOW_LEGACY_EXTENSIONS=1"
 
 . "$topsrcdir/build/mozconfig.common.override"

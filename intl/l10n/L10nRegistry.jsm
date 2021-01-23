@@ -1,10 +1,18 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 const { AppConstants } = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 // eslint-disable-next-line mozilla/use-services
 const appinfo = Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULRuntime);
-const { FluentBundle, FluentResource } = ChromeUtils.import("resource://gre/modules/Fluent.jsm");
 const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 XPCOMUtils.defineLazyGlobalGetters(this, ["fetch"]);
+ChromeUtils.defineModuleGetter(
+  this,
+  "NetUtil",
+  "resource://gre/modules/NetUtil.jsm"
+);
 
 const isParentProcess = appinfo.processType === appinfo.PROCESS_TYPE_DEFAULT;
 /**
@@ -81,7 +89,7 @@ const isParentProcess = appinfo.processType === appinfo.PROCESS_TYPE_DEFAULT;
  *
  * Notice: L10nRegistry is primarily an asynchronous API, but
  * it does provide a synchronous version of it's main method
- * for use by the `LocalizationSync` class.
+ * for use  by the `Localization` class when in `sync` state.
  * This API should be only used in very specialized cases and
  * the uses should be reviewed by the toolkit owner/peer.
  */
@@ -89,7 +97,21 @@ class L10nRegistryService {
   constructor() {
     this.sources = new Map();
 
-    if (!isParentProcess) {
+    if (isParentProcess) {
+      const locales = Services.locale.packagedLocales;
+      // Categories are sorted alphabetically, so we name our sources:
+      //   - 0-toolkit
+      //   - 5-browser
+      //   - langpack-{locale}
+      //
+      // This should ensure that they're returned in the correct order.
+      for (let {entry, value} of Services.catMan.enumerateCategory("l10n-registry")) {
+        if (!this.hasSource(entry)) {
+          const source = new FileSource(entry, locales, value);
+          this.registerSource(source);
+        }
+      }
+    } else {
       this._setSourcesFromSharedData();
       Services.cpmm.sharedData.addEventListener("change", this);
     }
@@ -115,13 +137,14 @@ class L10nRegistryService {
    * @returns {AsyncIterator<FluentBundle>}
    */
   async* generateBundles(requestedLangs, resourceIds) {
+    const resourceIdsDedup = Array.from(new Set(resourceIds));
     const sourcesOrder = Array.from(this.sources.keys()).reverse();
-    const pseudoNameFromPref = Services.prefs.getStringPref("intl.l10n.pseudo", "");
+    const pseudoStrategy = Services.prefs.getStringPref("intl.l10n.pseudo", "");
     for (const locale of requestedLangs) {
-      for await (const dataSets of generateResourceSetsForLocale(locale, sourcesOrder, resourceIds)) {
+      for await (const dataSets of generateResourceSetsForLocale(locale, sourcesOrder, resourceIdsDedup)) {
         const bundle = new FluentBundle(locale, {
           ...MSG_CONTEXT_OPTIONS,
-          transform: PSEUDO_STRATEGIES[pseudoNameFromPref],
+          pseudoStrategy,
         });
         for (const data of dataSets) {
           if (data === null) {
@@ -147,13 +170,14 @@ class L10nRegistryService {
    * @returns {Iterator<FluentBundle>}
    */
   * generateBundlesSync(requestedLangs, resourceIds) {
+    const resourceIdsDedup = Array.from(new Set(resourceIds));
     const sourcesOrder = Array.from(this.sources.keys()).reverse();
-    const pseudoNameFromPref = Services.prefs.getStringPref("intl.l10n.pseudo", "");
+    const pseudoStrategy = Services.prefs.getStringPref("intl.l10n.pseudo", "");
     for (const locale of requestedLangs) {
-      for (const dataSets of generateResourceSetsForLocaleSync(locale, sourcesOrder, resourceIds)) {
+      for (const dataSets of generateResourceSetsForLocaleSync(locale, sourcesOrder, resourceIdsDedup)) {
         const bundle = new FluentBundle(locale, {
           ...MSG_CONTEXT_OPTIONS,
-          transform: PSEUDO_STRATEGIES[pseudoNameFromPref],
+          pseudoStrategy
         });
         for (const data of dataSets) {
           if (data === null) {
@@ -237,11 +261,14 @@ class L10nRegistryService {
       });
     }
     Services.ppmm.sharedData.set("L10nRegistry:Sources", sources);
-    Services.ppmm.sharedData.flush();
   }
 
   _setSourcesFromSharedData() {
     let sources = Services.cpmm.sharedData.get("L10nRegistry:Sources");
+    if (!sources) {
+      console.warn(`[l10nregistry] Failed to fetch sources from shared data.`);
+      return;
+    }
     for (let [name, data] of sources.entries()) {
       if (!this.hasSource(name)) {
         const source = new FileSource(name, data.locales, data.prePath);
@@ -403,112 +430,6 @@ const MSG_CONTEXT_OPTIONS = {
   // Temporarily disable bidi isolation due to Microsoft not supporting FSI/PDI.
   // See bug 1439018 for details.
   useIsolating: Services.prefs.getBoolPref("intl.l10n.enable-bidi-marks", false),
-  functions: {
-    /**
-     * PLATFORM is a built-in allowing localizers to differentiate message
-     * variants depending on the target platform.
-     */
-    PLATFORM: () => {
-      switch (AppConstants.platform) {
-        case "linux":
-        case "android":
-          return AppConstants.platform;
-        case "win":
-          return "windows";
-        case "macosx":
-          return "macos";
-        default:
-          return "other";
-      }
-    },
-  },
-};
-
-/**
- * Pseudolocalizations
- *
- * PSEUDO_STRATEGIES is a dict of strategies to be used to modify a
- * context in order to create pseudolocalizations.  These can be used by
- * developers to test the localizability of their code without having to
- * actually speak a foreign language.
- *
- * Currently, the following pseudolocales are supported:
- *
- *   accented - Ȧȧƈƈḗḗƞŧḗḗḓ Ḗḗƞɠŀīīşħ
- *
- *     In Accented English all Latin letters are replaced by accented
- *     Unicode counterparts which don't impair the readability of the content.
- *     This allows developers to quickly test if any given string is being
- *     correctly displayed in its 'translated' form.  Additionally, simple
- *     heuristics are used to make certain words longer to better simulate the
- *     experience of international users.
- *
- *   bidi - ɥsıʅƃuƎ ıpıԐ
- *
- *     Bidi English is a fake RTL locale.  All words are surrounded by
- *     Unicode formatting marks forcing the RTL directionality of characters.
- *     In addition, to make the reversed text easier to read, individual
- *     letters are flipped.
- *
- *     Note: The name above is hardcoded to be RTL in case code editors have
- *     trouble with the RLO and PDF Unicode marks.  In reality, it should be
- *     surrounded by those marks as well.
- *
- * See https://bugzil.la/1450781 for more information.
- *
- * In this implementation we use code points instead of inline unicode characters
- * because the encoding of JSM files mangles them otherwise.
- */
-
-const ACCENTED_MAP = {
-      // ȦƁƇḒḖƑƓĦĪĴĶĿḾȠǾƤɊŘŞŦŬṼẆẊẎẐ
-      "caps": [550, 385, 391, 7698, 7702, 401, 403, 294, 298, 308, 310, 319, 7742, 544, 510, 420, 586, 344, 350, 358, 364, 7804, 7814, 7818, 7822, 7824],
-      // ȧƀƈḓḗƒɠħīĵķŀḿƞǿƥɋřşŧŭṽẇẋẏẑ
-      "small": [551, 384, 392, 7699, 7703, 402, 608, 295, 299, 309, 311, 320, 7743, 414, 511, 421, 587, 345, 351, 359, 365, 7805, 7815, 7819, 7823, 7825],
-};
-
-const FLIPPED_MAP = {
-      // ∀ԐↃᗡƎℲ⅁HIſӼ⅂WNOԀÒᴚS⊥∩ɅMX⅄Z
-      "caps": [8704, 1296, 8579, 5601, 398, 8498, 8513, 72, 73, 383, 1276, 8514, 87, 78, 79, 1280, 210, 7450, 83, 8869, 8745, 581, 77, 88, 8516, 90],
-      // ɐqɔpǝɟƃɥıɾʞʅɯuodbɹsʇnʌʍxʎz
-      "small": [592, 113, 596, 112, 477, 607, 387, 613, 305, 638, 670, 645, 623, 117, 111, 100, 98, 633, 115, 647, 110, 652, 653, 120, 654, 122],
-};
-
-function transformString(map, elongate = false, prefix = "", postfix = "", msg) {
-  // Exclude access-keys and other single-char messages
-  if (msg.length === 1) {
-    return msg;
-  }
-  // XML entities (&#x202a;) and XML tags.
-  const reExcluded = /(&[#\w]+;|<\s*.+?\s*>)/;
-
-  const parts = msg.split(reExcluded);
-  const modified = parts.map((part) => {
-    if (reExcluded.test(part)) {
-      return part;
-    }
-    return prefix + part.replace(/[a-z]/ig, (ch) => {
-      let cc = ch.charCodeAt(0);
-      if (cc >= 97 && cc <= 122) {
-        const newChar = String.fromCodePoint(map.small[cc - 97]);
-        // duplicate "a", "e", "o" and "u" to emulate ~30% longer text
-        if (elongate && (cc === 97 || cc === 101 || cc === 111 || cc === 117)) {
-          return newChar + newChar;
-        }
-        return newChar;
-      }
-      if (cc >= 65 && cc <= 90) {
-        return String.fromCodePoint(map.caps[cc - 65]);
-      }
-      return ch;
-    }) + postfix;
-  });
-  return modified.join("");
-}
-
-const PSEUDO_STRATEGIES = {
-  "accented": transformString.bind(null, ACCENTED_MAP, true, "", ""),
-  "bidi": transformString.bind(null, FLIPPED_MAP, false, "\u202e", "\u202c"),
 };
 
 /**
@@ -638,7 +559,12 @@ class FileSource {
       // `true` means that the file is indexed, but hasn't
       // been fetched yet.
       if (this.cache[fullPath] !== true) {
-        return this.cache[fullPath];
+        if (this.cache[fullPath] instanceof Promise && options.sync) {
+          console.warn(`[l10nregistry] Attempting to synchronously load file
+            ${fullPath} while it's being loaded asynchronously.`);
+        } else {
+          return this.cache[fullPath];
+        }
       }
     } else if (this.indexed) {
       return false;
@@ -649,7 +575,7 @@ class FileSource {
       if (data === false) {
         this.cache[fullPath] = false;
       } else {
-        this.cache[fullPath] = FluentResource.fromString(data);
+        this.cache[fullPath] = new FluentResource(data);
       }
 
       return this.cache[fullPath];
@@ -658,7 +584,7 @@ class FileSource {
     // async
     return this.cache[fullPath] = L10nRegistry.load(fullPath).then(
       data => {
-        return this.cache[fullPath] = FluentResource.fromString(data);
+        return this.cache[fullPath] = new FluentResource(data);
       },
       err => {
         this.cache[fullPath] = false;
@@ -705,7 +631,7 @@ this.L10nRegistry = new L10nRegistryService();
  *
  * @returns {Promise<string>}
  */
-this.L10nRegistry.load = function(url) {
+L10nRegistry.load = function(url) {
   return fetch(url).then(response => {
     if (!response.ok) {
       return Promise.reject(response.statusText);
@@ -726,14 +652,38 @@ this.L10nRegistry.load = function(url) {
  *
  * @returns {string}
  */
-this.L10nRegistry.loadSync = function(uri) {
+L10nRegistry.loadSync = function(uri) {
   try {
     let url = Services.io.newURI(uri);
     let data = Cu.readUTF8URI(url);
     return data;
   } catch (e) {
-    return false;
+    if (
+      e.result == Cr.NS_ERROR_INVALID_ARG ||
+      e.result == Cr.NS_ERROR_NOT_INITIALIZED
+    ) {
+      try {
+        // The preloader doesn't support this url or isn't initialized
+        // (xpcshell test). Try a synchronous channel load.
+        let stream = NetUtil.newChannel({
+          uri,
+          loadUsingSystemPrincipal: true,
+        }).open();
+
+        return NetUtil.readInputStreamToString(stream, stream.available(), {
+          charset: "UTF-8",
+        });
+      } catch (e) {
+        if (e.result != Cr.NS_ERROR_FILE_NOT_FOUND) {
+          Cu.reportError(e);
+        }
+      }
+    } else if (e.result != Cr.NS_ERROR_FILE_NOT_FOUND) {
+      Cu.reportError(e);
+    }
   }
+
+  return false;
 };
 
 this.FileSource = FileSource;

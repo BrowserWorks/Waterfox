@@ -5,25 +5,27 @@
 
 // React
 const {
-  Component,
   createFactory,
+  PureComponent,
 } = require("devtools/client/shared/vendor/react");
 const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
 
-const { L10N } = require("../utils/l10n");
+const { L10N } = require("devtools/client/accessibility/utils/l10n");
 
 const {
   accessibility: { SCORES },
 } = require("devtools/shared/constants");
 
-loader.lazyGetter(this, "Badge", () => createFactory(require("./Badge")));
+loader.lazyGetter(this, "Badge", () =>
+  createFactory(require("devtools/client/accessibility/components/Badge"))
+);
 
 /**
  * Component for rendering a badge for contrast accessibliity check
  * failures association with a given accessibility object in the accessibility
  * tree.
  */
-class ContrastBadge extends Component {
+class ContrastBadge extends PureComponent {
   static get propTypes() {
     return {
       error: PropTypes.string,
@@ -33,15 +35,12 @@ class ContrastBadge extends Component {
 
   render() {
     const { error, score } = this.props;
-    if (error) {
-      return null;
-    }
-
-    if (score !== SCORES.FAIL) {
+    if (error || score !== SCORES.FAIL) {
       return null;
     }
 
     return Badge({
+      score,
       label: L10N.getStr("accessibility.badge.contrast"),
       ariaLabel: L10N.getStr("accessibility.badge.contrast.warning"),
       tooltip: L10N.getStr("accessibility.badge.contrast.tooltip"),

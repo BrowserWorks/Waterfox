@@ -9,7 +9,7 @@ interface nsIFile;
 interface nsILoginInfo;
 interface nsIPropertyBag;
 
-/*
+/**
  * NOTE: This interface is intended to be implemented by modules
  *       providing storage mechanisms for the login manager.
  *       Other code should use the login manager's interfaces
@@ -28,7 +28,7 @@ interface nsILoginManagerStorage : nsISupports {
    * @resolves When initialization is complete.
    * @rejects JavaScript exception.
    */
-  jsval initialize();
+  Promise initialize();
 
 
   /**
@@ -41,7 +41,7 @@ interface nsILoginManagerStorage : nsISupports {
    * @resolves When finalization is complete.
    * @rejects JavaScript exception.
    */
-  jsval terminate();
+  Promise terminate();
 
 
   /**
@@ -51,13 +51,17 @@ interface nsILoginManagerStorage : nsISupports {
    *        The login to be added.
    * @param aPreEncrypted
    *        Whether the login was already encrypted or not.
+   * @param aPlaintextUsername
+   *        The plaintext username, if the login was already encrypted.
+   * @param aPlaintextPassword
+   *        The plaintext password, if the login was already encrypted.
    * @return a clone of the login info with the guid set (even if it was not provided).
    *
    * Default values for the login's nsILoginMetaInfo properties will be
    * created. However, if the caller specifies non-default values, they will
    * be used instead.
    */
-  nsILoginInfo addLogin(in nsILoginInfo aLogin, [optional] in boolean aPreEncrypted);
+  nsILoginInfo addLogin(in nsILoginInfo aLogin, [optional] in boolean aPreEncrypted, [optional] in jsval aPlaintextUsername, [optional] in jsval aPlaintextPassword);
 
 
   /**
@@ -95,12 +99,24 @@ interface nsILoginManagerStorage : nsISupports {
 
 
   /**
+   * Record that the password of a saved login was used (e.g. submitted or copied).
+   *
+   * @param nsILoginInfo aLogin
+   *        The login record of the password that was used.
+   *
+   * If only the username was used, this method shouldn't be called as we don't
+   * want to double-count the use if both the username and password are copied.
+   * Copying of the username normally precedes the copying of the password anyways.
+   */
+  void recordPasswordUse(in nsILoginInfo aLogin);
+
+
+  /**
    * Remove all stored logins.
    *
    * The browser sanitization feature allows the user to clear any stored
    * passwords. This interface allows that to be done without getting each
    * login first (which might require knowing the master password).
-   *
    */
   void removeAllLogins();
 
@@ -110,53 +126,60 @@ interface nsILoginManagerStorage : nsISupports {
    * if there are no logins the array is empty.
    *
    * @return An array of nsILoginInfo objects.
-   *
-   * NOTE: This can be called from JS as:
-   *       var logins = pwmgr.getAllLogins();
-   *       (|logins| is an array).
    */
   Array<nsILoginInfo> getAllLogins();
 
+  /**
+   * Fetch all logins in the login manager. An array is always returned;
+   * if there are no logins the array is empty.
+   *
+   * @return An array of nsILoginInfo objects.
+   */
+  Promise getAllLoginsAsync();
+
+  /**
+   * Asynchonously search for logins in the login manager. The Promise always
+   * resolves to an array; if there are no logins the array is empty.
+   *
+   * @param {object} matchData
+   *        The data used to search as a JS object. This does not follow the same
+   *        requirements as findLogins for those fields. Wildcard matches are
+   *        simply not specified.
+   * @return A promise resolving to an array of nsILoginInfo objects.
+   */
+  Promise searchLoginsAsync(in jsval matchData);
 
   /**
    * Search for logins in the login manager. An array is always returned;
    * if there are no logins the array is empty.
+   * @deprecated New code should use `searchLoginsAsync`.
+   *             Only autocomplete, prompt, and test code still use this.
    *
    * @param matchData
    *        The data used to search. This does not follow the same
    *        requirements as findLogins for those fields. Wildcard matches are
    *        simply not specified.
    * @return An array of nsILoginInfo objects.
-   *
-   * NOTE: This can be called from JS as:
-   *       var logins = pwmgr.searchLogins(matchData);
-   *       (|logins| is an array).
    */
   Array<nsILoginInfo> searchLogins(in nsIPropertyBag matchData);
-
 
   /**
    * Search for logins matching the specified criteria. Called when looking
    * for logins that might be applicable to a form or authentication request.
    *
-   * @param aHostname
-   *        The hostname to restrict searches to, in URL format. For
-   *        example: "http://www.site.com".
+   * @param aOrigin
+   *        The origin to restrict searches to. For example: "http://www.site.com".
    * @param aActionURL
-   *        For form logins, this argument should be the URL to which the
-   *        form will be submitted. For protocol logins, specify null.
+   *        For form logins, this argument should be the origin to which the
+   *        form will be submitted. For HTTP auth. logins, specify null.
    * @param aHttpRealm
    *        For protocol logins, this argument should be the HTTP Realm
    *        for which the login applies. This is obtained from the
    *        WWW-Authenticate header. See RFC2617. For form logins,
    *        specify null.
    * @return An array of nsILoginInfo objects.
-   *
-   * NOTE: This can be called from JS as:
-   *       var logins = pwmgr.findLogins(hostname, ...);
-   *
    */
-  Array<nsILoginInfo> findLogins(in AString aHostname, in AString aActionURL,
+  Array<nsILoginInfo> findLogins(in AString aOrigin, in AString aActionOrigin,
 				 in AString aHttpRealm);
 
 
@@ -167,12 +190,12 @@ interface nsILoginManagerStorage : nsISupports {
    * check for logins without causing the user to be prompted for a master
    * password to decrypt the logins.
    *
-   * @param aHostname
-   *        The hostname to restrict searches to. Specify an empty string
-   *        to match all hosts. A null value will not match any logins, and
+   * @param aOrigin
+   *        The origin to restrict searches to. Specify an empty string
+   *        to match all origins. A null value will not match any logins, and
    *        will thus always return a count of 0.
-   * @param aActionURL
-   *        The URL to which a form login will be submitted. To match any
+   * @param aActionOrigin
+   *        The origin to which a form login will be submitted. To match any
    *        form login, specify an empty string. To not match any form
    *        login, specify null.
    * @param aHttpRealm
@@ -180,7 +203,7 @@ interface nsILoginManagerStorage : nsISupports {
    *        any realm, specify an empty string. To not match logins for any
    *        realm, specify null.
    */
-  unsigned long countLogins(in AString aHostname, in AString aActionURL,
+  unsigned long countLogins(in AString aOrigin, in AString aActionOrigin,
                             in AString aHttpRealm);
   /**
    * True when a master password prompt is being shown.

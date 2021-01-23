@@ -5,21 +5,30 @@
 // tests the translation infobar, using a fake 'Translation' implementation.
 
 var tmp = {};
-ChromeUtils.import("resource:///modules/translation/Translation.jsm", tmp);
+ChromeUtils.import(
+  "resource:///modules/translation/TranslationParent.jsm",
+  tmp
+);
+const { PermissionTestUtils } = ChromeUtils.import(
+  "resource://testing-common/PermissionTestUtils.jsm"
+);
 var { Translation } = tmp;
 
 const kLanguagesPref = "browser.translation.neverForLanguages";
 const kShowUIPref = "browser.translation.ui.show";
+const kEnableTranslationPref = "browser.translation.detectLanguage";
 
 function test() {
   waitForExplicitFinish();
 
   Services.prefs.setBoolPref(kShowUIPref, true);
+  Services.prefs.setBoolPref(kEnableTranslationPref, true);
   let tab = BrowserTestUtils.addTab(gBrowser);
   gBrowser.selectedTab = tab;
   registerCleanupFunction(function() {
     gBrowser.removeTab(tab);
     Services.prefs.clearUserPref(kShowUIPref);
+    Services.prefs.clearUserPref(kEnableTranslationPref);
   });
   BrowserTestUtils.browserLoaded(tab.linkedBrowser).then(() => {
     (async function() {
@@ -43,7 +52,7 @@ function getLanguageExceptions() {
 
 function getDomainExceptions() {
   let results = [];
-  for (let perm of Services.perms.enumerator) {
+  for (let perm of Services.perms.all) {
     if (
       perm.type == "translate" &&
       perm.capability == Services.perms.DENY_ACTION
@@ -123,17 +132,20 @@ var gTests = [
     desc: "never for language",
     run: async function checkNeverForLanguage() {
       // Show the infobar for example.com and fr.
-      Translation.documentStateReceived(gBrowser.selectedBrowser, {
+      let actor = gBrowser.selectedBrowser.browsingContext.currentWindowGlobal.getActor(
+        "Translation"
+      );
+      actor.documentStateReceived({
         state: Translation.STATE_OFFER,
         originalShown: true,
         detectedLanguage: "fr",
       });
       let notif = await getInfoBar();
       ok(notif, "the infobar is visible");
-      let ui = gBrowser.selectedBrowser.translationUI;
-      let uri = gBrowser.selectedBrowser.currentURI;
+
+      let principal = gBrowser.selectedBrowser.contentPrincipal;
       ok(
-        ui.shouldShowInfoBar(uri, "fr"),
+        actor.shouldShowInfoBar(principal, "fr"),
         "check shouldShowInfoBar initially returns true"
       );
 
@@ -160,7 +172,7 @@ var gTests = [
       is(langs.length, 1, "one language in the exception list");
       is(langs[0], "fr", "correct language in the exception list");
       ok(
-        !ui.shouldShowInfoBar(uri, "fr"),
+        !actor.shouldShowInfoBar(principal, "fr"),
         "the infobar wouldn't be shown anymore"
       );
 
@@ -184,17 +196,19 @@ var gTests = [
     desc: "never for site",
     run: async function checkNeverForSite() {
       // Show the infobar for example.com and fr.
-      Translation.documentStateReceived(gBrowser.selectedBrowser, {
+      let actor = gBrowser.selectedBrowser.browsingContext.currentWindowGlobal.getActor(
+        "Translation"
+      );
+      actor.documentStateReceived({
         state: Translation.STATE_OFFER,
         originalShown: true,
         detectedLanguage: "fr",
       });
       let notif = await getInfoBar();
       ok(notif, "the infobar is visible");
-      let ui = gBrowser.selectedBrowser.translationUI;
-      let uri = gBrowser.selectedBrowser.currentURI;
+      let principal = gBrowser.selectedBrowser.contentPrincipal;
       ok(
-        ui.shouldShowInfoBar(uri, "fr"),
+        actor.shouldShowInfoBar(principal, "fr"),
         "check shouldShowInfoBar initially returns true"
       );
 
@@ -225,7 +239,7 @@ var gTests = [
         "correct site in the exception list"
       );
       ok(
-        !ui.shouldShowInfoBar(uri, "fr"),
+        !actor.shouldShowInfoBar(principal, "fr"),
         "the infobar wouldn't be shown anymore"
       );
 
@@ -240,7 +254,7 @@ var gTests = [
       );
 
       // Cleanup.
-      Services.perms.remove(makeURI("http://example.com"), "translate");
+      PermissionTestUtils.remove("http://example.com", "translate");
       notif.close();
     },
   },
@@ -254,7 +268,7 @@ var gTests = [
 
       // Open the translation exceptions dialog.
       let win = openDialog(
-        "chrome://browser/content/preferences/translation.xul",
+        "chrome://browser/content/preferences/dialogs/translation.xhtml",
         "Browser:TranslationExceptions",
         "",
         null
@@ -307,13 +321,20 @@ var gTests = [
     run: async function checkDomainExceptions() {
       // Put 2 exceptions before opening the window to check the list is
       // displayed on load.
-      let perms = Services.perms;
-      perms.add(makeURI("http://example.org"), "translate", perms.DENY_ACTION);
-      perms.add(makeURI("http://example.com"), "translate", perms.DENY_ACTION);
+      PermissionTestUtils.add(
+        "http://example.org",
+        "translate",
+        Services.perms.DENY_ACTION
+      );
+      PermissionTestUtils.add(
+        "http://example.com",
+        "translate",
+        Services.perms.DENY_ACTION
+      );
 
       // Open the translation exceptions dialog.
       let win = openDialog(
-        "chrome://browser/content/preferences/translation.xul",
+        "chrome://browser/content/preferences/dialogs/translation.xhtml",
         "Browser:TranslationExceptions",
         "",
         null
@@ -339,14 +360,18 @@ var gTests = [
       is(getDomainExceptions().length, 1, "One exception in the permissions");
 
       // Clear the permissions, and check the last item is removed from the display.
-      perms.remove(makeURI("http://example.org"), "translate");
-      perms.remove(makeURI("http://example.com"), "translate");
+      PermissionTestUtils.remove("http://example.org", "translate");
+      PermissionTestUtils.remove("http://example.com", "translate");
       is(tree.view.rowCount, 0, "The site exceptions list is empty");
       ok(remove.disabled, "The 'Remove Site' button is disabled");
       ok(removeAll.disabled, "The 'Remove All Site' button is disabled");
 
       // Add an item and check it appears.
-      perms.add(makeURI("http://example.com"), "translate", perms.DENY_ACTION);
+      PermissionTestUtils.add(
+        "http://example.com",
+        "translate",
+        Services.perms.DENY_ACTION
+      );
       is(tree.view.rowCount, 1, "The site exceptions list has 1 item");
       ok(remove.disabled, "The 'Remove Site' button is disabled");
       ok(!removeAll.disabled, "The 'Remove All Sites' button is enabled");

@@ -4,10 +4,12 @@
 
 //! A thin atomically-reference-counted slice.
 
+use serde::de::{Deserialize, Deserializer};
+use serde::ser::{Serialize, Serializer};
 use servo_arc::ThinArc;
-use std::{iter, mem};
 use std::ops::Deref;
 use std::ptr::NonNull;
+use std::{iter, mem};
 
 /// A canary that we stash in ArcSlices.
 ///
@@ -24,7 +26,7 @@ const ARC_SLICE_CANARY: u64 = 0xf3f3f3f3f3f3f3f3;
 /// cbindgen:derive-eq=false
 /// cbindgen:derive-neq=false
 #[repr(C)]
-#[derive(Debug, Clone, PartialEq, Eq, ToShmem)]
+#[derive(Debug, Eq, PartialEq, ToShmem)]
 pub struct ArcSlice<T>(#[shmem(field_bound)] ThinArc<u64, T>);
 
 impl<T> Deref for ArcSlice<T> {
@@ -37,10 +39,16 @@ impl<T> Deref for ArcSlice<T> {
     }
 }
 
+impl<T> Clone for ArcSlice<T> {
+    fn clone(&self) -> Self {
+        ArcSlice(self.0.clone())
+    }
+}
+
 lazy_static! {
     // ThinArc doesn't support alignments greater than align_of::<u64>.
     static ref EMPTY_ARC_SLICE: ArcSlice<u64> = {
-        ArcSlice(ThinArc::from_header_and_iter(ARC_SLICE_CANARY, iter::empty()))
+        ArcSlice::from_iter_leaked(iter::empty())
     };
 }
 
@@ -60,6 +68,25 @@ impl<T> Default for ArcSlice<T> {
     }
 }
 
+impl<T: Serialize> Serialize for ArcSlice<T> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        self.deref().serialize(serializer)
+    }
+}
+
+impl<'de, T: Deserialize<'de>> Deserialize<'de> for ArcSlice<T> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let r = Vec::deserialize(deserializer)?;
+        Ok(ArcSlice::from_iter(r.into_iter()))
+    }
+}
+
 impl<T> ArcSlice<T> {
     /// Creates an Arc for a slice using the given iterator to generate the
     /// slice.
@@ -72,6 +99,19 @@ impl<T> ArcSlice<T> {
             return Self::default();
         }
         ArcSlice(ThinArc::from_header_and_iter(ARC_SLICE_CANARY, items))
+    }
+
+    /// Creates an Arc for a slice using the given iterator to generate the
+    /// slice, and marks the arc as intentionally leaked from the refcount
+    /// logging point of view.
+    #[inline]
+    pub fn from_iter_leaked<I>(items: I) -> Self
+    where
+        I: Iterator<Item = T> + ExactSizeIterator,
+    {
+        let thin_arc = ThinArc::from_header_and_iter(ARC_SLICE_CANARY, items);
+        thin_arc.with_arc(|a| a.mark_as_intentionally_leaked());
+        ArcSlice(thin_arc)
     }
 
     /// Creates a value that can be passed via FFI, and forgets this value

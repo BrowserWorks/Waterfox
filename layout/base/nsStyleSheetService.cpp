@@ -25,7 +25,6 @@
 #include "nsISimpleEnumerator.h"
 #include "nsNetUtil.h"
 #include "nsIConsoleService.h"
-#include "nsIObserverService.h"
 #include "nsLayoutStatics.h"
 #include "nsLayoutUtils.h"
 
@@ -156,8 +155,7 @@ nsStyleSheetService::LoadAndRegisterSheet(nsIURI* aSheetURI,
   rv = LoadAndRegisterSheetInternal(aSheetURI, aSheetType);
   if (NS_SUCCEEDED(rv)) {
     // Hold on to a copy of the registered PresShells.
-    nsTArray<RefPtr<PresShell>> toNotify(mPresShells);
-    for (PresShell* presShell : toNotify) {
+    for (PresShell* presShell : mPresShells.Clone()) {
       StyleSheet* sheet = mSheets[aSheetType].LastElement();
       presShell->NotifyStyleSheetServiceSheetAdded(sheet, aSheetType);
     }
@@ -170,21 +168,12 @@ nsStyleSheetService::LoadAndRegisterSheet(nsIURI* aSheetURI,
         return rv;
       }
 
-      mozilla::ipc::URIParams uri;
-      SerializeURI(aSheetURI, uri);
-
       for (uint32_t i = 0; i < children.Length(); i++) {
-        Unused << children[i]->SendLoadAndRegisterSheet(uri, aSheetType);
+        Unused << children[i]->SendLoadAndRegisterSheet(aSheetURI, aSheetType);
       }
     }
   }
   return rv;
-}
-
-static nsresult LoadSheet(nsIURI* aURI, css::SheetParsingMode aParsingMode,
-                          RefPtr<StyleSheet>* aResult) {
-  RefPtr<css::Loader> loader = new css::Loader;
-  return loader->LoadSheetSync(aURI, aParsingMode, true, aResult);
 }
 
 nsresult nsStyleSheetService::LoadAndRegisterSheetInternal(
@@ -210,12 +199,13 @@ nsresult nsStyleSheetService::LoadAndRegisterSheetInternal(
       return NS_ERROR_INVALID_ARG;
   }
 
-  RefPtr<StyleSheet> sheet;
-  nsresult rv = LoadSheet(aSheetURI, parsingMode, &sheet);
-  NS_ENSURE_SUCCESS(rv, rv);
-  MOZ_ASSERT(sheet);
-  mSheets[aSheetType].AppendElement(sheet);
-
+  RefPtr<css::Loader> loader = new css::Loader;
+  auto result = loader->LoadSheetSync(aSheetURI, parsingMode,
+                                      css::Loader::UseSystemPrincipal::Yes);
+  if (result.isErr()) {
+    return result.unwrapErr();
+  }
+  mSheets[aSheetType].AppendElement(result.unwrap());
   return NS_OK;
 }
 
@@ -264,9 +254,7 @@ nsStyleSheetService::PreloadSheet(nsIURI* aSheetURI, uint32_t aSheetType,
   nsresult rv = GetParsingMode(aSheetType, &parsingMode);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  RefPtr<PreloadedStyleSheet> sheet;
-  rv = PreloadedStyleSheet::Create(aSheetURI, parsingMode,
-                                   getter_AddRefs(sheet));
+  auto sheet = MakeRefPtr<PreloadedStyleSheet>(aSheetURI, parsingMode);
   NS_ENSURE_SUCCESS(rv, rv);
 
   rv = sheet->Preload();
@@ -295,11 +283,7 @@ nsStyleSheetService::PreloadSheetAsync(nsIURI* aSheetURI, uint32_t aSheetType,
     return errv.StealNSResult();
   }
 
-  RefPtr<PreloadedStyleSheet> sheet;
-  rv = PreloadedStyleSheet::Create(aSheetURI, parsingMode,
-                                   getter_AddRefs(sheet));
-  NS_ENSURE_SUCCESS(rv, rv);
-
+  auto sheet = MakeRefPtr<PreloadedStyleSheet>(aSheetURI, parsingMode);
   sheet->PreloadAsync(WrapNotNull(promise));
 
   if (!ToJSValue(aCx, promise, aRval)) {
@@ -322,8 +306,7 @@ nsStyleSheetService::UnregisterSheet(nsIURI* aSheetURI, uint32_t aSheetType) {
   }
 
   // Hold on to a copy of the registered PresShells.
-  nsTArray<RefPtr<PresShell>> toNotify(mPresShells);
-  for (PresShell* presShell : toNotify) {
+  for (PresShell* presShell : mPresShells.Clone()) {
     if (presShell->StyleSet()) {
       if (sheet) {
         presShell->NotifyStyleSheetServiceSheetRemoved(sheet, aSheetType);
@@ -339,11 +322,8 @@ nsStyleSheetService::UnregisterSheet(nsIURI* aSheetURI, uint32_t aSheetType) {
       return NS_OK;
     }
 
-    mozilla::ipc::URIParams uri;
-    SerializeURI(aSheetURI, uri);
-
     for (uint32_t i = 0; i < children.Length(); i++) {
-      Unused << children[i]->SendUnregisterSheet(uri, aSheetType);
+      Unused << children[i]->SendUnregisterSheet(aSheetURI, aSheetType);
     }
   }
 

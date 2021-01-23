@@ -9,8 +9,80 @@
 
 #include "nss.h"
 #include "pk11pub.h"
+#include "pk11priv.h"
 #include "seccomon.h"
 #include "selfencrypt.h"
+#include "secmodti.h"
+#include "sslproto.h"
+
+SECStatus SSLInt_SetDCAdvertisedSigSchemes(PRFileDesc *fd,
+                                           const SSLSignatureScheme *schemes,
+                                           uint32_t num_sig_schemes) {
+  if (!fd) {
+    return SECFailure;
+  }
+  sslSocket *ss = ssl_FindSocket(fd);
+  if (!ss) {
+    return SECFailure;
+  }
+
+  // Alloc and copy, libssl will free.
+  SSLSignatureScheme *dc_schemes =
+      PORT_ZNewArray(SSLSignatureScheme, num_sig_schemes);
+  if (!dc_schemes) {
+    return SECFailure;
+  }
+  memcpy(dc_schemes, schemes, sizeof(SSLSignatureScheme) * num_sig_schemes);
+
+  if (ss->xtnData.delegCredSigSchemesAdvertised) {
+    PORT_Free(ss->xtnData.delegCredSigSchemesAdvertised);
+  }
+  ss->xtnData.delegCredSigSchemesAdvertised = dc_schemes;
+  ss->xtnData.numDelegCredSigSchemesAdvertised = num_sig_schemes;
+  return SECSuccess;
+}
+
+SECStatus SSLInt_TweakChannelInfoForDC(PRFileDesc *fd, PRBool changeAuthKeyBits,
+                                       PRBool changeScheme) {
+  if (!fd) {
+    return SECFailure;
+  }
+  sslSocket *ss = ssl_FindSocket(fd);
+  if (!ss) {
+    return SECFailure;
+  }
+
+  // Just toggle so we'll always have a valid value.
+  if (changeScheme) {
+    ss->sec.signatureScheme = (ss->sec.signatureScheme == ssl_sig_ed25519)
+                                  ? ssl_sig_ecdsa_secp256r1_sha256
+                                  : ssl_sig_ed25519;
+  }
+  if (changeAuthKeyBits) {
+    ss->sec.authKeyBits = ss->sec.authKeyBits ? ss->sec.authKeyBits * 2 : 384;
+  }
+
+  return SECSuccess;
+}
+
+SECStatus SSLInt_GetHandshakeRandoms(PRFileDesc *fd, SSL3Random client_random,
+                                     SSL3Random server_random) {
+  if (!fd) {
+    return SECFailure;
+  }
+  sslSocket *ss = ssl_FindSocket(fd);
+  if (!ss) {
+    return SECFailure;
+  }
+
+  if (client_random) {
+    memcpy(client_random, ss->ssl3.hs.client_random, sizeof(SSL3Random));
+  }
+  if (server_random) {
+    memcpy(server_random, ss->ssl3.hs.server_random, sizeof(SSL3Random));
+  }
+  return SECSuccess;
+}
 
 SECStatus SSLInt_IncrementClientHandshakeVersion(PRFileDesc *fd) {
   sslSocket *ss = ssl_FindSocket(fd);
@@ -109,9 +181,10 @@ void SSLInt_PrintCipherSpecs(const char *label, PRFileDesc *fd) {
   }
 }
 
-/* Force a timer expiry by backdating when all active timers were started. We
- * could set the remaining time to 0 but then backoff would not work properly if
- * we decide to test it. */
+/* DTLS timers are separate from the time that the rest of the stack uses.
+ * Force a timer expiry by backdating when all active timers were started.
+ * We could set the remaining time to 0 but then backoff would not work properly
+ * if we decide to test it. */
 SECStatus SSLInt_ShiftDtlsTimers(PRFileDesc *fd, PRIntervalTime shift) {
   size_t i;
   sslSocket *ss = ssl_FindSocket(fd);
@@ -261,6 +334,9 @@ SECStatus SSLInt_AdvanceReadSeqNum(PRFileDesc *fd, PRUint64 to) {
 
 SECStatus SSLInt_AdvanceWriteSeqNum(PRFileDesc *fd, PRUint64 to) {
   sslSocket *ss;
+  ssl3CipherSpec *spec;
+  PK11Context *pk11ctxt;
+  const ssl3BulkCipherDef *cipher_def;
 
   ss = ssl_FindSocket(fd);
   if (!ss) {
@@ -271,7 +347,43 @@ SECStatus SSLInt_AdvanceWriteSeqNum(PRFileDesc *fd, PRUint64 to) {
     return SECFailure;
   }
   ssl_GetSpecWriteLock(ss);
-  ss->ssl3.cwSpec->nextSeqNum = to;
+  spec = ss->ssl3.cwSpec;
+  cipher_def = spec->cipherDef;
+  spec->nextSeqNum = to;
+  if (cipher_def->type != type_aead) {
+    ssl_ReleaseSpecWriteLock(ss);
+    return SECSuccess;
+  }
+  /* If we are using aead, we need to advance the counter in the
+   * internal IV generator as well.
+   * This could be in the token or software. */
+  pk11ctxt = spec->cipherContext;
+  /* If counter is in the token, we need to switch it to software,
+   * since we don't have access to the internal state of the token. We do
+   * that by turning on the simulated message interface, then setting up the
+   * software IV generator */
+  if (pk11ctxt->ivCounter == 0) {
+    _PK11_ContextSetAEADSimulation(pk11ctxt);
+    pk11ctxt->ivLen = cipher_def->iv_size + cipher_def->explicit_nonce_size;
+    pk11ctxt->ivMaxCount = PR_UINT64(0xffffffffffffffff);
+    if ((cipher_def->explicit_nonce_size == 0) ||
+        (spec->version >= SSL_LIBRARY_VERSION_TLS_1_3)) {
+      pk11ctxt->ivFixedBits =
+          (pk11ctxt->ivLen - sizeof(sslSequenceNumber)) * BPB;
+      pk11ctxt->ivGen = CKG_GENERATE_COUNTER_XOR;
+    } else {
+      pk11ctxt->ivFixedBits = cipher_def->iv_size * BPB;
+      pk11ctxt->ivGen = CKG_GENERATE_COUNTER;
+    }
+    /* DTLS included the epoch in the fixed portion of the IV */
+    if (IS_DTLS(ss)) {
+      pk11ctxt->ivFixedBits += 2 * BPB;
+    }
+  }
+  /* now we can update the internal counter (either we are already using
+   * the software IV generator, or we just switched to it above */
+  pk11ctxt->ivCounter = to;
+
   ssl_ReleaseSpecWriteLock(ss);
   return SECSuccess;
 }
@@ -297,10 +409,6 @@ SSLKEAType SSLInt_GetKEAType(SSLNamedGroup group) {
   return groupDef->keaType;
 }
 
-void SSLInt_SetTicketLifetime(uint32_t lifetime) {
-  ssl_ticket_lifetime = lifetime;
-}
-
 SECStatus SSLInt_SetSocketMaxEarlyDataSize(PRFileDesc *fd, uint32_t size) {
   sslSocket *ss;
 
@@ -322,10 +430,6 @@ SECStatus SSLInt_SetSocketMaxEarlyDataSize(PRFileDesc *fd, uint32_t size) {
   ssl_ReleaseSpecWriteLock(ss);
 
   return SECSuccess;
-}
-
-void SSLInt_RolloverAntiReplay(void) {
-  tls13_AntiReplayRollover(ssl_TimeUsec());
 }
 
 SECStatus SSLInt_HasPendingHandshakeData(PRFileDesc *fd, PRBool *pending) {

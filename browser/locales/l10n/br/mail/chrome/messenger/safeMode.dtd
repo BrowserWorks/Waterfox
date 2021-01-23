@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title             "Mod diogelroez &brandShortName;">
+<!ENTITY window.width                     "37em">
+
+<!ENTITY safeModeDescription.label        "Emañ &brandShortName; o labourat e mod diogelroez hag a ziweredeka hoc'h arventennoù, neuzioù hag askouezhioù personel gant un doare padennek.">
+<!ENTITY safeModeDescription2.label       "An holl pe un darn eus ar c'hemmoù-mañ a c'hall bezañ padel :">
+
+<!ENTITY disableAddons.label              "Diweredekaat an holl askouezhioù">
+<!ENTITY disableAddons.accesskey          "D">
+
+<!ENTITY resetToolbars.label              "Adderaouekaat barrennoù ostilhoù ha reolerezhioù">
+<!ENTITY resetToolbars.accesskey          "A">
+
+<!ENTITY changeAndRestartButton.label     "Arloañ ar c'hemmoù hag adloc'hañ">
+<!ENTITY changeAndRestartButton.accesskey "m">
+
+<!ENTITY continueButton.label             "Kenderc'hel e mod diogelroez">
+<!ENTITY continueButton.accesskey         "K">

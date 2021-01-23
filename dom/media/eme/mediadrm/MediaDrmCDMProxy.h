@@ -9,7 +9,6 @@
 
 #include <jni.h>
 #include "mozilla/jni/Types.h"
-#include "GeneratedJNINatives.h"
 #include "mozilla/CDMProxy.h"
 #include "mozilla/CDMCaps.h"
 #include "mozilla/dom/MediaKeys.h"
@@ -19,8 +18,6 @@
 
 #include "MediaCodec.h"
 #include "nsString.h"
-
-using namespace mozilla::java;
 
 namespace mozilla {
 
@@ -80,15 +77,17 @@ class MediaDrmCDMProxy : public CDMProxy {
   void OnSessionError(const nsAString& aSessionId, nsresult aException,
                       uint32_t aSystemCode, const nsAString& aMsg) override;
 
-  void OnRejectPromise(uint32_t aPromiseId, nsresult aCode,
+  void OnRejectPromise(uint32_t aPromiseId, ErrorResult&& aException,
                        const nsCString& aMsg) override;
 
   RefPtr<DecryptPromise> Decrypt(MediaRawData* aSample) override;
   void OnDecrypted(uint32_t aId, DecryptStatus aResult,
                    const nsTArray<uint8_t>& aDecryptedData) override;
 
-  void RejectPromise(PromiseId aId, nsresult aCode,
+  void RejectPromise(PromiseId aId, ErrorResult&& aException,
                      const nsCString& aReason) override;
+  // Reject promise with an InvalidStateError and the given message.
+  void RejectPromiseWithStateError(PromiseId aId, const nsCString& aReason);
 
   // Resolves promise with "undefined".
   // Can be called from any thread.
@@ -139,22 +138,32 @@ class MediaDrmCDMProxy : public CDMProxy {
 
   class RejectPromiseTask : public Runnable {
    public:
-    RejectPromiseTask(MediaDrmCDMProxy* aProxy, PromiseId aId, nsresult aCode,
-                      const nsCString& aReason)
+    RejectPromiseTask(MediaDrmCDMProxy* aProxy, PromiseId aId,
+                      ErrorResult&& aException, const nsCString& aReason)
         : Runnable("RejectPromiseTask"),
           mProxy(aProxy),
           mId(aId),
-          mCode(aCode),
+          mException(std::move(aException)),
           mReason(aReason) {}
     NS_IMETHOD Run() override {
-      mProxy->RejectPromise(mId, mCode, mReason);
+      // Moving into or out of a non-copyable ErrorResult will assert that both
+      // ErorResults are from our current thread.  Avoid the assertion by moving
+      // into a current-thread CopyableErrorResult first.  Note that this is
+      // safe, because CopyableErrorResult never holds state that can't move
+      // across threads.
+      CopyableErrorResult rv(std::move(mException));
+      mProxy->RejectPromise(mId, std::move(rv), mReason);
       return NS_OK;
     }
 
    private:
     RefPtr<MediaDrmCDMProxy> mProxy;
     PromiseId mId;
-    nsresult mCode;
+    // We use a CopyableErrorResult here, because we're going to dispatch to a
+    // different thread and normal ErrorResult doesn't support that.
+    // CopyableErrorResult ensures that it only stores values that are safe to
+    // move across threads.
+    CopyableErrorResult mException;
     nsCString mReason;
   };
 

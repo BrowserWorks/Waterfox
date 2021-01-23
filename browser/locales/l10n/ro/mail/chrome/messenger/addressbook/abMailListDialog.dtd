@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY mailListWindowAdd.title        "Listă nouă de adrese de e-mail">
+
+<!-- Labels and Access Keys -->
+<!ENTITY addToAddressBook.label         "Adaugă la: ">
+<!ENTITY addToAddressBook.accesskey     "A">
+<!ENTITY ListName.label                 "Denumirea listei: ">
+<!ENTITY ListName.accesskey             "l">
+<!ENTITY ListNickName.label             "Listează pseudonime: ">
+<!ENTITY ListNickName.accesskey         "n">
+<!ENTITY ListDescription.label          "Descriere: ">
+<!ENTITY ListDescription.accesskey      "D">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "Introdu adrese de e-mail de adăugat în lista de adrese:">
+<!ENTITY AddressTitle.accesskey         "m">
+<!ENTITY UpButton.label                 "Mută sus">
+<!ENTITY DownButton.label               "Mută jos">

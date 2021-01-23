@@ -8,6 +8,7 @@
 #include "nsPIDOMWindow.h"
 #include "nsTArray.h"
 #include "nsVariant.h"
+#include "mozilla/StaticPrefs_dom.h"
 #include "mozilla/dom/GamepadBinding.h"
 
 namespace mozilla {
@@ -22,7 +23,8 @@ NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(Gamepad)
 NS_INTERFACE_MAP_END
 
 NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(Gamepad, mParent, mButtons, mPose,
-                                      mHapticActuators)
+                                      mHapticActuators, mLightIndicators,
+                                      mTouchEvents)
 
 void Gamepad::UpdateTimestamp() {
   nsCOMPtr<nsPIDOMWindowInner> newWindow(do_QueryInterface(mParent));
@@ -34,15 +36,17 @@ void Gamepad::UpdateTimestamp() {
   }
 }
 
-Gamepad::Gamepad(nsISupports* aParent, const nsAString& aID, uint32_t aIndex,
+Gamepad::Gamepad(nsISupports* aParent, const nsAString& aID, int32_t aIndex,
                  uint32_t aHashKey, GamepadMappingType aMapping,
                  GamepadHand aHand, uint32_t aDisplayID, uint32_t aNumButtons,
-                 uint32_t aNumAxes, uint32_t aNumHaptics)
+                 uint32_t aNumAxes, uint32_t aNumHaptics,
+                 uint32_t aNumLightIndicator, uint32_t aNumTouchEvents)
     : mParent(aParent),
       mID(aID),
       mIndex(aIndex),
       mHashKey(aHashKey),
       mDisplayId(aDisplayID),
+      mTouchIdHashValue(0),
       mMapping(aMapping),
       mHand(aHand),
       mConnected(true),
@@ -58,10 +62,21 @@ Gamepad::Gamepad(nsISupports* aParent, const nsAString& aID, uint32_t aIndex,
     mHapticActuators.AppendElement(
         new GamepadHapticActuator(mParent, mHashKey, i));
   }
+  for (uint32_t i = 0; i < aNumLightIndicator; ++i) {
+    mLightIndicators.AppendElement(
+        new GamepadLightIndicator(mParent, mHashKey, i));
+  }
+  for (uint32_t i = 0; i < aNumTouchEvents; ++i) {
+    mTouchEvents.AppendElement(new GamepadTouch(mParent));
+  }
+
+  // Mapping touchId(0) to touchIdHash(0) by default.
+  mTouchIdHash.Put(0, mTouchIdHashValue);
+  ++mTouchIdHashValue;
   UpdateTimestamp();
 }
 
-void Gamepad::SetIndex(uint32_t aIndex) { mIndex = aIndex; }
+void Gamepad::SetIndex(int32_t aIndex) { mIndex = aIndex; }
 
 void Gamepad::SetConnected(bool aConnected) { mConnected = aConnected; }
 
@@ -88,11 +103,35 @@ void Gamepad::SetPose(const GamepadPoseState& aPose) {
   UpdateTimestamp();
 }
 
+void Gamepad::SetLightIndicatorType(uint32_t aLightIndex,
+                                    GamepadLightIndicatorType aType) {
+  mLightIndicators[aLightIndex]->SetType(aType);
+  UpdateTimestamp();
+}
+
+void Gamepad::SetTouchEvent(uint32_t aTouchIndex,
+                            const GamepadTouchState& aTouch) {
+  if (aTouchIndex >= mTouchEvents.Length()) {
+    MOZ_CRASH("Touch index exceeds the event array.");
+    return;
+  }
+
+  // Handling cross-origin tracking.
+  GamepadTouchState touchState(aTouch);
+  if (auto hashValue = mTouchIdHash.GetValue(touchState.touchId)) {
+    touchState.touchId = *hashValue;
+  } else {
+    touchState.touchId = mTouchIdHashValue;
+    mTouchIdHash.Put(aTouch.touchId, mTouchIdHashValue);
+    ++mTouchIdHashValue;
+  }
+  mTouchEvents[aTouchIndex]->SetTouchState(touchState);
+  UpdateTimestamp();
+}
+
 void Gamepad::SetHand(GamepadHand aHand) { mHand = aHand; }
 
 void Gamepad::SyncState(Gamepad* aOther) {
-  const char* kGamepadExtEnabledPref = "dom.gamepad.extensions.enabled";
-
   if (mButtons.Length() != aOther->mButtons.Length() ||
       mAxes.Length() != aOther->mAxes.Length()) {
     return;
@@ -114,12 +153,23 @@ void Gamepad::SyncState(Gamepad* aOther) {
     Gamepad_Binding::ClearCachedAxesValue(this);
   }
 
-  if (Preferences::GetBool(kGamepadExtEnabledPref)) {
+  if (StaticPrefs::dom_gamepad_extensions_enabled()) {
     MOZ_ASSERT(aOther->GetPose());
     mPose->SetPoseState(aOther->GetPose()->GetPoseState());
     mHand = aOther->Hand();
     for (uint32_t i = 0; i < mHapticActuators.Length(); ++i) {
       mHapticActuators[i]->Set(aOther->mHapticActuators[i]);
+    }
+
+    if (StaticPrefs::dom_gamepad_extensions_lightindicator()) {
+      for (uint32_t i = 0; i < mLightIndicators.Length(); ++i) {
+        mLightIndicators[i]->Set(aOther->mLightIndicators[i]);
+      }
+    }
+    if (StaticPrefs::dom_gamepad_extensions_multitouch()) {
+      for (uint32_t i = 0; i < mTouchEvents.Length(); ++i) {
+        mTouchEvents[i]->Set(aOther->mTouchEvents[i]);
+      }
     }
   }
 
@@ -129,7 +179,8 @@ void Gamepad::SyncState(Gamepad* aOther) {
 already_AddRefed<Gamepad> Gamepad::Clone(nsISupports* aParent) {
   RefPtr<Gamepad> out =
       new Gamepad(aParent, mID, mIndex, mHashKey, mMapping, mHand, mDisplayId,
-                  mButtons.Length(), mAxes.Length(), mHapticActuators.Length());
+                  mButtons.Length(), mAxes.Length(), mHapticActuators.Length(),
+                  mLightIndicators.Length(), mTouchEvents.Length());
   out->SyncState(this);
   return out.forget();
 }

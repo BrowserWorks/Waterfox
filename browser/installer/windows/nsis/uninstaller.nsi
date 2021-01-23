@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -39,6 +39,8 @@ ManifestDPIAware true
 Var TmpVal
 Var MaintCertKey
 Var ShouldOpenSurvey
+Var ShouldPromptForRefresh
+Var RefreshRequested
 ; AddTaskbarSC is defined here in order to silence warnings from inside
 ; MigrateTaskBarShortcut and is not intended to be used here.
 ; See Bug 1329869 for more.
@@ -47,6 +49,7 @@ Var AddTaskbarSC
 ; Other included files may depend upon these includes!
 ; The following includes are provided by NSIS.
 !include FileFunc.nsh
+!include InstallOptions.nsh
 !include LogicLib.nsh
 !include MUI.nsh
 !include WinMessages.nsh
@@ -93,7 +96,13 @@ VIAddVersionKey "OriginalFilename" "helper.exe"
 !insertmacro WriteRegDWORD2
 !insertmacro WriteRegStr2
 
+; This needs to be inserted after InitHashAppModelId because it uses
+; $AppUserModelID and the compiler can't handle using variables lexically before
+; they've been declared.
+!insertmacro GetInstallerRegistryPref
+
 !insertmacro un.ChangeMUIHeaderImage
+!insertmacro un.ChangeMUISidebarImage
 !insertmacro un.CheckForFilesInUse
 !insertmacro un.CleanUpdateDirectories
 !insertmacro un.CleanVirtualStore
@@ -105,6 +114,7 @@ VIAddVersionKey "OriginalFilename" "helper.exe"
 !insertmacro un.RegCleanAppHandler
 !insertmacro un.RegCleanFileHandler
 !insertmacro un.RegCleanMain
+!insertmacro un.RegCleanPrefs
 !insertmacro un.RegCleanUninstall
 !insertmacro un.RegCleanProtocolHandler
 !insertmacro un.RemoveQuotesFromPath
@@ -132,6 +142,12 @@ ShowUnInstDetails nevershow
 
 !define URLUninstallSurvey "https://www.waterfox.net/survey/"
 
+; Support for the profile refresh feature
+!define URLProfileRefreshHelp "https://support.mozilla.org/kb/refresh-firefox-reset-add-ons-and-settings"
+
+; Arguments to add to the command line when launching FileMainEXE for profile refresh
+!define ArgsProfileRefresh "-reset-profile -migration -uninstaller-profile-refresh"
+
 ################################################################################
 # Modern User Interface - MUI
 
@@ -142,6 +158,11 @@ ShowUnInstDetails nevershow
 !define MUI_HEADERIMAGE
 !define MUI_HEADERIMAGE_RIGHT
 !define MUI_UNWELCOMEFINISHPAGE_BITMAP wizWatermark.bmp
+; By default MUI_BGCOLOR is hardcoded to FFFFFF, which is only correct if the
+; the Windows theme or high-contrast mode hasn't changed it, so we need to
+; override that with GetSysColor(COLOR_WINDOW) (this string ends up getting
+; passed to SetCtlColors, which uses this custom syntax to mean that).
+!define MUI_BGCOLOR SYSCLR:WINDOW
 
 ; Use a right to left header image when the language is right to left
 !ifdef ${AB_CD}_rtl
@@ -150,11 +171,14 @@ ShowUnInstDetails nevershow
 !define MUI_HEADERIMAGE_BITMAP wizHeader.bmp
 !endif
 
+!define MUI_CUSTOMFUNCTION_UNGUIINIT un.GUIInit
+
 /**
  * Uninstall Pages
  */
 ; Welcome Page
 !define MUI_PAGE_CUSTOMFUNCTION_PRE un.preWelcome
+!define MUI_PAGE_CUSTOMFUNCTION_SHOW un.showWelcome
 !define MUI_PAGE_CUSTOMFUNCTION_LEAVE un.leaveWelcome
 !insertmacro MUI_UNPAGE_WELCOME
 
@@ -170,6 +194,7 @@ UninstPage custom un.preConfirm
 !define MUI_FINISHPAGE_SHOWREADME_TEXT $(UN_SURVEY_CHECKBOX_LABEL)
 !define MUI_FINISHPAGE_SHOWREADME_FUNCTION un.Survey
 !define MUI_PAGE_CUSTOMFUNCTION_PRE un.preFinish
+!define MUI_PAGE_CUSTOMFUNCTION_SHOW un.showFinish
 !insertmacro MUI_UNPAGE_FINISH
 
 ; Use the default dialog for IDD_VERIFY for a simple Banner
@@ -184,10 +209,10 @@ Exch
 Exch $1 ;line number
 Push $2
 Push $3
- 
+
   FileOpen $2 $0 r
  StrCpy $3 0
- 
+
 Loop:
  IntOp $3 $3 + 1
   ClearErrors
@@ -195,7 +220,7 @@ Loop:
   IfErrors +2
  StrCmp $3 $1 0 loop
   FileClose $2
- 
+
 Pop $3
 Pop $2
 Pop $1
@@ -240,7 +265,7 @@ Function un.UninstallServiceIfNotUsed
   ; Restore back the registry view
   ${If} ${RunningX64}
   ${OrIf} ${IsNativeARM64}
-    SetRegView lastUsed
+    SetRegView lastused
   ${EndIf}
 
   ${If} $0 == 0
@@ -272,6 +297,50 @@ Function un.UninstallServiceIfNotUsed
   Pop $0
 FunctionEnd
 
+Function un.LaunchAppForRefresh
+  Push $0
+  Push $1
+  ; Set the current working directory to the installation directory
+  SetOutPath "$INSTDIR"
+  ClearErrors
+  ${GetParameters} $0
+  ${GetOptions} "$0" "/UAC:" $1
+  ${If} ${Errors}
+    ${ExecAndWaitForInputIdle} "$\"$INSTDIR\${FileMainEXE}$\" ${ArgsProfileRefresh}"
+  ${Else}
+    GetFunctionAddress $0 un.LaunchAppForRefreshFromElevatedProcess
+    UAC::ExecCodeSegment $0
+  ${EndIf}
+  Pop $1
+  Pop $0
+FunctionEnd
+
+Function un.LaunchAppForRefreshFromElevatedProcess
+  ; Set the current working directory to the installation directory
+  SetOutPath "$INSTDIR"
+  ${ExecAndWaitForInputIdle} "$\"$INSTDIR\${FileMainEXE}$\" ${ArgsProfileRefresh}"
+FunctionEnd
+
+Function un.LaunchRefreshHelpPage
+  Push $0
+  Push $1
+  ClearErrors
+  ${GetParameters} $0
+  ${GetOptions} "$0" "/UAC:" $1
+  ${If} ${Errors}
+    Call un.OpenRefreshHelpURL
+  ${Else}
+    GetFunctionAddress $0 un.OpenRefreshHelpURL
+    UAC::ExecCodeSegment $0
+  ${EndIf}
+  Pop $1
+  Pop $0
+FunctionEnd
+
+Function un.OpenRefreshHelpURL
+  ExecShell "open" "${URLProfileRefreshHelp}"
+FunctionEnd
+
 ################################################################################
 # Install Sections
 ; Empty section required for the installer to compile as an uninstaller
@@ -298,11 +367,9 @@ Section "Uninstall"
     ClearErrors
   ${EndIf}
 
-  ; setup the application model id registration value
-  ${un.InitHashAppModelId} "$INSTDIR" "Software\Waterfox\${AppName}\TaskBarIDs"
-
   SetShellVarContext current  ; Set SHCTX to HKCU
   ${un.RegCleanMain} "Software\Waterfox"
+  ${un.RegCleanPrefs} "Software\Waterfox\${AppName}"
   ${un.RegCleanUninstall}
   ${un.DeleteShortcuts}
 
@@ -335,19 +402,26 @@ Section "Uninstall"
 
   ${un.RegCleanAppHandler} "WaterfoxURL-$AppUserModelID"
   ${un.RegCleanAppHandler} "WaterfoxHTML-$AppUserModelID"
+!ifndef NIGHTLY_BUILD
+  ; Keep the compile-time conditional synchronized with the
+  ; "network.ftp.enabled" compile-time conditional.
   ${un.RegCleanProtocolHandler} "ftp"
+!endif ; NIGHTLY_BUILD
   ${un.RegCleanProtocolHandler} "http"
   ${un.RegCleanProtocolHandler} "https"
+  ${un.RegCleanProtocolHandler} "mailto"
   ${un.RegCleanFileHandler}  ".htm"   "WaterfoxHTML-$AppUserModelID"
   ${un.RegCleanFileHandler}  ".html"  "WaterfoxHTML-$AppUserModelID"
   ${un.RegCleanFileHandler}  ".shtml" "WaterfoxHTML-$AppUserModelID"
   ${un.RegCleanFileHandler}  ".xht"   "WaterfoxHTML-$AppUserModelID"
   ${un.RegCleanFileHandler}  ".xhtml" "WaterfoxHTML-$AppUserModelID"
-  ${un.RegCleanFileHandler}  ".oga"  "WaterfoxHTML-$AppUserModelID"
-  ${un.RegCleanFileHandler}  ".ogg"  "WaterfoxHTML-$AppUserModelID"
-  ${un.RegCleanFileHandler}  ".ogv"  "WaterfoxHTML-$AppUserModelID"
-  ${un.RegCleanFileHandler}  ".pdf"  "WaterfoxHTML-$AppUserModelID"
+  ${un.RegCleanFileHandler}  ".oga"   "WaterfoxHTML-$AppUserModelID"
+  ${un.RegCleanFileHandler}  ".ogg"   "WaterfoxHTML-$AppUserModelID"
+  ${un.RegCleanFileHandler}  ".ogv"   "WaterfoxHTML-$AppUserModelID"
+  ${un.RegCleanFileHandler}  ".pdf"   "WaterfoxHTML-$AppUserModelID"
   ${un.RegCleanFileHandler}  ".webm"  "WaterfoxHTML-$AppUserModelID"
+  ${un.RegCleanFileHandler}  ".svg"   "WaterfoxHTML-$AppUserModelID"
+  ${un.RegCleanFileHandler}  ".webp"  "WaterfoxHTML-$AppUserModelID"
 
   SetShellVarContext all  ; Set SHCTX to HKLM
   ${un.GetSecondInstallPath} "Software\Waterfox" $R9
@@ -395,7 +469,7 @@ Section "Uninstall"
     StrCpy $0 "Software\Microsoft\MediaPlayer\ShimInclusionList\plugin-container.exe"
     DeleteRegKey HKLM "$0"
     DeleteRegKey HKCU "$0"
-    StrCpy $0 "Software\Classes\MIME\Database\Content Type\application/x-xpinstall;app=Waterfox"
+    StrCpy $0 "Software\Classes\MIME\Database\Content Type\application/x-xpinstall;app=waterfox"
     DeleteRegKey HKLM "$0"
     DeleteRegKey HKCU "$0"
   ${Else}
@@ -459,17 +533,22 @@ Section "Uninstall"
   DeleteRegValue HKCU ${MOZ_LAUNCHER_SUBKEY} "$INSTDIR\${FileMainEXE}|Telemetry"
 !endif
 
+!ifdef MOZ_UPDATE_AGENT
+  ; Unregister the update agent
+  nsExec::Exec '"$INSTDIR\updateagent.exe" unregister-task "${UpdateAgentFullName} $AppUserModelID"'
+!endif
+
+  ; Uninstall the default browser agent scheduled task.
+  ; This also removes the registry entries it creates.
+  ExecWait '"$INSTDIR\default-browser-agent.exe" uninstall $AppUserModelID'
+
   ${un.RemovePrecompleteEntries} "false"
 
   ${If} ${FileExists} "$INSTDIR\defaults\pref\channel-prefs.js"
     Delete /REBOOTOK "$INSTDIR\defaults\pref\channel-prefs.js"
   ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\defaults\pref"
-    RmDir /REBOOTOK "$INSTDIR\defaults\pref"
-  ${EndIf}
-  ${If} ${FileExists} "$INSTDIR\defaults"
-    RmDir /REBOOTOK "$INSTDIR\defaults"
-  ${EndIf}
+  RmDir "$INSTDIR\defaults\pref"
+  RmDir "$INSTDIR\defaults"
   ${If} ${FileExists} "$INSTDIR\uninstall"
     ; Remove the uninstall directory that we control
     RmDir /r /REBOOTOK "$INSTDIR\uninstall"
@@ -510,7 +589,7 @@ Section "Uninstall"
   ; Refresh desktop icons otherwise the start menu internet item won't be
   ; removed and other ugly things will happen like recreation of the app's
   ; clients registry key by the OS under some conditions.
-  System::Call "shell32::SHChangeNotify(i ${SHCNE_ASSOCCHANGED}, i 0, i 0, i 0)"
+  ${RefreshShellIcons}
 
   ; Users who uninstall then reinstall expecting Firefox to use a clean profile
   ; may be surprised during first-run. This key is checked during startup of Firefox and
@@ -580,15 +659,84 @@ Function un.preWelcome
   ; We don't want the header bitmap showing on the welcome page.
   GetDlgItem $0 $HWNDPARENT 1046
   ShowWindow $0 ${SW_HIDE}
+
+  ${If} $ShouldPromptForRefresh == "1"
+    ; Replace title and body text
+    WriteINIStr "$PLUGINSDIR\ioSpecial.ini" "Field 2" Text "$(UN_REFRESH_PAGE_TITLE)"
+    ; Convert to translate newlines, this includes $PLUGINSDIR internally.
+    !insertmacro INSTALLOPTIONS_WRITE_UNCONVERT "ioSpecial.ini" "Field 3" Text "$(UN_REFRESH_PAGE_EXPLANATION)"
+
+    ; Make room for the link and button
+    StrCpy $0 "148"
+    WriteINIStr "$PLUGINSDIR\ioSpecial.ini" "Field 3" Bottom  $0
+
+    ; Show the help link
+    IntOp $1 $0 + 14
+    WriteINIStr "$PLUGINSDIR\ioSpecial.ini" "Field 4" Type    "link"
+    WriteINIStr "$PLUGINSDIR\ioSpecial.ini" "Field 4" Text    "$(UN_REFRESH_LEARN_MORE)"
+    WriteINIStr "$PLUGINSDIR\ioSpecial.ini" "Field 4" Left    "120"
+    WriteINIStr "$PLUGINSDIR\ioSpecial.ini" "Field 4" Top     $0
+    WriteINIStr "$PLUGINSDIR\ioSpecial.ini" "Field 4" Right   "315"
+    WriteINIStr "$PLUGINSDIR\ioSpecial.ini" "Field 4" Bottom  $1
+    WriteINIStr "$PLUGINSDIR\ioSpecial.ini" "Field 4" Flags   "NOTIFY"
+
+    ; Show the refresh button.
+    IntOp $2 $1 + 14
+    WriteINIStr "$PLUGINSDIR\ioSpecial.ini" "Field 5" Type    "button"
+    WriteINIStr "$PLUGINSDIR\ioSpecial.ini" "Field 5" Text    "$(UN_REFRESH_BUTTON)"
+    WriteINIStr "$PLUGINSDIR\ioSpecial.ini" "Field 5" Left    "120"
+    WriteINIStr "$PLUGINSDIR\ioSpecial.ini" "Field 5" Top     $1
+    WriteINIStr "$PLUGINSDIR\ioSpecial.ini" "Field 5" Right   "240"
+    WriteINIStr "$PLUGINSDIR\ioSpecial.ini" "Field 5" Bottom  $2
+    WriteINIStr "$PLUGINSDIR\ioSpecial.ini" "Field 5" Flags   "NOTIFY"
+
+    WriteINIStr "$PLUGINSDIR\ioSpecial.ini" "Settings" NumFields 5
+  ${EndIf}
+FunctionEnd
+
+Function un.ShowWelcome
+  ; The welcome and finish pages don't get the correct colors for their labels
+  ; like the other pages do, presumably because they're built by filling in an
+  ; InstallOptions .ini file instead of from a dialog resource like the others.
+  ; Field 2 is the header and Field 3 is the body text.
+  ReadINIStr $0 "$PLUGINSDIR\ioSpecial.ini" "Field 2" "HWND"
+  SetCtlColors $0 SYSCLR:WINDOWTEXT SYSCLR:WINDOW
+
+  ReadINIStr $0 "$PLUGINSDIR\ioSpecial.ini" "Field 3" "HWND"
+  SetCtlColors $0 SYSCLR:WINDOWTEXT SYSCLR:WINDOW
+
+  ${If} $ShouldPromptForRefresh == "1"
+    ; Field 4 is the profile refresh help link
+    ReadINIStr $0 "$PLUGINSDIR\ioSpecial.ini" "Field 4" "HWND"
+    SetCtlColors $0 SYSCLR:HOTLIGHT SYSCLR:WINDOW
+  ${EndIf}
+
+  ; We need to overwrite the sidebar image so that we get it drawn with proper
+  ; scaling if the display is scaled at anything above 100%.
+  ${un.ChangeMUISidebarImage} "$PLUGINSDIR\modern-wizard.bmp"
 FunctionEnd
 
 Function un.leaveWelcome
+  StrCpy $RefreshRequested "0"
+
+  ${If} $ShouldPromptForRefresh == "1"
+    ReadINIStr $0 "$PLUGINSDIR\ioSpecial.ini" "Settings" "State"
+    ${If} $0 == "5"
+      ; Refresh button
+      StrCpy $RefreshRequested "1"
+    ${ElseIf} $0 == "4"
+      ; Launch refresh help link, stay on this page
+      Call un.LaunchRefreshHelpPage
+      Abort
+    ${EndIf}
+  ${EndIf}
+
   ${If} ${FileExists} "$INSTDIR\${FileMainEXE}"
     Banner::show /NOUNLOAD "$(BANNER_CHECK_EXISTING)"
 
-    ; If the message window has been found previously give the app an additional
-    ; five seconds to close.
-    ${If} "$TmpVal" == "FoundMessageWindow"
+    ; If we already found a window once and we're checking again, wait for an
+    ; additional five seconds for the app to close.
+    ${If} "$TmpVal" == "FoundAppWindow"
       Sleep 5000
     ${EndIf}
 
@@ -600,14 +748,29 @@ Function un.leaveWelcome
 
     ; If there are files in use $TmpVal will be "true"
     ${If} "$TmpVal" == "true"
-      ; If the message window is found the call to ManualCloseAppPrompt will
-      ; abort leaving the value of $TmpVal set to "FoundMessageWindow".
-      StrCpy $TmpVal "FoundMessageWindow"
-      ${un.ManualCloseAppPrompt} "${WindowClass}" "$(WARN_MANUALLY_CLOSE_APP_UNINSTALL)"
+      ; If it finds a window of the right class, then ManualCloseAppPrompt will
+      ; abort leaving the value of $TmpVal set to "FoundAppWindow".
+      StrCpy $TmpVal "FoundAppWindow"
+
+      ${If} $RefreshRequested == "1"
+        ${un.ManualCloseAppPrompt} "${MainWindowClass}" "$(WARN_MANUALLY_CLOSE_APP_REFRESH)"
+        ${un.ManualCloseAppPrompt} "${DialogWindowClass}" "$(WARN_MANUALLY_CLOSE_APP_REFRESH)"
+      ${Else}
+        ${un.ManualCloseAppPrompt} "${MainWindowClass}" "$(WARN_MANUALLY_CLOSE_APP_UNINSTALL)"
+        ${un.ManualCloseAppPrompt} "${DialogWindowClass}" "$(WARN_MANUALLY_CLOSE_APP_UNINSTALL)"
+      ${EndIf}
       ; If the message window is not found set $TmpVal to "true" so the restart
       ; required message is displayed.
+      ; In the case of a refresh request the restart required message will not be displayed;
+      ; we're not trying to change the installation, so files in use only matter if the
+      ; window is shown.
       StrCpy $TmpVal "true"
     ${EndIf}
+  ${EndIf}
+
+  ${If} $RefreshRequested == "1"
+    Call un.LaunchAppForRefresh
+    Quit
   ${EndIf}
 
   ; Bring back the header bitmap for the next pages.
@@ -616,12 +779,19 @@ Function un.leaveWelcome
 FunctionEnd
 
 Function un.preConfirm
+  ; The header on the wizard pages doesn't get the correct text
+  ; color by default for some reason, even though the other controls do.
+  GetDlgItem $0 $HWNDPARENT 1037
+  SetCtlColors $0 SYSCLR:WINDOWTEXT SYSCLR:WINDOW
+  ; Hide unused subheader (to avoid overlapping moved header)
+  GetDlgItem $0 $HWNDPARENT 1038
+  ShowWindow $0 ${SW_HIDE}
+
   ${If} ${FileExists} "$INSTDIR\distribution\modern-header.bmp"
-  ${AndIf} $hHeaderBitmap == ""
     Delete "$PLUGINSDIR\modern-header.bmp"
     CopyFiles /SILENT "$INSTDIR\distribution\modern-header.bmp" "$PLUGINSDIR\modern-header.bmp"
-    ${un.ChangeMUIHeaderImage} "$PLUGINSDIR\modern-header.bmp"
   ${EndIf}
+  ${un.ChangeMUIHeaderImage} "$PLUGINSDIR\modern-header.bmp"
 
   ; Setup the unconfirm.ini file for the Custom Uninstall Confirm Page
   WriteINIStr "$PLUGINSDIR\unconfirm.ini" "Settings" NumFields "3"
@@ -644,25 +814,19 @@ Function un.preConfirm
   WriteINIStr "$PLUGINSDIR\unconfirm.ini" "Field 2" Bottom "30"
   WriteINIStr "$PLUGINSDIR\unconfirm.ini" "Field 2" flags  "READONLY"
 
-  WriteINIStr "$PLUGINSDIR\unconfirm.ini" "Field 3" Type   "label"
-  WriteINIStr "$PLUGINSDIR\unconfirm.ini" "Field 3" Text   "$(UN_CONFIRM_CLICK)"
-  WriteINIStr "$PLUGINSDIR\unconfirm.ini" "Field 3" Left   "0"
-  WriteINIStr "$PLUGINSDIR\unconfirm.ini" "Field 3" Right  "-1"
-  WriteINIStr "$PLUGINSDIR\unconfirm.ini" "Field 3" Top    "130"
-  WriteINIStr "$PLUGINSDIR\unconfirm.ini" "Field 3" Bottom "150"
-
   ${If} "$TmpVal" == "true"
-    WriteINIStr "$PLUGINSDIR\unconfirm.ini" "Field 4" Type   "label"
-    WriteINIStr "$PLUGINSDIR\unconfirm.ini" "Field 4" Text   "$(SUMMARY_REBOOT_REQUIRED_UNINSTALL)"
-    WriteINIStr "$PLUGINSDIR\unconfirm.ini" "Field 4" Left   "0"
-    WriteINIStr "$PLUGINSDIR\unconfirm.ini" "Field 4" Right  "-1"
-    WriteINIStr "$PLUGINSDIR\unconfirm.ini" "Field 4" Top    "35"
-    WriteINIStr "$PLUGINSDIR\unconfirm.ini" "Field 4" Bottom "45"
+    WriteINIStr "$PLUGINSDIR\unconfirm.ini" "Field 3" Type   "label"
+    WriteINIStr "$PLUGINSDIR\unconfirm.ini" "Field 3" Text   "$(SUMMARY_REBOOT_REQUIRED_UNINSTALL)"
+    WriteINIStr "$PLUGINSDIR\unconfirm.ini" "Field 3" Left   "0"
+    WriteINIStr "$PLUGINSDIR\unconfirm.ini" "Field 3" Right  "-1"
+    WriteINIStr "$PLUGINSDIR\unconfirm.ini" "Field 3" Top    "35"
+    WriteINIStr "$PLUGINSDIR\unconfirm.ini" "Field 3" Bottom "45"
 
-    WriteINIStr "$PLUGINSDIR\unconfirm.ini" "Settings" NumFields "4"
+    WriteINIStr "$PLUGINSDIR\unconfirm.ini" "Settings" NumFields "3"
   ${EndIf}
 
-  !insertmacro MUI_HEADER_TEXT "$(UN_CONFIRM_PAGE_TITLE)" "$(UN_CONFIRM_PAGE_SUBTITLE)"
+  !insertmacro MUI_HEADER_TEXT "$(UN_CONFIRM_PAGE_TITLE)" ""
+
   ; The Summary custom page has a textbox that will automatically receive
   ; focus. This sets the focus to the Install button instead.
   !insertmacro MUI_INSTALLOPTIONS_INITDIALOG "unconfirm.ini"
@@ -690,6 +854,32 @@ Function un.preFinish
   ShowWindow $0 ${SW_HIDE}
 FunctionEnd
 
+Function un.ShowFinish
+  ReadINIStr $0 "$PLUGINSDIR\ioSpecial.ini" "Field 2" "HWND"
+  SetCtlColors $0 SYSCLR:WINDOWTEXT SYSCLR:WINDOW
+
+  ReadINIStr $0 "$PLUGINSDIR\ioSpecial.ini" "Field 3" "HWND"
+  SetCtlColors $0 SYSCLR:WINDOWTEXT SYSCLR:WINDOW
+
+  ; We need to overwrite the sidebar image so that we get it drawn with proper
+  ; scaling if the display is scaled at anything above 100%.
+  ${un.ChangeMUISidebarImage} "$PLUGINSDIR\modern-wizard.bmp"
+
+  ; Either Fields 4 and 5 are the reboot option radio buttons, or Field 4 is
+  ; the survey checkbox and Field 5 doesn't exist. Either way, we need to
+  ; clear the theme from them before we can set their background colors.
+  ReadINIStr $0 "$PLUGINSDIR\ioSpecial.ini" "Field 4" "HWND"
+  System::Call 'uxtheme::SetWindowTheme(i $0, w " ", w " ")'
+  SetCtlColors $0 SYSCLR:WINDOWTEXT SYSCLR:WINDOW
+
+  ClearErrors
+  ReadINIStr $0 "$PLUGINSDIR\ioSpecial.ini" "Field 5" "HWND"
+  ${IfNot} ${Errors}
+    System::Call 'uxtheme::SetWindowTheme(i $0, w " ", w " ")'
+    SetCtlColors $0 SYSCLR:WINDOWTEXT SYSCLR:WINDOW
+  ${EndIf}
+FunctionEnd
+
 ################################################################################
 # Initialization Functions
 
@@ -712,7 +902,43 @@ Function un.onInit
 
   ${un.UninstallUnOnInitCommon}
 
+  ; setup the application model id registration value
+  ${un.InitHashAppModelId} "$INSTDIR" "Software\Waterfox\${AppName}\TaskBarIDs"
+
+  ; Find a default profile for this install.
+  SetShellVarContext current
+  ${un.FindInstallSpecificProfile}
+  Pop $1
+  GetFullPathName $1 $1
+
+  ; If there is an existing default profile, offer profile refresh.
+  StrCpy $ShouldPromptForRefresh "0"
+  StrCpy $RefreshRequested "0"
+  ${If} $1 != ""
+    StrCpy $ShouldPromptForRefresh "1"
+  ${EndIf}
+
   !insertmacro InitInstallOptionsFile "unconfirm.ini"
+FunctionEnd
+
+Function un.GUIInit
+  ; Move header text down, roughly vertically centered in the header.
+  ; Even if we're not changing the X, we can't set Y without also setting X.
+  ; Child window positions have to be set in client coordinates, and these are
+  ; left-to-right mirrored for RTL.
+  GetDlgItem $0 $HWNDPARENT 1037
+  ; Get current rect in screen coordinates
+  System::Call "*(i 0, i 0, i 0, i 0) i .r2"
+  System::Call "user32::GetWindowRect(p $0, p $2)"
+  ; Convert screen coordinates to client coordinates (handles RTL mirroring)
+  System::Call "user32::MapWindowPoints(p 0, p $HWNDPARENT, p $2, i 2)"
+  System::Call "*$2(i . r3, i . r4, i, i)"
+  System::Free $2
+  ; Move down
+  ${DialogUnitsToPixels} 8 Y $1
+  IntOp $4 $4 + $1
+  ; Set position, 0x0015 is SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE
+  System::Call "user32::SetWindowPos(p $0, p 0, i $3, i $4, i 0, i 0, i 0x0015)"
 FunctionEnd
 
 Function .onGUIEnd

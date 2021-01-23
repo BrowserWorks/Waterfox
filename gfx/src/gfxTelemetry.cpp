@@ -5,6 +5,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 #include "gfxTelemetry.h"
 
+#include "mozilla/Assertions.h"
+
 namespace mozilla {
 namespace gfx {
 
@@ -44,6 +46,18 @@ const char* FeatureStatusToString(FeatureStatus aStatus) {
       return "blocked-no-gfx-info";
     case FeatureStatus::BlockedOverride:
       return "blocked-override";
+    case FeatureStatus::BlockedReleaseChannelIntel:
+      return "blocked-release-channel-intel";
+    case FeatureStatus::BlockedReleaseChannelAMD:
+      return "blocked-release-channel-amd";
+    case FeatureStatus::BlockedReleaseChannelNvidia:
+      return "blocked-release-channel-nvidia";
+    case FeatureStatus::BlockedReleaseChannelBattery:
+      return "blocked-release-channel-battery";
+    case FeatureStatus::BlockedReleaseChannelAndroid:
+      return "blocked-release-channel-android";
+    case FeatureStatus::Denied:
+      return "denied";
     case FeatureStatus::Blacklisted:
       return "blacklisted";
     case FeatureStatus::OptIn:

@@ -9,48 +9,28 @@
 #include "StorageDBThread.h"
 #include "StorageUtils.h"
 
-#include "nsIScriptSecurityManager.h"
 #include "nsIEffectiveTLDService.h"
 
 #include "nsNetUtil.h"
 #include "nsNetCID.h"
-#include "nsIURL.h"
 #include "nsPrintfCString.h"
 #include "nsXULAppAPI.h"
 #include "nsThreadUtils.h"
 #include "nsIObserverService.h"
 #include "mozilla/Services.h"
-#include "mozilla/Preferences.h"
+#include "mozilla/StaticPrefs_dom.h"
 #include "mozilla/dom/LocalStorageCommon.h"
-
-// Only allow relatively small amounts of data since performance of
-// the synchronous IO is very bad.
-// We are enforcing simple per-origin quota only.
-#define DEFAULT_QUOTA_LIMIT (5 * 1024)
 
 namespace mozilla {
 namespace dom {
 
 using namespace StorageUtils;
 
-namespace {
-
-int32_t gQuotaLimit = DEFAULT_QUOTA_LIMIT;
-
-}  // namespace
-
 LocalStorageManager* LocalStorageManager::sSelf = nullptr;
 
 // static
 uint32_t LocalStorageManager::GetQuota() {
-  static bool preferencesInitialized = false;
-  if (!preferencesInitialized) {
-    mozilla::Preferences::AddIntVarCache(
-        &gQuotaLimit, "dom.storage.default_quota", DEFAULT_QUOTA_LIMIT);
-    preferencesInitialized = true;
-  }
-
-  return gQuotaLimit * 1024;  // pref is in kBs
+  return StaticPrefs::dom_storage_default_quota() * 1024;  // pref is in kBs
 }
 
 NS_IMPL_ISUPPORTS(LocalStorageManager, nsIDOMStorageManager,
@@ -89,42 +69,6 @@ LocalStorageManager::~LocalStorageManager() {
 
   sSelf = nullptr;
 }
-
-namespace {
-
-nsresult CreateQuotaDBKey(nsIPrincipal* aPrincipal, nsACString& aKey) {
-  nsresult rv;
-
-  nsCOMPtr<nsIEffectiveTLDService> eTLDService(
-      do_GetService(NS_EFFECTIVETLDSERVICE_CONTRACTID, &rv));
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  nsCOMPtr<nsIURI> uri;
-  rv = aPrincipal->GetURI(getter_AddRefs(uri));
-  NS_ENSURE_SUCCESS(rv, rv);
-  NS_ENSURE_TRUE(uri, NS_ERROR_UNEXPECTED);
-
-  nsAutoCString eTLDplusOne;
-  rv = eTLDService->GetBaseDomain(uri, 0, eTLDplusOne);
-  if (NS_ERROR_INSUFFICIENT_DOMAIN_LEVELS == rv) {
-    // XXX bug 357323 - what to do for localhost/file exactly?
-    rv = uri->GetAsciiHost(eTLDplusOne);
-  }
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  aKey.Truncate();
-  aPrincipal->OriginAttributesRef().CreateSuffix(aKey);
-
-  nsAutoCString subdomainsDBKey;
-  CreateReversedDomain(eTLDplusOne, subdomainsDBKey);
-
-  aKey.Append(':');
-  aKey.Append(subdomainsDBKey);
-
-  return NS_OK;
-}
-
-}  // namespace
 
 // static
 nsAutoCString LocalStorageManager::CreateOrigin(
@@ -178,7 +122,7 @@ already_AddRefed<LocalStorageCache> LocalStorageManager::PutCache(
   RefPtr<LocalStorageCache> cache = entry->cache();
 
   nsAutoCString quotaOrigin;
-  CreateQuotaDBKey(aPrincipal, quotaOrigin);
+  aPrincipal->GetLocalStorageQuotaKey(quotaOrigin);
 
   // Lifetime handled by the cache, do persist
   cache->Init(this, true, aPrincipal, quotaOrigin);
@@ -203,7 +147,8 @@ nsresult LocalStorageManager::GetStorageInternal(
   nsAutoCString originAttrSuffix;
   nsAutoCString originKey;
 
-  nsresult rv = GenerateOriginKey(aPrincipal, originAttrSuffix, originKey);
+  nsresult rv = aStoragePrincipal->GetStorageOriginKey(originKey);
+  aStoragePrincipal->OriginAttributesRef().CreateSuffix(originAttrSuffix);
   if (NS_FAILED(rv)) {
     return NS_ERROR_NOT_AVAILABLE;
   }
@@ -241,7 +186,8 @@ nsresult LocalStorageManager::GetStorageInternal(
     }
 
     PrincipalInfo principalInfo;
-    rv = mozilla::ipc::PrincipalToPrincipalInfo(aPrincipal, &principalInfo);
+    rv = mozilla::ipc::PrincipalToPrincipalInfo(aStoragePrincipal,
+                                                &principalInfo);
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
     }
@@ -255,7 +201,7 @@ nsresult LocalStorageManager::GetStorageInternal(
 
     // There is always a single instance of a cache per scope
     // in a single instance of a DOM storage manager.
-    cache = PutCache(originAttrSuffix, originKey, aPrincipal);
+    cache = PutCache(originAttrSuffix, originKey, aStoragePrincipal);
 
 #if !defined(MOZ_WIDGET_ANDROID)
     LocalStorageCacheChild* actor = new LocalStorageCacheChild(cache);
@@ -282,9 +228,10 @@ nsresult LocalStorageManager::GetStorageInternal(
 
 NS_IMETHODIMP
 LocalStorageManager::PrecacheStorage(nsIPrincipal* aPrincipal,
+                                     nsIPrincipal* aStoragePrincipal,
                                      Storage** aRetval) {
   return GetStorageInternal(CreateMode::CreateIfShouldPreload, nullptr,
-                            aPrincipal, aPrincipal, EmptyString(), false,
+                            aPrincipal, aStoragePrincipal, EmptyString(), false,
                             aRetval);
 }
 
@@ -367,7 +314,7 @@ void LocalStorageManager::ClearCaches(uint32_t aUnloadFlags,
       continue;
     }
 
-    CacheOriginHashtable* table = iter1.Data();
+    CacheOriginHashtable* table = iter1.UserData();
 
     for (auto iter2 = table->Iter(); !iter2.Done(); iter2.Next()) {
       LocalStorageCache* cache = iter2.Get()->cache();

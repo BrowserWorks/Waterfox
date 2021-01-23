@@ -5,7 +5,7 @@
 
 "use strict";
 
-const TEST_HOSTNAME = "https://example.com";
+const TEST_ORIGIN = "https://example.com";
 const BASIC_FORM_PAGE_PATH = DIRECTORY_PATH + "form_basic.html";
 
 /**
@@ -32,12 +32,15 @@ add_task(async function test_initialize() {
 });
 
 add_task(async function test_context_menu_username() {
+  let formFilled = listenForTestNotification("FormProcessed");
+
   await BrowserTestUtils.withNewTab(
     {
       gBrowser,
-      url: TEST_HOSTNAME + BASIC_FORM_PAGE_PATH,
+      url: TEST_ORIGIN + BASIC_FORM_PAGE_PATH,
     },
     async function(browser) {
+      await formFilled;
       await openContextMenu(browser, "#form-basic-username");
 
       let contextMenu = document.getElementById("contentAreaContextMenu");
@@ -48,12 +51,15 @@ add_task(async function test_context_menu_username() {
 });
 
 add_task(async function test_context_menu_password() {
+  let formFilled = listenForTestNotification("FormProcessed");
+
   await BrowserTestUtils.withNewTab(
     {
       gBrowser,
-      url: TEST_HOSTNAME + BASIC_FORM_PAGE_PATH,
+      url: TEST_ORIGIN + BASIC_FORM_PAGE_PATH,
     },
     async function(browser) {
+      await formFilled;
       await openContextMenu(browser, "#form-basic-password");
 
       let contextMenu = document.getElementById("contentAreaContextMenu");
@@ -101,14 +107,14 @@ async function openContextMenu(browser, loginInput) {
 function loginList() {
   return [
     LoginTestUtils.testData.formLogin({
-      hostname: "https://example.com",
-      formSubmitURL: "https://example.com",
+      origin: "https://example.com",
+      formActionOrigin: "https://example.com",
       username: "username",
       password: "password",
     }),
     LoginTestUtils.testData.formLogin({
-      hostname: "https://example.com",
-      formSubmitURL: "https://example.com",
+      origin: "https://example.com",
+      formActionOrigin: "https://example.com",
       username: "username2",
       password: "password2",
     }),

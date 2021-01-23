@@ -5,10 +5,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "places_test_harness.h"
-#include "nsIPrefService.h"
 #include "nsIPrefBranch.h"
 #include "nsString.h"
 #include "mozilla/Attributes.h"
+#include "mozilla/StaticPrefs_layout.h"
 #include "nsNetUtil.h"
 
 #include "mock_Link.h"
@@ -119,7 +119,7 @@ void test_wait_checkpoint() {
 // sets the nsCOMPtr's to nullptr, freeing the reference.
 namespace test_unvisited_does_not_notify {
 nsCOMPtr<nsIURI> testURI;
-RefPtr<Link> testLink;
+RefPtr<mock_Link> testLink;
 }  // namespace test_unvisited_does_not_notify
 void test_unvisited_does_not_notify_part1() {
   using namespace test_unvisited_does_not_notify;
@@ -138,8 +138,7 @@ void test_unvisited_does_not_notify_part1() {
 
   // Now, register our Link to be notified.
   nsCOMPtr<IHistory> history = do_get_IHistory();
-  nsresult rv = history->RegisterVisitedCallback(testURI, testLink);
-  do_check_success(rv);
+  history->RegisterVisitedCallback(testURI, testLink);
 
   // Run the next test.
   run_next_test();
@@ -156,8 +155,7 @@ void test_visited_notifies() {
 
   // Now, register our Link to be notified.
   nsCOMPtr<IHistory> history = do_get_IHistory();
-  nsresult rv = history->RegisterVisitedCallback(testURI, link);
-  do_check_success(rv);
+  history->RegisterVisitedCallback(testURI, link);
 
   // Note: test will continue upon notification.
 }
@@ -165,18 +163,19 @@ void test_visited_notifies() {
 void test_unvisited_does_not_notify_part2() {
   using namespace test_unvisited_does_not_notify;
 
+  if (StaticPrefs::layout_css_notify_of_unvisited()) {
+    SpinEventLoopUntil([&]() { return testLink->GotNotified(); });
+  }
+
   // We would have had a failure at this point had the content node been told it
-  // was visited.  Therefore, it is safe to unregister our content node.
-  nsCOMPtr<IHistory> history = do_get_IHistory();
-  nsresult rv = history->UnregisterVisitedCallback(testURI, testLink);
-  do_check_success(rv);
+  // was visited. Therefore, now we change it so that it expects a visited
+  // notification, and unregisters itself after addURI.
+  testLink->AwaitNewNotification(expect_visit);
+  addURI(testURI);
 
   // Clear the stored variables now.
   testURI = nullptr;
   testLink = nullptr;
-
-  // Run the next test.
-  run_next_test();
 }
 
 void test_same_uri_notifies_both() {
@@ -192,10 +191,8 @@ void test_same_uri_notifies_both() {
 
   // Now, register our Link to be notified.
   nsCOMPtr<IHistory> history = do_get_IHistory();
-  nsresult rv = history->RegisterVisitedCallback(testURI, link1);
-  do_check_success(rv);
-  rv = history->RegisterVisitedCallback(testURI, link2);
-  do_check_success(rv);
+  history->RegisterVisitedCallback(testURI, link1);
+  history->RegisterVisitedCallback(testURI, link2);
 
   // Note: test will continue upon notification.
 }
@@ -206,16 +203,12 @@ void test_unregistered_visited_does_not_notify() {
   // unregistered Links (due to request serialization).
 
   nsCOMPtr<nsIURI> testURI = new_test_uri();
-  RefPtr<Link> link = new mock_Link(expect_no_visit);
-
-  // Now, register our Link to be notified.
+  RefPtr<Link> link = new mock_Link(expect_no_visit, false);
   nsCOMPtr<IHistory> history(do_get_IHistory());
-  nsresult rv = history->RegisterVisitedCallback(testURI, link);
-  do_check_success(rv);
+  history->RegisterVisitedCallback(testURI, link);
 
   // Unregister the Link.
-  rv = history->UnregisterVisitedCallback(testURI, link);
-  do_check_success(rv);
+  history->UnregisterVisitedCallback(testURI, link);
 
   // And finally add a visit for the URI.
   addURI(testURI);
@@ -232,13 +225,21 @@ void test_unregistered_visited_does_not_notify() {
 void test_new_visit_notifies_waiting_Link() {
   // Create our test Link.  The callback function will release the reference we
   // have on the link.
-  RefPtr<Link> link = new mock_Link(expect_visit);
+  //
+  // Note that this will query the database and we'll get an _unvisited_
+  // notification, then (after we addURI) a _visited_ one.
+  RefPtr<mock_Link> link = new mock_Link(expect_no_visit);
 
   // Now, register our content node to be notified.
   nsCOMPtr<nsIURI> testURI = new_test_uri();
   nsCOMPtr<IHistory> history = do_get_IHistory();
-  nsresult rv = history->RegisterVisitedCallback(testURI, link);
-  do_check_success(rv);
+  history->RegisterVisitedCallback(testURI, link);
+
+  if (StaticPrefs::layout_css_notify_of_unvisited()) {
+    SpinEventLoopUntil([&]() { return link->GotNotified(); });
+  }
+
+  link->AwaitNewNotification(expect_visit);
 
   // Add ourselves to history.
   addURI(testURI);
@@ -252,17 +253,15 @@ void test_RegisterVisitedCallback_returns_before_notifying() {
   addURI(testURI);
 
   // Create our test Link.
-  RefPtr<Link> link = new mock_Link(expect_no_visit);
+  RefPtr<Link> link = new mock_Link(expect_no_visit, false);
 
   // Now, register our content node to be notified.  It should not be notified.
   nsCOMPtr<IHistory> history = do_get_IHistory();
-  nsresult rv = history->RegisterVisitedCallback(testURI, link);
-  do_check_success(rv);
+  history->RegisterVisitedCallback(testURI, link);
 
   // Remove ourselves as an observer.  We would have failed if we had been
   // notified.
-  rv = history->UnregisterVisitedCallback(testURI, link);
-  do_check_success(rv);
+  history->UnregisterVisitedCallback(testURI, link);
 
   run_next_test();
 }
@@ -341,8 +340,8 @@ void test_observer_topic_dispatched() {
 
   // Need two Link objects as well - one for each URI.
   RefPtr<Link> visitedLink = new mock_Link(expect_visit, false);
+  RefPtr<Link> notVisitedLink = new mock_Link(expect_no_visit, false);
   RefPtr<Link> visitedLinkCopy = visitedLink;
-  RefPtr<Link> notVisitedLink = new mock_Link(expect_no_visit);
 
   // Add the right observers for the URIs to check results.
   bool visitedNotified = false;
@@ -354,17 +353,14 @@ void test_observer_topic_dispatched() {
 
   // Register our Links to be notified.
   nsCOMPtr<IHistory> history = do_get_IHistory();
-  rv = history->RegisterVisitedCallback(visitedURI, visitedLink);
-  do_check_success(rv);
-  rv = history->RegisterVisitedCallback(notVisitedURI, notVisitedLink);
-  do_check_success(rv);
+  history->RegisterVisitedCallback(visitedURI, visitedLink);
+  history->RegisterVisitedCallback(notVisitedURI, notVisitedLink);
 
   // Spin the event loop as long as we have not been properly notified.
   SpinEventLoopUntil([&]() { return visitedNotified && notVisitedNotified; });
 
   // Unregister our observer that would not have been released.
-  rv = history->UnregisterVisitedCallback(notVisitedURI, notVisitedLink);
-  do_check_success(rv);
+  history->UnregisterVisitedCallback(notVisitedURI, notVisitedLink);
 
   run_next_test();
 }
@@ -508,7 +504,7 @@ void test_new_visit_adds_place_guid() {
   PlaceRecord place;
   do_get_place(visitedURI, place);
   do_check_eq(place.visitCount, 1);
-  do_check_eq(place.guid.Length(), 12);
+  do_check_eq(place.guid.Length(), 12u);
 
   run_next_test();
 }
@@ -523,13 +519,11 @@ void test_two_null_links_same_uri() {
   nsCOMPtr<nsIURI> testURI = new_test_uri();
 
   nsCOMPtr<IHistory> history = do_get_IHistory();
-  nsresult rv = history->RegisterVisitedCallback(testURI, nullptr);
-  do_check_success(rv);
-  rv = history->RegisterVisitedCallback(testURI, nullptr);
-  do_check_success(rv);
+  history->RegisterVisitedCallback(testURI, nullptr);
+  history->RegisterVisitedCallback(testURI, nullptr);
 
-  rv = history->VisitURI(nullptr, testURI, nullptr,
-                         mozilla::IHistory::TOP_LEVEL);
+  nsresult rv = history->VisitURI(nullptr, testURI, nullptr,
+                                  mozilla::IHistory::TOP_LEVEL);
   do_check_success(rv);
 
   RefPtr<VisitURIObserver> finisher = new VisitURIObserver();

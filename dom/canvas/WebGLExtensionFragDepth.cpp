@@ -16,8 +16,6 @@ WebGLExtensionFragDepth::WebGLExtensionFragDepth(WebGLContext* webgl)
   MOZ_ASSERT(IsSupported(webgl), "Don't construct extension if unsupported.");
 }
 
-WebGLExtensionFragDepth::~WebGLExtensionFragDepth() {}
-
 bool WebGLExtensionFragDepth::IsSupported(const WebGLContext* webgl) {
   if (webgl->IsWebGL2()) return false;
 
@@ -29,7 +27,5 @@ bool WebGLExtensionFragDepth::IsSupported(const WebGLContext* webgl) {
   }
   return gl->IsSupported(gl::GLFeature::frag_depth);
 }
-
-IMPL_WEBGL_EXTENSION_GOOP(WebGLExtensionFragDepth, EXT_frag_depth)
 
 }  // namespace mozilla

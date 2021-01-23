@@ -86,7 +86,7 @@ class ExtensionControlledPopup {
    *                 then it will anchor to a browser action or the app menu.
    * @param {string} opts.popupnotificationId
    *                 The id for the popupnotification element in the markup. This
-   *                 element should be defined in panelUI.inc.xul.
+   *                 element should be defined in panelUI.inc.xhtml.
    * @param {string} opts.settingType
    *                 The setting type to check in ExtensionSettingsStore to retrieve
    *                 the controlling extension.
@@ -252,7 +252,7 @@ class ExtensionControlledPopup {
 
     // Find the elements we need.
     let doc = win.document;
-    let panel = doc.getElementById("extension-notification-panel");
+    let panel = ExtensionControlledPopup._getAndMaybeCreatePanel(doc);
     let popupnotification = doc.getElementById(this.popupnotificationId);
     let urlBarWasFocused = win.gURLBar.focused;
 
@@ -262,6 +262,15 @@ class ExtensionControlledPopup {
       );
     }
 
+    let elementsToTranslate = panel.querySelectorAll("[data-lazy-l10n-id]");
+    if (elementsToTranslate.length) {
+      win.MozXULElement.insertFTLIfNeeded("browser/appMenuNotifications.ftl");
+      for (let el of elementsToTranslate) {
+        el.setAttribute("data-l10n-id", el.getAttribute("data-lazy-l10n-id"));
+        el.removeAttribute("data-lazy-l10n-id");
+      }
+      await win.document.l10n.translateFragment(panel);
+    }
     let addon = await AddonManager.getAddonByID(extensionId);
     this.populateDescription(doc, addon);
 
@@ -313,12 +322,7 @@ class ExtensionControlledPopup {
       // Anchor to a toolbar browserAction if found, otherwise use the menu button.
       anchorButton = action || doc.getElementById("PanelUI-menu-button");
     }
-    let anchor = doc.getAnonymousElementByAttribute(
-      anchorButton,
-      "class",
-      "toolbarbutton-icon"
-    );
-    panel.hidden = false;
+    let anchor = anchorButton.icon;
     popupnotification.show();
     panel.openPopup(anchor);
   }
@@ -362,40 +366,40 @@ class ExtensionControlledPopup {
     description.appendChild(link);
   }
 
-  _ensureWindowReady(win) {
+  async _ensureWindowReady(win) {
+    if (win.closed) {
+      throw new Error("window is closed");
+    }
+    let promises = [];
+    let listenersToRemove = [];
+    function promiseEvent(type) {
+      promises.push(
+        new Promise(resolve => {
+          let listener = () => {
+            win.removeEventListener(type, listener);
+            resolve();
+          };
+          win.addEventListener(type, listener);
+          listenersToRemove.push([type, listener]);
+        })
+      );
+    }
+    let { focusedWindow, activeWindow } = Services.focus;
+    if (activeWindow != win) {
+      promiseEvent("activate");
+    }
+    if (focusedWindow) {
+      // We may have focused a non-remote child window, find the browser window:
+      let { rootTreeItem } = focusedWindow.docShell;
+      rootTreeItem.QueryInterface(Ci.nsIDocShell);
+      focusedWindow = rootTreeItem.contentViewer.DOMDocument.defaultView;
+    }
+    if (focusedWindow != win) {
+      promiseEvent("focus");
+    }
+    let unloadListener;
+    // eslint-disable-next-line no-async-promise-executor
     return new Promise(async (resolve, reject) => {
-      if (win.closed) {
-        reject();
-        return;
-      }
-      let promises = [];
-      let listenersToRemove = [];
-      function promiseEvent(type) {
-        promises.push(
-          new Promise(resolve => {
-            let listener = () => {
-              win.removeEventListener(type, listener);
-              resolve();
-            };
-            win.addEventListener(type, listener);
-            listenersToRemove.push([type, listener]);
-          })
-        );
-      }
-      let { focusedWindow, activeWindow } = Services.focus;
-      if (activeWindow != win) {
-        promiseEvent("activate");
-      }
-      if (focusedWindow) {
-        // We may have focused a non-remote child window, find the browser window:
-        let { rootTreeItem } = focusedWindow.docShell;
-        rootTreeItem.QueryInterface(Ci.nsIDocShell);
-        focusedWindow = rootTreeItem.contentViewer.DOMDocument.defaultView;
-      }
-      if (focusedWindow != win) {
-        promiseEvent("focus");
-      }
-      let unloadListener;
       if (promises.length) {
         unloadListener = () => {
           for (let [type, listener] of listenersToRemove) {
@@ -405,11 +409,30 @@ class ExtensionControlledPopup {
         };
         win.addEventListener("unload", unloadListener, { once: true });
       }
-      await Promise.all(promises);
+      let error;
+      try {
+        await Promise.all(promises);
+      } catch (ex) {
+        error = ex;
+      }
       if (unloadListener) {
         win.removeEventListener("unload", unloadListener);
       }
-      resolve();
+      if (error) {
+        reject(new Error("window unloaded"));
+      } else {
+        resolve();
+      }
     });
+  }
+
+  static _getAndMaybeCreatePanel(doc) {
+    // // Lazy load the extension-notification panel the first time we need to display it.
+    let template = doc.getElementById("extensionNotificationTemplate");
+    if (template) {
+      template.replaceWith(template.content);
+    }
+
+    return doc.getElementById("extension-notification-panel");
   }
 }

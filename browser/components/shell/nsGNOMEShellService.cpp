@@ -8,18 +8,14 @@
 #include "nsCOMPtr.h"
 #include "nsGNOMEShellService.h"
 #include "nsShellService.h"
-#include "nsIServiceManager.h"
 #include "nsIFile.h"
 #include "nsIProperties.h"
 #include "nsDirectoryServiceDefs.h"
-#include "nsIPrefService.h"
 #include "prenv.h"
 #include "nsString.h"
 #include "nsIGIOService.h"
 #include "nsIGSettingsService.h"
 #include "nsIStringBundle.h"
-#include "nsIOutputStream.h"
-#include "nsIProcess.h"
 #include "nsServiceManagerUtils.h"
 #include "nsComponentManagerUtils.h"
 #include "nsIImageLoadingContent.h"
@@ -75,7 +71,19 @@ static const MimeTypeAssociation appTypes[] = {
 #define kDesktopDrawBGGSKey "draw-background"
 #define kDesktopColorGSKey "primary-color"
 
-static bool IsRunningAsASnap() { return (PR_GetEnv("SNAP") != nullptr); }
+static bool IsRunningAsASnap() {
+  // SNAP holds the path to the snap, use SNAP_NAME
+  // which is easier to parse.
+  const char* snap_name = PR_GetEnv("SNAP_NAME");
+
+  // return early if not set.
+  if (snap_name == nullptr) {
+    return false;
+  }
+
+  // snap_name as defined on https://snapcraft.io/firefox
+  return (strcmp(snap_name, "firefox") == 0);
+}
 
 nsresult nsGNOMEShellService::Init() {
   nsresult rv;
@@ -92,6 +100,14 @@ nsresult nsGNOMEShellService::Init() {
       do_GetService(NS_GSETTINGSSERVICE_CONTRACTID);
 
   if (!giovfs && !gsettings) return NS_ERROR_NOT_AVAILABLE;
+
+#ifdef MOZ_ENABLE_DBUS
+  const char* currentDesktop = getenv("XDG_CURRENT_DESKTOP");
+  if (currentDesktop && strstr(currentDesktop, "GNOME") != nullptr &&
+      Preferences::GetBool("browser.gnome-search-provider.enabled", false)) {
+    mSearchProvider.Startup();
+  }
+#endif
 
   // Check G_BROKEN_FILENAMES.  If it's set, then filenames in glib use
   // the locale encoding.  If it's not set, they use UTF-8.
@@ -500,40 +516,4 @@ nsGNOMEShellService::SetDesktopBackgroundColor(uint32_t aColor) {
   }
 
   return NS_ERROR_FAILURE;
-}
-
-NS_IMETHODIMP
-nsGNOMEShellService::OpenApplication(int32_t aApplication) {
-  nsAutoCString scheme;
-  if (aApplication == APPLICATION_MAIL)
-    scheme.AssignLiteral("mailto");
-  else if (aApplication == APPLICATION_NEWS)
-    scheme.AssignLiteral("news");
-  else
-    return NS_ERROR_NOT_AVAILABLE;
-
-  nsCOMPtr<nsIGIOService> giovfs = do_GetService(NS_GIOSERVICE_CONTRACTID);
-  if (giovfs) {
-    nsCOMPtr<nsIHandlerApp> handlerApp;
-    giovfs->GetAppForURIScheme(scheme, getter_AddRefs(handlerApp));
-    if (handlerApp) return handlerApp->LaunchWithURI(nullptr, nullptr);
-  }
-
-  return NS_ERROR_FAILURE;
-}
-
-NS_IMETHODIMP
-nsGNOMEShellService::OpenApplicationWithURI(nsIFile* aApplication,
-                                            const nsACString& aURI) {
-  nsresult rv;
-  nsCOMPtr<nsIProcess> process =
-      do_CreateInstance("@mozilla.org/process/util;1", &rv);
-  if (NS_FAILED(rv)) return rv;
-
-  rv = process->Init(aApplication);
-  if (NS_FAILED(rv)) return rv;
-
-  const nsCString spec(aURI);
-  const char* specStr = spec.get();
-  return process->Run(false, &specStr, 1);
 }

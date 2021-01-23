@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY printCmd.commandkey            "p">
+
+<!ENTITY findOnCmd.commandkey           "F">
+<!ENTITY findAgainCmd.commandkey        "G">
+<!ENTITY findAgainCmd.commandkey2       "VK_F3">
+
+<!ENTITY backButton.label               "පසුපසට">
+<!ENTITY backButton.accesskey           "B">
+<!ENTITY backButton.tooltip             "පිටුවක් පසුපසට">
+<!ENTITY forwardButton.label            "ඉදිරියට">
+<!ENTITY forwardButton.accesskey        "F">
+<!ENTITY forwardButton.tooltip          "පිටුවක් ඉදිරියට">
+<!ENTITY copyCmd.label                  "කොපි කරන්න">
+<!ENTITY copyCmd.accesskey              "C">
+<!ENTITY selectAllCmd.label             "සියල්ල තොරන්න">
+<!ENTITY selectAllCmd.accesskey         "A">
+<!ENTITY goBackCmd.commandkey           "[">
+<!ENTITY goForwardCmd.commandkey        "]">
+<!ENTITY homeButton.label               "මුල් පිටුව">
+<!ENTITY homeButton.tooltip             "උදව් ආරම්භක පිටුවට යාමට">
+<!ENTITY printButton.label              "මුද්‍රණය">
+<!ENTITY printButton.tooltip            "මෙම පිටුව මුද්‍රණයට">
+<!ENTITY closeWindow.commandkey         "W">
+
+<!ENTITY search.emptytext               "සොයන්න">
+<!ENTITY searchHeader.label             "සෙවුම් තොරතුරු">
+<!ENTITY toctab.label                   "අන්තර්ගතය">
+<!ENTITY toctab.accesskey               "C">
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "-">
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> <!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "=">
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "0">
+
+<!ENTITY helpSearch.commandkey          "k">
+
+<!ENTITY zLevel.label                   "සැමවිටම ඉහළින්">
+<!ENTITY zLevel.accesskey               "T">
+
+<!ENTITY fullZoomReduceBtn.label        "කුඩා කරන්න">
+<!ENTITY fullZoomReduceBtn.accesskey    "O">
+<!ENTITY fullZoomEnlargeBtn.label       "විශාල කරන්න">
+<!ENTITY fullZoomEnlargeBtn.accesskey   "I">

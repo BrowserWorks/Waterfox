@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Властивості зображення">
+
+<!ENTITY pixelsPopup.value "пікселів">
+
+<!-- These are in the Location tab panel -->
+<!ENTITY locationEditField.label "Адреса зображення:">
+<!ENTITY locationEditField.accessKey "А">
+<!ENTITY locationEditField.tooltip "Введіть ім’я файлу із зображенням або його адресу">
+<!ENTITY locationEditField.shortenedDataURI "Скорочений URI даних (копія помістить в буфер обміну повний URI)">
+<!ENTITY title.label "Спливаюча підказка:">
+<!ENTITY title.accessKey "С">
+<!ENTITY title.tooltip "Атрибут «title», що відображається як спливаюча підказка">
+<!ENTITY altText.label "Альтернативний текст:">
+<!ENTITY altText.accessKey "л">
+<!ENTITY altTextEditField.tooltip "Введіть текст, що показується на місці зображення">
+<!ENTITY noAltText.label "Не використовувати альтернативний текст">
+<!ENTITY noAltText.accessKey "Н">
+
+<!ENTITY previewBox.label "Попередній перегляд зображення">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+<!ENTITY actualSize.label "Дійсний розмір:">
+<!ENTITY actualSizeRadio.label "Дійсний розмір">
+<!ENTITY actualSizeRadio.accessKey "о">
+<!ENTITY actualSizeRadio.tooltip "Повернутися до початкових розмірів зображення">
+<!ENTITY customSizeRadio.label "Власний розмір">
+<!ENTITY customSizeRadio.accessKey "л">
+<!ENTITY customSizeRadio.tooltip "Змінити розмір зображення так, як це виглядає на сторінці">
+<!ENTITY heightEditField.label "Висота:">
+<!ENTITY heightEditField.accessKey "В">
+<!ENTITY widthEditField.label "Ширина:">
+<!ENTITY widthEditField.accessKey "Ш">
+<!ENTITY constrainCheckbox.label "Дотримувати пропорції">
+<!ENTITY constrainCheckbox.accessKey "Д">
+<!ENTITY constrainCheckbox.tooltip "Дотримувати пропорції при зміні розміру зображення">
+
+<!-- These controls are in the Image Map box of the expanded area -->
+<!ENTITY imagemapBox.label "Карта зображення">
+<!ENTITY removeImageMapButton.label "Прибрати">
+<!ENTITY removeImageMapButton.accessKey "П">
+
+<!-- These are the options for image alignment -->
+<!ENTITY alignment.label "Розташування тексту по відношенню до зображення">
+<!ENTITY bottomPopup.value "Внизу">
+<!ENTITY topPopup.value "Вгорі">
+<!ENTITY centerPopup.value "По центру">
+<!ENTITY wrapRightPopup.value "Вліво, оточити текстом справа">
+<!ENTITY wrapLeftPopup.value "Управо, оточити текстом зліва">
+
+<!-- These controls are in the Spacing Box -->
+<!ENTITY spacingBox.label "Поля">
+<!ENTITY leftRightEditField.label "Зліва і справа:">
+<!ENTITY leftRightEditField.accessKey "л">
+<!ENTITY topBottomEditField.label "Зверху і знизу:">
+<!ENTITY topBottomEditField.accessKey "в">
+<!ENTITY borderEditField.label "Суцільна межа:">
+<!ENTITY borderEditField.accessKey "ц">
+
+<!-- These controls are in the Link Box -->
+<!ENTITY showImageLinkBorder.label "Показувати межу навколо зображення, що містить посилання">
+<!ENTITY showImageLinkBorder.accessKey "м">
+<!ENTITY LinkAdvancedEditButton.label "Посилання додаткового редагування…">
+<!ENTITY LinkAdvancedEditButton.accessKey "г">
+<!ENTITY LinkAdvancedEditButton.tooltip "Додати або змінити атрибути HTML, атрибути стилю, та JavaScript">
+
+<!-- These tabs are currently used in the image input dialog -->
+<!ENTITY imageInputTab.label "Форма">
+<!ENTITY imageLocationTab.label "Адреса">
+<!ENTITY imageDimensionsTab.label "Розміри">
+<!ENTITY imageAppearanceTab.label "Зовнішній вигляд">
+<!ENTITY imageLinkTab.label "Посилання">

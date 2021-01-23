@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title             "&brandShortName; - wěsty modus">
+<!ENTITY window.width                     "37em">
+
+<!ENTITY safeModeDescription.label        "&brandShortName; běžy něnto we wěstem modusu, kótaryž nachylu znjemóžnja waše swójske nastajenja, drastwy a rozšyrjenja.">
+<!ENTITY safeModeDescription2.label       "Móžośo někotre abo wšykne ze slědujucych nastajenjow na pśecej wustajiś:">
+
+<!ENTITY disableAddons.label              "Wšykne dodanki znjemóžniś">
+<!ENTITY disableAddons.accesskey          "d">
+
+<!ENTITY resetToolbars.label              "Symbolowe rědki a wóźeńske elementy slědk stajiś">
+<!ENTITY resetToolbars.accesskey          "s">
+
+<!ENTITY changeAndRestartButton.label     "Změny pśewjasć a znowego startowaś">
+<!ENTITY changeAndRestartButton.accesskey "m">
+
+<!ENTITY continueButton.label             "Z wěstym modusom pókšacowaś">
+<!ENTITY continueButton.accesskey         "w">

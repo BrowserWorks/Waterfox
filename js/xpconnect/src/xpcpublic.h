@@ -43,7 +43,7 @@ class Exception;
 }  // namespace dom
 }  // namespace mozilla
 
-typedef void (*xpcGCCallback)(JSGCStatus status);
+using xpcGCCallback = void (*)(JSGCStatus);
 
 namespace xpc {
 
@@ -86,9 +86,10 @@ JSObject* TransplantObjectRetainingXrayExpandos(JSContext* cx,
                                                 JS::HandleObject origobj,
                                                 JS::HandleObject target);
 
-bool IsContentXBLCompartment(JS::Compartment* compartment);
-bool IsContentXBLScope(JS::Realm* realm);
-bool IsInContentXBLScope(JSObject* obj);
+// If origObj has an xray waiver, nuke it before transplant.
+JSObject* TransplantObjectNukingXrayWaiver(JSContext* cx,
+                                           JS::HandleObject origObj,
+                                           JS::HandleObject target);
 
 bool IsUAWidgetCompartment(JS::Compartment* compartment);
 bool IsUAWidgetScope(JS::Realm* realm);
@@ -98,32 +99,9 @@ bool MightBeWebContentCompartment(JS::Compartment* compartment);
 
 void SetCompartmentChangedDocumentDomain(JS::Compartment* compartment);
 
-// Return a raw XBL scope object corresponding to contentScope, which must
-// be an object whose global is a DOM window.
-//
-// The return value is not wrapped into cx->compartment, so be sure to enter
-// its compartment before doing anything meaningful.
-//
-// Also note that XBL scopes are lazily created, so the return-value should be
-// null-checked unless the caller can ensure that the scope must already
-// exist.
-//
-// This function asserts if |contentScope| is itself in an XBL scope to catch
-// sloppy consumers. Conversely, GetXBLScopeOrGlobal will handle objects that
-// are in XBL scope (by just returning the global).
-JSObject* GetXBLScope(JSContext* cx, JSObject* contentScope);
-
 JSObject* GetUAWidgetScope(JSContext* cx, nsIPrincipal* principal);
 
 JSObject* GetUAWidgetScope(JSContext* cx, JSObject* contentScope);
-
-inline JSObject* GetXBLScopeOrGlobal(JSContext* cx, JSObject* obj) {
-  MOZ_ASSERT(!js::IsCrossCompartmentWrapper(obj));
-  if (IsInContentXBLScope(obj)) {
-    return JS::GetNonCCWObjectGlobal(obj);
-  }
-  return GetXBLScope(cx, obj);
-}
 
 // Returns whether XBL scopes have been explicitly disabled for code running
 // in this compartment. See the comment around mAllowContentXBLScope.
@@ -242,9 +220,9 @@ class XPCStringConvert {
                                                     uint32_t length,
                                                     JS::MutableHandleValue rval,
                                                     bool* sharedBuffer) {
-    JSString* str =
-        JS_NewMaybeExternalString(cx, static_cast<char16_t*>(buf->Data()),
-                                  length, &sDOMStringFinalizer, sharedBuffer);
+    JSString* str = JS_NewMaybeExternalString(
+        cx, static_cast<char16_t*>(buf->Data()), length,
+        &sDOMStringExternalString, sharedBuffer);
     if (!str) {
       return false;
     }
@@ -257,8 +235,8 @@ class XPCStringConvert {
                                           uint32_t length,
                                           JS::MutableHandleValue rval) {
     bool ignored;
-    JSString* str = JS_NewMaybeExternalString(cx, literal, length,
-                                              &sLiteralFinalizer, &ignored);
+    JSString* str = JS_NewMaybeExternalString(
+        cx, literal, length, &sLiteralExternalString, &ignored);
     if (!str) {
       return false;
     }
@@ -271,7 +249,7 @@ class XPCStringConvert {
     bool sharedAtom;
     JSString* str =
         JS_NewMaybeExternalString(cx, atom->GetUTF16String(), atom->GetLength(),
-                                  &sDynamicAtomFinalizer, &sharedAtom);
+                                  &sDynamicAtomExternalString, &sharedAtom);
     if (!str) {
       return false;
     }
@@ -286,26 +264,45 @@ class XPCStringConvert {
     return true;
   }
 
-  static MOZ_ALWAYS_INLINE bool IsLiteral(JSString* str) {
-    return JS_IsExternalString(str) &&
-           JS_GetExternalStringFinalizer(str) == &sLiteralFinalizer;
+  static MOZ_ALWAYS_INLINE bool MaybeGetExternalStringChars(
+      JSString* str, const JSExternalStringCallbacks* desiredCallbacks,
+      const char16_t** chars) {
+    const JSExternalStringCallbacks* callbacks;
+    return js::IsExternalString(str, &callbacks, chars) &&
+           callbacks == desiredCallbacks;
   }
 
-  static MOZ_ALWAYS_INLINE bool IsDOMString(JSString* str) {
-    return JS_IsExternalString(str) &&
-           JS_GetExternalStringFinalizer(str) == &sDOMStringFinalizer;
+  // Returns non-null chars if the given string is a literal external string.
+  static MOZ_ALWAYS_INLINE bool MaybeGetLiteralStringChars(
+      JSString* str, const char16_t** chars) {
+    return MaybeGetExternalStringChars(str, &sLiteralExternalString, chars);
+  }
+
+  // Returns non-null chars if the given string is a DOM external string.
+  static MOZ_ALWAYS_INLINE bool MaybeGetDOMStringChars(JSString* str,
+                                                       const char16_t** chars) {
+    return MaybeGetExternalStringChars(str, &sDOMStringExternalString, chars);
   }
 
  private:
-  static const JSStringFinalizer sLiteralFinalizer, sDOMStringFinalizer,
-      sDynamicAtomFinalizer;
-
-  static void FinalizeLiteral(const JSStringFinalizer* fin, char16_t* chars);
-
-  static void FinalizeDOMString(const JSStringFinalizer* fin, char16_t* chars);
-
-  static void FinalizeDynamicAtom(const JSStringFinalizer* fin,
-                                  char16_t* chars);
+  struct LiteralExternalString : public JSExternalStringCallbacks {
+    void finalize(char16_t* aChars) const override;
+    size_t sizeOfBuffer(const char16_t* aChars,
+                        mozilla::MallocSizeOf aMallocSizeOf) const override;
+  };
+  struct DOMStringExternalString : public JSExternalStringCallbacks {
+    void finalize(char16_t* aChars) const override;
+    size_t sizeOfBuffer(const char16_t* aChars,
+                        mozilla::MallocSizeOf aMallocSizeOf) const override;
+  };
+  struct DynamicAtomExternalString : public JSExternalStringCallbacks {
+    void finalize(char16_t* aChars) const override;
+    size_t sizeOfBuffer(const char16_t* aChars,
+                        mozilla::MallocSizeOf aMallocSizeOf) const override;
+  };
+  static const LiteralExternalString sLiteralExternalString;
+  static const DOMStringExternalString sDOMStringExternalString;
+  static const DynamicAtomExternalString sDynamicAtomExternalString;
 
   XPCStringConvert() = delete;
 };
@@ -418,7 +415,7 @@ void SetLocationForGlobal(JSObject* global, nsIURI* locationURI);
 // of JS::ZoneStats.
 class ZoneStatsExtras {
  public:
-  ZoneStatsExtras() {}
+  ZoneStatsExtras() = default;
 
   nsCString pathPrefix;
 
@@ -431,7 +428,7 @@ class ZoneStatsExtras {
 // of JS::RealmStats.
 class RealmStatsExtras {
  public:
-  RealmStatsExtras() {}
+  RealmStatsExtras() = default;
 
   nsCString jsPathPrefix;
   nsCString domPathPrefix;
@@ -546,8 +543,6 @@ bool ShouldDiscardSystemSource();
 
 void SetPrefableRealmOptions(JS::RealmOptions& options);
 
-bool ExtraWarningsForSystemJS();
-
 class ErrorBase {
  public:
   nsString mErrorMsg;
@@ -587,10 +582,15 @@ class ErrorReport : public ErrorBase {
   nsString mSourceLine;
   nsString mErrorMsgName;
   uint64_t mWindowID;
-  uint32_t mFlags;
+  bool mIsWarning;
   bool mIsMuted;
+  bool mIsPromiseRejection;
 
-  ErrorReport() : mWindowID(0), mFlags(0), mIsMuted(false) {}
+  ErrorReport()
+      : mWindowID(0),
+        mIsWarning(false),
+        mIsMuted(false),
+        mIsPromiseRejection(false) {}
 
   void Init(JSErrorReport* aReport, const char* aToStringResult, bool aIsChrome,
             uint64_t aWindowID);
@@ -604,11 +604,11 @@ class ErrorReport : public ErrorBase {
   // the sort that JS::CaptureCurrentStack produces).  aStack is allowed to be
   // null. If aStack is non-null, aStackGlobal must be a non-null global
   // object that's same-compartment with aStack. Note that aStack might be a
-  // CCW. When recording/replaying, aTimeWarpTarget optionally indicates
-  // where the error occurred in the process' execution.
-  void LogToConsoleWithStack(JS::HandleObject aStack,
-                             JS::HandleObject aStackGlobal,
-                             uint64_t aTimeWarpTarget = 0);
+  // CCW.
+  void LogToConsoleWithStack(nsGlobalWindowInner* aWin,
+                             JS::Handle<mozilla::Maybe<JS::Value>> aException,
+                             JS::HandleObject aStack,
+                             JS::HandleObject aStackGlobal);
 
   // Produce an error event message string from the given JSErrorReport.  Note
   // that this may produce an empty string if aReport doesn't have a
@@ -619,8 +619,10 @@ class ErrorReport : public ErrorBase {
   // Log the error report to the stderr.
   void LogToStderr();
 
+  bool IsWarning() const { return mIsWarning; };
+
  private:
-  ~ErrorReport() {}
+  ~ErrorReport() = default;
 };
 
 void DispatchScriptErrorEvent(nsPIDOMWindowInner* win,
@@ -661,42 +663,43 @@ extern void GetCurrentRealmName(JSContext*, nsCString& name);
 void AddGCCallback(xpcGCCallback cb);
 void RemoveGCCallback(xpcGCCallback cb);
 
+// We need an exact page size only if we run the binary in automation.
+const size_t kAutomationPageSize = 4096;
+
+struct alignas(kAutomationPageSize) ReadOnlyPage final {
+  bool mNonLocalConnectionsDisabled = false;
+  bool mTurnOffAllSecurityPref = false;
+
+  static void Init();
+
+#ifdef MOZ_TSAN
+  // TSan is confused by write access to read-only section.
+  static ReadOnlyPage sInstance;
+#else
+  static const volatile ReadOnlyPage sInstance;
+#endif
+
+ private:
+  constexpr ReadOnlyPage() = default;
+  ReadOnlyPage(const ReadOnlyPage&) = delete;
+  void operator=(const ReadOnlyPage&) = delete;
+
+  static void Write(const volatile bool* aPtr, bool aValue);
+};
+
 inline bool AreNonLocalConnectionsDisabled() {
-  static int disabledForTest = -1;
-  if (disabledForTest == -1) {
-    char* s = getenv("MOZ_DISABLE_NONLOCAL_CONNECTIONS");
-    if (s) {
-      disabledForTest = *s != '0';
-    } else {
-      disabledForTest = 0;
-    }
-  }
-  return disabledForTest;
+  return ReadOnlyPage::sInstance.mNonLocalConnectionsDisabled;
 }
 
 inline bool IsInAutomation() {
-  static bool sAutomationPrefIsSet;
-  static bool sPrefCacheAdded = false;
-  if (!sPrefCacheAdded) {
-    mozilla::Preferences::AddBoolVarCache(
-        &sAutomationPrefIsSet,
-        "security.turn_off_all_security_so_that_viruses_can_take_over_this_"
-        "computer",
-        false);
-    sPrefCacheAdded = true;
+  if (!ReadOnlyPage::sInstance.mTurnOffAllSecurityPref) {
+    return false;
   }
-  return sAutomationPrefIsSet && AreNonLocalConnectionsDisabled();
+  MOZ_RELEASE_ASSERT(AreNonLocalConnectionsDisabled());
+  return true;
 }
 
-void CreateCooperativeContext();
-
-void DestroyCooperativeContext();
-
-// Please see JS_YieldCooperativeContext in jsapi.h.
-void YieldCooperativeContext();
-
-// Please see JS_ResumeCooperativeContext in jsapi.h.
-void ResumeCooperativeContext();
+void InitializeJSContext();
 
 /**
  * Extract the native nsID object from a JS ID, IfaceID, ClassID, or ContractID
@@ -757,12 +760,6 @@ namespace mozilla {
 namespace dom {
 
 /**
- * A test for whether WebIDL methods that should only be visible to
- * chrome or XBL scopes should be exposed.
- */
-bool IsChromeOrXBL(JSContext* cx, JSObject* /* unused */);
-
-/**
  * This is used to prevent UA widget code from directly creating and adopting
  * nodes via the content document, since they should use the special
  * create-and-insert apis instead.
@@ -773,12 +770,12 @@ bool IsNotUAWidget(JSContext* cx, JSObject* /* unused */);
  * A test for whether WebIDL methods that should only be visible to
  * chrome, XBL scopes, or UA Widget scopes.
  */
-bool IsChromeOrXBLOrUAWidget(JSContext* cx, JSObject* /* unused */);
+bool IsChromeOrUAWidget(JSContext* cx, JSObject* /* unused */);
 
 /**
- * Same as IsChromeOrXBLOrUAWidget but can be used in worker threads as well.
+ * Same as IsChromeOrUAWidget but can be used in worker threads as well.
  */
-bool ThreadSafeIsChromeOrXBLOrUAWidget(JSContext* cx, JSObject* obj);
+bool ThreadSafeIsChromeOrUAWidget(JSContext* cx, JSObject* obj);
 
 }  // namespace dom
 

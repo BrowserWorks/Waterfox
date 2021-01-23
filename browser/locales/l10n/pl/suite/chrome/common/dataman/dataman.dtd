@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dataman.windowTitle "Menedżer danych">
+
+<!ENTITY selectAll.key "a">
+
+<!ENTITY select.all.label "Wszystkie rodzaje danych">
+<!ENTITY select.cookies.label "Tylko ciasteczka">
+<!ENTITY select.permissions.label "Tylko uprawnienia">
+<!ENTITY select.preferences.label "Tylko preferencje">
+<!ENTITY select.passwords.label "Tylko hasła">
+<!ENTITY select.storage.label "Tylko dane">
+
+<!ENTITY domain.search.placeholder "Szukaj domen">
+<!ENTITY domain.search.key "f">
+
+<!ENTITY domain.tree.domain.label "Domena">
+
+<!ENTITY domain.ctx.forgetdomain.label "Usuń całą domenę">
+<!ENTITY domain.ctx.forgetdomain.accesskey "s">
+<!ENTITY domain.ctx.forgetglobal.label "Usuń wszystkie dane">
+<!ENTITY domain.ctx.forgetglobal.accesskey "s">
+
+<!ENTITY data.search.key "k">
+
+<!ENTITY tab.cookies.label "Ciasteczka">
+<!ENTITY tab.permissions.label "Uprawnienia">
+<!ENTITY tab.preferences.label "Ustawienia">
+<!ENTITY tab.passwords.label "Hasła">
+<!ENTITY tab.storage.label "Dane offline">
+<!ENTITY tab.formdata.label "Dane formularzy">
+<!ENTITY tab.forget.label "Usuń">
+
+<!-- cookies -->
+<!ENTITY cookies.description "Ta domena przechowuje następujące ciasteczka w pamięci przeglądarki:">
+
+<!ENTITY cookies.tree.host.label "Witryna">
+<!ENTITY cookies.tree.name.label "Nazwa ciasteczka">
+<!ENTITY cookies.tree.expires.label "Wygasa">
+
+<!ENTITY cookies.infobox.label "Informacje o wybranym ciasteczku">
+
+<!ENTITY cookies.info.name.label "Nazwa:">
+<!ENTITY cookies.info.value.label "Zawartość:">
+<!ENTITY cookies.info.host.label "Host:">
+<!ENTITY cookies.info.domain.label "Domena:">
+<!ENTITY cookies.info.path.label "Ścieżka:">
+<!ENTITY cookies.info.sendtype.label "Wyślij dla:">
+<!ENTITY cookies.info.expires.label "Wygasa:">
+
+<!ENTITY cookies.ctx.remove.label "Usuń">
+<!ENTITY cookies.ctx.remove.accesskey "U">
+<!ENTITY cookies.ctx.selectAll.label "Zaznacz wszystko">
+<!ENTITY cookies.ctx.selectAll.accesskey "w">
+
+<!ENTITY cookies.button.remove.label "Usuń">
+<!ENTITY cookies.button.remove.accesskey "U">
+
+<!ENTITY cookies.blockOnRemove.label "Usuwając nie pozwól, aby usunięte ciasteczka były później ponownie zaakceptowane">
+<!ENTITY cookies.blockOnRemove.accesskey "p">
+
+<!-- permissions -->
+<!ENTITY perm.UseDefault "Użyj domyślnych">
+<!ENTITY perm.AskAlways "Zawsze pytaj">
+<!ENTITY perm.NeverSave "Nigdy nie zapisuj">
+<!ENTITY perm.Allow "Zezwalaj">
+<!ENTITY perm.AllowSameDomain "Zezwalaj dla tej samej domeny">
+<!ENTITY perm.AllowSession "Zezwalaj na czas sesji">
+<!ENTITY perm.Block "Blokuj">
+
+<!ENTITY perm.host.placeholder "Wprowadź nazwę hosta">
+<!ENTITY perm.button.add.label "Dodaj">
+<!ENTITY perm.button.add.accesskey "D">
+
+<!-- preferences -->
+<!ENTITY prefs.description "Ustawienia zawartości są dla programu &brandShortName; sposobem zapisywania osobnych ustawień dla poszczególnych witryn.">
+
+<!ENTITY prefs.tree.host.label "Witryna">
+<!ENTITY prefs.tree.name.label "Nazwa ustawienia">
+<!ENTITY prefs.tree.value.label "Wartość">
+
+<!ENTITY prefs.ctx.remove.label "Usuń">
+<!ENTITY prefs.ctx.remove.accesskey "U">
+<!ENTITY prefs.ctx.selectAll.label "Zaznacz wszystko">
+<!ENTITY prefs.ctx.selectAll.accesskey "w">
+
+<!ENTITY prefs.button.remove.label "Usuń">
+<!ENTITY prefs.button.remove.accesskey "U">
+
+<!-- passwords -->
+<!ENTITY pwd.description "Następujące hasła są zachowywane dla następującej domeny:">
+
+<!ENTITY pwd.tree.host.label "Witryna">
+<!ENTITY pwd.tree.username.label "Nazwa użytkownika">
+<!ENTITY pwd.tree.password.label "Hasło">
+
+<!ENTITY pwd.ctx.remove.label "Usuń">
+<!ENTITY pwd.ctx.remove.accesskey "U">
+<!ENTITY pwd.ctx.copyPasswordCmd.label "Kopiuj hasło">
+<!ENTITY pwd.ctx.copyPasswordCmd.accesskey "K">
+<!ENTITY pwd.ctx.selectAll.label "Zaznacz wszystko">
+<!ENTITY pwd.ctx.selectAll.accesskey "w">
+
+<!ENTITY pwd.button.remove.label "Usuń">
+<!ENTITY pwd.button.remove.accesskey "U">
+
+<!-- storage -->
+<!ENTITY storage.description "Ta domena przechowuje następujące dane offline w pamięci przeglądarki:">
+
+<!ENTITY storage.tree.host.label "Witryna">
+<!ENTITY storage.tree.type.label "Typ">
+<!ENTITY storage.tree.size.label "Rozmiar">
+
+<!ENTITY storage.ctx.remove.label "Usuń">
+<!ENTITY storage.ctx.remove.accesskey "U">
+<!ENTITY storage.ctx.selectAll.label "Zaznacz wszystko">
+<!ENTITY storage.ctx.selectAll.accesskey "w">
+
+<!ENTITY storage.button.remove.label "Usuń">
+<!ENTITY storage.button.remove.accesskey "U">
+
+<!-- form data -->
+<!ENTITY fdata.search.placeholder "Szukaj danych w polach">
+
+<!ENTITY fdata.tree.fieldname.label "Nazwa pola">
+<!ENTITY fdata.tree.value.label "Wprowadzona wartość">
+<!ENTITY fdata.tree.usecount.label "Użycia">
+<!ENTITY fdata.tree.firstused.label "Pierwsze użycie">
+<!ENTITY fdata.tree.lastused.label "Ostatnie użycie">
+
+<!ENTITY fdata.ctx.remove.label "Usuń">
+<!ENTITY fdata.ctx.remove.accesskey "U">
+<!ENTITY fdata.ctx.selectAll.label "Zaznacz wszystko">
+<!ENTITY fdata.ctx.selectAll.accesskey "w">
+
+<!ENTITY fdata.button.remove.label "Usuń">
+<!ENTITY fdata.button.remove.accesskey "U">
+
+<!-- forget -->
+<!ENTITY forget.cookies.label "Ciasteczka">
+<!ENTITY forget.cookies.accesskey "C">
+<!ENTITY forget.permissions.label "Uprawnienia">
+<!ENTITY forget.permissions.accesskey "r">
+<!ENTITY forget.preferences.label "Ustawienia zawartości">
+<!ENTITY forget.preferences.accesskey "t">
+<!ENTITY forget.passwords.label "Hasła">
+<!ENTITY forget.passwords.accesskey "H">
+<!ENTITY forget.storage.label "Dane">
+<!ENTITY forget.storage.accesskey "D">
+<!ENTITY forget.formdata.label "Dane formularzy">
+<!ENTITY forget.formdata.accesskey "f">
+
+<!ENTITY forget.button.label "Usuń te dane">
+<!ENTITY forget.button.accesskey "s">

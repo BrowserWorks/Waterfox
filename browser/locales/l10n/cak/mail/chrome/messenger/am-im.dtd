@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountWindow.title           "Taq richinil rub'i' taqoya'l">
+<!ENTITY accountWindow.width           "300">
+<!ENTITY account.general               "Chijun">
+<!ENTITY account.advanced              "Q'axinäq taq Cha'oj">
+<!ENTITY account.name                  "Rub'i' winäq:">
+<!ENTITY account.password              "Ewan tzij:">
+<!ENTITY account.alias                 "Tz'ukun b'i'aj:">
+<!ENTITY account.newMailNotification   "Tiya' rutzijol k'ak'a' Taqoya'l">
+<!ENTITY account.autojoin              "Ruyonil-Tok pa re taq B'ey re':">
+<!ENTITY account.proxySettings.caption "Proxi taq Nuk'ulem:">
+<!ENTITY account.proxySettings.change.label     "Tijal…">
+<!ENTITY account.proxySettings.change.accessKey "j">

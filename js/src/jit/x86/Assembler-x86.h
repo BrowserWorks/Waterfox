@@ -10,7 +10,7 @@
 #include "mozilla/ArrayUtils.h"
 
 #include "jit/CompactBuffer.h"
-#include "jit/IonCode.h"
+#include "jit/JitCode.h"
 #include "jit/JitRealm.h"
 #include "jit/shared/Assembler-shared.h"
 #include "jit/x86-shared/Constants-x86-shared.h"
@@ -75,10 +75,8 @@ static constexpr Register CallTempReg4 = esi;
 static constexpr Register CallTempReg5 = edx;
 
 // We have no arg regs, so our NonArgRegs are just our CallTempReg*
-// Use "const" instead of constexpr here to work around a bug
-// of VS2015 Update 1. See bug 1229604.
-static const Register CallTempNonArgRegs[] = {edi, eax, ebx, ecx, esi, edx};
-static const uint32_t NumCallTempNonArgRegs =
+static constexpr Register CallTempNonArgRegs[] = {edi, eax, ebx, ecx, esi, edx};
+static constexpr uint32_t NumCallTempNonArgRegs =
     mozilla::ArrayLength(CallTempNonArgRegs);
 
 class ABIArgGenerator {
@@ -126,8 +124,16 @@ static constexpr Register WasmTableCallScratchReg1 = ABINonArgReg1;
 static constexpr Register WasmTableCallSigReg = ABINonArgReg2;
 static constexpr Register WasmTableCallIndexReg = ABINonArgReg3;
 
+// Register used as a scratch along the return path in the fast js -> wasm stub
+// code.  This must not overlap ReturnReg, JSReturnOperand, or WasmTlsReg. It
+// must be a volatile register.
+static constexpr Register WasmJitEntryReturnScratch = ebx;
+
 static constexpr Register OsrFrameReg = edx;
 static constexpr Register PreBarrierReg = edx;
+
+// Not enough registers for a PC register (R0-R2 use 2 registers each).
+static constexpr Register InterpreterPCReg = InvalidReg;
 
 // Registerd used in RegExpMatcher instruction (do not use JSReturnOperand).
 static constexpr Register RegExpMatcherRegExpReg = CallTempReg0;
@@ -155,11 +161,6 @@ static_assert(JitStackAlignment % sizeof(Value) == 0 &&
                   JitStackValueAlignment >= 1,
               "Stack alignment should be a non-zero multiple of sizeof(Value)");
 
-// This boolean indicates whether we support SIMD instructions flavoured for
-// this architecture or not. Rather than a method in the LIRGenerator, it is
-// here such that it is accessible from the entire codebase. Once full support
-// for SIMD is reached on all tier-1 platforms, this constant can be deleted.
-static constexpr bool SupportsSimd = false;
 static constexpr uint32_t SimdMemoryAlignment = 16;
 
 static_assert(CodeAlignment % SimdMemoryAlignment == 0,
@@ -175,8 +176,8 @@ static_assert(JitStackAlignment % SimdMemoryAlignment == 0,
               "spilled values.  Thus it should be larger than the alignment "
               "for SIMD accesses.");
 
-static const uint32_t WasmStackAlignment = SimdMemoryAlignment;
-static const uint32_t WasmTrapInstructionLength = 2;
+static constexpr uint32_t WasmStackAlignment = SimdMemoryAlignment;
+static constexpr uint32_t WasmTrapInstructionLength = 2;
 
 struct ImmTag : public Imm32 {
   explicit ImmTag(JSValueTag mask) : Imm32(int32_t(mask)) {}
@@ -186,7 +187,7 @@ struct ImmType : public ImmTag {
   explicit ImmType(JSValueType type) : ImmTag(JSVAL_TYPE_TO_TAG(type)) {}
 };
 
-static const Scale ScalePointer = TimesFour;
+static constexpr Scale ScalePointer = TimesFour;
 
 }  // namespace jit
 }  // namespace js
@@ -195,17 +196,6 @@ static const Scale ScalePointer = TimesFour;
 
 namespace js {
 namespace jit {
-
-static inline void PatchJump(CodeLocationJump jump, CodeLocationLabel label) {
-#ifdef DEBUG
-  // Assert that we're overwriting a jump instruction, either:
-  //   0F 80+cc <imm32>, or
-  //   E9 <imm32>
-  unsigned char* x = (unsigned char*)jump.raw() - 5;
-  MOZ_ASSERT(((*x >= 0x80 && *x <= 0x8F) && *(x - 1) == 0x0F) || (*x == 0xE9));
-#endif
-  X86Encoding::SetRel32(jump.raw(), label.raw());
-}
 
 static inline Operand LowWord(const Operand& op) {
   switch (op.kind()) {
@@ -262,7 +252,7 @@ class Assembler : public AssemblerX86Shared {
 
   // Copy the assembly code to the given buffer, and perform any pending
   // relocations relying on the target address.
-  void executableCopy(uint8_t* buffer, bool flushICache = true);
+  void executableCopy(uint8_t* buffer);
 
   // Actual assembly emitting functions.
 
@@ -466,30 +456,6 @@ class Assembler : public AssemblerX86Shared {
     MOZ_ASSERT(src0.size() == 16);
     MOZ_ASSERT(dest.size() == 16);
     masm.vsubpd_rr(src1.encoding(), src0.encoding(), dest.encoding());
-  }
-
-  void vpunpckldq(FloatRegister src1, FloatRegister src0, FloatRegister dest) {
-    MOZ_ASSERT(HasSSE2());
-    MOZ_ASSERT(src0.size() == 16);
-    MOZ_ASSERT(src1.size() == 16);
-    MOZ_ASSERT(dest.size() == 16);
-    masm.vpunpckldq_rr(src1.encoding(), src0.encoding(), dest.encoding());
-  }
-  void vpunpckldq(const Operand& src1, FloatRegister src0, FloatRegister dest) {
-    MOZ_ASSERT(HasSSE2());
-    MOZ_ASSERT(src0.size() == 16);
-    MOZ_ASSERT(dest.size() == 16);
-    switch (src1.kind()) {
-      case Operand::MEM_REG_DISP:
-        masm.vpunpckldq_mr(src1.disp(), src1.base(), src0.encoding(),
-                           dest.encoding());
-        break;
-      case Operand::MEM_ADDRESS32:
-        masm.vpunpckldq_mr(src1.address(), src0.encoding(), dest.encoding());
-        break;
-      default:
-        MOZ_CRASH("unexpected operand kind");
-    }
   }
 
   void fild(const Operand& src) {

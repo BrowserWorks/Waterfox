@@ -20,10 +20,7 @@
 #include "nsHttpNegotiateAuth.h"
 
 #include "nsIHttpAuthenticableChannel.h"
-#include "nsIProxiedChannel.h"
 #include "nsIAuthModule.h"
-#include "nsIServiceManager.h"
-#include "nsIPrefService.h"
 #include "nsIPrefBranch.h"
 #include "nsIProxyInfo.h"
 #include "nsIURI.h"
@@ -326,7 +323,7 @@ NS_IMPL_ISUPPORTS(GetNextTokenCompleteEvent, nsIRunnable, nsICancelable)
 // GetNextTokenRunnable
 //
 // This runnable is created by GenerateCredentialsAsync and it runs
-// in nsHttpNegotiateAuth::mNegotiateThread and calling GenerateCredentials.
+// on the background thread pool and calls GenerateCredentials.
 //
 class GetNextTokenRunnable final : public mozilla::Runnable {
   ~GetNextTokenRunnable() override = default;
@@ -436,17 +433,12 @@ nsHttpNegotiateAuth::GenerateCredentialsAsync(
   nsCOMPtr<nsIRunnable> getNextTokenRunnable = new GetNextTokenRunnable(
       authChannel, challenge, isProxyAuth, domain, username, password,
       sessionState, continuationState, cancelEvent);
-  cancelEvent.forget(aCancelable);
 
-  nsresult rv;
-  if (!mNegotiateThread) {
-    mNegotiateThread = new mozilla::LazyIdleThread(
-        DEFAULT_THREAD_TIMEOUT_MS, NS_LITERAL_CSTRING("NegotiateAuth"));
-    NS_ENSURE_TRUE(mNegotiateThread, NS_ERROR_OUT_OF_MEMORY);
-  }
-  rv = mNegotiateThread->Dispatch(getNextTokenRunnable, NS_DISPATCH_NORMAL);
+  nsresult rv = NS_DispatchBackgroundTask(
+      getNextTokenRunnable, nsIEventTarget::DISPATCH_EVENT_MAY_BLOCK);
   NS_ENSURE_SUCCESS(rv, rv);
 
+  cancelEvent.forget(aCancelable);
   return NS_OK;
 }
 
@@ -497,8 +489,10 @@ nsHttpNegotiateAuth::GenerateCredentials(
     while (*challenge == ' ') challenge++;
     len = strlen(challenge);
 
+    if (!len) return NS_ERROR_UNEXPECTED;
+
     // strip off any padding (see bug 230351)
-    while (challenge[len - 1] == '=') len--;
+    while (len && challenge[len - 1] == '=') len--;
 
     //
     // Decode the response that followed the "Negotiate" token

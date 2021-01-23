@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY adaptiveJunkLog.title "Registro de posta indesirate">
+<!ENTITY adaptiveJunkLogInfo.label "Registro de activitate del filtro adaptive de posta indesirate.">
+<!ENTITY clearLog.label "Clarar le registro">
+<!ENTITY clearLog.accesskey "C">
+<!ENTITY closeLog.label "Clauder">
+<!ENTITY closeLog.accesskey "u">

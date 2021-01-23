@@ -1,4 +1,4 @@
-// |reftest| skip-if(!xulRuntime.shell) -- dynamic-import is not enabled unconditionally
+// |reftest| async
 // This file was procedurally generated from the following sources:
 // - src/dynamic-import/ns-extensible.case
 // - src/dynamic-import/namespace/await.template
@@ -7,7 +7,6 @@ description: Module namespace objects are not extensible. (value from await reso
 esid: sec-finishdynamicimport
 features: [dynamic-import]
 flags: [generated, async]
-includes: [propertyHelper.js]
 info: |
     Runtime Semantics: FinishDynamicImport ( referencingScriptOrModule, specifier, promiseCapability, completion )
 

@@ -9,12 +9,14 @@
 #include "nsCOMPtr.h"
 #include "nsJSPrincipals.h"
 #include "nsTArray.h"
-#include "nsIContentSecurityPolicy.h"
-#include "nsIProtocolHandler.h"
 #include "nsNetUtil.h"
 #include "nsScriptSecurityManager.h"
 #include "mozilla/BasePrincipal.h"
 #include "mozilla/extensions/WebExtensionPolicy.h"
+
+namespace Json {
+class Value;
+}
 
 namespace mozilla {
 
@@ -29,14 +31,14 @@ class ContentPrincipal final : public BasePrincipal {
   NS_IMETHOD GetBaseDomain(nsACString& aBaseDomain) override;
   NS_IMETHOD GetAddonId(nsAString& aAddonId) override;
   NS_IMETHOD GetSiteOrigin(nsACString& aSiteOrigin) override;
-  bool IsCodebasePrincipal() const override { return true; }
+  bool IsContentPrincipal() const override { return true; }
 
   ContentPrincipal();
 
-  static PrincipalKind Kind() { return eCodebasePrincipal; }
+  static PrincipalKind Kind() { return eContentPrincipal; }
 
   // Init() must be called before the principal is in a usable state.
-  nsresult Init(nsIURI* aCodebase, const OriginAttributes& aOriginAttributes,
+  nsresult Init(nsIURI* aURI, const OriginAttributes& aOriginAttributes,
                 const nsACString& aOriginNoSuffix);
   nsresult Init(ContentPrincipal* aOther,
                 const OriginAttributes& aOriginAttributes);
@@ -51,7 +53,20 @@ class ContentPrincipal final : public BasePrincipal {
   extensions::WebExtensionPolicy* AddonPolicy();
 
   nsCOMPtr<nsIURI> mDomain;
-  nsCOMPtr<nsIURI> mCodebase;
+  nsCOMPtr<nsIURI> mURI;
+
+  virtual nsresult PopulateJSONObject(Json::Value& aObject) override;
+  // Serializable keys are the valid enum fields the serialization supports
+  enum SerializableKeys : uint8_t {
+    eURI = 0,
+    eDomain,
+    eSuffix,
+    eMax = eSuffix
+  };
+  typedef mozilla::BasePrincipal::KeyValT<SerializableKeys> KeyVal;
+
+  static already_AddRefed<BasePrincipal> FromProperties(
+      nsTArray<ContentPrincipal::KeyVal>& aFields);
 
  protected:
   virtual ~ContentPrincipal();

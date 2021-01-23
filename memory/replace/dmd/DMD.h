@@ -7,14 +7,14 @@
 #ifndef DMD_h___
 #define DMD_h___
 
-#include <string.h>
 #include <stdarg.h>
+#include <string.h>
+
+#include <utility>
 
 #include "mozilla/DebugOnly.h"
-#include "mozilla/Move.h"
 #include "mozilla/Types.h"
 #include "mozilla/UniquePtr.h"
-
 #include "replace_malloc_bridge.h"
 
 namespace mozilla {
@@ -222,12 +222,12 @@ inline void ClearReports() {
 //   "frameTable": {
 //     // Each property key is a frame key mentioned in the "traceTable" object.
 //     // Each property value is a string containing a frame description. Each
-//     // frame description must be in a format recognized by the stack-fixing
-//     // scripts (e.g. fix_linux_stack.py), which require a frame number at
-//     // the start. Because each stack frame description in this table can
-//     // be shared between multiple stack traces, we use a dummy value of
-//     // #00. The proper frame number can be reconstructed later by scripts
-//     // that output stack traces in a conventional non-shared format.
+//     // frame description must be in a format recognized by `fix_stacks.py`,
+//     // which requires a frame number at the start. Because each stack frame
+//     // description in this table can be shared between multiple stack
+//     // traces, we use a dummy value of #00. The proper frame number can be
+//     // reconstructed later by scripts that output stack traces in a
+//     // conventional non-shared format.
 //     "D": "#00: foo (Foo.cpp:123)",
 //     "E": "#00: bar (Bar.cpp:234)",
 //     "F": "#00: baz (Baz.cpp:345)",

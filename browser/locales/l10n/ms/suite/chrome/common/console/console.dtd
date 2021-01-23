@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY errorConsole.title   "Konsol Ralat">
+
+<!ENTITY errFile.label        "Fail Sumber:">
+<!ENTITY errLine.label        "Baris:">
+<!ENTITY errColumn.label      "Lajur:">
+
+<!ENTITY all.label            "Semua">
+<!ENTITY all.accesskey        "S">
+<!ENTITY errors.label         "Ralat">
+<!ENTITY errors.accesskey     "t">
+<!ENTITY warnings.label       "Amaran">
+<!ENTITY warnings.accesskey   "n">
+<!ENTITY messages.label       "Mesej">
+<!ENTITY messages.accesskey   "M">
+<!ENTITY clear.label          "Buang">
+<!ENTITY clear.accesskey      "u">
+<!ENTITY codeEval.label       "Kod:">
+<!ENTITY codeEval.accesskey   "o">
+<!ENTITY evaluate.label       "Menilai">
+<!ENTITY evaluate.accesskey   "i">
+<!ENTITY filter2.label        "Tapis:">
+<!ENTITY filter2.accesskey    "i">
+
+<!ENTITY copyCmd.label         "Salin">
+<!ENTITY copyCmd.accesskey     "S">
+<!ENTITY copyCmd.commandkey    "C">
+<!ENTITY sortFirst.label       "Tertib Susunan Pertama > Terakhir">
+<!ENTITY sortFirst.accesskey   "a">
+<!ENTITY sortLast.label        "Tertib Susunan Terakhir > Pertama">
+<!ENTITY sortLast.accesskey    "r">
+<!ENTITY closeCmd.commandkey   "w">
+<!ENTITY focus1.commandkey     "l">
+<!ENTITY focus2.commandkey     "d">
+
+<!ENTITY menuBar.tooltip       "Bar Menu">
+<!ENTITY modeToolbar.tooltip   "Bar alatan Mod">
+<!ENTITY entryToolbar.tooltip  "Bar alatan Entri JavaScript">
+<!ENTITY toolbarsCmd.label     "Papar/Sorok">
+<!ENTITY toolbarsCmd.accesskey "r">
+<!ENTITY toolbarMode.label     "Mod">
+<!ENTITY toolbarMode.accesskey "M">
+<!ENTITY toolbarEval.label     "Entri JavaScript">
+<!ENTITY toolbarEval.accesskey "J">

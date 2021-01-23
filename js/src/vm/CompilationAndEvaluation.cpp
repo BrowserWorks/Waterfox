@@ -18,6 +18,7 @@
 #include "jstypes.h"      // JS_PUBLIC_API
 
 #include "frontend/BytecodeCompilation.h"  // frontend::CompileGlobalScript
+#include "frontend/CompilationInfo.h"      // for frontened::CompilationInfo
 #include "frontend/FullParseHandler.h"     // frontend::FullParseHandler
 #include "frontend/ParseContext.h"         // frontend::UsedNameTracker
 #include "frontend/Parser.h"       // frontend::Parser, frontend::ParseGoal
@@ -29,12 +30,13 @@
 #include "js/Value.h"              // JS::Value
 #include "util/CompleteFile.h"     // js::FileContents, js::ReadCompleteFile
 #include "util/StringBuffer.h"     // js::StringBuffer
-#include "vm/Debugger.h"           // js::Debugger
 #include "vm/EnvironmentObject.h"  // js::CreateNonSyntacticEnvironmentChain
+#include "vm/FunctionFlags.h"      // js::FunctionFlags
 #include "vm/Interpreter.h"        // js::Execute
 #include "vm/JSContext.h"          // JSContext
 
-#include "vm/JSContext-inl.h"  // JSContext::check
+#include "debugger/DebugAPI-inl.h"  // js::DebugAPI
+#include "vm/JSContext-inl.h"       // JSContext::check
 
 using mozilla::Utf8Unit;
 
@@ -65,30 +67,17 @@ static JSScript* CompileSourceBuffer(JSContext* cx,
   AssertHeapIsIdle();
   CHECK_THREAD(cx);
 
-  frontend::GlobalScriptInfo info(cx, options, scopeKind);
-  return frontend::CompileGlobalScript(info, srcBuf);
-}
-
-static JSScript* CompileUtf8Inflating(JSContext* cx,
-                                      const ReadOnlyCompileOptions& options,
-                                      SourceText<Utf8Unit>& srcBuf) {
-  auto bytes = srcBuf.get();
-  size_t length = srcBuf.length();
-
-  auto chars = UniqueTwoByteChars(
-      UTF8CharsToNewTwoByteCharsZ(cx, UTF8Chars(bytes, length), &length,
-                                  js::MallocArena)
-          .get());
-  if (!chars) {
+  LifoAllocScope allocScope(&cx->tempLifoAlloc());
+  frontend::CompilationInfo compilationInfo(cx, allocScope, options);
+  if (!compilationInfo.init(cx)) {
     return nullptr;
   }
 
-  SourceText<char16_t> source;
-  if (!source.init(cx, std::move(chars), length)) {
-    return nullptr;
-  }
-
-  return CompileSourceBuffer(cx, options, source);
+  SourceExtent extent =
+      SourceExtent::makeGlobalExtent(srcBuf.length(), options);
+  frontend::GlobalSharedContext globalsc(cx, scopeKind, compilationInfo,
+                                         compilationInfo.directives, extent);
+  return frontend::CompileGlobalScript(compilationInfo, globalsc, srcBuf);
 }
 
 JSScript* JS::Compile(JSContext* cx, const ReadOnlyCompileOptions& options,
@@ -98,35 +87,12 @@ JSScript* JS::Compile(JSContext* cx, const ReadOnlyCompileOptions& options,
 
 JSScript* JS::Compile(JSContext* cx, const ReadOnlyCompileOptions& options,
                       SourceText<Utf8Unit>& srcBuf) {
-  return CompileUtf8Inflating(cx, options, srcBuf);
-}
-
-JSScript* JS::CompileDontInflate(JSContext* cx,
-                                 const ReadOnlyCompileOptions& options,
-                                 SourceText<Utf8Unit>& srcBuf) {
   return CompileSourceBuffer(cx, options, srcBuf);
 }
 
 JSScript* JS::CompileUtf8File(JSContext* cx,
                               const ReadOnlyCompileOptions& options,
                               FILE* file) {
-  FileContents buffer(cx);
-  if (!ReadCompleteFile(cx, file, buffer)) {
-    return nullptr;
-  }
-
-  SourceText<Utf8Unit> srcBuf;
-  if (!srcBuf.init(cx, reinterpret_cast<const char*>(buffer.begin()),
-                   buffer.length(), SourceOwnership::Borrowed)) {
-    return nullptr;
-  }
-
-  return CompileUtf8Inflating(cx, options, srcBuf);
-}
-
-JSScript* JS::CompileUtf8FileDontInflate(JSContext* cx,
-                                         const ReadOnlyCompileOptions& options,
-                                         FILE* file) {
   FileContents buffer(cx);
   if (!ReadCompleteFile(cx, file, buffer)) {
     return nullptr;
@@ -151,7 +117,7 @@ JSScript* JS::CompileUtf8Path(JSContext* cx,
 
   CompileOptions options(cx, optionsArg);
   options.setFileAndLine(filename, 1);
-  return CompileUtf8FileDontInflate(cx, options, file.fp());
+  return CompileUtf8File(cx, options, file.fp());
 }
 
 JSScript* JS::CompileForNonSyntacticScope(
@@ -163,14 +129,6 @@ JSScript* JS::CompileForNonSyntacticScope(
 }
 
 JSScript* JS::CompileForNonSyntacticScope(
-    JSContext* cx, const ReadOnlyCompileOptions& optionsArg,
-    SourceText<Utf8Unit>& srcBuf) {
-  CompileOptions options(cx, optionsArg);
-  options.setNonSyntacticScope(true);
-  return CompileUtf8Inflating(cx, options, srcBuf);
-}
-
-JSScript* JS::CompileForNonSyntacticScopeDontInflate(
     JSContext* cx, const ReadOnlyCompileOptions& optionsArg,
     SourceText<Utf8Unit>& srcBuf) {
   CompileOptions options(cx, optionsArg);
@@ -200,26 +158,22 @@ JS_PUBLIC_API bool JS_Utf8BufferIsCompilableUnit(JSContext* cx,
   // our caller doesn't try to collect more buffered source.
   bool result = true;
 
-  using frontend::CreateScriptSourceObject;
+  using frontend::CompilationInfo;
   using frontend::FullParseHandler;
   using frontend::ParseGoal;
   using frontend::Parser;
-  using frontend::UsedNameTracker;
 
   CompileOptions options(cx);
-  UsedNameTracker usedNames(cx);
-
-  Rooted<ScriptSourceObject*> sourceObject(cx);
-  sourceObject = CreateScriptSourceObject(cx, options, mozilla::Nothing());
-  if (!sourceObject) {
+  LifoAllocScope allocScope(&cx->tempLifoAlloc());
+  CompilationInfo compilationInfo(cx, allocScope, options);
+  if (!compilationInfo.init(cx)) {
     return false;
   }
 
   JS::AutoSuppressWarningReporter suppressWarnings(cx);
-  Parser<FullParseHandler, char16_t> parser(
-      cx, cx->tempLifoAlloc(), options, chars.get(), length,
-      /* foldConstants = */ true, usedNames, nullptr, nullptr, sourceObject,
-      ParseGoal::Script);
+  Parser<FullParseHandler, char16_t> parser(cx, options, chars.get(), length,
+                                            /* foldConstants = */ true,
+                                            compilationInfo, nullptr, nullptr);
   if (!parser.checkOptions() || !parser.parse()) {
     // We ran into an error. If it was because we ran out of source, we
     // return false so our caller knows to try to collect more buffered
@@ -307,7 +261,7 @@ class FunctionCompiler {
   }
 
   JSFunction* finish(HandleObjectVector envChain,
-                     const ReadOnlyCompileOptions& options) {
+                     const ReadOnlyCompileOptions& optionsArg) {
     if (!funStr_.append(FunctionConstructorFinalBrace)) {
       return nullptr;
     }
@@ -334,7 +288,7 @@ class FunctionCompiler {
 
     RootedFunction fun(
         cx_,
-        NewScriptedFunction(cx_, 0, JSFunction::INTERPRETED_NORMAL,
+        NewScriptedFunction(cx_, 0, FunctionFlags::INTERPRETED_NORMAL,
                             nameIsIdentifier_ ? HandleAtom(nameAtom_) : nullptr,
                             /* proto = */ nullptr, gc::AllocKind::FUNCTION,
                             TenuredObject, enclosingEnv));
@@ -346,6 +300,10 @@ class FunctionCompiler {
     // non-syntactic scope.
     MOZ_ASSERT_IF(!IsGlobalLexicalEnvironment(enclosingEnv),
                   enclosingScope->hasOnChain(ScopeKind::NonSyntactic));
+
+    CompileOptions options(cx_, optionsArg);
+    options.setNonSyntacticScope(
+        enclosingScope->hasOnChain(ScopeKind::NonSyntactic));
 
     if (!js::frontend::CompileStandaloneFunction(
             cx_, &fun, options, newSrcBuf, mozilla::Some(parameterListEnd_),
@@ -401,42 +359,34 @@ JS_PUBLIC_API JSFunction* JS::CompileFunctionUtf8(
   return CompileFunction(cx, envChain, options, name, nargs, argnames, srcBuf);
 }
 
-JS_PUBLIC_API bool JS::InitScriptSourceElement(JSContext* cx,
-                                               HandleScript script,
-                                               HandleObject element,
-                                               HandleString elementAttrName) {
-  MOZ_ASSERT(cx);
-  MOZ_ASSERT(CurrentThreadCanAccessRuntime(cx->runtime()));
-
-  RootedScriptSourceObject sso(
-      cx, &script->sourceObject()->as<ScriptSourceObject>());
-  return ScriptSourceObject::initElementProperties(cx, sso, element,
-                                                   elementAttrName);
-}
-
 JS_PUBLIC_API void JS::ExposeScriptToDebugger(JSContext* cx,
                                               HandleScript script) {
   MOZ_ASSERT(cx);
   MOZ_ASSERT(CurrentThreadCanAccessRuntime(cx->runtime()));
 
-  MOZ_ASSERT(script->hideScriptFromDebugger());
-  script->clearHideScriptFromDebugger();
-  Debugger::onNewScript(cx, script);
+  DebugAPI::onNewScript(cx, script);
 }
 
-MOZ_NEVER_INLINE static bool ExecuteScript(JSContext* cx, HandleObject scope,
-                                           HandleScript script, Value* rval) {
+JS_PUBLIC_API void JS::SetGetElementCallback(JSContext* cx,
+                                             JSGetElementCallback callback) {
+  MOZ_ASSERT(cx->runtime());
+  cx->runtime()->setElementCallback(cx->runtime(), callback);
+}
+
+MOZ_NEVER_INLINE static bool ExecuteScript(JSContext* cx, HandleObject envChain,
+                                           HandleScript script,
+                                           MutableHandleValue rval) {
   MOZ_ASSERT(!cx->zone()->isAtomsZone());
   AssertHeapIsIdle();
   CHECK_THREAD(cx);
-  cx->check(scope, script);
-  MOZ_ASSERT_IF(!IsGlobalLexicalEnvironment(scope),
+  cx->check(envChain, script);
+  MOZ_ASSERT_IF(!IsGlobalLexicalEnvironment(envChain),
                 script->hasNonSyntacticScope());
-  return Execute(cx, script, *scope, rval);
+  return Execute(cx, script, envChain, rval);
 }
 
 static bool ExecuteScript(JSContext* cx, HandleObjectVector envChain,
-                          HandleScript scriptArg, Value* rval) {
+                          HandleScript scriptArg, MutableHandleValue rval) {
   RootedObject env(cx);
   RootedScope dummy(cx);
   if (!CreateNonSyntacticEnvironmentChain(cx, envChain, &env, &dummy)) {
@@ -449,7 +399,6 @@ static bool ExecuteScript(JSContext* cx, HandleObjectVector envChain,
     if (!script) {
       return false;
     }
-    js::Debugger::onNewScript(cx, script);
   }
 
   return ExecuteScript(cx, env, script, rval);
@@ -459,24 +408,26 @@ MOZ_NEVER_INLINE JS_PUBLIC_API bool JS_ExecuteScript(JSContext* cx,
                                                      HandleScript scriptArg,
                                                      MutableHandleValue rval) {
   RootedObject globalLexical(cx, &cx->global()->lexicalEnvironment());
-  return ExecuteScript(cx, globalLexical, scriptArg, rval.address());
+  return ExecuteScript(cx, globalLexical, scriptArg, rval);
 }
 
 MOZ_NEVER_INLINE JS_PUBLIC_API bool JS_ExecuteScript(JSContext* cx,
                                                      HandleScript scriptArg) {
   RootedObject globalLexical(cx, &cx->global()->lexicalEnvironment());
-  return ExecuteScript(cx, globalLexical, scriptArg, nullptr);
+  RootedValue rval(cx);
+  return ExecuteScript(cx, globalLexical, scriptArg, &rval);
 }
 
 MOZ_NEVER_INLINE JS_PUBLIC_API bool JS_ExecuteScript(
     JSContext* cx, HandleObjectVector envChain, HandleScript scriptArg,
     MutableHandleValue rval) {
-  return ExecuteScript(cx, envChain, scriptArg, rval.address());
+  return ExecuteScript(cx, envChain, scriptArg, rval);
 }
 
 MOZ_NEVER_INLINE JS_PUBLIC_API bool JS_ExecuteScript(
     JSContext* cx, HandleObjectVector envChain, HandleScript scriptArg) {
-  return ExecuteScript(cx, envChain, scriptArg, nullptr);
+  RootedValue rval(cx);
+  return ExecuteScript(cx, envChain, scriptArg, &rval);
 }
 
 JS_PUBLIC_API bool JS::CloneAndExecuteScript(JSContext* cx,
@@ -490,10 +441,8 @@ JS_PUBLIC_API bool JS::CloneAndExecuteScript(JSContext* cx,
     if (!script) {
       return false;
     }
-
-    js::Debugger::onNewScript(cx, script);
   }
-  return ExecuteScript(cx, globalLexical, script, rval.address());
+  return ExecuteScript(cx, globalLexical, script, rval);
 }
 
 JS_PUBLIC_API bool JS::CloneAndExecuteScript(JSContext* cx,
@@ -507,10 +456,8 @@ JS_PUBLIC_API bool JS::CloneAndExecuteScript(JSContext* cx,
     if (!script) {
       return false;
     }
-
-    js::Debugger::onNewScript(cx, script);
   }
-  return ExecuteScript(cx, envChain, script, rval.address());
+  return ExecuteScript(cx, envChain, script, rval);
 }
 
 template <typename Unit>
@@ -527,47 +474,34 @@ static bool EvaluateSourceBuffer(JSContext* cx, ScopeKind scopeKind,
   MOZ_ASSERT_IF(!IsGlobalLexicalEnvironment(env),
                 scopeKind == ScopeKind::NonSyntactic);
 
+  options.setNonSyntacticScope(scopeKind == ScopeKind::NonSyntactic);
   options.setIsRunOnce(true);
 
   RootedScript script(cx);
   {
-    frontend::GlobalScriptInfo info(cx, options, scopeKind);
-    script = frontend::CompileGlobalScript(info, srcBuf);
+    LifoAllocScope allocScope(&cx->tempLifoAlloc());
+    frontend::CompilationInfo compilationInfo(cx, allocScope, options);
+    if (!compilationInfo.init(cx)) {
+      return false;
+    }
+
+    SourceExtent extent =
+        SourceExtent::makeGlobalExtent(srcBuf.length(), options);
+    frontend::GlobalSharedContext globalsc(cx, scopeKind, compilationInfo,
+                                           compilationInfo.directives, extent);
+    script = frontend::CompileGlobalScript(compilationInfo, globalsc, srcBuf);
     if (!script) {
       return false;
     }
   }
 
-  return Execute(cx, script, *env,
-                 options.noScriptRval ? nullptr : rval.address());
+  return Execute(cx, script, env, rval);
 }
 
 JS_PUBLIC_API bool JS::Evaluate(JSContext* cx,
                                 const ReadOnlyCompileOptions& options,
                                 SourceText<Utf8Unit>& srcBuf,
                                 MutableHandle<Value> rval) {
-  RootedObject globalLexical(cx, &cx->global()->lexicalEnvironment());
-
-  size_t length = srcBuf.length();
-  auto chars = UniqueTwoByteChars(
-      UTF8CharsToNewTwoByteCharsZ(cx, UTF8Chars(srcBuf.get(), length),
-                                  &length, js::MallocArena).get());
-  if (!chars) {
-    return false;
-  }
-
-  SourceText<char16_t> inflatedSrc;
-  if (!inflatedSrc.init(cx, std::move(chars), length)) {
-    return false;
-  }
-
-  return EvaluateSourceBuffer(cx, ScopeKind::Global, globalLexical, options,
-                              inflatedSrc, rval);
-}
-
-JS_PUBLIC_API bool JS::EvaluateDontInflate(
-    JSContext* cx, const ReadOnlyCompileOptions& options,
-    SourceText<Utf8Unit>& srcBuf, MutableHandle<Value> rval) {
   RootedObject globalLexical(cx, &cx->global()->lexicalEnvironment());
   return EvaluateSourceBuffer(cx, ScopeKind::Global, globalLexical, options,
                               srcBuf, rval);

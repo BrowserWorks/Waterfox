@@ -11,6 +11,8 @@ UNIFIED_SOURCES += [
     'RemoteSpellCheckEngineParent.cpp',
 ]
 
+DEFINES['HUNSPELL_STATIC'] = True
+
 FINAL_LIBRARY = 'xul'
 
 LOCAL_INCLUDES += [
@@ -32,3 +34,9 @@ EXPORTS.mozilla += [
      'RemoteSpellCheckEngineChild.h',
      'RemoteSpellCheckEngineParent.h',
 ]
+
+if CONFIG['CC_TYPE'] in ('clang', 'clang-cl'):
+    CXXFLAGS += [
+        # We force-include mozHunspellAllocator.h from third-party code.
+        '-Wno-undefined-var-template',
+    ]

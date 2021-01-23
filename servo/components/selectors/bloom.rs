@@ -18,11 +18,6 @@ const KEY_MASK: u32 = (1 << KEY_SIZE) - 1;
 /// A counting Bloom filter with 8-bit counters.
 pub type BloomFilter = CountingBloomFilter<BloomStorageU8>;
 
-/// A non-counting Bloom filter.
-///
-/// Effectively a counting Bloom filter with 1-bit counters.
-pub type NonCountingBloomFilter = CountingBloomFilter<BloomStorageBool>;
-
 /// A counting Bloom filter with parameterized storage to handle
 /// counters of different sizes.  For now we assume that having two hash
 /// functions is enough, but we may revisit that decision later.
@@ -69,7 +64,7 @@ pub type NonCountingBloomFilter = CountingBloomFilter<BloomStorageBool>;
 /// Similarly, using a KeySize of 10 would lead to a 4% false
 /// positive rate for N == 100 and to quite bad false positive
 /// rates for larger N.
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct CountingBloomFilter<S>
 where
     S: BloomStorage,
@@ -84,9 +79,7 @@ where
     /// Creates a new bloom filter.
     #[inline]
     pub fn new() -> Self {
-        CountingBloomFilter {
-            storage: Default::default(),
-        }
+        Default::default()
     }
 
     #[inline]

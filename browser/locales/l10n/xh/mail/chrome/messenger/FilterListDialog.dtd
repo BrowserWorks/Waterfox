@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Izihluzi Zomyalezo">
+<!ENTITY nameColumn.label "Igama Lesihluzi">
+<!ENTITY activeColumn.label "Kunikwe isakhono">
+<!ENTITY newButton.label "Okutsha...">
+<!ENTITY newButton.accesskey "O">
+<!ENTITY editButton.label "Hlela...">
+<!ENTITY editButton.accesskey "H">
+<!ENTITY deleteButton.label "Cima">
+<!ENTITY deleteButton.accesskey "m">
+<!ENTITY reorderTopButton "Move to Top">
+<!ENTITY reorderTopButton.accessKey "o">
+<!ENTITY reorderTopButton.toolTip "Rearrange filter so it executes before all others">
+<!ENTITY reorderUpButton.label "Shenxisela Phezulu">
+<!ENTITY reorderUpButton.accesskey "P">
+<!ENTITY reorderDownButton.label "Shenxisela Ezantsi">
+<!ENTITY reorderDownButton.accesskey "E">
+<!ENTITY reorderBottomButton "Move to Bottom">
+<!ENTITY reorderBottomButton.accessKey "B">
+<!ENTITY reorderBottomButton.toolTip "Rearrange filter so it executes after all others">
+<!ENTITY filterHeader.label "Izihluzi ezinikwe isakhono ziqhutyelwa phambili ngokuzenzekela ngendlela eboniswe ngezantsi.">
+<!ENTITY filtersForPrefix.label "Izihluzi ezenzelwe:">
+<!ENTITY filtersForPrefix.accesskey "I">
+<!ENTITY viewLogButton.label "Ingxelo Yolwazi Ngesihluzi">
+<!ENTITY viewLogButton.accesskey "Y">
+<!ENTITY runFilters.label "Qhubela Phambili Ngoku">
+<!ENTITY runFilters.accesskey "Q">
+<!ENTITY stopFilters.label "Nqumama">
+<!ENTITY stopFilters.accesskey "N">
+<!ENTITY folderPickerPrefix.label "Qhubela phambili izihluzi ezikhethiweyo:">
+<!ENTITY folderPickerPrefix.accesskey "k">
+<!ENTITY helpButton.label "Uncedo">
+<!ENTITY helpButton.accesskey "U">
+<!ENTITY closeCmd.key "W"> 
+<!ENTITY searchBox.emptyText "Search filters by name…">
+

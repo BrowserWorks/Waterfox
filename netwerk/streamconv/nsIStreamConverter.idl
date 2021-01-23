@@ -5,6 +5,7 @@
 
 #include "nsIStreamListener.idl"
 
+interface nsIChannel;
 interface nsIInputStream;
 
 /**
@@ -12,7 +13,7 @@ interface nsIInputStream;
  * that converts data from one type to another.
  *
  * Suppose you had code that converted plain text into HTML. You could implement
- * this interface to allow everyone else to use your conversion logic using a 
+ * this interface to allow everyone else to use your conversion logic using a
  * standard api.
  * <p>
  * <b>STREAM CONVERTER USERS</b>
@@ -76,8 +77,8 @@ interface nsIStreamConverter : nsIStreamListener {
 
     /**
      * <b>ASYNCRONOUS VERSION</b>
-     * Converts data arriving via the converter's nsIStreamListener::OnDataAvailable() 
-     * method from one type to another, pushing the converted data out to the caller 
+     * Converts data arriving via the converter's nsIStreamListener::OnDataAvailable()
+     * method from one type to another, pushing the converted data out to the caller
      * via aListener::OnDataAvailable().
      *
      * Use this method when you want to proxy (and convert) nsIStreamListener callbacks
@@ -93,6 +94,18 @@ interface nsIStreamConverter : nsIStreamListener {
                           in string aToType,
                           in nsIStreamListener aListener,
                           in nsISupports aCtxt);
+
+    /**
+     * Returns the content type that the stream listener passed to asyncConvertData will
+     * see on the channel if the conversion is being done from aFromType to * /*.
+     *
+     * @param aFromType     The type of the content prior to conversion.
+     * @param aChannel      The channel that we'd like to convert. May be null.
+     *
+     * @throws if the converter does not support conversion to * /* or if it doesn't know
+     *         the type in advance.
+     */
+    ACString getConvertedType(in ACString aFromType, in nsIChannel aChannel);
 };
 
 %{C++

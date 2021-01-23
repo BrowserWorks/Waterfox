@@ -13,10 +13,10 @@
 #include <algorithm>
 #include <gdk/gdk.h>
 #include <gdk/gdkx.h>
-#ifdef MOZ_WIDGET_GTK
-#  include <gdk/gdkkeysyms-compat.h>
-#endif
+#include <dlfcn.h>
+#include <gdk/gdkkeysyms-compat.h>
 #include <X11/XKBlib.h>
+#include "X11UndefineNone.h"
 #include "IMContextWrapper.h"
 #include "WidgetUtils.h"
 #include "keysym2ucs.h"
@@ -26,6 +26,7 @@
 #include "nsPrintfCString.h"
 #include "nsServiceManagerUtils.h"
 #include "nsWindow.h"
+#include "gfxPlatformGtk.h"
 
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/MouseEvents.h"
@@ -34,6 +35,7 @@
 
 #ifdef MOZ_WAYLAND
 #  include <sys/mman.h>
+#  include "nsWaylandDisplay.h"
 #endif
 
 namespace mozilla {
@@ -338,13 +340,17 @@ void KeymapWrapper::Shutdown() {
 KeymapWrapper::KeymapWrapper()
     : mInitialized(false),
       mGdkKeymap(gdk_keymap_get_default()),
-      mXKBBaseEventCode(0) {
+      mXKBBaseEventCode(0),
+      mOnKeysChangedSignalHandle(0),
+      mOnDirectionChangedSignalHandle(0) {
   MOZ_LOG(gKeymapWrapperLog, LogLevel::Info,
           ("%p Constructor, mGdkKeymap=%p", this, mGdkKeymap));
 
   g_object_ref(mGdkKeymap);
 
-  if (GDK_IS_X11_DISPLAY(gdk_display_get_default())) InitXKBExtension();
+  if (gfxPlatformGtk::GetPlatform()->IsX11Display()) {
+    InitXKBExtension();
+  }
 
   Init();
 }
@@ -361,10 +367,13 @@ void KeymapWrapper::Init() {
   mModifierKeys.Clear();
   memset(mModifierMasks, 0, sizeof(mModifierMasks));
 
-  if (GDK_IS_X11_DISPLAY(gdk_display_get_default())) InitBySystemSettingsX11();
+  if (gfxPlatformGtk::GetPlatform()->IsX11Display()) {
+    InitBySystemSettingsX11();
+  }
 #ifdef MOZ_WAYLAND
-  else
+  else {
     InitBySystemSettingsWayland();
+  }
 #endif
 
   gdk_window_add_filter(nullptr, FilterEvents, this);
@@ -445,9 +454,14 @@ void KeymapWrapper::InitBySystemSettingsX11() {
   MOZ_LOG(gKeymapWrapperLog, LogLevel::Info,
           ("%p InitBySystemSettingsX11, mGdkKeymap=%p", this, mGdkKeymap));
 
-  g_signal_connect(mGdkKeymap, "keys-changed", (GCallback)OnKeysChanged, this);
-  g_signal_connect(mGdkKeymap, "direction-changed",
-                   (GCallback)OnDirectionChanged, this);
+  if (!mOnKeysChangedSignalHandle) {
+    mOnKeysChangedSignalHandle = g_signal_connect(
+        mGdkKeymap, "keys-changed", (GCallback)OnKeysChanged, this);
+  }
+  if (!mOnDirectionChangedSignalHandle) {
+    mOnDirectionChangedSignalHandle = g_signal_connect(
+        mGdkKeymap, "direction-changed", (GCallback)OnDirectionChanged, this);
+  }
 
   Display* display = gdk_x11_display_get_xdisplay(gdk_display_get_default());
 
@@ -757,11 +771,7 @@ static const struct wl_registry_listener keyboard_registry_listener = {
     gdk_registry_handle_global, gdk_registry_handle_global_remove};
 
 void KeymapWrapper::InitBySystemSettingsWayland() {
-  // Available as of GTK 3.8+
-  static auto sGdkWaylandDisplayGetWlDisplay = (wl_display * (*)(GdkDisplay*))
-      dlsym(RTLD_DEFAULT, "gdk_wayland_display_get_wl_display");
-  wl_display* display =
-      sGdkWaylandDisplayGetWlDisplay(gdk_display_get_default());
+  wl_display* display = WaylandDisplayGetWLDisplay();
   wl_registry_add_listener(wl_display_get_registry(display),
                            &keyboard_registry_listener, this);
 }
@@ -769,11 +779,11 @@ void KeymapWrapper::InitBySystemSettingsWayland() {
 
 KeymapWrapper::~KeymapWrapper() {
   gdk_window_remove_filter(nullptr, FilterEvents, this);
-  if (GDK_IS_X11_DISPLAY(gdk_display_get_default())) {
-    g_signal_handlers_disconnect_by_func(mGdkKeymap,
-                                         FuncToGpointer(OnKeysChanged), this);
-    g_signal_handlers_disconnect_by_func(
-        mGdkKeymap, FuncToGpointer(OnDirectionChanged), this);
+  if (mOnKeysChangedSignalHandle) {
+    g_signal_handler_disconnect(mGdkKeymap, mOnKeysChangedSignalHandle);
+  }
+  if (mOnDirectionChangedSignalHandle) {
+    g_signal_handler_disconnect(mGdkKeymap, mOnDirectionChangedSignalHandle);
   }
   g_object_unref(mGdkKeymap);
   MOZ_LOG(gKeymapWrapperLog, LogLevel::Info, ("%p Destructor", this));

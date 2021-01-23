@@ -37,10 +37,10 @@ const sources = {
   },
 };
 
-const threadClient = {
+const threadFront = {
   sourceContents: async ({ source }) => sources[source],
-  getBreakpointPositions: async () => ({}),
-  getBreakableLines: async () => [],
+  getSourceActorBreakpointPositions: async () => ({}),
+  getSourceActorBreakableLines: async () => [],
 };
 
 describe("project text search", () => {
@@ -54,7 +54,7 @@ describe("project text search", () => {
   });
 
   it("should search all the loaded sources based on the query", async () => {
-    const { dispatch, getState, cx } = createStore(threadClient);
+    const { dispatch, getState, cx } = createStore(threadFront);
     const mockQuery = "foo";
 
     await dispatch(actions.newGeneratedSource(makeSource("foo1")));
@@ -78,7 +78,7 @@ describe("project text search", () => {
       getOriginalLocation: async loc => loc,
     };
 
-    const { dispatch, getState, cx } = createStore(threadClient, {}, mockMaps);
+    const { dispatch, getState, cx } = createStore(threadFront, {}, mockMaps);
 
     const source1 = await dispatch(
       actions.newGeneratedSource(makeSource("bar"))
@@ -94,7 +94,7 @@ describe("project text search", () => {
   });
 
   it("should search a specific source", async () => {
-    const { dispatch, getState, cx } = createStore(threadClient);
+    const { dispatch, getState, cx } = createStore(threadFront);
 
     const source = await dispatch(
       actions.newGeneratedSource(makeSource("bar"))
@@ -118,7 +118,7 @@ describe("project text search", () => {
   });
 
   it("should clear all the search results", async () => {
-    const { dispatch, getState, cx } = createStore(threadClient);
+    const { dispatch, getState, cx } = createStore(threadFront);
     const mockQuery = "foo";
 
     await dispatch(actions.newGeneratedSource(makeSource("foo1")));
@@ -133,13 +133,13 @@ describe("project text search", () => {
 
   it("should set the status properly", () => {
     const { dispatch, getState, cx } = createStore();
-    const mockStatus = "Fetching";
+    const mockStatus = "FETCHING";
     dispatch(actions.updateSearchStatus(cx, mockStatus));
     expect(getTextSearchStatus(getState())).toEqual(mockStatus);
   });
 
   it("should close project search", async () => {
-    const { dispatch, getState, cx } = createStore(threadClient);
+    const { dispatch, getState, cx } = createStore(threadFront);
     const mockQuery = "foo";
 
     await dispatch(actions.newGeneratedSource(makeSource("foo1")));

@@ -11,17 +11,21 @@
 #include "mozilla/dom/DOMTypes.h"
 #include "mozilla/Logging.h"
 #include "mozilla/StaticPtr.h"
+#ifdef MOZ_WAYLAND
+#  include <gdk/gdk.h>
+#  include <gdk/gdkx.h>
+#  include <gdk/gdkwayland.h>
+#endif /* MOZ_WAYLAND */
 
 static mozilla::LazyLogModule sScreenLog("WidgetScreen");
 
-namespace mozilla {
-namespace widget {
+namespace mozilla::widget {
 
 NS_IMPL_ISUPPORTS(ScreenManager, nsIScreenManager)
 
-ScreenManager::ScreenManager() {}
+ScreenManager::ScreenManager() = default;
 
-ScreenManager::~ScreenManager() {}
+ScreenManager::~ScreenManager() = default;
 
 static StaticRefPtr<ScreenManager> sSingleton;
 
@@ -104,6 +108,15 @@ void ScreenManager::CopyScreensToAllRemotesIfIsParent() {
 NS_IMETHODIMP
 ScreenManager::ScreenForRect(int32_t aX, int32_t aY, int32_t aWidth,
                              int32_t aHeight, nsIScreen** aOutScreen) {
+#ifdef MOZ_WAYLAND
+  static bool inWayland = gdk_display_get_default() &&
+                          !GDK_IS_X11_DISPLAY(gdk_display_get_default());
+
+  if (inWayland) {
+    NS_WARNING("Getting screen in wayland, primary display will be returned.");
+  }
+#endif
+
   if (mScreenList.IsEmpty()) {
     MOZ_LOG(sScreenLog, LogLevel::Warning,
             ("No screen available. This can happen in xpcshell."));
@@ -206,5 +219,27 @@ ScreenManager::GetPrimaryScreen(nsIScreen** aPrimaryScreen) {
   return NS_OK;
 }
 
-}  // namespace widget
-}  // namespace mozilla
+NS_IMETHODIMP
+ScreenManager::GetTotalScreenPixels(int64_t* aTotalScreenPixels) {
+  MOZ_ASSERT(aTotalScreenPixels);
+
+  if (mScreenList.IsEmpty()) {
+    MOZ_LOG(sScreenLog, LogLevel::Warning,
+            ("No screen available. This can happen in xpcshell."));
+    *aTotalScreenPixels = 0;
+    return NS_OK;
+  }
+
+  int64_t pixels = 0;
+  for (auto& screen : mScreenList) {
+    int32_t x, y, width, height;
+    x = y = width = height = 0;
+    screen->GetRect(&x, &y, &width, &height);
+    pixels += width * height;
+  }
+
+  *aTotalScreenPixels = pixels;
+  return NS_OK;
+}
+
+}  // namespace mozilla::widget

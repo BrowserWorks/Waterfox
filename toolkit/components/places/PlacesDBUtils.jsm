@@ -5,6 +5,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 const BYTES_PER_MEBIBYTE = 1048576;
+const MS_PER_DAY = 86400000;
+// Threshold value for removeOldCorruptDBs.
+// Corrupt DBs older than this value are removed.
+const CORRUPT_DB_RETAIN_DAYS = 14;
 
 const { XPCOMUtils } = ChromeUtils.import(
   "resource://gre/modules/XPCOMUtils.jsm"
@@ -44,6 +48,7 @@ var PlacesDBUtils = {
       this._refreshUI,
       this.originFrecencyStats,
       this.incrementalVacuum,
+      this.removeOldCorruptDBs,
     ];
     let telemetryStartTime = Date.now();
     let taskStatusMap = await PlacesDBUtils.runTasks(tasks);
@@ -144,11 +149,16 @@ var PlacesDBUtils = {
     return PlacesUtils.withConnectionWrapper(
       "PlacesDBUtils: invalidate caches",
       async db => {
-        let idsWithInvalidGuidsRows = await db.execute(`
-        SELECT id FROM moz_bookmarks
-        WHERE guid IS NULL OR
-              NOT IS_VALID_GUID(guid)`);
-        for (let row of idsWithInvalidGuidsRows) {
+        let idsWithStaleGuidsRows = await db.execute(
+          `SELECT id FROM moz_bookmarks
+           WHERE guid IS NULL OR
+                 NOT IS_VALID_GUID(guid) OR
+                 (type = :bookmark_type AND fk IS NULL) OR
+                 (type <> :bookmark_type AND fk NOT NULL) OR
+                 type IS NULL`,
+          { bookmark_type: PlacesUtils.bookmarks.TYPE_BOOKMARK }
+        );
+        for (let row of idsWithStaleGuidsRows) {
           let id = row.getResultByName("id");
           PlacesUtils.invalidateCachedGuidFor(id);
         }
@@ -208,9 +218,9 @@ var PlacesDBUtils = {
     return PlacesUtils.withConnectionWrapper(
       "PlacesDBUtils: incrementalVacuum",
       async db => {
-        let count = (await db.execute(
-          "PRAGMA favicons.freelist_count"
-        ))[0].getResultByIndex(0);
+        let count = (
+          await db.execute("PRAGMA favicons.freelist_count")
+        )[0].getResultByIndex(0);
         if (count < 10) {
           logs.push(
             `The favicons database has only ${count} free pages, not vacuuming.`
@@ -220,9 +230,9 @@ var PlacesDBUtils = {
             `The favicons database has ${count} free pages, vacuuming.`
           );
           await db.execute("PRAGMA favicons.incremental_vacuum");
-          count = (await db.execute(
-            "PRAGMA favicons.freelist_count"
-          ))[0].getResultByIndex(0);
+          count = (
+            await db.execute("PRAGMA favicons.freelist_count")
+          )[0].getResultByIndex(0);
           logs.push(
             `The database has been vacuumed and has now ${count} free pages.`
           );
@@ -402,27 +412,7 @@ var PlacesDBUtils = {
         )`,
       },
 
-      // D.1 remove items without a valid place
-      // If fk IS NULL we fix them in D.7
-      {
-        query: `DELETE FROM moz_bookmarks WHERE guid NOT IN (
-          :rootGuid, :menuGuid, :toolbarGuid, :unfiledGuid, :tagsGuid  /* skip roots */
-        ) AND id IN (
-          SELECT b.id FROM moz_bookmarks b
-          WHERE fk NOT NULL AND b.type = :bookmark_type
-            AND NOT EXISTS (SELECT url FROM moz_places WHERE id = b.fk LIMIT 1)
-        )`,
-        params: {
-          bookmark_type: PlacesUtils.bookmarks.TYPE_BOOKMARK,
-          rootGuid: PlacesUtils.bookmarks.rootGuid,
-          menuGuid: PlacesUtils.bookmarks.menuGuid,
-          toolbarGuid: PlacesUtils.bookmarks.toolbarGuid,
-          unfiledGuid: PlacesUtils.bookmarks.unfiledGuid,
-          tagsGuid: PlacesUtils.bookmarks.tagsGuid,
-        },
-      },
-
-      // D.2 remove items that are not uri bookmarks from tag containers
+      // D.1 remove items that are not uri bookmarks from tag containers
       {
         query: `DELETE FROM moz_bookmarks WHERE guid NOT IN (
           :rootGuid, :menuGuid, :toolbarGuid, :unfiledGuid, :tagsGuid  /* skip roots */
@@ -443,7 +433,7 @@ var PlacesDBUtils = {
         },
       },
 
-      // D.3 remove empty tags
+      // D.2 remove empty tags
       {
         query: `DELETE FROM moz_bookmarks WHERE guid NOT IN (
           :rootGuid, :menuGuid, :toolbarGuid, :unfiledGuid, :tagsGuid  /* skip roots */
@@ -464,7 +454,7 @@ var PlacesDBUtils = {
         },
       },
 
-      // D.4 move orphan items to unsorted folder
+      // D.3 move orphan items to unsorted folder
       {
         query: `UPDATE moz_bookmarks SET
           parent = (SELECT id FROM moz_bookmarks WHERE guid = :unfiledGuid)
@@ -484,14 +474,40 @@ var PlacesDBUtils = {
         },
       },
 
-      // D.6 fix wrong item types
+      // D.4 Insert tombstones for any synced items with the wrong type.
+      // Sync doesn't support changing the type of an existing item while
+      // keeping its GUID. To avoid confusing other clients, we insert
+      // tombstones for all synced items with the wrong type, so that we
+      // can reupload them with the correct type and a new GUID.
+      {
+        query: `INSERT OR IGNORE INTO moz_bookmarks_deleted(guid, dateRemoved)
+                SELECT guid, :dateRemoved
+                FROM moz_bookmarks
+                WHERE syncStatus <> :syncStatus AND
+                      ((type IN (:folder_type, :separator_type) AND
+                        fk NOTNULL) OR
+                       (type = :bookmark_type AND
+                        fk IS NULL) OR
+                       type IS NULL)`,
+        params: {
+          dateRemoved: PlacesUtils.toPRTime(new Date()),
+          syncStatus: PlacesUtils.bookmarks.SYNC_STATUS.NEW,
+          bookmark_type: PlacesUtils.bookmarks.TYPE_BOOKMARK,
+          folder_type: PlacesUtils.bookmarks.TYPE_FOLDER,
+          separator_type: PlacesUtils.bookmarks.TYPE_SEPARATOR,
+        },
+      },
+
+      // D.5 fix wrong item types
       // Folders and separators should not have an fk.
-      // If they have a valid fk convert them to bookmarks. Later in D.9 we
-      // will move eventual children to unsorted bookmarks.
+      // If they have a valid fk, convert them to bookmarks, and give them new
+      // GUIDs. If the item has children, we'll move them to the unfiled root
+      // in D.8. If the `fk` doesn't exist in `moz_places`, we'll remove the
+      // item in D.9.
       {
         query: `UPDATE moz_bookmarks
-        SET type = :bookmark_type,
-            syncChangeCounter = syncChangeCounter + 1
+        SET guid = GENERATE_GUID(),
+            type = :bookmark_type
         WHERE guid NOT IN (
           :rootGuid, :menuGuid, :toolbarGuid, :unfiledGuid, :tagsGuid  /* skip roots */
         ) AND id IN (
@@ -511,13 +527,13 @@ var PlacesDBUtils = {
         },
       },
 
-      // D.7 fix wrong item types
+      // D.6 fix wrong item types
       // Bookmarks should have an fk, if they don't have any, convert them to
       // folders.
       {
         query: `UPDATE moz_bookmarks
-        SET type = :folder_type,
-            syncChangeCounter = syncChangeCounter + 1
+        SET guid = GENERATE_GUID(),
+            type = :folder_type
         WHERE guid NOT IN (
           :rootGuid, :menuGuid, :toolbarGuid, :unfiledGuid, :tagsGuid  /* skip roots */
         ) AND id IN (
@@ -536,7 +552,28 @@ var PlacesDBUtils = {
         },
       },
 
-      // D.9 fix wrong parents
+      // D.7 fix wrong item types
+      // `moz_bookmarks.type` doesn't have a NOT NULL constraint, so it's
+      // possible for an item to not have a type (bug 1586427).
+      {
+        query: `UPDATE moz_bookmarks
+        SET guid = GENERATE_GUID(),
+            type = CASE WHEN fk NOT NULL THEN :bookmark_type ELSE :folder_type END
+        WHERE guid NOT IN (
+         :rootGuid, :menuGuid, :toolbarGuid, :unfiledGuid, :tagsGuid  /* skip roots */
+        ) AND type IS NULL`,
+        params: {
+          bookmark_type: PlacesUtils.bookmarks.TYPE_BOOKMARK,
+          folder_type: PlacesUtils.bookmarks.TYPE_FOLDER,
+          rootGuid: PlacesUtils.bookmarks.rootGuid,
+          menuGuid: PlacesUtils.bookmarks.menuGuid,
+          toolbarGuid: PlacesUtils.bookmarks.toolbarGuid,
+          unfiledGuid: PlacesUtils.bookmarks.unfiledGuid,
+          tagsGuid: PlacesUtils.bookmarks.tagsGuid,
+        },
+      },
+
+      // D.8 fix wrong parents
       // Items cannot have separators or other bookmarks
       // as parent, if they have bad parent move them to unsorted bookmarks.
       {
@@ -554,6 +591,28 @@ var PlacesDBUtils = {
         params: {
           bookmark_type: PlacesUtils.bookmarks.TYPE_BOOKMARK,
           separator_type: PlacesUtils.bookmarks.TYPE_SEPARATOR,
+          rootGuid: PlacesUtils.bookmarks.rootGuid,
+          menuGuid: PlacesUtils.bookmarks.menuGuid,
+          toolbarGuid: PlacesUtils.bookmarks.toolbarGuid,
+          unfiledGuid: PlacesUtils.bookmarks.unfiledGuid,
+          tagsGuid: PlacesUtils.bookmarks.tagsGuid,
+        },
+      },
+
+      // D.9 remove items without a valid place
+      // We've already converted folders with an `fk` to bookmarks in D.5,
+      // and bookmarks without an `fk` to folders in D.6. However, the `fk`
+      // might not reference an existing `moz_places.id`, even if it's
+      // NOT NULL. This statement takes care of those.
+      {
+        query: `DELETE FROM moz_bookmarks AS b
+        WHERE b.guid NOT IN (
+          :rootGuid, :menuGuid, :toolbarGuid, :unfiledGuid, :tagsGuid  /* skip roots */
+        ) AND b.fk NOT NULL
+          AND b.type = :bookmark_type
+          AND NOT EXISTS (SELECT 1 FROM moz_places h WHERE h.id = b.fk)`,
+        params: {
+          bookmark_type: PlacesUtils.bookmarks.TYPE_BOOKMARK,
           rootGuid: PlacesUtils.bookmarks.rootGuid,
           menuGuid: PlacesUtils.bookmarks.menuGuid,
           toolbarGuid: PlacesUtils.bookmarks.toolbarGuid,
@@ -829,7 +888,7 @@ var PlacesDBUtils = {
     // synced bookmarks.
     cleanupStatements.unshift({
       query: `CREATE TEMP TRIGGER IF NOT EXISTS moz_bm_sync_change_temp_trigger
-      AFTER UPDATE of guid, parent, position ON moz_bookmarks
+      AFTER UPDATE OF guid, parent, position ON moz_bookmarks
       FOR EACH ROW
       BEGIN
         UPDATE moz_bookmarks
@@ -1192,10 +1251,9 @@ var PlacesDBUtils = {
       let val;
       if ("query" in probe) {
         let db = await PlacesUtils.promiseDBConnection();
-        val = (await db.execute(
-          probe.query,
-          probe.params || {}
-        ))[0].getResultByIndex(0);
+        val = (
+          await db.execute(probe.query, probe.params || {})
+        )[0].getResultByIndex(0);
       }
       // Report the result of the probe through Telemetry.
       // The resulting promise cannot reject.
@@ -1205,6 +1263,56 @@ var PlacesDBUtils = {
       probeValues[probe.histogram] = val;
       Services.telemetry.getHistogramById(probe.histogram).add(val);
     }
+  },
+
+  /**
+   * Remove old and useless places.sqlite.corrupt files.
+   *
+   * @resolves to an array of logs for this task.
+   *
+   */
+  async removeOldCorruptDBs() {
+    let logs = [];
+    logs.push(
+      "> Cleanup profile from places.sqlite.corrupt files older than " +
+        CORRUPT_DB_RETAIN_DAYS +
+        " days."
+    );
+    let re = /^places\.sqlite(-\d)?\.corrupt$/;
+    let currentTime = Date.now();
+    let iterator = new OS.File.DirectoryIterator(OS.Constants.Path.profileDir);
+    try {
+      await iterator.forEach(async entry => {
+        let lastModificationDate;
+        if (!entry.isDir && !entry.isSymLink && re.test(entry.name)) {
+          if ("winLastWriteDate" in entry) {
+            // Under Windows, additional information allows us to sort files immediately
+            // without having to perform additional I/O.
+            lastModificationDate = entry.winLastWriteDate.getTime();
+          } else {
+            // Under other OSes, we need to call OS.File.stat
+            let info = await OS.File.stat(entry.path);
+            lastModificationDate = info.lastModificationDate.getTime();
+          }
+          try {
+            // Convert milliseconds to days.
+            let days = Math.ceil(
+              (currentTime - lastModificationDate) / MS_PER_DAY
+            );
+            if (days >= CORRUPT_DB_RETAIN_DAYS || days < 0) {
+              await OS.File.remove(entry.path);
+            }
+          } catch (error) {
+            logs.push("Could not remove file: " + entry.path, error);
+          }
+        }
+      });
+    } catch (error) {
+      logs.push("removeOldCorruptDBs failed", error);
+    } finally {
+      iterator.close();
+    }
+    return logs;
   },
 
   /**

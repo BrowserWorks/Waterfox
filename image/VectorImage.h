@@ -14,6 +14,8 @@ class nsIRequest;
 class gfxDrawable;
 
 namespace mozilla {
+struct MediaFeatureChange;
+
 namespace image {
 
 struct SVGDrawingParameters;
@@ -32,6 +34,7 @@ class VectorImage final : public ImageResource, public nsIStreamListener {
   // (no public constructor - use ImageFactory)
 
   // Methods inherited from Image
+  void MediaFeatureValuesChangedAllDocuments(const MediaFeatureChange&) final;
   nsresult GetNativeSizes(nsTArray<gfx::IntSize>& aNativeSizes) const override;
   size_t GetNativeSizesLength() const override;
   virtual size_t SizeOfSourceWithComputedFallback(
@@ -66,8 +69,6 @@ class VectorImage final : public ImageResource, public nsIStreamListener {
   // Callbacks for SVGLoadEventListener.
   void OnSVGDocumentLoaded();
   void OnSVGDocumentError();
-
-  virtual void ReportUseCounters() override;
 
  protected:
   explicit VectorImage(nsIURI* aURI = nullptr);

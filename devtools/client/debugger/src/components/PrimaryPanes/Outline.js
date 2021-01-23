@@ -8,7 +8,9 @@ import React, { Component } from "react";
 import { showMenu } from "devtools-contextmenu";
 import { connect } from "../../utils/connect";
 import { score as fuzzaldrinScore } from "fuzzaldrin-plus";
+const classnames = require("classnames");
 
+import { containsPosition, positionAfter } from "../../utils/ast";
 import { copyToTheClipboard } from "../../utils/clipboard";
 import { findFunctionText } from "../../utils/function";
 
@@ -16,7 +18,7 @@ import actions from "../../actions";
 import {
   getSelectedSourceWithContent,
   getSymbols,
-  getSelectedLocation,
+  getCursorPosition,
   getContext,
 } from "../../selectors";
 
@@ -25,36 +27,42 @@ import "./Outline.css";
 import PreviewFunction from "../shared/PreviewFunction";
 import { uniq, sortBy } from "lodash";
 
+import type { Symbols } from "../../reducers/ast";
+
 import type {
-  AstLocation,
-  SymbolDeclarations,
   SymbolDeclaration,
   FunctionDeclaration,
 } from "../../workers/parser";
-import type { Source, Context } from "../../types";
+import type { SourceWithContent, Context, SourceLocation } from "../../types";
 
-type Props = {
-  cx: Context,
-  symbols: SymbolDeclarations,
-  selectedSource: ?Source,
+type OwnProps = {|
   alphabetizeOutline: boolean,
   onAlphabetizeClick: Function,
-  selectedLocation: any,
+|};
+type Props = {
+  cx: Context,
+  symbols: ?Symbols,
+  selectedSource: ?SourceWithContent,
+  alphabetizeOutline: boolean,
+  onAlphabetizeClick: Function,
   getFunctionText: Function,
+  cursorPosition: ?SourceLocation,
   selectLocation: typeof actions.selectLocation,
   flashLineRange: typeof actions.flashLineRange,
 };
 
 type State = {
   filter: string,
+  focusedItem: ?SymbolDeclaration,
 };
+
+// Set higher to make the fuzzaldrin filter more specific
+const FUZZALDRIN_FILTER_THRESHOLD = 15000;
 
 /**
  * Check whether the name argument matches the fuzzy filter argument
  */
 const filterOutlineItem = (name: string, filter: string) => {
-  // Set higher to make the fuzzaldrin filter more specific
-  const FUZZALDRIN_FILTER_THRESHOLD = 15000;
   if (!filter) {
     return true;
   }
@@ -66,39 +74,93 @@ const filterOutlineItem = (name: string, filter: string) => {
   return fuzzaldrinScore(name, filter) > FUZZALDRIN_FILTER_THRESHOLD;
 };
 
+// Checks if an element is visible inside its parent element
+function isVisible(element: HTMLLIElement, parent: HTMLElement) {
+  const parentRect = parent.getBoundingClientRect();
+  const elementRect = element.getBoundingClientRect();
+
+  const parentTop = parentRect.top;
+  const parentBottom = parentRect.bottom;
+  const elTop = elementRect.top;
+  const elBottom = elementRect.bottom;
+
+  return parentTop < elTop && parentBottom > elBottom;
+}
+
 export class Outline extends Component<Props, State> {
+  focusedElRef: ?React$ElementRef<"li">;
+
   constructor(props: Props) {
     super(props);
-    (this: any).updateFilter = this.updateFilter.bind(this);
-    this.state = { filter: "" };
+    this.focusedElRef = null;
+    this.state = { filter: "", focusedItem: null };
   }
 
-  selectItem(location: AstLocation) {
+  componentDidUpdate(prevProps: Props) {
+    const { cursorPosition, symbols } = this.props;
+    if (
+      cursorPosition &&
+      symbols &&
+      cursorPosition !== prevProps.cursorPosition
+    ) {
+      this.setFocus(cursorPosition);
+    }
+
+    if (
+      this.focusedElRef &&
+      !isVisible(this.focusedElRef, this.refs.outlineList)
+    ) {
+      this.focusedElRef.scrollIntoView({ block: "center" });
+    }
+  }
+
+  setFocus(cursorPosition: SourceLocation) {
+    const { symbols } = this.props;
+    let classes = [];
+    let functions = [];
+
+    if (symbols && !symbols.loading) {
+      ({ classes, functions } = symbols);
+    }
+
+    // Find items that enclose the selected location
+    const enclosedItems = [...classes, ...functions].filter(
+      ({ name, location }) =>
+        name != "anonymous" && containsPosition(location, cursorPosition)
+    );
+
+    if (enclosedItems.length == 0) {
+      return this.setState({ focusedItem: null });
+    }
+
+    // Find the closest item to the selected location to focus
+    const closestItem = enclosedItems.reduce((item, closest) =>
+      positionAfter(item.location, closest.location) ? item : closest
+    );
+
+    this.setState({ focusedItem: closestItem });
+  }
+
+  selectItem(selectedItem: ?SymbolDeclaration) {
     const { cx, selectedSource, selectLocation } = this.props;
-    if (!selectedSource) {
+    if (!selectedSource || !selectedItem) {
       return;
     }
 
     selectLocation(cx, {
       sourceId: selectedSource.id,
-      line: location.start.line,
-      column: location.start.column,
+      line: selectedItem.location.start.line,
+      column: selectedItem.location.start.column,
     });
+
+    this.setState({ focusedItem: selectedItem });
   }
 
   onContextMenu(event: SyntheticEvent<HTMLElement>, func: SymbolDeclaration) {
     event.stopPropagation();
     event.preventDefault();
 
-    const {
-      selectedSource,
-      getFunctionText,
-      flashLineRange,
-      selectedLocation,
-    } = this.props;
-
-    const copyFunctionKey = L10N.getStr("copyFunction.accesskey");
-    const copyFunctionLabel = L10N.getStr("copyFunction.label");
+    const { selectedSource, flashLineRange, getFunctionText } = this.props;
 
     if (!selectedSource) {
       return;
@@ -109,14 +171,14 @@ export class Outline extends Component<Props, State> {
 
     const copyFunctionItem = {
       id: "node-menu-copy-function",
-      label: copyFunctionLabel,
-      accesskey: copyFunctionKey,
+      label: L10N.getStr("copyFunction.label"),
+      accesskey: L10N.getStr("copyFunction.accesskey"),
       disabled: !functionText,
       click: () => {
         flashLineRange({
-          start: func.location.start.line,
+          start: sourceLine,
           end: func.location.end.line,
-          sourceId: selectedLocation.sourceId,
+          sourceId: selectedSource.id,
         });
         return copyToTheClipboard(functionText);
       },
@@ -125,9 +187,9 @@ export class Outline extends Component<Props, State> {
     showMenu(event, menuOptions);
   }
 
-  updateFilter(filter: string) {
+  updateFilter = (filter: string) => {
     this.setState({ filter: filter.trim() });
-  }
+  };
 
   renderPlaceholder() {
     const placeholderMessage = this.props.selectedSource
@@ -144,13 +206,20 @@ export class Outline extends Component<Props, State> {
   }
 
   renderFunction(func: FunctionDeclaration) {
+    const { focusedItem } = this.state;
     const { name, location, parameterNames } = func;
+    const isFocused = focusedItem === func;
 
     return (
       <li
         key={`${name}:${location.start.line}:${location.start.column}`}
-        className="outline-list__element"
-        onClick={() => this.selectItem(location)}
+        className={classnames("outline-list__element", { focused: isFocused })}
+        ref={el => {
+          if (isFocused) {
+            this.focusedElRef = el;
+          }
+        }}
+        onClick={() => this.selectItem(func)}
         onContextMenu={e => this.onContextMenu(e, func)}
       >
         <span className="outline-list__element-icon">λ</span>
@@ -159,28 +228,47 @@ export class Outline extends Component<Props, State> {
     );
   }
 
+  renderClassHeader(klass: string) {
+    return (
+      <div>
+        <span className="keyword">class</span> {klass}
+      </div>
+    );
+  }
+
   renderClassFunctions(klass: ?string, functions: FunctionDeclaration[]) {
-    if (klass == null || functions.length == 0) {
+    const { symbols } = this.props;
+
+    if (!symbols || symbols.loading || klass == null || functions.length == 0) {
       return null;
     }
 
+    const { focusedItem } = this.state;
     const classFunc = functions.find(func => func.name === klass);
     const classFunctions = functions.filter(func => func.klass === klass);
-    const classInfo = this.props.symbols.classes.find(c => c.name === klass);
+    const classInfo = symbols.classes.find(c => c.name === klass);
 
-    const heading = classFunc ? (
-      <h2>{this.renderFunction(classFunc)}</h2>
-    ) : (
-      <h2
-        onClick={classInfo ? () => this.selectItem(classInfo.location) : null}
-      >
-        <span className="keyword">class</span> {klass}
-      </h2>
-    );
+    const item = classFunc || classInfo;
+    const isFocused = focusedItem === item;
 
     return (
-      <li className="outline-list__class" key={klass}>
-        {heading}
+      <li
+        className="outline-list__class"
+        ref={el => {
+          if (isFocused) {
+            this.focusedElRef = el;
+          }
+        }}
+        key={klass}
+      >
+        <h2
+          className={classnames("", { focused: isFocused })}
+          onClick={() => this.selectItem(item)}
+        >
+          {classFunc
+            ? this.renderFunction(classFunc)
+            : this.renderClassHeader(klass)}
+        </h2>
         <ul className="outline-list__class-list">
           {classFunctions.map(func => this.renderFunction(func))}
         </ul>
@@ -190,26 +278,28 @@ export class Outline extends Component<Props, State> {
 
   renderFunctions(functions: Array<FunctionDeclaration>) {
     const { filter } = this.state;
-    let classes = uniq(functions.map(func => func.klass));
+    let classes = uniq(functions.map(({ klass }) => klass));
     let namedFunctions = functions.filter(
-      func =>
-        filterOutlineItem(func.name, filter) &&
-        !func.klass &&
-        !classes.includes(func.name)
+      ({ name, klass }) =>
+        filterOutlineItem(name, filter) && !klass && !classes.includes(name)
     );
 
     let classFunctions = functions.filter(
-      func => filterOutlineItem(func.name, filter) && !!func.klass
+      ({ name, klass }) => filterOutlineItem(name, filter) && !!klass
     );
 
     if (this.props.alphabetizeOutline) {
       namedFunctions = sortBy(namedFunctions, "name");
-      classes = sortBy(classes, "klass");
+      classes = classes.sort();
       classFunctions = sortBy(classFunctions, "name");
     }
 
     return (
-      <ul className="outline-list devtools-monospace">
+      <ul
+        ref="outlineList"
+        className="outline-list devtools-monospace"
+        dir="ltr"
+      >
         {namedFunctions.map(func => this.renderFunction(func))}
         {classes.map(klass => this.renderClassFunctions(klass, classFunctions))}
       </ul>
@@ -218,7 +308,7 @@ export class Outline extends Component<Props, State> {
 
   renderFooter() {
     return (
-      <div className="outline-footer bottom">
+      <div className="outline-footer">
         <button
           onClick={this.props.onAlphabetizeClick}
           className={this.props.alphabetizeOutline ? "active" : ""}
@@ -242,7 +332,7 @@ export class Outline extends Component<Props, State> {
     }
 
     const symbolsToDisplay = symbols.functions.filter(
-      func => func.name != "anonymous"
+      ({ name }) => name != "anonymous"
     );
 
     if (symbolsToDisplay.length === 0) {
@@ -263,15 +353,13 @@ export class Outline extends Component<Props, State> {
 
 const mapStateToProps = state => {
   const selectedSource = getSelectedSourceWithContent(state);
-  const symbols = selectedSource
-    ? getSymbols(state, selectedSource.source)
-    : null;
+  const symbols = selectedSource ? getSymbols(state, selectedSource) : null;
 
   return {
     cx: getContext(state),
     symbols,
-    selectedSource: selectedSource && selectedSource.source,
-    selectedLocation: getSelectedLocation(state),
+    selectedSource: (selectedSource: ?SourceWithContent),
+    cursorPosition: getCursorPosition(state),
     getFunctionText: line => {
       if (selectedSource) {
         return findFunctionText(line, selectedSource, symbols);
@@ -282,10 +370,7 @@ const mapStateToProps = state => {
   };
 };
 
-export default connect(
-  mapStateToProps,
-  {
-    selectLocation: actions.selectLocation,
-    flashLineRange: actions.flashLineRange,
-  }
-)(Outline);
+export default connect<Props, OwnProps, _, _, _, _>(mapStateToProps, {
+  selectLocation: actions.selectLocation,
+  flashLineRange: actions.flashLineRange,
+})(Outline);

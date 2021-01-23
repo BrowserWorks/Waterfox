@@ -112,7 +112,7 @@
 /* back and forward button */
 #back-button,
 #forward-button {
-  list-style-image: url("chrome://browser/skin/arrow-left.svg");
+  list-style-image: url("chrome://global/skin/icons/arrow-left.svg");
 }
 
 #back-button {
@@ -138,7 +138,7 @@
 
 /* organize button */
 #organizeButton {
-  list-style-image: url("chrome://browser/skin/settings.svg");
+  list-style-image: url("chrome://global/skin/icons/settings.svg");
 }
 
 /* view button */
@@ -171,7 +171,7 @@
 
 #placeContent > treechildren::-moz-tree-cell,
 #placeContent > treechildren::-moz-tree-column {
-  border-right: 1px solid #d7dad7;
+  border-inline-end: 1px solid #d7dad7;
 }
 
 #placeContent > treechildren::-moz-tree-cell(separator) {

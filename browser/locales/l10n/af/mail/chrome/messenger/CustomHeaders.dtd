@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Pasmaak kopskrifte">
+<!ENTITY addButton.label "Voeg by">
+<!ENTITY addButton.accesskey "V">
+<!ENTITY removeButton.label "Verwyder">
+<!ENTITY removeButton.accesskey "V">
+<!ENTITY newMsgHeader.label "Nuwe boodskapkopskrif:">
+<!ENTITY newMsgHeader.accesskey "N">

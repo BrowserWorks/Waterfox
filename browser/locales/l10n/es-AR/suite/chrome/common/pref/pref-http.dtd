@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.http.title                     "Red HTTP">
+
+<!-- Network-->
+<!ENTITY prefDirect.label                    "Opciones de conexión directa">
+<!ENTITY prefProxy.label                     "Opciones de conexión a través de proxy">
+<!ENTITY prefEnableHTTP10.label              "Usar HTTP 1.0">
+<!ENTITY prefEnableHTTP10.accesskey          "U">
+<!ENTITY prefEnableHTTP10Proxy.accesskey     "S">
+<!ENTITY prefEnableHTTP11.label              "Usar HTTP 1.1">
+<!ENTITY prefEnableHTTP11.accesskey          "U">
+<!ENTITY prefEnableHTTP11Proxy.accesskey     "T">
+<!ENTITY prefPara                            "Las conexiones HTTP pueden ser calibradas usando estas opciones para mejorar tanto el rendimiento como la compatibilidad. Algunos servidores proxy, por ejemplo, pueden necesitar HTTP/1.0 (vea las notas de la versión para más detalles).">
+<!ENTITY prefUseragent.label                 "Cadena de agente de usuario">
+<!ENTITY prefFirefoxCompat.label             "Publicitar compatibilidad de Waterfox">
+<!ENTITY prefFirefoxCompat.accesskey         "F">
+<!ENTITY prefLightningShow.label             "Anunciar instalación de Lightning">
+<!ENTITY prefLightningShow.accesskey         "L">
+<!ENTITY prefCompatWarning                   "ADVERTENCIA: deshabilitar estas opciones puede hacer que sitios web o servicios no funcionen correctamente.">
+<!ENTITY prefFirefoxStrict.label             "Identificar como Waterfox">
+<!ENTITY prefFirefoxStrict.accesskey         "I">
+<!ENTITY prefFirefoxNone.label               "Identificar como SeaMonkey">
+<!ENTITY prefFirefoxNone.accesskey           "M">
+<!ENTITY prefFirefoxCompat2.label            "Identifcar como SeaMonkey y anunciar la compatibilidad de Waterfox">
+<!ENTITY prefFirefoxCompat2.accesskey        "F">
+<!ENTITY prefCompatWarning2.desc             "ADVERTENCIA: deshabilitar estas opciones puede hacer que sitios web o servicios no funcionen correctamente.">

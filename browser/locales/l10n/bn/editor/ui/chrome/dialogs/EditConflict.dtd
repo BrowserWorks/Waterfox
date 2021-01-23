@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "সম্পাদনা পরিবর্তন, নির্বাচন করুন">
+<!ENTITY conflictWarning.label "এই পৃষ্ঠাটি আরেকটি প্রোগ্রাম দ্বারা পরিবর্তিত হয়েছে, কিন্তু রচনাকারকে আপনার করা কিছু অসংরক্ষিত পরিবর্তন আছে।">
+<!ENTITY conflictResolve.label "কোন সংস্করণ রাখা হবে তা নির্বাচন করুন:">
+<!ENTITY keepCurrentPageButton.label "বর্তমান পৃষ্ঠায় করা পরিবর্তনগুলো রাখা হবে">
+<!ENTITY useOtherPageButton.label "অন্যান্য পরিবর্তনসহ বর্তমান পৃষ্ঠা প্রতিস্থাপন করা হবে">

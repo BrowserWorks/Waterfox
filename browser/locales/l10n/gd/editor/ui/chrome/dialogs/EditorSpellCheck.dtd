@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Ceartaich an litreachadh">
+
+<!ENTITY misspelledWord.label "Facal air a dhroch litreachadh:">
+<!ENTITY wordEditField.label "Cuir na leanas 'na àite:">
+<!ENTITY wordEditField.accessKey "n">
+<!ENTITY checkwordButton.label "Ceartaich am facal seo">
+<!ENTITY checkwordButton.accessKey "C">
+<!ENTITY suggestions.label "Molaidhean:">
+<!ENTITY suggestions.accessKey "M">
+<!ENTITY ignoreButton.label "Leig seachad">
+<!ENTITY ignoreButton.accessKey "i">
+<!ENTITY ignoreAllButton.label "Leig seachad gach aon dhiubh">
+<!ENTITY ignoreAllButton.accessKey "n">
+<!ENTITY replaceButton.label "Cuir 'na àite">
+<!ENTITY replaceButton.accessKey "r">
+<!ENTITY replaceAllButton.label "Cuir an àite gach aon dhiubh">
+<!ENTITY replaceAllButton.accessKey "a">
+<!ENTITY stopButton.label "Sguir dheth">
+<!ENTITY stopButton.accessKey "u">
+<!ENTITY userDictionary.label "Am faclair pearsanta:">
+<!ENTITY moreDictionaries.label "Luchdaich a-nuas barrachd fhaclairean…">
+<!ENTITY addToUserDictionaryButton.label "Cuir ris facal">
+<!ENTITY addToUserDictionaryButton.accessKey "C">
+<!ENTITY editUserDictionaryButton.label "Deasaich…">
+<!ENTITY editUserDictionaryButton.accessKey "e">
+<!ENTITY recheckButton2.label "Ath-cheartaich an teacsa">
+<!ENTITY recheckButton2.accessKey "t">
+<!ENTITY closeButton.label "Dùin">
+<!ENTITY closeButton.accessKey "D">
+<!ENTITY sendButton.label "Cuir">
+<!ENTITY sendButton.accessKey "C">
+<!ENTITY languagePopup.label "Cànan:">
+<!ENTITY languagePopup.accessKey "C">

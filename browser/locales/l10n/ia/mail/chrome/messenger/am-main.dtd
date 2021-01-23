@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Parametros de contos">
+<!ENTITY accountName.label "Nomine del conto:">
+<!ENTITY accountName.accesskey "N">
+<!ENTITY identityTitle.label "Identitate predefinite">
+<!ENTITY identityDesc.label "Cata conto ha un identitate, que es le informationes que le alteres vide quando illes lege tu messages.">
+<!ENTITY name.label "Tu nomine:">
+<!ENTITY name.accesskey "T">
+<!ENTITY email.label "Adresse de email:">
+<!ENTITY email.accesskey "e">
+<!ENTITY catchAll.label "Replicar ab iste identitate quando le titulos de consignation concorda:">
+<!ENTITY catchAll.accesskey "c">
+<!ENTITY replyTo.label "Adresse pro responsas:">
+<!ENTITY replyTo.accesskey "s">
+<!ENTITY replyTo.placeholder "Le destinatarios respondera a iste altere adresse">
+<!ENTITY organization.label "Organisation:">
+<!ENTITY organization.accesskey "O">
+<!ENTITY signatureText.label "Testo pro firma:">
+<!ENTITY signatureText.accesskey "x">
+<!ENTITY signatureHtml.label "Usar HTML (e.g., &lt;b&gt;nigrate&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "L">
+<!ENTITY signatureFile.label "Annexar le firma ab un file in vice que (texto, HTML o imagine):">
+<!ENTITY signatureFile.accesskey "x">
+<!ENTITY edit.label "Rediger…">
+<!ENTITY choose.label "Eliger…">
+<!ENTITY choose.accesskey "E">
+<!ENTITY editVCard.label "Rediger carta…">
+<!ENTITY editVCard.accesskey "d">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Annexar mi vCard al message">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "Gerer identitates…">
+<!ENTITY manageIdentities.accesskey "G">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Servitor de exito (SMTP):">
+<!ENTITY smtpName.accesskey "u">
+<!ENTITY smtpDefaultServer.label "Usar le servitor predefinite">
+
+<!ENTITY smtpServerEdit.label "Rediger servitor SMTP…">
+<!ENTITY smtpServerEdit.accesskey "P">

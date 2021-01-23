@@ -3,6 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 @namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
+@namespace html url("http://www.w3.org/1999/xhtml");
 
 findbar {
   border-top: 1px solid ThreeDShadow;
@@ -27,9 +28,8 @@ findbar[noanim] {
 }
 
 .findbar-container {
+  padding-block: 4px;
   padding-inline-start: 8px;
-  padding-top: 4px;
-  padding-bottom: 4px;
 }
 
 .findbar-closebutton {
@@ -40,7 +40,7 @@ findbar[noanim] {
 
 /* Don't apply theme colors on findbar when header image is applied to avoid
 contrast issues, see bug 1506913 */
-:root[lwtheme-image] findbar {
+html|html[lwtheme-image] findbar {
   --lwt-toolbar-field-background-color: initial;
   --lwt-toolbar-field-color: initial;
   --lwt-toolbar-field-border-color: initial;
@@ -48,39 +48,40 @@ contrast issues, see bug 1506913 */
   --lwt-toolbar-field-focus-color: initial;
 }
 
-.findbar-textbox {
+html|input.findbar-textbox {
   -moz-appearance: none;
   background-color: -moz-Field;
   border: 1px solid var(--lwt-toolbar-field-border-color, ThreeDShadow);
   border-start-start-radius: 2px;
   border-end-start-radius: 2px;
+  outline: none;
   margin: 0;
   padding: 2px 5px;
   width: 14em;
 }
 
-.findbar-textbox:-moz-lwtheme {
+html|input.findbar-textbox:-moz-lwtheme {
   background-color: var(--lwt-toolbar-field-background-color, -moz-Field);
   color: var(--lwt-toolbar-field-color, -moz-FieldText);
 }
 
-.findbar-textbox[focused="true"] {
+html|input.findbar-textbox:focus {
   background-color: var(--lwt-toolbar-field-focus, var(--lwt-toolbar-field-background-color, -moz-Field));
   color: var(--lwt-toolbar-field-focus-color, var(--lwt-toolbar-field-color, -moz-FieldText));
   border-color: var(--toolbar-field-focus-border-color, Highlight);
 }
 
-.findbar-textbox[status="notfound"] {
+html|input.findbar-textbox[status="notfound"] {
   background-color: rgba(255,0,57,.3);
   color: inherit;
 }
 
-.findbar-textbox[flash="true"] {
+html|input.findbar-textbox[flash="true"] {
   background-color: rgba(255,233,0,.3);
   color: inherit;
 }
 
-.findbar-textbox.minimal {
+html|input.findbar-textbox.minimal {
   border-radius: 2px;
 }
 
@@ -110,8 +111,7 @@ contrast issues, see bug 1506913 */
 
 .findbar-find-previous {
   list-style-image: url(chrome://global/skin/icons/find-previous-arrow.svg);
-  border-right-width: 0;
-  border-left-width: 0;
+  border-inline-width: 0;
   margin-inline-end: 0;
 }
 
@@ -138,12 +138,14 @@ contrast issues, see bug 1506913 */
 
 .findbar-highlight,
 .findbar-case-sensitive,
+.findbar-match-diacritics,
 .findbar-entire-word {
   margin-inline-start: 5px;
 }
 
 .findbar-highlight > .toolbarbutton-icon,
 .findbar-case-sensitive > .toolbarbutton-icon,
+.findbar-match-diacritics > .toolbarbutton-icon,
 .findbar-entire-word > .toolbarbutton-icon {
   display: none;
 }

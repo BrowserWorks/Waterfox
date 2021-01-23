@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Bildeegenskaper">
+
+<!ENTITY pixelsPopup.value "piksler">
+
+<!-- These are in the Location tab panel -->
+<!ENTITY locationEditField.label "Bildeadresse:">
+<!ENTITY locationEditField.accessKey "B">
+<!ENTITY locationEditField.tooltip "Skriv inn bildets filnavn eller adresse">
+<!ENTITY locationEditField.shortenedDataURI "Forkortet data-URI (ved kopiering vil hele URI-en bli plassert på utklippstavlen)">
+<!ENTITY title.label "Verktøytips:">
+<!ENTITY title.accessKey "V">
+<!ENTITY title.tooltip "HTML-attributtet «title» viser et verktøytips">
+<!ENTITY altText.label "Alternativ tekst:">
+<!ENTITY altText.accessKey "A">
+<!ENTITY altTextEditField.tooltip "Skriv inn tekst for å vise istedenfor bildet">
+<!ENTITY noAltText.label "Ikke bruk alternativ tekst">
+<!ENTITY noAltText.accessKey "I">
+
+<!ENTITY previewBox.label "Bildeforhåndsvisning">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+<!ENTITY actualSize.label "Virkelig størrelse:">
+<!ENTITY actualSizeRadio.label "Virkelig størrelse">
+<!ENTITY actualSizeRadio.accessKey "V">
+<!ENTITY actualSizeRadio.tooltip "Gå tilbake til bildets virkelige størrelse">
+<!ENTITY customSizeRadio.label "Egendefinert størrelse">
+<!ENTITY customSizeRadio.accessKey "E">
+<!ENTITY customSizeRadio.tooltip "Endre bildets størrelse som vist på siden">
+<!ENTITY heightEditField.label "Høyde:">
+<!ENTITY heightEditField.accessKey "H">
+<!ENTITY widthEditField.label "Bredde:">
+<!ENTITY widthEditField.accessKey "r">
+<!ENTITY constrainCheckbox.label "Begrens">
+<!ENTITY constrainCheckbox.accessKey "B">
+<!ENTITY constrainCheckbox.tooltip "Behold bildets størrelsesforhold">
+
+<!-- These controls are in the Image Map box of the expanded area -->
+<!ENTITY imagemapBox.label "Bildekart">
+<!ENTITY removeImageMapButton.label "Fjern">
+<!ENTITY removeImageMapButton.accessKey "F">
+
+<!-- These are the options for image alignment -->
+<!ENTITY alignment.label "Juster tekst etter bilde">
+<!ENTITY bottomPopup.value "Ved bunnen">
+<!ENTITY topPopup.value "Ved toppen">
+<!ENTITY centerPopup.value "I midten">
+<!ENTITY wrapRightPopup.value "Bryt til høyre">
+<!ENTITY wrapLeftPopup.value "Bryt til venstre">
+
+<!-- These controls are in the Spacing Box -->
+<!ENTITY spacingBox.label "Mellomrom">
+<!ENTITY leftRightEditField.label "Venstre og høyre:">
+<!ENTITY leftRightEditField.accessKey "V">
+<!ENTITY topBottomEditField.label "Topp og bunn:">
+<!ENTITY topBottomEditField.accessKey "T">
+<!ENTITY borderEditField.label "Heltrukket kantlinje">
+<!ENTITY borderEditField.accessKey "H">
+
+<!-- These controls are in the Link Box -->
+<!ENTITY showImageLinkBorder.label "Vis kantlinje rund lenket bilde">
+<!ENTITY showImageLinkBorder.accessKey "V">
+<!ENTITY LinkAdvancedEditButton.label "Lenk avansert redigering …">
+<!ENTITY LinkAdvancedEditButton.accessKey "L">
+<!ENTITY LinkAdvancedEditButton.tooltip "Legg til eller endre HTML-attributter, stilattributter og JavaScript">
+
+<!-- These tabs are currently used in the image input dialog -->
+<!ENTITY imageInputTab.label "Skjema">
+<!ENTITY imageLocationTab.label "Adresse">
+<!ENTITY imageDimensionsTab.label "Størrelsesforhold">
+<!ENTITY imageAppearanceTab.label "Utseende">
+<!ENTITY imageLinkTab.label "Lenke">

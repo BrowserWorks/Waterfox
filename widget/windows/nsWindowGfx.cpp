@@ -41,13 +41,12 @@ using mozilla::plugins::PluginInstanceParent;
 #include "nsIWidgetListener.h"
 #include "mozilla/Unused.h"
 #include "nsDebug.h"
-#include "nsIXULRuntime.h"
 
 #include "mozilla/gfx/GPUProcessManager.h"
 #include "mozilla/layers/CompositorBridgeParent.h"
 #include "mozilla/layers/CompositorBridgeChild.h"
 #include "ClientLayerManager.h"
-#include "WinCompositorWidget.h"
+#include "InProcessWinCompositorWidget.h"
 
 #include "nsUXThemeData.h"
 #include "nsUXThemeConstants.h"
@@ -204,6 +203,21 @@ bool nsWindow::OnPaint(HDC aDC, uint32_t aNestingLevel) {
     return true;
   }
 
+  // Clear window by transparent black when compositor window is used in GPU
+  // process and non-client area rendering by DWM is enabled.
+  // It is for showing non-client area rendering. See nsWindow::UpdateGlass().
+  if (HasGlass() && GetLayerManager()->AsKnowsCompositor() &&
+      GetLayerManager()->AsKnowsCompositor()->GetUseCompositorWnd()) {
+    HDC hdc;
+    RECT rect;
+    hdc = ::GetWindowDC(mWnd);
+    ::GetWindowRect(mWnd, &rect);
+    ::MapWindowPoints(nullptr, mWnd, (LPPOINT)&rect, 2);
+    ::FillRect(hdc, &rect,
+               reinterpret_cast<HBRUSH>(GetStockObject(BLACK_BRUSH)));
+    ReleaseDC(mWnd, hdc);
+  }
+
   if (GetLayerManager()->AsKnowsCompositor() &&
       !mBounds.IsEqualEdges(mLastPaintBounds)) {
     // Do an early async composite so that we at least have something on the
@@ -213,7 +227,9 @@ bool nsWindow::OnPaint(HDC aDC, uint32_t aNestingLevel) {
   mLastPaintBounds = mBounds;
 
 #ifdef MOZ_XUL
-  if (!aDC && (eTransparencyTransparent == mTransparencyMode)) {
+  if (!aDC &&
+      (GetLayerManager()->GetBackendType() == LayersBackend::LAYERS_BASIC) &&
+      (eTransparencyTransparent == mTransparencyMode)) {
     // For layered translucent windows all drawing should go to memory DC and no
     // WM_PAINT messages are normally generated. To support asynchronous
     // painting we force generation of WM_PAINT messages by invalidating window
@@ -226,7 +242,7 @@ bool nsWindow::OnPaint(HDC aDC, uint32_t aNestingLevel) {
 
     // We're guaranteed to have a widget proxy since we called
     // GetLayerManager().
-    aDC = mCompositorWidgetDelegate->GetTransparentDC();
+    aDC = mBasicLayersSurface->GetTransparentDC();
   }
 #endif
 
@@ -318,10 +334,9 @@ bool nsWindow::OnPaint(HDC aDC, uint32_t aNestingLevel) {
 
         RECT paintRect;
         ::GetClientRect(mWnd, &paintRect);
-        RefPtr<DrawTarget> dt =
-            gfxPlatform::GetPlatform()->CreateDrawTargetForSurface(
-                targetSurface, IntSize(paintRect.right - paintRect.left,
-                                       paintRect.bottom - paintRect.top));
+        RefPtr<DrawTarget> dt = gfxPlatform::CreateDrawTargetForSurface(
+            targetSurface, IntSize(paintRect.right - paintRect.left,
+                                   paintRect.bottom - paintRect.top));
         if (!dt || !dt->IsValid()) {
           gfxWarning()
               << "nsWindow::OnPaint failed in CreateDrawTargetForSurface";
@@ -419,7 +434,28 @@ bool nsWindow::OnPaint(HDC aDC, uint32_t aNestingLevel) {
   return result;
 }
 
-IntSize nsWindowGfx::GetIconMetrics(IconSizeType aSizeType) {
+// This override of CreateCompositor is to add support for sending the IPC
+// call for RequesetFxrOutput as soon as the compositor for this widget is
+// available.
+void nsWindow::CreateCompositor() {
+  nsWindowBase::CreateCompositor();
+
+  if (mRequestFxrOutputPending) {
+    GetRemoteRenderer()->SendRequestFxrOutput();
+  }
+}
+
+void nsWindow::RequestFxrOutput() {
+  if (GetRemoteRenderer() != nullptr) {
+    MOZ_CRASH("RequestFxrOutput should happen before Compositor is created.");
+  } else {
+    // The compositor isn't ready, so indicate to make the IPC call when
+    // it is available.
+    mRequestFxrOutputPending = true;
+  }
+}
+
+LayoutDeviceIntSize nsWindowGfx::GetIconMetrics(IconSizeType aSizeType) {
   int32_t width = ::GetSystemMetrics(sIconMetrics[aSizeType].xMetric);
   int32_t height = ::GetSystemMetrics(sIconMetrics[aSizeType].yMetric);
 
@@ -427,18 +463,21 @@ IntSize nsWindowGfx::GetIconMetrics(IconSizeType aSizeType) {
     width = height = sIconMetrics[aSizeType].defaultSize;
   }
 
-  return IntSize(width, height);
+  return LayoutDeviceIntSize(width, height);
 }
 
 nsresult nsWindowGfx::CreateIcon(imgIContainer* aContainer, bool aIsCursor,
-                                 uint32_t aHotspotX, uint32_t aHotspotY,
-                                 IntSize aScaledSize, HICON* aIcon) {
+                                 LayoutDeviceIntPoint aHotspot,
+                                 LayoutDeviceIntSize aScaledSize,
+                                 HICON* aIcon) {
+  MOZ_ASSERT(aHotspot.x >= 0 && aHotspot.y >= 0);
   MOZ_ASSERT((aScaledSize.width > 0 && aScaledSize.height > 0) ||
              (aScaledSize.width == 0 && aScaledSize.height == 0));
 
   // Get the image data
   RefPtr<SourceSurface> surface = aContainer->GetFrame(
-      imgIContainer::FRAME_CURRENT, imgIContainer::FLAG_SYNC_DECODE);
+      imgIContainer::FRAME_CURRENT,
+      imgIContainer::FLAG_SYNC_DECODE | imgIContainer::FLAG_ASYNC_NOTIFY);
   NS_ENSURE_TRUE(surface, NS_ERROR_NOT_AVAILABLE);
 
   IntSize frameSize = surface->GetSize();
@@ -522,8 +561,8 @@ nsresult nsWindowGfx::CreateIcon(imgIContainer* aContainer, bool aIsCursor,
 
   ICONINFO info = {0};
   info.fIcon = !aIsCursor;
-  info.xHotspot = aHotspotX;
-  info.yHotspot = aHotspotY;
+  info.xHotspot = aHotspot.x;
+  info.yHotspot = aHotspot.y;
   info.hbmMask = mbmp;
   info.hbmColor = bmp;
 

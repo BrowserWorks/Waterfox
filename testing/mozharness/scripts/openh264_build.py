@@ -81,10 +81,6 @@ class OpenH264Build(TransferMixin, VCSScript, TooltoolMixin):
             "action": "store_true",
             "default": False,
         }],
-        [["--scm-level"], {
-            "dest": "scm_level",
-            "help": "dummy option",
-        }],
         [["--branch"], {
             "dest": "branch",
             "help": "dummy option",
@@ -123,6 +119,7 @@ class OpenH264Build(TransferMixin, VCSScript, TooltoolMixin):
         if self.abs_dirs:
             return self.abs_dirs
         dirs = super(OpenH264Build, self).query_abs_dirs()
+        dirs['abs_src_dir'] = os.environ['GECKO_PATH']
         dirs['abs_upload_dir'] = os.path.join(dirs['abs_work_dir'], 'upload')
         self.abs_dirs = dirs
         return self.abs_dirs
@@ -134,7 +131,7 @@ class OpenH264Build(TransferMixin, VCSScript, TooltoolMixin):
             return
         dirs = self.query_abs_dirs()
         self.mkdir_p(dirs['abs_work_dir'])
-        manifest = os.path.join(dirs['abs_work_dir'], 'src', 'testing',
+        manifest = os.path.join(dirs['abs_src_dir'], 'testing',
                                 'mozharness', 'configs', 'openh264',
                                 'tooltool-manifests',
                                 c['tooltool_manifest_file'])
@@ -142,7 +139,7 @@ class OpenH264Build(TransferMixin, VCSScript, TooltoolMixin):
         try:
             self.tooltool_fetch(
                 manifest=manifest,
-                output_dir=os.path.join(dirs['abs_work_dir'], 'src'),
+                output_dir=os.path.join(dirs['abs_work_dir']),
                 cache=c.get('tooltool_cache')
             )
         except KeyError:
@@ -174,7 +171,6 @@ class OpenH264Build(TransferMixin, VCSScript, TooltoolMixin):
         self.fatal("can't determine platform")
 
     def query_make_params(self):
-        dirs = self.query_abs_dirs()
         retval = []
         if self.config['debug_build']:
             retval.append('BUILDTYPE=Debug')
@@ -198,7 +194,7 @@ class OpenH264Build(TransferMixin, VCSScript, TooltoolMixin):
                     retval.append("ARCH=arm")
                 retval.append('TARGET=invalid')
                 retval.append('NDKLEVEL=%s' % self.config['min_sdk'])
-                retval.append('NDKROOT=%s/src/android-ndk' % dirs['abs_work_dir'])
+                retval.append('NDKROOT=%s/android-ndk' % os.environ['MOZ_FETCHES_DIR'])
                 retval.append('NDK_TOOLCHAIN_VERSION=clang')
             if self.config["operating_system"] == "darwin":
                 retval.append('OS=darwin')
@@ -267,7 +263,7 @@ class OpenH264Build(TransferMixin, VCSScript, TooltoolMixin):
                       os.path.join(dirs['abs_work_dir'], 'openh264'))
 
             # Retrieve in-tree version of gmp-api
-            self.copytree(os.path.join(dirs['abs_work_dir'], 'src', 'dom',
+            self.copytree(os.path.join(dirs['abs_src_dir'], 'dom',
                                        'media', 'gmp', 'gmp-api'),
                           os.path.join(repo_dir, 'gmp-api'))
 
@@ -285,7 +281,7 @@ class OpenH264Build(TransferMixin, VCSScript, TooltoolMixin):
                 # os.symlink is not available on Windows until we switch to
                 # Python 3.
                 os.system('ln -s %s %s' % (
-                          os.path.join(dirs['abs_work_dir'], 'src', 'clang',
+                          os.path.join(os.environ['MOZ_FETCHES_DIR'], 'clang',
                                        'bin', 'clang.exe'),
                           os.path.join(openh264_dir, 'cpp')))
             return 0
@@ -376,8 +372,8 @@ class OpenH264Build(TransferMixin, VCSScript, TooltoolMixin):
         if self.config.get('partial_env'):
             env = self.query_env(self.config['partial_env'])
         kwargs = dict(cwd=repo_dir, env=env)
-        dump_syms = os.path.join(dirs['abs_work_dir'], 'src', c['dump_syms_binary'])
-        self.chmod(dump_syms, 0755)
+        dump_syms = os.path.join(dirs['abs_work_dir'], c['dump_syms_binary'])
+        self.chmod(dump_syms, 0o755)
         python = self.query_exe('python2.7')
         cmd = [python, os.path.join(external_tools_path, 'packagesymbols.py'),
                '--symbol-zip', symbol_zip_path,

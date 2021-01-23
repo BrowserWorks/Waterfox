@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Taq Ruchayub'al Tzijol">
+<!ENTITY nameColumn.label "Chayub'äl B'i'aj">
+<!ENTITY activeColumn.label "Tzijon">
+<!ENTITY newButton.label "K'ak'a'…">
+<!ENTITY newButton.accesskey "K">
+<!ENTITY newButton.popupCopy.label "Tiwachib'ëx…">
+<!ENTITY newButton.popupCopy.accesskey "w">
+<!ENTITY editButton.label "Tinuk'…">
+<!ENTITY editButton.accesskey "n">
+<!ENTITY deleteButton.label "Tiyuj">
+<!ENTITY deleteButton.accesskey "y">
+<!ENTITY reorderTopButton "Tisilöx pa Rutikirib'al">
+<!ENTITY reorderTopButton.accessKey "s">
+<!ENTITY reorderTopButton.toolTip "Ticholajïx chik ri chayub'äl richin tunab'eyij rusamajib'exik chi kiwäch ri ch'aqa' chik">
+<!ENTITY reorderUpButton.label "Tijotob'äx">
+<!ENTITY reorderUpButton.accesskey "j">
+<!ENTITY reorderDownButton.label "Tiqasäx Qa">
+<!ENTITY reorderDownButton.accesskey "Q">
+<!ENTITY reorderBottomButton "Tisilöx pa Ruk'isib'al">
+<!ENTITY reorderBottomButton.accessKey "R">
+<!ENTITY reorderBottomButton.toolTip "Ticholajïx chik ri chayub'äl richin tunab'eyij rusamajib'exik chi kij ri ch'aqa' chik">
+<!ENTITY filterHeader.label "Ri etzijon taq chayub'äl ruyonil xkesamajib'ëx rik'in ri rucholajen nik'ut ikim.">
+<!ENTITY filtersForPrefix.label "Taq ruchayub'al:">
+<!ENTITY filtersForPrefix.accesskey "T">
+<!ENTITY viewLogButton.label "Tichayüx Tz'ib'anïk">
+<!ENTITY viewLogButton.accesskey "T">
+<!ENTITY runFilters.label "Tib'an Wakami">
+<!ENTITY runFilters.accesskey "T">
+<!ENTITY stopFilters.label "Tiq'at">
+<!ENTITY stopFilters.accesskey "q">
+<!ENTITY folderPickerPrefix.label "Tisamajib'ëx chayub'äl (e)cha'on pa:">
+<!ENTITY folderPickerPrefix.accesskey "c">
+<!ENTITY helpButton.label "To'ïk">
+<!ENTITY helpButton.accesskey "T">
+<!ENTITY closeCmd.key "W">
+<!ENTITY searchBox.emptyText "Taq chayub'äl richin nikanöx chi b'i'aj…">

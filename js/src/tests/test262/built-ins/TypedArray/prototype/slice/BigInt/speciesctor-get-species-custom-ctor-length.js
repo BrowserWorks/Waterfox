@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('BigInt')) -- BigInt is not enabled unconditionally
 // Copyright (C) 2016 the V8 project authors. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 /*---
@@ -45,4 +44,5 @@ testWithBigIntTypedArrayConstructors(function(TA) {
   result = sample.slice();
   assert.sameValue(result.length, customCount, "length > count");
 });
+
 reportCompare(0, 0);

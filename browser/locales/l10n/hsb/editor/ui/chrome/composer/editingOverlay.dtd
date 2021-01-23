@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Dataju wočinić…">
+<!ENTITY openFileCmd.accesskey "o">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Webadresu wočinić…">
+<!ENTITY openRemoteCmd.accesskey "a">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Najnowše strony">
+<!ENTITY fileRecentMenu.accesskey "N">
+<!ENTITY saveCmd.label "Składować">
+<!ENTITY saveCmd.accesskey "S">
+<!ENTITY saveAsCmd.label "Składować jako…">
+<!ENTITY saveAsCmd.accesskey "k">
+<!ENTITY saveAsChangeEncodingCmd2.label "Tekstowe kodowanje składować a změnić">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "e">
+<!ENTITY publishCmd.label "Wozjewić">
+<!ENTITY publishCmd.accesskey "z">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Wozjewić jako…">
+<!ENTITY publishAsCmd.accesskey "e">
+<!ENTITY fileRevert.label "Anulować">
+<!ENTITY fileRevert.accesskey "l">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Nastajenja za wozjewjenje sydłow…">
+<!ENTITY publishSettings.accesskey "z">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "Nowe">
+<!ENTITY newToolbarCmd.tooltip "Nowu editorowu stronu wutworić">
+<!ENTITY openToolbarCmd.label "Wočinić">
+<!ENTITY openToolbarCmd.tooltip "Lokalnu dataju wočinić">
+<!ENTITY saveToolbarCmd.tooltip "Dataju do lokalneho městna składować">
+<!ENTITY publishToolbarCmd.tooltip "Dataju do webadresy nahrać">
+<!ENTITY printToolbarCmd.label "Ćišćeć">
+<!ENTITY printToolbarCmd.tooltip "Tutu stronu ćišćeć">

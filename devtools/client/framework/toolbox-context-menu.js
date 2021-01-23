@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -23,7 +21,7 @@ function loadEditMenuStrings(win) {
 
   if (win.MozXULElement) {
     stringsLoaded.set(win, true);
-    win.MozXULElement.insertFTLIfNeeded("toolkit/main-window/editmenu.ftl");
+    win.MozXULElement.insertFTLIfNeeded("toolkit/global/textActions.ftl");
   }
 }
 
@@ -48,7 +46,7 @@ function createEditContextMenu(win, id) {
   menu.append(
     new MenuItem({
       id: "editmenu-undo",
-      l10nID: "editmenu-undo",
+      l10nID: "text-action-undo",
       disabled: !docshell.isCommandEnabled("cmd_undo"),
       click: () => {
         docshell.doCommand("cmd_undo");
@@ -63,7 +61,7 @@ function createEditContextMenu(win, id) {
   menu.append(
     new MenuItem({
       id: "editmenu-cut",
-      l10nID: "editmenu-cut",
+      l10nID: "text-action-cut",
       disabled: !docshell.isCommandEnabled("cmd_cut"),
       click: () => {
         docshell.doCommand("cmd_cut");
@@ -73,7 +71,7 @@ function createEditContextMenu(win, id) {
   menu.append(
     new MenuItem({
       id: "editmenu-copy",
-      l10nID: "editmenu-copy",
+      l10nID: "text-action-copy",
       disabled: !docshell.isCommandEnabled("cmd_copy"),
       click: () => {
         docshell.doCommand("cmd_copy");
@@ -83,7 +81,7 @@ function createEditContextMenu(win, id) {
   menu.append(
     new MenuItem({
       id: "editmenu-paste",
-      l10nID: "editmenu-paste",
+      l10nID: "text-action-paste",
       disabled: !docshell.isCommandEnabled("cmd_paste"),
       click: () => {
         docshell.doCommand("cmd_paste");
@@ -93,7 +91,7 @@ function createEditContextMenu(win, id) {
   menu.append(
     new MenuItem({
       id: "editmenu-delete",
-      l10nID: "editmenu-delete",
+      l10nID: "text-action-delete",
       disabled: !docshell.isCommandEnabled("cmd_delete"),
       click: () => {
         docshell.doCommand("cmd_delete");
@@ -108,7 +106,7 @@ function createEditContextMenu(win, id) {
   menu.append(
     new MenuItem({
       id: "editmenu-selectAll",
-      l10nID: "editmenu-select-all",
+      l10nID: "text-action-select-all",
       disabled: !docshell.isCommandEnabled("cmd_selectAll"),
       click: () => {
         docshell.doCommand("cmd_selectAll");

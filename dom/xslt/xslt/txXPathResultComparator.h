@@ -7,6 +7,7 @@
 #define TRANSFRMX_XPATHRESULTCOMPARATOR_H
 
 #include "mozilla/Attributes.h"
+#include "mozilla/UniquePtr.h"
 #include "txCore.h"
 #include "nsCOMPtr.h"
 #include "nsICollation.h"
@@ -20,7 +21,7 @@ class txIEvalContext;
  */
 class txXPathResultComparator {
  public:
-  virtual ~txXPathResultComparator() {}
+  virtual ~txXPathResultComparator() = default;
 
   /*
    * Compares two XPath results. Returns -1 if val1 < val2,
@@ -59,9 +60,13 @@ class txResultStringComparator : public txXPathResultComparator {
     StringValue();
     ~StringValue();
 
-    uint8_t* mKey;
-    void* mCaseKey;
-    uint32_t mLength, mCaseLength;
+    nsresult initCaseKey(nsICollation* aCollation);
+
+    nsTArray<uint8_t> mKey;
+    // Either mCaseKeyString is non-null, or we have a usable key in mCaseKey
+    // already.
+    mozilla::UniquePtr<nsString> mCaseKeyString;
+    nsTArray<uint8_t> mCaseKey;
   };
 };
 

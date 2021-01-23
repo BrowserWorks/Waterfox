@@ -6,6 +6,7 @@
 
 #include "mozilla/dom/SVGStyleElement.h"
 
+#include "mozilla/RefPtr.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/SVGStyleElementBinding.h"
 #include "nsCOMPtr.h"
@@ -26,19 +27,18 @@ JSObject* SVGStyleElement::WrapNode(JSContext* aCx,
 
 NS_IMPL_ISUPPORTS_CYCLE_COLLECTION_INHERITED(SVGStyleElement,
                                              SVGStyleElementBase,
-                                             nsIStyleSheetLinkingElement,
                                              nsIMutationObserver)
 
 NS_IMPL_CYCLE_COLLECTION_CLASS(SVGStyleElement)
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(SVGStyleElement,
                                                   SVGStyleElementBase)
-  tmp->nsStyleLinkElement::Traverse(cb);
+  tmp->LinkStyle::Traverse(cb);
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(SVGStyleElement,
                                                 SVGStyleElementBase)
-  tmp->nsStyleLinkElement::Unlink();
+  tmp->LinkStyle::Unlink();
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 //----------------------------------------------------------------------
@@ -58,10 +58,8 @@ NS_IMPL_ELEMENT_CLONE_WITH_INIT(SVGStyleElement)
 //----------------------------------------------------------------------
 // nsIContent methods
 
-nsresult SVGStyleElement::BindToTree(Document* aDocument, nsIContent* aParent,
-                                     nsIContent* aBindingParent) {
-  nsresult rv =
-      SVGStyleElementBase::BindToTree(aDocument, aParent, aBindingParent);
+nsresult SVGStyleElement::BindToTree(BindContext& aContext, nsINode& aParent) {
+  nsresult rv = SVGStyleElementBase::BindToTree(aContext, aParent);
   NS_ENSURE_SUCCESS(rv, rv);
 
   void (SVGStyleElement::*update)() =
@@ -72,10 +70,10 @@ nsresult SVGStyleElement::BindToTree(Document* aDocument, nsIContent* aParent,
   return rv;
 }
 
-void SVGStyleElement::UnbindFromTree(bool aDeep, bool aNullParent) {
+void SVGStyleElement::UnbindFromTree(bool aNullParent) {
   nsCOMPtr<Document> oldDoc = GetUncomposedDoc();
   ShadowRoot* oldShadow = GetContainingShadow();
-  SVGStyleElementBase::UnbindFromTree(aDeep, aNullParent);
+  SVGStyleElementBase::UnbindFromTree(aNullParent);
   Unused << UpdateStyleSheetInternal(oldDoc, oldShadow);
 }
 
@@ -173,8 +171,8 @@ void SVGStyleElement::SetTitle(const nsAString& aTitle, ErrorResult& rv) {
 //----------------------------------------------------------------------
 // nsStyleLinkElement methods
 
-Maybe<nsStyleLinkElement::SheetInfo> SVGStyleElement::GetStyleSheetInfo() {
-  if (!IsCSSMimeTypeAttribute(*this)) {
+Maybe<LinkStyle::SheetInfo> SVGStyleElement::GetStyleSheetInfo() {
+  if (!IsCSSMimeTypeAttributeForStyleElement(*this)) {
     return Nothing();
   }
 
@@ -189,12 +187,16 @@ Maybe<nsStyleLinkElement::SheetInfo> SVGStyleElement::GetStyleSheetInfo() {
       // FIXME(bug 1459822): Why doesn't this need a principal, but
       // HTMLStyleElement does?
       nullptr,
-      net::ReferrerPolicy::RP_Unset,
       // FIXME(bug 1459822): Why does this need a crossorigin attribute, but
       // HTMLStyleElement doesn't?
+      MakeAndAddRef<ReferrerInfo>(*this),
       AttrValueToCORSMode(GetParsedAttr(nsGkAtoms::crossorigin)),
       title,
       media,
+      /* integrity = */ EmptyString(),
+      /* nsStyleUtil::CSPAllowsInlineStyle takes care of nonce checking for
+         inline styles. Bug 1607011 */
+      /* nonce = */ EmptyString(),
       HasAlternateRel::No,
       IsInline::Yes,
       IsExplicitlyEnabled::No,

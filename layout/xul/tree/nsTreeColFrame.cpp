@@ -34,7 +34,7 @@ nsIFrame* NS_NewTreeColFrame(PresShell* aPresShell, ComputedStyle* aStyle) {
 NS_IMPL_FRAMEARENA_HELPERS(nsTreeColFrame)
 
 // Destructor
-nsTreeColFrame::~nsTreeColFrame() {}
+nsTreeColFrame::~nsTreeColFrame() = default;
 
 void nsTreeColFrame::Init(nsIContent* aContent, nsContainerFrame* aParent,
                           nsIFrame* aPrevInFlow) {
@@ -55,11 +55,7 @@ class nsDisplayXULTreeColSplitterTarget final : public nsDisplayItem {
       : nsDisplayItem(aBuilder, aFrame) {
     MOZ_COUNT_CTOR(nsDisplayXULTreeColSplitterTarget);
   }
-#ifdef NS_BUILD_REFCNT_LOGGING
-  virtual ~nsDisplayXULTreeColSplitterTarget() {
-    MOZ_COUNT_DTOR(nsDisplayXULTreeColSplitterTarget);
-  }
-#endif
+  MOZ_COUNTED_DTOR_OVERRIDE(nsDisplayXULTreeColSplitterTarget)
 
   virtual void HitTest(nsDisplayListBuilder* aBuilder, const nsRect& aRect,
                        HitTestState* aState,
@@ -84,7 +80,7 @@ void nsDisplayXULTreeColSplitterTarget::HitTest(
   }
 
   // Swap left and right for RTL trees in order to find the correct splitter
-  if (mFrame->StyleVisibility()->mDirection == NS_STYLE_DIRECTION_RTL) {
+  if (mFrame->StyleVisibility()->mDirection == StyleDirection::Rtl) {
     bool tmp = left;
     left = right;
     right = tmp;
@@ -127,7 +123,7 @@ nsresult nsTreeColFrame::AttributeChanged(int32_t aNameSpaceID,
   nsresult rv =
       nsBoxFrame::AttributeChanged(aNameSpaceID, aAttribute, aModType);
 
-  if (aAttribute == nsGkAtoms::ordinal || aAttribute == nsGkAtoms::primary) {
+  if (aAttribute == nsGkAtoms::primary) {
     InvalidateColumns();
   }
 

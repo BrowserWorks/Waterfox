@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -10,7 +8,9 @@
  * the correct requests
  */
 add_task(async function() {
-  const { tab, monitor } = await initNetMonitor(POST_RAW_URL);
+  const { tab, monitor } = await initNetMonitor(POST_RAW_URL, {
+    requestCount: 1,
+  });
   const { document, store, windowRequire } = monitor.panelWin;
   const { getSelectedRequest } = windowRequire(
     "devtools/client/netmonitor/src/selectors/index"

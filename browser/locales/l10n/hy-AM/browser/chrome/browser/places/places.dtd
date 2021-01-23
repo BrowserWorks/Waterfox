@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Շտեմարան">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Ղեկավարում">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      " Կարգավորեք ձեր էջանիշները:">
+
+<!ENTITY file.close.label               "Փակել">
+<!ENTITY file.close.accesskey           "C">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Տեսք">
+<!ENTITY views.accesskey                "V">
+<!ENTITY views.tooltip                  "Փոխել դիտելու ձևը">
+<!ENTITY view.columns.label             "Ցուցադրել սյուները">
+<!ENTITY view.columns.accesskey         "Ց">
+<!ENTITY view.sort.label                "Խմբավորել">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "Առանց Խմբավորման">
+<!ENTITY view.unsorted.accesskey        "Ա">
+<!ENTITY view.sortAscending.label       "Այբենական Խմբավորում">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Հադարձ Խմբավորում">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Ներմուծել էջանիշեր HTML-ից">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "Էջանիշերը արտահանել HTML նիշքով">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "Ներմուծել տվյալներ այլ դիտարկիչից">
+<!ENTITY importOtherBrowser.accesskey      "Ն">
+
+<!ENTITY cmd.backup.label               "Պահուստացնել…">
+<!ENTITY cmd.backup.accesskey           "Պ">
+<!ENTITY cmd.restore2.label             "Վերականգնել">
+<!ENTITY cmd.restore2.accesskey         "R">
+<!ENTITY cmd.restoreFromFile.label      "Ընտրել Ֆայլ…">
+<!ENTITY cmd.restoreFromFile.accesskey  "C">
+
+<!ENTITY col.name.label          "Անվանումը">
+<!ENTITY col.tags.label          "Կցապիտակներ">
+<!ENTITY col.url.label           "Հասցե">
+<!ENTITY col.mostrecentvisit.label "Վերջին այցելությունները">
+<!ENTITY col.visitcount.label    "Այցելումների քանակ">
+<!ENTITY col.dateadded.label     "Ավելացվել է">
+<!ENTITY col.lastmodified.label  "Վերջին փոփոխությունը">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Ներմուծել և Պահուստացնել">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "Ներմուծեք և պահպանեք ձեր էջանշերը">
+
+<!ENTITY backButton.tooltip  "Գնալ ետ">
+
+<!ENTITY forwardButton.tooltip  "Անցնել առաջ">
+
+<!ENTITY detailsPane.selectAnItemText.description "Ընտրեք բաղադրիրը դիտելու և խմբագրելու նրա կարգավորումները">
+

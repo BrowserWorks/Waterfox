@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "Zhašeć">
+<!ENTITY editContactPanelDeleteContact.accesskey "Z">
+
+<!ENTITY editContactName.label "Mjeno:">
+<!ENTITY editContactName.accesskey "M">
+
+<!ENTITY editContactEmail.label "E-mejl:">
+<!ENTITY editContactEmail.accesskey "E">
+
+<!ENTITY editContactAddressBook.label "Adresnik:">
+<!ENTITY editContactAddressBook.accesskey "A">
+
+<!ENTITY editContactPanelDone.label "Hotowo">
+<!ENTITY editContactPanelDone.accesskey "H">
+
+<!ENTITY contactMoveDisabledWarning.description "Njemóžeće tutón adresnik změnić, dokelž kontakt je w rozesyłanskej lisćinje.">

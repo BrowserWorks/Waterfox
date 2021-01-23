@@ -11,7 +11,8 @@
 
 #include "mozilla/Assertions.h"
 #include "mozilla/ReverseIterator.h"
-#include "mozilla/TypeTraits.h"
+
+#include <type_traits>
 
 namespace mozilla {
 
@@ -139,7 +140,7 @@ class IntegerRange {
   IntTypeT mEnd;
 };
 
-template <typename T, bool = IsUnsigned<T>::value>
+template <typename T, bool = std::is_unsigned_v<T>>
 struct GeqZero {
   static bool isNonNegative(T t) { return t >= 0; }
 };
@@ -153,7 +154,7 @@ struct GeqZero<T, true> {
 
 template <typename IntType>
 detail::IntegerRange<IntType> IntegerRange(IntType aEnd) {
-  static_assert(IsIntegral<IntType>::value, "value must be integral");
+  static_assert(std::is_integral_v<IntType>, "value must be integral");
   MOZ_ASSERT(detail::GeqZero<IntType>::isNonNegative(aEnd),
              "Should never have negative value here");
   return detail::IntegerRange<IntType>(aEnd);
@@ -161,9 +162,9 @@ detail::IntegerRange<IntType> IntegerRange(IntType aEnd) {
 
 template <typename IntType1, typename IntType2>
 detail::IntegerRange<IntType2> IntegerRange(IntType1 aBegin, IntType2 aEnd) {
-  static_assert(IsIntegral<IntType1>::value && IsIntegral<IntType2>::value,
+  static_assert(std::is_integral_v<IntType1> && std::is_integral_v<IntType2>,
                 "values must both be integral");
-  static_assert(IsSigned<IntType1>::value == IsSigned<IntType2>::value,
+  static_assert(std::is_signed_v<IntType1> == std::is_signed_v<IntType2>,
                 "signed/unsigned mismatch");
   MOZ_ASSERT(aEnd >= aBegin, "End value should be larger than begin value");
   return detail::IntegerRange<IntType2>(aBegin, aEnd);

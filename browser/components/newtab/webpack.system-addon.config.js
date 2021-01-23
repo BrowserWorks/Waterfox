@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 const path = require("path");
 const webpack = require("webpack");
 
@@ -11,10 +15,16 @@ module.exports = (env = {}) => ({
   output: {
     path: absolute("data/content"),
     filename: "activity-stream.bundle.js",
+    library: "NewtabRenderUtils",
   },
   // TODO: switch to eval-source-map for faster builds. Requires CSP changes
   devtool: env.development ? "inline-source-map" : false,
-  plugins: [new webpack.optimize.ModuleConcatenationPlugin()],
+  plugins: [
+    new webpack.BannerPlugin(
+      `THIS FILE IS AUTO-GENERATED: ${path.basename(__filename)}`
+    ),
+    new webpack.optimize.ModuleConcatenationPlugin(),
+  ],
   module: {
     rules: [
       {
@@ -23,9 +33,6 @@ module.exports = (env = {}) => ({
         loader: "babel-loader",
         options: {
           presets: ["@babel/preset-react"],
-          plugins: [
-            ["@babel/plugin-proposal-async-generator-functions"],
-          ],
         },
       },
       {
@@ -33,24 +40,32 @@ module.exports = (env = {}) => ({
         exclude: /node_modules/,
         loader: "babel-loader",
         // Converts .jsm files into common-js modules
-        options: {plugins: [["jsm-to-esmodules", {basePath: resourcePathRegEx, removeOtherImports: true, replace: true}]]},
+        options: {
+          plugins: [
+            [
+              "jsm-to-esmodules",
+              {
+                basePath: resourcePathRegEx,
+                removeOtherImports: true,
+                replace: true,
+              },
+            ],
+          ],
+        },
       },
     ],
   },
   // This resolve config allows us to import with paths relative to the root directory, e.g. "lib/ActivityStream.jsm"
   resolve: {
     extensions: [".js", ".jsx"],
-    modules: [
-      "node_modules",
-      ".",
-    ],
+    modules: ["node_modules", "."],
   },
   externals: {
     "prop-types": "PropTypes",
-    "react": "React",
+    react: "React",
     "react-dom": "ReactDOM",
-    "react-intl": "ReactIntl",
-    "redux": "Redux",
+    redux: "Redux",
     "react-redux": "ReactRedux",
+    "react-transition-group": "ReactTransitionGroup",
   },
 });

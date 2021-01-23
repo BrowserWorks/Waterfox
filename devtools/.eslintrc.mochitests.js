@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 // Parent config file for all devtools browser mochitest files.
 module.exports = {
   "extends": [
@@ -23,6 +27,8 @@ module.exports = {
   "rules": {
     // Allow non-camelcase so that run_test doesn't produce a warning.
     "camelcase": "off",
+    // Tests don't have to cleanup observers
+    "mozilla/balanced-observers": 0,
     // Tests can always import anything.
     "mozilla/reject-some-requires": 0,
   },

@@ -9,7 +9,7 @@ loadHelperScript("helper_color_data.js");
 
 add_task(async function() {
   await addTab("about:blank");
-  const [host, , doc] = await createHost("bottom");
+  const { host, doc } = await createHost("bottom");
 
   info("Creating a test canvas element to test colors");
   const canvas = createTestCanvas(doc);
@@ -30,7 +30,14 @@ function createTestCanvas(doc) {
 function testColorUtils(canvas) {
   const data = getFixtureColorData();
 
-  for (const { authored, name, hex, hsl, rgb } of data) {
+  for (const {
+    authored,
+    name,
+    hex,
+    hsl,
+    rgb,
+    disableColorMatch = false,
+  } of data) {
     const color = new colorUtils.CssColor(authored);
 
     // Check all values.
@@ -41,7 +48,9 @@ function testColorUtils(canvas) {
     is(color.rgb, rgb, "color.rgb === rgb");
 
     testToString(color, name, hex, hsl, rgb);
-    testColorMatch(name, hex, hsl, rgb, color.rgba, canvas);
+    if (!disableColorMatch) {
+      testColorMatch(name, hex, hsl, rgb, color.rgba, canvas);
+    }
   }
 
   testSetAlpha();
@@ -95,7 +104,9 @@ function testColorMatch(name, hex, hsl, rgb, rgba, canvas) {
     ok(!rgbFail, "color " + rgba + " matches target. Type: " + type);
     if (rgbFail) {
       info(
-        `target: ${target.toSource()}, color: [r: ${r}, g: ${g}, b: ${b}, a: ${a}]`
+        `target: ${JSON.stringify(
+          target
+        )}, color: [r: ${r}, g: ${g}, b: ${b}, a: ${a}]`
       );
     }
 

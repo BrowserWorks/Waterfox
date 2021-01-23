@@ -272,7 +272,9 @@ var DownloadCache = {
           // The start time is always available when we reach this point.
           date: download.startTime,
           transition: PlacesUtils.history.TRANSITIONS.DOWNLOAD,
-          referrer: download.source.referrer,
+          referrer: download.source.referrerInfo
+            ? download.source.referrerInfo.originalReferrer
+            : null,
         },
       ],
     });
@@ -559,7 +561,7 @@ var DownloadHistoryList = function(publicList, place) {
   }, "quit-application-granted");
 };
 
-this.DownloadHistoryList.prototype = {
+DownloadHistoryList.prototype = {
   __proto__: DownloadList.prototype,
 
   /**
@@ -741,7 +743,6 @@ this.DownloadHistoryList.prototype = {
   },
 
   // nsINavHistoryResultObserver
-  nodeAnnotationChanged() {},
   nodeIconChanged() {},
   nodeTitleChanged() {},
   nodeKeywordChanged() {},

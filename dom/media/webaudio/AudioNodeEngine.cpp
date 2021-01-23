@@ -42,7 +42,9 @@ void WriteZeroesToAudioBlock(AudioBlock* aChunk, uint32_t aStart,
                              uint32_t aLength) {
   MOZ_ASSERT(aStart + aLength <= WEBAUDIO_BLOCK_SIZE);
   MOZ_ASSERT(!aChunk->IsNull(), "You should pass a non-null chunk");
-  if (aLength == 0) return;
+  if (aLength == 0) {
+    return;
+  }
 
   for (uint32_t i = 0; i < aChunk->ChannelCount(); ++i) {
     PodZero(aChunk->ChannelFloatsForWrite(i) + aStart, aLength);
@@ -303,9 +305,9 @@ void AudioBlockPanStereoToStereo(const float aInputL[WEBAUDIO_BLOCK_SIZE],
 
 void AudioBlockPanStereoToStereo(const float aInputL[WEBAUDIO_BLOCK_SIZE],
                                  const float aInputR[WEBAUDIO_BLOCK_SIZE],
-                                 float aGainL[WEBAUDIO_BLOCK_SIZE],
-                                 float aGainR[WEBAUDIO_BLOCK_SIZE],
-                                 bool aIsOnTheLeft[WEBAUDIO_BLOCK_SIZE],
+                                 const float aGainL[WEBAUDIO_BLOCK_SIZE],
+                                 const float aGainR[WEBAUDIO_BLOCK_SIZE],
+                                 const bool aIsOnTheLeft[WEBAUDIO_BLOCK_SIZE],
                                  float aOutputL[WEBAUDIO_BLOCK_SIZE],
                                  float aOutputR[WEBAUDIO_BLOCK_SIZE]) {
 #ifdef USE_NEON
@@ -362,6 +364,20 @@ float AudioBufferSumOfSquares(const float* aInput, uint32_t aLength) {
   return sum;
 }
 
+void NaNToZeroInPlace(float* aSamples, size_t aCount) {
+#ifdef USE_SSE2
+  if (mozilla::supports_sse2()) {
+    NaNToZeroInPlace_SSE(aSamples, aCount);
+    return;
+  }
+#endif
+  for (size_t i = 0; i < aCount; i++) {
+    if (aSamples[i] != aSamples[i]) {
+      aSamples[i] = 0.0;
+    }
+  }
+}
+
 AudioNodeEngine::AudioNodeEngine(dom::AudioNode* aNode)
     : mNode(aNode),
       mNodeType(aNode ? aNode->NodeType() : nullptr),
@@ -374,16 +390,17 @@ AudioNodeEngine::AudioNodeEngine(dom::AudioNode* aNode)
   MOZ_COUNT_CTOR(AudioNodeEngine);
 }
 
-void AudioNodeEngine::ProcessBlock(AudioNodeStream* aStream, GraphTime aFrom,
+void AudioNodeEngine::ProcessBlock(AudioNodeTrack* aTrack, GraphTime aFrom,
                                    const AudioBlock& aInput,
                                    AudioBlock* aOutput, bool* aFinished) {
   MOZ_ASSERT(mInputCount <= 1 && mOutputCount <= 1);
   *aOutput = aInput;
 }
 
-void AudioNodeEngine::ProcessBlocksOnPorts(AudioNodeStream* aStream,
-                                           const OutputChunks& aInput,
-                                           OutputChunks& aOutput,
+void AudioNodeEngine::ProcessBlocksOnPorts(AudioNodeTrack* aTrack,
+                                           GraphTime aFrom,
+                                           Span<const AudioBlock> aInput,
+                                           Span<AudioBlock> aOutput,
                                            bool* aFinished) {
   MOZ_ASSERT(mInputCount > 1 || mOutputCount > 1);
   // Only produce one output port, and drop all other input ports.

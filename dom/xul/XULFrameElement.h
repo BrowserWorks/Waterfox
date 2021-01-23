@@ -40,11 +40,6 @@ class XULFrameElement final : public nsXULElement, public nsFrameLoaderOwner {
   Nullable<WindowProxyHolder> GetContentWindow();
   Document* GetContentDocument();
 
-  void PresetOpenerWindow(const Nullable<WindowProxyHolder>& aWindow,
-                          ErrorResult& aRv) {
-    mOpener = aWindow.IsNull() ? nullptr : aWindow.Value().get();
-  }
-
   void SwapFrameLoaders(mozilla::dom::HTMLIFrameElement& aOtherLoaderOwner,
                         mozilla::ErrorResult& rv);
   void SwapFrameLoaders(XULFrameElement& aOtherLoaderOwner,
@@ -53,9 +48,8 @@ class XULFrameElement final : public nsXULElement, public nsFrameLoaderOwner {
                         mozilla::ErrorResult& rv);
 
   // nsIContent
-  virtual nsresult BindToTree(Document* aDocument, nsIContent* aParent,
-                              nsIContent* aBindingParent) override;
-  virtual void UnbindFromTree(bool aDeep, bool aNullParent) override;
+  virtual nsresult BindToTree(BindContext&, nsINode& aParent) override;
+  virtual void UnbindFromTree(bool aNullParent) override;
   virtual void DestroyContent() override;
 
   virtual nsresult AfterSetAttr(int32_t aNamespaceID, nsAtom* aName,
@@ -64,10 +58,13 @@ class XULFrameElement final : public nsXULElement, public nsFrameLoaderOwner {
                                 nsIPrincipal* aSubjectPrincipal,
                                 bool aNotify) override;
 
- protected:
-  virtual ~XULFrameElement() {}
+  NS_IMPL_FROMNODE_HELPER(XULFrameElement,
+                          IsAnyOfXULElements(nsGkAtoms::iframe,
+                                             nsGkAtoms::browser,
+                                             nsGkAtoms::editor))
 
-  RefPtr<BrowsingContext> mOpener;
+ protected:
+  virtual ~XULFrameElement() = default;
 
   JSObject* WrapNode(JSContext* aCx,
                      JS::Handle<JSObject*> aGivenProto) override;

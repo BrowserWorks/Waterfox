@@ -6,16 +6,18 @@
 <link rel="help" href="https://drafts.csswg.org/css-overflow-3/#propdef-overflow">
 <link rel="match" href="reference/100x100-grey-box-with-scrollbars.html">
 <meta name="assert" content="This test verifies that the scrollbars are shown on a grid with an item placed outside the boundaries of the grid container.">
-<link href="support/grid.css" rel="stylesheet">
+<link href="/css/support/grid.css" rel="stylesheet">
 <style>
     .grid {
-       grid: 100px 100px / 100px 100px;
+       grid: 100px / 100px;
        width: 100px;
        height: 100px;
+       overflow: auto;
     }
     .item {
-       grid-column: 2;
-       grid-row: 2;
+       grid-column: 1;
+       grid-row: 1;
+       margin: 100px 0 0 100px;
        width: 50px;
        height: 50px;
     }

@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Перетворення в таблицю">
+<!ENTITY instructions1.label   "Компонувальник створює новий рядок в таблиці для кожного параграфа у виділенні.">
+<!ENTITY instructions2.label   "Виберіть символ, який використовується для відокремлення колонок у виділенні:">
+<!ENTITY commaRadio.label      "Кома">
+<!ENTITY spaceRadio.label      "Пропуск">
+<!ENTITY otherRadio.label      "Інший символ:">
+<!ENTITY deleteCharCheck.label "Видалити символ розділення">
+<!ENTITY collapseSpaces.label  "Ігнорувати зайві пропуски">
+<!ENTITY collapseSpaces.tooltip "Перетворити суміжні пропуски в один роздільник">

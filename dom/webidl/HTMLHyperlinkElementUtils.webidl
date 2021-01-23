@@ -10,16 +10,9 @@
  * and create derivative works of this document.
  */
 
-[NoInterfaceObject]
-interface HTMLHyperlinkElementUtils {
-  // Bug 824857: no support for stringifier attributes yet.
-  //  stringifier attribute USVString href;
-
-  // Bug 824857 should remove this.
-  stringifier;
-
+interface mixin HTMLHyperlinkElementUtils {
   [CEReactions, SetterThrows]
-           attribute USVString href;
+  stringifier attribute USVString href;
 
   readonly attribute USVString origin;
   [CEReactions]

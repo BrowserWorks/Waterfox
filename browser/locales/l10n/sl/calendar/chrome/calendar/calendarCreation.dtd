@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "Ustvari nov koledar" >
+<!ENTITY wizard.label             "Ustvari nov koledar" >
+<!ENTITY wizard.description       "Poiščite svoj koledar" >
+
+<!ENTITY initialpage.description    "Vaš koledar je lahko shranjen na vašem računalniku ali na strežniku, tako da ga lahko uporabljate oddaljeno ali ga delite s prijatelji ali sodelavci." >
+<!ENTITY initialpage.computer.label  "Na računalniku">
+<!ENTITY initialpage.network.label  "V omrežju">
+
+<!ENTITY locationpage.description         "Podajte podatke, potrebne za dostop do oddaljenega koledarja." >
+<!ENTITY locationpage.login.description   "Neobvezno: vnesite uporabniško ime in geslo" >
+<!ENTITY locationpage.username.label      "Uporabniško ime:" >
+<!ENTITY locationpage.password.label      "Geslo:" >
+
+<!ENTITY custompage.shortdescription  "Koledar po meri" >
+<!ENTITY custompage.longdescription   "Svojemu koledarju lahko dodelite kratko ime in obarvate dogodke iz tega koledarja." >
+
+<!ENTITY finishpage.shortdescription  "Koledar ustvarjen" >
+<!ENTITY finishpage.longdescription   "Vaš koledar je bil ustvarjen." >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "Drugo">
+
+<!ENTITY buttons.create.label "Ustvari koledar">
+<!ENTITY buttons.create.accesskey "U">
+
+<!ENTITY buttons.find.label "Najdi koledarje">
+<!ENTITY buttons.find.accesskey "N">
+
+<!ENTITY buttons.back.label "Nazaj">
+<!ENTITY buttons.back.accesskey "z">
+
+<!ENTITY buttons.subscribe.label "Naroči se">
+<!ENTITY buttons.subscribe.accesskey "č">
+
+<!ENTITY calendartype.label "Vrsta koledarja:">
+<!ENTITY location.label "Mesto:">
+<!ENTITY location.placeholder "Spletni naslov ali ime gostitelja strežnika koledarja">
+
+<!ENTITY network.nocredentials.label "To mesto ne zahteva poverilnic">
+<!ENTITY network.loading.description "Počakajte, medtem ko se vaši koledarji odkrivajo.">
+<!ENTITY network.notfound.description "Na tem mestu ni bilo mogoče najti koledarjev. Preverite svoje nastavitve.">
+<!ENTITY network.authfail.description "Poverilnice, ki ste jih vnesli, niso bile sprejete. Preverite svoje nastavitve.">
+
+<!ENTITY network.subscribe.single.description "Izberite koledarje, na katere se želite naročiti.">
+<!ENTITY network.subscribe.multiple.description "Za to mesto je na voljo več vrst koledarjev. Izberite vrsto koledarja in nato označite koledarje, na katere se želite naročiti.">

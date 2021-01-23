@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.viewing.messages.title      "Visualización">
+<!ENTITY style.label                      "Ystilo:">
+<!ENTITY style.accesskey                  "s">
+<!ENTITY regular.label                    "Normal">
+<!ENTITY bold.label                       "Negreta">
+<!ENTITY italic.label                     "Cursiva">
+<!ENTITY boldItalic.label                 "Neg. curs.">
+<!ENTITY size.label                       "Tamaño:">
+<!ENTITY size.accesskey                   "a">
+<!ENTITY bigger.label                     "Mayor">
+<!ENTITY smaller.label                    "Menor">
+<!ENTITY color.label                      "Color:">
+<!ENTITY color.accesskey                  "C">
+<!ENTITY displayPlainText.caption         "Mensaches de texto sin formato">
+<!ENTITY fontPlainText.label              "Tipo de letra:">
+<!ENTITY fontPlainText.accesskey          "d">
+<!ENTITY displayQuoted.label              "Configuración de mensaches citaus:">
+<!ENTITY wrapInMsg.label                  "Ajustar texto a l'amplo d'a finestra">
+<!ENTITY wrapInMsg.accesskey              "j">
+<!-- LOCALIZATION NOTE : (convertEmoticons.label) 'Emoticons' are also known as 'Smileys', e.g. :-)   -->
+<!ENTITY convertEmoticons.label           "Amostrar emoticones como graficos">
+<!ENTITY convertEmoticons.accesskey       "A">
+<!ENTITY generalMessageDisplay.caption    "Cheneral">
+<!ENTITY autoMarkAsRead.label             "Marcar automaticament mensaches como leitos">
+<!ENTITY autoMarkAsRead.accesskey         "M">
+<!-- LOCALIZATION NOTE (markAsReadAfter.label): This will concatenate to
+     "Only after displaying for [___] seconds",
+     using (markAsReadAfter.label) and a number (secondsLabel.label). -->
+<!ENTITY markAsReadAfter.label            "Only after displaying for">
+<!ENTITY markAsReadAfter.accesskey        "t">
+<!ENTITY secondsLabel.label               "segundos">
+
+<!ENTITY openingMessages.label            "Al ubrir mensaches, amostrar-los en:">
+<!ENTITY newWindowRadio.label             "Una finestra mens. nueva">
+<!ENTITY newWindowRadio.accesskey         "n">
+<!ENTITY existingWindowRadio.label        "Una ventana mens. existent">
+<!ENTITY existingWindowRadio.accesskey    "e">
+<!ENTITY disableContent.label             "Bloquiar imachens y unatro conteniu d'orichens remotos.">
+<!ENTITY disableContent.accesskey         "B">
+<!ENTITY showCondensedAddresses.label     "Amostrar solament l'atributo 'nombre amostrau' ta las personas d'a mía libreta d'adrezas">
+<!ENTITY showCondensedAddresses.accesskey "o">
+<!ENTITY closeMsgWindowOnDelete.label     "Zarrar a finestra de mensaches en eliminar o mensache">
+<!ENTITY closeMsgWindowOnDelete.accesskey "a">

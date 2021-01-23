@@ -6,7 +6,6 @@
 #include "mozilla/StaticPtr.h"
 #include "mozilla/XULStore.h"
 #include "nsCOMPtr.h"
-#include "nsIXULStore.h"
 
 namespace mozilla {
 
@@ -33,6 +32,7 @@ XULStoreIterator* xulstore_get_attrs(const nsAString* doc, const nsAString* id,
 bool xulstore_iter_has_more(const XULStoreIterator*);
 nsresult xulstore_iter_get_next(XULStoreIterator*, nsAString* value);
 void xulstore_iter_free(XULStoreIterator* iterator);
+nsresult xulstore_shutdown();
 }
 
 // A static reference to the nsIXULStore singleton that JS uses to access
@@ -102,6 +102,7 @@ nsresult GetAttrs(const nsAString& doc, const nsAString& id,
   iter.reset(xulstore_get_attrs(&doc, &id, &result));
   return result;
 }
+nsresult Shutdown() { return xulstore_shutdown(); }
 
 };  // namespace XULStore
 };  // namespace mozilla

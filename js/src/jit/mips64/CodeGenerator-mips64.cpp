@@ -33,33 +33,46 @@ ValueOperand CodeGeneratorMIPS64::ToTempValue(LInstruction* ins, size_t pos) {
 
 void CodeGenerator::visitBox(LBox* box) {
   const LAllocation* in = box->getOperand(0);
-  const LDefinition* result = box->getDef(0);
+  ValueOperand result = ToOutValue(box);
 
-  if (IsFloatingPointType(box->type())) {
-    FloatRegister reg = ToFloatRegister(in);
-    if (box->type() == MIRType::Float32) {
-      masm.convertFloat32ToDouble(reg, ScratchDoubleReg);
-      reg = ScratchDoubleReg;
-    }
-    masm.moveFromDouble(reg, ToRegister(result));
-  } else {
-    masm.boxValue(ValueTypeFromMIRType(box->type()), ToRegister(in),
-                  ToRegister(result));
-  }
+  masm.moveValue(TypedOrValueRegister(box->type(), ToAnyRegister(in)), result);
 }
 
 void CodeGenerator::visitUnbox(LUnbox* unbox) {
   MUnbox* mir = unbox->mir();
 
+  Register result = ToRegister(unbox->output());
+
   if (mir->fallible()) {
     const ValueOperand value = ToValue(unbox, LUnbox::Input);
-    masm.splitTag(value, SecondScratchReg);
-    bailoutCmp32(Assembler::NotEqual, SecondScratchReg,
-                 Imm32(MIRTypeToTag(mir->type())), unbox->snapshot());
+    Label bail;
+    switch (mir->type()) {
+      case MIRType::Int32:
+        masm.fallibleUnboxInt32(value, result, &bail);
+        break;
+      case MIRType::Boolean:
+        masm.fallibleUnboxBoolean(value, result, &bail);
+        break;
+      case MIRType::Object:
+        masm.fallibleUnboxObject(value, result, &bail);
+        break;
+      case MIRType::String:
+        masm.fallibleUnboxString(value, result, &bail);
+        break;
+      case MIRType::Symbol:
+        masm.fallibleUnboxSymbol(value, result, &bail);
+        break;
+      case MIRType::BigInt:
+        masm.fallibleUnboxBigInt(value, result, &bail);
+        break;
+      default:
+        MOZ_CRASH("Given MIRType cannot be unboxed.");
+    }
+    bailoutFrom(&bail, unbox->snapshot());
+    return;
   }
 
   LAllocation* input = unbox->getOperand(LUnbox::Input);
-  Register result = ToRegister(unbox->output());
   if (input->isRegister()) {
     Register inputReg = ToRegister(input);
     switch (mir->type()) {
@@ -124,7 +137,7 @@ void CodeGenerator::visitCompareB(LCompareB* lir) {
   const LAllocation* rhs = lir->rhs();
   const Register output = ToRegister(lir->output());
 
-  MOZ_ASSERT(mir->jsop() == JSOP_STRICTEQ || mir->jsop() == JSOP_STRICTNE);
+  MOZ_ASSERT(mir->jsop() == JSOp::StrictEq || mir->jsop() == JSOp::StrictNe);
   Assembler::Condition cond = JSOpToCondition(mir->compareType(), mir->jsop());
 
   // Load boxed boolean in ScratchRegister.
@@ -144,7 +157,7 @@ void CodeGenerator::visitCompareBAndBranch(LCompareBAndBranch* lir) {
   const ValueOperand lhs = ToValue(lir, LCompareBAndBranch::Lhs);
   const LAllocation* rhs = lir->rhs();
 
-  MOZ_ASSERT(mir->jsop() == JSOP_STRICTEQ || mir->jsop() == JSOP_STRICTNE);
+  MOZ_ASSERT(mir->jsop() == JSOp::StrictEq || mir->jsop() == JSOp::StrictNe);
 
   // Load boxed boolean in ScratchRegister.
   if (rhs->isConstant()) {
@@ -179,8 +192,8 @@ void CodeGenerator::visitCompareBitwiseAndBranch(
   const ValueOperand lhs = ToValue(lir, LCompareBitwiseAndBranch::LhsInput);
   const ValueOperand rhs = ToValue(lir, LCompareBitwiseAndBranch::RhsInput);
 
-  MOZ_ASSERT(mir->jsop() == JSOP_EQ || mir->jsop() == JSOP_STRICTEQ ||
-             mir->jsop() == JSOP_NE || mir->jsop() == JSOP_STRICTNE);
+  MOZ_ASSERT(mir->jsop() == JSOp::Eq || mir->jsop() == JSOp::StrictEq ||
+             mir->jsop() == JSOp::Ne || mir->jsop() == JSOp::StrictNe);
 
   emitBranch(lhs.valueReg(), rhs.valueReg(), cond, lir->ifTrue(),
              lir->ifFalse());
@@ -196,12 +209,16 @@ void CodeGenerator::visitCompareI64(LCompareI64* lir) {
   Register lhsReg = ToRegister64(lhs).reg;
   Register output = ToRegister(lir->output());
   Register rhsReg;
+  ScratchRegisterScope scratch(masm);
 
   if (IsConstant(rhs)) {
-    rhsReg = ScratchRegister;
+    rhsReg = scratch;
     masm.ma_li(rhsReg, ImmWord(ToInt64(rhs)));
-  } else {
+  } else if (rhs.value().isGeneralReg()) {
     rhsReg = ToRegister64(rhs).reg;
+  } else {
+    rhsReg = scratch;
+    masm.loadPtr(ToAddress(rhs.value()), rhsReg);
   }
 
   bool isSigned = mir->compareType() == MCompare::Compare_Int64;
@@ -218,12 +235,16 @@ void CodeGenerator::visitCompareI64AndBranch(LCompareI64AndBranch* lir) {
   const LInt64Allocation rhs = lir->getInt64Operand(LCompareI64::Rhs);
   Register lhsReg = ToRegister64(lhs).reg;
   Register rhsReg;
+  ScratchRegisterScope scratch(masm);
 
   if (IsConstant(rhs)) {
-    rhsReg = ScratchRegister;
+    rhsReg = scratch;
     masm.ma_li(rhsReg, ImmWord(ToInt64(rhs)));
-  } else {
+  } else if (rhs.value().isGeneralReg()) {
     rhsReg = ToRegister64(rhs).reg;
+  } else {
+    rhsReg = scratch;
+    masm.loadPtr(ToAddress(rhs.value()), rhsReg);
   }
 
   bool isSigned = mir->compareType() == MCompare::Compare_Int64;
@@ -260,14 +281,20 @@ void CodeGenerator::visitDivOrModI64(LDivOrModI64* lir) {
     masm.bind(&notOverflow);
   }
 
+#ifdef MIPSR6
+  if (lir->mir()->isMod()) {
+    masm.as_dmod(output, lhs, rhs);
+  } else {
+    masm.as_ddiv(output, lhs, rhs);
+  }
+#else
   masm.as_ddiv(lhs, rhs);
-
   if (lir->mir()->isMod()) {
     masm.as_mfhi(output);
   } else {
     masm.as_mflo(output);
   }
-
+#endif
   masm.bind(&done);
 }
 
@@ -286,14 +313,20 @@ void CodeGenerator::visitUDivOrModI64(LUDivOrModI64* lir) {
     masm.bind(&nonZero);
   }
 
+#ifdef MIPSR6
+  if (lir->mir()->isMod()) {
+    masm.as_dmodu(output, lhs, rhs);
+  } else {
+    masm.as_ddivu(output, lhs, rhs);
+  }
+#else
   masm.as_ddivu(lhs, rhs);
-
   if (lir->mir()->isMod()) {
     masm.as_mfhi(output);
   } else {
     masm.as_mflo(output);
   }
-
+#endif
   masm.bind(&done);
 }
 

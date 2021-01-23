@@ -5,7 +5,7 @@ esid: sec-proxy-object-internal-methods-and-internal-slots-ownpropertykeys
 description: >
     [[OwnPropertyKeys]] ( )
 
-    8. Let trapResultArray be Call(trap, handler, «target»).
+    7. Let trapResultArray be ? Call(trap, handler, « target »).
 features: [Proxy]
 ---*/
 

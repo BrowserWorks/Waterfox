@@ -9,23 +9,16 @@
  */
 var relativeTimeFormatInternalProperties = {
     localeData: relativeTimeFormatLocaleData,
-    _availableLocales: null,
-    availableLocales: function() // eslint-disable-line object-shorthand
-    {
-        var locales = this._availableLocales;
-        if (locales)
-            return locales;
-
-        locales = intl_RelativeTimeFormat_availableLocales();
-        addSpecialMissingLanguageTags(locales);
-        return (this._availableLocales = locales);
-    },
-    relevantExtensionKeys: [],
+    relevantExtensionKeys: ["nu"],
 };
 
 function relativeTimeFormatLocaleData() {
-    // RelativeTimeFormat doesn't support any extension keys.
-    return {};
+    return {
+        nu: getNumberingSystems,
+        default: {
+            nu: intl_numberingSystem,
+        },
+    };
 }
 
 /**
@@ -38,36 +31,36 @@ function resolveRelativeTimeFormatInternals(lazyRelativeTimeFormatData) {
 
     var RelativeTimeFormat = relativeTimeFormatInternalProperties;
 
-    // Steps 7-8.
-    const r = ResolveLocale(callFunction(RelativeTimeFormat.availableLocales, RelativeTimeFormat),
+    // Steps 10-11.
+    const r = ResolveLocale("RelativeTimeFormat",
                             lazyRelativeTimeFormatData.requestedLocales,
                             lazyRelativeTimeFormatData.opt,
                             RelativeTimeFormat.relevantExtensionKeys,
                             RelativeTimeFormat.localeData);
 
-    // Steps 9-10.
+    // Steps 12-13.
     internalProps.locale = r.locale;
 
-    // Step 11.
-    assert(r.locale === r.dataLocale,
-           "resolved locale matches the resolved data-locale when no extension-keys are present");
+    // Step 14.
+    internalProps.numberingSystem = r.nu;
 
-    // Step 13.
+    // Step 15 (Not relevant in our implementation).
+
+    // Step 17.
     internalProps.style = lazyRelativeTimeFormatData.style;
 
-    // Step 15.
+    // Step 19.
     internalProps.numeric = lazyRelativeTimeFormatData.numeric;
 
-    // Steps 16-20 (Not relevant in our implementation).
+    // Steps 20-24 (Not relevant in our implementation).
 
     return internalProps;
 }
 
 /**
- * Returns an object containing the RelativeTimeFormat internal properties of |obj|,
- * or throws a TypeError if |obj| isn't RelativeTimeFormat-initialized.
+ * Returns an object containing the RelativeTimeFormat internal properties of |obj|.
  */
-function getRelativeTimeFormatInternals(obj, methodName) {
+function getRelativeTimeFormatInternals(obj) {
     assert(IsObject(obj), "getRelativeTimeFormatInternals called with non-object");
     assert(GuardToRelativeTimeFormat(obj) !== null, "getRelativeTimeFormatInternals called with non-RelativeTimeFormat");
 
@@ -135,13 +128,22 @@ function InitializeRelativeTimeFormat(relativeTimeFormat, locales, options) {
     let matcher = GetOption(options, "localeMatcher", "string", ["lookup", "best fit"], "best fit");
     opt.localeMatcher = matcher;
 
+    // Steps 7-9.
+    let numberingSystem = GetOption(options, "numberingSystem", "string", undefined, undefined);
+    if (numberingSystem !== undefined) {
+        numberingSystem = intl_ValidateAndCanonicalizeUnicodeExtensionType(numberingSystem,
+                                                                           "numberingSystem",
+                                                                           "nu");
+    }
+    opt.nu = numberingSystem;
+
     lazyRelativeTimeFormatData.opt = opt;
 
-    // Steps 12-13.
+    // Steps 16-17.
     const style = GetOption(options, "style", "string", ["long", "short", "narrow"], "long");
     lazyRelativeTimeFormatData.style = style;
 
-    // Steps 14-15.
+    // Steps 18-19.
     const numeric = GetOption(options, "numeric", "string", ["always", "auto"], "always");
     lazyRelativeTimeFormatData.numeric = numeric;
 
@@ -159,8 +161,8 @@ function Intl_RelativeTimeFormat_supportedLocalesOf(locales /*, options*/) {
     var options = arguments.length > 1 ? arguments[1] : undefined;
 
     // Step 1.
-    var availableLocales = callFunction(relativeTimeFormatInternalProperties.availableLocales,
-                                        relativeTimeFormatInternalProperties);
+    var availableLocales = "RelativeTimeFormat";
+
     // Step 2.
     let requestedLocales = CanonicalizeLocaleList(locales);
 
@@ -196,42 +198,48 @@ function Intl_RelativeTimeFormat_format(value, unit) {
     // Step 4.
     let u = ToString(unit);
 
-    // PartitionRelativeTimePattern, step 4.
-    if (!Number_isFinite(t)) {
-        ThrowRangeError(JSMSG_DATE_NOT_FINITE, "RelativeTimeFormat");
+    // Step 5.
+    return intl_FormatRelativeTime(relativeTimeFormat, t, u, internals.numeric,
+                                   false);
+}
+
+/**
+ * Returns an Array composed of the components of a relative date formatted
+ * according to the effective locale and the formatting options of this
+ * RelativeTimeFormat object.
+ *
+ * Spec: ECMAScript 402 API, RelativeTImeFormat, 1.4.4.
+ */
+function Intl_RelativeTimeFormat_formatToParts(value, unit) {
+    // Step 1.
+    let relativeTimeFormat = this;
+
+    // Step 2.
+    if (!IsObject(relativeTimeFormat) ||
+        (relativeTimeFormat = GuardToRelativeTimeFormat(relativeTimeFormat)) === null)
+    {
+        return callFunction(CallRelativeTimeFormatMethodIfWrapped, this, value, unit,
+                            "Intl_RelativeTimeFormat_formatToParts");
     }
 
-    // PartitionRelativeTimePattern, step 5.
-    switch (u) {
-      case "second":
-      case "seconds":
-      case "minute":
-      case "minutes":
-      case "hour":
-      case "hours":
-      case "day":
-      case "days":
-      case "week":
-      case "weeks":
-      case "month":
-      case "months":
-      case "quarter":
-      case "quarters":
-      case "year":
-      case "years":
-        break;
-      default:
-        ThrowRangeError(JSMSG_INVALID_OPTION_VALUE, "unit", u);
-    }
+    // Ensure the RelativeTimeFormat internals are resolved.
+    var internals = getRelativeTimeFormatInternals(relativeTimeFormat);
+
+    // Step 3.
+    let t = ToNumber(value);
+
+    // Step 4.
+    let u = ToString(unit);
 
     // Step 5.
-    return intl_FormatRelativeTime(relativeTimeFormat, t, u, internals.numeric);
+    return intl_FormatRelativeTime(relativeTimeFormat, t, u, internals.numeric,
+                                   true);
 }
 
 /**
  * Returns the resolved options for a RelativeTimeFormat object.
  *
- * Spec: ECMAScript 402 API, RelativeTimeFormat, 1.4.4.
+ * Spec: ECMAScript 402 API, RelativeTimeFormat, 1.4.5.
  */
 function Intl_RelativeTimeFormat_resolvedOptions() {
     // Step 1.
@@ -245,13 +253,14 @@ function Intl_RelativeTimeFormat_resolvedOptions() {
                             "Intl_RelativeTimeFormat_resolvedOptions");
     }
 
-    var internals = getRelativeTimeFormatInternals(relativeTimeFormat, "resolvedOptions");
+    var internals = getRelativeTimeFormatInternals(relativeTimeFormat);
 
     // Steps 4-5.
     var result = {
         locale: internals.locale,
         style: internals.style,
         numeric: internals.numeric,
+        numberingSystem: internals.numberingSystem,
     };
 
     // Step 6.

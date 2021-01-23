@@ -35,8 +35,7 @@ namespace js {
 
 // Memory protection occurs at non-deterministic points when
 // recording/replaying.
-static mozilla::Atomic<bool, mozilla::SequentiallyConsistent,
-                       mozilla::recordreplay::Behavior::DontPreserve>
+static mozilla::Atomic<bool, mozilla::SequentiallyConsistent>
     sProtectedRegionsInit(false);
 
 /*
@@ -530,6 +529,7 @@ static ExceptionHandlerState* sMachExceptionState = nullptr;
  * previously installed handler (which will likely terminate the process).
  */
 static void MachExceptionHandler() {
+  ThisThread::SetName("JS MachExceptionHandler");
   kern_return_t ret;
   MachExceptionParameters& current = sMachExceptionState->current;
   MachExceptionParameters& previous = sMachExceptionState->previous;

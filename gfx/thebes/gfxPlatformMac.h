@@ -32,16 +32,10 @@ class gfxPlatformMac : public gfxPlatform {
   already_AddRefed<gfxASurface> CreateOffscreenSurface(
       const IntSize& aSize, gfxImageFormat aFormat) override;
 
-  gfxFontGroup* CreateFontGroup(const mozilla::FontFamilyList& aFontFamilyList,
-                                const gfxFontStyle* aStyle,
-                                gfxTextPerfMetrics* aTextPerf,
-                                gfxUserFontSet* aUserFontSet,
-                                gfxFloat aDevToCssSize) override;
-
   gfxPlatformFontList* CreatePlatformFontList() override;
 
   void ReadSystemFontList(
-      InfallibleTArray<mozilla::dom::SystemFontListEntry>* aFontList) override;
+      nsTArray<mozilla::dom::SystemFontListEntry>* aFontList) override;
 
   bool IsFontFormatSupported(uint32_t aFormatFlags) override;
 
@@ -81,8 +75,10 @@ class gfxPlatformMac : public gfxPlatform {
 
   bool CheckVariationFontSupport() override;
 
+  void InitPlatformGPUProcessPrefs() override;
+
  private:
-  void GetPlatformCMSOutputProfile(void*& mem, size_t& size) override;
+  nsTArray<uint8_t> GetPlatformCMSOutputProfileData() override;
 
   // read in the pref value for the lower threshold on font anti-aliasing
   static uint32_t ReadAntiAliasingThreshold();

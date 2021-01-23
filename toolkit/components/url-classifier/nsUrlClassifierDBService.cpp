@@ -7,13 +7,9 @@
 #include "nsAppDirectoryServiceDefs.h"
 #include "nsArrayUtils.h"
 #include "nsCRT.h"
-#include "nsIDirectoryService.h"
-#include "nsIKeyModule.h"
 #include "nsIObserverService.h"
 #include "nsIPermissionManager.h"
 #include "nsIPrefBranch.h"
-#include "nsIPrefService.h"
-#include "nsIProperties.h"
 #include "nsIXULRuntime.h"
 #include "nsToolkitCompsCID.h"
 #include "nsUrlClassifierDBService.h"
@@ -28,6 +24,7 @@
 #include "nsProxyRelease.h"
 #include "nsString.h"
 #include "mozilla/Atomics.h"
+#include "mozilla/BasePrincipal.h"
 #include "mozilla/Components.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/ErrorNames.h"
@@ -43,6 +40,7 @@
 #include "ProtocolParser.h"
 #include "mozilla/Attributes.h"
 #include "nsIPrincipal.h"
+#include "nsIUrlListManager.h"
 #include "Classifier.h"
 #include "ProtocolParser.h"
 #include "nsContentUtils.h"
@@ -59,7 +57,6 @@
 #include "nsStringStream.h"
 #include "nsNetUtil.h"
 #include "nsToolkitCompsCID.h"
-#include "nsIClassifiedChannel.h"
 
 namespace mozilla {
 namespace safebrowsing {
@@ -232,11 +229,11 @@ class nsUrlClassifierDBService::FeatureHolder final {
 
   ~FeatureHolder() {
     for (FeatureData& featureData : mFeatureData) {
-      NS_ReleaseOnMainThreadSystemGroup("FeatureHolder:mFeatureData",
-                                        featureData.mFeature.forget());
+      NS_ReleaseOnMainThread("FeatureHolder:mFeatureData",
+                             featureData.mFeature.forget());
     }
 
-    NS_ReleaseOnMainThreadSystemGroup("FeatureHolder:mURI", mURI.forget());
+    NS_ReleaseOnMainThread("FeatureHolder:mURI", mURI.forget());
   }
 
   TableData* GetOrCreateTableData(const nsACString& aTable) {
@@ -281,7 +278,7 @@ nsIThread* nsUrlClassifierDBService::gDbBackgroundThread = nullptr;
 
 // Once we've committed to shutting down, don't do work in the background
 // thread.
-static bool gShuttingDownThread = false;
+static Atomic<bool> gShuttingDownThread(false);
 
 static uint32_t sGethashNoise = GETHASH_NOISE_DEFAULT;
 
@@ -865,12 +862,8 @@ nsUrlClassifierDBServiceWorker::ResetDatabase() {
 
 NS_IMETHODIMP
 nsUrlClassifierDBServiceWorker::ReloadDatabase() {
-  nsTArray<nsCString> tables;
-  nsresult rv = mClassifier->ActiveTables(tables);
-  NS_ENSURE_SUCCESS(rv, rv);
-
   // This will null out mClassifier
-  rv = CloseDb();
+  nsresult rv = CloseDb();
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Create new mClassifier and load prefixset and completions from disk.
@@ -1030,7 +1023,7 @@ nsresult nsUrlClassifierDBServiceWorker::CacheCompletions(
 
   rv = mClassifier->ApplyFullHashes(updates);
   if (NS_SUCCEEDED(rv)) {
-    mLastResults = aResults;
+    mLastResults = aResults.Clone();
   }
   return rv;
 }
@@ -1195,8 +1188,8 @@ NS_IMPL_ISUPPORTS(nsUrlClassifierLookupCallback, nsIUrlClassifierLookupCallback,
 
 nsUrlClassifierLookupCallback::~nsUrlClassifierLookupCallback() {
   if (mCallback) {
-    NS_ReleaseOnMainThreadSystemGroup(
-        "nsUrlClassifierLookupCallback::mCallback", mCallback.forget());
+    NS_ReleaseOnMainThread("nsUrlClassifierLookupCallback::mCallback",
+                           mCallback.forget());
   }
 }
 
@@ -1233,7 +1226,7 @@ nsUrlClassifierLookupCallback::LookupComplete(
       // has registered the table. In the second case we should not call
       // complete.
       if ((!gethashUrl.IsEmpty() ||
-           StringBeginsWith(result->mTableName, NS_LITERAL_CSTRING("test"))) &&
+           nsUrlClassifierUtils::IsTestTable(result->mTableName)) &&
           mDBService->GetCompleter(result->mTableName,
                                    getter_AddRefs(completer))) {
         // Bug 1323953 - Send the first 4 bytes for completion no matter how
@@ -1362,8 +1355,9 @@ nsresult nsUrlClassifierLookupCallback::ProcessComplete(
     RefPtr<CacheResult> aCacheResult) {
   NS_ENSURE_ARG_POINTER(mResults);
 
-  // OK if this fails, we just won't cache the item.
-  mCacheResults.AppendElement(aCacheResult, fallible);
+  if (!mCacheResults.AppendElement(aCacheResult, fallible)) {
+    // OK if this failed, we just won't cache the item.
+  }
 
   // Check if this matched any of our results.
   for (const auto& result : *mResults) {
@@ -1502,7 +1496,7 @@ class nsUrlClassifierClassifyCallback final
     nsresult errorCode;
   };
 
-  ~nsUrlClassifierClassifyCallback(){};
+  ~nsUrlClassifierClassifyCallback() = default;
 
   nsCOMPtr<nsIURIClassifierCallback> mCallback;
   nsTArray<ClassifyMatchedInfo> mMatchedArray;
@@ -1626,15 +1620,6 @@ nsresult nsUrlClassifierDBService::ReadDisallowCompletionsTablesFromPrefs() {
 
 nsresult nsUrlClassifierDBService::Init() {
   MOZ_ASSERT(NS_IsMainThread(), "Must initialize DB service on main thread");
-  nsCOMPtr<nsIXULRuntime> appInfo =
-      do_GetService("@mozilla.org/xre/app-info;1");
-  if (appInfo) {
-    bool inSafeMode = false;
-    appInfo->GetInSafeMode(&inSafeMode);
-    if (inSafeMode) {
-      return NS_ERROR_NOT_AVAILABLE;
-    }
-  }
 
   switch (XRE_GetProcessType()) {
     case GeckoProcessType_Default:
@@ -1719,7 +1704,7 @@ nsUrlClassifierDBService::Classify(nsIPrincipal* aPrincipal,
   NS_ENSURE_ARG(aPrincipal);
   NS_ENSURE_ARG(aResult);
 
-  if (nsContentUtils::IsSystemPrincipal(aPrincipal)) {
+  if (aPrincipal->IsSystemPrincipal()) {
     *aResult = false;
     return NS_OK;
   }
@@ -1736,14 +1721,8 @@ nsUrlClassifierDBService::Classify(nsIPrincipal* aPrincipal,
 
     if (aEventTarget) {
       content->SetEventTargetForActor(actor, aEventTarget);
-    } else {
-      // In the case null event target we should use systemgroup event target
-      NS_WARNING(
-          ("Null event target, we should use SystemGroup to do labelling"));
-      nsCOMPtr<nsIEventTarget> systemGroupEventTarget =
-          mozilla::SystemGroup::EventTargetFor(mozilla::TaskCategory::Other);
-      content->SetEventTargetForActor(actor, systemGroupEventTarget);
     }
+
     if (!content->SendPURLClassifierConstructor(
             actor, IPC::Principal(aPrincipal), aResult)) {
       *aResult = false;
@@ -1781,7 +1760,9 @@ nsUrlClassifierDBService::Classify(nsIPrincipal* aPrincipal,
   }
 
   nsCOMPtr<nsIURI> uri;
-  rv = aPrincipal->GetURI(getter_AddRefs(uri));
+  // Casting to BasePrincipal, as we can't get InnerMost URI otherwise
+  auto* basePrincipal = BasePrincipal::Cast(aPrincipal);
+  rv = basePrincipal->GetURI(getter_AddRefs(uri));
   NS_ENSURE_SUCCESS(rv, rv);
   NS_ENSURE_TRUE(uri, NS_ERROR_FAILURE);
 
@@ -1997,7 +1978,7 @@ nsUrlClassifierDBService::SendThreatHitReport(nsIChannel* aChannel,
                      nsContentUtils::GetSystemPrincipal(),
                      nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
                      nsIContentPolicy::TYPE_OTHER,
-                     nullptr,  // nsICookieSettings
+                     nullptr,  // nsICookieJarSettings
                      nullptr,  // aPerformanceStorage
                      nullptr,  // aLoadGroup
                      nullptr, loadFlags);
@@ -2035,17 +2016,16 @@ nsUrlClassifierDBService::SendThreatHitReport(nsIChannel* aChannel,
 
 NS_IMETHODIMP
 nsUrlClassifierDBService::Lookup(nsIPrincipal* aPrincipal,
-                                 const nsACString& tables,
-                                 nsIUrlClassifierCallback* c) {
+                                 const nsACString& aTables,
+                                 nsIUrlClassifierCallback* aCallback) {
+  // We don't expect someone with SystemPrincipal calls this API(See Bug
+  // 813897).
+  MOZ_ASSERT(!aPrincipal->IsSystemPrincipal());
+
   NS_ENSURE_TRUE(gDbBackgroundThread, NS_ERROR_NOT_INITIALIZED);
 
-  if (nsContentUtils::IsSystemPrincipal(aPrincipal)) {
-    // FIXME: we don't call 'c' here!
-    return NS_OK;
-  }
-
   nsTArray<nsCString> tableArray;
-  Classifier::SplitTables(tables, tableArray);
+  Classifier::SplitTables(aTables, tableArray);
 
   nsCOMPtr<nsIUrlClassifierFeature> feature;
   nsresult rv =
@@ -2054,7 +2034,9 @@ nsUrlClassifierDBService::Lookup(nsIPrincipal* aPrincipal,
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsCOMPtr<nsIURI> uri;
-  rv = aPrincipal->GetURI(getter_AddRefs(uri));
+  // Casting to BasePrincipal, as we can't get InnerMost URI otherwise
+  auto* basePrincipal = BasePrincipal::Cast(aPrincipal);
+  rv = basePrincipal->GetURI(getter_AddRefs(uri));
   NS_ENSURE_SUCCESS(rv, rv);
   NS_ENSURE_TRUE(uri, NS_ERROR_FAILURE);
 
@@ -2081,7 +2063,7 @@ nsUrlClassifierDBService::Lookup(nsIPrincipal* aPrincipal,
   rv = utilsService->GetKeyForURI(uri, key);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  return LookupURI(key, holder, c);
+  return LookupURI(key, holder, aCallback);
 }
 
 nsresult nsUrlClassifierDBService::LookupURI(
@@ -2384,7 +2366,7 @@ nsresult nsUrlClassifierDBService::Shutdown() {
   //    will cause the pending events on the joining thread to
   //    be processed.
   nsIThread* backgroundThread = nullptr;
-  Swap(backgroundThread, gDbBackgroundThread);
+  std::swap(backgroundThread, gDbBackgroundThread);
 
   // 4. Wait until the worker thread is down.
   if (backgroundThread) {
@@ -2407,11 +2389,14 @@ bool nsUrlClassifierDBService::ShutdownHasStarted() {
 
 // static
 nsUrlClassifierDBServiceWorker* nsUrlClassifierDBService::GetWorker() {
-  if (!sUrlClassifierDBService) {
+  nsresult rv;
+  RefPtr<nsUrlClassifierDBService> service =
+      nsUrlClassifierDBService::GetInstance(&rv);
+  if (!service) {
     return nullptr;
   }
 
-  return sUrlClassifierDBService->mWorker;
+  return service->mWorker;
 }
 
 NS_IMETHODIMP
@@ -2455,14 +2440,6 @@ nsUrlClassifierDBService::AsyncClassifyLocalWithFeatures(
 
     auto actor = new URLClassifierLocalChild();
 
-    // TODO: Bug 1353701 - Supports custom event target for labelling.
-    nsCOMPtr<nsIEventTarget> systemGroupEventTarget =
-        mozilla::SystemGroup::EventTargetFor(mozilla::TaskCategory::Other);
-    content->SetEventTargetForActor(actor, systemGroupEventTarget);
-
-    URIParams uri;
-    SerializeURI(aURI, uri);
-
     nsTArray<IPCURLClassifierFeature> ipcFeatures;
     for (nsIUrlClassifierFeature* feature : aFeatures) {
       nsAutoCString name;
@@ -2478,16 +2455,19 @@ nsUrlClassifierDBService::AsyncClassifyLocalWithFeatures(
       }
 
       nsAutoCString skipHostList;
-      rv = feature->GetSkipHostList(skipHostList);
-      if (NS_WARN_IF(NS_FAILED(rv))) {
-        continue;
+      if (aListType == nsIUrlClassifierFeature::blacklist) {
+        rv = feature->GetSkipHostList(skipHostList);
+        if (NS_WARN_IF(NS_FAILED(rv))) {
+          continue;
+        }
       }
 
       ipcFeatures.AppendElement(
           IPCURLClassifierFeature(name, tables, skipHostList));
     }
 
-    if (!content->SendPURLClassifierLocalConstructor(actor, uri, ipcFeatures)) {
+    if (!content->SendPURLClassifierLocalConstructor(actor, aURI,
+                                                     ipcFeatures)) {
       return NS_ERROR_FAILURE;
     }
 
@@ -2580,7 +2560,9 @@ bool nsUrlClassifierDBService::AsyncClassifyLocalWithFeaturesUsingPreferences(
   nsCOMPtr<nsIUrlClassifierFeatureCallback> callback(aCallback);
   nsCOMPtr<nsIRunnable> cbRunnable = NS_NewRunnableFunction(
       "nsUrlClassifierDBService::AsyncClassifyLocalWithFeatures",
-      [callback, results]() { callback->OnClassifyComplete(results); });
+      [callback, results = std::move(results)]() {
+        callback->OnClassifyComplete(results);
+      });
 
   NS_DispatchToMainThread(cbRunnable);
   return true;

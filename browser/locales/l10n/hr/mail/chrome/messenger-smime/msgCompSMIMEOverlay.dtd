@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSMIMEOverlay.dtd UI for s/mime hooks in message composition -->
+
+<!ENTITY menu_securityDoNotEncrypt.label "Nemoj šifrirati">
+<!ENTITY menu_securityDoNotEncrypt.accesskey "o">
+
+<!-- not yet used
+<!ENTITY menu_securityEncryptOptional.label "Allow Encryption">
+<!ENTITY menu_securityEncryptOptional.accesskey "w">
+-->
+
+<!ENTITY menu_securityEncryptRequire2.label "Zahtijevaj šifriranje">
+<!ENTITY menu_securityEncryptRequire.accesskey "K">
+
+<!ENTITY menu_securitySign.label "Digitalno potpiši ovu poruku">
+<!ENTITY menu_securitySign.accesskey "p">
+
+<!ENTITY menu_securityAttachMyKey.label "Priloži moj javni ključ">
+<!ENTITY menu_securityAttachMyKey.accesskey "P">
+
+<!ENTITY menu_securityTech.label "Tehnologija šifriranja">
+<!ENTITY menu_securityTech.accesskey "T">
+
+<!ENTITY menu_techPGP.label "OpenPGP">
+<!ENTITY menu_techPGP.accesskey "O">
+<!ENTITY menu_techSMIME.label "S/MIME">
+<!ENTITY menu_techSMIME.accesskey "S">
+
+<!ENTITY menu_securityStatus.label "Prikaži sigurnosne informacije">
+<!ENTITY menu_securityStatus.accesskey "i">
+
+<!ENTITY securityButton.label "Sigurnost">
+<!ENTITY securityButton.tooltip "Pogledajte ili promijenite sigurnosne postavke">
+
+<!ENTITY menu_viewSecurityStatus.label "Sigurnosne informacije poruke">
+<!ENTITY menu_viewSecurityStatus.accesskey "i">

@@ -7,30 +7,29 @@
  * Verify user typed text remains in the URL bar when tab switching, even when
  * loads fail.
  */
-add_task(async function() {
+add_task(async function validURL() {
   let input = "i-definitely-dont-exist.example.com";
   let tab = await BrowserTestUtils.openNewForegroundTab(
     gBrowser,
-    "about:blank",
-    false
+    "http://example.com/"
   );
   let browser = tab.linkedBrowser;
   // Note: Waiting on content document not being hidden because new tab pages can be preloaded,
   // in which case no load events fire.
-  await ContentTask.spawn(browser, null, async () => {
+  await SpecialPowers.spawn(browser, [], async () => {
     await ContentTaskUtils.waitForCondition(() => {
       return content.document && !content.document.hidden;
     });
   });
-  let errorPageLoaded = BrowserTestUtils.waitForErrorPage(tab.linkedBrowser);
+  let errorPageLoaded = BrowserTestUtils.waitForErrorPage(browser);
   gURLBar.value = input;
   gURLBar.select();
   EventUtils.sendKey("return");
   await errorPageLoaded;
-  is(gURLBar.textValue, input, "Text is still in URL bar");
+  is(gURLBar.value, input, "Text is still in URL bar");
   await BrowserTestUtils.switchTab(gBrowser, tab.previousElementSibling);
   await BrowserTestUtils.switchTab(gBrowser, tab);
-  is(gURLBar.textValue, input, "Text is still in URL bar after tab switch");
+  is(gURLBar.value, input, "Text is still in URL bar after tab switch");
   BrowserTestUtils.removeTab(tab);
 });
 
@@ -38,7 +37,7 @@ add_task(async function() {
  * Invalid URIs fail differently (that is, immediately, in the loadURI call)
  * if keyword searches are turned off. Test that this works, too.
  */
-add_task(async function() {
+add_task(async function invalidURL() {
   let input = "To be or not to be-that is the question";
   await SpecialPowers.pushPrefEnv({ set: [["keyword.enabled", false]] });
   let tab = await BrowserTestUtils.openNewForegroundTab(
@@ -49,7 +48,7 @@ add_task(async function() {
   let browser = tab.linkedBrowser;
   // Note: Waiting on content document not being hidden because new tab pages can be preloaded,
   // in which case no load events fire.
-  await ContentTask.spawn(browser, null, async () => {
+  await SpecialPowers.spawn(browser, [], async () => {
     await ContentTaskUtils.waitForCondition(() => {
       return content.document && !content.document.hidden;
     });
@@ -59,11 +58,11 @@ add_task(async function() {
   gURLBar.select();
   EventUtils.sendKey("return");
   await errorPageLoaded;
-  is(gURLBar.textValue, input, "Text is still in URL bar");
+  is(gURLBar.value, input, "Text is still in URL bar");
   is(tab.linkedBrowser.userTypedValue, input, "Text still stored on browser");
   await BrowserTestUtils.switchTab(gBrowser, tab.previousElementSibling);
   await BrowserTestUtils.switchTab(gBrowser, tab);
-  is(gURLBar.textValue, input, "Text is still in URL bar after tab switch");
+  is(gURLBar.value, input, "Text is still in URL bar after tab switch");
   is(tab.linkedBrowser.userTypedValue, input, "Text still stored on browser");
   BrowserTestUtils.removeTab(tab);
 });

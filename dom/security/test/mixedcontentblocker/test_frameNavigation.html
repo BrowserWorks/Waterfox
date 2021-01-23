@@ -33,7 +33,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=840388
   }
 
   var secureTestsStarted = false;
-  function checkTestsCompleted() {
+  async function checkTestsCompleted() {
     for (var prop in testsToRunInsecure) {
       // some test hasn't run yet so we're not done
       if (!testsToRunInsecure[prop])
@@ -60,7 +60,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=840388
        }
       //call to change the preferences
       counter++;
-      SpecialPowers.setBoolPref("security.mixed_content.block_active_content", false);
+      await SpecialPowers.setBoolPref("security.mixed_content.block_active_content", false);
       blockActive = SpecialPowers.getBoolPref("security.mixed_content.block_active_content");
       log("blockActive set to "+blockActive+".");
       secureTestsStarted = false;
@@ -91,22 +91,22 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=840388
 
       case "insecurePage_navigate_child":
         is(event.data.msg, "navigated to insecure iframe on insecure page", "navigating to insecure iframe blocked on insecure page");
-        testsToRunInsecure["insecurePage_navigate_child"] = true;
+        testsToRunInsecure.insecurePage_navigate_child = true;
         break;
 
       case "insecurePage_navigate_grandchild":
         is(event.data.msg, "navigated to insecure grandchild iframe on insecure page", "navigating to insecure grandchild iframe blocked on insecure page");
-        testsToRunInsecure["insecurePage_navigate_grandchild"] = true;
+        testsToRunInsecure.insecurePage_navigate_grandchild = true;
         break;
 
       case "securePage_navigate_child":
         ok(blockActive == (event.data.msg == "navigating to insecure iframe blocked on secure page"), "navigated to insecure iframe on secure page");
-        testsToRunSecure["securePage_navigate_child"] = true;
+        testsToRunSecure.securePage_navigate_child = true;
         break;
 
       case "blankTarget":
         is(event.data.msg, "opened an http link with target=_blank from a secure page", "couldn't open an http link in a new window from a secure page");
-        testsToRunSecure["blankTarget"] = true;
+        testsToRunSecure.blankTarget = true;
         break;
 
     }

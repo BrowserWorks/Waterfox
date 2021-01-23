@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "Editor Sifat Lanjutan">
+<!ENTITY AttName.label                  "Atribut: ">
+<!ENTITY AttValue.label                 "Nilai: ">
+<!ENTITY PropertyName.label             "Sifat: ">
+<!ENTITY currentattributesfor.label     "Atribut semasa untuk: ">
+<!ENTITY tree.attributeHeader.label     "Atribut">
+<!ENTITY tree.propertyHeader.label      "Sifat">
+<!ENTITY tree.valueHeader.label         "Nilai">
+<!ENTITY tabHTML.label                  "Atribut HTML">
+<!ENTITY tabCSS.label                   "Gaya Dalam-susunan">
+<!ENTITY tabJSE.label                   "Acara JavaScript">
+
+<!ENTITY editAttribute.label    "Klik pada item di atas untuk mengedit nilainya">
+<!ENTITY removeAttribute.label  "Buang">

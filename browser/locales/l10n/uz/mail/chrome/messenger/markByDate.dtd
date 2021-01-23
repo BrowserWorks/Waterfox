@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageMarkByDate.label "Xabarlarni sanasi bo‘yicha o‘qilgan deb belgilash">
+<!ENTITY markByDateLower.label "Ushbudan xabarlarni o‘qilgan deb belgilash:">
+<!ENTITY markByDateLower.accesskey "U">
+<!ENTITY markByDateUpper.label "Qabul qiluvchi">
+<!ENTITY markByDateUpper.accesskey "Q">

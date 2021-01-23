@@ -1,6 +1,6 @@
 AC_PREREQ([2.64])
 AC_INIT([HarfBuzz],
-        [2.4.0],
+        [2.6.6],
         [https://github.com/harfbuzz/harfbuzz/issues/new],
         [harfbuzz],
         [http://harfbuzz.org/])
@@ -9,7 +9,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([src/harfbuzz.pc.in])
 AC_CONFIG_HEADERS([config.h])
 
-AM_INIT_AUTOMAKE([1.13.0 gnits tar-ustar dist-bzip2 no-dist-gzip -Wall no-define color-tests -Wno-portability])
+AM_INIT_AUTOMAKE([1.13.0 gnits tar-ustar dist-xz no-dist-gzip -Wall no-define color-tests -Wno-portability])
 AM_SILENT_RULES([yes])
 AX_CODE_COVERAGE
 
@@ -23,7 +23,7 @@ AC_PROG_CC
 AC_PROG_CC_C99
 AM_PROG_CC_C_O
 AC_PROG_CXX
-dnl AX_CXX_COMPILE_STDCXX(11, noext, optional)
+AX_CXX_COMPILE_STDCXX(11)
 AC_SYS_LARGEFILE
 PKG_PROG_PKG_CONFIG([0.20])
 AM_MISSING_PROG([RAGEL], [ragel])
@@ -77,14 +77,8 @@ GTK_DOC_CHECK([1.15],[--flavour no-tmpl])
 ])
 
 # Functions and headers
-AC_CHECK_FUNCS(atexit mprotect sysconf getpagesize mmap isatty newlocale strtod_l posix_memalign)
-
-save_libs="$LIBS"
-LIBS="$LIBS -lm"
-AC_CHECK_FUNCS([round], ,[AC_CHECK_DECLS([round], , ,[#include <math.h>])])
-LIBS="$save_libs"
-
-AC_CHECK_HEADERS(unistd.h sys/mman.h xlocale.h stdbool.h)
+AC_CHECK_FUNCS(atexit mprotect sysconf getpagesize mmap isatty roundf)
+AC_CHECK_HEADERS(unistd.h sys/mman.h stdbool.h)
 
 # Compiler flags
 AC_CANONICAL_HOST
@@ -134,23 +128,13 @@ AC_MSG_RESULT([$hb_os_win32])
 AM_CONDITIONAL(OS_WIN32, test "$hb_os_win32" = "yes")
 
 have_pthread=false
-if test "$hb_os_win32" = no; then
-	AX_PTHREAD([have_pthread=true])
-fi
+AX_PTHREAD([have_pthread=true])
 if $have_pthread; then
 	AC_DEFINE(HAVE_PTHREAD, 1, [Have POSIX threads])
 fi
 AM_CONDITIONAL(HAVE_PTHREAD, $have_pthread)
 
 dnl ==========================================================================
-
-have_fallback=true
-if $have_fallback; then
-	AC_DEFINE(HAVE_FALLBACK, 1, [Have simple TrueType Layout backend])
-fi
-AM_CONDITIONAL(HAVE_FALLBACK, $have_fallback)
-
-dnl ===========================================================================
 
 AC_ARG_WITH(glib,
 	[AS_HELP_STRING([--with-glib=@<:@yes/no/auto@:>@],
@@ -300,21 +284,6 @@ AM_CONDITIONAL(HAVE_ICU_BUILTIN, $have_icu && test "x$with_icu" = "xbuiltin")
 
 dnl ===========================================================================
 
-AC_ARG_WITH(ucdn,
-	[AS_HELP_STRING([--with-ucdn=@<:@yes/no@:>@],
-			[Use builtin UCDN library @<:@default=yes@:>@])],,
-	[with_ucdn=yes])
-have_ucdn=false
-if test "x$with_ucdn" = "xyes"; then
-	have_ucdn=true
-fi
-if $have_ucdn; then
-	AC_DEFINE(HAVE_UCDN, 1, [Have UCDN Unicode functions])
-fi
-AM_CONDITIONAL(HAVE_UCDN, $have_ucdn)
-
-dnl ==========================================================================
-
 AC_ARG_WITH(graphite2,
 	[AS_HELP_STRING([--with-graphite2=@<:@yes/no/auto@:>@],
 			[Use the graphite2 library @<:@default=no@:>@])],,
@@ -392,6 +361,28 @@ AM_CONDITIONAL(HAVE_UNISCRIBE, $have_uniscribe)
 
 dnl ===========================================================================
 
+AC_ARG_WITH(gdi,
+	[AS_HELP_STRING([--with-gdi=@<:@yes/no/auto@:>@],
+			[Provide GDI integration helpers @<:@default=no@:>@])],,
+	[with_gdi=no])
+have_gdi=false
+if test "x$with_gdi" = "xyes" -o "x$with_gdi" = "xauto"; then
+	AC_CHECK_HEADERS(windows.h, have_gdi=true)
+fi
+if test "x$with_gdi" = "xyes" -a "x$have_gdi" != "xtrue"; then
+	AC_MSG_ERROR([gdi support requested but not found])
+fi
+if $have_gdi; then
+	GDI_CFLAGS=
+	GDI_LIBS="-lgdi32"
+	AC_SUBST(GDI_CFLAGS)
+	AC_SUBST(GDI_LIBS)
+	AC_DEFINE(HAVE_GDI, 1, [Have GDI library])
+fi
+AM_CONDITIONAL(HAVE_GDI, $have_gdi)
+
+dnl ===========================================================================
+
 AC_ARG_WITH(directwrite,
 	[AS_HELP_STRING([--with-directwrite=@<:@yes/no/auto@:>@],
 			[Use the DirectWrite library (experimental) @<:@default=no@:>@])],,
@@ -407,7 +398,7 @@ if test "x$with_directwrite" = "xyes" -a "x$have_directwrite" != "xtrue"; then
 fi
 if $have_directwrite; then
 	DIRECTWRITE_CXXFLAGS=
-	DIRECTWRITE_LIBS="-ldwrite"
+	DIRECTWRITE_LIBS=
 	AC_SUBST(DIRECTWRITE_CXXFLAGS)
 	AC_SUBST(DIRECTWRITE_LIBS)
 	AC_DEFINE(HAVE_DIRECTWRITE, 1, [Have DirectWrite library])
@@ -497,7 +488,6 @@ AC_CONFIG_FILES([
 Makefile
 src/Makefile
 src/harfbuzz-config.cmake
-src/hb-ucdn/Makefile
 util/Makefile
 test/Makefile
 test/api/Makefile
@@ -525,7 +515,7 @@ AC_MSG_NOTICE([
 Build configuration:
 
 Unicode callbacks (you want at least one):
-	Builtin (UCDN):		${have_ucdn}
+	Builtin			true
 	Glib:			${have_glib}
 	ICU:			${have_icu}
 
@@ -542,6 +532,7 @@ Additional shapers (the more the merrier):
 Platform shapers (not normally needed):
 	CoreText:		${have_coretext}
 	DirectWrite:		${have_directwrite}
+	GDI:			${have_gdi}
 	Uniscribe:		${have_uniscribe}
 
 Other features:

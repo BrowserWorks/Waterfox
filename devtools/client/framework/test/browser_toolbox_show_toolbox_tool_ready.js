@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -37,6 +35,15 @@ function isPanelReady(toolbox, toolId) {
  * returning. See Bug 1543907.
  */
 add_task(async function automaticallyBindTexbox() {
+  // We have to disable CSP for this test otherwise the CSP of
+  // about:devtools-toolbox will block the data: url.
+  await SpecialPowers.pushPrefEnv({
+    set: [
+      ["security.csp.enable", false],
+      ["dom.security.skip_about_page_has_csp_assert", true],
+    ],
+  });
+
   info(
     "Registering a tool with an input field and making sure the context menu works"
   );

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Жаңа сақталған іздеу бумасы">
+<!ENTITY name.label                 "Аты:">
+<!ENTITY name.accesskey             "А">
+<!ENTITY description.label          "Келесінің ішкі бумасы ретінде жасау:">
+<!ENTITY description.accesskey      "с">
+
+<!ENTITY searchTermCaption.label "Бұл сақталған іздеу бумасы үшін іздеу шартын баптау: ">
+
+<!ENTITY folderSelectionCaption.label "Іздеу үшін бумаларды таңдаңыз: ">
+<!ENTITY chooseFoldersButton.label "Таңдау…">
+<!ENTITY chooseFoldersButton.accesskey "Т">
+
+<!ENTITY searchOnline.label "Желіде іздеу (IMAP және Жаңалықтар бумалары үшін нақты жауаптарды береді, бірақ, буманы ашу уақытын ұзартады)">
+<!ENTITY searchOnline.accesskey "л">
+<!ENTITY newFolderButton.label       "Жасау">
+<!ENTITY newFolderButton.accesskey   "с">
+<!ENTITY editFolderButton.label      "Жаңарту">
+<!ENTITY editFolderButton.accesskey  "Ж">

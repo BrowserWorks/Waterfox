@@ -82,7 +82,7 @@ Connection::CreateAsyncStatement(const nsACString&,
 }
 
 NS_IMETHODIMP
-Connection::ExecuteAsync(mozIStorageBaseStatement**, uint32_t,
+Connection::ExecuteAsync(const nsTArray<RefPtr<mozIStorageBaseStatement>>&,
                          mozIStorageStatementCallback*,
                          mozIStoragePendingStatement**) {
   // async methods are not supported
@@ -223,6 +223,11 @@ Connection::GetDefaultTransactionType(int32_t* aResultOut) {
 NS_IMETHODIMP
 Connection::SetDefaultTransactionType(int32_t aType) {
   return mBase->SetDefaultTransactionType(aType);
+}
+
+NS_IMETHODIMP
+Connection::GetVariableLimit(int32_t* aResultOut) {
+  return mBase->GetVariableLimit(aResultOut);
 }
 
 NS_IMETHODIMP

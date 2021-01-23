@@ -18,6 +18,7 @@
 #include "nsPrintfCString.h"
 #include "nsNavHistory.h"
 #include "mozilla/Likely.h"
+#include "mozilla/Utf8.h"
 #include "nsVariant.h"
 
 // Maximum number of chars to search through.
@@ -108,7 +109,7 @@ static MOZ_ALWAYS_INLINE bool isOnBoundary(const_char_iterator aPos) {
 
 /**
  * Check whether a token string matches a particular position of a source
- * string, case insensitively.
+ * string, case insensitively (or optionally, case and diacritic insensitively).
  *
  * @param aTokenStart
  *        An iterator pointing to the start of the token string.
@@ -119,6 +120,8 @@ static MOZ_ALWAYS_INLINE bool isOnBoundary(const_char_iterator aPos) {
  *        matching at.
  * @param aSourceEnd
  *        An iterator pointing past-the-end of the source string.
+ * @param aMatchDiacritics
+ *        Whether or not the match is diacritic-sensitive.
  *
  * @return true if the string [aTokenStart, aTokenEnd) matches the start of
  *         the string [aSourceStart, aSourceEnd, false otherwise.
@@ -126,7 +129,8 @@ static MOZ_ALWAYS_INLINE bool isOnBoundary(const_char_iterator aPos) {
 static MOZ_ALWAYS_INLINE bool stringMatch(const_char_iterator aTokenStart,
                                           const_char_iterator aTokenEnd,
                                           const_char_iterator aSourceStart,
-                                          const_char_iterator aSourceEnd) {
+                                          const_char_iterator aSourceEnd,
+                                          bool aMatchDiacritics) {
   const_char_iterator tokenCur = aTokenStart, sourceCur = aSourceStart;
 
   while (tokenCur < aTokenEnd) {
@@ -136,8 +140,8 @@ static MOZ_ALWAYS_INLINE bool stringMatch(const_char_iterator aTokenStart,
 
     bool error;
     if (!CaseInsensitiveUTF8CharsEqual(sourceCur, tokenCur, aSourceEnd,
-                                       aTokenEnd, &sourceCur, &tokenCur,
-                                       &error)) {
+                                       aTokenEnd, &sourceCur, &tokenCur, &error,
+                                       aMatchDiacritics)) {
       return false;
     }
   }
@@ -173,6 +177,9 @@ static bool findInString(const nsDependentCSubstring& aToken,
     return false;
   }
 
+  const nsNavHistory* history = nsNavHistory::GetConstHistoryService();
+  bool matchDiacritics = history && history->MatchDiacritics();
+
   const_char_iterator tokenStart(aToken.BeginReading()),
       tokenEnd(aToken.EndReading()), tokenNext,
       sourceStart(aSourceString.BeginReading()),
@@ -183,10 +190,15 @@ static bool findInString(const nsDependentCSubstring& aToken,
   if (tokenFirstChar == uint32_t(-1)) {
     return false;
   }
+  if (!matchDiacritics) {
+    tokenFirstChar = ToNaked(tokenFirstChar);
+  }
 
   for (;;) {
-    // Scan forward to the next viable candidate (if any).
-    goToNextSearchCandidate(sourceCur, sourceEnd, tokenFirstChar);
+    if (matchDiacritics) {
+      // Scan forward to the next viable candidate (if any).
+      goToNextSearchCandidate(sourceCur, sourceEnd, tokenFirstChar);
+    }
     if (sourceCur == sourceEnd) {
       break;
     }
@@ -199,11 +211,15 @@ static bool findInString(const nsDependentCSubstring& aToken,
     if (sourceFirstChar == uint32_t(-1)) {
       return false;
     }
+    if (!matchDiacritics) {
+      sourceFirstChar = ToNaked(sourceFirstChar);
+    }
 
     if (sourceFirstChar == tokenFirstChar &&
         (aBehavior != eFindOnBoundary || sourceCur == sourceStart ||
          isOnBoundary(sourceCur)) &&
-        stringMatch(tokenNext, tokenEnd, sourceNext, sourceEnd)) {
+        stringMatch(tokenNext, tokenEnd, sourceNext, sourceEnd,
+                    matchDiacritics)) {
       return true;
     }
 
@@ -373,7 +389,7 @@ nsDependentCSubstring MatchAutoCompleteFunction::fixupURISpec(
   // Otherwise, we will simply use our original string.
   bool unescaped = NS_UnescapeURL(aURISpec.BeginReading(), aURISpec.Length(),
                                   esc_SkipControl, aSpecBuf);
-  if (unescaped && IsUTF8(aSpecBuf)) {
+  if (unescaped && IsUtf8(aSpecBuf)) {
     fixedSpec.Rebind(aSpecBuf, 0);
   } else {
     fixedSpec.Rebind(aURISpec, 0);

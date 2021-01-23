@@ -1,0 +1,86 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "ઈમેજ ગુણધર્મો">
+
+<!ENTITY pixelsPopup.value "પિક્સેલો">
+<!ENTITY percentPopup.value "ટકા">
+
+<!-- These are in the Location tab panel -->
+<!ENTITY locationEditField.label "ઈમેજ સ્થાન:">
+<!ENTITY locationEditField.accessKey "L">
+<!ENTITY locationEditField.tooltip "ઈમેજનું ફાઈલનામ અથવા સ્થાન લખો">
+<!ENTITY title.label "સાધનમદદ:">
+<!ENTITY title.accessKey "T">
+<!ENTITY title.tooltip "html 'title' લક્ષણ કે જે સાધનમદદ તરીકે પ્રદર્શિત થાય છે">
+<!ENTITY altText.label "વૈકલ્પિક લખાણ:">
+<!ENTITY altText.accessKey "A">
+<!ENTITY altTextEditField.tooltip "ઈમેજના સ્થાને પ્રદર્શિત કરવા માટેનું લખાણ લખો">
+<!ENTITY noAltText.label "વૈકલ્પિક લખાણ વાપરશો નહિં">
+<!ENTITY noAltText.accessKey "D">
+
+<!ENTITY previewBox.label "ઈમેજ પૂર્વદર્શન">
+<!ENTITY MoreFewerButton.tooltip "ફેરફાર કરવા માટે વધુ અથવા થોડા ગુણધર્મો પ્રદર્શિત કરો">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+<!ENTITY actualSize.label "વાસ્તવિક માપ:">
+<!ENTITY actualSizeRadio.label "વાસ્તવિક માપ">
+<!ENTITY actualSizeRadio.accessKey "A">
+<!ENTITY actualSizeRadio.tooltip "ઈમેજના વાસ્તવિક માપમાં પાછા ફરો">
+<!ENTITY customSizeRadio.label "વૈવિધ્યપૂર્ણ માપ">
+<!ENTITY customSizeRadio.accessKey "S">
+<!ENTITY customSizeRadio.tooltip "ઈમેજનું માપ પાનામાં પ્રદર્શિત થયા અનુસાર બદલો">
+<!ENTITY heightEditField.label "ઊંચાઈ:">
+<!ENTITY heightEditField.accessKey "G">
+<!ENTITY widthEditField.label "પહોળાઈ:">
+<!ENTITY widthEditField.accessKey "W">
+<!ENTITY constrainCheckbox.label "પરિમાણ">
+<!ENTITY constrainCheckbox.accessKey "C">
+<!ENTITY constrainCheckbox.tooltip "ઈમેજનો એસ્પેક્ટ ગુણોત્તર જાળવો">
+
+<!-- These controls are in the Image Map box of the expanded area -->
+<!ENTITY imagemapBox.label "ઈમેજ મેપ">
+<!ENTITY removeImageMapButton.label "દૂર કરો">
+<!ENTITY removeImageMapButton.accessKey "R">
+<!ENTITY editImageMapButton.label "ફેરફાર કરો...">
+<!ENTITY editImageMapButton.tooltip "આ ઈમેજ માટે ક્લિક કરી શકાય તેવા હોટસ્પોટ બનાવો">
+
+<!-- These are the options for image alignment -->
+<!ENTITY alignment.label "લખાણને ઈમેજ સાથે બંધબેસાડો">
+<!ENTITY bottomPopup.value "તળિયે">
+<!ENTITY topPopup.value "ટોચ પર">
+<!ENTITY centerPopup.value "કેન્દ્રમાં">
+<!ENTITY wrapRightPopup.value "જમણેથી લપેટો">
+<!ENTITY wrapLeftPopup.value "ડાબેથી લપેટો">
+
+<!-- These controls are in the Spacing Box -->
+<!ENTITY spacingBox.label "જગ્યા છોડી રહ્યા છીએ">
+<!ENTITY spacingBox.tooltip "ઈમેજની ફરતે જગ્યાના જથ્થા માટે નંબર લખો">
+<!ENTITY leftRightEditField.label "ડાબું અને જમણું:">
+<!ENTITY leftRightEditField.accessKey "L">
+<!ENTITY topBottomEditField.label "ઉપર અને નીચે:">
+<!ENTITY topBottomEditField.accessKey "T">
+<!ENTITY borderEditField.label "ઘાટી કિનારી:">
+<!ENTITY borderEditField.accessKey "B">
+
+<!-- These controls are in the Link Box -->
+<!ENTITY showImageLinkBorder.label "કડી થયેલ ઈમેજની ફરતે કિનારી બદાવો">
+<!ENTITY showImageLinkBorder.accessKey "B">
+
+<!-- These controls may be added some day; currently not used -->
+<!ENTITY makePageBackgroundCheckbox.label "પાનાંનો પાશ્વ ભાગ બનાવો">
+<!ENTITY makePageBackgroundCheckbox.tooltip "તમારા પાનાં માટે ઈમેજને પાશ્વ ભાગ તરીકે વાપરો">
+<!ENTITY editImageButton.label "ઈમેજમાં ફેરફાર કરો">
+<!ENTITY editImageButton.tooltip "ઈમેજ ફાઈલને અન્ય કાર્યક્રમમાં ફેરફાર કરો">
+
+<!-- These tabs are currently used in the image input dialog -->
+<!ENTITY imageInputTab.label "ફોર્મ">
+<!ENTITY imageLocationTab.label "સ્થાન">
+<!ENTITY imageDimensionsTab.label "પરિમાણો">
+<!ENTITY imageAppearanceTab.label "દેખાવ">
+<!ENTITY imageLinkTab.label "કડી">

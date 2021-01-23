@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Barba">
+<!ENTITY lastPickedColor.label "Poslednja wubrana barba">
+<!ENTITY lastPickedColor.accessKey "P">
+<!ENTITY chooseColor1.label "Wubjerće barbu:">
+<!ENTITY chooseColor2.label "Zapisajće znamjenjowy slěd HTML za barbu">
+<!ENTITY chooseColor2.accessKey "H">
+<!ENTITY setColorExample.label "(na.př.: &quot;#0000ff&quot; abo &quot;blue&quot;):">
+<!ENTITY default.label "Standard">
+<!ENTITY default.accessKey "S">
+<!ENTITY palette.label "Paleta:">
+<!ENTITY standardPalette.label "Standard">
+<!ENTITY webPalette.label "Wšě webbarby">
+<!ENTITY background.label "Pozadk za:">
+<!ENTITY background.accessKey "P">
+<!ENTITY table.label "Tabela">
+<!ENTITY table.accessKey "T">
+<!ENTITY cell.label "Cela (Cele)">
+<!ENTITY cell.accessKey "C">

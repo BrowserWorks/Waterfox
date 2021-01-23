@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY renameFolderDialog.title          "重新命名資料夾">
+<!ENTITY rename.label                      "請輸入資料夾的新名稱:">
+<!ENTITY rename.accesskey                  "E">
+<!ENTITY accept.label                      "重新命名">
+<!ENTITY accept.accesskey                  "R">
+

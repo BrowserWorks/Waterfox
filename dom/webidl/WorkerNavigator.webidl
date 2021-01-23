@@ -7,16 +7,16 @@
 interface WorkerNavigator {
 };
 
-WorkerNavigator implements NavigatorID;
-WorkerNavigator implements NavigatorLanguage;
-WorkerNavigator implements NavigatorOnLine;
-WorkerNavigator implements NavigatorConcurrentHardware;
-WorkerNavigator implements NavigatorStorage;
+WorkerNavigator includes NavigatorID;
+WorkerNavigator includes NavigatorLanguage;
+WorkerNavigator includes NavigatorOnLine;
+WorkerNavigator includes NavigatorConcurrentHardware;
+WorkerNavigator includes NavigatorStorage;
 
 // http://wicg.github.io/netinfo/#extensions-to-the-navigator-interface
 [Exposed=Worker]
 partial interface WorkerNavigator {
-    [Func="mozilla::dom::DOMPrefs::dom_netinfo_enabled", Throws]
+    [Pref="dom.netinfo.enabled", Throws]
     readonly attribute NetworkInformation connection;
 };
 

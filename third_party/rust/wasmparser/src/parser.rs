@@ -17,25 +17,26 @@
 use std::boxed::Box;
 use std::vec::Vec;
 
-use limits::{
+use crate::limits::{
     MAX_WASM_FUNCTIONS, MAX_WASM_FUNCTION_LOCALS, MAX_WASM_STRING_SIZE, MAX_WASM_TABLE_ENTRIES,
 };
 
-use primitives::{
+use crate::primitives::{
     BinaryReaderError, CustomSectionKind, ExternalKind, FuncType, GlobalType,
     ImportSectionEntryType, LinkingType, MemoryType, Naming, Operator, RelocType, Result,
     SectionCode, TableType, Type,
 };
 
-use readers::{
-    CodeSectionReader, Data, DataKind, DataSectionReader, Element, ElementItems, ElementKind,
-    ElementSectionReader, Export, ExportSectionReader, FunctionBody, FunctionSectionReader, Global,
-    GlobalSectionReader, Import, ImportSectionReader, LinkingSectionReader, MemorySectionReader,
-    ModuleReader, Name, NameSectionReader, NamingReader, OperatorsReader, Reloc,
-    RelocSectionReader, Section, SectionReader, TableSectionReader, TypeSectionReader,
+use crate::readers::{
+    CodeSectionReader, Data, DataKind, DataSectionReader, Element, ElementItem, ElementItems,
+    ElementKind, ElementSectionReader, Export, ExportSectionReader, FunctionBody,
+    FunctionSectionReader, Global, GlobalSectionReader, Import, ImportSectionReader,
+    LinkingSectionReader, MemorySectionReader, ModuleReader, Name, NameSectionReader, NamingReader,
+    OperatorsReader, Reloc, RelocSectionReader, Section, SectionReader, TableSectionReader,
+    TypeSectionReader,
 };
 
-use binary_reader::{BinaryReader, Range};
+use crate::binary_reader::{BinaryReader, Range};
 
 const MAX_DATA_CHUNK_SIZE: usize = MAX_WASM_STRING_SIZE;
 
@@ -60,10 +61,10 @@ pub struct RelocEntry {
     pub addend: Option<u32>,
 }
 
-enum InitExpressionContinuation {
-    GlobalSection,
-    ElementSection,
-    DataSection,
+enum InitExpressionContinuationSection {
+    Global,
+    Element,
+    Data,
 }
 
 #[derive(Debug)]
@@ -116,9 +117,12 @@ pub enum ParserState<'a> {
     EndFunctionBody,
     SkippingFunctionBody,
 
-    BeginPassiveElementSectionEntry(Type),
-    BeginActiveElementSectionEntry(u32),
-    ElementSectionEntryBody(Box<[u32]>),
+    BeginElementSectionEntry {
+        /// `None` means this is a passive or defined entry
+        table: ElemSectionEntryTable,
+        ty: Type,
+    },
+    ElementSectionEntryBody(Box<[ElementItem]>),
     EndElementSectionEntry,
 
     BeginPassiveDataSectionEntry,
@@ -136,6 +140,13 @@ pub enum ParserState<'a> {
     LinkingSectionEntry(LinkingType),
 
     SourceMappingURL(&'a str),
+}
+
+#[derive(Debug, Copy, Clone)]
+pub enum ElemSectionEntryTable {
+    Passive,
+    Declared,
+    Active(u32),
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -206,7 +217,7 @@ pub struct Parser<'a> {
     section_reader: ParserSectionReader<'a>,
     element_items: Option<ElementItems<'a>>,
     current_function_body: Option<FunctionBody<'a>>,
-    init_expr_continuation: Option<InitExpressionContinuation>,
+    init_expr_continuation: Option<InitExpressionContinuationSection>,
     current_data_segment: Option<&'a [u8]>,
     binary_reader: Option<BinaryReader<'a>>,
     operators_reader: Option<OperatorsReader<'a>>,
@@ -269,8 +280,12 @@ impl<'a> Parser<'a> {
                 .original_position();
         }
         match self.section_reader {
-            ParserSectionReader::CodeSectionReader(ref reader) => return reader.original_position(),
-            ParserSectionReader::DataSectionReader(ref reader) => return reader.original_position(),
+            ParserSectionReader::CodeSectionReader(ref reader) => {
+                return reader.original_position()
+            }
+            ParserSectionReader::DataSectionReader(ref reader) => {
+                return reader.original_position()
+            }
             ParserSectionReader::ElementSectionReader(ref reader) => {
                 return reader.original_position();
             }
@@ -292,8 +307,12 @@ impl<'a> Parser<'a> {
             ParserSectionReader::TableSectionReader(ref reader) => {
                 return reader.original_position();
             }
-            ParserSectionReader::TypeSectionReader(ref reader) => return reader.original_position(),
-            ParserSectionReader::NameSectionReader(ref reader) => return reader.original_position(),
+            ParserSectionReader::TypeSectionReader(ref reader) => {
+                return reader.original_position()
+            }
+            ParserSectionReader::NameSectionReader(ref reader) => {
+                return reader.original_position()
+            }
             ParserSectionReader::LinkingSectionReader(ref reader) => {
                 return reader.original_position();
             }
@@ -377,7 +396,7 @@ impl<'a> Parser<'a> {
         Ok(())
     }
 
-    fn read_init_expression_body(&mut self, cont: InitExpressionContinuation) {
+    fn read_init_expression_body(&mut self, cont: InitExpressionContinuationSection) {
         self.state = ParserState::BeginInitExpressionBody;
         self.init_expr_continuation = Some(cont);
     }
@@ -411,19 +430,19 @@ impl<'a> Parser<'a> {
         if self.section_entries_left == 0 {
             return self.check_section_end();
         }
-        let Element { kind, items } = section_reader!(self, ElementSectionReader).read()?;
-        match kind {
-            ElementKind::Passive(ty) => {
-                self.state = ParserState::BeginPassiveElementSectionEntry(ty);
-            }
+        let Element { kind, items, ty } = section_reader!(self, ElementSectionReader).read()?;
+        let table = match kind {
+            ElementKind::Passive => ElemSectionEntryTable::Passive,
+            ElementKind::Declared => ElemSectionEntryTable::Declared,
             ElementKind::Active {
                 table_index,
                 init_expr,
             } => {
-                self.state = ParserState::BeginActiveElementSectionEntry(table_index);
                 self.operators_reader = Some(init_expr.get_operators_reader());
+                ElemSectionEntryTable::Active(table_index)
             }
-        }
+        };
+        self.state = ParserState::BeginElementSectionEntry { table, ty };
         self.element_items = Some(items);
         self.section_entries_left -= 1;
         Ok(())
@@ -437,12 +456,12 @@ impl<'a> Parser<'a> {
             .get_items_reader()?;
         let num_elements = reader.get_count() as usize;
         if num_elements > MAX_WASM_TABLE_ENTRIES {
-            return Err(BinaryReaderError {
-                message: "num_elements is out of bounds",
-                offset: 0, // reader.position - 1, // TODO offset
-            });
+            return Err(BinaryReaderError::new(
+                "num_elements is out of bounds",
+                0, // reader.position - 1, // TODO offset
+            ));
         }
-        let mut elements: Vec<u32> = Vec::with_capacity(num_elements);
+        let mut elements = Vec::with_capacity(num_elements);
         for _ in 0..num_elements {
             elements.push(reader.read()?);
         }
@@ -468,27 +487,26 @@ impl<'a> Parser<'a> {
         let mut reader = function_body.get_locals_reader()?;
         let local_count = reader.get_count() as usize;
         if local_count > MAX_WASM_FUNCTION_LOCALS {
-            return Err(BinaryReaderError {
-                message: "local_count is out of bounds",
-                offset: reader.original_position() - 1,
-            });
+            return Err(BinaryReaderError::new(
+                "local_count is out of bounds",
+                reader.original_position() - 1,
+            ));
         }
         let mut locals: Vec<(u32, Type)> = Vec::with_capacity(local_count);
         let mut locals_total: usize = 0;
         for _ in 0..local_count {
             let (count, ty) = reader.read()?;
-            locals_total =
-                locals_total
-                    .checked_add(count as usize)
-                    .ok_or_else(|| BinaryReaderError {
-                        message: "locals_total is out of bounds",
-                        offset: reader.original_position() - 1,
-                    })?;
+            locals_total = locals_total.checked_add(count as usize).ok_or_else(|| {
+                BinaryReaderError::new(
+                    "locals_total is out of bounds",
+                    reader.original_position() - 1,
+                )
+            })?;
             if locals_total > MAX_WASM_FUNCTION_LOCALS {
-                return Err(BinaryReaderError {
-                    message: "locals_total is out of bounds",
-                    offset: reader.original_position() - 1,
-                });
+                return Err(BinaryReaderError::new(
+                    "locals_total is out of bounds",
+                    reader.original_position() - 1,
+                ));
             }
             locals.push((count, ty));
         }
@@ -513,10 +531,10 @@ impl<'a> Parser<'a> {
                 return Ok(());
             }
             let reader = self.operators_reader.as_ref().expect("operator reader");
-            return Err(BinaryReaderError {
-                message: "Expected end of function marker",
-                offset: reader.original_position(),
-            });
+            return Err(BinaryReaderError::new(
+                "Expected end of function marker",
+                reader.original_position(),
+            ));
         }
         let reader = self.operators_reader.as_mut().expect("operator reader");
         let op = reader.read()?;
@@ -571,10 +589,10 @@ impl<'a> Parser<'a> {
     {
         let count = naming_reader.get_count() as usize;
         if count > limit {
-            return Err(BinaryReaderError {
-                message: "name map size is out of bound",
-                offset: naming_reader.original_position() - 1,
-            });
+            return Err(BinaryReaderError::new(
+                "name map size is out of bound",
+                naming_reader.original_position() - 1,
+            ));
         }
         let mut result = Vec::with_capacity(count);
         for _ in 0..count {
@@ -596,10 +614,10 @@ impl<'a> Parser<'a> {
                 let mut reader = locals.get_function_local_reader()?;
                 let funcs_len = reader.get_count() as usize;
                 if funcs_len > MAX_WASM_FUNCTIONS {
-                    return Err(BinaryReaderError {
-                        message: "function count is out of bounds",
-                        offset: reader.original_position() - 1,
-                    });
+                    return Err(BinaryReaderError::new(
+                        "function count is out of bounds",
+                        reader.original_position() - 1,
+                    ));
                 }
                 let mut funcs: Vec<LocalName<'a>> = Vec::with_capacity(funcs_len);
                 for _ in 0..funcs_len {
@@ -855,7 +873,7 @@ impl<'a> Parser<'a> {
 
     fn read_data_chunk(&mut self) -> Result<()> {
         let data = self.current_data_segment.expect("data");
-        if data.len() == 0 {
+        if data.is_empty() {
             self.state = ParserState::EndDataSectionEntryBody;
             self.current_data_segment = None;
             return Ok(());
@@ -899,31 +917,30 @@ impl<'a> Parser<'a> {
             ParserState::TableSectionEntry(_) => self.read_table_entry()?,
             ParserState::ExportSectionEntry { .. } => self.read_export_entry()?,
             ParserState::BeginGlobalSectionEntry(_) => {
-                self.read_init_expression_body(InitExpressionContinuation::GlobalSection)
+                self.read_init_expression_body(InitExpressionContinuationSection::Global)
             }
             ParserState::EndGlobalSectionEntry => self.read_global_entry()?,
-            ParserState::BeginPassiveElementSectionEntry(_) => self.read_element_entry_body()?,
-            ParserState::BeginActiveElementSectionEntry(_) => {
-                self.read_init_expression_body(InitExpressionContinuation::ElementSection)
-            }
+            ParserState::BeginElementSectionEntry {
+                table: ElemSectionEntryTable::Active(_),
+                ..
+            } => self.read_init_expression_body(InitExpressionContinuationSection::Element),
+            ParserState::BeginElementSectionEntry { .. } => self.read_element_entry_body()?,
             ParserState::BeginInitExpressionBody | ParserState::InitExpressionOperator(_) => {
                 self.read_init_expression_operator()?
             }
-            ParserState::BeginPassiveDataSectionEntry => {
-                self.read_data_entry_body()?;
-            }
+            ParserState::BeginPassiveDataSectionEntry => self.read_data_entry_body()?,
             ParserState::BeginActiveDataSectionEntry(_) => {
-                self.read_init_expression_body(InitExpressionContinuation::DataSection)
+                self.read_init_expression_body(InitExpressionContinuationSection::Data)
             }
             ParserState::EndInitExpressionBody => {
                 match self.init_expr_continuation {
-                    Some(InitExpressionContinuation::GlobalSection) => {
+                    Some(InitExpressionContinuationSection::Global) => {
                         self.state = ParserState::EndGlobalSectionEntry
                     }
-                    Some(InitExpressionContinuation::ElementSection) => {
+                    Some(InitExpressionContinuationSection::Element) => {
                         self.read_element_entry_body()?
                     }
-                    Some(InitExpressionContinuation::DataSection) => self.read_data_entry_body()?,
+                    Some(InitExpressionContinuationSection::Data) => self.read_data_entry_body()?,
                     None => unreachable!(),
                 }
                 self.init_expr_continuation = None;
@@ -1070,11 +1087,19 @@ impl<'a> WasmDecoder<'a> for Parser<'a> {
     /// #              0x80, 0x80, 0x80, 0x0, 0x0, 0x0, 0xb];
     /// use wasmparser::{WasmDecoder, Parser, ParserState};
     /// let mut parser = Parser::new(data);
+    /// let mut types = Vec::new();
+    /// let mut function_types = Vec::new();
     /// let mut function_readers = Vec::new();
     /// loop {
-    ///     match *parser.read() {
+    ///     match parser.read() {
     ///         ParserState::Error(_) |
     ///         ParserState::EndWasm => break,
+    ///         ParserState::TypeSectionEntry(ty) => {
+    ///             types.push(ty.clone());
+    ///         }
+    ///         ParserState::FunctionSectionEntry(id) => {
+    ///             function_types.push(id.clone());
+    ///         }
     ///         ParserState::BeginFunctionBody {..} => {
     ///             let reader = parser.create_binary_reader();
     ///             function_readers.push(reader);
@@ -1083,9 +1108,21 @@ impl<'a> WasmDecoder<'a> for Parser<'a> {
     ///     }
     /// }
     /// for (i, reader) in function_readers.iter_mut().enumerate() {
-    ///     println!("Function {}", i);
+    ///     // Access the function type through the types table.
+    ///     let ty = &types[function_types[i] as usize];
+    ///     println!("\nFunction {} of type {:?}", i, ty);
+    ///     // Read the local declarations required by the function body.
+    ///     let local_decls_len = reader.read_local_count().unwrap();
+    ///     let mut local_decls = Vec::with_capacity(local_decls_len);
+    ///     let mut local_count = ty.params.len();
+    ///     for _ in 0..local_decls_len {
+    ///         let local_decl = reader.read_local_decl(&mut local_count).unwrap();
+    ///         local_decls.push(local_decl);
+    ///     }
+    ///     println!("Function locals: vars {:?}; total {} ", local_decls, local_count);
+    ///     // Read the operations of the function body.
     ///     while let Ok(ref op) = reader.read_operator() {
-    ///       println!("  {:?}", op);
+    ///         println!("  {:?}", op);
     ///     }
     /// }
     /// ```

@@ -21,9 +21,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.StringTokenizer;
-import java.util.TreeMap;
 
 import org.mozilla.gecko.annotation.JNITarget;
 import org.mozilla.gecko.annotation.RobocopTarget;
@@ -46,12 +44,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
 import android.graphics.PixelFormat;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.hardware.Camera;
@@ -65,6 +65,8 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.media.AudioManager;
 import android.net.ConnectivityManager;
+import android.net.LinkProperties;
+import android.net.Network;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
@@ -110,24 +112,6 @@ public class GeckoAppShell {
         @Override
         protected Context getAppContext() {
             return getApplicationContext();
-        }
-
-        @Override
-        protected Bundle getCrashExtras(final Thread thread, final Throwable exc) {
-            final Bundle extras = super.getCrashExtras(thread, exc);
-
-            extras.putString("ProductName", BuildConfig.MOZ_APP_BASENAME);
-            extras.putString("ProductID", BuildConfig.MOZ_APP_ID);
-            extras.putString("Version", BuildConfig.MOZ_APP_VERSION);
-            extras.putString("BuildID", BuildConfig.MOZ_APP_BUILDID);
-            extras.putString("Vendor", BuildConfig.MOZ_APP_VENDOR);
-            extras.putString("ReleaseChannel", BuildConfig.MOZ_UPDATE_CHANNEL);
-
-            final String appNotes = getAppNotes();
-            if (appNotes != null) {
-                extras.putString("Notes", appNotes);
-            }
-            return extras;
         }
 
         @Override
@@ -252,13 +236,13 @@ public class GeckoAppShell {
     @WrapForJNI
     /* package */ static native void reportJavaCrash(Throwable exc, String stackTrace);
 
-    @WrapForJNI(dispatchTo = "gecko")
-    public static native void notifyUriVisited(String uri);
-
     private static Rect sScreenSizeOverride;
 
     @WrapForJNI(stubName = "NotifyObservers", dispatchTo = "gecko")
     private static native void nativeNotifyObservers(String topic, String data);
+
+    @WrapForJNI(stubName = "AppendAppNotesToCrashReport", dispatchTo = "gecko")
+    public static native void nativeAppendAppNotesToCrashReport(final String notes);
 
     @RobocopTarget
     public static void notifyObservers(final String topic, final String data) {
@@ -873,13 +857,13 @@ public class GeckoAppShell {
     }
 
     @WrapForJNI(calledFrom = "gecko")
-    private static boolean getHWEncoderCapability() {
-        return HardwareCodecCapabilityUtils.getHWEncoderCapability();
+    private static boolean hasHWVP8Encoder() {
+        return HardwareCodecCapabilityUtils.hasHWVP8(true /* aIsEncoder */);
     }
 
     @WrapForJNI(calledFrom = "gecko")
-    private static boolean getHWDecoderCapability() {
-        return HardwareCodecCapabilityUtils.getHWDecoderCapability();
+    private static boolean hasHWVP8Decoder() {
+        return HardwareCodecCapabilityUtils.hasHWVP8(false /* aIsEncoder */);
     }
 
     static List<ResolveInfo> queryIntentActivities(final Intent intent) {
@@ -1037,8 +1021,8 @@ public class GeckoAppShell {
         return sDensity;
     }
 
-    private static boolean isHighMemoryDevice() {
-        return HardwareUtils.getMemSize() > HIGH_MEMORY_DEVICE_THRESHOLD_MB;
+    private static boolean isHighMemoryDevice(final Context context) {
+        return SysInfo.getMemSize(context) > HIGH_MEMORY_DEVICE_THRESHOLD_MB;
     }
 
     public static synchronized void useMaxScreenDepth(final boolean enable) {
@@ -1053,11 +1037,11 @@ public class GeckoAppShell {
     public static synchronized int getScreenDepth() {
         if (sScreenDepth == 0) {
             sScreenDepth = 16;
+            final Context applicationContext = getApplicationContext();
             PixelFormat info = new PixelFormat();
-            final WindowManager wm = (WindowManager)
-                    getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
+            final WindowManager wm = (WindowManager) applicationContext.getSystemService(Context.WINDOW_SERVICE);
             PixelFormat.getPixelFormatInfo(wm.getDefaultDisplay().getPixelFormat(), info);
-            if (info.bitsPerPixel >= 24 && isHighMemoryDevice()) {
+            if (info.bitsPerPixel >= 24 && isHighMemoryDevice(applicationContext)) {
                 sScreenDepth = sUseMaxScreenDepth ? info.bitsPerPixel : 24;
             }
         }
@@ -1147,12 +1131,20 @@ public class GeckoAppShell {
         }
     }
 
+    private static ConnectivityManager sConnectivityManager;
+
+    private static void ensureConnectivityManager() {
+        if (sConnectivityManager == null) {
+            sConnectivityManager = (ConnectivityManager)
+                getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        }
+    }
+
     @WrapForJNI(calledFrom = "gecko")
     private static boolean isNetworkLinkUp() {
-        ConnectivityManager cm = (ConnectivityManager)
-                getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        ensureConnectivityManager();
         try {
-            NetworkInfo info = cm.getActiveNetworkInfo();
+            NetworkInfo info = sConnectivityManager.getActiveNetworkInfo();
             if (info == null || !info.isConnected())
                 return false;
         } catch (SecurityException se) {
@@ -1163,10 +1155,9 @@ public class GeckoAppShell {
 
     @WrapForJNI(calledFrom = "gecko")
     private static boolean isNetworkLinkKnown() {
-        ConnectivityManager cm = (ConnectivityManager)
-            getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        ensureConnectivityManager();
         try {
-            if (cm.getActiveNetworkInfo() == null)
+            if (sConnectivityManager.getActiveNetworkInfo() == null)
                 return false;
         } catch (SecurityException se) {
             return false;
@@ -1176,9 +1167,8 @@ public class GeckoAppShell {
 
     @WrapForJNI(calledFrom = "gecko")
     private static int getNetworkLinkType() {
-        ConnectivityManager cm = (ConnectivityManager)
-            getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo info = cm.getActiveNetworkInfo();
+        ensureConnectivityManager();
+        NetworkInfo info = sConnectivityManager.getActiveNetworkInfo();
         if (info == null) {
             return LINK_TYPE_UNKNOWN;
         }
@@ -1234,10 +1224,29 @@ public class GeckoAppShell {
     }
 
     @WrapForJNI(calledFrom = "gecko")
+    private static String getDNSDomains() {
+        if (Build.VERSION.SDK_INT < 23) {
+            return "";
+        }
+
+        ensureConnectivityManager();
+        Network net = sConnectivityManager.getActiveNetwork();
+        if (net == null) {
+            return "";
+        }
+
+        LinkProperties lp = sConnectivityManager.getLinkProperties(net);
+        if (lp == null) {
+            return "";
+        }
+
+        return lp.getDomains();
+    }
+
+    @WrapForJNI(calledFrom = "gecko")
     private static int[] getSystemColors() {
         // attrsAppearance[] must correspond to AndroidSystemColors structure in android/AndroidBridge.h
         final int[] attrsAppearance = {
-            android.R.attr.textColor,
             android.R.attr.textColorPrimary,
             android.R.attr.textColorPrimaryInverse,
             android.R.attr.textColorSecondary,
@@ -1355,61 +1364,6 @@ public class GeckoAppShell {
             return "";
         } finally {
             IOUtils.safeStreamClose(cmdlineReader);
-        }
-    }
-
-    public static void listOfOpenFiles() {
-        int pidColumn = -1;
-        int nameColumn = -1;
-
-        // run lsof and parse its output
-        Process process = null;
-        InputStreamReader inputStreamReader = null;
-        BufferedReader in = null;
-        try {
-            String filter = GeckoProfile.get(getApplicationContext()).getDir().toString();
-            Log.d(LOGTAG, "[OPENFILE] Filter: " + filter);
-
-            process = Runtime.getRuntime().exec("lsof");
-            inputStreamReader = new InputStreamReader(process.getInputStream());
-            in = new BufferedReader(inputStreamReader, 2048);
-
-            String headerOutput = in.readLine();
-            StringTokenizer st = new StringTokenizer(headerOutput);
-            int token = 0;
-            while (st.hasMoreTokens()) {
-                String next = st.nextToken();
-                if (next.equalsIgnoreCase("PID"))
-                    pidColumn = token;
-                else if (next.equalsIgnoreCase("NAME"))
-                    nameColumn = token;
-                token++;
-            }
-
-            // alright, the rest are open file entries.
-            Map<Integer, String> pidNameMap = new TreeMap<Integer, String>();
-            String output = null;
-            while ((output = in.readLine()) != null) {
-                String[] split = output.split("\\s+");
-                if (split.length <= pidColumn || split.length <= nameColumn)
-                    continue;
-                final Integer pid = Integer.valueOf(split[pidColumn]);
-                String name = pidNameMap.get(pid);
-                if (name == null) {
-                    name = getAppNameByPID(pid.intValue());
-                    pidNameMap.put(pid, name);
-                }
-                String file = split[nameColumn];
-                if (!TextUtils.isEmpty(name) && !TextUtils.isEmpty(file) && file.startsWith(filter))
-                    Log.d(LOGTAG, "[OPENFILE] " + name + "(" + split[pidColumn] + ") : " + file);
-            }
-        } catch (Exception e) {
-        } finally {
-            IOUtils.safeStreamClose(in);
-            IOUtils.safeStreamClose(inputStreamReader);
-            if (process != null) {
-                process.destroy();
-            }
         }
     }
 
@@ -1652,7 +1606,7 @@ public class GeckoAppShell {
 
     @WrapForJNI(calledFrom = "gecko")
     private static void enableNetworkNotifications() {
-        ThreadUtils.postToUiThread(new Runnable() {
+        ThreadUtils.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 GeckoNetworkManager.getInstance().enableNotifications();
@@ -1662,7 +1616,7 @@ public class GeckoAppShell {
 
     @WrapForJNI(calledFrom = "gecko")
     private static void disableNetworkNotifications() {
-        ThreadUtils.postToUiThread(new Runnable() {
+        ThreadUtils.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 GeckoNetworkManager.getInstance().disableNotifications();
@@ -1957,7 +1911,12 @@ public class GeckoAppShell {
         final WindowManager wm = (WindowManager)
                 getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
         final Display disp = wm.getDefaultDisplay();
-        return new Rect(0, 0, disp.getWidth(), disp.getHeight());
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            return new Rect(0, 0, disp.getWidth(), disp.getHeight());
+        }
+        Point size = new Point();
+        disp.getRealSize(size);
+        return new Rect(0, 0, size.x, size.y);
     }
 
     @WrapForJNI(calledFrom = "any")
@@ -2059,16 +2018,11 @@ public class GeckoAppShell {
         return locales;
     }
 
-    private static Boolean sIsFennec;
-
-    public static boolean isFennec() {
-        if (sIsFennec == null) {
-            try {
-                sIsFennec = Class.forName("org.mozilla.gecko.GeckoApp") != null;
-            } catch (ClassNotFoundException e) {
-                sIsFennec = false;
-            }
-        }
-        return sIsFennec;
+    @WrapForJNI
+    public static String getAppName() {
+        final Context context = getApplicationContext();
+        final ApplicationInfo info = context.getApplicationInfo();
+        final int id = info.labelRes;
+        return id == 0 ? info.nonLocalizedLabel.toString() : context.getString(id);
     }
 }

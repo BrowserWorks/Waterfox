@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY mailListWindowAdd.title        "Ny e-postlista">
+
+<!-- Labels and Access Keys -->
+<!ENTITY addToAddressBook.label         "Lägg till i: ">
+<!ENTITY addToAddressBook.accesskey     "L">
+<!ENTITY ListName.label                 "Listnamn: ">
+<!ENTITY ListName.accesskey             "N">
+<!ENTITY ListNickName.label             "Smeknamn på listan: ">
+<!ENTITY ListNickName.accesskey         "S">
+<!ENTITY ListDescription.label          "Beskrivning: ">
+<!ENTITY ListDescription.accesskey      "B">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "Skriv in e-postadresser för att lägga till dem i listan:">
+<!ENTITY AddressTitle.accesskey         "l">
+<!ENTITY UpButton.label                 "Flytta uppåt">
+<!ENTITY DownButton.label               "Flytta neråt">
+

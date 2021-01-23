@@ -1,0 +1,220 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressbookWindow.title                        "Manzil kitobi">
+<!ENTITY blankResultsPaneMessage.label                  "Bu manzil kitobi kontaktlari faqat qidirganingizdan so‘ng ko‘rinadi">
+<!ENTITY localResultsOnlyMessage.label                  "Masofadagi manil kitoblaridagi kontaktlarni qidirmasangiz ko‘rinmaydi">
+<!-- File Menu -->
+
+<!ENTITY fileMenu.label                                 "Fayl">
+<!ENTITY fileMenu.accesskey                             "F">
+<!ENTITY newMenu.label                                  "Yangi">
+<!ENTITY newMenu.accesskey                              "Y">
+<!ENTITY newContact.label                               "Manzil kitobi kontatki…">
+<!ENTITY newContact.accesskey                           "k">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "Xabar almashish ro‘yxati…">
+<!ENTITY newListCmd.accesskey                           "L">
+<!ENTITY newAddressBookCmd.label                        "Manzil kitobi…">
+<!ENTITY newAddressBookCmd.accesskey                    "k">
+<!ENTITY newLDAPDirectoryCmd.label                      "LDAP direktoriyasi…">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "D">
+<!ENTITY newMessageCmd.label                            "Xabar">
+<!ENTITY newMessageCmd.key                              "M">
+<!ENTITY newMessageCmd.accesskey                        "X">
+<!-- LOCALIZATION NOTE (osxAddressBook) : These entities are only used on Mac -->
+<!ENTITY osxAddressBook.label                           "Mac OS X manzil kitobidan foydaning">
+<!ENTITY osxAddressBook.accesskey                       "O">
+<!ENTITY closeCmd.label                                 "Yopish">
+<!ENTITY closeCmd.key                                   "W">
+<!ENTITY closeCmd.accesskey                             "Y">
+<!ENTITY printSetupCmd.label                            "Sahifani sozlash…">
+<!ENTITY printSetupCmd.accesskey                        "s">
+<!ENTITY printPreviewContactCmd.label                   "Kontaktni chop qilishni ko‘rish">
+<!ENTITY printPreviewContactCmd.accesskey               "n">
+<!ENTITY printPreviewAddressBook.label                  "Manzil kitobini chop qilishni ko‘rish">
+<!ENTITY printPreviewAddressBook.accesskey              "k">
+<!ENTITY printContactCmd.label                          "Kontaktni chop qilish…">
+<!ENTITY printContactCmd.accesskey                      "p">
+<!ENTITY printContactCmd.key                            "P">
+<!ENTITY printAddressBook.label                         "Manzil kitobini chop qilish…">
+<!ENTITY printAddressBook.accesskey                     "k">
+<!-- Edit Menu -->
+
+<!ENTITY editMenu.label                                 "Tahrirlash">
+<!ENTITY editMenu.accesskey                             "T">
+<!ENTITY deleteCmd.label                                "O‘chirish">
+<!ENTITY deleteAbCmd.label                              "Manzil kitobini o‘chirish">
+<!ENTITY deleteContactCmd.label                         "Kontaktni o‘chirish">
+<!ENTITY deleteContactsCmd.label                        "Kontaktlarni o‘chirish">
+<!ENTITY deleteListCmd.label                            "Ro‘yxatni o‘chirish">
+<!ENTITY deleteListsCmd.label                           "Ro‘yxatlarni o‘chirish">
+<!ENTITY deleteItemsCmd.label                           "Elementlarni o‘chirish">
+<!ENTITY searchAddressesCmd.key                         "f">
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+
+
+<!ENTITY propertiesCmd.key                              "i">
+<!ENTITY abPropertiesMenu.label                         "Manzillar kitobni xossalari">
+<!ENTITY abPropertiesMenu.accesskey                     "x">
+<!ENTITY contactPropertiesMenu.label                    "Kontakt xossalari">
+<!ENTITY contactPropertiesMenu.accesskey                "x">
+<!ENTITY mailingListPropertiesMenu.label                "Yozishmalar ro‘yxati xossalari">
+<!ENTITY mailingListPropertiesMenu.accesskey            "Y">
+<!-- View Menu -->
+
+<!ENTITY viewMenu.label                                 "Ko‘rinishi">
+<!ENTITY viewMenu.accesskey                             "K">
+<!ENTITY viewToolbarsMenu.label                         "Asboblar paneli">
+<!ENTITY viewToolbarsMenu.accesskey                     "A">
+<!ENTITY menubarCmd.label                               "Menyu paneli">
+<!ENTITY menubarCmd.accesskey                           "M">
+<!ENTITY showAbToolbarCmd.label                         "Manzil kitobi paneli">
+<!ENTITY showAbToolbarCmd.accesskey                     "M">
+<!ENTITY showTaskbarCmd.label                           "Holat paneli">
+<!ENTITY showTaskbarCmd.accesskey                       "H">
+<!ENTITY customizeToolbar.label                         "Qulaylashtirish…">
+<!ENTITY customizeToolbar.accesskey                     "Q">
+<!ENTITY layoutMenu.label                               "Tartib">
+<!ENTITY layoutMenu.accesskey                           "T">
+<!ENTITY showDirectoryPane.label                        "Direkotirya oynasi">
+<!ENTITY showDirectoryPane.accesskey                    "D">
+<!ENTITY showContactPane2.label                         "Kontakt oynasi">
+<!ENTITY showContactPane2.accesskey                     "K">
+<!ENTITY menu_ShowNameAs.label                          "Ism-familiyatini ko‘rsatusg">
+<!ENTITY menu_ShowNameAs.accesskey                      "I">
+<!-- LOCALIZATION NOTE (firstLastCmd2.label): We're not including a comma here
+because displayed names don't have the comma in between. -->
+<!ENTITY firstLastCmd2.label                            "Ismi Familiyasi shaklida">
+<!ENTITY firstLastCmd2.accesskey                        "I">
+<!ENTITY lastFirstCmd.label                             "Familiyasi, Ismi shaklida">
+<!ENTITY lastFirstCmd.accesskey                         "F">
+<!ENTITY displayNameCmd.label                           "Ko‘rinadigan nom">
+<!ENTITY displayNameCmd.accesskey                       "K">
+<!ENTITY sortMenu.label                                 "Saralash:">
+<!ENTITY sortMenu.accesskey                             "S">
+<!-- Tools Menu -->
+
+<!ENTITY tasksMenu.label                                "Asboblar">
+<!ENTITY tasksMenu.accesskey                            "A">
+<!ENTITY messengerCmd.label                             "Xat va yangiliklar to‘lplami">
+<!ENTITY messengerCmd.accesskey                         "X">
+<!ENTITY messengerCmd.commandkey                        "1">
+<!ENTITY searchAddressesCmd.label                       "Manzillarni qidirish…">
+<!ENTITY searchAddressesCmd.accesskey                   "q">
+<!ENTITY importCmd.label                                "Import…">
+<!ENTITY importCmd.accesskey                            "I">
+<!ENTITY exportCmd.label                                "Eksport…">
+<!ENTITY exportCmd.accesskey                            "E">
+<!ENTITY preferencesCmd2.label                          "Tanlamalar">
+<!ENTITY preferencesCmd2.accesskey                      "T">
+<!ENTITY preferencesCmdUnix.label                       "Parametrlar">
+<!ENTITY preferencesCmdUnix.accesskey                   "m">
+<!-- Address Book Toolbar and Context Menus -->
+
+<!ENTITY newContactButton.label                         "Yangi kontakt">
+<!ENTITY newContactButton.accesskey                     "k">
+<!ENTITY newlistButton.label                            "Yangi ro‘yxat">
+<!ENTITY newlistButton.accesskey                        "r">
+<!ENTITY showAsDefault.label                            "Asosiy ishga tushish jildi">
+<!ENTITY showAsDefault.accesskey                        "i">
+<!ENTITY editPropertiesButton.label                     "Tahrirlash">
+<!ENTITY propertiesContext.label                        "Xossalari">
+<!ENTITY propertiesContext.accesskey                    "X">
+<!ENTITY abPropertiesContext.label                      "Xossalari">
+<!ENTITY abPropertiesContext.accesskey                  "X">
+<!ENTITY editContactContext.label                       "Kontaktni tahrirlash">
+<!ENTITY editContactContext.accesskey                   "t">
+<!ENTITY editMailingListContext.label                   "Ro‘yxatni tahrirlash">
+<!ENTITY editMailingListContext.accesskey               "t">
+<!ENTITY newmsgButton.label                             "Yozish">
+<!ENTITY newmsgButton.accesskey                         "Y">
+<!ENTITY newIM.label                                    "Qisqa xabar">
+<!ENTITY newIM.accesskey                                "Q">
+<!ENTITY printButton.label                              "Chop qilish…">
+<!ENTITY printButton.accesskey                          "p">
+<!ENTITY deleteButton2.label                            "O‘chirish">
+<!ENTITY deleteButton2.accesskey                        "O">
+<!-- Address Book Toolbar Tooltips -->
+
+<!ENTITY newContactButton.tooltip                       "Yangi manzil kitobi kontaktini yaratish">
+<!ENTITY newlistButton.tooltip                          "Yangi ro‘yxat yaratish">
+<!ENTITY editPropertiesButton.tooltip                   "Tanlanganni tahrir qilish">
+<!ENTITY editAbPropertiesButton.tooltip                 "Tanlangan manzillar kitobining xossalarini tahrirlash">
+<!ENTITY editContactPropertiesButton.tooltip            "Tanlangan kontaktni tahrir qilish">
+<!ENTITY editMailingListPropertiesButton.tooltip        "Tanlangan yozishmalar ro‘yxatini tahrirlash">
+<!ENTITY newmsgButton.tooltip                           "E-pochta orqali xabar jo‘natish">
+<!ENTITY newIM.tooltip                                  "Qisqa xabar jo‘natish yoki chat orqali gaplashish">
+<!ENTITY deleteButton2.tooltip                          "Tanlanganni o‘chirish">
+<!-- Dir Tree header -->
+
+<!-- Search Bar -->
+
+<!ENTITY SearchNameOrEmail.label                        "Nomi yoki e-pochta manzili">
+<!ENTITY SearchNameOrEmail.accesskey                    "N">
+<!ENTITY advancedButton.tooltip                         "Qo‘shimcha manzilni qidirish">
+<!ENTITY quickSearchCmd.key                             "k">
+<!ENTITY searchItem.title "Tezkor qidiruv">
+<!-- Results Pane -->
+
+<!ENTITY Addrbook.label                                 "Manzil kitobi">
+<!ENTITY Addrbook.accesskey                             "k">
+<!ENTITY GeneratedName.label                            "Nomi">
+<!ENTITY GeneratedName.accesskey                        "N">
+<!ENTITY PrimaryEmail.label                             "E-pochta">
+<!ENTITY PrimaryEmail.accesskey                         "E">
+<!ENTITY ChatName.label                                 "Chat nomi">
+<!ENTITY ChatName.accesskey                             "C">
+<!ENTITY Company.label                                  "Tashkilot">
+<!ENTITY Company.accesskey                              "T">
+<!ENTITY NickName.label                                 "Taxallusi">
+<!ENTITY NickName.accesskey                             "T">
+<!ENTITY SecondEmail.label                              "Qo‘shimcha e-pochta">
+<!ENTITY SecondEmail.accesskey                          "Q">
+<!ENTITY Department.label                               "Idora">
+<!ENTITY Department.accesskey                           "I">
+<!ENTITY JobTitle.label                                 "Nomi">
+<!ENTITY JobTitle.accesskey                             "N">
+<!ENTITY CellularNumber.label                           "Mobil">
+<!ENTITY CellularNumber.accesskey                       "M">
+<!ENTITY PagerNumber.label                              "Peyjer">
+<!ENTITY PagerNumber.accesskey                          "P">
+<!ENTITY FaxNumber.label                                "Faks">
+<!ENTITY FaxNumber.accesskey                            "F">
+<!ENTITY HomePhone.label                                "Uy telefoni">
+<!ENTITY HomePhone.accesskey                            "U">
+<!ENTITY WorkPhone.label                                "Ish telefoni">
+<!ENTITY WorkPhone.accesskey                            "I">
+<!ENTITY sortAscending.label                            "Ortib borish tartibida">
+<!ENTITY sortAscending.accesskey                        "O">
+<!ENTITY sortDescending.label                           "Kamayib borish tartibida">
+<!ENTITY sortDescending.accesskey                       "K">
+<!ENTITY _PhoneticName.label                            "Fonetik nomi">
+<!ENTITY _PhoneticName.accesskey                        "o">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+
+<!ENTITY contact.heading                                "Kontakt">
+<!ENTITY home.heading                                   "Uy">
+<!ENTITY other.heading                                  "Boshqa">
+<!ENTITY chat.heading                                   "Chat">
+<!ENTITY phone.heading                                  "Telefon">
+<!ENTITY work.heading                                   "Ish">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "Ta’rifi">
+<!ENTITY addresses.heading                              "Manzillar">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "Xaritasini ko‘rish">
+<!ENTITY mapIt.tooltip                                  "Bu manzilni internetdan xaritasini ko‘rsatish">
+<!-- Status Bar -->
+
+<!ENTITY statusText.label                               "">
+<!--  Mac OS X Window Menu -->
+
+<!ENTITY windowMenu.label                               "Oyna">
+<!ENTITY minimizeWindow.label                           "Yig‘ish">
+<!ENTITY minimizeWindow.key                             "m">
+<!ENTITY bringAllToFront.label                          "Barchasini oldinga o‘tkazish">
+<!ENTITY zoomWindow.label                               "Masshtab">

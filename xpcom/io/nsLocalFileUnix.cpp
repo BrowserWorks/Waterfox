@@ -43,7 +43,6 @@
 #include "nsString.h"
 #include "nsReadableUtils.h"
 #include "nsLocalFile.h"
-#include "nsIComponentManager.h"
 #include "prproces.h"
 #include "nsIDirectoryEnumerator.h"
 #include "nsSimpleEnumerator.h"
@@ -64,7 +63,7 @@ static nsresult MacErrorMapper(OSErr inErr);
 #endif
 
 #ifdef MOZ_WIDGET_ANDROID
-#  include "GeneratedJNIWrappers.h"
+#  include "mozilla/java/GeckoAppShellWrappers.h"
 #  include "nsIMIMEService.h"
 #  include <linux/magic.h>
 #endif
@@ -830,7 +829,10 @@ nsLocalFile::CopyToNative(nsIFile* aNewParent, const nsACString& aNewName) {
 
     // get the old permissions
     uint32_t myPerms;
-    GetPermissions(&myPerms);
+    rv = GetPermissions(&myPerms);
+    if (NS_FAILED(rv)) {
+      return rv;
+    }
 
     // Create the new file with the old file's permissions, even if write
     // permission is missing.  We can't create with write permission and

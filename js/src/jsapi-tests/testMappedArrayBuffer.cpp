@@ -6,6 +6,7 @@
 #include <stdio.h>
 
 #include "jsfriendapi.h"
+#include "js/Array.h"        // JS::NewArrayObject
 #include "js/ArrayBuffer.h"  // JS::{{Create,Release}MappedArrayBufferContents,DetachArrayBuffer,GetArrayBuffer{ByteLength,Data},Is{,Detached,Mapped}ArrayBufferObject,NewMappedArrayBufferWithContents,StealArrayBufferContents}
 #include "js/StructuredClone.h"
 #include "jsapi-tests/tests.h"
@@ -133,11 +134,11 @@ bool TestCloneObject() {
   JS::RootedObject obj1(cx, CreateNewObject(8, 12));
   CHECK(obj1);
   JSAutoStructuredCloneBuffer cloned_buffer(
-      JS::StructuredCloneScope::SameProcessSameThread, nullptr, nullptr);
+      JS::StructuredCloneScope::SameProcess, nullptr, nullptr);
   JS::RootedValue v1(cx, JS::ObjectValue(*obj1));
   CHECK(cloned_buffer.write(cx, v1, nullptr, nullptr));
   JS::RootedValue v2(cx);
-  CHECK(cloned_buffer.read(cx, &v2, nullptr, nullptr));
+  CHECK(cloned_buffer.read(cx, &v2, JS::CloneDataPolicy(), nullptr, nullptr));
   JS::RootedObject obj2(cx, v2.toObjectOrNull());
   CHECK(VerifyObject(obj2, 8, 12, false));
 
@@ -167,17 +168,16 @@ bool TestTransferObject() {
   }
 
   JS::RootedObject obj(
-      cx, JS_NewArrayObject(cx, JS::HandleValueArray::subarray(argv, 0, 1)));
+      cx, JS::NewArrayObject(cx, JS::HandleValueArray::subarray(argv, 0, 1)));
   CHECK(obj);
   JS::RootedValue transferable(cx, JS::ObjectValue(*obj));
 
   JSAutoStructuredCloneBuffer cloned_buffer(
-      JS::StructuredCloneScope::SameProcessSameThread, nullptr, nullptr);
-  CHECK(cloned_buffer.write(cx, v1, transferable,
-                            JS::CloneDataPolicy().denySharedArrayBuffer(),
-                            nullptr, nullptr));
+      JS::StructuredCloneScope::SameProcess, nullptr, nullptr);
+  JS::CloneDataPolicy policy;
+  CHECK(cloned_buffer.write(cx, v1, transferable, policy, nullptr, nullptr));
   JS::RootedValue v2(cx);
-  CHECK(cloned_buffer.read(cx, &v2, nullptr, nullptr));
+  CHECK(cloned_buffer.read(cx, &v2, policy, nullptr, nullptr));
   JS::RootedObject obj2(cx, v2.toObjectOrNull());
   CHECK(VerifyObject(obj2, 8, 12, true));
   CHECK(JS::IsDetachedArrayBufferObject(obj1));

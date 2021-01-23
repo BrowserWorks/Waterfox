@@ -1252,6 +1252,14 @@ function getFixtureColorData() {
       cycle: 3,
     },
     {
+      authored: "#aaaaaa08",
+      name: "#aaaaaa08",
+      hex: "#aaaaaa08",
+      hsl: "hsla(0, 0%, 66.7%, 0)",
+      rgb: "rgba(170, 170, 170, 0)",
+      disableColorMatch: true,
+    },
+    {
       authored: "currentcolor",
       name: "currentcolor",
       hex: "currentcolor",

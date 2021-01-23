@@ -25,7 +25,7 @@ class ClientSourceParent final : public PClientSourceParent {
   const Maybe<ContentParentId> mContentParentId;
   RefPtr<ClientManagerService> mService;
   nsTArray<ClientHandleParent*> mHandleList;
-  MozPromiseHolder<GenericPromise> mExecutionReadyPromise;
+  MozPromiseHolder<GenericNonExclusivePromise> mExecutionReadyPromise;
   bool mExecutionReady;
   bool mFrozen;
 
@@ -68,7 +68,7 @@ class ClientSourceParent final : public PClientSourceParent {
 
   bool ExecutionReady() const;
 
-  RefPtr<GenericPromise> ExecutionReadyPromise();
+  RefPtr<GenericNonExclusivePromise> ExecutionReadyPromise();
 
   const Maybe<ServiceWorkerDescriptor>& GetController() const;
 
@@ -82,7 +82,7 @@ class ClientSourceParent final : public PClientSourceParent {
 
   void DetachHandle(ClientHandleParent* aClientSource);
 
-  RefPtr<ClientOpPromise> StartOp(const ClientOpConstructorArgs& aArgs);
+  RefPtr<ClientOpPromise> StartOp(ClientOpConstructorArgs&& aArgs);
 };
 
 }  // namespace dom

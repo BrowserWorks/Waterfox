@@ -6,10 +6,11 @@
 
 #include "mozilla/layers/APZCTreeManagerChild.h"
 
-#include "InputData.h"                               // for InputData
-#include "mozilla/dom/BrowserParent.h"               // for BrowserParent
-#include "mozilla/layers/APZCCallbackHelper.h"       // for APZCCallbackHelper
-#include "mozilla/layers/APZInputBridgeChild.h"      // for APZInputBridgeChild
+#include "InputData.h"                              // for InputData
+#include "mozilla/dom/BrowserParent.h"              // for BrowserParent
+#include "mozilla/layers/APZCCallbackHelper.h"      // for APZCCallbackHelper
+#include "mozilla/layers/APZInputBridgeChild.h"     // for APZInputBridgeChild
+#include "mozilla/layers/GeckoContentController.h"  // for GeckoContentController
 #include "mozilla/layers/RemoteCompositorSession.h"  // for RemoteCompositorSession
 
 namespace mozilla {
@@ -18,7 +19,7 @@ namespace layers {
 APZCTreeManagerChild::APZCTreeManagerChild()
     : mCompositorSession(nullptr), mIPCOpen(false) {}
 
-APZCTreeManagerChild::~APZCTreeManagerChild() {}
+APZCTreeManagerChild::~APZCTreeManagerChild() = default;
 
 void APZCTreeManagerChild::SetCompositorSession(
     RemoteCompositorSession* aSession) {
@@ -48,7 +49,7 @@ void APZCTreeManagerChild::SetKeyboardMap(const KeyboardMap& aKeyboardMap) {
   SendSetKeyboardMap(aKeyboardMap);
 }
 
-void APZCTreeManagerChild::ZoomToRect(const SLGuidAndRenderRoot& aGuid,
+void APZCTreeManagerChild::ZoomToRect(const ScrollableLayerGuid& aGuid,
                                       const CSSRect& aRect,
                                       const uint32_t aFlags) {
   SendZoomToRect(aGuid, aRect, aFlags);
@@ -60,12 +61,12 @@ void APZCTreeManagerChild::ContentReceivedInputBlock(uint64_t aInputBlockId,
 }
 
 void APZCTreeManagerChild::SetTargetAPZC(
-    uint64_t aInputBlockId, const nsTArray<SLGuidAndRenderRoot>& aTargets) {
+    uint64_t aInputBlockId, const nsTArray<ScrollableLayerGuid>& aTargets) {
   SendSetTargetAPZC(aInputBlockId, aTargets);
 }
 
 void APZCTreeManagerChild::UpdateZoomConstraints(
-    const SLGuidAndRenderRoot& aGuid,
+    const ScrollableLayerGuid& aGuid,
     const Maybe<ZoomConstraints>& aConstraints) {
   if (mIPCOpen) {
     SendUpdateZoomConstraints(aGuid, aConstraints);
@@ -80,16 +81,16 @@ void APZCTreeManagerChild::SetAllowedTouchBehavior(
 }
 
 void APZCTreeManagerChild::StartScrollbarDrag(
-    const SLGuidAndRenderRoot& aGuid, const AsyncDragMetrics& aDragMetrics) {
+    const ScrollableLayerGuid& aGuid, const AsyncDragMetrics& aDragMetrics) {
   SendStartScrollbarDrag(aGuid, aDragMetrics);
 }
 
-bool APZCTreeManagerChild::StartAutoscroll(const SLGuidAndRenderRoot& aGuid,
+bool APZCTreeManagerChild::StartAutoscroll(const ScrollableLayerGuid& aGuid,
                                            const ScreenPoint& aAnchorLocation) {
   return SendStartAutoscroll(aGuid, aAnchorLocation);
 }
 
-void APZCTreeManagerChild::StopAutoscroll(const SLGuidAndRenderRoot& aGuid) {
+void APZCTreeManagerChild::StopAutoscroll(const ScrollableLayerGuid& aGuid) {
   SendStopAutoscroll(aGuid);
 }
 

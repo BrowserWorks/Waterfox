@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Сүзгі ережелері">
+<!ENTITY filterEditorDialog.dimensions "width: 100ch;">
+<!ENTITY filterName.label "Сүзгі атауы:">
+<!ENTITY filterName.accesskey "С">
+
+<!ENTITY junk.label "Спам">
+<!ENTITY notJunk.label "Спам емес">
+
+<!ENTITY lowestPriorityCmd.label "Ең төмен">
+<!ENTITY lowPriorityCmd.label "Төмен">
+<!ENTITY normalPriorityCmd.label "Қалыпты">
+<!ENTITY highPriorityCmd.label "Жоғары">
+<!ENTITY highestPriorityCmd.label "Ең жоғары">
+
+<!ENTITY contextDesc.label "Сүзгіні қолдану шарты:">
+<!ENTITY contextIncomingMail.label "Жаңа поштаны алу:">
+<!ENTITY contextIncomingMail.accesskey "л">
+<!ENTITY contextManual.label "Қолмен орындау">
+<!ENTITY contextManual.accesskey "р">
+<!ENTITY contextBeforeCls.label "Спамды анықтау алдында сүзгілеу">
+<!ENTITY contextAfterCls.label "Спамды анықтаудан кейін сүзгілеу">
+<!ENTITY contextOutgoing.label "Жібергеннен кейін">
+<!ENTITY contextOutgoing.accesskey "б">
+<!ENTITY contextArchive.label "Архивтеу">
+<!ENTITY contextArchive.accesskey "А">
+<!ENTITY contextPeriodic.accesskey "e">
+
+<!ENTITY filterActionDesc.label "Келесі әрекеттерді орындау:">
+<!ENTITY filterActionDesc.accesskey "н">
+
+<!ENTITY filterActionOrderWarning.label "Ескерту: Сүзгі әрекеттері басқа ретпен орындалатын болады.">
+<!ENTITY filterActionOrder.label "Орындалу ретін қарау">
+
+<!-- New Style Filter Rule Actions -->
+<!ENTITY moveMessage.label "Хабарламаны қайда жылжыту">
+<!ENTITY copyMessage.label "Хабарлама көшірмесін қайда жасау">
+<!ENTITY forwardTo.label "Хабарламаны қайда қайта бағдарлау">
+<!ENTITY replyWithTemplate.label "Үлгімен жауап беру">
+<!ENTITY markMessageRead.label "Оқылған ретінде белгілеу">
+<!ENTITY markMessageUnread.label "Оқылмаған ретінде белгілеу">
+<!ENTITY markMessageStarred.label "Жұлдызшаны қосу">
+<!ENTITY setPriority.label "Приоритетті келесідей орнату">
+<!ENTITY addTag.label "Хабарламаға тег қою">
+<!ENTITY setJunkScore.label "Спам күйін келесіге орнату">
+<!ENTITY deleteMessage.label "Хабарламаны өшіру">
+<!ENTITY deleteFromPOP.label "POP серверінен өшіру">
+<!ENTITY fetchFromPOP.label "POP серверінен алу">
+<!ENTITY ignoreThread.label "Ағындарды елемеу">
+<!ENTITY ignoreSubthread.label "Ағындарды елемеу">
+<!ENTITY watchThread.label "Ағынды бақылау">
+<!ENTITY stopExecution.label "Сүзгі орындалуын тоқтату">
+
+<!ENTITY addAction.tooltip "Жаңа әрекетті қосу">
+<!ENTITY removeAction.tooltip "Бұл әрекетті өшіру">
+
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- Flex Attribute: https://developer.mozilla.org/docs/XUL/Attribute/flex -->
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">

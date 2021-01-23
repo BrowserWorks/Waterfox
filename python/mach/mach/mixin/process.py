@@ -12,6 +12,7 @@ import signal
 import subprocess
 import sys
 
+from mozbuild.util import ensure_subprocess_env
 from mozprocess.processhandler import ProcessHandlerMixin
 
 from .logging import LoggingMixin
@@ -41,10 +42,11 @@ if os.environ.get('MSYSTEM', None) in ('MINGW32', 'MINGW64'):
 class ProcessExecutionMixin(LoggingMixin):
     """Mix-in that provides process execution functionality."""
 
-    def run_process(self, args=None, cwd=None, append_env=None,
-                    explicit_env=None, log_name=None, log_level=logging.INFO,
-                    line_handler=None, require_unix_environment=False,
-                    ensure_exit_code=0, ignore_children=False, pass_thru=False):
+    def run_process(
+            self, args=None, cwd=None, append_env=None, explicit_env=None,
+            log_name=None, log_level=logging.INFO, line_handler=None,
+            require_unix_environment=False, ensure_exit_code=0,
+            ignore_children=False, pass_thru=False, python_unbuffered=True):
         """Runs a single process to completion.
 
         Takes a list of arguments to run where the first item is the
@@ -73,6 +75,13 @@ class ProcessExecutionMixin(LoggingMixin):
         where buffering from mozprocess could be an issue. pass_thru does not
         use mozprocess. Therefore, arguments like log_name, line_handler,
         and ignore_children have no effect.
+
+        When python_unbuffered is set, the PYTHONUNBUFFERED environment variable
+        will be set in the child process. This is normally advantageous (see bug
+        1627873) but is detrimental in certain circumstances (specifically, we
+        have seen issues when using pass_thru mode to open a Python subshell, as
+        in bug 1628838). This variable should be set to False to avoid bustage
+        in those circumstances.
         """
         args = self._normalize_command(args, require_unix_environment)
 
@@ -100,24 +109,12 @@ class ProcessExecutionMixin(LoggingMixin):
             if append_env:
                 use_env.update(append_env)
 
-        self.log(logging.DEBUG, 'process', {'env': use_env}, 'Environment: {env}')
+        if python_unbuffered:
+            use_env['PYTHONUNBUFFERED'] = '1'
 
-        # There is a bug in subprocess where it doesn't like unicode types in
-        # environment variables. Here, ensure all unicode are converted to
-        # binary. utf-8 is our globally assumed default. If the caller doesn't
-        # want UTF-8, they shouldn't pass in a unicode instance.
-        normalized_env = {}
-        for k, v in use_env.items():
-            if isinstance(k, unicode):
-                k = k.encode('utf-8', 'strict')
+        self.log(logging.DEBUG, 'process', {'env': str(use_env)}, 'Environment: {env}')
 
-            if isinstance(v, unicode):
-                v = v.encode('utf-8', 'strict')
-
-            normalized_env[k] = v
-
-        use_env = normalized_env
-
+        use_env = ensure_subprocess_env(use_env)
         if pass_thru:
             proc = subprocess.Popen(args, cwd=cwd, env=use_env)
             status = None

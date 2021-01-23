@@ -8,6 +8,7 @@
 #include "mozilla/Services.h"
 #include "mozilla/dom/Document.h"
 #include "nsCOMPtr.h"
+#include "nsGlobalWindowInner.h"
 #include "nsIDOMEventListener.h"
 #include "nsIFrame.h"
 #include "nsIObserverService.h"
@@ -134,15 +135,31 @@ bool GeckoMVMContext::IsInReaderMode() const {
   return StringBeginsWith(uri, readerModeUriPrefix);
 }
 
-void GeckoMVMContext::SetResolutionAndScaleTo(float aResolution) {
+bool GeckoMVMContext::IsDocumentLoading() const {
+  MOZ_ASSERT(mDocument);
+  return mDocument->GetReadyStateEnum() == dom::Document::READYSTATE_LOADING;
+}
+
+void GeckoMVMContext::SetResolutionAndScaleTo(float aResolution,
+                                              ResolutionChangeOrigin aOrigin) {
   MOZ_ASSERT(mPresShell);
-  mPresShell->SetResolutionAndScaleTo(aResolution,
-                                      ResolutionChangeOrigin::MainThread);
+  mPresShell->SetResolutionAndScaleTo(aResolution, aOrigin);
 }
 
 void GeckoMVMContext::SetVisualViewportSize(const CSSSize& aSize) {
   MOZ_ASSERT(mPresShell);
   nsLayoutUtils::SetVisualViewportSize(mPresShell, aSize);
+}
+
+void GeckoMVMContext::PostVisualViewportResizeEventByDynamicToolbar() {
+  MOZ_ASSERT(mDocument);
+
+  // We only fire visual viewport events and don't want to cause any explicit
+  // reflows here since in general we don't use the up-to-date visual viewport
+  // size for layout.
+  if (auto* window = nsGlobalWindowInner::Cast(mDocument->GetInnerWindow())) {
+    window->VisualViewport()->PostResizeEvent();
+  }
 }
 
 void GeckoMVMContext::UpdateDisplayPortMargins() {
@@ -161,7 +178,8 @@ void GeckoMVMContext::UpdateDisplayPortMargins() {
     // We only create MobileViewportManager for root content documents. If that
     // ever changes we'd need to limit the size of this displayport base rect
     // because non-toplevel documents have no limit on their size.
-    MOZ_ASSERT(mPresShell->GetPresContext()->IsRootContentDocument());
+    MOZ_ASSERT(
+        mPresShell->GetPresContext()->IsRootContentDocumentCrossProcess());
     nsLayoutUtils::SetDisplayPortBaseIfNotSet(root->GetContent(),
                                               displayportBase);
     nsIScrollableFrame* scrollable = do_QueryFrame(root);
@@ -170,21 +188,13 @@ void GeckoMVMContext::UpdateDisplayPortMargins() {
   }
 }
 
-void GeckoMVMContext::Reflow(const CSSSize& aNewSize, const CSSSize& aOldSize,
-                             ResizeEventFlag aResizeEventFlag) {
+void GeckoMVMContext::Reflow(const CSSSize& aNewSize) {
   MOZ_ASSERT(mPresShell);
 
-  ResizeReflowOptions reflowOptions = ResizeReflowOptions::NoOption;
-  if (aResizeEventFlag == ResizeEventFlag::Suppress) {
-    reflowOptions |= ResizeReflowOptions::SuppressResizeEvent;
-  }
-
   RefPtr<PresShell> presShell = mPresShell;
-  presShell->ResizeReflowIgnoreOverride(
-      nsPresContext::CSSPixelsToAppUnits(aNewSize.width),
-      nsPresContext::CSSPixelsToAppUnits(aNewSize.height),
-      nsPresContext::CSSPixelsToAppUnits(aOldSize.width),
-      nsPresContext::CSSPixelsToAppUnits(aOldSize.height), reflowOptions);
+  presShell->ResizeReflowIgnoreOverride(CSSPixel::ToAppUnits(aNewSize.width),
+                                        CSSPixel::ToAppUnits(aNewSize.height),
+                                        ResizeReflowOptions::NoOption);
 }
 
 }  // namespace mozilla

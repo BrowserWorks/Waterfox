@@ -9,13 +9,8 @@
  * xul.css.  (This split of the XUL rules is to minimize memory use and improve
  * performance in HTML/SVG documents.)
  *
- * This file should also not contain any app specific styling.  Defaults for
- * widgets of a particular application should be in that application's style
- * sheet.  For example style definitions for navigator can be found in
- * navigator.css.
- *
- * THIS FILE IS LOCKED DOWN.  YOU ARE NOT ALLOWED TO MODIFY IT WITHOUT FIRST
- * HAVING YOUR CHANGES REVIEWED BY enndeakin@gmail.com
+ * ANYTHING ADDED TO THIS FILE WILL APPLY TO ALL DOCUMENTS, INCLUDING WEB CONTENT.
+ * IF UA RULES ARE ONLY NEEDED IN CHROME, THEY SHOULD BE ADDED TO xul.css.
  */
 
 @namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"); /* set default namespace to XUL */
@@ -27,24 +22,99 @@
   box-sizing: border-box;
 }
 
-:root {
-  text-rendering: optimizeLegibility;
-  -moz-control-character-visibility: visible;
-}
-
-:root:-moz-locale-dir(rtl) {
-  direction: rtl;
-}
-
 /* hide the content and destroy the frame */
 [hidden="true"] {
   display: none;
 }
 
 /* hide the content, but don't destroy the frames */
-[collapsed="true"],
-[moz-collapsed="true"] {
+[collapsed="true"] {
   visibility: collapse;
+}
+
+/* Rules required for style caching of anonymous content scrollbar parts */
+@supports -moz-bool-pref("layout.css.cached-scrollbar-styles.enabled") {
+  scrollcorner:-moz-native-anonymous-no-specificity,
+  resizer:-moz-native-anonymous-no-specificity,
+  scrollbar:-moz-native-anonymous-no-specificity,
+  scrollbarbutton:-moz-native-anonymous-no-specificity,
+  slider:-moz-native-anonymous-no-specificity {
+    /* All scrollbar parts must not inherit any properties from the scrollable
+     * element (except for visibility and pointer-events), for the anonymous
+     * content style caching system to work.
+     */
+    all: initial;
+    visibility: inherit;
+    pointer-events: inherit;
+
+    /* These properties are not included in 'all'. */
+    -moz-list-reversed: initial;
+    -moz-font-smoothing-background-color: initial;
+    -moz-min-font-size-ratio: initial;
+
+    /* Using initial is not sufficient for direction, since its initial value can
+     * depend on the document's language.
+     *
+     * LTR is what we want for all scrollbar parts anyway, so that e.g. we don't
+     * reverse the rendering of a horizontal scrollbar.
+     */
+    direction: ltr;
+
+    /* Similarly for font properties, whose initial values depend on the
+     * document's language.  Scrollbar parts don't have any text or rely on
+     * font metrics.
+     */
+    font: 16px sans-serif;
+
+    /* The initial value of justify-items is `legacy`, which makes it depend on
+     * the parent style.
+     *
+     * Reset it to something else.
+     */
+    justify-items: start;
+
+    /* Avoid `object > *` rule in html.css from setting a useless, non-initial
+     * value of vertical-align.
+     */
+    vertical-align: initial !important;
+
+    /* Duplicate the rules from the '*' rule above, which were clobbered by the
+     * 'all: initial' declaration.
+     *
+     * The other zero specificity rules above are on :root, and scrollbar parts
+     * cannot match :root, so no need to duplicate them.
+     */
+    -moz-user-focus: ignore;
+    -moz-user-select: none;
+    display: -moz-box;
+    box-sizing: border-box;
+  }
+
+  /* There are other rules that set direction and cursor on scrollbar,
+   * expecting them to inherit into its children.  Explicitly inherit those,
+   * overriding the 'all: initial; direction: ltr;' declarations above.
+   */
+  scrollbarbutton:-moz-native-anonymous-no-specificity,
+  slider:-moz-native-anonymous-no-specificity,
+  thumb:-moz-native-anonymous-no-specificity {
+    direction: inherit;
+    cursor: inherit;
+  }
+}
+
+scrollbar[orient="vertical"],
+slider[orient="vertical"],
+thumb[orient="vertical"] {
+  -moz-box-orient: vertical;
+}
+
+thumb {
+  /* Prevent -moz-user-modify declaration from designmode.css having an
+   * effect. */
+  -moz-user-modify: initial;
+
+  -moz-box-align: center;
+  -moz-box-pack: center;
 }
 
 /********** resizer **********/
@@ -106,11 +176,6 @@ resizer[dir="topright"] {
 
 /********** scrollbar **********/
 
-/* Scrollbars are never flipped even if BiDI kicks in. */
-scrollbar[orient="horizontal"] {
-  direction: ltr;
-}
-
 thumb {
   display: -moz-box !important;
 }
@@ -161,7 +226,7 @@ scrollbar[value="hidden"] {
 }
 
 @media (-moz-scrollbar-thumb-proportional) {
-  thumb[sbattr="scrollbar-thumb"] {
+  thumb {
     -moz-box-flex: 1;
   }
 }

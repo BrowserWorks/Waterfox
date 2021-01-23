@@ -10,6 +10,7 @@
  * liability, trademark and document use rules apply.
  */
 
+[Exposed=Window]
 interface SVGFEBlendElement : SVGElement {
 
   // Blend Mode Types
@@ -38,4 +39,4 @@ interface SVGFEBlendElement : SVGElement {
   readonly attribute SVGAnimatedEnumeration mode;
 };
 
-SVGFEBlendElement implements SVGFilterPrimitiveStandardAttributes;
+SVGFEBlendElement includes SVGFilterPrimitiveStandardAttributes;

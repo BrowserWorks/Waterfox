@@ -19,8 +19,9 @@ dictionary CSPReportProperties {
   long column-number;
 };
 
+[GenerateToJSON]
 dictionary CSPReport {
   // We always want to have a "csp-report" property, so just pre-initialize it
   // to an empty dictionary..
-  CSPReportProperties csp-report = null;
+  CSPReportProperties csp-report = {};
 };

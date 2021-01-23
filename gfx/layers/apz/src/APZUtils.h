@@ -8,6 +8,8 @@
 #define mozilla_layers_APZUtils_h
 
 #include <stdint.h>  // for uint32_t
+#include <type_traits>
+#include "gfxTypes.h"
 #include "FrameMetrics.h"
 #include "LayersTypes.h"
 #include "UnitTransforms.h"
@@ -22,7 +24,7 @@ namespace mozilla {
 struct ExternalPixel;
 
 template <>
-struct IsPixel<ExternalPixel> : TrueType {};
+struct IsPixel<ExternalPixel> : std::true_type {};
 
 typedef gfx::CoordTyped<ExternalPixel> ExternalCoord;
 typedef gfx::IntCoordTyped<ExternalPixel> ExternalIntCoord;
@@ -157,6 +159,23 @@ bool IsCloseToHorizontal(float aAngle, float aThreshold);
 
 // As above, but for the vertical axis.
 bool IsCloseToVertical(float aAngle, float aThreshold);
+
+// Determine the amount of overlap between the 1D vector |aTranslation|
+// and the interval [aMin, aMax].
+gfxFloat IntervalOverlap(gfxFloat aTranslation, gfxFloat aMin, gfxFloat aMax);
+
+// Returns true if a sticky layer with async translation |aTranslation| is
+// stuck with a bottom margin. The inner/outer ranges are produced by the main
+// thread at the last paint, and so |aTranslation| only needs to be the
+// async translation from the last paint.
+bool IsStuckAtBottom(gfxFloat aTranslation,
+                     const LayerRectAbsolute& aInnerRange,
+                     const LayerRectAbsolute& aOuterRange);
+
+// Returns true if a sticky layer with async translation |aTranslation| is
+// stuck with a top margin.
+bool IsStuckAtTop(gfxFloat aTranslation, const LayerRectAbsolute& aInnerRange,
+                  const LayerRectAbsolute& aOuterRange);
 
 }  // namespace apz
 

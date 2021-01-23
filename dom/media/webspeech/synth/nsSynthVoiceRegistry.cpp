@@ -19,7 +19,7 @@
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/dom/ContentParent.h"
 #include "mozilla/intl/LocaleService.h"
-#include "mozilla/StaticPrefs.h"
+#include "mozilla/StaticPrefs_media.h"
 #include "mozilla/StaticPtr.h"
 #include "mozilla/Unused.h"
 
@@ -35,7 +35,7 @@ extern mozilla::LogModule* GetSpeechSynthLog();
 namespace {
 
 void GetAllSpeechSynthActors(
-    InfallibleTArray<mozilla::dom::SpeechSynthesisParent*>& aActors) {
+    nsTArray<mozilla::dom::SpeechSynthesisParent*>& aActors) {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aActors.IsEmpty());
 
@@ -72,7 +72,7 @@ namespace dom {
 class VoiceData final {
  private:
   // Private destructor, to discourage deletion outside of Release():
-  ~VoiceData() {}
+  ~VoiceData() = default;
 
  public:
   VoiceData(nsISpeechService* aService, const nsAString& aUri,
@@ -105,7 +105,7 @@ class VoiceData final {
 class GlobalQueueItem final {
  private:
   // Private destructor, to discourage deletion outside of Release():
-  ~GlobalQueueItem() {}
+  ~GlobalQueueItem() = default;
 
  public:
   GlobalQueueItem(VoiceData* aVoice, nsSpeechTask* aTask,
@@ -187,8 +187,8 @@ bool nsSynthVoiceRegistry::SendInitialVoicesAndState(
     SpeechSynthesisParent* aParent) {
   MOZ_ASSERT(XRE_IsParentProcess());
 
-  InfallibleTArray<RemoteVoice> voices;
-  InfallibleTArray<nsString> defaults;
+  nsTArray<RemoteVoice> voices;
+  nsTArray<nsString> defaults;
 
   for (uint32_t i = 0; i < mVoices.Length(); ++i) {
     RefPtr<VoiceData> voice = mVoices[i];
@@ -323,7 +323,7 @@ nsSynthVoiceRegistry::RemoveVoice(nsISpeechService* aService,
   mUriVoiceMap.Remove(aUri);
 
   if (retval->mIsQueued &&
-      !StaticPrefs::MediaWebspeechSynthForceGlobalQueue()) {
+      !StaticPrefs::media_webspeech_synth_force_global_queue()) {
     // Check if this is the last queued voice, and disable the global queue if
     // it is.
     bool queued = false;
@@ -486,7 +486,7 @@ nsresult nsSynthVoiceRegistry::AddVoiceImpl(
                                           aLocalService, aQueuesUtterances);
 
   mVoices.AppendElement(voice);
-  mUriVoiceMap.Put(aUri, voice);
+  mUriVoiceMap.Put(aUri, std::move(voice));
   mUseGlobalQueue |= aQueuesUtterances;
 
   nsTArray<SpeechSynthesisParent*> ssplist;
@@ -571,7 +571,7 @@ VoiceData* nsSynthVoiceRegistry::FindBestMatch(const nsAString& aUri,
 
   // Try UI language.
   nsAutoCString uiLang;
-  LocaleService::GetInstance()->GetAppLocaleAsLangTag(uiLang);
+  LocaleService::GetInstance()->GetAppLocaleAsBCP47(uiLang);
 
   if (FindVoiceByLang(NS_ConvertASCIItoUTF16(uiLang), &retval)) {
     LOG(LogLevel::Debug,
@@ -663,7 +663,8 @@ void nsSynthVoiceRegistry::Speak(const nsAString& aText, const nsAString& aLang,
 
   aTask->SetChosenVoiceURI(voice->mUri);
 
-  if (mUseGlobalQueue || StaticPrefs::MediaWebspeechSynthForceGlobalQueue()) {
+  if (mUseGlobalQueue ||
+      StaticPrefs::media_webspeech_synth_force_global_queue()) {
     LOG(LogLevel::Debug,
         ("nsSynthVoiceRegistry::Speak queueing text='%s' lang='%s' uri='%s' "
          "rate=%f pitch=%f",
@@ -733,8 +734,8 @@ void nsSynthVoiceRegistry::SetIsSpeaking(bool aIsSpeaking) {
 
   // Only set to 'true' if global queue is enabled.
   mIsSpeaking =
-      aIsSpeaking &&
-      (mUseGlobalQueue || StaticPrefs::MediaWebspeechSynthForceGlobalQueue());
+      aIsSpeaking && (mUseGlobalQueue ||
+                      StaticPrefs::media_webspeech_synth_force_global_queue());
 
   nsTArray<SpeechSynthesisParent*> ssplist;
   GetAllSpeechSynthActors(ssplist);

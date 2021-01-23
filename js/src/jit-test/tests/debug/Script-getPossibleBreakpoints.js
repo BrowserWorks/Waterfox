@@ -10,14 +10,19 @@ assertBreakpoints(`
   /*S*/obj./*B*/prop();
 `);
 
+// calls with many args
+assertBreakpoints(`
+  /*S*/a/*B*/(1);
+  /*S*/a/*B*/(1,2);
+  /*S*/a/*B*/(1,2,3);
+`);
+
+
 // ExpressionStatement with nested expression calls.
 assertBreakpoints(`
   "45";
   /*S*/"45" + /*B*/a();
   /*S*/b() + "45";
-  /*S*/"45" + /*B*/a() + /*B*/b();
-  /*S*/b() + "45" + /*B*/a();
-  /*S*/b() + /*B*/a() + "45";
 
   /*S*/"45" + o./*B*/a();
   /*S*/o./*B*/b() + "45";
@@ -117,54 +122,16 @@ assertBreakpoints(`
 // ForExpr
 assertBreakpoints(`
   for (/*S*/b = 42; /*S*/c; /*S*/d) /*S*/fn();
-`);
-
-// ForVar
-assertBreakpoints(`
   for (var b = /*S*/42; /*S*/c; /*S*/d) /*S*/fn();
-`);
-
-// ForLet
-assertBreakpoints(`
   for (let b = /*S*/42; /*S*/c; /*S*/d) /*S*/fn();
-`);
-
-// ForConst
-assertBreakpoints(`
   for (const b = /*S*/42; /*S*/c; /*S*/d) /*S*/fn();
-`);
-
-// ForInExpr
-assertBreakpoints(`
   for (b in /*S*/d) /*S*/fn();
-`);
-// ForInVar
-assertBreakpoints(`
   for (var b in /*S*/d) /*S*/fn();
-`);
-// ForInLet
-assertBreakpoints(`
   for (let b in /*S*/d) /*S*/fn();
-`);
-// ForInConst
-assertBreakpoints(`
   for (const b in /*S*/d) /*S*/fn();
-`);
-
-// ForOfExpr
-assertBreakpoints(`
   for (b of /*S*/d) /*S*/fn();
-`);
-// ForOfVar
-assertBreakpoints(`
   for (var b of /*S*/d) /*S*/fn();
-`);
-// ForOfLet
-assertBreakpoints(`
   for (let b of /*S*/d) /*S*/fn();
-`);
-// ForOfConst
-assertBreakpoints(`
   for (const b of /*S*/d) /*S*/fn();
 `);
 
@@ -341,7 +308,7 @@ assertBreakpoints(`
 function assertBreakpoints(expected) {
   const input = expected.replace(/\/\*[BS]\*\//g, "");
 
-  var global = newGlobal({newCompartment: true});
+  var global = newGlobal({ newCompartment: true });
   var dbg = Debugger(global);
   dbg.onDebuggerStatement = function(frame) {
     const fScript = frame.environment.parent.getVariable("f").script;
@@ -382,7 +349,12 @@ function annotateOffsets(code, positions) {
   for (const { lineNumber, columnNumber, isStepStart } of positions) {
     const offset = offsetLookup(lineNumber, columnNumber);
 
-    output = "/*" + (isStepStart ? "S" : "B") + "*/" + code.slice(offset, last) + output;
+    output =
+      "/*" +
+      (isStepStart ? "S" : "B") +
+      "*/" +
+      code.slice(offset, last) +
+      output;
     last = offset;
   }
   return code.slice(0, last) + output;

@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label  "Vaakaviivan ominaisuudet">
+
+<!ENTITY dimensionsBox.label  "Mitat">
+<!ENTITY heightEditField.label  "Korkeus:">
+<!ENTITY heightEditField.accessKey  "K">
+<!ENTITY widthEditField.label  "Leveys:">
+<!ENTITY widthEditField.accessKey  "e">
+<!ENTITY pixelsPopup.value  "kuvapistettä">
+<!ENTITY alignmentBox.label  "Tasaus">
+<!ENTITY leftRadio.label "Vasen">
+<!ENTITY leftRadio.accessKey "V">
+<!ENTITY centerRadio.label "Keskitetty">
+<!ENTITY centerRadio.accessKey "K">
+<!ENTITY rightRadio.label "Oikea">
+<!ENTITY rightRadio.accessKey "O">
+
+<!ENTITY threeDShading.label  "3-D varjostus">
+<!ENTITY threeDShading.accessKey  "D">
+<!ENTITY saveSettings.label  "Käytä oletusarvona">
+<!ENTITY saveSettings.accessKey  "O">
+<!ENTITY saveSettings.tooltip  "Tallenna nämä asetukset käytettäväksi uusia vaakaviivoja lisättäessä.">

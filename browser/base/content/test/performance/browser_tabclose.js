@@ -20,19 +20,17 @@ const EXPECTED_REFLOWS = [
  * uninterruptible reflows when closing new tabs.
  */
 add_task(async function() {
+  // Force-enable tab animations
+  gReduceMotionOverride = false;
+
   await ensureNoPreloadedBrowser();
+  await disableFxaBadge();
 
   let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser);
-  await BrowserTestUtils.waitForCondition(() => tab._fullyOpen);
+  await TestUtils.waitForCondition(() => tab._fullyOpen);
 
   let tabStripRect = gBrowser.tabContainer.arrowScrollbox.getBoundingClientRect();
-  let newTabButtonRect = document
-    .getAnonymousElementByAttribute(
-      gBrowser.tabContainer,
-      "anonid",
-      "tabs-newtab-button"
-    )
-    .getBoundingClientRect();
+  let newTabButtonRect = gBrowser.tabContainer.newTabButton.getBoundingClientRect();
   let inRange = (val, min, max) => min <= val && val <= max;
 
   // Add a reflow observer and open a new tab.
@@ -49,24 +47,26 @@ add_task(async function() {
         filter: rects =>
           rects.filter(
             r =>
-              !// We expect all changes to be within the tab strip.
-              (
-                r.y1 >= tabStripRect.top &&
-                r.y2 <= tabStripRect.bottom &&
-                r.x1 >= tabStripRect.left &&
-                r.x2 <= tabStripRect.right &&
-                // The closed tab should disappear at the same time as the previous
-                // tab gets selected, causing both tab areas to change color at once:
-                // this should be a single rect of the width of 2 tabs, and can
-                // include the '+' button if it starts its animation.
-                ((r.w > gBrowser.selectedTab.clientWidth &&
-                  r.x2 <= newTabButtonRect.right) ||
-                  // The '+' icon moves with an animation. At the end of the animation
-                  // the former and new positions can touch each other causing the rect
-                  // to have twice the icon's width.
-                  (r.h == 14 && r.w <= 2 * 14 + kMaxEmptyPixels) ||
-                  // We sometimes have a rect for the right most 2px of the '+' button.
-                  (r.h == 2 && r.w == 2))
+              !(
+                // We expect all changes to be within the tab strip.
+                (
+                  r.y1 >= tabStripRect.top &&
+                  r.y2 <= tabStripRect.bottom &&
+                  r.x1 >= tabStripRect.left &&
+                  r.x2 <= tabStripRect.right &&
+                  // The closed tab should disappear at the same time as the previous
+                  // tab gets selected, causing both tab areas to change color at once:
+                  // this should be a single rect of the width of 2 tabs, and can
+                  // include the '+' button if it starts its animation.
+                  ((r.w > gBrowser.selectedTab.clientWidth &&
+                    r.x2 <= newTabButtonRect.right) ||
+                    // The '+' icon moves with an animation. At the end of the animation
+                    // the former and new positions can touch each other causing the rect
+                    // to have twice the icon's width.
+                    (r.h == 14 && r.w <= 2 * 14 + kMaxEmptyPixels) ||
+                    // We sometimes have a rect for the right most 2px of the '+' button.
+                    (r.h == 2 && r.w == 2))
+                )
               )
           ),
         exceptions: [

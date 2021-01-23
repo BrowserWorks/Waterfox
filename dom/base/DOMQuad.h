@@ -7,22 +7,27 @@
 #ifndef MOZILLA_DOMQUAD_H_
 #define MOZILLA_DOMQUAD_H_
 
+#include "js/StructuredClone.h"
 #include "nsWrapperCache.h"
 #include "nsISupports.h"
 #include "nsCycleCollectionParticipant.h"
 #include "mozilla/Attributes.h"
 #include "nsCOMPtr.h"
+#include "nsIGlobalObject.h"
 #include "mozilla/dom/BindingDeclarations.h"
 #include "mozilla/ErrorResult.h"
 #include "Units.h"
+
+class nsIGlobalObject;
 
 namespace mozilla {
 namespace dom {
 
 class DOMRectReadOnly;
 class DOMPoint;
-struct DOMQuadJSON;
 struct DOMPointInit;
+struct DOMQuadInit;
+struct DOMRectInit;
 
 class DOMQuad final : public nsWrapperCache {
   ~DOMQuad();
@@ -38,17 +43,20 @@ class DOMQuad final : public nsWrapperCache {
   virtual JSObject* WrapObject(JSContext* aCx,
                                JS::Handle<JSObject*> aGivenProto) override;
 
+  static already_AddRefed<DOMQuad> FromRect(const GlobalObject& aGlobal,
+                                            const DOMRectInit& aInit);
+
+  static already_AddRefed<DOMQuad> FromQuad(const GlobalObject& aGlobal,
+                                            const DOMQuadInit& aInit);
+
   static already_AddRefed<DOMQuad> Constructor(const GlobalObject& aGlobal,
                                                const DOMPointInit& aP1,
                                                const DOMPointInit& aP2,
                                                const DOMPointInit& aP3,
-                                               const DOMPointInit& aP4,
-                                               ErrorResult& aRV);
+                                               const DOMPointInit& aP4);
   static already_AddRefed<DOMQuad> Constructor(const GlobalObject& aGlobal,
-                                               const DOMRectReadOnly& aRect,
-                                               ErrorResult& aRV);
+                                               const DOMRectReadOnly& aRect);
 
-  DOMRectReadOnly* Bounds();
   already_AddRefed<DOMRectReadOnly> GetBounds() const;
   DOMPoint* P1() const { return mPoints[0]; }
   DOMPoint* P2() const { return mPoints[1]; }
@@ -57,7 +65,12 @@ class DOMQuad final : public nsWrapperCache {
 
   DOMPoint* Point(uint32_t aIndex) const { return mPoints[aIndex]; }
 
-  void ToJSON(DOMQuadJSON& aInit);
+  bool WriteStructuredClone(JSContext* aCx,
+                            JSStructuredCloneWriter* aWriter) const;
+
+  static already_AddRefed<DOMQuad> ReadStructuredClone(
+      JSContext* aCx, nsIGlobalObject* aGlobal,
+      JSStructuredCloneReader* aReader);
 
  protected:
   void GetHorizontalMinMax(double* aX1, double* aX2) const;
@@ -65,7 +78,6 @@ class DOMQuad final : public nsWrapperCache {
 
   nsCOMPtr<nsISupports> mParent;
   RefPtr<DOMPoint> mPoints[4];
-  RefPtr<DOMRectReadOnly> mBounds;
 };
 
 }  // namespace dom

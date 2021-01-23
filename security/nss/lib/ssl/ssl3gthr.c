@@ -268,6 +268,7 @@ dtls_GatherData(sslSocket *ss, sslGather *gs, int flags)
     PRUint8 contentType;
     unsigned int headerLen;
     SECStatus rv;
+    PRBool dtlsLengthPresent = PR_TRUE;
 
     SSL_TRC(30, ("dtls_GatherData"));
 
@@ -316,8 +317,20 @@ dtls_GatherData(sslSocket *ss, sslGather *gs, int flags)
         headerLen = 13;
     } else if (contentType == ssl_ct_application_data) {
         headerLen = 7;
-    } else if ((contentType & 0xe0) == 0x20) {
-        headerLen = 2;
+    } else if (dtls_IsDtls13Ciphertext(ss->version, contentType)) {
+        /* We don't support CIDs. */
+        if (contentType & 0x10) {
+            PORT_Assert(PR_FALSE);
+            PORT_SetError(SSL_ERROR_RX_UNKNOWN_RECORD_TYPE);
+            gs->dtlsPacketOffset = 0;
+            gs->dtlsPacket.len = 0;
+            return -1;
+        }
+
+        dtlsLengthPresent = (contentType & 0x04) == 0x04;
+        PRUint8 dtlsSeqNoSize = (contentType & 0x08) ? 2 : 1;
+        PRUint8 dtlsLengthBytes = dtlsLengthPresent ? 2 : 0;
+        headerLen = 1 + dtlsSeqNoSize + dtlsLengthBytes;
     } else {
         SSL_DBG(("%d: SSL3[%d]: invalid first octet (%d) for DTLS",
                  SSL_GETPID(), ss->fd, contentType));
@@ -345,12 +358,10 @@ dtls_GatherData(sslSocket *ss, sslGather *gs, int flags)
     gs->dtlsPacketOffset += headerLen;
 
     /* Have received SSL3 record header in gs->hdr. */
-    if (headerLen == 13) {
-        gs->remainder = (gs->hdr[11] << 8) | gs->hdr[12];
-    } else if (headerLen == 7) {
-        gs->remainder = (gs->hdr[5] << 8) | gs->hdr[6];
+    if (dtlsLengthPresent) {
+        gs->remainder = (gs->hdr[headerLen - 2] << 8) |
+                        gs->hdr[headerLen - 1];
     } else {
-        PORT_Assert(headerLen == 2);
         gs->remainder = gs->dtlsPacket.len - gs->dtlsPacketOffset;
     }
 
@@ -600,6 +611,46 @@ ssl3_GatherAppDataRecord(sslSocket *ss, int flags)
     return rv;
 }
 
+static SECStatus
+ssl_HandleZeroRttRecordData(sslSocket *ss, const PRUint8 *data, unsigned int len)
+{
+    PORT_Assert(ss->sec.isServer);
+    if (ss->ssl3.hs.zeroRttState == ssl_0rtt_accepted) {
+        sslBuffer buf = { CONST_CAST(PRUint8, data), len, len, PR_TRUE };
+        return tls13_HandleEarlyApplicationData(ss, &buf);
+    }
+    if (ss->ssl3.hs.zeroRttState == ssl_0rtt_ignored &&
+        ss->ssl3.hs.zeroRttIgnore != ssl_0rtt_ignore_none) {
+        /* We're ignoring 0-RTT so drop this record quietly. */
+        return SECSuccess;
+    }
+    PORT_SetError(SSL_ERROR_RX_UNEXPECTED_APPLICATION_DATA);
+    return SECFailure;
+}
+
+/* Ensure that application data in the wrong epoch is blocked. */
+static PRBool
+ssl_IsApplicationDataPermitted(sslSocket *ss, PRUint16 epoch)
+{
+    /* Epoch 0 is never OK. */
+    if (epoch == 0) {
+        return PR_FALSE;
+    }
+    if (ss->version < SSL_LIBRARY_VERSION_TLS_1_3) {
+        return ss->firstHsDone;
+    }
+    /* TLS 1.3 application data. */
+    if (epoch >= TrafficKeyApplicationData) {
+        return ss->firstHsDone;
+    }
+    /* TLS 1.3 early data is server only. Further checks aren't needed
+     * as those are handled in ssl_HandleZeroRttRecordData. */
+    if (epoch == TrafficKeyEarlyApplicationData) {
+        return ss->sec.isServer;
+    }
+    return PR_FALSE;
+}
+
 SECStatus
 SSLExp_RecordLayerData(PRFileDesc *fd, PRUint16 epoch,
                        SSLContentType contentType,
@@ -626,8 +677,8 @@ SSLExp_RecordLayerData(PRFileDesc *fd, PRUint16 epoch,
         goto early_loser; /* Rely on the existing code. */
     }
 
-    /* Don't allow application data before handshake completion. */
-    if (contentType == ssl_ct_application_data && !ss->firstHsDone) {
+    if (contentType == ssl_ct_application_data &&
+        !ssl_IsApplicationDataPermitted(ss, epoch)) {
         PORT_SetError(SEC_ERROR_INVALID_ARGS);
         goto early_loser;
     }
@@ -638,7 +689,18 @@ SSLExp_RecordLayerData(PRFileDesc *fd, PRUint16 epoch,
     if (epoch < ss->ssl3.crSpec->epoch) {
         epochError = SEC_ERROR_INVALID_ARGS; /* Too c/old. */
     } else if (epoch > ss->ssl3.crSpec->epoch) {
-        epochError = PR_WOULD_BLOCK_ERROR; /* Too warm/new. */
+        /* If a TLS 1.3 server is not expecting EndOfEarlyData,
+         * moving from 1 to 2 is a signal to execute the code
+         * as though that message had been received. Let that pass. */
+        if (ss->version >= SSL_LIBRARY_VERSION_TLS_1_3 &&
+            ss->opt.suppressEndOfEarlyData &&
+            ss->sec.isServer &&
+            ss->ssl3.crSpec->epoch == TrafficKeyEarlyApplicationData &&
+            epoch == TrafficKeyHandshake) {
+            epochError = 0;
+        } else {
+            epochError = PR_WOULD_BLOCK_ERROR; /* Too warm/new. */
+        }
     } else {
         epochError = 0; /* Just right. */
     }
@@ -649,11 +711,18 @@ SSLExp_RecordLayerData(PRFileDesc *fd, PRUint16 epoch,
     }
 
     /* If the handshake is still running, we need to run that. */
-    ssl_Get1stHandshakeLock(ss);
     rv = ssl_Do1stHandshake(ss);
     if (rv != SECSuccess && PORT_GetError() != PR_WOULD_BLOCK_ERROR) {
+        goto early_loser;
+    }
+
+    /* 0-RTT needs its own special handling here. */
+    if (ss->version >= SSL_LIBRARY_VERSION_TLS_1_3 &&
+        epoch == TrafficKeyEarlyApplicationData &&
+        contentType == ssl_ct_application_data) {
+        rv = ssl_HandleZeroRttRecordData(ss, data, len);
         ssl_Release1stHandshakeLock(ss);
-        return SECFailure;
+        return rv;
     }
 
     /* Finally, save the data... */

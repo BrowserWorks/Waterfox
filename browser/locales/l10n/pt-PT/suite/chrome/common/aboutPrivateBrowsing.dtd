@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: where ".private" and ".normal" variants exist,
+   - the former is shown in a private browsing window and the latter in
+   - a regular (non-private) browsing window. -->
+
+<!ENTITY privatebrowsingpage.title.private       "Está numa janela de navegação privada">
+<!ENTITY privatebrowsingpage.title.normal        "Gostaria de iniciar a navegação privada?">
+
+<!ENTITY privatebrowsingpage.status.private      "O &brandShortName; não irá memorizar qualquer histórico para esta janela.">
+<!ENTITY privatebrowsingpage.status.normal       "Você não está numa janela de navegação privada.">
+
+<!ENTITY privatebrowsingpage.common.description  "Na janela de navegação privada, o &brandShortName; não guarda o histórico de navegação, pesquisa, transferências, formulários, cookies e ficheiros temporários.  Contudo, os marcadores criados ou transferências efetuadas serão mantidos.">
+<!ENTITY privatebrowsingpage.track.warn          "Apesar de não ser registado o histórico de navegação, a sua entidade empregadora ou fornecedor de serviços da Internet poderão monitorizar as páginas acedidas.">
+<!ENTITY privatebrowsingpage.learnmore.label     "Saber mais">
+<!ENTITY privatebrowsingpage.learnmore.accesskey "S">
+
+<!ENTITY privatebrowsingpage.close.info          "Ao terminar, feche esta janela para sair da navegação privada.">
+<!ENTITY privatebrowsingpage.close.label         "Fechar esta janela">
+<!ENTITY privatebrowsingpage.close.accesskey     "c">
+
+<!ENTITY privatebrowsingpage.start.info          "Para iniciar a navegação privada, clique no botão abaixo ou selecione Ficheiro - Nova - Janela privada no menu.">
+<!ENTITY privatebrowsingpage.private.label       "Abrir nova janela privada">
+<!ENTITY privatebrowsingpage.private.accesskey   "o">

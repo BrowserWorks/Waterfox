@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 /* eslint no-unused-vars: [2, {"vars": "local", "args": "none"}] */
@@ -34,26 +33,29 @@ registerCleanupFunction(() => {
  * @return a promise that resolves to the tab object when
  *        the url is loaded
  */
-function addTestTab(url) {
+async function addTestTab(url) {
   info("Adding a new test tab with URL: '" + url + "'");
 
-  return new Promise(resolve => {
-    addTab(url).then(tab => {
-      // Load devtools/shared/test/frame-script-utils.js
-      loadFrameScriptUtils();
+  const tab = await addTab(url);
 
-      // Select the DOM panel and wait till it's initialized.
-      initDOMPanel(tab).then(panel => {
-        waitForDispatch(panel, "FETCH_PROPERTIES").then(() => {
-          resolve({
-            tab: tab,
-            browser: tab.linkedBrowser,
-            panel: panel,
-          });
-        });
-      });
-    });
-  });
+  // Load devtools/shared/test/frame-script-utils.js
+  loadFrameScriptUtils();
+
+  // Select the DOM panel and wait till it's initialized.
+  const panel = await initDOMPanel(tab);
+
+  // FETCH_PROPERTIES should be fired during the call to initDOMPanel
+  // But note that this behavior changed during a change in webconsole
+  // initialization. So this might be racy.
+  const doc = panel.panelWin.document;
+  const nodes = [...doc.querySelectorAll(".treeLabel")];
+  ok(nodes.length > 0, "The DOM panel is already populated");
+
+  return {
+    tab,
+    browser: tab.linkedBrowser,
+    panel,
+  };
 }
 
 /**
@@ -186,8 +188,9 @@ function expandRow(panel, labelText) {
   });
 }
 
-function evaluateJSAsync(panel, expression) {
-  return panel.target.activeConsole.evaluateJSAsync(expression);
+async function evaluateJSAsync(panel, expression) {
+  const consoleFront = await panel.currentTarget.getFront("console");
+  return consoleFront.evaluateJSAsync(expression);
 }
 
 function refreshPanel(panel) {

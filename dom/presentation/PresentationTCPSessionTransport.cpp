@@ -6,11 +6,7 @@
 
 #include "nsArrayUtils.h"
 #include "nsIAsyncStreamCopier.h"
-#include "nsIInputStreamPump.h"
 #include "nsIMultiplexInputStream.h"
-#include "nsIMutableArray.h"
-#include "nsIOutputStream.h"
-#include "nsIPresentationControlChannel.h"
 #include "nsIScriptableInputStream.h"
 #include "nsISocketTransport.h"
 #include "nsISocketTransportService.h"
@@ -36,7 +32,7 @@ class CopierCallbacks final : public nsIRequestObserver {
   NS_DECL_ISUPPORTS
   NS_DECL_NSIREQUESTOBSERVER
  private:
-  ~CopierCallbacks() {}
+  ~CopierCallbacks() = default;
 
   RefPtr<PresentationTCPSessionTransport> mOwner;
 };
@@ -76,7 +72,7 @@ PresentationTCPSessionTransport::PresentationTCPSessionTransport()
       mCloseStatus(NS_OK),
       mDataNotificationEnabled(false) {}
 
-PresentationTCPSessionTransport::~PresentationTCPSessionTransport() {}
+PresentationTCPSessionTransport::~PresentationTCPSessionTransport() = default;
 
 NS_IMETHODIMP
 PresentationTCPSessionTransport::BuildTCPSenderTransport(
@@ -165,8 +161,8 @@ PresentationTCPSessionTransport::BuildTCPReceiverTransport(
   if (NS_WARN_IF(!sts)) {
     return NS_ERROR_NOT_AVAILABLE;
   }
-  rv = sts->CreateTransport(nullptr, 0, serverHost, serverPort, nullptr,
-                            getter_AddRefs(mTransport));
+  rv = sts->CreateTransport(nsTArray<nsCString>(), serverHost, serverPort,
+                            nullptr, getter_AddRefs(mTransport));
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }

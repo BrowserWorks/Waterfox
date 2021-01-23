@@ -3,17 +3,36 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import datetime
-import time
+import logging
+import os
 import re
 import posixpath
-import tempfile
 import shutil
+import sys
+import tempfile
+import time
 
-from automation import Automation
+import six
+
 from mozdevice import ADBTimeoutError
 from mozlog import get_default_logger
 from mozscreenshot import dump_screen, dump_device_screen
 import mozcrash
+
+
+def resetGlobalLog(log):
+    while _log.handlers:
+        _log.removeHandler(_log.handlers[0])
+    handler = logging.StreamHandler(log)
+    _log.setLevel(logging.INFO)
+    _log.addHandler(handler)
+
+
+# We use the logging system here primarily because it'll handle multiple
+# threads, which is needed to process the output of the server and application
+# processes simultaneously.
+_log = logging.getLogger()
+resetGlobalLog(sys.stdout)
 
 # signatures for logcat messages that we don't care about much
 fennecLogcatFilters = ["The character encoding of the HTML document was not declared",
@@ -21,17 +40,18 @@ fennecLogcatFilters = ["The character encoding of the HTML document was not decl
                        "Unexpected value from nativeGetEnabledTags: 0"]
 
 
-class RemoteAutomation(Automation):
+class RemoteAutomation(object):
 
     def __init__(self, device, appName='', remoteProfile=None, remoteLog=None,
                  processArgs=None):
+        super(RemoteAutomation, self).__init__()
         self.device = device
         self.appName = appName
         self.remoteProfile = remoteProfile
         self.remoteLog = remoteLog
         self.processArgs = processArgs or {}
         self.lastTestSeen = "remoteautomation.py"
-        Automation.__init__(self)
+        self.log = _log
 
     def runApp(self, testURL, env, app, profileDir, extraArgs,
                utilityPath=None, xrePath=None, debuggerInfo=None, symbolsPath=None,
@@ -45,10 +65,6 @@ class RemoteAutomation(Automation):
             self.device.rm(self.remoteLog, root=True)
             self.log.info("remoteautomation.py | runApp deleted %s" % self.remoteLog)
 
-        if utilityPath is None:
-            utilityPath = self.DIST_BIN
-        if xrePath is None:
-            xrePath = self.DIST_BIN
         if timeout == -1:
             timeout = self.DEFAULT_TIMEOUT
         self.utilityPath = utilityPath
@@ -61,10 +77,10 @@ class RemoteAutomation(Automation):
                        env=self.environment(env=env, crashreporter=not debuggerInfo),
                        e10s=e10s, **self.processArgs)
 
-        self.log.info("remoteautomation.py | Application pid: %d", self.pid)
+        self.log.info("remoteautomation.py | Application pid: %d" % self.pid)
 
         status = self.waitForFinish(timeout, maxTime)
-        self.log.info("remoteautomation.py | Application ran for: %s",
+        self.log.info("remoteautomation.py | Application ran for: %s" %
                       str(datetime.datetime.now() - startTime))
 
         crashed = self.checkForCrashes(symbolsPath)
@@ -136,30 +152,11 @@ class RemoteAutomation(Automation):
         return status
 
     def checkForCrashes(self, symbolsPath):
-        logcat = self.device.get_logcat(
-            filter_out_regexps=fennecLogcatFilters)
-
-        javaException = mozcrash.check_for_java_exception(
-            logcat, test_name=self.lastTestSeen)
-        if javaException:
-            return True
-
-        # If crash reporting is disabled (MOZ_CRASHREPORTER!=1), we can't say
-        # anything.
-        if not self.CRASHREPORTER:
-            return False
-
         try:
             dumpDir = tempfile.mkdtemp()
             remoteCrashDir = posixpath.join(self.remoteProfile, 'minidumps')
             if not self.device.is_dir(remoteCrashDir):
-                # If crash reporting is enabled (MOZ_CRASHREPORTER=1), the
-                # minidumps directory is automatically created when Fennec
-                # (first) starts, so its lack of presence is a hint that
-                # something went wrong.
-                print("Automation Error: No crash directory (%s) found on remote device" %
-                      remoteCrashDir)
-                return True
+                return False
             self.device.pull(remoteCrashDir, dumpDir)
 
             logger = get_default_logger()
@@ -184,8 +181,22 @@ class RemoteAutomation(Automation):
         if app == "am" and extraArgs[0] in ('instrument', 'start'):
             return app, extraArgs
 
-        cmd, args = Automation.buildCommandLine(
-            self, app, debuggerInfo, profileDir, testURL, extraArgs)
+        cmd = os.path.abspath(app)
+
+        args = []
+
+        if debuggerInfo:
+            args.extend(debuggerInfo.args)
+            args.append(cmd)
+            cmd = os.path.abspath(debuggerInfo.path)
+
+        profileDirectory = profileDir + "/"
+
+        args.extend(("-no-remote", "-profile", profileDirectory))
+        if testURL is not None:
+            args.append((testURL))
+        args.extend(extraArgs)
+
         try:
             args.remove('-foreground')
         except Exception:
@@ -210,7 +221,7 @@ class RemoteAutomation(Automation):
             cmd = ' '.join(cmd)
             self.procName = self.appName
             if not self.device.shell_bool(cmd):
-                print("remote_automation.py failed to launch %s" % cmd)
+                print("remoteautomation.py failed to launch %s" % cmd)
         else:
             self.procName = cmd[0].split(posixpath.sep)[-1]
             args = cmd
@@ -252,8 +263,6 @@ class RemoteAutomation(Automation):
         Fetch the full remote log file, log any new content and return True if new
         content processed.
         """
-        if not self.device.is_file(self.remoteLog):
-            return False
         try:
             newLogContent = self.device.get_file(self.remoteLog, offset=self.stdoutlen)
         except ADBTimeoutError:
@@ -291,27 +300,39 @@ class RemoteAutomation(Automation):
 
         for line in lines:
             # This passes the line to the logger (to be logged or buffered)
-            parsed_messages = self.messageLogger.write(line)
+            if isinstance(line, six.text_type):
+                # if line is unicode - let's encode it to bytes
+                parsed_messages = self.messageLogger.write(line.encode('UTF-8', 'replace'))
+            else:
+                # if line is bytes type, write it as it is
+                parsed_messages = self.messageLogger.write(line)
+
             for message in parsed_messages:
-                if isinstance(message, dict) and message.get('action') == 'test_start':
-                    self.lastTestSeen = message['test']
-                if isinstance(message, dict) and message.get('action') == 'log':
-                    line = message['message'].strip()
-                    if self.counts:
-                        m = re.match(".*:\s*(\d*)", line)
-                        if m:
-                            try:
-                                val = int(m.group(1))
-                                if "Passed:" in line:
-                                    self.counts['pass'] += val
-                                elif "Failed:" in line:
-                                    self.counts['fail'] += val
-                                elif "Todo:" in line:
-                                    self.counts['todo'] += val
-                            except ADBTimeoutError:
-                                raise
-                            except Exception:
-                                pass
+                if isinstance(message, dict):
+                    if message.get('action') == 'test_start':
+                        self.lastTestSeen = message['test']
+                    elif message.get('action') == 'test_end':
+                        self.lastTestSeen = '{} (finished)'.format(message['test'])
+                    elif message.get('action') == 'suite_end':
+                        self.lastTestSeen = "Last test finished"
+                    elif message.get('action') == 'log':
+                        line = message['message'].strip()
+                        if self.counts:
+                            m = re.match(".*:\s*(\d*)", line)
+                            if m:
+                                try:
+                                    val = int(m.group(1))
+                                    if "Passed:" in line:
+                                        self.counts['pass'] += val
+                                        self.lastTestSeen = "Last test finished"
+                                    elif "Failed:" in line:
+                                        self.counts['fail'] += val
+                                    elif "Todo:" in line:
+                                        self.counts['todo'] += val
+                                except ADBTimeoutError:
+                                    raise
+                                except Exception:
+                                    pass
 
         return True
 
@@ -331,6 +352,16 @@ class RemoteAutomation(Automation):
         top = self.procName
         slowLog = False
         endTime = datetime.datetime.now() + datetime.timedelta(seconds=timeout)
+        # wait for log creation on startup
+        retries = 0
+        while retries < 20 and not self.device.is_file(self.remoteLog, root=True):
+            retries += 1
+            time.sleep(1)
+        if self.device.is_file(self.remoteLog, root=True):
+            # We must change the remote log's permissions so that the shell can read it.
+            self.device.chmod(self.remoteLog, mask="666", root=True)
+        else:
+            print("Failed wait for remote log: %s missing?" % self.remoteLog)
         while top == self.procName:
             # Get log updates on each interval, but if it is taking
             # too long, only do it every 60 seconds
@@ -424,3 +455,8 @@ class RemoteAutomation(Automation):
                 pass
         if self.device.process_exist(crashreporter):
             print("ERROR: %s still running!!" % crashreporter)
+
+    @staticmethod
+    def elf_arm(filename):
+        data = open(filename, 'rb').read(20)
+        return data[:4] == "\x7fELF" and ord(data[18]) == 40  # EM_ARM

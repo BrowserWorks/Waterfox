@@ -7,7 +7,6 @@
 #include "AccessCheck.h"
 
 #include "nsJSPrincipals.h"
-#include "nsDOMWindowList.h"
 #include "nsGlobalWindow.h"
 
 #include "XPCWrapper.h"
@@ -20,7 +19,6 @@
 #include "mozilla/dom/BindingUtils.h"
 #include "mozilla/dom/LocationBinding.h"
 #include "mozilla/dom/WindowBinding.h"
-#include "mozilla/jsipc/CrossProcessObjectWrappers.h"
 #include "nsJSUtils.h"
 #include "xpcprivate.h"
 
@@ -82,7 +80,7 @@ bool AccessCheck::isChrome(JSObject* obj) {
 
 bool IsCrossOriginAccessibleObject(JSObject* obj) {
   obj = js::UncheckedUnwrap(obj, /* stopAtWindowProxy = */ false);
-  const js::Class* clasp = js::GetObjectClass(obj);
+  const JSClass* clasp = js::GetObjectClass(obj);
 
   return (clasp->name[0] == 'L' && !strcmp(clasp->name, "Location")) ||
          (clasp->name[0] == 'W' && !strcmp(clasp->name, "Window"));
@@ -98,16 +96,6 @@ bool AccessCheck::checkPassToPrivilegedCode(JSContext* cx, HandleObject wrapper,
 
   // Non-wrappers are fine.
   if (!js::IsWrapper(obj)) {
-    return true;
-  }
-
-  // CPOWs use COWs (in the unprivileged junk scope) for all child->parent
-  // references. Without this test, the child process wouldn't be able to
-  // pass any objects at all to CPOWs.
-  if (mozilla::jsipc::IsWrappedCPOW(obj) &&
-      js::GetObjectCompartment(wrapper) ==
-          js::GetObjectCompartment(xpc::UnprivilegedJunkScope()) &&
-      XRE_IsParentProcess()) {
     return true;
   }
 
@@ -164,7 +152,7 @@ void AccessCheck::reportCrossOriginDenial(JSContext* cx, JS::HandleId id,
               NS_LITERAL_CSTRING(" on cross-origin object");
   }
   ErrorResult rv;
-  rv.ThrowDOMException(NS_ERROR_DOM_SECURITY_ERR, message);
+  rv.ThrowSecurityError(message);
   MOZ_ALWAYS_TRUE(rv.MaybeSetPendingException(cx));
 }
 

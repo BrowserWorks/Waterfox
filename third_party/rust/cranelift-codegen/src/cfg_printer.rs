@@ -1,10 +1,12 @@
 //! The `CFGPrinter` utility.
 
+use alloc::vec::Vec;
 use core::fmt::{Display, Formatter, Result, Write};
 
-use crate::flowgraph::{BasicBlock, ControlFlowGraph};
-use crate::ir::instructions::BranchInfo;
+use crate::entity::SecondaryMap;
+use crate::flowgraph::{BlockPredecessor, ControlFlowGraph};
 use crate::ir::Function;
+use crate::write::{FuncWriter, PlainWriter};
 
 /// A utility for pretty-printing the CFG of a `Function`.
 pub struct CFGPrinter<'a> {
@@ -23,14 +25,14 @@ impl<'a> CFGPrinter<'a> {
     }
 
     /// Write the CFG for this function to `w`.
-    pub fn write(&self, w: &mut Write) -> Result {
+    pub fn write(&self, w: &mut dyn Write) -> Result {
         self.header(w)?;
-        self.ebb_nodes(w)?;
+        self.block_nodes(w)?;
         self.cfg_connections(w)?;
         writeln!(w, "}}")
     }
 
-    fn header(&self, w: &mut Write) -> Result {
+    fn header(&self, w: &mut dyn Write) -> Result {
         writeln!(w, "digraph \"{}\" {{", self.func.name)?;
         if let Some(entry) = self.func.layout.entry_block() {
             writeln!(w, "    {{rank=min; {}}}", entry)?;
@@ -38,34 +40,36 @@ impl<'a> CFGPrinter<'a> {
         Ok(())
     }
 
-    fn ebb_nodes(&self, w: &mut Write) -> Result {
-        for ebb in &self.func.layout {
-            write!(w, "    {} [shape=record, label=\"{{{}", ebb, ebb)?;
+    fn block_nodes(&self, w: &mut dyn Write) -> Result {
+        let mut aliases = SecondaryMap::<_, Vec<_>>::new();
+        for v in self.func.dfg.values() {
+            // VADFS returns the immediate target of an alias
+            if let Some(k) = self.func.dfg.value_alias_dest_for_serialization(v) {
+                aliases[k].push(v);
+            }
+        }
+
+        for block in &self.func.layout {
+            write!(w, "    {} [shape=record, label=\"{{", block)?;
+            crate::write::write_block_header(w, self.func, None, block, 4)?;
             // Add all outgoing branch instructions to the label.
-            for inst in self.func.layout.ebb_insts(ebb) {
-                let idata = &self.func.dfg[inst];
-                match idata.analyze_branch(&self.func.dfg.value_lists) {
-                    BranchInfo::SingleDest(dest, _) => {
-                        write!(w, " | <{}>{} {}", inst, idata.opcode(), dest)?
-                    }
-                    BranchInfo::Table(table, dest) => {
-                        write!(w, " | <{}>{} {}", inst, idata.opcode(), table)?;
-                        if let Some(dest) = dest {
-                            write!(w, " {}", dest)?
-                        }
-                    }
-                    BranchInfo::NotABranch => {}
-                }
+            for inst in self.func.layout.block_likely_branches(block) {
+                write!(w, " | <{}>", inst)?;
+                PlainWriter.write_instruction(w, self.func, &aliases, None, inst, 0)?;
             }
             writeln!(w, "}}\"]")?
         }
         Ok(())
     }
 
-    fn cfg_connections(&self, w: &mut Write) -> Result {
-        for ebb in &self.func.layout {
-            for BasicBlock { ebb: parent, inst } in self.cfg.pred_iter(ebb) {
-                writeln!(w, "    {}:{} -> {}", parent, inst, ebb)?;
+    fn cfg_connections(&self, w: &mut dyn Write) -> Result {
+        for block in &self.func.layout {
+            for BlockPredecessor {
+                block: parent,
+                inst,
+            } in self.cfg.pred_iter(block)
+            {
+                writeln!(w, "    {}:{} -> {}", parent, inst, block)?;
             }
         }
         Ok(())

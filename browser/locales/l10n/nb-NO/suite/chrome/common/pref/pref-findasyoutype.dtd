@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.findAsYouType.title "Finn mens du skriver">
+<!ENTITY findAsYouTypeBehavior.label "Finn mens du skriver">
+<!ENTITY findAsYouTypeTip.label "Tips: For å starte 'Finn mens du skriver', trykk / for å finne tekst, eller ' for å finne lenker, etterfulgt av teksten du ønsker å finne.">
+<!ENTITY findAsYouTypeTimeout.label "Tøm det aktive søket etter noen sekunder med inaktivitet">
+<!ENTITY findAsYouTypeTimeout.accesskey "T">
+<!ENTITY findAsYouTypeSound.label "Spill av en lyd når den innskrevne teksten ikke blir funnet">
+<!ENTITY findAsYouTypeSound.accesskey "S">
+<!ENTITY findAsYouTypeEnableAuto.label "Finn automatisk når jeg skriver i en nettside:">
+<!ENTITY findAsYouTypeEnableAuto.accesskey "F">
+<!ENTITY findAsYouTypeAutoText.label "All tekst på siden">
+<!ENTITY findAsYouTypeAutoText.accesskey "A">
+<!ENTITY findAsYouTypeAutoLinks.label "Bare lenker">
+<!ENTITY findAsYouTypeAutoLinks.accesskey "B">
+
+<!ENTITY findAsYouTypeFindbarEnable.label "Vis finn-verktøylinjen når finn mens du skriver brukes">
+<!ENTITY findAsYouTypeFindbarEnable.accesskey "V">
+<!ENTITY findAsYouTypeFindbarEnableTip.label "Merk: 'Finn mens du skriver' uten at søkelinjen er synlig tillater ikke bruk av internasjonale tegn.">

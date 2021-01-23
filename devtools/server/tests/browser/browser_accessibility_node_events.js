@@ -7,14 +7,17 @@
 // Checks for the AccessibleActor events
 
 add_task(async function() {
-  const { target, walker, accessibility } = await initAccessibilityFrontForUrl(
+  const {
+    target,
+    walker,
+    a11yWalker,
+    parentAccessibility,
+  } = await initAccessibilityFrontsForUrl(
     MAIN_DOMAIN + "doc_accessibility.html"
   );
   const modifiers =
     Services.appinfo.OS === "Darwin" ? "\u2303\u2325" : "Alt+Shift+";
 
-  const a11yWalker = await accessibility.getWalker();
-  await accessibility.enable();
   const rootNode = await walker.getRootNode();
   const a11yDoc = await a11yWalker.getAccessibleFor(rootNode);
   const buttonNode = await walker.querySelector(walker.rootNode, "#button");
@@ -64,7 +67,7 @@ add_task(async function() {
       checkA11yFront(parent, {}, a11yDoc);
     },
     () =>
-      ContentTask.spawn(browser, null, () =>
+      SpecialPowers.spawn(browser, [], () =>
         content.document
           .getElementById("button")
           .setAttribute("aria-label", "Renamed")
@@ -77,7 +80,7 @@ add_task(async function() {
     "description-change",
     () => checkA11yFront(accessibleFront, { description: "" }),
     () =>
-      ContentTask.spawn(browser, null, () =>
+      SpecialPowers.spawn(browser, [], () =>
         content.document
           .getElementById("button")
           .removeAttribute("aria-describedby")
@@ -94,7 +97,7 @@ add_task(async function() {
       SimpleTest.isDeeply(newStates, expectedStates, "States are updated");
     },
     () =>
-      ContentTask.spawn(browser, null, () =>
+      SpecialPowers.spawn(browser, [], () =>
         content.document.getElementById("button").setAttribute("disabled", true)
       )
   );
@@ -124,7 +127,7 @@ add_task(async function() {
       is(newAttrs.live, "polite", "Attributes are updated");
     },
     () =>
-      ContentTask.spawn(browser, null, () =>
+      SpecialPowers.spawn(browser, [], () =>
         content.document
           .getElementById("button")
           .setAttribute("aria-live", "polite")
@@ -139,7 +142,7 @@ add_task(async function() {
     "value-change",
     () => checkA11yFront(accessibleSliderFront, { value: "6" }),
     () =>
-      ContentTask.spawn(browser, null, () =>
+      SpecialPowers.spawn(browser, [], () =>
         content.document
           .getElementById("slider")
           .setAttribute("aria-valuenow", "6")
@@ -168,7 +171,7 @@ add_task(async function() {
       );
     },
     () =>
-      ContentTask.spawn(browser, null, () => {
+      SpecialPowers.spawn(browser, [], () => {
         const doc = content.document;
         const slider = doc.getElementById("slider");
         const button = doc.createElement("button");
@@ -189,13 +192,12 @@ add_task(async function() {
         "Slider's first child has an updated index in parent"
       ),
     () =>
-      ContentTask.spawn(browser, null, () =>
+      SpecialPowers.spawn(browser, [], () =>
         content.document.getElementById("slider").firstChild.remove()
       )
   );
 
-  await accessibility.disable();
-  await waitForA11yShutdown();
+  await waitForA11yShutdown(parentAccessibility);
   await target.destroy();
   gBrowser.removeCurrentTab();
 });

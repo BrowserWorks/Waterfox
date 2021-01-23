@@ -10,7 +10,6 @@ const ChromeUtils = require("ChromeUtils");
 const EventEmitter = require("devtools/shared/event-emitter");
 const protocol = require("devtools/shared/protocol");
 const Services = require("Services");
-const ReplayInspector = require("devtools/server/actors/replay/inspector");
 const {
   highlighterSpec,
   customHighlighterSpec,
@@ -19,6 +18,12 @@ const {
 loader.lazyRequireGetter(
   this,
   "isWindowIncluded",
+  "devtools/shared/layout/utils",
+  true
+);
+loader.lazyRequireGetter(
+  this,
+  "isRemoteFrame",
   "devtools/shared/layout/utils",
   true
 );
@@ -114,8 +119,6 @@ exports.HighlighterActor = protocol.ActorClassWithSpec(highlighterSpec, {
     this._highlighterEnv = new HighlighterEnvironment();
     this._highlighterEnv.initFromTargetActor(this._targetActor);
 
-    this._highlighterReady = this._highlighterReady.bind(this);
-    this._highlighterHidden = this._highlighterHidden.bind(this);
     this._onNavigate = this._onNavigate.bind(this);
 
     const doc = this._targetActor.window.document;
@@ -148,8 +151,6 @@ exports.HighlighterActor = protocol.ActorClassWithSpec(highlighterSpec, {
         this._highlighterEnv,
         this._inspector
       );
-      this._highlighter.on("ready", this._highlighterReady);
-      this._highlighter.on("hide", this._highlighterHidden);
     } else {
       this._highlighter = new SimpleOutlineHighlighter(this._highlighterEnv);
     }
@@ -157,10 +158,6 @@ exports.HighlighterActor = protocol.ActorClassWithSpec(highlighterSpec, {
 
   _destroyHighlighter: function() {
     if (this._highlighter) {
-      if (!this._isPreviousWindowXUL) {
-        this._highlighter.off("ready", this._highlighterReady);
-        this._highlighter.off("hide", this._highlighterHidden);
-      }
       this._highlighter.destroy();
       this._highlighter = null;
     }
@@ -220,6 +217,12 @@ exports.HighlighterActor = protocol.ActorClassWithSpec(highlighterSpec, {
     if (this._highlighter) {
       this._highlighter.hide();
     }
+
+    // Since the node-picker works independently in each remote frame, the inspector
+    // front-end decides which highlighter to show and hide while picking.
+    // If we're being asked to hide here, we should also reset the current hovered node so
+    // we can start highlighting correctly again later.
+    this._hoveredNode = null;
   },
 
   /**
@@ -257,17 +260,35 @@ exports.HighlighterActor = protocol.ActorClassWithSpec(highlighterSpec, {
   _currentNode: null,
 
   pick: function() {
+    if (this._targetActor.threadActor) {
+      this._targetActor.threadActor.hideOverlay();
+    }
+
     if (this._isPicking) {
       return null;
     }
     this._isPicking = true;
 
+    // In most cases, we need to prevent content events from reaching the content. This is
+    // needed to avoid triggering actions such as submitting forms or following links.
+    // In the case where the event happens on a remote frame however, we do want to let it
+    // through. That is because otherwise the pickers started in nested remote frames will
+    // never have a chance of picking their own elements.
     this._preventContentEvent = event => {
+      if (isRemoteFrame(event.target)) {
+        return;
+      }
       event.stopPropagation();
       event.preventDefault();
     };
 
     this._onPick = event => {
+      // If the picked node is a remote frame, then we need to let the event through
+      // since there's a highlighter actor in that sub-frame also picking.
+      if (isRemoteFrame(event.target)) {
+        return;
+      }
+
       this._preventContentEvent(event);
 
       if (!this._isEventAllowed(event)) {
@@ -283,7 +304,6 @@ exports.HighlighterActor = protocol.ActorClassWithSpec(highlighterSpec, {
         );
         return;
       }
-
       this._stopPickerListeners();
       this._isPicking = false;
       if (this._autohide) {
@@ -298,8 +318,13 @@ exports.HighlighterActor = protocol.ActorClassWithSpec(highlighterSpec, {
     };
 
     this._onHovered = event => {
-      this._preventContentEvent(event);
+      // If the hovered node is a remote frame, then we need to let the event through
+      // since there's a highlighter actor in that sub-frame also picking.
+      if (isRemoteFrame(event.target)) {
+        return;
+      }
 
+      this._preventContentEvent(event);
       if (!this._isEventAllowed(event)) {
         return;
       }
@@ -372,9 +397,11 @@ exports.HighlighterActor = protocol.ActorClassWithSpec(highlighterSpec, {
           this._walker.emit("picker-node-canceled");
           return;
         case event.DOM_VK_C:
+          const { altKey, ctrlKey, metaKey, shiftKey } = event;
+
           if (
-            (IS_OSX && event.metaKey && event.altKey) ||
-            (!IS_OSX && event.ctrlKey && event.shiftKey)
+            (IS_OSX && metaKey && altKey | shiftKey) ||
+            (!IS_OSX && ctrlKey && shiftKey)
           ) {
             this.cancelPick();
             this._walker.emit("picker-node-canceled");
@@ -409,9 +436,7 @@ exports.HighlighterActor = protocol.ActorClassWithSpec(highlighterSpec, {
     // originalTarget allows access to the "real" element before any retargeting
     // is applied, such as in the case of XBL anonymous elements.  See also
     // https://developer.mozilla.org/docs/XBL/XBL_1.0_Reference/Anonymous_Content#Event_Flow_and_Targeting
-    const node = isReplaying
-      ? ReplayInspector.findEventTarget(event)
-      : event.originalTarget || event.target;
+    const node = event.originalTarget || event.target;
     return this._walker.attachElement(node);
   },
 
@@ -475,17 +500,15 @@ exports.HighlighterActor = protocol.ActorClassWithSpec(highlighterSpec, {
     this._setSuppressedEventListener(null);
   },
 
-  _highlighterReady: function() {
-    this._inspector.walker.emit("highlighter-ready");
-  },
-
-  _highlighterHidden: function() {
-    this._inspector.walker.emit("highlighter-hide");
-  },
-
   cancelPick: function() {
+    if (this._targetActor.threadActor) {
+      this._targetActor.threadActor.showOverlay();
+    }
+
     if (this._isPicking) {
-      this._highlighter.hide();
+      if (this._highlighter) {
+        this._highlighter.hide();
+      }
       this._stopPickerListeners();
       this._isPicking = false;
       this._hoveredNode = null;
@@ -519,7 +542,8 @@ exports.CustomHighlighterActor = protocol.ActorClassWithSpec(
         );
       }
 
-      const constructor = require("./highlighters/" + modulePath)[typeName];
+      const constructor = require("devtools/server/actors/highlighters/" +
+        modulePath)[typeName];
       // The assumption is that custom highlighters either need the canvasframe
       // container to append their elements and thus a non-XUL window or they have
       // to define a static XULSupported flag that indicates that the highlighter
@@ -582,7 +606,7 @@ exports.CustomHighlighterActor = protocol.ActorClassWithSpec(
         return null;
       }
 
-      const rawNode = node && node.rawNode;
+      const rawNode = node?.rawNode;
 
       return this._highlighter.show(rawNode, options);
     },
@@ -637,7 +661,7 @@ exports.CustomHighlighterActor = protocol.ActorClassWithSpec(
  * most frequent way of using it, since highlighters are usually initialized by
  * the HighlighterActor or CustomHighlighterActor, which have a targetActor
  * reference). It can also be initialized just with a window object (which is
- * useful for when a highlighter is used outside of the debugger server context.
+ * useful for when a highlighter is used outside of the devtools server context.
  */
 function HighlighterEnvironment() {
   this.relayTargetActorWindowReady = this.relayTargetActorWindowReady.bind(

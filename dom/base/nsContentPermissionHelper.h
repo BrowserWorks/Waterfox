@@ -12,7 +12,7 @@
 #include "nsIMutableArray.h"
 #include "mozilla/dom/PContentPermissionRequestChild.h"
 #include "mozilla/dom/ipc/IdType.h"
-#include "nsIDOMEventListener.h"
+#include "mozilla/PermissionDelegateHandler.h"
 
 // Microsoft's API Name hackery sucks
 // XXXbz Doing this in a header is a gigantic footgun. See
@@ -72,9 +72,7 @@ class nsContentPermissionUtils {
       const nsTArray<PermissionRequest>& aRequests, Element* aElement,
       nsIPrincipal* aPrincipal, nsIPrincipal* aTopLevelPrincipal,
       const bool aIsHandlingUserInput,
-      const bool aUserHadInteractedWithDocument,
-      const DOMTimeStamp aDocumentDOMContentLoadedTimestamp,
-      const TabId& aTabId);
+      const bool aMaybeUnsafePermissionDelegate, const TabId& aTabId);
 
   static nsresult AskPermission(nsIContentPermissionRequest* aRequest,
                                 nsPIDOMWindowInner* aWindow);
@@ -119,14 +117,14 @@ class ContentPermissionRequestBase : public nsIContentPermissionRequest {
 
   NS_IMETHOD GetTypes(nsIArray** aTypes) override;
   NS_IMETHOD GetPrincipal(nsIPrincipal** aPrincipal) override;
+  NS_IMETHOD GetDelegatePrincipal(const nsACString& aType,
+                                  nsIPrincipal** aPrincipal) override;
   NS_IMETHOD GetTopLevelPrincipal(nsIPrincipal** aTopLevelPrincipal) override;
   NS_IMETHOD GetWindow(mozIDOMWindow** aWindow) override;
   NS_IMETHOD GetElement(mozilla::dom::Element** aElement) override;
   NS_IMETHOD GetIsHandlingUserInput(bool* aIsHandlingUserInput) override;
-  NS_IMETHOD GetUserHadInteractedWithDocument(
-      bool* aUserHadInteractedWithDocument) override;
-  NS_IMETHOD GetDocumentDOMContentLoadedTimestamp(
-      DOMTimeStamp* aDocumentDOMContentLoadedTimestamp) override;
+  NS_IMETHOD GetMaybeUnsafePermissionDelegate(
+      bool* aMaybeUnsafePermissionDelegate) override;
   NS_IMETHOD GetRequester(nsIContentPermissionRequester** aRequester) override;
   // Overrides for Allow() and Cancel() aren't provided by this class.
   // That is the responsibility of the subclasses.
@@ -139,6 +137,9 @@ class ContentPermissionRequestBase : public nsIContentPermissionRequest {
   nsresult ShowPrompt(PromptResult& aResult);
 
   PromptResult CheckPromptPrefs();
+
+  // Check if the permission has an opportunity to request.
+  bool CheckPermissionDelegate();
 
   enum class DelayedTaskType {
     Allow,
@@ -158,11 +159,11 @@ class ContentPermissionRequestBase : public nsIContentPermissionRequest {
   nsCOMPtr<nsIPrincipal> mTopLevelPrincipal;
   nsCOMPtr<nsPIDOMWindowInner> mWindow;
   nsCOMPtr<nsIContentPermissionRequester> mRequester;
+  RefPtr<PermissionDelegateHandler> mPermissionHandler;
   nsCString mPrefName;
   nsCString mType;
   bool mIsHandlingUserInput;
-  bool mUserHadInteractedWithDocument;
-  DOMTimeStamp mDocumentDOMContentLoadedTimestamp;
+  bool mMaybeUnsafePermissionDelegate;
 };
 
 }  // namespace dom
@@ -198,7 +199,7 @@ class nsContentPermissionRequestProxy : public nsIContentPermissionRequest {
     void NotifyVisibilityResult(const bool& aIsVisible);
 
    private:
-    virtual ~nsContentPermissionRequesterProxy() {}
+    virtual ~nsContentPermissionRequesterProxy() = default;
 
     ContentPermissionRequestParent* mParent;
     bool mWaitGettingResult;
@@ -232,7 +233,7 @@ class RemotePermissionRequest final
   // because we don't have MOZ_CAN_RUN_SCRIPT bits in IPC code yet.
   MOZ_CAN_RUN_SCRIPT_BOUNDARY
   mozilla::ipc::IPCResult RecvNotifyResult(
-      const bool& aAllow, InfallibleTArray<PermissionChoice>&& aChoices);
+      const bool& aAllow, nsTArray<PermissionChoice>&& aChoices);
 
   mozilla::ipc::IPCResult RecvGetVisibility();
 

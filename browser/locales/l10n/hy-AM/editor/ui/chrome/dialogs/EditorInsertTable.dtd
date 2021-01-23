@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Ներմուծել աղյուսակ">
+
+<!ENTITY size.label "Չափը">
+<!ENTITY numRowsEditField.label "Գծեր.">
+<!ENTITY numRowsEditField.accessKey "Գ">
+<!ENTITY numColumnsEditField.label "Սյուներ.">
+<!ENTITY numColumnsEditField.accessKey "Ս">
+<!ENTITY widthEditField.label "Լայնքը.">
+<!ENTITY widthEditField.accessKey "Լ">
+<!ENTITY borderEditField.label "Եզրագիծը.">
+<!ENTITY borderEditField.accessKey "Ե">
+<!ENTITY borderEditField.tooltip "Նշեք աղյուսակի եզրագծի չափը կամ նշեք զրո (0)՝ առանց եզրագծի համար">
+<!ENTITY pixels.label "փիքսել">

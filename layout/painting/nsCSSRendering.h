@@ -11,7 +11,6 @@
 
 #include "gfxBlur.h"
 #include "gfxContext.h"
-#include "imgIContainer.h"
 #include "mozilla/gfx/PathHelpers.h"
 #include "mozilla/gfx/Rect.h"
 #include "mozilla/TypedEnumBits.h"
@@ -20,6 +19,7 @@
 #include "nsIFrame.h"
 #include "nsImageRenderer.h"
 #include "nsCSSRenderingBorders.h"
+#include "gfxTextRun.h"
 
 class gfxContext;
 class nsPresContext;
@@ -29,7 +29,7 @@ namespace mozilla {
 class ComputedStyle;
 
 namespace gfx {
-struct Color;
+struct sRGBColor;
 class DrawTarget;
 }  // namespace gfx
 
@@ -62,7 +62,7 @@ struct nsBackgroundLayerState {
   /**
    * @param aFlags some combination of nsCSSRendering::PAINTBG_* flags
    */
-  nsBackgroundLayerState(nsIFrame* aForFrame, const nsStyleImage* aImage,
+  nsBackgroundLayerState(nsIFrame* aForFrame, const mozilla::StyleImage* aImage,
                          uint32_t aFlags)
       : mImageRenderer(aForFrame, aImage, aFlags) {}
 
@@ -96,7 +96,7 @@ struct nsBackgroundLayerState {
 };
 
 struct nsCSSRendering {
-  typedef mozilla::gfx::Color Color;
+  typedef mozilla::gfx::sRGBColor sRGBColor;
   typedef mozilla::gfx::CompositionOp CompositionOp;
   typedef mozilla::gfx::DrawTarget DrawTarget;
   typedef mozilla::gfx::Float Float;
@@ -141,8 +141,8 @@ struct nsCSSRendering {
                              RectCornerRadii& aOutRadii);
   static nsRect GetShadowRect(const nsRect& aFrameArea, bool aNativeTheme,
                               nsIFrame* aForFrame);
-  static mozilla::gfx::Color GetShadowColor(const mozilla::StyleSimpleShadow&,
-                                            nsIFrame* aFrame, float aOpacity);
+  static mozilla::gfx::sRGBColor GetShadowColor(
+      const mozilla::StyleSimpleShadow&, nsIFrame* aFrame, float aOpacity);
   // Returns if the frame has a themed frame.
   // aMaybeHasBorderRadius will return false if we can early detect
   // that we don't have a border radius.
@@ -166,37 +166,44 @@ struct nsCSSRendering {
   static ImgDrawResult PaintBorder(
       nsPresContext* aPresContext, gfxContext& aRenderingContext,
       nsIFrame* aForFrame, const nsRect& aDirtyRect, const nsRect& aBorderArea,
-      mozilla::ComputedStyle* aComputedStyle, mozilla::PaintBorderFlags aFlags,
+      mozilla::ComputedStyle* aStyle, mozilla::PaintBorderFlags aFlags,
       Sides aSkipSides = Sides());
 
   /**
    * Like PaintBorder, but taking an nsStyleBorder argument instead of
-   * getting it from aComputedStyle. aSkipSides says which sides to skip
+   * getting it from aStyle. aSkipSides says which sides to skip
    * when rendering, the default is to skip none.
    */
   static ImgDrawResult PaintBorderWithStyleBorder(
       nsPresContext* aPresContext, gfxContext& aRenderingContext,
       nsIFrame* aForFrame, const nsRect& aDirtyRect, const nsRect& aBorderArea,
-      const nsStyleBorder& aBorderStyle, mozilla::ComputedStyle* aComputedStyle,
+      const nsStyleBorder& aBorderStyle, mozilla::ComputedStyle* aStyle,
       mozilla::PaintBorderFlags aFlags, Sides aSkipSides = Sides());
 
   static mozilla::Maybe<nsCSSBorderRenderer> CreateBorderRenderer(
       nsPresContext* aPresContext, DrawTarget* aDrawTarget, nsIFrame* aForFrame,
       const nsRect& aDirtyRect, const nsRect& aBorderArea,
-      mozilla::ComputedStyle* aComputedStyle, bool* aOutBorderIsEmpty,
+      mozilla::ComputedStyle* aStyle, bool* aOutBorderIsEmpty,
       Sides aSkipSides = Sides());
 
   static mozilla::Maybe<nsCSSBorderRenderer>
   CreateBorderRendererWithStyleBorder(
       nsPresContext* aPresContext, DrawTarget* aDrawTarget, nsIFrame* aForFrame,
       const nsRect& aDirtyRect, const nsRect& aBorderArea,
-      const nsStyleBorder& aBorderStyle, mozilla::ComputedStyle* aComputedStyle,
+      const nsStyleBorder& aBorderStyle, mozilla::ComputedStyle* aStyle,
+      bool* aOutBorderIsEmpty, Sides aSkipSides = Sides());
+
+  static mozilla::Maybe<nsCSSBorderRenderer>
+  CreateNullBorderRendererWithStyleBorder(
+      nsPresContext* aPresContext, DrawTarget* aDrawTarget, nsIFrame* aForFrame,
+      const nsRect& aDirtyRect, const nsRect& aBorderArea,
+      const nsStyleBorder& aBorderStyle, mozilla::ComputedStyle* aStyle,
       bool* aOutBorderIsEmpty, Sides aSkipSides = Sides());
 
   static mozilla::Maybe<nsCSSBorderRenderer> CreateBorderRendererForOutline(
       nsPresContext* aPresContext, gfxContext* aRenderingContext,
       nsIFrame* aForFrame, const nsRect& aDirtyRect, const nsRect& aBorderArea,
-      mozilla::ComputedStyle* aComputedStyle);
+      mozilla::ComputedStyle* aStyle);
 
   static ImgDrawResult CreateWebRenderCommandsForBorder(
       nsDisplayItem* aItem, nsIFrame* aForFrame, const nsRect& aBorderArea,
@@ -205,6 +212,13 @@ struct nsCSSRendering {
       const mozilla::layers::StackingContextHelper& aSc,
       mozilla::layers::RenderRootStateManager* aManager,
       nsDisplayListBuilder* aDisplayListBuilder);
+
+  static void CreateWebRenderCommandsForNullBorder(
+      nsDisplayItem* aItem, nsIFrame* aForFrame, const nsRect& aBorderArea,
+      mozilla::wr::DisplayListBuilder& aBuilder,
+      mozilla::wr::IpcResourceUpdateQueue& aResources,
+      const mozilla::layers::StackingContextHelper& aSc,
+      const nsStyleBorder& aStyleBorder);
 
   static ImgDrawResult CreateWebRenderCommandsForBorderWithStyleBorder(
       nsDisplayItem* aItem, nsIFrame* aForFrame, const nsRect& aBorderArea,
@@ -222,7 +236,7 @@ struct nsCSSRendering {
   static void PaintOutline(nsPresContext* aPresContext,
                            gfxContext& aRenderingContext, nsIFrame* aForFrame,
                            const nsRect& aDirtyRect, const nsRect& aBorderArea,
-                           mozilla::ComputedStyle* aComputedStyle);
+                           mozilla::ComputedStyle* aStyle);
 
   /**
    * Render keyboard focus on an element.
@@ -244,7 +258,7 @@ struct nsCSSRendering {
    * aIntrinsicSize is the size of the source gradient.
    */
   static void PaintGradient(nsPresContext* aPresContext, gfxContext& aContext,
-                            nsStyleGradient* aGradient,
+                            const mozilla::StyleGradient& aGradient,
                             const nsRect& aDirtyRect, const nsRect& aDest,
                             const nsRect& aFill, const nsSize& aRepeatSize,
                             const mozilla::CSSIntRect& aSrc,
@@ -298,7 +312,9 @@ struct nsCSSRendering {
   static nsIFrame* FindCanvasBackgroundFrame(nsIFrame* aForFrame,
                                              nsIFrame* aRootElementFrame) {
     MOZ_ASSERT(IsCanvasFrame(aForFrame), "not a canvas frame");
-    if (aRootElementFrame) return FindBackgroundStyleFrame(aRootElementFrame);
+    if (aRootElementFrame) {
+      return FindBackgroundStyleFrame(aRootElementFrame);
+    }
 
     // This should always give transparent, so we'll fill it in with the
     // default color if needed.  This seems to happen a bit while a page is
@@ -326,9 +342,11 @@ struct nsCSSRendering {
   /**
    * Determine the background color to draw taking into account print settings.
    */
-  static nscolor DetermineBackgroundColor(
-      nsPresContext* aPresContext, mozilla::ComputedStyle* aComputedStyle,
-      nsIFrame* aFrame, bool& aDrawBackgroundImage, bool& aDrawBackgroundColor);
+  static nscolor DetermineBackgroundColor(nsPresContext* aPresContext,
+                                          mozilla::ComputedStyle* aStyle,
+                                          nsIFrame* aFrame,
+                                          bool& aDrawBackgroundImage,
+                                          bool& aDrawBackgroundColor);
 
   static nsRect ComputeImageLayerPositioningArea(
       nsPresContext* aPresContext, nsIFrame* aForFrame,
@@ -557,6 +575,12 @@ struct nsCSSRendering {
     // for a vertical textrun, width will actually be a physical height;
     // and conversely, height will be a physical width.
     Size lineSize;
+    // The default height [thickness] of the line given by the font metrics.
+    // This is used for obtaining the correct offset for the decoration line
+    // when CSS specifies a unique thickness for a text-decoration,
+    // since the offset given by the font is derived from the font metric's
+    // assumed line height
+    Float defaultLineThickness = 0.0f;
     // The ascent of the text.
     Float ascent = 0.0f;
     // The offset of the decoration line from the baseline of the text
@@ -574,12 +598,14 @@ struct nsCSSRendering {
     // Which line will be painted. The value can be
     // UNDERLINE or OVERLINE or LINE_THROUGH.
     mozilla::StyleTextDecorationLine decoration =
-        mozilla::StyleTextDecorationLine_UNDERLINE;
+        mozilla::StyleTextDecorationLine::UNDERLINE;
     // The style of the decoration line such as
     // NS_STYLE_TEXT_DECORATION_STYLE_*.
     uint8_t style = NS_STYLE_TEXT_DECORATION_STYLE_NONE;
     bool vertical = false;
     bool sidewaysLeft = false;
+    gfxTextRun::Range glyphRange;
+    gfxTextRun::PropertyProvider* provider;
   };
 
   struct PaintDecorationLineParams : DecorationRectParams {
@@ -592,14 +618,35 @@ struct nsCSSRendering {
     // The distance between the left edge of the given frame and the
     // position of the text as positioned without offset of the shadow.
     Float icoordInFrame = 0.0f;
+    // Baseline offset being applied to this text (block-direction adjustment
+    // applied to glyph positions when computing skip-ink intercepts).
+    Float baselineOffset = 0.0f;
   };
+
+  /**
+   * Function for painting the clipped decoration lines for the text.
+   * Takes into account the rect clipping that occurs when
+   * text-decoration-skip-ink is being used for underlines or overlines
+   *
+   *  input:
+   *    @param aFrame            the frame which needs the decoration line
+   *    @param aDrawTarget       the target/backend being drawn to
+   *    @param aParams           the parameters for the decoration line
+   *                             being drawn
+   *    @param aRect             the rect representing the decoration line
+   */
+  static void PaintDecorationLineInternal(
+      nsIFrame* aFrame, DrawTarget& aDrawTarget,
+      const PaintDecorationLineParams& aParams, Rect aRect);
 
   /**
    * Function for painting the decoration lines for the text.
    *
    *   input:
    *     @param aFrame            the frame which needs the decoration line
-   *     @param aGfxContext
+   *     @param aDrawTarget       the target/backend being drawn to
+   *     @param aParams           the parameters for the decoration line
+   *                              being drawn
    */
   static void PaintDecorationLine(nsIFrame* aFrame, DrawTarget& aDrawTarget,
                                   const PaintDecorationLineParams& aParams);
@@ -625,39 +672,39 @@ struct nsCSSRendering {
   static nsRect GetTextDecorationRect(nsPresContext* aPresContext,
                                       const DecorationRectParams& aParams);
 
-  static CompositionOp GetGFXBlendMode(uint8_t mBlendMode) {
+  static CompositionOp GetGFXBlendMode(mozilla::StyleBlend mBlendMode) {
     switch (mBlendMode) {
-      case NS_STYLE_BLEND_NORMAL:
+      case mozilla::StyleBlend::Normal:
         return CompositionOp::OP_OVER;
-      case NS_STYLE_BLEND_MULTIPLY:
+      case mozilla::StyleBlend::Multiply:
         return CompositionOp::OP_MULTIPLY;
-      case NS_STYLE_BLEND_SCREEN:
+      case mozilla::StyleBlend::Screen:
         return CompositionOp::OP_SCREEN;
-      case NS_STYLE_BLEND_OVERLAY:
+      case mozilla::StyleBlend::Overlay:
         return CompositionOp::OP_OVERLAY;
-      case NS_STYLE_BLEND_DARKEN:
+      case mozilla::StyleBlend::Darken:
         return CompositionOp::OP_DARKEN;
-      case NS_STYLE_BLEND_LIGHTEN:
+      case mozilla::StyleBlend::Lighten:
         return CompositionOp::OP_LIGHTEN;
-      case NS_STYLE_BLEND_COLOR_DODGE:
+      case mozilla::StyleBlend::ColorDodge:
         return CompositionOp::OP_COLOR_DODGE;
-      case NS_STYLE_BLEND_COLOR_BURN:
+      case mozilla::StyleBlend::ColorBurn:
         return CompositionOp::OP_COLOR_BURN;
-      case NS_STYLE_BLEND_HARD_LIGHT:
+      case mozilla::StyleBlend::HardLight:
         return CompositionOp::OP_HARD_LIGHT;
-      case NS_STYLE_BLEND_SOFT_LIGHT:
+      case mozilla::StyleBlend::SoftLight:
         return CompositionOp::OP_SOFT_LIGHT;
-      case NS_STYLE_BLEND_DIFFERENCE:
+      case mozilla::StyleBlend::Difference:
         return CompositionOp::OP_DIFFERENCE;
-      case NS_STYLE_BLEND_EXCLUSION:
+      case mozilla::StyleBlend::Exclusion:
         return CompositionOp::OP_EXCLUSION;
-      case NS_STYLE_BLEND_HUE:
+      case mozilla::StyleBlend::Hue:
         return CompositionOp::OP_HUE;
-      case NS_STYLE_BLEND_SATURATION:
+      case mozilla::StyleBlend::Saturation:
         return CompositionOp::OP_SATURATION;
-      case NS_STYLE_BLEND_COLOR:
+      case mozilla::StyleBlend::Color:
         return CompositionOp::OP_COLOR;
-      case NS_STYLE_BLEND_LUMINOSITY:
+      case mozilla::StyleBlend::Luminosity:
         return CompositionOp::OP_LUMINOSITY;
       default:
         MOZ_ASSERT(false);
@@ -665,15 +712,16 @@ struct nsCSSRendering {
     }
   }
 
-  static CompositionOp GetGFXCompositeMode(uint8_t aCompositeMode) {
+  static CompositionOp GetGFXCompositeMode(
+      mozilla::StyleMaskComposite aCompositeMode) {
     switch (aCompositeMode) {
-      case NS_STYLE_MASK_COMPOSITE_ADD:
+      case mozilla::StyleMaskComposite::Add:
         return CompositionOp::OP_OVER;
-      case NS_STYLE_MASK_COMPOSITE_SUBTRACT:
+      case mozilla::StyleMaskComposite::Subtract:
         return CompositionOp::OP_OUT;
-      case NS_STYLE_MASK_COMPOSITE_INTERSECT:
+      case mozilla::StyleMaskComposite::Intersect:
         return CompositionOp::OP_IN;
-      case NS_STYLE_MASK_COMPOSITE_EXCLUDE:
+      case mozilla::StyleMaskComposite::Exclude:
         return CompositionOp::OP_XOR;
       default:
         MOZ_ASSERT(false);
@@ -723,7 +771,7 @@ struct nsCSSRendering {
  * This is very useful for creating drop shadows or silhouettes.
  */
 class nsContextBoxBlur {
-  typedef mozilla::gfx::Color Color;
+  typedef mozilla::gfx::sRGBColor sRGBColor;
   typedef mozilla::gfx::DrawTarget DrawTarget;
   typedef mozilla::gfx::RectCornerRadii RectCornerRadii;
 
@@ -830,8 +878,8 @@ class nsContextBoxBlur {
   static void BlurRectangle(gfxContext* aDestinationCtx, const nsRect& aRect,
                             int32_t aAppUnitsPerDevPixel,
                             RectCornerRadii* aCornerRadii, nscoord aBlurRadius,
-                            const Color& aShadowColor, const nsRect& aDirtyRect,
-                            const gfxRect& aSkipRect);
+                            const sRGBColor& aShadowColor,
+                            const nsRect& aDirtyRect, const gfxRect& aSkipRect);
 
   /**
    * Draws a blurred inset box shadow shape onto the destination surface.
@@ -859,7 +907,7 @@ class nsContextBoxBlur {
   bool InsetBoxBlur(gfxContext* aDestinationCtx,
                     mozilla::gfx::Rect aDestinationRect,
                     mozilla::gfx::Rect aShadowClipRect,
-                    mozilla::gfx::Color& aShadowColor,
+                    mozilla::gfx::sRGBColor& aShadowColor,
                     nscoord aBlurRadiusAppUnits, nscoord aSpreadRadiusAppUnits,
                     int32_t aAppUnitsPerDevPixel, bool aHasBorderRadius,
                     RectCornerRadii& aInnerClipRectRadii,

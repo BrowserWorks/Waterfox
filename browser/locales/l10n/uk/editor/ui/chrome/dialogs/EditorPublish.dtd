@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label            "Публікація сторінки">
+<!ENTITY windowTitleSettings.label    "Параметри публікації">
+<!ENTITY publishTab.label             "Публікація">
+<!ENTITY settingsTab.label            "Параметри">
+<!ENTITY publishButton.label          "Опублікувати">
+
+<!-- Publish Tab Panel -->
+<!ENTITY siteList.label               "Назва сайту:">
+<!ENTITY siteList.accesskey           "Н">
+<!ENTITY siteList.tooltip             "Виберіть сайт, що ви його хочете опубілкувати">
+<!ENTITY newSiteButton.label          "Новий сайт">
+<!ENTITY newSiteButton.accesskey      "о">
+<!ENTITY docDirList.label             "Підтека сайту для цієї сторінки:">
+<!ENTITY docDirList.accesskey         "П">
+<!ENTITY docDirList.tooltip           "Виберіть або введіть ім’я підкаталога для цієї сторінки">
+<!ENTITY publishImgCheckbox.label     "Включити зображення та інші файли">
+<!ENTITY publishImgCheckbox.accesskey "з">
+<!ENTITY publishImgCheckbox.tooltip   "Опублікувати зображення та інші файли, на які посилається ця сторінка">
+<!ENTITY sameLocationRadio.label      "Використовувати місцезнаходження сторінки">
+<!ENTITY sameLocationRadio.accesskey  "т">
+<!ENTITY sameLocationRadio.tooltip    "Публікувати файли в те ж місце, куди й сторінку">
+<!ENTITY useSubdirRadio.label         "Використовувати цю підтеку сайта:">
+<!ENTITY useSubdirRadio.accesskey     "п">
+<!ENTITY useSubdirRadio.tooltip       "Опублікувати файли у вказаний віддалений підкаталог">
+<!ENTITY otherDirList.tooltip         "Оберіть або введіть назву віддаленого підкаталогу, де будуть опубліковані файли">
+<!ENTITY pageTitle.label              "Найва сторінки:">
+<!ENTITY pageTitle.accesskey          "Н">
+<!ENTITY pageTitle.tooltip            "Введіть назву для ідентифікації сторінки в вікні браузера та в закладках">
+<!ENTITY pageTitleExample.label       "напр., &quot;Моя вебсторінка&quot;">
+<!ENTITY filename.label               "Ім’я файлу:">
+<!ENTITY filename.accesskey           "Ф">
+<!ENTITY filename.tooltip             "Введіть ім’я цього файлу, включно з '.html' для вебсторінки">
+<!ENTITY filenameExample.label        "напр., «mypage.html»">
+<!ENTITY setDefaultButton.label       "Встановити за замовчанням">
+<!ENTITY setDefaultButton.accesskey   "ч">
+<!ENTITY removeButton.label           "Стерти сайт">
+<!ENTITY removeButton.accesskey       "С">
+
+<!-- Settings Tab Panel -->
+<!ENTITY publishSites.label           "Публікація сайтів">
+<!ENTITY serverInfo.label             "Інформація про сервер">
+<!ENTITY loginInfo.label              "Інформація для входу">
+<!ENTITY siteName.label               "Ім’я сайту:">
+<!ENTITY siteName.accesskey           "І">
+<!ENTITY siteName.tooltip             "Псевдонім, що ідентифікує опублікований сайт (напр., 'MySite')">
+<!ENTITY siteUrl.label                "Адреса публікації (напр., 'ftp://ftp.myisp.com/myusername'):">
+<!ENTITY siteUrl.accesskey            "А">
+<!ENTITY siteUrl.tooltip              "FTP:// або HTTP:// -адреса, вказана вашим провайдером або службою хостингу">
+<!ENTITY browseUrl.label              "HTTP-адреса вашої домашньої сторінки (напр., 'http://www.myisp.com/myusername'):">
+<!ENTITY browseUrl.accesskey          "а">
+<!ENTITY browseUrl.tooltip            "HTTP-адреса вашого домашнього каталогу (без імені файлу)">
+<!ENTITY username.label               "Ім’я користувача:">
+<!ENTITY username.accesskey           "к">
+<!ENTITY username.tooltip             "Ім’я, що ви під ним входите до вашого ISP чи служби хостингу">
+<!ENTITY password.label               "Пароль:">
+<!ENTITY password.accesskey           "П">
+<!ENTITY password.tooltip             "Пароль, пов’язаний з вашим ім’ям користувача">
+<!ENTITY savePassword.label           "Запам’ятати пароль">
+<!ENTITY savePassword.accesskey       "п">
+<!ENTITY savePassword.tooltip         "Оберіть для безпечного збереження пароля, використовуючи Менеджер паролів">

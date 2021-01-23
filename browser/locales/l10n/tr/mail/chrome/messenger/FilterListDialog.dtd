@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "İleti Süzgeçleri">
+<!ENTITY nameColumn.label "Süzgeç adı">
+<!ENTITY activeColumn.label "Etkin">
+<!ENTITY newButton.label "Yeni…">
+<!ENTITY newButton.accesskey "Y">
+<!ENTITY newButton.popupCopy.label "Kopyala…">
+<!ENTITY newButton.popupCopy.accesskey "K">
+<!ENTITY editButton.label "Düzenle…">
+<!ENTITY editButton.accesskey "e">
+<!ENTITY deleteButton.label "Sil">
+<!ENTITY deleteButton.accesskey "S">
+<!ENTITY reorderTopButton "Üste taşı">
+<!ENTITY reorderTopButton.accessKey "Ü">
+<!ENTITY reorderTopButton.toolTip "Filtreyi diğerlerinden önce çalışacak şekilde yeniden düzenle">
+<!ENTITY reorderUpButton.label "Yukarı taşı">
+<!ENTITY reorderUpButton.accesskey "Y">
+<!ENTITY reorderDownButton.label "Aşağı taşı">
+<!ENTITY reorderDownButton.accesskey "A">
+<!ENTITY reorderBottomButton "Alta taşı">
+<!ENTITY reorderBottomButton.accessKey "A">
+<!ENTITY reorderBottomButton.toolTip "Filtreyi diğerlerinden sonra çalışacak şekilde yeniden düzenle">
+<!ENTITY filterHeader.label "Etkin süzgeçler aşağıdaki sıralamaya göre otomatik olarak çalıştırılır.">
+<!ENTITY filtersForPrefix.label "Süzülecek hesap:">
+<!ENTITY filtersForPrefix.accesskey "S">
+<!ENTITY viewLogButton.label "Süzgeç günlüğü">
+<!ENTITY viewLogButton.accesskey "l">
+<!ENTITY runFilters.label "Şimdi çalıştır">
+<!ENTITY runFilters.accesskey "a">
+<!ENTITY stopFilters.label "Durdur">
+<!ENTITY stopFilters.accesskey "D">
+<!ENTITY folderPickerPrefix.label "Seçili süzgeçleri bu dizinde uygula:">
+<!ENTITY folderPickerPrefix.accesskey "i">
+<!ENTITY helpButton.label "Yardım">
+<!ENTITY helpButton.accesskey "Y">
+<!ENTITY closeCmd.key "W"> 
+<!ENTITY searchBox.emptyText "Süzgeçleri isme göre ara…">
+

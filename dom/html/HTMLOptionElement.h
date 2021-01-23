@@ -65,10 +65,8 @@ class HTMLOptionElement final : public nsGenericHTMLElement {
    */
   void UpdateDisabledState(bool aNotify);
 
-  virtual nsresult BindToTree(Document* aDocument, nsIContent* aParent,
-                              nsIContent* aBindingParent) override;
-  virtual void UnbindFromTree(bool aDeep = true,
-                              bool aNullParent = true) override;
+  virtual nsresult BindToTree(BindContext&, nsINode& aParent) override;
+  virtual void UnbindFromTree(bool aNullParent = true) override;
 
   // nsIContent
   virtual EventStates IntrinsicState() const override;
@@ -84,6 +82,13 @@ class HTMLOptionElement final : public nsGenericHTMLElement {
   }
 
   HTMLFormElement* GetForm();
+
+  void GetRenderedLabel(nsAString& aLabel) {
+    if (!GetAttr(kNameSpaceID_None, nsGkAtoms::label, aLabel) ||
+        aLabel.IsEmpty()) {
+      GetText(aLabel);
+    }
+  }
 
   void GetLabel(DOMString& aLabel) {
     if (!GetAttr(kNameSpaceID_None, nsGkAtoms::label, aLabel)) {

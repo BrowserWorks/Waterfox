@@ -30,25 +30,30 @@
 
 #include "src/cpu.h"
 
-static unsigned flags_mask = -1;
-
-unsigned dav1d_get_cpu_flags(void) {
-    static unsigned flags;
-    static uint8_t checked = 0;
-
-    if (!checked) {
-#if (ARCH_AARCH64 || ARCH_ARM) && HAVE_ASM
-        flags = dav1d_get_cpu_flags_arm();
-#elif ARCH_X86 && HAVE_ASM
-        flags = dav1d_get_cpu_flags_x86();
+static unsigned flags = 0;
+#if ARCH_X86
+/* Disable AVX-512 by default for the time being */
+static unsigned flags_mask = ~DAV1D_X86_CPU_FLAG_AVX512ICL;
 #else
-        flags = 0;
+static unsigned flags_mask = -1;
 #endif
-        checked = 1;
-    }
+
+COLD void dav1d_init_cpu(void) {
+#if HAVE_ASM
+#if ARCH_AARCH64 || ARCH_ARM
+    flags = dav1d_get_cpu_flags_arm();
+#elif ARCH_PPC64LE
+    flags = dav1d_get_cpu_flags_ppc();
+#elif ARCH_X86
+    flags = dav1d_get_cpu_flags_x86();
+#endif
+#endif
+}
+
+COLD unsigned dav1d_get_cpu_flags(void) {
     return flags & flags_mask;
 }
 
-void dav1d_set_cpu_flags_mask(const unsigned mask) {
+COLD void dav1d_set_cpu_flags_mask(const unsigned mask) {
     flags_mask = mask;
 }

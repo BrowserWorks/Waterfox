@@ -15,25 +15,22 @@ dictionary PCErrorData
 
 [ChromeOnly,
  JSImplementation="@mozilla.org/dom/peerconnectionobserver;1",
- Constructor (RTCPeerConnection domPC)]
+ Exposed=Window]
 interface PeerConnectionObserver
 {
+  [Throws]
+  constructor(RTCPeerConnection domPC);
+
   /* JSEP callbacks */
   void onCreateOfferSuccess(DOMString offer);
   void onCreateOfferError(PCErrorData error);
   void onCreateAnswerSuccess(DOMString answer);
   void onCreateAnswerError(PCErrorData error);
-  void onSetLocalDescriptionSuccess();
-  void onSetRemoteDescriptionSuccess();
-  void onSetLocalDescriptionError(PCErrorData error);
-  void onSetRemoteDescriptionError(PCErrorData error);
+  void onSetDescriptionSuccess();
+  void onSetDescriptionError(PCErrorData error);
   void onAddIceCandidateSuccess();
   void onAddIceCandidateError(PCErrorData error);
   void onIceCandidate(unsigned short level, DOMString mid, DOMString candidate, DOMString ufrag);
-
-  /* Stats callbacks */
-  void onGetStatsSuccess(optional RTCStatsReportInternal report);
-  void onGetStatsError(DOMString message);
 
   /* Data channel callbacks */
   void notifyDataChannel(RTCDataChannel channel);
@@ -45,8 +42,15 @@ interface PeerConnectionObserver
      transceiver to be created on the C++ side */
   void onTransceiverNeeded(DOMString kind, TransceiverImpl transceiverImpl);
 
-  /* DTMF callback */
-  void onDTMFToneChange(MediaStreamTrack track, DOMString tone);
+  /*
+    Lets PeerConnectionImpl fire track events on the RTCPeerConnection
+  */
+  void fireTrackEvent(RTCRtpReceiver receiver, sequence<MediaStream> streams);
+
+  /*
+    Lets PeerConnectionImpl fire addstream events on the RTCPeerConnection
+  */
+  void fireStreamEvent(MediaStream stream);
 
   /* Packet dump callback */
   void onPacket(unsigned long level, mozPacketDumpType type, boolean sending,

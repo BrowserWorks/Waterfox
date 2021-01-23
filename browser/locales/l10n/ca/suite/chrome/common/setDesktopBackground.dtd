@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setDesktopBackground.title "Defineix el fons d'escriptori">
+
+<!ENTITY position.label             "Posició:">
+<!ENTITY position.accesskey         "P">
+<!ENTITY position.tile.label        "Mosaic">
+<!ENTITY position.stretch.label     "Amplia">
+<!ENTITY position.center.label      "Centra">
+<!ENTITY position.fill.label        "Omple">
+<!ENTITY position.fit.label         "Ajusta">
+<!ENTITY picker.label               "Color:">
+<!ENTITY picker.accesskey           "C">
+<!ENTITY preview.caption            "Previsualitza">
+<!ENTITY apply.label                "Aplica">
+<!ENTITY apply.accesskey            "A">
+<!ENTITY close.label                "Tanca">

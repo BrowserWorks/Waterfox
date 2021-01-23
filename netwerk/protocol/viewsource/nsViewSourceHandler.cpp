@@ -64,9 +64,10 @@ nsViewSourceHandler::GetFlagsForURI(nsIURI* aURI, uint32_t* result) {
   return NS_OK;
 }
 
-NS_IMETHODIMP
-nsViewSourceHandler::NewURI(const nsACString& aSpec, const char* aCharset,
-                            nsIURI* aBaseURI, nsIURI** aResult) {
+// static
+nsresult nsViewSourceHandler::CreateNewURI(const nsACString& aSpec,
+                                           const char* aCharset,
+                                           nsIURI* aBaseURI, nsIURI** aResult) {
   *aResult = nullptr;
 
   // Extract inner URL and normalize to ASCII.  This is done to properly
@@ -107,13 +108,7 @@ nsViewSourceHandler::NewChannel(nsIURI* uri, nsILoadInfo* aLoadInfo,
   NS_ENSURE_ARG_POINTER(uri);
   RefPtr<nsViewSourceChannel> channel = new nsViewSourceChannel();
 
-  nsresult rv = channel->Init(uri);
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-
-  // set the loadInfo on the new channel
-  rv = channel->SetLoadInfo(aLoadInfo);
+  nsresult rv = channel->Init(uri, aLoadInfo);
   if (NS_FAILED(rv)) {
     return rv;
   }

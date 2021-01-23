@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
@@ -41,7 +41,7 @@ import sys
 import psutil
 
 
-if not (psutil.LINUX or psutil.OSX or psutil.WINDOWS):
+if not (psutil.LINUX or psutil.MACOS or psutil.WINDOWS):
     sys.exit("platform not supported")
 
 
@@ -64,7 +64,7 @@ def main():
         with p.oneshot():
             try:
                 mem = p.memory_full_info()
-                info = p.as_dict(attrs=["cmdline", "username"])
+                info = p.as_dict(["cmdline", "username"])
             except psutil.AccessDenied:
                 ad_pids.append(p.pid)
             except psutil.NoSuchProcess:
@@ -86,7 +86,7 @@ def main():
     for p in procs[:86]:
         line = templ % (
             p.pid,
-            p._info["username"][:7],
+            p._info["username"][:7] if p._info["username"] else "",
             " ".join(p._info["cmdline"])[:30],
             convert_bytes(p._uss),
             convert_bytes(p._pss) if p._pss != "" else "",

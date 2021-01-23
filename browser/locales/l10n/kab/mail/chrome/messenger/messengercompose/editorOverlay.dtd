@@ -1,0 +1,303 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Attn: Localization - some of the menus in this dialog directly affect mail also. -->
+
+<!-- Edit menu items -->
+<!ENTITY pasteNoFormatting.label "Senteḍ s war amsal">
+<!ENTITY pasteNoFormatting.accesskey "s">
+<!ENTITY pasteNoFormatting.key "V">
+<!ENTITY pasteAsQuotationCmd.label "Sented am ubder">
+<!ENTITY pasteAsQuotationCmd.accesskey "b">
+
+<!-- Insert menu items -->
+<!ENTITY insertMenu.label "Senni">
+<!ENTITY insertMenu.accesskey "S">
+<!ENTITY insertLinkCmd2.label "Aseɣwen…">
+<!ENTITY insertLinkCmd2.accesskey "s">
+<!ENTITY insertLinkCmd2.key "K">
+<!ENTITY insertAnchorCmd.label "Isem n temdeyt…">
+<!ENTITY insertAnchorCmd.accesskey "d">
+<!ENTITY insertImageCmd.label "Tugna…">
+<!ENTITY insertImageCmd.accesskey "g">
+<!ENTITY insertHLineCmd.label "Izirig aglawan">
+<!ENTITY insertHLineCmd.accesskey "l">
+<!ENTITY insertTableCmd.label "Tafelwit…">
+<!ENTITY insertTableCmd.accesskey "f">
+<!ENTITY insertHTMLCmd.label "HTML…">
+<!ENTITY insertHTMLCmd.accesskey "H">
+<!ENTITY insertMathCmd.label "Tusnakt…">
+<!ENTITY insertMathCmd.accesskey "s">
+<!ENTITY insertCharsCmd.label "&amp;Isekkilen d izamulen…">
+<!ENTITY insertCharsCmd.accesskey "k">
+<!ENTITY insertBreakAllCmd.label "Rnu adig daw n tugna">
+<!ENTITY insertBreakAllCmd.accesskey "n">
+
+<!-- Used just in context popup. -->
+<!ENTITY createLinkCmd.label "Rnu aseɣwen…">
+<!ENTITY createLinkCmd.accesskey "e">
+<!ENTITY editLinkCmd.label "Ẓreg aseɣwen ɣef umsuddes amaynut">
+<!ENTITY editLinkCmd.accesskey "Ẓ">
+
+<!-- Font Face SubMenu -->
+<!ENTITY FontFaceSelect.tooltip "Fren tasefsit">
+<!ENTITY fontfaceMenu.label "Tasefsit">
+<!ENTITY fontfaceMenu.accesskey "s">
+<!ENTITY fontVarWidth.label "Tehri timettit">
+<!ENTITY fontVarWidth.accesskey "h">
+<!ENTITY fontFixedWidth.label "Tehri tusbiṭ">
+<!ENTITY fontFixedWidth.accesskey "s">
+<!ENTITY fontFixedWidth.key "T">
+<!ENTITY fontHelvetica.label "Helvetica, Arial">
+<!ENTITY fontHelvetica.accesskey "l">
+<!ENTITY fontTimes.label "Times">
+<!ENTITY fontTimes.accesskey "T">
+<!ENTITY fontCourier.label "Courier">
+<!ENTITY fontCourier.accesskey "C">
+
+<!-- Font Size SubMenu -->
+<!ENTITY FontSizeSelect.tooltip "Fren teɣzi n tsefsit">
+<!ENTITY decreaseFontSize.label "Meẓẓi">
+<!ENTITY decreaseFontSize.accesskey "M">
+<!ENTITY decrementFontSize.key "&lt;">
+<!ENTITY decrementFontSize.key2 ","> <!-- < is above this key on many keyboards -->
+<!ENTITY increaseFontSize.label "Meqqer">
+<!ENTITY increaseFontSize.accesskey "q">
+<!ENTITY incrementFontSize.key "&gt;">
+<!ENTITY incrementFontSize.key2 "."> <!-- > is above this key on many keyboards -->
+
+<!ENTITY fontSizeMenu.label "Teɣzi">
+<!ENTITY fontSizeMenu.accesskey "z">
+<!ENTITY size-tinyCmd.label "Meẓẓi aṭas">
+<!ENTITY size-tinyCmd.accesskey "M">
+<!ENTITY size-smallCmd.label "Mecṭuḥ">
+<!ENTITY size-smallCmd.accesskey "M">
+<!ENTITY size-mediumCmd.label "Alemmas">
+<!ENTITY size-mediumCmd.accesskey "l">
+<!ENTITY size-largeCmd.label "Meqqer">
+<!ENTITY size-largeCmd.accesskey "M">
+<!ENTITY size-extraLargeCmd.label "Meqqer">
+<!ENTITY size-extraLargeCmd.accesskey "q">
+<!ENTITY size-hugeCmd.label "Meqqer aṭas">
+<!ENTITY size-hugeCmd.accesskey "q">
+
+<!-- Font Style SubMenu -->
+<!ENTITY fontStyleMenu.label "Aɣanib n uḍris">
+<!ENTITY fontStyleMenu.accesskey "n">
+<!ENTITY styleBoldCmd.label "Zur">
+<!ENTITY styleBoldCmd.accesskey "Z">
+<!ENTITY styleBoldCmd.key "B">
+<!ENTITY styleItalicCmd.label "Uknan">
+<!ENTITY styleItalicCmd.accesskey "U">
+<!ENTITY styleItalicCmd.key "I">
+<!ENTITY styleUnderlineCmd.label "Derrer">
+<!ENTITY styleUnderlineCmd.accesskey "D">
+<!ENTITY styleUnderlineCmd.key "U">
+<!ENTITY styleStrikeThruCmd.label "Yettwajeṛṛeḍ">
+<!ENTITY styleStrikeThruCmd.accesskey "Y">
+<!ENTITY styleSuperscriptCmd.label "Ameskan">
+<!ENTITY styleSuperscriptCmd.accesskey "k">
+<!ENTITY styleSubscriptCmd.label "Amatar">
+<!ENTITY styleSubscriptCmd.accesskey "t">
+<!ENTITY styleNonbreakingCmd.label "S war anegzum">
+<!ENTITY styleNonbreakingCmd.accesskey "n">
+<!ENTITY styleEm.label "Asentem">
+<!ENTITY styleEm.accesskey "A">
+<!ENTITY styleStrong.label "Asentem yeqwan">
+<!ENTITY styleStrong.accesskey "q">
+<!ENTITY styleCite.label "Abder">
+<!ENTITY styleCite.accesskey "b">
+<!ENTITY styleAbbr.label "Tazegzilt">
+<!ENTITY styleAbbr.accesskey "z">
+<!ENTITY styleAcronym.label "Axefwal">
+<!ENTITY styleAcronym.accesskey "x">
+<!ENTITY styleCode.label "Tangalt">
+<!ENTITY styleCode.accesskey "n">
+<!ENTITY styleSamp.label "Amedya n tuffɣa">
+<!ENTITY styleSamp.accesskey "m">
+<!ENTITY styleVar.label "Amuţi">
+<!ENTITY styleVar.accesskey "m">
+
+<!ENTITY formatFontColor.label "Tiɣmi n uḍris…">
+<!ENTITY formatFontColor.accesskey "m">
+<!ENTITY tableOrCellColor.label "Tiɣmi n ugilal n tfelwit neɣ tebniqt…">
+<!ENTITY tableOrCellColor.accesskey "B">
+
+<!ENTITY formatRemoveStyles.key "Y">
+<!ENTITY formatRemoveLinks.key "K">
+<!ENTITY formatRemoveNamedAnchors.label "Kkes timedyin yettusemman">
+<!ENTITY formatRemoveNamedAnchors.accesskey "K">
+<!ENTITY formatRemoveNamedAnchors2.key "R">
+
+<!ENTITY paragraphMenu.label "Taseddaṛt">
+<!ENTITY paragraphMenu.accesskey "T">
+<!ENTITY paragraphParagraphCmd.label "Taseddaṛt">
+<!ENTITY paragraphParagraphCmd.accesskey "T">
+<!ENTITY heading1Cmd.label "Aqerru 1">
+<!ENTITY heading1Cmd.accesskey "1">
+<!ENTITY heading2Cmd.label "Aqerru 2">
+<!ENTITY heading2Cmd.accesskey "2">
+<!ENTITY heading3Cmd.label "Aqerru 3">
+<!ENTITY heading3Cmd.accesskey "3">
+<!ENTITY heading4Cmd.label "Aqerru 4">
+<!ENTITY heading4Cmd.accesskey "4">
+<!ENTITY heading5Cmd.label "Aqerru 5">
+<!ENTITY heading5Cmd.accesskey "5">
+<!ENTITY heading6Cmd.label "Aqerru 6">
+<!ENTITY heading6Cmd.accesskey "6">
+<!ENTITY paragraphAddressCmd.label "Tansa">
+<!ENTITY paragraphAddressCmd.accesskey "T">
+<!ENTITY paragraphPreformatCmd.label "Amasal uzwir">
+<!ENTITY paragraphPreformatCmd.accesskey "m">
+
+<!-- List menu items -->
+<!ENTITY formatlistMenu.label "Tabdart">
+<!ENTITY formatlistMenu.accesskey "b">
+<!ENTITY noneCmd.label "Ula yiwen">
+<!ENTITY noneCmd.accesskey "y">
+<!ENTITY listBulletCmd.label "S tneqqiḍin">
+<!ENTITY listBulletCmd.accesskey "n">
+<!ENTITY listNumberedCmd.label "S wuṭṭunen">
+<!ENTITY listNumberedCmd.accesskey "u">
+<!ENTITY listTermCmd.label "Awal">
+<!ENTITY listTermCmd.accesskey "w">
+<!ENTITY listDefinitionCmd.label "Tabadut">
+<!ENTITY listDefinitionCmd.accesskey "b">
+<!ENTITY listPropsCmd.label "Timeẓliyin n tebdart…">
+<!ENTITY listPropsCmd.accesskey "ẓ">
+
+<!ENTITY ParagraphSelect.tooltip "Fren amasal n tessadaṛt">
+<!-- Shared in Paragraph, and Toolbar menulist -->
+<!ENTITY bodyTextCmd.label "Aḍris n tfekka">
+<!ENTITY bodyTextCmd.accesskey "k">
+
+<!-- Align menu items -->
+<!ENTITY alignMenu.label "Reyyec">
+<!ENTITY alignMenu.accesskey "y">
+<!ENTITY alignLeft.label "Azemlaḍ">
+<!ENTITY alignLeft.accesskey "z">
+<!ENTITY alignLeft.tooltip "Reyyec s azelmaḍ">
+<!ENTITY alignCenter.label "Talemmast">
+<!ENTITY alignCenter.accesskey "m">
+<!ENTITY alignCenter.tooltip "Reyyec ɣer tlemmast">
+<!ENTITY alignRight.label "Ayeffus">
+<!ENTITY alignRight.accesskey "y">
+<!ENTITY alignRight.tooltip "Reyyec s ayeffus">
+<!ENTITY alignJustify.label "Reyyec">
+<!ENTITY alignJustify.accesskey "R">
+<!ENTITY alignJustify.tooltip "Reyyec s triglwin">
+
+<!ENTITY increaseIndent.label "Rnu arigel">
+<!ENTITY increaseIndent.accesskey "R">
+<!ENTITY increaseIndent.key "]">
+<!ENTITY decreaseIndent.label "Senɣes arigel ">
+<!ENTITY decreaseIndent.accesskey "ɣ">
+<!ENTITY decreaseIndent.key "[">
+
+<!ENTITY colorsAndBackground.label "Initen d ugilal n usebter…">
+<!ENTITY colorsAndBackground.accesskey "g">
+
+<!-- Table Menu -->
+<!ENTITY tableMenu.label "Tafelwit">
+<!ENTITY tableMenu.accesskey "f">
+
+<!-- Select Submenu -->
+<!ENTITY tableSelectMenu.label "Fren">
+<!ENTITY tableSelectMenu.accesskey "r">
+
+<!ENTITY tableSelectMenu2.label "Tafelwit Fren">
+<!ENTITY tableSelectMenu2.accesskey "r">
+<!ENTITY tableInsertMenu2.label "Tafelwit Ger">
+<!ENTITY tableInsertMenu2.accesskey "G">
+<!ENTITY tableDeleteMenu2.label "Tafelwit Kkes">
+<!ENTITY tableDeleteMenu2.accesskey "K">
+
+<!-- Insert SubMenu -->
+<!ENTITY tableInsertMenu.label "Ger">
+<!ENTITY tableInsertMenu.accesskey "G">
+<!ENTITY tableTable.label "Tafelwit">
+<!ENTITY tableTable.accesskey "f">
+<!ENTITY tableRow.label "Izirig">
+<!ENTITY tableRows.label "Izirig(i-en)">
+<!ENTITY tableRow.accesskey "I">
+<!ENTITY tableRowAbove.label "Izirig nnig-a">
+<!ENTITY tableRowAbove.accesskey "z">
+<!ENTITY tableRowBelow.label "Izirig daw-a">
+<!ENTITY tableRowBelow.accesskey "d">
+<!ENTITY tableColumn.label "Tigejdit">
+<!ENTITY tableColumns.label "Tigejdit(ti-a)">
+<!ENTITY tableColumn.accesskey "g">
+<!ENTITY tableColumnBefore.label "Tigejdit send">
+<!ENTITY tableColumnBefore.accesskey "n">
+<!ENTITY tableColumnAfter.label "Tigejdit seld">
+<!ENTITY tableColumnAfter.accesskey "d">
+<!ENTITY tableCell.label "Tabniqt">
+<!ENTITY tableCells.label "Ta&amp;bniqt(ti-in)">
+<!ENTITY tableCell.accesskey "b">
+<!ENTITY tableCellContents.label "Igburen n tebniqt">
+<!ENTITY tableCellContents.accesskey "b">
+<!ENTITY tableAllCells.label "Akk tibniqin">
+<!ENTITY tableAllCells.accesskey "n">
+<!ENTITY tableCellBefore.label "Tabniqt send">
+<!ENTITY tableCellBefore.accesskey "n">
+<!ENTITY tableCellAfter.label "Tabniqt seld">
+<!ENTITY tableCellAfter.accesskey "l">
+<!-- Delete SubMenu -->
+<!ENTITY tableDeleteMenu.label "Kkes">
+<!ENTITY tableDeleteMenu.accesskey "K">
+
+<!-- text for "Join Cells" is in editor.properties
+     ("JoinSelectedCells" and "JoinCellToRight")
+     the access key must exist in both of those strings
+     But value must be set here for accesskey to draw properly
+-->
+<!ENTITY tableJoinCells.label "j">
+<!ENTITY tableJoinCells.accesskey "j">
+<!ENTITY tableSplitCell.label "Gzem tabniqt">
+<!ENTITY tableSplitCell.accesskey "G">
+<!ENTITY convertToTable.label "Rnu tafelwit seg ufran">
+<!ENTITY convertToTable.accesskey "f">
+<!ENTITY tableProperties.label "Timeẓliyin n tfelwit…">
+<!ENTITY tableProperties.accesskey "e">
+
+<!ENTITY imageToolbarCmd.label "Tugna">
+<!ENTITY imageToolbarCmd.tooltip "Ger tugna tamaynut neɣ ẓreg timeẓliyin n tugna yettwafernen">
+<!ENTITY hruleToolbarCmd.label "Izirig aglawan">
+<!ENTITY hruleToolbarCmd.tooltip "Ger izirig aglawan neɣ ẓreg timeẓliyin n izirig yettwafernen">
+<!ENTITY tableToolbarCmd.label "Tafelwit">
+<!ENTITY tableToolbarCmd.tooltip "Ger tafelwit tamaynut neɣ ẓreg timeẓliyin n tfelwit yettwafernen">
+<!ENTITY linkToolbarCmd.label "Aseɣwen">
+<!ENTITY linkToolbarCmd.tooltip "Ger aseɣwen amaynut neɣ ẓreg timeẓliyin n useɣwen yettwafernen">
+<!ENTITY anchorToolbarCmd.label "Tamdeyt">
+<!ENTITY anchorToolbarCmd.tooltip "Ger tamdeyt tamaynut neɣ ẓreg timeẓliyin n temdeyt yettwafernen">
+<!ENTITY TextColorButton.tooltip "Fren ini i weḍris">
+<!ENTITY BackgroundColorButton.tooltip "Fren ini i ugilal">
+
+<!-- Editor toolbar -->
+<!ENTITY absoluteFontSizeToolbarCmd.tooltip "Sbadu teɣzi n tesefsit">
+<!ENTITY decreaseFontSizeToolbarCmd.tooltip "Teɣzi n tsefsit tamezyant">
+<!ENTITY increaseFontSizeToolbarCmd.tooltip "Teɣzi n tsefsit meqqren">
+<!ENTITY boldToolbarCmd.tooltip "Zur">
+<!ENTITY italicToolbarCmd.tooltip "Uknan">
+<!ENTITY underlineToolbarCmd.tooltip "Derrer">
+<!ENTITY bulletListToolbarCmd.tooltip "Sness neɣ kkes tabdart n tneqqiḍin">
+<!ENTITY numberListToolbarCmd.tooltip "Snes neɣ kkes tabdart n wuṭṭunen">
+<!ENTITY outdentToolbarCmd.tooltip "Senɣes asiẓi (awi s azelmaḍ)">
+<!ENTITY indentToolbarCmd.tooltip "Rigel aḍris (saẓ s ayeffus)">
+<!ENTITY AlignPopupButton.tooltip "Fren areyyec n uḍris">
+<!ENTITY InsertPopupButton.tooltip "Ger aseɣwen, ">
+<!ENTITY alignLeftButton.tooltip "Reyyec aḍris ɣer tama tazelmaṭ">
+<!ENTITY alignCenterButton.tooltip "Reyyec aḍris ɣer tlemmast">
+<!ENTITY alignRightButton.tooltip "Reyyec aḍris ɣer tama tayeffust">
+<!ENTITY alignJustifyButton.tooltip "Reyyec aḍris gar tama tazelmat akked tama tayeffust">
+
+<!-- TOC manipulation -->
+<!ENTITY insertTOC.label          "Ger">
+<!ENTITY insertTOC.accesskey      "G">
+<!ENTITY updateTOC.label          "Leqqem">
+<!ENTITY updateTOC.accesskey      "L">
+<!ENTITY removeTOC.label          "Kkes">
+<!ENTITY removeTOC.accesskey      "K">
+<!ENTITY tocMenu.label            "Tafelwit n ugbur...">
+<!ENTITY tocMenu.accesskey        "f">

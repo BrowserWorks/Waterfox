@@ -254,6 +254,8 @@
   var SpecialPowers = global.SpecialPowers;
   var SpecialPowersCu = SpecialPowers.Cu;
   var SpecialPowersForceGC = SpecialPowers.forceGC;
+  var TestingFunctions = SpecialPowers.Cu.getJSTestingFunctions();
+  var ClearKeptObjects = TestingFunctions.clearKeptObjects;
 
   // Cached DOM nodes used by the test harness itself.  (We assume the test
   // doesn't misbehave in a way that actively interferes with what the test
@@ -387,6 +389,8 @@
   }
   global.gc = gc;
 
+  global.clearKeptObjects = ClearKeptObjects;
+
   function options(aOptionName) {
     // return value of options() is a comma delimited list
     // of the previously set values
@@ -428,7 +432,7 @@
   function jsTestDriverBrowserInit() {
     // Unset all options before running any test code, cf. the call to
     // |shellOptionsClear| in shell.js' set-up code.
-    for (var optionName of ["strict", "werror", "strict_mode"]) {
+    for (var optionName of ["strict_mode"]) {
       if (!HasOwnProperty(SpecialPowersCu, optionName))
         throw "options is out of sync with Components.utils";
 
@@ -504,6 +508,10 @@
     // Finally output the driver-end script to advance to the next test.
     scripts.push({src: "js-test-driver-end.js", module: false});
 
+    if (properties.async) {
+      gDelayTestDriverEnd = true;
+    }
+
     if (!moduleTest) {
       for (var i = 0; i < scripts.length; i++) {
         var src = scripts[i].src;
@@ -555,6 +563,8 @@
       appendScript(0);
     }
   }
+
+  global.gDelayTestDriverEnd = false;
 
   function jsTestDriverEnd() {
     // gDelayTestDriverEnd is used to delay collection of the test result and
@@ -639,7 +649,5 @@
   jsTestDriverBrowserInit();
 
 })(this);
-
-var gDelayTestDriverEnd = false;
 
 var gPageCompleted;

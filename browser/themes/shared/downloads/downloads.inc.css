@@ -13,11 +13,6 @@
 
 /*** Panel and outer controls ***/
 
-#downloadsPanel > .panel-arrowcontainer > .panel-arrowcontent {
-  overflow: hidden;
-  padding: 0;
-}
-
 #downloadsListBox {
   background: transparent;
   color: inherit;
@@ -28,13 +23,14 @@
 #emptyDownloads {
   padding: 16px 16px;
   margin: 0;
+  pointer-events: none;
 }
 
 @item@ > toolbarseparator {
   margin: 0;
   border: 0;
   min-width: 0;
-  border-left: 1px solid var(--panel-separator-color);
+  border-inline-start: 1px solid var(--panel-separator-color);
   -moz-appearance: none;
 }
 
@@ -59,8 +55,7 @@
 }
 
 #downloadsHistory {
-  padding-inline-start: 14px;
-  padding-inline-end: 14px;
+  padding-inline: 14px;
 }
 
 @item@ > toolbarseparator {
@@ -223,11 +218,11 @@
 }
 
 .downloadIconSubviewArrow > .button-box > .button-icon {
-  list-style-image: url("chrome://browser/skin/panel-icon-arrow-right.svg");
+  list-style-image: url("chrome://global/skin/icons/arrow-left.svg");
 }
 
-.downloadIconSubviewArrow > .button-box > .button-icon:-moz-locale-dir(rtl) {
-  list-style-image: url("chrome://browser/skin/panel-icon-arrow-left.svg");
+.downloadIconSubviewArrow > .button-box > .button-icon:-moz-locale-dir(ltr) {
+  transform: scaleX(-1);
 }
 
 /*** Blocked subview ***/
@@ -248,8 +243,7 @@
 }
 
 #downloadsPanel-blockedSubview-title {
-  margin-top: 16px;
-  margin-bottom: 16px;
+  margin-block: 16px;
   font-size: calc(100% / var(--downloads-item-font-size-factor));
 }
 
@@ -263,8 +257,7 @@
 #downloadsPanel-blockedSubview-title,
 #downloadsPanel-blockedSubview-details1,
 #downloadsPanel-blockedSubview-details2 {
-  -moz-margin-start: 64px;
-  -moz-margin-end: 16px;
+  margin-inline: 64px 16px;
 }
 
 /*** Progressmeter ***/

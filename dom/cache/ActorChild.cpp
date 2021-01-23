@@ -6,45 +6,51 @@
 
 #include "mozilla/dom/cache/ActorChild.h"
 
-#include "mozilla/dom/cache/CacheWorkerHolder.h"
+#include "mozilla/dom/cache/CacheWorkerRef.h"
 #include "nsThreadUtils.h"
 
 namespace mozilla {
 namespace dom {
 namespace cache {
 
-void ActorChild::SetWorkerHolder(CacheWorkerHolder* aWorkerHolder) {
+void ActorChild::SetWorkerRef(SafeRefPtr<CacheWorkerRef> aWorkerRef) {
   // Some of the Cache actors can have multiple DOM objects associated with
-  // them.  In this case the workerHolder will be added multiple times.  This is
-  // permitted, but the workerHolder should be the same each time.
-  if (mWorkerHolder) {
-    MOZ_DIAGNOSTIC_ASSERT(mWorkerHolder == aWorkerHolder);
+  // them.  In this case the workerRef will be added multiple times.  This is
+  // permitted, but the workerRef should be the same each time.
+  if (mWorkerRef) {
+    // XXX Here, we don't use aWorkerRef, so we unnecessarily add-refed... This
+    // might be a case to show in the raw pointer guideline as a possible
+    // exception, if warranted by performance analyses.
+
+    MOZ_DIAGNOSTIC_ASSERT(mWorkerRef == aWorkerRef);
     return;
   }
 
-  mWorkerHolder = aWorkerHolder;
-  if (mWorkerHolder) {
-    mWorkerHolder->AddActor(this);
+  mWorkerRef = std::move(aWorkerRef);
+  if (mWorkerRef) {
+    mWorkerRef->AddActor(this);
   }
 }
 
-void ActorChild::RemoveWorkerHolder() {
-  MOZ_ASSERT_IF(!NS_IsMainThread(), mWorkerHolder);
-  if (mWorkerHolder) {
-    mWorkerHolder->RemoveActor(this);
-    mWorkerHolder = nullptr;
+void ActorChild::RemoveWorkerRef() {
+  MOZ_ASSERT_IF(!NS_IsMainThread(), mWorkerRef);
+  if (mWorkerRef) {
+    mWorkerRef->RemoveActor(this);
+    mWorkerRef = nullptr;
   }
 }
 
-CacheWorkerHolder* ActorChild::GetWorkerHolder() const { return mWorkerHolder; }
-
-bool ActorChild::WorkerHolderNotified() const {
-  return mWorkerHolder && mWorkerHolder->Notified();
+const SafeRefPtr<CacheWorkerRef>& ActorChild::GetWorkerRefPtr() const {
+  return mWorkerRef;
 }
 
-ActorChild::ActorChild() {}
+bool ActorChild::WorkerRefNotified() const {
+  return mWorkerRef && mWorkerRef->Notified();
+}
 
-ActorChild::~ActorChild() { MOZ_DIAGNOSTIC_ASSERT(!mWorkerHolder); }
+ActorChild::ActorChild() = default;
+
+ActorChild::~ActorChild() { MOZ_DIAGNOSTIC_ASSERT(!mWorkerRef); }
 
 }  // namespace cache
 }  // namespace dom

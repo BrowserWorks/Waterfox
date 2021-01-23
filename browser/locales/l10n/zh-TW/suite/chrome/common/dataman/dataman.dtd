@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dataman.windowTitle "資料管理員">
+
+<!ENTITY selectAll.key "a">
+
+<!ENTITY select.all.label "所有資料類型">
+<!ENTITY select.cookies.label "只有 Cookie">
+<!ENTITY select.permissions.label "只有權限">
+<!ENTITY select.preferences.label "只有偏好設定">
+<!ENTITY select.passwords.label "只有密碼">
+<!ENTITY select.storage.label "僅儲存空間">
+
+<!ENTITY domain.search.placeholder "搜尋網域">
+<!ENTITY domain.search.key "f">
+
+<!ENTITY domain.tree.domain.label "網域">
+
+<!ENTITY domain.ctx.forgetdomain.label "忘記與此網域有關的記錄">
+<!ENTITY domain.ctx.forgetdomain.accesskey "F">
+<!ENTITY domain.ctx.forgetglobal.label "忘記全部資料">
+<!ENTITY domain.ctx.forgetglobal.accesskey "F">
+
+<!ENTITY data.search.key "k">
+
+<!ENTITY tab.cookies.label "Cookie">
+<!ENTITY tab.permissions.label "權限">
+<!ENTITY tab.preferences.label "偏好設定">
+<!ENTITY tab.passwords.label "密碼">
+<!ENTITY tab.storage.label "儲存空間">
+<!ENTITY tab.formdata.label "表單資料">
+<!ENTITY tab.forget.label "忘記">
+
+<!-- cookies -->
+<!ENTITY cookies.description "此網域已經於您的電腦儲存了下列 Cookie:">
+
+<!ENTITY cookies.tree.host.label "網站">
+<!ENTITY cookies.tree.name.label "Cookie 名稱">
+<!ENTITY cookies.tree.expires.label "有效期限">
+
+<!ENTITY cookies.infobox.label "關於已選取的 Cookie 的資訊:">
+
+<!ENTITY cookies.info.name.label "名稱:">
+<!ENTITY cookies.info.value.label "內容:">
+<!ENTITY cookies.info.host.label "主機:">
+<!ENTITY cookies.info.domain.label "網域:">
+<!ENTITY cookies.info.path.label "路徑:">
+<!ENTITY cookies.info.sendtype.label "送出:">
+<!ENTITY cookies.info.expires.label "有效期限:">
+
+<!ENTITY cookies.ctx.remove.label "移除">
+<!ENTITY cookies.ctx.remove.accesskey "R">
+<!ENTITY cookies.ctx.selectAll.label "全選">
+<!ENTITY cookies.ctx.selectAll.accesskey "A">
+
+<!ENTITY cookies.button.remove.label "移除">
+<!ENTITY cookies.button.remove.accesskey "R">
+
+<!ENTITY cookies.blockOnRemove.label "移除時，避免列出的網站在未來設定 Cookie">
+<!ENTITY cookies.blockOnRemove.accesskey "W">
+
+<!-- permissions -->
+<!ENTITY perm.UseDefault "使用預設值">
+<!ENTITY perm.AskAlways "總是詢問">
+<!ENTITY perm.NeverSave "永不儲存">
+<!ENTITY perm.Allow "允許">
+<!ENTITY perm.AllowSameDomain "允許同網域">
+<!ENTITY perm.AllowSession "此次瀏覽階段允許">
+<!ENTITY perm.Block "封鎖">
+
+<!ENTITY perm.host.placeholder "輸入一個主機名稱">
+<!ENTITY perm.button.add.label "新增">
+<!ENTITY perm.button.add.accesskey "A">
+
+<!-- preferences -->
+<!ENTITY prefs.description "內容偏好設定是 &brandShortName; 為每個儲存像是縮放等級等不同設定的一個方法。">
+
+<!ENTITY prefs.tree.host.label "網站">
+<!ENTITY prefs.tree.name.label "偏好設定名稱">
+<!ENTITY prefs.tree.value.label "值">
+
+<!ENTITY prefs.ctx.remove.label "移除">
+<!ENTITY prefs.ctx.remove.accesskey "R">
+<!ENTITY prefs.ctx.selectAll.label "全選">
+<!ENTITY prefs.ctx.selectAll.accesskey "A">
+
+<!ENTITY prefs.button.remove.label "移除">
+<!ENTITY prefs.button.remove.accesskey "R">
+
+<!-- passwords -->
+<!ENTITY pwd.description "您已為此網域儲存了下列密碼:">
+
+<!ENTITY pwd.tree.host.label "網站">
+<!ENTITY pwd.tree.username.label "使用者名稱">
+<!ENTITY pwd.tree.password.label "密碼">
+
+<!ENTITY pwd.ctx.remove.label "移除">
+<!ENTITY pwd.ctx.remove.accesskey "R">
+<!ENTITY pwd.ctx.copyPasswordCmd.label "複製密碼">
+<!ENTITY pwd.ctx.copyPasswordCmd.accesskey "C">
+<!ENTITY pwd.ctx.selectAll.label "全選">
+<!ENTITY pwd.ctx.selectAll.accesskey "A">
+
+<!ENTITY pwd.button.remove.label "移除">
+<!ENTITY pwd.button.remove.accesskey "R">
+
+<!-- storage -->
+<!ENTITY storage.description "此網域在您的電腦上使用下列網頁儲存空間:">
+
+<!ENTITY storage.tree.host.label "網站">
+<!ENTITY storage.tree.type.label "類型">
+<!ENTITY storage.tree.size.label "大小">
+
+<!ENTITY storage.ctx.remove.label "移除">
+<!ENTITY storage.ctx.remove.accesskey "R">
+<!ENTITY storage.ctx.selectAll.label "全選">
+<!ENTITY storage.ctx.selectAll.accesskey "A">
+
+<!ENTITY storage.button.remove.label "移除">
+<!ENTITY storage.button.remove.accesskey "R">
+
+<!-- form data -->
+<!ENTITY fdata.search.placeholder "搜尋欄位資料">
+
+<!ENTITY fdata.tree.fieldname.label "欄位名稱">
+<!ENTITY fdata.tree.value.label "已輸入的值">
+<!ENTITY fdata.tree.usecount.label "使用次數">
+<!ENTITY fdata.tree.firstused.label "第一次使用">
+<!ENTITY fdata.tree.lastused.label "上次使用">
+
+<!ENTITY fdata.ctx.remove.label "移除">
+<!ENTITY fdata.ctx.remove.accesskey "R">
+<!ENTITY fdata.ctx.selectAll.label "全選">
+<!ENTITY fdata.ctx.selectAll.accesskey "A">
+
+<!ENTITY fdata.button.remove.label "移除">
+<!ENTITY fdata.button.remove.accesskey "R">
+
+<!-- forget -->
+<!ENTITY forget.cookies.label "Cookie">
+<!ENTITY forget.cookies.accesskey "C">
+<!ENTITY forget.permissions.label "權限">
+<!ENTITY forget.permissions.accesskey "P">
+<!ENTITY forget.preferences.label "內容偏好設定">
+<!ENTITY forget.preferences.accesskey "o">
+<!ENTITY forget.passwords.label "密碼">
+<!ENTITY forget.passwords.accesskey "a">
+<!ENTITY forget.storage.label "儲存空間">
+<!ENTITY forget.storage.accesskey "S">
+<!ENTITY forget.formdata.label "表單資料">
+<!ENTITY forget.formdata.accesskey "D">
+
+<!ENTITY forget.button.label "忘記此資料">
+<!ENTITY forget.button.accesskey "F">

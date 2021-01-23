@@ -10,8 +10,9 @@
 #include "nsIURI.h"
 #include "nsNetUtil.h"
 #include "nsPIDOMWindow.h"
-
+#include "mozilla/BasePrincipal.h"
 #include "mozilla/ErrorResult.h"
+#include "mozilla/dom/BodyStream.h"
 #include "mozilla/dom/FetchBinding.h"
 #include "mozilla/dom/ResponseBinding.h"
 #include "mozilla/dom/Headers.h"
@@ -22,19 +23,18 @@
 #include "nsDOMString.h"
 
 #include "BodyExtractor.h"
-#include "FetchStream.h"
 #include "FetchStreamReader.h"
 #include "InternalResponse.h"
 
 namespace mozilla {
 namespace dom {
 
-NS_IMPL_CYCLE_COLLECTING_ADDREF(Response)
-NS_IMPL_CYCLE_COLLECTING_RELEASE(Response)
+NS_IMPL_ADDREF_INHERITED(Response, FetchBody<Response>)
+NS_IMPL_RELEASE_INHERITED(Response, FetchBody<Response>)
 
 NS_IMPL_CYCLE_COLLECTION_CLASS(Response)
 
-NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(Response)
+NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(Response, FetchBody<Response>)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mOwner)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mHeaders)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mSignalImpl)
@@ -46,14 +46,14 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(Response)
   NS_IMPL_CYCLE_COLLECTION_UNLINK_PRESERVED_WRAPPER
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
-NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(Response)
+NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(Response, FetchBody<Response>)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mOwner)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mHeaders)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mSignalImpl)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mFetchStreamReader)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
-NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN(Response)
+NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN_INHERITED(Response, FetchBody<Response>)
   NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mReadableStreamBody)
   NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mReadableStreamReader)
   NS_IMPL_CYCLE_COLLECTION_TRACE_PRESERVED_WRAPPER
@@ -61,8 +61,7 @@ NS_IMPL_CYCLE_COLLECTION_TRACE_END
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(Response)
   NS_WRAPPERCACHE_INTERFACE_MAP_ENTRY
-  NS_INTERFACE_MAP_ENTRY(nsISupports)
-NS_INTERFACE_MAP_END
+NS_INTERFACE_MAP_END_INHERITING(FetchBody<Response>)
 
 Response::Response(nsIGlobalObject* aGlobal,
                    InternalResponse* aInternalResponse,
@@ -97,25 +96,31 @@ already_AddRefed<Response> Response::Redirect(const GlobalObject& aGlobal,
   nsAutoString parsedURL;
 
   if (NS_IsMainThread()) {
-    nsCOMPtr<nsIURI> baseURI;
+    nsIURI* baseURI = nullptr;
     nsCOMPtr<nsPIDOMWindowInner> inner(
         do_QueryInterface(aGlobal.GetAsSupports()));
     Document* doc = inner ? inner->GetExtantDoc() : nullptr;
     if (doc) {
       baseURI = doc->GetBaseURI();
     }
+    // Don't use NS_ConvertUTF16toUTF8 because that doesn't let us handle OOM.
+    nsAutoCString url;
+    if (!AppendUTF16toUTF8(aUrl, url, fallible)) {
+      aRv.Throw(NS_ERROR_OUT_OF_MEMORY);
+      return nullptr;
+    }
+
     nsCOMPtr<nsIURI> resolvedURI;
-    nsresult rv =
-        NS_NewURI(getter_AddRefs(resolvedURI), aUrl, nullptr, baseURI);
+    nsresult rv = NS_NewURI(getter_AddRefs(resolvedURI), url, nullptr, baseURI);
     if (NS_WARN_IF(NS_FAILED(rv))) {
-      aRv.ThrowTypeError<MSG_INVALID_URL>(aUrl);
+      aRv.ThrowTypeError<MSG_INVALID_URL>(url);
       return nullptr;
     }
 
     nsAutoCString spec;
     rv = resolvedURI->GetSpec(spec);
     if (NS_WARN_IF(NS_FAILED(rv))) {
-      aRv.ThrowTypeError<MSG_INVALID_URL>(aUrl);
+      aRv.ThrowTypeError<MSG_INVALID_URL>(url);
       return nullptr;
     }
 
@@ -126,21 +131,25 @@ already_AddRefed<Response> Response::Redirect(const GlobalObject& aGlobal,
     worker->AssertIsOnWorkerThread();
 
     NS_ConvertUTF8toUTF16 baseURL(worker->GetLocationInfo().mHref);
-    RefPtr<URL> url = URL::WorkerConstructor(aGlobal, aUrl, baseURL, aRv);
+    RefPtr<URL> url =
+        URL::Constructor(aGlobal.GetAsSupports(), aUrl, baseURL, aRv);
     if (aRv.Failed()) {
       return nullptr;
     }
 
-    url->Stringify(parsedURL);
+    url->GetHref(parsedURL);
   }
 
   if (aStatus != 301 && aStatus != 302 && aStatus != 303 && aStatus != 307 &&
       aStatus != 308) {
-    aRv.ThrowRangeError<MSG_INVALID_REDIRECT_STATUSCODE_ERROR>();
+    aRv.ThrowRangeError("Invalid redirect status code.");
     return nullptr;
   }
 
-  Optional<Nullable<fetch::ResponseBodyInit>> body;
+  // We can't just pass nullptr for our null-valued Nullable, because the
+  // fetch::ResponseBodyInit is a non-temporary type due to the MOZ_RAII
+  // annotations on some of its members.
+  Nullable<fetch::ResponseBodyInit> body;
   ResponseInit init;
   init.mStatus = aStatus;
   init.mStatusText.AssignASCII("");
@@ -162,8 +171,7 @@ already_AddRefed<Response> Response::Redirect(const GlobalObject& aGlobal,
 
 /*static*/
 already_AddRefed<Response> Response::Constructor(
-    const GlobalObject& aGlobal,
-    const Optional<Nullable<fetch::ResponseBodyInit>>& aBody,
+    const GlobalObject& aGlobal, const Nullable<fetch::ResponseBodyInit>& aBody,
     const ResponseInit& aInit, ErrorResult& aRv) {
   nsCOMPtr<nsIGlobalObject> global = do_QueryInterface(aGlobal.GetAsSupports());
 
@@ -173,7 +181,7 @@ already_AddRefed<Response> Response::Constructor(
   }
 
   if (aInit.mStatus < 200 || aInit.mStatus > 599) {
-    aRv.ThrowRangeError<MSG_INVALID_RESPONSE_STATUSCODE_ERROR>();
+    aRv.ThrowRangeError("Invalid response status code.");
     return nullptr;
   }
 
@@ -216,7 +224,7 @@ already_AddRefed<Response> Response::Constructor(
       }
 
       internalResponse->InitChannelInfo(info);
-    } else if (nsContentUtils::IsSystemPrincipal(global->PrincipalOrNull())) {
+    } else if (global->PrincipalOrNull()->IsSystemPrincipal()) {
       info.InitFromChromeGlobal(global);
 
       internalResponse->InitChannelInfo(info);
@@ -259,9 +267,9 @@ already_AddRefed<Response> Response::Constructor(
     }
   }
 
-  if (aBody.WasPassed() && !aBody.Value().IsNull()) {
+  if (!aBody.IsNull()) {
     if (aInit.mStatus == 204 || aInit.mStatus == 205 || aInit.mStatus == 304) {
-      aRv.ThrowTypeError<MSG_RESPONSE_NULL_STATUS_WITH_BODY>();
+      aRv.ThrowTypeError("Response body is given with a null body status.");
       return nullptr;
     }
 
@@ -269,7 +277,7 @@ already_AddRefed<Response> Response::Constructor(
     nsCOMPtr<nsIInputStream> bodyStream;
     int64_t bodySize = InternalResponse::UNKNOWN_BODY_SIZE;
 
-    const fetch::ResponseBodyInit& body = aBody.Value().Value();
+    const fetch::ResponseBodyInit& body = aBody.Value();
     if (body.IsReadableStream()) {
       aRv.MightThrowJSException();
 
@@ -309,8 +317,8 @@ already_AddRefed<Response> Response::Constructor(
 
         MOZ_ASSERT(underlyingSource);
 
-        aRv = FetchStream::RetrieveInputStream(underlyingSource,
-                                               getter_AddRefs(bodyStream));
+        aRv = BodyStream::RetrieveInputStream(underlyingSource,
+                                              getter_AddRefs(bodyStream));
 
         // The releasing of the external source is needed in order to avoid an
         // extra stream lock.

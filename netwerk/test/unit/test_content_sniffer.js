@@ -1,5 +1,7 @@
 // This file tests nsIContentSniffer, introduced in bug 324985
 
+"use strict";
+
 const { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
 
 const unknownType = "application/x-unknown-content-type";
@@ -11,32 +13,25 @@ const categoryName = "net-content-sniffers";
 
 var sniffing_enabled = true;
 
+var isNosniff = false;
+
 /**
  * This object is both a factory and an nsIContentSniffer implementation (so, it
  * is de-facto a service)
  */
 var sniffer = {
-  QueryInterface: function sniffer_qi(iid) {
-    if (
-      iid.equals(Ci.nsISupports) ||
-      iid.equals(Ci.nsIFactory) ||
-      iid.equals(Ci.nsIContentSniffer)
-    ) {
-      return this;
-    }
-    throw Cr.NS_ERROR_NO_INTERFACE;
-  },
+  QueryInterface: ChromeUtils.generateQI(["nsIFactory", "nsIContentSniffer"]),
   createInstance: function sniffer_ci(outer, iid) {
     if (outer) {
-      throw Cr.NS_ERROR_NO_AGGREGATION;
+      throw Components.Exception("", Cr.NS_ERROR_NO_AGGREGATION);
     }
     return this.QueryInterface(iid);
   },
   lockFactory: function sniffer_lockf(lock) {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+    throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
   },
 
-  getMIMETypeFromContent: function(request, data, length) {
+  getMIMETypeFromContent(request, data, length) {
     return sniffedType;
   },
 };
@@ -48,7 +43,11 @@ var listener = {
       if (chan.contentType == unknownType) {
         do_throw("Type should not be unknown!");
       }
-      if (
+      if (isNosniff) {
+        if (chan.contentType == sniffedType) {
+          do_throw("Sniffer called for X-Content-Type-Options:nosniff");
+        }
+      } else if (
         sniffing_enabled &&
         this._iteration > 2 &&
         chan.contentType != sniffedType
@@ -70,11 +69,11 @@ var listener = {
       do_throw("Unexpected exception: " + e);
     }
 
-    throw Cr.NS_ERROR_ABORT;
+    throw Components.Exception("", Cr.NS_ERROR_ABORT);
   },
 
   onDataAvailable: function test_ODA() {
-    throw Cr.NS_ERROR_UNEXPECTED;
+    throw Components.Exception("", Cr.NS_ERROR_UNEXPECTED);
   },
 
   onStopRequest: function test_onStopR(request, status) {
@@ -99,6 +98,7 @@ var urls = null;
 
 function run_test() {
   httpserv = new HttpServer();
+  httpserv.registerPathHandler("/nosniff", nosniffHandler);
   httpserv.start(-1);
 
   urls = [
@@ -108,6 +108,7 @@ function run_test() {
     // used the unknown content sniffer too
     "data:text/plain, Some more text",
     "http://localhost:" + httpserv.identity.primaryPort,
+    "http://localhost:" + httpserv.identity.primaryPort + "/nosniff",
   ];
 
   Components.manager.nsIComponentRegistrar.registerFactory(
@@ -118,6 +119,10 @@ function run_test() {
   );
 
   run_test_iteration(1);
+}
+
+function nosniffHandler(request, response) {
+  response.setHeader("X-Content-Type-Options", "nosniff");
 }
 
 function run_test_iteration(index) {
@@ -145,6 +150,8 @@ function run_test_iteration(index) {
       false,
       true
     );
+  } else if (sniffing_enabled && index == 5) {
+    isNosniff = true;
   }
 
   var chan = makeChan(urls[index - 1]);

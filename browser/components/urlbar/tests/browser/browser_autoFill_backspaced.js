@@ -11,12 +11,13 @@ async function test_autocomplete(data) {
   let { desc, typed, autofilled, modified, keys, type, onAutoFill } = data;
   info(desc);
 
-  await promiseAutocompleteResultPopup(typed);
-  Assert.equal(
-    gURLBar.textValue,
-    autofilled,
-    "autofilled value is as expected"
-  );
+  await UrlbarTestUtils.promiseAutocompleteResultPopup({
+    window,
+    waitForFocus,
+    value: typed,
+    fireInputEvent: true,
+  });
+  Assert.equal(gURLBar.value, autofilled, "autofilled value is as expected");
   if (onAutoFill) {
     onAutoFill();
   }
@@ -26,10 +27,9 @@ async function test_autocomplete(data) {
     let args = Array.isArray(key) ? key : [key];
     EventUtils.synthesizeKey(...args);
   }
+  await UrlbarTestUtils.promiseSearchComplete(window);
 
-  await promiseSearchComplete();
-
-  Assert.equal(gURLBar.textValue, modified, "backspaced value is as expected");
+  Assert.equal(gURLBar.value, modified, "backspaced value is as expected");
 
   Assert.greater(
     UrlbarTestUtils.getResultCount(window),
@@ -136,8 +136,16 @@ add_task(async function() {
     onAutoFill: () => {
       gURLBar.blur();
       gURLBar.focus();
-      gURLBar.selectionStart = 1;
-      gURLBar.selectionEnd = 12;
+      Assert.equal(
+        gURLBar.selectionStart,
+        gURLBar.value.length,
+        "blur/focus should not change selection"
+      );
+      Assert.equal(
+        gURLBar.selectionEnd,
+        gURLBar.value.length,
+        "blur/focus should not change selection"
+      );
     },
   });
   await test_autocomplete({
@@ -145,18 +153,26 @@ add_task(async function() {
     typed: "ex",
     autofilled: "example.com/",
     modified: "e",
-    keys: ["KEY_Delete"],
+    keys: ["KEY_ArrowLeft", "KEY_Delete"],
     type: UrlbarUtils.RESULT_TYPE.SEARCH,
     onAutoFill: () => {
       gURLBar.blur();
       gURLBar.focus();
-      gURLBar.selectionStart = 1;
-      gURLBar.selectionEnd = 12;
+      Assert.equal(
+        gURLBar.selectionStart,
+        gURLBar.value.length,
+        "blur/focus should not change selection"
+      );
+      Assert.equal(
+        gURLBar.selectionEnd,
+        gURLBar.value.length,
+        "blur/focus should not change selection"
+      );
     },
   });
   await test_autocomplete({
     desc: "double BACK_SPACE after blur should search",
-    typed: "ex",
+    typed: "exa",
     autofilled: "example.com/",
     modified: "e",
     keys: ["KEY_Backspace", "KEY_Backspace"],
@@ -164,8 +180,16 @@ add_task(async function() {
     onAutoFill: () => {
       gURLBar.blur();
       gURLBar.focus();
-      gURLBar.selectionStart = 2;
-      gURLBar.selectionEnd = 12;
+      Assert.equal(
+        gURLBar.selectionStart,
+        gURLBar.value.length,
+        "blur/focus should not change selection"
+      );
+      Assert.equal(
+        gURLBar.selectionEnd,
+        gURLBar.value.length,
+        "blur/focus should not change selection"
+      );
     },
   });
 
@@ -192,14 +216,8 @@ add_task(async function() {
       ["KEY_ArrowLeft", { shiftKey: true }],
       "KEY_Backspace",
     ],
-    type: UrlbarUtils.RESULT_TYPE.URL,
+    type: UrlbarUtils.RESULT_TYPE.SEARCH,
   });
-
-  // The remaining tests fail on awesomebar because it doesn't properly handle
-  // them.
-  if (!UrlbarPrefs.get("quantumbar")) {
-    return;
-  }
 
   await test_autocomplete({
     desc:

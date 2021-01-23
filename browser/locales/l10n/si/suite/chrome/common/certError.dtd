@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+
+<!--
+Entities below were automatically added by compare-locales,
+ based on en-US entities.
+-->
+
+<!ENTITY certerror.pagetitle "Untrusted Connection">
+<!ENTITY certerror.expert.contentPara2 "Don't add an exception unless
+you know there's a good reason why this website doesn't use trusted identification.">
+<!ENTITY certerror.getMeOutOfHere.label "This sounds bad, take me to my home page instead">
+<!ENTITY certerror.addException.label "Add Exception…">
+<!ENTITY certerror.introPara2 "Normally, when you try to connect securely,
+websites will present trusted identification to prove that you are
+going to the right place. However, this website's identity can't be verified.">
+<!ENTITY certerror.whatShouldIDo.heading "What Should I Do?">
+<!ENTITY certerror.introPara1 "You have asked &brandShortName; to connect
+securely to <b>#1</b>, but we can't confirm that your connection is secure.">
+<!ENTITY certerror.technical.heading "Technical Details">
+<!ENTITY certerror.expert.heading "I Understand the Risks">
+<!ENTITY certerror.longpagetitle "This Connection is Untrusted">
+<!ENTITY certerror.whatShouldIDo.content "If you usually connect to
+this website without problems, this error could mean that someone is
+trying to impersonate the website, and you shouldn't continue.">
+<!ENTITY certerror.expert.content "If you understand what's going on, you
+can tell &brandShortName; to start trusting this website's identification.
+<b>Even if you trust the website, this error could mean that someone is
+tampering with your connection.</b>">

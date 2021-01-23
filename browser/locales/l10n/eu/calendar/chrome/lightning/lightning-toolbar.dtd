@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name "Egutegiaren tresna-barra">
+<!ENTITY lightning.toolbar.calendar.name.accesskey "E">
+<!ENTITY lightning.toolbar.task.name "Zereginen tresna-barra">
+<!ENTITY lightning.toolbar.task.name.accesskey "Z">
+
+<!ENTITY lightning.toolbar.sync.label "Sinkronizatu">
+<!ENTITY lightning.toolbar.sync.tooltip "Berritu egutegiak eta sinkronizatu aldaketak">
+<!ENTITY lightning.toolbar.delete.label "Ezabatu">
+<!ENTITY lightning.toolbar.delete.tooltip "Ezabatu aukeratutako gertaera edo zeregina">
+<!ENTITY lightning.toolbar.edit.label "Editatu">
+<!ENTITY lightning.toolbar.edit.tooltip "Editatu aukeratutako gertaera edo zeregina">
+<!ENTITY lightning.toolbar.gototoday.label "Gaur kokatu">
+<!ENTITY lightning.toolbar.gototoday.tooltip "Gaur kokatu">
+<!ENTITY lightning.toolbar.print.label "Inprimatu">
+<!ENTITY lightning.toolbar.print.tooltip "Inprimatu gertaerak edo zereginak">
+
+<!-- Mode Toolbar -->
+<!ENTITY lightning.toolbar.calendar.label     "Egutegia">
+<!ENTITY lightning.toolbar.calendar.tooltip   "Aldatu egutegiaren fitxara">
+<!ENTITY lightning.toolbar.calendar.accesskey "E">
+<!ENTITY lightning.toolbar.task.label         "Zereginak">
+<!ENTITY lightning.toolbar.task.tooltip       "Aldatu zereginen fitxara">
+<!ENTITY lightning.toolbar.task.accesskey     "Z">
+
+<!-- Toolbar write button -->
+<!ENTITY lightning.toolbar.newevent.label     "Gertaera">
+<!ENTITY lightning.toolbar.newevent.tooltip   "Sortu gertaera berria">
+<!ENTITY lightning.toolbar.newtask.label      "Zeregina">
+<!ENTITY lightning.toolbar.newtask.tooltip    "Sortu zeregin berria">
+
+<!-- Calendar and Task Mode Toolbar -->
+<!ENTITY lightning.toolbar.day.label                 "Egun">
+<!ENTITY lightning.toolbar.day.accesskey             "E">
+<!ENTITY lightning.toolbar.week.label                "Aste">
+<!ENTITY lightning.toolbar.week.accesskey            "A">
+<!ENTITY lightning.toolbar.multiweek.label           "Aste anitz">
+<!ENTITY lightning.toolbar.multiweek.accesskey       "s">
+<!ENTITY lightning.toolbar.month.label               "Hilabete">
+<!ENTITY lightning.toolbar.month.accesskey           "H">
+<!-- LOCALIZATION NOTE: the same as appmenuButton.label and appmenuButton1.tooltip
+     from messenger.dtd -->
+<!ENTITY lightning.toolbar.appmenuButton.label       "AplMenua">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip    "Bistaratu &brandShortName; menua">
+<!ENTITY lightning.toolbar.calendarmenu.label        "Egutegiaren panela">
+<!ENTITY lightning.toolbar.calendarmenu.accesskey    "p">
+<!ENTITY lightning.toolbar.calendarpane.label        "Erakutsi egutegiaren panela">
+<!ENTITY lightning.toolbar.calendarpane.accesskey    "p">

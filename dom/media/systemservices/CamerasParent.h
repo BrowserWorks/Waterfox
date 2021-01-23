@@ -7,7 +7,6 @@
 #ifndef mozilla_CamerasParent_h
 #define mozilla_CamerasParent_h
 
-#include "nsIObserver.h"
 #include "VideoEngine.h"
 #include "mozilla/camera/PCamerasParent.h"
 #include "mozilla/ipc/Shmem.h"
@@ -27,10 +26,6 @@
 #include "base/thread.h"
 
 namespace mozilla {
-
-namespace ipc {
-class PrincipalInfo;
-}
 
 namespace camera {
 
@@ -65,7 +60,7 @@ class InputObserver : public webrtc::VideoInputFeedBack {
   friend CamerasParent;
 
  private:
-  ~InputObserver() {}
+  ~InputObserver() = default;
 
   RefPtr<CamerasParent> mParent;
 };
@@ -80,7 +75,7 @@ class CamerasParent final : public PCamerasParent,
   // Messages received form the child. These run on the IPC/PBackground thread.
   mozilla::ipc::IPCResult RecvAllocateCaptureDevice(
       const CaptureEngine& aEngine, const nsCString& aUnique_idUTF8,
-      const ipc::PrincipalInfo& aPrincipalInfo) override;
+      const uint64_t& aWindowID) override;
   mozilla::ipc::IPCResult RecvReleaseCaptureDevice(const CaptureEngine&,
                                                    const int&) override;
   mozilla::ipc::IPCResult RecvNumberOfCaptureDevices(

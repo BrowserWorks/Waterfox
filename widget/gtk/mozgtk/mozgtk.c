@@ -1,3 +1,9 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 #include "mozilla/Types.h"
 #include "mozilla/Assertions.h"
 
@@ -95,6 +101,7 @@ STUB(gdk_window_get_parent)
 STUB(gdk_window_get_position)
 STUB(gdk_window_get_root_origin)
 STUB(gdk_window_get_screen)
+STUB(gtk_window_get_size)
 STUB(gdk_window_get_state)
 STUB(gdk_window_get_toplevel)
 STUB(gdk_window_get_update_area)
@@ -517,10 +524,12 @@ STUB(gtk_window_set_accept_focus)
 STUB(gtk_window_set_decorated)
 STUB(gtk_window_set_deletable)
 STUB(gtk_window_set_destroy_with_parent)
+STUB(gtk_window_set_focus_on_map)
 STUB(gtk_window_set_geometry_hints)
 STUB(gtk_window_set_icon_name)
 STUB(gtk_window_set_modal)
 STUB(gtk_window_set_skip_taskbar_hint)
+STUB(gtk_window_set_startup_id)
 STUB(gtk_window_set_title)
 STUB(gtk_window_set_transient_for)
 STUB(gtk_window_set_type_hint)

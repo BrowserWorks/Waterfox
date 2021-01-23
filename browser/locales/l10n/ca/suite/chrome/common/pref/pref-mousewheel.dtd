@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE : FILE Mouse-wheel management prefs, for those lucky OSes that support mouse wheels -->
+
+
+<!ENTITY pref.mouseWheel.title           "Rodeta del ratolí">
+<!ENTITY mouseWheelPanel.label           "Indiqueu el comportament de la roda del ratolí en utilitzar-lo amb aquesta tecla: ">
+<!ENTITY usingJustTheWheel.label         "Sense tecla modificadora">
+<!ENTITY usingWheelAndAlt.label          "&altKey.label;">
+<!ENTITY usingWheelAndCtrl.label         "&ctrlKey.label;">
+<!ENTITY usingWheelAndShft.label         "&shiftKey.label;">
+<!ENTITY mouseWheelGroup.label           "Desplaçament vertical">
+<!ENTITY mouseWheelHorizGroup.label      "Desplaçament horitzontal">
+<!ENTITY sameAsVertical.label            "Idèntic al desplaçament vertical">
+<!ENTITY sameAsVertical.accesskey        "v">
+<!ENTITY doNothing.label                 "No fer res">
+<!ENTITY doNothing.accesskey             "f">
+<!ENTITY doNothingHoriz.accesskey        "n">
+<!ENTITY scrollDocument.label            "Desplaceu-vos pel document">
+<!ENTITY scrollDocument.accesskey        "s">
+<!ENTITY scrollDocumentHoriz.accesskey   "c">
+<!ENTITY history.label                   "Mou enrere o endavant en l'historial de navegació">
+<!ENTITY history.accesskey               "h">
+<!ENTITY historyHoriz.accesskey          "v">
+<!ENTITY zoom.label                      "Augmenta o redueix la pàgina">
+<!ENTITY zoom.accesskey                  "t">
+<!ENTITY zoomHoriz.accesskey             "e">
+<!ENTITY wheelSpeed.label                "Velocitat de la roda del ratolí:">
+<!ENTITY wheelSpeed.accesskey            "o">
+<!ENTITY wheelSpeedHoriz.accesskey       "a">
+<!ENTITY reverseDirection.label          "Direcció inversa">
+<!ENTITY reverseDirection.accesskey      "D">
+<!ENTITY reverseDirectionHoriz.accesskey "i">

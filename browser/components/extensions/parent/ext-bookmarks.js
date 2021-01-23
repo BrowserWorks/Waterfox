@@ -1,10 +1,18 @@
 /* -*- Mode: indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set sts=2 sw=2 et tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
 
-var { PlacesUtils } = ChromeUtils.import(
-  "resource://gre/modules/PlacesUtils.jsm"
+var { XPCOMUtils } = ChromeUtils.import(
+  "resource://gre/modules/XPCOMUtils.jsm"
 );
+
+XPCOMUtils.defineLazyModuleGetters(this, {
+  PlacesUtils: "resource://gre/modules/PlacesUtils.jsm",
+});
 
 var { ExtensionError } = ExtensionUtils;
 
@@ -114,7 +122,6 @@ let observer = new (class extends EventEmitter {
     super();
 
     this.skipTags = true;
-    this.skipDescendantsOnItemRemoval = true;
 
     this.handlePlacesEvents = this.handlePlacesEvents.bind(this);
   }
@@ -124,24 +131,44 @@ let observer = new (class extends EventEmitter {
 
   handlePlacesEvents(events) {
     for (let event of events) {
-      if (event.isTagging) {
-        continue;
-      }
-      let bookmark = {
-        id: event.guid,
-        parentId: event.parentGuid,
-        index: event.index,
-        title: event.title,
-        dateAdded: event.dateAdded,
-        type: BOOKMARKS_TYPES_TO_API_TYPES_MAP.get(event.itemType),
-        url: getUrl(event.itemType, event.url),
-      };
+      switch (event.type) {
+        case "bookmark-added":
+          if (event.isTagging) {
+            continue;
+          }
+          let bookmark = {
+            id: event.guid,
+            parentId: event.parentGuid,
+            index: event.index,
+            title: event.title,
+            dateAdded: event.dateAdded,
+            type: BOOKMARKS_TYPES_TO_API_TYPES_MAP.get(event.itemType),
+            url: getUrl(event.itemType, event.url),
+          };
 
-      if (event.itemType == TYPE_FOLDER) {
-        bookmark.dateGroupModified = bookmark.dateAdded;
-      }
+          if (event.itemType == TYPE_FOLDER) {
+            bookmark.dateGroupModified = bookmark.dateAdded;
+          }
 
-      this.emit("created", bookmark);
+          this.emit("created", bookmark);
+          break;
+        case "bookmark-removed":
+          if (event.isTagging || event.isDescendantRemoval) {
+            continue;
+          }
+          let node = {
+            id: event.guid,
+            parentId: event.parentGuid,
+            index: event.index,
+            type: BOOKMARKS_TYPES_TO_API_TYPES_MAP.get(event.itemType),
+            url: getUrl(event.itemType, event.url),
+          };
+
+          this.emit("removed", {
+            guid: event.guid,
+            info: { parentId: event.parentGuid, index: event.index, node },
+          });
+      }
     }
   }
 
@@ -166,18 +193,6 @@ let observer = new (class extends EventEmitter {
       oldIndex,
     };
     this.emit("moved", { guid, info });
-  }
-
-  onItemRemoved(id, parentId, index, itemType, uri, guid, parentGuid, source) {
-    let node = {
-      id: guid,
-      parentId: parentGuid,
-      index,
-      type: BOOKMARKS_TYPES_TO_API_TYPES_MAP.get(itemType),
-      url: getUrl(itemType, uri && uri.spec),
-    };
-
-    this.emit("removed", { guid, info: { parentId: parentGuid, index, node } });
   }
 
   onItemChanged(
@@ -212,7 +227,7 @@ const decrementListeners = () => {
   if (!listenerCount) {
     PlacesUtils.bookmarks.removeObserver(observer);
     PlacesUtils.observers.removeListener(
-      ["bookmark-added"],
+      ["bookmark-added", "bookmark-removed"],
       observer.handlePlacesEvents
     );
   }
@@ -223,7 +238,7 @@ const incrementListeners = () => {
   if (listenerCount == 1) {
     PlacesUtils.bookmarks.addObserver(observer);
     PlacesUtils.observers.addListener(
-      ["bookmark-added"],
+      ["bookmark-added", "bookmark-removed"],
       observer.handlePlacesEvents
     );
   }

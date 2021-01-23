@@ -21,9 +21,20 @@ ChromeUtils.defineModuleGetter(
   "PreferenceExperiments",
   "resource://normandy/lib/PreferenceExperiments.jsm"
 );
-
-const { generateUUID } = Cc["@mozilla.org/uuid-generator;1"].getService(
-  Ci.nsIUUIDGenerator
+ChromeUtils.defineModuleGetter(
+  this,
+  "PreferenceRollouts",
+  "resource://normandy/lib/PreferenceRollouts.jsm"
+);
+ChromeUtils.defineModuleGetter(
+  this,
+  "AddonStudies",
+  "resource://normandy/lib/AddonStudies.jsm"
+);
+ChromeUtils.defineModuleGetter(
+  this,
+  "AddonRollouts",
+  "resource://normandy/lib/AddonRollouts.jsm"
 );
 
 var EXPORTED_SYMBOLS = ["ClientEnvironment"];
@@ -66,15 +77,7 @@ class ClientEnvironment extends ClientEnvironmentBase {
   }
 
   static get userId() {
-    let id = Services.prefs.getCharPref("app.normandy.user_id", "");
-    if (!id) {
-      // generateUUID adds leading and trailing "{" and "}". strip them off.
-      id = generateUUID()
-        .toString()
-        .slice(1, -1);
-      Services.prefs.setCharPref("app.normandy.user_id", id);
-    }
-    return id;
+    return ClientEnvironment.randomizationId;
   }
 
   static get country() {
@@ -97,16 +100,42 @@ class ClientEnvironment extends ClientEnvironmentBase {
     return (async () => {
       const names = { all: [], active: [], expired: [] };
 
-      for (const experiment of await PreferenceExperiments.getAll()) {
-        names.all.push(experiment.name);
-        if (experiment.expired) {
-          names.expired.push(experiment.name);
+      for (const { slug, expired } of await PreferenceExperiments.getAll()) {
+        names.all.push(slug);
+        if (expired) {
+          names.expired.push(slug);
         } else {
-          names.active.push(experiment.name);
+          names.active.push(slug);
         }
       }
 
       return names;
+    })();
+  }
+
+  static get studies() {
+    return (async () => {
+      const rv = { pref: {}, addon: {} };
+      for (const prefStudy of await PreferenceExperiments.getAll()) {
+        rv.pref[prefStudy.slug] = prefStudy;
+      }
+      for (const addonStudy of await AddonStudies.getAll()) {
+        rv.addon[addonStudy.slug] = addonStudy;
+      }
+      return rv;
+    })();
+  }
+
+  static get rollouts() {
+    return (async () => {
+      const rv = { pref: {}, addon: {} };
+      for (const prefRollout of await PreferenceRollouts.getAll()) {
+        rv.pref[prefRollout.slug] = prefRollout;
+      }
+      for (const addonRollout of await AddonRollouts.getAll()) {
+        rv.addon[addonRollout.slug] = addonRollout;
+      }
+      return rv;
     })();
   }
 

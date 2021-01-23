@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Xabar filterlari">
+<!ENTITY nameColumn.label "Filtrning nomi">
+<!ENTITY activeColumn.label "Yoqib qo‘yilgan">
+<!ENTITY newButton.label "Yangi…">
+<!ENTITY newButton.accesskey "Y">
+
+
+<!ENTITY editButton.label "Tahrirlash…">
+<!ENTITY editButton.accesskey "T">
+<!ENTITY deleteButton.label "O‘chirish">
+<!ENTITY deleteButton.accesskey "c">
+<!ENTITY reorderTopButton "Yuqoriga ko‘chirish">
+<!ENTITY reorderTopButton.accessKey "o">
+<!ENTITY reorderTopButton.toolTip "Boshqa barchasini filterlashdan oldin uni tartiblash">
+<!ENTITY reorderUpButton.label "Yuqoriga ko‘chirish">
+<!ENTITY reorderUpButton.accesskey "Y">
+<!ENTITY reorderDownButton.label "Pastga ko‘chirish">
+<!ENTITY reorderDownButton.accesskey "P">
+<!ENTITY reorderBottomButton "Eng pastga ko‘chirish">
+<!ENTITY reorderBottomButton.accessKey "B">
+<!ENTITY reorderBottomButton.toolTip "Boshqa barchasini filterlashdan keyin uni tartiblash">
+<!ENTITY filterHeader.label "Yoqib qo‘yilgan filterlar pastga ko‘rsatilgan tartibga ko‘ra avtomatik ishga tushadi.">
+<!ENTITY filtersForPrefix.label "Filterlar:">
+<!ENTITY filtersForPrefix.accesskey "F">
+<!ENTITY viewLogButton.label "Filter jurnali">
+<!ENTITY viewLogButton.accesskey "j">
+<!ENTITY runFilters.label "Hozir ishga tushirish">
+<!ENTITY runFilters.accesskey "i">
+<!ENTITY stopFilters.label "To‘xtatish">
+<!ENTITY stopFilters.accesskey "T">
+<!ENTITY folderPickerPrefix.label "Tanlangan filterlarni ishga tushirish:">
+<!ENTITY folderPickerPrefix.accesskey "T">
+<!ENTITY helpButton.label "Yordam">
+<!ENTITY helpButton.accesskey "Y">
+<!ENTITY closeCmd.key "W"> 
+<!ENTITY searchBox.emptyText "Filterlarni nomi bo‘yicha izlash…">
+

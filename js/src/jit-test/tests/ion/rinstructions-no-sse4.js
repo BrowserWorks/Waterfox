@@ -6,6 +6,9 @@
 setJitCompilerOption("baseline.warmup.trigger", 10);
 setJitCompilerOption("ion.warmup.trigger", 20);
 
+// Prevent the GC from cancelling Ion compilations, when we expect them to succeed
+gczeal(0);
+
 const max = 200;
 
 // Check that we are able to remove the operation inside recover test
@@ -19,7 +22,7 @@ let uceFault = function (i) {
 };
 
 let uceFault_ceil_double = eval(
-    uneval(uceFault)
+    `(${uceFault})`
         .replace('uceFault', 'uceFault_ceil_double')
 );
 function rceil_double(i) {
@@ -31,7 +34,7 @@ function rceil_double(i) {
 }
 
 let uceFault_floor_double = eval(
-    uneval(uceFault)
+    `(${uceFault})`
         .replace('uceFault', 'uceFault_floor_double')
 );
 function rfloor_double(i) {

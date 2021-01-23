@@ -177,8 +177,11 @@ EVENT(durationchange, eDurationChange, EventNameType_HTML, eBasicEventClass)
 EVENT(emptied, eEmptied, EventNameType_HTML, eBasicEventClass)
 EVENT(ended, eEnded, EventNameType_HTML, eBasicEventClass)
 EVENT(finish, eMarqueeFinish, EventNameType_HTMLMarqueeOnly, eBasicEventClass)
+EVENT(formdata, eFormData, EventNameType_HTML, eBasicEventClass)
 EVENT(fullscreenchange, eFullscreenChange, EventNameType_HTML, eBasicEventClass)
 EVENT(fullscreenerror, eFullscreenError, EventNameType_HTML, eBasicEventClass)
+EVENT(beforeinput, eEditorBeforeInput, EventNameType_HTMLXUL,
+      eEditorInputEventClass)
 EVENT(input, eEditorInput, EventNameType_HTMLXUL, eEditorInputEventClass)
 EVENT(invalid, eFormInvalid, EventNameType_HTMLXUL, eBasicEventClass)
 EVENT(keydown, eKeyDown, EventNameType_HTMLXUL, eKeyboardEventClass)
@@ -246,9 +249,12 @@ EVENT(toggle, eToggle, EventNameType_HTML, eBasicEventClass)
 EVENT(volumechange, eVolumeChange, EventNameType_HTML, eBasicEventClass)
 EVENT(waiting, eWaiting, EventNameType_HTML, eBasicEventClass)
 EVENT(wheel, eWheel, EventNameType_All, eWheelEventClass)
-EVENT(copy, eCopy, EventNameType_HTMLXUL, eClipboardEventClass)
-EVENT(cut, eCut, EventNameType_HTMLXUL, eClipboardEventClass)
-EVENT(paste, ePaste, EventNameType_HTMLXUL, eClipboardEventClass)
+EVENT(copy, eCopy, EventNameType_HTMLXUL | EventNameType_SVGGraphic,
+      eClipboardEventClass)
+EVENT(cut, eCut, EventNameType_HTMLXUL | EventNameType_SVGGraphic,
+      eClipboardEventClass)
+EVENT(paste, ePaste, EventNameType_HTMLXUL | EventNameType_SVGGraphic,
+      eClipboardEventClass)
 // Gecko-specific extensions that apply to elements
 EVENT(beforescriptexecute, eBeforeScriptExecute, EventNameType_HTMLXUL,
       eBasicEventClass)
@@ -339,9 +345,6 @@ WINDOW_ONLY_EVENT(vrdisplaydisconnect, eVRDisplayDisconnect, EventNameType_None,
                   eBasicEventClass)
 WINDOW_ONLY_EVENT(vrdisplaypresentchange, eVRDisplayPresentChange,
                   EventNameType_None, eBasicEventClass)
-// Install events as per W3C Manifest spec
-WINDOW_ONLY_EVENT(appinstalled, eAppInstalled, EventNameType_None,
-                  eBasicEventClass)
 
 TOUCH_EVENT(touchstart, eTouchStart, EventNameType_All, eTouchEventClass)
 TOUCH_EVENT(touchend, eTouchEnd, EventNameType_All, eTouchEventClass)
@@ -522,13 +525,17 @@ EVENT(webkitAnimationStart, eWebkitAnimationStart, EventNameType_All,
 EVENT(webkitTransitionEnd, eWebkitTransitionEnd, EventNameType_All,
       eTransitionEventClass)
 #ifndef MESSAGE_TO_EVENT
-EVENT(webkitanimationend, eWebkitAnimationEnd, EventNameType_All,
+// These are only here so that IsEventAttributeName() will return the right
+// thing for these events.  We could probably remove them if we used
+// Element::GetEventNameForAttr on the input to IsEventAttributeName before
+// looking it up in the hashtable...
+EVENT(webkitanimationend, eUnidentifiedEvent, EventNameType_All,
       eAnimationEventClass)
-EVENT(webkitanimationiteration, eWebkitAnimationIteration, EventNameType_All,
+EVENT(webkitanimationiteration, eUnidentifiedEvent, EventNameType_All,
       eAnimationEventClass)
-EVENT(webkitanimationstart, eWebkitAnimationStart, EventNameType_All,
+EVENT(webkitanimationstart, eUnidentifiedEvent, EventNameType_All,
       eAnimationEventClass)
-EVENT(webkittransitionend, eWebkitTransitionEnd, EventNameType_All,
+EVENT(webkittransitionend, eUnidentifiedEvent, EventNameType_All,
       eTransitionEventClass)
 #endif
 

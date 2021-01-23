@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identitiesListManageDesc.label "Gestioneu les identitats d'aquest compte. S'utilitza la primera identitat per defecte.">
+<!ENTITY identitiesListAdd.label  "Afegeix…">
+<!ENTITY identitiesListAdd.accesskey  "A">
+<!ENTITY identitiesListEdit.label "Edita…">
+<!ENTITY identitiesListEdit.accesskey "E">
+<!ENTITY identitiesListDefault.label "Defineix per defecte">
+<!ENTITY identitiesListDefault.accesskey "D">
+<!ENTITY identitiesListDelete.label "Suprimeix">
+<!ENTITY identitiesListDelete.accesskey "S">
+<!ENTITY identitiesListClose.label "Tanca">
+<!ENTITY identitiesListClose.accesskey "c">

@@ -4,236 +4,294 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 %endif
 
+%filter substitution
+
 #identity-box {
-  padding-inline-start: 8px;
-  padding-inline-end: 4px;
-  margin-inline-end: 4px;
+  padding-inline: @identityBoxPaddingInline@;
+  margin-inline-end: @identityBoxMarginInlineEnd@;
+}
+
+#identity-box,
+#tracking-protection-icon-container {
   /* Set default fill for icons in the identity block.
      Individual icons can override this. */
   fill: currentColor;
   fill-opacity: .6;
-  /* This is for tracking-protection-icon's slide-in animation. */
-  overflow: hidden;
 }
 
-#urlbar[pageproxystate="invalid"] > #identity-box > #blocked-permissions-container,
-#urlbar[pageproxystate="invalid"] > #identity-box > #notification-popup-box,
-#urlbar[pageproxystate="invalid"] > #identity-box > #identity-icon-labels {
+/* The tracking protection icon will be hidden if it is a chrome page. There
+   will be only the brand icon in the url bar. So, we need to change the padding
+   start for proper positing the icon. */
+#identity-box[pageproxystate="valid"].chromeUI {
+  padding-inline-start: 8px;
+}
+
+#urlbar.searchButton > #urlbar-input-container > #identity-box[pageproxystate="invalid"],
+#identity-box[pageproxystate="invalid"] > #permissions-granted-icon,
+#identity-box[pageproxystate="invalid"] > #blocked-permissions-container,
+#identity-box[pageproxystate="invalid"] > #notification-popup-box,
+#identity-box[pageproxystate="invalid"] > #identity-icon-label,
+#identity-box[pageproxystate="invalid"] > #remote-control-icon {
   display: none;
 }
 
-#urlbar[pageproxystate="invalid"] > #identity-box {
+#urlbar:not(.searchButton) > #urlbar-input-container > #identity-box[pageproxystate="invalid"] {
   pointer-events: none;
   -moz-user-focus: ignore;
 }
 
-#identity-box:hover:not(.no-hover):not([open=true]) {
+#identity-box:hover:not(.no-hover):not([open=true]),
+#tracking-protection-icon-container:hover:not([open=true]) {
   background-color: hsla(0,0%,70%,.2);
   fill-opacity: .8;
 }
 
 #identity-box:hover:active:not(.no-hover),
-#identity-box[open=true] {
+#identity-box[open=true],
+#tracking-protection-icon-container:hover:active,
+#tracking-protection-icon-container[open=true] {
   background-color: hsla(0,0%,70%,.3);
   fill-opacity: .8;
 }
 
-#identity-box:not(:active):-moz-focusring {
+#identity-box:not(:active):-moz-focusring,
+#tracking-protection-icon-container:not(:active):-moz-focusring {
   outline: var(--toolbarbutton-focus-outline);
   outline-offset: -2px;
   -moz-outline-radius: var(--toolbarbutton-border-radius);
 }
 
-#urlbar[pageproxystate="valid"] > #identity-box.verifiedIdentity > #identity-icon-labels {
-  color: #058B00;
+#identity-box[pageproxystate="valid"].chromeUI > #identity-icon-label,
+.urlbar-label {
+  opacity: .6;
 }
 
-:root[lwt-toolbar-field-brighttext] #urlbar[pageproxystate="valid"] > #identity-box.verifiedIdentity > #identity-icon-labels {
-  color: #30e60b;
-}
-
-#urlbar[pageproxystate="valid"] > #identity-box.chromeUI > #identity-icon-labels {
-%ifdef MOZ_OFFICIAL_BRANDING
-  color: rgb(229,115,0);
-%else
-  color: inherit;
-%endif
-}
-
-#identity-icon-labels:-moz-locale-dir(ltr) {
-  padding-left: 4px;
-}
-#identity-icon-labels:-moz-locale-dir(rtl) {
-  padding-right: 4px;
+#identity-icon-label {
+  padding-inline-start: 4px;
 }
 #identity-box:not(.chromeUI):not(.extensionPage):not(.notSecureText) {
   --urlbar-separator-color: transparent;
 }
-#urlbar[pageproxystate=valid] > #identity-box.verifiedIdentity {
-  --urlbar-separator-color: rgba(18, 188, 0, .5);
-}
 
-#urlbar[pageproxystate=valid] > #identity-box.notSecureText,
-#urlbar[pageproxystate=valid] > #identity-box.verifiedIdentity,
-#urlbar[pageproxystate=valid] > #identity-box.chromeUI,
-#urlbar[pageproxystate=valid] > #identity-box.extensionPage,
-#urlbar-display-box {
+#identity-box[pageproxystate="valid"].notSecureText,
+#identity-box[pageproxystate="valid"].chromeUI,
+#identity-box[pageproxystate="valid"].extensionPage,
+#urlbar-label-box {
   margin-inline-end: 8px;
   border-inline-end: 1px solid var(--urlbar-separator-color);
   border-image: linear-gradient(transparent 15%, var(--urlbar-separator-color) 15%, var(--urlbar-separator-color) 85%, transparent 85%);
   border-image-slice: 1;
 }
 
-#urlbar[pageproxystate=valid] > #identity-box.notSecureText,
-#urlbar[pageproxystate=valid] > #identity-box.verifiedIdentity,
-#urlbar[pageproxystate=valid] > #identity-box.chromeUI,
-#urlbar[pageproxystate=valid] > #identity-box.extensionPage {
+#identity-box[pageproxystate="valid"].notSecureText,
+#identity-box[pageproxystate="valid"].chromeUI,
+#identity-box[pageproxystate="valid"].extensionPage {
   padding-inline-end: 8px;
 }
 
-#urlbar-display-box {
-  padding-inline-start: 4px;
+#urlbar-label-box {
+  padding-inline: 4px;
   border-inline-start: 1px solid var(--urlbar-separator-color);
-  border-image: linear-gradient(transparent 15%, var(--urlbar-separator-color) 15%, var(--urlbar-separator-color) 85%, transparent 85%);
-  border-image-slice: 1;
 }
 
-#sharing-icon,
+.urlbar-label {
+  margin: 0;
+}
+
+.sharing-icon,
 #identity-icon,
+#permissions-granted-icon,
 #tracking-protection-icon,
-#connection-icon,
 .notification-anchor-icon,
-#blocked-permissions-container > .blocked-permission-icon,
-#extension-icon {
+#blocked-permissions-container > .blocked-permission-icon {
   width: 16px;
   height: 16px;
   margin-inline-start: 4px;
   -moz-context-properties: fill, fill-opacity;
+}
+
+#tracking-protection-icon {
+  margin-inline-start: 0;
 }
 
 /* MAIN IDENTITY ICON */
 #identity-icon {
   margin-inline-start: 0;
-  list-style-image: url(chrome://browser/skin/identity-icon.svg);
+  list-style-image: url(chrome://global/skin/icons/identity-icon.svg);
 }
 
-#identity-box.grantedPermissions > #identity-icon {
-  list-style-image: url(chrome://browser/skin/identity-icon-notice.svg);
-}
-
-#urlbar[pageproxystate="valid"] > #identity-box.chromeUI > #identity-icon {
+#identity-box[pageproxystate="valid"].chromeUI > #identity-icon {
   list-style-image: url(chrome://branding/content/identity-icons-brand.svg);
 }
 
-#urlbar[pageproxystate="invalid"] > #identity-box > #identity-icon {
+#urlbar:not(.searchButton) > #urlbar-input-container > #identity-box[pageproxystate="invalid"] > #identity-icon {
   list-style-image: url(chrome://browser/skin/search-glass.svg);
   fill-opacity: .4;
 }
 
-#urlbar[actiontype="extension"] > #identity-box > #identity-icon {
-  list-style-image: url(chrome://mozapps/skin/extensions/extensionGeneric-16.svg);
+#urlbar[actiontype="extension"] > #urlbar-input-container > #identity-box > #identity-icon {
+  list-style-image: url(chrome://mozapps/skin/extensions/extension.svg);
+}
+
+#identity-box[pageproxystate="valid"].extensionPage > #identity-icon {
+  list-style-image: url(chrome://mozapps/skin/extensions/extension.svg);
+}
+
+#identity-box[pageproxystate="valid"].verifiedDomain > #identity-icon,
+#identity-box[pageproxystate="valid"].mixedActiveBlocked > #identity-icon {
+  list-style-image: url(chrome://browser/skin/connection-secure.svg);
+}
+
+#identity-box[pageproxystate="valid"].verifiedDomain > #identity-icon:not([lock-icon-gray]),
+#identity-box[pageproxystate="valid"].mixedActiveBlocked > #identity-icon:not([lock-icon-gray]) {
+  fill-opacity: 1;
+  fill: #12BC00;
+}
+
+#identity-box[pageproxystate="valid"].weakCipher > #identity-icon,
+#identity-box[pageproxystate="valid"].mixedDisplayContent > #identity-icon,
+#identity-box[pageproxystate="valid"].mixedDisplayContentLoadedActiveBlocked > #identity-icon,
+#identity-box[pageproxystate="valid"].certUserOverridden > #identity-icon,
+#identity-box[pageproxystate="valid"].certErrorPage > #identity-icon {
+  list-style-image: url(chrome://browser/skin/connection-mixed-passive-loaded.svg);
+  fill: unset;
+}
+
+#identity-box[pageproxystate="valid"].notSecure > #identity-icon,
+#identity-box[pageproxystate="valid"].mixedActiveContent > #identity-icon {
+  list-style-image: url(chrome://browser/skin/connection-mixed-active-loaded.svg);
+}
+
+#permissions-granted-icon {
+  list-style-image: url(chrome://browser/skin/permissions.svg);
+}
+
+#identity-box:not(.grantedPermissions) > #permissions-granted-icon {
+  display: none;
 }
 
 /* SHARING ICON */
 
-#identity-box[sharing="camera"] > #sharing-icon {
+#webrtc-sharing-icon[sharing="camera"] {
   list-style-image: url("chrome://browser/skin/notification-icons/camera.svg");
 }
 
-#identity-box[sharing="microphone"] > #sharing-icon {
+#webrtc-sharing-icon[sharing="microphone"] {
   list-style-image: url("chrome://browser/skin/notification-icons/microphone.svg");
 }
 
-#identity-box[sharing="screen"] > #sharing-icon {
+#webrtc-sharing-icon[sharing="screen"] {
   list-style-image: url("chrome://browser/skin/notification-icons/screen.svg");
 }
 
-#identity-box:not([sharing]) > #sharing-icon {
+#geo-sharing-icon[sharing] {
+  list-style-image: url("chrome://browser/skin/notification-icons/geo.svg");
+}
+
+.sharing-icon:not([sharing]) {
   display: none;
 }
 
-#identity-box[sharing]:not([paused]) > #sharing-icon {
-  animation: 1.5s ease in-use-blink infinite;
+#webrtc-sharing-icon[sharing]:not([paused]) {
+  animation: 1.5s ease webrtc-sharing-icon-in-use-blink infinite;
   -moz-context-properties: fill;
   fill: rgb(224, 41, 29);
 }
 
-@keyframes in-use-blink {
+@keyframes webrtc-sharing-icon-in-use-blink {
   50% { opacity: 0; }
 }
 
 /* TRACKING PROTECTION ICON */
 
-#tracking-protection-icon-box {
-  visibility: collapse;
-  overflow: hidden;
-  width: 20px;
-  height: 20px;
-  margin-inline-end: -20px;
+#tracking-protection-icon-container {
+  padding-inline: @identityBoxPaddingInline@;
+  /* Separator */
+  border-inline-end: 1px solid var(--urlbar-separator-color);
+  border-image: linear-gradient(transparent 15%, var(--urlbar-separator-color) 15%, var(--urlbar-separator-color) 85%, transparent 85%);
+  border-image-slice: 1;
+  /* This is needed in order to position the blue dot indicator. */
+  position: relative;
 }
 
-#tracking-protection-icon-box[active],
-#tracking-protection-icon-box[hasException] {
-  margin-inline-end: 0px;
-  visibility: visible;
-}
-
-#tracking-protection-icon-box[animationsenabled][animate] {
-  transition: margin-left 200ms ease-out, margin-right 200ms ease-out;
-}
-
-#tracking-protection-icon-box:not([hasException])[active][animationsenabled] > #tracking-protection-icon,
-#tracking-protection-icon-box:not([animationsenabled]) > #tracking-protection-icon-animatable-box {
+#urlbar-input-container[pageproxystate="valid"] > #tracking-protection-icon-container.chromeUI {
   display: none;
 }
 
-#tracking-protection-icon-box > #tracking-protection-icon-animatable-box {
-  position: absolute;
+#tracking-protection-icon-box {
   overflow: hidden;
-  margin-inline-start: 4px;
   width: 16px;
-  height: 20px;
+  height: 16px;
 }
 
-#tracking-protection-icon-box:not([hasException])[active] #tracking-protection-icon-animatable-image {
+#tracking-protection-icon-box:not([hasException])[active] > #tracking-protection-icon,
+#tracking-protection-icon-box:not([active]) > #tracking-protection-icon-animatable-box {
+  display: none;
+}
+
+#tracking-protection-icon-animatable-box {
+  display: block;
+  position: absolute;
+  overflow: hidden;
+  width: 16px;
+  height: 16px;
+}
+
+#tracking-protection-icon-box:not([hasException])[active] > #tracking-protection-icon-animatable-box > #tracking-protection-icon-animatable-image {
+  /* Overrides the default 'display: -moz-box' to prevent icon shifting issue
+     with scaled text, see Bug 1591049 */
+  display: block;
   background-image: url(chrome://browser/skin/tracking-protection-animation.svg);
-  transform: translateX(-2816px);
-  width: 2832px;
+  transform: translateX(-256px);
+  width: 272px;
   background-size: auto;
   height: 16px;
-  min-height: 20px;
+  min-height: 16px;
   -moz-context-properties: fill, fill-opacity;
 }
 
-:root[lwt-toolbar-field-brighttext] #tracking-protection-icon-box:not([hasException])[active] #tracking-protection-icon-animatable-image {
+#tracking-protection-icon-box:not([hasException])[active] > #tracking-protection-icon-animatable-box > #tracking-protection-icon-animatable-image:-moz-locale-dir(rtl) {
+  transform: translateX(0);
+}
+
+#tracking-protection-icon-box[hasException]:-moz-locale-dir(rtl)::before {
+  left: 0;
+  right: unset;
+  /* This is needed in order to put the dot in front of the shield icon in rtl
+     mode */
+  z-index: 1;
+}
+
+:root[lwt-toolbar-field-brighttext] #tracking-protection-icon-box:not([hasException])[active] > #tracking-protection-icon-animatable-box > #tracking-protection-icon-animatable-image {
   background-image: url(chrome://browser/skin/tracking-protection-animation-brighttext.svg);
 }
 
-#tracking-protection-icon-box[active] #tracking-protection-icon-animatable-image:-moz-locale-dir(rtl) {
-  transform: scaleX(-1) translateX(-2816px);
+@media (prefers-reduced-motion: no-preference) {
+  #tracking-protection-icon-box[active][animate] > #tracking-protection-icon-animatable-box > #tracking-protection-icon-animatable-image {
+    animation-name: tp-icon-animation;
+    animation-timing-function: steps(16);
+    animation-duration: 1s;
+    animation-fill-mode: forwards;
+  }
+
+  #tracking-protection-icon-box[active][animate] > #tracking-protection-icon-animatable-box > #tracking-protection-icon-animatable-image:-moz-locale-dir(rtl) {
+    animation-name: tp-icon-animation-rtl;
+  }
 }
 
-#tracking-protection-icon-box[active][animate] #tracking-protection-icon-animatable-image {
-  animation-name: tp-icon-animation;
-  animation-timing-function: steps(176);
-  animation-duration: 3s;
-  animation-fill-mode: forwards;
+#tracking-protection-icon-tooltip {
+  max-width: 500px;
 }
 
-#tracking-protection-icon-box[active][animate] #tracking-protection-icon-animatable-image:-moz-locale-dir(rtl) {
-  animation-name: tp-icon-animation-rtl;
-}
-
-#tracking-protection-icon-box[active] > #tracking-protection-icon {
+#urlbar-input-container[pageproxystate="valid"] > #tracking-protection-icon-container > #tracking-protection-icon-box > #tracking-protection-icon {
   list-style-image: url(chrome://browser/skin/tracking-protection.svg);
 }
 
-#tracking-protection-icon-box[hasException] > #tracking-protection-icon {
+#urlbar-input-container[pageproxystate="valid"] > #tracking-protection-icon-container > #tracking-protection-icon-box[hasException] > #tracking-protection-icon {
   list-style-image: url(chrome://browser/skin/tracking-protection-disabled.svg);
 }
 
-#urlbar[pageproxystate="invalid"] > #identity-box > #extension-icon,
-#urlbar[pageproxystate="invalid"] > #identity-box > #tracking-protection-icon-box {
+#urlbar-input-container[pageproxystate="invalid"] > #tracking-protection-icon-container {
   visibility: collapse;
 }
 
@@ -242,54 +300,23 @@
     transform: translateX(0);
   }
   100% {
-    transform: translateX(-2816px);
+    transform: translateX(-256px);
   }
 }
 
 @keyframes tp-icon-animation-rtl {
   from {
-    transform: scaleX(-1) translateX(0);
+    transform: translateX(256px);
   }
   100% {
-    transform: scaleX(-1) translateX(-2816px);
+    transform: translateX(0);
   }
 }
 
-/* CONNECTION ICON, EXTENSION ICON, REMOTE CONTROL ICON */
+/* REMOTE CONTROL ICON */
 
-#connection-icon,
-#extension-icon,
 #remote-control-icon {
   visibility: collapse;
-}
-#urlbar[pageproxystate="valid"] > #identity-box.verifiedDomain > #connection-icon,
-#urlbar[pageproxystate="valid"] > #identity-box.verifiedIdentity > #connection-icon,
-#urlbar[pageproxystate="valid"] > #identity-box.mixedActiveBlocked > #connection-icon {
-  list-style-image: url(chrome://browser/skin/connection-secure.svg);
-  visibility: visible;
-  -moz-context-properties: fill;
-  fill: #12BC00;
-}
-#urlbar[pageproxystate="valid"] > #identity-box.weakCipher > #connection-icon,
-#urlbar[pageproxystate="valid"] > #identity-box.mixedDisplayContent > #connection-icon,
-#urlbar[pageproxystate="valid"] > #identity-box.mixedDisplayContentLoadedActiveBlocked > #connection-icon,
-#urlbar[pageproxystate="valid"] > #identity-box.certUserOverridden > #connection-icon {
-  list-style-image: url(chrome://browser/skin/connection-mixed-passive-loaded.svg);
-  visibility: visible;
-  fill: unset;
-  -moz-context-properties: fill, fill-opacity;
-}
-
-#urlbar[pageproxystate="valid"] > #identity-box.notSecure > #connection-icon,
-#urlbar[pageproxystate="valid"] > #identity-box.insecureLoginForms > #connection-icon,
-#urlbar[pageproxystate="valid"] > #identity-box.mixedActiveContent > #connection-icon {
-  list-style-image: url(chrome://browser/skin/connection-mixed-active-loaded.svg);
-  visibility: visible;
-}
-
-#identity-box.extensionPage > #extension-icon {
-  list-style-image: url(chrome://mozapps/skin/extensions/extensionGeneric-16.svg);
-  visibility: visible;
 }
 
 :root[remotecontrol] #remote-control-icon {

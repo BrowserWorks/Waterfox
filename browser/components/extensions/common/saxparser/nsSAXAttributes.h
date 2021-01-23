@@ -25,9 +25,9 @@ class nsSAXAttributes final : public nsISAXAttributes {
   NS_DECL_ISUPPORTS
   NS_DECL_NSISAXATTRIBUTES
 
-  nsresult AddAttribute(const nsAString &aURI, const nsAString &aLocalName,
-                        const nsAString &aQName, const nsAString &aType,
-                        const nsAString &aValue);
+  nsresult AddAttribute(const nsAString& aURI, const nsAString& aLocalName,
+                        const nsAString& aQName, const nsAString& aType,
+                        const nsAString& aValue);
 
  private:
   ~nsSAXAttributes() {}

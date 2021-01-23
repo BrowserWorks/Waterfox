@@ -12,10 +12,10 @@
 //! there.
 
 #![cfg_attr(feature = "nightly", feature(nonzero))]
-#![cfg_attr(feature = "cargo-clippy", allow(float_cmp, too_many_arguments, unreadable_literal))]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::float_cmp, clippy::too_many_arguments))]
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::unreadable_literal, clippy::new_without_default))]
 
 extern crate app_units;
-extern crate bincode;
 #[macro_use]
 extern crate bitflags;
 extern crate byteorder;
@@ -28,8 +28,6 @@ extern crate core_graphics;
 #[macro_use]
 extern crate derive_more;
 pub extern crate euclid;
-#[cfg(feature = "ipc")]
-extern crate ipc_channel;
 #[macro_use]
 extern crate malloc_size_of_derive;
 extern crate serde;
@@ -38,21 +36,29 @@ extern crate serde_derive;
 extern crate time;
 
 extern crate malloc_size_of;
+extern crate peek_poke;
 
 mod api;
 pub mod channel;
 mod color;
 mod display_item;
+mod display_item_cache;
 mod display_list;
 mod font;
 mod gradient_builder;
 mod image;
+mod resources;
 pub mod units;
+
+#[doc(hidden)]
+pub mod image_tiling;
 
 pub use crate::api::*;
 pub use crate::color::*;
 pub use crate::display_item::*;
+pub use crate::display_item_cache::DisplayItemCache;
 pub use crate::display_list::*;
 pub use crate::font::*;
 pub use crate::gradient_builder::*;
 pub use crate::image::*;
+pub use crate::resources::DEFAULT_TILE_SIZE;

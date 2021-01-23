@@ -47,9 +47,14 @@ include $(CORE_DEPTH)/coreconf/rules.mk
 # (7) Execute "local" rules. (OPTIONAL).                              #
 #######################################################################
 
-nss_build_all: build_nspr all latest
+nss_build_all:
+	$(MAKE) build_nspr
+	$(MAKE) all
+	$(MAKE) latest
 
-nss_clean_all: clobber_nspr clobber
+nss_clean_all:
+	$(MAKE) clobber_nspr
+	$(MAKE) clobber
 
 NSPR_CONFIG_STATUS = $(CORE_DEPTH)/../nspr/$(OBJDIR_NAME)/config.status
 NSPR_CONFIGURE = $(CORE_DEPTH)/../nspr/configure
@@ -86,16 +91,14 @@ endif
 ifdef NS_USE_GCC
 NSPR_CONFIGURE_ENV = CC=gcc CXX=g++
 endif
+# Make sure to remove -arch arguments. NSPR can't handle that.
+remove_arch = $(filter-out __REMOVEME%,$(subst $(NULL) -arch , __REMOVEME,$(1)))
 ifdef CC
-NSPR_CONFIGURE_ENV = CC="$(CC)"
+NSPR_CONFIGURE_ENV = CC="$(call remove_arch,$(CC))"
 endif
 ifdef CCC
-NSPR_CONFIGURE_ENV += CXX="$(CCC)"
+NSPR_CONFIGURE_ENV += CXX="$(call remove_arch,$(CCC))"
 endif
-# Remove -arch definitions. NSPR can't handle that.
-NSPR_CONFIGURE_ENV := $(filter-out -arch x86_64,$(NSPR_CONFIGURE_ENV))
-NSPR_CONFIGURE_ENV := $(filter-out -arch i386,$(NSPR_CONFIGURE_ENV))
-NSPR_CONFIGURE_ENV := $(filter-out -arch ppc,$(NSPR_CONFIGURE_ENV))
 
 #
 # Some pwd commands on Windows (for example, the pwd
@@ -137,6 +140,7 @@ endif
 
 build_nspr: $(NSPR_CONFIG_STATUS)
 	$(MAKE) -C $(CORE_DEPTH)/../nspr/$(OBJDIR_NAME)
+	$(MAKE) -C $(CORE_DEPTH)/../nspr/$(OBJDIR_NAME)/pr/tests
 
 install_nspr: build_nspr
 	$(MAKE) -C $(CORE_DEPTH)/../nspr/$(OBJDIR_NAME) install
@@ -157,4 +161,3 @@ package:
 
 latest:
 	echo $(OBJDIR_NAME) > $(CORE_DEPTH)/../dist/latest
-

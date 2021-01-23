@@ -1,0 +1,428 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY event.title.label                  "Edita l'element" >
+
+<!ENTITY event.dialog.keepDurationButton.tooltip   "Conserva la durada quan es canviï la data de finalització">
+<!ENTITY event.dialog.keepDurationButton.accesskey "d">
+
+<!ENTITY newevent.from.label                "Des de" >
+<!ENTITY newevent.to.label                  "Fins a" >
+
+<!ENTITY newevent.status.label                    "Estat" >
+<!ENTITY newevent.status.accesskey                "s" >
+<!ENTITY newevent.eventStatus.none.label          "Sense especificar" >
+<!ENTITY newevent.eventStatus.none.accesskey      "e" >
+<!ENTITY newevent.todoStatus.none.label           "Sense especificar" >
+<!ENTITY newevent.eventStatus.cancelled.label     "Cancel·lada" >
+<!ENTITY newevent.eventStatus.cancelled.accesskey "n" >
+<!ENTITY newevent.todoStatus.cancelled.label      "Cancel·lada" >
+<!ENTITY newevent.status.tentative.label          "Provisional" >
+<!ENTITY newevent.status.tentative.accesskey      "P" >
+<!ENTITY newevent.status.confirmed.label          "Confirmada" >
+<!ENTITY newevent.status.confirmed.accesskey      "C" >
+<!ENTITY newevent.status.needsaction.label        "Necessita una acció" >
+<!ENTITY newevent.status.inprogress.label         "En curs" >
+<!ENTITY newevent.status.completed.label          "Acabada el dia" >
+
+<!-- The following entity is for New Task dialog only -->
+<!ENTITY newtodo.percentcomplete.label      "&#37; acabada">
+
+<!-- LOCALIZATON NOTE(event.attendees.notify.label,event.attendees.notifyundisclosed.label,
+     event.attendees.disallowcounter.label)
+   - These three labels are displayed side by side in the event dialog, make sure
+   - they still fit in. -->
+<!ENTITY event.attendees.notify.label                "Notifica els assistents">
+<!ENTITY event.attendees.notify.accesskey            "f">
+<!ENTITY event.attendees.notifyundisclosed.label     "Invitació separada per a cada assistent">
+<!ENTITY event.attendees.notifyundisclosed.accesskey "n">
+<!ENTITY event.attendees.notifyundisclosed.tooltip   "Aquesta opció envia un missatge d'invitació per assistent. Cada invitació conté l'assistent com a únic destinatari, de forma que els assistents no veuen la identitat els uns dels altres.">
+<!ENTITY event.attendees.disallowcounter.label       "No permetis contrapropostes">
+<!ENTITY event.attendees.disallowcounter.accesskey   "a">
+<!ENTITY event.attendees.disallowcounter.tooltip     "Indica que no voleu acceptar contrapropostes">
+
+<!-- Keyboard Shortcuts -->
+<!ENTITY event.dialog.new.event.key2              "I">
+<!ENTITY event.dialog.new.task.key2               "D">
+<!ENTITY event.dialog.new.message.key2            "N">
+<!ENTITY event.dialog.close.key                   "W">
+<!ENTITY event.dialog.save.key                    "S">
+<!ENTITY event.dialog.saveandclose.key            "L">
+<!ENTITY event.dialog.print.key                   "P">
+<!ENTITY event.dialog.undo.key                    "Z">
+<!ENTITY event.dialog.redo.key                    "Y">
+<!ENTITY event.dialog.cut.key                     "X">
+<!ENTITY event.dialog.copy.key                    "C">
+<!ENTITY event.dialog.paste.key                   "V">
+<!ENTITY event.dialog.select.all.key              "A">
+
+<!-- Menubar -->
+<!ENTITY  event.menu.item.new.label                       "Nou">
+<!ENTITY  event.menu.item.new.accesskey                   "N">
+<!ENTITY  event.menu.item.new.event.label                 "Cita">
+<!ENTITY  event.menu.item.new.event.accesskey             "C">
+<!ENTITY  event.menu.item.new.task.label                  "Tasca">
+<!ENTITY  event.menu.item.new.task.accesskey              "T">
+<!ENTITY  event.menu.item.new.message.label               "Missatge">
+<!ENTITY  event.menu.item.new.message.accesskey           "M">
+<!ENTITY  event.menu.item.new.contact.label               "Contacte de la llibreta d'adreces">
+<!ENTITY  event.menu.item.new.contact.accesskey           "C">
+<!ENTITY  event.menu.item.close.label                     "Tanca">
+<!ENTITY  event.menu.item.close.accesskey                 "T">
+
+<!-- LOCALIZATION NOTE
+   - event.menu.item.save.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a dialog window.
+   - event.menu.item.save.tab.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.save.label                      "Desa">
+<!ENTITY  event.menu.item.save.accesskey                  "D">
+<!ENTITY  event.menu.item.save.tab.accesskey              "a">
+
+<!-- LOCALIZATION NOTE
+    - event.menu.item.saveandclose.accesskey is used for "Save and Close"
+    - menu item when editing events/tasks in a dialog window.
+    - event.menu.item.saveandclose.tab.accesskey is used for "Save and Close"
+    - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.saveandclose.label              "Desa i tanca">
+<!ENTITY  event.menu.item.saveandclose.accesskey          "e">
+<!ENTITY  event.menu.item.saveandclose.tab.accesskey      "t">
+
+<!ENTITY  event.menu.item.delete.label                    "Suprimeix…">
+<!ENTITY  event.menu.item.delete.accesskey                "S">
+<!ENTITY  event.menu.item.page.setup.label                "Configuració de la pàgina">
+<!ENTITY  event.menu.item.page.setup.accesskey            "u">
+<!ENTITY  event.menu.item.print.label                     "Imprimeix">
+<!ENTITY  event.menu.item.print.accesskey                 "I">
+
+<!ENTITY  event.menu.edit.label                           "Edita">
+<!ENTITY  event.menu.edit.accesskey                       "E">
+<!ENTITY  event.menu.edit.undo.label                      "Desfés">
+<!ENTITY  event.menu.edit.undo.accesskey                  "D">
+<!ENTITY  event.menu.edit.redo.label                      "Refés">
+<!ENTITY  event.menu.edit.redo.accesskey                  "R">
+<!ENTITY  event.menu.edit.cut.label                       "Retalla">
+<!ENTITY  event.menu.edit.cut.accesskey                   "t">
+<!ENTITY  event.menu.edit.copy.label                      "Copia">
+<!ENTITY  event.menu.edit.copy.accesskey                  "C">
+<!ENTITY  event.menu.edit.paste.label                     "Enganxa">
+<!ENTITY  event.menu.edit.paste.accesskey                 "x">
+<!ENTITY  event.menu.edit.select.all.label                "Selecciona-ho tot">
+<!ENTITY  event.menu.edit.select.all.accesskey            "o">
+
+<!ENTITY  event.menu.view.label                           "Visualitza">
+<!ENTITY  event.menu.view.accesskey                       "V">
+<!ENTITY  event.menu.view.toolbars.label                  "Barres d'eines">
+<!ENTITY  event.menu.view.toolbars.accesskey              "B">
+<!ENTITY  event.menu.view.toolbars.event.label            "Barra d'eines de cites">
+<!ENTITY  event.menu.view.toolbars.event.accesskey        "c">
+<!ENTITY  event.menu.view.toolbars.customize.label        "Personalitza…">
+<!ENTITY  event.menu.view.toolbars.customize.accesskey    "P">
+<!ENTITY  event.menu.view.showlink.label                  "Mostra l'enllaç relacionat">
+<!ENTITY  event.menu.view.showlink.accesskey              "r">
+
+<!ENTITY  event.menu.options.label                            "Opcions">
+<!ENTITY  event.menu.options.accesskey                        "O">
+<!ENTITY  event.menu.options.attendees.label                  "Invita assistents…">
+<!ENTITY  event.menu.options.attendees.accesskey              "I">
+<!ENTITY  event.menu.options.timezone2.label                  "Mostra els fusos horaris">
+<!ENTITY  event.menu.options.timezone2.accesskey              "h">
+<!ENTITY  event.menu.options.priority2.label                  "Prioritat">
+<!ENTITY  event.menu.options.priority2.accesskey              "P">
+<!ENTITY  event.menu.options.priority.notspecified.label      "Sense especificar">
+<!ENTITY  event.menu.options.priority.notspecified.accesskey  "S">
+<!ENTITY  event.menu.options.priority.low.label               "Baixa">
+<!ENTITY  event.menu.options.priority.low.accesskey           "B">
+<!ENTITY  event.menu.options.priority.normal.label            "Normal">
+<!ENTITY  event.menu.options.priority.normal.accesskey        "N">
+<!ENTITY  event.menu.options.priority.high.label              "Alta">
+<!ENTITY  event.menu.options.priority.high.accesskey          "A">
+<!ENTITY  event.menu.options.privacy.label                    "Privadesa">
+<!ENTITY  event.menu.options.privacy.accesskey                "v">
+<!ENTITY  event.menu.options.privacy.public.label             "Cita pública">
+<!ENTITY  event.menu.options.privacy.public.accesskey         "b">
+<!ENTITY  event.menu.options.privacy.confidential.label       "Mostra només la data i l'hora">
+<!ENTITY  event.menu.options.privacy.confidential.accesskey   "s">
+<!ENTITY  event.menu.options.privacy.private.label            "Cita privada">
+<!ENTITY  event.menu.options.privacy.private.accesskey        "r">
+<!ENTITY  event.menu.options.show.time.label                  "Disponibilitat">
+<!ENTITY  event.menu.options.show.time.accesskey              "t">
+<!ENTITY  event.menu.options.show.time.busy.label             "Ocupat">
+<!ENTITY  event.menu.options.show.time.busy.accesskey         "O">
+<!ENTITY  event.menu.options.show.time.free.label             "Lliure">
+<!ENTITY  event.menu.options.show.time.free.accesskey         "L">
+
+<!ENTITY event.invite.attendees.label                     "Invita assistents…">
+<!ENTITY event.invite.attendees.accesskey                 "I">
+<!ENTITY event.email.attendees.label                      "Redacta un missatge a tots els assistents…">
+<!ENTITY event.email.attendees.accesskey                  "t">
+<!ENTITY event.email.tentative.attendees.label            "Redacta un missatge a tots els assistents indecisos…">
+<!ENTITY event.email.tentative.attendees.accesskey        "i">
+<!ENTITY event.remove.attendees.label2                    "Elimina tots els assistents">
+<!ENTITY event.remove.attendees.accesskey                 "l">
+<!ENTITY event.remove.attendee.label                      "Elimina un assistent">
+<!ENTITY event.remove.attendee.accesskey                  "E">
+
+<!-- Toolbar -->
+<!ENTITY  event.toolbar.save.label2                       "Desa">
+<!ENTITY  event.toolbar.saveandclose.label                "Desa i tanca">
+<!ENTITY  event.toolbar.delete.label                      "Suprimeix">
+<!ENTITY  event.toolbar.attendees.label                   "Invita assistents">
+<!ENTITY  event.toolbar.privacy.label                     "Privadesa">
+
+<!ENTITY  event.toolbar.save.tooltip2                     "Desa">
+<!ENTITY  event.toolbar.saveandclose.tooltip              "Desa i tanca">
+<!ENTITY  event.toolbar.delete.tooltip                    "Suprimeix">
+<!ENTITY  event.toolbar.attendees.tooltip                 "Invita assistents">
+<!ENTITY  event.toolbar.attachments.tooltip               "Afegeix adjuncions">
+<!ENTITY  event.toolbar.privacy.tooltip                   "Canvia la privadesa">
+<!ENTITY  event.toolbar.priority.tooltip                  "Canvia la prioritat">
+<!ENTITY  event.toolbar.status.tooltip                    "Canvia l'estat">
+<!ENTITY  event.toolbar.freebusy.tooltip                  "Canvia la disponibilitat (lliure/ocupat)">
+
+<!-- Counter box -->
+<!-- LOCALIZATON NOTE(counter.button.*)
+   - This is only visible in the UI if you have received a counterproposal before and are going to
+   - reschedule the event from the imipbar in the email view. Clicking on the buttons will only
+   - populate the form fields in the dialog, there's no other immediate action on clicking like with
+   - the imip bar. Rescheduling will happen after clicking on save&close as usual. This screenshot
+   - illustrates how it might look like: https://bugzilla.mozilla.org/attachment.cgi?id=8810121 -->
+<!ENTITY counter.button.proposal.label                    "Aplica la proposta">
+<!ENTITY counter.button.proposal.accesskey                "p">
+<!ENTITY counter.button.proposal.tooltip2                 "Els camps de la cita s'emplenaran utilitzant els valors de la contraproposta; només quan es desi, amb canvis addicionals o sense, es notificaran tots els assistents degudament.">
+<!ENTITY counter.button.original.label                    "Aplica les dades originals">
+<!ENTITY counter.button.original.accesskey                "r">
+<!ENTITY counter.button.original.tooltip2                 "Els valors dels camps seran els de la cita original, abans de fer la contraproposta">
+
+<!-- Main page -->
+<!ENTITY event.title.textbox.label                        "Títol:" >
+<!ENTITY event.title.textbox.accesskey                    "T">
+<!ENTITY event.location.label                             "Ubicació:" >
+<!ENTITY event.location.accesskey                         "U">
+<!ENTITY event.categories.label                           "Categoria:">
+<!ENTITY event.categories.accesskey                       "g">
+<!ENTITY event.categories.textbox.label                   "Afegeix una categoria nova" >
+<!ENTITY event.calendar.label                             "Calendari:" >
+<!ENTITY event.calendar.accesskey                         "C">
+<!ENTITY event.attendees.label                            "Assistents:" >
+<!ENTITY event.attendees.accesskey                        "n">
+<!ENTITY event.alldayevent.label                          "Cita de tot el dia" >
+<!ENTITY event.alldayevent.accesskey                      "d">
+<!ENTITY event.from.label                                 "Inici:" >
+<!ENTITY event.from.accesskey                             "I">
+<!ENTITY task.from.label                                  "Inici:" >
+<!ENTITY task.from.accesskey                              "I">
+<!ENTITY event.to.label                                   "Fi:" >
+<!ENTITY event.to.accesskey                               "F">
+<!ENTITY task.to.label                                    "Data de venciment:" >
+<!ENTITY task.to.accesskey                                "V">
+<!ENTITY task.status.label                                "Estat:" >
+<!ENTITY task.status.accesskey                            "E">
+<!ENTITY event.repeat.label                               "Repetició:" >
+<!ENTITY event.repeat.accesskey                           "R">
+<!ENTITY event.until.label                                "Fins:">
+<!ENTITY event.until.accesskey                            "i">
+<!ENTITY event.reminder.label                             "Recordatori:" >
+<!ENTITY event.reminder.accesskey                         "e">
+<!ENTITY event.description.label                          "Descripció:" >
+<!ENTITY event.description.accesskey                      "p">
+<!ENTITY event.attachments.label                          "Adjuncions:" >
+<!ENTITY event.attachments.accesskey                      "j" >
+<!ENTITY event.attachments.menubutton.label               "Adjunta">
+<!ENTITY event.attachments.menubutton.accesskey           "A">
+<!ENTITY event.attachments.url.label                      "Pàgina web…">
+<!ENTITY event.attachments.url.accesskey                  "w">
+<!ENTITY event.attachments.popup.remove.label             "Suprimeix" >
+<!ENTITY event.attachments.popup.remove.accesskey         "S" >
+<!ENTITY event.attachments.popup.open.label               "Obre" >
+<!ENTITY event.attachments.popup.open.accesskey           "O" >
+<!ENTITY event.attachments.popup.removeAll.label          "Suprimeix-les totes" >
+<!ENTITY event.attachments.popup.removeAll.accesskey      "t" >
+<!ENTITY event.attachments.popup.attachPage.label         "Adjunta una pàgina web…" >
+<!ENTITY event.attachments.popup.attachPage.accesskey     "w" >
+<!ENTITY event.url.label                                  "Enllaç relacionat:" >
+<!ENTITY event.priority2.label                            "Prioritat:">
+
+<!ENTITY event.reminder.none.label                        "Cap recordatori " >
+<!ENTITY event.reminder.0minutes.before.label             "0 minuts abans" >
+<!ENTITY event.reminder.5minutes.before.label             "5 minuts abans" >
+<!ENTITY event.reminder.15minutes.before.label            "15 minuts abans" >
+<!ENTITY event.reminder.30minutes.before.label            "30 minuts abans" >
+<!ENTITY event.reminder.1hour.before.label                "1 hora abans" >
+<!ENTITY event.reminder.2hours.before.label               "2 hores abans" >
+<!ENTITY event.reminder.12hours.before.label              "12 hores abans" >
+<!ENTITY event.reminder.1day.before.label                 "1 dia abans" >
+<!ENTITY event.reminder.2days.before.label                "2 dies abans" >
+<!ENTITY event.reminder.1week.before.label                "1 setmana abans" >
+<!ENTITY event.reminder.custom.label                      "Personalitzat…" >
+
+<!ENTITY event.reminder.multiple.label                    "Recordatoris múltiples…" >
+
+<!ENTITY event.statusbarpanel.freebusy.label              "Disponibilitat:">
+<!ENTITY event.statusbarpanel.privacy.label               "Privadesa:">
+
+<!-- Recurrence dialog -->
+<!ENTITY recurrence.title.label                         "Edita la repetició">
+
+<!ENTITY event.repeat.does.not.repeat.label             "No es repeteix">
+<!ENTITY event.repeat.daily.label                       "Diàriament">
+<!ENTITY event.repeat.weekly.label                      "Setmanalment">
+<!ENTITY event.repeat.every.weekday.label               "Cada dia feiner">
+<!ENTITY event.repeat.bi.weekly.label                   "Cada dues setmanes">
+<!ENTITY event.repeat.monthly.label                     "Mensualment">
+<!ENTITY event.repeat.yearly.label                      "Anualment">
+<!ENTITY event.repeat.custom.label                      "Personalitzat…">
+
+<!ENTITY event.recurrence.pattern.label                 "Patró de repetició">
+<!ENTITY event.recurrence.occurs.label                  "Es repeteix" >
+<!ENTITY event.recurrence.day.label                     "diàriament" >
+<!ENTITY event.recurrence.week.label                    "setmanalment" >
+<!ENTITY event.recurrence.month.label                   "mensualment" >
+<!ENTITY event.recurrence.year.label                    "anualment" >
+
+<!ENTITY event.recurrence.pattern.every.label           "Cada" >
+<!ENTITY repeat.units.days.both                         "dia/es" >
+<!ENTITY event.recurrence.pattern.every.weekday.label   "Cada dia feiner" >
+
+<!ENTITY event.recurrence.pattern.weekly.every.label    "Cada" >
+<!ENTITY repeat.units.weeks.both                        "setmana/es" >
+<!ENTITY event.recurrence.on.label                      "El:" >
+
+<!ENTITY event.recurrence.pattern.monthly.every.label   "Cada" >
+<!ENTITY repeat.units.months.both                       "mes/os" >
+<!ENTITY event.recurrence.monthly.every.label           "Cada" >
+<!ENTITY event.recurrence.monthly.first.label           "El primer">
+<!ENTITY event.recurrence.monthly.second.label          "El segon">
+<!ENTITY event.recurrence.monthly.third.label           "El tercer">
+<!ENTITY event.recurrence.monthly.fourth.label          "El quart">
+<!ENTITY event.recurrence.monthly.fifth.label           "El cinquè">
+<!ENTITY event.recurrence.monthly.last.label            "L'últim">
+<!ENTITY event.recurrence.pattern.monthly.week.1.label  "diumenge" >
+<!ENTITY event.recurrence.pattern.monthly.week.2.label  "dilluns" >
+<!ENTITY event.recurrence.pattern.monthly.week.3.label  "dimarts" >
+<!ENTITY event.recurrence.pattern.monthly.week.4.label  "dimecres" >
+<!ENTITY event.recurrence.pattern.monthly.week.5.label  "dijous" >
+<!ENTITY event.recurrence.pattern.monthly.week.6.label  "divendres" >
+<!ENTITY event.recurrence.pattern.monthly.week.7.label  "dissabte" >
+<!ENTITY event.recurrence.repeat.dayofmonth.label       "dia del mes">
+<!ENTITY event.recurrence.repeat.recur.label            "Es repeteix els dies">
+
+<!ENTITY event.recurrence.every.label                        "Cada:" >
+<!ENTITY repeat.units.years.both                             "any/s" >
+<!ENTITY event.recurrence.pattern.yearly.every.month.label   "Cada" >
+
+<!-- LOCALIZATON NOTE
+     Some languages use a preposition when describing dates:
+     Portuguese: 6 de Setembro
+     English: 6 [of] September
+     event.recurrence.pattern.yearly.of.label is "of" in
+     Edit recurrence window -> Recurrence pattern -> Repeat yearly
+-->
+<!ENTITY event.recurrence.pattern.yearly.of.label            "de" >
+
+<!ENTITY event.recurrence.pattern.yearly.month.1.label       "gener" >
+<!ENTITY event.recurrence.pattern.yearly.month.2.label       "febrer" >
+<!ENTITY event.recurrence.pattern.yearly.month.3.label       "març" >
+<!ENTITY event.recurrence.pattern.yearly.month.4.label       "abril" >
+<!ENTITY event.recurrence.pattern.yearly.month.5.label       "maig" >
+<!ENTITY event.recurrence.pattern.yearly.month.6.label       "juny" >
+<!ENTITY event.recurrence.pattern.yearly.month.7.label       "juliol" >
+<!ENTITY event.recurrence.pattern.yearly.month.8.label       "agost" >
+<!ENTITY event.recurrence.pattern.yearly.month.9.label       "setembre" >
+<!ENTITY event.recurrence.pattern.yearly.month.10.label      "octubre" >
+<!ENTITY event.recurrence.pattern.yearly.month.11.label      "novembre" >
+<!ENTITY event.recurrence.pattern.yearly.month.12.label      "desembre" >
+<!ENTITY event.recurrence.yearly.every.label                 "Cada">
+<!ENTITY event.recurrence.yearly.first.label                 "El primer">
+<!ENTITY event.recurrence.yearly.second.label                "El segon">
+<!ENTITY event.recurrence.yearly.third.label                 "El tercer">
+<!ENTITY event.recurrence.yearly.fourth.label                "El quart">
+<!ENTITY event.recurrence.yearly.fifth.label                 "El cinquè">
+<!ENTITY event.recurrence.yearly.last.label                  "L'últim">
+<!ENTITY event.recurrence.pattern.yearly.week.1.label        "diumenge" >
+<!ENTITY event.recurrence.pattern.yearly.week.2.label        "dilluns" >
+<!ENTITY event.recurrence.pattern.yearly.week.3.label        "dimarts" >
+<!ENTITY event.recurrence.pattern.yearly.week.4.label        "dimecres" >
+<!ENTITY event.recurrence.pattern.yearly.week.5.label        "dijous" >
+<!ENTITY event.recurrence.pattern.yearly.week.6.label        "divendres" >
+<!ENTITY event.recurrence.pattern.yearly.week.7.label        "dissabte" >
+<!ENTITY event.recurrence.pattern.yearly.day.label           "dia" >
+<!ENTITY event.recurrence.of.label                           "de" >
+<!ENTITY event.recurrence.pattern.yearly.month2.1.label      "gener" >
+<!ENTITY event.recurrence.pattern.yearly.month2.2.label      "febrer" >
+<!ENTITY event.recurrence.pattern.yearly.month2.3.label      "març" >
+<!ENTITY event.recurrence.pattern.yearly.month2.4.label      "abril" >
+<!ENTITY event.recurrence.pattern.yearly.month2.5.label      "maig" >
+<!ENTITY event.recurrence.pattern.yearly.month2.6.label      "juny" >
+<!ENTITY event.recurrence.pattern.yearly.month2.7.label      "juliol" >
+<!ENTITY event.recurrence.pattern.yearly.month2.8.label      "agost" >
+<!ENTITY event.recurrence.pattern.yearly.month2.9.label      "setembre" >
+<!ENTITY event.recurrence.pattern.yearly.month2.10.label     "octubre" >
+<!ENTITY event.recurrence.pattern.yearly.month2.11.label     "novembre" >
+<!ENTITY event.recurrence.pattern.yearly.month2.12.label     "desembre" >
+
+<!ENTITY event.recurrence.range.label                   "Interval de repetició">
+<!ENTITY event.recurrence.forever.label                 "Sense data de finalització" >
+<!ENTITY event.recurrence.repeat.for.label              "Crea" >
+<!ENTITY event.recurrence.appointments.label            "Cites" >
+<!ENTITY event.repeat.until.label                       "Es repeteix fins" >
+<!ENTITY event.recurrence.preview.label                 "Previsualització">
+
+<!-- Attendees dialog -->
+<!ENTITY invite.title.label                     "Invita assistents">
+<!ENTITY event.organizer.label                  "Organitzador">
+<!ENTITY event.freebusy.suggest.slot            "Franja horària suggerida:">
+<!ENTITY event.freebusy.button.next.slot        "Franja següent">
+<!ENTITY event.freebusy.button.previous.slot    "Franja anterior">
+<!ENTITY event.freebusy.zoom                    "Escala:">
+<!ENTITY event.freebusy.legend.free             "Lliure" >
+<!ENTITY event.freebusy.legend.busy             "Ocupat" >
+<!ENTITY event.freebusy.legend.busy_tentative   "Provisional" >
+<!ENTITY event.freebusy.legend.busy_unavailable "Fora de l'oficina" >
+<!ENTITY event.freebusy.legend.unknown          "Sense informació" >
+<!ENTITY event.attendee.role.required           "Assistent necessari">
+<!ENTITY event.attendee.role.optional           "Assistent opcional">
+<!ENTITY event.attendee.role.chair              "Presideix">
+<!ENTITY event.attendee.role.nonparticipant     "No hi participa">
+<!ENTITY event.attendee.usertype.individual     "Individu">
+<!ENTITY event.attendee.usertype.group          "Grup">
+<!ENTITY event.attendee.usertype.resource       "Recurs">
+<!ENTITY event.attendee.usertype.room           "Sala">
+<!ENTITY event.attendee.usertype.unknown        "Desconegut">
+
+<!-- Timezone dialog -->
+<!ENTITY timezone.title.label            "Indiqueu el fus horari">
+<!ENTITY event.timezone.custom.label     "Més fusos horaris…">
+
+<!-- Read-Only dialog -->
+<!ENTITY read.only.general.label         "General">
+<!ENTITY read.only.title.label           "Títol:">
+<!ENTITY read.only.calendar.label        "Calendari:">
+<!ENTITY read.only.event.start.label     "Data d'inici:">
+<!ENTITY read.only.task.start.label      "Data d'inici:">
+<!ENTITY read.only.event.end.label       "Data de fi:">
+<!ENTITY read.only.task.due.label        "Data de venciment:">
+<!ENTITY read.only.repeat.label          "Repetició:">
+<!ENTITY read.only.location.label        "Ubicació:">
+<!ENTITY read.only.category.label        "Categoria:">
+<!ENTITY read.only.organizer.label       "Organitzador:">
+<!ENTITY read.only.reminder.label        "Recordatori:">
+<!ENTITY read.only.attachments.label     "Adjuncions:">
+<!ENTITY read.only.attendees.label       "Assistents">
+<!ENTITY read.only.description.label     "Descripció">
+<!ENTITY read.only.link.label            "Enllaç relacionat">
+
+<!-- Summary dialog -->
+<!ENTITY summary.dialog.saveclose.label         "Desa i tanca">
+<!ENTITY summary.dialog.saveclose.tooltiptext   "Desa els canvis i tanca la finestra sense canviar el vostre estat de participació ni enviar cap resposta">
+<!ENTITY summary.dialog.accept.label            "Accepta">
+<!ENTITY summary.dialog.accept.tooltiptext      "Accepta la invitació">
+<!ENTITY summary.dialog.tentative.label         "Provisional">
+<!ENTITY summary.dialog.tentative.tooltiptext   "Accepta la invitació provisionalment">
+<!ENTITY summary.dialog.decline.label           "Declina">
+<!ENTITY summary.dialog.decline.tooltiptext     "Declina la invitació">
+<!ENTITY summary.dialog.dontsend.label          "No enviïs cap resposta">
+<!ENTITY summary.dialog.dontsend.tooltiptext    "Canvia el vostre estat de participació sense enviar cap resposta a l'organitzador i tanca la finestra">
+<!ENTITY summary.dialog.send.label              "Envia una resposta ara">
+<!ENTITY summary.dialog.send.tooltiptext        "Envia una resposta a l'organitzador i tanca la finestra">

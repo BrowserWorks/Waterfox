@@ -2,7 +2,6 @@ import os
 import unittest
 import time
 import json
-import sys
 
 from six.moves import urllib
 
@@ -61,8 +60,6 @@ class TestSub(TestUsingServer):
         expected = b"localhost localhost %i" % self.server.port
         self.assertEqual(resp.read().rstrip(), expected)
 
-    @pytest.mark.xfail(sys.platform == "win32",
-                       reason="https://github.com/web-platform-tests/wpt/issues/12949")
     def test_sub_file_hash(self):
         resp = self.request("/sub_file_hash.sub.txt")
         expected = b"""
@@ -83,8 +80,6 @@ sha512: r8eLGRTc7ZznZkFjeVLyo6/FyQdra9qmlYCwKKxm3kfQAswRS9+3HsYk3thLUhcFmmWhK4dX
         expected = b"PASS"
         self.assertEqual(resp.read().rstrip(), expected)
 
-    @pytest.mark.xfail(sys.platform == "win32",
-                       reason="https://github.com/web-platform-tests/wpt/issues/12949")
     def test_sub_location(self):
         resp = self.request("/sub_location.sub.txt?query_string")
         expected = """
@@ -106,6 +101,10 @@ server: http://localhost:{0}""".format(self.server.port).encode("ascii")
     def test_sub_url_base(self):
         resp = self.request("/sub_url_base.sub.txt")
         self.assertEqual(resp.read().rstrip(), b"Before / After")
+
+    def test_sub_url_base_via_filename_with_query(self):
+        resp = self.request("/sub_url_base.sub.txt?pipe=slice(5,10)")
+        self.assertEqual(resp.read().rstrip(), b"e / A")
 
     def test_sub_uuid(self):
         resp = self.request("/sub_uuid.sub.txt")

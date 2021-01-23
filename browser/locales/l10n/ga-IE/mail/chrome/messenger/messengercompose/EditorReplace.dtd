@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from EdReplace.xul -->
+
+
+<!-- extracted from EdReplace.xhtml -->
+
+<!ENTITY replaceDialog.title "Aimsigh agus Ionadaigh">
+<!ENTITY findField.label "Cuardaigh téacs:">
+<!ENTITY findField.accesskey "r">
+<!ENTITY replaceField.label "Ionadaigh le:">
+<!ENTITY replaceField.accesskey "e">
+<!ENTITY caseSensitiveCheckbox.label "Meaitseáil an cás go beacht">
+<!ENTITY caseSensitiveCheckbox.accesskey "M">
+<!ENTITY wrapCheckbox.label "Timfhill">
+<!ENTITY wrapCheckbox.accesskey "T">
+<!ENTITY backwardsCheckbox.label "Cuardaigh ar gcúl">
+<!ENTITY backwardsCheckbox.accesskey "g">
+<!ENTITY findNextButton.label "An Chéad Cheann Eile">
+<!ENTITY findNextButton.accesskey "E">
+<!ENTITY replaceButton.label "Ionadaigh">
+<!ENTITY replaceButton.accesskey "I">
+<!ENTITY replaceAndFindButton.label "Ionadaigh agus Aimsigh">
+<!ENTITY replaceAndFindButton.accesskey "d">
+<!ENTITY replaceAllButton.label "Ionadaigh Uile">
+<!ENTITY replaceAllButton.accesskey "a">
+<!ENTITY closeButton.label "Dún">
+<!ENTITY closeButton.accesskey "D">

@@ -77,27 +77,6 @@ inline void DocAccessible::UpdateText(nsIContent* aTextNode) {
     mNotificationController->ScheduleTextUpdate(aTextNode);
 }
 
-inline void DocAccessible::AddScrollListener() {
-  // Delay scroll initializing until the document has a root frame.
-  if (!mPresShell->GetRootFrame()) return;
-
-  mDocFlags |= eScrollInitialized;
-  nsIScrollableFrame* sf = mPresShell->GetRootScrollFrameAsScrollable();
-  if (sf) {
-    sf->AddScrollPositionListener(this);
-
-#ifdef A11Y_LOG
-    if (logging::IsEnabled(logging::eDocCreate))
-      logging::Text("add scroll listener");
-#endif
-  }
-}
-
-inline void DocAccessible::RemoveScrollListener() {
-  nsIScrollableFrame* sf = mPresShell->GetRootScrollFrameAsScrollable();
-  if (sf) sf->RemoveScrollPositionListener(this);
-}
-
 inline void DocAccessible::NotifyOfLoad(uint32_t aLoadEventType) {
   mLoadState |= eDOMLoaded;
   mLoadEventType = aLoadEventType;
@@ -112,8 +91,10 @@ inline void DocAccessible::NotifyOfLoad(uint32_t aLoadEventType) {
 }
 
 inline void DocAccessible::MaybeNotifyOfValueChange(Accessible* aAccessible) {
-  if (aAccessible->IsCombobox() || aAccessible->Role() == roles::ENTRY)
+  if (aAccessible->IsCombobox() || aAccessible->Role() == roles::ENTRY ||
+      aAccessible->Role() == roles::SPINBUTTON) {
     FireDelayedEvent(nsIAccessibleEvent::EVENT_TEXT_VALUE_CHANGE, aAccessible);
+  }
 }
 
 inline Accessible* DocAccessible::GetAccessibleEvenIfNotInMapOrContainer(

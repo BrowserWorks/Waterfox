@@ -2,6 +2,7 @@ ChromeUtils.import("resource://gre/modules/Preferences.jsm", this);
 ChromeUtils.import("resource://testing-common/AddonTestUtils.jsm", this);
 ChromeUtils.import("resource://testing-common/TestUtils.jsm", this);
 ChromeUtils.import("resource://normandy-content/AboutPages.jsm", this);
+ChromeUtils.import("resource://normandy/lib/AddonStudies.jsm", this);
 ChromeUtils.import("resource://normandy/lib/NormandyApi.jsm", this);
 ChromeUtils.import("resource://normandy/lib/TelemetryEvents.jsm", this);
 ChromeUtils.defineModuleGetter(
@@ -31,12 +32,10 @@ sinon.assert.fail = function(message) {
 // Prep Telemetry to receive events from tests
 TelemetryEvents.init();
 
-this.UUID_REGEX = /[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/;
-
 this.TEST_XPI_URL = (function() {
   const dir = getChromeDir(getResolvedURI(gTestPath));
   dir.append("addons");
-  dir.append("normandydriver-1.0.xpi");
+  dir.append("normandydriver-a-1.0.xpi");
   return Services.io.newFileURI(dir).spec;
 })();
 
@@ -132,21 +131,6 @@ this.withMockNormandyApi = function(testFunction) {
     };
 
     // Use callsFake instead of resolves so that the current values in mockApi are used.
-    mockApi.fetchActions = sinon
-      .stub(NormandyApi, "fetchActions")
-      .callsFake(async () => mockApi.actions);
-    mockApi.fetchRecipes = sinon
-      .stub(NormandyApi, "fetchRecipes")
-      .callsFake(async () => mockApi.recipes);
-    mockApi.fetchImplementation = sinon
-      .stub(NormandyApi, "fetchImplementation")
-      .callsFake(async action => {
-        const impl = mockApi.implementations[action.name];
-        if (!impl) {
-          throw new Error(`Missing implementation for ${action.name}`);
-        }
-        return impl;
-      });
     mockApi.fetchExtensionDetails = sinon
       .stub(NormandyApi, "fetchExtensionDetails")
       .callsFake(async extensionId => {
@@ -158,11 +142,8 @@ this.withMockNormandyApi = function(testFunction) {
       });
 
     try {
-      await testFunction(mockApi, ...args);
+      await testFunction(...args, mockApi);
     } finally {
-      mockApi.fetchActions.restore();
-      mockApi.fetchRecipes.restore();
-      mockApi.fetchImplementation.restore();
       mockApi.fetchExtensionDetails.restore();
     }
   };
@@ -253,6 +234,19 @@ this.withPrefEnv = function(inPrefs) {
   };
 };
 
+this.withStudiesEnabled = function(testFunc) {
+  return async function inner(...args) {
+    await SpecialPowers.pushPrefEnv({
+      set: [["app.shield.optoutstudies.enabled", true]],
+    });
+    try {
+      await testFunc(...args);
+    } finally {
+      await SpecialPowers.popPrefEnv();
+    }
+  };
+};
+
 /**
  * Combine a list of functions right to left. The rightmost function is passed
  * to the preceding function as the argument; the result of this is passed to
@@ -296,60 +290,6 @@ this.decorate = function(...args) {
  */
 this.decorate_task = function(...args) {
   return add_task(decorate(...args));
-};
-
-let _addonStudyFactoryId = 0;
-this.addonStudyFactory = function(attrs) {
-  return Object.assign(
-    {
-      recipeId: _addonStudyFactoryId++,
-      name: "Test study",
-      description: "fake",
-      active: true,
-      addonId: "fake@example.com",
-      addonUrl: "http://test/addon.xpi",
-      addonVersion: "1.0.0",
-      studyStartDate: new Date(),
-      extensionApiId: 1,
-      extensionHash:
-        "ade1c14196ec4fe0aa0a6ba40ac433d7c8d1ec985581a8a94d43dc58991b5171",
-      extensionHashAlgorithm: "sha256",
-    },
-    attrs
-  );
-};
-
-let _preferenceStudyFactoryId = 0;
-this.preferenceStudyFactory = function(attrs) {
-  const defaultPref = {
-    "test.study": {},
-  };
-  const defaultPrefInfo = {
-    preferenceValue: false,
-    preferenceType: "boolean",
-    previousPreferenceValue: undefined,
-    preferenceBranchType: "default",
-  };
-  const preferences = {};
-  for (const [prefName, prefInfo] of Object.entries(
-    attrs.preferences || defaultPref
-  )) {
-    preferences[prefName] = { ...defaultPrefInfo, ...prefInfo };
-  }
-
-  return Object.assign(
-    {
-      name: `Test study ${_preferenceStudyFactoryId++}`,
-      branch: "control",
-      expired: false,
-      lastSeen: new Date().toJSON(),
-      experimentType: "exp",
-    },
-    attrs,
-    {
-      preferences,
-    }
-  );
 };
 
 this.withStub = function(...stubArgs) {
@@ -401,7 +341,7 @@ this.withSendEventStub = function(testFunction) {
       await testFunction(...args, stub);
     } finally {
       stub.restore();
-      Assert.ok(!stub.threw(), "some telemetry call failed");
+      Assert.ok(!stub.threw(), "Telemetry events should not fail");
     }
   };
 };
@@ -453,4 +393,156 @@ this.CryptoUtils = {
     fis.close();
     return hash;
   },
+};
+
+const FIXTURE_ADDON_ID = "normandydriver-a@example.com";
+const FIXTURE_ADDON_BASE_URL =
+  getRootDirectory(gTestPath).replace(
+    "chrome://mochitests/content",
+    "http://example.com"
+  ) + "/addons/";
+
+const FIXTURE_ADDONS = [
+  "normandydriver-a-1.0",
+  "normandydriver-b-1.0",
+  "normandydriver-a-2.0",
+];
+
+// Generate fixture add-on details
+this.FIXTURE_ADDON_DETAILS = {};
+FIXTURE_ADDONS.forEach(addon => {
+  const filename = `${addon}.xpi`;
+  const dir = getChromeDir(getResolvedURI(gTestPath));
+  dir.append("addons");
+  dir.append(filename);
+  const xpiFile = Services.io.newFileURI(dir).QueryInterface(Ci.nsIFileURL)
+    .file;
+
+  FIXTURE_ADDON_DETAILS[addon] = {
+    url: `${FIXTURE_ADDON_BASE_URL}${filename}`,
+    hash: CryptoUtils.getFileHash(xpiFile, "sha256"),
+  };
+});
+
+this.extensionDetailsFactory = function(overrides = {}) {
+  return Object.assign(
+    {
+      id: 1,
+      name: "Normandy Fixture",
+      xpi: FIXTURE_ADDON_DETAILS["normandydriver-a-1.0"].url,
+      extension_id: FIXTURE_ADDON_ID,
+      version: "1.0",
+      hash: FIXTURE_ADDON_DETAILS["normandydriver-a-1.0"].hash,
+      hash_algorithm: "sha256",
+    },
+    overrides
+  );
+};
+
+/**
+ * Utility function to uninstall addons safely. Preventing the issue mentioned
+ * in bug 1485569.
+ *
+ * addon.uninstall is async, but it also triggers the AddonStudies onUninstall
+ * listener, which is not awaited. Wrap it here and trigger a promise once it's
+ * done so we can wait until AddonStudies cleanup is finished.
+ */
+this.safeUninstallAddon = async function(addon) {
+  const activeStudies = (await AddonStudies.getAll()).filter(
+    study => study.active
+  );
+  const matchingStudy = activeStudies.find(study => study.addonId === addon.id);
+
+  let studyEndedPromise;
+  if (matchingStudy) {
+    studyEndedPromise = TestUtils.topicObserved(
+      "shield-study-ended",
+      (subject, message) => {
+        return message === `${matchingStudy.recipeId}`;
+      }
+    );
+  }
+
+  const addonUninstallPromise = addon.uninstall();
+
+  return Promise.all([studyEndedPromise, addonUninstallPromise]);
+};
+
+/**
+ * Test decorator that is a modified version of the withInstalledWebExtension
+ * decorator that safely uninstalls the created addon.
+ */
+this.withInstalledWebExtensionSafe = function(manifestOverrides = {}) {
+  return testFunction => {
+    return async function wrappedTestFunction(...args) {
+      const decorated = withInstalledWebExtension(
+        manifestOverrides,
+        true
+      )(async ([id, file]) => {
+        try {
+          await testFunction(...args, [id, file]);
+        } finally {
+          let addon = await AddonManager.getAddonByID(id);
+          if (addon) {
+            await safeUninstallAddon(addon);
+            addon = await AddonManager.getAddonByID(id);
+            ok(!addon, "add-on should be uninstalled");
+          }
+        }
+      });
+      await decorated();
+    };
+  };
+};
+
+/**
+ * Test decorator to provide a web extension installed from a URL.
+ */
+this.withInstalledWebExtensionFromURL = function(url) {
+  return function wrapper(testFunction) {
+    return async function wrappedTestFunction(...args) {
+      let startupPromise;
+      let addonId;
+
+      const install = await AddonManager.getInstallForURL(url);
+      const listener = {
+        onInstallStarted(cbInstall) {
+          addonId = cbInstall.addon.id;
+          startupPromise = AddonTestUtils.promiseWebExtensionStartup(addonId);
+        },
+      };
+      install.addListener(listener);
+
+      await install.install();
+      await startupPromise;
+
+      try {
+        await testFunction(...args, [addonId, url]);
+      } finally {
+        const addonToUninstall = await AddonManager.getAddonByID(addonId);
+        await safeUninstallAddon(addonToUninstall);
+      }
+    };
+  };
+};
+
+/**
+ * Test decorator that checks that the test cleans up all add-ons installed
+ * during the test. Likely needs to be the first decorator used.
+ */
+this.ensureAddonCleanup = function(testFunction) {
+  return async function wrappedTestFunction(...args) {
+    const beforeAddons = new Set(await AddonManager.getAllAddons());
+
+    try {
+      await testFunction(...args);
+    } finally {
+      const afterAddons = new Set(await AddonManager.getAllAddons());
+      Assert.deepEqual(
+        beforeAddons,
+        afterAddons,
+        "The add-ons should be same before and after the test"
+      );
+    }
+  };
 };

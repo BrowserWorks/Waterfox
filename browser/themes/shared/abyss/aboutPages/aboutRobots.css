@@ -1,0 +1,45 @@
+/* Additional styling for Abyss theme for Waterfox Current
+/* Author: Stefano Rosselli
+*/
+
+/* ::: ABOUT "ROBOTS" ::: */
+
+@-moz-document  url("about:robots") {    
+    
+    .container {
+      background-image: url("chrome://browser/skin/abyss/img/gort.png") !important;
+      background-position: bottom center !important;
+      background-repeat: no-repeat !important;
+      background-size: cover !important;
+      background-color: rgba(4,6,20,.35) !important;
+	  color: var(--wfx-content-color) !important;
+      border-color: transparent !important;
+      border-radius: 10px !important;
+	  background-origin: padding-box !important;
+	  box-shadow: 0 7px 14px rgba(0,0,0,.25) !important;
+	  padding: 20px;
+    }
+    
+    #errorShortDesc > p {
+      border-bottom: 1px solid transparent !important;
+    }
+    
+    h1 {
+      color: var(--wfx-dt-primary-color) !important;
+      border-bottom: 0 !important;
+    }
+
+    .title {
+      background-image: none !important;
+    }
+    
+    #errorTitle,
+    #errorLongContent,
+    #errorTryAgain{
+      margin-inline-start: 0px !important;
+    }
+
+    img{
+      display: none;
+    }
+}

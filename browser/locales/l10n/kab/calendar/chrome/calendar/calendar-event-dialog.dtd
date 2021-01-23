@@ -1,0 +1,428 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY event.title.label                  "Ẓreg aferdis" >
+
+<!ENTITY event.dialog.keepDurationButton.tooltip   "Ḥrez tanzagt ticki tesnileḍ azemz n tagara">
+<!ENTITY event.dialog.keepDurationButton.accesskey "K">
+
+<!ENTITY newevent.from.label                "Si" >
+<!ENTITY newevent.to.label                  "I" >
+
+<!ENTITY newevent.status.label                    "Addad" >
+<!ENTITY newevent.status.accesskey                "d" >
+<!ENTITY newevent.eventStatus.none.label          "Ur iban ara anwa" >
+<!ENTITY newevent.eventStatus.none.accesskey      "b" >
+<!ENTITY newevent.todoStatus.none.label           "Ur iban ara anwa" >
+<!ENTITY newevent.eventStatus.cancelled.label     "Yettwasefsex" >
+<!ENTITY newevent.eventStatus.cancelled.accesskey "f" >
+<!ENTITY newevent.todoStatus.cancelled.label      "Yettwasefsex" >
+<!ENTITY newevent.status.tentative.label          "Askudan" >
+<!ENTITY newevent.status.tentative.accesskey      "k" >
+<!ENTITY newevent.status.confirmed.label          "Yettwasentem" >
+<!ENTITY newevent.status.confirmed.accesskey      "s" >
+<!ENTITY newevent.status.needsaction.label        "Isra tigawt" >
+<!ENTITY newevent.status.inprogress.label         "Iteddu akka tura" >
+<!ENTITY newevent.status.completed.label          "Yemmed di" >
+
+<!-- The following entity is for New Task dialog only -->
+<!ENTITY newtodo.percentcomplete.label      "&#037; yemmed">
+
+<!-- LOCALIZATON NOTE(event.attendees.notify.label,event.attendees.notifyundisclosed.label,
+     event.attendees.disallowcounter.label)
+   - These three labels are displayed side by side in the event dialog, make sure
+   - they still fit in. -->
+<!ENTITY event.attendees.notify.label                "Lɣu imttekkiyen">
+<!ENTITY event.attendees.notify.accesskey            "t">
+<!ENTITY event.attendees.notifyundisclosed.label     "Yal tinnubga i yiman-is">
+<!ENTITY event.attendees.notifyundisclosed.accesskey "Y">
+<!ENTITY event.attendees.notifyundisclosed.tooltip   "Aɣewwaṛ-agi ad yazen yiwet n tinnubga s yimayl i yal imttekki. Yal tinnubga ad tegber kan yiwen n uɣerwaḍ akken ulac win ara yeẓren win ara yelin.">
+<!ENTITY event.attendees.disallowcounter.label       "Ur sirig ara amesmiḍan">
+<!ENTITY event.attendees.disallowcounter.accesskey   "U">
+<!ENTITY event.attendees.disallowcounter.tooltip     "ayagi ymmal-d ma yella ur tqebbleḍ ara asumer n umesmiḍan">
+
+<!-- Keyboard Shortcuts -->
+<!ENTITY event.dialog.new.event.key2              "I">
+<!ENTITY event.dialog.new.task.key2               "D">
+<!ENTITY event.dialog.new.message.key2            "N">
+<!ENTITY event.dialog.close.key                   "W">
+<!ENTITY event.dialog.save.key                    "S">
+<!ENTITY event.dialog.saveandclose.key            "L">
+<!ENTITY event.dialog.print.key                   "P">
+<!ENTITY event.dialog.undo.key                    "Z">
+<!ENTITY event.dialog.redo.key                    "Y">
+<!ENTITY event.dialog.cut.key                     "X">
+<!ENTITY event.dialog.copy.key                    "C">
+<!ENTITY event.dialog.paste.key                   "V">
+<!ENTITY event.dialog.select.all.key              "A">
+
+<!-- Menubar -->
+<!ENTITY  event.menu.item.new.label                       "Amaynut">
+<!ENTITY  event.menu.item.new.accesskey                   "m">
+<!ENTITY  event.menu.item.new.event.label                 "Tadyant">
+<!ENTITY  event.menu.item.new.event.accesskey             "d">
+<!ENTITY  event.menu.item.new.task.label                  "Tawuri">
+<!ENTITY  event.menu.item.new.task.accesskey              "w">
+<!ENTITY  event.menu.item.new.message.label               "Izen">
+<!ENTITY  event.menu.item.new.message.accesskey           "I">
+<!ENTITY  event.menu.item.new.contact.label               "Anermis n umedlis n tensa">
+<!ENTITY  event.menu.item.new.contact.accesskey           "n">
+<!ENTITY  event.menu.item.close.label                     "Mdel">
+<!ENTITY  event.menu.item.close.accesskey                 "M">
+
+<!-- LOCALIZATION NOTE
+   - event.menu.item.save.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a dialog window.
+   - event.menu.item.save.tab.accesskey is used for the "Save" menu item
+   - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.save.label                      "Sekles">
+<!ENTITY  event.menu.item.save.accesskey                  "S">
+<!ENTITY  event.menu.item.save.tab.accesskey              "a">
+
+<!-- LOCALIZATION NOTE
+    - event.menu.item.saveandclose.accesskey is used for "Save and Close"
+    - menu item when editing events/tasks in a dialog window.
+    - event.menu.item.saveandclose.tab.accesskey is used for "Save and Close"
+    - when editing events/tasks in a tab. -->
+<!ENTITY  event.menu.item.saveandclose.label              "Sekles u Mdel">
+<!ENTITY  event.menu.item.saveandclose.accesskey          "d">
+<!ENTITY  event.menu.item.saveandclose.tab.accesskey      "z">
+
+<!ENTITY  event.menu.item.delete.label                    "Kkes…">
+<!ENTITY  event.menu.item.delete.accesskey                "K">
+<!ENTITY  event.menu.item.page.setup.label                "Asbadu n usebter">
+<!ENTITY  event.menu.item.page.setup.accesskey            "b">
+<!ENTITY  event.menu.item.print.label                     "Siggez">
+<!ENTITY  event.menu.item.print.accesskey                 "S">
+
+<!ENTITY  event.menu.edit.label                           "Ẓreg">
+<!ENTITY  event.menu.edit.accesskey                       "Ẓ">
+<!ENTITY  event.menu.edit.undo.label                      "Sefsax">
+<!ENTITY  event.menu.edit.undo.accesskey                  "S">
+<!ENTITY  event.menu.edit.redo.label                      "Err-d">
+<!ENTITY  event.menu.edit.redo.accesskey                  "E">
+<!ENTITY  event.menu.edit.cut.label                       "Gzem">
+<!ENTITY  event.menu.edit.cut.accesskey                   "G">
+<!ENTITY  event.menu.edit.copy.label                      "Nɣel">
+<!ENTITY  event.menu.edit.copy.accesskey                  "N">
+<!ENTITY  event.menu.edit.paste.label                     "Senteḍ">
+<!ENTITY  event.menu.edit.paste.accesskey                 "n">
+<!ENTITY  event.menu.edit.select.all.label                "Fren akk">
+<!ENTITY  event.menu.edit.select.all.accesskey            "F">
+
+<!ENTITY  event.menu.view.label                           "Sken">
+<!ENTITY  event.menu.view.accesskey                       "n">
+<!ENTITY  event.menu.view.toolbars.label                  "Ifeggagen n ifecka">
+<!ENTITY  event.menu.view.toolbars.accesskey              "I">
+<!ENTITY  event.menu.view.toolbars.event.label            "Afeggeg n ifecka n tedyant">
+<!ENTITY  event.menu.view.toolbars.event.accesskey        "A">
+<!ENTITY  event.menu.view.toolbars.customize.label        "Sagen…">
+<!ENTITY  event.menu.view.toolbars.customize.accesskey    "S">
+<!ENTITY  event.menu.view.showlink.label                  "Sken aseɣwen icudden">
+<!ENTITY  event.menu.view.showlink.accesskey              "d">
+
+<!ENTITY  event.menu.options.label                            "Iɣewwaṛen">
+<!ENTITY  event.menu.options.accesskey                        "w">
+<!ENTITY  event.menu.options.attendees.label                  "Ɛṛeḍ-d imttekkiyen…">
+<!ENTITY  event.menu.options.attendees.accesskey              "Ɛ">
+<!ENTITY  event.menu.options.timezone2.label                  "Sken iẓdi usrig">
+<!ENTITY  event.menu.options.timezone2.accesskey              "g">
+<!ENTITY  event.menu.options.priority2.label                  "Tazwart">
+<!ENTITY  event.menu.options.priority2.accesskey              "z">
+<!ENTITY  event.menu.options.priority.notspecified.label      "Ur iban ara anwa">
+<!ENTITY  event.menu.options.priority.notspecified.accesskey  "b">
+<!ENTITY  event.menu.options.priority.low.label               "Meẓẓi">
+<!ENTITY  event.menu.options.priority.low.accesskey           "M">
+<!ENTITY  event.menu.options.priority.normal.label            "Amagnu">
+<!ENTITY  event.menu.options.priority.normal.accesskey        "N">
+<!ENTITY  event.menu.options.priority.high.label              "Muqqer">
+<!ENTITY  event.menu.options.priority.high.accesskey          "q">
+<!ENTITY  event.menu.options.privacy.label                    "Tabaḍnit">
+<!ENTITY  event.menu.options.privacy.accesskey                "b">
+<!ENTITY  event.menu.options.privacy.public.label             "Tadyant tazayezt">
+<!ENTITY  event.menu.options.privacy.public.accesskey         "d">
+<!ENTITY  event.menu.options.privacy.confidential.label       "Seken-d Akkud d uzemz kan">
+<!ENTITY  event.menu.options.privacy.confidential.accesskey   "S">
+<!ENTITY  event.menu.options.privacy.private.label            "Tadyant tusligt">
+<!ENTITY  event.menu.options.privacy.private.accesskey        "d">
+<!ENTITY  event.menu.options.show.time.label                  "Sken akkud am">
+<!ENTITY  event.menu.options.show.time.accesskey              "n">
+<!ENTITY  event.menu.options.show.time.busy.label             "Ur yestuffi ara">
+<!ENTITY  event.menu.options.show.time.busy.accesskey         "U">
+<!ENTITY  event.menu.options.show.time.free.label             "Yestuffa">
+<!ENTITY  event.menu.options.show.time.free.accesskey         "Y">
+
+<!ENTITY event.invite.attendees.label                     "Ɛṛeḍ-d imttekkiyen…">
+<!ENTITY event.invite.attendees.accesskey                 "Ɛ">
+<!ENTITY event.email.attendees.label                      "Aru imayl i yemttekkiyen meṛṛa…">
+<!ENTITY event.email.attendees.accesskey                  "m">
+<!ENTITY event.email.tentative.attendees.label            "Aru imayl i yemttekkiyen ur nɛebbel ara…">
+<!ENTITY event.email.tentative.attendees.accesskey        "b">
+<!ENTITY event.remove.attendees.label2                    "Kkes akk imttekkiyen">
+<!ENTITY event.remove.attendees.accesskey                 "r">
+<!ENTITY event.remove.attendee.label                      "Kkes imttekki">
+<!ENTITY event.remove.attendee.accesskey                  "i">
+
+<!-- Toolbar -->
+<!ENTITY  event.toolbar.save.label2                       "Sekles">
+<!ENTITY  event.toolbar.saveandclose.label                "Sekles u Mdel">
+<!ENTITY  event.toolbar.delete.label                      "Kkes">
+<!ENTITY  event.toolbar.attendees.label                   "Ɛṛeḍ-d imttekki">
+<!ENTITY  event.toolbar.privacy.label                     "Tabaḍnit">
+
+<!ENTITY  event.toolbar.save.tooltip2                     "Sekles">
+<!ENTITY  event.toolbar.saveandclose.tooltip              "Sekles u Mdel">
+<!ENTITY  event.toolbar.delete.tooltip                    "Kkes">
+<!ENTITY  event.toolbar.attendees.tooltip                 "&amp;Ɛṛeḍ-d imttekkiyen">
+<!ENTITY  event.toolbar.attachments.tooltip               "Rnu Tasawit">
+<!ENTITY  event.toolbar.privacy.tooltip                   "Snifel tabaḍnit">
+<!ENTITY  event.toolbar.priority.tooltip                  "Snifel Tazwart">
+<!ENTITY  event.toolbar.status.tooltip                    "Snifel addad">
+<!ENTITY  event.toolbar.freebusy.tooltip                  "Snifel akud ilelli/yettwaṭṭef">
+
+<!-- Counter box -->
+<!-- LOCALIZATON NOTE(counter.button.*)
+   - This is only visible in the UI if you have received a counterproposal before and are going to
+   - reschedule the event from the imipbar in the email view. Clicking on the buttons will only
+   - populate the form fields in the dialog, there's no other immediate action on clicking like with
+   - the imip bar. Rescheduling will happen after clicking on save&close as usual. This screenshot
+   - illustrates how it might look like: https://bugzilla.mozilla.org/attachment.cgi?id=8810121 -->
+<!ENTITY counter.button.proposal.label                    "Snes asumer">
+<!ENTITY counter.button.proposal.accesskey                "p">
+<!ENTITY counter.button.proposal.tooltip2                 "Urtan n tedyanin ad ɛɛaṛen s useqdec n wazaln seg umgal-asumer , ala asekles s neɣ s war asnifel nniḍen ara yelɣun akk imttekkiyen s wayen-nni">
+<!ENTITY counter.button.original.label                    "Snes isefka ineẓliyen">
+<!ENTITY counter.button.original.accesskey                "r">
+<!ENTITY counter.button.original.tooltip2                 "Urtan ad ttuwenzen ar wazalen si tedyant tanezlit, send ad yettwag umgal-asumer">
+
+<!-- Main page -->
+<!ENTITY event.title.textbox.label                        "Azwel:" >
+<!ENTITY event.title.textbox.accesskey                    "z">
+<!ENTITY event.location.label                             "Adig:" >
+<!ENTITY event.location.accesskey                         "A">
+<!ENTITY event.categories.label                           "Taggayt:">
+<!ENTITY event.categories.accesskey                       "y">
+<!ENTITY event.categories.textbox.label                   "Rrnu Taggayt Tamaynut" >
+<!ENTITY event.calendar.label                             "Awitay:" >
+<!ENTITY event.calendar.accesskey                         "y">
+<!ENTITY event.attendees.label                            "Imttekkiyen:" >
+<!ENTITY event.attendees.accesskey                        "m">
+<!ENTITY event.alldayevent.label                          "Tadyant n wass imeṛṛa" >
+<!ENTITY event.alldayevent.accesskey                      "d">
+<!ENTITY event.from.label                                 "Bdu:" >
+<!ENTITY event.from.accesskey                             "B">
+<!ENTITY task.from.label                                  "Bdu:" >
+<!ENTITY task.from.accesskey                              "B">
+<!ENTITY event.to.label                                   "Tagara:" >
+<!ENTITY event.to.accesskey                               "g">
+<!ENTITY task.to.label                                    "Azemz n tagara:" >
+<!ENTITY task.to.accesskey                                "g">
+<!ENTITY task.status.label                                "Addad:" >
+<!ENTITY task.status.accesskey                            "d">
+<!ENTITY event.repeat.label                               "Snilest:" >
+<!ENTITY event.repeat.accesskey                           "n">
+<!ENTITY event.until.label                                "Arma:">
+<!ENTITY event.until.accesskey                            "m">
+<!ENTITY event.reminder.label                             "Mmekti-d:" >
+<!ENTITY event.reminder.accesskey                         "M">
+<!ENTITY event.description.label                          "Aglam:" >
+<!ENTITY event.description.accesskey                      "m">
+<!ENTITY event.attachments.label                          "Imeddayen:" >
+<!ENTITY event.attachments.accesskey                      "y" >
+<!ENTITY event.attachments.menubutton.label               "Qqen">
+<!ENTITY event.attachments.menubutton.accesskey           "Q">
+<!ENTITY event.attachments.url.label                      "Asebter web...">
+<!ENTITY event.attachments.url.accesskey                  "W">
+<!ENTITY event.attachments.popup.remove.label             "Kkes" >
+<!ENTITY event.attachments.popup.remove.accesskey         "K" >
+<!ENTITY event.attachments.popup.open.label               "Ldi" >
+<!ENTITY event.attachments.popup.open.accesskey           "L" >
+<!ENTITY event.attachments.popup.removeAll.label          "Kkes akk" >
+<!ENTITY event.attachments.popup.removeAll.accesskey      "A" >
+<!ENTITY event.attachments.popup.attachPage.label         "Qqen asebter web..." >
+<!ENTITY event.attachments.popup.attachPage.accesskey     "w" >
+<!ENTITY event.url.label                                  "Aseqwen i d-yettuɣalen:" >
+<!ENTITY event.priority2.label                            "Tazwart:">
+
+<!ENTITY event.reminder.none.label                        "ulac asmekti" >
+<!ENTITY event.reminder.0minutes.before.label             "0 Dqiqa Uqbel" >
+<!ENTITY event.reminder.5minutes.before.label             "5 Dqayeq uqbel" >
+<!ENTITY event.reminder.15minutes.before.label            "15 Dqayeq uqbel" >
+<!ENTITY event.reminder.30minutes.before.label            "30 Dqayeq uqbel" >
+<!ENTITY event.reminder.1hour.before.label                "1 asrag uqbel" >
+<!ENTITY event.reminder.2hours.before.label               "2 n yesragen uqbel" >
+<!ENTITY event.reminder.12hours.before.label              "12 n yesragen uqbel" >
+<!ENTITY event.reminder.1day.before.label                 "1 n wass uqbel" >
+<!ENTITY event.reminder.2days.before.label                "2 n wussan uqbel" >
+<!ENTITY event.reminder.1week.before.label                "1 n ddurt uqbel" >
+<!ENTITY event.reminder.custom.label                      "Sagen…" >
+
+<!ENTITY event.reminder.multiple.label                    "Deqs n ismektiyen…" >
+
+<!ENTITY event.statusbarpanel.freebusy.label              "Akkud am:">
+<!ENTITY event.statusbarpanel.privacy.label               "Tasawit:">
+
+<!-- Recurrence dialog -->
+<!ENTITY recurrence.title.label                         "Zreg asniles">
+
+<!ENTITY event.repeat.does.not.repeat.label             "Ur tettales ara">
+<!ENTITY event.repeat.daily.label                       "Yal ass">
+<!ENTITY event.repeat.weekly.label                      "Yal ddurt">
+<!ENTITY event.repeat.every.weekday.label               "Yal ddurt">
+<!ENTITY event.repeat.bi.weekly.label                   "Sin iberdan i ddurt">
+<!ENTITY event.repeat.monthly.label                     "Yal aggur">
+<!ENTITY event.repeat.yearly.label                      "Yal asseggas">
+<!ENTITY event.repeat.custom.label                      "Sagen…">
+
+<!ENTITY event.recurrence.pattern.label                 "Taneɣruft n usniles">
+<!ENTITY event.recurrence.occurs.label                  "Sniles" >
+<!ENTITY event.recurrence.day.label                     "Yal ass" >
+<!ENTITY event.recurrence.week.label                    "Yal ddurt" >
+<!ENTITY event.recurrence.month.label                   "Yal aggur" >
+<!ENTITY event.recurrence.year.label                    "s useggass" >
+
+<!ENTITY event.recurrence.pattern.every.label           "Yal" >
+<!ENTITY repeat.units.days.both                         "Ass (ussan)" >
+<!ENTITY event.recurrence.pattern.every.weekday.label   "Yal dduṛt" >
+
+<!ENTITY event.recurrence.pattern.weekly.every.label    "Yal" >
+<!ENTITY repeat.units.weeks.both                        "Ḍdurt(at)" >
+<!ENTITY event.recurrence.on.label                      "Di:" >
+
+<!ENTITY event.recurrence.pattern.monthly.every.label   "Yal" >
+<!ENTITY repeat.units.months.both                       "Aggur (agguren)" >
+<!ENTITY event.recurrence.monthly.every.label           "Yal" >
+<!ENTITY event.recurrence.monthly.first.label           "Amezwaru">
+<!ENTITY event.recurrence.monthly.second.label          "Wissin">
+<!ENTITY event.recurrence.monthly.third.label           "wis krad">
+<!ENTITY event.recurrence.monthly.fourth.label          "wis ukkus">
+<!ENTITY event.recurrence.monthly.fifth.label           "wis semmus">
+<!ENTITY event.recurrence.monthly.last.label            "Annegarru">
+<!ENTITY event.recurrence.pattern.monthly.week.1.label  "Acer" >
+<!ENTITY event.recurrence.pattern.monthly.week.2.label  "Arim" >
+<!ENTITY event.recurrence.pattern.monthly.week.3.label  "Aram" >
+<!ENTITY event.recurrence.pattern.monthly.week.4.label  "Ahad" >
+<!ENTITY event.recurrence.pattern.monthly.week.5.label  "Amhad" >
+<!ENTITY event.recurrence.pattern.monthly.week.6.label  "Sem" >
+<!ENTITY event.recurrence.pattern.monthly.week.7.label  "Sed" >
+<!ENTITY event.recurrence.repeat.dayofmonth.label       "Ass n waggur">
+<!ENTITY event.recurrence.repeat.recur.label            "Sniles deg ass (u-an)">
+
+<!ENTITY event.recurrence.every.label                        "Yal:" >
+<!ENTITY repeat.units.years.both                             "Asseggas (iseggassen)" >
+<!ENTITY event.recurrence.pattern.yearly.every.month.label   "Yal" >
+
+<!-- LOCALIZATON NOTE
+     Some languages use a preposition when describing dates:
+     Portuguese: 6 de Setembro
+     English: 6 [of] September
+     event.recurrence.pattern.yearly.of.label is "of" in
+     Edit recurrence window -> Recurrence pattern -> Repeat yearly
+-->
+<!ENTITY event.recurrence.pattern.yearly.of.label            "" >
+
+<!ENTITY event.recurrence.pattern.yearly.month.1.label       "Yennayer" >
+<!ENTITY event.recurrence.pattern.yearly.month.2.label       "Fuṛaṛ" >
+<!ENTITY event.recurrence.pattern.yearly.month.3.label       "Meɣres" >
+<!ENTITY event.recurrence.pattern.yearly.month.4.label       "Yebrir" >
+<!ENTITY event.recurrence.pattern.yearly.month.5.label       "Magu" >
+<!ENTITY event.recurrence.pattern.yearly.month.6.label       "Yunyu" >
+<!ENTITY event.recurrence.pattern.yearly.month.7.label       "Yulyu" >
+<!ENTITY event.recurrence.pattern.yearly.month.8.label       "Ɣuct" >
+<!ENTITY event.recurrence.pattern.yearly.month.9.label       "Cṭambeṛ" >
+<!ENTITY event.recurrence.pattern.yearly.month.10.label      "Tubeṛ" >
+<!ENTITY event.recurrence.pattern.yearly.month.11.label      "Wambeṛ" >
+<!ENTITY event.recurrence.pattern.yearly.month.12.label      "Dujambeṛ" >
+<!ENTITY event.recurrence.yearly.every.label                 "Yal">
+<!ENTITY event.recurrence.yearly.first.label                 "Amezwaru">
+<!ENTITY event.recurrence.yearly.second.label                "Wis sin">
+<!ENTITY event.recurrence.yearly.third.label                 "Wis kraḍ">
+<!ENTITY event.recurrence.yearly.fourth.label                "Wis kuẓ">
+<!ENTITY event.recurrence.yearly.fifth.label                 "Wis Semmus">
+<!ENTITY event.recurrence.yearly.last.label                  "Aneggaru">
+<!ENTITY event.recurrence.pattern.yearly.week.1.label        "Acer" >
+<!ENTITY event.recurrence.pattern.yearly.week.2.label        "Arim" >
+<!ENTITY event.recurrence.pattern.yearly.week.3.label        "Aram" >
+<!ENTITY event.recurrence.pattern.yearly.week.4.label        "Ahad" >
+<!ENTITY event.recurrence.pattern.yearly.week.5.label        "Amhad" >
+<!ENTITY event.recurrence.pattern.yearly.week.6.label        "Sem" >
+<!ENTITY event.recurrence.pattern.yearly.week.7.label        "Sed" >
+<!ENTITY event.recurrence.pattern.yearly.day.label           "Ass" >
+<!ENTITY event.recurrence.of.label                           "si" >
+<!ENTITY event.recurrence.pattern.yearly.month2.1.label      "Yennayer" >
+<!ENTITY event.recurrence.pattern.yearly.month2.2.label      "Fuṛaṛ" >
+<!ENTITY event.recurrence.pattern.yearly.month2.3.label      "Meɣres" >
+<!ENTITY event.recurrence.pattern.yearly.month2.4.label      "Yebrir" >
+<!ENTITY event.recurrence.pattern.yearly.month2.5.label      "Magu" >
+<!ENTITY event.recurrence.pattern.yearly.month2.6.label      "Yunyu" >
+<!ENTITY event.recurrence.pattern.yearly.month2.7.label      "Yulyu" >
+<!ENTITY event.recurrence.pattern.yearly.month2.8.label      "Ɣuct" >
+<!ENTITY event.recurrence.pattern.yearly.month2.9.label      "Cṭambeṛ" >
+<!ENTITY event.recurrence.pattern.yearly.month2.10.label     "Tubeṛ" >
+<!ENTITY event.recurrence.pattern.yearly.month2.11.label     "Wambeṛ" >
+<!ENTITY event.recurrence.pattern.yearly.month2.12.label     "Dujambeṛ" >
+
+<!ENTITY event.recurrence.range.label                   "Azilal n usniles">
+<!ENTITY event.recurrence.forever.label                 "Ulac azemz n tagara" >
+<!ENTITY event.recurrence.repeat.for.label              "Snulfu" >
+<!ENTITY event.recurrence.appointments.label            "Ttiɛad" >
+<!ENTITY event.repeat.until.label                       "Ales alamma" >
+<!ENTITY event.recurrence.preview.label                 "Taskant">
+
+<!-- Attendees dialog -->
+<!ENTITY invite.title.label                     "Ɛṛeḍ-d imttekkiyen">
+<!ENTITY event.organizer.label                  "Suddes">
+<!ENTITY event.freebusy.suggest.slot            "Azilal n usumer n wakud:">
+<!ENTITY event.freebusy.button.next.slot        "Azilal d-iteddun">
+<!ENTITY event.freebusy.button.previous.slot    "Azilal yezrin">
+<!ENTITY event.freebusy.zoom                    "Asemɣer/Asemẓi">
+<!ENTITY event.freebusy.legend.free             "Ilelli" >
+<!ENTITY event.freebusy.legend.busy             "Yettwaṭṭef" >
+<!ENTITY event.freebusy.legend.busy_tentative   "Aɛraḍ" >
+<!ENTITY event.freebusy.legend.busy_unavailable "Beṛṛa n umahil" >
+<!ENTITY event.freebusy.legend.unknown          "Ulac issalen" >
+<!ENTITY event.attendee.role.required           "Yessefk ad tiliḍ">
+<!ENTITY event.attendee.role.optional           "Ur issefk ara ad tiliḍ">
+<!ENTITY event.attendee.role.chair              "Akersi">
+<!ENTITY event.attendee.role.nonparticipant     "Mačči d imttekki">
+<!ENTITY event.attendee.usertype.individual     "Yiwen n umdan">
+<!ENTITY event.attendee.usertype.group          "Agraw">
+<!ENTITY event.attendee.usertype.resource       "Taɣbalut">
+<!ENTITY event.attendee.usertype.room           "Taxxamt">
+<!ENTITY event.attendee.usertype.unknown        "Arussin">
+
+<!-- Timezone dialog -->
+<!ENTITY timezone.title.label            "Ma ulac aɣilif, mudd-d iẓdi ursrig">
+<!ENTITY event.timezone.custom.label     "Ugar n yeẓḍan usrigen…">
+
+<!-- Read-Only dialog -->
+<!ENTITY read.only.general.label         "Amatu">
+<!ENTITY read.only.title.label           "Tineɣremt">
+<!ENTITY read.only.calendar.label        "Awitay:">
+<!ENTITY read.only.event.start.label     "Azemz n tazwara:">
+<!ENTITY read.only.task.start.label      "Azemz n tazwara:">
+<!ENTITY read.only.event.end.label       "Azemz n tagara">
+<!ENTITY read.only.task.due.label        "Azemz n tagara:">
+<!ENTITY read.only.repeat.label          "Tisnilas:">
+<!ENTITY read.only.location.label        "Adig">
+<!ENTITY read.only.category.label        "Taggayt:">
+<!ENTITY read.only.organizer.label       "Suddes">
+<!ENTITY read.only.reminder.label        "Asmekti:">
+<!ENTITY read.only.attachments.label     "Imeddayen:">
+<!ENTITY read.only.attendees.label       "Imttekkiyen">
+<!ENTITY read.only.description.label     "Aglam">
+<!ENTITY read.only.link.label            "Aseɣwen i d-yettuɣalen">
+
+<!-- Summary dialog -->
+<!ENTITY summary.dialog.saveclose.label         "Sekles sakin Mdel">
+<!ENTITY summary.dialog.saveclose.tooltiptext   "Sekles ibeddilen sakin mdel asfaylus war abeddel n waddad n uttekki sakin azen tiririt">
+<!ENTITY summary.dialog.accept.label            "Qbel">
+<!ENTITY summary.dialog.accept.tooltiptext      "Qbel tinnubga">
+<!ENTITY summary.dialog.tentative.label         "Aɛraḍ">
+<!ENTITY summary.dialog.tentative.tooltiptext   "Qbel s wudem askudan tinnubga">
+<!ENTITY summary.dialog.decline.label           "Agwi">
+<!ENTITY summary.dialog.decline.tooltiptext     "Agwi tinnubga">
+<!ENTITY summary.dialog.dontsend.label          "Ur ttazen ara tiririt">
+<!ENTITY summary.dialog.dontsend.tooltiptext    "Beddel addad n uttekki-ik s war tuzna n tririt i yimsuddes sakin mdel asfaylu">
+<!ENTITY summary.dialog.send.label              "Azen tiririt tura">
+<!ENTITY summary.dialog.send.tooltiptext        "Azen tiririt n yimsuddes sakin mdel asfaylu">

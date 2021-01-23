@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSMIMEOverlay.dtd UI for s/mime hooks in message composition -->
+
+<!ENTITY menu_securityDoNotEncrypt.label "Njezaklučować">
+<!ENTITY menu_securityDoNotEncrypt.accesskey "z">
+
+<!-- not yet used
+<!ENTITY menu_securityEncryptOptional.label "Allow Encryption">
+<!ENTITY menu_securityEncryptOptional.accesskey "w">
+-->
+
+<!ENTITY menu_securityEncryptRequire2.label "Zaklučowanje požadać">
+<!ENTITY menu_securityEncryptRequire.accesskey "z">
+
+<!ENTITY menu_securitySign.label "Tutu powěsć digitalnje podpisać">
+<!ENTITY menu_securitySign.accesskey "d">
+
+<!ENTITY menu_securityAttachMyKey.label "Mój zjawny kluč připowěsnyć">
+<!ENTITY menu_securityAttachMyKey.accesskey "M">
+
+<!ENTITY menu_securityTech.label "Zaklučowanska technologija">
+<!ENTITY menu_securityTech.accesskey "t">
+
+<!ENTITY menu_techPGP.label "OpenPGP">
+<!ENTITY menu_techPGP.accesskey "O">
+<!ENTITY menu_techSMIME.label "S/MIME">
+<!ENTITY menu_techSMIME.accesskey "S">
+
+<!ENTITY menu_securityStatus.label "Wěstotna info za powěsće">
+<!ENTITY menu_securityStatus.accesskey "s">
+
+<!ENTITY securityButton.label "Wěstota">
+<!ENTITY securityButton.tooltip "Nastajenja wěstoty wobhladać abo změnić">
+
+<!ENTITY menu_viewSecurityStatus.label "Wěstotne informacije wo powěsći">
+<!ENTITY menu_viewSecurityStatus.accesskey "i">

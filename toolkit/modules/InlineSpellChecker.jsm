@@ -25,9 +25,17 @@ InlineSpellChecker.prototype = {
     }
   },
 
-  initFromRemote(aSpellInfo) {
+  initFromRemote(aSpellInfo, aWindowGlobalParent) {
     if (this.mRemote) {
-      throw new Error("Unexpected state");
+      // We shouldn't get here, but let's just recover instead of bricking the
+      // menu by throwing exceptions:
+      Cu.reportError(new Error("Unexpected remote spellchecker present!"));
+      try {
+        this.mRemote.uninit();
+      } catch (ex) {
+        Cu.reportError(ex);
+      }
+      this.mRemote = null;
     }
     this.uninit();
 
@@ -35,7 +43,8 @@ InlineSpellChecker.prototype = {
       return;
     }
     this.mInlineSpellChecker = this.mRemote = new RemoteSpellChecker(
-      aSpellInfo
+      aSpellInfo,
+      aWindowGlobalParent
     );
     this.mOverMisspelling = aSpellInfo.overMisspelling;
     this.mMisspelling = aSpellInfo.misspelling;
@@ -217,10 +226,7 @@ InlineSpellChecker.prototype = {
       curlang = this.mRemote.currentDictionary;
     } else if (this.mInlineSpellChecker) {
       var spellchecker = this.mInlineSpellChecker.spellChecker;
-      var o1 = {},
-        o2 = {};
-      spellchecker.GetDictionaryList(o1, o2);
-      list = o1.value;
+      list = spellchecker.GetDictionaryList();
       try {
         curlang = spellchecker.GetCurrentDictionary();
       } catch (e) {}
@@ -340,7 +346,7 @@ InlineSpellChecker.prototype = {
   },
   // callback for removing the last added word to the dictionary LIFO fashion
   undoAddToDictionary() {
-    if (this.mAddedWordStack.length > 0) {
+    if (this.mAddedWordStack.length) {
       var word = this.mAddedWordStack.pop();
       if (this.mRemote) {
         this.mRemote.undoAddToDictionary(word);
@@ -351,7 +357,7 @@ InlineSpellChecker.prototype = {
   },
   canUndo() {
     // Return true if we have words on the stack
-    return this.mAddedWordStack.length > 0;
+    return !!this.mAddedWordStack.length;
   },
   ignoreWord() {
     if (this.mRemote) {
@@ -488,9 +494,11 @@ var SpellCheckHelper = {
   },
 };
 
-function RemoteSpellChecker(aSpellInfo) {
+function RemoteSpellChecker(aSpellInfo, aWindowGlobalParent) {
   this._spellInfo = aSpellInfo;
   this._suggestionGenerator = null;
+  this._actor = aWindowGlobalParent.getActor("InlineSpellChecker");
+  this._actor.registerDestructionObserver(this);
 }
 
 RemoteSpellChecker.prototype = {
@@ -532,24 +540,15 @@ RemoteSpellChecker.prototype = {
   },
 
   selectDictionary(localeCode) {
-    this._spellInfo.target.sendAsyncMessage(
-      "InlineSpellChecker:selectDictionary",
-      { localeCode }
-    );
+    this._actor.selectDictionary({ localeCode });
   },
 
   replaceMisspelling(index) {
-    this._spellInfo.target.sendAsyncMessage(
-      "InlineSpellChecker:replaceMisspelling",
-      { index }
-    );
+    this._actor.replaceMisspelling({ index });
   },
 
   toggleEnabled() {
-    this._spellInfo.target.sendAsyncMessage(
-      "InlineSpellChecker:toggleEnabled",
-      {}
-    );
+    this._actor.toggleEnabled();
   },
   addToDictionary() {
     // This is really ugly. There is an nsISpellChecker somewhere in the
@@ -564,26 +563,32 @@ RemoteSpellChecker.prototype = {
       "@mozilla.org/spellchecker/personaldictionary;1"
     ].getService(Ci.mozIPersonalDictionary);
     dictionary.addWord(this._spellInfo.misspelling);
-
-    this._spellInfo.target.sendAsyncMessage("InlineSpellChecker:recheck", {});
+    this._actor.recheckSpelling();
   },
   undoAddToDictionary(word) {
     let dictionary = Cc[
       "@mozilla.org/spellchecker/personaldictionary;1"
     ].getService(Ci.mozIPersonalDictionary);
     dictionary.removeWord(word);
-
-    this._spellInfo.target.sendAsyncMessage("InlineSpellChecker:recheck", {});
+    this._actor.recheckSpelling();
   },
   ignoreWord() {
     let dictionary = Cc[
       "@mozilla.org/spellchecker/personaldictionary;1"
     ].getService(Ci.mozIPersonalDictionary);
     dictionary.ignoreWord(this._spellInfo.misspelling);
-
-    this._spellInfo.target.sendAsyncMessage("InlineSpellChecker:recheck", {});
+    this._actor.recheckSpelling();
   },
   uninit() {
-    this._spellInfo.target.sendAsyncMessage("InlineSpellChecker:uninit", {});
+    if (this._actor) {
+      this._actor.uninit();
+      this._actor.unregisterDestructionObserver(this);
+    }
+  },
+
+  actorDestroyed() {
+    // The actor lets us know if it gets destroyed, so we don't
+    // later try to call `.uninit()` on it.
+    this._actor = null;
   },
 };

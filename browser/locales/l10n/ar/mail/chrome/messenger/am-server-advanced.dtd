@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "إعدادات الحساب المتقدّمة">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "دليل خادوم IMAP:">
+<!ENTITY serverDirectory.accesskey "د">
+<!ENTITY usingSubscription.label "أظهر المجلدات المشترِكة فقط">
+<!ENTITY usingSubscription.accesskey "ظ">
+<!ENTITY dualUseFolders.label "يدعم الخادوم المجلدات التي تحوي مجلدات فرعيّة ورسائل">
+<!ENTITY dualUseFolders.accesskey "م">
+<!ENTITY maximumConnectionsNumber.label "العدد الأقصى للاتّصالات بالخادوم التي ستُستبقى">
+<!ENTITY maximumConnectionsNumber.accesskey "ع">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "هذه التفضيلات تحدد فضاءات التسمية في خادوم ال IMAP لديك">
+<!ENTITY personalNamespace.label "فضاء تسمية شخصي:">
+<!ENTITY personalNamespace.accesskey "ض">
+<!ENTITY publicNamespace.label "عام (مشارَك):">
+<!ENTITY publicNamespace.accesskey "م">
+<!ENTITY otherUsersNamespace.label "مستخدمون آخرون:">
+<!ENTITY otherUsersNamespace.accesskey "ن">
+<!ENTITY overrideNamespaces.label "اسمح للخادوم بتعديل فضاء التسمية هذا">
+<!ENTITY overrideNamespaces.accesskey "س">
+<!ENTITY pop3DeferringDesc.label "عند تنزيل البريد من خادوم هذا الحساب، استخدم المجلد التالي للبريد الجديد:" >
+<!ENTITY accountInbox.label "صندوق الوارد لهذا الحساب">
+<!ENTITY accountInbox.accesskey "ذ">
+<!ENTITY deferToServer.label "صندوق الوارد لحساب آخر">
+<!ENTITY deferToServer.accesskey "خ">
+<!ENTITY deferGetNewMail.label "اشمل هذا الخادوم عند جلب البريد الجديد">
+<!ENTITY deferGetNewMail.accesskey "ش">

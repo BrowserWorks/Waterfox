@@ -1,5 +1,11 @@
-#include "Entries.h"
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 #include "mozilla/EndianUtils.h"
+
+#include "Common.h"
 
 TEST(UrlClassifierHash, ToFromUint32)
 {
@@ -28,7 +34,7 @@ TEST(UrlClassifierHash, Compare)
   Prefix p1, p2, p3;
 
   // The order of p1,p2,p3 is "p1 == p3 < p2"
-#if MOZ_LITTLE_ENDIAN
+#if MOZ_LITTLE_ENDIAN()
   p1.Assign(nsCString("\x01\x00\x00\x00", 4));
   p2.Assign(nsCString("\x00\x00\x00\x01", 4));
   p3.Assign(nsCString("\x01\x00\x00\x00", 4));

@@ -10,6 +10,8 @@
  * - again we receive the data from the server.
  */
 
+"use strict";
+
 const { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
 
 XPCOMUtils.defineLazyGetter(this, "URL", function() {
@@ -20,7 +22,7 @@ var httpServer = null;
 
 // needs to be rooted
 var cacheFlushObserver = (cacheFlushObserver = {
-  observe: function() {
+  observe() {
     cacheFlushObserver = null;
     readServerContentAgain();
   },

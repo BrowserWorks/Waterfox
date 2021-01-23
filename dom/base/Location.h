@@ -10,6 +10,7 @@
 #include "js/TypeDecls.h"
 #include "mozilla/ErrorResult.h"
 #include "mozilla/dom/BrowsingContext.h"
+#include "mozilla/dom/LocationBase.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsIWeakReferenceUtils.h"
 #include "nsPIDOMWindow.h"
@@ -27,11 +28,13 @@ namespace dom {
 // Location: Script "location" object
 //*****************************************************************************
 
-class Location final : public nsISupports, public nsWrapperCache {
+class Location final : public nsISupports,
+                       public LocationBase,
+                       public nsWrapperCache {
  public:
   typedef BrowsingContext::LocationProxy RemoteProxy;
 
-  Location(nsPIDOMWindowInner* aWindow, nsIDocShell* aDocShell);
+  Location(nsPIDOMWindowInner* aWindow, BrowsingContext* aBrowsingContext);
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(Location)
@@ -40,9 +43,6 @@ class Location final : public nsISupports, public nsWrapperCache {
   void Assign(const nsAString& aUrl, nsIPrincipal& aSubjectPrincipal,
               ErrorResult& aError);
 
-  void Replace(const nsAString& aUrl, nsIPrincipal& aSubjectPrincipal,
-               ErrorResult& aError);
-
   void Reload(bool aForceget, nsIPrincipal& aSubjectPrincipal,
               ErrorResult& aError) {
     if (!CallerSubsumes(&aSubjectPrincipal)) {
@@ -50,7 +50,7 @@ class Location final : public nsISupports, public nsWrapperCache {
       return;
     }
 
-    aError = Reload(aForceget);
+    Reload(aForceget, aError);
   }
 
   void GetHref(nsAString& aHref, nsIPrincipal& aSubjectPrincipal,
@@ -62,9 +62,6 @@ class Location final : public nsISupports, public nsWrapperCache {
 
     aError = GetHref(aHref);
   }
-
-  void SetHref(const nsAString& aHref, nsIPrincipal& aSubjectPrincipal,
-               ErrorResult& aError);
 
   void GetOrigin(nsAString& aOrigin, nsIPrincipal& aSubjectPrincipal,
                  ErrorResult& aError);
@@ -111,12 +108,6 @@ class Location final : public nsISupports, public nsWrapperCache {
   void SetHash(const nsAString& aHash, nsIPrincipal& aSubjectPrincipal,
                ErrorResult& aError);
 
-  void Stringify(nsAString& aRetval, nsIPrincipal& aSubjectPrincipal,
-                 ErrorResult& aError) {
-    // GetHref checks CallerSubsumes.
-    GetHref(aRetval, aSubjectPrincipal, aError);
-  }
-
   nsPIDOMWindowInner* GetParentObject() const { return mInnerWindow; }
 
   virtual JSObject* WrapObject(JSContext* aCx,
@@ -128,10 +119,13 @@ class Location final : public nsISupports, public nsWrapperCache {
 
   nsresult ToString(nsAString& aString) { return GetHref(aString); }
 
-  nsresult Reload(bool aForceget);
+  void Reload(bool aForceget, ErrorResult& aRv);
 
  protected:
   virtual ~Location();
+
+  BrowsingContext* GetBrowsingContext() override;
+  already_AddRefed<nsIDocShell> GetDocShell() override;
 
   // In the case of jar: uris, we sometimes want the place the jar was
   // fetched from as the URI instead of the jar: uri itself.  Pass in
@@ -140,31 +134,11 @@ class Location final : public nsISupports, public nsWrapperCache {
   // if the docShell is null.
   nsresult GetURI(nsIURI** aURL, bool aGetInnermostURI = false);
 
-  void SetURI(nsIURI* aURL, nsIPrincipal& aSubjectPrincipal, ErrorResult& aRv,
-              bool aReplace = false);
-  void SetHrefWithBase(const nsAString& aHref, nsIURI* aBase,
-                       nsIPrincipal& aSubjectPrincipal, bool aReplace,
-                       ErrorResult& aRv);
-
-  // Helper for Assign/SetHref/Replace
-  void DoSetHref(const nsAString& aHref, nsIPrincipal& aSubjectPrincipal,
-                 bool aReplace, ErrorResult& aRv);
-
-  // Get the base URL we should be using for our relative URL
-  // resolution for SetHref/Assign/Replace.
-  already_AddRefed<nsIURI> GetSourceBaseURL();
-
-  // Check whether it's OK to load the given url with the given subject
-  // principal, and if so construct the right nsDocShellLoadInfo for the load
-  // and return it.
-  already_AddRefed<nsDocShellLoadState> CheckURL(
-      nsIURI* url, nsIPrincipal& aSubjectPrincipal, ErrorResult& aRv);
-
   bool CallerSubsumes(nsIPrincipal* aSubjectPrincipal);
 
   nsString mCachedHash;
   nsCOMPtr<nsPIDOMWindowInner> mInnerWindow;
-  nsWeakPtr mDocShell;
+  uint64_t mBrowsingContextId = 0;
 };
 
 }  // namespace dom

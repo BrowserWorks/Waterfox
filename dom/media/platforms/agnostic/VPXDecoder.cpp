@@ -5,17 +5,19 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "VPXDecoder.h"
+
+#include <algorithm>
+
 #include "BitReader.h"
+#include "ByteWriter.h"
+#include "ImageContainer.h"
 #include "TimeUnits.h"
 #include "gfx2DGlue.h"
 #include "mozilla/PodOperations.h"
 #include "mozilla/SyncRunnable.h"
 #include "mozilla/Unused.h"
-#include "ImageContainer.h"
 #include "nsError.h"
 #include "prsystem.h"
-
-#include <algorithm>
 
 #undef LOG
 #define LOG(arg, ...)                                                  \
@@ -177,6 +179,22 @@ RefPtr<MediaDataDecoder::DecodePromise> VPXDecoder::ProcessDecode(
                       RESULT_DETAIL("VPX Unknown image format")),
           __func__);
     }
+    b.mYUVColorSpace = [&]() {
+      switch (img->cs) {
+        case VPX_CS_BT_601:
+        case VPX_CS_SMPTE_170:
+        case VPX_CS_SMPTE_240:
+          return gfx::YUVColorSpace::BT601;
+        case VPX_CS_BT_709:
+          return gfx::YUVColorSpace::BT709;
+        case VPX_CS_BT_2020:
+          return gfx::YUVColorSpace::BT2020;
+        default:
+          return DefaultColorSpace({img->d_w, img->d_h});
+      }
+    }();
+    b.mColorRange = img->range == VPX_CR_FULL_RANGE ? gfx::ColorRange::FULL
+                                                    : gfx::ColorRange::LIMITED;
 
     RefPtr<VideoData> v;
     if (!img_alpha) {
@@ -454,8 +472,8 @@ bool VPXDecoder::GetStreamInfo(Span<const uint8_t> aBuffer,
         }
       } else {
         aInfo.mColorSpace = 1;  // CS_BT_601
-        aInfo.mSubSampling_x = 1;
-        aInfo.mSubSampling_y = 1;
+        aInfo.mSubSampling_x = true;
+        aInfo.mSubSampling_y = true;
         aInfo.mBitDepth = 8;
       }
       Unused << br.ReadBits(8);  // refresh_frame_flags
@@ -464,6 +482,61 @@ bool VPXDecoder::GetStreamInfo(Span<const uint8_t> aBuffer,
     }
   }
   return true;
+}
+
+// Ref: "VP Codec ISO Media File Format Binding, v1.0, 2017-03-31"
+// <https://www.webmproject.org/vp9/mp4/>
+//
+// class VPCodecConfigurationBox extends FullBox('vpcC', version = 1, 0)
+// {
+//     VPCodecConfigurationRecord() vpcConfig;
+// }
+//
+// aligned (8) class VPCodecConfigurationRecord {
+//     unsigned int (8)     profile;
+//     unsigned int (8)     level;
+//     unsigned int (4)     bitDepth;
+//     unsigned int (3)     chromaSubsampling;
+//     unsigned int (1)     videoFullRangeFlag;
+//     unsigned int (8)     colourPrimaries;
+//     unsigned int (8)     transferCharacteristics;
+//     unsigned int (8)     matrixCoefficients;
+//     unsigned int (16)    codecIntializationDataSize;
+//     unsigned int (8)[]   codecIntializationData;
+// }
+
+/* static */
+void VPXDecoder::GetVPCCBox(MediaByteBuffer* aDestBox,
+                            const VPXStreamInfo& aInfo) {
+  ByteWriter<BigEndian> writer(*aDestBox);
+
+  int chroma = [&]() {
+    if (aInfo.mSubSampling_x && aInfo.mSubSampling_y) {
+      return 1;  // 420 Colocated;
+    }
+    if (aInfo.mSubSampling_x && !aInfo.mSubSampling_y) {
+      return 2;  // 422
+    }
+    if (!aInfo.mSubSampling_x && !aInfo.mSubSampling_y) {
+      return 3;  // 444
+    }
+    // This indicates 4:4:0 subsampling, which is not expressable in the
+    // 'vpcC' box. Default to 4:2:0.
+    return 1;
+  }();
+
+  MOZ_ALWAYS_TRUE(writer.WriteU32(1 << 24));        // version & flag
+  MOZ_ALWAYS_TRUE(writer.WriteU8(aInfo.mProfile));  // profile
+  MOZ_ALWAYS_TRUE(writer.WriteU8(10));              // level set it to 1.0
+  MOZ_ALWAYS_TRUE(writer.WriteU8(
+      (0xF & aInfo.mBitDepth) << 4 | (0x7 & chroma) << 1 |
+      (0x1 & aInfo.mFullRange)));      // bitdepth (4 bits), chroma (3 bits),
+                                       // video full/restrice range (1 bit)
+  MOZ_ALWAYS_TRUE(writer.WriteU8(2));  // color primaries: unknown
+  MOZ_ALWAYS_TRUE(writer.WriteU8(2));  // transfer characteristics: unknown
+  MOZ_ALWAYS_TRUE(writer.WriteU8(2));  // matrix coefficient: unknown
+  MOZ_ALWAYS_TRUE(
+      writer.WriteU16(0));  // codecIntializationDataSize (must be 0 for VP9)
 }
 
 }  // namespace mozilla

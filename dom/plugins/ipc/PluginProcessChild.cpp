@@ -4,16 +4,16 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "mozilla/ipc/IOThreadChild.h"
 #include "mozilla/plugins/PluginProcessChild.h"
 
-#include "prlink.h"
-
+#include "ClearOnShutdown.h"
 #include "base/command_line.h"
 #include "base/string_util.h"
+#include "mozilla/AbstractThread.h"
+#include "mozilla/ipc/IOThreadChild.h"
 #include "nsDebugImpl.h"
 #include "nsThreadManager.h"
-#include "ClearOnShutdown.h"
+#include "prlink.h"
 
 #if defined(XP_MACOSX) && defined(MOZ_SANDBOX)
 #  include "mozilla/SandboxSettings.h"
@@ -167,7 +167,7 @@ bool PluginProcessChild::Init(int aArgc, char* aArgv[]) {
 
   bool retval = mPlugin.InitForChrome(pluginFilename, ParentPid(),
                                       IOThreadChild::message_loop(),
-                                      IOThreadChild::channel());
+                                      IOThreadChild::TakeChannel());
 #if defined(XP_MACOSX)
   if (nsCocoaFeatures::OnYosemiteOrLater()) {
     // Explicitly turn off CGEvent logging.  This works around bug 1092855.
@@ -195,6 +195,7 @@ void PluginProcessChild::CleanUp() {
 #endif
 
   mozilla::KillClearOnShutdown(ShutdownPhase::ShutdownFinal);
+  AbstractThread::ShutdownMainThread();
 }
 
 }  // namespace plugins

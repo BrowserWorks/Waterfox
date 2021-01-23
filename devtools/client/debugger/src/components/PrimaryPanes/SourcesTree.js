@@ -8,6 +8,7 @@
 import React, { Component } from "react";
 import classnames from "classnames";
 import { connect } from "../../utils/connect";
+import { difference } from "lodash";
 
 // Selectors
 import {
@@ -35,9 +36,12 @@ import {
   createTree,
   getDirectories,
   isDirectory,
-  getSourceFromNode,
-  nodeHasChildren,
+  findSourceTreeNodes,
   updateTree,
+  getSource,
+  getChildren,
+  getAllSources,
+  getSourcesInsideGroup,
 } from "../../utils/sources-tree";
 import { parse } from "../../utils/url";
 import { getRawSourceURL } from "../../utils/source";
@@ -46,28 +50,32 @@ import type {
   TreeNode,
   TreeDirectory,
   ParentMap,
+  SourcesGroups,
 } from "../../utils/sources-tree/types";
-import type { Source, Context, Thread } from "../../types";
+import type { Source, Context, Thread, URL } from "../../types";
 import type {
   SourcesMapByThread,
   State as AppState,
 } from "../../reducers/types";
 import type { Item } from "../shared/ManagedTree";
 
+type OwnProps = {|
+  threads: Thread[],
+|};
 type Props = {
   cx: Context,
   threads: Thread[],
   sources: SourcesMapByThread,
   sourceCount: number,
-  shownSource?: Source,
-  selectedSource?: Source,
-  debuggeeUrl: string,
+  shownSource: ?Source,
+  selectedSource: ?Source,
+  debuggeeUrl: URL,
   projectRoot: string,
   expanded: Set<string>,
   selectSource: typeof actions.selectSource,
   setExpandedState: typeof actions.setExpandedState,
   focusItem: typeof actions.focusItem,
-  focused: TreeNode,
+  focused: ?TreeNode,
 };
 
 type State = {
@@ -80,8 +88,8 @@ type State = {
 
 type SetExpanded = (item: TreeNode, expanded: boolean, altKey: boolean) => void;
 
-function shouldAutoExpand(depth, item, debuggeeUrl) {
-  if (depth !== 1) {
+function shouldAutoExpand(depth, item, debuggeeUrl, projectRoot) {
+  if (projectRoot != "" || depth !== 1) {
     return false;
   }
 
@@ -148,16 +156,17 @@ class SourcesTree extends Component<Props, State> {
     // NOTE: do not run this every time a source is clicked,
     // only when a new source is added
     if (nextProps.sources != this.props.sources) {
-      this.setState(
-        updateTree({
-          newSources: nextProps.sources,
-          threads: nextProps.threads,
-          prevSources: sources,
-          debuggeeUrl,
-          uncollapsedTree,
-          sourceTree,
-        })
-      );
+      const update = updateTree({
+        newSources: nextProps.sources,
+        threads: nextProps.threads,
+        prevSources: sources,
+        debuggeeUrl,
+        uncollapsedTree,
+        sourceTree,
+      });
+      if (update) {
+        this.setState(update);
+      }
     }
   }
 
@@ -175,14 +184,9 @@ class SourcesTree extends Component<Props, State> {
     this.selectItem(item);
   };
 
-  // NOTE: we get the source from sources because item.contents is cached
-  getSource(item: TreeNode): ?Source {
-    return getSourceFromNode(item);
-  }
-
   getPath = (item: TreeNode): string => {
     const { path } = item;
-    const source = this.getSource(item);
+    const source = getSource(item, this.props);
 
     if (!source || isDirectory(item)) {
       return path;
@@ -206,7 +210,7 @@ class SourcesTree extends Component<Props, State> {
     return sourceTree.contents.length === 0;
   }
 
-  renderEmptyElement(message) {
+  renderEmptyElement(message: string) {
     return (
       <div key="empty" className="no-sources-message">
         {message}
@@ -214,34 +218,32 @@ class SourcesTree extends Component<Props, State> {
     );
   }
 
-  getRoots = () => {
-    const { projectRoot } = this.props;
-    const { sourceTree } = this.state;
-
+  getRoots = (sourceTree: TreeDirectory, projectRoot: string) => {
     const sourceContents = sourceTree.contents[0];
-    const rootLabel = projectRoot.split("/").pop();
 
-    // The "sourceTree.contents[0]" check ensures that there are contents
-    // A custom root with no existing sources will be ignored
     if (projectRoot && sourceContents) {
-      if (sourceContents && sourceContents.name !== rootLabel) {
-        return sourceContents.contents[0].contents;
-      }
-      return sourceContents.contents;
+      const roots = findSourceTreeNodes(sourceTree, projectRoot);
+      // NOTE if there is one root, we want to show its content
+      // TODO with multiple roots we should try and show the thread name
+      return roots && roots.length == 1 ? roots[0].contents : roots;
     }
 
     return sourceTree.contents;
   };
 
-  getChildren = (item: $Shape<TreeDirectory>) => {
-    return nodeHasChildren(item) ? item.contents : [];
+  getSourcesGroups = (item: TreeNode): SourcesGroups => {
+    const sourcesAll = getAllSources(this.props);
+    const sourcesInside = getSourcesInsideGroup(item, this.props);
+    const sourcesOuside = difference(sourcesAll, sourcesInside);
+
+    return { sourcesInside, sourcesOuside };
   };
 
   renderItem = (
     item: TreeNode,
     depth: number,
     focused: boolean,
-    _,
+    _: mixed,
     expanded: boolean,
     { setExpanded }: { setExpanded: SetExpanded }
   ) => {
@@ -253,32 +255,33 @@ class SourcesTree extends Component<Props, State> {
         threads={threads}
         depth={depth}
         focused={focused}
-        autoExpand={shouldAutoExpand(depth, item, debuggeeUrl)}
+        autoExpand={shouldAutoExpand(depth, item, debuggeeUrl, projectRoot)}
         expanded={expanded}
         focusItem={this.onFocus}
         selectItem={this.selectItem}
-        source={this.getSource(item)}
+        source={getSource(item, this.props)}
         debuggeeUrl={debuggeeUrl}
         projectRoot={projectRoot}
         setExpanded={setExpanded}
+        getSourcesGroups={this.getSourcesGroups}
       />
     );
   };
 
   renderTree() {
-    const { expanded, focused } = this.props;
+    const { expanded, focused, projectRoot } = this.props;
 
-    const { highlightItems, listItems, parentMap } = this.state;
+    const { highlightItems, listItems, parentMap, sourceTree } = this.state;
 
     const treeProps = {
       autoExpandAll: false,
       autoExpandDepth: 1,
       expanded,
       focused,
-      getChildren: this.getChildren,
+      getChildren: getChildren,
       getParent: (item: $Shape<TreeNode>) => parentMap.get(item),
       getPath: this.getPath,
-      getRoots: this.getRoots,
+      getRoots: () => this.getRoots(sourceTree, projectRoot),
       highlightItems,
       itemHeight: 21,
       key: this.isEmpty() ? "empty" : "full",
@@ -294,7 +297,7 @@ class SourcesTree extends Component<Props, State> {
     return <ManagedTree {...treeProps} />;
   }
 
-  renderPane(...children) {
+  renderPane(child: React$Node) {
     const { projectRoot } = this.props;
 
     return (
@@ -304,7 +307,7 @@ class SourcesTree extends Component<Props, State> {
           "sources-list-custom-root": projectRoot,
         })}
       >
-        {children}
+        {child}
       </div>
     );
   }
@@ -357,11 +360,8 @@ const mapStateToProps = (state, props) => {
   };
 };
 
-export default connect(
-  mapStateToProps,
-  {
-    selectSource: actions.selectSource,
-    setExpandedState: actions.setExpandedState,
-    focusItem: actions.focusItem,
-  }
-)(SourcesTree);
+export default connect<Props, OwnProps, _, _, _, _>(mapStateToProps, {
+  selectSource: actions.selectSource,
+  setExpandedState: actions.setExpandedState,
+  focusItem: actions.focusItem,
+})(SourcesTree);

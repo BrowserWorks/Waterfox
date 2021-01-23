@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Cuir a-steach caractair">
+<!ENTITY category.label "Roinn">
+<!ENTITY letter.label "Litir:">
+<!ENTITY letter.accessKey "L">
+<!ENTITY character.label "Caractair:">
+<!ENTITY character.accessKey "C">
+<!ENTITY accentUpper.label "Stràc air litir mhòr">
+<!ENTITY accentLower.label "Stràc air litir bheag">
+<!ENTITY otherUpper.label "Litir mhòr eile">
+<!ENTITY otherLower.label "Litir bheag eile">
+<!ENTITY commonSymbols.label "Samhlaidhean cumanta">
+<!ENTITY insertButton.label "Cuir a-steach">
+<!ENTITY closeButton.label "Dùin">

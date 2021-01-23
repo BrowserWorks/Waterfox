@@ -3,6 +3,7 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import re
+from counted_unknown_properties import COUNTED_UNKNOWN_PROPERTIES
 
 PHYSICAL_SIDES = ["top", "right", "bottom", "left"]
 LOGICAL_SIDES = ["block-start", "block-end", "inline-start", "inline-end"]
@@ -10,11 +11,14 @@ PHYSICAL_SIZES = ["width", "height"]
 LOGICAL_SIZES = ["block-size", "inline-size"]
 PHYSICAL_CORNERS = ["top-left", "top-right", "bottom-right", "bottom-left"]
 LOGICAL_CORNERS = ["start-start", "start-end", "end-start", "end-end"]
+PHYSICAL_AXES = ["x", "y"]
+LOGICAL_AXES = ["inline", "block"]
 
 # bool is True when logical
 ALL_SIDES = [(side, False) for side in PHYSICAL_SIDES] + [(side, True) for side in LOGICAL_SIDES]
 ALL_SIZES = [(size, False) for size in PHYSICAL_SIZES] + [(size, True) for size in LOGICAL_SIZES]
 ALL_CORNERS = [(corner, False) for corner in PHYSICAL_CORNERS] + [(corner, True) for corner in LOGICAL_CORNERS]
+ALL_AXES = [(axis, False) for axis in PHYSICAL_AXES] + [(axis, True) for axis in LOGICAL_AXES]
 
 SYSTEM_FONT_LONGHANDS = """font_family font_size font_style
                            font_variant_caps font_stretch font_kerning
@@ -26,8 +30,8 @@ SYSTEM_FONT_LONGHANDS = """font_family font_size font_style
                            font_optical_sizing""".split()
 
 
-def maybe_moz_logical_alias(product, side, prop):
-    if product == "gecko" and side[1]:
+def maybe_moz_logical_alias(engine, side, prop):
+    if engine == "gecko" and side[1]:
         axis, dir = side[0].split("-")
         if axis == "inline":
             return prop % dir
@@ -70,9 +74,12 @@ def parse_aliases(value):
 class Keyword(object):
     def __init__(self, name, values, gecko_constant_prefix=None,
                  gecko_enum_prefix=None, custom_consts=None,
-                 extra_gecko_values=None, extra_servo_values=None,
-                 aliases=None,
-                 extra_gecko_aliases=None,
+                 extra_gecko_values=None,
+                 extra_servo_2013_values=None,
+                 extra_servo_2020_values=None,
+                 gecko_aliases=None,
+                 servo_2013_aliases=None,
+                 servo_2020_aliases=None,
                  gecko_strip_moz_prefix=None,
                  gecko_inexhaustive=None):
         self.name = name
@@ -84,40 +91,35 @@ class Keyword(object):
             "NS_STYLE_" + self.name.upper().replace("-", "_")
         self.gecko_enum_prefix = gecko_enum_prefix
         self.extra_gecko_values = (extra_gecko_values or "").split()
-        self.extra_servo_values = (extra_servo_values or "").split()
-        self.aliases = parse_aliases(aliases or "")
-        self.extra_gecko_aliases = parse_aliases(extra_gecko_aliases or "")
+        self.extra_servo_2013_values = (extra_servo_2013_values or "").split()
+        self.extra_servo_2020_values = (extra_servo_2020_values or "").split()
+        self.gecko_aliases = parse_aliases(gecko_aliases or "")
+        self.servo_2013_aliases = parse_aliases(servo_2013_aliases or "")
+        self.servo_2020_aliases = parse_aliases(servo_2020_aliases or "")
         self.consts_map = {} if custom_consts is None else custom_consts
         self.gecko_strip_moz_prefix = True \
             if gecko_strip_moz_prefix is None else gecko_strip_moz_prefix
         self.gecko_inexhaustive = gecko_inexhaustive or (gecko_enum_prefix is None)
 
-    def gecko_values(self):
-        return self.values + self.extra_gecko_values
-
-    def servo_values(self):
-        return self.values + self.extra_servo_values
-
-    def gecko_aliases(self):
-        aliases = self.aliases.copy()
-        aliases.update(self.extra_gecko_aliases)
-        return aliases
-
-    def values_for(self, product):
-        if product == "gecko":
-            return self.gecko_values()
-        elif product == "servo":
-            return self.servo_values()
+    def values_for(self, engine):
+        if engine == "gecko":
+            return self.values + self.extra_gecko_values
+        elif engine == "servo-2013":
+            return self.values + self.extra_servo_2013_values
+        elif engine == "servo-2020":
+            return self.values + self.extra_servo_2020_values
         else:
-            raise Exception("Bad product: " + product)
+            raise Exception("Bad engine: " + engine)
 
-    def aliases_for(self, product):
-        if product == "gecko":
-            return self.gecko_aliases()
-        elif product == "servo":
-            return self.aliases
+    def aliases_for(self, engine):
+        if engine == "gecko":
+            return self.gecko_aliases
+        elif engine == "servo-2013":
+            return self.servo_2013_aliases
+        elif engine == "servo-2020":
+            return self.servo_2020_aliases
         else:
-            raise Exception("Bad product: " + product)
+            raise Exception("Bad engine: " + engine)
 
     def gecko_constant(self, value):
         moz_stripped = (value.replace("-moz-", '')
@@ -159,8 +161,6 @@ def parse_property_aliases(alias_list):
     if alias_list:
         for alias in alias_list.split():
             (name, _, pref) = alias.partition(":")
-            if name.startswith("-webkit-") and not pref:
-                pref = "layout.css.prefixes.webkit"
             result.append((name, pref))
     return result
 
@@ -171,12 +171,16 @@ def to_phys(name, logical, physical):
 
 class Longhand(object):
     def __init__(self, style_struct, name, spec=None, animation_value_type=None, keyword=None,
-                 predefined_type=None, servo_pref=None, gecko_pref=None,
+                 predefined_type=None,
+                 servo_2013_pref=None,
+                 servo_2020_pref=None,
+                 gecko_pref=None,
                  enabled_in="content", need_index=False,
                  gecko_ffi_name=None,
+                 has_effect_on_gecko_scrollbars=None,
                  allowed_in_keyframe_block=True, cast_type='u8',
                  logical=False, logical_group=None, alias=None, extra_prefixes=None, boxed=False,
-                 flags=None, allowed_in_page_rule=False, allow_quirks=False,
+                 flags=None, allowed_in_page_rule=False, allow_quirks="No",
                  ignored_when_colors_disabled=False,
                  simple_vector_bindings=False,
                  vector=False, servo_restyle_damage="repaint"):
@@ -189,8 +193,17 @@ class Longhand(object):
         self.ident = to_rust_ident(name)
         self.camel_case = to_camel_case(self.ident)
         self.style_struct = style_struct
-        self.servo_pref = servo_pref
+        self.servo_2013_pref = servo_2013_pref
+        self.servo_2020_pref = servo_2020_pref
         self.gecko_pref = gecko_pref
+        self.has_effect_on_gecko_scrollbars = has_effect_on_gecko_scrollbars
+        assert (
+            has_effect_on_gecko_scrollbars in [None, False, True] and
+            not style_struct.inherited or
+            (gecko_pref is None) == (has_effect_on_gecko_scrollbars is None)), (
+            "Property " + name + ": has_effect_on_gecko_scrollbars must be " +
+            "specified, and must have a value of True or False, iff a " +
+            "property is inherited and is behind a Gecko pref")
         # For enabled_in, the setup is as follows:
         # It needs to be one of the four values: ["", "ua", "chrome", "content"]
         #  * "chrome" implies "ua", and implies that they're explicitly
@@ -207,6 +220,7 @@ class Longhand(object):
         self.logical_group = logical_group
         if self.logical:
             assert logical_group, "Property " + name + " must have a logical group"
+
         self.alias = parse_property_aliases(alias)
         self.extra_prefixes = parse_property_aliases(extra_prefixes)
         self.boxed = arg_to_bool(boxed)
@@ -250,20 +264,26 @@ class Longhand(object):
             return []
 
         candidates = [s for s in LOGICAL_SIDES + LOGICAL_SIZES + LOGICAL_CORNERS
-                      if s in self.name]
+                      if s in self.name] + [s for s in LOGICAL_AXES if self.name.endswith(s)]
         assert(len(candidates) == 1)
         logical_side = candidates[0]
 
         physical = PHYSICAL_SIDES if logical_side in LOGICAL_SIDES \
             else PHYSICAL_SIZES if logical_side in LOGICAL_SIZES \
+            else PHYSICAL_AXES if logical_side in LOGICAL_AXES \
             else LOGICAL_CORNERS
         return [data.longhands_by_name[to_phys(self.name, logical_side, physical_side)]
                 for physical_side in physical]
 
-    def experimental(self, product):
-        if product == "gecko":
+    def experimental(self, engine):
+        if engine == "gecko":
             return bool(self.gecko_pref)
-        return bool(self.servo_pref)
+        elif engine == "servo-2013":
+            return bool(self.servo_2013_pref)
+        elif engine == "servo-2020":
+            return bool(self.servo_2020_pref)
+        else:
+            raise Exception("Bad engine: " + engine)
 
     # FIXME(emilio): Shorthand and Longhand should really share a base class.
     def explicitly_enabled_in_ua_sheets(self):
@@ -275,10 +295,15 @@ class Longhand(object):
     def enabled_in_content(self):
         return self.enabled_in == "content"
 
-    def may_be_disabled_in(self, shorthand, product):
-        if product == "gecko":
+    def may_be_disabled_in(self, shorthand, engine):
+        if engine == "gecko":
             return self.gecko_pref and self.gecko_pref != shorthand.gecko_pref
-        return self.servo_pref and self.servo_pref != shorthand.servo_pref
+        elif engine == "servo-2013":
+            return self.servo_2013_pref and self.servo_2013_pref != shorthand.servo_2013_pref
+        elif engine == "servo-2020":
+            return self.servo_2020_pref and self.servo_2020_pref != shorthand.servo_2020_pref
+        else:
+            raise Exception("Bad engine: " + engine)
 
     def base_type(self):
         if self.predefined_type and not self.is_vector:
@@ -303,6 +328,7 @@ class Longhand(object):
                 "AlignItems",
                 "AlignSelf",
                 "Appearance",
+                "AspectRatio",
                 "BreakBetween",
                 "BreakWithin",
                 "BackgroundRepeat",
@@ -330,12 +356,16 @@ class Longhand(object):
                 "JustifyContent",
                 "JustifyItems",
                 "JustifySelf",
+                "LineBreak",
+                "MasonryAutoFlow",
                 "MozForceBrokenImageIcon",
                 "MozListReversed",
                 "MozScriptLevel",
                 "MozScriptMinSize",
                 "MozScriptSizeMultiplier",
+                "TextDecorationSkipInk",
                 "NonNegativeNumber",
+                "OffsetRotate",
                 "Opacity",
                 "OutlineStyle",
                 "Overflow",
@@ -353,9 +383,11 @@ class Longhand(object):
                 "ScrollSnapStrictness",
                 "ScrollSnapType",
                 "TextAlign",
+                "TextAlignLast",
                 "TextDecorationLine",
                 "TextEmphasisPosition",
                 "TextTransform",
+                "TextUnderlinePosition",
                 "TouchAction",
                 "TransformStyle",
                 "UserSelect",
@@ -380,7 +412,10 @@ class Longhand(object):
 
 
 class Shorthand(object):
-    def __init__(self, name, sub_properties, spec=None, servo_pref=None, gecko_pref=None,
+    def __init__(self, name, sub_properties, spec=None,
+                 servo_2013_pref=None,
+                 servo_2020_pref=None,
+                 gecko_pref=None,
                  enabled_in="content",
                  allowed_in_keyframe_block=True, alias=None, extra_prefixes=None,
                  allowed_in_page_rule=False, flags=None):
@@ -390,7 +425,8 @@ class Shorthand(object):
         self.spec = spec
         self.ident = to_rust_ident(name)
         self.camel_case = to_camel_case(self.ident)
-        self.servo_pref = servo_pref
+        self.servo_2013_pref = servo_2013_pref
+        self.servo_2020_pref = servo_2020_pref
         self.gecko_pref = gecko_pref
         self.sub_properties = sub_properties
         assert enabled_in in ["", "ua", "chrome", "content"]
@@ -428,10 +464,15 @@ class Shorthand(object):
     def type():
         return "shorthand"
 
-    def experimental(self, product):
-        if product == "gecko":
+    def experimental(self, engine):
+        if engine == "gecko":
             return bool(self.gecko_pref)
-        return bool(self.servo_pref)
+        elif engine == "servo-2013":
+            return bool(self.servo_2013_pref)
+        elif engine == "servo-2020":
+            return bool(self.servo_2020_pref)
+        else:
+            raise Exception("Bad engine: " + engine)
 
     # FIXME(emilio): Shorthand and Longhand should really share a base class.
     def explicitly_enabled_in_ua_sheets(self):
@@ -454,10 +495,11 @@ class Alias(object):
         self.camel_case = to_camel_case(self.ident)
         self.original = original
         self.enabled_in = original.enabled_in
-        self.servo_pref = original.servo_pref
         self.animatable = original.animatable
-        self.transitionable = original.transitionable
+        self.servo_2013_pref = original.servo_2013_pref
+        self.servo_2020_pref = original.servo_2020_pref
         self.gecko_pref = gecko_pref
+        self.transitionable = original.transitionable
         self.allowed_in_page_rule = original.allowed_in_page_rule
         self.allowed_in_keyframe_block = original.allowed_in_keyframe_block
 
@@ -465,10 +507,15 @@ class Alias(object):
     def type():
         return "alias"
 
-    def experimental(self, product):
-        if product == "gecko":
+    def experimental(self, engine):
+        if engine == "gecko":
             return bool(self.gecko_pref)
-        return bool(self.servo_pref)
+        elif engine == "servo-2013":
+            return bool(self.servo_2013_pref)
+        elif engine == "servo-2020":
+            return bool(self.servo_2020_pref)
+        else:
+            raise Exception("Bad engine: " + engine)
 
     def explicitly_enabled_in_ua_sheets(self):
         return self.enabled_in in ["ua", "chrome"]
@@ -522,15 +569,18 @@ class StyleStruct(object):
 
 
 class PropertiesData(object):
-    def __init__(self, product):
-        self.product = product
+    def __init__(self, engine):
+        self.engine = engine
         self.style_structs = []
         self.current_style_struct = None
         self.longhands = []
         self.longhands_by_name = {}
+        self.longhands_by_logical_group = {}
         self.longhand_aliases = []
         self.shorthands = []
+        self.shorthands_by_name = {}
         self.shorthand_aliases = []
+        self.counted_unknown_properties = [CountedUnknownProperty(p) for p in COUNTED_UNKNOWN_PROPERTIES]
 
     def new_style_struct(self, *args, **kwargs):
         style_struct = StyleStruct(*args, **kwargs)
@@ -543,40 +593,39 @@ class PropertiesData(object):
     def add_prefixed_aliases(self, property):
         # FIXME Servo's DOM architecture doesn't support vendor-prefixed properties.
         #       See servo/servo#14941.
-        if self.product == "gecko":
+        if self.engine == "gecko":
             for (prefix, pref) in property.extra_prefixes:
-                # All webkit prefixed properties are currently under
-                # control of this pref in Gecko currently.
-                if prefix == "webkit" and not pref:
-                    pref = "layout.css.prefixes.webkit"
                 property.alias.append(('-%s-%s' % (prefix, property.name), pref))
 
-    def declare_longhand(self, name, products="gecko servo", **kwargs):
-        products = products.split()
-        if self.product not in products:
+    def declare_longhand(self, name, engines=None, **kwargs):
+        engines = engines.split()
+        if self.engine not in engines:
             return
 
         longhand = Longhand(self.current_style_struct, name, **kwargs)
         self.add_prefixed_aliases(longhand)
-        longhand.alias = list(map(lambda (x, p): Alias(x, longhand, p), longhand.alias))
+        longhand.alias = [Alias(xp[0], longhand, xp[1]) for xp in longhand.alias]
         self.longhand_aliases += longhand.alias
         self.current_style_struct.longhands.append(longhand)
         self.longhands.append(longhand)
         self.longhands_by_name[name] = longhand
+        if longhand.logical_group:
+            self.longhands_by_logical_group.setdefault(longhand.logical_group, []).append(longhand)
 
         return longhand
 
-    def declare_shorthand(self, name, sub_properties, products="gecko servo", *args, **kwargs):
-        products = products.split()
-        if self.product not in products:
+    def declare_shorthand(self, name, sub_properties, engines, *args, **kwargs):
+        engines = engines.split()
+        if self.engine not in engines:
             return
 
         sub_properties = [self.longhands_by_name[s] for s in sub_properties]
         shorthand = Shorthand(name, sub_properties, *args, **kwargs)
         self.add_prefixed_aliases(shorthand)
-        shorthand.alias = list(map(lambda (x, p): Alias(x, shorthand, p), shorthand.alias))
+        shorthand.alias = [Alias(xp[0], shorthand, xp[1]) for xp in shorthand.alias]
         self.shorthand_aliases += shorthand.alias
         self.shorthands.append(shorthand)
+        self.shorthands_by_name[name] = shorthand
         return shorthand
 
     def shorthands_except_all(self):
@@ -584,3 +633,180 @@ class PropertiesData(object):
 
     def all_aliases(self):
         return self.longhand_aliases + self.shorthand_aliases
+
+
+def _add_logical_props(data, props):
+    groups = set()
+    for prop in props:
+        if prop not in data.longhands_by_name:
+            assert data.engine in ["servo-2013", "servo-2020"]
+            continue
+        prop = data.longhands_by_name[prop]
+        if prop.logical_group:
+            groups.add(prop.logical_group)
+    for group in groups:
+        for prop in data.longhands_by_logical_group[group]:
+            props.add(prop.name)
+
+
+# These are probably Gecko bugs and should be supported per spec.
+def _remove_common_first_line_and_first_letter_properties(props, engine):
+    if engine == "gecko":
+        props.remove("-moz-tab-size")
+        props.remove("hyphens")
+        props.remove("line-break")
+        props.remove("text-align-last")
+        props.remove("text-emphasis-position")
+        props.remove("text-emphasis-style")
+        props.remove("text-emphasis-color")
+
+    props.remove("overflow-wrap")
+    props.remove("text-align")
+    props.remove("text-justify")
+    props.remove("white-space")
+    props.remove("word-break")
+    props.remove("text-indent")
+
+
+class PropertyRestrictions:
+    @staticmethod
+    def logical_group(data, group):
+        return [p.name for p in data.longhands_by_logical_group[group]]
+
+    @staticmethod
+    def shorthand(data, shorthand):
+        if shorthand not in data.shorthands_by_name:
+            return []
+        return [p.name for p in data.shorthands_by_name[shorthand].sub_properties]
+
+    @staticmethod
+    def spec(data, spec_path):
+        return [p.name for p in data.longhands if spec_path in p.spec]
+
+    # https://drafts.csswg.org/css-pseudo/#first-letter-styling
+    @staticmethod
+    def first_letter(data):
+        props = set([
+            "color",
+            "opacity",
+            "float",
+            "initial-letter",
+
+            # Kinda like css-fonts?
+            "-moz-osx-font-smoothing",
+
+            # Kinda like css-text?
+            "-webkit-text-stroke-width",
+            "-webkit-text-fill-color",
+            "-webkit-text-stroke-color",
+            "vertical-align",
+            "line-height",
+
+            # Kinda like css-backgrounds?
+            "background-blend-mode",
+        ] + PropertyRestrictions.shorthand(data, "padding")
+          + PropertyRestrictions.shorthand(data, "margin")
+          + PropertyRestrictions.spec(data, "css-fonts")
+          + PropertyRestrictions.spec(data, "css-backgrounds")
+          + PropertyRestrictions.spec(data, "css-text")
+          + PropertyRestrictions.spec(data, "css-shapes")
+          + PropertyRestrictions.spec(data, "css-text-decor"))
+
+        _add_logical_props(data, props)
+
+        _remove_common_first_line_and_first_letter_properties(props, data.engine)
+        return props
+
+    # https://drafts.csswg.org/css-pseudo/#first-line-styling
+    @staticmethod
+    def first_line(data):
+        props = set([
+            # Per spec.
+            "color",
+            "opacity",
+
+            # Kinda like css-fonts?
+            "-moz-osx-font-smoothing",
+
+            # Kinda like css-text?
+            "-webkit-text-stroke-width",
+            "-webkit-text-fill-color",
+            "-webkit-text-stroke-color",
+            "vertical-align",
+            "line-height",
+
+            # Kinda like css-backgrounds?
+            "background-blend-mode",
+        ] + PropertyRestrictions.spec(data, "css-fonts")
+          + PropertyRestrictions.spec(data, "css-backgrounds")
+          + PropertyRestrictions.spec(data, "css-text")
+          + PropertyRestrictions.spec(data, "css-text-decor"))
+
+        # These are probably Gecko bugs and should be supported per spec.
+        for prop in PropertyRestrictions.shorthand(data, "border"):
+            props.remove(prop)
+        for prop in PropertyRestrictions.shorthand(data, "border-radius"):
+            props.remove(prop)
+        props.remove("box-shadow")
+
+        _remove_common_first_line_and_first_letter_properties(props, data.engine)
+        return props
+
+    # https://drafts.csswg.org/css-pseudo/#placeholder
+    #
+    # The spec says that placeholder and first-line have the same restrictions,
+    # but that's not true in Gecko and we also allow a handful other properties
+    # for ::placeholder.
+    @staticmethod
+    def placeholder(data):
+        props = PropertyRestrictions.first_line(data)
+        props.add("opacity")
+        props.add("white-space")
+        props.add("text-overflow")
+        props.add("text-align")
+        props.add("text-justify")
+        return props
+
+    # https://drafts.csswg.org/css-pseudo/#marker-pseudo
+    @staticmethod
+    def marker(data):
+        return set([
+            "color",
+            "text-combine-upright",
+            "unicode-bidi",
+            "direction",
+            "content",
+            "-moz-osx-font-smoothing",
+        ] + PropertyRestrictions.spec(data, "css-fonts"))
+
+    # https://www.w3.org/TR/webvtt1/#the-cue-pseudo-element
+    @staticmethod
+    def cue(data):
+        return set([
+            "color",
+            "opacity",
+            "visibility",
+            "text-shadow",
+            "white-space",
+            "text-combine-upright",
+            "ruby-position",
+
+            # XXX Should these really apply to cue?
+            "font-synthesis",
+            "-moz-osx-font-smoothing",
+
+            # FIXME(emilio): background-blend-mode should be part of the
+            # background shorthand, and get reset, per
+            # https://drafts.fxtf.org/compositing/#background-blend-mode
+            "background-blend-mode",
+        ] + PropertyRestrictions.shorthand(data, "text-decoration")
+          + PropertyRestrictions.shorthand(data, "background")
+          + PropertyRestrictions.shorthand(data, "outline")
+          + PropertyRestrictions.shorthand(data, "font"))
+
+
+class CountedUnknownProperty:
+    def __init__(self, name):
+        self.name = name
+        self.ident = to_rust_ident(name)
+        self.camel_case = to_camel_case(self.ident)

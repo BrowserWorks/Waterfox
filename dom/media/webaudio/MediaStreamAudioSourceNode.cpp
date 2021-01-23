@@ -7,12 +7,12 @@
 #include "MediaStreamAudioSourceNode.h"
 #include "mozilla/dom/MediaStreamAudioSourceNodeBinding.h"
 #include "AudioNodeEngine.h"
-#include "AudioNodeExternalInputStream.h"
+#include "AudioNodeExternalInputTrack.h"
 #include "AudioStreamTrack.h"
 #include "mozilla/dom/Document.h"
-#include "mozilla/CORSMode.h"
 #include "nsContentUtils.h"
 #include "nsIScriptError.h"
+#include "nsID.h"
 
 namespace mozilla {
 namespace dom {
@@ -37,35 +37,25 @@ NS_INTERFACE_MAP_END_INHERITING(AudioNode)
 NS_IMPL_ADDREF_INHERITED(MediaStreamAudioSourceNode, AudioNode)
 NS_IMPL_RELEASE_INHERITED(MediaStreamAudioSourceNode, AudioNode)
 
-MediaStreamAudioSourceNode::MediaStreamAudioSourceNode(AudioContext* aContext)
+MediaStreamAudioSourceNode::MediaStreamAudioSourceNode(
+    AudioContext* aContext, TrackChangeBehavior aBehavior)
     : AudioNode(aContext, 2, ChannelCountMode::Max,
-                ChannelInterpretation::Speakers) {}
+                ChannelInterpretation::Speakers),
+      mBehavior(aBehavior) {}
 
 /* static */
 already_AddRefed<MediaStreamAudioSourceNode> MediaStreamAudioSourceNode::Create(
     AudioContext& aAudioContext, const MediaStreamAudioSourceOptions& aOptions,
     ErrorResult& aRv) {
-  if (aAudioContext.IsOffline()) {
-    aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
-    return nullptr;
-  }
-
-  if (aAudioContext.Graph() !=
-      aOptions.mMediaStream->GetPlaybackStream()->Graph()) {
-    nsCOMPtr<nsPIDOMWindowInner> pWindow = aAudioContext.GetParentObject();
-    Document* document = pWindow ? pWindow->GetExtantDoc() : nullptr;
-    nsContentUtils::ReportToConsole(nsIScriptError::warningFlag,
-                                    NS_LITERAL_CSTRING("Web Audio"), document,
-                                    nsContentUtils::eDOM_PROPERTIES,
-                                    "MediaStreamAudioSourceNodeDifferentRate");
-    aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
-    return nullptr;
-  }
+  // The spec has a pointless check here.  See
+  // https://github.com/WebAudio/web-audio-api/issues/2149
+  MOZ_RELEASE_ASSERT(!aAudioContext.IsOffline(), "Bindings messed up?");
 
   RefPtr<MediaStreamAudioSourceNode> node =
-      new MediaStreamAudioSourceNode(&aAudioContext);
+      new MediaStreamAudioSourceNode(&aAudioContext, LockOnTrackPicked);
 
-  node->Init(aOptions.mMediaStream, aRv);
+  // aOptions.mMediaStream is not nullable.
+  node->Init(*aOptions.mMediaStream, aRv);
   if (aRv.Failed()) {
     return nullptr;
   }
@@ -73,30 +63,18 @@ already_AddRefed<MediaStreamAudioSourceNode> MediaStreamAudioSourceNode::Create(
   return node.forget();
 }
 
-void MediaStreamAudioSourceNode::Init(DOMMediaStream* aMediaStream,
+void MediaStreamAudioSourceNode::Init(DOMMediaStream& aMediaStream,
                                       ErrorResult& aRv) {
-  if (!aMediaStream) {
-    aRv.Throw(NS_ERROR_FAILURE);
-    return;
-  }
-
-  MediaStream* inputStream = aMediaStream->GetPlaybackStream();
-  MediaStreamGraph* graph = Context()->Graph();
-  if (NS_WARN_IF(graph != inputStream->Graph())) {
-    aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
-    return;
-  }
-
-  mInputStream = aMediaStream;
+  mInputStream = &aMediaStream;
   AudioNodeEngine* engine = new MediaStreamAudioSourceNodeEngine(this);
-  mStream = AudioNodeExternalInputStream::Create(graph, engine);
+  mTrack = AudioNodeExternalInputTrack::Create(Context()->Graph(), engine);
   mInputStream->AddConsumerToKeepAlive(ToSupports(this));
 
   mInputStream->RegisterTrackListener(this);
-  if (mInputStream->Active()) {
-    NotifyActive();
+  if (mInputStream->Audible()) {
+    NotifyAudible();
   }
-  AttachToFirstTrack(mInputStream);
+  AttachToRightTrack(mInputStream, aRv);
 }
 
 void MediaStreamAudioSourceNode::Destroy() {
@@ -110,20 +88,37 @@ void MediaStreamAudioSourceNode::Destroy() {
 MediaStreamAudioSourceNode::~MediaStreamAudioSourceNode() { Destroy(); }
 
 void MediaStreamAudioSourceNode::AttachToTrack(
-    const RefPtr<MediaStreamTrack>& aTrack) {
+    const RefPtr<MediaStreamTrack>& aTrack, ErrorResult& aRv) {
   MOZ_ASSERT(!mInputTrack);
   MOZ_ASSERT(aTrack->AsAudioStreamTrack());
+  MOZ_DIAGNOSTIC_ASSERT(!aTrack->Ended());
 
-  if (!mStream) {
+  if (!mTrack) {
+    return;
+  }
+
+  if (NS_WARN_IF(Context()->Graph() != aTrack->Graph())) {
+    nsCOMPtr<nsPIDOMWindowInner> pWindow = Context()->GetParentObject();
+    Document* document = pWindow ? pWindow->GetExtantDoc() : nullptr;
+    nsContentUtils::ReportToConsole(nsIScriptError::warningFlag,
+                                    NS_LITERAL_CSTRING("Web Audio"), document,
+                                    nsContentUtils::eDOM_PROPERTIES,
+                                    "MediaStreamAudioSourceNodeDifferentRate");
+    // This is not a spec-required exception, just a limitation of our
+    // implementation.
+    aRv.ThrowNotSupportedError(
+        "Connecting AudioNodes from AudioContexts with different sample-rate "
+        "is currently not supported.");
     return;
   }
 
   mInputTrack = aTrack;
-  ProcessedMediaStream* outputStream =
-      static_cast<ProcessedMediaStream*>(mStream.get());
-  mInputPort = mInputTrack->ForwardTrackContentsTo(outputStream);
+  ProcessedMediaTrack* outputTrack =
+      static_cast<ProcessedMediaTrack*>(mTrack.get());
+  mInputPort = mInputTrack->ForwardTrackContentsTo(outputTrack);
   PrincipalChanged(mInputTrack);  // trigger enabling/disabling of the connector
   mInputTrack->AddPrincipalChangeObserver(this);
+  MarkActive();
 }
 
 void MediaStreamAudioSourceNode::DetachFromTrack() {
@@ -137,18 +132,40 @@ void MediaStreamAudioSourceNode::DetachFromTrack() {
   }
 }
 
-void MediaStreamAudioSourceNode::AttachToFirstTrack(
-    const RefPtr<DOMMediaStream>& aMediaStream) {
+static int AudioTrackCompare(const RefPtr<AudioStreamTrack>& aLhs,
+                             const RefPtr<AudioStreamTrack>& aRhs) {
+  nsAutoStringN<NSID_LENGTH> IDLhs;
+  nsAutoStringN<NSID_LENGTH> IDRhs;
+  aLhs->GetId(IDLhs);
+  aRhs->GetId(IDRhs);
+  return NS_ConvertUTF16toUTF8(IDLhs).Compare(
+      NS_ConvertUTF16toUTF8(IDRhs).get());
+}
+
+void MediaStreamAudioSourceNode::AttachToRightTrack(
+    const RefPtr<DOMMediaStream>& aMediaStream, ErrorResult& aRv) {
   nsTArray<RefPtr<AudioStreamTrack>> tracks;
   aMediaStream->GetAudioTracks(tracks);
 
+  if (tracks.IsEmpty() && mBehavior == LockOnTrackPicked) {
+    aRv.ThrowInvalidStateError("No audio tracks in MediaStream");
+    return;
+  }
+
+  // Sort the track to have a stable order, on their ID by lexicographic
+  // ordering on sequences of code unit values.
+  tracks.Sort(AudioTrackCompare);
+
   for (const RefPtr<AudioStreamTrack>& track : tracks) {
-    if (track->Ended()) {
-      continue;
+    if (mBehavior == FollowChanges) {
+      if (track->Ended()) {
+        continue;
+      }
     }
 
-    AttachToTrack(track);
-    MarkActive();
+    if (!track->Ended()) {
+      AttachToTrack(track, aRv);
+    }
     return;
   }
 
@@ -158,6 +175,9 @@ void MediaStreamAudioSourceNode::AttachToFirstTrack(
 
 void MediaStreamAudioSourceNode::NotifyTrackAdded(
     const RefPtr<MediaStreamTrack>& aTrack) {
+  if (mBehavior != FollowChanges) {
+    return;
+  }
   if (mInputTrack) {
     return;
   }
@@ -166,35 +186,37 @@ void MediaStreamAudioSourceNode::NotifyTrackAdded(
     return;
   }
 
-  AttachToTrack(aTrack);
+  AttachToTrack(aTrack, IgnoreErrors());
 }
 
 void MediaStreamAudioSourceNode::NotifyTrackRemoved(
     const RefPtr<MediaStreamTrack>& aTrack) {
-  if (aTrack != mInputTrack) {
-    return;
-  }
+  if (mBehavior == FollowChanges) {
+    if (aTrack != mInputTrack) {
+      return;
+    }
 
-  DetachFromTrack();
-  AttachToFirstTrack(mInputStream);
+    DetachFromTrack();
+    AttachToRightTrack(mInputStream, IgnoreErrors());
+  }
 }
 
-void MediaStreamAudioSourceNode::NotifyActive() {
+void MediaStreamAudioSourceNode::NotifyAudible() {
   MOZ_ASSERT(mInputStream);
   Context()->StartBlockedAudioContextIfAllowed();
 }
 
 /**
  * Changes the principal. Note that this will be called on the main thread, but
- * changes will be enacted on the MediaStreamGraph thread. If the principal
+ * changes will be enacted on the MediaTrackGraph thread. If the principal
  * change results in the document principal losing access to the stream, then
  * there needs to be other measures in place to ensure that any media that is
- * governed by the new stream principal is not available to the MediaStreamGraph
+ * governed by the new stream principal is not available to the MediaTrackGraph
  * before this change completes. Otherwise, a site could get access to
  * media that they are not authorized to receive.
  *
  * One solution is to block the altered content, call this method, then dispatch
- * another change request to the MediaStreamGraph thread that allows the content
+ * another change request to the MediaTrackGraph thread that allows the content
  * under the new principal to flow. This might be unnecessary if the principal
  * change is changing to be the document principal.
  */
@@ -215,9 +237,9 @@ void MediaStreamAudioSourceNode::PrincipalChanged(
       }
     }
   }
-  auto stream = static_cast<AudioNodeExternalInputStream*>(mStream.get());
-  bool enabled = subsumes || aMediaStreamTrack->GetCORSMode() != CORS_NONE;
-  stream->SetInt32Parameter(MediaStreamAudioSourceNodeEngine::ENABLE, enabled);
+  auto track = static_cast<AudioNodeExternalInputTrack*>(mTrack.get());
+  bool enabled = subsumes;
+  track->SetInt32Parameter(MediaStreamAudioSourceNodeEngine::ENABLE, enabled);
 
   if (!enabled && doc) {
     nsContentUtils::ReportToConsole(
@@ -242,12 +264,12 @@ size_t MediaStreamAudioSourceNode::SizeOfIncludingThis(
   return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
 }
 
-void MediaStreamAudioSourceNode::DestroyMediaStream() {
+void MediaStreamAudioSourceNode::DestroyMediaTrack() {
   if (mInputPort) {
     mInputPort->Destroy();
     mInputPort = nullptr;
   }
-  AudioNode::DestroyMediaStream();
+  AudioNode::DestroyMediaTrack();
 }
 
 JSObject* MediaStreamAudioSourceNode::WrapObject(

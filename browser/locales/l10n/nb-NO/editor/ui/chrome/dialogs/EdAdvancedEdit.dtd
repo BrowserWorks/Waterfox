@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "Avanserte egenskaper">
+<!ENTITY AttName.label                  "Attributt: ">
+<!ENTITY AttValue.label                 "Verdi: ">
+<!ENTITY PropertyName.label             "Egenskap: ">
+<!ENTITY currentattributesfor.label     "Gjeldende attributter for: ">
+<!ENTITY tree.attributeHeader.label     "Attributt">
+<!ENTITY tree.propertyHeader.label      "Egenskap">
+<!ENTITY tree.valueHeader.label         "Verdi">
+<!ENTITY tabHTML.label                  "HTML-attributter">
+<!ENTITY tabCSS.label                   "Innebygd stil">
+<!ENTITY tabJSE.label                   "JavaScript-hendelser">
+
+<!ENTITY editAttribute.label    "Velg et element ovenfor for å redigere verdien">
+<!ENTITY removeAttribute.label  "Fjern">

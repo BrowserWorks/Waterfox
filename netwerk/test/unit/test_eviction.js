@@ -201,7 +201,7 @@ function set_cookies(begin, end, expiry) {
       false,
       expiry,
       {},
-      Ci.nsICookie2.SAMESITE_UNSET
+      Ci.nsICookie.SAMESITE_NONE
     );
 
     if (i == begin) {
@@ -222,9 +222,9 @@ function set_cookies(begin, end, expiry) {
 
 function get_creationTime(i) {
   let host = "eviction." + i + ".tests";
-  let enumerator = Services.cookiemgr.getCookiesFromHost(host, {});
-  Assert.ok(enumerator.hasMoreElements());
-  let cookie = enumerator.getNext().QueryInterface(Ci.nsICookie2);
+  let cookies = Services.cookiemgr.getCookiesFromHost(host, {});
+  Assert.ok(cookies.length);
+  let cookie = cookies[0];
   return cookie.creationTime;
 }
 
@@ -235,12 +235,12 @@ function get_creationTime(i) {
 // + 10% are exceeded.
 function check_remaining_cookies(aNumberTotal, aNumberOld, aNumberToExpect) {
   let i = 0;
-  for (let cookie of Services.cookiemgr.enumerator) {
+  for (let cookie of Services.cookiemgr.cookies) {
     ++i;
 
     if (aNumberTotal != aNumberToExpect) {
       // make sure the cookie is one of the batch we expect was purged.
-      var hostNumber = new Number(cookie.rawHost.split(".")[1]);
+      var hostNumber = Number(cookie.rawHost.split(".")[1]);
       if (hostNumber < aNumberOld - aNumberToExpect) {
         break;
       }

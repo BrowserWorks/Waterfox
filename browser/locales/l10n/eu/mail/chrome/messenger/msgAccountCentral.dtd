@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "E-posta">
+<!ENTITY readMsgsLink.label           "Irakurri mezuak">
+<!ENTITY composeMsgLink.label         "Idatzi mezu berria">
+
+<!ENTITY newsSectionHdr.label         "Berri-taldeak">
+<!ENTITY subscribeNewsLink.label      "Kudeatu berri-taldeetako harpidetzak">
+
+<!ENTITY feedsSectionHdr.label        "Jarioak">
+<!ENTITY subscribeFeeds.label         "Kudeatu harpidetzak">
+
+<!ENTITY chat.label                   "Txata">
+<!ENTITY movemail.label               "Movemail">
+
+<!ENTITY accountsSectionHdr.label     "Kontuak">
+<!ENTITY subscribeImapFolders.label   "Kudeatu karpeten harpidetzak">
+<!ENTITY settingsLink.label           "Ikusi kontu honen ezarpenak">
+<!ENTITY setupNewAcct.label           "Konfiguratu kontu bat:">
+
+<!ENTITY advFeaturesSectionHdr.label  "Eginbide aurreratuak">
+<!ENTITY searchMsgsLink.label         "Bilatu mezuak">
+<!ENTITY filtersLink.label            "Kudeatu mezu-iragazkiak">
+<!ENTITY junkSettings.label           "Zabor-postaren ezarpenak">
+<!ENTITY offlineLink.label            "Lineaz kanpoko ezarpenak">

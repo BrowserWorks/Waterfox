@@ -5,6 +5,7 @@
 <%namespace name="helpers" file="/helpers.mako.rs" />
 
 <%helpers:shorthand name="flex-flow"
+                    engines="gecko servo-2013"
                     sub_properties="flex-direction flex-wrap"
                     extra_prefixes="webkit"
                     derive_serialize="True"
@@ -44,6 +45,7 @@
 </%helpers:shorthand>
 
 <%helpers:shorthand name="flex"
+                    engines="gecko servo-2013"
                     sub_properties="flex-grow flex-shrink flex-basis"
                     extra_prefixes="webkit"
                     derive_serialize="True"
@@ -108,9 +110,13 @@
     }
 </%helpers:shorthand>
 
-<%helpers:shorthand name="gap" alias="grid-gap" sub_properties="row-gap column-gap"
-                    spec="https://drafts.csswg.org/css-align-3/#gap-shorthand"
-                    products="gecko">
+<%helpers:shorthand
+    name="gap"
+    engines="gecko"
+    alias="grid-gap"
+    sub_properties="row-gap column-gap"
+    spec="https://drafts.csswg.org/css-align-3/#gap-shorthand"
+>
   use crate::properties::longhands::{row_gap, column_gap};
 
   pub fn parse_value<'i, 't>(context: &ParserContext, input: &mut Parser<'i, 't>)
@@ -139,11 +145,15 @@
 </%helpers:shorthand>
 
 % for kind in ["row", "column"]:
-<%helpers:shorthand name="grid-${kind}" sub_properties="grid-${kind}-start grid-${kind}-end"
-                    spec="https://drafts.csswg.org/css-grid/#propdef-grid-${kind}"
-                    products="gecko">
+<%helpers:shorthand
+    name="grid-${kind}"
+    sub_properties="grid-${kind}-start grid-${kind}-end"
+    engines="gecko",
+    spec="https://drafts.csswg.org/css-grid/#propdef-grid-${kind}"
+>
     use crate::values::specified::GridLine;
     use crate::parser::Parse;
+    use crate::Zero;
 
     // NOTE: Since both the shorthands have the same code, we should (re-)use code from one to implement
     // the other. This might not be a big deal for now, but we should consider looking into this in the future
@@ -157,8 +167,8 @@
             GridLine::parse(context, input)?
         } else {
             let mut line = GridLine::auto();
-            if start.line_num.is_none() && !start.is_span {
-                line.ident = start.ident.clone();       // ident from start value should be taken
+            if start.line_num.is_zero() && !start.is_span {
+                line.ident = start.ident.clone(); // ident from start value should be taken
             }
 
             line
@@ -171,8 +181,18 @@
     }
 
     impl<'a> ToCss for LonghandsToSerialize<'a> {
+        // Return the shortest possible serialization of the `grid-${kind}-[start/end]` values.
+        // This function exploits the opportunities to omit the end value per this spec text:
+        //
+        // https://drafts.csswg.org/css-grid/#propdef-grid-column
+        // "When the second value is omitted, if the first value is a <custom-ident>,
+        // the grid-row-end/grid-column-end longhand is also set to that <custom-ident>;
+        // otherwise, it is set to auto."
         fn to_css<W>(&self, dest: &mut CssWriter<W>) -> fmt::Result where W: fmt::Write {
             self.grid_${kind}_start.to_css(dest)?;
+            if self.grid_${kind}_start.can_omit(self.grid_${kind}_end) {
+                return Ok(());  // the end value is redundant
+            }
             dest.write_str(" / ")?;
             self.grid_${kind}_end.to_css(dest)
         }
@@ -180,12 +200,15 @@
 </%helpers:shorthand>
 % endfor
 
-<%helpers:shorthand name="grid-area"
-                    sub_properties="grid-row-start grid-row-end grid-column-start grid-column-end"
-                    spec="https://drafts.csswg.org/css-grid/#propdef-grid-area"
-                    products="gecko">
+<%helpers:shorthand
+    name="grid-area"
+    engines="gecko"
+    sub_properties="grid-row-start grid-row-end grid-column-start grid-column-end"
+    spec="https://drafts.csswg.org/css-grid/#propdef-grid-area"
+>
     use crate::values::specified::GridLine;
     use crate::parser::Parse;
+    use crate::Zero;
 
     // The code is the same as `grid-{row,column}` except that this can have four values at most.
     pub fn parse_value<'i, 't>(
@@ -194,7 +217,7 @@
     ) -> Result<Longhands, ParseError<'i>> {
         fn line_with_ident_from(other: &GridLine) -> GridLine {
             let mut this = GridLine::auto();
-            if other.line_num.is_none() && !other.is_span {
+            if other.line_num.is_zero() && !other.is_span {
                 this.ident = other.ident.clone();
             }
 
@@ -234,37 +257,63 @@
     }
 
     impl<'a> ToCss for LonghandsToSerialize<'a> {
+        // Return the shortest possible serialization of the `grid-[column/row]-[start/end]` values.
+        // This function exploits the opportunities to omit trailing values per this spec text:
+        //
+        // https://drafts.csswg.org/css-grid/#propdef-grid-area
+        // "If four <grid-line> values are specified, grid-row-start is set to the first value,
+        // grid-column-start is set to the second value, grid-row-end is set to the third value,
+        // and grid-column-end is set to the fourth value.
+        //
+        // When grid-column-end is omitted, if grid-column-start is a <custom-ident>,
+        // grid-column-end is set to that <custom-ident>; otherwise, it is set to auto.
+        //
+        // When grid-row-end is omitted, if grid-row-start is a <custom-ident>, grid-row-end is
+        // set to that <custom-ident>; otherwise, it is set to auto.
+        //
+        // When grid-column-start is omitted, if grid-row-start is a <custom-ident>, all four
+        // longhands are set to that value. Otherwise, it is set to auto."
         fn to_css<W>(&self, dest: &mut CssWriter<W>) -> fmt::Result where W: fmt::Write {
             self.grid_row_start.to_css(dest)?;
+            let mut trailing_values = 3;
+            if self.grid_column_start.can_omit(self.grid_column_end) {
+                trailing_values -= 1;
+                if self.grid_row_start.can_omit(self.grid_row_end) {
+                    trailing_values -= 1;
+                    if self.grid_row_start.can_omit(self.grid_column_start) {
+                        trailing_values -= 1;
+                    }
+                }
+            }
             let values = [&self.grid_column_start, &self.grid_row_end, &self.grid_column_end];
-            for value in &values {
+            for value in values.iter().take(trailing_values) {
                 dest.write_str(" / ")?;
                 value.to_css(dest)?;
             }
-
             Ok(())
         }
     }
 </%helpers:shorthand>
 
-<%helpers:shorthand name="grid-template"
-                    sub_properties="grid-template-rows grid-template-columns grid-template-areas"
-                    spec="https://drafts.csswg.org/css-grid/#propdef-grid-template"
-                    products="gecko">
+<%helpers:shorthand
+    name="grid-template"
+    engines="gecko"
+    sub_properties="grid-template-rows grid-template-columns grid-template-areas"
+    spec="https://drafts.csswg.org/css-grid/#propdef-grid-template"
+>
     use crate::parser::Parse;
     use servo_arc::Arc;
-    use crate::values::{Either, None_};
-    use crate::values::generics::grid::{TrackSize, TrackList, TrackListType};
+    use crate::values::generics::grid::{TrackSize, TrackList};
     use crate::values::generics::grid::{TrackListValue, concat_serialize_idents};
     use crate::values::specified::{GridTemplateComponent, GenericGridTemplateComponent};
     use crate::values::specified::grid::parse_line_names;
-    use crate::values::specified::position::{TemplateAreas, TemplateAreasArc};
+    use crate::values::specified::position::{GridTemplateAreas, TemplateAreas, TemplateAreasArc};
 
     /// Parsing for `<grid-template>` shorthand (also used by `grid` shorthand).
     pub fn parse_grid_template<'i, 't>(
         context: &ParserContext,
         input: &mut Parser<'i, 't>,
-    ) -> Result<(GridTemplateComponent, GridTemplateComponent, Either<TemplateAreasArc, None_>), ParseError<'i>> {
+    ) -> Result<(GridTemplateComponent, GridTemplateComponent, GridTemplateAreas), ParseError<'i>> {
         // Other shorthand sub properties also parse the `none` keyword and this shorthand
         // should know after this keyword there is nothing to parse. Otherwise it gets
         // confused and rejects the sub properties that contains `none`.
@@ -275,13 +324,10 @@
         % for keyword, rust_type in keywords.items():
             if let Ok(x) = input.try(|i| {
                 if i.try(|i| i.expect_ident_matching("${keyword}")).is_ok() {
-                    if i.is_exhausted() {
-                        return Ok((${rust_type},
-                                   ${rust_type},
-                                   Either::Second(None_)))
-                    } else {
+                    if !i.is_exhausted() {
                         return Err(());
                     }
+                    return Ok((${rust_type}, ${rust_type}, GridTemplateAreas::None));
                 }
                 Err(())
             }) {
@@ -289,26 +335,38 @@
             }
         % endfor
 
-        let first_line_names = input.try(parse_line_names).unwrap_or(vec![].into_boxed_slice());
-        if let Ok(mut string) = input.try(|i| i.expect_string().map(|s| s.as_ref().into())) {
+        let first_line_names = input.try(parse_line_names).unwrap_or_default();
+        if let Ok(string) = input.try(|i| i.expect_string().map(|s| s.as_ref().to_owned().into())) {
             let mut strings = vec![];
             let mut values = vec![];
             let mut line_names = vec![];
-            let mut names = first_line_names.into_vec();
+            line_names.push(first_line_names);
+            strings.push(string);
             loop {
-                line_names.push(names.into_boxed_slice());
-                strings.push(string);
                 let size = input.try(|i| TrackSize::parse(context, i)).unwrap_or_default();
                 values.push(TrackListValue::TrackSize(size));
-                names = input.try(parse_line_names).unwrap_or(vec![].into_boxed_slice()).into_vec();
-                if let Ok(v) = input.try(parse_line_names) {
-                    names.extend(v.into_vec());
-                }
+                let mut names = input.try(parse_line_names).unwrap_or_default();
+                let more_names = input.try(parse_line_names);
 
-                string = match input.try(|i| i.expect_string().map(|s| s.as_ref().into())) {
-                    Ok(s) => s,
-                    _ => {      // only the named area determines whether we should bail out
-                        line_names.push(names.into_boxed_slice());
+                match input.try(|i| i.expect_string().map(|s| s.as_ref().to_owned().into())) {
+                    Ok(string) => {
+                        strings.push(string);
+                        if let Ok(v) = more_names {
+                            // We got `[names] [more_names] "string"` - merge the two name lists.
+                            let mut names_vec = names.into_vec();
+                            names_vec.extend(v.into_iter());
+                            names = names_vec.into();
+                        }
+                        line_names.push(names);
+                    },
+                    Err(e) => {
+                        if more_names.is_ok() {
+                            // We've parsed `"string" [names] [more_names]` but then failed to parse another `"string"`.
+                            // The grammar doesn't allow two trailing `<line-names>` so this is an invalid value.
+                            return Err(e.into());
+                        }
+                        // only the named area determines whether we should bail out
+                        line_names.push(names);
                         break
                     },
                 };
@@ -316,33 +374,35 @@
 
             if line_names.len() == values.len() {
                 // should be one longer than track sizes
-                line_names.push(vec![].into_boxed_slice());
+                line_names.push(Default::default());
             }
 
             let template_areas = TemplateAreas::from_vec(strings)
                 .map_err(|()| input.new_custom_error(StyleParseErrorKind::UnspecifiedError))?;
             let template_rows = TrackList {
-                list_type: TrackListType::Normal,
-                values: values,
-                line_names: line_names.into_boxed_slice(),
-                auto_repeat: None,
+                values: values.into(),
+                line_names: line_names.into(),
+                auto_repeat_index: std::usize::MAX,
             };
 
             let template_cols = if input.try(|i| i.expect_delim('/')).is_ok() {
                 let value = GridTemplateComponent::parse_without_none(context, input)?;
                 if let GenericGridTemplateComponent::TrackList(ref list) = value {
-                    if list.list_type != TrackListType::Explicit {
+                    if !list.is_explicit() {
                         return Err(input.new_custom_error(StyleParseErrorKind::UnspecifiedError))
                     }
                 }
 
                 value
             } else {
-                GenericGridTemplateComponent::None
+                GridTemplateComponent::default()
             };
 
-            Ok((GenericGridTemplateComponent::TrackList(template_rows),
-                template_cols, Either::First(TemplateAreasArc(Arc::new(template_areas)))))
+            Ok((
+                GenericGridTemplateComponent::TrackList(Box::new(template_rows)),
+                template_cols,
+                GridTemplateAreas::Areas(TemplateAreasArc(Arc::new(template_areas)))
+            ))
         } else {
             let mut template_rows = GridTemplateComponent::parse(context, input)?;
             if let GenericGridTemplateComponent::TrackList(ref mut list) = template_rows {
@@ -356,7 +416,7 @@
             }
 
             input.expect_delim('/')?;
-            Ok((template_rows, GridTemplateComponent::parse(context, input)?, Either::Second(None_)))
+            Ok((template_rows, GridTemplateComponent::parse(context, input)?, GridTemplateAreas::None))
         }
     }
 
@@ -377,18 +437,21 @@
     pub fn serialize_grid_template<W>(
         template_rows: &GridTemplateComponent,
         template_columns: &GridTemplateComponent,
-        template_areas: &Either<TemplateAreasArc, None_>,
+        template_areas: &GridTemplateAreas,
         dest: &mut CssWriter<W>,
     ) -> fmt::Result
     where
         W: Write {
         match *template_areas {
-            Either::Second(_none) => {
+            GridTemplateAreas::None => {
+                if template_rows.is_initial() && template_columns.is_initial() {
+                    return GridTemplateComponent::default().to_css(dest);
+                }
                 template_rows.to_css(dest)?;
                 dest.write_str(" / ")?;
                 template_columns.to_css(dest)
             },
-            Either::First(ref areas) => {
+            GridTemplateAreas::Areas(ref areas) => {
                 // The length of template-area and template-rows values should be equal.
                 if areas.0.strings.len() != template_rows.track_list_len() {
                     return Ok(());
@@ -396,13 +459,10 @@
 
                 let track_list = match *template_rows {
                     GenericGridTemplateComponent::TrackList(ref list) => {
-                        // We should fail if there is a `repeat` function. `grid` and
-                        // `grid-template` shorthands doesn't accept that. Only longhand accepts.
-                        if list.auto_repeat.is_some() ||
-                           list.values.iter().any(|v| match *v {
-                               TrackListValue::TrackRepeat(_) => true,
-                               _ => false,
-                           }) {
+                        // We should fail if there is a `repeat` function.
+                        // `grid` and `grid-template` shorthands doesn't accept
+                        // that. Only longhand accepts.
+                        if !list.is_explicit() {
                             return Ok(());
                         }
                         list
@@ -418,11 +478,7 @@
                     // We should fail if there is a `repeat` function. `grid` and
                     // `grid-template` shorthands doesn't accept that. Only longhand accepts that.
                     GenericGridTemplateComponent::TrackList(ref list) => {
-                        if list.auto_repeat.is_some() ||
-                           list.values.iter().any(|v| match *v {
-                               TrackListValue::TrackRepeat(_) => true,
-                               _ => false,
-                           }) {
+                        if !list.is_explicit() {
                             return Ok(());
                         }
                     },
@@ -447,8 +503,12 @@
                     }
 
                     string.to_css(dest)?;
-                    dest.write_str(" ")?;
-                    value.to_css(dest)?;
+
+                    // If the track size is the initial value then it's redundant here.
+                    if !value.is_initial() {
+                        dest.write_str(" ")?;
+                        value.to_css(dest)?;
+                    }
                 }
 
                 if let Some(names) = names_iter.next() {
@@ -478,55 +538,56 @@
     }
 </%helpers:shorthand>
 
-<%helpers:shorthand name="grid"
-                    sub_properties="grid-template-rows grid-template-columns grid-template-areas
-                                    grid-auto-rows grid-auto-columns grid-auto-flow"
-                    spec="https://drafts.csswg.org/css-grid/#propdef-grid"
-                    products="gecko">
+<%helpers:shorthand
+    name="grid"
+    engines="gecko"
+    sub_properties="grid-template-rows grid-template-columns grid-template-areas
+                    grid-auto-rows grid-auto-columns grid-auto-flow"
+    spec="https://drafts.csswg.org/css-grid/#propdef-grid"
+>
     use crate::parser::Parse;
     use crate::properties::longhands::{grid_auto_columns, grid_auto_rows, grid_auto_flow};
-    use crate::values::{Either, None_};
-    use crate::values::generics::grid::{GridTemplateComponent, TrackListType};
-    use crate::values::specified::{GenericGridTemplateComponent, TrackSize};
-    use crate::values::specified::position::{AutoFlow, GridAutoFlow};
+    use crate::values::generics::grid::GridTemplateComponent;
+    use crate::values::specified::{GenericGridTemplateComponent, ImplicitGridTracks};
+    use crate::values::specified::position::{GridAutoFlow, GridTemplateAreas};
 
     pub fn parse_value<'i, 't>(
         context: &ParserContext,
         input: &mut Parser<'i, 't>,
     ) -> Result<Longhands, ParseError<'i>> {
-        let mut temp_rows = GridTemplateComponent::None;
-        let mut temp_cols = GridTemplateComponent::None;
-        let mut temp_areas = Either::Second(None_);
-        let mut auto_rows = TrackSize::default();
-        let mut auto_cols = TrackSize::default();
+        let mut temp_rows = GridTemplateComponent::default();
+        let mut temp_cols = GridTemplateComponent::default();
+        let mut temp_areas = GridTemplateAreas::None;
+        let mut auto_rows = ImplicitGridTracks::default();
+        let mut auto_cols = ImplicitGridTracks::default();
         let mut flow = grid_auto_flow::get_initial_value();
 
         fn parse_auto_flow<'i, 't>(
             input: &mut Parser<'i, 't>,
             is_row: bool,
         ) -> Result<GridAutoFlow, ParseError<'i>> {
-            let mut auto_flow = None;
-            let mut dense = false;
+            let mut track = None;
+            let mut dense = GridAutoFlow::empty();
+
             for _ in 0..2 {
                 if input.try(|i| i.expect_ident_matching("auto-flow")).is_ok() {
-                    auto_flow = if is_row {
-                        Some(AutoFlow::Row)
+                    track = if is_row {
+                        Some(GridAutoFlow::ROW)
                     } else {
-                        Some(AutoFlow::Column)
+                        Some(GridAutoFlow::COLUMN)
                     };
                 } else if input.try(|i| i.expect_ident_matching("dense")).is_ok() {
-                    dense = true;
+                    dense = GridAutoFlow::DENSE
                 } else {
                     break
                 }
             }
 
-            auto_flow.map(|flow| {
-                GridAutoFlow {
-                    autoflow: flow,
-                    dense: dense,
-                }
-            }).ok_or(input.new_custom_error(StyleParseErrorKind::UnspecifiedError))
+            if track.is_some() {
+                Ok(track.unwrap() | dense)
+            } else {
+                Err(input.new_custom_error(StyleParseErrorKind::UnspecifiedError))
+            }
         }
 
         if let Ok((rows, cols, areas)) = input.try(|i| super::grid_template::parse_grid_template(context, i)) {
@@ -558,68 +619,68 @@
     impl<'a> LonghandsToSerialize<'a> {
         /// Returns true if other sub properties except template-{rows,columns} are initial.
         fn is_grid_template(&self) -> bool {
-            *self.grid_template_areas == Either::Second(None_) &&
-            *self.grid_auto_rows == TrackSize::default() &&
-            *self.grid_auto_columns == TrackSize::default() &&
+            *self.grid_template_areas == GridTemplateAreas::None &&
+            self.grid_auto_rows.is_initial() &&
+            self.grid_auto_columns.is_initial() &&
             *self.grid_auto_flow == grid_auto_flow::get_initial_value()
         }
     }
 
     impl<'a> ToCss for LonghandsToSerialize<'a> {
         fn to_css<W>(&self, dest: &mut CssWriter<W>) -> fmt::Result where W: fmt::Write {
-            if *self.grid_template_areas != Either::Second(None_) ||
-               (*self.grid_template_rows != GridTemplateComponent::None &&
-                   *self.grid_template_columns != GridTemplateComponent::None) ||
+            if *self.grid_template_areas != GridTemplateAreas::None ||
+               (!self.grid_template_rows.is_initial() &&
+                !self.grid_template_columns.is_initial()) ||
                self.is_grid_template() {
                 return super::grid_template::serialize_grid_template(self.grid_template_rows,
                                                                      self.grid_template_columns,
                                                                      self.grid_template_areas, dest);
             }
 
-            if self.grid_auto_flow.autoflow == AutoFlow::Column {
+            if self.grid_auto_flow.contains(GridAutoFlow::COLUMN) {
                 // It should fail to serialize if other branch of the if condition's values are set.
-                if *self.grid_auto_rows != TrackSize::default() ||
-                   *self.grid_template_columns != GridTemplateComponent::None {
+                if !self.grid_auto_rows.is_initial() ||
+                    !self.grid_template_columns.is_initial() {
                     return Ok(());
                 }
 
                 // It should fail to serialize if template-rows value is not Explicit.
                 if let GenericGridTemplateComponent::TrackList(ref list) = *self.grid_template_rows {
-                    if list.list_type != TrackListType::Explicit {
+                    if !list.is_explicit() {
                         return Ok(());
                     }
                 }
 
                 self.grid_template_rows.to_css(dest)?;
                 dest.write_str(" / auto-flow")?;
-                if self.grid_auto_flow.dense {
+                if self.grid_auto_flow.contains(GridAutoFlow::DENSE) {
                     dest.write_str(" dense")?;
                 }
 
-                if !self.grid_auto_columns.is_default() {
+                if !self.grid_auto_columns.is_initial() {
                     dest.write_str(" ")?;
                     self.grid_auto_columns.to_css(dest)?;
                 }
             } else {
                 // It should fail to serialize if other branch of the if condition's values are set.
-                if *self.grid_auto_columns != TrackSize::default() ||
-                   *self.grid_template_rows != GridTemplateComponent::None {
+                if !self.grid_auto_columns.is_initial() ||
+                    !self.grid_template_rows.is_initial() {
                     return Ok(());
                 }
 
                 // It should fail to serialize if template-column value is not Explicit.
                 if let GenericGridTemplateComponent::TrackList(ref list) = *self.grid_template_columns {
-                    if list.list_type != TrackListType::Explicit {
+                    if !list.is_explicit() {
                         return Ok(());
                     }
                 }
 
                 dest.write_str("auto-flow")?;
-                if self.grid_auto_flow.dense {
+                if self.grid_auto_flow.contains(GridAutoFlow::DENSE) {
                     dest.write_str(" dense")?;
                 }
 
-                if !self.grid_auto_rows.is_default() {
+                if !self.grid_auto_rows.is_initial() {
                     dest.write_str(" ")?;
                     self.grid_auto_rows.to_css(dest)?;
                 }
@@ -632,9 +693,12 @@
     }
 </%helpers:shorthand>
 
-<%helpers:shorthand name="place-content" sub_properties="align-content justify-content"
-                    spec="https://drafts.csswg.org/css-align/#propdef-place-content"
-                    products="gecko">
+<%helpers:shorthand
+    name="place-content"
+    engines="gecko"
+    sub_properties="align-content justify-content"
+    spec="https://drafts.csswg.org/css-align/#propdef-place-content"
+>
     use crate::values::specified::align::{AlignContent, JustifyContent, ContentDistribution, AxisDirection};
 
     pub fn parse_value<'i, 't>(
@@ -684,9 +748,12 @@
     }
 </%helpers:shorthand>
 
-<%helpers:shorthand name="place-self" sub_properties="align-self justify-self"
-                    spec="https://drafts.csswg.org/css-align/#place-self-property"
-                    products="gecko">
+<%helpers:shorthand
+    name="place-self"
+    engines="gecko"
+    sub_properties="align-self justify-self"
+    spec="https://drafts.csswg.org/css-align/#place-self-property"
+>
     use crate::values::specified::align::{AlignSelf, JustifySelf, SelfAlignment, AxisDirection};
 
     pub fn parse_value<'i, 't>(
@@ -722,9 +789,12 @@
     }
 </%helpers:shorthand>
 
-<%helpers:shorthand name="place-items" sub_properties="align-items justify-items"
-                    spec="https://drafts.csswg.org/css-align/#place-items-property"
-                    products="gecko">
+<%helpers:shorthand
+    name="place-items"
+    engines="gecko"
+    sub_properties="align-items justify-items"
+    spec="https://drafts.csswg.org/css-align/#place-items-property"
+>
     use crate::values::specified::align::{AlignItems, JustifyItems};
     use crate::parser::Parse;
 
@@ -767,8 +837,9 @@ ${helpers.four_sides_shorthand(
     "inset",
     "%s",
     "specified::LengthPercentageOrAuto::parse",
+    engines="gecko servo-2013",
     spec="https://drafts.csswg.org/css-logical/#propdef-inset",
-    allow_quirks=False,
+    allow_quirks="No",
 )}
 
 ${helpers.two_properties_shorthand(
@@ -776,6 +847,7 @@ ${helpers.two_properties_shorthand(
     "inset-block-start",
     "inset-block-end",
     "specified::LengthPercentageOrAuto::parse",
+    engines="gecko servo-2013",
     spec="https://drafts.csswg.org/css-logical/#propdef-inset-block"
 )}
 
@@ -784,5 +856,6 @@ ${helpers.two_properties_shorthand(
     "inset-inline-start",
     "inset-inline-end",
     "specified::LengthPercentageOrAuto::parse",
+    engines="gecko servo-2013",
     spec="https://drafts.csswg.org/css-logical/#propdef-inset-inline"
 )}

@@ -143,10 +143,10 @@ async function test_cookie_cleared() {
   }
   // Check that cookies have been set properly.
   for (let userContextId of Object.keys(USER_CONTEXTS)) {
-    let enumerator = getCookiesForOA(TEST_HOST, userContextId);
-    ok(enumerator.hasMoreElements(), "Cookies available");
+    let cookies = getCookiesForOA(TEST_HOST, userContextId);
+    ok(cookies.length, "Cookies available");
 
-    let foundCookie = enumerator.getNext().QueryInterface(Ci.nsICookie2);
+    let foundCookie = cookies[0];
     Assert.equal(foundCookie.name, COOKIE_NAME, "Check cookie name");
     Assert.equal(
       foundCookie.value,
@@ -160,8 +160,8 @@ async function test_cookie_cleared() {
 
   // Check that whether cookies has been cleared or not.
   for (let userContextId of Object.keys(USER_CONTEXTS)) {
-    let enumerator = getCookiesForOA(TEST_HOST, userContextId);
-    ok(!enumerator.hasMoreElements(), "No Cookie should be here");
+    let cookies = getCookiesForOA(TEST_HOST, userContextId);
+    ok(!cookies.length, "No Cookie should be here");
   }
 }
 
@@ -294,9 +294,9 @@ async function test_storage_cleared() {
     );
 
     // Check that the storages has been set correctly.
-    await ContentTask.spawn(
+    await SpecialPowers.spawn(
       tabInfo.browser,
-      { userContext: USER_CONTEXTS[userContextId] },
+      [{ userContext: USER_CONTEXTS[userContextId] }],
       async function(arg) {
         // Check that the local storage has been set correctly.
         Assert.equal(
@@ -356,7 +356,7 @@ async function test_storage_cleared() {
     );
 
     // Check that do storages be cleared or not.
-    await ContentTask.spawn(tabInfo.browser, null, async function() {
+    await SpecialPowers.spawn(tabInfo.browser, [], async function() {
       // Check that does the local storage be cleared or not.
       Assert.ok(
         !content.localStorage.getItem("userContext"),

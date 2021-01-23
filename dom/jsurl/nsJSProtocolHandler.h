@@ -9,7 +9,6 @@
 #include "mozilla/Attributes.h"
 #include "nsIProtocolHandler.h"
 #include "nsIURI.h"
-#include "nsIMutable.h"
 #include "nsISerializable.h"
 #include "nsIClassInfo.h"
 #include "nsSimpleURI.h"
@@ -49,10 +48,6 @@ class nsJSProtocolHandler : public nsIProtocolHandler {
   // nsJSProtocolHandler methods:
   nsJSProtocolHandler();
 
-  static nsresult Create(nsISupports* aOuter, REFNSIID aIID, void** aResult);
-
-  nsresult Init();
-
   static nsresult CreateNewURI(const nsACString& aSpec, const char* aCharset,
                                nsIURI* aBaseURI, nsIURI** result);
 
@@ -89,10 +84,10 @@ class nsJSURI final : public mozilla::net::nsSimpleURI {
   // override;
 
  protected:
-  nsJSURI() {}
+  nsJSURI() = default;
   explicit nsJSURI(nsIURI* aBaseURI) : mBaseURI(aBaseURI) {}
 
-  virtual ~nsJSURI() {}
+  virtual ~nsJSURI() = default;
 
   virtual nsresult EqualsInternal(nsIURI* other,
                                   RefHandlingEnum refHandlingMode,
@@ -126,10 +121,10 @@ class nsJSURI final : public mozilla::net::nsSimpleURI {
       return NS_OK;
     }
 
-    explicit Mutator() {}
+    explicit Mutator() = default;
 
    private:
-    virtual ~Mutator() {}
+    virtual ~Mutator() = default;
 
     friend class nsJSURI;
   };

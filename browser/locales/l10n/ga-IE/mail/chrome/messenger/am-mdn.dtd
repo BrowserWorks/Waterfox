@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Admhálacha Léite">
+<!ENTITY useGlobalPrefs.label         "Úsáid mo shainroghanna uilíocha maidir le hadmhálacha léite don chuntas seo">
+<!ENTITY useGlobalPrefs.accesskey     "u">
+<!ENTITY globalReceipts.label         "Sainroghanna Comhchoiteanna…">
+<!ENTITY globalReceipts.accesskey     "C">
+<!ENTITY useCustomPrefs.label         "Saincheap admhálacha léite don chuntas seo">
+<!ENTITY useCustomPrefs.accesskey     "c">
+<!ENTITY requestReceipt.label         "Iarr admháil léite i gcónaí agus teachtaireachtaí á seoladh">
+<!ENTITY requestReceipt.accesskey     "I">
+<!ENTITY receiptArrive.label          "Nuair a thagann admháil léite:">
+<!ENTITY leaveIt.label                "Fág i mo Bhosca Isteach é">
+<!ENTITY leaveIt.accesskey            "I">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "Bog chuig m&apos;fhillteán &quot;Seolta&quot; é">
+<!ENTITY moveToSent.accesskey         "B">
+<!ENTITY requestMDN.label             "Agus iarratas ar admháil léite faighte agam:">
+<!ENTITY returnSome.label             "Ceadaigh admhálacha léite le haghaidh teachtaireachtaí áirithe">
+<!ENTITY returnSome.accesskey         "e">
+<!ENTITY never.label                  "Ná seol admháil léite riamh">
+<!ENTITY never.accesskey              "N">
+<!ENTITY notInToCc.label              "Mura bhfuil mé i Chuig nó Cc na teachtaireachta:">
+<!ENTITY notInToCc.accesskey          "C">
+<!ENTITY outsideDomain.label          "Má tá an seoltóir lasmuigh de m'fhearann:">
+<!ENTITY outsideDomain.accesskey      "s">
+<!ENTITY otherCases.label             "I ngach cás eile:">
+<!ENTITY otherCases.accesskey         "e">
+<!ENTITY askMe.label                  "Fiafraigh díom">
+<!ENTITY alwaysSend.label             "Seol i gcónaí">
+<!ENTITY neverSend.label              "Ná seol choíche">

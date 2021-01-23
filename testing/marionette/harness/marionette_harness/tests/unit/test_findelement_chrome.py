@@ -18,7 +18,7 @@ class TestElementsChrome(WindowManagerMixin, MarionetteTestCase):
 
         self.marionette.set_context("chrome")
 
-        win = self.open_chrome_window("chrome://marionette/content/test.xul")
+        win = self.open_chrome_window("chrome://marionette/content/test.xhtml")
         self.marionette.switch_to_window(win)
 
     def tearDown(self):
@@ -41,14 +41,14 @@ class TestElementsChrome(WindowManagerMixin, MarionetteTestCase):
     def test_child_element(self):
         el = self.marionette.find_element(By.ID, "textInput")
         parent = self.marionette.find_element(By.ID, "things")
-        found_el = parent.find_element(By.TAG_NAME, "textbox")
+        found_el = parent.find_element(By.TAG_NAME, "input")
         self.assertEqual(HTMLElement, type(found_el))
         self.assertEqual(el, found_el)
 
     def test_child_elements(self):
         el = self.marionette.find_element(By.ID, "textInput3")
         parent = self.marionette.find_element(By.ID, "things")
-        found_els = parent.find_elements(By.TAG_NAME, "textbox")
+        found_els = parent.find_elements(By.TAG_NAME, "input")
         self.assertTrue(el.id in [found_el.id for found_el in found_els])
 
     def test_tag_name(self):
@@ -85,7 +85,7 @@ class TestElementsChrome(WindowManagerMixin, MarionetteTestCase):
         self.marionette.timeout.implicit = 4
         self.marionette.execute_script("""
             window.setTimeout(function () {
-              var b = window.document.createElement('button');
+              var b = window.document.createXULElement('button');
               b.id = 'myid';
               document.getElementById('things').appendChild(b);
             }, 1000); """)

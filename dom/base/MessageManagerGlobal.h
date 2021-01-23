@@ -23,7 +23,7 @@ class MessageManagerGlobal {
                           MessageListener& aListener, bool aListenWhenClosed,
                           ErrorResult& aError) {
     if (!mMessageManager) {
-      aError.Throw(NS_ERROR_NULL_POINTER);
+      aError.Throw(NS_ERROR_NOT_INITIALIZED);
       return;
     }
     mMessageManager->AddMessageListener(aMessageName, aListener,
@@ -32,7 +32,7 @@ class MessageManagerGlobal {
   void RemoveMessageListener(const nsAString& aMessageName,
                              MessageListener& aListener, ErrorResult& aError) {
     if (!mMessageManager) {
-      aError.Throw(NS_ERROR_NULL_POINTER);
+      aError.Throw(NS_ERROR_NOT_INITIALIZED);
       return;
     }
     mMessageManager->RemoveMessageListener(aMessageName, aListener, aError);
@@ -40,7 +40,7 @@ class MessageManagerGlobal {
   void AddWeakMessageListener(const nsAString& aMessageName,
                               MessageListener& aListener, ErrorResult& aError) {
     if (!mMessageManager) {
-      aError.Throw(NS_ERROR_NULL_POINTER);
+      aError.Throw(NS_ERROR_NOT_INITIALIZED);
       return;
     }
     mMessageManager->AddWeakMessageListener(aMessageName, aListener, aError);
@@ -49,7 +49,7 @@ class MessageManagerGlobal {
                                  MessageListener& aListener,
                                  ErrorResult& aError) {
     if (!mMessageManager) {
-      aError.Throw(NS_ERROR_NULL_POINTER);
+      aError.Throw(NS_ERROR_NOT_INITIALIZED);
       return;
     }
     mMessageManager->RemoveWeakMessageListener(aMessageName, aListener, aError);
@@ -58,20 +58,18 @@ class MessageManagerGlobal {
   // MessageSender
   void SendAsyncMessage(JSContext* aCx, const nsAString& aMessageName,
                         JS::Handle<JS::Value> aObj,
-                        JS::Handle<JSObject*> aObjects,
-                        nsIPrincipal* aPrincipal,
                         JS::Handle<JS::Value> aTransfers, ErrorResult& aError) {
     if (!mMessageManager) {
-      aError.Throw(NS_ERROR_NULL_POINTER);
+      aError.Throw(NS_ERROR_NOT_INITIALIZED);
       return;
     }
-    mMessageManager->SendAsyncMessage(aCx, aMessageName, aObj, aObjects,
-                                      aPrincipal, aTransfers, aError);
+    mMessageManager->SendAsyncMessage(aCx, aMessageName, aObj, aTransfers,
+                                      aError);
   }
   already_AddRefed<ProcessMessageManager> GetProcessMessageManager(
       mozilla::ErrorResult& aError) {
     if (!mMessageManager) {
-      aError.Throw(NS_ERROR_NULL_POINTER);
+      aError.Throw(NS_ERROR_NOT_INITIALIZED);
       return nullptr;
     }
     return mMessageManager->GetProcessMessageManager(aError);
@@ -79,7 +77,7 @@ class MessageManagerGlobal {
 
   void GetRemoteType(nsAString& aRemoteType, mozilla::ErrorResult& aError) {
     if (!mMessageManager) {
-      aError.Throw(NS_ERROR_NULL_POINTER);
+      aError.Throw(NS_ERROR_NOT_INITIALIZED);
       return;
     }
     mMessageManager->GetRemoteType(aRemoteType, aError);
@@ -87,31 +85,17 @@ class MessageManagerGlobal {
 
   // SyncMessageSender
   void SendSyncMessage(JSContext* aCx, const nsAString& aMessageName,
-                       JS::Handle<JS::Value> aObj,
-                       JS::Handle<JSObject*> aObjects, nsIPrincipal* aPrincipal,
-                       nsTArray<JS::Value>& aResult, ErrorResult& aError) {
+                       JS::Handle<JS::Value> aObj, nsTArray<JS::Value>& aResult,
+                       ErrorResult& aError) {
     if (!mMessageManager) {
-      aError.Throw(NS_ERROR_NULL_POINTER);
+      aError.Throw(NS_ERROR_NOT_INITIALIZED);
       return;
     }
-    mMessageManager->SendSyncMessage(aCx, aMessageName, aObj, aObjects,
-                                     aPrincipal, aResult, aError);
-  }
-  void SendRpcMessage(JSContext* aCx, const nsAString& aMessageName,
-                      JS::Handle<JS::Value> aObj,
-                      JS::Handle<JSObject*> aObjects, nsIPrincipal* aPrincipal,
-                      nsTArray<JS::Value>& aResult, ErrorResult& aError) {
-    if (!mMessageManager) {
-      aError.Throw(NS_ERROR_NULL_POINTER);
-      return;
-    }
-    mMessageManager->SendRpcMessage(aCx, aMessageName, aObj, aObjects,
-                                    aPrincipal, aResult, aError);
+    mMessageManager->SendSyncMessage(aCx, aMessageName, aObj, aResult, aError);
   }
 
   // MessageManagerGlobal
   void Dump(const nsAString& aStr);
-  void PrivateNoteIntentionalCrash(ErrorResult& aError);
   void Atob(const nsAString& aAsciiString, nsAString& aBase64Data,
             ErrorResult& aError);
   void Btoa(const nsAString& aBase64Data, nsAString& aAsciiString,

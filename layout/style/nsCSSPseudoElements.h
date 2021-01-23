@@ -13,6 +13,7 @@
 #include "mozilla/CSSEnabledState.h"
 #include "mozilla/Compiler.h"
 #include "mozilla/PseudoStyleType.h"
+#include "mozilla/StaticPrefs_layout.h"
 
 // Is this pseudo-element a CSS2 pseudo-element that can be specified
 // with the single colon syntax (in addition to the double-colon syntax,
@@ -117,9 +118,20 @@ class nsCSSPseudoElements {
                                  CSS_PSEUDO_ELEMENT_IS_FLEX_OR_GRID_ITEM);
   }
 
+  static bool EnabledInContent(Type aType) {
+    switch (aType) {
+      case Type::mozFocusOuter:
+        return mozilla::StaticPrefs::layout_css_moz_focus_outer_enabled();
+      case Type::fileChooserButton:
+        return mozilla::StaticPrefs::layout_css_file_chooser_button_enabled();
+      default:
+        return !PseudoElementHasAnyFlag(
+            aType, CSS_PSEUDO_ELEMENT_ENABLED_IN_UA_SHEETS_AND_CHROME);
+    }
+  }
+
   static bool IsEnabled(Type aType, EnabledState aEnabledState) {
-    if (!PseudoElementHasAnyFlag(
-            aType, CSS_PSEUDO_ELEMENT_ENABLED_IN_UA_SHEETS_AND_CHROME)) {
+    if (EnabledInContent(aType)) {
       return true;
     }
 

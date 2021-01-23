@@ -9,6 +9,12 @@
 
 #include "nsError.h"
 #include "nscore.h"
+#include "nsINativeDNSResolverOverride.h"
+#include "nsHashKeys.h"
+#include "nsDataHashtable.h"
+#include "mozilla/RWLock.h"
+#include "nsTArray.h"
+#include "prio.h"
 
 #if defined(XP_WIN)
 #  define DNSQUERY_AVAILABLE 1
@@ -55,6 +61,25 @@ nsresult GetAddrInfoInit();
  * too many times.
  */
 nsresult GetAddrInfoShutdown();
+
+class NativeDNSResolverOverride : public nsINativeDNSResolverOverride {
+  NS_DECL_THREADSAFE_ISUPPORTS
+  NS_DECL_NSINATIVEDNSRESOLVEROVERRIDE
+ public:
+  NativeDNSResolverOverride() : mLock("NativeDNSResolverOverride") {}
+
+  static already_AddRefed<nsINativeDNSResolverOverride> GetSingleton();
+
+ private:
+  virtual ~NativeDNSResolverOverride() = default;
+  mozilla::RWLock mLock;
+
+  nsDataHashtable<nsCStringHashKey, nsTArray<PRNetAddr>> mOverrides;
+  nsDataHashtable<nsCStringHashKey, nsCString> mCnames;
+
+  friend bool FindAddrOverride(const nsACString& aHost, uint16_t aAddressFamily,
+                               uint16_t aFlags, AddrInfo** aAddrInfo);
+};
 
 }  // namespace net
 }  // namespace mozilla

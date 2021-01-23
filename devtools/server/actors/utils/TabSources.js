@@ -4,10 +4,12 @@
 
 "use strict";
 
+const { Ci } = require("chrome");
 const DevToolsUtils = require("devtools/shared/DevToolsUtils");
-const { assert } = DevToolsUtils;
+const { assert, fetch } = DevToolsUtils;
 const EventEmitter = require("devtools/shared/event-emitter");
-const { GeneratedLocation } = require("devtools/server/actors/common");
+const { SourceLocation } = require("devtools/server/actors/common");
+const Services = require("Services");
 
 loader.lazyRequireGetter(
   this,
@@ -23,8 +25,8 @@ loader.lazyRequireGetter(
 );
 
 /**
- * Manages the sources for a thread. Handles source maps, locations in the
- * sources, etc for ThreadActors.
+ * Manages the sources for a thread. Handles URL contents, locations in
+ * the sources, etc for ThreadActors.
  */
 function TabSources(threadActor, allowSourceFn = () => true) {
   EventEmitter.decorate(this);
@@ -41,6 +43,16 @@ function TabSources(threadActor, allowSourceFn = () => true) {
   // Debugger.Source -> SourceActor
   this._sourceActors = new Map();
 
+  // URL -> content
+  //
+  // Any possibly incomplete content that has been loaded for each URL.
+  this._urlContents = new Map();
+
+  // URL -> Promise[]
+  //
+  // Any promises waiting on a URL to be completely loaded.
+  this._urlWaiters = new Map();
+
   // Debugger.Source.id -> Debugger.Source
   //
   // The IDs associated with ScriptSources and available via DebuggerSource.id
@@ -49,6 +61,10 @@ function TabSources(threadActor, allowSourceFn = () => true) {
   // has not been GC'ed and the actor has been created. This is lazily populated
   // the first time it is needed.
   this._sourcesByInternalSourceId = null;
+
+  if (!isWorker) {
+    Services.obs.addObserver(this, "devtools-html-content");
+  }
 }
 
 /**
@@ -59,6 +75,12 @@ function TabSources(threadActor, allowSourceFn = () => true) {
 const MINIFIED_SOURCE_REGEXP = /\bmin\.js$/;
 
 TabSources.prototype = {
+  destroy() {
+    if (!isWorker) {
+      Services.obs.removeObserver(this, "devtools-html-content");
+    }
+  },
+
   /**
    * Update preferences and clear out existing sources
    */
@@ -80,6 +102,8 @@ TabSources.prototype = {
    */
   reset: function() {
     this._sourceActors = new Map();
+    this._urlContents = new Map();
+    this._urlWaiters = new Map();
     this._sourcesByInternalSourceId = null;
   },
 
@@ -115,7 +139,7 @@ TabSources.prototype = {
       contentType,
     });
 
-    this._thread.threadLifetimePool.addActor(actor);
+    this._thread.threadLifetimePool.manage(actor);
 
     if (
       this._autoBlackBox &&
@@ -243,6 +267,22 @@ TabSources.prototype = {
   },
 
   /**
+   * Return whether a source represents an inline script.
+   */
+  isInlineScript(source) {
+    // Assume the source is inline if the element that introduced it is a
+    // script element and does not have a src attribute.
+    try {
+      const e = source.element ? source.element.unsafeDereference() : null;
+      return e && e.tagName === "SCRIPT" && !e.hasAttribute("src");
+    } catch (e) {
+      // If we are debugging a dead window then the above can throw.
+      DevToolsUtils.reportException("TabSources.isInlineScript", e);
+      return false;
+    }
+  },
+
+  /**
    * Create a source actor representing this source.
    *
    * @param Debugger.Source source
@@ -266,14 +306,7 @@ TabSources.prototype = {
     // sources. Otherwise, use the `originalUrl` property to treat it
     // as an HTML source that manages multiple inline sources.
 
-    // Assume the source is inline if the element that introduced it is a
-    // script element and does not have a src attribute.
-    const element = source.element ? source.element.unsafeDereference() : null;
-    if (
-      element &&
-      element.tagName === "SCRIPT" &&
-      !element.hasAttribute("src")
-    ) {
+    if (this.isInlineScript(source)) {
       if (source.introductionScript) {
         // As for other evaluated sources, script elements which were
         // dynamically generated when another script ran should have
@@ -293,9 +326,9 @@ TabSources.prototype = {
       // There are a few special URLs that we know are JavaScript:
       // inline `javascript:` and code coming from the console
       if (
-        url.indexOf("Scratchpad/") === 0 ||
         url.indexOf("javascript:") === 0 ||
-        url === "debugger eval code"
+        url === "debugger eval code" ||
+        url === "sandbox eval code"
       ) {
         spec.contentType = "text/javascript";
       } else {
@@ -309,7 +342,7 @@ TabSources.prototype = {
             // `source.element` property, so do a blunt check here if
             // it's an xml page.
             spec.isInlineSource = true;
-          } else if (extension === "js") {
+          } else if (extension === "js" || extension == "sjs") {
             spec.contentType = "text/javascript";
           }
         } catch (e) {
@@ -343,7 +376,7 @@ TabSources.prototype = {
    */
   getScriptOffsetLocation: function(script, offset) {
     const { lineNumber, columnNumber } = script.getOffsetMetadata(offset);
-    return new GeneratedLocation(
+    return new SourceLocation(
       this.createSourceActor(script.source),
       lineNumber,
       columnNumber
@@ -361,7 +394,7 @@ TabSources.prototype = {
    */
   getFrameLocation: function(frame) {
     if (!frame || !frame.script) {
-      return new GeneratedLocation();
+      return new SourceLocation();
     }
     return this.getScriptOffsetLocation(frame.script, frame.offset);
   },
@@ -381,6 +414,11 @@ TabSources.prototype = {
 
     const range = ranges.find(r => isLocationInRange({ line, column }, r));
     return !!range;
+  },
+
+  isFrameBlackBoxed: function(frame) {
+    const { url, line, column } = this.getFrameLocation(frame);
+    return this.isBlackBoxed(url, line, column);
   },
 
   /**
@@ -439,6 +477,149 @@ TabSources.prototype = {
 
   iter: function() {
     return [...this._sourceActors.values()];
+  },
+
+  /**
+   * Listener for new HTML content.
+   */
+  observe(subject, topic, data) {
+    if (topic == "devtools-html-content") {
+      const { parserID, uri, contents, complete } = JSON.parse(data);
+      if (this._urlContents.has(uri)) {
+        const existing = this._urlContents.get(uri);
+        if (existing.parserID == parserID) {
+          assert(!existing.complete);
+          existing.content = existing.content + contents;
+          existing.complete = complete;
+
+          // After the HTML has finished loading, resolve any promises
+          // waiting for the complete file contents. Waits will only
+          // occur when the URL was ever partially loaded.
+          if (complete) {
+            const waiters = this._urlWaiters.get(uri);
+            if (waiters) {
+              for (const waiter of waiters) {
+                waiter();
+              }
+              this._urlWaiters.delete(uri);
+            }
+          }
+        }
+      } else {
+        this._urlContents.set(uri, {
+          content: contents,
+          complete,
+          contentType: "text/html",
+          parserID,
+        });
+      }
+    }
+  },
+
+  /**
+   * Get the contents of a URL, fetching it if necessary. If partial is set and
+   * any content for the URL has been received, that partial content is returned
+   * synchronously.
+   */
+  urlContents(url, partial, canUseCache) {
+    if (this._urlContents.has(url)) {
+      const data = this._urlContents.get(url);
+      if (!partial && !data.complete) {
+        return new Promise(resolve => {
+          if (!this._urlWaiters.has(url)) {
+            this._urlWaiters.set(url, []);
+          }
+          this._urlWaiters.get(url).push(resolve);
+        }).then(() => {
+          assert(data.complete);
+          return {
+            content: data.content,
+            contentType: data.contentType,
+          };
+        });
+      }
+      return {
+        content: data.content,
+        contentType: data.contentType,
+      };
+    }
+
+    return this._fetchURLContents(url, partial, canUseCache);
+  },
+
+  _fetchURLContents: async function(url, partial, canUseCache) {
+    // Only try the cache if it is currently enabled for the document.
+    // Without this check, the cache may return stale data that doesn't match
+    // the document shown in the browser.
+    let loadFromCache = canUseCache;
+    if (canUseCache && this._thread._parent._getCacheDisabled) {
+      loadFromCache = !this._thread._parent._getCacheDisabled();
+    }
+
+    // Fetch the sources with the same principal as the original document
+    const win = this._thread._parent.window;
+    let principal, cacheKey;
+    // On xpcshell, we don't have a window but a Sandbox
+    if (!isWorker && win instanceof Ci.nsIDOMWindow) {
+      const docShell = win.docShell;
+      const channel = docShell.currentDocumentChannel;
+      principal = channel.loadInfo.loadingPrincipal;
+
+      // Retrieve the cacheKey in order to load POST requests from cache
+      // Note that chrome:// URLs don't support this interface.
+      if (
+        loadFromCache &&
+        docShell.currentDocumentChannel instanceof Ci.nsICacheInfoChannel
+      ) {
+        cacheKey = docShell.currentDocumentChannel.cacheKey;
+      }
+    }
+
+    let result;
+    try {
+      result = await fetch(url, {
+        principal,
+        cacheKey,
+        loadFromCache,
+      });
+    } catch (error) {
+      this._reportLoadSourceError(error);
+      throw error;
+    }
+
+    // When we fetch the contents, there is a risk that the contents we get
+    // do not match up with the actual text of the sources these contents will
+    // be associated with. We want to always show contents that include that
+    // actual text (otherwise it will be very confusing or unusable for users),
+    // so replace the contents with the actual text if there is a mismatch.
+    const actors = [...this._sourceActors.values()].filter(
+      actor => actor.url == url
+    );
+    if (!actors.every(actor => actor.contentMatches(result))) {
+      if (actors.length > 1) {
+        // When there are multiple actors we won't be able to show the source
+        // for all of them. Ask the user to reload so that we don't have to do
+        // any fetching.
+        result.content = "Error: Incorrect contents fetched, please reload.";
+      } else {
+        result.content = actors[0].actualText();
+      }
+    }
+
+    this._urlContents.set(url, { ...result, complete: true });
+
+    return result;
+  },
+
+  _reportLoadSourceError: function(error) {
+    try {
+      DevToolsUtils.reportException("SourceActor", error);
+
+      const lines = JSON.stringify(this.form(), null, 4).split(/\n/g);
+      lines.forEach(line => console.error("\t", line));
+    } catch (e) {
+      // ignore
+    }
   },
 };
 

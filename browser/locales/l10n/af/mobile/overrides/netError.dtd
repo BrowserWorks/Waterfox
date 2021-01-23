@@ -1,0 +1,104 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Kan nie die bladsy laai nie">
+<!ENTITY retry.label "Probeer weer">
+
+<!-- Specific error messages -->
+
+
+<!ENTITY connectionFailure.title "Kan nie koppel nie">
+
+
+<!ENTITY deniedPortAccess.title "Hierdie adres het beperkings op">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Bediener nie gevind nie">
+<!-- LOCALIZATION NOTE (dnsNotFound.longDesc4) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside tags should be localized.  Do not change the ids. -->
+
+<!ENTITY fileNotFound.title "Lêer nie gevind nie">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Kontroleer die lêernaam vir bokas of onderkas of ander tikfoute.</li> <li>Kontroleer of die lêer verskuif, hernoem of geskrap is.</li> </ul>">
+
+
+
+<!ENTITY generic.title "Oeps.">
+
+
+<!-- LOCALIZATION NOTE (malformedURI.longDesc2) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside the tags should be localized. Do not touch the ids. -->
+
+<!ENTITY netInterrupt.title "Die verbinding is onderbreek">
+
+
+<!ENTITY notCached.title "Dokumentgeldigheid het verval">
+
+
+<!ENTITY netOffline.title "Aflynmodus">
+<!-- LOCALIZATION NOTE (netOffline.longDesc3) This string contains markup including widgets enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+
+
+
+<!ENTITY unsafeContentType.title "Onveilige lêersoort">
+
+
+<!ENTITY netReset.title "Die verbinding is teruggestel">
+
+
+<!ENTITY netTimeout.title "Die verbinding het uitgetel">
+
+
+
+
+
+
+<!-- LOCALIZATION NOTE (proxyResolveFailure.longDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+
+<!ENTITY redirectLoop.longDesc "<ul> <li>Hierdie probleem kan soms veroorsaak word deur koekies te deaktiveer of te weier om koekies te aanvaar.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "Onverwagse respons vanaf bediener">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Kontroleer of die persoonlike sekuriteitbestuurder op u rekenaar geïnstalleer is.</li> <li>Dit kan wees vanweë 'n niestandaard-opstelling op die bediener.</li> </ul>">
+
+<!ENTITY nssFailure2.title "Kon nie beveilig koppel nie">
+
+
+
+<!-- LOCALIZATION NOTE (sharedLongDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+
+<!ENTITY cspBlocked.title "Geblokkeer deur inhoudbeveiligingsbeleid">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; het voorkom dat hierdie bladsy op hierdie manier laai want die bladsy het 'n inhoudbeveiligingsbeleid wat dit keer.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Fout: inhoud korrup">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Die bladsy wat u probeer sien kan nie vertoon word nie omdat 'n fout bespeur is in die dataoordrag.</p><ul><li>Kontak die webwerf se eienaar om hulle oor die probleem in te lig.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Of u kan 'n uitsondering byvoeg…">
+
+<!ENTITY securityOverride.exceptionButtonLabel "Voeg uitsondering by…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <xul:button> tags.  The only language content is the label= field,
+which uses strings already defined above. The button is included here (instead of
+netError.xhtml) because it exposes functionality specific to firefox. -->
+
+
+<!ENTITY securityOverride.warningContent "<p>Jy moenie 'n uitsondering byvoeg as jy 'n internetverbinding gebruik wat jy nie volledig vertrou nie, of as jy nie gewoonlik 'n waarskuwing vir hierdie bediener sien nie.</p>  <button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> <button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "Afgeleë XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Kontak die webwerf se eienaar om hulle oor die probleem in te lig.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+
+<!-- LOCALIZATION NOTE (weakCryptoUsed.longDesc) - Do not translate
+     "SSL_ERROR_NO_CYPHER_OVERLAP". -->
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+

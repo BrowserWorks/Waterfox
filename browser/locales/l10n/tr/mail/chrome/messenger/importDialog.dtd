@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of 
+Netscape Communicator, Please translate using the brandname in respective 
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word 
+"&brandShortName;" below.
+-->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "İçeri Aktarma">
+<!ENTITY importAll.label          "Her şeyi içe aktar">
+<!ENTITY importAll.accesskey      "H">
+<!ENTITY importMail.label         "E-posta">
+<!ENTITY importMail.accesskey     "E">
+<!ENTITY importFeeds.label        "Besleme abonelikleri">
+<!ENTITY importFeeds.accesskey    "m">
+<!ENTITY importAddressbook.label  "Adres defterleri">
+<!ENTITY importAddressbook.accesskey "A">
+<!ENTITY importSettings.label     "Ayarlar">
+<!ENTITY importSettings.accesskey "y">
+<!ENTITY importFilters.label      "Süzgeçler">
+<!ENTITY importFilters.accesskey  "S">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "&brandShortName; İçeri Aktarma Sihirbazı">
+<!ENTITY importShortDesc.label    "Diğer uygulamalardan iletileri, adres defterlerini, ayarları ve süzgeçleri içe aktar">
+
+<!ENTITY importDescription1.label "Bu sihirbaz; diğer e-posta programlarındaki ve sık kullanılan adres defteri biçimlerindeki posta iletilerini, adres defteri kayıtlarını, tercihleri ve/veya süzgeçleri &brandShortName; içine alacaktır.">
+<!ENTITY importDescription2.label "İçeri alınan kayıtlara daha sonra &brandShortName; içinden erişebileceksiniz.">
+
+<!ENTITY selectDescription.label  "İçeri aktarmak istediğiniz dosya türünü seçin:">
+<!ENTITY selectDescriptionB.label "Lütfen mevcut bir hesap seçin veya yeni bir hesap oluşturun:">
+<!ENTITY selectDescription.accesskey "a">
+<!ENTITY acctName.label           "İsim:">
+<!ENTITY acctName.accesskey       "s">
+<!ENTITY noModulesFound.label     "Verilerin aktarılabileceği bir uygulama veya dosya bulunamadı.">
+
+<!ENTITY back.label               "&lt; Geri">
+<!ENTITY forward.label            "İleri &gt;">
+<!ENTITY finish.label             "Bitir">
+<!ENTITY cancel.label             "Vazgeç">
+
+<!ENTITY select.label             "veya içe aktarmak istediklerini seç:">
+
+<!ENTITY title.label              "Başlık">
+<!ENTITY processing.label         "İçe aktarılıyor…">

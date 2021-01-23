@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Formuliereigenskippen">
+
+<!ENTITY Settings.label "Ynstellings">
+
+<!ENTITY FormName.label "Formuliernamme:">
+<!ENTITY FormName.accesskey "N">
+<!ENTITY FormAction.label "Aksje-URL:">
+<!ENTITY FormAction.accesskey "A">
+<!ENTITY FormMethod.label "Metoade:">
+<!ENTITY FormMethod.accesskey "M">
+<!ENTITY FormEncType.label "Kodearing:">
+<!ENTITY FormEncType.accesskey "K">
+<!ENTITY FormTarget.label "Doelframe:">
+<!ENTITY FormTarget.accesskey "D">
+
+<!ENTITY RemoveForm.label "Formulier fuortsmite">
+<!ENTITY RemoveForm.accesskey "f">

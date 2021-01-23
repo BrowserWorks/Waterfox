@@ -1,24 +1,185 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 :root {
-  --section-width: 664px;
   --addon-icon-size: 32px;
+  --main-margin-start: 28px;
+  --section-width: 664px;
+  --sidebar-width: var(--in-content-sidebar-width);
+  --z-index-sticky-container: 1;
+  --z-index-popup: 10;
+}
+
+@media (max-width: 830px) {
+  :root {
+    --main-margin-start: 16px;
+    /* Maintain a main margin so card shadows don't overlap the sidebar. */
+    --sidebar-width: calc(var(--in-content-sidebar-width) - var(--main-margin-start));
+  }
 }
 
 *|*[hidden] {
   display: none !important;
 }
 
+body {
+  cursor: default;
+  /* The page starts to look really bad lower than this. */
+  min-width: 500px;
+}
+
+#full {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
+}
+
+#sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  overflow: hidden auto;
+}
+
+@media (prefers-reduced-motion) {
+  /* Setting border-inline-end on #sidebar makes it a focusable element */
+  #sidebar::after {
+    content: "";
+    width: 1px;
+    height: 100%;
+    background-color: var(--in-content-border-color);
+    top: 0;
+    inset-inline-end: 0;
+    position: absolute;
+  }
+}
+
+#categories {
+  display: flex;
+  flex-direction: column;
+  padding-inline-end: 4px; /* Leave space for the button focus styles. */
+}
+
+.category {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  margin-block: 0;
+  align-items: center;
+}
+
+.category[badge-count]::after {
+  display: inline-block;
+  min-width: 20px;
+  background-color: var(--blue-50);
+  color: #fff;
+  font-weight: bold;
+  /* Use a large border-radius to get semi-circles on the sides. */
+  border-radius: 1000px;
+  padding: 2px 6px;
+  content: attr(badge-count);
+  text-align: center;
+  margin-inline-start: 8px;
+  grid-column: 2;
+}
+
+.category[name="discover"] {
+  background-image: url("chrome://mozapps/skin/extensions/category-discover.svg");
+}
+.category[name="locale"] {
+  background-image: url("chrome://mozapps/skin/extensions/category-languages.svg");
+}
+.category[name="extension"] {
+  background-image: url("chrome://mozapps/skin/extensions/category-extensions.svg");
+}
+.category[name="theme"] {
+  background-image: url("chrome://mozapps/skin/extensions/category-themes.svg");
+}
+.category[name="plugin"] {
+  background-image: url("chrome://mozapps/skin/extensions/category-plugins.svg");
+}
+.category[name="dictionary"] {
+  background-image: url("chrome://mozapps/skin/extensions/category-dictionaries.svg");
+}
+.category[name="available-updates"] {
+  background-image: url("chrome://mozapps/skin/extensions/category-available.svg");
+}
+.category[name="recent-updates"] {
+  background-image: url("chrome://mozapps/skin/extensions/category-recent.svg");
+}
+
 .header-name {
   -moz-user-select: initial;
 }
 
+.sticky-container {
+  background: var(--in-content-page-background);
+  width: 100%;
+  position: sticky;
+  top: 0;
+  z-index: var(--z-index-sticky-container);
+}
+
+.main-search {
+  background: var(--in-content-page-background);
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding-inline-start: 28px;
+  padding-top: 20px;
+  padding-bottom: 30px;
+  max-width: var(--section-width);
+}
+
+search-addons > search-textbox {
+  margin: 0;
+  width: 20em;
+  min-height: 32px;
+}
+
+.search-label {
+  margin-inline-end: 8px;
+}
+
+.main-heading {
+  background: var(--in-content-page-background);
+  display: flex;
+  margin-inline-start: var(--main-margin-start);
+  padding-bottom: 16px;
+  max-width: var(--section-width);
+}
+
+.spacer {
+  flex-grow: 1;
+}
+
+#updates-message {
+  display: flex;
+  align-items: center;
+  margin-inline-end: 8px;
+}
+
+.back-button {
+  margin-inline-end: 16px;
+}
+
+/* Plugins aren't yet disabled by safemode (bug 342333),
+   so don't show that warning when viewing plugins. */
+#page-header[current-param="plugin"] message-bar[warning-type="safe-mode"] {
+  display: none;
+}
+
 #main {
-  margin-inline-start: 28px;
+  margin-inline-start: var(--main-margin-start);
   margin-bottom: 28px;
   max-width: var(--section-width);
 }
 
+global-warnings,
 #abuse-reports-messages {
-  margin-inline-start: 28px;
+  margin-inline-start: var(--main-margin-start);
   max-width: var(--section-width);
 }
 
@@ -27,28 +188,33 @@ message-bar-stack > * {
   margin-bottom: 8px;
 }
 
-/* The margin between pending message-bar-stack and the section heading. */
-addon-list message-bar-stack.pending-uninstall {
-  margin-bottom: 12px;
-}
-
 /* List sections */
 
 .list-section-heading {
   font-size: 17px;
   font-weight: 600;
-  margin-block: 16px;
+  margin-bottom: 16px;
 }
 
-/* The margin is set on the main heading, no need on the first subheading. */
-.list-section-heading:first-of-type {
-  margin-top: 0;
+.section {
+  margin-bottom: 32px;
 }
 
 /* Add-on cards */
 
 .addon.card {
   margin-bottom: 16px;
+}
+
+addon-card:not([expanded]) > .addon.card[active="false"] {
+  opacity: 0.6;
+  transition: opacity 150ms, box-shadow 150ms;
+}
+
+addon-card:not([expanded])[panelopen] > .addon.card[active="false"],
+addon-card:not([expanded]) > .addon.card[active="false"]:focus-within,
+addon-card:not([expanded]) > .addon.card[active="false"]:hover {
+  opacity: 1;
 }
 
 .addon.card:hover {
@@ -91,6 +257,7 @@ addon-card[expanded] .addon-card-message {
   /* Adjust height so that the image preserves the aspect ratio from AMO.
    * For details, see https://bugzilla.mozilla.org/show_bug.cgi?id=1546123 */
   height: calc(var(--section-width) * 92 / 680);
+  object-fit: cover;
 }
 
 .card-heading-icon {
@@ -107,10 +274,6 @@ addon-card[expanded] .addon-card-message {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-}
-
-.card-actions {
-  flex-shrink: 0;
 }
 
 .addon-name-container {
@@ -135,12 +298,14 @@ addon-card[expanded] .addon-card-message {
 }
 
 .addon-badge {
+  display: inline-block;
+  margin-inline-end: 8px;
   width: 16px;
   height: 16px;
   background-size: 16px;
   background-repeat: no-repeat;
   background-position: center;
-  margin-inline-end: 8px;
+  flex-shrink: 0;
 }
 
 .addon-badge-private-browsing-allowed {
@@ -156,6 +321,15 @@ addon-card[expanded] .addon-card-message {
   -moz-context-properties: fill;
 }
 
+.theme-enable-button {
+  min-width: auto;
+  height: auto;
+  font-size: 13px;
+  min-height: auto;
+  height: 24px;
+  margin: 0;
+}
+
 .addon-description {
   font-size: 14px;
   line-height: 20px;
@@ -165,9 +339,9 @@ addon-card[expanded] .addon-card-message {
 
 /* Prevent the content from wrapping unless expanded. */
 addon-card:not([expanded]) .card-contents {
-  /* Card padding times 4: 2 times for card, 1 between icon and content,
-   * 1 for the ... button. */
-  width: calc(var(--section-width) - var(--card-padding) * 4 - var(--addon-icon-size));
+  /* We're hiding the content when it's too long, so we need to define the
+   * width. As long as this is less than the width of its parent it works. */
+  width: 1px;
   white-space: nowrap;
 }
 
@@ -178,23 +352,23 @@ addon-card:not([expanded]) .addon-description {
   overflow-x: hidden;
 }
 
-.more-options-menu {
-  position: relative;
-  /* Add some negative margin to account for the button's padding */
-  margin-top: -10px;
-  margin-inline-end: -8px;
+.page-options-menu {
+  align-self: center;
+}
+
+.page-options-menu > .more-options-button {
+  background-image: url("chrome://global/skin/icons/settings.svg");
+  width: 32px;
+  height: 32px;
 }
 
 /* Recommended add-ons on list views */
 .recommended-heading {
-  margin-bottom: 16px;
+  margin-bottom: 24px;
+  margin-top: 48px;
 }
 
 /* Discopane extensions to the add-on card */
-
-recommended-addon-card .addon-name {
-  display: flex;
-}
 
 recommended-addon-card .addon-description:not(:empty) {
   margin-top: 0.5em;
@@ -204,6 +378,13 @@ recommended-addon-card .addon-description:not(:empty) {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
+}
+
+.disco-addon-name {
+  font-size: inherit;
+  font-weight: normal;
+  line-height: normal;
+  margin: 0;
 }
 
 .disco-addon-author {
@@ -224,6 +405,7 @@ recommended-addon-card .addon-description:not(:empty) {
   flex-shrink: 0;
   flex-grow: 0;
   align-self: baseline;
+  margin-inline-end: 0;
 }
 
 .disco-cta-button[action="install-addon"]::before {
@@ -232,7 +414,7 @@ recommended-addon-card .addon-description:not(:empty) {
 }
 
 .discopane-notice {
-  margin: 0.5em 0;
+  margin: 24px 0;
 }
 
 .discopane-notice-content {
@@ -243,6 +425,7 @@ recommended-addon-card .addon-description:not(:empty) {
 
 .discopane-notice-content > span {
   flex-grow: 1;
+  margin-inline-end: 4px;
 }
 
 .discopane-notice-content > button {
@@ -260,6 +443,10 @@ recommended-addon-card .addon-description:not(:empty) {
 
 .privacy-policy-link {
   font-size: small;
+}
+
+.theme-recommendation {
+  text-align: start;
 }
 
 addon-details {
@@ -293,6 +480,10 @@ addon-details {
   margin-top: var(--card-padding);
   margin-bottom: 0;
   align-self: flex-end;
+}
+
+.addon-detail-contribute-button:dir(rtl) {
+  background-position-x: right 8px;
 }
 
 .addon-detail-row {
@@ -335,10 +526,16 @@ addon-details {
   width: 24px;
   height: 24px;
   margin: 0;
+  margin-inline-start: 8px;
   -moz-context-properties: fill;
   fill: currentColor;
-  background: url("chrome://global/skin/icons/more.svg") no-repeat center center;
-  position: relative;
+  background-image: url("chrome://global/skin/icons/more.svg");
+  background-repeat: no-repeat;
+  background-position: center center;
+  /* Get the -badged ::after element in the right spot. */
+  padding: 1px;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .more-options-button-badged::after {
@@ -348,21 +545,14 @@ addon-details {
   height: 5px;
   border-radius: 50%;
   background: var(--blue-50);
-  position: absolute;
-  top: 0;
 }
 
-.more-options-button-badged:-moz-locale-dir(ltr)::after {
-  right: 0;
-}
-
-.more-options-button-badged:-moz-locale-dir(rtl)::after {
-  left: 0;
+panel-item {
+  -moz-context-properties: fill;
+  fill: currentColor;
 }
 
 panel-item[action="remove"] {
-  -moz-context-properties: fill;
-  fill: currentColor;
   --icon: url("chrome://global/skin/icons/delete.svg");
 }
 
@@ -371,8 +561,6 @@ panel-item[action="install-update"] {
 }
 
 panel-item[action="report"] {
-  -moz-context-properties: fill;
-  fill: currentColor;
   --icon: url(chrome://global/skin/icons/warning.svg);
 }
 
@@ -413,14 +601,73 @@ panel-item-separator {
   min-height: 250px;
   width: 100%;
   background-color: white;
+  margin-block: 4px;
 }
 
 addon-permissions-list > .addon-detail-row:first-of-type {
   border-top: none;
 }
 
-.deck-tab-group {
+.tab-group {
+  display: block;
   margin-top: 8px;
   /* Pull the buttons flush with the side of the card */
   margin-inline: calc(var(--card-padding) * -1);
+  border-bottom: 1px solid var(--in-content-box-border-color);
+  border-top: 1px solid var(--in-content-box-border-color);
+  /* font-size: 0; */
+  line-height: 0;
+}
+
+button.tab-button {
+  -moz-appearance: none;
+  border-inline: none;
+  border-block: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  font-size: 14px;
+  line-height: 20px;
+  margin: 0;
+  padding: 4px 16px;
+  color: var(--in-content-text-color);
+}
+
+button.tab-button:hover {
+  background-color: var(--in-content-button-background);
+  border-top-color: var(--in-content-box-border-color);
+}
+
+button.tab-button:hover:active {
+  background-color: var(--in-content-button-background-hover);
+}
+
+button.tab-button[selected] {
+  border-top-color: var(--in-content-border-highlight);
+  color: var(--in-content-category-text-selected) !important;
+}
+
+button.tab-button:-moz-focusring {
+  outline-offset: -2px;
+  -moz-outline-radius: 0;
+}
+
+.tab-group[last-input-type="mouse"] > button.tab-button:-moz-focusring {
+  outline: none;
+  box-shadow: none;
+}
+
+panel-list {
+  font-size: 13px;
+}
+
+@media (max-width: 830px) {
+  .category[badge-count]::after {
+    content: "";
+    display: block;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    min-width: auto;
+    padding: 0;
+  }
 }

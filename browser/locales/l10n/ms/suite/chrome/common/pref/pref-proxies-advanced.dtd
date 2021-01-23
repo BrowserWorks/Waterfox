@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Advanced Proxy Preferences dialog -->
+<!ENTITY  pref.proxies.advanced.title "Keutamaan Proksi Lanjutan">
+<!ENTITY  protocols.caption           "Proksi Protokol-Khusus">
+<!ENTITY  protocols.description       "Biasanya proksi yang sama boleh mengendalikan semua protokol yang disenaraikan di sini.">
+<!ENTITY  http.label                  "Proksi HTTP:">
+<!ENTITY  http.accesskey              "s">
+<!ENTITY  ssl.label                   "Proksi SSL:">
+<!ENTITY  ssl.accesskey               "L">
+<!ENTITY  ftp.label                   "Proksi FTP:">
+<!ENTITY  ftp.accesskey               "F">
+<!ENTITY  reuseProxy.label            "Guna tetapan Proksi HTTP untuk semua protokol">
+<!ENTITY  reuseProxy.accesskey        "G">
+<!ENTITY  port.label                  "Port:">
+<!ENTITY  HTTPPort.accesskey          "P">
+<!ENTITY  SSLPort.accesskey           "o">
+<!ENTITY  FTPPort.accesskey           "r">
+
+<!ENTITY  socks.caption               "Proksi Generik">
+<!ENTITY  socks.description           "Proksi SOCKS adalah proksi generik yang kadangkala digunakan dalam korporat atau persekitaran yang sama.">
+<!ENTITY  socks.label                 "Proksi SOCKS:">
+<!ENTITY  socks.accesskey             "S">
+<!ENTITY  socks4.label                "SOCKS v4">
+<!ENTITY  socks4.accesskey            "C">
+<!ENTITY  socks5.label                "SOCKS v5">
+<!ENTITY  socks5.accesskey            "K">
+<!ENTITY  socksRemoteDNS.label        "Gunakan untuk menyelesaikan nama hos (disyorkan untuk SOCKS v5)">
+<!ENTITY  socksRemoteDNS.accesskey    "e">
+<!ENTITY  SOCKSport.accesskey         "h">

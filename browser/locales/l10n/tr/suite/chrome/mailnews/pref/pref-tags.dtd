@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.tags.title "Etiketler">
+<!ENTITY pref.tags.caption "Etiketleri özelleştir">
+<!ENTITY pref.tags.description "Tags can be used to categorize and prioritize your messages. Modify the appearance and importance of tags using the settings below. Tags near the top are more important than those further down.">
+<!ENTITY tagColumn.label "Etiket">
+<!ENTITY colorColumn.label "Renk">
+<!ENTITY defaultTagName.label "İsimsiz etiket">
+<!ENTITY addTagButton.label "Ekle">
+<!ENTITY addTagButton.accesskey "E">
+<!ENTITY deleteTagButton.label "Sil">
+<!ENTITY deleteTagButton.accesskey "S">
+<!ENTITY raiseTagButton.label "Önemlilik derecesini arttır">
+<!ENTITY raiseTagButton.accesskey "n">
+<!ENTITY lowerTagButton.label "Önemlilik derecesini azalt">
+<!ENTITY lowerTagButton.accesskey "e">
+<!ENTITY restoreButton.label "Öntanımlı değerler">
+<!ENTITY restoreButton.accesskey "ğ">

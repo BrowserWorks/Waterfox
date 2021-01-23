@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (window.title) : do not translate "LDAP" in below line -->
+<!ENTITY pref.ldap.window.title    "LDAP Kicholb'al taq K'uxasamaj">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "LDAP Rucholb'al K'uxasamaj:">
+<!-- LOCALIZATION NOTE (directoriesText.label) : do not translate "LDAP" in below line -->
+<!ENTITY directoriesText.label     "Ticha' jun LDAP Cholb'äl K'uxasamaj:">
+<!ENTITY directoriesText.accesskey "c">
+<!ENTITY addDirectory.label        "Titz'aqatisäx">
+<!ENTITY addDirectory.accesskey    "t">
+<!ENTITY editDirectory.label       "Tinuk'">
+<!ENTITY editDirectory.accesskey   "n">
+<!ENTITY deleteDirectory.label     "Tiyuj">
+<!ENTITY deleteDirectory.accesskey "y">

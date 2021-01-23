@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY linksHeader.label "Gedrag van koppelingen">
+<!ENTITY newWindow.label "Openen van koppelingen">
+<!ENTITY newWindowDescription.label "Koppelingen die in een nieuw venster zouden openen, openen in:">
+<!ENTITY newWindowRestriction.label "Wanneer scripts een nieuw venster willen openen:">
+<!ENTITY external.label "Koppelingen van andere toepassingen">
+<!ENTITY externalDescription.label "Koppelingen vanuit andere toepassingen openen in:">
+
+<!ENTITY openCurrent.label "Het huidige tabblad/venster">
+<!ENTITY newWindowGroupCurrent.accesskey "u">
+<!ENTITY externalGroupCurrent.accesskey "d">
+
+<!ENTITY openTab.label "Een nieuw tabblad in het huidige venster">
+<!ENTITY newWindowGroupTab.accesskey "t">
+<!ENTITY externalGroupTab.accesskey "a">
+
+<!ENTITY openWindow.label "Een nieuw venster">
+<!ENTITY newWindowGroupWindow.accesskey "n">
+<!ENTITY externalGroupWindow.accesskey "v">
+
+<!ENTITY divertAll.label "Altijd vensters omzetten naar tabbladen">
+<!ENTITY divertAll.accesskey "o">
+<!ENTITY divertNoFeatures.label "Aangepaste vensters niet omzetten naar tabbladen">
+<!ENTITY divertNoFeatures.accesskey "z">
+<!ENTITY dontDivert.label "Altijd nieuwe vensters openen">
+<!ENTITY dontDivert.accesskey "w">

@@ -1,0 +1,68 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label          "Julkaise sivu">
+<!ENTITY windowTitleSettings.label  "Julkaisuasetukset">
+
+<!ENTITY publishTab.label          "Julkaise">
+<!ENTITY settingsTab.label         "Asetukset">
+
+<!ENTITY publishButton.label       "Julkaise">
+
+<!-- Publish Tab Panel -->
+<!ENTITY siteList.label            "Sivuston nimi:">
+<!ENTITY siteList.accesskey           "S">
+<!ENTITY siteList.tooltip          "Valitse nimi sivustolle, jonka haluat julkaista">
+<!ENTITY newSiteButton.label       "Uusi sivusto">
+<!ENTITY newSiteButton.accesskey      "s">
+<!ENTITY docDirList.label          "Tämän sivun alihakemisto sivustossa:">
+<!ENTITY docDirList.accesskey         "a">
+<!ENTITY docDirList.tooltip           "Valitse tai kirjoita alihakemisto etäpalvelimella">
+<!ENTITY publishImgCheckbox.label  "Sisällytä kuvat ja muut tiedostot">
+<!ENTITY publishImgCheckbox.accesskey "S">
+<!ENTITY publishImgCheckbox.tooltip  "Julkaise kuvat ja muut tiedostot, joihin tällä sivulla viitataan">
+<!ENTITY sameLocationRadio.label   "Käytä samaa sijaintia kuin sivun sijainti">
+<!ENTITY sameLocationRadio.accesskey  "K">
+<!ENTITY sameLocationRadio.tooltip  "Julkaise tiedostot samassa sijainnissa kuin sivu">
+<!ENTITY useSubdirRadio.label      "Käytä tätä sivuston alihakemistoa:">
+<!ENTITY useSubdirRadio.accesskey     "t">
+<!ENTITY useSubdirRadio.tooltip       "Julkaise tiedostot valittuun alihakemistoon palvelimella">
+<!ENTITY otherDirList.tooltip         "Valitse tai kirjoita alihakemisto, johon tiedostot julkaistaan">
+<!ENTITY pageTitle.label           "Sivun otsikko:">
+<!ENTITY pageTitle.accesskey          "S">
+<!ENTITY pageTitle.tooltip         "Kirjoita otsikko, joka näkyy mm. selainikkunan otsikkorivillä ja kirjanmerkeissä">
+<!ENTITY pageTitleExample.label    "esim.: &quot;Oma kotisivuni&quot;">
+<!ENTITY filename.label            "Tiedostonimi:">
+<!ENTITY filename.accesskey           "T">
+<!ENTITY filename.tooltip          "Kirjoita tälle tiedostolle nimi, ja lisää verkkosivuihin ppte &quot;.html&quot;">
+<!ENTITY filenameExample.label     "esim.: &quot;sivuni.html&quot;">
+<!ENTITY setDefaultButton.label    "Aseta oletukseksi">
+<!ENTITY setDefaultButton.accesskey   "o">
+<!ENTITY removeButton.label        "Poista sivusto">
+<!ENTITY removeButton.accesskey       "P">
+
+<!-- Settings Tab Panel -->
+<!ENTITY publishSites.label    "Julkaisusivustot">
+<!ENTITY serverInfo.label      "Sivuston tiedot">
+<!ENTITY loginInfo.label       "Kirjautumistiedot">
+<!ENTITY siteName.label        "Sivuston nimi:">
+<!ENTITY siteName.accesskey           "v">
+<!ENTITY siteName.tooltip      "Tämän julkaisusivuston yksilöllinen lempinimi (esim. &quot;OmaSivusto&quot;)">
+<!ENTITY siteUrl.label         "Julkaisuosoite (esim.: &quot;ftp://ftp.palveluntarjoaja.com/käyttäjätunnus&quot;):">
+<!ENTITY siteUrl.accesskey            "J">
+<!ENTITY siteUrl.tooltip       "FTP:// tai HTTP:// -osoite, jonka palveluntarjoajasi on antanut">
+<!ENTITY browseUrl.label       "WWW-sivustosi HTTP-osoite (esim.: &quot;http://www.palveluntarjoaja.com/käyttäjätunnus&quot;):">
+<!ENTITY browseUrl.accesskey          "W">
+<!ENTITY browseUrl.tooltip     "Kotihakemistosi HTTP://-osoite (älä laita tiedoston nimeä)">
+<!ENTITY username.label        "Käyttäjätunnus:">
+<!ENTITY username.accesskey           "K">
+<!ENTITY username.tooltip      "Käyttäjätunnus, jolla kirjaudut (esim. palveluntarjoajasi) sivustopalveluun">
+<!ENTITY password.label        "Salasana:">
+<!ENTITY password.accesskey           "S">
+<!ENTITY password.tooltip      "Käyttäjätunnuksesi salasana">
+<!ENTITY savePassword.label    "Tallenna salasana">
+<!ENTITY savePassword.accesskey       "T">
+<!ENTITY savePassword.tooltip  "Jos haluat tallentaa salasanasi turvallisesti salasanojen hallintaan, valitse">

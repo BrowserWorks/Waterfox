@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Տեքստի շրջանի հատկությունը">
+
+<!ENTITY Settings.label "Կարգավորումներ">
+
+<!ENTITY TextAreaName.label "Դաշտի անունը.">
+<!ENTITY TextAreaName.accessKey "Դ">
+<!ENTITY TextAreaRows.label "Գծեր.">
+<!ENTITY TextAreaRows.accessKey "Գ">
+<!ENTITY TextAreaCols.label "Սյուներ.">
+<!ENTITY TextAreaCols.accessKey "Ս">
+<!ENTITY TextAreaReadOnly.label "Միայն կարդալու">
+<!ENTITY TextAreaReadOnly.accessKey "Մ">
+<!ENTITY TextAreaDisabled.label "Անջատված">
+<!ENTITY TextAreaDisabled.accessKey "Ա">
+<!ENTITY TextAreaTabIndex.label "Էջի ցուցիչը.">
+<!ENTITY TextAreaTabIndex.accessKey "Է">
+<!ENTITY TextAreaAccessKey.label "Մուտքի բանալին.">
+<!ENTITY TextAreaAccessKey.accessKey "Մ">
+<!ENTITY InitialText.label "Որոշված տեքստը.">
+<!ENTITY InitialText.accessKey "Ո">
+
+<!ENTITY TextAreaWrap.label "Տողադարձի եղանակ.">
+<!ENTITY TextAreaWrap.accessKey "Տ">
+<!ENTITY WrapDefault.value "Սկզբնադիր">
+<!ENTITY WrapOff.value "Անջ.">
+<!ENTITY WrapHard.value "Կոշտ">
+<!ENTITY WrapSoft.value "Փափուկ">
+<!ENTITY WrapPhysical.value "Ֆիզիկական">
+<!ENTITY WrapVirtual.value "Վիրտուալ">

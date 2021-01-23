@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Yaltin-am ɗoo, a haalii bonnde!">
+<!ENTITY safeb.palm.decline.label "Faalkiso ngoo reentino">
+<!ENTITY safeb.palm.reportPage.label "Hol ko waɗi ngoo hello daaƴeede?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Rokki yiyannde ko <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "Jaŋtaama ko Hello Njangu!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Ngoo hello geese to <span id='malware_sitename'/> jaŋtaama ko hello njangu etee daaƴaama tugnaade e cuɓoraaɗe kisal maa.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Kelle njangu eotoo ko aafde topirɗe gujjirɗe humpito maa suraango, kuutoroo ordinateer maa ngam yande e woɗɓe, walla bonna yuɓɓo maa.</p><p>Yoga e kelle njangu ɗee ena cara topirɗe bonɗe e teyre, kono keewɗe ko bonnooje tawa jeyɗo-ɗe oo anndaa walla yamiraani.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "Lowre Fuuntoore!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "Ngoo hello geese to <span id='phishing_sitename'/> jaŋtaama ko hello njangu etee daaƴaama tugnaade e cuɓoraaɗe kisal maa.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>Lowe puuntooje mbaɗiraa ko tuufaade-ma e waɗde ko ena bonnan-maa, hono aafde topateeri, walla saaktude humpito maa heeriingo, walla finndeeji, tonngooɗe noddirɗe walla karte banke.</p><p>Naatnude humpito waawngo wonde fof ena waawu wuftude e nguyka innde maa walla jaŋfe nannduɗe heen.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Koko jaŋtaa Lowre Topirde añaande!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Ngoo hello geese to <span id='unwanted_sitename'/> jaŋtaama ko hello njangu etee daaƴaama tugnaade e cuɓoraaɗe kisal maa.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "Kelle topirɗe gañaaɗe etoto aafde topirɗe baawɗe fuuntude kadi njana e yuɓɓo maa e mbaydi ndi tijjaaka.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "Lowre aroore ndee ina waawi waɗde mbonnanteeri">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; daaƴii ngoo hello sabu ha ngo waawi etaade aafde jaaɓnirɗe bonɗe gujjooje walla momtooje humpito (yeru, nate, finndeeji, mesaasuuji e karte banke).">

@@ -64,9 +64,11 @@ function nonBrowserWindowStartup() {
     }
   }
 
-  // If no windows are active (i.e. we're the hidden window), disable the close, minimize
-  // and zoom menu commands as well
-  if (window.location.href == "chrome://browser/content/hiddenWindow.xul") {
+  if (
+    window.location.href == "chrome://browser/content/hiddenWindowMac.xhtml"
+  ) {
+    // If no windows are active (i.e. we're the hidden window), disable the
+    // close, minimize and zoom menu commands as well.
     var hiddenWindowDisabledItems = [
       "cmd_close",
       "minimizeWindow",
@@ -79,7 +81,7 @@ function nonBrowserWindowStartup() {
       }
     }
 
-    // also hide the window-list separator
+    // Also hide the window-list separator.
     element = document.getElementById("sep-window-list");
     element.setAttribute("hidden", "true");
 
@@ -99,13 +101,14 @@ function nonBrowserWindowStartup() {
         dockSupport.dockMenu = nativeMenu;
       } catch (e) {}
     }
-  }
 
-  if (PrivateBrowsingUtils.permanentPrivateBrowsing) {
-    document.getElementById("macDockMenuNewWindow").hidden = true;
-  }
-  if (!PrivateBrowsingUtils.enabled) {
-    document.getElementById("macDockMenuNewPrivateWindow").hidden = true;
+    // Hide menuitems that don't apply to private contexts.
+    if (PrivateBrowsingUtils.permanentPrivateBrowsing) {
+      document.getElementById("macDockMenuNewWindow").hidden = true;
+    }
+    if (!PrivateBrowsingUtils.enabled) {
+      document.getElementById("macDockMenuNewPrivateWindow").hidden = true;
+    }
   }
 
   delayedStartupTimeoutId = setTimeout(nonBrowserWindowDelayedStartup, 0);
@@ -124,7 +127,9 @@ function nonBrowserWindowDelayedStartup() {
 function nonBrowserWindowShutdown() {
   // If this is the hidden window being closed, release our reference to
   // the dock menu element to prevent leaks on shutdown
-  if (window.location.href == "chrome://browser/content/hiddenWindow.xul") {
+  if (
+    window.location.href == "chrome://browser/content/hiddenWindowMac.xhtml"
+  ) {
     let dockSupport = Cc["@mozilla.org/widget/macdocksupport;1"].getService(
       Ci.nsIMacDockSupport
     );

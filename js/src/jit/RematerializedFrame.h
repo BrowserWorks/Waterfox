@@ -95,10 +95,7 @@ class RematerializedFrame {
 
   bool isDebuggee() const { return isDebuggee_; }
   void setIsDebuggee() { isDebuggee_ = true; }
-  void unsetIsDebuggee() {
-    MOZ_ASSERT(!script()->isDebuggee());
-    isDebuggee_ = false;
-  }
+  inline void unsetIsDebuggee();
 
   uint8_t* top() const { return top_; }
   JSScript* outerScript() const {
@@ -139,9 +136,9 @@ class RematerializedFrame {
     return *argsObj_;
   }
 
-  bool isFunctionFrame() const { return !!script_->functionNonDelazifying(); }
+  bool isFunctionFrame() const { return script_->isFunction(); }
   bool isGlobalFrame() const { return script_->isGlobalCode(); }
-  bool isModuleFrame() const { return script_->module(); }
+  bool isModuleFrame() const { return script_->isModule(); }
 
   JSScript* script() const { return script_; }
   JSFunction* callee() const {

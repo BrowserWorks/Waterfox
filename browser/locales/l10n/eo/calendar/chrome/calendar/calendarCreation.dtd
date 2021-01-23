@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "Krei novan kalendaron" >
+<!ENTITY wizard.label             "Krei novan kalendaron" >
+<!ENTITY wizard.description       "Elekti lokon por kalendaro" >
+
+<!ENTITY initialpage.description    "Your calendar can be stored on your computer or be stored on a server in order to access it remotely or share it with your friends or co-workers." >
+<!ENTITY initialpage.computer.label  "On My Computer">
+<!ENTITY initialpage.network.label  "On the Network">
+
+<!ENTITY locationpage.description         "Provide info about what is needed to access your remote calendar" >
+<!ENTITY locationpage.login.description   "Optional: enter an username and password" >
+<!ENTITY locationpage.username.label      "Username:" >
+<!ENTITY locationpage.password.label      "Pasvorto:" >
+
+<!ENTITY custompage.shortdescription  "Customize your calendar" >
+<!ENTITY custompage.longdescription   "You can give your calendar a nickname and colorize the events from this calendar." >
+
+<!ENTITY finishpage.shortdescription  "Calendar Created" >
+<!ENTITY finishpage.longdescription   "Your calendar has been created." >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "Aliaj">
+
+<!ENTITY buttons.create.label "Krei kalendaron">
+<!ENTITY buttons.create.accesskey "k">
+
+<!ENTITY buttons.find.label "Trovi kalendarojn">
+<!ENTITY buttons.find.accesskey "T">
+
+<!ENTITY buttons.back.label "Malantaŭen">
+<!ENTITY buttons.back.accesskey "M">
+
+<!ENTITY buttons.subscribe.label "Aboni">
+<!ENTITY buttons.subscribe.accesskey "A">
+
+<!ENTITY calendartype.label "Tipo de kalendaro:">
+<!ENTITY location.label "Loko:">
+
+

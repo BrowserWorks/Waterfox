@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY settings.caption "Наладжванні">
+<!ENTITY security.caption "Бяспека і апазнаванне">
+<!ENTITY serverName.label "Назва паслугача:">
+<!ENTITY serverName.accesskey "Н">
+<!ENTITY serverDescription.label "Апісанне:">
+<!ENTITY serverDescription.accesskey "А">
+<!ENTITY serverPort.label "Порт:">
+<!ENTITY serverPort.accesskey "П">
+<!ENTITY userName.label "Імя карыстальніка:">
+<!ENTITY userName.accesskey "К">
+<!ENTITY connectionSecurity.label "Бяспека злучэння:">
+<!ENTITY connectionSecurity.accesskey "Б">
+<!ENTITY connectionSecurityType-0.label "Няма">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, калі даступна">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY smtpEditTitle.label "Паслугач SMTP">
+<!ENTITY serverPortDefault.label "Змоўчны:">
+<!ENTITY authMethod.label "Метад апазнавання:">
+<!ENTITY authMethod.accesskey "з">

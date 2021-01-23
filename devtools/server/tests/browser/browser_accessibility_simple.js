@@ -4,10 +4,18 @@
 
 "use strict";
 
+loader.lazyRequireGetter(
+  this,
+  "isWebRenderEnabled",
+  "devtools/server/actors/utils/accessibility",
+  true
+);
+
 const PREF_ACCESSIBILITY_FORCE_DISABLED = "accessibility.force_disabled";
 
-function checkAccessibilityState(accessibility, expected) {
-  const { enabled, canBeDisabled, canBeEnabled } = accessibility;
+function checkAccessibilityState(accessibility, parentAccessibility, expected) {
+  const { enabled } = accessibility;
+  const { canBeDisabled, canBeEnabled } = parentAccessibility;
   is(enabled, expected.enabled, "Enabled state is correct.");
   is(canBeDisabled, expected.canBeDisabled, "canBeDisabled state is correct.");
   is(canBeEnabled, expected.canBeEnabled, "canBeEnabled state is correct.");
@@ -20,37 +28,62 @@ add_task(async function() {
     walker: domWalker,
     target,
     accessibility,
-  } = await initAccessibilityFrontForUrl(
-    "data:text/html;charset=utf-8,<title>test</title><div></div>"
+    parentAccessibility,
+    a11yWalker,
+  } = await initAccessibilityFrontsForUrl(
+    "data:text/html;charset=utf-8,<title>test</title><div></div>",
+    { enableByDefault: false }
   );
 
   ok(accessibility, "The AccessibilityFront was created");
   ok(accessibility.getWalker, "The getWalker method exists");
+  ok(accessibility.getSimulator, "The getSimulator method exists");
 
-  let a11yWalker = await accessibility.getWalker();
-  ok(a11yWalker, "The AccessibleWalkerFront was returned");
+  ok(accessibility.accessibleWalkerFront, "Accessible walker was initialized");
 
-  checkAccessibilityState(accessibility, {
+  is(
+    a11yWalker,
+    accessibility.accessibleWalkerFront,
+    "The AccessibleWalkerFront was returned"
+  );
+
+  const a11ySimulator = accessibility.simulatorFront;
+  const webRenderEnabled = isWebRenderEnabled(window);
+  is(
+    !!a11ySimulator,
+    webRenderEnabled,
+    `The SimulatorFront was${webRenderEnabled ? "" : " not"} returned.`
+  );
+  if (webRenderEnabled) {
+    ok(accessibility.simulatorFront, "Accessible simulator was initialized");
+    is(
+      a11ySimulator,
+      accessibility.simulatorFront,
+      "The SimulatorFront was returned"
+    );
+  }
+
+  checkAccessibilityState(accessibility, parentAccessibility, {
     enabled: false,
     canBeDisabled: true,
     canBeEnabled: true,
   });
 
   info("Force disable accessibility service: updates canBeEnabled flag");
-  let onEvent = accessibility.once("can-be-enabled-change");
+  let onEvent = parentAccessibility.once("can-be-enabled-change");
   Services.prefs.setIntPref(PREF_ACCESSIBILITY_FORCE_DISABLED, 1);
   await onEvent;
-  checkAccessibilityState(accessibility, {
+  checkAccessibilityState(accessibility, parentAccessibility, {
     enabled: false,
     canBeDisabled: true,
     canBeEnabled: false,
   });
 
   info("Clear force disable accessibility service: updates canBeEnabled flag");
-  onEvent = accessibility.once("can-be-enabled-change");
+  onEvent = parentAccessibility.once("can-be-enabled-change");
   Services.prefs.clearUserPref(PREF_ACCESSIBILITY_FORCE_DISABLED);
   await onEvent;
-  checkAccessibilityState(accessibility, {
+  checkAccessibilityState(accessibility, parentAccessibility, {
     enabled: false,
     canBeDisabled: true,
     canBeEnabled: true,
@@ -58,26 +91,26 @@ add_task(async function() {
 
   info("Initialize accessibility service");
   const initEvent = accessibility.once("init");
-  await accessibility.enable();
+  await parentAccessibility.enable();
   await waitForA11yInit();
   await initEvent;
-  checkAccessibilityState(accessibility, {
+  checkAccessibilityState(accessibility, parentAccessibility, {
     enabled: true,
     canBeDisabled: true,
     canBeEnabled: true,
   });
 
-  a11yWalker = await accessibility.getWalker();
   const rootNode = await domWalker.getRootNode();
-  const a11yDoc = await a11yWalker.getAccessibleFor(rootNode);
+  const a11yDoc = await accessibility.accessibleWalkerFront.getAccessibleFor(
+    rootNode
+  );
   ok(a11yDoc, "Accessible document actor is created");
 
   info("Shutdown accessibility service");
   const shutdownEvent = accessibility.once("shutdown");
-  await accessibility.disable();
-  await waitForA11yShutdown();
+  await waitForA11yShutdown(parentAccessibility);
   await shutdownEvent;
-  checkAccessibilityState(accessibility, {
+  checkAccessibilityState(accessibility, parentAccessibility, {
     enabled: false,
     canBeDisabled: true,
     canBeEnabled: true,

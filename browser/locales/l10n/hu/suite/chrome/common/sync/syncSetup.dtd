@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountSetupTitle.label    "A &syncBrand.fullName.label; beállítása">
+
+<!-- First page of the wizard -->
+
+<!ENTITY setup.pickSetupType.description "Üdvözöljük! Ha még nem használta a &syncBrand.fullName.label;et, akkor létre kell hoznia egy fiókot.">
+<!ENTITY button.createNewAccount.label "Új fiók létrehozása">
+<!ENTITY setup.haveAccount.label "Már van &syncBrand.fullName.label;-fiókom.">
+<!ENTITY button.connect.label "Kapcsolódás">
+
+<!ENTITY setup.choicePage.title.label     "Használta már a &syncBrand.fullName.label; kiegészítőt?">
+<!ENTITY setup.choicePage.new.label       "Még nem használtam a &syncBrand.shortName.label; kiegészítőt">
+<!ENTITY setup.choicePage.existing.label  "Már használom a &syncBrand.shortName.label; kiegészítőt egy másik számítógépen">
+
+<!-- New Account AND Existing Account -->
+<!ENTITY server.label               "Kiszolgáló">
+<!ENTITY server.accesskey           "K">
+<!ENTITY serverType.main.label      "&syncBrand.fullName.label;-kiszolgáló">
+<!ENTITY serverType.custom2.label   "Egyéni kiszolgáló használata…">
+<!ENTITY signIn.account2.label      "Fiók">
+<!ENTITY signIn.account2.accesskey  "F">
+<!ENTITY signIn.password.label      "Jelszó">
+<!ENTITY signIn.password.accesskey  "J">
+<!ENTITY signIn.recoveryKey.label     "Helyreállítókulcs">
+<!ENTITY signIn.recoveryKey.accesskey "H">
+
+<!-- New Account Page 1: Basic Account Info -->
+<!ENTITY setup.newAccountDetailsPage.title.label "Fiók adatai">
+<!ENTITY setup.confirmPassword.label             "Jelszó megerősítése">
+<!ENTITY setup.confirmPassword.accesskey         "m">
+<!ENTITY setup.emailAddress.label                "E-mail cím">
+<!ENTITY setup.emailAddress.accesskey            "E">
+<!-- LOCALIZATION NOTE: tosAgree1, tosLink, tosAgree2, ppLink, tosAgree3 are
+     joined with implicit white space, so spaces in the strings aren't necessary -->
+<!ENTITY setup.tosAgree1.label      "Egyetértek a">
+<!ENTITY setup.tosAgree1.accesskey  "E">
+<!ENTITY setup.tosLink.label        "szolgáltatás feltételeivel">
+<!ENTITY setup.tosAgree2.label      "és az">
+<!ENTITY setup.ppLink.label         "adatvédelmi irányelvekkel">
+<!ENTITY setup.tosAgree3.label      "">
+<!ENTITY setup.tosAgree2.accesskey  "">
+
+<!-- New Account Page 2: Recovery Key -->
+<!ENTITY setup.newRecoveryKeyPage.title.label "A &brandShortName; ügyel adatai védelmére">
+<!ENTITY setup.newRecoveryKeyPage.description.label "A tökéletes adatvédelem érdekében minden adata titkosítva lesz feltöltés előtt. Az adatok visszafejtéséhez szükséges helyreállítókulcs nem lesz feltöltve.">
+<!ENTITY recoveryKeyEntry.label        "Helyreállítókulcs">
+<!ENTITY recoveryKeyEntry.accesskey    "H">
+<!ENTITY recoveryGenerateNewKey.label  "Új kulcs létrehozása">
+<!ENTITY recoveryKeyBackup.description "A helyreállítókulcs kelleni fog, ha más gépekről akarja elérni a &syncBrand.fullName.label; szolgáltatást. Készítsen biztonsági másolatot. Nem tudunk segíteni, ha elveszti a helyreállítókulcsát,">
+
+<!ENTITY button.syncKeyBackup.print.label     "Nyomtatás…">
+<!ENTITY button.syncKeyBackup.print.accesskey "N">
+<!ENTITY button.syncKeyBackup.save.label      "Mentés…">
+<!ENTITY button.syncKeyBackup.save.accesskey  "M">
+
+<!-- New Account Page 3: Captcha -->
+<!ENTITY setup.captchaPage2.title.label     "Bizonyítsa be, hogy Ön nem egy robot!">
+
+<!-- Existing Account Page 1: Add Device (incl. Add a Device dialog strings) -->
+<!ENTITY addDevice.title.label              "Eszköz hozzáadása">
+<!ENTITY addDevice.showMeHow.label          "Hogy kell?">
+<!ENTITY addDevice.dontHaveDevice.label     "Nincs nálam az eszköz">
+<!ENTITY addDevice.setup.description.label  "Az aktiváláshoz a másik eszközön lépjen a &syncBrand.shortName.label; Beállítások menübe, és válassza az „Eszköz hozzáadása” lehetőséget.">
+<!ENTITY addDevice.setup.enterCode.label    "Ezután írja be ezt a kódot:">
+<!ENTITY addDevice.dialog.description.label "Az új eszköz aktiválásához az eszközön lépjen be a &syncBrand.shortName.label; Beállítások menübe, és válassza a „Kapcsolódás” lehetőséget.">
+<!ENTITY addDevice.dialog.enterCode.label   "Írja be az eszköz által adott kódot:">
+<!ENTITY addDevice.dialog.tryAgain.label    "Próbálja meg újra.">
+<!ENTITY addDevice.dialog.successful.label  "Az eszköz sikeresen hozzá lett adva. Az első szinkronizálás több percet is igénybe vehet, és a háttérben fog befejeződni.">
+<!ENTITY addDevice.dialog.recoveryKey.label "Az eszköz aktiválásához meg kell majd adnia a helyreállítókulcsot. Nyomtassa ki vagy mentse ezt a kulcsot, és vigye magával.">
+<!ENTITY addDevice.dialog.connected.label   "Az eszköz csatlakoztatva van.">
+
+<!-- Existing Account Page 2: Manual Login -->
+<!ENTITY setup.signInPage.title.label "Bejelentkezés">
+<!ENTITY existingRecoveryKey.description "A helyreállítókulcs másolata megtalálható a másik eszközön a &syncBrand.shortName.label; Beállítások menüt választva, a „Fiók kezelése” alatt a „Saját helyreállítókulcs” lehetőséget választva.">
+<!ENTITY verifying.label              "Ellenőrzés…">
+<!ENTITY resetPassword.label          "Jelszó törlése">
+<!ENTITY resetSyncKey.label           "Elvesztettem a másik eszközt.">
+
+<!-- Sync Options -->
+<!ENTITY setup.optionsPage.title      "Szinkronizálási beállítások">
+<!ENTITY syncComputerName.label       "Számítógép neve:">
+<!ENTITY syncComputerName.accesskey   "S">
+
+<!ENTITY syncMy.label               "Szinkronizálandó">
+<!ENTITY engine.addons.label        "Kiegészítők">
+<!ENTITY engine.addons.accesskey    "K">
+<!ENTITY engine.bookmarks.label     "Könyvjelzők">
+<!ENTITY engine.bookmarks.accesskey "K">
+<!ENTITY engine.tabs.label          "Lapok">
+<!ENTITY engine.tabs.accesskey      "L">
+<!ENTITY engine.history.label       "Előzmények">
+<!ENTITY engine.history.accesskey   "E">
+<!ENTITY engine.passwords.label     "Jelszavak">
+<!ENTITY engine.passwords.accesskey "J">
+<!ENTITY engine.prefs.label         "Beállítások">
+<!ENTITY engine.prefs.accesskey     "B">
+
+<!ENTITY choice2.merge.main.label      "A számítógép adatainak összefésülése a &syncBrand.shortName.label; adataival">
+<!ENTITY choice2.merge.recommended.label "(ajánlott)">
+<!ENTITY choice2.client.main.label     "Minden adat felülírása ezen a számítógépen a &syncBrand.shortName.label; adataival">
+<!ENTITY choice2.server.main.label     "Minden más eszköz adatának a helyi adatokra cseréje">
+
+<!-- Confirm Merge Options -->
+<!ENTITY setup.optionsConfirmPage.title "Megerősítés">
+<!ENTITY confirm.merge.label    "A &syncBrand.fullName.label; most összefésüli ennek a számítógépnek a böngészőadatait a Sync-fiók adataival.">
+<!ENTITY confirm.client2.label         "Figyelmeztetés: A következő &brandShortName; adatok fognak törlődni erről a számítógépről:">
+<!ENTITY confirm.client.moreinfo.label "A &brandShortName; ezután rámásolja a &syncBrand.fullName.label;-adatokat erre a számítógépre.">
+<!ENTITY confirm.server2.label         "Figyelmeztetés: A következő eszközökön levő adatok lesznek felülírva a helyi adatokkal:">
+
+<!-- New & Existing Account: Setup Complete -->
+<!ENTITY setup.successPage.title "A beállítás kész">
+<!ENTITY changeOptions.label "Megváltoztathatja ezt a beállítást a Szinkronizálás beállítása lehetőséget választva.">
+<!ENTITY continueUsing.label "Folytathatja a &brandShortName; használatát.">

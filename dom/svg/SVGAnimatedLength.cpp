@@ -6,7 +6,9 @@
 
 #include "SVGAnimatedLength.h"
 
+#include "mozAutoDocUpdate.h"
 #include "mozilla/ArrayUtils.h"
+#include "mozilla/Maybe.h"
 #include "mozilla/SMILValue.h"
 #include "mozilla/dom/SVGViewportElement.h"
 #include "DOMSVGAnimatedLength.h"
@@ -133,8 +135,12 @@ bool SVGElementMetrics::EnsureCtx() const {
   if (!mCtx && mSVGElement) {
     mCtx = mSVGElement->GetCtx();
     if (!mCtx && mSVGElement->IsSVGElement(nsGkAtoms::svg)) {
-      // mSVGElement must be the outer svg element
-      mCtx = static_cast<SVGViewportElement*>(mSVGElement);
+      auto* e = static_cast<SVGViewportElement*>(mSVGElement);
+
+      if (!e->IsInner()) {
+        // mSVGElement must be the outer svg element
+        mCtx = e;
+      }
     }
   }
   return mCtx != nullptr;
@@ -200,22 +206,40 @@ float SVGAnimatedLength::GetPixelsPerUnit(nsIFrame* aFrame,
 // See https://www.w3.org/TR/css-values-3/#absolute-lengths
 static const float DPI = 96.0f;
 
-float SVGAnimatedLength::GetPixelsPerUnit(const UserSpaceMetrics& aMetrics,
-                                          uint8_t aUnitType) const {
+bool UserSpaceMetrics::ResolveAbsoluteUnit(uint8_t aUnitType, float& aRes) {
   switch (aUnitType) {
     case SVGLength_Binding::SVG_LENGTHTYPE_NUMBER:
     case SVGLength_Binding::SVG_LENGTHTYPE_PX:
-      return 1;
+      aRes = 1;
+      break;
     case SVGLength_Binding::SVG_LENGTHTYPE_MM:
-      return DPI / MM_PER_INCH_FLOAT;
+      aRes = DPI / MM_PER_INCH_FLOAT;
+      break;
     case SVGLength_Binding::SVG_LENGTHTYPE_CM:
-      return 10.0f * DPI / MM_PER_INCH_FLOAT;
+      aRes = 10.0f * DPI / MM_PER_INCH_FLOAT;
+      break;
     case SVGLength_Binding::SVG_LENGTHTYPE_IN:
-      return DPI;
+      aRes = DPI;
+      break;
     case SVGLength_Binding::SVG_LENGTHTYPE_PT:
-      return DPI / POINTS_PER_INCH_FLOAT;
+      aRes = DPI / POINTS_PER_INCH_FLOAT;
+      break;
     case SVGLength_Binding::SVG_LENGTHTYPE_PC:
-      return 12.0f * DPI / POINTS_PER_INCH_FLOAT;
+      aRes = 12.0f * DPI / POINTS_PER_INCH_FLOAT;
+      break;
+    default:
+      return false;
+  }
+  return true;
+}
+
+float SVGAnimatedLength::GetPixelsPerUnit(const UserSpaceMetrics& aMetrics,
+                                          uint8_t aUnitType) const {
+  float res;
+  if (UserSpaceMetrics::ResolveAbsoluteUnit(aUnitType, res)) {
+    return res;
+  }
+  switch (aUnitType) {
     case SVGLength_Binding::SVG_LENGTHTYPE_PERCENTAGE:
       return aMetrics.GetAxisLength(mCtxType) / 100.0f;
     case SVGLength_Binding::SVG_LENGTHTYPE_EMS:
@@ -228,16 +252,16 @@ float SVGAnimatedLength::GetPixelsPerUnit(const UserSpaceMetrics& aMetrics,
   }
 }
 
-void SVGAnimatedLength::SetBaseValueInSpecifiedUnits(float aValue,
-                                                     SVGElement* aSVGElement,
-                                                     bool aDoSetAttr) {
+void SVGAnimatedLength::SetBaseValueInSpecifiedUnits(
+    float aValue, SVGElement* aSVGElement, bool aDoSetAttr,
+    const mozAutoDocUpdate& aProofOfUpdate) {
   if (mIsBaseSet && mBaseVal == aValue) {
     return;
   }
 
   nsAttrValue emptyOrOldValue;
   if (aDoSetAttr) {
-    emptyOrOldValue = aSVGElement->WillChangeLength(mAttrEnum);
+    emptyOrOldValue = aSVGElement->WillChangeLength(mAttrEnum, aProofOfUpdate);
   }
   mBaseVal = aValue;
   mIsBaseSet = true;
@@ -247,7 +271,7 @@ void SVGAnimatedLength::SetBaseValueInSpecifiedUnits(float aValue,
     aSVGElement->AnimationNeedsResample();
   }
   if (aDoSetAttr) {
-    aSVGElement->DidChangeLength(mAttrEnum, emptyOrOldValue);
+    aSVGElement->DidChangeLength(mAttrEnum, emptyOrOldValue, aProofOfUpdate);
   }
 }
 
@@ -274,14 +298,17 @@ nsresult SVGAnimatedLength::ConvertToSpecifiedUnits(uint16_t unitType,
   // on the document, we still need to send out notifications in case we have
   // mutation listeners, since the actual string value of the attribute will
   // change.
-  nsAttrValue emptyOrOldValue = aSVGElement->WillChangeLength(mAttrEnum);
+  mozAutoDocUpdate updateBatch(aSVGElement->GetComposedDoc(), true);
+  nsAttrValue emptyOrOldValue =
+      aSVGElement->WillChangeLength(mAttrEnum, updateBatch);
 
   mSpecifiedUnitType = uint8_t(unitType);
   // Setting aDoSetAttr to false here will ensure we don't call
   // Will/DidChangeAngle a second time (and dispatch duplicate notifications).
-  SetBaseValueInSpecifiedUnits(valueInSpecifiedUnits, aSVGElement, false);
+  SetBaseValueInSpecifiedUnits(valueInSpecifiedUnits, aSVGElement, false,
+                               updateBatch);
 
-  aSVGElement->DidChangeLength(mAttrEnum, emptyOrOldValue);
+  aSVGElement->DidChangeLength(mAttrEnum, emptyOrOldValue, updateBatch);
 
   return NS_OK;
 }
@@ -298,7 +325,9 @@ nsresult SVGAnimatedLength::NewValueSpecifiedUnits(uint16_t aUnitType,
     return NS_OK;
   }
 
-  nsAttrValue emptyOrOldValue = aSVGElement->WillChangeLength(mAttrEnum);
+  mozAutoDocUpdate updateBatch(aSVGElement->GetComposedDoc(), true);
+  nsAttrValue emptyOrOldValue =
+      aSVGElement->WillChangeLength(mAttrEnum, updateBatch);
   mBaseVal = aValueInSpecifiedUnits;
   mIsBaseSet = true;
   mSpecifiedUnitType = uint8_t(aUnitType);
@@ -307,7 +336,7 @@ nsresult SVGAnimatedLength::NewValueSpecifiedUnits(uint16_t aUnitType,
   } else {
     aSVGElement->AnimationNeedsResample();
   }
-  aSVGElement->DidChangeLength(mAttrEnum, emptyOrOldValue);
+  aSVGElement->DidChangeLength(mAttrEnum, emptyOrOldValue, updateBatch);
   return NS_OK;
 }
 
@@ -338,9 +367,12 @@ nsresult SVGAnimatedLength::SetBaseValueString(const nsAString& aValueAsString,
     return NS_OK;
   }
 
+  Maybe<mozAutoDocUpdate> updateBatch;
   nsAttrValue emptyOrOldValue;
   if (aDoSetAttr) {
-    emptyOrOldValue = aSVGElement->WillChangeLength(mAttrEnum);
+    updateBatch.emplace(aSVGElement->GetComposedDoc(), true);
+    emptyOrOldValue =
+        aSVGElement->WillChangeLength(mAttrEnum, updateBatch.ref());
   }
   mBaseVal = value;
   mIsBaseSet = true;
@@ -352,7 +384,7 @@ nsresult SVGAnimatedLength::SetBaseValueString(const nsAString& aValueAsString,
   }
 
   if (aDoSetAttr) {
-    aSVGElement->DidChangeLength(mAttrEnum, emptyOrOldValue);
+    aSVGElement->DidChangeLength(mAttrEnum, emptyOrOldValue, updateBatch.ref());
   }
   return NS_OK;
 }
@@ -377,7 +409,9 @@ nsresult SVGAnimatedLength::SetBaseValue(float aValue, SVGElement* aSVGElement,
     return NS_ERROR_ILLEGAL_VALUE;
   }
 
-  SetBaseValueInSpecifiedUnits(valueInSpecifiedUnits, aSVGElement, aDoSetAttr);
+  mozAutoDocUpdate updateBatch(aSVGElement->GetComposedDoc(), true);
+  SetBaseValueInSpecifiedUnits(valueInSpecifiedUnits, aSVGElement, aDoSetAttr,
+                               updateBatch);
   return NS_OK;
 }
 

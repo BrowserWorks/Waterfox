@@ -42,8 +42,6 @@ class ManifestMessagesChild extends ActorChild {
         return this.hasManifestLink(message);
       case "DOM:ManifestObtainer:Obtain":
         return this.obtainManifest(message);
-      case "DOM:Manifest:FireAppInstalledEvent":
-        return this.fireAppInstalledEvent(message);
       case "DOM:WebManifest:fetchIcon":
         return this.fetchIcon(message);
     }
@@ -68,31 +66,21 @@ class ManifestMessagesChild extends ActorChild {
    * @param {Object} aMsg The IPC message, which is destructured to just
    *                      get the id.
    */
-  async obtainManifest({ data: { id } }) {
+  async obtainManifest(message) {
+    const {
+      data: { id, checkConformance },
+    } = message;
     const response = makeMsgResponse(id);
     try {
       response.result = await ManifestObtainer.contentObtainManifest(
-        this.mm.content
+        this.mm.content,
+        { checkConformance }
       );
       response.success = true;
     } catch (err) {
       response.result = serializeError(err);
     }
     this.mm.sendAsyncMessage("DOM:ManifestObtainer:Obtain", response);
-  }
-
-  fireAppInstalledEvent({ data: { id } }) {
-    const ev = new Event("appinstalled");
-    const response = makeMsgResponse(id);
-    if (!this.mm.content || this.mm.content.top !== this.mm.content) {
-      const msg =
-        "Can only dispatch install event on top-level browsing contexts.";
-      response.result = serializeError(new Error(msg));
-    } else {
-      response.success = true;
-      this.mm.content.dispatchEvent(ev);
-    }
-    this.mm.sendAsyncMessage("DOM:Manifest:FireAppInstalledEvent", response);
   }
 
   /**

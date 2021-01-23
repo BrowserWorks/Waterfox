@@ -13,9 +13,10 @@ UNIFIED_SOURCES += [
     'TestBSPTree.cpp',
     'TestBufferRotation.cpp',
     'TestColorNames.cpp',
+    'TestConfigManager.cpp',
     'TestGfxWidgets.cpp',
-    'TestJobScheduler.cpp',
     'TestLayers.cpp',
+    'TestMatrix.cpp',
     'TestMoz2D.cpp',
     'TestPolygon.cpp',
     'TestQcms.cpp',
@@ -35,7 +36,6 @@ if not(CONFIG['OS_TARGET'] == 'WINNT' and CONFIG['CPU_ARCH'] == 'aarch64'):
 if CONFIG['OS_TARGET'] != 'Android':
     UNIFIED_SOURCES += [
         'TestCompositor.cpp',
-        'TestGfxPrefs.cpp',
         'TestRect.cpp',
         'TestTextureCompatibility.cpp',
     ]
@@ -54,9 +54,17 @@ UNIFIED_SOURCES += [ '/gfx/2d/unittest/%s' % p for p in [
 # 'ScriptListTableTest_TestSuccess_Test::<anonymous>' whose type uses
 # the anonymous namespace").
 SOURCES += [ '/gfx/ots/tests/%s' % p for p in [
-    'cff_type2_charstring_test.cc',
+    'cff_charstring_test.cc',
     'layout_common_table_test.cc',
 ]]
+
+# ICC profiles used for verifying QCMS transformations. The copyright
+# notice embedded in the profiles should be reviewed to ensure there are
+# no known restrictions on distribution.
+TEST_HARNESS_FILES.gtest += [
+    'icc_profiles/lcms_samsung_syncmaster.icc',
+    'icc_profiles/lcms_thinkpad_w540.icc',
+]
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

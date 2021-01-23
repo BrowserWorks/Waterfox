@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY securityTitle.label "Keselamatan">
+<!ENTITY securityTab.label "Keselamatan">
+<!ENTITY securityHeading.label "Untuk menghantar dan menerima mesej bertandatangan atau dienkripsi, anda perlu menetapkan kedua-dua sijil bertandatangan digital dan sijil dienkripsi.">
+<!ENTITY encryptionGroupTitle.label "Enkripsi">
+<!ENTITY encryptionChoiceLabel.label "Tetapan enkripsi piawai semasa menghantar mesej:">
+<!ENTITY neverEncrypt.label "Jangan sekali-kali (jangan guna enkripsi)">
+<!ENTITY neverEncrypt.accesskey "J">
+<!ENTITY alwaysEncryptMessage.label "Dikehendaki (tidak boleh menghantar mesej kecuali semua penerima ada sijil)">
+<!ENTITY alwaysEncryptMessage.accesskey "k">
+<!ENTITY encryptionCert.message "Guna sijil ini untuk enkripsi &amp; dekripsi mesej yang dihantar kepada anda:">
+<!ENTITY digitalSign.certificate.button "Pilih…">
+<!ENTITY digitalSign.certificate.accesskey "P">
+<!ENTITY digitalSign.certificate_clear.button "Buang">
+<!ENTITY digitalSign.certificate_clear.accesskey "B">
+<!ENTITY encryption.certificate.button "Pilih…">
+<!ENTITY encryption.certificate.accesskey "h">
+<!ENTITY encryption.certificate_clear.button "Buang">
+<!ENTITY encryption.certificate_clear.accesskey "g">
+<!ENTITY signingGroupTitle.label "Tandatangan Digital">
+<!ENTITY signMessage.label "Mesej bertandatangan digital (piawai)">
+<!ENTITY signMessage.accesskey "M">
+<!ENTITY signingCert.message "Guna sijil ini untuk tandatangan mesej digital yang anda hantar:">
+
+<!ENTITY certificates.label "Sijil">
+<!ENTITY manageCerts2.label "Urus Sijil…">
+<!ENTITY manageCerts2.accesskey "U">
+<!ENTITY manageDevices.label "Urus Peranti Keselamatan…">
+<!ENTITY manageDevices.accesskey "s">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Pilih Sijil">
+<!ENTITY certPicker.info  "Sijil:">
+<!ENTITY certPicker.detailsLabel "Butiran sijil yang dipilih:">

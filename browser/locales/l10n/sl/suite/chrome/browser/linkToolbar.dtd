@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Link Toolbar Title -->
+
+<!-- Link Toolbar visibility options -->
+
+<!-- Toolbar buttons, menus, and menuitems -->
+<!ENTITY topButton.label "Na vrh">
+<!ENTITY upButton.label "Gor">
+<!ENTITY firstButton.label "Prvi">
+<!ENTITY prevButton.label "Prejšnji">
+<!ENTITY nextButton.label "Naslednji">
+<!ENTITY lastButton.label "Zadnji">
+
+<!ENTITY documentButton.label "Dokument">
+
+<!ENTITY tocButton.label "Kazalo vsebine">
+<!ENTITY chapterButton.label "Poglavja">
+<!ENTITY sectionButton.label "Odseki">
+<!ENTITY glossaryButton.label "Besednjak">
+
+<!ENTITY moreButton.label "Več">
+
+<!ENTITY helpButton.label "Pomoč">
+<!ENTITY searchButton.label "Iskanje">
+
+<!ENTITY authorButton.label "Avtor(ji)">
+
+<!ENTITY bookmarkButton.label "Zaznamki">
+
+<!ENTITY alternateButton.label "Druge različice">
+
+<!ENTITY feedButton.label "Naroči se">

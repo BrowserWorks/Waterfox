@@ -1,0 +1,58 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/*
+ * Bewerk dit bestand en kopieer het als userChrome.css naar uw
+ * profielmap/chrome/
+ */
+
+/*
+ * Dit bestand kan worden gebruikt om het uiterlijk van Mozilla’s gebruikersinterface
+ * aan te passen. Overweeg om !important te gebruiken voor regels waarvan u wilt dat
+ * ze voorgaan op de standaardinstellingen.
+ */
+
+/*
+ * De regel met @namespace niet verwijderen -- deze is nodig voor correct functioneren
+ */
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"); /* zet de standaard namespace op XUL */
+
+
+/*
+ * Enkele mogelijke toegankelijkheidsverbeteringen:
+ */
+/*
+ * Alle standaard lettertypegroottes op 20 pt zetten:
+ *
+ * * {
+ *   font-size: 20pt !important
+ * }
+ */
+/*
+ * Menu-items afzonderlijk op 15 pt zetten in plaats van de standaardgrootte:
+ *
+ * menupopup > * {
+ *   font-size: 15pt !important
+ * }
+ */
+/*
+ * Voor de locatiebalk (URL) een lettertype met vaste breedte gebruiken
+ *
+ * #urlbar {
+ *    font-family: monospace !important;
+ * }
+ */
+
+/*
+ * De throbber en zijn vervelende bewegen verwijderen:
+ *
+ * #throbber-box {
+ *   display: none !important;
+ * }
+ */
+
+/*
+ * Voor meer voorbeelden, zie http://www.mozilla.org/unix/customizing.html
+ */
+

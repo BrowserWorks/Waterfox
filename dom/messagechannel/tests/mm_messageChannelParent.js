@@ -2,23 +2,23 @@ let port;
 let mm;
 
 function info(message) {
-  return opener.wrappedJSObject.info(message);
+  return window.arguments[0].info(message);
 }
 
 function ok(condition, message) {
-  return opener.wrappedJSObject.ok(condition, message);
+  return window.arguments[0].ok(condition, message);
 }
 
 function is(v1, v2, message) {
-  return opener.wrappedJSObject.is(v1, v2, message);
+  return window.arguments[0].is(v1, v2, message);
 }
 
 function todo_is(v1, v2, message) {
-  return opener.wrappedJSObject.todo_is(v1, v2, message);
+  return window.arguments[0].todo_is(v1, v2, message);
 }
 
 function cleanUp() {
-  opener.setTimeout(function() {
+  window.arguments[0].setTimeout(function() {
     this.done();
   }, 0);
   window.close();
@@ -61,9 +61,7 @@ function basic_test(finish) {
   let channel = new MessageChannel();
   port = channel.port2;
   mm.addMessageListener("BasicTest:FinishPrepare", finishPrepare);
-  mm.sendAsyncMessage("BasicTest:PortCreated", {}, {}, undefined, [
-    channel.port1,
-  ]);
+  mm.sendAsyncMessage("BasicTest:PortCreated", {}, [channel.port1]);
 }
 
 // Communicate with closed port.
@@ -87,9 +85,7 @@ function close_test(finish) {
   let channel = new MessageChannel();
   port = channel.port2;
   mm.addMessageListener("CloseTest:FinishPrepare", finishPrepare);
-  mm.sendAsyncMessage("CloseTest:PortCreated", {}, {}, undefined, [
-    channel.port1,
-  ]);
+  mm.sendAsyncMessage("CloseTest:PortCreated", {}, [channel.port1]);
 }
 
 // Empty transferable object
@@ -103,7 +99,7 @@ function empty_transferable(finish) {
   };
 
   mm.addMessageListener("EmptyTest:FinishPrepare", finishPrepare);
-  mm.sendAsyncMessage("EmptyTest:PortCreated", {}, {}, undefined, []);
+  mm.sendAsyncMessage("EmptyTest:PortCreated", {}, []);
 }
 
 // Not transferable object.
@@ -116,9 +112,7 @@ function not_transferable(finish) {
   };
 
   mm.addMessageListener("NotTransferableTest:FinishPrepare", finishPrepare);
-  mm.sendAsyncMessage("NotTransferableTest:PortCreated", {}, {}, undefined, [
-    "",
-  ]);
+  mm.sendAsyncMessage("NotTransferableTest:PortCreated", {}, [""]);
 }
 
 /*

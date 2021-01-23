@@ -8,11 +8,8 @@
 
 #include "nsIconChannel.h"
 #include "nsIconURI.h"
-#include "nsIURL.h"
 #include "nsCRT.h"
 #include "nsCOMPtr.h"
-#include "nsIComponentManager.h"
-#include "nsIServiceManager.h"
 #include "nsNetCID.h"
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -52,15 +49,6 @@ nsIconProtocolHandler::GetProtocolFlags(uint32_t* result) {
   *result =
       URI_NORELATIVE | URI_NOAUTH | URI_IS_UI_RESOURCE | URI_IS_LOCAL_RESOURCE;
   return NS_OK;
-}
-
-NS_IMETHODIMP
-nsIconProtocolHandler::NewURI(const nsACString& aSpec,
-                              const char* aOriginCharset,  // ignored
-                              nsIURI* aBaseURI, nsIURI** result) {
-  return NS_MutateURI(new nsMozIconURI::Mutator())
-      .SetSpec(aSpec)
-      .Finalize(result);
 }
 
 NS_IMETHODIMP

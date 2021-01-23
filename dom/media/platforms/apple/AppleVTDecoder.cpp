@@ -6,18 +6,21 @@
 
 #include "AppleVTDecoder.h"
 
+#include <CoreVideo/CVPixelBufferIOSurface.h>
+#include <IOSurface/IOSurface.h>
+
 #include "AppleDecoderModule.h"
 #include "AppleUtils.h"
+#include "H264.h"
+#include "MP4Decoder.h"
 #include "MacIOSurfaceImage.h"
 #include "MediaData.h"
-#include "mozilla/ArrayUtils.h"
-#include "H264.h"
-#include "nsAutoPtr.h"
-#include "nsThreadUtils.h"
-#include "mozilla/Logging.h"
+#include "VPXDecoder.h"
 #include "VideoUtils.h"
 #include "gfxPlatform.h"
-#include "MacIOSurfaceImage.h"
+#include "mozilla/ArrayUtils.h"
+#include "mozilla/Logging.h"
+#include "nsThreadUtils.h"
 
 #define LOG(...) DDMOZ_LOG(sPDMLog, mozilla::LogLevel::Debug, __VA_ARGS__)
 #define LOGEX(_this, ...) \
@@ -35,11 +38,21 @@ AppleVTDecoder::AppleVTDecoder(const VideoInfo& aConfig, TaskQueue* aTaskQueue,
       mPictureHeight(aConfig.mImage.height),
       mDisplayWidth(aConfig.mDisplay.width),
       mDisplayHeight(aConfig.mDisplay.height),
-      mColorSpace(aConfig.mColorSpace),
+      mColorSpace(aConfig.mColorSpace == gfx::YUVColorSpace::UNKNOWN
+                      ? DefaultColorSpace({mPictureWidth, mPictureHeight})
+                      : aConfig.mColorSpace),
+      mColorRange(aConfig.mColorRange),
+      mStreamType(MP4Decoder::IsH264(aConfig.mMimeType)
+                      ? StreamType::H264
+                      : VPXDecoder::IsVP9(aConfig.mMimeType)
+                            ? StreamType::VP9
+                            : StreamType::Unknown),
       mTaskQueue(aTaskQueue),
-      mMaxRefFrames(aOptions.contains(CreateDecoderParams::Option::LowLatency)
-                        ? 0
-                        : H264::ComputeMaxRefFrames(aConfig.mExtraData)),
+      mMaxRefFrames(
+          mStreamType != StreamType::H264 ||
+                  aOptions.contains(CreateDecoderParams::Option::LowLatency)
+              ? 0
+              : H264::ComputeMaxRefFrames(aConfig.mExtraData)),
       mImageContainer(aImageContainer)
 #ifdef MOZ_WIDGET_UIKIT
       ,
@@ -51,16 +64,16 @@ AppleVTDecoder::AppleVTDecoder(const VideoInfo& aConfig, TaskQueue* aTaskQueue,
       ,
       mIsFlushing(false),
       mMonitor("AppleVTDecoder"),
+      mPromise(&mMonitor),  // To ensure our PromiseHolder is only ever accessed
+                            // with the monitor held.
       mFormat(nullptr),
       mSession(nullptr),
       mIsHardwareAccelerated(false) {
   MOZ_COUNT_CTOR(AppleVTDecoder);
+  MOZ_ASSERT(mStreamType != StreamType::Unknown);
   // TODO: Verify aConfig.mime_type.
-  LOG("Creating AppleVTDecoder for %dx%d h.264 video", mDisplayWidth,
-      mDisplayHeight);
-
-  // To ensure our PromiseHolder is only ever accessed with the monitor held.
-  mPromise.SetMonitor(&mMonitor);
+  LOG("Creating AppleVTDecoder for %dx%d %s video", mDisplayWidth,
+      mDisplayHeight, mStreamType == StreamType::H264 ? "H.264" : "VP9");
 }
 
 AppleVTDecoder::~AppleVTDecoder() { MOZ_COUNT_DTOR(AppleVTDecoder); }
@@ -180,7 +193,15 @@ void AppleVTDecoder::ProcessDecode(MediaRawData* aSample) {
       kVTDecodeFrame_EnableAsynchronousDecompression;
   rv = VTDecompressionSessionDecodeFrame(
       mSession, sample, decodeFlags, CreateAppleFrameRef(aSample), &infoFlags);
-  if (rv != noErr && !(infoFlags & kVTDecodeInfo_FrameDropped)) {
+  if (infoFlags & kVTDecodeInfo_FrameDropped) {
+    MonitorAutoLock mon(mMonitor);
+    // Smile and nod
+    NS_WARNING("Decoder synchronously dropped frame");
+    MaybeResolveBufferedFrames();
+    return;
+  }
+
+  if (rv != noErr) {
     LOG("AppleVTDecoder: Error %d VTDecompressionSessionDecodeFrame", rv);
     NS_WARNING("Couldn't pass frame to decoder");
     // It appears that even when VTDecompressionSessionDecodeFrame returned a
@@ -271,13 +292,16 @@ static void PlatformCallback(void* decompressionOutputRefCon,
   LOGEX(decoder, "AppleVideoDecoder %s status %d flags %d", __func__,
         static_cast<int>(status), flags);
 
-  nsAutoPtr<AppleVTDecoder::AppleFrameRef> frameRef(
+  UniquePtr<AppleVTDecoder::AppleFrameRef> frameRef(
       static_cast<AppleVTDecoder::AppleFrameRef*>(sourceFrameRefCon));
 
   // Validate our arguments.
-  if (status != noErr || !image) {
+  if (status != noErr) {
+    NS_WARNING("VideoToolbox decoder returned an error");
+    decoder->OnDecodeError(status);
+    return;
+  } else if (!image) {
     NS_WARNING("VideoToolbox decoder returned no data");
-    image = nullptr;
   } else if (flags & kVTDecodeInfo_FrameDropped) {
     NS_WARNING("  ...frame tagged as dropped...");
   } else {
@@ -286,6 +310,20 @@ static void PlatformCallback(void* decompressionOutputRefCon,
   }
 
   decoder->OutputFrame(image, *frameRef);
+}
+
+void AppleVTDecoder::MaybeResolveBufferedFrames() {
+  mMonitor.AssertCurrentThreadOwns();
+
+  if (mPromise.IsEmpty()) {
+    return;
+  }
+
+  DecodedData results;
+  while (mReorderQueue.Length() > mMaxRefFrames) {
+    results.AppendElement(mReorderQueue.Pop());
+  }
+  mPromise.Resolve(std::move(results), __func__);
 }
 
 // Copy and return a decoded frame.
@@ -306,7 +344,7 @@ void AppleVTDecoder::OutputFrame(CVPixelBufferRef aImage,
     // Image was dropped by decoder or none return yet.
     // We need more input to continue.
     MonitorAutoLock mon(mMonitor);
-    mPromise.Resolve(DecodedData(), __func__);
+    MaybeResolveBufferedFrames();
     return;
   }
 
@@ -375,6 +413,7 @@ void AppleVTDecoder::OutputFrame(CVPixelBufferRef aImage,
     buffer.mPlanes[2].mSkip = 0;
 
     buffer.mYUVColorSpace = mColorSpace;
+    buffer.mColorRange = mColorRange;
 
     gfx::IntRect visible = gfx::IntRect(0, 0, mPictureWidth, mPictureHeight);
 
@@ -387,10 +426,12 @@ void AppleVTDecoder::OutputFrame(CVPixelBufferRef aImage,
     CVPixelBufferUnlockBaseAddress(aImage, kCVPixelBufferLock_ReadOnly);
   } else {
 #ifndef MOZ_WIDGET_UIKIT
-    IOSurfacePtr surface = MacIOSurfaceLib::CVPixelBufferGetIOSurface(aImage);
+    CFTypeRefPtr<IOSurfaceRef> surface =
+        CFTypeRefPtr<IOSurfaceRef>::WrapUnderGetRule(
+            CVPixelBufferGetIOSurface(aImage));
     MOZ_ASSERT(surface, "Decoder didn't return an IOSurface backed buffer");
 
-    RefPtr<MacIOSurface> macSurface = new MacIOSurface(surface);
+    RefPtr<MacIOSurface> macSurface = new MacIOSurface(std::move(surface));
     macSurface->SetYUVColorSpace(mColorSpace);
 
     RefPtr<layers::Image> image = new layers::MacIOSurfaceImage(macSurface);
@@ -415,14 +456,18 @@ void AppleVTDecoder::OutputFrame(CVPixelBufferRef aImage,
   // in composition order.
   MonitorAutoLock mon(mMonitor);
   mReorderQueue.Push(data);
-  DecodedData results;
-  while (mReorderQueue.Length() > mMaxRefFrames) {
-    results.AppendElement(mReorderQueue.Pop());
-  }
-  mPromise.Resolve(std::move(results), __func__);
+  MaybeResolveBufferedFrames();
 
   LOG("%llu decoded frames queued",
       static_cast<unsigned long long>(mReorderQueue.Length()));
+}
+
+void AppleVTDecoder::OnDecodeError(OSStatus aError) {
+  MonitorAutoLock mon(mMonitor);
+  mPromise.RejectIfExists(
+      MediaResult(NS_ERROR_DOM_MEDIA_DECODE_ERR,
+                  RESULT_DETAIL("OnDecodeError:%x", aError)),
+      __func__);
 }
 
 nsresult AppleVTDecoder::WaitForAsynchronousFrames() {
@@ -439,9 +484,12 @@ MediaResult AppleVTDecoder::InitializeSession() {
 
   AutoCFRelease<CFDictionaryRef> extensions = CreateDecoderExtensions();
 
-  rv = CMVideoFormatDescriptionCreate(kCFAllocatorDefault,
-                                      kCMVideoCodecType_H264, mPictureWidth,
-                                      mPictureHeight, extensions, &mFormat);
+  rv = CMVideoFormatDescriptionCreate(
+      kCFAllocatorDefault,
+      mStreamType == StreamType::H264
+          ? kCMVideoCodecType_H264
+          : CMVideoCodecType(AppleDecoderModule::kCMVideoCodecType_VP9),
+      mPictureWidth, mPictureHeight, extensions, &mFormat);
   if (rv != noErr) {
     return MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
                        RESULT_DETAIL("Couldn't create format description!"));
@@ -482,11 +530,12 @@ MediaResult AppleVTDecoder::InitializeSession() {
 }
 
 CFDictionaryRef AppleVTDecoder::CreateDecoderExtensions() {
-  AutoCFRelease<CFDataRef> avc_data = CFDataCreate(
+  AutoCFRelease<CFDataRef> data = CFDataCreate(
       kCFAllocatorDefault, mExtraData->Elements(), mExtraData->Length());
 
-  const void* atomsKey[] = {CFSTR("avcC")};
-  const void* atomsValue[] = {avc_data};
+  const void* atomsKey[1];
+  atomsKey[0] = mStreamType == StreamType::H264 ? CFSTR("avcC") : CFSTR("vpcC");
+  const void* atomsValue[] = {data};
   static_assert(ArrayLength(atomsKey) == ArrayLength(atomsValue),
                 "Non matching keys/values array size");
 
@@ -546,11 +595,14 @@ CFDictionaryRef AppleVTDecoder::CreateOutputConfiguration() {
 
 #ifndef MOZ_WIDGET_UIKIT
   // Output format type:
-  SInt32 PixelFormatTypeValue = kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange;
+  SInt32 PixelFormatTypeValue =
+      mColorRange == gfx::ColorRange::FULL
+          ? kCVPixelFormatType_420YpCbCr8BiPlanarFullRange
+          : kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange;
   AutoCFRelease<CFNumberRef> PixelFormatTypeNumber = CFNumberCreate(
       kCFAllocatorDefault, kCFNumberSInt32Type, &PixelFormatTypeValue);
   // Construct IOSurface Properties
-  const void* IOSurfaceKeys[] = {MacIOSurfaceLib::kPropIsGlobal};
+  const void* IOSurfaceKeys[] = {kIOSurfaceIsGlobal};
   const void* IOSurfaceValues[] = {kCFBooleanTrue};
   static_assert(ArrayLength(IOSurfaceKeys) == ArrayLength(IOSurfaceValues),
                 "Non matching keys/values array size");

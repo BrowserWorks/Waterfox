@@ -83,7 +83,7 @@ function openDeleteCertConfirmDialog(tabID) {
     deleteConfirmed: false,
   };
   let win = window.openDialog(
-    "chrome://pippki/content/deletecert.xul",
+    "chrome://pippki/content/deletecert.xhtml",
     "",
     "",
     tabID,
@@ -187,9 +187,9 @@ async function testHelper(
 
 // Test deleting certs from the "Your Certificates" tab.
 add_task(async function testDeletePersonalCerts() {
-  const expectedTitleL10nId = { id: "delete-user-cert-title" };
-  const expectedConfirmL10nId = { id: "delete-user-cert-confirm" };
-  const expectedImpactL10nId = { id: "delete-user-cert-impact" };
+  const expectedTitleL10nId = { id: "delete-user-cert-title", args: null };
+  const expectedConfirmL10nId = { id: "delete-user-cert-confirm", args: null };
+  const expectedImpactL10nId = { id: "delete-user-cert-impact", args: null };
   await testHelper(
     "mine_tab",
     expectedTitleL10nId,
@@ -200,11 +200,11 @@ add_task(async function testDeletePersonalCerts() {
 
 // Test deleting certs from the "People" tab.
 add_task(async function testDeleteOtherPeopleCerts() {
-  const expectedTitleL10nId = { id: "delete-email-cert-title" };
+  const expectedTitleL10nId = { id: "delete-email-cert-title", args: null };
   // ’ doesn't seem to work when embedded in the following literals, which is
   // why escape codes are used instead.
-  const expectedConfirmL10nId = { id: "delete-email-cert-confirm" };
-  const expectedImpactL10nId = { id: "delete-email-cert-impact" };
+  const expectedConfirmL10nId = { id: "delete-email-cert-confirm", args: null };
+  const expectedImpactL10nId = { id: "delete-email-cert-impact", args: null };
   await testHelper(
     "others_tab",
     expectedTitleL10nId,
@@ -215,9 +215,9 @@ add_task(async function testDeleteOtherPeopleCerts() {
 
 // Test deleting certs from the "Servers" tab.
 add_task(async function testDeleteServerCerts() {
-  const expectedTitleL10nId = { id: "delete-ssl-cert-title" };
-  const expectedConfirmL10nId = { id: "delete-ssl-cert-confirm" };
-  const expectedImpactL10nId = { id: "delete-ssl-cert-impact" };
+  const expectedTitleL10nId = { id: "delete-ssl-cert-title", args: null };
+  const expectedConfirmL10nId = { id: "delete-ssl-cert-confirm", args: null };
+  const expectedImpactL10nId = { id: "delete-ssl-cert-impact", args: null };
   await testHelper(
     "websites_tab",
     expectedTitleL10nId,
@@ -228,9 +228,9 @@ add_task(async function testDeleteServerCerts() {
 
 // Test deleting certs from the "Authorities" tab.
 add_task(async function testDeleteCACerts() {
-  const expectedTitleL10nId = { id: "delete-ca-cert-title" };
-  const expectedConfirmL10nId = { id: "delete-ca-cert-confirm" };
-  const expectedImpactL10nId = { id: "delete-ca-cert-impact" };
+  const expectedTitleL10nId = { id: "delete-ca-cert-title", args: null };
+  const expectedConfirmL10nId = { id: "delete-ca-cert-confirm", args: null };
+  const expectedImpactL10nId = { id: "delete-ca-cert-impact", args: null };
   await testHelper(
     "ca_tab",
     expectedTitleL10nId,

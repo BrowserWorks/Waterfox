@@ -4,25 +4,17 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-import sys
+from __future__ import absolute_import
 import os
 
 import buildconfig
 import mozpack.path as mozpath
 
-# The xpidl parser is not incorporated in the in-tree virtualenv.
-xpidl_dir = mozpath.join(buildconfig.topsrcdir, 'xpcom', 'idl-parser',
-                         'xpidl')
-xpidl_cachedir = mozpath.join(buildconfig.topobjdir, 'xpcom', 'idl-parser',
-                              'xpidl')
-sys.path.extend([xpidl_dir, xpidl_cachedir])
-import xpidl
+from xpidl import xpidl
 
 # Load the webidl configuration file.
 glbl = {}
-execfile(mozpath.join(buildconfig.topsrcdir,
-                      'dom', 'bindings', 'Bindings.conf'),
-         glbl)
+exec(open(mozpath.join(buildconfig.topsrcdir, 'dom', 'bindings', 'Bindings.conf')).read(), glbl)
 webidlconfig = glbl['DOMInterfaces']
 
 # Instantiate the parser.
@@ -50,7 +42,7 @@ def loadEventIDL(parser, includePath, eventname):
 class Configuration:
     def __init__(self, filename):
         config = {}
-        execfile(filename, config)
+        exec(open(filename).read(), config)
         self.simple_events = config.get('simple_events', [])
 
 
@@ -242,7 +234,7 @@ def get_conf(conf_file):
     return conf, inc_dir
 
 
-def gen_files(fd, conf_file, xpidllex, xpidlyacc):
+def gen_files(fd, conf_file):
     deps = set()
     conf, inc_dir = get_conf(conf_file)
     deps.update(print_header_file(fd, conf, inc_dir))

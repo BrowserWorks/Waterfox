@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Nguồn cấp đã đăng kí">
+<!ENTITY learnMore.label             "Tìm hiểu thêm về nguồn cấp dữ liệu">
+
+<!ENTITY feedTitle.label             "Tiêu đề:">
+<!ENTITY feedTitle.accesskey         "T">
+
+<!ENTITY feedLocation.label          "URL nguồn cấp:">
+<!ENTITY feedLocation.accesskey      "F">
+<!ENTITY feedLocation2.placeholder   "Nhập một url nguồn cấp hợp lệ">
+<!ENTITY locationValidate.label      "Xác thực">
+<!ENTITY validateText.label          "Kiểm tra xác nhận và lấy một url hợp lệ.">
+
+<!ENTITY feedFolder.label            "Lưu trữ bài viết trong:">
+<!ENTITY feedFolder.accesskey        "S">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Kiểm tra bài viết mới mỗi ">
+<!ENTITY biffStart.accesskey         "k">
+<!ENTITY biffMinutes.label           "phút">
+<!ENTITY biffMinutes.accesskey       "n">
+<!ENTITY biffDays.label              "ngày">
+<!ENTITY biffDays.accesskey          "d">
+<!ENTITY recommendedUnits.label      "Nhà xuất bản được đề xuất:">
+
+<!ENTITY quickMode.label             "Hiển thị tóm tắt bài viết thay vì tải trang web">
+<!ENTITY quickMode.accesskey         "h">
+
+<!ENTITY autotagEnable.label         "Tự động tạo thẻ từ tên &lt;danh mục&gt; nguồn cấp dữ liệu">
+<!ENTITY autotagEnable.accesskey     "o">
+<!ENTITY autotagUsePrefix.label      "Các thẻ tiền tố với:">
+<!ENTITY autotagUsePrefix.accesskey  "P">
+<!ENTITY autoTagPrefix.placeholder   "Nhập tiền tố thẻ">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Thêm">
+<!ENTITY button.addFeed.accesskey    "T">
+<!ENTITY button.verifyFeed.label     "Xác nhận">
+<!ENTITY button.verifyFeed.accesskey "V">
+<!ENTITY button.updateFeed.label     "Cập nhật">
+<!ENTITY button.updateFeed.accesskey "U">
+<!ENTITY button.removeFeed.label     "Xóa">
+<!ENTITY button.removeFeed.accesskey "a">
+<!ENTITY button.importOPML.label     "Nhập">
+<!ENTITY button.importOPML.accesskey "N">
+<!ENTITY button.exportOPML.label     "Xuất">
+<!ENTITY button.exportOPML.accesskey "X">
+<!ENTITY button.exportOPML.tooltip   "Xuất nguồn cấp dữ liệu với cấu trúc thư mục; nhấn vào ctrl hoặc ctrl enter để xuất nguồn cấp dưới dạng danh sách">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Đóng">

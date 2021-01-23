@@ -39,7 +39,6 @@ mua{
         so{"Somaliya"}
         sv{"Swedia"}
         ta{"Tamul"}
-        th{"th"}
         tr{"Turk"}
         uk{"Ukrainia"}
         ur{"Urdu"}
@@ -48,5 +47,5 @@ mua{
         zh{"zah Syiŋ"}
         zu{"Zulu"}
     }
-    Version{"2.1.47.82"}
+    Version{"37"}
 }

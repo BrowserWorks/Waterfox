@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "Жаңа күнтізбені жасау" >
+<!ENTITY wizard.label             "Жаңа күнтізбені жасау" >
+<!ENTITY wizard.description       "Күнтізбеңіздің орналасуы" >
+
+<!ENTITY initialpage.description    "Сіздің күнтізбеңіз компьютеріңізде сақтала алады, немесе оған қашықтан қатынау немесе онымен достар және жұмыстастармен бөлісу үшін серверде сақтала алады." >
+<!ENTITY initialpage.computer.label  "Менің компьютерімде">
+<!ENTITY initialpage.network.label  "Желіде">
+
+<!ENTITY locationpage.description         "Қашықтағы күнтізбеңізге қатынау үшін керек ақпаратты көрсетіңіз" >
+<!ENTITY locationpage.login.description   "Міндетті емес: пайдаланушы аты және парольді енгізіңіз" >
+<!ENTITY locationpage.username.label      "Пайдаланушы:" >
+<!ENTITY locationpage.password.label      "Пароль:" >
+
+<!ENTITY custompage.shortdescription  "Күнтізбеңізді баптаңыз" >
+<!ENTITY custompage.longdescription   "Сіз бұл күнтізбеге бүркеншік атын беріп, бұл күнтізбеден оқиғаларға түсті бере аласыз." >
+
+<!ENTITY finishpage.shortdescription  "Күнтізбе жасалды" >
+<!ENTITY finishpage.longdescription   "Күнтізбеңіз жасалды." >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "Басқа">
+
+<!ENTITY buttons.create.label "Күнтізбені жасау">
+<!ENTITY buttons.create.accesskey "с">
+
+<!ENTITY buttons.find.label "Күнтізбелерді табу">
+<!ENTITY buttons.find.accesskey "т">
+
+<!ENTITY buttons.back.label "Артқа">
+<!ENTITY buttons.back.accesskey "а">
+
+<!ENTITY buttons.subscribe.label "Жазылу">
+<!ENTITY buttons.subscribe.accesskey "з">
+
+<!ENTITY calendartype.label "Күнтізбе түрі:">
+<!ENTITY location.label "Орналасуы:">
+<!ENTITY location.placeholder "Күнтізбе серверінің URL немесе хост аты">
+
+<!ENTITY network.nocredentials.label "Бұл орналасу тіркелу мәлеметтерін сұрамайды">
+<!ENTITY network.loading.description "Күнтізбелеріңіз өңделгенше күте тұрыңыз.">
+<!ENTITY network.notfound.description "Бұл орналасудан күнтізбелер табылмады. Баптауларды тексеріңіз.">
+<!ENTITY network.authfail.description "Сіз енгізген тіркелу мәліметтері қабылданбады. Баптауларды тексеріңіз.">
+
+<!ENTITY network.subscribe.single.description "Жазылғыңыз келетін күнтізбелерді таңдаңыз.">
+<!ENTITY network.subscribe.multiple.description "Бұл орналасу үшін бірнеше түрлі күнтізбелер қолжетерлік. Күнтізбе түрін таңдап, жазылғыңыз келетін күнтізбелерді белгілеңіз.">

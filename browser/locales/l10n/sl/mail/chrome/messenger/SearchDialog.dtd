@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- for SearchDialog.xul -->
+<!ENTITY searchHeading.label         "Išči po sporočilih v:">
+<!ENTITY searchHeading.accesskey     "č">
+<!ENTITY searchSubfolders.label      "Išči v podmapah">
+<!ENTITY searchSubfolders.accesskey  "d">
+<!ENTITY searchOnServer.label        "Zaženi iskanje na strežniku">
+<!ENTITY searchOnServer.accesskey    "Z">
+<!ENTITY resetButton.label           "Počisti">
+<!ENTITY resetButton.accesskey       "P">
+<!ENTITY openButton.label            "Odpri">
+<!ENTITY openButton.accesskey        "O">
+<!ENTITY deleteButton.label          "Izbriši">
+<!ENTITY deleteButton.accesskey      "b">
+<!ENTITY searchDialogTitle.label     "Išči po sporočilih">
+<!ENTITY results.label               "Rezultati">
+<!ENTITY moveButton.label            "Premakni v">
+<!ENTITY moveButton.accesskey        "r">
+<!ENTITY closeCmd.key                "W">
+<!ENTITY openInFolder.label          "Odpri v mapi">
+<!ENTITY openInFolder.accesskey      "m">
+<!ENTITY saveAsVFButton.label        "Shrani kot iskalno mapo">
+<!ENTITY saveAsVFButton.accesskey    "S">
+
+<!-- for ABSearchDialog.xul -->
+<!ENTITY abSearchHeading.label       "Išči v:">
+<!ENTITY abSearchHeading.accesskey   "š">
+<!ENTITY propertiesButton.label      "Lastnosti">
+<!ENTITY propertiesButton.accesskey  "L">
+<!ENTITY composeButton.label         "Sestavi">
+<!ENTITY composeButton.accesskey     "S">
+<!ENTITY deleteCardButton.label      "Izbriši">
+<!ENTITY deleteCardButton.accesskey  "b">
+<!ENTITY abSearchDialogTitle.label   "Napredno iskanje v imeniku">
+

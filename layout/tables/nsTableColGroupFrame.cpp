@@ -175,9 +175,9 @@ void nsTableColGroupFrame::AppendFrames(ChildListID aListID,
   InsertColsReflow(GetStartColumnIndex() + mColCount, newFrames);
 }
 
-void nsTableColGroupFrame::InsertFrames(ChildListID aListID,
-                                        nsIFrame* aPrevFrame,
-                                        nsFrameList& aFrameList) {
+void nsTableColGroupFrame::InsertFrames(
+    ChildListID aListID, nsIFrame* aPrevFrame,
+    const nsLineList::iterator* aPrevFrameLine, nsFrameList& aFrameList) {
   NS_ASSERTION(aListID == kPrincipalList, "unexpected child list");
   NS_ASSERTION(!aPrevFrame || aPrevFrame->GetParent() == this,
                "inserting after sibling frame with different parent");
@@ -299,12 +299,12 @@ void nsTableColGroupFrame::RemoveFrame(ChildListID aListID,
 
 nsIFrame::LogicalSides nsTableColGroupFrame::GetLogicalSkipSides(
     const ReflowInput* aReflowInput) const {
+  LogicalSides skip(mWritingMode);
   if (MOZ_UNLIKELY(StyleBorder()->mBoxDecorationBreak ==
                    StyleBoxDecorationBreak::Clone)) {
-    return LogicalSides();
+    return skip;
   }
 
-  LogicalSides skip;
   if (nullptr != GetPrevInFlow()) {
     skip |= eLogicalSideBitsBStart;
   }
@@ -325,7 +325,7 @@ void nsTableColGroupFrame::Reflow(nsPresContext* aPresContext,
   NS_ASSERTION(nullptr != mContent, "bad state -- null content for frame");
 
   const nsStyleVisibility* groupVis = StyleVisibility();
-  bool collapseGroup = (NS_STYLE_VISIBILITY_COLLAPSE == groupVis->mVisible);
+  bool collapseGroup = StyleVisibility::Collapse == groupVis->mVisible;
   if (collapseGroup) {
     GetTableFrame()->SetNeedToCollapse(true);
   }
@@ -341,9 +341,10 @@ void nsTableColGroupFrame::Reflow(nsPresContext* aPresContext,
                                LogicalSize(kidFrame->GetWritingMode()));
 
     nsReflowStatus status;
-    ReflowChild(kidFrame, aPresContext, kidSize, kidReflowInput, 0, 0, 0,
-                status);
-    FinishReflowChild(kidFrame, aPresContext, kidSize, nullptr, 0, 0, 0);
+    ReflowChild(kidFrame, aPresContext, kidSize, kidReflowInput, 0, 0,
+                ReflowChildFlags::Default, status);
+    FinishReflowChild(kidFrame, aPresContext, kidSize, &kidReflowInput, 0, 0,
+                      ReflowChildFlags::Default);
   }
 
   aDesiredSize.ClearSize();
@@ -352,7 +353,12 @@ void nsTableColGroupFrame::Reflow(nsPresContext* aPresContext,
 
 void nsTableColGroupFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
                                             const nsDisplayListSet& aLists) {
-  nsTableFrame::DisplayGenericTablePart(aBuilder, this, aLists);
+  // Per https://drafts.csswg.org/css-tables-3/#global-style-overrides:
+  // "All css properties of table-column and table-column-group boxes are
+  // ignored, except when explicitly specified by this specification."
+  // CSS outlines and box-shadows fall into this category, so we skip them
+  // on these boxes.
+  MOZ_ASSERT_UNREACHABLE("Colgroups don't paint themselves");
 }
 
 nsTableColFrame* nsTableColGroupFrame::GetFirstColumn() {
@@ -378,7 +384,7 @@ nsTableColFrame* nsTableColGroupFrame::GetNextColumn(nsIFrame* aChildFrame) {
   return result;
 }
 
-int32_t nsTableColGroupFrame::GetSpan() { return StyleTable()->mSpan; }
+int32_t nsTableColGroupFrame::GetSpan() { return StyleTable()->mXSpan; }
 
 void nsTableColGroupFrame::SetContinuousBCBorderWidth(LogicalSide aForSide,
                                                       BCPixelSize aPixelValue) {

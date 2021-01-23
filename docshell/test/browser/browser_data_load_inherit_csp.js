@@ -8,27 +8,31 @@ const HTML_URI = TEST_PATH + "file_data_load_inherit_csp.html";
 const DATA_URI = "data:text/html;html,<html><body>foo</body></html>";
 
 function setDataHrefOnLink(aBrowser, aDataURI) {
-  return ContentTask.spawn(aBrowser, aDataURI, function(uri) {
+  return SpecialPowers.spawn(aBrowser, [aDataURI], function(uri) {
     let link = content.document.getElementById("testlink");
     link.href = uri;
   });
 }
 
 function verifyCSP(aTestName, aBrowser, aDataURI) {
-  return ContentTask.spawn(aBrowser, { aTestName, aDataURI }, async function({
-    aTestName,
-    aDataURI,
-  }) {
-    let channel = content.docShell.currentDocumentChannel;
-    is(channel.URI.spec, aDataURI, "testing CSP for " + aTestName);
-    let principal = channel.loadInfo.triggeringPrincipal;
-    let cspJSON = principal.cspJSON;
-    let cspOBJ = JSON.parse(cspJSON);
-    let policies = cspOBJ["csp-policies"];
-    is(policies.length, 1, "should be one policy");
-    let policy = policies[0];
-    is(policy["script-src"], "'unsafe-inline'", "script-src directive matches");
-  });
+  return SpecialPowers.spawn(
+    aBrowser,
+    [{ aTestName, aDataURI }],
+    async function({ aTestName, aDataURI }) {
+      let channel = content.docShell.currentDocumentChannel;
+      is(channel.URI.spec, aDataURI, "testing CSP for " + aTestName);
+      let cspJSON = content.document.cspJSON;
+      let cspOBJ = JSON.parse(cspJSON);
+      let policies = cspOBJ["csp-policies"];
+      is(policies.length, 1, "should be one policy");
+      let policy = policies[0];
+      is(
+        policy["script-src"],
+        "'unsafe-inline'",
+        "script-src directive matches"
+      );
+    }
+  );
 }
 
 add_task(async function setup() {
@@ -55,7 +59,7 @@ add_task(async function test_data_csp_inheritance_regular_click() {
 
 add_task(async function test_data_csp_inheritance_ctrl_click() {
   await BrowserTestUtils.withNewTab(HTML_URI, async function(browser) {
-    let loadPromise = BrowserTestUtils.waitForNewTab(gBrowser, DATA_URI);
+    let loadPromise = BrowserTestUtils.waitForNewTab(gBrowser, DATA_URI, true);
     // set the data href + simulate ctrl+click
     await setDataHrefOnLink(gBrowser.selectedBrowser, DATA_URI);
     BrowserTestUtils.synthesizeMouseAtCenter(
@@ -73,7 +77,11 @@ add_task(async function test_data_csp_inheritance_ctrl_click() {
 add_task(
   async function test_data_csp_inheritance_right_click_open_link_in_new_tab() {
     await BrowserTestUtils.withNewTab(HTML_URI, async function(browser) {
-      let loadPromise = BrowserTestUtils.waitForNewTab(gBrowser, DATA_URI);
+      let loadPromise = BrowserTestUtils.waitForNewTab(
+        gBrowser,
+        DATA_URI,
+        true
+      );
       // set the data href + simulate right-click open link in tab
       await setDataHrefOnLink(gBrowser.selectedBrowser, DATA_URI);
       BrowserTestUtils.waitForEvent(document, "popupshown", false, event => {

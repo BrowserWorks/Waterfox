@@ -1,7 +1,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
-/* global window */
 
 // @flow
 
@@ -22,6 +21,7 @@ const blacklist = [
   "SET_FOCUSED_SOURCE_ITEM",
   "NODE_EXPAND",
   "IN_SCOPE_LINES",
+  "SET_PREVIEW",
 ];
 
 function cloneAction(action: any) {
@@ -29,7 +29,7 @@ function cloneAction(action: any) {
   action = { ...action };
 
   // ADD_TAB, ...
-  if (action.source && action.source.text) {
+  if (action.source?.text) {
     const source = { ...action.source, text: "" };
     action.source = source;
   }
@@ -47,7 +47,7 @@ function cloneAction(action: any) {
     action.text = "";
   }
 
-  if (action.value && action.value.text) {
+  if (action.value?.text) {
     const value = { ...action.value, text: "" };
     action.value = value;
   }
@@ -55,17 +55,11 @@ function cloneAction(action: any) {
   return action;
 }
 
-function formatFrame(frame) {
-  const { id, location, displayName } = frame;
-  return { id, location, displayName };
-}
-
 function formatPause(pause) {
   return {
     ...pause,
     pauseInfo: { why: pause.why },
     scopes: [],
-    frames: pause.frames.map(formatFrame),
     loadedObjects: [],
   };
 }
@@ -81,8 +75,16 @@ function serializeAction(action) {
       action = formatPause(action);
     }
 
-    // dump(`> ${action.type}...\n ${JSON.stringify(action)}\n`);
-    return JSON.stringify(action);
+    const serializer = function(key, value) {
+      // Serialize Object/LongString fronts
+      if (value?.getGrip) {
+        return value.getGrip();
+      }
+      return value;
+    };
+
+    // dump(`> ${action.type}...\n ${JSON.stringify(action, serializer)}\n`);
+    return JSON.stringify(action, serializer);
   } catch (e) {
     console.error(e);
     return "";
@@ -97,13 +99,15 @@ export function log({ dispatch, getState }: ThunkArgs) {
   return (next: any) => (action: any) => {
     const asyncMsg = !action.status ? "" : `[${action.status}]`;
 
-    if (isTesting() && prefs.logActions) {
-      // $FlowIgnore
-      dump(
-        `[ACTION] ${action.type} ${asyncMsg} - ${serializeAction(action)}\n`
-      );
-    } else {
-      console.log(action, asyncMsg);
+    if (prefs.logActions) {
+      if (isTesting()) {
+        // $FlowIgnore
+        dump(
+          `[ACTION] ${action.type} ${asyncMsg} - ${serializeAction(action)}\n`
+        );
+      } else {
+        console.log(action, asyncMsg);
+      }
     }
 
     next(action);

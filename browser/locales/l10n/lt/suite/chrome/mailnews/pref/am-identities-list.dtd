@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identitiesListManageDesc.label "Čia galite tvarkyti paskyros tapatumo duomenis. Pirmoji tapatybė bus laikoma numatytąja.">
+<!ENTITY identitiesListAdd.label  "Įtraukti…">
+<!ENTITY identitiesListAdd.accesskey  "r">
+<!ENTITY identitiesListEdit.label "Taisyti…">
+<!ENTITY identitiesListEdit.accesskey "T">
+<!ENTITY identitiesListDefault.label "Skirti numatytąja">
+<!ENTITY identitiesListDefault.accesskey "S">
+<!ENTITY identitiesListDelete.label "Pašalinti">
+<!ENTITY identitiesListDelete.accesskey "š">
+<!ENTITY identitiesListClose.label "Užverti">
+<!ENTITY identitiesListClose.accesskey "U">

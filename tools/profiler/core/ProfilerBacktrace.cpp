@@ -11,10 +11,24 @@
 #include "ProfileJSONWriter.h"
 #include "ThreadInfo.h"
 
-ProfilerBacktrace::ProfilerBacktrace(const char* aName, int aThreadId,
-                                     mozilla::UniquePtr<ProfileBuffer> aBuffer)
-    : mName(strdup(aName)), mThreadId(aThreadId), mBuffer(std::move(aBuffer)) {
+ProfilerBacktrace::ProfilerBacktrace(
+    const char* aName, int aThreadId,
+    UniquePtr<mozilla::ProfileChunkedBuffer> aProfileChunkedBuffer,
+    mozilla::UniquePtr<ProfileBuffer> aProfileBuffer)
+    : mName(strdup(aName)),
+      mThreadId(aThreadId),
+      mProfileChunkedBuffer(std::move(aProfileChunkedBuffer)),
+      mProfileBuffer(std::move(aProfileBuffer)) {
   MOZ_COUNT_CTOR(ProfilerBacktrace);
+  MOZ_ASSERT(!!mProfileChunkedBuffer,
+             "ProfilerBacktrace only takes a non-null "
+             "UniquePtr<ProfileChunkedBuffer>");
+  MOZ_ASSERT(
+      !!mProfileBuffer,
+      "ProfilerBacktrace only takes a non-null UniquePtr<ProfileBuffer>");
+  MOZ_ASSERT(
+      !mProfileChunkedBuffer->IsThreadSafe(),
+      "ProfilerBacktrace only takes a non-thread-safe ProfileChunkedBuffer");
 }
 
 ProfilerBacktrace::~ProfilerBacktrace() { MOZ_COUNT_DTOR(ProfilerBacktrace); }
@@ -23,10 +37,10 @@ void ProfilerBacktrace::StreamJSON(SpliceableJSONWriter& aWriter,
                                    const mozilla::TimeStamp& aProcessStartTime,
                                    UniqueStacks& aUniqueStacks) {
   // Unlike ProfiledThreadData::StreamJSON, we don't need to call
-  // ProfileBuffer::AddJITInfoForRange because mBuffer does not contain any
-  // JitReturnAddr entries. For synchronous samples, JIT frames get expanded
+  // ProfileBuffer::AddJITInfoForRange because mProfileBuffer does not contain
+  // any JitReturnAddr entries. For synchronous samples, JIT frames get expanded
   // at sample time.
-  StreamSamplesAndMarkers(mName.get(), mThreadId, *mBuffer.get(), aWriter,
+  StreamSamplesAndMarkers(mName.get(), mThreadId, *mProfileBuffer, aWriter,
                           NS_LITERAL_CSTRING(""), aProcessStartTime,
                           /* aRegisterTime */ mozilla::TimeStamp(),
                           /* aUnregisterTime */ mozilla::TimeStamp(),

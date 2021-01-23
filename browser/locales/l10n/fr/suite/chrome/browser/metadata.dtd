@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY no-properties.label   "Aucune propriété définie.">
+
+<!ENTITY caption.label         "Propriétés de l’élément">
+<!ENTITY image-sec.label       "Propriétés de l’image">
+<!ENTITY image-url.label       "Adresse :">
+<!ENTITY image-desc.label      "Description :">
+<!ENTITY image-alt.label       "Texte alternatif :">
+<!ENTITY image-width.label     "Largeur :">
+<!ENTITY image-height.label    "Hauteur :">
+<!ENTITY image-filesize.label  "Taille du fichier :">
+<!ENTITY image-filesize.value  "Inconnue">
+<!ENTITY insdel-sec.label      "Propriétés des éléments insérés/supprimés">
+<!ENTITY insdel-cite.label     "Info :">
+<!ENTITY insdel-date.label     "Date :">
+<!ENTITY link-sec.label        "Propriétés du lien">
+<!ENTITY link-url.label        "Adresse :">
+<!ENTITY link-target.label     "S’ouvrira dans :">
+<!ENTITY link-type.label       "Cible :">
+<!ENTITY link-lang.label       "Langue de la cible :">
+<!ENTITY link-rel.label        "Relation :">
+<!ENTITY link-rev.label        "Relation inversée :">
+<!ENTITY misc-sec.label        "Propriétés supplémentaires">
+<!ENTITY misc-lang.label       "Langue :">
+<!ENTITY misc-title.label      "Titre :">
+<!ENTITY misc-tblsummary.label "Résumé du tableau :">
+<!ENTITY quote-sec.label       "Propriétés de la citation">
+<!ENTITY quote-cite.label      "Info :">

@@ -2,8 +2,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import, print_function
-
 import json
 import os
 from distutils.spawn import find_executable
@@ -47,6 +45,7 @@ def setup(python):
 
 
 def run_linter(python, paths, config, **lintargs):
+    log = lintargs['log']
     binary = find_executable(python)
     if not binary:
         # If we're in automation, this is fatal. Otherwise, the warning in the
@@ -62,6 +61,7 @@ def run_linter(python, paths, config, **lintargs):
         fh.flush()
 
         cmd = [binary, os.path.join(here, 'check_compat.py'), fh.name]
+        log.debug("Command: {}".format(' '.join(cmd)))
 
         proc = PyCompatProcess(config, cmd)
         proc.run()

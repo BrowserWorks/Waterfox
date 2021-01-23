@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Восстановление сессии">
+<!ENTITY restorepage.pagetitle      "Вы хотите восстановить свою сессию?">
+<!-- LOCALIZATION NOTE: If "closed unexpectedly" sounds too awkward in the translation,
+                        you may translate "crash" instead (even though it's IT-speak) -->
+<!ENTITY restorepage.issueDesc      "Предыдущая сессия &brandShortName; неожиданно завершила работу. Мы приносим искренние извинения за причинённое неудобство. Вы можете восстановить вкладки и окна, открытые при работе в предыдущей сессии, или начать новую сессию, если они больше не нужны.">
+<!ENTITY restorepage.remedies       "Если &brandShortName; регулярно падает:">
+<!ENTITY restorepage.dueToChrome    "Попробуйте отключить все недавно добавленные расширения из вкладки управления дополнениями.">
+<!ENTITY restorepage.dueToContent   "Попробуйте восстановить сессию без веб-страниц, подозреваемых вами в вызывании проблемы:">
+
+<!ENTITY restorepage.restoreButton  "Восстановить предыдущую сессию">
+<!ENTITY restorepage.restore.access "с">
+<!ENTITY restorepage.cancelButton   "Начать новую сессию">
+<!ENTITY restorepage.cancel.access  "ч">
+
+<!ENTITY restorepage.restoreHeader  "Восстановить">
+<!ENTITY restorepage.listHeader     "Окна и вкладки">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Окно &#037;S">

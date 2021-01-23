@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Color">
+<!ENTITY lastPickedColor.label "Darrer color triat">
+<!ENTITY lastPickedColor.accessKey "l">
+<!ENTITY chooseColor1.label "Trieu un color:">
+<!ENTITY chooseColor2.label "Introduïu una cadena HTML de color">
+<!ENTITY chooseColor2.accessKey "H">
+<!ENTITY setColorExample.label "(p. ex.: «#0000ff» o «blue»):">
+<!ENTITY default.label "Per defecte">
+<!ENTITY default.accessKey "d">
+<!ENTITY palette.label "Paleta:">
+<!ENTITY standardPalette.label "Estàndard">
+<!ENTITY webPalette.label "Tots els colors web">
+<!ENTITY background.label "Fons per a:">
+<!ENTITY background.accessKey "o">
+<!ENTITY table.label "Taula">
+<!ENTITY table.accessKey "T">
+<!ENTITY cell.label "Cel·les">
+<!ENTITY cell.accessKey "C">

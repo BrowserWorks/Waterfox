@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -55,7 +54,7 @@ const storeMap = {
       {
         name: "sc1",
         value: "foobar",
-        path: "/browser/devtools/server/tests/browser/",
+        path: "/browser/devtools/server/tests/browser",
         host: "sectest1.example.org",
         expires: 0,
         hostOnly: true,
@@ -85,7 +84,7 @@ const storeMap = {
       {
         name: "sc1",
         value: "foobar",
-        path: "/browser/devtools/server/tests/browser/",
+        path: "/browser/devtools/server/tests/browser",
         host: "sectest1.example.org",
         expires: 0,
         hostOnly: true,
@@ -693,6 +692,6 @@ add_task(async function() {
   forceCollections();
   await target.destroy();
   forceCollections();
-  DebuggerServer.destroy();
+  DevToolsServer.destroy();
   forceCollections();
 });

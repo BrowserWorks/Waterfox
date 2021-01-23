@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identitiesListManageDesc.label "Identiteiten voor deze account beheren. Standaard wordt de eerste identiteit gebruikt.">
+<!ENTITY identitiesListAdd.label "Toevoegen…">
+<!ENTITY identitiesListAdd.accesskey "T">
+<!ENTITY identitiesListEdit.label "Bewerken…">
+<!ENTITY identitiesListEdit.accesskey "B">
+<!ENTITY identitiesListDefault.label "Als standaard instellen">
+<!ENTITY identitiesListDefault.accesskey "d">
+<!ENTITY identitiesListDelete.label "Verwijderen">
+<!ENTITY identitiesListDelete.accesskey "V">
+<!ENTITY identitiesListClose.label "Sluiten">
+<!ENTITY identitiesListClose.accesskey "S">

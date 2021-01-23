@@ -265,7 +265,7 @@ class TransactionsHistoryArray extends Array {
       throw new Error("aProxifiedTransaction is not a proxified transaction");
     }
 
-    if (this.length == 0 || forceNewEntry) {
+    if (!this.length || forceNewEntry) {
       this.clearRedoEntries();
       this.unshift([proxifiedTransaction]);
     } else {
@@ -296,7 +296,7 @@ class TransactionsHistoryArray extends Array {
    * Clear all entries.
    */
   clearAllEntries() {
-    if (this.length > 0) {
+    if (this.length) {
       this.splice(0);
       this._undoPosition = 0;
     }
@@ -315,7 +315,7 @@ var PlacesTransactions = {
    */
   batch(transactionsToBatch) {
     if (Array.isArray(transactionsToBatch)) {
-      if (transactionsToBatch.length == 0) {
+      if (!transactionsToBatch.length) {
         throw new Error("Must pass a non-empty array");
       }
 
@@ -725,7 +725,7 @@ function DefineTransaction(requiredProps = [], optionalProps = []) {
       return new ctor(input);
     }
 
-    if (requiredProps.length > 0 || optionalProps.length > 0) {
+    if (requiredProps.length || optionalProps.length) {
       // Bind the input properties to the arguments of execute.
       input = DefineTransaction.verifyInput(
         input,
@@ -858,7 +858,7 @@ DefineTransaction.defineArrayInputProp = function(name, basePropertyName) {
                           ${basePropertyName} as  input properties`);
         }
         let array = this.validateValue(input[name]);
-        if (required && array.length == 0) {
+        if (required && !array.length) {
           throw new Error(`Empty array passed for required input property:
                            ${name}`);
         }
@@ -896,7 +896,7 @@ DefineTransaction.getInputObjectForSingleValue = function(
   // * a single optional property with no required properties.
   if (
     requiredProps.length > 1 ||
-    (requiredProps.length == 0 && optionalProps.length > 1)
+    (!requiredProps.length && optionalProps.length > 1)
   ) {
     throw new Error("Transaction input isn't an object");
   }
@@ -915,16 +915,15 @@ DefineTransaction.verifyInput = function(
   requiredProps = [],
   optionalProps = []
 ) {
-  if (requiredProps.length == 0 && optionalProps.length == 0) {
+  if (!requiredProps.length && !optionalProps.length) {
     return {};
   }
 
   // If there's just a single required/optional property, we allow passing it
   // as is, so, for example, one could do PlacesTransactions.Remove(myGuid)
   // rather than PlacesTransactions.Remove({ guid: myGuid}).
-  // This shortcut isn't supported for "complex" properties - e.g. one cannot
-  // pass an annotation object this way (note there is no use case for this at
-  // the moment anyway).
+  // This shortcut isn't supported for "complex" properties, like objects (note
+  // there is no use case for this at the moment anyway).
   let isSinglePropertyInput =
     isPrimitive(input) ||
     Array.isArray(input) ||
@@ -1093,7 +1092,7 @@ PT.NewBookmark.prototype = Object.seal({
   async execute({ parentGuid, url, index, title, tags }) {
     let info = { parentGuid, index, url, title };
     // Filter tags to exclude already existing ones.
-    if (tags.length > 0) {
+    if (tags.length) {
       let currentTags = PlacesUtils.tagging.getTagsForURI(
         Services.io.newURI(url.href)
       );
@@ -1102,7 +1101,7 @@ PT.NewBookmark.prototype = Object.seal({
 
     async function createItem() {
       info = await PlacesUtils.bookmarks.insert(info);
-      if (tags.length > 0) {
+      if (tags.length) {
         PlacesUtils.tagging.tagURI(Services.io.newURI(url.href), tags);
       }
     }
@@ -1110,10 +1109,9 @@ PT.NewBookmark.prototype = Object.seal({
     await createItem();
 
     this.undo = async function() {
-      // Pick up the removed info so we have the accurate last-modified value,
-      // which could be affected by any annotation we set in createItem.
+      // Pick up the removed info so we have the accurate last-modified value.
       await PlacesUtils.bookmarks.remove(info);
-      if (tags.length > 0) {
+      if (tags.length) {
         PlacesUtils.tagging.untagURI(Services.io.newURI(url.href), tags);
       }
     };
@@ -1153,7 +1151,7 @@ PT.NewFolder.prototype = Object.seal({
       guid: parentGuid,
     };
 
-    if (children && children.length > 0) {
+    if (children && children.length) {
       // Ensure to specify a guid for each child to be restored on redo.
       info.children[0].children = children.map(c => {
         c.guid = PlacesUtils.history.makeGuid();
@@ -1304,7 +1302,7 @@ PT.EditUrl.prototype = Object.seal({
     async function updateItem() {
       updatedInfo = await PlacesUtils.bookmarks.update(updatedInfo);
       // Move tags from the original URI to the new URI.
-      if (originalTags.length > 0) {
+      if (originalTags.length) {
         // Untag the original URI only if this was the only bookmark.
         if (!(await PlacesUtils.bookmarks.fetch({ url: originalInfo.url }))) {
           PlacesUtils.tagging.untagURI(originalURI, originalTags);
@@ -1313,7 +1311,7 @@ PT.EditUrl.prototype = Object.seal({
         newURIAdditionalTags = originalTags.filter(
           t => !currentNewURITags.includes(t)
         );
-        if (newURIAdditionalTags && newURIAdditionalTags.length > 0) {
+        if (newURIAdditionalTags && newURIAdditionalTags.length) {
           PlacesUtils.tagging.tagURI(uri, newURIAdditionalTags);
         }
       }
@@ -1323,11 +1321,11 @@ PT.EditUrl.prototype = Object.seal({
     this.undo = async function() {
       await PlacesUtils.bookmarks.update(originalInfo);
       // Move tags from new URI to original URI.
-      if (originalTags.length > 0) {
+      if (originalTags.length) {
         // Only untag the new URI if this is the only bookmark.
         if (
           newURIAdditionalTags &&
-          newURIAdditionalTags.length > 0 &&
+          !!newURIAdditionalTags.length &&
           !(await PlacesUtils.bookmarks.fetch({ url }))
         ) {
           PlacesUtils.tagging.untagURI(uri, newURIAdditionalTags);
@@ -1418,7 +1416,7 @@ PT.SortByName.prototype = {
       let node = root.getChild(i);
       oldOrderGuids.push(node.bookmarkGuid);
       if (PlacesUtils.nodeIsSeparator(node)) {
-        if (preSepNodes.length > 0) {
+        if (preSepNodes.length) {
           preSepNodes.sort(sortingMethod);
           newOrderGuids.push(...preSepNodes.map(n => n.bookmarkGuid));
           preSepNodes = [];
@@ -1429,7 +1427,7 @@ PT.SortByName.prototype = {
       }
     }
     root.containerOpen = false;
-    if (preSepNodes.length > 0) {
+    if (preSepNodes.length) {
       preSepNodes.sort(sortingMethod);
       newOrderGuids.push(...preSepNodes.map(n => n.bookmarkGuid));
     }
@@ -1460,12 +1458,10 @@ PT.Remove.prototype = {
         // we do need it for the possibility of undo().
         removedItems.push(await PlacesUtils.promiseBookmarksTree(guid));
       } catch (ex) {
-        throw new Error(
-          "Failed to get info for the specified item (guid: " +
-            guid +
-            "): " +
-            ex
-        );
+        if (!ex.becauseInvalidURL) {
+          throw new Error(`Failed to get info for the guid: ${guid}: ${ex}`);
+        }
+        removedItems.push({ guid });
       }
     }
 
@@ -1475,9 +1471,7 @@ PT.Remove.prototype = {
         // info items, promiseBookmarksTree returns dateAdded and lastModified
         // as PRTime rather than date types.
         await PlacesUtils.bookmarks.remove(
-          removedItems.map(info => {
-            return { guid: info.guid };
-          })
+          removedItems.map(info => ({ guid: info.guid }))
         );
       }
     };
@@ -1485,7 +1479,11 @@ PT.Remove.prototype = {
 
     this.undo = async function() {
       for (let info of removedItems) {
-        await createItemsFromBookmarksTree(info, true);
+        try {
+          await createItemsFromBookmarksTree(info, true);
+        } catch (ex) {
+          Cu.reportError(`Unable to undo removal of ${info.guid}`);
+        }
       }
     };
     this.redo = removeThem;
@@ -1560,21 +1558,21 @@ PT.Untag.prototype = {
       let uri = Services.io.newURI(url.href);
       let tagsToRemove;
       let tagsSet = PlacesUtils.tagging.getTagsForURI(uri);
-      if (tags.length > 0) {
+      if (tags.length) {
         tagsToRemove = tags.filter(t => tagsSet.includes(t));
       } else {
         tagsToRemove = tagsSet;
       }
-      if (tagsToRemove.length > 0) {
+      if (tagsToRemove.length) {
         PlacesUtils.tagging.untagURI(uri, tagsToRemove);
       }
       onUndo.unshift(() => {
-        if (tagsToRemove.length > 0) {
+        if (tagsToRemove.length) {
           PlacesUtils.tagging.tagURI(uri, tagsToRemove);
         }
       });
       onRedo.push(() => {
-        if (tagsToRemove.length > 0) {
+        if (tagsToRemove.length) {
           PlacesUtils.tagging.untagURI(uri, tagsToRemove);
         }
       });

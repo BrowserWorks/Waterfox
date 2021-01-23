@@ -9,9 +9,6 @@ add_task(async function() {
   await SpecialPowers.flushPrefEnv();
   await SpecialPowers.pushPrefEnv({
     set: [
-      ["browser.contentblocking.allowlist.annotations.enabled", true],
-      ["browser.contentblocking.allowlist.storage.enabled", true],
-      [ContentBlocking.prefIntroCount, ContentBlocking.MAX_INTROS],
       ["dom.storage_access.auto_grants", true],
       ["dom.storage_access.auto_grants.delayed", false],
       ["dom.storage_access.enabled", true],
@@ -41,7 +38,7 @@ add_task(async function() {
 
   // Let's create an iframe and run the test there.
   let page = TEST_3RD_PARTY_DOMAIN + TEST_PATH + "workerIframe.html";
-  await ContentTask.spawn(browser, page, async function(page) {
+  await SpecialPowers.spawn(browser, [page], async function(page) {
     await new content.Promise(resolve => {
       let ifr = content.document.createElement("iframe");
       ifr.id = "test";
@@ -72,6 +69,8 @@ add_task(async function() {
 
   info("Removing the tab");
   BrowserTestUtils.removeTab(tab);
+
+  UrlClassifierTestUtils.cleanupTestTrackers();
 });
 
 add_task(async function() {

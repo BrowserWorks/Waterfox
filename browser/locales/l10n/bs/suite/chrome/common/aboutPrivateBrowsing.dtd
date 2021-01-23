@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: where ".private" and ".normal" variants exist,
+   - the former is shown in a private browsing window and the latter in
+   - a regular (non-private) browsing window. -->
+
+<!ENTITY privatebrowsingpage.title.private       "Vi ste u prozoru privatnog pretraživanja">
+<!ENTITY privatebrowsingpage.title.normal        "Želite li pokrenuti privatno pretraživanje?">
+
+<!ENTITY privatebrowsingpage.status.private      "&brandShortName; neće pamtiti nikakvu historiju za ovaj prozor.">
+<!ENTITY privatebrowsingpage.status.normal       "Trenutno niste u privatnom prozoru.">
+
+<!ENTITY privatebrowsingpage.common.description  "U prozoru privatnog pretraživanja, &brandShortName; neće čuvati nikakvu historiju pretraživača, historiju pretrage, historiju preuzimanja, historiju web forme, kolačiće ili privremene internet datoteke.  Međutim, napravljene zabilješke i preuzete datoteke će se čuvati.">
+<!ENTITY privatebrowsingpage.track.warn          "Iako ovaj računar neće evidentirati historiju pretraživanja, vaši zaposlenici ili pružaoci internet usluga će možda i dalje moći pratiti stranice koje posjećujete.">
+<!ENTITY privatebrowsingpage.learnmore.label     "Saznajte više">
+<!ENTITY privatebrowsingpage.learnmore.accesskey "S">
+
+<!ENTITY privatebrowsingpage.close.info          "Po završetku, zatvorite prozor da obustavite privatno pretraživanje.">
+<!ENTITY privatebrowsingpage.close.label         "Zatvori ovaj prozor sad">
+<!ENTITY privatebrowsingpage.close.accesskey     "Z">
+
+<!ENTITY privatebrowsingpage.start.info          "Da započnete privatno pretraživanje, kliknite dugme ispod ili odaberite datoteku ▶ Novi ▶ Privatni prozor iz menija.">
+<!ENTITY privatebrowsingpage.private.label       "Otvorite novi privatni prozor">
+<!ENTITY privatebrowsingpage.private.accesskey   "O">

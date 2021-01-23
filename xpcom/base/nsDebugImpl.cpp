@@ -8,6 +8,7 @@
 #include "base/process_util.h"
 
 #include "mozilla/Atomics.h"
+#include "mozilla/IntentionalCrash.h"
 #include "mozilla/Printf.h"
 
 #include "MainThreadUtils.h"
@@ -131,6 +132,12 @@ nsDebugImpl::Break(const char* aFile, int32_t aLine) {
 NS_IMETHODIMP
 nsDebugImpl::Abort(const char* aFile, int32_t aLine) {
   NS_DebugBreak(NS_DEBUG_ABORT, nullptr, nullptr, aFile, aLine);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsDebugImpl::CrashWithOOM() {
+  NS_ABORT_OOM(-1);
   return NS_OK;
 }
 
@@ -291,9 +298,6 @@ bool FixedBuffer::append(const char* aBuf, size_t aLen) {
 EXPORT_XPCOM_API(void)
 NS_DebugBreak(uint32_t aSeverity, const char* aStr, const char* aExpr,
               const char* aFile, int32_t aLine) {
-  // Allow messages to be printed during GC if we are recording or replaying.
-  recordreplay::AutoEnsurePassThroughThreadEvents pt;
-
   FixedBuffer nonPIDBuf;
   FixedBuffer buf;
   const char* sevString = "WARNING";
@@ -423,7 +427,7 @@ NS_DebugBreak(uint32_t aSeverity, const char* aStr, const char* aExpr,
     case NS_ASSERT_STACK_AND_ABORT:
       nsTraceRefcnt::WalkTheStack(stderr);
       // Fall through to abort
-      MOZ_FALLTHROUGH;
+      [[fallthrough]];
 
     case NS_ASSERT_ABORT:
       Abort(buf.buffer);
@@ -436,7 +440,10 @@ NS_DebugBreak(uint32_t aSeverity, const char* aStr, const char* aExpr,
   }
 }
 
-static void Abort(const char* aMsg) { mozalloc_abort(aMsg); }
+static void Abort(const char* aMsg) {
+  NoteIntentionalCrash(XRE_GetProcessTypeString());
+  mozalloc_abort(aMsg);
+}
 
 static void RealBreak() {
 #if defined(_WIN32)

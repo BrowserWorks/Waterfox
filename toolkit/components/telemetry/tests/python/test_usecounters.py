@@ -27,7 +27,7 @@ class TestParser(unittest.TestCase):
             }
         }
         histograms = load_histogram(SAMPLE_HISTOGRAM)
-        parse_histograms.load_whitelist()
+        parse_histograms.load_allowlist()
 
         hist = parse_histograms.Histogram('USE_COUNTER2_TEST_HISTOGRAM',
                                           histograms['USE_COUNTER2_TEST_HISTOGRAM'],
@@ -35,6 +35,7 @@ class TestParser(unittest.TestCase):
 
         ParserError.exit_func()
         self.assertEquals(hist.dataset(), "nsITelemetry::DATASET_ALL_CHANNELS")
+        self.assertEquals(hist.products(), ["firefox", "fennec", "geckoview"])
 
     def test_usecounter_histogram(self):
         SAMPLE_HISTOGRAM = {
@@ -45,7 +46,7 @@ class TestParser(unittest.TestCase):
             }
         }
         histograms = load_histogram(SAMPLE_HISTOGRAM)
-        parse_histograms.load_whitelist()
+        parse_histograms.load_allowlist()
 
         hist = parse_histograms.Histogram('USE_COUNTER2_TEST_HISTOGRAM',
                                           histograms['USE_COUNTER2_TEST_HISTOGRAM'],
@@ -55,6 +56,7 @@ class TestParser(unittest.TestCase):
         self.assertEquals(hist.expiration(), "never")
         self.assertEquals(hist.kind(), "boolean")
         self.assertEquals(hist.description(), "Whether a foo used bar")
+        self.assertEquals(hist.products(), ["firefox", "fennec", "geckoview"])
 
 
 if __name__ == '__main__':

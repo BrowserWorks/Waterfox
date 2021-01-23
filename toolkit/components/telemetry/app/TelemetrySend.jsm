@@ -70,7 +70,7 @@ const IS_UNIFIED_TELEMETRY = Services.prefs.getBoolPref(
 
 const MS_IN_A_MINUTE = 60 * 1000;
 
-const PING_TYPE_OPTOUT = "optout";
+const PING_TYPE_DELETION_REQUEST = "deletion-request";
 
 // We try to spread "midnight" pings out over this interval.
 const MIDNIGHT_FUZZING_INTERVAL_MS = 60 * MS_IN_A_MINUTE;
@@ -133,12 +133,12 @@ function isV4PingFormat(aPing) {
 }
 
 /**
- * Check if the provided ping is an optout ping.
+ * Check if the provided ping is a deletion-request ping.
  * @param {Object} aPing The ping to check.
- * @return {Boolean} True if the ping is an optout ping, false otherwise.
+ * @return {Boolean} True if the ping is a deletion-request ping, false otherwise.
  */
-function isOptoutPing(aPing) {
-  return isV4PingFormat(aPing) && aPing.type == PING_TYPE_OPTOUT;
+function isDeletionRequestPing(aPing) {
+  return isV4PingFormat(aPing) && aPing.type == PING_TYPE_DELETION_REQUEST;
 }
 
 /**
@@ -222,6 +222,15 @@ var TelemetrySend = {
   },
 
   /**
+   * Flushes all pings to pingsender that were both
+   *   1. submitted after profile-change-net-teardown, and
+   *   2. wanting to be sent using pingsender.
+   */
+  flushPingSenderBatch() {
+    TelemetrySendImpl.flushPingSenderBatch();
+  },
+
+  /**
    * Submit a ping for sending. This will:
    * - send the ping right away if possible or
    * - save the ping to disk and send it at the next opportunity
@@ -239,7 +248,7 @@ var TelemetrySend = {
   /**
    * Check if sending is disabled. If Telemetry is not allowed to upload,
    * pings are not sent to the server.
-   * If trying to send an optout ping, don't block it.
+   * If trying to send a deletion-request ping, don't block it.
    *
    * @param {Object} [ping=null] A ping to be checked.
    * @return {Boolean} True if pings can be send to the servers, false otherwise.
@@ -312,20 +321,22 @@ var TelemetrySend = {
    * This method is currently exposed here only for testing purposes as it's
    * only used internally.
    *
-   * @param {String} aUrl The telemetry server URL
-   * @param {String} aPingFilePath The path to the file holding the ping
-   *        contents, if if sent successfully the pingsender will delete it.
+   * @param {Array}<Object> pings An array of objects holding url / path pairs
+   *        for each ping to be sent. The URL represent the telemetry server the
+   *        ping will be sent to and the path points to the ping data. The ping
+   *        data files will be deleted if the pings have been submitted
+   *        successfully.
    * @param {callback} observer A function called with parameters
-            (subject, topic, data) and a topic of "process-finished" or
-            "process-failed" after pingsender completion.
+   *        (subject, topic, data) and a topic of "process-finished" or
+   *        "process-failed" after pingsender completion.
    *
    * @throws NS_ERROR_FAILURE if we couldn't find or run the pingsender
    *         executable.
    * @throws NS_ERROR_NOT_IMPLEMENTED on Android as the pingsender is not
    *         available.
    */
-  testRunPingSender(url, pingPath, observer) {
-    return TelemetrySendImpl.runPingSender(url, pingPath, observer);
+  testRunPingSender(pings, observer) {
+    return TelemetrySendImpl.runPingSender(pings, observer);
   },
 };
 
@@ -486,7 +497,7 @@ var SendScheduler = {
       }
 
       // Get a list of pending pings, sorted by last modified, descending.
-      // Filter out all the pings we can't send now. This addresses scenarios like "optout" pings
+      // Filter out all the pings we can't send now. This addresses scenarios like "deletion-request" pings
       // which can be sent even when upload is disabled.
       let pending = TelemetryStorage.getPendingPingList();
       let current = TelemetrySendImpl.getUnpersistedPings();
@@ -499,9 +510,9 @@ var SendScheduler = {
       // Note that the two lists contain different kind of data. |pending| only holds ping
       // info, while |current| holds actual ping data.
       if (!TelemetrySendImpl.sendingEnabled()) {
-        // If sending is disabled, only handle an unpersisted optout ping
+        // If sending is disabled, only handle deletion-request pings
         pending = [];
-        current = current.filter(p => isOptoutPing(p));
+        current = current.filter(p => isDeletionRequestPing(p));
       }
       this._log.trace(
         "_doSendTask - can send - pending: " +
@@ -511,7 +522,7 @@ var SendScheduler = {
       );
 
       // Bail out if there is nothing to send.
-      if (pending.length == 0 && current.length == 0) {
+      if (!pending.length && !current.length) {
         this._log.trace("_doSendTask - no pending pings, bailing out");
         this._sendTaskState = "bail out - no pings to send";
         return;
@@ -553,7 +564,10 @@ var SendScheduler = {
       this._sendsFailed = false;
       const sendStartTime = Policy.now();
       this._sendTaskState = "wait on ping sends";
-      await TelemetrySendImpl.sendPings(current, sending.map(p => p.id));
+      await TelemetrySendImpl.sendPings(
+        current,
+        sending.map(p => p.id)
+      );
       if (this._shutdown || TelemetrySend.pendingPingCount == 0) {
         this._log.trace(
           "_doSendTask - bailing out after sending, shutdown: " +
@@ -673,6 +687,8 @@ var TelemetrySendImpl = {
   _isOSShutdown: false,
   // Has the network shut down, making it too late to send pings?
   _tooLateToSend: false,
+  // Array of {url, path} awaiting flushPingSenderBatch().
+  _pingSenderBatch: [],
 
   OBSERVER_TOPICS: [
     TOPIC_IDLE_DAILY,
@@ -808,7 +824,7 @@ var TelemetrySendImpl = {
     // Scan the pending pings - that gives us a list sorted by last modified, descending.
     let infos = await TelemetryStorage.loadPendingPingList();
     this._log.info("_checkPendingPings - pending ping count: " + infos.length);
-    if (infos.length == 0) {
+    if (!infos.length) {
       this._log.trace("_checkPendingPings - no pending pings");
       return;
     }
@@ -859,6 +875,16 @@ var TelemetrySendImpl = {
 
     // Save any outstanding pending pings to disk.
     await this._persistCurrentPings();
+  },
+
+  flushPingSenderBatch() {
+    if (this._pingSenderBatch.length === 0) {
+      return;
+    }
+    this._log.trace(
+      `flushPingSenderBatch - Sending ${this._pingSenderBatch.length} pings.`
+    );
+    this.runPingSender(this._pingSenderBatch);
   },
 
   reset() {
@@ -951,7 +977,13 @@ var TelemetrySendImpl = {
     );
     try {
       const pingPath = OS.Path.join(TelemetryStorage.pingDirectoryPath, pingId);
-      this.runPingSender(submissionURL, pingPath);
+      if (this._tooLateToSend) {
+        // We're in shutdown. Batch pings destined for pingsender.
+        this._log.trace("_sendWithPingSender - too late to send. Batching.");
+        this._pingSenderBatch.push({ url: submissionURL, path: pingPath });
+        return;
+      }
+      this.runPingSender([{ url: submissionURL, path: pingPath }]);
     } catch (e) {
       this._log.error("_sendWithPingSender - failed to submit ping", e);
     }
@@ -1083,19 +1115,11 @@ var TelemetrySendImpl = {
         try {
           await this._doPing(ping, ping.id, false);
         } catch (ex) {
-          if (isOptoutPing(ping)) {
-            // Optout pings should only be tried once and then discarded.
-            this._log.info(
-              "sendPings - optout ping " + ping.id + " not sent, discarding",
-              ex
-            );
-          } else {
-            this._log.info(
-              "sendPings - ping " + ping.id + " not sent, saving to disk",
-              ex
-            );
-            await savePing(ping);
-          }
+          this._log.info(
+            "sendPings - ping " + ping.id + " not sent, saving to disk",
+            ex
+          );
+          await savePing(ping);
         } finally {
           this._currentPings.delete(ping.id);
         }
@@ -1105,7 +1129,7 @@ var TelemetrySendImpl = {
       pingSends.push(p);
     }
 
-    if (persistedPingIds.length > 0) {
+    if (persistedPingIds.length) {
       pingSends.push(
         this._sendPersistedPings(persistedPingIds).catch(ex => {
           this._log.info("sendPings - persisted pings not sent", ex);
@@ -1458,7 +1482,7 @@ var TelemetrySendImpl = {
   /**
    * Check if sending is disabled. If Telemetry is not allowed to upload,
    * pings are not sent to the server.
-   * If trying to send an optout ping, don't block it.
+   * If trying to send a "deletion-request" ping, don't block it.
    * If unified telemetry is off, don't send pings if Telemetry is disabled.
    *
    * @param {Object} [ping=null] A ping to be checked.
@@ -1477,8 +1501,8 @@ var TelemetrySendImpl = {
     // With unified Telemetry, the FHR upload setting controls whether we can send pings.
     // The Telemetry pref enables sending extended data sets instead.
     if (IS_UNIFIED_TELEMETRY) {
-      // Optout pings are sent once even if the upload is disabled.
-      if (ping && isOptoutPing(ping)) {
+      // "deletion-request" pings are sent once even if the upload is disabled.
+      if (ping && isDeletionRequestPing(ping)) {
         return true;
       }
       return Services.prefs.getBoolPref(
@@ -1523,11 +1547,8 @@ var TelemetrySendImpl = {
   async _persistCurrentPings() {
     for (let [id, ping] of this._currentPings) {
       try {
-        // Never save an optout ping to disk
-        if (!isOptoutPing(ping)) {
-          await savePing(ping);
-          this._log.trace("_persistCurrentPings - saved ping " + id);
-        }
+        await savePing(ping);
+        this._log.trace("_persistCurrentPings - saved ping " + id);
       } catch (ex) {
         this._log.error("_persistCurrentPings - failed to save ping " + id, ex);
       } finally {
@@ -1556,9 +1577,9 @@ var TelemetrySendImpl = {
     };
   },
 
-  runPingSender(url, pingPath, observer) {
+  runPingSender(pings, observer) {
     if (AppConstants.platform === "android") {
-      throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+      throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
     }
 
     const exeName =
@@ -1567,12 +1588,13 @@ var TelemetrySendImpl = {
     let exe = Services.dirsvc.get("GreBinD", Ci.nsIFile);
     exe.append(exeName);
 
+    let params = pings.flatMap(ping => [ping.url, ping.path]);
     let process = Cc["@mozilla.org/process/util;1"].createInstance(
       Ci.nsIProcess
     );
     process.init(exe);
     process.startHidden = true;
     process.noShell = true;
-    process.runAsync([url, pingPath], 2, observer);
+    process.runAsync(params, params.length, observer);
   },
 };

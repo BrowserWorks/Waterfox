@@ -7,15 +7,7 @@
 
 // FIXME bug 1524374 removing breakpoints in this test can cause uncaught
 // rejections and make bug 1512742 permafail.
-const { PromiseTestUtils } = ChromeUtils.import(
-  "resource://testing-common/PromiseTestUtils.jsm"
-);
 PromiseTestUtils.whitelistRejectionsGlobally(/NS_ERROR_NOT_INITIALIZED/);
-
-// Utilities for interacting with the editor
-function clickGutter(dbg, line) {
-  clickElement(dbg, "gutter", line);
-}
 
 add_task(async function() {
   const dbg = await initDebugger("doc-scripts.html", "simple1.js");
@@ -36,3 +28,42 @@ add_task(async function() {
   is(dbg.selectors.getBreakpointCount(), 0, "No breakpoints exist");
   await assertEditorBreakpoint(dbg, 4, false);
 });
+
+add_task(async function() {
+  info("Ensure clicking on gutter to add breakpoint will un-blackbox source");
+  const dbg = await initDebugger("doc-sourcemaps3.html");
+  dbg.actions.toggleMapScopes();
+  const {
+    selectors: { getBreakpoint, getBreakpointCount },
+    getState
+  } = dbg;
+  await waitForSources(dbg, "bundle.js", "sorted.js", "test.js");
+
+  info("blackbox the source");
+  const sortedSrc = findSource(dbg, "sorted.js");
+  await selectSource(dbg, sortedSrc);
+  await clickElement(dbg, "blackbox");
+  await waitForDispatch(dbg, "BLACKBOX");
+
+  // invoke test
+  invokeInTab("test");
+  // should not pause
+  is(isPaused(dbg), false);
+
+  info("ensure gutter breakpoint gets set with click");
+  clickGutter(dbg, 4);
+  await waitForDispatch(dbg, "SET_BREAKPOINT");
+  is(dbg.selectors.getBreakpointCount(), 1, "One breakpoint exists");
+  await assertEditorBreakpoint(dbg, 4, true);
+
+  // click on test
+  invokeInTab("test");
+  // verify pause at breakpoint.
+  await waitForPaused(dbg);
+  ok(true, "source is un-blackboxed");
+});
+
+// Utilities for interacting with the editor
+function clickGutter(dbg, line) {
+  clickElement(dbg, "gutter", line);
+}

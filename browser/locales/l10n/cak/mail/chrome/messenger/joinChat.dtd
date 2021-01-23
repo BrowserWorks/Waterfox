@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY joinChatWindow.title           "Tatunu' awi' pa chat">
+<!ENTITY name.label                     "Samajay">
+<!ENTITY optional.label                 "(cha'el)">
+<!ENTITY account.label                  "Rub'i' taqoya'l">
+<!ENTITY autojoin.label                 "Tatunu' awi' pa re Chat Jay">
+<!ENTITY autojoin.accesskey             "T">

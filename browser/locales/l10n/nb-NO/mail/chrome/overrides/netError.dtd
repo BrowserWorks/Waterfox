@@ -1,0 +1,114 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Problem ved lasting av side">
+<!ENTITY retry.label "Prøv igjen">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Klarte ikke koble til">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Tilgang til denne adressen er begrenset">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Serveren ikke funnet">
+<!ENTITY dnsNotFound.longDesc "<ul> <li>Kontroller om det er skrivefeil i adressen, for eksempel <strong>ww</strong>.eksempel.no istedenfor <strong>www</strong>.eksempel.no</li> <li>Hvis du ikke klarer å laste noen nettsider, kontroller at datamaskinens nettverksforbindelse er i orden.</li> <li>Hvis datamaskinen din eller nettverket er beskyttet av en brannmur eller proxy, sjekk at &brandShortName; har tillatelse til å bruke Internett.</li> </ul>">
+
+<!ENTITY fileNotFound.title "Fil ikke funnet">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Kontroller filnavnet etter forskjeller i store/små bokstaver eller andre skrivefeil.</li> <li>Sjekk om filen er flyttet, har endret navn eller er slettet.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "Tilgang til filen ble nektet">
+<!ENTITY fileAccessDenied.longDesc "<ul><li>Den kan ha blitt fjernet, flyttet eller filrettighetene forhindrer tilgang.</li></ul>">
+
+<!ENTITY generic.title "Oops.">
+<!ENTITY generic.longDesc "<p>&brandShortName; klarte ikke å laste denne siden av ukjent årsak.</p>">
+
+<!ENTITY malformedURI.title "Adressen er ugyldig">
+<!ENTITY malformedURI.longDesc "<ul> <li>Nettsideadresser skrives vanligvis på formen <strong>http://www.eksempel.no/</strong></li> <li>Kontroller at du bruker fremover-skråstrek (f.eks. <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "Tilkoblingen ble avbrutt">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Dokumentet er utgått på dato">
+<!ENTITY notCached.longDesc "<p>Det forespurte dokumentet er ikke tilgjengelig i hurtiglageret.</p><ul><li>Av sikkerhetshensyn vil ikke &brandShortName; automatisk laste ned sensitive dokumenter på nytt.</li><li>Trykk Prøv igjen for å hente dokumentet fra serveren på nytt.</li></ul>">
+
+<!ENTITY netOffline.title "Frakoblet modus">
+<!ENTITY netOffline.longDesc2 "<ul> <li>Trykk «Prøv igjen» for å bytte til tilkoblet modus og laste siden på nytt.</li> </ul>">
+
+<!ENTITY contentEncodingError.title "Feil med tegnkoding">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Kontakt eieren av nettstedet og informer om problemet.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Utrygg filtype">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Kontakt nettsideeierne og informer dem om dette problemet.</li> </ul>">
+
+<!ENTITY netReset.title "Tilkoblingen ble avbrutt">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Tilkoblingen fikk tidsavbrudd">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Klarte ikke forstå adressen">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Det er mulig at du må installere ekstra programvare for å åpne denne adressen.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "Proxy godtar ikke tilkoblinger">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Kontroller at proxyinnstillingene er korrekte.</li> <li>Kontakt nettverksansvarlig og forsikre deg om at proxyen virker.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "Klarte ikke finne proxy">
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Kontroller at proxyinnstillingene er korrekte.</li> <li>Kontroller at datamaskinen har en virkende nettverksforbindelse.</li> <li>Dersom datamaskinen din eller nettverket er beskyttet av en brannmur eller proxy, kontroller at &brandShortName; har tillatelse til å få tilgang til Internett.</li> </ul>">
+
+<!ENTITY redirectLoop.title "Nettsiden videresender ikke ordentlig">
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Dette problemet kan av og til skyldes at infokapsler er avslått eller ved å ikke godta
+    infokapsler.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.title "Uventet svar fra server">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Kontroller at systemet ditt har Personal Security Manager installert.</li> <li>Dette problemet kan skyldes en uvanlig konfigurasjon på serveren.</li> </ul>">
+
+<!ENTITY nssFailure2.title "Sikker tilkobling feilet">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Siden du forsøker åpne kan ikke vises fordi det ikke kan bekreftes at mottatte data er autentiske.</li> <li>Kontakt nettstedseieren og informer om problemet.</li> </ul>">
+
+<!ENTITY nssBadCert.title "Sikker tilkobling feilet">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>Dette kan være på grunn av et problem med serverens innstillinger, eller det kan være at noen forsøker å etterligne serveren.</li> <li>Dersom du tidligere har koblet til serveren er det mulig at feilen er midlertidig, og du kan prøve igjen senere.</li> </ul>">
+
+<!ENTITY sharedLongDesc "<ul> <li>Nettstedet kan være midlertidig utilgjengelig eller opptatt. Prøv igjen om en liten stund.</li> <li>Dersom du ikke klarer å laste noen sider, kontroller at datamaskinens nettverkstilkobling er i orden.</li> <li>Dersom datamaskinen er beskyttet av en brannmur eller proxy, kontroller at &brandShortName; har tillatelse til å bruke webben (www).</li> </ul>">
+
+<!ENTITY cspBlocked.title "Blokkert av sikkerhetspolicy">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; forhindret nettsiden fra å lastes inn på denne måten fordi nettsiden har en sikkerhetspolicy som forhindrer det.</p>">
+
+<!ENTITY xfoBlocked.title "Blokkert av X-Frame-Options-policy">
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; forhindret denne nettsiden i å laste i denne konteksten fordi nettsiden har en X-Frame-Options-policy som ikke tillater det.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Ødelagt innhold">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Siden du forsøker å vise kan ikke åpnes fordi en feil i dataoverføringen ble oppdaget.</p><ul><li>Kontakt nettstedseierne og informer dem om dette problemet.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Eller du kan lage en unntaksregel …">
+<!ENTITY securityOverride.getMeOutOfHereButton "Få meg bort herfra">
+<!ENTITY securityOverride.exceptionButtonLabel "Lag et unntak …">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <button> tags. It uses strings already defined above. The
+button is included here (instead of netError.xhtml) because it exposes
+functionality specific to thunderbird. -->
+
+<!ENTITY securityOverride.warningContent "<p>Du bør ikke legge til en unntaksregel dersom du bruker en Internett-forbindelse som du ikke stoler på, eller dersom du ikke er vant med å se slike advarsler på denne serveren.</p>  <button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> <button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "Remote XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Kontakt nettstedseierne og informer dem om dette problemet.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "Tilkoblingen din er ikke sikker">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> bruker sikkerhetsteknologi som er utdatert eller sårbar for angrep. En angriper kan enkelt fremskaffe informasjon som du trodde var sikker. Nettstedsadministratoren må endre serveren først, før du kan besøke nettstedet.</p><p>Feilkode: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Blokkert side">
+
+<!ENTITY networkProtocolError.title "Nettverksprotokollfeil">
+<!ENTITY networkProtocolError.longDesc "<p>Siden du forsøker å vise kan ikke åpnes fordi en feil i nettverksprotokollen ble oppdaget.</p><ul><li>Kontakt nettstedseierne og informer dem om dette problemet.</li></ul>">

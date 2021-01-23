@@ -395,7 +395,9 @@ PlacesViewBase.prototype = {
           }
         }
 
-        let popup = document.createXULElement("menupopup");
+        let popup = document.createXULElement("menupopup", {
+          is: "places-popup",
+        });
         popup._placesNode = PlacesUtils.asContainer(aPlacesNode);
 
         if (!this._nativeView) {
@@ -491,8 +493,6 @@ PlacesViewBase.prototype = {
     elt.removeAttribute("image");
     elt.setAttribute("image", aPlacesNode.icon);
   },
-
-  nodeAnnotationChanged() {},
 
   nodeTitleChanged: function PVB_nodeTitleChanged(aPlacesNode, aNewTitle) {
     let elt = this._getDOMNodeForPlacesNode(aPlacesNode);
@@ -715,9 +715,9 @@ PlacesViewBase.prototype = {
     }
 
     if (!hasMultipleURIs) {
-      aPopup.setAttribute("singleitempopup", "true");
+      aPopup.setAttribute("nofooterpopup", "true");
     } else {
-      aPopup.removeAttribute("singleitempopup");
+      aPopup.removeAttribute("nofooterpopup");
     }
 
     if (!hasMultipleURIs) {
@@ -820,7 +820,7 @@ PlacesViewBase.prototype = {
 
     // Remove any delayed element, see _cleanPopup for details.
     if ("_delayedRemovals" in popup) {
-      while (popup._delayedRemovals.length > 0) {
+      while (popup._delayedRemovals.length) {
         popup.removeChild(popup._delayedRemovals.shift());
       }
     }
@@ -1064,7 +1064,9 @@ PlacesToolbar.prototype = {
           }
         }
 
-        let popup = document.createXULElement("menupopup");
+        let popup = document.createXULElement("menupopup", {
+          is: "places-popup",
+        });
         popup.setAttribute("placespopup", "true");
         button.appendChild(popup);
         popup._placesNode = PlacesUtils.asContainer(aChild);
@@ -1427,25 +1429,6 @@ PlacesToolbar.prototype = {
     PlacesViewBase.prototype.nodeMoved.apply(this, arguments);
   },
 
-  nodeAnnotationChanged: function PT_nodeAnnotationChanged(aPlacesNode, aAnno) {
-    let elt = this._getDOMNodeForPlacesNode(aPlacesNode, true);
-    // Nothing to do if it's a never-visible node.
-    if (!elt || elt == this._rootElt) {
-      return;
-    }
-
-    // We're notified for the menupopup, not the containing toolbarbutton.
-    if (elt.localName == "menupopup") {
-      elt = elt.parentNode;
-    }
-
-    if (elt.parentNode != this._rootElt) {
-      // Node is on the toolbar.
-      // Node is in a submenu.
-      PlacesViewBase.prototype.nodeAnnotationChanged.apply(this, arguments);
-    }
-  },
-
   nodeTitleChanged: function PT_nodeTitleChanged(aPlacesNode, aNewTitle) {
     let elt = this._getDOMNodeForPlacesNode(aPlacesNode, true);
 
@@ -1491,9 +1474,9 @@ PlacesToolbar.prototype = {
     // The mouse is no longer dragging over the stored menubutton.
     // Close the menubutton, clear out drag styles, and clear all
     // timers for opening/closing it.
-    if (this._overFolder.elt && this._overFolder.elt.lastElementChild) {
-      if (!this._overFolder.elt.lastElementChild.hasAttribute("dragover")) {
-        this._overFolder.elt.lastElementChild.hidePopup();
+    if (this._overFolder.elt && this._overFolder.elt.menupopup) {
+      if (!this._overFolder.elt.menupopup.hasAttribute("dragover")) {
+        this._overFolder.elt.menupopup.hidePopup();
       }
       this._overFolder.elt.removeAttribute("dragover");
       this._overFolder.elt = null;
@@ -1641,7 +1624,7 @@ PlacesToolbar.prototype = {
       // * Timer to open a menubutton that's being dragged over.
       // Set the autoopen attribute on the folder's menupopup so that
       // the menu will automatically close when the mouse drags off of it.
-      this._overFolder.elt.lastElementChild.setAttribute("autoopened", "true");
+      this._overFolder.elt.menupopup.setAttribute("autoopened", "true");
       this._overFolder.elt.open = true;
       this._overFolder.openTimer = null;
     } else if (aTimer == this._overFolder.closeTimer) {
@@ -1676,12 +1659,12 @@ PlacesToolbar.prototype = {
       button._placesNode &&
       PlacesUtils.nodeIsURI(button._placesNode)
     ) {
-      window.XULBrowserWindow.setOverLink(aEvent.target._placesNode.uri, null);
+      window.XULBrowserWindow.setOverLink(aEvent.target._placesNode.uri);
     }
   },
 
   _onMouseOut: function PT__onMouseOut(aEvent) {
-    window.XULBrowserWindow.setOverLink("", null);
+    window.XULBrowserWindow.setOverLink("");
   },
 
   _onMouseDown: function PT__onMouseDown(aEvent) {
@@ -1736,7 +1719,7 @@ PlacesToolbar.prototype = {
 
       // If the menu is open, close it.
       if (draggedElt.open) {
-        draggedElt.lastElementChild.hidePopup();
+        draggedElt.menupopup.hidePopup();
         draggedElt.open = false;
       }
     }
@@ -2126,8 +2109,6 @@ PlacesPanelMenuView.prototype = {
     this._rootElt.insertBefore(elt, this._rootElt.children[aNewIndex]);
   },
 
-  nodeAnnotationChanged() {},
-
   nodeTitleChanged: function PAMV_nodeTitleChanged(aPlacesNode, aNewTitle) {
     let elt = this._getDOMNodeForPlacesNode(aPlacesNode);
 
@@ -2192,6 +2173,7 @@ this.PlacesPanelview = class extends PlacesViewBase {
         if (event.button != 1) {
           break;
         }
+      // fall through
       case "command":
         this._onCommand(event);
         break;

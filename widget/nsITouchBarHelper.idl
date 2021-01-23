@@ -6,6 +6,8 @@
 #include "nsISupports.idl"
 #include "nsITouchBarInput.idl"
 
+webidl Document;
+
 /**
  * Back-to-frontend communication for the Touch Bar
  */
@@ -23,14 +25,31 @@ interface nsITouchBarHelper : nsISupports
   readonly attribute AString activeTitle;
 
   /**
-   * Returns the layout for the Touch Bar in an nsIArray
+   * Return true if the Urlbar has focus.
+   */
+  readonly attribute boolean isUrlbarFocused;
+
+  /**
+   * Returns all available Touch Bar Inputs in an nsIArray
    * of nsITouchBarInput objects.
    */
-  attribute nsIArray layout;
+  attribute nsIArray allItems;
+
+  /**
+   * The context in which this nsITouchBarHelper exists. Required to create
+   * an imgLoader to load our SVG icons.
+   */
+  readonly attribute Document document;
 
   /**
    * Returns the requested TouchBarInput.
    * Exposed for testing.
    */
   nsITouchBarInput getTouchBarInput(in string aInputName);
+
+  /**
+   * Inserts a search restriction string in the Urlbar.
+   * Exposed for testing.
+   */
+  void insertRestrictionInUrlbar(in string aToken);
 };

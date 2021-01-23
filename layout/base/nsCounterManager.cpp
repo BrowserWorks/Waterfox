@@ -157,8 +157,7 @@ void nsCounterList::SetScope(nsCounterNode* aNode) {
           nodeContent == startContent) &&
         // everything is inside the root (except the case above,
         // a second reset on the root)
-        (!startContent ||
-         nsContentUtils::ContentIsDescendantOf(nodeContent, startContent))) {
+        (!startContent || nodeContent->IsInclusiveDescendantOf(startContent))) {
       aNode->mScopeStart = start;
       aNode->mScopePrev = prev;
       return;
@@ -177,9 +176,9 @@ void nsCounterList::RecalcAll() {
     SetScope(node);
     if (node->IsContentBasedReset()) {
       node->mValueAfter = 1;
-    } else if ((node->mType == nsCounterChangeNode::INCREMENT ||
-                node->mType == nsCounterChangeNode::SET) &&
-               node->mScopeStart && node->mScopeStart->IsContentBasedReset()) {
+    } else if (node->mType == nsCounterChangeNode::INCREMENT &&
+               node->mScopeStart && node->mScopeStart->IsContentBasedReset() &&
+               node->mPseudoFrame->StyleDisplay()->IsListItem()) {
       ++node->mScopeStart->mValueAfter;
     }
   }
@@ -189,70 +188,12 @@ void nsCounterList::RecalcAll() {
   }
 }
 
-static bool HasCounters(const nsStyleContent& aStyle) {
-  return aStyle.CounterIncrementCount() || aStyle.CounterResetCount() ||
-         aStyle.CounterSetCount();
-}
-
-bool nsCounterManager::AddCounterChanges(nsIFrame* aFrame) {
-  // For elements with 'display:list-item' we add a default
-  // 'counter-increment:list-item' unless 'counter-increment' already has a
-  // value for 'list-item'.
-  //
-  // https://drafts.csswg.org/css-lists-3/#declaring-a-list-item
-  //
-  // We inherit `display` for some anonymous boxes, but we don't want them to
-  // increment the list-item counter.
-  const bool requiresListItemIncrement =
-      aFrame->StyleDisplay()->mDisplay == StyleDisplay::ListItem &&
-      !aFrame->Style()->IsAnonBox();
-
-  const nsStyleContent* styleContent = aFrame->StyleContent();
-
-  if (!requiresListItemIncrement && !HasCounters(*styleContent)) {
-    MOZ_ASSERT(!aFrame->HasAnyStateBits(NS_FRAME_HAS_CSS_COUNTER_STYLE));
-    return false;
-  }
-
-  aFrame->AddStateBits(NS_FRAME_HAS_CSS_COUNTER_STYLE);
-
-  bool dirty = false;
-  // Add in order, resets first, so all the comparisons will be optimized
-  // for addition at the end of the list.
-  for (int32_t i : IntegerRange(styleContent->CounterResetCount())) {
-    dirty |= AddCounterChangeNode(aFrame, i, styleContent->CounterResetAt(i),
-                                  nsCounterChangeNode::RESET);
-  }
-  bool hasListItemIncrement = false;
-  for (int32_t i : IntegerRange(styleContent->CounterIncrementCount())) {
-    const nsStyleCounterData& increment = styleContent->CounterIncrementAt(i);
-    hasListItemIncrement |= increment.mCounter == nsGkAtoms::list_item;
-    dirty |= AddCounterChangeNode(aFrame, i, increment,
-                                  nsCounterChangeNode::INCREMENT);
-  }
-  if (requiresListItemIncrement && !hasListItemIncrement) {
-    bool reversed =
-        aFrame->StyleList()->mMozListReversed == StyleMozListReversed::True;
-    nsStyleCounterData listItemIncrement{nsGkAtoms::list_item,
-                                         reversed ? -1 : 1};
-    dirty |=
-        AddCounterChangeNode(aFrame, styleContent->CounterIncrementCount() + 1,
-                             listItemIncrement, nsCounterChangeNode::INCREMENT);
-  }
-  for (int32_t i : IntegerRange(styleContent->CounterSetCount())) {
-    dirty |= AddCounterChangeNode(aFrame, i, styleContent->CounterSetAt(i),
-                                  nsCounterChangeNode::SET);
-  }
-  return dirty;
-}
-
-bool nsCounterManager::AddCounterChangeNode(
-    nsIFrame* aFrame, int32_t aIndex, const nsStyleCounterData& aCounterData,
-    nsCounterNode::Type aType) {
-  nsCounterChangeNode* node =
-      new nsCounterChangeNode(aFrame, aType, aCounterData.mValue, aIndex);
-
-  nsCounterList* counterList = CounterListFor(aCounterData.mCounter);
+static bool AddCounterChangeNode(nsCounterManager& aManager, nsIFrame* aFrame,
+                                 int32_t aIndex,
+                                 const nsStyleContent::CounterPair& aPair,
+                                 nsCounterNode::Type aType) {
+  auto* node = new nsCounterChangeNode(aFrame, aType, aPair.value, aIndex);
+  nsCounterList* counterList = aManager.CounterListFor(aPair.name.AsAtom());
   counterList->Insert(node);
   if (!counterList->IsLast(node)) {
     // Tell the caller it's responsible for recalculating the entire
@@ -269,11 +210,78 @@ bool nsCounterManager::AddCounterChangeNode(
   return false;
 }
 
+static bool HasCounters(const nsStyleContent& aStyle) {
+  return !aStyle.mCounterIncrement.IsEmpty() ||
+         !aStyle.mCounterReset.IsEmpty() || !aStyle.mCounterSet.IsEmpty();
+}
+
+bool nsCounterManager::AddCounterChanges(nsIFrame* aFrame) {
+  // For elements with 'display:list-item' we add a default
+  // 'counter-increment:list-item' unless 'counter-increment' already has a
+  // value for 'list-item'.
+  //
+  // https://drafts.csswg.org/css-lists-3/#declaring-a-list-item
+  //
+  // We inherit `display` for some anonymous boxes, but we don't want them to
+  // increment the list-item counter.
+  const bool requiresListItemIncrement =
+      aFrame->StyleDisplay()->IsListItem() && !aFrame->Style()->IsAnonBox();
+
+  const nsStyleContent* styleContent = aFrame->StyleContent();
+
+  if (!requiresListItemIncrement && !HasCounters(*styleContent)) {
+    MOZ_ASSERT(!aFrame->HasAnyStateBits(NS_FRAME_HAS_CSS_COUNTER_STYLE));
+    return false;
+  }
+
+  aFrame->AddStateBits(NS_FRAME_HAS_CSS_COUNTER_STYLE);
+
+  bool dirty = false;
+  // Add in order, resets first, so all the comparisons will be optimized
+  // for addition at the end of the list.
+  {
+    int32_t i = 0;
+    for (const auto& pair : styleContent->mCounterReset.AsSpan()) {
+      dirty |= AddCounterChangeNode(*this, aFrame, i++, pair,
+                                    nsCounterChangeNode::RESET);
+    }
+  }
+  bool hasListItemIncrement = false;
+  {
+    int32_t i = 0;
+    for (const auto& pair : styleContent->mCounterIncrement.AsSpan()) {
+      hasListItemIncrement |= pair.name.AsAtom() == nsGkAtoms::list_item;
+      dirty |= AddCounterChangeNode(*this, aFrame, i++, pair,
+                                    nsCounterChangeNode::INCREMENT);
+    }
+  }
+
+  if (requiresListItemIncrement && !hasListItemIncrement) {
+    bool reversed =
+        aFrame->StyleList()->mMozListReversed == StyleMozListReversed::True;
+    RefPtr<nsAtom> atom = nsGkAtoms::list_item;
+    auto listItemIncrement = nsStyleContent::CounterPair{
+        {StyleAtom(atom.forget())}, reversed ? -1 : 1};
+    dirty |= AddCounterChangeNode(
+        *this, aFrame, styleContent->mCounterIncrement.Length(),
+        listItemIncrement, nsCounterChangeNode::INCREMENT);
+  }
+
+  {
+    int32_t i = 0;
+    for (const auto& pair : styleContent->mCounterSet.AsSpan()) {
+      dirty |= AddCounterChangeNode(*this, aFrame, i++, pair,
+                                    nsCounterChangeNode::SET);
+    }
+  }
+  return dirty;
+}
+
 nsCounterList* nsCounterManager::CounterListFor(nsAtom* aCounterName) {
   MOZ_ASSERT(aCounterName);
-  return mNames.LookupForAdd(aCounterName).OrInsert([]() {
-    return new nsCounterList();
-  });
+  return mNames.LookupForAdd(aCounterName)
+      .OrInsert([]() { return new nsCounterList(); })
+      .get();
 }
 
 void nsCounterManager::RecalcAll() {

@@ -1,6 +1,12 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 /* Avoid adding ID selector rules in this style sheet, since they could
  * inadvertently match elements in the article content. */
-
+:root {
+  --blue-60: #0060df;
+}
 .narrating {
   position: relative;
   z-index: 1;
@@ -58,21 +64,29 @@ body.dark .narrate-word-highlight {
 }
 
 .narrate-toggle {
-  margin: 0;
-  background-image: url("chrome://global/skin/narrate/waveform.svg");
+  background-image: url("chrome://global/skin/narrate/headphone.svg");
 }
 
 .speaking .narrate-toggle {
   /* This shows with an animation. */
-  background-image: url("chrome://global/skin/narrate/waveform.svg#waveform");
+  background-image: url("chrome://global/skin/narrate/headphone-active.svg");
 }
 
 .narrate-dropdown > .dropdown-popup button {
   background-color: transparent;
 }
 
-.narrate-dropdown > .dropdown-popup button:hover:not(:disabled) {
-  background-color: var(--toolbar-hover);
+.narrate-dropdown > .dropdown-popup button:enabled:hover,
+.narrate-dropdown > .dropdown-popup button:enabled:focus {
+  background-color: var(--popup-button-hover);
+}
+
+.narrate-dropdown > .dropdown-popup {
+  top: -34px;
+}
+
+.narrate-dropdown .dropdown-arrow {
+  top: 40px;
 }
 
 .narrate-row {
@@ -80,6 +94,10 @@ body.dark .narrate-word-highlight {
   align-items: center;
   min-height: 40px;
   box-sizing: border-box;
+}
+
+.narrate-row:not(.narrate-voices) {
+  direction: ltr;
 }
 
 .narrate-row:not(:first-child) {
@@ -93,33 +111,24 @@ body.dark .narrate-word-highlight {
   background-repeat: no-repeat;
   background-position: center center;
   height: 64px;
-  width: 100px;
+  width: 82px;
   border: none;
   color: #666;
   box-sizing: border-box;
 }
 
 .narrate-control > button:not(:first-child) {
-  border-left: 1px solid var(--border-color);
+  border-inline-start: 1px solid var(--popup-line);
 }
 
 .narrate-skip-previous {
   border-top-left-radius: 3px;
   background-image: url("chrome://global/skin/narrate/back.svg");
-  -moz-context-properties: fill;
-  fill: rgb(128 128 128);
 }
 
 .narrate-skip-next {
   border-top-right-radius: 3px;
   background-image: url("chrome://global/skin/narrate/forward.svg");
-  -moz-context-properties: fill;
-  fill: rgb(128 128 128);
-}
-
-.narrate-skip-previous:disabled,
-.narrate-skip-next:disabled {
-  fill: rgb(128 128 128 / 50%);
 }
 
 .narrate-start-stop {
@@ -154,9 +163,8 @@ body.dark .narrate-word-highlight {
 .narrate-rate-input {
   margin: 0 1px;
   flex-grow: 1;
-}
-.narrate-rate-input {
   background-color: var(--popup-bgcolor);
+  width: 148px;
 }
 
 .narrate-rate-input::-moz-range-track {
@@ -165,7 +173,7 @@ body.dark .narrate-word-highlight {
 }
 
 .narrate-rate-input::-moz-range-progress {
-  background-color: #2EA3FF;
+  background-color: var(--active-color);
   height: 2px;
 }
 
@@ -178,13 +186,13 @@ body.dark .narrate-word-highlight {
 }
 
 .narrate-rate-input:active::-moz-range-thumb {
-  background-color: #2EA3FF;
+  background-color: var(--blue-60);
 }
 
 /* Voice selection */
 
 .voiceselect {
-  width: 100%;
+  width: 246px;
 }
 
 .voiceselect > button.select-toggle,
@@ -224,7 +232,7 @@ body.dark .narrate-word-highlight {
 }
 
 body.dark .voiceselect > .options:not(.hovering) > button.option:focus {
-  background-color: var(--toolbar-hover);
+  background-color: var(--popup-button-hover);
 }
 
 .voiceselect > .options:not(.hovering) > button.option:hover:not(:focus) {

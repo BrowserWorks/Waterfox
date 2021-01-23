@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label        "Sivunlatausvirhe">
+<!ENTITY gopherAddon.title      "Gopher-protokolla">
+<!ENTITY gopherAddon.shortDesc  "gopher ei ole rekisteröity yhteyskäytäntö.">
+<!ENTITY gopherAddon.longDesc   "Osoitteessa käytetään gopher-yhteyskäytäntöä, jota ei enää tueta, joten selain ei voi yhdistää tähän sivustoon. Voit yhdistää tähän sivustoon hakemalla tätä yhteyskäytäntöä tukevan lisäosan Mozillan lisäosasivustolta.">
+<!ENTITY goToAddOn.label        "Siirry lisäosasivulle">

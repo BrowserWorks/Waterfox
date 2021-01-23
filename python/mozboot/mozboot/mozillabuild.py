@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import, print_function
+from __future__ import absolute_import, print_function, unicode_literals
 
 import ctypes
 import os
@@ -51,11 +51,11 @@ class MozillaBuildBootstrapper(BaseBootstrapper):
     def install_system_packages(self):
         pass
 
-    def ensure_mercurial_modern(self):
-        # Overrides default implementation to always run pip because.
-        print('Running pip to ensure Mercurial is up-to-date...')
-        self.run([self.which('pip'), 'install', '--upgrade', 'Mercurial'])
-        return True, True
+    def upgrade_mercurial(self, current):
+        # Mercurial upstream sometimes doesn't upload wheels, and building
+        # from source requires MS Visual C++ 9.0. So we force pip to install
+        # the last version that comes with wheels.
+        self.pip_install('mercurial', '--only-binary', 'mercurial')
 
     def upgrade_python(self, current):
         pass
@@ -67,15 +67,53 @@ class MozillaBuildBootstrapper(BaseBootstrapper):
         pass
 
     def install_mobile_android_packages(self):
-        pass
+        self.ensure_mobile_android_packages()
 
     def install_mobile_android_artifact_mode_packages(self):
-        pass
+        self.ensure_mobile_android_packages(artifact_mode=True)
+
+    def ensure_mobile_android_packages(self, artifact_mode=False):
+        # Get java path from registry key
+        try:
+            import _winreg
+        except ImportError:
+            import winreg as _winreg
+
+        key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE,
+                              r'SOFTWARE\JavaSoft\Java Development Kit\1.8')
+        java_path, regtype = _winreg.QueryValueEx(key, 'JavaHome')
+        _winreg.CloseKey(key)
+        from mach.util import setenv
+        setenv('PATH', '{}{}{}'.format(os.path.join(java_path, 'bin'), os.pathsep,
+                                       os.environ['PATH']))
+        self.ensure_java()
+
+        from mozboot import android
+        android.ensure_android('windows', artifact_mode=artifact_mode,
+                               no_interactive=self.no_interactive)
+
+    def suggest_mobile_android_mozconfig(self, artifact_mode=False):
+        from mozboot import android
+        android.suggest_mozconfig('windows', artifact_mode=artifact_mode)
+
+    def suggest_mobile_android_artifact_mode_mozconfig(self):
+        self.suggest_mobile_android_mozconfig(artifact_mode=True)
 
     def ensure_clang_static_analysis_package(self, state_dir, checkout_root):
         from mozboot import static_analysis
         self.install_toolchain_static_analysis(
             state_dir, checkout_root, static_analysis.WINDOWS_CLANG_TIDY)
+
+    def ensure_sccache_packages(self, state_dir, checkout_root):
+        from mozboot import sccache
+
+        self.install_toolchain_artifact(state_dir, checkout_root, sccache.WIN64_SCCACHE)
+        self.install_toolchain_artifact(state_dir, checkout_root,
+                                        sccache.RUSTC_DIST_TOOLCHAIN,
+                                        no_unpack=True)
+        self.install_toolchain_artifact(state_dir, checkout_root,
+                                        sccache.CLANG_DIST_TOOLCHAIN,
+                                        no_unpack=True)
 
     def ensure_stylo_packages(self, state_dir, checkout_root):
         # On-device artifact builds are supported; on-device desktop builds are not.
@@ -100,6 +138,22 @@ class MozillaBuildBootstrapper(BaseBootstrapper):
         node_artifact = node.WIN32 if is_aarch64_host() else node.WIN64
         self.install_toolchain_artifact(
             state_dir, checkout_root, node_artifact)
+
+    def ensure_dump_syms_packages(self, state_dir, checkout_root):
+        from mozboot import dump_syms
+
+        self.install_toolchain_artifact(state_dir, checkout_root, dump_syms.WIN64_DUMP_SYMS)
+
+    def ensure_fix_stacks_packages(self, state_dir, checkout_root):
+        from mozboot import fix_stacks
+
+        self.install_toolchain_artifact(state_dir, checkout_root, fix_stacks.WINDOWS_FIX_STACKS)
+
+    def ensure_minidump_stackwalk_packages(self, state_dir, checkout_root):
+        from mozboot import minidump_stackwalk
+
+        self.install_toolchain_artifact(state_dir, checkout_root,
+                                        minidump_stackwalk.WINDOWS_MINIDUMP_STACKWALK)
 
     def _update_package_manager(self):
         pass

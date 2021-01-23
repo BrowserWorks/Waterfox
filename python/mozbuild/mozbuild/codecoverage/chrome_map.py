@@ -2,11 +2,12 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from collections import defaultdict
+from __future__ import absolute_import, print_function
+
 import json
 import os
 import re
-import urlparse
+import six
 
 from mach.config import ConfigSettings
 from mach.logging import LoggingManager
@@ -22,12 +23,14 @@ from mozpack.files import PreprocessedFile
 from mozpack.manifests import InstallManifest
 import mozpack.path as mozpath
 
-from manifest_handler import ChromeManifestHandler
+from .manifest_handler import ChromeManifestHandler
 
 
 _line_comment_re = re.compile('^//@line (\d+) "(.+)"$')
+
+
 def generate_pp_info(path, topsrcdir):
-    with open(path) as fh:
+    with open(path, encoding='utf-8') as fh:
         # (start, end) -> (included_source, start)
         section_info = dict()
 
@@ -46,7 +49,15 @@ def generate_pp_info(path, topsrcdir):
                 if this_section:
                     finish_section(count + 1)
                 inc_start, inc_source = m.groups()
-                inc_source = mozpath.relpath(inc_source, topsrcdir)
+
+                # Special case to handle $SRCDIR prefixes
+                src_dir_prefix = '$SRCDIR'
+                parts = mozpath.split(inc_source)
+                if parts[0] == src_dir_prefix:
+                    inc_source = mozpath.join(*parts[1:])
+                else:
+                    inc_source = mozpath.relpath(inc_source, topsrcdir)
+
                 pp_start = count + 2
                 this_section = pp_start, inc_source, int(inc_start)
 
@@ -57,6 +68,8 @@ def generate_pp_info(path, topsrcdir):
 
 # This build backend is assuming the build to have happened already, as it is parsing
 # built preprocessed files to generate data to map them to the original sources.
+
+
 class ChromeMapBackend(CommonBackend):
     def _init(self):
         CommonBackend._init(self)
@@ -89,7 +102,9 @@ class ChromeMapBackend(CommonBackend):
                     pp_info = generate_pp_info(obj_path, obj.topsrcdir)
                 else:
                     pp_info = None
-                self._install_mapping[dest] = mozpath.relpath(f.full_path, obj.topsrcdir), pp_info
+
+                base = obj.topobjdir if f.full_path.startswith(obj.topobjdir) else obj.topsrcdir
+                self._install_mapping[dest] = mozpath.relpath(f.full_path, base), pp_info
 
     def consume_finished(self):
         mp = os.path.join(self.environment.topobjdir, '_build_manifests', 'install', '_tests')
@@ -110,22 +125,26 @@ class ChromeMapBackend(CommonBackend):
                 pp_info = generate_pp_info(obj_path, self.environment.topsrcdir)
             else:
                 pp_info = None
-            self._install_mapping[dest] = src.path, pp_info
+
+            rel_src = mozpath.relpath(src.path, self.environment.topsrcdir)
+            self._install_mapping[dest] = rel_src, pp_info
 
         # Our result has four parts:
         #  A map from url prefixes to objdir directories:
         #  { "chrome://mozapps/content/": [ "dist/bin/chrome/toolkit/content/mozapps" ], ... }
         #  A map of overrides.
-        #  A map from objdir paths to sourcedir paths, and an object storing mapping information for preprocessed files:
+        #  A map from objdir paths to sourcedir paths, and an object storing mapping
+        #    information for preprocessed files:
         #  { "dist/bin/browser/chrome/browser/content/browser/aboutSessionRestore.js":
-        #    [ "$topsrcdir/browser/components/sessionstore/content/aboutSessionRestore.js", {} ], ... }
+        #    [ "$topsrcdir/browser/components/sessionstore/content/aboutSessionRestore.js", {} ],
+        #    ... }
         #  An object containing build configuration information.
         outputfile = os.path.join(self.environment.topobjdir, 'chrome-map.json')
         with self._write_file(outputfile) as fh:
             chrome_mapping = self.manifest_handler.chrome_mapping
             overrides = self.manifest_handler.overrides
             json.dump([
-                {k: list(v) for k, v in chrome_mapping.iteritems()},
+                {k: list(v) for k, v in six.iteritems(chrome_mapping)},
                 overrides,
                 self._install_mapping,
                 {

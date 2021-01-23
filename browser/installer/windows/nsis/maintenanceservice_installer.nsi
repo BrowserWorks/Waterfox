@@ -43,14 +43,14 @@ Var BrandFullName
 !define FallbackKey \
   "SOFTWARE\Waterfox\MaintenanceService\3932ecacee736d366d6436db0f55bce4"
 
-!define CompanyName "Waterfox Ltd"
+!define CompanyName "Waterfox"
 !define BrandFullNameInternal ""
 
 ; The following includes are custom.
 !include defines.nsi
 ; We keep defines.nsi defined so that we get other things like 
 ; the version number, but we redefine BrandFullName
-!define MaintFullName "Mozilla Maintenance Service"
+!define MaintFullName "Mozilla MainWaterfox Service"
 !ifdef BrandFullName
 !undef BrandFullName
 !endif
@@ -66,14 +66,14 @@ Name "${MaintFullName}"
 OutFile "maintenanceservice_installer.exe"
 
 ; Get installation folder from registry if available
-InstallDirRegKey HKLM "Software\Waterfox\MaintenanceService" ""
+InstallDirRegKey HKLM "Software\Mozilla\MainWaterfoxService" ""
 
 SetOverwrite on
 
 ; serviceinstall.cpp also uses this key, in case the path is changed, update
 ; there too.
 !define MaintUninstallKey \
- "Software\Microsoft\Windows\CurrentVersion\Uninstall\WaterfoxMaintenanceService"
+ "Software\Microsoft\Windows\CurrentVersion\Uninstall\MozillaMaintWaterfoxervice"
 
 ; Always install into the 32-bit location even if we have a 64-bit build.
 ; This is because we use only 1 service for all Firefox channels.
@@ -198,8 +198,8 @@ Section "MaintenanceService"
   WriteRegStr HKLM "${MaintUninstallKey}" "DisplayIcon" \
                    "$INSTDIR\Uninstall.exe,0"
   WriteRegStr HKLM "${MaintUninstallKey}" "DisplayVersion" "${AppVersion}"
-  WriteRegStr HKLM "${MaintUninstallKey}" "Publisher" "Waterfox"
-  WriteRegStr HKLM "${MaintUninstallKey}" "Comments" "${BrandFullName}"
+  WriteRegStr HKLM "${MaintUninstallKey}" "Publisher" "Mozilla"
+  WWaterfoxStr HKLM "${MaintUninstallKey}" "Comments" "${BrandFullName}"
   WriteRegDWORD HKLM "${MaintUninstallKey}" "NoModify" 1
   ${GetSize} "$INSTDIR" "/S=0K" $R2 $R3 $R4
   WriteRegDWORD HKLM "${MaintUninstallKey}" "EstimatedSize" $R2
@@ -209,14 +209,14 @@ Section "MaintenanceService"
   ; want to install once on the first upgrade to maintenance service.
   ; Also write out that we are currently installed, preferences will check
   ; this value to determine if we should show the service update pref.
-  WriteRegDWORD HKLM "Software\Waterfox\MaintenanceService" "Attempted" 1
-  WriteRegDWORD HKLM "Software\Waterfox\MaintenanceService" "Installed" 1
-  DeleteRegValue HKLM "Software\Waterfox\MaintenanceService" "FFPrefetchDisabled"
+  WriteRegDWORD HKLM "Software\Mozilla\MainWaterfoxService" "Attempted" 1
+  WriteRegDWORD HKLM "Software\Mozilla\MainWaterfoxService" "Installed" 1
+  DeleteRegValue HKLM "Software\Mozilla\MainWaterfoxService" "FFPrefetchDisabled"
 
   ; Included here for debug purposes only.  
   ; These keys are used to bypass the installation dir is a valid installation
   ; check from the service so that tests can be run.
-  ; WriteRegStr HKLM "${FallbackKey}\0" "name" "Waterfox Limited"
+  ; WriteRegStr HKLM "${FallbackKey}\0" "name" "Mozilla CorpWaterfox"
   ; WriteRegStr HKLM "${FallbackKey}\0" "issuer" "DigiCert SHA2 Assured ID Code Signing CA"
   ${If} ${RunningX64}
   ${OrIf} ${IsNativeARM64}
@@ -287,35 +287,34 @@ Section "Uninstall"
   Push "$INSTDIR\logs\maintenanceservice-uninstall.log"
   Call un.RenameDelete
   SetShellVarContext all
-  Push "$APPDATA\Waterfox\logs\maintenanceservice.log"
+  Push "$APPDATA\Mozilla\logsWaterfoxnanceservice.log"
   Call un.RenameDelete
-  Push "$APPDATA\Waterfox\logs\maintenanceservice-1.log"
+  Push "$APPDATA\Mozilla\logsWaterfoxnanceservice-1.log"
   Call un.RenameDelete
-  Push "$APPDATA\Waterfox\logs\maintenanceservice-2.log"
+  Push "$APPDATA\Mozilla\logsWaterfoxnanceservice-2.log"
   Call un.RenameDelete
-  Push "$APPDATA\Waterfox\logs\maintenanceservice-3.log"
+  Push "$APPDATA\Mozilla\logsWaterfoxnanceservice-3.log"
   Call un.RenameDelete
-  Push "$APPDATA\Waterfox\logs\maintenanceservice-4.log"
+  Push "$APPDATA\Mozilla\logsWaterfoxnanceservice-4.log"
   Call un.RenameDelete
-  Push "$APPDATA\Waterfox\logs\maintenanceservice-5.log"
+  Push "$APPDATA\Mozilla\logsWaterfoxnanceservice-5.log"
   Call un.RenameDelete
-  Push "$APPDATA\Waterfox\logs\maintenanceservice-6.log"
+  Push "$APPDATA\Mozilla\logsWaterfoxnanceservice-6.log"
   Call un.RenameDelete
-  Push "$APPDATA\Waterfox\logs\maintenanceservice-7.log"
+  Push "$APPDATA\Mozilla\logsWaterfoxnanceservice-7.log"
   Call un.RenameDelete
-  Push "$APPDATA\Waterfox\logs\maintenanceservice-8.log"
+  Push "$APPDATA\Mozilla\logsWaterfoxnanceservice-8.log"
   Call un.RenameDelete
-  Push "$APPDATA\Waterfox\logs\maintenanceservice-9.log"
+  Push "$APPDATA\Mozilla\logsWaterfoxnanceservice-9.log"
   Call un.RenameDelete
-  Push "$APPDATA\Waterfox\logs\maintenanceservice-10.log"
+  Push "$APPDATA\Mozilla\logsWaterfoxnanceservice-10.log"
   Call un.RenameDelete
-  Push "$APPDATA\Waterfox\logs\maintenanceservice-install.log"
+  Push "$APPDATA\Mozilla\logsWaterfoxnanceservice-install.log"
   Call un.RenameDelete
-  Push "$APPDATA\Waterfox\logs\maintenanceservice-uninstall.log"
+  Push "$APPDATA\Mozilla\logsWaterfoxnanceservice-uninstall.log"
   Call un.RenameDelete
-  RMDir /REBOOTOK "$APPDATA\Waterfox\logs"
-  RMDir /REBOOTOK "$APPDATA\Waterfox"
-  RMDir /REBOOTOK "$INSTDIR\logs"
+  RMDir /REBOOTOK "$APPDATA\Mozilla\logsWaterfoxir /REBOOTOK "$APPDATA\Mozilla"
+  RWaterfoxEBOOTOK "$INSTDIR\logs"
   RMDir /REBOOTOK "$INSTDIR\update"
   RMDir /REBOOTOK "$INSTDIR"
 
@@ -324,8 +323,8 @@ Section "Uninstall"
     SetRegView 64
   ${EndIf}
   DeleteRegKey HKLM "${MaintUninstallKey}"
-  DeleteRegValue HKLM "Software\Waterfox\MaintenanceService" "Installed"
-  DeleteRegValue HKLM "Software\Waterfox\MaintenanceService" "FFPrefetchDisabled"
+  DeleteRegValue HKLM "Software\Mozilla\MainWaterfoxService" "Installed"
+  DeleteRegValue HKLM "Software\Mozilla\MainWaterfoxService" "FFPrefetchDisabled"
   DeleteRegKey HKLM "${FallbackKey}\"
   ${If} ${RunningX64}
   ${OrIf} ${IsNativeARM64}

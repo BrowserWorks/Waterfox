@@ -122,25 +122,11 @@ include $(CORE_DEPTH)/coreconf/suffix.mk
 endif
 
 #######################################################################
-# [13.0] Master "Core Components" for defining JDK                    #
-#        (dependent upon <architecture>, <source>, and <suffix>  tags)#
-#######################################################################
-ifdef NS_USE_JDK
-include $(CORE_DEPTH)/coreconf/jdk.mk
-endif
-
-#######################################################################
 # [14.0] Master "Core Components" rule set                            #
 #######################################################################
 ifndef MK_RULESET
 include $(CORE_DEPTH)/coreconf/ruleset.mk
 endif
-
-#######################################################################
-# [15.0] Dependencies.
-#######################################################################
-
--include $(MKDEPENDENCIES)
 
 #######################################################################
 # [16.0] Global environ ment defines
@@ -162,8 +148,16 @@ ifdef NSS_DISABLE_DBM
 DEFINES += -DNSS_DISABLE_DBM
 endif
 
+ifdef NSS_DISABLE_AVX2
+DEFINES += -DNSS_DISABLE_AVX2
+endif
+
 ifdef NSS_DISABLE_CHACHAPOLY
 DEFINES += -DNSS_DISABLE_CHACHAPOLY
+endif
+
+ifdef NSS_DISABLE_DEPRECATED_SEED
+DEFINES += -DNSS_DISABLE_DEPRECATED_SEED
 endif
 
 ifdef NSS_PKIX_NO_LDAP
@@ -194,6 +188,16 @@ ifndef BUILD_OPT
 ifdef PKIX_OBJECT_LEAK_TEST
 DEFINES += -DPKIX_OBJECT_LEAK_TEST
 endif
+endif
+
+# Avoid building with Neon acceleration on Arm32
+ifdef NSS_DISABLE_ARM32_NEON
+DEFINES += -DNSS_DISABLE_ARM32_NEON
+endif
+
+# Avoid building with PowerPC's Altivec acceleration
+ifdef NSS_DISABLE_ALTIVEC
+DEFINES += -DNSS_DISABLE_ALTIVEC
 endif
 
 # This allows all library and tools code to use the util function

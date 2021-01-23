@@ -8,6 +8,9 @@
 #define mozilla_IHistory_h_
 
 #include "nsISupports.h"
+#include "nsDataHashtable.h"
+#include "nsURIHashKey.h"
+#include "nsTObserverArray.h"
 
 class nsIURI;
 class nsIWidget;
@@ -15,6 +18,7 @@ class nsIWidget;
 namespace mozilla {
 
 namespace dom {
+class Document;
 class Link;
 }  // namespace dom
 
@@ -34,11 +38,10 @@ class IHistory : public nsISupports {
    * Registers the Link for notifications about the visited-ness of aURI.
    * Consumers should assume that the URI is unvisited after calling this, and
    * they will be notified if that state (unvisited) changes by having
-   * SetLinkState called on themselves.  This function is guaranteed to run to
-   * completion before aLink is notified.  After the node is notified, it will
-   * be unregistered.
+   * VisitedQueryFinished called on themselves. Note that it may call
+   * synchronously if the answer is already known.
    *
-   * @note SetLinkState must not call RegisterVisitedCallback or
+   * @note VisitedQueryFinished must not call RegisterVisitedCallback or
    *       UnregisterVisitedCallback.
    *
    * @pre aURI must not be null.
@@ -52,11 +55,11 @@ class IHistory : public nsISupports {
    *        object should be destroyed, be sure to call
    *        UnregisterVistedCallback first.
    */
-  NS_IMETHOD RegisterVisitedCallback(nsIURI* aURI, dom::Link* aLink) = 0;
+  virtual void RegisterVisitedCallback(nsIURI* aURI, dom::Link* aLink) = 0;
 
   /**
    * Unregisters a previously registered Link object.  This must be called
-   * before destroying the registered object.
+   * before destroying the registered object, and asserts when misused.
    *
    * @pre aURI must not be null.
    * @pre aLink must not be null.
@@ -66,7 +69,19 @@ class IHistory : public nsISupports {
    * @param aLink
    *        The link object to unregister for aURI.
    */
-  NS_IMETHOD UnregisterVisitedCallback(nsIURI* aURI, dom::Link* aLink) = 0;
+  virtual void UnregisterVisitedCallback(nsIURI* aURI, dom::Link* aLink) = 0;
+
+  enum class VisitedStatus : uint8_t {
+    Unknown,
+    Visited,
+    Unvisited,
+  };
+
+  /**
+   * Notifies about the visited status of a given URI. The visited status cannot
+   * be unknown, otherwise there's no point in notifying of anything.
+   */
+  virtual void NotifyVisited(nsIURI*, VisitedStatus) = 0;
 
   enum VisitFlags {
     /**
@@ -126,27 +141,9 @@ class IHistory : public nsISupports {
    *        The title string.
    */
   NS_IMETHOD SetURITitle(nsIURI* aURI, const nsAString& aTitle) = 0;
-
-  /**
-   * Notifies about the visited status of a given URI.
-   *
-   * @param aURI
-   *        The URI to notify about.
-   */
-  NS_IMETHOD NotifyVisited(nsIURI* aURI) = 0;
 };
 
 NS_DEFINE_STATIC_IID_ACCESSOR(IHistory, IHISTORY_IID)
-
-#define NS_DECL_IHISTORY                                                       \
-  NS_IMETHOD RegisterVisitedCallback(nsIURI* aURI,                             \
-                                     mozilla::dom::Link* aContent) override;   \
-  NS_IMETHOD UnregisterVisitedCallback(nsIURI* aURI,                           \
-                                       mozilla::dom::Link* aContent) override; \
-  NS_IMETHOD VisitURI(nsIWidget* aWidget, nsIURI* aURI,                        \
-                      nsIURI* aLastVisitedURI, uint32_t aFlags) override;      \
-  NS_IMETHOD SetURITitle(nsIURI* aURI, const nsAString& aTitle) override;      \
-  NS_IMETHOD NotifyVisited(nsIURI* aURI) override;
 
 }  // namespace mozilla
 

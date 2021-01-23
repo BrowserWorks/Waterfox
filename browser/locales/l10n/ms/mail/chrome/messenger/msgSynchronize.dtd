@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "Muat turun dan Sync Mesej">
+<!ENTITY MsgSelect.label "Item untuk Penggunaan Luar talian">
+<!ENTITY MsgSyncDesc.label "Jika anda sudah pilih folder mel atau kumpulan berita untuk penggunaan luar talian, anda boleh memuat turun dan/atau selaraskan sekarang. Jika belum, gunakan butang &quot;Pilih&quot; untuk memilih folder mel dan kumpulan berita untuk penggunaan luar talian.">
+<!ENTITY MsgSyncDirections.label "Muat turun dan/atau selaraskan yang berikut:">
+<!ENTITY syncTypeMail.label "Mesej mel">
+<!ENTITY syncTypeMail.accesskey "M">
+<!ENTITY syncTypeNews.label "Mesej kumpulan berita">
+<!ENTITY syncTypeNews.accesskey "M">
+<!ENTITY sendMessage.label "Hantar Mesej yang Tidak Dihantar">
+<!ENTITY sendMessage.accesskey "H">
+<!ENTITY workOffline.label "Kerja luar talian selepas muat turun dan/atau sync selesai">
+<!ENTITY workOffline.accesskey "K">
+<!ENTITY selectButton.label "Pilih…">
+<!ENTITY selectButton.accesskey "P">
+<!ENTITY MsgSelectDesc.label "Pilih folder mel dan kumpulan berita untuk penggunaan luar talian.">
+<!ENTITY MsgSelectInd.label "Muat turun">
+<!ENTITY MsgSelectItems.label "Folder dan Kumpulan berita">

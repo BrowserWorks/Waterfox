@@ -10,17 +10,24 @@ function updateAllTestPlugins(aState) {
   setTestPluginEnabledState(aState, "Second Test Plug-in");
 }
 
+function promisePluginActivated() {
+  return SpecialPowers.spawn(gBrowser.selectedBrowser, [], function() {
+    return ContentTaskUtils.waitForCondition(
+      () => content.document.getElementById("test").activated,
+      "Wait for plugin to be activated"
+    );
+  });
+}
+
 add_task(async function() {
   registerCleanupFunction(async function() {
     clearAllPluginPermissions();
     updateAllTestPlugins(Ci.nsIPluginTag.STATE_ENABLED);
-    Services.prefs.clearUserPref("plugins.click_to_play");
     Services.prefs.clearUserPref("extensions.blocklist.suppressUI");
     await asyncSetAndUpdateBlocklist(
       gTestRoot + "blockNoPlugins",
       gTestBrowser
     );
-    resetBlocklist();
     gBrowser.removeCurrentTab();
     window.focus();
     gTestBrowser = null;
@@ -34,7 +41,6 @@ add_task(async function() {
   updateAllTestPlugins(Ci.nsIPluginTag.STATE_CLICKTOPLAY);
 
   Services.prefs.setBoolPref("extensions.blocklist.suppressUI", true);
-  Services.prefs.setBoolPref("plugins.click_to_play", true);
 
   // Prime the content process
   await promiseTabLoadEvent(
@@ -70,7 +76,7 @@ add_task(async function() {
   );
   ok(!pluginInfo.activated, "Test 18a, Plugin should not be activated");
 
-  await ContentTask.spawn(gTestBrowser, null, async function() {
+  await SpecialPowers.spawn(gTestBrowser, [], async function() {
     let doc = content.document;
     let plugin = doc.getElementById("test");
     let overlay = plugin.openOrClosedShadowRoot.getElementById("main");
@@ -94,7 +100,7 @@ add_task(async function() {
     true
   );
 
-  await ContentTask.spawn(gTestBrowser, {}, async function() {
+  await SpecialPowers.spawn(gTestBrowser, [], async function() {
     let doc = content.document;
     let plugin = doc.getElementById("test");
     let updateLink = plugin.openOrClosedShadowRoot.getElementById(
@@ -128,7 +134,7 @@ add_task(async function() {
   );
   ok(!pluginInfo.activated, "Test 18b, Plugin should not be activated");
 
-  await ContentTask.spawn(gTestBrowser, null, async function() {
+  await SpecialPowers.spawn(gTestBrowser, [], async function() {
     let doc = content.document;
     let plugin = doc.getElementById("test");
     let overlay = plugin.openOrClosedShadowRoot.getElementById("main");
@@ -170,7 +176,7 @@ add_task(async function() {
   );
   ok(!pluginInfo.activated, "Test 18c, Plugin should not be activated");
 
-  await ContentTask.spawn(gTestBrowser, null, async function() {
+  await SpecialPowers.spawn(gTestBrowser, [], async function() {
     let doc = content.document;
     let plugin = doc.getElementById("test");
     let overlay = plugin.openOrClosedShadowRoot.getElementById("main");
@@ -193,6 +199,7 @@ add_task(async function() {
 
   PopupNotifications.panel.firstElementChild.button.click();
 
+  await promisePluginActivated();
   pluginInfo = await promiseForPluginInfo("test");
   is(
     pluginInfo.pluginFallbackType,
@@ -253,7 +260,7 @@ add_task(async function() {
     oldEventCallback = null;
   };
 
-  await ContentTask.spawn(gTestBrowser, {}, async function() {
+  await SpecialPowers.spawn(gTestBrowser, [], async function() {
     let doc = content.document;
     let plugin = doc.getElementById("test");
     let bounds = plugin.getBoundingClientRect();
@@ -307,6 +314,7 @@ add_task(async function() {
 
   PopupNotifications.panel.firstElementChild.button.click();
 
+  await promisePluginActivated();
   pluginInfo = await promiseForPluginInfo("test");
   ok(pluginInfo.activated, "Test 24a, Plugin should be active.");
 
@@ -345,6 +353,7 @@ add_task(async function() {
 
   PopupNotifications.panel.firstElementChild.button.click();
 
+  await promisePluginActivated();
   pluginInfo = await promiseForPluginInfo("test");
   ok(pluginInfo.activated, "Test 24b, Plugin should be active.");
 
@@ -417,9 +426,8 @@ add_task(async function() {
     "Test 26, plugin fallback type should be PLUGIN_BLOCKLISTED"
   );
 
-  await ContentTask.spawn(gTestBrowser, null, async function() {
+  await SpecialPowers.spawn(gTestBrowser, [], async function() {
     let plugin = content.document.getElementById("test");
-    let objLoadingContent = plugin.QueryInterface(Ci.nsIObjectLoadingContent);
-    Assert.ok(!objLoadingContent.activated, "Plugin should not be activated.");
+    Assert.ok(!plugin.activated, "Plugin should not be activated.");
   });
 });

@@ -1,0 +1,142 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Problèma al moment de cargar la pagina">
+<!ENTITY retry.label "Tornar ensajar">
+<!ENTITY returnToPreviousPage.label "Tornar en arrièr">
+<!ENTITY returnToPreviousPage1.label "Tornar (recomandat)">
+<!ENTITY advanced2.label "Avançat…">
+<!ENTITY viewCertificate.label "Mostrar lo certificat">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "Impossible de trobar lo servidor">
+<!ENTITY dnsNotFound.longDesc1 "
+<strong>S’aquesta adreça es corrècta, vaquí tres causas de mai que podètz ensajar :</strong>
+<ul>
+  <li>Tornar ensajar mai tard.</li>
+  <li>Verificar vòstra connexion al ret.</li>
+  <li>Se sètz connectat amb un parafuòc, verificatz que &brandShortName; a la permission d’accedir al Web.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.longDesc "<ul> <li>Verificatz la sintaxi del nom de fichièr (amb respècte de las minusculas/majusculas) ;</li> <li>Verificatz se lo fichièr es pas estat desplaçat, renomenat o suprimit.</li> </ul>">
+
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>Benlèu es estat suprimit, bolegat o las permissions del fichièr n'empacharián l'accès.</li>
+</ul>
+">
+
+<!ENTITY generic.longDesc "<p>&brandShortName; pòt pas cargar aquesta pagina.</p>">
+
+<!ENTITY captivePortal.title "Se connectar al ret">
+<!ENTITY captivePortal.longDesc2 "<p>Cal dobrir la pagina de connexion a aqueste ret per accedir a Internet.</p>">
+
+<!ENTITY openPortalLoginPage.label2 "Dobrir la pagina de connexion al ret">
+
+<!ENTITY malformedURI.pageTitle "URL invalida">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>Lo document demandat es pas mai disponible dins lo cache de &brandShortName;.</p><ul><li>Per mesura de seguretat, &brandShortName; tòrna pas demandar automaticament de documents sensibles.</li><li>Clicatz sus Tornar ensajar per tornar demandar aqueste document del site web.</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "
+<ul>
+  <li>Clicatz lo boton «Tornar ensajar» per tornar en mòde connectat e recargar la pagina.</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Contactatz lo webmèstre del site per l'assabentar d'aqueste problèma.</li> </ul>">
+
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Contactatz lo webmèstre del site per l'assabentar d'aqueste problèma.</li> </ul>">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Benlèu qu'es necessari d'installar una autra aplicacion per dobrir aqueste tipe d'adreça.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Verificatz que los paramètres del proxy son corrèctes ;</li> <li>Contactatz vòstre administrator de ret per vos assegurar que lo servidor proxy fonciona.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Verificatz que los paramètres del proxy son corrèctes ;</li> <li>Verificatz que la connexion ret de vòstre ordenador fonciona ;</li> <li>Se vòstre ordenador o vòstra ret es protegida per un parafuòc o un proxy, asseguratz-vos que &brandShortName; a l'autorizacion d'accedir al Web.</li> </ul>">
+
+<!ENTITY redirectLoop.longDesc "<ul> <li>La causa d'aqueste problèma pòt èsser la desactivacion o lo refús dels cookies.</li> </ul>">
+
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Verificatz que lo gestionari de seguretat personala (PSM) es installat sus vòstre sistèma.</li> <li>Aquò pòt èsser degut a una configuracion inacostumada del servidor.</li></ul>">
+
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>La pagina qu'ensajatz de consultar pòt pas èsser afichada perque l'autenticitat de las donadas recebudas pòt pas èsser verificada.</li> <li>Contactatz los proprietaris del sit Web per los n'assabentar. Tanben podètz utilizar la comanda dins lo menú d'ajuda per senhalar un site pas foncional.</li> </ul>">
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara2 "&brandShortName; a detectat una menaça de seguretat potenciala e a pas contunhat cap a <span class='hostname'/>. Se consultatz aqueste site, los atacaires poirián ensajar de panar d’informacions coma los senhals, las adreças electronicas o las donadas de cartas bancàrias.">
+<!ENTITY certerror.sts.introPara "&brandShortName; a detectat una menaça de seguretat potenciala e a pas contunhat <span class = 'hostname' /> perque aqueste site Web demanda una connexion securizada.">
+
+<!ENTITY certerror.expiredCert.introPara "&brandShortName; a detectat un problèma e a arrestat lo cargament de <span class='hostname'/>. Siá lo site es mal configurat, siá l’ora de l’ordenador es pas corrècta.">
+<!ENTITY certerror.expiredCert.secondPara2 "Es probable que lo certificat del site Web s'acabèt, çò qu'empacha &brandShortName; de se connectar en tota seguretat. En visitant aqueste site, los atacaires poirián ensajar de panar d'informacions coma los senhals, las adreças electronicas o las donadas de cartas bancàrias.">
+<!ENTITY certerror.expiredCert.sts.secondPara "Lo certificat del site acabèt benlèu, çò qu'empacha &brandShortName; d’establir una connexion securizada.">
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "De qué podètz far ?">
+
+<!ENTITY certerror.unknownIssuer.whatCanYouDoAboutIt "<p>Lo problèma ven benlèu del site web, doncas podètz pas res far per resòlver aquò.</p><p>Se navegatz sus un ret d’entrepresa o utilizatz un antivirus, podètz contactar las equipas d’assisténcias per obténer ajuda. Tanben podètz senhalar lo problèma als administrators del site web.</p>">
+
+<!ENTITY certerror.expiredCert.whatCanYouDoAboutIt2 "<p>Lo relòtge de l’ordenador es reglat sus <span id='wrongSystemTime_systemDate2'/>. Verificatz que la data, l’ora e lo fus orari son corrèctes dins los paramètres sistèma de l’ordenador, puèi actualizatz <span class='hostname'/>.</p>
+<p>Se lo relòtge e ja plan reglat, lo site web es benlèu mal configurat e i a pas res de far per resòlvre lo problèma. Ensajatz benlèu de lo senhalar a l’administrator del site.</p>">
+
+<!ENTITY certerror.badCertDomain.whatCanYouDoAboutIt "<p>Lo problèma ven benlèu del site web, podètz doncas pas i remediar. Podètz lo senhalar als administrators del site.</p>">
+
+<!ENTITY sharedLongDesc "<ul> <li>Benlèu que lo site es temporàriament indisponible o subrecargat. Tornatz ensajar pus tard ;</li> <li>Se capitatz pas de navegar sus cap de site, verificatz la connexion a la ret de vòstre ordenador ;</li> <li>Se vòstre ordenador o vòstra ret es protegit per un parafuòc o un proxy, asseguratz-vos que &brandShortName; a l'autorizacion d'accedir al Web.</li> </ul>">
+
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; a empacha lo cargament d'aquesta pagina d 'aqueste biais perque son estrategia de seguretat de contengut lo permet pas.</p>">
+
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; a empachat lo cargament d’aquesta pagina dins aqueste contèxt pr’amor que la politica X-Frame-Options de la pagina l’autoriza pas.</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>La pagina qu'ensajatz de veire pòt pas èsser afichada perque una error dins la transmission de donadas es estada detectada.</p><ul><li>Contactatz los proprietaris del site Web per los assabentar d'aqueste problèma.</li></ul>">
+
+<!ENTITY securityOverride.exceptionButton1Label "Acceptar lo risc e contunhar">
+
+<!ENTITY errorReporting.automatic2 "Senhalar de talas errors ajuda Mozilla a identificar e blocar de sites malvolents">
+<!ENTITY errorReporting.learnMore "Ne saber mai…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Contactatz lo webmèstre del site per l'assabentar d'aqueste problèma.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Informacion avançada: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.pagetitle2  "Atencion : risc probable de seguretat">
+<!ENTITY certerror.sts.pagetitle  "Connexion blocada : problèma potencial de seguretat">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation1 "<span class='hostname'></span> utiliza una estrategia de seguretat HTTP Strict Transport Security (HSTS), una connexion securizada es obligatòria per i accedir. Podètz pas apondre d’excepcion per consultar aqueste site.">
+<!ENTITY certerror.copyToClipboard.label "Copiar lo tèxte dins lo quichapapièrs">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> utiliza una tecnologia de seguretat obsolèta e vulnerabla a las atacas. Un atacant poiriá aisidament revelar d'informacions que pensèssetz èsser seguras. L'administrator del site web deurà d'en primièr adobar lo servidor abans que poguèssetz visitar lo site.</p><p>Error code : NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Pagina blocada">
+
+<!ENTITY certerror.mitm.longDesc "<span class='hostname'></span> es benlèu un site fisable, mas èra pas possible d’establir una connexion securizada. Aqueste problèma es causat per <span class='mitm-name'/>, qu’es un logicial installat siá sus vòstre ordenador, siá sus vòstre ret.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt1 "deSe vòstre logicial antivirus inclutz una foncionalitat d’analisi de las connexions chifradas (a vegada nomenada « analisi web » o « analisi HTTPS »), podètz desactivar aquesta foncionalitat. S'aquò fonciona pas, enssajatz de suprimir puèi tornar installar vòstre logicial antivirus.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt2 "S’utilizatz un ret d’entrepresa, podètz contactar lo servici informatic.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt3 "Se coneissètz pas <span class='mitm-name'/>, alara poiriá èsser una ataca e deuriatz pas anar sul site.">
+<!ENTITY certerror.mitm.sts.whatCanYouDoAboutIt3 "Se coneissètz pas <span class='mitm-name'/>, alara poiriá èsser una ataca, e i a pas res de far per accedir al site.">
+
+<!ENTITY clockSkewError.longDesc "Segon vòstre ordenador es <span id='wrongSystemTime_systemDate1'/> qu'empacha &brandShortName; de se connectar en tota seguretat. Per visitar <span class='hostname'></span>, reglatz lo relòtge de l’ordenador dins los paramètres sistèma de data d’ora e de fus orari, puèi actualizatz <span class='hostname'></span>.">
+
+<!ENTITY prefReset.longDesc "Sembla que la configuracion actuala de seguretat del ret a provocat aquesta error. Restablir los paramètres per defaut ?">
+<!ENTITY prefReset.label "Restablir los paramètres per defaut">
+
+<!ENTITY enableTls10.longDesc "Aqueste site web poiriá pas prendre en carga lo protocòl TLS 1.2, qu'es la version minimala presa en carga per &brandShortName;. L’activacion de TLS 1.0 e TLS 1.1 poiriá permetre a la connexion de foncionar.">
+<!ENTITY enableTls10.note "TLS 1.0 e TLS 1.1 seràn desactivats per totjorn per las versions venentas.">
+<!ENTITY enableTls10.label "Activar TLS 1.0 e 1.1">
+
+<!ENTITY networkProtocolError.longDesc "<p>La pagina que volètz veire pòt pas èsser afichada a causa d’una error de protocòl ret detectada.</p><ul><li>Mercés de contactar los proprietaris del site web per los informar d’aqueste problèma.</li></ul>">

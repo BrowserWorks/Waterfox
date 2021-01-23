@@ -8,6 +8,7 @@
 #define MOZILLA_GFX_RECORDINGTYPES_H_
 
 #include <ostream>
+#include <vector>
 
 #include "Logging.h"
 
@@ -28,6 +29,15 @@ template <class S, class T>
 void WriteElement(S& aStream, const T& aElement) {
   ElementStreamFormat<S, T>::Write(aStream, aElement);
 }
+template <class S, class T>
+void WriteVector(S& aStream, const std::vector<T>& aVector) {
+  size_t size = aVector.size();
+  WriteElement(aStream, size);
+  if (size) {
+    aStream.write(reinterpret_cast<const char*>(aVector.data()),
+                  sizeof(T) * size);
+  }
+}
 
 // ReadElement is disabled for enum types. Use ReadElementConstrained instead.
 template <class S, class T,
@@ -39,11 +49,26 @@ template <class S, class T>
 void ReadElementConstrained(S& aStream, T& aElement, const T& aMinValue,
                             const T& aMaxValue) {
   ElementStreamFormat<S, T>::Read(aStream, aElement);
+  if (!aStream.good()) {
+    return;
+  }
+
   if (aElement < aMinValue || aElement > aMaxValue) {
     gfxDevCrash(LogReason::InvalidConstrainedValueRead)
         << "Invalid constrained value read: value: " << int(aElement)
         << ", min: " << int(aMinValue) << ", max: " << int(aMaxValue);
     aStream.SetIsBad();
+  }
+}
+template <class S, class T>
+void ReadVector(S& aStream, std::vector<T>& aVector) {
+  size_t size;
+  ReadElement(aStream, size);
+  if (size && aStream.good()) {
+    aVector.resize(size);
+    aStream.read(reinterpret_cast<char*>(aVector.data()), sizeof(T) * size);
+  } else {
+    aVector.clear();
   }
 }
 

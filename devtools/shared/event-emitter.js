@@ -11,6 +11,7 @@ const BAD_LISTENER =
 const eventListeners = Symbol("EventEmitter/listeners");
 const onceOriginalListener = Symbol("EventEmitter/once-original-listener");
 const handler = Symbol("EventEmitter/event-handler");
+loader.lazyRequireGetter(this, "flags", "devtools/shared/flags");
 
 class EventEmitter {
   constructor() {
@@ -27,6 +28,8 @@ class EventEmitter {
    *    The type of event.
    * @param {Function|Object} listener
    *    The listener that processes the event.
+   * @returns {Function}
+   *    A function that removes the listener when called.
    */
   static on(target, type, listener) {
     if (typeof listener !== "function" && !isEventHandler(listener)) {
@@ -44,6 +47,8 @@ class EventEmitter {
     } else {
       events.set(type, new Set([listener]));
     }
+
+    return () => EventEmitter.off(target, type, listener);
   }
 
   /**
@@ -137,21 +142,25 @@ class EventEmitter {
         // To prevent side effects we're removing the listener upfront.
         EventEmitter.off(target, type, newListener);
 
+        let rv;
         if (listener) {
           if (isEventHandler(listener)) {
             // if the `listener` given is actually an object that handles the events
             // using `EventEmitter.handler`, we want to call that function, passing also
             // the event's type as first argument, and the `listener` (the object) as
             // contextual object.
-            listener[handler](type, first, ...rest);
+            rv = listener[handler](type, first, ...rest);
           } else {
             // Otherwise we'll just call it
-            listener.call(target, first, ...rest);
+            rv = listener.call(target, first, ...rest);
           }
         }
 
         // We resolve the promise once the listener is called.
         resolve(first);
+
+        // Listeners may return a promise, so pass it along
+        return rv;
       };
 
       newListener[onceOriginalListener] = listener;
@@ -160,11 +169,37 @@ class EventEmitter {
   }
 
   static emit(target, type, ...rest) {
+    EventEmitter._emit(target, type, false, ...rest);
+  }
+
+  static emitAsync(target, type, ...rest) {
+    return EventEmitter._emit(target, type, true, ...rest);
+  }
+
+  /**
+   * Emit an event of a given `type` on a given `target` object.
+   *
+   * @param {Object} target
+   *    Event target object.
+   * @param {String} type
+   *    The type of the event.
+   * @param {Boolean} async
+   *    If true, this function will wait for each listener completion.
+   *    Each listener has to return a promise, which will be awaited for.
+   * @param {any} ...rest
+   *    The arguments to pass to each listener function.
+   * @return {Promise|undefined}
+   *    If `async` argument is true, returns the promise resolved once all listeners have resolved.
+   *    Otherwise, this function returns undefined;
+   */
+  static _emit(target, type, async, ...rest) {
     logEvent(type, rest);
 
     if (!(eventListeners in target)) {
-      return;
+      return undefined;
     }
+
+    const promises = async ? [] : null;
 
     if (target[eventListeners].has(type)) {
       // Creating a temporary Set with the original listeners, to avoiding side effects
@@ -184,15 +219,27 @@ class EventEmitter {
         // event handler we're going to fire wasn't removed.
         if (listeners && listeners.has(listener)) {
           try {
+            let promise;
             if (isEventHandler(listener)) {
-              listener[handler](type, ...rest);
+              promise = listener[handler](type, ...rest);
             } else {
-              listener.call(target, ...rest);
+              promise = listener.call(target, ...rest);
+            }
+            if (async) {
+              // Assert the name instead of `constructor != Promise` in order
+              // to avoid cross compartment issues where Promise can be multiple.
+              if (!promise || promise.constructor.name != "Promise") {
+                console.warn(
+                  `Listener for event '${type}' did not return a promise.`
+                );
+              } else {
+                promises.push(promise);
+              }
             }
           } catch (ex) {
             // Prevent a bad listener from interfering with the others.
+            console.error(ex);
             const msg = ex + ": " + ex.stack;
-            console.error(msg);
             dump(msg + "\n");
           }
         }
@@ -207,6 +254,12 @@ class EventEmitter {
     if (type !== "*" && hasWildcardListeners) {
       EventEmitter.emit(target, "*", type, ...rest);
     }
+
+    if (async) {
+      return Promise.all(promises);
+    }
+
+    return undefined;
   }
 
   /**
@@ -252,7 +305,7 @@ class EventEmitter {
   }
 
   on(...args) {
-    EventEmitter.on(this, ...args);
+    return EventEmitter.on(this, ...args);
   }
 
   off(...args) {
@@ -270,6 +323,16 @@ class EventEmitter {
   emit(...args) {
     EventEmitter.emit(this, ...args);
   }
+
+  emitAsync(...args) {
+    return EventEmitter.emitAsync(this, ...args);
+  }
+
+  emitForTests(...args) {
+    if (flags.testing) {
+      EventEmitter.emit(this, ...args);
+    }
+  }
 }
 
 module.exports = EventEmitter;
@@ -283,11 +346,22 @@ let loggingEnabled = false;
 
 if (!isWorker) {
   loggingEnabled = Services.prefs.getBoolPref("devtools.dump.emit");
-  Services.prefs.addObserver("devtools.dump.emit", {
+  const observer = {
     observe: () => {
       loggingEnabled = Services.prefs.getBoolPref("devtools.dump.emit");
     },
-  });
+  };
+  Services.prefs.addObserver("devtools.dump.emit", observer);
+
+  // Also listen for Loader unload to unregister the pref observer and
+  // prevent leaking
+  const unloadObserver = function(subject) {
+    if (subject.wrappedJSObject == require("@loader/unload")) {
+      Services.prefs.removeObserver("devtools.dump.emit", observer);
+      Services.obs.removeObserver(unloadObserver, "devtools:loader:destroy");
+    }
+  };
+  Services.obs.addObserver(unloadObserver, "devtools:loader:destroy");
 }
 
 function serialize(target) {
@@ -332,11 +406,7 @@ function serialize(target) {
   }
 
   // Window
-  if (
-    target.constructor &&
-    target.constructor.name &&
-    target.constructor.name === "Window"
-  ) {
+  if (target?.constructor?.name === "Window") {
     return `window (${target.location.origin})`;
   }
 

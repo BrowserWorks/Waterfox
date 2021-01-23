@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Eiginleikar síðu">
+<!ENTITY location.label "Staðsetning:">
+<!ENTITY lastModified.label "Síðast breytt:">
+<!ENTITY titleInput.label "Titill:">
+<!ENTITY titleInput.accessKey "T">
+<!ENTITY authorInput.label "Hönnuður:">
+<!ENTITY authorInput.accessKey "H">
+<!ENTITY descriptionInput.label "Lýsing:">
+<!ENTITY descriptionInput.accessKey "L">
+<!ENTITY locationNewPage.label "[Ný síða, ekki vistuð ennþá]">
+<!ENTITY EditHEADSource1.label "Ítarlegt:">
+<!ENTITY EditHEADSource2.label "Til að breyta öðru efni í &lt;hausnum&gt;, veldu &quot;HTML frumkóði&quot; í Skoða valmyndinni eða breytiverkfæraslá.">

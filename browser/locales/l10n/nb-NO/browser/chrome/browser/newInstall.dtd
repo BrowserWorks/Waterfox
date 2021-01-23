@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
+ discrete download of Waterfox" and "version" is used to mean "the specific
+ revision number of a given Waterfox channel". These terms are not synonymous.
+-->
+
+<!ENTITY window.title "Viktige nyheter">
+<!ENTITY window.style "width: 490px">
+<!ENTITY sync "For å synkronisere informasjon du allerede har lagret i Waterfox med denne installasjonen av &brandShortName;, logg inn med din &syncBrand.fxAccount.label;.">
+<!ENTITY continue-button "Fortsett">
+
+<!ENTITY mainText "Denne installasjonen av &brandShortName; har en ny profil. Den deler ikke bokmerker, passord og brukerinnstillinger med andre installasjoner av Waterfox (inkludert Waterfox, Waterfox ESR, Waterfox Beta, Waterfox Developer Edition og Waterfox Nightly) på denne datamaskinen.">

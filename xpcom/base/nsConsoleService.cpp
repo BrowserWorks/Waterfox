@@ -24,14 +24,18 @@
 #include "nsProxyRelease.h"
 #include "nsIScriptError.h"
 #include "nsISupportsPrimitives.h"
+#include "mozilla/dom/WindowGlobalParent.h"
+#include "mozilla/dom/ContentParent.h"
+#include "mozilla/dom/BrowserParent.h"
 
 #include "mozilla/Preferences.h"
+#include "mozilla/SchedulerGroup.h"
 #include "mozilla/Services.h"
-#include "mozilla/SystemGroup.h"
 
 #if defined(ANDROID)
 #  include <android/log.h>
 #  include "mozilla/dom/ContentChild.h"
+#  include "mozilla/StaticPrefs_consoleservice.h"
 #endif
 #ifdef XP_WIN
 #  include <windows.h>
@@ -57,11 +61,8 @@ static const bool gLoggingBuffered = true;
 #ifdef XP_WIN
 static bool gLoggingToDebugger = true;
 #endif  // XP_WIN
-#if defined(ANDROID)
-static bool gLoggingLogcat = false;
-#endif  // defined(ANDROID)
 
-nsConsoleService::MessageElement::~MessageElement() {}
+nsConsoleService::MessageElement::~MessageElement() = default;
 
 nsConsoleService::nsConsoleService()
     : mCurrentSize(0),
@@ -138,16 +139,6 @@ class AddConsolePrefWatchers : public Runnable {
       : mozilla::Runnable("AddConsolePrefWatchers"), mConsole(aConsole) {}
 
   NS_IMETHOD Run() override {
-#if defined(ANDROID)
-    Preferences::AddBoolVarCache(&gLoggingLogcat, "consoleservice.logcat",
-#  ifdef RELEASE_OR_BETA
-                                 false
-#  else
-                                 true
-#  endif
-    );
-#endif  // defined(ANDROID)
-
     nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
     MOZ_ASSERT(obs);
     obs->AddObserver(mConsole, NS_XPCOM_SHUTDOWN_OBSERVER_ID, false);
@@ -169,6 +160,77 @@ nsresult nsConsoleService::Init() {
   return NS_OK;
 }
 
+nsresult nsConsoleService::MaybeForwardScriptError(nsIConsoleMessage* aMessage,
+                                                   bool* sent) {
+  *sent = false;
+
+  nsCOMPtr<nsIScriptError> scriptError = do_QueryInterface(aMessage);
+  if (!scriptError) {
+    // Not an nsIScriptError
+    return NS_OK;
+  }
+
+  uint64_t windowID;
+  nsresult rv;
+  rv = scriptError->GetInnerWindowID(&windowID);
+  NS_ENSURE_SUCCESS(rv, rv);
+  if (!windowID) {
+    // Does not set window id
+    return NS_OK;
+  }
+
+  RefPtr<mozilla::dom::WindowGlobalParent> windowGlobalParent =
+      mozilla::dom::WindowGlobalParent::GetByInnerWindowId(windowID);
+  if (!windowGlobalParent) {
+    // Could not find parent window by id
+    return NS_OK;
+  }
+
+  RefPtr<mozilla::dom::BrowserParent> browserParent =
+      windowGlobalParent->GetBrowserParent();
+  if (!browserParent) {
+    return NS_OK;
+  }
+
+  mozilla::dom::ContentParent* contentParent = browserParent->Manager();
+  if (!contentParent) {
+    return NS_ERROR_FAILURE;
+  }
+
+  nsAutoString msg, sourceName, sourceLine;
+  nsCString category;
+  uint32_t lineNum, colNum, flags;
+  uint64_t innerWindowId;
+  bool fromPrivateWindow, fromChromeContext;
+
+  rv = scriptError->GetErrorMessage(msg);
+  NS_ENSURE_SUCCESS(rv, rv);
+  rv = scriptError->GetSourceName(sourceName);
+  NS_ENSURE_SUCCESS(rv, rv);
+  rv = scriptError->GetSourceLine(sourceLine);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  rv = scriptError->GetCategory(getter_Copies(category));
+  NS_ENSURE_SUCCESS(rv, rv);
+  rv = scriptError->GetLineNumber(&lineNum);
+  NS_ENSURE_SUCCESS(rv, rv);
+  rv = scriptError->GetColumnNumber(&colNum);
+  NS_ENSURE_SUCCESS(rv, rv);
+  rv = scriptError->GetFlags(&flags);
+  NS_ENSURE_SUCCESS(rv, rv);
+  rv = scriptError->GetIsFromPrivateWindow(&fromPrivateWindow);
+  NS_ENSURE_SUCCESS(rv, rv);
+  rv = scriptError->GetIsFromChromeContext(&fromChromeContext);
+  NS_ENSURE_SUCCESS(rv, rv);
+  rv = scriptError->GetInnerWindowID(&innerWindowId);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  *sent = contentParent->SendScriptError(
+      msg, sourceName, sourceLine, lineNum, colNum, flags, category,
+      fromPrivateWindow, innerWindowId, fromChromeContext);
+  return NS_OK;
+}
+
 namespace {
 
 class LogMessageRunnable : public Runnable {
@@ -187,8 +249,6 @@ class LogMessageRunnable : public Runnable {
 
 NS_IMETHODIMP
 LogMessageRunnable::Run() {
-  MOZ_ASSERT(NS_IsMainThread());
-
   // Snapshot of listeners so that we don't reenter this hash during
   // enumeration.
   nsCOMArray<nsIConsoleListener> listeners;
@@ -237,6 +297,18 @@ nsresult nsConsoleService::LogMessageWithMode(
     return NS_ERROR_FAILURE;
   }
 
+  if (XRE_IsParentProcess() && NS_IsMainThread()) {
+    // If mMessage is a scriptError with an innerWindowId set,
+    // forward it to the matching ContentParent
+    // This enables logging from parent to content process
+    bool sent;
+    nsresult rv = MaybeForwardScriptError(aMessage, &sent);
+    NS_ENSURE_SUCCESS(rv, rv);
+    if (sent) {
+      return NS_OK;
+    }
+  }
+
   RefPtr<LogMessageRunnable> r;
   nsCOMPtr<nsIConsoleMessage> retiredMessage;
 
@@ -248,7 +320,7 @@ nsresult nsConsoleService::LogMessageWithMode(
     MutexAutoLock lock(mLock);
 
 #if defined(ANDROID)
-    if (gLoggingLogcat && aOutputMode == OutputToLog) {
+    if (StaticPrefs::consoleservice_logcat() && aOutputMode == OutputToLog) {
       nsCString msg;
       aMessage->ToString(msg);
 
@@ -326,15 +398,15 @@ nsresult nsConsoleService::LogMessageWithMode(
     // Release |retiredMessage| on the main thread in case it is an instance of
     // a mainthread-only class like nsScriptErrorWithStack and we're off the
     // main thread.
-    NS_ReleaseOnMainThreadSystemGroup("nsConsoleService::retiredMessage",
-                                      retiredMessage.forget());
+    NS_ReleaseOnMainThread("nsConsoleService::retiredMessage",
+                           retiredMessage.forget());
   }
 
   if (r) {
     // avoid failing in XPCShell tests
     nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
     if (mainThread) {
-      SystemGroup::Dispatch(TaskCategory::Other, r.forget());
+      SchedulerGroup::Dispatch(TaskCategory::Other, r.forget());
     }
   }
 
@@ -361,43 +433,23 @@ nsConsoleService::LogStringMessage(const char16_t* aMessage) {
 }
 
 NS_IMETHODIMP
-nsConsoleService::GetMessageArray(uint32_t* aCount,
-                                  nsIConsoleMessage*** aMessages) {
+nsConsoleService::GetMessageArray(
+    nsTArray<RefPtr<nsIConsoleMessage>>& aMessages) {
   MOZ_RELEASE_ASSERT(NS_IsMainThread());
 
   MutexAutoLock lock(mLock);
 
   if (mMessages.isEmpty()) {
-    /*
-     * Make a 1-length output array so that nobody gets confused,
-     * and return a count of 0.  This should result in a 0-length
-     * array object when called from script.
-     */
-    nsIConsoleMessage** messageArray =
-        (nsIConsoleMessage**)moz_xmalloc(sizeof(nsIConsoleMessage*));
-    *messageArray = nullptr;
-    *aMessages = messageArray;
-    *aCount = 0;
-
     return NS_OK;
   }
 
   MOZ_ASSERT(mCurrentSize <= mMaximumSize);
-  nsIConsoleMessage** messageArray = static_cast<nsIConsoleMessage**>(
-      moz_xmalloc(sizeof(nsIConsoleMessage*) * mCurrentSize));
+  aMessages.SetCapacity(mCurrentSize);
 
-  uint32_t i = 0;
   for (MessageElement* e = mMessages.getFirst(); e != nullptr;
        e = e->getNext()) {
-    nsCOMPtr<nsIConsoleMessage> m = e->Get();
-    m.forget(&messageArray[i]);
-    i++;
+    aMessages.AppendElement(e->Get());
   }
-
-  MOZ_ASSERT(i == mCurrentSize);
-
-  *aCount = i;
-  *aMessages = messageArray;
 
   return NS_OK;
 }

@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "Arventennañ kounadurioù ">
+<!ENTITY reminder.add.label                                "Ouzhpennañ">
+<!ENTITY reminder.add.accesskey                            "O">
+<!ENTITY reminder.remove.label                             "Lemel">
+<!ENTITY reminder.remove.accesskey                         "L">
+
+<!ENTITY reminder.reminderDetails.label                    "Munudoù ar c'hounadur">
+<!ENTITY reminder.action.label                             "Dibabit ur gwered kounadur">
+
+<!ENTITY reminder.action.alert.label                       "Diskouez ur galv diwall">
+<!ENTITY reminder.action.email.label                       "Kas ur postel">
+
+<!ENTITY alarm.units.minutes                               "munutennoù" >
+<!ENTITY alarm.units.hours                                 "eurioù" >
+<!ENTITY alarm.units.days                                  "devezhioù" >

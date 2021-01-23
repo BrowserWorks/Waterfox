@@ -18,8 +18,11 @@
 
 namespace mozilla {
 
-class DOMSVGPathSeg;
 class SVGAnimatedPathSegList;
+
+namespace dom {
+
+class DOMSVGPathSeg;
 
 /**
  * Class DOMSVGPathSegList
@@ -197,6 +200,8 @@ class DOMSVGPathSegList final : public nsISupports, public nsWrapperCache {
 
   DOMSVGPathSeg*& ItemAt(uint32_t aIndex) { return mItems[aIndex].mItem; }
 
+  void RemoveFromTearoffTable();
+
   /**
    * This struct is used in our array of mItems to provide us with somewhere to
    * store the indexes into the internal SVGPathData of the internal seg data
@@ -226,6 +231,7 @@ class DOMSVGPathSegList final : public nsISupports, public nsWrapperCache {
   bool mIsAnimValList;
 };
 
+}  // namespace dom
 }  // namespace mozilla
 
 #endif  // MOZILLA_DOMSVGPATHSEGLIST_H__

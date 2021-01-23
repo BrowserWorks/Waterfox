@@ -8,33 +8,25 @@ fi
 
 set -e -x -v
 
-# The docker image this is running in has the HACL* and NSS sources.
-# The extracted C code from HACL* is already generated and the HACL* tests were
-# successfully executed.
+# The docker image this is running in has NSS sources.
+# Get the HACL* source, containing a snapshot of the C code, extracted on the
+# HACL CI.
+# When bug 1593647 is resolved, extract the code on CI again.
+git clone -q "https://github.com/project-everest/hacl-star" ~/hacl-star
+git -C ~/hacl-star checkout -q e4311991b1526734f99f4e3a0058895a46c63e5c
 
-# Verify HACL*. Taskcluster fails when we do this in the image build.
-make -C hacl-star verify-nss -j$(nproc)
-
-# Add license header to specs
-spec_files=($(find ~/hacl-star/specs -type f -name '*.fst'))
-for f in "${spec_files[@]}"; do
-    cat /tmp/license.txt "$f" > /tmp/tmpfile && mv /tmp/tmpfile "$f"
-done
-
-# Format the extracted C code.
-cd ~/hacl-star/snapshots/nss
+# Format the C snapshot.
+cd ~/hacl-star/dist/mozilla
+cp ~/nss/.clang-format .
+find . -type f -name '*.[ch]' -exec clang-format -i {} \+
+cd ~/hacl-star/dist/kremlin
 cp ~/nss/.clang-format .
 find . -type f -name '*.[ch]' -exec clang-format -i {} \+
 
 # These diff commands will return 1 if there are differences and stop the script.
 files=($(find ~/nss/lib/freebl/verified/ -type f -name '*.[ch]'))
 for f in "${files[@]}"; do
-    diff $f $(basename "$f")
-done
-
-# Check that the specs didn't change either.
-cd ~/hacl-star/specs
-files=($(find ~/nss/lib/freebl/verified/specs -type f))
-for f in "${files[@]}"; do
-    diff $f $(basename "$f")
+    file_name=$(basename "$f")
+    hacl_file=($(find ~/hacl-star/dist/mozilla/ ~/hacl-star/dist/kremlin/ -type f -name $file_name))
+    diff $hacl_file $f
 done

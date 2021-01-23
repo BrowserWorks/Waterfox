@@ -1,0 +1,336 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "Kirja koostamine: (teema puudub)">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label "Fail">
+<!ENTITY fileMenu.accesskey "F">
+<!ENTITY newMenu.label "Uus">
+<!ENTITY newMenu.accesskey "U">
+<!ENTITY newMessage.label "Kiri">
+<!ENTITY newMessage.key "M">
+<!ENTITY newMessageCmd2.key "N">
+<!ENTITY newMessage.accesskey "K">
+<!ENTITY newContact.label "Aadressiraamatu kontakt...">
+<!ENTITY newContact.accesskey "d">
+<!ENTITY attachMenu.label "Lisamine">
+<!ENTITY attachMenu.accesskey "L">
+<!ENTITY attachFileCmd.label "Fail(id)...">
+<!ENTITY attachFileCmd.accesskey "F">
+<!ENTITY attachFileCmd.key "A">
+<!ENTITY attachCloudCmd.label "Fail(id) kasutades teenust">
+<!ENTITY attachCloudCmd.accesskey "i">
+<!ENTITY attachPageCmd.label "Veebileht...">
+<!ENTITY attachPageCmd.accesskey "e">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "Visiitkaart (vCard)">
+<!ENTITY attachVCardCmd.accesskey "V">
+<!ENTITY remindLater.label "Tuletatakse hiljem meelde">
+<!ENTITY remindLater.accesskey "T">
+<!ENTITY closeCmd.label "Sulge">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "u">
+<!ENTITY saveCmd.label "Salvesta">
+<!ENTITY saveCmd.key "S">
+<!ENTITY saveCmd.accesskey "S">
+<!ENTITY saveAsCmd.label "Salvestamine">
+<!ENTITY saveAsCmd.accesskey "l">
+<!ENTITY saveAsFileCmd.label "Failina...">
+<!ENTITY saveAsFileCmd.accesskey "F">
+<!ENTITY saveAsDraftCmd.label "Mustandina">
+<!ENTITY saveAsDraftCmd.accesskey "M">
+<!ENTITY saveAsTemplateCmd.label "Mallina">
+<!ENTITY saveAsTemplateCmd.accesskey "i">
+<!ENTITY sendNowCmd.label "Saada">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "a">
+<!ENTITY sendLaterCmd.label "Saada hiljem">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "h">
+<!ENTITY printSetupCmd.label "Printimise sätted...">
+<!ENTITY printSetupCmd.accesskey "r">
+<!ENTITY printPreviewCmd.label "Lehekülje eelvaade">
+<!ENTITY printPreviewCmd.accesskey "e">
+<!ENTITY printCmd.label "Prindi...">
+<!ENTITY printCmd.key "P">
+<!ENTITY printCmd.accesskey "P">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label "Redigeerimine">
+<!ENTITY editMenu.accesskey "R">
+<!ENTITY undoCmd.label "Võta tagasi">
+<!ENTITY undoCmd.key "Z">
+<!ENTITY undoCmd.accesskey "V">
+<!ENTITY redoCmd.label "Tee uuesti">
+<!ENTITY redoCmd.key "Y">
+<!ENTITY redoCmd.accesskey "s">
+<!ENTITY cutCmd.key "X">
+<!ENTITY copyCmd.key "C">
+<!ENTITY pasteCmd.key "V">
+<!ENTITY pasteNoFormattingCmd.key "V">
+<!ENTITY pasteAsQuotationCmd.key "o">
+<!ENTITY editRewrapCmd.accesskey "T">
+<!ENTITY deleteCmd.label "Kustuta">
+<!ENTITY deleteCmd.accesskey "u">
+<!ENTITY editRewrapCmd.label "Teisenda tavatekstiks">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY renameAttachmentCmd.label "Muuda manuse nime…">
+<!ENTITY renameAttachmentCmd.accesskey "e">
+<!ENTITY reorderAttachmentsCmd.label "Muuda manuste järjestust…">
+<!ENTITY reorderAttachmentsCmd.accesskey "j">
+<!ENTITY reorderAttachmentsCmd.key "x">
+<!ENTITY toggleAttachmentPaneCmd.label "Manuste paneel">
+<!-- LOCALIZATION NOTE (toggleAttachmentPaneCmd.accesskey):
+     For better mnemonics, toggleAttachmentPaneCmd.accesskey should be the same
+     as attachments.accesskey. -->
+<!ENTITY toggleAttachmentPaneCmd.accesskey "M">
+<!ENTITY selectAllCmd.accesskey "i">
+<!ENTITY findBarCmd.label "Otsi…">
+<!ENTITY findBarCmd.accesskey "O">
+<!ENTITY findBarCmd.key "F">
+<!ENTITY findReplaceCmd.label "Otsi ja asenda…">
+<!ENTITY findReplaceCmd.accesskey "j">
+<!ENTITY findReplaceCmd.key "H">
+<!ENTITY findAgainCmd.label "Otsi uuesti">
+<!ENTITY findAgainCmd.accesskey "u">
+<!ENTITY findAgainCmd.key "G">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "Otsi eelmine">
+<!ENTITY findPrevCmd.accesskey "O">
+<!ENTITY findPrevCmd.key "G">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+
+<!-- Reorder Attachment Panel -->
+<!ENTITY reorderAttachmentsPanel.label "Muuda manuste järjestust">
+<!ENTITY moveAttachmentTopPanelBtn.label "Liiguta esimeseks">
+<!ENTITY moveAttachmentUpPanelBtn.label "Liiguta üles">
+<!ENTITY moveAttachmentBundleUpPanelBtn.label "Liiguta koos">
+<!ENTITY moveAttachmentDownPanelBtn.label "Liiguta alla">
+<!ENTITY moveAttachmentBottomPanelBtn.label "Liiguta viimaseks">
+
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.Sort.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.Sort.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.Sort.AZ.label "Sorteeri: A - Z">
+<!ENTITY sortAttachmentsPanelBtn.Sort.ZA.label "Sorteeri: Z - A">
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.SortSelection.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.SortSelection.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.AZ.label "Sorteeri valitud: A - Z">
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.ZA.label "Sorteeri valitud: Z - A">
+<!ENTITY sortAttachmentsPanelBtn.key "y">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label "Vaade">
+<!ENTITY viewMenu.accesskey "V">
+<!ENTITY viewToolbarsMenuNew.label "Tööriistaribad">
+<!ENTITY viewToolbarsMenuNew.accesskey "T">
+<!ENTITY menubarCmd.label "Menüüriba">
+<!ENTITY menubarCmd.accesskey "M">
+<!ENTITY showCompositionToolbarCmd.label "Koostamisriba">
+<!ENTITY showCompositionToolbarCmd.accesskey "o">
+<!ENTITY showFormattingBarCmd.label "Vorminguriba">
+<!ENTITY showFormattingBarCmd.accesskey "V">
+<!ENTITY showTaskbarCmd.label "Olekuriba">
+<!ENTITY showTaskbarCmd.accesskey "l">
+<!ENTITY customizeToolbar.label "Kohanda...">
+<!ENTITY customizeToolbar.accesskey "K">
+
+<!ENTITY addressSidebar.label "Kontaktide külgriba">
+<!ENTITY addressSidebar.accesskey "t">
+
+<!-- Format Menu -->
+<!ENTITY formatMenu.label "Vormindus">
+<!ENTITY formatMenu.accesskey "m">
+
+<!-- Options Menu -->
+<!ENTITY optionsMenu.label "Valikud">
+<!ENTITY optionsMenu.accesskey "l">
+<!ENTITY checkSpellingCmd2.label "Õigekirja kontroll..">
+<!ENTITY checkSpellingCmd2.key "k">
+<!ENTITY checkSpellingCmd2.key2 "VK_F7">
+<!ENTITY checkSpellingCmd2.accesskey "j">
+<!ENTITY enableInlineSpellChecker.label "Õigekirja kontroll sisestamisel">
+<!ENTITY enableInlineSpellChecker.accesskey "g">
+<!ENTITY quoteCmd.label "Tsiteeri kirja">
+<!ENTITY quoteCmd.accesskey "s">
+
+<!--LOCALIZATION NOTE attachVCard.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCard.label "Lisa visiitkaart (vCard)">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY returnReceiptMenu.label "Kättesaamise kinnitus sees/väljas">
+<!ENTITY returnReceiptMenu.accesskey "t">
+<!ENTITY dsnMenu.label "Saatmise staatuse teavitus">
+<!ENTITY dsnMenu.accesskey "S">
+<!ENTITY deliveryFormatMenu.label "Saadetava kirja vorming">
+<!ENTITY deliveryFormatMenu.accesskey "d">
+<!ENTITY autoFormatCmd.label "Tuvastatakse automaatselt">
+<!ENTITY autoFormatCmd.accesskey "T">
+<!ENTITY plainTextFormatCmd.label "Tavaline tekst">
+<!ENTITY plainTextFormatCmd.accesskey "T">
+<!ENTITY htmlFormatCmd.label "Ainult HTML">
+<!ENTITY htmlFormatCmd.accesskey "H">
+<!ENTITY bothFormatCmd.label "Tavaline tekst ja HTML">
+<!ENTITY bothFormatCmd.accesskey "v">
+<!ENTITY priorityMenu.label "Prioriteet">
+<!ENTITY priorityMenu.accesskey "P">
+<!ENTITY priorityButton.title "Prioriteet">
+<!ENTITY priorityButton.tooltiptext "Muuda kirja prioriteeti">
+<!ENTITY priorityButton.label "Prioriteet:">
+<!ENTITY lowestPriorityCmd.label "Madalaim">
+<!ENTITY lowestPriorityCmd.accesskey "M">
+<!ENTITY lowPriorityCmd.label "Madal">
+<!ENTITY lowPriorityCmd.accesskey "a">
+<!ENTITY normalPriorityCmd.label "Normaalne">
+<!ENTITY normalPriorityCmd.accesskey "N">
+<!ENTITY highPriorityCmd.label "Kõrge">
+<!ENTITY highPriorityCmd.accesskey "k">
+<!ENTITY highestPriorityCmd.label "Kõrgeim">
+<!ENTITY highestPriorityCmd.accesskey "r">
+<!ENTITY fileCarbonCopyCmd.label "Saadetud kirja salvestamine">
+<!ENTITY fileCarbonCopyCmd.accesskey "u">
+<!ENTITY fileHereMenu.label "Salvesta siia">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label "Tööriistad">
+<!ENTITY tasksMenu.accesskey "T">
+<!ENTITY messengerCmd.label "E-post ja uudistegrupid">
+<!ENTITY messengerCmd.accesskey "E">
+<!ENTITY messengerCmd.commandkey "1">
+<!ENTITY addressBookCmd.label "Aadressiraamat">
+<!ENTITY addressBookCmd.accesskey "A">
+<!ENTITY addressBookCmd.key "B">
+<!ENTITY accountManagerCmd2.label "Kontode sätted">
+<!ENTITY accountManagerCmd2.accesskey "K">
+<!ENTITY accountManagerCmdUnix2.accesskey "S">
+<!ENTITY preferencesCmd2.label "Valikud">
+<!ENTITY preferencesCmd2.accesskey "V">
+<!ENTITY preferencesCmdUnix.label "Eelistused">
+<!ENTITY preferencesCmdUnix.accesskey "E">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY minimizeWindow.key "M">
+<!ENTITY minimizeWindow.label "Minimeeri">
+<!ENTITY bringAllToFront.label "Too kõik ette">
+<!ENTITY zoomWindow.label "Suurendus">
+<!ENTITY windowMenu.label "Aken">
+
+<!-- Mail Toolbar -->
+<!ENTITY sendButton.label "Saada">
+<!ENTITY quoteButton.label "Tsiteeri">
+<!ENTITY addressButton.label "Kontaktid">
+<!ENTITY attachButton.label "Lisa">
+<!ENTITY spellingButton.label "Õigekiri">
+<!ENTITY saveButton.label "Salvesta">
+<!ENTITY printButton.label "Prindi">
+
+<!-- Mail Toolbar Tooltips -->
+<!ENTITY sendButton.tooltip "Saada kiri kohe">
+<!ENTITY sendlaterButton.tooltip "Saada kiri hiljem">
+<!ENTITY quoteButton.tooltip "Tsiteeri eelnevat kirja">
+<!ENTITY addressButton.tooltip "Vali kirja saaja aadressiraamatust">
+<!ENTITY attachButton.tooltip2 "Lisa manus">
+<!ENTITY spellingButton.tooltip "Kontrolli valiku või terve kirja õigekirja">
+<!ENTITY saveButton.tooltip "Salvesta see kiri">
+<!ENTITY cutButton.tooltip              "Lõika">
+<!ENTITY copyButton.tooltip             "Kopeeri">
+<!ENTITY pasteButton.tooltip            "Aseta">
+<!ENTITY printButton.tooltip "Prindi see kiri">
+
+<!-- Headers -->
+<!ENTITY fromAddr.accesskey "j">
+<!ENTITY subject.accesskey "e">
+<!ENTITY attachmentBucketCloseButton.tooltip "Peida manuste paneel">
+
+<!-- Format Toolbar, imported from editorAppShell.xul -->
+<!ENTITY SmileButton.tooltip "Lisa emotikon">
+<!ENTITY smiley1Cmd.label "Naeratus">
+<!ENTITY smiley2Cmd.label "Mossitus">
+<!ENTITY smiley3Cmd.label "Silmapilgutus">
+<!ENTITY smiley4Cmd.label "Keelenäitamine">
+<!ENTITY smiley5Cmd.label "Naermine">
+<!ENTITY smiley6Cmd.label "Häbenemine">
+<!ENTITY smiley7Cmd.label "Kõhklemine">
+<!ENTITY smiley8Cmd.label "Üllatus">
+<!ENTITY smiley9Cmd.label "Suudlus">
+<!ENTITY smiley10Cmd.label "Karjumine">
+<!ENTITY smiley11Cmd.label "Lahe">
+<!ENTITY smiley12Cmd.label "Raha suus">
+<!ENTITY smiley13Cmd.label "Jalg suus">
+<!ENTITY smiley14Cmd.label "Süütuke">
+<!ENTITY smiley15Cmd.label "Nutmine">
+<!ENTITY smiley16Cmd.label "Kokkusurutud huuled">
+
+<!-- Message Pane Context Menu -->
+<!ENTITY spellCheckNoSuggestions.label "Soovitusi ei leitud">
+<!ENTITY spellCheckIgnoreWord.label "Ignoreeri sõna">
+<!ENTITY spellCheckIgnoreWord.accesskey "I">
+<!ENTITY spellCheckAddToDictionary.label "Lisa sõnaraamatusse">
+<!ENTITY spellCheckAddToDictionary.accesskey "s">
+<!ENTITY undo.label "Võta tagasi">
+<!ENTITY undo.accesskey "V">
+<!ENTITY cut.label "Lõika">
+<!ENTITY cut.accesskey "L">
+<!ENTITY copy.label "Kopeeri">
+<!ENTITY copy.accesskey "o">
+<!ENTITY paste.label "Aseta">
+<!ENTITY paste.accesskey "e">
+<!ENTITY pasteQuote.label "Aseta tsitaadina">
+<!ENTITY pasteQuote.accesskey "t">
+
+<!-- Attachment Item and List Context Menus -->
+<!ENTITY openAttachment.label "Ava">
+<!ENTITY openAttachment.accesskey "A">
+<!ENTITY delete.label "Kustuta">
+<!ENTITY delete.accesskey "u">
+<!ENTITY removeAttachment.label "Eemalda manus">
+<!ENTITY removeAttachment.accesskey "E">
+<!ENTITY renameAttachment.label "Nimeta ümber...">
+<!ENTITY renameAttachment.accesskey "N">
+<!ENTITY reorderAttachments.label "Muuda manuste järjestust…">
+<!ENTITY reorderAttachments.accesskey "j">
+<!ENTITY removeAllAttachments.label "Eemalda kõik manused">
+<!ENTITY removeAllAttachments.accesskey "õ">
+<!ENTITY selectAll.label "Vali kõik">
+<!ENTITY selectAll.accesskey "l">
+<!ENTITY attachFile.label "Lisa fail(id)...">
+<!ENTITY attachFile.accesskey "i">
+<!ENTITY attachCloud.label "Lisa fail(id) kasutades teenust…">
+<!ENTITY attachCloud.accesskey "k">
+<!ENTITY convertCloud.label "Liiguta pilve või pilvest tavaliseks manuseks…">
+<!ENTITY convertCloud.accesskey "p">
+<!ENTITY cancelUpload.label "Katkesta üleslaadimine">
+<!ENTITY cancelUpload.accesskey "t">
+<!ENTITY convertRegularAttachment.label "Tavaline manus">
+<!ENTITY convertRegularAttachment.accesskey "v">
+<!ENTITY attachPage.label "Lisa veebileht...">
+<!ENTITY attachPage.accesskey "S">
+
+<!-- Attachment Pane Header Bar Context Menu -->
+<!-- LOCALIZATION NOTE (initiallyShowAttachmentPane.label):
+     Should use the same wording as startExpandedCmd.label
+     in msgHdrViewOverlay.dtd. -->
+<!ENTITY initiallyShowAttachmentPane.label "Kirja avamisel kuvatakse manused kohe">
+<!ENTITY initiallyShowAttachmentPane.accesskey "K">
+
+<!-- Spell checker context menu items -->
+<!ENTITY spellAddDictionaries.label "Lisa sõnaraamatuid…">
+<!ENTITY spellAddDictionaries.accesskey "L">
+
+<!-- Title for the address picker panel -->
+<!ENTITY addressesSidebarTitle.label "Kontaktid">
+
+<!-- Identity popup customize menuitem -->
+<!ENTITY customizeFromAddress.label "Kohanda saatja aadressi…">
+<!ENTITY customizeFromAddress.accesskey "a">
+
+<!-- Accessibility name for the document -->
+<!ENTITY aria.message.bodyName "Kirja sisu">
+
+<!-- Status Bar -->
+<!ENTITY languageStatusButton.tooltip "Kontrolli õigekirja">
+<!ENTITY encodingStatusPanel.tooltip "Teksti kodeering">

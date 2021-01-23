@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY linksHeader.label "Comportament dels enllaços">
+<!ENTITY newWindow.label "Comportament en obrir enllaços">
+<!ENTITY newWindowDescription.label "Obrir enllaços vol dir obrir-los en una finestra nova en:">
+<!ENTITY newWindowRestriction.label "Quan els scripts vulguin obrir una finestra nova:">
+<!ENTITY external.label "Enllaços d'altres aplicacions">
+<!ENTITY externalDescription.label "Obre els enllaços d'altres aplicacions en:">
+
+<!ENTITY openCurrent.label "La pestanya/finestra actual">
+<!ENTITY newWindowGroupCurrent.accesskey "c">
+<!ENTITY externalGroupCurrent.accesskey "u">
+
+<!ENTITY openTab.label "Una pestanya nova en la finestra actual">
+<!ENTITY newWindowGroupTab.accesskey "n">
+<!ENTITY externalGroupTab.accesskey "e">
+
+<!ENTITY openWindow.label "Una finestra nova">
+<!ENTITY newWindowGroupWindow.accesskey "f">
+<!ENTITY externalGroupWindow.accesskey "o">
+
+<!ENTITY divertAll.label "Desvia sempre les finestres en pestanyes">
+<!ENTITY divertAll.accesskey "D">
+<!ENTITY divertNoFeatures.label "No desviïs les finestres pròpies en pestanyes">
+<!ENTITY divertNoFeatures.accesskey "s">
+<!ENTITY dontDivert.label "Obre sempre finestres noves">
+<!ENTITY dontDivert.accesskey "n">

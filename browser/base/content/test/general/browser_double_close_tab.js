@@ -67,14 +67,10 @@ add_task(async function() {
         doCompletion();
       });
       // Click again:
-      document
-        .getAnonymousElementByAttribute(testTab, "anonid", "close-button")
-        .click();
+      testTab.closeButton.click();
     });
     // Click once:
-    document
-      .getAnonymousElementByAttribute(testTab, "anonid", "close-button")
-      .click();
+    testTab.closeButton.click();
   });
   await TestUtils.waitForCondition(() => !testTab.parentNode);
   ok(!testTab.parentNode, "Tab should be closed completely");
@@ -84,7 +80,7 @@ registerCleanupFunction(async function() {
   if (testTab.parentNode) {
     // Remove the handler, or closing this tab will prove tricky:
     try {
-      await ContentTask.spawn(testTab.linkedBrowser, null, function() {
+      await SpecialPowers.spawn(testTab.linkedBrowser, [], function() {
         content.window.onbeforeunload = null;
       });
     } catch (ex) {}

@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- These are added to the Advanced - Scripts & Plugins panel -->
+
+<!ENTITY enbPluginCheckMailNews.label     "Levelező és hírolvasó">
+<!ENTITY enbPluginCheckMailNews.accesskey "e">
+<!-- These are added to the Window menu -->
+
+<!ENTITY mail.label                       "Levelező és hírolvasó">
+<!ENTITY mail.accesskey                   "L">
+<!ENTITY addressbook.label                "Címjegyzék">
+<!ENTITY addressbook.accesskey            "C">
+<!-- These are added to Preferences dialog -->
+
+<!ENTITY viewingMessages.label            "Üzenetek megjelenítése">
+<!ENTITY notifications.label              "Értesítések">
+<!ENTITY composingMessages.label          "Szerkesztés">
+<!ENTITY format.label                     "Küldés formátuma">
+<!ENTITY address.label                    "Címzés">
+<!ENTITY junk.label                       "Levélszemét kezelése">
+<!ENTITY tags.label                       "Címkék">
+<!ENTITY return.label                     "Tértivevények">
+<!ENTITY characterEncoding2.label         "Kódolás">
+<!ENTITY networkStorage.label             "Hálózat nélkül és lemezterület">

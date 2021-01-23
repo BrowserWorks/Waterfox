@@ -4,13 +4,14 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include <stdlib.h>
+#include "mozilla/gfx/Swizzle.h"
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/NullPrincipal.h"
 #include "nsMimeTypes.h"
-#include "nsIURL.h"
 #include "nsXULAppAPI.h"
 #include "AndroidBridge.h"
 #include "nsIconChannel.h"
+#include "nsIIconURI.h"
 #include "nsIStringStream.h"
 #include "nsNetUtil.h"
 #include "nsComponentManagerUtils.h"
@@ -37,7 +38,7 @@ static nsresult CallRemoteGetIconForExtension(const nsACString& aFileExt,
   NS_ENSURE_TRUE(aBuf != nullptr, NS_ERROR_NULL_POINTER);
 
   // An array has to be used to get data from remote process
-  InfallibleTArray<uint8_t> bits;
+  nsTArray<uint8_t> bits;
   uint32_t bufSize = aIconSize * aIconSize * 4;
 
   if (!ContentChild::GetSingleton()->SendGetIconForExtension(
@@ -65,12 +66,20 @@ static nsresult moz_icon_to_channel(nsIURI* aURI, const nsACString& aFileExt,
   // moz-icon data should have two bytes for the size,
   // then the ARGB pixel values with pre-multiplied Alpha
   const int channels = 4;
-  long int buf_size = 2 + channels * height * width;
-  uint8_t* const buf = (uint8_t*)moz_xmalloc(buf_size);
+  CheckedInt32 buf_size =
+      4 + channels * CheckedInt32(height) * CheckedInt32(width);
+  if (!buf_size.isValid()) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
+  uint8_t* const buf = (uint8_t*)moz_xmalloc(buf_size.value());
   uint8_t* out = buf;
 
   *(out++) = width;
   *(out++) = height;
+  *(out++) = uint8_t(mozilla::gfx::SurfaceFormat::R8G8B8A8);
+
+  // Set all bits to ensure in nsIconDecoder we color manage and premultiply.
+  *(out++) = 0xFF;
 
   nsresult rv;
   if (XRE_IsParentProcess()) {
@@ -80,33 +89,16 @@ static nsresult moz_icon_to_channel(nsIURI* aURI, const nsACString& aFileExt,
   }
   NS_ENSURE_SUCCESS(rv, rv);
 
-  // Encode the RGBA data
-  const uint8_t* in = out;
-  for (int y = 0; y < height; ++y) {
-    for (int x = 0; x < width; ++x) {
-      uint8_t r = *(in++);
-      uint8_t g = *(in++);
-      uint8_t b = *(in++);
-      uint8_t a = *(in++);
-#define DO_PREMULTIPLY(c_) uint8_t(uint16_t(c_) * uint16_t(a) / uint16_t(255))
-      *(out++) = DO_PREMULTIPLY(b);
-      *(out++) = DO_PREMULTIPLY(g);
-      *(out++) = DO_PREMULTIPLY(r);
-      *(out++) = a;
-#undef DO_PREMULTIPLY
-    }
-  }
-
   nsCOMPtr<nsIStringInputStream> stream =
       do_CreateInstance("@mozilla.org/io/string-input-stream;1", &rv);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  rv = stream->AdoptData((char*)buf, buf_size);
+  rv = stream->AdoptData((char*)buf, buf_size.value());
   NS_ENSURE_SUCCESS(rv, rv);
 
   // nsIconProtocolHandler::NewChannel will provide the correct loadInfo for
   // this iconChannel. Use the most restrictive security settings for the
-  // temporary loadInfo to make sure the channel can not be openend.
+  // temporary loadInfo to make sure the channel can not be opened.
   nsCOMPtr<nsIPrincipal> nullPrincipal =
       NullPrincipal::CreateWithoutOriginAttributes();
   return NS_NewInputStreamChannel(

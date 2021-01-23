@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identityListDesc.label "Κάντε ρύθμιση των παραμέτρων αυτής της ταυτότητας:">
+
+<!ENTITY settingsTab.label       "Ρυθμίσεις">
+<!ENTITY copiesFoldersTab.label "Αντίγραφα &amp; φάκελοι">
+<!ENTITY addressingTab.label    "Σύνταξη &amp; διευθυνσιοδότηση">
+
+<!ENTITY publicData.label        "Δημόσια Δεδομένα">
+<!ENTITY privateData.label       "Ιδιωτικά Δεδομένα">
+<!ENTITY identityAlias.label     "Ετικέτα ταυτότητας:">
+<!ENTITY identityAlias.accesskey "τ">

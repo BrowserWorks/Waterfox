@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Βοηθός λογαριασμών συνομιλίας">
+
+<!ENTITY accountProtocolTitle.label   "Δίκτυο συνομιλιών">
+<!ENTITY accountProtocolInfo.label    "Παρακαλώ επιλέξτε το δίκτυο του λογαριασμού συνομιλίας σας.">
+<!ENTITY accountProtocolField.label   "Δίκτυο:">
+<!ENTITY accountProtocolGetMore.label "Περισσότερα…">
+
+<!ENTITY accountUsernameTitle.label   "Όνομα χρήστη">
+<!ENTITY accountUsernameDuplicate.label "Αυτός ο λογαριασμός έχει ήδη ρυθμιστεί!">
+
+<!ENTITY accountPasswordTitle.label   "Κωδικός">
+<!ENTITY accountPasswordInfo.label    "Παρακαλώ εισάγετε τον κωδικό σας στο παρακάτω πλαίσιο.">
+<!ENTITY accountPasswordField.label   "Κωδικός:">
+<!ENTITY accountPasswordManager.label "Ο κωδικός που εισαγάγατε εδώ θα αποθηκευτεί στη Διαχείριση κωδικών. Αφήστε αυτό το πλαίσιο κενό αν θέλετε να εισάγετε τον κωδικό σας κάθε φορά που θα συνδέεστε σε αυτόν τον λογαριασμό.">
+
+<!ENTITY accountAdvancedTitle.label   "Προηγμένες επιλογές">
+<!ENTITY accountAdvancedInfo.label    "Μπορείτε, αν θέλετε, να παρακάμψετε αυτό το βήμα.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Ειδοποίηση σε νέα Mail">
+<!ENTITY accountAliasGroupbox.caption "Τοπικό Alias">
+<!ENTITY accountAliasField.label      "Ψευδώνυμο:">
+<!ENTITY accountAliasInfo.label       "Αυτό θα εμφανίζεται μόνο στις συνομιλίες σας που συμμετέχετε, οι απομακρυσμένες επαφές σας δεν θα το βλέπουν.">
+<!ENTITY accountProxySettings.caption "Ρυθμίσεις διαμεσολαβητή">
+<!ENTITY accountProxySettings.change.label     "Αλλαγή…">
+<!ENTITY accountProxySettings.change.accessKey "γ">
+
+<!ENTITY accountSummaryTitle.label   "Σύνοψη">
+<!ENTITY accountSummaryInfo.label    "Μια σύνοψη των πληροφοριών που έχετε εισάγει εμφανίζεται παρακάτω. Ελέγξτε τις πληροφορίες πριν να δημιουργηθεί ο λογαριασμός.">
+<!ENTITY accountSummary.connectNow.label "Σύνδεση τώρα σε αυτόν το λογαριασμό.">

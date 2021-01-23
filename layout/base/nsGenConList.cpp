@@ -70,14 +70,6 @@ inline int32_t PseudoCompareType(nsIFrame* aFrame, nsIContent** aContent) {
   return 0;
 }
 
-#ifdef DEBUG
-static bool IsXBLInvolved(nsIContent* aContent1, nsIContent* aContent2) {
-  auto* ancestor = nsContentUtils::GetCommonAncestor(aContent1, aContent2);
-  return ancestor && ancestor->IsElement() &&
-         ancestor->AsElement()->GetXBLBinding();
-}
-#endif
-
 /* static */
 bool nsGenConList::NodeAfter(const nsGenConNode* aNode1,
                              const nsGenConNode* aNode2) {
@@ -105,10 +97,7 @@ bool nsGenConList::NodeAfter(const nsGenConNode* aNode1,
   content2 = frame2->GetContent();
 
   int32_t cmp = nsLayoutUtils::CompareTreePosition(content1, content2);
-  // DoCompareTreePosition doesn't know about XBL anonymous content, and we
-  // probably shouldn't bother teaching it about it.
-  MOZ_ASSERT(cmp != 0 || IsXBLInvolved(content1, content2),
-             "same content, different frames");
+  MOZ_ASSERT(cmp != 0, "same content, different frames");
   return cmp > 0;
 }
 

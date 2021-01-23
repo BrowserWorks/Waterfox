@@ -9,7 +9,6 @@
 #include "mozilla/dom/DOMException.h"
 #include "mozilla/net/MozURL.h"
 
-#include "mozIThirdPartyUtil.h"
 #include "nsIEventTarget.h"
 #include "nsIInputStream.h"
 #include "nsILineInputStream.h"
@@ -120,11 +119,8 @@ nsresult CreatePrincipalInfo(nsILineInputStream* aStream,
     return rv;
   }
 
-  // CSP will be applied during the script load.
-  nsTArray<mozilla::ipc::ContentSecurityPolicy> policies;
   aEntry->principal() = mozilla::ipc::ContentPrincipalInfo(
-      attrs, origin, aEntry->scope(), Nothing(), std::move(policies),
-      baseDomain);
+      attrs, origin, aEntry->scope(), Nothing(), baseDomain);
 
   return NS_OK;
 }
@@ -308,7 +304,7 @@ void ServiceWorkerRegistrar::RemoveAll() {
     MOZ_ASSERT(mDataLoaded);
 
     // Let's take a copy in order to inform StorageActivityService.
-    data = mData;
+    data = mData.Clone();
 
     deleted = !mData.IsEmpty();
     mData.Clear();
@@ -1110,9 +1106,11 @@ void ServiceWorkerRegistrar::ProfileStarted() {
     return;
   }
 
-  rv = GetShutdownPhase()->AddBlocker(
-      this, NS_LITERAL_STRING(__FILE__), __LINE__,
-      NS_LITERAL_STRING("ServiceWorkerRegistrar: Flushing data"));
+  nsAutoString blockerName;
+  MOZ_ALWAYS_SUCCEEDS(GetName(blockerName));
+
+  rv = GetShutdownPhase()->AddBlocker(this, NS_LITERAL_STRING(__FILE__),
+                                      __LINE__, blockerName);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return;
   }

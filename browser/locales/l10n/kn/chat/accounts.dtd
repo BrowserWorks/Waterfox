@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Account manager window for Instantbird -->
+
+<!ENTITY accounts.title                      "ಖಾತೆಗಳು - &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "ಕ್ಷಿಪ್ರ ಸಂದೇಶಗಾರನ ಸ್ಥಿತಿಗತಿ">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "ಹೊಸ ಖಾತೆ">
+<!ENTITY accountManager.newAccount.accesskey "N">
+<!ENTITY accountManager.close.label          "ಮುಚ್ಚು">
+<!ENTITY accountManager.close.accesskey      "l">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+
+
+
+<!ENTITY account.connect.label        "ಸಂಪರ್ಕಿಸು">
+<!ENTITY account.connect.accesskey    "o">
+<!ENTITY account.disconnect.label     "ಸಂಪರ್ಕ ತೆಗೆ">
+<!ENTITY account.disconnect.accesskey "i">
+<!ENTITY account.delete.label         "ಅಳಿಸು">
+<!ENTITY account.delete.accesskey     "D">
+<!ENTITY account.edit.label           "ಲಕ್ಷಣಗಳು">
+<!ENTITY account.edit.accesskey       "P">
+<!ENTITY account.moveup.label         "ಮೇಲಕ್ಕೆ ಜರುಗಿಸು">
+<!ENTITY account.movedown.label       "ಕೆಳಕ್ಕೆ ಜರುಗಿಸು">
+
+
+
+
+
+
+
+
+

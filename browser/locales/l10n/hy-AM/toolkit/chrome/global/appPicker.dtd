@@ -1,0 +1,7 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY NoAppFound.label      "Այս ֆայլի տեսակի համար ոչ մի ծրագիր չի գտնվել:">
+<!ENTITY BrowseButton.label    "Ընտրել...">
+<!ENTITY SendMsg.label         "Այս ֆայլը բացել՝">

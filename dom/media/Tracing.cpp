@@ -12,6 +12,30 @@
 
 using namespace mozilla;
 
+mozilla::AsyncLogger gAudioCallbackTraceLogger("AudioCallbackTracing");
+static std::atomic<int> gTracingStarted(0);
+
+void StartAudioCallbackTracing() {
+#ifdef TRACING
+  int cnt = gTracingStarted.fetch_add(1, std::memory_order_seq_cst);
+  if (cnt == 0) {
+    // This is a noop if the logger has not been enabled.
+    gAudioCallbackTraceLogger.Start();
+    gAudioCallbackTraceLogger.Log("[");
+  }
+#endif
+}
+
+void StopAudioCallbackTracing() {
+#ifdef TRACING
+  int cnt = gTracingStarted.fetch_sub(1, std::memory_order_seq_cst);
+  if (cnt == 1) {
+    // This is a noop if the logger has not been enabled.
+    gAudioCallbackTraceLogger.Stop();
+  }
+#endif
+}
+
 uint64_t AutoTracer::NowInUs() {
   static TimeStamp base = TimeStamp::Now();
   return (TimeStamp::Now() - base).ToMicroseconds();

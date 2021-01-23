@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-composer.xul -->
+
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+<!ENTITY  pref.composer.title           "Composer">
+<!ENTITY  recentFiles.title             "Menu Faqesh Së Fundi">
+<!ENTITY  documentsInMenu.label         "Numri më i madh i faqeve të listuara:">
+<!ENTITY  documentsInMenu.accesskey     "n">
+<!ENTITY  savingFiles.title             "Kur Ruhen apo Botohen Faqe">
+<!ENTITY  preserveExisting.label        "Ruaj formatimin origjinal të burimit">
+<!ENTITY  preserveExisting.accesskey    "f">
+<!ENTITY  preserveExisting.tooltip      "Ruani ndërprerje rreshtash të formatimit origjinal të faqes">
+<!ENTITY  saveAssociatedFiles.label     "Ruaj figura dhe kartela të tjera të përshoqëruara, kur ruhen faqe">
+<!ENTITY  saveAssociatedFiles.accesskey "s">
+<!ENTITY  showPublishDialog.label       "Trego përherë dialog Botimi kur botohen faqe">
+<!ENTITY  showPublishDialog.accesskey   "T">
+<!ENTITY  composerEditing.label         "Përpunim">
+<!ENTITY  maintainStructure.label       "Ruaj skemë tabele kur futen apo hiqen kuti">
+<!ENTITY  maintainStructure.tooltip     "Ruani formën katërkëndore për tabelën duke futur apo hequr kuti vetvetiu">
+<!ENTITY  maintainStructure.accesskey   "R">
+<!ENTITY  useCSS.label                  "Përdor stile CSS në vend të elementesh dhe atributesh HTML">
+<!ENTITY  useCSS.accesskey              "P">
+<!ENTITY  crInPCreatesNewP.label        "Kthimi në një paragraf krijon përherë paragraf të ri">
+<!ENTITY  crInPCreatesNewP.accesskey    "K">

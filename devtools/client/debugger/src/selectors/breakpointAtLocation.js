@@ -4,14 +4,22 @@
 
 // @flow
 
-import { getSelectedSource } from "../reducers/sources";
+import {
+  getSelectedSource,
+  getBreakpointPositionsForLine,
+} from "../reducers/sources";
 import { getBreakpointsList } from "../reducers/breakpoints";
 import { isGenerated } from "../utils/source";
 
-import type { Breakpoint } from "../types";
+import type {
+  Breakpoint,
+  BreakpointPosition,
+  PartialPosition,
+  SourceLocation,
+} from "../types";
 import type { State } from "../reducers/types";
 
-function getColumn(column, selectedSource) {
+function getColumn(column, selectedSource): ?number {
   if (column) {
     return column;
   }
@@ -19,7 +27,7 @@ function getColumn(column, selectedSource) {
   return isGenerated(selectedSource) ? undefined : 0;
 }
 
-function getLocation(bp, selectedSource) {
+function getLocation(bp, selectedSource): SourceLocation {
   return isGenerated(selectedSource)
     ? bp.generatedLocation || bp.location
     : bp.location;
@@ -40,7 +48,7 @@ function findBreakpointAtLocation(
   breakpoints,
   selectedSource,
   { line, column }: LineColumn
-) {
+): ?Breakpoint {
   return breakpoints.find(breakpoint => {
     const location = getLocation(breakpoint, selectedSource);
     const sameLine = location.line === line;
@@ -56,6 +64,27 @@ function findBreakpointAtLocation(
   });
 }
 
+// returns the closest active column breakpoint
+function findClosestBreakpoint(breakpoints, column) {
+  if (!breakpoints || breakpoints.length == 0) {
+    return null;
+  }
+
+  const firstBreakpoint = breakpoints[0];
+  return breakpoints.reduce((closestBp, currentBp) => {
+    const currentColumn = currentBp.generatedLocation.column;
+    const closestColumn = closestBp.generatedLocation.column;
+    // check that breakpoint has a column.
+    if (column && currentColumn && closestColumn) {
+      const currentDistance = Math.abs(currentColumn - column);
+      const closestDistance = Math.abs(closestColumn - column);
+
+      return currentDistance < closestDistance ? currentBp : closestBp;
+    }
+    return closestBp;
+  }, firstBreakpoint);
+}
+
 /*
  * Finds a breakpoint at a location (line, column) of the
  * selected source.
@@ -63,7 +92,10 @@ function findBreakpointAtLocation(
  * This is useful for finding a breakpoint when the
  * user clicks in the gutter or on a token.
  */
-export function getBreakpointAtLocation(state: State, location: LineColumn) {
+export function getBreakpointAtLocation(
+  state: State,
+  location: LineColumn
+): ?Breakpoint {
   const selectedSource = getSelectedSource(state);
   if (!selectedSource) {
     throw new Error("no selectedSource");
@@ -83,4 +115,31 @@ export function getBreakpointsAtLine(state: State, line: number): Breakpoint[] {
   return breakpoints.filter(
     breakpoint => getLocation(breakpoint, selectedSource).line === line
   );
+}
+
+export function getClosestBreakpoint(
+  state: State,
+  position: PartialPosition
+): ?Breakpoint {
+  const columnBreakpoints = getBreakpointsAtLine(state, position.line);
+  const breakpoint = findClosestBreakpoint(columnBreakpoints, position.column);
+  return (breakpoint: any);
+}
+
+export function getClosestBreakpointPosition(
+  state: State,
+  position: PartialPosition
+): ?BreakpointPosition {
+  const selectedSource = getSelectedSource(state);
+  if (!selectedSource) {
+    throw new Error("no selectedSource");
+  }
+
+  const columnBreakpoints = getBreakpointPositionsForLine(
+    state,
+    selectedSource.id,
+    position.line
+  );
+
+  return findClosestBreakpoint(columnBreakpoints, position.column);
 }

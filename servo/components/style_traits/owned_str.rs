@@ -13,7 +13,7 @@ use std::ops::{Deref, DerefMut};
 /// A struct that basically replaces a Box<str>, but with a defined layout,
 /// suitable for FFI.
 #[repr(C)]
-#[derive(Default, Clone, PartialEq, Eq, MallocSizeOf, ToShmem)]
+#[derive(Clone, Default, Eq, MallocSizeOf, PartialEq, ToShmem)]
 pub struct OwnedStr(OwnedSlice<u8>);
 
 impl fmt::Debug for OwnedStr {
@@ -35,6 +35,34 @@ impl DerefMut for OwnedStr {
     #[inline(always)]
     fn deref_mut(&mut self) -> &mut Self::Target {
         unsafe { std::str::from_utf8_unchecked_mut(&mut *self.0) }
+    }
+}
+
+impl OwnedStr {
+    /// Convert the OwnedStr into a boxed str.
+    #[inline]
+    pub fn into_box(self) -> Box<str> {
+        self.into_string().into_boxed_str()
+    }
+
+    /// Convert the OwnedStr into a `String`.
+    #[inline]
+    pub fn into_string(self) -> String {
+        unsafe { String::from_utf8_unchecked(self.0.into_vec()) }
+    }
+}
+
+impl From<OwnedStr> for String {
+    #[inline]
+    fn from(b: OwnedStr) -> Self {
+        b.into_string()
+    }
+}
+
+impl From<OwnedStr> for Box<str> {
+    #[inline]
+    fn from(b: OwnedStr) -> Self {
+        b.into_box()
     }
 }
 

@@ -1,3 +1,7 @@
+/* eslint-env mozilla/frame-script */
+
+"use strict";
+
 const SCRIPT_URL = SimpleTest.getTestFileURL("file_chromecommon.js");
 
 var gExpectedCookies;
@@ -14,7 +18,14 @@ function setupTest(uri, cookies, loads) {
 
   var prefSet = new Promise(resolve => {
     SpecialPowers.pushPrefEnv(
-      { set: [["network.cookie.cookieBehavior", 1]] },
+      {
+        set: [
+          ["network.cookie.cookieBehavior", 1],
+          // cookieBehavior 1 allows cookies from chrome script if we enable
+          // exceptions.
+          ["network.cookie.rejectForeignWithExceptions.enabled", false],
+        ],
+      },
       resolve
     );
   });

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Taq Richinil Molaj taq K'ojlib'äl">
+
+<!ENTITY Legend.label "Moch'öch'">
+<!ENTITY Legend.accesskey "M">
+
+<!ENTITY EditLegendText.label "Tinuk' Moch'öch':">
+<!ENTITY EditLegendText.accesskey "T">
+<!ENTITY LegendAlign.label "Ticholajïx Moch'öch' b'i'aj:">
+<!ENTITY LegendAlign.accesskey "T">
+<!ENTITY AlignDefault.label "K'o wi">
+<!ENTITY AlignLeft.label "Xokon">
+<!ENTITY AlignCenter.label "Pa nik'aj">
+<!ENTITY AlignRight.label "Ajkiq'a'">
+
+<!ENTITY RemoveFieldSet.label "Keyuj Molaj taq K'ojlib'äl">
+<!ENTITY RemoveFieldSet.accesskey "K">

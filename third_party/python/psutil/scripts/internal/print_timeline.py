@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright (c) 2009 Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
@@ -13,7 +13,7 @@ import subprocess
 
 entry = """\
 - {date}:
-  `{ver} <https://pypi.python.org/pypi?name=psutil&version={ver}&:action=files>`__ -
+  `{ver} <https://pypi.org/project/psutil/#files>`__ -
   `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#{nodotver}>`__ -
   `diff <https://github.com/giampaolo/psutil/compare/{prevtag}...{tag}#files_bucket>`__"""  # NOQA
 
@@ -30,7 +30,7 @@ def get_tag_date(tag):
 
 def main():
     releases = []
-    out = sh("git tags")
+    out = sh("git tag")
     for line in out.split('\n'):
         tag = line.split(' ')[0]
         ver = tag.replace('release-', '')

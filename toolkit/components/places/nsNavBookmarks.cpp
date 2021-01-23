@@ -18,6 +18,7 @@
 #include "mozilla/Preferences.h"
 #include "mozilla/storage.h"
 #include "mozilla/dom/PlacesBookmarkAddition.h"
+#include "mozilla/dom/PlacesBookmarkRemoved.h"
 #include "mozilla/dom/PlacesObservers.h"
 #include "mozilla/dom/PlacesVisit.h"
 
@@ -49,12 +50,6 @@ int64_t NS_NavBookmarksTotalSyncChanges() {
 
 PLACES_FACTORY_SINGLETON_IMPLEMENTATION(nsNavBookmarks, gBookmarksService)
 
-#define BOOKMARKS_ANNO_PREFIX "bookmarks/"
-#define BOOKMARKS_TOOLBAR_FOLDER_ANNO \
-  NS_LITERAL_CSTRING(BOOKMARKS_ANNO_PREFIX "toolbarFolder")
-#define SYNC_PARENT_ANNO "sync/parent"
-#define SQLITE_MAX_VARIABLE_NUMBER 999
-
 namespace {
 
 #define SKIP_TAGS(condition) ((condition) ? SkipTags : DontSkip)
@@ -64,11 +59,6 @@ bool SkipTags(nsCOMPtr<nsINavBookmarkObserver> obs) {
   bool skipTags = false;
   (void)obs->GetSkipTags(&skipTags);
   return skipTags;
-}
-bool SkipDescendants(nsCOMPtr<nsINavBookmarkObserver> obs) {
-  bool skipDescendantsOnItemRemoval = false;
-  (void)obs->GetSkipDescendantsOnItemRemoval(&skipDescendantsOnItemRemoval);
-  return skipDescendantsOnItemRemoval;
 }
 
 template <typename Method, typename DataType>
@@ -208,7 +198,7 @@ nsresult nsNavBookmarks::Init() {
   NS_ENSURE_STATE(history);
   history->AddObserver(this, true);
   AutoTArray<PlacesEventType, 1> events;
-  events.AppendElement(PlacesEventType::Page_visited, fallible);
+  events.AppendElement(PlacesEventType::Page_visited);
   PlacesObservers::AddListener(events, this);
 
   // DO NOT PUT STUFF HERE that can fail. See observer comment above.
@@ -649,14 +639,27 @@ nsNavBookmarks::RemoveItem(int64_t aItemId, uint16_t aSource) {
     NS_WARNING_ASSERTION(uri, "Invalid URI in RemoveItem");
   }
 
-  NOTIFY_BOOKMARKS_OBSERVERS(
-      mCanNotify, mObservers,
-      SKIP_TAGS(bookmark.parentId == tagsRootId ||
-                bookmark.grandParentId == tagsRootId),
-      OnItemRemoved(bookmark.id, bookmark.parentId, bookmark.position,
-                    bookmark.type, uri, bookmark.guid, bookmark.parentGuid,
-                    aSource));
+  if (mCanNotify) {
+    Sequence<OwningNonNull<PlacesEvent>> events;
+    RefPtr<PlacesBookmarkRemoved> bookmarkRef = new PlacesBookmarkRemoved();
+    bookmarkRef->mItemType = bookmark.type;
+    bookmarkRef->mId = bookmark.id;
+    bookmarkRef->mParentId = bookmark.parentId;
+    bookmarkRef->mIndex = bookmark.position;
+    if (bookmark.type == TYPE_BOOKMARK) {
+      bookmarkRef->mUrl.Assign(NS_ConvertUTF8toUTF16(bookmark.url));
+    }
+    bookmarkRef->mGuid.Assign(bookmark.guid);
+    bookmarkRef->mParentGuid.Assign(bookmark.parentGuid);
+    bookmarkRef->mSource = aSource;
+    bookmarkRef->mIsTagging =
+        bookmark.parentId == tagsRootId || bookmark.grandParentId == tagsRootId;
+    bookmarkRef->mIsDescendantRemoval = false;
+    bool success = !!events.AppendElement(bookmarkRef.forget(), fallible);
+    MOZ_RELEASE_ASSERT(success);
 
+    PlacesObservers::NotifyListeners(events);
+  }
   if (bookmark.type == TYPE_BOOKMARK && bookmark.grandParentId == tagsRootId &&
       uri) {
     // If the removed bookmark was child of a tag container, notify a tags
@@ -936,12 +939,24 @@ nsresult nsNavBookmarks::RemoveFolderChildren(int64_t aFolderId,
       NS_WARNING_ASSERTION(uri, "Invalid URI in RemoveFolderChildren");
     }
 
-    NOTIFY_BOOKMARKS_OBSERVERS(
-        mCanNotify, mObservers,
-        ((child.grandParentId == tagsRootId) ? SkipTags : SkipDescendants),
-        OnItemRemoved(child.id, child.parentId, child.position, child.type, uri,
-                      child.guid, child.parentGuid, aSource));
+    if (mCanNotify) {
+      Sequence<OwningNonNull<PlacesEvent>> events;
+      RefPtr<PlacesBookmarkRemoved> bookmark = new PlacesBookmarkRemoved();
+      bookmark->mItemType = TYPE_BOOKMARK;
+      bookmark->mId = child.id;
+      bookmark->mParentId = child.parentId;
+      bookmark->mIndex = child.position;
+      bookmark->mUrl.Assign(NS_ConvertUTF8toUTF16(child.url));
+      bookmark->mGuid.Assign(child.guid);
+      bookmark->mParentGuid.Assign(child.parentGuid);
+      bookmark->mSource = aSource;
+      bookmark->mIsTagging = (child.grandParentId == tagsRootId);
+      bookmark->mIsDescendantRemoval = (child.grandParentId != tagsRootId);
+      bool success = !!events.AppendElement(bookmark.forget(), fallible);
+      MOZ_RELEASE_ASSERT(success);
 
+      PlacesObservers::NotifyListeners(events);
+    }
     if (child.type == TYPE_BOOKMARK && child.grandParentId == tagsRootId &&
         uri) {
       // If the removed bookmark was a child of a tag container, notify all
@@ -1278,7 +1293,14 @@ nsresult nsNavBookmarks::InsertTombstones(
     return NS_OK;
   }
 
-  size_t maxRowsPerChunk = SQLITE_MAX_VARIABLE_NUMBER / 2;
+  nsCOMPtr<mozIStorageConnection> conn = mDB->MainConn();
+  NS_ENSURE_STATE(conn);
+
+  int32_t variableLimit = 0;
+  nsresult rv = conn->GetVariableLimit(&variableLimit);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  size_t maxRowsPerChunk = variableLimit / 2;
   for (uint32_t startIndex = 0; startIndex < aTombstones.Length();
        startIndex += maxRowsPerChunk) {
     size_t rowsPerChunk =
@@ -1304,7 +1326,6 @@ nsresult nsNavBookmarks::InsertTombstones(
     mozStorageStatementScoper scoper(stmt);
 
     uint32_t paramIndex = 0;
-    nsresult rv;
     for (uint32_t i = 0; i < rowsPerChunk; ++i) {
       const TombstoneData& tombstone = aTombstones[startIndex + i];
       rv = stmt->BindUTF8StringByIndex(paramIndex++, tombstone.guid);
@@ -1742,7 +1763,7 @@ nsresult nsNavBookmarks::GetBookmarksForURI(
     rv = stmt->GetInt32(6, &bookmark.syncStatus);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    NS_ENSURE_TRUE(aBookmarks.AppendElement(bookmark), NS_ERROR_OUT_OF_MEMORY);
+    aBookmarks.AppendElement(bookmark);
   }
 
   return NS_OK;
@@ -1763,7 +1784,8 @@ nsNavBookmarks::RemoveObserver(nsINavBookmarkObserver* aObserver) {
 }
 
 NS_IMETHODIMP
-nsNavBookmarks::GetObservers(nsTArray<RefPtr<nsINavBookmarkObserver>>& aObservers) {
+nsNavBookmarks::GetObservers(
+    nsTArray<RefPtr<nsINavBookmarkObserver>>& aObservers) {
   aObservers.Clear();
 
   if (!mCanNotify) return NS_OK;
@@ -1798,7 +1820,8 @@ void nsNavBookmarks::NotifyItemVisited(const ItemVisitData& aData) {
 void nsNavBookmarks::NotifyItemChanged(const ItemChangeData& aData) {
   // A guid must always be defined.
   MOZ_ASSERT(!aData.bookmark.guid.IsEmpty());
-
+  // No more supported.
+  MOZ_ASSERT(!aData.isAnnotation, "Don't notify item annotation changes");
   PRTime lastModified = aData.bookmark.lastModified;
   if (aData.updateLastModified) {
     lastModified = RoundedPRNow();
@@ -1921,10 +1944,7 @@ nsNavBookmarks::OnPageChanged(nsIURI* aURI, uint32_t aChangedAttribute,
     changeData.bookmark.type = TYPE_BOOKMARK;
 
     // Favicons may be set to either pure URIs or to folder URIs
-    bool isPlaceURI;
-    rv = aURI->SchemeIs("place", &isPlaceURI);
-    NS_ENSURE_SUCCESS(rv, rv);
-    if (isPlaceURI) {
+    if (aURI->SchemeIs("place")) {
       nsNavHistory* history = nsNavHistory::GetHistoryService();
       NS_ENSURE_TRUE(history, NS_ERROR_OUT_OF_MEMORY);
 

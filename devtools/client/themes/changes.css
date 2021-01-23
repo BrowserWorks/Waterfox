@@ -101,7 +101,12 @@
   border-radius: 3px;
   color: var(--theme-body-color);
   fill: currentColor;
-  padding: 4px 5px 4px 25px;
+  padding-block: 4px;
+  padding-inline: 25px 5px;
+}
+
+.changes__copy-all-changes-button:dir(rtl) {
+  background-position-x: right 4px;
 }
 
 .changes__copy-all-changes-button:hover,
@@ -160,6 +165,7 @@
 
 .changes__declaration {
   overflow-wrap: break-word;
+  white-space: pre-wrap;
 }
 
 .changes__declaration-name {
@@ -172,7 +178,8 @@
   position: relative;
 }
 
-.diff-marker {
+.diff-add::before,
+.diff-remove::before {
   position: absolute;
   left: 5px;
 }
@@ -181,7 +188,8 @@
   background-color: var(--diff-add-background-color);
 }
 
-.diff-add .diff-marker {
+.diff-add::before {
+  content: "+";
   color: var(--diff-add-text-color);
 }
 
@@ -189,10 +197,15 @@
   background-color: var(--diff-remove-background-color);
 }
 
-.diff-remove .diff-marker{
+.diff-remove::before {
+  content: "-";
   color: var(--diff-remove-text-color);
 }
 
 #sidebar-panel-changes .devtools-sidepanel-no-result :not(:first-child) {
   font-style: normal;
+}
+
+#sidebar-panel-changes.inspector-tabpanel {
+  min-width: 0;
 }

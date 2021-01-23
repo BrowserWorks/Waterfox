@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "डिस्क स्थान सहेजने के लिये, डाउनलोड मत करें:">
+<!ENTITY offlineNotDownload.label "इससे बड़ा संदेश">
+<!ENTITY offlineNotDownload.accesskey "M">
+<!ENTITY kb.label "KB">
+<!ENTITY daysOld.label "दिन पुराना">
+<!ENTITY message.label "संदेश">
+<!ENTITY nntpNotDownloadRead.label "संदेश पढ़े">
+<!ENTITY nntpNotDownloadRead.accesskey "R">
+<!ENTITY nntpDownloadMsg.label "इससे ज्यादा संदेश">
+<!ENTITY nntpDownloadMsg.accesskey "e">
+<!ENTITY retentionCleanup.label "डिस्क स्थान प्राप्त करने के लिये, पुराना संदेश को स्थायी रूप से मिटा दिया जायेगा">
+<!ENTITY retentionKeepMsg.label "इससे ज्याादा संदेश मिटायें">
+<!ENTITY retentionKeepMsg.accesskey "m">
+<!ENTITY retentionKeepAll.label "किसी संदेश को मत मिटायें">
+<!ENTITY retentionKeepAll.accesskey "A">
+<!ENTITY offlineSelectNntp.label "ऑफलाइन प्रयोग के लिये न्यूजग्रूप चुनें...">
+<!ENTITY diskspaceGroupTitle.label "डिस्क स्थान">
+

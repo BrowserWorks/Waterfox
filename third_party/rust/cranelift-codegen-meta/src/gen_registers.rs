@@ -1,3 +1,4 @@
+//! Generate the ISA-specific registers.
 use crate::cdsl::isa::TargetIsa;
 use crate::cdsl::regs::{RegBank, RegClass};
 use crate::error;
@@ -5,7 +6,7 @@ use crate::srcgen::Formatter;
 use cranelift_entity::EntityRef;
 
 fn gen_regbank(fmt: &mut Formatter, reg_bank: &RegBank) {
-    let names = if reg_bank.names.len() > 0 {
+    let names = if !reg_bank.names.is_empty() {
         format!(r#""{}""#, reg_bank.names.join(r#"", ""#))
     } else {
         "".to_string()
@@ -56,6 +57,13 @@ fn gen_regclass(isa: &TargetIsa, reg_class: &RegClass, fmt: &mut Formatter) {
         fmtln!(fmt, "first: {},", reg_bank.first_unit + reg_class.start);
         fmtln!(fmt, "subclasses: {:#x},", reg_class.subclass_mask());
         fmtln!(fmt, "mask: [{}],", mask);
+        fmtln!(
+            fmt,
+            "pinned_reg: {:?},",
+            reg_bank
+                .pinned_reg
+                .map(|index| index + reg_bank.first_unit as u16 + reg_class.start as u16)
+        );
         fmtln!(fmt, "info: &INFO,");
     });
     fmtln!(fmt, "};");
@@ -132,7 +140,7 @@ fn gen_isa(isa: &TargetIsa, fmt: &mut Formatter) {
     fmtln!(fmt, "}");
 }
 
-pub fn generate(isa: &TargetIsa, filename: &str, out_dir: &str) -> Result<(), error::Error> {
+pub(crate) fn generate(isa: &TargetIsa, filename: &str, out_dir: &str) -> Result<(), error::Error> {
     let mut fmt = Formatter::new();
     gen_isa(&isa, &mut fmt);
     fmt.update_file(filename, out_dir)?;

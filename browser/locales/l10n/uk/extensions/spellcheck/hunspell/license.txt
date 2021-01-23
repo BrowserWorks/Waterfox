@@ -1,0 +1,36 @@
+This is Ukrainian spelling dictionary for Waterfox and Thunderbird,
+that use hunspell as spelling engine and it is based on 
+dictionary of dict_uk project https://github.com/brown-uk/dict_uk
+
+xpi package authors:
+	Yaroslav Krytsun <slavko7@gmail.com>, 2006
+	Andriy Rysin <arysin@gmail.com>, 2007 — 2020
+This is Ukrainian spelling dictionary for myspell & hunspell version 5.0.6
+
+Copyright (C) 1999
+	Volodymyr Yakovchuk
+	Oleg Podgurniy
+
+Copyright (C) 2001 
+	Dmytro Kovalyov
+	Maksym Polyakov
+	Andriy Rysin
+
+Copyright (C) 2002
+	Valentyn Solomko
+	Volodymyr M. Lisivka
+
+Copyright (C) 2005
+	Andriy Rysin
+	Eugeniy Meshcheryakov
+	Dmytro Kovalyov
+
+Copyright (C) 2009
+	Andriy Rysin
+
+Copyright (C) 2017 - 2020
+	Andriy Rysin
+	Vasyl Starko
+	BrUK team https://r2u.org.ua/corpus
+
+This dictionary is licensed under MPL (Mozilla Public License) 1.1 license.

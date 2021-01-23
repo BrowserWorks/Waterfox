@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Skoazeller Enporzhiañ">
+
+<!ENTITY importFromWin.label            "Enporzhiañ an dibarzhioù, perzhioù ar c'hontoù, karned chomlec'hioù, siloù ha titouroù all adalek :">
+<!ENTITY importFromNonWin.label         "Enporzhiañ gwellvezioù, perzhioù ar c'hontoù, ar c'harned chomlec'hioù, siloù ha titouroù all adalek :">
+<!ENTITY importSourceNotFound.label     "N'eus bet kavet arload ebet evit enporzhiañ roadennoù.">
+
+<!ENTITY importFromNothing.label        "Na enporzhiañ netra">
+<!ENTITY importFromNothing.accesskey    "e">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 pe nevesoc'h">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "Enporzhiañ arventennoù ha teuliadoù posteloù adalek">
+<!ENTITY importItems.title              "Elfennoù da enporzhiañ">
+<!ENTITY importItems.label              "Diuzañ pe elfennoù da enporzhiañ :">
+
+<!ENTITY migrating.title                "Oc'h enporzhiañ …">
+<!ENTITY migrating.label                "Emañ an elfennoù a heul o vezañ enporzhiet …">
+
+<!ENTITY selectProfile.title            "Diuzañ un aelad">
+<!ENTITY selectProfile.label            "An aeladoù a heul a c'hell bezañ enporzhiet adalek :">
+
+<!ENTITY done.title                     "Enporzhiañ klokaet">
+<!ENTITY done.label                     "Enporzhiet mat eo bet an elfennoù a heul :">

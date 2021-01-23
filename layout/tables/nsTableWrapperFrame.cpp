@@ -17,7 +17,6 @@
 #include "prinrval.h"
 #include "nsGkAtoms.h"
 #include "nsHTMLParts.h"
-#include "nsIServiceManager.h"
 #include "nsDisplayList.h"
 #include "nsLayoutUtils.h"
 #include "nsIFrameInlines.h"
@@ -31,6 +30,12 @@ using namespace mozilla::layout;
 /* virtual */
 nscoord nsTableWrapperFrame::GetLogicalBaseline(
     WritingMode aWritingMode) const {
+  if (StyleDisplay()->IsContainLayout()) {
+    // We have no baseline. Fall back to the inherited impl which is
+    // appropriate for this situation.
+    return nsContainerFrame::GetLogicalBaseline(aWritingMode);
+  }
+
   nsIFrame* kid = mFrames.FirstChild();
   if (!kid) {
     MOZ_ASSERT_UNREACHABLE("no inner table");
@@ -46,7 +51,7 @@ nsTableWrapperFrame::nsTableWrapperFrame(ComputedStyle* aStyle,
                                          ClassID aID)
     : nsContainerFrame(aStyle, aPresContext, aID) {}
 
-nsTableWrapperFrame::~nsTableWrapperFrame() {}
+nsTableWrapperFrame::~nsTableWrapperFrame() = default;
 
 NS_QUERYFRAME_HEAD(nsTableWrapperFrame)
   NS_QUERYFRAME_ENTRY(nsTableWrapperFrame)
@@ -121,9 +126,9 @@ void nsTableWrapperFrame::AppendFrames(ChildListID aListID,
   MarkNeedsDisplayItemRebuild();
 }
 
-void nsTableWrapperFrame::InsertFrames(ChildListID aListID,
-                                       nsIFrame* aPrevFrame,
-                                       nsFrameList& aFrameList) {
+void nsTableWrapperFrame::InsertFrames(
+    ChildListID aListID, nsIFrame* aPrevFrame,
+    const nsLineList::iterator* aPrevFrameLine, nsFrameList& aFrameList) {
   MOZ_ASSERT(kCaptionList == aListID, "unexpected child list");
   MOZ_ASSERT(aFrameList.IsEmpty() || aFrameList.FirstChild()->IsTableCaption(),
              "inserting non-caption frame into captionList");
@@ -147,7 +152,7 @@ void nsTableWrapperFrame::RemoveFrame(ChildListID aListID,
   if (HasSideCaption()) {
     // The old caption isize had an effect on the inner table isize, so
     // we're going to need to reflow it. Mark it dirty
-    InnerTableFrame()->AddStateBits(NS_FRAME_IS_DIRTY);
+    InnerTableFrame()->MarkSubtreeDirty();
   }
 
   // Remove the frame and destroy it
@@ -160,13 +165,14 @@ void nsTableWrapperFrame::RemoveFrame(ChildListID aListID,
 
 void nsTableWrapperFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
                                            const nsDisplayListSet& aLists) {
-  // No border, background or outline are painted because they all belong
-  // to the inner table.
+  // No border or background is painted because they belong to the inner table.
+  // The outline belongs to the wrapper frame so it can contain the caption.
 
   // If there's no caption, take a short cut to avoid having to create
   // the special display list set and then sort it.
   if (mCaptionFrames.IsEmpty()) {
     BuildDisplayListForInnerTable(aBuilder, aLists);
+    DisplayOutline(aBuilder, aLists);
     return;
   }
 
@@ -187,6 +193,8 @@ void nsTableWrapperFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
   set.PositionedDescendants()->SortByContentOrder(GetContent());
   set.Outlines()->SortByContentOrder(GetContent());
   set.MoveTo(aLists);
+
+  DisplayOutline(aBuilder, aLists);
 }
 
 void nsTableWrapperFrame::BuildDisplayListForInnerTable(
@@ -235,11 +243,13 @@ void nsTableWrapperFrame::InitChildReflowInput(nsPresContext& aPresContext,
       pCollapsePadding = &collapsePadding;
     }
     // Propagate our stored CB size if present, minus any margins.
+    //
+    // Note that inner table computed margins are always zero, they're inherited
+    // by the table wrapper, so we need to get our margin from aOuterRI.
     if (!HasAnyStateBits(NS_FRAME_OUT_OF_FLOW)) {
-      LogicalSize* cb = GetProperty(GridItemCBSizeProperty());
-      if (cb) {
+      if (LogicalSize* cb = GetProperty(GridItemCBSizeProperty())) {
         cbSize.emplace(*cb);
-        *cbSize -= aReflowInput.ComputedLogicalMargin().Size(wm);
+        *cbSize -= aOuterRI.ComputedLogicalMargin().Size(wm);
       }
     }
     if (!cbSize) {
@@ -378,10 +388,10 @@ nscoord nsTableWrapperFrame::ChildShrinkWrapISize(
   if (MOZ_UNLIKELY(isGridItem) && !StyleMargin()->HasInlineAxisAuto(aWM)) {
     auto inlineAxisAlignment =
         aWM.IsOrthogonalTo(parent->GetWritingMode())
-            ? StylePosition()->UsedAlignSelf(parent->Style())
-            : StylePosition()->UsedJustifySelf(parent->Style());
-    if (inlineAxisAlignment == NS_STYLE_ALIGN_NORMAL ||
-        inlineAxisAlignment == NS_STYLE_ALIGN_STRETCH) {
+            ? StylePosition()->UsedAlignSelf(parent->Style())._0
+            : StylePosition()->UsedJustifySelf(parent->Style())._0;
+    if (inlineAxisAlignment == StyleAlignFlags::NORMAL ||
+        inlineAxisAlignment == StyleAlignFlags::STRETCH) {
       flags = nsIFrame::ComputeSizeFlags::eDefault;
     }
   }
@@ -760,7 +770,7 @@ void nsTableWrapperFrame::OuterDoReflowChild(nsPresContext* aPresContext,
 
   // Use the current position as a best guess for placement.
   LogicalPoint childPt = aChildFrame->GetLogicalPosition(wm, zeroCSize);
-  uint32_t flags = NS_FRAME_NO_MOVE_FRAME;
+  ReflowChildFlags flags = ReflowChildFlags::NoMoveFrame;
 
   // We don't want to delete our next-in-flow's child if it's an inner table
   // frame, because table wrapper frames always assume that their inner table
@@ -768,7 +778,7 @@ void nsTableWrapperFrame::OuterDoReflowChild(nsPresContext* aPresContext,
   // a next-in-flow of an already complete table wrapper frame, then it will
   // take care of removing it's inner table frame.
   if (aChildFrame == InnerTableFrame()) {
-    flags |= NS_FRAME_NO_DELETE_NEXT_IN_FLOW_CHILD;
+    flags |= ReflowChildFlags::NoDeleteNextInFlowChild;
   }
 
   ReflowChild(aChildFrame, aPresContext, aMetrics, aChildRI, wm, childPt,
@@ -954,7 +964,8 @@ void nsTableWrapperFrame::Reflow(nsPresContext* aPresContext,
     GetCaptionOrigin(captionSide, containSize, innerSize, innerMargin,
                      captionSize, captionMargin, captionOrigin, wm);
     FinishReflowChild(mCaptionFrames.FirstChild(), aPresContext, *captionMet,
-                      captionRI.ptr(), wm, captionOrigin, containerSize, 0);
+                      captionRI.ptr(), wm, captionOrigin, containerSize,
+                      ReflowChildFlags::Default);
     captionRI.reset();
   }
   // XXX If the bsize is constrained then we need to check whether
@@ -964,7 +975,7 @@ void nsTableWrapperFrame::Reflow(nsPresContext* aPresContext,
   GetInnerOrigin(captionSide, containSize, captionSize, captionMargin,
                  innerSize, innerMargin, innerOrigin, wm);
   FinishReflowChild(InnerTableFrame(), aPresContext, innerMet, innerRI.ptr(),
-                    wm, innerOrigin, containerSize, 0);
+                    wm, innerOrigin, containerSize, ReflowChildFlags::Default);
   innerRI.reset();
 
   if (mCaptionFrames.NotEmpty()) {
@@ -977,7 +988,8 @@ void nsTableWrapperFrame::Reflow(nsPresContext* aPresContext,
 
   if (GetPrevInFlow()) {
     ReflowOverflowContainerChildren(aPresContext, aOuterRI,
-                                    aDesiredSize.mOverflowAreas, 0, aStatus);
+                                    aDesiredSize.mOverflowAreas,
+                                    ReflowChildFlags::Default, aStatus);
   }
 
   FinishReflowWithAbsoluteFrames(aPresContext, aDesiredSize, aOuterRI, aStatus);

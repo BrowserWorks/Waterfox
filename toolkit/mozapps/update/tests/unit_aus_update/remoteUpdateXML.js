@@ -50,7 +50,7 @@ async function run_test() {
     // detailsURL when it isn't specified in the update xml.
 
     let bestUpdate = gAUS
-      .selectUpdate(aArgs.updates, aArgs.updateCount)
+      .selectUpdate(aArgs.updates)
       .QueryInterface(Ci.nsIWritablePropertyBag);
     Assert.equal(
       bestUpdate.type,
@@ -254,7 +254,11 @@ async function run_test() {
   updates = getRemoteUpdateString({}, patches);
   gResponseBody = getRemoteUpdatesXMLString(updates);
   await waitForUpdateCheck(true).then(aArgs => {
-    Assert.equal(aArgs.updateCount, 0, "the update count" + MSG_SHOULD_EQUAL);
+    Assert.equal(
+      aArgs.updates.length,
+      0,
+      "the update count" + MSG_SHOULD_EQUAL
+    );
   });
 
   debugDump(
@@ -290,7 +294,7 @@ async function run_test() {
   updates += getRemoteUpdateString(updateProps, patches);
   gResponseBody = getRemoteUpdatesXMLString(updates);
   await waitForUpdateCheck(true, { updateCount: 2 }).then(aArgs => {
-    let bestUpdate = gAUS.selectUpdate(aArgs.updates, aArgs.updateCount);
+    let bestUpdate = gAUS.selectUpdate(aArgs.updates);
     Assert.ok(!bestUpdate, "there shouldn't be an update available");
   });
 
@@ -305,7 +309,7 @@ async function run_test() {
   updates = getRemoteUpdateString(updateProps, patches);
   gResponseBody = getRemoteUpdatesXMLString(updates);
   await waitForUpdateCheck(true, { updateCount: 1 }).then(aArgs => {
-    let bestUpdate = gAUS.selectUpdate(aArgs.updates, aArgs.updateCount);
+    let bestUpdate = gAUS.selectUpdate(aArgs.updates);
     Assert.ok(!!bestUpdate, "there should be one update available");
     Assert.equal(
       bestUpdate.appVersion,

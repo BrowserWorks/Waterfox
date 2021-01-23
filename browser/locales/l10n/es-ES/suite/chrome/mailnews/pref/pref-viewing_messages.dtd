@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.viewing.messages.title "Visualización">
+<!ENTITY style.label "Estilo:">
+<!ENTITY style.accesskey "S">
+<!ENTITY regular.label "Normal">
+<!ENTITY bold.label "Negrita">
+<!ENTITY italic.label "Cursiva">
+<!ENTITY boldItalic.label "Neg. curs.">
+<!ENTITY size.label "Tamaño:">
+<!ENTITY size.accesskey "a">
+<!ENTITY bigger.label "Mayor">
+<!ENTITY smaller.label "Menor">
+<!ENTITY color.label "Color:">
+<!ENTITY color.accesskey "C">
+<!ENTITY displayPlainText.caption "Mensajes de texto sin formato">
+<!ENTITY fontPlainText.label "Tipo de letra:">
+<!ENTITY fontPlainText.accesskey "d">
+<!ENTITY displayQuoted.label "Configuración de mensajes citados:">
+<!ENTITY wrapInMsg.label "Ajustar texto al ancho de la ventana">
+<!ENTITY wrapInMsg.accesskey "j">
+<!ENTITY convertEmoticons.label "Mostrar emoticones como gráficos">
+<!ENTITY convertEmoticons.accesskey "M">
+<!ENTITY generalMessageDisplay.caption "General">
+<!ENTITY autoMarkAsRead.label "Marcar automáticamente mensajes como leídos">
+<!ENTITY autoMarkAsRead.accesskey "m">
+<!ENTITY markAsReadAfter.label "Sólo tras ser mostrado durante">
+<!ENTITY markAsReadAfter.accesskey "u">
+<!ENTITY secondsLabel.label "segundos">
+<!ENTITY openingMessages.label "Al abrir mensajes, mostrarlos en:">
+<!ENTITY newWindowRadio.label "Una ventana mens. nueva">
+<!ENTITY newWindowRadio.accesskey "n">
+<!ENTITY existingWindowRadio.label "Una ventana mens. existente">
+<!ENTITY existingWindowRadio.accesskey "e">
+<!ENTITY disableContent.label "Bloquear imágenes y otro contenido de orígenes remotos.">
+<!ENTITY disableContent.accesskey "B">
+<!ENTITY showCondensedAddresses.label "Mostrar sólo el atributo 'nombre mostrado' para las personas de mi libreta de direcciones">
+<!ENTITY showCondensedAddresses.accesskey "o">
+<!ENTITY closeMsgWindowOnDelete.label "Cerrar la ventana de mensajes al eliminar el mensaje">
+<!ENTITY closeMsgWindowOnDelete.accesskey "l">

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Proprietates de lista">
+
+<!ENTITY ListType.label "Typo de lista">
+<!ENTITY bulletStyle.label "Stilo de punctos:">
+<!ENTITY startingNumber.label "Numero initial:">
+<!ENTITY startingNumber.accessKey "i">
+<!ENTITY none.value "Nulle">
+<!ENTITY bulletList.value "Lista a punctos (sin numeros)">
+<!ENTITY numberList.value "Lista numerate">
+<!ENTITY definitionList.value "Lista de definitiones">
+<!ENTITY changeEntireListRadio.label "Cambiar tote le lista">
+<!ENTITY changeEntireListRadio.accessKey "C">
+<!ENTITY changeSelectedRadio.label "Cambiar solo elementos seligite">
+<!ENTITY changeSelectedRadio.accessKey "e">

@@ -18,21 +18,21 @@ add_test(function test_udp_message_raw_data() {
   info("Port assigned : " + socket.port);
   socket.asyncListen({
     QueryInterface: ChromeUtils.generateQI([Ci.nsIUDPSocketListener]),
-    onPacketReceived: function(aSocket, aMessage) {
+    onPacketReceived(aSocket, aMessage) {
       let recv_data = String.fromCharCode.apply(null, aMessage.rawData);
       Assert.equal(recv_data, HELLO_WORLD);
       Assert.equal(recv_data, aMessage.data);
       socket.close();
       run_next_test();
     },
-    onStopListening: function(aSocket, aStatus) {},
+    onStopListening(aSocket, aStatus) {},
   });
 
   let rawData = new Uint8Array(HELLO_WORLD.length);
   for (let i = 0; i < HELLO_WORLD.length; i++) {
     rawData[i] = HELLO_WORLD.charCodeAt(i);
   }
-  let written = socket.send("127.0.0.1", socket.port, rawData, rawData.length);
+  let written = socket.send("127.0.0.1", socket.port, rawData);
   Assert.equal(written, HELLO_WORLD.length);
 });
 
@@ -46,13 +46,13 @@ add_test(function test_udp_send_stream() {
   socket.init(-1, true, Services.scriptSecurityManager.getSystemPrincipal());
   socket.asyncListen({
     QueryInterface: ChromeUtils.generateQI([Ci.nsIUDPSocketListener]),
-    onPacketReceived: function(aSocket, aMessage) {
+    onPacketReceived(aSocket, aMessage) {
       let recv_data = String.fromCharCode.apply(null, aMessage.rawData);
       Assert.equal(recv_data, HELLO_WORLD);
       socket.close();
       run_next_test();
     },
-    onStopListening: function(aSocket, aStatus) {},
+    onStopListening(aSocket, aStatus) {},
   });
 
   let stream = Cc["@mozilla.org/io/string-input-stream;1"].createInstance(
@@ -73,21 +73,17 @@ add_test(function test_udp_message_zero_length() {
   info("Port assigned : " + socket.port);
   socket.asyncListen({
     QueryInterface: ChromeUtils.generateQI([Ci.nsIUDPSocketListener]),
-    onPacketReceived: function(aSocket, aMessage) {
+    onPacketReceived(aSocket, aMessage) {
       let recv_data = String.fromCharCode.apply(null, aMessage.rawData);
       Assert.equal(recv_data, EMPTY_MESSAGE);
       Assert.equal(recv_data, aMessage.data);
       socket.close();
       run_next_test();
     },
-    onStopListening: function(aSocket, aStatus) {},
+    onStopListening(aSocket, aStatus) {},
   });
 
   let rawData = new Uint8Array(EMPTY_MESSAGE.length);
-  let written = socket.send("127.0.0.1", socket.port, rawData, rawData.length);
+  let written = socket.send("127.0.0.1", socket.port, rawData);
   Assert.equal(written, EMPTY_MESSAGE.length);
 });
-
-function run_test() {
-  run_next_test();
-}

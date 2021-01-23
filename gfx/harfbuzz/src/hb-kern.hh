@@ -52,8 +52,7 @@ struct hb_kern_machine_t
     OT::hb_ot_apply_context_t c (1, font, buffer);
     c.set_lookup_mask (kern_mask);
     c.set_lookup_props (OT::LookupFlag::IgnoreMarks);
-    OT::hb_ot_apply_context_t::skipping_iterator_t &skippy_iter = c.iter_input;
-    skippy_iter.init (&c);
+    auto &skippy_iter = c.iter_input;
 
     bool horizontal = HB_DIRECTION_IS_HORIZONTAL (buffer->props.direction);
     unsigned int count = buffer->len;
@@ -82,11 +81,11 @@ struct hb_kern_machine_t
 
 
       if (likely (!kern))
-        goto skip;
+	goto skip;
 
       if (horizontal)
       {
-        if (scale)
+	if (scale)
 	  kern = font->em_scale_x (kern);
 	if (crossStream)
 	{
@@ -104,7 +103,7 @@ struct hb_kern_machine_t
       }
       else
       {
-        if (scale)
+	if (scale)
 	  kern = font->em_scale_y (kern);
 	if (crossStream)
 	{

@@ -85,7 +85,7 @@ add_task(async function test() {
         TESTROOT + "file_pdfjs_test.pdf#zoom=100"
       );
 
-      await ContentTask.spawn(newTabBrowser, TESTS, async function(
+      await SpecialPowers.spawn(newTabBrowser, [TESTS], async function(
         contentTESTS
       ) {
         let document = content.document;
@@ -139,7 +139,7 @@ add_task(async function test() {
             }
 
             // Dispatch the event for changing the zoom
-            ev = new Event(subTest.action.event);
+            ev = new content.Event(subTest.action.event);
           } else {
             // We zoom using keyboard
             // Simulate key press
@@ -185,6 +185,87 @@ add_task(async function test() {
 
         var viewer = content.wrappedJSObject.PDFViewerApplication;
         await viewer.close();
+      });
+    }
+  );
+});
+
+// Performs a SpecialPowers.spawn round-trip to ensure that any setup
+// that needs to be done in the content process by any pending tasks has
+// a chance to complete before continuing.
+function waitForRoundTrip(browser) {
+  return SpecialPowers.spawn(browser, [], () => {});
+}
+
+async function waitForRenderAndGetWidth(newTabBrowser) {
+  return SpecialPowers.spawn(newTabBrowser, [], async function() {
+    function waitForRender(document) {
+      return new Promise(resolve => {
+        document.addEventListener(
+          "pagerendered",
+          function onPageRendered(e) {
+            if (e.detail.pageNumber !== 1) {
+              return;
+            }
+
+            document.removeEventListener("pagerendered", onPageRendered, true);
+            resolve();
+          },
+          true
+        );
+      });
+    }
+    // check that PDF is opened with internal viewer
+    Assert.ok(
+      content.document.querySelector("div#viewer"),
+      "document content has viewer UI"
+    );
+
+    await waitForRender(content.document);
+
+    return parseInt(
+      content.document.querySelector("div.page[data-page-number='1']").style
+        .width
+    );
+  });
+}
+
+add_task(async function test_browser_zoom() {
+  await BrowserTestUtils.withNewTab(
+    { gBrowser, url: "about:blank" },
+    async function(newTabBrowser) {
+      await waitForPdfJS(newTabBrowser, TESTROOT + "file_pdfjs_test.pdf");
+
+      const initialWidth = await waitForRenderAndGetWidth(newTabBrowser);
+
+      // Zoom in
+      let newWidthPromise = waitForRenderAndGetWidth(newTabBrowser);
+      await waitForRoundTrip(newTabBrowser);
+      FullZoom.enlarge();
+      ok(
+        (await newWidthPromise) > initialWidth,
+        "Zoom in makes the page bigger."
+      );
+
+      // Reset
+      newWidthPromise = waitForRenderAndGetWidth(newTabBrowser);
+      await waitForRoundTrip(newTabBrowser);
+      FullZoom.reset();
+      is(await newWidthPromise, initialWidth, "Zoom reset restores page.");
+
+      // Zoom out
+      newWidthPromise = waitForRenderAndGetWidth(newTabBrowser);
+      await waitForRoundTrip(newTabBrowser);
+      FullZoom.reduce();
+      ok(
+        (await newWidthPromise) < initialWidth,
+        "Zoom out makes the page smaller."
+      );
+
+      // Clean-up after the PDF viewer.
+      await SpecialPowers.spawn(newTabBrowser, [], function() {
+        const viewer = content.wrappedJSObject.PDFViewerApplication;
+        return viewer.close();
       });
     }
   );

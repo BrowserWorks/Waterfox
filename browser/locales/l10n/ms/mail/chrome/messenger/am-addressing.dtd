@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "Karangan &amp; Alamat">
+<!ENTITY addressingGroupTitle.label "Alamat">
+<!ENTITY addressingText.label      "Apabila mencari alamat:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Guna keutamaan pelayan LDAP global untuk akaun ini">
+<!ENTITY useGlobal.accesskey       "G">
+<!ENTITY editDirectories.label     "Edit Direktori…">
+<!ENTITY editDirectories.accesskey "E">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Guna pelayan LDAP lain:">
+<!ENTITY directories.accesskey     "l">
+<!ENTITY directoriesNone.label     "Tiada">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "Karangan">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Karang mesej dalam format HTML">
+<!ENTITY useHtml.accesskey                    "K">
+<!ENTITY autoQuote.label                      "Petik mesej asal secara automatik apabila membalas">
+<!ENTITY autoQuote.accesskey                  "m">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "Apabila memetik,">
+<!ENTITY quoting.accesskey                    "m">
+<!ENTITY aboveQuote.label                     "mulakan balasan di atas petikan tadi">
+<!ENTITY belowQuote.label                     "mulakan balasan di bawah petikan tadi">
+<!ENTITY selectAndQuote.label                 "pilih petikan">
+<!ENTITY place.label                          "dan letakkan tandatangan">
+<!ENTITY place.accesskey                      "t">
+<!ENTITY belowText.label                      "di bawah petikan (disyorkan)">
+<!ENTITY aboveText.label                      "di bawah balasan (di atas petikan tadi)">
+<!ENTITY includeSigOnReply.label              "Sertakan tandatangan bagi setiap balasan">
+<!ENTITY includeSigOnReply.accesskey          "I">
+<!ENTITY includeSigOnForward.label            "Sertakan tandatangan bagi kiriman semula">
+<!ENTITY includeSigOnForward.accesskey        "r">
+
+<!ENTITY globalComposingPrefs.label           "Keutamaan Karangan Global…">
+<!ENTITY globalComposingPrefs.accesskey       "G">
+
+<!ENTITY globalAddressingPrefs.label          "Keutamaan Pengalamatan Global…">
+<!ENTITY globalAddressingPrefs.accesskey      "P">

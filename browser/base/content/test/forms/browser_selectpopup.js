@@ -88,7 +88,7 @@ const PAGECONTENT_TRANSLATED =
   "<html><body>" +
   "<div id='div'>" +
   "<iframe id='frame' width='320' height='295' style='border: none;'" +
-  "        src='data:text/html,<select id=select autofocus><option>he he he</option><option>boo boo</option><option>baz baz</option></select>'" +
+  "        src='data:text/html,<select id=select><option>he he he</option><option>boo boo</option><option>baz baz</option></select>'" +
   "</iframe>" +
   "</div></body></html>";
 
@@ -129,19 +129,19 @@ function openSelectPopup(
 }
 
 function getInputEvents() {
-  return ContentTask.spawn(gBrowser.selectedBrowser, {}, function() {
+  return SpecialPowers.spawn(gBrowser.selectedBrowser, [], function() {
     return content.wrappedJSObject.gInputEvents;
   });
 }
 
 function getChangeEvents() {
-  return ContentTask.spawn(gBrowser.selectedBrowser, {}, function() {
+  return SpecialPowers.spawn(gBrowser.selectedBrowser, [], function() {
     return content.wrappedJSObject.gChangeEvents;
   });
 }
 
 function getClickEvents() {
-  return ContentTask.spawn(gBrowser.selectedBrowser, {}, function() {
+  return SpecialPowers.spawn(gBrowser.selectedBrowser, [], function() {
     return content.wrappedJSObject.gClickEvents;
   });
 }
@@ -210,7 +210,7 @@ async function doSelectTests(contentType, content) {
   is(await getClickEvents(), 0, "Before closed - number of click events");
 
   EventUtils.synthesizeKey("a", { accelKey: true });
-  await ContentTask.spawn(gBrowser.selectedBrowser, { isWindows }, function(
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [{ isWindows }], function(
     args
   ) {
     Assert.equal(
@@ -354,7 +354,7 @@ add_task(async function() {
   // First, try it when a different <select> element than the one that is open is removed
   await openSelectPopup(selectPopup, "click", "#one");
 
-  await ContentTask.spawn(gBrowser.selectedBrowser, {}, function() {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], function() {
     content.document.body.removeChild(content.document.getElementById("two"));
   });
 
@@ -372,7 +372,7 @@ add_task(async function() {
     selectPopup,
     "popuphidden"
   );
-  await ContentTask.spawn(gBrowser.selectedBrowser, {}, function() {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], function() {
     content.document.body.removeChild(content.document.getElementById("three"));
   });
   await popupHiddenPromise;
@@ -396,6 +396,20 @@ add_task(async function() {
 add_task(async function() {
   const pageUrl = "data:text/html," + escape(PAGECONTENT_TRANSLATED);
   let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, pageUrl);
+
+  // We need to explicitly call Element.focus() since dataURL is treated as
+  // cross-origin, thus autofocus doesn't work there.
+  const iframe = await SpecialPowers.spawn(tab.linkedBrowser, [], () => {
+    return content.document.querySelector("iframe").browsingContext;
+  });
+  await SpecialPowers.spawn(iframe, [], async () => {
+    const input = content.document.getElementById("select");
+    const focusPromise = new Promise(resolve => {
+      input.addEventListener("focus", resolve, { once: true });
+    });
+    input.focus();
+    await focusPromise;
+  });
 
   let menulist = document.getElementById("ContentSelectDropdown");
   let selectPopup = menulist.menupopup;
@@ -430,7 +444,7 @@ add_task(async function() {
   for (let stepIndex = 0; stepIndex < steps.length; stepIndex++) {
     let step = steps[stepIndex];
 
-    await ContentTask.spawn(gBrowser.selectedBrowser, step, async function(
+    await SpecialPowers.spawn(gBrowser.selectedBrowser, [step], async function(
       contentStep
     ) {
       return new Promise(resolve => {
@@ -492,11 +506,13 @@ add_task(async function test_event_order() {
           type: "input",
           cancelable: false,
           targetIsOption: false,
+          composed: false,
         },
         {
           type: "change",
           cancelable: false,
           targetIsOption: false,
+          composed: false,
         },
       ];
 
@@ -505,26 +521,31 @@ add_task(async function test_event_order() {
           type: "mousedown",
           cancelable: true,
           targetIsOption: true,
+          composed: true,
         },
         {
           type: "mouseup",
           cancelable: true,
           targetIsOption: true,
+          composed: true,
         },
         {
           type: "input",
           cancelable: false,
           targetIsOption: false,
+          composed: false,
         },
         {
           type: "change",
           cancelable: false,
           targetIsOption: false,
+          composed: false,
         },
         {
           type: "click",
           cancelable: true,
           targetIsOption: true,
+          composed: true,
         },
       ];
 
@@ -536,9 +557,9 @@ add_task(async function test_event_order() {
           mode == "enter" ? "#one" : "#two"
         );
 
-        let eventsPromise = ContentTask.spawn(
+        let eventsPromise = SpecialPowers.spawn(
           browser,
-          [mode, expected],
+          [[mode, expected]],
           async function([contentMode, contentExpected]) {
             return new Promise(resolve => {
               function onEvent(event) {
@@ -563,6 +584,11 @@ add_task(async function test_event_order() {
                   event.target.localName,
                   expectation.targetIsOption ? "option" : "select",
                   "Target matches"
+                );
+                Assert.equal(
+                  event.composed,
+                  expectation.composed,
+                  "Composed property should match"
                 );
                 if (!contentExpected.length) {
                   resolve();
@@ -596,7 +622,7 @@ add_task(async function test_event_order() {
 async function performLargePopupTests(win) {
   let browser = win.gBrowser.selectedBrowser;
 
-  await ContentTask.spawn(browser, null, async function() {
+  await SpecialPowers.spawn(browser, [], async function() {
     let doc = content.document;
     let select = doc.getElementById("one");
     for (var i = 0; i < 180; i++) {
@@ -783,7 +809,7 @@ async function performLargePopupTests(win) {
     );
 
     // Don't check the scroll position for the last step as the popup will be cut off.
-    if (positions.length > 0) {
+    if (positions.length) {
       let cs = win.getComputedStyle(selectPopup);
       let bpBottom =
         parseFloat(cs.paddingBottom) + parseFloat(cs.borderBottomWidth);
@@ -811,8 +837,13 @@ async function performLargePopupTests(win) {
 
     position = positions.shift();
 
-    let contentPainted = BrowserTestUtils.contentPainted(browser);
-    await ContentTask.spawn(browser, position, async function(contentPosition) {
+    let contentPainted = BrowserTestUtils.waitForContentEvent(
+      browser,
+      "MozAfterPaint"
+    );
+    await SpecialPowers.spawn(browser, [position], async function(
+      contentPosition
+    ) {
       let select = content.document.getElementById("one");
       select.setAttribute("style", contentPosition || "");
       select.getBoundingClientRect();
@@ -821,7 +852,7 @@ async function performLargePopupTests(win) {
   }
 
   if (navigator.platform.indexOf("Mac") == 0) {
-    await ContentTask.spawn(browser, null, async function() {
+    await SpecialPowers.spawn(browser, [], async function() {
       let doc = content.document;
       doc.body.style = "padding-top: 400px;";
 
@@ -853,7 +884,7 @@ add_task(async function test_large_popup() {
   BrowserTestUtils.removeTab(tab);
 });
 
-// This test checks the same as the previous test but in a new smaller window.
+// This test checks the same as the previous test but in a new, vertically smaller window.
 add_task(async function test_large_popup_in_small_window() {
   let newWin = await BrowserTestUtils.openNewBrowserWindow();
 
@@ -862,10 +893,11 @@ add_task(async function test_large_popup_in_small_window() {
     "resize",
     false,
     e => {
-      return newWin.innerHeight <= 400 && newWin.innerWidth <= 400;
+      info(`Got resize event (innerHeight: ${newWin.innerHeight})`);
+      return newWin.innerHeight <= 400;
     }
   );
-  newWin.resizeTo(400, 400);
+  newWin.resizeTo(600, 400);
   await resizePromise;
 
   const pageUrl = "data:text/html," + escape(PAGECONTENT_SMALL);
@@ -884,7 +916,7 @@ add_task(async function test_large_popup_in_small_window() {
 
 async function performSelectSearchTests(win) {
   let browser = win.gBrowser.selectedBrowser;
-  await ContentTask.spawn(browser, null, async function() {
+  await SpecialPowers.spawn(browser, [], async function() {
     let doc = content.document;
     let select = doc.getElementById("one");
 
@@ -1093,7 +1125,7 @@ add_task(async function test_blur_hides_popup() {
   const pageUrl = "data:text/html," + escape(PAGECONTENT_SMALL);
   let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, pageUrl);
 
-  await ContentTask.spawn(tab.linkedBrowser, null, async function() {
+  await SpecialPowers.spawn(tab.linkedBrowser, [], async function() {
     content.addEventListener(
       "blur",
       function(event) {
@@ -1116,13 +1148,183 @@ add_task(async function test_blur_hides_popup() {
     "popuphidden"
   );
 
-  await ContentTask.spawn(tab.linkedBrowser, null, async function() {
+  await SpecialPowers.spawn(tab.linkedBrowser, [], async function() {
     content.document.getElementById("one").blur();
   });
 
   await popupHiddenPromise;
 
   ok(true, "Blur closed popup");
+
+  BrowserTestUtils.removeTab(tab);
+});
+
+// Test zoom handling.
+add_task(async function test_zoom() {
+  const pageUrl = "data:text/html," + escape(PAGECONTENT_SMALL);
+  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, pageUrl);
+
+  let menulist = document.getElementById("ContentSelectDropdown");
+  let selectPopup = menulist.menupopup;
+
+  info("Opening the popup");
+  await openSelectPopup(selectPopup, "click");
+
+  info("Opened the popup");
+  let nonZoomedFontSize = parseFloat(
+    getComputedStyle(selectPopup.querySelector("menuitem")).fontSize,
+    10
+  );
+
+  info("font-size is " + nonZoomedFontSize);
+  await hideSelectPopup(selectPopup);
+
+  info("Hid the popup");
+
+  FullZoom.setZoom(2.0, tab.linkedBrowser);
+
+  info("Opening popup again");
+  await openSelectPopup(selectPopup, "click");
+
+  let zoomedFontSize = parseFloat(
+    getComputedStyle(selectPopup.querySelector("menuitem")).fontSize,
+    10
+  );
+  info("Zoomed font-size is " + zoomedFontSize);
+
+  ok(
+    Math.abs(zoomedFontSize - nonZoomedFontSize * 2.0) < 0.01,
+    `Zoom should affect menu popup size, got ${zoomedFontSize}, ` +
+      `expected ${nonZoomedFontSize * 2.0}`
+  );
+
+  await hideSelectPopup(selectPopup);
+  info("Hid the popup again");
+
+  BrowserTestUtils.removeTab(tab);
+});
+
+function getIsHandlingUserInput(browser, elementId, eventName) {
+  return SpecialPowers.spawn(browser, [[elementId, eventName]], async function([
+    contentElementId,
+    contentEventName,
+  ]) {
+    let element = content.document.getElementById(contentElementId);
+    let isHandlingUserInput = false;
+    await ContentTaskUtils.waitForEvent(element, contentEventName, false, e => {
+      isHandlingUserInput = content.window.windowUtils.isHandlingUserInput;
+      return true;
+    });
+
+    return isHandlingUserInput;
+  });
+}
+
+// This test checks if the change/click event is considered as user input event.
+add_task(async function test_handling_user_input() {
+  const pageUrl = "data:text/html," + escape(PAGECONTENT_SMALL);
+  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, pageUrl);
+
+  let menulist = document.getElementById("ContentSelectDropdown");
+  let selectPopup = menulist.menupopup;
+
+  // Test onchange event when changing value via keyboard.
+  await openSelectPopup(selectPopup, "click", "#one");
+  let getPromise = getIsHandlingUserInput(tab.linkedBrowser, "one", "change");
+  EventUtils.synthesizeKey("KEY_ArrowDown");
+  await hideSelectPopup(selectPopup);
+  is(await getPromise, true, "isHandlingUserInput should be true");
+
+  // Test onchange event when changing value via mouse click
+  await openSelectPopup(selectPopup, "click", "#two");
+  getPromise = getIsHandlingUserInput(tab.linkedBrowser, "two", "change");
+  EventUtils.synthesizeMouseAtCenter(selectPopup.lastElementChild, {});
+  is(await getPromise, true, "isHandlingUserInput should be true");
+
+  // Test onclick event fired from clicking select popup.
+  await openSelectPopup(selectPopup, "click", "#three");
+  getPromise = getIsHandlingUserInput(tab.linkedBrowser, "three", "click");
+  EventUtils.synthesizeMouseAtCenter(selectPopup.firstElementChild, {});
+  is(await getPromise, true, "isHandlingUserInput should be true");
+
+  BrowserTestUtils.removeTab(tab);
+});
+
+// Test that input and change events are dispatched consistently (bug 1561882).
+add_task(async function test_event_destroys_popup() {
+  const PAGE_CONTENT = `
+<!doctype html>
+<select>
+  <option>a</option>
+  <option>b</option>
+</select>
+<script>
+gChangeEvents = 0;
+gInputEvents = 0;
+let select = document.querySelector("select");
+  select.addEventListener("input", function() {
+    gInputEvents++;
+    this.style.display = "none";
+    this.getBoundingClientRect();
+  })
+  select.addEventListener("change", function() {
+    gChangeEvents++;
+  })
+</script>`;
+
+  const pageUrl = "data:text/html," + escape(PAGE_CONTENT);
+  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, pageUrl);
+
+  let menulist = document.getElementById("ContentSelectDropdown");
+  let selectPopup = menulist.menupopup;
+
+  // Test change and input events get handled consistently
+  await openSelectPopup(selectPopup, "click");
+  EventUtils.synthesizeKey("KEY_ArrowDown");
+  await hideSelectPopup(selectPopup);
+
+  is(
+    await getChangeEvents(),
+    1,
+    "Should get change and input events consistently"
+  );
+  is(
+    await getInputEvents(),
+    1,
+    "Should get change and input events consistently (input)"
+  );
+
+  BrowserTestUtils.removeTab(tab);
+});
+
+add_task(async function test_label_not_text() {
+  const PAGE_CONTENT = `
+<!doctype html>
+<select>
+  <option label="Some nifty Label">Some Element Text Instead</option>
+  <option label="">Element Text</option>
+</select>
+`;
+
+  const pageUrl = "data:text/html," + escape(PAGE_CONTENT);
+  let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, pageUrl);
+
+  let menulist = document.getElementById("ContentSelectDropdown");
+  let selectPopup = menulist.menupopup;
+
+  await openSelectPopup(selectPopup, "click");
+
+  is(
+    selectPopup.children[0].label,
+    "Some nifty Label",
+    "Use the label not the text."
+  );
+
+  is(
+    selectPopup.children[1].label,
+    "Element Text",
+    "Uses the text if the label is empty, like HTMLOptionElement::GetRenderedLabel."
+  );
 
   BrowserTestUtils.removeTab(tab);
 });

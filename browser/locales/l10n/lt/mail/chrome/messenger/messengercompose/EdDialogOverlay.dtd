@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "Papildoma taisa…">
+<!ENTITY AdvancedEditButton.accessKey "t">
+<!ENTITY AdvancedEditButton.tooltip "Pridėti ar modifikuoti HTML, stiliaus požymius bei „JavaScript“ įvykius">
+<!ENTITY chooseFileButton.label "Parinkti failą…">
+<!ENTITY chooseFileButton.accessKey "f">
+<!ENTITY chooseFileLinkButton.label "Parinkti failą…">
+<!ENTITY chooseFileLinkButton.accessKey "f">
+<!ENTITY makeUrlRelative.label "Santykinis universalusis adresas">
+<!ENTITY makeUrlRelative.accessKey "S">
+<!ENTITY makeUrlRelative.tooltip "Sukeisti santykinį adresą su absoliučiuoju. Prieš tai reikia įrašyti tinklalapį į diską.">
+
+<!-- Shared by Link and Image dialogs -->
+<!ENTITY LinkURLEditField2.label "Įveskite tinklalapio adresą, kelią iki vietinio failo, vietinę nuorodą arba pasirinkite žymę ar antraštę iš išskleidžiamojo sąrašo:">
+<!ENTITY LinkURLEditField2.accessKey "w">

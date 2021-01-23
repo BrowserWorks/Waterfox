@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migration.title "&brandFullName;: Akter n isefka">
+<!ENTITY migration.welcome "Anṣuf yis-k">
+<!ENTITY migration.importing "Akter">
+<!ENTITY migration.list.description "&brandShortName; yezmer ad d-yekter isefka n uwitay si deqs n yesnasen yettwasnen. Isefka seg isnasen-agi ttwafen ɣef uselkim-inek. Ma ulac aɣilif, fren isansen ansa ad d-ketreḍ isefka.">
+<!ENTITY migration.progress.description "Akter n isefka yettwafernen">

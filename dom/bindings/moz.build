@@ -5,7 +5,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 with Files("**"):
-    BUG_COMPONENT = ("Core", "DOM: Core & HTML")
+    BUG_COMPONENT = ("Core", "DOM: Bindings (WebIDL)")
 
 TEST_DIRS += ['test']
 
@@ -27,12 +27,14 @@ EXPORTS.mozilla += [
 
 EXPORTS.mozilla.dom += [
     'AtomList.h',
+    'BindingCallContext.h',
     'BindingDeclarations.h',
+    'BindingIPCUtils.h',
     'BindingUtils.h',
     'CallbackFunction.h',
     'CallbackInterface.h',
     'CallbackObject.h',
-    'Date.h',
+    'DOMExceptionNames.h',
     'DOMJSClass.h',
     'DOMJSProxyHandler.h',
     'DOMString.h',
@@ -50,7 +52,6 @@ EXPORTS.mozilla.dom += [
     'RootedDictionary.h',
     'SimpleGlobalObject.h',
     'SpiderMonkeyInterface.h',
-    'StructuredClone.h',
     'ToJSValue.h',
     'TypedArray.h',
     'UnionMember.h',
@@ -78,7 +79,6 @@ LOCAL_INCLUDES += [
     '/dom/media/webaudio',
     '/dom/media/webspeech/recognition',
     '/dom/svg',
-    '/dom/xbl',
     '/dom/xml',
     '/dom/xslt/base',
     '/dom/xslt/xpath',
@@ -93,6 +93,8 @@ LOCAL_INCLUDES += [
     '/media/webrtc/signaling/src/common/time_profiling',
     '/media/webrtc/signaling/src/peerconnection',
     '/media/webrtc/trunk/',
+    '/media/webrtc/trunk/webrtc/',
+    '/netwerk/base/'
 ]
 
 LOCAL_INCLUDES += ['/third_party/msgpack/include']
@@ -104,7 +106,6 @@ UNIFIED_SOURCES += [
     'BindingUtils.cpp',
     'CallbackInterface.cpp',
     'CallbackObject.cpp',
-    'Date.cpp',
     'DOMJSProxyHandler.cpp',
     'Exceptions.cpp',
     'IterableIterator.cpp',
@@ -114,10 +115,6 @@ UNIFIED_SOURCES += [
     'SimpleGlobalObject.cpp',
     'ToJSValue.cpp',
     'WebIDLGlobalNameHash.cpp',
-]
-
-SOURCES += [
-    'StructuredClone.cpp',
 ]
 
 # Some tests, including those for for maplike and setlike, require bindings
@@ -180,10 +177,10 @@ if CONFIG['CC_TYPE'] in ('clang', 'gcc'):
     ]
 
 if CONFIG['COMPILE_ENVIRONMENT']:
-    GENERATED_FILES += ['CSS2Properties.webidl']
-    css_props = GENERATED_FILES['CSS2Properties.webidl']
-    css_props.script = 'GenerateCSS2PropertiesWebIDL.py:generate'
-    css_props.inputs = [
-        '/dom/webidl/CSS2Properties.webidl.in',
-        '!/layout/style/ServoCSSPropList.py',
-    ]
+    GeneratedFile('CSS2Properties.webidl',
+                  script='GenerateCSS2PropertiesWebIDL.py',
+                  entry_point='generate',
+                  inputs=[
+                      '/dom/webidl/CSS2Properties.webidl.in',
+                      '!/layout/style/ServoCSSPropList.py',
+                  ])

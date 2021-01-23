@@ -1,0 +1,72 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageStorage.label "Сховішча лістоў">
+<!ENTITY securitySettings.label "Наладжванні бяспекі">
+<!ENTITY serverSettings.label "Наладжванні паслугача">
+<!ENTITY serverType.label "Тып паслугача:">
+<!ENTITY serverName.label "Назва паслугача:">
+<!ENTITY serverName.accesskey "Н">
+<!ENTITY userName.label "Імя карыстальніка:">
+<!ENTITY userName.accesskey "і">
+<!ENTITY port.label "Порт:">
+<!ENTITY port.accesskey "П">
+<!ENTITY serverPortDefault.label "Змоўчны:">
+<!ENTITY biffStart.label "Правяраць, ці існуюць новыя лісты, кожныя">
+<!ENTITY biffStart.accesskey "а">
+<!ENTITY biffEnd.label "хвілінаў">
+<!ENTITY connectionSecurity.label "Бяспека злучэння:">
+<!ENTITY connectionSecurity.accesskey "Б">
+<!ENTITY connectionSecurityType-0.label "Няма">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, калі даступна">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "Метад апазнавання:">
+<!ENTITY authMethod.accesskey "з">
+<!ENTITY leaveOnServer.label "Пакідаць лісты на паслугачы">
+<!ENTITY leaveOnServer.accesskey "п">
+<!ENTITY headersOnly.label "Атрымліваць толькі загалоўкі">
+<!ENTITY headersOnly.accesskey "т">
+<!ENTITY deleteByAgeFromServer.label "Не болей чым на">
+<!ENTITY deleteByAgeFromServer.accesskey "ч">
+<!ENTITY daysEnd.label "дзён">
+<!ENTITY deleteOnServer2.label "Пакуль я не выдалю іх">
+<!ENTITY deleteOnServer2.accesskey "д">
+<!ENTITY downloadOnBiff.label "Самастойна загружаць новыя лісты">
+<!ENTITY downloadOnBiff.accesskey "С">
+<!ENTITY username.label "Ваша ўваходнае імя">
+<!ENTITY deleteMessagePrefix.label "Калі я выдаляю ліст:">
+<!ENTITY modelMoveToTrash.label "Перамясціць яго ў гэтую папку:">
+<!ENTITY modelMoveToTrash.accesskey "ў">
+<!ENTITY modelMarkDeleted.label "Пазначыць яго выдаленым">
+<!ENTITY modelMarkDeleted.accesskey "д">
+<!ENTITY modelDeleteImmediately.label "Выдаліць яго неадкладна">
+<!ENTITY modelDeleteImmediately.accesskey "н">
+<!ENTITY expungeOnExit.label "Прыбраць (&quot;Знішчыць&quot;) папку Атрыманыя перад выхадам">
+<!ENTITY expungeOnExit.accesskey "П">
+<!ENTITY emptyTrashOnExit.label "Выкідаць смецце перад выхадам">
+<!ENTITY emptyTrashOnExit.accesskey "ы">
+<!ENTITY loginAtStartup.label "Правяраць, ці ёсць новыя лісты, пасля запуску">
+<!ENTITY loginAtStartup.accesskey "у">
+<!ENTITY maxMessagesStart.label "Пытацца мяне перад загрузкай больш чым">
+<!ENTITY maxMessagesStart.accesskey "а">
+<!ENTITY maxMessagesEnd.label "лістоў">
+<!ENTITY alwaysAuthenticate.label "Заўсёды патрабаваць апазнаванне ў час злучэння з гэтым паслугачом">
+<!ENTITY alwaysAuthenticate.accesskey "ў">
+<!ENTITY newsrcFilePath.label "файл newsrc:">
+<!ENTITY newsrcPicker.label "Выбраць файл newsrc">
+<!ENTITY abbreviate.label "Паказваць назвы навінакупаў у шыбе паштовай папкі як:">
+<!ENTITY abbreviateOn.label "Цэлыя назвы (Напрыклад, 'netscape.public.mozilla.mail-news')">
+<!ENTITY abbreviateOff.label "Скарочаныя назвы (Напрыклад, 'n.p.m.mail-news')">
+<!ENTITY advancedButton.label "Пашыраны…">
+<!ENTITY serverDefaultCharset.label "Змоўчная кадоўка знакаў:">
+<!ENTITY advancedButton.accesskey "ш">
+<!ENTITY localPath.label "Мясцовая дырэкторыя:">
+<!ENTITY localFolderPicker.label "Вылучыць мясцовую дырэкторыю">
+<!ENTITY browseFolder.label "Агляд…">
+<!ENTITY browseFolder.accesskey "г">
+<!ENTITY browseNewsrc.label "Агляд…">
+<!ENTITY browseNewsrc.accesskey "г">
+<!ENTITY accountTitle.label "Наладжванні рахунку">
+<!ENTITY accountSettingsDesc.label "Гэта адмысловы рахунак.  Няма адметаў, злучаных з ім.">

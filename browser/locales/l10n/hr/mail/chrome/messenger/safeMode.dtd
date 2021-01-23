@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title             "&brandShortName; sigurni način rada">
+<!ENTITY window.width                     "37em">
+
+<!ENTITY safeModeDescription.label        "&brandShortName; je pokrenut u sigurnom načinu rada, koji privremeno onemogućava tvoje prilagođene postavke, motive i dodatke.">
+<!ENTITY safeModeDescription2.label       "Neke od ovih promjena možete učiniti trajnima:">
+
+<!ENTITY disableAddons.label              "Onemogući sve dodatke">
+<!ENTITY disableAddons.accesskey          "d">
+
+<!ENTITY resetToolbars.label              "Vrati alatne trake i tipke na početne postavke">
+<!ENTITY resetToolbars.accesskey          "r">
+
+<!ENTITY changeAndRestartButton.label     "Spremi promjene i ponovno pokreni">
+<!ENTITY changeAndRestartButton.accesskey "m">
+
+<!ENTITY continueButton.label             "Nastavi u sigurnom načinu rada">
+<!ENTITY continueButton.accesskey         "N">

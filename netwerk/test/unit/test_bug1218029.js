@@ -1,6 +1,8 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
+"use strict";
+
 var tests = [
   { data: "", chunks: [], status: Cr.NS_OK, consume: [], dataChunks: [""] },
   {
@@ -73,7 +75,7 @@ function execute_test(test) {
   let chunkIndex = 0;
 
   let observer = {
-    onStreamComplete: function(loader, context, status, length, data) {
+    onStreamComplete(loader, context, status, length, data) {
       equal(chunkIndex, test.dataChunks.length - 1);
       var expectedChunk = test.dataChunks[chunkIndex];
       equal(length, expectedChunk.length);
@@ -81,7 +83,7 @@ function execute_test(test) {
 
       equal(status, test.status);
     },
-    onIncrementalData: function(loader, context, length, data, consumed) {
+    onIncrementalData(loader, context, length, data, consumed) {
       ok(chunkIndex < test.dataChunks.length - 1);
       var expectedChunk = test.dataChunks[chunkIndex];
       equal(length, expectedChunk.length);

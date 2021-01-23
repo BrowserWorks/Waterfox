@@ -39,8 +39,8 @@ CERT_FreeDistNames;
 CERT_FreeNicknames;
 CERT_GetAVATag;
 CERT_GetCertEmailAddress;
-CERT_GetCertNicknames;
 CERT_GetCertIssuerAndSN;
+CERT_GetCertNicknames;
 CERT_GetCertTrust;
 CERT_GetCertUid;
 CERT_GetCommonName;
@@ -1148,6 +1148,36 @@ HASH_GetHashOidTagByHashType;
 ;+NSS_3.44 { 	# NSS 3.44 release
 ;+    global:
 CERT_GetCertificateDer;
+;+    local:
+;+       *;
+;+};
+;+NSS_3.45 { 	# NSS 3.45 release
+;+    global:
+PK11_FindRawCertsWithSubject;
+;+    local:
+;+       *;
+;+};
+;+NSS_3.47 { 	# NSS 3.47 release
+;+    global:
+PK11_GetCertsMatchingPrivateKey;
+;+    local:
+;+       *;
+;+};
+;+NSS_3.52 { 	# NSS 3.52 release
+;+    global:
+_PK11_ContextGetAEADSimulation;
+_PK11_ContextSetAEADSimulation;
+PK11_AEADOp;
+PK11_AEADRawOp;
+PK11_GetObjectHandle;
+PK11_ReadRawAttributes;
+PK11_SymKeysToSameSlot;
+;+    local:
+;+       *;
+;+};
+;+NSS_3.53 { 	# NSS 3.53 release
+;+    global:
+SECMOD_GetSystemFIPSEnabled;
 ;+    local:
 ;+       *;
 ;+};

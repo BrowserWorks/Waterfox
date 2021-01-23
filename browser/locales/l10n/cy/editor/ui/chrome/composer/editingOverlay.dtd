@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Agor Ffeil…">
+<!ENTITY openFileCmd.accesskey "A">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Agor Lleoliad Gwe…">
+<!ENTITY openRemoteCmd.accesskey "L">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Tudalennau Diweddar">
+<!ENTITY fileRecentMenu.accesskey "T">
+<!ENTITY saveCmd.label "Cadw">
+<!ENTITY saveCmd.accesskey "C">
+<!ENTITY saveAsCmd.label "Cadw Fel…">
+<!ENTITY saveAsCmd.accesskey "F">
+<!ENTITY saveAsChangeEncodingCmd2.label "Cadw a Newid Amgodiad Nod">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "N">
+<!ENTITY publishCmd.label "Cyhoeddi">
+<!ENTITY publishCmd.accesskey "y">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Cyhoeddi Fel…">
+<!ENTITY publishAsCmd.accesskey "F">
+<!ENTITY fileRevert.label "Dychwelyd">
+<!ENTITY fileRevert.accesskey "D">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Gosodiadau'r Wefan Cyhoeddi…">
+<!ENTITY publishSettings.accesskey "G">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "Newydd">
+<!ENTITY newToolbarCmd.tooltip "Creu tudalen Cyfansoddwr newydd">
+<!ENTITY openToolbarCmd.label "Agor">
+<!ENTITY openToolbarCmd.tooltip "Agor ffeil leol">
+<!ENTITY saveToolbarCmd.tooltip "Cadw ffeil i leoliad lleol">
+<!ENTITY publishToolbarCmd.tooltip "Llwytho ffeil i fyny i leoliad pell">
+<!ENTITY printToolbarCmd.label "Argraffu">
+<!ENTITY printToolbarCmd.tooltip "Argraffu'r dudalen hon">

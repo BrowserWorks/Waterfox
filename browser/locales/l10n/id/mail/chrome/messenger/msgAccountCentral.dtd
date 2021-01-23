@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "Email">
+<!ENTITY readMsgsLink.label           "Pesan Terbaca">
+<!ENTITY composeMsgLink.label         "Tulis pesan baru">
+
+<!ENTITY newsSectionHdr.label         "Newsgroup">
+<!ENTITY subscribeNewsLink.label      "Kelola langganan newsgroup">
+
+<!ENTITY feedsSectionHdr.label        "Feed">
+<!ENTITY subscribeFeeds.label         "Kelola langganan">
+
+<!ENTITY chat.label                   "Ngobrol">
+<!ENTITY movemail.label               "Movemail">
+
+<!ENTITY accountsSectionHdr.label     "Akun">
+<!ENTITY subscribeImapFolders.label   "Kelola langganan folder">
+<!ENTITY settingsLink.label           "Tampilkan pengaturan akun ini">
+<!ENTITY setupNewAcct.label           "Siapkan akun:">
+
+<!ENTITY advFeaturesSectionHdr.label  "Fitur Canggih">
+<!ENTITY searchMsgsLink.label         "Cari pesan">
+<!ENTITY filtersLink.label            "Kelola penyaring pesan">
+<!ENTITY junkSettings.label           "Pengaturan email junk">
+<!ENTITY offlineLink.label            "Pengaturan luring">

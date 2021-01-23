@@ -33,9 +33,6 @@ user_pref("browser.contentHandlers.types.5.uri", "http://test1.example.org/rss?u
 user_pref("browser.download.panel.shown", true);
 user_pref("browser.newtabpage.activity-stream.default.sites", "");
 user_pref("browser.newtabpage.activity-stream.telemetry", false);
-// Make sure PingCentre doesn't hit the network.
-user_pref("browser.ping-centre.production.endpoint", "");
-user_pref("browser.ping-centre.staging.endpoint", "");
 // Point the url-classifier to the local testing server for fast failures
 user_pref("browser.safebrowsing.downloads.remote.url", "http://{server}/safebrowsing-dummy/update");
 user_pref("browser.safebrowsing.provider.google.gethashURL", "http://{server}/safebrowsing-dummy/gethash");
@@ -68,13 +65,14 @@ user_pref("browser.urlbar.speculativeConnect.enabled", false);
 // connections.
 user_pref("browser.urlbar.suggest.searches", false);
 user_pref("browser.urlbar.usepreloadedtopurls.enabled", false);
-// Turn off the location bar search suggestions opt-in.  It interferes with
-// tests that don't expect it to be there.
-user_pref("browser.urlbar.userMadeSearchSuggestionsChoice", true);
+// URIFixup whitelist
+user_pref("browser.fixup.domainsuffixwhitelist.test", true);
 user_pref("browser.warnOnQuit", false);
 // Enable webapps testing mode, which bypasses native installation.
 user_pref("browser.webapps.testing", true);
 user_pref("captivedetect.canonicalURL", "http://{server}/captive-detect/success.txt");
+// Enable android logcat for better diagnostics on beta/release
+user_pref("consoleservice.logcat", true);
 // Point Firefox Health Report at a local server. We don't care if it actually
 // works. It just can't hit the default production endpoint.
 user_pref("datareporting.healthreport.documentServerURI", "http://{server}/healthreport/");
@@ -82,11 +80,9 @@ user_pref("datareporting.healthreport.uploadEnabled", false);
 user_pref("devtools.browsertoolbox.panel", "jsdebugger");
 user_pref("devtools.debugger.remote-port", 6023);
 user_pref("devtools.testing", true);
-// Required to set values in wpt metadata files (bug 1485842)
-user_pref("dom.audioworklet.enabled", false);
 user_pref("dom.allow_scripts_to_close_windows", true);
 user_pref("dom.disable_open_during_load", false);
-user_pref("dom.ipc.reportProcessHangs", false); // process hang monitor
+user_pref("dom.ipc.reportProcessHangs", true); // process hang monitor
 // Don't forceably kill content processes after a timeout
 user_pref("dom.ipc.tabs.shutdownTimeoutSecs", 0);
 user_pref("dom.min_background_timeout_value", 1000);
@@ -106,14 +102,12 @@ user_pref("dom.use_xbl_scopes_for_remote_xul", true);
 user_pref("extensions.autoDisableScopes", 0);
 user_pref("extensions.blocklist.detailsURL", "http://{server}/extensions-dummy/blocklistDetailsURL");
 user_pref("extensions.blocklist.itemURL", "http://{server}/extensions-dummy/blocklistItemURL");
-user_pref("extensions.blocklist.url", "http://{server}/extensions-dummy/blocklistURL");
 // XPI extensions are required for test harnesses to load
 user_pref("extensions.defaultProviders.enabled", true);
 // Disable metadata caching for installed add-ons by default
 user_pref("extensions.getAddons.cache.enabled", false);
 // Make sure AddonRepository won't hit the network
 user_pref("extensions.getAddons.get.url", "http://{server}/extensions-dummy/repositoryGetURL");
-user_pref("extensions.getAddons.getWithPerformance.url", "http://{server}/extensions-dummy/repositoryGetWithPerformanceURL");
 user_pref("extensions.getAddons.search.browseURL", "http://{server}/extensions-dummy/repositoryBrowseURL");
 user_pref("extensions.hotfix.url", "http://{server}/extensions-dummy/hotfixURL");
 // Disable intalling any distribution add-ons
@@ -124,9 +118,6 @@ user_pref("extensions.systemAddon.update.url", "http://{server}/dummy-system-add
 user_pref("extensions.update.background.url", "http://{server}/extensions-dummy/updateBackgroundURL");
 // Point update checks to the local testing server for fast failures
 user_pref("extensions.update.url", "http://{server}/extensions-dummy/updateURL");
-// Make sure opening about:addons won't hit the network
-user_pref("extensions.webservice.discoverURL", "http://{server}/extensions-dummy/discoveryURL");
-user_pref("extensions.privatebrowsing.notification", true);
 user_pref("findbar.highlightAll", false);
 user_pref("findbar.modalHighlight", false);
 // Existing tests assume there is no font size inflation.
@@ -136,10 +127,10 @@ user_pref("general.useragent.updates.url", "https://example.com/0/%APP_ID%");
 // Always use network provider for geolocation tests
 // so we bypass the OSX dialog raised by the corelocation provider
 user_pref("geo.provider.testing", true);
-user_pref("geo.wifi.logging.enabled", true);
-user_pref("geo.wifi.scan", false);
-user_pref("geo.wifi.timeToWaitBeforeSending", 2000);
-user_pref("geo.wifi.uri", "http://{server}/tests/dom/tests/mochitest/geolocation/network_geolocation.sjs");
+user_pref("geo.provider.network.logging.enabled", true);
+user_pref("geo.provider.network.scan", false);
+user_pref("geo.provider.network.timeToWaitBeforeSending", 2000);
+user_pref("geo.provider.network.url", "http://{server}/tests/dom/tests/mochitest/geolocation/network_geolocation.sjs");
 user_pref("gfx.color_management.force_srgb", true);
 user_pref("gfx.logging.level", 1);
 // We don't want to hit the real Firefox Accounts server for tests.  We don't
@@ -246,3 +237,4 @@ user_pref("security.data_uri.block_toplevel_data_uri_navigations", false);
 
 // We use data: to tell the Quitter extension to quit.
 user_pref("security.data_uri.block_toplevel_data_uri_navigations", false);
+

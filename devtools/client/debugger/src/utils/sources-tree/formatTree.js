@@ -10,7 +10,7 @@ export function formatTree(
   tree: TreeNode,
   depth: number = 0,
   str: string = ""
-) {
+): string {
   const whitespace = new Array(depth * 2).join(" ");
 
   if (tree.type === "directory") {
@@ -19,8 +19,7 @@ export function formatTree(
       str = formatTree(t, depth + 1, str);
     });
   } else {
-    const id = tree.contents.id;
-    str += `${whitespace} - ${tree.name} path=${tree.path} source_id=${id} \n`;
+    str += `${whitespace} - ${tree.name} path=${tree.path} source_id=${tree.contents.id} \n`;
   }
 
   return str;

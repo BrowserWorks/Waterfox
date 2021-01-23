@@ -7,9 +7,8 @@
 #ifndef frontend_JumpList_h
 #define frontend_JumpList_h
 
-#include <stddef.h>
-
-#include "js/TypeDecls.h"
+#include "frontend/BytecodeOffset.h"  // BytecodeOffset
+#include "js/TypeDecls.h"             // jsbytecode
 
 namespace js {
 namespace frontend {
@@ -21,7 +20,7 @@ namespace frontend {
 // Example:
 //
 //     JumpList brList;
-//     if (!emitJump(JSOP_IFEQ, &brList)) {
+//     if (!emitJump(JSOp::IfEq, &brList)) {
 //         return false;
 //     }
 //     ...
@@ -30,13 +29,13 @@ namespace frontend {
 //         return false;
 //     }
 //     ...
-//     if (!emitJump(JSOP_GOTO, &brList)) {
+//     if (!emitJump(JSOp::Goto, &brList)) {
 //         return false;
 //     }
 //     ...
 //     patchJumpsToTarget(brList, label);
 //
-//                 +-> -1
+//                 +-> (the delta is END_OF_LIST_DELTA (=0) for the last item)
 //                 |
 //                 |
 //    ifeq ..   <+ +                +-+   ifeq ..
@@ -56,16 +55,20 @@ namespace frontend {
 
 // Offset of a jump target instruction, used for patching jump instructions.
 struct JumpTarget {
-  ptrdiff_t offset;
+  BytecodeOffset offset = BytecodeOffset::invalidOffset();
 };
 
 struct JumpList {
-  JumpList() {}
+  // Delta value for pre-patchJumpsToTarget that marks the end of the link.
+  static const ptrdiff_t END_OF_LIST_DELTA = 0;
+
   // -1 is used to mark the end of jump lists.
-  ptrdiff_t offset = -1;
+  JumpList() : offset(BytecodeOffset::invalidOffset()) {}
+
+  BytecodeOffset offset;
 
   // Add a jump instruction to the list.
-  void push(jsbytecode* code, ptrdiff_t jumpOffset);
+  void push(jsbytecode* code, BytecodeOffset jumpOffset);
 
   // Patch all jump instructions in this list to jump to `target`.  This
   // clobbers the list.

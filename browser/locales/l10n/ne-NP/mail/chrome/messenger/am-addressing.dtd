@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label "रचना &amp; सम्बोधन">
+<!ENTITY addressingGroupTitle.label "सम्बोधन">
+<!ENTITY addressingText.label "ठेगाना खोज्दा:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label "यस खाताका लागि मेरो विश्वब्यापी LDAP सर्भर प्राथमिकता प्रयोग गर्नुहोस्">
+<!ENTITY useGlobal.accesskey "U">
+<!ENTITY editDirectories.label "डाइरेक्टरी सम्पादन गर्नुहोस्...">
+<!ENTITY editDirectories.accesskey "E">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label "भिन्न LDAP सर्भर प्रयोग गर्नुहोस्:">
+<!ENTITY directories.accesskey "d">
+
+<!-- am-addressing.xul -->
+
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label "रचना">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label "सन्देश HTML ढाँचामा रचना गर्नुहोस्">
+<!ENTITY useHtml.accesskey "C">
+<!ENTITY autoQuote.label "जवाफ पठाउदा सन्देशलाई स्वचालित रूपले उद्धरण चिन्ह भित्र राख्दछ">
+<!ENTITY autoQuote.accesskey "q">
+<!ENTITY aboveQuote.label "मेरो जवाफ उद्धरण माथि सुरु गर्नुहोस्">
+<!ENTITY belowQuote.label "मेरो जवाफ उद्धरण तल सुरु गर्नुहोस्">
+<!ENTITY selectAndQuote.label "उद्धरण चिन्ह चयन गर्नुहोस्">
+<!ENTITY place.label "र मेरो हस्ताक्षर राख्नुहोस्">
+<!ENTITY place.accesskey "p">
+<!ENTITY belowText.label "उद्धरण तल (सिफारिस गरिएको)">
+<!ENTITY aboveText.label "मेरो जवाफ तल (उद्धरण माथि)">
+

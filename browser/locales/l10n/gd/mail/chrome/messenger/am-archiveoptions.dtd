@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-archiveoptions.xul -->
+
+
+<!-- extracted from am-archiveoptions.xhtml -->
+
+<!ENTITY dialogTitle.label "Roghainnean na tasg-lainn">
+<!ENTITY archiveGranularityPrefix.label "Nuair a chuireas mi teachdaireachdan san tasg-lann, cuir iad:">
+<!ENTITY archiveFlat.label "anns an aon phasgan">
+<!ENTITY archiveFlat.accesskey "s">
+<!ENTITY archiveYearly.label "Ann am pasganan a thèid an tasglannadh gach bliadhna">
+<!ENTITY archiveYearly.accesskey "m">
+<!ENTITY archiveMonthly.label "Ann am pasganan a thèid an tasglannadh gach mìos">
+<!ENTITY archiveMonthly.accesskey "t">
+<!ENTITY keepFolderStructure.label "Glèidh structar nam pasgan tasglannaidh">
+<!ENTITY keepFolderStructure.accesskey "G">
+<!ENTITY archiveExample.label "Ball-eisimpleir">
+<!-- LOCALIZATION NOTE (archiveFolderName.label): this should match the default
+     name for the "Archives" folder -->
+<!ENTITY archiveFolderName.label "Tasg-lannan">
+<!-- LOCALIZATION NOTE (inboxFolderName.label): this should match the default
+     name for the "Inbox" folder -->
+<!ENTITY inboxFolderName.label "Am bogsa a-steach">

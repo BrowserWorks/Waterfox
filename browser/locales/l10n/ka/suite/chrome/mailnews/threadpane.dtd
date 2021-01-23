@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY threadColumn.label "მიმოწერა">
+<!ENTITY fromColumn.label "გამგზავნი">
+<!ENTITY recipientColumn.label "მიმღები">
+<!ENTITY attachmentColumn.label "დანართები">
+<!ENTITY subjectColumn.label "თემა">
+<!ENTITY dateColumn.label "თარიღი">
+<!ENTITY priorityColumn.label "პრიორიტეტი">
+<!ENTITY tagsColumn.label "ჭდეები">
+<!ENTITY accountColumn.label "ანგარიში">
+<!ENTITY statusColumn.label "სტატუსი">
+<!ENTITY sizeColumn.label "ზომა">
+<!ENTITY junkStatusColumn.label "ჯართის სტატუსი">
+<!ENTITY unreadColumn.label "წასაკითხი მიმოწერაში">
+<!ENTITY totalColumn.label "სულ მიმოწერაში">
+<!ENTITY readColumn.label "წაკითხული">
+<!ENTITY receivedColumn.label "მიღებული">
+<!ENTITY flagColumn.label "ალამი">
+<!ENTITY locationColumn.label "მისამართი">
+<!ENTITY idColumn.label "მიღების რიგი">
+
+<!--Tooltips-->
+<!ENTITY columnChooser2.tooltip "სვეტების შერჩევა საჩვენებლად">
+<!ENTITY threadColumn2.tooltip "მიმოწერის ჩვენება">
+<!ENTITY fromColumn2.tooltip "ავტორის მიხედვით დალაგება">
+<!ENTITY recipientColumn2.tooltip "მიმღების მიხედვით დალაგება">
+<!ENTITY attachmentColumn2.tooltip "დანართების მიხედვით დალაგება">
+<!ENTITY subjectColumn2.tooltip "თემის მიხედვით დავალება">
+<!ENTITY dateColumn2.tooltip "თარიღის მიხედვით დავალება">
+<!ENTITY priorityColumn2.tooltip "უპირატესობის მიხედვით დალაგება">
+<!ENTITY tagsColumn2.tooltip "ჭდეებით დალაგება">
+<!ENTITY accountColumn2.tooltip "ანგარიშით დალაგება">
+<!ENTITY statusColumn2.tooltip "მდგომარეობის მიხედვით დალაგება">
+<!ENTITY sizeColumn2.tooltip "ზომით დალაგება">
+<!ENTITY junkStatusColumn2.tooltip "ჯართად მიჩნეულის დალაგება">
+<!ENTITY unreadColumn2.tooltip "წასაკითხი წერილების რაოდენობა მიმოწერაში">
+<!ENTITY totalColumn2.tooltip "წერილების საერთო რაოდენობა მიმოწერაში">
+<!ENTITY readColumn2.tooltip "წაკითხულების დალაგება">
+<!ENTITY receivedColumn2.tooltip "მიღების თარიღით დალაგება">
+<!ENTITY flagColumn2.tooltip "ჩანიშნულების დალაგება">
+<!ENTITY locationColumn2.tooltip "მდებარეობის მიხედვით დალაგება">
+<!ENTITY idColumn2.tooltip "მიღების თანმიმდევრობით დალაგება">

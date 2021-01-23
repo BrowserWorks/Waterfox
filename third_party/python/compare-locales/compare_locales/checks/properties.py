@@ -33,6 +33,10 @@ class PropertiesChecker(Checker):
     def check(self, refEnt, l10nEnt):
         '''Test for the different variable formats.
         '''
+        for encoding_trouble in super(
+            PropertiesChecker, self
+        ).check(refEnt, l10nEnt):
+            yield encoding_trouble
         refValue, l10nValue = refEnt.val, l10nEnt.val
         refSpecs = None
         # check for PluralForm.jsm stuff, should have the docs in the
@@ -67,8 +71,9 @@ class PropertiesChecker(Checker):
         '''Check for the stringbundle plurals logic.
         The common variable pattern is #1.
         '''
-        if self.locale in plurals.CATEGORIES_BY_LOCALE:
-            expected_forms = len(plurals.CATEGORIES_BY_LOCALE[self.locale])
+        known_plurals = plurals.get_plural(self.locale)
+        if known_plurals:
+            expected_forms = len(known_plurals)
             found_forms = l10nValue.count(';') + 1
             msg = 'expecting {} plurals, found {}'.format(
                 expected_forms,

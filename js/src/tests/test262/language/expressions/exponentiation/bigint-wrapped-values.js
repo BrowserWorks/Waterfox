@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('BigInt')) -- BigInt is not enabled unconditionally
 // Copyright (C) 2017 Josh Wolfe. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 /*---
@@ -44,4 +43,5 @@ assert.sameValue(1n ** {
     return 2n;
   }
 }, 1n, 'The result of (1n ** {toString: function() {return 2n;}}) is 1n');
+
 reportCompare(0, 0);

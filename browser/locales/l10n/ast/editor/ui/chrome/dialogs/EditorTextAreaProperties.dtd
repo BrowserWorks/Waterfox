@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY windowTitle.label "Propiedaes del área de testu">
+<!ENTITY Settings.label "Configuración">
+<!ENTITY TextAreaName.label "Nome del campu:">
+<!ENTITY TextAreaName.accessKey "N">
+<!ENTITY TextAreaRows.label "Fileres:">
+<!ENTITY TextAreaRows.accessKey "F">
+<!ENTITY TextAreaCols.label "Columnes:">
+<!ENTITY TextAreaCols.accessKey "o">
+<!ENTITY TextAreaReadOnly.label "Namái llectura">
+<!ENTITY TextAreaReadOnly.accessKey "N">
+<!ENTITY TextAreaDisabled.label "Desactiváu">
+<!ENTITY TextAreaDisabled.accessKey "D">
+<!ENTITY TextAreaTabIndex.label "Índiz de tabulación:">
+<!ENTITY TextAreaTabIndex.accessKey "c">
+<!ENTITY TextAreaAccessKey.label "Tecla d'accesu rápidu:">
+<!ENTITY TextAreaAccessKey.accessKey "r">
+<!ENTITY InitialText.label "Testu inicial:">
+<!ENTITY InitialText.accessKey "T">
+<!ENTITY TextAreaWrap.label "Mou d'axuste:">
+<!ENTITY TextAreaWrap.accessKey "M">
+<!ENTITY WrapDefault.value "Predetermináu">
+<!ENTITY WrapOff.value "Dengún">
+<!ENTITY WrapHard.value "Estrictu">
+<!ENTITY WrapSoft.value "Suave">
+<!ENTITY WrapPhysical.value "Físicu">
+<!ENTITY WrapVirtual.value "Virtual">

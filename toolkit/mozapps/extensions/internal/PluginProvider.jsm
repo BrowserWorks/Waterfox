@@ -11,7 +11,6 @@ var EXPORTED_SYMBOLS = [];
 const { AddonManager, AddonManagerPrivate } = ChromeUtils.import(
   "resource://gre/modules/AddonManager.jsm"
 );
-/* globals AddonManagerPrivate*/
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 ChromeUtils.defineModuleGetter(
@@ -306,8 +305,7 @@ PluginWrapper.prototype = {
     }
 
     if (
-      (Services.prefs.getBoolPref("plugins.click_to_play") &&
-        tag.clicktoplay) ||
+      tag.clicktoplay ||
       this.blocklistState ==
         Ci.nsIBlocklistService.STATE_VULNERABLE_UPDATE_AVAILABLE ||
       this.blocklistState == Ci.nsIBlocklistService.STATE_VULNERABLE_NO_UPDATE
@@ -320,6 +318,10 @@ PluginWrapper.prototype = {
 
   set userDisabled(val) {
     let previousVal = this.userDisabled;
+    if (val === false && this.isFlashPlugin) {
+      val = AddonManager.STATE_ASK_TO_ACTIVATE;
+    }
+
     if (val === previousVal) {
       return val;
     }
@@ -432,14 +434,8 @@ PluginWrapper.prototype = {
       tags: [tag],
     } = pluginFor(this);
     let path = tag.fullpath;
-    // Plugins inside the application directory are in the application scope
-    let dir = Services.dirsvc.get("APlugns", Ci.nsIFile);
-    if (path.startsWith(dir.path)) {
-      return AddonManager.SCOPE_APPLICATION;
-    }
-
     // Plugins inside the profile directory are in the profile scope
-    dir = Services.dirsvc.get("ProfD", Ci.nsIFile);
+    let dir = Services.dirsvc.get("ProfD", Ci.nsIFile);
     if (path.startsWith(dir.path)) {
       return AddonManager.SCOPE_PROFILE;
     }
@@ -483,21 +479,20 @@ PluginWrapper.prototype = {
         permissions |= AddonManager.PERM_CAN_DISABLE;
       }
 
+      if (this.userDisabled !== AddonManager.STATE_ASK_TO_ACTIVATE) {
+        permissions |= AddonManager.PERM_CAN_ASK_TO_ACTIVATE;
+      }
+
       let blocklistState = this.blocklistState;
       let isCTPBlocklisted =
         blocklistState == Ci.nsIBlocklistService.STATE_VULNERABLE_NO_UPDATE ||
         blocklistState ==
           Ci.nsIBlocklistService.STATE_VULNERABLE_UPDATE_AVAILABLE;
-
       if (
-        this.userDisabled !== AddonManager.STATE_ASK_TO_ACTIVATE &&
-        (Services.prefs.getBoolPref("plugins.click_to_play") ||
-          isCTPBlocklisted)
+        this.userDisabled !== false &&
+        !isCTPBlocklisted &&
+        !this.isFlashPlugin
       ) {
-        permissions |= AddonManager.PERM_CAN_ASK_TO_ACTIVATE;
-      }
-
-      if (this.userDisabled !== false && !isCTPBlocklisted) {
         permissions |= AddonManager.PERM_CAN_ENABLE;
       }
     }
@@ -510,7 +505,7 @@ PluginWrapper.prototype = {
 
   get optionsURL() {
     return (
-      "chrome://mozapps/content/extensions/pluginPrefs.xul#id=" +
+      "chrome://mozapps/content/extensions/pluginPrefs.xhtml#id=" +
       encodeURIComponent(this.id)
     );
   },
@@ -553,6 +548,10 @@ PluginWrapper.prototype = {
     if ("onUpdateFinished" in aListener) {
       aListener.onUpdateFinished(this);
     }
+  },
+
+  get isFlashPlugin() {
+    return pluginFor(this).tags.some(t => t.isFlashPlugin);
   },
 };
 

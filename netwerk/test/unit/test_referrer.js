@@ -1,3 +1,5 @@
+"use strict";
+
 const ReferrerInfo = Components.Constructor(
   "@mozilla.org/referrer-info;1",
   "nsIReferrerInfo",
@@ -7,12 +9,12 @@ const ReferrerInfo = Components.Constructor(
 function getTestReferrer(server_uri, referer_uri, isPrivate = false) {
   var uri = NetUtil.newURI(server_uri);
   let referrer = NetUtil.newURI(referer_uri);
-  let principal = Services.scriptSecurityManager.createCodebasePrincipal(
+  let principal = Services.scriptSecurityManager.createContentPrincipal(
     referrer,
     { privateBrowsingId: isPrivate ? 1 : 0 }
   );
   var chan = NetUtil.newChannel({
-    uri: uri,
+    uri,
     loadingPrincipal: principal,
     contentPolicyType: Ci.nsIContentPolicy.TYPE_OTHER,
     securityFlags: Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
@@ -20,7 +22,7 @@ function getTestReferrer(server_uri, referer_uri, isPrivate = false) {
 
   chan.QueryInterface(Ci.nsIHttpChannel);
   chan.referrerInfo = new ReferrerInfo(
-    Ci.nsIHttpChannel.REFERRER_POLICY_UNSET,
+    Ci.nsIReferrerInfo.EMPTY,
     true,
     referrer
   );
@@ -211,6 +213,22 @@ function run_test() {
     getTestReferrer(server_uri, referer_uri_2_anchor),
     referer_uri_2
   );
+
+  // test referrer length limitation
+  // referer_uri's length is 27 and origin's length is 23
+  prefs.setIntPref("network.http.referer.referrerLengthLimit", 27);
+  Assert.equal(getTestReferrer(server_uri, referer_uri), referer_uri);
+  prefs.setIntPref("network.http.referer.referrerLengthLimit", 26);
+  Assert.equal(
+    getTestReferrer(server_uri, referer_uri),
+    "http://foo.example.com/"
+  );
+  prefs.setIntPref("network.http.referer.referrerLengthLimit", 22);
+  Assert.equal(getTestReferrer(server_uri, referer_uri), null);
+  prefs.setIntPref("network.http.referer.referrerLengthLimit", 0);
+  Assert.equal(getTestReferrer(server_uri, referer_uri), referer_uri);
+  prefs.setIntPref("network.http.referer.referrerLengthLimit", 4096);
+  Assert.equal(getTestReferrer(server_uri, referer_uri), referer_uri);
 
   // combination test: send spoofed path-only when hosts match
   var combo_referer_uri = "http://blah.foo.com/path?q=hot";

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY tapToPlayPlugin                                     "ಪ್ಲಗ್‌ಇನ್‌ಗಳನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಲು ಇಲ್ಲಿ ಮೆಲ್ಲಗೆ ತಟ್ಟಿ.">
+<!ENTITY clickToActivatePlugin                               "ಪ್ಲಗ್ಇನ್ ಅನ್ನು ಸಕ್ರಿಯಗೊಳಿಸು.">
+<!ENTITY checkForUpdates                                     "ಅಪ್‌ಡೇಟ್‌ಗಳಿಗಾಗಿ ಪರಿಶೀಲಿಸು…">
+<!ENTITY blockedPlugin.label                                 "ನಿಮ್ಮ ಸುರಕ್ಷತೆಯ ಕಾರಣದಿಂದಾಗಿ ಈ ಪ್ಲಗ್‌ಇನ್  ಅನ್ನು ತಡೆಹಿಡಿಯಲಾಗಿದೆ.">
+<!ENTITY hidePluginBtn.label                                 "ಪ್ಲಗ್ಇನ್ ಅಡಗಿಸು">
+<!ENTITY managePlugins                                       "ಪ್ಲಗ್‌ಇನ್‌ಗಳನ್ನು ನಿರ್ವಹಿಸಿ…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "ಪುಟವನ್ನು ಮರಳಿ ಲೋಡ್ ಮಾಡಿ">
+<!ENTITY reloadPlugin.post                                   " ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಲು.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "ಕುಸಿತದ ವರದಿಯನ್ನು ಕಳುಹಿಸು">
+<!ENTITY report.submitting                                   "ವರದಿಯನ್ನು ಕಳುಹಿಸಲಾಗುತ್ತಿದೆ…">
+<!ENTITY report.submitted                                    "ಕುಸಿತದ ವರದಿಯನ್ನು ಕಳುಹಿಸಲಾಗಿದೆ.">
+<!ENTITY report.disabled                                     "ಕುಸಿತದ ವರದಿಯನ್ನು ಅಶಕ್ತಗೊಳಿಸಲಾಗಿದೆ.">
+<!ENTITY report.failed                                       "ಸಲ್ಲಿಸುವಿಕೆಯು ವಿಫಲಗೊಂಡಿದೆ.">
+<!ENTITY report.unavailable                                  "ಯಾವುದೆ ವರದಿಯು ಲಭ್ಯವಿಲ್ಲ.">
+<!ENTITY report.comment                                      "ಒಂದು ಟಿಪ್ಪಣಿಯನ್ನು ಸೇರಿಸಿ (ಟಿಪ್ಪಣಿಗಳು ಸಾರ್ವಜನಿಕವಾಗಿ ಕಾಣಿಸುತ್ತವೆ)">
+<!ENTITY report.pageURL                                      "ಪುಟದ URL ಅನ್ನು ಸೇರಿಸು">
+
+<!ENTITY plugin.file                                         "ಕಡತ">
+<!ENTITY plugin.mimeTypes                                    "MIME ಬಗೆಗಳು">
+<!ENTITY plugin.flashProtectedMode.label                     "ಆಡೋಬ್ ಫ್ಲಾಷ್ ಸುರಕ್ಷತಾ ಸ್ಥಿತಿ ಸಕ್ರಿಯಗೊಳಿಸು">
+<!ENTITY plugin.enableBlocklists.label                       "ಅಪಾಯಕಾರಿ ಮತ್ತು ವಂಚಕ ಫ್ಲ್ಯಾಷ್ ಪರಿಕರವನ್ನು ನಿರ್ಬಂಧಿಸು">

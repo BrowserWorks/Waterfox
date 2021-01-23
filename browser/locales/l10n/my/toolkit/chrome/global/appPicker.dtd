@@ -1,0 +1,7 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY NoAppFound.label      "ဒီဖိုင် အမျိုးအစားအတွက် လုပ်ငန်းသုံး ကိရိယာများ မရှိဘူး။">
+<!ENTITY BrowseButton.label    "လှော်​လှန်ပါ...">
+<!ENTITY SendMsg.label         "ဒီအချက်ကို ပို့မဲ့နေရာ၊">

@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Placeholders for input type=time -->
+
+<!ENTITY time.hour.placeholder "--">
+<!ENTITY time.minute.placeholder "--">
+<!ENTITY time.second.placeholder "--">
+<!ENTITY time.millisecond.placeholder "--">
+<!ENTITY time.dayperiod.placeholder "--">
+
+<!-- Field labels for input type=time -->
+
+<!ENTITY time.hour.label "Tunnit">
+<!ENTITY time.minute.label "Minuutit">
+<!ENTITY time.second.label "Sekunnit">
+<!ENTITY time.millisecond.label "Millisekunnit">
+<!ENTITY time.dayperiod.label "Aamupäivä/iltapäivä">
+
+<!-- Placeholders for input type=date -->
+
+<!ENTITY date.year.placeholder "vvvv">
+<!ENTITY date.month.placeholder "kk">
+<!ENTITY date.day.placeholder "pp">
+
+<!-- Field labels for input type=date -->
+
+<!ENTITY date.year.label "Vuosi">
+<!ENTITY date.month.label "Kuukausi">
+<!ENTITY date.day.label "Päivä">
+
+<!-- Date/time clear button -->
+
+<!ENTITY datetime.reset.label "Tyhjennä">

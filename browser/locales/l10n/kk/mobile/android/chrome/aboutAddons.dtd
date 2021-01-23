@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "Қосымшалар">
+<!ENTITY aboutAddons.header2                    "Қосымшаларыңыз">
+
+<!ENTITY addonAction.enable                     "Іске қосу">
+<!ENTITY addonAction.disable                    "Сөндіру">
+<!ENTITY addonAction.uninstall                  "Өшіру">
+<!ENTITY addonAction.undo                       "Болдырмау">
+<!ENTITY addonAction.update                     "Жаңарту">
+
+<!ENTITY addonUnsigned.message                  "Бұл қосымшаны &brandShortName; растай алмады.">
+<!ENTITY addonUnsigned.learnMore                "Көбірек білу">

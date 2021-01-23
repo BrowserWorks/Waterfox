@@ -5,13 +5,13 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 with Files('**'):
-    BUG_COMPONENT = ('Core', 'Document Navigation')
+    BUG_COMPONENT = ('Core', 'DOM: Navigation')
 
 with Files('crashtests/430628*'):
-    BUG_COMPONENT = ('Core', 'Editor')
+    BUG_COMPONENT = ('Core', 'DOM: Editor')
 
 with Files('crashtests/432114*'):
-    BUG_COMPONENT = ('Core', 'Editor')
+    BUG_COMPONENT = ('Core', 'DOM: Editor')
 
 with Files('crashtests/500328*'):
     BUG_COMPONENT = ('Firefox', 'Bookmarks & History')
@@ -44,7 +44,6 @@ XPIDL_SOURCES += [
     'nsIPrivacyTransitionObserver.idl',
     'nsIReflowObserver.idl',
     'nsIRefreshURI.idl',
-    'nsIScrollable.idl',
     'nsITooltipListener.idl',
     'nsITooltipTextProvider.idl',
     'nsIURIFixup.idl',
@@ -62,40 +61,46 @@ EXPORTS += [
     'nsDocShellLoadTypes.h',
     'nsDocShellTreeOwner.h',
     'nsIScrollObserver.h',
+    'nsWebNavigationInfo.h',
     'SerializedLoadContext.h',
 ]
 
 EXPORTS.mozilla += [
+    'BaseHistory.h',
     'IHistory.h',
     'LoadContext.h',
 ]
 
 EXPORTS.mozilla.dom += [
     'BrowsingContext.h',
-    'BrowsingContextFieldList.h',
     'BrowsingContextGroup.h',
     'CanonicalBrowsingContext.h',
     'ChildProcessChannelListener.h',
+    'SyncedContext.h',
+    'SyncedContextInlines.h',
+    'WindowContext.h',
 ]
 
 UNIFIED_SOURCES += [
+    'BaseHistory.cpp',
     'BrowsingContext.cpp',
     'BrowsingContextGroup.cpp',
     'CanonicalBrowsingContext.cpp',
     'ChildProcessChannelListener.cpp',
     'LoadContext.cpp',
     'nsAboutRedirector.cpp',
-    'nsDefaultURIFixup.cpp',
     'nsDocShell.cpp',
     'nsDocShellEditorData.cpp',
     'nsDocShellEnumerator.cpp',
     'nsDocShellLoadState.cpp',
+    'nsDocShellTelemetryUtils.cpp',
     'nsDocShellTreeOwner.cpp',
     'nsDSURIContentListener.cpp',
     'nsPingListener.cpp',
     'nsRefreshTimer.cpp',
     'nsWebNavigationInfo.cpp',
     'SerializedLoadContext.cpp',
+    'WindowContext.cpp',
 ]
 
 include('/ipc/chromium/chromium-config.mozbuild')
@@ -120,5 +125,6 @@ LOCAL_INCLUDES += [
 if CONFIG['CC_TYPE'] in ('clang', 'gcc'):
     CXXFLAGS += ['-Wno-error=shadow']
 
-if CONFIG['MOZ_LAYOUT_DEBUGGER']:
-    DEFINES['MOZ_LAYOUT_DEBUGGER'] = True
+EXTRA_JS_MODULES += [
+    'URIFixup.jsm'
+]

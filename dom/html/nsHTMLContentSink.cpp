@@ -21,53 +21,38 @@
 #include "nsIInterfaceRequestor.h"
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsIURI.h"
-#include "nsIContentViewer.h"
 #include "mozilla/dom/NodeInfo.h"
 #include "mozilla/dom/ScriptLoader.h"
-#include "nsIAppShell.h"
 #include "nsCRT.h"
 #include "prtime.h"
 #include "mozilla/Logging.h"
-#include "nsNodeUtils.h"
 #include "nsIContent.h"
 #include "mozilla/dom/CustomElementRegistry.h"
 #include "mozilla/dom/Element.h"
+#include "mozilla/dom/MutationObservers.h"
 #include "mozilla/Preferences.h"
 
 #include "nsGenericHTMLElement.h"
 
 #include "nsIScriptElement.h"
 
-#include "nsIComponentManager.h"
-#include "nsIServiceManager.h"
-
 #include "nsDocElementCreatedNotificationRunner.h"
 #include "nsGkAtoms.h"
 #include "nsContentUtils.h"
 #include "nsIChannel.h"
-#include "nsIHttpChannel.h"
-#include "nsIDocShell.h"
 #include "mozilla/dom/Document.h"
 #include "nsStubDocumentObserver.h"
-#include "nsIHTMLDocument.h"
-#include "nsICookieService.h"
+#include "nsHTMLDocument.h"
 #include "nsTArray.h"
-#include "nsIScriptSecurityManager.h"
-#include "nsIPrincipal.h"
 #include "nsTextFragment.h"
 #include "nsIScriptGlobalObject.h"
 #include "nsNameSpaceManager.h"
 
-#include "nsIStyleSheetLinkingElement.h"
-#include "nsITimer.h"
 #include "nsError.h"
 #include "nsContentPolicyUtils.h"
 #include "nsIScriptContext.h"
-#include "nsStyleLinkElement.h"
 
-#include "nsIPrompt.h"
 #include "nsLayoutCID.h"
-#include "nsIDocShellTreeItem.h"
 
 #include "nsEscape.h"
 #include "nsNodeInfoManager.h"
@@ -137,7 +122,7 @@ class HTMLContentSink : public nsContentSink, public nsIHTMLContentSink {
  protected:
   virtual ~HTMLContentSink();
 
-  nsCOMPtr<nsIHTMLDocument> mHTMLDocument;
+  RefPtr<nsHTMLDocument> mHTMLDocument;
 
   // The maximum length of a text run
   int32_t mMaxTextRun;
@@ -612,7 +597,7 @@ nsresult HTMLContentSink::Init(Document* aDoc, nsIURI* aURI,
 
   aDoc->AddObserver(this);
   mIsDocumentObserver = true;
-  mHTMLDocument = do_QueryInterface(aDoc);
+  mHTMLDocument = aDoc->AsHTMLDocument();
 
   NS_ASSERTION(mDocShell, "oops no docshell!");
 
@@ -660,20 +645,18 @@ NS_IMETHODIMP
 HTMLContentSink::WillBuildModel(nsDTDMode aDTDMode) {
   WillBuildModelImpl();
 
-  if (mHTMLDocument) {
-    nsCompatibility mode = eCompatibility_NavQuirks;
-    switch (aDTDMode) {
-      case eDTDMode_full_standards:
-        mode = eCompatibility_FullStandards;
-        break;
-      case eDTDMode_almost_standards:
-        mode = eCompatibility_AlmostStandards;
-        break;
-      default:
-        break;
-    }
-    mHTMLDocument->SetCompatibilityMode(mode);
+  nsCompatibility mode = eCompatibility_NavQuirks;
+  switch (aDTDMode) {
+    case eDTDMode_full_standards:
+      mode = eCompatibility_FullStandards;
+      break;
+    case eDTDMode_almost_standards:
+      mode = eCompatibility_AlmostStandards;
+      break;
+    default:
+      break;
   }
+  mDocument->SetCompatibilityMode(mode);
 
   // Notify document that the load is beginning
   mDocument->BeginLoad();
@@ -874,7 +857,8 @@ void HTMLContentSink::NotifyInsert(nsIContent* aContent,
     // Note that aContent->OwnerDoc() may be different to mDocument already.
     MOZ_AUTO_DOC_UPDATE(aContent ? aContent->OwnerDoc() : mDocument.get(),
                         true);
-    nsNodeUtils::ContentInserted(NODE_FROM(aContent, mDocument), aChildContent);
+    MutationObservers::NotifyContentInserted(NODE_FROM(aContent, mDocument),
+                                             aChildContent);
     mLastNotificationTime = PR_Now();
   }
 
@@ -962,6 +946,6 @@ void HTMLContentSink::ContinueInterruptedParsingAsync() {
       "HTMLContentSink::ContinueInterruptedParsingIfEnabled", this,
       &HTMLContentSink::ContinueInterruptedParsingIfEnabled);
 
-  nsCOMPtr<Document> doc = do_QueryInterface(mHTMLDocument);
+  RefPtr<Document> doc = mHTMLDocument;
   doc->Dispatch(mozilla::TaskCategory::Other, ev.forget());
 }

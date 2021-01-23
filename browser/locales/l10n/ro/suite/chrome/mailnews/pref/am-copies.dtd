@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+# janimo <jani@ubuntu.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- extracted from am-copies.xul -->
+
+<!ENTITY copyAndFolderTitle.label "Copii și dosare">
+<!ENTITY sendingPrefix.label "La trimiterea unui mesaj:">
+<!ENTITY fccMailFolder.label "Plasează automat o copie în:">
+<!ENTITY fccMailFolder.accesskey "P">
+<!ENTITY fccReplyFollowsParent.label "Pune răspunsurile în dosarul cu mesajul la care se răspunde">
+<!ENTITY fccReplyFollowsParent.accesskey "c">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Cc these email addresses:">
+<!ENTITY ccAddress.accesskey "C">
+<!ENTITY ccAddressList.placeholder "Separate addresses with commas">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Bcc la următoarele adrese:">
+<!ENTITY bccAddress.accesskey "B">
+<!ENTITY bccAddressList.placeholder "Separate addresses with commas">
+<!ENTITY saveMessageDlg.label "Afișează dialog de confirmare la salvarea mesajelor">
+<!ENTITY saveMessageDlg.accesskey "A">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "Dosarul „Mesaje trimise” din:">
+<!ENTITY sentFolderOn.accesskey "s">
+<!ENTITY sentInOtherFolder.label "Altul:">
+<!ENTITY sentInOtherFolder.accesskey "A">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Message Archives">
+<!ENTITY keepArchives.label "Păstrează mesajele arhivate în:">
+<!ENTITY keepArchives.accesskey "K">
+<!ENTITY archiveHierarchyButton.label "Archive options…">
+<!ENTITY archiveHierarchyButton.accesskey "n">
+<!ENTITY archivesFolderOn.label "Dosarul „Arhive” din:">
+<!ENTITY archivesFolderOn.accesskey "a">
+<!ENTITY archiveInOtherFolder.label "Altul:">
+<!ENTITY archiveInOtherFolder.accesskey "t">
+<!ENTITY specialFolders.label "Drafts and Templates">
+<!ENTITY keepDrafts.label "Păstrează ciornele în:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "Dosarul „Mesaje nefinalizate” din:">
+<!ENTITY draftsFolderOn.accesskey "D">
+<!ENTITY draftInOtherFolder.label "Altul:">
+<!ENTITY draftInOtherFolder.accesskey "t">
+<!ENTITY keepTemplates.label "Keep message templates in:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "Dosarul „Șabloane” din:">
+<!ENTITY templatesFolderOn.accesskey "D">
+<!ENTITY templateInOtherFolder.label "Altul:">
+<!ENTITY templateInOtherFolder.accesskey "A">

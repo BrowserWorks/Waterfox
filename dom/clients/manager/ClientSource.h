@@ -10,12 +10,14 @@
 #include "mozilla/dom/ClientOpPromise.h"
 #include "mozilla/dom/ClientThing.h"
 #include "mozilla/dom/ServiceWorkerDescriptor.h"
+#include "mozilla/Result.h"
 #include "mozilla/Variant.h"
 
 #ifdef XP_WIN
 #  undef PostMessage
 #endif
 
+class nsIContentSecurityPolicy;
 class nsIDocShell;
 class nsIGlobalObject;
 class nsISerialEventTarget;
@@ -77,7 +79,7 @@ class ClientSource final : public ClientThing<ClientSourceChild> {
 
   void MaybeCreateInitialDocument();
 
-  nsresult SnapshotWindowState(ClientState* aStateOut);
+  Result<ClientState, ErrorResult> SnapshotWindowState();
 
   // Private methods called by ClientManager
   ClientSource(ClientManager* aManager, nsISerialEventTarget* aEventTarget,
@@ -144,9 +146,18 @@ class ClientSource final : public ClientThing<ClientSourceChild> {
   RefPtr<ClientOpPromise> GetInfoAndState(
       const ClientGetInfoAndStateArgs& aArgs);
 
-  nsresult SnapshotState(ClientState* aStateOut);
+  Result<ClientState, ErrorResult> SnapshotState();
 
   nsISerialEventTarget* EventTarget() const;
+
+  void SetCsp(nsIContentSecurityPolicy* aCsp);
+  void SetPreloadCsp(nsIContentSecurityPolicy* aPreloadCSP);
+  void SetCspInfo(const mozilla::ipc::CSPInfo& aCSPInfo);
+  const Maybe<mozilla::ipc::CSPInfo>& GetCspInfo();
+
+  void SetAgentClusterId(const nsID& aId) {
+    mClientInfo.SetAgentClusterId(aId);
+  }
 
   void Traverse(nsCycleCollectionTraversalCallback& aCallback,
                 const char* aName, uint32_t aFlags);

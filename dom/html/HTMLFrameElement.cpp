@@ -17,7 +17,7 @@ HTMLFrameElement::HTMLFrameElement(
     FromParser aFromParser)
     : nsGenericHTMLFrameElement(std::move(aNodeInfo), aFromParser) {}
 
-HTMLFrameElement::~HTMLFrameElement() {}
+HTMLFrameElement::~HTMLFrameElement() = default;
 
 NS_IMPL_ELEMENT_CLONE(HTMLFrameElement)
 
@@ -33,10 +33,10 @@ bool HTMLFrameElement::ParseAttribute(int32_t aNamespaceID, nsAtom* aAttribute,
       return ParseFrameborderValue(aValue, aResult);
     }
     if (aAttribute == nsGkAtoms::marginwidth) {
-      return aResult.ParseSpecialIntValue(aValue);
+      return aResult.ParseNonNegativeIntValue(aValue);
     }
     if (aAttribute == nsGkAtoms::marginheight) {
-      return aResult.ParseSpecialIntValue(aValue);
+      return aResult.ParseNonNegativeIntValue(aValue);
     }
     if (aAttribute == nsGkAtoms::scrolling) {
       return ParseScrollingValue(aValue, aResult);

@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "inɣal &amp; ikaramen">
+<!ENTITY sendingPrefix.label "Ticki tettazneḍ iznan, s wudem awurman:">
+<!ENTITY fccMailFolder.label "Sers anɣel di:">
+<!ENTITY fccMailFolder.accesskey "S">
+<!ENTITY fccReplyFollowsParent.label "Sers tiririt deg ukaram n yizen ara tettarraḍ">
+<!ENTITY fccReplyFollowsParent.accesskey "e">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Azen Anɣ.I i tensiwin-agi:">
+<!ENTITY ccAddress.accesskey "I">
+<!ENTITY ccAddressList.placeholder "Frez tansiwin s ticcert">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Azen Anɣ.Uff i tensiwin-agi:">
+<!ENTITY bccAddress.accesskey "U">
+<!ENTITY bccAddressList.placeholder "Frez tansiwin s ticcert">
+<!ENTITY saveMessageDlg.label "Sken adiwenni n usentem ticki izen yettwasekles">
+<!ENTITY saveMessageDlg.accesskey "d">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "Akaram &quot;Yettwazen&quot; di:">
+<!ENTITY sentFolderOn.accesskey "Y">
+<!ENTITY sentInOtherFolder.label "Wayeḍ:">
+<!ENTITY sentInOtherFolder.accesskey "W">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Iɣbaren n yizen">
+<!ENTITY keepArchives.label "Eǧǧ aḥraz n yeznan di :">
+<!ENTITY keepArchives.accesskey "E">
+<!ENTITY archiveHierarchyButton.label "Iɣewwaṛen n uḥraz">
+<!ENTITY archiveHierarchyButton.accesskey "ḥ">
+<!ENTITY archivesFolderOn.label "Akaram n &quot;Aḥraz&quot; adi:">
+<!ENTITY archivesFolderOn.accesskey "n">
+<!ENTITY archiveInOtherFolder.label "Wiyaḍ:">
+<!ENTITY archiveInOtherFolder.accesskey "y">
+<!ENTITY specialFolders.label "Irewwayen akked tineɣrufin">
+<!ENTITY keepDrafts2.label "Eǧǧ iznan irewwayen di:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "Akaran n &quot;Irewwayen&quot; di:">
+<!ENTITY draftsFolderOn.accesskey "I">
+<!ENTITY draftInOtherFolder.label "Wiyaḍ:">
+<!ENTITY draftInOtherFolder.accesskey "y">
+<!ENTITY keepTemplates.label "Eǧǧ tineɣrufin n yizen di:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "Akaram n &quot;Tineɣrufin&quot; di:">
+<!ENTITY templatesFolderOn.accesskey "r">
+<!ENTITY templateInOtherFolder.label "Wiyaḍ:">
+<!ENTITY templateInOtherFolder.accesskey "W">

@@ -1,0 +1,762 @@
+// sass-lint:disable no-css-comments
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+@import '../styles/normalize';
+@import '../styles/OnboardingImages';
+
+$break-point-medium: 610px;
+$break-point-large: 866px;
+$break-point-widest: 1122px;
+$logo-size: 112px;
+
+html {
+  height: 100%;
+}
+
+body {
+  // sass-lint:disable no-color-literals
+  --grey-subtitle: #4A4A4F;
+  --grey-subtitle-1: #696977;
+  --newtab-background-color: #EDEDF0;
+  --newtab-background-color-1: #F9F9FA;
+  --newtab-text-primary-color: #0C0C0D;
+  --newtab-text-conditional-color: #4A4A4F;
+  --newtab-button-primary-color: #0060DF;
+  --newtab-button-secondary-color: #0060DF;
+  --newtab-card-background-color: #FFF;
+  --newtab-card-shadow: 0 1px 4px 0 rgba(12, 12, 13, 0.1);
+  --tiles-theme-section-border-width: 1px;
+  --welcome-header-text-color: #2B2156;
+  --welcome-header-text-color-1: #20133A;
+  --welcome-card-button-background-color: rgba(12, 12, 13, 0.1);
+  --welcome-card-button-background-hover-color: rgba(12, 12, 13, 0.2);
+  --welcome-card-button-background-active-color: rgba(12, 12, 13, 0.3);
+  --welcome-button-box-shadow-color: rgba(10, 132, 255, 0.3);
+  --welcome-button-box-shadow-inset-color: #0A84FF;
+  --welcome-button-text-color: #FFF;
+  --welcome-button-background-hover-color: #003EAA;
+  --welcome-button-background-active-color: #002275;
+  --about-welcome-media-fade: linear-gradient(transparent, transparent 35%, #F9F9FA, #F9F9FA);
+
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Ubuntu',
+  'Helvetica Neue', sans-serif;
+  font-size: 16px;
+  position: relative;
+  /* these two rules fix test failures in
+  "browser_ext_themes_ntp_colors" & "browser_ext_themes_ntp_colors_perwindow".*/
+  color: var(--newtab-text-primary-color);
+  background-color: var(--newtab-background-color);
+
+  &[lwt-newtab-brighttext] {
+    --newtab-background-color: #2A2A2E;
+    --newtab-background-color-1: rgba(4,6,20,.35);
+    --newtab-text-primary-color: #F9F9FA;
+    --newtab-text-conditional-color: #F9F9FA;
+    --grey-subtitle-1: #FFF;
+    --newtab-button-primary-color: #0060DF;
+    --newtab-button-secondary-color: #FFF;
+    --newtab-card-background-color: #38383D;
+    --newtab-card-shadow: 0 1px 8px 0 rgba(12, 12, 13, 0.2);
+    --welcome-header-text-color: rgba(255, 255, 255, 0.6);
+    --welcome-header-text-color-1: #7542E5;
+    --welcome-card-button-background-color: rgba(12, 12, 13, 0.3);
+    --welcome-card-button-background-hover-color: rgba(12, 12, 13, 0.5);
+    --welcome-card-button-background-active-color: rgba(12, 12, 13, 0.7);
+    --welcome-button-box-shadow-color: rgba(249, 249, 250, 0.2);
+    --about-welcome-media-fade: linear-gradient(transparent, transparent 35%, #1D1133, #1D1133);
+  }
+}
+
+.welcomeCardGrid {
+  margin: 0;
+  margin-top: 32px;
+  display: grid;
+  grid-gap: 32px;
+  transition: opacity 0.4s;
+  transition-delay: 0.1s;
+  grid-auto-rows: 1fr;
+
+  @media (min-width: $break-point-medium) {
+    grid-template-columns: repeat(auto-fit, 224px);
+  }
+
+  @media (min-width: $break-point-widest) {
+    grid-template-columns: repeat(auto-fit, 309px);
+  }
+}
+
+.welcomeContainer {
+  text-align: center;
+
+  @media (min-width: $break-point-medium) {
+    max-height: 1000px;
+  }
+
+  h1 {
+    font-size: 36px;
+    font-weight: 200;
+    margin: 0 0 40px;
+    color: var(--welcome-header-text-color);
+  }
+
+  .welcome-title {
+    margin-bottom: 5px;
+    line-height: 52px;
+  }
+
+  .welcome-subtitle {
+    font-size: 28px;
+    font-weight: 200;
+    margin: 6px 0 0;
+    color: var(--grey-subtitle);
+    line-height: 42px;
+  }
+}
+
+.welcomeContainerInner {
+  margin: auto;
+  padding: 40px 25px;
+
+  @media (min-width: $break-point-medium) {
+    width: 530px;
+  }
+
+  @media (min-width: $break-point-large) {
+    width: 786px;
+  }
+
+  @media (min-width: $break-point-widest) {
+    width: 1042px;
+  }
+}
+
+.welcomeCard {
+  position: relative;
+  background: var(--newtab-card-background-color);
+  border-radius: 4px;
+  box-shadow: var(--newtab-card-shadow);
+  font-size: 13px;
+  padding: 20px 20px 60px;
+
+  @media (max-width: $break-point-large) {
+    padding: 20px;
+  }
+
+  @media (min-width: $break-point-widest) {
+    font-size: 15px;
+  }
+}
+
+.welcomeCard .onboardingTitle {
+  font-weight: normal;
+  color: var(--newtab-text-primary-color);
+  margin: 10px 0 4px;
+  font-size: 15px;
+
+  @media (min-width: $break-point-widest) {
+    font-size: 18px;
+  }
+}
+
+.welcomeCard .onboardingText {
+  margin: 0 0 60px;
+  color: var(--newtab-text-conditional-color);
+  line-height: 1.5;
+  font-weight: 200;
+}
+
+.welcomeCard .onboardingButton {
+  color: var(--newtab-text-conditional-color);
+  background: var(--welcome-card-button-background-color);
+  border: 0;
+  border-radius: 4px;
+  margin: 14px;
+  min-width: 70%;
+  padding: 6px 14px;
+  white-space: pre-wrap;
+  cursor: pointer;
+
+  &:focus,
+  &:hover {
+    box-shadow: none;
+    background: var(--welcome-card-button-background-hover-color);
+  }
+
+  &:focus {
+    outline: dotted 1px;
+  }
+
+  &:active {
+    background: var(--welcome-card-button-background-active-color);
+  }
+}
+
+.welcomeCard .onboardingButtonContainer {
+  position: absolute;
+  bottom: 16px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+}
+
+.onboardingMessageImage {
+  height: 112px;
+  width: 180px;
+  background-size: auto 140px;
+  background-position: center center;
+  background-repeat: no-repeat;
+  display: inline-block;
+
+  @media (max-width: $break-point-large) {
+    height: 75px;
+    min-width: 80px;
+    background-size: 140px;
+  }
+}
+
+.start-button {
+  border: 0;
+  font-size: 15px;
+  font-family: inherit;
+  font-weight: 200;
+  margin-inline-start: 12px;
+  margin: 30px 0 25px;
+  padding: 8px 16px;
+  white-space: nowrap;
+  background-color: var(--newtab-button-primary-color);
+  color: var(--welcome-button-text-color);
+  cursor: pointer;
+  border-radius: 2px;
+
+  &:focus {
+    background: var(--welcome-button-background-hover-color);
+    box-shadow: 0 0 0 1px var(--welcome-button-box-shadow-inset-color) inset,
+    0 0 0 1px var(--welcome-button-box-shadow-inset-color),
+    0 0 0 4px var(--welcome-button-box-shadow-color);
+  }
+
+  &:hover {
+    background: var(--welcome-button-background-hover-color);
+  }
+
+  &:active {
+    background: var(--welcome-button-background-active-color);
+  }
+}
+
+
+.multistageContainer {
+  text-align: center;
+  overflow-x: auto;
+  height: 100vh;
+  background-color: var(--newtab-background-color-1);
+
+  .screen {
+    display: flex;
+    flex-flow: column nowrap;
+    height: 100%;
+  }
+
+  .brand-logo {
+    background: url('chrome://branding/content/about-logo.svg') top
+    center / $logo-size no-repeat;
+    padding: $logo-size 0 20px;
+    margin-top: 60px;
+
+    &.cta-top {
+      margin-top: 25px;
+    }
+  }
+
+  .welcomeZap {
+    span {
+      position: relative;
+      z-index: 1;
+      white-space: nowrap;
+    }
+
+    .zap {
+      &::after {
+        display: block;
+        background-repeat: no-repeat;
+        background-size: 100% 100%;
+        content: '';
+        position: absolute;
+        top: calc(100% - 0.15em);
+        width: 100%;
+        height: 0.3em;
+        left: 0;
+        z-index: -1;
+      }
+
+      &.short::after {
+        background-image:  url('../data/content/assets/short-zap.svg');
+      }
+
+      &.long::after {
+        background-image:  url('../data/content/assets/long-zap.svg');
+      }
+    }
+
+
+  }
+
+  .welcome-text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+
+    h1,
+    h2 {
+      width: 860px;
+      @media (max-width: $break-point-large) {
+        width: 530px;
+      }
+
+      @media (max-width: $break-point-medium) {
+        width: 430px;
+      }
+    }
+
+    h1 {
+      font-size: 48px;
+      line-height: 56px;
+      font-weight: bold;
+      margin: 0 6px;
+      color: var(--welcome-header-text-color-1);
+    }
+
+    h2 {
+      font-size: 18px;
+      font-weight: normal;
+      margin: 10px 6px 0;
+      color: var(--grey-subtitle-1);
+      line-height: 28px;
+      max-width: 750px;
+      letter-spacing: -0.01em;
+    }
+  }
+
+  .tiles-theme-container {
+    margin: 10px auto;
+    border: 0;
+  }
+
+  .sr-only {
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+
+    &.input {
+      height: 1px;
+      width: 1px;
+    }
+  }
+
+  .tiles-theme-section {
+    display: grid;
+    grid-gap: 21px;
+    grid-template-columns: repeat(3, auto);
+
+    /* --newtab-background-color-1 will be invisible, but it's necessary to
+     * keep the content from jumping around when it gets focus-within and
+     * does sprout a dotted border.  This way it keeps a 1 pixel wide border
+     * either way so things don't change position.
+     */
+    border: var(--tiles-theme-section-border-width)
+    solid
+    var(--newtab-background-color-1);
+
+    @media (max-width: $break-point-medium) {
+      grid-template-columns: repeat(2, auto);
+    }
+
+    &:focus-within {
+      border: var(--tiles-theme-section-border-width) dotted;
+    }
+
+    .theme {
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      width: 180px;
+      height: 145px;
+      color: #000;
+      background-color: #FFF;
+      box-shadow: 0 1px 4px rgba(12, 12, 13, 0.1);
+      border-radius: 4px;
+      cursor: pointer;
+
+      .icon {
+        background-size: cover;
+        border-top-left-radius: 4px;
+        border-top-right-radius: 4px;
+        height: 91px;
+
+        &:dir(rtl) {
+          transform: scaleX(-1);
+        }
+
+        &.light {
+          background-image: url('chrome://mozapps/content/extensions/firefox-compact-light.svg');
+        }
+
+        &.dark {
+          background-image: url('chrome://mozapps/content/extensions/firefox-compact-dark.svg');
+        }
+
+        &.automatic {
+          background-image: url('chrome://mozapps/content/extensions/default-theme.svg');
+        }
+
+        &.abyss {
+          background-image: url('chrome://browser/skin/abyss/img/waterfox-abyss-preview.svg');
+        }
+		
+        &.floe {
+          background-image: url('chrome://browser/skin/floe/img/waterfox-floe-preview.svg');
+        }
+      }
+
+      .text {
+        display: flex;
+        font-size: 14px;
+        font-weight: bold;
+        line-height: 22px;
+        margin-inline-start: 12px;
+        margin-top: 9px;
+      }
+
+      &.selected {
+        outline: 4px solid #0090ED;
+        outline-offset: -4px;
+      }
+
+      &:focus,
+      &:active {
+        outline: 4px solid #0090ED;
+        outline-offset: -4px;
+      }
+    }
+  }
+
+  .tiles-container {
+    margin: 10px auto;
+
+    &.info {
+      padding: 6px 12px 12px;
+
+      &:hover,
+      &:focus {
+        background-color: rgba(217, 217, 227, 0.3);
+        border-radius: 4px;
+      }
+    }
+  }
+  .tiles-search-container {
+    margin: 10px auto;
+    border: 0;
+  }
+
+  .sr-only {
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+
+    &.input {
+      height: 1px;
+      width: 1px;
+    }
+  }
+
+  .tiles-search-section {
+    display: grid;
+    grid-gap: 21px;
+    grid-template-columns: repeat(4, auto);
+
+    /* --newtab-background-color-1 will be invisible, but it's necessary to
+     * keep the content from jumping around when it gets focus-within and
+     * does sprout a dotted border.  This way it keeps a 1 pixel wide border
+     * either way so things don't change position.
+     */
+    border: var(--tiles-search-section-border-width)
+    solid
+    var(--newtab-background-color-1);
+
+    @media (max-width: $break-point-medium) {
+      grid-template-columns: repeat(2, auto);
+    }
+
+    &:focus-within {
+      border: var(--tiles-search-section-border-width) dotted;
+    }
+
+    .search {
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      width: 180px;
+      height: 145px;
+      color: #000;
+      background-color: #FFF;
+      box-shadow: 0 1px 4px rgba(12, 12, 13, 0.1);
+      border-radius: 4px;
+      cursor: pointer;
+
+      .icon {
+        background-size: cover;
+        border-top-left-radius: 4px;
+        border-top-right-radius: 4px;
+        height: 91px;
+
+        &:dir(rtl) {
+          transform: scaleX(-1);
+        }
+
+        &.bing {
+          background-image: url('resource://activity-stream/data/content/tippytop/images/bing-search-welcome.png');
+        }
+
+        &.startpage {
+          background-image: url('resource://activity-stream/data/content/tippytop/images/startpage-search-welcome.png');
+        }
+      }
+
+      .text {
+        display: flex;
+        font-size: 14px;
+        font-weight: bold;
+        line-height: 22px;
+        margin-inline-start: 12px;
+        margin-top: 9px;
+      }
+
+      &.selected {
+        outline: 4px solid #0090ED;
+        outline-offset: -4px;
+      }
+
+      &:focus,
+      &:active {
+        outline: 4px solid #0090ED;
+        outline-offset: -4px;
+      }
+    }
+  }
+
+  .tiles-container {
+    margin: 10px auto;
+
+    &.info {
+      padding: 6px 12px 12px;
+
+      &:hover,
+      &:focus {
+        background-color: rgba(217, 217, 227, 0.3);
+        border-radius: 4px;
+      }
+    }
+  }
+
+  .tiles-topsites-disclaimer {
+    display: flex;
+    flex-direction: column;
+    padding: 1em;
+    text-align: center;
+    color: var(--grey-subtitle-1);
+    font-size: 12px;
+    line-height: 18px;
+  }
+
+  .tiles-topsites-section {
+    $host-size: 12px;
+    $tile-size: 96px;
+
+    display: grid;
+    grid-gap: $tile-size / 4;
+    grid-template-columns: repeat(5, auto);
+
+    @media (max-width: $break-point-medium) {
+      grid-template-columns: repeat(3, auto);
+    }
+
+    .site {
+      width: $tile-size;
+    }
+
+    .icon {
+      background-size: cover;
+      border-radius: 4px;
+      box-shadow: var(--newtab-card-shadow);
+      color: rgba(255, 255, 255, 0.5);
+      font-size: $host-size * 2;
+      font-weight: bold;
+      height: $tile-size;
+      line-height: $tile-size;
+    }
+
+    .host {
+      font-size: $host-size;
+      line-height: $host-size * 3;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .site:nth-child(1) .icon {
+      background-color: #7542E5;
+    }
+
+    .site:nth-child(2) .icon {
+      background-color: #952BB9;
+    }
+
+    .site:nth-child(3) .icon {
+      background-color: #E31587;
+    }
+
+    .site:nth-child(4) .icon {
+      background-color: #E25920;
+    }
+
+    .site:nth-child(5) .icon {
+      background-color: #0250BB;
+    }
+  }
+
+  .tiles-media-section {
+    align-self: center;
+    position: relative;
+    margin-top: -12px;
+    margin-bottom: -155px;
+
+    .fade {
+      height: 390px;
+      width: 800px;
+      position: absolute;
+      background-image: var(--about-welcome-media-fade);
+    }
+
+    .media {
+      height: 390px;
+      width: 800px;
+    }
+
+    @media (prefers-reduced-motion) {
+      height: 200px;
+      width: 800px;
+      margin: 0;
+
+      &.privacy {
+        background: top no-repeat url('../data/content/assets/firefox-protections.svg');
+      }
+
+      .media {
+        opacity: 0;
+      }
+    }
+  }
+
+  button {
+    font-family: inherit;
+    cursor: pointer;
+    border: 0;
+
+    &.primary {
+      font-size: 16px;
+      margin-inline-start: 12px;
+      margin: 20px 0 0;
+      padding: 12px 20px;
+      white-space: nowrap;
+      background-color: var(--newtab-button-primary-color);
+      color: var(--welcome-button-text-color);
+      border-radius: 4px;
+      position: relative;
+      z-index: 1;
+
+      &:focus {
+        background: var(--welcome-button-background-hover-color);
+        box-shadow: 0 0 0 1px var(--welcome-button-box-shadow-inset-color) inset,
+        0 0 0 1px var(--welcome-button-box-shadow-inset-color),
+        0 0 0 4px var(--welcome-button-box-shadow-color);
+      }
+
+      &:hover {
+        background: var(--welcome-button-background-hover-color);
+      }
+
+      &:active {
+        background: var(--welcome-button-background-active-color);
+      }
+    }
+
+    &.secondary {
+      background-color: initial;
+      text-decoration: underline;
+      display: block;
+      padding: 0;
+      width: auto;
+      color: var(--newtab-button-secondary-color);
+      margin-top: 14px;
+
+      &:hover,
+      &:focus,
+      &:active {
+        background-color: initial;
+      }
+    }
+  }
+
+  .secondary-cta {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    font-size: 14px;
+
+    &.top {
+      justify-content: end;
+      align-items: end;
+      padding-inline-end: 30px;
+      padding-top: 4px;
+
+      @media (max-width: $break-point-medium) {
+        justify-content: center;
+      }
+    }
+
+    span {
+      color: var(--grey-subtitle-1);
+      margin: 0 4px;
+    }
+  }
+
+  .steps {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    margin-top: auto;
+    padding: 32px 0 66px;
+    z-index: 1;
+
+    &.has-disclaimer {
+      padding-bottom: 0;
+    }
+
+    .indicator {
+      width: 60px;
+      height: 4px;
+      margin-inline-end: 4px;
+      margin-inline-start: 4px;
+      background: var(--grey-subtitle-1);
+      border-radius: 5px;
+      opacity: 0.25;
+
+      &.current {
+        opacity: 1;
+      }
+    }
+  }
+}

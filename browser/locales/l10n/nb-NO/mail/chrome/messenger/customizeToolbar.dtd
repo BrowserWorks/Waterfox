@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "Tilpass verktøylinje">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "Du kan legge til eller fjerne elementer ved å dra de til eller fra verktøylinjer.">
+<!ENTITY show.label               "Vis:">
+<!ENTITY iconsAndText.label       "Ikoner og tekst">
+<!ENTITY icons.label              "Ikoner">
+<!ENTITY text.label               "Tekst">
+<!ENTITY iconsBesideText.label    "Ikoner ved siden av teksten">
+<!ENTITY useSmallIcons.label      "Bruk små ikoner">
+<!ENTITY restoreDefaultSet.label  "Gjenopprett standardsett">
+<!ENTITY showTitlebar2.label      "Tittellinje">
+<!ENTITY extraDragSpace2.label    "Dra-og-slipp-område">
+<!ENTITY saveChanges.label        "Ferdig">
+<!ENTITY undoChanges.label        "Angre endringer">

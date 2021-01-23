@@ -1,0 +1,292 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY appmenu.tooltip                     "Menu iepenje">
+<!ENTITY navbarOverflow.label                "Mear ark…">
+
+<!-- Tab context menu -->
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "Ljepblêd fêstsette">
+<!ENTITY  unpinTab.label                     "Ljepblêd losmeitsje">
+
+<!ENTITY  listAllTabs.label      "Alle ljepblêdtitels werjaan">
+
+<!ENTITY tabCmd.label "Nij ljepblêd">
+<!ENTITY openFileCmd.label "Bestân iepenje…">
+<!ENTITY printCmd.label "Ofdrukke…">
+
+<!ENTITY taskManagerCmd.label "Taakbehearder">
+
+<!ENTITY menubarCmd.label "Menubalke">
+<!ENTITY menubarCmd.accesskey "M">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY navbar.accessibleLabel "Navigaasje">
+<!ENTITY personalbarCmd.label "Blêdwizerarkbalke">
+<!ENTITY personalbarCmd.accesskey "B">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY personalbar.accessibleLabel "Blêdwizers">
+<!ENTITY bookmarksToolbarItem.label "Blêdwizerarkbalke-ûnderdiel">
+
+<!ENTITY fullScreenCmd.label "Folslein skerm">
+
+
+<!-- } is above this key on many keyboards -->
+
+
+<!ENTITY pictureInPictureHideToggle.label "Ofbylding-yn-ôfbylding-skeakeler ferstopje">
+<!ENTITY pictureInPictureHideToggle.accesskey "O">
+
+<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
+     for the Waterfox Account toolbar menu screen. The `Signed in as` text is
+     followed by the user's email. -->
+<!ENTITY fxa.menu.syncSettings2.label "&syncBrand.shortName.label;-ynstellingen">
+<!ENTITY fxa.menu.connectAnotherDevice2.label "In oar apparaat ferbine…">
+<!ENTITY fxa.menu.firefoxAccount "&syncBrand.fxAccount.label;">
+
+<!ENTITY fxa.menu.signin.label "Oanmelde by &brandProductName;">
+<!ENTITY fxa.menu.turnOnSync.label "&syncBrand.shortName.label; ynskeakelje">
+<!ENTITY fxa.menu.firefoxServices.label "&brandProductName;-tsjinsten">
+<!ENTITY fxa.menu.account.label "Account">
+<!ENTITY fxa.menu.settings.label "Ynstellingen">
+<!ENTITY fxa.menu.accountSettings.label "Accountynstellingen">
+<!ENTITY fxa.menu.manageAccount2.label "Account beheare">
+<!ENTITY fxa.menu.signOut.label "Ofmelde…">
+<!ENTITY fxa.menu.setupSync.label "&syncBrand.shortName.label; ynstelle…">
+
+<!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
+     for the Waterfox Account toolbar menu screen.  -->
+<!ENTITY fxa.service.sendTab.description "Stjoer in ljepblêd daliks nei elk apparaat wêrop jo oanmeld binne.">
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "brûkt no it folsleine skerm">
+<!ENTITY fullscreenWarning.generic.label "Dit dokumint brûkt no it folsleine skerm">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "Folslein skerm ferlitte (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "Folslein skerm ferlitte (esc)">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "hat de kontrôle oer jo oanwizer. Druk op Esc om de kontrôle wer oer te nimmen.">
+<!ENTITY pointerlockWarning.generic.label "Dit dokumint hat de kontrôle oer jo oanwizer. Druk op Esc om de kontrôle wer oer te nimmen.">
+
+<!ENTITY showAllBookmarks2.label "Alle blêdwizers toane">
+<!ENTITY recentBookmarks.label "Resint oanmakke blêdwizers">
+<!ENTITY bookmarksToolbarChevron.tooltip "Mear blêdwizers toane">
+
+<!ENTITY printButton.label            "Ofdrukke">
+<!ENTITY printButton.tooltip          "Dizze side ôfdrukke">
+
+
+<!ENTITY searchItem.title             "Sykje">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "Begjinside">
+<!ENTITY homeButton.defaultPage.tooltip "&brandShortName;-startside">
+
+<!ENTITY bookmarksButton.label          "Blêdwizers">
+
+<!ENTITY bookmarksSubview.label             "Blêdwizers">
+<!ENTITY bookmarksMenuButton2.label         "Blêdwizermenu">
+<!ENTITY bookmarksMenuButton.other.label    "Oare blêdwizers">
+<!ENTITY bookmarksMenuButton.mobile.label   "Mobyl-blêdwizers">
+<!ENTITY viewBookmarksSidebar2.label        "Blêdwizersydbalke werjaan">
+<!ENTITY hideBookmarksSidebar.label         "Blêdwizersydbalke ferstopje">
+<!ENTITY viewBookmarksToolbar.label         "Blêdwizerarkbalke werjaan">
+<!ENTITY hideBookmarksToolbar.label         "Blêdwizerarkbalke ferstopje">
+<!ENTITY searchBookmarks.label              "Blêdwizers trochsykje">
+<!ENTITY bookmarkingTools.label             "Blêdwizerark">
+<!ENTITY addBookmarksMenu.label             "Blêdwizers oan arkbalke tafoegje">
+<!ENTITY removeBookmarksMenu.label          "Blêdwizers fan arkbalke fuortsmite">
+
+<!ENTITY historyButton.label            "Skiednis">
+
+<!ENTITY downloads.label              "Downloads">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "Downloads">
+<!ENTITY addons.label                 "Add-ons">
+
+<!ENTITY webDeveloperMenu.label       "Webûntwikkeler">
+
+<!ENTITY newNavigatorCmd.label        "Nij finster">
+<!ENTITY newPrivateWindow.label     "Nij priveefinster">
+
+<!ENTITY editMenu.label         "Bewurkje">
+<!ENTITY preferencesCmd2.label       "Opsjes">
+<!ENTITY preferencesCmdUnix.label       "Foarkarren…">
+<!ENTITY logins.label                           "Oanmeldingen en wachtwurden">
+
+<!ENTITY overflowCustomizeToolbar.label       "Arkbalke wizigje…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "A">
+
+<!ENTITY historyMenu.label "Skiednis">
+<!ENTITY historyUndoMenu.label "Koartlyn sluten ljepblêden">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "Koartlyn sluten skermen">
+
+<!ENTITY appMenuHistory.showAll.label "Alle skiednis toane">
+<!ENTITY appMenuHistory.clearRecent.label "Resinte skiednis wiskje…">
+<!ENTITY appMenuHistory.restoreSession.label "Foarige sesje werom bringe">
+<!ENTITY appMenuHistory.viewSidebar.label "Skiednissydbalke werjaaan">
+<!ENTITY appMenuHistory.hideSidebar.label "Skiednissidebalke ferstopje">
+<!ENTITY appMenuHistory.recentHistory.label "Resinte skiednis">
+<!ENTITY appMenuHelp.label "Help">
+
+<!ENTITY appMenuRemoteTabs.label "Syngronisearre ljepblêden">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Gjin iepen ljepblêden">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "Mear toane">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Mear ljepblêden fan dit apparaat toane">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Alle toane">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Alle ljepblêden fan dit apparaat toane">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Set ljepblêdsyngronisaasje oan om in list fan ljepblêden fan jo oare apparaten wer te jaan.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Waterfox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Wolle jo hjir jo ljepblêden fan oare apparaten sjen?">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "Foarkarren foar Sync iepenje">
+<!ENTITY appMenuRemoteTabs.welcome.label "Besjoch in list mei ljepblêden fan jo oare apparaten.">
+<!ENTITY appMenuRemoteTabs.unverified.label "Jo account moat ferifiearre wurde.">
+<!ENTITY appMenuRemoteTabs.signintosync.label "Oanmelde by &syncBrand.shortName.label;…">
+<!ENTITY appMenuRemoteTabs.turnonsync.label "&syncBrand.shortName.label; ynskeakelje…">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Apparaten beheare…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "Syngroane-ljepblêdensidebalke werjaan">
+<!ENTITY appMenuRemoteTabs.hidesidebar.label "Sidebalke mei syngronisearre ljepblêden ferstopje">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "Noch in apparaat keppelje">
+
+<!ENTITY appMenuRecentHighlights.label "Resinte hichtepunten">
+
+<!ENTITY customizeMenu.addToToolbar.label "Tafoegje oan arkbalke">
+<!ENTITY customizeMenu.addToToolbar.accesskey "a">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "Tafoegje oan oerrinmenu">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "m">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Losmeitsje fan oerrinmenu">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "L">
+<!ENTITY customizeMenu.removeFromToolbar.label "Fuortsmite fan arkbalke">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "r">
+<!ENTITY customizeMenu.addMoreItems.label "Mear items tafoegje…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "M">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "Mear">
+
+<!ENTITY contentSearchSubmit.tooltip  "Sykopdracht ferstjoere">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "Sykje">
+<!ENTITY searchIcon.tooltip           "Sykje">
+
+<!ENTITY openLinkCmdInTab.accesskey   "l">
+
+<!ENTITY pageAction.copyLink.label    "Keppeling kopiearje">
+
+<!ENTITY saveToPocketCmd.label        "Side bewarje nei Pocket">
+<!ENTITY pocketMenuitem.label         "Pocket-list werjaan">
+
+<!ENTITY emailPageCmd.label           "Keppeling e-maile…">
+
+<!-- Media (video/audio) controls -->
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoom.label                 "Zoome">
+
+<!ENTITY sidebarCloseButton.tooltip     "Sidebalke slute">
+
+<!ENTITY quitApplicationCmdWin2.label       "Ofslute">
+<!ENTITY quitApplicationCmdWin2.accesskey   "O">
+<!ENTITY quitApplicationCmdWin2.tooltip     "&brandShorterName; ôfslute">
+<!ENTITY quitApplicationCmd.label       "Ofslute">
+<!ENTITY quitApplicationCmd.accesskey   "O">
+<!ENTITY quitApplicationCmdMac2.label   "&brandShorterName; ôfslute">
+
+<!ENTITY allowPopups.accesskey "P">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Foarkarren foar pop-upblokkearring bewurkje…">
+<!ENTITY editPopupSettings.label "Opsjes foar pop-upblokkearring bewurkje…">
+<!ENTITY editPopupSettings.accesskey "O">
+<!ENTITY dontShowMessage.accesskey "b">
+
+<!ENTITY findOnCmd.label     "Sykje op dizze side…">
+
+<!ENTITY spellAddDictionaries.label "Wurdboeken tafoegje…">
+<!ENTITY spellAddDictionaries.accesskey "W">
+
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "Browserljepblêden">
+
+<!ENTITY syncBrand.shortName.label    "Sync">
+
+<!ENTITY customizeMode.autoHideDownloadsButton.label "Automatysk ferstopje">
+
+
+<!ENTITY uiTour.infoPanel.close "Slute">
+
+<!ENTITY panicButton.thankyou.msg1                "Jo resinte skiednis is wiskje.">
+<!ENTITY panicButton.thankyou.msg2                "Feilich sneupje!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Tankewol!">
+
+<!ENTITY updateAvailable.panelUI.label "&brandShorterName;-fernijing downloade">
+<!ENTITY updateManual.panelUI.label "Download in farske kopy fan &brandShorterName;">
+<!ENTITY updateUnsupported.panelUI.label "Jo kinne gjin fierdere fernijingen útfiere">
+<!ENTITY updateRestart.panelUI.label2 "Start &brandShorterName; opnij om te fernijen">
+
+<!ENTITY sendToDevice.syncNotReady.label "Apparaten syngronisearje…">
+
+<!ENTITY pageAction.shareUrl.label "Diele">
+<!ENTITY pageAction.shareMore.label "Mear…">
+
+<!ENTITY libraryButton.tooltip "Skiednis, bewarre blêdwizers en mear besjen">
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+<!ENTITY accessibilityIndicator.tooltip "Tagonklikheidsfunksjes ynskeakele">

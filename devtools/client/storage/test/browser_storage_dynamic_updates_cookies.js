@@ -95,7 +95,7 @@ add_task(async function() {
         getCookieId(
           "c3",
           "test1.example.org",
-          "/browser/devtools/client/storage/test/"
+          "/browser/devtools/client/storage/test"
         ),
       ],
     ],
@@ -103,7 +103,7 @@ add_task(async function() {
   const c3id = getCookieId(
     "c3",
     "test1.example.org",
-    "/browser/devtools/client/storage/test/"
+    "/browser/devtools/client/storage/test"
   );
   checkCell(c3id, "value", "booyeah");
 
@@ -121,12 +121,12 @@ add_task(async function() {
         getCookieId(
           "c3",
           "test1.example.org",
-          "/browser/devtools/client/storage/test/"
+          "/browser/devtools/client/storage/test"
         ),
         getCookieId(
           "c4",
           "test1.example.org",
-          "/browser/devtools/client/storage/test/"
+          "/browser/devtools/client/storage/test"
         ),
       ],
     ],
@@ -134,7 +134,7 @@ add_task(async function() {
   const c4id = getCookieId(
     "c4",
     "test1.example.org",
-    "/browser/devtools/client/storage/test/"
+    "/browser/devtools/client/storage/test"
   );
   checkCell(c4id, "value", "booyeah");
 
@@ -151,12 +151,12 @@ add_task(async function() {
         getCookieId(
           "c3",
           "test1.example.org",
-          "/browser/devtools/client/storage/test/"
+          "/browser/devtools/client/storage/test"
         ),
         getCookieId(
           "c4",
           "test1.example.org",
-          "/browser/devtools/client/storage/test/"
+          "/browser/devtools/client/storage/test"
         ),
       ],
     ],
@@ -180,7 +180,7 @@ add_task(async function() {
         getCookieId(
           "c4",
           "test1.example.org",
-          "/browser/devtools/client/storage/test/"
+          "/browser/devtools/client/storage/test"
         ),
       ],
     ],
@@ -200,7 +200,7 @@ add_task(async function() {
         getCookieId(
           "c4",
           "test1.example.org",
-          "/browser/devtools/client/storage/test/"
+          "/browser/devtools/client/storage/test"
         ),
       ],
     ],
@@ -221,9 +221,9 @@ add_task(async function() {
 });
 
 async function addCookie(name, value, path) {
-  await ContentTask.spawn(
+  await SpecialPowers.spawn(
     gBrowser.selectedBrowser,
-    [name, value, path],
+    [[name, value, path]],
     ([nam, valu, pat]) => {
       content.wrappedJSObject.addCookie(nam, valu, pat);
     }
@@ -231,9 +231,9 @@ async function addCookie(name, value, path) {
 }
 
 async function removeCookie(name, path) {
-  await ContentTask.spawn(
+  await SpecialPowers.spawn(
     gBrowser.selectedBrowser,
-    [name, path],
+    [[name, path]],
     ([nam, pat]) => {
       content.wrappedJSObject.removeCookie(nam, pat);
     }

@@ -7,13 +7,14 @@
 #include "nsWindowMemoryReporter.h"
 #include "nsWindowSizes.h"
 #include "nsGlobalWindow.h"
+#include "mozilla/dom/BrowsingContext.h"
 #include "mozilla/dom/Document.h"
-#include "nsDOMWindowList.h"
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Services.h"
 #include "mozilla/StaticPtr.h"
 #include "mozilla/Telemetry.h"
+#include "mozilla/ResultExtensions.h"
 #include "nsNetCID.h"
 #include "nsPrintfCString.h"
 #include "XPCJSMemoryReporter.h"
@@ -61,19 +62,16 @@ static nsresult AddNonJSSizeOfWindowAndItsDescendents(
 
   windowSizes.addToTabSizes(aSizes);
 
-  nsDOMWindowList* frames = aWindow->GetFrames();
-
-  uint32_t length = frames->GetLength();
+  BrowsingContext* bc = aWindow->GetBrowsingContext();
+  if (!bc) {
+    return NS_OK;
+  }
 
   // Measure this window's descendents.
-  for (uint32_t i = 0; i < length; i++) {
-    nsCOMPtr<nsPIDOMWindowOuter> child = frames->IndexedGetter(i);
-    NS_ENSURE_STATE(child);
-
-    nsGlobalWindowOuter* childWin = nsGlobalWindowOuter::Cast(child);
-
-    nsresult rv = AddNonJSSizeOfWindowAndItsDescendents(childWin, aSizes);
-    NS_ENSURE_SUCCESS(rv, rv);
+  for (const auto& frame : bc->Children()) {
+    if (auto* childWin = nsGlobalWindowOuter::Cast(frame->GetDOMWindow())) {
+      MOZ_TRY(AddNonJSSizeOfWindowAndItsDescendents(childWin, aSizes));
+    }
   }
   return NS_OK;
 }
@@ -118,64 +116,54 @@ nsWindowMemoryReporter* nsWindowMemoryReporter::Get() {
   return sWindowReporter;
 }
 
-static already_AddRefed<nsIURI> GetWindowURI(nsGlobalWindowInner* aWindow) {
-  NS_ENSURE_TRUE(aWindow, nullptr);
+static nsCString GetWindowURISpec(nsGlobalWindowInner* aWindow) {
+  NS_ENSURE_TRUE(aWindow, NS_LITERAL_CSTRING(""));
 
   nsCOMPtr<Document> doc = aWindow->GetExtantDoc();
-  nsCOMPtr<nsIURI> uri;
-
   if (doc) {
+    nsCOMPtr<nsIURI> uri;
     uri = doc->GetDocumentURI();
+    return uri->GetSpecOrDefault();
   }
+  nsCOMPtr<nsIScriptObjectPrincipal> scriptObjPrincipal =
+      do_QueryObject(aWindow);
+  NS_ENSURE_TRUE(scriptObjPrincipal, NS_LITERAL_CSTRING(""));
 
-  if (!uri) {
-    nsCOMPtr<nsIScriptObjectPrincipal> scriptObjPrincipal =
-        do_QueryObject(aWindow);
-    NS_ENSURE_TRUE(scriptObjPrincipal, nullptr);
-
-    // GetPrincipal() will print a warning if the window does not have an outer
-    // window, so check here for an outer window first.  This code is
-    // functionally correct if we leave out the GetOuterWindow() check, but we
-    // end up printing a lot of warnings during debug mochitests.
-    if (aWindow->GetOuterWindow()) {
-      nsIPrincipal* principal = scriptObjPrincipal->GetPrincipal();
-      if (principal) {
-        principal->GetURI(getter_AddRefs(uri));
-      }
-    }
+  // GetPrincipal() will print a warning if the window does not have an outer
+  // window, so check here for an outer window first.  This code is
+  // functionally correct if we leave out the GetOuterWindow() check, but we
+  // end up printing a lot of warnings during debug mochitests.
+  if (!aWindow->GetOuterWindow()) {
+    return NS_LITERAL_CSTRING("");
   }
-
-  return uri.forget();
-}
-
-// Forward to the inner window if we need to when getting the window's URI.
-static already_AddRefed<nsIURI> GetWindowURI(nsGlobalWindowOuter* aWindow) {
-  NS_ENSURE_TRUE(aWindow, nullptr);
-  return GetWindowURI(aWindow->GetCurrentInnerWindowInternal());
+  nsIPrincipal* principal = scriptObjPrincipal->GetPrincipal();
+  if (!principal) {
+    return NS_LITERAL_CSTRING("");
+  }
+  nsCString spec;
+  principal->GetAsciiSpec(spec);
+  return spec;
 }
 
 static void AppendWindowURI(nsGlobalWindowInner* aWindow, nsACString& aStr,
                             bool aAnonymize) {
-  nsCOMPtr<nsIURI> uri = GetWindowURI(aWindow);
+  nsCString spec = GetWindowURISpec(aWindow);
 
-  if (uri) {
-    if (aAnonymize && !aWindow->IsChromeWindow()) {
-      aStr.AppendPrintf("<anonymized-%" PRIu64 ">", aWindow->WindowID());
-    } else {
-      nsCString spec = uri->GetSpecOrDefault();
-
-      // A hack: replace forward slashes with '\\' so they aren't
-      // treated as path separators.  Users of the reporters
-      // (such as about:memory) have to undo this change.
-      spec.ReplaceChar('/', '\\');
-
-      aStr += spec;
-    }
-  } else {
+  if (spec.IsEmpty()) {
     // If we're unable to find a URI, we're dealing with a chrome window with
     // no document in it (or somesuch), so we call this a "system window".
     aStr += NS_LITERAL_CSTRING("[system]");
+    return;
   }
+  if (aAnonymize && !aWindow->IsChromeWindow()) {
+    aStr.AppendPrintf("<anonymized-%" PRIu64 ">", aWindow->WindowID());
+    return;
+  }
+  // A hack: replace forward slashes with '\\' so they aren't
+  // treated as path separators.  Users of the reporters
+  // (such as about:memory) have to undo this change.
+  spec.ReplaceChar('/', '\\');
+  aStr += spec;
 }
 
 MOZ_DEFINE_MALLOC_SIZE_OF(WindowsMallocSizeOf)
@@ -226,20 +214,14 @@ static void CollectWindowReports(nsGlobalWindowInner* aWindow,
                                  nsISupports* aData, bool aAnonymize) {
   nsAutoCString windowPath("explicit/");
 
-  // Avoid calling aWindow->GetTop() if there's no outer window.  It will work
-  // just fine, but will spew a lot of warnings.
+  // Avoid calling aWindow->GetInProcessTop() if there's no outer window.  It
+  // will work just fine, but will spew a lot of warnings.
   nsGlobalWindowOuter* top = nullptr;
-  nsCOMPtr<nsIURI> location;
   if (aWindow->GetOuterWindow()) {
     // Our window should have a null top iff it has a null docshell.
-    MOZ_ASSERT(!!aWindow->GetTopInternal() == !!aWindow->GetDocShell());
-    top = aWindow->GetTopInternal();
-    if (top) {
-      location = GetWindowURI(top);
-    }
-  }
-  if (!location) {
-    location = GetWindowURI(aWindow);
+    MOZ_ASSERT(!!aWindow->GetInProcessTopInternal() ==
+               !!aWindow->GetDocShell());
+    top = aWindow->GetInProcessTopInternal();
   }
 
   windowPath += NS_LITERAL_CSTRING("window-objects/");
@@ -325,12 +307,18 @@ static void CollectWindowReports(nsGlobalWindowInner* aWindow,
               "Memory used by MediaQueryList objects for the window's "
               "document.");
 
+  REPORT_SIZE("/dom/resize-observers", mDOMResizeObserverControllerSize,
+              "Memory used for resize observers.");
+
   REPORT_SIZE("/dom/other", mDOMOtherSize,
               "Memory used by a window's DOM that isn't measured by the "
               "other 'dom/' numbers.");
 
   REPORT_SIZE("/layout/style-sheets", mLayoutStyleSheetsSize,
               "Memory used by document style sheets within a window.");
+
+  REPORT_SIZE("/layout/svg-mapped-declarations", mLayoutSvgMappedDeclarations,
+              "Memory used by mapped declarations of SVG elements");
 
   REPORT_SIZE("/layout/shadow-dom/style-sheets",
               mLayoutShadowDomStyleSheetsSize,
@@ -345,6 +333,11 @@ static void CollectWindowReports(nsGlobalWindowInner* aWindow,
               "Memory used by layout's PresShell, along with any structures "
               "allocated in its arena and not measured elsewhere, "
               "within a window.");
+
+  REPORT_SIZE("/layout/display-list", mLayoutRetainedDisplayListSize,
+              "Memory used by the retained display list data, "
+              "along with any structures allocated in its arena and not "
+              "measured elsewhere, within a window.");
 
   REPORT_SIZE("/layout/style-sets/stylist/rule-tree",
               mLayoutStyleSetsStylistRuleTree,
@@ -413,14 +406,52 @@ static void CollectWindowReports(nsGlobalWindowInner* aWindow,
                "Number of event listeners in a window, including event "
                "listeners on nodes and other event targets.");
 
-  REPORT_SIZE("/layout/line-boxes", mArenaSizes.mLineBoxes,
-              "Memory used by line boxes within a window.");
+  // There are many different kinds of frames, but it is very likely
+  // that only a few matter.  Implement a cutoff so we don't bloat
+  // about:memory with many uninteresting entries.
+  const size_t ARENA_SUNDRIES_THRESHOLD =
+      js::MemoryReportingSundriesThreshold();
 
-  REPORT_SIZE("/layout/rule-nodes", mArenaSizes.mRuleNodes,
-              "Memory used by CSS rule nodes within a window.");
+  size_t presArenaSundriesSize = 0;
+#define ARENA_OBJECT(name_, sundries_size_, prefix_)                    \
+  {                                                                     \
+    size_t size = windowSizes.mArenaSizes.NS_ARENA_SIZES_FIELD(name_);  \
+    if (size < ARENA_SUNDRIES_THRESHOLD) {                              \
+      sundries_size_ += size;                                           \
+    } else {                                                            \
+      REPORT_SUM_SIZE(prefix_ #name_, size,                             \
+                      "Memory used by objects of type " #name_          \
+                      " within a window.");                             \
+    }                                                                   \
+    aWindowTotalSizes->mArenaSizes.NS_ARENA_SIZES_FIELD(name_) += size; \
+  }
+#define PRES_ARENA_OBJECT(name_) \
+  ARENA_OBJECT(name_, presArenaSundriesSize, "/layout/pres-arena/")
+#include "nsPresArenaObjectList.h"
+#undef PRES_ARENA_OBJECT
 
-  REPORT_SIZE("/layout/style-contexts", mArenaSizes.mComputedStyles,
-              "Memory used by ComputedStyles within a window.");
+  if (presArenaSundriesSize > 0) {
+    REPORT_SUM_SIZE(
+        "/layout/pres-arena/sundries", presArenaSundriesSize,
+        "The sum of all memory used by objects in the arena which were too "
+        "small to be shown individually.");
+  }
+
+  size_t displayListArenaSundriesSize = 0;
+#define DISPLAY_LIST_ARENA_OBJECT(name_)            \
+  ARENA_OBJECT(name_, displayListArenaSundriesSize, \
+               "/layout/display-list-arena/")
+#include "nsDisplayListArenaTypes.h"
+#undef DISPLAY_LIST_ARENA_OBJECT
+
+  if (displayListArenaSundriesSize > 0) {
+    REPORT_SUM_SIZE(
+        "/layout/display-list-arena/sundries", displayListArenaSundriesSize,
+        "The sum of all memory used by objects in the DL arena which were too "
+        "small to be shown individually.");
+  }
+
+#undef ARENA_OBJECT
 
   // There are many different kinds of style structs, but it is likely that
   // only a few matter. Implement a cutoff so we don't bloat about:memory with
@@ -428,38 +459,6 @@ static void CollectWindowReports(nsGlobalWindowInner* aWindow,
   const size_t STYLE_SUNDRIES_THRESHOLD =
       js::MemoryReportingSundriesThreshold();
 
-  // There are many different kinds of frames, but it is very likely
-  // that only a few matter.  Implement a cutoff so we don't bloat
-  // about:memory with many uninteresting entries.
-  const size_t FRAME_SUNDRIES_THRESHOLD =
-      js::MemoryReportingSundriesThreshold();
-
-  size_t frameSundriesSize = 0;
-#define FRAME_ID(classname, ...)                                            \
-  {                                                                         \
-    size_t size = windowSizes.mArenaSizes.NS_ARENA_SIZES_FIELD(classname);  \
-    if (size < FRAME_SUNDRIES_THRESHOLD) {                                  \
-      frameSundriesSize += size;                                            \
-    } else {                                                                \
-      REPORT_SUM_SIZE("/layout/frames/" #classname, size,                   \
-                      "Memory used by frames of type " #classname           \
-                      " within a window.");                                 \
-    }                                                                       \
-    aWindowTotalSizes->mArenaSizes.NS_ARENA_SIZES_FIELD(classname) += size; \
-  }
-#define ABSTRACT_FRAME_ID(...)
-#include "nsFrameIdList.h"
-#undef FRAME_ID
-#undef ABSTRACT_FRAME_ID
-
-  if (frameSundriesSize > 0) {
-    REPORT_SUM_SIZE(
-        "/layout/frames/sundries", frameSundriesSize,
-        "The sum of all memory used by frames which were too small to be shown "
-        "individually.");
-  }
-
-  // This is the style structs.
   size_t styleSundriesSize = 0;
 #define STYLE_STRUCT(name_)                                             \
   {                                                                     \
@@ -538,7 +537,7 @@ nsWindowMemoryReporter::CollectReports(nsIHandleReportCallback* aHandleReport,
     "ghost-windows", KIND_OTHER, UNITS_COUNT, ghostWindows.Count(),
 "The number of ghost windows present (the number of nodes underneath "
 "explicit/window-objects/top(none)/ghost, modulo race conditions).  A ghost "
-"window is not shown in any tab, is not in a tab group with any "
+"window is not shown in any tab, is not in a browsing context group with any "
 "non-detached windows, and has met these criteria for at least "
 "memory.ghost_window_timeout_seconds, or has survived a round of "
 "about:memory's minimize memory usage button.\n\n"
@@ -641,29 +640,26 @@ nsWindowMemoryReporter::CollectReports(nsIHandleReportCallback* aHandleReport,
   REPORT("window-objects/property-tables", windowTotalSizes.mPropertyTablesSize,
          "This is the sum of all windows' 'property-tables' numbers.");
 
-  REPORT("window-objects/layout/line-boxes",
-         windowTotalSizes.mArenaSizes.mLineBoxes,
-         "This is the sum of all windows' 'layout/line-boxes' numbers.");
+  size_t presArenaTotal = 0;
+#define PRES_ARENA_OBJECT(name_) \
+  presArenaTotal += windowTotalSizes.mArenaSizes.NS_ARENA_SIZES_FIELD(name_);
+#include "nsPresArenaObjectList.h"
+#undef PRES_ARENA_OBJECT
 
-  REPORT("window-objects/layout/rule-nodes",
-         windowTotalSizes.mArenaSizes.mRuleNodes,
-         "This is the sum of all windows' 'layout/rule-nodes' numbers.");
+  REPORT("window-objects/layout/pres-arena", presArenaTotal,
+         "Memory used for the pres arena within windows. "
+         "This is the sum of all windows' 'layout/pres-arena/' numbers.");
 
-  REPORT("window-objects/layout/style-contexts",
-         windowTotalSizes.mArenaSizes.mComputedStyles,
-         "This is the sum of all windows' 'layout/style-contexts' numbers.");
+  size_t displayListArenaTotal = 0;
+#define DISPLAY_LIST_ARENA_OBJECT(name_) \
+  displayListArenaTotal +=               \
+      windowTotalSizes.mArenaSizes.NS_ARENA_SIZES_FIELD(name_);
+#include "nsDisplayListArenaTypes.h"
+#undef DISPLAY_LIST_ARENA_OBJECT
 
-  size_t frameTotal = 0;
-#define FRAME_ID(classname, ...) \
-  frameTotal += windowTotalSizes.mArenaSizes.NS_ARENA_SIZES_FIELD(classname);
-#define ABSTRACT_FRAME_ID(...)
-#include "nsFrameIdList.h"
-#undef FRAME_ID
-#undef ABSTRACT_FRAME_ID
-
-  REPORT("window-objects/layout/frames", frameTotal,
-         "Memory used for layout frames within windows. "
-         "This is the sum of all windows' 'layout/frames/' numbers.");
+  REPORT("window-objects/layout/display-list-arena", displayListArenaTotal,
+         "Memory used for the display list arena within windows. This is the "
+         "sum of all windows' 'layout/display-list-arena/' numbers.");
 
   size_t styleTotal = 0;
 #define STYLE_STRUCT(name_) \
@@ -803,19 +799,23 @@ void nsWindowMemoryReporter::CheckForGhostWindows(
   mLastCheckForGhostWindows = TimeStamp::NowLoRes();
   KillCheckTimer();
 
-  nsTHashtable<nsPtrHashKey<TabGroup>> nonDetachedTabGroups;
+  nsTHashtable<nsPtrHashKey<BrowsingContextGroup>>
+      nonDetachedBrowsingContextGroups;
 
-  // Populate nonDetachedTabGroups.
+  // Populate nonDetachedBrowsingContextGroups.
   for (auto iter = windowsById->Iter(); !iter.Done(); iter.Next()) {
-    // Null outer window implies null top, but calling GetTop() when there's no
-    // outer window causes us to spew debug warnings.
+    // Null outer window implies null top, but calling GetInProcessTop() when
+    // there's no outer window causes us to spew debug warnings.
     nsGlobalWindowInner* window = iter.UserData();
-    if (!window->GetOuterWindow() || !window->GetTopInternal()) {
-      // This window is detached, so we don't care about its tab group.
+    if (!window->GetOuterWindow() || !window->GetInProcessTopInternal() ||
+        !window->GetBrowsingContextGroup()) {
+      // This window is detached, so we don't care about its browsing
+      // context group.
       continue;
     }
 
-    nonDetachedTabGroups.PutEntry(window->TabGroup());
+    nonDetachedBrowsingContextGroups.PutEntry(
+        window->GetBrowsingContextGroup());
   }
 
   // Update mDetachedWindows and write the ghost window IDs into aOutGhostIDs,
@@ -835,12 +835,12 @@ void nsWindowMemoryReporter::CheckForGhostWindows(
 
     nsPIDOMWindowInner* window = nsPIDOMWindowInner::From(iwindow);
 
-    // Avoid calling GetTop() if we have no outer window.  Nothing will break if
-    // we do, but it will spew debug output, which can cause our test logs to
-    // overflow.
+    // Avoid calling GetInProcessTop() if we have no outer window.  Nothing
+    // will break if we do, but it will spew debug output, which can cause our
+    // test logs to overflow.
     nsCOMPtr<nsPIDOMWindowOuter> top;
     if (window->GetOuterWindow()) {
-      top = window->GetOuterWindow()->GetTop();
+      top = window->GetOuterWindow()->GetInProcessTop();
     }
 
     if (top) {
@@ -850,13 +850,15 @@ void nsWindowMemoryReporter::CheckForGhostWindows(
     }
 
     TimeStamp& timeStamp = iter.Data();
-
-    if (nonDetachedTabGroups.GetEntry(window->TabGroup())) {
-      // This window is in the same tab group as a non-detached
+    BrowsingContextGroup* browsingContextGroup =
+        window->GetBrowsingContextGroup();
+    if (browsingContextGroup &&
+        nonDetachedBrowsingContextGroups.GetEntry(browsingContextGroup)) {
+      // This window is in the same browsing context group as a non-detached
       // window, so reset its clock.
       timeStamp = TimeStamp();
     } else {
-      // This window is not in the same tab group as a non-detached
+      // This window is not in the same browsing context group as a non-detached
       // window, so it meets ghost criterion (2).
       if (timeStamp.IsNull()) {
         // This may become a ghost window later; start its clock.

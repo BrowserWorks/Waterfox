@@ -1,4 +1,3 @@
-/* vim:set ts=2 sw=2 sts=2 et: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -23,8 +22,8 @@
 .treeTable .treeLabelCell,
 .treeTable .treeValueCell {
   padding: 2px 0;
-  line-height: 16px; /* make rows 20px tall */
   padding-inline-start: 4px;
+  line-height: 16px; /* make rows 20px tall */
   vertical-align: top;
   overflow: hidden;
 }
@@ -41,8 +40,7 @@
 }
 
 .treeTable .treeValueCell.inputEnabled {
-  padding-top: 0;
-  padding-bottom: 0;
+  padding-block: 0;
 }
 
 .treeTable .treeValueCell.inputEnabled input {
@@ -66,6 +64,7 @@
 .treeTable .treeValueCell > [aria-labelledby],
 .treeTable .treeLabelCell > .treeLabel {
   unicode-bidi: plaintext;
+  text-align: match-parent;
 }
 
 /* No padding if there is actually no label */
@@ -113,7 +112,7 @@
 
 /* Learn More link */
 .treeTable .treeValueCell .learn-more-link {
-  -moz-user-select: none;
+  user-select: none;
   color: var(--theme-highlight-blue);
   cursor: pointer;
   margin: 0 5px;
@@ -137,12 +136,11 @@
   display: inline-block;
   vertical-align: bottom;
   /* Use a total width of 20px (margins + padding + width) */
-  margin-inline-start: 3px;
-  margin-inline-end: 1px;
+  margin-inline: 3px 1px;
 }
 
 /* All expanded/collapsed styles need to apply on immediate children
-  since there might be nested trees within a tree. */
+   since there might be nested trees within a tree. */
 .treeTable .treeRow.hasChildren > .treeLabelCell > .treeIcon {
   cursor: pointer;
   background-repeat: no-repeat;
@@ -157,7 +155,7 @@
 
 .treeTable .treeHeaderCell {
   cursor: pointer;
-  -moz-user-select: none;
+  user-select: none;
   border-bottom: 1px solid rgba(0, 0, 0, 0.2);
   padding: 0 !important;
   background: linear-gradient(
@@ -171,9 +169,8 @@
 }
 
 .treeTable .treeHeaderCellBox {
-  padding: 2px 0;
-  padding-inline-start: 10px;
-  padding-inline-end: 14px;
+  padding-block: 2px;
+  padding-inline: 10px 14px;
 }
 
 .treeTable .treeHeaderRow > .treeHeaderCell:first-child > .treeHeaderCellBox {

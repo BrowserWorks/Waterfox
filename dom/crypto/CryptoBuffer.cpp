@@ -33,18 +33,18 @@ uint8_t* CryptoBuffer::Assign(const SECItem* aItem) {
   return Assign(aItem->data, aItem->len);
 }
 
-uint8_t* CryptoBuffer::Assign(const InfallibleTArray<uint8_t>& aData) {
+uint8_t* CryptoBuffer::Assign(const nsTArray<uint8_t>& aData) {
   return ReplaceElementsAt(0, Length(), aData.Elements(), aData.Length(),
                            fallible);
 }
 
 uint8_t* CryptoBuffer::Assign(const ArrayBuffer& aData) {
-  aData.ComputeLengthAndData();
+  aData.ComputeState();
   return Assign(aData.Data(), aData.Length());
 }
 
 uint8_t* CryptoBuffer::Assign(const ArrayBufferView& aData) {
-  aData.ComputeLengthAndData();
+  aData.ComputeState();
   return Assign(aData.Data(), aData.Length());
 }
 
@@ -72,6 +72,11 @@ uint8_t* CryptoBuffer::Assign(const OwningArrayBufferViewOrArrayBuffer& aData) {
   MOZ_ASSERT(false);
   Clear();
   return nullptr;
+}
+
+uint8_t* CryptoBuffer::Assign(const Uint8Array& aArray) {
+  aArray.ComputeState();
+  return Assign(aArray.Data(), aArray.Length());
 }
 
 uint8_t* CryptoBuffer::AppendSECItem(const SECItem* aItem) {

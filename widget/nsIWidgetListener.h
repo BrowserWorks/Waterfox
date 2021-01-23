@@ -16,7 +16,7 @@
 
 class nsView;
 class nsIWidget;
-class nsIXULWindow;
+class nsIAppWindow;
 
 namespace mozilla {
 class PresShell;
@@ -45,11 +45,11 @@ enum nsWindowZ {
 class nsIWidgetListener {
  public:
   /**
-   * If this listener is for an nsIXULWindow, return it. If this is null, then
+   * If this listener is for an nsIAppWindow, return it. If this is null, then
    * this is likely a listener for a view, which can be determined using
    * GetView. If both methods return null, this will be an nsWebBrowser.
    */
-  virtual nsIXULWindow* GetXULWindow();
+  virtual nsIAppWindow* GetAppWindow();
 
   /**
    * If this listener is for an nsView, return it.
@@ -84,6 +84,11 @@ class nsIWidgetListener {
    * such that UI elements may need to be rescaled.
    */
   virtual void UIResolutionChanged();
+
+#if defined(MOZ_WIDGET_ANDROID)
+  virtual void DynamicToolbarMaxHeightChanged(mozilla::ScreenIntCoord aHeight);
+  virtual void DynamicToolbarOffsetChanged(mozilla::ScreenIntCoord aOffset);
+#endif
 
   /**
    * Called when the z-order of the window is changed. Returns true if the
@@ -180,6 +185,12 @@ class nsIWidgetListener {
    */
   virtual nsEventStatus HandleEvent(mozilla::WidgetGUIEvent* aEvent,
                                     bool aUseAttachedEvents);
+
+  /**
+   * Called when safe area insets are changed.
+   */
+  virtual void SafeAreaInsetsChanged(
+      const mozilla::ScreenIntMargin& aSafeAreaInsets);
 };
 
 #endif

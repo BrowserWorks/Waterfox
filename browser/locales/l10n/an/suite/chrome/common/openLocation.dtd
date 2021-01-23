@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/openLocation.xul -->
+
+
+<!ENTITY enter.label "Introduzca a dirección web (URL), u especifique o fichero local que quiere ubrir:">
+<!-- LOCALIZATION NOTE (enter.accesskey): should be present in both enter.label
+     as defined above and attachEnterLabel as defined in
+     openLocation.properties -->
+<!ENTITY enter.accesskey "e">
+<!ENTITY chooseFile.label "Esleir archivo…">
+<!ENTITY chooseFile.accesskey "c">
+<!ENTITY newPrivate.label "New private window">
+<!ENTITY newWindow.label "Finestra d'o navegador nueva">
+<!ENTITY newTab.label "Pestanya d'o navegador nueva">
+<!ENTITY currentTab.label "Pestanya actual d'o navegador">
+<!ENTITY editNewWindow.label "Finestra de Composer nueva">
+<!ENTITY open.label "Ubrir">
+<!ENTITY caption.label "Ubrir adreza web">
+<!ENTITY openWhere.label "Ubrir en:">
+<!ENTITY openWhere.accesskey "U">

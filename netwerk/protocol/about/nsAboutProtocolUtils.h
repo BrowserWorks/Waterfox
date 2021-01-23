@@ -12,16 +12,10 @@
 #include "nsServiceManagerUtils.h"
 #include "prtime.h"
 
-inline MOZ_MUST_USE nsresult NS_GetAboutModuleName(nsIURI* aAboutURI,
-                                                   nsCString& aModule) {
-#ifdef DEBUG
-  {
-    bool isAbout;
-    NS_ASSERTION(
-        NS_SUCCEEDED(aAboutURI->SchemeIs("about", &isAbout)) && isAbout,
-        "should be used only on about: URIs");
-  }
-#endif
+[[nodiscard]] inline nsresult NS_GetAboutModuleName(nsIURI* aAboutURI,
+                                                    nsCString& aModule) {
+  NS_ASSERTION(aAboutURI->SchemeIs("about"),
+               "should be used only on about: URIs");
 
   nsresult rv = aAboutURI->GetPathQueryRef(aModule);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -50,11 +44,9 @@ inline nsresult NS_GetAboutModule(nsIURI* aAboutURI, nsIAboutModule** aModule) {
 }
 
 inline PRTime SecondsToPRTime(uint32_t t_sec) {
-  PRTime t_usec, usec_per_sec;
-  t_usec = t_sec;
-  usec_per_sec = PR_USEC_PER_SEC;
-  return t_usec *= usec_per_sec;
+  return (PRTime)t_sec * PR_USEC_PER_SEC;
 }
+
 inline void PrintTimeString(char* buf, uint32_t bufsize, uint32_t t_sec) {
   PRExplodedTime et;
   PRTime t_usec = SecondsToPRTime(t_sec);

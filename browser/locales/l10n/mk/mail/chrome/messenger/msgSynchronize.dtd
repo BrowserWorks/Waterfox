@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "Преземање и синхронизирање на пораки">
+<!ENTITY MsgSelect.label "Елементи за локална употреба">
+<!ENTITY MsgSyncDesc.label "Ако веќе сте избрале папки со пошта или дискусиони групи за локална употреба, можете да ги преземете/синхронизирате сега. Во друг случај можете да го корисите копчето &quot;Избери&quot; за да изберете папки и дискусиони групи за локална употреба.">
+<!ENTITY MsgSyncDirections.label "Преземи го и/или синхронизирај го следново:">
+<!ENTITY syncTypeMail.label "Поштенски пораки">
+<!ENTITY syncTypeMail.accesskey "П">
+<!ENTITY syncTypeNews.label "Дискусиони пораки">
+<!ENTITY syncTypeNews.accesskey "Д">
+<!ENTITY sendMessage.label "Испрати ги неиспратените пораки">
+<!ENTITY sendMessage.accesskey "с">
+<!ENTITY workOffline.label "Исклучи се од Интернет штом ќе заврши преземањето и/или синхронизацијата">
+<!ENTITY workOffline.accesskey "к">
+<!ENTITY selectButton.label "Избери…">
+<!ENTITY selectButton.accesskey "е">
+<!ENTITY MsgSelectDesc.label "Изберете пошта и дискусиони групи за локална употреба.">
+<!ENTITY MsgSelectInd.label "Преземи">
+<!ENTITY MsgSelectItems.label "Папки и дискусиони групи">

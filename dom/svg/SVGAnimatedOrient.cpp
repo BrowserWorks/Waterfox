@@ -6,16 +6,20 @@
 
 #include "SVGAnimatedOrient.h"
 
-#include "mozilla/ArrayUtils.h"
-#include "mozilla/Move.h"
-#include "mozilla/SMILValue.h"
-#include "mozilla/dom/SVGMarkerElement.h"
-#include "DOMSVGAnimatedAngle.h"
+#include <utility>
+
 #include "DOMSVGAngle.h"
-#include "nsContentUtils.h"
-#include "nsTextFormatter.h"
+#include "DOMSVGAnimatedAngle.h"
 #include "SVGAttrTearoffTable.h"
 #include "SVGOrientSMILType.h"
+#include "mozilla/ArrayUtils.h"
+#include "mozilla/Maybe.h"
+#include "mozilla/SMILValue.h"
+#include "mozilla/dom/SVGMarkerElement.h"
+#include "mozAutoDocUpdate.h"
+#include "nsContentUtils.h"
+#include "nsTextFormatter.h"
+#include "nsPrintfCString.h"
 
 using namespace mozilla::dom;
 using namespace mozilla::dom::SVGAngle_Binding;
@@ -42,7 +46,7 @@ static SVGAttrTearoffTable<SVGAnimatedOrient, DOMSVGAngle>
 //----------------------------------------------------------------------
 // Helper class: AutoChangeOrientNotifier
 // Stack-based helper class to pair calls to WillChangeOrient and
-// DidChangeOrient.
+// DidChangeOrient with mozAutoDocUpdate.
 class MOZ_RAII AutoChangeOrientNotifier {
  public:
   explicit AutoChangeOrientNotifier(
@@ -52,14 +56,15 @@ class MOZ_RAII AutoChangeOrientNotifier {
     MOZ_GUARD_OBJECT_NOTIFIER_INIT;
     MOZ_ASSERT(mOrient, "Expecting non-null orient");
     if (mSVGElement && mDoSetAttr) {
-      mEmptyOrOldValue = mSVGElement->WillChangeOrient();
+      mUpdateBatch.emplace(mSVGElement->GetComposedDoc(), true);
+      mEmptyOrOldValue = mSVGElement->WillChangeOrient(mUpdateBatch.ref());
     }
   }
 
   ~AutoChangeOrientNotifier() {
     if (mSVGElement) {
       if (mDoSetAttr) {
-        mSVGElement->DidChangeOrient(mEmptyOrOldValue);
+        mSVGElement->DidChangeOrient(mEmptyOrOldValue, mUpdateBatch.ref());
       }
       if (mOrient->mIsAnimated) {
         mSVGElement->AnimationNeedsResample();
@@ -68,6 +73,7 @@ class MOZ_RAII AutoChangeOrientNotifier {
   }
 
  private:
+  Maybe<mozAutoDocUpdate> mUpdateBatch;
   SVGAnimatedOrient* const mOrient;
   SVGElement* const mSVGElement;
   nsAttrValue mEmptyOrOldValue;
@@ -335,13 +341,12 @@ void SVGAnimatedOrient::SetBaseValue(float aValue, uint8_t aUnit,
   }
 }
 
-nsresult SVGAnimatedOrient::SetBaseType(SVGEnumValue aValue,
-                                        SVGElement* aSVGElement) {
+void SVGAnimatedOrient::SetBaseType(SVGEnumValue aValue,
+                                    SVGElement* aSVGElement, ErrorResult& aRv) {
   if (mBaseType == aValue) {
-    return NS_OK;
+    return;
   }
-  if (aValue == SVG_MARKER_ORIENT_AUTO || aValue == SVG_MARKER_ORIENT_ANGLE ||
-      aValue == SVG_MARKER_ORIENT_AUTO_START_REVERSE) {
+  if (aValue == SVG_MARKER_ORIENT_AUTO || aValue == SVG_MARKER_ORIENT_ANGLE) {
     AutoChangeOrientNotifier notifier(this, aSVGElement);
 
     mBaseVal = .0f;
@@ -352,9 +357,10 @@ nsresult SVGAnimatedOrient::SetBaseType(SVGEnumValue aValue,
       mAnimValUnit = mBaseValUnit;
       mAnimType = mBaseType;
     }
-    return NS_OK;
+    return;
   }
-  return NS_ERROR_DOM_TYPE_ERR;
+  nsPrintfCString err("Invalid base value %u for marker orient", aValue);
+  aRv.ThrowTypeError(err);
 }
 
 void SVGAnimatedOrient::SetAnimValue(float aValue, uint8_t aUnit,

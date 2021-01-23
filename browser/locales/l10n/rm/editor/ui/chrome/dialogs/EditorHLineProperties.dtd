@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Caracteristicas da la lingia orizontala">
+
+<!ENTITY dimensionsBox.label "Dimensiuns">
+<!ENTITY heightEditField.label "Autezza:">
+<!ENTITY heightEditField.accessKey "Z">
+<!ENTITY widthEditField.label "Largezza:">
+<!ENTITY widthEditField.accessKey "W">
+<!ENTITY pixelsPopup.value "pixels">
+<!ENTITY alignmentBox.label "Alingiament">
+<!ENTITY leftRadio.label "A sanestra">
+<!ENTITY leftRadio.accessKey "L">
+<!ENTITY centerRadio.label "Entamez">
+<!ENTITY centerRadio.accessKey "M">
+<!ENTITY rightRadio.label "A dretga">
+<!ENTITY rightRadio.accessKey "a">
+
+<!ENTITY threeDShading.label "Sumbriva 3D">
+<!ENTITY threeDShading.accessKey "K">
+<!ENTITY saveSettings.label "Utilisar sco standard">
+<!ENTITY saveSettings.accessKey "i">
+<!ENTITY saveSettings.tooltip "Memorisar quests parameters per utilisar els cun inserir novas lingias orizontalas">

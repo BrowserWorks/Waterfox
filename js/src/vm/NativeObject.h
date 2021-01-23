@@ -10,14 +10,16 @@
 #include "mozilla/Assertions.h"
 #include "mozilla/Attributes.h"
 
+#include <algorithm>
 #include <stdint.h>
 
 #include "jsfriendapi.h"
 #include "NamespaceImports.h"
 
 #include "gc/Barrier.h"
-#include "gc/Heap.h"
 #include "gc/Marking.h"
+#include "gc/MaybeRooted.h"
+#include "gc/ZoneAllocator.h"
 #include "js/Value.h"
 #include "vm/JSObject.h"
 #include "vm/Shape.h"
@@ -204,6 +206,11 @@ class ObjectElements {
 
     // These elements are set to integrity level "frozen". If this flag is
     // set, the SEALED flag must be set as well.
+    //
+    // This flag must only be set if the BaseShape has the FROZEN_ELEMENTS flag.
+    // The BaseShape flag ensures a shape guard can be used to guard against
+    // frozen elements. The ObjectElements flag is convenient for JIT code and
+    // ObjectElements assertions.
     FROZEN = 0x20,
   };
 
@@ -315,6 +322,8 @@ class ObjectElements {
     flags |= FROZEN;
   }
 
+  bool isFrozen() const { return flags & FROZEN; }
+
  public:
   constexpr ObjectElements(uint32_t capacity, uint32_t length)
       : flags(0), initializedLength(0), capacity(capacity), length(length) {}
@@ -367,11 +376,10 @@ class ObjectElements {
   static bool MakeElementsCopyOnWrite(JSContext* cx, NativeObject* obj);
 
   static MOZ_MUST_USE bool PreventExtensions(JSContext* cx, NativeObject* obj);
-  static void FreezeOrSeal(JSContext* cx, NativeObject* obj,
-                           IntegrityLevel level);
+  static MOZ_MUST_USE bool FreezeOrSeal(JSContext* cx, HandleNativeObject obj,
+                                        IntegrityLevel level);
 
   bool isSealed() const { return flags & SEALED; }
-  bool isFrozen() const { return flags & FROZEN; }
 
   uint8_t elementAttributes() const {
     if (isFrozen()) {
@@ -411,7 +419,6 @@ static_assert(ObjectElements::VALUES_PER_HEADER * sizeof(HeapSlot) ==
 extern HeapSlot* const emptyObjectElements;
 extern HeapSlot* const emptyObjectElementsShared;
 
-struct Class;
 class AutoCheckShapeConsistency;
 class GCMarker;
 class Shape;
@@ -477,9 +484,8 @@ class NativeObject : public JSObject {
     static_assert(sizeof(NativeObject) % sizeof(Value) == 0,
                   "fixed slots after an object must be aligned");
 
-    static_assert(
-        offsetof(NativeObject, group_) == offsetof(shadow::Object, group),
-        "shadow type must match actual type");
+    static_assert(offsetOfGroup() == offsetof(shadow::Object, group),
+                  "shadow type must match actual type");
     static_assert(
         offsetof(NativeObject, slots_) == offsetof(shadow::Object, slots),
         "shadow slots must match actual slots");
@@ -538,11 +544,6 @@ class NativeObject : public JSObject {
   // the new properties.
   void setLastPropertyShrinkFixedSlots(Shape* shape);
 
-  // As for setLastProperty(), but changes the class associated with the
-  // object to a non-native one. This leaves the object with a type and shape
-  // that are (temporarily) inconsistent.
-  void setLastPropertyMakeNonNative(Shape* shape);
-
   // Newly-created TypedArrays that map a SharedArrayBuffer are
   // marked as shared by giving them an ObjectElements that has the
   // ObjectElements::SHARED_MEMORY flag set.
@@ -556,9 +557,6 @@ class NativeObject : public JSObject {
   static inline JS::Result<NativeObject*, JS::OOM&> create(
       JSContext* cx, js::gc::AllocKind kind, js::gc::InitialHeap heap,
       js::HandleShape shape, js::HandleObjectGroup group);
-
-  static inline JS::Result<NativeObject*, JS::OOM&> createWithTemplate(
-      JSContext* cx, HandleObject templateObject);
 
 #ifdef DEBUG
   static void enableShapeConsistencyChecks();
@@ -736,14 +734,16 @@ class NativeObject : public JSObject {
 
   uint32_t numUsedFixedSlots() const {
     uint32_t nslots = lastProperty()->slotSpan(getClass());
-    return Min(nslots, numFixedSlots());
+    return std::min(nslots, numFixedSlots());
   }
 
   uint32_t slotSpan() const {
     if (inDictionaryMode()) {
       return lastProperty()->base()->slotSpan();
     }
-    return lastProperty()->slotSpan();
+    // Get the class from the object group rather than the base shape to avoid a
+    // race between Shape::ensureOwnBaseShape and background sweeping.
+    return lastProperty()->slotSpan(getClass());
   }
 
   /* Whether a slot is at a fixed offset from this object. */
@@ -937,6 +937,7 @@ class NativeObject : public JSObject {
 
   static MOZ_MUST_USE bool fillInAfterSwap(JSContext* cx,
                                            HandleNativeObject obj,
+                                           NativeObject* old,
                                            HandleValueVector values,
                                            void* priv);
 
@@ -1119,7 +1120,7 @@ class NativeObject : public JSObject {
    */
   static MOZ_ALWAYS_INLINE uint32_t dynamicSlotsCount(uint32_t nfixed,
                                                       uint32_t span,
-                                                      const Class* clasp);
+                                                      const JSClass* clasp);
   static MOZ_ALWAYS_INLINE uint32_t dynamicSlotsCount(Shape* shape);
 
   /* Elements accessors. */
@@ -1215,26 +1216,7 @@ class NativeObject : public JSObject {
   inline void elementsRangeWriteBarrierPost(uint32_t start, uint32_t count);
 
  public:
-  // When an array's length becomes non-writable, writes to indexes greater
-  // greater than or equal to the length don't change the array.  We handle
-  // this with a check for non-writable length in most places. But in JIT code
-  // every check counts -- so we piggyback the check on the already-required
-  // range check for |index < capacity| by making capacity of arrays with
-  // non-writable length never exceed the length. This mechanism is also used
-  // when an object becomes non-extensible.
-  void shrinkCapacityToInitializedLength(JSContext* cx) {
-    if (getElementsHeader()->numShiftedElements() > 0) {
-      moveShiftedElements();
-    }
-
-    ObjectElements* header = getElementsHeader();
-    uint32_t len = header->initializedLength;
-    if (header->capacity > len) {
-      shrinkElements(cx, len);
-      header = getElementsHeader();
-      header->capacity = len;
-    }
-  }
+  void shrinkCapacityToInitializedLength(JSContext* cx);
 
  private:
   void setDenseInitializedLengthInternal(uint32_t length) {
@@ -1334,7 +1316,7 @@ class NativeObject : public JSObject {
     return getElementsHeader()->isSealed();
   }
   bool denseElementsAreFrozen() const {
-    return getElementsHeader()->isFrozen();
+    return hasAllFlags(js::BaseShape::FROZEN_ELEMENTS);
   }
 
   /* Packed information for this object's elements. */
@@ -1429,7 +1411,7 @@ class NativeObject : public JSObject {
     MOZ_ASSERT(*cellp);
     gc::StoreBuffer* storeBuffer = (*cellp)->storeBuffer();
     if (storeBuffer) {
-      storeBuffer->putCell(cellp);
+      storeBuffer->putCell(reinterpret_cast<JSObject**>(cellp));
     }
   }
 
@@ -1504,17 +1486,18 @@ class NativeObject : public JSObject {
   static constexpr size_t getPrivateDataOffset(size_t nfixed) {
     return getFixedSlotOffset(nfixed);
   }
+  static constexpr size_t getFixedSlotIndexFromOffset(size_t offset) {
+    MOZ_ASSERT(offset >= sizeof(NativeObject));
+    offset -= sizeof(NativeObject);
+    MOZ_ASSERT(offset % sizeof(Value) == 0);
+    MOZ_ASSERT(offset / sizeof(Value) < MAX_FIXED_SLOTS);
+    return offset / sizeof(Value);
+  }
+  static constexpr size_t getDynamicSlotIndexFromOffset(size_t offset) {
+    MOZ_ASSERT(offset % sizeof(Value) == 0);
+    return offset / sizeof(Value);
+  }
   static size_t offsetOfSlots() { return offsetof(NativeObject, slots_); }
-};
-
-// Object class for plain native objects created using '{}' object literals,
-// 'new Object()', 'Object.create', etc.
-class PlainObject : public NativeObject {
- public:
-  static const js::Class class_;
-
-  /* Return the allocKind we would use if we were to tenure this object. */
-  inline js::gc::AllocKind allocKindForTenure() const;
 };
 
 inline void NativeObject::privateWriteBarrierPre(void** oldval) {
@@ -1664,11 +1647,38 @@ bool IsPackedArray(JSObject* obj);
 extern void AddPropertyTypesAfterProtoChange(JSContext* cx, NativeObject* obj,
                                              ObjectGroup* oldGroup);
 
-// Specializations of 7.3.23 CopyDataProperties(...) for NativeObjects.
-extern bool CopyDataPropertiesNative(JSContext* cx, HandlePlainObject target,
-                                     HandleNativeObject from,
-                                     HandlePlainObject excludedItems,
-                                     bool* optimized);
+// Initialize an object's reserved slot with a private value pointing to
+// malloc-allocated memory and associate the memory with the object.
+//
+// This call should be matched with a call to JSFreeOp::free_/delete_ in the
+// object's finalizer to free the memory and update the memory accounting.
+
+inline void InitReservedSlot(NativeObject* obj, uint32_t slot, void* ptr,
+                             size_t nbytes, MemoryUse use) {
+  AddCellMemory(obj, nbytes, use);
+  obj->initReservedSlot(slot, PrivateValue(ptr));
+}
+template <typename T>
+inline void InitReservedSlot(NativeObject* obj, uint32_t slot, T* ptr,
+                             MemoryUse use) {
+  InitReservedSlot(obj, slot, ptr, sizeof(T), use);
+}
+
+// Initialize an object's private slot with a pointer to malloc-allocated memory
+// and associate the memory with the object.
+//
+// This call should be matched with a call to JSFreeOp::free_/delete_ in the
+// object's finalizer to free the memory and update the memory accounting.
+
+inline void InitObjectPrivate(NativeObject* obj, void* ptr, size_t nbytes,
+                              MemoryUse use) {
+  AddCellMemory(obj, nbytes, use);
+  obj->initPrivate(ptr);
+}
+template <typename T>
+inline void InitObjectPrivate(NativeObject* obj, T* ptr, MemoryUse use) {
+  InitObjectPrivate(obj, ptr, sizeof(T), use);
+}
 
 }  // namespace js
 

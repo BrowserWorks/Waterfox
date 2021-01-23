@@ -12,7 +12,7 @@ const {
 const dom = require("devtools/client/shared/vendor/react-dom-factories");
 const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
 
-const { toFixed } = require("../utils/font-utils");
+const { toFixed } = require("devtools/client/inspector/fonts/utils/font-utils");
 
 class FontPropertyValue extends PureComponent {
   static get propTypes() {
@@ -150,7 +150,11 @@ class FontPropertyValue extends PureComponent {
       value = this.state.initialValue;
     }
 
-    this.updateValue(value);
+    // Avoid updating the value if a keyword value like "normal" is present
+    if (!this.props.valueLabel) {
+      this.updateValue(value);
+    }
+
     this.toggleInteractiveState(false);
   }
 

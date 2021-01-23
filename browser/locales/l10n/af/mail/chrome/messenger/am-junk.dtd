@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Gemorspos-opstelling">
+
+<!ENTITY level.label "Aktiveer aanpassende gemorsposkontrole vir hierdie rekening">
+<!ENTITY level.accesskey "A">
+
+<!ENTITY move.label "Skuif nuwe gemorspos na:">
+<!ENTITY move.accesskey "S">
+
+
+<!ENTITY otherFolder.label "Ander:">
+<!ENTITY otherFolder.accesskey "A">
+<!ENTITY purge1.label "Skrap gemorspos outomaties indien ouer as">
+<!ENTITY purge1.accesskey "o">
+<!ENTITY purge2.label "dae">
+
+
+
+<!ENTITY ispHeaders.label "Vertrou gemorspos-kopskrifte wat opgestel is deur: ">
+<!ENTITY ispHeaders.accesskey "V">
+
+<!ENTITY junkClassification.label "Seleksie">
+
+
+

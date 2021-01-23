@@ -16,14 +16,15 @@
 #include "nsIInterfaceRequestor.h"
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsIObserverService.h"
-#include "nsIServiceManager.h"
 #include "nsITokenPasswordDialogs.h"
 #include "nsNSSComponent.h"
 #include "nsNSSHelper.h"
+#include "nsNetCID.h"
 #include "nsPK11TokenDB.h"
 #include "pk11func.h"
 #include "pk11sdr.h"  // For PK11SDR_Encrypt, PK11SDR_Decrypt
-#include "ssl.h"      // For SSL_ClearSessionCache
+
+static mozilla::LazyLogModule gSDRLog("sdrlog");
 
 using namespace mozilla;
 using dom::Promise;
@@ -34,11 +35,10 @@ void BackgroundSdrEncryptStrings(const nsTArray<nsCString>& plaintexts,
                                  RefPtr<Promise>& aPromise) {
   nsCOMPtr<nsISecretDecoderRing> sdrService =
       do_GetService(NS_SECRETDECODERRING_CONTRACTID);
-  InfallibleTArray<nsString> cipherTexts(plaintexts.Length());
+  nsTArray<nsString> cipherTexts(plaintexts.Length());
 
   nsresult rv = NS_ERROR_FAILURE;
-  for (uint32_t i = 0; i < plaintexts.Length(); ++i) {
-    const nsCString& plaintext = plaintexts[i];
+  for (const auto& plaintext : plaintexts) {
     nsCString cipherText;
     rv = sdrService->EncryptString(plaintext, cipherText);
 
@@ -57,6 +57,51 @@ void BackgroundSdrEncryptStrings(const nsTArray<nsCString>& plaintexts,
                                  aPromise->MaybeReject(rv);
                                } else {
                                  aPromise->MaybeResolve(cipherTexts);
+                               }
+                             }));
+  NS_DispatchToMainThread(runnable.forget());
+}
+
+void BackgroundSdrDecryptStrings(const nsTArray<nsCString>& encryptedStrings,
+                                 RefPtr<Promise>& aPromise) {
+  nsCOMPtr<nsISecretDecoderRing> sdrService =
+      do_GetService(NS_SECRETDECODERRING_CONTRACTID);
+  nsTArray<nsString> plainTexts(encryptedStrings.Length());
+
+  nsresult rv = NS_ERROR_FAILURE;
+  for (const auto& encryptedString : encryptedStrings) {
+    nsCString plainText;
+    rv = sdrService->DecryptString(encryptedString, plainText);
+
+    if (NS_FAILED(rv)) {
+      if (rv == NS_ERROR_NOT_AVAILABLE) {
+        // Master Password entry was canceled. Don't keep prompting again.
+        break;
+      }
+
+      // NS_ERROR_ILLEGAL_VALUE or NS_ERROR_FAILURE could be due to bad data for
+      // a single string but we still want to decrypt the others.
+      // Callers of `decryptMany` in crypto-SDR.js assume there will be an
+      // equal number of usernames and passwords so use an empty string to keep
+      // this assumption true.
+      MOZ_LOG(gSDRLog, LogLevel::Warning,
+              ("Couldn't decrypt string: %s", encryptedString.get()));
+      plainTexts.AppendElement(nullptr);
+      rv = NS_OK;
+      continue;
+    }
+
+    plainTexts.AppendElement(NS_ConvertUTF8toUTF16(plainText));
+  }
+
+  nsCOMPtr<nsIRunnable> runnable(
+      NS_NewRunnableFunction("BackgroundSdrDecryptStringsResolve",
+                             [rv, aPromise = std::move(aPromise),
+                              plainTexts = std::move(plainTexts)]() {
+                               if (NS_FAILED(rv)) {
+                                 aPromise->MaybeReject(rv);
+                               } else {
+                                 aPromise->MaybeResolve(plainTexts);
                                }
                              }));
   NS_DispatchToMainThread(runnable.forget());
@@ -141,13 +186,12 @@ SecretDecoderRing::EncryptString(const nsACString& text,
 }
 
 NS_IMETHODIMP
-SecretDecoderRing::AsyncEncryptStrings(uint32_t plaintextsCount,
-                                       const char16_t** plaintexts,
+SecretDecoderRing::AsyncEncryptStrings(const nsTArray<nsCString>& plaintexts,
                                        JSContext* aCx, Promise** aPromise) {
   MOZ_RELEASE_ASSERT(NS_IsMainThread());
-  NS_ENSURE_ARG(plaintextsCount);
-  NS_ENSURE_ARG_POINTER(plaintexts);
+  NS_ENSURE_ARG(!plaintexts.IsEmpty());
   NS_ENSURE_ARG_POINTER(aCx);
+  NS_ENSURE_ARG_POINTER(aPromise);
 
   nsIGlobalObject* globalObject = xpc::CurrentNativeGlobal(aCx);
   if (NS_WARN_IF(!globalObject)) {
@@ -160,19 +204,19 @@ SecretDecoderRing::AsyncEncryptStrings(uint32_t plaintextsCount,
     return result.StealNSResult();
   }
 
-  InfallibleTArray<nsCString> plaintextsUtf8(plaintextsCount);
-  for (uint32_t i = 0; i < plaintextsCount; ++i) {
-    plaintextsUtf8.AppendElement(NS_ConvertUTF16toUTF8(plaintexts[i]));
-  }
+  // plaintexts are already expected to be UTF-8.
   nsCOMPtr<nsIRunnable> runnable(NS_NewRunnableFunction(
       "BackgroundSdrEncryptStrings",
-      [promise, plaintextsUtf8 = std::move(plaintextsUtf8)]() mutable {
-        BackgroundSdrEncryptStrings(plaintextsUtf8, promise);
+      [promise, plaintexts = plaintexts.Clone()]() mutable {
+        BackgroundSdrEncryptStrings(plaintexts, promise);
       }));
 
-  nsCOMPtr<nsIThread> encryptionThread;
-  nsresult rv = NS_NewNamedThread("AsyncSDRThread",
-                                  getter_AddRefs(encryptionThread), runnable);
+  nsCOMPtr<nsIEventTarget> target(
+      do_GetService(NS_STREAMTRANSPORTSERVICE_CONTRACTID));
+  if (!target) {
+    return NS_ERROR_FAILURE;
+  }
+  nsresult rv = target->Dispatch(runnable, NS_DISPATCH_NORMAL);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
@@ -195,6 +239,47 @@ SecretDecoderRing::DecryptString(const nsACString& encryptedBase64Text,
     return rv;
   }
 
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+SecretDecoderRing::AsyncDecryptStrings(
+    const nsTArray<nsCString>& encryptedStrings, JSContext* aCx,
+    Promise** aPromise) {
+  MOZ_RELEASE_ASSERT(NS_IsMainThread());
+  NS_ENSURE_ARG(!encryptedStrings.IsEmpty());
+  NS_ENSURE_ARG_POINTER(aCx);
+  NS_ENSURE_ARG_POINTER(aPromise);
+
+  nsIGlobalObject* globalObject = xpc::CurrentNativeGlobal(aCx);
+  if (NS_WARN_IF(!globalObject)) {
+    return NS_ERROR_UNEXPECTED;
+  }
+
+  ErrorResult result;
+  RefPtr<Promise> promise = Promise::Create(globalObject, result);
+  if (NS_WARN_IF(result.Failed())) {
+    return result.StealNSResult();
+  }
+
+  // encryptedStrings are expected to be base64.
+  nsCOMPtr<nsIRunnable> runnable(NS_NewRunnableFunction(
+      "BackgroundSdrDecryptStrings",
+      [promise, encryptedStrings = encryptedStrings.Clone()]() mutable {
+        BackgroundSdrDecryptStrings(encryptedStrings, promise);
+      }));
+
+  nsCOMPtr<nsIEventTarget> target(
+      do_GetService(NS_STREAMTRANSPORTSERVICE_CONTRACTID));
+  if (!target) {
+    return NS_ERROR_FAILURE;
+  }
+  nsresult rv = target->Dispatch(runnable, NS_DISPATCH_NORMAL);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  promise.forget(aPromise);
   return NS_OK;
 }
 
@@ -225,7 +310,7 @@ SecretDecoderRing::ChangePassword() {
 NS_IMETHODIMP
 SecretDecoderRing::Logout() {
   PK11_LogoutAll();
-  SSL_ClearSessionCache();
+  nsNSSComponent::ClearSSLExternalAndInternalSessionCacheNative();
   return NS_OK;
 }
 
@@ -234,7 +319,7 @@ SecretDecoderRing::LogoutAndTeardown() {
   static NS_DEFINE_CID(kNSSComponentCID, NS_NSSCOMPONENT_CID);
 
   PK11_LogoutAll();
-  SSL_ClearSessionCache();
+  nsNSSComponent::ClearSSLExternalAndInternalSessionCacheNative();
 
   nsresult rv;
   nsCOMPtr<nsINSSComponent> nssComponent(do_GetService(kNSSComponentCID, &rv));

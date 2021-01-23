@@ -29,14 +29,11 @@ add_task(async function() {
   await BrowserTestUtils.switchTab(gBrowser, tab2);
   gURLBar.focus(); // focus the urlbar in the tab we will switch to
   await BrowserTestUtils.switchTab(gBrowser, tab1);
-  // Now open the popup by the history marker.
-  await UrlbarTestUtils.promisePopupOpen(window, () => {
-    let historyDropMarker = window.document.getAnonymousElementByAttribute(
-      gURLBar.textbox,
-      "anonid",
-      "historydropmarker"
-    );
-    EventUtils.synthesizeMouseAtCenter(historyDropMarker, {}, window);
+  // Now open the popup.
+  await UrlbarTestUtils.promiseAutocompleteResultPopup({
+    window,
+    waitForFocus,
+    value: "",
   });
   // Check that the popup closes when we switch tab.
   await UrlbarTestUtils.promisePopupClose(window, () => {

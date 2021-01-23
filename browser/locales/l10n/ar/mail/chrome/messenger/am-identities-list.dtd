@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identitiesListManageDesc.label "أدِر هويات هذا الحساب. الهوية الأولى ستستخدم مبدئيا.">
+<!ENTITY identitiesListAdd.label  "أضِف…">
+<!ENTITY identitiesListAdd.accesskey  "ض">
+<!ENTITY identitiesListEdit.label "حرّر…">
+<!ENTITY identitiesListEdit.accesskey "ح">
+<!ENTITY identitiesListDefault.label "اجعلها المبدئية">
+<!ENTITY identitiesListDefault.accesskey "ب">
+<!ENTITY identitiesListDelete.label "احذف">
+<!ENTITY identitiesListDelete.accesskey "ذ">
+<!ENTITY identitiesListClose.label "أغلق">
+<!ENTITY identitiesListClose.accesskey "غ">

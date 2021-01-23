@@ -37,10 +37,16 @@ async function promiseForChange(mediaQuery) {
 }
 
 add_task(async () => {
-  SpecialPowers.DOMWindowUtils.setPrefersReducedMotionOverrideForTest(false);
+  const initiallyMatches =
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // Need to wait a frame since MediaQuery changes are asynchronously processed.
-  await waitForFrame();
+  const changePromise = initiallyMatches ? promiseForChange('(prefers-reduced-motion: reduce)') : null;
+
+  await SpecialPowers.pushPrefEnv({ set: [['ui.prefersReducedMotion', 0]]});
+
+  if (changePromise) {
+    await changePromise;
+  }
 
   ok(!window.matchMedia('(prefers-reduced-motion: reduce)').matches,
      'Does not matches prefers-reduced-motion: reduced) when the system sets ' +
@@ -58,7 +64,7 @@ add_task(async () => {
   const booleanContext = promiseForChange('(prefers-reduced-motion)');
   const noPreference = promiseForChange('(prefers-reduced-motion: no-preference)');
 
-  SpecialPowers.DOMWindowUtils.setPrefersReducedMotionOverrideForTest(true);
+  await SpecialPowers.pushPrefEnv({ set: [['ui.prefersReducedMotion', 1]]});
 
   const [ reduceResult, booleanContextResult, noPreferenceResult ] =
     await Promise.all([ reduce, booleanContext, noPreference ]);
@@ -73,7 +79,7 @@ add_task(async () => {
      'Does not matches (prefers-reduced-motion: no-preference) when the ' +
      'system sets prefers-reduced-motion true');
 
-  SpecialPowers.DOMWindowUtils.resetPrefersReducedMotionOverrideForTest();
+  await SpecialPowers.flushPrefEnv();
 });
 </script>
 </body>

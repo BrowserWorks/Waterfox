@@ -54,14 +54,14 @@ function getSteppableExpression(
 
 function _getNextStep(
   statement: SimplePath,
-  sourceId: string,
+  sourceId: SourceId,
   position: AstPosition
 ): ?SourceLocation {
   const nextStatement = statement.getSibling(1);
   if (nextStatement) {
     return {
       ...nextStatement.node.loc.start,
-      sourceId: sourceId,
+      sourceId,
     };
   }
 

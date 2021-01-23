@@ -7,9 +7,9 @@
 #include "js/UbiNodeShortestPaths.h"
 
 #include "mozilla/Maybe.h"
-#include "mozilla/Move.h"
 
-#include "builtin/String.h"
+#include <utility>
+
 #include "util/Text.h"
 
 namespace JS {

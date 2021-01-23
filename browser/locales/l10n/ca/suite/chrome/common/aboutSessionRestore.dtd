@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Recuperació de la sessió">
+<!ENTITY restorepage.pagetitle      "Voleu recuperar la vostra sessió?">
+<!-- LOCALIZATION NOTE: If "closed unexpectedly" sounds too awkward in the translation,
+                        you may translate "crash" instead (even though it's IT-speak) -->
+<!ENTITY restorepage.issueDesc      "La sessió anterior del &brandShortName; s'ha tancat de forma inesperada. Lamentem els inconvenients que us pugui haver ocasionat. Podeu recuperar les pestanyes i les finestres de la sessió anterior, o iniciar una sessió nova si ja no us calen.">
+<!ENTITY restorepage.remedies       "Si el &brandShortName; es tanca repetidament:">
+<!ENTITY restorepage.dueToChrome    "Proveu d'inhabilitar aquelles extensions que hàgiu afegit recentment al gestor de complements.">
+<!ENTITY restorepage.dueToContent   "Proveu de recuperar la sessió sense aquelles pàgines web que sospiteu que puguin estar provocant el problema:">
+
+<!ENTITY restorepage.restoreButton  "Recupera la sessió anterior">
+<!ENTITY restorepage.restore.access "R">
+<!ENTITY restorepage.cancelButton   "Inicia una sessió nova">
+<!ENTITY restorepage.cancel.access  "s">
+
+<!ENTITY restorepage.restoreHeader  "Recupera">
+<!ENTITY restorepage.listHeader     "Finestres i pestanyes">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Finestra &#037;S">

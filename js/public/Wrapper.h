@@ -151,6 +151,10 @@ class JS_FRIEND_API Wrapper : public ForwardingProxyHandler {
   static JSObject* New(JSContext* cx, JSObject* obj, const Wrapper* handler,
                        const WrapperOptions& options = WrapperOptions());
 
+  static JSObject* NewSingleton(
+      JSContext* cx, JSObject* obj, const Wrapper* handler,
+      const WrapperOptions& options = WrapperOptions());
+
   static JSObject* Renew(JSObject* existing, JSObject* obj,
                          const Wrapper* handler);
 
@@ -472,9 +476,11 @@ JS_FRIEND_API void NukeCrossCompartmentWrapperIfExists(JSContext* cx,
                                                        JSObject* target);
 
 void RemapWrapper(JSContext* cx, JSObject* wobj, JSObject* newTarget);
+void RemapDeadWrapper(JSContext* cx, HandleObject wobj, HandleObject newTarget);
 
-JS_FRIEND_API bool RemapAllWrappersForObject(JSContext* cx, JSObject* oldTarget,
-                                             JSObject* newTarget);
+JS_FRIEND_API bool RemapAllWrappersForObject(JSContext* cx,
+                                             HandleObject oldTarget,
+                                             HandleObject newTarget);
 
 // API to recompute all cross-compartment wrappers whose source and target
 // match the given filters.

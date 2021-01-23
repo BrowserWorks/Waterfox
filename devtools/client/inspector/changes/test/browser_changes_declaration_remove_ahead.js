@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -23,9 +22,8 @@ add_task(async function() {
   const { document: doc, store } = selectChangesView(inspector);
 
   await selectNode("div", inspector);
-  const rule = getRuleViewRuleEditor(ruleView, 1).rule;
-  const prop1 = rule.textProps[0];
-  const prop2 = rule.textProps[1];
+  const prop1 = getTextProperty(ruleView, 1, { color: "red" });
+  const prop2 = getTextProperty(ruleView, 1, { display: "block" });
 
   let onTrackChange = waitUntilAction(store, "TRACK_CHANGE");
   info("Change the second declaration");

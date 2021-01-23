@@ -1,13 +1,9 @@
 /* -*- Mode: indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set sts=2 sw=2 et tw=80: */
-/* global gBrowser SessionStore */
+/* global gBrowser */
 "use strict";
 
 add_task(async function test_highlighted() {
-  await SpecialPowers.pushPrefEnv({
-    set: [["browser.tabs.multiselect", true]],
-  });
-
   let extension = ExtensionTestUtils.loadExtension({
     manifest: {
       permissions: ["tabs"],

@@ -76,12 +76,12 @@ add_task(async function() {
         getCookieId(
           "sc1",
           "sectest1.example.org",
-          "/browser/devtools/client/storage/test/"
+          "/browser/devtools/client/storage/test"
         ),
         getCookieId(
           "sc2",
           "sectest1.example.org",
-          "/browser/devtools/client/storage/test/"
+          "/browser/devtools/client/storage/test"
         ),
         getCookieId("uc1", ".example.org", "/"),
         getCookieId("uc2", ".example.org", "/"),
@@ -120,12 +120,12 @@ add_task(async function() {
         getCookieId(
           "sc1",
           "sectest1.example.org",
-          "/browser/devtools/client/storage/test/"
+          "/browser/devtools/client/storage/test"
         ),
         getCookieId(
           "sc2",
           "sectest1.example.org",
-          "/browser/devtools/client/storage/test/"
+          "/browser/devtools/client/storage/test"
         ),
       ],
     ],
@@ -158,7 +158,7 @@ add_task(async function() {
         getCookieId(
           "sc2",
           "sectest1.example.org",
-          "/browser/devtools/client/storage/test/"
+          "/browser/devtools/client/storage/test"
         ),
       ],
     ],

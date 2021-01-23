@@ -15,10 +15,10 @@ const {
 const {
   getSourceNames,
   parseURL,
-  isScratchpadScheme,
   getSourceMappedFile,
 } = require("devtools/client/shared/source-utils");
 const { LocalizationHelper } = require("devtools/shared/l10n");
+const { MESSAGE_SOURCE } = require("devtools/client/webconsole/constants");
 
 const l10n = new LocalizationHelper(
   "devtools/client/locales/components.properties"
@@ -51,6 +51,8 @@ class Frame extends Component {
       showFullSourceUrl: PropTypes.bool,
       // Service to enable the source map feature for console.
       sourceMapService: PropTypes.object,
+      // The source of the message
+      messageSource: PropTypes.string,
     };
   }
 
@@ -121,6 +123,7 @@ class Frame extends Component {
     };
   }
 
+  // eslint-disable-next-line complexity
   render() {
     let frame, isSourceMapped;
     const {
@@ -130,6 +133,7 @@ class Frame extends Component {
       showHost,
       showEmptyPathAsHost,
       showFullSourceUrl,
+      messageSource,
     } = this.props;
 
     if (this.state && this.state.isSourceMapped && this.state.frame) {
@@ -151,15 +155,11 @@ class Frame extends Component {
 
     // Reparse the URL to determine if we should link this; `getSourceNames`
     // has already cached this indirectly. We don't want to attempt to
-    // link to "self-hosted" and "(unknown)". However, we do want to link
-    // to Scratchpad URIs.
+    // link to "self-hosted" and "(unknown)".
     // Source mapped sources might not necessary linkable, but they
     // are still valid in the debugger.
     // If we have a source ID then we can show the source in the debugger.
-    const isLinkable =
-      !!(isScratchpadScheme(source) || parseURL(source)) ||
-      isSourceMapped ||
-      sourceId;
+    const isLinkable = !!parseURL(source) || isSourceMapped || sourceId;
     const elements = [];
     const sourceElements = [];
     let sourceEl;
@@ -245,13 +245,21 @@ class Frame extends Component {
 
     // Inner el is useful for achieving ellipsis on the left and correct LTR/RTL
     // ordering. See CSS styles for frame-link-source-[inner] and bug 1290056.
+    let tooltipMessage;
+    if (messageSource && messageSource === MESSAGE_SOURCE.CSS) {
+      tooltipMessage = l10n.getFormatStr(
+        "frame.viewsourceinstyleeditor",
+        tooltip
+      );
+    } else {
+      tooltipMessage = l10n.getFormatStr("frame.viewsourceindebugger", tooltip);
+    }
+
     const sourceInnerEl = dom.span(
       {
         key: "source-inner",
         className: "frame-link-source-inner",
-        title: isLinkable
-          ? l10n.getFormatStr("frame.viewsourceindebugger", tooltip)
-          : tooltip,
+        title: isLinkable ? tooltipMessage : tooltip,
       },
       sourceElements
     );

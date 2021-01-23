@@ -15,6 +15,9 @@ dictionary ChannelMergerOptions : AudioNodeOptions {
 };
 
 [Pref="dom.webaudio.enabled",
- Constructor(BaseAudioContext context, optional ChannelMergerOptions options)]
+ Exposed=Window]
 interface ChannelMergerNode : AudioNode {
+  [Throws]
+  constructor(BaseAudioContext context,
+              optional ChannelMergerOptions options = {});
 };

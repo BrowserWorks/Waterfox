@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label          "Bestân">
+<!ENTITY fileMenu.accesskey        "B">
+<!ENTITY newMenu.label            "Nij">
+<!ENTITY newMenu.accesskey          "N">
+
+<!ENTITY editMenu.label          "Bewurkje">
+<!ENTITY editMenu.accesskey        "w">
+<!ENTITY undoCmd.label            "Ungedien meitsje">
+<!ENTITY undoCmd.accesskey          "U">
+<!ENTITY redoCmd.label            "Opnij útfiere">
+<!ENTITY redoCmd.accesskey          "n">
+<!ENTITY deleteCmd.label          "Fuortsmite">
+<!ENTITY deleteCmd.accesskey        "F">
+<!ENTITY preferencesCmd2.label "Opsjes">
+<!ENTITY preferencesCmd2.accesskey "O">
+<!ENTITY preferencesCmdUnix.label       "Foarkarren">
+<!ENTITY preferencesCmdUnix.accesskey     "k">
+
+<!ENTITY customizeCmd.label "Oanpasse">
+<!ENTITY customizeCmd.accesskey "p">
+
+<!ENTITY viewMenu.label          "Byld">
+<!ENTITY viewMenu.accesskey        "L">
+<!ENTITY viewToolbarsMenu.label        "Arkbalken">
+<!ENTITY viewToolbarsMenu.accesskey      "A">
+<!ENTITY showTaskbarCmd.label          "Steatbalke">
+<!ENTITY showTaskbarCmd.accesskey        "S">
+
+<!ENTITY closeCmd.label      "Slute">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "S">
+
+<!ENTITY quitApplicationCmd.label  "Ofslute">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "O">
+
+<!ENTITY quitApplicationCmdUnix.label  "Ofslute">
+<!ENTITY quitApplicationCmdUnix.accesskey  "O">
+
+<!ENTITY quitApplicationCmdMac.label  "&brandShortName; ôfslute">
+<!ENTITY quitApplicationCmdMac.accesskey  "s">

@@ -19,6 +19,8 @@ enum MediaKeysRequirement {
 dictionary MediaKeySystemMediaCapability {
    DOMString contentType = "";
    DOMString robustness = "";
+   [Pref="media.eme.encrypted-media-encryption-scheme.enabled"]
+   DOMString? encryptionScheme = null;
 };
 
 dictionary MediaKeySystemConfiguration {
@@ -31,6 +33,7 @@ dictionary MediaKeySystemConfiguration {
   sequence<DOMString>                     sessionTypes;
 };
 
+[Exposed=Window]
 interface MediaKeySystemAccess {
   readonly    attribute DOMString keySystem;
   [NewObject]

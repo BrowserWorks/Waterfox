@@ -22,7 +22,7 @@ const CLASSES_TO_PRESERVE = [
   "caption",
   "emoji",
   "hidden",
-  "invisble",
+  "invisible",
   "sr-only",
   "visually-hidden",
   "visuallyhidden",
@@ -116,7 +116,7 @@ var ReaderMode = {
     let referrerURI, principal;
     try {
       referrerURI = Services.io.newURI(url);
-      principal = Services.scriptSecurityManager.createCodebasePrincipal(
+      principal = Services.scriptSecurityManager.createContentPrincipal(
         referrerURI,
         win.document.nodePrincipal.originAttributes
       );
@@ -124,7 +124,7 @@ var ReaderMode = {
       Cu.reportError(e);
       return;
     }
-    let flags = webNav.LOAD_FLAGS_DISALLOW_INHERIT_PRINCIPAL;
+    let loadFlags = webNav.LOAD_FLAGS_DISALLOW_INHERIT_PRINCIPAL;
     let ReferrerInfo = Components.Constructor(
       "@mozilla.org/referrer-info;1",
       "nsIReferrerInfo",
@@ -132,9 +132,9 @@ var ReaderMode = {
     );
     let loadURIOptions = {
       triggeringPrincipal: principal,
-      loadFlags: flags,
+      loadFlags,
       referrerInfo: new ReferrerInfo(
-        Ci.nsIHttpChannel.REFERRER_POLICY_UNSET,
+        Ci.nsIReferrerInfo.EMPTY,
         true,
         referrerURI
       ),
@@ -193,7 +193,7 @@ var ReaderMode = {
         return null;
       }
       try {
-        return Services.uriFixup.createExposableURI(uriObj);
+        return Services.io.createExposableURI(uriObj);
       } catch (ex) {
         return null;
       }

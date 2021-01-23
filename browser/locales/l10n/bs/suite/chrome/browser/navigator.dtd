@@ -1,0 +1,81 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/navigator.xul -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items --> 
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE --> 
+<!ENTITY mainWindow.title "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+
+<!ENTITY mainWindow.titleprivate "Privatno pretraživanje">
+
+<!ENTITY editPageCmd.label "Uredi stranicu">
+<!ENTITY editPageCmd.accesskey "U">
+<!ENTITY editPageCmd.commandkey "e">
+
+<!ENTITY navbarCmd.label "Traka za navigaciju">
+<!ENTITY navbarCmd.accesskey "n">
+<!ENTITY bookmarksToolbarCmd.label     "Traka sa zabilješkama">
+<!ENTITY bookmarksToolbarCmd.accesskey "z">
+
+<!ENTITY closeWindow.label "Zatvori prozor">
+<!ENTITY closeWindow.accesskey "p">
+
+<!ENTITY minimizeButton.tooltip       "Minimiziraj">
+<!ENTITY restoreButton.tooltip        "Povrati">
+
+<!ENTITY feedsMenu.label "Pretplati me na ovu stranicu">
+<!ENTITY feedsMenu.accesskey "P">
+
+<!ENTITY menuBar.tooltip                  "Traka menija">
+<!ENTITY bookmarksToolbar.tooltip         "Traka sa zabilješkama">
+<!ENTITY navigationToolbar.tooltip        "Alatna traka za navigaciju">
+
+<!ENTITY editBookmark.done.label "Gotovo">
+<!ENTITY editBookmark.cancel.label "Otkaži">
+
+<!-- Toolbar items --> 
+<!ENTITY backButton.label             "Nazad">
+<!ENTITY backButton.tooltip           "Idi nazad jednu stranicu">
+<!ENTITY forwardButton.label          "Naprijed">
+<!ENTITY forwardButton.tooltip        "Idi naprijed jednu stranicu">
+<!ENTITY reloadButton.label           "Učitaj ponovo">
+<!ENTITY reloadButton.tooltip         "Ponovo učitaj trenutnu stranicu">
+<!ENTITY stopButton.label             "Zaustavi">
+<!ENTITY stopButton.tooltip           "Zaustavi učitavanje ove stranice">
+<!ENTITY searchButton.label           "Traži">
+<!ENTITY searchButton.tooltip         "Upišite riječ u lijevo polje, zatim kliknite Traži">
+<!ENTITY goButton.label               "Idi">
+<!ENTITY goButton.tooltip             "Upišite riječ u lijevo polje, zatim kliknite Idi">
+<!ENTITY printButton.label            "Štampaj">
+<!ENTITY printButton.tooltip          "Štampaj ovu stranicu">
+
+<!ENTITY throbber.tooltip             "Idite na &vendorShortName; početnu stranicu">
+
+<!ENTITY locationBar.tooltip          "Unesite traženi pojam, ključnu riječ ili web adresu">
+<!ENTITY locationBar.title            "Lokacija">
+<!ENTITY proxyIcon.tooltip            "Povucite i ispustite ovu ikonu za stvaranje veze za ovu stranicu">
+
+<!ENTITY searchItem.title             "Traži">
+
+<!ENTITY bookmarksButton.label        "Zabilješke">
+<!ENTITY bookmarksButton.tooltip      "Lista zabilješki">
+<!ENTITY homeButton.label             "Početna">
+<!ENTITY bookmarksToolbarItem.label   "Stavke trake sa zabilješkama">
+<!ENTITY bookmarksToolbarChevron.tooltip "Prikaži više zabilješki">
+
+<!-- Statusbar -->
+<!ENTITY  statusText.label            "Gotovo">
+
+<!ENTITY popupIcon.tooltiptext      "Odblokirajte iskočne prozore ove web stranice">
+
+<!ENTITY viewSecurityInfo.label      "Prikaži sigurnosne informacije">
+<!ENTITY viewCertificate.label       "Prikaži certifikat">
+<!ENTITY viewCertManager.label       "Otvori menadžera certifikata">

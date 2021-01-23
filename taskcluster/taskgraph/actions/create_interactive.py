@@ -58,6 +58,8 @@ SCOPE_WHITELIST = [
     # internal downloads are OK
     re.compile(r'^docker-worker:relengapi-proxy:tooltool.download.internal$'),
     re.compile(r'^project:releng:services/tooltool/api/download/internal$'),
+    # private toolchain artifacts from tasks
+    re.compile(r'^queue:get-artifact:project/gecko/.*$'),
     # level-appropriate secrets are generally necessary to run a task; these
     # also are "not that secret" - most of them are built into the resulting
     # binary and could be extracted by someone with `strings`.
@@ -76,6 +78,9 @@ def context(params):
         return [{'worker-implementation': 'docker-worker'}]
     else:
         return [{'worker-implementation': 'docker-worker', 'kind': 'test'}]
+    # Windows is not supported by one-click loaners yet. See
+    # https://wiki.mozilla.org/ReleaseEngineering/How_To/Self_Provision_a_TaskCluster_Windows_Instance
+    # for instructions for using them.
 
 
 @register_callback_action(

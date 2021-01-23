@@ -9,8 +9,9 @@
 #ifndef mozilla_EnumeratedArray_h
 #define mozilla_EnumeratedArray_h
 
+#include <utility>
+
 #include "mozilla/Array.h"
-#include "mozilla/Move.h"
 
 namespace mozilla {
 
@@ -49,42 +50,16 @@ class EnumeratedArray {
   ArrayType mArray;
 
  public:
-  EnumeratedArray() {}
+  EnumeratedArray() = default;
 
   template <typename... Args>
   MOZ_IMPLICIT constexpr EnumeratedArray(Args&&... aArgs)
       : mArray{std::forward<Args>(aArgs)...} {}
 
-  explicit EnumeratedArray(const EnumeratedArray& aOther) {
-    for (size_t i = 0; i < kSize; i++) {
-      mArray[i] = aOther.mArray[i];
-    }
-  }
-
-  EnumeratedArray(EnumeratedArray&& aOther) {
-    for (size_t i = 0; i < kSize; i++) {
-      mArray[i] = std::move(aOther.mArray[i]);
-    }
-  }
-
   ValueType& operator[](IndexType aIndex) { return mArray[size_t(aIndex)]; }
 
   const ValueType& operator[](IndexType aIndex) const {
     return mArray[size_t(aIndex)];
-  }
-
-  EnumeratedArray& operator=(EnumeratedArray&& aOther) {
-    for (size_t i = 0; i < kSize; i++) {
-      mArray[i] = std::move(aOther.mArray[i]);
-    }
-    return *this;
-  }
-
-  EnumeratedArray& operator=(const EnumeratedArray& aOther) {
-    for (size_t i = 0; i < kSize; i++) {
-      mArray[i] = aOther.mArray[i];
-    }
-    return *this;
   }
 
   typedef typename ArrayType::iterator iterator;

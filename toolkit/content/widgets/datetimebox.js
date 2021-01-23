@@ -143,6 +143,7 @@ this.DateTimeInputBaseImplWidget = class {
      * Remove it when migrate to Fluent (bug 1504363).
      */
     const parser = new this.window.DOMParser();
+    parser.forceEnableDTD();
     let parserDoc = parser.parseFromString(
       `<!DOCTYPE bindings [
       <!ENTITY % datetimeboxDTD SYSTEM "chrome://global/locale/datetimebox.dtd">
@@ -336,7 +337,7 @@ this.DateTimeInputBaseImplWidget = class {
   }
 
   updateResetButtonVisibility() {
-    if (this.isAnyFieldAvailable(false)) {
+    if (this.isAnyFieldAvailable(false) && !this.isRequired()) {
       this.mResetButton.style.visibility = "";
     } else {
       this.mResetButton.style.visibility = "hidden";
@@ -436,7 +437,9 @@ this.DateTimeInputBaseImplWidget = class {
       child.tabIndex = this.mInputElement.tabIndex;
     }
 
-    this.mResetButton.disabled = this.mInputElement.disabled;
+    this.mResetButton.disabled =
+      this.mInputElement.disabled || this.mInputElement.readOnly;
+    this.updateResetButtonVisibility();
   }
 
   isEmpty(aValue) {
@@ -463,39 +466,39 @@ this.DateTimeInputBaseImplWidget = class {
   }
 
   setFieldValue() {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+    throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
   }
 
   clearInputFields() {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+    throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
   }
 
   setFieldsFromInputValue() {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+    throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
   }
 
   setInputValueFromFields() {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+    throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
   }
 
   setFieldsFromPicker() {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+    throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
   }
 
   handleKeypress() {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+    throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
   }
 
   handleKeyboardNav() {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+    throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
   }
 
   getCurrentValue() {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+    throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
   }
 
   isAnyFieldAvailable() {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+    throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
   }
 
   notifyPicker() {
@@ -510,6 +513,18 @@ this.DateTimeInputBaseImplWidget = class {
 
   isReadonly() {
     return this.mInputElement.hasAttribute("readonly");
+  }
+
+  isEditable() {
+    return !this.isDisabled() && !this.isReadonly();
+  }
+
+  isRequired() {
+    return this.mInputElement.hasAttribute("required");
+  }
+
+  containingTree() {
+    return this.mInputElement.containingShadowRoot || this.document;
   }
 
   handleEvent(aEvent) {
@@ -578,7 +593,7 @@ this.DateTimeInputBaseImplWidget = class {
 
   onFocus(aEvent) {
     this.log("onFocus originalTarget: " + aEvent.originalTarget);
-    if (this.document.activeElement != this.mInputElement) {
+    if (this.containingTree().activeElement != this.mInputElement) {
       return;
     }
 
@@ -621,10 +636,14 @@ this.DateTimeInputBaseImplWidget = class {
         break;
       }
       case "Backspace": {
-        let targetField = aEvent.originalTarget;
-        this.clearFieldValue(targetField);
-        this.setInputValueFromFields();
-        aEvent.preventDefault();
+        // TODO(emilio, bug 1571533): These functions should look at
+        // defaultPrevented.
+        if (this.isEditable()) {
+          let targetField = aEvent.originalTarget;
+          this.clearFieldValue(targetField);
+          this.setInputValueFromFields();
+          aEvent.preventDefault();
+        }
         break;
       }
       case "ArrowRight":
@@ -665,7 +684,7 @@ this.DateTimeInputBaseImplWidget = class {
         aEvent.target
     );
 
-    if (aEvent.defaultPrevented || this.isDisabled() || this.isReadonly()) {
+    if (aEvent.defaultPrevented || !this.isEditable()) {
       return;
     }
 
@@ -778,7 +797,7 @@ this.DateInputImplWidget = class extends DateTimeInputBaseImplWidget {
   clearInputFields(aFromInputElement) {
     this.log("clearInputFields");
 
-    if (this.isDisabled() || this.isReadonly()) {
+    if (!this.isEditable()) {
       return;
     }
 
@@ -889,7 +908,7 @@ this.DateInputImplWidget = class extends DateTimeInputBaseImplWidget {
   }
 
   handleKeypress(aEvent) {
-    if (this.isDisabled() || this.isReadonly()) {
+    if (!this.isEditable()) {
       return;
     }
 
@@ -910,7 +929,9 @@ this.DateInputImplWidget = class extends DateTimeInputBaseImplWidget {
         this.advanceToNextField();
       }
       targetField.setAttribute("typeBuffer", buffer);
-      this.setInputValueFromFields();
+      if (!this.isAnyFieldEmpty()) {
+        this.setInputValueFromFields();
+      }
     }
   }
 
@@ -947,7 +968,7 @@ this.DateInputImplWidget = class extends DateTimeInputBaseImplWidget {
   }
 
   handleKeyboardNav(aEvent) {
-    if (this.isDisabled() || this.isReadonly()) {
+    if (!this.isEditable()) {
       return;
     }
 
@@ -1084,6 +1105,7 @@ this.TimeInputImplWidget = class extends DateTimeInputBaseImplWidget {
     this.mMinSecPageUpDownInterval = 10;
 
     this.buildEditFields();
+    this.updateEditAttributes();
 
     if (this.mInputElement.value) {
       this.setFieldsFromInputValue();
@@ -1455,7 +1477,7 @@ this.TimeInputImplWidget = class extends DateTimeInputBaseImplWidget {
   clearInputFields(aFromInputElement) {
     this.log("clearInputFields");
 
-    if (this.isDisabled() || this.isReadonly()) {
+    if (!this.isEditable()) {
       return;
     }
 
@@ -1554,7 +1576,7 @@ this.TimeInputImplWidget = class extends DateTimeInputBaseImplWidget {
   }
 
   handleKeyboardNav(aEvent) {
-    if (this.isDisabled() || this.isReadonly()) {
+    if (!this.isEditable()) {
       return;
     }
 
@@ -1606,7 +1628,7 @@ this.TimeInputImplWidget = class extends DateTimeInputBaseImplWidget {
   }
 
   handleKeypress(aEvent) {
-    if (this.isDisabled() || this.isReadonly()) {
+    if (!this.isEditable()) {
       return;
     }
 
@@ -1619,7 +1641,9 @@ this.TimeInputImplWidget = class extends DateTimeInputBaseImplWidget {
       } else if (key == "p" || key == "P") {
         this.setDayPeriodValue(this.mPMIndicator);
       }
-      this.setInputValueFromFields();
+      if (!this.isAnyFieldEmpty()) {
+        this.setInputValueFromFields();
+      }
       return;
     }
 
@@ -1637,7 +1661,9 @@ this.TimeInputImplWidget = class extends DateTimeInputBaseImplWidget {
         this.advanceToNextField();
       }
       targetField.setAttribute("typeBuffer", buffer);
-      this.setInputValueFromFields();
+      if (!this.isAnyFieldEmpty()) {
+        this.setInputValueFromFields();
+      }
     }
   }
 

@@ -5,13 +5,12 @@
 
 #include "nsWindowBase.h"
 
-#include "gfxPrefs.h"
 #include "mozilla/MiscEvents.h"
 #include "mozilla/PresShell.h"
+#include "mozilla/StaticPrefs_apz.h"
 #include "KeyboardLayout.h"
 #include "WinUtils.h"
 #include "npapi.h"
-#include "nsAutoPtr.h"
 
 using namespace mozilla;
 using namespace mozilla::widget;
@@ -134,7 +133,8 @@ nsresult nsWindowBase::SynthesizeNativeTouchPoint(
     uint32_t aPointerOrientation, nsIObserver* aObserver) {
   AutoObserverNotifier notifier(aObserver, "touchpoint");
 
-  if (gfxPrefs::APZTestFailsWithNativeInjection() || !InitTouchInjection()) {
+  if (StaticPrefs::apz_test_fails_with_native_injection() ||
+      !InitTouchInjection()) {
     // If we don't have touch injection from the OS, or if we are running a test
     // that cannot properly inject events to satisfy the OS requirements (see
     // bug 1313170)  we can just fake it and synthesize the events from here.
@@ -220,9 +220,8 @@ nsresult nsWindowBase::ClearNativeTouchSequence(nsIObserver* aObserver) {
 
   // cancel all input points
   for (auto iter = mActivePointers.Iter(); !iter.Done(); iter.Next()) {
-    nsAutoPtr<PointerInfo>& info = iter.Data();
-    InjectTouchPoint(info.get()->mPointerId, info.get()->mPosition,
-                     POINTER_FLAG_CANCELED);
+    auto info = iter.UserData();
+    InjectTouchPoint(info->mPointerId, info->mPosition, POINTER_FLAG_CANCELED);
     iter.Remove();
   }
 

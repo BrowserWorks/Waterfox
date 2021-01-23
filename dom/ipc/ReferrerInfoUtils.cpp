@@ -5,13 +5,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/dom/ReferrerInfoUtils.h"
-#include "nsISerializable.h"
 #include "nsSerializationHelper.h"
 
 namespace IPC {
 
-void ParamTraits<nsIReferrerInfo>::Write(Message* aMsg,
-                                         nsIReferrerInfo* aParam) {
+void ParamTraits<nsIReferrerInfo*>::Write(Message* aMsg,
+                                          nsIReferrerInfo* aParam) {
   bool isNull = !aParam;
   WriteParam(aMsg, isNull);
   if (isNull) {
@@ -26,9 +25,9 @@ void ParamTraits<nsIReferrerInfo>::Write(Message* aMsg,
   WriteParam(aMsg, infoString);
 }
 
-bool ParamTraits<nsIReferrerInfo>::Read(const Message* aMsg,
-                                        PickleIterator* aIter,
-                                        RefPtr<nsIReferrerInfo>* aResult) {
+bool ParamTraits<nsIReferrerInfo*>::Read(const Message* aMsg,
+                                         PickleIterator* aIter,
+                                         RefPtr<nsIReferrerInfo>* aResult) {
   bool isNull;
   if (!ReadParam(aMsg, aIter, &isNull)) {
     return false;
@@ -46,7 +45,7 @@ bool ParamTraits<nsIReferrerInfo>::Read(const Message* aMsg,
   NS_ENSURE_SUCCESS(rv, false);
   nsCOMPtr<nsIReferrerInfo> referrerInfo = do_QueryInterface(iSupports);
   NS_ENSURE_TRUE(referrerInfo, false);
-  *aResult = referrerInfo.forget();
+  *aResult = ToRefPtr(std::move(referrerInfo));
   return true;
 }
 

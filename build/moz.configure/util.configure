@@ -23,36 +23,27 @@ def configure_error(message):
 # A wrapper to obtain a process' output and return code.
 # Returns a tuple (retcode, stdout, stderr).
 @imports('os')
-@imports(_from='__builtin__', _import='unicode')
+@imports('six')
 @imports('subprocess')
 @imports(_from='mozbuild.shellutil', _import='quote')
+@imports(_from='mozbuild.util', _import='system_encoding')
 def get_cmd_output(*args, **kwargs):
-    # subprocess on older Pythons can't handle unicode keys or values in
-    # environment dicts. Normalize automagically so callers don't have to
-    # deal with this.
-    if 'env' in kwargs:
-        normalized_env = {}
-        for k, v in kwargs['env'].items():
-            if isinstance(k, unicode):
-                k = k.encode('utf-8', 'strict')
-
-            if isinstance(v, unicode):
-                v = v.encode('utf-8', 'strict')
-
-            normalized_env[k] = v
-
-        kwargs['env'] = normalized_env
-
     log.debug('Executing: `%s`', quote(*args))
-    proc = subprocess.Popen(args, stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
-                            # On Python 2 on Windows, close_fds prevents the
-                            # process from inheriting stdout/stderr.
-                            # Elsewhere, it simply prevents it from inheriting
-                            # extra file descriptors, which is what we want.
-                            close_fds=os.name != 'nt',
-                            **kwargs)
+    proc = subprocess.Popen(
+        args, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        # On Python 2 on Windows, close_fds prevents the process from inheriting
+        # stdout/stderr. Elsewhere, it simply prevents it from inheriting extra
+        # file descriptors, which is what we want.
+        close_fds=os.name != 'nt', **kwargs)
     stdout, stderr = proc.communicate()
+    # Normally we would set the `encoding` and `errors` arguments in the
+    # constructor to subprocess.Popen, but those arguments were added in 3.6
+    # and we need to support back to 3.5, so instead we need to do this
+    # nonsense.
+    stdout = six.ensure_text(stdout, encoding=system_encoding,
+                             errors='replace').replace('\r\n', '\n')
+    stderr = six.ensure_text(stderr, encoding=system_encoding,
+                             errors='replace').replace('\r\n', '\n')
     return proc.wait(), stdout, stderr
 
 
@@ -75,7 +66,7 @@ def check_cmd_output(*args, **kwargs):
         for out, desc in ((stdout, 'output'), (stderr, 'error output')):
             if out:
                 log.debug('Its %s was:', desc)
-                with LineIO(lambda l: log.debug('| %s', l), 'replace') as o:
+                with LineIO(lambda l: log.debug('| %s', l)) as o:
                     o.write(out)
         if onerror:
             return onerror()
@@ -105,7 +96,7 @@ def windows_binary_type(path):
     """
     GetBinaryTypeW = ctypes.windll.kernel32.GetBinaryTypeW
     GetBinaryTypeW.argtypes = [wintypes.LPWSTR,
-                               wintypes.POINTER(wintypes.DWORD)]
+                               ctypes.POINTER(wintypes.DWORD)]
     GetBinaryTypeW.restype = wintypes.BOOL
 
     bin_type = wintypes.DWORD()
@@ -176,12 +167,10 @@ normalize_path = normalize_path()
 # exists.
 # The `paths` parameter may be passed to search the given paths instead of
 # $PATH.
-@imports(_from='which', _import='which')
-@imports(_from='which', _import='WhichError')
-@imports('itertools')
 @imports('sys')
 @imports(_from='os', _import='pathsep')
 @imports(_from='os', _import='environ')
+@imports(_from='mozfile', _import='which')
 def find_program(file, paths=None):
     # The following snippet comes from `which` itself, with a slight
     # modification to use lowercase extensions, because it's confusing rustup
@@ -198,26 +187,23 @@ def find_program(file, paths=None):
     else:
         exts = None
 
-    try:
-        if is_absolute_or_relative(file):
-            return normalize_path(which(os.path.basename(file),
-                                        [os.path.dirname(file)], exts=exts))
-        if paths:
-            if not isinstance(paths, (list, tuple)):
-                die("Paths provided to find_program must be a list of strings, "
-                    "not %r", paths)
-            paths = list(itertools.chain(
-                *(p.split(pathsep) for p in paths if p)))
-        else:
-            paths = environ['PATH'].split(pathsep)
-        return normalize_path(which(file, path=paths, exts=exts))
-    except WhichError:
-        return None
+    if is_absolute_or_relative(file):
+        path = which(os.path.basename(file), path=os.path.dirname(file), exts=exts)
+        return normalize_path(path) if path else None
+
+    if paths:
+        if not isinstance(paths, (list, tuple)):
+            die("Paths provided to find_program must be a list of strings, "
+                "not %r", paths)
+        paths = pathsep.join(paths)
+
+    path = which(file, path=paths, exts=exts)
+    return normalize_path(path) if path else None
 
 
 @imports('os')
-@imports('subprocess')
 @imports(_from='mozbuild.configure.util', _import='LineIO')
+@imports(_from='six', _import='ensure_binary')
 @imports(_from='tempfile', _import='mkstemp')
 def try_invoke_compiler(compiler, language, source, flags=None, onerror=None):
     flags = flags or []
@@ -231,7 +217,7 @@ def try_invoke_compiler(compiler, language, source, flags=None, onerror=None):
         'C++': '.cpp',
     }[language]
 
-    fd, path = mkstemp(prefix='conftest.', suffix=suffix)
+    fd, path = mkstemp(prefix='conftest.', suffix=suffix, text=True)
     try:
         source = source.encode('ascii', 'replace')
 
@@ -239,7 +225,7 @@ def try_invoke_compiler(compiler, language, source, flags=None, onerror=None):
         with LineIO(lambda l: log.debug('| %s', l)) as out:
             out.write(source)
 
-        os.write(fd, source)
+        os.write(fd, ensure_binary(source))
         os.close(fd)
         cmd = compiler + [path] + list(flags)
         kwargs = {'onerror': onerror}
@@ -302,7 +288,7 @@ def unique_list(l):
 #     ('19.0', 'arm', r'C:\...\amd64_arm\cl.exe')
 #     ('19.0', 'x64', r'C:\...\amd64\cl.exe')
 #     ('19.0', 'x86', r'C:\...\amd64_x86\cl.exe')
-@imports(_import='_winreg', _as='winreg')
+@imports(_import='winreg')
 @imports(_from='__builtin__', _import='WindowsError')
 @imports(_from='fnmatch', _import='fnmatch')
 def get_registry_values(pattern, get_32_and_64_bit=False):
@@ -423,7 +409,9 @@ def dependable(obj):
         return obj
     if isfunction(obj):
         return depends(when=True)(obj)
-    return depends(when=True)(lambda: obj)
+    # Depend on --help to make lint happy if the dependable is used as an input
+    # to an option().
+    return depends('--help', when=True)(lambda _: obj)
 
 
 always = dependable(True)
@@ -472,11 +460,6 @@ def old_configure_assignments():
     return []
 
 
-@dependable
-def extra_old_configure_args():
-    return []
-
-
 @template
 def add_old_configure_assignment(var, value, when=None):
     var = dependable(var)
@@ -495,11 +478,3 @@ def add_old_configure_assignment(var, value, when=None):
             if isinstance(value, (list, tuple)):
                 value = quote(*value)
             assignments.append((var, str(value)))
-
-
-@template
-def add_old_configure_arg(arg):
-    @depends(extra_old_configure_args, arg)
-    def add_arg(args, arg):
-        if arg:
-            args.append(arg)

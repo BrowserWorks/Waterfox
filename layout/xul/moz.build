@@ -8,33 +8,20 @@ with Files('**'):
     BUG_COMPONENT = ('Core', 'XUL')
 
 with Files('*Menu*'):
-    BUG_COMPONENT = ('Core', 'XP Toolkit/Widgets: Menus')
+    BUG_COMPONENT = ('Firefox', 'Menus')
 
 if CONFIG['ENABLE_TESTS']:
     MOCHITEST_MANIFESTS += ['test/mochitest.ini']
     MOCHITEST_CHROME_MANIFESTS += ['test/chrome.ini']
     BROWSER_CHROME_MANIFESTS += ['test/browser.ini']
 
-XPIDL_SOURCES += [
-    'nsIBoxObject.idl',
-]
-
-XPIDL_MODULE = 'layout_xul'
-
 EXPORTS += [
-    'nsBox.h',
     'nsIScrollbarMediator.h',
-    'nsPIBoxObject.h',
     'nsXULPopupManager.h',
     'nsXULTooltipListener.h',
 ]
 
-EXPORTS.mozilla.dom += [
-    'BoxObject.h',
-]
-
 UNIFIED_SOURCES += [
-    'BoxObject.cpp',
     'nsBox.cpp',
     'nsBoxFrame.cpp',
     'nsBoxLayout.cpp',
@@ -55,7 +42,6 @@ if CONFIG['MOZ_XUL']:
     UNIFIED_SOURCES += [
         'nsDeckFrame.cpp',
         'nsDocElementBoxFrame.cpp',
-        'nsGroupBoxFrame.cpp',
         'nsImageBoxFrame.cpp',
         'nsLeafBoxFrame.cpp',
         'nsMenuBarFrame.cpp',

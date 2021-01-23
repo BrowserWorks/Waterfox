@@ -28,6 +28,16 @@ enum class ValidityCheckingMode {
   CheckForEV = 1,
 };
 
+enum class NSSDBConfig {
+  ReadWrite = 0,
+  ReadOnly = 1,
+};
+
+enum class PKCS11DBConfig {
+  DoNotLoadModules = 0,
+  LoadModules = 1,
+};
+
 // Policy options for matching id-Netscape-stepUp with id-kp-serverAuth (for CA
 // certificates only):
 // * Always match: the step-up OID is considered equivalent to serverAuth
@@ -42,8 +52,8 @@ enum class NetscapeStepUpPolicy : uint32_t {
   NeverMatch = 3,
 };
 
-SECStatus InitializeNSS(const nsACString& dir, bool readOnly,
-                        bool loadPKCS11Modules);
+SECStatus InitializeNSS(const nsACString& dir, NSSDBConfig nssDbConfig,
+                        PKCS11DBConfig pkcs11DbConfig);
 
 void DisableMD5();
 
@@ -58,7 +68,22 @@ void DisableMD5();
  */
 bool LoadLoadableRoots(const nsCString& dir);
 
-void UnloadLoadableRoots();
+/**
+ * Loads the OS client certs module.
+ *
+ * @param dir
+ *        The path to the directory containing the module. This should be the
+ *        same as where all of the other gecko libraries live.
+ * @return true if the module was successfully loaded, false otherwise.
+ */
+bool LoadOSClientCertsModule(const nsCString& dir);
+
+extern const char* kOSClientCertsModuleName;
+
+/**
+ * Unloads the loadable roots module and os client certs module, if loaded.
+ */
+void UnloadUserModules();
 
 nsresult DefaultServerNicknameForCert(const CERTCertificate* cert,
                                       /*out*/ nsCString& nickname);
@@ -68,8 +93,10 @@ nsresult DefaultServerNicknameForCert(const CERTCertificate* cert,
  * Build nsTArray<uint8_t>s out of the issuer, serial, subject and public key
  * data from the supplied certificate for use in revocation checks.
  *
- * @param cert
- *        The CERTCertificate* from which to extract the data.
+ * @param certDER
+ *        The Input that references the encoded bytes of the certificate.
+ * @param endEntityOrCA
+ *        Whether the certificate is an end-entity or CA.
  * @param out encIssuer
  *        The array to populate with issuer data.
  * @param out encSerial
@@ -79,21 +106,23 @@ nsresult DefaultServerNicknameForCert(const CERTCertificate* cert,
  * @param out encPubKey
  *        The array to populate with public key data.
  * @return
- *        NS_OK, unless there's a memory allocation problem, in which case
- *        NS_ERROR_OUT_OF_MEMORY.
+ *        Result::Success, unless there's a problem decoding the certificate.
  */
-nsresult BuildRevocationCheckArrays(const UniqueCERTCertificate& cert,
-                                    /*out*/ nsTArray<uint8_t>& issuerBytes,
-                                    /*out*/ nsTArray<uint8_t>& serialBytes,
-                                    /*out*/ nsTArray<uint8_t>& subjectBytes,
-                                    /*out*/ nsTArray<uint8_t>& pubKeyBytes);
+pkix::Result BuildRevocationCheckArrays(pkix::Input certDER,
+                                        pkix::EndEntityOrCA endEntityOrCA,
+                                        /*out*/ nsTArray<uint8_t>& issuerBytes,
+                                        /*out*/ nsTArray<uint8_t>& serialBytes,
+                                        /*out*/ nsTArray<uint8_t>& subjectBytes,
+                                        /*out*/ nsTArray<uint8_t>& pubKeyBytes);
 #else
 /**
  * Build strings of base64 encoded issuer, serial, subject and public key data
  * from the supplied certificate for use in revocation checks.
  *
- * @param cert
- *        The CERTCertificate* from which to extract the data.
+ * @param certDER
+ *        The Input that references the encoded bytes of the certificate.
+ * @param endEntityOrCA
+ *        Whether the certificate is an end-entity or CA.
  * @param out encIssuer
  *        The string to populate with base64 encoded issuer data.
  * @param out encSerial
@@ -103,14 +132,15 @@ nsresult BuildRevocationCheckArrays(const UniqueCERTCertificate& cert,
  * @param out encPubKey
  *        The string to populate with base64 encoded public key data.
  * @return
- *        NS_OK, unless there's a Base64 encoding problem, in which case
- *        NS_ERROR_FAILURE.
+ *        Result::Success, unless there's a problem decoding the certificate or
+ *        a Base64 encoding problem.
  */
-nsresult BuildRevocationCheckStrings(const CERTCertificate* cert,
-                                     /*out*/ nsCString& encIssuer,
-                                     /*out*/ nsCString& encSerial,
-                                     /*out*/ nsCString& encSubject,
-                                     /*out*/ nsCString& encPubKey);
+pkix::Result BuildRevocationCheckStrings(pkix::Input certDER,
+                                         pkix::EndEntityOrCA endEntityOrCA,
+                                         /*out*/ nsCString& encIssuer,
+                                         /*out*/ nsCString& encSerial,
+                                         /*out*/ nsCString& encSubject,
+                                         /*out*/ nsCString& encPubKey);
 #endif
 
 void SaveIntermediateCerts(const UniqueCERTCertList& certList);
@@ -135,12 +165,14 @@ class NSSCertDBTrustDomain : public mozilla::pkix::TrustDomain {
       ValidityCheckingMode validityCheckingMode,
       CertVerifier::SHA1Mode sha1Mode,
       NetscapeStepUpPolicy netscapeStepUpPolicy,
-      DistrustedCAPolicy distrustedCAPolicy,
+      DistrustedCAPolicy distrustedCAPolicy, CRLiteMode crliteMode,
       const OriginAttributes& originAttributes,
       const Vector<mozilla::pkix::Input>& thirdPartyRootInputs,
       const Vector<mozilla::pkix::Input>& thirdPartyIntermediateInputs,
+      const Maybe<nsTArray<nsTArray<uint8_t>>>& extraCertificates,
       /*out*/ UniqueCERTCertList& builtChain,
       /*optional*/ PinningTelemetryInfo* pinningTelemetryInfo = nullptr,
+      /*optional*/ CRLiteTelemetryInfo* crliteTelemetryInfo = nullptr,
       /*optional*/ const char* hostname = nullptr);
 
   virtual Result FindIssuer(mozilla::pkix::Input encodedIssuerName,
@@ -191,6 +223,7 @@ class NSSCertDBTrustDomain : public mozilla::pkix::TrustDomain {
   virtual Result CheckRevocation(
       mozilla::pkix::EndEntityOrCA endEntityOrCA,
       const mozilla::pkix::CertID& certID, mozilla::pkix::Time time,
+      mozilla::pkix::Time validityPeriodBeginning,
       mozilla::pkix::Duration validityDuration,
       /*optional*/ const mozilla::pkix::Input* stapledOCSPResponse,
       /*optional*/ const mozilla::pkix::Input* aiaExtension) override;
@@ -235,8 +268,8 @@ class NSSCertDBTrustDomain : public mozilla::pkix::TrustDomain {
   Result SynchronousCheckRevocationWithServer(
       const mozilla::pkix::CertID& certID, const nsCString& aiaLocation,
       mozilla::pkix::Time time, uint16_t maxOCSPLifetimeInDays,
-      const Result cachedResponseResult,
-      const Result stapledOCSPResponseResult);
+      const Result cachedResponseResult, const Result stapledOCSPResponseResult,
+      const Maybe<TimeDuration>& crliteLookupDuration);
   Result HandleOCSPFailure(const Result cachedResponseResult,
                            const Result stapledOCSPResponseResult,
                            const Result error);
@@ -254,13 +287,16 @@ class NSSCertDBTrustDomain : public mozilla::pkix::TrustDomain {
   CertVerifier::SHA1Mode mSHA1Mode;
   NetscapeStepUpPolicy mNetscapeStepUpPolicy;
   DistrustedCAPolicy mDistrustedCAPolicy;
+  CRLiteMode mCRLiteMode;
   bool mSawDistrustedCAByPolicyError;
   const OriginAttributes& mOriginAttributes;
   const Vector<mozilla::pkix::Input>& mThirdPartyRootInputs;  // non-owning
   const Vector<mozilla::pkix::Input>&
-      mThirdPartyIntermediateInputs;  // non-owning
-  UniqueCERTCertList& mBuiltChain;    // non-owning
+      mThirdPartyIntermediateInputs;                             // non-owning
+  const Maybe<nsTArray<nsTArray<uint8_t>>>& mExtraCertificates;  // non-owning
+  UniqueCERTCertList& mBuiltChain;                               // non-owning
   PinningTelemetryInfo* mPinningTelemetryInfo;
+  CRLiteTelemetryInfo* mCRLiteTelemetryInfo;
   const char* mHostname;  // non-owning - only used for pinning checks
 #ifdef MOZ_NEW_CERT_STORAGE
   nsCOMPtr<nsICertStorage> mCertStorage;
@@ -271,6 +307,9 @@ class NSSCertDBTrustDomain : public mozilla::pkix::TrustDomain {
   // Certificate Transparency data extracted during certificate verification
   UniqueSECItem mSCTListFromCertificate;
   UniqueSECItem mSCTListFromOCSPStapling;
+
+  // The built-in roots module, if available.
+  UniqueSECMODModule mBuiltInRootsModule;
 };
 
 }  // namespace psm

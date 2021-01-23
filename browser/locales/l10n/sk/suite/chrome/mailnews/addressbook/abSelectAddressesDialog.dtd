@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY selectAddressWindow.title           "Vybrať adresy">
+
+<!-- Buttons -->
+<!ENTITY toButton.label                      "Komu ->">
+<!ENTITY toButton.accesskey                  "K">
+<!ENTITY ccButton.label                      "Kópia ->">
+<!ENTITY ccButton.accesskey                  "p">
+<!ENTITY bccButton.label                     "Skrytá kópia ->">
+<!ENTITY bccButton.accesskey                 "S">
+<!ENTITY newButton.label                     "Nová…">
+<!ENTITY newButton.accesskey                 "N">
+<!ENTITY editButton.label                    "Upraviť…">
+<!ENTITY editButton.accesskey                "U">
+<!ENTITY removeButton.label                  "Odstrániť">
+<!ENTITY removeButton.accesskey              "d">
+<!ENTITY lookIn.label                        "Hľadať v:">
+<!ENTITY lookIn.accesskey                    "H">
+<!ENTITY for.label                           "pre:">
+<!ENTITY for.accesskey                       "p">
+<!ENTITY for.placeholder                     "Názov alebo E-mail">
+<!ENTITY addressMessageTo.label              "Komu adresovať správy:">
+
+<!-- Tooltips items -->
+<!ENTITY addressPickerNewButton.tooltip      "Vytvoriť novú kartu">
+<!ENTITY addressPickerEditButton.tooltip     "Upraviť vybranú kartu">

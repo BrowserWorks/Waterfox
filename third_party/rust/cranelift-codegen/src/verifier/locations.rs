@@ -1,5 +1,6 @@
 //! Verify value locations.
 
+use crate::flowgraph::ControlFlowGraph;
 use crate::ir;
 use crate::isa;
 use crate::regalloc::liveness::Liveness;
@@ -14,13 +15,14 @@ use crate::verifier::{VerifierErrors, VerifierStepResult};
 /// instruction encoding recipes.
 ///
 /// Values can be temporarily diverted to a different location by using the `regmove`, `regspill`,
-/// and `regfill` instructions, but only inside an EBB.
+/// and `regfill` instructions, but only inside a block.
 ///
 /// If a liveness analysis is provided, it is used to verify that there are no active register
 /// diversions across control flow edges.
 pub fn verify_locations(
-    isa: &isa::TargetIsa,
+    isa: &dyn isa::TargetIsa,
     func: &ir::Function,
+    cfg: &ControlFlowGraph,
     liveness: Option<&Liveness>,
     errors: &mut VerifierErrors,
 ) -> VerifierStepResult<()> {
@@ -30,6 +32,7 @@ pub fn verify_locations(
         func,
         reginfo: isa.register_info(),
         encinfo: isa.encoding_info(),
+        cfg,
         liveness,
     };
     verifier.check_constraints(errors)?;
@@ -37,10 +40,11 @@ pub fn verify_locations(
 }
 
 struct LocationVerifier<'a> {
-    isa: &'a isa::TargetIsa,
+    isa: &'a dyn isa::TargetIsa,
     func: &'a ir::Function,
     reginfo: isa::RegInfo,
     encinfo: isa::EncInfo,
+    cfg: &'a ControlFlowGraph,
     liveness: Option<&'a Liveness>,
 }
 
@@ -50,11 +54,11 @@ impl<'a> LocationVerifier<'a> {
         let dfg = &self.func.dfg;
         let mut divert = RegDiversions::new();
 
-        for ebb in self.func.layout.ebbs() {
-            // Diversions are reset at the top of each EBB. No diversions can exist across control
-            // flow edges.
-            divert.clear();
-            for inst in self.func.layout.ebb_insts(ebb) {
+        for block in self.func.layout.blocks() {
+            divert.at_block(&self.func.entry_diversions, block);
+
+            let mut is_after_branch = false;
+            for inst in self.func.layout.block_insts(block) {
                 let enc = self.func.encodings[inst];
 
                 if enc.is_legal() {
@@ -71,10 +75,11 @@ impl<'a> LocationVerifier<'a> {
                 if opcode.is_return() {
                     self.check_return_abi(inst, &divert, errors)?;
                 } else if opcode.is_branch() && !divert.is_empty() {
-                    self.check_cfg_edges(inst, &divert, errors)?;
+                    self.check_cfg_edges(inst, &mut divert, is_after_branch, errors)?;
                 }
 
                 self.update_diversions(inst, &mut divert, errors)?;
+                is_after_branch = opcode.is_branch();
             }
         }
 
@@ -99,12 +104,15 @@ impl<'a> LocationVerifier<'a> {
         }
 
         // TODO: We could give a better error message here.
-        fatal!(
-            errors,
+        errors.fatal((
             inst,
-            "{} constraints not satisfied",
-            self.encinfo.display(enc)
-        )
+            format!(
+                "{} constraints not satisfied in: {}\n{}",
+                self.encinfo.display(enc),
+                self.func.dfg.display_inst(inst, self.isa),
+                self.func.display(self.isa),
+            ),
+        ))
     }
 
     /// Check that the result values produced by a ghost instruction are not assigned a value
@@ -119,13 +127,14 @@ impl<'a> LocationVerifier<'a> {
         for &res in results {
             let loc = self.func.locations[res];
             if loc.is_assigned() {
-                return fatal!(
-                    errors,
+                return errors.fatal((
                     inst,
-                    "ghost result {} value must not have a location ({}).",
-                    res,
-                    loc.display(&self.reginfo)
-                );
+                    format!(
+                        "ghost result {} value must not have a location ({}).",
+                        res,
+                        loc.display(&self.reginfo)
+                    ),
+                ));
             }
         }
 
@@ -207,50 +216,51 @@ impl<'a> LocationVerifier<'a> {
             ir::ArgumentLoc::Unassigned => {}
             ir::ArgumentLoc::Reg(reg) => {
                 if loc != ir::ValueLoc::Reg(reg) {
-                    return fatal!(
-                        errors,
+                    return errors.fatal((
                         inst,
-                        "ABI expects {} in {}, got {}",
-                        value,
-                        abi.location.display(&self.reginfo),
-                        loc.display(&self.reginfo)
-                    );
+                        format!(
+                            "ABI expects {} in {}, got {}",
+                            value,
+                            abi.location.display(&self.reginfo),
+                            loc.display(&self.reginfo),
+                        ),
+                    ));
                 }
             }
             ir::ArgumentLoc::Stack(offset) => {
                 if let ir::ValueLoc::Stack(ss) = loc {
                     let slot = &self.func.stack_slots[ss];
                     if slot.kind != want_kind {
-                        return fatal!(
-                            errors,
+                        return errors.fatal((
                             inst,
-                            "call argument {} should be in a {} slot, but {} is {}",
-                            value,
-                            want_kind,
-                            ss,
-                            slot.kind
-                        );
+                            format!(
+                                "call argument {} should be in a {} slot, but {} is {}",
+                                value, want_kind, ss, slot.kind
+                            ),
+                        ));
                     }
                     if slot.offset.unwrap() != offset {
-                        return fatal!(
-                            errors,
+                        return errors.fatal((
                             inst,
-                            "ABI expects {} at stack offset {}, but {} is at {}",
-                            value,
-                            offset,
-                            ss,
-                            slot.offset.unwrap()
-                        );
+                            format!(
+                                "ABI expects {} at stack offset {}, but {} is at {}",
+                                value,
+                                offset,
+                                ss,
+                                slot.offset.unwrap()
+                            ),
+                        ));
                     }
                 } else {
-                    return fatal!(
-                        errors,
+                    return errors.fatal((
                         inst,
-                        "ABI expects {} at stack offset {}, got {}",
-                        value,
-                        offset,
-                        loc.display(&self.reginfo)
-                    );
+                        format!(
+                            "ABI expects {} at stack offset {}, got {}",
+                            value,
+                            offset,
+                            loc.display(&self.reginfo)
+                        ),
+                    ));
                 }
             }
         }
@@ -274,20 +284,23 @@ impl<'a> LocationVerifier<'a> {
 
         if let Some(d) = divert.diversion(arg) {
             if d.to != src {
-                return fatal!(
-                    errors,
+                return errors.fatal((
                     inst,
-                    "inconsistent with current diversion to {}",
-                    d.to.display(&self.reginfo)
-                );
+                    format!(
+                        "inconsistent with current diversion to {}",
+                        d.to.display(&self.reginfo)
+                    ),
+                ));
             }
         } else if self.func.locations[arg] != src {
-            return fatal!(
-                errors,
+            return errors.fatal((
                 inst,
-                "inconsistent with global location {}",
-                self.func.locations[arg].display(&self.reginfo)
-            );
+                format!(
+                    "inconsistent with global location {} ({})",
+                    self.func.locations[arg].display(&self.reginfo),
+                    self.func.dfg.display_inst(inst, None)
+                ),
+            ));
         }
 
         divert.apply(&self.func.dfg[inst]);
@@ -300,63 +313,81 @@ impl<'a> LocationVerifier<'a> {
     fn check_cfg_edges(
         &self,
         inst: ir::Inst,
-        divert: &RegDiversions,
+        divert: &mut RegDiversions,
+        is_after_branch: bool,
         errors: &mut VerifierErrors,
     ) -> VerifierStepResult<()> {
         use crate::ir::instructions::BranchInfo::*;
+        let dfg = &self.func.dfg;
+        let branch_kind = dfg.analyze_branch(inst);
 
         // We can only check CFG edges if we have a liveness analysis.
         let liveness = match self.liveness {
             Some(l) => l,
             None => return Ok(()),
         };
-        let dfg = &self.func.dfg;
 
-        match dfg.analyze_branch(inst) {
+        match branch_kind {
             NotABranch => panic!(
                 "No branch information for {}",
                 dfg.display_inst(inst, self.isa)
             ),
-            SingleDest(ebb, _) => {
+            SingleDest(block, _) => {
+                let unique_predecessor = self.cfg.pred_iter(block).count() == 1;
+                let mut val_to_remove = vec![];
                 for (&value, d) in divert.iter() {
                     let lr = &liveness[value];
-                    if lr.is_livein(ebb, liveness.context(&self.func.layout)) {
-                        return fatal!(
-                            errors,
+                    if is_after_branch && unique_predecessor {
+                        // Forward diversions based on the targeted branch.
+                        if !lr.is_livein(block, &self.func.layout) {
+                            val_to_remove.push(value)
+                        }
+                    } else if lr.is_livein(block, &self.func.layout) {
+                        return errors.fatal((
                             inst,
-                            "{} is diverted to {} and live in to {}",
-                            value,
-                            d.to.display(&self.reginfo),
-                            ebb
-                        );
+                            format!(
+                                "SingleDest: {} is diverted to {} and live in to {}",
+                                value,
+                                d.to.display(&self.reginfo),
+                                block,
+                            ),
+                        ));
                     }
                 }
+                if is_after_branch && unique_predecessor {
+                    for val in val_to_remove.into_iter() {
+                        divert.remove(val);
+                    }
+                    debug_assert!(divert.check_block_entry(&self.func.entry_diversions, block));
+                }
             }
-            Table(jt, ebb) => {
+            Table(jt, block) => {
                 for (&value, d) in divert.iter() {
                     let lr = &liveness[value];
-                    if let Some(ebb) = ebb {
-                        if lr.is_livein(ebb, liveness.context(&self.func.layout)) {
-                            return fatal!(
-                                errors,
+                    if let Some(block) = block {
+                        if lr.is_livein(block, &self.func.layout) {
+                            return errors.fatal((
                                 inst,
-                                "{} is diverted to {} and live in to {}",
-                                value,
-                                d.to.display(&self.reginfo),
-                                ebb
-                            );
+                                format!(
+                                    "Table.default: {} is diverted to {} and live in to {}",
+                                    value,
+                                    d.to.display(&self.reginfo),
+                                    block,
+                                ),
+                            ));
                         }
                     }
-                    for ebb in self.func.jump_tables[jt].iter() {
-                        if lr.is_livein(*ebb, liveness.context(&self.func.layout)) {
-                            return fatal!(
-                                errors,
+                    for block in self.func.jump_tables[jt].iter() {
+                        if lr.is_livein(*block, &self.func.layout) {
+                            return errors.fatal((
                                 inst,
-                                "{} is diverted to {} and live in to {}",
-                                value,
-                                d.to.display(&self.reginfo),
-                                ebb
-                            );
+                                format!(
+                                    "Table.case: {} is diverted to {} and live in to {}",
+                                    value,
+                                    d.to.display(&self.reginfo),
+                                    block,
+                                ),
+                            ));
                         }
                     }
                 }

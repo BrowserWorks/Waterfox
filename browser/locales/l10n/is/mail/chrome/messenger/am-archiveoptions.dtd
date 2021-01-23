@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-archiveoptions.xul -->
+
+<!-- extracted from am-archiveoptions.xhtml -->
+
+<!ENTITY dialogTitle.label "Stillingar fyrir skjalageymslu">
+<!ENTITY archiveGranularityPrefix.label "Þegar póstur er settur í skjalageymslu, setja í:">
+<!ENTITY archiveFlat.label "Eina möppu">
+<!ENTITY archiveFlat.accesskey "E">
+<!ENTITY archiveYearly.label "Árleg skjalageymsla">
+<!ENTITY archiveYearly.accesskey "r">
+<!ENTITY archiveMonthly.label "Mánaðarleg skjalageymsla">
+<!ENTITY archiveMonthly.accesskey "M">
+<!ENTITY keepFolderStructure.label "Viðhalda möppuskipan í skjalageymslu">
+<!ENTITY keepFolderStructure.accesskey "k">
+<!ENTITY archiveExample.label "Dæmi">
+<!-- LOCALIZATION NOTE (archiveFolderName.label): this should match the default
+     name for the "Archives" folder -->
+<!ENTITY archiveFolderName.label "Skjalasöfn
+">
+<!-- LOCALIZATION NOTE (inboxFolderName.label): this should match the default
+     name for the "Inbox" folder -->
+<!ENTITY inboxFolderName.label "Innhólf">

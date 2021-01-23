@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Firefox ಖಾತೆಗಳು">
+<!ENTITY aboutAccounts.connected.description "ನೀವು ಹೀಗೆ ಸಂಪರ್ಕಿತಗೊಂಡಿದ್ದೀರಿ">
+<!ENTITY aboutAccounts.syncPreferences.label "ಸಿಂಕ್ ಸಿದ್ಧತೆಗಳ ಪರಿಶೀಲನೆಗ್ಗೆ ಇಲ್ಲಿ ಮೆಲ್ಲನೆ ತಟ್ಟಿ">
+
+<!ENTITY aboutAccounts.noConnection.title "ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕ ಲಭ್ಯವಿಲ್ಲ">
+<!ENTITY aboutAccounts.retry.label "ಮತ್ತೊಮ್ಮೆ ಪ್ರಯತ್ನಿಸಿ">
+
+<!ENTITY aboutAccounts.restrictedError.title "ಪ್ರತಿಬಂಧಿಸಲ್ಪಟ್ಟಿದೆ">
+<!ENTITY aboutAccounts.restrictedError.description "ನೀವು ‍Firefox ಖಾತೆಗಳನ್ನು ಈ ಫ್ರೊಫೈಲ್‌ನಿಂದ ನಿರ್ವಹಿಸುವಂತಿಲ್ಲ.">

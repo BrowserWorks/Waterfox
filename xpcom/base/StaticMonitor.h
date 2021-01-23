@@ -28,8 +28,8 @@ class MOZ_ONLY_USED_TO_AVOID_STATIC_CONSTRUCTORS StaticMonitor {
   void Wait() { CondVar()->Wait(); }
   CVStatus Wait(TimeDuration aDuration) { return CondVar()->Wait(aDuration); }
 
-  nsresult Notify() { return CondVar()->Notify(); }
-  nsresult NotifyAll() { return CondVar()->NotifyAll(); }
+  void Notify() { CondVar()->Notify(); }
+  void NotifyAll() { CondVar()->NotifyAll(); }
 
   void AssertCurrentThreadOwns() {
 #ifdef DEBUG
@@ -78,7 +78,7 @@ class MOZ_ONLY_USED_TO_AVOID_STATIC_CONSTRUCTORS StaticMonitor {
 
   // Disallow these operators.
   StaticMonitor& operator=(const StaticMonitor& aRhs);
-  static void* operator new(size_t) CPP_THROW_NEW;
+  static void* operator new(size_t) noexcept(true);
   static void operator delete(void*);
 };
 
@@ -94,14 +94,14 @@ class MOZ_STACK_CLASS StaticMonitorAutoLock {
   void Wait() { mMonitor->Wait(); }
   CVStatus Wait(TimeDuration aDuration) { return mMonitor->Wait(aDuration); }
 
-  nsresult Notify() { return mMonitor->Notify(); }
-  nsresult NotifyAll() { return mMonitor->NotifyAll(); }
+  void Notify() { mMonitor->Notify(); }
+  void NotifyAll() { mMonitor->NotifyAll(); }
 
  private:
   StaticMonitorAutoLock();
   StaticMonitorAutoLock(const StaticMonitorAutoLock&);
   StaticMonitorAutoLock& operator=(const StaticMonitorAutoLock&);
-  static void* operator new(size_t) CPP_THROW_NEW;
+  static void* operator new(size_t) noexcept(true);
 
   StaticMonitor* mMonitor;
 };

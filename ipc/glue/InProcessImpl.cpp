@@ -75,14 +75,9 @@ void InProcessParent::Startup() {
 
   parent->SetOtherProcessId(base::GetCurrentProcId());
 
-  // Create references held by the IPC layer which will be freed in
-  // DeallocPInProcess{Parent,Child}.
-  parent.get()->AddRef();
-  child.get()->AddRef();
-
   // Stash global references to fetch the other side of the reference.
-  InProcessParent::sSingleton = parent.forget();
-  InProcessChild::sSingleton = child.forget();
+  InProcessParent::sSingleton = std::move(parent);
+  InProcessChild::sSingleton = std::move(child);
 }
 
 /* static */
@@ -120,16 +115,6 @@ void InProcessChild::ActorDestroy(ActorDestroyReason aWhy) {
   InProcessParent::Shutdown();
 }
 
-void InProcessParent::DeallocPInProcessParent() {
-  MOZ_ASSERT(!InProcessParent::sSingleton);
-  Release();  // Release the reference taken in InProcessParent::Startup.
-}
-
-void InProcessChild::DeallocPInProcessChild() {
-  MOZ_ASSERT(!InProcessChild::sSingleton);
-  Release();  // Release the reference taken in InProcessParent::Startup.
-}
-
 ////////////////////////////////
 // In-Process Actor Utilities //
 ////////////////////////////////
@@ -141,7 +126,7 @@ static IProtocol* GetOtherInProcessActor(IProtocol* aActor) {
   // Discover the manager of aActor which is PInProcess.
   IProtocol* current = aActor;
   while (current) {
-    if (current->GetProtocolTypeId() == PInProcessMsgStart) {
+    if (current->GetProtocolId() == PInProcessMsgStart) {
       break;  // Found the correct actor.
     }
     current = current->Manager();
@@ -173,7 +158,7 @@ static IProtocol* GetOtherInProcessActor(IProtocol* aActor) {
   if (otherActor) {
     MOZ_ASSERT(otherActor->GetSide() != UnknownSide, "bad unknown side");
     MOZ_ASSERT(otherActor->GetSide() != aActor->GetSide(), "Wrong side!");
-    MOZ_ASSERT(otherActor->GetProtocolTypeId() == aActor->GetProtocolTypeId(),
+    MOZ_ASSERT(otherActor->GetProtocolId() == aActor->GetProtocolId(),
                "Wrong type of protocol!");
   }
 
@@ -191,6 +176,8 @@ IProtocol* InProcessChild::ParentActorFor(IProtocol* aActor) {
   MOZ_ASSERT(aActor && aActor->GetSide() == ChildSide);
   return GetOtherInProcessActor(aActor);
 }
+
+NS_IMPL_ISUPPORTS(InProcessParent, nsIObserver)
 
 }  // namespace ipc
 }  // namespace mozilla

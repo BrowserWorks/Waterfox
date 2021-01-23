@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "Копия и папки">
+<!ENTITY sendingPrefix.label "При изпращане на писмо, автоматично:">
+<!ENTITY fccMailFolder.label "Оставя се копие в:">
+<!ENTITY fccMailFolder.accesskey "О">
+<!ENTITY fccReplyFollowsParent.label "Оставя отговорите в папката на отговореното писмо">
+<!ENTITY fccReplyFollowsParent.accesskey "г">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Копие (Cc) до тези адреси:">
+<!ENTITY ccAddress.accesskey "К">
+<!ENTITY ccAddressList.placeholder "Разделяне на адресите със запетаи">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Скрито копие (Bcc) до тези адреси:">
+<!ENTITY bccAddress.accesskey "С">
+<!ENTITY bccAddressList.placeholder "Разделяне на адресите със запетаи">
+<!ENTITY saveMessageDlg.label "Иска се потвърждение при запазване на писмата">
+<!ENTITY saveMessageDlg.accesskey "И">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "Папка &quot;Изпратени&quot; в:">
+<!ENTITY sentFolderOn.accesskey "П">
+<!ENTITY sentInOtherFolder.label "Друга:">
+<!ENTITY sentInOtherFolder.accesskey "Д">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Архиви на съобщения">
+<!ENTITY keepArchives.label "Архивите на съобщенията се пазят в:">
+<!ENTITY keepArchives.accesskey "х">
+<!ENTITY archiveHierarchyButton.label "Настройки на архивиране…">
+<!ENTITY archiveHierarchyButton.accesskey "а">
+<!ENTITY archivesFolderOn.label "Папка &quot;Архиви&quot; в:">
+<!ENTITY archivesFolderOn.accesskey "в">
+<!ENTITY archiveInOtherFolder.label "Друга:">
+<!ENTITY archiveInOtherFolder.accesskey "у">
+<!ENTITY specialFolders.label "Чернови и шаблони">
+<!ENTITY keepDrafts2.label "Съхраняване на черновите в:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "Папка &quot;Чернови&quot; в:">
+<!ENTITY draftsFolderOn.accesskey "а">
+<!ENTITY draftInOtherFolder.label "Друга:">
+<!ENTITY draftInOtherFolder.accesskey "р">
+<!ENTITY keepTemplates.label "Шаблоните за писма се пазят в:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "Папка &quot;Шаблони&quot; в:">
+<!ENTITY templatesFolderOn.accesskey "к">
+<!ENTITY templateInOtherFolder.label "Друга:">
+<!ENTITY templateInOtherFolder.accesskey "г">

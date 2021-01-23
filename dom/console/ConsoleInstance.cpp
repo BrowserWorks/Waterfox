@@ -56,7 +56,7 @@ ConsoleLogLevel PrefToValue(const nsAString& aPref) {
     return ConsoleLogLevel::All;
   }
 
-  MOZ_ASSERT(index < (int)ConsoleLogLevel::EndGuard_);
+  MOZ_ASSERT(index < (int)ConsoleLogLevelValues::Count);
   return static_cast<ConsoleLogLevel>(index);
 }
 
@@ -101,7 +101,7 @@ ConsoleInstance::ConsoleInstance(JSContext* aCx,
   }
 }
 
-ConsoleInstance::~ConsoleInstance() {}
+ConsoleInstance::~ConsoleInstance() = default;
 
 JSObject* ConsoleInstance::WrapObject(JSContext* aCx,
                                       JS::Handle<JSObject*> aGivenProto) {

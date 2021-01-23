@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.history.title                "ისტორია">
+
+<!ENTITY  pref.history.caption              "ისტორიის გადახედვა">
+<!ENTITY  historyPages.label                "ისტორია არის ადრე მონახულებული გვერდების ნუსხა.">
+<!ENTITY  enableHistory.label               "მონახულებული გვერდების დამახსოვრება">
+<!ENTITY  enableHistory.accesskey           "R">
+<!ENTITY  clearHistory.label                "ისტორიის წაშლა">
+<!ENTITY  clearHistory.accesskey            "s">
+
+<!ENTITY  locationBarHistory.caption        "მისამართების პანელის ისტორია">
+<!ENTITY  urlBarHistoryEnabled.caption      "მისამართების ზოლის ისტორიის ჩართვა">
+<!ENTITY  urlBarHistoryEnabled.accesskey    "ჩ">
+<!ENTITY  clearLocationBar.label            "მისამართების პანელში შენახული საიტების წაშლა.">
+<!ENTITY  clearLocationBarButton.label      "მისამართების პანელის წაშლა">
+<!ENTITY  clearLocationBarButton.accesskey  "L">
+<!ENTITY  formfillHistory.caption           "ფორმებისა და ძიების ისტორია">
+<!ENTITY  enableFormfill.label              "ფორმებისა და ძიების ისტორიის ჩართვა">
+<!ENTITY  enableFormfill.accesskey          "n">
+<!ENTITY  formfillExpire.label              "ფორმებისა და ძიების ისტორიის შენახვა">
+<!ENTITY  formfillExpire.accesskey          "f">
+<!ENTITY  formfillDays.label                "დღის განმავლობაში">

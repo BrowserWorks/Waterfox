@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!ENTITY MsgSynchronize.label "Preuzmi i sinhroniziraj poruke">
+<!ENTITY MsgSelect.label "Stavke za upotrebu van mreže">
+<!ENTITY MsgSyncDesc.label "Ako ste već odabrali direktorije pošte ili interesnih grupa za van mrežno korištenje, možete ih preuzeti i/ili sinhronizovati sada. U suprotnom, koristite &quot;Odaberi&quot; dugme da odaberete direktorije pošte i interesnih grupa za van mrežno korištenje.">
+<!ENTITY MsgSyncDirections.label "Preuzmi i/ili sinhroniziraj sljedeće:">
+<!ENTITY syncTypeMail.label "Poruke pošte">
+<!ENTITY syncTypeNews.label "Poruke s novinskih grupa">
+<!ENTITY sendMessage.label "Pošalji neposlane poruke">
+<!ENTITY workOffline.label "Radi izvanmrežno kada preuzimanje i/ili sinhronizacija završi">
+<!ENTITY selectButton.label "Odaberi…">
+<!ENTITY MsgSelectDesc.label "Odaberi datoteke e-pošte i novinske grupe za izvanmrežno korištenje.">
+<!ENTITY MsgSelectInd.label "Preuzmi">
+<!ENTITY MsgSelectItems.label "Datoteke i novinske grupe">

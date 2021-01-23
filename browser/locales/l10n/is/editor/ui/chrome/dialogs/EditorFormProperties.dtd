@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Eiginleikar eyðublaðs">
+<!ENTITY Settings.label "Stillingar">
+<!ENTITY FormName.label "Heiti eyðublaðs:">
+<!ENTITY FormName.accesskey "H">
+<!ENTITY FormAction.label "Aðgerð URL:">
+<!ENTITY FormAction.accesskey "A">
+<!ENTITY FormMethod.label "Aðferð:">
+<!ENTITY FormMethod.accesskey "A">
+<!ENTITY FormEncType.label "Kóðun:">
+<!ENTITY FormEncType.accesskey "K">
+<!ENTITY FormTarget.label "Áfangastaður ramma:">
+<!ENTITY FormTarget.accesskey "t">
+<!ENTITY RemoveForm.label "Fjarlægja eyðublað">
+<!ENTITY RemoveForm.accesskey "r">

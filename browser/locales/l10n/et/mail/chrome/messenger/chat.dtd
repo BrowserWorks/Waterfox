@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label            "Võrgus olevad kontaktid">
+<!ENTITY offlineContactsHeader.label           "Ühendamata kontaktid">
+<!ENTITY conversationsHeader.label             "Vestlused">
+<!ENTITY searchResultConversation.label        "Otsingutulemused">
+<!ENTITY chat.noConv.title                     "Vestlusi kuvatakse siin.">
+<!ENTITY chat.noConv.description               "Vestluse alustamiseks kasuta vasakul olevat kontaktide paneeli.">
+<!ENTITY chat.noPreviousConv.description       "&brandShortName;il pole selle kontakti kohta salvestatud ühtki varasemat vestlust.">
+<!ENTITY chat.noAccount.title                  "Sa pole veel kiirsuhtluse kontot seadistanud.">
+<!ENTITY chat.noAccount.description            "Luba &brandShortName;il end uue kiirsuhtluse konto loomisel juhendada.">
+<!ENTITY chat.accountWizard.button             "Tee algust">
+<!ENTITY chat.noConnectedAccount.title         "Kiirsuhtluse kontod pole ühendatud.">
+<!ENTITY chat.noConnectedAccount.description   "Võid neid ühendada 'kiirsuhtluse oleku' aknast:">
+<!ENTITY chat.showAccountManager.button        "Näita kiirsuhtluse olekut">
+
+<!ENTITY chat.participants                     "Osalejaid:">
+<!ENTITY chat.previousConversations            "Eelmised vestlused:">
+<!ENTITY chat.ongoingConversation              "Käimasolevad vestlused">
+
+<!ENTITY openConversationCmd.label             "Alusta vestlust">
+<!ENTITY openConversationCmd.accesskey         "l">
+<!ENTITY closeConversationCmd.label            "Sulge vestlus">
+<!ENTITY closeConversationCmd.accesskey        "l">
+<!ENTITY aliasCmd.label                        "Alias…">
+<!ENTITY aliasCmd.accesskey                    "i">
+<!ENTITY deleteCmd.label                       "Eemalda">
+<!ENTITY deleteCmd.accesskey                   "m">
+
+<!ENTITY openConversationButton.tooltip        "Alusta vestlust">
+<!ENTITY closeConversationButton.tooltip       "Sulge vestlus">
+
+<!ENTITY addBuddyButton.label                  "Lisa kontakt">
+<!ENTITY joinChatButton.label                  "Liitu vestlusega">
+<!ENTITY chatAccountsButton.label              "Kuva kontosid">
+
+<!ENTITY status.available                      "Saadaval">
+<!ENTITY status.unavailable                    "Pole saadaval">
+<!ENTITY status.offline                        "Ühendamata">
+
+<!ENTITY openLinkCmd.label                     "Ava link…">
+<!ENTITY openLinkCmd.accesskey                 "A">

@@ -8,23 +8,20 @@
 #include "jsapi.h"
 #include "nsIXPConnect.h"
 #include "nsCOMPtr.h"
-#include "nsIServiceManager.h"
-#include "nsIComponentManager.h"
 #include "nsString.h"
-#include "nsIPrefBranch.h"
-#include "nsIPrefService.h"
 #include "nspr.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/NullPrincipal.h"
 #include "nsContentUtils.h"
-#include "nsIScriptSecurityManager.h"
 #include "nsJSPrincipals.h"
 #include "nsIScriptError.h"
 #include "js/Wrapper.h"
+#include "mozilla/Utf8.h"
 
 extern mozilla::LazyLogModule MCD;
 using mozilla::AutoSafeJSContext;
+using mozilla::IsUtf8;
 using mozilla::NullPrincipal;
 using mozilla::dom::AutoJSAPI;
 
@@ -138,7 +135,7 @@ nsresult EvaluateAdminConfigScript(JS::HandleObject sandbox,
   JS::RootedValue v(cx);
 
   nsString convertedScript;
-  bool isUTF8 = IsUTF8(script);
+  bool isUTF8 = IsUtf8(script);
   if (isUTF8) {
     convertedScript = NS_ConvertUTF8toUTF16(script);
   } else {

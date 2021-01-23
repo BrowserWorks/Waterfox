@@ -33,7 +33,7 @@ class InternalHeaders final {
     Entry(const nsACString& aName, const nsACString& aValue)
         : mName(aName), mValue(aValue) {}
 
-    Entry() {}
+    Entry() = default;
 
     nsCString mName;
     nsCString mValue;
@@ -64,7 +64,7 @@ class InternalHeaders final {
     mGuard = aOther.mGuard;
   }
 
-  explicit InternalHeaders(const nsTArray<Entry>&& aHeaders,
+  explicit InternalHeaders(nsTArray<Entry>&& aHeaders,
                            HeadersGuardEnum aGuard = HeadersGuardEnum::None);
 
   InternalHeaders(const nsTArray<HeadersEntry>& aHeadersEntryList,

@@ -1,0 +1,74 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Vlastnosti">
+
+<!ENTITY generalInfo.label                       "Všeobecné informácie">
+<!ENTITY folderCharsetFallback2.label            "Štandardné kódovanie textu:">
+<!ENTITY folderCharsetFallback2.accesskey        "a">
+<!ENTITY folderCharsetEnforce2.label             "Použiť pre všetky správy v priečinku (ignorovať kódovanie textu definované v správe)">
+<!ENTITY folderCharsetEnforce2.accesskey         "P">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Vytvorí nový indexový súbor">
+<!ENTITY folderRebuildSummaryFile2.label         "Opraviť priečinok">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "O">
+<!ENTITY folderRebuildSummaryFile.explanation    "Indexový súbor priečinka (.msf) sa môže poškodiť, čo spôsobí, že niektoré správy sa nezobrazujú alebo už odstránené správy sú stále zobrazované. Opravením indexu priečinka tieto problémy odstránite.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Správy v tomto priečinku zahrnúť do výsledkov globálneho vyhľadávania">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "z">
+
+<!ENTITY retention.label "Pravidlá manipulácie so správami">
+<!ENTITY retentionUseAccount.label  "Použiť nastavenia účtu">
+<!ENTITY retentionUseAccount.accesskey "P">
+<!ENTITY daysOld.label "dní">
+<!ENTITY message.label "správ">
+<!ENTITY retentionCleanup.label "Automatickým odstraňovaním starých správ je možné získať miesto na disku.">
+<!ENTITY retentionCleanupImap.label "Automatickým odstraňovaním starých správ (lokálnych kópií ako aj originálov na vzdialenom serveri) je možné získať miesto na disku.">
+<!ENTITY retentionCleanupPop.label "Automatickým odstraňovaním starých správ (vrátane originálov na vzdialenom serveri) je možné získať miesto na disku.">
+<!ENTITY retentionDeleteMsg.label "Odstrániť správy staršie ako">
+<!ENTITY retentionDeleteMsg.accesskey "O">
+<!ENTITY retentionKeepAll.label "Neodstraňovať žiadne správy">
+<!ENTITY retentionKeepAll.accesskey "N">
+<!ENTITY retentionKeepRecent.label "Odstrániť všetky okrem najnovších">
+<!ENTITY retentionKeepRecent.accesskey "d">
+<!ENTITY retentionApplyToFlagged.label "Vždy ponechať správy označené hviezdičkou">
+<!ENTITY retentionApplyToFlagged.accesskey "h">
+
+<!ENTITY folderSynchronizationTab.label          "Synchronizácia">
+<!ENTITY folderCheckForNewMessages2.label         "Pri získavaní nových správ pre tento účet vždy kontrolovať aj tento priečinok">
+<!ENTITY folderCheckForNewMessages2.accesskey     "k">
+
+<!ENTITY offlineFolder.check.label               "Používať tento priečinok offline">
+<!ENTITY offlineFolder.check.accesskey           "u">
+<!ENTITY offlineFolder.button.label              "Prevziať">
+<!ENTITY offlineFolder.button.accesskey          "P">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Označiť túto diskusiu na použitie v režime offline">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "O">
+<!ENTITY offlineNewsgroup.button.label           "Prevziať">
+<!ENTITY offlineNewsgroup.button.accesskey       "P">
+
+<!ENTITY folderProps.name.label                  "Názov:">
+<!ENTITY folderProps.name.accesskey              "N">
+<!ENTITY folderProps.color.label                 "Farba ikony:">
+<!ENTITY folderProps.color.accesskey             "i">
+<!ENTITY folderProps.reset.tooltip               "Obnoviť predvolenú farbu">
+<!ENTITY folderProps.location.label              "Umiestnenie:">
+<!ENTITY folderProps.location.accesskey          "U">
+
+<!ENTITY folderSharingTab.label                  "Zdieľanie">
+<!ENTITY privileges.button.label                 "Prístupové práva…">
+<!ENTITY privileges.button.accesskey             "P">
+<!ENTITY permissionsDesc.label                   "Máte nasledujúce prístupové práva:">
+<!ENTITY folderOtherUsers.label                  "K tomuto priečinku majú prístup aj:">
+<!ENTITY folderType.label                        "Typ priečinka:">
+
+<!ENTITY folderQuotaTab.label                    "Kvóta">
+<!ENTITY folderQuotaUsage.label                  "Využitie:">
+<!ENTITY folderQuotaStatus.label                 "Stav:">
+
+<!ENTITY numberOfMessages.label                  "Počet správ:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "neznámy">
+<!ENTITY sizeOnDisk.label                        "Veľkosť na disku:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "neznáma">

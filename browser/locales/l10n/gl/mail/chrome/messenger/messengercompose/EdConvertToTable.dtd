@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Converter nunha táboa">
+<!ENTITY instructions1.label   "O Composer crea unha fila de táboa para cada parágrafo da selección.">
+<!ENTITY instructions2.label   "Escoller o carácter utilizado para separar a selección en columnas:">
+<!ENTITY commaRadio.label      "Vírgula">
+<!ENTITY spaceRadio.label      "Espazo">
+<!ENTITY otherRadio.label      "Outro carácter:">
+<!ENTITY deleteCharCheck.label "Eliminar o carácter separador">
+<!ENTITY collapseSpaces.label  "Ignorar espazos adicionais">
+<!ENTITY collapseSpaces.tooltip "Converter espazos adxacentes nun separador">

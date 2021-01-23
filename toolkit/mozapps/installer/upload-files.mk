@@ -12,7 +12,7 @@ ifndef MOZ_PKG_FORMAT
             ifeq (SunOS,$(OS_ARCH))
                 MOZ_PKG_FORMAT  = BZ2
             else
-                ifeq (gtk3,$(MOZ_WIDGET_TOOLKIT))
+                ifeq (gtk,$(MOZ_WIDGET_TOOLKIT))
                     MOZ_PKG_FORMAT  = BZ2
                 else
                     ifeq (android,$(MOZ_WIDGET_TOOLKIT))
@@ -65,10 +65,10 @@ ifndef MOZ_SYSTEM_NSPR
 endif # MOZ_SYSTEM_NSPR
 
 ifdef MSVC_C_RUNTIME_DLL
-  JSSHELL_BINS += $(MSVC_C_RUNTIME_DLL)
+  JSSHELL_BINS += $(notdir $(wildcard $(DIST)/bin/$(MSVC_C_RUNTIME_DLL)))
 endif
 ifdef MSVC_CXX_RUNTIME_DLL
-  JSSHELL_BINS += $(MSVC_CXX_RUNTIME_DLL)
+  JSSHELL_BINS += $(notdir $(wildcard $(DIST)/bin/$(MSVC_CXX_RUNTIME_DLL)))
 endif
 
 ifdef WIN_UCRT_REDIST_DIR
@@ -94,7 +94,13 @@ endif
 MAKE_JSSHELL  = $(call py_action,zip,-C $(DIST)/bin --strip $(abspath $(PKG_JSSHELL)) $(JSSHELL_BINS))
 
 ifneq (,$(PGO_JARLOG_PATH))
-  JARLOG_FILE_AB_CD = $(PGO_JARLOG_PATH)
+  # The backslash subst is to work around an issue with our version of mozmake,
+  # where backslashes get slurped in command-line arguments if a command is run
+  # with a double-quote character. The command to packager.py happens to be one
+  # of these commands, where double-quotes appear in certain ACDEFINES values.
+  # This turns a jarlog path like "Z:\task..." into "Z:task", which fails.
+  # Switching the backslashes for forward slashes works around the issue.
+  JARLOG_FILE_AB_CD = $(subst \,/,$(PGO_JARLOG_PATH))
 else
   JARLOG_FILE_AB_CD = $(topobjdir)/jarlog/$(AB_CD).log
 endif
@@ -156,7 +162,7 @@ ifeq ($(MOZ_PKG_FORMAT),RPM)
 
   RPM_CMD = \
     echo Creating RPM && \
-    $(PYTHON) -m mozbuild.action.preprocessor \
+    $(PYTHON3) -m mozbuild.action.preprocessor \
       -DMOZ_APP_NAME=$(MOZ_APP_NAME) \
       -DMOZ_APP_DISPLAYNAME='$(MOZ_APP_DISPLAYNAME)' \
       -DMOZ_APP_REMOTINGNAME='$(MOZ_APP_REMOTINGNAME)' \
@@ -215,7 +221,8 @@ endif #Create an RPM file
 
 
 ifeq ($(MOZ_PKG_FORMAT),APK)
-include $(MOZILLA_DIR)/toolkit/mozapps/installer/upload-files-$(MOZ_PKG_FORMAT).mk
+INNER_MAKE_PACKAGE = true
+INNER_UNMAKE_PACKAGE = true
 endif
 
 ifeq ($(MOZ_PKG_FORMAT),DMG)
@@ -264,9 +271,10 @@ NO_PKG_FILES += \
 	shlibsign* \
 	certutil* \
 	pk12util* \
-	BadCertServer* \
+	BadCertAndPinningServer* \
+	DelegatedCredentialsServer* \
 	OCSPStaplingServer* \
-	SymantecSanctionsServer* \
+	SanctionsTestServer* \
 	GenerateOCSPResponse* \
 	chrome/chrome.rdf \
 	chrome/app-chrome.manifest \
@@ -379,12 +387,17 @@ UPLOAD_FILES= \
   $(call QUOTED_WILDCARD,$(topobjdir)/config.status) \
   $(if $(UPLOAD_EXTRA_FILES), $(foreach f, $(UPLOAD_EXTRA_FILES), $(wildcard $(DIST)/$(f))))
 
-ifneq ($(filter-out en-US x-test,$(AB_CD)),)
+ifneq ($(filter-out en-US,$(AB_CD)),)
   UPLOAD_FILES += \
     $(call QUOTED_WILDCARD,$(topobjdir)/$(MOZ_BUILD_APP)/installer/windows/l10ngen/setup.exe) \
     $(call QUOTED_WILDCARD,$(topobjdir)/$(MOZ_BUILD_APP)/installer/windows/l10ngen/setup-stub.exe)
 endif
 
+ifdef MOZ_NORMANDY
+ifndef CROSS_COMPILE
+  UPLOAD_FILES += $(call QUOTED_WILDCARD,$(MOZ_NORMANDY_JSON))
+endif
+endif
 
 ifdef MOZ_CODE_COVERAGE
   UPLOAD_FILES += \
@@ -401,6 +414,10 @@ ifdef ENABLE_MOZSEARCH_PLUGIN
   UPLOAD_FILES += $(call QUOTED_WILDCARD,$(DIST)/$(PKG_PATH)$(MOZSEARCH_INCLUDEMAP_BASENAME).map)
 endif
 
+ifeq (Darwin, $(OS_ARCH))
+  UPLOAD_FILES += $(call QUOTED_WILDCARD,$(DIST)/$(PKG_PATH)$(MACOS_CODESIGN_ARCHIVE_BASENAME).zip)
+endif
+
 ifdef MOZ_STUB_INSTALLER
   UPLOAD_FILES += $(call QUOTED_WILDCARD,$(DIST)/$(PKG_INST_PATH)$(PKG_STUB_BASENAME).exe)
 endif
@@ -412,6 +429,10 @@ endif
 SRC_TAR_PREFIX = $(MOZ_APP_NAME)-$(MOZ_PKG_VERSION)
 SRC_TAR_EXCLUDE_PATHS += \
   --exclude='.hg*' \
+  --exclude='.git' \
+  --exclude='.gitattributes' \
+  --exclude='.gitkeep' \
+  --exclude='.gitmodules' \
   --exclude='CVS' \
   --exclude='.cvs*' \
   --exclude='.mozconfig*' \

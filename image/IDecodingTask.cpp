@@ -5,15 +5,12 @@
 
 #include "IDecodingTask.h"
 
-#include "gfxPrefs.h"
 #include "nsThreadUtils.h"
 
 #include "Decoder.h"
 #include "DecodePool.h"
 #include "RasterImage.h"
 #include "SurfaceCache.h"
-
-#include "mozilla/SystemGroup.h"
 
 namespace mozilla {
 
@@ -41,7 +38,7 @@ void IDecodingTask::EnsureHasEventTarget(NotNull<RasterImage*> aImage) {
     if (tracker) {
       mEventTarget = tracker->GetEventTarget();
     } else {
-      mEventTarget = SystemGroup::EventTargetFor(TaskCategory::Other);
+      mEventTarget = GetMainThreadSerialEventTarget();
     }
   }
 }
@@ -68,7 +65,8 @@ void IDecodingTask::NotifyProgress(NotNull<RasterImage*> aImage,
   // calls we make off-main-thread and the notifications that RasterImage
   // actually receives, which would cause bugs.
   Progress progress = aDecoder->TakeProgress();
-  IntRect invalidRect = aDecoder->TakeInvalidRect();
+  UnorientedIntRect invalidRect =
+      UnorientedIntRect::FromUnknownRect(aDecoder->TakeInvalidRect());
   Maybe<uint32_t> frameCount = aDecoder->TakeCompleteFrameCount();
   DecoderFlags decoderFlags = aDecoder->GetDecoderFlags();
   SurfaceFlags surfaceFlags = aDecoder->GetSurfaceFlags();
@@ -103,7 +101,8 @@ void IDecodingTask::NotifyDecodeComplete(NotNull<RasterImage*> aImage,
   ImageMetadata metadata = aDecoder->GetImageMetadata();
   DecoderTelemetry telemetry = aDecoder->Telemetry();
   Progress progress = aDecoder->TakeProgress();
-  IntRect invalidRect = aDecoder->TakeInvalidRect();
+  UnorientedIntRect invalidRect =
+      UnorientedIntRect::FromUnknownRect(aDecoder->TakeInvalidRect());
   Maybe<uint32_t> frameCount = aDecoder->TakeCompleteFrameCount();
   DecoderFlags decoderFlags = aDecoder->GetDecoderFlags();
   SurfaceFlags surfaceFlags = aDecoder->GetSurfaceFlags();

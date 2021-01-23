@@ -7,14 +7,10 @@
 #include "nsAndroidProtocolHandler.h"
 #include "nsCOMPtr.h"
 #include "nsIChannel.h"
-#include "nsIIOService.h"
-#include "nsIStandardURL.h"
-#include "nsIURL.h"
-#include "nsIURIMutator.h"
 #include "android/log.h"
 #include "nsBaseChannel.h"
 #include "AndroidBridge.h"
-#include "GeneratedJNIWrappers.h"
+#include "mozilla/java/GeckoAppShellWrappers.h"
 
 using namespace mozilla;
 
@@ -127,17 +123,6 @@ nsAndroidProtocolHandler::GetProtocolFlags(uint32_t* result) {
   *result = URI_STD | URI_IS_UI_RESOURCE | URI_IS_LOCAL_RESOURCE |
             URI_NORELATIVE | URI_DANGEROUS_TO_LOAD;
   return NS_OK;
-}
-
-NS_IMETHODIMP
-nsAndroidProtocolHandler::NewURI(const nsACString& aSpec, const char* aCharset,
-                                 nsIURI* aBaseURI, nsIURI** result) {
-  nsCOMPtr<nsIURI> base(aBaseURI);
-  return NS_MutateURI(NS_STANDARDURLMUTATOR_CONTRACTID)
-      .Apply(NS_MutatorMethod(&nsIStandardURLMutator::Init,
-                              nsIStandardURL::URLTYPE_STANDARD, -1,
-                              nsCString(aSpec), aCharset, base, nullptr))
-      .Finalize(result);
 }
 
 NS_IMETHODIMP

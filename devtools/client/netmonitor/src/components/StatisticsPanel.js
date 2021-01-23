@@ -5,7 +5,7 @@
 "use strict";
 
 const ReactDOM = require("devtools/client/shared/vendor/react-dom");
-const { FILTER_TAGS } = require("../constants");
+const { FILTER_TAGS } = require("devtools/client/netmonitor/src/constants");
 const {
   Component,
   createFactory,
@@ -17,15 +17,21 @@ const {
 } = require("devtools/client/shared/redux/visibility-handler-connect");
 const { Chart } = require("devtools/client/shared/widgets/Chart");
 const { PluralForm } = require("devtools/shared/plural-form");
-const Actions = require("../actions/index");
-const { Filters } = require("../utils/filter-predicates");
+const Actions = require("devtools/client/netmonitor/src/actions/index");
+const {
+  Filters,
+} = require("devtools/client/netmonitor/src/utils/filter-predicates");
 const {
   getSizeWithDecimals,
   getTimeWithDecimals,
-} = require("../utils/format-utils");
-const { L10N } = require("../utils/l10n");
-const { getPerformanceAnalysisURL } = require("../utils/mdn-utils");
-const { fetchNetworkUpdatePacket } = require("../utils/request-utils");
+} = require("devtools/client/netmonitor/src/utils/format-utils");
+const { L10N } = require("devtools/client/netmonitor/src/utils/l10n");
+const {
+  getPerformanceAnalysisURL,
+} = require("devtools/client/netmonitor/src/utils/mdn-utils");
+const {
+  fetchNetworkUpdatePacket,
+} = require("devtools/client/netmonitor/src/utils/request-utils");
 
 // Components
 const MDNLink = createFactory(
@@ -100,8 +106,7 @@ class StatisticsPanel extends Component {
 
     const { requests } = this.props;
     const ready =
-      requests &&
-      requests.length &&
+      requests?.length &&
       requests.every(
         req =>
           req.contentSize !== undefined &&
@@ -379,7 +384,7 @@ class StatisticsPanel extends Component {
 
 module.exports = connect(
   state => ({
-    requests: [...state.requests.requests.values()],
+    requests: [...state.requests.requests],
   }),
   (dispatch, props) => ({
     closeStatistics: () =>

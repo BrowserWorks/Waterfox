@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label            "E’lon qilish sahifasi">
+<!ENTITY windowTitleSettings.label    "E’lon qilish sozlamalari">
+<!ENTITY publishTab.label             "E’lon qilish">
+<!ENTITY settingsTab.label            "Sozlamalar">
+<!ENTITY publishButton.label          "E’lon qilish">
+<!-- Publish Tab Panel -->
+
+<!ENTITY siteList.label               "Sayt nomi:">
+<!ENTITY siteList.accesskey           "S">
+<!ENTITY siteList.tooltip             "E’lon qilish uchun saytni tanlang:">
+<!ENTITY newSiteButton.label          "Yangi sayt">
+<!ENTITY newSiteButton.accesskey      "Y">
+<!ENTITY docDirList.label             "Ushbu sahifa uchun sayt quyi direktoriyasi:">
+<!ENTITY docDirList.accesskey         "s">
+<!ENTITY docDirList.tooltip           "Ushbu sayt uchun masofadagi quyi direktoriya nomini kiriting yoki tanlang">
+<!ENTITY publishImgCheckbox.label     "Rasmlar va boshqa fayllar bilan birga">
+<!ENTITY publishImgCheckbox.accesskey "b">
+<!ENTITY publishImgCheckbox.tooltip   "Ushbu sahifa tomonidan taqdim etilgan boshqa fayllar va rasmlarni e’lon qilish">
+<!ENTITY sameLocationRadio.label      "Ayni shu manzildan sahifa sifatida foydalanish">
+<!ENTITY sameLocationRadio.accesskey  "f">
+<!ENTITY sameLocationRadio.tooltip    "Fayllarni aynni shu manzilga sahifa sifatida e’lon qilish">
+<!ENTITY useSubdirRadio.label         "Ushbu sayt quyi direktoriyasidan foydalaning:">
+<!ENTITY useSubdirRadio.accesskey     "d">
+<!ENTITY useSubdirRadio.tooltip       "Tanlangan masofadagi quyi direktoriyaga fayllarni e’lon qilish">
+<!ENTITY otherDirList.tooltip         "Fayllar e’lon qilinandigan masofadagi quyi direktoriya nomini tanlang yoki kiriting">
+<!ENTITY pageTitle.label              "Sahifa nomi:">
+<!ENTITY pageTitle.accesskey          "n">
+<!ENTITY pageTitle.tooltip            "E’lon qilish sahifasi">
+<!ENTITY pageTitleExample.label       "Masalan: &quot;Mening veb sahifam&quot;">
+<!ENTITY filename.label               "Fayl nomi:">
+<!ENTITY filename.accesskey           "F">
+<!ENTITY filename.tooltip             "Veb sahifalar uchun &quot;.html&quot; bilan birga ushbu fayl nomini kiriting">
+<!ENTITY filenameExample.label        "masalan: &quot;mypage.html&quot;">
+<!ENTITY setDefaultButton.label       "Standart sifatida o‘rnatish">
+<!ENTITY setDefaultButton.accesskey   "S">
+<!ENTITY removeButton.label           "Saytni olib tashlash">
+<!ENTITY removeButton.accesskey       "o">
+<!-- Settings Tab Panel -->
+
+<!ENTITY publishSites.label           "E’lon qilinadigan sayt">
+<!ENTITY serverInfo.label             "Server ma’lumoti">
+<!ENTITY loginInfo.label              "Kirish ma’lumotlari">
+<!ENTITY siteName.label               "Sayt nomi:">
+<!ENTITY siteName.accesskey           "S">
+<!ENTITY siteName.tooltip             "Ushbu e’lon qilinadigan saytni tadiqdan o‘tkazish uchun taxallus (masalan: &quot;MySite&quot;)">
+<!ENTITY siteUrl.label                "address e’lon qilinmoqda (masalan: 'ftp://ftp.myisp.com/myusername'):">
+<!ENTITY siteUrl.accesskey            "a">
+<!ENTITY siteUrl.tooltip              "The FTP:// yoki HTTP:// manzil ISP yoki veb hosting xizmati tomonidan beriladi">
+<!ENTITY browseUrl.label              "Bosh sahifangiz uchun HTTP manzili (masalan: 'http://www.myisp.com/myusername'):">
+<!ENTITY browseUrl.accesskey          "T">
+<!ENTITY browseUrl.tooltip            "Uy direktoriyangiz uchun HTTP:// manzil (fayl nomi qo‘shilmasin)">
+<!ENTITY username.label               "Foydalanuvchi nomi:">
+<!ENTITY username.accesskey           "F">
+<!ENTITY username.tooltip             "ISP yoki veb hosting xizmatiga kirishda foydalanish uchun foydalanuvchi nomi">
+<!ENTITY password.label               "Parol:">
+<!ENTITY password.accesskey           "P">
+<!ENTITY password.tooltip             "Parol sizning foydalanish uchun nomingiz bilan bog‘liq">
+<!ENTITY savePassword.label           "Parolni saqlash">
+<!ENTITY savePassword.accesskey       "s">
+<!ENTITY savePassword.tooltip         "&quot;Parol menejeri&quot;dan foydalanib parolingizni xavfsiz saqlash uchu uni tanlang">

@@ -34,7 +34,6 @@
 #include "nsILoadContext.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/HTMLObjectElementBinding.h"
-#include "AudioChannelAgent.h"
 #include "AudioChannelService.h"
 
 using namespace mozilla;
@@ -62,11 +61,9 @@ nsNPAPIPluginInstance::nsNPAPIPluginInstance()
       mCurrentPluginEvent(nullptr)
 #endif
       ,
-      mHaveJavaC2PJSObjectQuirk(false),
       mCachedParamLength(0),
       mCachedParamNames(nullptr),
-      mCachedParamValues(nullptr),
-      mMuted(false) {
+      mCachedParamValues(nullptr) {
   mNPP.pdata = nullptr;
   mNPP.ndata = this;
 
@@ -280,8 +277,6 @@ nsresult nsNPAPIPluginInstance::Start() {
 
   GetMIMEType(&mimetype);
 
-  CheckJavaC2PJSObjectQuirk(quirkParamLength, mCachedParamNames, mCachedParamValues);
-
   bool oldVal = mInPluginInitCall;
   mInPluginInitCall = true;
 
@@ -323,14 +318,8 @@ nsresult nsNPAPIPluginInstance::SetWindow(NPWindow* window) {
   if (!window || RUNNING != mRunning) return NS_OK;
 
 #if MOZ_WIDGET_GTK
-  // bug 108347, flash plugin on linux doesn't like window->width <=
-  // 0, but Java needs wants this call.
-  if (window && window->type == NPWindowTypeWindow &&
-      (window->width <= 0 || window->height <= 0) &&
-      (nsPluginHost::GetSpecialType(nsDependentCString(mMIMEType)) !=
-       nsPluginHost::eSpecialType_Java)) {
-    return NS_OK;
-  }
+  // bug 108347, flash plugin on linux doesn't like window->width <= 0
+  return NS_OK;
 #endif
 
   if (!mPlugin || !mPlugin->GetLibrary()) return NS_ERROR_FAILURE;
@@ -610,9 +599,6 @@ nsresult nsNPAPIPluginInstance::CSSZoomFactorChanged(float aCSSZoomFactor) {
 
 nsresult nsNPAPIPluginInstance::GetJSObject(JSContext* cx,
                                             JSObject** outObject) {
-  if (mHaveJavaC2PJSObjectQuirk) {
-    return NS_ERROR_FAILURE;
-  }
   NPObject* npobj = nullptr;
   nsresult rv = GetValueFromPlugin(NPPVpluginScriptableNPObject, &npobj);
   if (NS_FAILED(rv) || !npobj) return NS_ERROR_FAILURE;
@@ -787,11 +773,9 @@ nsresult nsNPAPIPluginInstance::PushPopupsEnabledState(bool aEnabled) {
           aEnabled ? PopupBlocker::openAllowed : PopupBlocker::openAbused,
           true);
 
-  if (!mPopupStates.AppendElement(oldState)) {
-    // Appending to our state stack failed, pop what we just pushed.
-    PopupBlocker::PopPopupControlState(oldState);
-    return NS_ERROR_FAILURE;
-  }
+  // XXX(Bug 1631371) Check if this should use a fallible operation as it
+  // pretended earlier.
+  mPopupStates.AppendElement(oldState);
 
   return NS_OK;
 }
@@ -1061,96 +1045,6 @@ void nsNPAPIPluginInstance::SetCurrentAsyncSurface(NPAsyncSurface* surface,
   }
 }
 
-static bool
-GetJavaVersionFromMimetype(nsPluginTag* pluginTag, nsCString& version)
-{
-  for (uint32_t i = 0; i < pluginTag->MimeTypes().Length(); ++i) {
-    nsCString type = pluginTag->MimeTypes()[i];
-    nsAutoCString jpi("application/x-java-applet;jpi-version=");
-
-    int32_t idx = type.Find(jpi, false, 0, -1);
-    if (idx != 0) {
-      continue;
-    }
-
-    type.Cut(0, jpi.Length());
-    if (type.IsEmpty()) {
-      continue;
-    }
-
-    type.ReplaceChar('_', '.');
-    version = type;
-    return true;
-  }
-
-  return false;
-}
-
-void
-nsNPAPIPluginInstance::CheckJavaC2PJSObjectQuirk(uint16_t paramCount,
-                                                 const char* const* paramNames,
-                                                 const char* const* paramValues)
-{
-  if (!mMIMEType || !mPlugin) {
-    return;
-  }
-
-  nsPluginTagType tagtype;
-  nsresult rv = GetTagType(&tagtype);
-  if (NS_FAILED(rv) ||
-      (tagtype != nsPluginTagType_Applet)) {
-    return;
-  }
-
-  RefPtr<nsPluginHost> pluginHost = nsPluginHost::GetInst();
-  if (!pluginHost) {
-    return;
-  }
-
-  nsPluginTag* pluginTag = pluginHost->TagForPlugin(mPlugin);
-  if (!pluginTag ||
-      !pluginTag->mIsJavaPlugin) {
-    return;
-  }
-
-  // check the params for "code" being present and non-empty
-  bool haveCodeParam = false;
-  bool isCodeParamEmpty = true;
-
-  for (uint16_t i = paramCount; i > 0; --i) {
-    if (PL_strcasecmp(paramNames[i - 1], "code") == 0) {
-      haveCodeParam = true;
-      if (strlen(paramValues[i - 1]) > 0) {
-        isCodeParamEmpty = false;
-      }
-      break;
-    }
-  }
-
-  // Due to the Java version being specified inconsistently across platforms
-  // check the version via the mimetype for choosing specific Java versions
-  nsCString javaVersion;
-  if (!GetJavaVersionFromMimetype(pluginTag, javaVersion)) {
-    return;
-  }
-
-  mozilla::Version version(javaVersion.get());
-
-  if (version >= "1.7.0.4") {
-    return;
-  }
-
-  if (!haveCodeParam && version >= "1.6.0.34" && version < "1.7") {
-    return;
-  }
-
-  if (haveCodeParam && !isCodeParamEmpty) {
-    return;
-  }
-
-  mHaveJavaC2PJSObjectQuirk = true;
-}
-
 double nsNPAPIPluginInstance::GetContentsScaleFactor() {
   double scaleFactor = 1.0;
   if (mOwner) {
@@ -1210,36 +1104,18 @@ void nsNPAPIPluginInstance::NotifyStartedPlaying() {
   }
 
   MOZ_ASSERT(mAudioChannelAgent);
-  dom::AudioPlaybackConfig config;
   rv = mAudioChannelAgent->NotifyStartedPlaying(
-      &config, dom::AudioChannelService::AudibleState::eAudible);
+      mIsMuted ? AudioChannelService::AudibleState::eNotAudible
+               : AudioChannelService::AudibleState::eAudible);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return;
   }
 
-  rv = WindowVolumeChanged(config.mVolume, config.mMuted);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return;
-  }
-
-  // Since we only support muting for now, the implementation of suspend
-  // is equal to muting. Therefore, if we have already muted the plugin,
-  // then we don't need to call WindowSuspendChanged() again.
-  if (config.mMuted) {
-    return;
-  }
-
-  rv = WindowSuspendChanged(config.mSuspend);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return;
-  }
+  mAudioChannelAgent->PullInitialUpdate();
 }
 
 void nsNPAPIPluginInstance::NotifyStoppedPlaying() {
   MOZ_ASSERT(mAudioChannelAgent);
-
-  // Reset the attribute.
-  mMuted = false;
   nsresult rv = mAudioChannelAgent->NotifyStoppedPlaying();
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return;
@@ -1252,21 +1128,12 @@ nsNPAPIPluginInstance::WindowVolumeChanged(float aVolume, bool aMuted) {
           ("nsNPAPIPluginInstance, WindowVolumeChanged, "
            "this = %p, aVolume = %f, aMuted = %s\n",
            this, aVolume, aMuted ? "true" : "false"));
-
   // We just support mute/unmute
-  nsresult rv = SetMuted(aMuted);
-  NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "SetMuted failed");
-  if (mMuted != aMuted) {
-    mMuted = aMuted;
-    if (mAudioChannelAgent) {
-      AudioChannelService::AudibleState audible =
-          aMuted ? AudioChannelService::AudibleState::eNotAudible
-                 : AudioChannelService::AudibleState::eAudible;
-      mAudioChannelAgent->NotifyStartedAudible(
-          audible, AudioChannelService::AudibleChangedReasons::eVolumeChanged);
-    }
+  if (mWindowMuted != aMuted) {
+    mWindowMuted = aMuted;
+    return UpdateMutedIfNeeded();
   }
-  return rv;
+  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -1275,16 +1142,46 @@ nsNPAPIPluginInstance::WindowSuspendChanged(nsSuspendedTypes aSuspend) {
           ("nsNPAPIPluginInstance, WindowSuspendChanged, "
            "this = %p, aSuspend = %s\n",
            this, SuspendTypeToStr(aSuspend)));
-
-  // It doesn't support suspended, so we just do something like mute/unmute.
-  WindowVolumeChanged(1.0, /* useless */
-                      aSuspend != nsISuspendedTypes::NONE_SUSPENDED);
+  const bool isSuspended = aSuspend != nsISuspendedTypes::NONE_SUSPENDED;
+  if (mWindowSuspended != isSuspended) {
+    mWindowSuspended = isSuspended;
+    // It doesn't support suspending, so we just do something like mute/unmute.
+    return UpdateMutedIfNeeded();
+  }
   return NS_OK;
 }
 
 NS_IMETHODIMP
 nsNPAPIPluginInstance::WindowAudioCaptureChanged(bool aCapture) {
   return NS_OK;
+}
+
+void nsNPAPIPluginInstance::NotifyAudibleStateChanged() const {
+  // This happens when global window destroyed, we would notify agent's callback
+  // to mute its volume, but the nsNSNPAPI had released the agent before that.
+  if (!mAudioChannelAgent) {
+    return;
+  }
+  AudioChannelService::AudibleState audibleState =
+      mIsMuted ? AudioChannelService::AudibleState::eNotAudible
+               : AudioChannelService::AudibleState::eAudible;
+  // Because we don't really support suspending nsNPAPI, so all audible changes
+  // come from changing its volume.
+  mAudioChannelAgent->NotifyStartedAudible(
+      audibleState, AudioChannelService::AudibleChangedReasons::eVolumeChanged);
+}
+
+nsresult nsNPAPIPluginInstance::UpdateMutedIfNeeded() {
+  const bool shouldMute = mWindowSuspended || mWindowMuted;
+  if (mIsMuted == shouldMute) {
+    return NS_OK;
+  }
+
+  mIsMuted = shouldMute;
+  NotifyAudibleStateChanged();
+  nsresult rv = SetMuted(mIsMuted);
+  NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "SetMuted failed");
+  return rv;
 }
 
 nsresult nsNPAPIPluginInstance::SetMuted(bool aIsMuted) {

@@ -13,7 +13,7 @@ interface nsIPrefBranch;
 interface nsIApplicationCache;
 interface nsIFile;
 interface nsIObserver;
-interface nsICookieSettings;
+interface nsICookieJarSettings;
 webidl Document;
 
 [scriptable, uuid(47360d57-8ef4-4a5d-8865-1a27a739ad1a)]
@@ -42,7 +42,7 @@ interface nsIOfflineCacheUpdateObserver : nsISupports {
    * Informs the observer about an application being available to associate.
    *
    * @param applicationCache
-   *        The application cache instance that has been created or found by the 
+   *        The application cache instance that has been created or found by the
    *        update to associate with
    */
   void applicationCacheAvailable(in nsIApplicationCache applicationCache);
@@ -90,6 +90,11 @@ interface nsIOfflineCacheUpdate : nsISupports {
   readonly attribute nsIURI manifestURI;
 
   /**
+   * The principal of the page that is requesting the update.
+   */
+  readonly attribute nsIPrincipal loadingPrincipal;
+
+  /**
    * TRUE if the cache update completed successfully.
    */
   readonly attribute boolean succeeded;
@@ -111,7 +116,7 @@ interface nsIOfflineCacheUpdate : nsISupports {
             [optional] in nsIFile aCustomProfileDir);
 
   /**
-   * Initialize the update for partial processing. 
+   * Initialize the update for partial processing.
    *
    * @param aManifestURI
    *        The manifest URI of the related cache.
@@ -120,15 +125,15 @@ interface nsIOfflineCacheUpdate : nsISupports {
    *        must be ID of cache in the cache group identified by
    *        the manifest URI passed in the first parameter.
    * @param aDocumentURI
-   *        The page that is requesting the update. May be null 
+   *        The page that is requesting the update. May be null
    *        when this information is unknown.
-   * @param aCookieSettings
-   *        The cookie settings belonging to the page that is requesting
+   * @param aCookieJarSettings
+   *        The cookie jar settings belonging to the page that is requesting
    *        the update.
    */
   void initPartial(in nsIURI aManifestURI, in ACString aClientID,
                    in nsIURI aDocumentURI, in nsIPrincipal aPrincipal,
-                   in nsICookieSettings aCookieSettings);
+                   in nsICookieJarSettings aCookieJarSettings);
 
   /**
    * Initialize the update to only check whether there is an update
@@ -228,9 +233,9 @@ interface nsIOfflineCacheUpdateService : nsISupports {
 
     /**
      * Schedule a cache update for a given offline manifest using app cache
-     * bound to the given appID+inIsolatedMozBrowser flag.  If an existing update
-     * is scheduled or running, that update will be returned. Otherwise a new
-     * update will be scheduled.
+     * bound to the given appID flag.  If an existing update is scheduled or
+     * running, that update will be returned. Otherwise a new update will be
+     * scheduled.
      */
     nsIOfflineCacheUpdate scheduleAppUpdate(in nsIURI aManifestURI,
                                             in nsIURI aDocumentURI,
@@ -266,26 +271,16 @@ interface nsIOfflineCacheUpdateService : nsISupports {
      * cache.
      * @param aPrincipal
      *        The principal to check.
-     * @param aPrefBranch
-     *        The pref branch to use to check the
-     *        offline-apps.allow_by_default pref.  If not specified,
-     *        the pref service will be used.
      */
-    boolean offlineAppAllowed(in nsIPrincipal aPrincipal,
-                              in nsIPrefBranch aPrefBranch);
+    boolean offlineAppAllowed(in nsIPrincipal aPrincipal);
 
     /**
      * Checks whether a document at the given URI should have access
      * to the offline cache.
      * @param aURI
      *        The URI to check
-     * @param aPrefBranch
-     *        The pref branch to use to check the
-     *        offline-apps.allow_by_default pref.  If not specified,
-     *        the pref service will be used.
      */
-    boolean offlineAppAllowedForURI(in nsIURI aURI,
-                                    in nsIPrefBranch aPrefBranch);
+    boolean offlineAppAllowedForURI(in nsIURI aURI);
 
     /**
      * Sets the "offline-app" permission for the principal.

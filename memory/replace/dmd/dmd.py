@@ -6,7 +6,7 @@
 
 '''This script analyzes a JSON file emitted by DMD.'''
 
-from __future__ import print_function, division
+from __future__ import absolute_import, print_function, division
 
 import argparse
 import collections
@@ -217,51 +217,44 @@ def fixStackTraces(inputFilename, isZipped, opener):
     bpsyms = os.environ.get('BREAKPAD_SYMBOLS_PATH', None)
     sysname = platform.system()
     if bpsyms and os.path.exists(bpsyms):
-        import fix_stack_using_bpsyms as fixModule
+        import fix_stacks as fixModule
 
         def fix(line):
-            return fixModule.fixSymbols(line, bpsyms, jsonEscape=True)
+            return fixModule.fixSymbols(line, jsonMode=True, breakpadSymsDir=bpsyms)
 
-    elif sysname == 'Linux':
-        import fix_linux_stack as fixModule
+    elif sysname in ('Linux', 'Darwin', 'Windows'):
+        import fix_stacks as fixModule
 
-        def fix(line): return fixModule.fixSymbols(line, jsonEscape=True)
-
-    elif sysname == 'Darwin':
-        import fix_macosx_stack as fixModule
-
-        def fix(line): return fixModule.fixSymbols(line, jsonEscape=True)
+        def fix(line): return fixModule.fixSymbols(line, jsonMode=True)
 
     else:
-        fix = None  # there is no fix script for Windows
+        return
 
-    if fix:
-        # Fix stacks, writing output to a temporary file, and then
-        # overwrite the original file.
-        tmpFile = tempfile.NamedTemporaryFile(delete=False)
+    # Fix stacks, writing output to a temporary file, and then overwrite the
+    # original file.
+    tmpFile = tempfile.NamedTemporaryFile(delete=False)
 
-        # If the input is gzipped, then the output (written initially to
-        # |tmpFile|) should be gzipped as well.
-        #
-        # And we want to set its pre-gzipped filename to '' rather than the
-        # name of the temporary file, so that programs like the Unix 'file'
-        # utility don't say that it was called 'tmp6ozTxE' (or something like
-        # that) before it was zipped. So that explains the |filename=''|
-        # parameter.
-        #
-        # But setting the filename like that clobbers |tmpFile.name|, so we
-        # must get that now in order to move |tmpFile| at the end.
-        tmpFilename = tmpFile.name
-        if isZipped:
-            tmpFile = gzip.GzipFile(filename='', fileobj=tmpFile)
+    # If the input is gzipped, then the output (written initially to |tmpFile|)
+    # should be gzipped as well.
+    #
+    # And we want to set its pre-gzipped filename to '' rather than the name of
+    # the temporary file, so that programs like the Unix 'file' utility don't
+    # say that it was called 'tmp6ozTxE' (or something like that) before it was
+    # zipped. So that explains the |filename=''| parameter.
+    #
+    # But setting the filename like that clobbers |tmpFile.name|, so we must
+    # get that now in order to move |tmpFile| at the end.
+    tmpFilename = tmpFile.name
+    if isZipped:
+        tmpFile = gzip.GzipFile(filename='', fileobj=tmpFile)
 
-        with opener(inputFilename, 'rb') as inputFile:
-            for line in inputFile:
-                tmpFile.write(fix(line))
+    with opener(inputFilename, 'rb') as inputFile:
+        for line in inputFile:
+            tmpFile.write(fix(line))
 
-        tmpFile.close()
+    tmpFile.close()
 
-        shutil.move(tmpFilename, inputFilename)
+    shutil.move(tmpFilename, inputFilename)
 
 
 def getDigestFromFile(args, inputFile):
@@ -334,20 +327,37 @@ def getDigestFromFile(args, inputFile):
         fmt = '    #{:02d}{:}'
 
         if args.filter_stacks_for_testing:
-            # When running SmokeDMD.cpp, every stack trace should contain at
-            # least one frame that contains 'DMD.cpp', from either |DMD.cpp| or
-            # |SmokeDMD.cpp|. (Or 'dmd.cpp' on Windows.) On builds without
-            # debuginfo we expect just |SmokeDMD|. If we see such a
-            # frame, we replace the entire stack trace with a single,
-            # predictable frame. There is too much variation in the stack
-            # traces across different machines and platforms to do more precise
-            # matching, but this level of matching will result in failure if
-            # stack fixing fails completely.
+            # This option is used by `test_dmd.js`, which runs the code in
+            # `SmokeDMD.cpp`. When running that test, there is too much
+            # variation in the stack traces across different machines and
+            # platforms to do exact output matching. However, every stack trace
+            # should have at least three frames that contain `DMD` (in one of
+            # `DMD.cpp`, `SmokeDMD.cpp`, `SmokeDMD`, or `SmokeDMD.exe`). Some
+            # example frames from automation (where `..` indicates excised path
+            # segments):
+            #
+            # Linux debug, with stack fixing using breakpad syms:
+            # `#01: replace_realloc(void*, unsigned long) [../dmd/DMD.cpp:1110]`
+            #
+            # Linux opt, with native stack fixing:
+            # `#02: TestFull(char const*, int, char const*, int) (../dmd/test/SmokeDMD.cpp:165)`
+            #
+            # Mac opt, with native stack fixing:
+            # `#03: RunTests() (../build/tests/bin/SmokeDMD + 0x21f9)`
+            #
+            # Windows opt, with native stack fixing failing due to a missing PDB:
+            # `#04: ??? (..\\build\\tests\\bin\\SmokeDMD.exe + 0x1c58)`
+            #
+            # If we see three such frames, we replace the entire stack trace
+            # with a single, predictable frame. This imprecise matching will at
+            # least detect if stack fixing fails completely.
+            dmd_frame_matches = 0
             for frameKey in frameKeys:
                 frameDesc = frameTable[frameKey]
-                expected = ('DMD.cpp', 'dmd.cpp', 'SmokeDMD')
-                if any(ex in frameDesc for ex in expected):
-                    return [fmt.format(1, ': ... DMD.cpp ...')]
+                if 'DMD' in frameDesc:
+                    dmd_frame_matches += 1
+                    if dmd_frame_matches >= 3:
+                        return [fmt.format(1, ': ... DMD.cpp ...')]
 
         # The frame number is always '#00' (see DMD.h for why), so we have to
         # replace that with the correct frame number.
@@ -592,11 +602,8 @@ def printDigest(args, digest):
                        number(record.reqSize),
                        number(record.slopSize)))
 
-            def abscmp((usableSize1, _1), (usableSize2, _2)): return \
-                cmp(abs(usableSize1), abs(usableSize2))
-            usableSizes = sorted(record.usableSizes.items(), cmp=abscmp,
-                                 reverse=True)
-
+            usableSizes = sorted(record.usableSizes.items(),
+                                 key=lambda x: abs(x[0]), reverse=True)
             hasSingleBlock = len(usableSizes) == 1 and usableSizes[0][1] == 1
 
             if not hasSingleBlock:

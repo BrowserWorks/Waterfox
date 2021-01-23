@@ -14,7 +14,6 @@
 #include "HandlerRelation.h"
 
 #include "Factory.h"
-#include "HandlerData.h"
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/a11y/HandlerDataCleanup.h"
 #include "mozilla/mscom/Registration.h"
@@ -26,6 +25,7 @@
 
 #include "AccessibleHypertext.h"
 #include "AccessibleHypertext2.h"
+#include "AccessibleRole.h"
 #include "Accessible2_i.c"
 #include "Accessible2_2_i.c"
 #include "Accessible2_3_i.c"
@@ -40,6 +40,16 @@
 
 namespace mozilla {
 namespace a11y {
+
+// Must be kept in sync with kClassNameTabContent in
+// accessible/windows/msaa/nsWinUtils.h.
+const WCHAR kEmulatedWindowClassName[] = L"MozillaContentWindowClass";
+const uint32_t kEmulatedWindowClassNameNChars =
+    sizeof(kEmulatedWindowClassName) / sizeof(WCHAR);
+// Mask to get the content process portion of a Windows accessible unique id.
+// This is bits 24 through 30 (LSB 0) of the id. This must be kept in sync
+// with kNumContentProcessIDBits in accessible/windows/msaa/MsaaIdGenerator.cpp.
+const uint32_t kIdContentProcessMask = 0x7F000000;
 
 static mscom::Factory<AccessibleHandler> sHandlerFactory;
 
@@ -72,13 +82,15 @@ AccessibleHandler::AccessibleHandler(IUnknown* aOuter, HRESULT* aResult)
       mIATableCellPassThru(nullptr),
       mIAHypertextPassThru(nullptr),
       mCachedData(),
+      mCachedDynamicDataMarshaledByCom(false),
       mCacheGen(0),
       mCachedHyperlinks(nullptr),
       mCachedNHyperlinks(-1),
       mCachedTextAttribRuns(nullptr),
       mCachedNTextAttribRuns(-1),
       mCachedRelations(nullptr),
-      mCachedNRelations(-1) {
+      mCachedNRelations(-1),
+      mIsEmulatedWindow(false) {
   RefPtr<AccessibleHandlerControl> ctl(gControlFactory.GetOrCreateSingleton());
   MOZ_ASSERT(ctl);
   if (!ctl) {
@@ -92,8 +104,8 @@ AccessibleHandler::AccessibleHandler(IUnknown* aOuter, HRESULT* aResult)
 }
 
 AccessibleHandler::~AccessibleHandler() {
-  // No need to zero memory, since we're being destroyed anyway.
-  CleanupDynamicIA2Data(mCachedData.mDynamicData, false);
+  CleanupDynamicIA2Data(mCachedData.mDynamicData,
+                        mCachedDynamicDataMarshaledByCom);
   if (mCachedData.mGeckoBackChannel) {
     mCachedData.mGeckoBackChannel->Release();
   }
@@ -208,9 +220,20 @@ AccessibleHandler::MaybeUpdateCachedData() {
     return E_POINTER;
   }
 
-  HRESULT hr =
-      mCachedData.mGeckoBackChannel->Refresh(&mCachedData.mDynamicData);
+  // While we're making the outgoing COM call below, an incoming COM call can
+  // be handled which calls ReadHandlerPayload or re-enters this function.
+  // Therefore, we mustn't update the cached data directly lest it be mutated
+  // elsewhere before the outgoing COM call returns and cause corruption or
+  // memory leaks. Instead, pass a temporary struct and update the cached data
+  // only after this call completes.
+  DynamicIA2Data newData;
+  HRESULT hr = mCachedData.mGeckoBackChannel->Refresh(&newData);
   if (SUCCEEDED(hr)) {
+    // Clean up the old data.
+    CleanupDynamicIA2Data(mCachedData.mDynamicData,
+                          mCachedDynamicDataMarshaledByCom);
+    mCachedData.mDynamicData = newData;
+    mCachedDynamicDataMarshaledByCom = true;
     // We just updated the cache, so update this object's cache generation
     // so we only update the cache again after the next change.
     mCacheGen = gen;
@@ -402,6 +425,26 @@ AccessibleHandler::QueryHandlerInterface(IUnknown* aProxyUnknown, REFIID aIid,
     if (mCachedData.mDynamicData.mChildCount == 0) {
       return E_NOINTERFACE;
     }
+    if (mCachedData.mDynamicData.mIA2Role == IA2_ROLE_INTERNAL_FRAME &&
+        mCachedData.mDynamicData.mChildCount == 1) {
+      // This is for an iframe. HandlerChildEnumerator works fine for iframes
+      // rendered in the same content process. However, for out-of-process
+      // iframes, HandlerProvider::get_AllChildren (called by
+      // HandlerChildEnumerator) will fail. This is because we only send down
+      // an IDispatch COM proxy for the embedded document, but get_AllChildren
+      // will try to QueryInterface this to IAccessible2 to reduce QI calls
+      // from the parent process. Because the content process is sandboxed,
+      // it can't make the outgoing COM call to QI the proxy from IDispatch to
+      // IAccessible2 and so it fails.
+      // Since an iframe only has one child anyway, we don't need the bulk fetch
+      // optimization offered by HandlerChildEnumerator or even IEnumVARIANT.
+      // Therefore, we explicitly tell the client this interface is not
+      // supported, which will cause the oleacc AccessibleChildren function
+      // to fall back to accChild.
+      // If we return E_NOINTERFACE here, mscom::Handler will try the COM
+      // proxy. S_FALSE signals that the proxy should not be tried.
+      return S_FALSE;
+    }
     RefPtr<IEnumVARIANT> childEnum(
         new HandlerChildEnumerator(this, mCachedData.mGeckoBackChannel));
     childEnum.forget(aOutInterface);
@@ -436,9 +479,10 @@ AccessibleHandler::ReadHandlerPayload(IStream* aStream, REFIID aIid) {
     return E_FAIL;
   }
   // Clean up the old data.
-  // No need to zero memory, since we're about to completely replace this.
-  CleanupDynamicIA2Data(mCachedData.mDynamicData, false);
+  CleanupDynamicIA2Data(mCachedData.mDynamicData,
+                        mCachedDynamicDataMarshaledByCom);
   mCachedData = newData;
+  mCachedDynamicDataMarshaledByCom = false;
 
   // These interfaces have been aggregated into the proxy manager.
   // The proxy manager will resolve these interfaces now on QI,
@@ -451,6 +495,15 @@ AccessibleHandler::ReadHandlerPayload(IStream* aStream, REFIID aIid) {
   // those pointers.
   ReleaseStaticIA2DataInterfaces(mCachedData.mStaticData);
 
+  WCHAR className[kEmulatedWindowClassNameNChars];
+  if (mCachedData.mDynamicData.mHwnd &&
+      ::GetClassName(
+          reinterpret_cast<HWND>(uintptr_t(mCachedData.mDynamicData.mHwnd)),
+          className, kEmulatedWindowClassNameNChars) > 0 &&
+      wcscmp(className, kEmulatedWindowClassName) == 0) {
+    mIsEmulatedWindow = true;
+  }
+
   if (!mCachedData.mGeckoBackChannel) {
     return S_OK;
   }
@@ -458,6 +511,15 @@ AccessibleHandler::ReadHandlerPayload(IStream* aStream, REFIID aIid) {
   RefPtr<AccessibleHandlerControl> ctl(gControlFactory.GetOrCreateSingleton());
   if (!ctl) {
     return E_OUTOFMEMORY;
+  }
+
+  if (mCachedData.mDynamicData.mIA2Role == ROLE_SYSTEM_COLUMNHEADER ||
+      mCachedData.mDynamicData.mIA2Role == ROLE_SYSTEM_ROWHEADER) {
+    // Because the same headers can apply to many cells, handler payloads
+    // include the ids of header cells, rather than potentially marshaling the
+    // same objects many times. We need to cache header cells here so we can
+    // get them by id later.
+    ctl->CacheAccessible(mCachedData.mDynamicData.mUniqueId, this);
   }
 
   return ctl->Register(WrapNotNull(mCachedData.mGeckoBackChannel));
@@ -642,6 +704,33 @@ AccessibleHandler::get_accChild(VARIANT varChild, IDispatch** ppdispChild) {
     disp.forget(ppdispChild);
     return S_OK;
   }
+
+  if (mIsEmulatedWindow && varChild.vt == VT_I4 && varChild.lVal < 0 &&
+      (varChild.lVal & kIdContentProcessMask) !=
+          (mCachedData.mDynamicData.mUniqueId & kIdContentProcessMask)) {
+    // Window emulation is enabled and the target id is in a different
+    // process to this accessible.
+    // When window emulation is enabled, each tab document gets its own HWND.
+    // OOP iframes get the same HWND as their tab document and fire events with
+    // that HWND. However, the root accessible for the HWND (the tab document)
+    // can't return accessibles for OOP iframes. Therefore, we must get the root
+    // accessible from the main HWND and call accChild on that instead.
+    // We don't need an oleacc proxy, so send WM_GETOBJECT directly instead of
+    // calling AccessibleObjectFromEvent.
+    HWND rootHwnd = GetParent(
+        reinterpret_cast<HWND>(uintptr_t(mCachedData.mDynamicData.mHwnd)));
+    MOZ_ASSERT(rootHwnd);
+    LRESULT lresult = ::SendMessage(rootHwnd, WM_GETOBJECT, 0, OBJID_CLIENT);
+    if (lresult > 0) {
+      RefPtr<IAccessible2_3> rootAcc;
+      HRESULT hr = ::ObjectFromLresult(lresult, IID_IAccessible2_3, 0,
+                                       getter_AddRefs(rootAcc));
+      if (hr == S_OK) {
+        return rootAcc->get_accChild(varChild, ppdispChild);
+      }
+    }
+  }
+
   HRESULT hr = ResolveIA2();
   if (FAILED(hr)) {
     return hr;
@@ -1462,7 +1551,49 @@ AccessibleHandler::get_columnExtent(long* nColumnsSpanned) {
 HRESULT
 AccessibleHandler::get_columnHeaderCells(IUnknown*** cellAccessibles,
                                          long* nColumnHeaderCells) {
-  HRESULT hr = ResolveIATableCell();
+  if (!cellAccessibles || !nColumnHeaderCells) {
+    return E_INVALIDARG;
+  }
+
+  HRESULT hr = S_OK;
+  if (HasPayload()) {
+    RefPtr<AccessibleHandlerControl> ctl(
+        gControlFactory.GetOrCreateSingleton());
+    if (!ctl) {
+      return E_OUTOFMEMORY;
+    }
+    *nColumnHeaderCells = mCachedData.mDynamicData.mNColumnHeaderCells;
+    *cellAccessibles = static_cast<IUnknown**>(
+        ::CoTaskMemAlloc(sizeof(IUnknown*) * *nColumnHeaderCells));
+    long i;
+    for (i = 0; i < *nColumnHeaderCells; ++i) {
+      RefPtr<AccessibleHandler> headerAcc;
+      hr = ctl->GetCachedAccessible(
+          mCachedData.mDynamicData.mColumnHeaderCellIds[i],
+          getter_AddRefs(headerAcc));
+      if (FAILED(hr)) {
+        break;
+      }
+      hr = headerAcc->QueryInterface(IID_IUnknown,
+                                     (void**)&(*cellAccessibles)[i]);
+      if (FAILED(hr)) {
+        break;
+      }
+    }
+    if (SUCCEEDED(hr)) {
+      return S_OK;
+    }
+    // If we failed to get any of the headers from the cache, don't use the
+    // cache at all. We need to clean up anything we did so far.
+    long failedHeader = i;
+    for (i = 0; i < failedHeader; ++i) {
+      (*cellAccessibles)[i]->Release();
+    }
+    ::CoTaskMemFree(*cellAccessibles);
+    *cellAccessibles = nullptr;
+  }
+
+  hr = ResolveIATableCell();
   if (FAILED(hr)) {
     return hr;
   }
@@ -1512,7 +1643,49 @@ AccessibleHandler::get_rowExtent(long* nRowsSpanned) {
 HRESULT
 AccessibleHandler::get_rowHeaderCells(IUnknown*** cellAccessibles,
                                       long* nRowHeaderCells) {
-  HRESULT hr = ResolveIATableCell();
+  if (!cellAccessibles || !nRowHeaderCells) {
+    return E_INVALIDARG;
+  }
+
+  HRESULT hr = S_OK;
+  if (HasPayload()) {
+    RefPtr<AccessibleHandlerControl> ctl(
+        gControlFactory.GetOrCreateSingleton());
+    if (!ctl) {
+      return E_OUTOFMEMORY;
+    }
+    *nRowHeaderCells = mCachedData.mDynamicData.mNRowHeaderCells;
+    *cellAccessibles = static_cast<IUnknown**>(
+        ::CoTaskMemAlloc(sizeof(IUnknown*) * *nRowHeaderCells));
+    long i;
+    for (i = 0; i < *nRowHeaderCells; ++i) {
+      RefPtr<AccessibleHandler> headerAcc;
+      hr = ctl->GetCachedAccessible(
+          mCachedData.mDynamicData.mRowHeaderCellIds[i],
+          getter_AddRefs(headerAcc));
+      if (FAILED(hr)) {
+        break;
+      }
+      hr = headerAcc->QueryInterface(IID_IUnknown,
+                                     (void**)&(*cellAccessibles)[i]);
+      if (FAILED(hr)) {
+        break;
+      }
+    }
+    if (SUCCEEDED(hr)) {
+      return S_OK;
+    }
+    // If we failed to get any of the headers from the cache, don't use the
+    // cache at all. We need to clean up anything we did so far.
+    long failedHeader = i;
+    for (i = 0; i < failedHeader; ++i) {
+      (*cellAccessibles)[i]->Release();
+    }
+    ::CoTaskMemFree(*cellAccessibles);
+    *cellAccessibles = nullptr;
+  }
+
+  hr = ResolveIATableCell();
   if (FAILED(hr)) {
     return hr;
   }

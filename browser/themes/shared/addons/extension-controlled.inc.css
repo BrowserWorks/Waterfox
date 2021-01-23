@@ -1,14 +1,13 @@
-#extension-notification-panel > .panel-arrowcontainer > .panel-arrowcontent {
-  padding: 0;
-}
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 .extension-controlled-notification > .popup-notification-body-container > .popup-notification-body {
   width: 30em;
 }
 
 .extension-controlled-notification > .popup-notification-body-container > .popup-notification-body > hbox > vbox > .popup-notification-description {
-  font-size: 1.3em;
-  font-weight: lighter;
+  font-weight: 600;
 }
 
 .extension-controlled-notification {

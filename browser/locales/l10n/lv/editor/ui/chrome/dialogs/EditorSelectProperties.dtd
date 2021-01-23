@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Atlases saraksta īpasības">
+
+<!ENTITY Select.label "Atlases saraksts">
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY OptGroup.label "Opciju grupa">
+
+
+
+
+
+<!ENTITY Option.label "Opcija">
+<!ENTITY OptionText.label "Teksts:">
+<!ENTITY OptionText.accesskey "T">
+<!ENTITY OptionValue.label "Vērtība:">
+<!ENTITY OptionValue.accesskey "V">
+
+
+
+
+
+<!ENTITY TextHeader.label "Teksts">
+<!ENTITY ValueHeader.label "Vērtība">
+<!ENTITY SelectedHeader.label "Atlasīts">
+
+<!ENTITY AddOption.label "Pievienot opciju">
+<!ENTITY AddOption.accesskey "o">
+<!ENTITY AddOptGroup.label "Pievienot grupu">
+<!ENTITY AddOptGroup.accesskey "g">
+
+
+
+
+
+

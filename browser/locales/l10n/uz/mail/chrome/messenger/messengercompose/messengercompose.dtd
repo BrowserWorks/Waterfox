@@ -1,0 +1,293 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+
+<!ENTITY msgComposeWindow.title "Yozish: (mavzusiz)">
+<!-- File Menu -->
+
+<!ENTITY fileMenu.label "Fayl">
+<!ENTITY fileMenu.accesskey "F">
+<!ENTITY newMenu.label "Yangi">
+<!ENTITY newMenu.accesskey "Y">
+<!ENTITY newMessage.label "Xabar">
+<!ENTITY newMessage.key "M">
+<!ENTITY newMessageCmd2.key "N">
+<!ENTITY newMessage.accesskey "X">
+<!ENTITY newContact.label "Manzil kitobidagi kontakt…">
+<!ENTITY newContact.accesskey "k">
+<!ENTITY attachMenu.label "Biriktirish">
+<!ENTITY attachMenu.accesskey "B">
+<!ENTITY attachFileCmd.label "Fayl(lar)…">
+<!ENTITY attachFileCmd.accesskey "F">
+<!ENTITY attachFileCmd.key "A">
+<!ENTITY attachCloudCmd.label "Filelink">
+<!ENTITY attachCloudCmd.accesskey "i">
+<!ENTITY attachPageCmd.label "Veb sahifa…">
+<!ENTITY attachPageCmd.accesskey "V">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "Shaxsiy karta (vCard)">
+<!ENTITY attachVCardCmd.accesskey "S">
+<!ENTITY remindLater.label "Kechroq eslatilsin">
+<!ENTITY remindLater.accesskey "K">
+<!ENTITY closeCmd.label "Yopish">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "Y">
+<!ENTITY saveCmd.label "Saqlash">
+<!ENTITY saveCmd.key "S">
+<!ENTITY saveCmd.accesskey "S">
+<!ENTITY saveAsCmd.label "Boshqa formatda saqlash">
+<!ENTITY saveAsCmd.accesskey "a">
+<!ENTITY saveAsFileCmd.label "Fayl…">
+<!ENTITY saveAsFileCmd.accesskey "F">
+<!ENTITY saveAsDraftCmd.label "Qoralama">
+<!ENTITY saveAsDraftCmd.accesskey "Q">
+<!ENTITY saveAsTemplateCmd.label "Namuna">
+<!ENTITY saveAsTemplateCmd.accesskey "N">
+<!ENTITY sendNowCmd.label "Darhol joʻnatish">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "j">
+<!ENTITY sendLaterCmd.label "Keyinroq joʻnatish">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "K">
+<!ENTITY printSetupCmd.label "Sahifani sozlash…">
+<!ENTITY printSetupCmd.accesskey "s">
+<!ENTITY printPreviewCmd.label "Chop qilishni ko‘rish">
+<!ENTITY printPreviewCmd.accesskey "n">
+<!ENTITY printCmd.label "Chop qilish…">
+<!ENTITY printCmd.key "P">
+<!ENTITY printCmd.accesskey "p">
+<!-- Edit Menu -->
+
+<!ENTITY editMenu.label "Tahrirlash">
+<!ENTITY editMenu.accesskey "T">
+<!ENTITY undoCmd.label "Amalni bekor qilish">
+<!ENTITY undoCmd.key "Z">
+<!ENTITY undoCmd.accesskey "b">
+<!ENTITY redoCmd.label "Amalni qaytarish">
+<!ENTITY redoCmd.key "Y">
+<!ENTITY redoCmd.accesskey "q">
+<!ENTITY cutCmd.key "X">
+<!ENTITY copyCmd.key "C">
+<!ENTITY pasteCmd.key "V">
+<!ENTITY pasteNoFormattingCmd.key "V">
+<!ENTITY pasteAsQuotationCmd.key "o">
+<!ENTITY editRewrapCmd.accesskey "j">
+<!ENTITY deleteCmd.label "O‘chirish">
+<!ENTITY deleteCmd.accesskey "O">
+<!ENTITY editRewrapCmd.label "Qayta joylash">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY renameAttachmentCmd.label "Biriktirma nomini o‘zgartirish…">
+<!ENTITY renameAttachmentCmd.accesskey "n">
+<!ENTITY selectAllCmd.accesskey "a">
+<!ENTITY findBarCmd.label "Topish…">
+<!ENTITY findBarCmd.accesskey "T">
+<!ENTITY findBarCmd.key "F">
+<!ENTITY findReplaceCmd.label "Topish va almashtirish…">
+<!ENTITY findReplaceCmd.accesskey "a">
+<!ENTITY findReplaceCmd.key "H">
+<!ENTITY findAgainCmd.label "Yana topish">
+<!ENTITY findAgainCmd.accesskey "p">
+<!ENTITY findAgainCmd.key "G">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "Oldingisini topish">
+<!ENTITY findPrevCmd.accesskey "t">
+<!ENTITY findPrevCmd.key "G">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+<!-- View Menu -->
+
+<!ENTITY viewMenu.label "Ko‘rinishi">
+<!ENTITY viewMenu.accesskey "K">
+<!ENTITY viewToolbarsMenuNew.label "Asboblar paneli">
+<!ENTITY viewToolbarsMenuNew.accesskey "A">
+<!ENTITY menubarCmd.label "Menyu paneli">
+<!ENTITY menubarCmd.accesskey "M">
+<!ENTITY showCompositionToolbarCmd.label "Xat yozish paneli">
+<!ENTITY showCompositionToolbarCmd.accesskey "o">
+<!ENTITY showFormattingBarCmd.label "Formatini o‘zgartirish paneli">
+<!ENTITY showFormattingBarCmd.accesskey "F">
+<!ENTITY showTaskbarCmd.label "Holat paneli">
+<!ENTITY showTaskbarCmd.accesskey "H">
+<!ENTITY customizeToolbar.label "Qulaylashtirish…">
+<!ENTITY customizeToolbar.accesskey "Q">
+
+<!ENTITY addressSidebar.label "Kontaktlar yon paneli">
+<!ENTITY addressSidebar.accesskey "K">
+<!-- Format Menu -->
+
+<!ENTITY formatMenu.label "Format">
+<!ENTITY formatMenu.accesskey "o">
+<!-- Options Menu -->
+
+<!ENTITY optionsMenu.label "Parametrlar">
+<!ENTITY optionsMenu.accesskey "P">
+<!ENTITY checkSpellingCmd2.label "Imloni tekshirish…">
+<!ENTITY checkSpellingCmd2.key "p">
+<!ENTITY checkSpellingCmd2.key2 "VK_F7">
+<!ENTITY checkSpellingCmd2.accesskey "t">
+<!ENTITY enableInlineSpellChecker.label "Yozayotganda imlo xatolarini tekshirish">
+<!ENTITY enableInlineSpellChecker.accesskey "t">
+<!ENTITY quoteCmd.label "Iqtibos xabari">
+<!ENTITY quoteCmd.accesskey "I">
+<!--LOCALIZATION NOTE attachVCard.label Don't translate the term 'vCard' -->
+
+<!ENTITY attachVCard.label "Shaxsiy kartani biriktirish (vCard)">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY returnReceiptMenu.label "Qabul qilinganni qaytarish">
+<!ENTITY returnReceiptMenu.accesskey "q">
+<!ENTITY dsnMenu.label "Yetib borish bildirishnomasi">
+<!ENTITY dsnMenu.accesskey "b">
+<!ENTITY deliveryFormatMenu.label "Yetib borish formati">
+<!ENTITY deliveryFormatMenu.accesskey "f">
+<!ENTITY autoFormatCmd.label "Auto-aniqlash">
+<!ENTITY autoFormatCmd.accesskey "A">
+<!ENTITY plainTextFormatCmd.label "Faqat oddiy matn">
+<!ENTITY plainTextFormatCmd.accesskey "o">
+<!ENTITY htmlFormatCmd.label "Murakkab matn (HTML) faqat">
+<!ENTITY htmlFormatCmd.accesskey "M">
+<!ENTITY bothFormatCmd.label "Oddiy va murakkab (HTML) matn">
+<!ENTITY bothFormatCmd.accesskey "O">
+<!ENTITY priorityMenu.label "Muhimlik darajasi">
+<!ENTITY priorityMenu.accesskey "M">
+<!ENTITY priorityButton.title "Muhimlik darajasi">
+<!ENTITY priorityButton.tooltiptext "Xabar muhimlik darajasini o‘zgartirish">
+<!ENTITY priorityButton.label "Muhimligi:">
+<!ENTITY lowestPriorityCmd.label "Juda past">
+<!ENTITY lowestPriorityCmd.accesskey "J">
+<!ENTITY lowPriorityCmd.label "Past">
+<!ENTITY lowPriorityCmd.accesskey "P">
+<!ENTITY normalPriorityCmd.label "O‘rtacha">
+<!ENTITY normalPriorityCmd.accesskey "O">
+<!ENTITY highPriorityCmd.label "Yuqori">
+<!ENTITY highPriorityCmd.accesskey "Y">
+<!ENTITY highestPriorityCmd.label "Eng yuqori">
+<!ENTITY highestPriorityCmd.accesskey "E">
+<!ENTITY fileCarbonCopyCmd.label "Nusxasini jo‘natish">
+<!ENTITY fileCarbonCopyCmd.accesskey "j">
+<!ENTITY fileHereMenu.label "Fayl bu yerga">
+<!-- Tools Menu -->
+
+<!ENTITY tasksMenu.label "Asboblar">
+<!ENTITY tasksMenu.accesskey "A">
+<!ENTITY messengerCmd.label "Xat va yangiliklar to‘plami">
+<!ENTITY messengerCmd.accesskey "X">
+<!ENTITY messengerCmd.commandkey "1">
+<!ENTITY addressBookCmd.label "Manzil kitobi">
+<!ENTITY addressBookCmd.accesskey "k">
+<!ENTITY addressBookCmd.key "B">
+<!ENTITY accountManagerCmd2.label "Hisob sozlamalari">
+<!ENTITY accountManagerCmd2.accesskey "s">
+<!ENTITY accountManagerCmdUnix2.accesskey "S">
+<!ENTITY preferencesCmd2.label "Tanlamalar">
+<!ENTITY preferencesCmd2.accesskey "T">
+<!ENTITY preferencesCmdUnix.label "Parametrlar">
+<!ENTITY preferencesCmdUnix.accesskey "m">
+<!--  Mac OS X Window Menu -->
+
+<!ENTITY minimizeWindow.key "m">
+<!ENTITY minimizeWindow.label "Yig‘ish">
+<!ENTITY bringAllToFront.label "Barchasini oldinga o‘tkazish">
+<!ENTITY zoomWindow.label "Masshtab">
+<!ENTITY windowMenu.label "Oyna">
+<!-- Mail Toolbar -->
+
+<!ENTITY sendButton.label "Jo‘natish">
+<!ENTITY quoteButton.label "Iqtibos">
+<!ENTITY addressButton.label "Kontaktlar">
+<!ENTITY attachButton.label "Biriktirish">
+<!ENTITY spellingButton.label "Imloni tekshirish">
+<!ENTITY saveButton.label "Saqlash">
+<!ENTITY printButton.label "Chop qilish">
+<!-- Mail Toolbar Tooltips -->
+
+<!ENTITY sendButton.tooltip "Bu xabarni hozir jo‘natish">
+<!ENTITY sendlaterButton.tooltip "Bu xabarni keyinroq jo‘natish">
+<!ENTITY quoteButton.tooltip "Oldingi xabardan iqtibos olish">
+<!ENTITY addressButton.tooltip "Manzil kitobdan qabul qiluvchini tanlash">
+<!ENTITY spellingButton.tooltip "Tanlanganni yoki butun xabarning imlo xatolarini tekshirish">
+<!ENTITY saveButton.tooltip "Bu xabarni saqlash">
+<!ENTITY cutButton.tooltip              "Kesish">
+<!ENTITY copyButton.tooltip             "Nusxa olish">
+<!ENTITY pasteButton.tooltip            "Qo‘yish">
+<!ENTITY printButton.tooltip "Bu xabarni chop qilish">
+
+<!-- Headers -->
+<!--LOCALIZATION NOTE headersSpace.style is for aligning  the From:, To: and
+    Subject: rows. It should be larger than the largest Header label  -->
+
+<!ENTITY fromAddr.accesskey "J">
+<!ENTITY subject.accesskey "M">
+<!-- Format Toolbar, imported from editorAppShell.xul -->
+
+<!ENTITY SmileButton.tooltip "Smayl kiritish">
+<!ENTITY smiley1Cmd.label "Smayl">
+<!ENTITY smiley2Cmd.label "Xo‘mraygan">
+<!ENTITY smiley3Cmd.label "Ko‘z qisgan">
+<!ENTITY smiley4Cmd.label "Tilini chiqargan">
+<!ENTITY smiley5Cmd.label "Kulayotgan">
+<!ENTITY smiley6Cmd.label "Uyalgan">
+<!ENTITY smiley7Cmd.label "Beqaror">
+<!ENTITY smiley8Cmd.label "Ajablangan">
+<!ENTITY smiley9Cmd.label "Bo‘sa">
+<!ENTITY smiley10Cmd.label "Hayqiriq">
+<!ENTITY smiley11Cmd.label "Sovuqqon">
+<!ENTITY smiley12Cmd.label "Maymunning og‘zi">
+<!ENTITY smiley13Cmd.label "Og‘zidan chiqib ketdi">
+<!ENTITY smiley14Cmd.label "Sodda">
+<!ENTITY smiley15Cmd.label "Yig‘lagan">
+<!ENTITY smiley16Cmd.label "Labini tishlagan">
+<!-- Message Pane Context Menu -->
+
+<!ENTITY spellCheckNoSuggestions.label "Tavsiyalar topilmadi">
+<!ENTITY spellCheckIgnoreWord.label "So‘zni e’tiborsiz qoldirish">
+<!ENTITY spellCheckIgnoreWord.accesskey "I">
+<!ENTITY spellCheckAddToDictionary.label "Lug‘atga qo‘shish">
+<!ENTITY spellCheckAddToDictionary.accesskey "L">
+<!ENTITY undo.label "Amalni qaytarish">
+<!ENTITY undo.accesskey "q">
+<!ENTITY cut.label "Kesish">
+<!ENTITY cut.accesskey "K">
+<!ENTITY copy.label "Nusxa olish">
+<!ENTITY copy.accesskey "N">
+<!ENTITY paste.label "Qo‘yish">
+<!ENTITY paste.accesskey "Q">
+<!ENTITY pasteQuote.label "Iqtibos sifatida qo‘yish">
+<!ENTITY pasteQuote.accesskey "I">
+
+<!ENTITY openAttachment.label "Ochish">
+<!ENTITY openAttachment.accesskey "O">
+<!ENTITY delete.label "O‘chirish">
+<!ENTITY delete.accesskey "O">
+<!ENTITY removeAttachment.label "Biriktirmani olib tashlash">
+<!ENTITY removeAttachment.accesskey "o">
+<!ENTITY renameAttachment.label "Nomini o‘zgartirish…">
+<!ENTITY renameAttachment.accesskey "N">
+<!ENTITY selectAll.label "Barchasini tanlash">
+<!ENTITY selectAll.accesskey "a">
+<!ENTITY attachFile.label "Fayl(lar)ni biriktirish…">
+<!ENTITY attachFile.accesskey "F">
+<!ENTITY attachCloud.label "Filelink…">
+<!ENTITY attachCloud.accesskey "i">
+<!ENTITY convertCloud.label "O‘girish:">
+<!ENTITY convertCloud.accesskey "O">
+<!ENTITY cancelUpload.label "Yuklab qo‘yishni bekor qilish">
+<!ENTITY cancelUpload.accesskey "b">
+<!ENTITY convertRegularAttachment.label "Muntazam biriktirma">
+<!ENTITY convertRegularAttachment.accesskey "b">
+<!ENTITY attachPage.label "Veb sahifani biriktirish…">
+<!ENTITY attachPage.accesskey "V">
+<!-- Spell checker context menu items -->
+
+<!-- Attachment Pane Header Bar Context Menu -->
+
+<!ENTITY spellAddDictionaries.label "Lug‘atlar qo‘shish…">
+<!ENTITY spellAddDictionaries.accesskey "q">
+<!-- Title for the address picker panel -->
+
+<!ENTITY addressesSidebarTitle.label "Kontaktlar">
+<!-- Identity popup customize menuitem -->
+
+<!ENTITY customizeFromAddress.label "Manzildan sozlab olish…">
+<!ENTITY customizeFromAddress.accesskey "M">
+

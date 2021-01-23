@@ -52,8 +52,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "mozilla/RefPtr.h"
 #include "mozilla/UniquePtr.h"
 #include "nsCOMPtr.h"
-#include "nsIEventTarget.h"
-#include "nsITimer.h"
 
 #include "m_cpp_utils.h"
 
@@ -80,12 +78,14 @@ struct NrIceCandidate {
 
   NrIceAddr cand_addr;
   NrIceAddr local_addr;
+  std::string mdns_addr;
   Type type;
   TcpType tcp_type;
   std::string codeword;
   std::string label;
   bool trickled;
   uint32_t priority;
+  bool is_proxied = false;
 };
 
 struct NrIceCandidatePair {
@@ -153,7 +153,8 @@ class NrIceMediaStream {
 
   // Parse trickle ICE candidate
   nsresult ParseTrickleCandidate(const std::string& candidate,
-                                 const std::string& ufrag);
+                                 const std::string& ufrag,
+                                 const std::string& mdns_addr);
 
   // Disable a component
   nsresult DisableComponent(int component);
@@ -191,7 +192,8 @@ class NrIceMediaStream {
   // the candidate belongs to.
   const std::string& GetId() const { return id_; }
 
-  sigslot::signal3<NrIceMediaStream*, const std::string&, const std::string&>
+  sigslot::signal5<NrIceMediaStream*, const std::string&, const std::string&,
+                   const std::string&, const std::string&>
       SignalCandidate;  // A new ICE candidate:
 
   sigslot::signal1<NrIceMediaStream*> SignalReady;   // Candidate pair ready.

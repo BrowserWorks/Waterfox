@@ -7,8 +7,9 @@
 
 #include "mozilla/Atomics.h"
 #include "mozilla/IntegerRange.h"
-#include "mozilla/Move.h"
 #include "mozilla/Vector.h"
+
+#include <utility>
 
 #include "js/AllocPolicy.h"
 #include "jsapi-tests/tests.h"
@@ -55,12 +56,13 @@ BEGIN_TEST(testThreadingThreadSetName) {
 END_TEST(testThreadingThreadSetName)
 
 BEGIN_TEST(testThreadingThreadId) {
-  CHECK(js::Thread::Id() == js::Thread::Id());
-  js::Thread::Id fromOther;
+  CHECK(js::ThreadId() == js::ThreadId());
+  js::ThreadId fromOther;
   js::Thread thread;
-  CHECK(thread.init([](js::Thread::Id* idp) { *idp = js::ThisThread::GetId(); },
-                    &fromOther));
-  js::Thread::Id fromMain = thread.get_id();
+  CHECK(thread.init(
+      [](js::ThreadId* idp) { *idp = js::ThreadId::ThisThreadId(); },
+      &fromOther));
+  js::ThreadId fromMain = thread.get_id();
   thread.join();
   CHECK(fromOther == fromMain);
   return true;

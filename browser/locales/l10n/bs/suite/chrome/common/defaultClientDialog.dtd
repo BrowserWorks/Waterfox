@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultClient.title  "Izvorni klijent">
+<!ENTITY defaultClient.intro  "Koristite &brandShortName; kao glavnog klijenta za:">
+
+<!ENTITY browser.label "Browser">
+<!ENTITY email.label "E-pošta">
+<!ENTITY newsgroups.label "Interesne grupe">
+<!ENTITY feeds.label "Kanali">
+
+<!ENTITY checkOnStartup.label "Uvijek provjeri prilikom pokretanja &brandShortName;">

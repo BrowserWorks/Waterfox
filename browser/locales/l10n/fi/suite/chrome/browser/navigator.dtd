@@ -1,0 +1,91 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/navigator.xul -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items --> 
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE --> 
+<!ENTITY mainWindow.title "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+
+<!ENTITY mainWindow.titleprivate "(tietosuojattu selaus)">
+
+<!ENTITY editPageCmd.label "Muokkaa sivua">
+<!ENTITY editPageCmd.accesskey "v">
+<!ENTITY editPageCmd.commandkey "e">
+
+<!ENTITY navbarCmd.label "Navigaatiopalkki">
+<!ENTITY navbarCmd.accesskey "N">
+<!ENTITY bookmarksToolbarCmd.label     "Kirjanmerkkipalkki">
+<!ENTITY bookmarksToolbarCmd.accesskey "K">
+
+<!ENTITY closeWindow.label "Sulje ikkuna">
+<!ENTITY closeWindow.accesskey "i">
+
+<!ENTITY minimizeButton.tooltip       "Pienennä">
+<!ENTITY restoreButton.tooltip        "Palauta">
+
+<!ENTITY feedsMenu.label "Tilaa sivu">
+<!ENTITY feedsMenu.accesskey "T">
+
+<!ENTITY menuBar.tooltip                  "Valikkopalkki">
+<!ENTITY bookmarksToolbar.tooltip         "Kirjanmerkkipalkki">
+<!ENTITY navigationToolbar.tooltip        "Navigointipalkki">
+
+<!ENTITY editBookmark.done.label "Valmis">
+<!ENTITY editBookmark.cancel.label "Peruuta">
+<!ENTITY editBookmark.removeBookmark.accessKey "P">
+
+<!-- Toolbar items --> 
+<!ENTITY backButton.label             "Edellinen">
+<!ENTITY backButton.tooltip           "Siirry sivu taaksepäin">
+<!ENTITY forwardButton.label          "Seuraava">
+<!ENTITY forwardButton.tooltip        "Siirry sivu eteenpäin">
+<!ENTITY reloadButton.label           "Päivitä">
+<!ENTITY reloadButton.tooltip         "Päivitä avoin sivu">
+<!ENTITY stopButton.label             "Pysäytä">
+<!ENTITY stopButton.tooltip           "Lopeta sivun lataus">
+<!ENTITY searchButton.label           "Hae">
+<!ENTITY searchButton.tooltip         "Kirjoita hakusana kenttään ja paina Hae">
+<!ENTITY goButton.label               "Siirry">
+<!ENTITY goButton.tooltip             "Kirjoita osoite kenttään ja paina Siirry">
+<!ENTITY printButton.label            "Tulosta">
+<!ENTITY printButton.tooltip          "Tulosta sivu">
+
+<!ENTITY throbber.tooltip             "Siirry &vendorShortName;:n kotisivulle">
+
+<!ENTITY throbber.tooltip2            "Siirry &brandShortName;n kotisivulle">
+
+<!ENTITY locationBar.tooltip          "Kirjoita osoite, hakusana tai pikakomento">
+<!ENTITY locationBar.accesskey        "O">
+<!ENTITY locationBar.title            "Osoite">
+<!ENTITY proxyIcon.tooltip            "Vedä ja pudota tämä kuvake luodaksesi linkin tähän sivuun">
+
+<!ENTITY searchItem.title             "Hae">
+
+<!ENTITY bookmarksButton.label        "Kirjanmerkit">
+<!ENTITY bookmarksButton.tooltip      "Kirjanmerkkilista">
+<!ENTITY homeButton.label             "Aloitussivu">
+<!ENTITY bookmarksToolbarItem.label   "Kirjanmerkkipalkin kirjanmerkit">
+<!ENTITY bookmarksToolbarChevron.tooltip "Näytä enemmän kirjanmerkkejä">
+
+<!-- Statusbar -->
+<!ENTITY  statusText.label            "Valmis">
+
+<!ENTITY popupIcon.tooltiptext      "Salli ponnahdusikkunat tällä sivustolla">
+
+<!ENTITY viewSecurityInfo.label      "Näytä turvallisuustiedot">
+<!ENTITY viewSecurityInfo.accesskey  "N">
+<!ENTITY viewCertificate.label       "Näytä varmenne">
+<!ENTITY viewCertificate.accesskey   "v">
+<!ENTITY viewCertManager.label       "Avaa varmenteiden hallinta">
+<!ENTITY viewCertManager.accesskey   "h">
+
+<!ENTITY zoomIn.tooltiptext          "Suurenna">
+<!ENTITY zoomOut.tooltiptext         "Pienennä">

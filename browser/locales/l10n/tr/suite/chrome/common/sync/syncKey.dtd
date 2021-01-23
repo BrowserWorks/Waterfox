@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY syncKey.page.title "&syncBrand.fullName.label; anahtarınız">
+<!ENTITY syncKey.page.description "Bu anahtar &syncBrand.fullName.label; hesabınızdaki verileri çözmek için kullanılır. Yeni bir bilgisayar veya aygıtta &syncBrand.fullName.label; uygulamasını her yapılandırmanızda bu anahtarı girmek zorundasınız.">
+<!ENTITY syncKey.keepItSecret.heading "İyi saklayın">
+<!ENTITY syncKey.keepItSecret.description "&syncBrand.fullName.label; hesabınız gizliliğinizi korumak için şifrelenir. Kişisel bilgilerinizi bu anahtarınız olmaksızın çözmek bir başkasının yıllarını alacaktır. Bu anahtarın tek sahibi sizsiniz. Bu, &syncBrand.fullName.label; verilerine ulaşabilen tek kişi sizsiniz demektir.">
+<!ENTITY syncKey.keepItSafe.heading "Güvende tutun">
+<!ENTITY syncKey.keepItSafe1.description "Bu anahtarı kaybetmeyin.">
+<!ENTITY syncKey.keepItSafe2.description " Anahtarınızın kopyasını saklamıyoruz (yoksa güvenli olmazdı!), bu nedenle onu kaybederseniz ">
+<!ENTITY syncKey.keepItSafe3.description "size yardımcı olamayız">
+<!ENTITY syncKey.keepItSafe4.description ". Yeni bir bilgisayar veya aygıtta &syncBrand.fullName.label; kullandığınızda bu anahtarı kullanmak zorunda olacaksınız.">
+<!ENTITY syncKey.findOutMore1.label "&syncBrand.fullName.label; ve gizliliğiniz hakkında daha fazla bilgi alın: ">
+<!ENTITY syncKey.findOutMore2.label ".">
+<!ENTITY syncKey.footer1.label "&syncBrand.fullName.label; hizmet koşulları: ">
+<!ENTITY syncKey.footer2.label "Gizlilik politikası: ">
+<!ENTITY syncKey.footer3.label ".">

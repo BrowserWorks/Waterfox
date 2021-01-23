@@ -58,16 +58,6 @@
 #define XRE_USER_APP_DATA_DIR "UAppData"
 
 /**
- * A directory service key which provides a list of all enabled extension
- * directories and files (packed XPIs).  The list includes compatible
- * platform-specific extension subdirectories.
- *
- * @note The directory list will have no members when the application is
- *       launched in safe mode.
- */
-#define XRE_EXTENSIONS_DIR_LIST "XREExtDL"
-
-/**
  * A directory service key which provides the executable file used to
  * launch the current process.  This is the same value returned by the
  * XRE_GetBinaryPath function defined below.
@@ -150,6 +140,13 @@
  * Should be a synonym for XCurProcD everywhere except in tests.
  */
 #define XRE_ADDON_APP_DIR "XREAddonAppDir"
+
+/**
+ * A directory service key which specifies the distribution specific files for
+ * the application unique for each user.
+ * It's located at /run/user/$UID/<product name>/
+ */
+#define XRE_USER_RUNTIME_DIR "XREUserRunTimeDir"
 
 /**
  * A directory service key which provides the update directory. Callers should
@@ -383,7 +380,7 @@ static const char* const kGeckoProcessTypeString[] = {
 static_assert(MOZ_ARRAY_LENGTH(kGeckoProcessTypeString) == GeckoProcessType_End,
               "Array length mismatch");
 
-XRE_API(const char*, XRE_ChildProcessTypeToString,
+XRE_API(const char*, XRE_GeckoProcessTypeToString,
         (GeckoProcessType aProcessType))
 XRE_API(const char*, XRE_ChildProcessTypeToAnnotation,
         (GeckoProcessType aProcessType))
@@ -403,26 +400,19 @@ XRE_API(void, XRE_SetAndroidChildFds,
 
 XRE_API(void, XRE_SetProcessType, (const char* aProcessTypeString))
 
-// Used in child processes.
-#if defined(XP_WIN)
-// Uses uintptr_t, even though it's really a HANDLE, because including
-// <windows.h> here caused compilation issues.
-XRE_API(bool, XRE_SetRemoteExceptionHandler,
-        (const char* aPipe, uintptr_t aCrashTimeAnnotationFile))
-#else
-XRE_API(bool, XRE_SetRemoteExceptionHandler, (const char* aPipe))
-#endif
-
-namespace mozilla {
-namespace gmp {
-class GMPLoader;
-}  // namespace gmp
-}  // namespace mozilla
-
 XRE_API(nsresult, XRE_InitChildProcess,
         (int aArgc, char* aArgv[], const XREChildData* aChildData))
 
+/**
+ * Return the GeckoProcessType of the current process.
+ */
 XRE_API(GeckoProcessType, XRE_GetProcessType, ())
+
+/**
+ * Return the string representation of the GeckoProcessType of the current
+ * process.
+ */
+XRE_API(const char*, XRE_GetProcessTypeString, ())
 
 /**
  * Returns true when called in the e10s parent process.  Does *NOT* return true
@@ -449,14 +439,6 @@ XRE_API(bool, XRE_IsSocketProcess, ())
  * false if we should rely solely on the Gecko event loop.
  */
 XRE_API(bool, XRE_UseNativeEventProcessing, ())
-
-#if defined(XP_WIN)
-/**
- * @returns true if win32k calls are allowed in this process type, false if
- *          win32k is (or should be) disabled.
- */
-XRE_API(bool, XRE_Win32kCallsAllowed, ())
-#endif
 
 typedef void (*MainFunction)(void* aData);
 
@@ -508,5 +490,11 @@ XRE_API(int, XRE_XPCShellMain,
 XRE_API(void, XRE_LibFuzzerSetDriver, (LibFuzzerDriver))
 
 #endif  // LIBFUZZER
+
+#ifdef MOZ_ENABLE_FORKSERVER
+
+XRE_API(int, XRE_ForkServer, (int* aArgc, char*** aArgv))
+
+#endif  // MOZ_ENABLE_FORKSERVER
 
 #endif  // _nsXULAppAPI_h__

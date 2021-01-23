@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+<!-- LOCALIZATION NOTE  (editorWindow.titlemodifier): DONT_TRANSLATE -->
+
+<!ENTITY editorWindow.titlemodifier "Composer"> 
+<!ENTITY editorWindow.titlemodifiermenuseparator " - ">
+<!-- Menu items:  the . means that the menu item isn't implemented yet -->
+<!-- Toolbar-only items -->
+
+
+<!ENTITY compositionToolbar.tooltip "Composition asboblar paneli">
+<!ENTITY previewToolbarCmd.label "Ko‘rish">
+<!ENTITY previewToolbarCmd.tooltip "Ushbu sahifani brauzerda yuklash">
+<!-- File menu items -->
+
+<!ENTITY exportToTextCmd.label "Mantga eksport qilish…">
+<!ENTITY exportToTextCmd.accesskey "x">
+<!ENTITY previewCmd.label "Sahifani ko‘rish">
+<!ENTITY previewCmd.accesskey "k">
+<!ENTITY sendPageCmd.label "Sahifani jo‘natish…">
+<!ENTITY sendPageCmd.accesskey "j">
+<!-- View menu items -->
+
+<!ENTITY compositionToolbarCmd.label "Composition asboblar paneli">
+<!ENTITY compositionToolbarCmd.accesskey "C">
+<!ENTITY formattingToolbarCmd.label "Formatlash asboblar paneli">
+<!ENTITY formattingToolbarCmd.accesskey "F">
+<!ENTITY editmodeToolbarCmd.label "Tahrirlash rejimi asboblar paneli">
+<!ENTITY editmodeToolbarCmd.accesskey "T">
+<!-- Format menu items -->
+
+<!ENTITY formatMenu.label "Formatlash">
+<!ENTITY formatMenu.accesskey "o">
+<!ENTITY grid.label "Panjara joylashuvi">
+<!ENTITY grid.accesskey "y">
+<!ENTITY pageProperties.label "Sahifa nomi va xossalari…">
+<!ENTITY pageProperties.accesskey "g">
+<!-- Tools menu items -->
+
+<!ENTITY validateCmd.label "HTML’ni tasdiqlash">
+<!ENTITY validateCmd.accesskey "V">
+<!-- Display Mode toolbar and View menu items -->
+
+<!ENTITY NormalModeTab.label "O‘rtacha">
+<!ENTITY NormalMode.label "O‘rtacha tahrirlash rejimi">
+<!ENTITY NormalMode.accesskey "O">
+<!ENTITY NormalMode.tooltip "Jadval chegaralari va nomlangan ko‘rsatkichlarni ko‘rsatish">
+<!ENTITY AllTagsModeTab.label "HTML teglar">
+<!ENTITY AllTagsMode.label "HTML teglar">
+<!ENTITY AllTagsMode.accesskey "e">
+<!ENTITY AllTagsMode.tooltip "Barcha HTML teglar uchun nishonchalarni ko‘rsatish">
+<!-- LOCALIZATION NOTE: (HTMLSourceModeTab.dir, HTMLSourceModeTab.label)
+     Do NOT translate text for 'HTMLSourceModeTab.dir', use latin "ltr" if
+     you want the <html> image to left of the 'HTMLSourceModeTab.label' text,
+     or use latin "rtl" if you want this image to the right of text. You do
+     not need to include HTML in the label 'HTMLSourceModeTab.label' -->
+<!ENTITY HTMLSourceModeTab.dir "ltr">
+<!ENTITY HTMLSourceModeTab.label "Manba">
+<!ENTITY HTMLSourceMode.label "HTML manba">
+<!ENTITY HTMLSourceMode.accesskey "H">
+<!ENTITY HTMLSourceMode.tooltip "HTML manbani tahrirlash">
+<!ENTITY PreviewModeTab.label "Oldindan ko‘rish">
+<!ENTITY PreviewMode.label "Oldindan ko‘rish">
+<!ENTITY PreviewMode.accesskey "O">
+<!ENTITY PreviewMode.tooltip "WYSIWYG (brauzer ichidagi) kabi ko‘rsatish">

@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Iɣewwaṛen n umiḍan">
+<!ENTITY accountName.label "Isem n umiḍan:">
+<!ENTITY accountName.accesskey "s">
+<!ENTITY identityTitle.label "Tamagit tamezwert">
+<!ENTITY identityDesc.label "Yal amiḍan ɣur-s tamagit, tamagit d talɣut ara walin yemdanen nniḍen ticki ɣran iznan-inek.">
+<!ENTITY name.label "Isem-ik:">
+<!ENTITY name.accesskey "s">
+<!ENTITY email.label "Tansa Imayl:">
+<!ENTITY email.accesskey "n">
+<!ENTITY catchAll.label "Azen-d tiririt si tmagit-a ma yili iqerra n usiweḍ mṣadan:">
+<!ENTITY catchAll.accesskey "d">
+<!ENTITY replyTo.label "Err-i tensa:">
+<!ENTITY replyTo.accesskey "n">
+<!ENTITY replyTo.placeholder "Iɣerwaden ad erren i tensa-yagi nniḍen">
+<!ENTITY organization.label "Takebbanit:">
+<!ENTITY organization.accesskey "b">
+<!ENTITY signatureText.label "Aḍris n uzmul:">
+<!ENTITY signatureText.accesskey "ḍ">
+<!ENTITY signatureHtml.label "Seqdec HTML (amedya:, &lt;b&gt;bold&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "L">
+<!ENTITY signatureFile.label "Seddu azmul seg ufaylu (aḍris, HTML, neɣ tugna):">
+<!ENTITY signatureFile.accesskey "t">
+<!ENTITY edit.label "Ẓreg...">
+<!ENTITY choose.label "Fren...">
+<!ENTITY choose.accesskey "F">
+<!ENTITY editVCard.label "Ẓreg vCard...">
+<!ENTITY editVCard.accesskey "Ẓ">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Seddu vCard inu deg iznan">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "Sefrek timagiyin...">
+<!ENTITY manageIdentities.accesskey "r">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Aqeddac uffiɣ (SMTP):">
+<!ENTITY smtpName.accesskey "q">
+<!ENTITY smtpDefaultServer.label "Seqdec aqeddac amezwer">
+
+<!ENTITY smtpServerEdit.label "Ẓreg ageddac SMTP…">
+<!ENTITY smtpServerEdit.accesskey "R">

@@ -10,7 +10,6 @@
 #include "mozilla/dom/Document.h"
 #include "nsGkAtoms.h"
 #include "nsMenuPopupFrame.h"
-#include "nsIServiceManager.h"
 #include "nsIDragService.h"
 #include "nsIDragSession.h"
 #ifdef MOZ_XUL
@@ -348,12 +347,7 @@ void nsXULTooltipListener::CheckTreeBodyMove(MouseEvent* aMouseEvent) {
     // determine if we are going to need a titletip
     // XXX check the disabletitletips attribute on the tree content
     mNeedTitletip = false;
-    int16_t colType = -1;
-    if (col) {
-      colType = col->Type();
-    }
-    if (row >= 0 && cellInfo.mChildElt.EqualsLiteral("text") &&
-        colType != TreeColumn_Binding::TYPE_PASSWORD) {
+    if (row >= 0 && cellInfo.mChildElt.EqualsLiteral("text")) {
       mNeedTitletip = tree->IsCellCropped(row, col, rv);
     }
 

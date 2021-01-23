@@ -6,16 +6,12 @@
 #ifndef CompositionTransaction_h
 #define CompositionTransaction_h
 
-#include "mozilla/EditTransactionBase.h"   // base class
+#include "mozilla/EditTransactionBase.h"  // base class
+
+#include "mozilla/EditorDOMPoint.h"  // EditorDOMPointInText
+#include "mozilla/WeakPtr.h"
 #include "nsCycleCollectionParticipant.h"  // various macros
 #include "nsString.h"                      // mStringToInsert
-
-#define NS_IMETEXTTXN_IID                            \
-  {                                                  \
-    0xb391355d, 0x346c, 0x43d1, {                    \
-      0x85, 0xed, 0x9e, 0x65, 0xbe, 0xe7, 0x7e, 0x48 \
-    }                                                \
-  }
 
 namespace mozilla {
 
@@ -33,15 +29,15 @@ class Text;
  * composition string, modifying the composition string or its IME selection
  * ranges and commit or cancel the composition.
  */
-class CompositionTransaction final : public EditTransactionBase {
+class CompositionTransaction final
+    : public EditTransactionBase,
+      public SupportsWeakPtr<CompositionTransaction> {
  protected:
   CompositionTransaction(EditorBase& aEditorBase,
-                         const nsAString& aStringToInsert, dom::Text& aTextNode,
-                         uint32_t aOffset);
+                         const nsAString& aStringToInsert,
+                         const EditorDOMPointInText& aPointToInsert);
 
  public:
-  NS_DECLARE_STATIC_IID_ACCESSOR(NS_IMETEXTTXN_IID)
-
   /**
    * Creates a composition transaction.  aEditorBase must not return from
    * GetComposition() while calling this method.  Note that this method will
@@ -52,13 +48,13 @@ class CompositionTransaction final : public EditTransactionBase {
    *                            be different from actual composition string.
    *                            E.g., password editor can hide the character
    *                            with a different character.
-   * @param aTextNode           The text node which will have aStringToInsert.
-   * @param aOffset             The offset in aTextNode where aStringToInsert
-   *                            will be inserted.
+   * @param aPointToInsert      The insertion point.
    */
   static already_AddRefed<CompositionTransaction> Create(
       EditorBase& aEditorBase, const nsAString& aStringToInsert,
-      dom::Text& aTextNode, uint32_t aOffset);
+      const EditorDOMPointInText& aPointToInsert);
+
+  MOZ_DECLARE_WEAKREFERENCE_TYPENAME(CompositionTransaction)
 
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(CompositionTransaction,
                                            EditTransactionBase)
@@ -66,20 +62,20 @@ class CompositionTransaction final : public EditTransactionBase {
   NS_DECL_ISUPPORTS_INHERITED
 
   NS_DECL_EDITTRANSACTIONBASE
+  NS_DECL_EDITTRANSACTIONBASE_GETASMETHODS_OVERRIDE(CompositionTransaction)
 
-  NS_IMETHOD Merge(nsITransaction* aTransaction, bool* aDidMerge) override;
+  NS_IMETHOD Merge(nsITransaction* aOtherTransaction, bool* aDidMerge) override;
 
   void MarkFixed();
 
-  static nsresult SetIMESelection(EditorBase& aEditorBase, dom::Text* aTextNode,
-                                  uint32_t aOffsetInNode,
-                                  uint32_t aLengthOfCompositionString,
-                                  const TextRangeArray* aRanges);
+  MOZ_CAN_RUN_SCRIPT static nsresult SetIMESelection(
+      EditorBase& aEditorBase, dom::Text* aTextNode, uint32_t aOffsetInNode,
+      uint32_t aLengthOfCompositionString, const TextRangeArray* aRanges);
 
  private:
-  ~CompositionTransaction();
+  virtual ~CompositionTransaction() = default;
 
-  nsresult SetSelectionForRanges();
+  MOZ_CAN_RUN_SCRIPT nsresult SetSelectionForRanges();
 
   // The text element to operate upon.
   RefPtr<dom::Text> mTextNode;
@@ -100,8 +96,6 @@ class CompositionTransaction final : public EditTransactionBase {
 
   bool mFixed;
 };
-
-NS_DEFINE_STATIC_IID_ACCESSOR(CompositionTransaction, NS_IMETEXTTXN_IID)
 
 }  // namespace mozilla
 

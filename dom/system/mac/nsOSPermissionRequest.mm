@@ -37,6 +37,17 @@ nsOSPermissionRequest::GetVideoCapturePermissionState(uint16_t* aVideo) {
 }
 
 NS_IMETHODIMP
+nsOSPermissionRequest::GetScreenCapturePermissionState(uint16_t* aScreen) {
+  MOZ_ASSERT(aScreen);
+
+  if (!nsCocoaFeatures::OnCatalinaOrLater()) {
+    return nsOSPermissionRequestBase::GetScreenCapturePermissionState(aScreen);
+  }
+
+  return nsCocoaUtils::GetScreenCapturePermissionState(*aScreen);
+}
+
+NS_IMETHODIMP
 nsOSPermissionRequest::RequestVideoCapturePermission(JSContext* aCx, Promise** aPromiseOut) {
   if (!nsCocoaFeatures::OnMojaveOrLater()) {
     return nsOSPermissionRequestBase::RequestVideoCapturePermission(aCx, aPromiseOut);
@@ -68,4 +79,13 @@ nsOSPermissionRequest::RequestAudioCapturePermission(JSContext* aCx, Promise** a
   rv = nsCocoaUtils::RequestAudioCapturePermission(promiseHandle);
   promiseHandle.forget(aPromiseOut);
   return rv;
+}
+
+NS_IMETHODIMP
+nsOSPermissionRequest::MaybeRequestScreenCapturePermission() {
+  if (!nsCocoaFeatures::OnCatalinaOrLater()) {
+    return nsOSPermissionRequestBase::MaybeRequestScreenCapturePermission();
+  }
+
+  return nsCocoaUtils::MaybeRequestScreenCapturePermission();
 }

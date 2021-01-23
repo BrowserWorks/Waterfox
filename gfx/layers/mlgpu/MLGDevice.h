@@ -222,7 +222,8 @@ class MLGDevice {
 
   virtual bool Initialize();
 
-  virtual TextureFactoryIdentifier GetTextureFactoryIdentifier() const = 0;
+  virtual TextureFactoryIdentifier GetTextureFactoryIdentifier(
+      widget::CompositorWidget* aWidget) const = 0;
   virtual int32_t GetMaxTextureSize() const = 0;
   virtual LayersBackend GetLayersBackend() const = 0;
 
@@ -307,11 +308,11 @@ class MLGDevice {
       MLGRenderTargetFlags aFlags = MLGRenderTargetFlags::Default) = 0;
 
   // Clear a render target to the given color, or clear a depth buffer.
-  virtual void Clear(MLGRenderTarget* aRT, const gfx::Color& aColor) = 0;
+  virtual void Clear(MLGRenderTarget* aRT, const gfx::DeviceColor& aColor) = 0;
   virtual void ClearDepthBuffer(MLGRenderTarget* aRT) = 0;
 
   // This is only available if CanUseClearView() returns true.
-  virtual void ClearView(MLGRenderTarget* aRT, const gfx::Color& aColor,
+  virtual void ClearView(MLGRenderTarget* aRT, const gfx::DeviceColor& aColor,
                          const gfx::IntRect* aRects, size_t aNumRects) = 0;
 
   // Drawing Commands

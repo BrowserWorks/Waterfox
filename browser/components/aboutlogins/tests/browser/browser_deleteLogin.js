@@ -1,22 +1,11 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
-let gLogins = [
-  {
-    guid: "70a",
-    username: "jared",
-    password: "deraj",
-    hostname: "https://www.example.com",
-  },
-  {
-    guid: "70b",
-    username: "firefox",
-    password: "xoferif",
-    hostname: "https://www.example.com",
-  },
-];
+ChromeUtils.import("resource://testing-common/OSKeyStoreTestUtils.jsm", this);
 
 add_task(async function setup() {
+  TEST_LOGIN1 = await addLogin(TEST_LOGIN1);
+  TEST_LOGIN2 = await addLogin(TEST_LOGIN2);
   await BrowserTestUtils.openNewForegroundTab({
     gBrowser,
     url: "about:logins",
@@ -28,52 +17,170 @@ add_task(async function setup() {
 
 add_task(async function test_show_logins() {
   let browser = gBrowser.selectedBrowser;
-  browser.messageManager.sendAsyncMessage("AboutLogins:AllLogins", gLogins);
 
-  await ContentTask.spawn(browser, gLogins, async logins => {
-    let loginList = Cu.waiveXrays(content.document.querySelector("login-list"));
-    let loginFound = await ContentTaskUtils.waitForCondition(() => {
-      return (
-        loginList._logins.length == 2 &&
-        loginList._logins[0].guid == logins[0].guid &&
-        loginList._logins[1].guid == logins[1].guid
+  await SpecialPowers.spawn(
+    browser,
+    [[TEST_LOGIN1.guid, TEST_LOGIN2.guid]],
+    async loginGuids => {
+      let loginList = Cu.waiveXrays(
+        content.document.querySelector("login-list")
       );
-    }, "Waiting for logins to be displayed");
-    ok(loginFound, "Newly added logins should be added to the page");
-  });
+      let loginFound = await ContentTaskUtils.waitForCondition(() => {
+        return (
+          loginList._loginGuidsSortedOrder.length == 2 &&
+          loginList._loginGuidsSortedOrder.includes(loginGuids[0]) &&
+          loginList._loginGuidsSortedOrder.includes(loginGuids[1])
+        );
+      }, "Waiting for logins to be displayed");
+      ok(
+        !content.document.documentElement.classList.contains("no-logins"),
+        "Should no longer be in no logins view"
+      );
+      ok(
+        !loginList.classList.contains("no-logins"),
+        "login-list should no longer be in no logins view"
+      );
+      ok(loginFound, "Newly added logins should be added to the page");
+    }
+  );
 });
 
 add_task(async function test_login_item() {
   let browser = gBrowser.selectedBrowser;
-  let deleteLoginMessageReceived = false;
-  browser.messageManager.addMessageListener(
-    "AboutLogins:DeleteLogin",
-    function onMsg() {
-      deleteLoginMessageReceived = true;
-      browser.messageManager.removeMessageListener(
-        "AboutLogins:DeleteLogin",
-        onMsg
-      );
-    }
-  );
-  await ContentTask.spawn(browser, gLogins, async logins => {
-    let loginList = content.document.querySelector("login-list");
-    let loginListItems = loginList.shadowRoot.querySelectorAll(
-      "login-list-item"
+
+  function waitForDelete() {
+    let numLogins = Services.logins.countLogins("", "", "");
+    return BrowserTestUtils.waitForCondition(
+      () => Services.logins.countLogins("", "", "") < numLogins,
+      "Error waiting for login deletion"
     );
-    loginListItems[0].click();
+  }
 
-    let loginItem = Cu.waiveXrays(content.document.querySelector("login-item"));
-    let loginItemPopulated = await ContentTaskUtils.waitForCondition(() => {
-      return loginItem._login.guid == loginListItems[0].getAttribute("guid");
-    }, "Waiting for login item to get populated");
-    ok(loginItemPopulated, "The login item should get populated");
+  async function deleteFirstLoginAfterEdit() {
+    await SpecialPowers.spawn(browser, [], async () => {
+      let loginList = content.document.querySelector("login-list");
+      let loginListItem = loginList.shadowRoot.querySelector(
+        ".login-list-item[data-guid]:not([hidden])"
+      );
+      info("Clicking on the first login");
+      loginListItem.click();
 
-    let deleteButton = loginItem.shadowRoot.querySelector(".delete-button");
-    deleteButton.click();
+      let loginItem = Cu.waiveXrays(
+        content.document.querySelector("login-item")
+      );
+      let loginItemPopulated = await ContentTaskUtils.waitForCondition(() => {
+        return loginItem._login.guid == loginListItem.dataset.guid;
+      }, "Waiting for login item to get populated");
+      ok(loginItemPopulated, "The login item should get populated");
+    });
+    let reauthObserved = OSKeyStoreTestUtils.waitForOSKeyStoreLogin(true);
+    await SpecialPowers.spawn(browser, [], async () => {
+      let loginItem = Cu.waiveXrays(
+        content.document.querySelector("login-item")
+      );
+      let editButton = loginItem.shadowRoot.querySelector(".edit-button");
+      editButton.click();
+    });
+    await reauthObserved;
+    return SpecialPowers.spawn(browser, [], async () => {
+      let loginItem = Cu.waiveXrays(
+        content.document.querySelector("login-item")
+      );
+      let usernameInput = loginItem.shadowRoot.querySelector(
+        "input[name='username']"
+      );
+      let passwordInput = loginItem._passwordInput;
+      usernameInput.value += "-undone";
+      passwordInput.value += "-undone";
+
+      let deleteButton = loginItem.shadowRoot.querySelector(".delete-button");
+      deleteButton.click();
+
+      let confirmDeleteDialog = Cu.waiveXrays(
+        content.document.querySelector("confirmation-dialog")
+      );
+      let confirmButton = confirmDeleteDialog.shadowRoot.querySelector(
+        ".confirm-button"
+      );
+      confirmButton.click();
+    });
+  }
+
+  function deleteFirstLogin() {
+    return SpecialPowers.spawn(browser, [], async () => {
+      let loginList = content.document.querySelector("login-list");
+      let loginListItem = loginList.shadowRoot.querySelector(
+        ".login-list-item[data-guid]:not([hidden])"
+      );
+      info("Clicking on the first login");
+      loginListItem.click();
+
+      let loginItem = Cu.waiveXrays(
+        content.document.querySelector("login-item")
+      );
+      let loginItemPopulated = await ContentTaskUtils.waitForCondition(() => {
+        return loginItem._login.guid == loginListItem.dataset.guid;
+      }, "Waiting for login item to get populated");
+      ok(loginItemPopulated, "The login item should get populated");
+
+      let deleteButton = loginItem.shadowRoot.querySelector(".delete-button");
+      deleteButton.click();
+
+      let confirmDeleteDialog = Cu.waiveXrays(
+        content.document.querySelector("confirmation-dialog")
+      );
+      let confirmButton = confirmDeleteDialog.shadowRoot.querySelector(
+        ".confirm-button"
+      );
+      confirmButton.click();
+    });
+  }
+
+  let onDeletePromise;
+  if (OSKeyStoreTestUtils.canTestOSKeyStoreLogin()) {
+    // Can only test Edit mode in official builds
+    onDeletePromise = waitForDelete();
+    await deleteFirstLoginAfterEdit();
+    await onDeletePromise;
+
+    await SpecialPowers.spawn(browser, [], async () => {
+      let loginList = content.document.querySelector("login-list");
+      ok(
+        !content.document.documentElement.classList.contains("no-logins"),
+        "Should not be in no logins view as there is still one login"
+      );
+      ok(
+        !loginList.classList.contains("no-logins"),
+        "Should not be in no logins view as there is still one login"
+      );
+
+      let confirmDiscardDialog = Cu.waiveXrays(
+        content.document.querySelector("confirmation-dialog")
+      );
+      ok(
+        confirmDiscardDialog.hidden,
+        "Discard confirm dialog should not show up after delete an edited login"
+      );
+    });
+  } else {
+    onDeletePromise = waitForDelete();
+    await deleteFirstLogin();
+    await onDeletePromise;
+  }
+
+  onDeletePromise = waitForDelete();
+  await deleteFirstLogin();
+  await onDeletePromise;
+
+  await SpecialPowers.spawn(browser, [], async () => {
+    let loginList = content.document.querySelector("login-list");
+    ok(
+      content.document.documentElement.classList.contains("no-logins"),
+      "Should be in no logins view as all logins got deleted"
+    );
+    ok(
+      loginList.classList.contains("no-logins"),
+      "login-list should be in no logins view as all logins got deleted"
+    );
   });
-  ok(
-    deleteLoginMessageReceived,
-    "Clicking the delete button should send the AboutLogins:DeleteLogin messsage"
-  );
 });

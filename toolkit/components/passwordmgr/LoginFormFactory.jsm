@@ -9,7 +9,7 @@
 
 "use strict";
 
-var EXPORTED_SYMBOLS = ["LoginFormFactory"];
+const EXPORTED_SYMBOLS = ["LoginFormFactory"];
 
 const { XPCOMUtils } = ChromeUtils.import(
   "resource://gre/modules/XPCOMUtils.jsm"
@@ -30,7 +30,7 @@ XPCOMUtils.defineLazyGetter(this, "log", () => {
   return LoginHelper.createLogger("LoginFormFactory");
 });
 
-var LoginFormFactory = {
+this.LoginFormFactory = {
   /**
    * WeakMap of the root element of a LoginForm to the LoginForm representing its fields.
    *
@@ -95,7 +95,8 @@ var LoginFormFactory = {
   createFromField(aField) {
     if (
       ChromeUtils.getClassName(aField) !== "HTMLInputElement" ||
-      (aField.type != "password" && !LoginHelper.isUsernameFieldType(aField)) ||
+      (!aField.hasBeenTypePassword &&
+        !LoginHelper.isUsernameFieldType(aField)) ||
       !aField.ownerDocument
     ) {
       throw new Error(
@@ -105,6 +106,11 @@ var LoginFormFactory = {
 
     if (aField.form) {
       return this.createFromForm(aField.form);
+    } else if (aField.hasAttribute("form")) {
+      log.debug(
+        "createFromField: field has form attribute but no form: ",
+        aField.getAttribute("form")
+      );
     }
 
     let formLike = FormLikeFactory.createFromField(aField);

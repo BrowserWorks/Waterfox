@@ -2,6 +2,7 @@
 /* global contextMenu:true */
 
 var lastElement;
+const FRAME_OS_PID = "context-frameOsPid";
 
 function openContextMenuFor(element, shiftkey, waitForSpellCheck) {
   // Context menu should be closed before we open it again.
@@ -86,9 +87,14 @@ function getVisibleMenuItems(aMenu, aData) {
         item.id != "fill-login-no-logins" &&
         // XXX Screenshots doesn't have an access key. This needs
         // at least bug 1320462 fixing first.
-        item.id != "screenshots_mozilla_org-menuitem-_create-screenshot"
+        item.id != "screenshots_mozilla_org-menuitem-_create-screenshot" &&
+        // Inspect accessibility properties does not have an access key. See
+        // bug 1630717 for more details.
+        item.id != "context-inspect-a11y"
       ) {
-        ok(key, "menuitem " + item.id + " has an access key");
+        if (item.id != FRAME_OS_PID) {
+          ok(key, "menuitem " + item.id + " has an access key");
+        }
         if (accessKeys[key]) {
           ok(
             false,
@@ -346,6 +352,8 @@ let lastElementSelector = null;
  *        preCheckContextMenuFn: callback to run before opening menu
  *        onContextMenuShown: callback to run when the context menu is shown
  *        postCheckContextMenuFn: callback to run after opening menu
+ *        keepMenuOpen: if true, we do not call hidePopup, the consumer is
+ *                      responsible for calling it.
  * @return {Promise} resolved after the test finishes
  */
 async function test_contextmenu(selector, menuItems, options = {}) {
@@ -358,9 +366,9 @@ async function test_contextmenu(selector, menuItems, options = {}) {
   }
 
   if (!options.skipFocusChange) {
-    await ContentTask.spawn(
+    await SpecialPowers.spawn(
       gBrowser.selectedBrowser,
-      [lastElementSelector, selector],
+      [[lastElementSelector, selector]],
       async function([contentLastElementSelector, contentSelector]) {
         if (contentLastElementSelector) {
           let contentLastElement = content.document.querySelector(
@@ -383,16 +391,18 @@ async function test_contextmenu(selector, menuItems, options = {}) {
 
   if (options.waitForSpellCheck) {
     info("Waiting for spell check");
-    await ContentTask.spawn(gBrowser.selectedBrowser, selector, async function(
-      contentSelector
-    ) {
-      let { onSpellCheck } = ChromeUtils.import(
-        "resource://testing-common/AsyncSpellCheckTestHelper.jsm"
-      );
-      let element = content.document.querySelector(contentSelector);
-      await new Promise(resolve => onSpellCheck(element, resolve));
-      info("Spell check running");
-    });
+    await SpecialPowers.spawn(
+      gBrowser.selectedBrowser,
+      [selector],
+      async function(contentSelector) {
+        let { onSpellCheck } = ChromeUtils.import(
+          "resource://testing-common/AsyncSpellCheckTestHelper.jsm"
+        );
+        let element = content.document.querySelector(contentSelector);
+        await new Promise(resolve => onSpellCheck(element, resolve));
+        info("Spell check running");
+      }
+    );
   }
 
   let awaitPopupShown = BrowserTestUtils.waitForEvent(
@@ -421,16 +431,20 @@ async function test_contextmenu(selector, menuItems, options = {}) {
 
   if (menuItems) {
     if (Services.prefs.getBoolPref("devtools.inspector.enabled", true)) {
-      let inspectItems = ["---", null, "context-inspect", true];
-      menuItems = menuItems.concat(inspectItems);
-    }
+      const inspectItems = ["---", null];
+      if (
+        Services.prefs.getBoolPref("devtools.accessibility.enabled", true) &&
+        (Services.appinfo.accessibilityEnabled ||
+          Services.prefs.getBoolPref(
+            "devtools.accessibility.auto-init.enabled",
+            false
+          ))
+      ) {
+        inspectItems.push("context-inspect-a11y", true);
+      }
 
-    if (
-      Services.prefs.getBoolPref("devtools.accessibility.enabled", true) &&
-      Services.appinfo.accessibilityEnabled
-    ) {
-      let inspectA11YItems = ["context-inspect-a11y", true];
-      menuItems = menuItems.concat(inspectA11YItems);
+      inspectItems.push("context-inspect", true);
+      menuItems = menuItems.concat(inspectItems);
     }
 
     if (
@@ -460,6 +474,8 @@ async function test_contextmenu(selector, menuItems, options = {}) {
     info("Completed postCheckContextMenuFn");
   }
 
-  contextMenu.hidePopup();
-  await awaitPopupHidden;
+  if (!options.keepMenuOpen) {
+    contextMenu.hidePopup();
+    await awaitPopupHidden;
+  }
 }

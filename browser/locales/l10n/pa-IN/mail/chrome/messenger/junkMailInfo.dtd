@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "ਜੰਕ ਮੇਲ ਬਾਰੇ">
+<!ENTITY window.width  "450">
+ <!ENTITY info1a.label  "&brandShortName; ਆਉਣ ਵਾਲੇ ਸੁਨੇਹਿਆਂ ਨੂੰ ਆਟੋਮੈਟਿਕ ਹੀ ਜੰਕ (ਜਿਸ ਨੂੰ ਸਪਮ ਵੀ ਕਹਿੰਦੇ ਹਨ) ਹੋਣ ਦੀ ਜਾਂਚ ਕਰਦਾ ਹੈ। ਜਿੰਨਾਂ ਸੁਨਹਿਆਂ ਨੂੰ &brandShortName; ਜੰਕ ਸਮਝਦਾ ਹੈ, ਉਹਨਾਂ ਲਈ ਜੰਕ ਆਈਕਾਨ ਵੇਖਾਇਆ ਜਾਦਾ ਹੈ।">
+<!ENTITY info1b.label  ".">
+<!ENTITY info2.label   "ਪਹਿਲੀਂ ਵਾਰ, ਤੁਹਾਨੂੰ &brandShortName; ਨੂੰ ਜੰਕ ਟੂਲਬਾਰ ਬਟਨ ਦੀ ਵਰਤੋਂ ਕਰਕੇ ਜੰਕ ਮੇਲ ਦੀ ਪਛਾਣ ਕਰਨ ਦੇ ਯੋਗ ਕਰਨਾ ਪਵੇਗਾ ਕਿ ਕੋਈ ਮੇਲ ਜੰਕ ਹੈ ਜਾਂ ਨਹੀਂ।">
+<!ENTITY info3.label   "ਇੱਕ ਵੇਰ &brandShortName; ਨੇ ਜੰਕ ਮੇਲ ਦੀ ਪਛਾਣ ਕਰ ਲਈ ਤਾਂ, ਤੁਸੀਂ ਜੰਕ ਮੇਲ ਕੰਟਰੋਲ ਨੂੰ ਆਉਣ ਵਾਲੇ ਜੰਕ ਮੇਲ ਨੂੰ ਜੰਕ ਫੋਲਡਰ ਵਿੱਚ ਆਟੋਮੈਟਿਕ ਹੀ ਸਿੱਧਾ ਜੰਕ ਫੋਲਡਰ ਵਿੱਚ ਭੇਜਣ ਲਈ ਸੰਰਚਿਤ ਕਰ ਸਕਦੇ ਹੋ।">
+<!ENTITY info4.label   "ਵਧੇਰੇ ਜਾਣਕਾਰੀ ਲਈ ਮੱਦਦ ਨੂੰ ਦਬਾਓ।">

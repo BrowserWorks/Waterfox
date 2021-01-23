@@ -38,7 +38,7 @@ class nsSliderMediator final : public nsIDOMEventListener {
   NS_DECL_NSIDOMEVENTLISTENER
 
  protected:
-  virtual ~nsSliderMediator() {}
+  virtual ~nsSliderMediator() = default;
 };
 
 class nsSliderFrame final : public nsBoxFrame {
@@ -88,6 +88,7 @@ class nsSliderFrame final : public nsBoxFrame {
   virtual void AppendFrames(ChildListID aListID,
                             nsFrameList& aFrameList) override;
   virtual void InsertFrames(ChildListID aListID, nsIFrame* aPrevFrame,
+                            const nsLineList::iterator* aPrevFrameLine,
                             nsFrameList& aFrameList) override;
   virtual void RemoveFrame(ChildListID aListID, nsIFrame* aOldFrame) override;
 

@@ -3,6 +3,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from __future__ import absolute_import
+
 import json
 import os
 import posixpath
@@ -107,16 +109,15 @@ class CodeCoverageMixin(SingleTestMixin):
 
     def _setup_cpp_js_coverage_tools(self):
         if mozinfo.os == 'linux' or mozinfo.os == 'mac':
-            self.prefix = '/builds/worker/workspace/build/src/'
-            strip_count = self.prefix.count('/')
+            self.prefix = '/builds/worker/checkouts/gecko'
         elif mozinfo.os == 'win':
+            # obj folder is z:/build/workspace/obj-build
+            # same strip count as prefix
             self.prefix = 'z:/build/build/src/'
-            # Add 1 as on Windows the path where the compiler tries to write the
-            # gcda files has an additional 'obj-firefox' component.
-            strip_count = self.prefix.count('/') + 1
         else:
             raise Exception('Unexpected OS: {}'.format(mozinfo.os))
 
+        strip_count = len(filter(None, self.prefix.split('/')))
         os.environ['GCOV_PREFIX_STRIP'] = str(strip_count)
 
         # Download the gcno archive from the build machine.
@@ -153,7 +154,8 @@ class CodeCoverageMixin(SingleTestMixin):
 
         self.grcov_dir = os.environ['MOZ_FETCHES_DIR']
         if not os.path.isfile(os.path.join(self.grcov_dir, self.grcov_bin)):
-            self.fetch_content()
+            raise Exception('File not found: {}'.format(
+                os.path.join(self.grcov_dir, self.grcov_bin)))
 
         if self.code_coverage_enabled:
             self._setup_cpp_js_coverage_tools()
@@ -188,8 +190,8 @@ class CodeCoverageMixin(SingleTestMixin):
                 'test': 'testing/mochitest/baselinecoverage/browser_chrome/browser_baselinecoverage.js',  # NOQA: E501
                 'suite': 'mochitest-browser-chrome'
             },
-            '.xul': {
-                'test': 'testing/mochitest/baselinecoverage/chrome/test_baselinecoverage.xul',
+            '.xhtml': {
+                'test': 'testing/mochitest/baselinecoverage/chrome/test_baselinecoverage.xhtml',
                 'suite': 'mochitest-chrome'
             }
         }
@@ -283,9 +285,9 @@ class CodeCoverageMixin(SingleTestMixin):
         dirs = self.query_abs_dirs()
 
         sys.path.append(dirs['abs_test_install_dir'])
-        sys.path.append(os.path.join(dirs['abs_test_install_dir'], 'mozbuild/codecoverage'))
+        sys.path.append(os.path.join(dirs['abs_test_install_dir'], 'mozbuild'))
 
-        from lcov_rewriter import LcovFileRewriter
+        from codecoverage.lcov_rewriter import LcovFileRewriter
         jsvm_files = [os.path.join(jsvm_dir, e) for e in os.listdir(jsvm_dir)]
         rewriter = LcovFileRewriter(os.path.join(self.grcov_dir, 'chrome-map.json'))
         rewriter.rewrite_files(jsvm_files, jsvm_output_file, '')
@@ -295,8 +297,8 @@ class CodeCoverageMixin(SingleTestMixin):
             os.path.join(self.grcov_dir, self.grcov_bin),
             '-t', output_format,
             '-p', self.prefix,
-            '--ignore-dir', 'gcc*',
-            '--ignore-dir', 'vs2017_*',
+            '--ignore', 'gcc*',
+            '--ignore', 'vs2017_*',
             os.path.join(self.grcov_dir, 'target.code-coverage-gcno.zip'), gcov_dir
         ]
 

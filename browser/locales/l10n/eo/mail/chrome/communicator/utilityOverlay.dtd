@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label          "Dosiero">
+<!ENTITY fileMenu.accesskey        "D">
+<!ENTITY newMenu.label            "Krei">
+<!ENTITY newMenu.accesskey          "K">
+
+<!ENTITY editMenu.label          "Redakti">
+<!ENTITY editMenu.accesskey        "R">
+<!ENTITY undoCmd.label            "Malfari">
+<!ENTITY undoCmd.accesskey          "M">
+<!ENTITY redoCmd.label            "Refari">
+<!ENTITY redoCmd.accesskey          "R">
+<!ENTITY deleteCmd.label          "Forigi">
+<!ENTITY deleteCmd.accesskey        "F">
+<!ENTITY preferencesCmd2.label "Elektebloj">
+<!ENTITY preferencesCmd2.accesskey "E">
+<!ENTITY preferencesCmdUnix.label       "Preferoj">
+<!ENTITY preferencesCmdUnix.accesskey     "P">
+
+<!ENTITY viewMenu.label          "Vido">
+<!ENTITY viewMenu.accesskey        "V">
+<!ENTITY viewToolbarsMenu.label        "Ilarstrioj">
+<!ENTITY viewToolbarsMenu.accesskey      "I">
+<!ENTITY showTaskbarCmd.label          "Stata strio">
+<!ENTITY showTaskbarCmd.accesskey        "S">
+
+<!ENTITY closeCmd.label      "Fermi">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "F">
+
+<!ENTITY quitApplicationCmd.label  "Eliri">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "E">
+
+<!ENTITY quitApplicationCmdUnix.label  "Eliri">
+<!ENTITY quitApplicationCmdUnix.accesskey  "E">
+
+<!ENTITY quitApplicationCmdMac.label  "Fermi &brandShortName;">
+<!ENTITY quitApplicationCmdMac.accesskey  "F">

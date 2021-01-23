@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-colors.xul -->
+
+<!-- LOCALIZATION NOTE : FILE Color management prefs -->
+<!ENTITY pref.colors.title                 "Warna">
+<!ENTITY color                             "Teks dan Latar Belakang">
+<!ENTITY textColor.label                   "Teks:">
+<!ENTITY textColor.accesskey               "T">
+<!ENTITY backgroundColor.label             "Latar belakang:">
+<!ENTITY backgroundColor.accesskey         "L">
+<!ENTITY useSystemColors.label             "Guna warna sistem">
+<!ENTITY useSystemColors.accesskey         "s">
+
+<!ENTITY underlineLinks.label              "Garis bawah pautan">
+<!ENTITY underlineLinks.accesskey          "G">
+<!ENTITY links                             "Warna Pautan">
+<!ENTITY linkColor.label                   "Pautan Belum Dilawati:">
+<!ENTITY linkColor.accesskey               "P">
+<!ENTITY activeLinkColor.label             "Pautan Aktif:">
+<!ENTITY activeLinkColor.accesskey         "k">
+<!ENTITY visitedLinkColor.label            "Pautan Dilawati:">
+<!ENTITY visitedLinkColor.accesskey        "D">
+<!-- LOCALIZATION NOTE (someProvColors): This is the start of a sentence and will be followed by the following radio buttons. -->
+<!ENTITY someProvColors                    "Apabila halaman web menyediakan warna dan latar belakang sendiri">
+<!-- LOCALIZATION NOTE (alwaysUseDocColors.label): This is option one, and it appends to 'someProvColors' above. -->
+<!ENTITY alwaysUseDocumentColors.label     "Sentiasa gunakan warna dan latar belakang yang ditentukan halaman web">
+<!ENTITY alwaysUseDocumentColors.accesskey "S">
+<!-- LOCALIZATION NOTE (ignoreDocColors.label): This is option two, and it appends to 'someProvColors' above.  -->
+<!ENTITY useMyColors.label                 "Gunakan warna pilihan saya, abaikan warna dan imej latar belakang yang dinyatakan">
+<!ENTITY useMyColors.accesskey             "s">
+<!ENTITY automaticColors.label             "Abaikan hanya warna halaman apabila menggunakan tema Kontras Tinggi">
+<!ENTITY automaticColors.accesskey         "A">

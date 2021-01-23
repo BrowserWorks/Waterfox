@@ -12,8 +12,8 @@
 #include "nsMargin.h"            // for nsMargin
 
 static_assert(
-    (int(eSideTop) == 0) && (int(eSideRight) == 1) && (int(eSideBottom) == 2) &&
-        (int(eSideLeft) == 3),
+    (int(mozilla::eSideTop) == 0) && (int(mozilla::eSideRight) == 1) &&
+        (int(mozilla::eSideBottom) == 2) && (int(mozilla::eSideLeft) == 3),
     "The mozilla::Side sequence must match the nsMargin nscoord sequence");
 
 const mozilla::gfx::IntRect& GetMaxSizedIntRect() {
@@ -32,26 +32,3 @@ bool nsRect::Overflows() const {
   return !xMost.isValid() || !yMost.isValid();
 #endif
 }
-
-#ifdef DEBUG
-// Diagnostics
-
-FILE* operator<<(FILE* out, const nsRect& rect) {
-  nsAutoString tmp;
-
-  // Output the coordinates in fractional pixels so they're easier to read
-  tmp.Append('{');
-  tmp.AppendFloat(NSAppUnitsToFloatPixels(rect.X(), AppUnitsPerCSSPixel()));
-  tmp.AppendLiteral(", ");
-  tmp.AppendFloat(NSAppUnitsToFloatPixels(rect.Y(), AppUnitsPerCSSPixel()));
-  tmp.AppendLiteral(", ");
-  tmp.AppendFloat(NSAppUnitsToFloatPixels(rect.Width(), AppUnitsPerCSSPixel()));
-  tmp.AppendLiteral(", ");
-  tmp.AppendFloat(
-      NSAppUnitsToFloatPixels(rect.Height(), AppUnitsPerCSSPixel()));
-  tmp.Append('}');
-  fputs(NS_LossyConvertUTF16toASCII(tmp).get(), out);
-  return out;
-}
-
-#endif  // DEBUG

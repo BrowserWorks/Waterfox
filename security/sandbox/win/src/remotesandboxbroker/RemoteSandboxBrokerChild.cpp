@@ -22,8 +22,8 @@ RemoteSandboxBrokerChild::~RemoteSandboxBrokerChild() {}
 
 bool RemoteSandboxBrokerChild::Init(base::ProcessId aParentPid,
                                     MessageLoop* aIOLoop,
-                                    IPC::Channel* aChannel) {
-  if (NS_WARN_IF(!Open(aChannel, aParentPid, aIOLoop))) {
+                                    UniquePtr<IPC::Channel> aChannel) {
+  if (NS_WARN_IF(!Open(std::move(aChannel), aParentPid, aIOLoop))) {
     return false;
   }
   CrashReporterClient::InitSingleton(this);
@@ -50,8 +50,19 @@ mozilla::ipc::IPCResult RemoteSandboxBrokerChild::AnswerLaunchApp(
     envmap[towstring(env.name())] = towstring(env.value());
   }
 
+  // We need to add our parent as a target peer, so that the sandboxed child can
+  // duplicate handles to it for crash reporting. AddTargetPeer duplicates the
+  // handle, so we use a ScopedProcessHandle to automatically close ours.
+  ipc::ScopedProcessHandle parentProcHandle;
+  if (!base::OpenProcessHandle(OtherPid(), &parentProcHandle.rwget())) {
+    *aOutOk = false;
+    return IPC_OK();
+  }
+  mSandboxBroker.AddTargetPeer(parentProcHandle);
+
   if (!mSandboxBroker.SetSecurityLevelForGMPlugin(
-          AbstractSandboxBroker::SandboxLevel(aParams.sandboxLevel()))) {
+          AbstractSandboxBroker::SandboxLevel(aParams.sandboxLevel()),
+          /* aIsRemoteLaunch */ true)) {
     *aOutOk = false;
     return IPC_OK();
   }
@@ -71,7 +82,7 @@ mozilla::ipc::IPCResult RemoteSandboxBrokerChild::AnswerLaunchApp(
   *aOutOk =
       mSandboxBroker.LaunchApp(aParams.path().get(), aParams.args().get(),
                                envmap, GeckoProcessType(aParams.processType()),
-                               aParams.enableLogging(), (void**)&p);
+                               aParams.enableLogging(), nullptr, (void**)&p);
   if (*aOutOk) {
     *aOutHandle = uint64_t(p);
   }

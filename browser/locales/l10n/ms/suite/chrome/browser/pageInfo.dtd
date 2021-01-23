@@ -1,0 +1,122 @@
+<!--
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- Note to localizers, don't localize the strings 'width' or 'height' -->
+<!ENTITY  pageInfoWindow.dimensions  "width: 100ch; height: 38em;">
+
+<!ENTITY  copy.key               "C">
+<!ENTITY  copy.label             "Salin">
+<!ENTITY  copy.accesskey         "S">
+<!ENTITY  selectall.key          "A">
+<!ENTITY  selectall.label        "Pilih Semua">
+<!ENTITY  selectall.accesskey    "P">
+<!ENTITY  openHelpMac.key        "?">
+<!ENTITY  closeWindow.key        "w">
+<!ENTITY  copyLinks.label           "Salin Pautan">
+<!ENTITY  copyLinks.accesskey       "P">
+<!ENTITY  openInNewTab.label        "Buka dalam Tab Baru">
+<!ENTITY  openInNewTab.accesskey    "T">
+<!ENTITY  openInNewWindow.label     "Buka dalam Tetingkap Baru">
+<!ENTITY  openInNewWindow.accesskey "B">
+
+<!ENTITY  generalTab            "Umum">
+<!ENTITY  generalTab.accesskey  "U">
+<!ENTITY  generalURL            "Alamat:">
+<!ENTITY  generalType           "Jenis:">
+<!ENTITY  generalMode           "Mod Penghuraian:">
+<!ENTITY  generalSize           "Saiz:">
+<!ENTITY  generalReferrer       "URL Perujuk:">
+<!ENTITY  generalSource         "Sumber Cache:">
+<!ENTITY  generalModified       "Diubahsuai:">
+<!ENTITY  generalEncoding2      "Pengekodan Teks:">
+<!ENTITY  generalMetaName       "Nama">
+<!ENTITY  generalMetaContent    "Kandungan">
+<!ENTITY  generalSecurityDetails           "Butiran">
+<!ENTITY  generalSecurityDetails.accesskey "B">
+
+<!ENTITY  formsTab              "Borang">
+<!ENTITY  formsTab.accesskey    "B">
+<!ENTITY  formAction            "Tindakan Borang">
+<!ENTITY  formMethod            "Kaedah">
+<!ENTITY  formName              "Nama">
+<!ENTITY  formEncoding          "Pengekodan:">
+<!ENTITY  formTarget            "Sasaran:">
+<!ENTITY  formFields            "Medan:">
+<!ENTITY  formLabel             "Label">
+<!ENTITY  formFName             "Nama Medan">
+<!ENTITY  formType              "Jenis">
+<!ENTITY  formCValue            "Nilai Semasa">
+
+<!ENTITY  linksTab              "Pautan">
+<!ENTITY  linksTab.accesskey    "P">
+<!ENTITY  linkName              "Nama">
+<!ENTITY  linkAddress           "Alamat">
+<!ENTITY  linkType              "Jenis">
+<!ENTITY  linkTarget            "Sasaran">
+<!ENTITY  linkAccessKey         "Kekunci Akses">
+
+<!ENTITY  mediaTab              "Media">
+<!ENTITY  mediaTab.accesskey    "M">
+<!ENTITY  mediaURL              "Alamat:">
+<!ENTITY  mediaAlt              "Teks Alternatif:">
+<!ENTITY  mediaAltHeader        "Teks Alternatif">
+<!ENTITY  mediaAddress          "Alamat">
+<!ENTITY  mediaType             "Jenis">
+<!ENTITY  mediaSize             "Saiz">
+<!ENTITY  mediaCount            "Kiraan">
+<!ENTITY  mediaDimensions       "Dimensi Dinyatakan:">
+<!ENTITY  mediaPhysDimensions   "Dimensi Sebenar:">
+<!ENTITY  mediaTitle            "Tajuk:">
+<!ENTITY  mediaLongdesc         "Keterangan:">
+<!ENTITY  mediaBlockImage.accesskey "S">
+<!ENTITY  mediaSaveAs           "Simpan Sebagai…">
+<!ENTITY  mediaSaveAs.accesskey "S">
+<!ENTITY  mediaSaveAs2.accesskey "e">
+<!ENTITY  mediaPreview          "Previu Media:">
+
+<!ENTITY  feedTab               "Suapan">
+<!ENTITY  feedTab.accesskey     "S">
+<!ENTITY  feedSubscribe         "Langgan">
+<!ENTITY  feedSubscribe.accesskey "g">
+
+<!ENTITY  permTab               "Keizinan">
+<!ENTITY  permTab.accesskey     "K">
+<!ENTITY  permUseDefault        "Guna Piawai">
+<!ENTITY  permAskAlways         "Sentiasa tanya">
+<!ENTITY  permAllow             "Izinkan">
+<!ENTITY  permAllowSession      "Izinkan untuk Sesi">
+<!ENTITY  permBlock             "Sekat">
+<!ENTITY  permissionsFor        "Keizinan untuk:">
+<!ENTITY  permImage             "Muatkan Imej">
+<!ENTITY  permPopup             "Buka Tetingkap Popup">
+<!ENTITY  permCookie            "Tetapkan Kuki">
+<!ENTITY  permNotifications     "Papar Notifikasi">
+<!ENTITY  permInstall           "Pasang Ekstensi atau Tema">
+<!ENTITY  permGeo               "Kongsi Lokasi">
+
+<!ENTITY  securityTab           "Keselamatan">
+<!ENTITY  securityTab.accesskey "K">
+<!ENTITY  securityHeader        "Maklumat keselamatan untuk halaman ini">
+<!ENTITY  securityView.certView "Papar Sijil">
+<!ENTITY  securityView.accesskey "P">
+<!ENTITY  securityView.unknown   "Tidak diketahui">
+
+
+<!ENTITY  securityView.identity.header   "Identiti Laman Web">
+<!ENTITY  securityView.identity.owner    "Pemilik:">
+<!ENTITY  securityView.identity.domain   "Laman web:">
+<!ENTITY  securityView.identity.verifier "Disahkan oleh:">
+
+<!ENTITY  securityView.privacy.header                   "Privasi &amp; Sejarah">
+<!ENTITY  securityView.privacy.history                  "Adakah saya sudah layari laman web ini hari ini?">
+<!ENTITY  securityView.privacy.cookies                  "Adakah laman web ini menyimpan maklumat (kuki) dalam komputer saya?">
+<!ENTITY  securityView.privacy.viewCookies              "Papar Kuki">
+<!ENTITY  securityView.privacy.viewCookies.accessKey    "k">
+<!ENTITY  securityView.privacy.passwords                "Adakah saya pernah simpan kata laluan bagi laman web ini?">
+<!ENTITY  securityView.privacy.viewPasswords            "Papar Kata laluan yang Disimpan">
+<!ENTITY  securityView.privacy.viewPasswords.accessKey  "r">
+
+<!ENTITY  securityView.technical.header                 "Butiran Teknikal">

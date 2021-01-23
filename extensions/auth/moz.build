@@ -34,3 +34,6 @@ FINAL_LIBRARY = 'xul'
 with Files('**'):
     BUG_COMPONENT = ('Core', 'Networking')
 
+include('/tools/fuzzing/libfuzzer-config.mozbuild')
+
+include('/ipc/chromium/chromium-config.mozbuild')

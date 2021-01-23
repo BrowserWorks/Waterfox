@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title.private "Questa è una finestra anonima.">
+<!ENTITY privatebrowsingpage.title.normal "Avviare la Navigazione anonima?">
+<!ENTITY privatebrowsingpage.status.private "&brandShortName; non conserverà alcuna cronologia per questa finestra.">
+<!ENTITY privatebrowsingpage.status.normal "Questa non è una finestra anonima.">
+<!ENTITY privatebrowsingpage.common.description "In una finestra di Navigazione anonima non verrà conservata in &brandShortName; alcuna cronologia relativa a navigazione, ricerche, download, compilazione di moduli, cookie e file temporanei. Tuttavia verranno mantenuti eventuali file scaricati o segnalibri aggiunti.">
+<!ENTITY privatebrowsingpage.track.warn "Anche se questo computer non conserverà alcuna informazione relativa alla cronologia di navigazione, il fornitore di servizi internet in uso sarà comunque in grado di mantenere un registro delle pagine visitate.">
+<!ENTITY privatebrowsingpage.learnmore.label "Ulteriori informazioni">
+<!ENTITY privatebrowsingpage.learnmore.accesskey "U">
+<!ENTITY privatebrowsingpage.close.info "Dopo aver finito, chiudere la finestra per interrompere la Navigazione anonima.">
+<!ENTITY privatebrowsingpage.close.label "Chiudi questa finestra ora">
+<!ENTITY privatebrowsingpage.close.accesskey "C">
+<!ENTITY privatebrowsingpage.start.info "Per avviare la Navigazione anonima fare clic sul pulsante in basso o selezionare File ▶ Nuovo ▶ Finestra anonima dal menu.">
+<!ENTITY privatebrowsingpage.private.label "Apri una nuova finestra anonima">
+<!ENTITY privatebrowsingpage.private.accesskey "A">

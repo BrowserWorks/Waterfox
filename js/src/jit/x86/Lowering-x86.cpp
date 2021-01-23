@@ -283,6 +283,11 @@ static bool OptimizableConstantAccess(MDefinition* base,
   return true;
 }
 
+void LIRGenerator::visitWasmHeapBase(MWasmHeapBase* ins) {
+  auto* lir = new (alloc()) LWasmHeapBase(useRegisterAtStart(ins->tlsPtr()));
+  define(lir, ins);
+}
+
 void LIRGenerator::visitWasmLoad(MWasmLoad* ins) {
   MDefinition* base = ins->base();
   MOZ_ASSERT(base->type() == MIRType::Int32);
@@ -381,6 +386,7 @@ void LIRGenerator::visitWasmStore(MWasmStore* ins) {
     case Scalar::BigInt64:
     case Scalar::BigUint64:
     case Scalar::MaxTypedArrayViewType:
+    case Scalar::Simd128:
       MOZ_CRASH("unexpected array type");
   }
 

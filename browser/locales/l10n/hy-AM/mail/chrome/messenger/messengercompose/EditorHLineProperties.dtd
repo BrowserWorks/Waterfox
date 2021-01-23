@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Հորիզոնական տողի հատկություններ">
+
+<!ENTITY dimensionsBox.label "Չափերը">
+<!ENTITY heightEditField.label "Բարձր-ը.">
+<!ENTITY heightEditField.accessKey "Բ">
+<!ENTITY widthEditField.label "Լայն-ը.">
+<!ENTITY widthEditField.accessKey "Լ">
+<!ENTITY pixelsPopup.value "փիքսել">
+<!ENTITY alignmentBox.label "Հավասարեցումը">
+<!ENTITY leftRadio.label "Ձախից">
+<!ENTITY leftRadio.accessKey "Ձ">
+<!ENTITY centerRadio.label "Կենտրոնում">
+<!ENTITY centerRadio.accessKey "Կ">
+<!ENTITY rightRadio.label "Աջից">
+<!ENTITY rightRadio.accessKey "Ա">
+
+<!ENTITY threeDShading.label "3-D ստվերով">
+<!ENTITY threeDShading.accessKey "3">
+<!ENTITY saveSettings.label "Օգտ. որպես հիմնական">
+<!ENTITY saveSettings.accessKey "Օ">
+<!ENTITY saveSettings.tooltip "Պահպանեք այս կարգավորումները՝ նոր հորիզոնական տողերի համար">

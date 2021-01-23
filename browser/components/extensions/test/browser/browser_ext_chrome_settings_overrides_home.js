@@ -3,15 +3,19 @@
 
 "use strict";
 
-ChromeUtils.defineModuleGetter(
-  this,
-  "AddonManager",
-  "resource://gre/modules/AddonManager.jsm"
+const { XPCOMUtils } = ChromeUtils.import(
+  "resource://gre/modules/XPCOMUtils.jsm"
 );
+
+XPCOMUtils.defineLazyModuleGetters(this, {
+  AddonManager: "resource://gre/modules/AddonManager.jsm",
+  ExtensionSettingsStore: "resource://gre/modules/ExtensionSettingsStore.jsm",
+});
+
 ChromeUtils.defineModuleGetter(
   this,
-  "ExtensionSettingsStore",
-  "resource://gre/modules/ExtensionSettingsStore.jsm"
+  "ExtensionControlledPopup",
+  "resource:///modules/ExtensionControlledPopup.jsm"
 );
 
 // Named this way so they correspond to the extensions
@@ -354,7 +358,7 @@ add_task(async function test_doorhanger_homepage_button() {
     useAddonManager: "temporary",
   });
 
-  let panel = document.getElementById("extension-notification-panel");
+  let panel = ExtensionControlledPopup._getAndMaybeCreatePanel(document);
   let popupnotification = document.getElementById(
     "extension-homepage-notification"
   );
@@ -433,11 +437,12 @@ add_task(async function test_doorhanger_new_window() {
   let win = OpenBrowserWindow();
   await windowOpenedPromise;
   let doc = win.document;
+  let panel = ExtensionControlledPopup._getAndMaybeCreatePanel(doc);
+  await promisePopupShown(panel);
+
   let description = doc.getElementById(
     "extension-homepage-notification-description"
   );
-  let panel = doc.getElementById("extension-notification-panel");
-  await promisePopupShown(panel);
 
   ok(win.gURLBar.value.endsWith("ext2.html"), "ext2 is in control");
   is(
@@ -501,12 +506,12 @@ add_task(async function test_overriding_home_page_incognito_not_allowed() {
   let win = OpenBrowserWindow();
   await windowOpenedPromise;
   let doc = win.document;
+  let panel = ExtensionControlledPopup._getAndMaybeCreatePanel(doc);
+  await promisePopupShown(panel);
+
   let description = doc.getElementById(
     "extension-homepage-notification-description"
   );
-  let panel = doc.getElementById("extension-notification-panel");
-  await promisePopupShown(panel);
-
   let popupnotification = description.closest("popupnotification");
   is(
     description.textContent,
@@ -559,7 +564,7 @@ add_task(async function test_overriding_home_page_incognito_spanning() {
   let win = OpenBrowserWindow({ private: true });
   await windowOpenedPromise;
   let doc = win.document;
-  let panel = doc.getElementById("extension-notification-panel");
+  let panel = ExtensionControlledPopup._getAndMaybeCreatePanel(doc);
 
   let popupShown = promisePopupShown(panel);
   win.BrowserHome();

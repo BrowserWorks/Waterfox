@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Umetni znak">
+<!ENTITY category.label "Kategorija">
+<!ENTITY letter.label "Slovo:">
+<!ENTITY letter.accessKey "l">
+<!ENTITY character.label "Znak:">
+<!ENTITY character.accessKey "Z">
+<!ENTITY accentUpper.label "Istakni velika slova">
+<!ENTITY accentLower.label "Istakni mala slova">
+<!ENTITY otherUpper.label "Druga velika slova">
+<!ENTITY otherLower.label "Druga mala slova">
+<!ENTITY commonSymbols.label "Zajednički simboli">
+<!ENTITY insertButton.label "Umetni">
+<!ENTITY closeButton.label "Zatvori">

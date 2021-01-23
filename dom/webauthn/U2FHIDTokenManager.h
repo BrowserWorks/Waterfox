@@ -8,7 +8,7 @@
 #define mozilla_dom_U2FHIDTokenManager_h
 
 #include "mozilla/dom/U2FTokenTransport.h"
-#include "u2f-hid-rs/src/u2fhid-capi.h"
+#include "authenticator/src/u2fhid-capi.h"
 
 /*
  * U2FHIDTokenManager is a Rust implementation of a secure token manager
@@ -135,7 +135,7 @@ class U2FHIDTokenManager final : public U2FTokenTransport {
   void HandleSignResult(UniquePtr<U2FResult>&& aResult);
 
  private:
-  ~U2FHIDTokenManager() {}
+  ~U2FHIDTokenManager() = default;
 
   void ClearPromises() {
     mRegisterPromise.RejectIfExists(NS_ERROR_DOM_UNKNOWN_ERR, __func__);
@@ -145,18 +145,28 @@ class U2FHIDTokenManager final : public U2FTokenTransport {
   class Transaction {
    public:
     Transaction(uint64_t aId, const nsTArray<uint8_t>& aRpIdHash,
+                const Maybe<nsTArray<uint8_t>>& aAppIdHash,
                 const nsCString& aClientDataJSON,
                 bool aForceNoneAttestation = false)
         : mId(aId),
-          mRpIdHash(aRpIdHash),
+          mRpIdHash(aRpIdHash.Clone()),
           mClientDataJSON(aClientDataJSON),
-          mForceNoneAttestation(aForceNoneAttestation) {}
+          mForceNoneAttestation(aForceNoneAttestation) {
+      if (aAppIdHash) {
+        mAppIdHash = Some(aAppIdHash->Clone());
+      } else {
+        mAppIdHash = Nothing();
+      }
+    }
 
     // The transaction ID.
     uint64_t mId;
 
     // The RP ID hash.
     nsTArray<uint8_t> mRpIdHash;
+
+    // The App ID hash, if the AppID extension was set
+    Maybe<nsTArray<uint8_t>> mAppIdHash;
 
     // The clientData JSON.
     nsCString mClientDataJSON;

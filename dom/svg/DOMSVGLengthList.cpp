@@ -8,6 +8,7 @@
 
 #include "SVGElement.h"
 #include "DOMSVGLength.h"
+#include "mozAutoDocUpdate.h"
 #include "nsError.h"
 #include "SVGAnimatedLengthList.h"
 #include "nsCOMPtr.h"
@@ -69,6 +70,13 @@ NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(DOMSVGLengthList)
   NS_INTERFACE_MAP_ENTRY(nsISupports)
 NS_INTERFACE_MAP_END
 
+void DOMSVGLengthList::IndexedSetter(uint32_t index, DOMSVGLength& newValue,
+                                     ErrorResult& error) {
+  // Need to take a ref to the return value so it does not leak.
+  RefPtr<DOMSVGLength> ignored = ReplaceItem(newValue, index, error);
+  Unused << ignored;
+}
+
 JSObject* DOMSVGLengthList::WrapObject(JSContext* cx,
                                        JS::Handle<JSObject*> aGivenProto) {
   return mozilla::dom::SVGLengthList_Binding::Wrap(cx, this, aGivenProto);
@@ -78,20 +86,21 @@ JSObject* DOMSVGLengthList::WrapObject(JSContext* cx,
 // Helper class: AutoChangeLengthListNotifier
 // Stack-based helper class to pair calls to WillChangeLengthList and
 // DidChangeLengthList.
-class MOZ_RAII AutoChangeLengthListNotifier {
+class MOZ_RAII AutoChangeLengthListNotifier : public mozAutoDocUpdate {
  public:
   explicit AutoChangeLengthListNotifier(
       DOMSVGLengthList* aLengthList MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
-      : mLengthList(aLengthList) {
+      : mozAutoDocUpdate(aLengthList->Element()->GetComposedDoc(), true),
+        mLengthList(aLengthList) {
     MOZ_GUARD_OBJECT_NOTIFIER_INIT;
     MOZ_ASSERT(mLengthList, "Expecting non-null lengthList");
-    mEmptyOrOldValue =
-        mLengthList->Element()->WillChangeLengthList(mLengthList->AttrEnum());
+    mEmptyOrOldValue = mLengthList->Element()->WillChangeLengthList(
+        mLengthList->AttrEnum(), *this);
   }
 
   ~AutoChangeLengthListNotifier() {
     mLengthList->Element()->DidChangeLengthList(mLengthList->AttrEnum(),
-                                                mEmptyOrOldValue);
+                                                mEmptyOrOldValue, *this);
     if (mLengthList->IsAnimating()) {
       mLengthList->Element()->AnimationNeedsResample();
     }
@@ -181,10 +190,6 @@ already_AddRefed<DOMSVGLength> DOMSVGLengthList::Initialize(
   // prevent that from happening we have to do the clone here, if necessary.
 
   RefPtr<DOMSVGLength> domItem = &newItem;
-  if (!domItem) {
-    error.Throw(NS_ERROR_DOM_SVG_WRONG_TYPE_ERR);
-    return nullptr;
-  }
   if (domItem->HasOwner() || domItem->IsReflectingAttribute()) {
     domItem = domItem->Copy();
   }
@@ -231,10 +236,6 @@ already_AddRefed<DOMSVGLength> DOMSVGLengthList::InsertItemBefore(
   }
 
   RefPtr<DOMSVGLength> domItem = &newItem;
-  if (!domItem) {
-    error.Throw(NS_ERROR_DOM_SVG_WRONG_TYPE_ERR);
-    return nullptr;
-  }
   if (domItem->HasOwner() || domItem->IsReflectingAttribute()) {
     domItem = domItem->Copy();  // must do this before changing anything!
   }
@@ -277,15 +278,12 @@ already_AddRefed<DOMSVGLength> DOMSVGLengthList::ReplaceItem(
     return nullptr;
   }
 
-  RefPtr<DOMSVGLength> domItem = &newItem;
-  if (!domItem) {
-    error.Throw(NS_ERROR_DOM_SVG_WRONG_TYPE_ERR);
-    return nullptr;
-  }
   if (index >= LengthNoFlush()) {
     error.Throw(NS_ERROR_DOM_INDEX_SIZE_ERR);
     return nullptr;
   }
+
+  RefPtr<DOMSVGLength> domItem = &newItem;
   if (domItem->HasOwner() || domItem->IsReflectingAttribute()) {
     domItem = domItem->Copy();  // must do this before changing anything!
   }

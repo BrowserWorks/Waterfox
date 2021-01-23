@@ -22,11 +22,14 @@
 #  include "mozilla/Span.h"
 #  include "Units.h"
 #  include "mozilla/gfx/Types.h"
+#  include "mozilla/CORSMode.h"
 #  include "mozilla/MemoryReporting.h"
 #  include "mozilla/ServoTypes.h"
 #  include "mozilla/ServoBindingTypes.h"
+#  include "mozilla/Vector.h"
 #  include "nsCSSPropertyID.h"
 #  include "nsCompatibility.h"
+#  include "nsIURI.h"
 #  include <atomic>
 
 struct RawServoAnimationValueTable;
@@ -35,9 +38,11 @@ struct RawServoAnimationValueMap;
 class nsAtom;
 class nsIFrame;
 class nsINode;
+class nsIContent;
 class nsCSSPropertyIDSet;
 class nsPresContext;
 class nsSimpleContentList;
+class imgRequestProxy;
 struct nsCSSValueSharedList;
 struct nsTimingFunction;
 
@@ -46,7 +51,7 @@ struct gfxFontFeature;
 namespace mozilla {
 namespace gfx {
 struct FontVariation;
-}
+}  // namespace gfx
 }  // namespace mozilla
 typedef mozilla::gfx::FontVariation gfxFontVariation;
 
@@ -67,23 +72,29 @@ class ComputedStyle;
 using Matrix4x4Components = float[16];
 using StyleMatrix4x4Components = Matrix4x4Components;
 
+// This is sound because std::num::NonZeroUsize is repr(transparent).
+//
+// It is just the case that cbindgen doesn't understand it natively.
+using StyleNonZeroUsize = uintptr_t;
+
 struct Keyframe;
 struct PropertyStyleAnimationValuePair;
 
 using ComputedKeyframeValues = nsTArray<PropertyStyleAnimationValuePair>;
 
 class ComputedStyle;
+enum LogicalAxis : uint8_t;
 class SeenPtrs;
 class SharedFontList;
 class StyleSheet;
 class WritingMode;
 class ServoElementSnapshotTable;
-enum class StyleContentType : uint8_t;
 
-template<typename T>
+template <typename T>
 struct StyleForgottenArcSlicePtr;
 
 struct AnimationPropertySegment;
+struct AspectRatio;
 struct ComputedTiming;
 struct URLExtraData;
 
@@ -97,7 +108,6 @@ class Loader;
 class LoaderReusableStyleSheets;
 class SheetLoadData;
 using SheetLoadDataHolder = nsMainThreadPtrHolder<SheetLoadData>;
-struct URLValue;
 enum SheetParsingMode : uint8_t;
 }  // namespace css
 
@@ -107,15 +117,72 @@ enum class CallerType : uint32_t;
 
 class Element;
 class Document;
+class ImageTracker;
+
 }  // namespace dom
+
+namespace ipc {
+class ByteBuf;
+}  // namespace ipc
+
+// Replacement for a Rust Box<T> for a non-dynamically-sized-type.
+//
+// TODO(emilio): If this was some sort of nullable box then this could be made
+// to work with moves, and also reduce memory layout size of stuff, potentially.
+template <typename T>
+struct StyleBox {
+  explicit StyleBox(UniquePtr<T> aPtr) : mRaw(aPtr.release()) {
+    MOZ_DIAGNOSTIC_ASSERT(mRaw);
+  }
+
+  ~StyleBox() {
+    MOZ_DIAGNOSTIC_ASSERT(mRaw);
+    delete mRaw;
+  }
+
+  StyleBox(const StyleBox& aOther) : StyleBox(MakeUnique<T>(*aOther)) {}
+
+  StyleBox& operator=(const StyleBox& aOther) const {
+    delete mRaw;
+    mRaw = MakeUnique<T>(*aOther).release();
+    return *this;
+  }
+
+  const T* operator->() const {
+    MOZ_DIAGNOSTIC_ASSERT(mRaw);
+    return mRaw;
+  }
+
+  const T& operator*() const {
+    MOZ_DIAGNOSTIC_ASSERT(mRaw);
+    return *mRaw;
+  }
+
+  T* operator->() {
+    MOZ_DIAGNOSTIC_ASSERT(mRaw);
+    return mRaw;
+  }
+
+  T& operator*() {
+    MOZ_DIAGNOSTIC_ASSERT(mRaw);
+    return *mRaw;
+  }
+
+  bool operator==(const StyleBox& aOther) const { return *(*this) == *aOther; }
+
+  bool operator!=(const StyleBox& aOther) const { return *(*this) != *aOther; }
+
+ private:
+  T* mRaw;
+};
 
 // Work-around weird cbindgen renaming / avoiding moving stuff outside its
 // namespace.
 
+using StyleImageTracker = dom::ImageTracker;
 using StyleLoader = css::Loader;
 using StyleLoaderReusableStyleSheets = css::LoaderReusableStyleSheets;
 using StyleCallerType = dom::CallerType;
-using StyleURLValue = css::URLValue;
 using StyleSheetParsingMode = css::SheetParsingMode;
 using StyleSheetLoadData = css::SheetLoadData;
 using StyleSheetLoadDataHolder = css::SheetLoadDataHolder;
@@ -142,5 +209,11 @@ using StyleMatrixTransformOperator =
 using StyleAtomicUsize = std::atomic<size_t>;
 
 }  // namespace mozilla
+
+#  ifndef HAVE_64BIT_BUILD
+static_assert(sizeof(void*) == 4, "");
+#    define SERVO_32_BITS 1
+#  endif
+#  define CBINDGEN_IS_GECKO
 
 #endif

@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY converterDialog.title "Зміна типу сховища повідомлень">
+<!ENTITY converterDialog.continueButton "Продовжити">
+<!ENTITY converterDialog.cancelButton "Скасувати">
+<!ENTITY converterDialog.finishButton "Завершити">
+<!ENTITY converterDialog.complete "Перетворення завершено. &brandShortName; зараз перезапуститься.">
+<!ENTITY converterDialog.error "Перетворення не вдалося.">
+

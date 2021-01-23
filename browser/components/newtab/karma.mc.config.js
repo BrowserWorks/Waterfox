@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 const path = require("path");
 
 const PATHS = {
@@ -44,7 +48,15 @@ module.exports = function(config) {
     reporters: [
       "coverage-istanbul", // require("karma-coverage")
       "mocha", // require("karma-mocha-reporter")
+
+      // for bin/try-runner.js to parse the output easily
+      "json", // require("karma-json-reporter")
     ],
+    jsonReporter: {
+      // So this doesn't get interleaved with other karma output
+      stdout: false,
+      outputFile: path.join("logs", "karma-run-results.json"),
+    },
     coverageIstanbulReporter: {
       reports: ["html", "text-summary"],
       dir: PATHS.coverageReportingPath,
@@ -62,11 +74,23 @@ module.exports = function(config) {
               functions: 100,
               branches: 83,
             },
+            "lib/PlacesFeed.jsm": {
+              statements: 98,
+              lines: 98,
+              functions: 100,
+              branches: 84,
+            },
             "lib/UTEventReporting.jsm": {
               statements: 100,
               lines: 100,
               functions: 100,
               branches: 75,
+            },
+            "lib/TopSitesFeed.jsm": {
+              statements: 96,
+              lines: 96,
+              functions: 97,
+              branches: 84,
             },
             "lib/*.jsm": {
               statements: 100,
@@ -75,10 +99,10 @@ module.exports = function(config) {
               branches: 84,
             },
             "content-src/components/DiscoveryStreamComponents/**/*.jsx": {
-              statements: 65.2,
-              lines: 65.2,
-              functions: 50,
-              branches: 50,
+              statements: 90.48,
+              lines: 90.48,
+              functions: 85.71,
+              branches: 68.75,
             },
             "content-src/asrouter/**/*.jsx": {
               statements: 57,
@@ -94,7 +118,7 @@ module.exports = function(config) {
             },
             "content-src/components/**/*.jsx": {
               statements: 51.1,
-              lines: 53.6,
+              lines: 52.38,
               functions: 31.2,
               branches: 31.2,
             },
@@ -108,14 +132,13 @@ module.exports = function(config) {
       mode: "none",
       devtool: "inline-source-map",
       // This loader allows us to override required files in tests
-      resolveLoader: {alias: {inject: path.join(__dirname, "loaders/inject-loader")}},
+      resolveLoader: {
+        alias: { inject: path.join(__dirname, "loaders/inject-loader") },
+      },
       // This resolve config allows us to import with paths relative to the root directory, e.g. "lib/ActivityStream.jsm"
       resolve: {
         extensions: [".js", ".jsx"],
-        modules: [
-          PATHS.moduleResolveDirectory,
-          "node_modules",
-        ],
+        modules: [PATHS.moduleResolveDirectory, "node_modules"],
       },
       externals: {
         // enzyme needs these for backwards compatibility with 0.13.
@@ -130,15 +153,26 @@ module.exports = function(config) {
           {
             test: /\.jsm$/,
             exclude: [/node_modules/],
-            use: [{
-              loader: "babel-loader", // require("babel-core")
-              options: {
-                plugins: [
-                  // Converts .jsm files into common-js modules
-                  ["jsm-to-commonjs", {basePath: PATHS.resourcePathRegEx, removeOtherImports: true, replace: true}], // require("babel-plugin-jsm-to-commonjs")
-                ],
+            use: [
+              {
+                loader: "babel-loader", // require("babel-core")
+                options: {
+                  plugins: [
+                    // Converts .jsm files into common-js modules
+                    [
+                      "jsm-to-commonjs",
+                      {
+                        basePath: PATHS.resourcePathRegEx,
+                        removeOtherImports: true,
+                        replace: true,
+                      },
+                    ], // require("babel-plugin-jsm-to-commonjs")
+                    "@babel/plugin-proposal-nullish-coalescing-operator",
+                    "@babel/plugin-proposal-optional-chaining",
+                  ],
+                },
               },
-            }],
+            ],
           },
           {
             test: /\.js$/,
@@ -161,7 +195,7 @@ module.exports = function(config) {
             enforce: "post",
             test: /\.js[mx]?$/,
             loader: "istanbul-instrumenter-loader",
-            options: {esModules: true},
+            options: { esModules: true },
             include: [
               path.resolve("content-src"),
               path.resolve("lib"),
@@ -181,6 +215,6 @@ module.exports = function(config) {
       },
     },
     // Silences some overly-verbose logging of individual module builds
-    webpackMiddleware: {noInfo: true},
+    webpackMiddleware: { noInfo: true },
   });
 };

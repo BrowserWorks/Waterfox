@@ -44,13 +44,6 @@ interface nsIScriptError : nsIConsoleMessage
     /** message is warning */
     const unsigned long warningFlag = 0x1;
 
-    /** exception was thrown for this case - exception-aware hosts can ignore */
-    const unsigned long exceptionFlag = 0x2;
-
-    // XXX check how strict is implemented these days.
-    /** error or warning is due to strict option */
-    const unsigned long strictFlag = 0x4;
-
     /** just a log message */
     const unsigned long infoFlag = 0x8;
 
@@ -95,6 +88,21 @@ interface nsIScriptError : nsIConsoleMessage
 
     readonly attribute boolean isFromChromeContext;
 
+    // Error created from a Promise rejection.
+    readonly attribute boolean isPromiseRejection;
+
+    [noscript] void initIsPromiseRejection(in bool isPromiseRejection);
+
+    // The "exception" value generated when an uncaught exception is thrown
+    // by JavaScript. This can be any value, e.g.
+    // - an Error object (`throw new Error("foobar"`)
+    // - some primitive (`throw "hello"`)
+    attribute jsval exception;
+
+    // The hasException attribute is used to differentiate between no thrown
+    // exception and `throw undefined`.
+    readonly attribute boolean hasException;
+
     attribute jsval stack;
 
     /**
@@ -113,12 +121,6 @@ interface nsIScriptError : nsIConsoleMessage
     attribute AString errorMessageName;
 
     readonly attribute nsIArray notes;
-
-    /**
-     * If we are recording or replaying, this value may identify the point
-     * where the error was generated, otherwise zero.
-     */
-    attribute unsigned long long timeWarpTarget;
 
     /**
      * If the ScriptError is a CSS parser error, this value will contain the
@@ -155,7 +157,8 @@ interface nsIScriptError : nsIConsoleMessage
                           in uint32_t columnNumber,
                           in uint32_t flags,
                           in ACString category,
-                          in unsigned long long innerWindowID);
+                          in unsigned long long innerWindowID,
+                          [optional] in bool fromChromeContext);
 
     /* This is the same function as initWithWindowID, but it expects an already
      * sanitized sourceName.
@@ -168,7 +171,8 @@ interface nsIScriptError : nsIConsoleMessage
                                  in uint32_t columnNumber,
                                  in uint32_t flags,
                                  in ACString category,
-                                 in unsigned long long innerWindowID);
+                                 in unsigned long long innerWindowID,
+                                 [optional] in bool fromChromeContext);
 
     /* This is the same function as initWithWindowID with an uri as a source parameter.
      */
@@ -179,12 +183,26 @@ interface nsIScriptError : nsIConsoleMessage
                            in uint32_t columnNumber,
                            in uint32_t flags,
                            in ACString category,
-                           in unsigned long long innerWindowID);
+                           in unsigned long long innerWindowID,
+                           [optional] in bool fromChromeContext);
 
     /* Initialize the script source ID in a new error. */
     void initSourceId(in uint32_t sourceId);
 
 %{C++
+    nsresult InitWithWindowID(const nsAString& message,
+                              const nsAString& sourceName,
+                              const nsAString& sourceLine,
+                              uint32_t lineNumber,
+                              uint32_t columnNumber,
+                              uint32_t flags,
+                              const nsACString& category,
+                              uint64_t aInnerWindowID)
+    {
+        return InitWithWindowID(message, sourceName, sourceLine, lineNumber,
+                                columnNumber, flags, category, aInnerWindowID,
+                                false);
+    }
     // These overloads allow passing a literal string for category.
     template<uint32_t N>
     nsresult InitWithWindowID(const nsAString& message,
@@ -194,11 +212,28 @@ interface nsIScriptError : nsIConsoleMessage
                               uint32_t columnNumber,
                               uint32_t flags,
                               const char (&c)[N],
-                              uint64_t aInnerWindowID)
+                              uint64_t aInnerWindowID,
+                              bool aFromChromeContext = false)
     {
         nsDependentCString category(c, N - 1);
         return InitWithWindowID(message, sourceName, sourceLine, lineNumber,
-                                columnNumber, flags, category, aInnerWindowID);
+                                columnNumber, flags, category, aInnerWindowID,
+                                aFromChromeContext);
+    }
+
+    nsresult InitWithSanitizedSource(const nsAString& message,
+                                     const nsAString& sourceName,
+                                     const nsAString& sourceLine,
+                                     uint32_t lineNumber,
+                                     uint32_t columnNumber,
+                                     uint32_t flags,
+                                     const nsACString& category,
+                                     uint64_t aInnerWindowID)
+    {
+        return InitWithSanitizedSource(message, sourceName, sourceLine,
+                                       lineNumber, columnNumber, flags,
+                                       category, aInnerWindowID,
+                                       false);
     }
 
     template<uint32_t N>
@@ -209,12 +244,28 @@ interface nsIScriptError : nsIConsoleMessage
                                      uint32_t columnNumber,
                                      uint32_t flags,
                                      const char (&c)[N],
-                                     uint64_t aInnerWindowID)
+                                     uint64_t aInnerWindowID,
+                                     bool aFromChromeContext = false)
     {
         nsDependentCString category(c, N - 1);
         return InitWithSanitizedSource(message, sourceName, sourceLine,
                                        lineNumber, columnNumber, flags,
-                                       category, aInnerWindowID);
+                                       category, aInnerWindowID,
+                                       aFromChromeContext);
+    }
+
+    nsresult InitWithSourceURI(const nsAString& message,
+                               nsIURI* sourceURI,
+                               const nsAString& sourceLine,
+                               uint32_t lineNumber,
+                               uint32_t columnNumber,
+                               uint32_t flags,
+                               const nsACString& category,
+                               uint64_t aInnerWindowID)
+    {
+        return InitWithSourceURI(message, sourceURI, sourceLine,
+                                 lineNumber, columnNumber, flags,
+                                 category, aInnerWindowID, false);
     }
 
     template<uint32_t N>
@@ -225,12 +276,13 @@ interface nsIScriptError : nsIConsoleMessage
                                uint32_t columnNumber,
                                uint32_t flags,
                                const char (&c)[N],
-                               uint64_t aInnerWindowID)
+                               uint64_t aInnerWindowID,
+                               bool aFromChromeContext = false)
     {
         nsDependentCString category(c, N - 1);
         return InitWithSourceURI(message, sourceURI, sourceLine,
                                  lineNumber, columnNumber, flags,
-                                 category, aInnerWindowID);
+                                 category, aInnerWindowID, aFromChromeContext);
     }
 %}
 

@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Privacy and Security' prefs settings -->
+<!ENTITY pref.security.title "Soukromí a zabezpečení">
+
+<!ENTITY tracking.label "Sledování uživatelů">
+<!ENTITY trackingIntro.label "Webové servery mohou sledovat, jak je používáte, což ovlivňuje vaše soukromí.">
+
+<!ENTITY doNotTrack.label                 "Informovat servery, že nechci být sledován">
+<!ENTITY doNotTrack.accesskey             "n">
+<!ENTITY trackProtect.label               "Zamezit známým serverům mě sledovat">
+<!ENTITY trackProtect.accesskey           "z">
+<!ENTITY warnTrackContent.label           "Varovat, pokud budou zjištěny známé aktivity sledování">
+<!ENTITY warnTrackContent.accesskey       "V">
+
+<!ENTITY geoLocation.label                "Prohlížení se znalostí polohy">
+<!ENTITY geoIntro.label                   "Webové stránky mohou požadovat více informací o vaší současné poloze.">
+
+<!ENTITY geoEnabled.label                 "Zeptat se na povolení příchozího požadavku">
+<!ENTITY geoEnabled.accesskey             "d">
+<!ENTITY geoDisabled.label                "Zakázat tuto funkci a odmítat všechny požadavky">
+<!ENTITY geoDisabled.accesskey            "Z">
+
+<!-- LOCALIZATION NOTE (safeBrowsing.label, blockWebForgeries.label, blockAttackSites.label):
+  The methods by which forged (phished) and attack sites will be detected by
+  phishing providers will vary from human review to machine-based heuristics
+  to a combination of both, so it's important that these strings convey the
+  meaning "reported" (and not something like "known").
+-->
+<!ENTITY safeBrowsing.label "Bezpečné prohlížení">
+<!ENTITY safeBrowsingIntro.label "&brandShortName; může blokovat stránky, jejichž obsah byl nahlášen jako škodlivý.">
+
+<!ENTITY blockAttackSites.label "Blokovat nahlášené útočné stránky">
+<!ENTITY blockAttackSites.accesskey "B">
+
+<!ENTITY blockWebForgeries.label "Blokovat nahlášené podvodné stránky">
+<!ENTITY blockWebForgeries.accesskey "o">

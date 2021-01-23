@@ -18,7 +18,8 @@ platforms:
   - win64
 # Minimum clang-tidy version that is required for all the following checkers
 # to work properly.
-package_version: "8.0.0"
+# This is also used by 'mach clang-format'
+package_version: "10.0"
 clang_checkers:
   - name: -*
     publish: !!bool no
@@ -62,6 +63,8 @@ clang_checkers:
     reliability: high
   - name: bugprone-swapped-arguments
     reliability: high
+  - name: bugprone-too-small-loop-variable
+    reliability: high
   - name: bugprone-unused-raii
     reliability: high
   - name: bugprone-use-after-move
@@ -80,6 +83,8 @@ clang_checkers:
     reliability: medium
   - name: clang-analyzer-core.uninitialized.Branch
     reliability: medium
+  - name: clang-analyzer-cplusplus.Move
+    reliability: high
   - name: clang-analyzer-cplusplus.NewDelete
     reliability: medium
   - name: clang-analyzer-cplusplus.NewDeleteLeaks
@@ -120,6 +125,10 @@ clang_checkers:
     reliability: high
   - name: clang-analyzer-unix.cstring.NullArg
     reliability: high
+  - name: cppcoreguidelines-narrowing-conversions
+    reliability: high
+  - name: cppcoreguidelines-pro-type-member-init
+    reliability: medium
   - name: misc-non-copyable-objects
     reliability: high
   - name: misc-redundant-expression
@@ -133,6 +142,10 @@ clang_checkers:
       - win32
       - win64
     reliability: medium
+  - name: modernize-concat-nested-namespaces
+    reliability: high
+  - name: modernize-deprecated-ios-base-aliases
+    reliability: high
   - name: modernize-loop-convert
     reliability: high
   - name: modernize-raw-string-literal
@@ -160,6 +173,8 @@ clang_checkers:
     reliability: low
     # Too noisy because of the way how we implement NS_IMETHOD. See Bug 1420366.
     publish: !!bool no
+  - name: modernize-use-using
+    reliability: high
   - name: mozilla-*
     reliability: high
   - name: performance-faster-string-find
@@ -173,12 +188,19 @@ clang_checkers:
       - linux64
       - macosx64
     reliability: high
+    # Disable as the test does not support C++17 yet
+    publish: !!bool no
   - name: performance-inefficient-string-concatenation
     reliability: high
   - name: performance-inefficient-vector-operation
     reliability: high
   - name: performance-move-const-arg
     reliability: high
+    config:
+      - key: CheckTriviallyCopyableMove
+        # As per Bug 1558359 - disable detection of trivially copyable types
+        # that do not have a move constructor.
+        value: 0
   - name: performance-move-constructor-init
     reliability: high
   - name: performance-noexcept-move-constructor
@@ -190,6 +212,8 @@ clang_checkers:
   - name: performance-unnecessary-value-param
     reliability: high
   - name: readability-braces-around-statements
+    reliability: high
+  - name: readability-const-return-type
     reliability: high
   # Note: this can be loosened up by using the ShortStatementLines option
   - name: readability-container-size-empty
@@ -211,9 +235,19 @@ clang_checkers:
         value: 1
   - name: readability-inconsistent-declaration-parameter-name
     reliability: high
+  - name: readability-isolate-declaration
+    # As per bug 1558987 - we don't want to have this enabled
+    publish: !!bool no
+    reliability: high
+  - name: readability-magic-numbers
+    # Bug 1553495 - we must see first its impact on our code.
+    publish: !!bool no
+    reliability: high
   - name: readability-misleading-indentation
     reliability: high
   - name: readability-non-const-parameter
+    reliability: high
+  - name: readability-qualified-auto
     reliability: high
   - name: readability-redundant-control-flow
     reliability: high
@@ -272,6 +306,3 @@ clang_checkers:
   - name: google-runtime-references
     reliability: low
     publish: !!bool no
-
-# Third party files from mozilla-central
-third_party: tools/rewriting/ThirdPartyPaths.txt

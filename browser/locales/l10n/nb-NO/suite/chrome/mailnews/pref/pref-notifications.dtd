@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.notifications.title         "Varsler">
+<!ENTITY notifications.caption            "Varsler">
+<!ENTITY newMessagesArrive.label          "Når en ny melding kommer inn:">
+
+<!-- LOCALIZATION NOTE: (showAlertFor.label, showAlertTimeEnd.label)
+     showAlertFor.label is associated with the checkbox to show the alert,
+     leading into a numerical field to enter a time in seconds, followed by
+     showAlertTimeEnd.label which in en-US is the unit of the value -->
+
+<!ENTITY showAlertFor.label               "Vis et varsel for">
+<!ENTITY showAlertFor.accesskey           "V">
+<!ENTITY showAlertTimeEnd.label           "sekunder">
+
+<!ENTITY showAlertPreviewText.label       "Vis en forhåndsvisning av meldingsteksten">
+<!ENTITY showAlertPreviewText.accesskey   "f">
+<!ENTITY showAlertSubject.label           "Vis emne">
+<!ENTITY showAlertSubject.accesskey       "e">
+<!ENTITY showAlertSender.label            "Vis avsender">
+<!ENTITY showAlertSender.accesskey        "a">
+<!ENTITY useSystemAlert.label             "Benytter operativsystemets innebygde varslingstjeneste">
+<!ENTITY useSystemAlert.accesskey         "d">
+<!ENTITY useBuiltInAlert.label            "Bruk &brandShortName; sine egne varslingsvinduer">
+<!ENTITY useBuiltInAlert.accesskey        "v">
+
+<!ENTITY showTrayIcon.label               "Vis et varselsikon">
+<!ENTITY showTrayIcon.accesskey           "s">
+<!ENTITY showBalloon.label                "Vis et ballongvarsel">
+<!ENTITY showBalloon.accesskey            "b">
+<!ENTITY bounceSystemDockIcon.label       "Animer startlinje-ikonet">
+<!ENTITY bounceSystemDockIcon.accesskey   "A">
+
+<!ENTITY playSound.label                  "Spill av en lyd">
+<!ENTITY playSound.accesskey              "S">
+<!ENTITY playButton.label                 "Spill av">
+<!ENTITY playButton.accesskey             "S">
+<!ENTITY systemsound.label                "Systemets e-postlyd">
+<!ENTITY systemsound.accesskey            "M">
+<!ENTITY customsound.label                "Egen WAV-fil">
+<!ENTITY customsound.accesskey            "W">
+<!ENTITY browse.label                     "Bla gjennom …">
+<!ENTITY browse.accesskey                 "B">
+<!ENTITY browse.title                     "Velg fil">

@@ -15,7 +15,6 @@
 #include "nsUnicodeScriptCodes.h"
 
 #include "gfxTypes.h"
-#include "gfxFontFamilyList.h"
 #include "gfxBlur.h"
 #include "gfxSkipChars.h"
 #include "nsRect.h"
@@ -41,9 +40,11 @@ class nsAtom;
 class nsIObserver;
 class SRGBOverrideObserver;
 class gfxTextPerfMetrics;
+struct FontMatchingStats;
 typedef struct FT_LibraryRec_* FT_Library;
 
 namespace mozilla {
+class FontFamilyList;
 namespace layers {
 class FrameStats;
 }
@@ -156,7 +157,8 @@ class gfxPlatform : public mozilla::layers::MemoryPressureListener {
   typedef mozilla::StretchRange StretchRange;
   typedef mozilla::SlantStyleRange SlantStyleRange;
   typedef mozilla::WeightRange WeightRange;
-  typedef mozilla::gfx::Color Color;
+  typedef mozilla::gfx::sRGBColor sRGBColor;
+  typedef mozilla::gfx::DeviceColor DeviceColor;
   typedef mozilla::gfx::DataSourceSurface DataSourceSurface;
   typedef mozilla::gfx::DrawTarget DrawTarget;
   typedef mozilla::gfx::IntSize IntSize;
@@ -202,6 +204,10 @@ class gfxPlatform : public mozilla::layers::MemoryPressureListener {
   static void InitMoz2DLogging();
 
   static bool IsHeadless();
+
+  static bool UseWebRender();
+
+  static bool CanMigrateMacGPUs();
 
   /**
    * Create an offscreen surface of the given dimensions
@@ -279,6 +285,8 @@ class gfxPlatform : public mozilla::layers::MemoryPressureListener {
   void GetApzSupportInfo(mozilla::widget::InfoObject& aObj);
   void GetTilesSupportInfo(mozilla::widget::InfoObject& aObj);
   void GetFrameStats(mozilla::widget::InfoObject& aObj);
+  void GetCMSSupportInfo(mozilla::widget::InfoObject& aObj);
+  void GetDisplayInfo(mozilla::widget::InfoObject& aObj);
 
   // Get the default content backend that will be used with the default
   // compositor. If the compositor is known when calling this function,
@@ -323,7 +331,7 @@ class gfxPlatform : public mozilla::layers::MemoryPressureListener {
    * content process. Currently implemented only on MacOSX and Linux.
    */
   virtual void ReadSystemFontList(
-      InfallibleTArray<mozilla::dom::SystemFontListEntry>* aFontList) {}
+      nsTArray<mozilla::dom::SystemFontListEntry>* aFontList) {}
 
   /**
    * Rebuilds the any cached system font lists
@@ -361,12 +369,14 @@ class gfxPlatform : public mozilla::layers::MemoryPressureListener {
                                    const nsACString& aGenericFamily);
 
   /**
-   * Create the appropriate platform font group
+   * Create a gfxFontGroup based on the given family list and style.
    */
-  virtual gfxFontGroup* CreateFontGroup(
-      const mozilla::FontFamilyList& aFontFamilyList,
-      const gfxFontStyle* aStyle, gfxTextPerfMetrics* aTextPerf,
-      gfxUserFontSet* aUserFontSet, gfxFloat aDevToCssSize) = 0;
+  gfxFontGroup* CreateFontGroup(const mozilla::FontFamilyList& aFontFamilyList,
+                                const gfxFontStyle* aStyle,
+                                gfxTextPerfMetrics* aTextPerf,
+                                FontMatchingStats* aFontMatchingStats,
+                                gfxUserFontSet* aUserFontSet,
+                                gfxFloat aDevToCssSize) const;
 
   /**
    * Look up a local platform font using the full font face name.
@@ -497,6 +507,11 @@ class gfxPlatform : public mozilla::layers::MemoryPressureListener {
   static eCMSMode GetCMSMode();
 
   /**
+   * Used only for testing. Override the pref setting.
+   */
+  static void SetCMSModeOverride(eCMSMode aMode);
+
+  /**
    * Determines the rendering intent for color management.
    *
    * If the value in the pref gfx.color_management.rendering_intent is a
@@ -510,11 +525,9 @@ class gfxPlatform : public mozilla::layers::MemoryPressureListener {
 
   /**
    * Convert a pixel using a cms transform in an endian-aware manner.
-   *
-   * Sets 'out' to 'in' if transform is nullptr.
    */
-  static void TransformPixel(const Color& in, Color& out,
-                             qcms_transform* transform);
+  static DeviceColor TransformPixel(const sRGBColor& in,
+                                    qcms_transform* transform);
 
   /**
    * Return the output device ICC profile.
@@ -540,6 +553,21 @@ class gfxPlatform : public mozilla::layers::MemoryPressureListener {
    * Return sRGBA -> output device transform.
    */
   static qcms_transform* GetCMSRGBATransform();
+
+  /**
+   * Return sBGRA -> output device transform.
+   */
+  static qcms_transform* GetCMSBGRATransform();
+
+  /**
+   * Return OS RGBA -> output device transform.
+   */
+  static qcms_transform* GetCMSOSRGBATransform();
+
+  /**
+   * Return OS RGBA QCMS type.
+   */
+  static qcms_data_type GetCMSOSRGBAType();
 
   virtual void FontsPrefsChanged(const char* aPref);
 
@@ -611,8 +639,7 @@ class gfxPlatform : public mozilla::layers::MemoryPressureListener {
    */
   virtual mozilla::gfx::VsyncSource* GetHardwareVsync() {
     MOZ_ASSERT(mVsyncSource != nullptr);
-    MOZ_ASSERT(XRE_IsParentProcess() ||
-               mozilla::recordreplay::IsRecordingOrReplaying());
+    MOZ_ASSERT(XRE_IsParentProcess());
     return mVsyncSource;
   }
 
@@ -644,6 +671,12 @@ class gfxPlatform : public mozilla::layers::MemoryPressureListener {
   static void ReInitFrameRate();
 
   /**
+   * Update force subpixel AA quality setting (called after pref
+   * changes).
+   */
+  void UpdateForceSubpixelAAWherePossible();
+
+  /**
    * Used to test which input types are handled via APZ.
    */
   virtual bool SupportsApzWheelInput() const { return false; }
@@ -651,6 +684,7 @@ class gfxPlatform : public mozilla::layers::MemoryPressureListener {
   bool SupportsApzDragInput() const;
   bool SupportsApzKeyboardInput() const;
   bool SupportsApzAutoscrolling() const;
+  bool SupportsApzZooming() const;
 
   virtual void FlushContentDrawing() {}
 
@@ -667,8 +701,9 @@ class gfxPlatform : public mozilla::layers::MemoryPressureListener {
       mozilla::gfx::SurfaceFormat aFormat);
 
   /**
-   * Wrapper around gfxPrefs::PerfWarnings().
-   * Extracted into a function to avoid including gfxPrefs.h from this file.
+   * Wrapper around StaticPrefs::gfx_perf_warnings_enabled().
+   * Extracted into a function to avoid including StaticPrefs_gfx.h from this
+   * file.
    */
   static bool PerfWarnings();
 
@@ -700,6 +735,12 @@ class gfxPlatform : public mozilla::layers::MemoryPressureListener {
   const gfxSkipChars& EmptySkipChars() const { return kEmptySkipChars; }
 
   /**
+   * Returns a buffer containing the CMS output profile data. The way this
+   * is obtained is platform-specific.
+   */
+  virtual nsTArray<uint8_t> GetPlatformCMSOutputProfileData();
+
+  /**
    * Return information on how child processes should initialize graphics
    * devices.
    */
@@ -711,8 +752,6 @@ class gfxPlatform : public mozilla::layers::MemoryPressureListener {
    */
   virtual void ImportGPUDeviceData(const mozilla::gfx::GPUDeviceData& aData);
 
-  virtual FT_Library GetFTLibrary() { return nullptr; }
-
   bool HasVariationFontSupport() const { return mHasVariationFontSupport; }
 
   bool HasNativeColrFontSupport() const { return mHasNativeColrFontSupport; }
@@ -721,6 +760,8 @@ class gfxPlatform : public mozilla::layers::MemoryPressureListener {
   static bool WebRenderPrefEnabled();
   // you probably want to use gfxVars::UseWebRender() instead of this
   static bool WebRenderEnvvarEnabled();
+  // you probably want to use gfxVars::UseWebRender() instead of this
+  static bool WebRenderEnvvarDisabled();
 
   void NotifyFrameStats(nsTArray<mozilla::layers::FrameStats>&& aFrameStats);
 
@@ -736,10 +777,9 @@ class gfxPlatform : public mozilla::layers::MemoryPressureListener {
   gfxPlatform();
   virtual ~gfxPlatform();
 
-  virtual bool HasBattery() { return false; }
-
   virtual void InitAcceleration();
   virtual void InitWebRenderConfig();
+  virtual void InitWebGPUConfig();
 
   /**
    * Called immediately before deleting the gfxPlatform object.
@@ -779,6 +819,23 @@ class gfxPlatform : public mozilla::layers::MemoryPressureListener {
   void FetchAndImportContentDeviceData();
   virtual void ImportContentDeviceData(
       const mozilla::gfx::ContentDeviceData& aData);
+
+  /**
+   * Returns the contents of the file pointed to by the
+   * gfx.color_management.display_profile pref, if set.
+   * Returns an empty array if not set, or if an error occurs
+   */
+  nsTArray<uint8_t> GetPrefCMSOutputProfileData();
+
+  /**
+   * If inside a child process and currently being initialized by the
+   * SetXPCOMProcessAttributes message, this can be used by subclasses to
+   * retrieve the ContentDeviceData passed by the message
+   *
+   * If not currently being initialized, will return nullptr. In this case,
+   * child should send a sync message to ask parent for color profile
+   */
+  const mozilla::gfx::ContentDeviceData* GetInitContentDeviceData();
 
   /**
    * Increase the global device counter after a device has been removed/reset.
@@ -855,11 +912,7 @@ class gfxPlatform : public mozilla::layers::MemoryPressureListener {
   static void InitOpenGLConfig();
   static void CreateCMSOutputProfile();
 
-  static void GetCMSOutputProfileData(void*& mem, size_t& size);
-
   friend void RecordingPrefChanged(const char* aPrefName, void* aClosure);
-
-  virtual void GetPlatformCMSOutputProfile(void*& mem, size_t& size);
 
   /**
    * Calling this function will compute and set the ideal tile size for the
@@ -876,7 +929,11 @@ class gfxPlatform : public mozilla::layers::MemoryPressureListener {
 
   void InitCompositorAccelerationPrefs();
   void InitGPUProcessPrefs();
+  virtual void InitPlatformGPUProcessPrefs() {}
   void InitOMTPConfig();
+
+  // Gather telemetry data about the Gfx Platform and send it
+  static void ReportTelemetry();
 
   static bool IsDXInterop2Blocked();
   static bool IsDXNV12Blocked();
@@ -903,6 +960,8 @@ class gfxPlatform : public mozilla::layers::MemoryPressureListener {
   mozilla::widget::GfxInfoCollector<gfxPlatform> mApzSupportCollector;
   mozilla::widget::GfxInfoCollector<gfxPlatform> mTilesInfoCollector;
   mozilla::widget::GfxInfoCollector<gfxPlatform> mFrameStatsCollector;
+  mozilla::widget::GfxInfoCollector<gfxPlatform> mCMSInfoCollector;
+  mozilla::widget::GfxInfoCollector<gfxPlatform> mDisplayInfoCollector;
 
   nsTArray<mozilla::layers::FrameStats> mFrameStats;
 
@@ -914,6 +973,9 @@ class gfxPlatform : public mozilla::layers::MemoryPressureListener {
 
   int32_t mScreenDepth;
   mozilla::gfx::IntSize mScreenSize;
+
+  // Total number of screen pixels across all monitors.
+  int64_t mScreenPixels;
 
   // An instance of gfxSkipChars which is empty. It is used as the
   // basis for error-case iterators.

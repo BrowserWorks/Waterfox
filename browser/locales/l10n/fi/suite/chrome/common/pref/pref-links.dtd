@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY linksHeader.label "Linkkien avautuminen">
+<!ENTITY newWindow.label "Linkkien avautuminen">
+<!ENTITY newWindowDescription.label "Avaa uuteen ikkunaan avautuviksi tarkoitetut linkit:">
+<!ENTITY newWindowRestriction.label "Kun komentosarja pyytää avaamaan uuden ikkunan:">
+<!ENTITY external.label "Muiden sovellusten avaamat linkit">
+<!ENTITY externalDescription.label "Avaa muiden sovellusten avaamat sivut:">
+
+<!ENTITY openCurrent.label "Nykyiseen välilehteen tai ikkunaan">
+<!ENTITY newWindowGroupCurrent.accesskey "N">
+<!ENTITY externalGroupCurrent.accesskey "y">
+
+<!ENTITY openTab.label "Uuteen välilehteen nykyisessä ikkunassa">
+<!ENTITY newWindowGroupTab.accesskey "v">
+<!ENTITY externalGroupTab.accesskey "ä">
+
+<!ENTITY openWindow.label "Uuteen ikkunaan">
+<!ENTITY newWindowGroupWindow.accesskey "i">
+<!ENTITY externalGroupWindow.accesskey "k">
+
+<!ENTITY divertAll.label "Avaa aina välilehti ikkunan sijaan">
+<!ENTITY divertAll.accesskey "A">
+<!ENTITY divertNoFeatures.label "Älä avaa mukautettuja ikkunoita välilehtiin">
+<!ENTITY divertNoFeatures.accesskey "Ä">
+<!ENTITY dontDivert.label "Avaa aina uusi ikkuna">
+<!ENTITY dontDivert.accesskey "u">

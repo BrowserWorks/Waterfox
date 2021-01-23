@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label          "Датотека">
+<!ENTITY fileMenu.accesskey        "Д">
+<!ENTITY newMenu.label            "Ново">
+<!ENTITY newMenu.accesskey          "Н">
+
+<!ENTITY editMenu.label          "Уреди">
+<!ENTITY editMenu.accesskey        "У">
+<!ENTITY undoCmd.label            "Поништи">
+<!ENTITY undoCmd.accesskey          "П">
+<!ENTITY redoCmd.label            "Понови">
+<!ENTITY redoCmd.accesskey          "о">
+<!ENTITY deleteCmd.label          "Обриши">
+<!ENTITY deleteCmd.accesskey        "б">
+<!ENTITY preferencesCmd2.label "Опције">
+<!ENTITY preferencesCmd2.accesskey "Ц">
+<!ENTITY preferencesCmdUnix.label       "Поставке">
+<!ENTITY preferencesCmdUnix.accesskey     "с">
+
+<!ENTITY customizeCmd.label "Прилагоди">
+<!ENTITY customizeCmd.accesskey "д">
+
+<!ENTITY viewMenu.label          "Преглед">
+<!ENTITY viewMenu.accesskey        "р">
+<!ENTITY viewToolbarsMenu.label        "Траке са алаткама">
+<!ENTITY viewToolbarsMenu.accesskey      "Т">
+<!ENTITY showTaskbarCmd.label          "Статусна трака">
+<!ENTITY showTaskbarCmd.accesskey        "к">
+
+<!ENTITY closeCmd.label      "Затвори">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "З">
+
+<!ENTITY quitApplicationCmd.label  "Изађи">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "ђ">
+
+<!ENTITY quitApplicationCmdUnix.label  "Изађи">
+<!ENTITY quitApplicationCmdUnix.accesskey  "ђ">
+
+<!ENTITY quitApplicationCmdMac.label  "Изађи из &brandShortName;">
+<!ENTITY quitApplicationCmdMac.accesskey  "ђ">

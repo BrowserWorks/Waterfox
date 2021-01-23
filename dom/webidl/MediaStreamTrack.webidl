@@ -33,6 +33,30 @@ enum MediaSourceEnum {
     // If values are added, adjust n_values in Histograms.json (2 places)
 };
 
+dictionary ConstrainLongRange {
+    long min;
+    long max;
+    long exact;
+    long ideal;
+};
+
+dictionary ConstrainDoubleRange {
+    double min;
+    double max;
+    double exact;
+    double ideal;
+};
+
+dictionary ConstrainBooleanParameters {
+    boolean exact;
+    boolean ideal;
+};
+
+dictionary ConstrainDOMStringParameters {
+    (DOMString or sequence<DOMString>) exact;
+    (DOMString or sequence<DOMString>) ideal;
+};
+
 typedef (long or ConstrainLongRange) ConstrainLong;
 typedef (double or ConstrainDoubleRange) ConstrainDouble;
 typedef (boolean or ConstrainBooleanParameters) ConstrainBoolean;
@@ -46,10 +70,11 @@ dictionary MediaTrackConstraintSet {
     ConstrainLong height;
     ConstrainDouble frameRate;
     ConstrainDOMString facingMode;
-    DOMString mediaSource = "camera";
+    DOMString mediaSource;
     long long browserWindow;
     boolean scrollWithPage;
     ConstrainDOMString deviceId;
+    ConstrainDOMString groupId;
     ConstrainLong viewportOffsetX;
     ConstrainLong viewportOffsetY;
     ConstrainLong viewportWidth;
@@ -60,6 +85,7 @@ dictionary MediaTrackConstraintSet {
     ConstrainLong channelCount;
 };
 
+[GenerateToJSON]
 dictionary MediaTrackConstraints : MediaTrackConstraintSet {
     sequence<MediaTrackConstraintSet> advanced;
 };
@@ -89,9 +115,6 @@ interface MediaStreamTrack : EventTarget {
     MediaTrackSettings     getSettings ();
 
     [Throws, NeedsCallerType]
-    Promise<void>          applyConstraints (optional MediaTrackConstraints constraints);
+    Promise<void>          applyConstraints (optional MediaTrackConstraints constraints = {});
 //              attribute EventHandler          onoverconstrained;
-
-    [ChromeOnly]
-    void mutedChanged(boolean muted);
 };

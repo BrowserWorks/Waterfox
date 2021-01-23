@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE shown while obtaining certificates from a directory -->
+
+
+<!ENTITY title.label "Certifikaty sćahnyć">
+<!ENTITY info.message "Zapis za certifikaty přijimarja so pyta. To móže někotre mjeńšiny trać.">
+<!ENTITY stop.label "Pytanje zastajić">

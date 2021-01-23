@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Draoidh a' chunntais chabadaich">
+
+<!ENTITY accountProtocolTitle.label   "An lìonra cabadaich">
+<!ENTITY accountProtocolInfo.label    "Tagh lìonra a' chunntais chabadaich agad.">
+<!ENTITY accountProtocolField.label   "Lìonra:">
+<!ENTITY accountProtocolGetMore.label "Barrachd…">
+
+<!ENTITY accountUsernameTitle.label   "Ainm-cleachdaiche">
+<!ENTITY accountUsernameDuplicate.label "Chaidh an cunntas seo a rèiteachadh mu thràth!">
+
+<!ENTITY accountPasswordTitle.label   "Facal-faire">
+<!ENTITY accountPasswordInfo.label    "Cuir am facal-faire agad a-steach sa bhogsa gu h-ìosal.">
+<!ENTITY accountPasswordField.label   "Facal-faire:">
+<!ENTITY accountPasswordManager.label "Ma chuireas tu a-steach facal-faire an-seo, thèid a stòradh le manaidsear nam faclan-faire. Ma tha thu airson am facal-faire a chur a-steach a làimh gach turas a nì thu ceangal dhan chunntas seo, fàg am bogsa seo bàn.">
+
+<!ENTITY accountAdvancedTitle.label   "Roghainnean adhartach">
+<!ENTITY accountAdvancedInfo.label    "'S urrainn dhut leum a ghearradh thairis air a' cheum seo ma thogras tu.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Innis dhomh ma bhios post ùr ann">
+<!ENTITY accountAliasGroupbox.caption "Ainm-brèige ionadail">
+<!ENTITY accountAliasField.label      "Ainm-brèige:">
+<!ENTITY accountAliasInfo.label       "Chan fhaic thu seo 'nad chòmhraidhean ach ma bhios tu a' bruidhinn ann, chan fhaic an luchd-aithne cèin e.">
+<!ENTITY accountProxySettings.caption "Roghainnean progsaidh">
+<!ENTITY accountProxySettings.change.label     "Atharraich…">
+<!ENTITY accountProxySettings.change.accessKey "A">
+
+<!ENTITY accountSummaryTitle.label   "Gearr-chunntas">
+<!ENTITY accountSummaryInfo.label    "Chì thu gearr-chunntas dhen fhiosrachadh a chuir thu a-steach gu h-ìosal. Thoir sùil air mu cruthaich thu an cunntas.">
+<!ENTITY accountSummary.connectNow.label "Ceangal ris a' chunntas seo an-dràsta.">

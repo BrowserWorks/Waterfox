@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "مجھے یہاں سے نکالیں!">
+<!ENTITY safeb.palm.decline.label "اس تنبیہ کو نظر انداز کریں">
+<!ENTITY safeb.palm.reportPage.label "اس صفحہ کو بلاک کیوں کیا گیا تھا؟">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "<a id='advisory_provider'/> کی طرف سے مشاورتی">
+
+<!ENTITY safeb.blocked.malwarePage.title "رپورٹ شدہ اٹیک صفحہ!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "<span id='malware_sitename'/> پر ویب پیج اٹیک پیج کے طور پر رپعرٹ ہو چکا ہے اور آپ کی سلامتی ترجیحات کی بناہ پر بلاک کر دیا گیا ہے۔">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>اٹیک پیج ایسے پروگرام تنصیب کرنے کی کوشش کرتے ہیں جو نجی معلومات چوری کرتی ہے، آپ کا کمپیوٹر دوسروں پر حملہ کرنے کے لیے استعمال کرتے ہیں، یا آپ کا نظام خراب کرتے ہیں۔</p><p>کچھ اٹیک پیج جان کر مضر سافٹ ویئر بانٹتے ہیں، لیکن کافی سے یہ اپنے مالکین کی اجازت کے بغیر کرتے ہیں۔</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "فریبی سائٹ!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "یہ صفہ <span id='phishing_sitename'/> فریبی سائٹ کی طور پر رپورٹ کیا گیا ہے اور آپ کی سلامتی ترجیحات کی بناہ پر بلاک کر دیا گیا ہے۔">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p> پرفریب سائٹس آپ کو کچھ خطرناک کرنے کے جال میں پھنسانے کے لیے تیار کیا گیا ہے، جیسے سافٹ ویئر نصب کرنا، یا آپ کی ذاتی معلومات کا انکشاف کرنا، جیسے پاسورڈ، فون نمبر یا کریڈٹ کارڈ۔ </p><p>اس ویب صفحہ پر کسی بھی معلومات درج کرنے سے کے نتیجے میں شناخت کی چوری یا دیگر فراڈہو سکتا ہے۔</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "ناپسندیدہ سافٹ ویئر ویب سائٹ رپورٹ کرے!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "میں اس ویب صفحہ <span id='unwanted_sitename'/> ناپسندیدہ سافٹ ویئر پر مشتمل کی رپورٹ کیا گیا ہے اور آپ کی سلامتی کی ترجیحات کی بنیاد پر بلاک کر دیا گیا ہے۔">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "ناپسندیدہ سافٹ ویئر کے صفحات برامک ہو اور غیر متوقع طور طریقوں سے آپ کے سسٹم کو متاثر کر سکتا ہے کہ سافٹ ویئر کو انسٹال کرنے کی کوشش کری۔">
+
+<!ENTITY safeb.blocked.harmfulPage.title "آگے سائٹ میں وائرس موجود ہو سکتا ہے">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; نے اس صحہ کو بلاک کر دیا ہے کیونکہ شاید یہ خطرناک ایپلیکیشن تنصیب کرنے کی کوشش کرے یا ۔آپ کی معلومات چوری یا حزف کرنے کی کوشش کرے (جیسے کہ ، نقوش، پاسورڈ، پیغام اور کریڈٹ کارڈ)۔">

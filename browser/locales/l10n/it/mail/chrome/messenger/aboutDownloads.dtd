@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title "File salvati">
+<!ENTITY aboutDownloads.empty "Nessun file salvato">
+<!ENTITY cmd.show.label "Apri cartella">
+<!ENTITY cmd.show.accesskey "c">
+<!ENTITY cmd.showMac.label "Mostra nel Finder">
+<!ENTITY cmd.showMac.accesskey "F">
+<!ENTITY cmd.open.label "Apri">
+<!ENTITY cmd.open.accesskey "A">
+<!ENTITY cmd.removeFromHistory.label "Elimina dalla cronologia">
+<!ENTITY cmd.removeFromHistory.accesskey "E">
+<!ENTITY cmd.clearList.label "Pulisci elenco">
+<!ENTITY cmd.clearList.accesskey "P">
+<!ENTITY cmd.clearList.tooltip "Elimina tutte le voci dalla lista dei file salvati, tranne i download in corso.">
+<!ENTITY cmd.searchDownloads.label "Cerca…">
+<!ENTITY cmd.searchDownloads.key "F">

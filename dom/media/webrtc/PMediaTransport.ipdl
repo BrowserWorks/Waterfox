@@ -2,10 +2,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-include protocol PSocketProcessBridge;
+include protocol PBackground;
 
 #ifdef MOZ_WEBRTC
-include NeckoChannelParams;
+include WebrtcProxyConfig;
 
 // ParamTraits stuff for generated code and other classes we don't want to change
 include "mozilla/net/NrIceStunAddrMessageUtils.h";
@@ -14,15 +14,14 @@ using StringVector from "mozilla/media/webrtc/WebrtcIPCTraits.h";
 using CandidateInfo from "mozilla/media/webrtc/WebrtcIPCTraits.h";
 using DtlsDigestList from "mozilla/media/webrtc/WebrtcIPCTraits.h";
 using std::string from "ipc/IPCMessageUtils.h";
-using struct mozilla::dom::RTCStatsReportInternal from "mozilla/dom/RTCStatsReportBinding.h";
-using struct mozilla::dom::MovableRTCStatsReportInternal from "mozilla/media/webrtc/WebrtcGlobal.h";
+using struct mozilla::dom::NotReallyMovableButLetsPretendItIsRTCStatsCollection from "mozilla/dom/RTCStatsReportBinding.h";
 using WebrtcGlobalLog from "mozilla/media/webrtc/WebrtcGlobal.h";
 using mozilla::dom::RTCIceServer from "mozilla/dom/RTCConfigurationBinding.h";
 using mozilla::dom::RTCIceTransportPolicy from "mozilla/dom/RTCConfigurationBinding.h";
-using TabId from "mozilla/dom/ipc/IdType.h";
 
 // ParamTraits stuff for our own classes
 using MediaPacket from "mtransport/mediapacket.h";
+include "mozilla/net/NrIceStunAddrMessageUtils.h";
 using net::NrIceStunAddrArray from "mozilla/net/PStunAddrsParams.h";
 #endif // MOZ_WEBRTC
 
@@ -30,7 +29,7 @@ namespace mozilla {
 namespace dom {
 
 async protocol PMediaTransport {
-  manager PSocketProcessBridge;
+  manager PBackground;
 
 parent:
   async __delete__();
@@ -45,16 +44,18 @@ parent:
                      RTCIceServer[] iceServers,
                      RTCIceTransportPolicy icePolicy);
 
-  async SetProxyServer(TabId id,
-                       LoadInfoArgs args, // Does this have the id?
-                       nsCString alpn);
+  async SetProxyConfig(WebrtcProxyConfig proxyConfig);
 
   async EnsureProvisionalTransport(string transportId,
                                    string localUfrag,
                                    string localPwd,
                                    int componentCount);
 
+  async SetTargetForDefaultLocalAddressLookup(string targetIp,
+                                              uint16_t targetPort);
+
   async StartIceGathering(bool defaultRouteOnly,
+                          bool obfuscateHostAddresses,
                           NrIceStunAddrArray stunAddrs);
 
   async ActivateTransport(string transportId,
@@ -73,20 +74,18 @@ parent:
   async RemoveTransportsExcept(StringVector transportIds);
 
   async StartIceChecks(bool isControlling,
-                       bool isOfferer,
                        StringVector iceOptions);
 
   async SendPacket(string transportId, MediaPacket packet);
 
   async AddIceCandidate(string transportId,
                         string candidate,
-                        string ufrag);
+                        string ufrag,
+                        string obfuscatedAddr);
 
   async UpdateNetworkState(bool online);
 
-  async GetIceStats(string transportId,
-                    double now,
-                    RTCStatsReportInternal reportIn) returns (MovableRTCStatsReportInternal reportOut);
+  async GetIceStats(string transportId, double now) returns (NotReallyMovableButLetsPretendItIsRTCStatsCollection stats);
 
 child:
   async OnCandidate(string transportId, CandidateInfo candidateInfo);

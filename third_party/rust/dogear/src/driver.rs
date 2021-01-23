@@ -12,12 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::fmt::Arguments;
+use std::{fmt::Arguments, time::Duration};
 
 use log::{Level, LevelFilter, Log};
 
 use crate::error::{ErrorKind, Result};
 use crate::guid::Guid;
+use crate::merge::StructureCounts;
+use crate::tree::ProblemCounts;
 
 /// An abort signal is used to abort merging. Implementations of `AbortSignal`
 /// can store an aborted flag, usually as an atomic integer or Boolean, set
@@ -51,6 +53,23 @@ impl AbortSignal for DefaultAbortSignal {
     fn aborted(&self) -> bool {
         false
     }
+}
+
+/// A merge telemetry event.
+pub enum TelemetryEvent {
+    FetchLocalTree(TreeStats),
+    FetchRemoteTree(TreeStats),
+    Merge(Duration, StructureCounts),
+    Apply(Duration),
+}
+
+/// Records the time taken to build a local or remote tree, number of items
+/// in the tree, and structure problem counts.
+pub struct TreeStats {
+    pub time: Duration,
+    pub items: usize,
+    pub deletions: usize,
+    pub problems: ProblemCounts,
 }
 
 /// A merge driver provides methods to customize merging behavior.
@@ -88,6 +107,13 @@ pub trait Driver {
     fn logger(&self) -> &dyn Log {
         log::logger()
     }
+
+    /// Records a merge telemetry event.
+    ///
+    /// The default implementation is a no-op that discards the event.
+    /// Implementations can override this method to capture event and bookmark
+    /// validation telemetry.
+    fn record_telemetry_event(&self, _: TelemetryEvent) {}
 }
 
 /// A default implementation of the merge driver.
@@ -124,8 +150,8 @@ pub fn log<D: Driver>(
 #[macro_export]
 macro_rules! error {
     ($driver:expr, $($args:tt)+) => {
-        if log::Level::Error <= $driver.max_log_level() {
-            $crate::driver::log(
+        if log::Level::Error <= $crate::Driver::max_log_level($driver) {
+            $crate::log(
                 $driver,
                 log::Level::Error,
                 format_args!($($args)+),
@@ -137,10 +163,11 @@ macro_rules! error {
     }
 }
 
+#[macro_export]
 macro_rules! warn {
     ($driver:expr, $($args:tt)+) => {
-        if log::Level::Warn <= $driver.max_log_level() {
-            $crate::driver::log(
+        if log::Level::Warn <= $crate::Driver::max_log_level($driver) {
+            $crate::log(
                 $driver,
                 log::Level::Warn,
                 format_args!($($args)+),
@@ -155,8 +182,8 @@ macro_rules! warn {
 #[macro_export]
 macro_rules! debug {
     ($driver:expr, $($args:tt)+) => {
-        if log::Level::Debug <= $driver.max_log_level() {
-            $crate::driver::log(
+        if log::Level::Debug <= $crate::Driver::max_log_level($driver) {
+            $crate::log(
                 $driver,
                 log::Level::Debug,
                 format_args!($($args)+),
@@ -171,8 +198,8 @@ macro_rules! debug {
 #[macro_export]
 macro_rules! trace {
     ($driver:expr, $($args:tt)+) => {
-        if log::Level::Trace <= $driver.max_log_level() {
-            $crate::driver::log(
+        if log::Level::Trace <= $crate::Driver::max_log_level($driver) {
+            $crate::log(
                 $driver,
                 log::Level::Trace,
                 format_args!($($args)+),

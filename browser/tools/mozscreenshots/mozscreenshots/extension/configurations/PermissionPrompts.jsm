@@ -7,12 +7,6 @@
 var EXPORTED_SYMBOLS = ["PermissionPrompts"];
 
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
-const { E10SUtils } = ChromeUtils.import(
-  "resource://gre/modules/E10SUtils.jsm"
-);
-const { ContentTask } = ChromeUtils.import(
-  "resource://testing-common/ContentTask.jsm"
-);
 const { BrowserTestUtils } = ChromeUtils.import(
   "resource://testing-common/BrowserTestUtils.jsm"
 );
@@ -81,7 +75,18 @@ var PermissionPrompts = {
       selectors: ["#notification-popup", "#identity-box"],
       async applyConfig() {
         await closeLastTab();
-        await clickOn("#login-capture");
+        // we need to emulate user input in the form for the save-password prompt to be shown
+        await clickOn("#login-capture", function beforeContentFn() {
+          const { E10SUtils } = ChromeUtils.import(
+            "resource://gre/modules/E10SUtils.jsm"
+          );
+          E10SUtils.wrapHandlingUserInput(content, true, function() {
+            let element = content.document.querySelector(
+              "input[type=password]"
+            );
+            element.setUserInput("123456");
+          });
+        });
       },
     },
 
@@ -112,7 +117,7 @@ var PermissionPrompts = {
           "navigator:browser"
         );
         let notification = browserWindow.document.getElementById(
-          "addon-install-confirmation-notification"
+          "addon-webext-permissions-notification"
         );
 
         await closeLastTab();
@@ -121,7 +126,7 @@ var PermissionPrompts = {
         // We want to skip the progress-notification, so we wait for
         // the install-confirmation screen to be "not hidden" = shown.
         return BrowserTestUtils.waitForCondition(
-          () => !notification.hasAttribute("hidden"),
+          () => !notification.hidden,
           "addon install confirmation did not show",
           200
         ).catch(msg => {
@@ -140,7 +145,7 @@ async function closeLastTab() {
   lastTab = null;
 }
 
-async function clickOn(selector) {
+async function clickOn(selector, beforeContentFn) {
   let browserWindow = Services.wm.getMostRecentWindow("navigator:browser");
 
   // Save the tab so we can close it later.
@@ -149,11 +154,21 @@ async function clickOn(selector) {
     URL
   );
 
-  await ContentTask.spawn(lastTab.linkedBrowser, selector, async function(arg) {
+  let { SpecialPowers } = lastTab.ownerGlobal;
+  if (beforeContentFn) {
+    await SpecialPowers.spawn(lastTab.linkedBrowser, [], beforeContentFn);
+  }
+
+  await SpecialPowers.spawn(lastTab.linkedBrowser, [selector], arg => {
+    const { E10SUtils } = ChromeUtils.import(
+      "resource://gre/modules/E10SUtils.jsm"
+    );
+    content.document.notifyUserGestureActivation();
     E10SUtils.wrapHandlingUserInput(content, true, function() {
       let element = content.document.querySelector(arg);
       element.click();
     });
+    content.document.clearUserGestureActivation();
   });
 
   // Wait for the popup to actually be shown before making the screenshot

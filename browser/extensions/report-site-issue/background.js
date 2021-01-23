@@ -80,7 +80,7 @@ function checkForFrameworks(tabId) {
         ${hasFastClickPageScript};
         ${hasMobifyPageScript};
         ${hasMarfeelPageScript};
-        
+
         const result = {
           hasFastClick: hasFastClickPageScript(),
           hasMobify: hasMobifyPageScript(),
@@ -100,6 +100,7 @@ function getWebCompatInfoForTab(tab) {
   return Promise.all([
     browser.browserInfo.getBlockList(),
     browser.browserInfo.getBuildID(),
+    browser.browserInfo.getGPUInfo(),
     browser.browserInfo.getGraphicsPrefs(),
     browser.browserInfo.getUpdateChannel(),
     browser.browserInfo.hasTouchScreen(),
@@ -113,6 +114,7 @@ function getWebCompatInfoForTab(tab) {
     ([
       blockList,
       buildID,
+      GPUs,
       graphicsPrefs,
       channel,
       hasTouchScreen,
@@ -135,6 +137,7 @@ function getWebCompatInfoForTab(tab) {
           channel,
           consoleLog,
           frameworks,
+          GPUs,
           hasTouchScreen,
           "mixed active content blocked":
             frameInfo.hasMixedActiveContentBlocked,
@@ -195,23 +198,21 @@ async function openWebCompatTab(compatInfo) {
     );
   }
 
-  const tab = await browser.tabs.create({ url: "about:blank" });
   const json = stripNonASCIIChars(JSON.stringify(params));
-  await browser.tabExtras.loadURIWithPostData(
-    tab.id,
-    url.href,
-    json,
-    "application/json"
-  );
+  const tab = await browser.tabs.create({ url: url.href });
   await browser.tabs.executeScript(tab.id, {
     runAt: "document_end",
     code: `(function() {
-      async function sendScreenshot(dataURI) {
+      async function postMessageData(dataURI, metadata) {
         const res = await fetch(dataURI);
         const blob = await res.blob();
-        postMessage(blob, "${url.origin}");
+        const data = {
+           screenshot: blob,
+           message: metadata
+        };
+        postMessage(data, "${url.origin}");
       }
-      sendScreenshot("${compatInfo.screenshot}");
+      postMessageData("${compatInfo.screenshot}", ${json});
     })()`,
   });
 }

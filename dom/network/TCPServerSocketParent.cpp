@@ -4,7 +4,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "nsIScriptSecurityManager.h"
 #include "TCPServerSocket.h"
 #include "TCPServerSocketParent.h"
 #include "nsJSUtils.h"
@@ -45,7 +44,7 @@ TCPServerSocketParent::TCPServerSocketParent(PNeckoParent* neckoParent,
   mServerSocket->SetServerBridgeParent(this);
 }
 
-TCPServerSocketParent::~TCPServerSocketParent() {}
+TCPServerSocketParent::~TCPServerSocketParent() = default;
 
 void TCPServerSocketParent::Init() {
   NS_ENSURE_SUCCESS_VOID(mServerSocket->Init());

@@ -52,7 +52,7 @@ typedef const void *const_left_pixel_row_2px;
 // order to get access to pre-filter top pixels, use $top.
 #define decl_cdef_fn(name) \
 void (name)(pixel *dst, ptrdiff_t stride, const_left_pixel_row_2px left, \
-            /*const*/ pixel *const top[2], int pri_strength, int sec_strength, \
+            const pixel *top, int pri_strength, int sec_strength, \
             int dir, int damping, enum CdefEdgeFlags edges HIGHBD_DECL_SUFFIX)
 typedef decl_cdef_fn(*cdef_fn);
 
@@ -67,6 +67,7 @@ typedef struct Dav1dCdefDSPContext {
 
 bitfn_decls(void dav1d_cdef_dsp_init, Dav1dCdefDSPContext *c);
 bitfn_decls(void dav1d_cdef_dsp_init_arm, Dav1dCdefDSPContext *c);
+bitfn_decls(void dav1d_cdef_dsp_init_ppc, Dav1dCdefDSPContext *c);
 bitfn_decls(void dav1d_cdef_dsp_init_x86, Dav1dCdefDSPContext *c);
 
 #endif /* DAV1D_SRC_CDEF_H */

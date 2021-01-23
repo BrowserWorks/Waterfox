@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgReadSecurityInfo.dtd UI for viewing security status when reading a received message -->
+
+<!ENTITY status.label "Öryggi pósts">
+<!ENTITY signatureCert.label "Skoða skilríki undirskriftar">
+<!ENTITY encryptionCert.label "Skoða dulritunarvottorð">
+
+<!ENTITY signer.name "Undirritað:">
+<!ENTITY recipient.name "Dulkóðað fyrir:">
+<!ENTITY email.address "Netfang:">
+<!ENTITY issuer.name "Skilríki útgefið af:">
+

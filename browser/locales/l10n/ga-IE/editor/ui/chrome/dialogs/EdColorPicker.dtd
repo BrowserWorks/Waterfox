@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Dath">
+<!ENTITY lastPickedColor.label "An dath roghnaithe roimhe seo">
+<!ENTITY lastPickedColor.accessKey "r">
+<!ENTITY setColor1.label "Cliceáil ar dhath nó">
+<!ENTITY setColor2.label "iontráil teaghrán datha HTML">
+<!ENTITY setColor2.accessKey "H">
+<!ENTITY setColorExample.label "(m.sh.: &quot;#0000ff&quot; nó &quot;blue&quot;):">
+<!ENTITY default.label "Réamhshocrú">
+<!ENTITY default.accessKey "R">
+<!ENTITY palette.label "Pailéad:">
+<!ENTITY standardPalette.label "Caighdeánach">
+<!ENTITY webPalette.label "Gach dath Gréasáin">
+<!ENTITY background.label "Cúlra le haghaidh:">
+<!ENTITY background.accessKey "C">
+<!ENTITY table.label "Tábla">
+<!ENTITY table.accessKey "T">
+<!ENTITY cell.label "Cill/Cealla">
+<!ENTITY cell.accessKey "C">

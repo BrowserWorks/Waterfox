@@ -9,6 +9,7 @@
 
 #include "mozilla/a11y/COMPtrTypes.h"
 #include "mozilla/a11y/DocAccessibleChildBase.h"
+#include "mozilla/dom/BrowserBridgeChild.h"
 #include "mozilla/dom/BrowserChild.h"
 #include "mozilla/mscom/Ptr.h"
 
@@ -31,6 +32,8 @@ class DocAccessibleChild : public DocAccessibleChildBase {
   virtual ipc::IPCResult RecvEmulatedWindow(
       const WindowsHandle& aEmulatedWindowHandle,
       const IDispatchHolder& aEmulatedWindowCOMProxy) override;
+  virtual ipc::IPCResult RecvTopLevelDocCOMProxy(
+      const IAccessibleHolder& aCOMProxy) override;
   virtual ipc::IPCResult RecvRestoreFocus() override;
 
   HWND GetNativeWindowHandle() const;
@@ -39,6 +42,9 @@ class DocAccessibleChild : public DocAccessibleChildBase {
   }
 
   IDispatch* GetParentIAccessible() const { return mParentProxy.get(); }
+  IAccessible* GetTopLevelDocIAccessible() const {
+    return mTopLevelDocProxy.get();
+  }
 
   bool SendEvent(const uint64_t& aID, const uint32_t& type);
   bool SendHideEvent(const uint64_t& aRootID, const bool& aFromUser);
@@ -68,6 +74,14 @@ class DocAccessibleChild : public DocAccessibleChildBase {
 
   bool SendBindChildDoc(DocAccessibleChild* aChildDoc,
                         const uint64_t& aNewParentID);
+
+  /**
+   * Set the embedder accessible on a BrowserBridgeChild to an accessible in
+   * this document.
+   * Sending this will be deferred if this DocAccessibleChild hasn't been
+   * constructed in the parent process yet.
+   */
+  void SetEmbedderOnBridge(dom::BrowserBridgeChild* aBridge, uint64_t aID);
 
  protected:
   virtual void MaybeSendShowEvent(ShowEventData& aData,
@@ -326,9 +340,23 @@ class DocAccessibleChild : public DocAccessibleChildBase {
     void Dispatch(DocAccessibleChild* aIPCDoc) override { aIPCDoc->Shutdown(); }
   };
 
+  struct SerializedSetEmbedder final : public DeferredEvent {
+    SerializedSetEmbedder(dom::BrowserBridgeChild* aBridge,
+                          DocAccessibleChild* aDoc, uint64_t aID)
+        : DeferredEvent(aDoc), mBridge(aBridge), mID(aID) {}
+
+    void Dispatch(DocAccessibleChild* aDoc) override {
+      Unused << mBridge->SendSetEmbedderAccessible(aDoc, mID);
+    }
+
+    RefPtr<dom::BrowserBridgeChild> mBridge;
+    uint64_t mID;
+  };
+
   bool mIsRemoteConstructed;
   mscom::ProxyUniquePtr<IDispatch> mParentProxy;
   mscom::ProxyUniquePtr<IDispatch> mEmulatedWindowProxy;
+  mscom::ProxyUniquePtr<IAccessible> mTopLevelDocProxy;
   nsTArray<UniquePtr<DeferredEvent>> mDeferredEvents;
   HWND mEmulatedWindowHandle;
 };

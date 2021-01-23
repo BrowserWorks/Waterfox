@@ -10,7 +10,6 @@
 #include "ClientLayerManager.h"
 #include "gfxPlatform.h"
 #include "mozilla/dom/BrowserChild.h"
-#include "mozilla/dom/TabGroup.h"
 #include "mozilla/gfx/gfxVars.h"
 #include "mozilla/Hal.h"
 #include "mozilla/IMEStateManager.h"
@@ -19,6 +18,8 @@
 #include "mozilla/layers/WebRenderLayerManager.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/PresShell.h"
+#include "mozilla/SchedulerGroup.h"
+#include "mozilla/StaticPrefs_browser.h"
 #include "mozilla/TextComposition.h"
 #include "mozilla/TextEventDispatcher.h"
 #include "mozilla/TextEvents.h"
@@ -76,9 +77,6 @@ static bool MightNeedIMEFocus(const nsWidgetInitData* aInitData) {
 // Arbitrary, fungible.
 const size_t PuppetWidget::kMaxDimension = 4000;
 
-static bool gRemoteDesktopBehaviorEnabled = false;
-static bool gRemoteDesktopBehaviorInitialized = false;
-
 NS_IMPL_ISUPPORTS_INHERITED(PuppetWidget, nsBaseWidget,
                             TextEventDispatcherListener)
 
@@ -96,12 +94,6 @@ PuppetWidget::PuppetWidget(BrowserChild* aBrowserChild)
       mIgnoreCompositionEvents(false) {
   // Setting 'Unknown' means "not yet cached".
   mInputContext.mIMEState.mEnabled = IMEState::UNKNOWN;
-
-  if (!gRemoteDesktopBehaviorInitialized) {
-    Preferences::AddBoolVarCache(&gRemoteDesktopBehaviorEnabled,
-                                 "browser.tabs.remote.desktopbehavior", false);
-    gRemoteDesktopBehaviorInitialized = true;
-  }
 }
 
 PuppetWidget::~PuppetWidget() { Destroy(); }
@@ -260,12 +252,10 @@ nsresult PuppetWidget::ConfigureChildren(
   return NS_OK;
 }
 
-nsresult PuppetWidget::SetFocus(bool aRaise) {
-  if (aRaise && mBrowserChild) {
-    mBrowserChild->SendRequestFocus(true);
+void PuppetWidget::SetFocus(Raise aRaise, CallerType aCallerType) {
+  if (aRaise == Raise::Yes && mBrowserChild) {
+    mBrowserChild->SendRequestFocus(true, aCallerType);
   }
-
-  return NS_OK;
 }
 
 void PuppetWidget::Invalidate(const LayoutDeviceIntRect& aRect) {
@@ -283,7 +273,7 @@ void PuppetWidget::Invalidate(const LayoutDeviceIntRect& aRect) {
   if (mBrowserChild && !mDirtyRegion.IsEmpty() && !mPaintTask.IsPending()) {
     mPaintTask = new PaintTask(this);
     nsCOMPtr<nsIRunnable> event(mPaintTask.get());
-    mBrowserChild->TabGroup()->Dispatch(TaskCategory::Other, event.forget());
+    SchedulerGroup::Dispatch(TaskCategory::Other, event.forget());
     return;
   }
 }
@@ -405,15 +395,6 @@ nsEventStatus PuppetWidget::DispatchInputEvent(WidgetInputEvent* aEvent) {
     return nsEventStatus_eIgnore;
   }
 
-  if (PresShell* presShell = mBrowserChild->GetTopLevelPresShell()) {
-    // Because the root resolution is conceptually at the parent/child process
-    // boundary, we need to apply that resolution here because we're sending
-    // the event from the child to the parent process.
-    LayoutDevicePoint pt(aEvent->mRefPoint);
-    pt = pt * presShell->GetResolution();
-    aEvent->mRefPoint = LayoutDeviceIntPoint::Round(pt);
-  }
-
   switch (aEvent->mClass) {
     case eWheelEventClass:
       Unused << mBrowserChild->SendDispatchWheelEvent(*aEvent->AsWheelEvent());
@@ -520,7 +501,7 @@ nsresult PuppetWidget::ClearNativeTouchSequence(nsIObserver* aObserver) {
 
 void PuppetWidget::SetConfirmedTargetAPZC(
     uint64_t aInputBlockId,
-    const nsTArray<SLGuidAndRenderRoot>& aTargets) const {
+    const nsTArray<ScrollableLayerGuid>& aTargets) const {
   if (mBrowserChild) {
     mBrowserChild->SetTargetAPZC(aInputBlockId, aTargets);
   }
@@ -538,13 +519,18 @@ bool PuppetWidget::AsyncPanZoomEnabled() const {
   return mBrowserChild && mBrowserChild->AsyncPanZoomEnabled();
 }
 
-void PuppetWidget::GetEditCommands(NativeKeyBindingsType aType,
+bool PuppetWidget::GetEditCommands(NativeKeyBindingsType aType,
                                    const WidgetKeyboardEvent& aEvent,
                                    nsTArray<CommandInt>& aCommands) {
   // Validate the arguments.
-  nsIWidget::GetEditCommands(aType, aEvent, aCommands);
-
+  if (NS_WARN_IF(!nsIWidget::GetEditCommands(aType, aEvent, aCommands))) {
+    return false;
+  }
+  if (NS_WARN_IF(!mBrowserChild)) {
+    return false;
+  }
   mBrowserChild->RequestEditCommands(aType, aEvent, aCommands);
+  return true;
 }
 
 LayerManager* PuppetWidget::GetLayerManager(
@@ -590,7 +576,7 @@ bool PuppetWidget::CreateRemoteLayerManager(
   // it if we successfully create its successor because a partially initialized
   // layer manager is worse than a fully initialized but shutdown layer manager.
   DestroyLayerManager();
-  mLayerManager = lm.forget();
+  mLayerManager = std::move(lm);
   return true;
 }
 
@@ -786,7 +772,7 @@ nsresult PuppetWidget::NotifyIMEOfFocusChange(
   RefPtr<PuppetWidget> self = this;
   mBrowserChild->SendNotifyIMEFocus(mContentCache, aIMENotification)
       ->Then(
-          mBrowserChild->TabGroup()->EventTargetFor(TaskCategory::UI), __func__,
+          GetMainThreadSerialEventTarget(), __func__,
           [self](IMENotificationRequests&& aRequests) {
             self->mIMENotificationRequestsOfParent = aRequests;
             if (TextEventDispatcher* dispatcher =
@@ -949,7 +935,8 @@ void PuppetWidget::SetCursor(nsCursor aCursor, imgIContainer* aCursorImage,
 
   if (aCursorImage) {
     RefPtr<SourceSurface> surface = aCursorImage->GetFrame(
-        imgIContainer::FRAME_CURRENT, imgIContainer::FLAG_SYNC_DECODE);
+        imgIContainer::FRAME_CURRENT,
+        imgIContainer::FLAG_SYNC_DECODE | imgIContainer::FLAG_ASYNC_NOTIFY);
     if (surface) {
       if (RefPtr<DataSourceSurface> dataSurface = surface->GetDataSurface()) {
         hasCustomCursor = true;
@@ -1074,7 +1061,8 @@ void PuppetWidget::OnMemoryPressure(layers::MemoryPressureReason aWhy) {
 bool PuppetWidget::NeedsPaint() {
   // e10s popups are handled by the parent process, so never should be painted
   // here
-  if (XRE_IsContentProcess() && gRemoteDesktopBehaviorEnabled &&
+  if (XRE_IsContentProcess() &&
+      StaticPrefs::browser_tabs_remote_desktopbehavior() &&
       mWindowType == eWindowType_popup) {
     NS_WARNING("Trying to paint an e10s popup in the child process!");
     return false;
@@ -1143,6 +1131,14 @@ LayoutDeviceIntPoint PuppetWidget::GetChromeOffset() {
   return GetOwningBrowserChild()->GetChromeOffset();
 }
 
+LayoutDeviceIntPoint PuppetWidget::WidgetToScreenOffset() {
+  auto positionRalativeToWindow =
+      WidgetToTopLevelWidgetTransform().TransformPoint(LayoutDevicePoint());
+
+  return GetWindowPosition() +
+         LayoutDeviceIntPoint::Round(positionRalativeToWindow);
+}
+
 LayoutDeviceIntPoint PuppetWidget::GetWindowPosition() {
   if (!GetOwningBrowserChild()) {
     return LayoutDeviceIntPoint();
@@ -1160,12 +1156,17 @@ LayoutDeviceIntRect PuppetWidget::GetScreenBounds() {
   return LayoutDeviceIntRect(WidgetToScreenOffset(), mBounds.Size());
 }
 
-uint32_t PuppetWidget::GetMaxTouchPoints() const {
-  uint32_t maxTouchPoints = 0;
-  if (mBrowserChild) {
-    mBrowserChild->GetMaxTouchPoints(&maxTouchPoints);
+LayoutDeviceIntSize PuppetWidget::GetCompositionSize() {
+  Maybe<LayoutDeviceIntRect> visibleRect =
+      mBrowserChild ? mBrowserChild->GetVisibleRect() : Nothing();
+  if (!visibleRect) {
+    return nsBaseWidget::GetCompositionSize();
   }
-  return maxTouchPoints;
+  return visibleRect->Size();
+}
+
+uint32_t PuppetWidget::GetMaxTouchPoints() const {
+  return mBrowserChild ? mBrowserChild->MaxTouchPoints() : 0;
 }
 
 void PuppetWidget::StartAsyncScrollbarDrag(
@@ -1175,7 +1176,7 @@ void PuppetWidget::StartAsyncScrollbarDrag(
 
 PuppetScreen::PuppetScreen(void* nativeScreen) {}
 
-PuppetScreen::~PuppetScreen() {}
+PuppetScreen::~PuppetScreen() = default;
 
 static ScreenConfiguration ScreenConfig() {
   ScreenConfiguration config;
@@ -1220,7 +1221,7 @@ PuppetScreenManager::PuppetScreenManager() {
   mOneScreen = new PuppetScreen(nullptr);
 }
 
-PuppetScreenManager::~PuppetScreenManager() {}
+PuppetScreenManager::~PuppetScreenManager() = default;
 
 NS_IMETHODIMP
 PuppetScreenManager::GetPrimaryScreen(nsIScreen** outScreen) {
@@ -1229,10 +1230,33 @@ PuppetScreenManager::GetPrimaryScreen(nsIScreen** outScreen) {
 }
 
 NS_IMETHODIMP
+PuppetScreenManager::GetTotalScreenPixels(int64_t* aTotalScreenPixels) {
+  MOZ_ASSERT(aTotalScreenPixels);
+  if (mOneScreen) {
+    int32_t x, y, width, height;
+    x = y = width = height = 0;
+    mOneScreen->GetRect(&x, &y, &width, &height);
+    *aTotalScreenPixels = width * height;
+  } else {
+    *aTotalScreenPixels = 0;
+  }
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 PuppetScreenManager::ScreenForRect(int32_t inLeft, int32_t inTop,
                                    int32_t inWidth, int32_t inHeight,
                                    nsIScreen** outScreen) {
   return GetPrimaryScreen(outScreen);
+}
+
+ScreenIntMargin PuppetWidget::GetSafeAreaInsets() const {
+  return mSafeAreaInsets;
+}
+
+void PuppetWidget::UpdateSafeAreaInsets(
+    const ScreenIntMargin& aSafeAreaInsets) {
+  mSafeAreaInsets = aSafeAreaInsets;
 }
 
 nsIWidgetListener* PuppetWidget::GetCurrentWidgetListener() {
@@ -1421,28 +1445,6 @@ nsresult PuppetWidget::GetSystemFont(nsCString& aFontName) {
     return NS_ERROR_FAILURE;
   }
   mBrowserChild->SendGetSystemFont(&aFontName);
-  return NS_OK;
-}
-
-nsresult PuppetWidget::SetPrefersReducedMotionOverrideForTest(bool aValue) {
-  if (!mBrowserChild) {
-    return NS_ERROR_FAILURE;
-  }
-
-  nsXPLookAndFeel::GetInstance()->SetPrefersReducedMotionOverrideForTest(
-      aValue);
-
-  mBrowserChild->SendSetPrefersReducedMotionOverrideForTest(aValue);
-  return NS_OK;
-}
-
-nsresult PuppetWidget::ResetPrefersReducedMotionOverrideForTest() {
-  if (!mBrowserChild) {
-    return NS_ERROR_FAILURE;
-  }
-
-  nsXPLookAndFeel::GetInstance()->ResetPrefersReducedMotionOverrideForTest();
-  mBrowserChild->SendResetPrefersReducedMotionOverrideForTest();
   return NS_OK;
 }
 

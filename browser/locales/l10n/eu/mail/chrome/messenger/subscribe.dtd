@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "Harpidetu">
+<!ENTITY subscribeButton.label        "Harpidetu">
+<!ENTITY subscribeButton.accesskey    "H">
+<!ENTITY unsubscribeButton.label      "Kendu harpidetza">
+<!ENTITY unsubscribeButton.accesskey  "u">
+<!ENTITY newGroupsTab.label           "Berri-taldeak">
+<!ENTITY newGroupsTab.accesskey       "B">
+<!ENTITY refreshButton.label          "Berritu">
+<!ENTITY refreshButton.accesskey      "r">
+<!ENTITY stopButton.label             "Gelditu">
+<!ENTITY stopButton.accesskey         "G">
+<!ENTITY server.label                 "Kontua:">
+<!ENTITY server.accesskey             "K">
+<!ENTITY subscribedHeader.label       "Harpidetu">
+<!-- commenting out until bug 38906 is fixed 
+<!ENTITY messagesHeader.label         "Messages"> -->
+<!ENTITY namefield.label              "Erakutsi hau daukaten elementuak:">
+<!ENTITY namefield.accesskey          "s">

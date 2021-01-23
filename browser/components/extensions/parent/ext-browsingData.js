@@ -1,36 +1,24 @@
 /* -*- Mode: indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set sts=2 sw=2 et tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
 
-var { PlacesUtils } = ChromeUtils.import(
-  "resource://gre/modules/PlacesUtils.jsm"
+var { XPCOMUtils } = ChromeUtils.import(
+  "resource://gre/modules/XPCOMUtils.jsm"
 );
 
-ChromeUtils.defineModuleGetter(
-  this,
-  "Preferences",
-  "resource://gre/modules/Preferences.jsm"
-);
-ChromeUtils.defineModuleGetter(
-  this,
-  "Sanitizer",
-  "resource:///modules/Sanitizer.jsm"
-);
-ChromeUtils.defineModuleGetter(
-  this,
-  "Services",
-  "resource://gre/modules/Services.jsm"
-);
-ChromeUtils.defineModuleGetter(
-  this,
-  "setTimeout",
-  "resource://gre/modules/Timer.jsm"
-);
-ChromeUtils.defineModuleGetter(
-  this,
-  "ServiceWorkerCleanUp",
-  "resource://gre/modules/ServiceWorkerCleanUp.jsm"
-);
+XPCOMUtils.defineLazyModuleGetters(this, {
+  LoginHelper: "resource://gre/modules/LoginHelper.jsm",
+  PlacesUtils: "resource://gre/modules/PlacesUtils.jsm",
+  Preferences: "resource://gre/modules/Preferences.jsm",
+  Sanitizer: "resource:///modules/Sanitizer.jsm",
+  Services: "resource://gre/modules/Services.jsm",
+  setTimeout: "resource://gre/modules/Timer.jsm",
+  ServiceWorkerCleanUp: "resource://gre/modules/ServiceWorkerCleanUp.jsm",
+});
 
 XPCOMUtils.defineLazyServiceGetter(
   this,
@@ -51,9 +39,43 @@ const makeRange = options => {
     : [PlacesUtils.toPRTime(options.since), PlacesUtils.toPRTime(Date.now())];
 };
 
-const clearCache = () => {
-  // Clearing the cache does not support timestamps.
-  return Sanitizer.items.cache.clear();
+// General implementation for clearing data using Services.clearData.
+// Currently Sanitizer.items uses this under the hood.
+async function clearData(options, flags) {
+  if (options.hostnames) {
+    await Promise.all(
+      options.hostnames.map(
+        host =>
+          new Promise(resolve => {
+            // Set aIsUserRequest to true. This means when the ClearDataService
+            // "Cleaner" implementation doesn't support clearing by host
+            // it will delete all data instead.
+            // This is appropriate for cases like |cache|, which doesn't
+            // support clearing by a time range.
+            // In future when we use this for other data types, we have to
+            // evaluate if that behavior is still acceptable.
+            Services.clearData.deleteDataFromHost(host, true, flags, resolve);
+          })
+      )
+    );
+    return;
+  }
+
+  if (options.since) {
+    const range = makeRange(options);
+    await new Promise(resolve => {
+      Services.clearData.deleteDataInTimeRange(...range, true, flags, resolve);
+    });
+    return;
+  }
+
+  // Don't return the promise here and above to prevent leaking the resolved
+  // value.
+  await new Promise(resolve => Services.clearData.deleteData(flags, resolve));
+}
+
+const clearCache = options => {
+  return clearData(options, Ci.nsIClearDataService.CLEAR_ALL_CACHES);
 };
 
 const clearCookies = async function(options) {
@@ -63,7 +85,7 @@ const clearCookies = async function(options) {
 
   if (options.since || options.hostnames) {
     // Iterate through the cookies and delete any created after our cutoff.
-    for (const cookie of cookieMgr.enumerator) {
+    for (const cookie of cookieMgr.cookies) {
       if (
         (!options.since ||
           cookie.creationTime >= PlacesUtils.toPRTime(options.since)) &&
@@ -75,7 +97,6 @@ const clearCookies = async function(options) {
           cookie.host,
           cookie.name,
           cookie.path,
-          false,
           cookie.originAttributes
         );
 
@@ -113,27 +134,33 @@ const clearIndexedDB = async function(options) {
       }
 
       for (let item of request.result) {
-        let principal = Services.scriptSecurityManager.createCodebasePrincipalFromOrigin(
+        let principal = Services.scriptSecurityManager.createContentPrincipalFromOrigin(
           item.origin
         );
-        let scheme = principal.URI.scheme;
-        if (scheme == "http" || scheme == "https" || scheme == "file") {
-          promises.push(
-            new Promise((resolve, reject) => {
-              let clearRequest = quotaManagerService.clearStoragesForPrincipal(
-                principal,
-                null,
-                "idb"
-              );
-              clearRequest.callback = () => {
-                if (clearRequest.resultCode == Cr.NS_OK) {
-                  resolve();
-                } else {
-                  reject({ message: "Clear indexedDB failed" });
-                }
-              };
-            })
-          );
+        if (
+          principal.schemeIs("http") ||
+          principal.schemeIs("https") ||
+          principal.schemeIs("file")
+        ) {
+          let host = principal.hostPort;
+          if (!options.hostnames || options.hostnames.includes(host)) {
+            promises.push(
+              new Promise((resolve, reject) => {
+                let clearRequest = quotaManagerService.clearStoragesForPrincipal(
+                  principal,
+                  null,
+                  "idb"
+                );
+                clearRequest.callback = () => {
+                  if (clearRequest.resultCode == Cr.NS_OK) {
+                    resolve();
+                  } else {
+                    reject({ message: "Clear indexedDB failed" });
+                  }
+                };
+              })
+            );
+          }
         }
       }
 
@@ -182,27 +209,37 @@ const clearLocalStorage = async function(options) {
         }
 
         for (let item of request.result) {
-          let principal = Services.scriptSecurityManager.createCodebasePrincipalFromOrigin(
+          let principal = Services.scriptSecurityManager.createContentPrincipalFromOrigin(
             item.origin
           );
-          let host = principal.URI.hostPort;
-          if (!options.hostnames || options.hostnames.includes(host)) {
-            promises.push(
-              new Promise((resolve, reject) => {
-                let clearRequest = quotaManagerService.clearStoragesForPrincipal(
-                  principal,
-                  "default",
-                  "ls"
-                );
-                clearRequest.callback = () => {
-                  if (clearRequest.resultCode == Cr.NS_OK) {
-                    resolve();
-                  } else {
-                    reject({ message: "Clear localStorage failed" });
-                  }
-                };
-              })
-            );
+          // Consistently to removeIndexedDB and the API documentation for
+          // removeLocalStorage, we should only clear the data stored by
+          // regular websites, on the contrary we shouldn't clear data stored
+          // by browser components (like about:newtab) or other extensions.
+          if (
+            principal.schemeIs("http") ||
+            principal.schemeIs("https") ||
+            principal.schemeIs("file")
+          ) {
+            let host = principal.hostPort;
+            if (!options.hostnames || options.hostnames.includes(host)) {
+              promises.push(
+                new Promise((resolve, reject) => {
+                  let clearRequest = quotaManagerService.clearStoragesForPrincipal(
+                    principal,
+                    "default",
+                    "ls"
+                  );
+                  clearRequest.callback = () => {
+                    if (clearRequest.resultCode == Cr.NS_OK) {
+                      resolve();
+                    } else {
+                      reject({ message: "Clear localStorage failed" });
+                    }
+                  };
+                })
+              );
+            }
           }
         }
 
@@ -215,29 +252,34 @@ const clearLocalStorage = async function(options) {
 };
 
 const clearPasswords = async function(options) {
-  let loginManager = Services.logins;
   let yieldCounter = 0;
 
-  if (options.since) {
-    // Iterate through the logins and delete any updated after our cutoff.
-    let logins = loginManager.getAllLogins();
-    for (let login of logins) {
-      login.QueryInterface(Ci.nsILoginMetaInfo);
-      if (login.timePasswordChanged >= options.since) {
-        loginManager.removeLogin(login);
-        if (++yieldCounter % YIELD_PERIOD == 0) {
-          await new Promise(resolve => setTimeout(resolve, 0)); // Don't block the main thread too long.
-        }
+  // Iterate through the logins and delete any updated after our cutoff.
+  for (let login of await LoginHelper.getAllUserFacingLogins()) {
+    login.QueryInterface(Ci.nsILoginMetaInfo);
+    if (!options.since || login.timePasswordChanged >= options.since) {
+      Services.logins.removeLogin(login);
+      if (++yieldCounter % YIELD_PERIOD == 0) {
+        await new Promise(resolve => setTimeout(resolve, 0)); // Don't block the main thread too long.
       }
     }
-  } else {
-    // Remove everything.
-    loginManager.removeAllLogins();
   }
 };
 
 const clearPluginData = options => {
-  return Sanitizer.items.pluginData.clear(makeRange(options));
+  return clearData(options, Ci.nsIClearDataService.CLEAR_PLUGIN_DATA);
+};
+
+const clearServiceWorkers = options => {
+  if (!options.hostnames) {
+    return ServiceWorkerCleanUp.removeAll();
+  }
+
+  return Promise.all(
+    options.hostnames.map(host => {
+      return ServiceWorkerCleanUp.removeFromHost(host);
+    })
+  );
 };
 
 const doRemoval = (options, dataToRemove, extension) => {
@@ -257,7 +299,7 @@ const doRemoval = (options, dataToRemove, extension) => {
     if (dataToRemove[dataType]) {
       switch (dataType) {
         case "cache":
-          removalPromises.push(clearCache());
+          removalPromises.push(clearCache(options));
           break;
         case "cookies":
           removalPromises.push(clearCookies(options));
@@ -284,7 +326,7 @@ const doRemoval = (options, dataToRemove, extension) => {
           removalPromises.push(clearPluginData(options));
           break;
         case "serviceWorkers":
-          removalPromises.push(ServiceWorkerCleanUp.removeAll());
+          removalPromises.push(clearServiceWorkers(options));
           break;
         default:
           invalidDataTypes.push(dataType);

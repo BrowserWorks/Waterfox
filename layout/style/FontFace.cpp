@@ -18,10 +18,9 @@
 #include "mozilla/ServoCSSParser.h"
 #include "mozilla/ServoStyleSet.h"
 #include "mozilla/ServoUtils.h"
-#include "mozilla/StaticPrefs.h"
+#include "mozilla/StaticPrefs_layout.h"
 #include "mozilla/dom/Document.h"
 #include "nsStyleUtil.h"
-#include "mozilla/net/ReferrerPolicy.h"
 
 namespace mozilla {
 namespace dom {
@@ -55,7 +54,7 @@ template <typename T>
 static void GetDataFrom(const T& aObject, uint8_t*& aBuffer,
                         uint32_t& aLength) {
   MOZ_ASSERT(!aBuffer);
-  aObject.ComputeLengthAndData();
+  aObject.ComputeState();
   // We use malloc here rather than a FallibleTArray or fallible
   // operator new[] since the gfxUserFontEntry will be calling free
   // on it.
@@ -82,6 +81,8 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(FontFace)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mParent)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mLoaded)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mFontFaceSet)
+  tmp->mInFontFaceSet = false;
+  tmp->SetUserFontEntry(nullptr);
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mOtherFontFaceSets)
   NS_IMPL_CYCLE_COLLECTION_UNLINK_PRESERVED_WRAPPER
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
@@ -315,8 +316,7 @@ void FontFace::SetDisplay(const nsAString& aValue, ErrorResult& aRv) {
   }
 }
 
-void FontFace::DescriptorUpdated()
-{
+void FontFace::DescriptorUpdated() {
   // If we haven't yet initialized mUserFontEntry, no need to do anything here;
   // we'll respect the updated descriptor when the time comes to create it.
   if (!mUserFontEntry) {
@@ -326,7 +326,7 @@ void FontFace::DescriptorUpdated()
   // Behind the scenes, this will actually update the existing entry and return
   // it, rather than create a new one.
   RefPtr<gfxUserFontEntry> newEntry =
-    mFontFaceSet->FindOrCreateUserFontEntryFromFontFace(this);
+      mFontFaceSet->FindOrCreateUserFontEntryFromFontFace(this);
   SetUserFontEntry(newEntry);
 
   if (mInFontFaceSet) {
@@ -479,10 +479,12 @@ already_AddRefed<URLExtraData> FontFace::GetURLExtraData() const {
   nsCOMPtr<nsIURI> docURI = window->GetDocumentURI();
   nsCOMPtr<nsIURI> base = window->GetDocBaseURI();
 
-  // We pass RP_Unset when creating URLExtraData object here because it's not
+  // We pass RP_Unset when creating ReferrerInfo object here because it's not
   // going to result to change referer policy in a resource request.
-  RefPtr<URLExtraData> url =
-      new URLExtraData(base, docURI, principal, net::RP_Unset);
+  nsCOMPtr<nsIReferrerInfo> referrerInfo =
+      new ReferrerInfo(docURI, ReferrerPolicy::_empty);
+
+  RefPtr<URLExtraData> url = new URLExtraData(base, referrerInfo, principal);
   return url.forget();
 }
 
@@ -505,7 +507,7 @@ bool FontFace::SetDescriptor(nsCSSFontDesc aFontDesc, const nsAString& aValue,
   bool changed;
   if (!Servo_FontFaceRule_SetDescriptor(GetData(), aFontDesc, &value, url,
                                         &changed)) {
-    aRv.Throw(NS_ERROR_DOM_SYNTAX_ERR);
+    aRv.ThrowSyntaxError("Invalid font descriptor");
     return false;
   }
 
@@ -627,7 +629,7 @@ Maybe<StyleComputedFontStretchRange> FontFace::GetFontStretch() const {
 }
 
 Maybe<StyleComputedFontStyleDescriptor> FontFace::GetFontStyle() const {
-  StyleComputedFontStyleDescriptor descriptor;
+  auto descriptor = StyleComputedFontStyleDescriptor::Normal();
   if (!Servo_FontFaceRule_GetFontStyle(GetData(), &descriptor)) {
     return Nothing();
   }

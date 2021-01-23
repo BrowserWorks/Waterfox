@@ -3,15 +3,29 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+include protocol PDNSRequest;
 include protocol PSocketProcessBridge;
 include protocol PProfiler;
-include protocol PWebrtcProxyChannel;
+include protocol PWebrtcTCPSocket;
+include protocol PHttpTransaction;
+include protocol PHttpConnectionMgr;
+include protocol PFileDescriptorSet;
+include protocol PChildToParentStream;
+include protocol PParentToChildStream;
+include protocol PInputChannelThrottleQueue;
+include protocol PBackground;
+include protocol PAltService;
+include protocol PAltSvcTransaction;
+include protocol PTRRService;
+include protocol PProxyConfigLookup;
 
 include MemoryReportTypes;
-include PBrowserOrId;
+include NeckoChannelParams;
 include PrefsTypes;
+include PSMIPCTypes;
 
 using mozilla::dom::NativeThreadId from "mozilla/dom/TabMessageUtils.h";
+using mozilla::dom::TabId from "mozilla/dom/ipc/IdType.h";
 using mozilla::Telemetry::HistogramAccumulation from "mozilla/TelemetryComms.h";
 using mozilla::Telemetry::KeyedHistogramAccumulation from "mozilla/TelemetryComms.h";
 using mozilla::Telemetry::ScalarAction from "mozilla/TelemetryComms.h";
@@ -19,16 +33,30 @@ using mozilla::Telemetry::KeyedScalarAction from "mozilla/TelemetryComms.h";
 using mozilla::Telemetry::ChildEventData from "mozilla/TelemetryComms.h";
 using mozilla::Telemetry::DiscardedData from "mozilla/TelemetryComms.h";
 using base::ProcessId from "base/process.h";
+using mozilla::OriginAttributes from "mozilla/ipc/BackgroundUtils.h";
+using PRTime from "prtime.h";
+using refcounted class nsIURI from "mozilla/ipc/URIUtils.h";
 
 namespace mozilla {
 namespace net {
 
-protocol PSocketProcess
+sync protocol PSocketProcess
 {
-  manages PWebrtcProxyChannel;
+  manages PDNSRequest;
+  manages PWebrtcTCPSocket;
+  manages PFileDescriptorSet;
+  manages PHttpTransaction;
+  manages PHttpConnectionMgr;
+  manages PChildToParentStream;
+  manages PParentToChildStream;
+  manages PInputChannelThrottleQueue;
+  manages PAltService;
+  manages PAltSvcTransaction;
+  manages PTRRService;
+  manages PProxyConfigLookup;
 
 parent:
-  async InitCrashReporter(Shmem shmem, NativeThreadId threadId);
+  async InitCrashReporter(NativeThreadId threadId);
   async AddMemoryReport(MemoryReport aReport);
   async FinishMemoryReport(uint32_t aGeneration);
   // Messages for sending telemetry to parent process.
@@ -39,7 +67,31 @@ parent:
   async RecordChildEvents(ChildEventData[] events);
   async RecordDiscardedData(DiscardedData data);
 
-  async PWebrtcProxyChannel(TabId tabId);
+  /* tabId is only required for web-proxy support, which isn't always needed */
+  async PWebrtcTCPSocket(TabId? tabId);
+  async PChildToParentStream();
+  async ObserveHttpActivity(HttpActivityArgs aActivityArgs,
+                            uint32_t aActivityType,
+                            uint32_t aActivitySubtype,
+                            PRTime   aTimestamp,
+                            uint64_t aExtraSizeData,
+                            nsCString aExtraStringData);
+  async InitBackground(Endpoint<PBackgroundParent> aEndpoint);
+  async PAltService();
+  sync GetTLSClientCert(nsCString aHostName,
+                        OriginAttributes aOriginAttributes,
+                        int32_t aPort,
+                        uint32_t aProviderFlags,
+                        uint32_t aProviderTlsFlags,
+                        ByteArray aServerCert,
+                        ByteArray? aClientCert,
+                        ByteArray[] aCollectedCANames)
+    returns (bool aSucceeded, ByteArray aOutCert, ByteArray aOutKey, ByteArray[] aBuiltChain);
+  async PProxyConfigLookup(nsIURI aUri, uint32_t aFlags);
+  async CachePushCheck(nsIURI aPushedURL,
+                       OriginAttributes aOriginAttributes,
+                       nsCString aRequestString)
+    returns (bool aAccepted);
 
 child:
   async PreferenceUpdate(Pref pref);
@@ -48,10 +100,30 @@ child:
                             bool minimizeMemoryUsage,
                             FileDescriptor? DMDFile);
   async SetOffline(bool offline);
+  async InitLinuxSandbox(FileDescriptor? sandboxBroker);
   async InitSocketProcessBridgeParent(ProcessId processId, Endpoint<PSocketProcessBridgeParent> endpoint);
   async InitProfiler(Endpoint<PProfilerChild> aEndpoint);
   // test-only
   async SocketProcessTelemetryPing();
+
+  async PHttpTransaction();
+  async PParentToChildStream();
+  async PHttpConnectionMgr();
+
+  async OnHttpActivityDistributorActivated(bool aIsActivated);
+  async PInputChannelThrottleQueue(uint32_t meanBytesPerSecond,
+                                   uint32_t maxBytesPerSecond);
+  async PAltSvcTransaction(HttpConnectionInfoCloneArgs aConnInfo,
+                           uint32_t aCaps);
+  async ClearSessionCache();
+  async PTRRService(bool aCaptiveIsPassed,
+                    bool aParentalControlEnabled,
+                    nsCString[] aDNSSuffixList);
+
+both:
+  async PFileDescriptorSet(FileDescriptor fd);
+  async PDNSRequest(nsCString hostName, nsCString trrServer, uint16_t type,
+                    OriginAttributes originAttributes, uint32_t flags);
 };
 
 } // namespace net

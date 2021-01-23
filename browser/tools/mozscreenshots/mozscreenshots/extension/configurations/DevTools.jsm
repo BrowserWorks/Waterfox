@@ -6,14 +6,11 @@
 
 var EXPORTED_SYMBOLS = ["DevTools"];
 
-const { gDevTools } = ChromeUtils.import(
-  "resource://devtools/client/framework/gDevTools.jsm"
-);
+const { require } = ChromeUtils.import("resource://devtools/shared/Loader.jsm");
+const { TargetFactory } = require("devtools/client/framework/target");
+const { gDevTools } = require("devtools/client/framework/devtools");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { setTimeout } = ChromeUtils.import("resource://gre/modules/Timer.jsm");
-
-let { devtools } = ChromeUtils.import("resource://devtools/shared/Loader.jsm");
-let TargetFactory = devtools.TargetFactory;
 
 async function getTargetForSelectedTab() {
   let browserWindow = Services.wm.getMostRecentWindow("navigator:browser");
@@ -67,7 +64,10 @@ var DevTools = {
         let target = await getTargetForSelectedTab();
         let toolbox = await gDevTools.showToolbox(target, "inspector", "right");
         this.selectors = [selectToolbox.bind(null, toolbox)];
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      },
+      async verifyConfig() {
+        return "Panel sizes are regularly inconsistent";
       },
     },
     undockedToolbox: {
@@ -80,7 +80,10 @@ var DevTools = {
           "window"
         );
         this.selectors = [selectToolbox.bind(null, toolbox)];
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      },
+      async verifyConfig() {
+        return "Panel sizes are regularly inconsistent";
       },
     },
   },

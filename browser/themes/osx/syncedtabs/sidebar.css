@@ -34,30 +34,3 @@ body:not([lwt-sidebar-highlight]) .item.selected:focus > .item-title-container {
     font-weight: bold;
   }
 }
-
-.sidebar-search-container {
-  padding: 4px;
-}
-
-.search-box {
-  -moz-appearance: searchfield;
-  padding: 1px;
-  font-size: 12px;
-  cursor: text;
-  margin: 4px;
-  color: -moz-fieldText;
-  -moz-user-select: text;
-  text-shadow: none;
-}
-
-.search-box > .textbox-input-box > .textbox-search-icons > .textbox-search-clear {
-  background-image: url(chrome://global/skin/icons/searchfield-cancel.svg);
-  background-repeat: no-repeat;
-  background-size: 11px 11px;
-  width: 11px;
-  height: 11px;
-}
-
-.textbox-search-clear {
-  margin-top: 1px;
-}

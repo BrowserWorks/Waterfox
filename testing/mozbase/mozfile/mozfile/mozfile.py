@@ -8,13 +8,16 @@
 
 from __future__ import absolute_import, print_function
 
-from six.moves import urllib
-from contextlib import contextmanager
 import errno
 import os
 import stat
+import sys
 import time
 import warnings
+from contextlib import contextmanager
+
+from six.moves import urllib
+
 
 __all__ = ['extract_tarball',
            'extract_zip',
@@ -25,6 +28,7 @@ __all__ = ['extract_tarball',
            'remove',
            'rmtree',
            'tree',
+           'which',
            'NamedTemporaryFile',
            'TemporaryDirectory']
 
@@ -93,10 +97,10 @@ def extract(src, dest=None):
         os.makedirs(dest)
     assert not os.path.isfile(dest), "dest cannot be a file"
 
-    if zipfile.is_zipfile(src):
-        namelist = extract_zip(src, dest)
-    elif tarfile.is_tarfile(src):
+    if tarfile.is_tarfile(src):
         namelist = extract_tarball(src, dest)
+    elif zipfile.is_zipfile(src):
+        namelist = extract_zip(src, dest)
     else:
         raise Exception("mozfile.extract: no archive format found for '%s'" %
                         src)
@@ -308,6 +312,72 @@ def tree(directory, sort_key=lambda x: x.lower()):
                            for index, filename in enumerate(filenames)])
 
     return '\n'.join(retval)
+
+
+def which(cmd, mode=os.F_OK | os.X_OK, path=None, exts=None):
+    """A wrapper around `shutil.which` to make the behavior on Windows
+    consistent with other platforms.
+
+    On non-Windows platforms, this is a direct call to `shutil.which`. On
+    Windows, this:
+
+    * Ensures that `cmd` without an extension will be found. Previously it was
+      only found if it had an extension in `PATHEXT`.
+    * Ensures the absolute path to the binary is returned. Previously if the
+      binary was found in `cwd`, a relative path was returned.
+    * Checks the Windows registry if shutil.which doesn't come up with anything.
+
+    The arguments are the same as the ones in `shutil.which`. In addition there
+    is an `exts` argument that only has an effect on Windows. This is used to
+    set a custom value for PATHEXT and is formatted as a list of file
+    extensions.
+    """
+    try:
+        from shutil import which as shutil_which
+    except ImportError:
+        from shutil_which import which as shutil_which
+
+    if isinstance(path, (list, tuple)):
+        path = os.pathsep.join(path)
+
+    if sys.platform != "win32":
+        return shutil_which(cmd, mode=mode, path=path)
+
+    oldexts = os.environ.get("PATHEXT", "")
+    if not exts:
+        exts = oldexts.split(os.pathsep)
+
+    # This ensures that `cmd` without any extensions will be found.
+    # See: https://bugs.python.org/issue31405
+    if "." not in exts:
+        exts.append(".")
+
+    os.environ["PATHEXT"] = os.pathsep.join(exts)
+    try:
+        path = shutil_which(cmd, mode=mode, path=path)
+        if path:
+            return os.path.abspath(path.rstrip('.'))
+    finally:
+        if oldexts:
+            os.environ["PATHEXT"] = oldexts
+        else:
+            del os.environ["PATHEXT"]
+
+    # If we've gotten this far, we need to check for registered executables
+    # before giving up.
+    try:
+        import winreg
+    except ImportError:
+        import _winreg as winreg
+    if not cmd.lower().endswith('.exe'):
+        cmd += '.exe'
+    try:
+        ret = winreg.QueryValue(
+            winreg.HKEY_LOCAL_MACHINE,
+            r'SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\%s' % cmd)
+        return os.path.abspath(ret) if ret else None
+    except winreg.error:
+        return None
 
 
 # utilities for temporary resources

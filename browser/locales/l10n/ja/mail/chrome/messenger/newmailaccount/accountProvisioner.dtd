@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title			"&brandShortName; のご利用ありがとうございます">
+<!ENTITY header2.label			"新しいメールアドレスを使いたい方">
+<!ENTITY other.languages		"あなたの地域で提供されているプロバイダーのみが表示されています。すべてのプロバイダーを表示するには、ここをクリックしてください。">
+<!ENTITY error.line1			"申し訳ありませんが、提案されたメールアドレスを見つけることができませんでした。">
+<!ENTITY error.line2			"ニックネームや他の単語でメールアドレスを検索してみてください。">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before		"代わりとなる">
+<!ENTITY error.suggest.middle		"無料のメールアカウントサービス">
+<!ENTITY error.suggest.after		"も利用できます。">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before		"「">
+<!ENTITY success.title.after		"」で検索した結果、次のメールアドレスが利用できます:">
+<!ENTITY success.tip			"(ニックネームや他の単語でもメールアドレスを検索できます)">
+<!ENTITY partnership.description	"いくつかのプロバイダーとの提携により、&brandShortName; が新しいメールアカウントを提供します。利用可能なメールアドレスを検索するため、ご氏名または好きな言葉を上のテキストボックスに入力してください (半角英数字のみ)。">
+<!ENTITY existing.header		"すでにメールアドレスをお持ちの方">
+<!ENTITY tinyheader.title		"すでに取得済み？">
+<!ENTITY tinyheader.existing		"メールアカウントを設定する">
+<!ENTITY content.close			"このウィンドウを閉じて後で設定する">
+<!ENTITY successful.title		"アカウント作成完了"><!-- en-US: "Congratulations!" -->
+<!ENTITY successful.successMessage	"アカウントのセットアップが完了しました。">
+<!ENTITY successful.write		"メールを書く">
+<!ENTITY successful.write.desc		"親しい友人や家族に新しいメールアドレスを知らせましょう。">
+<!ENTITY successful.customize		"&brandShortName; をアドオンでカスタマイズする">
+<!ENTITY successful.customize.desc	"&brandShortName; を使いやすくカスタマイズできる数多くのアドオンがあります。">
+<!ENTITY successful.attach		"メールに署名を付ける">
+<!ENTITY successful.attach.desc		"送信するメッセージの末尾に、あなたのお名前など様々な情報を自動的に付加できます。">
+<!ENTITY successful.close		"このウィンドウを閉じる">
+<!ENTITY input.namePlaceholder		"氏名またはニックネーム">
+<!ENTITY input.search			"検索">
+<!ENTITY search_engine.title		"検索エンジンのカスタマイズ">
+<!ENTITY search_engine.message		"ご利用のメールプロバイダーは、ウェブ検索機能も提供しています。">
+<!ENTITY search_engine.button		"完了">

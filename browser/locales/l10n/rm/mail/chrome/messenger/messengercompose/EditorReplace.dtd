@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from EdReplace.xul -->
+
+<!-- extracted from EdReplace.xhtml -->
+
+<!ENTITY replaceDialog.title "Tschertgar e remplazzar">
+<!ENTITY findField.label "Tschertgar il text:">
+<!ENTITY findField.accesskey "T">
+<!ENTITY replaceField.label "Remplazzar cun:">
+<!ENTITY replaceField.accesskey "R">
+<!ENTITY caseSensitiveCheckbox.label "Resguardar maiusclas/minusclas">
+<!ENTITY caseSensitiveCheckbox.accesskey "m">
+<!ENTITY wrapCheckbox.label "Cumenzar danovamain, cura che la fin dal document è cuntanschida">
+<!ENTITY wrapCheckbox.accesskey "C">
+<!ENTITY backwardsCheckbox.label "Tschertgar vers ensi">
+<!ENTITY backwardsCheckbox.accesskey "e">
+<!ENTITY findNextButton.label "Tschertgar vinavant">
+<!ENTITY findNextButton.accesskey "v">
+<!ENTITY replaceButton.label "Remplazzar">
+<!ENTITY replaceButton.accesskey "z">
+<!ENTITY replaceAndFindButton.label "Remplazzar e tschertgar">
+<!ENTITY replaceAndFindButton.accesskey "t">
+<!ENTITY replaceAllButton.label "Remplazzar tut">
+<!ENTITY replaceAllButton.accesskey "u">
+<!ENTITY closeButton.label "Serrar">
+<!ENTITY closeButton.accesskey "a">

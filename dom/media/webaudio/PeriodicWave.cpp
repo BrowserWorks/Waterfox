@@ -29,8 +29,10 @@ PeriodicWave::PeriodicWave(AudioContext* aContext, const float* aRealData,
 
   // Copy coefficient data.
   // The SharedBuffer and two arrays share a single allocation.
-  RefPtr<SharedBuffer> buffer =
-      SharedBuffer::Create(sizeof(float) * aLength * 2, fallible);
+  CheckedInt<size_t> bufferSize(sizeof(float));
+  bufferSize *= aLength;
+  bufferSize *= 2;
+  RefPtr<SharedBuffer> buffer = SharedBuffer::Create(bufferSize, fallible);
   if (!buffer) {
     aRv.Throw(NS_ERROR_OUT_OF_MEMORY);
     return;
@@ -72,7 +74,9 @@ already_AddRefed<PeriodicWave> PeriodicWave::Constructor(
     const PeriodicWaveOptions& aOptions, ErrorResult& aRv) {
   if (aOptions.mReal.WasPassed() && aOptions.mImag.WasPassed() &&
       aOptions.mReal.Value().Length() != aOptions.mImag.Value().Length()) {
-    aRv.Throw(NS_ERROR_DOM_INDEX_SIZE_ERR);
+    aRv.ThrowIndexSizeError(
+        "\"real\" and \"imag\" parameters of PeriodicWaveOptions are different "
+        "lengths");
     return nullptr;
   }
 
@@ -88,7 +92,7 @@ already_AddRefed<PeriodicWave> PeriodicWave::Constructor(
   }
 
   if (length == 0) {
-    aRv.Throw(NS_ERROR_DOM_INDEX_SIZE_ERR);
+    aRv.ThrowIndexSizeError("\"real\" and \"imag\" are both empty arrays");
     return nullptr;
   }
 

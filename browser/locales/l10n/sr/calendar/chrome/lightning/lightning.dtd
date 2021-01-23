@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+
+<!-- Tools menu -->
+<!ENTITY lightning.preferencesLabel "Календар">
+
+<!-- New menu popup in File menu -->
+<!ENTITY lightning.menupopup.new.event.label    "Догађај…">
+<!ENTITY lightning.menupopup.new.event.accesskey "г">
+<!ENTITY lightning.menupopup.new.task.label     "Задатак…">
+<!ENTITY lightning.menupopup.new.task.accesskey "к">
+<!ENTITY lightning.menupopup.new.calendar.label "Календар…">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "н">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.label               "Отвори">
+<!ENTITY lightning.menupopup.open.accesskey           "О">
+<!ENTITY lightning.menupopup.open.message.label       "Сачувана порука…">
+<!ENTITY lightning.menupopup.open.message.accesskey   "п">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.calendar.label      "Датотека календара…">
+<!ENTITY lightning.menupopup.open.calendar.accesskey  "л">
+
+<!-- View Menu -->
+<!ENTITY lightning.menu.view.calendar.label            "Календар">
+<!ENTITY lightning.menu.view.calendar.accesskey        "д">
+<!ENTITY lightning.menu.view.tasks.label               "Задаци">
+<!ENTITY lightning.menu.view.tasks.accesskey           "ц">
+
+<!-- Events and Tasks menu -->
+<!ENTITY lightning.menu.eventtask.label                "Догађаји и задаци">
+<!ENTITY lightning.menu.eventtask.accesskey            "а">
+
+<!-- properties dialog, calendar creation wizard -->
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.email.label,
+     lightning.calendarproperties.forceEmailScheduling.label)
+     These strings are used in the calendar wizard and the calendar properties dialog, but are only
+     displayed when setting/using a caldav calendar -->
+<!ENTITY lightning.calendarproperties.email.label                           "Мејл:">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.label            "Дај предност клијентском заказивању мејлова">
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.forceEmailScheduling.tooltiptext1,
+     lightning.calendarproperties.forceEmailScheduling.tooltiptext2)
+     - tooltiptext1 is used in the calendar wizard when setting a new caldav calendar
+     - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "За сада, можете омогућити ово након што подесите овај календар унутар његовог прозорчета својстава ако се календарски сервер побринуо за заказивање.">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "Ова опција је доступна само ако је календарски сервер задужен за заказивање. Омогућавањем ћете одступити на уобичајено заказивање преко мејла уместо да то препустите серверу.">
+
+<!-- iMIP Bar (meeting support) -->
+<!ENTITY lightning.imipbar.btnAccept.label                                  "Прихвати">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext                           "Прихвати позивницу на догађај">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label                       "Прихвати све">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences2.tooltiptext                "Прихвати позивницу за све ове догађаје">
+<!ENTITY lightning.imipbar.btnAdd.label                                     "Додај">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext                               "Додај догађај у календар">
+<!ENTITY lightning.imipbar.btnDecline.label                                 "Одбиј">
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext                          "Одбиј позивницу на догађај">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label                      "Одбиј све">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences2.tooltiptext               "Одбиј позивницу за све ове догађаје">
+<!ENTITY lightning.imipbar.btnDeclineCounter.label                          "Одбиј">
+<!ENTITY lightning.imipbar.btnDeclineCounter.tooltiptext                    "Одбиј контра-предлог">
+<!ENTITY lightning.imipbar.btnDelete.label                                  "Обриши">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext                            "Обриши из календара">
+<!ENTITY lightning.imipbar.btnDetails.label                                 "Појединости…">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext                           "Прикажи појединости догађаја">
+<!ENTITY lightning.imipbar.btnDoNotShowImipBar.label                        "Не приказуј ми више ове поруке">
+<!ENTITY lightning.imipbar.btnGoToCalendar.label                            "Календар">
+<!ENTITY lightning.imipbar.btnGoToCalendar.tooltiptext                      "Иди на језичак календара">
+<!ENTITY lightning.imipbar.btnMore.label                                    "Више">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext                              "Кликни за приказивање више опција">
+<!ENTITY lightning.imipbar.btnReconfirm2.label                              "Поново потврди">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext                         "Шаље поновну потврду организатору">
+<!ENTITY lightning.imipbar.btnReschedule.label                              "Поново закажи">
+<!ENTITY lightning.imipbar.btnReschedule.tooltiptext                        "Поново закажи догађај">
+<!ENTITY lightning.imipbar.btnSaveCopy.label                                "Сачувај примерак">
+<!ENTITY lightning.imipbar.btnSaveCopy.tooltiptext                          "Чува примерак догађаја у календар, одвојено од одговарања организатору. Списак полазника ће бити испражњен.">
+<!ENTITY lightning.imipbar.btnTentative.label                               "Условно">
+<!ENTITY lightning.imipbar.btnTentative2.tooltiptext                        "Прихвати условно позивницу на догађај">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences.label                    "Све условно">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences2.tooltiptext             "Прихвати условно позивницу за све ове догађаје">
+<!ENTITY lightning.imipbar.btnUpdate.label                                  "Ажурирај">
+<!ENTITY lightning.imipbar.btnUpdate.tooltiptext                            "Ажурирај догађај у календару">
+<!ENTITY lightning.imipbar.description                                      "Ова порука садржи позивницу на догађај.">
+
+<!ENTITY lightning.imipbar.btnSend.label                                    "Пошаљи одговор одмах">
+<!ENTITY lightning.imipbar.btnSend.tooltiptext                              "Пошаљи одговор организатору">
+<!ENTITY lightning.imipbar.btnSendSeries.tooltiptext                        "Пошаљи одговор на целу серију организатору">
+<!ENTITY lightning.imipbar.btnDontSend.label                                "Не шаљи одговор">
+<!ENTITY lightning.imipbar.btnDontSend.tooltiptext                          "Мења стање учествовања без слања одговора организатору">
+<!ENTITY lightning.imipbar.btnDontSendSeries.tooltiptext                    "Мења стање учествовања за серију без слања одговора организатору">
+
+<!-- Lightning specific keybindings -->
+<!ENTITY lightning.keys.event.showCalendar.key "C">
+<!ENTITY lightning.keys.event.showTasks.key "D">
+<!ENTITY lightning.keys.event.new "I">
+<!ENTITY lightning.keys.todo.new "D">
+
+<!-- Account Central page -->
+<!ENTITY lightning.acctCentral.newCalendar.label "Направи нови календар">
+
+<!-- today-pane-specific -->
+<!ENTITY todaypane.showMinimonth.label "Прикажи мини-месец">
+<!ENTITY todaypane.showMinimonth.accesskey "м">
+<!ENTITY todaypane.showMiniday.label "Прикажи мини-дан">
+<!ENTITY todaypane.showMiniday.accesskey  "д">
+<!ENTITY todaypane.showNone.label "Прикажи ништа">
+<!ENTITY todaypane.showNone.accesskey "н">
+<!ENTITY todaypane.showTodayPane.label "Прикажи данашњу површ">
+<!ENTITY todaypane.showTodayPane.accesskey "о">
+<!ENTITY todaypane.statusButton.label "Данашња површ">

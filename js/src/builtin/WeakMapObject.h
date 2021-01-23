@@ -17,12 +17,12 @@ class GlobalObject;
 // Abstract base class for WeakMapObject and WeakSetObject.
 class WeakCollectionObject : public NativeObject {
  public:
-  ObjectValueMap* getMap() {
-    return static_cast<ObjectValueMap*>(getPrivate());
+  ObjectValueWeakMap* getMap() {
+    return static_cast<ObjectValueWeakMap*>(getPrivate());
   }
 
   size_t sizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) {
-    ObjectValueMap* map = getMap();
+    ObjectValueWeakMap* map = getMap();
     return map ? map->sizeOfIncludingThis(aMallocSizeOf) : 0;
   }
 
@@ -31,13 +31,13 @@ class WeakCollectionObject : public NativeObject {
       MutableHandleObject ret);
 
  protected:
-  static const ClassOps classOps_;
+  static const JSClassOps classOps_;
 };
 
 class WeakMapObject : public WeakCollectionObject {
  public:
-  static const Class class_;
-  static const Class protoClass_;
+  static const JSClass class_;
+  static const JSClass protoClass_;
 
  private:
   static const ClassSpec classSpec_;

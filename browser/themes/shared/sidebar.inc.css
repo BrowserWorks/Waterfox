@@ -9,14 +9,13 @@
   --sidebar-text-color: -moz-FieldText;
   background-color: var(--sidebar-background-color);
   color: var(--sidebar-text-color);
+  text-shadow: none;
 }
 
 #sidebar-header {
   font-size: 1.333em;
   padding: 8px;
   border-bottom: 1px solid var(--sidebar-border-color);
-  background-color: transparent;
-  color: inherit;
 }
 
 %ifndef MOZ_WIDGET_GTK
@@ -36,10 +35,8 @@
 }
 
 #sidebar-box[positionend] + .sidebar-splitter {
-  border-inline-end-width: 0;
-  border-inline-start-width: 1px;
-  margin-inline-start: 0;
-  margin-inline-end: -4px;
+  border-inline-width: 1px 0;
+  margin-inline: 0 -4px;
 }
 %endif
 
@@ -57,8 +54,7 @@
 #sidebar-title {
   margin: 0;
   padding: 0;
-  padding-inline-start: 8px;
-  padding-inline-end: 4px;
+  padding-inline: 8px 4px;
 }
 
 #sidebar-switcher-arrow {
@@ -82,8 +78,9 @@
   padding: 2px 4px;
 }
 
-#sidebar-switcher-target:hover {
-  background: var(--toolbarbutton-hover-background);
+#sidebar-switcher-target:-moz-focusring:not(:hover):not([open]),
+#sidebar-close:-moz-focusring:not(:hover):not([open]) {
+  outline: 1px dotted;
 }
 
 #sidebar-switcher-target:hover:active,
@@ -117,21 +114,21 @@ toolbarseparator + #sidebar-extensions-separator {
 %ifdef XP_MACOSX
 
 #sidebarMenu-popup > .subviewbutton[checked="true"] {
-  background-position: top 7px left 4px;
+  background-position: left 4px top 7px;
 }
 
 #sidebarMenu-popup > .subviewbutton[checked="true"]:-moz-locale-dir(rtl) {
-  background-position: top 7px right 4px;
+  background-position-x: right 4px;
 }
 
 %else
 
 #sidebarMenu-popup > .subviewbutton[checked="true"] {
-  background-position: center left 7px;
+  background-position: left 7px center;
 }
 
 #sidebarMenu-popup > .subviewbutton[checked="true"]:-moz-locale-dir(rtl) {
-  background-position: center right 7px;
+  background-position-x: right 7px;
 }
 
 /* Allow room for the checkbox drawn as a background image at the start of the toolbarbutton */

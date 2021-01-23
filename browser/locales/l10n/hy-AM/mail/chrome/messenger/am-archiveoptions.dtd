@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-archiveoptions.xul -->
+
+
+<!-- extracted from am-archiveoptions.xhtml -->
+
+<!ENTITY dialogTitle.label "Արխիվի ընտրանքները">
+<!ENTITY archiveGranularityPrefix.label "Նամակները արխիվացնելիս, դնել դրանք՝">
+<!ENTITY archiveFlat.label "Թղթապանակում">
+<!ENTITY archiveFlat.accesskey "s">
+<!ENTITY archiveYearly.label "Տարեկան արխիվացված թղթ.">
+<!ENTITY archiveYearly.accesskey "Y">
+<!ENTITY archiveMonthly.label "Ամսեկան արխիվացված թղթ.">
+<!ENTITY archiveMonthly.accesskey "M">
+<!ENTITY keepFolderStructure.label "Պահել արխիվացված նամակների թղթ. կառուցվածքը">
+<!ENTITY keepFolderStructure.accesskey "K">
+<!ENTITY archiveExample.label "Օրինակ">
+<!-- LOCALIZATION NOTE (archiveFolderName.label): this should match the default
+     name for the "Archives" folder -->
+<!ENTITY archiveFolderName.label "Արխիվ">
+<!-- LOCALIZATION NOTE (inboxFolderName.label): this should match the default
+     name for the "Inbox" folder -->
+<!ENTITY inboxFolderName.label "Մուտքային">

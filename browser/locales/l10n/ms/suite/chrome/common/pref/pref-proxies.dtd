@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-proxies.xul -->
+
+<!--LOCALIZATION NOTE : FILE The Proxies preferences dialog -->
+<!ENTITY  pref.proxies.title            "Proksi">
+<!ENTITY  pref.proxies.desc             "Proksi ialah perkhidmatan rangkaian yang boleh menapis dan meningkatkan kelajuan sambungan Internet.">
+<!ENTITY  proxyTitle.label              "Tetapkan Proksi untuk Mengakses Internet">
+<!ENTITY  directTypeRadio.label         "Sambungan Terus ke Internet">
+<!ENTITY  directTypeRadio.accesskey     "T">
+<!ENTITY  systemTypeRadio.label         "Guna tetapan proksi sistem">
+<!ENTITY  systemTypeRadio.accesskey     "G">
+<!ENTITY  manualTypeRadio.label         "Konfigurasi proksi manual:">
+<!ENTITY  manualTypeRadio.accesskey     "K">
+<!ENTITY  wpadTypeRadio.label           "Konfigurasi proksi automatik">
+<!ENTITY  wpadTypeRadio.accesskey       "a">
+<!ENTITY  autoTypeRadio.label           "URL konfigurasi proksi automatik:">
+<!ENTITY  autoTypeRadio.accesskey       "k">
+<!ENTITY  reload.label                  "Muat semula">
+<!ENTITY  reload.accesskey              "M">
+<!ENTITY  http.label                    "Proksi:">
+<!ENTITY  http.accesskey                "P">
+<!ENTITY  port.label                    "Port:">
+<!ENTITY  HTTPPort.accesskey            "o">
+<!ENTITY  advanced.label                "Lanjutan…">
+<!ENTITY  advanced.accesskey            "j">
+<!ENTITY  noproxy.label                 "Tiada Proksi untuk:">
+<!ENTITY  noproxy.accesskey             "T">
+<!ENTITY  noproxyExplain.label          "Contoh: .mozilla.org, .net.nz, 192.168.1.0/24">

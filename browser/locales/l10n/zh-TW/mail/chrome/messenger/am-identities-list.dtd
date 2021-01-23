@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identitiesListManageDesc.label "管理此帳號的身份，預設將使用第一組身份。">
+<!ENTITY identitiesListAdd.label  "新增…">
+<!ENTITY identitiesListAdd.accesskey  "A">
+<!ENTITY identitiesListEdit.label "編輯…">
+<!ENTITY identitiesListEdit.accesskey "E">
+<!ENTITY identitiesListDefault.label "設為預設值">
+<!ENTITY identitiesListDefault.accesskey "S">
+<!ENTITY identitiesListDelete.label "刪除">
+<!ENTITY identitiesListDelete.accesskey "D">
+<!ENTITY identitiesListClose.label "關閉">
+<!ENTITY identitiesListClose.accesskey "C">

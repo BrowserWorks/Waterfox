@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY biffAll.label                 "Aktualizacije za wšě kanale zmóžnić">
+<!ENTITY biffAll.accesskey             "A">
+
+<!ENTITY newFeedSettings.label         "Standardne nastajenja za nowe kanale">
+
+<!ENTITY manageSubscriptions.label     "Abonementy zrjadować…">
+<!ENTITY manageSubscriptions.accesskey "A">
+
+<!ENTITY feedWindowTitle.label         "Asistent kanaloweho konta">
+<!ENTITY feeds.accountName             "Blogi a powěsćowe kanale">

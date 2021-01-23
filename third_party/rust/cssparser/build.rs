@@ -2,15 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#[macro_use]
-extern crate quote;
-#[macro_use]
-extern crate syn;
-extern crate proc_macro2;
-
 #[cfg(feature = "dummy_match_byte")]
 mod codegen {
-    use std::path::Path;
     pub fn main() {}
 }
 
@@ -20,7 +13,6 @@ mod match_byte;
 
 #[cfg(not(feature = "dummy_match_byte"))]
 mod codegen {
-    use match_byte;
     use std::env;
     use std::path::Path;
     use std::thread::Builder;
@@ -36,7 +28,7 @@ mod codegen {
         let handle = Builder::new()
             .stack_size(128 * 1024 * 1024)
             .spawn(move || {
-                match_byte::expand(&input, &output);
+                crate::match_byte::expand(&input, &output);
             })
             .unwrap();
 

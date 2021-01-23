@@ -1,184 +1,303 @@
-use crate::cdsl::formats::{FormatRegistry, InstructionFormatBuilder as Builder};
-use crate::shared::OperandKinds;
+use crate::cdsl::formats::{InstructionFormat, InstructionFormatBuilder as Builder};
+use crate::shared::{entities::EntityRefs, immediates::Immediates};
+use std::rc::Rc;
 
-pub fn define(immediates: &OperandKinds, entities: &OperandKinds) -> FormatRegistry {
-    // Shorthands for immediates.
-    let uimm8 = immediates.by_name("uimm8");
-    let uimm32 = immediates.by_name("uimm32");
-    let imm64 = immediates.by_name("imm64");
-    let ieee32 = immediates.by_name("ieee32");
-    let ieee64 = immediates.by_name("ieee64");
-    let boolean = immediates.by_name("boolean");
-    let intcc = immediates.by_name("intcc");
-    let floatcc = immediates.by_name("floatcc");
-    let memflags = immediates.by_name("memflags");
-    let offset32 = immediates.by_name("offset32");
-    let trapcode = immediates.by_name("trapcode");
-    let regunit = immediates.by_name("regunit");
+pub(crate) struct Formats {
+    pub(crate) binary: Rc<InstructionFormat>,
+    pub(crate) binary_imm: Rc<InstructionFormat>,
+    pub(crate) branch: Rc<InstructionFormat>,
+    pub(crate) branch_float: Rc<InstructionFormat>,
+    pub(crate) branch_icmp: Rc<InstructionFormat>,
+    pub(crate) branch_int: Rc<InstructionFormat>,
+    pub(crate) branch_table: Rc<InstructionFormat>,
+    pub(crate) branch_table_base: Rc<InstructionFormat>,
+    pub(crate) branch_table_entry: Rc<InstructionFormat>,
+    pub(crate) call: Rc<InstructionFormat>,
+    pub(crate) call_indirect: Rc<InstructionFormat>,
+    pub(crate) cond_trap: Rc<InstructionFormat>,
+    pub(crate) copy_special: Rc<InstructionFormat>,
+    pub(crate) copy_to_ssa: Rc<InstructionFormat>,
+    pub(crate) extract_lane: Rc<InstructionFormat>,
+    pub(crate) float_compare: Rc<InstructionFormat>,
+    pub(crate) float_cond: Rc<InstructionFormat>,
+    pub(crate) float_cond_trap: Rc<InstructionFormat>,
+    pub(crate) func_addr: Rc<InstructionFormat>,
+    pub(crate) heap_addr: Rc<InstructionFormat>,
+    pub(crate) indirect_jump: Rc<InstructionFormat>,
+    pub(crate) insert_lane: Rc<InstructionFormat>,
+    pub(crate) int_compare: Rc<InstructionFormat>,
+    pub(crate) int_compare_imm: Rc<InstructionFormat>,
+    pub(crate) int_cond: Rc<InstructionFormat>,
+    pub(crate) int_cond_trap: Rc<InstructionFormat>,
+    pub(crate) int_select: Rc<InstructionFormat>,
+    pub(crate) jump: Rc<InstructionFormat>,
+    pub(crate) load: Rc<InstructionFormat>,
+    pub(crate) load_complex: Rc<InstructionFormat>,
+    pub(crate) multiary: Rc<InstructionFormat>,
+    pub(crate) nullary: Rc<InstructionFormat>,
+    pub(crate) reg_fill: Rc<InstructionFormat>,
+    pub(crate) reg_move: Rc<InstructionFormat>,
+    pub(crate) reg_spill: Rc<InstructionFormat>,
+    pub(crate) shuffle: Rc<InstructionFormat>,
+    pub(crate) stack_load: Rc<InstructionFormat>,
+    pub(crate) stack_store: Rc<InstructionFormat>,
+    pub(crate) store: Rc<InstructionFormat>,
+    pub(crate) store_complex: Rc<InstructionFormat>,
+    pub(crate) table_addr: Rc<InstructionFormat>,
+    pub(crate) ternary: Rc<InstructionFormat>,
+    pub(crate) trap: Rc<InstructionFormat>,
+    pub(crate) unary: Rc<InstructionFormat>,
+    pub(crate) unary_bool: Rc<InstructionFormat>,
+    pub(crate) unary_const: Rc<InstructionFormat>,
+    pub(crate) unary_global_value: Rc<InstructionFormat>,
+    pub(crate) unary_ieee32: Rc<InstructionFormat>,
+    pub(crate) unary_ieee64: Rc<InstructionFormat>,
+    pub(crate) unary_imm: Rc<InstructionFormat>,
+}
 
-    // Shorthands for entities.
-    let global_value = entities.by_name("global_value");
-    let ebb = entities.by_name("ebb");
-    let jump_table = entities.by_name("jump_table");
-    let func_ref = entities.by_name("func_ref");
-    let sig_ref = entities.by_name("sig_ref");
-    let stack_slot = entities.by_name("stack_slot");
-    let heap = entities.by_name("heap");
-    let table = entities.by_name("table");
+impl Formats {
+    pub fn new(imm: &Immediates, entities: &EntityRefs) -> Self {
+        Self {
+            unary: Builder::new("Unary").value().build(),
 
-    let mut registry = FormatRegistry::new();
+            unary_imm: Builder::new("UnaryImm").imm(&imm.imm64).build(),
 
-    registry.insert(Builder::new("Unary").value());
-    registry.insert(Builder::new("UnaryImm").imm(imm64));
-    registry.insert(Builder::new("UnaryIeee32").imm(ieee32));
-    registry.insert(Builder::new("UnaryIeee64").imm(ieee64));
-    registry.insert(Builder::new("UnaryBool").imm(boolean));
-    registry.insert(Builder::new("UnaryGlobalValue").imm(global_value));
+            unary_ieee32: Builder::new("UnaryIeee32").imm(&imm.ieee32).build(),
 
-    registry.insert(Builder::new("Binary").value().value());
-    registry.insert(Builder::new("BinaryImm").value().imm(imm64));
+            unary_ieee64: Builder::new("UnaryIeee64").imm(&imm.ieee64).build(),
 
-    // The select instructions are controlled by the second VALUE operand.
-    // The first VALUE operand is the controlling flag which has a derived type.
-    // The fma instruction has the same constraint on all inputs.
-    registry.insert(
-        Builder::new("Ternary")
-            .value()
-            .value()
-            .value()
-            .typevar_operand(1),
-    );
+            unary_bool: Builder::new("UnaryBool").imm(&imm.boolean).build(),
 
-    // Catch-all for instructions with many outputs and inputs and no immediate
-    // operands.
-    registry.insert(Builder::new("MultiAry").varargs());
+            unary_const: Builder::new("UnaryConst").imm(&imm.pool_constant).build(),
 
-    registry.insert(Builder::new("NullAry"));
+            unary_global_value: Builder::new("UnaryGlobalValue")
+                .imm(&entities.global_value)
+                .build(),
 
-    registry.insert(
-        Builder::new("InsertLane")
-            .value()
-            .imm(("lane", uimm8))
-            .value(),
-    );
-    registry.insert(Builder::new("ExtractLane").value().imm(("lane", uimm8)));
+            binary: Builder::new("Binary").value().value().build(),
 
-    registry.insert(Builder::new("IntCompare").imm(intcc).value().value());
-    registry.insert(Builder::new("IntCompareImm").imm(intcc).value().imm(imm64));
-    registry.insert(Builder::new("IntCond").imm(intcc).value());
+            binary_imm: Builder::new("BinaryImm").value().imm(&imm.imm64).build(),
 
-    registry.insert(Builder::new("FloatCompare").imm(floatcc).value().value());
-    registry.insert(Builder::new("FloatCond").imm(floatcc).value());;
+            // The select instructions are controlled by the second VALUE operand.
+            // The first VALUE operand is the controlling flag which has a derived type.
+            // The fma instruction has the same constraint on all inputs.
+            ternary: Builder::new("Ternary")
+                .value()
+                .value()
+                .value()
+                .typevar_operand(1)
+                .build(),
 
-    registry.insert(Builder::new("IntSelect").imm(intcc).value().value().value());
+            // Catch-all for instructions with many outputs and inputs and no immediate
+            // operands.
+            multiary: Builder::new("MultiAry").varargs().build(),
 
-    registry.insert(Builder::new("Jump").imm(ebb).varargs());
-    registry.insert(Builder::new("Branch").value().imm(ebb).varargs());
-    registry.insert(
-        Builder::new("BranchInt")
-            .imm(intcc)
-            .value()
-            .imm(ebb)
-            .varargs(),
-    );
-    registry.insert(
-        Builder::new("BranchFloat")
-            .imm(floatcc)
-            .value()
-            .imm(ebb)
-            .varargs(),
-    );
-    registry.insert(
-        Builder::new("BranchIcmp")
-            .imm(intcc)
-            .value()
-            .value()
-            .imm(ebb)
-            .varargs(),
-    );
-    registry.insert(Builder::new("BranchTable").value().imm(ebb).imm(jump_table));
-    registry.insert(
-        Builder::new("BranchTableEntry")
-            .value()
-            .value()
-            .imm(uimm8)
-            .imm(jump_table),
-    );
-    registry.insert(Builder::new("BranchTableBase").imm(jump_table));
-    registry.insert(Builder::new("IndirectJump").value().imm(jump_table));
+            nullary: Builder::new("NullAry").build(),
 
-    registry.insert(Builder::new("Call").imm(func_ref).varargs());
-    registry.insert(Builder::new("CallIndirect").imm(sig_ref).value().varargs());
-    registry.insert(Builder::new("FuncAddr").imm(func_ref));
+            insert_lane: Builder::new("InsertLane")
+                .value()
+                .imm_with_name("lane", &imm.uimm8)
+                .value()
+                .build(),
 
-    registry.insert(Builder::new("Load").imm(memflags).value().imm(offset32));
-    registry.insert(
-        Builder::new("LoadComplex")
-            .imm(memflags)
-            .varargs()
-            .imm(offset32),
-    );
-    registry.insert(
-        Builder::new("Store")
-            .imm(memflags)
-            .value()
-            .value()
-            .imm(offset32),
-    );
-    registry.insert(
-        Builder::new("StoreComplex")
-            .imm(memflags)
-            .value()
-            .varargs()
-            .imm(offset32),
-    );
-    registry.insert(Builder::new("StackLoad").imm(stack_slot).imm(offset32));
-    registry.insert(
-        Builder::new("StackStore")
-            .value()
-            .imm(stack_slot)
-            .imm(offset32),
-    );
+            extract_lane: Builder::new("ExtractLane")
+                .value()
+                .imm_with_name("lane", &imm.uimm8)
+                .build(),
 
-    // Accessing a WebAssembly heap.
-    registry.insert(Builder::new("HeapAddr").imm(heap).value().imm(uimm32));
+            shuffle: Builder::new("Shuffle")
+                .value()
+                .value()
+                .imm_with_name("mask", &imm.uimm128)
+                .build(),
 
-    // Accessing a WebAssembly table.
-    registry.insert(Builder::new("TableAddr").imm(table).value().imm(offset32));
+            int_compare: Builder::new("IntCompare")
+                .imm(&imm.intcc)
+                .value()
+                .value()
+                .build(),
 
-    registry.insert(
-        Builder::new("RegMove")
-            .value()
-            .imm(("src", regunit))
-            .imm(("dst", regunit)),
-    );
-    registry.insert(
-        Builder::new("CopySpecial")
-            .imm(("src", regunit))
-            .imm(("dst", regunit)),
-    );
-    registry.insert(
-        Builder::new("RegSpill")
-            .value()
-            .imm(("src", regunit))
-            .imm(("dst", stack_slot)),
-    );
-    registry.insert(
-        Builder::new("RegFill")
-            .value()
-            .imm(("src", stack_slot))
-            .imm(("dst", regunit)),
-    );
+            int_compare_imm: Builder::new("IntCompareImm")
+                .imm(&imm.intcc)
+                .value()
+                .imm(&imm.imm64)
+                .build(),
 
-    registry.insert(Builder::new("Trap").imm(trapcode));
-    registry.insert(Builder::new("CondTrap").value().imm(trapcode));
-    registry.insert(Builder::new("IntCondTrap").imm(intcc).value().imm(trapcode));
-    registry.insert(
-        Builder::new("FloatCondTrap")
-            .imm(floatcc)
-            .value()
-            .imm(trapcode),
-    );
+            int_cond: Builder::new("IntCond").imm(&imm.intcc).value().build(),
 
-    registry
+            float_compare: Builder::new("FloatCompare")
+                .imm(&imm.floatcc)
+                .value()
+                .value()
+                .build(),
+
+            float_cond: Builder::new("FloatCond").imm(&imm.floatcc).value().build(),
+
+            int_select: Builder::new("IntSelect")
+                .imm(&imm.intcc)
+                .value()
+                .value()
+                .value()
+                .build(),
+
+            jump: Builder::new("Jump").imm(&entities.block).varargs().build(),
+
+            branch: Builder::new("Branch")
+                .value()
+                .imm(&entities.block)
+                .varargs()
+                .build(),
+
+            branch_int: Builder::new("BranchInt")
+                .imm(&imm.intcc)
+                .value()
+                .imm(&entities.block)
+                .varargs()
+                .build(),
+
+            branch_float: Builder::new("BranchFloat")
+                .imm(&imm.floatcc)
+                .value()
+                .imm(&entities.block)
+                .varargs()
+                .build(),
+
+            branch_icmp: Builder::new("BranchIcmp")
+                .imm(&imm.intcc)
+                .value()
+                .value()
+                .imm(&entities.block)
+                .varargs()
+                .build(),
+
+            branch_table: Builder::new("BranchTable")
+                .value()
+                .imm(&entities.block)
+                .imm(&entities.jump_table)
+                .build(),
+
+            branch_table_entry: Builder::new("BranchTableEntry")
+                .value()
+                .value()
+                .imm(&imm.uimm8)
+                .imm(&entities.jump_table)
+                .build(),
+
+            branch_table_base: Builder::new("BranchTableBase")
+                .imm(&entities.jump_table)
+                .build(),
+
+            indirect_jump: Builder::new("IndirectJump")
+                .value()
+                .imm(&entities.jump_table)
+                .build(),
+
+            call: Builder::new("Call")
+                .imm(&entities.func_ref)
+                .varargs()
+                .build(),
+
+            call_indirect: Builder::new("CallIndirect")
+                .imm(&entities.sig_ref)
+                .value()
+                .varargs()
+                .build(),
+
+            func_addr: Builder::new("FuncAddr").imm(&entities.func_ref).build(),
+
+            load: Builder::new("Load")
+                .imm(&imm.memflags)
+                .value()
+                .imm(&imm.offset32)
+                .build(),
+
+            load_complex: Builder::new("LoadComplex")
+                .imm(&imm.memflags)
+                .varargs()
+                .imm(&imm.offset32)
+                .build(),
+
+            store: Builder::new("Store")
+                .imm(&imm.memflags)
+                .value()
+                .value()
+                .imm(&imm.offset32)
+                .build(),
+
+            store_complex: Builder::new("StoreComplex")
+                .imm(&imm.memflags)
+                .value()
+                .varargs()
+                .imm(&imm.offset32)
+                .build(),
+
+            stack_load: Builder::new("StackLoad")
+                .imm(&entities.stack_slot)
+                .imm(&imm.offset32)
+                .build(),
+
+            stack_store: Builder::new("StackStore")
+                .value()
+                .imm(&entities.stack_slot)
+                .imm(&imm.offset32)
+                .build(),
+
+            // Accessing a WebAssembly heap.
+            heap_addr: Builder::new("HeapAddr")
+                .imm(&entities.heap)
+                .value()
+                .imm(&imm.uimm32)
+                .build(),
+
+            // Accessing a WebAssembly table.
+            table_addr: Builder::new("TableAddr")
+                .imm(&entities.table)
+                .value()
+                .imm(&imm.offset32)
+                .build(),
+
+            reg_move: Builder::new("RegMove")
+                .value()
+                .imm_with_name("src", &imm.regunit)
+                .imm_with_name("dst", &imm.regunit)
+                .build(),
+
+            copy_special: Builder::new("CopySpecial")
+                .imm_with_name("src", &imm.regunit)
+                .imm_with_name("dst", &imm.regunit)
+                .build(),
+
+            copy_to_ssa: Builder::new("CopyToSsa")
+                .imm_with_name("src", &imm.regunit)
+                .build(),
+
+            reg_spill: Builder::new("RegSpill")
+                .value()
+                .imm_with_name("src", &imm.regunit)
+                .imm_with_name("dst", &entities.stack_slot)
+                .build(),
+
+            reg_fill: Builder::new("RegFill")
+                .value()
+                .imm_with_name("src", &entities.stack_slot)
+                .imm_with_name("dst", &imm.regunit)
+                .build(),
+
+            trap: Builder::new("Trap").imm(&imm.trapcode).build(),
+
+            cond_trap: Builder::new("CondTrap").value().imm(&imm.trapcode).build(),
+
+            int_cond_trap: Builder::new("IntCondTrap")
+                .imm(&imm.intcc)
+                .value()
+                .imm(&imm.trapcode)
+                .build(),
+
+            float_cond_trap: Builder::new("FloatCondTrap")
+                .imm(&imm.floatcc)
+                .value()
+                .imm(&imm.trapcode)
+                .build(),
+        }
+    }
 }

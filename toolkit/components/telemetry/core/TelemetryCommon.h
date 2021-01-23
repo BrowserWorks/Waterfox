@@ -38,7 +38,8 @@ enum class SupportedProduct : uint8_t {
   Firefox = (1 << 0),
   Fennec = (1 << 1),
   Geckoview = (1 << 2),
-  All = 0xFF  // All the products
+  GeckoviewStreaming = (1 << 3),
+  Thunderbird = (1 << 4),
 };
 MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS(SupportedProduct);
 
@@ -155,15 +156,8 @@ JSString* ToJSString(JSContext* cx, const nsACString& aStr);
 JSString* ToJSString(JSContext* cx, const nsAString& aStr);
 
 /**
- * Set the current product.
- *
- * On Firefox desktop, this method has no effect.
- * On Android it will determine if it is running Fennec or GeckoView
- */
-void SetCurrentProduct();
-
-/**
- * Get an identifier for the current running product.
+ * Get an identifier for the currently-running product.
+ * This is not stable over time and may change.
  *
  * @returns the product identifier
  */

@@ -15,10 +15,6 @@ Protocol`_ (CDP).
 .. _Remote Debugging Protocol: https://docs.firefox-dev.tools/backend/protocol.html
 .. _Chrome DevTools Protocol: https://chromedevtools.github.io/devtools-protocol/
 
-
-Users
-=====
-
 .. toctree::
   :maxdepth: 1
 
@@ -26,8 +22,8 @@ Users
   Prefs.md
 
 
-Developers
-==========
+Internals
+=========
 
 .. toctree::
   :maxdepth: 1
@@ -35,29 +31,25 @@ Developers
   Building.md
   Debugging.md
   Testing.md
+  Architecture.md
   Prefs.md
   CodeStyle.md
+  PuppeteerVendor.md
+  Security.md
 
 
 Bugs
 ====
 
-Bugs are tracked under the `Remote Protocol`_ product.
+Bugs are tracked under the `Remote Protocol product`_.
 
-.. _Remote Protocol: https://bugzilla.mozilla.org/describecomponents.cgi?product=Remote%20Protocol
+.. _Remote Protocol product: https://bugzilla.mozilla.org/describecomponents.cgi?product=Remote%20Protocol
 
 
 Communication
 =============
 
-The mailing list for Firefox remote debugging discussion is
-`dev-remote@lists.mozilla.org`_ (`subscribe`_, `archive`_).
+See `Communication`_ on `our project wiki`_.
 
-If you prefer real-time chat, there is often someone in the *#remote*
-IRC channel on irc.mozilla.org.  Don’t ask if you may ask a
-question just go ahead and ask, and please wait for an answer as
-we might not be in your timezone.
-
-.. _dev-remote@lists.mozilla.org: mailto:dev-remote@lists.mozilla.org
-.. _subscribe: https://lists.mozilla.org/listinfo/dev-remote
-.. _archive: https://lists.mozilla.org/pipermail/dev-remote/
+.. _Communication: https://wiki.mozilla.org/Remote#Communication
+.. _our project wiki: https://wiki.mozilla.org/Remote

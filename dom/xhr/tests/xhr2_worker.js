@@ -2,7 +2,7 @@
  * Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
-
+/* eslint-env worker */
 onmessage = function(event) {
   const url = event.data;
 
@@ -13,7 +13,7 @@ onmessage = function(event) {
   const refText = xhr.responseText;
 
   function getResponse(type) {
-    var xhr = new XMLHttpRequest();
+    xhr = new XMLHttpRequest();
     xhr.open("GET", url, false);
     if (type !== undefined) {
       xhr.responseType = type;
@@ -48,7 +48,7 @@ onmessage = function(event) {
   // property.
 
   function testResponseTextException(type) {
-    var xhr = new XMLHttpRequest();
+    xhr = new XMLHttpRequest();
     xhr.open("GET", url, false);
     xhr.responseType = type;
     xhr.send();
@@ -57,24 +57,26 @@ onmessage = function(event) {
 
     try {
       xhr.responseText;
-    }
-    catch(e) {
+    } catch (e) {
       exception = e;
     }
 
     if (!exception) {
-      throw new Error("Failed to throw when getting responseText on '" + type +
-                      "' type");
+      throw new Error(
+        "Failed to throw when getting responseText on '" + type + "' type"
+      );
     }
 
     if (exception.name != "InvalidStateError") {
-      throw new Error("Unexpected error when getting responseText on '" + type +
-                      "' type");
+      throw new Error(
+        "Unexpected error when getting responseText on '" + type + "' type"
+      );
     }
 
     if (exception.code != DOMException.INVALID_STATE_ERR) {
-      throw new Error("Unexpected error code when getting responseText on '" + type +
-                      "' type");
+      throw new Error(
+        "Unexpected error code when getting responseText on '" + type + "' type"
+      );
     }
   }
 
@@ -97,4 +99,4 @@ onmessage = function(event) {
   }
 
   postMessage("done");
-}
+};

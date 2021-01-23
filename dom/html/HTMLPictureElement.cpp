@@ -12,7 +12,9 @@
 nsGenericHTMLElement* NS_NewHTMLPictureElement(
     already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo,
     mozilla::dom::FromParser aFromParser) {
-  return new mozilla::dom::HTMLPictureElement(std::move(aNodeInfo));
+  RefPtr<mozilla::dom::NodeInfo> nodeInfo(aNodeInfo);
+  auto* nim = nodeInfo->NodeInfoManager();
+  return new (nim) mozilla::dom::HTMLPictureElement(nodeInfo.forget());
 }
 
 namespace mozilla {
@@ -22,7 +24,7 @@ HTMLPictureElement::HTMLPictureElement(
     already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo)
     : nsGenericHTMLElement(std::move(aNodeInfo)) {}
 
-HTMLPictureElement::~HTMLPictureElement() {}
+HTMLPictureElement::~HTMLPictureElement() = default;
 
 NS_IMPL_ELEMENT_CLONE(HTMLPictureElement)
 

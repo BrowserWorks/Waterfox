@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountWindow.title           "Kontoegenskaper">
+<!ENTITY accountWindow.width           "300">
+<!ENTITY account.general               "Allmän">
+<!ENTITY account.advanced              "Avancerade inställningar">
+<!ENTITY account.name                  "Användarnamn:">
+<!ENTITY account.password              "Lösenord:">
+<!ENTITY account.alias                 "Alias:">
+<!ENTITY account.newMailNotification   "Meddela om ny e-post">
+<!ENTITY account.autojoin              "Automatiskt anslutna kanaler:">
+<!ENTITY account.proxySettings.caption "Proxyinställningar:">
+<!ENTITY account.proxySettings.change.label     "Ändra…">
+<!ENTITY account.proxySettings.change.accessKey "n">

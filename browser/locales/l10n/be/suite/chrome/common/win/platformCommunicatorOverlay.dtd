@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY closeCmd.label "Зачыніць">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "ч">
+<!ENTITY quitApplicationCmd.label "Выйсці">
+<!ENTITY quitApplicationCmd.key "Q">
+<!ENTITY quitApplicationCmd.accesskey "В">
+<!ENTITY redoCmd.key "Y">
+<!ENTITY findTypeTextCmd.key "/">
+<!ENTITY findTypeLinksCmd.key "'">
+<!ENTITY accel.emacs_conflict "accel">
+<!ENTITY openHelpCmd.label "Змест даведкі">
+<!ENTITY openHelpCmd.accesskey "д">
+<!ENTITY openHelpCmd.key "VK_F1">
+<!ENTITY helpForIEUsers.label "Карыстальнікам Internet Explorer">
+<!ENTITY helpForIEUsers.accesskey "I">
+<!ENTITY helpMenu.label "Даведка">
+<!ENTITY helpMenu.accesskey "Д">
+<!ENTITY ctrlKey.label "Ctrl">
+<!ENTITY altKey.label "Alt">
+<!ENTITY shiftKey.label "Shift">

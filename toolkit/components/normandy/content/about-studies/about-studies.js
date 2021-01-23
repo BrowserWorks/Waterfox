@@ -188,9 +188,9 @@ class StudyList extends React.Component {
         { className: "study-list active-study-list" },
         activeStudies.map(study =>
           study.type === "addon"
-            ? r(AddonStudyListItem, { key: study.name, study, translations })
+            ? r(AddonStudyListItem, { key: study.slug, study, translations })
             : r(PreferenceStudyListItem, {
-                key: study.name,
+                key: study.slug,
                 study,
                 translations,
               })
@@ -202,9 +202,9 @@ class StudyList extends React.Component {
         { className: "study-list inactive-study-list" },
         inactiveStudies.map(study =>
           study.type === "addon"
-            ? r(AddonStudyListItem, { key: study.name, study, translations })
+            ? r(AddonStudyListItem, { key: study.slug, study, translations })
             : r(PreferenceStudyListItem, {
-                key: study.name,
+                key: study.slug,
                 study,
                 translations,
               })
@@ -240,14 +240,14 @@ class AddonStudyListItem extends React.Component {
       "li",
       {
         className: classnames("study addon-study", { disabled: !study.active }),
-        "data-study-name": study.name,
+        "data-study-slug": study.slug, // used to identify this row in tests
       },
       r(
         "div",
         { className: "study-icon" },
-        study.name
-          .replace(/-?add-?on-?/, "")
-          .replace(/-?study-?/, "")
+        study.userFacingName
+          .replace(/-?add-?on-?/i, "")
+          .replace(/-?study-?/i, "")
           .slice(0, 1)
       ),
       r(
@@ -256,7 +256,7 @@ class AddonStudyListItem extends React.Component {
         r(
           "div",
           { className: "study-header" },
-          r("span", { className: "study-name" }, study.name),
+          r("span", { className: "study-name" }, study.userFacingName),
           r("span", {}, "\u2022"), // &bullet;
           r(
             "span",
@@ -266,7 +266,11 @@ class AddonStudyListItem extends React.Component {
               : translations.completeStatus
           )
         ),
-        r("div", { className: "study-description" }, study.description)
+        r(
+          "div",
+          { className: "study-description" },
+          study.userFacingDescription
+        )
       ),
       r(
         "div",
@@ -284,9 +288,10 @@ class AddonStudyListItem extends React.Component {
 AddonStudyListItem.propTypes = {
   study: PropTypes.shape({
     recipeId: PropTypes.number.isRequired,
-    name: PropTypes.string.isRequired,
+    slug: PropTypes.string.isRequired,
+    userFacingName: PropTypes.string.isRequired,
     active: PropTypes.bool.isRequired,
-    description: PropTypes.string.isRequired,
+    userFacingDescription: PropTypes.string.isRequired,
   }).isRequired,
   translations: PropTypes.object.isRequired,
 };
@@ -302,7 +307,7 @@ class PreferenceStudyListItem extends React.Component {
 
   handleClickRemove() {
     sendPageEvent("RemovePreferenceStudy", {
-      experimentName: this.props.study.name,
+      experimentName: this.props.study.slug,
       reason: "individual-opt-out",
     });
   }
@@ -310,13 +315,11 @@ class PreferenceStudyListItem extends React.Component {
   render() {
     const { study, translations } = this.props;
 
-    let userFacingName = study.userFacingName;
-    if (!userFacingName) {
-      userFacingName = study.name
-        .replace(/-?pref-?(flip|study)-?/, "")
-        .replace(/-?study-?/, "")
-        .slice(0, 1);
-    }
+    let iconLetter = (study.userFacingName || study.slug)
+      .replace(/-?pref-?(flip|study)-?/, "")
+      .replace(/-?study-?/, "")
+      .slice(0, 1)
+      .toUpperCase();
 
     let description = study.userFacingDescription;
     if (!description) {
@@ -342,16 +345,20 @@ class PreferenceStudyListItem extends React.Component {
       "li",
       {
         className: classnames("study pref-study", { disabled: study.expired }),
-        "data-study-name": study.name,
+        "data-study-slug": study.slug, // used to identify this row in tests
       },
-      r("div", { className: "study-icon" }, userFacingName),
+      r("div", { className: "study-icon" }, iconLetter),
       r(
         "div",
         { className: "study-details" },
         r(
           "div",
           { className: "study-header" },
-          r("span", { className: "study-name" }, study.name),
+          r(
+            "span",
+            { className: "study-name" },
+            study.userFacingName || study.slug
+          ),
           r("span", {}, "\u2022"), // &bullet;
           r(
             "span",
@@ -381,7 +388,9 @@ class PreferenceStudyListItem extends React.Component {
 }
 PreferenceStudyListItem.propTypes = {
   study: PropTypes.shape({
-    name: PropTypes.string.isRequired,
+    slug: PropTypes.string.isRequired,
+    userFacingName: PropTypes.string,
+    userFacingDescription: PropTypes.string,
     expired: PropTypes.bool.isRequired,
     preferenceName: PropTypes.string.isRequired,
     preferenceValue: PropTypes.oneOf(

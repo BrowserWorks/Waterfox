@@ -32,10 +32,10 @@ const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm")
 
 XPCOMUtils.defineLazyPreferenceGetter(this, "supportPseudo",
                                       "media.webvtt.pseudo.enabled", false);
+XPCOMUtils.defineLazyPreferenceGetter(this, "DEBUG_LOG",
+                                      "media.webvtt.debug.logging", false);
 
 (function(global) {
-  var DEBUG_LOG = false;
-
   function LOG(message) {
     if (DEBUG_LOG) {
       dump("[vtt] " + message + "\n");
@@ -416,15 +416,20 @@ XPCOMUtils.defineLazyPreferenceGetter(this, "supportPseudo",
     let root;
     switch (mode) {
       case PARSE_CONTENT_MODE.PSUEDO_CUE:
-        root = window.document.createElement("div", {pseudo: "::cue"});
+        root = window.document.createElement("span", {pseudo: "::cue"});
         break;
       case PARSE_CONTENT_MODE.NORMAL_CUE:
       case PARSE_CONTENT_MODE.REGION_CUE:
-        root = window.document.createElement("div");
+        root = window.document.createElement("span");
         break;
       case PARSE_CONTENT_MODE.DOCUMENT_FRAGMENT:
         root = window.document.createDocumentFragment();
         break;
+    }
+
+    if (!input) {
+      root.appendChild(window.document.createTextNode(""));
+      return root;
     }
 
     let current = root,
@@ -503,9 +508,6 @@ XPCOMUtils.defineLazyPreferenceGetter(this, "supportPseudo",
     return val === 0 ? 0 : val + unit;
   };
 
-  XPCOMUtils.defineLazyPreferenceGetter(StyleBox.prototype, "supportPseudo",
-                                        "media.webvtt.pseudo.enabled", false);
-
   // TODO(alwu): remove StyleBox and change other style box to class-based.
   class StyleBoxBase {
     applyStyles(styles, div) {
@@ -537,11 +539,11 @@ XPCOMUtils.defineLazyPreferenceGetter(this, "supportPseudo",
       // As pseudo element won't inherit the parent div's style, so we have to
       // set the font size explicitly.
       if (supportPseudo) {
-        this.cueDiv.style.setProperty("--cue-font-size", this.fontSize);
+        this._applyDefaultStylesOnPseudoBackgroundNode();
       } else {
-        this._applyNonPseudoCueStyles();
+        this._applyDefaultStylesOnNonPseudoBackgroundNode();
       }
-      this.applyStyles(this._getNodeDefaultStyles(cue));
+      this._applyDefaultStylesOnRootNode();
     }
 
     getCueBoxPositionAndSize() {
@@ -569,6 +571,16 @@ XPCOMUtils.defineLazyPreferenceGetter(this, "supportPseudo",
       return this.div.firstLineBoxBSize;
     }
 
+    setBidiRule() {
+      // This function is a workaround which is used to force the reflow in order
+      // to use the correct alignment for bidi text. Now this function would be
+      // called after calculating the final position of the cue box to ensure the
+      // rendering result is correct. See bug1557882 comment3 for more details.
+      // TODO : remove this function and set `unicode-bidi` when initiailizing
+      // the CueStyleBox, after fixing bug1558431.
+      this.applyStyles({ "unicode-bidi": "plaintext" });
+    }
+
     /**
      * Following methods are private functions, should not use them outside this
      * class.
@@ -586,58 +598,62 @@ XPCOMUtils.defineLazyPreferenceGetter(this, "supportPseudo",
       return containerBox.height * 0.05 + "px";
     }
 
-    _applyNonPseudoCueStyles() {
+    _applyDefaultStylesOnPseudoBackgroundNode() {
+      // most of the properties have been defined in `::cue` in `html.css`, but
+      // there are some css variables we have to set them dynamically.
+      this.cueDiv.style.setProperty("--cue-font-size", this.fontSize, "important");
+      this.cueDiv.style.setProperty("--cue-writing-mode", this._getCueWritingMode(), "important");
+    }
+
+    _applyDefaultStylesOnNonPseudoBackgroundNode() {
       // If cue div is not a pseudo element, we should set the default css style
       // for it, the reason we need to set these attributes to cueDiv is because
       // if we set background on the root node directly, if would cause filling
       // too large area for the background color as the size of root node won't
       // be adjusted by cue size.
       this.applyStyles({
-        "color": "rgba(255, 255, 255, 1)",
-        "white-space": "pre-line",
-        "font": this.fontSize + " sans-serif",
         "background-color": "rgba(0, 0, 0, 0.8)",
-        "display": "inline",
       }, this.cueDiv);
     }
 
     // spec https://www.w3.org/TR/webvtt1/#applying-css-properties
-    _getNodeDefaultStyles(cue) {
-      let styles = {
-        "position": "absolute",
-        "unicode-bidi": "plaintext",
-        "overflow-wrap": "break-word",
-        // "text-wrap": "balance", (we haven't supported this CSS attribute yet)
-        "font": this.fontSize + " sans-serif",
-        "white-space": "pre-line",
-        "text-align": cue.align,
-      }
-
-      this._processCueSetting(cue, styles);
-      return styles;
-    }
-
-    // spec https://www.w3.org/TR/webvtt1/#processing-cue-settings
-    _processCueSetting(cue, styles) {
+    _applyDefaultStylesOnRootNode() {
+      // The variables writing-mode, top, left, width, and height are calculated
+      // in the spec 7.2, https://www.w3.org/TR/webvtt1/#processing-cue-settings
       // spec 7.2.1, calculate 'writing-mode'.
-      styles["writing-mode"] = this._getCueWritingMode(cue);
+      const writingMode = this._getCueWritingMode();
 
       // spec 7.2.2 ~ 7.2.7, calculate 'width', 'height', 'left' and 'top'.
-      const {width, height, left, top} = this._getCueSizeAndPosition(cue);
-      styles["width"] = width;
-      styles["height"] = height;
-      styles["left"] = left;
-      styles["top"] = top;
+      const {width, height, left, top} = this._getCueSizeAndPosition();
+
+      this.applyStyles({
+        "position": "absolute",
+        // "unicode-bidi": "plaintext", (uncomment this line after fixing bug1558431)
+        "writing-mode": writingMode,
+        "top": top,
+        "left": left,
+        "width": width,
+        "height": height,
+        "overflow-wrap": "break-word",
+        // "text-wrap": "balance", (we haven't supported this CSS attribute yet)
+        "white-space": "pre-line",
+        "font": this.fontSize + " sans-serif",
+        "color": "rgba(255, 255, 255, 1)",
+        "white-space": "pre-line",
+        "text-align": this.cue.align,
+      });
     }
 
-    _getCueWritingMode(cue) {
+    _getCueWritingMode() {
+      const cue = this.cue;
       if (cue.vertical == "") {
         return "horizontal-tb";
       }
       return cue.vertical == "lr" ? "vertical-lr" : "vertical-rl";
     }
 
-    _getCueSizeAndPosition(cue) {
+    _getCueSizeAndPosition() {
+      const cue = this.cue;
       // spec 7.2.2, determine the value of maximum size for cue as per the
       // appropriate rules from the following list.
       let maximumSize;
@@ -796,6 +812,8 @@ XPCOMUtils.defineLazyPreferenceGetter(this, "supportPseudo",
       this.left = isHTMLElement ? obj.offsetLeft : obj.left;
       this.width = isHTMLElement ? obj.offsetWidth : obj.width;
       this.height = isHTMLElement ? obj.offsetHeight : obj.height;
+      // This value is smaller than 1 app unit (~= 0.0166 px).
+      this.fuzz = 0.01;
     }
 
     get bottom() {
@@ -838,20 +856,10 @@ XPCOMUtils.defineLazyPreferenceGetter(this, "supportPseudo",
 
     // Check if this box overlaps another box, b2.
     overlaps(b2) {
-      return this.left < b2.right &&
-             this.right > b2.left &&
-             this.top < b2.bottom &&
-             this.bottom > b2.top;
-    }
-
-    // Check if this box overlaps any other boxes in boxes.
-    overlapsAny(boxes) {
-      for (let i = 0; i < boxes.length; i++) {
-        if (this.overlaps(boxes[i])) {
-          return true;
-        }
-      }
-      return false;
+      return (this.left < b2.right - this.fuzz) &&
+             (this.right > b2.left + this.fuzz) &&
+             (this.top < b2.bottom - this.fuzz) &&
+             (this.bottom > b2.top + this.fuzz);
     }
 
     // Check if this box overlaps any other boxes in boxes.
@@ -866,10 +874,10 @@ XPCOMUtils.defineLazyPreferenceGetter(this, "supportPseudo",
 
     // Check if this box is within another box.
     within(container) {
-      return this.top >= container.top &&
-             this.bottom <= container.bottom &&
-             this.left >= container.left &&
-             this.right <= container.right;
+      return (this.top >= container.top - this.fuzz) &&
+             (this.bottom <= container.bottom + this.fuzz) &&
+             (this.left >= container.left - this.fuzz) &&
+             (this.right <= container.right + this.fuzz);
     }
 
     // Check whether this box is passed over the specfic axis boundary. The axis
@@ -878,13 +886,13 @@ XPCOMUtils.defineLazyPreferenceGetter(this, "supportPseudo",
     isOutsideTheAxisBoundary(container, axis) {
       switch (axis) {
       case "+x":
-        return this.right > container.right;
+        return this.right > container.right + this.fuzz;
       case "-x":
-        return this.left < container.left;
+        return this.left < container.left - this.fuzz;
       case "+y":
-        return this.bottom > container.bottom;
+        return this.bottom > container.bottom + this.fuzz;
       case "-y":
-        return this.top < container.top;
+        return this.top < container.top - this.fuzz;
       }
     }
 
@@ -906,6 +914,10 @@ XPCOMUtils.defineLazyPreferenceGetter(this, "supportPseudo",
     const cue = styleBox.cue;
     const isWritingDirectionHorizontal = cue.vertical == "";
     let box = new BoxPosition(styleBox);
+    if (!box.width || !box.height) {
+      LOG(`No way to adjust a box with zero width or height.`);
+      return;
+    }
 
     // Spec 7.2.10, adjust the positions of boxes according to the appropriate
     // steps from the following list. Also, we use offsetHeight/offsetWidth here
@@ -914,6 +926,7 @@ XPCOMUtils.defineLazyPreferenceGetter(this, "supportPseudo",
     const fullDimension = isWritingDirectionHorizontal ?
       containerBox.height : containerBox.width;
     if (cue.snapToLines) {
+      LOG(`Adjust position when 'snap-to-lines' is true.`);
       // The step is the height or width of the line box. We should use font
       // size directly, instead of using text box's width or height, because the
       // width or height of the box would be changed when the text is wrapped to
@@ -1002,6 +1015,7 @@ XPCOMUtils.defineLazyPreferenceGetter(this, "supportPseudo",
         });
       }
     } else {
+      LOG(`Adjust position when 'snap-to-lines' is false.`);
       // (snap-to-lines if false) spec 7.2.10.1 ~ 7.2.10.2
       if (cue.lineAlign != "start") {
         const isCenterAlign = cue.lineAlign == "center";
@@ -1018,8 +1032,34 @@ XPCOMUtils.defineLazyPreferenceGetter(this, "supportPseudo",
           specifiedPosition = box.clone(),
           outsideAreaPercentage = 1; // Highest possible so the first thing we get is better.
       let hasFoundBestPosition = false;
-      const axis = ["-y", "-x", "+x", "+y"];
-      const toMove = styleBox.getFirstLineBoxSize();
+
+      // For the different writing directions, we should have different priority
+      // for the moving direction. For example, if the writing direction is
+      // horizontal, which means the cues will grow from the top to the bottom,
+      // then moving cues along the `y` axis should be more important than moving
+      // cues along the `x` axis, and vice versa for those cues growing from the
+      // left to right, or from the right to the left. We don't follow the exact
+      // way which the spec requires, see the reason in bug1575460.
+      function getAxis(writingDirection) {
+        if (writingDirection == "") {
+          return ["+y", "-y", "+x", "-x"];
+        }
+        // Growing from left to right.
+        if (writingDirection == "lr") {
+          return ["+x", "-x", "+y", "-y"];
+        }
+        // Growing from right to left.
+        return ["-x", "+x", "+y", "-y"];
+      }
+      const axis = getAxis(cue.vertical);
+
+      // This factor effects the granularity of the moving unit, when using the
+      // factor=1 often moves too much and results in too many redudant spaces
+      // between boxes. So we can increase the factor to slightly reduce the
+      // move we do every time, but still can preverse the reasonable spaces
+      // between boxes.
+      const factor = 4;
+      const toMove = styleBox.getFirstLineBoxSize() / factor;
       for (let i = 0; i < axis.length && !hasFoundBestPosition; i++) {
         while (!box.isOutsideTheAxisBoundary(containerBox, axis[i]) &&
                (!box.within(containerBox) || box.overlapsAny(outputBoxes))) {
@@ -1043,9 +1083,14 @@ XPCOMUtils.defineLazyPreferenceGetter(this, "supportPseudo",
         box = specifiedPosition.clone();
       }
 
+      // Can not find a place to place this box inside the rendering area.
+      if (!box.within(containerBox)) {
+        return null;
+      }
+
       styleBox.applyStyles({
-        top: getPercentagePosition(box.top, fullDimension),
-        left: getPercentagePosition(box.left, fullDimension),
+        top: getPercentagePosition(box.top, containerBox.height),
+        left: getPercentagePosition(box.left, containerBox.width),
       });
     }
 
@@ -1059,6 +1104,7 @@ XPCOMUtils.defineLazyPreferenceGetter(this, "supportPseudo",
   }
 
   function WebVTT() {
+    this.isProcessingCues = false;
     // Nothing
   }
 
@@ -1084,14 +1130,36 @@ XPCOMUtils.defineLazyPreferenceGetter(this, "supportPseudo",
     return parseContent(window, cuetext, PARSE_CONTENT_MODE.DOCUMENT_FRAGMENT);
   };
 
+  function clearAllCuesDiv(overlay) {
+    while (overlay.firstChild) {
+      overlay.firstChild.remove();
+    }
+  }
+
+  // It's used to record how many cues we process in the last `processCues` run.
+  var lastDisplayedCueNums = 0;
+
+  const DIV_COMPUTING_STATE = {
+    REUSE : 0,
+    REUSE_AND_CLEAR : 1,
+    COMPUTE_AND_CLEAR : 2
+  };
+
   // Runs the processing model over the cues and regions passed to it.
-  // @param overlay A block level element (usually a div) that the computed cues
+  // Spec https://www.w3.org/TR/webvtt1/#processing-model
+  // @parem window : JS window
+  // @param cues : the VTT cues are going to be displayed.
+  // @param overlay : A block level element (usually a div) that the computed cues
   //                and regions will be placed into.
-  // @param controls  A Control bar element. Cues' position will be
+  // @param controls : A Control bar element. Cues' position will be
   //                 affected and repositioned according to it.
-  WebVTT.processCues = function(window, cues, overlay, controls) {
-    if (!window || !cues || !overlay) {
-      return null;
+  function processCuesInternal(window, cues, overlay, controls) {
+    LOG(`=== processCues ===`);
+    if (!cues) {
+      LOG(`clear display and abort processing because of no cue.`);
+      clearAllCuesDiv(overlay);
+      lastDisplayedCueNums = 0;
+      return;
     }
 
     let controlBar, controlBarShown;
@@ -1105,32 +1173,46 @@ XPCOMUtils.defineLazyPreferenceGetter(this, "supportPseudo",
       controlBarShown = false;
     }
 
-    // Determine if we need to compute the display states of the cues. This could
-    // be the case if a cue's state has been changed since the last computation or
-    // if it has not been computed yet.
-    function shouldCompute(cues) {
+    /**
+     * This function is used to tell us if we have to recompute or reuse current
+     * cue's display state. Display state is a DIV element with corresponding
+     * CSS style to display cue on the screen. When the cue is being displayed
+     * first time, we will compute its display state. After that, we could reuse
+     * its state until following conditions happen.
+     * (1) control changes : it means the rendering area changes so we should
+     * recompute cues' position.
+     * (2) cue's `hasBeenReset` flag is true : it means cues' line or position
+     * property has been modified, we also need to recompute cues' position.
+     * (3) the amount of showing cues changes : it means some cue would disappear
+     * but other cues should stay at the same place without recomputing, so we
+     * can resume their display state.
+     */
+    function getDIVComputingState(cues) {
       if (overlay.lastControlBarShownStatus != controlBarShown) {
-        return true;
+        return DIV_COMPUTING_STATE.COMPUTE_AND_CLEAR;
       }
 
       for (let i = 0; i < cues.length; i++) {
         if (cues[i].hasBeenReset || !cues[i].displayState) {
-          return true;
+          return DIV_COMPUTING_STATE.COMPUTE_AND_CLEAR;
         }
       }
-      return false;
+
+      if (lastDisplayedCueNums != cues.length) {
+        return DIV_COMPUTING_STATE.REUSE_AND_CLEAR;
+      }
+      return DIV_COMPUTING_STATE.REUSE;
     }
 
-    // We don't need to recompute the cues' display states. Just reuse them.
-    if (!shouldCompute(cues)) {
-      return;
-    }
+    const divState = getDIVComputingState(cues);
     overlay.lastControlBarShownStatus = controlBarShown;
 
-    // Remove all previous children.
-    while (overlay.firstChild) {
-      overlay.firstChild.remove();
+    if (divState == DIV_COMPUTING_STATE.REUSE) {
+      LOG(`reuse current cue's display state and abort processing`);
+      return;
     }
+
+    clearAllCuesDiv(overlay);
     let rootOfCues = window.document.createElement("div");
     rootOfCues.style.position = "absolute";
     rootOfCues.style.left = "0";
@@ -1139,73 +1221,103 @@ XPCOMUtils.defineLazyPreferenceGetter(this, "supportPseudo",
     rootOfCues.style.bottom = "0";
     overlay.appendChild(rootOfCues);
 
-    let boxPositions = [],
+    if (divState == DIV_COMPUTING_STATE.REUSE_AND_CLEAR) {
+      LOG(`clear display but reuse cues' display state.`);
+      for (let cue of cues) {
+        rootOfCues.appendChild(cue.displayState);
+      }
+    } else if (divState == DIV_COMPUTING_STATE.COMPUTE_AND_CLEAR) {
+      LOG(`clear display and recompute cues' display state.`);
+      let boxPositions = [],
         containerBox = new BoxPosition(rootOfCues);
 
-    let styleBox, cue, controlBarBox;
-    if (controlBarShown) {
-      controlBarBox = new BoxPosition(controlBar);
-      // Add an empty output box that cover the same region as video control bar.
-      boxPositions.push(controlBarBox);
-    }
+      let styleBox, cue, controlBarBox;
+      if (controlBarShown) {
+        controlBarBox = new BoxPosition(controlBar);
+        // Add an empty output box that cover the same region as video control bar.
+        boxPositions.push(controlBarBox);
+      }
 
-    // https://w3c.github.io/webvtt/#processing-model 6.1.12.1
-    // Create regionNode
-    let regionNodeBoxes = {};
-    let regionNodeBox;
+      // https://w3c.github.io/webvtt/#processing-model 6.1.12.1
+      // Create regionNode
+      let regionNodeBoxes = {};
+      let regionNodeBox;
 
-    LOG(`=== processCues ===`);
+      LOG(`lastDisplayedCueNums=${lastDisplayedCueNums}, currentCueNums=${cues.length}`);
+      lastDisplayedCueNums = cues.length;
+      for (let i = 0; i < cues.length; i++) {
+        cue = cues[i];
+        if (cue.region != null) {
+         // 6.1.14.1
+          styleBox = new RegionCueStyleBox(window, cue);
 
-    for (let i = 0; i < cues.length; i++) {
-      cue = cues[i];
-      if (cue.region != null) {
-       // 6.1.14.1
-        styleBox = new RegionCueStyleBox(window, cue);
-
-        if (!regionNodeBoxes[cue.region.id]) {
-          // create regionNode
-          // Adjust the container hieght to exclude the controlBar
-          let adjustContainerBox = new BoxPosition(rootOfCues);
-          if (controlBarShown) {
-            adjustContainerBox.height -= controlBarBox.height;
-            adjustContainerBox.bottom += controlBarBox.height;
+          if (!regionNodeBoxes[cue.region.id]) {
+            // create regionNode
+            // Adjust the container hieght to exclude the controlBar
+            let adjustContainerBox = new BoxPosition(rootOfCues);
+            if (controlBarShown) {
+              adjustContainerBox.height -= controlBarBox.height;
+              adjustContainerBox.bottom += controlBarBox.height;
+            }
+            regionNodeBox = new RegionNodeBox(window, cue.region, adjustContainerBox);
+            regionNodeBoxes[cue.region.id] = regionNodeBox;
           }
-          regionNodeBox = new RegionNodeBox(window, cue.region, adjustContainerBox);
-          regionNodeBoxes[cue.region.id] = regionNodeBox;
-        }
-        // 6.1.14.3
-        let currentRegionBox = regionNodeBoxes[cue.region.id];
-        let currentRegionNodeDiv = currentRegionBox.div;
-        // 6.1.14.3.2
-        // TODO: fix me, it looks like the we need to set/change "top" attribute at the styleBox.div
-        // to do the "scroll up", however, we do not implement it yet?
-        if (cue.region.scroll == "up" && currentRegionNodeDiv.childElementCount > 0) {
-          styleBox.div.style.transitionProperty = "top";
-          styleBox.div.style.transitionDuration = "0.433s";
-        }
+          // 6.1.14.3
+          let currentRegionBox = regionNodeBoxes[cue.region.id];
+          let currentRegionNodeDiv = currentRegionBox.div;
+          // 6.1.14.3.2
+          // TODO: fix me, it looks like the we need to set/change "top" attribute at the styleBox.div
+          // to do the "scroll up", however, we do not implement it yet?
+          if (cue.region.scroll == "up" && currentRegionNodeDiv.childElementCount > 0) {
+            styleBox.div.style.transitionProperty = "top";
+            styleBox.div.style.transitionDuration = "0.433s";
+          }
 
-        currentRegionNodeDiv.appendChild(styleBox.div);
-        rootOfCues.appendChild(currentRegionNodeDiv);
-        cue.displayState = styleBox.div;
-        boxPositions.push(new BoxPosition(currentRegionBox));
-      } else {
-        // Compute the intial position and styles of the cue div.
-        styleBox = new CueStyleBox(window, cue, containerBox);
-        rootOfCues.appendChild(styleBox.div);
-
-        // Move the cue to correct position, we might get the null box if the
-        // result of algorithm doesn't want us to show the cue when we don't
-        // have any room for this cue.
-        let cueBox = adjustBoxPosition(styleBox, containerBox, controlBarBox, boxPositions);
-        if (cueBox) {
-          // Remember the computed div so that we don't have to recompute it later
-          // if we don't have too.
+          currentRegionNodeDiv.appendChild(styleBox.div);
+          rootOfCues.appendChild(currentRegionNodeDiv);
           cue.displayState = styleBox.div;
-          boxPositions.push(cueBox);
-          LOG(`cue ${i}, ` + cueBox.getBoxInfoInChars());
+          boxPositions.push(new BoxPosition(currentRegionBox));
+        } else {
+          // Compute the intial position and styles of the cue div.
+          styleBox = new CueStyleBox(window, cue, containerBox);
+          rootOfCues.appendChild(styleBox.div);
+
+          // Move the cue to correct position, we might get the null box if the
+          // result of algorithm doesn't want us to show the cue when we don't
+          // have any room for this cue.
+          let cueBox = adjustBoxPosition(styleBox, containerBox, controlBarBox, boxPositions);
+          if (cueBox) {
+            styleBox.setBidiRule();
+            // Remember the computed div so that we don't have to recompute it later
+            // if we don't have too.
+            cue.displayState = styleBox.div;
+            boxPositions.push(cueBox);
+            LOG(`cue ${i}, ` + cueBox.getBoxInfoInChars());
+          } else {
+            LOG(`can not find a proper position to place cue ${i}`);
+            // Clear the display state and clear the reset flag in the cue as well,
+            // which controls whether the task for updating the cue display is
+            // dispatched.
+            cue.displayState = null;
+            rootOfCues.removeChild(styleBox.div);
+          }
         }
       }
+    } else {
+      LOG(`[ERROR] unknown div computing state`);
     }
+  };
+
+  WebVTT.processCues = function(window, cues, overlay, controls) {
+    // When accessing `offsetXXX` attributes of element, it would trigger reflow
+    // and might result in a re-entry of this function. In order to avoid doing
+    // redundant computation, we would only do one processing at a time.
+    if (this.isProcessingCues) {
+      return;
+    }
+    this.isProcessingCues = true;
+    processCuesInternal(window, cues, overlay, controls);
+    this.isProcessingCues = false;
   };
 
   WebVTT.Parser = function(window, decoder) {

@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label "Својства">
+
+<!ENTITY generalInfo.label "Општи информации">
+
+
+<!ENTITY retention.label "Бришење на ѓубрето">
+<!ENTITY daysOld.label "денови">
+<!ENTITY message.label "пораки">
+<!ENTITY retentionCleanup.label "За ослободување простор на дискот, старите пораки можат да бидат избришани засекогаш">
+<!ENTITY retentionKeepAll.label "Не бриши ниту една порака">
+<!ENTITY retentionKeepAll.accesskey "а">
+
+<!ENTITY offlineFolder.check.label "Избери ја оваа папка за локална употреба">
+<!ENTITY offlineFolder.check.accesskey "з">
+<!ENTITY offlineFolder.button.label "Преземи сега">
+<!ENTITY offlineFolder.button.accesskey "р">
+
+<!ENTITY selectofflineNewsgroup.check.label "Изберија оваа дискусиона група за локална употреба">
+<!ENTITY selectofflineNewsgroup.check.accesskey "у">
+<!ENTITY offlineNewsgroup.button.label "Преземи сега">
+<!ENTITY offlineNewsgroup.button.accesskey "р">
+
+<!ENTITY folderProps.name.label "Име:">
+<!ENTITY folderProps.name.accesskey "И">
+
+<!ENTITY folderSharingTab.label "Делење">
+<!ENTITY privileges.button.label "Привилегии…">
+<!ENTITY privileges.button.accesskey "П">
+<!ENTITY permissionsDesc.label "Ги имаш следниве дозволи:">
+<!ENTITY folderType.label "Тип на папка:">
+
+<!ENTITY folderQuotaTab.label "Квота">
+<!ENTITY folderQuotaUsage.label "Употреба:">
+<!ENTITY folderQuotaStatus.label "Статус:">
+

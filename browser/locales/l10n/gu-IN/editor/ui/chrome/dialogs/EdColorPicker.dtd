@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "રંગ">
+<!ENTITY lastPickedColor.label "છેલ્લે પસંદ થયેલ રંગ">
+<!ENTITY lastPickedColor.accessKey "L">
+<!ENTITY setColor1.label "રંગ પર ક્લિક કરો અથવા">
+<!ENTITY setColor2.label "HTML રંગ શબ્દમાળા દાખલ કરો">
+<!ENTITY setColor2.accessKey "H">
+<!ENTITY setColorExample.label "(દા.ત.: &quot;#0000ff&quot; અથવા &quot;blue&quot;):">
+<!ENTITY default.label "મૂળભુત">
+<!ENTITY default.accessKey "D">
+<!ENTITY palette.label "પેલેટ:">
+<!ENTITY standardPalette.label "પ્રમાણભૂત">
+<!ENTITY webPalette.label "બધા વેબ રંગો">
+<!ENTITY background.label "માટેનો પાશ્વ ભાગ:">
+<!ENTITY background.accessKey "B">
+<!ENTITY table.label "કોષ્ટક">
+<!ENTITY table.accessKey "T">
+<!ENTITY cell.label "ખાનાંઓ">
+<!ENTITY cell.accessKey "C">

@@ -23,9 +23,24 @@ const { Preferences } = ChromeUtils.import(
   "resource://gre/modules/Preferences.jsm"
 );
 ChromeUtils.import("resource://testing-common/ContentTaskUtils.jsm", this);
+const { TestUtils } = ChromeUtils.import(
+  "resource://testing-common/TestUtils.jsm"
+);
+
+ChromeUtils.defineModuleGetter(
+  this,
+  "jwcrypto",
+  "resource://services-crypto/jwcrypto.jsm"
+);
+
+ChromeUtils.defineModuleGetter(
+  this,
+  "JsonSchemaValidator",
+  "resource://gre/modules/components-utils/JsonSchemaValidator.jsm"
+);
 
 const PING_FORMAT_VERSION = 4;
-const OPTOUT_PING_TYPE = "optout";
+const DELETION_REQUEST_PING_TYPE = "deletion-request";
 const TEST_PING_TYPE = "test-ping-type";
 
 const PLATFORM_VERSION = "1.9.2";
@@ -159,13 +174,13 @@ add_task(async function test_disableDataUpload() {
   const OPTIN_PROBE = "telemetry.data_upload_optin";
   const isUnified = Preferences.get(TelemetryUtils.Preferences.Unified, false);
   if (!isUnified) {
-    // Skipping the test if unified telemetry is off, as no optout ping will
-    // be generated.
+    // Skipping the test if unified telemetry is off, as no deletion-request ping will be generated.
     return;
   }
 
-  // Check that the optin probe is not set, there should be other data in the snapshot though
-  let snapshot = Telemetry.getSnapshotForScalars("main", false).parent;
+  // Check that the optin probe is not set.
+  // (If there are no recorded scalars, "parent" will be undefined).
+  let snapshot = Telemetry.getSnapshotForScalars("main", false).parent || {};
   Assert.ok(
     !(OPTIN_PROBE in snapshot),
     "Data optin scalar should not be set at start"
@@ -176,6 +191,7 @@ add_task(async function test_disableDataUpload() {
   let ping = await PingServer.promiseNextPing();
   checkPingFormat(ping, TEST_PING_TYPE, true, false);
   let firstClientId = ping.clientId;
+
   Assert.ok(firstClientId, "Test ping needs a client ID");
   Assert.notEqual(
     TelemetryUtils.knownClientID,
@@ -183,18 +199,26 @@ add_task(async function test_disableDataUpload() {
     "Client ID should be valid and random"
   );
 
-  // Disable FHR upload: this should trigger a optout ping.
+  // The next step should trigger an event, watch for it.
+  let disableObserved = TestUtils.topicObserved(
+    TelemetryUtils.TELEMETRY_UPLOAD_DISABLED_TOPIC
+  );
+
+  // Disable FHR upload: this should trigger a deletion-request ping.
   Preferences.set(TelemetryUtils.Preferences.FhrUploadEnabled, false);
 
+  // Wait for the disable event
+  await disableObserved;
+
   ping = await PingServer.promiseNextPing();
-  checkPingFormat(ping, OPTOUT_PING_TYPE, false, false);
+  checkPingFormat(ping, DELETION_REQUEST_PING_TYPE, true, false);
   // Wait on ping activity to settle.
   await TelemetrySend.testWaitOnOutgoingPings();
 
-  snapshot = Telemetry.getSnapshotForScalars("main", false).parent;
+  snapshot = Telemetry.getSnapshotForScalars("main", false).parent || {};
   Assert.ok(
     !(OPTIN_PROBE in snapshot),
-    "Data optin scalar should not be set after optout"
+    "Data optin scalar should not be set after opt out"
   );
 
   // Restore FHR Upload.
@@ -209,20 +233,30 @@ add_task(async function test_disableDataUpload() {
     );
   });
 
-  snapshot = Telemetry.getSnapshotForScalars("main", false).parent;
+  snapshot = Telemetry.getSnapshotForScalars("main", false).parent || {};
   Assert.ok(
     snapshot[OPTIN_PROBE],
     "Enabling data upload should set optin probe"
   );
 
-  // Simulate a failure in sending the optout ping by disabling the HTTP server.
+  // The clientId should've been reset when we restored FHR Upload.
+  let secondClientId = TelemetryController.getCurrentPingData().clientId;
+  Assert.notEqual(
+    firstClientId,
+    secondClientId,
+    "The client id must have changed"
+  );
+
+  // Simulate a failure in sending the deletion-request ping by disabling the HTTP server.
   await PingServer.stop();
 
   // Try to send a ping. It will be saved as pending  and get deleted when disabling upload.
   TelemetryController.submitExternalPing(TEST_PING_TYPE, {});
 
-  // Disable FHR upload to send a optout ping again.
+  // Disable FHR upload to send a deletion-request ping again.
   Preferences.set(TelemetryUtils.Preferences.FhrUploadEnabled, false);
+  // Wait for the deletion-request ping to be submitted.
+  await TelemetryController.testPromiseDeletionRequestPingSubmitted();
 
   // Wait on sending activity to settle, as |TelemetryController.testReset()| doesn't do that.
   await TelemetrySend.testWaitOnOutgoingPings();
@@ -236,8 +270,8 @@ add_task(async function test_disableDataUpload() {
   let pendingPings = await TelemetryStorage.loadPendingPingList();
   Assert.equal(
     pendingPings.length,
-    0,
-    "All the pending pings should have been deleted, including the optout ping"
+    1,
+    "All the pending pings should have been deleted, except the deletion-request ping"
   );
 
   // Enable the ping server again.
@@ -260,7 +294,7 @@ add_task(async function test_disableDataUpload() {
   // Send a test ping
   await sendPing(true, false);
 
-  // We should have only received the test ping
+  // We should have received the test ping first.
   ping = await PingServer.promiseNextPing();
   checkPingFormat(ping, TEST_PING_TYPE, true, false);
 
@@ -274,6 +308,15 @@ add_task(async function test_disableDataUpload() {
     firstClientId,
     ping.clientId,
     "Client ID should be different from the previous value"
+  );
+
+  // The "deletion-request" ping should come next, as it was pending.
+  ping = await PingServer.promiseNextPing();
+  checkPingFormat(ping, DELETION_REQUEST_PING_TYPE, true, false);
+  Assert.equal(
+    secondClientId,
+    ping.clientId,
+    "Deletion must be requested for correct client id"
   );
 
   // Wait on ping activity to settle before moving on to the next test. If we were
@@ -403,11 +446,10 @@ add_task(async function test_archivePings() {
     : TelemetryUtils.Preferences.TelemetryEnabled;
   Preferences.set(uploadPref, false);
 
-  // If we're using unified telemetry, disabling ping upload will generate a "optout"
-  // ping. Catch it.
+  // If we're using unified telemetry, disabling ping upload will generate a "deletion-request" ping. Catch it.
   if (isUnified) {
     let ping = await PingServer.promiseNextPing();
-    checkPingFormat(ping, OPTOUT_PING_TYPE, false, false);
+    checkPingFormat(ping, DELETION_REQUEST_PING_TYPE, true, false);
   }
 
   // Register a new Ping Handler that asserts if a ping is received, then send a ping.
@@ -529,7 +571,10 @@ add_task(async function test_midnightPingSendFuzzing() {
 
   // Clean-up.
   fakeMidnightPingFuzzingDelay(0);
-  fakePingSendTimer(() => {}, () => {});
+  fakePingSendTimer(
+    () => {},
+    () => {}
+  );
 });
 
 add_task(async function test_changePingAfterSubmission() {
@@ -698,6 +743,10 @@ add_task(async function test_sendNewProfile() {
     "startup",
     "The new-profile ping generated after startup must have the correct reason"
   );
+  Assert.ok(
+    "parent" in ping.payload.processes,
+    "The new-profile ping generated after startup must have processes.parent data"
+  );
 
   // Check that is not sent with the pingsender during startup.
   Assert.throws(
@@ -721,6 +770,10 @@ add_task(async function test_sendNewProfile() {
     ping.payload.reason,
     "shutdown",
     "The new-profile ping generated at shutdown must have the correct reason"
+  );
+  Assert.ok(
+    "parent" in ping.payload.processes,
+    "The new-profile ping generated at shutdown must have processes.parent data"
   );
 
   // Check that the new-profile ping is sent at shutdown using the pingsender.
@@ -760,6 +813,252 @@ add_task(async function test_sendNewProfile() {
   // Reset the pref and restart Telemetry.
   Preferences.reset(PREF_NEWPROFILE_ENABLED);
   PingServer.resetPingHandler();
+});
+
+add_task(async function test_encryptedPing() {
+  if (gIsAndroid) {
+    // The underlying jwcrypto module being used here is not currently available on Android.
+    return;
+  }
+  Cu.importGlobalProperties(["crypto"]);
+
+  const ECDH_PARAMS = {
+    name: "ECDH",
+    namedCurve: "P-256",
+  };
+
+  const privateKey = {
+    crv: "P-256",
+    d: "rcs093UlGDG6piwHenmSDoAxbzMIXT43JkQbkt3xEmI",
+    ext: true,
+    key_ops: ["deriveKey"],
+    kty: "EC",
+    x: "h12feyTYBZ__wO_AnM1a5-KTDlko3-YyQ_en19jyrs0",
+    y: "6GSfzo14ehDyH5E-xCOedJDAYlN0AGPMCtIgFbheLko",
+  };
+
+  const publicKey = {
+    crv: "P-256",
+    ext: true,
+    kty: "EC",
+    x: "h12feyTYBZ__wO_AnM1a5-KTDlko3-YyQ_en19jyrs0",
+    y: "6GSfzo14ehDyH5E-xCOedJDAYlN0AGPMCtIgFbheLko",
+  };
+
+  const pioneerId = "12345";
+  const schemaName = "abc";
+  const schemaNamespace = "def";
+  const schemaVersion = 2;
+
+  Services.prefs.setStringPref("toolkit.telemetry.pioneerId", pioneerId);
+
+  // Stop the sending task and then start it again.
+  await TelemetrySend.shutdown();
+  // Reset the controller to spin the ping sending task.
+  await TelemetryController.testReset();
+
+  // Submit a ping with a custom payload, which will be encrypted.
+  let payload = { canary: "test" };
+  let pingPromise = TelemetryController.submitExternalPing(
+    "pioneer-study",
+    payload,
+    {
+      studyName: "pioneer-dev-1@allizom.org",
+      addPioneerId: true,
+      useEncryption: true,
+      encryptionKeyId: "pioneer-dev-20200423",
+      publicKey,
+      schemaName,
+      schemaNamespace,
+      schemaVersion,
+    }
+  );
+
+  // Wait for the ping to be archived.
+  const pingId = await pingPromise;
+
+  let archivedCopy = await TelemetryArchive.promiseArchivedPingById(pingId);
+
+  Assert.notEqual(
+    archivedCopy.payload.encryptedData,
+    payload,
+    "The encrypted payload must not match the plaintext."
+  );
+
+  Assert.equal(
+    archivedCopy.payload.pioneerId,
+    pioneerId,
+    "Pioneer ID in ping must match the pref."
+  );
+
+  // Validate ping against schema.
+  const schema = {
+    $schema: "http://json-schema.org/draft-04/schema#",
+    properties: {
+      application: {
+        additionalProperties: false,
+        properties: {
+          architecture: {
+            type: "string",
+          },
+          buildId: {
+            pattern: "^[0-9]{10}",
+            type: "string",
+          },
+          channel: {
+            type: "string",
+          },
+          displayVersion: {
+            pattern: "^[0-9]{2,3}\\.",
+            type: "string",
+          },
+          name: {
+            type: "string",
+          },
+          platformVersion: {
+            pattern: "^[0-9]{2,3}\\.",
+            type: "string",
+          },
+          vendor: {
+            type: "string",
+          },
+          version: {
+            pattern: "^[0-9]{2,3}\\.",
+            type: "string",
+          },
+          xpcomAbi: {
+            type: "string",
+          },
+        },
+        required: [
+          "architecture",
+          "buildId",
+          "channel",
+          "name",
+          "platformVersion",
+          "version",
+          "vendor",
+          "xpcomAbi",
+        ],
+        type: "object",
+      },
+      creationDate: {
+        pattern:
+          "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{3}Z$",
+        type: "string",
+      },
+      id: {
+        pattern:
+          "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$",
+        type: "string",
+      },
+      payload: {
+        description: "",
+        properties: {
+          encryptedData: {
+            description: "JOSE/JWE encrypted payload.",
+            type: "string",
+          },
+          encryptionKeyId: {
+            description: "JOSE/JWK key id, e.g. pioneer-20170520.",
+            type: "string",
+          },
+          pioneerId: {
+            description: "Custom pioneer id, must not be Telemetry clientId",
+            pattern:
+              "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$",
+            type: "string",
+          },
+          schemaName: {
+            description:
+              "Name of a schema used for validation of the encryptedData",
+            maxLength: 100,
+            minLength: 1,
+            pattern: "^\\S+$",
+            type: "string",
+          },
+          schemaNamespace: {
+            description:
+              "The namespace of the schema used for validation and routing to a dataset.",
+            maxLength: 100,
+            minLength: 1,
+            pattern: "^\\S+$",
+            type: "string",
+          },
+          schemaVersion: {
+            description: "Integer version number of the schema",
+            minimum: 1,
+            type: "integer",
+          },
+          studyName: {
+            description: "Name of a particular study. Usually the addon_id.",
+            maxLength: 100,
+            minLength: 1,
+            pattern: "^\\S+$",
+            type: "string",
+          },
+        },
+        required: [
+          "encryptedData",
+          "encryptionKeyId",
+          "pioneerId",
+          "studyName",
+          "schemaName",
+          "schemaNamespace",
+          "schemaVersion",
+        ],
+        title: "pioneer-study",
+        type: "object",
+      },
+      type: {
+        description: "doc_type, restated",
+        enum: ["pioneer-study"],
+        type: "string",
+      },
+      version: {
+        maximum: 4,
+        minimum: 4,
+        type: "integer",
+      },
+    },
+    required: [
+      "application",
+      "creationDate",
+      "id",
+      "payload",
+      "type",
+      "version",
+    ],
+    title: "pioneer-study",
+    type: "object",
+  };
+
+  const result = JsonSchemaValidator.validate(archivedCopy, schema);
+
+  Assert.ok(
+    result.valid,
+    `Archived ping should validate against schema: ${result.error}`
+  );
+
+  // check that payload can be decrypted.
+  const privateJWK = await crypto.subtle.importKey(
+    "jwk",
+    privateKey,
+    ECDH_PARAMS,
+    false,
+    ["deriveKey"]
+  );
+
+  const decryptedJWE = await jwcrypto.decryptJWE(
+    archivedCopy.payload.encryptedData,
+    privateJWK
+  );
+
+  Assert.deepEqual(
+    JSON.parse(new TextDecoder("utf-8").decode(decryptedJWE)),
+    payload,
+    "decrypted payload should match"
+  );
 });
 
 // Testing shutdown and checking that pings sent afterwards are rejected.

@@ -20,10 +20,7 @@ class nsIThreadObserver;
 namespace mozilla {
 
 class EventQueue;
-
-template <typename InnerQueueT>
 class PrioritizedEventQueue;
-
 class ThreadEventTarget;
 
 // A ThreadEventQueue implements normal monitor-style synchronization over the
@@ -39,8 +36,10 @@ class ThreadEventQueue final : public SynchronizedEventQueue {
   bool PutEvent(already_AddRefed<nsIRunnable>&& aEvent,
                 EventQueuePriority aPriority) final;
 
-  already_AddRefed<nsIRunnable> GetEvent(bool aMayWait,
-                                         EventQueuePriority* aPriority) final;
+  already_AddRefed<nsIRunnable> GetEvent(
+      bool aMayWait, EventQueuePriority* aPriority,
+      mozilla::TimeDuration* aLastEventDelay = nullptr) final;
+  void DidRunEvent() final;
   bool HasPendingEvent() final;
   bool HasPendingHighPriorityEvents() final;
 
@@ -94,7 +93,7 @@ class ThreadEventQueue final : public SynchronizedEventQueue {
 };
 
 extern template class ThreadEventQueue<EventQueue>;
-extern template class ThreadEventQueue<PrioritizedEventQueue<EventQueue>>;
+extern template class ThreadEventQueue<PrioritizedEventQueue>;
 
 };  // namespace mozilla
 

@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!-- LOCALIZATION NOTE  (editorWindow.titlemodifier): DONT_TRANSLATE -->
+<!ENTITY editorWindow.titlemodifier "සකසනය"> 
+<!ENTITY editorWindow.titlemodifiermenuseparator " - ">
+
+<!-- Menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- View menu items -->
+<!ENTITY compositionToolbarCmd.label "සංයුති මෙවලම් තීරුව">
+<!ENTITY compositionToolbarCmd.accesskey "C">
+<!ENTITY formattingToolbarCmd.label "හැඩතල මෙවලම් තීරුව">
+<!ENTITY formattingToolbarCmd.accesskey "F">
+<!ENTITY editmodeToolbarCmd.label "ප්‍රකාර මෙවලම් තීරුව සැකසීම">
+<!ENTITY editmodeToolbarCmd.accesskey "E">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "හැඩතල">
+<!ENTITY formatMenu.accesskey "o">
+
+
+<!ENTITY PreviewMode.label "පෙරදැක්ම">
+<!ENTITY HTMLSourceModeTab.label "මූලය">
+<!ENTITY sendPageCmd.accesskey "d">
+<!ENTITY grid.label "Positioning grid">
+<!ENTITY previewToolbarCmd.tooltip "මෙම පිටුව බ්‍රව්සරය තුළ විවෘත කරන්න">
+<!ENTITY AllTagsMode.tooltip "සියළු HTML ටැග් සඳහා රූප පෙන්වන්න">
+<!ENTITY NormalMode.accesskey "N">
+<!ENTITY NormalMode.label "සාමාන්‍ය සැකසුම් ආකාරය">
+<!ENTITY previewCmd.accesskey "w">
+<!ENTITY AllTagsMode.label "HTML ටැග්">
+<!ENTITY HTMLSourceModeTab.dir "ltr">
+<!ENTITY AllTagsMode.accesskey "a">
+<!ENTITY pageProperties.label "පිටුවේ නම සහ ලක්ෂණ…">
+<!ENTITY HTMLSourceMode.accesskey "H">
+<!ENTITY PreviewMode.accesskey "P">
+<!ENTITY sendPageCmd.label "පිටුව යවන්න…">
+<!ENTITY NormalModeTab.label "සාමාන්‍ය">
+<!ENTITY pageProperties.accesskey "g">
+<!ENTITY exportToTextCmd.label "පාඨ බවට පෙරලන්න…">
+<!ENTITY grid.accesskey "t">
+<!ENTITY AllTagsModeTab.label "HTML ටැග්">
+<!ENTITY previewToolbarCmd.label "ගවේෂණය">
+<!ENTITY HTMLSourceMode.label "HTML මූලය">
+<!ENTITY compositionToolbar.tooltip "Composition මෙවලම්තීරුව">
+<!ENTITY PreviewMode.tooltip "Display as WYSIWYG (as in the browser)">
+<!ENTITY validateCmd.accesskey "V">
+<!ENTITY exportToTextCmd.accesskey "T">
+<!ENTITY validateCmd.label "HTML වලංගුකරණය">
+<!ENTITY HTMLSourceMode.tooltip "HTML මූලයේ සැකසුම්">
+<!ENTITY PreviewModeTab.label "පෙරදැක්ම">
+<!ENTITY previewCmd.label "පිටුව ගවේෂණය ">
+<!ENTITY NormalMode.tooltip "වගුවේ මායිම් සහ නම්කළ ඈඳුම් පෙන්වන්න">

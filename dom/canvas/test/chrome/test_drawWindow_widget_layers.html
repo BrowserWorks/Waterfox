@@ -29,17 +29,21 @@
 
     // Need to open as a toplevel chrome window so that
     // DRAWWINDOW_USE_WIDGET_LAYERS is honored.
-    sourceWindow = window.open("file_drawWindow_source.html", "",
-                               `chrome,width=${WINDOW_INNER_WIDTH},height=${WINDOW_INNER_HEIGHT}`);
+    sourceWindow = docShell.rootTreeItem.domWindow.open("file_drawWindow_source.html", "",
+                                                        `chrome,width=${WINDOW_INNER_WIDTH},height=${WINDOW_INNER_HEIGHT}`);
     SimpleTest.waitForFocus(runTests, sourceWindow);
   }
 
-  function runTests() {
+  async function runTests() {
     var cxInterfaceWrap = SpecialPowers.wrap(CanvasRenderingContext2D);
-    var flags = cxInterfaceWrap.DRAWWINDOW_USE_WIDGET_LAYERS |
-                cxInterfaceWrap.DRAWWINDOW_DRAW_CARET |
-                cxInterfaceWrap.DRAWWINDOW_DRAW_VIEW;
-    runDrawWindowTests(sourceWindow, flags, true);
+    
+    let snapshot = function(context, x, y, width, height, bg) {
+      var flags = cxInterfaceWrap.DRAWWINDOW_USE_WIDGET_LAYERS |
+                  cxInterfaceWrap.DRAWWINDOW_DRAW_CARET |
+                  cxInterfaceWrap.DRAWWINDOW_DRAW_VIEW;
+      context.drawWindow(sourceWindow, x, y, width, height, bg, flags);
+    }
+    await runDrawWindowTests(snapshot, true);
 
     sourceWindow.close();
 

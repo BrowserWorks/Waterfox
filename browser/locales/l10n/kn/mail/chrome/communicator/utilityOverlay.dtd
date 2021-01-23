@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+
+<!ENTITY fileMenu.label          "ಕಡತ(F)">
+<!ENTITY fileMenu.accesskey        "F">
+<!ENTITY newMenu.label            "ಹೊಸ (N)">
+<!ENTITY newMenu.accesskey          "N">
+
+<!ENTITY editMenu.label          "ಸಂಪಾದನೆ(E)">
+<!ENTITY editMenu.accesskey        "E">
+<!ENTITY undoCmd.label            "ರದ್ದು ಮಾಡು(U)">
+<!ENTITY undoCmd.accesskey          "U">
+<!ENTITY redoCmd.label            "ಮತ್ತೊಮ್ಮೆ ಮಾಡು(R)">
+<!ENTITY redoCmd.accesskey          "R">
+<!ENTITY deleteCmd.label          "ಅಳಿಸು(D)">
+<!ENTITY deleteCmd.accesskey        "D">
+<!ENTITY preferencesCmd2.label "ಆಯ್ಕೆಗಳು">
+<!ENTITY preferencesCmd2.accesskey "O">
+<!ENTITY preferencesCmdUnix.label       "ಆದ್ಯತೆಗಳು">
+<!ENTITY preferencesCmdUnix.accesskey     "n">
+
+<!ENTITY viewMenu.label          "ನೋಟ(V)">
+<!ENTITY viewMenu.accesskey        "V">
+<!ENTITY viewToolbarsMenu.label        "ಉಪಕರಣ ಪಟ್ಟಿಗಳು">
+<!ENTITY viewToolbarsMenu.accesskey      "T">
+<!ENTITY showTaskbarCmd.label          "ಸ್ಥಿತಿಪಟ್ಟಿಕೆ">
+<!ENTITY showTaskbarCmd.accesskey        "u">
+
+<!ENTITY closeCmd.label      "ಮುಚ್ಚು(C)">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "C">
+
+<!ENTITY quitApplicationCmd.label  "ಹೊರನಡೆ">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "x">
+
+<!ENTITY quitApplicationCmdUnix.label  "ಹೊರನಡೆ (Q)">
+<!ENTITY quitApplicationCmdUnix.accesskey  "Q">
+
+<!ENTITY quitApplicationCmdMac.label  "Qತ್ಯಜಿಸು &brandShortName;">
+<!ENTITY quitApplicationCmdMac.accesskey  "Q">

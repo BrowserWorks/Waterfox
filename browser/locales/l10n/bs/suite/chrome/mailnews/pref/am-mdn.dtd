@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Potvrde čitanja">
+<!ENTITY useGlobalPrefs.label         "Koristi moje globalne postavke potvrde čitanja za ovaj račun">
+<!ENTITY globalReceipts.label         "Globalne postavke…">
+<!ENTITY useCustomPrefs.label         "Prilagodi potvrde čitanja za ovaj račun">
+<!ENTITY requestReceipt.label         "Prilikom slanja poruke, uvijek zahtijevaj potvrdu čitanja">
+<!ENTITY receiptArrive.label          "Kada potvrda stigne:">
+<!ENTITY leaveIt.label                "Ostavi je u Primljenoj pošti">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "Premjesti je u folder &quot;Poslana pošta&quot;">
+<!ENTITY requestMDN.label             "Kada primim zahtjev za potvrdu čitanja:">
+<!ENTITY returnSome.label             "Dozvoli potvrde čitanja za neke poruke">
+<!ENTITY never.label                  "Nikada ne šalji potvrdu čitanja">
+<!ENTITY notInToCc.label              "Ako nisam u Prima ili Kop dijelu poruke:">
+<!ENTITY outsideDomain.label          "Ako je pošiljaoc izvan moje domene:">
+<!ENTITY otherCases.label             "U svim ostalim slučajevima:">
+<!ENTITY askMe.label                  "Pitaj me">
+<!ENTITY alwaysSend.label             "Uvijek pošalji">
+<!ENTITY neverSend.label              "Nikada ne šalji">

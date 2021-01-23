@@ -14,7 +14,7 @@ Usage: $(basename "$0") [-p product]
            # Use archive.m.o instead of the taskcluster index to get xpcshell
            [--use-ftp-builds]
            # One (or more) of the following actions must be specified.
-           --hsts | --hpkp | --blocklist
+           --hsts | --hpkp | --remote-settings | --suffix-list
            -b branch
 
 EOF
@@ -29,24 +29,18 @@ DONTBUILD=false
 APPROVAL=false
 COMMIT_AUTHOR='ffxbld <ffxbld@mozilla.com>'
 REPODIR=''
-APP_DIR=''
-APP_ID=''
-APP_NAME=''
 HGHOST="hg.mozilla.org"
 STAGEHOST="archive.mozilla.org"
 WGET="wget -nv"
 UNTAR="tar -zxf"
 DIFF="$(command -v diff) -u"
 BASEDIR="${HOME}"
-TOOLSDIR="${HOME}/tools"
 
 SCRIPTDIR="$(realpath "$(dirname "$0")")"
 HG="$(command -v hg)"
 DATADIR="${BASEDIR}/data"
 mkdir -p "${DATADIR}"
 
-VERSION=''
-MCVERSION=''
 USE_MC=false
 USE_TC=true
 JQ="$(command -v jq)"
@@ -66,13 +60,6 @@ HPKP_PRELOAD_INPUT="${DATADIR}/${HPKP_PRELOAD_INC}"
 HPKP_PRELOAD_OUTPUT="${DATADIR}/${HPKP_PRELOAD_INC}.out"
 HPKP_UPDATED=false
 
-DO_BLOCKLIST=false
-BLOCKLIST_URL_AMO=''
-BLOCKLIST_URL_HG=''
-BLOCKLIST_LOCAL_AMO="blocklist_amo.xml"
-BLOCKLIST_LOCAL_HG="blocklist_hg.xml"
-BLOCKLIST_UPDATED=false
-
 DO_REMOTE_SETTINGS=false
 REMOTE_SETTINGS_SERVER=''
 REMOTE_SETTINGS_INPUT="${DATADIR}/remote-settings.in"
@@ -91,38 +78,12 @@ ARTIFACTS_DIR="${ARTIFACTS_DIR:-.}"
 # Defaults
 HSTS_DIFF_ARTIFACT="${ARTIFACTS_DIR}/${HSTS_DIFF_ARTIFACT:-"nsSTSPreloadList.diff"}"
 HPKP_DIFF_ARTIFACT="${ARTIFACTS_DIR}/${HPKP_DIFF_ARTIFACT:-"StaticHPKPins.h.diff"}"
-BLOCKLIST_DIFF_ARTIFACT="${ARTIFACTS_DIR}/${BLOCKLIST_DIFF_ARTIFACT:-"blocklist.diff"}"
 REMOTE_SETTINGS_DIFF_ARTIFACT="${ARTIFACTS_DIR}/${REMOTE_SETTINGS_DIFF_ARTIFACT:-"remote-settings.diff"}"
 SUFFIX_LIST_DIFF_ARTIFACT="${ARTIFACTS_DIR}/${SUFFIX_LIST_DIFF_ARTIFACT:-"effective_tld_names.diff"}"
 
 # duplicate the functionality of taskcluster-lib-urls, but in bash..
-if [ "$TASKCLUSTER_ROOT_URL" = "https://taskcluster.net" ]; then
-    queue_base='https://queue.taskcluster.net/v1'
-    index_base='https://index.taskcluster.net/v1'
-else
-    queue_base="$TASKCLUSTER_ROOT_URL/api/queue/v1"
-    index_base="$TASKCLUSTER_ROOT_URL/api/index/v1"
-fi
-
-# Get the current in-tree version for a code branch.
-function get_version {
-  VERSION_REPO=$1
-  VERSION_FILE='version.txt'
-
-  # TODO bypass temporary file
-
-  cd "${BASEDIR}"
-  VERSION_URL_HG="${VERSION_REPO}/raw-file/default/${APP_DIR}/config/version.txt"
-  rm -f ${VERSION_FILE}
-  ${WGET} -O "${VERSION_FILE}" "${VERSION_URL_HG}"
-  PARSED_VERSION=$(cat version.txt)
-  if [ "${PARSED_VERSION}" == "" ]; then
-    echo "ERROR: Unable to parse version from $VERSION_FILE" >&2
-    exit 21
-  fi
-  rm -f ${VERSION_FILE}
-  echo "${PARSED_VERSION}"
-}
+queue_base="$TASKCLUSTER_ROOT_URL/api/queue/v1"
+index_base="$TASKCLUSTER_ROOT_URL/api/index/v1"
 
 # Cleanup common artifacts.
 function preflight_cleanup {
@@ -304,40 +265,9 @@ function compare_suffix_lists {
   rm -f "${HG_SUFFIX_LOCAL}"
   ${WGET} -O "${HG_SUFFIX_LOCAL}" "${HG_SUFFIX_URL}"
 
-  echo "INFO: diffing in-tree blocklist against the blocklist from AMO..."
+  echo "INFO: diffing in-tree suffix list against the suffix list from AMO..."
   ${DIFF} ${GITHUB_SUFFIX_LOCAL} ${HG_SUFFIX_LOCAL} | tee "${SUFFIX_LIST_DIFF_ARTIFACT}"
   if [ -s "${SUFFIX_LIST_DIFF_ARTIFACT}" ]
-  then
-    return 0
-  fi
-  return 1
-}
-
-# Downloads the current in-tree blocklist file.
-# Downloads the current blocklist file from AMO.
-# Compares the AMO blocklist with the in-tree blocklist to determine whether we need to update.
-function compare_blocklist_files {
-  BLOCKLIST_URL_AMO="https://blocklist.addons.mozilla.org/blocklist/3/${APP_ID}/${VERSION}/${APP_NAME}/20090105024647/blocklist-sync/en-US/nightly/blocklist-sync/default/default/"
-  BLOCKLIST_URL_HG="${HGREPO}/raw-file/default/${APP_DIR}/app/blocklist.xml"
-
-  cd "${BASEDIR}"
-  rm -f ${BLOCKLIST_LOCAL_AMO}
-  echo "INFO: ${WGET} -O ${BLOCKLIST_LOCAL_AMO} ${BLOCKLIST_URL_AMO}"
-  ${WGET} -O "${BLOCKLIST_LOCAL_AMO}" "${BLOCKLIST_URL_AMO}"
-
-  rm -f ${BLOCKLIST_LOCAL_HG}
-  echo "INFO: ${WGET} -O ${BLOCKLIST_LOCAL_HG} ${BLOCKLIST_URL_HG}"
-  ${WGET} -O "${BLOCKLIST_LOCAL_HG}" "${BLOCKLIST_URL_HG}"
-
-  # The downloaded files should be non-empty and have a valid xml header
-  # if they were retrieved properly, and some random HTML garbage if not.
-  # set -x catches these
-  is_valid_xml ${BLOCKLIST_LOCAL_AMO}
-  is_valid_xml ${BLOCKLIST_LOCAL_HG}
-
-  echo "INFO: diffing in-tree blocklist against the blocklist from AMO..."
-  ${DIFF} ${BLOCKLIST_LOCAL_HG} ${BLOCKLIST_LOCAL_AMO} | tee "${BLOCKLIST_DIFF_ARTIFACT}"
-  if [ -s "${BLOCKLIST_DIFF_ARTIFACT}" ]
   then
     return 0
   fi
@@ -371,6 +301,22 @@ function compare_remote_settings_files {
     local_location_output="$REMOTE_SETTINGS_OUTPUT/${bucket}/${collection}.json"
     mkdir -p "$REMOTE_SETTINGS_OUTPUT/${bucket}"
     ${WGET} -qO "$local_location_output" "$remote_records_url"
+
+    # 5. Download attachments if needed.
+    if [ "${bucket}" = "blocklists" ] && [ "${collection}" = "addons-bloomfilters" ]; then
+      # Find the attachment with the most recent generation_time, like _updateMLBF in Blocklist.jsm.
+      # The server should return one "bloomfilter-base" record, but in case it returns multiple,
+      # return the most recent one. The server may send multiple entries if we ever decide to use
+      # the "filter_expression" feature of Remote Settings to send different records to specific
+      # channels. In that case this code should be updated to recognize the filter expression,
+      # but until we do, simply select the most recent record - can't go wrong with that.
+      # Note that "attachment_type" and "generation_time" are specific to addons-bloomfilters.
+      update_remote_settings_attachment "${bucket}" "${collection}" addons-mlbf.bin \
+        'map(select(.attachment_type == "bloomfilter-base")) | sort_by(.generation_time) | last'
+    fi
+    # Here is an example to download an attachment with record identifier "ID":
+    # update_remote_settings_attachment "${bucket}" "${collection}" ID '.[] | select(.id == "ID")'
+    # NOTE: The downloaded data is not validated. xpcshell should be used for that.
   done
 
   echo "INFO: diffing old/new remote settings dumps..."
@@ -382,18 +328,59 @@ function compare_remote_settings_files {
   return 1
 }
 
-function clone_build_tools {
-  rm -fr "${TOOLSDIR}"
-  CLONE_CMD="${HG} clone https://hg.mozilla.org/build/tools ${TOOLSDIR}"
-  ${CLONE_CMD}
+# Helper for compare_remote_settings_files to download attachments from remote settings.
+# The format and location is documented at:
+# https://firefox-source-docs.mozilla.org/services/common/services/RemoteSettings.html#packaging-attachments
+function update_remote_settings_attachment() {
+  local bucket=$1
+  local collection=$2
+  local attachment_id=$3
+  # $4 is a jq filter on the arrays that should return one record with the attachment
+  local jq_attachment_selector=".data | map(select(.attachment)) | $4"
+
+  # These paths match _readAttachmentDump in services/settings/Attachments.jsm.
+  local path_to_attachment="${bucket}/${collection}/${attachment_id}"
+  local path_to_meta="${bucket}/${collection}/${attachment_id}.meta.json"
+  local old_meta="$REMOTE_SETTINGS_INPUT/${path_to_meta}"
+  local new_meta="$REMOTE_SETTINGS_OUTPUT/${path_to_meta}"
+
+  # Those files should have been created by compare_remote_settings_files before the function call.
+  local local_location_input="$REMOTE_SETTINGS_INPUT/${bucket}/${collection}.json"
+  local local_location_output="$REMOTE_SETTINGS_OUTPUT/${bucket}/${collection}.json"
+
+  # Compute the metadata based on already-downloaded records.
+  mkdir -p "$REMOTE_SETTINGS_INPUT/${bucket}/${collection}"
+  ${JQ} -cj <"$local_location_input" "${jq_attachment_selector}" > "${old_meta}"
+  mkdir -p "$REMOTE_SETTINGS_OUTPUT/${bucket}/${collection}"
+  ${JQ} -cj <"$local_location_output" "${jq_attachment_selector}" > "${new_meta}"
+
+  if cmp --silent "${old_meta}" "${new_meta}" ; then
+    # Metadata not changed, don't bother downloading the attachments themselves.
+    return
+  fi
+  # Metadata changed. Download attachments.
+
+  echo "INFO: Downloading updated remote settings dump: ${bucket}/${collection}/${attachment_id}"
+
+  # Overwrited old_meta with the actual file from the repo. The content should be equivalent,
+  # but can have minor differences (e.g. different line endings) if the checked in file was not
+  # generated by this script (e.g. manually checked in).
+  ${WGET} -qO "${old_meta}" "${HGREPO}/raw-file/default${REMOTE_SETTINGS_DIR}/${path_to_meta}"
+
+  ${WGET} -qO "${REMOTE_SETTINGS_INPUT}/${path_to_attachment}" "${HGREPO}/raw-file/default${REMOTE_SETTINGS_DIR}/${path_to_attachment}"
+
+  if [ -z "${ATTACHMENT_BASE_URL}" ] ; then
+    ATTACHMENT_BASE_URL=$(${WGET} -qO- "${REMOTE_SETTINGS_SERVER}" | ${JQ} -r .capabilities.attachments.base_url)
+  fi
+  attachment_path_from_meta=$(${JQ} -r < "${new_meta}" .attachment.location)
+  ${WGET} -qO "${REMOTE_SETTINGS_OUTPUT}/${path_to_attachment}" "${ATTACHMENT_BASE_URL}${attachment_path_from_meta}"
 }
 
 # Clones an hg repo
 function clone_repo {
   cd "${BASEDIR}"
   if [ ! -d "${REPODIR}" ]; then
-    CLONE_CMD="${HG} clone ${HGREPO} ${REPODIR}"
-    ${CLONE_CMD}
+    ${HG} robustcheckout --sharebase /tmp/hg-store -b default "${HGREPO}" "${REPODIR}"
   fi
 
   ${HG} -R ${REPODIR} pull
@@ -409,11 +396,6 @@ function stage_hsts_files {
 function stage_hpkp_files {
   cd "${BASEDIR}"
   cp -f "${HPKP_PRELOAD_OUTPUT}" "${REPODIR}/security/manager/ssl/${HPKP_PRELOAD_INC}"
-}
-
-function stage_blocklist_files {
-  cd "${BASEDIR}"
-  cp -f ${BLOCKLIST_LOCAL_AMO} ${REPODIR}/${APP_DIR}/app/blocklist.xml
 }
 
 function stage_remote_settings_files {
@@ -471,7 +453,6 @@ while [ $# -gt 0 ]; do
     --pinset) DO_PRELOAD_PINSET=true ;;
     --hsts) DO_HSTS=true ;;
     --hpkp) DO_HPKP=true ;;
-    --blocklist) DO_BLOCKLIST=true ;;
     --remote-settings) DO_REMOTE_SETTINGS=true ;;
     --suffix-list) DO_SUFFIX_LIST=true ;;
     -r) REPODIR="$2"; shift ;;
@@ -492,9 +473,9 @@ if [ "${BRANCH}" == "" ]; then
 fi
 
 # Must choose at least one update action.
-if [ "$DO_HSTS" == "false" ] && [ "$DO_HPKP" == "false" ] && [ "$DO_BLOCKLIST" == "false" ] && [ "$DO_REMOTE_SETTINGS" == "false" ] && [ "$DO_SUFFIX_LIST" == "false" ]
+if [ "$DO_HSTS" == "false" ] && [ "$DO_HPKP" == "false" ] && [ "$DO_REMOTE_SETTINGS" == "false" ] && [ "$DO_SUFFIX_LIST" == "false" ]
 then
-  echo "Error: you must specify at least one action from: --hsts, --hpkp, --blocklist, --remote-settings" >&2
+  echo "Error: you must specify at least one action from: --hsts, --hpkp, --remote-settings, or --suffix-list" >&2
   usage
   exit 13
 fi
@@ -502,15 +483,9 @@ fi
 # per-product constants
 case "${PRODUCT}" in
   thunderbird)
-    APP_DIR="mail"
-    APP_ID="%7B3550f703-e582-4d05-9a08-453d09bdfdc6%7D"
-    APP_NAME="Thunderbird"
     COMMIT_AUTHOR="tbirdbld <tbirdbld@thunderbird.net>"
     ;;
   firefox)
-    APP_DIR="browser"
-    APP_ID="%7Bec8030f7-c20a-464f-9b0e-13a3a9e97384%7D"
-    APP_NAME="Firefox"
     ;;
   *)
     echo "Error: Invalid product specified"
@@ -535,30 +510,8 @@ case "${BRANCH}" in
     ;;
 esac
 
-MCREPO="https://${HGHOST}/mozilla-central"
-
-# Remove once 52esr is off support
-VERSION=$(get_version "${HGREPO}")
-MAJOR_VERSION="${VERSION%%.*}"
-echo "INFO: parsed version is ${VERSION}"
-if [ "${USE_MC}" == "true" ]; then
-  MCVERSION=$(get_version "${MCREPO}")
-  echo "INFO: parsed mozilla-central version is ${MCVERSION}"
-  MAJOR_VERSION="${MCVERSION%%.*}"
-fi
-
-BROWSER_ARCHIVE="${PRODUCT}-${VERSION}.en-US.${PLATFORM}.${PLATFORM_EXT}"
-TESTS_ARCHIVE="${PRODUCT}-${VERSION}.en-US.${PLATFORM}.common.tests.tar.gz"
-if [ "${USE_MC}" == "true" ]; then
-  BROWSER_ARCHIVE="${PRODUCT}-${MCVERSION}.en-US.${PLATFORM}.${PLATFORM_EXT}"
-  TESTS_ARCHIVE="${PRODUCT}-${MCVERSION}.en-US.${PLATFORM}.common.tests.tar.gz"
-fi
-# Simple name builds on >=53.0.0
-if [ "${MAJOR_VERSION}" -ge 53 ] ; then
-  BROWSER_ARCHIVE="target.${PLATFORM_EXT}"
-  TESTS_ARCHIVE="target.common.tests.tar.gz"
-fi
-# End 'remove once 52esr is off support'
+BROWSER_ARCHIVE="target.${PLATFORM_EXT}"
+TESTS_ARCHIVE="target.common.tests.tar.gz"
 
 preflight_cleanup
 if [ "${DO_HSTS}" == "true" ] || [ "${DO_HPKP}" == "true" ] || [ "${DO_PRELOAD_PINSET}" == "true" ]
@@ -583,12 +536,6 @@ if [ "${DO_HPKP}" == "true" ]; then
     HPKP_UPDATED=true
   fi
 fi
-if [ "${DO_BLOCKLIST}" == "true" ]; then
-  if compare_blocklist_files
-  then
-    BLOCKLIST_UPDATED=true
-  fi
-fi
 if [ "${DO_REMOTE_SETTINGS}" == "true" ]; then
   if compare_remote_settings_files
   then
@@ -603,7 +550,7 @@ if [ "${DO_SUFFIX_LIST}" == "true" ]; then
 fi
 
 
-if [ "${HSTS_UPDATED}" == "false" ] && [ "${HPKP_UPDATED}" == "false" ] && [ "${BLOCKLIST_UPDATED}" == "false" ] && [ "${REMOTE_SETTINGS_UPDATED}" == "false" ] && [ "${SUFFIX_LIST_UPDATED}" == "false" ]; then
+if [ "${HSTS_UPDATED}" == "false" ] && [ "${HPKP_UPDATED}" == "false" ] && [ "${REMOTE_SETTINGS_UPDATED}" == "false" ] && [ "${SUFFIX_LIST_UPDATED}" == "false" ]; then
   echo "INFO: no updates required. Exiting."
   exit 0
 else
@@ -612,9 +559,6 @@ else
     exit 2
   fi
 fi
-
-# Currently less reliable than regular 'hg'
-# clone_build_tools
 
 clone_repo
 
@@ -629,12 +573,6 @@ if [ "${HPKP_UPDATED}" == "true" ]
 then
   stage_hpkp_files
   COMMIT_MESSAGE="${COMMIT_MESSAGE} HPKP"
-fi
-
-if [ "${BLOCKLIST_UPDATED}" == "true" ]
-then
-  stage_blocklist_files
-  COMMIT_MESSAGE="${COMMIT_MESSAGE} blocklist"
 fi
 
 if [ "${REMOTE_SETTINGS_UPDATED}" == "true" ]

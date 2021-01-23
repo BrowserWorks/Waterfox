@@ -1,10 +1,9 @@
-import urlparse
-
-import error
-import protocol
-import transport
+from . import error
+from . import protocol
+from . import transport
 
 from six import string_types
+from six.moves.urllib import parse as urlparse
 
 
 def command(func):
@@ -218,7 +217,12 @@ class Actions(object):
                         ``ActionSequence.dict``.
         """
         body = {"actions": [] if actions is None else actions}
-        return self.session.send_session_command("POST", "actions", body)
+        actions = self.session.send_session_command("POST", "actions", body)
+        """WebDriver window should be set to the top level window when wptrunner
+        processes the next event.
+        """
+        self.session.switch_frame(None)
+        return actions
 
     @command
     def release(self):
@@ -308,8 +312,11 @@ class Find(object):
         self.session = session
 
     @command
-    def css(self, selector, all=True):
-        return self._find_element("css selector", selector, all)
+    def css(self, element_selector, all=True, frame="window"):
+        if (frame != "window"):
+            self.session.switch_frame(frame)
+        elements = self._find_element("css selector", element_selector, all)
+        return elements
 
     def _find_element(self, strategy, selector, all):
         route = "elements" if all else "element"
@@ -366,10 +373,8 @@ class Session(object):
                  port,
                  url_prefix="/",
                  capabilities=None,
-                 timeout=None,
                  extension=None):
-        self.transport = transport.HTTPWireProtocol(
-            host, port, url_prefix, timeout=timeout)
+        self.transport = transport.HTTPWireProtocol(host, port, url_prefix)
         self.requested_capabilities = capabilities
         self.capabilities = None
         self.session_id = None
@@ -413,7 +418,7 @@ class Session(object):
         if self.session_id is not None:
             return
 
-        body = {}
+        body = {"capabilities": {}}
 
         if self.requested_capabilities is not None:
             body["capabilities"] = self.requested_capabilities
@@ -439,7 +444,7 @@ class Session(object):
         finally:
             self.session_id = None
 
-    def send_command(self, method, url, body=None):
+    def send_command(self, method, url, body=None, timeout=None):
         """
         Send a command to the remote end and validate its success.
 
@@ -460,7 +465,7 @@ class Session(object):
         response = self.transport.send(
             method, url, body,
             encoder=protocol.Encoder, decoder=protocol.Decoder,
-            session=self)
+            session=self, timeout=timeout)
 
         if response.status != 200:
             err = error.from_response(response)
@@ -488,7 +493,7 @@ class Session(object):
 
         return value
 
-    def send_session_command(self, method, uri, body=None):
+    def send_session_command(self, method, uri, body=None, timeout=None):
         """
         Send a command to an established session and validate its success.
 
@@ -505,7 +510,7 @@ class Session(object):
             an error.
         """
         url = urlparse.urljoin("session/%s/" % self.session_id, uri)
-        return self.send_command(method, url, body)
+        return self.send_command(method, url, body, timeout)
 
     @property
     @command
@@ -729,6 +734,10 @@ class Element(object):
     @command
     def selected(self):
         return self.send_element_command("GET", "selected")
+
+    @command
+    def screenshot(self):
+        return self.send_element_command("GET", "screenshot")
 
     @command
     def attribute(self, name):

@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY linkToolbar.label "Barra de navegación del sitio web">
+<!ENTITY linkToolbar.accesskey "a">
+<!ENTITY linkToolbar.tooltip "Barra de navegación del sitio web">
+<!ENTITY linkToolbarAlways.label "Mostrar siempre">
+<!ENTITY linkToolbarAlways.accesskey "S">
+<!ENTITY linkToolbarAsNeeded.label "Mostrar sólo cuando sea necesaria">
+<!ENTITY linkToolbarAsNeeded.accesskey "O">
+<!ENTITY linkToolbarNever.label "Ocultar siempre">
+<!ENTITY linkToolbarNever.accesskey "c">
+<!ENTITY topButton.label "Superior">
+<!ENTITY upButton.label "Arriba">
+<!ENTITY firstButton.label "Primero">
+<!ENTITY prevButton.label "Anterior">
+<!ENTITY nextButton.label "Siguiente">
+<!ENTITY lastButton.label "Último">
+<!ENTITY documentButton.label "Documento">
+<!ENTITY tocButton.label "Tabla de contenidos">
+<!ENTITY chapterButton.label "Capítulos">
+<!ENTITY sectionButton.label "Secciones">
+<!ENTITY subSectionButton.label "Subsecciones">
+<!ENTITY appendixButton.label "Apéndices">
+<!ENTITY glossaryButton.label "Glosario">
+<!ENTITY indexButton.label "Índice">
+<!ENTITY moreButton.label "Más">
+<!ENTITY helpButton.label "Ayuda">
+<!ENTITY searchButton.label "Buscar">
+<!ENTITY authorButton.label "Autor(es)">
+<!ENTITY copyrightButton.label "Copyright">
+<!ENTITY bookmarkButton.label "Marcadores">
+<!ENTITY alternateButton.label "Otras versiones">
+<!ENTITY feedButton.label "Suscribirse">

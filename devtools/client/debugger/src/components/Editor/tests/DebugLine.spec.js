@@ -34,20 +34,18 @@ function generateDefaults(editor, overrides) {
     },
     frame: null,
     source: ({
-      source: createSourceObject("foo"),
+      ...createSourceObject("foo"),
       content: null,
     }: SourceWithContent),
     ...overrides,
   };
 }
 
-function createFrame(line) {
+function createLocation(line) {
   return {
-    location: {
-      sourceId: "foo",
-      line,
-      column: 2,
-    },
+    sourceId: "foo",
+    line,
+    column: 2,
   };
 }
 
@@ -57,7 +55,7 @@ function render(overrides = {}) {
   const props = generateDefaults(editor, overrides);
 
   const doc = createMockDocument(clear);
-  setDocument(props.source.source.id, doc);
+  setDocument(props.source.id, doc);
 
   // $FlowIgnore
   const component = shallow(<DebugLine.WrappedComponent {...props} />, {
@@ -71,7 +69,7 @@ describe("DebugLine Component", () => {
     it("should show a new debug line", async () => {
       const { component, props, doc } = render({
         source: {
-          source: createSourceObject("foo"),
+          ...createSourceObject("foo"),
           content: asyncValue.fulfilled({
             type: "text",
             value: "",
@@ -80,13 +78,13 @@ describe("DebugLine Component", () => {
         },
       });
       const line = 2;
-      const frame = createFrame(line);
+      const location = createLocation(line);
 
-      component.setProps({ ...props, frame });
+      component.setProps({ ...props, location });
 
       expect(doc.removeLineClass.mock.calls).toEqual([]);
       expect(doc.addLineClass.mock.calls).toEqual([
-        [toEditorLine("foo", line), "line", "new-debug-line"],
+        [toEditorLine("foo", line), "wrapClass", "new-debug-line"],
       ]);
     });
 
@@ -94,7 +92,7 @@ describe("DebugLine Component", () => {
       it("should replace the first debug line", async () => {
         const { props, component, clear, doc } = render({
           source: {
-            source: createSourceObject("foo"),
+            ...createSourceObject("foo"),
             content: asyncValue.fulfilled({
               type: "text",
               value: "",
@@ -107,31 +105,31 @@ describe("DebugLine Component", () => {
         const firstLine = 2;
         const secondLine = 2;
 
-        component.setProps({ ...props, frame: createFrame(firstLine) });
+        component.setProps({ ...props, location: createLocation(firstLine) });
         component.setProps({
           ...props,
-          frame: createFrame(secondLine),
+          frame: createLocation(secondLine),
         });
 
         expect(doc.removeLineClass.mock.calls).toEqual([
-          [toEditorLine("foo", firstLine), "line", "new-debug-line"],
+          [toEditorLine("foo", firstLine), "wrapClass", "new-debug-line"],
         ]);
 
         expect(doc.addLineClass.mock.calls).toEqual([
-          [toEditorLine("foo", firstLine), "line", "new-debug-line"],
-          [toEditorLine("foo", secondLine), "line", "new-debug-line"],
+          [toEditorLine("foo", firstLine), "wrapClass", "new-debug-line"],
+          [toEditorLine("foo", secondLine), "wrapClass", "new-debug-line"],
         ]);
 
         expect(doc.markText.mock.calls).toEqual([
           [
             { ch: 2, line: toEditorLine("foo", firstLine) },
             { ch: null, line: toEditorLine("foo", firstLine) },
-            { className: "debug-expression" },
+            { className: "debug-expression to-line-end" },
           ],
           [
             { ch: 2, line: toEditorLine("foo", secondLine) },
             { ch: null, line: toEditorLine("foo", secondLine) },
-            { className: "debug-expression" },
+            { className: "debug-expression to-line-end" },
           ],
         ]);
 
@@ -143,9 +141,9 @@ describe("DebugLine Component", () => {
       it("should not set the debug line", () => {
         const { component, props, doc } = render({ frame: null });
         const line = 2;
-        const frame = createFrame(line);
+        const location = createLocation(line);
 
-        component.setProps({ ...props, frame });
+        component.setProps({ ...props, location });
         expect(doc.removeLineClass).not.toHaveBeenCalled();
       });
     });

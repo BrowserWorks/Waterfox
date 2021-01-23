@@ -12,7 +12,7 @@ namespace mozilla {
 namespace net {
 
 NS_IMPL_ISUPPORTS(NullHttpChannel, nsINullChannel, nsIHttpChannel,
-                  nsITimedChannel)
+                  nsIIdentChannel, nsITimedChannel)
 
 NullHttpChannel::NullHttpChannel()
     : mAllRedirectsSameOrigin(false), mAllRedirectsPassTimingAllowCheck(false) {
@@ -84,40 +84,18 @@ NullHttpChannel::SetTopLevelOuterContentWindowId(uint64_t aWindowId) {
 }
 
 NS_IMETHODIMP
-NullHttpChannel::IsTrackingResource(bool* aIsTrackingResource) {
-  return NS_ERROR_NOT_IMPLEMENTED;
-}
-
-NS_IMETHODIMP
-NullHttpChannel::IsThirdPartyTrackingResource(bool* aIsTrackingResource) {
-  return NS_ERROR_NOT_IMPLEMENTED;
-}
-
-NS_IMETHODIMP
-NullHttpChannel::GetClassificationFlags(uint32_t* aClassificationFlags) {
-  return NS_ERROR_NOT_IMPLEMENTED;
-}
-
-NS_IMETHODIMP
 NullHttpChannel::GetFlashPluginState(
     nsIHttpChannel::FlashPluginState* aResult) {
   return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 NS_IMETHODIMP
-NullHttpChannel::GetFirstPartyClassificationFlags(
-    uint32_t* aClassificationFlags) {
-  return NS_ERROR_NOT_IMPLEMENTED;
-}
-
-NS_IMETHODIMP
-NullHttpChannel::GetThirdPartyClassificationFlags(
-    uint32_t* aClassificationFlags) {
-  return NS_ERROR_NOT_IMPLEMENTED;
-}
-
-NS_IMETHODIMP
 NullHttpChannel::GetTransferSize(uint64_t* aTransferSize) {
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+NullHttpChannel::GetRequestSize(uint64_t* aRequestSize) {
   return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -271,17 +249,6 @@ NullHttpChannel::IsPrivateResponse(bool* _retval) {
 NS_IMETHODIMP
 NullHttpChannel::RedirectTo(nsIURI* aNewURI) {
   return NS_ERROR_NOT_IMPLEMENTED;
-}
-
-NS_IMETHODIMP
-NullHttpChannel::SwitchProcessTo(mozilla::dom::Promise* aBrowserParent,
-                                 uint64_t aIdentifier) {
-  return NS_ERROR_NOT_AVAILABLE;
-}
-
-NS_IMETHODIMP
-NullHttpChannel::HasCrossOriginOpenerPolicyMismatch(bool* aMismatch) {
-  return NS_ERROR_NOT_AVAILABLE;
 }
 
 NS_IMETHODIMP
@@ -462,6 +429,11 @@ NS_IMETHODIMP
 NullHttpChannel::Cancel(nsresult aStatus) { return NS_ERROR_NOT_IMPLEMENTED; }
 
 NS_IMETHODIMP
+NullHttpChannel::GetCanceled(bool* aCanceled) {
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
 NullHttpChannel::Suspend() { return NS_ERROR_NOT_IMPLEMENTED; }
 
 NS_IMETHODIMP
@@ -479,6 +451,16 @@ NullHttpChannel::SetLoadGroup(nsILoadGroup* aLoadGroup) {
 
 NS_IMETHODIMP
 NullHttpChannel::GetLoadFlags(nsLoadFlags* aLoadFlags) {
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+NullHttpChannel::GetTRRMode(nsIRequest::TRRMode* aTRRMode) {
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+NullHttpChannel::SetTRRMode(nsIRequest::TRRMode aTRRMode) {
   return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -761,7 +743,7 @@ NullHttpChannel::TimingAllowCheck(nsIPrincipal* aOrigin, bool* _retval) {
   }
 
   nsAutoCString origin;
-  nsContentUtils::GetASCIIOrigin(aOrigin, origin);
+  aOrigin->GetAsciiOrigin(origin);
 
   if (mTimingAllowOriginHeader == origin) {
     *_retval = true;

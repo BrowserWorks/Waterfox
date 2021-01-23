@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "கூடுதல் இணைப்புகள்">
+<!ENTITY aboutAddons.header2                    "உங்களுடைய நீட்சிகள்">
+
+<!ENTITY addonAction.enable                     "செயல்படுத்து">
+<!ENTITY addonAction.disable                    "செயல்நீக்கு">
+<!ENTITY addonAction.uninstall                  "நிறுவுல் நீக்கு">
+<!ENTITY addonAction.undo                       "மறை">
+<!ENTITY addonAction.update                     "புதுப்பிப்பு">
+
+<!ENTITY addonUnsigned.message                  "&brandShortName; ஆல் இந்த கூடுதல் இணைப்பை பரிசோதிக்க இயலவில்லை.">
+<!ENTITY addonUnsigned.learnMore                "மேலும் அறிய">

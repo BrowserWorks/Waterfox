@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!ENTITY MsgSynchronize.label "Transferir e sincronizar mensagens">
+<!ENTITY MsgSelect.label "Itenss para utilização offline">
+<!ENTITY MsgSyncDesc.label "Se já selecionou as pastas de correio ou de grupos de notícias para serem utilizados no modo offline, pode transferir e/ou sincronizar os itens. Caso contrário, utilize o botão &quot;Selecionar&quot; para escolher as pastas de correio e grupos de discussão para utilização offline.">
+<!ENTITY MsgSyncDirections.label "Transferir e/ou sincronizar o seguinte:">
+<!ENTITY syncTypeMail.label "Mensagens de correio">
+<!ENTITY syncTypeMail.accesskey "e">
+<!ENTITY syncTypeNews.label "Mensagens de grupos de notícias">
+<!ENTITY syncTypeNews.accesskey "n">
+<!ENTITY sendMessage.label "Enviar mensagens por enviar">
+<!ENTITY sendMessage.accesskey "e">
+<!ENTITY workOffline.label "Trabalhar offline assim que terminar de transferir e/ou sincronizar">
+<!ENTITY workOffline.accesskey "o">
+<!ENTITY selectButton.label "Selecione...">
+<!ENTITY selectButton.accesskey "S">
+<!ENTITY MsgSelectDesc.label "Escolha as pastas de correio e grupos de notícias para utilização offline.">
+<!ENTITY MsgSelectInd.label "Transferir">
+<!ENTITY MsgSelectItems.label "Pastas e grupos de notícias">

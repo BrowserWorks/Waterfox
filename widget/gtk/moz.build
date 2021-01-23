@@ -13,14 +13,14 @@ with Files("*CompositorWidget*"):
 with Files("*WindowSurface*"):
     BUG_COMPONENT = ("Core", "Graphics")
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk3':
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk':
     DIRS += ['mozgtk']
 
 if CONFIG['MOZ_WAYLAND']:
     DIRS += ['wayland', 'mozwayland']
 
 EXPORTS += [
-    'mozcontainer.h',
+    'MozContainer.h',
     'nsGTKToolkit.h',
     'nsIImageToPixbuf.h',
 ]
@@ -31,7 +31,8 @@ EXPORTS.mozilla += [
 
 UNIFIED_SOURCES += [
     'IMContextWrapper.cpp',
-    'mozcontainer.cpp',
+    'MozContainer.cpp',
+    'MPRISServiceHandler.cpp',
     'NativeKeyBindings.cpp',
     'nsAppShell.cpp',
     'nsBidiKeyboard.cpp',
@@ -53,6 +54,7 @@ UNIFIED_SOURCES += [
 ]
 
 SOURCES += [
+    'MediaKeysEventSourceFactory.cpp',
     'nsDbusmenu.cpp',
     'nsMenu.cpp', # conflicts with X11 headers
     'nsMenuBar.cpp',
@@ -63,6 +65,7 @@ SOURCES += [
     'nsNativeMenuDocListener.cpp',
     'nsNativeMenuService.cpp',
     'nsWindow.cpp', # conflicts with X11 headers
+    'WaylandVsyncSource.cpp', # conflicts with X11 headers
 ]
 
 if CONFIG['MOZ_X11']:
@@ -106,12 +109,16 @@ if CONFIG['MOZ_X11']:
 
 if CONFIG['MOZ_WAYLAND']:
     UNIFIED_SOURCES += [
+        'MozContainerWayland.cpp',
         'nsClipboardWayland.cpp',
         'nsWaylandDisplay.cpp',
+        'WaylandDMABufSurface.cpp',
         'WindowSurfaceWayland.cpp',
     ]
     EXPORTS.mozilla.widget += [
-        'nsWaylandDisplayShutdown.h'
+        'MozContainerWayland.h',
+        'nsWaylandDisplay.h',
+        'WaylandDMABufSurface.h',
     ]
 
 if CONFIG['ACCESSIBILITY']:
@@ -152,8 +159,6 @@ DEFINES['CAIRO_GFX'] = True
 
 DEFINES['MOZ_APP_NAME'] = '"%s"' % CONFIG['MOZ_APP_NAME']
 
-CFLAGS += CONFIG['MOZ_STARTUP_NOTIFICATION_CFLAGS']
-
 # When building with GTK3, the widget code always needs to use
 # system Cairo headers, regardless of whether we are also linked
 # against and using in-tree Cairo. By not using in-tree Cairo
@@ -161,13 +166,15 @@ CFLAGS += CONFIG['MOZ_STARTUP_NOTIFICATION_CFLAGS']
 # use only system Cairo symbols that GTK3 uses. This allows that
 # any Cairo objects created can be freely passed back and forth
 # between the widget code and GTK3.
-if not (CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk3' and CONFIG['MOZ_TREE_CAIRO']):
+if not (CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk' and CONFIG['MOZ_TREE_CAIRO']):
     CXXFLAGS += CONFIG['MOZ_CAIRO_CFLAGS']
-
-CXXFLAGS += CONFIG['MOZ_STARTUP_NOTIFICATION_CFLAGS']
 
 CFLAGS += CONFIG['TK_CFLAGS']
 CXXFLAGS += CONFIG['TK_CFLAGS']
+
+if CONFIG['MOZ_WAYLAND']:
+    CFLAGS += CONFIG['MOZ_WAYLAND_CFLAGS']
+    CXXFLAGS += CONFIG['MOZ_WAYLAND_CFLAGS']
 
 if CONFIG['MOZ_ENABLE_DBUS']:
     CXXFLAGS += CONFIG['MOZ_DBUS_GLIB_CFLAGS']

@@ -5,20 +5,27 @@
 
 #include "nsDeviceContextSpecX.h"
 
-#include "mozilla/gfx/PrintTargetCG.h"
+#import <Cocoa/Cocoa.h>
+#include <CoreFoundation/CoreFoundation.h>
+#include <unistd.h>
+
 #ifdef MOZ_ENABLE_SKIA_PDF
 #  include "mozilla/gfx/PrintTargetSkPDF.h"
 #endif
+#include "mozilla/gfx/PrintTargetCG.h"
+#include "mozilla/Logging.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/RefPtr.h"
+#include "mozilla/Telemetry.h"
+
+#include "nsCocoaUtils.h"
 #include "nsCRT.h"
 #include "nsDirectoryServiceDefs.h"
 #include "nsILocalFileMac.h"
-#include <unistd.h>
-
-#include "nsQueryObject.h"
-#include "nsIServiceManager.h"
 #include "nsPrintSettingsX.h"
+#include "nsQueryObject.h"
+#include "nsStringEnumerator.h"
+#include "prenv.h"
 
 // This must be the last include:
 #include "nsObjCExceptions.h"
@@ -31,6 +38,97 @@ using mozilla::gfx::PrintTargetCG;
 using mozilla::gfx::PrintTargetSkPDF;
 #endif
 using mozilla::gfx::SurfaceFormat;
+
+static LazyLogModule sDeviceContextSpecXLog("DeviceContextSpecX");
+// Macro to make lines shorter
+#define DO_PR_DEBUG_LOG(x) MOZ_LOG(sDeviceContextSpecXLog, mozilla::LogLevel::Debug, x)
+
+//----------------------------------------------------------------------
+// nsPrinterErnumeratorX
+
+NS_IMPL_ISUPPORTS(nsPrinterEnumeratorX, nsIPrinterEnumerator);
+
+NS_IMETHODIMP nsPrinterEnumeratorX::GetPrinterNameList(nsIStringEnumerator** aPrinterNameList) {
+  NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NSRESULT;
+
+  NS_ENSURE_ARG_POINTER(aPrinterNameList);
+  *aPrinterNameList = nullptr;
+
+  NSArray<NSString*>* printerNames = [NSPrinter printerNames];
+  size_t nameCount = [printerNames count];
+  nsTArray<nsString>* printerNameList = new nsTArray<nsString>(nameCount);
+
+  for (size_t i = 0; i < nameCount; ++i) {
+    NSString* name = [printerNames objectAtIndex:i];
+    nsAutoString nsName;
+    nsCocoaUtils::GetStringForNSString(name, nsName);
+    printerNameList->AppendElement(nsName);
+  }
+
+  // If there are no printers available after all checks, return an error
+  if (printerNameList->IsEmpty()) {
+    delete printerNameList;
+    return NS_ERROR_GFX_PRINTER_NO_PRINTER_AVAILABLE;
+  }
+
+  return NS_NewAdoptingStringEnumerator(aPrinterNameList, printerNameList);
+
+  NS_OBJC_END_TRY_ABORT_BLOCK_NSRESULT;
+}
+
+NS_IMETHODIMP nsPrinterEnumeratorX::GetDefaultPrinterName(nsAString& aDefaultPrinterName) {
+  NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NSRESULT;
+
+  DO_PR_DEBUG_LOG(("nsPrinterEnumeratorX::GetDefaultPrinterName()\n"));
+
+  aDefaultPrinterName.Truncate();
+  NSArray<NSString*>* printerNames = [NSPrinter printerNames];
+  if ([printerNames count] > 0) {
+    NSString* name = [printerNames objectAtIndex:0];
+    nsCocoaUtils::GetStringForNSString(name, aDefaultPrinterName);
+  }
+
+  DO_PR_DEBUG_LOG(("GetDefaultPrinterName(): default printer='%s'.\n",
+                   NS_ConvertUTF16toUTF8(aDefaultPrinterName).get()));
+  return NS_OK;
+
+  NS_OBJC_END_TRY_ABORT_BLOCK_NSRESULT;
+}
+
+NS_IMETHODIMP
+nsPrinterEnumeratorX::InitPrintSettingsFromPrinter(const nsAString& aPrinterName,
+                                                   nsIPrintSettings* aPrintSettings) {
+  DO_PR_DEBUG_LOG(("nsPrinterEnumeratorX::InitPrintSettingsFromPrinter()"));
+
+  NS_ENSURE_ARG_POINTER(aPrintSettings);
+
+  // Set a default file name.
+  nsAutoString filename;
+  nsresult rv = aPrintSettings->GetToFileName(filename);
+  if (NS_FAILED(rv) || filename.IsEmpty()) {
+    const char* path = PR_GetEnv("PWD");
+    if (!path) {
+      path = PR_GetEnv("HOME");
+    }
+
+    if (path) {
+      CopyUTF8toUTF16(MakeStringSpan(path), filename);
+      filename.AppendLiteral("/mozilla.pdf");
+    } else {
+      filename.AssignLiteral("mozilla.pdf");
+    }
+
+    DO_PR_DEBUG_LOG(("Setting default filename to '%s'\n", NS_ConvertUTF16toUTF8(filename).get()));
+    aPrintSettings->SetToFileName(filename);
+  }
+
+  aPrintSettings->SetIsInitializedFromPrinter(true);
+
+  return NS_OK;
+}
+
+//----------------------------------------------------------------------
+// nsDeviceContentSpecX
 
 nsDeviceContextSpecX::nsDeviceContextSpecX()
     : mPrintSession(NULL),
@@ -62,6 +160,10 @@ NS_IMETHODIMP nsDeviceContextSpecX::Init(nsIWidget* aWidget, nsIPrintSettings* a
 
   bool toFile;
   settings->GetPrintToFile(&toFile);
+
+  if (toFile) {
+    settings->SetDispositionSaveToFile();
+  }
 
   bool toPrinter = !toFile && !aIsPrintPreview;
   if (!toPrinter) {
@@ -110,6 +212,29 @@ NS_IMETHODIMP nsDeviceContextSpecX::Init(nsIWidget* aWidget, nsIPrintSettings* a
   }
 #endif
 
+  int16_t outputFormat;
+  aPS->GetOutputFormat(&outputFormat);
+
+  if (outputFormat == nsIPrintSettings::kOutputFormatPDF) {
+    // We don't actually currently support/use kOutputFormatPDF on mac, but
+    // this is for completeness in case we add that (we probably need to in
+    // order to support adding links into saved PDFs, for example).
+    Telemetry::ScalarAdd(Telemetry::ScalarID::PRINTING_TARGET_TYPE, NS_LITERAL_STRING("pdf_file"),
+                         1);
+  } else {
+    PMDestinationType destination;
+    OSStatus status = ::PMSessionGetDestinationType(mPrintSession, mPrintSettings, &destination);
+    if (status == noErr &&
+        (destination == kPMDestinationFile || destination == kPMDestinationPreview ||
+         destination == kPMDestinationProcessPDF)) {
+      Telemetry::ScalarAdd(Telemetry::ScalarID::PRINTING_TARGET_TYPE, NS_LITERAL_STRING("pdf_file"),
+                           1);
+    } else {
+      Telemetry::ScalarAdd(Telemetry::ScalarID::PRINTING_TARGET_TYPE, NS_LITERAL_STRING("unknown"),
+                           1);
+    }
+  }
+
   return NS_OK;
 
   NS_OBJC_END_TRY_ABORT_BLOCK_NSRESULT;
@@ -119,22 +244,6 @@ NS_IMETHODIMP nsDeviceContextSpecX::BeginDocument(const nsAString& aTitle,
                                                   const nsAString& aPrintToFileName,
                                                   int32_t aStartPage, int32_t aEndPage) {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NSRESULT;
-
-  // Print Core of Application Service sent print job with names exceeding
-  // 255 bytes. This is a workaround until fix it.
-  // (https://openradar.appspot.com/34428043)
-  nsAutoString adjustedTitle;
-  PrintTarget::AdjustPrintJobNameForIPP(aTitle, adjustedTitle);
-
-  if (!adjustedTitle.IsEmpty()) {
-    CFStringRef cfString = ::CFStringCreateWithCharacters(
-        NULL, reinterpret_cast<const UniChar*>(adjustedTitle.BeginReading()),
-        adjustedTitle.Length());
-    if (cfString) {
-      ::PMPrintSettingsSetJobName(mPrintSettings, cfString);
-      ::CFRelease(cfString);
-    }
-  }
 
   return NS_OK;
 

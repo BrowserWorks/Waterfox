@@ -127,7 +127,7 @@ def process_leak_log(leak_log_file, leak_thresholds=None,
     The base of leak_log_file for a non-default process needs to end with
       _proctype_pid12345.log
     "proctype" is a string denoting the type of the process, which should
-    be the result of calling XRE_ChildProcessTypeToString(). 12345 is
+    be the result of calling XRE_GeckoProcessTypeToString(). 12345 is
     a series of digits that is the pid for the process. The .log is
     optional.
 
@@ -164,7 +164,17 @@ def process_leak_log(leak_log_file, leak_thresholds=None,
 
     # This list is based on kGeckoProcessTypeString. ipdlunittest processes likely
     # are not going to produce leak logs we will ever see.
-    knownProcessTypes = ["default", "plugin", "tab", "gmplugin", "gpu", "rdd", "vr", "socket"]
+    knownProcessTypes = [
+                         "default",
+                         "forkserver",
+                         "gmplugin",
+                         "gpu",
+                         "plugin",
+                         "rdd",
+                         "socket",
+                         "tab",
+                         "vr",
+                        ]
 
     for processType in knownProcessTypes:
         log.info("TEST-INFO | leakcheck | %s process: leak threshold set at %d bytes"

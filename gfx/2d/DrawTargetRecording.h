@@ -17,7 +17,7 @@ class DrawTargetRecording : public DrawTarget {
  public:
   MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(DrawTargetRecording, override)
   DrawTargetRecording(DrawEventRecorder* aRecorder, DrawTarget* aDT,
-                      IntSize aSize, bool aHasData = false);
+                      IntRect aRect, bool aHasData = false);
 
   ~DrawTargetRecording();
 
@@ -35,13 +35,10 @@ class DrawTargetRecording : public DrawTarget {
 
   virtual void DetachAllSnapshots() override;
 
-  virtual IntSize GetSize() const override { return mSize; }
+  virtual IntSize GetSize() const override { return mRect.Size(); }
+  virtual IntRect GetRect() const override { return mRect; }
 
-  /* Ensure that the DrawTarget backend has flushed all drawing operations to
-   * this draw target. This must be called before using the backing surface of
-   * this draw target outside of GFX 2D code.
-   */
-  virtual void Flush() override { mFinalDT->Flush(); }
+  virtual void Flush() override;
 
   virtual void FlushItem(const IntRect& aBounds) override;
 
@@ -85,7 +82,8 @@ class DrawTargetRecording : public DrawTarget {
    * aOperator Composition operator used
    */
   virtual void DrawSurfaceWithShadow(SourceSurface* aSurface,
-                                     const Point& aDest, const Color& aColor,
+                                     const Point& aDest,
+                                     const DeviceColor& aColor,
                                      const Point& aOffset, Float aSigma,
                                      CompositionOp aOperator) override;
 
@@ -294,6 +292,13 @@ class DrawTargetRecording : public DrawTarget {
   virtual already_AddRefed<DrawTarget> CreateSimilarDrawTarget(
       const IntSize& aSize, SurfaceFormat aFormat) const override;
 
+  /**
+   * Create a DrawTarget whose backing surface is optimized for use with this
+   * DrawTarget.
+   */
+  virtual already_AddRefed<DrawTarget> CreateSimilarDrawTargetWithBacking(
+      const IntSize& aSize, SurfaceFormat aFormat) const override;
+
   bool CanCreateSimilarDrawTarget(const IntSize& aSize,
                                   SurfaceFormat aFormat) const override;
   /**
@@ -301,8 +306,7 @@ class DrawTargetRecording : public DrawTarget {
    * on this DrawTarget's rect transformed to the new target's space.
    */
   virtual RefPtr<DrawTarget> CreateClippedDrawTarget(
-      const IntSize& aMaxSize, const Matrix& aTransform,
-      SurfaceFormat aFormat) const override;
+      const Rect& aBounds, SurfaceFormat aFormat) override;
 
   virtual already_AddRefed<DrawTarget> CreateSimilarDrawTargetForFilter(
       const IntSize& aSize, SurfaceFormat aFormat, FilterNode* aFilter,
@@ -359,7 +363,7 @@ class DrawTargetRecording : public DrawTarget {
    * @param aSize size of the the similar DrawTarget
    * @param aFormat format of the similar DrawTarget
    */
-  DrawTargetRecording(const DrawTargetRecording* aDT, IntSize aSize,
+  DrawTargetRecording(const DrawTargetRecording* aDT, IntRect aRect,
                       SurfaceFormat aFormat);
 
   Path* GetPathForPathRecording(const Path* aPath) const;
@@ -368,7 +372,7 @@ class DrawTargetRecording : public DrawTarget {
 
   RefPtr<DrawEventRecorderPrivate> mRecorder;
   RefPtr<DrawTarget> mFinalDT;
-  IntSize mSize;
+  IntRect mRect;
 };
 
 }  // namespace gfx

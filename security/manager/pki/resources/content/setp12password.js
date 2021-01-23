@@ -4,7 +4,7 @@
 "use strict";
 
 /**
- * @file Implements the functionality of setp12password.xul: a dialog that lets
+ * @file Implements the functionality of setp12password.xhtml: a dialog that lets
  *       the user confirm the password to set on a PKCS #12 file.
  * @argument {nsISupports} window.arguments[0]
  *           Object to set the return values of calling the dialog on, queryable
@@ -122,5 +122,6 @@ function onPasswordInput(recalculatePasswordStrength) {
   // Disable the accept button if the two passwords don't match, and enable it
   // if the passwords do match.
   let pw2 = document.getElementById("pw2").value;
-  document.documentElement.getButton("accept").disabled = pw1 != pw2;
+  document.getElementById("setp12password").getButton("accept").disabled =
+    pw1 != pw2;
 }

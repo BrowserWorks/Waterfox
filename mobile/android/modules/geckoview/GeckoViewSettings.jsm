@@ -9,9 +9,14 @@ var EXPORTED_SYMBOLS = ["GeckoViewSettings"];
 const { GeckoViewModule } = ChromeUtils.import(
   "resource://gre/modules/GeckoViewModule.jsm"
 );
+
 const { XPCOMUtils } = ChromeUtils.import(
   "resource://gre/modules/XPCOMUtils.jsm"
 );
+
+XPCOMUtils.defineLazyModuleGetters(this, {
+  Services: "resource://gre/modules/Services.jsm",
+});
 
 XPCOMUtils.defineLazyGetter(this, "MOBILE_USER_AGENT", function() {
   return Cc["@mozilla.org/network/protocol;1?name=http"].getService(
@@ -35,15 +40,17 @@ const USER_AGENT_MODE_MOBILE = 0;
 const USER_AGENT_MODE_DESKTOP = 1;
 const USER_AGENT_MODE_VR = 2;
 
-// Handles GeckoView settings including:
-// * multiprocess
-// * user agent override
+// Handles GeckoSession settings.
 class GeckoViewSettings extends GeckoViewModule {
+  static get useMultiprocess() {
+    return Services.prefs.getBoolPref("browser.tabs.remote.autostart", true);
+  }
+
   onInit() {
     debug`onInit`;
     this._userAgentMode = USER_AGENT_MODE_MOBILE;
     this._userAgentOverride = null;
-    // Required for safe browsing and tracking protection.
+    this._sessionContextId = null;
 
     this.registerListener(["GeckoView:GetUserAgent"]);
   }
@@ -63,12 +70,11 @@ class GeckoViewSettings extends GeckoViewModule {
     debug`onSettingsUpdate: ${settings}`;
 
     this.displayMode = settings.displayMode;
+    this.unsafeSessionContextId = settings.unsafeSessionContextId;
     this.userAgentMode = settings.userAgentMode;
     this.userAgentOverride = settings.userAgentOverride;
-  }
-
-  get useMultiprocess() {
-    return this.browser.isRemoteBrowser;
+    this.sessionContextId = settings.sessionContextId;
+    this.suspendMediaWhenInactive = settings.suspendMediaWhenInactive;
   }
 
   get userAgent() {
@@ -103,12 +109,30 @@ class GeckoViewSettings extends GeckoViewModule {
     this._userAgentOverride = aUserAgent;
   }
 
+  get suspendMediaWhenInactive() {
+    return this.browser.suspendMediaWhenInactive;
+  }
+
+  set suspendMediaWhenInactive(aSuspendMediaWhenInactive) {
+    if (aSuspendMediaWhenInactive != this.browser.suspendMediaWhenInactive) {
+      this.browser.suspendMediaWhenInactive = aSuspendMediaWhenInactive;
+    }
+  }
+
   get displayMode() {
     return this.window.docShell.displayMode;
   }
 
   set displayMode(aMode) {
     this.window.docShell.displayMode = aMode;
+  }
+
+  set sessionContextId(aAttribute) {
+    this._sessionContextId = aAttribute;
+  }
+
+  get sessionContextId() {
+    return this._sessionContextId;
   }
 }
 

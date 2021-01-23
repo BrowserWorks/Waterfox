@@ -6,15 +6,126 @@ from __future__ import absolute_import
 
 import os
 import re
+import time
+
+from logger.logger import RaptorLogger
+from mozdevice import ADBError, ADBTimeoutError
+
+
+LOG = RaptorLogger(component='raptor-power')
+
+P2_PATH = "/sys/class/power_supply/battery/input_suspend"
+G5_PATH = "/sys/class/power_supply/battery/charging_enabled"
+
+
+def get_device_type(device, timeout=10):
+    """Returns the type of device being tested. Currently
+    it can either be Pixel 2, or Moto G5"""
+    device_type = device.shell_output("getprop ro.product.model", timeout=timeout)
+    if device_type == "Pixel 2":
+        pass
+    elif device_type == "Moto G (5)":
+        pass
+    else:
+        raise Exception(
+            "TEST-UNEXPECTED-FAIL | Unknown device ('%s')! Contact Android Relops immediately."
+            % device_type
+        )
+    return device_type
+
+
+def change_charging_state(device, device_type, enable=True, timeout=10):
+    """Changes the charging state. If enable is True, charging will be enabled,
+    otherwise it will be disabled."""
+    try:
+        if device_type == "Pixel 2":
+            status = 0 if enable else 1
+            device.shell_bool(
+                "echo %s > %s" % (status, P2_PATH), root=True, timeout=timeout
+            )
+        elif device_type == "Moto G (5)":
+            status = 1 if enable else 0
+            device.shell_bool(
+                "echo %s > %s" % (status, G5_PATH), root=True, timeout=timeout
+            )
+    except (ADBTimeoutError, ADBError) as e:
+        raise Exception(
+            "TEST-UNEXPECTED-FAIL | Failed to %s charging. Contact Android Relops "
+            "immediately. Error: %s" %
+            ("enable" if enable else "disable", "{}: {}".format(e.__class__.__name__, e))
+        )
+
+
+def is_charging_disabled(device, device_type, timeout=10):
+    """True if charging is already disabled."""
+    disabled = False
+    if device_type == "Pixel 2":
+        disabled = (
+            device.shell_output(
+                "cat %s 2>/dev/null" % P2_PATH, timeout=timeout
+            ).strip()
+            == "1"
+        )
+    elif device_type == "Moto G (5)":
+        disabled = (
+            device.shell_output(
+                "cat %s 2>/dev/null" % G5_PATH, timeout=timeout
+            ).strip()
+            == "0"
+        )
+    return disabled
+
+
+def is_charging_enabled(device, device_type):
+    """True if charging is already enabled."""
+    return not is_charging_disabled(device, device_type)
+
+
+def enable_charging(device):
+    """Enables charging on P2 or G5 devices."""
+    device_type = get_device_type(device)
+    if is_charging_enabled(device, device_type):
+        return
+
+    # ProxyLogger returns a RuntimeError when the
+    # logger isn't initialized. Catching this error
+    # is the only way to tell if the logger wasn't
+    # initialized.
+    enabling_str = "Enabling charging..."
+    try:
+        LOG.info(enabling_str)
+    except RuntimeError:
+        print(enabling_str)
+
+    change_charging_state(device, device_type, enable=True)
+
+
+def disable_charging(device):
+    """Disables charging on P2 or G5 devices."""
+    device_type = get_device_type(device)
+    if is_charging_disabled(device, device_type):
+        return
+
+    disabling_str = "Disabling charging..."
+    try:
+        LOG.info(disabling_str)
+    except RuntimeError:
+        print(disabling_str)
+
+    change_charging_state(device, device_type, enable=False)
 
 
 def init_android_power_test(raptor):
     upload_dir = os.getenv("MOZ_UPLOAD_DIR")
     if not upload_dir:
-        raptor.log.critical(
-            "% power test ignored; MOZ_UPLOAD_DIR unset" % raptor.config["app"]
+        LOG.critical(
+            "%s power test ignored; MOZ_UPLOAD_DIR unset" % raptor.config["app"]
         )
         return
+    # Disable adaptive brightness - do not restore the value since this setting
+    # should always be disabled.
+    raptor.device.shell_output("settings put system screen_brightness_mode 0")
+
     # Set the screen-off timeout to two (2) hours, since the device will be running
     # disconnected, and would otherwise turn off the screen, thereby halting
     # execution of the test. Save the current value so we can restore it later
@@ -38,6 +149,8 @@ def init_android_power_test(raptor):
     filepath = os.path.join(upload_dir, "battery-before.txt")
     with open(filepath, "w") as output:
         output.write(raptor.device.shell_output("dumpsys battery"))
+
+    raptor.test_start_time = int(time.time())
 
 
 # The batterystats output for Estimated power use differs
@@ -82,11 +195,11 @@ def init_android_power_test(raptor):
 # along with the values from the Screen and Wifi lines.
 
 
-def finish_android_power_test(raptor, test_name):
+def finish_android_power_test(raptor, test_name, os_baseline=False):
     upload_dir = os.getenv("MOZ_UPLOAD_DIR")
     if not upload_dir:
-        raptor.log.critical(
-            "% power test ignored because MOZ_UPLOAD_DIR was not set" % test_name
+        LOG.critical(
+            "%s power test ignored because MOZ_UPLOAD_DIR was not set" % test_name
         )
         return
     # Restore screen_off_timeout and screen brightness.
@@ -96,6 +209,8 @@ def finish_android_power_test(raptor, test_name):
     raptor.device.shell_output(
         "settings put system screen_brightness %s" % raptor.screen_brightness
     )
+
+    test_end_time = int(time.time())
 
     filepath = os.path.join(upload_dir, "battery-after.txt")
     with open(filepath, "w") as output:
@@ -110,29 +225,44 @@ def finish_android_power_test(raptor, test_name):
         batterystats = raptor.device.shell_output("dumpsys batterystats")
         output.write(batterystats)
     raptor.device._verbose = verbose
+
+    # Get the android version
+    android_version = raptor.device.shell_output(
+        "getprop ro.build.version.release"
+    ).strip()
+    major_android_version = int(android_version.split('.')[0])
+
     estimated_power = False
     uid = None
     total = cpu = wifi = smearing = screen = proportional = 0
     full_screen = 0
     full_wifi = 0
     re_uid = re.compile(r'proc=([^:]+):"%s"' % raptor.config["binary"])
+    re_wifi = re.compile(r'.*wifi=([\d.]+).*')
+    re_cpu = re.compile(r'.*cpu=([\d.]+).*')
     re_estimated_power = re.compile(r"\s+Estimated power use [(]mAh[)]")
     re_proportional = re.compile(r"proportional=([\d.]+)")
     re_screen = re.compile(r"screen=([\d.]+)")
     re_full_screen = re.compile(r"\s+Screen:\s+([\d.]+)")
     re_full_wifi = re.compile(r"\s+Wifi:\s+([\d.]+)")
-    re_power = None
+
+    re_smear = re.compile(r".*smearing:\s+([\d.]+)\s+.*")
+    re_power = re.compile(
+        r"\s+Uid\s+\w+[:]\s+([\d.]+) [(]([\s\w\d.\=]*)(?:([)] "
+        r"Including smearing:.*)|(?:[)]))"
+    )
+
     batterystats = batterystats.split("\n")
     for line in batterystats:
-        if uid is None:
+        if uid is None and not os_baseline:
             # The proc line containing the Uid and app name appears
             # before the Estimated power line.
             match = re_uid.search(line)
             if match:
                 uid = match.group(1)
                 re_power = re.compile(
-                    r"\s+Uid %s:\s+([\d.]+) ([(] cpu=([\d.]+) wifi=([\d.]+) [)] "
-                    r"Including smearing: ([\d.]+))?" % uid
+                    r"\s+Uid %s[:]\s+([\d.]+) [(]([\s\w\d.\=]*)(?:([)] "
+                    r"Including smearing:.*)|(?:[)]))" % uid
                 )
                 continue
         if not estimated_power:
@@ -144,43 +274,62 @@ def finish_android_power_test(raptor, test_name):
             continue
         if full_screen == 0:
             match = re_full_screen.match(line)
-            if match:
-                full_screen = match.group(1)
+            if match and match.group(1):
+                full_screen += float(match.group(1))
                 continue
         if full_wifi == 0:
             match = re_full_wifi.match(line)
-            if match:
-                full_wifi = match.group(1)
+            if match and match.group(1):
+                full_wifi += float(match.group(1))
                 continue
         if re_power:
             match = re_power.match(line)
             if match:
-                (total, android8, cpu, wifi, smearing) = match.groups()
-                if android8:
-                    # android8 is not None only if the Uid line
-                    # contained values for cpu and wifi, which is
-                    # true only for Android 8+.
-                    match = re_screen.search(line)
-                    if match:
-                        screen = match.group(1)
-                    match = re_proportional.search(line)
-                    if match:
-                        proportional = match.group(1)
+                ttotal, breakdown, smear_info = match.groups()
+                total += float(ttotal) if ttotal else 0
+
+                cpu_match = re_cpu.match(breakdown)
+                if cpu_match and cpu_match.group(1):
+                    cpu += float(cpu_match.group(1))
+
+                wifi_match = re_wifi.match(breakdown)
+                if wifi_match and wifi_match.group(1):
+                    wifi += float(wifi_match.group(1))
+
+                if smear_info:
+                    # Smearing and screen power are only
+                    # available on android 8+
+                    smear_match = re_smear.match(smear_info)
+                    if smear_match and smear_match.group(1):
+                        smearing += float(smear_match.group(1))
+                    screen_match = re_screen.search(line)
+                    if screen_match and screen_match.group(1):
+                        screen += float(screen_match.group(1))
+                    prop_match = re_proportional.search(smear_info)
+                    if prop_match and prop_match.group(1):
+                        proportional += float(prop_match.group(1))
         if full_screen and full_wifi and (cpu and wifi and smearing or total):
             # Stop parsing batterystats once we have a full set of data.
-            break
+            # If we are running an OS baseline, stop when we've exhausted
+            # the list of entries.
+            if not os_baseline:
+                break
+            elif line.replace(' ', '') == '':
+                break
 
-    cpu = total if cpu is None else cpu
+    cpu = total if cpu == 0 else cpu
     screen = full_screen if screen == 0 else screen
-    wifi = full_wifi if wifi is None else wifi
+    wifi = full_wifi if wifi == 0 else wifi
 
-    raptor.log.info(
+    if os_baseline:
+        uid = 'all'
+    LOG.info(
         "power data for uid: %s, cpu: %s, wifi: %s, screen: %s, proportional: %s"
         % (uid, cpu, wifi, screen, proportional)
     )
 
-    # send power data directly to the control-server results handler,
-    # so it can be formatted and out-put for perfherder ingestion
+    # Send power data directly to the control-server results handler
+    # so it can be formatted and output for perfherder ingestion
 
     power_data = {
         "type": "power",
@@ -190,13 +339,47 @@ def finish_android_power_test(raptor, test_name):
             "cpu": float(cpu),
             "wifi": float(wifi),
             "screen": float(screen),
-            "proportional": float(proportional),
         },
     }
 
-    raptor.log.info("submitting power data via control server directly")
-    raptor.control_server.submit_supporting_data(power_data)
+    if major_android_version >= 8:
+        power_data['values']['proportional'] = float(proportional)
 
-    # generate power bugreport zip
-    raptor.log.info("generating power bugreport zip")
-    raptor.device.command_output(["bugreport", upload_dir])
+    if os_baseline:
+        raptor.os_baseline_data = power_data
+    else:
+        LOG.info("submitting power data via control server directly")
+
+        raptor.control_server.submit_supporting_data(power_data)
+        if raptor.os_baseline_data:
+            # raptor.power_test_time is only used by test_power.py
+            # for testing power measurement parsing
+            test_time = raptor.power_test_time
+            if not test_time:
+                test_time = float(test_end_time - raptor.test_start_time)/60
+            LOG.info("Approximate power test time %s" % str(test_time))
+
+            def calculate_pc(power_measure, baseline_measure):
+                return (100 * (
+                    (power_measure + baseline_measure) /
+                    baseline_measure
+                )) - 100
+
+            pc_power_data = {
+                "type": "power",
+                "test": power_data["test"] + "-%change",
+                "unit": "%",
+                "values": {}
+            }
+            for power_measure in power_data['values']:
+                pc_power_data['values'][power_measure] = calculate_pc(
+                    (power_data['values'][power_measure]/test_time),
+                    raptor.os_baseline_data['values'][power_measure]
+                )
+
+            raptor.control_server.submit_supporting_data(pc_power_data)
+            raptor.control_server.submit_supporting_data(raptor.os_baseline_data)
+
+        # Generate power bugreport zip
+        LOG.info("generating power bugreport zip")
+        raptor.device.command_output(["bugreport", upload_dir])

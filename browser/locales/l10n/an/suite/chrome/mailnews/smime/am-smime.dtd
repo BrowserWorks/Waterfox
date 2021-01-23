@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY securityTitle.label "Seguranza">
+<!ENTITY securityTab.label "Seguranza">
+<!ENTITY securityHeading.label "Ta ninviar y recibir mensaches sinyaus u zifraus, debe especificar tanto un certificau ta sinyatura dichital como un ta zifrau.">
+<!ENTITY encryptionGroupTitle.label "Zifrau">
+<!ENTITY encryptionChoiceLabel.label "Zifrau esleiu ta ninviar mensaches:">
+<!ENTITY neverEncrypt.label "Nunca (no usar zifrau)">
+<!ENTITY neverEncrypt.accesskey "N">
+<!ENTITY alwaysEncryptMessage.label "Siempre (no podrá enviar si bell receptor carece de certificau)">
+<!ENTITY alwaysEncryptMessage.accesskey "v">
+<!ENTITY encryptionCert.message "Use this certificate to encrypt &amp; decrypt messages sent to you:">
+<!ENTITY digitalSign.certificate.button "Trigar…">
+<!ENTITY digitalSign.certificate.accesskey "S">
+<!ENTITY digitalSign.certificate_clear.button "Limpiar">
+<!ENTITY digitalSign.certificate_clear.accesskey "L">
+<!ENTITY encryption.certificate.button "Trigar…">
+<!ENTITY encryption.certificate.accesskey "c">
+<!ENTITY encryption.certificate_clear.button "Limpiar">
+<!ENTITY encryption.certificate_clear.accesskey "m">
+<!ENTITY signingGroupTitle.label "Sinyau dichital">
+<!ENTITY signMessage.label "Sinyar mensaches dichitalment">
+<!ENTITY signMessage.accesskey "d">
+<!ENTITY signingCert.message "Usar iste certificau ta sinyar os mensaches que ninvie:">
+
+<!ENTITY certificates.label "Certificaus">
+<!ENTITY manageCerts.label "Administrar certificaus…">
+<!ENTITY manageCerts.accesskey "A">
+<!ENTITY manageDevices.label "Administrar dispositivos de seguranza…">
+<!ENTITY manageDevices.accesskey "i">

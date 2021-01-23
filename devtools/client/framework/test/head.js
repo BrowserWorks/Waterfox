@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -14,12 +12,6 @@ Services.scriptloader.loadSubScript(
 
 const EventEmitter = require("devtools/shared/event-emitter");
 
-// This is far from ideal. https://bugzilla.mozilla.org/show_bug.cgi?id=1565279
-// covers removing this pref flip.
-SpecialPowers.pushPrefEnv({
-  set: [["security.allow_unsafe_parent_loads", true]],
-});
-
 function toggleAllTools(state) {
   for (const [, tool] of gDevTools._tools) {
     if (!tool.visibilityswitch) {
@@ -33,51 +25,29 @@ function toggleAllTools(state) {
   }
 }
 
-function getParentProcessActors(callback) {
-  const { DebuggerServer } = require("devtools/server/main");
-  const { DebuggerClient } = require("devtools/shared/client/debugger-client");
+async function getParentProcessActors(callback) {
+  const { DevToolsServer } = require("devtools/server/devtools-server");
+  const { DevToolsClient } = require("devtools/client/devtools-client");
 
-  DebuggerServer.init();
-  DebuggerServer.registerAllActors();
-  DebuggerServer.allowChromeProcess = true;
-
-  const client = new DebuggerClient(DebuggerServer.connectPipe());
-  client
-    .connect()
-    .then(() => client.mainRoot.getMainProcess())
-    .then(front => {
-      callback(client, front);
-    });
+  DevToolsServer.init();
+  DevToolsServer.registerAllActors();
+  DevToolsServer.allowChromeProcess = true;
 
   SimpleTest.registerCleanupFunction(() => {
-    DebuggerServer.destroy();
+    DevToolsServer.destroy();
   });
+
+  const client = new DevToolsClient(DevToolsServer.connectPipe());
+  await client.connect();
+  const mainProcessDescriptor = await client.mainRoot.getMainProcess();
+  const mainProcessTargetFront = await mainProcessDescriptor.getTarget();
+
+  callback(client, mainProcessTargetFront);
 }
 
 function getSourceActor(aSources, aURL) {
   const item = aSources.getItemForAttachment(a => a.source.url === aURL);
   return item && item.value;
-}
-
-/**
- * Open a Scratchpad window.
- *
- * @return nsIDOMWindow
- *         The new window object that holds Scratchpad.
- */
-async function openScratchpadWindow() {
-  const win = ScratchpadManager.openScratchpad();
-
-  await once(win, "load");
-
-  return new Promise(resolve => {
-    win.Scratchpad.addObserver({
-      onReady: function() {
-        win.Scratchpad.removeObserver(this);
-        resolve(win);
-      },
-    });
-  });
 }
 
 /**
@@ -106,22 +76,16 @@ function waitForContentMessage(name) {
  * @param {String} name The message name. Should be one of the messages defined
  * in doc_frame_script.js
  * @param {Object} data Optional data to send along
- * @param {Object} objects Optional CPOW objects to send along
  * @param {Boolean} expectResponse If set to false, don't wait for a response
  * with the same name from the content script. Defaults to true.
  * @return {Promise} Resolves to the response data if a response is expected,
  * immediately resolves otherwise
  */
-function executeInContent(
-  name,
-  data = {},
-  objects = {},
-  expectResponse = true
-) {
+function executeInContent(name, data = {}, expectResponse = true) {
   info("Sending message " + name + " to content");
   const mm = gBrowser.selectedBrowser.messageManager;
 
-  mm.sendAsyncMessage(name, data, objects);
+  mm.sendAsyncMessage(name, data);
   if (expectResponse) {
     return waitForContentMessage(name);
   }
@@ -426,6 +390,16 @@ function getElementByToolIdOrExtensionIdOrSelector(toolbox, idOrSelector) {
   return tabEl ? tabEl : toolbox.doc.querySelector(idOrSelector);
 }
 
+/**
+ * Returns a toolbox tab element, even if it's overflowed
+ **/
+function getToolboxTab(doc, toolId) {
+  return (
+    doc.getElementById(`toolbox-tab-${toolId}`) ||
+    doc.getElementById(`tools-chevron-menupopup-${toolId}`)
+  );
+}
+
 function getWindow(toolbox) {
   return toolbox.topWindow;
 }
@@ -466,28 +440,6 @@ async function openAboutToolbox(params) {
     tab,
     document: browser.contentDocument,
   };
-}
-
-/**
- * Enable temporary preferences useful to run browser toolbox process tests.
- * Returns a promise that will resolve when the preferences are set.
- */
-function setupPreferencesForBrowserToolbox() {
-  const options = {
-    set: [
-      ["devtools.debugger.prompt-connection", false],
-      ["devtools.debugger.remote-enabled", true],
-      ["devtools.chrome.enabled", true],
-      // Test-only pref to allow passing `testScript` argument to the browser
-      // toolbox
-      ["devtools.browser-toolbox.allow-unsafe-script", true],
-      // On debug test runner, it takes more than the default time (20s)
-      // to get a initialized console
-      ["devtools.debugger.remote-timeout", 120000],
-    ],
-  };
-
-  return SpecialPowers.pushPrefEnv(options);
 }
 
 /**

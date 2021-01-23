@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Labels -->
+   
+<!ENTITY newFolderDialog.title      "Yeni Dizin">
+<!ENTITY name.label                 "Dizin adı:">
+<!ENTITY name.accesskey             "D">
+<!ENTITY description.label          "Aşağıdaki dizinin alt dizini olarak oluştur:">
+<!ENTITY description.accesskey      "k">
+<!ENTITY folderRestriction1.label   "Bu sunucu dizinleri iki özel türle sınırlandırıyor.">
+<!ENTITY folderRestriction2.label   "Yeni dizin aşağıdakileri içerebilir:">
+<!ENTITY foldersOnly.label          "Sadece dizinler">
+<!ENTITY messagesOnly.label         "Sadece iletiler">
+<!ENTITY accept.label               "Dizin oluştur">
+<!ENTITY accept.accesskey           "o">

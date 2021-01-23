@@ -1,3 +1,4 @@
+const { NetUtil } = ChromeUtils.import("resource://gre/modules/NetUtil.jsm");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 const URI = Services.io.newURI("http://example.org/");
@@ -66,14 +67,21 @@ function setCookie(value, expected) {
       Assert.equal(data, expectedInternal.type);
 
       // Check cookie details.
-      let cookie = subject.QueryInterface(Ci.nsICookie2);
+      let cookie = subject.QueryInterface(Ci.nsICookie);
       Assert.equal(cookie.isSession, expectedInternal.isSession);
       Assert.equal(cookie.isSecure, expectedInternal.isSecure);
       Assert.equal(cookie.isHttpOnly, expectedInternal.isHttpOnly);
     }
 
     Services.obs.addObserver(observer, "cookie-changed");
-    cs.setCookieStringFromHttp(URI, null, null, valueInternal, null, null);
+
+    let channel = NetUtil.newChannel({
+      uri: URI,
+      loadUsingSystemPrincipal: true,
+      contentPolicyType: Ci.nsIContentPolicy.TYPE_DOCUMENT,
+    });
+
+    cs.setCookieStringFromHttp(URI, valueInternal, channel);
     Services.obs.removeObserver(observer, "cookie-changed");
   }
 

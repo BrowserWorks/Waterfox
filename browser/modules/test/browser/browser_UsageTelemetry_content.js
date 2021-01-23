@@ -8,23 +8,17 @@ add_task(async function setup() {
   // Create two new search engines. Mark one as the default engine, so
   // the test don't crash. We need to engines for this test as the searchbar
   // in content doesn't display the default search engine among the one-off engines.
-  await Services.search.addEngineWithDetails(
-    "MozSearch",
-    "",
-    "mozalias",
-    "",
-    "GET",
-    "http://example.com/?q={searchTerms}"
-  );
+  await Services.search.addEngineWithDetails("MozSearch", {
+    alias: "mozalias",
+    method: "GET",
+    template: "http://example.com/?q={searchTerms}",
+  });
 
-  await Services.search.addEngineWithDetails(
-    "MozSearch2",
-    "",
-    "mozalias2",
-    "",
-    "GET",
-    "http://example.com/?q={searchTerms}"
-  );
+  await Services.search.addEngineWithDetails("MozSearch2", {
+    alias: "mozalias2",
+    method: "GET",
+    template: "http://example.com/?q={searchTerms}",
+  });
 
   // Make the first engine the default search engine.
   let engineDefault = Services.search.getEngineByName("MozSearch");
@@ -74,7 +68,7 @@ add_task(async function test_context_menu() {
   );
 
   info("Select all the text in the page.");
-  await ContentTask.spawn(tab.linkedBrowser, "", async function() {
+  await SpecialPowers.spawn(tab.linkedBrowser, [""], async function() {
     return new Promise(resolve => {
       content.document.addEventListener("selectionchange", () => resolve(), {
         once: true,
@@ -101,17 +95,19 @@ add_task(async function test_context_menu() {
   searchItem.click();
 
   info("Validate the search metrics.");
+
+  // Telemetry is not updated synchronously here, we must wait for it.
+  await TestUtils.waitForCondition(() => {
+    const scalars = TelemetryTestUtils.getProcessScalars("parent", true, false);
+    return Object.keys(scalars[SCALAR_CONTEXT_MENU] || {}).length == 1;
+  }, "This search must increment one entry in the scalar.");
+
   const scalars = TelemetryTestUtils.getProcessScalars("parent", true, false);
   TelemetryTestUtils.assertKeyedScalar(
     scalars,
     SCALAR_CONTEXT_MENU,
     "search",
     1
-  );
-  Assert.equal(
-    Object.keys(scalars[SCALAR_CONTEXT_MENU]).length,
-    1,
-    "This search must only increment one entry in the scalar."
   );
 
   // Make sure SEARCH_COUNTS contains identical values.
@@ -151,7 +147,7 @@ add_task(async function test_about_newtab() {
     "about:newtab",
     false
   );
-  await ContentTask.spawn(tab.linkedBrowser, null, async function() {
+  await SpecialPowers.spawn(tab.linkedBrowser, [], async function() {
     await ContentTaskUtils.waitForCondition(() => !content.document.hidden);
   });
 

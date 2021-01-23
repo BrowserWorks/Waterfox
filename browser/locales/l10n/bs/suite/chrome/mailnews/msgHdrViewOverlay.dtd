@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField.label "Za: ">
+<!ENTITY fromField.label "Od: ">
+<!ENTITY senderField.label "Pošiljalac: ">
+<!ENTITY organizationField.label "Organizacija: ">
+<!ENTITY replyToField.label "Odgovori za: ">
+
+<!ENTITY subjectField.label "Tema: ">
+<!--# LOCALIZATION NOTE (ccField.label): DONT_TRANSLATE -->
+<!ENTITY ccField.label "Kopija: ">
+<!ENTITY bccField.label "sKopija: ">
+<!ENTITY newsgroupsField.label "Interesne grupe: ">
+<!ENTITY followupToField.label "Nastavak-za: ">
+
+<!ENTITY tagsHdr.label "Oznake: ">
+<!ENTITY dateField.label "Datum: ">
+<!ENTITY userAgentField.label "Korisnički agent: ">
+<!ENTITY referencesField.label "Reference: ">
+<!ENTITY messageIdField.label "ID poruke: ">
+<!ENTITY inReplyToField.label "Odgovori za: ">
+<!ENTITY originalWebsite.label "Web stranica: ">
+
+<!ENTITY editMessage.label                 "Uredi skicu…">
+
+<!ENTITY attachmentsTree.label             "Prilozi:">
+<!ENTITY openAttachmentCmd.label           "Otvori">
+<!ENTITY viewAttachmentCmd.label           "Prikaži izvor">
+<!ENTITY saveAsAttachmentCmd.label         "Sačuvaj kao…">
+<!ENTITY detachAttachmentCmd.label         "Otkači…">
+<!ENTITY deleteAttachmentCmd.label         "Izbriši">
+<!ENTITY saveAllAttachmentsCmd.label       "Sačuvaj sve…">
+<!ENTITY detachAllAttachmentsCmd.label     "Otkači sve…">
+<!ENTITY deleteAllAttachmentsCmd.label     "Izbriši sve…">

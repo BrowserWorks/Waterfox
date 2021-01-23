@@ -13,11 +13,7 @@ job-defaults:
     description: Release Promotion version tag for buildN
     run-on-projects: []
     shipping-phase: promote
-    worker-type:
-        by-project:
-            mozilla-(beta|release|esr.*): scriptworker-k8s/gecko-3-tree
-            maple: scriptworker-k8s/gecko-3-tree
-            default: scriptworker-k8s/gecko-1-tree
+    worker-type: tree
     worker:
         implementation: treescript
         tags: ['buildN']
@@ -29,15 +25,22 @@ job-defaults:
                 maple: true
                 default: false
 
-jobs:
-    fennec:
-        name: fennec-tag-buildN
-        shipping-product: fennec
 
+jobs:
     firefox:
         name: firefox-tag-buildN
         shipping-product: firefox
+        treeherder:
+            platform: firefox-release/opt
+            symbol: Rel(TagBuild)
+            tier: 1
+            kind: build
 
     devedition:
         name: devedition-tag-buildN
         shipping-product: devedition
+        treeherder:
+            platform: devedition-release/opt
+            symbol: Rel(TagBuild)
+            tier: 1
+            kind: build

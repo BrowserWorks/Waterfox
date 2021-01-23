@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 /* import-globals-from helper_events_test_runner.js */
@@ -24,7 +23,7 @@ const TEST_DATA = [
     expected: [
       {
         type: "click",
-        filename: TEST_LIB + ":16",
+        filename: TEST_LIB + ":16:27180",
         attributes: [
           "Bubbling",
           "DOM2"
@@ -33,7 +32,7 @@ const TEST_DATA = [
       },
       {
         type: "onClick",
-        filename: TEST_LIB_BABEL + ":10",
+        filename: TEST_LIB_BABEL + ":10:41",
         attributes: [
           "Bubbling",
           "React"
@@ -50,7 +49,7 @@ const TEST_DATA = [
     expected: [
       {
         type: "click",
-        filename: TEST_LIB + ":16",
+        filename: TEST_LIB + ":16:27180",
         attributes: [
           "Bubbling",
           "DOM2"
@@ -59,7 +58,7 @@ const TEST_DATA = [
       },
       {
         type: "onClick",
-        filename: TEST_EXTERNAL_LISTENERS + ":4",
+        filename: TEST_EXTERNAL_LISTENERS + ":4:25",
         attributes: [
           "Bubbling",
           "React"
@@ -76,7 +75,7 @@ const TEST_DATA = [
     expected: [
       {
         type: "click",
-        filename: TEST_LIB + ":16",
+        filename: TEST_LIB + ":16:27180",
         attributes: [
           "Bubbling",
           "DOM2"
@@ -85,7 +84,7 @@ const TEST_DATA = [
       },
       {
         type: "onClick",
-        filename: TEST_EXTERNAL_LISTENERS + ":4",
+        filename: TEST_EXTERNAL_LISTENERS + ":4:25",
         attributes: [
           "Bubbling",
           "React"
@@ -97,7 +96,7 @@ const TEST_DATA = [
       },
       {
         type: "onMouseUp",
-        filename: TEST_LIB_BABEL + ":10",
+        filename: TEST_LIB_BABEL + ":10:41",
         attributes: [
           "Bubbling",
           "React"
@@ -114,7 +113,7 @@ const TEST_DATA = [
     expected: [
       {
         type: "onClickCapture",
-        filename: TEST_EXTERNAL_LISTENERS + ":8",
+        filename: TEST_EXTERNAL_LISTENERS + ":8:34",
         attributes: [
           "Capturing",
           "React"

@@ -52,6 +52,9 @@ MARKUPMAP(
     },
     0)
 
+// XXX: Uncomment this once HTML-aam agrees to map to same as ARIA.
+// MARKUPMAP(code, New_HyperText, roles::CODE)
+
 MARKUPMAP(dd, New_HTMLDtOrDd<HyperTextAccessibleWrap>, roles::DEFINITION)
 
 MARKUPMAP(del, New_HyperText, roles::CONTENT_DELETION)
@@ -63,7 +66,7 @@ MARKUPMAP(
     [](Element* aElement, Accessible* aContext) -> Accessible* {
       // Never create an accessible if we're part of an anonymous
       // subtree.
-      if (aElement->IsInAnonymousSubtree()) {
+      if (aElement->IsInNativeAnonymousSubtree()) {
         return nullptr;
       }
       // Always create an accessible if the div has an id.
@@ -210,13 +213,13 @@ MARKUPMAP(
       }
       if (aElement->AttrValueIs(kNameSpaceID_None, nsGkAtoms::type,
                                 nsGkAtoms::time, eIgnoreCase)) {
-        return new EnumRoleAccessible<roles::GROUPING>(aElement,
-                                                       aContext->Document());
+        return new HTMLDateTimeAccessible<roles::GROUPING>(
+            aElement, aContext->Document());
       }
       if (aElement->AttrValueIs(kNameSpaceID_None, nsGkAtoms::type,
                                 nsGkAtoms::date, eIgnoreCase)) {
-        return new EnumRoleAccessible<roles::DATE_EDITOR>(aElement,
-                                                          aContext->Document());
+        return new HTMLDateTimeAccessible<roles::DATE_EDITOR>(
+            aElement, aContext->Document());
       }
       return nullptr;
     },
@@ -257,6 +260,8 @@ MARKUPMAP(
 MARKUPMAP(main, New_HyperText, roles::LANDMARK)
 
 MARKUPMAP(map, nullptr, roles::TEXT_CONTAINER)
+
+MARKUPMAP(mark, New_HyperText, roles::MARK, Attr(xmlroles, mark))
 
 MARKUPMAP(math, New_HyperText, roles::MATHML_MATH)
 
@@ -344,6 +349,13 @@ MARKUPMAP(maction_, New_HyperText, roles::MATHML_ACTION,
           AttrFromDOM(actiontype_, actiontype_),
           AttrFromDOM(selection_, selection_))
 
+MARKUPMAP(
+    menu,
+    [](Element* aElement, Accessible* aContext) -> Accessible* {
+      return new HTMLListAccessible(aElement, aContext->Document());
+    },
+    roles::LIST)
+
 MARKUPMAP(merror_, New_HyperText, roles::MATHML_ERROR)
 
 MARKUPMAP(mstack_, New_HyperText, roles::MATHML_STACK,
@@ -395,7 +407,7 @@ MARKUPMAP(
     [](Element* aElement, Accessible* aContext) -> Accessible* {
       return new HTMLOutputAccessible(aElement, aContext->Document());
     },
-    roles::SECTION, Attr(live, polite))
+    roles::STATUSBAR, Attr(live, polite))
 
 MARKUPMAP(p, nullptr, roles::PARAGRAPH)
 
@@ -501,7 +513,7 @@ MARKUPMAP(
     0)
 
 MARKUPMAP(
-    tfoot,
+    thead,
     [](Element* aElement, Accessible* aContext) -> Accessible* {
       // Expose this as a grouping if its frame type is non-standard.
       if (aElement->GetPrimaryFrame() &&

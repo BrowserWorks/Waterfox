@@ -13,28 +13,28 @@
 importScripts(
   "resource://gre/modules/workers/require.js",
   "resource://gre/modules/CanonicalJSON.jsm",
+  "resource://services-settings/IDBHelpers.jsm",
+  "resource://services-settings/SharedUtils.jsm",
   "resource://gre/modules/third_party/jsesc/jsesc.js"
 );
 
-const IDB_NAME = "remote-settings";
-const IDB_VERSION = 2;
 const IDB_RECORDS_STORE = "records";
 const IDB_TIMESTAMPS_STORE = "timestamps";
 
+let gShutdown = false;
+
 const Agent = {
   /**
-   * Return the canonical JSON serialization of the changes
-   * applied to the local records.
+   * Return the canonical JSON serialization of the specified records.
    * It has to match what is done on the server (See Kinto/kinto-signer).
    *
-   * @param {Array<Object>} localRecords
-   * @param {Array<Object>} remoteRecords
+   * @param {Array<Object>} records
    * @param {String} timestamp
    * @returns {String}
    */
-  async canonicalStringify(localRecords, remoteRecords, timestamp) {
+  async canonicalStringify(records, timestamp) {
     // Sort list by record id.
-    let allRecords = localRecords.concat(remoteRecords).sort((a, b) => {
+    let allRecords = records.sort((a, b) => {
       if (a.id < b.id) {
         return -1;
       }
@@ -64,9 +64,20 @@ const Agent = {
    * (eg. blocklists/certificates, main/onboarding)
    * @param {String} bucket
    * @param {String} collection
+   * @returns {int} Number of records loaded from dump or -1 if no dump found.
    */
   async importJSONDump(bucket, collection) {
-    const { data: records } = await loadJSONDump(bucket, collection);
+    const { data: records } = await SharedUtils.loadJSONDump(
+      bucket,
+      collection
+    );
+    if (records === null) {
+      // Return -1 if file is missing.
+      return -1;
+    }
+    if (gShutdown) {
+      throw new Error("Can't import when we've started shutting down.");
+    }
     await importDumpIDB(bucket, collection, records);
     return records.length;
   },
@@ -86,19 +97,27 @@ const Agent = {
       // File does not exist.
       return false;
     }
-    // Has expected size? (saves computing hash)
-    const fileSize = parseInt(resp.headers.get("Content-Length"), 10);
-    if (fileSize !== size) {
-      return false;
-    }
-    // Has expected content?
     const buffer = await resp.arrayBuffer();
-    const bytes = new Uint8Array(buffer);
-    const hashBuffer = await crypto.subtle.digest("SHA-256", bytes);
-    const hashBytes = new Uint8Array(hashBuffer);
-    const toHex = b => b.toString(16).padStart(2, "0");
-    const hashStr = Array.from(hashBytes, toHex).join("");
-    return hashStr == hash;
+    return SharedUtils.checkContentHash(buffer, size, hash);
+  },
+
+  async prepareShutdown() {
+    gShutdown = true;
+    // Ensure we can iterate and abort (which may delete items) by cloning
+    // the list.
+    let transactions = Array.from(gPendingTransactions);
+    for (let transaction of transactions) {
+      try {
+        transaction.abort();
+      } catch (ex) {
+        // We can hit this case if the transaction has finished but
+        // we haven't heard about it yet.
+      }
+    }
+  },
+
+  _test_only_import(bucket, collection, records) {
+    return importDumpIDB(bucket, collection, records);
   },
 };
 
@@ -119,23 +138,7 @@ self.onmessage = event => {
     });
 };
 
-/**
- * Load (from disk) the JSON file distributed with the release for this collection.
- * @param {String}  bucket
- * @param {String}  collection
- */
-async function loadJSONDump(bucket, collection) {
-  const fileURI = `resource://app/defaults/settings/${bucket}/${collection}.json`;
-  let response;
-  try {
-    response = await fetch(fileURI);
-  } catch (e) {
-    // Return empty dataset if file is missing.
-    return { data: [] };
-  }
-  // Will throw if JSON is invalid.
-  return response.json();
-}
+let gPendingTransactions = new Set();
 
 /**
  * Import the records into the Remote Settings Chrome IndexedDB.
@@ -149,77 +152,49 @@ async function loadJSONDump(bucket, collection) {
 async function importDumpIDB(bucket, collection, records) {
   // Open the DB. It will exist since if we are running this, it means
   // we already tried to read the timestamp in `remote-settings.js`
-  const db = await openIDB(IDB_NAME, IDB_VERSION);
+  const db = await IDBHelpers.openIDB(false /* do not allow upgrades */);
 
-  // Each entry of the dump will be stored in the records store.
-  // They are indexed by `_cid`, and their status is `synced`.
-  const cid = bucket + "/" + collection;
-  await executeIDB(db, IDB_RECORDS_STORE, store => {
-    // Chain the put operations together, the last one will be waited by
-    // the `transaction.oncomplete` callback.
-    let i = 0;
-    putNext();
+  // try...finally to ensure we always close the db.
+  try {
+    if (gShutdown) {
+      throw new Error("Can't import when we've started shutting down.");
+    }
 
-    function putNext() {
-      if (i == records.length) {
-        return;
+    // Each entry of the dump will be stored in the records store.
+    // They are indexed by `_cid`.
+    const cid = bucket + "/" + collection;
+    // We can just modify the items in-place, as we got them from SharedUtils.loadJSONDump().
+    records.forEach(item => {
+      item._cid = cid;
+    });
+    // Store the highest timestamp as the collection timestamp (or zero if dump is empty).
+    const timestamp =
+      records.length === 0
+        ? 0
+        : Math.max(...records.map(record => record.last_modified));
+    let { transaction, promise } = IDBHelpers.executeIDB(
+      db,
+      [IDB_RECORDS_STORE, IDB_TIMESTAMPS_STORE],
+      "readwrite",
+      ([recordsStore, timestampStore], rejectTransaction) => {
+        IDBHelpers.bulkOperationHelper(
+          recordsStore,
+          {
+            reject: rejectTransaction,
+            completion() {
+              timestampStore.put({ cid, value: timestamp });
+            },
+          },
+          "put",
+          records
+        );
       }
-      const entry = { ...records[i], _status: "synced", _cid: cid };
-      store.put(entry).onsuccess = putNext; // On error, `transaction.onerror` is called.
-      ++i;
-    }
-  });
-
-  // Store the highest timestamp as the collection timestamp (or zero if dump is empty).
-  const timestamp =
-    records.length === 0
-      ? 0
-      : Math.max(...records.map(record => record.last_modified));
-  await executeIDB(db, IDB_TIMESTAMPS_STORE, store =>
-    store.put({ cid, value: timestamp })
-  );
-}
-
-/**
- * Helper to wrap indexedDB.open() into a promise.
- */
-async function openIDB(dbname, version) {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(dbname, version);
-    request.onupgradeneeded = () => {
-      // We should never have to initialize the DB here.
-      reject(
-        new Error(`Error accessing ${dbname} Chrome IDB at version ${version}`)
-      );
-    };
-    request.onerror = event => reject(event.target.error);
-    request.onsuccess = event => {
-      const db = event.target.result;
-      resolve(db);
-    };
-  });
-}
-
-/**
- * Helper to wrap some IDBObjectStore operations into a promise.
- *
- * @param {IDBDatabase} db
- * @param {String} storeName
- * @param {function} callback
- */
-async function executeIDB(db, storeName, callback) {
-  const mode = "readwrite";
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction([storeName], mode);
-    const store = transaction.objectStore(storeName);
-    let result;
-    try {
-      result = callback(store);
-    } catch (e) {
-      transaction.abort();
-      reject(e);
-    }
-    transaction.onerror = event => reject(event.target.error);
-    transaction.oncomplete = event => resolve(result);
-  });
+    );
+    gPendingTransactions.add(transaction);
+    promise = promise.finally(() => gPendingTransactions.delete(transaction));
+    await promise;
+  } finally {
+    // Close now that we're done.
+    db.close();
+  }
 }

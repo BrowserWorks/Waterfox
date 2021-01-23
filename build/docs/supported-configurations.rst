@@ -1,55 +1,95 @@
-.. _build_supported_configurations:
+Supported build targets
+=======================
 
-========================
-Supported Configurations
-========================
+ ..  role:: strikethrough
 
-This page attempts to document supported build configurations.
+There are three tiers of **supported Firefox build targets** at this
+time. These tiers represent the shared engineering priorities of the
+Mozilla project.
 
-Windows
-=======
+.. note::
 
-We support building on Windows XP and newer operating systems using
-Visual Studio 2010 and newer.
+   Sheriffs are in charge of monitoring the tree. Their definition for tiers
+   is for automation jobs, which tells a developer what is expected of them when
+   they land code. This document is about the tiers of supported build targets,
+   which tells a person compiling/using Firefox what they can expect from Mozilla.
+   See the `job tier definition <https://wiki.mozilla.org/Sheriffing/Job_Visibility_Policy#Overview_of_the_Job_Visibility_Tiers>`__ for more information.
 
-The following are not fully supported by Mozilla (but may work):
+.. _tier-1:
 
-* Building without the latest *MozillaBuild* Windows development
-  environment
-* Building with Mingw or any other non-Visual Studio toolchain.
+The term **"Tier-1 platform"** refers to those platforms - CPU
+architectures and operating systems - that are the primary focus of
+Firefox development efforts. Tier-1 platforms are fully supported by
+Mozilla's `continuous integration processes <https://treeherder.mozilla.org/>`__ and the
+:ref:`Try Server`. Any proposed change to Firefox on these
+platforms that results in build failures, test failures, performance
+regressions or other major problems **will be reverted immediately**.
 
-OS X
-====
 
-We support building on OS X 10.6 and newer with the OS X 10.6 SDK.
+The **Tier-1 Firefox platforms** and their supported compilers are:
 
-The tree should build with the following OS X releases and SDK versions:
+-  Android on Linux x86, x86-64, ARMv7 and ARMv8-A (clang)
+-  Linux/x86 and x86-64 (gcc and clang)
+-  OSX 10.9 and later on x86-64 (clang)
+-  Windows/x86, x86-64 and AArch64 (clang-cl)
 
-* 10.6 Snow Leopard
-* 10.7 Lion
-* 10.8 Mountain Lion
-* 10.9 Mavericks
+Prior to Firefox 63, Windows/x86 and Windows/x86-64 relied on the MSVC
+compiler; from **Firefox 63 onward MSVC is not supported**. Older 32-bit
+x86 CPUs without SSE2 instructions such as the Pentium III and Athlon XP
+are also **not considered Tier-1 platforms, and are not supported**.
+Note also that while Windows/x86 and ARM/AArch64 are supported *as build
+targets*, it is not possible to build Firefox *on* Windows/x86 or
+Windows/AArch64 systems.
 
-The tree requires building with Clang 3.3 and newer. This corresponds to
-version of 4.2 of Apple's Clang that ships with Xcode. This corresponds
-to Xcode 4.6 and newer. Xcode 4.6 only runs on OS X 10.7.4 and newer.
-So, OS X 10.6 users will need to install a non-Apple toolchain. Running
-``mach bootstrap`` should install an appropriate toolchain from Homebrew
-or MacPorts automatically.
+.. _tier-2:
 
-The tree should build with GCC 4.4 and newer on OS X. However, this
-build configuration isn't as widely used (and differs from what Mozilla
-uses to produce OS X builds), so it's recommended to stick with Clang.
+**Tier-2 platforms** are actively maintained by the Mozilla community,
+though with less rigorous requirements. Proposed changes resulting in
+breakage or regressions limited to these platforms **may not immediately
+result in reversion**. However, developers who break these platforms are
+expected to work with platform maintainers to fix problems, and **may be
+required to revert their changes** if a fix cannot be found.
 
-Linux
-=====
+The **Tier-2 Firefox platforms** and their supported compilers are:
 
-Linux 2.6 and later kernels are supported.
+-  Linux/AArch64 (clang)
+-  Windows/x86 (mingw-clang) - maintained by Tom Ritter and Jacek Caban
+   -
 
-Most distributions are supported as long as the proper package
-dependencies are in place. Running ``mach bootstrap`` should install
-packages for popular Linux distributions. ``configure`` will typically
-detect missing dependencies and inform you how to disable features to
-work around unsatisfied dependencies.
+   -  *Note that some features of this platform are disabled, as they
+      require MS COM or the w32api project doesn't expose the necessary
+      Windows APIs.*
 
-Clang 3.3 or GCC 4.4 is required to build the tree.
+.. _tier-3:
+
+**Tier-3 platforms** have a maintainer or community which attempt to
+keep the platform working. These platforms are **not supported by our
+continuous integration processes**, and **Mozilla does not routinely
+test on these platforms**, nor do we block further development on the
+outcomes of those tests.
+
+At any given time a Firefox built from mozilla-central for these
+platforms may or may not work correctly or build at all.
+
+**Tier-3 Firefox platforms** include: 
+
+-  Linux on various CPU architectures including ARM variants not listed
+   above, PowerPC, and x86 CPUs without SSE2 support - maintained by
+   various Linux distributions
+-  FreeBSD/x86, x86-64, Aarch64 (clang) - maintained by Jan Beich
+-  OpenBSD/x86, x86-64 (clang) - maintained by Landry Breuil
+-  NetBSD/x86-64 (gcc) - maintained by David Laight
+-  Solaris/x86-64, sparc64 (gcc) - maintained by Petr Sumbera
+-  :strikethrough:`Windows/x86-64 (mingw-gcc)` - Unsupported due to
+   requirements for clang-bindgen
+
+If you're filing a bug against Firefox on a Tier-3 platform (or any
+combination of OS, CPU and compiler not listed above) please bear in
+mind that Mozilla developers do not reliably have access to non-Tier-1
+platforms or build environments. To be actionable bug reports against
+non-Tier-1 platforms should include as much information as possible to
+help the owner of the bug determine the cause of the problem and the
+proper solution. If you can provide a patch, a regression range or
+assist in verifying that the developer's patches work for your platform,
+that would help a lot towards getting your bugs fixed and checked into
+the tree.

@@ -1,0 +1,106 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "Aan">
+<!ENTITY fromField4.label "Van">
+<!ENTITY senderField4.label "Afsender">
+
+
+
+
+<!ENTITY ccField4.label "CC">
+<!ENTITY bccField4.label "BCC">
+
+
+
+<!ENTITY dateField4.label "Datum">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!ENTITY hdrTrashButton1.label "Skrap">
+
+
+<!ENTITY hdrViewToolbarShowFull.label "Wys ikone en teks">
+<!ENTITY hdrViewToolbarShowFull.accesskey "e">
+<!ENTITY hdrViewToolbarShowIcons.label "Wys net ikone">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "i">
+<!ENTITY hdrViewToolbarShowText.label "Wys net teks">
+<!ENTITY hdrViewToolbarShowText.accesskey "t">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "Wys altyd antwoord aan afsender">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "a">
+
+<!ENTITY otherActionsButton2.label "Meer">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Attachment bar context menu items -->
+
+<!-- Attachment context menu items -->
+
+<!ENTITY openAttachmentCmd.label    "Open">
+<!ENTITY openAttachmentCmd.accesskey    "O">
+
+
+
+
+
+
+
+
+<!ENTITY saveAllAttachmentsCmd.label    "Stoor alle…">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "S">
+<!ENTITY detachAllAttachmentsCmd.label    "Afheg alle…">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "A">
+<!ENTITY deleteAllAttachmentsCmd.label    "Skrap alle…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "S">
+
+<!-- Attachment toolbar items -->
+
+<!ENTITY saveAttachmentButton1.label       "Stoor">
+
+
+
+
+<!ENTITY copyLinkCmd.label        "Kopieer skakelligging">
+<!ENTITY copyLinkCmd.accesskey    "K">
+
+
+
+
+
+

@@ -1,0 +1,100 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label "Errur cun chargiar la pagina">
+<!ENTITY retry.label "Empruvar anc ina giada">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Connexiun betg reussida">
+<!ENTITY connectionFailure.longDesc "<p>Schebain che la website para d'esser valida, n'è la connexiun betg reussida. </p><ul><li>Forsa è la website temporarmain betg cuntanschibla? Emprova pli tard anc ina giada. </li><li>Na pos ti era betg chargiar autras websites? Controllescha la configuraziun da l'access a la rait da tes computer.</li><li>Èn tes computer u tia rait protegids d'ina firewall u d'in proxy? Parameters fauss pon disturbar l'access al web.</li></ul>">
+
+<!ENTITY deniedPortAccess.title "Il port è bloccà per motivs da segirezza">
+<!ENTITY deniedPortAccess.longDesc "<p>L'adressa dumandada pretenda in port (per exempel <q>mozilla.org:80</q> per il port 80 sin mozilla.org) che na vegn <em>normalmain betg</em> utilisà per navigar en il web. La dumonda è vegnida interrutta per ta proteger.</p>">
+
+<!ENTITY dnsNotFound.title "Impussibel da chattar l'adressa">
+<!ENTITY dnsNotFound.longDesc "<p>Impussibel da chattar il server da host da l'adressa dumandada.</p><ul><li>Has ti fatg in sbagl da scriver cun endatar l'adressa? (per exempel <q><strong>ww</strong>.mozilla.org</q> empè da <q><strong>www</strong>.mozilla.org</q>)</li><li> Es ti segir che l'adressa exista? La registraziun pudess esser scrudada.</li><li>Na pos ti era betg chargiar autras websites? Controllescha ils parameters dal server DNS e quellas da la connexiun a la rait.</li><li>Èn tes computer u tia rait protegids d'ina firewall u d'in proxy? Configuraziuns falladas pon disturbar l'access al web.</li></ul>">
+
+<!ENTITY fileNotFound.title "Impussibel da chattar la datoteca">
+<!ENTITY fileNotFound.longDesc "<ul><li>Forsa è l'endataziun vegnida renumnada, stizzada u spustada? </li><li>Cuntegna l'adressa in sbagl ortografic, in sbagl da scripziun grond e pitschen u in auter sbagl da scriver? </li><li>Has ti ils dretgs d'access correspundents per chargiar l'endataziun dumandada?</li></ul>">
+
+<!ENTITY fileAccessDenied.title "Refusà l'access a la datoteca">
+<!ENTITY fileAccessDenied.longDesc "<ul><li>Ella è eventualmain vegnida allontanada, spustada u che las permissiuns da datoteca impedeschan l'access.</li></ul>">
+
+<!ENTITY generic.title "Impussibel d'exequir la dumonda">
+<!ENTITY generic.longDesc "<p>Ulteriuras infurmaziuns davart quest problem u questa errur n'èn per il mument betg disponiblas.</p>">
+
+<!ENTITY malformedURI.title "Adressa nunvalida">
+<!ENTITY malformedURI.longDesc "<p>L'adressa inditgada ha in format nunenconuschent. Controllescha per plaschair, sche l'adressa cuntegna errurs ed emprova anc ina giada.</p>">
+
+<!ENTITY netInterrupt.title "La transmissiun da datas è interrutta">
+<!ENTITY netInterrupt.longDesc "<p>La connexiun è reussida, ella è dentant interrutta durant la transmissiun da datas. Emprova per plaschair anc ina giada.</p><ul><li>Na pos ti era betg chargiar autras websites? Controllescha la configuraziun da la connexiun a la rait da tes computer.</li><li>Na funcziuneschi anc adina betg? Contactescha l'administratur da la rait u il provider e dumonda agid.</li></ul>">
+
+<!ENTITY notCached.title "Document scrudà">
+<!ENTITY notCached.longDesc "<p>Il document dumandà n'è betg disponibel en il cache dal navigatur.</p><ul><li>Sco mesira da protecziun na rechargia il navigatur betg automaticamain documents sensibels.</li><li>Clicca sin 'Empruvar danovamain' per rechargiar il document da la website.</li></ul>">
+
+<!ENTITY netOffline.title "Modus offline">
+<!ENTITY netOffline.longDesc2 "<p>Il navigatur è en il modus offline e na po perquai betg connectar cun l'element dumandà.</p><ul><li>È il computer collià cun ina rait activa?</li><li>Clicca sin &quot;Empruvar anc ina giada&quot; per midar en il modus online e rechargiar la pagina.</li></ul>">
+
+<!ENTITY contentEncodingError.title "Cuntegns cun codaziun nunvalida">
+<!ENTITY contentEncodingError.longDesc "<p>La pagina dumandada na po betg vegnir mussada, perquai ch'ella utilisescha ina furma da cumpressiun nunvalida u betg cumpatibla.</p><ul><li>Contactescha per plaschair l'administratur da la website per infurmar el davart quest problem.</li></ul>">
+
+<!ENTITY unsafeContentType.title "Tip da datoteca malsegir">
+<!ENTITY unsafeContentType.longDesc "<p>La pagina dumandada na po betg vegnir mussada, perquai ch'ella utilisescha ina furma da cumpressiun nunvalida u betg cumpatibla.</p><ul><li>Contactescha per plaschair l'administratur da la website per infurmar el davart quest problem.</li></ul>">
+
+<!ENTITY netReset.title "La connexiun è interrutta">
+<!ENTITY netReset.longDesc "<p>La connexiun a la rait è vegnida interrutta, durant che la connexiun è vegnida restaurada. Emprova per plaschair anc ina giada.</p>">
+
+<!ENTITY netTimeout.title "Il temp da la rait è surpassà">
+<!ENTITY netTimeout.longDesc "<p>La website dumandada n'ha memia ditg betg reagì sin l'emprova da connectar, perquai na vegn ussa betg pli spetgada ina reacziun.</p><ul><li>Pudess il server esser surchargià u esser temporarmain ord funcziun? Emprova pli tard anc ina giada.</li><li>Na pos ti era betg chargiar autras websites? Controllescha la configuraziun da la connexiun a la rait da tes computer.</li><li>Èn tes computer u tia rait protegids d'ina firewall u d'in proxy? Parameters fauss pon disturbar l'access al web.</li><li>Na funcziuneschi anc adina betg? Contactescha l'administratur da la rait u il provider e dumonda agid.</li></ul>">
+
+<!ENTITY unknownProtocolFound.title "Protocol nunenconuschent">
+<!ENTITY unknownProtocolFound.longDesc "<p>L'adressa specifitgescha in protocol (per exempel <q>wxyz://</q>) ch'il navigatur n'enconuscha betg, perquai na po il navigatur betg connectar correctamain cun la website.</p><ul><li>Emprovas ti dad acceder a multimedia u auters servetschs betg textuals? Controllescha sche ti adempleschas las pretensiuns tecnicas da la website.</li><li>Tscherts protocols dovran software da terzs u plug-ins per ch'il navigatur als possia reconuscher.</li></ul>">
+
+<!ENTITY proxyConnectFailure.title "Il proxy server refusescha la connexiun">
+<!ENTITY proxyConnectFailure.longDesc "<p>Il navigatur è vegnì configurà per l'utilisaziun d'in proxy server, ma il proxy refusescha la connexiun.</p><ul><li>Èn las configuraziuns dal proxy correctas? Controllescha per plaschair ils parameters ed emprova anc ina giada.</li><li>Permetta il servetsch da proxy connexiuns or da questa rait?</li><li>Na funcziuneschi anc adina betg? Contactescha l'administratur da la rait u il provider e dumonda agid.</li></ul>">
+
+<!ENTITY proxyResolveFailure.title "Impussibel da chattar il proxy server">
+<!ENTITY proxyResolveFailure.longDesc "<p>Il navigatur è vegnì configurà per l'utilisaziun d'in proxy server, ma i n'è betg stà pussibel da chattar il proxy.</p><ul><li>Èn las configuraziuns da proxy correctas? Controlleschails parameters ed emprova lura anc ina giada.</li><li>Permetta il servetsch da proxy connexiuns or da questa rait?</li><li>Na funcziuneschi anc adina betg? Contactescha l'administratur da la rait u il provider e dumonda agid.</li></ul>">
+
+<!ENTITY redirectLoop.title "Cirquit da sviament">
+<!ENTITY redirectLoop.longDesc "<p>L'emprova da connectar cun l'adressa dumandada è vegnida interrutta. La website dumandada sviescha la dumonda uschia ch'ella na po mai vegnir terminada.</p><ul><li>Has ti bloccà u deactivà cookies indispensabels per questa website?</li><li><em>AVIS</em>: Per cas ch'i na gida betg d'acceptar ils cookies ed ils problems cun l'adressa dumandada persistan, sa tracti probablamain d'ina configuraziun fallada dal server e betg d'in problem da tes computer.</li></ul>">
+
+<!ENTITY unknownSocketType.title "Resposta nuncorrecta">
+<!ENTITY unknownSocketType.longDesc "<p>La website dumandada ha respundì a moda nunspetgada, uschia che la connexiun na po betg vegnir mantegnida.</p>">
+
+<!ENTITY nssFailure2.title "La connexiun segira n'è betg reussida">
+<!ENTITY nssFailure2.longDesc2 "<p>La pagina dumandada na po betg vegnir mussada, perquai che l'autenticitad da las datas na po betg vegnir verifitgada.</p><ul><li>Contactescha per plaschair ils administraturs da la website per infurmar els davart quest problem.</li></ul>">
+
+<!ENTITY nssBadCert.title "La connexiun segira n'è betg reussida">
+<!ENTITY nssBadCert.longDesc2 "<ul> 
+<li>Quai pudess esser in problem cun la configuraziun dal server, u insatgi vul sa dar per quest server.</li> 
+<li>Sche ti has connectà cun success cun quest server en il passà, sa tracti eventualmain mo d'ina errur temporara e ti pos empruvar pli tard anc ina giada.</li> 
+</ul>">
+
+<!ENTITY securityOverride.linkText "U che ti pos agiuntar ina excepziun…">
+<!ENTITY securityOverride.warningContent "<p>Ti na duessas betg agiuntar ina excepziun sche ti utiliseschas ina connexiun d'internet da la quala ti na ta fidas betg dal tuttafatg u sche ti na vesas uschiglio nagin avertiment per quest server.</p>
+<p>Sche ti vuls anc adina agiuntar ina excepziun per questa pagina pos ti far quai en ils parameters da criptadi extendids.</p>">
+
+<!ENTITY cspBlocked.title "Bloccà da las directivas per la segirezza dal cuntegn">
+<!ENTITY cspBlocked.longDesc "<p>Il navigatur ha impedì che questa pagina chargia en tala maniera perquai che la pagina cuntegna directivas per la segirezza dal cuntegn (content security policy) che scumondan quai.</p>">
+
+<!ENTITY xfoBlocked.title "Bloccà dad ina directiva X-Frame-Options">
+<!ENTITY xfoBlocked.longDesc "<p>Il navigatur ha impedì che questa pagina vegnia chargiada en quest context perquai che la pagina cuntegna ina directiva X-Frame-Options che scumonda quai.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Errur da cuntegn donnegià">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Impussibel da visualisar la pagina che ti vuls chargiar perquai ch'ina errur è sa mussada en la transmissiun da datas.</p><ul><li>Contactescha per plaschair ils possessurs da la website per als infurmar davart quest problem.</li></ul>">
+
+<!ENTITY remoteXUL.title "Remote-XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Infurmescha per plaschair il possesur da la website davart quest problem.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "Tia connexiun n'è betg segirada">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> utilisescha tecnologia da segirezza ch'è obsoleta e qua tras vulnerabla. In attatgader pudess revelar a moda simpla infurmaziuns che ti has considerà sco segiradas. L'administratur da la website vegn a stuair metter en urden ses server avant che ti possias visitar la website.</p><p>Code d'errur: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Pagina bloccada">
+
+<!ENTITY networkProtocolError.title "Errur dal protocol da rait">
+<!ENTITY networkProtocolError.longDesc "<p>Impussibel da mussar la pagina che ti emprovas da chargiar perquai ch'igl è succedida ina errur en il protocol da rait.</p><ul><li>Contactescha per plaschair il possessur da la website per al infurmar davart quest problem.</li></ul>">

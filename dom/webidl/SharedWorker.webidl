@@ -4,9 +4,13 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-[Constructor(USVString scriptURL, optional (DOMString or WorkerOptions) options)]
+[Exposed=Window]
 interface SharedWorker : EventTarget {
+    [Throws]
+    constructor(USVString scriptURL,
+                optional (DOMString or WorkerOptions) options = {});
+
     readonly attribute MessagePort port;
 };
 
-SharedWorker implements AbstractWorker;
+SharedWorker includes AbstractWorker;

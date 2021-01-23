@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -9,31 +7,6 @@
 const InspectorUtils = require("InspectorUtils");
 
 const MAX_DATA_URL_LENGTH = 40;
-
-/*
- * About the objects defined in this file:
- * - CssLogic contains style information about a view context. It provides
- *   access to 2 sets of objects: Css[Sheet|Rule|Selector] provide access to
- *   information that does not change when the selected element changes while
- *   Css[Property|Selector]Info provide information that is dependent on the
- *   selected element.
- *   Its key methods are highlight(), getPropertyInfo() and forEachSheet(), etc
- *   It also contains a number of static methods for l10n, naming, etc
- *
- * - CssSheet provides a more useful API to a DOM CSSSheet for our purposes,
- *   including shortSource and href.
- * - CssRule a more useful API to a DOM CSSRule including access to the group
- *   of CssSelectors that the rule provides properties for
- * - CssSelector A single selector - i.e. not a selector group. In other words
- *   a CssSelector does not contain ','. This terminology is different from the
- *   standard DOM API, but more inline with the definition in the spec.
- *
- * - CssPropertyInfo contains style information for a single property for the
- *   highlighted element.
- * - CssSelectorInfo is a wrapper around CssSelector, which adds sorting with
- *   reference to the selected element.
- */
-
 /**
  * Provide access to the style information in a page.
  * CssLogic uses the standard DOM API, and the Gecko InspectorUtils API to
@@ -46,17 +19,6 @@ const MAX_DATA_URL_LENGTH = 40;
 
 const Services = require("Services");
 
-loader.lazyImporter(
-  this,
-  "findCssSelector",
-  "resource://gre/modules/css-selector.js"
-);
-loader.lazyImporter(
-  this,
-  "getCssPath",
-  "resource://gre/modules/css-selector.js"
-);
-loader.lazyImporter(this, "getXPath", "resource://gre/modules/css-selector.js");
 loader.lazyRequireGetter(
   this,
   "getCSSLexer",
@@ -69,7 +31,6 @@ loader.lazyRequireGetter(
   "devtools/shared/indentation",
   true
 );
-
 const { LocalizationHelper } = require("devtools/shared/l10n");
 const styleInspectorL10N = new LocalizationHelper(
   "devtools/shared/locales/styleinspector.properties"
@@ -222,9 +183,30 @@ function getLineCountInComments(text) {
  * Prettify minified CSS text.
  * This prettifies CSS code where there is no indentation in usual places while
  * keeping original indentation as-is elsewhere.
- * @param string text The CSS source to prettify.
- * @return string Prettified CSS source
+ *
+ * Returns an object with the resulting prettified source and a list of mappings of
+ * token positions between the original and the prettified source. Each single mapping
+ * is an object that looks like this:
+ *
+ * {
+ *  original: {line: {Number}, column: {Number}},
+ *  generated: {line: {Number}, column: {Number}},
+ * }
+ *
+ * @param  {String} text
+ *         The CSS source to prettify.
+ * @param  {Number} ruleCount
+ *         The number of CSS rules expected in the CSS source.
+ *
+ * @return {Object}
+ *         Object with the prettified source and source mappings.
+ *          {
+ *            result: {String}  // Prettified source
+ *            mappings: {Array} // List of objects with mappings for lines and columns
+ *                              // between the original source and prettified source
+ *          }
  */
+// eslint-disable-next-line complexity
 function prettifyCSS(text, ruleCount) {
   if (prettifyCSS.LINE_SEPARATOR == null) {
     const os = Services.appinfo.OS;
@@ -247,7 +229,7 @@ function prettifyCSS(text, ruleCount) {
   // don't attempt to prettify if there's more than one line per rule, excluding comments.
   const lineCount = text.split("\n").length - 1 - getLineCountInComments(text);
   if (ruleCount !== null && lineCount >= ruleCount) {
-    return originalText;
+    return { result: originalText, mappings: [] };
   }
 
   // We reformat the text using a simple state machine.  The
@@ -266,6 +248,12 @@ function prettifyCSS(text, ruleCount) {
   let indent = "";
   let indentLevel = 0;
   const tokens = getCSSLexer(text);
+  // List of mappings of token positions from original source to prettified source.
+  const mappings = [];
+  // Line and column offsets used to shift the token positions after prettyfication.
+  let lineOffset = 0;
+  let columnOffset = 0;
+  let indentOffset = 0;
   let result = "";
   let pushbackToken = undefined;
 
@@ -330,6 +318,21 @@ function prettifyCSS(text, ruleCount) {
         endIndex = text.length;
         break;
       }
+
+      const line = tokens.lineNumber;
+      const column = tokens.columnNumber;
+      mappings.push({
+        original: {
+          line,
+          column,
+        },
+        generated: {
+          line: lineOffset + line,
+          column: columnOffset,
+        },
+      });
+      // Shift the column offset for the next token by the current token's length.
+      columnOffset += token.endOffset - token.startOffset;
 
       if (token.tokenType === "at") {
         isInAtRuleDefinition = true;
@@ -397,6 +400,7 @@ function prettifyCSS(text, ruleCount) {
         result = result + indent + text.substring(startIndex, endIndex);
         if (isCloseBrace) {
           result += prettifyCSS.LINE_SEPARATOR;
+          lineOffset = lineOffset + 1;
         }
       }
     }
@@ -412,8 +416,10 @@ function prettifyCSS(text, ruleCount) {
 
       if (tabPrefs.indentWithTabs) {
         indent = TAB_CHARS.repeat(indentLevel);
+        indentOffset = 4 * indentLevel;
       } else {
         indent = SPACE_CHARS.repeat(indentLevel);
+        indentOffset = 1 * indentLevel;
       }
       result = result + indent + "}";
     }
@@ -425,12 +431,15 @@ function prettifyCSS(text, ruleCount) {
     if (token.tokenType === "symbol" && token.text === "{") {
       if (!lastWasWS) {
         result += " ";
+        columnOffset++;
       }
       result += "{";
       if (tabPrefs.indentWithTabs) {
         indent = TAB_CHARS.repeat(++indentLevel);
+        indentOffset = 4 * indentLevel;
       } else {
         indent = SPACE_CHARS.repeat(++indentLevel);
+        indentOffset = 1 * indentLevel;
       }
     }
 
@@ -447,11 +456,15 @@ function prettifyCSS(text, ruleCount) {
       token.tokenType === "whitespace" &&
       /\n/g.test(text.substring(token.startOffset, token.endOffset))
     ) {
-      return originalText;
+      return { result: originalText, mappings: [] };
     }
 
     // Finally time for that newline.
     result = result + prettifyCSS.LINE_SEPARATOR;
+
+    // Update line and column offsets for the new line.
+    lineOffset = lineOffset + 1;
+    columnOffset = 0 + indentOffset;
 
     // Maybe we hit EOF.
     if (!pushbackToken) {
@@ -459,32 +472,10 @@ function prettifyCSS(text, ruleCount) {
     }
   }
 
-  return result;
+  return { result, mappings };
 }
 
 exports.prettifyCSS = prettifyCSS;
-
-/**
- * Find a unique CSS selector for a given element
- * @returns a string such that ele.ownerDocument.querySelector(reply) === ele
- * and ele.ownerDocument.querySelectorAll(reply).length === 1
- */
-exports.findCssSelector = findCssSelector;
-
-/**
- * Get the full CSS path for a given element.
- * @returns a string that can be used as a CSS selector for the element. It might not
- * match the element uniquely. It does however, represent the full path from the root
- * node to the element.
- */
-exports.getCssPath = getCssPath;
-
-/**
- * Get the xpath for a given element.
- * @param {DomNode} ele
- * @returns a string that can be used as an XPath to find the element uniquely.
- */
-exports.getXPath = getXPath;
 
 /**
  * Given a node, check to see if it is a ::marker, ::before, or ::after element.
@@ -527,3 +518,299 @@ function getCSSStyleRules(node) {
   return rules;
 }
 exports.getCSSStyleRules = getCSSStyleRules;
+
+/**
+ * Returns true if the given node has visited state.
+ */
+function hasVisitedState(node) {
+  if (!node) {
+    return false;
+  }
+
+  const NS_EVENT_STATE_VISITED = 1 << 24;
+
+  return (
+    !!(InspectorUtils.getContentState(node) & NS_EVENT_STATE_VISITED) ||
+    InspectorUtils.hasPseudoClassLock(node, ":visited")
+  );
+}
+exports.hasVisitedState = hasVisitedState;
+
+/**
+ * Find the position of [element] in [nodeList].
+ * @returns an index of the match, or -1 if there is no match
+ */
+function positionInNodeList(element, nodeList) {
+  for (let i = 0; i < nodeList.length; i++) {
+    if (element === nodeList[i]) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+/**
+ * For a provided node, find the appropriate container/node couple so that
+ * container.contains(node) and a CSS selector can be created from the
+ * container to the node.
+ */
+function findNodeAndContainer(node) {
+  const shadowRoot = node.containingShadowRoot;
+  while (node?.isNativeAnonymous) {
+    node = node.parentNode;
+  }
+
+  if (shadowRoot) {
+    // If the node is under a shadow root, the shadowRoot contains the node and
+    // we can find the node via shadowRoot.querySelector(path).
+    return {
+      containingDocOrShadow: shadowRoot,
+      node,
+    };
+  }
+
+  // Otherwise, get the root binding parent to get a non anonymous element that
+  // will be accessible from the ownerDocument.
+  return {
+    containingDocOrShadow: node.ownerDocument,
+    node,
+  };
+}
+
+/**
+ * Find a unique CSS selector for a given element
+ * @returns a string such that:
+ *   - ele.containingDocOrShadow.querySelector(reply) === ele
+ *   - ele.containingDocOrShadow.querySelectorAll(reply).length === 1
+ */
+const findCssSelector = function(ele) {
+  const { node, containingDocOrShadow } = findNodeAndContainer(ele);
+  ele = node;
+
+  if (!containingDocOrShadow || !containingDocOrShadow.contains(ele)) {
+    // findCssSelector received element not inside container.
+    return "";
+  }
+
+  const cssEscape = ele.ownerGlobal.CSS.escape;
+
+  // document.querySelectorAll("#id") returns multiple if elements share an ID
+  if (
+    ele.id &&
+    containingDocOrShadow.querySelectorAll("#" + cssEscape(ele.id)).length === 1
+  ) {
+    return "#" + cssEscape(ele.id);
+  }
+
+  // Inherently unique by tag name
+  const tagName = ele.localName;
+  if (tagName === "html") {
+    return "html";
+  }
+  if (tagName === "head") {
+    return "head";
+  }
+  if (tagName === "body") {
+    return "body";
+  }
+
+  // We might be able to find a unique class name
+  let selector, index, matches;
+  for (let i = 0; i < ele.classList.length; i++) {
+    // Is this className unique by itself?
+    selector = "." + cssEscape(ele.classList.item(i));
+    matches = containingDocOrShadow.querySelectorAll(selector);
+    if (matches.length === 1) {
+      return selector;
+    }
+    // Maybe it's unique with a tag name?
+    selector = cssEscape(tagName) + selector;
+    matches = containingDocOrShadow.querySelectorAll(selector);
+    if (matches.length === 1) {
+      return selector;
+    }
+    // Maybe it's unique using a tag name and nth-child
+    index = positionInNodeList(ele, ele.parentNode.children) + 1;
+    selector = selector + ":nth-child(" + index + ")";
+    matches = containingDocOrShadow.querySelectorAll(selector);
+    if (matches.length === 1) {
+      return selector;
+    }
+  }
+
+  // Not unique enough yet.
+  index = positionInNodeList(ele, ele.parentNode.children) + 1;
+  selector = cssEscape(tagName) + ":nth-child(" + index + ")";
+  if (ele.parentNode !== containingDocOrShadow) {
+    selector = findCssSelector(ele.parentNode) + " > " + selector;
+  }
+  return selector;
+};
+exports.findCssSelector = findCssSelector;
+
+/**
+ * If the element is in a frame or under a shadowRoot, return the corresponding
+ * element.
+ */
+function getSelectorParent(node) {
+  const shadowRoot = node.containingShadowRoot;
+  if (shadowRoot) {
+    // The element is in a shadowRoot, return the host component.
+    return shadowRoot.host;
+  }
+
+  // Otherwise return the parent frameElement.
+  return node.ownerGlobal.frameElement;
+}
+
+/**
+ * Retrieve the array of CSS selectors corresponding to the provided node.
+ *
+ * The selectors are ordered starting with the root document and ending with the deepest
+ * nested frame. Additional items are used if the node is inside a frame or a shadow root,
+ * each representing the CSS selector for finding the frame or root element in its parent
+ * document.
+ *
+ * This format is expected by DevTools in order to handle the Inspect Node context menu
+ * item.
+ *
+ * @param  {node}
+ *         The node for which the CSS selectors should be computed
+ * @return {Array}
+ *         An array of CSS selectors to find the target node. Several selectors can be
+ *         needed if the element is nested in frames and not directly in the root
+ *         document. The selectors are ordered starting with the root document and
+ *         ending with the deepest nested frame or shadow root.
+ */
+const findAllCssSelectors = function(node) {
+  const selectors = [];
+  while (node) {
+    selectors.unshift(findCssSelector(node));
+    node = getSelectorParent(node);
+  }
+
+  return selectors;
+};
+exports.findAllCssSelectors = findAllCssSelectors;
+
+/**
+ * Get the full CSS path for a given element.
+ *
+ * @returns a string that can be used as a CSS selector for the element. It might not
+ * match the element uniquely. It does however, represent the full path from the root
+ * node to the element.
+ */
+function getCssPath(ele) {
+  const { node, containingDocOrShadow } = findNodeAndContainer(ele);
+  ele = node;
+  if (!containingDocOrShadow || !containingDocOrShadow.contains(ele)) {
+    // getCssPath received element not inside container.
+    return "";
+  }
+
+  const nodeGlobal = ele.ownerGlobal.Node;
+
+  const getElementSelector = element => {
+    if (!element.localName) {
+      return "";
+    }
+
+    let label =
+      element.nodeName == element.nodeName.toUpperCase()
+        ? element.localName.toLowerCase()
+        : element.localName;
+
+    if (element.id) {
+      label += "#" + element.id;
+    }
+
+    if (element.classList) {
+      for (const cl of element.classList) {
+        label += "." + cl;
+      }
+    }
+
+    return label;
+  };
+
+  const paths = [];
+
+  while (ele) {
+    if (!ele || ele.nodeType !== nodeGlobal.ELEMENT_NODE) {
+      break;
+    }
+
+    paths.splice(0, 0, getElementSelector(ele));
+    ele = ele.parentNode;
+  }
+
+  return paths.length ? paths.join(" ") : "";
+}
+exports.getCssPath = getCssPath;
+
+/**
+ * Get the xpath for a given element.
+ *
+ * @param {DomNode} ele
+ * @returns a string that can be used as an XPath to find the element uniquely.
+ */
+function getXPath(ele) {
+  const { node, containingDocOrShadow } = findNodeAndContainer(ele);
+  ele = node;
+  if (!containingDocOrShadow || !containingDocOrShadow.contains(ele)) {
+    // getXPath received element not inside container.
+    return "";
+  }
+
+  // Create a short XPath for elements with IDs.
+  if (ele.id) {
+    return `//*[@id="${ele.id}"]`;
+  }
+
+  // Otherwise walk the DOM up and create a part for each ancestor.
+  const parts = [];
+
+  const nodeGlobal = ele.ownerGlobal.Node;
+  // Use nodeName (instead of localName) so namespace prefix is included (if any).
+  while (ele && ele.nodeType === nodeGlobal.ELEMENT_NODE) {
+    let nbOfPreviousSiblings = 0;
+    let hasNextSiblings = false;
+
+    // Count how many previous same-name siblings the element has.
+    let sibling = ele.previousSibling;
+    while (sibling) {
+      // Ignore document type declaration.
+      if (
+        sibling.nodeType !== nodeGlobal.DOCUMENT_TYPE_NODE &&
+        sibling.nodeName == ele.nodeName
+      ) {
+        nbOfPreviousSiblings++;
+      }
+
+      sibling = sibling.previousSibling;
+    }
+
+    // Check if the element has at least 1 next same-name sibling.
+    sibling = ele.nextSibling;
+    while (sibling) {
+      if (sibling.nodeName == ele.nodeName) {
+        hasNextSiblings = true;
+        break;
+      }
+      sibling = sibling.nextSibling;
+    }
+
+    const prefix = ele.prefix ? ele.prefix + ":" : "";
+    const nth =
+      nbOfPreviousSiblings || hasNextSiblings
+        ? `[${nbOfPreviousSiblings + 1}]`
+        : "";
+
+    parts.push(prefix + ele.localName + nth);
+
+    ele = ele.parentNode;
+  }
+
+  return parts.length ? "/" + parts.reverse().join("/") : "";
+}
+exports.getXPath = getXPath;

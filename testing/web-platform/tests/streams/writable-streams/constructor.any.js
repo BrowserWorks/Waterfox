@@ -1,4 +1,4 @@
-// META: global=worker,jsshell
+// META: global=window,worker,jsshell
 // META: script=../resources/constructor-ordering.js
 'use strict';
 
@@ -35,7 +35,7 @@ promise_test(t => {
 
   return Promise.all([
     writer.write('a'),
-    promise_rejects(t, error1, writer.closed, 'controller.error() in write() should error the stream')
+    promise_rejects_exactly(t, error1, writer.closed, 'controller.error() in write() should error the stream')
   ]);
 }, 'controller argument should be passed to write method');
 
@@ -115,8 +115,8 @@ test(() => {
     }
   });
 
-  assert_throws(new TypeError(), () => new WritableStreamDefaultController({}),
-                'constructor should throw a TypeError exception');
+  assert_throws_js(TypeError, () => new WritableStreamDefaultController({}),
+                   'constructor should throw a TypeError exception');
 }, 'WritableStreamDefaultController constructor should throw');
 
 test(() => {
@@ -127,8 +127,8 @@ test(() => {
     }
   });
 
-  assert_throws(new TypeError(), () => new WritableStreamDefaultController(stream),
-                'constructor should throw a TypeError exception');
+  assert_throws_js(TypeError, () => new WritableStreamDefaultController(stream),
+                   'constructor should throw a TypeError exception');
 }, 'WritableStreamDefaultController constructor should throw when passed an initialised WritableStream');
 
 test(() => {
@@ -136,16 +136,16 @@ test(() => {
   const writer = stream.getWriter();
   const WritableStreamDefaultWriter = writer.constructor;
   writer.releaseLock();
-  assert_throws(new TypeError(), () => new WritableStreamDefaultWriter({}),
-                'constructor should throw a TypeError exception');
+  assert_throws_js(TypeError, () => new WritableStreamDefaultWriter({}),
+                   'constructor should throw a TypeError exception');
 }, 'WritableStreamDefaultWriter should throw unless passed a WritableStream');
 
 test(() => {
   const stream = new WritableStream();
   const writer = stream.getWriter();
   const WritableStreamDefaultWriter = writer.constructor;
-  assert_throws(new TypeError(), () => new WritableStreamDefaultWriter(stream),
-                'constructor should throw a TypeError exception');
+  assert_throws_js(TypeError, () => new WritableStreamDefaultWriter(stream),
+                   'constructor should throw a TypeError exception');
 }, 'WritableStreamDefaultWriter constructor should throw when stream argument is locked');
 
 const operations = [

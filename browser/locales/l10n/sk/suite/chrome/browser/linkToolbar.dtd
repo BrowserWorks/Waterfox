@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Link Toolbar Title -->
+<!ENTITY linkToolbar.label "Panel s navigáciou stránok">
+<!ENTITY linkToolbar.accesskey "a">
+<!ENTITY linkToolbar.tooltip "Panel s navigáciou stránok">
+
+<!-- Link Toolbar visibility options -->
+<!ENTITY linkToolbarAlways.label "Vždy zobraziť">
+<!ENTITY linkToolbarAlways.accesskey "V">
+<!ENTITY linkToolbarAsNeeded.label "Zobraziť podľa potreby">
+<!ENTITY linkToolbarAsNeeded.accesskey "o">
+<!ENTITY linkToolbarNever.label "Vždy skryť">
+<!ENTITY linkToolbarNever.accesskey "s">
+
+<!-- Toolbar buttons, menus, and menuitems -->
+<!ENTITY topButton.label "Hore">
+<!ENTITY upButton.label "Vyššie">
+<!ENTITY firstButton.label "Prvá">
+<!ENTITY prevButton.label "Predchádzajúca">
+<!ENTITY nextButton.label "Ďalšia">
+<!ENTITY lastButton.label "Posledná">
+
+<!ENTITY documentButton.label "Dokument">
+
+<!ENTITY tocButton.label "Obsah">
+<!ENTITY chapterButton.label "Kapitoly">
+<!ENTITY sectionButton.label "Sekcie">
+<!ENTITY subSectionButton.label "Podsekcie">
+<!ENTITY appendixButton.label "Register">
+<!ENTITY glossaryButton.label "Slovník">
+<!ENTITY indexButton.label "Zoznam">
+
+<!ENTITY moreButton.label "Viac">
+
+<!ENTITY helpButton.label "Pomocník">
+<!ENTITY searchButton.label "Hľadať">
+
+<!ENTITY authorButton.label "Autori">
+<!ENTITY copyrightButton.label "Copyright">
+
+<!ENTITY bookmarkButton.label "Záložky">
+
+<!ENTITY alternateButton.label "Iné verzie">
+
+<!ENTITY feedButton.label "Odoberať">

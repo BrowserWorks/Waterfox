@@ -3,17 +3,26 @@
 "use strict";
 
 /* exported openToolboxForTab, closeToolboxForTab, getToolboxTargetForTab,
-            registerBlankToolboxPanel, TOOLBOX_BLANK_PANEL_ID */
+            registerBlankToolboxPanel, TOOLBOX_BLANK_PANEL_ID, assertDevToolsExtensionEnabled */
 
 ChromeUtils.defineModuleGetter(
   this,
-  "gDevTools",
-  "resource://devtools/client/framework/gDevTools.jsm"
+  "loader",
+  "resource://devtools/shared/Loader.jsm"
 );
+XPCOMUtils.defineLazyGetter(this, "gDevTools", () => {
+  const { gDevTools } = loader.require("devtools/client/framework/devtools");
+  return gDevTools;
+});
+XPCOMUtils.defineLazyGetter(this, "TargetFactory", () => {
+  const { TargetFactory } = loader.require("devtools/client/framework/target");
+  return TargetFactory;
+});
+
 ChromeUtils.defineModuleGetter(
   this,
-  "devtools",
-  "resource://devtools/shared/Loader.jsm"
+  "DevToolsShim",
+  "chrome://devtools-startup/content/DevToolsShim.jsm"
 );
 
 const TOOLBOX_BLANK_PANEL_ID = "testBlankPanel";
@@ -48,7 +57,7 @@ async function registerBlankToolboxPanel() {
 }
 
 function getToolboxTargetForTab(tab) {
-  return devtools.TargetFactory.forTab(tab);
+  return TargetFactory.forTab(tab);
 }
 
 async function openToolboxForTab(tab, panelId = TOOLBOX_BLANK_PANEL_ID) {
@@ -82,4 +91,14 @@ async function closeToolboxForTab(tab) {
       outerWindowID,
     })}`
   );
+}
+
+function assertDevToolsExtensionEnabled(uuid, enabled) {
+  for (let toolbox of DevToolsShim.getToolboxes()) {
+    is(
+      enabled,
+      !!toolbox.isWebExtensionEnabled(uuid),
+      `extension is ${enabled ? "enabled" : "disabled"} on toolbox`
+    );
+  }
 }

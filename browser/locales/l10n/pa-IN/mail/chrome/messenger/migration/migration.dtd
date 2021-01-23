@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "ਇੰਪੋਰਟ ਸਹਾਇਕ">
+
+<!ENTITY importFromWin.label            "ਚੋਣਾਂ, ਅਕਾਊਂਟ ਡਾਟਾ, ਐਡਰੈੱਸ ਬੁੱਕ, ਫਿਲਟਰ ਅਤੇ ਹੋਰ ਡਾਟਾ ਇੱਥੋਂ ਇੰਪੋਰਟ ਕਰੋ:">
+<!ENTITY importFromNonWin.label         "ਪਸੰਦ, ਅਖਾਊਂਟ ਡਾਟਾ, ਐਡਰੈੱਸ ਬੁੱਕ, ਫਿਲਟਰ ਅਤੇ ਹੋਰ ਡਾਟਾ ਇੱਥੋਂ ਇੰਪੋਰਟ ਕਰੋ:">
+
+<!ENTITY importFromNothing.label        "ਕੁਝ ਵੀ ਇੰਪੋਰਟ ਨਾ ਕਰੋ">
+<!ENTITY importFromNothing.accesskey    "D">
+
+
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 or later">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "ਸੈਟਿੰਗ ਅਤੇ ਮੇਲ ਫੋਲਡਰ ਇੰਪੋਰਟ">
+<!ENTITY importItems.title              "ਇੰਪੋਰਟ ਕਰਨ ਲਈ ਆਈਟਮਾਂ">
+<!ENTITY importItems.label              "ਚੁਣੋ ਕਿ ਕਿਹੜੀਆਂ ਆਈਟਮਾਂ ਇੰਪੋਰਟ ਕਰਨੀਆਂ ਹਨ:">
+
+<!ENTITY migrating.title                "ਇੰਪੋਰਟ ਕਰਨਾ ਜਾਰੀ…">
+<!ENTITY migrating.label                "ਹੇਠ ਦਿੱਤੀਆਂ ਆਈਟਮਾਂ ਹੁਣ ਇੰਪੋਰਟ ਕੀਤੀਆਂ ਜਾ ਰਹੀਆਂ ਹਨ…">
+
+<!ENTITY selectProfile.title            "ਪਰੋਫਾਇਲ ਚੁਣੋ">
+<!ENTITY selectProfile.label            "ਹੇਠ ਦਿੱਤੇ ਪਰੋਫਾਇਲ ਇੰਪੋਰਟ ਕਰਨ ਲਈ ਉਪਲੱਬਧ ਹਨ:">
+
+<!ENTITY done.title                     "ਇੰਪੋਰਟ ਮੁਕੰਮਲ">
+<!ENTITY done.label                     "ਹੇਠ ਦਿੱਤੀਆਂ ਆਈਟਮਾਂ ਠੀਕ ਤਰ੍ਹਾਂ ਇੰਪੋਰਟ ਕੀਤੀਆਂ ਗਈਆਂ ਹਨ:">

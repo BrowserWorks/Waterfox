@@ -9,11 +9,15 @@ var EXPORTED_SYMBOLS = ["Target"];
 const { Connection } = ChromeUtils.import(
   "chrome://remote/content/Connection.jsm"
 );
-const { WebSocketDebuggerTransport } = ChromeUtils.import(
+const { WebSocketTransport } = ChromeUtils.import(
   "chrome://remote/content/server/WebSocketTransport.jsm"
 );
-const { WebSocketServer } = ChromeUtils.import(
-  "chrome://remote/content/server/WebSocket.jsm"
+const { WebSocketHandshake } = ChromeUtils.import(
+  "chrome://remote/content/server/WebSocketHandshake.jsm"
+);
+
+const UUIDGen = Cc["@mozilla.org/uuid-generator;1"].getService(
+  Ci.nsIUUIDGenerator
 );
 
 /**
@@ -25,16 +29,28 @@ class Target {
    * @param Class sessionClass
    */
   constructor(targets, sessionClass) {
+    // Save a reference to Targets instance in order to expose it to:
+    // domains/parent/Target.jsm
     this.targets = targets;
+
+    // When a new connection is made to this target,
+    // we will instantiate a new session based on this given class.
+    // The session class is specific to each target's kind and is passed
+    // by the inheriting class.
     this.sessionClass = sessionClass;
-    this.sessions = new Map();
+
+    // There can be more than one connection if multiple clients connect to the remote agent.
+    this.connections = new Set();
+    this.id = UUIDGen.generateUUID()
+      .toString()
+      .slice(1, -1);
   }
 
   /**
-   * Close all pending connections to this target.
+   * Close all active connections made to this target.
    */
-  disconnect() {
-    for (const [conn] of this.sessions) {
+  destructor() {
+    for (const conn of this.connections) {
       conn.close();
     }
   }
@@ -42,10 +58,12 @@ class Target {
   // nsIHttpRequestHandler
 
   async handle(request, response) {
-    const so = await WebSocketServer.upgrade(request, response);
-    const transport = new WebSocketDebuggerTransport(so);
+    const so = await WebSocketHandshake.upgrade(request, response);
+    const transport = new WebSocketTransport(so);
     const conn = new Connection(transport, response._connection);
-    this.sessions.set(conn, new this.sessionClass(conn, this));
+    const session = new this.sessionClass(conn, this);
+    conn.registerSession(session);
+    this.connections.add(conn);
   }
 
   // XPCOM

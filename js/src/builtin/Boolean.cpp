@@ -27,20 +27,32 @@
 
 using namespace js;
 
-const Class BooleanObject::class_ = {
+const JSClass BooleanObject::class_ = {
     "Boolean",
-    JSCLASS_HAS_RESERVED_SLOTS(1) | JSCLASS_HAS_CACHED_PROTO(JSProto_Boolean)};
+    JSCLASS_HAS_RESERVED_SLOTS(1) | JSCLASS_HAS_CACHED_PROTO(JSProto_Boolean),
+    JS_NULL_CLASS_OPS, &BooleanObject::classSpec_};
 
 MOZ_ALWAYS_INLINE bool IsBoolean(HandleValue v) {
   return v.isBoolean() || (v.isObject() && v.toObject().is<BooleanObject>());
 }
 
-MOZ_ALWAYS_INLINE bool bool_toSource_impl(JSContext* cx, const CallArgs& args) {
-  HandleValue thisv = args.thisv();
-  MOZ_ASSERT(IsBoolean(thisv));
+// ES2020 draft rev ecb4178012d6b4d9abc13fcbd45f5c6394b832ce
+// 19.4.3 Properties of the Boolean Prototype Object,  thisBooleanValue.
+static MOZ_ALWAYS_INLINE bool ThisBooleanValue(HandleValue val) {
+  // Step 3, the error case, is handled by CallNonGenericMethod.
+  MOZ_ASSERT(IsBoolean(val));
 
-  bool b = thisv.isBoolean() ? thisv.toBoolean()
-                             : thisv.toObject().as<BooleanObject>().unbox();
+  // Step 1.
+  if (val.isBoolean()) {
+    return val.toBoolean();
+  }
+
+  // Step 2.
+  return val.toObject().as<BooleanObject>().unbox();
+}
+
+MOZ_ALWAYS_INLINE bool bool_toSource_impl(JSContext* cx, const CallArgs& args) {
+  bool b = ThisBooleanValue(args.thisv());
 
   JSStringBuilder sb(cx);
   if (!sb.append("(new Boolean(") || !BooleanToStringBuffer(b, sb) ||
@@ -61,12 +73,13 @@ static bool bool_toSource(JSContext* cx, unsigned argc, Value* vp) {
   return CallNonGenericMethod<IsBoolean, bool_toSource_impl>(cx, args);
 }
 
+// ES2020 draft rev ecb4178012d6b4d9abc13fcbd45f5c6394b832ce
+// 19.3.3.2 Boolean.prototype.toString ( )
 MOZ_ALWAYS_INLINE bool bool_toString_impl(JSContext* cx, const CallArgs& args) {
-  HandleValue thisv = args.thisv();
-  MOZ_ASSERT(IsBoolean(thisv));
+  // Step 1.
+  bool b = ThisBooleanValue(args.thisv());
 
-  bool b = thisv.isBoolean() ? thisv.toBoolean()
-                             : thisv.toObject().as<BooleanObject>().unbox();
+  // Step 2.
   args.rval().setString(BooleanToString(cx, b));
   return true;
 }
@@ -76,13 +89,11 @@ static bool bool_toString(JSContext* cx, unsigned argc, Value* vp) {
   return CallNonGenericMethod<IsBoolean, bool_toString_impl>(cx, args);
 }
 
+// ES2020 draft rev ecb4178012d6b4d9abc13fcbd45f5c6394b832ce
+// 19.3.3.3 Boolean.prototype.valueOf ( )
 MOZ_ALWAYS_INLINE bool bool_valueOf_impl(JSContext* cx, const CallArgs& args) {
-  HandleValue thisv = args.thisv();
-  MOZ_ASSERT(IsBoolean(thisv));
-
-  bool b = thisv.isBoolean() ? thisv.toBoolean()
-                             : thisv.toObject().as<BooleanObject>().unbox();
-  args.rval().setBoolean(b);
+  // Step 1.
+  args.rval().setBoolean(ThisBooleanValue(args.thisv()));
   return true;
 }
 
@@ -96,12 +107,16 @@ static const JSFunctionSpec boolean_methods[] = {
     JS_FN(js_toString_str, bool_toString, 0, 0),
     JS_FN(js_valueOf_str, bool_valueOf, 0, 0), JS_FS_END};
 
+// ES2020 draft rev ecb4178012d6b4d9abc13fcbd45f5c6394b832ce
+// 19.3.1.1 Boolean ( value )
 static bool Boolean(JSContext* cx, unsigned argc, Value* vp) {
   CallArgs args = CallArgsFromVp(argc, vp);
 
+  // Step 1.
   bool b = args.length() != 0 ? JS::ToBoolean(args[0]) : false;
 
   if (args.isConstructing()) {
+    // Steps 3-4.
     RootedObject proto(cx);
     if (!GetPrototypeFromBuiltinConstructor(cx, args, JSProto_Boolean,
                                             &proto)) {
@@ -112,47 +127,37 @@ static bool Boolean(JSContext* cx, unsigned argc, Value* vp) {
     if (!obj) {
       return false;
     }
+
+    // Step 5.
     args.rval().setObject(*obj);
   } else {
+    // Step 2.
     args.rval().setBoolean(b);
   }
   return true;
 }
 
-JSObject* js::InitBooleanClass(JSContext* cx, Handle<GlobalObject*> global) {
-  Rooted<BooleanObject*> booleanProto(
-      cx, GlobalObject::createBlankPrototype<BooleanObject>(cx, global));
+JSObject* BooleanObject::createPrototype(JSContext* cx, JSProtoKey key) {
+  BooleanObject* booleanProto =
+      GlobalObject::createBlankPrototype<BooleanObject>(cx, cx->global());
   if (!booleanProto) {
     return nullptr;
   }
   booleanProto->setFixedSlot(BooleanObject::PRIMITIVE_VALUE_SLOT,
                              BooleanValue(false));
-
-  RootedFunction ctor(cx, GlobalObject::createConstructor(
-                              cx, Boolean, cx->names().Boolean, 1,
-                              gc::AllocKind::FUNCTION, &jit::JitInfo_Boolean));
-  if (!ctor) {
-    return nullptr;
-  }
-
-  if (!LinkConstructorAndPrototype(cx, ctor, booleanProto)) {
-    return nullptr;
-  }
-
-  if (!DefinePropertiesAndFunctions(cx, booleanProto, nullptr,
-                                    boolean_methods)) {
-    return nullptr;
-  }
-
-  if (!GlobalObject::initBuiltinConstructor(cx, global, JSProto_Boolean, ctor,
-                                            booleanProto)) {
-    return nullptr;
-  }
-
   return booleanProto;
 }
 
-JSString* js::BooleanToString(JSContext* cx, bool b) {
+const ClassSpec BooleanObject::classSpec_ = {
+    GenericCreateConstructor<Boolean, 1, gc::AllocKind::FUNCTION,
+                             &jit::JitInfo_Boolean>,
+    BooleanObject::createPrototype,
+    nullptr,
+    nullptr,
+    boolean_methods,
+    nullptr};
+
+PropertyName* js::BooleanToString(JSContext* cx, bool b) {
   return b ? cx->names().true_ : cx->names().false_;
 }
 

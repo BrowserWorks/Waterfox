@@ -17,18 +17,14 @@
 #include "WMFAudioMFTManager.h"
 #include "WMFMediaDataDecoder.h"
 #include "WMFVideoMFTManager.h"
-#include "gfxPrefs.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/StaticMutex.h"
-#include "mozilla/StaticPrefs.h"
+#include "mozilla/StaticPrefs_media.h"
 #include "mozilla/WindowsVersion.h"
 #include "mozilla/gfx/gfxVars.h"
 #include "mozilla/mscom/EnsureMTA.h"
-#include "nsAutoPtr.h"
 #include "nsComponentManagerUtils.h"
-#include "nsIGfxInfo.h"
-#include "nsIWindowsRegKey.h"
 #include "nsIXULRuntime.h"
 #include "nsServiceManagerUtils.h"
 #include "nsWindowsHelpers.h"
@@ -75,7 +71,7 @@ void WMFDecoderModule::Init() {
     // If we're in the content process and the UseGPUDecoder pref is set, it
     // means that we've given up on the GPU process (it's been crashing) so we
     // should disable DXVA
-    sDXVAEnabled = !StaticPrefs::MediaGpuProcessDecoder();
+    sDXVAEnabled = !StaticPrefs::media_gpu_process_decoder();
     // We need to test for VPX in the content process as the GPUDecoderModule
     // directly calls WMFDecoderModule::Supports in the content process.
     // This unnecessary requirement will be fixed in bug 1534815.
@@ -90,7 +86,7 @@ void WMFDecoderModule::Init() {
 
   sDXVAEnabled = sDXVAEnabled && gfx::gfxVars::CanUseHardwareVideoDecoding();
   testForVPx = testForVPx && gfx::gfxVars::CanUseHardwareVideoDecoding();
-  if (testForVPx && gfxPrefs::MediaWmfVp9Enabled()) {
+  if (testForVPx && StaticPrefs::media_wmf_vp9_enabled_AtStartup()) {
     gfx::WMFVPXVideoCrashGuard guard;
     if (!guard.Crashed()) {
       sUsableVPXMFT = CanCreateMFTDecoder(CLSID_WebmMfVpxDec);
@@ -126,7 +122,7 @@ already_AddRefed<MediaDataDecoder> WMFDecoderModule::CreateVideoDecoder(
     return nullptr;
   }
 
-  nsAutoPtr<WMFVideoMFTManager> manager(new WMFVideoMFTManager(
+  UniquePtr<WMFVideoMFTManager> manager(new WMFVideoMFTManager(
       aParams.VideoConfig(), aParams.mKnowsCompositor, aParams.mImageContainer,
       aParams.mRate.mValue, aParams.mOptions, sDXVAEnabled));
 
@@ -139,14 +135,14 @@ already_AddRefed<MediaDataDecoder> WMFDecoderModule::CreateVideoDecoder(
   }
 
   RefPtr<MediaDataDecoder> decoder =
-      new WMFMediaDataDecoder(manager.forget(), aParams.mTaskQueue);
+      new WMFMediaDataDecoder(manager.release(), aParams.mTaskQueue);
 
   return decoder.forget();
 }
 
 already_AddRefed<MediaDataDecoder> WMFDecoderModule::CreateAudioDecoder(
     const CreateDecoderParams& aParams) {
-  nsAutoPtr<WMFAudioMFTManager> manager(
+  UniquePtr<WMFAudioMFTManager> manager(
       new WMFAudioMFTManager(aParams.AudioConfig()));
 
   if (!manager->Init()) {
@@ -154,7 +150,7 @@ already_AddRefed<MediaDataDecoder> WMFDecoderModule::CreateAudioDecoder(
   }
 
   RefPtr<MediaDataDecoder> decoder =
-      new WMFMediaDataDecoder(manager.forget(), aParams.mTaskQueue);
+      new WMFMediaDataDecoder(manager.release(), aParams.mTaskQueue);
   return decoder.forget();
 }
 

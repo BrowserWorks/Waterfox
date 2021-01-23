@@ -7,6 +7,7 @@ Transform the beetmover-push-to-release task into a task description.
 
 from __future__ import absolute_import, print_function, unicode_literals
 
+from six import text_type
 from taskgraph.transforms.base import TransformSequence
 from taskgraph.util.schema import (
     Schema,
@@ -14,23 +15,22 @@ from taskgraph.util.schema import (
 )
 from taskgraph.util.scriptworker import (
     get_beetmover_bucket_scope, add_scope_prefix,
-    get_worker_type_for_scope,
 )
 from taskgraph.transforms.task import task_description_schema
 from voluptuous import Required, Optional
 
 
 beetmover_push_to_release_description_schema = Schema({
-    Required('name'): basestring,
-    Required('product'): basestring,
-    Required('treeherder-platform'): basestring,
-    Optional('attributes'): {basestring: object},
+    Required('name'): text_type,
+    Required('product'): text_type,
+    Required('treeherder-platform'): text_type,
+    Optional('attributes'): {text_type: object},
     Optional('job-from'): task_description_schema['job-from'],
-    Optional('run'): {basestring: object},
+    Optional('run'): {text_type: object},
     Optional('run-on-projects'): task_description_schema['run-on-projects'],
-    Optional('dependencies'): {basestring: taskref_or_string},
-    Optional('index'): {basestring: basestring},
-    Optional('routes'): [basestring],
+    Optional('dependencies'): {text_type: taskref_or_string},
+    Optional('index'): {text_type: text_type},
+    Optional('routes'): [text_type],
     Required('shipping-phase'): task_description_schema['shipping-phase'],
     Required('shipping-product'): task_description_schema['shipping-product'],
     Optional('extra'): task_description_schema['extra'],
@@ -57,15 +57,13 @@ def make_beetmover_push_to_release_description(config, jobs):
             )
         )
 
-        bucket_scope = get_beetmover_bucket_scope(
-            config, job_release_type=job.get('attributes', {}).get('release-type')
-        )
+        bucket_scope = get_beetmover_bucket_scope(config)
         action_scope = add_scope_prefix(config, 'beetmover:action:push-to-releases')
 
         task = {
             'label': label,
             'description': description,
-            'worker-type': get_worker_type_for_scope(config, bucket_scope),
+            'worker-type': 'beetmover',
             'scopes': [bucket_scope, action_scope],
             'product': job['product'],
             'dependencies': job['dependencies'],

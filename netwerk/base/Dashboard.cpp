@@ -14,7 +14,6 @@
 #include "nsIInputStream.h"
 #include "nsINamed.h"
 #include "nsISocketTransport.h"
-#include "nsIThread.h"
 #include "nsProxyRelease.h"
 #include "nsSocketTransportService2.h"
 #include "nsThreadUtils.h"
@@ -120,8 +119,7 @@ class ConnectionData : public nsITransportEventSink,
   void StartTimer(uint32_t aTimeout);
   void StopTimer();
 
-  explicit ConnectionData(Dashboard* target)
-      : mPort(0), mProtocol(nullptr), mTimeout(0) {
+  explicit ConnectionData(Dashboard* target) : mPort(0), mTimeout(0) {
     mEventTarget = nullptr;
     mDashboard = target;
   }
@@ -135,7 +133,7 @@ class ConnectionData : public nsITransportEventSink,
 
   nsCString mHost;
   uint32_t mPort;
-  const char* mProtocol;
+  nsCString mProtocol;
   uint32_t mTimeout;
 
   nsString mStatus;
@@ -266,13 +264,6 @@ LookupHelper::OnLookupComplete(nsICancelable* aRequest, nsIDNSRecord* aRecord,
                              &LookupHelper::ConstructAnswer, arg),
                          NS_DISPATCH_NORMAL);
 
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-LookupHelper::OnLookupByTypeComplete(nsICancelable* aRequest,
-                                     nsIDNSByTypeRecord* aRes,
-                                     nsresult aStatus) {
   return NS_OK;
 }
 
@@ -433,7 +424,7 @@ nsresult Dashboard::GetHttpConnections(HttpData* aHttpData) {
 
     CopyASCIItoUTF16(httpData->mData[i].host, connection.mHost);
     connection.mPort = httpData->mData[i].port;
-    connection.mSpdy = httpData->mData[i].spdy;
+    CopyASCIItoUTF16(httpData->mData[i].httpVersion, connection.mHttpVersion);
     connection.mSsl = httpData->mData[i].ssl;
 
     connection.mActive.Construct();
@@ -502,9 +493,9 @@ Dashboard::AddHost(const nsACString& aHost, uint32_t aSerial, bool aEncrypted) {
     if (mWs.data.Contains(mData)) {
       return NS_OK;
     }
-    if (!mWs.data.AppendElement(mData)) {
-      return NS_ERROR_OUT_OF_MEMORY;
-    }
+    // XXX(Bug 1631371) Check if this should use a fallible operation as it
+    // pretended earlier.
+    mWs.data.AppendElement(mData);
     return NS_OK;
   }
   return NS_ERROR_FAILURE;
@@ -679,6 +670,9 @@ nsresult Dashboard::GetDNSCacheEntries(DnsData* dnsData) {
     } else {
       entry.mFamily.AssignLiteral(u"ipv4");
     }
+
+    entry.mOriginAttributesSuffix =
+        NS_ConvertUTF8toUTF16(dnsData->mData[i].originAttributesSuffix);
   }
 
   JS::RootedValue val(cx);
@@ -768,7 +762,7 @@ nsresult Dashboard::GetRcwnData(RcwnData* aData) {
   return NS_OK;
 }
 
-void HttpConnInfo::SetHTTP1ProtocolVersion(HttpVersion pv) {
+void HttpConnInfo::SetHTTPProtocolVersion(HttpVersion pv) {
   switch (pv) {
     case HttpVersion::v0_9:
       protocolVersion.AssignLiteral(u"http/0.9");
@@ -780,16 +774,14 @@ void HttpConnInfo::SetHTTP1ProtocolVersion(HttpVersion pv) {
       protocolVersion.AssignLiteral(u"http/1.1");
       break;
     case HttpVersion::v2_0:
-      protocolVersion.AssignLiteral(u"http/2.0");
+      protocolVersion.AssignLiteral(u"http/2");
+      break;
+    case HttpVersion::v3_0:
+      protocolVersion.AssignLiteral(u"http/3");
       break;
     default:
       protocolVersion.AssignLiteral(u"unknown protocol version");
   }
-}
-
-void HttpConnInfo::SetHTTP2ProtocolVersion(SpdyVersion pv) {
-  MOZ_ASSERT(pv == SpdyVersion::HTTP_2);
-  protocolVersion.AssignLiteral(u"h2");
 }
 
 NS_IMETHODIMP
@@ -854,16 +846,15 @@ nsresult Dashboard::TestNewConnection(ConnectionData* aConnectionData) {
     return NS_ERROR_UNKNOWN_HOST;
   }
 
-  if (connectionData->mProtocol &&
-      NS_LITERAL_STRING("ssl").EqualsASCII(connectionData->mProtocol)) {
+  if (connectionData->mProtocol.EqualsLiteral("ssl")) {
+    AutoTArray<nsCString, 1> socketTypes = {connectionData->mProtocol};
     rv = gSocketTransportService->CreateTransport(
-        &connectionData->mProtocol, 1, connectionData->mHost,
-        connectionData->mPort, nullptr,
+        socketTypes, connectionData->mHost, connectionData->mPort, nullptr,
         getter_AddRefs(connectionData->mSocket));
   } else {
     rv = gSocketTransportService->CreateTransport(
-        nullptr, 0, connectionData->mHost, connectionData->mPort, nullptr,
-        getter_AddRefs(connectionData->mSocket));
+        nsTArray<nsCString>(), connectionData->mHost, connectionData->mPort,
+        nullptr, getter_AddRefs(connectionData->mSocket));
   }
   if (NS_FAILED(rv)) {
     return rv;

@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Account manager window for Instantbird -->
+<!ENTITY accounts.title                      "„&brandShortName;“ paskyros">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "Tikralaikių pokalbių būsena">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "Nauja paskyra">
+<!ENTITY accountManager.newAccount.accesskey "N">
+<!ENTITY accountManager.close.label          "Užverti">
+<!ENTITY accountManager.close.accesskey      "U">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "Dar nėra sukurtų paskyrų">
+<!ENTITY accountManager.noAccount.description "Paspauskite mygtuką „&accountManager.newAccount.label;“, ir „&brandShortName;“ padės jums susikurti naują paskyrą.">
+<!ENTITY account.autoSignOn.label     "Prisijungti paleidžiant programą">
+<!ENTITY account.autoSignOn.accesskey "p">
+<!ENTITY account.connect.label        "Prisijungti">
+<!ENTITY account.connect.accesskey    "j">
+<!ENTITY account.disconnect.label     "Atsijungti">
+<!ENTITY account.disconnect.accesskey "j">
+<!ENTITY account.delete.label         "Šalinti">
+<!ENTITY account.delete.accesskey     "Š">
+<!ENTITY account.edit.label           "Savybės">
+<!ENTITY account.edit.accesskey       "S">
+<!ENTITY account.moveup.label         "Pakelti aukščiau">
+<!ENTITY account.movedown.label       "Nuleisti žemiau">
+<!ENTITY account.cancelReconnection.label         "Nutraukti bandymą prisijungti">
+<!ENTITY account.cancelReconnection.accesskey     "t">
+<!ENTITY account.copyDebugLog.label     "Kopijuoti derinimo žurnalą">
+<!ENTITY account.copyDebugLog.accesskey "K">
+<!ENTITY account.showDebugLog.label     "Rodyti derinimo žurnalą">
+<!ENTITY account.showDebugLog.accesskey "R">
+<!ENTITY account.connecting           "Jungiamasi…">
+<!ENTITY account.disconnecting        "Atsijungiama…">
+<!ENTITY account.disconnected         "Neprisijungta">

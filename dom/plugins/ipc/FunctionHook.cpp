@@ -91,7 +91,7 @@ template <>
 ShouldHookFunc* const GetWindowInfoFH::mShouldHook =
     &CheckQuirks<QUIRK_FLASH_HOOK_GETWINDOWINFO>;
 
-static const wchar_t* kMozillaWindowClass = L"MozillaWindowClass";
+static const wchar_t* kWaterfoxWindowClass = L"WaterfoxWindowClass";
 static HWND sBrowserHwnd = nullptr;
 
 BOOL WINAPI GetWindowInfoHook(HWND hWnd, PWINDOWINFO pwi) {
@@ -114,7 +114,7 @@ BOOL WINAPI GetWindowInfoHook(HWND hWnd, PWINDOWINFO pwi) {
     // value less than the buffer's length.
     int nameLen = GetClassNameW(hWnd, szClass, ArrayLength(szClass));
     if ((nameLen < (int)ArrayLength(szClass)) &&
-        !wcscmp(szClass, kMozillaWindowClass)) {
+        !wcscmp(szClass, kWaterfoxWindowClass)) {
       sBrowserHwnd = hWnd;
     }
   }

@@ -96,6 +96,10 @@ nsresult GetOrigin(nsPIDOMWindowInner* aParent,
     return NS_ERROR_FAILURE;
   }
 
+  if (principal->GetIsIpAddress()) {
+    return NS_ERROR_DOM_SECURITY_ERR;
+  }
+
   if (aOrigin.EqualsLiteral("null")) {
     // 4.1.1.3 If callerOrigin is an opaque origin, reject promise with a
     // DOMException whose name is "NotAllowedError", and terminate this
@@ -106,7 +110,8 @@ nsresult GetOrigin(nsPIDOMWindowInner* aParent,
   }
 
   nsCOMPtr<nsIURI> originUri;
-  if (NS_FAILED(principal->GetURI(getter_AddRefs(originUri)))) {
+  auto* basePrin = BasePrincipal::Cast(principal);
+  if (NS_FAILED(basePrin->GetURI(getter_AddRefs(originUri)))) {
     return NS_ERROR_FAILURE;
   }
   if (NS_FAILED(originUri->GetAsciiHost(aHost))) {
@@ -124,8 +129,10 @@ nsresult RelaxSameOrigin(nsPIDOMWindowInner* aParent,
   MOZ_ASSERT(doc);
 
   nsCOMPtr<nsIPrincipal> principal = doc->NodePrincipal();
+  auto* basePrin = BasePrincipal::Cast(principal);
   nsCOMPtr<nsIURI> uri;
-  if (NS_FAILED(principal->GetURI(getter_AddRefs(uri)))) {
+
+  if (NS_FAILED(basePrin->GetURI(getter_AddRefs(uri)))) {
     return NS_ERROR_FAILURE;
   }
   nsAutoCString originHost;
@@ -247,7 +254,7 @@ already_AddRefed<Promise> WebAuthnManager::MakeCredential(
   nsCString rpId;
   rv = GetOrigin(mParent, origin, rpId);
   if (NS_WARN_IF(rv.Failed())) {
-    promise->MaybeReject(rv);
+    promise->MaybeReject(std::move(rv));
     return promise.forget();
   }
 
@@ -258,7 +265,7 @@ already_AddRefed<Promise> WebAuthnManager::MakeCredential(
   CryptoBuffer userId;
   userId.Assign(aOptions.mUser.mId);
   if (userId.Length() > 64) {
-    promise->MaybeReject(NS_ERROR_DOM_TYPE_ERR);
+    promise->MaybeRejectWithTypeError("user.id is too long");
     return promise.forget();
   }
 
@@ -404,9 +411,15 @@ already_AddRefed<Promise> WebAuthnManager::MakeCredential(
   WebAuthnMakeCredentialExtraInfo extra(rpInfo, userInfo, coseAlgos, extensions,
                                         authSelection, attestation);
 
+  BrowsingContext* context = mParent->GetBrowsingContext();
+  if (!context) {
+    promise->MaybeReject(NS_ERROR_DOM_OPERATION_ERR);
+    return promise.forget();
+  }
+
   WebAuthnMakeCredentialInfo info(origin, NS_ConvertUTF8toUTF16(rpId),
                                   challenge, clientDataJSON, adjustedTimeout,
-                                  excludeList, Some(extra));
+                                  excludeList, Some(extra), context->Id());
 
 #ifdef OS_WIN
   if (!WinWebAuthnManager::AreWebAuthNApisAvailable()) {
@@ -466,7 +479,7 @@ already_AddRefed<Promise> WebAuthnManager::GetAssertion(
   nsCString rpId;
   rv = GetOrigin(mParent, origin, rpId);
   if (NS_WARN_IF(rv.Failed())) {
-    promise->MaybeReject(rv);
+    promise->MaybeReject(std::move(rv));
     return promise.forget();
   }
 
@@ -539,8 +552,7 @@ already_AddRefed<Promise> WebAuthnManager::GetAssertion(
           NS_ConvertUTF16toUTF8 cStr(str);
           int i = FindEnumStringIndexImpl(
               cStr.get(), cStr.Length(), AuthenticatorTransportValues::strings);
-          if (i < 0 ||
-              i >= static_cast<int>(AuthenticatorTransport::EndGuard_)) {
+          if (i < 0) {
             continue;  // Unknown enum
           }
           AuthenticatorTransport t = static_cast<AuthenticatorTransport>(i);
@@ -606,9 +618,15 @@ already_AddRefed<Promise> WebAuthnManager::GetAssertion(
 
   WebAuthnGetAssertionExtraInfo extra(extensions, aOptions.mUserVerification);
 
+  BrowsingContext* context = mParent->GetBrowsingContext();
+  if (!context) {
+    promise->MaybeReject(NS_ERROR_DOM_OPERATION_ERR);
+    return promise.forget();
+  }
+
   WebAuthnGetAssertionInfo info(origin, NS_ConvertUTF8toUTF16(rpId), challenge,
                                 clientDataJSON, adjustedTimeout, allowList,
-                                Some(extra));
+                                Some(extra), context->Id());
 
 #ifdef OS_WIN
   if (!WinWebAuthnManager::AreWebAuthNApisAvailable()) {

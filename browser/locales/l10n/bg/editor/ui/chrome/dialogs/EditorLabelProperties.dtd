@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Свойства на етикет">
+
+<!ENTITY Settings.label "Настройки">
+<!ENTITY Settings.accesskey "Н">
+
+<!ENTITY EditLabelText.label "Редактиране на текст:">
+<!ENTITY EditLabelText.accesskey "т">
+<!ENTITY LabelFor.label "За контрол:">
+<!ENTITY LabelFor.accesskey "к">
+<!ENTITY AccessKey.label "Клавиш за достъп:">
+<!ENTITY AccessKey.accesskey "д">
+
+<!ENTITY RemoveLabel.label "Премахване на етикет">
+<!ENTITY RemoveLabel.accesskey "П">

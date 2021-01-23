@@ -11,6 +11,7 @@
 
 const State = {
   BYTECHECK: -1,
+  PARSED: Ci.nsIServiceWorkerInfo.STATE_PARSED,
   INSTALLING: Ci.nsIServiceWorkerInfo.STATE_INSTALLING,
   INSTALLED: Ci.nsIServiceWorkerInfo.STATE_INSTALLED,
   ACTIVATING: Ci.nsIServiceWorkerInfo.STATE_ACTIVATING,
@@ -36,6 +37,10 @@ let expectedResults = [
     activatedTimeRecorded: false, redundantTimeRecorded: false
   },
   {
+    state: State.PARSED, installedTimeRecorded: false,
+    activatedTimeRecorded: false, redundantTimeRecorded: false
+  },
+  {
     state: State.INSTALLING, installedTimeRecorded: false,
     activatedTimeRecorded: false, redundantTimeRecorded: false
   },
@@ -56,13 +61,13 @@ let expectedResults = [
   {
     state: State.REDUNDANT, installedTimeRecorded: true,
     activatedTimeRecorded: true, redundantTimeRecorded: true
-  }
+  },
 ];
 
 function waitForRegister(aScope, aCallback) {
   return new Promise(function (aResolve) {
     let listener = {
-      onRegister: function (aRegistration) {
+      onRegister (aRegistration) {
         if (aRegistration.scope !== aScope) {
           return;
         }
@@ -78,7 +83,7 @@ function waitForRegister(aScope, aCallback) {
 function waitForUnregister(aScope) {
   return new Promise(function (aResolve) {
     let listener = {
-      onUnregister: function (aRegistration) {
+      onUnregister (aRegistration) {
         if (aRegistration.scope !== aScope) {
           return;
         }
@@ -113,7 +118,8 @@ function verifyServiceWorkTime(aSWRInfo, resolve) {
   info("Check the ServiceWorker time in its state is " + expectedResult.state);
 
   // Get serviceWorkerInfo from swrInfo or get the astray one which we hold.
-  let swInfo = aSWRInfo.installingWorker ||
+  let swInfo = aSWRInfo.evaluatingWorker ||
+               aSWRInfo.installingWorker ||
                aSWRInfo.waitingWorker ||
                aSWRInfo.activeWorker ||
                astrayServiceWorkerInfo;

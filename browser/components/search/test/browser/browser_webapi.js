@@ -11,7 +11,7 @@ const brandBundle = Services.strings.createBundle(
 const brandName = brandBundle.GetStringFromName("brandShortName");
 
 function getString(key, ...params) {
-  return searchBundle.formatStringFromName(key, params, params.length);
+  return searchBundle.formatStringFromName(key, params);
 }
 
 function AddSearchProvider(...args) {
@@ -29,7 +29,7 @@ function promiseDialogOpened() {
 
         let win = xulWin.docShell.domWindow;
         waitForFocus(() => {
-          if (win.location == "chrome://global/content/commonDialog.xul") {
+          if (win.location == "chrome://global/content/commonDialog.xhtml") {
             resolve(win);
           } else {
             reject();
@@ -54,7 +54,7 @@ add_task(async function test_working() {
     getString("addEngineConfirmation", "Foo", "example.com"),
     "Should have seen the right install message"
   );
-  dialog.document.documentElement.cancelDialog();
+  dialog.document.getElementById("commonDialog").cancelDialog();
 
   gBrowser.removeCurrentTab();
 });
@@ -75,7 +75,7 @@ add_task(async function test_HTTP() {
     getString("addEngineConfirmation", "Foo", "example.com"),
     "Should have seen the right install message"
   );
-  dialog.document.documentElement.cancelDialog();
+  dialog.document.getElementById("commonDialog").cancelDialog();
 
   gBrowser.removeCurrentTab();
 });
@@ -94,7 +94,7 @@ add_task(async function test_relative() {
     getString("addEngineConfirmation", "Foo", "example.com"),
     "Should have seen the right install message"
   );
-  dialog.document.documentElement.cancelDialog();
+  dialog.document.getElementById("commonDialog").cancelDialog();
 
   gBrowser.removeCurrentTab();
 });
@@ -110,7 +110,7 @@ add_task(async function test_invalid() {
     getString("error_invalid_engine_msg2", brandName, url),
     "Should have seen the right error message"
   );
-  dialog.document.documentElement.acceptDialog();
+  dialog.document.getElementById("commonDialog").acceptDialog();
 
   gBrowser.removeCurrentTab();
 });
@@ -126,7 +126,7 @@ add_task(async function test_missing() {
     getString("error_loading_engine_msg2", brandName, url),
     "Should have seen the right error message"
   );
-  dialog.document.documentElement.acceptDialog();
+  dialog.document.getElementById("commonDialog").acceptDialog();
 
   gBrowser.removeCurrentTab();
 });
@@ -142,7 +142,7 @@ add_task(async function test_missing_namespace() {
     getString("error_invalid_engine_msg2", brandName, url),
     "Should have seen the right error message"
   );
-  dialog.document.documentElement.acceptDialog();
+  dialog.document.getElementById("commonDialog").acceptDialog();
 
   gBrowser.removeCurrentTab();
 });

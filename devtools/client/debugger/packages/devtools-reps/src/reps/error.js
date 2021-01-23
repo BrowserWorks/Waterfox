@@ -3,15 +3,15 @@
  * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
 
 // ReactJS
-const PropTypes = require("prop-types");
+const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
+const { span } = require("devtools/client/shared/vendor/react-dom-factories");
+
 // Utils
 const { getGripType, isGrip, wrapRender } = require("./rep-utils");
 const { cleanFunctionName } = require("./function");
 const { isLongString } = require("./string");
 const { MODE } = require("./constants");
 
-const dom = require("react-dom-factories");
-const { span } = dom;
 const IGNORED_SOURCE_URLS = ["debugger eval code"];
 
 /**
@@ -25,12 +25,33 @@ ErrorRep.propTypes = {
   renderStacktrace: PropTypes.func,
 };
 
+/**
+ * Render an Error object.
+ * The customFormat prop allows to print a simplified view of the object, with only the
+ * message and the stacktrace, e.g.:
+ *      Error: "blah"
+ *          <anonymous> debugger eval code:1
+ *
+ * The customFormat prop will only be taken into account if the mode isn't tiny and the
+ * depth is 0. This is because we don't want error in previews or in object to be
+ * displayed unlike other objects:
+ *      - Object { err: Error }
+ *      - ▼ {
+ *            err: Error: "blah"
+ *        }
+ */
 function ErrorRep(props) {
-  const object = props.object;
+  const { object, mode, depth } = props;
   const preview = object.preview;
+  const customFormat = props.customFormat && mode !== MODE.TINY && !depth;
 
   let name;
-  if (preview && preview.name && preview.kind) {
+  if (
+    preview &&
+    preview.name &&
+    typeof preview.name === "string" &&
+    preview.kind
+  ) {
     switch (preview.kind) {
       case "Error":
         name = preview.name;
@@ -45,15 +66,29 @@ function ErrorRep(props) {
     name = "Error";
   }
 
+  const errorTitle = mode === MODE.TINY ? name : `${name}: `;
   const content = [];
 
-  if (props.mode === MODE.TINY) {
-    content.push(name);
+  if (customFormat) {
+    content.push(errorTitle);
   } else {
-    content.push(`${name}: "${preview.message}"`);
+    content.push(span({ className: "objectTitle", key: "title" }, errorTitle));
   }
 
-  if (preview.stack && props.mode !== MODE.TINY) {
+  if (mode !== MODE.TINY) {
+    const { Rep } = require("./rep");
+    content.push(
+      Rep({
+        ...props,
+        key: "message",
+        object: preview.message,
+        mode: props.mode || MODE.TINY,
+        useQuotes: false,
+      })
+    );
+  }
+  const renderStack = preview.stack && customFormat;
+  if (renderStack) {
     const stacktrace = props.renderStacktrace
       ? props.renderStacktrace(parseStackString(preview.stack))
       : getStacktraceElements(props, preview);
@@ -63,9 +98,11 @@ function ErrorRep(props) {
   return span(
     {
       "data-link-actor-id": object.actor,
-      className: "objectBox-stackTrace",
+      className: `objectBox-stackTrace ${
+        customFormat ? "reps-custom-format" : ""
+      }`,
     },
-    content
+    ...content
   );
 }
 
@@ -163,14 +200,18 @@ function getStacktraceElements(props, preview) {
  *                  - {Number} lineNumber
  */
 function parseStackString(stack) {
-  const res = [];
   if (!stack) {
-    return res;
+    return [];
   }
 
   const isStacktraceALongString = isLongString(stack);
   const stackString = isStacktraceALongString ? stack.initial : stack;
 
+  if (typeof stackString !== "string") {
+    return [];
+  }
+
+  const res = [];
   stackString.split("\n").forEach((frame, index, frames) => {
     if (!frame) {
       // Skip any blank lines

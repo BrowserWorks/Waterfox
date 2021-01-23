@@ -1,6 +1,7 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+"use strict";
 
 const PR_RDONLY = 0x1;
 
@@ -71,10 +72,8 @@ function run_test() {
             "There should be no more data after the last line"
           );
         }
-      } else {
-        if (!more) {
-          err(test.file, lineNo, "There should be more data after this line");
-        }
+      } else if (!more) {
+        err(test.file, lineNo, "There should be more data after this line");
       }
       if (line.value != check) {
         err(

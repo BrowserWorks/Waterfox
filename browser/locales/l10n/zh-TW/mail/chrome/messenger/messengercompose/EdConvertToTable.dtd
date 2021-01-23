@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "轉換為表格">
+<!ENTITY instructions1.label   "編輯會從已選範圍的每段為一列來建立表格。">
+<!ENTITY instructions2.label   "選擇用來分欄的字元:">
+<!ENTITY commaRadio.label      "逗號">
+<!ENTITY spaceRadio.label      "空白">
+<!ENTITY otherRadio.label      "其它字元:">
+<!ENTITY deleteCharCheck.label "刪除分隔字元">
+<!ENTITY collapseSpaces.label  "忽略額外的空白">
+<!ENTITY collapseSpaces.tooltip "轉換臨近的空白為單一分隔字元">
+

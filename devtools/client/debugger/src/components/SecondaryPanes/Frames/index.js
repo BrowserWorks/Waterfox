@@ -29,19 +29,25 @@ import "./Frames.css";
 
 const NUM_FRAMES_SHOWN = 7;
 
+type OwnProps = {|
+  getFrameTitle?: string => string,
+  panel: "debugger" | "webconsole",
+|};
+
 type Props = {
   cx: ThreadContext,
   frames: Array<Frame>,
   frameworkGroupingOn: boolean,
   selectedFrame: Object,
   selectFrame: typeof actions.selectFrame,
+  selectLocation: typeof actions.selectLocation,
   toggleBlackBox: Function,
   toggleFrameworkGrouping: Function,
   disableFrameTruncate: boolean,
   disableContextMenu: boolean,
   displayFullUrl: boolean,
   getFrameTitle?: string => string,
-  selectable?: boolean,
+  panel: "debugger" | "webconsole",
 };
 
 type State = {
@@ -114,13 +120,14 @@ class Frames extends Component<Props, State> {
     const {
       cx,
       selectFrame,
+      selectLocation,
       selectedFrame,
       toggleBlackBox,
       frameworkGroupingOn,
       displayFullUrl,
       getFrameTitle,
       disableContextMenu,
-      selectable = false,
+      panel,
     } = this.props;
 
     const framesOrGroups = this.truncateFrames(this.collapseFrames(frames));
@@ -140,13 +147,14 @@ class Frames extends Component<Props, State> {
               copyStackTrace={this.copyStackTrace}
               frameworkGroupingOn={frameworkGroupingOn}
               selectFrame={selectFrame}
+              selectLocation={selectLocation}
               selectedFrame={selectedFrame}
               toggleBlackBox={toggleBlackBox}
               key={String(frameOrGroup.id)}
               displayFullUrl={displayFullUrl}
               getFrameTitle={getFrameTitle}
               disableContextMenu={disableContextMenu}
-              selectable={selectable}
+              panel={panel}
             />
           ) : (
             <Group
@@ -156,13 +164,14 @@ class Frames extends Component<Props, State> {
               copyStackTrace={this.copyStackTrace}
               frameworkGroupingOn={frameworkGroupingOn}
               selectFrame={selectFrame}
+              selectLocation={selectLocation}
               selectedFrame={selectedFrame}
               toggleBlackBox={toggleBlackBox}
               key={frameOrGroup[0].id}
               displayFullUrl={displayFullUrl}
               getFrameTitle={getFrameTitle}
               disableContextMenu={disableContextMenu}
-              selectable={selectable}
+              panel={panel}
             />
           )
         )}
@@ -219,19 +228,17 @@ const mapStateToProps = state => ({
   frames: getCallStackFrames(state),
   frameworkGroupingOn: getFrameworkGroupingState(state),
   selectedFrame: getSelectedFrame(state, getCurrentThread(state)),
+  disableFrameTruncate: false,
+  disableContextMenu: false,
+  displayFullUrl: false,
 });
 
-export default connect(
-  mapStateToProps,
-  {
-    selectFrame: actions.selectFrame,
-    toggleBlackBox: actions.toggleBlackBox,
-    toggleFrameworkGrouping: actions.toggleFrameworkGrouping,
-    disableFrameTruncate: false,
-    disableContextMenu: false,
-    displayFullUrl: false,
-  }
-)(Frames);
+export default connect<Props, OwnProps, _, _, _, _>(mapStateToProps, {
+  selectFrame: actions.selectFrame,
+  selectLocation: actions.selectLocation,
+  toggleBlackBox: actions.toggleBlackBox,
+  toggleFrameworkGrouping: actions.toggleFrameworkGrouping,
+})(Frames);
 
 // Export the non-connected component in order to use it outside of the debugger
 // panel (e.g. console, netmonitor, …).

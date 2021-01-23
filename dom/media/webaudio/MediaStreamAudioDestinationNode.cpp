@@ -8,10 +8,10 @@
 #include "mozilla/dom/Document.h"
 #include "mozilla/dom/MediaStreamAudioDestinationNodeBinding.h"
 #include "AudioNodeEngine.h"
-#include "AudioNodeStream.h"
+#include "AudioNodeTrack.h"
+#include "AudioStreamTrack.h"
 #include "DOMMediaStream.h"
-#include "MediaStreamTrack.h"
-#include "TrackUnionStream.h"
+#include "ForwardedInputTrack.h"
 
 namespace mozilla {
 namespace dom {
@@ -23,12 +23,21 @@ class AudioDestinationTrackSource final : public MediaStreamTrackSource {
                                            MediaStreamTrackSource)
 
   AudioDestinationTrackSource(MediaStreamAudioDestinationNode* aNode,
+                              mozilla::MediaTrack* aInputTrack,
+                              ProcessedMediaTrack* aTrack,
                               nsIPrincipal* aPrincipal)
-      : MediaStreamTrackSource(aPrincipal, nsString()), mNode(aNode) {}
+      : MediaStreamTrackSource(aPrincipal, nsString()),
+        mTrack(aTrack),
+        mPort(mTrack->AllocateInputPort(aInputTrack)),
+        mNode(aNode) {}
 
   void Destroy() override {
+    if (!mTrack->IsDestroyed()) {
+      mTrack->Destroy();
+      mPort->Destroy();
+    }
     if (mNode) {
-      mNode->DestroyMediaStream();
+      mNode->DestroyMediaTrack();
       mNode = nullptr;
     }
   }
@@ -42,6 +51,9 @@ class AudioDestinationTrackSource final : public MediaStreamTrackSource {
   void Disable() override {}
 
   void Enable() override {}
+
+  const RefPtr<ProcessedMediaTrack> mTrack;
+  const RefPtr<MediaInputPort> mPort;
 
  private:
   ~AudioDestinationTrackSource() = default;
@@ -69,8 +81,7 @@ MediaStreamAudioDestinationNode::MediaStreamAudioDestinationNode(
     AudioContext* aContext)
     : AudioNode(aContext, 2, ChannelCountMode::Explicit,
                 ChannelInterpretation::Speakers),
-      mDOMStream(DOMAudioNodeMediaStream::CreateTrackUnionStreamAsInput(
-          GetOwner(), this, aContext->Graph())) {
+      mDOMStream(MakeAndAddRef<DOMMediaStream>(GetOwner())) {
   // Ensure an audio track with the correct ID is exposed to JS. If we can't get
   // a principal here because the document is not available, pass in a null
   // principal. This happens in edge cases when the document is being unloaded
@@ -81,21 +92,15 @@ MediaStreamAudioDestinationNode::MediaStreamAudioDestinationNode(
     Document* doc = aContext->GetParentObject()->GetExtantDoc();
     principal = doc->NodePrincipal();
   }
-  RefPtr<MediaStreamTrackSource> source =
-      new AudioDestinationTrackSource(this, principal);
-  RefPtr<MediaStreamTrack> track = mDOMStream->CreateDOMTrack(
-      AudioNodeStream::AUDIO_TRACK, MediaSegment::AUDIO, source,
-      MediaTrackConstraints());
+  mTrack = AudioNodeTrack::Create(aContext, new AudioNodeEngine(this),
+                                  AudioNodeTrack::EXTERNAL_OUTPUT,
+                                  aContext->Graph());
+  auto source = MakeRefPtr<AudioDestinationTrackSource>(
+      this, mTrack,
+      aContext->Graph()->CreateForwardedInputTrack(MediaSegment::AUDIO),
+      principal);
+  auto track = MakeRefPtr<AudioStreamTrack>(GetOwner(), source->mTrack, source);
   mDOMStream->AddTrackInternal(track);
-
-  ProcessedMediaStream* outputStream =
-      mDOMStream->GetInputStream()->AsProcessedStream();
-  MOZ_ASSERT(!!outputStream);
-  AudioNodeEngine* engine = new AudioNodeEngine(this);
-  mStream = AudioNodeStream::Create(
-      aContext, engine, AudioNodeStream::EXTERNAL_OUTPUT, aContext->Graph());
-  mPort =
-      outputStream->AllocateInputPort(mStream, AudioNodeStream::AUDIO_TRACK);
 }
 
 /* static */
@@ -103,10 +108,9 @@ already_AddRefed<MediaStreamAudioDestinationNode>
 MediaStreamAudioDestinationNode::Create(AudioContext& aAudioContext,
                                         const AudioNodeOptions& aOptions,
                                         ErrorResult& aRv) {
-  if (aAudioContext.IsOffline()) {
-    aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
-    return nullptr;
-  }
+  // The spec has a pointless check here.  See
+  // https://github.com/WebAudio/web-audio-api/issues/2149
+  MOZ_RELEASE_ASSERT(!aAudioContext.IsOffline(), "Bindings messed up?");
 
   RefPtr<MediaStreamAudioDestinationNode> audioNode =
       new MediaStreamAudioDestinationNode(&aAudioContext);
@@ -124,7 +128,6 @@ size_t MediaStreamAudioDestinationNode::SizeOfExcludingThis(
   // Future:
   // - mDOMStream
   size_t amount = AudioNode::SizeOfExcludingThis(aMallocSizeOf);
-  amount += mPort->SizeOfIncludingThis(aMallocSizeOf);
   return amount;
 }
 
@@ -133,12 +136,8 @@ size_t MediaStreamAudioDestinationNode::SizeOfIncludingThis(
   return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
 }
 
-void MediaStreamAudioDestinationNode::DestroyMediaStream() {
-  AudioNode::DestroyMediaStream();
-  if (mPort) {
-    mPort->Destroy();
-    mPort = nullptr;
-  }
+void MediaStreamAudioDestinationNode::DestroyMediaTrack() {
+  AudioNode::DestroyMediaTrack();
 }
 
 JSObject* MediaStreamAudioDestinationNode::WrapObject(

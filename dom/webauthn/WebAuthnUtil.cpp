@@ -32,8 +32,7 @@ bool EvaluateAppID(nsPIDOMWindowInner* aParent, const nsString& aOrigin,
   }
 
   // If the facetId (origin) is not HTTPS, reject
-  bool facetIsHttps = false;
-  if (NS_FAILED(facetUri->SchemeIs("https", &facetIsHttps)) || !facetIsHttps) {
+  if (!facetUri->SchemeIs("https")) {
     return false;
   }
 
@@ -51,8 +50,7 @@ bool EvaluateAppID(nsPIDOMWindowInner* aParent, const nsString& aOrigin,
   }
 
   // if the appId URL is not HTTPS, reject.
-  bool appIdIsHttps = false;
-  if (NS_FAILED(appIdUri->SchemeIs("https", &appIdIsHttps)) || !appIdIsHttps) {
+  if (!appIdUri->SchemeIs("https")) {
     return false;
   }
 
@@ -152,10 +150,10 @@ nsresult AssembleAuthenticatorData(const CryptoBuffer& rpIdHashBuf,
     return NS_ERROR_INVALID_ARG;
   }
 
-  authDataBuf.AppendElements(rpIdHashBuf, mozilla::fallible);
-  authDataBuf.AppendElement(flags, mozilla::fallible);
-  authDataBuf.AppendElements(counterBuf, mozilla::fallible);
-  authDataBuf.AppendElements(attestationDataBuf, mozilla::fallible);
+  (void)authDataBuf.AppendElements(rpIdHashBuf, mozilla::fallible);
+  (void)authDataBuf.AppendElement(flags, mozilla::fallible);
+  (void)authDataBuf.AppendElements(counterBuf, mozilla::fallible);
+  (void)authDataBuf.AppendElements(attestationDataBuf, mozilla::fallible);
   return NS_OK;
 }
 
@@ -177,13 +175,13 @@ nsresult AssembleAttestationData(const CryptoBuffer& aaguidBuf,
     return NS_ERROR_INVALID_ARG;
   }
 
-  attestationDataBuf.AppendElements(aaguidBuf, mozilla::fallible);
-  attestationDataBuf.AppendElement((keyHandleBuf.Length() >> 8) & 0xFF,
-                                   mozilla::fallible);
-  attestationDataBuf.AppendElement((keyHandleBuf.Length() >> 0) & 0xFF,
-                                   mozilla::fallible);
-  attestationDataBuf.AppendElements(keyHandleBuf, mozilla::fallible);
-  attestationDataBuf.AppendElements(pubKeyObj, mozilla::fallible);
+  (void)attestationDataBuf.AppendElements(aaguidBuf, mozilla::fallible);
+  (void)attestationDataBuf.AppendElement((keyHandleBuf.Length() >> 8) & 0xFF,
+                                         mozilla::fallible);
+  (void)attestationDataBuf.AppendElement((keyHandleBuf.Length() >> 0) & 0xFF,
+                                         mozilla::fallible);
+  (void)attestationDataBuf.AppendElements(keyHandleBuf, mozilla::fallible);
+  (void)attestationDataBuf.AppendElements(pubKeyObj, mozilla::fallible);
   return NS_OK;
 }
 
@@ -209,7 +207,8 @@ nsresult AssembleAttestationObject(const CryptoBuffer& aRpIdHash,
   // FIDO U2F devices have no AAGUIDs, so they'll be all zeros until we add
   // support for CTAP2 devices.
   for (int i = 0; i < 16; i++) {
-    aaguidBuf.AppendElement(0x00, mozilla::fallible);
+    // SetCapacity was just called, these cannot fail.
+    (void)aaguidBuf.AppendElement(0x00, mozilla::fallible);
   }
 
   // During create credential, counter is always 0 for U2F
@@ -218,10 +217,11 @@ nsresult AssembleAttestationObject(const CryptoBuffer& aRpIdHash,
   if (NS_WARN_IF(!counterBuf.SetCapacity(4, mozilla::fallible))) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
-  counterBuf.AppendElement(0x00, mozilla::fallible);
-  counterBuf.AppendElement(0x00, mozilla::fallible);
-  counterBuf.AppendElement(0x00, mozilla::fallible);
-  counterBuf.AppendElement(0x00, mozilla::fallible);
+  // SetCapacity was just called, these cannot fail.
+  (void)counterBuf.AppendElement(0x00, mozilla::fallible);
+  (void)counterBuf.AppendElement(0x00, mozilla::fallible);
+  (void)counterBuf.AppendElement(0x00, mozilla::fallible);
+  (void)counterBuf.AppendElement(0x00, mozilla::fallible);
 
   // Construct the Attestation Data, which slots into the end of the
   // Authentication Data buffer.

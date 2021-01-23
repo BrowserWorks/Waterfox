@@ -3,6 +3,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from __future__ import absolute_import, print_function
+
 import os
 import signal
 import subprocess
@@ -25,7 +27,11 @@ def run_process(cmd):
 
 def run_mozlint(hooktype, args):
     # --quiet prevents warnings on eslint, it will be ignored by other linters
-    python = find_executable('python2.7') or find_executable('python')
+    python = find_executable('python3')
+    if not python:
+        print("error: Python 3 not detected on your system! Please install it.")
+        sys.exit(1)
+
     cmd = [python, os.path.join(topsrcdir, 'mach'), 'lint', '--quiet']
 
     if 'commit' in hooktype:

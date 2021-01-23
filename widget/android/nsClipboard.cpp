@@ -2,8 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "mozilla/java/ClipboardWrappers.h"
+#include "mozilla/java/GeckoAppShellWrappers.h"
 #include "nsClipboard.h"
-#include "FennecJNIWrappers.h"
 #include "nsISupportsPrimitives.h"
 #include "nsCOMPtr.h"
 #include "nsComponentManagerUtils.h"
@@ -63,12 +64,13 @@ nsClipboard::SetData(nsITransferable* aTransferable, nsIClipboardOwner* anOwner,
   }
 
   if (!html.IsEmpty() &&
-      java::Clipboard::SetHTML(GeckoAppShell::GetApplicationContext(), text,
-                               html)) {
+      java::Clipboard::SetHTML(java::GeckoAppShell::GetApplicationContext(),
+                               text, html)) {
     return NS_OK;
   }
   if (!text.IsEmpty() &&
-      java::Clipboard::SetText(GeckoAppShell::GetApplicationContext(), text)) {
+      java::Clipboard::SetText(java::GeckoAppShell::GetApplicationContext(),
+                               text)) {
     return NS_OK;
   }
 
@@ -89,8 +91,8 @@ nsClipboard::GetData(nsITransferable* aTransferable, int32_t aWhichClipboard) {
   for (auto& flavorStr : flavors) {
     if (flavorStr.EqualsLiteral(kUnicodeMime) ||
         flavorStr.EqualsLiteral(kHTMLMime)) {
-      auto text =
-          Clipboard::GetData(GeckoAppShell::GetApplicationContext(), flavorStr);
+      auto text = java::Clipboard::GetData(
+          java::GeckoAppShell::GetApplicationContext(), flavorStr);
       if (!text) {
         continue;
       }
@@ -126,7 +128,7 @@ nsClipboard::EmptyClipboard(int32_t aWhichClipboard) {
 }
 
 NS_IMETHODIMP
-nsClipboard::HasDataMatchingFlavors(const char** aFlavorList, uint32_t aLength,
+nsClipboard::HasDataMatchingFlavors(const nsTArray<nsCString>& aFlavorList,
                                     int32_t aWhichClipboard, bool* aHasText) {
   *aHasText = false;
   if (aWhichClipboard != kGlobalClipboard) return NS_ERROR_NOT_IMPLEMENTED;
@@ -135,10 +137,10 @@ nsClipboard::HasDataMatchingFlavors(const char** aFlavorList, uint32_t aLength,
     return NS_ERROR_NOT_AVAILABLE;
   }
 
-  for (uint32_t k = 0; k < aLength; k++) {
+  for (auto& flavor : aFlavorList) {
     bool hasData =
         java::Clipboard::HasData(java::GeckoAppShell::GetApplicationContext(),
-                                 NS_ConvertASCIItoUTF16(aFlavorList[k]));
+                                 NS_ConvertASCIItoUTF16(flavor));
     if (hasData) {
       *aHasText = true;
       return NS_OK;

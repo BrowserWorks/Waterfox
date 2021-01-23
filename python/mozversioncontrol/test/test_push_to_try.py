@@ -38,7 +38,8 @@ def test_push_to_try(repo, monkeypatch):
     else:
         expected = [
             (tool, 'cinnabar', '--version'),
-            (tool, 'commit', '--allow-empty', '-m', commit_message),
+            (tool, '-c', 'commit.gpgSign=false', 'commit', '--allow-empty',
+                   '-m', commit_message),
             (tool, 'push', 'hg::ssh://hg.mozilla.org/try',
                    '+HEAD:refs/heads/branches/default/tip'),
             (tool, 'reset', 'HEAD~'),
@@ -51,6 +52,9 @@ def test_push_to_try(repo, monkeypatch):
 
 
 def test_push_to_try_missing_extensions(repo, monkeypatch):
+    if repo.vcs != 'git':
+        return
+
     vcs = get_repository_object(repo.strpath)
 
     orig = vcs._run

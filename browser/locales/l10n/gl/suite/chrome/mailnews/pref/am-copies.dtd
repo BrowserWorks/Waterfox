@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!ENTITY copyAndFolderTitle.label "Copias e cartafoles">
+<!ENTITY sendingPrefix.label "Ao enviar as mensaxes:">
+<!ENTITY fccMailFolder.label "Gardar automaticamente unha copia en:">
+<!ENTITY fccMailFolder.accesskey "u">
+<!ENTITY fccReplyFollowsParent.label "Gardar as respostas no cartafol da mensaxe respondida">
+<!ENTITY fccReplyFollowsParent.accesskey "p">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Cc a estes enderezos de correo electrónico:">
+<!ENTITY ccAddress.accesskey "C">
+<!ENTITY ccAddressList.placeholder "Separar os enderezos con vírgulas">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Bcc para estes enderezos de correo:">
+<!ENTITY bccAddress.accesskey "B">
+<!ENTITY bccAddressList.placeholder "Separar os enderezos con vírgulas">
+<!ENTITY saveMessageDlg.label "Mostrar unha caixa de diálogo de confirmación ao gardar mensaxes">
+<!ENTITY saveMessageDlg.accesskey "M">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "Cartafol &quot;Enviados&quot; en:">
+<!ENTITY sentFolderOn.accesskey "s">
+<!ENTITY sentInOtherFolder.label "Outro cartafol:">
+<!ENTITY sentInOtherFolder.accesskey "O">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Arquivos de mensaxes">
+<!ENTITY keepArchives.label "Gardar arquivos de mensaxes en:">
+<!ENTITY keepArchives.accesskey "G">
+<!ENTITY archiveHierarchyButton.label "Opcións do arquivo…">
+<!ENTITY archiveHierarchyButton.accesskey "n">
+<!ENTITY archivesFolderOn.label "Cartafol &quot;Arquivos&quot; en:">
+<!ENTITY archivesFolderOn.accesskey "v">
+<!ENTITY archiveInOtherFolder.label "Outro cartafol:">
+<!ENTITY archiveInOtherFolder.accesskey "l">
+<!ENTITY specialFolders.label "Borradores e modelos">
+<!ENTITY keepDrafts.label "Gardar os borradores das mensaxes en:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "Cartafol &quot;Borradores&quot; en:">
+<!ENTITY draftsFolderOn.accesskey "d">
+<!ENTITY draftInOtherFolder.label "Outro cartafol:">
+<!ENTITY draftInOtherFolder.accesskey "t">
+<!ENTITY keepTemplates.label "Gardar os modelos das mensaxes en:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "Cartafol &quot;Modelos&quot; en:">
+<!ENTITY templatesFolderOn.accesskey "M">
+<!ENTITY templateInOtherFolder.label "Outro cartafol:">
+<!ENTITY templateInOtherFolder.accesskey "O">

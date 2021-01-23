@@ -7,19 +7,19 @@ DevTools has a client module that allows applications to be written that debug o
 In order to communicate, a client and a server instance must be created and a protocol connection must be established. The connection can be either over a TCP socket or an nsIPipe. The `start` function displayed below establishes an nsIPipe-backed connection:
 
 ```javascript
-Components.utils.import("resource://gre/modules/devtools/dbg-server.jsm");
-Components.utils.import("resource://gre/modules/devtools/dbg-client.jsm");
+const { DevToolsServer } = require("devtools/server/devtools-server");
+const { DevToolsClient } = require("devtools/client/devtools-client");
 
 function start() {
   // Start the server.
-  DebuggerServer.init();
-  DebuggerServer.registerAllActors();
+  DevToolsServer.init();
+  DevToolsServer.registerAllActors();
 
   // Listen to an nsIPipe
-  let transport = DebuggerServer.connectPipe();
+  let transport = DevToolsServer.connectPipe();
 
   // Start the client.
-  client = new DebuggerClient(transport);
+  client = new DevToolsClient(transport);
 
   client.connect((type, traits) => {
     // Now the client is connected to the server.
@@ -31,23 +31,23 @@ function start() {
 If a TCP socket is required, the function should be split in two parts, a server-side and a client-side, like this:
 
 ```javascript
-Components.utils.import("resource://gre/modules/devtools/dbg-server.jsm");
-Components.utils.import("resource://gre/modules/devtools/dbg-client.jsm");
+const { DevToolsServer } = require("devtools/server/devtools-server");
+const { DevToolsClient } = require("devtools/client/devtools-client");
 
 function startServer() {
   // Start the server.
-  DebuggerServer.init();
-  DebuggerServer.registerAllActors();
+  DevToolsServer.init();
+  DevToolsServer.registerAllActors();
 
   // For an nsIServerSocket we do this:
-  DebuggerServer.openListener(2929); // A connection on port 2929.
+  DevToolsServer.openListener(2929); // A connection on port 2929.
 }
 
 async function startClient() {
-  let transport = await DebuggerClient.socketConnect({ host: "localhost", port: 2929 });
+  let transport = await DevToolsClient.socketConnect({ host: "localhost", port: 2929 });
 
   // Start the client.
-  client = new DebuggerClient(transport);
+  client = new DevToolsClient(transport);
 
   client.connect((type, traits) => {
     // Now the client is connected to the server.
@@ -82,13 +82,13 @@ function attachToTab() {
       // Now the targetFront is ready and can be used.
 
       // Attach listeners for client events.
-      targetFront.addListener("tabNavigated", onTab);
+      targetFront.on("tabNavigated", onTab);
     });
   });
 }
 ```
 
-The debugger client will send event notifications for a number of events the application may be interested in. These events include state changes in the debugger, like pausing and resuming, stack frames or source scripts being ready for retrieval, etc.
+The devtools client will send event notifications for a number of events the application may be interested in. These events include state changes in the debugger, like pausing and resuming, stack frames or source scripts being ready for retrieval, etc.
 
 ## Handling location changes
 
@@ -113,18 +113,18 @@ Once the application is attached to a tab, it can attach to its thread in order 
 // Assuming the application is already attached to the tab, and response is the first
 // argument of the attachTarget callback.
 
-client.attachThread(response.threadActor).then(function([response, threadClient]) {
-  if (!threadClient) {
+client.attachThread(response.threadActor).then(function(threadFront) {
+  if (!threadFront) {
     return;
   }
 
   // Attach listeners for thread events.
-  threadClient.addListener("paused", onPause);
-  threadClient.addListener("resumed", fooListener);
-  threadClient.addListener("detached", fooListener);
+  threadFront.on("paused", onPause);
+  threadFront.on("resumed", fooListener);
+  threadFront.on("detached", fooListener);
 
   // Resume the thread.
-  threadClient.resume();
+  threadFront.resume();
 
   // Debugger is now ready and debuggee is running.
 });
@@ -137,28 +137,26 @@ Here is the source code for a complete debugger application:
 ```javascript
 /*
  * Debugger API demo.
- * Try it in Scratchpad with Environment -> Browser, using
- * http://htmlpad.org/debugger/ as the current page.
  */
-Components.utils.import("resource://gre/modules/devtools/dbg-server.jsm");
-Components.utils.import("resource://gre/modules/devtools/dbg-client.jsm");
+const { DevToolsServer } = require("devtools/server/devtools-server");
+const { DevToolsClient } = require("devtools/client/devtools-client");
 
 let client;
-let threadClient;
+let threadFront;
 
 function startDebugger() {
   // Start the server.
-  DebuggerServer.init();
-  DebuggerServer.registerAllActors();
+  DevToolsServer.init();
+  DevToolsServer.registerAllActors();
   // Listen to an nsIPipe
-  let transport = DebuggerServer.connectPipe();
+  let transport = DevToolsServer.connectPipe();
   // For an nsIServerSocket we do this:
-  // DebuggerServer.openListener(port);
+  // DevToolsServer.openListener(port);
   // ...and this at the client:
   // let transport = debuggerSocketConnect(host, port);
 
   // Start the client.
-  client = new DebuggerClient(transport);
+  client = new DevToolsClient(transport);
   client.connect((type, traits) => {
     // Now the client is connected to the server.
     debugTab();
@@ -180,14 +178,14 @@ function debugTab() {
     // Attach to the tab.
     targetFront.attach().then(() => {
       // Attach to the thread (context).
-      targetFront.attachThread().then(([response, threadClient]) => {
+      targetFront.attachThread().then((threadFront) => {
         // Attach listeners for thread events.
-        threadClient.addListener("paused", onPause);
-        threadClient.addListener("resumed", fooListener);
-        threadClient.addListener("detached", fooListener);
+        threadFront.on("paused", onPause);
+        threadFront.on("resumed", fooListener);
+        threadFront.on("detached", fooListener);
 
         // Resume the thread.
-        threadClient.resume();
+        threadFront.resume();
         // Debugger is now ready and debuggee is running.
       });
     });

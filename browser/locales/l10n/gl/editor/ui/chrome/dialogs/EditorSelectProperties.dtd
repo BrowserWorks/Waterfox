@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Propiedades da lista de selección">
+
+<!ENTITY Select.label "Lista de selección">
+<!ENTITY SelectName.label "Nome da lista:">
+<!ENTITY SelectName.accesskey "N">
+<!ENTITY SelectSize.label "Altura:">
+<!ENTITY SelectSize.accesskey "A">
+<!ENTITY SelectMultiple.label "Selección múltiple">
+<!ENTITY SelectMultiple.accesskey "m">
+<!ENTITY SelectDisabled.label "Desactivado">
+<!ENTITY SelectDisabled.accesskey "D">
+<!ENTITY SelectTabIndex.label "Índice de tabulación:">
+<!ENTITY SelectTabIndex.accesskey "i">
+
+<!ENTITY OptGroup.label "Grupo de opción">
+<!ENTITY OptGroupLabel.label "Etiqueta:">
+<!ENTITY OptGroupLabel.accesskey "E">
+<!ENTITY OptGroupDisabled.label "Desactivado">
+<!ENTITY OptGroupDisabled.accesskey "D">
+
+<!ENTITY Option.label "Opción">
+<!ENTITY OptionText.label "Texto:">
+<!ENTITY OptionText.accesskey "T">
+<!ENTITY OptionValue.label "Valor: ">
+<!ENTITY OptionValue.accesskey "V">
+<!ENTITY OptionSelected.label "Seleccionado inicialmente">
+<!ENTITY OptionSelected.accesskey "S">
+<!ENTITY OptionDisabled.label "Desactivado">
+<!ENTITY OptionDisabled.accesskey "D">
+
+<!ENTITY TextHeader.label "Texto">
+<!ENTITY ValueHeader.label "Valor">
+<!ENTITY SelectedHeader.label "Seleccionado">
+
+<!ENTITY AddOption.label "Engadir opción">
+<!ENTITY AddOption.accesskey "o">
+<!ENTITY AddOptGroup.label "Engadir grupo">
+<!ENTITY AddOptGroup.accesskey "g">
+<!ENTITY RemoveElement.label "Eliminar">
+<!ENTITY RemoveElement.accesskey "E">
+<!ENTITY MoveElementUp.label "Subir">
+<!ENTITY MoveElementUp.accesskey "b">
+<!ENTITY MoveElementDown.label "Baixar">
+<!ENTITY MoveElementDown.accesskey "x">

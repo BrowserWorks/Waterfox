@@ -19,7 +19,6 @@
 #include "js/UniquePtr.h"
 #include "js/Utility.h"
 
-struct JS_PUBLIC_API JSFreeOp;
 class JS_PUBLIC_API JSTracer;
 
 namespace js {
@@ -71,21 +70,12 @@ typedef enum JSGCParamKey {
   JSGC_MAX_BYTES = 0,
 
   /**
-   * Initial value for the malloc bytes threshold.
-   *
-   * Pref: javascript.options.mem.high_water_mark
-   * Default: TuningDefaults::MaxMallocBytes
-   */
-  JSGC_MAX_MALLOC_BYTES = 1,
-
-  /**
    * Maximum size of the generational GC nurseries.
    *
-   * This will be rounded to the nearest gc::ChunkSize.  The special value 0
-   * will disable generational GC.
+   * This will be rounded to the nearest gc::ChunkSize.
    *
    * Pref: javascript.options.mem.nursery.max_kb
-   * Default: JS::DefaultNurseryBytes
+   * Default: JS::DefaultNurseryMaxBytes
    */
   JSGC_MAX_NURSERY_BYTES = 2,
 
@@ -115,9 +105,9 @@ typedef enum JSGCParamKey {
    * Max milliseconds to spend in an incremental GC slice.
    *
    * Pref: javascript.options.mem.gc_incremental_slice_ms
-   * Default: DefaultTimeBudget.
+   * Default: DefaultTimeBudgetMS.
    */
-  JSGC_SLICE_TIME_BUDGET = 9,
+  JSGC_SLICE_TIME_BUDGET_MS = 9,
 
   /**
    * Maximum size the GC mark stack can grow to.
@@ -131,7 +121,7 @@ typedef enum JSGCParamKey {
    * The "do we collect?" decision depends on various parameters and can be
    * summarised as:
    *
-   *    ZoneSize * 1/UsageFactor > Max(ThresholdBase, LastSize) * GrowthFactor
+   *   ZoneSize > Max(ThresholdBase, LastSize) * GrowthFactor * ThresholdFactor
    *
    * Where
    *   ZoneSize: Current size of this zone.
@@ -140,13 +130,14 @@ typedef enum JSGCParamKey {
    *   GrowthFactor: A number above 1, calculated based on some of the
    *                 following parameters.
    *                 See computeZoneHeapGrowthFactorForHeapSize() in GC.cpp
-   *   UsageFactor: JSGC_ALLOCATION_THRESHOLD_FACTOR or
-   *                JSGC_ALLOCATION_THRESHOLD_FACTOR_AVOID_INTERRUPT or 1.0 for
-   *                non-incremental collections.
+   *   ThresholdFactor: 1.0 to trigger an incremental collections or between
+   *                    JSGC_SMALL_HEAP_INCREMENTAL_LIMIT and
+   *                    JSGC_LARGE_HEAP_INCREMENTAL_LIMIT to trigger a
+   *                    non-incremental collection.
    *
    * The RHS of the equation above is calculated and sets
-   * zone->threshold.gcTriggerBytes(). When usage.gcBytes() surpasses
-   * threshold.gcTriggerBytes() for a zone, the zone may be scheduled for a GC.
+   * zone->gcHeapThreshold.bytes(). When gcHeapSize.bytes() exeeds
+   * gcHeapThreshold.bytes() for a zone, the zone may be scheduled for a GC.
    */
 
   /**
@@ -159,61 +150,55 @@ typedef enum JSGCParamKey {
   JSGC_HIGH_FREQUENCY_TIME_LIMIT = 11,
 
   /**
-   * Start of dynamic heap growth (MB).
+   * Upper limit for classifying a heap as small (MB).
    *
-   * Pref: javascript.options.mem.gc_high_frequency_low_limit_mb
-   * Default: HighFrequencyLowLimitBytes
+   * Dynamic heap growth thresholds are based on whether the heap is small,
+   * medium or large. Heaps smaller than this size are classified as small;
+   * larger heaps are classified as medium or large.
+   *
+   * Pref: javascript.options.mem.gc_small_heap_size_max_mb
+   * Default: SmallHeapSizeMaxBytes
    */
-  JSGC_HIGH_FREQUENCY_LOW_LIMIT = 12,
+  JSGC_SMALL_HEAP_SIZE_MAX = 12,
 
   /**
-   * End of dynamic heap growth (MB).
+   * Lower limit for classifying a heap as large (MB).
    *
-   * Pref: javascript.options.mem.gc_high_frequency_high_limit_mb
-   * Default: HighFrequencyHighLimitBytes
+   * Dynamic heap growth thresholds are based on whether the heap is small,
+   * medium or large. Heaps larger than this size are classified as large;
+   * smaller heaps are classified as small or medium.
+   *
+   * Pref: javascript.options.mem.gc_large_heap_size_min_mb
+   * Default: LargeHeapSizeMinBytes
    */
-  JSGC_HIGH_FREQUENCY_HIGH_LIMIT = 13,
+  JSGC_LARGE_HEAP_SIZE_MIN = 13,
 
   /**
-   * Upper bound of heap growth percentage.
+   * Heap growth factor for small heaps in the high-frequency GC state.
    *
-   * Pref: javascript.options.mem.gc_high_frequency_heap_growth_max
-   * Default: HighFrequencyHeapGrowthMax
+   * Pref: javascript.options.mem.gc_high_frequency_small_heap_growth
+   * Default: HighFrequencySmallHeapGrowth
    */
-  JSGC_HIGH_FREQUENCY_HEAP_GROWTH_MAX = 14,
+  JSGC_HIGH_FREQUENCY_SMALL_HEAP_GROWTH = 14,
 
   /**
-   * Lower bound of heap growth percentage.
+   * Heap growth factor for large heaps in the high-frequency GC state.
    *
-   * Pref: javascript.options.mem.gc_high_frequency_heap_growth_min
-   * Default: HighFrequencyHeapGrowthMin
+   * Pref: javascript.options.mem.gc_high_frequency_large_heap_growth
+   * Default: HighFrequencyLargeHeapGrowth
    */
-  JSGC_HIGH_FREQUENCY_HEAP_GROWTH_MIN = 15,
+  JSGC_HIGH_FREQUENCY_LARGE_HEAP_GROWTH = 15,
 
   /**
-   * Heap growth percentage for low frequency GCs.
+   * Heap growth factor for low frequency GCs.
+   *
+   * This factor is applied regardless of the size of the heap when not in the
+   * high-frequency GC state.
    *
    * Pref: javascript.options.mem.gc_low_frequency_heap_growth
    * Default: LowFrequencyHeapGrowth
    */
   JSGC_LOW_FREQUENCY_HEAP_GROWTH = 16,
-
-  /**
-   * If false, the heap growth factor is fixed at 3. If true, it is determined
-   * based on whether GCs are high- or low- frequency.
-   *
-   * Pref: javascript.options.mem.gc_dynamic_heap_growth
-   * Default: DynamicHeapGrowthEnabled
-   */
-  JSGC_DYNAMIC_HEAP_GROWTH = 17,
-
-  /**
-   * If true, high-frequency GCs will use a longer mark slice.
-   *
-   * Pref: javascript.options.mem.gc_dynamic_mark_slice
-   * Default: DynamicMarkSliceEnabled
-   */
-  JSGC_DYNAMIC_MARK_SLICE = 18,
 
   /**
    * Lower limit for collecting a zone.
@@ -252,26 +237,26 @@ typedef enum JSGCParamKey {
   JSGC_COMPACTING_ENABLED = 23,
 
   /**
-   * Percentage for triggering a GC based on zone->threshold.gcTriggerBytes().
+   * Limit of how far over the incremental trigger threshold we allow the heap
+   * to grow before finishing a collection non-incrementally, for small heaps.
    *
-   * When the heap reaches this percentage of the allocation threshold an
-   * incremental collection is started.
+   * We trigger an incremental GC when a trigger threshold is reached but the
+   * collection may not be fast enough to keep up with the mutator. At some
+   * point we finish the collection non-incrementally.
    *
-   * Default: ZoneAllocThresholdFactorDefault
-   * Pref: None
+   * Default: SmallHeapIncrementalLimit
+   * Pref: javascript.options.mem.gc_small_heap_incremental_limit
    */
-  JSGC_ALLOCATION_THRESHOLD_FACTOR = 25,
+  JSGC_SMALL_HEAP_INCREMENTAL_LIMIT = 25,
 
   /**
-   * Percentage for triggering a GC based on zone->threshold.gcTriggerBytes().
+   * Limit of how far over the incremental trigger threshold we allow the heap
+   * to grow before finishing a collection non-incrementally, for large heaps.
    *
-   * Used instead of the above percentage if if another GC (in different zones)
-   * is already running.
-   *
-   * Default: ZoneAllocThresholdFactorAvoidInterruptDefault
-   * Pref: None
+   * Default: LargeHeapIncrementalLimit
+   * Pref: javascript.options.mem.gc_large_heap_incremental_limit
    */
-  JSGC_ALLOCATION_THRESHOLD_FACTOR_AVOID_INTERRUPT = 26,
+  JSGC_LARGE_HEAP_INCREMENTAL_LIMIT = 26,
 
   /**
    * Attempt to run a minor GC in the idle time if the free space falls
@@ -320,7 +305,7 @@ typedef enum JSGCParamKey {
    */
   JSGC_MIN_NURSERY_BYTES = 31,
 
-  /*
+  /**
    * The minimum time to allow between triggering last ditch GCs in seconds.
    *
    * Default: 60 seconds
@@ -328,13 +313,41 @@ typedef enum JSGCParamKey {
    */
   JSGC_MIN_LAST_DITCH_GC_PERIOD = 32,
 
-  /*
+  /**
    * The delay (in heapsize kilobytes) between slices of an incremental GC.
    *
    * Default: ZoneAllocDelayBytes
    */
   JSGC_ZONE_ALLOC_DELAY_KB = 33,
 
+  /*
+   * The current size of the nursery.
+   *
+   * read-only.
+   */
+  JSGC_NURSERY_BYTES = 34,
+
+  /**
+   * Retained size base value for calculating malloc heap threshold.
+   *
+   * Default: MallocThresholdBase
+   */
+  JSGC_MALLOC_THRESHOLD_BASE = 35,
+
+  /**
+   * Growth factor for calculating malloc heap threshold.
+   *
+   * Default: MallocGrowthFactor
+   */
+  JSGC_MALLOC_GROWTH_FACTOR = 36,
+
+  /**
+   * Whether incremental weakmap marking is enabled.
+   *
+   * Pref: javascript.options.mem.incremental_weakmap
+   * Default: IncrementalWeakMarkEnabled
+   */
+  JSGC_INCREMENTAL_WEAKMAP_ENABLED = 37,
 } JSGCParamKey;
 
 /*
@@ -344,8 +357,6 @@ typedef enum JSGCParamKey {
 typedef void (*JSTraceDataOp)(JSTracer* trc, void* data);
 
 typedef enum JSGCStatus { JSGC_BEGIN, JSGC_END } JSGCStatus;
-
-typedef void (*JSGCCallback)(JSContext* cx, JSGCStatus status, void* data);
 
 typedef void (*JSObjectsTenuredCallback)(JSContext* cx, void* data);
 
@@ -385,80 +396,105 @@ typedef void (*JSWeakPointerCompartmentCallback)(JSContext* cx,
                                                  JS::Compartment* comp,
                                                  void* data);
 
-/**
- * Finalizes external strings created by JS_NewExternalString. The finalizer
- * can be called off the main thread.
+/*
+ * This is called to tell the embedding that the FinalizationRegistry object
+ * |registry| has cleanup work, and that then engine should be called back at an
+ * appropriate later time to perform this cleanup.
+ *
+ * This callback must not do anything that could cause GC.
  */
-struct JSStringFinalizer {
-  void (*finalize)(const JSStringFinalizer* fin, char16_t* chars);
+using JSHostCleanupFinalizationRegistryCallback = void (*)(JSObject* registry,
+                                                           void* data);
+
+/**
+ * Each external string has a pointer to JSExternalStringCallbacks. Embedders
+ * can use this to implement custom finalization or memory reporting behavior.
+ */
+struct JSExternalStringCallbacks {
+  /**
+   * Finalizes external strings created by JS_NewExternalString. The finalizer
+   * can be called off the main thread.
+   */
+  virtual void finalize(char16_t* chars) const = 0;
+
+  /**
+   * Callback used by memory reporting to ask the embedder how much memory an
+   * external string is keeping alive.  The embedder is expected to return a
+   * value that corresponds to the size of the allocation that will be released
+   * by the finalizer callback above.
+   *
+   * Implementations of this callback MUST NOT do anything that can cause GC.
+   */
+  virtual size_t sizeOfBuffer(const char16_t* chars,
+                              mozilla::MallocSizeOf mallocSizeOf) const = 0;
 };
 
 namespace JS {
 
-#define GCREASONS(D)                       \
-  /* Reasons internal to the JS engine */  \
-  D(API, 0)                                \
-  D(EAGER_ALLOC_TRIGGER, 1)                \
-  D(DESTROY_RUNTIME, 2)                    \
-  D(ROOTS_REMOVED, 3)                      \
-  D(LAST_DITCH, 4)                         \
-  D(TOO_MUCH_MALLOC, 5)                    \
-  D(ALLOC_TRIGGER, 6)                      \
-  D(DEBUG_GC, 7)                           \
-  D(COMPARTMENT_REVIVED, 8)                \
-  D(RESET, 9)                              \
-  D(OUT_OF_NURSERY, 10)                    \
-  D(EVICT_NURSERY, 11)                     \
-  D(DELAYED_ATOMS_GC, 12)                  \
-  D(SHARED_MEMORY_LIMIT, 13)               \
-  D(IDLE_TIME_COLLECTION, 14)              \
-  D(INCREMENTAL_TOO_SLOW, 15)              \
-  D(ABORT_GC, 16)                          \
-  D(FULL_WHOLE_CELL_BUFFER, 17)            \
-  D(FULL_GENERIC_BUFFER, 18)               \
-  D(FULL_VALUE_BUFFER, 19)                 \
-  D(FULL_CELL_PTR_BUFFER, 20)              \
-  D(FULL_SLOT_BUFFER, 21)                  \
-  D(FULL_SHAPE_BUFFER, 22)                 \
-  D(TOO_MUCH_WASM_MEMORY, 23)              \
-  D(DISABLE_GENERATIONAL_GC, 24)           \
-  D(FINISH_GC, 25)                         \
-  D(PREPARE_FOR_TRACING, 26)               \
-                                           \
-  /* These are reserved for future use. */ \
-  D(RESERVED3, 27)                         \
-  D(RESERVED4, 28)                         \
-  D(RESERVED5, 29)                         \
-  D(RESERVED6, 30)                         \
-  D(RESERVED7, 31)                         \
-  D(RESERVED8, 32)                         \
-                                           \
-  /* Reasons from Firefox */               \
-  D(DOM_WINDOW_UTILS, 33)                  \
-  D(COMPONENT_UTILS, 34)                   \
-  D(MEM_PRESSURE, 35)                      \
-  D(CC_WAITING, 36)                        \
-  D(CC_FORCED, 37)                         \
-  D(LOAD_END, 38)                          \
-  D(UNUSED3, 39)                           \
-  D(PAGE_HIDE, 40)                         \
-  D(NSJSCONTEXT_DESTROY, 41)               \
-  D(WORKER_SHUTDOWN, 42)                   \
-  D(SET_DOC_SHELL, 43)                     \
-  D(DOM_UTILS, 44)                         \
-  D(DOM_IPC, 45)                           \
-  D(DOM_WORKER, 46)                        \
-  D(INTER_SLICE_GC, 47)                    \
-  D(UNUSED1, 48)                           \
-  D(FULL_GC_TIMER, 49)                     \
-  D(SHUTDOWN_CC, 50)                       \
-  D(UNUSED2, 51)                           \
-  D(USER_INACTIVE, 52)                     \
-  D(XPCONNECT_SHUTDOWN, 53)                \
-  D(DOCSHELL, 54)                          \
+#define GCREASONS(D)                        \
+  /* Reasons internal to the JS engine */   \
+  D(API, 0)                                 \
+  D(EAGER_ALLOC_TRIGGER, 1)                 \
+  D(DESTROY_RUNTIME, 2)                     \
+  D(ROOTS_REMOVED, 3)                       \
+  D(LAST_DITCH, 4)                          \
+  D(TOO_MUCH_MALLOC, 5)                     \
+  D(ALLOC_TRIGGER, 6)                       \
+  D(DEBUG_GC, 7)                            \
+  D(COMPARTMENT_REVIVED, 8)                 \
+  D(RESET, 9)                               \
+  D(OUT_OF_NURSERY, 10)                     \
+  D(EVICT_NURSERY, 11)                      \
+  D(DELAYED_ATOMS_GC, 12)                   \
+  D(SHARED_MEMORY_LIMIT, 13)                \
+  D(IDLE_TIME_COLLECTION, 14)               \
+  D(BG_TASK_FINISHED, 15)                   \
+  D(ABORT_GC, 16)                           \
+  D(FULL_WHOLE_CELL_BUFFER, 17)             \
+  D(FULL_GENERIC_BUFFER, 18)                \
+  D(FULL_VALUE_BUFFER, 19)                  \
+  D(FULL_CELL_PTR_OBJ_BUFFER, 20)           \
+  D(FULL_SLOT_BUFFER, 21)                   \
+  D(FULL_SHAPE_BUFFER, 22)                  \
+  D(TOO_MUCH_WASM_MEMORY, 23)               \
+  D(DISABLE_GENERATIONAL_GC, 24)            \
+  D(FINISH_GC, 25)                          \
+  D(PREPARE_FOR_TRACING, 26)                \
+  D(INCREMENTAL_ALLOC_TRIGGER, 27)          \
+  D(FULL_CELL_PTR_STR_BUFFER, 28)           \
+  D(TOO_MUCH_JIT_CODE, 29)                  \
+  D(FULL_CELL_PTR_BIGINT_BUFFER, 30)        \
+  D(INIT_SELF_HOSTING, 31)                  \
+  D(NURSERY_MALLOC_BUFFERS, 32)             \
+                                            \
+  /* Reasons from Firefox */                \
+  D(DOM_WINDOW_UTILS, FIRST_FIREFOX_REASON) \
+  D(COMPONENT_UTILS, 34)                    \
+  D(MEM_PRESSURE, 35)                       \
+  D(CC_WAITING, 36)                         \
+  D(CC_FORCED, 37)                          \
+  D(LOAD_END, 38)                           \
+  D(UNUSED3, 39)                            \
+  D(PAGE_HIDE, 40)                          \
+  D(NSJSCONTEXT_DESTROY, 41)                \
+  D(WORKER_SHUTDOWN, 42)                    \
+  D(SET_DOC_SHELL, 43)                      \
+  D(DOM_UTILS, 44)                          \
+  D(DOM_IPC, 45)                            \
+  D(DOM_WORKER, 46)                         \
+  D(INTER_SLICE_GC, 47)                     \
+  D(UNUSED1, 48)                            \
+  D(FULL_GC_TIMER, 49)                      \
+  D(SHUTDOWN_CC, 50)                        \
+  D(UNUSED2, 51)                            \
+  D(USER_INACTIVE, 52)                      \
+  D(XPCONNECT_SHUTDOWN, 53)                 \
+  D(DOCSHELL, 54)                           \
   D(HTML_PARSER, 55)
 
 enum class GCReason {
+  FIRST_FIREFOX_REASON = 33,
+
 #define MAKE_REASON(name, val) name = val,
   GCREASONS(MAKE_REASON)
 #undef MAKE_REASON
@@ -478,6 +514,11 @@ enum class GCReason {
  */
 extern JS_PUBLIC_API const char* ExplainGCReason(JS::GCReason reason);
 
+/**
+ * Return true if the GC reason is internal to the JS engine.
+ */
+extern JS_PUBLIC_API bool InternalGCReason(JS::GCReason reason);
+
 /*
  * Zone GC:
  *
@@ -495,7 +536,7 @@ extern JS_PUBLIC_API const char* ExplainGCReason(JS::GCReason reason);
 /**
  * Schedule the given zone to be collected as part of the next GC.
  */
-extern JS_PUBLIC_API void PrepareZoneForGC(Zone* zone);
+extern JS_PUBLIC_API void PrepareZoneForGC(JSContext* cx, Zone* zone);
 
 /**
  * Schedule all zones to be collected in the next GC.
@@ -519,7 +560,7 @@ extern JS_PUBLIC_API bool IsGCScheduled(JSContext* cx);
  * Undoes the effect of the Prepare methods above. The given zone will not be
  * collected in the next GC.
  */
-extern JS_PUBLIC_API void SkipZoneForGC(Zone* zone);
+extern JS_PUBLIC_API void SkipZoneForGC(JSContext* cx, Zone* zone);
 
 /*
  * Non-Incremental GC:
@@ -816,8 +857,8 @@ extern JS_PUBLIC_API bool IsGenerationalGCEnabled(JSRuntime* rt);
  */
 class JS_PUBLIC_API AutoRequireNoGC {
  protected:
-  AutoRequireNoGC() {}
-  ~AutoRequireNoGC() {}
+  AutoRequireNoGC() = default;
+  ~AutoRequireNoGC() = default;
 };
 
 /**
@@ -912,12 +953,17 @@ class JS_PUBLIC_API AutoCheckCannotGC : public AutoRequireNoGC {
 } JS_HAZ_GC_INVALIDATED;
 #endif
 
+extern JS_PUBLIC_API void SetLowMemoryState(JSContext* cx, bool newState);
+
 /*
  * Internal to Firefox.
  */
 extern JS_FRIEND_API void NotifyGCRootsRemoved(JSContext* cx);
 
 } /* namespace JS */
+
+typedef void (*JSGCCallback)(JSContext* cx, JSGCStatus status,
+                             JS::GCReason reason, void* data);
 
 /**
  * Register externally maintained GC roots.
@@ -1027,7 +1073,7 @@ extern JS_PUBLIC_API void JS_SetGCParametersBasedOnAvailableMemory(
  */
 extern JS_PUBLIC_API JSString* JS_NewExternalString(
     JSContext* cx, const char16_t* chars, size_t length,
-    const JSStringFinalizer* fin);
+    const JSExternalStringCallbacks* callbacks);
 
 /**
  * Create a new JSString whose chars member may refer to external memory.
@@ -1038,7 +1084,7 @@ extern JS_PUBLIC_API JSString* JS_NewExternalString(
  */
 extern JS_PUBLIC_API JSString* JS_NewMaybeExternalString(
     JSContext* cx, const char16_t* chars, size_t length,
-    const JSStringFinalizer* fin, bool* allocatedExternal);
+    const JSExternalStringCallbacks* callbacks, bool* allocatedExternal);
 
 /**
  * Return whether 'str' was created with JS_NewExternalString or
@@ -1047,16 +1093,28 @@ extern JS_PUBLIC_API JSString* JS_NewMaybeExternalString(
 extern JS_PUBLIC_API bool JS_IsExternalString(JSString* str);
 
 /**
- * Return the 'fin' arg passed to JS_NewExternalString.
+ * Return the 'callbacks' arg passed to JS_NewExternalString or
+ * JS_NewMaybeExternalString.
  */
-extern JS_PUBLIC_API const JSStringFinalizer* JS_GetExternalStringFinalizer(
-    JSString* str);
+extern JS_PUBLIC_API const JSExternalStringCallbacks*
+JS_GetExternalStringCallbacks(JSString* str);
 
 namespace JS {
 
 extern JS_PUBLIC_API bool IsIdleGCTaskNeeded(JSRuntime* rt);
 
 extern JS_PUBLIC_API void RunIdleTimeGCTask(JSRuntime* rt);
+
+extern JS_PUBLIC_API void SetHostCleanupFinalizationRegistryCallback(
+    JSContext* cx, JSHostCleanupFinalizationRegistryCallback cb, void* data);
+
+/**
+ * Clear kept alive objects in JS WeakRef.
+ * https://tc39.es/proposal-weakrefs/#sec-clear-kept-objects
+ */
+extern JS_PUBLIC_API void ClearKeptObjects(JSContext* cx);
+
+extern JS_PUBLIC_API bool ZoneIsCollecting(Zone* zone);
 
 }  // namespace JS
 
@@ -1069,6 +1127,17 @@ namespace gc {
  * malloc memory.
  */
 extern JS_PUBLIC_API JSObject* NewMemoryInfoObject(JSContext* cx);
+
+/*
+ * Run the finalizer of a nursery-allocated JSObject that is known to be dead.
+ *
+ * This is a dangerous operation - only use this if you know what you're doing!
+ *
+ * This is used by the browser to implement nursery-allocated wrapper cached
+ * wrappers.
+ */
+extern JS_PUBLIC_API void FinalizeDeadNurseryObject(JSContext* cx,
+                                                    JSObject* obj);
 
 } /* namespace gc */
 } /* namespace js */

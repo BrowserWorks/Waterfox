@@ -5,12 +5,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "mozilla/Move.h"
+#include <utility>
 
 #include "gc/GCLock.h"
 #include "gc/GCRuntime.h"
-#include "gc/Heap.h"
-
 #include "jsapi-tests/tests.h"
 
 BEGIN_TEST(testGCChunkPool) {
@@ -19,7 +17,7 @@ BEGIN_TEST(testGCChunkPool) {
 
   // Create.
   for (int i = 0; i < N; ++i) {
-    js::gc::Chunk* chunk = js::gc::Chunk::allocate(cx->runtime());
+    js::gc::Chunk* chunk = js::gc::Chunk::allocate(&cx->runtime()->gc);
     CHECK(chunk);
     pool.push(chunk);
   }

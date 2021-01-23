@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title "Innflutningshjálp">
+
+<!ENTITY importFromWin.label "Flytja inn stillingar, reikninga, nafnaskrá, síur og önnur gögn frá:">
+<!ENTITY importFromNonWin.label "Flytja inn stillingar, reikninga, nafnaskrá, síur og önnur gögn frá:">
+<!ENTITY importSourceNotFound.label "Ekkert forrit fannst til að flytja inn gögn.">
+
+<!ENTITY importFromNothing.label "Flytja ekkert inn">
+<!ENTITY importFromNothing.accesskey "e">
+<!ENTITY importFromSeamonkey3.label "SeaMonkey 2 eða nýrra">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label "Outlook">
+<!ENTITY importFromOutlook.accesskey "O">
+
+<!ENTITY importSource.title "Flytja inn stillingar og póstmöppur">
+<!ENTITY importItems.title "Hlutir til að flytja inn">
+<!ENTITY importItems.label "Veldu hvaða hluti þú vilt flytja inn:">
+
+<!ENTITY migrating.title "Flyt inn…">
+<!ENTITY migrating.label "Verið er að flytja inn eftirfarandi hluti…">
+
+<!ENTITY selectProfile.title "Veldu forstillingu">
+<!ENTITY selectProfile.label "Hægt er að flytja eftirfarandi forstillingar inn frá:">
+
+<!ENTITY done.title "Innflutningi lokið">
+<!ENTITY done.label "Eftirfarandi hluti tókst að flytja inn:">

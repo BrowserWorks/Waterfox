@@ -491,14 +491,10 @@ var DownloadIntegration = {
       });
     }
     return new Promise(resolve => {
-      let aReferrer = null;
-      if (aDownload.source.referrer) {
-        aReferrer = NetUtil.newURI(aDownload.source.referrer);
-      }
       gApplicationReputationService.queryReputation(
         {
           sourceURI: NetUtil.newURI(aDownload.source.url),
-          referrerURI: aReferrer,
+          referrerInfo: aDownload.source.referrerInfo,
           fileSize: aDownload.currentBytes,
           sha256Hash: hash,
           suggestedFileName: OS.Path.basename(aDownload.target.path),
@@ -620,14 +616,14 @@ var DownloadIntegration = {
           );
           try {
             let zoneId = "[ZoneTransfer]\r\nZoneId=" + zone + "\r\n";
-            if (!aDownload.source.isPrivate) {
+            let { url, isPrivate, referrerInfo } = aDownload.source;
+            if (!isPrivate) {
+              let referrer = referrerInfo
+                ? referrerInfo.computedReferrerSpec
+                : "";
               zoneId +=
-                this._zoneIdKey("ReferrerUrl", aDownload.source.referrer) +
-                this._zoneIdKey(
-                  "HostUrl",
-                  aDownload.source.url,
-                  "about:internet"
-                );
+                this._zoneIdKey("ReferrerUrl", referrer) +
+                this._zoneIdKey("HostUrl", url, "about:internet");
             }
             await stream.write(new TextEncoder().encode(zoneId));
           } finally {
@@ -689,8 +685,8 @@ var DownloadIntegration = {
     }
 
     let aReferrer = null;
-    if (aDownload.source.referrer) {
-      aReferrer = NetUtil.newURI(aDownload.source.referrer);
+    if (aDownload.source.referrerInfo) {
+      aReferrer = aDownload.source.referrerInfo.originalReferrer;
     }
 
     await gDownloadPlatform.downloadDone(
@@ -713,6 +709,9 @@ var DownloadIntegration = {
    *           to launch the file. The relevant properties are: the target
    *           file, the contentType and the custom application chosen
    *           to launch it.
+   * @param options.openWhere     Optional string indicating how to open when handling
+   *                              download by opening the target file URI.
+   *                              One of "window", "tab", "tabshifted"
    *
    * @return {Promise}
    * @resolves When the instruction to launch the file has been
@@ -722,7 +721,7 @@ var DownloadIntegration = {
    * @rejects  JavaScript exception if there was an error trying to launch
    *           the file.
    */
-  async launchDownload(aDownload) {
+  async launchDownload(aDownload, { openWhere }) {
     let file = new FileUtils.File(aDownload.target.path);
 
     // In case of a double extension, like ".tar.gz", we only
@@ -785,6 +784,48 @@ var DownloadIntegration = {
       mimeInfo.preferredAction = Ci.nsIMIMEInfo.useHelperApp;
 
       this.launchFile(file, mimeInfo);
+      // After an attempt has been made to launch the download, clear the
+      // launchWhenSucceeded bit so future attempts to open the download can go
+      // through Firefox when possible.
+      aDownload.launchWhenSucceeded = false;
+      return;
+    }
+
+    const PDF_CONTENT_TYPE = "application/pdf";
+    if (
+      aDownload.handleInternally ||
+      (mimeInfo &&
+        (mimeInfo.type == PDF_CONTENT_TYPE ||
+          fileExtension?.toLowerCase() == "pdf") &&
+        !mimeInfo.alwaysAskBeforeHandling &&
+        mimeInfo.preferredAction === Ci.nsIHandlerInfo.handleInternally &&
+        !aDownload.launchWhenSucceeded)
+    ) {
+      DownloadUIHelper.loadFileIn(file, {
+        browsingContextId: aDownload.source.browsingContextId,
+        isPrivate: aDownload.source.isPrivate,
+        openWhere,
+        userContextId: aDownload.source.userContextId,
+      });
+      return;
+    }
+
+    // An attempt will now be made to launch the download, clear the
+    // launchWhenSucceeded bit so future attempts to open the download can go
+    // through Firefox when possible.
+    aDownload.launchWhenSucceeded = false;
+
+    // When a file has no extension, and there's an executable file with the
+    // same name in the same folder, Windows shell can get confused.
+    // For this reason we show the file in the containing folder instead of
+    // trying to open it.
+    // We also don't trust mimeinfo, it could be a type we can forward to a
+    // system handler, but it could also be an executable type, and we
+    // don't have an exhaustive list with all of them.
+    if (!fileExtension && AppConstants.platform == "win") {
+      // We can't check for the existance of a same-name file with every
+      // possible executable extension, so this is a catch-all.
+      this.showContainingDirectory(aDownload.target.path);
       return;
     }
 
@@ -792,7 +833,6 @@ var DownloadIntegration = {
     // handler. First, let's try to launch it through the MIME service.
     if (mimeInfo) {
       mimeInfo.preferredAction = Ci.nsIMIMEInfo.useSystemDefault;
-
       try {
         this.launchFile(file, mimeInfo);
         return;
@@ -825,6 +865,8 @@ var DownloadIntegration = {
 
   /**
    * Launches the specified file, unless overridden by regression tests.
+   * @note Always use launchDownload() from the outside of this module, it is
+   *       both more powerful and safer.
    */
   launchFile(file, mimeInfo) {
     if (mimeInfo) {
@@ -1068,6 +1110,7 @@ var DownloadObserver = {
     for (let download of this._canceledOfflineDownloads) {
       download.start().catch(() => {});
     }
+    this._canceledOfflineDownloads.clear();
   },
 
   // nsIObserver
@@ -1176,7 +1219,7 @@ var DownloadHistoryObserver = function(aList) {
   PlacesUtils.history.addObserver(this);
 };
 
-this.DownloadHistoryObserver.prototype = {
+DownloadHistoryObserver.prototype = {
   /**
    * DownloadList object linked to this observer.
    */
@@ -1228,7 +1271,7 @@ var DownloadAutoSaveView = function(aList, aStore) {
   );
 };
 
-this.DownloadAutoSaveView.prototype = {
+DownloadAutoSaveView.prototype = {
   /**
    * DownloadList object linked to this view.
    */

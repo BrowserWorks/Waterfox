@@ -39,6 +39,8 @@ var forceCC = true;
 var useMozAfterPaint = false;
 var useFNBPaint = false;
 var isFNBPaintPending = false;
+var usePDFPaint = false;
+var isPDFPaintPending = false;
 var useHero = false;
 var gPaintWindow = window;
 var gPaintListener = false;
@@ -47,6 +49,7 @@ var scrollTest = false;
 var profilingInfo = false;
 var baseVsRef = false;
 var useBrowserChrome = false;
+var useA11y = false;
 
 var isIdleCallbackPending = false;
 
@@ -140,9 +143,11 @@ function plInit() {
     );
     useHero = Services.prefs.getBoolPref("talos.tphero", false);
     useFNBPaint = Services.prefs.getBoolPref("talos.fnbpaint", false);
+    usePDFPaint = Services.prefs.getBoolPref("talos.pdfpaint", false);
     loadNoCache = Services.prefs.getBoolPref("talos.tploadnocache", false);
     scrollTest = Services.prefs.getBoolPref("talos.tpscrolltest", false);
     useBrowserChrome = Services.prefs.getBoolPref("talos.tpchrome", false);
+    useA11y = Services.prefs.getBoolPref("talos.a11y", false);
 
     // for pageloader tests the profiling info is found in an env variable
     // because it is not available early enough to set it as a browser pref
@@ -227,15 +232,15 @@ function plInit() {
         let remoteType = E10SUtils.getRemoteTypeForURI(
           pageUrls[0],
           /* remote */ true,
-          /* fission */ false
+          /* fission */ Services.prefs.getBoolPref("fission.autostart")
         );
         let tabbrowser = browserWindow.gBrowser;
         if (remoteType) {
-          tabbrowser.updateBrowserRemoteness(tabbrowser.initialBrowser, {
+          tabbrowser.updateBrowserRemoteness(tabbrowser.selectedBrowser, {
             remoteType,
           });
         } else {
-          tabbrowser.updateBrowserRemoteness(tabbrowser.initialBrowser, {
+          tabbrowser.updateBrowserRemoteness(tabbrowser.selectedBrowser, {
             remoteType: E10SUtils.NOT_REMOTE,
           });
         }
@@ -269,6 +274,12 @@ function plInit() {
             false,
             true
           );
+        } else if (usePDFPaint) {
+          content.selectedBrowser.messageManager.loadFrameScript(
+            "chrome://pageloader/content/lh_pdfpaint.js",
+            false,
+            true
+          );
         } else {
           content.selectedBrowser.messageManager.loadFrameScript(
             "chrome://pageloader/content/lh_dummy.js",
@@ -295,6 +306,13 @@ function plInit() {
           false,
           true
         );
+        if (useA11y) {
+          content.selectedBrowser.messageManager.loadFrameScript(
+            "chrome://pageloader/content/a11y.js",
+            false,
+            true
+          );
+        }
 
         // Ensure that any webextensions that need to do setup have a chance
         // to do so. e.g. the 'tabswitch' talos test registers a about:tabswitch
@@ -374,6 +392,10 @@ function plLoadPage() {
 
   if (useFNBPaint) {
     isFNBPaintPending = true;
+  }
+
+  if (usePDFPaint) {
+    isPDFPaintPending = true;
   }
 
   startAndLoadURI(pageName);
@@ -486,6 +508,14 @@ var plNextPage = async function() {
     }
   }
 
+  if (usePDFPaint) {
+    // don't move to next page until we've received pdfpaint
+    if (isPDFPaintPending) {
+      dumpLine("Waiting for pdfpaint");
+      await waitForPDFPaint();
+    }
+  }
+
   if (profilingInfo) {
     await TalosParentProfiler.finishTest();
   }
@@ -550,6 +580,19 @@ function waitForFNBPaint() {
       }
     }
     checkForFNBPaint();
+  });
+}
+
+function waitForPDFPaint() {
+  return new Promise(resolve => {
+    function checkForPDFPaint() {
+      if (!isPDFPaintPending) {
+        resolve();
+      } else {
+        setTimeout(checkForPDFPaint, 200);
+      }
+    }
+    checkForPDFPaint();
   });
 }
 
@@ -748,7 +791,14 @@ function _loadHandler(paint_time = 0) {
     end_time = Date.now();
   }
 
-  var duration = end_time - start_time;
+  var duration;
+  if (usePDFPaint) {
+    // PDF paint uses performance.now(), so the time does not need to be
+    // adjusted from the start time.
+    duration = end_time;
+  } else {
+    duration = end_time - start_time;
+  }
   TalosParentProfiler.pause("Bubbling load handler fired.");
 
   // does this page want to do its own timing?
@@ -775,6 +825,8 @@ function plLoadHandlerMessage(message) {
     if (message.json.name == "fnbpaint") {
       // we've received fnbpaint; no longer pending for this current pageload
       isFNBPaintPending = false;
+    } else if (message.json.name == "pdfpaint") {
+      isPDFPaintPending = false;
     }
   }
 

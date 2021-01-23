@@ -313,6 +313,10 @@ bool ADTSTrackDemuxer::Init() {
   // Rewind back to the stream begin to avoid dropping the first frame.
   FastSeek(TimeUnit::Zero());
 
+  if (!mSamplesPerSecond) {
+    return false;
+  }
+
   if (!mInfo) {
     mInfo = MakeUnique<AudioInfo>();
   }
@@ -342,7 +346,7 @@ bool ADTSTrackDemuxer::Init() {
   // https://developer.apple.com/library/content/documentation/QuickTime/QTFF/QTFFAppenG/QTFFAppenG.html
   // So we always seek 2112 frames prior the seeking point.
   mPreRoll = TimeUnit::FromMicroseconds(2112 * 1000000ULL / mSamplesPerSecond);
-  return mSamplesPerSecond && mChannels;
+  return mChannels;
 }
 
 UniquePtr<TrackInfo> ADTSTrackDemuxer::GetInfo() const {
@@ -435,8 +439,7 @@ RefPtr<ADTSTrackDemuxer::SamplesPromise> ADTSTrackDemuxer::GetSamples(
   while (aNumSamples--) {
     RefPtr<MediaRawData> frame(GetNextFrame(FindNextFrame()));
     if (!frame) break;
-
-    frames->mSamples.AppendElement(frame);
+    frames->AppendSample(frame);
   }
 
   ADTSLOGV(
@@ -445,11 +448,11 @@ RefPtr<ADTSTrackDemuxer::SamplesPromise> ADTSTrackDemuxer::GetSamples(
       " mTotalFrameLen=%" PRIu64
       " mSamplesPerFrame=%d mSamplesPerSecond=%d "
       "mChannels=%d",
-      frames->mSamples.Length(), aNumSamples, mOffset, mNumParsedFrames,
+      frames->GetSamples().Length(), aNumSamples, mOffset, mNumParsedFrames,
       mFrameIndex, mTotalFrameLen, mSamplesPerFrame, mSamplesPerSecond,
       mChannels);
 
-  if (frames->mSamples.IsEmpty()) {
+  if (frames->GetSamples().IsEmpty()) {
     return SamplesPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_END_OF_STREAM,
                                            __func__);
   }

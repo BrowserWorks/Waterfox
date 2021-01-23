@@ -561,45 +561,54 @@ add_task(async function test_alreadyGranted() {
 
 const GRANTED_WITHOUT_USER_PROMPT = [
   "activeTab",
+  "activityLog",
   "alarms",
   "captivePortal",
   "contextMenus",
   "contextualIdentities",
   "cookies",
+  "dns",
   "geckoProfiler",
   "identity",
   "idle",
   "menus",
   "menus.overrideContext",
   "mozillaAddons",
+  "networkStatus",
+  "normandyAddonStudy",
   "search",
   "storage",
   "telemetry",
   "theme",
+  "unlimitedStorage",
+  "urlbar",
   "webRequest",
   "webRequestBlocking",
 ];
 
 add_task(function test_permissions_have_localization_strings() {
-  const ns = Schemas.getNamespace("manifest");
-
-  const permissions = ns.get("Permission").choices;
-  const optional = ns.get("OptionalPermission").choices;
+  let noPromptNames = Schemas.getPermissionNames([
+    "PermissionNoPrompt",
+    "OptionalPermissionNoPrompt",
+  ]);
+  Assert.deepEqual(
+    GRANTED_WITHOUT_USER_PROMPT,
+    noPromptNames,
+    "List of no-prompt permissions is correct."
+  );
 
   const bundle = Services.strings.createBundle(BROWSER_PROPERTIES);
 
-  for (const choice of permissions.concat(optional)) {
-    for (const perm of choice.enumeration || []) {
-      try {
-        const str = bundle.GetStringFromName(`webextPerms.description.${perm}`);
+  for (const perm of Schemas.getPermissionNames()) {
+    try {
+      const str = bundle.GetStringFromName(`webextPerms.description.${perm}`);
 
-        ok(str.length, `Found localization string for '${perm}' permission`);
-      } catch (e) {
-        ok(
-          GRANTED_WITHOUT_USER_PROMPT.includes(perm),
-          `Permission '${perm}' intentionally granted without prompting the user`
-        );
-      }
+      ok(str.length, `Found localization string for '${perm}' permission`);
+    } catch (e) {
+      ok(
+        GRANTED_WITHOUT_USER_PROMPT.includes(perm),
+        `Permission '${perm}' intentionally granted without prompting the user`
+      );
     }
   }
 });

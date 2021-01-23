@@ -10,6 +10,7 @@ interface nsIURI;
 interface nsICancelable;
 interface nsIMIMEInfo;
 interface nsIFile;
+webidl BrowsingContext;
 
 [scriptable, uuid(37ec75d3-97ad-4da8-afaa-eabe5b4afd73)]
 interface nsITransfer : nsIWebProgressListener2 {
@@ -49,6 +50,7 @@ interface nsITransfer : nsIWebProgressListener2 {
      * @param aIsPrivate Used to determine the privacy status of the new transfer.
      *                   If true, indicates that the transfer was initiated from
      *                   a source that desires privacy.
+     *
      */
     void init(in nsIURI aSource,
               in nsIURI aTarget,
@@ -58,6 +60,27 @@ interface nsITransfer : nsIWebProgressListener2 {
               in nsIFile aTempFile,
               in nsICancelable aCancelable,
               in boolean aIsPrivate);
+
+    /**
+     * Same as init, but allows for passing the browsingContext
+     * which will allow for opening the download with the same
+     * userContextId
+     *
+     * @param aBrowsingContext BrowsingContext of the initiating document.
+     *
+     * @param aHandleInternally Set to true if the download should be opened within
+     *                          the browser.
+     */
+    void initWithBrowsingContext(in nsIURI aSource,
+                                 in nsIURI aTarget,
+                                 in AString aDisplayName,
+                                 in nsIMIMEInfo aMIMEInfo,
+                                 in PRTime startTime,
+                                 in nsIFile aTempFile,
+                                 in nsICancelable aCancelable,
+                                 in boolean aIsPrivate,
+                                 in BrowsingContext aBrowsingContext,
+                                 in boolean aHandleInternally);
 
     /*
      * Used to notify the transfer object of the hash of the downloaded file.
@@ -71,10 +94,10 @@ interface nsITransfer : nsIWebProgressListener2 {
      * Used to notify the transfer object of the signature of the downloaded
      * file.  Must be called on the main thread, only after the download has
      * finished successfully.
-     * @param aSignatureInfo The nsIArray of nsIX509CertList of nsIX509Cert
+     * @param aSignatureInfo The Array of Array of Array of bytes
      *        certificates of the downloaded file.
      */
-    void setSignatureInfo(in nsIArray aSignatureInfo);
+    void setSignatureInfo(in Array<Array<Array<uint8_t> > > aSignatureInfo);
 
     /*
      * Used to notify the transfer object of the redirects associated with the

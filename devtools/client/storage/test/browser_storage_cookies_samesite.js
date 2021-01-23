@@ -14,28 +14,31 @@ add_task(async function() {
   const id1 = getCookieId(
     "test1",
     "test1.example.org",
-    "/browser/devtools/client/storage/test/"
+    "/browser/devtools/client/storage/test"
   );
   const id2 = getCookieId(
     "test2",
     "test1.example.org",
-    "/browser/devtools/client/storage/test/"
+    "/browser/devtools/client/storage/test"
   );
   const id3 = getCookieId(
     "test3",
     "test1.example.org",
-    "/browser/devtools/client/storage/test/"
+    "/browser/devtools/client/storage/test"
   );
 
   await checkState([
-    [["cookies", "http://test1.example.org"], [id1, id2, id3]],
+    [
+      ["cookies", "http://test1.example.org"],
+      [id1, id2, id3],
+    ],
   ]);
 
   const sameSite1 = getRowValues(id1).sameSite;
   const sameSite2 = getRowValues(id2).sameSite;
   const sameSite3 = getRowValues(id3).sameSite;
 
-  is(sameSite1, "Unset", `sameSite1 is "Unset"`);
+  is(sameSite1, "None", `sameSite1 is "None"`);
   is(sameSite2, "Lax", `sameSite2 is "Lax"`);
   is(sameSite3, "Strict", `sameSite3 is "Strict"`);
 

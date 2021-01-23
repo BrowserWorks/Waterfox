@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Enmeti matematikan esprimon">
+
+<!ENTITY sourceEditField.label "Enigi LaTeX‑kodon:">
+
+<!ENTITY options.label "Elektebloj">
+<!ENTITY optionInline.label "Enteksta reĝimo">
+<!ENTITY optionInline.accesskey "t">
+<!ENTITY optionDisplay.label "Antaŭvida reĝimo">
+<!ENTITY optionDisplay.accesskey "A">
+<!ENTITY optionLTR.label "Maldekstre-dekstren">
+<!ENTITY optionLTR.accesskey "M">
+<!ENTITY optionRTL.label "Dekstre-maldekstren">
+<!ENTITY optionRTL.accesskey "D">
+
+<!ENTITY insertButton.label "Enmeti">
+<!ENTITY insertButton.accesskey "E">

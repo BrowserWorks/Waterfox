@@ -19,7 +19,7 @@ use crate::{Atom, CaseSensitivityExt, LocalName, Namespace, Prefix};
 use cssparser::{serialize_identifier, CowRcStr, Parser as CssParser, SourceLocation, ToCss};
 use fxhash::FxHashMap;
 use selectors::attr::{AttrSelectorOperation, CaseSensitivity, NamespaceConstraint};
-use selectors::parser::{SelectorParseErrorKind, Visit};
+use selectors::parser::SelectorParseErrorKind;
 use selectors::visitor::SelectorVisitor;
 use std::fmt;
 use std::mem;
@@ -143,6 +143,12 @@ impl PseudoElement {
         false
     }
 
+    /// Whether this pseudo-element is the ::selection pseudo.
+    #[inline]
+    pub fn is_selection(&self) -> bool {
+        *self == PseudoElement::Selection
+    }
+
     /// Whether this pseudo-element is the ::before pseudo.
     #[inline]
     pub fn is_before(&self) -> bool {
@@ -164,6 +170,12 @@ impl PseudoElement {
     /// Whether the current pseudo element is :first-line
     #[inline]
     pub fn is_first_line(&self) -> bool {
+        false
+    }
+
+    /// Whether this pseudo-element is the ::-moz-color-swatch pseudo.
+    #[inline]
+    pub fn is_color_swatch(&self) -> bool {
         false
     }
 
@@ -266,6 +278,7 @@ pub enum NonTSPseudoClass {
     Active,
     AnyLink,
     Checked,
+    Defined,
     Disabled,
     Enabled,
     Focus,
@@ -297,6 +310,18 @@ impl ::selectors::parser::NonTSPseudoClass for NonTSPseudoClass {
             NonTSPseudoClass::Active | NonTSPseudoClass::Hover | NonTSPseudoClass::Focus
         )
     }
+
+    #[inline]
+    fn has_zero_specificity(&self) -> bool {
+        false
+    }
+
+    fn visit<V>(&self, _: &mut V) -> bool
+    where
+        V: SelectorVisitor<Impl = Self::Impl>,
+    {
+        true
+    }
 }
 
 impl ToCss for NonTSPseudoClass {
@@ -315,6 +340,7 @@ impl ToCss for NonTSPseudoClass {
             Active => ":active",
             AnyLink => ":any-link",
             Checked => ":checked",
+            Defined => ":defined",
             Disabled => ":disabled",
             Enabled => ":enabled",
             Focus => ":focus",
@@ -333,17 +359,6 @@ impl ToCss for NonTSPseudoClass {
     }
 }
 
-impl Visit for NonTSPseudoClass {
-    type Impl = SelectorImpl;
-
-    fn visit<V>(&self, _: &mut V) -> bool
-    where
-        V: SelectorVisitor<Impl = Self::Impl>,
-    {
-        true
-    }
-}
-
 impl NonTSPseudoClass {
     /// Gets a given state flag for this pseudo-class. This is used to do
     /// selector matching, and it's set from the DOM.
@@ -354,6 +369,7 @@ impl NonTSPseudoClass {
             Focus => ElementState::IN_FOCUS_STATE,
             Fullscreen => ElementState::IN_FULLSCREEN_STATE,
             Hover => ElementState::IN_HOVER_STATE,
+            Defined => ElementState::IN_DEFINED_STATE,
             Enabled => ElementState::IN_ENABLED_STATE,
             Disabled => ElementState::IN_DISABLED_STATE,
             Checked => ElementState::IN_CHECKED_STATE,
@@ -374,12 +390,6 @@ impl NonTSPseudoClass {
     /// Returns true if the given pseudoclass should trigger style sharing cache revalidation.
     pub fn needs_cache_revalidation(&self) -> bool {
         self.state_flag().is_empty()
-    }
-
-    /// Returns true if the evaluation of the pseudo-class depends on the
-    /// element's attributes.
-    pub fn is_attr_based(&self) -> bool {
-        matches!(*self, NonTSPseudoClass::Lang(..))
     }
 }
 
@@ -419,6 +429,7 @@ impl<'a, 'i> ::selectors::Parser<'i> for SelectorParser<'a> {
             "active" => Active,
             "any-link" => AnyLink,
             "checked" => Checked,
+            "defined" => Defined,
             "disabled" => Disabled,
             "enabled" => Enabled,
             "focus" => Focus,
@@ -454,8 +465,8 @@ impl<'a, 'i> ::selectors::Parser<'i> for SelectorParser<'a> {
         let pseudo_class = match_ignore_ascii_case! { &name,
             "lang" => {
                 Lang(parser.expect_ident_or_string()?.as_ref().into())
-            }
-            _ => return Err(parser.new_custom_error(SelectorParseErrorKind::UnexpectedIdent(name.clone())))
+            },
+            _ => return Err(parser.new_custom_error(SelectorParseErrorKind::UnexpectedIdent(name.clone()))),
         };
 
         Ok(pseudo_class)
@@ -686,6 +697,10 @@ impl ElementSnapshot for ServoElementSnapshot {
 
     fn is_part(&self, _name: &Atom) -> bool {
         false
+    }
+
+    fn imported_part(&self, _: &Atom) -> Option<Atom> {
+        None
     }
 
     fn has_class(&self, name: &Atom, case_sensitivity: CaseSensitivity) -> bool {

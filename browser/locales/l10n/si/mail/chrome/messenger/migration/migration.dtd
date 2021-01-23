@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "ආයාත විශාරද">
+
+<!ENTITY importFromWin.label            "වරණ, ගිණුම් සැකසුම්, ලිපින පොත, පෙරහන්, සහ අනෙකුත් දත්ත ආයාත කිරීම (වෙතින්):">
+<!ENTITY importFromNonWin.label         "මනාපයන්, ගිණුම් සැකසුම්, ලිපින පොත, පෙරහන්, සහ අනෙකුත් දත්ත ආයාත කිරීම (වෙතින්):">
+
+<!ENTITY importFromNothing.label        "කිසිවක් ආයාත නොකරන්න">
+<!ENTITY importFromNothing.accesskey    "D">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 හෝ පසු නිකුතූන්">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "සැකසුම් සහ ලිපි ෆෝල්ඩර ආයාත කරන්න (වෙතින්)">
+<!ENTITY importItems.title              "ආයාත කරන අයිතමයන්">
+<!ENTITY importItems.label              "ආයාත කරන අයිතමයන් තෝරන්න:">
+
+<!ENTITY migrating.title                "ආයාත කරමින් සිටී...">
+<!ENTITY migrating.label                "පහත අයිතමයන් මේ වනවිට ආයාත කරමින් සිටී...">
+
+<!ENTITY selectProfile.title            "පැතිකඩ (Profile) තෝරන්න">
+<!ENTITY selectProfile.label            "පහත පැතිකඩ (Profile) ආයාත කිරීම සඳහා තිබේ (වෙතින්):">
+
+<!ENTITY done.title                     "ආයාත කිරීම අවසන්">
+<!ENTITY done.label                     "පහත අයිතමයන් සාර්ථකව ආයාත කරන ලදී:">

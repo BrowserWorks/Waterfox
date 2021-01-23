@@ -4,23 +4,19 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* JS boolean interface. */
+
 #ifndef builtin_Boolean_h
 #define builtin_Boolean_h
 
-/*
- * JS boolean interface.
- */
+#include "jstypes.h"  // JS_PUBLIC_API
 
-#include "NamespaceImports.h"
+struct JS_PUBLIC_API JSContext;
 
 namespace js {
+class PropertyName;
 
-class GlobalObject;
-
-extern JSObject* InitBooleanClass(JSContext* cx,
-                                  js::Handle<GlobalObject*> global);
-
-extern JSString* BooleanToString(JSContext* cx, bool b);
+extern PropertyName* BooleanToString(JSContext* cx, bool b);
 
 }  // namespace js
 

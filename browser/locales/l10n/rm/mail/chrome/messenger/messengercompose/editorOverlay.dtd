@@ -1,0 +1,303 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Attn: Localization - some of the menus in this dialog directly affect mail also. -->
+
+<!-- Edit menu items -->
+<!ENTITY pasteNoFormatting.label "Encollar senza formataziuns">
+<!ENTITY pasteNoFormatting.accesskey "s">
+<!ENTITY pasteNoFormatting.key "V">
+<!ENTITY pasteAsQuotationCmd.label "Encollar sco citat">
+<!ENTITY pasteAsQuotationCmd.accesskey "i">
+
+<!-- Insert menu items -->
+<!ENTITY insertMenu.label "Inserir">
+<!ENTITY insertMenu.accesskey "I">
+<!ENTITY insertLinkCmd2.label "Colliaziun…">
+<!ENTITY insertLinkCmd2.accesskey "l">
+<!ENTITY insertLinkCmd2.key "K">
+<!ENTITY insertAnchorCmd.label "Ancra cun num…">
+<!ENTITY insertAnchorCmd.accesskey "A">
+<!ENTITY insertImageCmd.label "Grafica…">
+<!ENTITY insertImageCmd.accesskey "G">
+<!ENTITY insertHLineCmd.label "Lingia orizontala">
+<!ENTITY insertHLineCmd.accesskey "o">
+<!ENTITY insertTableCmd.label "Tabella…">
+<!ENTITY insertTableCmd.accesskey "T">
+<!ENTITY insertHTMLCmd.label "HTML…">
+<!ENTITY insertHTMLCmd.accesskey "H">
+<!ENTITY insertMathCmd.label "Matematica…">
+<!ENTITY insertMathCmd.accesskey "M">
+<!ENTITY insertCharsCmd.label "Caracters e simbols…">
+<!ENTITY insertCharsCmd.accesskey "C">
+<!ENTITY insertBreakAllCmd.label "Nova lingia sut la(s) grafica(s)">
+<!ENTITY insertBreakAllCmd.accesskey "n">
+
+<!-- Used just in context popup. -->
+<!ENTITY createLinkCmd.label "Crear ina colliaziun…">
+<!ENTITY createLinkCmd.accesskey "c">
+<!ENTITY editLinkCmd.label "Editar la colliaziun en ina nova fanestra dal Composer">
+<!ENTITY editLinkCmd.accesskey "i">
+
+<!-- Font Face SubMenu -->
+<!ENTITY FontFaceSelect.tooltip "Tscherner ina scrittira">
+<!ENTITY fontfaceMenu.label "Scrittira">
+<!ENTITY fontfaceMenu.accesskey "S">
+<!ENTITY fontVarWidth.label "Largezza variabla">
+<!ENTITY fontVarWidth.accesskey "V">
+<!ENTITY fontFixedWidth.label "Largezza fixa">
+<!ENTITY fontFixedWidth.accesskey "x">
+<!ENTITY fontFixedWidth.key "t">
+<!ENTITY fontHelvetica.label "Helvetica, Arial">
+<!ENTITY fontHelvetica.accesskey "l">
+<!ENTITY fontTimes.label "Times">
+<!ENTITY fontTimes.accesskey "T">
+<!ENTITY fontCourier.label "Courier">
+<!ENTITY fontCourier.accesskey "C">
+
+<!-- Font Size SubMenu -->
+<!ENTITY FontSizeSelect.tooltip "Tscherna la grondezza da scrittira">
+<!ENTITY decreaseFontSize.label "Pli pitschen">
+<!ENTITY decreaseFontSize.accesskey "p">
+<!ENTITY decrementFontSize.key "&lt;">
+<!ENTITY decrementFontSize.key2 ","> <!-- < is above this key on many keyboards -->
+<!ENTITY increaseFontSize.label "Pli grond">
+<!ENTITY increaseFontSize.accesskey "g">
+<!ENTITY incrementFontSize.key "&gt;">
+<!ENTITY incrementFontSize.key2 "."> <!-- > is above this key on many keyboards -->
+
+<!ENTITY fontSizeMenu.label "Grondezza">
+<!ENTITY fontSizeMenu.accesskey "G">
+<!ENTITY size-tinyCmd.label "Pitschnin">
+<!ENTITY size-tinyCmd.accesskey "t">
+<!ENTITY size-smallCmd.label "pitschen">
+<!ENTITY size-smallCmd.accesskey "p">
+<!ENTITY size-mediumCmd.label "mesaun">
+<!ENTITY size-mediumCmd.accesskey "m">
+<!ENTITY size-largeCmd.label "grond">
+<!ENTITY size-largeCmd.accesskey "g">
+<!ENTITY size-extraLargeCmd.label "Fitg grond">
+<!ENTITY size-extraLargeCmd.accesskey "F">
+<!ENTITY size-hugeCmd.label "Extrem grond">
+<!ENTITY size-hugeCmd.accesskey "x">
+
+<!-- Font Style SubMenu -->
+<!ENTITY fontStyleMenu.label "Stil da la scrittira">
+<!ENTITY fontStyleMenu.accesskey "t">
+<!ENTITY styleBoldCmd.label "Grass">
+<!ENTITY styleBoldCmd.accesskey "G">
+<!ENTITY styleBoldCmd.key "B">
+<!ENTITY styleItalicCmd.label "Cursiv">
+<!ENTITY styleItalicCmd.accesskey "C">
+<!ENTITY styleItalicCmd.key "I">
+<!ENTITY styleUnderlineCmd.label "Suttastritgà">
+<!ENTITY styleUnderlineCmd.accesskey "S">
+<!ENTITY styleUnderlineCmd.key "U">
+<!ENTITY styleStrikeThruCmd.label "Stritgà">
+<!ENTITY styleStrikeThruCmd.accesskey "t">
+<!ENTITY styleSuperscriptCmd.label "Elevà">
+<!ENTITY styleSuperscriptCmd.accesskey "e">
+<!ENTITY styleSubscriptCmd.label "Sbassà">
+<!ENTITY styleSubscriptCmd.accesskey "b">
+<!ENTITY styleNonbreakingCmd.label "Senza sigl da lingia">
+<!ENTITY styleNonbreakingCmd.accesskey "N">
+<!ENTITY styleEm.label "Relevà">
+<!ENTITY styleEm.accesskey "R">
+<!ENTITY styleStrong.label "Relevà fermamain">
+<!ENTITY styleStrong.accesskey "f">
+<!ENTITY styleCite.label "Citat">
+<!ENTITY styleCite.accesskey "i">
+<!ENTITY styleAbbr.label "Abreviaziun">
+<!ENTITY styleAbbr.accesskey "A">
+<!ENTITY styleAcronym.label "Acronim">
+<!ENTITY styleAcronym.accesskey "m">
+<!ENTITY styleCode.label "Code">
+<!ENTITY styleCode.accesskey "o">
+<!ENTITY styleSamp.label "Exempel dal resultat">
+<!ENTITY styleSamp.accesskey "l">
+<!ENTITY styleVar.label "Variabel">
+<!ENTITY styleVar.accesskey "V">
+
+<!ENTITY formatFontColor.label "Colur dal text…">
+<!ENTITY formatFontColor.accesskey "C">
+<!ENTITY tableOrCellColor.label "Colur dal fund davos da la tabella u da la cella…">
+<!ENTITY tableOrCellColor.accesskey "f">
+
+<!ENTITY formatRemoveStyles.key "Y">
+<!ENTITY formatRemoveLinks.key "K">
+<!ENTITY formatRemoveNamedAnchors.label "Allontanar las ancras cun num">
+<!ENTITY formatRemoveNamedAnchors.accesskey "R">
+<!ENTITY formatRemoveNamedAnchors2.key "R">
+
+<!ENTITY paragraphMenu.label "Paragraf">
+<!ENTITY paragraphMenu.accesskey "P">
+<!ENTITY paragraphParagraphCmd.label "Paragraf">
+<!ENTITY paragraphParagraphCmd.accesskey "P">
+<!ENTITY heading1Cmd.label "Titel 1">
+<!ENTITY heading1Cmd.accesskey "1">
+<!ENTITY heading2Cmd.label "Titel 2">
+<!ENTITY heading2Cmd.accesskey "2">
+<!ENTITY heading3Cmd.label "Titel 3">
+<!ENTITY heading3Cmd.accesskey "3">
+<!ENTITY heading4Cmd.label "Titel 4">
+<!ENTITY heading4Cmd.accesskey "4">
+<!ENTITY heading5Cmd.label "Titel 5">
+<!ENTITY heading5Cmd.accesskey "5">
+<!ENTITY heading6Cmd.label "Titel 6">
+<!ENTITY heading6Cmd.accesskey "6">
+<!ENTITY paragraphAddressCmd.label "Adressa">
+<!ENTITY paragraphAddressCmd.accesskey "A">
+<!ENTITY paragraphPreformatCmd.label "Preformatà">
+<!ENTITY paragraphPreformatCmd.accesskey "f">
+
+<!-- List menu items -->
+<!ENTITY formatlistMenu.label "Far ina glista">
+<!ENTITY formatlistMenu.accesskey "L">
+<!ENTITY noneCmd.label "Nagina glista">
+<!ENTITY noneCmd.accesskey "N">
+<!ENTITY listBulletCmd.label "Betg numerà">
+<!ENTITY listBulletCmd.accesskey "B">
+<!ENTITY listNumberedCmd.label "Numerà">
+<!ENTITY listNumberedCmd.accesskey "m">
+<!ENTITY listTermCmd.label "Term">
+<!ENTITY listTermCmd.accesskey "T">
+<!ENTITY listDefinitionCmd.label "Definiziun">
+<!ENTITY listDefinitionCmd.accesskey "D">
+<!ENTITY listPropsCmd.label "Caracteristicas da la glista…">
+<!ENTITY listPropsCmd.accesskey "C">
+
+<!ENTITY ParagraphSelect.tooltip "Tscherna in format da paragraf">
+<!-- Shared in Paragraph, and Toolbar menulist -->
+<!ENTITY bodyTextCmd.label "Text normal">
+<!ENTITY bodyTextCmd.accesskey "T">
+
+<!-- Align menu items -->
+<!ENTITY alignMenu.label "Alingiar">
+<!ENTITY alignMenu.accesskey "A">
+<!ENTITY alignLeft.label "A sanestra">
+<!ENTITY alignLeft.accesskey "s">
+<!ENTITY alignLeft.tooltip "Alingiar a sanestra">
+<!ENTITY alignCenter.label "Centrà">
+<!ENTITY alignCenter.accesskey "C">
+<!ENTITY alignCenter.tooltip "Alingiar centrà">
+<!ENTITY alignRight.label "A dretga">
+<!ENTITY alignRight.accesskey "d">
+<!ENTITY alignRight.tooltip "Alingiar a dretga">
+<!ENTITY alignJustify.label "En bloc">
+<!ENTITY alignJustify.accesskey "b">
+<!ENTITY alignJustify.tooltip "Alingiar en bloc">
+
+<!ENTITY increaseIndent.label "Augmentar l'incisiun">
+<!ENTITY increaseIndent.accesskey "A">
+<!ENTITY increaseIndent.key "]">
+<!ENTITY decreaseIndent.label "Diminuir l'incisiun">
+<!ENTITY decreaseIndent.accesskey "D">
+<!ENTITY decreaseIndent.key "[">
+
+<!ENTITY colorsAndBackground.label "Colur e fund davos da la pagina…">
+<!ENTITY colorsAndBackground.accesskey "C">
+
+<!-- Table Menu -->
+<!ENTITY tableMenu.label "Tabella">
+<!ENTITY tableMenu.accesskey "T">
+
+<!-- Select Submenu -->
+<!ENTITY tableSelectMenu.label "Tscherner">
+<!ENTITY tableSelectMenu.accesskey "S">
+
+<!ENTITY tableSelectMenu2.label "Selecziunar ina tabella">
+<!ENTITY tableSelectMenu2.accesskey "S">
+<!ENTITY tableInsertMenu2.label "Inserir ina tabella">
+<!ENTITY tableInsertMenu2.accesskey "I">
+<!ENTITY tableDeleteMenu2.label "Stizzar la tabella">
+<!ENTITY tableDeleteMenu2.accesskey "t">
+
+<!-- Insert SubMenu -->
+<!ENTITY tableInsertMenu.label "Inserir">
+<!ENTITY tableInsertMenu.accesskey "I">
+<!ENTITY tableTable.label "Tabella">
+<!ENTITY tableTable.accesskey "T">
+<!ENTITY tableRow.label "Lingia">
+<!ENTITY tableRows.label "Lingia(s)">
+<!ENTITY tableRow.accesskey "L">
+<!ENTITY tableRowAbove.label "Lingia sura">
+<!ENTITY tableRowAbove.accesskey "l">
+<!ENTITY tableRowBelow.label "Lingia sut">
+<!ENTITY tableRowBelow.accesskey "g">
+<!ENTITY tableColumn.label "Colonna">
+<!ENTITY tableColumns.label "Colonna(s)">
+<!ENTITY tableColumn.accesskey "o">
+<!ENTITY tableColumnBefore.label "Colonna avant">
+<!ENTITY tableColumnBefore.accesskey "a">
+<!ENTITY tableColumnAfter.label "Colonna suenter">
+<!ENTITY tableColumnAfter.accesskey "s">
+<!ENTITY tableCell.label "Cella">
+<!ENTITY tableCells.label "Cella(s)">
+<!ENTITY tableCell.accesskey "C">
+<!ENTITY tableCellContents.label "Cuntegn da la cella">
+<!ENTITY tableCellContents.accesskey "n">
+<!ENTITY tableAllCells.label "Tut las cellas">
+<!ENTITY tableAllCells.accesskey "u">
+<!ENTITY tableCellBefore.label "Cella avant">
+<!ENTITY tableCellBefore.accesskey "C">
+<!ENTITY tableCellAfter.label "Cella suenter">
+<!ENTITY tableCellAfter.accesskey "e">
+<!-- Delete SubMenu -->
+<!ENTITY tableDeleteMenu.label "Stizzar">
+<!ENTITY tableDeleteMenu.accesskey "z">
+
+<!-- text for "Join Cells" is in editor.properties
+     ("JoinSelectedCells" and "JoinCellToRight")
+     the access key must exist in both of those strings
+     But value must be set here for accesskey to draw properly
+-->
+<!ENTITY tableJoinCells.label "u">
+<!ENTITY tableJoinCells.accesskey "u">
+<!ENTITY tableSplitCell.label "Divider la cella">
+<!ENTITY tableSplitCell.accesskey "D">
+<!ENTITY convertToTable.label "Crear ina tabella da la selecziun">
+<!ENTITY convertToTable.accesskey "r">
+<!ENTITY tableProperties.label "Caracteristicas da la tabella…">
+<!ENTITY tableProperties.accesskey "C">
+
+<!ENTITY imageToolbarCmd.label "Grafica">
+<!ENTITY imageToolbarCmd.tooltip "Inserir ina nova grafica u modifitgar las caracteristicas da la grafica selecziunada">
+<!ENTITY hruleToolbarCmd.label "Lingia">
+<!ENTITY hruleToolbarCmd.tooltip "Inserir ina nova lingia orizontala u modifitgar las caracteristicas da la lingia orizontala selecziunada">
+<!ENTITY tableToolbarCmd.label "Tabella">
+<!ENTITY tableToolbarCmd.tooltip "Inserir ina nova tabella u modifitgar las caracteristicas da la tabella selecziunada">
+<!ENTITY linkToolbarCmd.label "Colliaziun">
+<!ENTITY linkToolbarCmd.tooltip "Inserir ina nova colliaziun u modifitgar las caracteristicas da la colliaziun selecziunada">
+<!ENTITY anchorToolbarCmd.label "Ancra">
+<!ENTITY anchorToolbarCmd.tooltip "Inserir ina nova ancra cun num u modifitgar las caracteristicas da l'ancra selecziunada">
+<!ENTITY TextColorButton.tooltip "Tscherner ina colur per il text">
+<!ENTITY BackgroundColorButton.tooltip "Tscherner ina colur per il fund davos">
+
+<!-- Editor toolbar -->
+<!ENTITY absoluteFontSizeToolbarCmd.tooltip "Definir la grondezza da scrittira">
+<!ENTITY decreaseFontSizeToolbarCmd.tooltip "Empitschnir la grondezza da scrittira">
+<!ENTITY increaseFontSizeToolbarCmd.tooltip "Engrondir la grondezza da scrittira">
+<!ENTITY boldToolbarCmd.tooltip "Grass">
+<!ENTITY italicToolbarCmd.tooltip "Cursiv">
+<!ENTITY underlineToolbarCmd.tooltip "Suttastritgà">
+<!ENTITY bulletListToolbarCmd.tooltip "Applitgar u allontanar la &quot;glista betg numerada&quot;">
+<!ENTITY numberListToolbarCmd.tooltip "Applitgar u allontanar la &quot;glista numerada&quot;">
+<!ENTITY outdentToolbarCmd.tooltip "Diminuir l'incisiun da text (stumplar a sanestra)">
+<!ENTITY indentToolbarCmd.tooltip "Augmentar l'incisiun da text (stumplar a dretga)">
+<!ENTITY AlignPopupButton.tooltip "Definir l'alingiament dal text">
+<!ENTITY InsertPopupButton.tooltip "Inserir ina colliaziun, in'ancra, ina grafica, ina lingia orizontala u ina tabella">
+<!ENTITY alignLeftButton.tooltip "Alingiar il text a l'ur sanester">
+<!ENTITY alignCenterButton.tooltip "Centrar il text">
+<!ENTITY alignRightButton.tooltip "Alingiar il text a l'ur dretg">
+<!ENTITY alignJustifyButton.tooltip "Alingiar il text a l'ur sanester ed a l'ur dretg">
+
+<!-- TOC manipulation -->
+<!ENTITY insertTOC.label          "Inserir">
+<!ENTITY insertTOC.accesskey      "I">
+<!ENTITY updateTOC.label          "Actualisar">
+<!ENTITY updateTOC.accesskey      "c">
+<!ENTITY removeTOC.label          "Allontanar">
+<!ENTITY removeTOC.accesskey      "A">
+<!ENTITY tocMenu.label            "Tavla da cuntegn">
+<!ENTITY tocMenu.accesskey        "v">

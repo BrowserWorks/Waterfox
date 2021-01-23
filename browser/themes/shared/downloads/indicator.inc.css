@@ -16,13 +16,13 @@
   background: url("chrome://browser/skin/downloads/download-icons.svg#default-bar") center no-repeat;
 }
 
-#downloads-button[attention="success"] > #downloads-indicator-anchor > #downloads-indicator-icon,
-#downloads-button[attention="success"] > #downloads-indicator-anchor > #downloads-indicator-progress-outer {
+#downloads-button[attention="success"] > .toolbarbutton-badge-stack > #downloads-indicator-anchor > #downloads-indicator-icon,
+#downloads-button[attention="success"] > .toolbarbutton-badge-stack > #downloads-indicator-anchor > #downloads-indicator-progress-outer {
   -moz-context-properties: fill, fill-opacity;
   fill: var(--toolbarbutton-icon-fill-attention);
   fill-opacity: 1;
 }
-#downloads-button[progress] > #downloads-indicator-anchor > #downloads-indicator-progress-outer {
+#downloads-button[progress] > .toolbarbutton-badge-stack > #downloads-indicator-anchor > #downloads-indicator-progress-outer {
   background: url("chrome://browser/skin/downloads/download-icons.svg#progress-bar-bg") center no-repeat;
 }
 
@@ -35,7 +35,7 @@
 
 #downloads-indicator-progress-inner {
   background: url("chrome://browser/skin/downloads/download-icons.svg#progress-bar-fg") left no-repeat;
-  margin-right: 16px;
+  margin-inline-end: 16px;
   -moz-context-properties: fill;
   fill: var(--toolbarbutton-icon-fill-attention);
   background-size: 16px;
@@ -51,27 +51,15 @@
 }
 
 #downloads-indicator-progress-inner:-moz-locale-dir(rtl) {
-  background-position: right;
-  animation-name: indicatorArrowProgressRTL;
-  margin-left: 16px;
-  margin-right: 0;
+  background-position-x: right;
 }
 
 @keyframes indicatorArrowProgress {
   0% {
-    margin-right: 15px;
+    margin-inline-end: 15px;
   }
   100% {
-    margin-right: 1px;
-  }
-}
-
-@keyframes indicatorArrowProgressRTL {
-  0% {
-    margin-left: 15px;
-  }
-  100% {
-    margin-left: 1px;
+    margin-inline-end: 1px;
   }
 }
 
@@ -86,7 +74,7 @@
   border-radius: 50%;
   /* "!important" is necessary to override the rule in toolbarbutton.css */
   margin-top: -1px !important;
-  margin-right: -2px !important;
+  margin-inline-end: -2px !important;
 }
 
 #downloads-button[cui-areatype="toolbar"] > .toolbarbutton-badge-stack > .toolbarbutton-badge {
@@ -109,7 +97,7 @@
 
 /*** Download notifications ***/
 
-#downloads-button[notification="start"] > #downloads-indicator-anchor > #downloads-indicator-icon {
+#downloads-button[notification="start"] > .toolbarbutton-badge-stack > #downloads-indicator-anchor > #downloads-indicator-icon {
   animation-name: downloadsIndicatorStartDip;
   /* Upon changing the duration_delay below, please keep the delay time of
      setTimeout() identical in indicator.js for this animation.
@@ -145,7 +133,7 @@
   to    { transform: scale(1); animation-timing-function: ease-in; }
 }
 
-#downloads-button[notification="finish"] > #downloads-indicator-anchor > #downloads-indicator-icon {
+#downloads-button[notification="finish"] > .toolbarbutton-badge-stack > #downloads-indicator-anchor > #downloads-indicator-icon {
   animation-name: downloadsIndicatorFinishPulse;
   animation-delay: 250ms;
   animation-duration: 300ms;
@@ -163,6 +151,7 @@
   position: relative;
   /* The selected tab may overlap #downloads-indicator-notification */
   z-index: 5;
+  pointer-events: none;
 }
 
 /* download start animation */
@@ -170,6 +159,10 @@
 #downloads-notification-anchor {
   width: 42px; /* Width of each frame within the SVG sprite */
   height: 98px; /* Height of each frame within the SVG sprite */
+  /* We need a min-height as well, to avoid being compressed away by our
+     container (#downloads-animation-container), which is 1px tall as defined
+     in a CSS rule above this one. */
+  min-height: 98px;
   overflow: hidden;
   /* animation is not directional and shouldn't be reversed in RTL */
   direction: ltr;

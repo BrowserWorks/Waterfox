@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Ներմուծելու Օգնական">
+
+<!ENTITY importFromWin.label            "Ներմուծել Ընտրանքները, Փոստարկղի կարգավորումները, Հասցեագիրքը, Զտիչներ և այլ տվյալներ.">
+<!ENTITY importFromNonWin.label         "Ներմուծել նախապատվությունները, Փոստարկղի կարգավորումները, Հասցեագիրքը, Զտիչներ և այլ տվյալներ.">
+<!ENTITY importSourceNotFound.label     "Հայտնաբերված տվյալներ ներմուծելու համար ոչ մի դիմում չկա:">
+
+<!ENTITY importFromNothing.label        "Չներմուծել ոչինչ">
+<!ENTITY importFromNothing.accesskey    "Չ">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 կամ ավելի նոր">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "Ներմուծել կարգավորումները և նամակի թղթապանակները">
+<!ENTITY importItems.title              "Ներմուծել՝">
+<!ENTITY importItems.label              "Ընտրեք թե ինչ պիտի ներմուծվի">
+
+<!ENTITY migrating.title                "Ներմուծվում է...">
+<!ENTITY migrating.label                "Հետևյալները ներմուծվում են…">
+
+<!ENTITY selectProfile.title            "Ընտրեք հատկագիր">
+<!ENTITY selectProfile.label            "Հետևյալ հատկագիր հասանելի են ներմուծելու՝">
+
+<!ENTITY done.title                     "Ներմուծումն ավարտվեց">
+<!ENTITY done.label                     "Հետևյալները հաջողությամբ ներմուծվել են.">

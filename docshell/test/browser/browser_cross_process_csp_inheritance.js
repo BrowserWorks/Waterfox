@@ -11,24 +11,33 @@ const TEST_URI = TEST_PATH + "file_cross_process_csp_inheritance.html";
 const DATA_URI =
   "data:text/html,<html>test-same-diff-process-csp-inhertiance</html>";
 
+const FISSION_ENABLED = SpecialPowers.useRemoteSubframes;
+
 function getCurrentPID(aBrowser) {
-  return ContentTask.spawn(aBrowser, null, () => {
+  return SpecialPowers.spawn(aBrowser, [], () => {
     return Services.appinfo.processID;
   });
 }
 
 function getCurrentURI(aBrowser) {
-  return ContentTask.spawn(aBrowser, null, () => {
+  return SpecialPowers.spawn(aBrowser, [], () => {
     let channel = content.docShell.currentDocumentChannel;
     return channel.URI.asciiSpec;
   });
 }
 
-function verifyResult(aTestName, aBrowser, aDataURI, aPID, aSamePID) {
-  return ContentTask.spawn(
+function verifyResult(
+  aTestName,
+  aBrowser,
+  aDataURI,
+  aPID,
+  aSamePID,
+  aFissionEnabled
+) {
+  return SpecialPowers.spawn(
     aBrowser,
-    { aTestName, aDataURI, aPID, aSamePID },
-    async function({ aTestName, aDataURI, aPID, aSamePID }) {
+    [{ aTestName, aDataURI, aPID, aSamePID, aFissionEnabled }],
+    async function({ aTestName, aDataURI, aPID, aSamePID, aFissionEnabled }) {
       // sanity, to make sure the correct URI was loaded
       let channel = content.docShell.currentDocumentChannel;
       is(
@@ -41,13 +50,21 @@ function verifyResult(aTestName, aBrowser, aDataURI, aPID, aSamePID) {
       let pid = Services.appinfo.processID;
       if (aSamePID) {
         is(pid, aPID, aTestName + ": process ID needs to be identical");
+      } else if (aFissionEnabled) {
+        // TODO: Fission discards dom.noopener.newprocess.enabled and puts
+        // data: URIs in the same process. Unfortunately todo_isnot is not
+        // defined in that scope, hence we have to use a workaround.
+        todo(
+          false,
+          pid == aPID,
+          ": process ID needs to be different in fission"
+        );
       } else {
         isnot(pid, aPID, aTestName + ": process ID needs to be different");
       }
 
       // finally, evaluate that the CSP was set.
-      let principal = channel.loadInfo.triggeringPrincipal;
-      let cspOBJ = JSON.parse(principal.cspJSON);
+      let cspOBJ = JSON.parse(content.document.cspJSON);
       let policies = cspOBJ["csp-policies"];
       is(policies.length, 1, "should be one policy");
       let policy = policies[0];
@@ -67,7 +84,7 @@ async function simulateCspInheritanceForNewTab(aTestName, aSamePID) {
     is(currentURI, TEST_URI, aTestName + ": correct test uri loaded");
 
     let pid = await getCurrentPID(gBrowser.selectedBrowser);
-    let loadPromise = BrowserTestUtils.waitForNewTab(gBrowser, DATA_URI);
+    let loadPromise = BrowserTestUtils.waitForNewTab(gBrowser, DATA_URI, true);
     // simulate click
     BrowserTestUtils.synthesizeMouseAtCenter(
       "#testLink",
@@ -81,7 +98,8 @@ async function simulateCspInheritanceForNewTab(aTestName, aSamePID) {
       gBrowser.selectedBrowser,
       DATA_URI,
       pid,
-      aSamePID
+      aSamePID,
+      FISSION_ENABLED
     );
     await BrowserTestUtils.removeTab(tab);
   });

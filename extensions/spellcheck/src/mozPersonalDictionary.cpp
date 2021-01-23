@@ -4,28 +4,28 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozPersonalDictionary.h"
-#include "nsIUnicharInputStream.h"
-#include "nsReadableUtils.h"
-#include "nsIFile.h"
+
+#include <utility>
+
 #include "nsAppDirectoryServiceDefs.h"
-#include "nsIObserverService.h"
-#include "nsIPrefService.h"
-#include "nsIPrefBranch.h"
-#include "nsIWeakReference.h"
 #include "nsCRT.h"
-#include "nsNetUtil.h"
-#include "nsNetCID.h"
+#include "nsIFile.h"
 #include "nsIInputStream.h"
+#include "nsIObserverService.h"
 #include "nsIOutputStream.h"
-#include "nsISafeOutputStream.h"
-#include "nsTArray.h"
-#include "nsStringEnumerator.h"
-#include "nsUnicharInputStream.h"
 #include "nsIRunnable.h"
-#include "nsThreadUtils.h"
+#include "nsISafeOutputStream.h"
+#include "nsIUnicharInputStream.h"
+#include "nsIWeakReference.h"
+#include "nsNetCID.h"
+#include "nsNetUtil.h"
 #include "nsProxyRelease.h"
+#include "nsReadableUtils.h"
+#include "nsStringEnumerator.h"
+#include "nsTArray.h"
+#include "nsThreadUtils.h"
+#include "nsUnicharInputStream.h"
 #include "prio.h"
-#include "mozilla/Move.h"
 
 #define MOZ_PERSONAL_DICT_NAME "persdict.dat"
 
@@ -61,9 +61,8 @@ class mozPersonalDictionaryLoader final : public mozilla::Runnable {
     mDict->SyncLoad();
 
     // Release the dictionary on the main thread
-    NS_ReleaseOnMainThreadSystemGroup(
-        "mozPersonalDictionaryLoader::mDict",
-        mDict.forget().downcast<mozIPersonalDictionary>());
+    NS_ReleaseOnMainThread("mozPersonalDictionaryLoader::mDict",
+                           mDict.forget().downcast<mozIPersonalDictionary>());
 
     return NS_OK;
   }
@@ -78,7 +77,7 @@ class mozPersonalDictionarySave final : public mozilla::Runnable {
                                      nsCOMPtr<nsIFile> aFile,
                                      nsTArray<nsString>&& aDictWords)
       : mozilla::Runnable("mozPersonalDictionarySave"),
-        mDictWords(aDictWords),
+        mDictWords(std::move(aDictWords)),
         mFile(aFile),
         mDict(aDict) {}
 
@@ -133,9 +132,8 @@ class mozPersonalDictionarySave final : public mozilla::Runnable {
     }
 
     // Release the dictionary on the main thread.
-    NS_ReleaseOnMainThreadSystemGroup(
-        "mozPersonalDictionarySave::mDict",
-        mDict.forget().downcast<mozIPersonalDictionary>());
+    NS_ReleaseOnMainThread("mozPersonalDictionarySave::mDict",
+                           mDict.forget().downcast<mozIPersonalDictionary>());
 
     return NS_OK;
   }

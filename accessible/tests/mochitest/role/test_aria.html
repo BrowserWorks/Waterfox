@@ -14,7 +14,15 @@
 
   <script type="application/javascript">
 
-    function doTest() {
+    // To test initial roles on body elements, we need to use an iframe.
+    function testBodyRole(iframeId, role) {
+      let iframe = getNode(iframeId);
+      let doc = iframe.contentDocument;
+      let docAcc = getAccessible(doc);
+      testRole(docAcc, role);
+    }
+
+    async function doTest() {
       // ARIA role map.
       testRole("aria_alert", ROLE_ALERT);
       testRole("aria_alertdialog", ROLE_DIALOG);
@@ -24,8 +32,11 @@
       testRole("aria_button", ROLE_PUSHBUTTON);
       testRole("aria_caption", ROLE_CAPTION);
       testRole("aria_checkbox", ROLE_CHECKBUTTON);
+      testRole("aria_code", ROLE_CODE);
       testRole("aria_columnheader", ROLE_COLUMNHEADER);
       testRole("aria_combobox", ROLE_EDITCOMBOBOX);
+      testRole("aria_comment", ROLE_COMMENT);
+      testRole("aria_deletion", ROLE_CONTENT_DELETION);
       testRole("aria_dialog", ROLE_DIALOG);
       testRole("aria_directory", ROLE_LIST);
       testRole("aria_document", ROLE_NON_NATIVE_DOCUMENT);
@@ -38,11 +49,13 @@
       testRole("aria_group", ROLE_GROUPING);
       testRole("aria_heading", ROLE_HEADING);
       testRole("aria_img", ROLE_GRAPHIC);
+      testRole("aria_insertion", ROLE_CONTENT_INSERTION);
       testRole("aria_link", ROLE_LINK);
       testRole("aria_list", ROLE_LIST);
       testRole("aria_listbox", ROLE_LISTBOX);
       testRole("aria_listitem", ROLE_LISTITEM);
       testRole("aria_log", ROLE_TEXT); // weak role
+      testRole("aria_mark", ROLE_MARK);
       testRole("aria_marquee", ROLE_ANIMATION);
       testRole("aria_math", ROLE_FLAT_EQUATION);
       testRole("aria_menu", ROLE_MENUPOPUP);
@@ -69,6 +82,7 @@
       testRole("aria_slider", ROLE_SLIDER);
       testRole("aria_spinbutton", ROLE_SPINBUTTON);
       testRole("aria_status", ROLE_STATUSBAR);
+      testRole("aria_suggestion", ROLE_SUGGESTION);
       testRole("aria_switch", ROLE_SWITCH);
       testRole("aria_tab", ROLE_PAGETAB);
       testRole("aria_tablist", ROLE_PAGETABLIST);
@@ -87,7 +101,7 @@
       // role mapping. Similarly "strong foo" means there is a good foo-to-
       // platform role mapping.
 
-      testRole("articlemain", ROLE_ARTICLE);
+      testRole("articlemain", ROLE_LANDMARK);
       testRole("articleform", ROLE_FORM);
 
       // Test article exposed as article
@@ -105,39 +119,41 @@
       testRole("form", ROLE_FORM);
       testRole("application_table", ROLE_APPLICATION);
 
-      // weak landmarks
-      var weak_landmarks = ["banner", "complementary", "contentinfo",
+      // landmarks
+      let landmarks = ["banner", "complementary", "contentinfo",
           "main", "navigation", "search"];
-      for (l in weak_landmarks)
-        testRole(weak_landmarks[l], ROLE_SECTION);
+      for (const l in landmarks) {
+        testRole(landmarks[l], ROLE_LANDMARK);
+      }
 
-      for (l in weak_landmarks) {
-        var id = weak_landmarks[l] + "_table";
-        testRole(id, ROLE_TABLE);
-    
-        var accessibleTable = getAccessible(id, [nsIAccessibleTable], null,
+      for (const l in landmarks) {
+        let id = landmarks[l] + "_table";
+        testRole(id, ROLE_LANDMARK);
+
+        let accessibleTable = getAccessible(id, [nsIAccessibleTable], null,
                                             DONOTFAIL_IF_NO_INTERFACE);
         ok(!!accessibleTable, "landmarked table should have nsIAccessibleTable");
-    
+
         if (accessibleTable)
           is(accessibleTable.getCellAt(0, 0).firstChild.name, "hi", "no cell");
       }
 
       // ////////////////////////////////////////////////////////////////////////
       // test gEmptyRoleMap
-      testRole("buttontable_row", ROLE_NOTHING);
-      testRole("buttontable_cell", ROLE_NOTHING);
+      testRole("buttontable_row", ROLE_TEXT_CONTAINER);
+      testRole("buttontable_cell", ROLE_TEXT_CONTAINER);
 
       // abstract roles
       var abstract_roles = ["composite", "landmark", "structure", "widget",
                             "window", "input", "range", "select", "section",
                             "sectionhead"];
-      for (a in abstract_roles)
+      for (const a in abstract_roles)
         testRole(abstract_roles[a], ROLE_SECTION);
 
       // ////////////////////////////////////////////////////////////////////////
       // roles transformed by ARIA state attributes
       testRole("togglebutton", ROLE_TOGGLE_BUTTON);
+      testRole("implicit_gridcell", ROLE_GRID_CELL);
 
       // ////////////////////////////////////////////////////////////////////////
       // ignore unknown roles, take first known
@@ -155,12 +171,42 @@
       testRole(testDoc, ROLE_DOCUMENT);
       document.body.setAttribute("role", "application");
       testRole(testDoc, ROLE_APPLICATION);
+      document.body.setAttribute("role", "dialog");
+      testRole(testDoc, ROLE_DIALOG);
+      // Other roles aren't valid on body elements.
+      document.body.setAttribute("role", "document");
+      testRole(testDoc, ROLE_DOCUMENT);
+      document.body.setAttribute("role", "button");
+      testRole(testDoc, ROLE_DOCUMENT);
+      document.body.setAttribute("role", "main");
+      testRole(testDoc, ROLE_DOCUMENT);
 
       // Test equation image
       testRole("img_eq", ROLE_FLAT_EQUATION);
 
       // Test textual equation
       testRole("txt_eq", ROLE_FLAT_EQUATION);
+
+      // Test initial ARIA roles on the body element.
+      testBodyRole("iframe_aria_application", ROLE_APPLICATION);
+      testBodyRole("iframe_aria_dialog", ROLE_DIALOG);
+      // role="alert" is valid on the body of chrome documents.
+      let win = Services.ww.openWindow(
+        null,
+        "chrome://mochitests/content/a11y/accessible/tests/mochitest/role/chrome_body_role_alert.xhtml",
+        "_blank",
+        "chrome",
+        []
+      );
+      await new Promise(resolve => addA11yLoadEvent(resolve, win));
+      testRole(win.document, ROLE_ALERT);
+      win.close();
+      // Other roles aren't valid on body elements.
+      testBodyRole("iframe_aria_document", ROLE_DOCUMENT);
+      testBodyRole("iframe_aria_button", ROLE_DOCUMENT);
+      testBodyRole("iframe_aria_main", ROLE_DOCUMENT);
+      // role="alert" is not valid on the body of content documents.
+      testBodyRole("iframe_aria_alert", ROLE_DOCUMENT);
 
       SimpleTest.finish();
     }
@@ -208,71 +254,77 @@
   <pre id="test">
   </pre>
 
-  <span id="aria_alert" role="alert"/>
-  <span id="aria_alertdialog" role="alertdialog"/>
-  <span id="aria_application" role="application"/>
-  <span id="aria_article" role="article"/>
-  <span id="aria_blockquote" role="blockquote"/>
-  <span id="aria_button" role="button"/>
-  <span id="aria_caption" role="caption"/>
-  <span id="aria_checkbox" role="checkbox"/>
-  <span id="aria_columnheader" role="columnheader"/>
-  <span id="aria_combobox" role="combobox"/>
-  <span id="aria_dialog" role="dialog"/>
-  <span id="aria_directory" role="directory"/>
-  <span id="aria_document" role="document"/>
-  <span id="aria_form" role="form"/>
-  <span id="aria_form_with_label" role="form" aria-label="Label"/>
-  <span id="aria_feed" role="feed"/>
-  <span id="aria_figure" role="figure"/>
-  <span id="aria_grid" role="grid"/>
-  <span id="aria_gridcell" role="gridcell"/>
-  <span id="aria_group" role="group"/>
-  <span id="aria_heading" role="heading"/>
-  <span id="aria_img" role="img"/>
-  <span id="aria_link" role="link"/>
-  <span id="aria_list" role="list"/>
-  <span id="aria_listbox" role="listbox"/>
-  <span id="aria_listitem" role="listitem"/>
-  <span id="aria_log" role="log"/>
-  <span id="aria_marquee" role="marquee"/>
-  <span id="aria_math" role="math"/>
-  <span id="aria_menu" role="menu"/>
-  <span id="aria_menubar" role="menubar"/>
-  <span id="aria_menuitem" role="menuitem"/>
-  <span id="aria_menuitemcheckbox" role="menuitemcheckbox"/>
-  <span id="aria_menuitemradio" role="menuitemradio"/>
-  <span id="aria_note" role="note"/>
-  <span id="aria_paragraph" role="paragraph"/>
-  <span id="aria_presentation" role="presentation" tabindex="0"/>
-  <span id="aria_progressbar" role="progressbar"/>
-  <span id="aria_radio" role="radio"/>
-  <span id="aria_radiogroup" role="radiogroup"/>
-  <span id="aria_region_no_name" role="region"/>
-  <span id="aria_region_has_label" role="region" aria-label="label"/>
-  <span id="aria_region_has_labelledby" role="region" aria-labelledby="label"/><span id="label" aria-label="label">
-  <span id="aria_region_has_title" role="region" title="title"/>
-  <span id="aria_region_empty_name" role="region" aria-label="" title="" aria-labelledby="empty"/><span id="empty"/>
-  <span id="aria_row" role="row"/>
-  <span id="aria_rowheader" role="rowheader"/>
-  <span id="aria_scrollbar" role="scrollbar"/>
-  <span id="aria_searchbox" role="textbox"/>
-  <span id="aria_separator" role="separator"/>
-  <span id="aria_slider" role="slider"/>
-  <span id="aria_spinbutton" role="spinbutton"/>
-  <span id="aria_status" role="status"/>
-  <span id="aria_switch" role="switch"/>
-  <span id="aria_tab" role="tab"/>
-  <span id="aria_tablist" role="tablist"/>
-  <span id="aria_tabpanel" role="tabpanel"/>
-  <span id="aria_term" role="term"/>
-  <span id="aria_textbox" role="textbox"/>
-  <span id="aria_timer" role="timer"/>
-  <span id="aria_toolbar" role="toolbar"/>
-  <span id="aria_tooltip" role="tooltip"/>
-  <span id="aria_tree" role="tree"/>
-  <span id="aria_treegrid" role="treegrid"/>
-  <span id="aria_treeitem" role="treeitem"/>
+  <span id="aria_alert" role="alert"></span>
+  <span id="aria_alertdialog" role="alertdialog"></span>
+  <span id="aria_application" role="application"></span>
+  <span id="aria_article" role="article"></span>
+  <span id="aria_blockquote" role="blockquote"></span>
+  <span id="aria_button" role="button"></span>
+  <span id="aria_caption" role="caption"></span>
+  <span id="aria_checkbox" role="checkbox"></span>
+  <span id="aria_code" role="code"></span>
+  <span id="aria_columnheader" role="columnheader"></span>
+  <span id="aria_combobox" role="combobox"></span>
+  <span id="aria_comment" role="comment"></span>
+  <span id="aria_deletion" role="deletion"></span>
+  <span id="aria_dialog" role="dialog"></span>
+  <span id="aria_directory" role="directory"></span>
+  <span id="aria_document" role="document"></span>
+  <span id="aria_form" role="form"></span>
+  <span id="aria_form_with_label" role="form" aria-label="Label"></span>
+  <span id="aria_feed" role="feed"></span>
+  <span id="aria_figure" role="figure"></span>
+  <span id="aria_grid" role="grid"></span>
+  <span id="aria_gridcell" role="gridcell"></span>
+  <span id="aria_group" role="group"></span>
+  <span id="aria_heading" role="heading"></span>
+  <span id="aria_img" role="img"></span>
+  <span id="aria_insertion" role="insertion"></span>
+  <span id="aria_link" role="link"></span>
+  <span id="aria_list" role="list"></span>
+  <span id="aria_listbox" role="listbox"></span>
+  <span id="aria_listitem" role="listitem"></span>
+  <span id="aria_log" role="log"></span>
+  <span id="aria_mark" role="mark"></span>
+  <span id="aria_marquee" role="marquee"></span>
+  <span id="aria_math" role="math"></span>
+  <span id="aria_menu" role="menu"></span>
+  <span id="aria_menubar" role="menubar"></span>
+  <span id="aria_menuitem" role="menuitem"></span>
+  <span id="aria_menuitemcheckbox" role="menuitemcheckbox"></span>
+  <span id="aria_menuitemradio" role="menuitemradio"></span>
+  <span id="aria_note" role="note"></span>
+  <span id="aria_paragraph" role="paragraph"></span>
+  <span id="aria_presentation" role="presentation" tabindex="0"></span>
+  <span id="aria_progressbar" role="progressbar"></span>
+  <span id="aria_radio" role="radio"></span>
+  <span id="aria_radiogroup" role="radiogroup"></span>
+  <span id="aria_region_no_name" role="region"></span>
+  <span id="aria_region_has_label" role="region" aria-label="label"></span>
+  <span id="aria_region_has_labelledby" role="region" aria-labelledby="label"><span id="label" aria-label="label"></span>
+  <span id="aria_region_has_title" role="region" title="title"></span>
+  <span id="aria_region_empty_name" role="region" aria-label="" title="" aria-labelledby="empty"></span><span id="empty"></span>
+  <span id="aria_row" role="row"></span>
+  <span id="aria_rowheader" role="rowheader"></span>
+  <span id="aria_scrollbar" role="scrollbar"></span>
+  <span id="aria_searchbox" role="textbox"></span>
+  <span id="aria_separator" role="separator"></span>
+  <span id="aria_slider" role="slider"></span>
+  <span id="aria_spinbutton" role="spinbutton"></span>
+  <span id="aria_status" role="status"></span>
+  <span id="aria_suggestion" role="suggestion"></span>
+  <span id="aria_switch" role="switch"></span>
+  <span id="aria_tab" role="tab"></span>
+  <span id="aria_tablist" role="tablist"></span>
+  <span id="aria_tabpanel" role="tabpanel"></span>
+  <span id="aria_term" role="term"></span>
+  <span id="aria_textbox" role="textbox"></span>
+  <span id="aria_timer" role="timer"></span>
+  <span id="aria_toolbar" role="toolbar"></span>
+  <span id="aria_tooltip" role="tooltip"></span>
+  <span id="aria_tree" role="tree"></span>
+  <span id="aria_treegrid" role="treegrid"></span>
+  <span id="aria_treeitem" role="treeitem"></span>
 
   <article id="articlemain" role="main">a main area</article>
   <article id="articleform" role="form">a form area</article>
@@ -339,6 +391,13 @@
   <div role="section" id="section">section</div>
   <div role="sectionhead" id="sectionhead">sectionhead</div>
 
+  <!-- roles transformed by ARIA roles of ancestors -->
+  <table role="grid">
+    <tr>
+      <td id="implicit_gridcell">foo</td>
+    </tr>
+  </table>
+
   <!-- roles transformed by ARIA state attributes -->
   <button aria-pressed="true" id="togglebutton">
 
@@ -355,13 +414,26 @@
     <div role="listitem">C</div>
   </div>
 
-  <p>Image: 
+  <p>Image:
     <img id="img_eq" role="math" src="foo" alt="x^2 + y^2 + z^2">
   </p>
 
-  <p>Text: 
-    <span id="txt_eq" role="math" title="x^2 + y^2 + z^2">x<sup>2</sup> + 
+  <p>Text:
+    <span id="txt_eq" role="math" title="x^2 + y^2 + z^2">x<sup>2</sup> +
       y<sup>2</sup> + z<sup>2</sup></span>
+  </p>
 
+  <iframe id="iframe_aria_application"
+    src="data:text/html,<body role='application'>"></iframe>
+  <iframe id="iframe_aria_dialog"
+    src="data:text/html,<body role='dialog'>"></iframe>
+  <iframe id="iframe_aria_document"
+    src="data:text/html,<body role='document'>"></iframe>
+  <iframe id="iframe_aria_button"
+    src="data:text/html,<body role='button'>"></iframe>
+  <iframe id="iframe_aria_main"
+    src="data:text/html,<body role='main'>"></iframe>
+  <iframe id="iframe_aria_alert"
+    src="data:text/html,<body role='alert'>"></iframe>
 </body>
 </html>

@@ -7,13 +7,13 @@
 
 #include "gfxQuartzSurface.h"
 #include "mozilla/gfx/2D.h"
-#include "mozilla/gfx/MacIOSurface.h"
 
 #include "gfxMacPlatformFontList.h"
 #include "gfxMacFont.h"
 #include "gfxCoreTextShaper.h"
 #include "gfxTextRun.h"
 #include "gfxUserFontSet.h"
+#include "gfxConfig.h"
 
 #include "nsTArray.h"
 #include "mozilla/Preferences.h"
@@ -27,6 +27,7 @@
 #include <CoreVideo/CoreVideo.h>
 
 #include "mozilla/layers/CompositorBridgeParent.h"
+#include "mozilla/layers/SurfacePool.h"
 #include "VsyncSource.h"
 
 using namespace mozilla;
@@ -76,8 +77,6 @@ gfxPlatformMac::gfxPlatformMac() {
 
   InitBackendPrefs(GetBackendPrefs());
 
-  MacIOSurfaceLib::LoadLibrary();
-
   if (nsCocoaFeatures::OnHighSierraOrLater()) {
     mHasNativeColrFontSupport = true;
   }
@@ -114,7 +113,7 @@ gfxPlatformFontList* gfxPlatformMac::CreatePlatformFontList() {
 }
 
 void gfxPlatformMac::ReadSystemFontList(
-    InfallibleTArray<SystemFontListEntry>* aFontList) {
+    nsTArray<SystemFontListEntry>* aFontList) {
   gfxMacPlatformFontList::PlatformFontList()->ReadSystemFontList(aFontList);
 }
 
@@ -126,14 +125,6 @@ already_AddRefed<gfxASurface> gfxPlatformMac::CreateOffscreenSurface(
 
   RefPtr<gfxASurface> newSurface = new gfxQuartzSurface(aSize, aFormat);
   return newSurface.forget();
-}
-
-gfxFontGroup* gfxPlatformMac::CreateFontGroup(
-    const FontFamilyList& aFontFamilyList, const gfxFontStyle* aStyle,
-    gfxTextPerfMetrics* aTextPerf, gfxUserFontSet* aUserFontSet,
-    gfxFloat aDevToCssSize) {
-  return new gfxFontGroup(aFontFamilyList, aStyle, aTextPerf, aUserFontSet,
-                          aDevToCssSize);
 }
 
 bool gfxPlatformMac::IsFontFormatSupported(uint32_t aFormatFlags) {
@@ -160,6 +151,7 @@ static const char kFontGeneva[] = "Geneva";
 static const char kFontGeezaPro[] = "Geeza Pro";
 static const char kFontGujaratiSangamMN[] = "Gujarati Sangam MN";
 static const char kFontGurmukhiMN[] = "Gurmukhi MN";
+static const char kFontHelvetica[] = "Helvetica";
 static const char kFontHiraginoKakuGothic[] = "Hiragino Kaku Gothic ProN";
 static const char kFontHiraginoSansGB[] = "Hiragino Sans GB";
 static const char kFontKefa[] = "Kefa";
@@ -170,12 +162,14 @@ static const char kFontMenlo[] = "Menlo";
 static const char kFontMicrosoftTaiLe[] = "Microsoft Tai Le";
 static const char kFontMingLiUExtB[] = "MingLiU-ExtB";
 static const char kFontMyanmarMN[] = "Myanmar MN";
+static const char kFontNotoSansMongolian[] = "Noto Sans Mongolian";
 static const char kFontPlantagenetCherokee[] = "Plantagenet Cherokee";
 static const char kFontSimSunExtB[] = "SimSun-ExtB";
 static const char kFontSongtiSC[] = "Songti SC";
 static const char kFontSTHeiti[] = "STHeiti";
 static const char kFontSTIXGeneral[] = "STIXGeneral";
 static const char kFontTamilMN[] = "Tamil MN";
+static const char kFontZapfDingbats[] = "Zapf Dingbats";
 
 void gfxPlatformMac::GetCommonFallbackFonts(uint32_t aCh, uint32_t aNextCh,
                                             Script aRunScript,
@@ -231,6 +225,7 @@ void gfxPlatformMac::GetCommonFallbackFonts(uint32_t aCh, uint32_t aNextCh,
         aFontList.AppendElement(kFontSongtiSC);
         break;
       case 0x10:
+        aFontList.AppendElement(kFontHelvetica);
         aFontList.AppendElement(kFontMenlo);
         aFontList.AppendElement(kFontMyanmarMN);
         break;
@@ -245,7 +240,7 @@ void gfxPlatformMac::GetCommonFallbackFonts(uint32_t aCh, uint32_t aNextCh,
         aFontList.AppendElement(kFontGeneva);
         break;
       case 0x18:  // Mongolian, UCAS
-        aFontList.AppendElement(kFontSTHeiti);
+        aFontList.AppendElement(kFontNotoSansMongolian);
         aFontList.AppendElement(kFontEuphemiaUCAS);
         break;
       case 0x19:  // Khmer
@@ -256,6 +251,9 @@ void gfxPlatformMac::GetCommonFallbackFonts(uint32_t aCh, uint32_t aNextCh,
       case 0x1e:
         aFontList.AppendElement(kFontGeneva);
         break;
+      case 0x27:  // For Dingbats block 2700-27BF, prefer Zapf Dingbats
+        aFontList.AppendElement(kFontZapfDingbats);
+        [[fallthrough]];
       case 0x20:  // Symbol ranges
       case 0x21:
       case 0x22:
@@ -263,7 +261,6 @@ void gfxPlatformMac::GetCommonFallbackFonts(uint32_t aCh, uint32_t aNextCh,
       case 0x24:
       case 0x25:
       case 0x26:
-      case 0x27:
       case 0x29:
       case 0x2a:
       case 0x2b:
@@ -364,9 +361,9 @@ static CVReturn VsyncCallback(CVDisplayLinkRef aDisplayLink,
 
 class OSXVsyncSource final : public VsyncSource {
  public:
-  OSXVsyncSource() {}
+  OSXVsyncSource() : mGlobalDisplay(new OSXDisplay()) {}
 
-  Display& GetGlobalDisplay() override { return mGlobalDisplay; }
+  Display& GetGlobalDisplay() override { return *mGlobalDisplay; }
 
   class OSXDisplay final : public VsyncSource::Display {
    public:
@@ -510,7 +507,7 @@ class OSXVsyncSource final : public VsyncSource {
  private:
   virtual ~OSXVsyncSource() = default;
 
-  OSXDisplay mGlobalDisplay;
+  RefPtr<OSXDisplay> mGlobalDisplay;
 };  // OSXVsyncSource
 
 static CVReturn VsyncCallback(CVDisplayLinkRef aDisplayLink,
@@ -562,16 +559,18 @@ gfxPlatformMac::CreateHardwareVsyncSource() {
   return osxVsyncSource.forget();
 }
 
-void gfxPlatformMac::GetPlatformCMSOutputProfile(void*& mem, size_t& size) {
-  mem = nullptr;
-  size = 0;
+nsTArray<uint8_t> gfxPlatformMac::GetPlatformCMSOutputProfileData() {
+  nsTArray<uint8_t> prefProfileData = GetPrefCMSOutputProfileData();
+  if (!prefProfileData.IsEmpty()) {
+    return prefProfileData;
+  }
 
   CGColorSpaceRef cspace = ::CGDisplayCopyColorSpace(::CGMainDisplayID());
   if (!cspace) {
     cspace = ::CGColorSpaceCreateDeviceRGB();
   }
   if (!cspace) {
-    return;
+    return nsTArray<uint8_t>();
   }
 
   CFDataRef iccp = ::CGColorSpaceCopyICCProfile(cspace);
@@ -579,22 +578,21 @@ void gfxPlatformMac::GetPlatformCMSOutputProfile(void*& mem, size_t& size) {
   ::CFRelease(cspace);
 
   if (!iccp) {
-    return;
+    return nsTArray<uint8_t>();
   }
 
   // copy to external buffer
-  size = static_cast<size_t>(::CFDataGetLength(iccp));
+  size_t size = static_cast<size_t>(::CFDataGetLength(iccp));
+
+  nsTArray<uint8_t> result;
+
   if (size > 0) {
-    void* data = malloc(size);
-    if (data) {
-      memcpy(data, ::CFDataGetBytePtr(iccp), size);
-      mem = data;
-    } else {
-      size = 0;
-    }
+    result.AppendElements(::CFDataGetBytePtr(iccp), size);
   }
 
   ::CFRelease(iccp);
+
+  return result;
 }
 
 bool gfxPlatformMac::CheckVariationFontSupport() {
@@ -603,4 +601,11 @@ bool gfxPlatformMac::CheckVariationFontSupport() {
   // fairly buggy.
   // (Note that Safari also requires 10.13 for variation-font support.)
   return nsCocoaFeatures::OnHighSierraOrLater();
+}
+
+void gfxPlatformMac::InitPlatformGPUProcessPrefs() {
+  FeatureState& gpuProc = gfxConfig::GetFeature(Feature::GPU_PROCESS);
+  gpuProc.ForceDisable(FeatureStatus::Blocked,
+                       "GPU process does not work on Mac",
+                       NS_LITERAL_CSTRING("FEATURE_FAILURE_MAC_GPU_PROC"));
 }

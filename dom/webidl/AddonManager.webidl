@@ -6,7 +6,8 @@
 /* We need a JSImplementation but cannot get one without a contract ID.
    Since Addon and AddonInstall are only ever created from JS they don't need
    real contract IDs. */
-[ChromeOnly, JSImplementation="dummy"]
+[ChromeOnly, JSImplementation="dummy",
+ Exposed=Window]
 interface Addon {
   // The add-on's ID.
   readonly attribute DOMString id;
@@ -31,7 +32,8 @@ interface Addon {
   Promise<void> setEnabled(boolean value);
 };
 
-[ChromeOnly, JSImplementation="dummy"]
+[ChromeOnly, JSImplementation="dummy",
+ Exposed=Window]
 interface AddonInstall : EventTarget {
   // One of the STATE_* symbols from AddonManager.jsm
   readonly attribute DOMString state;
@@ -56,9 +58,9 @@ dictionary addonInstallOptions {
 
 [HeaderFile="mozilla/AddonManagerWebAPI.h",
  Func="mozilla::AddonManagerWebAPI::IsAPIEnabled",
- NavigatorProperty="mozAddonManager",
  JSImplementation="@mozilla.org/addon-web-api/manager;1",
- WantsEventListenerHooks]
+ WantsEventListenerHooks,
+ Exposed=Window]
 interface AddonManager : EventTarget {
   /**
    * Gets information about an add-on
@@ -76,14 +78,33 @@ interface AddonManager : EventTarget {
    *        Only one supported option: 'url', the URL of the addon to install.
    * @return A promise that resolves to an instance of AddonInstall.
    */
-  Promise<AddonInstall> createInstall(optional addonInstallOptions options);
+  Promise<AddonInstall> createInstall(optional addonInstallOptions options = {});
+
+  /**
+   * Opens an Abuse Report dialog window for the addon with the given id.
+   * The addon may be currently installed (in which case the report will
+   * include the details available locally), or not (in which case the report
+   * will include the details that can be retrieved from the AMO API endpoint).
+   *
+   * @param  id
+   *         The ID of the add-on to report.
+   * @return A promise that resolves to a boolean (true when the report
+   *         has been submitted successfully, false if the user cancelled
+   *         the report). The Promise is rejected is the report fails
+   *         for a reason other than user cancellation.
+   */
+  Promise<boolean> reportAbuse(DOMString id);
 
   // Indicator to content whether permissions prompts are enabled
   readonly attribute boolean permissionPromptsEnabled;
+
+  // Indicator to content whether handing off the reports to the integrated
+  // abuse report panel is enabled.
+  readonly attribute boolean abuseReportPanelEnabled;
 };
 
 [ChromeOnly,Exposed=Window,HeaderFile="mozilla/AddonManagerWebAPI.h"]
-interface AddonManagerPermissions {
-  static boolean isHostPermitted(DOMString host);
+namespace AddonManagerPermissions {
+  boolean isHostPermitted(DOMString host);
 };
 

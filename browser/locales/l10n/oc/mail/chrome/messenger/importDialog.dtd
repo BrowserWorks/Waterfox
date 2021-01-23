@@ -1,0 +1,59 @@
+<!-- ***** BEGIN LICENSE BLOCK *****
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of 
+Netscape Communicator, Please translate using the brandname in respective 
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word 
+"&brandShortName;" below.
+-->
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Importar">
+<!ENTITY importAll.label "Importar tot">
+<!ENTITY importAll.accesskey "T">
+<!ENTITY importMail.label "Corrièr">
+<!ENTITY importMail.accesskey "C">
+<!ENTITY importAddressbook.label "Quasernets d'adreças">
+<!ENTITY importAddressbook.accesskey "a">
+<!ENTITY importSettings.label "Paramètres">
+<!ENTITY importSettings.accesskey "P">
+<!ENTITY importFilters.label "Filtres">
+<!ENTITY importFilters.accesskey  "F">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "Assistent d'importacion de &brandShortName;">
+<!ENTITY importShortDesc.label    "Importar lo corrièr, los paramètres, los quasernets d'adreças e los filtres d'autres logicials">
+
+<!ENTITY importDescription1.label "Aqueste assistent importarà dins &brandShortName; lo corrièr, los quasernets d'adreças, las preferéncias e/o los filtres d'autres logicials de corrièr e de quasernets d'adreças en format comun.">
+<!ENTITY importDescription2.label "Un còp importats, aquelas donadas seràn accessiblas dempuèi &brandShortName;.">
+
+<!ENTITY selectDescription.label  "Seleccionats lo tipe de fichièr d'importar :">
+<!ENTITY selectDescription.accesskey "V">
+
+<!ENTITY back.label               "&lt; Precedent">
+<!ENTITY forward.label            "Seguent &gt;">
+<!ENTITY finish.label             "Acabar">
+<!ENTITY cancel.label             "Annuler">
+
+<!ENTITY select.label             "o seleccionatz las donadas que volètz importar :">
+
+<!ENTITY title.label              "Títol">
+<!ENTITY processing.label         "Tractament en cors…">
+

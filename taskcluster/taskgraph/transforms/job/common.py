@@ -49,31 +49,6 @@ def add_cache(job, taskdesc, name, mount_point, skip_untrusted=False):
         pass
 
 
-def docker_worker_add_workspace_cache(config, job, taskdesc, extra=None):
-    """Add the workspace cache.
-
-    Args:
-        config (TransformConfig): Transform configuration object.
-        job (dict): Task's job description.
-        taskdesc (dict): Target task description to modify.
-        extra (str): Optional context passed in that supports extending the cache
-            key name to avoid undesired conflicts with other caches.
-    """
-    cache_name = '{}-build-{}-{}-workspace'.format(
-        config.params['project'],
-        taskdesc['attributes']['build_platform'],
-        taskdesc['attributes']['build_type'],
-    )
-    if extra:
-        cache_name = '{}-{}'.format(cache_name, extra)
-
-    mount_point = "{workdir}/workspace".format(**job['run'])
-
-    # Don't enable the workspace cache when we can't guarantee its
-    # behavior, like on Try.
-    add_cache(job, taskdesc, cache_name, mount_point, skip_untrusted=True)
-
-
 def add_artifacts(config, job, taskdesc, path):
     taskdesc['worker'].setdefault('artifacts', []).append({
         'name': get_artifact_prefix(taskdesc),
@@ -84,7 +59,9 @@ def add_artifacts(config, job, taskdesc, path):
 
 def docker_worker_add_artifacts(config, job, taskdesc):
     """ Adds an artifact directory to the task """
-    add_artifacts(config, job, taskdesc, path='{workdir}/artifacts/'.format(**job['run']))
+    path = '{workdir}/artifacts/'.format(**job['run'])
+    taskdesc['worker'].setdefault('env', {})['UPLOAD_DIR'] = path
+    add_artifacts(config, job, taskdesc, path)
 
 
 def generic_worker_add_artifacts(config, job, taskdesc):
@@ -104,7 +81,7 @@ def support_vcs_checkout(config, job, taskdesc, sparse=False):
     worker = job['worker']
     is_mac = worker['os'] == 'macosx'
     is_win = worker['os'] == 'windows'
-    is_linux = worker['os'] == 'linux'
+    is_linux = worker['os'] == 'linux' or 'linux-bitbar'
     assert is_mac or is_win or is_linux
 
     if is_win:
@@ -133,9 +110,9 @@ def support_vcs_checkout(config, job, taskdesc, sparse=False):
         'GECKO_BASE_REPOSITORY': config.params['base_repository'],
         'GECKO_HEAD_REPOSITORY': config.params['head_repository'],
         'GECKO_HEAD_REV': config.params['head_rev'],
-        'GECKO_PATH': geckodir,
         'HG_STORE_PATH': hgstore,
     })
+    taskdesc['worker']['env'].setdefault('GECKO_PATH', geckodir)
 
     if 'comm_base_repository' in config.params:
         taskdesc['worker']['env'].update({

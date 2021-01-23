@@ -1,0 +1,30 @@
+<!--
+# Reviewer(s):
+#
+# hatul <amiadb@gmail.com>
+# http://tomercohen.com/ <tomer.mozilla@tomercohen.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "רישום כמנוי">
+<!ENTITY subscribeButton.label        "הירשם כמנוי">
+<!ENTITY subscribeButton.accesskey    "ה">
+<!ENTITY unsubscribeButton.label      "בטל מנוי">
+<!ENTITY unsubscribeButton.accesskey  "ב">
+<!ENTITY newGroupsTab.label           "קבוצות חדשות">
+<!ENTITY newGroupsTab.accesskey       "ח">
+<!ENTITY refreshButton.label          "רענן">
+<!ENTITY refreshButton.accesskey      "ר">
+<!ENTITY stopButton.label             "עצור">
+<!ENTITY stopButton.accesskey         "ע">
+<!ENTITY server.label                 "חשבון:">
+<!ENTITY server.accesskey             "ח">
+<!ENTITY subscribedHeader.label       "רישום כמנוי">
+<!-- commenting out until bug 38906 is fixed 
+<!ENTITY messagesHeader.label         "הודעות"> -->
+<!ENTITY namefield.label              "הראה פריטים המכילים:">
+<!ENTITY namefield.accesskey          "ה">
+

@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY enter.label "Увядзіце месцазнаходжанне ў сеціве (URL) ці вызначце мясцовы файл, які вы хочаце адчыніць:">
+<!ENTITY enter.accesskey "м">
+<!ENTITY chooseFile.label "Выбраць файл…">
+<!ENTITY chooseFile.accesskey "В">
+<!ENTITY newPrivate.label "Новае адасобленае акно">
+<!ENTITY newWindow.label "Новае акно азіральніка">
+<!ENTITY newTab.label "Новая ўстаўка азіральніка">
+<!ENTITY currentTab.label "Цяперашняя ўстаўка азіральніка">
+<!ENTITY editNewWindow.label "Новае акно Ўкладальніка">
+<!ENTITY open.label "Адчыніць">
+<!ENTITY caption.label "Адчыніць месца ў Сеціве">
+<!ENTITY openWhere.label "Адчыніць у:">
+<!ENTITY openWhere.accesskey "у">

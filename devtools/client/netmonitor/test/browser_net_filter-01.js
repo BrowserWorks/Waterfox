@@ -15,7 +15,9 @@ const UNICODE_IN_IDN = "\u03c0\u03b1";
  * Test if filtering items in the network table works correctly.
  */
 const BASIC_REQUESTS = [
-  { url: getSjsURLInUnicodeIdn() + "?fmt=html&res=undefined&text=Sample" },
+  {
+    url: getSjsURLInUnicodeIdn() + "?fmt=html&res=undefined&text=Sample&cors=1",
+  },
   { url: "sjs_content-type-test-server.sjs?fmt=css&text=sample" },
   { url: "sjs_content-type-test-server.sjs?fmt=js&text=sample" },
   {
@@ -30,7 +32,7 @@ const BASIC_REQUESTS = [
 ];
 
 const REQUESTS_WITH_MEDIA = BASIC_REQUESTS.concat([
-  { url: getSjsURLInUnicodeIdn() + "?fmt=font" },
+  { url: getSjsURLInUnicodeIdn() + "?fmt=font&cors=1" },
   { url: "sjs_content-type-test-server.sjs?fmt=image" },
   { url: "sjs_content-type-test-server.sjs?fmt=audio" },
   { url: "sjs_content-type-test-server.sjs?fmt=video" },
@@ -52,7 +54,7 @@ const REQUESTS_WITH_MEDIA_AND_FLASH_AND_WS = REQUESTS_WITH_MEDIA_AND_FLASH.conca
 const EXPECTED_REQUESTS = [
   {
     method: "GET",
-    url: getSjsURLInUnicodeIdn() + "?fmt=html&res=undefined&text=Sample",
+    url: getSjsURLInUnicodeIdn() + "?fmt=html&res=undefined&text=Sample&cors=1",
     data: {
       fuzzyUrl: true,
       status: 200,
@@ -118,7 +120,7 @@ const EXPECTED_REQUESTS = [
   },
   {
     method: "GET",
-    url: getSjsURLInUnicodeIdn() + "?fmt=font",
+    url: getSjsURLInUnicodeIdn() + "?fmt=font&cors=1",
     data: {
       fuzzyUrl: true,
       status: 200,
@@ -195,7 +197,7 @@ const EXPECTED_REQUESTS = [
   },
   {
     method: "GET",
-    url: WS_CONTENT_TYPE_SJS + "?fmt=ws",
+    url: WS_WS_CONTENT_TYPE_SJS + "?fmt=ws",
     data: {
       fuzzyUrl: true,
       status: 101,
@@ -205,7 +207,7 @@ const EXPECTED_REQUESTS = [
 ];
 
 add_task(async function() {
-  const { monitor } = await initNetMonitor(FILTERING_URL);
+  const { monitor } = await initNetMonitor(FILTERING_URL, { requestCount: 1 });
   const { document, store, windowRequire } = monitor.panelWin;
   const Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
   const {
@@ -246,7 +248,7 @@ add_task(async function() {
     "The first item should be selected in the requests menu."
   );
   is(
-    !!document.querySelector(".network-details-panel"),
+    !!document.querySelector(".network-details-bar"),
     true,
     "The network details panel should render correctly."
   );
@@ -503,22 +505,22 @@ add_task(async function() {
     // displayed requests reach final state.
     await waitUntil(() => {
       visibleItems = getDisplayedRequests(store.getState());
-      return visibleItems.size === visibility.filter(e => e).length;
+      return visibleItems.length === visibility.filter(e => e).length;
     });
 
     is(
-      items.size,
+      items.length,
       visibility.length,
       "There should be a specific amount of items in the requests menu."
     );
     is(
-      visibleItems.size,
+      visibleItems.length,
       visibility.filter(e => e).length,
       "There should be a specific amount of visible items in the requests menu."
     );
 
     for (let i = 0; i < visibility.length; i++) {
-      const itemId = items.get(i).id;
+      const itemId = items[i].id;
       const shouldBeVisible = !!visibility[i];
       const isThere = visibleItems.some(r => r.id == itemId);
 
@@ -533,7 +535,7 @@ add_task(async function() {
         verifyRequestItemTarget(
           document,
           getDisplayedRequests(store.getState()),
-          getSortedRequests(store.getState()).get(i),
+          getSortedRequests(store.getState())[i],
           method,
           url,
           data

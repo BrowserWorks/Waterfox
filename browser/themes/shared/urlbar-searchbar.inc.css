@@ -6,6 +6,8 @@
 
 %define fieldBorderColor hsla(240,5%,5%,.25)
 %define fieldHoverBorderColor hsla(240,5%,5%,.35)
+%define urlbarMarginInline 5px
+%define urlbarSearchButtonWidth calc(16px + 2 * @identityBoxPaddingInline@)
 
 :root {
   --toolbar-field-focus-border-color: Highlight;
@@ -24,91 +26,239 @@
   --urlbar-icon-padding: 7px;
 }
 
+#urlbar-container,
+#search-container {
+  padding-block: 3px;
+  margin-inline: @urlbarMarginInline@;
+}
+
 #urlbar,
-.searchbar-textbox {
-  -moz-appearance: none;
-  background-clip: content-box;
+#searchbar {
+  min-height: 30px;
+  text-shadow: none;
+  color: -moz-FieldText;
+}
+
+#urlbar-background,
+#searchbar {
+  background-color: -moz-Field;
+  background-clip: padding-box;
   border: 1px solid @fieldBorderColor@;
   border-radius: var(--toolbarbutton-border-radius);
   box-shadow: 0 1px 4px rgba(0,0,0,.05);
-  padding: 0;
-  margin: 3px 5px;
-  min-height: 30px;
-  cursor: default;
+}
+
+#urlbar-input-container,
+#searchbar {
+  border-radius: var(--toolbarbutton-border-radius);
   overflow: -moz-hidden-unscrollable;
 }
 
-#urlbar:hover,
-.searchbar-textbox:hover {
+#urlbar-input,
+#urlbar-scheme,
+.searchbar-textbox {
+  -moz-box-flex: 1;
+  background-color: transparent;
+  color: inherit;
+  border: none;
+  margin: 0;
+  padding: 0;
+  outline: none;
+}
+
+#urlbar:not([focused="true"]):hover > #urlbar-background,
+#searchbar:not(:focus-within):hover {
   border-color: @fieldHoverBorderColor@;
   box-shadow: 0 1px 6px rgba(0,0,0,.1);
 }
 
-#urlbar:-moz-lwtheme,
-#navigator-toolbox .searchbar-textbox:-moz-lwtheme {
-  background-color: var(--lwt-toolbar-field-background-color, hsla(0,0%,100%,.8));
-  color: var(--lwt-toolbar-field-color, black);
-}
-
-#urlbar:not([focused="true"]):-moz-lwtheme,
-#urlbar.hidden-focus:-moz-lwtheme,
-#navigator-toolbox .searchbar-textbox:not([focused="true"]):-moz-lwtheme {
-  border-color: var(--lwt-toolbar-field-border-color, @fieldBorderColor@);
-}
-
-#urlbar:not([focused="true"]):-moz-lwtheme:hover,
-#urlbar.hidden-focus:-moz-lwtheme:hover,
-#navigator-toolbox .searchbar-textbox:not([focused="true"]):-moz-lwtheme:hover {
-  border-color: var(--lwt-toolbar-field-border-color, @fieldHoverBorderColor@);
-}
-
-#urlbar:-moz-lwtheme:hover,
-#navigator-toolbox .searchbar-textbox:-moz-lwtheme:hover {
-  background-color: var(--lwt-toolbar-field-background-color, white);
-}
-
-#urlbar:not(.hidden-focus)[focused="true"],
-.searchbar-textbox[focused="true"] {
+#urlbar[focused="true"] > #urlbar-background,
+#searchbar:focus-within {
   border-color: var(--toolbar-field-focus-border-color);
 }
 
-#urlbar:not(.hidden-focus):-moz-lwtheme[focused="true"],
-#navigator-toolbox .searchbar-textbox:-moz-lwtheme[focused="true"] {
-  background-color: var(--lwt-toolbar-field-focus, var(--lwt-toolbar-field-background-color, white));
-  color: var(--lwt-toolbar-field-focus-color, var(--lwt-toolbar-field-color, black));
+#urlbar:-moz-lwtheme,
+#navigator-toolbox #searchbar:-moz-lwtheme {
+  color: var(--lwt-toolbar-field-color, black);
 }
 
-:root[lwt-selection] .urlbar-input:-moz-lwtheme::selection,
+#urlbar:-moz-lwtheme > #urlbar-background,
+#navigator-toolbox #searchbar:-moz-lwtheme {
+  background-color: var(--lwt-toolbar-field-background-color, hsla(0,0%,100%,.8));
+}
+
+#urlbar:not([focused="true"]):-moz-lwtheme > #urlbar-background,
+#navigator-toolbox #searchbar:not(:focus-within):-moz-lwtheme {
+  border-color: var(--lwt-toolbar-field-border-color, @fieldBorderColor@);
+}
+
+#urlbar:not([focused="true"]):-moz-lwtheme:hover > #urlbar-background,
+#navigator-toolbox #searchbar:not(:focus-within):-moz-lwtheme:hover {
+  border-color: var(--lwt-toolbar-field-border-color, @fieldHoverBorderColor@);
+}
+
+#urlbar:-moz-lwtheme:hover > #urlbar-background,
+#navigator-toolbox #searchbar:-moz-lwtheme:hover {
+  background-color: var(--lwt-toolbar-field-background-color, white);
+}
+
+#urlbar[focused="true"]:-moz-lwtheme,
+#navigator-toolbox #searchbar:focus-within:-moz-lwtheme {
+  color: var(--lwt-toolbar-field-focus-color);
+}
+
+#urlbar[focused="true"]:-moz-lwtheme > #urlbar-background,
+#navigator-toolbox #searchbar:focus-within:-moz-lwtheme {
+  background-color: var(--lwt-toolbar-field-focus);
+}
+
+:root[lwt-selection] #urlbar-input:-moz-lwtheme::selection,
 :root[lwt-selection] .searchbar-textbox:-moz-lwtheme::selection {
   background-color: var(--lwt-toolbar-field-highlight, Highlight);
   color: var(--lwt-toolbar-field-highlight-text, HighlightText);
 }
 
+#urlbar:not([focused="true"]) {
+  caret-color: transparent;
+}
+
+#urlbar.searchButton > #urlbar-input-container > #urlbar-search-button {
+  width: @urlbarSearchButtonWidth@;
+  background-image: url(chrome://browser/skin/search-glass.svg);
+  background-repeat: no-repeat;
+  background-position: center;
+  -moz-context-properties: fill, fill-opacity;
+  fill: var(--lwt-toolbarbutton-icon-fill, var(--toolbar-color));
+  fill-opacity: var(--toolbarbutton-icon-fill-opacity);
+}
+
+#urlbar.searchButton > #urlbar-input-container[pageproxystate="invalid"] > #urlbar-search-button {
+  margin-inline-end: 6px;
+}
+
+/**
+ * The urlbar background is a separate element so we can animate it
+ * independently from the content. It's positioned absolutely and stretched to
+ * the bounds of the urlbar.
+ */
+
+#urlbar,
+#urlbar-input-container,
+.urlbarView {
+  position: relative;
+}
+
+#urlbar-background {
+  display: block;
+  position: absolute;
+  inset: 0;
+}
+
+:root:not([chromehidden~="toolbar"]) #urlbar.searchButton:not([breakout]) > #urlbar-background,
+:root:not([chromehidden~="toolbar"]) #urlbar.searchButton:not([breakout-extend]) > #urlbar-background {
+  inset-inline-start: @urlbarSearchButtonWidth@;
+}
+
+#urlbar-input-container {
+  /* Match urlbar-background's border. */
+  border: 1px solid transparent;
+}
+
+#urlbar-container[breakout] {
+  position: relative;
+  min-height: var(--urlbar-container-height);
+}
+
+#urlbar[breakout] {
+  display: block;
+  position: absolute;
+  width: 100%;
+  height: var(--urlbar-height);
+  top: calc((var(--urlbar-toolbar-height) - var(--urlbar-height)) / 2);
+  left: 0;
+}
+
+#urlbar[breakout] > #urlbar-input-container {
+  width: 100%;
+  height: 100%;
+}
+
+#urlbar:not([open]) > .urlbarView,
+#urlbar:not([breakout]) > .urlbarView {
+  display: none;
+}
+
+#urlbar[breakout][breakout-extend],
+#urlbar[breakout][breakout-extend-disabled][open] {
+  /* The z-index needs to be big enough to trump other positioned UI pieces
+     that we want to overlay. 3 is used in the tab bar. */
+  z-index: 3;
+  height: auto;
+}
+
+#urlbar[breakout][breakout-extend] {
+  top: -@urlbarBreakoutExtend@;
+  left: calc(-@urlbarMarginInline@ - @urlbarBreakoutExtend@);
+  width: calc(100% + 2 * @urlbarMarginInline@ + 2 * @urlbarBreakoutExtend@);
+}
+
+#urlbar[breakout][breakout-extend] > #urlbar-background {
+  box-shadow: 0 3px 8px 0 rgba(0,0,0,.15)
+}
+
+#urlbar[breakout][breakout-extend][open] > #urlbar-background {
+  box-shadow: 0 5px 18px rgba(0,0,0,.2);
+}
+
+#urlbar[breakout][breakout-extend] > #urlbar-input-container {
+  height: calc(var(--urlbar-toolbar-height) + 2 * @urlbarBreakoutExtend@);
+  padding-block: calc(@urlbarBreakoutExtend@ + (var(--urlbar-toolbar-height) - var(--urlbar-height)) / 2);
+  padding-inline: calc(@urlbarMarginInline@ + @urlbarBreakoutExtend@);
+}
+
+#urlbar.searchButton[breakout][breakout-extend] > #urlbar-input-container > #urlbar-search-button {
+  fill: currentColor;
+  fill-opacity: .6;
+}
+
+@keyframes urlbar-grow {
+  0% {
+    transform: scaleX(.99) scaleY(.95);
+  }
+  100% {
+    transform: scale(1.0);
+  }
+}
+
+#urlbar[breakout][breakout-extend] > #urlbar-background {
+  animation-name: urlbar-grow;
+  animation-duration: 0s;
+  animation-timing-function: var(--animation-easing-function);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  #urlbar[breakout][breakout-extend][breakout-extend-animate] > #urlbar-background {
+    animation-duration: 150ms;
+  }
+}
+
 :root[uidensity=compact] #urlbar,
-:root[uidensity=compact] .searchbar-textbox {
+:root[uidensity=compact] #searchbar {
   min-height: 26px;
-  margin-top: 3px;
-  margin-bottom: 3px;
 }
 
 :root[uidensity=touch] #urlbar,
-:root[uidensity=touch] .searchbar-textbox {
+:root[uidensity=touch] #searchbar {
   min-height: 32px;
 }
 
-:root[chromehidden~="toolbar"] #urlbar {
+:root[chromehidden~="toolbar"] #urlbar-container {
   /* Remove excess space between the address bar and the menu button in popups. */
-  margin-inline-end: 0;
+  padding-inline-end: 0;
 }
 
 :root[customizing] .urlbar-input-box {
   visibility: hidden;
-}
-
-.urlbar-input {
-  /* Remove the 1px padding-left (and padding-right) so that the titles in the
-     urlbar popup align with the text in the input. */
-  padding: 0;
 }
 
 #urlbar-container {
@@ -150,18 +300,9 @@
   list-style-image: url("chrome://browser/skin/pocket-outline.svg");
 }
 
-#pocket-button-box[open="true"] > #pocket-button,
-#pocket-button-box[pocketed="true"] > #pocket-button {
+#pocket-button[open="true"],
+#pocket-button[pocketed="true"] {
   list-style-image: url("chrome://browser/skin/pocket.svg");
-}
-
-#pocket-button-box[animate="true"] > #pocket-button,
-#pocket-button[open="true"][animationsenabled] > .toolbarbutton-icon {
-  fill: transparent;
-}
-
-#pocket-button-box[open="true"] > #pocket-button,
-#pocket-button-box[pocketed="true"] > #pocket-button {
   fill: #ef4056;
   fill-opacity: 1;
 }
@@ -210,6 +351,14 @@
   list-style-image: url("chrome://browser/skin/device-desktop.svg");
 }
 
+.pageAction-sendToDevice-device[clientType=tv] {
+  list-style-image: url("chrome://browser/skin/device-tv.svg");
+}
+
+.pageAction-sendToDevice-device[clientType=vr] {
+  list-style-image: url("chrome://browser/skin/device-vr.svg");
+}
+
 .pageAction-sendToDevice-device.signintosync,
 #pageAction-panel-sendToDevice-fxa,
 #pageAction-urlbar-sendToDevice-fxa {
@@ -233,13 +382,13 @@
   min-height: 11px;
 }
 
-#pageActionActivatedActionPanel[actionID="pocket"] > .panel-arrowcontainer > .panel-arrowcontent {
-  padding-top: 0;
-  padding-bottom: 0;
+#pageActionActivatedActionPanel[actionID="pocket"] {
+  --arrowpanel-background: #fbfbfb;
 }
 
-#pageActionActivatedActionPanel[actionID="pocket"] > .panel-arrowcontainer > .panel-arrowbox > .panel-arrow {
-  fill: #fbfbfb;
+#pageAction-panel-launchSSB,
+#pageAction-urlbar-launchSSB {
+  list-style-image: url("chrome://browser/skin/install-ssb.svg");
 }
 
 /* URL bar and page action buttons */
@@ -249,7 +398,7 @@
 }
 
 #pageActionSeparator {
-  /* This draws the separator the same way that #urlbar-display-box draws its
+  /* This draws the separator the same way that #urlbar-label-box draws its
      left and right borders, which end up looking like separators.  It might not
      be the best way in this case, but it makes sure that all these vertical
      lines in the urlbar look the same: same height, vertical position, etc. */
@@ -273,14 +422,12 @@
   /* Show the separator between the page actions and other elements when at
      least one of the latter is shown. */
   visibility: visible;
-  margin-left: 6px;
-  margin-right: 6px;
+  margin-inline: 6px;
 }
 
 #userContext-icons,
 #urlbar-zoom-button {
-  margin-left: 6px;
-  margin-right: 6px;
+  margin-inline: 6px;
 }
 
 .urlbar-icon {
@@ -307,22 +454,16 @@
   height: 30px;
 }
 
-.urlbar-icon:not([disabled]):hover,
+:not(.urlbar-icon-wrapper) > .urlbar-icon:not([disabled]):hover,
 .urlbar-icon-wrapper:not([disabled]):hover {
   background-color: hsla(0,0%,70%,.2);
 }
 
-.urlbar-icon[open],
-.urlbar-icon-wrapper[open],
-.urlbar-icon:not([disabled]):hover:active,
-.urlbar-icon-wrapper:hover:active {
+:not(.urlbar-icon-wrapper) > .urlbar-icon:not([disabled])[open],
+:not(.urlbar-icon-wrapper) > .urlbar-icon:not([disabled]):hover:active,
+.urlbar-icon-wrapper:not([disabled])[open],
+.urlbar-icon-wrapper:not([disabled]):hover:active {
   background-color: hsla(0,0%,70%,.3);
-}
-
-.urlbar-icon-wrapper[open] > .urlbar-icon,
-.urlbar-icon-wrapper > .urlbar-icon:hover,
-.urlbar-icon-wrapper > .urlbar-icon:hover:active {
-  background-color: transparent;
 }
 
 .urlbar-icon:-moz-focusring,
@@ -332,38 +473,14 @@
   -moz-outline-radius: var(--toolbarbutton-border-radius);
 }
 
-.urlbar-go-button,
+#urlbar-go-button,
 .search-go-button {
   list-style-image: url("chrome://browser/skin/forward.svg");
 }
 
-.urlbar-go-button:-moz-locale-dir(rtl),
+#urlbar-go-button:-moz-locale-dir(rtl),
 .search-go-button:-moz-locale-dir(rtl) {
   transform: scaleX(-1);
-}
-
-.urlbar-history-dropmarker {
-  -moz-appearance: none;
-  list-style-image: url(chrome://global/skin/icons/arrow-dropdown-16.svg);
-  transition: opacity 0.15s ease;
-}
-
-#urlbar[hidedropmarker] > .urlbar-history-dropmarker {
-  display: none;
-}
-
-/* Avoid re-opening the popup when the dropmarker is clicked while the popup is still open. */
-#urlbar[quantumbar="false"] > .urlbar-history-dropmarker[open] {
-  pointer-events: none;
-}
-
-#urlbar[switchingtabs] > .urlbar-history-dropmarker {
-  transition: none;
-}
-
-#nav-bar:not([customizing="true"]) > #nav-bar-customization-target > #urlbar-container:not(:hover) > #urlbar:not([focused]) > .urlbar-history-dropmarker,
-#nav-bar:not([customizing="true"]) > #nav-bar-customization-target > #urlbar-container:not(:hover) > #urlbar.hidden-focus > .urlbar-history-dropmarker {
-  opacity: 0;
 }
 
 #pageActionButton,
@@ -371,167 +488,83 @@
   list-style-image: url("chrome://global/skin/icons/more.svg");
 }
 
-@keyframes bookmark-animation {
-  from {
-    transform: translateX(0);
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes bookmark-animation {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-627px);
+    }
   }
-  to {
-    transform: translateX(-627px);
+
+  @keyframes bookmark-animation-rtl {
+    from {
+      transform: scaleX(-1) translateX(0);
+    }
+    to {
+      transform: scaleX(-1) translateX(-627px);
+    }
   }
-}
 
-@keyframes bookmark-animation-rtl {
-  from {
-    transform: scaleX(-1) translateX(0);
+  #star-button-box {
+    position: relative;
   }
-  to {
-    transform: scaleX(-1) translateX(-627px);
+
+  /* Preload the bookmark animations to prevent a flicker during the first playing
+     of the animations. */
+  #star-button[preloadanimations] + #star-button-animatable-box > #star-button-animatable-image {
+    background-image: url("chrome://browser/skin/bookmark-animation.svg"),
+                      url("chrome://browser/skin/library-bookmark-animation.svg");
+    background-size: 0, 0;
   }
-}
 
-#star-button-box[animationsenabled] {
-  position: relative;
-}
-
-/* Preload the bookmark animations to prevent a flicker during the first playing
-   of the animations. */
-#star-button[preloadanimations] + #star-button-animatable-box > #star-button-animatable-image {
-  background-image: url("chrome://browser/skin/bookmark-animation.svg"),
-                    url("chrome://browser/skin/library-bookmark-animation.svg");
-  background-size: 0, 0;
-}
-
-#star-button-box[animationsenabled] > #star-button[starred][animate] {
-  fill: transparent;
-  position: relative;
-}
-
-#star-button-box[animationsenabled] > #star-button[starred][animate] + #star-button-animatable-box {
-  position: absolute;
-  overflow: hidden;
-  top: calc(50% - 16.5px); /* 16.5px is half the height of the sprite */
-  /* .urlbar-icon has width 28px. Each frame is 33px wide. Set margin-inline-start
-     to be half the difference, -2.5px. */
-  margin-inline-start: -2.5px;
-  width: 33px; /* Width of each frame within the SVG sprite */
-  height: 33px; /* Height of each frame within the SVG sprite */
-}
-
-:root[uidensity=compact] #star-button-box[animationsenabled] > #star-button[starred][animate] + #star-button-animatable-box {
-  /* .urlbar-icon has width 24px in this case */
-  margin-inline-start: -4.5px;
-}
-
-:root[uidensity=touch] #star-button-box[animationsenabled] > #star-button[starred][animate] + #star-button-animatable-box {
-  /* .urlbar-icon has width 30px in this case */
-  margin-inline-start: -1.5px;
-}
-
-#star-button-box[animationsenabled] > #star-button[starred][animate] + #star-button-animatable-box > #star-button-animatable-image {
-  background-image: url("chrome://browser/skin/bookmark-animation.svg");
-  background-size: auto;
-  list-style-image: none;
-  height: var(--toolbarbutton-height);
-  min-height: 33px; /* Minimum height must be equal to the height of the SVG sprite */
-  animation-name: bookmark-animation;
-  animation-fill-mode: forwards;
-  animation-iteration-count: 1;
-  animation-timing-function: steps(19);
-  animation-duration: 317ms;
-  width: 660px;
-  -moz-context-properties: fill, stroke;
-  stroke: var(--toolbarbutton-icon-fill-attention);
-}
-
-#star-button-box[animationsenabled] > #star-button[starred][animate]:-moz-locale-dir(rtl) + #star-button-animatable-box > #star-button-animatable-image {
-  animation-name: bookmark-animation-rtl;
-}
-
-@keyframes pocket-animation {
-  from {
-    transform: translateX(0);
+  #star-button[starred][animate] {
+    fill: transparent;
+    position: relative;
   }
-  to {
-    transform: translateX(-240px);
+
+  #star-button[starred][animate] + #star-button-animatable-box {
+    display: block;
+    position: absolute;
+    overflow: hidden;
+    top: calc(50% - 16.5px); /* 16.5px is half the height of the sprite */
+    /* .urlbar-icon has width 28px. Each frame is 33px wide. Set margin-inline-start
+       to be half the difference, -2.5px. */
+    margin-inline-start: -2.5px;
+    width: 33px; /* Width of each frame within the SVG sprite */
+    height: 33px; /* Height of each frame within the SVG sprite */
   }
-}
 
-@keyframes pocket-animation-rtl {
-  from {
-    transform: scaleX(-1) translateX(0);
+  :root[uidensity=compact] #star-button[starred][animate] + #star-button-animatable-box {
+    /* .urlbar-icon has width 24px in this case */
+    margin-inline-start: -4.5px;
   }
-  to {
-    transform: scaleX(-1) translateX(-240px);
+
+  :root[uidensity=touch] #star-button[starred][animate] + #star-button-animatable-box {
+    /* .urlbar-icon has width 30px in this case */
+    margin-inline-start: -1.5px;
   }
-}
 
-#pocket-button-box[animate="true"] > #pocket-animatable-box,
-#pocket-button > .toolbarbutton-animatable-box {
-  top: calc(50% - 8px); /* 8px is half the height of the sprite */
-  /* Since .toolbarbutton-icon uses a different width than the animatable box,
-     we need to set a padding relative to the difference in widths. */
-  margin-inline-start: calc((16px + 2 * var(--toolbarbutton-inner-padding) - 20px) / 2);
-  width: 20px; /* Width of each frame within the SVG sprite */
-  height: 16px; /* Height of each frame within the SVG sprite */
-}
+  #star-button[starred][animate] + #star-button-animatable-box > #star-button-animatable-image {
+    background-image: url("chrome://browser/skin/bookmark-animation.svg");
+    background-size: auto;
+    list-style-image: none;
+    height: var(--toolbarbutton-height);
+    min-height: 33px; /* Minimum height must be equal to the height of the SVG sprite */
+    animation-name: bookmark-animation;
+    animation-fill-mode: forwards;
+    animation-iteration-count: 1;
+    animation-timing-function: steps(19);
+    animation-duration: 317ms;
+    width: 660px;
+    -moz-context-properties: fill, stroke;
+    stroke: var(--toolbarbutton-icon-fill-attention);
+  }
 
-#pocket-button-box[animate="true"] > #pocket-animatable-box {
-  position: absolute;
-  overflow: hidden;
-  /* .urlbar-icon has width 28px. Each frame is 20px wide. Set margin-inline-start
-     to be half the difference, 4px. */
-  margin-inline-start: 4px;
-}
-
-:root[uidensity=compact] #pocket-button-box[animate="true"] > #pocket-animatable-box {
-  /* .urlbar-icon has width 24px in this case */
-  margin-inline-start: 2px;
-}
-
-:root[uidensity=touch] #pocket-button-box[animate="true"] > #pocket-animatable-box {
-  /* .urlbar-icon has width 30px in this case */
-  margin-inline-start: 5px;
-}
-
-#pocket-button-box[animate="true"] > #pocket-animatable-box > #pocket-animatable-image,
-#pocket-button > .toolbarbutton-animatable-box > .toolbarbutton-animatable-image {
-  height: var(--toolbarbutton-height); /* Height must be equal to height of toolbarbutton padding-box */
-}
-
-#pocket-button-box[animate="true"],
-#pocket-button[open="true"][animationsenabled][cui-areatype="toolbar"]:not([overflowedItem="true"]) {
-  position: relative;
-}
-
-#pocket-button-box:not([animate="true"]):not(:hover) > #pocket-animatable-box {
-  display: none;
-}
-
-/* Preload pocket-animation.svg and library-pocket-animation.svg to prevent
-   a flicker at the start of either animation. The preloading of the library
-   animation is triggered off of hovering the pocket button since the pocket
-   button always animates before the library button. */
-#pocket-button-box:not([animate="true"]):hover > #pocket-animatable-box > #pocket-animatable-image,
-#pocket-button[animationsenabled][cui-areatype="toolbar"]:not([overflowedItem="true"]):not([open="true"]):hover > .toolbarbutton-animatable-box > .toolbarbutton-animatable-image {
-  background-image: url("chrome://browser/skin/pocket-animation.svg"),
-                    url("chrome://browser/skin/library-pocket-animation.svg");
-  background-size: 0, 0;
-}
-
-#pocket-button-box[animate="true"] > #pocket-animatable-box > #pocket-animatable-image,
-#pocket-button[open="true"][animationsenabled][cui-areatype="toolbar"]:not([overflowedItem="true"]) > .toolbarbutton-animatable-box > .toolbarbutton-animatable-image {
-  animation-name: pocket-animation;
-  animation-timing-function: steps(12);
-  animation-duration: 200ms;
-  background-image: url("chrome://browser/skin/pocket-animation.svg");
-  fill: #ef4056;
-  -moz-context-properties: fill;
-  width: 260px;
-}
-
-#pocket-button-box[animate="true"]:-moz-locale-dir(rtl) > #pocket-animatable-box > #pocket-animatable-image,
-#pocket-button[open="true"][animationsenabled][cui-areatype="toolbar"]:not([overflowedItem="true"]):-moz-locale-dir(rtl) > .toolbarbutton-animatable-box > .toolbarbutton-animatable-image {
-  animation-name: pocket-animation-rtl;
+  #star-button[starred][animate]:-moz-locale-dir(rtl) + #star-button-animatable-box > #star-button-animatable-image {
+    animation-name: bookmark-animation-rtl;
+  }
 }
 
 
@@ -554,6 +587,7 @@
   --cfr-animation-duration: 0.35s;
   --cfr-button-addons-icon: url(resource://activity-stream/data/content/assets/glyph-webextension-16.svg);
   --cfr-button-features-icon: url(resource://activity-stream/data/content/assets/glyph-cfr-feature-16.svg);
+  --cfr-button-highlights-icon: url(resource://activity-stream/data/content/assets/glyph-highlights-16.svg);
   --cfr-active-color: #0060df;
 }
 
@@ -573,11 +607,14 @@
   transition-timing-function: ease-in-out;
   transition-duration: var(--cfr-animation-duration);
 }
-#cfr-button[data-cfr-icon="webextensions-icon"] {
+#contextual-feature-recommendation[data-cfr-icon="webextensions-icon"] #cfr-button {
   list-style-image: var(--cfr-button-addons-icon);
 }
-#cfr-button[data-cfr-icon="recommendations-icon"] {
+#contextual-feature-recommendation[data-cfr-icon="recommendations-icon"] #cfr-button {
   list-style-image: var(--cfr-button-features-icon);
+}
+#contextual-feature-recommendation[data-cfr-icon="highlights-icon"] #cfr-button {
+  list-style-image: var(--cfr-button-highlights-icon);
 }
 #urlbar[cfr-recommendation-state="expanded"] #cfr-button {
   fill: white;
@@ -643,19 +680,8 @@
   mask-position-x: 0;
 }
 
-/* Translate the dropmarker to give illusion of increasing width of the recommendation  */
-#urlbar[cfr-recommendation-state] .urlbar-history-dropmarker {
-  transition: transform ease-in-out var(--cfr-animation-duration);
-}
-#urlbar[cfr-recommendation-state="expanded"] .urlbar-history-dropmarker {
-  transform: translateX(calc(var(--cfr-label-width) * -1));
-}
-#urlbar[cfr-recommendation-state="expanded"] .urlbar-history-dropmarker:-moz-locale-dir(rtl) {
-  transform: translateX(calc(var(--cfr-label-width)));
-}
-
 /* Shift the url-bar text fading to stop the recommendation overlapping */
-#urlbar[cfr-recommendation-state] html|input.urlbar-input {
+#urlbar[cfr-recommendation-state] #urlbar-input {
   /* A mask-image is usually only defined for the url bar when text overflows.
      We need to re-define the mask image here so that it shows up correctly when
      we transition to or from an `expanded` state (in which the right end of the
@@ -663,13 +689,13 @@
   mask-image: linear-gradient(to left, transparent, black 3ch);
   transition: mask-position-x ease-in-out var(--cfr-animation-duration);
 }
-#urlbar[cfr-recommendation-state] html|input.urlbar-input:-moz-locale-dir(rtl) {
+#urlbar[cfr-recommendation-state] #urlbar-input:-moz-locale-dir(rtl) {
   mask-image: linear-gradient(to right, transparent, black 3ch);
 }
-#urlbar[cfr-recommendation-state="expanded"] html|input.urlbar-input {
+#urlbar[cfr-recommendation-state="expanded"] #urlbar-input {
   mask-position-x: calc(var(--cfr-label-width) * -1);
 }
-#urlbar[cfr-recommendation-state="expanded"] html|input.urlbar-input:-moz-locale-dir(rtl) {
+#urlbar[cfr-recommendation-state="expanded"] #urlbar-input:-moz-locale-dir(rtl) {
   mask-position-x: calc(var(--cfr-label-width));
 }
 
@@ -687,11 +713,25 @@
 /* Zoom button */
 
 #urlbar-zoom-button {
+  -moz-appearance: none;
+  color: inherit;
   font-size: .8em;
   padding: 0 8px;
   border-radius: 1em;
   background-color: hsla(0,0%,0%,.05);
   border: 1px solid hsla(210,4%,50%,.3);
+}
+
+@keyframes urlbar-zoom-reset-pulse {
+  0% {
+    transform: scale(0);
+  }
+  75% {
+    transform: scale(1.5);
+  }
+  100% {
+    transform: scale(1.0);
+  }
 }
 
 #urlbar-zoom-button[animate="true"] {
@@ -731,6 +771,10 @@
 
 /* Search bar */
 
+#search-container {
+  min-width: 125px;
+}
+
 .searchbar-search-button {
   -moz-box-align: center;
   fill: currentColor;
@@ -740,8 +784,7 @@
   list-style-image: url(chrome://browser/skin/search-glass.svg);
   -moz-context-properties: fill, fill-opacity;
   pointer-events: none;
-  margin-inline-start: 8px;
-  margin-inline-end: 6px;
+  margin-inline: 8px 6px;
   width: 16px;
   fill-opacity: .4;
 }
@@ -760,32 +803,24 @@
 
 .searchbar-search-button[addengines=true] > .searchbar-search-icon-overlay {
   list-style-image: url(chrome://browser/skin/search-indicator-badge-add.svg);
-  margin-inline-start: -15px;
-  margin-inline-end: 4px;
+  margin-inline: -15px 4px;
   margin-top: -10px;
   width: 11px;
   height: 11px;
 }
 
 .searchbar-search-button[addengines=true] > .searchbar-search-icon-overlay:-moz-locale-dir(rtl) {
-  margin-inline-start: -25px;
-  margin-inline-end: 14px;
+  margin-inline: -25px 14px;
 }
 
 .searchbar-search-button:hover:not([addengines=true]) > .searchbar-search-icon-overlay {
   list-style-image: url(chrome://global/skin/icons/arrow-dropdown-12.svg);
   -moz-context-properties: fill;
-  margin-inline-start: -8px;
-  margin-inline-end: 2px;
+  margin-inline: -8px 2px;
   width: 6px;
   height: 6px;
 }
 
 .searchbar-search-button:hover:not([addengines=true]) > .searchbar-search-icon-overlay:-moz-locale-dir(rtl) {
-  margin-inline-start: -26px;
-  margin-inline-end: 20px;
-}
-
-#urlbar.hidden-focus[focused="true"] {
-  caret-color: transparent;
+  margin-inline: -26px 20px;
 }

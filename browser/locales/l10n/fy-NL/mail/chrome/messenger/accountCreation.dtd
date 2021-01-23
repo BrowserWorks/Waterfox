@@ -1,0 +1,112 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailWizard.title               "Jo besteande e-mailadres ynstelle">
+<!ENTITY emailWizard.caption             "Jo besteande e-mailadres brûke">
+<!ENTITY name.label                      "Jo namme">
+<!ENTITY name.accesskey                  "n">
+<!ENTITY fullname.placeholder            "Jo folsleine namme">
+<!ENTITY name.text                       "Jo namme, as toant oan oaren">
+<!ENTITY name.error                      "Fier jo namme yn">
+<!ENTITY email.label                     "E-mailadres:">
+<!ENTITY email.accesskey                 "l">
+<!ENTITY email3.placeholder              "Jo e-mailadres">
+<!ENTITY email.text                      "Jo besteande e-mailadres">
+<!ENTITY email.error                     "Unjildich e-mailadres">
+<!ENTITY password.label                  "Wachtwurd:">
+<!ENTITY password.accesskey              "W">
+<!ENTITY password.placeholder            "Wachtwurd">
+<!ENTITY password.text                   "Opsjoneel, sil allinnich brûkt wurde om de brûkersnamme te falidearjen">
+<!ENTITY password.toggle                 "Wachtwurd toane/ferstopje">
+<!ENTITY rememberPassword.label          "Wachtwurd ûnthâlde">
+<!ENTITY rememberPassword.accesskey      "u">
+<!ENTITY usernameEx.label                "Jo oanmelding:">
+<!ENTITY usernameEx.accesskey            "o">
+<!-- LOCALIZATION NOTE(usernameEx.placeholder): YOURDOMAIN refers to the Windows domain in ActiveDirectory. yourusername refers to the user's account name in Windows. -->
+<!ENTITY usernameEx.placeholder          "YOURDOMAIN\yourusername">
+<!-- LOCALIZATION NOTE(usernameEx.text): Domain refers to the Windows domain in ActiveDirectory. We mean the user's login in Windows at the local corporate network. -->
+<!ENTITY usernameEx.text                 "Domeinoanmelding">
+
+<!ENTITY protocol.label                  "Protokol:">
+<!ENTITY imapLong.label                  "IMAP (mappen op in oare kompjûter)">
+<!ENTITY pop3Long.label                  "POP3 (e-mail op jo kompjûter bewarje)">
+
+<!ENTITY manualConfigTable.summary       "Serverynstellingen">
+<!ENTITY incoming.label                  "Ynkommend:">
+<!ENTITY incomingColumn.label            "Ynkommend">
+<!ENTITY outgoing.label                  "Utgeand:">
+<!ENTITY outgoingColumn.label            "Utgeand">
+<!ENTITY username.label                  "Brûkersnamme:">
+<!ENTITY serverRow.label                 "Server:">
+<!ENTITY portRow.label                   "Poarte:">
+<!ENTITY sslRow.label                    "SSL:">
+<!ENTITY auth.label                      "Autentikaasje">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label                      "POP3">
+<!-- LOCALIZATION NOTE(exchange.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange.label                  "Exchange">
+<!ENTITY smtp.label                      "SMTP">
+<!ENTITY autodetect.label                "Autodeteksje">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "Gjin">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!-- LOCALIZATION NOTE(exchange-hostname.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange-hostname.label         "Exchange-server:">
+
+<!ENTITY advancedSetup.label             "Wiidweidich ynstelle">
+<!ENTITY advancedSetup.accesskey         "W">
+<!ENTITY cancel.label                    "Annulearje">
+<!ENTITY cancel.accesskey                "A">
+<!ENTITY continue.label                  "Trochgean">
+<!ENTITY continue.accesskey              "T">
+<!ENTITY stop.label                      "Stop">
+<!ENTITY stop.accesskey                  "S">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual config mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "Opnij teste">
+<!ENTITY half-manual-test.accesskey      "t">
+<!ENTITY manual-config.label             "Hânmjittich konfigurearje…">
+<!ENTITY manual-config.accesskey         "H">
+<!ENTITY open-provisioner.label          "Krij in nij e-mailadres…">
+<!ENTITY open-provisioner.accesskey      "k">
+
+
+<!ENTITY get-help.label                  "Help krije">
+<!ENTITY get-help.accesskey              "H">
+
+
+<!ENTITY warning.label                   "Warskôging!">
+<!ENTITY incomingSettings.label          "Ynkommende ynstellingen:">
+<!ENTITY outgoingSettings.label          "Utgeande ynstellingen:">
+<!ENTITY technicaldetails.label          "Technyske details">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "Ik begryp it risiko.">
+<!ENTITY confirmWarning.accesskey        "b">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "Klear">
+<!ENTITY doneAccount.accesskey           "K">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "Ynstellingen wizigje">
+<!ENTITY changeSettings.accesskey        "Y">
+
+<!ENTITY contactYourProvider.description "&brandShortName; kin jo tastean om jo e-mail te krijen mei dizze konfiguraasjes. Mar, jo soene kontakt opnimme moatte mei de administrator of e-mailprovider oer dizze ferkearde ferbiningen. Sjoch de Thunderbird FAQ foar mear ynformaasje.">
+
+<!ENTITY insecureServer.tooltip.title    "Warskôging! Dit is in ûnfeilige server.">
+<!ENTITY insecureServer.tooltip.details  "Klik sirkel foar mear details.">
+
+<!ENTITY insecureUnencrypted.description "Jo e-mail en autentikaasje wurde net-fersifere ferstjoerd, dus jo wachtwurd (en jo berjocht) kin maklik lêzen wurde troch oare minsken. &brandShortName; sil jo jo e-mail ophelje, mar jo soene einliks jo e-mailprovider freegje moatte om de server te konfigurearjen mei in feilige ferbining.">
+<!ENTITY insecureSelfSigned.description  "De server brûkt in sertifikaat dy't wy net fertrouwe kinne, dus wy binne net wis oft ien it ferkear tusken &brandShortName; en jo server probearret te ûnderskeppen. &brandShortName; sil jo jo e-mail ophelje litte, mar jo soene einliks jo e-mailprovider freegje moatte om de server te konfigurearjen mei in feilich sertifikaat.">
+<!ENTITY secureServer.description        "Lokwinske! Dit is in feilige server.">

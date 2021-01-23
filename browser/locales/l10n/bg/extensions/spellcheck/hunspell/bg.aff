@@ -1,0 +1,430 @@
+SET cp1251
+TRY аеонирвтсмлкпздяубъчгцжхшфйщюьАЕОНИРВТСМЛКПЗДЯУБЪЧГЦЖХШФЙЩЮЬ
+
+SFX A Y 8
+SFX A   0         а         .
+SFX A   0         ата       .
+SFX A   0         и         .
+SFX A   0         ите       .
+SFX A   0         ия        .
+SFX A   0         ият       .
+SFX A   0         о         .
+SFX A   0         ото       .
+
+SFX B Y 3
+SFX B   0         и         .
+SFX B   0         ите       .
+SFX B   0         та        .
+
+SFX C Y 4
+SFX C   0         а         .
+SFX C   0         и         .
+SFX C   0         ите       .
+SFX C   0         ът        .
+
+SFX D Y 4
+SFX D   0         а         .
+SFX D   0         ове       .
+SFX D   0         овете     .
+SFX D   0         ът        .
+
+SFX E Y 5
+SFX E   0         и         .
+SFX E   0         ите       .
+SFX E   0         ю         .
+SFX E   0         я         .
+SFX E   0         ят        .
+
+SFX F Y 5
+SFX F   0         а         .
+SFX F   0         е         .
+SFX F   0         и         .
+SFX F   0         ите       .
+SFX F   0         ът        .
+
+SFX G Y 5
+SFX G   0         а         .
+SFX G   0         и         .
+SFX G   0         ите       .
+SFX G   0         о         .
+SFX G   0         ът        .
+
+SFX H Y 4
+SFX H   0         и         .
+SFX H   0         ите       .
+SFX H   0         я         .
+SFX H   0         ят        .
+
+SFX I Y 2
+SFX I   0         а         .
+SFX I   0         ът        .
+
+SFX J Y 3
+SFX J   0         та        .
+SFX J   0         тата      .
+SFX J   0         то        .
+
+SFX K Y 25
+SFX K   а         ата       а
+SFX K   а         и         а
+SFX K   а         ите       а
+SFX K   г         га        г
+SFX K   г         гът       г
+SFX K   г         зи        г
+SFX K   г         зите      г
+SFX K   ен        на        ен
+SFX K   ен        ната      ен
+SFX K   ен        ни        ен
+SFX K   ен        ните      ен
+SFX K   ен        ния       ен
+SFX K   ен        ният      ен
+SFX K   ен        но        ен
+SFX K   ен        ното      ен
+SFX K   и         а         и
+SFX K   и         ата       и
+SFX K   и         ите       и
+SFX K   и         ия        и
+SFX K   и         ият       и
+SFX K   и         о         и
+SFX K   и         ото       и
+SFX K   я         и         я
+SFX K   я         ите       я
+SFX K   я         ята       я
+
+SFX L Y 133
+SFX L   а         ата       а
+SFX L   а         и         а
+SFX L   а         ите       а
+SFX L   е         ето       е
+SFX L   е         я         е
+SFX L   е         ята       е
+SFX L   ен        йна       ен
+SFX L   ен        йната     ен
+SFX L   ен        йни       ен
+SFX L   ен        йните     ен
+SFX L   ен        йния      ен
+SFX L   ен        йният     ен
+SFX L   ен        йно       ен
+SFX L   ен        йното     ен
+SFX L   ец        еца       ец
+SFX L   ец        ецо       ец
+SFX L   ец        ецът      ец
+SFX L   ец        ци        ец
+SFX L   ец        ците      ец
+SFX L   и         а         и
+SFX L   и         ата       и
+SFX L   и         ите       и
+SFX L   и         ия        и
+SFX L   и         ият       и
+SFX L   и         о         и
+SFX L   и         ото       и
+SFX L   о         а         о
+SFX L   о         ата       о
+SFX L   о         ото       о
+SFX L   ъв        ва        ъв
+SFX L   ъв        вата      ъв
+SFX L   ъв        ви        ъв
+SFX L   ъв        вите      ъв
+SFX L   ъв        вия       ъв
+SFX L   ъв        вият      ъв
+SFX L   ъв        во        ъв
+SFX L   ъв        вото      ъв
+SFX L   ъг        га        ъг
+SFX L   ъг        гата      ъг
+SFX L   ъг        ги        ъг
+SFX L   ъг        гите      ъг
+SFX L   ъг        гия       ъг
+SFX L   ъг        гият      ъг
+SFX L   ъг        го        ъг
+SFX L   ъг        гото      ъг
+SFX L   ък        ка        ък
+SFX L   ък        ката      ък
+SFX L   ък        ки        ък
+SFX L   ък        ките      ък
+SFX L   ък        кия       ък
+SFX L   ък        кият      ък
+SFX L   ък        ко        ък
+SFX L   ък        кото      ък
+SFX L   ъл        ла        ъл
+SFX L   ъл        лата      ъл
+SFX L   ъл        ли        ъл
+SFX L   ъл        лите      ъл
+SFX L   ъл        лия       ъл
+SFX L   ъл        лият      ъл
+SFX L   ъл        ло        ъл
+SFX L   ъл        лото      ъл
+SFX L   ър        ра        ър
+SFX L   ър        рата      ър
+SFX L   ър        ри        ър
+SFX L   ър        рите      ър
+SFX L   ър        рия       ър
+SFX L   ър        рият      ър
+SFX L   ър        ро        ър
+SFX L   ър        рото      ър
+SFX L   ъш        ша        ъш
+SFX L   ъш        шата      ъш
+SFX L   ъш        ши        ъш
+SFX L   ъш        шите      ъш
+SFX L   ъш        шия       ъш
+SFX L   ъш        шият      ъш
+SFX L   ъш        шо        ъш
+SFX L   ъш        шото      ъш
+SFX L   яв        еви       яв
+SFX L   яв        евите     яв
+SFX L   яв        евия      яв
+SFX L   яв        евият     яв
+SFX L   яв        ява       яв
+SFX L   яв        явата     яв
+SFX L   яв        яво       яв
+SFX L   яв        явото     яв
+SFX L   як        еки       як
+SFX L   як        еките     як
+SFX L   як        екия      як
+SFX L   як        екият     як
+SFX L   як        яка       як
+SFX L   як        яката     як
+SFX L   як        яко       як
+SFX L   як        якото     як
+SFX L   ял        ели       ял
+SFX L   ял        елите     ял
+SFX L   ял        елия      ял
+SFX L   ял        елият     ял
+SFX L   ял        яла       ял
+SFX L   ял        ялата     ял
+SFX L   ял        яло       ял
+SFX L   ял        ялото     ял
+SFX L   ям        еми       ям
+SFX L   ям        емите     ям
+SFX L   ям        емия      ям
+SFX L   ям        емият     ям
+SFX L   ям        яма       ям
+SFX L   ям        ямата     ям
+SFX L   ям        ямо       ям
+SFX L   ям        ямото     ям
+SFX L   ян        ени       ян
+SFX L   ян        ените     ян
+SFX L   ян        ения      ян
+SFX L   ян        еният     ян
+SFX L   ян        яна       ян
+SFX L   ян        яната     ян
+SFX L   ян        яно       ян
+SFX L   ян        яното     ян
+SFX L   яп        епи       яп
+SFX L   яп        епите     яп
+SFX L   яп        епия      яп
+SFX L   яп        епият     яп
+SFX L   яп        япа       яп
+SFX L   яп        япата     яп
+SFX L   яп        япо       яп
+SFX L   яп        япото     яп
+SFX L   ят        ети       ят
+SFX L   ят        етите     ят
+SFX L   ят        етия      ят
+SFX L   ят        етият     ят
+SFX L   ят        ята       ят
+SFX L   ят        ятата     ят
+SFX L   ят        ято       ят
+SFX L   ят        ятото     ят
+
+SFX M Y 29
+SFX M   е         а         е
+SFX M   е         ата       е
+SFX M   е         ето       е
+SFX M   ец        еца       ец
+SFX M   ец        ецо       ец
+SFX M   ец        ецът      ец
+SFX M   ец        йци       ец
+SFX M   ец        йците     ец
+SFX M   ин        и         ин
+SFX M   ин        ина       ин
+SFX M   ин        ино       ин
+SFX M   ин        инът      ин
+SFX M   ин        ите       ин
+SFX M   й         и         й
+SFX M   й         ите       й
+SFX M   й         ю         й
+SFX M   й         я         й
+SFX M   й         ят        й
+SFX M   о         и         о
+SFX M   о         ите       о
+SFX M   о         ото       о
+SFX M   ъм        ма        ъм
+SFX M   ъм        ми        ъм
+SFX M   ъм        мите      ъм
+SFX M   ъм        мът       ъм
+SFX M   ъм        ъма       ъм
+SFX M   я         и         я
+SFX M   я         ите       я
+SFX M   я         ята       я
+
+SFX N Y 20
+SFX N   ел        ела       ел
+SFX N   ел        елът      ел
+SFX N   ел        ли        ел
+SFX N   ел        лите      ел
+SFX N   ец        еца       ец
+SFX N   ец        ецът      ец
+SFX N   ец        ци        ец
+SFX N   ец        ците      ец
+SFX N   ъл        ли        ъл
+SFX N   ъл        лите      ъл
+SFX N   ъл        ъла       ъл
+SFX N   ъл        ълът      ъл
+SFX N   ъм        ми        ъм
+SFX N   ъм        мите      ъм
+SFX N   ъм        ъма       ъм
+SFX N   ъм        ъмът      ъм
+SFX N   ър        ри        ър
+SFX N   ър        рите      ър
+SFX N   ър        ъра       ър
+SFX N   ър        ърът      ър
+
+SFX O Y 18
+SFX O   е         ето       е
+SFX O   е         ия        е
+SFX O   е         ията      е
+SFX O   й         и         й
+SFX O   й         ите       й
+SFX O   й         я         й
+SFX O   й         ят        й
+SFX O   к         ка        к
+SFX O   к         кът       к
+SFX O   к         ци        к
+SFX O   к         ците      к
+SFX O   о         овци      о
+SFX O   о         овците    о
+SFX O   о         ото       о
+SFX O   х         си        х
+SFX O   х         сите      х
+SFX O   х         ха        х
+SFX O   х         хът       х
+
+SFX S Y 40
+SFX S   ам        а         ам
+SFX S   ам        ай        ам
+SFX S   ам        айки      ам
+SFX S   ам        айте      ам
+SFX S   ам        ал        ам
+SFX S   ам        ала       ам
+SFX S   ам        алата     ам
+SFX S   ам        али       ам
+SFX S   ам        алите     ам
+SFX S   ам        алия      ам
+SFX S   ам        алият     ам
+SFX S   ам        ало       ам
+SFX S   ам        алото     ам
+SFX S   ам        аме       ам
+SFX S   ам        ан        ам
+SFX S   ам        ана       ам
+SFX S   ам        аната     ам
+SFX S   ам        ани       ам
+SFX S   ам        аните     ам
+SFX S   ам        ания      ам
+SFX S   ам        аният     ам
+SFX S   ам        ано       ам
+SFX S   ам        аното     ам
+SFX S   ам        ат        ам
+SFX S   ам        ате       ам
+SFX S   ам        ах        ам
+SFX S   ам        аха       ам
+SFX S   ам        ахме      ам
+SFX S   ам        ахте      ам
+SFX S   ам        аш        ам
+SFX S   ам        аше       ам
+SFX S   ам        ащ        ам
+SFX S   ам        аща       ам
+SFX S   ам        ащата     ам
+SFX S   ам        ащи       ам
+SFX S   ам        ащите     ам
+SFX S   ам        ащия      ам
+SFX S   ам        ащият     ам
+SFX S   ам        ащо       ам
+SFX S   ам        ащото     ам
+
+SFX X Y 38
+SFX X   м         дат       м
+SFX X   м         де        м
+SFX X   м         дели      м
+SFX X   м         дем       м
+SFX X   м         ден       м
+SFX X   м         дена      м
+SFX X   м         дената    м
+SFX X   м         дени      м
+SFX X   м         дените    м
+SFX X   м         дения     м
+SFX X   м         деният    м
+SFX X   м         дено      м
+SFX X   м         деното    м
+SFX X   м         дете      м
+SFX X   м         деш       м
+SFX X   м         деше      м
+SFX X   м         дох       м
+SFX X   м         доха      м
+SFX X   м         дохме     м
+SFX X   м         дохте     м
+SFX X   м         дял       м
+SFX X   м         дяла      м
+SFX X   м         дяло      м
+SFX X   м         дях       м
+SFX X   м         дяха      м
+SFX X   м         дяхме     м
+SFX X   м         дяхте     м
+SFX X   м         й         м
+SFX X   м         йте       м
+SFX X   м         л         м
+SFX X   м         ла        м
+SFX X   м         лата      м
+SFX X   м         ли        м
+SFX X   м         лите      м
+SFX X   м         лия       м
+SFX X   м         лият      м
+SFX X   м         ло        м
+SFX X   м         лото      м
+
+MAP 28
+MAP аъьa
+MAP еиeu
+MAP оуoy
+MAP бпn6
+MAP вф
+MAP гкk
+MAP дтg
+MAP жш6
+MAP зс3
+MAP pр
+MAP cс
+MAP xх
+MAP ч4
+MAP АЪЬA
+MAP ЕИE
+MAP ОУO0
+MAP БП6
+MAP ВФB
+MAP ГКK
+MAP ДТT
+MAP ЖШ6
+MAP ЗС3C
+MAP MМ
+MAP HН
+MAP PР
+MAP YУ
+MAP XХ
+MAP Ч4
+
+REP 16
+REP сх ш
+REP зх ж
+REP тз ц
+REP тс ц
+REP ц тс
+REP шт щ
+REP щ шт
+REP ща шата
+REP ще шите
+REP що шето
+REP йу ю
+REP ьу ю
+REP йа я
+REP йъ я
+REP ьа я
+REP ьъ я

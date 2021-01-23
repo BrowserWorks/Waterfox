@@ -6,6 +6,8 @@
 
 #include "mozilla/dom/ChildProcessChannelListener.h"
 
+#include "nsDocShellLoadState.h"
+
 namespace mozilla {
 namespace dom {
 
@@ -13,26 +15,30 @@ static StaticRefPtr<ChildProcessChannelListener> sCPCLSingleton;
 
 void ChildProcessChannelListener::RegisterCallback(uint64_t aIdentifier,
                                                    Callback&& aCallback) {
-  if (auto channel = mChannels.GetAndRemove(aIdentifier)) {
-    aCallback(*channel);
+  if (auto args = mChannelArgs.GetAndRemove(aIdentifier)) {
+    nsresult rv =
+        aCallback(args->mLoadState, std::move(args->mStreamFilterEndpoints),
+                  args->mTiming);
+    args->mResolver(rv);
   } else {
     mCallbacks.Put(aIdentifier, std::move(aCallback));
   }
 }
 
-NS_IMETHODIMP ChildProcessChannelListener::OnChannelReady(
-    nsIChildChannel* aChannel, uint64_t aIdentifier) {
+void ChildProcessChannelListener::OnChannelReady(
+    nsDocShellLoadState* aLoadState, uint64_t aIdentifier,
+    nsTArray<Endpoint>&& aStreamFilterEndpoints, nsDOMNavigationTiming* aTiming,
+    Resolver&& aResolver) {
   if (auto callback = mCallbacks.GetAndRemove(aIdentifier)) {
-    (*callback)(aChannel);
+    nsresult rv =
+        (*callback)(aLoadState, std::move(aStreamFilterEndpoints), aTiming);
+    aResolver(rv);
   } else {
-    mChannels.Put(aIdentifier, aChannel);
+    mChannelArgs.Put(aIdentifier,
+                     {aLoadState, std::move(aStreamFilterEndpoints), aTiming,
+                      std::move(aResolver)});
   }
-  return NS_OK;
 }
-
-ChildProcessChannelListener::ChildProcessChannelListener() = default;
-
-ChildProcessChannelListener::~ChildProcessChannelListener() = default;
 
 already_AddRefed<ChildProcessChannelListener>
 ChildProcessChannelListener::GetSingleton() {
@@ -43,8 +49,6 @@ ChildProcessChannelListener::GetSingleton() {
   RefPtr<ChildProcessChannelListener> cpcl = sCPCLSingleton;
   return cpcl.forget();
 }
-
-NS_IMPL_ISUPPORTS(ChildProcessChannelListener, nsIChildProcessChannelListener);
 
 }  // namespace dom
 }  // namespace mozilla

@@ -16,7 +16,6 @@
 #include <memory>
 #include <queue>
 
-#include "nsAutoPtr.h"
 #include "nsCOMPtr.h"
 #include "nsINamed.h"
 #include "nsITimer.h"
@@ -92,7 +91,7 @@ class TransportLayerLoopback : public TransportLayer {
     NS_DECL_NSINAMED
 
    private:
-    virtual ~Deliverer() {}
+    virtual ~Deliverer() = default;
 
     DISALLOW_COPY_ASSIGN(Deliverer);
 

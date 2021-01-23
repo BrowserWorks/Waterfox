@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
 
 var { ExtensionCommon } = ChromeUtils.import(
@@ -35,27 +39,27 @@ extensions.registerModules({
   },
   extension: {
     url: "chrome://extensions/content/child/ext-extension.js",
-    scopes: ["addon_child", "content_child", "devtools_child", "proxy_script"],
+    scopes: ["addon_child", "content_child", "devtools_child"],
     paths: [["extension"]],
   },
   i18n: {
     url: "chrome://extensions/content/parent/ext-i18n.js",
-    scopes: ["addon_child", "content_child", "devtools_child", "proxy_script"],
+    scopes: ["addon_child", "content_child", "devtools_child"],
     paths: [["i18n"]],
   },
   runtime: {
     url: "chrome://extensions/content/child/ext-runtime.js",
-    scopes: ["addon_child", "content_child", "devtools_child", "proxy_script"],
+    scopes: ["addon_child", "content_child", "devtools_child"],
     paths: [["runtime"]],
   },
   storage: {
     url: "chrome://extensions/content/child/ext-storage.js",
-    scopes: ["addon_child", "content_child", "devtools_child", "proxy_script"],
+    scopes: ["addon_child", "content_child", "devtools_child"],
     paths: [["storage"]],
   },
   test: {
     url: "chrome://extensions/content/child/ext-test.js",
-    scopes: ["addon_child", "content_child", "devtools_child", "proxy_script"],
+    scopes: ["addon_child", "content_child", "devtools_child"],
     paths: [["test"]],
   },
   userScripts: {

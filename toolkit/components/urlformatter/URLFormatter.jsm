@@ -75,7 +75,7 @@ nsURLFormatterService.prototype = {
   QueryInterface: ChromeUtils.generateQI([Ci.nsIURLFormatter]),
 
   _defaults: {
-    LOCALE: () => Services.locale.appLocaleAsLangTag,
+    LOCALE: () => Services.locale.appLocaleAsBCP47,
     REGION() {
       try {
         // When the geoip lookup failed to identify the region, we fallback to
@@ -128,8 +128,8 @@ nsURLFormatterService.prototype = {
       return this.OSVersion;
     },
     CHANNEL: () => UpdateUtils.UpdateChannel,
+	DISPLAY_VERSION:  () => AppConstants.MOZ_APP_VERSION_DISPLAY,
     MOZILLA_API_KEY: () => AppConstants.MOZ_MOZILLA_API_KEY,
-    DISPLAY_VERSION:  () => AppConstants.MOZ_APP_VERSION_DISPLAY,
     GOOGLE_LOCATION_SERVICE_API_KEY: () =>
       AppConstants.MOZ_GOOGLE_LOCATION_SERVICE_API_KEY,
     GOOGLE_SAFEBROWSING_API_KEY: () =>

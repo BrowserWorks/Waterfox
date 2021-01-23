@@ -7,11 +7,13 @@
  * https://w3c.github.io/presentation-api/#interface-presentationconnectionavailableevent
  */
 
-[Constructor(DOMString type,
-             PresentationConnectionAvailableEventInit eventInitDict),
- Pref="dom.presentation.enabled"]
+[Pref="dom.presentation.enabled",
+ Exposed=Window]
 interface PresentationConnectionAvailableEvent : Event
 {
+  constructor(DOMString type,
+              PresentationConnectionAvailableEventInit eventInitDict);
+
   [SameObject]
   readonly attribute PresentationConnection connection;
 };

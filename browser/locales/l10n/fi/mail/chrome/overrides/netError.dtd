@@ -1,0 +1,203 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Sivun lataamisvirhe">
+<!ENTITY retry.label "Yritä uudestaan">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Yhteyden muodostus epäonnistui">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Osoitteen käyttö on rajoitettu">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Palvelinta ei löytynyt">
+<!ENTITY dnsNotFound.longDesc "
+<ul>
+  <li>Tarkista osoite kirjoitusvirheiden varalta: esim. 
+    <strong>ww</strong>.mozilla.org oikean muodon,
+    <strong>www</strong>.mozilla.org, sijaan</li>
+  <li>Jos muutkaan sivustot eivät toimi, tarkista 
+    tietokoneen verkkoasetukset.</li>
+  <li>Jos tietokone tai verkko on suojattu palomuurilla tai välityspalvelin on 
+    käytössä, tarkista että &brandShortName;in verkkoyhteyttä ei estetä.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.title "Tiedostoa ei löytynyt">
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>Tarkista, että tiedostonimi on kirjoitettu virheettömästi ja oikealla kirjainkoolla.</li>
+  <li>Tarkista, ettei tiedostoa ole poistettu, siirretty tai nimetty uudelleen.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.title "Tiedoston käyttö estettiin">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>Tiedosto on voitu poistaa tai siirtää, tai ehkä siihen ei ole käyttöoikeutta.</li>
+</ul>
+">
+
+<!ENTITY generic.title "Verkkopyyntöä ei kyetä toteuttamaan">
+<!ENTITY generic.longDesc "
+<p>&brandShortName; ei kykene lataamaan sivua jostain syystä.</p>
+">
+
+<!ENTITY malformedURI.title "Virheellinen osoite">
+<!ENTITY malformedURI.longDesc "
+<ul>
+  <li>Verkko-osoitteet ovat yleensä muotoa
+    <strong>http://www.example.com/</strong></li>
+  <li>Tarkista, että olet käyttänyt kauttaviivoja (siis
+    <strong>/</strong>-merkkiä).</li>
+</ul>
+">
+
+<!ENTITY netInterrupt.title "Tiedonsiirto keskeytyi">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Dokumentti on vanhentunut">
+<!ENTITY notCached.longDesc "<p>Pyydettyä dokumenttia ei ole tallennettu selaimen väliaikaistiedostoihin.</p><ul><li>Turvallisuusvarotoimena &brandShortName; ei automaattisesti lataa uudelleen luottamuksellisia dokumentteja.</li><li>Napsauta alta Yritä uudestaan ladataksesi dokumentin sivustolta uudestaan.</li></ul>">
+
+<!ENTITY netOffline.title "Yhteydettömässä tilassa">
+<!ENTITY netOffline.longDesc2 "
+<ul>
+  <li>Siirry yhteystilaan ja lataa sivu uudestaan valitsemalla &quot;Yritä uudestaan&quot;.</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.title "Sisällön koodausvirhe">
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>Ilmoitathan sivuston omistajalle tästä ongelmasta.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.title "Ei turvallinen tiedostotyyppi">
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>Ilmoita ongelmasta sivuston omistajalle.</li>
+</ul>
+">
+
+<!ENTITY netReset.title "Yhteys keskeytyi">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Yhteyden aikakatkaisu">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Osoitetta ei ymmärretty">
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Osoitteen avaaminen voi vaatia uuden ohjelman asentamista.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.title "Välityspalvelin kieltäytyy yhteydestä">
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>Tarkista, että välityspalvelinasetukset ovat oikein.</li>
+  <li>Varmista verkon ylläpidolta, että välityspalvelin on 
+    toimintakunnossa.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.title "Välityspalvelinta ei löytynyt">
+<!ENTITY proxyResolveFailure.longDesc "
+<ul>
+  <li>Tarkista, että välityspalvelinasetukset ovat oikein.</li>
+  <li>Varmista, että tietokoneesi verkkoyhteys on toimintakunnossa.</li>
+  <li>Jos tietokone tai verkko on suojattu palomuurilla tai välityspalvelin on 
+    käytössä, tarkista että &brandShortName;in verkkoyhteyttä ei estetä.</li>
+</ul>
+">
+
+<!ENTITY redirectLoop.title "Sivusto ei uudelleenohjaudu asianmukaisesti">
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Tämä virhe johtuu joskus siitä, että evästeiden asettamista ei ole
+    sallittu tai että se on erityisesti estetty tältä sivustolta.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.title "Odottamaton vastaus palvelimelta">
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>Tarkista, että tietokoneelle on asennettu Mozillan Personal Security 
+    Manager.</li>
+  <li>Virhe voi johtua palvelimen epästandardeista asetuksista.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.title "Suojatun yhteyden muodostaminen epäonnistui">
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>Avattavaa sivua ei voida näyttää, koska vastaanotetun datan alkuperää ei kyetty varmentamaan.</li>
+  <li>Ilmoitathan ongelmasta sivuston omistajalle.</li>
+</ul>
+">
+
+<!ENTITY nssBadCert.title "Suojatun yhteyden muodostaminen epäonnistui">
+<!ENTITY nssBadCert.longDesc2 "
+<ul>
+  <li>Ongelma voi johtua palvelimen asetuksista tai jonkin toisen palvelimen 
+    vilpillisestä yrityksestä tekeytyä palvelimeksi.</li>
+  <li>Jos yhteyden muodostuminen palvelimeen on aiemmin onnistunut, vika voi
+    olla väliaikainen. Yritä tällöin myöhemmin uudestaan.</li>
+</ul>
+">
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>Sivusto voi olla väliaikaisesti saavuttamattomissa tai kovan rasituksen 
+    alaisena. Yritä hetken kuluttua uudestaan.</li>
+  <li>Jos mitkään sivustot eivät toimi, tarkista tietokoneen 
+    verkkoasetukset.</li>
+  <li>Jos tietokone tai verkko on suojattu palomuurilla tai välityspalvelin on 
+    käytössä, tarkista että &brandShortName;in verkkoyhteyttä ei estetä.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.title "Sisällön tietosuojakäytännön estämä">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; esti tämän sivun latautumisen tässä yhteydessä, koska sivun sisällön tietosuojakäytäntö kieltää sen.</p>">
+
+<!ENTITY xfoBlocked.title "Estetty X-Frame-Options-käytännön perusteella">
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; esti tätä sivua latautumasta tässä yhteydessä, koska sivun X-Frame-Options-käytäntö estää lataamisen.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Sisältö vioittunut -virhe">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Avattavaa sivua ei voida näyttää, koska tiedonsiirrossa tapahtui virhe.</p><ul><li>Ilmoitathan ongelmasta sivuston omistajalle.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Tai lisää poikkeussääntö…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Siirry pois sivulta">
+<!ENTITY securityOverride.exceptionButtonLabel "Lisää poikkeus…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <button> tags. It uses strings already defined above. The
+button is included here (instead of netError.xhtml) because it exposes
+functionality specific to thunderbird. -->
+
+<!ENTITY securityOverride.warningContent "
+<p>Älä lisää poikkeussääntöä, jos et ole aivan varma käyttämäsi Internet-yhteyden turvallisuudesta tai jos et ole aikaisemmin nähnyt vastaavaa varoitusta tälle palvelimelle.</p>
+
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button>
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>
+">
+
+<!ENTITY remoteXUL.title "XUL-koodia etänä">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Ilmoitathan ongelmasta sivuston omistajalle.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "Yhteys ei ole suojattu">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> käyttää suojaustekniikkaa, joka on vanhentunut ja haavoittuvainen hyökkäyksille. Hyökkääjä voisi helposti lukea tietoja, joiden luulit olevan suojattuja. Sivuston ylläpitäjän täytyy korjata tämä ongelma ennen kuin voit käydä sivustolla.</p><p>Virhekoodi: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Estetty sivu">
+
+<!ENTITY networkProtocolError.title "Verkkoyhteyskäytännön virhe">
+<!ENTITY networkProtocolError.longDesc "<p>Haluamaasi sivua ei voitu näyttää verkkoprotokollavirheen vuoksi.</p><ul><li>Ole hyvä ja ilmoita sivuston omistajalle tästä ongelmasta.</li></ul>">

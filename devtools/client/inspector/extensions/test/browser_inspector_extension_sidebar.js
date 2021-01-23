@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -139,14 +138,14 @@ add_task(async function testSidebarSetObject() {
   });
 });
 
-add_task(async function testSidebarSetObjectValueGrip() {
+add_task(async function testSidebarSetExpressionResult() {
   const inspectedWindowFront = await toolbox.target.getFront(
     "webExtensionInspectedWindow"
   );
   const sidebar = inspector.getPanel(SIDEBAR_ID);
   const sidebarPanelContent = inspector.sidebar.getTabPanel(SIDEBAR_ID);
 
-  info("Testing sidebar.setObjectValueGrip with rootTitle");
+  info("Testing sidebar.setExpressionResult with rootTitle");
 
   const expression = `
     var obj = Object.create(null);
@@ -156,16 +155,16 @@ add_task(async function testSidebarSetObjectValueGrip() {
     obj;
   `;
 
-  const evalResult = await inspectedWindowFront.eval(
+  const consoleFront = await toolbox.target.getFront("console");
+  let evalResult = await inspectedWindowFront.eval(
     fakeExtCallerInfo,
     expression,
     {
-      evalResultAsGrip: true,
-      toolboxConsoleActorID: toolbox.target.activeConsole.actor,
+      consoleFront,
     }
   );
 
-  sidebar.setObjectValueGrip(evalResult.valueGrip, "Expected Root Title");
+  sidebar.setExpressionResult(evalResult, "Expected Root Title");
 
   // Wait the ObjectInspector component to be rendered and test its content.
   await testSetExpressionSidebarPanel(sidebarPanelContent, {
@@ -174,15 +173,92 @@ add_task(async function testSidebarSetObjectValueGrip() {
     rootTitle: "Expected Root Title",
   });
 
-  info("Testing sidebar.setObjectValueGrip without rootTitle");
+  info("Testing sidebar.setExpressionResult without rootTitle");
 
-  sidebar.setObjectValueGrip(evalResult.valueGrip);
+  sidebar.setExpressionResult(evalResult);
 
   // Wait the ObjectInspector component to be rendered and test its content.
   await testSetExpressionSidebarPanel(sidebarPanelContent, {
     nodesLength: 4,
     propertiesNames: ["cyclic", "prop1", "Symbol(sym1)"],
   });
+
+  info("Test expanding the object");
+  const oi = sidebarPanelContent.querySelector(".tree");
+  const cyclicNode = oi.querySelectorAll(".node")[1];
+  ok(cyclicNode.innerText.includes("cyclic"), "Found the expected node");
+  cyclicNode.click();
+
+  await ContentTaskUtils.waitForCondition(
+    () => oi.querySelectorAll(".node").length === 7,
+    "Wait for the 'cyclic' node to be expanded"
+  );
+
+  await ContentTaskUtils.waitForCondition(
+    () => oi.querySelector(".tree-node.focused"),
+    "Wait for the 'cyclic' node to be focused"
+  );
+  ok(
+    oi.querySelector(".tree-node.focused").innerText.includes("cyclic"),
+    "'cyclic' node is focused"
+  );
+
+  info("Test keyboard navigation");
+  EventUtils.synthesizeKey("KEY_ArrowLeft", {}, oi.ownerDocument.defaultView);
+  await ContentTaskUtils.waitForCondition(
+    () => oi.querySelectorAll(".node").length === 4,
+    "Wait for the 'cyclic' node to be collapsed"
+  );
+  ok(
+    oi.querySelector(".tree-node.focused").innerText.includes("cyclic"),
+    "'cyclic' node is still focused"
+  );
+
+  EventUtils.synthesizeKey("KEY_ArrowDown", {}, oi.ownerDocument.defaultView);
+  await ContentTaskUtils.waitForCondition(
+    () => oi.querySelectorAll(".tree-node")[2].classList.contains("focused"),
+    "Wait for the 'prop1' node to be focused"
+  );
+
+  ok(
+    oi.querySelector(".tree-node.focused").innerText.includes("prop1"),
+    "'prop1' node is focused"
+  );
+
+  info(
+    "Testing sidebar.setExpressionResult for an expression returning a longstring"
+  );
+  evalResult = await inspectedWindowFront.eval(
+    fakeExtCallerInfo,
+    `"ab ".repeat(10000)`,
+    {
+      consoleFront,
+    }
+  );
+  sidebar.setExpressionResult(evalResult);
+
+  await ContentTaskUtils.waitForCondition(() => {
+    const longStringEl = sidebarPanelContent.querySelector(
+      ".tree .objectBox-string"
+    );
+    return (
+      longStringEl && longStringEl.textContent.includes("ab ".repeat(10000))
+    );
+  }, "Wait for the longString to be render with its full text");
+  ok(true, "The longString is expanded and its full text is displayed");
+
+  info(
+    "Testing sidebar.setExpressionResult for an expression returning a primitive"
+  );
+  evalResult = await inspectedWindowFront.eval(fakeExtCallerInfo, `1 + 2`, {
+    consoleFront,
+  });
+  sidebar.setExpressionResult(evalResult);
+  const numberEl = await ContentTaskUtils.waitForCondition(
+    () => sidebarPanelContent.querySelector(".objectBox-number"),
+    "Wait for the result number element to be rendered"
+  );
+  is(numberEl.textContent, "3", `The "1 + 2" expression was evaluated as "3"`);
 
   inspectedWindowFront.destroy();
 });
@@ -196,16 +272,16 @@ add_task(async function testSidebarDOMNodeHighlighting() {
 
   const expression = "({ body: document.body })";
 
+  const consoleFront = await toolbox.target.getFront("console");
   const evalResult = await inspectedWindowFront.eval(
     fakeExtCallerInfo,
     expression,
     {
-      evalResultAsGrip: true,
-      toolboxConsoleActorID: toolbox.target.activeConsole.actor,
+      consoleFront,
     }
   );
 
-  sidebar.setObjectValueGrip(evalResult.valueGrip);
+  sidebar.setExpressionResult(evalResult);
 
   // Wait the DOM node to be rendered inside the component.
   await waitForObjectInspector(sidebarPanelContent, "node");
@@ -228,7 +304,7 @@ add_task(async function testSidebarDOMNodeHighlighting() {
   // Test highlight DOMNode on mouseover.
   info("Highlight the node by moving the cursor on it");
 
-  const onNodeHighlight = toolbox.highlighter.once("node-highlight");
+  const onNodeHighlight = inspector.highlighter.once("node-highlight");
 
   moveMouseOnObjectInspectorDOMNode(sidebarPanelContent);
 
@@ -237,7 +313,7 @@ add_task(async function testSidebarDOMNodeHighlighting() {
 
   // Test unhighlight DOMNode on mousemove.
   info("Unhighlight the node by moving away from the node");
-  const onNodeUnhighlight = toolbox.highlighter.once("node-unhighlight");
+  const onNodeUnhighlight = inspector.highlighter.once("node-unhighlight");
 
   moveMouseOnPanelCenter(sidebarPanelContent);
 
@@ -267,8 +343,8 @@ add_task(async function testSidebarDOMNodeOpenInspector() {
 
   // Once we click the open-inspector icon we expect a new node front to be selected
   // and the node to have been highlighted and unhighlighted.
-  const onNodeHighlight = toolbox.highlighter.once("node-highlight");
-  const onNodeUnhighlight = toolbox.highlighter.once("node-unhighlight");
+  const onNodeHighlight = inspector.highlighter.once("node-highlight");
+  const onNodeUnhighlight = inspector.highlighter.once("node-unhighlight");
   onceNewNodeFront = inspector.selection.once("new-node-front");
 
   clickOpenInspectorIcon(sidebarPanelContent);
@@ -336,7 +412,7 @@ add_task(async function testActiveTabOnNonExistingSidebar() {
   // to simulate the scenario where an extension has installed a sidebar
   // which has been saved in the preference but it doesn't exist anymore.
   await SpecialPowers.pushPrefEnv({
-    set: [["devtools.inspector.activeSidebar"], "unexisting-sidebar-id"],
+    set: [["devtools.inspector.activeSidebar", "unexisting-sidebar-id"]],
   });
 
   const res = await openInspectorForURL("about:blank");

@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Ajustes de correo basura">
+<!ENTITY trainingDescription.label "Si se habilita, primero debes entrenar a &brandShortName; para identificar el correo basura usando el botón Basura para marcar los mensajes como basura o no. Necesitas identificar tanto los mensajes que sean basura como los que no lo sean. Después de eso, &brandShortName; podrá marcar la basura automáticamente.">
+<!ENTITY level.label "Habilitar controles adaptativos de correo basura para este cuenta">
+<!ENTITY level.accesskey "E">
+
+<!ENTITY move.label "Mover mensajes nuevos de correo basura a:">
+<!ENTITY move.accesskey "M">
+<!ENTITY junkFolderOn.label "Carpeta de &quot;correo basura&quot; en:">
+<!ENTITY junkFolderOn.accesskey "J">
+<!ENTITY otherFolder.label "Otro:">
+<!ENTITY otherFolder.accesskey "O">
+<!ENTITY purge1.label "Automáticamente eliminar correo basura de más de">
+<!ENTITY purge1.accesskey "u">
+<!ENTITY purge2.label "días">
+
+<!ENTITY whitelistHeader.label "No marcar automáticamente el correo como basura si el remitente está en: ">
+<!ENTITY whitelistHeader.accesskey "D">
+
+<!ENTITY ispHeadersWarning.label "Si se habilita, &brandShortName; considerará automáticamente los mensajes marcados por este clasificador externo como basura.">
+<!ENTITY ispHeaders.label "Confiar en los encabezados de correo basura de: ">
+<!ENTITY ispHeaders.accesskey "T">
+
+<!ENTITY junkClassification.label "Selección">
+<!ENTITY junkActions.label "Destino y retención">
+
+<!ENTITY globalJunkPrefs.label "Preferencias generales de correo basura…">
+<!ENTITY globalJunkPrefs.accesskey "G">

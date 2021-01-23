@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-colors.xul -->
+<!-- LOCALIZATION NOTE : FILE Color management prefs -->
+
+<!ENTITY pref.colors.title "Colors">
+<!ENTITY color "Metin ve Arkaplan">
+<!ENTITY textColor.label "Metin:">
+<!ENTITY textColor.accesskey "t">
+<!ENTITY backgroundColor.label "Arkaplan:">
+<!ENTITY backgroundColor.accesskey "p">
+<!ENTITY useSystemColors.label "Sistem renklerini kullan">
+<!ENTITY useSystemColors.accesskey "S">
+
+<!ENTITY underlineLinks.label "Bağlantıların altını çiz">
+<!ENTITY underlineLinks.accesskey "ı">
+<!ENTITY links "Bağlantı Renkleri">
+<!ENTITY linkColor.label "Ziyaret edilmemiş bağlantılar:">
+<!ENTITY linkColor.accesskey "l">
+<!ENTITY activeLinkColor.label "Active Links:">
+<!ENTITY activeLinkColor.accesskey "c">
+<!ENTITY visitedLinkColor.label "Ziyaret edilmiş bağlantılar:">
+<!ENTITY visitedLinkColor.accesskey "Z">
+<!-- LOCALIZATION NOTE (someProvColors): This is the start of a sentence and will be followed by the following radio buttons. -->
+<!ENTITY someProvColors "When a web page provides its own colors and background">
+<!-- LOCALIZATION NOTE (alwaysUseDocColors.label): This is option one, and it appends to 'someProvColors' above. -->
+<!ENTITY alwaysUseDocumentColors.label "Always use the colors and background specified by the web page">
+<!ENTITY alwaysUseDocumentColors.accesskey "A">
+<!-- LOCALIZATION NOTE (ignoreDocColors.label): This is option two, and it appends to 'someProvColors' above.  -->
+<!ENTITY useMyColors.label "Use my chosen colors, ignoring the colors and background image specified">
+<!ENTITY useMyColors.accesskey "m">

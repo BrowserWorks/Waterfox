@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "বানান পরীক্ষা করুন">
+
+<!ENTITY misspelledWord.label "ভুল বানানের শব্দ:">
+<!ENTITY wordEditField.label "এটি দ্বারা প্রতিস্থাপন করা হবে (w):">
+<!ENTITY wordEditField.accessKey "w">
+<!ENTITY checkwordButton.label "শব্দ পরীক্ষা করুন (k)">
+<!ENTITY checkwordButton.accessKey "k">
+<!ENTITY suggestions.label "পরামর্শ (u):">
+<!ENTITY suggestions.accessKey "u">
+<!ENTITY ignoreButton.label "উপেক্ষা করা হবে (I)">
+<!ENTITY ignoreButton.accessKey "I">
+<!ENTITY ignoreAllButton.label "সব উপেক্ষা করা হবে (n)">
+<!ENTITY ignoreAllButton.accessKey "n">
+<!ENTITY replaceButton.label "প্রতিস্থাপন করুন (R)">
+<!ENTITY replaceButton.accessKey "R">
+<!ENTITY replaceAllButton.label "সব প্রতিস্থাপন করুন (A)">
+<!ENTITY replaceAllButton.accessKey "A">
+<!ENTITY stopButton.label "থামুন (t)">
+<!ENTITY stopButton.accessKey "t">
+<!ENTITY userDictionary.label "ব্যক্তিগত অভিধান:">
+<!ENTITY moreDictionaries.label "আরো অভিধান ডাউনলোড করুন...">
+<!ENTITY addToUserDictionaryButton.label "শব্দ যোগ করুন (d)">
+<!ENTITY addToUserDictionaryButton.accessKey "d">
+<!ENTITY editUserDictionaryButton.label "সম্পাদনা করুন... (E)">
+<!ENTITY editUserDictionaryButton.accessKey "E">
+<!ENTITY recheckButton.label "পৃষ্ঠা পুনরায় পরীক্ষা করুন (P)">
+<!ENTITY recheckButton.accessKey "P">
+<!ENTITY closeButton.label "বন্ধ করুন (C)">
+<!ENTITY closeButton.accessKey "C">
+<!ENTITY sendButton.label "প্রেরণ করুন (S)">
+<!ENTITY sendButton.accessKey "S">
+<!ENTITY languagePopup.label "ভাষা (L):">
+<!ENTITY languagePopup.accessKey "L">

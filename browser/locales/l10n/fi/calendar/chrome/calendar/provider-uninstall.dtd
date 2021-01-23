@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Poista palveluntarjoajan asennus">
+<!ENTITY providerUninstall.accept.label                    "Peruuta valittu tilaus">
+<!ENTITY providerUninstall.accept.accesskey                "u">
+<!ENTITY providerUninstall.cancel.label                    "Pidä lisäosa">
+<!ENTITY providerUninstall.cancel.accesskey                "P">
+<!ENTITY providerUninstall.preName.label                   "Olet pyytänyt, että seuraava lisäosa poistetaan tai poistetaan käytöstä:">
+<!ENTITY providerUninstall.postName.label                  "Tämän seurauksena alla luetellut kalenterit poistuvat käytöstä.">
+<!ENTITY providerUninstall.reinstallNote.label             "Voit myös peruuttaa tämän tarjoajan kalenterien tilaukset, paitsi jos aiot myöhemmin asentaa tämän tarjoajan uudelleen.">

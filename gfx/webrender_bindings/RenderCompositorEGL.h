@@ -23,8 +23,7 @@ class RenderCompositorEGL : public RenderCompositor {
   virtual ~RenderCompositorEGL();
 
   bool BeginFrame() override;
-  void EndFrame() override;
-  void WaitForGPU() override;
+  RenderedFrameId EndFrame(const nsTArray<DeviceIntRect>& aDirtyRects) final;
   void Pause() override;
   bool Resume() override;
 
@@ -36,12 +35,26 @@ class RenderCompositorEGL : public RenderCompositor {
 
   LayoutDeviceIntSize GetBufferSize() override;
 
+  CompositorCapabilities GetCompositorCapabilities() override;
+
+  // Interface for partial present
+  bool UsePartialPresent() override;
+  bool RequestFullRender() override;
+  uint32_t GetMaxPartialPresentRects() override;
+  bool ShouldDrawPreviousPartialPresentRegions() override;
+
  protected:
   EGLSurface CreateEGLSurface();
 
   void DestroyEGLSurface();
 
   EGLSurface mEGLSurface;
+#ifdef MOZ_WIDGET_ANDROID
+  // On android we must track our own surface size.
+  LayoutDeviceIntSize mEGLSurfaceSize;
+#endif
+
+  EGLint mBufferAge;
 };
 
 }  // namespace wr

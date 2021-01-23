@@ -7,22 +7,28 @@
 if CONFIG['JS_SHELL_NAME']:
     GeckoProgram(CONFIG['JS_SHELL_NAME'], linkage=None)
     if CONFIG['JS_BUNDLED_EDITLINE']:
+        DIRS += ['../editline']
         USE_LIBS += ['editline']
     USE_LIBS += ['static:js']
-    if CONFIG['ENABLE_WASM_CRANELIFT']:
-        USE_LIBS += [
-            'jsrust'
-        ]
 
 include('../js-config.mozbuild')
 include('../js-cxxflags.mozbuild')
+include('../js-standalone.mozbuild')
 
 UNIFIED_SOURCES += [
     'js.cpp',
     'jsoptparse.cpp',
     'jsshell.cpp',
-    'OSObject.cpp'
+    'ModuleLoader.cpp',
+    'OSObject.cpp',
+    'WasmTesting.cpp'
 ]
+
+if CONFIG['FUZZING_INTERFACES']:
+    UNIFIED_SOURCES += ['jsrtfuzzing/jsrtfuzzing.cpp']
+    USE_LIBS += [
+        'static:fuzzer',
+    ]
 
 DEFINES['EXPORT_JS_API'] = True
 
@@ -32,16 +38,6 @@ LOCAL_INCLUDES += [
 ]
 
 OS_LIBS += CONFIG['EDITLINE_LIBS']
-OS_LIBS += CONFIG['MOZ_ZLIB_LIBS']
-
-# Prepare module loader JS code for embedding
-GENERATED_FILES += [('shellmoduleloader.out.h', 'shellmoduleloader.js')]
-shellmoduleloader = GENERATED_FILES[('shellmoduleloader.out.h', 'shellmoduleloader.js')]
-shellmoduleloader.script = '../builtin/embedjs.py:generate_shellmoduleloader'
-shellmoduleloader.inputs = [
-    '../js.msg',
-    'ModuleLoader.js',
-]
 
 # Place a GDB Python auto-load file next to the shell executable, both in
 # the build directory and in the dist/bin directory.

@@ -13,7 +13,6 @@
 
 #include "mozilla/MemoryReporting.h"
 #include "nsIContent.h"  // for nsLinkState
-#include "nsIContentPolicy.h"
 
 namespace mozilla {
 
@@ -45,7 +44,7 @@ class Link : public nsISupports {
    */
   explicit Link();
 
-  virtual void SetLinkState(nsLinkState aState);
+  virtual void VisitedQueryFinished(bool aVisited);
 
   /**
    * @return NS_EVENT_STATE_VISITED if this link is visited,
@@ -119,16 +118,10 @@ class Link : public nsISupports {
 
   virtual bool ElementHasHref() const;
 
-  // This is called by HTMLAnchorElement.
+  // This is called by HTMLAnchorElement and HTMLLinkElement.
   void TryDNSPrefetch();
   void CancelDNSPrefetch(nsWrapperCache::FlagsType aDeferredFlag,
                          nsWrapperCache::FlagsType aRequestedFlag);
-
-  // This is called by HTMLLinkElement.
-  void TryDNSPrefetchOrPreconnectOrPrefetchOrPreloadOrPrerender();
-  void UpdatePreload(nsAtom* aName, const nsAttrValue* aValue,
-                     const nsAttrValue* aOldValue);
-  void CancelPrefetchOrPreload();
 
   bool HasPendingLinkUpdate() const { return mHasPendingLinkUpdate; }
   void SetHasPendingLinkUpdate() { mHasPendingLinkUpdate = true; }
@@ -137,15 +130,12 @@ class Link : public nsISupports {
   // To ensure correct mHasPendingLinkUpdate handling, we have this method
   // similar to the one in Element. Overriders must call
   // ClearHasPendingLinkUpdate().
-  // If you change this, change also the method in Element.
+  // If you change this, change also the method in nsINode.
   virtual void NodeInfoChanged(Document* aOldDoc) = 0;
 
   bool IsInDNSPrefetch() { return mInDNSPrefetch; }
   void SetIsInDNSPrefetch() { mInDNSPrefetch = true; }
   void ClearIsInDNSPrefetch() { mInDNSPrefetch = false; }
-
-  static void ParseAsValue(const nsAString& aValue, nsAttrValue& aResult);
-  static nsContentPolicyType AsValueToContentPolicy(const nsAttrValue& aValue);
 
  protected:
   virtual ~Link();
@@ -172,10 +162,6 @@ class Link : public nsISupports {
   void UnregisterFromHistory();
 
   void SetHrefAttribute(nsIURI* aURI);
-
-  void GetContentPolicyMimeTypeMedia(nsAttrValue& aAsAttr,
-                                     nsContentPolicyType& aPolicyType,
-                                     nsString& aMimeType, nsAString& aMedia);
 
   mutable nsCOMPtr<nsIURI> mCachedURI;
 

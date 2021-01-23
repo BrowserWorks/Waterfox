@@ -7,33 +7,21 @@
 #include "ActiveElementManager.h"
 #include "mozilla/EventStateManager.h"
 #include "mozilla/EventStates.h"
-#include "mozilla/Preferences.h"
 #include "mozilla/PresShell.h"
-#include "base/message_loop.h"
-#include "base/task.h"
+#include "mozilla/StaticPrefs_ui.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/Document.h"
 
-#define AEM_LOG(...)
-// #define AEM_LOG(...) printf_stderr("AEM: " __VA_ARGS__)
+static mozilla::LazyLogModule sApzAemLog("apz.activeelement");
+#define AEM_LOG(...) MOZ_LOG(sApzAemLog, LogLevel::Debug, (__VA_ARGS__))
 
 namespace mozilla {
 namespace layers {
 
-static int32_t sActivationDelayMs = 100;
-static bool sActivationDelayMsSet = false;
-
 ActiveElementManager::ActiveElementManager()
-    : mCanBePan(false), mCanBePanSet(false), mSetActiveTask(nullptr) {
-  if (!sActivationDelayMsSet) {
-    Preferences::AddIntVarCache(&sActivationDelayMs,
-                                "ui.touch_activation.delay_ms",
-                                sActivationDelayMs);
-    sActivationDelayMsSet = true;
-  }
-}
+    : mCanBePan(false), mCanBePanSet(false), mSetActiveTask(nullptr) {}
 
-ActiveElementManager::~ActiveElementManager() {}
+ActiveElementManager::~ActiveElementManager() = default;
 
 void ActiveElementManager::SetTargetElement(dom::EventTarget* aTarget) {
   if (mTarget) {
@@ -88,8 +76,9 @@ void ActiveElementManager::TriggerElementActivation() {
             "layers::ActiveElementManager::SetActiveTask", this,
             &ActiveElementManager::SetActiveTask, mTarget);
     mSetActiveTask = task;
-    MessageLoop::current()->PostDelayedTask(task.forget(), sActivationDelayMs);
-    AEM_LOG("Scheduling mSetActiveTask %p\n", mSetActiveTask);
+    NS_GetCurrentThread()->DelayedDispatch(
+        task.forget(), StaticPrefs::ui_touch_activation_delay_ms());
+    AEM_LOG("Scheduling mSetActiveTask %p\n", mSetActiveTask.get());
   }
 }
 
@@ -167,7 +156,7 @@ void ActiveElementManager::ResetTouchBlockState() {
 
 void ActiveElementManager::SetActiveTask(
     const nsCOMPtr<dom::Element>& aTarget) {
-  AEM_LOG("mSetActiveTask %p running\n", mSetActiveTask);
+  AEM_LOG("mSetActiveTask %p running\n", mSetActiveTask.get());
 
   // This gets called from mSetActiveTask's Run() method. The message loop
   // deletes the task right after running it, so we need to null out
@@ -177,7 +166,7 @@ void ActiveElementManager::SetActiveTask(
 }
 
 void ActiveElementManager::CancelTask() {
-  AEM_LOG("Cancelling task %p\n", mSetActiveTask);
+  AEM_LOG("Cancelling task %p\n", mSetActiveTask.get());
 
   if (mSetActiveTask) {
     mSetActiveTask->Cancel();

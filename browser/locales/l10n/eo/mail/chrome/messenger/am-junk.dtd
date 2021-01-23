@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Agordoj de trudmesaĝoj">
+<!ENTITY trainingDescription.label "Post aktivigi, vi unu devas instrui al &brandShortName; identigi trudmesaĝojn (spamon) per uzi la butonon “trudmesaĝo” ĉe ilarstrio por marki mesaĝojn kiel deziratajn aŭ ne. Vi devas identigi kaj deziratajn mesaĝojn kaj trudmesaĝojn. Post iom da tempo &brandShortName; eblos aŭtomate marki nedeziratajn mesaĝojn.">
+<!ENTITY level.label "Aktivigi mem‑lernantan filtrilon de trudmesaĝoj por tiu ĉi konto">
+<!ENTITY level.accesskey "A">
+
+<!ENTITY move.label "Movi trudmesaĝojn al:">
+<!ENTITY move.accesskey "M">
+<!ENTITY junkFolderOn.label "la mesaĝujo “trudmesaĝujo” de konto:">
+<!ENTITY junkFolderOn.accesskey "t">
+<!ENTITY otherFolder.label "alia mesaĝujo:">
+<!ENTITY otherFolder.accesskey "l">
+<!ENTITY purge1.label "Aŭtomate forigi trudmesaĝojn post">
+<!ENTITY purge1.accesskey "f">
+<!ENTITY purge2.label "tagoj">
+
+<!ENTITY whitelistHeader.label "Ne aŭtomate marki mesaĝojn kiel trudmesaĝojn se la sendinto estas en: ">
+<!ENTITY whitelistHeader.accesskey "N">
+
+<!ENTITY ispHeadersWarning.label "Aktivigu por ke &brandShortName; aŭtomate marki mesaĝojn kiel nedeziratajn surbaze de datumoj de ekstera liveranto.">
+<!ENTITY ispHeaders.label "Fidi je mesaĝkapoj de trudmesaĝoj liverataj de: ">
+<!ENTITY ispHeaders.accesskey "F">
+
+<!ENTITY junkClassification.label "Filtrado">
+<!ENTITY junkActions.label "Movado kaj forigado">
+
+<!ENTITY globalJunkPrefs.label "Ĝeneralaj agordoj de trudmesaĝoj…">
+<!ENTITY globalJunkPrefs.accesskey "e">

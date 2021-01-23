@@ -7,18 +7,18 @@
 
 /* Original author: bcampen@mozilla.com */
 
-#include <cstdarg>
-
 #include "rlogconnector.h"
 
+#include <cstdarg>
 #include <deque>
 #include <string>
+#include <utility>  // Pinch hitting for <utility> and std::move
+#include <vector>
+
 #include "logging.h"
 #include "mozilla/Assertions.h"
-#include "mozilla/Move.h"  // Pinch hitting for <utility> and std::move
 #include "mozilla/Mutex.h"
 #include "mozilla/Sprintf.h"
-#include <vector>
 
 extern "C" {
 #include <csi_platform.h>
@@ -29,13 +29,14 @@ extern "C" {
 /* Matches r_dest_vlog type defined in r_log.h */
 static int ringbuffer_vlog(int facility, int level, const char* format,
                            va_list ap) {
-  MOZ_ASSERT(mozilla::RLogConnector::GetInstance());
-  // I could be evil and printf right into a std::string, but unless this
-  // shows up in profiling, it is not worth doing.
-  char temp[4096];
-  VsprintfLiteral(temp, format, ap);
+  if (mozilla::RLogConnector::GetInstance()->ShouldLog(level)) {
+    // I could be evil and printf right into a std::string, but unless this
+    // shows up in profiling, it is not worth doing.
+    char temp[4096];
+    VsprintfLiteral(temp, format, ap);
 
-  mozilla::RLogConnector::GetInstance()->Log(level, std::string(temp));
+    mozilla::RLogConnector::GetInstance()->Log(level, std::string(temp));
+  }
   return 0;
 }
 
@@ -67,7 +68,7 @@ RLogConnector* RLogConnector::instance;
 RLogConnector::RLogConnector()
     : log_limit_(4096), mutex_("RLogConnector::mutex_"), disableCount_(0) {}
 
-RLogConnector::~RLogConnector() {}
+RLogConnector::~RLogConnector() = default;
 
 void RLogConnector::SetLogLimit(uint32_t new_limit) {
   OffTheBooksMutexAutoLock lock(mutex_);
@@ -75,14 +76,16 @@ void RLogConnector::SetLogLimit(uint32_t new_limit) {
   RemoveOld();
 }
 
+bool RLogConnector::ShouldLog(int level) const {
+  return level <= LOG_INFO ||
+         MOZ_LOG_TEST(getLogModule(), rLogLvlToMozLogLvl(level));
+}
+
 void RLogConnector::Log(int level, std::string&& log) {
   MOZ_MTLOG(rLogLvlToMozLogLvl(level), log);
-
-  if (level <= LOG_INFO) {
-    OffTheBooksMutexAutoLock lock(mutex_);
-    if (disableCount_ == 0) {
-      AddMsg(std::move(log));
-    }
+  OffTheBooksMutexAutoLock lock(mutex_);
+  if (disableCount_ == 0) {
+    AddMsg(std::move(log));
   }
 }
 

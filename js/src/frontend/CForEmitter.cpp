@@ -6,11 +6,11 @@
 
 #include "frontend/CForEmitter.h"
 
-#include "frontend/BytecodeEmitter.h"
-#include "frontend/EmitterScope.h"
-#include "frontend/SourceNotes.h"
-#include "vm/Opcodes.h"
-#include "vm/Scope.h"
+#include "frontend/BytecodeEmitter.h"  // BytecodeEmitter
+#include "frontend/EmitterScope.h"     // EmitterScope
+#include "vm/Opcodes.h"                // JSOp
+#include "vm/Scope.h"                  // ScopeKind
+#include "vm/StencilEnums.h"           // TryNoteKind
 
 using namespace js;
 using namespace js::frontend;
@@ -39,9 +39,8 @@ bool CForEmitter::emitInit(const Maybe<uint32_t>& initPos) {
   return true;
 }
 
-bool CForEmitter::emitBody(Cond cond, const Maybe<uint32_t>& bodyPos) {
+bool CForEmitter::emitCond(const Maybe<uint32_t>& condPos) {
   MOZ_ASSERT(state_ == State::Init);
-  cond_ = cond;
 
   // ES 13.7.4.8 step 2. The initial freshening.
   //
@@ -57,41 +56,33 @@ bool CForEmitter::emitBody(Cond cond, const Maybe<uint32_t>& bodyPos) {
     // one. If that scope has closed-over bindings inducing an
     // environment, recreate the current environment.
     MOZ_ASSERT(headLexicalEmitterScopeForLet_ == bce_->innermostEmitterScope());
-    MOZ_ASSERT(headLexicalEmitterScopeForLet_->scope(bce_)->kind() ==
+    MOZ_ASSERT(headLexicalEmitterScopeForLet_->scope(bce_).kind() ==
                ScopeKind::Lexical);
 
     if (headLexicalEmitterScopeForLet_->hasEnvironment()) {
-      if (!bce_->emit1(JSOP_FRESHENLEXICALENV)) {
+      if (!bce_->emit1(JSOp::FreshenLexicalEnv)) {
         return false;
       }
     }
   }
 
-  if (!bce_->newSrcNote(SRC_FOR, &noteIndex_)) {
-    return false;
-  }
-  if (!bce_->emit1(JSOP_NOP)) {
-    //              [stack]
+  if (!loopInfo_->emitLoopHead(bce_, condPos)) {
+    //            [stack]
     return false;
   }
 
-  biasedTop_ = bce_->bytecodeSection().offset();
+#ifdef DEBUG
+  state_ = State::Cond;
+#endif
+  return true;
+}
+
+bool CForEmitter::emitBody(Cond cond) {
+  MOZ_ASSERT(state_ == State::Cond);
+  cond_ = cond;
 
   if (cond_ == Cond::Present) {
-    // Goto the loop condition, which branches back to iterate.
-    if (!loopInfo_->emitEntryJump(bce_)) {
-      return false;
-    }
-  }
-
-  if (!loopInfo_->emitLoopHead(bce_, bodyPos)) {
-    //              [stack]
-    return false;
-  }
-
-  if (cond_ == Cond::Missing) {
-    if (!loopInfo_->emitLoopEntry(bce_, bodyPos)) {
-      //            [stack]
+    if (!bce_->emitJump(JSOp::IfEq, &loopInfo_->breaks)) {
       return false;
     }
   }
@@ -119,11 +110,11 @@ bool CForEmitter::emitUpdate(Update update, const Maybe<uint32_t>& updatePos) {
   // ES 13.7.4.8 step 3.e. The per-iteration freshening.
   if (headLexicalEmitterScopeForLet_) {
     MOZ_ASSERT(headLexicalEmitterScopeForLet_ == bce_->innermostEmitterScope());
-    MOZ_ASSERT(headLexicalEmitterScopeForLet_->scope(bce_)->kind() ==
+    MOZ_ASSERT(headLexicalEmitterScopeForLet_->scope(bce_).kind() ==
                ScopeKind::Lexical);
 
     if (headLexicalEmitterScopeForLet_->hasEnvironment()) {
-      if (!bce_->emit1(JSOP_FRESHENLEXICALENV)) {
+      if (!bce_->emit1(JSOp::FreshenLexicalEnv)) {
         return false;
       }
     }
@@ -147,43 +138,21 @@ bool CForEmitter::emitUpdate(Update update, const Maybe<uint32_t>& updatePos) {
   return true;
 }
 
-bool CForEmitter::emitCond(const Maybe<uint32_t>& forPos,
-                           const Maybe<uint32_t>& condPos,
-                           const Maybe<uint32_t>& endPos) {
+bool CForEmitter::emitEnd(const Maybe<uint32_t>& forPos) {
   MOZ_ASSERT(state_ == State::Update);
 
   if (update_ == Update::Present) {
+    tdzCache_.reset();
+
     //              [stack] UPDATE
 
-    if (!bce_->emit1(JSOP_POP)) {
+    if (!bce_->emit1(JSOp::Pop)) {
       //            [stack]
       return false;
     }
-
-    // Restore the absolute line number for source note readers.
-    if (endPos) {
-      uint32_t lineNum = bce_->parser->errorReporter().lineAt(*endPos);
-      if (bce_->bytecodeSection().currentLine() != lineNum) {
-        if (!bce_->newSrcNote2(SRC_SETLINE, ptrdiff_t(lineNum))) {
-          return false;
-        }
-        bce_->bytecodeSection().setCurrentLine(lineNum);
-      }
-    }
   }
 
-  if (update_ == Update::Present) {
-    tdzCache_.reset();
-  }
-
-  condOffset_ = bce_->bytecodeSection().offset();
-
-  if (cond_ == Cond::Present) {
-    if (!loopInfo_->emitLoopEntry(bce_, condPos)) {
-      //            [stack]
-      return false;
-    }
-  } else if (update_ == Update::Missing) {
+  if (cond_ == Cond::Missing && update_ == Update::Missing) {
     // If there is no condition clause and no update clause, mark
     // the loop-ending "goto" with the location of the "for".
     // This ensures that the debugger will stop on each loop
@@ -195,46 +164,8 @@ bool CForEmitter::emitCond(const Maybe<uint32_t>& forPos,
     }
   }
 
-#ifdef DEBUG
-  state_ = State::Cond;
-#endif
-  return true;
-}
-
-bool CForEmitter::emitEnd() {
-  MOZ_ASSERT(state_ == State::Cond);
-  // Set the first note offset so we can find the loop condition.
-  if (!bce_->setSrcNoteOffset(noteIndex_, SrcNote::For::CondOffset,
-                              condOffset_ - biasedTop_)) {
-    return false;
-  }
-  if (!bce_->setSrcNoteOffset(noteIndex_, SrcNote::For::UpdateOffset,
-                              loopInfo_->continueTargetOffset() - biasedTop_)) {
-    return false;
-  }
-
-  // If no loop condition, just emit a loop-closing jump.
-  if (!loopInfo_->emitLoopEnd(bce_,
-                              cond_ == Cond::Present ? JSOP_IFNE : JSOP_GOTO)) {
-    //              [stack]
-    return false;
-  }
-
-  // The third note offset helps us find the loop-closing jump.
-  if (!bce_->setSrcNoteOffset(noteIndex_, SrcNote::For::BackJumpOffset,
-                              loopInfo_->loopEndOffset() - biasedTop_))
-
-  {
-    return false;
-  }
-
-  if (!bce_->addTryNote(JSTRY_LOOP, bce_->bytecodeSection().stackDepth(),
-                        loopInfo_->headOffset(),
-                        loopInfo_->breakTargetOffset())) {
-    return false;
-  }
-
-  if (!loopInfo_->patchBreaksAndContinues(bce_)) {
+  // Emit the loop-closing jump.
+  if (!loopInfo_->emitLoopEnd(bce_, JSOp::Goto, TryNoteKind::Loop)) {
     //              [stack]
     return false;
   }

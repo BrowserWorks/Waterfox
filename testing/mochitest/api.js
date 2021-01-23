@@ -129,6 +129,7 @@ function loadMochitest(e) {
       null,
       null,
       null,
+      null,
       Services.scriptSecurityManager.getSystemPrincipal()
     );
   }

@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -77,7 +75,7 @@ function testType(isValid, type, params = "") {
   return addJsonViewTab(TEST_JSON_URL).then(
     async function() {
       ok(isValid, "The JSON Viewer should only load for valid content types.");
-      await ContentTask.spawn(gBrowser.selectedBrowser, type, function(
+      await SpecialPowers.spawn(gBrowser.selectedBrowser, [type], function(
         contentType
       ) {
         is(

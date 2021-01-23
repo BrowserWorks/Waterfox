@@ -12,15 +12,14 @@ add_task(async function() {
   info("Test DOM panel node highlight started");
 
   const { panel } = await addTestTab(TEST_PAGE_URL);
-  const toolbox = gDevTools.getToolbox(panel.target);
+  const toolbox = gDevTools.getToolbox(panel.currentTarget);
 
   info("Highlight the node by moving the cursor on it");
   let node = getRowByIndex(panel, 2).querySelector(".objectBox-node");
   // the inspector should be initialized first and then the node should
   // highlight after the hover effect.
-  let onNodeHighlight = toolbox.target
-    .once("inspector")
-    .then(inspector => inspector.highlighter.once("node-highlight"));
+  const inspectorFront = await toolbox.target.getFront("inspector");
+  let onNodeHighlight = inspectorFront.highlighter.once("node-highlight");
   EventUtils.synthesizeMouseAtCenter(
     node,
     {
@@ -32,7 +31,7 @@ add_task(async function() {
   is(nodeFront.displayName, "h1", "The correct node was highlighted");
 
   info("Unhighlight the node by moving away from the node");
-  let onNodeUnhighlight = toolbox.highlighter.once("node-unhighlight");
+  let onNodeUnhighlight = inspectorFront.highlighter.once("node-unhighlight");
   const btn = toolbox.doc.querySelector("#toolbox-meatball-menu-button");
   EventUtils.synthesizeMouseAtCenter(
     btn,
@@ -57,7 +56,7 @@ add_task(async function() {
     },
     node.ownerDocument.defaultView
   );
-  onNodeHighlight = toolbox.highlighter.once("node-highlight");
+  onNodeHighlight = inspectorFront.highlighter.once("node-highlight");
   nodeFront = await onNodeHighlight;
   is(nodeFront.displayName, "h2", "The correct node was highlighted");
 
@@ -69,7 +68,7 @@ add_task(async function() {
     },
     btn.ownerDocument.defaultView
   );
-  onNodeUnhighlight = toolbox.highlighter.once("node-unhighlight");
+  onNodeUnhighlight = inspectorFront.highlighter.once("node-unhighlight");
   await onNodeUnhighlight;
   ok(true, "node-unhighlight event was fired when moving away from the node");
 });

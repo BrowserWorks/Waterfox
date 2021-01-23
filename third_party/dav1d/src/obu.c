@@ -27,7 +27,6 @@
 
 #include "config.h"
 
-#include <assert.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
@@ -299,9 +298,10 @@ static int read_frame_size(Dav1dContext *const c, GetBits *const gb,
                 Dav1dThreadPicture *const ref =
                     &c->refs[c->frame_hdr->refidx[i]].p;
                 if (!ref->p.data[0]) return -1;
-                // FIXME render_* may be wrong
-                hdr->render_width = hdr->width[1] = ref->p.p.w;
-                hdr->render_height = hdr->height = ref->p.p.h;
+                hdr->width[1] = ref->p.p.w;
+                hdr->height = ref->p.p.h;
+                hdr->render_width = ref->p.frame_hdr->render_width;
+                hdr->render_height = ref->p.frame_hdr->render_height;
                 hdr->super_res.enabled = seqhdr->super_res && dav1d_get_bits(gb, 1);
                 if (hdr->super_res.enabled) {
                     const int d = hdr->super_res.width_scale_denominator =
@@ -917,10 +917,9 @@ static int parse_frame_hdr(Dav1dContext *const c, GetBits *const gb) {
     hdr->skip_mode_allowed = 0;
     if (hdr->switchable_comp_refs && hdr->frame_type & 1 && seqhdr->order_hint) {
         const unsigned poc = hdr->frame_offset;
-        unsigned off_before[2] = { 0xFFFFFFFF, 0xFFFFFFFF };
+        unsigned off_before = 0xFFFFFFFFU;
         int off_after = -1;
-        int off_before_idx[2], off_after_idx;
-        off_before_idx[0] = 0;
+        int off_before_idx, off_after_idx;
         for (int i = 0; i < 7; i++) {
             if (!c->refs[hdr->refidx[i]].p.p.data[0]) return DAV1D_ERR(EINVAL);
             const unsigned refpoc = c->refs[hdr->refidx[i]].p.p.frame_hdr->frame_offset;
@@ -933,36 +932,42 @@ static int parse_frame_hdr(Dav1dContext *const c, GetBits *const gb) {
                     off_after = refpoc;
                     off_after_idx = i;
                 }
-            } else if (diff < 0) {
-                if (off_before[0] == 0xFFFFFFFFU ||
-                    get_poc_diff(seqhdr->order_hint_n_bits,
-                                 refpoc, off_before[0]) > 0)
-                {
-                    off_before[1] = off_before[0];
-                    off_before[0] = refpoc;
-                    off_before_idx[1] = off_before_idx[0];
-                    off_before_idx[0] = i;
-                } else if (refpoc != off_before[0] &&
-                           (off_before[1] == 0xFFFFFFFFU ||
-                            get_poc_diff(seqhdr->order_hint_n_bits,
-                                         refpoc, off_before[1]) > 0))
-                {
-                    off_before[1] = refpoc;
-                    off_before_idx[1] = i;
-                }
+            } else if (diff < 0 && (off_before == 0xFFFFFFFFU ||
+                                    get_poc_diff(seqhdr->order_hint_n_bits,
+                                                 refpoc, off_before) > 0))
+            {
+                off_before = refpoc;
+                off_before_idx = i;
             }
         }
 
-        if (off_before[0] != 0xFFFFFFFFU && off_after != -1) {
-            hdr->skip_mode_refs[0] = imin(off_before_idx[0], off_after_idx);
-            hdr->skip_mode_refs[1] = imax(off_before_idx[0], off_after_idx);
+        if (off_before != 0xFFFFFFFFU && off_after != -1) {
+            hdr->skip_mode_refs[0] = imin(off_before_idx, off_after_idx);
+            hdr->skip_mode_refs[1] = imax(off_before_idx, off_after_idx);
             hdr->skip_mode_allowed = 1;
-        } else if (off_before[0] != 0xFFFFFFFFU &&
-                   off_before[1] != 0xFFFFFFFFU)
-        {
-            hdr->skip_mode_refs[0] = imin(off_before_idx[0], off_before_idx[1]);
-            hdr->skip_mode_refs[1] = imax(off_before_idx[0], off_before_idx[1]);
-            hdr->skip_mode_allowed = 1;
+        } else if (off_before != 0xFFFFFFFFU) {
+            unsigned off_before2 = 0xFFFFFFFFU;
+            int off_before2_idx;
+            for (int i = 0; i < 7; i++) {
+                if (!c->refs[hdr->refidx[i]].p.p.data[0]) return DAV1D_ERR(EINVAL);
+                const unsigned refpoc = c->refs[hdr->refidx[i]].p.p.frame_hdr->frame_offset;
+                if (get_poc_diff(seqhdr->order_hint_n_bits,
+                                 refpoc, off_before) < 0) {
+                    if (off_before2 == 0xFFFFFFFFU ||
+                        get_poc_diff(seqhdr->order_hint_n_bits,
+                                     refpoc, off_before2) > 0)
+                    {
+                        off_before2 = refpoc;
+                        off_before2_idx = i;
+                    }
+                }
+            }
+
+            if (off_before2 != 0xFFFFFFFFU) {
+                hdr->skip_mode_refs[0] = imin(off_before_idx, off_before2_idx);
+                hdr->skip_mode_refs[1] = imax(off_before_idx, off_before2_idx);
+                hdr->skip_mode_allowed = 1;
+            }
         }
     }
     hdr->skip_mode_enabled = hdr->skip_mode_allowed ? dav1d_get_bits(gb, 1) : 0;
@@ -1098,6 +1103,8 @@ static int parse_frame_hdr(Dav1dContext *const c, GetBits *const gb) {
                     const int num_uv_pos = num_y_pos + !!fgd->num_y_points;
                     for (int i = 0; i < num_uv_pos; i++)
                         fgd->ar_coeffs_uv[pl][i] = dav1d_get_bits(gb, 8) - 128;
+                    if (!fgd->num_y_points)
+                        fgd->ar_coeffs_uv[pl][num_uv_pos] = 0;
                 }
             fgd->ar_coeff_shift = dav1d_get_bits(gb, 2) + 6;
             fgd->grain_scale_shift = dav1d_get_bits(gb, 2);
@@ -1176,7 +1183,7 @@ int dav1d_parse_obus(Dav1dContext *const c, Dav1dData *const in, int global) {
 
     // obu header
     dav1d_get_bits(&gb, 1); // obu_forbidden_bit
-    const enum ObuType type = dav1d_get_bits(&gb, 4);
+    const enum Dav1dObuType type = dav1d_get_bits(&gb, 4);
     const int has_extension = dav1d_get_bits(&gb, 1);
     const int has_length_field = dav1d_get_bits(&gb, 1);
     dav1d_get_bits(&gb, 1); // reserved
@@ -1215,7 +1222,7 @@ int dav1d_parse_obus(Dav1dContext *const c, Dav1dData *const in, int global) {
     if (len > in->sz - init_byte_pos) goto error;
 
     // skip obu not belonging to the selected temporal/spatial layer
-    if (type != OBU_SEQ_HDR && type != OBU_TD &&
+    if (type != DAV1D_OBU_SEQ_HDR && type != DAV1D_OBU_TD &&
         has_extension && c->operating_point_idc != 0)
     {
         const int in_temporal_layer = (c->operating_point_idc >> temporal_id) & 1;
@@ -1225,7 +1232,7 @@ int dav1d_parse_obus(Dav1dContext *const c, Dav1dData *const in, int global) {
     }
 
     switch (type) {
-    case OBU_SEQ_HDR: {
+    case DAV1D_OBU_SEQ_HDR: {
         Dav1dRef *ref = dav1d_ref_create(sizeof(Dav1dSequenceHeader));
         if (!ref) return DAV1D_ERR(ENOMEM);
         Dav1dSequenceHeader *seq_hdr = ref->data;
@@ -1264,19 +1271,21 @@ int dav1d_parse_obus(Dav1dContext *const c, Dav1dData *const in, int global) {
         c->seq_hdr = seq_hdr;
         break;
     }
-    case OBU_REDUNDANT_FRAME_HDR:
+    case DAV1D_OBU_REDUNDANT_FRAME_HDR:
         if (c->frame_hdr) break;
         // fall-through
-    case OBU_FRAME:
-    case OBU_FRAME_HDR:
+    case DAV1D_OBU_FRAME:
+    case DAV1D_OBU_FRAME_HDR:
         if (global) break;
         if (!c->seq_hdr) goto error;
         if (!c->frame_hdr_ref) {
             c->frame_hdr_ref = dav1d_ref_create(sizeof(Dav1dFrameHeader));
             if (!c->frame_hdr_ref) return DAV1D_ERR(ENOMEM);
         }
+#ifndef NDEBUG
         // ensure that the reference is writable
         assert(dav1d_ref_is_writable(c->frame_hdr_ref));
+#endif
         c->frame_hdr = c->frame_hdr_ref->data;
         memset(c->frame_hdr, 0, sizeof(*c->frame_hdr));
         c->frame_hdr->temporal_id = temporal_id;
@@ -1289,7 +1298,7 @@ int dav1d_parse_obus(Dav1dContext *const c, Dav1dData *const in, int global) {
             dav1d_data_unref_internal(&c->tile[n].data);
         c->n_tile_data = 0;
         c->n_tiles = 0;
-        if (type != OBU_FRAME) {
+        if (type != DAV1D_OBU_FRAME) {
             // This is actually a frame header OBU so read the
             // trailing bit and check for overrun.
             dav1d_get_bits(&gb, 1);
@@ -1297,10 +1306,20 @@ int dav1d_parse_obus(Dav1dContext *const c, Dav1dData *const in, int global) {
                 c->frame_hdr = NULL;
                 return DAV1D_ERR(EINVAL);
             }
-
-            break;
         }
-        // OBU_FRAMEs shouldn't be signalled with show_existing_frame
+
+        if (c->frame_size_limit && (int64_t)c->frame_hdr->width[1] *
+            c->frame_hdr->height > c->frame_size_limit)
+        {
+            dav1d_log(c, "Frame size %dx%d exceeds limit %u\n", c->frame_hdr->width[1],
+                      c->frame_hdr->height, c->frame_size_limit);
+            c->frame_hdr = NULL;
+            return DAV1D_ERR(ERANGE);
+        }
+
+        if (type != DAV1D_OBU_FRAME)
+            break;
+        // OBU_FRAMEs shouldn't be signaled with show_existing_frame
         if (c->frame_hdr->show_existing_frame) {
             c->frame_hdr = NULL;
             goto error;
@@ -1311,7 +1330,7 @@ int dav1d_parse_obus(Dav1dContext *const c, Dav1dData *const in, int global) {
         // to align to the next byte.
         dav1d_bytealign_get_bits(&gb);
         // fall-through
-    case OBU_TILE_GRP: {
+    case DAV1D_OBU_TILE_GRP: {
         if (global) break;
         if (!c->frame_hdr) goto error;
         if (c->n_tile_data_alloc < c->n_tile_data + 1) {
@@ -1351,13 +1370,15 @@ int dav1d_parse_obus(Dav1dContext *const c, Dav1dData *const in, int global) {
         c->n_tile_data++;
         break;
     }
-    case OBU_METADATA: {
+    case DAV1D_OBU_METADATA: {
         // obu metadta type field
         const enum ObuMetaType meta_type = dav1d_get_uleb128(&gb);
+        const int meta_type_len = (dav1d_get_bits_pos(&gb) - init_bit_pos) >> 3;
         if (gb.error) goto error;
         Dav1dRef *ref;
         Dav1dContentLightLevel *content_light;
         Dav1dMasteringDisplay *mastering_display;
+        Dav1dITUTT35 *itut_t35_metadata;
 
         switch (meta_type) {
         case OBU_META_HDR_CLL:
@@ -1410,7 +1431,47 @@ int dav1d_parse_obus(Dav1dContext *const c, Dav1dData *const in, int global) {
             c->mastering_display_ref = ref;
             break;
         }
-        case OBU_META_ITUT_T35:
+        case OBU_META_ITUT_T35: {
+            int payload_size = len;
+            // Don't take into account all the trailing bits for payload_size
+            while (payload_size > 0 && !in->data[init_byte_pos + payload_size - 1])
+                payload_size--; // trailing_zero_bit x 8
+            payload_size--; // trailing_one_bit + trailing_zero_bit x 7
+
+            // Don't take into account meta_type bytes
+            payload_size -= meta_type_len;
+
+            int country_code_extension_byte = 0;
+            int country_code = dav1d_get_bits(&gb, 8);
+            payload_size--;
+            if (country_code == 0xFF) {
+                country_code_extension_byte = dav1d_get_bits(&gb, 8);
+                payload_size--;
+            }
+
+            if (payload_size <= 0) {
+                dav1d_log(c, "Malformed ITU-T T.35 metadata message format\n");
+                goto error;
+            }
+
+            ref = dav1d_ref_create(sizeof(Dav1dITUTT35) + payload_size * sizeof(uint8_t));
+            if (!ref) return DAV1D_ERR(ENOMEM);
+            itut_t35_metadata = ref->data;
+
+            // We need our public headers to be C++ compatible, so payload can't be
+            // a flexible array member
+            itut_t35_metadata->payload = (uint8_t *) &itut_t35_metadata[1];
+            itut_t35_metadata->country_code = country_code;
+            itut_t35_metadata->country_code_extension_byte = country_code_extension_byte;
+            for (int i = 0; i < payload_size; i++)
+                itut_t35_metadata->payload[i] = dav1d_get_bits(&gb, 8);
+            itut_t35_metadata->payload_size = payload_size;
+
+            dav1d_ref_dec(&c->itut_t35_ref);
+            c->itut_t35 = itut_t35_metadata;
+            c->itut_t35_ref = ref;
+            break;
+        }
         case OBU_META_SCALABILITY:
         case OBU_META_TIMECODE:
             // ignore metadata OBUs we don't care about
@@ -1418,17 +1479,19 @@ int dav1d_parse_obus(Dav1dContext *const c, Dav1dData *const in, int global) {
         default:
             // print a warning but don't fail for unknown types
             dav1d_log(c, "Unknown Metadata OBU type %d\n", meta_type);
+            break;
         }
 
         break;
     }
-    case OBU_PADDING:
-    case OBU_TD:
+    case DAV1D_OBU_PADDING:
+    case DAV1D_OBU_TD:
         // ignore OBUs we don't care about
         break;
     default:
+        // print a warning but don't fail for unknown types
         dav1d_log(c, "Unknown OBU type %d of size %u\n", type, len);
-        return DAV1D_ERR(EINVAL);
+        break;
     }
 
     if (c->seq_hdr && c->frame_hdr) {

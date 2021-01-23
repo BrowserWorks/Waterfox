@@ -8,23 +8,15 @@ use dwrote;
 use crate::gamma_lut::ColorLut;
 use crate::glyph_rasterizer::{FontInstance, FontTransform, GlyphKey};
 use crate::internal_types::{FastHashMap, FastHashSet, ResourceCacheError};
+use crate::glyph_rasterizer::{GlyphFormat, GlyphRasterError, GlyphRasterResult, RasterizedGlyph};
+use crate::gamma_lut::GammaLut;
 use std::borrow::Borrow;
 use std::collections::hash_map::Entry;
 use std::hash::{Hash, Hasher};
 use std::path::Path;
 use std::sync::{Arc, Mutex};
-
-cfg_if! {
-    if #[cfg(feature = "pathfinder")] {
-        use pathfinder_font_renderer::{PathfinderComPtr, IDWriteFontFace};
-        use crate::glyph_rasterizer::NativeFontHandleWrapper;
-    } else if #[cfg(not(feature = "pathfinder"))] {
-        use api::FontInstancePlatformOptions;
-        use crate::glyph_rasterizer::{GlyphFormat, GlyphRasterError, GlyphRasterResult, RasterizedGlyph};
-        use crate::gamma_lut::GammaLut;
-        use std::mem;
-    }
-}
+use api::FontInstancePlatformOptions;
+use std::mem;
 
 lazy_static! {
     static ref DEFAULT_FONT_DESCRIPTOR: dwrote::FontDescriptor = dwrote::FontDescriptor {
@@ -43,6 +35,9 @@ struct CachedFont {
     key: CachedFontKey,
     file: dwrote::FontFile,
 }
+
+// FontFile contains a ComPtr<IDWriteFontFile>, but DWrite font files are threadsafe.
+unsafe impl Send for CachedFont {}
 
 impl PartialEq for CachedFont {
     fn eq(&self, other: &CachedFont) -> bool {
@@ -80,8 +75,7 @@ struct FontFace {
 pub struct FontContext {
     fonts: FastHashMap<FontKey, FontFace>,
     variations: FastHashMap<(FontKey, dwrote::DWRITE_FONT_SIMULATIONS, Vec<FontVariation>), dwrote::FontFace>,
-    #[cfg(not(feature = "pathfinder"))]
-    gamma_luts: FastHashMap<(u16, u16), GammaLut>,
+    gamma_luts: FastHashMap<(u16, u8), GammaLut>,
 }
 
 // DirectWrite is safe to use on multiple threads and non-shareable resources are
@@ -122,6 +116,10 @@ fn dwrite_render_mode(
         FontRenderMode::Alpha | FontRenderMode::Subpixel => {
             if bitmaps || font.flags.contains(FontInstanceFlags::FORCE_GDI) {
                 dwrote::DWRITE_RENDERING_MODE_GDI_CLASSIC
+            } else if font.flags.contains(FontInstanceFlags::FORCE_SYMMETRIC) {
+                dwrote::DWRITE_RENDERING_MODE_CLEARTYPE_NATURAL_SYMMETRIC
+            } else if font.flags.contains(FontInstanceFlags::NO_SYMMETRIC) {
+                dwrote::DWRITE_RENDERING_MODE_CLEARTYPE_NATURAL
             } else {
                 font_face.get_recommended_rendering_mode_default_params(em_size, 1.0, measure_mode)
             }
@@ -148,7 +146,6 @@ impl FontContext {
         Ok(FontContext {
             fonts: FastHashMap::default(),
             variations: FastHashMap::default(),
-            #[cfg(not(feature = "pathfinder"))]
             gamma_luts: FastHashMap::default(),
         })
     }
@@ -259,7 +256,7 @@ impl FontContext {
                 let b = pixel[2];
                 print!("({}, {}, {}) ", r, g, b,);
             }
-            println!("");
+            println!();
         }
     }
 
@@ -381,36 +378,7 @@ impl FontContext {
         font: &FontInstance,
         key: &GlyphKey,
     ) -> Option<GlyphDimensions> {
-        let size = font.size.to_f32_px();
-        let bitmaps = is_bitmap_font(font);
-        let transform = if font.synthetic_italics.is_enabled() ||
-                           font.flags.intersects(FontInstanceFlags::TRANSPOSE |
-                                                 FontInstanceFlags::FLIP_X |
-                                                 FontInstanceFlags::FLIP_Y) {
-            let mut shape = FontTransform::identity();
-            if font.flags.contains(FontInstanceFlags::FLIP_X) {
-                shape = shape.flip_x();
-            }
-            if font.flags.contains(FontInstanceFlags::FLIP_Y) {
-                shape = shape.flip_y();
-            }
-            if font.flags.contains(FontInstanceFlags::TRANSPOSE) {
-                shape = shape.swap_xy();
-            }
-            if font.synthetic_italics.is_enabled() {
-                shape = shape.synthesize_italics(font.synthetic_italics);
-            }
-            Some(dwrote::DWRITE_MATRIX {
-                m11: shape.scale_x,
-                m12: shape.skew_y,
-                m21: shape.skew_x,
-                m22: shape.scale_y,
-                dx: 0.0,
-                dy: 0.0,
-            })
-        } else {
-            None
-        };
+        let (size, _, bitmaps, transform) = Self::get_glyph_parameters(font, key);
         let (_, _, bounds) = self.create_glyph_analysis(font, key, size, transform, bitmaps).ok()?;
 
         let width = (bounds.right - bounds.left) as i32;
@@ -427,7 +395,7 @@ impl FontContext {
             .first()
             .map(|metrics| {
                 let em_size = size / 16.;
-                let design_units_per_pixel = face.metrics().designUnitsPerEm as f32 / 16. as f32;
+                let design_units_per_pixel = face.metrics().metrics0().designUnitsPerEm as f32 / 16. as f32;
                 let scaled_design_units_to_pixels = em_size / design_units_per_pixel;
                 let advance = metrics.advanceWidth as f32 * scaled_design_units_to_pixels;
 
@@ -436,62 +404,87 @@ impl FontContext {
                     top: -bounds.top,
                     width,
                     height,
-                    advance: advance,
+                    advance,
                 }
             })
     }
 
     // DWrite ClearType gives us values in RGB, but WR expects BGRA.
-    #[cfg(not(feature = "pathfinder"))]
     fn convert_to_bgra(
         &self,
         pixels: &[u8],
+        width: usize,
+        height: usize,
         texture_type: dwrote::DWRITE_TEXTURE_TYPE,
         render_mode: FontRenderMode,
         bitmaps: bool,
         subpixel_bgr: bool,
+        texture_padding: bool,
     ) -> Vec<u8> {
+        let (buffer_width, buffer_height, padding) = if texture_padding {
+            (width + 2, height + 2, 1)
+        } else {
+            (width, height, 0)
+        };
+
+        let buffer_length = buffer_width * buffer_height * 4;
+        let mut bgra_pixels: Vec<u8> = vec![0; buffer_length];
+
         match (texture_type, render_mode, bitmaps) {
             (dwrote::DWRITE_TEXTURE_ALIASED_1x1, _, _) => {
-                let mut bgra_pixels: Vec<u8> = vec![0; pixels.len() * 4];
-                for i in 0 .. pixels.len() {
-                    let alpha = pixels[i];
-                    bgra_pixels[i * 4 + 0] = alpha;
-                    bgra_pixels[i * 4 + 1] = alpha;
-                    bgra_pixels[i * 4 + 2] = alpha;
-                    bgra_pixels[i * 4 + 3] = alpha;
+                assert!(width * height == pixels.len());
+                let mut i = 0;
+                for row in padding .. height + padding {
+                    let row_offset = row * buffer_width;
+                    for col in padding .. width + padding {
+                        let offset = (row_offset + col) * 4;
+                        let alpha = pixels[i];
+                        i += 1;
+                        bgra_pixels[offset + 0] = alpha;
+                        bgra_pixels[offset + 1] = alpha;
+                        bgra_pixels[offset + 2] = alpha;
+                        bgra_pixels[offset + 3] = alpha;
+                    }
                 }
-                bgra_pixels
             }
             (_, FontRenderMode::Subpixel, false) => {
-                let length = pixels.len() / 3;
-                let mut bgra_pixels: Vec<u8> = vec![0; length * 4];
-                for i in 0 .. length {
-                    let (mut r, g, mut b) = (pixels[i * 3 + 0], pixels[i * 3 + 1], pixels[i * 3 + 2]);
-                    if subpixel_bgr {
-                        mem::swap(&mut r, &mut b);
+                assert!(width * height * 3 == pixels.len());
+                let mut i = 0;
+                for row in padding .. height + padding {
+                    let row_offset = row * buffer_width;
+                    for col in padding .. width + padding {
+                        let offset = (row_offset + col) * 4;
+                        let (mut r, g, mut b) = (pixels[i + 0], pixels[i + 1], pixels[i + 2]);
+                        if subpixel_bgr {
+                            mem::swap(&mut r, &mut b);
+                        }
+                        i += 3;
+                        bgra_pixels[offset + 0] = b;
+                        bgra_pixels[offset + 1] = g;
+                        bgra_pixels[offset + 2] = r;
+                        bgra_pixels[offset + 3] = 0xff;
                     }
-                    bgra_pixels[i * 4 + 0] = b;
-                    bgra_pixels[i * 4 + 1] = g;
-                    bgra_pixels[i * 4 + 2] = r;
-                    bgra_pixels[i * 4 + 3] = 0xff;
                 }
-                bgra_pixels
             }
             _ => {
-                let length = pixels.len() / 3;
-                let mut bgra_pixels: Vec<u8> = vec![0; length * 4];
-                for i in 0 .. length {
-                    // Only take the G channel, as its closest to D2D
-                    let alpha = pixels[i * 3 + 1] as u8;
-                    bgra_pixels[i * 4 + 0] = alpha;
-                    bgra_pixels[i * 4 + 1] = alpha;
-                    bgra_pixels[i * 4 + 2] = alpha;
-                    bgra_pixels[i * 4 + 3] = alpha;
+                assert!(width * height * 3 == pixels.len());
+                let mut i = 0;
+                for row in padding .. height + padding {
+                    let row_offset = row * buffer_width;
+                    for col in padding .. width + padding {
+                        let offset = (row_offset + col) * 4;
+                        // Only take the G channel, as its closest to D2D
+                        let alpha = pixels[i + 1] as u8;
+                        i += 3;
+                        bgra_pixels[offset + 0] = alpha;
+                        bgra_pixels[offset + 1] = alpha;
+                        bgra_pixels[offset + 2] = alpha;
+                        bgra_pixels[offset + 3] = alpha;
+                    }
                 }
-                bgra_pixels
             }
-        }
+        };
+        bgra_pixels
     }
 
     pub fn prepare_font(font: &mut FontInstance) {
@@ -511,13 +504,11 @@ impl FontContext {
         }
     }
 
-    #[cfg(not(feature = "pathfinder"))]
-    pub fn rasterize_glyph(&mut self, font: &FontInstance, key: &GlyphKey) -> GlyphRasterResult {
-        let (x_scale, y_scale) = font.transform.compute_scale().unwrap_or((1.0, 1.0));
-        let scale = font.oversized_scale_factor(x_scale, y_scale);
-        let size = (font.size.to_f64_px() * y_scale / scale) as f32;
+    fn get_glyph_parameters(font: &FontInstance, key: &GlyphKey) -> (f32, f64, bool, Option<dwrote::DWRITE_MATRIX>) {
+        let (_, y_scale) = font.transform.compute_scale().unwrap_or((1.0, 1.0));
+        let scaled_size = font.size.to_f64_px() * y_scale;
         let bitmaps = is_bitmap_font(font);
-        let (mut shape, (x_offset, y_offset)) = if bitmaps {
+        let (mut shape, (mut x_offset, mut y_offset)) = if bitmaps {
             (FontTransform::identity(), (0.0, 0.0))
         } else {
             (font.transform.invert_scale(y_scale, y_scale), font.get_subpx_offset(key))
@@ -531,22 +522,32 @@ impl FontContext {
         if font.flags.contains(FontInstanceFlags::TRANSPOSE) {
             shape = shape.swap_xy();
         }
+        let (mut tx, mut ty) = (0.0, 0.0);
         if font.synthetic_italics.is_enabled() {
-            shape = shape.synthesize_italics(font.synthetic_italics);
-        }
+            let (shape_, (tx_, ty_)) = font.synthesize_italics(shape, scaled_size);
+            shape = shape_;
+            tx = tx_;
+            ty = ty_;
+        };
+        x_offset += tx;
+        y_offset += ty;
         let transform = if !shape.is_identity() || (x_offset, y_offset) != (0.0, 0.0) {
             Some(dwrote::DWRITE_MATRIX {
                 m11: shape.scale_x,
                 m12: shape.skew_y,
                 m21: shape.skew_x,
                 m22: shape.scale_y,
-                dx: (x_offset / scale) as f32,
-                dy: (y_offset / scale) as f32,
+                dx: x_offset as f32,
+                dy: y_offset as f32,
             })
         } else {
             None
         };
+        (scaled_size as f32, y_scale, bitmaps, transform)
+    }
 
+    pub fn rasterize_glyph(&mut self, font: &FontInstance, key: &GlyphKey) -> GlyphRasterResult {
+        let (size, y_scale, bitmaps, transform) = Self::get_glyph_parameters(font, key);
         let (analysis, texture_type, bounds) = self.create_glyph_analysis(font, key, size, transform, bitmaps)
                                                    .or(Err(GlyphRasterError::LoadFailed))?;
         let width = (bounds.right - bounds.left) as i32;
@@ -558,33 +559,27 @@ impl FontContext {
         }
 
         let pixels = analysis.create_alpha_texture(texture_type, bounds).or(Err(GlyphRasterError::LoadFailed))?;
-        let mut bgra_pixels = self.convert_to_bgra(&pixels, texture_type, font.render_mode, bitmaps,
-                                                   font.flags.contains(FontInstanceFlags::SUBPIXEL_BGR));
+        let mut bgra_pixels = self.convert_to_bgra(&pixels, width as usize, height as usize,
+                                                   texture_type, font.render_mode, bitmaps,
+                                                   font.flags.contains(FontInstanceFlags::SUBPIXEL_BGR),
+                                                   font.use_texture_padding());
 
-        // These are the default values we use in Gecko.
-        // We use a gamma value of 2.3 for gdi fonts
-        const GDI_GAMMA: u16 = 230;
-
-        let FontInstancePlatformOptions { gamma, contrast, .. } = font.platform_options.unwrap_or_default();
-        let gdi_gamma = match font.render_mode {
-            FontRenderMode::Mono => GDI_GAMMA,
-            FontRenderMode::Alpha | FontRenderMode::Subpixel => {
-                if bitmaps || font.flags.contains(FontInstanceFlags::FORCE_GDI) {
-                    GDI_GAMMA
-                } else {
-                    gamma
-                }
-            }
-        };
+        let FontInstancePlatformOptions { gamma, contrast, cleartype_level, .. } =
+            font.platform_options.unwrap_or_default();
         let gamma_lut = self.gamma_luts
-            .entry((gdi_gamma, contrast))
+            .entry((gamma, contrast))
             .or_insert_with(||
                 GammaLut::new(
                     contrast as f32 / 100.0,
-                    gdi_gamma as f32 / 100.0,
-                    gdi_gamma as f32 / 100.0,
+                    gamma as f32 / 100.0,
+                    gamma as f32 / 100.0,
                 ));
-        gamma_lut.preblend(&mut bgra_pixels, font.color);
+        if bitmaps || texture_type == dwrote::DWRITE_TEXTURE_ALIASED_1x1 ||
+           font.render_mode != FontRenderMode::Subpixel {
+            gamma_lut.preblend(&mut bgra_pixels, font.color);
+        } else {
+            gamma_lut.preblend_scaled(&mut bgra_pixels, font.color, cleartype_level);
+        }
 
         let format = if bitmaps {
             GlyphFormat::Bitmap
@@ -594,27 +589,15 @@ impl FontContext {
             font.get_glyph_format()
         };
 
+        let padding = if font.use_texture_padding() { 1 } else { 0 };
         Ok(RasterizedGlyph {
-            left: bounds.left as f32,
-            top: -bounds.top as f32,
-            width,
-            height,
-            scale: (if bitmaps { scale / y_scale } else { scale }) as f32,
+            left: (bounds.left - padding) as f32,
+            top: (-bounds.top + padding) as f32,
+            width: width + padding * 2,
+            height: height + padding * 2,
+            scale: (if bitmaps { y_scale.recip() } else { 1.0 }) as f32,
             format,
             bytes: bgra_pixels,
         })
-    }
-}
-
-#[cfg(feature = "pathfinder")]
-impl<'a> From<NativeFontHandleWrapper<'a>> for PathfinderComPtr<IDWriteFontFace> {
-    fn from(font_handle: NativeFontHandleWrapper<'a>) -> Self {
-        if let Some(file) = dwrote::FontFile::new_from_path(&font_handle.0.path) {
-            let index = font_handle.0.index;
-            if let Ok(face) = file.create_face(index, dwrote::DWRITE_FONT_SIMULATIONS_NONE) {
-                return unsafe { PathfinderComPtr::new(face.as_ptr()) };
-            }
-        }
-        panic!("missing font {:?}", font_handle.0)
     }
 }

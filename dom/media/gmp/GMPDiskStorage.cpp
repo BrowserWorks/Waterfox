@@ -13,22 +13,10 @@
 #include "mozilla/EndianUtils.h"
 #include "nsClassHashtable.h"
 #include "prio.h"
-#include "mozIGeckoMediaPluginService.h"
 #include "nsContentCID.h"
 #include "nsServiceManagerUtils.h"
-#include "nsISimpleEnumerator.h"
 
 namespace mozilla {
-
-#ifdef LOG
-#  undef LOG
-#endif
-
-extern LogModule* GetGMPLog();
-
-#define LOGD(msg) MOZ_LOG(GetGMPLog(), mozilla::LogLevel::Debug, msg)
-#define LOG(level, msg) MOZ_LOG(GetGMPLog(), (level), msg)
-
 namespace gmp {
 
 // We store the records for a given GMP as files in the profile dir.

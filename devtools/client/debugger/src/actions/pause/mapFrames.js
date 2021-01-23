@@ -4,43 +4,45 @@
 
 // @flow
 
-import {
-  getFrames,
-  getSymbols,
-  getSource,
-  getSourceFromId,
-  getSelectedFrame,
-} from "../../selectors";
+import { getFrames, getSource, getSelectedFrame } from "../../selectors";
 
 import assert from "../../utils/assert";
-import { findClosestFunction } from "../../utils/ast";
-import { setSymbols } from "../sources/symbols";
 
-import type { Frame, OriginalFrame, ThreadContext } from "../../types";
+import type {
+  Frame,
+  FrameId,
+  OriginalFrame,
+  ThreadContext,
+  ThreadId,
+} from "../../types";
 import type { State } from "../../reducers/types";
 import type { ThunkArgs } from "../types";
 
 import SourceMaps, { isGeneratedId } from "devtools-source-map";
 
-function isFrameBlackboxed(state, frame) {
+function isFrameBlackboxed(state: State, frame: Frame): boolean {
   const source = getSource(state, frame.location.sourceId);
-  return source && source.isBlackBoxed;
+  return !!source?.isBlackBoxed;
 }
 
-function getSelectedFrameId(state, thread, frames) {
+function getSelectedFrameId(
+  state: State,
+  thread: ThreadId,
+  frames: Frame[]
+): ?FrameId {
   let selectedFrame = getSelectedFrame(state, thread);
   if (selectedFrame && !isFrameBlackboxed(state, selectedFrame)) {
     return selectedFrame.id;
   }
 
   selectedFrame = frames.find(frame => !isFrameBlackboxed(state, frame));
-  return selectedFrame && selectedFrame.id;
+  return selectedFrame?.id;
 }
 
 export function updateFrameLocation(
   frame: Frame,
   sourceMaps: typeof SourceMaps
-) {
+): Promise<Frame> {
   if (frame.isOriginal) {
     return Promise.resolve(frame);
   }
@@ -64,39 +66,10 @@ function updateFrameLocations(
   );
 }
 
-export function mapDisplayNames(
-  frames: Frame[],
+function isWasmOriginalSourceFrame(
+  frame: Frame,
   getState: () => State
-): Frame[] {
-  return frames.map(frame => {
-    if (frame.isOriginal) {
-      return frame;
-    }
-
-    const source = getSource(getState(), frame.location.sourceId);
-
-    if (!source) {
-      return frame;
-    }
-
-    const symbols = getSymbols(getState(), source);
-
-    if (!symbols || !symbols.functions) {
-      return frame;
-    }
-
-    const originalFunction = findClosestFunction(symbols, frame.location);
-
-    if (!originalFunction) {
-      return frame;
-    }
-
-    const originalDisplayName = originalFunction.name;
-    return { ...frame, originalDisplayName };
-  });
-}
-
-function isWasmOriginalSourceFrame(frame, getState: () => State): boolean {
+): boolean {
   if (isGeneratedId(frame.location.sourceId)) {
     return false;
   }
@@ -105,7 +78,7 @@ function isWasmOriginalSourceFrame(frame, getState: () => State): boolean {
     frame.generatedLocation.sourceId
   );
 
-  return Boolean(generatedSource && generatedSource.isWasm);
+  return Boolean(generatedSource?.isWasm);
 }
 
 async function expandFrames(
@@ -136,7 +109,7 @@ async function expandFrames(
     };
 
     originalFrames.forEach((originalFrame, j) => {
-      if (!originalFrame.location || !originalFrame.thread) {
+      if (!originalFrame.location) {
         return;
       }
 
@@ -145,10 +118,11 @@ async function expandFrames(
       const id = j == 0 ? frame.id : `${frame.id}-originalFrame${j}`;
       result.push({
         id,
-        thread: originalFrame.thread,
         displayName: originalFrame.displayName,
         location: originalFrame.location,
+        index: frame.index,
         source: null,
+        thread: frame.thread,
         scope: frame.scope,
         this: frame.this,
         isOriginal: true,
@@ -156,19 +130,13 @@ async function expandFrames(
         // updateFrameLocation.
         generatedLocation: frame.generatedLocation,
         originalDisplayName: originalFrame.displayName,
+        originalVariables: originalFrame.variables,
+        asyncCause: frame.asyncCause,
+        state: frame.state,
       });
     });
   }
   return result;
-}
-
-async function updateFrameSymbols(cx, frames, { dispatch, getState }) {
-  await Promise.all(
-    frames.map(frame => {
-      const source = getSourceFromId(getState(), frame.location.sourceId);
-      return dispatch(setSymbols({ cx, source }));
-    })
-  );
 }
 
 /**
@@ -189,16 +157,15 @@ export function mapFrames(cx: ThreadContext) {
     }
 
     let mappedFrames = await updateFrameLocations(frames, sourceMaps);
-    await updateFrameSymbols(cx, mappedFrames, thunkArgs);
 
     mappedFrames = await expandFrames(mappedFrames, sourceMaps, getState);
-    mappedFrames = mapDisplayNames(mappedFrames, getState);
 
     const selectedFrameId = getSelectedFrameId(
       getState(),
       cx.thread,
       mappedFrames
     );
+
     dispatch({
       type: "MAP_FRAMES",
       cx,

@@ -13,6 +13,10 @@
 #include "nsSimpleURI.h"
 #include "mozilla/dom/MimeType.h"
 
+#ifdef ANDROID
+#  include "mozilla/StaticPrefs_network.h"
+#endif
+
 ////////////////////////////////////////////////////////////////////////////////
 
 NS_IMPL_ISUPPORTS(nsDataHandler, nsIProtocolHandler, nsISupportsWeakReference)
@@ -47,13 +51,6 @@ nsDataHandler::GetProtocolFlags(uint32_t* result) {
   return NS_OK;
 }
 
-NS_IMETHODIMP
-nsDataHandler::NewURI(const nsACString& aSpec,
-                      const char* aCharset,  // ignore charset info
-                      nsIURI* aBaseURI, nsIURI** result) {
-  return nsDataHandler::CreateNewURI(aSpec, aCharset, aBaseURI, result);
-}
-
 /* static */ nsresult nsDataHandler::CreateNewURI(const nsACString& aSpec,
                                                   const char* aCharset,
                                                   nsIURI* aBaseURI,
@@ -62,6 +59,12 @@ nsDataHandler::NewURI(const nsACString& aSpec,
   nsCOMPtr<nsIURI> uri;
 
   nsCString spec(aSpec);
+
+#ifdef ANDROID
+  // Due to heap limitations on mobile, limits the size of data URL
+  if (spec.Length() > StaticPrefs::network_data_max_uri_length_mobile())
+    return NS_ERROR_OUT_OF_MEMORY;
+#endif
 
   if (aBaseURI && !spec.IsEmpty() && spec[0] == '#') {
     // Looks like a reference instead of a fully-specified URI.
@@ -107,16 +110,9 @@ nsDataHandler::NewChannel(nsIURI* uri, nsILoadInfo* aLoadInfo,
     channel = new mozilla::net::DataChannelChild(uri);
   }
 
-  nsresult rv = channel->Init();
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-
   // set the loadInfo on the new channel
-  rv = channel->SetLoadInfo(aLoadInfo);
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
+  nsresult rv = channel->SetLoadInfo(aLoadInfo);
+  NS_ENSURE_SUCCESS(rv, rv);
 
   channel.forget(result);
   return NS_OK;
@@ -137,12 +133,11 @@ nsDataHandler::AllowPort(int32_t port, const char* scheme, bool* _retval) {
  */
 static bool FindOffsetOf(const nsACString& aPattern, const nsACString& aSrc,
                          nsACString::size_type& aOffset) {
-  static const nsCaseInsensitiveCStringComparator kComparator;
-
   nsACString::const_iterator begin, end;
   aSrc.BeginReading(begin);
   aSrc.EndReading(end);
-  if (!RFindInReadable(aPattern, begin, end, kComparator)) {
+  if (!RFindInReadable(aPattern, begin, end,
+                       nsCaseInsensitiveCStringComparator)) {
     return false;
   }
 
@@ -162,11 +157,15 @@ nsresult nsDataHandler::ParsePathWithoutRef(
 
   // First, find the start of the data
   int32_t commaIdx = aPath.FindChar(',');
-  if (commaIdx == kNotFound) {
+
+  // This is a hack! When creating a URL using the DOM API we want to ignore
+  // if a comma is missing. But if we're actually loading a data: URI, in which
+  // case aContentCharset is not null, then we want to return an error if a
+  // comma is missing.
+  if (aContentCharset && commaIdx == kNotFound) {
     return NS_ERROR_MALFORMED_URI;
   }
-
-  if (commaIdx == 0) {
+  if (commaIdx == 0 || commaIdx == kNotFound) {
     // Nothing but data.
     aContentType.AssignLiteral("text/plain");
     if (aContentCharset) {
@@ -219,8 +218,7 @@ nsresult nsDataHandler::ParsePathWithoutRef(
     }
 
     // Everything else is content type.
-    UniquePtr<CMimeType> parsed = CMimeType::Parse(mediaType);
-    if (parsed) {
+    if (mozilla::UniquePtr<CMimeType> parsed = CMimeType::Parse(mediaType)) {
       parsed->GetFullType(aContentType);
       if (aContentCharset) {
         parsed->GetParameterValue(kCharset, *aContentCharset);

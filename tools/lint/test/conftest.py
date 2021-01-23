@@ -1,3 +1,6 @@
+from __future__ import absolute_import, print_function
+
+import logging
 import os
 import sys
 from collections import defaultdict
@@ -5,6 +8,7 @@ from collections import defaultdict
 from mozbuild.base import MozbuildObject
 from mozlint.pathutils import findobject
 from mozlint.parser import Parser
+from mozlint.result import ResultSummary
 
 import pytest
 
@@ -13,6 +17,7 @@ build = MozbuildObject.from_environment(cwd=here)
 
 lintdir = os.path.dirname(here)
 sys.path.insert(0, lintdir)
+logger = logging.getLogger("mozlint")
 
 
 @pytest.fixture(scope='module')
@@ -85,7 +90,14 @@ def lint(config, root):
     except (ImportError, ValueError):
         pytest.fail("could not resolve a lint function from '{}'".format(config['payload']))
 
+    ResultSummary.root = root
+
     def wrapper(paths, config=config, root=root, collapse_results=False, **lintargs):
+        logger.setLevel(logging.DEBUG)
+        lintargs['log'] = logging.LoggerAdapter(logger, {
+            "lintname": config.get("name"),
+            "pid": os.getpid()
+        })
         results = func(paths, config, root=root, **lintargs)
         if not collapse_results:
             return results

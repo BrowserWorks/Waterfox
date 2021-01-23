@@ -80,6 +80,7 @@ class MenuList extends PureComponent {
       Array.from(this.wrapperRef.querySelectorAll(focusableSelector));
 
     switch (e.key) {
+      case "Tab":
       case "ArrowUp":
       case "ArrowDown":
         {
@@ -88,7 +89,7 @@ class MenuList extends PureComponent {
           const currentIndex = tabList.indexOf(currentElement);
           if (currentIndex !== -1) {
             let nextIndex;
-            if (e.key === "ArrowDown") {
+            if (e.key === "ArrowDown" || (e.key === "Tab" && !e.shiftKey)) {
               nextIndex =
                 currentIndex === tabList.length - 1 ? 0 : currentIndex + 1;
             } else {
@@ -132,6 +133,7 @@ class MenuList extends PureComponent {
       onMouseOut: this.onMouseOutOrBlur,
       onFocus: this.onMouseOverOrFocus,
       onBlur: this.onMouseOutOrBlur,
+      className: "menu-standard-padding",
     };
 
     if (this.props.id) {
@@ -146,7 +148,7 @@ class MenuList extends PureComponent {
       }
     });
     if (hasCheckbox) {
-      attr.className = "checkbox-container";
+      attr.className = "checkbox-container menu-standard-padding";
     }
 
     return div(attr, this.props.children);

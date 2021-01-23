@@ -10,7 +10,8 @@
  * liability, trademark and document use rules apply.
  */
 
-[Func="Navigator::HasUserMediaSupport"]
+[Func="Navigator::HasUserMediaSupport",
+ Exposed=Window]
 interface MediaDevices : EventTarget {
   [Pref="media.ondevicechange.enabled"]
   attribute EventHandler ondevicechange;
@@ -20,8 +21,10 @@ interface MediaDevices : EventTarget {
   Promise<sequence<MediaDeviceInfo>> enumerateDevices();
 
   [Throws, NeedsCallerType, UseCounter]
-  Promise<MediaStream> getUserMedia(optional MediaStreamConstraints constraints);
+  Promise<MediaStream> getUserMedia(optional MediaStreamConstraints constraints = {});
 
-  [SecureContext, Throws, NeedsCallerType, UseCounter]
-  Promise<MediaStream> getDisplayMedia(optional DisplayMediaStreamConstraints constraints);
+  // We need [SecureContext] in case media.devices.insecure.enabled = true
+  // because we don't want that legacy pref to expose this newer method.
+  [SecureContext, Pref="media.getdisplaymedia.enabled", Throws, NeedsCallerType, UseCounter]
+  Promise<MediaStream> getDisplayMedia(optional DisplayMediaStreamConstraints constraints = {});
 };

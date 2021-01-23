@@ -12,7 +12,6 @@
 #include "mozilla/gfx/Rect.h"   // for gfxRect
 #include "mozilla/gfx/Point.h"  // for IntPoint
 #include "mozilla/mozalloc.h"   // for operator delete
-#include "nsAutoPtr.h"          // for nsAutoPtr
 #include "nsCOMPtr.h"           // for already_AddRefed
 #include "nsDebug.h"            // for NS_ASSERTION
 #include "nsPoint.h"            // for nsIntPoint
@@ -36,7 +35,7 @@ class LayersPacket;
  */
 class ReadbackSink {
  public:
-  ReadbackSink() {}
+  ReadbackSink() = default;
   virtual ~ReadbackSink() = default;
 
   /**
@@ -110,9 +109,9 @@ class ReadbackLayer : public Layer {
    */
   void SetSink(ReadbackSink* aSink) {
     SetUnknown();
-    mSink = aSink;
+    mSink = mozilla::WrapUnique(aSink);
   }
-  ReadbackSink* GetSink() { return mSink; }
+  ReadbackSink* GetSink() { return mSink.get(); }
 
   /**
    * CONSTRUCTION PHASE ONLY
@@ -154,7 +153,7 @@ class ReadbackLayer : public Layer {
         mSink->SetUnknown(AllocateSequenceNumber());
       }
       mBackgroundLayer = nullptr;
-      mBackgroundColor = gfx::Color();
+      mBackgroundColor = gfx::DeviceColor();
     }
   }
 
@@ -167,7 +166,7 @@ class ReadbackLayer : public Layer {
         mSize(0, 0),
         mBackgroundLayer(nullptr),
         mBackgroundLayerOffset(0, 0),
-        mBackgroundColor(gfx::Color()) {}
+        mBackgroundColor(gfx::DeviceColor()) {}
 
   virtual void PrintInfo(std::stringstream& aStream,
                          const char* aPrefix) override;
@@ -176,7 +175,7 @@ class ReadbackLayer : public Layer {
                           const void* aParent) override;
 
   uint64_t mSequenceCounter;
-  nsAutoPtr<ReadbackSink> mSink;
+  UniquePtr<ReadbackSink> mSink;
   gfx::IntSize mSize;
 
   // This can refer to any (earlier) sibling PaintedLayer. That PaintedLayer
@@ -194,7 +193,7 @@ class ReadbackLayer : public Layer {
   // When mBackgroundColor is opaque, this is the color of the ColorLayer
   // that contained the contents we reported to mSink, which covered the
   // entire readback area.
-  gfx::Color mBackgroundColor;
+  gfx::DeviceColor mBackgroundColor;
 };
 
 }  // namespace layers

@@ -27,9 +27,8 @@
 !define AB_CD                 "@AB_CD@"
 
 !define FileMainEXE           "@MOZ_APP_NAME@.exe"
-!define WindowClass           "WaterfoxMessageWindow"
-!define MainWindowClass       "MozillaWindowClass"
-!define DialogWindowClass     "MozillaDialogClass"
+!define MainWindowClass       "WaterfoxWindowClass"
+!define DialogWindowClass     "WaterfoxDialogClass"
 !define DDEApplication        "Waterfox"
 !define AppRegName            "Waterfox"
 
@@ -41,11 +40,11 @@
 !define BrandFullName         "${BrandFullNameInternal}"
 !endif
 
-!define CERTIFICATE_NAME            "Waterfox Limited"
+!define CERTIFICATE_NAME            "Mozilla Corporation"
 !define CERTIFICATE_ISSUER          "DigiCert SHA2 Assured ID Code Signing CA"
 ; Changing the name or issuer requires us to have both the old and the new
 ;  in the registry at the same time, temporarily.
-!define CERTIFICATE_NAME_PREVIOUS   "Waterfox Limited"
+!define CERTIFICATE_NAME_PREVIOUS   "Mozilla Corporation"
 !define CERTIFICATE_ISSUER_PREVIOUS "DigiCert Assured ID Code Signing CA-1"
 
 # LSP_CATEGORIES is the permitted LSP categories for the application. Each LSP
@@ -119,8 +118,21 @@
 !define MOZ_MAINTENANCE_SERVICE
 #endif
 
+#ifdef MOZ_UPDATE_AGENT
+!define MOZ_UPDATE_AGENT
+!define UpdateAgentFullName "Waterfox Update Agent"
+#endif
+
 #ifdef MOZ_BITS_DOWNLOAD
 !define MOZ_BITS_DOWNLOAD
+#endif
+
+#ifdef MOZ_DEFAULT_BROWSER_AGENT
+!define MOZ_DEFAULT_BROWSER_AGENT
+#endif
+
+#ifdef NIGHTLY_BUILD
+!define NIGHTLY_BUILD
 #endif
 
 !if "@AB_CD@" == "en-US"
@@ -135,7 +147,6 @@ VIAddVersionKey "ProductName"     "${BrandShortName}"
 VIAddVersionKey "CompanyName"     "${CompanyName}"
 #ifdef MOZ_OFFICIAL_BRANDING
 VIAddVersionKey "LegalTrademarks" "${BrandShortName} is a Trademark of Waterfox Ltd."
-#endif
 VIAddVersionKey "LegalCopyright"  "${CompanyName}"
 VIAddVersionKey "FileVersion"     "${AppVersion}"
 VIAddVersionKey "ProductVersion"  "${AppVersion}"
@@ -151,5 +162,5 @@ VIAddVersionKey "ProductVersion"  "${AppVersion}"
 # Constants for parts of the telemetry submission URL
 !define TELEMETRY_BASE_URL 
 !define TELEMETRY_NAMESPACE firefox-installer
-!define TELEMETRY_INSTALL_PING_VERSION 0
+!define TELEMETRY_INSTALL_PING_VERSION 1
 !define TELEMETRY_INSTALL_PING_DOCTYPE install

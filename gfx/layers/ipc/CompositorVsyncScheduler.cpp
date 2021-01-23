@@ -14,12 +14,13 @@
 #ifdef MOZ_WIDGET_GTK
 #  include "gfxPlatformGtk.h"  // for gfxPlatform
 #endif
-#include "gfxPrefs.h"             // for gfxPrefs
 #include "mozilla/AutoRestore.h"  // for AutoRestore
 #include "mozilla/DebugOnly.h"    // for DebugOnly
-#include "mozilla/gfx/2D.h"       // for DrawTarget
-#include "mozilla/gfx/Point.h"    // for IntSize
-#include "mozilla/gfx/Rect.h"     // for IntSize
+#include "mozilla/StaticPrefs_gfx.h"
+#include "mozilla/StaticPrefs_layers.h"
+#include "mozilla/gfx/2D.h"     // for DrawTarget
+#include "mozilla/gfx/Point.h"  // for IntSize
+#include "mozilla/gfx/Rect.h"   // for IntSize
 #include "mozilla/layers/CompositorThread.h"
 #include "mozilla/layers/CompositorVsyncSchedulerOwner.h"
 #include "mozilla/mozalloc.h"  // for operator new, etc
@@ -41,7 +42,6 @@ namespace mozilla {
 namespace layers {
 
 using namespace mozilla::gfx;
-using namespace std;
 
 CompositorVsyncScheduler::Observer::Observer(CompositorVsyncScheduler* aOwner)
     : mMutex("CompositorVsyncScheduler.Observer.Mutex"), mOwner(aOwner) {}
@@ -78,9 +78,9 @@ CompositorVsyncScheduler::CompositorVsyncScheduler(
 
   // mAsapScheduling is set on the main thread during init,
   // but is only accessed after on the compositor thread.
-  mAsapScheduling = gfxPrefs::LayersCompositionFrameRate() == 0 ||
-                    gfxPlatform::IsInLayoutAsapMode() ||
-                    recordreplay::IsRecordingOrReplaying();
+  mAsapScheduling =
+      StaticPrefs::layers_offmainthreadcomposition_frame_rate() == 0 ||
+      gfxPlatform::IsInLayoutAsapMode();
 }
 
 CompositorVsyncScheduler::~CompositorVsyncScheduler() {
@@ -110,24 +110,24 @@ void CompositorVsyncScheduler::Destroy() {
 void CompositorVsyncScheduler::PostCompositeTask(
     VsyncId aId, TimeStamp aCompositeTimestamp) {
   MonitorAutoLock lock(mCurrentCompositeTaskMonitor);
-  if (mCurrentCompositeTask == nullptr && CompositorThreadHolder::Loop()) {
+  if (mCurrentCompositeTask == nullptr && CompositorThread()) {
     RefPtr<CancelableRunnable> task =
         NewCancelableRunnableMethod<VsyncId, TimeStamp>(
             "layers::CompositorVsyncScheduler::Composite", this,
             &CompositorVsyncScheduler::Composite, aId, aCompositeTimestamp);
     mCurrentCompositeTask = task;
-    ScheduleTask(task.forget());
+    CompositorThread()->Dispatch(task.forget());
   }
 }
 
 void CompositorVsyncScheduler::PostVRTask(TimeStamp aTimestamp) {
   MonitorAutoLock lockVR(mCurrentVRTaskMonitor);
-  if (mCurrentVRTask == nullptr && CompositorThreadHolder::Loop()) {
+  if (mCurrentVRTask == nullptr && CompositorThread()) {
     RefPtr<CancelableRunnable> task = NewCancelableRunnableMethod<TimeStamp>(
         "layers::CompositorVsyncScheduler::DispatchVREvents", this,
         &CompositorVsyncScheduler::DispatchVREvents, aTimestamp);
     mCurrentVRTask = task;
-    CompositorThreadHolder::Loop()->PostDelayedTask(task.forget(), 0);
+    CompositorThread()->Dispatch(task.forget());
   }
 }
 
@@ -255,7 +255,7 @@ void CompositorVsyncScheduler::Composite(VsyncId aId,
         mozilla::Telemetry::COMPOSITE_FRAME_ROUNDTRIP_TIME,
         compositeFrameTotal.ToMilliseconds());
   } else if (mVsyncNotificationsSkipped++ >
-             gfxPrefs::CompositorUnobserveCount()) {
+             StaticPrefs::gfx_vsync_compositor_unobserve_count_AtStartup()) {
     UnobserveVsync();
   }
 }
@@ -327,12 +327,6 @@ void CompositorVsyncScheduler::DispatchVREvents(TimeStamp aVsyncTimestamp) {
 
   VRManager* vm = VRManager::Get();
   vm->NotifyVsync(aVsyncTimestamp);
-}
-
-void CompositorVsyncScheduler::ScheduleTask(
-    already_AddRefed<CancelableRunnable> aTask) {
-  MOZ_ASSERT(CompositorThreadHolder::Loop());
-  CompositorThreadHolder::Loop()->PostDelayedTask(std::move(aTask), 0);
 }
 
 const TimeStamp& CompositorVsyncScheduler::GetLastComposeTime() const {

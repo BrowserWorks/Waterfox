@@ -16,19 +16,13 @@
 namespace mozilla {
 namespace dom {
 
-nsStaticAtom* const SVGTests::sStringListNames[3] = {
-    nsGkAtoms::requiredFeatures,
+nsStaticAtom* const SVGTests::sStringListNames[2] = {
     nsGkAtoms::requiredExtensions,
     nsGkAtoms::systemLanguage,
 };
 
 SVGTests::SVGTests() {
   mStringListAttributes[LANGUAGE].SetIsCommaSeparated(true);
-}
-
-already_AddRefed<DOMSVGStringList> SVGTests::RequiredFeatures() {
-  return DOMSVGStringList::GetDOMWrapper(&mStringListAttributes[FEATURES],
-                                         AsSVGElement(), true, FEATURES);
 }
 
 already_AddRefed<DOMSVGStringList> SVGTests::RequiredExtensions() {
@@ -67,7 +61,7 @@ bool SVGTests::IsConditionalProcessingAttribute(
 
 int32_t SVGTests::GetBestLanguagePreferenceRank(
     const nsAString& aAcceptLangs) const {
-  const nsCaseInsensitiveStringComparator caseInsensitiveComparator;
+  auto caseInsensitiveComparator = nsCaseInsensitiveStringComparator;
 
   if (!mStringListAttributes[LANGUAGE].IsExplicitlySet()) {
     return -2;
@@ -153,14 +147,12 @@ bool SVGTests::PassesConditionalProcessingTests(
       return false;
     }
 
-    const nsCaseInsensitiveStringComparator caseInsensitiveComparator;
-
     for (uint32_t i = 0; i < mStringListAttributes[LANGUAGE].Length(); i++) {
       nsCharSeparatedTokenizer languageTokenizer(acceptLangs, ',');
       while (languageTokenizer.hasMoreTokens()) {
         if (nsStyleUtil::DashMatchCompare(mStringListAttributes[LANGUAGE][i],
                                           languageTokenizer.nextToken(),
-                                          caseInsensitiveComparator)) {
+                                          nsCaseInsensitiveStringComparator)) {
           return true;
         }
       }

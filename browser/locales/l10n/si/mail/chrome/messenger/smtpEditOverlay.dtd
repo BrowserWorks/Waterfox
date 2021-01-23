@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY settings.caption "සැකසුම්">
+<!ENTITY security.caption "ආරක්ෂාව සහ සත්‍යාපනය (Authentication)">
+<!ENTITY serverName.label "සේවාදායක නම::">
+<!ENTITY serverName.accesskey "S">
+<!ENTITY serverDescription.label "විස්තරය:">
+<!ENTITY serverDescription.accesskey "D">
+<!ENTITY serverPort.label "තොට (Port):">
+<!ENTITY serverPort.accesskey "P">
+<!ENTITY userName.label "පරිශීලක නම:">
+<!ENTITY userName.accesskey "m">
+<!ENTITY connectionSecurity.label "සම්බන්ධතාවයේ ආරක්ෂාව:">
+<!ENTITY connectionSecurity.accesskey "n">
+<!ENTITY connectionSecurityType-0.label "None">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, තිබේ නම්">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY smtpEditTitle.label "SMTP සේවාදායකය">
+<!ENTITY serverPortDefault.label "පෙරනිමි (Default):">
+<!ENTITY authMethod.label "සත්‍යාපන ක්‍රමය:">
+<!ENTITY authMethod.accesskey "i">

@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Menubar.tooltip    "Päävalikko">
+<!ENTITY Toolbar.tooltip    "Pääpalkki">
+
+
+<!ENTITY multiline-expand.tooltip   "Siirry moniriviseen syöttötilaan (Ctrl+Nuoli ylös)">
+<!ENTITY multiline-contract.tooltip "Siirry yksiriviseen syöttötilaan (Ctrl+Nuoli alas)">
+<!ENTITY multiline-send.tooltip     "Lähetä viesti (Ctrl+Enter)">
+<!ENTITY server-nick.tooltip        "Muuta lempinimeä tai siirry pois. Siirry syöteruutuun painamalla Esc.">
+
+<!ENTITY Underline.label             "Alleviivaa">
+<!ENTITY Bold.label                  "Lihavoi">
+<!ENTITY Reverse.label               "Käänteinen video">
+<!ENTITY Normal.label                "Normaali">
+<!ENTITY Color.label                 "Väri">
+<!ENTITY ForeBack.label              "xx=edusta, yy=tausta">

@@ -1,16 +1,19 @@
 //! Image Processing Functions
 use std::cmp;
 
-use image::{GenericImage, GenericImageView, SubImage};
+use crate::image::{GenericImage, GenericImageView, SubImage};
 
-use buffer::Pixel;
+use crate::buffer::Pixel;
 
 pub use self::sample::FilterType;
 
 pub use self::sample::FilterType::{CatmullRom, Gaussian, Lanczos3, Nearest, Triangle};
 
 /// Affine transformations
-pub use self::affine::{flip_horizontal, flip_vertical, rotate180, rotate270, rotate90};
+pub use self::affine::{
+    flip_horizontal, flip_horizontal_in_place, flip_vertical, flip_vertical_in_place, rotate180,
+    rotate180_in_place, rotate270, rotate90, rotate180_in, rotate90_in, rotate270_in, flip_horizontal_in, flip_vertical_in
+};
 
 /// Image sampling
 pub use self::sample::{blur, filter3x3, resize, thumbnail, unsharpen};
@@ -72,8 +75,8 @@ pub fn crop<I: GenericImageView>(
 ///
 /// 1.1 We show that if `bottom_width <= x`, then `x_range = 0` therefore `x + [0..x_range)` is empty.
 ///
-/// x_range 
-///  = (top_width.saturating_add(x).min(bottom_width)).saturating_sub(x) 
+/// x_range
+///  = (top_width.saturating_add(x).min(bottom_width)).saturating_sub(x)
 /// <= bottom_width.saturating_sub(x)
 ///
 /// bottom_width <= x
@@ -84,15 +87,15 @@ pub fn crop<I: GenericImageView>(
 ///
 /// 1.2 If `x < bottom_width` then `x + x_range < bottom_width`
 ///
-/// x + x_range 
-/// <= x + bottom_width.saturating_sub(x) 
-///  = x + (bottom_width - x) 
+/// x + x_range
+/// <= x + bottom_width.saturating_sub(x)
+///  = x + (bottom_width - x)
 ///  = bottom_width
 ///
 /// 2. We show that `x_range <= top_width`
 ///
-/// x_range 
-///  = (top_width.saturating_add(x).min(bottom_width)).saturating_sub(x) 
+/// x_range
+///  = (top_width.saturating_add(x).min(bottom_width)).saturating_sub(x)
 /// <= top_width.saturating_add(x).saturating_sub(x)
 /// <= (top_wdith + x).saturating_sub(x)
 ///  = top_width (due to `top_width >= 0` and `x >= 0`)
@@ -105,7 +108,7 @@ pub fn overlay_bounds(
     x: u32,
     y: u32
 )
-    -> (u32, u32) 
+    -> (u32, u32)
 {
     let x_range = top_width.saturating_add(x) // Calculate max coordinate
         .min(bottom_width) // Restrict to lower width
@@ -117,7 +120,11 @@ pub fn overlay_bounds(
 }
 
 /// Overlay an image at a given coordinate (x, y)
-pub fn overlay<I: GenericImage>(bottom: &mut I, top: &I, x: u32, y: u32) {
+pub fn overlay<I, J>(bottom: &mut I, top: &J, x: u32, y: u32)
+where
+    I: GenericImage,
+    J: GenericImageView<Pixel = I::Pixel>,
+{
     let bottom_dims = bottom.dimensions();
     let top_dims = top.dimensions();
 
@@ -136,7 +143,11 @@ pub fn overlay<I: GenericImage>(bottom: &mut I, top: &I, x: u32, y: u32) {
 }
 
 /// Replace the contents of an image at a given coordinate (x, y)
-pub fn replace<I: GenericImage>(bottom: &mut I, top: &I, x: u32, y: u32) {
+pub fn replace<I, J>(bottom: &mut I, top: &J, x: u32, y: u32)
+where
+    I: GenericImage,
+    J: GenericImageView<Pixel = I::Pixel>,
+{
     let bottom_dims = bottom.dimensions();
     let top_dims = top.dimensions();
 
@@ -155,8 +166,8 @@ pub fn replace<I: GenericImage>(bottom: &mut I, top: &I, x: u32, y: u32) {
 mod tests {
 
     use super::overlay;
-    use buffer::ImageBuffer;
-    use color::Rgb;
+    use crate::buffer::ImageBuffer;
+    use crate::color::Rgb;
 
     #[test]
     /// Test that images written into other images works

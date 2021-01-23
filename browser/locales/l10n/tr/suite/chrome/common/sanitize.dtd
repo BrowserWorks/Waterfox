@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizeDialog.title "Özel bilgileri sil">
+<!ENTITY sanitizeItems.label "Aşağıdaki öğeleri hemen sil:">
+
+<!ENTITY itemHistory.label "Tarama geçmişi">
+<!ENTITY itemHistory.accesskey "m">
+<!ENTITY itemUrlBar.label "Konum çubuğu geçmişi">
+<!ENTITY itemUrlBar.accesskey "K">
+<!ENTITY itemDownloads.label "İndirme geçmişi">
+<!ENTITY itemDownloads.accesskey "d">
+<!ENTITY itemFormSearchHistory.label "Kayıtlı formlar ve arama geçmişi">
+<!ENTITY itemFormSearchHistory.accesskey "f">
+<!ENTITY itemCache.label "Önbellek">
+<!ENTITY itemCache.accesskey "n">
+<!ENTITY itemCookies.label "Çerezler">
+<!ENTITY itemCookies.accesskey "z">
+<!ENTITY itemOfflineApps.label "Çevrim dışı site verileri">
+<!ENTITY itemOfflineApps.accesskey "s">
+<!ENTITY itemPasswords.label "Kayıtlı parolalar">
+<!ENTITY itemPasswords.accesskey "p">
+<!ENTITY itemSessions.label "Yetkilendirilmiş oturumlar">
+<!ENTITY itemSessions.accesskey "Y">
+
+<!ENTITY sanitizeButton.label "Özel bilgileri sil şimdi sil">

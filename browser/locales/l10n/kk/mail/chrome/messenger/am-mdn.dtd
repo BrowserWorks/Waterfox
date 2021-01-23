@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Алу есептемелері">
+<!ENTITY useGlobalPrefs.label         "Бұл тіркелгі үшін менің глобалды алу есептемелері баптауларымды қолдану">
+<!ENTITY useGlobalPrefs.accesskey     "о">
+<!ENTITY globalReceipts.label         "Глобалды баптаулар…">
+<!ENTITY globalReceipts.accesskey     "Г">
+<!ENTITY useCustomPrefs.label         "Бұл тіркелгі үшін алу есептемелерін баптаңыз">
+<!ENTITY useCustomPrefs.accesskey     "п">
+<!ENTITY requestReceipt.label         "Хабарламаларды жіберу кезінде, алу есептемелерін әрқашан сұрау">
+<!ENTITY requestReceipt.accesskey     "з">
+<!ENTITY receiptArrive.label          "Алу есептемесі келген кезде:">
+<!ENTITY leaveIt.label                "Оны менің Кіріс бумасында қалдыру">
+<!ENTITY leaveIt.accesskey            "К">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "Оны менің &quot;Жіберілген&quot; бумасына жылжыту">
+<!ENTITY moveToSent.accesskey         "ж">
+<!ENTITY requestMDN.label             "Мен алу есептемесіне сұранымды алған кезде:">
+<!ENTITY returnSome.label             "Алу есептемелерін кейбір хабарламалар үшін рұқсат ету">
+<!ENTITY returnSome.accesskey         "е">
+<!ENTITY never.label                  "Алу есептемесін ешқашан жібермеу">
+<!ENTITY never.accesskey              "н">
+<!ENTITY notInToCc.label              "Мен хабарламаның Кімге немесе Көшірме өрістерінде болмасам:">
+<!ENTITY notInToCc.accesskey          "К">
+<!ENTITY outsideDomain.label          "Жіберуші менің доменімнен тыс болса:">
+<!ENTITY outsideDomain.accesskey      "Ж">
+<!ENTITY otherCases.label             "Барлық басқа жағдайда:">
+<!ENTITY otherCases.accesskey         "с">
+<!ENTITY askMe.label                  "Менен сұрау">
+<!ENTITY alwaysSend.label             "Әрқашанда жіберу">
+<!ENTITY neverSend.label              "Ешқашан жібермеу">

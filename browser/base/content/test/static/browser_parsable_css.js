@@ -12,25 +12,9 @@
 let whitelist = [
   // CodeMirror is imported as-is, see bug 1004423.
   { sourceName: /codemirror\.css$/i, isFromDevTools: true },
-  // The debugger uses cross-browser CSS.
-  {
-    sourceName: /devtools\/client\/debugger\/dist\/vendors.css/i,
-    isFromDevTools: true,
-  },
   {
     sourceName: /devtools\/client\/debugger\/src\/components\/([A-z\/]+).css/i,
     isFromDevTools: true,
-  },
-  // Reps uses cross-browser CSS.
-  {
-    sourceName: /devtools-client-shared\/components\/reps\/reps.css/i,
-    isFromDevTools: true,
-  },
-  // PDFjs rules needed for compat with other UAs.
-  {
-    sourceName: /web\/viewer\.css$/i,
-    errorMessage: /Unknown property.*(appearance|user-select)/i,
-    isFromDevTools: false,
   },
   // Highlighter CSS uses a UA-only pseudo-class, see bug 985597.
   {
@@ -55,6 +39,11 @@ let whitelist = [
     errorMessage: /Unknown property.*-moz-/i,
     isFromDevTools: false,
   },
+  {
+    sourceName: /(minimal-xul|xul)\.css$/i,
+    errorMessage: /Unknown pseudo-class.*-moz-/i,
+    isFromDevTools: false,
+  },
   // Reserved to UA sheets unless layout.css.overflow-clip-box.enabled flipped to true.
   {
     sourceName: /(?:res|gre-resources)\/forms\.css$/i,
@@ -68,7 +57,7 @@ let whitelist = [
     platforms: ["linux"],
     isFromDevTools: false,
   },
-  // The '-moz-menulist-button' value is only supported in chrome and UA sheets
+  // The '-moz-menulist-arrow-button' value is only supported in chrome and UA sheets
   // but forms.css is loaded as a document sheet by this test.
   // Maybe bug 1261237 will fix this?
   {
@@ -83,18 +72,6 @@ let whitelist = [
     sourceName: /jsonview\/css\/general\.css$/i,
     intermittent: true,
     errorMessage: /Property contained reference to invalid variable.*color/i,
-    isFromDevTools: true,
-  },
-  {
-    sourceName: /webide\/skin\/logs\.css$/i,
-    intermittent: true,
-    errorMessage: /Property contained reference to invalid variable.*color/i,
-    isFromDevTools: true,
-  },
-  {
-    sourceName: /webide\/skin\/logs\.css$/i,
-    intermittent: true,
-    errorMessage: /Property contained reference to invalid variable.*background/i,
     isFromDevTools: true,
   },
 ];
@@ -112,39 +89,19 @@ if (
   });
 }
 
-if (
-  !Services.prefs.getBoolPref(
-    "layout.css.line-height-moz-block-height.content.enabled"
-  )
-) {
-  // -moz-block-height is used in form controls but not exposed to the web.
-  whitelist.push({
-    sourceName: /(?:res|gre-resources)\/forms\.css$/i,
-    errorMessage: /Error in parsing value for \u2018line-height\u2019/iu,
-    isFromDevTools: false,
-  });
-}
-
-if (!Services.prefs.getBoolPref("full-screen-api.unprefix.enabled")) {
-  whitelist.push(
-    {
-      sourceName: /(?:res|gre-resources)\/(ua|html)\.css$/i,
-      errorMessage: /Unknown pseudo-class .*\bfullscreen\b/i,
-      isFromDevTools: false,
-    },
-    {
-      // PDFjs is futureproofing its pseudoselectors, and those rules are dropped.
-      sourceName: /web\/viewer\.css$/i,
-      errorMessage: /Unknown pseudo-class .*\bfullscreen\b/i,
-      isFromDevTools: false,
-    }
-  );
-}
-
 if (!Services.prefs.getBoolPref("layout.css.scrollbar-width.enabled")) {
   whitelist.push({
     sourceName: /(?:res|gre-resources)\/forms\.css$/i,
     errorMessage: /Unknown property .*\bscrollbar-width\b/i,
+    isFromDevTools: false,
+  });
+}
+
+if (!Services.prefs.getBoolPref("layout.css.file-chooser-button.enabled")) {
+  // Reserved to UA sheets, behind a pref for content.
+  whitelist.push({
+    sourceName: /(?:res|gre-resources)\/forms\.css$/i,
+    errorMessage: /Unknown pseudo-.*file-chooser-button/i,
     isFromDevTools: false,
   });
 }
@@ -440,7 +397,7 @@ add_task(async function checkAllTheCSS() {
 
   // filter out either the devtools paths or the non-devtools paths:
   let isDevtools = SimpleTest.harnessParameters.subsuite == "devtools";
-  let devtoolsPathBits = ["webide", "devtools"];
+  let devtoolsPathBits = ["devtools"];
   uris = uris.filter(
     uri => isDevtools == devtoolsPathBits.some(path => uri.spec.includes(path))
   );
@@ -547,9 +504,9 @@ add_task(async function checkAllTheCSS() {
   checkWhitelist(propNameWhitelist);
 
   // Clean up to avoid leaks:
-  iframe.remove();
   doc.head.innerHTML = "";
   doc = null;
+  iframe.remove();
   iframe = null;
   win = null;
   hiddenFrame.destroy();

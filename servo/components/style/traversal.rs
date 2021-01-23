@@ -45,12 +45,19 @@ impl<E: TElement> PreTraverseToken<E> {
     }
 }
 
+/// A global variable holding the state of
+/// `is_servo_nonincremental_layout()`.
+/// See [#22854](https://github.com/servo/servo/issues/22854).
+#[cfg(feature = "servo")]
+pub static IS_SERVO_NONINCREMENTAL_LAYOUT: std::sync::atomic::AtomicBool =
+    std::sync::atomic::AtomicBool::new(false);
+
 #[cfg(feature = "servo")]
 #[inline]
 fn is_servo_nonincremental_layout() -> bool {
-    use servo_config::opts;
+    use std::sync::atomic::Ordering;
 
-    opts::get().nonincremental_layout
+    IS_SERVO_NONINCREMENTAL_LAYOUT.load(Ordering::Relaxed)
 }
 
 #[cfg(not(feature = "servo"))]
@@ -260,7 +267,6 @@ pub trait DomTraversal<E: TElement>: Sync {
         context: &mut StyleContext<E>,
         parent: E,
         parent_data: &ElementData,
-        is_initial_style: bool,
     ) -> bool {
         debug_assert!(
             parent.has_current_styles_for_traversal(parent_data, context.shared.traversal_flags)
@@ -269,21 +275,6 @@ pub trait DomTraversal<E: TElement>: Sync {
         // If the parent computed display:none, we don't style the subtree.
         if parent_data.styles.is_display_none() {
             debug!("Parent {:?} is display:none, culling traversal", parent);
-            return true;
-        }
-
-        // Gecko-only XBL handling.
-        //
-        // When we apply the XBL binding during frame construction, we restyle
-        // the whole subtree again if the binding is valid, so assuming it's
-        // likely to load valid bindings, we avoid wasted work here, which may
-        // be a very big perf hit when elements with bindings are nested
-        // heavily.
-        if cfg!(feature = "gecko") &&
-            is_initial_style &&
-            parent_data.styles.primary().has_moz_binding()
-        {
-            debug!("Parent {:?} has XBL binding, deferring traversal", parent);
             return true;
         }
 
@@ -513,8 +504,8 @@ pub fn recalc_style_at<E, D, F>(
         !child_cascade_requirement.can_skip_cascade() ||
         is_servo_nonincremental_layout();
 
-    traverse_children = traverse_children &&
-        !traversal.should_cull_subtree(context, element, &data, is_initial_style);
+    traverse_children =
+        traverse_children && !traversal.should_cull_subtree(context, element, &data);
 
     // Examine our children, and enqueue the appropriate ones for traversal.
     if traverse_children {
@@ -688,13 +679,12 @@ where
     element.finish_restyle(context, data, new_styles, important_rules_changed)
 }
 
-#[cfg(feature = "servo")]
+#[cfg(feature = "servo-layout-2013")]
 fn notify_paint_worklet<E>(context: &StyleContext<E>, data: &ElementData)
 where
     E: TElement,
 {
     use crate::values::generics::image::Image;
-    use crate::values::Either;
     use style_traits::ToCss;
 
     // We speculatively evaluate any paint worklets during styling.
@@ -704,9 +694,7 @@ where
     if let Some(ref values) = data.styles.primary {
         for image in &values.get_background().background_image.0 {
             let (name, arguments) = match *image {
-                Either::Second(Image::PaintWorklet(ref worklet)) => {
-                    (&worklet.name, &worklet.arguments)
-                },
+                Image::PaintWorklet(ref worklet) => (&worklet.name, &worklet.arguments),
                 _ => continue,
             };
             let painter = match context.shared.registered_speculative_painters.get(name) {
@@ -729,7 +717,7 @@ where
     }
 }
 
-#[cfg(feature = "gecko")]
+#[cfg(not(feature = "servo-layout-2013"))]
 fn notify_paint_worklet<E>(_context: &StyleContext<E>, _data: &ElementData)
 where
     E: TElement,
@@ -785,7 +773,7 @@ fn note_children<E, D, F>(
                     child_hint |= RestyleHint::RECASCADE_SELF | RestyleHint::RECASCADE_DESCENDANTS;
                 },
                 ChildCascadeRequirement::MustCascadeChildrenIfInheritResetStyle => {
-                    use crate::properties::computed_value_flags::ComputedValueFlags;
+                    use crate::computed_value_flags::ComputedValueFlags;
                     if child_data
                         .styles
                         .primary()
@@ -855,7 +843,7 @@ where
                 //
                 // By consequence, any element without data has no descendants with
                 // data.
-                if kid.get_data().is_some() {
+                if kid.has_data() {
                     kid.clear_data();
                     parents.push(kid);
                 }

@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Sfondo e colori pagina">
+<!ENTITY pageColors.label "Colori pagina:">
+<!ENTITY defaultColorsRadio.label "Colori predefiniti utente (non modificare i colori nella pagina)">
+<!ENTITY defaultColorsRadio.accessKey "C">
+<!ENTITY defaultColorsRadio.tooltip "Utilizza solamente i colori predefiniti del browser">
+<!ENTITY customColorsRadio.label "Utilizza colori personalizzati:">
+<!ENTITY customColorsRadio.accessKey "U">
+<!ENTITY customColorsRadio.tooltip "Queste impostazioni modificano le impostazioni predefinite del browser">
+<!ENTITY normalText.label "Testo semplice">
+<!ENTITY normalText.accessKey "T">
+<!ENTITY linkText.label "Testo collegamento">
+<!ENTITY linkText.accessKey "m">
+<!ENTITY activeLinkText.label "Testo collegamento attivo">
+<!ENTITY activeLinkText.accessKey "e">
+<!ENTITY visitedLinkText.label "Testo collegamento visitato">
+<!ENTITY visitedLinkText.accessKey "o">
+<!ENTITY background.label "Sfondo:">
+<!ENTITY background.accessKey "S">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Immagine di sfondo:">
+<!ENTITY backgroundImage.accessKey "I">
+<!ENTITY backgroundImage.tooltip "Immagine di sfondo della pagina">
+<!ENTITY backgroundImage.shortenedDataURI "URI dati abbreviata (il comando copia scriverà l'URI intera negli appunti)">

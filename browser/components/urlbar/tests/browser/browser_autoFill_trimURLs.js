@@ -37,7 +37,7 @@ async function promiseSearch(searchtext) {
   gURLBar.focus();
   gURLBar.inputField.value = searchtext.substr(0, searchtext.length - 1);
   EventUtils.sendString(searchtext.substr(-1, 1));
-  await promiseSearchComplete();
+  await UrlbarTestUtils.promiseSearchComplete(window);
 }
 
 async function promiseTestResult(test) {
@@ -56,33 +56,19 @@ async function promiseTestResult(test) {
   Assert.equal(
     result.displayed.title,
     test.resultListDisplayTitle,
-    `Autocomplete result should have displayed title as expected for search '${
-      test.search
-    }'`
+    `Autocomplete result should have displayed title as expected for search '${test.search}'`
   );
 
-  if (!UrlbarPrefs.get("quantumbar") && test.resultListActionText == "Visit") {
-    Assert.equal(
-      result.displayed.action,
-      "",
-      `Autocomplete action text should be empty for search '${test.search}'`
-    );
-  } else {
-    Assert.equal(
-      result.displayed.action,
-      test.resultListActionText,
-      `Autocomplete action text should be as expected for search '${
-        test.search
-      }'`
-    );
-  }
+  Assert.equal(
+    result.displayed.action,
+    test.resultListActionText,
+    `Autocomplete action text should be as expected for search '${test.search}'`
+  );
 
   Assert.equal(
     result.type,
     test.resultListType,
-    `Autocomplete result should have searchengine for the type for search '${
-      test.search
-    }'`
+    `Autocomplete result should have searchengine for the type for search '${test.search}'`
   );
 
   Assert.equal(
@@ -121,6 +107,7 @@ const tests = [
     searchParams: {
       engine: "Google",
       query: "http://",
+      isSearchHistory: false,
     },
   },
   {
@@ -132,6 +119,7 @@ const tests = [
     searchParams: {
       engine: "Google",
       query: "https://",
+      isSearchHistory: false,
     },
   },
   {

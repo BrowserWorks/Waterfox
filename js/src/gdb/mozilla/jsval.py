@@ -1,7 +1,12 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this file,
+# You can obtain one at http://mozilla.org/MPL/2.0/.
+
 # Pretty-printers for SpiderMonkey's JS::Value.
 
 import gdb
 import gdb.types
+import struct
 import mozilla.prettyprinters
 from mozilla.prettyprinters import pretty_printer
 
@@ -84,7 +89,10 @@ class Box(object):
     # Return this value as a 32-bit integer, double, or address.
     def as_uint32(self): raise NotImplementedError
 
-    def as_double(self): raise NotImplementedError
+    def as_double(self):
+        packed = struct.pack("q", self.asBits)
+        (unpacked,) = struct.unpack("d", packed)
+        return unpacked
 
     def as_address(self): raise NotImplementedError
 
@@ -202,7 +210,7 @@ class JSValue(object):
             return '$JS::Int32Value(%s)' % value
 
         if tag == self.jtc.DOUBLE:
-            return '$JS::DoubleValue(%s)' % self.value['asDouble_']
+            return '$JS::DoubleValue(%s)' % self.box.as_double()
 
         if tag == self.jtc.STRING:
             value = self.box.as_address().cast(self.cache.JSString_ptr_t)

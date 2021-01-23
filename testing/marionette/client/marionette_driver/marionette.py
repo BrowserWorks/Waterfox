@@ -15,6 +15,7 @@ import traceback
 
 from contextlib import contextmanager
 
+import six
 from six import reraise
 
 from . import errors
@@ -429,6 +430,8 @@ class Marionette(object):
 
         """
         self.host = "127.0.0.1"  # host
+        if int(port) == 0:
+            port = Marionette.check_port_available(port)
         self.port = self.local_port = int(port)
         self.bin = bin
         self.client = None
@@ -475,7 +478,7 @@ class Marionette(object):
         except socket.error:
             _, value, tb = sys.exc_info()
             msg = "Port {}:{} is unavailable ({})".format(self.host, self.port, value)
-            reraise(IOError, msg, tb)
+            reraise(IOError, IOError(msg), tb)
 
         try:
             self.instance.start()
@@ -487,8 +490,7 @@ class Marionette(object):
 
             msg = "Process killed after {}s because no connection to Marionette "\
                   "server could be established. Check gecko.log for errors"
-            _, _, tb = sys.exc_info()
-            reraise(IOError, msg.format(timeout), tb)
+            reraise(IOError, IOError(msg.format(timeout)), sys.exc_info()[2])
 
     def cleanup(self):
         if self.session is not None:
@@ -520,8 +522,10 @@ class Marionette(object):
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try:
             s.bind((host, port))
+            port = s.getsockname()[1]
         finally:
             s.close()
+            return port
 
     def raise_for_port(self, timeout=None, check_process_status=True):
         """Raise socket.timeout if no connection can be established.
@@ -642,12 +646,12 @@ class Marionette(object):
         frame, and is only called via the `@do_process_check` decorator.
 
         """
-        exc, val, tb = sys.exc_info()
+        exc_cls, exc, tb = sys.exc_info()
 
         # If the application hasn't been launched by Marionette no further action can be done.
         # In such cases we simply re-throw the exception.
         if not self.instance:
-            reraise(exc, val, tb)
+            reraise(exc_cls, exc, tb)
 
         else:
             # Somehow the socket disconnected. Give the application some time to shutdown
@@ -675,7 +679,7 @@ class Marionette(object):
 
             message += ' (Reason: {reason})'
 
-            reraise(IOError, message.format(returncode=returncode, reason=val), tb)
+            reraise(IOError, IOError(message.format(returncode=returncode, reason=exc)), tb)
 
     @staticmethod
     def convert_keys(*string):
@@ -821,7 +825,7 @@ class Marionette(object):
                                              "on Gecko instances launched by Marionette")
         pref_exists = True
         with self.using_context(self.CONTEXT_CHROME):
-            for pref, value in prefs.iteritems():
+            for pref, value in six.iteritems(prefs):
                 if type(value) is not str:
                     value = json.dumps(value)
                 pref_exists = self.execute_script("""
@@ -1024,7 +1028,7 @@ class Marionette(object):
                 self.raise_for_port(timeout=self.shutdown_timeout,
                                     check_process_status=False)
             except socket.timeout:
-                exc, val, tb = sys.exc_info()
+                exc_cls, _, tb = sys.exc_info()
 
                 if self.instance.runner.returncode is None:
                     # The process is still running, which means the shutdown
@@ -1033,13 +1037,13 @@ class Marionette(object):
                     self._send_message("Marionette:AcceptConnections", {"value": True})
 
                     message = "Process still running {}s after restart request"
-                    reraise(exc, message.format(self.shutdown_timeout), tb)
+                    reraise(exc_cls, exc_cls(message.format(self.shutdown_timeout)), tb)
 
                 else:
                     # The process shutdown but didn't start again.
                     self.cleanup()
                     msg = "Process unexpectedly quit without restarting (exit code: {})"
-                    reraise(exc, msg.format(self.instance.runner.returncode), tb)
+                    reraise(exc_cls, exc_cls(msg.format(self.instance.runner.returncode)), tb)
 
             finally:
                 self.is_shutting_down = False
@@ -1262,7 +1266,7 @@ class Marionette(object):
         return self._send_message("WebDriver:GetPageSource",
                                   key="value")
 
-    def open(self, type=None, focus=False):
+    def open(self, type=None, focus=False, private=False):
         """Open a new window, or tab based on the specified context type.
 
         If no context type is given the application will choose the best
@@ -1270,10 +1274,11 @@ class Marionette(object):
 
         :param type: Type of window to be opened. Can be one of "tab" or "window"
         :param focus: If true, the opened window will be focused
+        :param private: If true, open a private window
 
         :returns: Dict with new window handle, and type of opened window
         """
-        body = {"type": type, "focus": focus}
+        body = {"type": type, "focus": focus, "private": private}
         return self._send_message("WebDriver:NewWindow", body)
 
     def close(self):
@@ -1490,7 +1495,7 @@ class Marionette(object):
         elif type(args) == HTMLElement:
             wrapped = {WEB_ELEMENT_KEY: args.id,
                        CHROME_ELEMENT_KEY: args.id}
-        elif (isinstance(args, bool) or isinstance(args, basestring) or
+        elif (isinstance(args, bool) or isinstance(args, six.string_types) or
               isinstance(args, int) or isinstance(args, float) or args is None):
             wrapped = args
         return wrapped
@@ -1677,9 +1682,9 @@ class Marionette(object):
 
         :param method: The method to use to locate the element; one of:
             "id", "name", "class name", "tag name", "css selector",
-            "link text", "partial link text", "xpath", "anon" and "anon
-            attribute". Note that the "name", "link text" and "partial
-            link test" methods are not supported in the chrome DOM.
+            "link text", "partial link text" and "xpath".
+            Note that the "name", "link text" and "partial link test"
+            methods are not supported in the chrome DOM.
         :param target: The target of the search.  For example, if method =
             "tag", target might equal "div".  If method = "id", target would
             be an element id.
@@ -1707,9 +1712,9 @@ class Marionette(object):
 
         :param method: The method to use to locate the elements; one
             of: "id", "name", "class name", "tag name", "css selector",
-            "link text", "partial link text", "xpath", "anon" and "anon
-            attribute". Note that the "name", "link text" and "partial link
-            test" methods are not supported in the chrome DOM.
+            "link text", "partial link text" and "xpath".
+            Note that the "name", "link text" and "partial link test"
+            methods are not supported in the chrome DOM.
         :param target: The target of the search.  For example, if method =
             "tag", target might equal "div".  If method = "id", target would be
             an element id.
@@ -1794,8 +1799,7 @@ class Marionette(object):
         """
         return self._send_message("WebDriver:GetCookies")
 
-    def save_screenshot(self, fh, element=None, highlights=None,
-                        full=True, scroll=True):
+    def save_screenshot(self, fh, element=None, full=True, scroll=True):
         """Takes a screenhot of a web element or the current frame and
         saves it in the filehandle.
 
@@ -1804,11 +1808,10 @@ class Marionette(object):
 
         The rest of the parameters are defined like in screenshot()
         """
-        data = self.screenshot(element, highlights, "binary", full, scroll)
+        data = self.screenshot(element, "binary", full, scroll)
         fh.write(data)
 
-    def screenshot(self, element=None, highlights=None, format="base64",
-                   full=True, scroll=True):
+    def screenshot(self, element=None, format="base64", full=True, scroll=True):
         """Takes a screenshot of a web element or the current frame.
 
         The screen capture is returned as a lossless PNG image encoded
@@ -1819,10 +1822,6 @@ class Marionette(object):
 
         :param element: The element to take a screenshot of.  If None, will
             take a screenshot of the current frame.
-
-        :param highlights: A list of
-            :class:`~marionette_driver.marionette.HTMLElement` objects to draw
-            a red box around in the returned screenshot.
 
         :param format: if "base64" (the default), returns the screenshot
             as a base64-string. If "binary", the data is decoded and
@@ -1840,12 +1839,8 @@ class Marionette(object):
 
         if element:
             element = element.id
-        lights = None
-        if highlights:
-            lights = [highlight.id for highlight in highlights]
 
         body = {"id": element,
-                "highlights": lights,
                 "full": full,
                 "hash": False,
                 "scroll": scroll}

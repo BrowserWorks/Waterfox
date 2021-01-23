@@ -6,11 +6,13 @@
 
 #include <string.h>
 #include "mozilla/Result.h"
+#include "mozilla/UniquePtr.h"
 
 using mozilla::Err;
 using mozilla::GenericErrorResult;
 using mozilla::Ok;
 using mozilla::Result;
+using mozilla::UniquePtr;
 
 struct Failed {
   int x;
@@ -224,6 +226,70 @@ static void AndThenTest() {
   MOZ_RELEASE_ASSERT(r3.unwrapErr() == r4.unwrapErr());
 }
 
+using UniqueResult = Result<UniquePtr<int>, const char*>;
+
+static UniqueResult UniqueTask() { return mozilla::MakeUnique<int>(3); }
+static UniqueResult UniqueTaskError() { return Err("bad"); }
+
+using UniqueErrorResult = Result<int, UniquePtr<int>>;
+static UniqueErrorResult UniqueError() {
+  return Err(mozilla::MakeUnique<int>(4));
+}
+
+static Result<Ok, UniquePtr<int>> TryUniqueErrorResult() {
+  MOZ_TRY(UniqueError());
+  return Ok();
+}
+
+static void UniquePtrTest() {
+  {
+    auto result = UniqueTask();
+    MOZ_RELEASE_ASSERT(result.isOk());
+    auto ptr = result.unwrap();
+    MOZ_RELEASE_ASSERT(ptr);
+    MOZ_RELEASE_ASSERT(*ptr == 3);
+    auto moved = result.unwrap();
+    MOZ_RELEASE_ASSERT(!moved);
+  }
+
+  {
+    auto err = UniqueTaskError();
+    MOZ_RELEASE_ASSERT(err.isErr());
+    auto ptr = err.unwrapOr(mozilla::MakeUnique<int>(4));
+    MOZ_RELEASE_ASSERT(ptr);
+    MOZ_RELEASE_ASSERT(*ptr == 4);
+  }
+
+  {
+    auto result = UniqueTaskError();
+    result = UniqueResult(mozilla::MakeUnique<int>(6));
+    MOZ_RELEASE_ASSERT(result.isOk());
+    MOZ_RELEASE_ASSERT(result.inspect() && *result.inspect() == 6);
+  }
+
+  {
+    auto result = UniqueError();
+    MOZ_RELEASE_ASSERT(result.isErr());
+    MOZ_RELEASE_ASSERT(result.inspectErr());
+    MOZ_RELEASE_ASSERT(*result.inspectErr() == 4);
+    auto err = result.unwrapErr();
+    MOZ_RELEASE_ASSERT(!result.inspectErr());
+    MOZ_RELEASE_ASSERT(err);
+    MOZ_RELEASE_ASSERT(*err == 4);
+
+    result = UniqueErrorResult(0);
+    MOZ_RELEASE_ASSERT(result.isOk() && result.unwrap() == 0);
+  }
+
+  {
+    auto result = TryUniqueErrorResult();
+    MOZ_RELEASE_ASSERT(result.isErr());
+    auto err = result.unwrapErr();
+    MOZ_RELEASE_ASSERT(err && *err == 4);
+    MOZ_RELEASE_ASSERT(!result.inspectErr());
+  }
+}
+
 /* * */
 
 int main() {
@@ -233,5 +299,6 @@ int main() {
   ReferenceTest();
   MapTest();
   AndThenTest();
+  UniquePtrTest();
   return 0;
 }

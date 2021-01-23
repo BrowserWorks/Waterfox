@@ -10,7 +10,6 @@
 #include "MediaInfo.h"
 #include "MediaSegment.h"
 #include "nsSize.h"
-#include "TrackID.h"
 
 namespace mozilla {
 
@@ -94,6 +93,10 @@ class MediaDecoderOwner {
   // when the resource has completed seeking.
   virtual void SeekCompleted() = 0;
 
+  // Called by the video decoder object, on the main thread,
+  // when the resource has aborted seeking.
+  virtual void SeekAborted() = 0;
+
   // Called by the media stream, on the main thread, when the download
   // has been suspended by the cache or because the element itself
   // asked the decoder to suspend the download.
@@ -136,20 +139,6 @@ class MediaDecoderOwner {
   virtual void DispatchEncrypted(const nsTArray<uint8_t>& aInitData,
                                  const nsAString& aInitDataType) = 0;
 
-  // Called by the media decoder to create audio/video tracks and add to its
-  // owner's track list.
-  virtual void ConstructMediaTracks(const MediaInfo* aInfo) = 0;
-
-  // Called by the media decoder to removes all audio/video tracks from its
-  // owner's track list.
-  virtual void RemoveMediaTracks() = 0;
-
-  // Called by the media decoder to notify the owner to resolve a seek promise.
-  virtual void AsyncResolveSeekDOMPromiseIfExists() = 0;
-
-  // Called by the media decoder to notify the owner to reject a seek promise.
-  virtual void AsyncRejectSeekDOMPromiseIfExists() = 0;
-
   // Notified by the decoder that a decryption key is required before emitting
   // further output.
   virtual void NotifyWaitingForKey() {}
@@ -189,6 +178,11 @@ class MediaDecoderOwner {
   virtual void PrincipalHandleChangedForVideoFrameContainer(
       VideoFrameContainer* aContainer,
       const PrincipalHandle& aNewPrincipalHandle) {}
+
+  // Called after the MediaDecoder has installed the given secondary video
+  // container and render potential frames to it.
+  virtual void OnSecondaryVideoContainerInstalled(
+      const RefPtr<VideoFrameContainer>& aSecondaryContainer) {}
 
   /*
    * Servo only methods go here. Please provide default implementations so they

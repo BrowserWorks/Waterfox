@@ -30,6 +30,8 @@ using gfx::Translator;
 
 class InlineTranslator : public Translator {
  public:
+  InlineTranslator();
+
   explicit InlineTranslator(DrawTarget* aDT, void* aFontContext = nullptr);
 
   bool TranslateRecording(char*, size_t len);
@@ -64,8 +66,15 @@ class InlineTranslator : public Translator {
   }
 
   GradientStops* LookupGradientStops(ReferencePtr aRefPtr) final {
-    GradientStops* result = mGradientStops.GetWeak(aRefPtr);
-    MOZ_ASSERT(result);
+    DebugOnly<bool> found;
+    GradientStops* result = mGradientStops.GetWeak(aRefPtr
+#if defined(DEBUG)
+                                                   ,
+                                                   &found
+#endif
+    );
+    // GradientStops can be null in some circumstances.
+    MOZ_ASSERT(found);
     return result;
   }
 
@@ -93,46 +102,46 @@ class InlineTranslator : public Translator {
   }
 
   void AddDrawTarget(ReferencePtr aRefPtr, DrawTarget* aDT) final {
-    mDrawTargets.Put(aRefPtr, aDT);
+    mDrawTargets.Put(aRefPtr, RefPtr{aDT});
   }
 
   void AddPath(ReferencePtr aRefPtr, Path* aPath) final {
-    mPaths.Put(aRefPtr, aPath);
+    mPaths.Put(aRefPtr, RefPtr{aPath});
   }
 
   void AddSourceSurface(ReferencePtr aRefPtr, SourceSurface* aSurface) final {
-    mSourceSurfaces.Put(aRefPtr, aSurface);
+    mSourceSurfaces.Put(aRefPtr, RefPtr{aSurface});
   }
 
   void AddFilterNode(ReferencePtr aRefPtr, FilterNode* aFilter) final {
-    mFilterNodes.Put(aRefPtr, aFilter);
+    mFilterNodes.Put(aRefPtr, RefPtr{aFilter});
   }
 
   void AddGradientStops(ReferencePtr aRefPtr, GradientStops* aStops) final {
-    mGradientStops.Put(aRefPtr, aStops);
+    mGradientStops.Put(aRefPtr, RefPtr{aStops});
   }
 
   void AddScaledFont(ReferencePtr aRefPtr, ScaledFont* aScaledFont) final {
-    mScaledFonts.Put(aRefPtr, aScaledFont);
+    mScaledFonts.Put(aRefPtr, RefPtr{aScaledFont});
   }
 
   void AddUnscaledFont(ReferencePtr aRefPtr,
                        UnscaledFont* aUnscaledFont) final {
-    mUnscaledFonts.Put(aRefPtr, aUnscaledFont);
+    mUnscaledFonts.Put(aRefPtr, RefPtr{aUnscaledFont});
   }
 
   void AddNativeFontResource(uint64_t aKey,
                              NativeFontResource* aScaledFontResouce) final {
-    mNativeFontResources.Put(aKey, aScaledFontResouce);
+    mNativeFontResources.Put(aKey, RefPtr{aScaledFontResouce});
   }
 
-  void RemoveDrawTarget(ReferencePtr aRefPtr) final {
+  void RemoveDrawTarget(ReferencePtr aRefPtr) override {
     mDrawTargets.Remove(aRefPtr);
   }
 
   void RemovePath(ReferencePtr aRefPtr) final { mPaths.Remove(aRefPtr); }
 
-  void RemoveSourceSurface(ReferencePtr aRefPtr) final {
+  void RemoveSourceSurface(ReferencePtr aRefPtr) override {
     mSourceSurfaces.Remove(aRefPtr);
   }
 
@@ -154,15 +163,20 @@ class InlineTranslator : public Translator {
 
   already_AddRefed<DrawTarget> CreateDrawTarget(
       ReferencePtr aRefPtr, const gfx::IntSize& aSize,
-      gfx::SurfaceFormat aFormat) final;
+      gfx::SurfaceFormat aFormat) override;
 
-  mozilla::gfx::DrawTarget* GetReferenceDrawTarget() final { return mBaseDT; }
+  mozilla::gfx::DrawTarget* GetReferenceDrawTarget() final {
+    MOZ_ASSERT(mBaseDT, "mBaseDT has not been initialized.");
+    return mBaseDT;
+  }
 
   void* GetFontContext() final { return mFontContext; }
   std::string GetError() { return mError; }
 
- private:
+ protected:
   RefPtr<DrawTarget> mBaseDT;
+
+ private:
   void* mFontContext;
   std::string mError;
 

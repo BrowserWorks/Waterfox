@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of 
+Netscape Communicator, Please translate using the brandname in respective 
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word 
+"&brandShortName;" below.
+-->
+
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Import qilish">
+<!ENTITY importAll.label          "Hamma narsani import qilish">
+<!ENTITY importAll.accesskey      "H">
+<!ENTITY importMail.label         "Xat">
+<!ENTITY importMail.accesskey     "X">
+<!ENTITY importFeeds.label        "Obunalar tasmasi">
+<!ENTITY importFeeds.accesskey    "t">
+<!ENTITY importAddressbook.label  "Manzil kitoblari">
+<!ENTITY importAddressbook.accesskey "M">
+<!ENTITY importSettings.label     "Sozlamalar">
+<!ENTITY importSettings.accesskey "S">
+<!ENTITY importFilters.label      "Filterlar">
+<!ENTITY importFilters.accesskey  "F">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "&brandShortName; import ustasi">
+<!ENTITY importShortDesc.label    "Boshqa dasturlardan xat, manzil kitoblari, sozlamalar va filterlarni import qilish">
+
+<!ENTITY importDescription1.label "Bu usta boshqa pochta dasturlari va umumiy pochta kitobi formatlaridan pochta xabarlari, manzil kitobidagi qaydlar, obuna bo‘lingan tasmalar, parametrlar yoki filterlarni &brandShortName; dasturiga import qiladi.">
+<!ENTITY importDescription2.label "Ular import qilingandan so‘ng &brandShortName; orqali ulardan foydalanish mumkin bo‘ladi.">
+
+<!ENTITY selectDescription.label  "Import qilinishi kerak bo‘lgan faylar turini tanlang:">
+<!ENTITY selectDescriptionB.label "Mavjud hisobni tanlang yoki yangisini yarating:">
+<!ENTITY selectDescription.accesskey "t">
+<!ENTITY acctName.label           "Nomi:">
+<!ENTITY acctName.accesskey       "N">
+<!ENTITY noModulesFound.label     "Import qilish uchun birorta ham ilova yoki fayl topilmadi.">
+
+<!ENTITY back.label               "&lt; &amp;Orqaga">
+<!ENTITY forward.label            "&amp;Keyingi &gt;">
+<!ENTITY finish.label             "Tayyor">
+<!ENTITY cancel.label             "Bekor qilish">
+
+<!ENTITY select.label             "yoki import qilinadigan material turini tanlang:">
+
+<!ENTITY title.label              "Sarlavhasi">
+<!ENTITY processing.label         "Import qilinmoqda...">

@@ -22,8 +22,8 @@ with other debuggers.)
 
 When the debuggee pops a stack frame (say, because a function call has
 returned or an exception has been thrown from it), the `Debugger.Frame`
-instance referring to that frame becomes inactive: its `live` property
-becomes `false`, and accessing its other properties or calling its methods
+instance referring to that frame becomes inactive: its `onStack` property
+becomes `false`, and accessing its many properties or calling its methods
 throws an exception. Note that frames only become inactive at times that
 are predictable for the debugger: when the debuggee runs, or when the
 debugger removes frames from the stack itself.
@@ -60,7 +60,7 @@ JavaScript stack, frames pushed for SpiderMonkey's calls to handler methods
 to report events in the debuggee are never considered visible frames.)
 
 
-## <span id='invf'>Invocation</span> Functions and "debugger" Frames
+## Invocation Functions and "debugger" Frames
 
 An <i>invocation function</i> is any function in this interface that allows
 the debugger to invoke code in the debuggee:
@@ -93,7 +93,7 @@ Pushing a `"debugger"` frame makes this continuation explicit, and makes it
 easier to find the extent of the stack created for the invocation.
 
 
-## <span id='suspended'>Suspended</span> Frames
+## Suspended Frames
 
 Some frames can be *suspended*.
 
@@ -105,7 +105,7 @@ will be put back onto the stack, and execution will continue where it
 left off. Only generator and async function call frames can be suspended
 and resumed.
 
-Currently, a frame's `live` property is `false` while it's suspended
+Currently, a frame's `onStack` property is `false` while it's suspended
 ([bug 1448880](https://bugzilla.mozilla.org/show_bug.cgi?id=1448880)).
 
 SpiderMonkey uses the same `Debugger.Frame` object each time a generator
@@ -116,6 +116,10 @@ The `frame.onPop` handler is called each time a frame is suspended, and
 the `Debugger.onEnterFrame` handler is called each time a frame is
 resumed. (This means these events can fire multiple times for the same
 `Frame` object, which is odd, but accurately conveys what's happening.)
+
+The [completion value][cv] passed to the `frame.onPop` handler for a suspension
+contains additional properties to clarify what's going on. See the documentation
+for completion values for details.
 
 
 ## Stepping Into Generators: The "Initial Yield"
@@ -158,90 +162,145 @@ generator will be resumed, firing `.onEnterFrame` again.
 A `Debugger.Frame` instance inherits the following accessor properties from
 its prototype:
 
-`type`
-:   A string describing what sort of frame this is:
+### `type`
 
-    * `"call"`: a frame running a function call. (We may not be able to obtain
-      frames for calls to host functions.)
+A string describing what sort of frame this is:
 
-    * `"eval"`: a frame running code passed to `eval`.
+* `"call"`: a frame running a function call. (We may not be able to obtain
+  frames for calls to host functions.)
 
-    * `"global"`: a frame running global code (JavaScript that is neither of
-      the above).
+* `"eval"`: a frame running code passed to `eval`.
 
-    * `"module"`: a frame running code at the top level of a module.
+* `"global"`: a frame running global code (JavaScript that is neither of
+  the above).
 
-    * `"wasmcall"`: a frame running a WebAssembly function call.
+* `"module"`: a frame running code at the top level of a module.
 
-    * `"debugger"`: a frame for a call to user code invoked by the debugger
-      (see the `eval` method below).
+* `"wasmcall"`: a frame running a WebAssembly function call.
 
-`implementation`
-:   A string describing which tier of the JavaScript engine this frame is
-    executing in:
+* `"debugger"`: a frame for a call to user code invoked by the debugger
+  (see the `eval` method below).
 
-    * `"interpreter"`: a frame running in the interpreter.
+Accessing this property will throw if `.terminated == true`.
 
-    * `"baseline"`: a frame running in the unoptimizing, baseline JIT.
+### `implementation`
+A string describing which tier of the JavaScript engine this frame is
+executing in:
 
-    * `"ion"`: a frame running in the optimizing JIT.
+* `"interpreter"`: a frame running in the interpreter.
 
-    * `"wasm"`: a frame running in WebAssembly baseline JIT.
+* `"baseline"`: a frame running in the unoptimizing, baseline JIT.
 
-`this`
-:   The value of `this` for this frame (a debuggee value). For a `wasmcall`
-    frame, this property throws a `TypeError`.
+* `"ion"`: a frame running in the optimizing JIT.
 
-`older`
-:   The next-older visible frame, in which control will resume when this
-    frame completes. If there is no older frame, this is `null`.
+* `"wasm"`: a frame running in WebAssembly baseline JIT.
 
-`depth`
-:   The depth of this frame, counting from oldest to youngest; the oldest
-    frame has a depth of zero.
+Accessing this property will throw if `.onStack == false`.
 
-`live`
-:   True if the frame this `Debugger.Frame` instance refers to is still on
-    the stack; false if it has completed execution or been
-    popped in some other way.
+### `this`
+The value of `this` for this frame (a debuggee value). For a `wasmcall`
+frame, this property throws a `TypeError`.
 
-`script`
-:   The script being executed in this frame (a [`Debugger.Script`][script]
-    instance), or `null` on frames that do not represent calls to debuggee
-    code. On frames whose `callee` property is not null, this is equal to
-    `callee.script`.
+Accessing this property will throw if `.terminated == true`.
 
-`offset`
-:   The offset of the bytecode instruction currently being executed in
-    `script`, or `undefined` if the frame's `script` property is `null`.
-    For a `wasmcall` frame, this property throws a `TypeError`.
+### `older`
+The `Debugger.Frame` for the next-older visible frame, in which control will
+resume when this frame completes. If there is no older frame, this is `null`.
+If there an explicitly inserted asynchronous stack trace above this frame,
+this is `null`, since the explicit saved frame takes priority.
+If this frame is a suspended generator or async call, this will also be `null`.
 
-`environment`
-:   The lexical environment within which evaluation is taking place (a
-    [`Debugger.Environment`][environment] instance), or `null` on frames
-    that do not represent the evaluation of debuggee code, like calls
-    non-debuggee functions, host functions or `"debugger"` frames.
+Accessing this property will throw if `.terminated == true`.
 
-`callee`
-:   The function whose application created this frame, as a debuggee value,
-    or `null` if this is not a `"call"` frame.
+### `olderSavedFrame`
 
-`generator`
-:   True if this frame is a generator frame, false otherwise.
+If this frame has no `older` frame, this field may hold a [`SavedFrame`][saved-frame]
+object representing the saved asynchronous stack that triggered execution of
+this `Debugger.Frame` instance.
 
-`constructing`
-:   True if this frame is for a function called as a constructor, false
-    otherwise.
+Accessing this property will throw if `.terminated == true`.
 
-`arguments`
-:   The arguments passed to the current frame, or `null` if this is not a
-    `"call"` frame. When non-`null`, this is an object, allocated in the
-    same global as the debugger, with `Array.prototype` on its prototype
-    chain, a non-writable `length` property, and properties whose names are
-    array indices. Each property is a read-only accessor property whose
-    getter returns the current value of the corresponding parameter. When
-    the referent frame is popped, the argument value's properties' getters
-    throw an error.
+### `onStack`
+True if the frame this `Debugger.Frame` instance refers to is still on
+the stack; false if it has completed execution or been popped in some other way.
+Note that this property may be accessed regardless of what state the frame is
+in, so it can be used to verify whether it is safe to access other properties
+that require an on-stack frame.
+
+### `terminated`
+True if the frame this `Debugger.Frame` instance refers to will never run
+again; false if it is on-stack or is a suspended generator/async call that
+may be resumed later. Note that this property may be accessed regardless of
+what state the frame is in, so it can be used to verify whether it is safe to
+access other properties that require a non-terminated frame.
+
+### `script`
+The script being executed in this frame (a [`Debugger.Script`][script]
+instance), or `null` on frames that do not represent calls to debuggee
+code. On frames whose `callee` property is not null, this is equal to
+`callee.script`.
+
+Accessing this property will throw if `.terminated == true`.
+
+### `offset`
+The offset of the bytecode instruction currently being executed in
+`script`, or `undefined` if the frame's `script` property is `null`.
+For a `wasmcall` frame, this property throws a `TypeError`.
+
+If this is used on a suspended function frame, the offset will reference
+the offset where the frame will be resumed.
+
+Accessing this property will throw if `.terminated == true`.
+
+### `environment`
+The lexical environment within which evaluation is taking place (a
+[`Debugger.Environment`][environment] instance), or `null` on frames
+that do not represent the evaluation of debuggee code, like calls
+non-debuggee functions, host functions or `"debugger"` frames.
+
+Accessing this property will throw if `.terminated == true`.
+
+### `callee`
+The function whose application created this frame, as a debuggee value,
+or `null` if this is not a `"call"` frame.
+
+Accessing this property will throw if `.terminated == true`.
+
+### `constructing`
+True if this frame is for a function called as a constructor, false
+otherwise.
+
+Accessing this property will throw if `.terminated == true`.
+
+### `arguments`
+The arguments passed to the current frame, or `null` if this is not a
+`"call"` frame. When non-`null`, this is an object, allocated in the
+same global as the debugger, with `Array.prototype` on its prototype
+chain, a non-writable `length` property, and properties whose names are
+array indices. Each property is a read-only accessor property whose
+getter returns the current value of the corresponding parameter. When
+the referent frame is popped, the argument value's properties' getters
+throw an error.
+
+Accessing this property will throw if `.onStack == false`.
+
+### `asyncPromise`
+
+If the frame is not an async (generator) function, this will be `undefined`.
+
+For async functions, this will be a [`Debugger.Object`][object] whose referent
+is the promise for async function call's return value. Note that this
+property will be `null` if the value is accessed during `onEnterFrame`,
+since the promise doesn't exist yet at that point.
+
+For async generator functions, this will be a [`Debugger.Object`][object]
+whose referent is the promise for the current iteration's "value"+"done" object,
+which will be resolved when the generator next throws/yields/returns.
+Note that this will be `null` if the value is accessed during the initial
+generator `onEnterFrame`/`onPop` (before the first `.next` call),
+since there is no promise yet at that point.
+
+Accessing this property will throw if `.terminated == true`.
 
 
 ## Handler Methods of Debugger.Frame Instances
@@ -255,79 +314,85 @@ the compartment to which the handler method belongs.
 
 `Debugger.Frame` instances inherit the following handler method properties:
 
-`onStep`
-:   This property must be either `undefined` or a function. If it is a
-    function, SpiderMonkey calls it when execution in this frame makes a
-    small amount of progress, passing no arguments and providing this
-    `Debugger.Frame` instance as the `this`value. The function should
-    return a [resumption value][rv] specifying how the debuggee's execution
-    should proceed.
+### `onStep`
+This property must be either `undefined` or a function. If it is a
+function, SpiderMonkey calls it when execution in this frame makes a
+small amount of progress, passing no arguments and providing this
+`Debugger.Frame` instance as the `this`value. The function should
+return a [resumption value][rv] specifying how the debuggee's execution
+should proceed.
 
-    What constitutes "a small amount of progress" varies depending on the
-    implementation, but it is fine-grained enough to implement useful
-    "step" and "next" behavior.
+What constitutes "a small amount of progress" varies depending on the
+implementation, but it is fine-grained enough to implement useful
+"step" and "next" behavior.
 
-    If multiple [`Debugger`][debugger-object] instances each have
-    `Debugger.Frame` instances for a given stack frame with `onStep`
-    handlers set, their handlers are run in an unspecified order. If any
-    `onStep` handler forces the frame to return early (by returning a
-    resumption value other than `undefined`), any remaining debuggers'
-    `onStep` handlers do not run.
+If multiple [`Debugger`][debugger-object] instances each have
+`Debugger.Frame` instances for a given stack frame with `onStep`
+handlers set, their handlers are run in an unspecified order. If any
+`onStep` handler forces the frame to return early (by returning a
+resumption value other than `undefined`), any remaining debuggers'
+`onStep` handlers do not run.
 
-    This property is ignored on frames that are not executing debuggee
-    code, like `"call"` frames for calls to host functions and `"debugger"`
-    frames.
+This property is ignored on frames that are not executing debuggee
+code, like `"call"` frames for calls to host functions and `"debugger"`
+frames.
 
-`onPop`
-:   This property must be either `undefined` or a function. If it is a
-    function, SpiderMonkey calls it just before this frame is popped,
-    passing a [completion value][cv] indicating how this frame's execution
-    completed, and providing this `Debugger.Frame` instance as the `this`
-    value. The function should return a [resumption value][rv] indicating
-    how execution should proceed. On newly created frames, this property's
-    value is `undefined`.
+Accessing and reassigning this property is allowed independent of whether
+or not the frame is currently on-stack/suspended/terminated.
 
-    When this handler is called, this frame's current execution location, as
-    reflected in its `offset` and `environment` properties, is the operation
-    which caused it to be unwound. In frames returning or throwing an
-    exception, the location is often a return or a throw statement. In frames
-    propagating exceptions, the location is a call.
+### `onPop`
+This property must be either `undefined` or a function. If it is a function,
+SpiderMonkey calls it just before this frame is popped or suspended, passing
+a [completion value][cv] indicating the reason, and providing this
+`Debugger.Frame` instance as the `this` value. The function should return a
+[resumption value][rv] indicating how execution should proceed. On newly
+created frames, this property's value is `undefined`.
 
-    When an `onPop` call reports the completion of a construction call
-    (that is, a function called via the `new` operator), the completion
-    value passed to the handler describes the value returned by the
-    function body. If this value is not an object, it may be different from
-    the value produced by the `new` expression, which will be the value of
-    the frame's `this` property. (In ECMAScript terms, the `onPop` handler
-    receives the value returned by the `[[Call]]` method, not the value
-    returned by the `[[Construct]]` method.)
+When this handler is called, this frame's current execution location, as
+reflected in its `offset` and `environment` properties, is the operation
+which caused it to be unwound. In frames returning or throwing an exception,
+the location is often a return or a throw statement. In frames propagating
+exceptions, the location is a call. In generator or async function frames,
+the location may be a `yield` or `await` expression.
 
-    When a debugger handler function forces a frame to complete early, by
-    returning a `{ return:... }`, `{ throw:... }`, or `null` resumption
-    value, SpiderMonkey calls the frame's `onPop` handler, if any. The
-    completion value passed in this case reflects the resumption value that
-    caused the frame to complete.
+When an `onPop` call reports the completion of a construction call
+(that is, a function called via the `new` operator), the completion
+value passed to the handler describes the value returned by the
+function body. If this value is not an object, it may be different from
+the value produced by the `new` expression, which will be the value of
+the frame's `this` property. (In ECMAScript terms, the `onPop` handler
+receives the value returned by the `[[Call]]` method, not the value
+returned by the `[[Construct]]` method.)
 
-    When SpiderMonkey calls an `onPop` handler for a frame that is throwing
-    an exception or being terminated, and the handler returns `undefined`,
-    then SpiderMonkey proceeds with the exception or termination. That is,
-    an `undefined` resumption value leaves the frame's throwing and
-    termination process undisturbed.
+When a debugger handler function forces a frame to complete early, by
+returning a `{ return:... }`, `{ throw:... }`, or `null` resumption
+value, SpiderMonkey calls the frame's `onPop` handler, if any. The
+completion value passed in this case reflects the resumption value that
+caused the frame to complete.
 
-    If multiple [`Debugger`][debugger-object] instances each have
-    `Debugger.Frame` instances for a given stack frame with `onPop`
-    handlers set, their handlers are run in an unspecified order. The
-    resumption value each handler returns establishes the completion value
-    reported to the next handler.
+When SpiderMonkey calls an `onPop` handler for a frame that is throwing
+an exception or being terminated, and the handler returns `undefined`,
+then SpiderMonkey proceeds with the exception or termination. That is,
+an `undefined` resumption value leaves the frame's throwing and
+termination process undisturbed.
 
-    This handler is not called on `"debugger"` frames. It is also not called
-    when unwinding a frame due to an over-recursion or out-of-memory
-    exception.
+If multiple [`Debugger`][debugger-object] instances each have
+`Debugger.Frame` instances for a given stack frame with `onPop`
+handlers set, their handlers are run in an unspecified order. The
+resumption value each handler returns establishes the completion value
+reported to the next handler.
 
-    The `onPop` handler is typically called only once for a given frame,
-    after which the frame becomes inactive. However, in the case of
-    [generators and async functions](suspended), `onPop` fires each time
-    the frame is suspended.
+The `onPop` handler is typically called only once for a given
+`Debugger.Frame`, after which the frame becomes inactive. However, in the
+case of [generators and async functions](#suspended-frames), `onPop` fires
+each time the frame is suspended.
+
+This handler is not called on `"debugger"` frames. It is also not called
+when unwinding a frame due to an over-recursion or out-of-memory
+exception.
+
+Accessing and reassigning this property is allowed independent of whether
+or not the frame is currently on-stack/suspended/terminated.
 
 
 ## Function Properties of the Debugger.Frame Prototype Object
@@ -336,66 +401,89 @@ The functions described below may only be called with a `this` value
 referring to a `Debugger.Frame` instance; they may not be used as
 methods of other kinds of objects.
 
-<code id="eval">eval(<i>code</i>, [<i>options</i>])</code>
-:   Evaluate <i>code</i> in the execution context of this frame, and return
-    a [completion value][cv] describing how it completed. <i>Code</i> is a
-    string. If this frame's `environment` property is `null` or `type` property
-    is `wasmcall`, throw a `TypeError`. All extant handler methods, breakpoints,
-    and so on remain active during the call. This function follows the
-    [invocation function conventions][inv fr].
+### `eval(code, [options])`
+Evaluate <i>code</i> in the execution context of this frame, and return
+a [completion value][cv] describing how it completed. <i>Code</i> is a
+string. If this frame's `environment` property is `null` or `type` property
+is `wasmcall`, throw a `TypeError`. All extant handler methods, breakpoints,
+and so on remain active during the call. This function follows the
+[invocation function conventions][inv fr].
 
-    <i>Code</i> is interpreted as strict mode code when it contains a Use
-    Strict Directive, or the code executing in this frame is strict mode
-    code.
+<i>Code</i> is interpreted as strict mode code when it contains a Use
+Strict Directive, or the code executing in this frame is strict mode
+code.
 
-    If <i>code</i> is not strict mode code, then variable declarations in
-    <i>code</i> affect the environment of this frame. (In the terms used by
-    the ECMAScript specification, the `VariableEnvironment` of the
-    execution context for the eval code is the `VariableEnvironment` of the
-    execution context that this frame represents.) If implementation
-    restrictions prevent SpiderMonkey from extending this frame's
-    environment as requested, this call throws an Error exception.
+If <i>code</i> is not strict mode code, then variable declarations in
+<i>code</i> affect the environment of this frame. (In the terms used by
+the ECMAScript specification, the `VariableEnvironment` of the
+execution context for the eval code is the `VariableEnvironment` of the
+execution context that this frame represents.) If implementation
+restrictions prevent SpiderMonkey from extending this frame's
+environment as requested, this call throws an Error exception.
 
-    If given, <i>options</i> should be an object whose properties specify
-    details of how the evaluation should occur. The `eval` method
-    recognizes the following properties:
+If given, <i>options</i> should be an object whose properties specify
+details of how the evaluation should occur. The `eval` method
+recognizes the following properties:
 
-    <code>url</code>
-    :   The filename or URL to which we should attribute <i>code</i>. If this
-        property is omitted, the URL defaults to `"debugger eval code"`.
+* `url`
 
-    <code>lineNumber</code>
-    :   The line number at which the evaluated code should be claimed to begin
-        within <i>url</i>.
+  The filename or URL to which we should attribute <i>code</i>. If this
+  property is omitted, the URL defaults to `"debugger eval code"`.
 
-<code>evalWithBindings(<i>code</i>, <i>bindings</i>, [<i>options</i>])</code>
-:   Like `eval`, but evaluate <i>code</i> in the environment of this frame,
-    extended with bindings from the object <i>bindings</i>. For each own
-    enumerable property of <i>bindings</i> named <i>name</i> whose value is
-    <i>value</i>, include a variable in the environment in which
-    <i>code</i> is evaluated named <i>name</i>, whose value is
-    <i>value</i>. Each <i>value</i> must be a debuggee value. (This is not
-    like a `with` statement: <i>code</i> may access, assign to, and delete
-    the introduced bindings without having any effect on the
-    <i>bindings</i> object.)
+* `lineNumber`
 
-    This method allows debugger code to introduce temporary bindings that
-    are visible to the given debuggee code and which refer to debugger-held
-    debuggee values, and do so without mutating any existing debuggee
-    environment.
+  The line number at which the evaluated code should be claimed to begin
+  within <i>url</i>.
 
-    Note that, like `eval`, declarations in the <i>code</i> passed to
-    `evalWithBindings` affect the environment of this frame, even as that
-    environment is extended by bindings visible within <i>code</i>. (In the
-    terms used by the ECMAScript specification, the `VariableEnvironment`
-    of the execution context for the eval code is the `VariableEnvironment`
-    of the execution context that this frame represents, and the
-    <i>bindings</i> appear in a new declarative environment, which is the
-    eval code's `LexicalEnvironment`.) If implementation restrictions
-    prevent SpiderMonkey from extending this frame's environment as
-    requested, this call throws an `Error` exception.
+Accessing this property will throw if `.onStack == false`.
 
-    The <i>options</i> argument is as for
-    [`Debugger.Frame.prototype.eval`][fr eval], described above.
-    Also like `eval`, if this frame's `environment` property is `null` or
-    `type` property is `wasmcall`, throw a `TypeError`.
+### `evalWithBindings(code, bindings, [options])`
+Like `eval`, but evaluate <i>code</i> in the environment of this frame,
+extended with bindings from the object <i>bindings</i>. For each own
+enumerable property of <i>bindings</i> named <i>name</i> whose value is
+<i>value</i>, include a variable in the environment in which
+<i>code</i> is evaluated named <i>name</i>, whose value is
+<i>value</i>. Each <i>value</i> must be a debuggee value. (This is not
+like a `with` statement: <i>code</i> may access, assign to, and delete
+the introduced bindings without having any effect on the
+<i>bindings</i> object.)
+
+This method allows debugger code to introduce temporary bindings that
+are visible to the given debuggee code and which refer to debugger-held
+debuggee values, and do so without mutating any existing debuggee
+environment.
+
+Note that, like `eval`, declarations in the <i>code</i> passed to
+`evalWithBindings` affect the environment of this frame, even as that
+environment is extended by bindings visible within <i>code</i>. (In the
+terms used by the ECMAScript specification, the `VariableEnvironment`
+of the execution context for the eval code is the `VariableEnvironment`
+of the execution context that this frame represents, and the
+<i>bindings</i> appear in a new declarative environment, which is the
+eval code's `LexicalEnvironment`.) If implementation restrictions
+prevent SpiderMonkey from extending this frame's environment as
+requested, this call throws an `Error` exception.
+
+The <i>options</i> argument is as for
+[`Debugger.Frame.prototype.eval`][fr eval], described above.
+Also like `eval`, if this frame's `environment` property is `null` or
+`type` property is `wasmcall`, throw a `TypeError`.
+
+Note: If this method is called on an object whose owner
+[Debugger object][debugger-object] has an onNativeCall handler, only hooks
+on objects associated with that debugger will be called during the evaluation.
+
+Accessing this property will throw if `.onStack == false`.
+
+
+[vf]: #visible-frames
+[debugger-object]: Debugger.md
+[object]: Debugger.Object.md
+[dbg code]: Conventions.html#debuggee-code
+[inv fr]: #invocation-functions-and-debugger-frames
+[cv]: Conventions.html#completion-values
+[script]: Debugger.Script.md
+[environment]: Debugger.Environment.md
+[rv]: Conventions.html#resumption-values
+[fr eval]: #eval-code-options
+[saved-frame]: ../SavedFrame/index

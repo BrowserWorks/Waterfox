@@ -21,24 +21,18 @@ class TextEncoder final : public NonRefcountedDOMObject {
  public:
   // The WebIDL constructor.
 
-  static TextEncoder* Constructor(const GlobalObject& aGlobal,
-                                  ErrorResult& aRv) {
-    nsAutoPtr<TextEncoder> txtEncoder(new TextEncoder());
-    txtEncoder->Init();
-    return txtEncoder.forget();
+  static TextEncoder* Constructor(const GlobalObject& aGlobal) {
+    return new TextEncoder();
   }
 
-  TextEncoder() {}
+  TextEncoder() = default;
 
-  virtual ~TextEncoder() {}
+  virtual ~TextEncoder() = default;
 
   bool WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto,
                   JS::MutableHandle<JSObject*> aReflector) {
     return TextEncoder_Binding::Wrap(aCx, this, aGivenProto, aReflector);
   }
-
- protected:
-  void Init();
 
  public:
   /**
@@ -46,23 +40,25 @@ class TextEncoder final : public NonRefcountedDOMObject {
    *
    * @param aEncoding, current encoding.
    */
-  void GetEncoding(nsAString& aEncoding);
+  void GetEncoding(nsACString& aEncoding);
 
   /**
-   * Encodes incoming utf-16 code units/ DOM string to utf-8.
+   * Encodes incoming code units to utf-8.
    *
    * @param aCx        Javascript context.
    * @param aObj       the wrapper of the TextEncoder
-   * @param aString    utf-16 code units to be encoded.
+   * @param aString    already-encoded utf-8 code units to be returned, via
+   *                   UTF8String.
    * @return JSObject* The Uint8Array wrapped in a JS object.  Returned via
    *                   the aRetval out param.
    */
   void Encode(JSContext* aCx, JS::Handle<JSObject*> aObj,
-              const nsAString& aString, JS::MutableHandle<JSObject*> aRetval,
-              ErrorResult& aRv);
+              const nsACString& aUtf8String,
+              JS::MutableHandle<JSObject*> aRetval, OOMReporter& aRv);
 
-  void EncodeInto(const nsAString& aSrc, const Uint8Array& aDst,
-                  TextEncoderEncodeIntoResult& aResult);
+  void EncodeInto(JSContext* aCx, JS::Handle<JSString*> aSrc,
+                  const Uint8Array& aDst, TextEncoderEncodeIntoResult& aResult,
+                  OOMReporter& aError);
 };
 
 }  // namespace dom

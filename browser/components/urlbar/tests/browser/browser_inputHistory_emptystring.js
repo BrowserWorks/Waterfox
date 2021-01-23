@@ -1,4 +1,3 @@
-/* eslint-disable mozilla/no-arbitrary-setTimeout */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -39,9 +38,7 @@ async function do_test(openFn, pickMethod) {
     },
     async function(browser) {
       await clearInputHistory();
-      if (!(await openFn())) {
-        return;
-      }
+      await openFn();
       await UrlbarTestUtils.promiseSearchComplete(window);
       let promise = BrowserTestUtils.waitForDocLoadAndStopIt(TEST_URL, browser);
       if (pickMethod == "keyboard") {
@@ -61,7 +58,11 @@ async function do_test(openFn, pickMethod) {
 
 add_task(async function setup() {
   await PlacesUtils.history.clear();
-  await PlacesTestUtils.addVisits(TEST_URL);
+  for (let i = 0; i < 5; i++) {
+    await PlacesTestUtils.addVisits(TEST_URL);
+  }
+
+  await updateTopSites(sites => sites && sites[0] && sites[0].url == TEST_URL);
   registerCleanupFunction(async () => {
     await PlacesUtils.history.clear();
   });
@@ -75,20 +76,22 @@ add_task(async function test_history_no_search_terms() {
         info("Test opening panel with down key");
         gURLBar.focus();
         EventUtils.sendKey("down");
-        return true;
-      },
-      () => {
-        info("Test opening panel with history dropmarker");
-        UrlbarTestUtils.getDropMarker(window).click();
-        return true;
       },
       async () => {
-        info("Test opening panel with history dropmarker on a page");
+        info("Test opening panel on focus");
+        gURLBar.blur();
+        EventUtils.synthesizeMouseAtCenter(gURLBar.textbox, {});
+      },
+      async () => {
+        info("Test opening panel on focus on a page");
         let selectedBrowser = gBrowser.selectedBrowser;
-        await BrowserTestUtils.loadURI(selectedBrowser, TEST_URL);
+        // A page other than TEST_URL must be loaded, or the first Top Site
+        // result will be a switch-to-tab result and page won't be reloaded when
+        // the result is selected.
+        await BrowserTestUtils.loadURI(selectedBrowser, "http://example.org/");
         await BrowserTestUtils.browserLoaded(selectedBrowser);
-        UrlbarTestUtils.getDropMarker(window).click();
-        return true;
+        gURLBar.blur();
+        EventUtils.synthesizeMouseAtCenter(gURLBar.textbox, {});
       },
     ]) {
       await do_test(openFn, pickMethod);

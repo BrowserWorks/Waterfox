@@ -24,6 +24,7 @@ ChromeUtils.defineModuleGetter(
 );
 
 const TOPICS = [
+  "weave:connected",
   "weave:service:login:change",
   "weave:service:login:error",
   "weave:service:ready",
@@ -74,13 +75,14 @@ const UIStateInternal = {
 
   init() {
     this._initialized = true;
-    if (!Services.prefs.prefHasUserValue("services.sync.username")) {
-      return;
-    }
-    // Refresh the state in the background.
-    this.refreshState().catch(e => {
-      Cu.reportError(e);
-    });
+    // Because the FxA toolbar is usually visible, this module gets loaded at
+    // browser startup, and we want to avoid pulling in all of FxA or Sync at
+    // that time, so we refresh the state after the browser has settled.
+    Services.tm.idleDispatchToMainThread(() => {
+      this.refreshState().catch(e => {
+        Cu.reportError(e);
+      });
+    }, 2000);
   },
 
   // Used for testing.
@@ -111,7 +113,15 @@ const UIStateInternal = {
   async refreshState() {
     const newState = {};
     await this._refreshFxAState(newState);
-    this._setLastSyncTime(newState); // We want this in case we change accounts.
+    // Optimize the "not signed in" case to avoid refreshing twice just after
+    // startup - if there's currently no _state, and we still aren't configured,
+    // just early exit.
+    if (this._state == null && newState.status == DEFAULT_STATE.status) {
+      return this.state;
+    }
+    if (newState.syncEnabled) {
+      this._setLastSyncTime(newState); // We want this in case we change accounts.
+    }
     this._state = newState;
 
     this.notifyStateUpdated();
@@ -133,26 +143,18 @@ const UIStateInternal = {
   async _refreshFxAState(newState) {
     let userData = await this._getUserData();
     await this._populateWithUserData(newState, userData);
-    if (newState.status != STATUS_SIGNED_IN) {
-      return;
-    }
-    let profile = await this._getProfile();
-    if (!profile) {
-      return;
-    }
-    this._populateWithProfile(newState, profile);
   },
 
   async _populateWithUserData(state, userData) {
     let status;
+    let syncUserName = Services.prefs.getStringPref(
+      "services.sync.username",
+      ""
+    );
     if (!userData) {
       // If Sync thinks it is configured but there's no FxA user, then we
       // want to enter the "login failed" state so the user can get
       // reconfigured.
-      let syncUserName = Services.prefs.getStringPref(
-        "services.sync.username",
-        ""
-      );
       if (syncUserName) {
         state.email = syncUserName;
         status = STATUS_LOGIN_FAILED;
@@ -171,13 +173,13 @@ const UIStateInternal = {
       }
       state.uid = userData.uid;
       state.email = userData.email;
+      state.displayName = userData.displayName;
+      // for better or worse, this module renames these attribues.
+      state.avatarURL = userData.avatar;
+      state.avatarIsDefault = userData.avatarDefault;
+      state.syncEnabled = !!syncUserName;
     }
     state.status = status;
-  },
-
-  _populateWithProfile(state, profile) {
-    state.displayName = profile.displayName;
-    state.avatarURL = profile.avatar;
   },
 
   async _getUserData() {
@@ -189,15 +191,6 @@ const UIStateInternal = {
       // Bug 995134 calls for better errors so we could retry if we were
       // sure this was the failure reason.
       Cu.reportError("Error updating FxA account info: " + e);
-      return null;
-    }
-  },
-
-  async _getProfile() {
-    try {
-      return await this.fxAccounts.getSignedInUserProfile();
-    } catch (e) {
-      // Not fetching the profile is sad but the FxA logs will already have noise.
       return null;
     }
   },

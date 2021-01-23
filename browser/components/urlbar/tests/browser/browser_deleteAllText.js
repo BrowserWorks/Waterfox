@@ -7,6 +7,18 @@
 "use strict";
 
 add_task(async function test() {
+  await runTest();
+  // Setting suggest.topsites to false disables the view's autoOpen behavior,
+  // which changes this test's outcomes.
+  await SpecialPowers.pushPrefEnv({
+    set: [["browser.urlbar.suggest.topsites", false]],
+  });
+  info("Running the test with autoOpen disabled.");
+  await runTest();
+  await SpecialPowers.popPrefEnv();
+});
+
+async function runTest() {
   await PlacesUtils.bookmarks.eraseEverything();
   await PlacesUtils.history.clear();
   await PlacesTestUtils.addVisits([
@@ -15,13 +27,15 @@ add_task(async function test() {
   ]);
 
   // Do an initial search for "x".
-  await promiseAutocompleteResultPopup("x", window, true);
+  await UrlbarTestUtils.promiseAutocompleteResultPopup({
+    window,
+    waitForFocus: SimpleTest.waitForFocus,
+    value: "x",
+    fireInputEvent: true,
+  });
   await checkResults();
 
-  // Backspace.  The popup should close.
-  await UrlbarTestUtils.promisePopupClose(window, () =>
-    EventUtils.synthesizeKey("KEY_Backspace")
-  );
+  await deleteInput();
 
   // Type "x".  A new search should start.  Don't use
   // promiseAutocompleteResultPopup, which has some logic that starts the search
@@ -34,19 +48,16 @@ add_task(async function test() {
 
   // Now repeat the backspace + x two more times.  Same thing should happen.
   for (let i = 0; i < 2; i++) {
-    await UrlbarTestUtils.promisePopupClose(window, () =>
-      EventUtils.synthesizeKey("KEY_Backspace")
-    );
+    await deleteInput();
     EventUtils.synthesizeKey("x");
     await UrlbarTestUtils.promiseSearchComplete(window);
     await checkResults();
   }
 
-  // Finally, backspace to close the popup.
-  await UrlbarTestUtils.promisePopupClose(window, () =>
-    EventUtils.synthesizeKey("KEY_Backspace")
-  );
-});
+  await deleteInput();
+  // autoOpen opened the panel, so we need to close it.
+  gURLBar.view.close();
+}
 
 async function checkResults() {
   Assert.equal(await UrlbarTestUtils.getResultCount(window), 2);
@@ -56,4 +67,35 @@ async function checkResults() {
   details = await UrlbarTestUtils.getDetailsOfResultAt(window, 1);
   Assert.equal(details.type, UrlbarUtils.RESULT_TYPE.URL);
   Assert.equal(details.url, "http://example.com/");
+}
+
+async function deleteInput() {
+  if (UrlbarPrefs.get("suggest.topsites")) {
+    // The popup should remain open and show top sites.
+    while (gURLBar.value.length) {
+      EventUtils.synthesizeKey("KEY_Backspace");
+    }
+    Assert.ok(
+      window.gURLBar.view.isOpen,
+      "View should remain open when deleting all input text"
+    );
+    let queryContext = await UrlbarTestUtils.promiseSearchComplete(window);
+    Assert.notEqual(
+      queryContext.results.length,
+      0,
+      "View should show results when deleting all input text"
+    );
+    Assert.equal(
+      queryContext.searchString,
+      "",
+      "Results should be for the empty search string (i.e. top sites) when deleting all input text"
+    );
+  } else {
+    // Deleting all text should close the view.
+    await UrlbarTestUtils.promisePopupClose(window, () => {
+      while (gURLBar.value.length) {
+        EventUtils.synthesizeKey("KEY_Backspace");
+      }
+    });
+  }
 }

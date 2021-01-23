@@ -1,5 +1,5 @@
 #![deny(unused_qualifications)]
-extern crate num;
+
 #[macro_use]
 extern crate num_derive;
 use num::FromPrimitive;
@@ -7,7 +7,7 @@ use num::ToPrimitive;
 
 #[derive(FromPrimitive, ToPrimitive)]
 pub enum SomeEnum {
-    A = 1
+    A = 1,
 }
 
 #[test]

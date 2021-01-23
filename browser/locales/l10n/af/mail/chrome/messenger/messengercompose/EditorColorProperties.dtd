@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Bladsykleure en -agtergrond">
+<!ENTITY pageColors.label "Bladsykleure">
+<!ENTITY defaultColorsRadio.label "Leser se verstek-kleure (moenie kleure in die bladsy opstel nie)">
+<!ENTITY defaultColorsRadio.accessKey "m">
+<!ENTITY defaultColorsRadio.tooltip "Gebruik slegs die kleuropstelling uit die leser se blaaier">
+<!ENTITY customColorsRadio.label "Gebruik pasgemaakte kleure:">
+<!ENTITY customColorsRadio.accessKey "p">
+<!ENTITY customColorsRadio.tooltip "Hierdie kleuropstelling oorheers die leser se blaaieropstelling">
+
+<!ENTITY normalText.label "Gewone teks">
+<!ENTITY normalText.accessKey "G">
+<!ENTITY linkText.label "Skakelteks">
+<!ENTITY linkText.accessKey "S">
+<!ENTITY activeLinkText.label "Teks van aktiewe skakels">
+<!ENTITY activeLinkText.accessKey "a">
+<!ENTITY visitedLinkText.label "Teks van besoekte skakels">
+<!ENTITY visitedLinkText.accessKey "b">
+<!ENTITY background.label "Agtergrond:">
+<!ENTITY background.accessKey "A">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Agtergrondprent:">
+<!ENTITY backgroundImage.accessKey "p">
+<!ENTITY backgroundImage.tooltip "Gebruik 'n prentlêer as die agtergrond van u bladsy">
+

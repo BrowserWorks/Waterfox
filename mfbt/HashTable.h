@@ -74,6 +74,9 @@
 #ifndef mozilla_HashTable_h
 #define mozilla_HashTable_h
 
+#include <utility>
+#include <type_traits>
+
 #include "mozilla/AllocPolicy.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/Attributes.h"
@@ -83,17 +86,15 @@
 #include "mozilla/Maybe.h"
 #include "mozilla/MemoryChecking.h"
 #include "mozilla/MemoryReporting.h"
-#include "mozilla/Move.h"
 #include "mozilla/Opaque.h"
 #include "mozilla/OperatorNewExtensions.h"
-#include "mozilla/PodOperations.h"
 #include "mozilla/ReentrancyGuard.h"
-#include "mozilla/TypeTraits.h"
 #include "mozilla/UniquePtr.h"
+#include "mozilla/WrappingOperations.h"
 
 namespace mozilla {
 
-template <class>
+template <class, class = void>
 struct DefaultHasher;
 
 template <class, class>
@@ -171,16 +172,13 @@ class HashMap {
 
   explicit HashMap(AllocPolicy aAllocPolicy = AllocPolicy(),
                    uint32_t aLen = Impl::sDefaultLen)
-      : mImpl(aAllocPolicy, aLen) {}
+      : mImpl(std::move(aAllocPolicy), aLen) {}
 
   explicit HashMap(uint32_t aLen) : mImpl(AllocPolicy(), aLen) {}
 
   // HashMap is movable.
-  HashMap(HashMap&& aRhs) : mImpl(std::move(aRhs.mImpl)) {}
-  void operator=(HashMap&& aRhs) {
-    MOZ_ASSERT(this != &aRhs, "self-move assignment is prohibited");
-    mImpl = std::move(aRhs.mImpl);
-  }
+  HashMap(HashMap&& aRhs) = default;
+  HashMap& operator=(HashMap&& aRhs) = default;
 
   // -- Status and sizing ----------------------------------------------------
 
@@ -456,16 +454,13 @@ class HashSet {
 
   explicit HashSet(AllocPolicy aAllocPolicy = AllocPolicy(),
                    uint32_t aLen = Impl::sDefaultLen)
-      : mImpl(aAllocPolicy, aLen) {}
+      : mImpl(std::move(aAllocPolicy), aLen) {}
 
   explicit HashSet(uint32_t aLen) : mImpl(AllocPolicy(), aLen) {}
 
   // HashSet is movable.
-  HashSet(HashSet&& aRhs) : mImpl(std::move(aRhs.mImpl)) {}
-  void operator=(HashSet&& aRhs) {
-    MOZ_ASSERT(this != &aRhs, "self-move assignment is prohibited");
-    mImpl = std::move(aRhs.mImpl);
-  }
+  HashSet(HashSet&& aRhs) = default;
+  HashSet& operator=(HashSet&& aRhs) = default;
 
   // -- Status and sizing ----------------------------------------------------
 
@@ -749,7 +744,7 @@ struct PointerHasher {
 };
 
 // The default hash policy, which only works with integers.
-template <class Key>
+template <class Key, typename>
 struct DefaultHasher {
   using Lookup = Key;
 
@@ -763,6 +758,22 @@ struct DefaultHasher {
   static bool match(const Key& aKey, const Lookup& aLookup) {
     // Use builtin or overloaded operator==.
     return aKey == aLookup;
+  }
+
+  static void rekey(Key& aKey, const Key& aNewKey) { aKey = aNewKey; }
+};
+
+// A DefaultHasher specialization for enums.
+template <class T>
+struct DefaultHasher<T, std::enable_if_t<std::is_enum_v<T>>> {
+  using Key = T;
+  using Lookup = Key;
+
+  static HashNumber hash(const Lookup& aLookup) { return HashGeneric(aLookup); }
+
+  static bool match(const Key& aKey, const Lookup& aLookup) {
+    // Use builtin or overloaded operator==.
+    return aKey == static_cast<Key>(aLookup);
   }
 
   static void rekey(Key& aKey, const Key& aNewKey) { aKey = aNewKey; }
@@ -909,13 +920,8 @@ class HashMapEntry {
       : key_(std::forward<KeyInput>(aKey)),
         value_(std::forward<ValueInput>(aValue)) {}
 
-  HashMapEntry(HashMapEntry&& aRhs)
-      : key_(std::move(aRhs.key_)), value_(std::move(aRhs.value_)) {}
-
-  void operator=(HashMapEntry&& aRhs) {
-    key_ = std::move(aRhs.key_);
-    value_ = std::move(aRhs.value_);
-  }
+  HashMapEntry(HashMapEntry&& aRhs) = default;
+  HashMapEntry& operator=(HashMapEntry&& aRhs) = default;
 
   using KeyType = Key;
   using ValueType = Value;
@@ -934,10 +940,6 @@ class HashMapEntry {
   void operator=(const HashMapEntry&) = delete;
 };
 
-template <typename K, typename V>
-struct IsPod<HashMapEntry<K, V>>
-    : IntegralConstant<bool, IsPod<K>::value && IsPod<V>::value> {};
-
 namespace detail {
 
 template <class T, class HashPolicy, class AllocPolicy>
@@ -949,7 +951,7 @@ class EntrySlot;
 template <typename T>
 class HashTableEntry {
  private:
-  using NonConstT = typename RemoveConst<T>::Type;
+  using NonConstT = std::remove_const_t<T>;
 
   // Instead of having a hash table entry store that looks like this:
   //
@@ -1054,11 +1056,15 @@ class HashTableEntry {
   void destroy() { destroyStoredT(); }
 
   void swap(HashTableEntry* aOther, bool aIsLive) {
+    // This allows types to use Argument-Dependent-Lookup, and thus use a custom
+    // std::swap, which is needed by types like JS::Heap and such.
+    using std::swap;
+
     if (this == aOther) {
       return;
     }
     if (aIsLive) {
-      Swap(*valuePtr(), *aOther->valuePtr());
+      swap(*valuePtr(), *aOther->valuePtr());
     } else {
       *aOther->valuePtr() = std::move(*valuePtr());
       destroy();
@@ -1074,7 +1080,7 @@ class HashTableEntry {
 // in the hash table. These two things are not stored in contiguous memory.
 template <class T>
 class EntrySlot {
-  using NonConstT = typename RemoveConst<T>::Type;
+  using NonConstT = std::remove_const_t<T>;
 
   using Entry = HashTableEntry<T>;
 
@@ -1110,7 +1116,7 @@ class EntrySlot {
 
   void swap(EntrySlot& aOther) {
     mEntry->swap(aOther.mEntry, aOther.isLive());
-    Swap(*mKeyHash, *aOther.mKeyHash);
+    std::swap(*mKeyHash, *aOther.mKeyHash);
   }
 
   T& get() const { return mEntry->get(); }
@@ -1169,7 +1175,7 @@ template <class T, class HashPolicy, class AllocPolicy>
 class HashTable : private AllocPolicy {
   friend class mozilla::ReentrancyGuard;
 
-  using NonConstT = typename RemoveConst<T>::Type;
+  using NonConstT = std::remove_const_t<T>;
   using Key = typename HashPolicy::KeyType;
   using Lookup = typename HashPolicy::Lookup;
 
@@ -1356,29 +1362,23 @@ class HashTable : private AllocPolicy {
 
    public:
     bool done() const {
-#ifdef DEBUG
       MOZ_ASSERT(mGeneration == mTable.generation());
       MOZ_ASSERT(mMutationCount == mTable.mMutationCount);
-#endif
       return mCur == mEnd;
     }
 
     T& get() const {
       MOZ_ASSERT(!done());
-#ifdef DEBUG
       MOZ_ASSERT(mValidEntry);
       MOZ_ASSERT(mGeneration == mTable.generation());
       MOZ_ASSERT(mMutationCount == mTable.mMutationCount);
-#endif
       return mCur.get();
     }
 
     void next() {
       MOZ_ASSERT(!done());
-#ifdef DEBUG
       MOZ_ASSERT(mGeneration == mTable.generation());
       MOZ_ASSERT(mMutationCount == mTable.mMutationCount);
-#endif
       moveToNextLiveEntry();
 #ifdef DEBUG
       mValidEntry = true;
@@ -1429,11 +1429,9 @@ class HashTable : private AllocPolicy {
 
     NonConstT& getMutable() {
       MOZ_ASSERT(!this->done());
-#ifdef DEBUG
       MOZ_ASSERT(this->mValidEntry);
       MOZ_ASSERT(this->mGeneration == this->Iterator::mTable.generation());
       MOZ_ASSERT(this->mMutationCount == this->Iterator::mTable.mMutationCount);
-#endif
       return this->mCur.getMutable();
     }
 
@@ -1515,20 +1513,32 @@ class HashTable : private AllocPolicy {
   };
 
   // HashTable is movable
-  HashTable(HashTable&& aRhs) : AllocPolicy(aRhs) {
-    PodAssign(this, &aRhs);
-    aRhs.mTable = nullptr;
-  }
-  void operator=(HashTable&& aRhs) {
+  HashTable(HashTable&& aRhs) : AllocPolicy(std::move(aRhs)) { moveFrom(aRhs); }
+  HashTable& operator=(HashTable&& aRhs) {
     MOZ_ASSERT(this != &aRhs, "self-move assignment is prohibited");
     if (mTable) {
       destroyTable(*this, mTable, capacity());
     }
-    PodAssign(this, &aRhs);
-    aRhs.mTable = nullptr;
+    AllocPolicy::operator=(std::move(aRhs));
+    moveFrom(aRhs);
+    return *this;
   }
 
  private:
+  void moveFrom(HashTable& aRhs) {
+    mGen = aRhs.mGen;
+    mHashShift = aRhs.mHashShift;
+    mTable = aRhs.mTable;
+    mEntryCount = aRhs.mEntryCount;
+    mRemovedCount = aRhs.mRemovedCount;
+#ifdef DEBUG
+    mMutationCount = aRhs.mMutationCount;
+    mEntered = aRhs.mEntered;
+#endif
+    aRhs.mTable = nullptr;
+    aRhs.clearAndCompact();
+  }
+
   // HashTable is not copyable or assignable
   HashTable(const HashTable&) = delete;
   void operator=(const HashTable&) = delete;
@@ -1623,7 +1633,6 @@ class HashTable : private AllocPolicy {
 
   static char* createTable(AllocPolicy& aAllocPolicy, uint32_t aCapacity,
                            FailureBehavior aReportFailure = ReportFailure) {
-
     FakeSlot* fake =
         aReportFailure
             ? aAllocPolicy.template pod_malloc<FakeSlot>(aCapacity)
@@ -1660,7 +1669,7 @@ class HashTable : private AllocPolicy {
 
  public:
   HashTable(AllocPolicy aAllocPolicy, uint32_t aLen)
-      : AllocPolicy(aAllocPolicy),
+      : AllocPolicy(std::move(aAllocPolicy)),
         mGen(0),
         mHashShift(hashShift(aLen)),
         mTable(nullptr),
@@ -1700,7 +1709,7 @@ class HashTable : private AllocPolicy {
 
   static HashNumber applyDoubleHash(HashNumber aHash1,
                                     const DoubleHash& aDoubleHash) {
-    return (aHash1 - aDoubleHash.mHash2) & aDoubleHash.mSizeMask;
+    return WrappingSubtract(aHash1, aDoubleHash.mHash2) & aDoubleHash.mSizeMask;
   }
 
   static MOZ_ALWAYS_INLINE bool match(T& aEntry, const Lookup& aLookup) {
@@ -2046,7 +2055,7 @@ class HashTable : private AllocPolicy {
   }
 
   MOZ_ALWAYS_INLINE Ptr readonlyThreadsafeLookup(const Lookup& aLookup) const {
-    if (!mTable || !HasHash<HashPolicy>(aLookup)) {
+    if (empty() || !HasHash<HashPolicy>(aLookup)) {
       return Ptr();
     }
     HashNumber keyHash = prepareHash(aLookup);

@@ -2,8 +2,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function, unicode_literals
 
+import codecs
 import mozpack.path as mozpath
 from mozpack.files import (
     BaseFinder,
@@ -24,7 +25,7 @@ from mozpack.copier import (
 )
 from mozpack.packager import SimplePackager
 from mozpack.packager.formats import FlatFormatter
-from urlparse import urlparse
+from six.moves.urllib.parse import urlparse
 
 
 class UnpackFinder(BaseFinder):
@@ -81,7 +82,8 @@ class UnpackFinder(BaseFinder):
             if is_manifest(p):
                 m = self.files[p] if self.files.contains(p) \
                     else ManifestFile(base)
-                for e in parse_manifest(self.base, p, f.open()):
+                for e in parse_manifest(
+                        self.base, p, codecs.getreader('utf-8')(f.open())):
                     m.add(self._handle_manifest_entry(e, jars))
                 if self.files.contains(p):
                     continue
@@ -145,7 +147,7 @@ class UnpackFinder(BaseFinder):
         jar = JarReader(fileobj=file.open())
         self.compressed = max(self.compressed, jar.compression)
         if jar.last_preloaded:
-            jarlog = jar.entries.keys()
+            jarlog = list(jar.entries.keys())
             self.jarlogs[path] = jarlog[:jarlog.index(jar.last_preloaded) + 1]
         return jar
 
@@ -158,8 +160,8 @@ class UnpackFinder(BaseFinder):
         Return whether the given BaseFile looks like a ZIP/Jar.
         '''
         header = file.open().read(8)
-        return len(header) == 8 and (header[0:2] == 'PK' or
-                                     header[4:6] == 'PK')
+        return len(header) == 8 and (header[0:2] == b'PK' or
+                                     header[4:6] == b'PK')
 
     def _unjarize(self, entry, relpath):
         '''

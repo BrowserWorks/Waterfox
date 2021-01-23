@@ -1,5 +1,6 @@
-/* Any copyright is dedicated to the Public Domain.
- * http://creativecommons.org/publicdomain/zero/1.0/ */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
 
 // Test that we show a breakpoint in the UI when there is an old pending
 // breakpoint with an invalid original location.
@@ -38,6 +39,7 @@ add_task(async function() {
 
   const toolbox = await openNewTabAndToolbox(EXAMPLE_URL + "doc-scripts.html", "jsdebugger");
   const dbg = createDebuggerContext(toolbox);
+  const onBreakpoint = waitForDispatch(dbg, "SET_BREAKPOINT", 2);
 
   // Pending breakpoints are installed asynchronously, keep invoking the entry
   // function until the debugger pauses.
@@ -45,6 +47,7 @@ add_task(async function() {
     invokeInTab("main");
     return isPaused(dbg);
   });
+  await onBreakpoint;
 
   ok(true, "paused at unmapped breakpoint");
   await waitForState(dbg, state => dbg.selectors.getBreakpointCount(state) == 2);
@@ -87,4 +90,5 @@ add_task(async function() {
         && bps[0].location.line == 15;
   });
   ok(true, "removed old breakpoint during sync");
+  await waitForRequestsToSettle(dbg);
 });

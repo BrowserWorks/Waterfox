@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "Rnu awitay amaynut" >
+<!ENTITY wizard.label             "Rnu awitay amaynut" >
+<!ENTITY wizard.description       "Sideg awitay-inek" >
+
+<!ENTITY initialpage.description    "Awitay-inek yezmer ad yettwakles ɣef uselkim inek neɣ ɣef uqeddac akken ad tkecmeḍ ɣur-s s wudem anmeggag neq ad ttebḍuṭ akked yemdukal neɣ wid ukud txeddmeḍ." >
+<!ENTITY initialpage.computer.label  "Ɣef uselkim inu">
+<!ENTITY initialpage.network.label  "Ɣef uẓeṭṭa">
+
+<!ENTITY locationpage.description         "Mudd-d talɣut ɣef wayen ilaqen akken ad tkecmeḍ ɣer uwitay anmeggag" >
+<!ENTITY locationpage.login.description   "Afrayan: sekcem isem n useqdac neɣ awal uffir" >
+<!ENTITY locationpage.username.label      "Isem n useqdac:" >
+<!ENTITY locationpage.password.label      "Awal uffir:" >
+
+<!ENTITY custompage.shortdescription  "Sagen awitay-inek" >
+<!ENTITY custompage.longdescription   "Tzemreḍ ad tmuddeḍ meffer isem i uwitay udiɣ ad ternuḍ tiɣmiwin n tedyanin n uwitay-agi." >
+
+<!ENTITY finishpage.shortdescription  "Awitay yettwarna" >
+<!ENTITY finishpage.longdescription   "Awitay-inek yettwarna." >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "Wiyaḍ">
+
+<!ENTITY buttons.create.label "rnu awitay">
+<!ENTITY buttons.create.accesskey "r">
+
+<!ENTITY buttons.find.label "Af-d iwitayen">
+<!ENTITY buttons.find.accesskey "w">
+
+<!ENTITY buttons.back.label "Ɣer deffir">
+<!ENTITY buttons.back.accesskey "d">
+
+<!ENTITY buttons.subscribe.label "Jerred">
+<!ENTITY buttons.subscribe.accesskey "J">
+
+<!ENTITY calendartype.label "Anaw n uwitay:">
+<!ENTITY location.label "Adig:">
+<!ENTITY location.placeholder "URL neɣ asenneftaɣ n uqeddac n uwitay">
+
+<!ENTITY network.nocredentials.label "Adig ur yesri ara asesteb">
+<!ENTITY network.loading.description "Ma ulac aɣilif, rǧu ticki iwitayen ttwafen.">
+<!ENTITY network.notfound.description "Ur izmir ara ad d-yaf awitay deg tansa-a. Wali iɣewwaṛen.">
+<!ENTITY network.authfail.description "Inekcam n tuqqna yettaskecmen ur ttwaqeblen ara. Wali iɣewwaṛen.">
+
+<!ENTITY network.subscribe.single.description "Ma ulac aɣilif, fren iwitayen aniɣer i tebɣiḍ ad tjerrdeḍ.">
+<!ENTITY network.subscribe.multiple.description "Ddeqs n wanawen n yiwitayen llan di tansa-a. Fren anaw n uwitay, sakin fren iwitayen aniɣer tebɣiḍ ad tjerrdeḍ.">

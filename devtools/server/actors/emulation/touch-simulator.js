@@ -2,13 +2,16 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/* global XPCNativeWrapper */
-
 "use strict";
 
 const { Services } = require("resource://gre/modules/Services.jsm");
 
 loader.lazyRequireGetter(this, "InspectorUtils", "InspectorUtils");
+loader.lazyRequireGetter(
+  this,
+  "PICKER_TYPES",
+  "devtools/shared/picker-constants"
+);
 
 var systemAppOrigin = (function() {
   let systemOrigin = "_";
@@ -22,13 +25,29 @@ var systemAppOrigin = (function() {
   return systemOrigin;
 })();
 
-var threshold = Services.prefs.getIntPref("ui.dragThresholdX", 25);
-var delay = Services.prefs.getIntPref("ui.click_hold_context_menus.delay", 500);
+var isClickHoldEnabled = Services.prefs.getBoolPref(
+  "ui.click_hold_context_menus"
+);
+var clickHoldDelay = Services.prefs.getIntPref(
+  "ui.click_hold_context_menus.delay",
+  500
+);
+
+// Touch state constants are derived from values defined in: nsIDOMWindowUtils.idl
+const TOUCH_CONTACT = 0x02;
+const TOUCH_REMOVE = 0x04;
+
+const TOUCH_STATES = {
+  touchstart: TOUCH_CONTACT,
+  touchmove: TOUCH_CONTACT,
+  touchend: TOUCH_REMOVE,
+};
 
 const kStateHover = 0x00000004; // NS_EVENT_STATE_HOVER
 
 function TouchSimulator(simulatorTarget) {
   this.simulatorTarget = simulatorTarget;
+  this._currentPickerMap = new Map();
 }
 
 /**
@@ -58,11 +77,13 @@ TouchSimulator.prototype = {
       // Simulator is already started
       return;
     }
+
     this.events.forEach(evt => {
       // Only listen trusted events to prevent messing with
       // event dispatched manually within content documents
       this.simulatorTarget.addEventListener(evt, this, true, false);
     });
+
     this.enabled = true;
   },
 
@@ -77,20 +98,37 @@ TouchSimulator.prototype = {
     this.enabled = false;
   },
 
-  /**
-   * Set the current element picker state value.
-   * True means the element picker is currently active and we should not be emulating
-   * touch events.
-   * False means the element picker is not active and it is ok to emulate touch events.
-   * @param {Boolean} state
-   */
-  setElementPickerState(state) {
-    this._isPicking = state;
+  _isPicking() {
+    const types = Object.values(PICKER_TYPES);
+    return types.some(type => this._currentPickerMap.get(type));
   },
 
+  /**
+   * Set the state value for one of DevTools pickers (either eyedropper or
+   * element picker).
+   * If any content picker is currently active, we should not be emulating
+   * touch events. Otherwise it is ok to emulate touch events.
+   * In theory only one picker can ever be active at a time, but tracking the
+   * different pickers independantly avoids race issues in the client code.
+   *
+   * @param {Boolean} state
+   *        True if the picker is currently active, false otherwise.
+   * @param {String} pickerType
+   *        One of PICKER_TYPES.
+   */
+  setElementPickerState(state, pickerType) {
+    if (!Object.values(PICKER_TYPES).includes(pickerType)) {
+      throw new Error(
+        "Unsupported type in setElementPickerState: " + pickerType
+      );
+    }
+    this._currentPickerMap.set(pickerType, state);
+  },
+
+  // eslint-disable-next-line complexity
   handleEvent(evt) {
     // Bail out if devtools is in pick mode in the same tab.
-    if (this._isPicking) {
+    if (this._isPicking()) {
       return;
     }
 
@@ -184,9 +222,13 @@ TouchSimulator.prototype = {
       case "mousedown":
         this.target = evt.target;
 
-        this.contextMenuTimeout = this.sendContextMenu(evt);
+        // If the click-hold feature is enabled, start a timeout to convert long clicks
+        // into contextmenu events.
+        // Just don't do it if the event occurred on a scrollbar.
+        if (isClickHoldEnabled && !evt.originalTarget.closest("scrollbar")) {
+          this.contextMenuTimeout = this.sendContextMenu(evt);
+        }
 
-        this.cancelClick = false;
         this.startX = evt.pageX;
         this.startY = evt.pageY;
 
@@ -202,16 +244,6 @@ TouchSimulator.prototype = {
           // Don't propagate mousemove event when touchstart event isn't fired
           evt.stopPropagation();
           return;
-        }
-
-        if (!this.cancelClick) {
-          if (
-            Math.abs(this.startX - evt.pageX) > threshold ||
-            Math.abs(this.startY - evt.pageY) > threshold
-          ) {
-            this.cancelClick = true;
-            content.clearTimeout(this.contextMenuTimeout);
-          }
         }
 
         type = "touchmove";
@@ -230,63 +262,28 @@ TouchSimulator.prototype = {
         // catching only real user click. (Especially ignore click
         // being dispatched on form submit)
         if (evt.detail == 1) {
-          this.simulatorTarget.addEventListener("click", this, true, false);
+          this.simulatorTarget.addEventListener("click", this, {
+            capture: true,
+            once: true,
+          });
         }
         break;
-
-      case "click":
-        // Mouse events has been cancelled so dispatch a sequence
-        // of events to where touchend has been fired
-        evt.preventDefault();
-        evt.stopImmediatePropagation();
-
-        this.simulatorTarget.removeEventListener("click", this, true, false);
-
-        if (this.cancelClick) {
-          return;
-        }
-
-        content.setTimeout(
-          function dispatchMouseEvents(self) {
-            try {
-              self.fireMouseEvent("mousedown", evt);
-              self.fireMouseEvent("mousemove", evt);
-              self.fireMouseEvent("mouseup", evt);
-            } catch (e) {
-              console.error("Exception in touch event helper: " + e);
-            }
-          },
-          this.getDelayBeforeMouseEvent(evt),
-          this
-        );
-        return;
     }
 
     const target = eventTarget || this.target;
     if (target && type) {
-      this.sendTouchEvent(evt, target, type);
+      this.synthesizeNativeTouch(
+        this.getContent(evt.target),
+        evt.clientX,
+        evt.clientY,
+        type
+      );
     }
 
     if (!isSystemWindow) {
       evt.preventDefault();
       evt.stopImmediatePropagation();
     }
-  },
-
-  fireMouseEvent(type, evt) {
-    const content = this.getContent(evt.target);
-    const utils = content.windowUtils;
-    utils.sendMouseEvent(
-      type,
-      evt.clientX,
-      evt.clientY,
-      0,
-      1,
-      0,
-      true,
-      0,
-      evt.MOZ_SOURCE_TOUCH
-    );
   },
 
   sendContextMenu({ target, clientX, clientY, screenX, screenY }) {
@@ -304,64 +301,101 @@ TouchSimulator.prototype = {
     const content = this.getContent(target);
     const timeout = content.setTimeout(() => {
       target.dispatchEvent(evt);
-      this.cancelClick = true;
-    }, delay);
+    }, clickHoldDelay);
 
     return timeout;
   },
 
+  /**
+   * Synthesizes a native tap gesture on a given target element. The `x` and `y` values
+   * passed to this function should be relative to the layout viewport (what is returned
+   * by `MouseEvent.clientX/clientY`) and are reported in CSS pixels.
+   *
+   * @param {Window} win
+   *        The target window.
+   * @param {Number} x
+   *        The `x` CSS coordinate relative to the layout viewport.
+   * @param {Number} y
+   *        The `y` CSS coordinate relative to the layout viewport.
+   */
+  synthesizeNativeTap(win, x, y) {
+    const pt = this.coordinatesRelativeToScreen(win, x, y);
+    const utils = win.windowUtils;
+
+    // Bug 1619402: RDM has issues with full-zoom + resolution handling. Knowing this,
+    // it's possible the pt.x and pt.y values passed here will result in incorrect
+    // behavior when attempting to perform a native touch gesture. However, we know
+    // that setting the full-zoom to 100% will produce expected behavior. So let's
+    // leave this note here and revisit when this issue gets resolved.
+    utils.sendNativeTouchTap(pt.x, pt.y, false, null);
+    return true;
+  },
+
+  synthesizeNativeTouch(win, x, y, type) {
+    const pt = this.coordinatesRelativeToScreen(win, x, y);
+    const utils = win.windowUtils;
+    utils.sendNativeTouchPoint(0, TOUCH_STATES[type], pt.x, pt.y, 1, 90, null);
+    return true;
+  },
+
+  /**
+   * Calculates the given CSS coordinates into global screen coordinates, which are
+   * reported in device pixels.
+   *
+   * @param {Window} win
+   *        The target window.
+   * @param {Number} x
+   *        The `x` CSS coordinate relative to the layout viewport.
+   * @param {Number} y
+   *        The `y` CSS coordinate relative to the layout viewport.
+   *
+   * @returns {Object} the `x` and `y` global screen coordinattes.
+   */
+  coordinatesRelativeToScreen(win, x, y) {
+    const utils = win.windowUtils;
+    // Bug 1617741: Ignore RDM's override DPR. The physical size of content displayed
+    // in RDM is not scaled to the override DPR, so a workaround is to use the device
+    // scale of the physical device when calculating the cordinates.
+    const deviceScale = utils.screenPixelsPerCSSPixelNoOverride;
+
+    const resolution = utils.getResolution();
+    const offsetX = {};
+    const offsetY = {};
+
+    utils.getVisualViewportOffsetRelativeToLayoutViewport(offsetX, offsetY);
+
+    return {
+      x: (win.mozInnerScreenX + (x - offsetX.value) * resolution) * deviceScale,
+      y: (win.mozInnerScreenY + (y - offsetY.value) * resolution) * deviceScale,
+    };
+  },
+
   sendTouchEvent(evt, target, name) {
-    const document = target.ownerDocument;
+    const win = target.ownerGlobal;
     const content = this.getContent(target);
     if (!content) {
       return;
     }
 
-    const touchEvent = document.createEvent("touchevent");
-    const point = document.createTouch(
-      content,
-      target,
-      0,
-      evt.pageX,
-      evt.pageY,
-      evt.screenX,
-      evt.screenY,
-      evt.clientX,
-      evt.clientY,
-      1,
-      1,
-      0,
-      0
-    );
-
-    let touches = document.createTouchList(point);
-    let targetTouches = touches;
-    const changedTouches = touches;
-    if (name === "touchend" || name === "touchcancel") {
-      // "touchend" and "touchcancel" events should not have the removed touch
-      // neither in touches nor in targetTouches
-      touches = targetTouches = document.createTouchList();
-    }
-
-    touchEvent.initTouchEvent(
+    // To avoid duplicating logic for creating and dispatching touch events on the JS
+    // side, we should use what's already implemented for WindowUtils.sendTouchEvent.
+    const utils = win.windowUtils;
+    utils.sendTouchEvent(
       name,
-      true,
-      true,
-      content,
+      [0],
+      [evt.clientX],
+      [evt.clientY],
+      [1],
+      [1],
+      [0],
+      [1],
       0,
-      false,
-      false,
-      false,
-      false,
-      touches,
-      targetTouches,
-      changedTouches
+      false
     );
-    target.dispatchEvent(touchEvent);
   },
 
   getContent(target) {
-    const win = target && target.ownerDocument ? target.ownerGlobal : null;
+    const win = target?.ownerDocument ? target.ownerGlobal : null;
     return win;
   },
 

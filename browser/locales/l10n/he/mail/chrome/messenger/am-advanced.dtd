@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpServer.label "הגדרות שרת יוצא (SMTP)">
+
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+
+<!ENTITY smtpListAdd.label  "הוספה…">
+<!ENTITY smtpListAdd.accesskey  "ה">
+<!ENTITY smtpListEdit.label "עריכה…">
+<!ENTITY smtpListEdit.accesskey "ע">
+<!ENTITY smtpListDelete.label "הסרה">
+<!ENTITY smtpListDelete.accesskey "ס">
+<!ENTITY smtpListSetDefault.label "קבע כברירת מחדל">
+<!ENTITY smtpListSetDefault.accesskey "ב">
+
+<!ENTITY serverDetails.label "פרטי השרת הנבחר:">
+<!ENTITY serverDescription.label "תיאור: ">
+<!ENTITY serverName.label "שם השרת: ">
+<!ENTITY serverPort.label "שער: ">
+<!ENTITY userName.label   "שם משתמש: ">
+<!ENTITY connectionSecurity.label "קישור מאובטח: ">
+<!ENTITY authMethod.label   "צורת אימות: ">

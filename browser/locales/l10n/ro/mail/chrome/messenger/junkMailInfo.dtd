@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Despre mesajele nesolicitate">
+<!ENTITY window.width  "450">
+<!ENTITY info1a.label  "&brandShortName; detectează automat mesajele primite care par a fi nesolicitate (zise și „spam”). Mesajele despre care &brandShortName; crede că sunt nesolicitate vor avea lângă o pictogramă specifică">
+<!ENTITY info1b.label  ".">
+<!ENTITY info2.label   "La început, trebuie să antrenezi &brandShortName; pentru a identifica mesajele nesolicitate utilizând butonul din bara pentru mesaje nesolicitate și marcând mesajele cu „nesolicitat” sau „nu e nesolicitat”.">
+<!ENTITY info3.label   "După ce &brandShortName; identifică corect mesajele nesolicitate, poți să folosești controalele de mesaje nesolicitate pentru a muta automat mesajele nesolicitate în dosarul Nesolicitate.">
+<!ENTITY info4.label   "Pentru mai multe informații, apasă Ajutor.">

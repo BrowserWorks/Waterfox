@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Настройки на регистрация">
+<!ENTITY accountName.label "Име на сметката:">
+<!ENTITY accountName.accesskey "И">
+<!ENTITY identityTitle.label "Самоличност по подразбиране">
+<!ENTITY identityDesc.label "Всяка регистрация е уникална. Това е информация, която другите виждат, четейки вашите писма.">
+<!ENTITY name.label "Вашето име:">
+<!ENTITY name.accesskey "В">
+<!ENTITY email.label "Адрес на ел. поща:">
+<!ENTITY email.accesskey "А">
+<!ENTITY replyTo.label "Адрес за отговор:">
+<!ENTITY replyTo.accesskey "р">
+<!ENTITY replyTo.placeholder "Получателите ще отговарят до този друг адрес">
+<!ENTITY organization.label "Организация:">
+<!ENTITY organization.accesskey "ц">
+<!ENTITY signatureText.label "Текст за подпис:">
+<!ENTITY signatureText.accesskey "к">
+<!ENTITY signatureHtml.label "Използване на HTML (напр., &lt;b&gt;bold&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "L">
+<!ENTITY signatureFile.label "Прикрепяне на подпис от файл (текст, HTML или изображение):">
+<!ENTITY signatureFile.accesskey "T">
+<!ENTITY edit.label "Промяна…">
+<!ENTITY choose.label "Избиране…">
+<!ENTITY choose.accesskey "з">
+<!ENTITY editVCard.label "Промяна…">
+<!ENTITY editVCard.accesskey "м">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Прикрепване на моята vCard към писмата">
+<!ENTITY attachVCard.accesskey "к">
+
+<!ENTITY manageIdentities.label "Управление на самоличността…">
+<!ENTITY manageIdentities.accesskey "У">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Изходящ сървър (SMTP):">
+<!ENTITY smtpName.accesskey "х">
+<!ENTITY smtpDefaultServer.label "Сървър по подразбиране">
+
+<!ENTITY smtpServerEdit.label "Редактиране на сървър SMTP…">
+<!ENTITY smtpServerEdit.accesskey "д">

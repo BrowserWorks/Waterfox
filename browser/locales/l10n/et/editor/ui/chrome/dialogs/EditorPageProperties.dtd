@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label          "Lehe omadused">
+<!ENTITY location.label             "Asukoht:">
+<!ENTITY lastModified.label         "Viimati muudetud:">
+<!ENTITY titleInput.label           "Pealkiri:">
+<!ENTITY titleInput.accessKey       "P">
+<!ENTITY authorInput.label          "Autor:">
+<!ENTITY authorInput.accessKey      "A">
+<!ENTITY descriptionInput.label     "Kirjeldus:">
+<!ENTITY descriptionInput.accessKey "K">
+<!ENTITY locationNewPage.label      "[Uus leht, pole veel salvestatud]">
+<!ENTITY EditHEADSource1.label      "Edasijõudnuile:">
+<!ENTITY EditHEADSource2.label      "Et muuta muud &lt;head&gt; piirkonnas asuvat sisu, kasuta &quot;HTML-lähtekood&quot; valikut menüüs Vaade või kasuta nuppu redigeerimise režiimi muutmise tööriistaribal.">

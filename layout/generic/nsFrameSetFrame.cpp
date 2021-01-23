@@ -34,7 +34,6 @@
 #include "mozilla/ServoStyleSetInlines.h"
 #include "mozilla/dom/Element.h"
 #include "nsDisplayList.h"
-#include "nsNodeUtils.h"
 #include "mozAutoDocUpdate.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/dom/ChildIterator.h"
@@ -183,7 +182,7 @@ nsHTMLFramesetFrame::nsHTMLFramesetFrame(ComputedStyle* aStyle,
   mEdgeColors.Set(NO_COLOR);
 }
 
-nsHTMLFramesetFrame::~nsHTMLFramesetFrame() {}
+nsHTMLFramesetFrame::~nsHTMLFramesetFrame() = default;
 
 NS_QUERYFRAME_HEAD(nsHTMLFramesetFrame)
   NS_QUERYFRAME_ENTRY(nsHTMLFramesetFrame)
@@ -286,7 +285,7 @@ void nsHTMLFramesetFrame::Init(nsIContent* aContent, nsContainerFrame* aParent,
     //
     // Maybe we should change that though.
     RefPtr<ComputedStyle> kidStyle =
-        presShell->StyleSet()->ResolveServoStyle(*child->AsElement());
+        ServoStyleSet::ResolveServoStyle(*child->AsElement());
     nsIFrame* frame;
     if (child->IsHTMLElement(nsGkAtoms::frameset)) {
       frame = NS_NewHTMLFramesetFrame(presShell, kidStyle);
@@ -670,14 +669,14 @@ void nsHTMLFramesetFrame::ReflowPlaceChild(nsIFrame* aChild,
   nsReflowStatus status;
 
   ReflowChild(aChild, aPresContext, reflowOutput, reflowInput, aOffset.x,
-              aOffset.y, 0, status);
+              aOffset.y, ReflowChildFlags::Default, status);
   NS_ASSERTION(status.IsComplete(), "bad status");
 
   // Place and size the child
   reflowOutput.Width() = aSize.width;
   reflowOutput.Height() = aSize.height;
-  FinishReflowChild(aChild, aPresContext, reflowOutput, nullptr, aOffset.x,
-                    aOffset.y, 0);
+  FinishReflowChild(aChild, aPresContext, reflowOutput, &reflowInput, aOffset.x,
+                    aOffset.y, ReflowChildFlags::Default);
 }
 
 static nsFrameborder GetFrameBorderHelper(nsGenericHTMLElement* aContent) {
@@ -934,11 +933,10 @@ void nsHTMLFramesetFrame::Reflow(nsPresContext* aPresContext,
     if (firstTime) {
       int32_t childVis;
       nsHTMLFramesetFrame* framesetFrame = do_QueryFrame(child);
-      nsSubDocumentFrame* subdocFrame;
       if (framesetFrame) {
         childVis = framesetFrame->mEdgeVisibility;
         mChildBorderColors[childX] = framesetFrame->mEdgeColors;
-      } else if ((subdocFrame = do_QueryFrame(child))) {
+      } else if (child->IsSubDocumentFrame()) {
         if (eFrameborder_Yes == mChildFrameborder[childX]) {
           childVis = ALL_VIS;
         } else if (eFrameborder_No == mChildFrameborder[childX]) {
@@ -1335,11 +1333,7 @@ class nsDisplayFramesetBorder : public nsPaintedDisplayItem {
       : nsPaintedDisplayItem(aBuilder, aFrame) {
     MOZ_COUNT_CTOR(nsDisplayFramesetBorder);
   }
-#ifdef NS_BUILD_REFCNT_LOGGING
-  virtual ~nsDisplayFramesetBorder() {
-    MOZ_COUNT_DTOR(nsDisplayFramesetBorder);
-  }
-#endif
+  MOZ_COUNTED_DTOR_OVERRIDE(nsDisplayFramesetBorder)
 
   // REVIEW: see old GetFrameForPoint
   // Receives events in its bounds
@@ -1522,9 +1516,7 @@ class nsDisplayFramesetBlank : public nsPaintedDisplayItem {
       : nsPaintedDisplayItem(aBuilder, aFrame) {
     MOZ_COUNT_CTOR(nsDisplayFramesetBlank);
   }
-#ifdef NS_BUILD_REFCNT_LOGGING
-  virtual ~nsDisplayFramesetBlank() { MOZ_COUNT_DTOR(nsDisplayFramesetBlank); }
-#endif
+  MOZ_COUNTED_DTOR_OVERRIDE(nsDisplayFramesetBlank)
 
   virtual void Paint(nsDisplayListBuilder* aBuilder, gfxContext* aCtx) override;
   NS_DISPLAY_DECL_NAME("FramesetBlank", TYPE_FRAMESET_BLANK)
@@ -1536,7 +1528,7 @@ void nsDisplayFramesetBlank::Paint(nsDisplayListBuilder* aBuilder,
   int32_t appUnitsPerDevPixel = mFrame->PresContext()->AppUnitsPerDevPixel();
   Rect rect =
       NSRectToSnappedRect(GetPaintRect(), appUnitsPerDevPixel, *drawTarget);
-  ColorPattern white(ToDeviceColor(Color(1.f, 1.f, 1.f, 1.f)));
+  ColorPattern white(ToDeviceColor(sRGBColor::OpaqueWhite()));
   drawTarget->FillRect(rect, white);
 }
 

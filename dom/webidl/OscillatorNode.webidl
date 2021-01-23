@@ -26,8 +26,11 @@ dictionary OscillatorOptions : AudioNodeOptions {
 };
 
 [Pref="dom.webaudio.enabled",
- Constructor(BaseAudioContext context, optional OscillatorOptions options)]
+ Exposed=Window]
 interface OscillatorNode : AudioScheduledSourceNode {
+    [Throws]
+    constructor(BaseAudioContext context,
+                optional OscillatorOptions options = {});
 
     [SetterThrows]
     attribute OscillatorType type;
@@ -39,4 +42,4 @@ interface OscillatorNode : AudioScheduledSourceNode {
 };
 
 // Mozilla extensions
-OscillatorNode implements AudioNodePassThrough;
+OscillatorNode includes AudioNodePassThrough;

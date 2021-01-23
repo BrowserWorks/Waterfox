@@ -41,7 +41,7 @@ const Instruction* Simulator::kEndOfSimAddress = NULL;
 
 void SimSystemRegister::SetBits(int msb, int lsb, uint32_t bits) {
   int width = msb - lsb + 1;
-  VIXL_ASSERT(is_uintn(width, bits) || is_intn(width, bits));
+  VIXL_ASSERT(IsUintN(width, bits) || IsIntN(width, bits));
 
   bits <<= lsb;
   uint32_t mask = ((1 << width) - 1) << lsb;
@@ -1965,6 +1965,7 @@ void Simulator::VisitFPIntegerConvert(const Instruction* instr) {
     case FCVTZU_xs: set_xreg(dst, FPToUInt64(sreg(src), FPZero)); break;
     case FCVTZU_wd: set_wreg(dst, FPToUInt32(dreg(src), FPZero)); break;
     case FCVTZU_xd: set_xreg(dst, FPToUInt64(dreg(src), FPZero)); break;
+    case FJCVTZS: set_wreg(dst, FPToFixedJS(dreg(src))); break;
     case FMOV_ws: set_wreg(dst, sreg_bits(src)); break;
     case FMOV_xd: set_xreg(dst, dreg_bits(src)); break;
     case FMOV_sw: set_sreg_bits(dst, wreg(src)); break;
@@ -2152,12 +2153,24 @@ void Simulator::VisitFPDataProcessing1Source(const Instruction* instr) {
     case FABS_d: fabs_(kFormatD, vreg(fd), vreg(fn)); return;
     case FNEG_s: fneg(kFormatS, vreg(fd), vreg(fn)); return;
     case FNEG_d: fneg(kFormatD, vreg(fd), vreg(fn)); return;
-    case FCVT_ds: set_dreg(fd, FPToDouble(sreg(fn))); return;
-    case FCVT_sd: set_sreg(fd, FPToFloat(dreg(fn), FPTieEven)); return;
-    case FCVT_hs: set_hreg(fd, FPToFloat16(sreg(fn), FPTieEven)); return;
-    case FCVT_sh: set_sreg(fd, FPToFloat(hreg(fn))); return;
-    case FCVT_dh: set_dreg(fd, FPToDouble(FPToFloat(hreg(fn)))); return;
-    case FCVT_hd: set_hreg(fd, FPToFloat16(dreg(fn), FPTieEven)); return;
+    case FCVT_ds:
+      set_dreg(fd, FPToDouble(sreg(fn), ReadDN()));
+      return;
+    case FCVT_sd:
+      set_sreg(fd, FPToFloat(dreg(fn), FPTieEven, ReadDN()));
+      return;
+    case FCVT_hs:
+      set_hreg(fd, Float16ToRawbits(FPToFloat16(sreg(fn), FPTieEven, ReadDN())));
+      return;
+    case FCVT_sh:
+      set_sreg(fd, FPToFloat(RawbitsToFloat16(hreg(fn)), ReadDN()));
+      return;
+    case FCVT_dh:
+      set_dreg(fd, FPToDouble(hreg(fn), ReadDN()));
+      return;
+    case FCVT_hd:
+      set_hreg(fd, Float16ToRawbits(FPToFloat16(dreg(fn), FPTieEven, ReadDN())));
+      return;
     case FSQRT_s:
     case FSQRT_d: fsqrt(vform, rd, rn); return;
     case FRINTI_s:
@@ -3289,10 +3302,10 @@ void Simulator::VisitNEONModifiedImmediate(const Instruction* instr) {
       } else {  // cmode_0 == 1, cmode == 0xf.
         if (op_bit == 0) {
           vform = q ? kFormat4S : kFormat2S;
-          imm = float_to_rawbits(instr->ImmNEONFP32());
+          imm = FloatToRawbits(instr->ImmNEONFP32());
         } else if (q == 1) {
           vform = kFormat2D;
-          imm = double_to_rawbits(instr->ImmNEONFP64());
+          imm = DoubleToRawbits(instr->ImmNEONFP64());
         } else {
           VIXL_ASSERT((q == 0) && (op_bit == 1) && (cmode == 0xf));
           VisitUnallocated(instr);
@@ -3816,8 +3829,7 @@ void Simulator::VisitNEONPerm(const Instruction* instr) {
 
 
 void Simulator::DoUnreachable(const Instruction* instr) {
-  VIXL_ASSERT((instr->Mask(ExceptionMask) == HLT) &&
-              (instr->ImmException() == kUnreachableOpcode));
+  VIXL_ASSERT(instr->InstructionBits() == UNDEFINED_INST_PATTERN);
 
   fprintf(stream_, "Hit UNREACHABLE marker at pc=%p.\n",
           reinterpret_cast<const void*>(instr));

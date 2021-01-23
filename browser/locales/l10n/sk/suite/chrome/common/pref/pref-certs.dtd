@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY managecerts.caption      "Správa certifikátov">
+<!ENTITY managecerts.text         "Použite tohto Správcu certifikátov na správu svojich vlastných certifikátov, ako aj certifikátov iných ľudí a certifikačných autorít.">
+<!ENTITY managecerts.button       "Správa certifikátov…">
+<!ENTITY managecerts.accesskey    "c">
+<!ENTITY managedevices.caption    "Správa bezpečnostných zariadení">
+<!ENTITY managedevices.text       "Použite toto tlačidlo na správu svojich bezpečnostných zariadení, napríklad Smart Cards.">
+<!ENTITY managedevices.button     "Správa bezpečnostných zariadení…">
+<!ENTITY managedevices.accesskey  "b">
+
+<!ENTITY ssl.label                "SSL">
+
+<!ENTITY pref.certs.title         "Certifikáty">
+<!ENTITY certs.label              "Certifikáty">
+
+<!ENTITY validation.ocsp.caption              "Online overenie stavu certifikátov">
+<!ENTITY enableOCSP.label                     "Použiť Online overenie stavu certifikátov (OCSP) na potvrdenie platnosti certifikátov">
+<!ENTITY enableOCSP.accesskey                 "u">
+<!ENTITY validation.requireOCSP.description   "Ak pripojenie k serveru OCSP zlyhá, označiť certifikát ako neplatný">
+<!ENTITY validation.requireOCSP.accesskey     "A">

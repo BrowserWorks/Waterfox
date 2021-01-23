@@ -3,8 +3,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "mozilla/java/GeckoAppShellWrappers.h"
 #include "nsAndroidHandlerApp.h"
-#include "GeneratedJNIWrappers.h"
 
 using namespace mozilla;
 
@@ -67,8 +67,8 @@ nsAndroidHandlerApp::Equals(nsIHandlerApp* aHandlerApp, bool* aRetval) {
 }
 
 NS_IMETHODIMP
-nsAndroidHandlerApp::LaunchWithURI(nsIURI* aURI,
-                                   nsIInterfaceRequestor* aWindowContext) {
+nsAndroidHandlerApp::LaunchWithURI(
+    nsIURI* aURI, mozilla::dom::BrowsingContext* aBrowsingContext) {
   nsCString uriSpec;
   aURI->GetSpec(uriSpec);
   return java::GeckoAppShell::OpenUriExternal(uriSpec, mMimeType, mPackageName,

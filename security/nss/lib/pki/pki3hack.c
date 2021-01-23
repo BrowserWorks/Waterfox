@@ -825,6 +825,36 @@ fill_CERTCertificateFields(NSSCertificate *c, CERTCertificate *cc, PRBool forced
             cc->trust = trust;
             CERT_UnlockCertTrust(cc);
         }
+        /* Read the distrust fields from a nssckbi/builtins certificate and
+         * fill the fields in CERTCertificate structure when any valid date
+         * is found. */
+        if (PK11_IsReadOnly(cc->slot) && PK11_HasRootCerts(cc->slot)) {
+            /* The values are hard-coded and readonly. Read just once. */
+            if (cc->distrust == NULL) {
+                CERTCertDistrust distrustModel;
+                SECItem model = { siUTCTime, NULL, 0 };
+                distrustModel.serverDistrustAfter = model;
+                distrustModel.emailDistrustAfter = model;
+                SECStatus rServer = PK11_ReadAttribute(
+                    cc->slot, cc->pkcs11ID, CKA_NSS_SERVER_DISTRUST_AFTER,
+                    cc->arena, &distrustModel.serverDistrustAfter);
+                SECStatus rEmail = PK11_ReadAttribute(
+                    cc->slot, cc->pkcs11ID, CKA_NSS_EMAIL_DISTRUST_AFTER,
+                    cc->arena, &distrustModel.emailDistrustAfter);
+                /* Only allocate the Distrust structure if a valid date is found.
+                 * The result length of a encoded valid timestamp is exactly 13 */
+                const unsigned int kDistrustFieldSize = 13;
+                if ((rServer == SECSuccess && rEmail == SECSuccess) &&
+                    (distrustModel.serverDistrustAfter.len == kDistrustFieldSize ||
+                     distrustModel.emailDistrustAfter.len == kDistrustFieldSize)) {
+                    CERTCertDistrust *tmpPtr = PORT_ArenaAlloc(
+                        cc->arena, sizeof(CERTCertDistrust));
+                    PORT_Memcpy(tmpPtr, &distrustModel,
+                                sizeof(CERTCertDistrust));
+                    cc->distrust = tmpPtr;
+                }
+            }
+        }
     }
     if (instance) {
         nssCryptokiObject_Destroy(instance);
@@ -891,14 +921,28 @@ stan_GetCERTCertificate(NSSCertificate *c, PRBool forceUpdate)
     }
     if (!cc->nssCertificate || forceUpdate) {
         fill_CERTCertificateFields(c, cc, forceUpdate);
-    } else if (CERT_GetCertTrust(cc, &certTrust) != SECSuccess &&
-               !c->object.cryptoContext) {
-        /* if it's a perm cert, it might have been stored before the
-         * trust, so look for the trust again.  But a temp cert can be
-         * ignored.
-         */
-        CERTCertTrust *trust = NULL;
-        trust = nssTrust_GetCERTCertTrustForCert(c, cc);
+    } else if (CERT_GetCertTrust(cc, &certTrust) != SECSuccess) {
+        CERTCertTrust *trust;
+        if (!c->object.cryptoContext) {
+            /* If it's a perm cert, it might have been stored before the
+             * trust, so look for the trust again.
+             */
+            trust = nssTrust_GetCERTCertTrustForCert(c, cc);
+        } else {
+            /* If it's a temp cert, it might have been stored before the
+             * builtin trust module is loaded, so look for the trust
+             * again, but don't set the empty trust if it is not found.
+             */
+            NSSTrust *t = nssTrustDomain_FindTrustForCertificate(c->object.cryptoContext->td, c);
+            if (!t) {
+                goto loser;
+            }
+            trust = cert_trust_from_stan_trust(t, cc->arena);
+            nssTrust_Destroy(t);
+            if (!trust) {
+                goto loser;
+            }
+        }
 
         CERT_LockCertTrust(cc);
         cc->trust = trust;
@@ -1002,20 +1046,19 @@ STAN_GetNSSCertificate(CERTCertificate *cc)
                    &c->issuer, cc->derIssuer.len, cc->derIssuer.data);
     nssItem_Create(arena,
                    &c->subject, cc->derSubject.len, cc->derSubject.data);
-    if (PR_TRUE) {
-        /* CERTCertificate stores serial numbers decoded.  I need the DER
-        * here.  sigh.
-        */
-        SECItem derSerial;
-        SECStatus secrv;
-        secrv = CERT_SerialNumberFromDERCert(&cc->derCert, &derSerial);
-        if (secrv == SECFailure) {
-            nssArena_Destroy(arena);
-            return NULL;
-        }
-        nssItem_Create(arena, &c->serial, derSerial.len, derSerial.data);
-        PORT_Free(derSerial.data);
+    /* CERTCertificate stores serial numbers decoded.  I need the DER
+    * here.  sigh.
+    */
+    SECItem derSerial;
+    SECStatus secrv;
+    secrv = CERT_SerialNumberFromDERCert(&cc->derCert, &derSerial);
+    if (secrv == SECFailure) {
+        nssArena_Destroy(arena);
+        return NULL;
     }
+    nssItem_Create(arena, &c->serial, derSerial.len, derSerial.data);
+    PORT_Free(derSerial.data);
+
     if (cc->emailAddr && cc->emailAddr[0]) {
         c->email = nssUTF8_Create(arena,
                                   nssStringType_PrintableString,

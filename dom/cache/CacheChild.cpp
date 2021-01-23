@@ -10,6 +10,7 @@
 #include "mozilla/dom/cache/ActorUtils.h"
 #include "mozilla/dom/cache/Cache.h"
 #include "mozilla/dom/cache/CacheOpChild.h"
+#include "CacheWorkerRef.h"
 
 namespace mozilla {
 namespace dom {
@@ -53,8 +54,10 @@ void CacheChild::ClearListener() {
 void CacheChild::ExecuteOp(nsIGlobalObject* aGlobal, Promise* aPromise,
                            nsISupports* aParent, const CacheOpArgs& aArgs) {
   mNumChildActors += 1;
-  MOZ_ALWAYS_TRUE(SendPCacheOpConstructor(
-      new CacheOpChild(GetWorkerHolder(), aGlobal, aParent, aPromise), aArgs));
+  MOZ_ALWAYS_TRUE(
+      SendPCacheOpConstructor(new CacheOpChild(GetWorkerRefPtr().clonePtr(),
+                                               aGlobal, aParent, aPromise),
+                              aArgs));
 }
 
 void CacheChild::StartDestroyFromListener() {
@@ -83,7 +86,7 @@ void CacheChild::StartDestroy() {
 
   RefPtr<Cache> listener = mListener;
 
-  // StartDestroy() can get called from either Cache or the WorkerHolder.
+  // StartDestroy() can get called from either Cache or the WorkerRef.
   // Theoretically we can get double called if the right race happens.  Handle
   // that by just ignoring the second StartDestroy() call.
   if (!listener) {
@@ -108,7 +111,7 @@ void CacheChild::ActorDestroy(ActorDestroyReason aReason) {
     MOZ_DIAGNOSTIC_ASSERT(!mListener);
   }
 
-  RemoveWorkerHolder();
+  RemoveWorkerRef();
 }
 
 PCacheOpChild* CacheChild::AllocPCacheOpChild(const CacheOpArgs& aOpArgs) {

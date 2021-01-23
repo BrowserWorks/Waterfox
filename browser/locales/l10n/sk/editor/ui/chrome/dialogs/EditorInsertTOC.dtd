@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title         "Obsah">
+<!ENTITY buildToc.label       "Vytvoriť obsah z:">
+<!ENTITY tag.label            "Značka:">
+<!ENTITY class.label          "Trieda:">
+<!ENTITY header1.label        "Úroveň 1">
+<!ENTITY header2.label        "Úroveň 2">
+<!ENTITY header3.label        "Úroveň 3">
+<!ENTITY header4.label        "Úroveň 4">
+<!ENTITY header5.label        "Úroveň 5">
+<!ENTITY header6.label        "Úroveň 6">
+<!ENTITY makeReadOnly.label   "Zamknúť obsah (ochrana pred priamou úpravou)">
+<!ENTITY orderedList.label    "Číslovať všetky položky v obsahu">

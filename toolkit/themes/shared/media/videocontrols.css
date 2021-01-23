@@ -28,10 +28,9 @@
   --track-size: 5px;
   --thumb-size: 13px;
   --label-font-size: 13px;
-  --pip-toggle-bgcolor: rgb(0, 96, 223);
-  --pip-toggle-text-and-icon-color: rgb(255, 255, 255);
   --pip-toggle-padding: 5px;
   --pip-toggle-icon-width-height: 16px;
+  --pip-toggle-translate-x: calc(100% - var(--pip-toggle-icon-width-height) - 2 * var(--pip-toggle-padding));
 }
 .controlsContainer.touch {
   --clickToPlay-size: 64px;
@@ -103,6 +102,7 @@
   justify-content: center;
   align-items: center;
   background-color: rgb(80,80,80, .85);
+  color: #fff;
 }
 
 .controlsOverlay {
@@ -130,6 +130,7 @@
   height: 40px;
   padding: 0 9px;
   background-color: rgba(26,26,26,.8);
+  color: #fff;
 }
 
 .touch .controlBar {
@@ -149,18 +150,21 @@
   background-origin: content-box;
   background-clip: content-box;
   -moz-context-properties: fill;
-  fill: #ffffff;
+  fill: currentColor;
+  color: inherit;
+  /* We don't suppress ::-moz-focus-inner, so that does for a focus indicator */
+  outline: none;
 }
 
 .touch .controlBar > .button {
   background-size: 24px 24px;
 }
 
-.controlBar > .button:hover {
+.controlBar > .button:enabled:hover {
   fill: #48a0f7;
 }
 
-.controlBar > .button:hover:active {
+.controlBar > .button:enabled:hover:active {
   fill: #2d89e6;
 }
 
@@ -177,11 +181,8 @@
 .muteButton[muted] {
   background-image: url(chrome://global/skin/media/audioMutedButton.svg);
 }
-.muteButton[noAudio],
-.muteButton[noAudio]:hover,
-.muteButton[noAudio]:hover:active {
+.muteButton[noAudio] {
   background-image: url(chrome://global/skin/media/audioNoAudioButton.svg);
-  fill: white;
 }
 .muteButton[noAudio] + .volumeStack {
   display: none;
@@ -219,13 +220,13 @@
   width: var(--thumb-size);
   border: none;
   border-radius: 50%;
-  background-color: #ffffff;
+  background-color: #fff;
   filter: drop-shadow(0px 0px 2px rgba(0,0,0,0.65));
 }
 
-.volumeControl::-moz-focus-outer,
-.scrubber::-moz-focus-outer {
-  border: 0;
+.volumeControl,
+.scrubber {
+  outline: none;
 }
 
 .progressBackgroundBar {
@@ -262,7 +263,6 @@
 .bufferBar,
 .progressBar,
 .scrubber,
-.volumeBackground,
 .volumeControl {
   bottom: 0;
   left: 0;
@@ -274,17 +274,15 @@
   border-radius: calc(var(--track-size) / 2);
   margin: 0;
   background: none;
-  background-color: transparent;
+  outline: none;
 }
 
-.bufferBar,
-.volumeBackground {
+.bufferBar {
   background-color: rgba(0,0,0,0.7);
 }
 
 .bufferBar::-moz-progress-bar,
-.progressBar::-moz-progress-bar,
-.volumeBackground::-moz-meter-bar {
+.progressBar::-moz-progress-bar {
   height: 100%;
   padding: 0;
   margin: 0;
@@ -315,7 +313,7 @@
 }
 
 .volumeControl::-moz-range-progress {
-  background-color: #ffffff;
+  background-color: #fff;
 }
 
 .volumeControl::-moz-range-track {
@@ -332,17 +330,26 @@
   background-color: #00b6f0;
 }
 
-.textTrackList {
+.textTrackListContainer {
   position: absolute;
   right: 5px;
   bottom: 45px;
+  top: 5px;
   max-width: 80%;
-  border: 1px solid #000000;
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+}
+
+.textTrackList {
+  flex: 0 1 auto;
+  border: 1px solid #000;
   border-radius: 2.5px;
   padding: 5px 0;
   vertical-align: middle;
-  background-color: #000000;
+  background-color: #000;
   opacity: 0.7;
+  overflow-y: auto;
 }
 
 .touch .textTrackList {
@@ -361,12 +368,12 @@
   overflow: hidden;
   text-align: left;
   text-overflow: ellipsis;
-  color: #ffffff;
+  color: #fff;
   background-color: transparent;
 }
 
 .textTrackList > .textTrackItem:hover {
-  background-color: #444444;
+  background-color: #444;
 }
 
 .textTrackList > .textTrackItem[on] {
@@ -386,7 +393,6 @@
   font: message-box;
   font-size: var(--label-font-size);
   font-size-adjust: 0.55;
-  color: #ffffff;
 }
 
 %ifdef XP_MACOSX
@@ -434,26 +440,47 @@
   min-width: 84px;
   min-height: 84px;
   background-image: url(chrome://global/skin/media/pictureinpicture.svg);
-  -moz-context-properties: fill, stroke;
-  fill: #fff;
-  stroke: #fff;
+  -moz-context-properties: fill;
+  fill: currentColor;
 }
 
 .pictureInPictureToggleButton {
   display: flex;
   -moz-appearance: none;
   position: absolute;
-  background-color: var(--pip-toggle-bgcolor);
-  color: var(--pip-toggle-text-and-icon-color);
+  background-color: #0060df;
+  color: #fff;
   border: 0;
   padding: var(--pip-toggle-padding);
   right: 0;
   top: 50%;
-  transform: translateY(-50%) translateX(calc(100% - var(--pip-toggle-icon-width-height) - 2 * var(--pip-toggle-padding)));
-  transition: opacity 160ms linear, transform 160ms linear;
+  translate: var(--pip-toggle-translate-x) -50%;
+  transition: opacity 160ms linear, translate 160ms linear;
   min-width: max-content;
   pointer-events: auto;
   opacity: 0;
+}
+
+.pictureInPictureToggleButton[policy="hidden"] {
+  display: none;
+}
+
+.pictureInPictureToggleButton[policy="top"] {
+  top: 0%;
+  translate: var(--pip-toggle-translate-x);
+}
+
+.pictureInPictureToggleButton[policy="one-quarter"] {
+  top: 25%;
+}
+
+.pictureInPictureToggleButton[policy="three-quarters"] {
+  top: 75%;
+}
+
+.pictureInPictureToggleButton[policy="bottom"] {
+  top: 100%;
+  translate: var(--pip-toggle-translate-x) -100%;
 }
 
 .pictureInPictureToggleIcon {
@@ -461,25 +488,49 @@
   background-image: url(chrome://global/skin/media/pictureinpicture.svg);
   background-position: center left;
   background-repeat: no-repeat;
-  -moz-context-properties: fill, stroke;
-  fill: var(--pip-toggle-text-and-icon-color);
-  stroke: var(--pip-toggle-text-and-icon-color);
+  -moz-context-properties: fill;
+  fill: currentColor;
   width: var(--pip-toggle-icon-width-height);
   height: var(--pip-toggle-icon-width-height);
   min-width: max-content;
+}
+
+.statusIcon[type="pictureInPicture"]:dir(rtl),
+.pictureInPictureToggleIcon:dir(rtl) {
+  transform: scaleX(-1);
 }
 
 .pictureInPictureToggleLabel {
   margin-inline-start: var(--pip-toggle-padding);
 }
 
-.controlsOverlay:hover > .pictureInPictureToggleButton {
+/**
+ * For the Picture-in-Picture toggle, we don't use the built-in :hover
+ * pseudoclass because there are many sites where the arrangement of the DOM
+ * or the CSS will conspire to prevent :hover from matching on the <video>
+ * itself. PictureInPictureToggleChild takes care of punching through those
+ * barriers, and manually sets a .hovering class.
+ */
+
+.controlsOverlay.hovering > .pictureInPictureToggleButton {
   opacity: 0.8;
 }
 
-.controlsOverlay:hover > .pictureInPictureToggleButton:hover {
+.controlsOverlay[hidetoggle="true"].hovering > .pictureInPictureToggleButton:not(.hovering) {
+  opacity: 0;
+}
+
+.controlsOverlay.hovering > .pictureInPictureToggleButton.hovering {
   opacity: 1;
-  transform: translateY(-50%) translateX(0);
+  translate: 0 -50%;
+}
+
+.controlsOverlay.hovering > .pictureInPictureToggleButton.hovering[policy="top"] {
+  translate: 0;
+}
+
+.controlsOverlay.hovering > .pictureInPictureToggleButton.hovering[policy="bottom"] {
+  translate: 0 -100%
 }
 
 @supports -moz-bool-pref("media.videocontrols.picture-in-picture.video-toggle.testing") {
@@ -503,7 +554,7 @@
   background-size: 40% 40%;
   background-color: #1a1a1a;
   -moz-context-properties: fill;
-  fill: #ffffff;
+  fill: #fff;
   opacity: 0.8;
   position: relative;
   top: 20px;
@@ -534,6 +585,7 @@
   align-items: center;
   opacity: 1;
   background-color: rgb(12, 12, 13);
+  color: #fff;
 }
 
 /* Status description formatting */
@@ -542,20 +594,19 @@
   text-align: center;
   font: message-box;
   font-size: 14px;
-  color: #ffffff;
 }
 
 .statusLabel {
   display: none;
 }
 
-[status="errorAborted"]         > [id="errorAborted"],
-[status="errorNetwork"]         > [id="errorNetwork"],
-[status="errorDecode"]          > [id="errorDecode"],
-[status="errorSrcNotSupported"] > [id="errorSrcNotSupported"],
-[status="errorNoSource"]        > [id="errorNoSource"],
-[status="errorGeneric"]         > [id="errorGeneric"],
-[status="pictureInPicture"]     > [id="pictureInPicture"] {
+[status="errorAborted"]         > #errorAborted,
+[status="errorNetwork"]         > #errorNetwork,
+[status="errorDecode"]          > #errorDecode,
+[status="errorSrcNotSupported"] > #errorSrcNotSupported,
+[status="errorNoSource"]        > #errorNoSource,
+[status="errorGeneric"]         > #errorGeneric,
+[status="pictureInPicture"]     > #pictureInPicture {
   display: inline;
 }
 

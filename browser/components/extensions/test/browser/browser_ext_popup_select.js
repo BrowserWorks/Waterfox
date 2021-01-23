@@ -2,11 +2,12 @@
 /* vim: set sts=2 sw=2 et tw=80: */
 "use strict";
 
-add_task(async function testSetup() {
-  Services.prefs.setBoolPref("toolkit.cosmeticAnimations.enabled", false);
-});
-
 add_task(async function testPopupSelectPopup() {
+  let tab = await BrowserTestUtils.openNewForegroundTab({
+    gBrowser,
+    url: "https://example.com",
+  });
+
   let extension = ExtensionTestUtils.loadExtension({
     background() {
       browser.tabs.query({ active: true, currentWindow: true }, tabs => {
@@ -53,7 +54,7 @@ add_task(async function testPopupSelectPopup() {
 
     // Wait the select element in the popup window to be ready before sending a
     // mouse event to open the select popup.
-    await ContentTask.spawn(browser, null, async () => {
+    await SpecialPowers.spawn(browser, [], async () => {
       await ContentTaskUtils.waitForCondition(() => {
         return content.document && content.document.querySelector("#select");
       });
@@ -62,7 +63,7 @@ add_task(async function testPopupSelectPopup() {
 
     await popupPromise;
 
-    let elemRect = await ContentTask.spawn(browser, null, async function() {
+    let elemRect = await SpecialPowers.spawn(browser, [], async function() {
       let elem = content.document.getElementById("select");
       let r = elem.getBoundingClientRect();
 
@@ -110,6 +111,7 @@ add_task(async function testPopupSelectPopup() {
     await closePageAction(extension);
   }
 
+  BrowserTestUtils.removeTab(tab);
   await extension.unload();
 });
 

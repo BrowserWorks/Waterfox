@@ -23,14 +23,8 @@ const PREF_MIGRATION_VERSION = PREF_PREFIX + ".migrationVersion";
 const PREF_PREVIOUS_ACTION = PREF_PREFIX + ".previousHandler.preferredAction";
 const PREF_PREVIOUS_ASK =
   PREF_PREFIX + ".previousHandler.alwaysAskBeforeHandling";
-const PREF_DISABLED_PLUGIN_TYPES = "plugin.disable_full_page_plugin_for_types";
-const PREF_ENABLED_CACHE_STATE = PREF_PREFIX + ".enabledCache.state";
-const PREF_ENABLED_CACHE_INITIALIZED =
-  PREF_PREFIX + ".enabledCache.initialized";
-const PREF_APP_UPDATE_POSTUPDATE = "app.update.postupdate";
+const PREF_ISDEFAULT_CACHE_STATE = PREF_PREFIX + ".enabledCache.state";
 const TOPIC_PDFJS_HANDLER_CHANGED = "pdfjs:handlerChanged";
-const TOPIC_PLUGINS_LIST_UPDATED = "plugins-list-updated";
-const TOPIC_PLUGIN_INFO_UPDATED = "plugin-info-updated";
 const PDF_CONTENT_TYPE = "application/pdf";
 
 const { XPCOMUtils } = ChromeUtils.import(
@@ -47,9 +41,9 @@ XPCOMUtils.defineLazyServiceGetter(
 );
 XPCOMUtils.defineLazyServiceGetter(
   Svc,
-  "pluginHost",
-  "@mozilla.org/plugin/host;1",
-  "nsIPluginHost"
+  "handlerService",
+  "@mozilla.org/uriloader/handler-service;1",
+  "nsIHandlerService"
 );
 ChromeUtils.defineModuleGetter(
   this,
@@ -61,31 +55,6 @@ ChromeUtils.defineModuleGetter(
   "PdfJsDefaultPreferences",
   "resource://pdf.js/PdfJsDefaultPreferences.jsm"
 );
-
-function getBoolPref(aPref, aDefaultValue) {
-  try {
-    return Services.prefs.getBoolPref(aPref);
-  } catch (ex) {
-    return aDefaultValue;
-  }
-}
-
-function getIntPref(aPref, aDefaultValue) {
-  try {
-    return Services.prefs.getIntPref(aPref);
-  } catch (ex) {
-    return aDefaultValue;
-  }
-}
-
-function isDefaultHandler() {
-  if (Services.appinfo.processType !== Services.appinfo.PROCESS_TYPE_DEFAULT) {
-    throw new Error(
-      "isDefaultHandler should only get called in the parent process."
-    );
-  }
-  return PdfjsChromeUtils.isDefaultHandlerApp();
-}
 
 function initializeDefaultPreferences() {
   var defaultBranch = Services.prefs.getDefaultBranch(PREF_PREFIX + ".");
@@ -106,11 +75,32 @@ function initializeDefaultPreferences() {
   }
 }
 
+// We're supposed to get this type of thing from the OS, and generally we do.
+// But doing so is expensive, so on startup paths we can use this to make the
+// handler service get and store the Right Thing (it just goes into a JSON
+// file) and avoid the performance issues.
+const gPdfFakeHandlerInfo = {
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIMIMEInfo]),
+  getFileExtensions() {
+    return ["pdf"];
+  },
+  possibleApplicationHandlers: Cc["@mozilla.org/array;1"].createInstance(
+    Ci.nsIMutableArray
+  ),
+  extensionExists(ext) {
+    return ext == "pdf";
+  },
+  alwaysAskBeforeHandling: false,
+  preferredAction: Ci.nsIHandlerInfo.handleInternally,
+  type: PDF_CONTENT_TYPE,
+};
+
 var PdfJs = {
   QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver]),
   _initialized: false,
+  _cachedIsDefault: true,
 
-  init: function init(remote) {
+  init: function init(isNewProfile) {
     if (
       Services.appinfo.processType !== Services.appinfo.PROCESS_TYPE_DEFAULT
     ) {
@@ -120,14 +110,7 @@ var PdfJs = {
     }
     PdfjsChromeUtils.init();
     this.initPrefs();
-
-    Services.ppmm.sharedData.set("pdfjs.enabled", this.checkEnabled());
-  },
-
-  earlyInit() {
-    // Note: Please keep this in sync with the duplicated logic in
-    // BrowserGlue.jsm.
-    Services.ppmm.sharedData.set("pdfjs.enabled", this.checkEnabled());
+    this.checkIsDefault(isNewProfile);
   },
 
   initPrefs: function initPrefs() {
@@ -136,35 +119,28 @@ var PdfJs = {
     }
     this._initialized = true;
 
-    if (!getBoolPref(PREF_DISABLED, true)) {
+    if (this._prefDisabled) {
+      this._unbecomeHandler();
+    } else {
       this._migrate();
     }
 
-    // Listen for when pdf.js is completely disabled or a different pdf handler
-    // is chosen.
-    Services.prefs.addObserver(PREF_DISABLED, this);
-    Services.prefs.addObserver(PREF_DISABLED_PLUGIN_TYPES, this);
+    // Listen for when a different pdf handler is chosen.
     Services.obs.addObserver(this, TOPIC_PDFJS_HANDLER_CHANGED);
-    Services.obs.addObserver(this, TOPIC_PLUGINS_LIST_UPDATED);
-    Services.obs.addObserver(this, TOPIC_PLUGIN_INFO_UPDATED);
 
     initializeDefaultPreferences();
   },
 
   uninit: function uninit() {
     if (this._initialized) {
-      Services.prefs.removeObserver(PREF_DISABLED, this);
-      Services.prefs.removeObserver(PREF_DISABLED_PLUGIN_TYPES, this);
       Services.obs.removeObserver(this, TOPIC_PDFJS_HANDLER_CHANGED);
-      Services.obs.removeObserver(this, TOPIC_PLUGINS_LIST_UPDATED);
-      Services.obs.removeObserver(this, TOPIC_PLUGIN_INFO_UPDATED);
       this._initialized = false;
     }
   },
 
   _migrate: function migrate() {
     const VERSION = 2;
-    var currentVersion = getIntPref(PREF_MIGRATION_VERSION, 0);
+    var currentVersion = Services.prefs.getIntPref(PREF_MIGRATION_VERSION, 0);
     if (currentVersion >= VERSION) {
       return;
     }
@@ -180,129 +156,113 @@ var PdfJs = {
   },
 
   _becomeHandler: function _becomeHandler() {
-    let handlerInfo = Svc.mime.getFromTypeAndExtension(PDF_CONTENT_TYPE, "pdf");
-    let prefs = Services.prefs;
-    if (
-      handlerInfo.preferredAction !== Ci.nsIHandlerInfo.handleInternally &&
-      handlerInfo.preferredAction !== false
-    ) {
-      // Store the previous settings of preferredAction and
-      // alwaysAskBeforeHandling in case we need to revert them in a hotfix that
-      // would turn pdf.js off.
-      prefs.setIntPref(PREF_PREVIOUS_ACTION, handlerInfo.preferredAction);
-      prefs.setBoolPref(PREF_PREVIOUS_ASK, handlerInfo.alwaysAskBeforeHandling);
-    }
-
-    let handlerService = Cc[
-      "@mozilla.org/uriloader/handler-service;1"
-    ].getService(Ci.nsIHandlerService);
-
-    // Change and save mime handler settings.
-    handlerInfo.alwaysAskBeforeHandling = false;
-    handlerInfo.preferredAction = Ci.nsIHandlerInfo.handleInternally;
-    handlerService.store(handlerInfo);
-
-    // Also disable any plugins for pdfs.
-    var stringTypes = "";
-    var types = [];
-    if (prefs.prefHasUserValue(PREF_DISABLED_PLUGIN_TYPES)) {
-      stringTypes = prefs.getCharPref(PREF_DISABLED_PLUGIN_TYPES);
-    }
-    if (stringTypes !== "") {
-      types = stringTypes.split(",");
-    }
-
-    if (!types.includes(PDF_CONTENT_TYPE)) {
-      types.push(PDF_CONTENT_TYPE);
-    }
-    prefs.setCharPref(PREF_DISABLED_PLUGIN_TYPES, types.join(","));
-
-    // Update the category manager in case the plugins are already loaded.
-    Services.catMan.deleteCategoryEntry(
-      "Gecko-Content-Viewers",
-      PDF_CONTENT_TYPE,
-      false
-    );
-  },
-
-  _isEnabled: function _isEnabled() {
-    var disabled = getBoolPref(PREF_DISABLED, true);
-    if (disabled) {
-      return false;
-    }
-
-    // Check if the 'application/pdf' preview handler is configured properly.
-    if (!isDefaultHandler()) {
-      return false;
-    }
-
-    // Check if we have disabled plugin handling of 'application/pdf' in prefs
-    if (Services.prefs.prefHasUserValue(PREF_DISABLED_PLUGIN_TYPES)) {
-      let disabledPluginTypes = Services.prefs
-        .getCharPref(PREF_DISABLED_PLUGIN_TYPES)
-        .split(",");
-      if (disabledPluginTypes.includes(PDF_CONTENT_TYPE)) {
-        return true;
-      }
-    }
-
-    // Check if there is an enabled pdf plugin.
-    // Note: this check is performed last because getPluginTags() triggers
-    // costly plugin list initialization (bug 881575)
-    let tags = Cc["@mozilla.org/plugin/host;1"]
-      .getService(Ci.nsIPluginHost)
-      .getPluginTags();
-    let enabledPluginFound = tags.some(function(tag) {
-      if (tag.disabled) {
-        return false;
-      }
-      let mimeTypes = tag.getMimeTypes();
-      return mimeTypes.some(function(mimeType) {
-        return mimeType === PDF_CONTENT_TYPE;
-      });
-    });
-
-    // Use pdf.js if pdf plugin is not present or disabled
-    return !enabledPluginFound;
-  },
-
-  checkEnabled: function checkEnabled() {
-    let isEnabled = this._isEnabled();
-    // This will be updated any time we observe a dependency changing, since
-    // updateRegistration internally calls enabled.
-    Services.prefs.setBoolPref(PREF_ENABLED_CACHE_STATE, isEnabled);
-    return isEnabled;
-  },
-
-  // nsIObserver
-  observe: function observe(aSubject, aTopic, aData) {
-    if (
-      Services.appinfo.processType !== Services.appinfo.PROCESS_TYPE_DEFAULT
-    ) {
-      throw new Error(
-        "Only the parent process should be observing PDF handler changes."
+    // Normally, this happens in the first run at some point, where the
+    // handler service doesn't have any info on user preferences yet.
+    // Don't bother storing old defaults in this case, as they're
+    // meaningless anyway.
+    if (!Svc.handlerService.exists(gPdfFakeHandlerInfo)) {
+      // Store the requisite info into the DB, and nothing else:
+      Svc.handlerService.store(gPdfFakeHandlerInfo);
+    } else {
+      let handlerInfo = Svc.mime.getFromTypeAndExtension(
+        PDF_CONTENT_TYPE,
+        "pdf"
       );
-    }
+      let prefs = Services.prefs;
+      if (
+        handlerInfo.preferredAction !== Ci.nsIHandlerInfo.handleInternally &&
+        handlerInfo.alwaysAskBeforeHandling !== false
+      ) {
+        // Store the previous settings of preferredAction and
+        // alwaysAskBeforeHandling in case we need to revert them in a hotfix that
+        // would turn pdf.js off.
+        prefs.setIntPref(PREF_PREVIOUS_ACTION, handlerInfo.preferredAction);
+        prefs.setBoolPref(
+          PREF_PREVIOUS_ASK,
+          handlerInfo.alwaysAskBeforeHandling
+        );
+      }
 
-    Services.ppmm.sharedData.set("pdfjs.enabled", this.checkEnabled());
+      // Change and save mime handler settings.
+      handlerInfo.alwaysAskBeforeHandling = false;
+      handlerInfo.preferredAction = Ci.nsIHandlerInfo.handleInternally;
+      Svc.handlerService.store(handlerInfo);
+    }
+  },
+
+  _unbecomeHandler: function _unbecomeHandler() {
+    let handlerInfo = Svc.mime.getFromTypeAndExtension(PDF_CONTENT_TYPE, "pdf");
+    if (handlerInfo.preferredAction === Ci.nsIHandlerInfo.handleInternally) {
+      // If PDFJS is disabled, but we're still marked to handleInternally,
+      // either put it back to what it was, or remove it.
+      if (Services.prefs.prefHasUserValue(PREF_PREVIOUS_ACTION)) {
+        handlerInfo.preferredAction = Services.prefs.getIntPref(
+          PREF_PREVIOUS_ACTION
+        );
+        handlerInfo.alwaysAskBeforeHandling = Services.prefs.getBoolPref(
+          PREF_PREVIOUS_ASK
+        );
+        Svc.handlerService.store(handlerInfo);
+      } else {
+        Svc.handlerService.remove(handlerInfo);
+        // Clear migration pref so the handler comes back if reenabled
+        Services.prefs.clearIntPref(PREF_MIGRATION_VERSION);
+      }
+    }
   },
 
   /**
-   * pdf.js is only enabled if it is both selected as the pdf viewer and if the
-   * global switch enabling it is true.
-   * @return {boolean} Whether or not it's enabled.
+   * @param isNewProfile used to decide whether we need to check the
+   *                     handler service to see if the user configured
+   *                     pdfs differently. If we're on a new profile,
+   *                     there's no need to check.
    */
-  get enabled() {
-    if (!Services.prefs.getBoolPref(PREF_ENABLED_CACHE_INITIALIZED, false)) {
-      // If we just updated, and the cache hasn't been initialized, then we
-      // can't assume a default state, and need to synchronously initialize
-      // PdfJs
-      if (Services.prefs.prefHasUserValue(PREF_APP_UPDATE_POSTUPDATE)) {
-        this.checkEnabled();
-      }
-
-      Services.prefs.setBoolPref(PREF_ENABLED_CACHE_INITIALIZED, true);
+  _isDefault(isNewProfile) {
+    let { processType, PROCESS_TYPE_DEFAULT } = Services.appinfo;
+    if (processType !== PROCESS_TYPE_DEFAULT) {
+      throw new Error(
+        "isDefault should only get called in the parent process."
+      );
     }
-    return Services.prefs.getBoolPref(PREF_ENABLED_CACHE_STATE, true);
+
+    if (this._prefDisabled) {
+      return false;
+    }
+
+    // Don't bother with the handler service on a new profile:
+    if (isNewProfile) {
+      return true;
+    }
+    // Check if the 'application/pdf' preview handler is configured properly.
+    let handlerInfo = Svc.mime.getFromTypeAndExtension(PDF_CONTENT_TYPE, "pdf");
+    return (
+      !handlerInfo.alwaysAskBeforeHandling &&
+      handlerInfo.preferredAction == Ci.nsIHandlerInfo.handleInternally
+    );
+  },
+
+  checkIsDefault(isNewProfile) {
+    this._cachedIsDefault = this._isDefault(isNewProfile);
+    Services.prefs.setBoolPref(
+      PREF_ISDEFAULT_CACHE_STATE,
+      this._cachedIsDefault
+    );
+  },
+
+  cachedIsDefault() {
+    return this._cachedIsDefault;
+  },
+
+  // nsIObserver
+  observe(aSubject, aTopic, aData) {
+    this.checkIsDefault();
   },
 };
+
+XPCOMUtils.defineLazyPreferenceGetter(
+  PdfJs,
+  "_prefDisabled",
+  PREF_DISABLED,
+  false,
+  () => PdfJs.checkIsDefault()
+);

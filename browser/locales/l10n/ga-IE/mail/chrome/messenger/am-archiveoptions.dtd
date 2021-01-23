@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-archiveoptions.xul -->
+
+
+<!-- extracted from am-archiveoptions.xhtml -->
+
+<!ENTITY dialogTitle.label "Roghanna Cartlannaithe">
+<!ENTITY archiveGranularityPrefix.label "Agus teachtaireachtaí á gcartlannú, cuir:">
+<!ENTITY archiveFlat.label "i bhfillteán amháin iad">
+<!ENTITY archiveFlat.accesskey "a">
+<!ENTITY archiveYearly.label "i bhfillteáin bhliantúla iad">
+<!ENTITY archiveYearly.accesskey "b">
+<!ENTITY archiveMonthly.label "i bhfillteáin mhíosúla iad">
+<!ENTITY archiveMonthly.accesskey "m">
+<!ENTITY keepFolderStructure.label "Coinnigh struchtúr na bhfillteán le haghaidh teachtaireachtaí cartlannaithe">
+<!ENTITY keepFolderStructure.accesskey "C">
+<!ENTITY archiveExample.label "Sampla">
+<!-- LOCALIZATION NOTE (archiveFolderName.label): this should match the default
+     name for the "Archives" folder -->
+<!ENTITY archiveFolderName.label "Cartlanna">
+<!-- LOCALIZATION NOTE (inboxFolderName.label): this should match the default
+     name for the "Inbox" folder -->
+<!ENTITY inboxFolderName.label "Bosca Isteach">

@@ -11,6 +11,7 @@
 #include "nsNetCID.h"
 #include "nsNetUtil.h"
 #include "nsIParser.h"
+#include "nsComponentManagerUtils.h"  // for do_CreateInstance
 #include "nsParserCIID.h"
 #include "nsStreamUtils.h"
 #include "nsStringStream.h"
@@ -57,13 +58,13 @@ nsSAXXMLReader::DidBuildModel(bool aTerminated) {
 }
 
 NS_IMETHODIMP
-nsSAXXMLReader::SetParser(nsParserBase *aParser) { return NS_OK; }
+nsSAXXMLReader::SetParser(nsParserBase* aParser) { return NS_OK; }
 
 // nsIExpatSink
 
 NS_IMETHODIMP
-nsSAXXMLReader::HandleStartElement(const char16_t *aName,
-                                   const char16_t **aAtts, uint32_t aAttsCount,
+nsSAXXMLReader::HandleStartElement(const char16_t* aName,
+                                   const char16_t** aAtts, uint32_t aAttsCount,
                                    uint32_t aLineNumber,
                                    uint32_t aColumnNumber) {
   if (!mContentHandler) return NS_OK;
@@ -89,7 +90,7 @@ nsSAXXMLReader::HandleStartElement(const char16_t *aName,
 }
 
 NS_IMETHODIMP
-nsSAXXMLReader::HandleEndElement(const char16_t *aName) {
+nsSAXXMLReader::HandleEndElement(const char16_t* aName) {
   if (mContentHandler) {
     nsAutoString uri, localName, qName;
     SplitExpatName(aName, uri, localName, qName);
@@ -99,13 +100,13 @@ nsSAXXMLReader::HandleEndElement(const char16_t *aName) {
 }
 
 NS_IMETHODIMP
-nsSAXXMLReader::HandleComment(const char16_t *aName) {
+nsSAXXMLReader::HandleComment(const char16_t* aName) {
   NS_ASSERTION(aName, "null passed to handler");
   return NS_OK;
 }
 
 NS_IMETHODIMP
-nsSAXXMLReader::HandleCDataSection(const char16_t *aData, uint32_t aLength) {
+nsSAXXMLReader::HandleCDataSection(const char16_t* aData, uint32_t aLength) {
   if (mContentHandler) {
     nsresult rv =
         mContentHandler->Characters(Substring(aData, aData + aLength));
@@ -115,16 +116,16 @@ nsSAXXMLReader::HandleCDataSection(const char16_t *aData, uint32_t aLength) {
 }
 
 NS_IMETHODIMP
-nsSAXXMLReader::HandleDoctypeDecl(const nsAString &aSubset,
-                                  const nsAString &aName,
-                                  const nsAString &aSystemId,
-                                  const nsAString &aPublicId,
-                                  nsISupports *aCatalogData) {
+nsSAXXMLReader::HandleDoctypeDecl(const nsAString& aSubset,
+                                  const nsAString& aName,
+                                  const nsAString& aSystemId,
+                                  const nsAString& aPublicId,
+                                  nsISupports* aCatalogData) {
   return NS_OK;
 }
 
 NS_IMETHODIMP
-nsSAXXMLReader::HandleCharacterData(const char16_t *aData, uint32_t aLength) {
+nsSAXXMLReader::HandleCharacterData(const char16_t* aData, uint32_t aLength) {
   if (mContentHandler)
     return mContentHandler->Characters(Substring(aData, aData + aLength));
 
@@ -132,8 +133,8 @@ nsSAXXMLReader::HandleCharacterData(const char16_t *aData, uint32_t aLength) {
 }
 
 NS_IMETHODIMP
-nsSAXXMLReader::HandleProcessingInstruction(const char16_t *aTarget,
-                                            const char16_t *aData) {
+nsSAXXMLReader::HandleProcessingInstruction(const char16_t* aTarget,
+                                            const char16_t* aData) {
   NS_ASSERTION(aTarget && aData, "null passed to handler");
   if (mContentHandler) {
     return mContentHandler->ProcessingInstruction(nsDependentString(aTarget),
@@ -144,17 +145,17 @@ nsSAXXMLReader::HandleProcessingInstruction(const char16_t *aTarget,
 }
 
 NS_IMETHODIMP
-nsSAXXMLReader::HandleXMLDeclaration(const char16_t *aVersion,
-                                     const char16_t *aEncoding,
+nsSAXXMLReader::HandleXMLDeclaration(const char16_t* aVersion,
+                                     const char16_t* aEncoding,
                                      int32_t aStandalone) {
   NS_ASSERTION(aVersion, "null passed to handler");
   return NS_OK;
 }
 
 NS_IMETHODIMP
-nsSAXXMLReader::ReportError(const char16_t *aErrorText,
-                            const char16_t *aSourceText, nsIScriptError *aError,
-                            bool *_retval) {
+nsSAXXMLReader::ReportError(const char16_t* aErrorText,
+                            const char16_t* aSourceText, nsIScriptError* aError,
+                            bool* _retval) {
   MOZ_ASSERT(aError && aSourceText && aErrorText, "Check arguments!!!");
   // Normally, the expat driver should report the error.
   *_retval = true;
@@ -173,43 +174,43 @@ nsSAXXMLReader::ReportError(const char16_t *aErrorText,
 // nsISAXXMLReader
 
 NS_IMETHODIMP
-nsSAXXMLReader::GetBaseURI(nsIURI **aBaseURI) {
+nsSAXXMLReader::GetBaseURI(nsIURI** aBaseURI) {
   NS_IF_ADDREF(*aBaseURI = mBaseURI);
   return NS_OK;
 }
 
 NS_IMETHODIMP
-nsSAXXMLReader::SetBaseURI(nsIURI *aBaseURI) {
+nsSAXXMLReader::SetBaseURI(nsIURI* aBaseURI) {
   mBaseURI = aBaseURI;
   return NS_OK;
 }
 
 NS_IMETHODIMP
-nsSAXXMLReader::GetContentHandler(nsISAXContentHandler **aContentHandler) {
+nsSAXXMLReader::GetContentHandler(nsISAXContentHandler** aContentHandler) {
   NS_IF_ADDREF(*aContentHandler = mContentHandler);
   return NS_OK;
 }
 
 NS_IMETHODIMP
-nsSAXXMLReader::SetContentHandler(nsISAXContentHandler *aContentHandler) {
+nsSAXXMLReader::SetContentHandler(nsISAXContentHandler* aContentHandler) {
   mContentHandler = aContentHandler;
   return NS_OK;
 }
 
 NS_IMETHODIMP
-nsSAXXMLReader::GetErrorHandler(nsISAXErrorHandler **aErrorHandler) {
+nsSAXXMLReader::GetErrorHandler(nsISAXErrorHandler** aErrorHandler) {
   NS_IF_ADDREF(*aErrorHandler = mErrorHandler);
   return NS_OK;
 }
 
 NS_IMETHODIMP
-nsSAXXMLReader::SetErrorHandler(nsISAXErrorHandler *aErrorHandler) {
+nsSAXXMLReader::SetErrorHandler(nsISAXErrorHandler* aErrorHandler) {
   mErrorHandler = aErrorHandler;
   return NS_OK;
 }
 
 NS_IMETHODIMP
-nsSAXXMLReader::ParseAsync(nsIRequestObserver *aObserver) {
+nsSAXXMLReader::ParseAsync(nsIRequestObserver* aObserver) {
   mParserObserver = aObserver;
   mIsAsyncParse = true;
   return NS_OK;
@@ -218,7 +219,7 @@ nsSAXXMLReader::ParseAsync(nsIRequestObserver *aObserver) {
 // nsIRequestObserver
 
 NS_IMETHODIMP
-nsSAXXMLReader::OnStartRequest(nsIRequest *aRequest) {
+nsSAXXMLReader::OnStartRequest(nsIRequest* aRequest) {
   NS_ENSURE_TRUE(mIsAsyncParse, NS_ERROR_FAILURE);
   nsresult rv;
   rv = EnsureBaseURI();
@@ -232,8 +233,7 @@ nsSAXXMLReader::OnStartRequest(nsIRequest *aRequest) {
 }
 
 NS_IMETHODIMP
-nsSAXXMLReader::OnStopRequest(nsIRequest *aRequest, nsresult status)
-{
+nsSAXXMLReader::OnStopRequest(nsIRequest* aRequest, nsresult status) {
   NS_ENSURE_TRUE(mIsAsyncParse, NS_ERROR_FAILURE);
   NS_ENSURE_STATE(mListener);
   nsresult rv = mListener->OnStopRequest(aRequest, status);
@@ -245,16 +245,16 @@ nsSAXXMLReader::OnStopRequest(nsIRequest *aRequest, nsresult status)
 // nsIStreamListener
 
 NS_IMETHODIMP
-nsSAXXMLReader::OnDataAvailable(nsIRequest *aRequest,
-                                nsIInputStream *aInputStream, uint64_t offset,
+nsSAXXMLReader::OnDataAvailable(nsIRequest* aRequest,
+                                nsIInputStream* aInputStream, uint64_t offset,
                                 uint32_t count) {
   NS_ENSURE_TRUE(mIsAsyncParse, NS_ERROR_FAILURE);
   NS_ENSURE_STATE(mListener);
   return mListener->OnDataAvailable(aRequest, aInputStream, offset, count);
 }
 
-nsresult nsSAXXMLReader::InitParser(nsIRequestObserver *aObserver,
-                                    nsIChannel *aChannel) {
+nsresult nsSAXXMLReader::InitParser(nsIRequestObserver* aObserver,
+                                    nsIChannel* aChannel) {
   nsresult rv;
 
   // setup the parser
@@ -277,16 +277,16 @@ nsresult nsSAXXMLReader::InitParser(nsIRequestObserver *aObserver,
 }
 
 // from nsDocument.cpp
-bool nsSAXXMLReader::TryChannelCharset(nsIChannel *aChannel,
-                                       int32_t &aCharsetSource,
-                                       NotNull<const Encoding *> &aEncoding) {
+bool nsSAXXMLReader::TryChannelCharset(nsIChannel* aChannel,
+                                       int32_t& aCharsetSource,
+                                       NotNull<const Encoding*>& aEncoding) {
   if (aCharsetSource >= kCharsetFromChannel) return true;
 
   if (aChannel) {
     nsAutoCString charsetVal;
     nsresult rv = aChannel->GetContentCharset(charsetVal);
     if (NS_SUCCEEDED(rv)) {
-      const Encoding *preferred = Encoding::ForLabel(charsetVal);
+      const Encoding* preferred = Encoding::ForLabel(charsetVal);
       if (!preferred) return false;
 
       aEncoding = WrapNotNull(preferred);
@@ -304,9 +304,9 @@ nsresult nsSAXXMLReader::EnsureBaseURI() {
   return NS_NewURI(getter_AddRefs(mBaseURI), "about:blank");
 }
 
-nsresult nsSAXXMLReader::SplitExpatName(const char16_t *aExpatName,
-                                        nsString &aURI, nsString &aLocalName,
-                                        nsString &aQName) {
+nsresult nsSAXXMLReader::SplitExpatName(const char16_t* aExpatName,
+                                        nsString& aURI, nsString& aLocalName,
+                                        nsString& aQName) {
   /**
    * Adapted from RDFContentSinkImpl
    *

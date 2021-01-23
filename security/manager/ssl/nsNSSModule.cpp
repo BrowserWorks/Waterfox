@@ -14,7 +14,6 @@
 #include "OSKeyStore.h"
 #include "OSReauthenticator.h"
 #include "PKCS11ModuleDB.h"
-#include "PSMContentListener.h"
 #include "SecretDecoderRing.h"
 #include "TransportSecurityInfo.h"
 #include "mozilla/MacroArgs.h"
@@ -23,9 +22,7 @@
 #include "nsCURILoader.h"
 #include "nsCertOverrideService.h"
 #include "nsCryptoHash.h"
-#include "nsICategoryManager.h"
 #include "nsKeyModule.h"
-#include "nsKeygenHandler.h"
 #include "nsNSSCertificate.h"
 #include "nsNSSCertificateDB.h"
 #include "nsNSSComponent.h"
@@ -34,7 +31,7 @@
 #include "nsPK11TokenDB.h"
 #include "nsPKCS11Slot.h"
 #include "nsRandomGenerator.h"
-#include "nsSecureBrowserUIImpl.h"
+#include "nsSecureBrowserUI.h"
 #include "nsSiteSecurityService.h"
 #include "nsXULAppAPI.h"
 
@@ -135,7 +132,6 @@ IMPL(nsPK11TokenDB, nullptr)
 IMPL(PKCS11ModuleDB, nullptr)
 IMPL(nsNSSCertificate, nullptr, ProcessRestriction::AnyProcess)
 IMPL(nsNSSCertificateDB, nullptr)
-IMPL(nsNSSCertList, nullptr, ProcessRestriction::AnyProcess)
 #ifdef MOZ_XUL
 IMPL(nsCertTree, nullptr)
 #endif

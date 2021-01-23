@@ -4,32 +4,33 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsXULPrototypeDocument.h"
-#include "XULDocument.h"
 
+#include "nsXULElement.h"
 #include "nsAString.h"
 #include "nsIObjectInputStream.h"
 #include "nsIObjectOutputStream.h"
 #include "nsIPrincipal.h"
 #include "nsJSPrincipals.h"
 #include "nsIScriptObjectPrincipal.h"
-#include "nsIScriptSecurityManager.h"
-#include "nsIServiceManager.h"
-#include "nsIArray.h"
 #include "nsIURI.h"
 #include "jsapi.h"
 #include "jsfriendapi.h"
 #include "nsString.h"
-#include "nsIConsoleService.h"
-#include "nsIScriptError.h"
 #include "nsDOMCID.h"
 #include "nsNodeInfoManager.h"
 #include "nsContentUtils.h"
 #include "nsCCUncollectableMarker.h"
 #include "xpcpublic.h"
+#include "mozilla/BasePrincipal.h"
 #include "mozilla/dom/BindingUtils.h"
+#include "nsXULPrototypeCache.h"
+#include "mozilla/DeclarationBlock.h"
+#include "mozilla/dom/Element.h"
+#include "mozilla/dom/Text.h"
 
+using namespace mozilla;
+using namespace mozilla::dom;
 using mozilla::dom::DestroyProtoAndIfaceCache;
-using mozilla::dom::XULDocument;
 
 uint32_t nsXULPrototypeDocument::gRefCnt;
 
@@ -39,7 +40,11 @@ uint32_t nsXULPrototypeDocument::gRefCnt;
 //
 
 nsXULPrototypeDocument::nsXULPrototypeDocument()
-    : mRoot(nullptr), mLoaded(false), mCCGeneration(0), mGCNumber(0) {
+    : mRoot(nullptr),
+      mLoaded(false),
+      mCCGeneration(0),
+      mGCNumber(0),
+      mWasL10nCached(false) {
   ++gRefCnt;
 }
 
@@ -102,13 +107,20 @@ nsXULPrototypeDocument::Read(nsIObjectInputStream* aStream) {
   mURI = do_QueryInterface(supports);
 
   // nsIPrincipal mNodeInfoManager->mPrincipal
-  rv = aStream->ReadObject(true, getter_AddRefs(supports));
+  nsAutoCString JSON;
+  rv = aStream->ReadCString(JSON);
   if (NS_FAILED(rv)) {
     return rv;
   }
-  nsCOMPtr<nsIPrincipal> principal = do_QueryInterface(supports);
+  nsCOMPtr<nsIPrincipal> principal = mozilla::BasePrincipal::FromJSON(JSON);
+
   // Better safe than sorry....
   mNodeInfoManager->SetDocumentPrincipal(principal);
+
+  rv = aStream->ReadBoolean(&mWasL10nCached);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
 
   mRoot = new nsXULPrototypeElement();
 
@@ -201,8 +213,8 @@ static nsresult GetNodeInfos(nsXULPrototypeElement* aPrototype,
   }
 
   // Search attributes
-  uint32_t i;
-  for (i = 0; i < aPrototype->mNumAttributes; ++i) {
+  size_t i;
+  for (i = 0; i < aPrototype->mAttributes.Length(); ++i) {
     RefPtr<mozilla::dom::NodeInfo> ni;
     nsAttrName* name = &aPrototype->mAttributes[i].mName;
     if (name->IsAtom()) {
@@ -237,19 +249,25 @@ nsXULPrototypeDocument::Write(nsIObjectOutputStream* aStream) {
   rv = aStream->WriteCompoundObject(mURI, NS_GET_IID(nsIURI), true);
 
   // nsIPrincipal mNodeInfoManager->mPrincipal
-  nsresult tmp =
-      aStream->WriteObject(mNodeInfoManager->DocumentPrincipal(), true);
+  nsAutoCString JSON;
+  mozilla::BasePrincipal::Cast(mNodeInfoManager->DocumentPrincipal())
+      ->ToJSON(JSON);
+  nsresult tmp = aStream->WriteStringZ(JSON.get());
   if (NS_FAILED(tmp)) {
     rv = tmp;
   }
 
 #ifdef DEBUG
   // XXX Worrisome if we're caching things without system principal.
-  if (!nsContentUtils::IsSystemPrincipal(
-          mNodeInfoManager->DocumentPrincipal())) {
+  if (!mNodeInfoManager->DocumentPrincipal()->IsSystemPrincipal()) {
     NS_WARNING("Serializing document without system principal");
   }
 #endif
+
+  tmp = aStream->WriteBoolean(mWasL10nCached);
+  if (NS_FAILED(tmp)) {
+    rv = tmp;
+  }
 
   // mozilla::dom::NodeInfo table
   nsTArray<RefPtr<mozilla::dom::NodeInfo>> nodeInfos;
@@ -347,9 +365,9 @@ void nsXULPrototypeDocument::SetRootElement(nsXULPrototypeElement* aElement) {
 nsresult nsXULPrototypeDocument::AddProcessingInstruction(
     nsXULPrototypePI* aPI) {
   MOZ_ASSERT(aPI, "null ptr");
-  if (!mProcessingInstructions.AppendElement(aPI)) {
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
+  // XXX(Bug 1631371) Check if this should use a fallible operation as it
+  // pretended earlier, or change the return type to void.
+  mProcessingInstructions.AppendElement(aPI);
   return NS_OK;
 }
 
@@ -382,9 +400,9 @@ nsresult nsXULPrototypeDocument::AwaitLoadDone(Callback&& aCallback,
   *aResult = mLoaded;
 
   if (!mLoaded) {
-    rv = mPrototypeWaiters.AppendElement(std::move(aCallback))
-             ? NS_OK
-             : NS_ERROR_OUT_OF_MEMORY;  // addrefs
+    // XXX(Bug 1631371) Check if this should use a fallible operation as it
+    // pretended earlier, or change the return type to void.
+    mPrototypeWaiters.AppendElement(std::move(aCallback));
   }
 
   return rv;
@@ -420,4 +438,90 @@ void nsXULPrototypeDocument::TraceProtos(JSTracer* aTrc) {
   if (mRoot) {
     mRoot->TraceAllScripts(aTrc);
   }
+}
+
+void nsXULPrototypeDocument::SetIsL10nCached(bool aIsCached) {
+  mWasL10nCached = aIsCached;
+}
+
+void nsXULPrototypeDocument::RebuildPrototypeFromElement(
+    nsXULPrototypeElement* aPrototype, Element* aElement, bool aDeep) {
+  aPrototype->mHasIdAttribute = aElement->HasID();
+  aPrototype->mHasClassAttribute = aElement->MayHaveClass();
+  aPrototype->mHasStyleAttribute = aElement->MayHaveStyle();
+  NodeInfo* oldNodeInfo = aElement->NodeInfo();
+  RefPtr<NodeInfo> newNodeInfo = mNodeInfoManager->GetNodeInfo(
+      oldNodeInfo->NameAtom(), oldNodeInfo->GetPrefixAtom(),
+      oldNodeInfo->NamespaceID(), nsINode::ELEMENT_NODE);
+  aPrototype->mNodeInfo = newNodeInfo;
+
+  // First replace the prototype attributes with the new ones from this element.
+  aPrototype->mAttributes.Clear();
+
+  uint32_t count = aElement->GetAttrCount();
+  nsXULPrototypeAttribute* protoAttr =
+      aPrototype->mAttributes.AppendElements(count);
+  for (uint32_t index = 0; index < count; index++) {
+    BorrowedAttrInfo attr = aElement->GetAttrInfoAt(index);
+
+    if (attr.mName->IsAtom()) {
+      protoAttr->mName.SetTo(attr.mName->Atom());
+    } else {
+      NodeInfo* oldNodeInfo = attr.mName->NodeInfo();
+      RefPtr<NodeInfo> newNodeInfo = mNodeInfoManager->GetNodeInfo(
+          oldNodeInfo->NameAtom(), oldNodeInfo->GetPrefixAtom(),
+          oldNodeInfo->NamespaceID(), nsINode::ATTRIBUTE_NODE);
+      protoAttr->mName.SetTo(newNodeInfo);
+    }
+    protoAttr->mValue.SetTo(*attr.mValue);
+
+    protoAttr++;
+  }
+
+  if (aDeep) {
+    // We have to rebuild the prototype children from this element.
+    // First release the tree under this element.
+    aPrototype->ReleaseSubtree();
+
+    RefPtr<nsXULPrototypeNode>* children =
+        aPrototype->mChildren.AppendElements(aElement->GetChildCount());
+    for (nsIContent* child = aElement->GetFirstChild(); child;
+         child = child->GetNextSibling()) {
+      if (child->IsElement()) {
+        Element* element = child->AsElement();
+        RefPtr<nsXULPrototypeElement> elemProto = new nsXULPrototypeElement;
+        RebuildPrototypeFromElement(elemProto, element, true);
+        *children = elemProto;
+      } else if (child->IsText()) {
+        Text* text = child->AsText();
+        RefPtr<nsXULPrototypeText> textProto = new nsXULPrototypeText();
+        text->AppendTextTo(textProto->mValue);
+        *children = textProto;
+      } else {
+        MOZ_ASSERT(false, "We handle only elements and text nodes here.");
+      }
+
+      children++;
+    }
+  }
+}
+
+void nsXULPrototypeDocument::RebuildL10nPrototype(Element* aElement,
+                                                  bool aDeep) {
+  if (mWasL10nCached) {
+    return;
+  }
+
+  Document* doc = aElement->OwnerDoc();
+
+  nsAutoString id;
+  MOZ_RELEASE_ASSERT(aElement->GetAttr(nsGkAtoms::datal10nid, id));
+
+  if (!doc) {
+    return;
+  }
+
+  RefPtr<nsXULPrototypeElement> proto = doc->mL10nProtoElements.Get(aElement);
+  MOZ_RELEASE_ASSERT(proto);
+  RebuildPrototypeFromElement(proto, aElement, aDeep);
 }

@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- these things need to move into utilityOverlay.xul -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items --> 
+
+<!ENTITY fileMenu.label		"Fichièr">
+<!ENTITY fileMenu.accesskey		"F">
+<!ENTITY newMenu.label		"Novèl">
+<!ENTITY newMenu.accesskey		"e">
+
+<!ENTITY editMenu.label		"Edicion">
+<!ENTITY editMenu.accesskey		"n">
+<!ENTITY undoCmd.label		"Anullar">
+<!ENTITY undoCmd.accesskey		"u">
+<!ENTITY redoCmd.label		"Restablir">
+<!ENTITY redoCmd.accesskey		"R">
+<!ENTITY deleteCmd.label		"Escafar">
+<!ENTITY deleteCmd.accesskey		"E">
+<!ENTITY preferencesCmdUnix.label	"Preferéncias">
+<!ENTITY preferencesCmdUnix.accesskey	"n">
+
+<!ENTITY viewMenu.label		"Afichatge">
+<!ENTITY viewMenu.accesskey		"A">
+<!ENTITY viewToolbarsMenu.label	"Barras d'espleches">
+<!ENTITY viewToolbarsMenu.accesskey	"t">
+<!ENTITY showTaskbarCmd.label		"Barra d'estat">
+<!ENTITY showTaskbarCmd.accesskey	"B">
+
+<!ENTITY closeCmd.label		"Tampar">
+<!ENTITY closeCmd.key			"W">
+<!ENTITY closeCmd.accesskey		"F">
+
+<!ENTITY quitApplicationCmd.label	"Quitar">
+<!ENTITY quitApplicationCmd.key	"Q">
+<!ENTITY quitApplicationCmd.accesskey	"Q">
+
+<!ENTITY quitApplicationCmdUnix.label	"Quitar">
+<!ENTITY quitApplicationCmdUnix.accesskey "Q">
+
+<!ENTITY quitApplicationCmdMac.label	"Quitar &brandShortName;">
+<!ENTITY quitApplicationCmdMac.accesskey "Q">

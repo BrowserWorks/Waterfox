@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items --> 
+
+<!ENTITY fileMenu.label					"फाइल"> 
+<!ENTITY fileMenu.accesskey				"f">
+<!ENTITY newMenu.label						"नया">
+<!ENTITY newMenu.accesskey					"N">
+
+<!ENTITY editMenu.label					"संपादित करें"> 
+<!ENTITY editMenu.accesskey				"e"> 
+<!ENTITY undoCmd.label						"वापस करें">  
+<!ENTITY undoCmd.accesskey					"u"> 
+<!ENTITY redoCmd.label						"फिर करें">  
+<!ENTITY redoCmd.accesskey					"r">  
+<!ENTITY deleteCmd.label					"मिटायें">  
+<!ENTITY deleteCmd.accesskey				"d">  
+<!ENTITY preferencesCmdUnix.label       "प्राथमिकता">
+<!ENTITY preferencesCmdUnix.accesskey     "n"> 
+
+<!ENTITY viewMenu.label					"देखें"> 
+<!ENTITY viewMenu.accesskey				"v"> 
+<!ENTITY viewToolbarsMenu.label				"टूलबार"> 
+<!ENTITY viewToolbarsMenu.accesskey			"T"> 
+<!ENTITY showTaskbarCmd.label					"प्रस्थिति बार">  
+<!ENTITY showTaskbarCmd.accesskey				"S"> 
+
+<!ENTITY closeCmd.label			"बंद करें">  
+<!ENTITY closeCmd.key			"W">  
+<!ENTITY closeCmd.accesskey		"c">
+
+<!ENTITY quitApplicationCmd.label	"बाहर निकलें"> 
+<!ENTITY quitApplicationCmd.key		"Q"> 
+<!ENTITY quitApplicationCmd.accesskey	"x">
+
+<!ENTITY quitApplicationCmdUnix.label	"छोड़ें"> 
+<!ENTITY quitApplicationCmdUnix.accesskey	"q">
+

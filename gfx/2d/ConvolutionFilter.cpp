@@ -13,13 +13,12 @@
 #include <cmath>
 #include "mozilla/Vector.h"
 
-namespace mozilla {
-namespace gfx {
+namespace mozilla::gfx {
 
 ConvolutionFilter::ConvolutionFilter()
     : mFilter(MakeUnique<SkConvolutionFilter1D>()) {}
 
-ConvolutionFilter::~ConvolutionFilter() {}
+ConvolutionFilter::~ConvolutionFilter() = default;
 
 int32_t ConvolutionFilter::MaxFilter() const { return mFilter->maxFilter(); }
 
@@ -163,5 +162,4 @@ bool ConvolutionFilter::ComputeResizeFilter(ResizeMethod aResizeMethod,
   return mFilter->maxFilter() > 0 && mFilter->numValues() == aDstSize;
 }
 
-}  // namespace gfx
-}  // namespace mozilla
+}  // namespace mozilla::gfx

@@ -15,16 +15,17 @@ const { EventEmitter } = ChromeUtils.import(
   "resource://gre/modules/EventEmitter.jsm"
 );
 
+const {
+  ExtensionUtils: { ExtensionError, promiseTimeout },
+} = ChromeUtils.import("resource://gre/modules/ExtensionUtils.jsm");
+
 XPCOMUtils.defineLazyModuleGetters(this, {
   AppConstants: "resource://gre/modules/AppConstants.jsm",
   AsyncShutdown: "resource://gre/modules/AsyncShutdown.jsm",
-  ExtensionChild: "resource://gre/modules/ExtensionChild.jsm",
   NativeManifests: "resource://gre/modules/NativeManifests.jsm",
   OS: "resource://gre/modules/osfile.jsm",
   Services: "resource://gre/modules/Services.jsm",
   Subprocess: "resource://gre/modules/Subprocess.jsm",
-  clearTimeout: "resource://gre/modules/Timer.jsm",
-  setTimeout: "resource://gre/modules/Timer.jsm",
 });
 
 // For a graceful shutdown (i.e., when the extension is unloaded or when it
@@ -68,7 +69,7 @@ var NativeApp = class extends EventEmitter {
     this.readPromise = null;
     this.sendQueue = [];
     this.writePromise = null;
-    this.sentDisconnect = false;
+    this.cleanupStarted = false;
 
     this.startupPromise = NativeManifests.lookupManifest(
       "stdio",
@@ -79,9 +80,7 @@ var NativeApp = class extends EventEmitter {
         // Report a generic error to not leak information about whether a native
         // application is installed to addons that do not have the right permission.
         if (!hostInfo) {
-          throw new context.cloneScope.Error(
-            `No such native application ${application}`
-          );
+          throw new ExtensionError(`No such native application ${application}`);
         }
 
         let command = hostInfo.manifest.path;
@@ -97,7 +96,9 @@ var NativeApp = class extends EventEmitter {
           arguments: [hostInfo.path, context.extension.id],
           workdir: OS.Path.dirname(command),
           stderr: "pipe",
+          disclaim: true,
         };
+
         return Subprocess.call(subprocessOpts);
       })
       .then(proc => {
@@ -116,34 +117,22 @@ var NativeApp = class extends EventEmitter {
 
   /**
    * Open a connection to a native messaging host.
-   *
-   * @param {BaseContext} context The context associated with the port.
-   * @param {nsIMessageSender} messageManager The message manager used to send
-   *     and receive messages from the port's creator.
    * @param {number} portId A unique internal ID that identifies the port.
-   * @param {object} sender The object describing the creator of the connection
-   *     request.
-   * @param {string} application The name of the native messaging host.
+   * @param {NativeMessenger} port Parent NativeMessenger used to send messages.
+   * @returns {ParentPort}
    */
-  static onConnectNative(context, messageManager, portId, sender, application) {
-    let app = new NativeApp(context, application);
-    let port = new ExtensionChild.Port(
-      context,
-      messageManager,
-      [Services.mm],
-      "",
-      portId,
-      sender,
-      sender
-    );
-    app.once("disconnect", (what, err) => port.disconnect(err));
-
-    /* eslint-disable mozilla/balanced-listeners */
-    app.on("message", (what, msg) => port.postMessage(msg));
-    /* eslint-enable mozilla/balanced-listeners */
-
-    port.registerOnMessage(holder => app.send(holder));
-    port.registerOnDisconnect(msg => app.close());
+  onConnect(portId, port) {
+    // eslint-disable-next-line
+    this.on("message", (_, message) => {
+      port.sendPortMessage(portId, new StructuredCloneHolder(message));
+    });
+    this.once("disconnect", (_, error) => {
+      port.sendPortDisconnect(portId, error && new ClonedErrorHolder(error));
+    });
+    return {
+      onPortMessage: holder => this.send(holder),
+      onPortDisconnect: () => this.close(),
+    };
   }
 
   /**
@@ -155,7 +144,7 @@ var NativeApp = class extends EventEmitter {
     message = context.jsonStringify(message);
     let buffer = new TextEncoder().encode(message).buffer;
     if (buffer.byteLength > NativeApp.maxWrite) {
-      throw new context.cloneScope.Error("Write too big");
+      throw new context.Error("Write too big");
     }
     return buffer;
   }
@@ -176,10 +165,8 @@ var NativeApp = class extends EventEmitter {
       .readUint32()
       .then(len => {
         if (len > NativeApp.maxRead) {
-          throw new this.context.cloneScope.Error(
-            `Native application tried to send a message of ${len} bytes, which exceeds the limit of ${
-              NativeApp.maxRead
-            } bytes.`
+          throw new ExtensionError(
+            `Native application tried to send a message of ${len} bytes, which exceeds the limit of ${NativeApp.maxRead} bytes.`
           );
         }
         return this.proc.stdout.readJSON(len);
@@ -198,7 +185,7 @@ var NativeApp = class extends EventEmitter {
   }
 
   _startWrite() {
-    if (this.sendQueue.length == 0) {
+    if (!this.sendQueue.length) {
       return;
     }
 
@@ -230,7 +217,7 @@ var NativeApp = class extends EventEmitter {
       let partial = "";
       while (true) {
         let data = await proc.stderr.readString();
-        if (data.length == 0) {
+        if (!data.length) {
           // We have hit EOF, just stop reading
           if (partial) {
             Services.console.logStringMessage(
@@ -255,9 +242,7 @@ var NativeApp = class extends EventEmitter {
 
   send(holder) {
     if (this._isDisconnected) {
-      throw new this.context.cloneScope.Error(
-        "Attempt to postMessage on disconnected port"
-      );
+      throw new ExtensionError("Attempt to postMessage on disconnected port");
     }
     let msg = holder.deserialize(global);
     if (Cu.getClassName(msg, true) != "ArrayBuffer") {
@@ -271,7 +256,7 @@ var NativeApp = class extends EventEmitter {
     let buffer = msg;
 
     if (buffer.byteLength > NativeApp.maxWrite) {
-      throw new this.context.cloneScope.Error("Write too big");
+      throw new ExtensionError("Write too big");
     }
 
     this.sendQueue.push(buffer);
@@ -280,62 +265,74 @@ var NativeApp = class extends EventEmitter {
     }
   }
 
-  // Shut down the native application and also signal to the extension
+  // Shut down the native application and (by default) signal to the extension
   // that the connect has been disconnected.
-  _cleanup(err) {
+  async _cleanup(err, fromExtension = false) {
+    if (this.cleanupStarted) {
+      return;
+    }
+    this.cleanupStarted = true;
     this.context.forgetOnClose(this);
 
-    let doCleanup = () => {
-      // Set a timer to kill the process gracefully after one timeout
-      // interval and kill it forcefully after two intervals.
-      let timer = setTimeout(() => {
-        if (this.proc) {
-          this.proc.kill(GRACEFUL_SHUTDOWN_TIME);
-        }
-      }, GRACEFUL_SHUTDOWN_TIME);
-
-      let promise = Promise.all([
-        this.proc.stdin.close().catch(err => {
-          if (err.errorCode != Subprocess.ERROR_END_OF_FILE) {
-            throw err;
-          }
-        }),
-        this.proc.wait(),
-      ]).then(() => {
-        this.proc = null;
-        clearTimeout(timer);
-      });
-
-      AsyncShutdown.profileBeforeChange.addBlocker(
-        `Native Messaging: Wait for application ${this.name} to exit`,
-        promise
-      );
-
-      promise.then(() => {
-        AsyncShutdown.profileBeforeChange.removeBlocker(promise);
-      });
-
-      return promise;
-    };
-
-    if (this.proc) {
-      doCleanup();
-    } else if (this.startupPromise) {
-      this.startupPromise.then(doCleanup);
-    }
-
-    if (!this.sentDisconnect) {
-      this.sentDisconnect = true;
+    if (!fromExtension) {
       if (err && err.errorCode == Subprocess.ERROR_END_OF_FILE) {
         err = null;
       }
       this.emit("disconnect", err);
     }
+
+    await this.startupPromise;
+
+    if (!this.proc) {
+      // Failed to initialize proc in the constructor.
+      return;
+    }
+
+    // To prevent an uncooperative process from blocking shutdown, we take the
+    // following actions, and wait for GRACEFUL_SHUTDOWN_TIME in between.
+    //
+    // 1. Allow exit by closing the stdin pipe.
+    // 2. Allow exit by a kill signal.
+    // 3. Allow exit by forced kill signal.
+    // 4. Give up and unblock shutdown despite the process still being alive.
+
+    // Close the stdin stream and allow the process to exit on its own.
+    // proc.wait() below will resolve once the process has exited gracefully.
+    this.proc.stdin.close().catch(err => {
+      if (err.errorCode != Subprocess.ERROR_END_OF_FILE) {
+        Cu.reportError(err);
+      }
+    });
+    let exitPromise = Promise.race([
+      // 1. Allow the process to exit on its own after closing stdin.
+      this.proc.wait().then(() => {
+        this.proc = null;
+      }),
+      promiseTimeout(GRACEFUL_SHUTDOWN_TIME).then(() => {
+        if (this.proc) {
+          // 2. Kill the process gracefully. 3. Force kill after a timeout.
+          this.proc.kill(GRACEFUL_SHUTDOWN_TIME);
+
+          // 4. If the process is still alive after a kill + timeout followed
+          // by a forced kill + timeout, give up and just resolve exitPromise.
+          //
+          // Note that waiting for just one interval is not enough, because the
+          // `proc.kill()` is asynchronous, so we need to wait a bit after the
+          // kill signal has been sent.
+          return promiseTimeout(2 * GRACEFUL_SHUTDOWN_TIME);
+        }
+      }),
+    ]);
+
+    AsyncShutdown.profileBeforeChange.addBlocker(
+      `Native Messaging: Wait for application ${this.name} to exit`,
+      exitPromise
+    );
   }
 
-  // Called from Context when the extension is shut down.
+  // Called when the Context or Port is closed.
   close() {
-    this._cleanup();
+    this._cleanup(null, true);
   }
 
   sendMessage(holder) {

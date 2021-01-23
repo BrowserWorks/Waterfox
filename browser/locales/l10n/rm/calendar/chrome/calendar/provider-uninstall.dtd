@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Deinstallar in purschider">
+<!ENTITY providerUninstall.accept.label                    "Deabunar ils tschernids">
+<!ENTITY providerUninstall.accept.accesskey                "u">
+<!ENTITY providerUninstall.cancel.label                    "Salvar il supplement">
+<!ENTITY providerUninstall.cancel.accesskey                "K">
+<!ENTITY providerUninstall.preName.label                   "Ti has decidì da deinstallar u deactivar:">
+<!ENTITY providerUninstall.postName.label                  "Quai vegn a deactivar ils chalenders sutvart.">
+<!ENTITY providerUninstall.reinstallNote.label             "Sche ti n'has betg l'intenziun da reinstallar quest purschider, pos ti era deabunar ils chalenders da quest purschider.">

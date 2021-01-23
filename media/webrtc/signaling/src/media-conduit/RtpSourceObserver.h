@@ -1,13 +1,19 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 #ifndef AUDIOLEVELOBSERVER_H
 #define AUDIOLEVELOBSERVER_H
 
 #include <vector>
 #include <map>
 
-#include "mozilla/Mutex.h"
 #include "nsISupportsImpl.h"
 #include "mozilla/dom/RTCRtpSourcesBinding.h"
-#include "webrtc/modules/rtp_rtcp/include/rtp_packet_observer.h"
+#include "webrtc/common_types.h"
+#include "RTCStatsReport.h"
 
 // Unit Test class
 namespace test {
@@ -21,39 +27,32 @@ namespace mozilla {
  *  * csrc-audio-level RTP header extension
  *  * ssrc-audio-level RTP header extension
  */
-class RtpSourceObserver : public webrtc::RtpPacketObserver {
+class RtpSourceObserver {
  public:
-  RtpSourceObserver();
+  explicit RtpSourceObserver(
+      const dom::RTCStatsTimestampMaker& aTimestampMaker);
 
-  virtual ~RtpSourceObserver(){};
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(RtpSourceObserver)
 
-  void OnRtpPacket(const webrtc::RTPHeader& aRtpHeader,
-                   const int64_t aTimestamp, const uint32_t aJitter) override;
-
-  /* Get the local time in MS from the same clock source that is used
-   * to generate the capture timestamps. Use for computing the age of
-   * an entry relative to another clock, e.g. the JS
-   * @return time of now in MS
-   */
-  static int64_t NowInReportClockTime();
+  void OnRtpPacket(const webrtc::RTPHeader& aHeader, const uint32_t aJitter);
 
   /*
    * Get the most recent 10 second window of CSRC and SSRC sources.
-   * @param aTimeNow the current report clock time, @see NowInReportClockTime.
    * @param outLevels will be popluted with source entries
    * Note: this takes jitter into account when calculating the window so
    * the window is actually [time - jitter - 10 sec .. time - jitter]
    */
-  void GetRtpSources(const int64_t aTimeNow,
-                     nsTArray<dom::RTCRtpSourceEntry>& outSources) const;
+  void GetRtpSources(nsTArray<dom::RTCRtpSourceEntry>& outSources) const;
 
  private:
-  // Note: these are pool allocated
+  virtual ~RtpSourceObserver() = default;
+
   struct RtpSourceEntry {
     RtpSourceEntry() = default;
-    void Update(const int64_t aTimestamp, const bool aHasAudioLevel,
-                const uint8_t aAudioLevel) {
-      jitterAdjustedTimestamp = aTimestamp;
+    void Update(const int64_t aTimestamp, const uint32_t aRtpTimestamp,
+                const bool aHasAudioLevel, const uint8_t aAudioLevel) {
+      predictedPlayoutTime = aTimestamp;
+      rtpTimestamp = aRtpTimestamp;
       // Audio level range is 0 - 127 inclusive
       hasAudioLevel = aHasAudioLevel && !(aAudioLevel & 0x80);
       audioLevel = aAudioLevel;
@@ -62,10 +61,19 @@ class RtpSourceObserver : public webrtc::RtpPacketObserver {
     // outlined in the webrtc-pc spec.
     double ToLinearAudioLevel() const;
     // Time this information was received + jitter
-    int64_t jitterAdjustedTimestamp = 0;
+    int64_t predictedPlayoutTime = 0;
+    // The original RTP timestamp in the received packet
+    uint32_t rtpTimestamp = 0;
     bool hasAudioLevel = false;
     uint8_t audioLevel = 0;
   };
+
+  /* Why this is needed:
+   * We are supposed to only report source stats for packets that have already
+   * been rendered. Unfortunately, we only know when these packets are
+   * _received_ right now. So, we need to make a guess at when each packet will
+   * be rendered, and hide its statistics until the clock reaches that estimate.
+   */
   /* Maintains a history of packets for reporting with getContributingSources
    * and getSynchronizationSources. It is expected that entries will not always
    * be observed in chronological order, and that the correct entry for a query
@@ -97,7 +105,8 @@ class RtpSourceObserver : public webrtc::RtpPacketObserver {
     const RtpSourceEntry* FindClosestNotAfter(int64_t aTime) const;
     // Inserts data into the history, may silently drop data if it is too old
     void Insert(const int64_t aTimeNow, const int64_t aTimestamp,
-                const bool aHasAudioLevel, const uint8_t aAudioLevel);
+                const uint32_t aRtpTimestamp, const bool aHasAudioLevel,
+                const uint8_t aAudioLevel);
     // Removes aged out from the jitter window
     void Prune(const int64_t aTimeNow);
     // Set Source
@@ -154,19 +163,17 @@ class RtpSourceObserver : public webrtc::RtpPacketObserver {
   std::map<uint64_t, RtpSourceHistory> mRtpSources;
   // 2 x the largest observed
   int64_t mMaxJitterWindow;
-  // Guards statistics
-  mutable Mutex mLevelGuard;
+  dom::RTCStatsTimestampMaker mTimestampMaker;
 
   // Unit test
   friend test::RtpSourcesTest;
 
   // Testing only
   // Inserts additional csrc audio levels for mochitests
-  friend void InsertAudioLevelForContributingSource(RtpSourceObserver& observer,
-                                                    uint32_t aCsrcSource,
-                                                    int64_t aTimestamp,
-                                                    bool aHasAudioLevel,
-                                                    uint8_t aAudioLevel);
+  friend void InsertAudioLevelForContributingSource(
+      RtpSourceObserver& observer, const uint32_t aCsrcSource,
+      const int64_t aTimestamp, const uint32_t aRtpTimestamp,
+      const bool aHasAudioLevel, const uint8_t aAudioLevel);
 };
 }  // namespace mozilla
 #undef NG

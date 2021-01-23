@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "מאפייני תמונה">
+
+<!ENTITY pixelsPopup.value "פיקסלים">
+
+<!-- These are in the Location tab panel -->
+<!ENTITY locationEditField.label "מיקום התמונה:">
+<!ENTITY locationEditField.accessKey "מ">
+<!ENTITY locationEditField.tooltip "הקלד את שם קובץ או מיקום התמונה">
+<!ENTITY locationEditField.shortenedDataURI "כתובת נתונים מקוצרת (העתקה תציב את הכתובת המלאה בזיכרון)">
+<!ENTITY title.label "תאור כלי:">
+<!ENTITY title.accessKey "ת">
+<!ENTITY title.tooltip "תכונת 'title' של HTML המוצגת כתיאור כלי (tooltip)">
+<!ENTITY altText.label "טקסט חלופי:">
+<!ENTITY altText.accessKey "ח">
+<!ENTITY altTextEditField.tooltip "הקלד טקסט להציג במקום התמונה">
+<!ENTITY noAltText.label "אל תשתמש בטקסט חלופי">
+<!ENTITY noAltText.accessKey "א">
+
+<!ENTITY previewBox.label "תצוגה מקדימה של התמונה">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+<!ENTITY actualSize.label "גודל אמיתי:">
+<!ENTITY actualSizeRadio.label "גודל אמיתי">
+<!ENTITY actualSizeRadio.accessKey "ג">
+<!ENTITY actualSizeRadio.tooltip "חזור לגודל אמיתי של התמונה">
+<!ENTITY customSizeRadio.label "גודל מותאם אישית">
+<!ENTITY customSizeRadio.accessKey "מ">
+<!ENTITY customSizeRadio.tooltip "שנה את גודל התמונה כפי שהיא מופיעה בדף">
+<!ENTITY heightEditField.label "גובה:">
+<!ENTITY heightEditField.accessKey "ב">
+<!ENTITY widthEditField.label "רוחב:">
+<!ENTITY widthEditField.accessKey "ר">
+<!ENTITY constrainCheckbox.label "שמור יחס אורך לרוחב">
+<!ENTITY constrainCheckbox.accessKey "י">
+<!ENTITY constrainCheckbox.tooltip "שמור על יחס גובה לרוחב של התמונה">
+
+<!-- These controls are in the Image Map box of the expanded area -->
+<!ENTITY imagemapBox.label "מיפוי תמונה">
+<!ENTITY removeImageMapButton.label "הסרה">
+<!ENTITY removeImageMapButton.accessKey "ס">
+
+<!-- These are the options for image alignment -->
+<!ENTITY alignment.label "יישור טקסט ביחס לתמונה">
+<!ENTITY bottomPopup.value "בתחתית">
+<!ENTITY topPopup.value "בקצה עליון">
+<!ENTITY centerPopup.value "במרכז">
+<!ENTITY wrapRightPopup.value "גלישה מימין">
+<!ENTITY wrapLeftPopup.value "גלישה משמאל">
+
+<!-- These controls are in the Spacing Box -->
+<!ENTITY spacingBox.label "ריווח">
+<!ENTITY leftRightEditField.label "שמאל וימין:">
+<!ENTITY leftRightEditField.accessKey "ש">
+<!ENTITY topBottomEditField.label "מעל ומתחת:">
+<!ENTITY topBottomEditField.accessKey "נ">
+<!ENTITY borderEditField.label "גבול עבה:">
+<!ENTITY borderEditField.accessKey "ע">
+
+<!-- These controls are in the Link Box -->
+<!ENTITY showImageLinkBorder.label "הראה גבול סביב תמונה מקושרת">
+<!ENTITY showImageLinkBorder.accessKey "ג">
+<!ENTITY LinkAdvancedEditButton.label "עריכת קישור מתקדמת…">
+<!ENTITY LinkAdvancedEditButton.accessKey "ק">
+<!ENTITY LinkAdvancedEditButton.tooltip "הוסף או שנה תכונות HTML, תכונות סגנון ו־JavaScript">
+
+<!-- These tabs are currently used in the image input dialog -->
+<!ENTITY imageInputTab.label "טופס">
+<!ENTITY imageLocationTab.label "מיקום">
+<!ENTITY imageDimensionsTab.label "ממדים">
+<!ENTITY imageAppearanceTab.label "הופעה">
+<!ENTITY imageLinkTab.label "קישור">

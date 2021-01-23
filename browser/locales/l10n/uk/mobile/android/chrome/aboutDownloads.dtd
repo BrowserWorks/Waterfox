@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Завантаження">
+<!ENTITY aboutDownloads.header                     "Ваші завантаження">
+<!ENTITY aboutDownloads.empty                      "Немає завантажень">
+
+<!ENTITY aboutDownloads.open                       "Відкрити">
+<!ENTITY aboutDownloads.remove                     "Видалити">
+<!ENTITY aboutDownloads.removeAll                  "Видалити всі">
+<!ENTITY aboutDownloads.pause                      "Пауза">
+<!ENTITY aboutDownloads.resume                     "Продовжити">
+<!ENTITY aboutDownloads.cancel                     "Скасувати">
+<!ENTITY aboutDownloads.retry                      "Перезапустити">

@@ -30,7 +30,7 @@ class BasicCardData final {
  public:
   struct Address {
     nsString country;
-    nsTArray<nsString> addressLine;
+    CopyableTArray<nsString> addressLine;
     nsString region;
     nsString regionCode;
     nsString city;
@@ -141,17 +141,17 @@ class PaymentResponse final : public DOMEventTargetHelper,
                     PaymentAddress* aShippingAddress,
                     const ResponseData& aDetails, const nsAString& aPayerName,
                     const nsAString& aPayerEmail, const nsAString& aPayerPhone);
-  void RejectRetry(nsresult aRejectReason);
+  void RejectRetry(ErrorResult&& aRejectReason);
 
  protected:
   ~PaymentResponse();
 
-  nsresult ValidatePaymentValidationErrors(
-      const PaymentValidationErrors& aErrors);
+  void ValidatePaymentValidationErrors(const PaymentValidationErrors& aErrors,
+                                       ErrorResult& aRv);
 
-  nsresult ConvertPaymentMethodErrors(JSContext* aCx,
-                                      const PaymentValidationErrors& aErrors,
-                                      nsAString& aErrorMsg) const;
+  void ConvertPaymentMethodErrors(JSContext* aCx,
+                                  const PaymentValidationErrors& aErrors,
+                                  ErrorResult& aRv) const;
 
   nsresult DispatchUpdateEvent(const nsAString& aType);
 

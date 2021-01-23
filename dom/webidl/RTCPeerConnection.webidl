@@ -78,21 +78,24 @@ dictionary RTCOfferOptions : RTCOfferAnswerOptions {
 
 [Pref="media.peerconnection.enabled",
  JSImplementation="@mozilla.org/dom/peerconnection;1",
- Constructor (optional RTCConfiguration configuration,
-              optional object? constraints)]
+ Exposed=Window]
 interface RTCPeerConnection : EventTarget  {
+  [Throws]
+  constructor(optional RTCConfiguration configuration = {},
+              optional object? constraints);
+
   [Throws, StaticClassOverride="mozilla::dom::RTCCertificate"]
   static Promise<RTCCertificate> generateCertificate (AlgorithmIdentifier keygenAlgorithm);
 
   [Pref="media.peerconnection.identity.enabled"]
   void setIdentityProvider (DOMString provider,
-                            optional RTCIdentityProviderOptions options);
+                            optional RTCIdentityProviderOptions options = {});
   [Pref="media.peerconnection.identity.enabled"]
   Promise<DOMString> getIdentityAssertion();
-  Promise<RTCSessionDescriptionInit> createOffer (optional RTCOfferOptions options);
-  Promise<RTCSessionDescriptionInit> createAnswer (optional RTCAnswerOptions options);
-  Promise<void> setLocalDescription (RTCSessionDescriptionInit description);
-  Promise<void> setRemoteDescription (RTCSessionDescriptionInit description);
+  Promise<RTCSessionDescriptionInit> createOffer (optional RTCOfferOptions options = {});
+  Promise<RTCSessionDescriptionInit> createAnswer (optional RTCAnswerOptions options = {});
+  Promise<void> setLocalDescription (optional RTCSessionDescriptionInit description = {});
+  Promise<void> setRemoteDescription (optional RTCSessionDescriptionInit description = {});
   readonly attribute RTCSessionDescription? localDescription;
   readonly attribute RTCSessionDescription? currentLocalDescription;
   readonly attribute RTCSessionDescription? pendingLocalDescription;
@@ -100,10 +103,11 @@ interface RTCPeerConnection : EventTarget  {
   readonly attribute RTCSessionDescription? currentRemoteDescription;
   readonly attribute RTCSessionDescription? pendingRemoteDescription;
   readonly attribute RTCSignalingState signalingState;
-  Promise<void> addIceCandidate (optional (RTCIceCandidateInit or RTCIceCandidate) candidate);
+  Promise<void> addIceCandidate (optional (RTCIceCandidateInit or RTCIceCandidate) candidate = {});
   readonly attribute boolean? canTrickleIceCandidates;
   readonly attribute RTCIceGatheringState iceGatheringState;
   readonly attribute RTCIceConnectionState iceConnectionState;
+  void restartIce ();
   [Pref="media.peerconnection.identity.enabled"]
   readonly attribute Promise<RTCIdentityAssertion> peerIdentity;
   [Pref="media.peerconnection.identity.enabled"]
@@ -128,26 +132,12 @@ interface RTCPeerConnection : EventTarget  {
   void removeTrack(RTCRtpSender sender);
 
   RTCRtpTransceiver addTransceiver((MediaStreamTrack or DOMString) trackOrKind,
-                                   optional RTCRtpTransceiverInit init);
+                                   optional RTCRtpTransceiverInit init = {});
 
   sequence<RTCRtpSender> getSenders();
   sequence<RTCRtpReceiver> getReceivers();
   sequence<RTCRtpTransceiver> getTransceivers();
 
-  // test-only: for testing getContributingSources
-  [ChromeOnly]
-  DOMHighResTimeStamp mozGetNowInRtpSourceReferenceTime();
-  // test-only: for testing getContributingSources
-  [ChromeOnly]
-  void mozInsertAudioLevelForContributingSource(RTCRtpReceiver receiver,
-                                                unsigned long source,
-                                                DOMHighResTimeStamp timestamp,
-                                                boolean hasLevel,
-                                                byte level);
-  [ChromeOnly]
-  void mozAddRIDExtension(RTCRtpReceiver receiver, unsigned short extensionId);
-  [ChromeOnly]
-  void mozAddRIDFilter(RTCRtpReceiver receiver, DOMString rid);
   [ChromeOnly]
   void mozSetPacketCallback(mozPacketCallback callback);
   [ChromeOnly]
@@ -173,7 +163,7 @@ interface RTCPeerConnection : EventTarget  {
 
   // Data channel.
   RTCDataChannel createDataChannel (DOMString label,
-                                    optional RTCDataChannelInit dataChannelDict);
+                                    optional RTCDataChannelInit dataChannelDict = {});
   attribute EventHandler ondatachannel;
 };
 
@@ -186,7 +176,7 @@ partial interface RTCPeerConnection {
 
   Promise<void> createOffer (RTCSessionDescriptionCallback successCallback,
                              RTCPeerConnectionErrorCallback failureCallback,
-                             optional RTCOfferOptions options);
+                             optional RTCOfferOptions options = {});
   Promise<void> createAnswer (RTCSessionDescriptionCallback successCallback,
                               RTCPeerConnectionErrorCallback failureCallback);
   Promise<void> setLocalDescription (RTCSessionDescriptionInit description,

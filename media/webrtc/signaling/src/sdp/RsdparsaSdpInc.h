@@ -7,6 +7,7 @@
 #define _RUSTSDPINC_H_
 
 #include "nsError.h"
+#include "mozilla/Maybe.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -21,22 +22,29 @@ struct U8Vec;
 struct U32Vec;
 struct U16Vec;
 struct F32Vec;
+struct SsrcVec;
 struct RustHeapString;
 
-enum class RustSdpAddrType { kRustAddrNone, kRustAddrIp4, kRustAddrIp6 };
-
-struct RustIpAddr {
-  RustSdpAddrType addrType;
-  char unicastAddr[50];
-};
+enum class RustSdpAddressType { kRustAddrIp4, kRustAddrIp6 };
 
 struct StringView {
   const char* buf;
   size_t len;
 };
 
+struct RustAddress {
+  char ipAddress[50];
+  StringView fqdn;
+  bool isFqdn;
+};
+
+struct RustExplicitlyTypedAddress {
+  RustSdpAddressType addressType;
+  RustAddress address;
+};
+
 struct RustSdpConnection {
-  RustIpAddr addr;
+  RustExplicitlyTypedAddress addr;
   uint8_t ttl;
   uint64_t amount;
 };
@@ -45,7 +53,7 @@ struct RustSdpOrigin {
   StringView username;
   uint64_t sessionId;
   uint64_t sessionVersion;
-  RustIpAddr addr;
+  RustExplicitlyTypedAddress addr;  // TODO address
 };
 
 enum class RustSdpMediaValue { kRustAudio, kRustVideo, kRustApplication };
@@ -55,11 +63,13 @@ enum class RustSdpProtocolValue {
   kRustUdpTlsRtpSavp,
   kRustTcpDtlsRtpSavp,
   kRustUdpTlsRtpSavpf,
-  kRustTcpTlsRtpSavpf,
   kRustTcpDtlsRtpSavpf,
   kRustDtlsSctp,
   kRustUdpDtlsSctp,
   kRustTcpDtlsSctp,
+  kRustRtpAvp,
+  kRustRtpAvpf,
+  kRustRtpSavp,
 };
 
 enum class RustSdpFormatType { kRustIntegers, kRustStrings };
@@ -98,6 +108,19 @@ struct RustSdpAttributeSsrc {
   uint32_t id;
   StringView attribute;
   StringView value;
+};
+
+enum class RustSdpAttributeSsrcGroupSemantic {
+  kRustDup,
+  kRustFid,
+  kRustFec,
+  kRustFecFr,
+  kRustSim,
+};
+
+struct RustSdpAttributeSsrcGroup {
+  RustSdpAttributeSsrcGroupSemantic semantic;
+  SsrcVec* ssrcs;
 };
 
 struct RustSdpAttributeRtpmap {
@@ -171,6 +194,12 @@ struct RustSdpAttributeImageAttr {
   RustSdpAttributeImageAttrSetList recv;
 };
 
+struct RustRtxFmtpParameters {
+  uint8_t apt;
+  bool has_rtx_time;
+  uint32_t rtx_time;
+};
+
 struct RustSdpAttributeFmtpParameters {
   // H264
   uint32_t packetization_mode;
@@ -188,13 +217,20 @@ struct RustSdpAttributeFmtpParameters {
 
   // Opus
   uint32_t maxplaybackrate;
+  uint32_t maxaveragebitrate;
   bool usedtx;
   bool stereo;
   bool useinbandfec;
   bool cbr;
+  uint32_t ptime;
+  uint32_t minptime;
+  uint32_t maxptime;
 
   // telephone-event
   StringView dtmf_tones;
+
+  // RTX
+  RustRtxFmtpParameters rtx;
 
   // Red codecs
   U8Vec* encodings;
@@ -244,7 +280,8 @@ struct RustSdpAttributeGroup {
 
 struct RustSdpAttributeRtcp {
   uint32_t port;
-  RustIpAddr unicastAddr;
+  RustExplicitlyTypedAddress unicastAddr;
+  bool has_address;
 };
 
 struct RustSdpAttributeSctpmap {
@@ -277,7 +314,7 @@ enum class RustDirection {
 
 struct RustSdpAttributeRemoteCandidate {
   uint32_t component;
-  RustIpAddr address;
+  RustAddress address;
   uint32_t port;
 };
 
@@ -308,6 +345,9 @@ nsresult u16_vec_get(const U16Vec* vec, size_t index, uint16_t* ret);
 size_t u8_vec_len(const U8Vec* vec);
 nsresult u8_vec_get(const U8Vec* vec, size_t index, uint8_t* ret);
 
+size_t ssrc_vec_len(const SsrcVec* vec);
+nsresult ssrc_vec_get_id(const SsrcVec* vec, size_t index, uint32_t* ret);
+
 void sdp_free_string(char* string);
 
 nsresult parse_sdp(StringView sdp, bool fail_on_warning, RustSdpSession** ret,
@@ -315,7 +355,8 @@ nsresult parse_sdp(StringView sdp, bool fail_on_warning, RustSdpSession** ret,
 RustSdpSession* sdp_new_reference(RustSdpSession* aSess);
 void sdp_free_session(RustSdpSession* ret);
 size_t sdp_get_error_line_num(const RustSdpError* err);
-StringView sdp_get_error_message(const RustSdpError* err);
+char* sdp_get_error_message(const RustSdpError* err);
+void sdp_free_error_message(char* message);
 void sdp_free_error(RustSdpError* err);
 
 RustSdpOrigin sdp_get_origin(const RustSdpSession* aSess);
@@ -379,6 +420,10 @@ nsresult sdp_get_setup(const RustAttributeList* aList, RustSdpSetup* ret);
 size_t sdp_get_ssrc_count(const RustAttributeList* aList);
 void sdp_get_ssrcs(const RustAttributeList* aList, size_t listSize,
                    RustSdpAttributeSsrc* ret);
+
+size_t sdp_get_ssrc_group_count(const RustAttributeList* aList);
+void sdp_get_ssrc_groups(const RustAttributeList* aList, size_t listSize,
+                         RustSdpAttributeSsrcGroup* ret);
 
 size_t sdp_get_rtpmap_count(const RustAttributeList* aList);
 void sdp_get_rtpmaps(const RustAttributeList* aList, size_t listSize,

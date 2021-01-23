@@ -7,9 +7,9 @@
 #ifndef mozilla_dom_cache_StreamList_h
 #define mozilla_dom_cache_StreamList_h
 
+#include "mozilla/dom/SafeRefPtr.h"
 #include "mozilla/dom/cache/Context.h"
 #include "mozilla/dom/cache/Types.h"
-#include "mozilla/RefPtr.h"
 #include "nsTArray.h"
 
 class nsIInputStream;
@@ -21,11 +21,12 @@ namespace cache {
 class CacheStreamControlParent;
 class Manager;
 
-class StreamList final : public Context::Activity {
+class StreamList final : public Context::Activity,
+                         public SafeRefCounted<StreamList> {
  public:
-  StreamList(Manager* aManager, Context* aContext);
+  StreamList(SafeRefPtr<Manager> aManager, SafeRefPtr<Context> aContext);
 
-  Manager* GetManager() const;
+  Manager& GetManager() const;
   bool ShouldOpenStreamFor(const nsID& aId) const;
 
   void SetStreamControl(CacheStreamControlParent* aStreamControl);
@@ -46,7 +47,6 @@ class StreamList final : public Context::Activity {
   virtual bool MatchesCacheId(CacheId aCacheId) const override;
 
  private:
-  ~StreamList();
   struct Entry {
     explicit Entry(const nsID& aId, nsCOMPtr<nsIInputStream>&& aStream)
         : mId(aId), mStream(std::move(aStream)) {}
@@ -54,15 +54,18 @@ class StreamList final : public Context::Activity {
     nsID mId;
     nsCOMPtr<nsIInputStream> mStream;
   };
-  RefPtr<Manager> mManager;
-  RefPtr<Context> mContext;
+  SafeRefPtr<Manager> mManager;
+  SafeRefPtr<Context> mContext;
   CacheId mCacheId;
   CacheStreamControlParent* mStreamControl;
   nsTArray<Entry> mList;
   bool mActivated;
 
  public:
-  NS_INLINE_DECL_REFCOUNTING(cache::StreamList)
+  ~StreamList();
+
+  NS_DECL_OWNINGTHREAD
+  MOZ_DECLARE_REFCOUNTED_TYPENAME(cache::StreamList)
 };
 
 }  // namespace cache

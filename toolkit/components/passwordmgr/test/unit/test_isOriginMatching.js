@@ -1,4 +1,4 @@
-/*
+/**
  * Test LoginHelper.isOriginMatching
  */
 
@@ -11,6 +11,17 @@ add_task(function test_isOriginMatching() {
     [true, "http://example.com:8080", "http://example.com:8080"],
     [true, "https://example.com", "https://example.com"],
     [true, "https://example.com:8443", "https://example.com:8443"],
+
+    // The formActionOrigin can be "javascript:"
+    [true, "javascript:", "javascript:"],
+    [false, "javascript:", "http://example.com"],
+    [false, "http://example.com", "javascript:"],
+
+    // HTTP Auth. logins have a null formActionOrigin
+    [true, null, null],
+    [false, null, "http://example.com"],
+    [false, "http://example.com", null],
+
     [false, "http://example.com", "http://mozilla.org"],
     [false, "http://example.com", "http://example.com:8080"],
     [false, "https://example.com", "http://example.com"],
@@ -68,6 +79,91 @@ add_task(function test_isOriginMatching() {
       "http://sub.example.com",
       "http://example.com",
       { schemeUpgrades: true },
+    ],
+    [
+      true,
+      "http://sub.example.com",
+      "http://example.com",
+      { acceptDifferentSubdomains: true },
+    ],
+    [
+      true,
+      "http://sub.sub.example.com",
+      "http://example.com",
+      { acceptDifferentSubdomains: true },
+    ],
+    [
+      true,
+      "http://example.com",
+      "http://sub.example.com",
+      { acceptDifferentSubdomains: true },
+    ],
+    [
+      true,
+      "http://example.com",
+      "http://sub.sub.example.com",
+      { acceptDifferentSubdomains: true },
+    ],
+    [
+      false,
+      "https://sub.example.com",
+      "http://example.com",
+      { acceptDifferentSubdomains: true, schemeUpgrades: true },
+    ],
+    [
+      true,
+      "http://sub.example.com",
+      "https://example.com",
+      { acceptDifferentSubdomains: true, schemeUpgrades: true },
+    ],
+    [
+      true,
+      "http://sub.example.com",
+      "http://example.com:8081",
+      { acceptDifferentSubdomains: true },
+    ],
+    [
+      false,
+      "http://sub.example.com",
+      "http://sub.example.mozilla.com",
+      { acceptDifferentSubdomains: true },
+    ],
+    // signon.includeOtherSubdomainsInLookup allows acceptDifferentSubdomains to be false
+    [
+      false,
+      "http://sub.example.com",
+      "http://example.com",
+      { acceptDifferentSubdomains: false },
+    ],
+    [
+      false,
+      "http://sub.sub.example.com",
+      "http://example.com",
+      { acceptDifferentSubdomains: false },
+    ],
+    [
+      false,
+      "http://sub.example.com",
+      "http://example.com:8081",
+      { acceptDifferentSubdomains: false },
+    ],
+    [
+      false,
+      "http://sub.example.com",
+      "http://sub.example.mozilla.com",
+      { acceptDifferentSubdomains: false },
+    ],
+
+    // HTTP Auth. logins have a null formActionOrigin
+    [
+      false,
+      null,
+      "http://example.com",
+      {
+        acceptDifferentSubdomains: false,
+        acceptWildcardMatch: true,
+        schemeUpgrades: true,
+      },
     ],
   ];
   for (let tc of testcases) {

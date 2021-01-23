@@ -47,8 +47,12 @@ pub trait Element: Sized + Clone + Debug {
     ///
     /// This is guaranteed to be called in a pseudo-element.
     fn pseudo_element_originating_element(&self) -> Option<Self> {
+        debug_assert!(self.is_pseudo_element());
         self.parent_element()
     }
+
+    /// Whether we're matching on a pseudo-element.
+    fn is_pseudo_element(&self) -> bool;
 
     /// Skips non-element nodes
     fn prev_sibling_element(&self) -> Option<Self>;
@@ -58,10 +62,13 @@ pub trait Element: Sized + Clone + Debug {
 
     fn is_html_element_in_html_document(&self) -> bool;
 
-    fn local_name(&self) -> &<Self::Impl as SelectorImpl>::BorrowedLocalName;
+    fn has_local_name(&self, local_name: &<Self::Impl as SelectorImpl>::BorrowedLocalName) -> bool;
 
     /// Empty string for no namespace
-    fn namespace(&self) -> &<Self::Impl as SelectorImpl>::BorrowedNamespaceUrl;
+    fn has_namespace(&self, ns: &<Self::Impl as SelectorImpl>::BorrowedNamespaceUrl) -> bool;
+
+    /// Whether this element and the `other` element have the same local name and namespace.
+    fn is_same_type(&self, other: &Self) -> bool;
 
     fn attr_matches(
         &self,
@@ -109,6 +116,13 @@ pub trait Element: Sized + Clone + Debug {
         name: &<Self::Impl as SelectorImpl>::ClassName,
         case_sensitivity: CaseSensitivity,
     ) -> bool;
+
+    /// Returns the mapping from the `exportparts` attribute in the reverse
+    /// direction, that is, in an outer-tree -> inner-tree direction.
+    fn imported_part(
+        &self,
+        name: &<Self::Impl as SelectorImpl>::PartName,
+    ) -> Option<<Self::Impl as SelectorImpl>::PartName>;
 
     fn is_part(&self, name: &<Self::Impl as SelectorImpl>::PartName) -> bool;
 

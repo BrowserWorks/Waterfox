@@ -41,7 +41,6 @@ add_task(async function setup() {
     set: [
       // Disable personalized recommendations, they will break the data URI.
       ["browser.discovery.enabled", false],
-      ["extensions.htmlaboutaddons.enabled", true],
       ["extensions.getAddons.discovery.api_url", `data:;base64,${results}`],
       [
         "extensions.recommendations.themeRecommendationUrl",
@@ -52,10 +51,7 @@ add_task(async function setup() {
 });
 
 function checkExtraContents(doc, type, opts = {}) {
-  let {
-    showAmoButton = false,
-    showThemeRecommendationFooter = type === "theme",
-  } = opts;
+  let { showThemeRecommendationFooter = type === "theme" } = opts;
   let footer = doc.querySelector("footer");
   let amoButton = footer.querySelector('[action="open-amo"]');
   let privacyPolicyLink = footer.querySelector(".privacy-policy-link");
@@ -68,15 +64,11 @@ function checkExtraContents(doc, type, opts = {}) {
 
   if (type == "extension") {
     ok(taarNotice, "There is a TAAR notice");
-    if (showAmoButton) {
-      is_element_visible(amoButton, "The AMO button is shown");
-    } else {
-      is_element_hidden(amoButton, "The AMO button is hidden");
-    }
+    is_element_visible(amoButton, "The AMO button is shown");
     is_element_visible(privacyPolicyLink, "The privacy policy is visible");
   } else if (type == "theme") {
     ok(!taarNotice, "There is no TAAR notice");
-    ok(!amoButton, "There is no AMO button");
+    ok(amoButton, "AMO button is shown");
     ok(!privacyPolicyLink, "There is no privacy policy");
   } else {
     throw new Error(`Unknown type ${type}`);
@@ -141,7 +133,7 @@ async function testListRecommendations({ type, manifestExtra = {} }) {
 
   // Check that the cards are all for the right type.
   let cards = doc.querySelectorAll("recommended-addon-card");
-  ok(cards.length > 0, "There were some cards found");
+  ok(!!cards.length, "There were some cards found");
   for (let card of cards) {
     is(card.discoAddon.type, type, `The card is for a ${type}`);
     is_element_visible(card, "The card is visible");
@@ -184,7 +176,7 @@ async function testListRecommendations({ type, manifestExtra = {} }) {
   is(hiddenCard.addonId, addonId, "The expected card was found");
   is_element_hidden(hiddenCard, "The card is still hidden");
 
-  ok(cards.length > 0, "There are still some visible cards");
+  ok(!!cards.length, "There are still some visible cards");
   for (let card of cards) {
     is(card.discoAddon.type, type, `The card is for a ${type}`);
     is_element_visible(card, "The card is visible");
@@ -233,7 +225,7 @@ add_task(async function testInstallAllExtensions() {
   let recommendedList = doc.querySelector("recommended-addon-list");
   await recommendedList.cardsReady;
 
-  // Find more button is hidden.
+  // Find more button is shown.
   checkExtraContents(doc, type);
 
   let cards = Array.from(doc.querySelectorAll("recommended-addon-card"));
@@ -243,16 +235,16 @@ add_task(async function testInstallAllExtensions() {
     cards.map(card => installAddon({ card, recommendedList }))
   );
 
-  // The find more on AMO button is now shown.
-  checkExtraContents(doc, type, { showAmoButton: true });
+  // The find more on AMO button is shown.
+  checkExtraContents(doc, type);
 
-  // Uninstall one of the extensions, the button should be hidden again.
+  // Uninstall one of the extensions, the button should still be shown.
   let extension = extensions.pop();
   let shown = BrowserTestUtils.waitForEvent(recommendedList, "card-shown");
   await extension.unload();
   await shown;
 
-  // The find more on AMO button is now hidden.
+  // The find more on AMO button is shown.
   checkExtraContents(doc, type);
 
   await Promise.all(extensions.map(extension => extension.unload()));
@@ -271,7 +263,7 @@ add_task(async function testError() {
   let recommendedList = doc.querySelector("recommended-addon-list");
   await recommendedList.cardsReady;
 
-  checkExtraContents(doc, "extension", { showAmoButton: true });
+  checkExtraContents(doc, "extension");
 
   await closeView(win);
   await SpecialPowers.popPrefEnv();

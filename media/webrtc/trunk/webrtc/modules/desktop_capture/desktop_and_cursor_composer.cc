@@ -130,7 +130,7 @@ DesktopFrameWithCursor::~DesktopFrameWithCursor() {
 DesktopAndCursorComposer::DesktopAndCursorComposer(
     DesktopCapturer* desktop_capturer,
     MouseCursorMonitor* mouse_monitor)
-    : DesktopAndCursorComposer(desktop_capturer, mouse_monitor, false) {}
+    : DesktopAndCursorComposer(desktop_capturer, mouse_monitor, true) {}
 
 DesktopAndCursorComposer::DesktopAndCursorComposer(
     std::unique_ptr<DesktopCapturer> desktop_capturer,
@@ -151,6 +151,13 @@ DesktopAndCursorComposer::DesktopAndCursorComposer(
 }
 
 DesktopAndCursorComposer::~DesktopAndCursorComposer() = default;
+
+std::unique_ptr<DesktopAndCursorComposer>
+DesktopAndCursorComposer::CreateWithoutMouseCursorMonitor(
+    std::unique_ptr<DesktopCapturer> desktop_capturer) {
+  return std::unique_ptr<DesktopAndCursorComposer>(
+      new DesktopAndCursorComposer(desktop_capturer.release(), nullptr));
+}
 
 void DesktopAndCursorComposer::Start(DesktopCapturer::Callback* callback) {
   callback_ = callback;

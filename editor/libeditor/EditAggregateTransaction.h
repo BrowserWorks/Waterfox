@@ -7,14 +7,13 @@
 #define EditAggregateTransaction_h
 
 #include "mozilla/EditTransactionBase.h"
+#include "mozilla/OwningNonNull.h"
 #include "nsCOMPtr.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsAtom.h"
 #include "nsISupportsImpl.h"
 #include "nsTArray.h"
 #include "nscore.h"
-
-class nsITransaction;
 
 namespace mozilla {
 
@@ -24,7 +23,7 @@ namespace mozilla {
  */
 class EditAggregateTransaction : public EditTransactionBase {
  protected:
-  EditAggregateTransaction();
+  EditAggregateTransaction() = default;
 
  public:
   /**
@@ -42,8 +41,8 @@ class EditAggregateTransaction : public EditTransactionBase {
 
   NS_DECL_EDITTRANSACTIONBASE
 
-  NS_IMETHOD RedoTransaction() override;
-  NS_IMETHOD Merge(nsITransaction* aTransaction, bool* aDidMerge) override;
+  MOZ_CAN_RUN_SCRIPT NS_IMETHOD RedoTransaction() override;
+  NS_IMETHOD Merge(nsITransaction* aOtherTransaction, bool* aDidMerge) override;
 
   /**
    * Append a transaction to this aggregate.
@@ -55,10 +54,15 @@ class EditAggregateTransaction : public EditTransactionBase {
    */
   NS_IMETHOD GetName(nsAtom** aName);
 
- protected:
-  virtual ~EditAggregateTransaction();
+  const nsTArray<OwningNonNull<EditTransactionBase>>& ChildTransactions()
+      const {
+    return mChildren;
+  }
 
-  nsTArray<RefPtr<EditTransactionBase>> mChildren;
+ protected:
+  virtual ~EditAggregateTransaction() = default;
+
+  nsTArray<OwningNonNull<EditTransactionBase>> mChildren;
   RefPtr<nsAtom> mName;
 };
 

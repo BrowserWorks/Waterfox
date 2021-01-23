@@ -1,0 +1,221 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressbookWindow.title                        "Osoitekirja">
+<!ENTITY blankResultsPaneMessage.label                  "Tämä osoitekirja näyttää yhteystietoja vain haun jälkeen">
+<!ENTITY localResultsOnlyMessage.label                  "Yhteystietoja etäosoitekirjoista ei näytetä ennen hakua">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label                                 "Tiedosto">
+<!ENTITY fileMenu.accesskey                             "T">
+<!ENTITY newMenu.label                                  "Uusi">
+<!ENTITY newMenu.accesskey                              "U">
+<!ENTITY newContact.label                               "Yhteystieto…">
+<!ENTITY newContact.accesskey                           "Y">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "Osoitelista…">
+<!ENTITY newListCmd.accesskey                           "O">
+<!ENTITY newAddressBookCmd.label                        "Osoitekirja…">
+<!ENTITY newAddressBookCmd.accesskey                    "s">
+<!ENTITY newCardDAVBookCmd.label                        "CardDAV Osoitekirja…">
+<!ENTITY newCardDAVBookCmd.accesskey                    "V">
+<!ENTITY newLDAPDirectoryCmd.label                      "LDAP-hakemisto…">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "L">
+<!ENTITY newMessageCmd.label                            "Viesti">
+<!ENTITY newMessageCmd.key                              "M">
+<!ENTITY newMessageCmd.accesskey                        "V">
+<!-- LOCALIZATION NOTE (osxAddressBook) : These entities are only used on Mac -->
+<!ENTITY osxAddressBook.label                           "Käytä Mac OS X:n osoitekirjaa">
+<!ENTITY osxAddressBook.accesskey                       "X">
+<!ENTITY closeCmd.label                                 "Sulje">
+<!ENTITY closeCmd.key                                   "W">
+<!ENTITY closeCmd.accesskey                             "S">
+<!ENTITY printSetupCmd.label                            "Sivun asetukset…">
+<!ENTITY printSetupCmd.accesskey                        "e">
+<!ENTITY printPreviewContactCmd.label                   "Kortin tulostuksen esikatselu">
+<!ENTITY printPreviewContactCmd.accesskey               "K">
+<!ENTITY printPreviewAddressBook.label                  "Osoitekirjan tulostuksen esikatselu">
+<!ENTITY printPreviewAddressBook.accesskey              "O">
+<!ENTITY printContactCmd.label                          "Tulosta yhteystieto…">
+<!ENTITY printContactCmd.accesskey                      "T">
+<!ENTITY printContactCmd.key                            "P">
+<!ENTITY printAddressBook.label                         "Tulosta osoitekirja…">
+<!ENTITY printAddressBook.accesskey                     "a">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label                                 "Muokkaa">
+<!ENTITY editMenu.accesskey                             "M">
+<!ENTITY deleteCmd.label                                "Poista">
+<!ENTITY deleteAbCmd.label                              "Poista osoitekirja">
+<!ENTITY deleteContactCmd.label                         "Poista yhteystieto">
+<!ENTITY deleteContactsCmd.label                        "Poista yhteystiedot">
+<!ENTITY deleteListCmd.label                            "Poista osoitelista">
+<!ENTITY deleteListsCmd.label                           "Poista osoitelistat">
+<!ENTITY deleteItemsCmd.label                           "Poista kohteet">
+<!ENTITY searchAddressesCmd.key                         "f">
+<!ENTITY propertiesMenu.label                           "Ominaisuudet">
+<!ENTITY propertiesMenu.accesskey                       "O">
+<!ENTITY propertiesCmd.key                              "i">
+<!ENTITY abPropertiesMenu.label                         "Osoitekirjan ominaisuudet">
+<!ENTITY abPropertiesMenu.accesskey                     "k">
+<!ENTITY contactPropertiesMenu.label                    "Yhteyshenkilön ominaisuudet">
+<!ENTITY contactPropertiesMenu.accesskey                "Y">
+<!ENTITY mailingListPropertiesMenu.label                "Postituslistan ominaisuudet">
+<!ENTITY mailingListPropertiesMenu.accesskey            "P">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label                                 "Näytä">
+<!ENTITY viewMenu.accesskey                             "N">
+<!ENTITY viewToolbarsMenu.label                         "Työkalupalkit">
+<!ENTITY viewToolbarsMenu.accesskey                     "T">
+<!ENTITY menubarCmd.label                               "Valikkopalkki">
+<!ENTITY menubarCmd.accesskey                           "V">
+<!ENTITY showAbToolbarCmd.label                         "Osoitekirjapalkki">
+<!ENTITY showAbToolbarCmd.accesskey                     "O">
+<!ENTITY showTaskbarCmd.label                           "Tilarivi">
+<!ENTITY showTaskbarCmd.accesskey                       "T">
+<!ENTITY customizeToolbar.label                         "Muokkaa…">
+<!ENTITY customizeToolbar.accesskey                     "M">
+<!ENTITY layoutMenu.label                               "Asettelu">
+<!ENTITY layoutMenu.accesskey                           "A">
+<!ENTITY showDirectoryPane.label                        "Hakemistopaneeli">
+<!ENTITY showDirectoryPane.accesskey                    "H">
+<!ENTITY showContactPane2.label                         "Yhteystietopaneeli">
+<!ENTITY showContactPane2.accesskey                     "Y">
+<!ENTITY menu_ShowNameAs.label                          "Näytä nimi muodossa">
+<!ENTITY menu_ShowNameAs.accesskey                      "N">
+<!-- LOCALIZATION NOTE (firstLastCmd2.label): We're not including a comma here
+because displayed names don't have the comma in between. -->
+<!ENTITY firstLastCmd2.label                            "Etunimi Sukunimi">
+<!ENTITY firstLastCmd2.accesskey                        "E">
+<!ENTITY lastFirstCmd.label                             "Sukunimi, Etunimi">
+<!ENTITY lastFirstCmd.accesskey                         "S">
+<!ENTITY displayNameCmd.label                           "Näyttönimi">
+<!ENTITY displayNameCmd.accesskey                       "N">
+<!ENTITY sortMenu.label                                 "Järjestelyperuste">
+<!ENTITY sortMenu.accesskey                             "J">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label                                "Työkalut">
+<!ENTITY tasksMenu.accesskey                            "y">
+<!ENTITY messengerCmd.label                             "Sähköposti ja keskusteluryhmät">
+<!ENTITY messengerCmd.accesskey                         "S">
+<!ENTITY messengerCmd.commandkey                        "1">
+<!ENTITY searchAddressesCmd.label                       "Etsi osoitekirjasta…">
+<!ENTITY searchAddressesCmd.accesskey                   "E">
+<!ENTITY importCmd.label                                "Tuo yhteystietoja…">
+<!ENTITY importCmd.accesskey                            "T">
+<!ENTITY exportCmd.label                                "Vie yhteystietoja…">
+<!ENTITY exportCmd.accesskey                            "V">
+<!ENTITY preferencesCmd2.label                          "Asetukset">
+<!ENTITY preferencesCmd2.accesskey                      "A">
+<!ENTITY preferencesCmdUnix.label                       "Asetukset">
+<!ENTITY preferencesCmdUnix.accesskey                   "A">
+
+<!-- Address Book Toolbar and Context Menus -->
+<!ENTITY newContactButton.label                         "Uusi yhteystieto">
+<!ENTITY newContactButton.accesskey                     "U">
+<!ENTITY newlistButton.label                            "Uusi lista">
+<!ENTITY newlistButton.accesskey                        "s">
+<!ENTITY showAsDefault.label                            "Oletuskansio">
+<!ENTITY showAsDefault.accesskey                        "K">
+<!ENTITY editPropertiesButton.label                     "Muokkaa">
+<!ENTITY propertiesContext.label                        "Ominaisuudet">
+<!ENTITY propertiesContext.accesskey                    "i">
+<!ENTITY abPropertiesContext.label                      "Ominaisuudet">
+<!ENTITY abPropertiesContext.accesskey                  "i">
+<!ENTITY syncContext.label                              "Synkronoi">
+<!ENTITY syncContext.accesskey                          "y">
+<!ENTITY editContactContext.label                       "Muokkaa yhteyshenkilöä">
+<!ENTITY editContactContext.accesskey                   "M">
+<!ENTITY editMailingListContext.label                   "Muokkaa listaa">
+<!ENTITY editMailingListContext.accesskey               "u">
+<!ENTITY newmsgButton.label                             "Lähetä">
+<!ENTITY newmsgButton.accesskey                         "L">
+<!ENTITY newIM.label                                    "Pikaviesti">
+<!ENTITY newIM.accesskey                                "P">
+<!ENTITY printButton.label                              "Tulosta…">
+<!ENTITY printButton.accesskey                          "T">
+<!ENTITY deleteButton2.label                            "Poista">
+<!ENTITY deleteButton2.accesskey                        "P">
+
+<!-- Address Book Toolbar Tooltips -->
+<!ENTITY columnChooser.tooltip                          "Valitse näytettävät sarakkeet">
+<!ENTITY newContactButton.tooltip                       "Luo uusi yhteystieto osoitekirjaan">
+<!ENTITY newlistButton.tooltip                          "Luo uusi lista">
+<!ENTITY editPropertiesButton.tooltip                   "Muokkaa valittua kohdetta">
+<!ENTITY editAbPropertiesButton.tooltip                 "Muokkaa valitun osoitekirjan ominaisuuksia">
+<!ENTITY editContactPropertiesButton.tooltip            "Muokkaa valittua yhteyshenkilöä">
+<!ENTITY editMailingListPropertiesButton.tooltip        "Muokkaa valittua postituslistaa">
+<!ENTITY newmsgButton.tooltip                           "Lähetä sähköpostia">
+<!ENTITY newIM.tooltip                                  "Lähetä pikaviesti tai keskustele">
+<!ENTITY deleteButton2.tooltip                          "Poista valittu tieto">
+
+<!-- Search Bar -->
+<!ENTITY SearchNameOrEmail.label                        "Nimi tai osoite">
+<!ENTITY SearchNameOrEmail.accesskey                    "N">
+<!ENTITY advancedButton.tooltip                         "Laajennettu osoitekirjahaku">
+<!ENTITY quickSearchCmd.key                             "k">
+<!ENTITY searchItem.title "Pikahaku">
+
+<!-- Results Pane -->
+<!ENTITY Addrbook.label                                 "Osoitekirja">
+<!ENTITY Addrbook.accesskey                             "k">
+<!ENTITY GeneratedName.label                            "Nimi">
+<!ENTITY GeneratedName.accesskey                        "N">
+<!ENTITY PrimaryEmail.label                             "Sähköpostiosoite">
+<!ENTITY PrimaryEmail.accesskey                         "S">
+<!ENTITY ChatName.label                                 "Pikaviestinimi">
+<!ENTITY ChatName.accesskey                             "P">
+<!ENTITY Company.label                                  "Organisaatio">
+<!ENTITY Company.accesskey                              "O">
+<!ENTITY NickName.label                                 "Lempinimi">
+<!ENTITY NickName.accesskey                             "L">
+<!ENTITY SecondEmail.label                              "Toinen sähköpostiosoite">
+<!ENTITY SecondEmail.accesskey                          "T">
+<!ENTITY Department.label                               "Osasto">
+<!ENTITY Department.accesskey                           "O">
+<!ENTITY JobTitle.label                                 "Ammattinimi">
+<!ENTITY JobTitle.accesskey                             "A">
+<!ENTITY CellularNumber.label                           "Matkapuhelin">
+<!ENTITY CellularNumber.accesskey                       "M">
+<!ENTITY PagerNumber.label                              "Hakulaite">
+<!ENTITY PagerNumber.accesskey                          "H">
+<!ENTITY FaxNumber.label                                "Faksi">
+<!ENTITY FaxNumber.accesskey                            "F">
+<!ENTITY HomePhone.label                                "Kotipuhelin">
+<!ENTITY HomePhone.accesskey                            "K">
+<!ENTITY WorkPhone.label                                "Työpuhelin">
+<!ENTITY WorkPhone.accesskey                            "y">
+<!ENTITY sortAscending.label                            "Nouseva järjestys">
+<!ENTITY sortAscending.accesskey                        "u">
+<!ENTITY sortDescending.label                           "Laskeva järjestys">
+<!ENTITY sortDescending.accesskey                       "e">
+<!ENTITY _PhoneticName.label                            "Foneettinen nimi">
+<!ENTITY _PhoneticName.accesskey                        "F">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "Yhteystieto">
+<!ENTITY home.heading                                   "Koti">
+<!ENTITY other.heading                                  "Muu">
+<!ENTITY chat.heading                                   "Keskustelu">
+<!ENTITY phone.heading                                  "Puhelin">
+<!ENTITY work.heading                                   "Työ">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "Kuvaus">
+<!ENTITY addresses.heading                              "Osoitteet">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "Hae kartta">
+<!ENTITY mapIt.tooltip                                  "Hae ja näytä tämän osoitteen kartta verkosta">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label                               "">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY windowMenu.label                               "Ikkuna">
+<!ENTITY minimizeWindow.label                           "Pienennä ikkuna">
+<!ENTITY minimizeWindow.key                             "m">
+<!ENTITY bringAllToFront.label                          "Näytä kaikki">
+<!ENTITY zoomWindow.label                               "Suurenna ikkunaa">

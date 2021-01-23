@@ -24,12 +24,12 @@ interface nsIQuotaOriginUsageResult : nsISupports
   readonly attribute unsigned long long usage;
 
   readonly attribute unsigned long long fileUsage;
-
-  readonly attribute unsigned long long limit;
 };
 
-[scriptable, function, uuid(5d8c2fbe-9ccc-4bab-8f03-8591dfc8e351)]
-interface nsIQuotaInitializedOriginsResult : nsISupports
+[scriptable, function, uuid(9827fc69-7ea9-48ef-b30d-2e2ae0451ec0)]
+interface nsIQuotaEstimateResult : nsISupports
 {
-  readonly attribute ACString origin;
+  readonly attribute unsigned long long usage;
+
+  readonly attribute unsigned long long limit;
 };

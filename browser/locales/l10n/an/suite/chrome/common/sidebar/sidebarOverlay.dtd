@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sidebar.panels.label           "Panel lateral">
+<!ENTITY sidebar.reload.label           "Recargar">
+<!ENTITY sidebar.reload.accesskey       "R">
+<!ENTITY sidebar.picker.label           "Pestanyas">
+<!ENTITY sidebar.customize.label        "Personalizar o panel lateral…">
+<!ENTITY sidebar.customize.accesskey    "P">
+<!ENTITY sidebar.hide.label             "Amagar pestanya">
+<!ENTITY sidebar.hide.accesskey         "A">
+<!ENTITY sidebar.switch.label           "Cambiar a la pestaña">
+<!ENTITY sidebar.switch.accesskey       "t">
+<!ENTITY sidebarCmd.label               "Panel lateral">
+<!ENTITY sidebarCmd.accesskey           "l">
+<!ENTITY sidebar.loading.label          "Cargando…">
+<!ENTITY sidebar.loadstopped.label      "Carga detenida">
+<!ENTITY sidebar.loading.stop.label     "Aturar">
+<!ENTITY sidebar.loading.stop.accesskey "A">
+
+<!ENTITY sidebar.no-panels.state     "O panel lateral ye vacío en iste momento.">
+<!ENTITY sidebar.no-panels.add       "Puede adhibir pestanyas si preta en o botón &quot;Pestanyas&quot; que ye dencima.">
+<!ENTITY sidebar.no-panels.hide      "Si deseya amagar totalment o panel lateral, prete en o menú &quot;Veyer&quot; d&apos;a parte superior y trige &quot;Panel lateral&quot; d&apos;o submenú &quot;Barras de ferramientas&quot;.">
+<!ENTITY sidebar.sbDirectory.label   "Directorio d'o panel lateral (Sidebar)…">
+
+<!ENTITY sidebar.pagenotfound.label  "Ista pestanya no ye disponible en iste momento.">
+<!ENTITY sidebar.close.tooltip       "Zarrar panel lateral">
+<!ENTITY sidebar.open.tooltip        "Ubrir panel lateral">
+
+<!ENTITY sidebar.search.label         "Buscar">
+<!ENTITY sidebar.client-bookmarks.label     "Marcadors">
+<!ENTITY sidebar.client-history.label       "Historial">
+<!ENTITY sidebar.client-addressbook.label   "Libreta d'adrezas">

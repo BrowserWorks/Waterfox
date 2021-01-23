@@ -1,7 +1,7 @@
 ﻿// © 2016 and later: Unicode, Inc. and others.
 // License & terms of use: http://www.unicode.org/copyright.html#License
 gd{
-    Version{"2.1.49.82"}
+    Version{"37"}
     zoneStrings{
         "Africa:Abidjan"{
             ec{"Abidjan"}
@@ -809,6 +809,9 @@ gd{
         }
         "Asia:Qatar"{
             ec{"Catar"}
+        }
+        "Asia:Qostanay"{
+            ec{"Qostanaı"}
         }
         "Asia:Qyzylorda"{
             ec{"Qızılorda"}
@@ -1788,7 +1791,9 @@ gd{
             ls{"Àm Niue"}
         }
         "meta:Norfolk"{
-            ls{"Àm Eilein Norfolk"}
+            ld{"Tìde samhraidh Eilein Norfolk"}
+            lg{"Àm Eilein Norfolk"}
+            ls{"Bun-àm Eilein Norfolk"}
         }
         "meta:Noronha"{
             ld{"Tìde Samhraidh Fernando de Noronha"}

@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "Klask">
+
+<!ENTITY newPref.namePlaceholder       "Anv">
+
+<!ENTITY newPref.valueBoolean          "Boulean">
+<!ENTITY newPref.valueString           "Hedad">
+<!ENTITY newPref.valueInteger          "Kevan">
+
+<!ENTITY newPref.stringPlaceholder     "Roit un hedad">
+<!ENTITY newPref.numberPlaceholder     "Roit un niverenn">
+
+<!ENTITY newPref.toggleButton          "Kuzhat/Diskouez">
+<!ENTITY newPref.cancelButton          "Nullañ">
+
+<!ENTITY contextMenu.copyPrefName      "Eilañ an anv">
+<!ENTITY contextMenu.copyPrefValue     "Eilañ  ar werzh">

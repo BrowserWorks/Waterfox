@@ -16,7 +16,8 @@ const { XPCOMUtils } = ChromeUtils.import(
 );
 XPCOMUtils.defineLazyModuleGetters(this, {
   Log: "resource://gre/modules/Log.jsm",
-  PlacesUtils: "resource://modules/PlacesUtils.jsm",
+  PlacesUtils: "resource://gre/modules/PlacesUtils.jsm",
+  SkippableTimer: "resource:///modules/UrlbarUtils.jsm",
   UrlbarMuxer: "resource:///modules/UrlbarUtils.jsm",
   UrlbarPrefs: "resource:///modules/UrlbarPrefs.jsm",
   UrlbarProvider: "resource:///modules/UrlbarUtils.jsm",
@@ -33,6 +34,16 @@ XPCOMUtils.defineLazyGetter(this, "logger", () =>
 var localProviderModules = {
   UrlbarProviderUnifiedComplete:
     "resource:///modules/UrlbarProviderUnifiedComplete.jsm",
+  UrlbarProviderInterventions:
+    "resource:///modules/UrlbarProviderInterventions.jsm",
+  UrlbarProviderPrivateSearch:
+    "resource:///modules/UrlbarProviderPrivateSearch.jsm",
+  UrlbarProviderSearchTips: "resource:///modules/UrlbarProviderSearchTips.jsm",
+  UrlbarProviderSearchSuggestions:
+    "resource:///modules/UrlbarProviderSearchSuggestions.jsm",
+  UrlbarProviderTokenAliasEngines:
+    "resource:///modules/UrlbarProviderTokenAliasEngines.jsm",
+  UrlbarProviderTopSites: "resource:///modules/UrlbarProviderTopSites.jsm",
 };
 
 // List of available local muxers, each is implemented in its own jsm module.
@@ -41,10 +52,10 @@ var localMuxerModules = {
     "resource:///modules/UrlbarMuxerUnifiedComplete.jsm",
 };
 
-// To improve dataflow and reduce UI work, when a match is added by a
-// non-immediate provider, we notify it to the controller after a delay, so
-// that we can chunk matches coming in that timeframe into a single call.
-const CHUNK_MATCHES_DELAY_MS = 16;
+// To improve dataflow and reduce UI work, when a result is added by a
+// non-heuristic provider, we notify it to the controller after a delay, so
+// that we can chunk results coming in that timeframe into a single call.
+const CHUNK_RESULTS_DELAY_MS = 16;
 
 const DEFAULT_MUXER = "UnifiedComplete";
 
@@ -55,8 +66,8 @@ const DEFAULT_MUXER = "UnifiedComplete";
  */
 class ProvidersManager {
   constructor() {
-    // Tracks the available providers.
-    // This is a sorted array, with IMMEDIATE providers at the top.
+    // Tracks the available providers.  This is a sorted array, with HEURISTIC
+    // providers at the front.
     this.providers = [];
     for (let [symbol, module] of Object.entries(localProviderModules)) {
       let { [symbol]: provider } = ChromeUtils.import(module, {});
@@ -90,11 +101,18 @@ class ProvidersManager {
       throw new Error(`Unknown provider type ${provider.type}`);
     }
     logger.info(`Registering provider ${provider.name}`);
-    if (provider.type == UrlbarUtils.PROVIDER_TYPE.IMMEDIATE) {
-      this.providers.unshift(provider);
-    } else {
-      this.providers.push(provider);
+    let index = -1;
+    if (provider.type == UrlbarUtils.PROVIDER_TYPE.HEURISTIC) {
+      // Keep heuristic providers in order at the front of the array.  Find the
+      // first non-heuristic provider and insert the new provider there.
+      index = this.providers.findIndex(
+        p => p.type != UrlbarUtils.PROVIDER_TYPE.HEURISTIC
+      );
     }
+    if (index < 0) {
+      index = this.providers.length;
+    }
+    this.providers.splice(index, 0, provider);
   }
 
   /**
@@ -103,10 +121,19 @@ class ProvidersManager {
    */
   unregisterProvider(provider) {
     logger.info(`Unregistering provider ${provider.name}`);
-    let index = this.providers.indexOf(provider);
+    let index = this.providers.findIndex(p => p.name == provider.name);
     if (index != -1) {
       this.providers.splice(index, 1);
     }
+  }
+
+  /**
+   * Returns the provider with the given name.
+   * @param {string} name The provider name.
+   * @returns {UrlbarProvider} The provider.
+   */
+  getProvider(name) {
+    return this.providers.find(p => p.name == name);
   }
 
   /**
@@ -134,9 +161,9 @@ class ProvidersManager {
   /**
    * Starts querying.
    * @param {object} queryContext The query context object
-   * @param {object} controller a UrlbarController instance
+   * @param {object} [controller] a UrlbarController instance
    */
-  async startQuery(queryContext, controller) {
+  async startQuery(queryContext, controller = null) {
     logger.info(`Query start ${queryContext.searchString}`);
 
     // Define the muxer to use.
@@ -153,8 +180,28 @@ class ProvidersManager {
       ? this.providers.filter(p => queryContext.providers.includes(p.name))
       : this.providers;
 
+    // Apply tokenization.
+    UrlbarTokenizer.tokenize(queryContext);
+
+    // If there's a single source, we are in restriction mode.
+    if (queryContext.sources && queryContext.sources.length == 1) {
+      queryContext.restrictSource = queryContext.sources[0];
+    }
+    // Providers can use queryContext.sources to decide whether they want to be
+    // invoked or not.
+    updateSourcesIfEmpty(queryContext);
+    logger.debug(`Context sources ${queryContext.sources}`);
+
     let query = new Query(queryContext, controller, muxer, providers);
     this.queries.set(queryContext, query);
+
+    // Update the behavior of extension providers.
+    for (let provider of this.providers) {
+      if (provider.type == UrlbarUtils.PROVIDER_TYPE.EXTENSION) {
+        await provider.tryMethod("updateBehavior", queryContext);
+      }
+    }
+
     await query.start();
   }
 
@@ -192,6 +239,20 @@ class ProvidersManager {
       this.interruptLevel--;
     }
   }
+
+  /**
+   * Notifies all providers when the user starts and ends an engagement with the
+   * urlbar.
+   *
+   * @param {boolean} isPrivate True if the engagement is in a private context.
+   * @param {string} state The state of the engagement, one of: start,
+   *        engagement, abandonment, discard.
+   */
+  notifyEngagementChange(isPrivate, state) {
+    for (let provider of this.providers) {
+      provider.tryMethod("onEngagement", isPrivate, state);
+    }
+  }
 }
 
 var UrlbarProvidersManager = new ProvidersManager();
@@ -211,8 +272,8 @@ class Query {
    *        The controller to be notified
    * @param {object} muxer
    *        The muxer to sort results
-   * @param {object} providers
-   *        Map of all the providers by type and name
+   * @param {Array} providers
+   *        Array of all the providers.
    */
   constructor(queryContext, controller, muxer, providers) {
     this.context = queryContext;
@@ -222,13 +283,10 @@ class Query {
     this.providers = providers;
     this.started = false;
     this.canceled = false;
-    this.complete = false;
 
-    // Array of acceptable RESULT_SOURCE values for this query. Providers can
-    // use queryContext.acceptableSources to decide whether they want to be
-    // invoked or not.
-    // This is also used to filter results in add().
-    this.acceptableSources = [];
+    // This is used as a last safety filter in add(), thus we keep an unmodified
+    // copy of it.
+    this.acceptableSources = queryContext.sources.slice();
   }
 
   /**
@@ -239,58 +297,90 @@ class Query {
       throw new Error("This Query has been started already");
     }
     this.started = true;
-    UrlbarTokenizer.tokenize(this.context);
 
-    this.acceptableSources = getAcceptableMatchSources(this.context);
-    logger.debug(`Acceptable sources ${this.acceptableSources}`);
-    // Pass a copy so the provider can't modify our local version.
-    this.context.acceptableSources = this.acceptableSources.slice();
-
-    // Check which providers should be queried.
-    let providers = this.providers.filter(p => p.isActive(this.context));
-    // Check if any of the remaining providers wants to restrict the search.
-    let restrictProviders = providers.filter(p =>
-      p.isRestricting(this.context)
-    );
-    if (restrictProviders.length) {
-      providers = restrictProviders;
+    // Check which providers should be queried by calling isActive on them.
+    let activeProviders = [];
+    let activePromises = [];
+    let maxPriority = -1;
+    for (let provider of this.providers) {
+      activePromises.push(
+        // Not all isActive implementations are async, so wrap the call in a
+        // promise so we can be sure we can call `then` on it.  Note that
+        // Promise.resolve returns its arg directly if it's already a promise.
+        Promise.resolve(provider.tryMethod("isActive", this.context))
+          .then(isActive => {
+            if (isActive && !this.canceled) {
+              let priority = provider.tryMethod("getPriority", this.context);
+              if (priority >= maxPriority) {
+                // The provider's priority is at least as high as the max.
+                if (priority > maxPriority) {
+                  // The provider's priority is higher than the max.  Remove all
+                  // previously added providers, since their priority is
+                  // necessarily lower, by setting length to zero.
+                  activeProviders.length = 0;
+                  maxPriority = priority;
+                }
+                activeProviders.push(provider);
+              }
+            }
+          })
+          .catch(Cu.reportError)
+      );
     }
 
-    // Start querying providers.
-    let promises = [];
-    let delayStarted = false;
-    for (let provider of providers) {
-      if (this.canceled) {
-        break;
+    // We have to wait for all isActive calls to finish because we want to query
+    // only the highest priority active providers as determined by the priority
+    // logic above.
+    await Promise.all(activePromises);
+
+    if (this.canceled) {
+      this.controller = null;
+      return;
+    }
+
+    // Start querying active providers.
+    let queryPromises = [];
+    for (let provider of activeProviders) {
+      if (provider.type == UrlbarUtils.PROVIDER_TYPE.HEURISTIC) {
+        queryPromises.push(
+          provider.tryMethod("startQuery", this.context, this.add.bind(this))
+        );
+        continue;
       }
-      if (
-        provider.type != UrlbarUtils.PROVIDER_TYPE.IMMEDIATE &&
-        !delayStarted
-      ) {
-        delayStarted = true;
+      if (!this._sleepTimer) {
         // Tracks the delay timer. We will fire (in this specific case, cancel
         // would do the same, since the callback is empty) the timer when the
         // search is canceled, unblocking start().
-        this._sleepTimer = new SkippableTimer(() => {},
-        UrlbarPrefs.get("delay"));
-        await this._sleepTimer.promise;
+        this._sleepTimer = new SkippableTimer({
+          name: "Query provider timer",
+          time: UrlbarPrefs.get("delay"),
+          logger,
+        });
       }
-      promises.push(provider.startQuery(this.context, this.add.bind(this)));
+      queryPromises.push(
+        this._sleepTimer.promise.then(() => {
+          if (this.canceled) {
+            return undefined;
+          }
+          return provider.tryMethod(
+            "startQuery",
+            this.context,
+            this.add.bind(this)
+          );
+        })
+      );
     }
 
-    logger.info(`Queried ${promises.length} providers`);
-    if (promises.length) {
-      await Promise.all(promises.map(p => p.catch(Cu.reportError)));
+    logger.info(`Queried ${queryPromises.length} providers`);
+    await Promise.all(queryPromises);
 
-      if (this._chunkTimer) {
-        // All the providers are done returning results, so we can stop chunking.
-        await this._chunkTimer.fire();
-      }
+    if (!this.canceled && this._chunkTimer) {
+      // All the providers are done returning results, so we can stop chunking.
+      await this._chunkTimer.fire();
     }
 
-    // Nothing should be failing above, since we catch all the promises, thus
-    // this is not in a finally for now.
-    this.complete = true;
+    // Break cycles with the controller to avoid leaks.
+    this.controller = null;
   }
 
   /**
@@ -303,7 +393,7 @@ class Query {
     }
     this.canceled = true;
     for (let provider of this.providers) {
-      provider.cancelQuery(this.context);
+      provider.tryMethod("cancelQuery", this.context);
     }
     if (this._chunkTimer) {
       this._chunkTimer.cancel().catch(Cu.reportError);
@@ -314,11 +404,11 @@ class Query {
   }
 
   /**
-   * Adds a match returned from a provider to the results set.
+   * Adds a result returned from a provider to the results set.
    * @param {object} provider
-   * @param {object} match
+   * @param {object} result
    */
-  add(provider, match) {
+  add(provider, result) {
     if (!(provider instanceof UrlbarProvider)) {
       throw new Error("Invalid provider passed to the add callback");
     }
@@ -328,125 +418,101 @@ class Query {
     }
     // Check if the result source should be filtered out. Pay attention to the
     // heuristic result though, that is supposed to be added regardless.
-    if (!this.acceptableSources.includes(match.source) && !match.heuristic) {
+    if (
+      !this.acceptableSources.includes(result.source) &&
+      !result.heuristic &&
+      // Treat form history as searches for the purpose of acceptableSources.
+      (result.type != UrlbarUtils.RESULT_TYPE.SEARCH ||
+        result.source != UrlbarUtils.RESULT_SOURCE.HISTORY ||
+        !this.acceptableSources.includes(UrlbarUtils.RESULT_SOURCE.SEARCH))
+    ) {
       return;
     }
 
     // Filter out javascript results for safety. The provider is supposed to do
     // it, but we don't want to risk leaking these out.
     if (
-      match.type != UrlbarUtils.RESULT_TYPE.KEYWORD &&
-      match.payload.url &&
-      match.payload.url.startsWith("javascript:") &&
+      result.type != UrlbarUtils.RESULT_TYPE.KEYWORD &&
+      result.payload.url &&
+      result.payload.url.startsWith("javascript:") &&
       !this.context.searchString.startsWith("javascript:") &&
       UrlbarPrefs.get("filter.javascript")
     ) {
       return;
     }
 
-    this.context.results.push(match);
+    result.providerName = provider.name;
+    this.context.results.push(result);
+    if (result.heuristic) {
+      this.context.heuristicResult = result;
+    }
 
-    let notifyResults = () => {
-      if (this._chunkTimer) {
-        this._chunkTimer.cancel().catch(Cu.reportError);
-        delete this._chunkTimer;
-      }
-      this.muxer.sort(this.context);
+    this._notifyResultsFromProvider(provider);
+  }
 
-      // Crop results to the requested number.
-      logger.debug(
-        `Cropping ${this.context.results.length} matches to ${
-          this.context.maxResults
-        }`
-      );
-      this.context.results = this.context.results.slice(
-        0,
-        this.context.maxResults
-      );
-      this.controller.receiveResults(this.context);
-    };
-
-    // If the provider is not of immediate type, chunk results, to improve the
+  _notifyResultsFromProvider(provider) {
+    // If the provider is not of heuristic type, chunk results, to improve the
     // dataflow and reduce UI flicker.
-    if (provider.type == UrlbarUtils.PROVIDER_TYPE.IMMEDIATE) {
-      notifyResults();
+    if (provider.type == UrlbarUtils.PROVIDER_TYPE.HEURISTIC) {
+      this._notifyResults();
     } else if (!this._chunkTimer) {
-      this._chunkTimer = new SkippableTimer(
-        notifyResults,
-        CHUNK_MATCHES_DELAY_MS
-      );
+      this._chunkTimer = new SkippableTimer({
+        name: "Query chunk timer",
+        callback: () => this._notifyResults(),
+        time: CHUNK_RESULTS_DELAY_MS,
+        logger,
+      });
+    }
+  }
+
+  _notifyResults() {
+    this.muxer.sort(this.context);
+
+    if (this._chunkTimer) {
+      this._chunkTimer.cancel().catch(Cu.reportError);
+      this._chunkTimer = null;
+    }
+
+    // Before the muxer.sort call above, this.context.results should never be
+    // empty since this method is called when results are added.  But the muxer
+    // may have excluded one or more results from the final sorted list.  For
+    // example, it excludes the "Search in a Private Window" result if it's the
+    // only result that's been added so far.  We don't want to notify consumers
+    // if there are no results since they generally expect at least one result
+    // when notified, so bail, but only after nulling out the chunk timer above
+    // so that it will be restarted the next time results are added.
+    if (!this.context.results.length) {
+      return;
+    }
+
+    // Crop results to the requested number, taking their result spans into
+    // account.
+    logger.debug(
+      `Cropping ${this.context.results.length} results to ${this.context.maxResults}`
+    );
+    let resultCount = this.context.maxResults;
+    for (let i = 0; i < this.context.results.length; i++) {
+      resultCount -= UrlbarUtils.getSpanForResult(this.context.results[i]);
+      if (resultCount < 0) {
+        this.context.results.splice(i, this.context.results.length - i);
+        break;
+      }
+    }
+
+    if (this.controller) {
+      this.controller.receiveResults(this.context);
     }
   }
 }
 
 /**
- * Class used to create a timer that can be manually fired, to immediately
- * invoke the callback, or canceled, as necessary.
- * Examples:
- *   let timer = new SkippableTimer();
- *   // Invokes the callback immediately without waiting for the delay.
- *   await timer.fire();
- *   // Cancel the timer, the callback won't be invoked.
- *   await timer.cancel();
- *   // Wait for the timer to have elapsed.
- *   await timer.promise;
- */
-class SkippableTimer {
-  /**
-   * Creates a skippable timer for the given callback and time.
-   * @param {function} callback To be invoked when requested
-   * @param {number} time A delay in milliseconds to wait for
-   */
-  constructor(callback, time) {
-    let timerPromise = new Promise(resolve => {
-      this._timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
-      this._timer.initWithCallback(
-        () => {
-          logger.debug(`Elapsed ${time}ms timer`);
-          resolve();
-        },
-        time,
-        Ci.nsITimer.TYPE_ONE_SHOT
-      );
-      logger.debug(`Started ${time}ms timer`);
-    });
-
-    let firePromise = new Promise(resolve => {
-      this.fire = () => {
-        logger.debug(`Skipped ${time}ms timer`);
-        resolve();
-        return this.promise;
-      };
-    });
-
-    this.promise = Promise.race([timerPromise, firePromise]).then(() => {
-      // If we've been canceled, don't call back.
-      if (this._timer) {
-        callback();
-      }
-    });
-  }
-
-  /**
-   * Allows to cancel the timer and the callback won't be invoked.
-   * It is not strictly necessary to await for this, the promise can just be
-   * used to ensure all the internal work is complete.
-   * @returns {promise} Resolved once all the cancelation work is complete.
-   */
-  cancel() {
-    logger.debug(`Canceling timer for ${this._timer.delay}ms`);
-    this._timer.cancel();
-    delete this._timer;
-    return this.fire();
-  }
-}
-
-/**
- * Gets an array of the provider sources accepted for a given UrlbarQueryContext.
+ * Updates in place the sources for a given UrlbarQueryContext.
  * @param {UrlbarQueryContext} context The query context to examine
- * @returns {array} Array of accepted sources
  */
-function getAcceptableMatchSources(context) {
+function updateSourcesIfEmpty(context) {
+  if (context.sources && context.sources.length) {
+    return;
+  }
   let acceptedSources = [];
   // There can be only one restrict token about sources.
   let restrictToken = context.tokens.find(t =>
@@ -486,8 +552,13 @@ function getAcceptableMatchSources(context) {
       case UrlbarUtils.RESULT_SOURCE.SEARCH:
         if (
           restrictTokenType === UrlbarTokenizer.TYPE.RESTRICT_SEARCH ||
-          (!restrictTokenType && UrlbarPrefs.get("suggest.searches"))
+          !restrictTokenType
         ) {
+          // We didn't check browser.urlbar.suggest.searches here, because it
+          // just controls search suggestions. If a search suggestion arrives
+          // here, we lost already, because we broke user's privacy by hitting
+          // the network. Thus, it's better to leave things go through and
+          // notice the bug, rather than hiding it with a filter.
           acceptedSources.push(source);
         }
         break;
@@ -512,5 +583,5 @@ function getAcceptableMatchSources(context) {
         break;
     }
   }
-  return acceptedSources;
+  context.sources = acceptedSources;
 }

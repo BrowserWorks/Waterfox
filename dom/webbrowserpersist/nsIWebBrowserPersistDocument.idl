@@ -13,6 +13,12 @@ interface nsIPrincipal;
 interface nsIRemoteTab;
 interface nsIWebBrowserPersistResourceVisitor;
 interface nsIWebBrowserPersistWriteCompletion;
+interface nsIReferrerInfo;
+interface nsISHEntry;
+
+webidl BrowsingContext;
+
+native SHEntryRef(already_AddRefed<nsISHEntry>);
 
 /**
  * Interface for the URI-mapping information that can be supplied when
@@ -50,7 +56,7 @@ interface nsIWebBrowserPersistURIMap : nsISupports
  * changes made to the underlying document; most of these are
  * self-explanatory from their names and types.
  */
-[scriptable, uuid(74aa4918-5d15-46b6-9ccf-74f9696d721d)]
+[scriptable, builtinclass, uuid(74aa4918-5d15-46b6-9ccf-74f9696d721d)]
 interface nsIWebBrowserPersistDocument : nsISupports
 {
   readonly attribute boolean isPrivate;
@@ -59,7 +65,7 @@ interface nsIWebBrowserPersistDocument : nsISupports
   readonly attribute ACString contentType;
   readonly attribute ACString characterSet;
   readonly attribute AString title;
-  readonly attribute AString referrer;
+  readonly attribute nsIReferrerInfo referrerInfo;
   readonly attribute AString contentDisposition;
   readonly attribute nsIInputStream postData;
   readonly attribute nsIPrincipal principal;
@@ -68,6 +74,7 @@ interface nsIWebBrowserPersistDocument : nsISupports
    * The cache key.  Unlike in nsISHEntry, where it's wrapped in an
    * nsISupportsPRUint32, this is just the integer.
    */
+  [infallible]
   readonly attribute unsigned long cacheKey;
 
   /**
@@ -119,6 +126,8 @@ interface nsIWebBrowserPersistDocument : nsISupports
                     in unsigned long aEncoderFlags,
                     in unsigned long aWrapColumn,
                     in nsIWebBrowserPersistWriteCompletion aCompletion);
+
+  [notxpcom, nostdcall] SHEntryRef GetHistory();
 };
 
 /**
@@ -140,6 +149,7 @@ interface nsIWebBrowserPersistResourceVisitor : nsISupports
   void visitResource(in nsIWebBrowserPersistDocument aDocument,
                      in AUTF8String aURI,
                      in nsContentPolicyType aContentPolicyType);
+
   /**
    * Indicates a subdocument resource; e.g., a frame or iframe.
    *
@@ -148,6 +158,16 @@ interface nsIWebBrowserPersistResourceVisitor : nsISupports
    */
   void visitDocument(in nsIWebBrowserPersistDocument aDocument,
                      in nsIWebBrowserPersistDocument aSubDocument);
+
+  /**
+   * Indicates a cross origin subdocument resource; e.g., a frame
+   * or iframe loaded in another process.
+   *
+   * @param aDocument     The document containing the reference.
+   * @param aContext      The referenced document's browsing context.
+   */
+  void visitBrowsingContext(in nsIWebBrowserPersistDocument aDocument,
+                            in BrowsingContext aContext);
 
   /**
    * Indicates that the document traversal is complete.

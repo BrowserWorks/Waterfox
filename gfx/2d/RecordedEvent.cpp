@@ -17,14 +17,21 @@
 namespace mozilla {
 namespace gfx {
 
-using namespace std;
-
-RecordedEvent* RecordedEvent::LoadEventFromStream(EventStream& aStream,
-                                                  EventType aType) {
-  return LoadEvent(aStream, aType);
+/* static */
+bool RecordedEvent::DoWithEventFromStream(
+    EventStream& aStream, EventType aType,
+    const std::function<bool(RecordedEvent*)>& aAction) {
+  return DoWithEvent(aStream, aType, aAction);
 }
 
-string RecordedEvent::GetEventName(EventType aType) {
+/* static */
+bool RecordedEvent::DoWithEventFromStream(
+    EventRingBuffer& aStream, EventType aType,
+    const std::function<bool(RecordedEvent*)>& aAction) {
+  return DoWithEvent(aStream, aType, aAction);
+}
+
+std::string RecordedEvent::GetEventName(EventType aType) {
   switch (aType) {
     case DRAWTARGETCREATION:
       return "DrawTarget Creation";

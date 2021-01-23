@@ -10,6 +10,7 @@
 #include "nsAccessibilityService.h"
 #include "mozilla/a11y/PDocAccessibleParent.h"
 #include "mozilla/a11y/ProxyAccessible.h"
+#include "mozilla/Tuple.h"
 #include "nsClassHashtable.h"
 #include "nsHashKeys.h"
 #include "nsISupportsImpl.h"
@@ -19,6 +20,10 @@ namespace a11y {
 
 class xpcAccessibleGeneric;
 
+#if !defined(XP_WIN)
+class DocAccessiblePlatformExtParent;
+#endif
+
 /*
  * These objects live in the main process and comunicate with and represent
  * an accessible document in a content process.
@@ -26,6 +31,8 @@ class xpcAccessibleGeneric;
 class DocAccessibleParent : public ProxyAccessible,
                             public PDocAccessibleParent {
  public:
+  NS_INLINE_DECL_REFCOUNTING(DocAccessibleParent);
+
   DocAccessibleParent()
       : ProxyAccessible(this),
         mParentDoc(kNoParentDoc),
@@ -33,23 +40,34 @@ class DocAccessibleParent : public ProxyAccessible,
         mEmulatedWindowHandle(nullptr),
 #endif  // defined(XP_WIN)
         mTopLevel(false),
+        mTopLevelInContentProcess(false),
         mShutdown(false) {
-    MOZ_COUNT_CTOR_INHERITED(DocAccessibleParent, ProxyAccessible);
     sMaxDocID++;
     mActorID = sMaxDocID;
     MOZ_ASSERT(!LiveDocs().Get(mActorID));
     LiveDocs().Put(mActorID, this);
   }
 
-  ~DocAccessibleParent() {
-    LiveDocs().Remove(mActorID);
-    MOZ_COUNT_DTOR_INHERITED(DocAccessibleParent, ProxyAccessible);
-    MOZ_ASSERT(mChildDocs.Length() == 0);
-    MOZ_ASSERT(!ParentDoc());
+  /**
+   * Set this as a top level document; i.e. it is not embedded by another remote
+   * document. This also means it is a top level document in its content
+   * process.
+   * Tab documents are top level documents.
+   */
+  void SetTopLevel() {
+    mTopLevel = true;
+    mTopLevelInContentProcess = true;
   }
-
-  void SetTopLevel() { mTopLevel = true; }
   bool IsTopLevel() const { return mTopLevel; }
+
+  /**
+   * Set this as a top level document in its content process.
+   * Note that this could be an out-of-process iframe embedded by a remote
+   * embedder document. In that case, IsToplevel() will return false, but
+   * IsTopLevelInContentProcess() will return true.
+   */
+  void SetTopLevelInContentProcess() { mTopLevelInContentProcess = true; }
+  bool IsTopLevelInContentProcess() const { return mTopLevelInContentProcess; }
 
   bool IsShutdown() const { return mShutdown; }
 
@@ -227,9 +245,30 @@ class DocAccessibleParent : public ProxyAccessible,
 #if !defined(XP_WIN)
   virtual mozilla::ipc::IPCResult RecvBatch(
       const uint64_t& aBatchType, nsTArray<BatchData>&& aData) override;
+
+  virtual bool DeallocPDocAccessiblePlatformExtParent(
+      PDocAccessiblePlatformExtParent* aActor) override;
+
+  virtual PDocAccessiblePlatformExtParent*
+  AllocPDocAccessiblePlatformExtParent() override;
+
+  DocAccessiblePlatformExtParent* GetPlatformExtension();
 #endif
 
+  /**
+   * If this is an iframe document rendered in a different process to its
+   * embedder, return the DocAccessibleParent and id for the embedder
+   * accessible. Otherwise, return null and 0.
+   */
+  Tuple<DocAccessibleParent*, uint64_t> GetRemoteEmbedder();
+
  private:
+  ~DocAccessibleParent() {
+    LiveDocs().Remove(mActorID);
+    MOZ_ASSERT(mChildDocs.Length() == 0);
+    MOZ_ASSERT(!ParentDoc());
+  }
+
   class ProxyEntry : public PLDHashEntryHdr {
    public:
     explicit ProxyEntry(const void*) : mProxy(nullptr) {}
@@ -257,7 +296,7 @@ class DocAccessibleParent : public ProxyAccessible,
   uint32_t AddSubtree(ProxyAccessible* aParent,
                       const nsTArray<AccessibleData>& aNewTree, uint32_t aIdx,
                       uint32_t aIdxInParent);
-  MOZ_MUST_USE bool CheckDocTree() const;
+  [[nodiscard]] bool CheckDocTree() const;
   xpcAccessibleGeneric* GetXPCAccessible(ProxyAccessible* aProxy);
 
   nsTArray<uint64_t> mChildDocs;
@@ -269,6 +308,8 @@ class DocAccessibleParent : public ProxyAccessible,
 
 #  if defined(MOZ_SANDBOX)
   mscom::PreservedStreamPtr mParentProxyStream;
+  mscom::PreservedStreamPtr mDocProxyStream;
+  mscom::PreservedStreamPtr mTopLevelDocProxyStream;
 #  endif  // defined(MOZ_SANDBOX)
 #endif    // defined(XP_WIN)
 
@@ -279,7 +320,17 @@ class DocAccessibleParent : public ProxyAccessible,
   nsTHashtable<ProxyEntry> mAccessibles;
   uint64_t mActorID;
   bool mTopLevel;
+  bool mTopLevelInContentProcess;
   bool mShutdown;
+
+  struct PendingChildDoc {
+    PendingChildDoc(DocAccessibleParent* aChildDoc, uint64_t aParentID)
+        : mChildDoc(aChildDoc), mParentID(aParentID) {}
+    RefPtr<DocAccessibleParent> mChildDoc;
+    uint64_t mParentID;
+  };
+  // We use nsTArray because there will be very few entries.
+  nsTArray<PendingChildDoc> mPendingChildDocs;
 
   static uint64_t sMaxDocID;
   static nsDataHashtable<nsUint64HashKey, DocAccessibleParent*>& LiveDocs() {

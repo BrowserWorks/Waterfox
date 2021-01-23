@@ -7,9 +7,9 @@
 #include "MediaSource.h"
 
 #include "AsyncEventRunner.h"
-#include "DecoderTraits.h"
 #include "Benchmark.h"
 #include "DecoderDoctorDiagnostics.h"
+#include "DecoderTraits.h"
 #include "MediaContainerType.h"
 #include "MediaResult.h"
 #include "MediaSourceDemuxer.h"
@@ -18,26 +18,26 @@
 #include "SourceBufferList.h"
 #include "mozilla/ErrorResult.h"
 #include "mozilla/FloatingPoint.h"
-#include "mozilla/Preferences.h"
-#include "mozilla/StaticPrefs.h"
+#include "mozilla/Logging.h"
+#include "mozilla/Sprintf.h"
+#include "mozilla/StaticPrefs_media.h"
 #include "mozilla/dom/BindingDeclarations.h"
 #include "mozilla/dom/HTMLMediaElement.h"
+#include "mozilla/gfx/gfxVars.h"
 #include "mozilla/mozalloc.h"
 #include "nsDebug.h"
 #include "nsError.h"
 #include "nsIRunnable.h"
 #include "nsIScriptObjectPrincipal.h"
-#include "nsPIDOMWindow.h"
 #include "nsMimeTypes.h"
+#include "nsPIDOMWindow.h"
+#include "nsServiceManagerUtils.h"
 #include "nsString.h"
 #include "nsThreadUtils.h"
-#include "mozilla/Logging.h"
-#include "nsServiceManagerUtils.h"
-#include "mozilla/gfx/gfxVars.h"
-#include "mozilla/Sprintf.h"
 
 #ifdef MOZ_WIDGET_ANDROID
 #  include "AndroidBridge.h"
+#  include "mozilla/java/HardwareCodecCapabilityUtilsWrappers.h"
 #endif
 
 struct JSContext;
@@ -74,13 +74,13 @@ namespace mozilla {
 //     optional "Windows Media Feature Pack"
 // 2. If H264 hardware acceleration is not available.
 // 3. The CPU is considered to be fast enough
-static bool IsWebMForced(DecoderDoctorDiagnostics* aDiagnostics) {
+static bool IsVP9Forced(DecoderDoctorDiagnostics* aDiagnostics) {
   bool mp4supported = DecoderTraits::IsMP4SupportedType(
       MediaContainerType(MEDIAMIMETYPE(VIDEO_MP4)), aDiagnostics);
   bool hwsupported = gfx::gfxVars::CanUseHardwareVideoDecoding();
 #ifdef MOZ_WIDGET_ANDROID
   return !mp4supported || !hwsupported || VP9Benchmark::IsVP9DecodeFast() ||
-         java::HardwareCodecCapabilityUtils::HasHWVP9();
+         java::HardwareCodecCapabilityUtils::HasHWVP9(false /* aIsEncoder */);
 #else
   return !mp4supported || !hwsupported || VP9Benchmark::IsVP9DecodeFast();
 #endif
@@ -89,20 +89,30 @@ static bool IsWebMForced(DecoderDoctorDiagnostics* aDiagnostics) {
 namespace dom {
 
 /* static */
-nsresult MediaSource::IsTypeSupported(const nsAString& aType,
-                                      DecoderDoctorDiagnostics* aDiagnostics) {
+void MediaSource::IsTypeSupported(const nsAString& aType,
+                                  DecoderDoctorDiagnostics* aDiagnostics,
+                                  ErrorResult& aRv) {
   if (aType.IsEmpty()) {
-    return NS_ERROR_DOM_TYPE_ERR;
+    return aRv.ThrowTypeError("Empty type");
   }
 
   Maybe<MediaContainerType> containerType = MakeMediaContainerType(aType);
   if (!containerType) {
-    return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
+    return aRv.ThrowNotSupportedError("Unknown type");
   }
 
   if (DecoderTraits::CanHandleContainerType(*containerType, aDiagnostics) ==
       CANPLAY_NO) {
-    return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
+    return aRv.ThrowNotSupportedError("Can't play type");
+  }
+
+  bool hasVP9 = false;
+  const MediaCodecs& codecs = containerType->ExtendedType().Codecs();
+  for (const auto& codec : codecs.Range()) {
+    if (IsVP9CodecString(codec)) {
+      hasVP9 = true;
+      break;
+    }
   }
 
   // Now we know that this media type could be played.
@@ -110,35 +120,45 @@ nsresult MediaSource::IsTypeSupported(const nsAString& aType,
   const MediaMIMEType& mimeType = containerType->Type();
   if (mimeType == MEDIAMIMETYPE("video/mp4") ||
       mimeType == MEDIAMIMETYPE("audio/mp4")) {
-    if (!Preferences::GetBool("media.mediasource.mp4.enabled", false)) {
-      return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
+    if (!StaticPrefs::media_mediasource_mp4_enabled()) {
+      // Don't leak information about the fact that it's pref-disabled; just act
+      // like we can't play it.  Or should this throw "Unknown type"?
+      return aRv.ThrowNotSupportedError("Can't play type");
     }
-    return NS_OK;
+    if (!StaticPrefs::media_mediasource_vp9_enabled() && hasVP9 &&
+        !IsVP9Forced(aDiagnostics)) {
+      // Don't leak information about the fact that it's pref-disabled; just act
+      // like we can't play it.  Or should this throw "Unknown type"?
+      return aRv.ThrowNotSupportedError("Can't play type");
+    }
+
+    return;
   }
   if (mimeType == MEDIAMIMETYPE("video/webm")) {
-    if (!(Preferences::GetBool("media.mediasource.webm.enabled", false) ||
-          StaticPrefs::MediaCapabilitiesEnabled() ||
-          containerType->ExtendedType().Codecs().Contains(
-              NS_LITERAL_STRING("vp8")) ||
-#ifdef MOZ_AV1
-          (StaticPrefs::MediaAv1Enabled() &&
-           IsAV1CodecString(
-               containerType->ExtendedType().Codecs().AsString())) ||
-#endif
-          IsWebMForced(aDiagnostics))) {
-      return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
+    if (!StaticPrefs::media_mediasource_webm_enabled()) {
+      // Don't leak information about the fact that it's pref-disabled; just act
+      // like we can't play it.  Or should this throw "Unknown type"?
+      return aRv.ThrowNotSupportedError("Can't play type");
     }
-    return NS_OK;
+    if (!StaticPrefs::media_mediasource_vp9_enabled() && hasVP9 &&
+        !IsVP9Forced(aDiagnostics)) {
+      // Don't leak information about the fact that it's pref-disabled; just act
+      // like we can't play it.  Or should this throw "Unknown type"?
+      return aRv.ThrowNotSupportedError("Can't play type");
+    }
+    return;
   }
   if (mimeType == MEDIAMIMETYPE("audio/webm")) {
-    if (!(Preferences::GetBool("media.mediasource.webm.enabled", false) ||
-          Preferences::GetBool("media.mediasource.webm.audio.enabled", true))) {
-      return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
+    if (!(StaticPrefs::media_mediasource_webm_enabled() ||
+          StaticPrefs::media_mediasource_webm_audio_enabled())) {
+      // Don't leak information about the fact that it's pref-disabled; just act
+      // like we can't play it.  Or should this throw "Unknown type"?
+      return aRv.ThrowNotSupportedError("Can't play type");
     }
-    return NS_OK;
+    return;
   }
 
-  return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
+  return aRv.ThrowNotSupportedError("Type not supported in MediaSource");
 }
 
 /* static */
@@ -195,7 +215,8 @@ void MediaSource::SetDuration(double aDuration, ErrorResult& aRv) {
   MOZ_ASSERT(NS_IsMainThread());
   MSE_API("SetDuration(aDuration=%f, ErrorResult)", aDuration);
   if (aDuration < 0 || IsNaN(aDuration)) {
-    aRv.Throw(NS_ERROR_DOM_TYPE_ERR);
+    nsPrintfCString error("Invalid duration value %f", aDuration);
+    aRv.ThrowTypeError(error);
     return;
   }
   if (mReadyState != MediaSourceReadyState::Open ||
@@ -216,14 +237,14 @@ already_AddRefed<SourceBuffer> MediaSource::AddSourceBuffer(
     const nsAString& aType, ErrorResult& aRv) {
   MOZ_ASSERT(NS_IsMainThread());
   DecoderDoctorDiagnostics diagnostics;
-  nsresult rv = IsTypeSupported(aType, &diagnostics);
+  IsTypeSupported(aType, &diagnostics, aRv);
+  bool supported = !aRv.Failed();
   diagnostics.StoreFormatDiagnostics(
-      GetOwner() ? GetOwner()->GetExtantDoc() : nullptr, aType,
-      NS_SUCCEEDED(rv), __func__);
+      GetOwner() ? GetOwner()->GetExtantDoc() : nullptr, aType, supported,
+      __func__);
   MSE_API("AddSourceBuffer(aType=%s)%s", NS_ConvertUTF16toUTF8(aType).get(),
-          rv == NS_OK ? "" : " [not supported]");
-  if (NS_FAILED(rv)) {
-    aRv.Throw(rv);
+          supported ? "" : " [not supported]");
+  if (!supported) {
     return nullptr;
   }
   if (mSourceBuffers->Length() >= MAX_SOURCE_BUFFERS) {
@@ -348,7 +369,10 @@ void MediaSource::EndOfStream(
       mDecoder->DecodeError(NS_ERROR_DOM_MEDIA_FATAL_ERR);
       break;
     default:
-      aRv.Throw(NS_ERROR_DOM_TYPE_ERR);
+      MOZ_ASSERT_UNREACHABLE(
+          "Someone added a MediaSourceReadyState value and didn't handle it "
+          "here");
+      break;
   }
 }
 
@@ -366,26 +390,18 @@ bool MediaSource::IsTypeSupported(const GlobalObject& aOwner,
                                   const nsAString& aType) {
   MOZ_ASSERT(NS_IsMainThread());
   DecoderDoctorDiagnostics diagnostics;
-  nsresult rv = IsTypeSupported(aType, &diagnostics);
+  IgnoredErrorResult rv;
+  IsTypeSupported(aType, &diagnostics, rv);
+  bool supported = !rv.Failed();
   nsCOMPtr<nsPIDOMWindowInner> window =
       do_QueryInterface(aOwner.GetAsSupports());
   diagnostics.StoreFormatDiagnostics(window ? window->GetExtantDoc() : nullptr,
-                                     aType, NS_SUCCEEDED(rv), __func__);
+                                     aType, supported, __func__);
   MOZ_LOG(GetMediaSourceAPILog(), mozilla::LogLevel::Debug,
           ("MediaSource::%s: IsTypeSupported(aType=%s) %s", __func__,
            NS_ConvertUTF16toUTF8(aType).get(),
-           rv == NS_OK ? "OK" : "[not supported]"));
-  return NS_SUCCEEDED(rv);
-}
-
-/* static */
-bool MediaSource::Enabled(JSContext* cx, JSObject* aGlobal) {
-  return Preferences::GetBool("media.mediasource.enabled");
-}
-
-/* static */
-bool MediaSource::ExperimentalEnabled(JSContext* cx, JSObject* aGlobal) {
-  return Preferences::GetBool("media.mediasource.experimental.enabled");
+           supported ? "OK" : "[not supported]"));
+  return supported;
 }
 
 void MediaSource::SetLiveSeekableRange(double aStart, double aEnd,
@@ -402,7 +418,7 @@ void MediaSource::SetLiveSeekableRange(double aStart, double aEnd,
   // 2. If start is negative or greater than end, then throw a TypeError
   // exception and abort these steps.
   if (aStart < 0 || aStart > aEnd) {
-    aRv.Throw(NS_ERROR_DOM_TYPE_ERR);
+    aRv.ThrowTypeError("Invalid start value");
     return;
   }
 
@@ -565,10 +581,22 @@ void MediaSource::DurationChange(double aNewDuration, ErrorResult& aRv) {
   mDecoder->SetMediaSourceDuration(aNewDuration);
 }
 
-void MediaSource::GetMozDebugReaderData(nsAString& aString) {
-  nsAutoCString result;
-  mDecoder->GetMozDebugReaderData(result);
-  aString = NS_ConvertUTF8toUTF16(result);
+already_AddRefed<Promise> MediaSource::MozDebugReaderData(ErrorResult& aRv) {
+  // Creating a JS promise
+  nsPIDOMWindowInner* win = GetOwner();
+  if (!win) {
+    aRv.Throw(NS_ERROR_UNEXPECTED);
+    return nullptr;
+  }
+  RefPtr<Promise> domPromise = Promise::Create(win->AsGlobal(), aRv);
+  if (NS_WARN_IF(aRv.Failed())) {
+    return nullptr;
+  }
+  MOZ_ASSERT(domPromise);
+  MediaSourceDecoderDebugInfo info;
+  mDecoder->GetDebugInfo(info);
+  domPromise->MaybeResolve(info);
+  return domPromise.forget();
 }
 
 nsPIDOMWindowInner* MediaSource::GetParentObject() const { return GetOwner(); }

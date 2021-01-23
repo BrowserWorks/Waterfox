@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE Mouse-wheel management prefs, for those lucky OSes that support mouse wheels -->
+
+<!ENTITY pref.mouseWheel.title           "Koliesko myši">
+<!ENTITY mouseWheelPanel.label           "Určuje správanie kolieska myši pri jeho použití v kombinácii s rôznymi klávesami.">
+<!ENTITY usingJustTheWheel.label         "Bez klávesu">
+<!ENTITY usingWheelAndAlt.label          "&altKey.label;">
+<!ENTITY usingWheelAndCtrl.label         "&ctrlKey.label;">
+<!ENTITY usingWheelAndShft.label         "&shiftKey.label;">
+<!-- Key labels, for mousewheel prefs -->
+<!ENTITY usingWheelAndAlt.label2         "Alt">
+<!ENTITY usingWheelAndOption.label       "Option">
+<!ENTITY usingWheelAndCtrl.label2        "Ctrl">
+<!ENTITY usingWheelAndShft.label2        "Shift">
+<!ENTITY mouseWheelGroup.label           "Zvislý posun">
+<!ENTITY mouseWheelHorizGroup.label      "Vodorovné posúvanie">
+<!ENTITY sameAsVertical.label            "Rovnaký ako zvislý posun">
+<!ENTITY sameAsVertical.accesskey        "v">
+<!ENTITY doNothing.label                 "Nerobiť nič">
+<!ENTITY doNothing.accesskey             "N">
+<!ENTITY doNothingHoriz.accesskey        "e">
+<!ENTITY scrollDocument.label            "Posunúť dokument">
+<!ENTITY scrollDocument.accesskey        "s">
+<!ENTITY scrollDocumentHoriz.accesskey   "k">
+<!ENTITY history.label                   "Presunúť sa dopredu alebo dozadu v histórii prehliadania">
+<!ENTITY history.accesskey               "h">
+<!ENTITY historyHoriz.accesskey          "z">
+<!ENTITY zoom.label                      "Priblížiť alebo vzdialiť stránku">
+<!ENTITY zoom.accesskey                  "b">
+<!ENTITY zoomHoriz.accesskey             "d">
+<!ENTITY wheelSpeed.label                "Rýchlosť kolieska myši:">
+<!ENTITY wheelSpeed.accesskey            "R">
+<!ENTITY wheelSpeedHoriz.accesskey       "c">
+<!ENTITY reverseDirection.label          "Opačný smer">
+<!ENTITY reverseDirection.accesskey      "O">
+<!ENTITY reverseDirectionHoriz.accesskey "m">

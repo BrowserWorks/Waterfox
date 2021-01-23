@@ -29,24 +29,14 @@ class BlockReflowInput {
   // Block reflow input flags.
   struct Flags {
     Flags()
-        : mHasUnconstrainedBSize(false),
-          mIsBStartMarginRoot(false),
+        : mIsBStartMarginRoot(false),
           mIsBEndMarginRoot(false),
           mShouldApplyBStartMargin(false),
-          mIsFirstInflow(false),
           mHasLineAdjacentToTop(false),
           mBlockNeedsFloatManager(false),
           mIsLineLayoutEmpty(false),
-          mIsOverflowContainer(false),
           mIsFloatListInBlockPropertyTable(false),
-          mFloatFragmentsInsideColumnEnabled(false),
           mCanHaveOverflowMarkers(false) {}
-
-    // Set in the BlockReflowInput constructor when the frame being reflowed has
-    // been given NS_UNCONSTRAINEDSIZE as its available BSize in the
-    // ReflowInput. If set, NS_UNCONSTRAINEDSIZE is passed to nsLineLayout as
-    // the available BSize.
-    bool mHasUnconstrainedBSize : 1;
 
     // Set in the BlockReflowInput constructor when reflowing a "block margin
     // root" frame (i.e. a frame with the NS_BLOCK_MARGIN_ROOT flag set, for
@@ -84,8 +74,6 @@ class BlockReflowInput {
     // root by default.
     bool mShouldApplyBStartMargin : 1;
 
-    bool mIsFirstInflow : 1;
-
     // Set when mLineAdjacentToTop is valid.
     bool mHasLineAdjacentToTop : 1;
 
@@ -96,13 +84,8 @@ class BlockReflowInput {
     // the current line.
     bool mIsLineLayoutEmpty : 1;
 
-    bool mIsOverflowContainer : 1;
-
     // Set when our mPushedFloats list is stored on the block's property table.
     bool mIsFloatListInBlockPropertyTable : 1;
-
-    // Set when the pref layout.float-fragments-inside-column.enabled is true.
-    bool mFloatFragmentsInsideColumnEnabled : 1;
 
     // Set when we need text-overflow or -webkit-line-clamp processing.
     bool mCanHaveOverflowMarkers : 1;
@@ -112,7 +95,7 @@ class BlockReflowInput {
   BlockReflowInput(const ReflowInput& aReflowInput, nsPresContext* aPresContext,
                    nsBlockFrame* aFrame, bool aBStartMarginRoot,
                    bool aBEndMarginRoot, bool aBlockNeedsFloatManager,
-                   nscoord aConsumedBSize = NS_INTRINSICSIZE);
+                   nscoord aConsumedBSize = NS_UNCONSTRAINEDSIZE);
 
   /**
    * Get the available reflow space (the area not occupied by floats)
@@ -203,12 +186,6 @@ class BlockReflowInput {
    */
   const mozilla::LogicalMargin& BorderPadding() const { return mBorderPadding; }
 
-  /**
-   * Retrieve the block-axis content size "consumed" by any prev-in-flows.
-   * @note the value is cached so subsequent calls will return the same value
-   */
-  nscoord ConsumedBSize();
-
   // Reconstruct the previous block-end margin that goes before |aLine|.
   void ReconstructMarginBefore(nsLineList::iterator aLine);
 
@@ -262,8 +239,6 @@ class BlockReflowInput {
   // block, not floats inside of it.
   nsFloatManager::SavedState mFloatManagerStateBefore;
 
-  nscoord mBEndEdge;
-
   // The content area to reflow child frames within.  This is within
   // this frame's coordinate system and writing mode, which means
   // mContentArea.IStart == BorderPadding().IStart and
@@ -290,6 +265,9 @@ class BlockReflowInput {
     return mContentArea.BSize(mReflowInput.GetWritingMode());
   }
   nscoord ContentBEnd() const {
+    NS_ASSERTION(
+        ContentBSize() != NS_UNCONSTRAINEDSIZE,
+        "ContentBSize() is unconstrained, so ContentBEnd() may overflow.");
     return mContentArea.BEnd(mReflowInput.GetWritingMode());
   }
   mozilla::LogicalSize ContentSize(mozilla::WritingMode aWM) const {
@@ -388,9 +366,9 @@ class BlockReflowInput {
 
   StyleClear mFloatBreakType;
 
-  // The amount of computed block-direction size "consumed" by
-  // previous-in-flows.
-  nscoord mConsumedBSize;
+  // The amount of computed content block-size "consumed" by our previous
+  // continuations.
+  const nscoord mConsumedBSize;
 
   // Cache the current line's BSize if nsBlockFrame::PlaceLine() fails to
   // place the line. When redoing the line, it will be used to query the

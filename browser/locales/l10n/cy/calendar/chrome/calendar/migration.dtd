@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migration.title "&brandFullName;: Mewnforio Data">
+<!ENTITY migration.welcome "Croeso">
+<!ENTITY migration.importing "Mewnforio">
+<!ENTITY migration.list.description "Mae &brandShortName; yn gallu mewnforio data calendr o nifer o raglenni poblogaidd. Mae data o'r rhaglenni canlynol wedi'u canfod ar eich cyfrifiadur. Dewiswch o ba un o'r rhain rydych am fewnforio data.">
+<!ENTITY migration.progress.description "Mewnforio data dewiswyd">

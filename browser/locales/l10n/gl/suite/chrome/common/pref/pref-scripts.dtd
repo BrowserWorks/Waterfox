@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-scripts.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Scripts & Plugins' preferences dialog -->
+<!ENTITY pref.scripts.title              "Scripts e engadidos">
+
+<!ENTITY navigator.label                 "Navegador">
+<!ENTITY navigator.accesskey             "N">
+
+<!--LOCALIZATION NOTE (enableJavaScript.label): 'JavaScript' should never be translated -->
+<!ENTITY enableJavaScript.label          "Activar JavaScript para">
+<!ENTITY allowScripts.label              "Permitir scripts para:">
+<!ENTITY allowScripts.accesskey          "s">
+<!ENTITY allowWindowMoveResize.label     "Mover ou redimensionar as xanelas existentes">
+<!ENTITY allowWindowFlip.label           "Elevar ou baixar xanelas">
+<!ENTITY allowWindowStatusChange.label   "Modificar o texto da barra de estado">
+<!ENTITY allowWindowImageSrcChange.label "Cambiar as imaxes">
+<!ENTITY allowContextmenuDisable.label   "Desactivar ou substituír menús de contexto">
+<!ENTITY allowHideStatusBar.label        "Ocultar a barra de estado">
+
+<!ENTITY enablePlugins.label             "Activar os engadidos para">
+<!ENTITY enablePluginForSuite.label      "Suite">
+<!ENTITY enablePluginForSuite.accesskey  "u">
+
+<!ENTITY whenPageRequiresPlugins.label   "Cando unha páxina requira engadidos">
+<!ENTITY activateAllPlugins.label        "Activar todos os engadidos de forma predeterminada">
+<!ENTITY activateAllPlugins.accesskey    "d">
+<!ENTITY warnPluginsRequired.label       "Avisarme se é necesaro instalar un engadido adicional">
+<!ENTITY warnPluginsRequired.accesskey   "v">

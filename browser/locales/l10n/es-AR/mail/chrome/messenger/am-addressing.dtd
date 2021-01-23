@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "Redacción y direcciones">
+<!ENTITY addressingGroupTitle.label "Direcciones">
+<!ENTITY addressingText.label      "Cuando se busquen direcciones:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Utilizar mis preferencias de servidor LDAP globales para esta cuenta">
+<!ENTITY useGlobal.accesskey       "U">
+<!ENTITY editDirectories.label     "Editar directorios…">
+<!ENTITY editDirectories.accesskey "E">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Utilizar un servidor LDAP diferente:">
+<!ENTITY directories.accesskey     "D">
+<!ENTITY directoriesNone.label     "Ninguno">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "Redacción">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Redactar mensajes en formato HTML">
+<!ENTITY useHtml.accesskey                    "R">
+<!ENTITY autoQuote.label                      "Citar automáticamente el mensaje original al responder">
+<!ENTITY autoQuote.accesskey                  "C">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "Cuando citando,">
+<!ENTITY quoting.accesskey                    "q">
+<!ENTITY aboveQuote.label                     "comenzar mi respuesta sobre el texto citado">
+<!ENTITY belowQuote.label                     "comenzar mi respuesta bajo el texto citado">
+<!ENTITY selectAndQuote.label                 "seleccionar el texto citado">
+<!ENTITY place.label                          "y poner mi firma">
+<!ENTITY place.accesskey                      "p">
+<!ENTITY belowText.label                      "bajo el texto citado (recomendado)">
+<!ENTITY aboveText.label                      "bajo mi respuesta (sobre el texto citado)">
+<!ENTITY includeSigOnReply.label              "Incluir firma para respuestas">
+<!ENTITY includeSigOnReply.accesskey          "s">
+<!ENTITY includeSigOnForward.label            "Incluir firma para reenvíos">
+<!ENTITY includeSigOnForward.accesskey        "v">
+
+<!ENTITY globalComposingPrefs.label           "Preferencas globales de escritura…">
+<!ENTITY globalComposingPrefs.accesskey       "g">
+
+<!ENTITY globalAddressingPrefs.label          "Preferencias globales de direcciones…">
+<!ENTITY globalAddressingPrefs.accesskey      "P">

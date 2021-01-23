@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: where ".private" and ".normal" variants exist,
+   - the former is shown in a private browsing window and the latter in
+   - a regular (non-private) browsing window. -->
+
+<!ENTITY privatebrowsingpage.title.private       "Вы находитесь в окне приватного просмотра">
+<!ENTITY privatebrowsingpage.title.normal        "Вы хотите начать приватный просмотр?">
+
+<!ENTITY privatebrowsingpage.status.private      "&brandShortName; не будет запоминать историю для этого окна.">
+<!ENTITY privatebrowsingpage.status.normal       "Сейчас вы не находитесь в приватном окне.">
+
+<!ENTITY privatebrowsingpage.common.description  "При работе в окне приватного просмотра &brandShortName; не будет вести журнал посещений, журнал поиска, журнал загрузок и журнал веб-форм. Также не будут сохраняться куки и временные файлы интернета. Однако, созданные закладки и загруженные файлы будут сохранены.">
+<!ENTITY privatebrowsingpage.track.warn          "Хотя этот компьютер не будет вести журнал посещаемых вами сайтов, ваш работодатель или интернет-провайдер могут следить за тем, какие страницы вы посещаете.">
+<!ENTITY privatebrowsingpage.learnmore.label     "Подробнее">
+<!ENTITY privatebrowsingpage.learnmore.accesskey "о">
+
+<!ENTITY privatebrowsingpage.close.info          "Когда закончите, закройте окно, чтобы завершить Приватный просмотр.">
+<!ENTITY privatebrowsingpage.close.label         "Закрыть сейчас это окно">
+<!ENTITY privatebrowsingpage.close.accesskey     "а">
+
+<!ENTITY privatebrowsingpage.start.info          "Чтобы начать приватный просмотр, щёлкните по кнопке ниже, или выберите из меню Файл ▶ Создать ▶ Приватное окно.">
+<!ENTITY privatebrowsingpage.private.label       "Открыть новое приватное окно">
+<!ENTITY privatebrowsingpage.private.accesskey   "ы">

@@ -13,19 +13,22 @@
 # will be used from shell, we just print the two assignments and evaluate
 # them from shell.
 
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 import os
 import subprocess
 import re
+import six
 
 re_for_ld = re.compile('.*\((.*)\).*')
+
 
 def parse_readelf_line(x):
     """Return the version from a readelf line that looks like:
     0x00ec: Rev: 1  Flags: none  Index: 8  Cnt: 2  Name: GLIBCXX_3.4.6
     """
     return x.split(':')[-1].split('_')[-1].strip()
+
 
 def parse_ld_line(x):
     """Parse a line from the output of ld -t. The output of gold is just
@@ -36,18 +39,12 @@ def parse_ld_line(x):
         return t.groups()[0].strip()
     return x.strip()
 
+
 def split_ver(v):
     """Covert the string '1.2.3' into the list [1,2,3]
     """
     return [int(x) for x in v.split('.')]
 
-def cmp_ver(a, b):
-    """Compare versions in the form 'a.b.c'
-    """
-    for (i, j) in zip(split_ver(a), split_ver(b)):
-        if i != j:
-            return i - j
-    return 0
 
 def encode_ver(v):
     """Encode the version as a single number.
@@ -55,13 +52,15 @@ def encode_ver(v):
     t = split_ver(v)
     return t[0] << 16 | t[1] << 8 | t[2]
 
+
 def find_version(args):
     """Given a base command line for a compiler, find the version of the
     libstdc++ it uses.
     """
-    args +=  ['-shared', '-Wl,-t']
+    args += ['-shared', '-Wl,-t']
     p = subprocess.Popen(args, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
-    candidates = [x for x in p.stdout if 'libstdc++.so' in x]
+    candidates = [six.ensure_text(x, encoding='ascii') for x in p.stdout]
+    candidates = [x for x in candidates if 'libstdc++.so' in x]
     candidates = [x for x in candidates if 'skipping incompatible' not in x]
     if not candidates:
         raise Exception('''Couldn't find libstdc++ candidates!
@@ -75,10 +74,12 @@ candidates:
     libstdcxx = parse_ld_line(candidates[-1])
 
     p = subprocess.Popen(['readelf', '-V', libstdcxx], stdout=subprocess.PIPE)
+    lines = [six.ensure_text(x, encoding='ascii') for x in p.stdout]
     versions = [parse_readelf_line(x)
-                for x in p.stdout.readlines() if 'Name: GLIBCXX' in x]
-    last_version = sorted(versions, cmp = cmp_ver)[-1]
+                for x in lines if 'Name: GLIBCXX' in x]
+    last_version = sorted(versions, key=split_ver)[-1]
     return (last_version, encode_ver(last_version))
+
 
 if __name__ == '__main__':
     """Given the value of environment variable CXX or HOST_CXX, find the

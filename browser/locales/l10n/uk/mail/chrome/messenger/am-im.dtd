@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountWindow.title           "Параметри облікового запису">
+<!ENTITY accountWindow.width           "300">
+<!ENTITY account.general               "Загальні">
+<!ENTITY account.advanced              "Розширені параметри">
+<!ENTITY account.name                  "Ім’я користувача:">
+<!ENTITY account.password              "Пароль:">
+<!ENTITY account.alias                 "Псевдонім:">
+<!ENTITY account.newMailNotification   "Повідомити на новий e-mail">
+<!ENTITY account.autojoin              "Автоматично під'єднані канали:">
+<!ENTITY account.proxySettings.caption "Параметри проксі:">
+<!ENTITY account.proxySettings.change.label     "Змінити…">
+<!ENTITY account.proxySettings.change.accessKey "З">

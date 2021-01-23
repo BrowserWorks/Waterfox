@@ -1,8 +1,12 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
 
+const {
+  accessibility: { AUDIT_TYPE },
+} = require("devtools/shared/constants");
 const {
   AUDIT,
   AUDITING,
@@ -11,7 +15,7 @@ const {
   FILTERS,
   RESET,
   SELECT,
-} = require("../constants");
+} = require("devtools/client/accessibility/constants");
 
 /**
  * Initial state definition
@@ -19,10 +23,25 @@ const {
 function getInitialState() {
   return {
     filters: {
+      [FILTERS.ALL]: false,
       [FILTERS.CONTRAST]: false,
+      [FILTERS.KEYBOARD]: false,
+      [FILTERS.TEXT_LABEL]: false,
     },
-    auditing: null,
+    auditing: [],
     progress: null,
+  };
+}
+
+/**
+ * State with all filters active.
+ */
+function allActiveFilters() {
+  return {
+    [FILTERS.ALL]: true,
+    [FILTERS.CONTRAST]: true,
+    [FILTERS.KEYBOARD]: true,
+    [FILTERS.TEXT_LABEL]: true,
   };
 }
 
@@ -31,11 +50,29 @@ function audit(state = getInitialState(), action) {
     case FILTER_TOGGLE:
       const { filter } = action;
       let { filters } = state;
-      const active = !filters[filter];
-      filters = {
-        ...filters,
-        [filter]: active,
-      };
+      const isToggledToActive = !filters[filter];
+
+      if (filter === FILTERS.NONE) {
+        filters = getInitialState().filters;
+      } else if (filter === FILTERS.ALL) {
+        filters = isToggledToActive
+          ? allActiveFilters()
+          : getInitialState().filters;
+      } else {
+        filters = {
+          ...filters,
+          [filter]: isToggledToActive,
+        };
+
+        const allAuditTypesActive = Object.values(AUDIT_TYPE)
+          .filter(filterKey => filters.hasOwnProperty(filterKey))
+          .every(filterKey => filters[filterKey]);
+        if (isToggledToActive && !filters[FILTERS.ALL] && allAuditTypesActive) {
+          filters[FILTERS.ALL] = true;
+        } else if (!isToggledToActive && filters[FILTERS.ALL]) {
+          filters[FILTERS.ALL] = false;
+        }
+      }
 
       return {
         ...state,
@@ -51,7 +88,7 @@ function audit(state = getInitialState(), action) {
     case AUDIT:
       return {
         ...state,
-        auditing: null,
+        auditing: getInitialState().auditing,
         progress: null,
       };
     case AUDIT_PROGRESS:

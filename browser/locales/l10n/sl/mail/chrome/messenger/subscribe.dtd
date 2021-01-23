@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "Naroči se">
+<!ENTITY subscribeButton.label        "Naroči se">
+<!ENTITY subscribeButton.accesskey    "s">
+<!ENTITY unsubscribeButton.label      "Odjavi naročnino">
+<!ENTITY unsubscribeButton.accesskey  "O">
+<!ENTITY newGroupsTab.label           "Nove skupine">
+<!ENTITY newGroupsTab.accesskey       "N">
+<!ENTITY refreshButton.label          "Osveži">
+<!ENTITY refreshButton.accesskey      "e">
+<!ENTITY stopButton.label             "Ustavi">
+<!ENTITY stopButton.accesskey         "U">
+<!ENTITY server.label                 "Račun:">
+<!ENTITY server.accesskey             "R">
+<!ENTITY subscribedHeader.label       "Naroči se">
+<!-- commenting out until bug 38906 is fixed 
+<!ENTITY messagesHeader.label         "Messages"> -->
+<!ENTITY namefield.label              "Pokaži predmete, ki vsebujejo:">
+<!ENTITY namefield.accesskey          "P">

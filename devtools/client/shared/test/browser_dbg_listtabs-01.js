@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -9,8 +7,8 @@
  * Make sure the listTabs request works as specified.
  */
 
-var { DebuggerServer } = require("devtools/server/main");
-var { DebuggerClient } = require("devtools/shared/client/debugger-client");
+var { DevToolsServer } = require("devtools/server/devtools-server");
+var { DevToolsClient } = require("devtools/client/devtools-client");
 
 const TAB1_URL = EXAMPLE_URL + "doc_empty-tab-01.html";
 const TAB2_URL = EXAMPLE_URL + "doc_empty-tab-02.html";
@@ -18,11 +16,11 @@ const TAB2_URL = EXAMPLE_URL + "doc_empty-tab-02.html";
 var gTab1, gTab1Front, gTab2, gTab2Front, gClient;
 
 function test() {
-  DebuggerServer.init();
-  DebuggerServer.registerAllActors();
+  DevToolsServer.init();
+  DevToolsServer.registerAllActors();
 
-  const transport = DebuggerServer.connectPipe();
-  gClient = new DebuggerClient(transport);
+  const transport = DevToolsServer.connectPipe();
+  gClient = new DevToolsClient(transport);
   gClient.connect().then(([aType, aTraits]) => {
     is(aType, "browser", "Root actor should identify itself as a browser.");
 
@@ -77,7 +75,7 @@ function testAttachRemovedTab() {
   return removeTab(gTab2).then(() => {
     const deferred = promise.defer();
 
-    gClient.addListener("paused", () => {
+    gClient.on("paused", () => {
       ok(
         false,
         "Attaching to an exited target actor shouldn't generate a pause."
@@ -85,9 +83,9 @@ function testAttachRemovedTab() {
       deferred.reject();
     });
 
-    gTab2Front.attach().then(null, error => {
+    gTab2Front.reconfigure({}).then(null, error => {
       ok(
-        error.includes("noSuchActor"),
+        error.message.includes("noSuchActor"),
         "Actor is gone since the tab was removed."
       );
       deferred.resolve();
@@ -106,7 +104,7 @@ registerCleanupFunction(function() {
 });
 
 async function getTargetActorForUrl(client, url) {
-  const tabs = await client.mainRoot.listTabs();
-  const targetFront = tabs.find(front => front.url == url);
-  return targetFront;
+  const tabDescriptors = await client.mainRoot.listTabs();
+  const tabDescriptor = tabDescriptors.find(front => front.url == url);
+  return tabDescriptor?.getTarget();
 }

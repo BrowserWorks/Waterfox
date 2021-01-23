@@ -6,13 +6,24 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #ifdef FREEBL_NO_DEPEND
+#include "stubs.h"
 extern int FREEBL_InitStubs(void);
 #endif
 
 #include "loader.h"
+#include "cmac.h"
 #include "alghmac.h"
 #include "hmacct.h"
 #include "blapii.h"
+#include "secerr.h"
+
+SECStatus
+FREEBL_Deprecated(void)
+{
+
+    PORT_SetError(SEC_ERROR_UNSUPPORTED_KEYALG);
+    return SECFailure;
+}
 
 static const struct FREEBLVectorStr vector =
     {
@@ -209,14 +220,23 @@ static const struct FREEBLVectorStr vector =
       PQG_DestroyParams,
       PQG_DestroyVerify,
 
-      /* End of Version 3.010. */
+/* End of Version 3.010. */
 
+#ifndef NSS_DISABLE_DEPRECATED_SEED
       SEED_InitContext,
       SEED_AllocateContext,
       SEED_CreateContext,
       SEED_DestroyContext,
       SEED_Encrypt,
       SEED_Decrypt,
+#else
+      (F_SEED_InitContext)FREEBL_Deprecated,
+      (F_SEED_AllocateContext)FREEBL_Deprecated,
+      (F_SEED_CreateContext)FREEBL_Deprecated,
+      (F_SEED_DestroyContext)FREEBL_Deprecated,
+      (F_SEED_Encrypt)FREEBL_Deprecated,
+      (F_SEED_Decrypt)FREEBL_Deprecated,
+#endif /* NSS_DISABLE_DEPRECATED_SEED */
 
       BL_Init,
       BL_SetForkState,
@@ -317,10 +337,25 @@ static const struct FREEBLVectorStr vector =
 
       /* End of Version 3.020 */
 
-      ChaCha20_Xor
+      ChaCha20_Xor,
 
       /* End of version 3.021 */
 
+      CMAC_Init,
+      CMAC_Create,
+      CMAC_Begin,
+      CMAC_Update,
+      CMAC_Finish,
+      CMAC_Destroy,
+
+      /* End of version 3.022 */
+      ChaCha20Poly1305_Encrypt,
+      ChaCha20Poly1305_Decrypt,
+      AES_AEAD,
+      AESKeyWrap_EncryptKWP,
+      AESKeyWrap_DecryptKWP
+
+      /* End of version 3.023 */
     };
 
 const FREEBLVector*

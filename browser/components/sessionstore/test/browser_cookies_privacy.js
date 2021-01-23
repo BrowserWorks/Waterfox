@@ -4,7 +4,7 @@
 const MAX_EXPIRY = Math.pow(2, 62);
 
 function addCookie(scheme, secure = false) {
-  let cookie = createTestCookie("http", secure);
+  let cookie = createTestCookie(scheme, secure);
   Services.cookies.add(
     cookie.host,
     cookie.path,
@@ -15,7 +15,7 @@ function addCookie(scheme, secure = false) {
     /* isSession = */ true,
     MAX_EXPIRY,
     /* originAttributes = */ {},
-    Ci.nsICookie2.SAMESITE_UNSET
+    Ci.nsICookie.SAMESITE_NONE
   );
   return cookie;
 }

@@ -21,6 +21,7 @@ import mozpack.path as mozpath
 
 TOPSRCDIR = os.path.abspath(os.path.join(__file__, '../../../../../'))
 
+
 class InvalidPathException(Exception):
     """Represents an error due to an invalid path."""
 
@@ -28,11 +29,11 @@ class InvalidPathException(Exception):
 @CommandProvider
 class MozbuildFileCommands(MachCommandBase):
     @Command('mozbuild-reference', category='build-dev',
-        description='View reference documentation on mozbuild files.')
+             description='View reference documentation on mozbuild files.')
     @CommandArgument('symbol', default=None, nargs='*',
-        help='Symbol to view help on. If not specified, all will be shown.')
+                     help='Symbol to view help on. If not specified, all will be shown.')
     @CommandArgument('--name-only', '-n', default=False, action='store_true',
-        help='Print symbol names only.')
+                     help='Print symbol names only.')
     def reference(self, symbol, name_only=False):
         # mozbuild.sphinx imports some Sphinx modules, so we need to be sure
         # the optional Sphinx package is installed.
@@ -227,18 +228,18 @@ class MozbuildFileCommands(MachCommandBase):
 
         components_json = os.path.join(out_dir, 'components.json')
         print('Writing %s' % components_json)
-        with open(components_json, 'wb') as fh:
+        with open(components_json, 'w') as fh:
             json.dump(component_by_path, fh, sort_keys=True, indent=2)
 
         missing_json = os.path.join(out_dir, 'missing.json')
         print('Writing %s' % missing_json)
-        with open(missing_json, 'wb') as fh:
+        with open(missing_json, 'w') as fh:
             json.dump({'missing': sorted(missing_component)}, fh, indent=2)
 
         indexed_components_json = os.path.join(out_dir,
                                                'components-normalized.json')
         print('Writing %s' % indexed_components_json)
-        with open(indexed_components_json, 'wb') as fh:
+        with open(indexed_components_json, 'w') as fh:
             # Don't indent so file is as small as possible.
             json.dump(normalized_component, fh, sort_keys=True)
 
@@ -284,7 +285,6 @@ class MozbuildFileCommands(MachCommandBase):
             print(e.message)
             return 1
 
-
     def _get_files_info(self, paths, rev=None):
         reader = self.mozbuild_reader(config_mode='empty', vcs_revision=rev)
 
@@ -327,7 +327,6 @@ class MozbuildFileCommands(MachCommandBase):
                     allpaths.append(path)
 
         return reader.files_info(allpaths)
-
 
     @SubCommand('file-info', 'schedules',
                 'Show the combined SCHEDULES for the files listed.')

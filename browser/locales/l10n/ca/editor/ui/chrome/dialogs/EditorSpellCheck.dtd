@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Verifica l'ortografia">
+
+<!ENTITY misspelledWord.label "Paraula mal escrita:">
+<!ENTITY wordEditField.label "Reemplaça amb:">
+<!ENTITY wordEditField.accessKey "m">
+<!ENTITY checkwordButton.label "Revisa la paraula">
+<!ENTITY checkwordButton.accessKey "R">
+<!ENTITY suggestions.label "Suggeriments:">
+<!ENTITY suggestions.accessKey "u">
+<!ENTITY ignoreButton.label "Ignora">
+<!ENTITY ignoreButton.accessKey "g">
+<!ENTITY ignoreAllButton.label "Ignora-les totes">
+<!ENTITY ignoreAllButton.accessKey "n">
+<!ENTITY replaceButton.label "Reemplaça">
+<!ENTITY replaceButton.accessKey "m">
+<!ENTITY replaceAllButton.label "Reemplaça-ho tot">
+<!ENTITY replaceAllButton.accessKey "a">
+<!ENTITY stopButton.label "Atura">
+<!ENTITY stopButton.accessKey "u">
+<!ENTITY userDictionary.label "Diccionari de l'usuari:">
+<!ENTITY moreDictionaries.label "Baixa més diccionaris…">
+<!ENTITY addToUserDictionaryButton.label "Afegeix una paraula">
+<!ENTITY addToUserDictionaryButton.accessKey "f">
+<!ENTITY editUserDictionaryButton.label "Edita…">
+<!ENTITY editUserDictionaryButton.accessKey "E">
+<!ENTITY recheckButton2.label "Torna a verificar el text">
+<!ENTITY recheckButton2.accessKey "T">
+<!ENTITY closeButton.label "Tanca">
+<!ENTITY closeButton.accessKey "c">
+<!ENTITY sendButton.label "Envia">
+<!ENTITY sendButton.accessKey "v">
+<!ENTITY languagePopup.label "Llengua:">
+<!ENTITY languagePopup.accessKey "L">

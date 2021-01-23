@@ -100,7 +100,7 @@ SECStatus intel_aes_encrypt_ctr_256(CTRContext *cx, unsigned char *output,
                                     unsigned int inputLen,
                                     unsigned int blocksize);
 
-#define intel_aes_ecb_worker(encrypt, keysize)                             \
+#define native_aes_ecb_worker(encrypt, keysize)                            \
     ((encrypt)                                                             \
          ? ((keysize) == 16 ? intel_aes_encrypt_ecb_128                    \
                             : (keysize) == 24 ? intel_aes_encrypt_ecb_192  \
@@ -109,7 +109,7 @@ SECStatus intel_aes_encrypt_ctr_256(CTRContext *cx, unsigned char *output,
                             : (keysize) == 24 ? intel_aes_decrypt_ecb_192  \
                                               : intel_aes_decrypt_ecb_256))
 
-#define intel_aes_cbc_worker(encrypt, keysize)                             \
+#define native_aes_cbc_worker(encrypt, keysize)                            \
     ((encrypt)                                                             \
          ? ((keysize) == 16 ? intel_aes_encrypt_cbc_128                    \
                             : (keysize) == 24 ? intel_aes_encrypt_cbc_192  \
@@ -123,21 +123,21 @@ SECStatus intel_aes_encrypt_ctr_256(CTRContext *cx, unsigned char *output,
                 : (nr) == 12 ? intel_aes_encrypt_ctr_192 \
                              : intel_aes_encrypt_ctr_256)
 
-#define intel_aes_init(encrypt, keysize)                          \
-    do {                                                          \
-        if (encrypt) {                                            \
-            if (keysize == 16)                                    \
-                intel_aes_encrypt_init_128(key, cx->expandedKey); \
-            else if (keysize == 24)                               \
-                intel_aes_encrypt_init_192(key, cx->expandedKey); \
-            else                                                  \
-                intel_aes_encrypt_init_256(key, cx->expandedKey); \
-        } else {                                                  \
-            if (keysize == 16)                                    \
-                intel_aes_decrypt_init_128(key, cx->expandedKey); \
-            else if (keysize == 24)                               \
-                intel_aes_decrypt_init_192(key, cx->expandedKey); \
-            else                                                  \
-                intel_aes_decrypt_init_256(key, cx->expandedKey); \
-        }                                                         \
+#define native_aes_init(encrypt, keysize)                           \
+    do {                                                            \
+        if (encrypt) {                                              \
+            if (keysize == 16)                                      \
+                intel_aes_encrypt_init_128(key, cx->k.expandedKey); \
+            else if (keysize == 24)                                 \
+                intel_aes_encrypt_init_192(key, cx->k.expandedKey); \
+            else                                                    \
+                intel_aes_encrypt_init_256(key, cx->k.expandedKey); \
+        } else {                                                    \
+            if (keysize == 16)                                      \
+                intel_aes_decrypt_init_128(key, cx->k.expandedKey); \
+            else if (keysize == 24)                                 \
+                intel_aes_decrypt_init_192(key, cx->k.expandedKey); \
+            else                                                    \
+                intel_aes_decrypt_init_256(key, cx->k.expandedKey); \
+        }                                                           \
     } while (0)

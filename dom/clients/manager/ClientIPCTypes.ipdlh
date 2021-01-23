@@ -10,8 +10,10 @@ include ProtocolTypes;
 using class mozilla::TimeStamp from "mozilla/TimeStamp.h";
 using ClientType from "mozilla/dom/ClientIPCUtils.h";
 using FrameType from "mozilla/dom/ClientIPCUtils.h";
-using nsContentUtils::StorageAccess from "mozilla/dom/ClientIPCUtils.h";
+using mozilla::StorageAccess from "mozilla/dom/ClientIPCUtils.h";
 using VisibilityState from "mozilla/dom/ClientIPCUtils.h";
+using CallerType from "mozilla/dom/BindingIPCUtils.h";
+using mozilla::CopyableErrorResult from "ipc/ErrorIPCUtils.h";
 
 namespace mozilla {
 namespace dom {
@@ -27,11 +29,14 @@ struct ClientSourceConstructorArgs
 struct IPCClientInfo
 {
   nsID id;
+  nsID? agentClusterId;
   ClientType type;
   PrincipalInfo principalInfo;
   TimeStamp creationTime;
   nsCString url;
   FrameType frameType;
+  CSPInfo? cspInfo;
+  CSPInfo? preloadCspInfo;
 };
 
 struct IPCClientWindowState
@@ -72,6 +77,7 @@ struct ClientControlledArgs
 
 struct ClientFocusArgs
 {
+  CallerType callerType;
 };
 
 struct ClientNavigateArgs
@@ -79,6 +85,7 @@ struct ClientNavigateArgs
   IPCClientInfo target;
   nsCString url;
   nsCString baseURL;
+  IPCServiceWorkerDescriptor serviceWorker;
 };
 
 struct ClientPostMessageArgs
@@ -108,7 +115,7 @@ struct ClientGetInfoAndStateArgs
 struct ClientOpenWindowArgs
 {
   PrincipalInfo principalInfo;
-  ContentSecurityPolicy[] cspInfos;
+  CSPInfo? cspInfo;
   nsCString url;
   nsCString baseURL;
 };
@@ -139,7 +146,7 @@ struct ClientNavigateOpConstructorArgs
 
 union ClientOpResult
 {
-  nsresult;
+  CopyableErrorResult;
   IPCClientState;
   ClientInfoAndState;
   ClientList;

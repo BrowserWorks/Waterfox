@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 /* -*- indent-tabs-mode: nil; js-indent-level: 4 -*- */
 
 "use strict";
@@ -159,6 +163,16 @@ for (const typename of extraRootedGCThings())
 for (const typename of extraRootedPointers())
     typeInfo.RootedPointers[typename] = true;
 
+// Everything that inherits from a "Rooted Base" is considered to be rooted.
+// This is for things like CustomAutoRooter and its subclasses.
+var basework = Object.keys(typeInfo.RootedBases);
+while (basework.length) {
+    const base = basework.pop();
+    typeInfo.RootedPointers[base] = true;
+    if (base in subClasses)
+        basework.push(...subClasses[base]);
+}
+
 // Now that we have the whole hierarchy set up, add all the types and propagate
 // info.
 for (const csu of typeInfo.GCThings)
@@ -205,16 +219,6 @@ for (const csu of inheritors) {
         if (core_type in gcPointers)
             markGCType(csu, paramDesc, why, ptrdness + 1, 0, "");
     }
-}
-
-// Everything that inherits from a "Rooted Base" is considered to be rooted.
-// This is for things like CustomAutoRooter and its subclasses.
-var basework = Object.keys(typeInfo.RootedBases);
-while (basework.length) {
-    const base = basework.pop();
-    typeInfo.RootedPointers[base] = true;
-    if (base in subClasses)
-        basework.push(...subClasses[base]);
 }
 
 // "typeName is a (pointer to a)^'typePtrLevel' GC type because it contains a field

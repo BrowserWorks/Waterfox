@@ -443,13 +443,7 @@ function runRawTests(testArray, done, beforeTestCallback) {
 
     var rawTest = testArray[testIndex];
 
-    var transport = sts.createTransport(
-      null,
-      0,
-      rawTest.host,
-      rawTest.port,
-      null
-    );
+    var transport = sts.createTransport([], rawTest.host, rawTest.port, null);
 
     var inStream = transport.openInputStream(0, 0, 0);
     var outStream = transport.openOutputStream(0, 0, 0);

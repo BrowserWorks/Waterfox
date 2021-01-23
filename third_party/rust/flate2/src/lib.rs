@@ -1,22 +1,53 @@
 //! A DEFLATE-based stream compression/decompression library
 //!
-//! This library is meant to supplement/replace the
-//! `flate` library that was previously part of the standard rust distribution
-//! providing a streaming encoder/decoder rather than purely
-//! an in-memory encoder/decoder.
+//! This library provides support for compression and decompression of
+//! DEFLATE-based streams:
 //!
-//! Like with [`flate`], flate2 is based on [`miniz.c`][1]
+//! * the DEFLATE format itself
+//! * the zlib format
+//! * gzip
 //!
-//! [1]: https://github.com/richgel999/miniz
-//! [`flate`]: https://github.com/rust-lang/rust/tree/1.19.0/src/libflate
+//! These three formats are all closely related and largely only differ in their
+//! headers/footers. This crate has three types in each submodule for dealing
+//! with these three formats.
+//!
+//! # Implementation
+//!
+//! In addition to supporting three formats, this crate supports three different
+//! backends, controlled through this crate's features:
+//!
+//! * `default`, or `rust_backend` - this implementation uses the `miniz_oxide`
+//!   crate which is a port of `miniz.c` (below) to Rust. This feature does not
+//!   require a C compiler and only requires Rust code.
+//!
+//! * `miniz-sys` - when enabled this feature will enable this crate to instead
+//!   use `miniz.c`, distributed with `miniz-sys`, to implement
+//!   compression/decompression.
+//!
+//! * `zlib` - finally, this feature will enable linking against the `libz`
+//!   library, typically found on most Linux systems by default. If the library
+//!   isn't found to already be on the system it will be compiled from source
+//!   (this is a C library).
+//!
+//! There's various tradeoffs associated with each implementation, but in
+//! general you probably won't have to tweak the defaults. The default choice is
+//! selected to avoid the need for a C compiler at build time. The `miniz-sys`
+//! feature is largely a historical artifact at this point and is unlikely to be
+//! needed, and `zlib` is often useful if you're already using `zlib` for other
+//! C dependencies. The compression ratios and performance of each of these
+//! feature should be roughly comparable, but you'll likely want to run your own
+//! tests if you're curious about the performance.
 //!
 //! # Organization
 //!
 //! This crate consists mainly of three modules, [`read`], [`write`], and
 //! [`bufread`]. Each module contains a number of types used to encode and
-//! decode various streams of data. All types in the [`write`] module work on
-//! instances of [`Write`][write], whereas all types in the [`read`] module work on
-//! instances of [`Read`][read] and [`bufread`] works with [`BufRead`][bufread].
+//! decode various streams of data.
+//!
+//! All types in the [`write`] module work on instances of [`Write`][write],
+//! whereas all types in the [`read`] module work on instances of
+//! [`Read`][read] and [`bufread`] works with [`BufRead`][bufread]. If you
+//! are decoding directly from a `&[u8]`, use the [`bufread`] types.
 //!
 //! ```
 //! use flate2::write::GzEncoder;
@@ -27,7 +58,7 @@
 //! # fn main() { let _ = run(); }
 //! # fn run() -> io::Result<()> {
 //! let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
-//! encoder.write(b"Example")?;
+//! encoder.write_all(b"Example")?;
 //! # Ok(())
 //! # }
 //! ```
@@ -76,30 +107,19 @@
 #![allow(trivial_numeric_casts)]
 #![cfg_attr(test, deny(warnings))]
 
-#[cfg(feature = "tokio")]
-extern crate futures;
-extern crate libc;
-#[cfg(test)]
-extern crate quickcheck;
-#[cfg(test)]
-extern crate rand;
-#[cfg(feature = "tokio")]
-#[macro_use]
-extern crate tokio_io;
-
-pub use gz::GzBuilder;
-pub use gz::GzHeader;
-pub use mem::{Compress, CompressError, DecompressError, Decompress, Status};
-pub use mem::{FlushCompress, FlushDecompress};
-pub use crc::{Crc, CrcReader};
+pub use crate::crc::{Crc, CrcReader, CrcWriter};
+pub use crate::gz::GzBuilder;
+pub use crate::gz::GzHeader;
+pub use crate::mem::{Compress, CompressError, Decompress, DecompressError, Status};
+pub use crate::mem::{FlushCompress, FlushDecompress};
 
 mod bufreader;
 mod crc;
 mod deflate;
 mod ffi;
 mod gz;
-mod zio;
 mod mem;
+mod zio;
 mod zlib;
 
 /// Types which operate over [`Read`] streams, both encoders and decoders for
@@ -107,13 +127,13 @@ mod zlib;
 ///
 /// [`Read`]: https://doc.rust-lang.org/std/io/trait.Read.html
 pub mod read {
-    pub use deflate::read::DeflateEncoder;
-    pub use deflate::read::DeflateDecoder;
-    pub use zlib::read::ZlibEncoder;
-    pub use zlib::read::ZlibDecoder;
-    pub use gz::read::GzEncoder;
-    pub use gz::read::GzDecoder;
-    pub use gz::read::MultiGzDecoder;
+    pub use crate::deflate::read::DeflateDecoder;
+    pub use crate::deflate::read::DeflateEncoder;
+    pub use crate::gz::read::GzDecoder;
+    pub use crate::gz::read::GzEncoder;
+    pub use crate::gz::read::MultiGzDecoder;
+    pub use crate::zlib::read::ZlibDecoder;
+    pub use crate::zlib::read::ZlibEncoder;
 }
 
 /// Types which operate over [`Write`] streams, both encoders and decoders for
@@ -121,11 +141,12 @@ pub mod read {
 ///
 /// [`Write`]: https://doc.rust-lang.org/std/io/trait.Write.html
 pub mod write {
-    pub use deflate::write::DeflateEncoder;
-    pub use deflate::write::DeflateDecoder;
-    pub use zlib::write::ZlibEncoder;
-    pub use zlib::write::ZlibDecoder;
-    pub use gz::write::GzEncoder;
+    pub use crate::deflate::write::DeflateDecoder;
+    pub use crate::deflate::write::DeflateEncoder;
+    pub use crate::gz::write::GzDecoder;
+    pub use crate::gz::write::GzEncoder;
+    pub use crate::zlib::write::ZlibDecoder;
+    pub use crate::zlib::write::ZlibEncoder;
 }
 
 /// Types which operate over [`BufRead`] streams, both encoders and decoders for
@@ -133,13 +154,13 @@ pub mod write {
 ///
 /// [`BufRead`]: https://doc.rust-lang.org/std/io/trait.BufRead.html
 pub mod bufread {
-    pub use deflate::bufread::DeflateEncoder;
-    pub use deflate::bufread::DeflateDecoder;
-    pub use zlib::bufread::ZlibEncoder;
-    pub use zlib::bufread::ZlibDecoder;
-    pub use gz::bufread::GzEncoder;
-    pub use gz::bufread::GzDecoder;
-    pub use gz::bufread::MultiGzDecoder;
+    pub use crate::deflate::bufread::DeflateDecoder;
+    pub use crate::deflate::bufread::DeflateEncoder;
+    pub use crate::gz::bufread::GzDecoder;
+    pub use crate::gz::bufread::GzEncoder;
+    pub use crate::gz::bufread::MultiGzDecoder;
+    pub use crate::zlib::bufread::ZlibDecoder;
+    pub use crate::zlib::bufread::ZlibEncoder;
 }
 
 fn _assert_send_sync() {
@@ -157,6 +178,7 @@ fn _assert_send_sync() {
     _assert_send_sync::<write::ZlibEncoder<Vec<u8>>>();
     _assert_send_sync::<write::ZlibDecoder<Vec<u8>>>();
     _assert_send_sync::<write::GzEncoder<Vec<u8>>>();
+    _assert_send_sync::<write::GzDecoder<Vec<u8>>>();
 }
 
 /// When compressing data, the compression level can be specified by a value in
@@ -201,4 +223,12 @@ impl Default for Compression {
     fn default() -> Compression {
         Compression(6)
     }
+}
+
+#[cfg(test)]
+fn random_bytes() -> impl Iterator<Item = u8> {
+    use rand::Rng;
+    use std::iter;
+
+    iter::repeat(()).map(|_| rand::thread_rng().gen())
 }

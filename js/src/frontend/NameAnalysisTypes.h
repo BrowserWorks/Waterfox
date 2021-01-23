@@ -7,6 +7,8 @@
 #ifndef frontend_NameAnalysisTypes_h
 #define frontend_NameAnalysisTypes_h
 
+#include <type_traits>
+
 #include "vm/BytecodeUtil.h"
 #include "vm/Scope.h"
 
@@ -327,20 +329,15 @@ class NameLocation {
   }
 };
 
-// This type is declared here for LazyScript::Create.
+// These types are declared here for BaseScript::CreateLazy.
 using AtomVector = Vector<JSAtom*, 24, SystemAllocPolicy>;
+
+class FunctionBox;
+// FunctionBoxes stored in this type are required to be rooted
+// by the parser
+using FunctionBoxVector = Vector<const FunctionBox*, 8>;
 
 }  // namespace frontend
 }  // namespace js
-
-namespace mozilla {
-
-template <>
-struct IsPod<js::frontend::DeclaredNameInfo> : TrueType {};
-
-template <>
-struct IsPod<js::frontend::NameLocation> : TrueType {};
-
-}  // namespace mozilla
 
 #endif  // frontend_NameAnalysisTypes_h

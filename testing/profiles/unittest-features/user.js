@@ -8,16 +8,10 @@
 /* globals user_pref */
 // Enable w3c touch events for testing
 user_pref("dom.w3c_touch_events.enabled", 1);
-// Enable CSS 'contain' for testing
-user_pref("layout.css.contain.enabled", true);
 // Enable CSS Grid 'subgrid' feature for testing
 user_pref("layout.css.grid-template-subgrid-value.enabled", true);
 // Enable CSS initial-letter for testing
 user_pref("layout.css.initial-letter.enabled", true);
-// Enable -webkit-{min|max}-device-pixel-ratio media queries for testing
-user_pref("layout.css.prefixes.device-pixel-ratio-webkit", true);
-// Enable webkit prefixed CSS features for testing
-user_pref("layout.css.prefixes.webkit", true);
 // Enable Media Source Extensions for testing
 user_pref("media.mediasource.mp4.enabled", true);
 user_pref("media.mediasource.webm.enabled", true);
@@ -37,7 +31,3 @@ user_pref("extensions.formautofill.available", "on");
 user_pref("layout.css.clip-path-path.enabled", true);
 // Enable visualviewport for testing
 user_pref("dom.visualviewport.enabled", true);
-
-// For Firefox 52 only, ESR will support non-Flash plugins while release will
-// not, so we keep testing the non-Flash pathways
-user_pref("plugin.load_flash_only", false);

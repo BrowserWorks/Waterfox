@@ -11,7 +11,10 @@ add_task(async function() {
   // Disable rcwn to make cache behavior deterministic.
   await pushPref("network.http.rcwn.enabled", false);
 
-  const { tab, monitor } = await initNetMonitor(STATUS_CODES_URL, true);
+  const { tab, monitor } = await initNetMonitor(STATUS_CODES_URL, {
+    enableCache: true,
+    requestCount: 1,
+  });
   info("Starting test... ");
 
   const { document, store, windowRequire } = monitor.panelWin;
@@ -100,12 +103,13 @@ add_task(async function() {
     const requestsListStatus = requestItem.querySelector(".status-code");
     EventUtils.sendMouseEvent({ type: "mouseover" }, requestsListStatus);
     await waitUntil(() => requestsListStatus.title);
+    await waitForDOMIfNeeded(requestItem, ".requests-list-timings-total");
 
     info("Verifying request #" + index);
     await verifyRequestItemTarget(
       document,
       getDisplayedRequests(store.getState()),
-      getSortedRequests(store.getState()).get(index),
+      getSortedRequests(store.getState())[index],
       request.method,
       request.uri,
       request.details
@@ -118,7 +122,7 @@ add_task(async function() {
 
   async function performRequestsAndWait() {
     const wait = waitForNetworkEvents(monitor, 3);
-    await ContentTask.spawn(tab.linkedBrowser, {}, async function() {
+    await SpecialPowers.spawn(tab.linkedBrowser, [], async function() {
       content.wrappedJSObject.performCachedRequests();
     });
     await wait;

@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Iɣewwaṛen leqqayen n umiḍan">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "Akaram n uqeddac IMAP:">
+<!ENTITY serverDirectory.accesskey "k">
+<!ENTITY usingSubscription.label "Sken kan ikaramen n umulteɣ">
+<!ENTITY usingSubscription.accesskey "n">
+<!ENTITY dualUseFolders.label "Aqeddac yessefrak ikaramen igebren ikaramen akked yeznan">
+<!ENTITY dualUseFolders.accesskey "m">
+<!ENTITY maximumConnectionsNumber.label "Amḍan afellay n tuqqniwin ɣer uqeddac di tuffirt">
+<!ENTITY maximumConnectionsNumber.accesskey "l">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Ismenyifen-agi mmalen-d tallunt n yesmawen ɣef uqeddac inek IMAP">
+<!ENTITY personalNamespace.label "Tallunt n yisem tudmawant">
+<!ENTITY personalNamespace.accesskey "i">
+<!ENTITY publicNamespace.label "Azayez (Yebḍa):">
+<!ENTITY publicNamespace.accesskey "A">
+<!ENTITY otherUsersNamespace.label "Iseqdacen nniḍen:">
+<!ENTITY otherUsersNamespace.accesskey "d">
+<!ENTITY overrideNamespaces.label "Sireg aqeddac ad isnifel tallunt-agi n yesmawen">
+<!ENTITY overrideNamespaces.accesskey "g">
+<!ENTITY pop3DeferringDesc.label "Ticki tisidireḍ-d tirawt si uqeddac n umiḍan, seqdec akaram-agi akked ad tesseklseḍ iznan imaynuten:" >
+<!ENTITY accountInbox.label "Tirawt n urmas i umiḍan-agi">
+<!ENTITY accountInbox.accesskey "m">
+<!ENTITY deferToServer.label "Tirawt n urmas nniḍen i umiḍan-agi">
+<!ENTITY deferToServer.accesskey "u">
+<!ENTITY deferGetNewMail.label "Seddu aqeddac-agi ticki tettawiḍ-d iznan imaynuten">
+<!ENTITY deferGetNewMail.accesskey "d">

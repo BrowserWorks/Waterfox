@@ -65,9 +65,9 @@ async function setUp(server) {
   await generateNewKeys(Service.collectionKeys);
   let serverKeys = Service.collectionKeys.asWBO("crypto", "keys");
   await serverKeys.encrypt(Service.identity.syncKeyBundle);
-  let result = (await serverKeys.upload(
-    Service.resource(Service.cryptoKeysURL)
-  )).success;
+  let result = (
+    await serverKeys.upload(Service.resource(Service.cryptoKeysURL))
+  ).success;
   return result;
 }
 
@@ -180,6 +180,54 @@ add_test(function test_prefAttributes() {
   Svc.Prefs.resetBranch("");
   scheduler.setDefaults();
   run_next_test();
+});
+
+add_task(async function test_sync_skipped_low_score_no_resync() {
+  enableValidationPrefs();
+  let server = await sync_httpd_setup();
+
+  function SkipEngine() {
+    SyncEngine.call(this, "Skip", Service);
+    this.syncs = 0;
+  }
+
+  SkipEngine.prototype = {
+    __proto__: SyncEngine.prototype,
+    _sync() {
+      do_throw("Should have been skipped");
+    },
+    shouldSkipSync() {
+      return true;
+    },
+  };
+  await Service.engineManager.register(SkipEngine);
+
+  let engine = Service.engineManager.get("skip");
+  engine.enabled = true;
+  engine._tracker._score = 30;
+
+  Assert.equal(Status.sync, SYNC_SUCCEEDED);
+
+  Assert.ok(await setUp(server));
+
+  let resyncDoneObserver = promiseOneObserver("weave:service:resyncs-finished");
+
+  let synced = false;
+  function onSyncStarted() {
+    Assert.ok(!synced, "Only should sync once");
+    synced = true;
+  }
+
+  await Service.sync();
+
+  Assert.equal(Status.sync, SYNC_SUCCEEDED);
+
+  Svc.Obs.add("weave:service:sync:start", onSyncStarted);
+  await resyncDoneObserver;
+
+  Svc.Obs.remove("weave:service:sync:start", onSyncStarted);
+  engine._tracker._store = 0;
+  await cleanUpAndGo(server);
 });
 
 add_task(async function test_updateClientMode() {
@@ -566,14 +614,19 @@ add_task(async function test_autoconnect_mp_locked() {
   };
   let origFxA = Service.identity._fxaService;
   Service.identity._fxaService = new FxAccounts({
-    canGetKeys() {
-      return false;
+    currentAccountState: {
+      getUserAccountData(...args) {
+        return origFxA._internal.currentAccountState.getUserAccountData(
+          ...args
+        );
+      },
     },
-    getSignedInUser() {
-      return origFxA.getSignedInUser();
+    keys: {
+      canGetKeys() {
+        return false;
+      },
     },
   });
-
   // A locked master password will still trigger a sync, but then we'll hit
   // MASTER_PASSWORD_LOCKED and hence MASTER_PASSWORD_LOCKED_RETRY_INTERVAL.
   let promiseObserved = promiseOneObserver("weave:service:login:error");
@@ -812,7 +865,7 @@ add_task(async function test_sync_failed_partial_noresync() {
   let engine = Service.engineManager.get("catapult");
   engine.enabled = true;
   engine.exception = "Bad news";
-  engine._tracker._score = 10;
+  engine._tracker._score = MULTI_DEVICE_THRESHOLD + 1;
 
   Assert.equal(Status.sync, SYNC_SUCCEEDED);
 

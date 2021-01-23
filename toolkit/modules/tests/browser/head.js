@@ -80,7 +80,7 @@ function promiseEnterStringIntoFindField(findbar, str) {
       0,
       str.charCodeAt(i)
     );
-    findbar._findField.inputField.dispatchEvent(event);
+    findbar._findField.dispatchEvent(event);
   }
   return promise;
 }
@@ -91,9 +91,9 @@ function promiseTestHighlighterOutput(
   expectedResult,
   extraTest = () => {}
 ) {
-  return ContentTask.spawn(
+  return SpecialPowers.spawn(
     browser,
-    { word, expectedResult, extraTest: extraTest.toSource() },
+    [{ word, expectedResult, extraTest: extraTest.toSource() }],
     async function({ word, expectedResult, extraTest }) {
       return new Promise((resolve, reject) => {
         let stubbed = {};
@@ -109,7 +109,7 @@ function promiseTestHighlighterOutput(
         // was called.
         const kTimeoutMs = 1000;
         // The initial timeout may wait for a while for results to come in.
-        let timeout = setTimeout(
+        let timeout = content.setTimeout(
           () => finish(false, "Timeout"),
           kTimeoutMs * 5
         );
@@ -121,7 +121,7 @@ function promiseTestHighlighterOutput(
             content.document.removeAnonymousContent = stubbed.remove;
           } catch (ex) {}
           stubbed = {};
-          clearTimeout(timeout);
+          content.clearTimeout(timeout);
 
           if (expectedResult.rectCount !== 0) {
             Assert.ok(ok, message);
@@ -153,9 +153,7 @@ function promiseTestHighlighterOutput(
           if (!lastMaskNode && expectedResult.rectCount !== 0) {
             Assert.ok(
               false,
-              `No mask node found, but expected ${
-                expectedResult.rectCount
-              } rects.`
+              `No mask node found, but expected ${expectedResult.rectCount} rects.`
             );
           }
 
@@ -242,8 +240,8 @@ function promiseTestHighlighterOutput(
                 lastOutlineNode = node;
               }
             }
-            clearTimeout(timeout);
-            timeout = setTimeout(() => {
+            content.clearTimeout(timeout);
+            timeout = content.setTimeout(() => {
               finish();
             }, kTimeoutMs);
             let res = stubbed[which].call(content.document, node);

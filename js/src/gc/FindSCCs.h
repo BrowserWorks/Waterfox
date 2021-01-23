@@ -7,10 +7,10 @@
 #ifndef gc_FindSCCs_h
 #define gc_FindSCCs_h
 
-#include "mozilla/Move.h"
+#include <algorithm>
+#include <utility>
 
 #include "jsfriendapi.h"
-#include "jsutil.h"
 
 #include "js/HashTable.h"
 
@@ -129,9 +129,9 @@ class ComponentFinder {
   void addEdgeTo(Node* w) {
     if (w->gcDiscoveryTime == Undefined) {
       processNode(w);
-      cur->gcLowLink = Min(cur->gcLowLink, w->gcLowLink);
+      cur->gcLowLink = std::min(cur->gcLowLink, w->gcLowLink);
     } else if (w->gcDiscoveryTime != Finished) {
-      cur->gcLowLink = Min(cur->gcLowLink, w->gcDiscoveryTime);
+      cur->gcLowLink = std::min(cur->gcLowLink, w->gcDiscoveryTime);
     }
   }
 

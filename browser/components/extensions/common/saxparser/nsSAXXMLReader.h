@@ -44,7 +44,7 @@ class nsSAXXMLReader final : public nsISAXXMLReader,
 
   NS_IMETHOD WillBuildModel(nsDTDMode aDTDMode) override;
   NS_IMETHOD DidBuildModel(bool aTerminated) override;
-  NS_IMETHOD SetParser(nsParserBase *aParser) override;
+  NS_IMETHOD SetParser(nsParserBase* aParser) override;
 
   NS_IMETHOD WillInterrupt() override { return NS_OK; }
 
@@ -52,10 +52,10 @@ class nsSAXXMLReader final : public nsISAXXMLReader,
 
   virtual void FlushPendingNotifications(mozilla::FlushType aType) override {}
 
-  virtual void SetDocumentCharset(
-      NotNull<const Encoding *> aEncoding) override {}
+  virtual void SetDocumentCharset(NotNull<const Encoding*> aEncoding) override {
+  }
 
-  virtual nsISupports *GetTarget() override { return nullptr; }
+  virtual nsISupports* GetTarget() override { return nullptr; }
 
  private:
   ~nsSAXXMLReader() {}
@@ -66,12 +66,12 @@ class nsSAXXMLReader final : public nsISAXXMLReader,
   nsCOMPtr<nsIStreamListener> mListener;
   nsCOMPtr<nsIRequestObserver> mParserObserver;
   bool mIsAsyncParse;
-  static bool TryChannelCharset(nsIChannel *aChannel, int32_t &aCharsetSource,
-                                NotNull<const Encoding *> &aEncoding);
+  static bool TryChannelCharset(nsIChannel* aChannel, int32_t& aCharsetSource,
+                                NotNull<const Encoding*>& aEncoding);
   nsresult EnsureBaseURI();
-  nsresult InitParser(nsIRequestObserver *aListener, nsIChannel *aChannel);
-  nsresult SplitExpatName(const char16_t *aExpatName, nsString &aURI,
-                          nsString &aLocalName, nsString &aQName);
+  nsresult InitParser(nsIRequestObserver* aListener, nsIChannel* aChannel);
+  nsresult SplitExpatName(const char16_t* aExpatName, nsString& aURI,
+                          nsString& aLocalName, nsString& aQName);
 };
 
 #endif  // nsSAXXMLReader_h__

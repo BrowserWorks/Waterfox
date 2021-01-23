@@ -14,7 +14,6 @@
 #include "mozilla/dom/ScriptSettings.h"
 #include "nsArrayUtils.h"
 #include "nsCOMArray.h"
-#include "nsIXPConnect.h"
 #include "nsJSUtils.h"
 #include "nsMemory.h"
 #include "nsServiceManagerUtils.h"
@@ -31,7 +30,7 @@ using namespace dom;
 
 NS_IMPL_ISUPPORTS(EventListenerChange, nsIEventListenerChange)
 
-EventListenerChange::~EventListenerChange() {}
+EventListenerChange::~EventListenerChange() = default;
 
 EventListenerChange::EventListenerChange(EventTarget* aTarget)
     : mTarget(aTarget) {}

@@ -11,33 +11,35 @@
 #include "nsHashKeys.h"
 #include "nsIObserver.h"
 #include "mozilla/Omnijar.h"
+#include "mozilla/ipc/SharedMemoryBasic.h"
 
 class nsHyphenator;
 class nsAtom;
 class nsIURI;
 
-class nsHyphenationManager {
+class nsHyphenationManager : public nsIObserver {
  public:
+  NS_DECL_ISUPPORTS
+  NS_DECL_NSIOBSERVER
+
   nsHyphenationManager();
 
   already_AddRefed<nsHyphenator> GetHyphenator(nsAtom* aLocale);
+
+  void ShareHyphDictToProcess(
+      nsIURI* aURI, base::ProcessId aPid,
+      mozilla::ipc::SharedMemoryBasic::Handle* aOutHandle, uint32_t* aOutSize);
 
   static nsHyphenationManager* Instance();
 
   static void Shutdown();
 
+  size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf);
+
  private:
-  ~nsHyphenationManager();
+  virtual ~nsHyphenationManager();
 
  protected:
-  class MemoryPressureObserver final : public nsIObserver {
-    ~MemoryPressureObserver() {}
-
-   public:
-    NS_DECL_ISUPPORTS
-    NS_DECL_NSIOBSERVER
-  };
-
   void LoadPatternList();
   void LoadPatternListFromOmnijar(mozilla::Omnijar::Type aType);
   void LoadPatternListFromDir(nsIFile* aDir);

@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "Taq tz'aqat">
+<!ENTITY aboutAddons.header2                    "Taq rutz'aqat">
+
+<!ENTITY addonAction.enable                     "Titzij">
+<!ENTITY addonAction.disable                    "Tichup">
+<!ENTITY addonAction.uninstall                  "Telesäx el">
+<!ENTITY addonAction.undo                       "Titzolïx">
+<!ENTITY addonAction.update                     "Tik'ex">
+
+<!ENTITY addonUnsigned.message                  "Re jun add-on man tikirel nijikib'äx ruma &brandShortName;.">
+<!ENTITY addonUnsigned.learnMore                "Tetamäx ch'aqa' chik">

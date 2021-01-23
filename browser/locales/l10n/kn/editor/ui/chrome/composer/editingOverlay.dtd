@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- File menu items -->
+
+<!ENTITY openFileCmd.label "ಕಡತವನ್ನು ತೆರೆ…">
+<!ENTITY openFileCmd.accesskey "O">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "ಜಾಲತಾಣದ ವಿಳಾಸವನ್ನು ತೆರೆ‍…‍">
+<!ENTITY openRemoteCmd.accesskey "L">
+<!ENTITY openRemoteCmd.key "L‍">
+<!ENTITY fileRecentMenu.label "ಇತ್ತೀಚಿನ ಪುಟ‍ಗಳು‍">
+<!ENTITY fileRecentMenu.accesskey "R">
+<!ENTITY saveCmd.label "ಉಳಿಸು(S)‍">
+<!ENTITY saveCmd.accesskey "S">
+<!ENTITY saveAsCmd.label "ಹೀಗೆ ಉಳಿಸು (_A)...‍">
+<!ENTITY saveAsCmd.accesskey "A">
+
+
+
+
+
+
+
+
+
+<!-- Edit menu items -->
+
+<!-- Toolbar buttons/items -->
+
+
+
+
+

@@ -47,8 +47,8 @@ class CodeGeneratorMIPSShared : public CodeGeneratorShared {
     masm.branch32(c, lhs, rhs, &bail);
     bailoutFrom(&bail, snapshot);
   }
-  template <typename T>
-  void bailoutTest32(Assembler::Condition c, Register lhs, T rhs,
+  template <typename T1, typename T2>
+  void bailoutTest32(Assembler::Condition c, T1 lhs, T2 rhs,
                      LSnapshot* snapshot) {
     Label bail;
     masm.branchTest32(c, lhs, rhs, &bail);
@@ -138,6 +138,7 @@ class CodeGeneratorMIPSShared : public CodeGeneratorShared {
 
 // An out-of-line bailout thunk.
 class OutOfLineBailout : public OutOfLineCodeBase<CodeGeneratorMIPSShared> {
+ protected:
   LSnapshot* snapshot_;
   uint32_t frameSize_;
 

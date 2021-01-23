@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Verfügbare Kontakte">
+<!ENTITY offlineContactsHeader.label   "Abgemeldete Kontakte">
+<!ENTITY conversationsHeader.label     "Gespräche">
+<!ENTITY searchResultConversation.label "Suchergebnisse">
+<!ENTITY chat.noConv.title             "Gespräche werden hier dargestellt.">
+<!ENTITY chat.noConv.description       "Benutzen Sie die Kontaktliste links zum Starten eines Gesprächs.">
+<!ENTITY chat.noPreviousConv.description       "&brandShortName; verfügt über keine gespeicherten Gespräche für diesen Kontakt.">
+<!ENTITY chat.noAccount.title             "Sie haben noch kein Chat-Konto eingerichtet.">
+<!ENTITY chat.noAccount.description       "Lassen Sie sich von &brandShortName; durch die Einrichtung eines Chat-Kontos führen.">
+<!ENTITY chat.accountWizard.button       "Los geht's">
+<!ENTITY chat.noConnectedAccount.title             "Ihre Chat-Konten sind angemeldet.">
+<!ENTITY chat.noConnectedAccount.description       "Sie können sie über den Dialog 'Chat-Status' verbinden:">
+<!ENTITY chat.showAccountManager.button       "Chat-Status anzeigen">
+
+<!ENTITY chat.participants             "Teilnehmer:">
+<!ENTITY chat.previousConversations    "Vorherige Gespräche:">
+<!ENTITY chat.ongoingConversation      "Laufende Gespräche">
+
+<!ENTITY openConversationCmd.label     "Gespräch beginnen">
+<!ENTITY openConversationCmd.accesskey "b">
+<!ENTITY closeConversationCmd.label    "Gespräch beenden">
+<!ENTITY closeConversationCmd.accesskey "e">
+<!ENTITY aliasCmd.label                "Umbenennen">
+<!ENTITY aliasCmd.accesskey            "U">
+<!ENTITY deleteCmd.label               "Kontakt löschen">
+<!ENTITY deleteCmd.accesskey           "l">
+
+<!ENTITY openConversationButton.tooltip  "Ein Gespräch beginnen">
+<!ENTITY closeConversationButton.tooltip "Ein Gespräch beenden">
+
+<!ENTITY addBuddyButton.label          "Kontakt hinzufügen">
+<!ENTITY joinChatButton.label          "Chat betreten">
+<!ENTITY chatAccountsButton.label      "Konten anzeigen">
+
+<!ENTITY status.available          "Verfügbar">
+<!ENTITY status.unavailable        "Nicht verfügbar">
+<!ENTITY status.offline            "Nicht verbunden">
+
+<!ENTITY openLinkCmd.label            "Link öffnen…">
+<!ENTITY openLinkCmd.accesskey        "L">

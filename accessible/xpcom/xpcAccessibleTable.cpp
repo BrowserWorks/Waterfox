@@ -8,10 +8,10 @@
 
 #include "Accessible.h"
 #include "TableAccessible.h"
-#include "xpcAccessibleDocument.h"
 
 #include "nsIMutableArray.h"
 #include "nsComponentManagerUtils.h"
+#include "xpcAccessibleDocument.h"
 
 using namespace mozilla::a11y;
 

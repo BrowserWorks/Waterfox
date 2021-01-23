@@ -9,8 +9,13 @@ with Files("**"):
 
 # Public stuff.
 EXPORTS.mozilla.dom += [
+    'FetchEventOpChild.h',
+    'FetchEventOpParent.h',
+    'FetchEventOpProxyChild.h',
+    'FetchEventOpProxyParent.h',
     'ServiceWorker.h',
     'ServiceWorkerActors.h',
+    'ServiceWorkerCloneData.h',
     'ServiceWorkerContainer.h',
     'ServiceWorkerDescriptor.h',
     'ServiceWorkerEvents.h',
@@ -20,14 +25,21 @@ EXPORTS.mozilla.dom += [
     'ServiceWorkerManager.h',
     'ServiceWorkerManagerChild.h',
     'ServiceWorkerManagerParent.h',
+    'ServiceWorkerOp.h',
+    'ServiceWorkerOpPromise.h',
     'ServiceWorkerRegistrar.h',
     'ServiceWorkerRegistration.h',
     'ServiceWorkerRegistrationDescriptor.h',
     'ServiceWorkerRegistrationInfo.h',
+    'ServiceWorkerShutdownState.h',
     'ServiceWorkerUtils.h',
 ]
 
 UNIFIED_SOURCES += [
+    'FetchEventOpChild.cpp',
+    'FetchEventOpParent.cpp',
+    'FetchEventOpProxyChild.cpp',
+    'FetchEventOpProxyParent.cpp',
     'RemoteServiceWorkerContainerImpl.cpp',
     'RemoteServiceWorkerImpl.cpp',
     'RemoteServiceWorkerRegistrationImpl.cpp',
@@ -51,8 +63,10 @@ UNIFIED_SOURCES += [
     'ServiceWorkerManagerChild.cpp',
     'ServiceWorkerManagerParent.cpp',
     'ServiceWorkerManagerService.cpp',
+    'ServiceWorkerOp.cpp',
     'ServiceWorkerParent.cpp',
     'ServiceWorkerPrivate.cpp',
+    'ServiceWorkerPrivateImpl.cpp',
     'ServiceWorkerProxy.cpp',
     'ServiceWorkerRegisterJob.cpp',
     'ServiceWorkerRegistrar.cpp',
@@ -64,6 +78,8 @@ UNIFIED_SOURCES += [
     'ServiceWorkerRegistrationParent.cpp',
     'ServiceWorkerRegistrationProxy.cpp',
     'ServiceWorkerScriptCache.cpp',
+    'ServiceWorkerShutdownBlocker.cpp',
+    'ServiceWorkerShutdownState.cpp',
     'ServiceWorkerUnregisterCallback.cpp',
     'ServiceWorkerUnregisterJob.cpp',
     'ServiceWorkerUpdateJob.cpp',
@@ -75,11 +91,14 @@ UNIFIED_SOURCES += [
 IPDL_SOURCES += [
     'IPCServiceWorkerDescriptor.ipdlh',
     'IPCServiceWorkerRegistrationDescriptor.ipdlh',
+    'PFetchEventOp.ipdl',
+    'PFetchEventOpProxy.ipdl',
     'PServiceWorker.ipdl',
     'PServiceWorkerContainer.ipdl',
     'PServiceWorkerManager.ipdl',
     'PServiceWorkerRegistration.ipdl',
     'PServiceWorkerUpdater.ipdl',
+    'ServiceWorkerOpArgs.ipdlh',
     'ServiceWorkerRegistrarTypes.ipdlh',
 ]
 

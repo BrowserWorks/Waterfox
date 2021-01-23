@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY insertSmiley.label "Тварык">
+<!ENTITY insertSmiley.accesskey "Т">
+<!ENTITY smiley1Cmd.label "Усмешка">
+<!ENTITY smiley1Cmd.accesskey "У">
+<!ENTITY smiley1Cmd.tooltip "Уставіць тварык-усмешку">
+<!ENTITY smiley2Cmd.label "Пахмурны">
+<!ENTITY smiley2Cmd.accesskey "х">
+<!ENTITY smiley2Cmd.tooltip "Уставіць пахмурны тварык">
+<!ENTITY smiley3Cmd.label "Падміргванне">
+<!ENTITY smiley3Cmd.accesskey "м">
+<!ENTITY smiley3Cmd.tooltip "Уставіць тварык з падміргваннем">
+<!ENTITY smiley4Cmd.label "З высунутым языком">
+<!ENTITY smiley4Cmd.accesskey "я">
+<!ENTITY smiley4Cmd.tooltip "Уставіць тварык з высунутым языком">
+<!ENTITY smiley5Cmd.label "Смех">
+<!ENTITY smiley5Cmd.accesskey "С">
+<!ENTITY smiley5Cmd.tooltip "Уставіць тварык, які смяецца">
+<!ENTITY smiley6Cmd.label "Сарамлівы">
+<!ENTITY smiley6Cmd.accesskey "р">
+<!ENTITY smiley6Cmd.tooltip "Уставіць сарамлівы тварык">
+<!ENTITY smiley7Cmd.label "Няўпэўнены">
+<!ENTITY smiley7Cmd.accesskey "ў">
+<!ENTITY smiley7Cmd.tooltip "Уставіць няўпэўнены тварык">
+<!ENTITY smiley8Cmd.label "Здзіўленне">
+<!ENTITY smiley8Cmd.accesskey "З">
+<!ENTITY smiley8Cmd.tooltip "Уставіць здзіўлены тварык">
+<!ENTITY smiley9Cmd.label "Пацалунак">
+<!ENTITY smiley9Cmd.accesskey "ц">
+<!ENTITY smiley9Cmd.tooltip "Уставіць тварык-пацалунак">
+<!ENTITY smiley10Cmd.label "Роў">
+<!ENTITY smiley10Cmd.accesskey "Р">
+<!ENTITY smiley10Cmd.tooltip "Уставіць тварык, які раве">
+<!ENTITY smiley11Cmd.label "Файна">
+<!ENTITY smiley11Cmd.accesskey "Ф">
+<!ENTITY smiley11Cmd.tooltip "Уставіць файны тварык">
+<!ENTITY smiley12Cmd.label "Карыслівы">
+<!ENTITY smiley12Cmd.accesskey "К">
+<!ENTITY smiley12Cmd.tooltip "Уставіць карыслівы тварык">
+<!ENTITY smiley13Cmd.label "Ступня ў роце">
+<!ENTITY smiley13Cmd.accesskey "т">
+<!ENTITY smiley13Cmd.tooltip "Уставіць тварык з ступнёю ў роце">
+<!ENTITY smiley14Cmd.label "Бязгрэшны">
+<!ENTITY smiley14Cmd.accesskey "Б">
+<!ENTITY smiley14Cmd.tooltip "Уставіць бязгрэшны тварык">
+<!ENTITY smiley15Cmd.label "Рыданне">
+<!ENTITY smiley15Cmd.accesskey "ы">
+<!ENTITY smiley15Cmd.tooltip "Уставіць тварык, які плача">
+<!ENTITY smiley16Cmd.label "Надзьмуты">
+<!ENTITY smiley16Cmd.accesskey "Н">
+<!ENTITY smiley16Cmd.tooltip "Уставіць надзьмуты тварык">
+<!ENTITY SmileButton.tooltip "Уставіць тварык-усмешку">

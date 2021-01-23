@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+   
+<!-- Labels -->
+<!ENTITY newFolderDialog.title "Ný mappa">
+<!ENTITY name.label "Nafn:">
+<!ENTITY name.accesskey "n">
+<!ENTITY description.label "Búa til sem undirmöppu af:">
+<!ENTITY description.accesskey "B">
+<!ENTITY folderRestriction1.label "Þessi póstþjónn takmarkar möppur við tvær sérstakar tegundir.">
+<!ENTITY folderRestriction2.label "Leyfa nýrri möppu að innihalda:">
+<!ENTITY foldersOnly.label "Aðeins möppur">
+<!ENTITY messagesOnly.label "Aðeins póstur">
+<!ENTITY accept.label "Búa til möppu">
+<!ENTITY accept.accesskey "m">

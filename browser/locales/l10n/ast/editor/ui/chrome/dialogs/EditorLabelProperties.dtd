@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY windowTitle.label "Propiedaes de la etiqueta">
+<!ENTITY Settings.label "Configuración">
+<!ENTITY Settings.accesskey "C">
+<!ENTITY EditLabelText.label "Editar testu:">
+<!ENTITY EditLabelText.accesskey "d">
+<!ENTITY LabelFor.label "Pal control:">
+<!ENTITY LabelFor.accesskey "P">
+<!ENTITY AccessKey.label "Tecla d'accesu rápidu:">
+<!ENTITY AccessKey.accesskey "r">
+<!ENTITY RemoveLabel.label "Desaniciar etiqueta">
+<!ENTITY RemoveLabel.accesskey "n">

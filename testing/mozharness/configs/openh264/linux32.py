@@ -19,6 +19,9 @@ config = {
     'avoid_avx2': True,
     'operating_system': 'linux',
     'partial_env': {
-        'PATH': '%(abs_work_dir)s/src/clang/bin/:%(PATH)s',
+        'PATH': ('{MOZ_FETCHES_DIR}/clang/bin:'
+                 '{MOZ_FETCHES_DIR}/binutils/bin:'
+                 '{MOZ_FETCHES_DIR}/nasm:%(PATH)s'
+                 .format(MOZ_FETCHES_DIR=os.environ['MOZ_FETCHES_DIR'])),
     },
 }

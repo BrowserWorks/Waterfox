@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label               "Kakosći">
+<!ENTITY propertiesMenu.accesskey           "K">
+<!ENTITY propertiesCmd.key                  "i">
+<!ENTITY abPropertiesMenu.label             "Kakosći adresnika">
+<!ENTITY abPropertiesMenu.accesskey         "o">
+<!ENTITY contactPropertiesMenu.label        "Kontaktowe kakosći">
+<!ENTITY contactPropertiesMenu.accesskey    "t">
+<!ENTITY mailingListPropertiesMenu.label    "Kakosći rozesćełańskeje lisćiny">
+<!ENTITY mailingListPropertiesMenu.accesskey "r">
+
+<!ENTITY abContextMenuButton.tooltip        "Kontekstowy meni adresnika pokazaś">
+<!ENTITY addressbookPicker.label            "Adresnik:">
+<!ENTITY addressbookPicker.accesskey        "A">
+<!ENTITY searchContacts.label               "Kontakty pytaś:">
+<!ENTITY searchContacts.accesskey           "n">
+<!ENTITY SearchNameOrEmail.label            "Mě abo e-mail">
+
+<!ENTITY addtoToFieldMenu.label             "Póloju Komu pśidaś">
+<!ENTITY addtoToFieldMenu.accesskey         "m">
+<!ENTITY addtoCcFieldMenu.label             "Póloju Kopija pśidaś">
+<!ENTITY addtoCcFieldMenu.accesskey         "i">
+<!ENTITY addtoBccFieldMenu.label            "Póloju Schowana kopija pśidaś">
+<!ENTITY addtoBccFieldMenu.accesskey        "c">
+<!ENTITY deleteAddrBookCard.label           "Lašowaś">
+<!ENTITY deleteAddrBookCard.accesskey       "L">
+<!ENTITY propertiesContext.label            "Kakosći">
+<!ENTITY propertiesContext.accesskey        "a">
+<!ENTITY abPropertiesContext.label          "Kakosći">
+<!ENTITY abPropertiesContext.accesskey      "a">
+<!ENTITY editContactContext.label           "Kontakt wobźěłaś">
+<!ENTITY editContactContext.accesskey       "b">
+<!ENTITY editMailingListContext.label       "Lisćinu wobźěłaś">
+<!ENTITY editMailingListContext.accesskey   "L">
+
+<!ENTITY newContactAbContext.label          "Nowy kontakt">
+<!ENTITY newContactAbContext.accesskey      "k">
+<!ENTITY newListAbContext.label             "Nowa lisćina">
+<!ENTITY newListAbContext.accesskey         "l">
+
+<!ENTITY toButton.label                     "Póloju Komu pśidaś:">
+<!ENTITY toButton.accesskey                 "m">
+<!ENTITY ccButton.label                     "Póloju Kopija pśidaś:">
+<!ENTITY ccButton.accesskey                 "i">
+<!ENTITY bccButton.label                    "Póloju Schowana kopija pśidaś:">
+<!ENTITY bccButton.accesskey                "c">

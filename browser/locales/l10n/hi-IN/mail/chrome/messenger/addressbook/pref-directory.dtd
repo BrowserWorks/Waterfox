@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "LDAP निर्देशिका सर्वर:">
+<!-- LOCALIZATION NOTE (directoriesText.label) : do not translate "LDAP" in below line -->
+<!ENTITY directoriesText.label     "LDAP निर्देशिका सर्वर चुनें:">
+<!ENTITY directoriesText.accesskey "S">
+<!ENTITY addDirectory.label        "जोड़ें">
+<!ENTITY addDirectory.accesskey    "a">
+<!ENTITY editDirectory.label       "संपादन करें">
+<!ENTITY editDirectory.accesskey   "e">
+<!ENTITY deleteDirectory.label     "मिटायें">
+<!ENTITY deleteDirectory.accesskey "d">

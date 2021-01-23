@@ -8,10 +8,6 @@ function dateHoursAgo(hours) {
 }
 
 add_task(async function enableHtmlViews() {
-  await SpecialPowers.pushPrefEnv({
-    set: [["extensions.htmlaboutaddons.enabled", true]],
-  });
-
   gProvider = new MockProvider();
   gProvider.createAddons([
     {
@@ -78,12 +74,23 @@ add_task(async function testRecentUpdatesList() {
   // Load extension view first so we can mock the startOfDay property.
   let win = await loadInitialView("extension");
   let doc = win.document;
-  let managerDoc = win.managerWindow.document;
+  let categoryUtils = new CategoryUtilities(win.managerWindow);
+  const RECENT_URL = "addons://updates/recent";
+  let recentCat = categoryUtils.get("recent-updates");
+
+  ok(recentCat.hidden, "Recent updates category is initially hidden");
 
   // Load the recent updates view.
   let loaded = waitForViewLoad(win);
-  managerDoc.getElementById("utils-viewUpdates").doCommand();
+  doc.querySelector('#page-options [action="view-recent-updates"]').click();
   await loaded;
+
+  is(
+    categoryUtils.getSelectedViewId(),
+    RECENT_URL,
+    "Recent updates is selected"
+  );
+  ok(!recentCat.hidden, "Recent updates category is now shown");
 
   // Find all the add-on ids.
   let list = doc.querySelector("addon-list");
@@ -123,7 +130,7 @@ add_task(async function testRecentUpdatesList() {
 
   info("Go back to the recent updates view");
   loaded = waitForViewLoad(win);
-  managerDoc.getElementById("utils-viewUpdates").doCommand();
+  doc.querySelector('#page-options [action="view-recent-updates"]').click();
   await loaded;
 
   // Find the list again.
@@ -163,7 +170,7 @@ add_task(async function testRecentUpdatesList() {
   await loaded;
 
   is(
-    win.managerWindow.gCategories.selected,
+    categoryUtils.getSelectedViewId(),
     "addons://list/extension",
     "The extensions category is selected"
   );

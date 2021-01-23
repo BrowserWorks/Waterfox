@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Convertire în tabel">
+<!ENTITY instructions1.label   "Composer va crea un nou rând de tabel pentru fiecare paragraf din selecție.">
+<!ENTITY instructions2.label   "Alege caracterul folosit pentru a separa selecția pe coloane:">
+<!ENTITY commaRadio.label      "Virgulă">
+<!ENTITY spaceRadio.label      "Spațiu">
+<!ENTITY otherRadio.label      "Alt caracter:">
+<!ENTITY deleteCharCheck.label "Șterge caracterul de separare">
+<!ENTITY collapseSpaces.label  "Ignoră spațiile în plus">
+<!ENTITY collapseSpaces.tooltip "Convertește spațiile adiacente într-un singur separator">

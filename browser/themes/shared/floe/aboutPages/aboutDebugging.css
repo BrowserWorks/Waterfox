@@ -1,0 +1,88 @@
+/* Additional styling for Floe theme for Waterfox Current
+/* Author: Stefano Rosselli
+*/
+
+/* :::::: ABOUT DEBUGGING :::::: */
+
+@-moz-document  url-prefix("about:debugging"),
+				url-prefix("about:debugging-new") {
+	
+  .app__content a:hover {
+	text-decoration: underline !important;
+  }
+	
+  .app__sidebar a.sidebar-item__link {
+  -moz-context-properties: fill;
+	fill: var(--wfx-content-color) !important;
+	color: var(--wfx-content-color) !important;
+  }
+  
+  .app__sidebar .sidebar-item--selected a,
+  .app__sidebar .sidebar-item--selected a:hover {
+	fill: var(--wfx-lt-primary-color) !important;
+	color: var(--wfx-lt-primary-color) !important;
+  }
+  
+  .connect-section__header__icon {
+    -moz-context-properties: fill;
+	fill: var(--wfx-lt-primary-color);
+  }
+
+  li.sidebar-item--selectable:not([disabled="true"]):hover {
+	background-color: var(--wfx-btn-hover-color) !important;
+  }
+  
+  li.sidebar-item--selected.sidebar-item--selectable:hover {
+	background-color: var(--wfx-lt-primary-color-a15) !important;
+  }
+	
+  li.sidebar-item--selected.sidebar-item--selectable:hover:active {
+	background-color: var(--wfx-lt-primary-color-a10) !important;
+  }
+	
+	.icon-label--info,
+	.sidebar__label {
+    color: var(--wfx-content-color) !important;
+}
+  
+  .connect-section__extra {
+    border-block-start: 1px solid var(--wfx-separator-color) !important;
+  }
+  
+  .separator {
+    border-color: var(--wfx-separator-color) !important;
+  }
+  
+  #about-debugging-network-locations-host-input.default-input[class] {
+    border: 1px solid transparent !important;
+    color: var(--wfx-content-color) !important;
+    background-color: var(--wfx-gray-40) !important;
+    border-radius: var(--wfx-large-radius) !important;
+	  -moz-appearance: none !important;
+  }
+  
+  .icon-label--ok {
+    color: var(--wfx-green-color) !important;
+  }
+  
+    /* for Win10 */
+  .icon-label__icon {
+	fill: currentColor !important;
+  }
+  
+  .debug-target-item__icon {
+    -moz-context-properties: fill;
+    fill: currentColor;
+  }
+  
+    /* for Win10 */
+  .default-button {
+    color: var(--wfx-content-color) !important;
+    background-color: var(--wfx-btn-bg-color) !important;
+  }
+	
+  .primary-button:enabled:hover {
+    background-color: var(--wfx-lt-hover-primary-color) !important;
+  }
+
+}

@@ -7,7 +7,7 @@ function setup_test_preference(enableUserGesture) {
   return SpecialPowers.pushPrefEnv({
     set: [
       ["media.autoplay.default", SpecialPowers.Ci.nsIAutoplay.BLOCKED],
-      ["media.autoplay.enabled.user-gestures-needed", enableUserGesture],
+      ["media.autoplay.blocking_policy", enableUserGesture ? 0 : 1],
     ],
   });
 }
@@ -40,7 +40,7 @@ async function allow_play_for_played_video() {
       ok(false, "promise should not be rejected");
     }
   }
-  await ContentTask.spawn(tab.linkedBrowser, null, play_video_again);
+  await SpecialPowers.spawn(tab.linkedBrowser, [], play_video_again);
 
   info("- remove tab -");
   BrowserTestUtils.removeTab(tab);

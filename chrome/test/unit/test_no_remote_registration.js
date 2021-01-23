@@ -17,19 +17,8 @@ function ProtocolHandler(aScheme, aFlags) {
 ProtocolHandler.prototype = {
   defaultPort: -1,
   allowPort: () => false,
-  newURI(aSpec, aCharset, aBaseURI) {
-    let mutator = Cc[
-      "@mozilla.org/network/standard-url-mutator;1"
-    ].createInstance(Ci.nsIURIMutator);
-    if (aBaseURI) {
-      mutator.setSpec(aBaseURI.resolve(aSpec));
-    } else {
-      mutator.setSpec(aSpec);
-    }
-    return mutator.finalize();
-  },
   newChannel() {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+    throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
   },
   QueryInterface: ChromeUtils.generateQI([Ci.nsIProtocolHandler]),
 };
@@ -86,7 +75,7 @@ function run_test() {
     contractID: "@mozilla.org/xre/app-info;1",
     createInstance(outer, iid) {
       if (outer != null) {
-        throw Cr.NS_ERROR_NO_AGGREGATION;
+        throw Components.Exception("", Cr.NS_ERROR_NO_AGGREGATION);
       }
       return XULAppInfo.QueryInterface(iid);
     },
@@ -105,7 +94,7 @@ function run_test() {
         "@mozilla.org/network/protocol;1?name=" + testProtocols[i].scheme,
       createInstance(aOuter, aIID) {
         if (aOuter != null) {
-          throw Cr.NS_ERROR_NO_AGGREGATION;
+          throw Components.Exception("", Cr.NS_ERROR_NO_AGGREGATION);
         }
         let handler = new ProtocolHandler(this.scheme, this.flags, this.CID);
         return handler.QueryInterface(aIID);

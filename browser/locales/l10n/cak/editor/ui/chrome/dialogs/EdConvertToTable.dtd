@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Tib'an Kemoj Kajtz'ik Chi Re">
+<!ENTITY instructions1.label   "Ri nuk'unel nunük' jun k'ak'a' rucholaj kemon kajtz'ik chi kijujunal q'aptzij pa ri cha'onïk.">
+<!ENTITY instructions2.label   "Ticha' ri tz'ib' okisan richin nijach ri cha'oj pa taq tem:">
+<!ENTITY commaRadio.label      "Muxtuq'">
+<!ENTITY spaceRadio.label      "Rukojol">
+<!ENTITY otherRadio.label      "Jun chik Tz'ib':">
+<!ENTITY deleteCharCheck.label "Tiyuj ri jachonel tz'ib'">
+<!ENTITY collapseSpaces.label  "Choj ketz'et ri ruwi' taq kojol">
+<!ENTITY collapseSpaces.tooltip "Kejalwachïx naqaj taq kojol pa jun jachonel">

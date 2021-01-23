@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Culoare">
+<!ENTITY lastPickedColor.label "Ultima culoare aleasă">
+<!ENTITY lastPickedColor.accessKey "U">
+<!ENTITY chooseColor1.label "Alege o culoare:">
+<!ENTITY chooseColor2.label "Introdu un șir de culoare HTML">
+<!ENTITY chooseColor2.accessKey "H">
+<!ENTITY setColorExample.label "(ex.: „#0000ff” sau „blue”):">
+<!ENTITY default.label "Implicit">
+<!ENTITY default.accessKey "I">
+<!ENTITY palette.label "Paletă:">
+<!ENTITY standardPalette.label "Standard">
+<!ENTITY webPalette.label "Toate culorile web">
+<!ENTITY background.label "Fundal pentru:">
+<!ENTITY background.accessKey "F">
+<!ENTITY table.label "Tabel">
+<!ENTITY table.accessKey "T">
+<!ENTITY cell.label "Celulă(e)">
+<!ENTITY cell.accessKey "C">

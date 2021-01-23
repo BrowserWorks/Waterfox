@@ -13,6 +13,8 @@
 // Note: if the urgent request handling is broken (the urgent-marked requests
 // get blocked by queuing) this test will time out
 
+"use strict";
+
 const { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
 var server = new HttpServer();
 server.start(-1);
@@ -88,17 +90,17 @@ function HttpResponseListener(id) {
 
 var testOrder = 0;
 HttpResponseListener.prototype = {
-  onStartRequest: function(request) {},
+  onStartRequest(request) {},
 
-  onDataAvailable: function(request, stream, off, cnt) {},
+  onDataAvailable(request, stream, off, cnt) {},
 
-  onStopRequest: function(request, status) {
+  onStopRequest(request, status) {
     log("STOP id=" + this.id);
     do_test_finished();
   },
 };
 
-var responseQueue = new Array();
+var responseQueue = [];
 function setup_http_server() {
   log("setup_http_server");
   var prefs = Cc["@mozilla.org/preferences-service;1"].getService(

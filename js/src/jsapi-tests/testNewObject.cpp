@@ -5,6 +5,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "js/Array.h"  // JS::GetArrayLength, JS::IsArrayObject
 #include "jsapi-tests/tests.h"
 
 static bool constructHook(JSContext* cx, unsigned argc, JS::Value* vp) {
@@ -66,10 +67,10 @@ BEGIN_TEST(testNewObject_1) {
   JS::RootedObject obj(cx, JS_New(cx, Array, JS::HandleValueArray::empty()));
   CHECK(obj);
   JS::RootedValue rt(cx, JS::ObjectValue(*obj));
-  CHECK(JS_IsArrayObject(cx, obj, &isArray));
+  CHECK(JS::IsArrayObject(cx, obj, &isArray));
   CHECK(isArray);
   uint32_t len;
-  CHECK(JS_GetArrayLength(cx, obj, &len));
+  CHECK(JS::GetArrayLength(cx, obj, &len));
   CHECK_EQUAL(len, 0u);
 
   // With one argument.
@@ -77,9 +78,9 @@ BEGIN_TEST(testNewObject_1) {
   obj = JS_New(cx, Array, JS::HandleValueArray::subarray(argv, 0, 1));
   CHECK(obj);
   rt = JS::ObjectValue(*obj);
-  CHECK(JS_IsArrayObject(cx, obj, &isArray));
+  CHECK(JS::IsArrayObject(cx, obj, &isArray));
   CHECK(isArray);
-  CHECK(JS_GetArrayLength(cx, obj, &len));
+  CHECK(JS::GetArrayLength(cx, obj, &len));
   CHECK_EQUAL(len, 4u);
 
   // With N arguments.
@@ -89,17 +90,27 @@ BEGIN_TEST(testNewObject_1) {
   obj = JS_New(cx, Array, JS::HandleValueArray::subarray(argv, 0, N));
   CHECK(obj);
   rt = JS::ObjectValue(*obj);
-  CHECK(JS_IsArrayObject(cx, obj, &isArray));
+  CHECK(JS::IsArrayObject(cx, obj, &isArray));
   CHECK(isArray);
-  CHECK(JS_GetArrayLength(cx, obj, &len));
+  CHECK(JS::GetArrayLength(cx, obj, &len));
   CHECK_EQUAL(len, N);
   CHECK(JS_GetElement(cx, obj, N - 1, &v));
   CHECK(v.isInt32(N - 1));
 
   // With JSClass.construct.
-  static const JSClassOps clsOps = {nullptr, nullptr,      nullptr, nullptr,
-                                    nullptr, nullptr,      nullptr, nullptr,
-                                    nullptr, constructHook};
+  static const JSClassOps clsOps = {
+      nullptr,        // addProperty
+      nullptr,        // delProperty
+      nullptr,        // enumerate
+      nullptr,        // newEnumerate
+      nullptr,        // resolve
+      nullptr,        // mayResolve
+      nullptr,        // finalize
+      nullptr,        // call
+      nullptr,        // hasInstance
+      constructHook,  // construct
+      nullptr,        // trace
+  };
   static const JSClass cls = {"testNewObject_1", 0, &clsOps};
   JS::RootedObject ctor(cx, JS_NewObject(cx, &cls));
   CHECK(ctor);
@@ -143,3 +154,77 @@ BEGIN_TEST(testNewObject_IsMapObject) {
   return true;
 }
 END_TEST(testNewObject_IsMapObject)
+
+static const JSClassOps Base_classOps = {
+    nullptr,  // addProperty
+    nullptr,  // delProperty
+    nullptr,  // enumerate
+    nullptr,  // newEnumerate
+    nullptr,  // resolve
+    nullptr,  // mayResolve
+    nullptr,  // finalize
+    nullptr,  // call
+    nullptr,  // hasInstance
+    nullptr,  // construct
+    nullptr,  // trace
+};
+
+static const JSClass Base_class = {"Base",
+                                   0,  // flags
+                                   &Base_classOps};
+
+BEGIN_TEST(testNewObject_Subclassing) {
+  JSObject* proto =
+      JS_InitClass(cx, global, nullptr, &Base_class, Base_constructor, 0,
+                   nullptr, nullptr, nullptr, nullptr);
+  if (!proto) {
+    return false;
+  }
+
+  // Calling Base without `new` should fail with a TypeError.
+  JS::RootedValue expectedError(cx);
+  EVAL("TypeError", &expectedError);
+  JS::RootedValue actualError(cx);
+  EVAL(
+      "try {\n"
+      "  Base();\n"
+      "} catch (e) {\n"
+      "  e.constructor;\n"
+      "}\n",
+      &actualError);
+  CHECK_SAME(actualError, expectedError);
+
+  // Check prototype chains when a JS class extends a base class that's
+  // implemented in C++ using JS_NewObjectForConstructor.
+  EXEC(
+      "class MyClass extends Base {\n"
+      "  ok() { return true; }\n"
+      "}\n"
+      "let myObj = new MyClass();\n");
+
+  JS::RootedValue result(cx);
+  EVAL("myObj.ok()", &result);
+  CHECK_SAME(result, JS::TrueValue());
+
+  EVAL("myObj.__proto__ === MyClass.prototype", &result);
+  CHECK_SAME(result, JS::TrueValue());
+  EVAL("myObj.__proto__.__proto__ === Base.prototype", &result);
+  CHECK_SAME(result, JS::TrueValue());
+
+  EVAL("myObj", &result);
+  CHECK_EQUAL(JS_GetClass(&result.toObject()), &Base_class);
+
+  return true;
+}
+
+static bool Base_constructor(JSContext* cx, unsigned argc, JS::Value* vp) {
+  JS::CallArgs args = CallArgsFromVp(argc, vp);
+  JS::RootedObject obj(cx, JS_NewObjectForConstructor(cx, &Base_class, args));
+  if (!obj) {
+    return false;
+  }
+  args.rval().setObject(*obj);
+  return true;
+}
+
+END_TEST(testNewObject_Subclassing)

@@ -1,0 +1,411 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- General -->
+<!ENTITY calendar.calendar.label     "Calendário">
+<!ENTITY calendar.calendar.accesskey "C">
+
+<!ENTITY calendar.newevent.button.tooltip         "Criar um novo evento" >
+<!ENTITY calendar.newtask.button.tooltip          "Criar uma nova tarefa" >
+
+<!ENTITY calendar.unifinder.todoitems.label       "Tarefas" >
+
+<!ENTITY calendar.unifinder.showcompletedtodos.label "Mostrar tarefas concluídas">
+
+<!ENTITY calendar.today.button.label          "Hoje">
+<!ENTITY calendar.tomorrow.button.label       "Amanhã">
+<!ENTITY calendar.upcoming.button.label       "Brevemente">
+
+<!ENTITY calendar.events.filter.all.label "Todos os eventos">
+<!ENTITY calendar.events.filter.today.label "Eventos de hoje">
+<!ENTITY calendar.events.filter.future.label "Todos os eventos futuros">
+<!ENTITY calendar.events.filter.current.label "Dia selecionado">
+<!ENTITY calendar.events.filter.currentview.label "Eventos na vista atual">
+<!ENTITY calendar.events.filter.next7Days.label "Eventos nos próximos 7 dias">
+<!ENTITY calendar.events.filter.next14Days.label "Eventos nos próximos 14 dias">
+<!ENTITY calendar.events.filter.next31Days.label "Eventos nos próximos 31 dias">
+<!ENTITY calendar.events.filter.thisCalendarMonth.label "Eventos neste mês">
+
+<!-- LOCALIZATION NOTE(calendar.unifinder.tree.done.tooltip)
+   - This label and tooltip is used for the column with the checkbox in the
+   - task tree view. -->
+<!ENTITY calendar.unifinder.tree.done.label                "Feito">
+<!ENTITY calendar.unifinder.tree.done.tooltip2             "Ordenar por terminado">
+<!ENTITY calendar.unifinder.tree.priority.label            "Prioridade">
+<!ENTITY calendar.unifinder.tree.priority.tooltip2         "Ordenar por prioridade">
+<!ENTITY calendar.unifinder.tree.title.label               "Título">
+<!ENTITY calendar.unifinder.tree.title.tooltip2            "Ordenar por título">
+<!ENTITY calendar.unifinder.tree.percentcomplete.label     "&#037; concluído">
+<!ENTITY calendar.unifinder.tree.percentcomplete.tooltip2  "Ordenar por &#037; de conclusão">
+<!ENTITY calendar.unifinder.tree.startdate.label           "Início">
+<!ENTITY calendar.unifinder.tree.startdate.tooltip2        "Ordenar por data de início">
+<!ENTITY calendar.unifinder.tree.enddate.label             "Fim">
+<!ENTITY calendar.unifinder.tree.enddate.tooltip2          "Ordenar por data de fim">
+<!ENTITY calendar.unifinder.tree.duedate.label             "Limite">
+<!ENTITY calendar.unifinder.tree.duedate.tooltip2          "Ordenar por data limite">
+<!ENTITY calendar.unifinder.tree.completeddate.label       "Concluído">
+<!ENTITY calendar.unifinder.tree.completeddate.tooltip2    "Ordenar por data de conclusão">
+<!ENTITY calendar.unifinder.tree.categories.label          "Categoria">
+<!ENTITY calendar.unifinder.tree.categories.tooltip2       "Ordenar por categoria">
+<!ENTITY calendar.unifinder.tree.location.label            "Localização">
+<!ENTITY calendar.unifinder.tree.location.tooltip2         "Ordenar por localização">
+<!ENTITY calendar.unifinder.tree.status.label              "Estado">
+<!ENTITY calendar.unifinder.tree.status.tooltip2           "Ordenar por estado">
+<!ENTITY calendar.unifinder.tree.calendarname.label        "Nome do calendário">
+<!ENTITY calendar.unifinder.tree.calendarname.tooltip2     "Ordenar por nome do calendário">
+<!ENTITY calendar.unifinder.tree.duration.label            "Termina em">
+<!ENTITY calendar.unifinder.tree.duration.tooltip2         "Ordenar por data de vencimento">
+<!ENTITY calendar.unifinder.close.tooltip                  "Fechar pesquisa e lista de eventos">
+
+<!ENTITY calendar.today.button.tooltip          "Ir para hoje" >
+<!ENTITY calendar.todaypane.button.tooltip      "Mostrar hoje" >
+
+<!ENTITY calendar.day.button.tooltip            "Mudar para vista diária" >
+<!ENTITY calendar.week.button.tooltip           "Mudar para vista semanal" >
+<!ENTITY calendar.month.button.tooltip          "Mudar para vista mensal" >
+<!ENTITY calendar.multiweek.button.tooltip      "Mudar para vista multissemanal" >
+
+<!ENTITY calendar.nextday.label                 "Dia seguinte" >
+<!ENTITY calendar.prevday.label                 "Dia anterior" >
+<!ENTITY calendar.nextday.accesskey             "s" >
+<!ENTITY calendar.prevday.accesskey             "a" >
+<!ENTITY calendar.nextweek.label                "Semana seguinte" >
+<!ENTITY calendar.prevweek.label                "Semana anterior" >
+<!ENTITY calendar.nextweek.accesskey            "s" >
+<!ENTITY calendar.prevweek.accesskey            "a" >
+<!ENTITY calendar.nextmonth.label               "Mês seguinte" >
+<!ENTITY calendar.prevmonth.label               "Mês anterior" >
+<!ENTITY calendar.nextmonth.accesskey           "s" >
+<!ENTITY calendar.prevmonth.accesskey           "a" >
+
+<!ENTITY calendar.navigation.nextday.tooltip    "Avançar um dia" >
+<!ENTITY calendar.navigation.prevday.tooltip    "Recuar um dia" >
+<!ENTITY calendar.navigation.nextweek.tooltip   "Avançar uma semana" >
+<!ENTITY calendar.navigation.prevweek.tooltip   "Recuar uma semana" >
+<!ENTITY calendar.navigation.nextmonth.tooltip  "Avançar um mês" >
+<!ENTITY calendar.navigation.prevmonth.tooltip  "Recuar um mês" >
+
+<!ENTITY calendar.newevent.button.label         "Novo evento" >
+<!ENTITY calendar.newtask.button.label          "Nova tarefa" >
+<!ENTITY calendar.print.button.label            "Imprimir" >
+<!ENTITY calendar.print.button.accesskey        "p">
+
+<!ENTITY calendar.day.button.label              "Dia" >
+<!ENTITY calendar.week.button.label             "Semana" >
+<!ENTITY calendar.month.button.label            "Mês" >
+<!ENTITY calendar.multiweek.button.label        "Multissemana" >
+<!ENTITY calendar.onlyworkday.checkbox.label    "Dias úteis" >
+<!ENTITY calendar.onlyworkday.checkbox.accesskey  "s" >
+<!ENTITY calendar.displaytodos.checkbox.label   "Tarefas na vista" >
+<!ENTITY calendar.displaytodos.checkbox.accesskey "T" >
+<!ENTITY calendar.completedtasks.checkbox.label     "Mostrar tarefas concluídas" >
+<!ENTITY calendar.completedtasks.checkbox.accesskey "c" >
+
+<!ENTITY calendar.orientation.label "Rodar vista" >
+<!ENTITY calendar.orientation.accesskey "o" >
+
+<!ENTITY calendar.search.options.searchfor " contém">
+
+<!ENTITY calendar.list.header.label                 "Calendário">
+
+<!ENTITY calendar.task.filter.title.label           "Mostrar">
+<!ENTITY calendar.task.filter.all.label             "Todas">
+<!ENTITY calendar.task.filter.all.accesskey         "T">
+<!ENTITY calendar.task.filter.today.label           "Hoje">
+<!ENTITY calendar.task.filter.today.accesskey       "H">
+<!ENTITY calendar.task.filter.next7days.label       "Próximos sete dias">
+<!ENTITY calendar.task.filter.next7days.accesskey   "x">
+<!ENTITY calendar.task.filter.notstarted.label      "Tarefas por iniciar">
+<!ENTITY calendar.task.filter.notstarted.accesskey  "a">
+<!ENTITY calendar.task.filter.overdue.label         "Tarefas atrasadas">
+<!ENTITY calendar.task.filter.overdue.accesskey     "r">
+<!ENTITY calendar.task.filter.completed.label       "Tarefas concluídas">
+<!ENTITY calendar.task.filter.completed.accesskey   "c">
+<!ENTITY calendar.task.filter.open.label            "Tarefas incompletas">
+<!ENTITY calendar.task.filter.open.accesskey        "m">
+
+<!-- LOCALIZATION NOTE(calendar.task.filter.current.label)
+     "Current Tasks" will show all tasks, except those with a start date set
+     that is after today and after the selected date. If a task repeats, a
+     separate entry will be shown for each of the occurrences that happen on or
+     before today (or the selected date, whichever is later). -->
+<!ENTITY calendar.task.filter.current.label         "Tarefas atuais">
+<!ENTITY calendar.task.filter.current.accesskey     "u">
+
+<!ENTITY calendar.task-details.title.label           "título">
+<!ENTITY calendar.task-details.organizer.label       "de">
+<!ENTITY calendar.task-details.priority.label        "prioridade">
+<!ENTITY calendar.task-details.priority.low.label    "Baixa">
+<!ENTITY calendar.task-details.priority.normal.label "Normal">
+<!ENTITY calendar.task-details.priority.high.label   "Alta">
+<!ENTITY calendar.task-details.status.label          "estado">
+<!ENTITY calendar.task-details.category.label        "categoria">
+<!ENTITY calendar.task-details.repeat.label          "recorrentes">
+<!ENTITY calendar.task-details.attachments.label     "anexos">
+<!ENTITY calendar.task-details.start.label           "data inicial">
+<!ENTITY calendar.task-details.due.label             "data final">
+
+<!ENTITY calendar.task.category.button.tooltip  "Categorizar tarefas">
+<!ENTITY calendar.task.complete.button.tooltip  "Marcar tarefas selecionadas como concluídas">
+<!ENTITY calendar.task.priority.button.tooltip  "Mudar prioridade">
+
+<!ENTITY calendar.task.text-filter.textbox.emptytext.base1           "Filtrar tarefas #1">
+<!ENTITY calendar.task.text-filter.textbox.emptytext.keylabel.nonmac "&lt;Ctrl+Shift+K&gt;">
+<!ENTITY calendar.task.text-filter.textbox.emptytext.keylabel.mac    "&lt;&#x21E7;&#x2318;K&gt;">
+
+<!-- Context Menu -->
+<!ENTITY calendar.context.modifyorviewitem.label      "Abrir">
+<!ENTITY calendar.context.modifyorviewitem.accesskey  "A">
+<!ENTITY calendar.context.modifyorviewtask.label      "Abrir tarefa…">
+<!ENTITY calendar.context.modifyorviewtask.accesskey  "A">
+<!ENTITY calendar.context.newevent.label              "Novo evento…">
+<!ENTITY calendar.context.newevent.accesskey          "N">
+<!ENTITY calendar.context.newtodo.label               "Nova tarefa…">
+<!ENTITY calendar.context.newtodo.accesskey           "v">
+<!ENTITY calendar.context.deletetask.label            "Apagar tarefa">
+<!ENTITY calendar.context.deletetask.accesskey        "A">
+<!ENTITY calendar.context.deleteevent.label           "Apagar evento">
+<!ENTITY calendar.context.deleteevent.accesskey       "A">
+<!ENTITY calendar.context.cutevent.label              "Cortar">
+<!ENTITY calendar.context.cutevent.accesskey          "t">
+<!ENTITY calendar.context.copyevent.label             "Copiar">
+<!ENTITY calendar.context.copyevent.accesskey         "C">
+<!ENTITY calendar.context.pasteevent.label            "Colar">
+<!ENTITY calendar.context.pasteevent.accesskey        "o">
+<!ENTITY calendar.context.button.label                "Painel hoje">
+<!ENTITY calendar.context.button.accesskey            "j">
+
+<!ENTITY calendar.context.attendance.menu.label                 "Assistência">
+<!ENTITY calendar.context.attendance.menu.accesskey             "s">
+<!ENTITY calendar.context.attendance.occurrence.label           "Esta ocorrência">
+<!ENTITY calendar.context.attendance.all2.label                 "Série Completa">
+<!ENTITY calendar.context.attendance.send.label                 "Enviar uma notificação agora">
+<!ENTITY calendar.context.attendance.send.accesskey             "E">
+<!ENTITY calendar.context.attendance.dontsend.label             "Não enviar uma notificação">
+<!ENTITY calendar.context.attendance.dontsend.accesskey         "N">
+
+<!ENTITY calendar.context.attendance.occ.accepted.accesskey     "A">
+<!ENTITY calendar.context.attendance.occ.accepted.label         "Aceite">
+<!ENTITY calendar.context.attendance.occ.tentative.accesskey    "e">
+<!ENTITY calendar.context.attendance.occ.tentative.label        "Aceite provisoriamente">
+<!ENTITY calendar.context.attendance.occ.declined.accesskey     "c">
+<!ENTITY calendar.context.attendance.occ.declined.label         "Recusado">
+<!ENTITY calendar.context.attendance.occ.delegated.accesskey    "g">
+<!ENTITY calendar.context.attendance.occ.delegated.label        "Delegado">
+<!ENTITY calendar.context.attendance.occ.needsaction.accesskey  "A">
+<!ENTITY calendar.context.attendance.occ.needsaction.label      "Ainda necessita de ação">
+<!ENTITY calendar.context.attendance.occ.inprogress.accesskey   "E">
+<!ENTITY calendar.context.attendance.occ.inprogress.label       "Em progresso">
+<!ENTITY calendar.context.attendance.occ.completed.accesskey    "C">
+<!ENTITY calendar.context.attendance.occ.completed.label        "Completado">
+
+<!ENTITY calendar.context.attendance.all.accepted.accesskey     "e">
+<!ENTITY calendar.context.attendance.all.accepted.label         "Aceite">
+<!ENTITY calendar.context.attendance.all.tentative.accesskey    "v">
+<!ENTITY calendar.context.attendance.all.tentative.label        "Aceite provisoriamente">
+<!ENTITY calendar.context.attendance.all.declined.accesskey     "d">
+<!ENTITY calendar.context.attendance.all.declined.label         "Recusado">
+<!ENTITY calendar.context.attendance.all.delegated.accesskey    "l">
+<!ENTITY calendar.context.attendance.all.delegated.label        "Delegado">
+<!ENTITY calendar.context.attendance.all.needsaction.accesskey  "n">
+<!ENTITY calendar.context.attendance.all.needsaction.label      "Ainda necessita de ação">
+<!ENTITY calendar.context.attendance.all.inprogress.accesskey   "p">
+<!ENTITY calendar.context.attendance.all.inprogress.label       "Em progresso">
+<!ENTITY calendar.context.attendance.all.completed.accesskey    "m">
+<!ENTITY calendar.context.attendance.all.completed.label        "Completado">
+
+<!-- Task Context Menu -->
+<!ENTITY calendar.context.progress.label              "Progresso">
+<!ENTITY calendar.context.progress.accesskey          "P">
+<!ENTITY calendar.context.priority.label              "Prioridade">
+<!ENTITY calendar.context.priority.accesskey          "r">
+<!ENTITY calendar.context.postpone.label              "Adiar tarefa">
+<!ENTITY calendar.context.postpone.accesskey          "f">
+
+<!ENTITY percnt "&#38;#37;" ><!--=percent sign-->
+
+<!ENTITY calendar.context.markcompleted.label     "Marcar como terminado">
+<!ENTITY calendar.context.markcompleted.accesskey "o">
+
+<!ENTITY progress.level.0             "0&percnt; concluído">
+<!ENTITY progress.level.0.accesskey   "0">
+<!ENTITY progress.level.25            "25&percnt; concluído">
+<!ENTITY progress.level.25.accesskey  "2">
+<!ENTITY progress.level.50            "50&percnt; concluído">
+<!ENTITY progress.level.50.accesskey  "5">
+<!ENTITY progress.level.75            "75&percnt; concluído">
+<!ENTITY progress.level.75.accesskey  "7">
+<!ENTITY progress.level.100            "100&percnt; concluído">
+<!ENTITY progress.level.100.accesskey  "1">
+
+<!ENTITY priority.level.none                "Não especificada">
+<!ENTITY priority.level.none.accesskey      "N">
+<!ENTITY priority.level.low                 "Baixa">
+<!ENTITY priority.level.low.accesskey       "x">
+<!ENTITY priority.level.normal              "Normal">
+<!ENTITY priority.level.normal.accesskey    "N">
+<!ENTITY priority.level.high                "Alta">
+<!ENTITY priority.level.high.accesskey      "A">
+
+<!ENTITY calendar.context.postpone.1hour.label      "1 hora">
+<!ENTITY calendar.context.postpone.1hour.accesskey  "h">
+<!ENTITY calendar.context.postpone.1day.label       "1 dia">
+<!ENTITY calendar.context.postpone.1day.accesskey   "d">
+<!ENTITY calendar.context.postpone.1week.label      "1 semana">
+<!ENTITY calendar.context.postpone.1week.accesskey  "s">
+
+<!ENTITY calendar.copylink.label       "Copiar ligação da localização">
+<!ENTITY calendar.copylink.accesskey   "C">
+
+<!-- Task View -->
+<!-- Note that the above *.context.* strings are currently used for the other
+     task action buttons -->
+<!ENTITY calendar.taskview.delete.label     "Apagar">
+
+<!-- Server Context Menu -->
+<!ENTITY calendar.context.newserver.label              "Novo calendário…">
+<!ENTITY calendar.context.newserver.accesskey          "N">
+<!ENTITY calendar.context.findcalendar.label           "Localizar calendário…" >
+<!ENTITY calendar.context.findcalendar.accesskey       "o" >
+<!ENTITY calendar.context.deleteserver2.label          "Apagar calendário…">
+<!ENTITY calendar.context.deleteserver2.accesskey      "d">
+
+<!-- LOCALIZATION NOTE (calendar.context.removeserver.label): Removing the
+      calendar is the general action of removing it, while deleting means to
+      clear the data and unsubscribing means just taking it out of the calendar
+      list. -->
+<!ENTITY calendar.context.removeserver.label           "Remover calendário…">
+<!ENTITY calendar.context.removeserver.accesskey       "R">
+<!ENTITY calendar.context.unsubscribeserver.label      "Cancelar subscrição do calendário…">
+<!ENTITY calendar.context.unsubscribeserver.accesskey  "u">
+<!ENTITY calendar.context.synccalendars.label          "Sincronizar calendários">
+<!ENTITY calendar.context.synccalendars.accesskey      "S">
+<!ENTITY calendar.context.publish.label                "Publicar calendário…">
+<!ENTITY calendar.context.publish.accesskey            "b">
+<!ENTITY calendar.context.export.label                 "Exportar calendário…">
+<!ENTITY calendar.context.export.accesskey             "E">
+<!ENTITY calendar.context.properties.label             "Propriedades">
+<!ENTITY calendar.context.properties.accesskey         "P">
+
+<!-- LOCALIZATION NOTE (calendar.context.showcalendar.accesskey)
+     This is the access key used for the showCalendar string -->
+<!ENTITY calendar.context.showcalendar.accesskey      "h">
+
+<!-- LOCALIZATION NOTE (calendar.context.hidecalendar.accesskey)
+     This is the access key used for the hideCalendar string -->
+<!ENTITY calendar.context.hidecalendar.accesskey      "H">
+
+<!-- LOCALIZATION NOTE (calendar.context.showonly.accesskey)
+     This is the access key used for the showOnlyCalendar string -->
+<!ENTITY calendar.context.showonly.accesskey           "O">
+<!ENTITY calendar.context.showall.label                "Mostrar todos os calendários">
+<!ENTITY calendar.context.showall.accesskey            "a">
+
+<!ENTITY calendar.context.convertmenu.label              "Converter para">
+<!ENTITY calendar.context.convertmenu.accesskey.mail     "n">
+<!ENTITY calendar.context.convertmenu.accesskey.calendar "v">
+<!ENTITY calendar.context.convertmenu.event.label        "Evento…">
+<!ENTITY calendar.context.convertmenu.event.accesskey    "E">
+<!ENTITY calendar.context.convertmenu.message.label      "Mensagem…">
+<!ENTITY calendar.context.convertmenu.message.accesskey  "M">
+<!ENTITY calendar.context.convertmenu.task.label         "Tarefa…">
+<!ENTITY calendar.context.convertmenu.task.accesskey     "T">
+
+<!ENTITY calendar.tasks.view.minimonth.label           "Mini-mês">
+<!ENTITY calendar.tasks.view.minimonth.accesskey       "M">
+
+<!ENTITY calendar.tasks.view.calendarlist.label        "Lista de calendários">
+<!ENTITY calendar.tasks.view.calendarlist.accesskey    "L">
+
+<!ENTITY calendar.tasks.view.filtertasks.label           "Filtrar tarefas">
+<!ENTITY calendar.tasks.view.filtertasks.accesskey       "F">
+
+<!-- Calendar Alarm Dialog -->
+
+<!ENTITY calendar.alarm.location.label              "Localização:" >
+<!ENTITY calendar.alarm.details.label               "Detalhes…" >
+
+<!ENTITY calendar.alarm.snoozefor.label             "Silenciar durante" >
+<!ENTITY calendar.alarm.snoozeallfor.label          "Silenciar tudo durante" >
+<!ENTITY calendar.alarm.title.label                 "Lembretes do calendário" >
+<!ENTITY calendar.alarm.dismiss.label               "Dispensar" >
+<!ENTITY calendar.alarm.dismissall.label            "Dispensar tudo" >
+
+<!ENTITY calendar.alarm.snooze.5minutes.label       "5 minutos" >
+<!ENTITY calendar.alarm.snooze.10minutes.label      "10 minutos" >
+<!ENTITY calendar.alarm.snooze.15minutes.label      "15 minutos" >
+<!ENTITY calendar.alarm.snooze.30minutes.label      "30 minutos" >
+<!ENTITY calendar.alarm.snooze.45minutes.label      "45 minutos" >
+<!ENTITY calendar.alarm.snooze.1hour.label          "1 hora" >
+<!ENTITY calendar.alarm.snooze.2hours.label         "2 horas" >
+<!ENTITY calendar.alarm.snooze.1day.label           "1 dia" >
+
+<!-- LOCALIZATION NOTE (calendar.alarm.snooze.cancel)
+     This string is not seen in the UI, it is read by screen readers when the
+     user focuses the "Cancel" button in the "Snooze for..." popup of the alarm
+     dialog. -->
+<!ENTITY calendar.alarm.snooze.cancel               "Cancelar silenciamento">
+
+<!-- Calendar Server Dialog -->
+<!ENTITY calendar.server.dialog.title.edit          "Editar calendário">
+<!ENTITY calendar.server.dialog.name.label          "Nome do calendário:">
+
+<!-- Calendar Properties -->
+<!ENTITY calendarproperties.color.label                    "Cor:">
+<!ENTITY calendarproperties.webdav.label                   "iCalendar (ICS)">
+<!ENTITY calendarproperties.caldav.label                   "CalDAV">
+<!ENTITY calendarproperties.wcap.label                     "Servidor de calendário Sun Java (WCAP)">
+<!ENTITY calendarproperties.format.label                   "Formato:">
+<!ENTITY calendarproperties.location.label                 "Localização:">
+<!ENTITY calendarproperties.refreshInterval.label          "Atualização de calendário:">
+<!ENTITY calendarproperties.refreshInterval.manual.label   "Manual">
+<!ENTITY calendarproperties.name.label                     "Nome:">
+<!ENTITY calendarproperties.readonly.label                 "Só leitura">
+<!ENTITY calendarproperties.firealarms.label               "Mostrar lembretes">
+<!ENTITY calendarproperties.cache3.label                   "Suporte offline">
+<!ENTITY calendarproperties.enabled.label                  "Ativar este calendário">
+<!ENTITY calendarproperties.enabled2.label                 "Ativar este calendário">
+<!ENTITY calendarproperties.forceDisabled.label            "O fornecedor deste calendário não foi encontrado. Isto pode acontecer caso tenha desativado ou desinstalado alguns extras.">
+<!ENTITY calendarproperties.unsubscribe.label              "Cancelar subscrição">
+<!ENTITY calendarproperties.unsubscribe.accesskey          "u">
+
+<!-- Calendar Publish Dialog -->
+<!ENTITY calendar.publish.dialog.title              "Publicar calendário">
+<!ENTITY calendar.publish.url.label                 "Publicar URL">
+<!ENTITY calendar.publish.publish.button      "Publicar">
+<!ENTITY calendar.publish.close.button      "Fechar">
+
+<!ENTITY calendar.publish.example.url.description   "Algo como http://www.meuservidor.com/webdav/teste.ics">
+
+<!-- Select Calendar Dialog -->
+<!ENTITY calendar.select.dialog.title    "Selecione o calendário">
+
+<!-- Calendar Printing -->
+<!ENTITY calendar.print.window.title "Imprimir calendário">
+<!ENTITY calendar.print.title.label "Título:">
+<!ENTITY calendar.print.layout.label "Esquema:">
+<!ENTITY calendar.print.range.label "O que imprimir">
+<!ENTITY calendar.print.currentView2.label "Visualização atual">
+<!ENTITY calendar.print.selectedEventsAndTasks.label "Eventos/tarefas selecionadas">
+<!ENTITY calendar.print.tasks.label "Tarefas">
+<!ENTITY calendar.print.events.label "Eventos">
+<!ENTITY calendar.print.custom.label "Intervalo personalizado:">
+<!ENTITY calendar.print.from.label "De:">
+<!ENTITY calendar.print.to.label "Para:">
+<!ENTITY calendar.print.settingsGroup.label "Definições de impressão">
+<!ENTITY calendar.print.optionsGroup.label "Opções">
+<!ENTITY calendar.print.taskswithnoduedate.label "Tarefas sem data de vencimento">
+<!ENTITY calendar.print.completedtasks.label "Tarefas concluídas">
+
+<!-- Error reporting -->
+<!ENTITY calendar.error.detail "Detalhes…">
+<!ENTITY calendar.error.code "Código de erro:">
+<!ENTITY calendar.error.description "Descrição:">
+<!ENTITY calendar.error.title "Ocorreu um erro">
+
+<!-- Extract buttons in message header -->
+<!ENTITY calendar.extract.event.button         "Adicionar como evento">
+<!ENTITY calendar.extract.task.button          "Adicionar como tarefa">
+<!ENTITY calendar.extract.event.button.tooltip "Extrair informações da mensagem e adicionar ao calendário como evento">
+<!ENTITY calendar.extract.task.button.tooltip  "Extrair informações da mensagem e adicionar ao calendário como evento">

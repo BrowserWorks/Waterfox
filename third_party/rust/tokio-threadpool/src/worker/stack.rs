@@ -1,9 +1,9 @@
 use config::MAX_WORKERS;
 use worker;
 
-use std::{fmt, usize};
 use std::sync::atomic::AtomicUsize;
-use std::sync::atomic::Ordering::{Acquire, AcqRel, Relaxed};
+use std::sync::atomic::Ordering::{AcqRel, Acquire, Relaxed};
+use std::{fmt, usize};
 
 /// Lock-free stack of sleeping workers.
 ///
@@ -46,7 +46,7 @@ pub(crate) const EMPTY: usize = MAX_WORKERS;
 /// Used to mark the stack as terminated
 pub(crate) const TERMINATED: usize = EMPTY + 1;
 
-/// How many bits the treiber ABA guard is offset by
+/// How many bits the Treiber ABA guard is offset by
 const ABA_GUARD_SHIFT: usize = 16;
 
 #[cfg(target_pointer_width = "64")]
@@ -90,8 +90,10 @@ impl Stack {
             entries[idx].set_next_sleeper(head);
             next.set_head(idx);
 
-            let actual = self.state.compare_and_swap(
-                state.into(), next.into(), AcqRel).into();
+            let actual = self
+                .state
+                .compare_and_swap(state.into(), next.into(), AcqRel)
+                .into();
 
             if state == actual {
                 return Ok(());
@@ -112,11 +114,12 @@ impl Stack {
     /// Returns the index of the popped worker and the worker's observed state.
     ///
     /// `None` if the stack is empty.
-    pub fn pop(&self, entries: &[worker::Entry],
-                  max_lifecycle: worker::Lifecycle,
-                  terminate: bool)
-        -> Option<(usize, worker::State)>
-    {
+    pub fn pop(
+        &self,
+        entries: &[worker::Entry],
+        max_lifecycle: worker::Lifecycle,
+        terminate: bool,
+    ) -> Option<(usize, worker::State)> {
         // Figure out the empty value
         let terminal = match terminate {
             true => TERMINATED,
@@ -145,8 +148,10 @@ impl Stack {
                     return None;
                 }
 
-                let actual = self.state.compare_and_swap(
-                    state.into(), next.into(), AcqRel).into();
+                let actual = self
+                    .state
+                    .compare_and_swap(state.into(), next.into(), AcqRel)
+                    .into();
 
                 if actual != state {
                     state = actual;
@@ -173,8 +178,10 @@ impl Stack {
                 next.set_head(next_head);
             }
 
-            let actual = self.state.compare_and_swap(
-                state.into(), next.into(), AcqRel).into();
+            let actual = self
+                .state
+                .compare_and_swap(state.into(), next.into(), AcqRel)
+                .into();
 
             if actual == state {
                 // Release ordering is needed to ensure that unsetting the
@@ -215,7 +222,7 @@ impl State {
 
     #[inline]
     fn set_head(&mut self, val: usize) {
-        // The ABA guard protects against the ABA problem w/ treiber stacks
+        // The ABA guard protects against the ABA problem w/ Treiber stacks
         let aba_guard = ((self.0 >> ABA_GUARD_SHIFT) + 1) & ABA_GUARD_MASK;
 
         self.0 = (aba_guard << ABA_GUARD_SHIFT) | val;

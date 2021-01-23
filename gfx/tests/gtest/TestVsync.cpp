@@ -6,7 +6,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "gfxPlatform.h"
-#include "gfxPrefs.h"
+
 #include "MainThreadUtils.h"
 #include "nsIThread.h"
 #include "mozilla/RefPtr.h"
@@ -70,7 +70,6 @@ class VsyncTester : public ::testing::Test {
  protected:
   explicit VsyncTester() {
     gfxPlatform::GetPlatform();
-    gfxPrefs::GetSingleton();
     mVsyncSource = gfxPlatform::GetPlatform()->GetHardwareVsync();
     MOZ_RELEASE_ASSERT(mVsyncSource, "GFX: Vsync source not found.");
   }
@@ -128,6 +127,9 @@ TEST_F(VsyncTester, CompositorGetVsyncNotifications) {
 
   vsyncDispatcher = nullptr;
   testVsyncObserver = nullptr;
+
+  globalDisplay.DisableVsync();
+  ASSERT_FALSE(globalDisplay.IsVsyncEnabled());
 }
 
 // Test that if we have vsync enabled, the parent refresh driver should get
@@ -155,6 +157,9 @@ TEST_F(VsyncTester, ParentRefreshDriverGetVsyncNotifications) {
 
   vsyncDispatcher = nullptr;
   testVsyncObserver = nullptr;
+
+  globalDisplay.DisableVsync();
+  ASSERT_FALSE(globalDisplay.IsVsyncEnabled());
 }
 
 // Test that child refresh vsync observers get vsync notifications
@@ -181,6 +186,9 @@ TEST_F(VsyncTester, ChildRefreshDriverGetVsyncNotifications) {
 
   vsyncDispatcher = nullptr;
   testVsyncObserver = nullptr;
+
+  globalDisplay.DisableVsync();
+  ASSERT_FALSE(globalDisplay.IsVsyncEnabled());
 }
 
 // Test that we can read the vsync rate
@@ -189,4 +197,7 @@ TEST_F(VsyncTester, VsyncSourceHasVsyncRate) {
   TimeDuration vsyncRate = globalDisplay.GetVsyncRate();
   ASSERT_NE(vsyncRate, TimeDuration::Forever());
   ASSERT_GT(vsyncRate.ToMilliseconds(), 0);
+
+  globalDisplay.DisableVsync();
+  ASSERT_FALSE(globalDisplay.IsVsyncEnabled());
 }

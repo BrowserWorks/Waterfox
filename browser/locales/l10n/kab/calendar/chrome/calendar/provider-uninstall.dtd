@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Kkes asaǧǧaw">
+<!ENTITY providerUninstall.accept.label                    "Ffeɣ seg ujerred n wid yettwafernen">
+<!ENTITY providerUninstall.accept.accesskey                "j">
+<!ENTITY providerUninstall.cancel.label                    "Eǧǧ azegrir">
+<!ENTITY providerUninstall.cancel.accesskey                "E">
+<!ENTITY providerUninstall.preName.label                   "Tessutred-d tukksa n usebded neɣ n urmad n uzegrir.">
+<!ENTITY providerUninstall.postName.label                  "Ay-agai ad yekkes armad n iwitayen-agi daw-a.">
+<!ENTITY providerUninstall.reinstallNote.label             "Ma yella ur theggad ara ad tesbedded tikelt nniden asaǧǧaw-agi, tzemreḍ ad ferneḍ tufɣa seg ujerred seg iwitayen ines.">

@@ -7,14 +7,14 @@
 
 #include "GLContext.h"
 #include "WebGLSync.h"
+#include "mozilla/StaticPrefs_webgl.h"
 
 namespace mozilla {
 
 // -------------------------------------------------------------------------
 // Sync objects
 
-already_AddRefed<WebGLSync> WebGL2Context::FenceSync(GLenum condition,
-                                                     GLbitfield flags) {
+RefPtr<WebGLSync> WebGL2Context::FenceSync(GLenum condition, GLbitfield flags) {
   const FuncScope funcScope(*this, "fenceSync");
   if (IsContextLost()) return nullptr;
 
@@ -33,19 +33,7 @@ already_AddRefed<WebGLSync> WebGL2Context::FenceSync(GLenum condition,
   const auto& availRunnable = EnsureAvailabilityRunnable();
   availRunnable->mSyncs.push_back(globj);
 
-  return globj.forget();
-}
-
-bool WebGL2Context::IsSync(const WebGLSync* const sync) {
-  const FuncScope funcScope(*this, "isSync");
-  return ValidateIsObject(sync);
-}
-
-void WebGL2Context::DeleteSync(WebGLSync* sync) {
-  const FuncScope funcScope(*this, "deleteSync");
-  if (!ValidateDeleteObject(sync)) return;
-
-  sync->RequestDelete();
+  return globj;
 }
 
 GLenum WebGL2Context::ClientWaitSync(const WebGLSync& sync, GLbitfield flags,
@@ -67,7 +55,7 @@ GLenum WebGL2Context::ClientWaitSync(const WebGLSync& sync, GLbitfield flags,
   }
 
   const bool canBeAvailable =
-      (sync.mCanBeAvailable || gfxPrefs::WebGLImmediateQueries());
+      (sync.mCanBeAvailable || StaticPrefs::webgl_allow_immediate_queries());
   if (!canBeAvailable) {
     if (timeout) {
       GenerateWarning(
@@ -84,65 +72,6 @@ GLenum WebGL2Context::ClientWaitSync(const WebGLSync& sync, GLbitfield flags,
   }
 
   return ret;
-}
-
-void WebGL2Context::WaitSync(const WebGLSync& sync, GLbitfield flags,
-                             GLint64 timeout) {
-  const FuncScope funcScope(*this, "waitSync");
-  if (IsContextLost()) return;
-
-  if (!ValidateObject("sync", sync)) return;
-
-  if (flags != 0) {
-    ErrorInvalidValue("`flags` must be 0.");
-    return;
-  }
-
-  if (timeout != -1) {
-    ErrorInvalidValue("`timeout` must be TIMEOUT_IGNORED.");
-    return;
-  }
-
-  gl->fWaitSync(sync.mGLName, flags, LOCAL_GL_TIMEOUT_IGNORED);
-}
-
-void WebGL2Context::GetSyncParameter(JSContext*, const WebGLSync& sync,
-                                     GLenum pname,
-                                     JS::MutableHandleValue retval) {
-  const FuncScope funcScope(*this, "getSyncParameter");
-  retval.setNull();
-  if (IsContextLost()) return;
-
-  if (!ValidateObject("sync", sync)) return;
-
-  ////
-
-  const bool canBeAvailable =
-      (sync.mCanBeAvailable || gfxPrefs::WebGLImmediateQueries());
-  if (!canBeAvailable && pname == LOCAL_GL_SYNC_STATUS) {
-    retval.set(JS::Int32Value(LOCAL_GL_UNSIGNALED));
-    return;
-  }
-
-  GLint result = 0;
-  switch (pname) {
-    case LOCAL_GL_OBJECT_TYPE:
-    case LOCAL_GL_SYNC_STATUS:
-    case LOCAL_GL_SYNC_CONDITION:
-    case LOCAL_GL_SYNC_FLAGS:
-      gl->fGetSynciv(sync.mGLName, pname, 1, nullptr, &result);
-
-      if (pname == LOCAL_GL_SYNC_STATUS && result == LOCAL_GL_SIGNALED) {
-        sync.MarkSignaled();
-      }
-
-      retval.set(JS::Int32Value(result));
-      return;
-
-    default:
-      ErrorInvalidEnumInfo("pname", pname);
-      return;
-  }
 }
 
 }  // namespace mozilla

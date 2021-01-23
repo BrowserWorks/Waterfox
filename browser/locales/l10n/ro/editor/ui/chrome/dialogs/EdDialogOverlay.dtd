@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "Editare avansată…">
+<!ENTITY AdvancedEditButton.accessKey "E">
+<!ENTITY AdvancedEditButton.tooltip "Adaugă sau modifică atribute HTML, atribute de stiluri și cod JavaScript">
+<!ENTITY chooseFileButton.label "Alege fișier…">
+<!ENTITY chooseFileButton.accessKey "f">
+<!ENTITY chooseFileLinkButton.label "Alege fișier…">
+<!ENTITY chooseFileLinkButton.accessKey "f">
+<!ENTITY makeUrlRelative.label "URL-ul este relativ la locația paginii">
+<!ENTITY makeUrlRelative.accessKey "r">
+<!ENTITY makeUrlRelative.tooltip "Comută între URL relativ și absolut. Trebuie să salvezi mai întâi pagina ca să poți modifica.">
+
+<!-- Shared by Link and Image dialogs -->
+<!ENTITY LinkURLEditField2.label "Introdu o adresă de pagină web, un fișier local sau selectează o ancoră denumită sau un antet din meniul contextual al câmpului:">
+<!ENTITY LinkURLEditField2.accessKey "w">

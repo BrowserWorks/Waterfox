@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Proprietăți listă de selecție">
+
+<!ENTITY Select.label "Listă selecție">
+<!ENTITY SelectName.label "Nume listă:">
+<!ENTITY SelectName.accesskey "N">
+<!ENTITY SelectSize.label "Înălțime:">
+<!ENTITY SelectSize.accesskey "l">
+<!ENTITY SelectMultiple.label "Selecție multiplă">
+<!ENTITY SelectMultiple.accesskey "m">
+<!ENTITY SelectDisabled.label "Dezactivat">
+<!ENTITY SelectDisabled.accesskey "D">
+<!ENTITY SelectTabIndex.label "Index file:">
+<!ENTITY SelectTabIndex.accesskey "t">
+
+<!ENTITY OptGroup.label "Grup opțiuni">
+<!ENTITY OptGroupLabel.label "Etichetă:">
+<!ENTITY OptGroupLabel.accesskey "E">
+<!ENTITY OptGroupDisabled.label "Dezactivat">
+<!ENTITY OptGroupDisabled.accesskey "D">
+
+<!ENTITY Option.label "Opțiune">
+<!ENTITY OptionText.label "Text:">
+<!ENTITY OptionText.accesskey "T">
+<!ENTITY OptionValue.label "Valoare:">
+<!ENTITY OptionValue.accesskey "V">
+<!ENTITY OptionSelected.label "Inițial selectată">
+<!ENTITY OptionSelected.accesskey "s">
+<!ENTITY OptionDisabled.label "Dezactivat">
+<!ENTITY OptionDisabled.accesskey "D">
+
+<!ENTITY TextHeader.label "Text">
+<!ENTITY ValueHeader.label "Valoare">
+<!ENTITY SelectedHeader.label "Selectat">
+
+<!ENTITY AddOption.label "Adaugă opțiune">
+<!ENTITY AddOption.accesskey "o">
+<!ENTITY AddOptGroup.label "Adaugă grup">
+<!ENTITY AddOptGroup.accesskey "g">
+<!ENTITY RemoveElement.label "Șterge">
+<!ENTITY RemoveElement.accesskey "r">
+<!ENTITY MoveElementUp.label "Mută în sus">
+<!ENTITY MoveElementUp.accesskey "s">
+<!ENTITY MoveElementDown.label "Mută în jos">
+<!ENTITY MoveElementDown.accesskey "j">

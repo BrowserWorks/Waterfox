@@ -7,9 +7,9 @@ const { assert } = require("devtools/shared/DevToolsUtils");
 const { Component } = require("devtools/client/shared/vendor/react");
 const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
 const dom = require("devtools/client/shared/vendor/react-dom-factories");
-const { L10N } = require("../utils");
-const models = require("../models");
-const { viewState } = require("../constants");
+const { L10N } = require("devtools/client/memory/utils");
+const models = require("devtools/client/memory/models");
+const { viewState } = require("devtools/client/memory/constants");
 
 class Toolbar extends Component {
   static get propTypes() {
@@ -77,7 +77,7 @@ class Toolbar extends Component {
           dom.select(
             {
               id: "select-display",
-              className: "select-display",
+              className: "devtools-toolbar-select select-display",
               onChange: e => {
                 const newDisplay = censusDisplays.find(
                   b => b.displayName === e.target.value
@@ -175,6 +175,7 @@ class Toolbar extends Component {
           dom.select(
             {
               id: "select-label-display",
+              className: "devtools-toolbar-select select-label-display",
               onChange: e => {
                 const newDisplay = labelDisplays.find(
                   b => b.displayName === e.target.value
@@ -211,6 +212,7 @@ class Toolbar extends Component {
         dom.select(
           {
             id: "select-view",
+            className: "devtools-toolbar-select select-view",
             onChange: e => onViewChange(e.target.value),
             value: view.state,
           },

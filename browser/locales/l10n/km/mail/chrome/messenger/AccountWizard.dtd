@@ -1,0 +1,131 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+
+<!ENTITY windowTitle.label "Փոստարկղի Վարպետ">
+<!ENTITY accountWizard.size "width: 40em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+
+<!ENTITY accountSetupInfo2.label "ដើម្បី​ទទួល​សារ ជា​ដំបូង​អ្នក​ត្រូវ​បង្កើត​គណនី។">
+<!ENTITY accountTypeTitle.label "Նոր փոստարկղի կարգավորում">
+<!ENTITY accountTypeDesc2.label "អ្នកជំនួយការ​នេះ​នឹង​ប្រមូល​ព័ត៌មាន​ចាំបាច់​ដើម្បី​បង្កើត​គណនី។ បើ​អ្នក​មិន​ដឹង​ពី​ព័ត៌មាន​ដែល​បាន​ស្នើ​ទេ សូម​ទាក់ទង​អ្នក​គ្រប់គ្រង​ប្រព័ន្ធ ក្រុមហ៊ុន​ផ្ដល់​សេវា​អ៊ីនធឺណិត​របស់​អ្នក។">
+<!ENTITY accountTypeDirections.label "Ընտրեք փոստարկղի տեսակը.">
+<!ENTITY accountTypeMail.label "Փոստարկղ">
+<!ENTITY accountTypeMail.accesskey "m">
+<!ENTITY accountTypeNews.label "Նորությունների փոստարկղ">
+<!ENTITY accountTypeNews.accesskey "w">
+
+<!-- Entities for Identity page -->
+
+
+<!ENTITY identityTitle.label "Որոշիչ">
+<!ENTITY identityDesc.label "Յուրք. փոստարկղ անհատական է, այն ուղարկում է նշված տեղեկությունը Ձեր մասին, երբ որևէ մեկը ստանում է Ձեր նամակը։">
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+
+<!ENTITY fullnameDesc.label "Նշեք այն անունը, որը ուղարկվող նամակների կերևա &quot;Ումից&quot; դաշտում">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(օրինակ՝ &quot;John Smith&quot;)">
+<!ENTITY fullnameLabel.label "ឈ្មោះ​របស់​អ្នក ៖">
+<!ENTITY fullnameLabel.accesskey "Y">
+
+<!ENTITY emailLabel.label "Էլ. հասցեներ.">
+<!ENTITY emailLabel.accesskey "E">
+
+<!-- Entities for Incoming Server page -->
+
+
+<!ENTITY incomingTitle.label "ព័ត៌មាន​ម៉ាស៊ីន​មេ​ចូល">
+<!ENTITY incomingServerTypeDesc.label "ជ្រើស​ប្រភេទ​ម៉ាស៊ីន​បម្រើ​ចូល​ដែល​អ្នក​កំពុង​ប្រើ។">
+<!-- LOCALIZATION NOTE (imapType.label) : Do not translate "IMAP" in below line -->
+<!ENTITY imapType.label "IMAP">
+<!ENTITY imapType.accesskey "I">
+<!-- LOCALIZATION NOTE (popType.label) : Do not translate "POP" in below line -->
+<!ENTITY popType.label "POP">
+<!ENTITY popType.accesskey "P">
+<!ENTITY leaveMsgsOnSrvr.label "ទុក​សារ​នៅ​លើ​ម៉ាស៊ីន​បម្រើ">
+<!ENTITY leaveMsgsOnSrvr.accesskey "L">
+<!ENTITY portNum.label "ច្រក ៖">
+<!ENTITY portNum.accesskey "o">
+<!ENTITY defaultPortLabel.label "លំនាំដើម៖">
+<!ENTITY defaultPortValue.label "">
+<!-- LOCALIZATION NOTE (incomingServerNameDesc.label) : Do not translate "&quot;pop.example.net&quot;" in below line -->
+<!ENTITY incomingServer.description "បញ្ចូល​ឈ្មោះ​ម៉ាស៊ីន​មេ​ចូល​របស់​អ្នក (ឧទាហរណ៍៖ &quot;mail.example.net&quot;)។">
+<!ENTITY incomingServer.label "ម៉ាស៊ីន​មេ​ចូល៖">
+<!ENTITY incomingServer.accesskey "S">
+<!-- LOCALIZATION NOTE (incomingUsername.description) : do not translate "&quot;jsmith&quot;" in below line -->
+<!ENTITY incomingUsername.description "បញ្ចូល​ឈ្មោះ​អ្នកប្រើ​ចូល​ដែល​បាន​ផ្ដល់​ឲ្យ​អ្នក​ដោយ​ក្រុមហ៊ុន​ផ្ដល់​សេវា​អ៊ីមែល (ឧទាហរណ៍៖ &quot;jsmith&quot;)។">
+<!ENTITY incomingUsername.label "ឈ្មោះ​អ្នកប្រើ៖">
+<!ENTITY incomingUsername.accesskey "U">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Նշեք նորությունների սպասարկիչի անունը (NNTP) (օրինակ՝ &quot;news.example.net&quot;)։">
+<!ENTITY newsServerLabel.label "Նորությունների սպասարկիչ.">
+<!ENTITY newsServerLabel.accesskey "S">
+
+<!-- Entities for Outgoing Server page -->
+
+
+<!ENTITY outgoingTitle.label "ព័ត៌មាន​ម៉ាស៊ីន​មេ​ចេញ">
+<!-- LOCALIZATION NOTE (outgoingServer.description) : Do not translate "SMTP" and "&quot;smtp.example.net&quot;" in below line -->
+<!ENTITY outgoingServer.description "បញ្ចូល​ឈ្មោះ​ម៉ាស៊ីន​មេ​ចេញ​របស់​អ្នក (SMTP) (ឧទាហរណ៍៖ &quot;smtp.example.net&quot;)។">
+<!ENTITY outgoingServer.label "ម៉ាស៊ីន​មេ​ចេញ៖">
+<!ENTITY outgoingServer.accesskey "S">
+<!ENTITY outgoingUsername.description "បញ្ចូល​ឈ្មោះ​អ្នកប្រើ​ចេញ​ដែល​បាន​ផ្ដល់​ដោយ​ក្រុមហ៊ុន​ផ្ដល់​សេវា​អ៊ីមែល​របស់​អ្នក (វា​គឺ​ដូចគ្នា​នឹង​ឈ្មោះ​អ្នកប្រើ​ចូល​របស់​អ្នក​ដែរ)។">
+<!ENTITY outgoingUsername.label "ឈ្មោះ​អ្នកប្រើ​ចេញ៖">
+<!ENTITY outgoingUsername.accesskey "U">
+<!-- LOCALIZATION NOTE (modifyOutgoing.suffix) : This string will be appended after each of
+     haveSmtp1.suffix3, haveSmtp2.suffix3, haveSmtp3.suffix3 .
+-->
+
+<!ENTITY modifyOutgoing.suffix "អ្នក​អាច​ប្ដូរ​ម៉ាស៊ីន​មេ​នៅ​ក្នុង​ការ​កំណត់​គណនី។">
+<!-- LOCALIZATION NOTE (haveSmtp1.prefix and haveSmtp1.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp1.prefix and haveSmtp1.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp1.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp1.prefix "Ձեր առկա ելքային սպասարկիչը (SMTP), &quot;">
+<!ENTITY haveSmtp1.suffix3 "&quot;, នឹង​ត្រូវ​បាន​ប្រើ។">
+<!-- LOCALIZATION NOTE (haveSmtp2.prefix and haveSmtp2.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp2.prefix and haveSmtp2.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp2.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp2.prefix "Ձեր առկա ելքային (SMTP) սպասարկիչը, &quot;">
+<!ENTITY haveSmtp2.suffix3 "&quot;, នឹង​ត្រូវ​បាន​ប្រើ។">
+<!-- LOCALIZATION NOTE (haveSmtp3.prefix and haveSmtp3.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp3.prefix and haveSmtp3.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp3.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp3.prefix "Ձեր ելքային (SMTP) սպասարկիչը, &quot;">
+<!ENTITY haveSmtp3.suffix3 "&quot;, គឺ​ដូចគ្នា​បេះបិទ​នឹង​ម៉ាស៊ីន​មេ​ចូល​របស់​អ្នក ឈ្មោះ​អ្នកប្រើ​ចូល​របស់​អ្នក​នឹង​ត្រូវ​បាន​ប្រើ​ដើម្បី​ដំណើរការ​វា។">
+
+<!-- Entities for Account name page -->
+
+
+<!ENTITY accnameTitle.label "Փոստարկղի անունը">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Նշեք անունը, որին ցանանում եք կցել այս փոստարկղը (օրինակ՝ &quot;Աշխ. փոստարկղ&quot;, &quot;Տնային փոստարկղ&quot; կամ &quot;Նորությունների փոստարկղ&quot;)։">
+<!ENTITY accnameLabel.label "Փոստարկղի անունը.">
+<!ENTITY accnameLabel.accesskey "A">
+
+<!-- Entities for Done (Congratulations) page -->
+
+
+<!ENTITY completionTitle.label "Շնորհավորում ենք!">
+<!ENTITY completionText.label "Համոզվեք, որ տեղեկությունը ճիշտ է։">
+<!ENTITY serverTypePrefix.label "Մուտքային սպասարկիչի տեսակը.">
+<!ENTITY serverNamePrefix.label "Մուտքային սպասարկիչի անունը.">
+<!ENTITY smtpServerNamePrefix.label "Ելքային սպասարկիչի անունը (SMTP).">
+<!ENTITY newsServerNamePrefix.label "Նորությունների սպասարկիչի անունը (NNTP).">
+<!ENTITY downloadOnLogin.label "Բեռնել նամակները">
+<!ENTITY downloadOnLogin.accesskey "D">
+<!ENTITY deferStorageDesc.label "Հանեք ընտրումը՝ այս փոստարկղի նամակը դասավորելու համար իր թղթապանակում։ Այս փոստարկղը կերևա ամենավերևում։ Այն կլինի Local Folders Global Մուտքայինի մի մասնիկը։">
+<!ENTITY deferStorage.label "Օգտ. Հիմնական Մուտքայինները (պահել նամակները Լոկալ թղթապանակում)։">
+<!ENTITY deferStorage.accesskey "G">
+<!ENTITY clickFinish.label "Սեղմեք Ավարտել՝ պահպանելու համար կարգավորումները և փակելու համար Փոստարկղի Վարպետը։">
+<!ENTITY clickFinish.labelMac "Սեղմեք Պատրաստ է՝ պահպանելու համար կարգավորումները և փակելու համար Փոստարկղի Վարպետը։">

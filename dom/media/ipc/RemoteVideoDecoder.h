@@ -16,17 +16,19 @@ class BufferRecycleBin;
 
 namespace mozilla {
 
+class KnowsCompositorVideo;
 using mozilla::ipc::IPCResult;
 
-class RemoteVideoDecoderChild final : public RemoteDecoderChild {
+class RemoteVideoDecoderChild : public RemoteDecoderChild {
  public:
-  explicit RemoteVideoDecoderChild();
+  explicit RemoteVideoDecoderChild(bool aRecreatedOnCrash = false);
 
   MOZ_IS_CLASS_INIT
   MediaResult InitIPDL(const VideoInfo& aVideoInfo, float aFramerate,
-                       const CreateDecoderParams::OptionSet& aOptions);
+                       const CreateDecoderParams::OptionSet& aOptions,
+                       Maybe<layers::TextureFactoryIdentifier> aIdentifier);
 
-  IPCResult RecvOutput(const DecodedOutputIPDL& aDecodedData) override;
+  MediaResult ProcessOutput(const DecodedOutputIPDL& aDecodedData) override;
 
  private:
   RefPtr<mozilla::layers::Image> DeserializeImage(
@@ -35,18 +37,28 @@ class RemoteVideoDecoderChild final : public RemoteDecoderChild {
   RefPtr<mozilla::layers::BufferRecycleBin> mBufferRecycleBin;
 };
 
+class GpuRemoteVideoDecoderChild final : public RemoteVideoDecoderChild {
+ public:
+  GpuRemoteVideoDecoderChild();
+
+  MOZ_IS_CLASS_INIT
+  MediaResult InitIPDL(const VideoInfo& aVideoInfo, float aFramerate,
+                       const CreateDecoderParams::OptionSet& aOptions,
+                       Maybe<layers::TextureFactoryIdentifier> aIdentifier);
+};
+
 class RemoteVideoDecoderParent final : public RemoteDecoderParent {
  public:
-  RemoteVideoDecoderParent(RemoteDecoderManagerParent* aParent,
-                           const VideoInfo& aVideoInfo, float aFramerate,
-                           const CreateDecoderParams::OptionSet& aOptions,
-                           TaskQueue* aManagerTaskQueue,
-                           TaskQueue* aDecodeTaskQueue, bool* aSuccess,
-                           nsCString* aErrorDescription);
+  RemoteVideoDecoderParent(
+      RemoteDecoderManagerParent* aParent, const VideoInfo& aVideoInfo,
+      float aFramerate, const CreateDecoderParams::OptionSet& aOptions,
+      const Maybe<layers::TextureFactoryIdentifier>& aIdentifier,
+      TaskQueue* aManagerTaskQueue, TaskQueue* aDecodeTaskQueue, bool* aSuccess,
+      nsCString* aErrorDescription);
 
  protected:
-  MediaResult ProcessDecodedData(
-      const MediaDataDecoder::DecodedData& aData) override;
+  MediaResult ProcessDecodedData(const MediaDataDecoder::DecodedData& aData,
+                                 DecodedOutputIPDL& aDecodedData) override;
 
  private:
   // Can only be accessed from the manager thread
@@ -55,6 +67,8 @@ class RemoteVideoDecoderParent final : public RemoteDecoderParent {
   // passed a deserialized VideoInfo from RecvPRemoteDecoderConstructor
   // which is destroyed when RecvPRemoteDecoderConstructor returns.
   const VideoInfo mVideoInfo;
+
+  RefPtr<KnowsCompositorVideo> mKnowsCompositor;
 };
 
 }  // namespace mozilla

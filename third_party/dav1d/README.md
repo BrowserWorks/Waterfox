@@ -1,3 +1,5 @@
+![dav1d logo](dav1d_logo.png)
+
 # dav1d
 
 **dav1d** is a new **AV1** cross-platform **d**ecoder, open-source, and focused on speed and correctness.
@@ -29,15 +31,16 @@ The plan is the folllowing:
 2. Provide a usable API,
 3. Port to most platforms,
 4. Make it fast on desktop, by writing asm for AVX-2 chips.
+5. Make it fast on mobile, by writing asm for ARMv8 chips,
+6. Make it fast on older desktop, by writing asm for SSSE3+ chips.
 
 ### On-going
-5. Make it fast on mobile, by writing asm for ARMv8 chips,
-6. Make it fast on older desktop, by writing asm for SSE chips.
+7. Make it fast on older mobiles, by writing asm for ARMv7 chips,
+8. Improve C code base with [various tweaks](https://code.videolan.org/videolan/dav1d/wikis/task-list),
+9. Accelerate for less common architectures, like PPC, SSE2 or AVX-512.
 
 ### After
-7. Improve C code base with [various tweaks](https://code.videolan.org/videolan/dav1d/wikis/task-list),
-8. Accelerate for less common architectures,
-9. Use more GPU, when possible.
+10. Use more GPU, when possible.
 
 # Contribute
 
@@ -70,29 +73,16 @@ The [VideoLAN Code of Conduct](https://wiki.videolan.org/CoC) applies to this pr
 
 # Compile
 
-1. Install [Meson](https://mesonbuild.com/) (0.47 or higher), [Ninja](https://ninja-build.org/), and, for x86\* targets, [nasm](https://nasm.us/) (2.13.02 or higher)
-2. Run `meson build --buildtype release`
-3. Build with `ninja -C build`
+1. Install [Meson](https://mesonbuild.com/) (0.47 or higher), [Ninja](https://ninja-build.org/), and, for x86\* targets, [nasm](https://nasm.us/) (2.14 or higher)
+2. Run `mkdir build && cd build` to create a build directory and enter it
+3. Run `meson ..` to configure meson, add `--default-library=static` if static linking is desired
+4. Run `ninja` to compile
 
 # Run tests
 
-1. During initial build dir setup or `meson configure` specify `-Dbuild_tests=true`
-2. In the build directory run `meson test` optionally with `-v` for more verbose output, especially useful
-   for checkasm
-
-# Run testdata based tests
-
-1. Checkout the test data repository
-
-   ```
-   git clone https://code.videolan.org/videolan/dav1d-test-data.git tests/dav1d-test-data
-   ```
-2. During initial build dir setup or `meson configure` specify `-Dbuild_tests=true` and `-Dtestdata_tests=true`
-
-   ```
-   meson .test -Dbuild_tests=true -Dtestdata_tests=true
-   ```
-3. In the build directory run `meson test` optionally with `-v` for more verbose output
+1. In the root directory, run `git clone https://code.videolan.org/videolan/dav1d-test-data.git tests/dav1d-test-data` to fetch the test data repository
+2. During meson configuration, specify `-Dtestdata_tests=true`
+3. Run `meson test -v` after compiling
 
 # Support
 

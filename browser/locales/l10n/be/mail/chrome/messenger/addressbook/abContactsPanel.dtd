@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label               "Уласцівасці">
+<!ENTITY propertiesMenu.accesskey           "і">
+<!ENTITY propertiesCmd.key                  "i">
+<!ENTITY abPropertiesMenu.label             "Уласцівасці адраснай кнігі">
+<!ENTITY abPropertiesMenu.accesskey         "і">
+<!ENTITY contactPropertiesMenu.label        "Уласцівасці кантакта">
+<!ENTITY contactPropertiesMenu.accesskey    "і">
+<!ENTITY mailingListPropertiesMenu.label    "Уласцівасці спіса рассылкі">
+<!ENTITY mailingListPropertiesMenu.accesskey "і">
+
+<!ENTITY abContextMenuButton.tooltip        "Паказваць кантэкстнае меню адраснай кнігі">
+<!ENTITY addressbookPicker.label            "Адрасная кніга:">
+<!ENTITY addressbookPicker.accesskey        "к">
+<!ENTITY searchContacts.label               "Пошук кантактаў:">
+<!ENTITY searchContacts.accesskey           "н">
+<!ENTITY SearchNameOrEmail.label            "Імя або э-пошта">
+
+<!ENTITY addtoToFieldMenu.label             "Дадаць да поля Да">
+<!ENTITY addtoToFieldMenu.accesskey         "Д">
+<!ENTITY addtoCcFieldMenu.label             "Дадаць да поля Са">
+<!ENTITY addtoCcFieldMenu.accesskey         "С">
+<!ENTITY addtoBccFieldMenu.label            "Дадаць да поля Сса">
+<!ENTITY addtoBccFieldMenu.accesskey        "а">
+<!ENTITY deleteAddrBookCard.label           "Выдаліць">
+<!ENTITY deleteAddrBookCard.accesskey       "В">
+<!ENTITY propertiesContext.label            "Уласцівасці">
+<!ENTITY propertiesContext.accesskey        "і">
+<!ENTITY abPropertiesContext.label          "Уласцівасці">
+<!ENTITY abPropertiesContext.accesskey      "і">
+<!ENTITY editContactContext.label           "Рэдагаваць кантакт">
+<!ENTITY editContactContext.accesskey       "Р">
+<!ENTITY editMailingListContext.label       "Рэдагаваць спіс">
+<!ENTITY editMailingListContext.accesskey   "Р">
+
+<!ENTITY newContactAbContext.label          "Новы кантакт">
+<!ENTITY newContactAbContext.accesskey      "Н">
+<!ENTITY newListAbContext.label             "Новы спіс">
+<!ENTITY newListAbContext.accesskey         "с">
+
+<!ENTITY toButton.label                     "Дадаць да Да:">
+<!ENTITY toButton.accesskey                 "Д">
+<!ENTITY ccButton.label                     "Дадаць да Са:">
+<!ENTITY ccButton.accesskey                 "С">
+<!ENTITY bccButton.label                    "Дадаць да Сса:">
+<!ENTITY bccButton.accesskey                "а">

@@ -78,8 +78,7 @@ class AbstractCache {
  public:
   virtual void OnInvalidate() = 0;
 
-  InvalidatorListT ResetInvalidators(
-      InvalidatorListT&&);  // Returns the old list.
+  void ResetInvalidators(InvalidatorListT&&);
   void AddInvalidator(const CacheInvalidator&);
 };
 
@@ -122,7 +121,7 @@ class CacheWeakMap final {
     const ValueT mValue;
 
     Entry(CacheWeakMap& parent, const KeyT& key, ValueT&& value)
-        : mParent(parent), mKey(key), mValue(value) {}
+        : mParent(parent), mKey(key), mValue(std::move(value)) {}
 
     void OnInvalidate() override {
       const auto erased = mParent.mMap.erase(&mKey);

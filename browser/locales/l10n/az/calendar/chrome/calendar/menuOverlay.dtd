@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Event Menu -->
+<!ENTITY event.new.event                        "Yeni Tədbir…">
+<!ENTITY event.new.event.accesskey              "N">
+
+<!ENTITY event.new.task                         "Yeni Tədbir…">
+<!ENTITY event.new.task.accesskey               "k">
+
+<!ENTITY calendar.import.label                  "İdxal et…">
+<!ENTITY calendar.import.accesskey              "I">
+
+<!ENTITY calendar.export.label                  "İxrac et…">
+<!ENTITY calendar.export.accesskey              "E">
+
+<!ENTITY calendar.publish.label                 "Yayimla…">
+<!ENTITY calendar.publish.accesskey             "b">
+
+<!ENTITY calendar.deletecalendar.label          "Seçilmiş Təqvimi Sil…">
+<!ENTITY calendar.deletecalendar.accesskey      "D">
+<!ENTITY calendar.unsubscribecalendar.label     "Seçilmiş Təqvimin Abunəliyindən Çıx…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "U">
+
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+<!ENTITY calendar.removecalendar.label          "Seçilmiş Təqvimi Sil…">
+<!ENTITY calendar.removecalendar.accesskey      "R">
+
+
+<!ENTITY calendar.menu.customize.label          "Fərdiləşdir…">
+<!ENTITY calendar.menu.customize.accesskey      "C">
+
+<!ENTITY showUnifinderCmd.label                 "Tədbirləri Tap">
+<!ENTITY showUnifinderCmd.accesskey             "F">
+<!ENTITY showUnifinderCmd.tooltip               "Tədbir tapma panelini çevir">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "Təqvimdəki Tədbirləri Göstər">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "T">
+
+<!ENTITY goTodayCmd.label                       "Bu gün">
+<!ENTITY goTodayCmd.accesskey                   "T">
+
+<!ENTITY showCurrentView.label                  "Hazırki Görünüş">
+<!ENTITY showCurrentView.accesskey              "V">
+
+<!ENTITY calendar.properties.label              "Təqvim Xassələri…">
+<!ENTITY calendar.properties.accesskey          "C">

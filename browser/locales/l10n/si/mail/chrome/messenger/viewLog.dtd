@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "පෙරහන් ලොග් සටහන">
+<!ENTITY viewLogInfo.text "මෙම ගිණුමේ ක්‍රියාත්මක වන පෙරහන් සඳහා මෙය ලොග් සටහන් තබයි. මෙය බලැති (enable) කිරීම සඳහා පහත tick box භාවිතා කරන්න.">
+<!ENTITY clearLog.label "ලොග් සටහන හිස් ක.">
+<!ENTITY clearLog.accesskey "C">
+<!ENTITY enableLog.label "ලොග් සටහන බලැති (Enable) කරන්න.">
+<!ENTITY enableLog.accesskey "E">
+<!ENTITY closeLog.label "වහන්න">
+<!ENTITY closeLog.accesskey "o">

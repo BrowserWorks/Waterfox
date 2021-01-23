@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Linjoilla olevat tuttavat">
+<!ENTITY offlineContactsHeader.label   "Poissa linjoilta olevat tuttavat">
+<!ENTITY conversationsHeader.label     "Keskustelut">
+<!ENTITY searchResultConversation.label "Hakutulokset">
+<!ENTITY chat.noConv.title             "Keskustelut näkyvät tässä.">
+<!ENTITY chat.noConv.description       "Aloita keskustelu vasemman paneelin tuttavalistasta.">
+<!ENTITY chat.noPreviousConv.description       "&brandShortName;ssä ei ole tallennettuna yhtään keskustelua tämän tuttavan kanssa.">
+<!ENTITY chat.noAccount.title             "Et ole vielä luonut pikaviestitiliä.">
+<!ENTITY chat.noAccount.description       "&brandShortName; avustaa sinua luomaan pikaviestitilin.">
+<!ENTITY chat.accountWizard.button       "Aloita">
+<!ENTITY chat.noConnectedAccount.title             "Pikaviestitileihisi ei ole luotu yhteyttä.">
+<!ENTITY chat.noConnectedAccount.description       "Voit muodostaa yhteyden pikaviestitileihisi Läsnäolotila-valikosta:">
+<!ENTITY chat.showAccountManager.button       "Näytä läsnäolotila">
+
+<!ENTITY chat.participants             "Osallistujat:">
+<!ENTITY chat.previousConversations    "Aikaisemmat keskustelut:">
+<!ENTITY chat.ongoingConversation      "Käynnissä oleva keskustelu">
+
+<!ENTITY openConversationCmd.label     "Keskustele">
+<!ENTITY openConversationCmd.accesskey "K">
+<!ENTITY closeConversationCmd.label    "Lopeta keskustelu">
+<!ENTITY closeConversationCmd.accesskey "L">
+<!ENTITY aliasCmd.label                "Nimeä uudelleen">
+<!ENTITY aliasCmd.accesskey            "u">
+<!ENTITY deleteCmd.label               "Poista yhteyshenkilö">
+<!ENTITY deleteCmd.accesskey           "o">
+
+<!ENTITY openConversationButton.tooltip  "Aloita keskustelu">
+<!ENTITY closeConversationButton.tooltip "Lopeta keskustelu">
+
+<!ENTITY addBuddyButton.label          "Lisää tuttava">
+<!ENTITY joinChatButton.label          "Liity keskusteluun">
+<!ENTITY chatAccountsButton.label      "Näytä tilit">
+
+<!ENTITY status.available          "Tavoitettavissa">
+<!ENTITY status.unavailable        "Poissa">
+<!ENTITY status.offline            "Poissa linjoilta">
+
+<!ENTITY openLinkCmd.label            "Avaa linkki…">
+<!ENTITY openLinkCmd.accesskey        "A">

@@ -25,6 +25,7 @@
 #include "GeckoProfiler.h"
 #include "KeyboardEvent.h"
 #include "Layers.h"
+#include "mozilla/BasePrincipal.h"
 #include "mozilla/ContentEvents.h"
 #include "mozilla/dom/CloseEvent.h"
 #include "mozilla/dom/CustomEvent.h"
@@ -121,7 +122,7 @@ static bool IsEventTargetChrome(EventTarget* aEventTarget,
     }
   } else if (nsCOMPtr<nsIScriptObjectPrincipal> sop =
                  do_QueryInterface(aEventTarget->GetOwnerGlobal())) {
-    isChrome = nsContentUtils::IsSystemPrincipal(sop->GetPrincipal());
+    isChrome = sop->GetPrincipal()->IsSystemPrincipal();
   }
   return isChrome;
 }
@@ -134,7 +135,7 @@ class EventTargetChainItem {
     MOZ_COUNT_CTOR(EventTargetChainItem);
   }
 
-  ~EventTargetChainItem() { MOZ_COUNT_DTOR(EventTargetChainItem); }
+  MOZ_COUNTED_DTOR(EventTargetChainItem)
 
   static EventTargetChainItem* Create(nsTArray<EventTargetChainItem>& aChain,
                                       EventTarget* aTarget,
@@ -346,6 +347,12 @@ class EventTargetChainItem {
     if (mManager) {
       NS_ASSERTION(aVisitor.mEvent->mCurrentTarget == nullptr,
                    "CurrentTarget should be null!");
+
+      if (aVisitor.mEvent->mMessage == eMouseClick) {
+        aVisitor.mEvent->mFlags.mHadNonPrivilegedClickListeners =
+            aVisitor.mEvent->mFlags.mHadNonPrivilegedClickListeners ||
+            mManager->HasNonPrivilegedClickListeners();
+      }
       mManager->HandleEvent(aVisitor.mPresContext, aVisitor.mEvent,
                             &aVisitor.mDOMEvent, CurrentTarget(),
                             &aVisitor.mEventStatus, IsItemInShadowTree());
@@ -797,13 +804,14 @@ nsresult EventDispatcher::Dispatch(nsISupports* aTarget,
 #ifdef DEBUG
   if (NS_IsMainThread() && aEvent->mMessage != eVoidEvent &&
       !nsContentUtils::IsSafeToRunScript()) {
-    nsCOMPtr<nsINode> node = do_QueryInterface(target);
-    if (!node) {
-      // If the target is not a node, just go ahead and crash. There really
-      // shouldn't be any other event targets in documents that are not being
-      // rendered or scripted.
-      MOZ_CRASH("This is unsafe! Fix the caller!");
-    } else {
+    static const auto warn = [](bool aIsSystem) {
+      if (aIsSystem) {
+        NS_WARNING("Fix the caller!");
+      } else {
+        MOZ_CRASH("This is unsafe! Fix the caller!");
+      }
+    };
+    if (nsCOMPtr<nsINode> node = do_QueryInterface(target)) {
       // If this is a node, it's possible that this is some sort of DOM tree
       // that is never accessed by script (for example an SVG image or XBL
       // binding document or whatnot).  We really only want to warn/assert here
@@ -815,12 +823,10 @@ nsresult EventDispatcher::Dispatch(nsISupports* aTarget,
       nsIGlobalObject* global =
           doc->GetScriptHandlingObject(hasHadScriptHandlingObject);
       if (global || hasHadScriptHandlingObject) {
-        if (nsContentUtils::IsChromeDoc(doc)) {
-          NS_WARNING("Fix the caller!");
-        } else {
-          MOZ_CRASH("This is unsafe! Fix the caller!");
-        }
+        warn(nsContentUtils::IsChromeDoc(doc));
       }
+    } else if (nsCOMPtr<nsIGlobalObject> global = target->GetOwnerGlobal()) {
+      warn(global->PrincipalOrNull()->IsSystemPrincipal());
     }
   }
 
@@ -886,7 +892,7 @@ nsresult EventDispatcher::Dispatch(nsISupports* aTarget,
   bool clearTargets = false;
 
   nsCOMPtr<nsIContent> content = do_QueryInterface(aEvent->mOriginalTarget);
-  bool isInAnon = content && content->IsInAnonymousSubtree();
+  bool isInAnon = content && content->IsInNativeAnonymousSubtree();
 
   aEvent->mFlags.mIsBeingDispatched = true;
 
@@ -1026,21 +1032,23 @@ nsresult EventDispatcher::Dispatch(nsISupports* aTarget,
 
           nsCOMPtr<nsIDocShell> docShell;
           docShell = nsContentUtils::GetDocShellForEventTarget(aEvent->mTarget);
-          DECLARE_DOCSHELL_AND_HISTORY_ID(docShell);
-          profiler_add_marker(
-              "DOMEvent", JS::ProfilingCategoryPair::DOM,
-              MakeUnique<DOMEventMarkerPayload>(
-                  typeStr, aEvent->mTimeStamp, "DOMEvent",
-                  TRACING_INTERVAL_START, docShellId, docShellHistoryId));
+          Maybe<uint64_t> innerWindowID;
+          if (nsCOMPtr<nsPIDOMWindowInner> inner =
+                  do_QueryInterface(aEvent->mTarget->GetOwnerGlobal())) {
+            innerWindowID = Some(inner->WindowID());
+          }
+          PROFILER_ADD_MARKER_WITH_PAYLOAD(
+              "DOMEvent", DOM, DOMEventMarkerPayload,
+              (typeStr, aEvent->mTimeStamp, "DOMEvent", TRACING_INTERVAL_START,
+               innerWindowID));
 
           EventTargetChainItem::HandleEventTargetChain(chain, postVisitor,
                                                        aCallback, cd);
 
-          profiler_add_marker(
-              "DOMEvent", JS::ProfilingCategoryPair::DOM,
-              MakeUnique<DOMEventMarkerPayload>(
-                  typeStr, aEvent->mTimeStamp, "DOMEvent", TRACING_INTERVAL_END,
-                  docShellId, docShellHistoryId));
+          PROFILER_ADD_MARKER_WITH_PAYLOAD(
+              "DOMEvent", DOM, DOMEventMarkerPayload,
+              (typeStr, aEvent->mTimeStamp, "DOMEvent", TRACING_INTERVAL_END,
+               innerWindowID));
         } else
 #endif
         {
@@ -1124,6 +1132,11 @@ nsresult EventDispatcher::DispatchDOMEvent(nsISupports* aTarget,
   if (aDOMEvent) {
     WidgetEvent* innerEvent = aDOMEvent->WidgetEventPtr();
     NS_ENSURE_TRUE(innerEvent, NS_ERROR_ILLEGAL_VALUE);
+
+    // Don't modify the event if it's being dispatched right now.
+    if (innerEvent->mFlags.mIsBeingDispatched) {
+      return NS_ERROR_DOM_INVALID_STATE_ERR;
+    }
 
     bool dontResetTrusted = false;
     if (innerEvent->mFlags.mDispatchedAtLeastOnce) {
@@ -1224,14 +1237,10 @@ nsresult EventDispatcher::DispatchDOMEvent(nsISupports* aTarget,
       aEventType.LowerCaseEqualsLiteral("mouseevents")) {
     return NS_NewDOMMouseEvent(aOwner, aPresContext, nullptr);
   }
-  if (aEventType.LowerCaseEqualsLiteral("mousescrollevents")) {
-    return NS_NewDOMMouseScrollEvent(aOwner, aPresContext, nullptr);
-  }
   if (aEventType.LowerCaseEqualsLiteral("dragevent")) {
     return NS_NewDOMDragEvent(aOwner, aPresContext, nullptr);
   }
-  if (aEventType.LowerCaseEqualsLiteral("keyboardevent") ||
-      aEventType.LowerCaseEqualsLiteral("keyevents")) {
+  if (aEventType.LowerCaseEqualsLiteral("keyboardevent")) {
     return NS_NewDOMKeyboardEvent(aOwner, aPresContext, nullptr);
   }
   if (aEventType.LowerCaseEqualsLiteral("compositionevent") ||
@@ -1262,18 +1271,12 @@ nsresult EventDispatcher::DispatchDOMEvent(nsISupports* aTarget,
       aEventType.LowerCaseEqualsLiteral("svgevents")) {
     return NS_NewDOMEvent(aOwner, aPresContext, nullptr);
   }
-  if (aEventType.LowerCaseEqualsLiteral("timeevent")) {
-    return NS_NewDOMTimeEvent(aOwner, aPresContext, nullptr);
-  }
   if (aEventType.LowerCaseEqualsLiteral("messageevent")) {
     RefPtr<Event> event = new MessageEvent(aOwner, aPresContext, nullptr);
     return event.forget();
   }
   if (aEventType.LowerCaseEqualsLiteral("beforeunloadevent")) {
     return NS_NewDOMBeforeUnloadEvent(aOwner, aPresContext, nullptr);
-  }
-  if (aEventType.LowerCaseEqualsLiteral("scrollareaevent")) {
-    return NS_NewDOMScrollAreaEvent(aOwner, aPresContext, nullptr);
   }
   if (aEventType.LowerCaseEqualsLiteral("touchevent") &&
       TouchEvent::LegacyAPIEnabled(

@@ -92,7 +92,7 @@ enum gfxWindowsFontType {
 // A single member of a font family (i.e. a single face, such as Times Italic)
 // represented as a LOGFONT that will resolve to the correct face.
 // This replaces FontEntry from gfxWindowsFonts.h/cpp.
-class GDIFontEntry : public gfxFontEntry {
+class GDIFontEntry final : public gfxFontEntry {
  public:
   LPLOGFONTW GetLogFont() { return &mLogFont; }
 
@@ -185,10 +185,13 @@ class GDIFontEntry : public gfxFontEntry {
 };
 
 // a single font family, referencing one or more faces
-class GDIFontFamily : public gfxFontFamily {
+class GDIFontFamily final : public gfxFontFamily {
  public:
-  explicit GDIFontFamily(const nsACString& aName)
-      : gfxFontFamily(aName), mWindowsFamily(0), mWindowsPitch(0), mCharset() {}
+  GDIFontFamily(const nsACString& aName, FontVisibility aVisibility)
+      : gfxFontFamily(aName, aVisibility),
+        mWindowsFamily(0),
+        mWindowsPitch(0),
+        mCharset() {}
 
   virtual void FindStyleVariations(FontInfoData* aFontInfoData = nullptr);
 
@@ -288,7 +291,7 @@ class GDIFontFamily : public gfxFontFamily {
                                           DWORD fontType, LPARAM data);
 };
 
-class gfxGDIFontList : public gfxPlatformFontList {
+class gfxGDIFontList final : public gfxPlatformFontList {
  public:
   static gfxGDIFontList* PlatformFontList() {
     return static_cast<gfxGDIFontList*>(sPlatformFontList);
@@ -297,7 +300,8 @@ class gfxGDIFontList : public gfxPlatformFontList {
   // initialize font lists
   virtual nsresult InitFontListForPlatform() override;
 
-  gfxFontFamily* CreateFontFamily(const nsACString& aName) const override;
+  gfxFontFamily* CreateFontFamily(const nsACString& aName,
+                                  FontVisibility aVisibility) const override;
 
   bool FindAndAddFamilies(mozilla::StyleGenericFontFamily aGeneric,
                           const nsACString& aFamily,

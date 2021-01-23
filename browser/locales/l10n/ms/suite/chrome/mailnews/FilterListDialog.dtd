@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY filterListDialog.title "Tapis Mesej">
+<!ENTITY nameColumn.label "Nama Penapis">
+<!ENTITY activeColumn.label "Didayakan">
+<!ENTITY newButton.label "Baru…">
+<!ENTITY newButton.accesskey "B">
+<!ENTITY editButton.label "Edit…">
+<!ENTITY editButton.accesskey "E">
+<!ENTITY deleteButton.label "Buang">
+<!ENTITY deleteButton.accesskey "g">
+<!ENTITY reorderUpButton.label "Pindah Atas">
+<!ENTITY reorderUpButton.accesskey "A">
+<!ENTITY reorderDownButton.label "Pindah Bawah">
+<!ENTITY reorderDownButton.accesskey "B">
+<!ENTITY filterHeader.label "Penapis yang aktif dilaksanakan secara automatik mengikut susunan di bawah.">
+<!ENTITY filtersForPrefix.label "Tapis untuk:">
+<!ENTITY filtersForPrefix.accesskey "T">
+<!ENTITY viewLogButton.label "Tapis Log">
+<!ENTITY viewLogButton.accesskey "L">
+<!ENTITY runFilters.label "Laksanakan Sekarang">
+<!ENTITY runFilters.accesskey "S">
+<!ENTITY stopFilters.label "Berhenti">
+<!ENTITY stopFilters.accesskey "B">
+<!ENTITY folderPickerPrefix.label "Laksanakan penapis yang dipilih pada:">
+<!ENTITY folderPickerPrefix.accesskey "p">
+<!ENTITY choosethis.label "pilih folder ini">
+<!ENTITY choosethisnewsserver.label "pilih pelayan berita ini">

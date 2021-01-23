@@ -24,6 +24,7 @@ var ResetProfile = {
     if (Services.policies && !Services.policies.isAllowed("profileRefresh")) {
       return false;
     }
+    debugger;
     // Reset is only supported if the self-migrator used for reset exists.
     let migrator =
       "@mozilla.org/profile/migrator;1?app=" +
@@ -54,10 +55,10 @@ var ResetProfile = {
     let params = {
       reset: false,
     };
-    window.openDialog(
-      "chrome://global/content/resetProfile.xul",
+    window.docShell.rootTreeItem.domWindow.openDialog(
+      "chrome://global/content/resetProfile.xhtml",
       null,
-      "chrome,modal,centerscreen,titlebar,dialog=yes",
+      "modal,centerscreen,titlebar",
       params
     );
     if (!params.reset) {

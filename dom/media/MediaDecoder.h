@@ -16,22 +16,21 @@
 #  include "MediaPromiseDefs.h"
 #  include "MediaResource.h"
 #  include "MediaStatistics.h"
-#  include "MediaStreamGraph.h"
 #  include "SeekTarget.h"
 #  include "TimeUnits.h"
-#  include "TrackID.h"
 #  include "mozilla/Atomics.h"
 #  include "mozilla/CDMProxy.h"
 #  include "mozilla/MozPromise.h"
 #  include "mozilla/ReentrantMonitor.h"
 #  include "mozilla/StateMirroring.h"
 #  include "mozilla/StateWatching.h"
-#  include "nsAutoPtr.h"
+#  include "mozilla/dom/MediaDebugInfoBinding.h"
 #  include "nsCOMPtr.h"
 #  include "nsIObserver.h"
 #  include "nsISupports.h"
 #  include "nsITimer.h"
 
+class AudioDeviceInfo;
 class nsIPrincipal;
 
 namespace mozilla {
@@ -42,6 +41,8 @@ class MediaMemoryInfo;
 
 class AbstractThread;
 class DOMMediaStream;
+class DecoderBenchmark;
+class ProcessedMediaTrack;
 class FrameStatistics;
 class VideoFrameContainer;
 class MediaFormatReader;
@@ -49,13 +50,6 @@ class MediaDecoderStateMachine;
 struct MediaPlaybackEvent;
 
 enum class Visibility : uint8_t;
-
-// GetCurrentTime is defined in winbase.h as zero argument macro forwarding to
-// GetTickCount() and conflicts with MediaDecoder::GetCurrentTime
-// implementation.
-#  ifdef GetCurrentTime
-#    undef GetCurrentTime
-#  endif
 
 struct MOZ_STACK_CLASS MediaDecoderInit {
   MediaDecoderOwner* const mOwner;
@@ -125,6 +119,10 @@ class MediaDecoder : public DecoderDoctorLifeLogger<MediaDecoder> {
   // Return the principal of the current URI being played or downloaded.
   virtual already_AddRefed<nsIPrincipal> GetCurrentPrincipal() = 0;
 
+  // Return true if the loading of this resource required cross-origin
+  // redirects.
+  virtual bool HadCrossOriginRedirects() = 0;
+
   // Return the time position in the video stream being
   // played measured in seconds.
   virtual double GetCurrentTime();
@@ -156,33 +154,42 @@ class MediaDecoder : public DecoderDoctorLifeLogger<MediaDecoder> {
   void SetLooping(bool aLooping);
 
   // Set the given device as the output device.
-  RefPtr<GenericPromise> SetSink(AudioDeviceInfo* aSink);
+  RefPtr<GenericPromise> SetSink(AudioDeviceInfo* aSinkDevice);
 
   bool GetMinimizePreroll() const { return mMinimizePreroll; }
 
+  // When we enable delay seek mode, media decoder won't actually ask MDSM to do
+  // seeking. During this period, we would store the latest seeking target and
+  // perform the seek to that target when we leave the mode. If we have any
+  // delayed seeks stored `IsSeeking()` will return true. E.g. During delay
+  // seeking mode, if we get seek target to 5s, 10s, 7s. When we stop delaying
+  // seeking, we would only seek to 7s.
+  void SetDelaySeekMode(bool aShouldDelaySeek);
+
   // All MediaStream-related data is protected by mReentrantMonitor.
   // We have at most one DecodedStreamData per MediaDecoder. Its stream
-  // is used as the input for each ProcessedMediaStream created by calls to
+  // is used as the input for each ProcessedMediaTrack created by calls to
   // captureStream(UntilEnded). Seeking creates a new source stream, as does
   // replaying after the input as ended. In the latter case, the new source is
   // not connected to streams created by captureStreamUntilEnded.
 
-  // Sets the CORSMode for MediaStreamTracks that will be created by us.
-  void SetOutputStreamCORSMode(CORSMode aCORSMode);
-
-  // Add an output stream. All decoder output will be sent to the stream.
-  // The stream is initially blocked. The decoder is responsible for unblocking
-  // it while it is playing back.
-  void AddOutputStream(DOMMediaStream* aStream);
-  // Remove an output stream added with AddOutputStream.
-  void RemoveOutputStream(DOMMediaStream* aStream);
-
-  // Set the TrackID to be used as the initial id by the next DecodedStream
-  // sink.
-  void SetNextOutputStreamTrackID(TrackID aNextTrackID);
-  // Get the next TrackID to be allocated by DecodedStream,
-  // or the last set TrackID if there is no DecodedStream sink.
-  TrackID GetNextOutputStreamTrackID();
+  // Turn output capturing of this decoder on or off. If it is on, the
+  // MediaDecoderStateMachine's media sink will only play after output tracks
+  // have been set. This is to ensure that it doesn't skip over any data
+  // while the owner has intended to capture the full output, thus missing to
+  // capture some of it. The owner of the MediaDecoder is responsible for adding
+  // output tracks in a timely fashion while the output is captured.
+  void SetOutputCaptured(bool aCaptured);
+  // Add an output track. All decoder output for the track's media type will be
+  // sent to the track.
+  // Note that only one audio track and one video track is supported by
+  // MediaDecoder at this time. Passing in more of one type, or passing in a
+  // type that metadata says we are not decoding, is an error.
+  void AddOutputTrack(RefPtr<ProcessedMediaTrack> aTrack);
+  // Remove an output track added with AddOutputTrack.
+  void RemoveOutputTrack(const RefPtr<ProcessedMediaTrack>& aTrack);
+  // Update the principal for any output tracks.
+  void SetOutputTracksPrincipal(const RefPtr<nsIPrincipal>& aPrincipal);
 
   // Return the duration of the video in seconds.
   virtual double GetDuration();
@@ -226,14 +233,15 @@ class MediaDecoder : public DecoderDoctorLifeLogger<MediaDecoder> {
   // media element when it is sent to the bfcache, or when we need
   // to throttle the download. Call on the main thread only. This can
   // be called multiple times, there's an internal "suspend count".
-  virtual void Suspend() {}
+  // When it is called the internal system audio resource are cleaned up.
+  virtual void Suspend();
 
   // Resume any media downloads that have been suspended. Called by the
   // media element when it is restored from the bfcache, or when we need
   // to stop throttling the download. Call on the main thread only.
   // The download will only actually resume once as many Resume calls
   // have been made as Suspend calls.
-  virtual void Resume() {}
+  virtual void Resume();
 
   // Moves any existing channel loads into or out of background. Background
   // loads don't block the load event. This is called when we stop or restart
@@ -308,9 +316,10 @@ class MediaDecoder : public DecoderDoctorLifeLogger<MediaDecoder> {
   // Returns true if the decoder can't participate in suspend-video-decoder.
   bool HasSuspendTaint() const;
 
-  void SetCloningVisually(bool aIsCloningVisually);
-
   void UpdateVideoDecodeMode();
+
+  void SetSecondaryVideoContainer(
+      RefPtr<VideoFrameContainer> aSecondaryVideoContainer);
 
   void SetIsBackgroundVideoDecodingAllowed(bool aAllowed);
 
@@ -389,24 +398,24 @@ class MediaDecoder : public DecoderDoctorLifeLogger<MediaDecoder> {
 
   virtual MediaDecoderOwner::NextFrameStatus NextFrameBufferedStatus();
 
-  // Returns a string describing the state of the media player internal
-  // data. Used for debugging purposes.
-  virtual void GetMozDebugReaderData(nsACString& aString);
+  RefPtr<GenericPromise> RequestDebugInfo(dom::MediaDecoderDebugInfo& aInfo);
 
-  RefPtr<GenericPromise> DumpDebugInfo();
-
-  using DebugInfoPromise = MozPromise<nsCString, bool, true>;
-  RefPtr<DebugInfoPromise> RequestDebugInfo();
+  void GetDebugInfo(dom::MediaDecoderDebugInfo& aInfo);
 
  protected:
   virtual ~MediaDecoder();
 
   // Called when the first audio and/or video from the media file has been
   // loaded by the state machine. Call on the main thread only.
-  virtual void FirstFrameLoaded(nsAutoPtr<MediaInfo> aInfo,
+  virtual void FirstFrameLoaded(UniquePtr<MediaInfo> aInfo,
                                 MediaDecoderEventVisibility aEventVisibility);
 
   void SetStateMachineParameters();
+
+  // Called when MediaDecoder shutdown is finished. Subclasses use this to clean
+  // up internal structures, and unregister potential shutdown blockers when
+  // they're done.
+  virtual void ShutdownInternal();
 
   bool IsShutdown() const;
 
@@ -470,8 +479,6 @@ class MediaDecoder : public DecoderDoctorLifeLogger<MediaDecoder> {
   static constexpr auto DEFAULT_NEXT_FRAME_AVAILABLE_BUFFERED =
       media::TimeUnit::FromMicroseconds(250000);
 
-  virtual nsCString GetDebugInfo();
-
  private:
   // Called when the owner's activity changed.
   void NotifyCompositor();
@@ -483,6 +490,11 @@ class MediaDecoder : public DecoderDoctorLifeLogger<MediaDecoder> {
   void OnMediaNotSeekable() { mMediaSeekable = false; }
 
   void OnNextFrameStatus(MediaDecoderOwner::NextFrameStatus);
+
+  void OnSecondaryVideoContainerInstalled(
+      const RefPtr<VideoFrameContainer>& aSecondaryContainer);
+
+  void OnStoreDecoderBenchmark(const VideoInfo& aInfo);
 
   void FinishShutdown();
 
@@ -503,7 +515,7 @@ class MediaDecoder : public DecoderDoctorLifeLogger<MediaDecoder> {
  protected:
   void NotifyReaderDataArrived();
   void DiscardOngoingSeekIfExists();
-  virtual void CallSeek(const SeekTarget& aTarget);
+  void CallSeek(const SeekTarget& aTarget);
 
   // Called by MediaResource when the principal of the resource has
   // changed. Called on main thread only.
@@ -526,6 +538,9 @@ class MediaDecoder : public DecoderDoctorLifeLogger<MediaDecoder> {
   // Counters related to decode and presentation of frames.
   const RefPtr<FrameStatistics> mFrameStats;
 
+  // Store a benchmark of the decoder based on FrameStatistics.
+  RefPtr<DecoderBenchmark> mDecoderBenchmark;
+
   RefPtr<VideoFrameContainer> mVideoFrameContainer;
 
   // True if the decoder has been directed to minimize its preroll before
@@ -546,7 +561,7 @@ class MediaDecoder : public DecoderDoctorLifeLogger<MediaDecoder> {
 
   // Stores media info, including info of audio tracks and video tracks, should
   // only be accessed from main thread.
-  nsAutoPtr<MediaInfo> mInfo;
+  UniquePtr<MediaInfo> mInfo;
 
   // Tracks the visibility status of owner element's document.
   bool mIsDocumentVisible;
@@ -563,10 +578,6 @@ class MediaDecoder : public DecoderDoctorLifeLogger<MediaDecoder> {
   // True if the decoder has a suspend taint - meaning suspend-video-decoder is
   // disabled.
   bool mHasSuspendTaint;
-
-  // True if the decoder is sending video to a secondary container, and should
-  // not suspend the decoder.
-  bool mIsCloningVisually;
 
   MediaDecoderOwner::NextFrameStatus mNextFrameStatus =
       MediaDecoderOwner::NEXT_FRAME_UNAVAILABLE;
@@ -585,6 +596,8 @@ class MediaDecoder : public DecoderDoctorLifeLogger<MediaDecoder> {
   MediaEventListener mOnWaitingForKey;
   MediaEventListener mOnDecodeWarning;
   MediaEventListener mOnNextFrameStatus;
+  MediaEventListener mOnSecondaryVideoContainerInstalled;
+  MediaEventListener mOnStoreDecoderBenchmark;
 
   // True if we have suspended video decoding.
   bool mIsVideoDecodingSuspended = false;
@@ -615,6 +628,24 @@ class MediaDecoder : public DecoderDoctorLifeLogger<MediaDecoder> {
 
   Canonical<bool> mLooping;
 
+  // The device used with SetSink, or nullptr if no explicit device has been
+  // set.
+  Canonical<RefPtr<AudioDeviceInfo>> mSinkDevice;
+
+  // Set if the decoder is sending video to a secondary container. While set we
+  // should not suspend the decoder.
+  Canonical<RefPtr<VideoFrameContainer>> mSecondaryVideoContainer;
+
+  // Whether this MediaDecoder's output is captured. When captured, all decoded
+  // data must be played out through mOutputTracks.
+  Canonical<bool> mOutputCaptured;
+
+  // Tracks that, if set, will get data routed through them.
+  Canonical<CopyableTArray<RefPtr<ProcessedMediaTrack>>> mOutputTracks;
+
+  // PrincipalHandle to be used when feeding data into mOutputTracks.
+  Canonical<PrincipalHandle> mOutputPrincipal;
+
   // Media duration set explicitly by JS. At present, this is only ever present
   // for MSE.
   Maybe<double> mExplicitDuration;
@@ -630,7 +661,7 @@ class MediaDecoder : public DecoderDoctorLifeLogger<MediaDecoder> {
 
   // True if the media is same-origin with the element. Data can only be
   // passed to MediaStreams when this is true.
-  Canonical<bool> mSameOriginMedia;
+  bool mSameOriginMedia;
 
   // We can allow video decoding in background when we match some special
   // conditions, eg. when the cursor is hovering over the tab. This observer is
@@ -641,16 +672,35 @@ class MediaDecoder : public DecoderDoctorLifeLogger<MediaDecoder> {
   // background.
   bool mIsBackgroundVideoDecodingAllowed;
 
+  // True if we want to delay seeking, and and save the latest seeking target to
+  // resume to when we stop delaying seeking.
+  bool mShouldDelaySeek = false;
+  Maybe<SeekTarget> mDelayedSeekTarget;
+
  public:
   AbstractCanonical<double>* CanonicalVolume() { return &mVolume; }
   AbstractCanonical<bool>* CanonicalPreservesPitch() {
     return &mPreservesPitch;
   }
   AbstractCanonical<bool>* CanonicalLooping() { return &mLooping; }
-  AbstractCanonical<PlayState>* CanonicalPlayState() { return &mPlayState; }
-  AbstractCanonical<bool>* CanonicalSameOriginMedia() {
-    return &mSameOriginMedia;
+  AbstractCanonical<RefPtr<AudioDeviceInfo>>* CanonicalSinkDevice() {
+    return &mSinkDevice;
   }
+  AbstractCanonical<RefPtr<VideoFrameContainer>>*
+  CanonicalSecondaryVideoContainer() {
+    return &mSecondaryVideoContainer;
+  }
+  AbstractCanonical<bool>* CanonicalOutputCaptured() {
+    return &mOutputCaptured;
+  }
+  AbstractCanonical<CopyableTArray<RefPtr<ProcessedMediaTrack>>>*
+  CanonicalOutputTracks() {
+    return &mOutputTracks;
+  }
+  AbstractCanonical<PrincipalHandle>* CanonicalOutputPrincipal() {
+    return &mOutputPrincipal;
+  }
+  AbstractCanonical<PlayState>* CanonicalPlayState() { return &mPlayState; }
 
  private:
   // Notify owner when the audible state changed

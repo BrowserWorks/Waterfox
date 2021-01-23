@@ -1,0 +1,128 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "Dewin Cyfrif">
+<!ENTITY accountWizard.size "width: 40em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!ENTITY accountSetupInfo2.label "Er mwyn derbyn negeseuon, rhaid yn gyntaf, greu cyfrif.">
+<!ENTITY accountTypeTitle.label "Creu Cyfrif Newydd">
+<!ENTITY accountTypeDesc2.label "Bydd y Dewin yn casglu'r wybodaeth angenrheidiol i greu cyfrif E-bost neu Grŵp Newyddion. Os nad oes gennych y wybodaeth angenrheidiol, cysylltwch â'ch Gweinyddwr System neu Ddarparwr Gwasanaeth Rhyngrwyd.">
+<!ENTITY accountTypeDirections.label "Dewiswch y math o gyfrif i'w greu:">
+<!ENTITY accountTypeMail.label "Cyfrif e-bost">
+<!ENTITY accountTypeMail.accesskey "e">
+<!ENTITY accountTypeNews.label "Cyfrif Grŵp Newyddion">
+<!ENTITY accountTypeNews.accesskey "G">
+
+<!-- LOCALIZATION NOTE(accountTypeMovemail.label): do not translate 'Movemail' -->
+<!ENTITY accountTypeMovemail.label "Unix Mailspool (Movemail)">
+<!ENTITY accountTypeMovemail.accesskey "U">
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "Hunaniaeth">
+<!ENTITY identityDesc.label "Mae gan bob cyfrif enw, sef y wybodaeth sy'n eich enwi i eraill sy'n derbyn negeseuon gennych.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "Rhowch yr enw yr hoffech iddo ymddangos ym maes &quot;Oddi wrth&quot; y negeseuon fyddwch yn eu hanfon">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(er enghraifft., &quot;John Jones&quot;).">
+<!ENTITY fullnameLabel.label "Eich Enw:">
+<!ENTITY fullnameLabel.accesskey "E">
+
+<!ENTITY emailLabel.label "Cyfeiriad E-bost:">
+<!ENTITY emailLabel.accesskey "b">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "Gwybodaeth Gweinydd Derbyn">
+<!ENTITY incomingServerTypeDesc.label "Dewiswch y math o weinydd derbyn rydych yn ei ddefnyddio.">
+<!-- LOCALIZATION NOTE (imapType.label) : Do not translate "IMAP" in below line -->
+<!ENTITY imapType.label "IMAP">
+<!ENTITY imapType.accesskey "I">
+<!-- LOCALIZATION NOTE (popType.label) : Do not translate "POP" in below line -->
+<!ENTITY popType.label "POP">
+<!ENTITY popType.accesskey "P">
+<!ENTITY leaveMsgsOnSrvr.label "Gadael negeseuon ar y gweinydd">
+<!ENTITY leaveMsgsOnSrvr.accesskey "a">
+<!ENTITY portNum.label "Porth:">
+<!ENTITY portNum.accesskey "P">
+<!ENTITY defaultPortLabel.label "Rhagosodiad:">
+<!ENTITY defaultPortValue.label "">
+<!-- LOCALIZATION NOTE (incomingServerNameDesc.label) : Do not translate "&quot;pop.example.net&quot;" in below line -->
+<!ENTITY incomingServer.description "Rhowch enw eich gweinydd derbyn (e.e., &quot;ebost.esiampl.net&quot;).">
+<!ENTITY incomingServer.label "Gweinydd Derbyn:">
+<!ENTITY incomingServer.accesskey "G">
+<!-- LOCALIZATION NOTE (incomingUsername.description) : do not translate "&quot;jsmith&quot;" in below line -->
+<!ENTITY incomingUsername.description "Rhowch yr enw derbyn roddwyd i chi gan eich darparwr e-bost (e.e. &quot;jjones&quot;).">
+<!ENTITY incomingUsername.label "Enw Defnyddiwr:">
+<!ENTITY incomingUsername.accesskey "D">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Rhowch enw eich gweinydd newyddion (NNTP). (e.e., &quot;news.esiampl.net&quot;).">
+<!ENTITY newsServerLabel.label "Gweinydd Grŵp Newyddion:">
+<!ENTITY newsServerLabel.accesskey "G">
+
+<!-- Entities for Outgoing Server page -->
+
+<!ENTITY outgoingTitle.label "Gwybodaeth Gweinydd Anfon">
+<!-- LOCALIZATION NOTE (outgoingServer.description) : Do not translate "SMTP" and "&quot;smtp.example.net&quot;" in below line -->
+<!ENTITY outgoingServer.description "Rhowch enw&apos;r gweinydd anfon rhoddwyd i chi gan eich darparwr e-bost (SMTP) (e.e, &quot;smtp.esiampl.net&quot;).">
+<!ENTITY outgoingServer.label "Gweinydd Anfon:">
+<!ENTITY outgoingServer.accesskey "A">
+<!ENTITY outgoingUsername.description "Rhowch yr enw defnyddiwr anfon rhoddwyd i chi gan eich darparwr e-bost (fel rheol yr un a'ch enw defnyddiwr derbyn).">
+<!ENTITY outgoingUsername.label "Enw Defnyddiwr Anfon:">
+<!ENTITY outgoingUsername.accesskey "A">
+
+<!-- LOCALIZATION NOTE (modifyOutgoing.suffix) : This string will be appended after each of
+     haveSmtp1.suffix3, haveSmtp2.suffix3, haveSmtp3.suffix3 .
+-->
+<!ENTITY modifyOutgoing.suffix "Mae modd newid y gweinyddion anfon yn y gosodiadau cyfrif.">
+<!-- LOCALIZATION NOTE (haveSmtp1.prefix and haveSmtp1.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp1.prefix and haveSmtp1.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp1.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp1.prefix "Bydd eich gweinydd anfon cyfredol (SMTP), &quot;">
+<!ENTITY haveSmtp1.suffix3 "&quot;, yn cael ei ddefnyddio.">
+<!-- LOCALIZATION NOTE (haveSmtp2.prefix and haveSmtp2.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp2.prefix and haveSmtp2.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp2.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp2.prefix "Bydd eich gweinydd anfon cyfredol (SMTP), &quot;">
+<!ENTITY haveSmtp2.suffix3 "&quot;, yn cael ei ddefnyddio.">
+<!-- LOCALIZATION NOTE (haveSmtp3.prefix and haveSmtp3.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp3.prefix and haveSmtp3.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp3.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp3.prefix "Mae eich gweinydd anfon (SMTP), &quot;">
+<!ENTITY haveSmtp3.suffix3 "&quot;, yr un peth â&apos;ch gweinydd derbyn, bydd eich enw defnyddiwr i mewn yn cael ei ddefnyddio i gael mynediad ato.">
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "Enw Cyfrif">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Rhowch yr enw yr hoffech gyfeirio at y cyfrif. (e.e. &quot;Cyfrif Gwaith&quot;, &quot;Cyfrif Cartref&quot; neu &quot;Cyfrif Newyddion&quot;).">
+<!ENTITY accnameLabel.label "Enw Cyfrif:">
+<!ENTITY accnameLabel.accesskey "E">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "Llongyfarchiadau!">
+<!ENTITY completionText.label "Rydych wedi rhoi'r holl wybodaeth angenrheidiol ar gyfer creu'r cyfrif.">
+<!ENTITY serverTypePrefix.label "Math o Weinydd Derbyn:">
+<!ENTITY serverNamePrefix.label "Enw'r Gweinydd Derbyn:">
+<!ENTITY smtpServerNamePrefix.label "Enw'r Gweinydd Anfon (SMTP):">
+<!ENTITY newsServerNamePrefix.label "Enw Gweinydd Grwpiau Newyddion (NNTP):">
+<!ENTITY downloadOnLogin.label "Llwytho negeseuon i lawr nawr">
+<!ENTITY downloadOnLogin.accesskey "L">
+<!ENTITY deferStorageDesc.label "Dad-diciwch y blwch ticio i gadw e-byst ar gyfer y cyfrif hwn yn ei gyfeiriadur ei hun. Bydd hynny'n gwneud i'r cyfrif ymddangos fel cyfrif lefel uchel. Fel arall, bydd yn rhan o'r cyfrif Derbyn Eang Ffolderi Lleol.">
+<!ENTITY deferStorage.label "Defnyddiwch Flwch Derbyn Eang (cadw e-byst mewn Ffolderi Lleol)">
+<!ENTITY deferStorage.accesskey "D">
+<!ENTITY clickFinish.label "Cliciwch Gorffen i gadw'r gosodiadau a gadael y Dewin Cyfrif.">
+<!ENTITY clickFinish.labelMac "Cliciwch Gorffen i gadw'r gosodiadau a gadael y Dewin Cyfrif.">

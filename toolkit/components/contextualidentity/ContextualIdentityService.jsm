@@ -439,7 +439,10 @@ _ContextualIdentityService.prototype = {
 
   getPublicIdentities() {
     this.ensureDataReady();
-    return Cu.cloneInto(this._identities.filter(info => info.public), {});
+    return Cu.cloneInto(
+      this._identities.filter(info => info.public),
+      {}
+    );
   },
 
   getPrivateIdentity(name) {
@@ -555,8 +558,8 @@ _ContextualIdentityService.prototype = {
       }
 
       let tabbrowser = win.gBrowser;
-      for (let i = tabbrowser.tabContainer.children.length - 1; i >= 0; --i) {
-        let tab = tabbrowser.tabContainer.children[i];
+      for (let i = tabbrowser.tabs.length - 1; i >= 0; --i) {
+        let tab = tabbrowser.tabs[i];
         if (
           tab.hasAttribute("usercontextid") &&
           (!userContextId ||
@@ -606,7 +609,7 @@ _ContextualIdentityService.prototype = {
     // Collect the userContextIds currently used by any stored cookie.
     let cookiesUserContextIds = new Set();
 
-    for (let cookie of Services.cookies.enumerator) {
+    for (let cookie of Services.cookies.cookies) {
       // Skip any userContextIds that should not be cleared.
       if (
         cookie.originAttributes.userContextId >= minUserContextId &&

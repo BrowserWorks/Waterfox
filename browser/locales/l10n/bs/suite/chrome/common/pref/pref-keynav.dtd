@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.keyNav.title "Navigacija pomoću tastature">
+<!ENTITY tabNavigationBehavior.label "Navigacija pomoću tab tipke">
+<!ENTITY tabNavigationLinks.label "Linkovi">
+<!ENTITY tabNavigationForms.label "Tipke, radio tipke, polja potvrde i liste izbora">
+<!ENTITY tabNavigationTextboxes.label "Napomena: polja za tekst i regije s mogućnošću skrolanja su uvijek dio redoslijeda tabiranja.">
+<!ENTITY tabNavigationDesc.label "Kada pritisnete Tab ili Shift + Tab, pomjerite se između:">
+<!ENTITY accessibilityBrowseWithCaret.label "Pretražite sa Caret">
+<!ENTITY browseWithCaretDesc.label "Caret pretraživanje omogućuje vam navigaciju o izbor unutar stranica koristeći kursor da pomjerite vidljivu sliku.">
+<!ENTITY browseWithCaretUse.label "Koristite caret pretraživanje">
+<!ENTITY browseWithCaretShortCut.label "Koristite F7 prečicu da se prebacite na caret pretraživanje">
+<!ENTITY browseWithCaretWarn.label "Upozori me prije uključivanja caret pretraživanja">

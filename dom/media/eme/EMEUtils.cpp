@@ -28,12 +28,12 @@ ArrayData GetArrayBufferViewOrArrayBufferData(
   JS::AutoCheckCannotGC nogc;
   if (aBufferOrView.IsArrayBuffer()) {
     const dom::ArrayBuffer& buffer = aBufferOrView.GetAsArrayBuffer();
-    buffer.ComputeLengthAndData();
+    buffer.ComputeState();
     return ArrayData(buffer.Data(), buffer.Length());
   } else if (aBufferOrView.IsArrayBufferView()) {
     const dom::ArrayBufferView& bufferview =
         aBufferOrView.GetAsArrayBufferView();
-    bufferview.ComputeLengthAndData();
+    bufferview.ComputeState();
     return ArrayData(bufferview.Data(), bufferview.Length());
   }
   return ArrayData(nullptr, 0);
@@ -49,14 +49,6 @@ void CopyArrayBufferViewOrArrayBufferData(
     return;
   }
   aOutData.AppendElements(data.mData, data.mLength);
-}
-
-void CopyArrayBufferViewOrArrayBufferData(const dom::ArrayBuffer& aBuffer,
-                                          nsTArray<uint8_t>& aOutData) {
-  JS::AutoCheckCannotGC nogc;
-  aBuffer.ComputeLengthAndData();
-  aOutData.Clear();
-  aOutData.AppendElements(aBuffer.Data(), aBuffer.Length());
 }
 
 bool IsClearkeyKeySystem(const nsAString& aKeySystem) {

@@ -9,7 +9,9 @@
  */
 
 add_task(async function() {
-  const { tab, monitor } = await initNetMonitor(API_CALLS_URL);
+  const { tab, monitor } = await initNetMonitor(API_CALLS_URL, {
+    requestCount: 1,
+  });
   info("Starting test... ");
 
   const { document, store, windowRequire } = monitor.panelWin;
@@ -35,7 +37,7 @@ add_task(async function() {
     verifyRequestItemTarget(
       document,
       getDisplayedRequests(store.getState()),
-      getSortedRequests(store.getState()).get(index),
+      getSortedRequests(store.getState())[index],
       "GET",
       uri
     );

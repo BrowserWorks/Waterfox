@@ -10,6 +10,8 @@
  * <copied from="test_authentication.js"/>
  */
 
+"use strict";
+
 const { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
 
 const FLAG_RETURN_FALSE = 1 << 0;
@@ -29,12 +31,7 @@ AuthPrompt2.prototype = {
   },
   hostCred: { user: "host", pass: "guest", realmExpected: "extern", flags: 0 },
 
-  QueryInterface: function authprompt2_qi(iid) {
-    if (iid.equals(Ci.nsISupports) || iid.equals(Ci.nsIAuthPrompt2)) {
-      return this;
-    }
-    throw Cr.NS_ERROR_NO_INTERFACE;
-  },
+  QueryInterface: ChromeUtils.generateQI(["nsIAuthPrompt2"]),
 
   promptAuth: function ap2_promptAuth(channel, encryptionLevel, authInfo) {
     try {
@@ -131,12 +128,7 @@ function Cancelable(onCancelFunc) {
   this.onCancelFunc = onCancelFunc;
 }
 Cancelable.prototype = {
-  QueryInterface: function cancelable_qi(iid) {
-    if (iid.equals(Ci.nsISupports) || iid.equals(Ci.nsICancelable)) {
-      return this;
-    }
-    throw Cr.NS_ERROR_NO_INTERFACE;
-  },
+  QueryInterface: ChromeUtils.generateQI(["nsICancelable"]),
   cancel: function cancel() {
     try {
       this.onCancelFunc();
@@ -151,17 +143,12 @@ function Requestor(proxyFlags, hostFlags) {
   this.hostFlags = hostFlags;
 }
 Requestor.prototype = {
-  QueryInterface: function requestor_qi(iid) {
-    if (iid.equals(Ci.nsISupports) || iid.equals(Ci.nsIInterfaceRequestor)) {
-      return this;
-    }
-    throw Cr.NS_ERROR_NO_INTERFACE;
-  },
+  QueryInterface: ChromeUtils.generateQI(["nsIInterfaceRequestor"]),
 
   getInterface: function requestor_gi(iid) {
     if (iid.equals(Ci.nsIAuthPrompt)) {
       dump("authprompt1 not implemented\n");
-      throw Cr.NS_ERROR_NO_INTERFACE;
+      throw Components.Exception("", Cr.NS_ERROR_NO_INTERFACE);
     }
     if (iid.equals(Ci.nsIAuthPrompt2)) {
       try {
@@ -174,7 +161,7 @@ Requestor.prototype = {
         do_throw(e);
       }
     }
-    throw Cr.NS_ERROR_NO_INTERFACE;
+    throw Components.Exception("", Cr.NS_ERROR_NO_INTERFACE);
   },
 
   prompt2: null,
@@ -210,7 +197,7 @@ var listener = {
       do_throw("Unexpected exception: " + e);
     }
 
-    throw Cr.NS_ERROR_ABORT;
+    throw Components.Exception("", Cr.NS_ERROR_ABORT);
   },
 
   onDataAvailable: function test_ODA() {

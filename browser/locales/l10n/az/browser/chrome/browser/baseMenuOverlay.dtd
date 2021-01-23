@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProduct2.label      "&brandShorterName; Haqqında">
+<!ENTITY aboutProduct2.accesskey  "H">
+
+<!ENTITY preferencesCmdMac.label        "Seçənəklər…">
+
+<!ENTITY servicesMenuMac.label          "Xidmətlər">
+
+<!ENTITY hideThisAppCmdMac2.label       "&brandShorterName; gizlət">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Digərlərini gizlə">
+
+<!ENTITY showAllAppsCmdMac.label        "Hamısını göstər">
+
+<!ENTITY touchBarCmdMac.label           "Touch Bar-ı fərdiləşdir…">

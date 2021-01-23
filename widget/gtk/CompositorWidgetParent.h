@@ -7,6 +7,7 @@
 #define widget_gtk_CompositorWidgetParent_h
 
 #include "GtkCompositorWidget.h"
+#include "mozilla/VsyncDispatcher.h"
 #include "mozilla/widget/PCompositorWidgetParent.h"
 
 namespace mozilla {
@@ -26,8 +27,6 @@ class CompositorWidgetParent final : public PCompositorWidgetParent,
 
   mozilla::ipc::IPCResult RecvNotifyClientSizeChanged(
       const LayoutDeviceIntSize& aClientSize) override;
-
-  mozilla::ipc::IPCResult RecvRequestsUpdatingEGLSurface() override;
 
  private:
   RefPtr<VsyncObserver> mVsyncObserver;

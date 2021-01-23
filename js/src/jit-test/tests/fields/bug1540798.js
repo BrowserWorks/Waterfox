@@ -1,5 +1,3 @@
-// |jit-test| --enable-experimental-fields
-
 try { evaluate(`
 class constructor  { get;                                           } // Long line is long
 // Long line XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -13,4 +11,4 @@ function test() {
 }
 test();
 `); } catch(exc) {}
-uneval(this);
+constructor.toString();

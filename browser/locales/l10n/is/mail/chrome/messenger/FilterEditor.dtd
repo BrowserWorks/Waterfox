@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Síureglur">
+<!ENTITY filterEditorDialog.dimensions "width: 100ch;">
+<!ENTITY filterName.label "Nafn síu:">
+<!ENTITY filterName.accesskey "s">
+
+<!ENTITY junk.label "Ruslpóstur">
+<!ENTITY notJunk.label "Ekki ruslpóstur">
+
+<!ENTITY lowestPriorityCmd.label "Lægst">
+<!ENTITY lowPriorityCmd.label "Lágt">
+<!ENTITY normalPriorityCmd.label "Venjulegt">
+<!ENTITY highPriorityCmd.label "Hátt">
+<!ENTITY highestPriorityCmd.label "Hæst">
+
+<!ENTITY contextDesc.label "Beita síu þegar:">
+<!ENTITY contextIncomingMail.label "Næ í nýjan póst:">
+<!ENTITY contextIncomingMail.accesskey "æ">
+<!ENTITY contextManual.label "Keyrt handvirkt">
+<!ENTITY contextManual.accesskey "r">
+<!ENTITY contextBeforeCls.label "Sía fyrir ruslpóstflokkun">
+<!ENTITY contextAfterCls.label "Sía eftir ruslpóstflokkun">
+<!ENTITY contextOutgoing.label "Eftir að sent er">
+<!ENTITY contextOutgoing.accesskey "s">
+<!ENTITY contextArchive.label "Setur í safn">
+<!ENTITY contextArchive.accesskey "a">
+
+<!ENTITY filterActionDesc.label "Framkvæma þessar aðgerðir:">
+<!ENTITY filterActionDesc.accesskey "F">
+
+<!ENTITY filterActionOrderWarning.label "Athugaðu: Síu aðgerðir verða keyrðar í annarri röð.">
+<!ENTITY filterActionOrder.label "Sjá keyrsluröð">
+
+<!-- New Style Filter Rule Actions -->
+<!ENTITY moveMessage.label "Færa póst í">
+<!ENTITY copyMessage.label "Afrita póst í">
+<!ENTITY forwardTo.label "Áframsenda póst á">
+<!ENTITY replyWithTemplate.label "Svara með sniðmáti">
+<!ENTITY markMessageRead.label "Merkja sem lesið">
+<!ENTITY markMessageUnread.label "Merkja sem ólesið">
+<!ENTITY markMessageStarred.label "Stjörnumerkja">
+<!ENTITY setPriority.label "Setja mikilvægi sem">
+<!ENTITY addTag.label "Flokka póst">
+<!ENTITY setJunkScore.label "Setja ruslpóstsstöðu sem">
+<!ENTITY deleteMessage.label "Eyða pósti">
+<!ENTITY deleteFromPOP.label "Eyða frá POP póstþjóni">
+<!ENTITY fetchFromPOP.label "Ná í frá POP póstþjóni">
+<!ENTITY ignoreThread.label "Hunsa umræðu">
+<!ENTITY ignoreSubthread.label "Hunsa undirumræðu">
+<!ENTITY watchThread.label "Fylgjast með umræðu">
+<!ENTITY stopExecution.label "Stöðva keyrslu síu">
+
+<!ENTITY addAction.tooltip "Bæta við nýrri aðgerð">
+<!ENTITY removeAction.tooltip "Fjarlægja þessa aðgerð">
+
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- Flex Attribute: https://developer.mozilla.org/docs/XUL/Attribute/flex -->
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">

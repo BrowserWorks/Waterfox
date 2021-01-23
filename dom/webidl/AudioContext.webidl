@@ -14,12 +14,20 @@ dictionary AudioContextOptions {
              float        sampleRate = 0;
 };
 
-[Pref="dom.webaudio.enabled",
- Constructor(optional AudioContextOptions contextOptions)]
-interface AudioContext : BaseAudioContext {
+dictionary AudioTimestamp {
+  double contextTime;
+  DOMHighResTimeStamp performanceTime;
+};
 
-    // Bug 1324545: readonly        attribute double outputLatency;
-    // Bug 1324545: AudioTimestamp                  getOutputTimestamp ();
+[Pref="dom.webaudio.enabled",
+ Exposed=Window]
+interface AudioContext : BaseAudioContext {
+    [Throws]
+    constructor(optional AudioContextOptions contextOptions = {});
+
+    readonly        attribute double               baseLatency;
+    readonly        attribute double               outputLatency;
+    AudioTimestamp                  getOutputTimestamp();
 
     [Throws]
     Promise<void> suspend();

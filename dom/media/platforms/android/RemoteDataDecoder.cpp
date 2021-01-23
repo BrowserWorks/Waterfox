@@ -2,17 +2,24 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "RemoteDataDecoder.h"
+
 #include "AndroidBridge.h"
 #include "AndroidDecoderModule.h"
-#include "JavaCallbacksSupport.h"
-#include "SimpleMap.h"
+#include "EMEDecoderModule.h"
 #include "GLImages.h"
+#include "JavaCallbacksSupport.h"
 #include "MediaData.h"
 #include "MediaInfo.h"
+#include "mozilla/java/CodecProxyWrappers.h"
+#include "mozilla/java/GeckoSurfaceWrappers.h"
+#include "mozilla/java/SampleWrappers.h"
+#include "mozilla/java/SampleBufferWrappers.h"
+#include "mozilla/java/SurfaceAllocatorWrappers.h"
+#include "SimpleMap.h"
 #include "VideoUtils.h"
 #include "VPXDecoder.h"
 
-#include "nsIGfxInfo.h"
 #include "nsPromiseFlatString.h"
 #include "nsThreadUtils.h"
 #include "prlog.h"
@@ -26,8 +33,6 @@
 
 using namespace mozilla;
 using namespace mozilla::gl;
-using namespace mozilla::java;
-using namespace mozilla::java::sdk;
 using media::TimeUnit;
 
 namespace mozilla {
@@ -36,7 +41,8 @@ namespace mozilla {
 // the Java codec (for rendering or not).
 class RenderOrReleaseOutput {
  public:
-  RenderOrReleaseOutput(CodecProxy::Param aCodec, Sample::Param aSample)
+  RenderOrReleaseOutput(java::CodecProxy::Param aCodec,
+                        java::Sample::Param aSample)
       : mCodec(aCodec), mSample(aSample) {}
 
   virtual ~RenderOrReleaseOutput() { ReleaseOutput(false); }
@@ -51,21 +57,23 @@ class RenderOrReleaseOutput {
   }
 
  private:
-  CodecProxy::GlobalRef mCodec;
-  Sample::GlobalRef mSample;
+  java::CodecProxy::GlobalRef mCodec;
+  java::Sample::GlobalRef mSample;
 };
 
 class RemoteVideoDecoder : public RemoteDataDecoder {
  public:
   // Render the output to the surface when the frame is sent
   // to compositor, or release it if not presented.
-  class CompositeListener : private RenderOrReleaseOutput,
-                            public VideoData::Listener {
+  class CompositeListener
+      : private RenderOrReleaseOutput,
+        public layers::SurfaceTextureImage::SetCurrentCallback {
    public:
-    CompositeListener(CodecProxy::Param aCodec, Sample::Param aSample)
+    CompositeListener(java::CodecProxy::Param aCodec,
+                      java::Sample::Param aSample)
         : RenderOrReleaseOutput(aCodec, aSample) {}
 
-    void OnSentToCompositor() override { ReleaseOutput(true); }
+    void operator()(void) override { ReleaseOutput(true); }
   };
 
   class InputInfo {
@@ -92,7 +100,7 @@ class RemoteVideoDecoder : public RemoteDataDecoder {
       mDecoder->UpdateInputStatus(aTimestamp, aProcessed);
     }
 
-    void HandleOutput(Sample::Param aSample,
+    void HandleOutput(java::Sample::Param aSample,
                       java::SampleBuffer::Param aBuffer) override {
       MOZ_ASSERT(!aBuffer, "Video sample should be bufferless");
       // aSample will be implicitly converted into a GlobalRef.
@@ -109,7 +117,8 @@ class RemoteVideoDecoder : public RemoteDataDecoder {
     RemoteVideoDecoder* mDecoder;
   };
 
-  RemoteVideoDecoder(const VideoInfo& aConfig, MediaFormat::Param aFormat,
+  RemoteVideoDecoder(const VideoInfo& aConfig,
+                     java::sdk::MediaFormat::Param aFormat,
                      const nsString& aDrmStubId, TaskQueue* aTaskQueue)
       : RemoteDataDecoder(MediaData::Type::VIDEO_DATA, aConfig.mMimeType,
                           aFormat, aDrmStubId, aTaskQueue),
@@ -117,19 +126,20 @@ class RemoteVideoDecoder : public RemoteDataDecoder {
 
   ~RemoteVideoDecoder() {
     if (mSurface) {
-      SurfaceAllocator::DisposeSurface(mSurface);
+      java::SurfaceAllocator::DisposeSurface(mSurface);
     }
   }
 
   RefPtr<InitPromise> Init() override {
-    BufferInfo::LocalRef bufferInfo;
-    if (NS_FAILED(BufferInfo::New(&bufferInfo)) || !bufferInfo) {
+    java::sdk::BufferInfo::LocalRef bufferInfo;
+    if (NS_FAILED(java::sdk::BufferInfo::New(&bufferInfo)) || !bufferInfo) {
       return InitPromise::CreateAndReject(NS_ERROR_OUT_OF_MEMORY, __func__);
     }
     mInputBufferInfo = bufferInfo;
 
-    mSurface = GeckoSurface::LocalRef(SurfaceAllocator::AcquireSurface(
-        mConfig.mImage.width, mConfig.mImage.height, false));
+    mSurface =
+        java::GeckoSurface::LocalRef(java::SurfaceAllocator::AcquireSurface(
+            mConfig.mImage.width, mConfig.mImage.height, false));
     if (!mSurface) {
       return InitPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_FATAL_ERR,
                                           __func__);
@@ -140,7 +150,7 @@ class RemoteVideoDecoder : public RemoteDataDecoder {
     // Register native methods.
     JavaCallbacksSupport::Init();
 
-    mJavaCallbacks = CodecProxy::NativeCallbacks::New();
+    mJavaCallbacks = java::CodecProxy::NativeCallbacks::New();
     if (!mJavaCallbacks) {
       return InitPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_FATAL_ERR,
                                           __func__);
@@ -148,7 +158,7 @@ class RemoteVideoDecoder : public RemoteDataDecoder {
     JavaCallbacksSupport::AttachNative(
         mJavaCallbacks, mozilla::MakeUnique<CallbacksSupport>(this));
 
-    mJavaDecoder = CodecProxy::Create(
+    mJavaDecoder = java::CodecProxy::Create(
         false,  // false indicates to create a decoder and true denotes encoder
         mFormat, mSurface, mJavaCallbacks, mDrmStubId);
     if (mJavaDecoder == nullptr) {
@@ -236,11 +246,12 @@ class RemoteVideoDecoder : public RemoteDataDecoder {
   // Param and LocalRef are only valid for the duration of a JNI method call.
   // Use GlobalRef as the parameter type to keep the Java object referenced
   // until running.
-  void ProcessOutput(Sample::GlobalRef&& aSample) {
+  void ProcessOutput(java::Sample::GlobalRef&& aSample) {
     if (!mTaskQueue->IsCurrentThreadIn()) {
-      nsresult rv = mTaskQueue->Dispatch(NewRunnableMethod<Sample::GlobalRef&&>(
-          "RemoteVideoDecoder::ProcessOutput", this,
-          &RemoteVideoDecoder::ProcessOutput, std::move(aSample)));
+      nsresult rv =
+          mTaskQueue->Dispatch(NewRunnableMethod<java::Sample::GlobalRef&&>(
+              "RemoteVideoDecoder::ProcessOutput", this,
+              &RemoteVideoDecoder::ProcessOutput, std::move(aSample)));
       MOZ_DIAGNOSTIC_ASSERT(NS_SUCCEEDED(rv));
       Unused << rv;
       return;
@@ -252,10 +263,10 @@ class RemoteVideoDecoder : public RemoteDataDecoder {
       return;
     }
 
-    UniquePtr<VideoData::Listener> releaseSample(
+    UniquePtr<layers::SurfaceTextureImage::SetCurrentCallback> releaseSample(
         new CompositeListener(mJavaDecoder, aSample));
 
-    BufferInfo::LocalRef info = aSample->Info();
+    java::sdk::BufferInfo::LocalRef info = aSample->Info();
     MOZ_ASSERT(info);
 
     int32_t flags;
@@ -278,25 +289,26 @@ class RemoteVideoDecoder : public RemoteDataDecoder {
 
     InputInfo inputInfo;
     ok = mInputInfos.Find(presentationTimeUs, inputInfo);
-    bool isEOS = !!(flags & MediaCodec::BUFFER_FLAG_END_OF_STREAM);
+    bool isEOS = !!(flags & java::sdk::MediaCodec::BUFFER_FLAG_END_OF_STREAM);
     if (!ok && !isEOS) {
       // Ignore output with no corresponding input.
       return;
     }
 
     if (ok && (size > 0 || presentationTimeUs >= 0)) {
-      RefPtr<layers::Image> img = new SurfaceTextureImage(
+      RefPtr<layers::Image> img = new layers::SurfaceTextureImage(
           mSurfaceHandle, inputInfo.mImageSize, false /* NOT continuous */,
           gl::OriginPos::BottomLeft, mConfig.HasAlpha());
+      img->AsSurfaceTextureImage()->RegisterSetCurrentCallback(
+          std::move(releaseSample));
 
       RefPtr<VideoData> v = VideoData::CreateFromImage(
           inputInfo.mDisplaySize, offset,
           TimeUnit::FromMicroseconds(presentationTimeUs),
-          TimeUnit::FromMicroseconds(inputInfo.mDurationUs), img,
-          !!(flags & MediaCodec::BUFFER_FLAG_SYNC_FRAME),
+          TimeUnit::FromMicroseconds(inputInfo.mDurationUs), img.forget(),
+          !!(flags & java::sdk::MediaCodec::BUFFER_FLAG_SYNC_FRAME),
           TimeUnit::FromMicroseconds(presentationTimeUs));
 
-      v->SetListener(std::move(releaseSample));
       RemoteDataDecoder::UpdateOutputStatus(std::move(v));
     }
 
@@ -306,7 +318,7 @@ class RemoteVideoDecoder : public RemoteDataDecoder {
   }
 
   const VideoInfo mConfig;
-  GeckoSurface::GlobalRef mSurface;
+  java::GeckoSurface::GlobalRef mSurface;
   AndroidSurfaceTextureHandle mSurfaceHandle;
   // Only accessed on reader's task queue.
   bool mIsCodecSupportAdaptivePlayback = false;
@@ -322,7 +334,8 @@ class RemoteVideoDecoder : public RemoteDataDecoder {
 
 class RemoteAudioDecoder : public RemoteDataDecoder {
  public:
-  RemoteAudioDecoder(const AudioInfo& aConfig, MediaFormat::Param aFormat,
+  RemoteAudioDecoder(const AudioInfo& aConfig,
+                     java::sdk::MediaFormat::Param aFormat,
                      const nsString& aDrmStubId, TaskQueue* aTaskQueue)
       : RemoteDataDecoder(MediaData::Type::AUDIO_DATA, aConfig.mMimeType,
                           aFormat, aDrmStubId, aTaskQueue) {
@@ -342,8 +355,8 @@ class RemoteAudioDecoder : public RemoteDataDecoder {
   }
 
   RefPtr<InitPromise> Init() override {
-    BufferInfo::LocalRef bufferInfo;
-    if (NS_FAILED(BufferInfo::New(&bufferInfo)) || !bufferInfo) {
+    java::sdk::BufferInfo::LocalRef bufferInfo;
+    if (NS_FAILED(java::sdk::BufferInfo::New(&bufferInfo)) || !bufferInfo) {
       return InitPromise::CreateAndReject(NS_ERROR_OUT_OF_MEMORY, __func__);
     }
     mInputBufferInfo = bufferInfo;
@@ -351,7 +364,7 @@ class RemoteAudioDecoder : public RemoteDataDecoder {
     // Register native methods.
     JavaCallbacksSupport::Init();
 
-    mJavaCallbacks = CodecProxy::NativeCallbacks::New();
+    mJavaCallbacks = java::CodecProxy::NativeCallbacks::New();
     if (!mJavaCallbacks) {
       return InitPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_FATAL_ERR,
                                           __func__);
@@ -359,8 +372,8 @@ class RemoteAudioDecoder : public RemoteDataDecoder {
     JavaCallbacksSupport::AttachNative(
         mJavaCallbacks, mozilla::MakeUnique<CallbacksSupport>(this));
 
-    mJavaDecoder =
-        CodecProxy::Create(false, mFormat, nullptr, mJavaCallbacks, mDrmStubId);
+    mJavaDecoder = java::CodecProxy::Create(false, mFormat, nullptr,
+                                            mJavaCallbacks, mDrmStubId);
     if (mJavaDecoder == nullptr) {
       return InitPromise::CreateAndReject(NS_ERROR_DOM_MEDIA_FATAL_ERR,
                                           __func__);
@@ -399,14 +412,15 @@ class RemoteAudioDecoder : public RemoteDataDecoder {
       mDecoder->UpdateInputStatus(aTimestamp, aProcessed);
     }
 
-    void HandleOutput(Sample::Param aSample,
+    void HandleOutput(java::Sample::Param aSample,
                       java::SampleBuffer::Param aBuffer) override {
       MOZ_ASSERT(aBuffer, "Audio sample should have buffer");
       // aSample will be implicitly converted into a GlobalRef.
       mDecoder->ProcessOutput(std::move(aSample), std::move(aBuffer));
     }
 
-    void HandleOutputFormatChanged(MediaFormat::Param aFormat) override {
+    void HandleOutputFormatChanged(
+        java::sdk::MediaFormat::Param aFormat) override {
       int32_t outputChannels = 0;
       aFormat->GetInteger(NS_LITERAL_STRING("channel-count"), &outputChannels);
       AudioConfig::ChannelLayout layout(outputChannels);
@@ -452,11 +466,12 @@ class RemoteAudioDecoder : public RemoteDataDecoder {
   // Param and LocalRef are only valid for the duration of a JNI method call.
   // Use GlobalRef as the parameter type to keep the Java object referenced
   // until running.
-  void ProcessOutput(Sample::GlobalRef&& aSample,
-                     SampleBuffer::GlobalRef&& aBuffer) {
+  void ProcessOutput(java::Sample::GlobalRef&& aSample,
+                     java::SampleBuffer::GlobalRef&& aBuffer) {
     if (!mTaskQueue->IsCurrentThreadIn()) {
       nsresult rv = mTaskQueue->Dispatch(
-          NewRunnableMethod<Sample::GlobalRef&&, SampleBuffer::GlobalRef&&>(
+          NewRunnableMethod<java::Sample::GlobalRef&&,
+                            java::SampleBuffer::GlobalRef&&>(
               "RemoteAudioDecoder::ProcessOutput", this,
               &RemoteAudioDecoder::ProcessOutput, std::move(aSample),
               std::move(aBuffer)));
@@ -474,12 +489,12 @@ class RemoteAudioDecoder : public RemoteDataDecoder {
 
     RenderOrReleaseOutput autoRelease(mJavaDecoder, aSample);
 
-    BufferInfo::LocalRef info = aSample->Info();
+    java::sdk::BufferInfo::LocalRef info = aSample->Info();
     MOZ_ASSERT(info);
 
     int32_t flags = 0;
     bool ok = NS_SUCCEEDED(info->Flags(&flags));
-    bool isEOS = !!(flags & MediaCodec::BUFFER_FLAG_END_OF_STREAM);
+    bool isEOS = !!(flags & java::sdk::MediaCodec::BUFFER_FLAG_END_OF_STREAM);
 
     int32_t offset;
     ok &= NS_SUCCEEDED(info->Offset(&offset));
@@ -551,10 +566,10 @@ already_AddRefed<MediaDataDecoder> RemoteDataDecoder::CreateAudioDecoder(
     const CreateDecoderParams& aParams, const nsString& aDrmStubId,
     CDMProxy* aProxy) {
   const AudioInfo& config = aParams.AudioConfig();
-  MediaFormat::LocalRef format;
+  java::sdk::MediaFormat::LocalRef format;
   NS_ENSURE_SUCCESS(
-      MediaFormat::CreateAudioFormat(config.mMimeType, config.mRate,
-                                     config.mChannels, &format),
+      java::sdk::MediaFormat::CreateAudioFormat(config.mMimeType, config.mRate,
+                                                config.mChannels, &format),
       nullptr);
 
   RefPtr<MediaDataDecoder> decoder =
@@ -569,8 +584,8 @@ already_AddRefed<MediaDataDecoder> RemoteDataDecoder::CreateVideoDecoder(
     const CreateDecoderParams& aParams, const nsString& aDrmStubId,
     CDMProxy* aProxy) {
   const VideoInfo& config = aParams.VideoConfig();
-  MediaFormat::LocalRef format;
-  NS_ENSURE_SUCCESS(MediaFormat::CreateVideoFormat(
+  java::sdk::MediaFormat::LocalRef format;
+  NS_ENSURE_SUCCESS(java::sdk::MediaFormat::CreateVideoFormat(
                         TranslateMimeType(config.mMimeType),
                         config.mImage.width, config.mImage.height, &format),
                     nullptr);
@@ -585,7 +600,7 @@ already_AddRefed<MediaDataDecoder> RemoteDataDecoder::CreateVideoDecoder(
 
 RemoteDataDecoder::RemoteDataDecoder(MediaData::Type aType,
                                      const nsACString& aMimeType,
-                                     MediaFormat::Param aFormat,
+                                     java::sdk::MediaFormat::Param aFormat,
                                      const nsString& aDrmStubId,
                                      TaskQueue* aTaskQueue)
     : mType(aType),
@@ -604,6 +619,7 @@ RefPtr<MediaDataDecoder::FlushPromise> RemoteDataDecoder::Flush() {
 
 RefPtr<MediaDataDecoder::FlushPromise> RemoteDataDecoder::ProcessFlush() {
   AssertOnTaskQueue();
+  MOZ_ASSERT(GetState() != State::SHUTDOWN);
 
   mDecodedData = DecodedData();
   UpdatePendingInputStatus(PendingOp::CLEAR);
@@ -635,8 +651,8 @@ RefPtr<MediaDataDecoder::DecodePromise> RemoteDataDecoder::Drain() {
     }
 
     SetState(State::DRAINING);
-    self->mInputBufferInfo->Set(0, 0, -1,
-                                MediaCodec::BUFFER_FLAG_END_OF_STREAM);
+    self->mInputBufferInfo->Set(
+        0, 0, -1, java::sdk::MediaCodec::BUFFER_FLAG_END_OF_STREAM);
     mSession = mJavaDecoder->Input(nullptr, self->mInputBufferInfo, nullptr);
     return p;
   });
@@ -668,7 +684,7 @@ RefPtr<ShutdownPromise> RemoteDataDecoder::ProcessShutdown() {
   return ShutdownPromise::CreateAndResolve(true, __func__);
 }
 
-static CryptoInfo::LocalRef GetCryptoInfoFromSample(
+static java::sdk::CryptoInfo::LocalRef GetCryptoInfoFromSample(
     const MediaRawData* aSample) {
   auto& cryptoObj = aSample->mCrypto;
 
@@ -676,29 +692,34 @@ static CryptoInfo::LocalRef GetCryptoInfoFromSample(
     return nullptr;
   }
 
-  CryptoInfo::LocalRef cryptoInfo;
-  nsresult rv = CryptoInfo::New(&cryptoInfo);
+  java::sdk::CryptoInfo::LocalRef cryptoInfo;
+  nsresult rv = java::sdk::CryptoInfo::New(&cryptoInfo);
   NS_ENSURE_SUCCESS(rv, nullptr);
 
   uint32_t numSubSamples = std::min<uint32_t>(
       cryptoObj.mPlainSizes.Length(), cryptoObj.mEncryptedSizes.Length());
 
   uint32_t totalSubSamplesSize = 0;
+  for (auto& size : cryptoObj.mPlainSizes) {
+    totalSubSamplesSize += size;
+  }
   for (auto& size : cryptoObj.mEncryptedSizes) {
     totalSubSamplesSize += size;
   }
 
-  // mPlainSizes is uint16_t, need to transform to uint32_t first.
-  nsTArray<uint32_t> plainSizes;
-  for (auto& size : cryptoObj.mPlainSizes) {
-    totalSubSamplesSize += size;
-    plainSizes.AppendElement(size);
-  }
-
+  // Deep copy the plain sizes so we can modify them.
+  nsTArray<uint32_t> plainSizes = cryptoObj.mPlainSizes.Clone();
   uint32_t codecSpecificDataSize = aSample->Size() - totalSubSamplesSize;
-  // Size of codec specific data("CSD") for Android MediaCodec usage should be
-  // included in the 1st plain size.
-  plainSizes[0] += codecSpecificDataSize;
+  // Size of codec specific data("CSD") for Android java::sdk::MediaCodec usage
+  // should be included in the 1st plain size if it exists.
+  if (!plainSizes.IsEmpty()) {
+    // This shouldn't overflow as the the plain size should be UINT16_MAX at
+    // most, and the CSD should never be that large. Checked int acts like a
+    // diagnostic assert here to help catch if we ever have insane inputs.
+    CheckedUint32 newLeadingPlainSize{plainSizes[0]};
+    newLeadingPlainSize += codecSpecificDataSize;
+    plainSizes[0] = newLeadingPlainSize.value();
+  }
 
   static const int kExpectedIVLength = 16;
   auto tempIV(cryptoObj.mIV);
@@ -710,18 +731,19 @@ static CryptoInfo::LocalRef GetCryptoInfoFromSample(
   }
 
   auto numBytesOfPlainData = mozilla::jni::IntArray::New(
-      reinterpret_cast<int32_t*>(&plainSizes[0]), plainSizes.Length());
+      reinterpret_cast<const int32_t*>(&plainSizes[0]), plainSizes.Length());
 
   auto numBytesOfEncryptedData = mozilla::jni::IntArray::New(
       reinterpret_cast<const int32_t*>(&cryptoObj.mEncryptedSizes[0]),
       cryptoObj.mEncryptedSizes.Length());
+
   auto iv = mozilla::jni::ByteArray::New(reinterpret_cast<int8_t*>(&tempIV[0]),
                                          tempIV.Length());
   auto keyId = mozilla::jni::ByteArray::New(
       reinterpret_cast<const int8_t*>(&cryptoObj.mKeyId[0]),
       cryptoObj.mKeyId.Length());
   cryptoInfo->Set(numSubSamples, numBytesOfPlainData, numBytesOfEncryptedData,
-                  keyId, iv, MediaCodec::CRYPTO_MODE_AES_CTR);
+                  keyId, iv, java::sdk::MediaCodec::CRYPTO_MODE_AES_CTR);
 
   return cryptoInfo;
 }
@@ -737,6 +759,7 @@ RefPtr<MediaDataDecoder::DecodePromise> RemoteDataDecoder::Decode(
 RefPtr<MediaDataDecoder::DecodePromise> RemoteDataDecoder::ProcessDecode(
     MediaRawData* aSample) {
   AssertOnTaskQueue();
+  MOZ_ASSERT(GetState() != State::SHUTDOWN);
   MOZ_ASSERT(aSample != nullptr);
   jni::ByteBuffer::LocalRef bytes = jni::ByteBuffer::New(
       const_cast<uint8_t*>(aSample->Data()), aSample->Size());
@@ -835,8 +858,6 @@ void RemoteDataDecoder::DrainComplete() {
   }
   SetState(State::DRAINED);
   ReturnDecodedData();
-  // Make decoder accept input again.
-  mJavaDecoder->Flush();
 }
 
 void RemoteDataDecoder::Error(const MediaResult& aError) {
@@ -856,3 +877,4 @@ void RemoteDataDecoder::Error(const MediaResult& aError) {
 }
 
 }  // namespace mozilla
+#undef LOG

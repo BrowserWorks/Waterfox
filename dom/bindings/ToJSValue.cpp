@@ -43,7 +43,7 @@ bool ToJSValue(JSContext* aCx, nsresult aArgument,
   return ToJSValue(aCx, exception, aValue);
 }
 
-bool ToJSValue(JSContext* aCx, ErrorResult& aArgument,
+bool ToJSValue(JSContext* aCx, ErrorResult&& aArgument,
                JS::MutableHandle<JS::Value> aValue) {
   MOZ_ASSERT(aArgument.Failed());
   MOZ_ASSERT(
@@ -86,7 +86,8 @@ bool ToJSValue(JSContext* aCx, const WindowProxyHolder& aArgument,
     return ToJSValue(aCx, windowProxy, aValue);
   }
 
-  if (!GetRemoteOuterWindowProxy(aCx, bc, &windowProxy)) {
+  if (!GetRemoteOuterWindowProxy(aCx, bc, /* aTransplantTo = */ nullptr,
+                                 &windowProxy)) {
     return false;
   }
   aValue.setObjectOrNull(windowProxy);

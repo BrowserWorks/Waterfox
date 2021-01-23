@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSMIMEOverlay.dtd UI for s/mime hooks in message composition -->
+
+
+<!-- not yet used
+<!ENTITY menu_securityEncryptOptional.label "Allow Encryption">
+<!ENTITY menu_securityEncryptOptional.accesskey "w">
+-->
+
+<!ENTITY menu_securityEncryptRequire.accesskey "s">
+
+<!ENTITY menu_securitySign.label "Ushbu xabarga raqamli kirish">
+<!ENTITY menu_securitySign.accesskey "x">
+
+<!ENTITY menu_securityStatus.label "Xavfsizlik ma’lumotini ko‘rish">
+<!ENTITY menu_securityStatus.accesskey "k">
+
+<!ENTITY securityButton.label "Xavfsizlik">
+<!ENTITY securityButton.tooltip "Xavfsizlik sozlamalarini ko‘rish yoki o‘zgartirish">
+
+<!ENTITY menu_viewSecurityStatus.label "Xabar xavfsizligi ma’lumoti">
+<!ENTITY menu_viewSecurityStatus.accesskey "m">

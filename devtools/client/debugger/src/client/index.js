@@ -5,7 +5,6 @@
 // @flow
 
 import * as firefox from "./firefox";
-import * as chrome from "./chrome";
 
 import { asyncStore, verifyPrefSchema } from "../utils/prefs";
 import { setupHelper } from "../utils/dbg";
@@ -15,11 +14,13 @@ import {
   bootstrapStore,
   bootstrapWorkers,
 } from "../utils/bootstrap";
+
 import { initialBreakpointsState } from "../reducers/breakpoints";
+import { initialSourcesState } from "../reducers/sources";
 
 import type { Panel } from "./firefox/types";
 
-async function syncBreakpoints() {
+async function syncBreakpoints(): Promise<*> {
   const breakpoints = await asyncStore.pendingBreakpoints;
   const breakpointValues = (Object.values(breakpoints): any);
   breakpointValues.forEach(({ disabled, options, generatedLocation }) => {
@@ -29,7 +30,7 @@ async function syncBreakpoints() {
   });
 }
 
-function syncXHRBreakpoints() {
+function syncXHRBreakpoints(): void {
   asyncStore.xhrBreakpoints.then(bps => {
     bps.forEach(({ path, method, disabled }) => {
       if (!disabled) {
@@ -41,20 +42,24 @@ function syncXHRBreakpoints() {
 
 async function loadInitialState() {
   const pendingBreakpoints = await asyncStore.pendingBreakpoints;
-  const tabs = await asyncStore.tabs;
+  const tabs = { tabs: await asyncStore.tabs };
   const xhrBreakpoints = await asyncStore.xhrBreakpoints;
+  const tabsBlackBoxed = await asyncStore.tabsBlackBoxed;
   const eventListenerBreakpoints = await asyncStore.eventListenerBreakpoints;
-
   const breakpoints = initialBreakpointsState(xhrBreakpoints);
+  const sources = initialSourcesState({ tabsBlackBoxed });
 
-  return { pendingBreakpoints, tabs, breakpoints, eventListenerBreakpoints };
+  return {
+    pendingBreakpoints,
+    tabs,
+    breakpoints,
+    eventListenerBreakpoints,
+    sources,
+  };
 }
 
 function getClient(connection: any) {
-  const {
-    tab: { clientType },
-  } = connection;
-  return clientType == "firefox" ? firefox : chrome;
+  return firefox;
 }
 
 export async function onConnect(
@@ -82,7 +87,7 @@ export async function onConnect(
     initialState
   );
 
-  await client.onConnect(connection, actions);
+  const connected = client.onConnect(connection, actions);
 
   await syncBreakpoints();
   syncXHRBreakpoints();
@@ -95,6 +100,7 @@ export async function onConnect(
     client: client.clientCommands,
   });
 
-  bootstrapApp(store);
+  bootstrapApp(store, panel);
+  await connected;
   return { store, actions, selectors, client: commands };
 }

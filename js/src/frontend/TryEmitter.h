@@ -7,15 +7,14 @@
 #ifndef frontend_TryEmitter_h
 #define frontend_TryEmitter_h
 
-#include "mozilla/Attributes.h"
-#include "mozilla/Maybe.h"
+#include "mozilla/Attributes.h"  // MOZ_STACK_CLASS, MOZ_MUST_USE
+#include "mozilla/Maybe.h"       // mozilla::Maybe, mozilla::Nothing
 
-#include <stddef.h>
-#include <stdint.h>
+#include <stdint.h>  // uint32_t
 
-#include "frontend/BytecodeControlStructures.h"
-#include "frontend/JumpList.h"
-#include "frontend/TDZCheckCache.h"
+#include "frontend/BytecodeControlStructures.h"  // TryFinallyControl
+#include "frontend/BytecodeOffset.h"             // BytecodeOffset
+#include "frontend/JumpList.h"                   // JumpList, JumpTarget
 
 namespace js {
 namespace frontend {
@@ -32,7 +31,7 @@ struct BytecodeEmitter;
 //     tryCatch.emitTry();
 //     emit(try_block);
 //     tryCatch.emitCatch();
-//     emit(ex and catch_block); // use JSOP_EXCEPTION to get exception
+//     emit(catch_block); // Pending exception is on stack
 //     tryCatch.emitEnd();
 //
 //   `try { try_block } finally { finally_block }`
@@ -51,7 +50,7 @@ struct BytecodeEmitter;
 //     tryCatch.emitTry();
 //     emit(try_block);
 //     tryCatch.emitCatch();
-//     emit(ex and catch_block);
+//     emit(catch_block);
 //     tryCatch.emitFinally(Some(finally_pos));
 //     emit(finally_block);
 //     tryCatch.emitEnd();
@@ -72,38 +71,39 @@ class MOZ_STACK_CLASS TryEmitter {
   // block and the finally block, and also to save/restore the return value
   // before/after the finally block.
   //
-  //     JSOP_TRY
+  //     JSOp::Try offsetOf(jumpToEnd)
   //
   //     try_body...
   //
-  //     JSOP_GOSUB finally
-  //     JSOP_JUMPTARGET
-  //     JSOP_GOTO end:
+  //     JSOp::Gosub finally
+  //     JSOp::JumpTarget
+  //   jumpToEnd:
+  //     JSOp::Goto end:
   //
   //   catch:
-  //     JSOP_JUMPTARGET
-  //   * JSOP_UNDEFINED
-  //   * JSOP_SETRVAL
+  //     JSOp::JumpTarget
+  //   * JSOp::Undefined
+  //   * JSOp::SetRval
   //
   //     catch_body...
   //
-  //     JSOP_GOSUB finally
-  //     JSOP_JUMPTARGET
-  //     JSOP_GOTO end
+  //     JSOp::Gosub finally
+  //     JSOp::JumpTarget
+  //     JSOp::Goto end
   //
   //   finally:
-  //     JSOP_JUMPTARGET
-  //   * JSOP_GETRVAL
-  //   * JSOP_UNDEFINED
-  //   * JSOP_SETRVAL
+  //     JSOp::JumpTarget
+  //   * JSOp::GetRval
+  //   * JSOp::Undefined
+  //   * JSOp::SetRval
   //
   //     finally_body...
   //
-  //   * JSOP_SETRVAL
-  //     JSOP_NOP
+  //   * JSOp::SetRval
+  //     JSOp::Nop
   //
   //   end:
-  //     JSOP_JUMPTARGET
+  //     JSOp::JumpTarget
   //
   // For syntactic try-catch-finally, Syntactic should be used.
   // For non-syntactic try-catch-finally, NonSyntactic should be used.
@@ -117,13 +117,13 @@ class MOZ_STACK_CLASS TryEmitter {
   // Track jumps-over-catches and gosubs-to-finally for later fixup.
   //
   // When a finally block is active, non-local jumps (including
-  // jumps-over-catches) result in a GOSUB being written into the bytecode
+  // jumps-over-catches) result in a Gosub being written into the bytecode
   // stream and fixed-up later.
   //
   // For non-syntactic try-catch-finally, all that handling is skipped.
   // The non-syntactic try-catch-finally must:
   //   * have only one catch block
-  //   * have JSOP_GOTO at the end of catch-block
+  //   * have JSOp::Goto at the end of catch-block
   //   * have no non-local-jump
   //   * don't use finally block for normal completion of try-block and
   //     catch-block
@@ -133,22 +133,19 @@ class MOZ_STACK_CLASS TryEmitter {
   // emitted.
   mozilla::Maybe<TryFinallyControl> controlInfo_;
 
-  // The stack depth before emitting JSOP_TRY.
+  // The stack depth before emitting JSOp::Try.
   int depth_;
 
-  // The source note index for SRC_TRY.
-  unsigned noteIndex_;
+  // The offset of the JSOp::Try op.
+  BytecodeOffset tryOpOffset_;
 
-  // The offset after JSOP_TRY.
-  ptrdiff_t tryStart_;
-
-  // JSOP_JUMPTARGET after the entire try-catch-finally block.
+  // JSOp::JumpTarget after the entire try-catch-finally block.
   JumpList catchAndFinallyJump_;
 
-  // The offset of JSOP_GOTO at the end of the try block.
+  // The offset of JSOp::Goto at the end of the try block.
   JumpTarget tryEnd_;
 
-  // The offset of JSOP_JUMPTARGET at the beginning of the finally block.
+  // The offset of JSOp::JumpTarget at the beginning of the finally block.
   JumpTarget finallyStart_;
 
 #ifdef DEBUG
@@ -189,12 +186,12 @@ class MOZ_STACK_CLASS TryEmitter {
     return kind_ == Kind::TryCatchFinally || kind_ == Kind::TryFinally;
   }
 
+  BytecodeOffset offsetAfterTryOp() const {
+    return tryOpOffset_ + BytecodeOffsetDiff(JSOpLength_Try);
+  }
+
  public:
   TryEmitter(BytecodeEmitter* bce, Kind kind, ControlKind controlKind);
-
-  // Emits JSOP_GOTO to the end of try-catch-finally.
-  // Used in `yield*`.
-  MOZ_MUST_USE bool emitJumpOverCatchAndFinally();
 
   MOZ_MUST_USE bool emitTry();
   MOZ_MUST_USE bool emitCatch();
@@ -212,6 +209,7 @@ class MOZ_STACK_CLASS TryEmitter {
   MOZ_MUST_USE bool emitTryEnd();
   MOZ_MUST_USE bool emitCatchEnd();
   MOZ_MUST_USE bool emitFinallyEnd();
+  MOZ_MUST_USE bool instrumentEntryPoint();
 };
 
 } /* namespace frontend */

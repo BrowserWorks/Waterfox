@@ -29,28 +29,28 @@ add_task(async function() {
   await promiseViewShown;
 
   is_element_visible(
-    document.getElementById("connection-icon"),
-    "Should see connection icon"
+    document.getElementById("identity-icon"),
+    "Should see identity icon"
   );
-  let connectionIconImage = gBrowser.ownerGlobal
-    .getComputedStyle(document.getElementById("connection-icon"))
+  let identityIconImage = gBrowser.ownerGlobal
+    .getComputedStyle(document.getElementById("identity-icon"))
     .getPropertyValue("list-style-image");
   let securityViewBG = gBrowser.ownerGlobal
     .getComputedStyle(
       document
         .getElementById("identity-popup-securityView")
-        .getElementsByClassName("identity-popup-security-content")[0]
+        .getElementsByClassName("identity-popup-security-connection")[0]
     )
     .getPropertyValue("background-image");
   let securityContentBG = gBrowser.ownerGlobal
     .getComputedStyle(
       document
         .getElementById("identity-popup-mainView")
-        .getElementsByClassName("identity-popup-security-content")[0]
+        .getElementsByClassName("identity-popup-security-connection")[0]
     )
     .getPropertyValue("background-image");
   is(
-    connectionIconImage,
+    identityIconImage,
     'url("chrome://browser/skin/connection-mixed-passive-loaded.svg")',
     "Using expected icon image in the identity block"
   );

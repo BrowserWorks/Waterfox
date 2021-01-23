@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!ENTITY smtpServer.label "Iɣewwaṛen n uqeddac uffiɣ (SMTP)">
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+
+<!ENTITY smtpDescription.label "Ticki tessefrakeḍ timagiyin-inek tzemreḍ ad tesqedceḍ aqeddac seg tebdart agi s ufran ines d aqeddac uffiɣ (SMTP), neɣ tzemreḍ ad tesqedceḍ aqeddac amezwer si tebdart-agi s ufran n &quot;Seqdec aqeddac amezwzer&quot;.">
+
+<!ENTITY smtpListAdd.label  "Rnu...">
+<!ENTITY smtpListAdd.accesskey  "R">
+<!ENTITY smtpListEdit.label "Ẓreg…">
+<!ENTITY smtpListEdit.accesskey "r">
+<!ENTITY smtpListDelete.label "Kkes">
+<!ENTITY smtpListDelete.accesskey "K">
+<!ENTITY smtpListSetDefault.label "Sbadu-t d amezwer">
+<!ENTITY smtpListSetDefault.accesskey "b">
+
+<!ENTITY serverDetails.label "Talqayt ɣef uqeddac yettwafernen:">
+<!ENTITY serverDescription.label "Aglam:">
+<!ENTITY serverName.label "Isem n uqeddac:">
+<!ENTITY serverPort.label "Tabburt:">
+<!ENTITY userName.label   "Isem n useqdac:">
+<!ENTITY connectionSecurity.label "Taɣellist n tuqqna">
+<!ENTITY authMethod.label   "Tarrayt n usesteb:">

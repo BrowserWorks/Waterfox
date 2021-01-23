@@ -88,7 +88,7 @@ nsresult DOMImplementation::CreateDocument(const nsAString& aNamespaceURI,
   rv = NS_NewDOMDocument(getter_AddRefs(doc), aNamespaceURI, aQualifiedName,
                          aDoctype, mDocumentURI, mBaseURI,
                          mOwner->NodePrincipal(), true, scriptHandlingObject,
-                         DocumentFlavorLegacyGuess);
+                         DocumentFlavorXML);
   NS_ENSURE_SUCCESS(rv, rv);
 
   // When DOMImplementation's createDocument method is invoked with
@@ -160,7 +160,8 @@ nsresult DOMImplementation::CreateHTMLDocument(const nsAString& aTitle,
     rv = head->AppendChildTo(title, false);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    RefPtr<nsTextNode> titleText = new nsTextNode(doc->NodeInfoManager());
+    RefPtr<nsTextNode> titleText =
+        new (doc->NodeInfoManager()) nsTextNode(doc->NodeInfoManager());
     rv = titleText->SetText(aTitle, false);
     NS_ENSURE_SUCCESS(rv, rv);
     rv = title->AppendChildTo(titleText, false);

@@ -7,7 +7,7 @@
  * Tests if the pause/resume button works.
  */
 add_task(async function() {
-  const { tab, monitor } = await initNetMonitor(PAUSE_URL);
+  const { tab, monitor } = await initNetMonitor(PAUSE_URL, { requestCount: 1 });
   info("Starting test... ");
 
   const { document, store, windowRequire, connector } = monitor.panelWin;
@@ -24,11 +24,11 @@ add_task(async function() {
   assertRequestCount(store, 1);
 
   let noRequest = true;
-  monitor.panelWin.api.once(EVENTS.NETWORK_EVENT, () => {
+  monitor.panelWin.api.once(TEST_EVENTS.NETWORK_EVENT, () => {
     noRequest = false;
   });
 
-  monitor.panelWin.api.once(EVENTS.NETWORK_EVENT_UPDATED, () => {
+  monitor.panelWin.api.once(TEST_EVENTS.NETWORK_EVENT_UPDATED, () => {
     noRequest = false;
   });
 
@@ -59,7 +59,7 @@ add_task(async function() {
  */
 function assertRequestCount(store, count) {
   is(
-    store.getState().requests.requests.size,
+    store.getState().requests.requests.length,
     count,
     "There should be correct number of requests"
   );
@@ -70,7 +70,9 @@ function assertRequestCount(store, count) {
  */
 async function performRequestAndWait(tab, monitor) {
   const wait = waitForNetworkEvents(monitor, 1);
-  await ContentTask.spawn(tab.linkedBrowser, SIMPLE_SJS, async function(url) {
+  await SpecialPowers.spawn(tab.linkedBrowser, [SIMPLE_SJS], async function(
+    url
+  ) {
     await content.wrappedJSObject.performRequests(url);
   });
   await wait;
@@ -80,8 +82,10 @@ async function performRequestAndWait(tab, monitor) {
  * Execute simple GET request
  */
 async function performPausedRequest(connector, tab, monitor) {
-  const wait = connector.connector.webConsoleClient.once("networkEvent");
-  await ContentTask.spawn(tab.linkedBrowser, SIMPLE_SJS, async function(url) {
+  const wait = connector.connector.webConsoleFront.once("networkEvent");
+  await SpecialPowers.spawn(tab.linkedBrowser, [SIMPLE_SJS], async function(
+    url
+  ) {
     await content.wrappedJSObject.performRequests(url);
   });
   await wait;

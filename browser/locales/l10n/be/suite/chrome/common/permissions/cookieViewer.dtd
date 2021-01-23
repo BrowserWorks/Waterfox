@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tab.cookiesonsystem.label "Захаваныя біркі">
+<!ENTITY tab.bannedservers.label "Сеціўныя пляцоўкі бірак">
+<!ENTITY div.bannedservers.label "Кіраванне сеціўнымі пляцоўкамі, якія могуць ці не захоўваць біркі на вашым кампутары.">
+<!ENTITY div.cookiesonsystem.label "Прагляд і выдаленне бірак, якія захоўваюцца на вашым кампутары.">
+<!ENTITY treehead.cookiename.label "Назва біркі">
+<!ENTITY treehead.cookiedomain.label "Пляцоўка Сеціва">
+<!ENTITY treehead.cookieexpires.label "Высіліцца">
+<!ENTITY treehead.infoselected.label "Звесткі аб вылучанай бірцы">
+<!ENTITY button.removecookie.label "Выдаліць бірку">
+<!ENTITY button.removecookie.accesskey "В">
+<!ENTITY button.removeallcookies.label "Выдаліць усе біркі">
+<!ENTITY button.removeallcookies.accesskey "у">
+<!ENTITY search.placeholder "Пошук бірак">
+<!ENTITY focusSearch.key "f">
+<!ENTITY windowClose.key "w">
+<!ENTITY selectAll.key "a">
+<!ENTITY props.name.label "Назва:">
+<!ENTITY props.value.label "Змест:">
+<!ENTITY props.domain.label "Трымальнік:">
+<!ENTITY props.path.label "Шлях:">
+<!ENTITY props.secure.label "Дасылаецца праз:">
+<!ENTITY props.expires.label "Высіліцца:">
+<!ENTITY treehead.sitename.label "Пляцоўка Сеціва">
+<!ENTITY treehead.status.label "Статус">
+<!ENTITY windowtitle.label "Кіраўнік бірак">
+<!ENTITY buttonaccept.label "Зачыніць">
+<!ENTITY buttonaccept.accesskey "ч">
+<!ENTITY blockSite.label "Блакаваць">
+<!ENTITY blockSite.accesskey "Б">
+<!ENTITY allowSite.label "Дазволіць">
+<!ENTITY allowSite.accesskey "Д">
+<!ENTITY allowSiteSession.label "Сэсія">
+<!ENTITY allowSiteSession.accesskey "С">
+<!ENTITY removepermission.label "Выдаліць пляцоўку Сеціва">
+<!ENTITY removepermission.accesskey "ы">
+<!ENTITY removeallpermissions.label "Выдаліць усе сеціўныя пляцоўкі">
+<!ENTITY removeallpermissions.accesskey "п">
+<!ENTITY futureCookies.label "Не дазваляць сеціўным пляцоўкам, якія ўсталёўвалі выдаленыя біркі, усталёўваць біркі зноў">
+<!ENTITY futureCookies.accesskey "Н">

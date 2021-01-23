@@ -10,9 +10,18 @@ def main(request, response):
 <!DOCTYPE html>
 <script>
   var data = %s;
+  data.type = "COOKIES";
 
-  if (window.parent != window)
+  try {
+    data.domcookies = document.cookie;
+  } catch (e) {}
+
+  if (window.parent != window) {
     window.parent.postMessage(data, "*");
+    if (window.top != window.parent)
+      window.top.postMessage(data, "*");
+  }
+
 
   if (window.opener)
     window.opener.postMessage(data, "*");

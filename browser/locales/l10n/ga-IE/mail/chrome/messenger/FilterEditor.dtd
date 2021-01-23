@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Rialacha Scagtha">
+<!ENTITY filterEditorDialog.dimensions "width: 100ch;">
+<!ENTITY filterName.label "Ainm an scagaire:">
+<!ENTITY filterName.accesskey "i">
+
+<!ENTITY junk.label "Dramhphost">
+<!ENTITY notJunk.label "Post Ceart">
+
+<!ENTITY lowestPriorityCmd.label "Is Ísle">
+<!ENTITY lowPriorityCmd.label "Íseal">
+<!ENTITY normalPriorityCmd.label "Gnách">
+<!ENTITY highPriorityCmd.label "Ard">
+<!ENTITY highestPriorityCmd.label "Is Airde">
+
+<!ENTITY contextDesc.label "Cuir an scagaire seo i bhfeidhm agus:">
+<!ENTITY contextIncomingMail.label "Ríomhphost Nua á Fháil:">
+<!ENTITY contextIncomingMail.accesskey "F">
+<!ENTITY contextManual.label "Rith de láimh">
+<!ENTITY contextManual.accesskey "R">
+<!ENTITY contextBeforeCls.label "Scagadh roimh Aicmiú Dramhphoist">
+<!ENTITY contextAfterCls.label "Scagadh tar éis Aicmiú Dramhphoist">
+<!ENTITY contextOutgoing.label "Tar éis seolta">
+<!ENTITY contextOutgoing.accesskey "s">
+<!ENTITY contextArchive.label "Cartlannú">
+<!ENTITY contextArchive.accesskey "C">
+
+<!ENTITY filterActionDesc.label "Déan na gníomhartha seo:">
+<!ENTITY filterActionDesc.accesskey "g">
+
+<!ENTITY filterActionOrderWarning.label "Nóta: Cuirfear na scagairí i bhfeidhm in ord difriúil.">
+<!ENTITY filterActionOrder.label "Féach ar ord curtha i bhfeidhm">
+<!-- New Style Filter Rule Actions -->
+
+<!ENTITY moveMessage.label "Bog an teachtaireacht go">
+<!ENTITY copyMessage.label "Cóipeáil an teachtaireacht go">
+<!ENTITY forwardTo.label "Cuir an teachtaireacht ar aghaidh chuig">
+<!ENTITY replyWithTemplate.label "Freagair le teimpléad">
+<!ENTITY markMessageRead.label "Marcáil &quot;Léite&quot;">
+<!ENTITY markMessageUnread.label "Marcáil &quot;Neamhléite&quot;">
+<!ENTITY markMessageStarred.label "Cuir réiltín leis">
+<!ENTITY setPriority.label "Socraigh tosaíocht mar">
+<!ENTITY addTag.label "Clibeáil an teachtaireacht">
+<!ENTITY setJunkScore.label "Socraigh stádas dramhphoist mar">
+<!ENTITY deleteMessage.label "Scrios an teachtaireacht">
+<!ENTITY deleteFromPOP.label "Scrios ar an bhfreastalaí POP">
+<!ENTITY fetchFromPOP.label "Faigh ón bhfreastalaí POP">
+<!ENTITY ignoreThread.label "Tabhair Neamhaird ar an Snáithe">
+<!ENTITY ignoreSubthread.label "Tabhair Neamhaird ar an bhFoshnáithe">
+<!ENTITY watchThread.label "Bí ag Faire ar an Snáithe">
+<!ENTITY stopExecution.label "Stop rith an scagaire">
+
+<!ENTITY addAction.tooltip "Cuir gníomh nua leis">
+<!ENTITY removeAction.tooltip "Bain an gníomh seo">
+
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- Flex Attribute: https://developer.mozilla.org/docs/XUL/Attribute/flex -->
+
+<!ENTITY filterActionTypeFlexValue "11">
+<!ENTITY filterActionTargetFlexValue "4">

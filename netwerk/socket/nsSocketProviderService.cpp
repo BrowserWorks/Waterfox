@@ -4,7 +4,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsString.h"
-#include "nsIServiceManager.h"
 #include "nsISocketProvider.h"
 #include "nsError.h"
 #include "nsNSSComponent.h"
@@ -47,10 +46,12 @@ NS_IMETHODIMP
 nsSocketProviderService::GetSocketProvider(const char* type,
                                            nsISocketProvider** result) {
   nsCOMPtr<nsISocketProvider> inst;
-  if (!nsCRT::strcmp(type, "ssl") && XRE_IsParentProcess() &&
+  if (!nsCRT::strcmp(type, "ssl") &&
+      (XRE_IsParentProcess() || XRE_IsSocketProcess()) &&
       EnsureNSSInitializedChromeOrContent()) {
     inst = new nsSSLSocketProvider();
-  } else if (!nsCRT::strcmp(type, "starttls") && XRE_IsParentProcess() &&
+  } else if (!nsCRT::strcmp(type, "starttls") &&
+             (XRE_IsParentProcess() || XRE_IsSocketProcess()) &&
              EnsureNSSInitializedChromeOrContent()) {
     inst = new nsTLSSocketProvider();
   } else if (!nsCRT::strcmp(type, "socks")) {

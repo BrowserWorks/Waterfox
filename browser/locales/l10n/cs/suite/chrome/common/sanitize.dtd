@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizeDialog.title "Vymazání důvěrných dat">
+<!ENTITY sanitizeItems.label "Vymazat následující položky:">
+
+<!ENTITY itemHistory.label "Historie prohlížení">
+<!ENTITY itemHistory.accesskey "H">
+<!ENTITY itemUrlBar.label "Historie adresního řádku">
+<!ENTITY itemUrlBar.accesskey "a">
+<!ENTITY itemDownloads.label "Historie stahování">
+<!ENTITY itemDownloads.accesskey "s"> 
+<!ENTITY itemFormSearchHistory.label "Formuláře a historie hledání">
+<!ENTITY itemFormSearchHistory.accesskey "F">
+<!ENTITY itemCache.label "Mezipaměť">
+<!ENTITY itemCache.accesskey "p">
+<!ENTITY itemCookies.label "Cookies">
+<!ENTITY itemCookies.accesskey "C">
+<!ENTITY itemOfflineApps.label "Offline obsah">
+<!ENTITY itemOfflineApps.accesskey "O">
+<!ENTITY itemPasswords.label "Uložená hesla">
+<!ENTITY itemPasswords.accesskey "U">
+<!ENTITY itemSessions.label "Relace s autentizací">
+<!ENTITY itemSessions.accesskey "R">
+
+<!ENTITY sanitizeButton.label "Vymazat důvěrná data">

@@ -85,6 +85,7 @@ EXPORTS = \
 	$(NULL)
 
 PRIVATE_EXPORTS = \
+	cmac.h \
 	alghmac.h \
 	blake2b.h \
 	blapi.h \
@@ -119,12 +120,13 @@ CSRCS = \
 	md2.c \
 	md5.c \
 	sha512.c \
+	cmac.c \
 	alghmac.c \
 	rawhash.c \
 	alg2268.c \
 	arcfour.c \
 	arcfive.c \
-    crypto_primitives.c \
+	crypto_primitives.c \
 	blake2b.c \
 	desblapi.c \
 	des.c \
@@ -148,7 +150,6 @@ CSRCS = \
 	rsapkcs.c \
 	shvfy.c \
 	tlsprfalg.c \
-	seed.c \
 	jpake.c \
 	$(MPI_SRCS) \
 	$(MPCPU_SRCS) \
@@ -162,6 +163,7 @@ CSRCS = \
 ALL_CSRCS := $(CSRCS)
 
 ALL_HDRS =  \
+	cmac.h \
 	alghmac.h \
 	blake2b.h \
 	blapi.h \

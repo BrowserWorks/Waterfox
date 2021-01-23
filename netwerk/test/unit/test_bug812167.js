@@ -1,3 +1,5 @@
+"use strict";
+
 const { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
 
 /*
@@ -37,7 +39,6 @@ function redirectHandler_NoStore(metadata, response) {
   );
   response.setHeader("Cache-control", "no-store");
   ++redirectHandler_NoStore_calls;
-  return;
 }
 
 var redirectHandler_ExpiresInPast_calls = 0;
@@ -50,7 +51,6 @@ function redirectHandler_ExpiresInPast(metadata, response) {
   );
   response.setHeader("Expires", "-1");
   ++redirectHandler_ExpiresInPast_calls;
-  return;
 }
 
 function contentHandler(metadata, response) {

@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label        "Greška pri učitavanju stranice">
+<!ENTITY gopherAddon.title      "Gopher protokol">
+<!ENTITY gopherAddon.shortDesc  "gopher nije registrovan protokol.">
+<!ENTITY gopherAddon.longDesc   "Adresa određuje gopher protokol koji više nije podržan, tako da browser ne može da se poveže sa stranicom. Možete dobiti kompatibilni dodatak za pristup ovom serveru iz Mozilla dodataka.">
+<!ENTITY goToAddOn.label        "Idite na stranicu dodatka">

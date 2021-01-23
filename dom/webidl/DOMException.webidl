@@ -15,9 +15,7 @@
 
 interface StackFrame;
 
-[NoInterfaceObject,
- Exposed=(Window,Worker)]
-interface ExceptionMembers
+interface mixin ExceptionMembers
 {
   // The nsresult associated with this exception.
   readonly attribute unsigned long           result;
@@ -56,22 +54,25 @@ interface Exception {
   // The name of the error code (ie, a string repr of |result|).
   readonly attribute DOMString               name;
   // A custom message set by the thrower.
+  [BinaryName="messageMoz"]
   readonly attribute DOMString               message;
   // A generic formatter - make it suitable to print, etc.
   stringifier;
 };
 
-Exception implements ExceptionMembers;
+Exception includes ExceptionMembers;
 
 // XXXkhuey this is an 'exception', not an interface, but we don't have any
 // parser or codegen mechanisms for dealing with exceptions.
 [ExceptionClass,
- Exposed=(Window, Worker),
- Constructor(optional DOMString message = "", optional DOMString name)]
+ Exposed=(Window, Worker)]
 interface DOMException {
+  constructor(optional DOMString message = "", optional DOMString name);
+
   // The name of the error code (ie, a string repr of |result|).
   readonly attribute DOMString               name;
   // A custom message set by the thrower.
+  [BinaryName="messageMoz"]
   readonly attribute DOMString               message;
   readonly attribute unsigned short code;
 
@@ -104,4 +105,4 @@ interface DOMException {
 
 // XXXkhuey copy all of Gecko's non-standard stuff onto DOMException, but leave
 // the prototype chain sane.
-DOMException implements ExceptionMembers;
+DOMException includes ExceptionMembers;

@@ -1,0 +1,112 @@
+<!ENTITY aboutDialog.title          "Maidir le &brandFullName;">
+
+<!-- LOCALIZATION NOTE (update.*):
+# These strings are also used in the update pane of preferences.
+# See about:preferences#advanced.
+-->
+<!-- LOCALIZATION NOTE (update.checkForUpdatesButton.*, update.updateButton.*):
+# Only one button is present at a time.
+# The button when displayed is located directly under the Thunderbird version in
+# the about dialog.
+-->
+
+<!ENTITY update.checkForUpdatesButton.label       "Lorg Nuashonruithe">
+<!ENTITY update.checkForUpdatesButton.accesskey   "L">
+<!ENTITY update.updateButton.label3               "Atosaigh chun &brandShorterName; a nuashonrú">
+<!ENTITY update.updateButton.accesskey            "R">
+<!-- LOCALIZATION NOTE (warningDesc.version): This is a warning about the experimental nature of Nightly builds. It is only shown in this version. -->
+
+
+<!ENTITY warningDesc.version        "Is táirge turgnamhach é &brandShortName; agus seans nach mbeidh sé cobhsaí.">
+<!-- LOCALIZATION NOTE (warningDesc.telemetryDesc): This is a notification that Nightly builds automatically send Telemetry data back to Mozilla. It is only shown in this version. "It" refers to brandShortName. -->
+<!ENTITY warningDesc.telemetryDesc  "Seolann sé faisnéis maidir le feidhmíocht, crua-earraí, úsáid, agus saincheapadh chuig &vendorShortName; go huathoibríoch, chun cabhrú linn feabhas a chur ar &brandShortName;.">
+<!-- LOCALIZATION NOTE (community.exp.*) This paragraph is shown in "experimental" builds, i.e. Nightly builds, instead of the other "community.*" strings below. -->
+
+<!ENTITY community.exp.start        "Seo é ">
+<!-- LOCALIZATION NOTE (community.exp.mozillaLink): This is a link title that links to http://www.mozilla.org/. -->
+<!ENTITY community.exp.mozillaLink  "&vendorShortName;">
+<!ENTITY community.exp.middle       " - ">
+<!-- LOCALIZATION NOTE (community.exp.creditslink): This is a link title that links to about:credits. -->
+<!ENTITY community.exp.creditsLink  "comhphobal domhanda">
+<!ENTITY community.exp.end          " atá ag obair ar son Gréasáin atá oscailte, poiblí, agus ar fáil do chách.">
+
+<!ENTITY community.start2           "Bhí &brandShortName; cruthaithe ag ">
+<!-- LOCALIZATION NOTE (community.mozillaLink): This is a link title that links to http://www.mozilla.org/. -->
+<!ENTITY community.mozillaLink      "&vendorShortName;">
+<!ENTITY community.middle2          ", ">
+<!-- LOCALIZATION NOTE (community.creditsLink): This is a link title that links to about:credits. -->
+<!ENTITY community.creditsLink      "comhphobal domhanda">
+<!ENTITY community.end3             " atá ag obair ar son Gréasáin atá oscailte, poiblí, agus ar fáil do chách.">
+
+<!ENTITY helpus.start               "Ar mhaith leat cabhrú linn? ">
+<!-- LOCALIZATION NOTE (helpus.donateLink): This is a link title that links to the thunderbird donation page -->
+<!ENTITY helpus.donateLink          "Tabhair deontas">
+<!ENTITY helpus.middle              " nó ">
+<!-- LOCALIZATION NOTE (helpus.getInvolvedLink): This is a link title that links to http://www.mozilla.org/contribute/. -->
+<!ENTITY helpus.getInvolvedLink     "glac páirt!">
+<!ENTITY helpus.end                 "">
+
+<!ENTITY releaseNotes.link          "Nótaí eisiúna">
+<!-- LOCALIZATION NOTE (bottomLinks.license): This is a link title that links to about:license. -->
+
+<!ENTITY bottomLinks.license        "Maidir leis an gCeadúnas">
+<!-- LOCALIZATION NOTE (bottomLinks.rights): This is a link title that links to about:rights. -->
+
+<!ENTITY bottomLinks.rights         "Cearta an Úsáideora">
+<!-- LOCALIZATION NOTE (bottomLinks.privacy): This is a link title that links to https://www.mozilla.org/legal/privacy/. -->
+
+<!ENTITY bottomLinks.privacy        "Polasaí Príobháideachta">
+<!-- LOCALIZATION NOTE (update.checkingForUpdates): try to make the localized text short (see bug 596813 for screenshots). -->
+
+<!ENTITY update.checkingForUpdates  "Nuashonruithe á lorg…">
+<!-- LOCALIZATION NOTE (update.noUpdatesFound): try to make the localized text short (see bug 596813 for screenshots). -->
+<!ENTITY update.noUpdatesFound      "Tá &brandShortName; cothrom le dáta">
+<!-- LOCALIZATION NOTE (update.adminDisabled): try to make the localized text short (see bug 596813 for screenshots). -->
+<!ENTITY update.adminDisabled       "Tá nuashonruithe bogearra díchumasaithe ag riarthóir do chórais">
+<!-- LOCALIZATION NOTE (update.otherInstanceHandlingUpdates): try to make the localized text short -->
+<!ENTITY update.otherInstanceHandlingUpdates "Tá &brandShortName; á nuashonrú ag ásc eile">
+<!-- LOCALIZATION NOTE (update.failed.start,update.failed.linkText,update.failed.end):
+     update.failed.start, update.failed.linkText, and update.failed.end all go into
+     one line with linkText being wrapped in an anchor that links to a site to download
+     the latest version of Waterfox (e.g. http://www.firefox.com). As this is all in
+     one line, try to make the localized text short (see bug 596813 for screenshots). -->
+
+<!ENTITY update.failed.start        "Theip ar an nuashonrú. ">
+<!ENTITY update.failed.linkText     "Íoslódáil an leagan is déanaí">
+<!ENTITY update.failed.end          "">
+<!-- LOCALIZATION NOTE (update.manual.start,update.manual.end): update.manual.start and update.manual.end
+     all go into one line and have an anchor in between with text that is the same as the link to a site
+     to download the latest version of Waterfox (e.g. http://www.firefox.com). As this is all in one line,
+     try to make the localized text short (see bug 596813 for screenshots). -->
+
+<!ENTITY update.manual.start        "Íoslódáil an ">
+<!ENTITY update.manual.linkText     "leagan is déanaí">
+<!ENTITY update.manual.end          "">
+<!-- LOCALIZATION NOTE (update.unsupported.start,update.unsupported.linkText,update.unsupported.end):
+     update.unsupported.start, update.unsupported.linkText, and
+     update.unsupported.end all go into one line with linkText being wrapped in
+     an anchor that links to a site to provide additional information regarding
+     why the system is no longer supported. As this is all in one line, try to
+     make the localized text short (see bug 843497 for screenshots). -->
+
+<!ENTITY update.unsupported.start    "Ní féidir leat tuilleadh nuashonruithe a chur i bhfeidhm ar an gcóras seo. ">
+<!ENTITY update.unsupported.linkText "Tuilleadh eolais">
+<!ENTITY update.unsupported.end      "">
+<!-- LOCALIZATION NOTE (update.downloading.start,update.downloading.end): update.downloading.start and
+     update.downloading.end all go into one line, with the amount downloaded inserted in between. As this
+     is all in one line, try to make the localized text short (see bug 596813 for screenshots). The — is
+     the "em dash" (long dash).
+     example: Downloading update — 111 KB of 13 MB -->
+
+<!ENTITY update.downloading.start   "Nuashonrú á íoslódáil — ">
+<!ENTITY update.downloading.end     "">
+
+<!ENTITY update.applying            "Nuashonrú á chur i bhfeidhm…">
+<!-- LOCALIZATION NOTE (channel.description.start,channel.description.end): channel.description.start and
+     channel.description.end create one sentence, with the current channel label inserted in between.
+     example: You are currently on the _Stable_ update channel. -->
+
+<!ENTITY channel.description.start  "Tá tú ar an gcainéal ">
+<!ENTITY channel.description.end    " faoi láthair. ">
+
+<!ENTITY cmdCloseMac.commandKey "w">

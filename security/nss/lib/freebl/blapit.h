@@ -114,9 +114,9 @@ typedef int __BLAPI_DEPRECATED __attribute__((deprecated));
 #define BLAKE2B_BLOCK_LENGTH 128 /* Bytes */
 #define HASH_BLOCK_LENGTH_MAX SHA512_BLOCK_LENGTH
 
-#define AES_KEY_WRAP_IV_BYTES 8
-#define AES_KEY_WRAP_BLOCK_SIZE 8 /* bytes */
-#define AES_BLOCK_SIZE 16         /* bytes */
+#define AES_BLOCK_SIZE 16 /* bytes */
+#define AES_KEY_WRAP_BLOCK_SIZE (AES_BLOCK_SIZE / 2)
+#define AES_KEY_WRAP_IV_BYTES AES_KEY_WRAP_BLOCK_SIZE
 
 #define AES_128_KEY_LENGTH 16 /* bytes */
 #define AES_192_KEY_LENGTH 24 /* bytes */
@@ -198,6 +198,35 @@ typedef int __BLAPI_DEPRECATED __attribute__((deprecated));
  * returns number of bits in P for that index, or -1 if index is invalid.
  */
 #define PQG_INDEX_TO_PBITS(j) (((unsigned)(j) > 8) ? -1 : (512 + 64 * (j)))
+
+/* When we are generating a gcm iv from a random number, we need to calculate
+ * an acceptable iteration count to avoid birthday attacks. (randomly
+ * generating the same IV twice).
+ *
+ * We use the approximation n = sqrt(2*m*p) to find an acceptable n given m
+ * and p.
+ * where n is the number of iterations.
+ *       m is the number of possible random values.
+ *       p is the probability of collision (0-1).
+ *
+ * We want to calculate the constant number GCM_IV_RANDOM_BIRTHDAY_BITS, which
+ * is the number of bits we subtract off of the length of the iv (in bits) to
+ * get a safe count value (log2).
+ *
+ * Since we do the calculation in bits, so we need to take the whole
+ * equation log2:
+ *       log2 n = (1+(log2 m)+(log2 p))/2
+ * Since p < 1, log2 p is negative. Also note that the length of the iv in
+ * bits is log2 m, so if we set GCMIV_RANDOM_BIRTHDAY_BITS =- log2 p - 1.
+ * then we can calculate a safe counter value with:
+ *        n = 2^((ivLenBits - GCMIV_RANDOM_BIRTHDAY_BITS)/2)
+ *
+ * If we arbitrarily set p = 10^-18 (1 chance in trillion trillion operation)
+ * we get GCMIV_RANDOM_BIRTHDAY_BITS = -(-18)/.301 -1 = 59 (.301 = log10 2)
+ * GCMIV_RANDOM_BIRTHDAY_BITS should be at least 59, call it a round 64. NOTE:
+ * the variable IV size for TLS is 64 bits, which explains why it's not safe
+ * to use a random value for the nonce in TLS. */
+#define GCMIV_RANDOM_BIRTHDAY_BITS 64
 
 /***************************************************************************
 ** Opaque objects

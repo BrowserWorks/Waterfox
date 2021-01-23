@@ -19,3 +19,11 @@ CXXFLAGS += CONFIG['TK_CFLAGS']
 
 # Add libFuzzer configuration directives
 include('/tools/fuzzing/libfuzzer-config.mozbuild')
+
+LOCAL_INCLUDES += [
+    '/media/webrtc/trunk/webrtc',
+]
+
+if CONFIG['OS_TARGET'] == 'WINNT':
+    DEFINES["WEBRTC_WIN"] = True
+

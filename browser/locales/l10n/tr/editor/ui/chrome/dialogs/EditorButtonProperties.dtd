@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Düğme Özellikleri">
+
+<!ENTITY Settings.label "Ayarlar">
+
+<!ENTITY ButtonType.label "Tür">
+<!ENTITY ButtonType.accesskey "r">
+<!ENTITY submit.value "Gönder">
+<!ENTITY reset.value "Sıfırla">
+<!ENTITY button.value "Düğme">
+
+<!ENTITY ButtonName.label "Adı:">
+<!ENTITY ButtonName.accesskey "A">
+<!ENTITY ButtonValue.label "Değer:">
+<!ENTITY ButtonValue.accesskey "D">
+<!ENTITY tabIndex.label "Sekme Endeksi:">
+<!ENTITY tabIndex.accesskey "e">
+<!ENTITY ButtonDisabled.label "Devre dışı">
+<!ENTITY ButtonDisabled.accesskey "D">
+<!ENTITY AccessKey.label "Erişim Tuşu:">
+<!ENTITY AccessKey.accesskey "E">
+
+<!ENTITY RemoveButton.label "Düğmeyi kaldır">
+<!ENTITY RemoveButton.accesskey "m">

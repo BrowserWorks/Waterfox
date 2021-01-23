@@ -5,6 +5,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsCycleCollectionParticipant.h"
+#include "nsString.h"
+#include "nsWrapperCache.h"
 #include "jsapi.h"
 #include "jsfriendapi.h"
 
@@ -38,8 +40,8 @@ void TraceCallbackFunc::Trace(JS::Heap<JS::Value>* aPtr, const char* aName,
 
 void TraceCallbackFunc::Trace(JS::Heap<jsid>* aPtr, const char* aName,
                               void* aClosure) const {
-  if (JSID_IS_GCTHING(aPtr->unbarrieredGet())) {
-    mCallback(JSID_TO_GCTHING(aPtr->unbarrieredGet()), aName, aClosure);
+  if (aPtr->unbarrieredGet().isGCThing()) {
+    mCallback(aPtr->unbarrieredGet().toGCCellPtr(), aName, aClosure);
   }
 }
 
@@ -50,10 +52,11 @@ void TraceCallbackFunc::Trace(JS::Heap<JSObject*>* aPtr, const char* aName,
   }
 }
 
-void TraceCallbackFunc::Trace(JSObject** aPtr, const char* aName,
+void TraceCallbackFunc::Trace(nsWrapperCache* aPtr, const char* aName,
                               void* aClosure) const {
-  if (*aPtr) {
-    mCallback(JS::GCCellPtr(*aPtr), aName, aClosure);
+  JSObject* obj = aPtr->GetWrapperPreserveColor();
+  if (obj) {
+    mCallback(JS::GCCellPtr(obj), aName, aClosure);
   }
 }
 

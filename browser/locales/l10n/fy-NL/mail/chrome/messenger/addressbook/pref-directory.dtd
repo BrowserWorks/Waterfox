@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (window.title) : do not translate "LDAP" in below line -->
+<!ENTITY pref.ldap.window.title    "LDAP-mapservers">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "LDAP-mapserver:">
+<!-- LOCALIZATION NOTE (directoriesText.label) : do not translate "LDAP" in below line -->
+<!ENTITY directoriesText.label     "Selektearje in LDAP-mapserver:">
+<!ENTITY directoriesText.accesskey "S">
+<!-- LOCALIZATION NOTE (autocomplete.title) : do not translate "LDAP" in below line -->
+<!ENTITY addDirectory.label        "Tafoegje">
+<!ENTITY addDirectory.accesskey    "T">
+<!ENTITY editDirectory.label       "Bewurkje">
+<!ENTITY editDirectory.accesskey   "B">
+<!ENTITY deleteDirectory.label     "Fuortsmite">
+<!ENTITY deleteDirectory.accesskey "F">

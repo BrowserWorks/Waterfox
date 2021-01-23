@@ -28,9 +28,15 @@ struct AudioCodecConfig {
 
   bool mFECEnabled;
   bool mDtmfEnabled;
+  uint32_t mFrameSizeMs;
+  uint32_t mMaxFrameSizeMs;
+  uint32_t mMinFrameSizeMs;
 
   // OPUS-specific
+  bool mDTXEnabled;
+  uint32_t mMaxAverageBitrate;
   int mMaxPlaybackRate;
+  bool mCbrEnabled;
 
   AudioCodecConfig(int type, std::string name, int freq, int channels,
                    bool FECEnabled)
@@ -40,7 +46,13 @@ struct AudioCodecConfig {
         mChannels(channels),
         mFECEnabled(FECEnabled),
         mDtmfEnabled(false),
-        mMaxPlaybackRate(0) {}
+        mFrameSizeMs(0),
+        mMaxFrameSizeMs(0),
+        mMinFrameSizeMs(0),
+        mDTXEnabled(false),
+        mMaxAverageBitrate(0),
+        mMaxPlaybackRate(0),
+        mCbrEnabled(false) {}
 };
 
 /*
@@ -75,10 +87,12 @@ class VideoCodecConfig {
   // to drag SdpRtcpFbAttributeList::Feedback along too.
   bool mRembFbSet;
   bool mFECFbSet;
+  bool mTransportCCFbSet;
 
   int mULPFECPayloadType;
   int mREDPayloadType;
   int mREDRTXPayloadType;
+  int mRTXPayloadType;
 
   uint32_t mTias;
   EncodingConstraints mEncodingConstraints;
@@ -102,9 +116,11 @@ class VideoCodecConfig {
         mAckFbTypes != aRhs.mAckFbTypes || mNackFbTypes != aRhs.mNackFbTypes ||
         mCcmFbTypes != aRhs.mCcmFbTypes || mRembFbSet != aRhs.mRembFbSet ||
         mFECFbSet != aRhs.mFECFbSet ||
+        mTransportCCFbSet != aRhs.mTransportCCFbSet ||
         mULPFECPayloadType != aRhs.mULPFECPayloadType ||
         mREDPayloadType != aRhs.mREDPayloadType ||
-        mREDRTXPayloadType != aRhs.mREDRTXPayloadType || mTias != aRhs.mTias ||
+        mREDRTXPayloadType != aRhs.mREDRTXPayloadType ||
+        mRTXPayloadType != aRhs.mRTXPayloadType || mTias != aRhs.mTias ||
         !(mEncodingConstraints == aRhs.mEncodingConstraints) ||
         !(mEncodings == aRhs.mEncodings) ||
         mSpropParameterSets != aRhs.mSpropParameterSets ||
@@ -124,9 +140,11 @@ class VideoCodecConfig {
         mName(name),
         mRembFbSet(false),
         mFECFbSet(false),
+        mTransportCCFbSet(false),
         mULPFECPayloadType(123),
         mREDPayloadType(122),
         mREDRTXPayloadType(-1),
+        mRTXPayloadType(-1),
         mTias(0),
         mEncodingConstraints(constraints),
         mProfile(0x42),
@@ -187,6 +205,10 @@ class VideoCodecConfig {
   bool RtcpFbRembIsSet() const { return mRembFbSet; }
 
   bool RtcpFbFECIsSet() const { return mFECFbSet; }
+
+  bool RtcpFbTransportCCIsSet() const { return mTransportCCFbSet; }
+
+  bool RtxPayloadTypeIsSet() const { return mRTXPayloadType != -1; }
 };
 }  // namespace mozilla
 #endif

@@ -17,7 +17,6 @@
 #include "nsBoxFrame.h"
 #include "nsStackLayout.h"
 #include "nsIAnonymousContentCreator.h"
-#include "nsIServiceManager.h"
 #include "nsNodeInfoManager.h"
 #include "nsContentCreatorFunctions.h"
 
@@ -99,8 +98,9 @@ nsresult nsDocElementBoxFrame::CreateAnonymousContent(
                                  nodeInfo.forget(), dom::NOT_FROM_PARSER);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  if (!aElements.AppendElement(mPopupgroupContent))
-    return NS_ERROR_OUT_OF_MEMORY;
+  // XXX(Bug 1631371) Check if this should use a fallible operation as it
+  // pretended earlier.
+  aElements.AppendElement(mPopupgroupContent);
 
   // create the top-secret default tooltip node. shhhhh!
   nodeInfo = nodeInfoManager->GetNodeInfo(
@@ -114,7 +114,9 @@ nsresult nsDocElementBoxFrame::CreateAnonymousContent(
   mTooltipContent->SetAttr(kNameSpaceID_None, nsGkAtoms::_default,
                            NS_LITERAL_STRING("true"), false);
 
-  if (!aElements.AppendElement(mTooltipContent)) return NS_ERROR_OUT_OF_MEMORY;
+  // XXX(Bug 1631371) Check if this should use a fallible operation as it
+  // pretended earlier.
+  aElements.AppendElement(mTooltipContent);
 
   return NS_OK;
 }

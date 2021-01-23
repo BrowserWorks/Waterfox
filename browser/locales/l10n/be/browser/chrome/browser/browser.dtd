@@ -1,0 +1,292 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY appmenu.tooltip                     "Адкрыць меню">
+<!ENTITY navbarOverflow.label                "Іншыя прылады…">
+
+<!-- Tab context menu -->
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "Прышпіліць картку">
+<!ENTITY  unpinTab.label                     "Адшпіліць картку">
+
+<!ENTITY  listAllTabs.label      "Пералічыць усе карткі">
+
+<!ENTITY tabCmd.label "Новая картка">
+<!ENTITY openFileCmd.label "Адкрыць файл…">
+<!ENTITY printCmd.label "Друкаваць…">
+
+<!ENTITY taskManagerCmd.label "Менеджар задач">
+
+<!ENTITY menubarCmd.label "Паліца меню">
+<!ENTITY menubarCmd.accesskey "П">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY navbar.accessibleLabel "Навігацыя">
+<!ENTITY personalbarCmd.label "Паліца закладак">
+<!ENTITY personalbarCmd.accesskey "з">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY personalbar.accessibleLabel "Закладкі">
+<!ENTITY bookmarksToolbarItem.label "Элементы паліцы закладак">
+
+<!ENTITY fullScreenCmd.label "Увесь экран">
+
+
+<!-- } is above this key on many keyboards -->
+
+
+<!ENTITY pictureInPictureHideToggle.label "Схаваць пераключальнік Выява ў выяве">
+<!ENTITY pictureInPictureHideToggle.accesskey "р">
+
+<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
+     for the Waterfox Account toolbar menu screen. The `Signed in as` text is
+     followed by the user's email. -->
+<!ENTITY fxa.menu.syncSettings2.label "Налады сінхранізацыі">
+<!ENTITY fxa.menu.connectAnotherDevice2.label "Злучыць іншую прыладу…">
+<!ENTITY fxa.menu.firefoxAccount "&syncBrand.fxAccount.label;">
+
+<!ENTITY fxa.menu.signin.label "Увайсці ў &brandProductName;">
+<!ENTITY fxa.menu.turnOnSync.label "Уключыць сінхранізацыю">
+<!ENTITY fxa.menu.firefoxServices.label "Сервісы &brandProductName;">
+<!ENTITY fxa.menu.account.label "Уліковы запіс">
+<!ENTITY fxa.menu.settings.label "Налады">
+<!ENTITY fxa.menu.accountSettings.label "Налады ўліковага запісу">
+<!ENTITY fxa.menu.manageAccount2.label "Кіраваць уліковым запісам">
+<!ENTITY fxa.menu.signOut.label "Выйсці…">
+<!ENTITY fxa.menu.setupSync.label "Наладзіць сінхранізацыю…">
+
+<!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
+     for the Waterfox Account toolbar menu screen.  -->
+<!ENTITY fxa.service.sendTab.description "Імгненна адпраўляйце картку на любую прыладу, на якой вы ўвайшлі.">
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "цяпер поўнаэкранны">
+<!ENTITY fullscreenWarning.generic.label "Гэты дакумент цяпер поўнаэкранны">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "Выйсці з поўнаэкраннага рэжыму (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "Выйсці з поўнаэкраннага рэжыму (esc)">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "кіруе вашым указальнікам. Націсніце Esc, каб узяць кіраванне.">
+<!ENTITY pointerlockWarning.generic.label "Гэты дакумент кіруе вашым указальнікам. Націсніце Esc, каб узяць кіраванне.">
+
+<!ENTITY showAllBookmarks2.label "Паказаць усе закладкі">
+<!ENTITY recentBookmarks.label "Нядаўнія закладкі">
+<!ENTITY bookmarksToolbarChevron.tooltip "Паказаць больш закладак">
+
+<!ENTITY printButton.label            "Друкаваць">
+<!ENTITY printButton.tooltip          "Друкаваць гэтую старонку">
+
+
+<!ENTITY searchItem.title             "Пошук">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "Дадому">
+<!ENTITY homeButton.defaultPage.tooltip "Хатняя старонка &brandShortName;">
+
+<!ENTITY bookmarksButton.label          "Закладкі">
+
+<!ENTITY bookmarksSubview.label             "Закладкі">
+<!ENTITY bookmarksMenuButton2.label         "Меню закладак">
+<!ENTITY bookmarksMenuButton.other.label    "Іншыя закладкі">
+<!ENTITY bookmarksMenuButton.mobile.label   "Мабільныя закладкі">
+<!ENTITY viewBookmarksSidebar2.label        "Паказаць бакавую панэль закладак">
+<!ENTITY hideBookmarksSidebar.label         "Схаваць бакавую панэль закладак">
+<!ENTITY viewBookmarksToolbar.label         "Паказаць паліцу закладак">
+<!ENTITY hideBookmarksToolbar.label         "Схаваць паліцу закладак">
+<!ENTITY searchBookmarks.label              "Шукаць у закладках">
+<!ENTITY bookmarkingTools.label             "Прылады закладак">
+<!ENTITY addBookmarksMenu.label             "Дадаць меню закладак на паліцу прылад">
+<!ENTITY removeBookmarksMenu.label          "Прыбраць меню закладак з паліцы прылад">
+
+<!ENTITY historyButton.label            "Гісторыя">
+
+<!ENTITY downloads.label              "Сцягванні">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "Сцягванні">
+<!ENTITY addons.label                 "Дадаткі">
+
+<!ENTITY webDeveloperMenu.label       "Распрацоўшчык Сеціва">
+
+<!ENTITY newNavigatorCmd.label        "Новае акно">
+<!ENTITY newPrivateWindow.label     "Новае прыватнае акно">
+
+<!ENTITY editMenu.label         "Праўка">
+<!ENTITY preferencesCmd2.label       "Налады">
+<!ENTITY preferencesCmdUnix.label       "Налады">
+<!ENTITY logins.label                           "Лагіны і паролі">
+
+<!ENTITY overflowCustomizeToolbar.label       "Уладкаванне паліцы прылад…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "У">
+
+<!ENTITY historyMenu.label "Гісторыя">
+<!ENTITY historyUndoMenu.label "Нядаўна закрытыя карткі">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "Нядаўна закрытыя вокны">
+
+<!ENTITY appMenuHistory.showAll.label "Паказаць усю гісторыю">
+<!ENTITY appMenuHistory.clearRecent.label "Ачысціць нядаўнюю гісторыю…">
+<!ENTITY appMenuHistory.restoreSession.label "Аднавіць папярэдні сеанс">
+<!ENTITY appMenuHistory.viewSidebar.label "Паказаць панэль гісторыі">
+<!ENTITY appMenuHistory.hideSidebar.label "Схаваць панэль гісторыі">
+<!ENTITY appMenuHistory.recentHistory.label "Нядаўняя гісторыя">
+<!ENTITY appMenuHelp.label "Даведка">
+
+<!ENTITY appMenuRemoteTabs.label "Сінхранізаваныя карткі">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Няма адкрытых картак">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "Паказаць больш">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Паказаць больш картак з гэтай прылады">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Паказаць усе">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Паказаць усе карткі з гэтай прылады">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Уключыце сінхранізацыю картак, каб пабачыць спіс картак з вашых іншых прылад.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Waterfox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Хочаце пабачыць свае карткі з іншых прылад?">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "Адкрыць налады сінхранізацыі">
+<!ENTITY appMenuRemoteTabs.welcome.label "Пабачыць спіс картак з іншых сваіх прылад.">
+<!ENTITY appMenuRemoteTabs.unverified.label "Ваш уліковы запіс патрабуе пацвярджэння.">
+<!ENTITY appMenuRemoteTabs.signintosync.label "Увайсці ў сінхранізацыю…">
+<!ENTITY appMenuRemoteTabs.turnonsync.label "Уключыць сінхранізацыю…">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Кіраваць прыладамі...">
+<!ENTITY appMenuRemoteTabs.sidebar.label "Паказаць бакавую панэль сінхранізаваных картак">
+<!ENTITY appMenuRemoteTabs.hidesidebar.label "Схаваць бакавую панэль сінхранізаваных картак">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "Злучыць іншую прыладу">
+
+<!ENTITY appMenuRecentHighlights.label "Апошнія падсвятленні">
+
+<!ENTITY customizeMenu.addToToolbar.label "Дадаць на паліцу прылад">
+<!ENTITY customizeMenu.addToToolbar.accesskey "Д">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "Дадаць у меню перапаўнення">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "Д">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Адмацаваць з меню перапаўнення">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "А">
+<!ENTITY customizeMenu.removeFromToolbar.label "Выдаліць з паліцы прылад">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "В">
+<!ENTITY customizeMenu.addMoreItems.label "Дадаць больш элементаў…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "Д">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "Больш">
+
+<!ENTITY contentSearchSubmit.tooltip  "Даслаць запыт">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "Пошук">
+<!ENTITY searchIcon.tooltip           "Пошук">
+
+<!ENTITY openLinkCmdInTab.accesskey   "й">
+
+<!ENTITY pageAction.copyLink.label    "Капіяваць спасылку">
+
+<!ENTITY saveToPocketCmd.label        "Захаваць старонку ў Pocket">
+<!ENTITY pocketMenuitem.label         "Паглядзець спіс Pocket">
+
+<!ENTITY emailPageCmd.label           "Даслаць спасылку эл.поштай…">
+
+<!-- Media (video/audio) controls -->
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoom.label                 "Павелічэнне">
+
+<!ENTITY sidebarCloseButton.tooltip     "Закрыць бакавую панэль">
+
+<!ENTITY quitApplicationCmdWin2.label       "Выйсці">
+<!ENTITY quitApplicationCmdWin2.accesskey   "ы">
+<!ENTITY quitApplicationCmdWin2.tooltip     "Выйсці з &brandShorterName;">
+<!ENTITY quitApplicationCmd.label       "Выйсці">
+<!ENTITY quitApplicationCmd.accesskey   "В">
+<!ENTITY quitApplicationCmdMac2.label   "Выйсці з &brandShorterName;">
+
+<!ENTITY allowPopups.accesskey "Д">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Праўка налад затрымальніка выплыўных вокнаў…">
+<!ENTITY editPopupSettings.label "Змяніць налады блакавання выплыўных вокнаў…">
+<!ENTITY editPopupSettings.accesskey "П">
+<!ENTITY dontShowMessage.accesskey "Н">
+
+<!ENTITY findOnCmd.label     "Знайсці на гэтай старонцы…">
+
+<!ENTITY spellAddDictionaries.label "Дадаць слоўнікі…">
+<!ENTITY spellAddDictionaries.accesskey "с">
+
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "Карткі браўзера">
+
+<!ENTITY syncBrand.shortName.label    "Сінхранізацыя">
+
+<!ENTITY customizeMode.autoHideDownloadsButton.label "Хаваць аўтаматычна">
+
+
+<!ENTITY uiTour.infoPanel.close "Закрыць">
+
+<!ENTITY panicButton.thankyou.msg1                "Ваша нядаўняя гісторыя ачышчана.">
+<!ENTITY panicButton.thankyou.msg2                "Бяспечнае агляданне!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Дзякуй!">
+
+<!ENTITY updateAvailable.panelUI.label "Сцягнуць абнаўленне &brandShorterName;">
+<!ENTITY updateManual.panelUI.label "Атрымаць свежую копію &brandShorterName;">
+<!ENTITY updateUnsupported.panelUI.label "Вы не можаце выконваць далейшыя абнаўленні">
+<!ENTITY updateRestart.panelUI.label2 "Перазапуск для абнаўлення &brandShorterName;">
+
+<!ENTITY sendToDevice.syncNotReady.label "Сінхранізацыя прылад…">
+
+<!ENTITY pageAction.shareUrl.label "Падзяліцца">
+<!ENTITY pageAction.shareMore.label "Больш…">
+
+<!ENTITY libraryButton.tooltip "Паказаць гісторыю, захаваныя закладкі і іншае">
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+<!ENTITY accessibilityIndicator.tooltip "Магчымасці даступнасці ўключаны">

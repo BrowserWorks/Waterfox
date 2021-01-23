@@ -13,6 +13,7 @@
 #include <stdint.h>
 
 #include "ds/Nestable.h"
+#include "frontend/AbstractScopePtr.h"
 #include "frontend/NameAnalysisTypes.h"
 #include "frontend/NameCollections.h"
 #include "frontend/ParseContext.h"
@@ -24,6 +25,8 @@ namespace js {
 class Scope;
 
 namespace frontend {
+
+struct BytecodeEmitter;
 
 // A scope that introduces bindings.
 class EmitterScope : public Nestable<EmitterScope> {
@@ -61,7 +64,6 @@ class EmitterScope : public Nestable<EmitterScope> {
 
   MOZ_MUST_USE bool ensureCache(BytecodeEmitter* bce);
 
-  template <typename BindingIter>
   MOZ_MUST_USE bool checkSlotLimits(BytecodeEmitter* bce,
                                     const BindingIter& bi);
 
@@ -77,7 +79,7 @@ class EmitterScope : public Nestable<EmitterScope> {
 
   EmitterScope* enclosing(BytecodeEmitter** bce) const;
 
-  Scope* enclosingScope(BytecodeEmitter* bce) const;
+  AbstractScopePtr enclosingScope(BytecodeEmitter* bce) const;
 
   static bool nameCanBeFree(BytecodeEmitter* bce, JSAtom* name);
 
@@ -85,11 +87,15 @@ class EmitterScope : public Nestable<EmitterScope> {
                                              uint8_t hops);
   NameLocation searchAndCache(BytecodeEmitter* bce, JSAtom* name);
 
+  MOZ_MUST_USE bool internEmptyGlobalScopeAsBody(BytecodeEmitter* bce);
+
   template <typename ScopeCreator>
-  MOZ_MUST_USE bool internScope(BytecodeEmitter* bce, ScopeCreator createScope);
+  MOZ_MUST_USE bool internScopeCreationData(BytecodeEmitter* bce,
+                                            ScopeCreator createScope);
+
   template <typename ScopeCreator>
-  MOZ_MUST_USE bool internBodyScope(BytecodeEmitter* bce,
-                                    ScopeCreator createScope);
+  MOZ_MUST_USE bool internBodyScopeCreationData(BytecodeEmitter* bce,
+                                                ScopeCreator createScope);
   MOZ_MUST_USE bool appendScopeNote(BytecodeEmitter* bce);
 
   MOZ_MUST_USE bool deadZoneFrameSlotRange(BytecodeEmitter* bce,
@@ -107,7 +113,6 @@ class EmitterScope : public Nestable<EmitterScope> {
   MOZ_MUST_USE bool enterFunction(BytecodeEmitter* bce, FunctionBox* funbox);
   MOZ_MUST_USE bool enterFunctionExtraBodyVar(BytecodeEmitter* bce,
                                               FunctionBox* funbox);
-  MOZ_MUST_USE bool enterParameterExpressionVar(BytecodeEmitter* bce);
   MOZ_MUST_USE bool enterGlobal(BytecodeEmitter* bce,
                                 GlobalSharedContext* globalsc);
   MOZ_MUST_USE bool enterEval(BytecodeEmitter* bce, EvalSharedContext* evalsc);
@@ -126,7 +131,7 @@ class EmitterScope : public Nestable<EmitterScope> {
 
   uint32_t noteIndex() const { return noteIndex_; }
 
-  Scope* scope(const BytecodeEmitter* bce) const;
+  AbstractScopePtr scope(const BytecodeEmitter* bce) const;
 
   bool hasEnvironment() const { return hasEnvironment_; }
 

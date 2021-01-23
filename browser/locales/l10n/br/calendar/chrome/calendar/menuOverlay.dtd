@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Event Menu -->
+<!ENTITY event.new.event                        "Darvoudoù nevez...">
+<!ENTITY event.new.event.accesskey              "N">
+
+<!ENTITY event.new.task                         "Trevell &amp;nevez...">
+<!ENTITY event.new.task.accesskey               "k">
+
+<!ENTITY calendar.import.label                  "Enporzhiañ...">
+<!ENTITY calendar.import.accesskey              "E">
+
+<!ENTITY calendar.export.label                  "Ezporzhiañ...">
+<!ENTITY calendar.export.accesskey              "z">
+
+<!ENTITY calendar.publish.label                 "Embann">
+<!ENTITY calendar.publish.accesskey             "b">
+
+<!ENTITY calendar.deletecalendar.label          "Diverkañ an deiziataer diuzet...">
+<!ENTITY calendar.deletecalendar.accesskey      "D">
+<!ENTITY calendar.unsubscribecalendar.label     "Digoumanantiñ eus an deiziataer diuzet...">
+<!ENTITY calendar.unsubscribecalendar.accesskey "g">
+
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+<!ENTITY calendar.removecalendar.label          "Dilemel an deiziataer diuzet...">
+<!ENTITY calendar.removecalendar.accesskey      "l">
+
+
+<!ENTITY calendar.menu.customize.label          "Personelaat...">
+<!ENTITY calendar.menu.customize.accesskey      "P">
+
+<!ENTITY showUnifinderCmd.label                 "Kavout darvoudoù">
+<!ENTITY showUnifinderCmd.accesskey             "K">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "Skrammañ an trevelloù en deiziataer">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "t">
+
+<!ENTITY goTodayCmd.label                       "Hiziv">
+<!ENTITY goTodayCmd.accesskey                   "H">
+
+<!ENTITY showCurrentView.label                  "Gwel red">
+<!ENTITY showCurrentView.accesskey              "V">
+
+<!ENTITY calendar.properties.accesskey          "a">

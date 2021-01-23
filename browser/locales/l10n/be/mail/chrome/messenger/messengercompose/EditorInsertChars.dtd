@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY windowTitle.label "Устаўка знака">
+<!ENTITY category.label "Катэгорыя">
+<!ENTITY letter.label "Літара:">
+<!ENTITY letter.accessKey "Л">
+<!ENTITY character.label "Знак:">
+<!ENTITY character.accessKey "З">
+<!ENTITY accentUpper.label "Вялікія з націскам">
+<!ENTITY accentLower.label "Малыя з націскам">
+<!ENTITY otherUpper.label "Іншыя вялікія">
+<!ENTITY otherLower.label "Іншыя малыя">
+<!ENTITY commonSymbols.label "Агульныя сімвалы">
+<!ENTITY insertButton.label "Уставіць">
+<!ENTITY closeButton.label "Зачыніць">

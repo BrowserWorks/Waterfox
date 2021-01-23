@@ -10,22 +10,22 @@
 #include <stddef.h>     // for size_t
 #include <stdint.h>     // for uint32_t, uint64_t
 #include <sys/types.h>  // for int32_t
-#include <ostream>      // for std::ostream
-#include "nsCoord.h"    // for nscoord
-#include "nsError.h"    // for nsresult
-#include "nsPoint.h"    // for nsIntPoint, nsPoint
-#include "nsRect.h"     // for mozilla::gfx::IntRect, nsRect
-#include "nsRectAbsolute.h"
-#include "nsMargin.h"               // for nsIntMargin
-#include "nsRegionFwd.h"            // for nsIntRegion
-#include "nsString.h"               // for nsCString
-#include "xpcom-config.h"           // for CPP_THROW_NEW
-#include "mozilla/ArrayView.h"      // for ArrayView
-#include "mozilla/Move.h"           // for mozilla::Move
-#include "mozilla/gfx/MatrixFwd.h"  // for mozilla::gfx::Matrix4x4
-#include "mozilla/gfx/Logging.h"
-#include "nsTArray.h"
 
+#include <ostream>  // for std::ostream
+#include <utility>  // for mozilla::Move
+
+#include "mozilla/ArrayView.h"  // for ArrayView
+#include "mozilla/gfx/Logging.h"
+#include "mozilla/gfx/MatrixFwd.h"  // for mozilla::gfx::Matrix4x4
+#include "nsCoord.h"                // for nscoord
+#include "nsError.h"                // for nsresult
+#include "nsMargin.h"               // for nsIntMargin
+#include "nsPoint.h"                // for nsIntPoint, nsPoint
+#include "nsRect.h"                 // for mozilla::gfx::IntRect, nsRect
+#include "nsRectAbsolute.h"
+#include "nsRegionFwd.h"  // for nsIntRegion
+#include "nsString.h"     // for nsCString
+#include "nsTArray.h"
 #include "pixman.h"
 
 // Uncomment this line to get additional integrity checking.
@@ -55,8 +55,8 @@ struct Band;
 }
 
 template <>
-struct nsTArray_CopyChooser<regiondetails::Band> {
-  typedef nsTArray_CopyWithConstructors<regiondetails::Band> Type;
+struct nsTArray_RelocationStrategy<regiondetails::Band> {
+  typedef nsTArray_RelocateUsingMoveConstructor<regiondetails::Band> Type;
 };
 
 namespace regiondetails {
@@ -66,6 +66,9 @@ class UncheckedArray : public T {
  public:
   using T::Elements;
   using T::Length;
+
+  UncheckedArray() = default;
+  MOZ_IMPLICIT UncheckedArray(T&& aSrc) : T(std::move(aSrc)) {}
 
   E& operator[](size_t aIndex) { return Elements()[aIndex]; }
   const E& operator[](size_t aIndex) const { return Elements()[aIndex]; }
@@ -102,9 +105,10 @@ struct Strip {
 struct Band {
   using Strip = regiondetails::Strip;
 #ifndef DEBUG
-  using StripArray = regiondetails::UncheckedArray<AutoTArray<Strip, 2>, Strip>;
+  using StripArray =
+      regiondetails::UncheckedArray<CopyableAutoTArray<Strip, 2>, Strip>;
 #else
-  using StripArray = AutoTArray<Strip, 2>;
+  using StripArray = CopyableAutoTArray<Strip, 2>;
 #endif
 
   MOZ_IMPLICIT Band(const nsRectAbsolute& aRect)
@@ -112,12 +116,8 @@ struct Band {
     mStrips.AppendElement(Strip{aRect.X(), aRect.XMost()});
   }
 
-  Band(const Band& aOther)
-      : top(aOther.top), bottom(aOther.bottom), mStrips(aOther.mStrips) {}
-  Band(const Band&& aOther)
-      : top(aOther.top),
-        bottom(aOther.bottom),
-        mStrips(std::move(aOther.mStrips)) {}
+  Band(const Band& aOther) = default;
+  Band(Band&& aOther) = default;
 
   void InsertStrip(const Strip& aStrip) {
     for (size_t i = 0; i < mStrips.Length(); i++) {
@@ -352,7 +352,7 @@ struct Band {
       }
     }
 
-    mStrips = newStrips;
+    mStrips = std::move(newStrips);
   }
 
   bool Intersects(const Band& aOther) const {
@@ -492,7 +492,7 @@ class nsRegion {
   typedef nsPoint PointType;
   typedef nsMargin MarginType;
 
-  nsRegion() {}
+  nsRegion() = default;
   MOZ_IMPLICIT nsRegion(const nsRect& aRect) {
     mBounds = nsRectAbsolute::FromRect(aRect);
   }
@@ -528,10 +528,6 @@ class nsRegion {
 
   friend std::ostream& operator<<(std::ostream& stream, const nsRegion& m);
   void OutputToStream(std::string aObjName, std::ostream& stream) const;
-
-  static nsresult InitStatic() { return NS_OK; }
-
-  static void ShutdownStatic() {}
 
  private:
 #ifdef DEBUG_REGIONS
@@ -1830,10 +1826,10 @@ class nsRegion {
    * @param aToAPP the APP to scale to
    * @note this can turn an empty region into a non-empty region
    */
-  MOZ_MUST_USE nsRegion ScaleToOtherAppUnitsRoundOut(int32_t aFromAPP,
+  [[nodiscard]] nsRegion ScaleToOtherAppUnitsRoundOut(int32_t aFromAPP,
+                                                      int32_t aToAPP) const;
+  [[nodiscard]] nsRegion ScaleToOtherAppUnitsRoundIn(int32_t aFromAPP,
                                                      int32_t aToAPP) const;
-  MOZ_MUST_USE nsRegion ScaleToOtherAppUnitsRoundIn(int32_t aFromAPP,
-                                                    int32_t aToAPP) const;
   nsRegion& ScaleRoundOut(float aXScale, float aYScale);
   nsRegion& ScaleInverseRoundOut(float aXScale, float aYScale);
   nsRegion& Transform(const mozilla::gfx::Matrix4x4& aTransform);
@@ -1908,7 +1904,7 @@ class nsRegion {
 
   nsRegion& Copy(const nsRegion& aRegion) {
     mBounds = aRegion.mBounds;
-    mBands = aRegion.mBands;
+    mBands = aRegion.mBands.Clone();
     return *this;
   }
 
@@ -2221,7 +2217,7 @@ class BaseIntRegion {
   typedef Point PointType;
   typedef Margin MarginType;
 
-  BaseIntRegion() {}
+  BaseIntRegion() = default;
   MOZ_IMPLICIT BaseIntRegion(const Rect& aRect) : mImpl(ToRect(aRect)) {}
   explicit BaseIntRegion(mozilla::gfx::ArrayView<pixman_box32_t> aRects)
       : mImpl(aRects) {}
@@ -2494,7 +2490,7 @@ class IntRegionTyped
   typedef IntMarginTyped<units> MarginType;
 
   // Forward constructors.
-  IntRegionTyped() {}
+  IntRegionTyped() = default;
   MOZ_IMPLICIT IntRegionTyped(const IntRectTyped<units>& aRect)
       : Super(aRect) {}
   IntRegionTyped(const IntRegionTyped& aRegion) : Super(aRegion) {}

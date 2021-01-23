@@ -1,0 +1,109 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Парақты жүктегенде қате кетті">
+<!ENTITY retry.label "Қайталап көріңіз">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Байланысты орнату сәтсіз аяқталды">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Бұл портқа тыйым салынған">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Сервер табылмады">
+<!ENTITY dnsNotFound.longDesc "<ul> <li>Адресті енгізген кезде қате кетпегенге көз жеткізіңіз, мысалы <strong>www</strong>.example.com орнына <strong>ww</strong>.example.com</li> <li>Бірде-бір парақ жүктелмесе – Интернетпен байланысының баптауларын тексеріңіз.</li> <li>Компьютер немесе желі желіаралық экранмен немесе прокси-сервермен қорғалған болса – &brandShortName; үшін Интернетке шығуға рұқсат бар екеніне көз жеткізіңіз.</li> </ul>">
+
+<!ENTITY fileNotFound.title "Файл табылмады">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Файлдың енгізілген аты, үлкен-кіші әріптердің дұрыстығы, және басқа да қателер жоқ екеніне көз жеткізіңіз.</li> <li>Файлдың аты ауысқан, ол өшірілген немесе басқа жаққа көшірілген болуы мүмкін.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "Файлға қатынау құқығы жоқ">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Ол өшірілген, жылжытылған немесе файл рұқсаттары қатынауға жол бермеуі мүмкін.</li> </ul>">
+
+<!ENTITY generic.title "Қате.">
+<!ENTITY generic.longDesc "<p>&brandShortName; осы парақты белгісіз себептермен жүктей алмайды.</p>">
+
+<!ENTITY malformedURI.title "Адрес пішімі қате">
+<!ENTITY malformedURI.longDesc "<ul> <li>Веб адрестері әдетте келесідей жазылады - <strong>http://www.example.com/</strong></li> <li>Қалыпты слэштер қолданатыңызға көз жеткізіңіз (мыс. <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "Байланыс үзілген">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Құжат ескірген">
+<!ENTITY notCached.longDesc "<p>Сұралған құжат кэште жоқ.</p><ul><li>Қауіпсіздік мақсатында, &brandShortName; сезімтал құжаттарды автоматты түрде қайта сұрамайды.</li><li>Құжатты веб сайттан қайта сұрау үшін Қайтадан көру батырмасын шертіңіз.</li></ul>">
+
+<!ENTITY netOffline.title "Дербес жұмыс істеу режимі">
+<!ENTITY netOffline.longDesc2 "<ul> <li>Мәзірде &quot;Дербес жұмыс істеу&quot; жалаушасын алып тастап, қайталап көріңіз.</li> </ul>">
+
+<!ENTITY contentEncodingError.title "Құраманы декодтау кезінде қате кетті">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Веб сайт иелеріне осы мәселе жөнінде хабарлаңыз.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Қауіпсіз емес файл түрі">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Веб сайт иелеріне осы мәселе жөнінде хабарлаңыз.</li> </ul>">
+
+<!ENTITY netReset.title "Байланыс үзілген">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Байланысты күту уақыты аяқталды">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Адресті талдау қатесі">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Бұл адресті ашу үшін сізге қосымша бағдарламаларды орнату керек мүмкін.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "Прокси сервері сұранымдарды үзіп тұр">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Прокси баптауларын дұрыс болуына тексеріңіз.</li> <li>Прокси жұмыс істеуіне көз жеткізу үшін желі әкімшіңізбен хабарласыңыз.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "Прокси сервері табылмады">
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Прокси баптауларын олардың дұрыстығына тексеріңіз.</li> <li>Компьютеріңіз белсенді желіге қосулы тұрғанына көз жеткізіңіз.</li> <li>Егер компьютеріңіз желілік экран не файрволмен қорғалған болса, &brandShortName; үшін Интернетке қатынау рұқсаты бар-жоғын тексеріңіз.</li> </ul>">
+
+<!ENTITY redirectLoop.title "Парақтағы бағдарлау дұрыс емес">
+<!ENTITY redirectLoop.longDesc "<ul> <li>Бұл мәселе анда-санда cookies қабылдау сөндірілген кезде болуы мүмкін.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "Сервердің жауабы күтпеген түрде">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Жүйеңізде Personal Security Manager орнатылғанын тексеріңіз.</li> <li>Бұл мәселе қалыпты емес бапталған сервер себебінен болуы мүмкін.</li> </ul>">
+
+<!ENTITY nssFailure2.title "Қорғалған байланысты орнату сәтсіз аяқталды">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Сіз сұраған парақ көрсетілмейді, өйткені алынған мәліметтерді тексеру мүмкін емес.</li> <li>Сайт иесіне осы мәселе жөнінде хабарлаңыз.</li> </ul>">
+
+<!ENTITY nssBadCert.title "Қорғалған байланысты орнату сәтсіз аяқталды">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>Бұл сервердің қатесі болуы мүмкін, немесе біреу сізге керек серверді басқасымен ауыстырғысы келеді.</li> <li>Осыған дейін осы серверге сәтті қосылған болсаңыз, осы қате уақытша болуы мүмкін. Біраздан кейін қайталап көріңіз.</li> </ul>">
+
+<!ENTITY sharedLongDesc "<ul> <li>Сайт уақытша қолжетерсіз, немесе сұранымдарға толы шығар. Кейінірек қайталап көріңіз.</li> <li>Басқа да сайттарды аша-алмасаңыз, компьютеріңіздің желіге қосылу баптауларын тексеріңіз.</li> <li>Компьютер немесе желі желіаралық экранмен немесе прокси-сервермен қорғалған болса – &brandShortName; үшін Интернетке шығуға рұқсат бар екеніне көз жеткізіңіз.</li> </ul>">
+
+<!ENTITY cspBlocked.title "Құрамасының қауіпсіздік саясатымен блокталған">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; бұл парақтың осы жолмен жүктелуге жол бермеген, өйткені онда осыны рұқсат етпейтін қауіпсіздік саясаты бар.</p>">
+
+<!ENTITY xfoBlocked.title "X-Frame-Options саясатымен бұғаттаған">
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; бұл парақтың осы контекстте жүктелуге жол бермеген, өйткені онда осыны рұқсат етпейтін X-Frame-Options саясаты бар.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Зақымдалған құрама қатесі">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Сіз қараймын деген құрама көрсетілмейді, өйткені деректер тасымалданған кезде қате анықталды.</p><ul><li>Веб сайт иелеріне осы мәселе жөнінде хабарлаңыз.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Немесе ерекше ереже енгізуіңіз мүмкін…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Осыдан кеткім келеді!">
+<!ENTITY securityOverride.exceptionButtonLabel "Ерекше ережені қосу…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <button> tags. It uses strings already defined above. The
+button is included here (instead of netError.xhtml) because it exposes
+functionality specific to thunderbird. -->
+
+<!ENTITY securityOverride.warningContent "<p>Егер Интернетпен байланысыңызға толығымен сенбесеңіз, немесе бұл сайтпен қосылғанда хабарландыру шықпаса, онда ерекше ережені қоспауыңыз керек.</p>  <button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> <button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "Қашықтағы XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Бұл мәселе жөнінде веб сайт иесімен хабарласыңыз.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "Сіздің байланысыңыз қауіпсіз емес">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> ескірген және шабуылдарға әлсіз қауіпсіздік технологиясын қолдануда. Шабуылшы сіз қауіпсіз деп ойлаған ақпаратты оңай анықтай алады. Сіз сайтты шолғанға дейін оның әкімшісі серверді ретке келтіруі тиіс.</p><p>Қате коды: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Бұғатталған бет">
+
+<!ENTITY networkProtocolError.title "Желілік хаттама қатесі">
+<!ENTITY networkProtocolError.longDesc "<p>Сіз көруге тырысатын бет көрсетілмейді, себебі желі хаттамасында қате анықталды.</p><ul><li>Осы мәселе туралы хабарлау үшін веб-сайт иелеріне хабарласыңыз.</li></ul>">

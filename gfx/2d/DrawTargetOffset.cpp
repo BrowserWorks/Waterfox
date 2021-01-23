@@ -8,12 +8,10 @@
 #include "Logging.h"
 #include "PathHelpers.h"
 
-using namespace std;
-
 namespace mozilla {
 namespace gfx {
 
-DrawTargetOffset::DrawTargetOffset() {}
+DrawTargetOffset::DrawTargetOffset() = default;
 
 bool DrawTargetOffset::Init(DrawTarget* aDrawTarget, IntPoint aOrigin) {
   mDrawTarget = aDrawTarget;
@@ -25,7 +23,13 @@ bool DrawTargetOffset::Init(DrawTarget* aDrawTarget, IntPoint aOrigin) {
 }
 
 already_AddRefed<SourceSurface> DrawTargetOffset::Snapshot() {
-  return MakeAndAddRef<SourceSurfaceOffset>(mDrawTarget->Snapshot(), mOrigin);
+  RefPtr<SourceSurface> snapshot = mDrawTarget->Snapshot();
+
+  if (!snapshot) {
+    return nullptr;
+  }
+
+  return MakeAndAddRef<SourceSurfaceOffset>(snapshot, mOrigin);
 }
 
 void DrawTargetOffset::DetachAllSnapshots() {}
@@ -57,6 +61,16 @@ OFFSET_COMMAND4(MaskSurface, const Pattern&, SourceSurface*, Point,
                 const DrawOptions&)
 OFFSET_COMMAND4(FillGlyphs, ScaledFont*, const GlyphBuffer&, const Pattern&,
                 const DrawOptions&)
+OFFSET_COMMAND5(StrokeGlyphs, ScaledFont*, const GlyphBuffer&, const Pattern&,
+                const StrokeOptions&, const DrawOptions&)
+OFFSET_COMMAND3(FillRoundedRect, const RoundedRect&, const Pattern&,
+                const DrawOptions&)
+
+bool DrawTargetOffset::Draw3DTransformedSurface(SourceSurface* aSrc,
+                                                const Matrix4x4& aMatrix) {
+  return mDrawTarget->Draw3DTransformedSurface(aSrc, aMatrix);
+}
+
 OFFSET_COMMAND3(Mask, const Pattern&, const Pattern&, const DrawOptions&)
 
 void DrawTargetOffset::DrawFilter(FilterNode* aNode, const Rect& aSourceRect,
@@ -71,8 +85,7 @@ void DrawTargetOffset::DrawFilter(FilterNode* aNode, const Rect& aSourceRect,
     // Try to reduce the source rect so that it's not much bigger
     // than the draw target. The result is not minimal. Examples
     // are left as an exercise for the reader.
-    auto destRect = Rect(mOrigin.x, mOrigin.y, mDrawTarget->GetSize().width,
-                         mDrawTarget->GetSize().height);
+    auto destRect = Rect(mDrawTarget->GetRect() + mOrigin);
     Rect userSpaceBounds = clone.TransformBounds(destRect);
     userSpaceSource = userSpaceSource.Intersect(userSpaceBounds);
   }
@@ -167,8 +180,14 @@ void DrawTargetOffset::PushLayer(bool aOpaque, Float aOpacity,
 
 already_AddRefed<SourceSurface> DrawTargetOffset::IntoLuminanceSource(
     LuminanceType aLuminanceType, float aOpacity) {
-  return MakeAndAddRef<SourceSurfaceOffset>(
-      DrawTarget::IntoLuminanceSource(aLuminanceType, aOpacity), mOrigin);
+  RefPtr<SourceSurface> surface =
+      mDrawTarget->IntoLuminanceSource(aLuminanceType, aOpacity);
+
+  if (!surface) {
+    return nullptr;
+  }
+
+  return MakeAndAddRef<SourceSurfaceOffset>(surface, mOrigin);
 }
 
 void DrawTargetOffset::PushLayerWithBlend(bool aOpaque, Float aOpacity,

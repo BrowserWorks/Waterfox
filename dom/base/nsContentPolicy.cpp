@@ -16,18 +16,16 @@
 #include "mozilla/dom/nsCSPService.h"
 #include "nsContentPolicy.h"
 #include "nsIURI.h"
-#include "nsIDocShell.h"
-#include "nsIDOMWindow.h"
 #include "nsIBrowserChild.h"
 #include "nsIContent.h"
 #include "nsIImageLoadingContent.h"
-#include "nsILoadContext.h"
 #include "nsCOMArray.h"
 #include "nsContentUtils.h"
 #include "mozilla/dom/nsMixedContentBlocker.h"
 #include "nsIContentSecurityPolicy.h"
-#include "mozilla/dom/TabGroup.h"
 #include "mozilla/TaskCategory.h"
+
+class nsIDOMWindow;
 
 using mozilla::LogLevel;
 
@@ -43,7 +41,7 @@ nsresult NS_NewContentPolicy(nsIContentPolicy** aResult) {
 
 nsContentPolicy::nsContentPolicy() : mPolicies(NS_CONTENTPOLICY_CATEGORY) {}
 
-nsContentPolicy::~nsContentPolicy() {}
+nsContentPolicy::~nsContentPolicy() = default;
 
 #ifdef DEBUG
 #  define WARN_IF_URI_UNINITIALIZED(uri, name)            \
@@ -70,17 +68,9 @@ inline nsresult nsContentPolicy::CheckPolicy(CPMethod policyMethod,
                                              int16_t* decision) {
   nsContentPolicyType contentType = loadInfo->InternalContentPolicyType();
   nsCOMPtr<nsISupports> requestingContext = loadInfo->GetLoadingContext();
-  nsCOMPtr<nsIPrincipal> requestPrincipal = loadInfo->TriggeringPrincipal();
-  nsCOMPtr<nsIURI> requestingLocation;
-  nsCOMPtr<nsIPrincipal> loadingPrincipal = loadInfo->LoadingPrincipal();
-  if (loadingPrincipal) {
-    loadingPrincipal->GetURI(getter_AddRefs(requestingLocation));
-  }
-
   // sanity-check passed-through parameters
   MOZ_ASSERT(decision, "Null out pointer");
   WARN_IF_URI_UNINITIALIZED(contentLocation, "Request URI");
-  WARN_IF_URI_UNINITIALIZED(requestingLocation, "Requesting URI");
 
 #ifdef DEBUG
   {
@@ -93,23 +83,13 @@ inline nsresult nsContentPolicy::CheckPolicy(CPMethod policyMethod,
   }
 #endif
 
-  /*
-   * There might not be a requestinglocation. This can happen for
-   * iframes with an image as src. Get the uri from the dom node.
-   * See bug 254510
-   */
-  if (!requestingLocation) {
-    nsCOMPtr<mozilla::dom::Document> doc;
-    nsCOMPtr<nsIContent> node = do_QueryInterface(requestingContext);
-    if (node) {
-      doc = node->OwnerDoc();
-    }
-    if (!doc) {
-      doc = do_QueryInterface(requestingContext);
-    }
-    if (doc) {
-      requestingLocation = doc->GetDocumentURI();
-    }
+  nsCOMPtr<mozilla::dom::Document> doc;
+  nsCOMPtr<nsIContent> node = do_QueryInterface(requestingContext);
+  if (node) {
+    doc = node->OwnerDoc();
+  }
+  if (!doc) {
+    doc = do_QueryInterface(requestingContext);
   }
 
   nsContentPolicyType externalType =
@@ -129,9 +109,8 @@ inline nsresult nsContentPolicy::CheckPolicy(CPMethod policyMethod,
     window = do_QueryInterface(requestingContext);
   }
 
-  if (requestPrincipal) {
-    nsCOMPtr<nsIContentSecurityPolicy> csp;
-    requestPrincipal->GetCsp(getter_AddRefs(csp));
+  if (doc) {
+    nsCOMPtr<nsIContentSecurityPolicy> csp = doc->GetCsp();
     if (csp && window) {
       csp->EnsureEventTarget(
           window->EventTargetFor(mozilla::TaskCategory::Other));
@@ -169,11 +148,6 @@ inline nsresult nsContentPolicy::CheckPolicy(CPMethod policyMethod,
 // logType must be a literal string constant
 #define LOG_CHECK(logType)                                                     \
   PR_BEGIN_MACRO                                                               \
-  nsCOMPtr<nsIURI> requestingLocation;                                         \
-  nsCOMPtr<nsIPrincipal> loadingPrincipal = loadInfo->LoadingPrincipal();      \
-  if (loadingPrincipal) {                                                      \
-    loadingPrincipal->GetURI(getter_AddRefs(requestingLocation));              \
-  }                                                                            \
   /* skip all this nonsense if the call failed or logging is disabled */       \
   if (NS_SUCCEEDED(rv) && MOZ_LOG_TEST(gConPolLog, LogLevel::Debug)) {         \
     const char* resultName;                                                    \
@@ -184,10 +158,8 @@ inline nsresult nsContentPolicy::CheckPolicy(CPMethod policyMethod,
     }                                                                          \
     MOZ_LOG(                                                                   \
         gConPolLog, LogLevel::Debug,                                           \
-        ("Content Policy: " logType ": <%s> <Ref:%s> result=%s",               \
+        ("Content Policy: " logType ": <%s> result=%s",                        \
          contentLocation ? contentLocation->GetSpecOrDefault().get() : "None", \
-         requestingLocation ? requestingLocation->GetSpecOrDefault().get()     \
-                            : "None",                                          \
          resultName));                                                         \
   }                                                                            \
   PR_END_MACRO

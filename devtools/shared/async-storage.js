@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 /**
  *
  * Adapted from https://github.com/mozilla-b2g/gaia/blob/f09993563fb5fec4393eb71816ce76cb00463190/shared/js/async_storage.js
@@ -85,7 +89,8 @@ function getItem(itemKey) {
         };
         req = store.get(itemKey);
         req.onerror = function getItemOnError() {
-          reject("Error in asyncStorage.getItem(): ", req.error.name);
+          console.error("Error in asyncStorage.getItem():", req.error.name);
+          reject(req.error);
         };
       },
       reject
@@ -101,7 +106,8 @@ function setItem(itemKey, value) {
         store.transaction.oncomplete = resolve;
         const req = store.put(value, itemKey);
         req.onerror = function setItemOnError() {
-          reject("Error in asyncStorage.setItem(): ", req.error.name);
+          console.error("Error in asyncStorage.setItem():", req.error.name);
+          reject(req.error);
         };
       },
       reject
@@ -117,7 +123,8 @@ function removeItem(itemKey) {
         store.transaction.oncomplete = resolve;
         const req = store.delete(itemKey);
         req.onerror = function removeItemOnError() {
-          reject("Error in asyncStorage.removeItem(): ", req.error.name);
+          console.error("Error in asyncStorage.removeItem():", req.error.name);
+          reject(req.error);
         };
       },
       reject
@@ -133,7 +140,8 @@ function clear() {
         store.transaction.oncomplete = resolve;
         const req = store.clear();
         req.onerror = function clearOnError() {
-          reject("Error in asyncStorage.clear(): ", req.error.name);
+          console.error("Error in asyncStorage.clear():", req.error.name);
+          reject(req.error);
         };
       },
       reject
@@ -152,7 +160,8 @@ function length() {
         };
         req = store.count();
         req.onerror = function lengthOnError() {
-          reject("Error in asyncStorage.length(): ", req.error.name);
+          console.error("Error in asyncStorage.length():", req.error.name);
+          reject(req.error.name);
         };
       },
       reject
@@ -194,7 +203,8 @@ function key(n) {
           cursor.advance(n);
         };
         req.onerror = function keyOnError() {
-          reject("Error in asyncStorage.key(): ", req.error.name);
+          console.error("Error in asyncStorage.key():", req.error.name);
+          reject(req.error);
         };
       },
       reject

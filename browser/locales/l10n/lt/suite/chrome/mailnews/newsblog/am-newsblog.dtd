@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loginAtStartup.label "Paleidžiant programą tikrinti, ar yra naujų straipsnių">
+<!ENTITY loginAtStartup.accesskey "P">
+
+
+
+
+<!ENTITY manageSubscriptions.label "Tvarkyti prenumeratas…">
+<!ENTITY manageSubscriptions.accesskey "T">
+<!-- entities from rss.rdf -->
+
+<!ENTITY feeds.accountName "Sklaidos kanalai">
+<!ENTITY feeds.wizardShortName "Sklaidos kanalai">
+<!ENTITY feeds.wizardLongName "tinklaraščių ir naujienų sklaidos kanalus">
+<!ENTITY feeds.wizardLongName.accesskey "s">

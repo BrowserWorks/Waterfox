@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Батырма қасиеттері">
+
+<!ENTITY Settings.label "Баптаулар">
+
+<!ENTITY ButtonType.label "Түрі">
+<!ENTITY ButtonType.accesskey "Т">
+<!ENTITY submit.value "Жіберу">
+<!ENTITY reset.value "Тастау">
+<!ENTITY button.value "Батырма">
+
+<!ENTITY ButtonName.label "Аты:">
+<!ENTITY ButtonName.accesskey "А">
+<!ENTITY ButtonValue.label "Мәні:">
+<!ENTITY ButtonValue.accesskey "М">
+<!ENTITY tabIndex.label "Табуляция реті:">
+<!ENTITY tabIndex.accesskey "е">
+<!ENTITY ButtonDisabled.label "Сөндірілген">
+<!ENTITY ButtonDisabled.accesskey "д">
+<!ENTITY AccessKey.label "Қатынау кілті:">
+<!ENTITY AccessKey.accesskey "к">
+
+<!ENTITY RemoveButton.label "Батырманы өшіру">
+<!ENTITY RemoveButton.accesskey "ш">

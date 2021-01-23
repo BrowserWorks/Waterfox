@@ -20,7 +20,7 @@ CParserContext::CParserContext(CParserContext* aPrevContext,
     : mListener(aListener),
       mKey(aKey),
       mPrevContext(aPrevContext),
-      mScanner(aScanner),
+      mScanner(mozilla::WrapUnique(aScanner)),
       mDTDMode(eDTDMode_unknown),
       mDocType(static_cast<eParserDocType>(0)),
       mStreamListenerState(eNone),
@@ -47,7 +47,6 @@ void CParserContext::SetMimeType(const nsACString& aMimeType) {
   else if (mMimeType.EqualsLiteral(TEXT_XML) ||
            mMimeType.EqualsLiteral(APPLICATION_XML) ||
            mMimeType.EqualsLiteral(APPLICATION_XHTML_XML) ||
-           mMimeType.EqualsLiteral(TEXT_XUL) ||
            mMimeType.EqualsLiteral(IMAGE_SVG_XML) ||
            mMimeType.EqualsLiteral(APPLICATION_MATHML_XML) ||
            mMimeType.EqualsLiteral(APPLICATION_RDF_XML) ||

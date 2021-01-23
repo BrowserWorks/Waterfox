@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Tahrirlash uchun o‘zgartirishlarni tanlash">
+<!ENTITY conflictWarning.label "Ushbu sahifa boshqa dastur tomonidan o‘zgartirilgan, ammo Composer dasturida siz tomoningizdan kiritilgan o‘zgartirishlar saqlanmagan.">
+<!ENTITY conflictResolve.label "Saqlanadigan versiyasini tanlash:">
+<!ENTITY keepCurrentPageButton.label "Joriy sahifadagi o‘zgartirishlarini saqlash">
+<!ENTITY useOtherPageButton.label "Joriy sahifani boshqa o‘zgartirishlar bilan almashtirish">

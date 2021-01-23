@@ -122,6 +122,14 @@ gfx::YUVColorSpace MacIOSurfaceTextureHostOGL::GetYUVColorSpace() const {
   return mSurface->GetYUVColorSpace();
 }
 
+gfx::ColorRange MacIOSurfaceTextureHostOGL::GetColorRange() const {
+  if (!mSurface) {
+    return gfx::ColorRange::LIMITED;
+  }
+  return mSurface->IsFullRange() ? gfx::ColorRange::FULL
+                                 : gfx::ColorRange::LIMITED;
+}
+
 void MacIOSurfaceTextureHostOGL::CreateRenderTexture(
     const wr::ExternalImageId& aExternalImageId) {
   RefPtr<wr::RenderTextureHost> texture =
@@ -131,7 +139,7 @@ void MacIOSurfaceTextureHostOGL::CreateRenderTexture(
                                                  texture.forget());
 }
 
-uint32_t MacIOSurfaceTextureHostOGL::NumSubTextures() const {
+uint32_t MacIOSurfaceTextureHostOGL::NumSubTextures() {
   switch (GetFormat()) {
     case gfx::SurfaceFormat::R8G8B8X8:
     case gfx::SurfaceFormat::R8G8B8A8:
@@ -158,7 +166,8 @@ void MacIOSurfaceTextureHostOGL::PushResourceUpdates(
   auto method = aOp == TextureHost::ADD_IMAGE
                     ? &wr::TransactionBuilder::AddExternalImage
                     : &wr::TransactionBuilder::UpdateExternalImage;
-  auto bufferType = wr::WrExternalImageBufferType::TextureRectHandle;
+  auto imageType =
+      wr::ExternalImageType::TextureHandle(wr::TextureTarget::Rect);
 
   switch (GetFormat()) {
     case gfx::SurfaceFormat::R8G8B8X8:
@@ -171,7 +180,7 @@ void MacIOSurfaceTextureHostOGL::PushResourceUpdates(
                         ? gfx::SurfaceFormat::B8G8R8A8
                         : gfx::SurfaceFormat::B8G8R8X8;
       wr::ImageDescriptor descriptor(GetSize(), format);
-      (aResources.*method)(aImageKeys[0], descriptor, aExtID, bufferType, 0);
+      (aResources.*method)(aImageKeys[0], descriptor, aExtID, imageType, 0);
       break;
     }
     case gfx::SurfaceFormat::YUV422: {
@@ -182,7 +191,7 @@ void MacIOSurfaceTextureHostOGL::PushResourceUpdates(
       MOZ_ASSERT(aImageKeys.length() == 1);
       MOZ_ASSERT(mSurface->GetPlaneCount() == 0);
       wr::ImageDescriptor descriptor(GetSize(), gfx::SurfaceFormat::B8G8R8X8);
-      (aResources.*method)(aImageKeys[0], descriptor, aExtID, bufferType, 0);
+      (aResources.*method)(aImageKeys[0], descriptor, aExtID, imageType, 0);
       break;
     }
     case gfx::SurfaceFormat::NV12: {
@@ -196,8 +205,8 @@ void MacIOSurfaceTextureHostOGL::PushResourceUpdates(
           gfx::IntSize(mSurface->GetDevicePixelWidth(1),
                        mSurface->GetDevicePixelHeight(1)),
           gfx::SurfaceFormat::R8G8);
-      (aResources.*method)(aImageKeys[0], descriptor0, aExtID, bufferType, 0);
-      (aResources.*method)(aImageKeys[1], descriptor1, aExtID, bufferType, 1);
+      (aResources.*method)(aImageKeys[0], descriptor0, aExtID, imageType, 0);
+      (aResources.*method)(aImageKeys[1], descriptor1, aExtID, imageType, 1);
       break;
     }
     default: {
@@ -209,7 +218,8 @@ void MacIOSurfaceTextureHostOGL::PushResourceUpdates(
 void MacIOSurfaceTextureHostOGL::PushDisplayItems(
     wr::DisplayListBuilder& aBuilder, const wr::LayoutRect& aBounds,
     const wr::LayoutRect& aClip, wr::ImageRendering aFilter,
-    const Range<wr::ImageKey>& aImageKeys) {
+    const Range<wr::ImageKey>& aImageKeys,
+    const bool aPreferCompositorSurface) {
   switch (GetFormat()) {
     case gfx::SurfaceFormat::R8G8B8X8:
     case gfx::SurfaceFormat::R8G8B8A8:
@@ -218,7 +228,9 @@ void MacIOSurfaceTextureHostOGL::PushDisplayItems(
       MOZ_ASSERT(aImageKeys.length() == 1);
       MOZ_ASSERT(mSurface->GetPlaneCount() == 0);
       aBuilder.PushImage(aBounds, aClip, true, aFilter, aImageKeys[0],
-                         !(mFlags & TextureFlags::NON_PREMULTIPLIED));
+                         !(mFlags & TextureFlags::NON_PREMULTIPLIED),
+                         wr::ColorF{1.0f, 1.0f, 1.0f, 1.0f},
+                         aPreferCompositorSurface);
       break;
     }
     case gfx::SurfaceFormat::YUV422: {
@@ -228,7 +240,9 @@ void MacIOSurfaceTextureHostOGL::PushDisplayItems(
       // which only supports 8 bits color depth.
       aBuilder.PushYCbCrInterleavedImage(
           aBounds, aClip, true, aImageKeys[0], wr::ColorDepth::Color8,
-          wr::ToWrYuvColorSpace(GetYUVColorSpace()), aFilter);
+          wr::ToWrYuvColorSpace(GetYUVColorSpace()),
+          wr::ToWrColorRange(GetColorRange()), aFilter,
+          aPreferCompositorSurface);
       break;
     }
     case gfx::SurfaceFormat::NV12: {
@@ -239,7 +253,8 @@ void MacIOSurfaceTextureHostOGL::PushDisplayItems(
       aBuilder.PushNV12Image(aBounds, aClip, true, aImageKeys[0], aImageKeys[1],
                              wr::ColorDepth::Color8,
                              wr::ToWrYuvColorSpace(GetYUVColorSpace()),
-                             aFilter);
+                             wr::ToWrColorRange(GetColorRange()), aFilter,
+                             aPreferCompositorSurface);
       break;
     }
     default: {

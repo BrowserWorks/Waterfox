@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
 
 // These are defined on "global" which is used for the same scopes as the other
@@ -6,7 +10,7 @@
             getContainerForCookieStoreId,
             isValidCookieStoreId, isContainerCookieStoreId,
             EventManager, URL */
-/* global getCookieStoreIdForTab:false, getCookieStoreIdForOriginAttributes:false,
+/* global getCookieStoreIdForTab:false,
           getCookieStoreIdForContainer:false,
           getContainerForCookieStoreId: false,
           isValidCookieStoreId:false, isContainerCookieStoreId:false,

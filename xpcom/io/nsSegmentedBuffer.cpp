@@ -6,6 +6,9 @@
 
 #include "nsSegmentedBuffer.h"
 #include "nsMemory.h"
+#include "nsNetCID.h"
+#include "nsServiceManagerUtils.h"
+#include "nsThreadUtils.h"
 
 nsresult nsSegmentedBuffer::Init(uint32_t aSegmentSize, uint32_t aMaxSize) {
   if (mSegmentArrayCount != 0) {
@@ -64,7 +67,7 @@ char* nsSegmentedBuffer::AppendNewSegment() {
 bool nsSegmentedBuffer::DeleteFirstSegment() {
   NS_ASSERTION(mSegmentArray[mFirstSegmentIndex] != nullptr,
                "deleting bad segment");
-  free(mSegmentArray[mFirstSegmentIndex]);
+  FreeOMT(mSegmentArray[mFirstSegmentIndex]);
   mSegmentArray[mFirstSegmentIndex] = nullptr;
   int32_t last = ModSegArraySize(mLastSegmentIndex - 1);
   if (mFirstSegmentIndex == last) {
@@ -79,7 +82,7 @@ bool nsSegmentedBuffer::DeleteFirstSegment() {
 bool nsSegmentedBuffer::DeleteLastSegment() {
   int32_t last = ModSegArraySize(mLastSegmentIndex - 1);
   NS_ASSERTION(mSegmentArray[last] != nullptr, "deleting bad segment");
-  free(mSegmentArray[last]);
+  FreeOMT(mSegmentArray[last]);
   mSegmentArray[last] = nullptr;
   mLastSegmentIndex = last;
   return (bool)(mLastSegmentIndex == mFirstSegmentIndex);
@@ -100,10 +103,10 @@ void nsSegmentedBuffer::Empty() {
   if (mSegmentArray) {
     for (uint32_t i = 0; i < mSegmentArrayCount; i++) {
       if (mSegmentArray[i]) {
-        free(mSegmentArray[i]);
+        FreeOMT(mSegmentArray[i]);
       }
     }
-    free(mSegmentArray);
+    FreeOMT(mSegmentArray);
     mSegmentArray = nullptr;
   }
   mSegmentArrayCount = NS_SEGMENTARRAY_INITIAL_COUNT;
@@ -146,5 +149,25 @@ TestSegmentedBuffer()
   delete buf;
 }
 #endif
+
+void nsSegmentedBuffer::FreeOMT(void* aPtr) {
+  if (!NS_IsMainThread()) {
+    free(aPtr);
+    return;
+  }
+
+  nsCOMPtr<nsIRunnable> r = NS_NewRunnableFunction("nsSegmentedBuffer::FreeOMT",
+                                                   [aPtr]() { free(aPtr); });
+
+  if (!mIOThread) {
+    mIOThread = do_GetService(NS_STREAMTRANSPORTSERVICE_CONTRACTID);
+  }
+
+  // During the shutdown we are not able to obtain the IOThread and/or the
+  // dispatching of runnable fails.
+  if (!mIOThread || NS_FAILED(mIOThread->Dispatch(r.forget()))) {
+    free(aPtr);
+  }
+}
 
 ////////////////////////////////////////////////////////////////////////////////

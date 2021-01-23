@@ -13,7 +13,8 @@ function cleanup_and_finish() {
  * Check that the list of crashes displayed by about:crashes matches
  * the list of crashes that we placed in the pending+submitted directories.
  *
- * NB: This function is run in the child process via ContentTask.spawn.
+ * This function is run in a separate JS context via SpecialPowers.spawn, so
+ * it has no access to other functions or variables in this file.
  */
 function check_crash_list(crashes) {
   const doc = content.document;
@@ -50,7 +51,7 @@ function check_submit_pending(tab, crashes) {
     // loaded the crash report page
     ok(true, "got submission onload");
 
-    ContentTask.spawn(browser, null, function() {
+    SpecialPowers.spawn(browser, [], function() {
       // grab the Crash ID here to verify later
       let CrashID = content.location.search.split("=")[1];
       let CrashURL = content.location.toString();
@@ -102,7 +103,7 @@ function check_submit_pending(tab, crashes) {
         }
       }
 
-      // NB: Despite appearances, this doesn't use a CPOW.
+      // We can listen for pageshow like this because the tab is not remote.
       BrowserTestUtils.waitForEvent(browser, "pageshow", true).then(
         csp_pageshow
       );
@@ -124,7 +125,7 @@ function check_submit_pending(tab, crashes) {
     url => url !== "about:crashes"
   ).then(csp_onload);
   function csp_pageshow() {
-    ContentTask.spawn(browser, { CrashID, CrashURL }, function({
+    SpecialPowers.spawn(browser, [{ CrashID, CrashURL }], function({
       CrashID,
       CrashURL,
     }) {
@@ -155,7 +156,7 @@ function check_submit_pending(tab, crashes) {
     }
   }
 
-  ContentTask.spawn(browser, SubmittedCrash.id, id => {
+  SpecialPowers.spawn(browser, [SubmittedCrash.id], id => {
     const submitButton = content.document
       .getElementById(id)
       .getElementsByClassName("submit-button")[0];
@@ -187,8 +188,10 @@ function test() {
   );
 
   BrowserTestUtils.openNewForegroundTab(gBrowser, "about:crashes").then(tab => {
-    ContentTask.spawn(tab.linkedBrowser, crashes, check_crash_list).then(() =>
-      check_submit_pending(tab, crashes)
-    );
+    SpecialPowers.spawn(
+      tab.linkedBrowser,
+      [crashes],
+      check_crash_list
+    ).then(() => check_submit_pending(tab, crashes));
   });
 }

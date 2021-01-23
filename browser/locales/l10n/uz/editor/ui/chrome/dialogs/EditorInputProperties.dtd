@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Shakl maydoni xossalari">
+<!ENTITY windowTitleImage.label "Shakl rasmi xossalari">
+
+<!ENTITY InputType.label "Maydon turi">
+<!ENTITY InputType.accesskey "t">
+<!ENTITY text.value "Matn">
+<!ENTITY password.value "Parol">
+<!ENTITY checkbox.value "Belgilash tugmasi">
+<!ENTITY radio.value "Tanlash tugmasi">
+<!ENTITY submit.value "Jo‘natish tugmasi">
+<!ENTITY reset.value "Tiklash tugmasi">
+<!ENTITY file.value "Fayl">
+<!ENTITY hidden.value "Yashirilgan">
+<!ENTITY image.value "Rasm">
+<!ENTITY button.value "Tugma">
+
+<!ENTITY InputSettings.label "Maydon sozlamalari">
+<!ENTITY InputName.label "Maydon nomi:">
+<!ENTITY InputName.accesskey "n">
+<!ENTITY GroupName.label "Guruh nomi:">
+<!ENTITY GroupName.accesskey "n">
+<!ENTITY InputValue.label "Maydon qiymati:">
+<!ENTITY InputValue.accesskey "q">
+<!ENTITY InitialValue.label "Boshlang‘ich qiymat:">
+<!ENTITY InitialValue.accesskey "q">
+<!ENTITY InputChecked.label "Boshlang‘ich belgilandi">
+<!ENTITY InputChecked.accesskey "b">
+<!ENTITY InputSelected.label "Boshlang‘ich tanlandi">
+<!ENTITY InputSelected.accesskey "t">
+<!ENTITY InputReadOnly.label "Faqat o‘qish">
+<!ENTITY InputReadOnly.accesskey "o">
+<!ENTITY InputDisabled.label "O‘chirib qo‘yilgan">
+<!ENTITY InputDisabled.accesskey "O">
+<!ENTITY tabIndex.label "Ichki oyna indeksi:">
+<!ENTITY tabIndex.accesskey "i">
+<!ENTITY TextSize.label "Maydon hajmi:">
+<!ENTITY TextSize.accesskey "M">
+<!ENTITY TextLength.label "Maksimal uzunligi:">
+<!ENTITY TextLength.accesskey "u">
+<!ENTITY AccessKey.label "Kirish tugmasi:">
+<!ENTITY AccessKey.accesskey "t">
+<!ENTITY Accept.label "Qabul qilish turi:">
+<!ENTITY Accept.accesskey "Q">
+
+<!ENTITY ImageProperties.label "Rasm xossalari…">
+<!ENTITY ImageProperties.accesskey "R">

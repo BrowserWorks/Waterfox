@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Labels -->
+   
+<!ENTITY newFolderDialog.title      "Karpeta berria">
+<!ENTITY name.label                 "Izena:">
+<!ENTITY name.accesskey             "n">
+<!ENTITY description.label          "Sortu honen azpikarpeta gisa:">
+<!ENTITY description.accesskey      "S">
+<!ENTITY folderRestriction1.label   "Zerbitzari honek bi mota berezitara mugatzen ditu karpetak.">
+<!ENTITY folderRestriction2.label   "Onartu karpeta berriak ondorengoa edukitzea:">
+<!ENTITY foldersOnly.label          "Karpetak soilik">
+<!ENTITY messagesOnly.label         "Mezuak soilik">
+<!ENTITY accept.label               "Sortu karpeta">
+<!ENTITY accept.accesskey           "r">

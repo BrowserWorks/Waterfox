@@ -29,7 +29,7 @@ interface nsICommandManager : nsISupports
 {
   /*
    * Register an observer on the specified command. The observer's Observe
-   * method will get called when the state (enabled/disbaled, or toggled etc)
+   * method will get called when the state (enabled/disabled, or toggled etc)
    * of the command changes.
    *
    * You can register the same observer on multiple commmands by calling this
@@ -74,7 +74,7 @@ interface nsICommandManager : nsISupports
    * (equivalent to calling isCommandEnabled).
    *
    * aCommandName is the name of the command that needs the state
-   * aTargetWindow is the source of command controller 
+   * aTargetWindow is the source of command controller
    *      (null means use focus controller)
    * On output: aCommandParams: values set by the caller filled in with
    * state from the command.

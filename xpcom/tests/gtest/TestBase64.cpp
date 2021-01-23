@@ -5,6 +5,7 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/Base64.h"
+#include "nsComponentManagerUtils.h"
 #include "nsIScriptableBase64Encoder.h"
 #include "nsIInputStream.h"
 #include "nsString.h"
@@ -80,7 +81,7 @@ static Test kTests[] = {
     Test(nullptr, nullptr)};
 
 class FakeInputStream final : public nsIInputStream {
-  ~FakeInputStream() {}
+  ~FakeInputStream() = default;
 
  public:
   FakeInputStream()

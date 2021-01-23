@@ -20,7 +20,7 @@ namespace layout {
 
 using namespace gfx;
 
-// This class is fake DrawTarget, used to intercept text draw calls, while
+// This class is a fake DrawTarget, used to intercept text draw calls, while
 // also collecting up the other aspects of text natively.
 //
 // When using advanced-layers in nsDisplayText's constructor, we construct this
@@ -84,7 +84,7 @@ class TextDrawTarget : public DrawTarget {
     LayoutDeviceRect layoutBoundsRect =
         LayoutDeviceRect::FromAppUnits(aBounds, appUnitsPerDevPixel);
     LayoutDeviceRect layoutClipRect = layoutBoundsRect;
-    mBoundsRect = wr::ToRoundedLayoutRect(layoutBoundsRect);
+    mBoundsRect = wr::ToLayoutRect(layoutBoundsRect);
 
     // Add 1 pixel of dirty area around clip rect to allow us to paint
     // antialiased pixels beyond the measured text extents.
@@ -122,8 +122,6 @@ class TextDrawTarget : public DrawTarget {
     mBuilder.ClearSave();
     return true;
   }
-
-  wr::RenderRoot GetRenderRoot() { return mResources->GetRenderRoot(); }
 
   wr::FontInstanceFlags GetWRGlyphFlags() const { return mWRGlyphFlags; }
   void SetWRGlyphFlags(wr::FontInstanceFlags aFlags) { mWRGlyphFlags = aFlags; }
@@ -241,7 +239,8 @@ class TextDrawTarget : public DrawTarget {
     }
   }
 
-  void AppendSelectionRect(const LayoutDeviceRect& aRect, const Color& aColor) {
+  void AppendSelectionRect(const LayoutDeviceRect& aRect,
+                           const DeviceColor& aColor) {
     auto rect = wr::ToLayoutRect(aRect);
     auto color = wr::ToColorF(aColor);
     mBuilder.PushRect(rect, ClipRect(), mBackfaceVisible, color);
@@ -262,7 +261,7 @@ class TextDrawTarget : public DrawTarget {
   // as the top-left corner of the rect.
   void AppendDecoration(const Point& aStart, const Point& aEnd,
                         const float aThickness, const bool aVertical,
-                        const Color& aColor, const uint8_t aStyle) {
+                        const DeviceColor& aColor, const uint8_t aStyle) {
     auto pos = LayoutDevicePoint::FromUnknownPoint(aStart);
     LayoutDeviceSize size;
 
@@ -275,7 +274,7 @@ class TextDrawTarget : public DrawTarget {
     }
 
     wr::Line decoration;
-    decoration.bounds = wr::ToRoundedLayoutRect(LayoutDeviceRect(pos, size));
+    decoration.bounds = wr::ToLayoutRect(LayoutDeviceRect(pos, size));
     decoration.wavyLineThickness = 0;  // dummy value, unused
     decoration.color = wr::ToColorF(aColor);
     decoration.orientation = aVertical ? wr::LineOrientation::Vertical
@@ -306,11 +305,11 @@ class TextDrawTarget : public DrawTarget {
   // different, and trying to merge the concept is more of a mess than it's
   // worth.
   void AppendWavyDecoration(const Rect& aBounds, const float aThickness,
-                            const bool aVertical, const Color& aColor) {
+                            const bool aVertical, const DeviceColor& aColor) {
     wr::Line decoration;
 
     decoration.bounds =
-        wr::ToRoundedLayoutRect(LayoutDeviceRect::FromUnknownRect(aBounds));
+        wr::ToLayoutRect(LayoutDeviceRect::FromUnknownRect(aBounds));
     decoration.wavyLineThickness = aThickness;
     decoration.color = wr::ToColorF(aColor);
     decoration.orientation = aVertical ? wr::LineOrientation::Vertical
@@ -347,18 +346,30 @@ class TextDrawTarget : public DrawTarget {
 
  private:
   wr::LayoutRect ClipRect() {
-    return wr::ToRoundedLayoutRect(mClipStack.LastElement());
+    return wr::ToLayoutRect(mClipStack.LastElement());
   }
   LayoutDeviceRect GeckoClipRect() { return mClipStack.LastElement(); }
-  // Whether anything unsupported was encountered. Currently:
+  // Whether anything unsupported was encountered. This will result in this
+  // text being emitted as a blob, which means subpixel-AA can't be used and
+  // that performance will probably be a bit worse. At this point, we've
+  // properly implemented everything that shows up a lot, so you can assume
+  // that the remaining things we don't implement are fairly rare. The complete
+  // set of things that we don't implement are as follows:
   //
-  // * Synthetic bold/italics
-  // * SVG fonts
-  // * Unserializable fonts
-  // * Tofu glyphs
-  // * Pratial ligatures
-  // * Text writing-mode
-  // * Text stroke
+  // * Unserializable Fonts: WR lives across an IPC boundary
+  // * Text-Combine-Upright Squishing: no one's really bothered to impl it yet
+  // * Text-Stroke: not a real standard (exists for webcompat)
+  // * SVG Glyphs: not a real standard (we got overzealous with svg)
+  // * Color Glyphs (Emoji) With Transparency: requires us to apply transparency
+  //   with a composited layer (a single emoji can be many single-color glyphs)
+  //
+  // The transparent colored-glyphs issue is probably the most valuable to fix,
+  // since ideally it would also result in us fixing transparency for all
+  // intersecting glyphs (which currently look bad with or without webrender,
+  // so there's no fallback like with emoji). Specifically, transparency
+  // looks bad for "cursive" fonts where glyphs overlap at the seams. Since
+  // this is more common for non-latin scripts (e.g. मनीष), this amounts to us
+  // treating non-latin scripts poorly... unless they're emoji. Yikes!
   bool mHasUnsupportedFeatures = false;
 
   // The caller promises to call Save/Restore on the builder as needed.
@@ -430,7 +441,7 @@ class TextDrawTarget : public DrawTarget {
   }
 
   void DrawSurfaceWithShadow(SourceSurface* aSurface, const Point& aDest,
-                             const Color& aColor, const Point& aOffset,
+                             const DeviceColor& aColor, const Point& aOffset,
                              Float aSigma, CompositionOp aOperator) override {
     MOZ_CRASH("TextDrawTarget: Method shouldn't be called");
   }
@@ -451,8 +462,7 @@ class TextDrawTarget : public DrawTarget {
     if (!aRect.Intersects(GeckoClipRect().ToUnknownRect())) {
       return;
     }
-    auto rect =
-        wr::ToRoundedLayoutRect(LayoutDeviceRect::FromUnknownRect(aRect));
+    auto rect = wr::ToLayoutRect(LayoutDeviceRect::FromUnknownRect(aRect));
     auto color =
         wr::ToColorF(static_cast<const ColorPattern&>(aPattern).mColor);
     mBuilder.PushRect(rect, ClipRect(), mBackfaceVisible, color);
@@ -479,7 +489,7 @@ class TextDrawTarget : public DrawTarget {
     if (!rect.Intersects(GeckoClipRect())) {
       return;
     }
-    wr::LayoutRect bounds = wr::ToRoundedLayoutRect(rect);
+    wr::LayoutRect bounds = wr::ToLayoutRect(rect);
     mBuilder.PushBorder(bounds, ClipRect(), true, widths,
                         Range<const wr::BorderSide>(sides, 4), radius);
   }
@@ -573,6 +583,12 @@ class TextDrawTarget : public DrawTarget {
     return false;
   }
 
+  virtual RefPtr<DrawTarget> CreateClippedDrawTarget(
+      const Rect& aBounds, SurfaceFormat aFormat) override {
+    MOZ_CRASH("TextDrawTarget: Method shouldn't be called");
+    return nullptr;
+  }
+
   already_AddRefed<PathBuilder> CreatePathBuilder(
       FillRule aFillRule) const override {
     MOZ_CRASH("TextDrawTarget: Method shouldn't be called");
@@ -587,11 +603,6 @@ class TextDrawTarget : public DrawTarget {
   already_AddRefed<GradientStops> CreateGradientStops(
       GradientStop* aStops, uint32_t aNumStops,
       ExtendMode aExtendMode) const override {
-    MOZ_CRASH("TextDrawTarget: Method shouldn't be called");
-    return nullptr;
-  }
-
-  void* GetNativeSurface(NativeSurfaceType aType) override {
     MOZ_CRASH("TextDrawTarget: Method shouldn't be called");
     return nullptr;
   }

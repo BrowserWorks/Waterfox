@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "ਟੇਬਲ ਵਿਸ਼ੇਸ਼ਤਾ">
+<!ENTITY applyButton.label                "ਲਾਗੂ ਕਰੋ">
+<!ENTITY applyButton.accesskey            "A">
+<!ENTITY closeButton.label                "ਬੰਦ ਕਰੋ">
+<!ENTITY tableTab.label                   "ਟੇਬਲ">
+<!ENTITY cellTab.label                    "ਸੈੱਲ">
+<!ENTITY tableRows.label                  "ਕਤਾਰਾਂ:">
+<!ENTITY tableRows.accessKey              "R">
+<!ENTITY tableColumns.label               "ਕਾਲਮ:">
+<!ENTITY tableColumns.accessKey           "C">
+<!ENTITY tableHeight.label                "ਉਚਾਈ:">
+<!ENTITY tableHeight.accessKey            "G">
+<!ENTITY tableWidth.label                 "ਚੌੜਾਈ:">
+<!ENTITY tableWidth.accessKey             "W">
+<!ENTITY tableBorderSpacing.label         "ਬਾਰਡਰ ਅਤੇ ਫਾਸਲਾ">
+<!ENTITY tableBorderWidth.label           "ਬਾਰਡਰ:">
+<!ENTITY tableBorderWidth.accessKey       "B">
+<!ENTITY tableSpacing.label               "ਫਾਸਲਾ:">
+<!ENTITY tableSpacing.accessKey           "S">
+<!ENTITY tablePadding.label               "ਪੈਡਿੰਗ:">
+<!ENTITY tablePadding.accessKey           "P">
+<!ENTITY tablePxBetwCells.label           "ਸੈੱਲਾਂ ਵਿੱਚ ਪਿਕਸਲ">
+<!ENTITY tablePxBetwBrdrCellContent.label "ਸੈੱਲ ਬਾਰਡਰ ਅਤੇ ਸਮੱਗਰੀ ਵਿੱਚ ਪਿਕਸਲ">
+<!ENTITY tableAlignment.label             "ਟੇਬਲ ਇਕਸਾਰ:">
+<!ENTITY tableAlignment.accessKey         "T">
+<!ENTITY tableCaption.label               "ਸੁਰਖੀ:">
+<!ENTITY tableCaption.accessKey           "N">
+<!ENTITY tableCaptionAbove.label          "ਟੇਬਲ ਉੱਤੇ">
+<!ENTITY tableCaptionBelow.label          "ਟੇਬਲ ਹੇਠ">
+<!ENTITY tableCaptionLeft.label           "ਟੇਬਲ ਦੇ ਖੱਬੇ">
+<!ENTITY tableCaptionRight.label          "ਟੇਬਲ ਦੇ ਸੱਜੇ">
+<!ENTITY tableCaptionNone.label           "ਕੋਈ ਨਹੀਂ">
+<!ENTITY tableInheritColor.label           "(ਪੇਜ਼ ਦੇ ਰੰਗ ਨੂੰ ਵੇਖਾਈ ਦੇਣ ਦਿਓ)">
+
+<!ENTITY cellSelection.label              "ਚੋਣ">
+<!ENTITY cellSelectCell.label             "ਸੈੱਲ">
+<!ENTITY cellSelectRow.label              "ਕਤਾਰ">
+<!ENTITY cellSelectColumn.label           "ਕਾਲਮ">
+<!ENTITY cellSelectNext.label             "ਅੱਗੇ">
+<!ENTITY cellSelectNext.accessKey         "N">
+<!ENTITY cellSelectPrevious.label         "ਪਿੱਛੇ">
+<!ENTITY cellSelectPrevious.accessKey     "P">
+<!ENTITY applyBeforeChange.label          "ਚੋਣ ਬਦਲ ਤੋਂ ਪਹਿਲਾਂ ਮੌਜੂਦਾ ਬਦਲਾਅ ਲਾਗੂ ਕੀਤਾ ਜਾਵੇਗਾ।">
+<!ENTITY cellContentAlignment.label       "ਸਮੱਗਰੀ ਇਕਸਾਰ">
+<!ENTITY cellHorizontal.label             "ਹਰੀਜੱਟਲ:">
+<!ENTITY cellHorizontal.accessKey         "Z">
+<!ENTITY cellVertical.label               "ਵਰਟੀਕਲ:">
+<!ENTITY cellVertical.accessKey           "V">
+<!ENTITY cellStyle.label                  "ਸੈੱਲ ਸਟਾਈਲ:">
+<!ENTITY cellStyle.accessKey              "C">
+<!ENTITY cellNormal.label                 "ਸਧਾਰਨ">
+<!ENTITY cellHeader.label                 "ਹੈੱਡਰ">
+<!ENTITY cellTextWrap.label               "ਟੈਕਸਟ ਸਮੇਟੋ:">
+<!ENTITY cellTextWrap.accessKey           "T">
+<!ENTITY cellWrap.label                   "ਸਮੇਟੋ">
+<!ENTITY cellNoWrap.label                 "ਨਾ ਸਮੇਟੋ">
+<!ENTITY cellAlignTop.label               "ਉੱਤੇ">
+<!ENTITY cellAlignMiddle.label            "ਮੱਧ">
+<!ENTITY cellAlignBottom.label            "ਤਲ">
+<!ENTITY cellAlignJustify.label           "ਢੁੱਕਵਾਂ">
+<!ENTITY cellInheritColor.label           "(ਟੇਬਲ ਰੰਗ ਵੇਖਾਈ ਦੇਣ ਦਿਓ)">
+<!ENTITY cellUseCheckboxHelp.label        "ਸਭ ਚੁਣੇ ਸੈੱਲਾਂ ਉੱਤੇ ਕਿਹੜੀਆਂ ਵਿਸ਼ੇਸ਼ਤਾਵਾਂ ਲਾਗੂ ਕਰਨੀਆਂ ਹਨ, ਲਈ ਚੋਣ ਬਕਸੇ ਵਰਤੋਂ">
+
+<!-- Used in both Table and Cell panels  -->
+<!ENTITY size.label                       "ਸਾਈਜ਼">
+<!ENTITY pixels.label                     "ਪਿਕਸਲ">
+<!ENTITY backgroundColor.label            "ਬੈਕਗਰਾਊਂਡ ਰੰਗ:">
+<!ENTITY backgroundColor.accessKey        "B">
+<!ENTITY AlignLeft.label                  "ਖੱਬੇ">
+<!ENTITY AlignCenter.label                "ਸੈਂਟਰ">
+<!ENTITY AlignRight.label                 "ਸੱਜੇ">

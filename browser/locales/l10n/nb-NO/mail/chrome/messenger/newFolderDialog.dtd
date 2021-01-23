@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Labels -->
+   
+<!ENTITY newFolderDialog.title      "Ny mappe">
+<!ENTITY name.label                 "Navn:">
+<!ENTITY name.accesskey             "N">
+<!ENTITY description.label          "Undermappe av:">
+<!ENTITY description.accesskey      "U">
+<!ENTITY folderRestriction1.label   "Denne serveren begrenser mapper til to spesialtyper.">
+<!ENTITY folderRestriction2.label   "La den nye mappen inneholde:">
+<!ENTITY foldersOnly.label          "Bare mapper">
+<!ENTITY messagesOnly.label         "Bare meldinger">
+<!ENTITY accept.label               "Opprett mappe">
+<!ENTITY accept.accesskey           "O">

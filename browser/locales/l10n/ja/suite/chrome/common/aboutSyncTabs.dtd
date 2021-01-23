@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tabs.otherComputers.label): Keep this in sync with syncTabsMenu.label from navigator.dtd -->
+<!ENTITY tabs.otherComputers.label               "他のパソコンで開いていたタブ">
+
+<!ENTITY tabs.searchText.label                   "タブを検索...">
+
+<!-- LOCALIZATION NOTE (tabs.context.openTab.accesskey, tabs.context.openMultipleTabs.accesskey;
+     tabs.context.bookmarkSingleTab.accesskey, tabs.context.bookmarkMultipleTabs.accesskey):
+     Only one of each of these pairs will show at a time (based on selection), so reusing accesskey is ok. -->
+<!ENTITY tabs.context.openTab.label                   "このタブを開く">
+<!ENTITY tabs.context.openTab.accesskey               "O">
+<!ENTITY tabs.context.openMultipleTabs.label          "選択したタブを開く">
+<!ENTITY tabs.context.openMultipleTabs.accesskey      "O">
+<!ENTITY tabs.context.bookmarkSingleTab.label         "このタブをブックマーク...">
+<!ENTITY tabs.context.bookmarkSingleTab.accesskey     "B">
+<!ENTITY tabs.context.bookmarkMultipleTabs.label      "選択したタブをブックマーク...">
+<!ENTITY tabs.context.bookmarkMultipleTabs.accesskey  "B">
+<!ENTITY tabs.context.refreshList.label               "一覧を更新">
+<!ENTITY tabs.context.refreshList.accesskey           "R">

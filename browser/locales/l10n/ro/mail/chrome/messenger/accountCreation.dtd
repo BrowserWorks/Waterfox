@@ -1,0 +1,112 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailWizard.title               "Configurează-ți contul de e-mail existent">
+<!ENTITY emailWizard.caption             "Folosește-ți adresa de e-mail actuală">
+<!ENTITY name.label                      "Numele tău:">
+<!ENTITY name.accesskey                  "n">
+<!ENTITY fullname.placeholder            "Numele tău complet">
+<!ENTITY name.text                       "Numele tău, așa cum îl văd ceilalți">
+<!ENTITY name.error                      "Te rugăm să-ți introduci numele">
+<!ENTITY email.label                     "Adresa de e-mail:">
+<!ENTITY email.accesskey                 "l">
+<!ENTITY email3.placeholder              "Adresa ta de e-mail">
+<!ENTITY email.text                      "Adresa ta de e-mail existentă">
+<!ENTITY email.error                     "Adresă de e-mail nevalidă">
+<!ENTITY password.label                  "Parola:">
+<!ENTITY password.accesskey              "P">
+<!ENTITY password.placeholder            "Parolă">
+<!ENTITY password.text                   "Opțional, se va folosi doar pentru a valida numele de utilizator">
+<!ENTITY password.toggle                 "Afișează/Ascunde parola">
+<!ENTITY rememberPassword.label          "Ține minte parola">
+<!ENTITY rememberPassword.accesskey      "m">
+<!ENTITY usernameEx.label                "Datele tale de autentificare:">
+<!ENTITY usernameEx.accesskey            "I">
+<!-- LOCALIZATION NOTE(usernameEx.placeholder): YOURDOMAIN refers to the Windows domain in ActiveDirectory. yourusername refers to the user's account name in Windows. -->
+<!ENTITY usernameEx.placeholder          "DOMENIULTĂU\numeletăiudeutilizator">
+<!-- LOCALIZATION NOTE(usernameEx.text): Domain refers to the Windows domain in ActiveDirectory. We mean the user's login in Windows at the local corporate network. -->
+<!ENTITY usernameEx.text                 "Autentificare în domeniu">
+
+<!ENTITY protocol.label                  "Protocol:">
+<!ENTITY imapLong.label                  "IMAP (dosare la distanță)">
+<!ENTITY pop3Long.label                  "POP3 (păstrează mesajele pe calculator)">
+
+<!ENTITY manualConfigTable.summary       "Setări server">
+<!ENTITY incoming.label                  "Primire:">
+<!ENTITY incomingColumn.label            "Primire">
+<!ENTITY outgoing.label                  "Trimitere:">
+<!ENTITY outgoingColumn.label            "Trimitere">
+<!ENTITY username.label                  "Nume de utilizator:">
+<!ENTITY serverRow.label                 "Server:">
+<!ENTITY portRow.label                   "Port:">
+<!ENTITY sslRow.label                    "SSL:">
+<!ENTITY auth.label                      "Autentificare">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label                      "POP3">
+<!-- LOCALIZATION NOTE(exchange.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange.label                  "Schimb">
+<!ENTITY smtp.label                      "SMTP">
+<!ENTITY autodetect.label                "Detectează automat">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "Fără">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!-- LOCALIZATION NOTE(exchange-hostname.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange-hostname.label         "Server de schimb:">
+
+<!ENTITY advancedSetup.label             "Configurare avansată">
+<!ENTITY advancedSetup.accesskey         "A">
+<!ENTITY cancel.label                    "Renunță">
+<!ENTITY cancel.accesskey                "a">
+<!ENTITY continue.label                  "Continuă">
+<!ENTITY continue.accesskey              "C">
+<!ENTITY stop.label                      "Oprește">
+<!ENTITY stop.accesskey                  "O">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual config mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "Retestează">
+<!ENTITY half-manual-test.accesskey      "T">
+<!ENTITY manual-config.label             "Configurează manual...">
+<!ENTITY manual-config.accesskey         "M">
+<!ENTITY open-provisioner.label          "Obține o adresă de e-mail nouă…">
+<!ENTITY open-provisioner.accesskey      "g">
+
+
+<!ENTITY get-help.label                  "Obține ajutor">
+<!ENTITY get-help.accesskey              "H">
+
+
+<!ENTITY warning.label                   "Avertisment!">
+<!ENTITY incomingSettings.label          "Setări de primire:">
+<!ENTITY outgoingSettings.label          "Setări de trimitere:">
+<!ENTITY technicaldetails.label          "Detalii tehnice">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "Înțeleg riscurile.">
+<!ENTITY confirmWarning.accesskey        "u">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "Terminat">
+<!ENTITY doneAccount.accesskey           "D">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "Schimbă setările">
+<!ENTITY changeSettings.accesskey        "S">
+
+<!ENTITY contactYourProvider.description "&brandShortName; poate permite accesarea contului de e-mail folosind configurațiile furnizate. Totuși, trebuie să contactezi administratorul sau furnizorul de e-mail pentru conexiuni necorespunzătoare. Vezi întrebări adresate frecvent în Thunderbird FAQ pentru mai multe informații.">
+
+<!ENTITY insecureServer.tooltip.title    "Avertisment! Acesta este un server nesecurizat.">
+<!ENTITY insecureServer.tooltip.details  "Dă clic pe cerc pentru mai multe detalii.">
+
+<!ENTITY insecureUnencrypted.description "Adresa de e-mail și datele de autentificare sunt transmise fără a fi criptate; prin urmare, parola și mesajul pot fi citite de alte persoane. &brandShortName; îți va permite accesul la căsuța poștală, dar trebuie să contactezi furnizorul de e-mail pentru configurarea serverului cu o conexiune securizată.">
+<!ENTITY insecureSelfSigned.description  "Serverul folosește un certificat în care nu putem avea încredere și nu putem fi siguri că nu ai traficul interceptat între &brandShortName; și server. &brandShortName; va permite accesul la căsuța poștală, dar trebuie să contactezi neapărat furnizorul de e-mail pentru configurarea serverului cu un certificat de încredere.">
+<!ENTITY secureServer.description        "Felicitări! Acesta este un server securizat.">

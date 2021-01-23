@@ -65,7 +65,7 @@ let currentMockSocket = null;
 function setupMockPushSocket(mockWebSocket) {
   currentMockSocket = mockWebSocket;
   currentMockSocket._isActive = true;
-  chromeScript.sendSyncMessage("socket-setup");
+  chromeScript.sendAsyncMessage("socket-setup");
   chromeScript.addMessageListener("socket-client-msg", function(msg) {
     mockWebSocket.handleMessage(msg);
   });
@@ -76,7 +76,7 @@ function teardownMockPushSocket() {
     return new Promise(resolve => {
       currentMockSocket._isActive = false;
       chromeScript.addMessageListener("socket-server-teardown", resolve);
-      chromeScript.sendSyncMessage("socket-teardown");
+      chromeScript.sendAsyncMessage("socket-teardown");
     });
   }
   return Promise.resolve();
@@ -172,12 +172,9 @@ SimpleTest.registerCleanupFunction(async function() {
 });
 
 function setPushPermission(allow) {
-  return new Promise(resolve => {
-    SpecialPowers.pushPermissions(
-      [{ type: "desktop-notification", allow, context: document }],
-      resolve
-    );
-  });
+  return SpecialPowers.pushPermissions([
+    { type: "desktop-notification", allow, context: document },
+  ]);
 }
 
 function setupPrefs() {

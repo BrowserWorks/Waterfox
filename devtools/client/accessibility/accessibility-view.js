@@ -3,7 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-/* global EVENTS, gToolbox */
+/* global EVENTS */
 
 const nodeConstants = require("devtools/shared/dom-node-constants");
 
@@ -14,24 +14,25 @@ const {
 } = require("devtools/client/shared/vendor/react");
 const ReactDOM = require("devtools/client/shared/vendor/react-dom");
 const { Provider } = require("devtools/client/shared/vendor/react-redux");
-const { combineReducers } = require("devtools/client/shared/vendor/redux");
 
 // Accessibility Panel
-const MainFrame = createFactory(require("./components/MainFrame"));
-const OldVersionDescription = createFactory(
-  require("./components/Description").OldVersionDescription
+const MainFrame = createFactory(
+  require("devtools/client/accessibility/components/MainFrame")
 );
 
 // Store
-const createStore = require("devtools/client/shared/redux/create-store")();
+const createStore = require("devtools/client/shared/redux/create-store");
 
 // Reducers
-const { reducers } = require("./reducers/index");
-const store = createStore(combineReducers(reducers));
+const { reducers } = require("devtools/client/accessibility/reducers/index");
+const store = createStore(reducers);
 
 // Actions
-const { reset } = require("./actions/ui");
-const { select, highlight } = require("./actions/accessibles");
+const { reset } = require("devtools/client/accessibility/actions/ui");
+const {
+  select,
+  highlight,
+} = require("devtools/client/accessibility/actions/accessibles");
 
 /**
  * This object represents view of the Accessibility panel and is responsible
@@ -48,44 +49,131 @@ AccessibilityView.prototype = {
    * Initialize accessibility view, create its top level component and set the
    * data store.
    *
-   * @param {Object} accessibility  front that can initialize accessibility
-   *                                walker and enable/disable accessibility
-   *                                services.
-   * @param {Object} walker         front for accessibility walker actor responsible for
-   *                                managing accessible objects actors/fronts.
-   * @param {JSON}   supports       a collection of flags indicating which accessibility
-   *                                panel features are supported by the current serverside
-   *                                version.
+   * @param {Object}
+   *        Object that contains the following properties:
+   * - supports                               {JSON}
+   *                                          a collection of flags indicating
+   *                                          which accessibility panel features
+   *                                          are supported by the current
+   *                                          serverside version.
+   * - fluentBundles                          {Array}
+   *                                          array of FluentBundles elements
+   *                                          for localization
+   * - toolbox                                {Object}
+   *                                          devtools toolbox.
+   * - getAccessibilityTreeRoot               {Function}
+   *                                          Returns the topmost accessibiliity
+   *                                          walker that is used as the root of
+   *                                          the accessibility tree.
+   * - startListeningForAccessibilityEvents   {Function}
+   *                                          Add listeners for specific
+   *                                          accessibility events.
+   * - stopListeningForAccessibilityEvents    {Function}
+   *                                          Remove listeners for specific
+   *                                          accessibility events.
+   * - audit                                  {Function}
+   *                                          Audit function that will start
+   *                                          accessibility audit for given types
+   *                                          of accessibility issues.
+   * - simulate                               {null|Function}
+   *                                          Apply simulation of a given type
+   *                                          (by setting color matrices in
+   *                                          docShell).
+   * - enableAccessibility                    {Function}
+   *                                          Enable accessibility services.
+   * - disableAccessibility                   {Function}
+   *                                          Disable accessibility services.
+   * - resetAccessiblity                      {Function}
+   *                                          Reset the state of the
+   *                                          accessibility services.
+   * - startListeningForLifecycleEvents       {Function}
+   *                                          Add listeners for accessibility
+   *                                          service lifecycle events.
+   * - stopListeningForLifecycleEvents        {Function}
+   *                                          Remove listeners for accessibility
+   *                                          service lifecycle events.
+   * - startListeningForParentLifecycleEvents {Function}
+   *                                          Add listeners for parent process
+   *                                          accessibility service lifecycle
+   *                                          events.
+   * - stopListeningForParentLifecycleEvents  {Function}
+   *                                          Remove listeners for parent
+   *                                          process accessibility service
+   *                                          lifecycle events.
+   * - highlightAccessible                    {Function}
+   *                                          Highlight accessible object.
+   * - unhighlightAccessible                  {Function}
+   *                                          Unhighlight accessible object.
    */
-  async initialize(accessibility, walker, supports) {
+  async initialize({
+    supports,
+    fluentBundles,
+    toolbox,
+    getAccessibilityTreeRoot,
+    startListeningForAccessibilityEvents,
+    stopListeningForAccessibilityEvents,
+    audit,
+    simulate,
+    enableAccessibility,
+    disableAccessibility,
+    resetAccessiblity,
+    startListeningForLifecycleEvents,
+    stopListeningForLifecycleEvents,
+    startListeningForParentLifecycleEvents,
+    stopListeningForParentLifecycleEvents,
+    highlightAccessible,
+    unhighlightAccessible,
+  }) {
     // Make sure state is reset every time accessibility panel is initialized.
-    await this.store.dispatch(reset(accessibility, supports));
+    await this.store.dispatch(reset(resetAccessiblity, supports));
     const container = document.getElementById("content");
-
-    if (!supports.enableDisable) {
-      ReactDOM.render(OldVersionDescription(), container);
-      return;
-    }
-
-    const mainFrame = MainFrame({ accessibility, walker });
+    const mainFrame = MainFrame({
+      fluentBundles,
+      toolbox,
+      getAccessibilityTreeRoot,
+      startListeningForAccessibilityEvents,
+      stopListeningForAccessibilityEvents,
+      audit,
+      simulate,
+      enableAccessibility,
+      disableAccessibility,
+      resetAccessiblity,
+      startListeningForLifecycleEvents,
+      stopListeningForLifecycleEvents,
+      startListeningForParentLifecycleEvents,
+      stopListeningForParentLifecycleEvents,
+      highlightAccessible,
+      unhighlightAccessible,
+    });
     // Render top level component
     const provider = createElement(Provider, { store: this.store }, mainFrame);
     this.mainFrame = ReactDOM.render(provider, container);
   },
 
-  async selectAccessible(walker, accessible) {
-    await this.store.dispatch(select(walker, accessible));
+  destroy() {
+    const container = document.getElementById("content");
+    ReactDOM.unmountComponentAtNode(container);
+  },
+
+  async selectAccessible(accessible) {
+    await this.store.dispatch(select(accessible));
     window.emit(EVENTS.NEW_ACCESSIBLE_FRONT_INSPECTED);
   },
 
-  async highlightAccessible(walker, accessible) {
-    await this.store.dispatch(highlight(walker, accessible));
+  async highlightAccessible(accessible) {
+    await this.store.dispatch(highlight(accessible));
     window.emit(EVENTS.NEW_ACCESSIBLE_FRONT_HIGHLIGHTED);
   },
 
-  async selectNodeAccessible(walker, node, supports) {
-    let accessible = await walker.getAccessibleFor(node);
-    if (accessible && supports.hydration) {
+  async selectNodeAccessible(node) {
+    if (!node) {
+      return;
+    }
+
+    const accessibilityFront = await node.targetFront.getFront("accessibility");
+    const accessibleWalkerFront = await accessibilityFront.getWalker();
+    let accessible = await accessibleWalkerFront.getAccessibleFor(node);
+    if (accessible) {
       await accessible.hydrate();
     }
 
@@ -94,25 +182,48 @@ AccessibilityView.prototype = {
     // effort approach until there's accessibility API to retrieve accessible object at
     // point.
     if (!accessible || accessible.indexInParent < 0) {
-      const { nodes: children } = await gToolbox.walker.children(node);
+      const { nodes: children } = await node.walkerFront.children(node);
       for (const child of children) {
         if (child.nodeType === nodeConstants.TEXT_NODE) {
-          accessible = await walker.getAccessibleFor(child);
+          accessible = await accessibleWalkerFront.getAccessibleFor(child);
           // indexInParent property is only available with additional request
           // for data (hydration) about the accessible object.
-          if (accessible && supports.hydration) {
+          if (accessible) {
             await accessible.hydrate();
-          }
-
-          if (accessible.indexInParent >= 0) {
-            break;
+            if (accessible.indexInParent >= 0) {
+              break;
+            }
           }
         }
       }
     }
 
-    await this.store.dispatch(select(walker, accessible));
-    window.emit(EVENTS.NEW_ACCESSIBLE_FRONT_HIGHLIGHTED);
+    // Attempt to find closest accessible ancestor for a given node.
+    if (!accessible || accessible.indexInParent < 0) {
+      let parentNode = node.parentNode();
+      while (parentNode) {
+        accessible = await accessibleWalkerFront.getAccessibleFor(parentNode);
+        if (accessible) {
+          await accessible.hydrate();
+          if (accessible.indexInParent >= 0) {
+            break;
+          }
+        }
+
+        parentNode = parentNode.parentNode();
+      }
+    }
+
+    // Do not set the selected state if there is no corresponding accessible.
+    if (!accessible) {
+      console.warn(
+        `No accessible object found for a node or a node in its ancestry: ${node.actorID}`
+      );
+      return;
+    }
+
+    await this.store.dispatch(select(accessible));
+    window.emit(EVENTS.NEW_ACCESSIBLE_FRONT_INSPECTED);
   },
 
   /**

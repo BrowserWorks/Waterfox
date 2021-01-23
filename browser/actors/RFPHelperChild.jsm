@@ -5,9 +5,6 @@
 
 var EXPORTED_SYMBOLS = ["RFPHelperChild"];
 
-const { ActorChild } = ChromeUtils.import(
-  "resource://gre/modules/ActorChild.jsm"
-);
 const { XPCOMUtils } = ChromeUtils.import(
   "resource://gre/modules/XPCOMUtils.jsm"
 );
@@ -21,10 +18,10 @@ XPCOMUtils.defineLazyPreferenceGetter(
   false
 );
 
-class RFPHelperChild extends ActorChild {
-  handleEvent() {
-    if (isLetterboxingEnabled) {
-      this.mm.sendAsyncMessage("Letterboxing:ContentSizeUpdated");
+class RFPHelperChild extends JSWindowActorChild {
+  handleEvent(event) {
+    if (isLetterboxingEnabled && event.type == "resize") {
+      this.sendAsyncMessage("Letterboxing:ContentSizeUpdated");
     }
   }
 }

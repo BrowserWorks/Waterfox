@@ -6,11 +6,12 @@
 
 #include "SVGAnimatedPointList.h"
 
-#include "mozilla/Move.h"
-#include "mozilla/SMILValue.h"
-#include "mozilla/dom/SVGElement.h"
+#include <utility>
+
 #include "DOMSVGPointList.h"
 #include "SVGPointListSMILType.h"
+#include "mozilla/SMILValue.h"
+#include "mozilla/dom/SVGElement.h"
 
 using namespace mozilla::dom;
 
@@ -112,7 +113,7 @@ nsresult SVGAnimatedPointList::SetAnimValue(const SVGPointList& aNewAnimValue,
     domWrapper->InternalListWillChangeTo(aNewAnimValue);
   }
   if (!mAnimVal) {
-    mAnimVal = new SVGPointList();
+    mAnimVal = MakeUnique<SVGPointList>();
   }
   nsresult rv = mAnimVal->CopyFrom(aNewAnimValue);
   if (NS_FAILED(rv)) {
@@ -169,7 +170,7 @@ SMILValue SVGAnimatedPointList::SMILAnimatedPointList::GetBaseValue() const {
   nsresult rv = list->CopyFrom(mVal->mBaseVal);
   if (NS_SUCCEEDED(rv)) {
     list->SetInfo(mElement);
-    Swap(val, tmp);
+    std::swap(val, tmp);
   }
   return val;
 }

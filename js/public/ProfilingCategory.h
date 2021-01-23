@@ -35,6 +35,7 @@
     SUBCATEGORY(IDLE, IDLE, "Other")                                          \
   END_CATEGORY                                                                \
   BEGIN_CATEGORY(OTHER, "Other", "grey")                                      \
+    SUBCATEGORY(OTHER, OTHER_PreferenceRead, "Preference Read")               \
     SUBCATEGORY(OTHER, OTHER, "Other")                                        \
   END_CATEGORY                                                                \
   BEGIN_CATEGORY(LAYOUT, "Layout", "purple")                                  \
@@ -70,6 +71,31 @@
   END_CATEGORY                                                                \
   BEGIN_CATEGORY(DOM, "DOM", "blue")                                          \
     SUBCATEGORY(DOM, DOM, "Other")                                            \
+  END_CATEGORY                                                                \
+  BEGIN_CATEGORY(JAVA_ANDROID, "Android", "yellow")                           \
+    SUBCATEGORY(JAVA_ANDROID, JAVA_ANDROID, "Other")                          \
+  END_CATEGORY                                                                \
+  BEGIN_CATEGORY(JAVA_ANDROIDX, "AndroidX", "orange")                         \
+    SUBCATEGORY(JAVA_ANDROIDX, JAVA_ANDROIDX, "Other")                        \
+  END_CATEGORY                                                                \
+  BEGIN_CATEGORY(JAVA_LANGUAGE, "Java", "blue")                               \
+    SUBCATEGORY(JAVA_LANGUAGE, JAVA_LANGUAGE, "Other")                        \
+  END_CATEGORY                                                                \
+  BEGIN_CATEGORY(JAVA_MOZILLA, "Mozilla", "green")                            \
+    SUBCATEGORY(JAVA_MOZILLA, JAVA_MOZILLA, "Other")                          \
+  END_CATEGORY                                                                \
+  BEGIN_CATEGORY(JAVA_KOTLIN, "Kotlin", "purple")                             \
+    SUBCATEGORY(JAVA_KOTLIN, JAVA_KOTLIN, "Other")                            \
+  END_CATEGORY                                                                \
+  BEGIN_CATEGORY(JAVA_BLOCKED, "Blocked", "lightblue")                        \
+    SUBCATEGORY(JAVA_BLOCKED, JAVA_BLOCKED, "Other")                          \
+  END_CATEGORY                                                                \
+  BEGIN_CATEGORY(IPC, "IPC", "lightgreen")                                    \
+    SUBCATEGORY(IPC, IPC, "Other")                                            \
+  END_CATEGORY                                                                \
+  BEGIN_CATEGORY(MEDIA, "Media", "orange")                                    \
+    SUBCATEGORY(MEDIA, MEDIA_CUBEB, "Cubeb")                                  \
+    SUBCATEGORY(MEDIA, MEDIA_PLAYBACK, "Playback")                            \
   END_CATEGORY
 
 namespace JS {

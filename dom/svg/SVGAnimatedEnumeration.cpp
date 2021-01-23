@@ -31,8 +31,8 @@ const SVGEnumMapping* SVGAnimatedEnumeration::GetMapping(
   return info.mEnumInfo[mAttrEnum].mMapping;
 }
 
-nsresult SVGAnimatedEnumeration::SetBaseValueAtom(const nsAtom* aValue,
-                                                  SVGElement* aSVGElement) {
+bool SVGAnimatedEnumeration::SetBaseValueAtom(const nsAtom* aValue,
+                                              SVGElement* aSVGElement) {
   const SVGEnumMapping* mapping = GetMapping(aSVGElement);
 
   while (mapping && mapping->mKey) {
@@ -49,12 +49,12 @@ nsresult SVGAnimatedEnumeration::SetBaseValueAtom(const nsAtom* aValue,
         // SVGElement::ParseAttribute under Element::SetAttr,
         // which takes care of notifying.
       }
-      return NS_OK;
+      return true;
     }
     mapping++;
   }
 
-  return NS_ERROR_DOM_TYPE_ERR;
+  return false;
 }
 
 nsAtom* SVGAnimatedEnumeration::GetBaseValueAtom(SVGElement* aSVGElement) {
@@ -70,8 +70,9 @@ nsAtom* SVGAnimatedEnumeration::GetBaseValueAtom(SVGElement* aSVGElement) {
   return nsGkAtoms::_empty;
 }
 
-nsresult SVGAnimatedEnumeration::SetBaseValue(uint16_t aValue,
-                                              SVGElement* aSVGElement) {
+void SVGAnimatedEnumeration::SetBaseValue(uint16_t aValue,
+                                          SVGElement* aSVGElement,
+                                          ErrorResult& aRv) {
   const SVGEnumMapping* mapping = GetMapping(aSVGElement);
 
   while (mapping && mapping->mKey) {
@@ -86,11 +87,11 @@ nsresult SVGAnimatedEnumeration::SetBaseValue(uint16_t aValue,
         }
         aSVGElement->DidChangeEnum(mAttrEnum);
       }
-      return NS_OK;
+      return;
     }
     mapping++;
   }
-  return NS_ERROR_DOM_TYPE_ERR;
+  return aRv.ThrowTypeError("Invalid SVGAnimatedEnumeration base value");
 }
 
 void SVGAnimatedEnumeration::SetAnimValue(uint16_t aValue,

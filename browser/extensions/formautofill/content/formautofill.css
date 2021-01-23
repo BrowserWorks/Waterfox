@@ -11,7 +11,6 @@
   padding: 0;
   height: auto;
   min-height: auto;
-  -moz-binding: none;
 }
 
 /* Treat @collpased="true" as display: none similar to how it is for XUL elements.
@@ -23,11 +22,11 @@
   display: none;
 }
 
-#PopupAutoComplete[firstresultstyle="autofill-profile"] {
+#PopupAutoComplete[resultstyles~="autofill-profile"] {
   min-width: 150px !important;
 }
 
-#PopupAutoComplete[firstresultstyle="autofill-insecureWarning"] {
+#PopupAutoComplete[resultstyles~="autofill-insecureWarning"] {
   min-width: 200px !important;
 }
 
@@ -37,6 +36,8 @@
   margin-block-end: 12px;
 }
 #autofill-credit-card-notification popupnotificationcontent > .desc-message-box > image {
+  -moz-context-properties: fill;
+  fill: currentColor;
   margin-inline-start: 6px;
   width: 16px;
   height: 16px;

@@ -1,0 +1,121 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Na'ué gana'nin ñanj nan">
+<!ENTITY retry.label "A'ngô ñû">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Na'ue gatu riña internet ma">
+<!ENTITY connectionFailure.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY deniedPortAccess.title "Hua arán riña sitiô na">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Nu nari'ìj servidor">
+<!-- LOCALIZATION NOTE (dnsNotFound.longDesc4) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside tags should be localized.  Do not change the ids. -->
+<!ENTITY dnsNotFound.longDesc4 "<ul> <li>Gini'iaj hue'ê si nu gachrun hue'êt 'ngo nuguan'an dàj rû' <strong>ww</strong>.example.com lugâ gachrunt <strong>www</strong>.example.com</li> <div id='searchbox'> <input id='searchtext' type='search'></input> <button id='searchbutton'>Nanà'uì'</button> </div> <li>Sisi na'ue nayi'nï gà' si 'ngo página ni, ni'iaj si hua hue'ê si datô si aga't asi hua hue'ê Wi-Fi. <button id='wifi'>Nachrun Wi-Fi</button> </li> </ul>">
+
+<!ENTITY fileNotFound.title "Nu narì'ij archivo">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Natsij ni ni'iajt si nu gachrun a'na't si yugui archivo.</li> <li>Natsij ni ni'iajt si nu narè' archivo, gisikij asi nadunâ si yugui.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "Nun raj yinaj gun' aa atû'">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li> ga'ue si ganare'ej nej si guisikïj dadin' na'ue gun ña atû'.</li> </ul>">
+
+<!ENTITY generic.title "'Uà'">
+<!ENTITY generic.longDesc "<p>&brandShortName; hua nuj huin saj na'ue na'nïn página na.</p>">
+
+<!ENTITY malformedURI.title "Nu gachrun hue'êt dirección">
+<!-- LOCALIZATION NOTE (malformedURI.longDesc2) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY malformedURI.longDesc2 "<ul> <li>Danàj da'uît gachrunt si yugui nej sîtio <strong>http://www.example.com/</strong></li> <div id='searchbox'> <input id='searchtext' type='search'></input> <button id='searchbutton'>Nanà'uì'</button> </div> <li>Ni'iaj si arasun hue'êt nguèj chrun li nikïn' nitïn ne' ñaa(dàj rû' <strong>/</strong>).</li></ul>">
+
+<!ENTITY netInterrupt.title "Giyichin' ngè conexión">
+<!ENTITY netInterrupt.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY notCached.title "Ngà gire' ñanj na">
+<!ENTITY notCached.longDesc "<p>Ñanj nana'uî't ni nitaj ma nu riña caché si'iaj &brandShortName;.</p><ul><li>Guendâ ga nì gache nut ni, &brandShortName; nu achín nasinùnj ma 'ngo ñanj ahii ma.</li><li>Guru'ma ra'a riña taj nayi'ì nakà ñû da' nu ga'ue na'nïnj ra'a ñanj nana'ui' ra.</li></ul>">
+
+<!ENTITY netOffline.title "Si gida'aj internet">
+
+<!ENTITY contentEncodingError.title "Gire' 'ngo chrej nana'uij sa gachrûnt">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Gi'iaj 'ngo sunnuj ni, nanà'uì' ahui si si'iaj huin sitiô na ni gachinj na'anjt nuj huin saj gire'ej.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "'Ngo archivo hua ahii huin">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Gi'iaj 'ngo sunnuj ni, nanà'uì' ahuin si si'iaj huin sitiô na ni gachinj na'anjt nuj huin saj gire'ej.</li> </ul>">
+
+<!ENTITY netReset.title "Nayi'ì ñû conexión">
+<!ENTITY netReset.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY netTimeout.title "Ganahuij diû ana'uijt">
+<!ENTITY netTimeout.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY unknownProtocolFound.title "Nu gachrun hue'êt ñuj gun' na">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Da'uît ni ga'nïnjt a'ngô programa da' nu nayi'nïj riña dirección na.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "Nu a'nïnj servidor proxy gatut riña internet">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Ni'iaj si nagi'iaj hue'êt riña proxy a.</li> <li>Ga'min ngà sô' 'nïnj ra'a red na da' gini'in yangà't sisi proxy  'iaj sun hue'ê a.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "Na'ue nari'ìj proxy ma">
+<!-- LOCALIZATION NOTE (proxyResolveFailure.longDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY proxyResolveFailure.longDesc3 "<ul> <li>Natsij configuración proxy ni'iajt da' gini'in hiât si dugunàj huaj.</li> <li>Ni'iaj ni ga hia ruhuâ sisi nikaj si aga't 'ngo sa 'iaj sun hue'ê ngà Wi-Fi asi ngà dato. <button id='wifi'>Nachrun Wi-Fi</button> </li> </ul>">
+
+<!ENTITY redirectLoop.title "Na'ue nahuin nika riña huaj pagina na">
+<!ENTITY redirectLoop.longDesc "<ul> <li>'Iaj chì' riña aga' na si guruhuaj dadin ga'nèjt nej cookies.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "Se 'ngo nuguan' hue'ê nariki servidor">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Natsij ni ni'iajt sisi nikaj si aga't 'ngo sa narán riña nej nuguan'  a'min rayi'î ra.</li> <li>Sa nagi'iaj nakàt ni se 'ngo sa aran' dugui' ngà servidor huin yi'ì dan 'iaj chíj a.</li> </ul>">
+
+<!ENTITY nssFailure2.title "Gire' conexión hia">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>'Ngo página ni'iajt ruhuât na ni na'ue nayi'nïn dadin' na'ue nani'in sà' aga' na nej datô araj sunj.</li> <li>Gi'iaj 'ngo sunnuj ni nanà'uì't ahuin si si'iaj huin sitiô na ni gachinj na'anjt nuj huin saj gire'ej a.</li> </ul>">
+
+<!ENTITY nssBadCert.title "Gire' conexión nikà">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>Nagi'iaj chì' na dadin' ga'ue sisi nu nagi'aij hue'êt servidor asi hua 'ngo sa ânej eruhuâ natu riña sa huin ruhuât na'nïnt.</li> <li>Sisi gà' gatuj ñùt riña servidor na ni nitaj nùj gi'iaj chìj ni ga'ue sisi ma si giyichin' akuanjyakaj da'nga' gatut nanâ doj a.</li> </ul>">
+
+<!-- LOCALIZATION NOTE (sharedLongDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY sharedLongDesc3 "<ul> <li>Ga'ue si sitio na ni duyichin' akuan si ma asi ûta ga'ì duguî araj sun ma. Yakaj da'nga' ñû ngàj akuan nï doj.</li> <li>Sisi na'ue nayi'nï gà' si 'ngo página ni, ni'iaj dàj hua achrûnt asi hua Wi-Fi riña si aga't. <button id='wifi'>Nachrun Wi-Fi</button> </li> </ul>">
+
+<!ENTITY cspBlocked.title "'Ngo narán aga' na riña sitiô na yi'ì sa mà riñaj">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; Nu ga'nïn da' nayi'nïn página na dadin' dadin' hua sa ma riñaj ni ga'ue si sa yi'ìi huin nej ma.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Guire'ej dadin' sa nun riñan hua a'nan'">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Página ni'iaj rua nin na'ue diganj ma'an dadin' ngá gayi'ij nana'uij sa man riñan nin guire'ej.</p><ul><li>Ga'min nga nej dugui' nikaj ñu'unj sitio da' nata' nuin si gahuin.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Gahué nuta' ngo sa së sa anin ruat…">
+<!ENTITY securityOverride.getMeOutOfHereButton "¡gahui' ñunan!">
+<!ENTITY securityOverride.exceptionButtonLabel "Nitaj ama na'nìn' na ma...">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <xul:button> tags.  The only language content is the label= field,
+which uses strings already defined above. The button is included here (instead of
+netError.xhtml) because it exposes functionality specific to firefox. -->
+
+<!ENTITY securityOverride.warningContent "<p>Nitaj si da'uí nuta' doj sa huaj si nun yuman sa' ruat daj hua Internet raj sun, nej si nitaj si u'ñun nariki agat nan ngo sa naduyu'ui so' .</p>  <button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> <button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "XUL nagi'iaj mun'ûn'">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Gachinj ni'ia riñan nin nana'ui' ahuin si si'iaj huin sitio nan da' nata' nuin si gahuin an.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Si ga'ue guida'a hue'e man ">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc "Nuguan' nga huaj ne'ñan an: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY weakCryptoUsed.title "Nitaj si gua hue'e si conexion re'">
+<!-- LOCALIZATION NOTE (weakCryptoUsed.longDesc) - Do not translate
+     "SSL_ERROR_NO_CYPHER_OVERLAP". -->
+<!ENTITY weakCryptoUsed.longDesc "Nuguan' huaj ñaa: SSL_ERROR_NO_CYPHER_OVERLAP">
+
+<!ENTITY inadequateSecurityError.title "Nitaj si gua hue'e si conexion re'">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> raj sun ngo sa' ga'ue gui'iaj tu a'ngo dugui. Sí rua gui'iaj tu ni ga'ue nata' si rayi'i. Sa 'nïnj ra'a sitio nan ni ga'ue nagui'iaj asij gachin garasun' sitio </p><p> Código guire'ej: NS_ERROR_NET_INADEQUATE_SECURITY </p>">
+
+<!ENTITY networkProtocolError.title "Gire' si protokolô red">
+<!ENTITY networkProtocolError.longDesc "<p>Pajinâ ni'iajt ruhuât ni na'ue nayi'nïn dadin' hua a'nan' si protokolô red.</p><ul><li>Gi'iaj 'ngo sununj ni natà' na'anj' riña nej duguî' si'iaj huin pajinâ nan.</li></ul>">

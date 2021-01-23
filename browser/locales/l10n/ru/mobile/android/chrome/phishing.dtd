@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Уходим отсюда!">
+<!ENTITY safeb.palm.decline.label "Игнорировать это предупреждение">
+<!ENTITY safeb.palm.reportPage.label "Почему эта страница была заблокирована?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Информация получена от <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "Имеется информация, что эта веб-страница атакует компьютеры!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Имеется информация о том, что веб-страница <span id='malware_sitename'/> используется для атак на компьютеры пользователей. В соответствии с вашими настройками безопасности она была заблокирована.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Веб-страницы, атакующие компьютеры, пытаются установить программное обеспечение, которое похищает персональную информацию, вредит вашей системе или использует ваш компьютер для атак на другие компьютеры.</p> <p>Некоторые страницы намеренно созданы для распространения вредоносного программного обеспечения, однако многие страницы были взломаны и делают это без ведома или разрешения своих владельцев.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "Поддельный сайт!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "Имеется информация о том, что веб-страница на <span id='phishing_sitename'/> является поддельным сайтом. В соответствии с вашими настройками безопасности она была заблокирована.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>Поддельные сайты разработаны, чтобы обманным путем заставить вас сделать что-либо опасное, например установить программу или раскрыть свою личную информацию, такую как пароли, телефонные номера или данные кредитных карт.</p><p>Ввод на этой веб-странице любой информации может привести к краже личности или мошенничеству.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Имеется информация, что этот сайт содержит нежелательные программы!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Имеется информация о том, что веб-страница <span id='unwanted_sitename'/> содержит нежелательные программы. В соответствии с вашими настройками безопасности она была заблокирована.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "Страницы с нежелательными программами пытаются установить ПО, стремящееся вас обмануть и произвести неожиданные изменения на вашем устройстве.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "Этот сайт может содержать вредоносные программы">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; заблокировал доступ к этой странице, потому что она может попытаться установить опасные приложения, которые украдут или удалят вашу информацию (например, фотографии, пароли, сообщения и номера банковских карт).">

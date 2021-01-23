@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Kontoindstillinger">
+<!ENTITY accountName.label "Kontonavn:">
+<!ENTITY accountName.accesskey "a">
+<!ENTITY identityTitle.label "Identitet">
+<!ENTITY identityDesc.label "Hver konto har en identitet, som er de oplysninger andre ser om dig, når de læser dine meddelelser.">
+<!ENTITY name.label "Dit navn:">
+<!ENTITY name.accesskey "N">
+<!ENTITY email.label "Mailadresse:">
+<!ENTITY email.accesskey "E">
+<!ENTITY catchAll.label "Svar fra denne identitet, når leveringsheadere matcher:">
+<!ENTITY catchAll.accesskey "c">
+<!ENTITY replyTo.label "Svaradresse:">
+<!ENTITY replyTo.accesskey "r">
+<!ENTITY replyTo.placeholder "Modtagere vil svare til denne anden adresse">
+<!ENTITY organization.label "Organisation:">
+<!ENTITY organization.accesskey "O">
+<!ENTITY signatureText.label "Tekstsignatur:">
+<!ENTITY signatureText.accesskey "T">
+<!ENTITY signatureHtml.label "Brug HTML (fx &lt;b&gt;fed&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "H">
+<!ENTITY signatureFile.label "Vedhæft signaturen fra en fil (tekst, HTML eller et billede):">
+<!ENTITY signatureFile.accesskey "f">
+<!ENTITY edit.label "Rediger…">
+<!ENTITY choose.label "Vælg…">
+<!ENTITY choose.accesskey "V">
+<!ENTITY editVCard.label "Rediger kortet…">
+<!ENTITY editVCard.accesskey "d">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Vedhæft personligt visitkort i meddelelser (vCard)">
+<!ENTITY attachVCard.accesskey "V">
+
+<!ENTITY manageIdentities.label "Rediger identiteter…">
+<!ENTITY manageIdentities.accesskey "i">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Server:">
+<!ENTITY smtpName.accesskey "S">
+<!ENTITY smtpDefaultServer.label "Brug standardserver">
+
+<!ENTITY smtpServerEdit.label "Rediger SMTP-server…">
+<!ENTITY smtpServerEdit.accesskey "P">

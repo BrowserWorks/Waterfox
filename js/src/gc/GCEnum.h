@@ -13,11 +13,14 @@
 
 #include <stdint.h>
 
+#include "js/MemoryFunctions.h"  // JS_FOR_EACH_PUBLIC_MEMORY_USE
+
 namespace js {
 namespace gc {
 
-// Mark colors to pass to markIfUnmarked.
-enum class MarkColor : uint32_t { Black = 0, Gray };
+// Mark colors. Order is important here: the greater value the 'more marked' a
+// cell is.
+enum class MarkColor : uint8_t { Gray = 1, Black = 2 };
 
 // The phases of an incremental GC.
 #define GCSTATES(D) \
@@ -36,18 +39,19 @@ enum class State {
 };
 
 // Reasons we reset an ongoing incremental GC or perform a non-incremental GC.
-#define GC_ABORT_REASONS(D)     \
-  D(None, 0)                    \
-  D(NonIncrementalRequested, 1) \
-  D(AbortRequested, 2)          \
-  D(Unused1, 3)                 \
-  D(IncrementalDisabled, 4)     \
-  D(ModeChange, 5)              \
-  D(MallocBytesTrigger, 6)      \
-  D(GCBytesTrigger, 7)          \
-  D(ZoneChange, 8)              \
-  D(CompartmentRevived, 9)      \
-  D(GrayRootBufferingFailed, 10)
+#define GC_ABORT_REASONS(D)      \
+  D(None, 0)                     \
+  D(NonIncrementalRequested, 1)  \
+  D(AbortRequested, 2)           \
+  D(Unused1, 3)                  \
+  D(IncrementalDisabled, 4)      \
+  D(ModeChange, 5)               \
+  D(MallocBytesTrigger, 6)       \
+  D(GCBytesTrigger, 7)           \
+  D(ZoneChange, 8)               \
+  D(CompartmentRevived, 9)       \
+  D(GrayRootBufferingFailed, 10) \
+  D(JitCodeBytesTrigger, 11)
 enum class AbortReason {
 #define MAKE_REASON(name, num) name = num,
   GC_ABORT_REASONS(MAKE_REASON)
@@ -87,6 +91,72 @@ enum class ZealMode {
 };
 
 } /* namespace gc */
+
+#define JS_FOR_EACH_INTERNAL_MEMORY_USE(_) \
+  _(ArrayBufferContents)                   \
+  _(StringContents)                        \
+  _(ObjectElements)                        \
+  _(ObjectSlots)                           \
+  _(ScriptPrivateData)                     \
+  _(MapObjectTable)                        \
+  _(BigIntDigits)                          \
+  _(ScopeData)                             \
+  _(WeakMapObject)                         \
+  _(ShapeChildren)                         \
+  _(ShapeCache)                            \
+  _(ModuleBindingMap)                      \
+  _(BaselineScript)                        \
+  _(IonScript)                             \
+  _(ArgumentsData)                         \
+  _(RareArgumentsData)                     \
+  _(RegExpStatics)                         \
+  _(RegExpSharedBytecode)                  \
+  _(RegExpSharedNamedCaptureData)          \
+  _(TypedArrayElements)                    \
+  _(TypeDescrTraceList)                    \
+  _(NativeIterator)                        \
+  _(JitScript)                             \
+  _(ObjectGroupAddendum)                   \
+  _(ScriptDebugScript)                     \
+  _(BreakpointSite)                        \
+  _(Breakpoint)                            \
+  _(ForOfPIC)                              \
+  _(ForOfPICStub)                          \
+  _(WasmInstanceExports)                   \
+  _(WasmInstanceScopes)                    \
+  _(WasmInstanceGlobals)                   \
+  _(WasmInstanceInstance)                  \
+  _(WasmMemoryObservers)                   \
+  _(WasmGlobalCell)                        \
+  _(WasmResolveResponseClosure)            \
+  _(WasmModule)                            \
+  _(WasmTableTable)                        \
+  _(FileObjectFile)                        \
+  _(Debugger)                              \
+  _(DebuggerFrameGeneratorInfo)            \
+  _(DebuggerFrameIterData)                 \
+  _(DebuggerOnStepHandler)                 \
+  _(DebuggerOnPopHandler)                  \
+  _(RealmInstrumentation)                  \
+  _(ICUObject)                             \
+  _(FinalizationRegistryRecordVector)      \
+  _(FinalizationRegistryRecordSet)         \
+  _(FinalizationRegistryRegistrations)     \
+  _(FinalizationRecordVector)              \
+  _(ZoneAllocPolicy)                       \
+  _(SharedArrayRawBuffer)                  \
+  _(XDRBufferElements)
+
+#define JS_FOR_EACH_MEMORY_USE(_)  \
+  JS_FOR_EACH_PUBLIC_MEMORY_USE(_) \
+  JS_FOR_EACH_INTERNAL_MEMORY_USE(_)
+
+enum class MemoryUse : uint8_t {
+#define DEFINE_MEMORY_USE(Name) Name,
+  JS_FOR_EACH_MEMORY_USE(DEFINE_MEMORY_USE)
+#undef DEFINE_MEMORY_USE
+};
+
 } /* namespace js */
 
 #endif /* gc_GCEnum_h */

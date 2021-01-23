@@ -1,0 +1,9 @@
+<!--LOCALIZATION NOTE (editorCheck.label): DONT_TRANSLATE -->
+
+<!ENTITY editorCheck.label "Composer">
+<!ENTITY editorCheck.accesskey "c">
+
+<!ENTITY compose.label "कम्पोजर">
+<!ENTITY editing.label "नयाँ पृष्ठ सेटिङ">
+<!ENTITY toolbars.label "उपकरणपट्टी">
+<!ENTITY publish.label "प्रकाशन">

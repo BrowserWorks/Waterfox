@@ -9,7 +9,6 @@
 
 #include "nsIContent.h"
 #include "mozilla/dom/Document.h"
-#include "nsBindingManager.h"
 #include "nsContentUtils.h"
 #include "nsAtom.h"
 #include "nsIFrame.h"
@@ -95,7 +94,7 @@ static inline nsINode* GetFlattenedTreeParentNode(const nsINode* aNode) {
     return docLevel ? content->OwnerDocAsNode() : parent;
   }
 
-  if (content->IsRootOfAnonymousSubtree()) {
+  if (content->IsRootOfNativeAnonymousSubtree()) {
     return parent;
   }
 
@@ -117,23 +116,6 @@ static inline nsINode* GetFlattenedTreeParentNode(const nsINode* aNode) {
       return shadowRoot->GetHost();
     }
   }
-
-  if (content->HasFlag(NODE_MAY_BE_IN_BINDING_MNGR) ||
-      parent->HasFlag(NODE_MAY_BE_IN_BINDING_MNGR)) {
-    if (nsIContent* xblInsertionPoint = content->GetXBLInsertionPoint()) {
-      return xblInsertionPoint->GetParent();
-    }
-
-    if (parent->OwnerDoc()->BindingManager()->GetBindingWithContent(
-            parentAsContent)) {
-      // This is an unassigned node child of the bound element, so it isn't part
-      // of the flat tree.
-      return nullptr;
-    }
-  }
-
-  MOZ_ASSERT(!parentAsContent->IsActiveChildrenElement(),
-             "<xbl:children> isn't in the flattened tree");
 
   // Common case.
   return parent;
@@ -178,47 +160,61 @@ inline bool nsINode::IsEditable() const {
   }
 
   // Check if the node is in a document and the document is in designMode.
+  //
+  // NOTE(emilio): If you change this to be the composed doc you also need to
+  // change NotifyEditableStateChange() in Document.cpp.
   Document* doc = GetUncomposedDoc();
   return doc && doc->HasFlag(NODE_IS_EDITABLE);
 }
 
-inline bool nsIContent::IsActiveChildrenElement() const {
-  if (!mNodeInfo->Equals(nsGkAtoms::children, kNameSpaceID_XBL)) {
-    return false;
-  }
+inline void nsIContent::HandleInsertionToOrRemovalFromSlot() {
+  using mozilla::dom::HTMLSlotElement;
 
-  nsIContent* bindingParent = GetBindingParent();
-  if (!bindingParent) {
-    return false;
+  MOZ_ASSERT(GetParentElement());
+  if (!IsInShadowTree() || IsRootOfNativeAnonymousSubtree()) {
+    return;
   }
-
-  // We reuse the binding parent machinery for Shadow DOM too, so prevent that
-  // from getting us confused in this case.
-  return !bindingParent->GetShadowRoot();
+  HTMLSlotElement* slot = HTMLSlotElement::FromNode(mParent);
+  if (!slot) {
+    return;
+  }
+  // If parent's root is a shadow root, and parent is a slot whose
+  // assigned nodes is the empty list, then run signal a slot change for
+  // parent.
+  if (slot->AssignedNodes().IsEmpty()) {
+    slot->EnqueueSlotChangeEvent();
+  }
 }
 
-inline bool nsIContent::IsInAnonymousSubtree() const {
-  NS_ASSERTION(
-      !IsInNativeAnonymousSubtree() || GetBindingParent() ||
-          (!IsInUncomposedDoc() && static_cast<nsIContent*>(SubtreeRoot())
-                                       ->IsInNativeAnonymousSubtree()),
-      "Must have binding parent when in native anonymous subtree which is in "
-      "document.\n"
-      "Native anonymous subtree which is not in document must have native "
-      "anonymous root.");
+inline void nsIContent::HandleShadowDOMRelatedInsertionSteps(bool aHadParent) {
+  using mozilla::dom::Element;
+  using mozilla::dom::ShadowRoot;
 
-  if (IsInNativeAnonymousSubtree()) {
-    return true;
+  if (!aHadParent) {
+    if (Element* parentElement = Element::FromNode(mParent)) {
+      if (ShadowRoot* shadow = parentElement->GetShadowRoot()) {
+        shadow->MaybeSlotHostChild(*this);
+      }
+      HandleInsertionToOrRemovalFromSlot();
+    }
   }
+}
 
-  nsIContent* bindingParent = GetBindingParent();
-  if (!bindingParent) {
-    return false;
+inline void nsIContent::HandleShadowDOMRelatedRemovalSteps(bool aNullParent) {
+  using mozilla::dom::Element;
+  using mozilla::dom::ShadowRoot;
+
+  if (aNullParent) {
+    // FIXME(emilio, bug 1577141): FromNodeOrNull rather than just FromNode
+    // because XBL likes to call UnbindFromTree at very odd times (with already
+    // disconnected anonymous content subtrees).
+    if (Element* parentElement = Element::FromNodeOrNull(mParent)) {
+      if (ShadowRoot* shadow = parentElement->GetShadowRoot()) {
+        shadow->MaybeUnslotHostChild(*this);
+      }
+      HandleInsertionToOrRemovalFromSlot();
+    }
   }
-
-  // We reuse the binding parent machinery for Shadow DOM too, so prevent that
-  // from getting us confused in this case.
-  return !bindingParent->GetShadowRoot();
 }
 
 #endif  // nsIContentInlines_h

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newMessageCmd.label             "Missatge">
+<!ENTITY newMessageCmd.accesskey         "M">
+<!ENTITY newMessageCmd.key               "M">
+
+<!ENTITY newContactCmd.label             "Contacte…">
+<!ENTITY newContactCmd.accesskey         "C">
+
+<!ENTITY sendPage.label                  "Envia la pàgina...">
+<!ENTITY sendPage.accesskey              "a">
+
+<!ENTITY contextSendThisPage.label       "Envia la pàgina...">
+<!ENTITY contextSendThisPage.accesskey   "v">
+<!ENTITY contextSendThisLink.label       "Envia l'enllaç…">
+<!ENTITY contextSendThisLink.accesskey   "l">
+<!ENTITY contextSendImage.label          "Envia la imatge...">
+<!ENTITY contextSendImage.accesskey      "n">
+<!ENTITY contextSendVideo.label          "Envia el vídeo…">
+<!ENTITY contextSendVideo.accesskey      "n">
+<!ENTITY contextSendAudio.label          "Envia l'àudio…">
+<!ENTITY contextSendAudio.accesskey      "n">
+<!ENTITY contextSendFrame.label          "Envia el marc...">
+<!ENTITY contextSendFrame.accesskey      "n">
+
+<!ENTITY sendLinkCmd.label               "Envia l'enllaç..."> 
+<!ENTITY sendLinkCmd.accesskey           "i">
+

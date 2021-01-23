@@ -64,7 +64,7 @@ class nsTreeBodyFrame final : public nsLeafBoxFrame,
   // Callback handler methods for refresh driver based animations.
   // Calls to these functions are forwarded from nsTreeImageListener. These
   // mirror how nsImageFrame works.
-  nsresult OnImageIsAnimated(imgIRequest* aRequest);
+  void OnImageIsAnimated(imgIRequest* aRequest);
 
   // non-virtual signatures like nsITreeBodyFrame
   already_AddRefed<nsTreeColumns> Columns() const {
@@ -145,7 +145,7 @@ class nsTreeBodyFrame final : public nsLeafBoxFrame,
   virtual void ScrollbarActivityStarted() const override;
   virtual void ScrollbarActivityStopped() const override;
   virtual bool IsScrollbarOnRight() const override {
-    return (StyleVisibility()->mDirection == NS_STYLE_DIRECTION_LTR);
+    return StyleVisibility()->mDirection == mozilla::StyleDirection::Ltr;
   }
   virtual bool ShouldSuppressScrollbarRepaints() const override {
     return false;
@@ -173,9 +173,9 @@ class nsTreeBodyFrame final : public nsLeafBoxFrame,
 
   struct ScrollParts {
     nsScrollbarFrame* mVScrollbar;
-    RefPtr<Element> mVScrollbarContent;
+    RefPtr<mozilla::dom::Element> mVScrollbarContent;
     nsScrollbarFrame* mHScrollbar;
-    RefPtr<Element> mHScrollbarContent;
+    RefPtr<mozilla::dom::Element> mHScrollbarContent;
     nsIFrame* mColumnsFrame;
     nsIScrollableFrame* mColumnsScrollFrame;
   };

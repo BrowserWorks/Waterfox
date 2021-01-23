@@ -1,11 +1,8 @@
-extern crate proc_macro2;
-
+use proc_macro2::{Ident, Literal, Spacing, Span, TokenStream, TokenTree};
 use std::str::{self, FromStr};
 
-use proc_macro2::{Ident, Literal, Spacing, Span, TokenStream, TokenTree};
-
 #[test]
-fn terms() {
+fn idents() {
     assert_eq!(
         Ident::new("String", Span::call_site()).to_string(),
         "String"
@@ -16,7 +13,7 @@ fn terms() {
 
 #[test]
 #[cfg(procmacro2_semver_exempt)]
-fn raw_terms() {
+fn raw_idents() {
     assert_eq!(
         Ident::new_raw("String", Span::call_site()).to_string(),
         "r#String"
@@ -27,37 +24,37 @@ fn raw_terms() {
 
 #[test]
 #[should_panic(expected = "Ident is not allowed to be empty; use Option<Ident>")]
-fn term_empty() {
+fn ident_empty() {
     Ident::new("", Span::call_site());
 }
 
 #[test]
 #[should_panic(expected = "Ident cannot be a number; use Literal instead")]
-fn term_number() {
+fn ident_number() {
     Ident::new("255", Span::call_site());
 }
 
 #[test]
 #[should_panic(expected = "\"a#\" is not a valid Ident")]
-fn term_invalid() {
+fn ident_invalid() {
     Ident::new("a#", Span::call_site());
 }
 
 #[test]
 #[should_panic(expected = "not a valid Ident")]
-fn raw_term_empty() {
+fn raw_ident_empty() {
     Ident::new("r#", Span::call_site());
 }
 
 #[test]
 #[should_panic(expected = "not a valid Ident")]
-fn raw_term_number() {
+fn raw_ident_number() {
     Ident::new("r#255", Span::call_site());
 }
 
 #[test]
 #[should_panic(expected = "\"r#a#\" is not a valid Ident")]
-fn raw_term_invalid() {
+fn raw_ident_invalid() {
     Ident::new("r#a#", Span::call_site());
 }
 
@@ -80,10 +77,65 @@ fn lifetime_invalid() {
 }
 
 #[test]
-fn literals() {
+fn literal_string() {
     assert_eq!(Literal::string("foo").to_string(), "\"foo\"");
     assert_eq!(Literal::string("\"").to_string(), "\"\\\"\"");
+    assert_eq!(Literal::string("didn't").to_string(), "\"didn't\"");
+}
+
+#[test]
+fn literal_character() {
+    assert_eq!(Literal::character('x').to_string(), "'x'");
+    assert_eq!(Literal::character('\'').to_string(), "'\\''");
+    assert_eq!(Literal::character('"').to_string(), "'\"'");
+}
+
+#[test]
+fn literal_float() {
     assert_eq!(Literal::f32_unsuffixed(10.0).to_string(), "10.0");
+}
+
+#[test]
+fn literal_suffix() {
+    fn token_count(p: &str) -> usize {
+        p.parse::<TokenStream>().unwrap().into_iter().count()
+    }
+
+    assert_eq!(token_count("999u256"), 1);
+    assert_eq!(token_count("999r#u256"), 3);
+    assert_eq!(token_count("1."), 1);
+    assert_eq!(token_count("1.f32"), 3);
+    assert_eq!(token_count("1.0_0"), 1);
+    assert_eq!(token_count("1._0"), 3);
+    assert_eq!(token_count("1._m"), 3);
+    assert_eq!(token_count("\"\"s"), 1);
+    assert_eq!(token_count("r\"\"r"), 1);
+    assert_eq!(token_count("b\"\"b"), 1);
+    assert_eq!(token_count("br\"\"br"), 1);
+    assert_eq!(token_count("r#\"\"#r"), 1);
+    assert_eq!(token_count("'c'c"), 1);
+    assert_eq!(token_count("b'b'b"), 1);
+}
+
+#[test]
+fn literal_iter_negative() {
+    let negative_literal = Literal::i32_suffixed(-3);
+    let tokens = TokenStream::from(TokenTree::Literal(negative_literal));
+    let mut iter = tokens.into_iter();
+    match iter.next().unwrap() {
+        TokenTree::Punct(punct) => {
+            assert_eq!(punct.as_char(), '-');
+            assert_eq!(punct.spacing(), Spacing::Alone);
+        }
+        unexpected => panic!("unexpected token {:?}", unexpected),
+    }
+    match iter.next().unwrap() {
+        TokenTree::Literal(literal) => {
+            assert_eq!(literal.to_string(), "3i32");
+        }
+        unexpected => panic!("unexpected token {:?}", unexpected),
+    }
+    assert!(iter.next().is_none());
 }
 
 #[test]
@@ -113,6 +165,9 @@ fn roundtrip() {
         9
         0
         0xffffffffffffffffffffffffffffffff
+        1x
+        1u80
+        1f320
     ",
     );
     roundtrip("'a");
@@ -129,9 +184,6 @@ fn fail() {
             panic!("should have failed to parse: {}\n{:#?}", p, s);
         }
     }
-    fail("1x");
-    fail("1u80");
-    fail("1f320");
     fail("' static");
     fail("r#1");
     fail("r#_");
@@ -140,36 +192,6 @@ fn fail() {
 #[cfg(span_locations)]
 #[test]
 fn span_test() {
-    use proc_macro2::TokenTree;
-
-    fn check_spans(p: &str, mut lines: &[(usize, usize, usize, usize)]) {
-        let ts = p.parse::<TokenStream>().unwrap();
-        check_spans_internal(ts, &mut lines);
-    }
-
-    fn check_spans_internal(ts: TokenStream, lines: &mut &[(usize, usize, usize, usize)]) {
-        for i in ts {
-            if let Some((&(sline, scol, eline, ecol), rest)) = lines.split_first() {
-                *lines = rest;
-
-                let start = i.span().start();
-                assert_eq!(start.line, sline, "sline did not match for {}", i);
-                assert_eq!(start.column, scol, "scol did not match for {}", i);
-
-                let end = i.span().end();
-                assert_eq!(end.line, eline, "eline did not match for {}", i);
-                assert_eq!(end.column, ecol, "ecol did not match for {}", i);
-
-                match i {
-                    TokenTree::Group(ref g) => {
-                        check_spans_internal(g.stream().clone(), lines);
-                    }
-                    _ => {}
-                }
-            }
-        }
-    }
-
     check_spans(
         "\
 /// This is a document comment
@@ -248,49 +270,7 @@ fn span_join() {
 #[test]
 fn no_panic() {
     let s = str::from_utf8(b"b\'\xc2\x86  \x00\x00\x00^\"").unwrap();
-    assert!(s.parse::<proc_macro2::TokenStream>().is_err());
-}
-
-#[test]
-fn tricky_doc_comment() {
-    let stream = "/**/".parse::<proc_macro2::TokenStream>().unwrap();
-    let tokens = stream.into_iter().collect::<Vec<_>>();
-    assert!(tokens.is_empty(), "not empty -- {:?}", tokens);
-
-    let stream = "/// doc".parse::<proc_macro2::TokenStream>().unwrap();
-    let tokens = stream.into_iter().collect::<Vec<_>>();
-    assert!(tokens.len() == 2, "not length 2 -- {:?}", tokens);
-    match tokens[0] {
-        proc_macro2::TokenTree::Punct(ref tt) => assert_eq!(tt.as_char(), '#'),
-        _ => panic!("wrong token {:?}", tokens[0]),
-    }
-    let mut tokens = match tokens[1] {
-        proc_macro2::TokenTree::Group(ref tt) => {
-            assert_eq!(tt.delimiter(), proc_macro2::Delimiter::Bracket);
-            tt.stream().into_iter()
-        }
-        _ => panic!("wrong token {:?}", tokens[0]),
-    };
-
-    match tokens.next().unwrap() {
-        proc_macro2::TokenTree::Ident(ref tt) => assert_eq!(tt.to_string(), "doc"),
-        t => panic!("wrong token {:?}", t),
-    }
-    match tokens.next().unwrap() {
-        proc_macro2::TokenTree::Punct(ref tt) => assert_eq!(tt.as_char(), '='),
-        t => panic!("wrong token {:?}", t),
-    }
-    match tokens.next().unwrap() {
-        proc_macro2::TokenTree::Literal(ref tt) => {
-            assert_eq!(tt.to_string(), "\" doc\"");
-        }
-        t => panic!("wrong token {:?}", t),
-    }
-    assert!(tokens.next().is_none());
-
-    let stream = "//! doc".parse::<proc_macro2::TokenStream>().unwrap();
-    let tokens = stream.into_iter().collect::<Vec<_>>();
-    assert!(tokens.len() == 3, "not length 3 -- {:?}", tokens);
+    assert!(s.parse::<TokenStream>().is_err());
 }
 
 #[test]
@@ -319,11 +299,11 @@ fn raw_identifier() {
 fn test_debug_ident() {
     let ident = Ident::new("proc_macro", Span::call_site());
 
-    #[cfg(not(procmacro2_semver_exempt))]
+    #[cfg(not(span_locations))]
     let expected = "Ident(proc_macro)";
 
-    #[cfg(procmacro2_semver_exempt)]
-    let expected = "Ident { sym: proc_macro, span: bytes(0..0) }";
+    #[cfg(span_locations)]
+    let expected = "Ident { sym: proc_macro }";
 
     assert_eq!(expected, format!("{:?}", ident));
 }
@@ -332,8 +312,29 @@ fn test_debug_ident() {
 fn test_debug_tokenstream() {
     let tts = TokenStream::from_str("[a + 1]").unwrap();
 
-    #[cfg(not(procmacro2_semver_exempt))]
+    #[cfg(not(span_locations))]
     let expected = "\
+TokenStream [
+    Group {
+        delimiter: Bracket,
+        stream: TokenStream [
+            Ident {
+                sym: a,
+            },
+            Punct {
+                op: '+',
+                spacing: Alone,
+            },
+            Literal {
+                lit: 1,
+            },
+        ],
+    },
+]\
+    ";
+
+    #[cfg(not(span_locations))]
+    let expected_before_trailing_commas = "\
 TokenStream [
     Group {
         delimiter: Bracket,
@@ -353,8 +354,33 @@ TokenStream [
 ]\
     ";
 
-    #[cfg(procmacro2_semver_exempt)]
+    #[cfg(span_locations)]
     let expected = "\
+TokenStream [
+    Group {
+        delimiter: Bracket,
+        stream: TokenStream [
+            Ident {
+                sym: a,
+                span: bytes(2..3),
+            },
+            Punct {
+                op: '+',
+                spacing: Alone,
+                span: bytes(4..5),
+            },
+            Literal {
+                lit: 1,
+                span: bytes(6..7),
+            },
+        ],
+        span: bytes(1..8),
+    },
+]\
+    ";
+
+    #[cfg(span_locations)]
+    let expected_before_trailing_commas = "\
 TokenStream [
     Group {
         delimiter: Bracket,
@@ -378,7 +404,12 @@ TokenStream [
 ]\
     ";
 
-    assert_eq!(expected, format!("{:#?}", tts));
+    let actual = format!("{:#?}", tts);
+    if actual.ends_with(",\n]") {
+        assert_eq!(expected, actual);
+    } else {
+        assert_eq!(expected_before_trailing_commas, actual);
+    }
 }
 
 #[test]
@@ -386,4 +417,81 @@ fn default_tokenstream_is_empty() {
     let default_token_stream: TokenStream = Default::default();
 
     assert!(default_token_stream.is_empty());
+}
+
+#[test]
+fn tuple_indexing() {
+    // This behavior may change depending on https://github.com/rust-lang/rust/pull/71322
+    let mut tokens = "tuple.0.0".parse::<TokenStream>().unwrap().into_iter();
+    assert_eq!("tuple", tokens.next().unwrap().to_string());
+    assert_eq!(".", tokens.next().unwrap().to_string());
+    assert_eq!("0.0", tokens.next().unwrap().to_string());
+    assert!(tokens.next().is_none());
+}
+
+#[cfg(span_locations)]
+#[test]
+fn non_ascii_tokens() {
+    check_spans("// abc", &[]);
+    check_spans("// ábc", &[]);
+    check_spans("// abc x", &[]);
+    check_spans("// ábc x", &[]);
+    check_spans("/* abc */ x", &[(1, 10, 1, 11)]);
+    check_spans("/* ábc */ x", &[(1, 10, 1, 11)]);
+    check_spans("/* ab\nc */ x", &[(2, 5, 2, 6)]);
+    check_spans("/* áb\nc */ x", &[(2, 5, 2, 6)]);
+    check_spans("/*** abc */ x", &[(1, 12, 1, 13)]);
+    check_spans("/*** ábc */ x", &[(1, 12, 1, 13)]);
+    check_spans(r#""abc""#, &[(1, 0, 1, 5)]);
+    check_spans(r#""ábc""#, &[(1, 0, 1, 5)]);
+    check_spans(r###"r#"abc"#"###, &[(1, 0, 1, 8)]);
+    check_spans(r###"r#"ábc"#"###, &[(1, 0, 1, 8)]);
+    check_spans("r#\"a\nc\"#", &[(1, 0, 2, 3)]);
+    check_spans("r#\"á\nc\"#", &[(1, 0, 2, 3)]);
+    check_spans("'a'", &[(1, 0, 1, 3)]);
+    check_spans("'á'", &[(1, 0, 1, 3)]);
+    check_spans("//! abc", &[(1, 0, 1, 7), (1, 0, 1, 7), (1, 0, 1, 7)]);
+    check_spans("//! ábc", &[(1, 0, 1, 7), (1, 0, 1, 7), (1, 0, 1, 7)]);
+    check_spans("//! abc\n", &[(1, 0, 1, 7), (1, 0, 1, 7), (1, 0, 1, 7)]);
+    check_spans("//! ábc\n", &[(1, 0, 1, 7), (1, 0, 1, 7), (1, 0, 1, 7)]);
+    check_spans("/*! abc */", &[(1, 0, 1, 10), (1, 0, 1, 10), (1, 0, 1, 10)]);
+    check_spans("/*! ábc */", &[(1, 0, 1, 10), (1, 0, 1, 10), (1, 0, 1, 10)]);
+    check_spans("/*! a\nc */", &[(1, 0, 2, 4), (1, 0, 2, 4), (1, 0, 2, 4)]);
+    check_spans("/*! á\nc */", &[(1, 0, 2, 4), (1, 0, 2, 4), (1, 0, 2, 4)]);
+    check_spans("abc", &[(1, 0, 1, 3)]);
+    check_spans("ábc", &[(1, 0, 1, 3)]);
+    check_spans("ábć", &[(1, 0, 1, 3)]);
+    check_spans("abc// foo", &[(1, 0, 1, 3)]);
+    check_spans("ábc// foo", &[(1, 0, 1, 3)]);
+    check_spans("ábć// foo", &[(1, 0, 1, 3)]);
+    check_spans("b\"a\\\n c\"", &[(1, 0, 2, 3)]);
+    check_spans("b\"a\\\n\u{00a0}c\"", &[(1, 0, 2, 3)]);
+}
+
+#[cfg(span_locations)]
+fn check_spans(p: &str, mut lines: &[(usize, usize, usize, usize)]) {
+    let ts = p.parse::<TokenStream>().unwrap();
+    check_spans_internal(ts, &mut lines);
+    assert!(lines.is_empty(), "leftover ranges: {:?}", lines);
+}
+
+#[cfg(span_locations)]
+fn check_spans_internal(ts: TokenStream, lines: &mut &[(usize, usize, usize, usize)]) {
+    for i in ts {
+        if let Some((&(sline, scol, eline, ecol), rest)) = lines.split_first() {
+            *lines = rest;
+
+            let start = i.span().start();
+            assert_eq!(start.line, sline, "sline did not match for {}", i);
+            assert_eq!(start.column, scol, "scol did not match for {}", i);
+
+            let end = i.span().end();
+            assert_eq!(end.line, eline, "eline did not match for {}", i);
+            assert_eq!(end.column, ecol, "ecol did not match for {}", i);
+
+            if let TokenTree::Group(g) = i {
+                check_spans_internal(g.stream().clone(), lines);
+            }
+        }
+    }
 }

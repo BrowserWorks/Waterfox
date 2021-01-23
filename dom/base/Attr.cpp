@@ -22,7 +22,6 @@
 #include "nsGkAtoms.h"
 #include "nsCOMArray.h"
 #include "nsNameSpaceManager.h"
-#include "nsNodeUtils.h"
 #include "nsTextNode.h"
 #include "mozAutoDocUpdate.h"
 #include "nsWrapperCacheInlines.h"
@@ -94,8 +93,12 @@ NS_INTERFACE_TABLE_HEAD(Attr)
 NS_INTERFACE_MAP_END
 
 NS_IMPL_CYCLE_COLLECTING_ADDREF(Attr)
-NS_IMPL_CYCLE_COLLECTING_RELEASE_WITH_LAST_RELEASE(
-    Attr, nsNodeUtils::LastRelease(this))
+
+NS_IMPL_CYCLE_COLLECTING_RELEASE_WITH_LAST_RELEASE_AND_DESTROY(Attr,
+                                                               LastRelease(),
+                                                               Destroy())
+
+NS_IMPL_DOMARENA_DESTROY(Attr)
 
 void Attr::SetMap(nsDOMAttributeMap* aMap) {
   if (mAttrMap && !aMap && sInitialized) {
@@ -120,7 +123,7 @@ nsresult Attr::SetOwnerDocument(Document* aDocument) {
 
   Document* doc = OwnerDoc();
   NS_ASSERTION(doc != aDocument, "bad call to Attr::SetOwnerDocument");
-  doc->DeleteAllPropertiesFor(this);
+  doc->RemoveAllPropertiesFor(this);
 
   RefPtr<dom::NodeInfo> newNodeInfo = aDocument->NodeInfoManager()->GetNodeInfo(
       mNodeInfo->NameAtom(), mNodeInfo->GetPrefixAtom(),
@@ -175,17 +178,19 @@ void Attr::SetNodeValueInternal(const nsAString& aNodeValue,
 nsresult Attr::Clone(dom::NodeInfo* aNodeInfo, nsINode** aResult) const {
   nsAutoString value;
   const_cast<Attr*>(this)->GetValue(value);
+  *aResult = new (aNodeInfo->NodeInfoManager())
+      Attr(nullptr, do_AddRef(aNodeInfo), value);
 
-  *aResult = new Attr(nullptr, do_AddRef(aNodeInfo), value);
   NS_ADDREF(*aResult);
 
   return NS_OK;
 }
 
-already_AddRefed<nsIURI> Attr::GetBaseURI(bool aTryUseXHRDocBaseURI) const {
+nsIURI* Attr::GetBaseURI(bool aTryUseXHRDocBaseURI) const {
   Element* parent = GetElement();
 
-  return parent ? parent->GetBaseURI(aTryUseXHRDocBaseURI) : nullptr;
+  return parent ? parent->GetBaseURI(aTryUseXHRDocBaseURI)
+                : OwnerDoc()->GetBaseURI(aTryUseXHRDocBaseURI);
 }
 
 void Attr::GetTextContentInternal(nsAString& aTextContent,

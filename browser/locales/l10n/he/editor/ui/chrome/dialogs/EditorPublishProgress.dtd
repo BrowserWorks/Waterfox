@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY siteUrl.label         "URL של האתר:">
+<!ENTITY docSubdir.label       "תת־ספרייה של הדף:">
+<!ENTITY otherSubdir.label     "תת־ספרייה של התמונה:">
+
+<!ENTITY status.label          "מפרסם...">
+<!ENTITY fileList.label        "מצב פרסום">
+<!ENTITY succeeded.label       "הצלחה">
+<!ENTITY failed.label          "כישלון">
+
+<!ENTITY keepOpen              "שמור חלון זה פתוח לאחר סיום הפרסום.">
+<!ENTITY closeButton.label     "סגירה">
+
+

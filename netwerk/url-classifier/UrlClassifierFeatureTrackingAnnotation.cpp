@@ -7,11 +7,11 @@
 #include "UrlClassifierFeatureTrackingAnnotation.h"
 
 #include "Classifier.h"
-#include "mozilla/AntiTrackingCommon.h"
 #include "mozilla/Logging.h"
-#include "mozilla/StaticPrefs.h"
+#include "mozilla/StaticPrefs_privacy.h"
 #include "mozilla/StaticPtr.h"
 #include "mozilla/net/UrlClassifierCommon.h"
+#include "nsIClassifiedChannel.h"
 #include "nsContentUtils.h"
 
 namespace mozilla {
@@ -127,24 +127,31 @@ UrlClassifierFeatureTrackingAnnotation::ProcessChannel(
   static std::vector<UrlClassifierCommon::ClassificationData>
       sClassificationData = {
           {NS_LITERAL_CSTRING("ads-track-"),
-           nsIHttpChannel::ClassificationFlags::CLASSIFIED_TRACKING_AD},
+           nsIClassifiedChannel::ClassificationFlags::CLASSIFIED_TRACKING_AD},
           {NS_LITERAL_CSTRING("analytics-track-"),
-           nsIHttpChannel::ClassificationFlags::CLASSIFIED_TRACKING_ANALYTICS},
+           nsIClassifiedChannel::ClassificationFlags::
+               CLASSIFIED_TRACKING_ANALYTICS},
           {NS_LITERAL_CSTRING("social-track-"),
-           nsIHttpChannel::ClassificationFlags::CLASSIFIED_TRACKING_SOCIAL},
+           nsIClassifiedChannel::ClassificationFlags::
+               CLASSIFIED_TRACKING_SOCIAL},
           {NS_LITERAL_CSTRING("content-track-"),
-           nsIHttpChannel::ClassificationFlags::CLASSIFIED_TRACKING_CONTENT},
+           nsIClassifiedChannel::ClassificationFlags::
+               CLASSIFIED_TRACKING_CONTENT},
       };
 
   uint32_t flags = UrlClassifierCommon::TablesToClassificationFlags(
       aList, sClassificationData,
-      nsIHttpChannel::ClassificationFlags::CLASSIFIED_TRACKING);
+      nsIClassifiedChannel::ClassificationFlags::CLASSIFIED_TRACKING);
 
   UrlClassifierCommon::SetTrackingInfo(aChannel, aList, aHashes);
 
-  UrlClassifierCommon::AnnotateChannel(
-      aChannel, AntiTrackingCommon::eTrackingAnnotations, flags,
-      nsIWebProgressListener::STATE_LOADED_TRACKING_CONTENT);
+  uint32_t notification =
+      ((flags & nsIClassifiedChannel::ClassificationFlags::
+                    CLASSIFIED_TRACKING_CONTENT) != 0)
+          ? nsIWebProgressListener::STATE_LOADED_LEVEL_2_TRACKING_CONTENT
+          : nsIWebProgressListener::STATE_LOADED_LEVEL_1_TRACKING_CONTENT;
+
+  UrlClassifierCommon::AnnotateChannel(aChannel, flags, notification);
 
   return NS_OK;
 }
@@ -152,15 +159,19 @@ UrlClassifierFeatureTrackingAnnotation::ProcessChannel(
 NS_IMETHODIMP
 UrlClassifierFeatureTrackingAnnotation::GetURIByListType(
     nsIChannel* aChannel, nsIUrlClassifierFeature::listType aListType,
-    nsIURI** aURI) {
+    nsIUrlClassifierFeature::URIType* aURIType, nsIURI** aURI) {
   NS_ENSURE_ARG_POINTER(aChannel);
+  NS_ENSURE_ARG_POINTER(aURIType);
   NS_ENSURE_ARG_POINTER(aURI);
 
   if (aListType == nsIUrlClassifierFeature::blacklist) {
+    *aURIType = nsIUrlClassifierFeature::blacklistURI;
     return aChannel->GetURI(aURI);
   }
 
   MOZ_ASSERT(aListType == nsIUrlClassifierFeature::whitelist);
+
+  *aURIType = nsIUrlClassifierFeature::pairwiseWhitelistURI;
   return UrlClassifierCommon::CreatePairwiseWhiteListURI(aChannel, aURI);
 }
 

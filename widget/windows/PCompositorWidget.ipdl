@@ -13,11 +13,19 @@ using nsTransparencyMode from "mozilla/widget/WidgetMessageUtils.h";
 namespace mozilla {
 namespace widget {
 
+struct RemoteBackbufferHandles {
+  WindowsHandle fileMapping;
+  WindowsHandle requestReadyEvent;
+  WindowsHandle responseReadyEvent;
+};
+
 sync protocol PCompositorWidget
 {
   manager PCompositorBridge;
 
 parent:
+  sync Initialize(RemoteBackbufferHandles aRemoteHandles);
+  
   sync EnterPresentLock();
   sync LeavePresentLock();
   async UpdateTransparency(nsTransparencyMode aMode);
@@ -27,7 +35,8 @@ parent:
 child:
   async ObserveVsync();
   async UnobserveVsync();
-  async UpdateCompositorWnd(WindowsHandle aCompositorWnd, WindowsHandle aParentWnd);
+  async UpdateCompositorWnd(WindowsHandle aCompositorWnd, WindowsHandle aParentWnd)
+    returns (bool success);
 };
 
 } // namespace widget

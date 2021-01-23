@@ -19,7 +19,9 @@ add_task(async function() {
       document.getElementById("Browser:BookmarkAllTabs").doCommand();
     },
     async dialog => {
-      let acceptBtn = dialog.document.documentElement.getButton("accept");
+      let acceptBtn = dialog.document
+        .getElementById("bookmarkpropertiesdialog")
+        .getButton("accept");
       Assert.ok(!acceptBtn.disabled, "Accept button is enabled");
 
       let namepicker = dialog.document.getElementById("editBMPanel_namePicker");
@@ -38,10 +40,11 @@ add_task(async function() {
     },
     dialog => {
       let savedItemId = dialog.gEditItemOverlay.itemId;
-      Assert.ok(savedItemId > 0, "Found the itemId");
+      Assert.greater(savedItemId, 0, "Found the itemId");
       return PlacesTestUtils.waitForNotification(
-        "onItemRemoved",
-        id => id === savedItemId
+        "bookmark-removed",
+        events => events.some(event => event.id === savedItemId),
+        "places"
       );
     }
   );

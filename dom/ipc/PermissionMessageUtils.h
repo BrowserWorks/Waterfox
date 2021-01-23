@@ -21,16 +21,13 @@ class Principal {
   friend struct mozilla::ipc::IPDLParamTraits<Principal>;
 
  public:
-  Principal() : mPrincipal(nullptr) {}
+  Principal() = default;
 
   explicit Principal(nsIPrincipal* aPrincipal) : mPrincipal(aPrincipal) {}
 
   operator nsIPrincipal*() const { return mPrincipal.get(); }
 
-  Principal& operator=(const Principal& aOther) {
-    mPrincipal = aOther.mPrincipal;
-    return *this;
-  }
+  Principal& operator=(const Principal& aOther) = delete;
 
  private:
   RefPtr<nsIPrincipal> mPrincipal;
@@ -42,7 +39,7 @@ namespace mozilla {
 namespace ipc {
 
 template <>
-struct IPDLParamTraits<nsIPrincipal> {
+struct IPDLParamTraits<nsIPrincipal*> {
   static void Write(IPC::Message* aMsg, IProtocol* aActor,
                     nsIPrincipal* aParam);
   static bool Read(const IPC::Message* aMsg, PickleIterator* aIter,
@@ -55,7 +52,7 @@ struct IPDLParamTraits<nsIPrincipal> {
     if (!Read(aMsg, aIter, aActor, &result)) {
       return false;
     }
-    *aResult = result.forget();
+    *aResult = std::move(result);
     return true;
   }
 };

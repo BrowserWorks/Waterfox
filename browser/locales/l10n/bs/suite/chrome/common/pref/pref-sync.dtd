@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- The page shown when not logged in... -->
+<!ENTITY setupButton.label          "Postavite &syncBrand.fullName.label;">
+<!ENTITY weaveDesc.label            "&syncBrand.fullName.label; vam dopušta pristup vašoj historiji, zabilješkama, lozinkama i otvorenim tabovima putem svih vaših uređaja.">
+
+<!-- The page shown when logged in... -->
+<!ENTITY accountGroupboxCaption.label "&syncBrand.fullName.label; račun">
+<!ENTITY accountName.label            "Naziv računa:">
+
+<!-- Login error feedback -->
+<!ENTITY updatePass.label             "Ažuriraj">
+<!ENTITY resetPass.label              "Resetuj">
+
+<!-- Manage Account -->
+<!ENTITY manageAccount.label          "Upravljanje računom">
+<!ENTITY viewQuota.label              "Pregled kvote">
+<!ENTITY changePassword.label         "Promijeni lozinku">
+<!ENTITY myRecoveryKey.label          "Moj ključ za oporavak">
+<!ENTITY resetSync.label              "Resetuj Sync">
+<!ENTITY unlinkDevice.label           "Poništavanje veze ovog uređaja">
+<!ENTITY addDevice.label              "Dodaj uređaj">
+
+<!-- Sync Settings -->
+<!ENTITY syncComputerName.label       "Naziv računara:">
+
+<!ENTITY syncMy2.label              "Sync moj:">
+<!ENTITY engine.addons.label        "Dodaci">
+<!ENTITY engine.bookmarks.label     "Zabilješke">
+<!ENTITY engine.tabs.label          "Tabovi">
+<!ENTITY engine.history.label       "Historija">
+<!ENTITY engine.passwords.label     "Lozinke">
+<!ENTITY engine.prefs.label         "Postavke">
+
+<!-- Footer stuff -->
+<!ENTITY prefs.tosLink.label        "Uslovi korištenja">
+<!ENTITY prefs.ppLink.label         "Polica privatnosti">

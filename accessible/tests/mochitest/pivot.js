@@ -1,3 +1,9 @@
+/* import-globals-from common.js */
+/* import-globals-from events.js */
+/* import-globals-from role.js */
+/* import-globals-from states.js */
+/* import-globals-from text.js */
+
 ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 // //////////////////////////////////////////////////////////////////////////////
@@ -50,7 +56,8 @@ var ObjectTraversalRule = {
     var role = aAccessible.role;
     if (
       hasState(aAccessible, STATE_FOCUSABLE) &&
-      (role != ROLE_DOCUMENT && role != ROLE_INTERNAL_FRAME)
+      role != ROLE_DOCUMENT &&
+      role != ROLE_INTERNAL_FRAME
     ) {
       rv = FILTER_IGNORE_SUBTREE | FILTER_MATCH;
     } else if (

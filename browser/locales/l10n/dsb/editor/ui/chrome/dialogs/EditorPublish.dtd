@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label            "Bok publicěrowaś">
+<!ENTITY windowTitleSettings.label    "Wózjawjeńske nastajenja">
+<!ENTITY publishTab.label             "Wózjawiś">
+<!ENTITY settingsTab.label            "Nastajenja">
+<!ENTITY publishButton.label          "Wózjawiś">
+
+<!-- Publish Tab Panel -->
+<!ENTITY siteList.label               "Mě sedła:">
+<!ENTITY siteList.accesskey           "M">
+<!ENTITY siteList.tooltip             "Wubjeŕśo sedło, ku kótaremuž cośo wózjawiś">
+<!ENTITY newSiteButton.label          "Nowe sedło">
+<!ENTITY newSiteButton.accesskey      "N">
+<!ENTITY docDirList.label             "Sedłowy pódzapis za toś ten bok:">
+<!ENTITY docDirList.accesskey         "S">
+<!ENTITY docDirList.tooltip           "Wubjeŕśo abo zapódajśo mě dalokego pódzapisa za toś ten bok">
+<!ENTITY publishImgCheckbox.label     "Wobraze a druge dataje zapśimjeś">
+<!ENTITY publishImgCheckbox.accesskey "d">
+<!ENTITY publishImgCheckbox.tooltip   "Wobrazy a druge dataje z toś togo boka wózjawiś">
+<!ENTITY sameLocationRadio.label      "To samske městno ako bok wužywaś">
+<!ENTITY sameLocationRadio.accesskey  "m">
+<!ENTITY sameLocationRadio.tooltip    "Dataje do togo samskego městna ako bok wózjawiś">
+<!ENTITY useSubdirRadio.label         "Toś ten sedłowy pódzapis wužywaś:">
+<!ENTITY useSubdirRadio.accesskey     "T">
+<!ENTITY useSubdirRadio.tooltip       "Dataje do wubranego dalokego pódzapisa wózjawiś">
+<!ENTITY otherDirList.tooltip         "Mě dalokego pódzapisa, źož budu se dataje wózjawjaś, wubraś abo zapódaś">
+<!ENTITY pageTitle.label              "Bokowy titel:">
+<!ENTITY pageTitle.accesskey          "B">
+<!ENTITY pageTitle.tooltip            "Zapódajśo titel, aby bok we woknje a w cytańskich znamjenjach identificěrował">
+<!ENTITY pageTitleExample.label       "na pś.: &quot;Mój webbok&quot;">
+<!ENTITY filename.label               "Datajowe mě:">
+<!ENTITY filename.accesskey           "D">
+<!ENTITY filename.tooltip             "Zapódajśo mě za toś tu dataju, inkluziwnje '.html' za webbok">
+<!ENTITY filenameExample.label        "na pś.: &quot;mójbok.html&quot;;">
+<!ENTITY setDefaultButton.label       "Ako standard nastajiś">
+<!ENTITY setDefaultButton.accesskey   "s">
+<!ENTITY removeButton.label           "Sedło wótpóraś">
+<!ENTITY removeButton.accesskey       "S">
+
+<!-- Settings Tab Panel -->
+<!ENTITY publishSites.label           "Wózjawjenje sedłow">
+<!ENTITY serverInfo.label             "Serwerowe informacije">
+<!ENTITY loginInfo.label              "Pśizjawjeńske informacije">
+<!ENTITY siteName.label               "Mě sedła:">
+<!ENTITY siteName.accesskey           "M">
+<!ENTITY siteName.tooltip             "Pśimě, kótarež identificěrujo toś to wózjawjone sedło (na pś.: 'mójosedło')">
+<!ENTITY siteUrl.label                "Wózjawjeńska adresa (na pś.: 'ftp://ftp.mójisp.de/mójowužywarskemě'):">
+<!ENTITY siteUrl.accesskey            "W">
+<!ENTITY siteUrl.tooltip              "Adresa FTP:// abo HTTP:// pśepódana wót wašogo ISP abo gósćinarskeje websłužby">
+<!ENTITY browseUrl.label              "HTTP-adresa wašogo startowego boka (na pś.: 'http://www.mójisp.de/mójowužywarskemě'):">
+<!ENTITY browseUrl.accesskey          "P">
+<!ENTITY browseUrl.tooltip            "Adresa HTTP:// wašogo startowego zapisa (njepódajśo datajowe mě)">
+<!ENTITY username.label               "Wužywarske mě:">
+<!ENTITY username.accesskey           "u">
+<!ENTITY username.tooltip             "Wužywarske mě, kótarež wužywaśo, aby se pla swójogo ISP abo gósćinarskeje websłužby pśizjawił">
+<!ENTITY password.label               "Gronidło:">
+<!ENTITY password.accesskey           "G">
+<!ENTITY password.tooltip             "Gronidło zwězane z wašym wužywarskim mjenim">
+<!ENTITY savePassword.label           "Gronidło składowaś">
+<!ENTITY savePassword.accesskey       "s">
+<!ENTITY savePassword.tooltip         "Wubjeŕśo to, aby swójo gronidło pśez zastojnik gronidłow wěsće składował">

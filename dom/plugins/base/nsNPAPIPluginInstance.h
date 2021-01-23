@@ -12,12 +12,10 @@
 #include "nsPIDOMWindow.h"
 #include "nsITimer.h"
 #include "nsIPluginInstanceOwner.h"
-#include "nsIURI.h"
-#include "nsIChannel.h"
 #include "nsHashKeys.h"
 #include <prinrval.h>
 #include "js/TypeDecls.h"
-#include "nsIAudioChannelAgent.h"
+#include "AudioChannelAgent.h"
 
 #include "mozilla/EventForwards.h"
 #include "mozilla/TimeStamp.h"
@@ -51,6 +49,10 @@ const NPDrawingModel kDefaultDrawingModel = NPDrawingModelCoreGraphics;
 #  endif
 #else
 const NPDrawingModel kDefaultDrawingModel = static_cast<NPDrawingModel>(0);
+#endif
+
+#if defined(OS_WIN)
+static const DWORD NPAPI_INVALID_WPARAM = 0xffffffff;
 #endif
 
 /**
@@ -242,12 +244,11 @@ class nsNPAPIPluginInstance final
 
   nsresult GetTagType(nsPluginTagType* result);
 
-  // check if this is a Java applet and affected by bug 750480
-  void CheckJavaC2PJSObjectQuirk(uint16_t paramCount,
-                                 const char* const* names,
-                                 const char* const* values);
-
   nsresult CreateAudioChannelAgentIfNeeded();
+
+  void NotifyAudibleStateChanged() const;
+
+  nsresult UpdateMutedIfNeeded();
 
   // The structure used to communicate between the plugin instance and
   // the browser.
@@ -267,8 +268,6 @@ class nsNPAPIPluginInstance final
  public:
   // True while creating the plugin, or calling NPP_SetWindow() on it.
   bool mInPluginInitCall;
-
-  nsCString mFakeURL;
 
  private:
   RefPtr<nsNPAPIPlugin> mPlugin;
@@ -296,9 +295,6 @@ class nsNPAPIPluginInstance final
   // This is only valid when the plugin is actually stopped!
   mozilla::TimeStamp mStopTime;
 
-  // is this instance Java and affected by bug 750480?
-  bool mHaveJavaC2PJSObjectQuirk;
-
   static uint32_t gInUnsafePluginCalls;
 
   // The arrays can only be released when the plugin instance is destroyed,
@@ -307,8 +303,10 @@ class nsNPAPIPluginInstance final
   char** mCachedParamNames;
   char** mCachedParamValues;
 
-  nsCOMPtr<nsIAudioChannelAgent> mAudioChannelAgent;
-  bool mMuted;
+  RefPtr<mozilla::dom::AudioChannelAgent> mAudioChannelAgent;
+  bool mIsMuted = false;
+  bool mWindowMuted = false;
+  bool mWindowSuspended = false;
 };
 
 void NS_NotifyBeginPluginCall(NSPluginCallReentry aReentryState);

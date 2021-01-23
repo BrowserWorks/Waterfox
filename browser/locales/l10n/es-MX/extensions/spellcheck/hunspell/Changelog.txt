@@ -1,0 +1,55 @@
+Versión 1.18.5
+- Fueron agregadas palabras como:
+  bisección, bisectriz, cardiólogo, cooperacha, defensoría, depredación, equilatero, gobernatura, gubernatura, montañismo, rufián, senaduría, etc.
+- Esta versión incluye todas las mejoras aceptadas en el proyecto hasta el 12 de mayo de 2018.
+  Para consultar la lista completa, vaya al siguiente enlace:
+  https://github.com/sbosio/rla-es/commits/master
+
+Versión 1.18.3
+- Fueron agregadas palabras como:
+  asintótico, criptomoneda, digitalmente, esporádicamente, fructosa, futbolísticamente, vegano, etc.
+- Esta versión incluye todas las mejoras aceptadas en el proyecto hasta el once de marzo de 2018.
+  Para consultar la lista completa, vaya al siguiente enlace:
+  https://github.com/sbosio/rla-es/commits/master
+
+Versión 1.17.12
+- Fueron agregadas palabras como:
+  achichincle, adoquín, agave, americanismo, cheve, chilpayate, cibernauta, influenza, logo, mezcal, taekwondo, tuit, tuitear, tuitero, zacate, etc.
+- Esta versión incluye todas las mejoras aceptadas en el proyecto hasta el cuatro de diciembre de 2017.
+  Para consultar la lista completa, vaya al siguiente enlace:
+  https://github.com/sbosio/rla-es/commits/master
+
+Versión 1.17.9
+- Cambia la forma de nombrar las versiones de este complemento.
+  Ahora se hará de la siguiente manera:
+  - [ 1]: Uno. Se incrementará un dígito cuando haya un cambio significativo en el proyecto.
+  - [17]: Los últimos dos dígitos del año en que fue liberado.
+  - [ 9]: El número del mes en que fue liberado.
+- Se agregó una lista de topónimos que incluye las 32 entidades federativas.
+  Fuente: Instituto Nacional de Estadística y Geografía (INEGI)
+- Se agregó una lista de topónimos que incluye las 2458 municipalidades.
+  Fuente: Instituto Nacional de Estadística y Geografía (INEGI)
+- Se agregó una lista con algunas abreviaturas.
+- Fueron agregadas palabras como:
+  abarrotero, cempasúchil, escamol, huitlacoche, jitomate, tlacoyo, tlayuda, pambazo, piquín, etc.
+- Esta versión incluye todas las mejoras aceptadas en el proyecto hasta el primero de septiembre de 2017.
+  Para consultar la lista completa, vaya al siguiente enlace:
+  https://github.com/sbosio/rla-es/commits/master
+
+Versión 0.0.6
+- Primera versión estable en Mozilla Add-ons.
+
+Versión 0.0.5
+- Cambios menores para poder subir el complemento a Mozilla Add-ons.
+
+Versión 0.0.4
+- Versión de prueba 4.
+
+Versión 0.0.3:
+- Versión de prueba 3.
+
+Versión 0.0.2:
+- Versión de prueba 2.
+
+Versión 0.0.1:
+- Versión de prueba 1.

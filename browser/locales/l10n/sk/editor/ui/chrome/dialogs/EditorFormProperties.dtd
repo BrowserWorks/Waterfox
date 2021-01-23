@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Vlastnosti formulára">
+
+<!ENTITY Settings.label "Nastavenie">
+
+<!ENTITY FormName.label "Názov formulára:">
+<!ENTITY FormName.accesskey "N">
+<!ENTITY FormAction.label "Akcia (URL):">
+<!ENTITY FormAction.accesskey "A">
+<!ENTITY FormMethod.label "Metóda:">
+<!ENTITY FormMethod.accesskey "e">
+<!ENTITY FormEncType.label "Kódovanie:">
+<!ENTITY FormEncType.accesskey "a">
+<!ENTITY FormTarget.label "Cieľový rámec:">
+<!ENTITY FormTarget.accesskey "C">
+
+<!ENTITY RemoveForm.label "Odstrániť formulár">
+<!ENTITY RemoveForm.accesskey "d">

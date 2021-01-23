@@ -23,7 +23,7 @@ instructions in the file `INSTALL.UNIX' instead.
     Note that  make++, a  make tool written  in Perl,  supports enough
     features of GNU make to compile FreeType.  See
 
-      http://makepp.sourceforge.net
+      https://makepp.sourceforge.net
 
     for more information;  you need version 2.0 or newer, and you must
     pass option `--norc-substitution'.
@@ -63,7 +63,7 @@ instructions in the file `INSTALL.UNIX' instead.
 
       Otherwise, simply type 'make' again to build the library
       or 'make refdoc' to build the API reference (the latter needs
-      python).
+      Python >= 3.5).
       =============================================================
 
 
@@ -148,7 +148,7 @@ instructions in the file `INSTALL.UNIX' instead.
 
 ----------------------------------------------------------------------
 
-Copyright 2003-2018 by
+Copyright (C) 2003-2020 by
 David Turner, Robert Wilhelm, and Werner Lemberg.
 
 This  file is  part of  the FreeType  project, and  may only  be used,

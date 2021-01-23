@@ -12,12 +12,14 @@
 #define js_OffThreadScriptCompilation_h
 
 #include "mozilla/Range.h"   // mozilla::Range
+#include "mozilla/Utf8.h"    // mozilla::Utf8Unit
 #include "mozilla/Vector.h"  // mozilla::Vector
 
 #include <stddef.h>  // size_t
 
 #include "jstypes.h"  // JS_PUBLIC_API
 
+#include "js/BinASTFormat.h"    // JS::BinASTFormat
 #include "js/CompileOptions.h"  // JS::ReadOnlyCompileOptions
 #include "js/GCVector.h"        // JS::GCVector
 #include "js/Transcoding.h"     // JS::TranscodeSource
@@ -39,12 +41,6 @@ class OffThreadToken;
 using OffThreadCompileCallback = void (*)(OffThreadToken* token,
                                           void* callbackData);
 
-extern JS_PUBLIC_API bool CanCompileOffThread(
-    JSContext* cx, const ReadOnlyCompileOptions& options, size_t length);
-
-extern JS_PUBLIC_API bool CanDecodeOffThread(
-    JSContext* cx, const ReadOnlyCompileOptions& options, size_t length);
-
 /*
  * Off thread compilation control flow.
  *
@@ -62,9 +58,21 @@ extern JS_PUBLIC_API bool CanDecodeOffThread(
  * to FinishOffThreadScript.
  */
 
+extern JS_PUBLIC_API bool CanCompileOffThread(
+    JSContext* cx, const ReadOnlyCompileOptions& options, size_t length);
+
 extern JS_PUBLIC_API bool CompileOffThread(
     JSContext* cx, const ReadOnlyCompileOptions& options,
     SourceText<char16_t>& srcBuf, OffThreadCompileCallback callback,
+    void* callbackData);
+
+// NOTE: Unlike for the normal sync compilation functions, this function NEVER
+//       INFLATES TO UTF-16.  Therefore, it is ALWAYS invoking experimental
+//       UTF-8 support.  Inflate to UTF-16 yourself and use the other overload
+//       if you're unable to take a risk using unstable functionality.
+extern JS_PUBLIC_API bool CompileOffThread(
+    JSContext* cx, const ReadOnlyCompileOptions& options,
+    SourceText<mozilla::Utf8Unit>& srcBuf, OffThreadCompileCallback callback,
     void* callbackData);
 
 extern JS_PUBLIC_API JSScript* FinishOffThreadScript(JSContext* cx,
@@ -78,11 +86,23 @@ extern JS_PUBLIC_API bool CompileOffThreadModule(
     SourceText<char16_t>& srcBuf, OffThreadCompileCallback callback,
     void* callbackData);
 
+// NOTE: Unlike for the normal sync compilation functions, this function NEVER
+//       INFLATES TO UTF-16.  Therefore, it is ALWAYS invoking experimental
+//       UTF-8 support.  Inflate to UTF-16 yourself and use the other overload
+//       if you're unable to take a risk using unstable functionality.
+extern JS_PUBLIC_API bool CompileOffThreadModule(
+    JSContext* cx, const ReadOnlyCompileOptions& options,
+    SourceText<mozilla::Utf8Unit>& srcBuf, OffThreadCompileCallback callback,
+    void* callbackData);
+
 extern JS_PUBLIC_API JSObject* FinishOffThreadModule(JSContext* cx,
                                                      OffThreadToken* token);
 
 extern JS_PUBLIC_API void CancelOffThreadModule(JSContext* cx,
                                                 OffThreadToken* token);
+
+extern JS_PUBLIC_API bool CanDecodeOffThread(
+    JSContext* cx, const ReadOnlyCompileOptions& options, size_t length);
 
 extern JS_PUBLIC_API bool DecodeOffThreadScript(
     JSContext* cx, const ReadOnlyCompileOptions& options,
@@ -112,12 +132,19 @@ extern JS_PUBLIC_API bool FinishMultiOffThreadScriptsDecoder(
 extern JS_PUBLIC_API void CancelMultiOffThreadScriptsDecoder(
     JSContext* cx, OffThreadToken* token);
 
-#if defined(JS_BUILD_BINAST)
-
+// This returns false if built without JS_BUILD_BINAST.
 extern JS_PUBLIC_API bool CanDecodeBinASTOffThread(
     JSContext* cx, const ReadOnlyCompileOptions& options, size_t length);
 
-#endif  // defined(JS_BUILD_BINAST)
+// This throws an exception if built without JS_BUILD_BINAST.
+extern JS_PUBLIC_API bool DecodeBinASTOffThread(
+    JSContext* cx, const ReadOnlyCompileOptions& options, const uint8_t* buf,
+    size_t length, JS::BinASTFormat format, OffThreadCompileCallback callback,
+    void* callbackData);
+
+// This throws an exception if built without JS_BUILD_BINAST.
+extern JS_PUBLIC_API JSScript* FinishOffThreadBinASTDecode(
+    JSContext* cx, OffThreadToken* token);
 
 }  // namespace JS
 

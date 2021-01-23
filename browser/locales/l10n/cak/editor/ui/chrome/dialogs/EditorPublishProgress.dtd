@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY siteUrl.label         "Ruxaq URL:">
+<!ENTITY docSubdir.label       "Rachcholb'al ruxaq:">
+<!ENTITY otherSubdir.label     "Rachcholb'al wachib'äl:">
+
+<!ENTITY status.label          "Tajin nitalüx rutzijol…">
+<!ENTITY fileList.label        "Rub'anikil Rutaluxik Rutzijol">
+<!ENTITY succeeded.label       "Q'i'onel">
+<!ENTITY failed.label          "Man ütz ta xub'än">
+
+<!ENTITY keepOpen              "Tijaqe' re tzuwäch re' chi rij toq xtitz'aqät ri rutaluxik rutzijol.">
+<!ENTITY closeButton.label     "Titz'apïx">

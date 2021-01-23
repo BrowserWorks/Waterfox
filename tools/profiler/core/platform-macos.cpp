@@ -76,7 +76,7 @@ void Sampler::Disable(PSLockRef aLock) {}
 template <typename Func>
 void Sampler::SuspendAndSampleAndResumeThread(
     PSLockRef aLock, const RegisteredThread& aRegisteredThread,
-    const Func& aProcessRegs) {
+    const TimeStamp& aNow, const Func& aProcessRegs) {
   thread_act_t samplee_thread =
       aRegisteredThread.GetPlatformData()->ProfiledThread();
 
@@ -119,7 +119,7 @@ void Sampler::SuspendAndSampleAndResumeThread(
     regs.mFP = reinterpret_cast<Address>(state.REGISTER_FIELD(bp));
     regs.mLR = 0;
 
-    aProcessRegs(regs);
+    aProcessRegs(regs, aNow);
   }
 
 #undef REGISTER_FIELD
@@ -148,7 +148,7 @@ static void* ThreadEntry(void* aArg) {
 
 SamplerThread::SamplerThread(PSLockRef aLock, uint32_t aActivityGeneration,
                              double aIntervalMilliseconds)
-    : Sampler(aLock),
+    : mSampler(aLock),
       mActivityGeneration(aActivityGeneration),
       mIntervalMicroseconds(
           std::max(1, int(floor(aIntervalMilliseconds * 1000 + 0.5)))),
@@ -159,7 +159,13 @@ SamplerThread::SamplerThread(PSLockRef aLock, uint32_t aActivityGeneration,
   }
 }
 
-SamplerThread::~SamplerThread() { pthread_join(mThread, nullptr); }
+SamplerThread::~SamplerThread() {
+  pthread_join(mThread, nullptr);
+  // Just in the unlikely case some callbacks were added between the end of the
+  // thread and now.
+  InvokePostSamplingCallbacks(std::move(mPostSamplingCallbackList),
+                              SamplingState::JustStopped);
+}
 
 void SamplerThread::SleepMicro(uint32_t aMicroseconds) {
   usleep(aMicroseconds);
@@ -169,7 +175,7 @@ void SamplerThread::SleepMicro(uint32_t aMicroseconds) {
   // case where the usleep call is interrupted by a signal.
 }
 
-void SamplerThread::Stop(PSLockRef aLock) { Sampler::Disable(aLock); }
+void SamplerThread::Stop(PSLockRef aLock) { mSampler.Disable(aLock); }
 
 // END SamplerThread target specifics
 ////////////////////////////////////////////////////////////////////////

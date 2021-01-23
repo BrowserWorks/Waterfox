@@ -6,11 +6,13 @@
 
 const { getColor } = require("devtools/client/shared/theme");
 const { colorUtils } = require("devtools/shared/css/color");
-const { REQUESTS_WATERFALL } = require("../constants");
+const {
+  REQUESTS_WATERFALL,
+} = require("devtools/client/netmonitor/src/constants");
 
 const HTML_NS = "http://www.w3.org/1999/xhtml";
 const STATE_KEYS = [
-  "firstRequestStartedMillis",
+  "firstRequestStartedMs",
   "scale",
   "timingMarkers",
   "waterfallWidth",
@@ -110,7 +112,7 @@ class WaterfallBackground {
       }
 
       const delta = Math.floor(
-        (timestamp - state.firstRequestStartedMillis) * state.scale
+        (timestamp - state.firstRequestStartedMs) * state.scale
       );
       drawPixelAt(delta, color);
     }

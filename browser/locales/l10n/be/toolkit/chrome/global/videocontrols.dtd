@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD
+    SYSTEM "chrome://branding/locale/brand.dtd">
+  %brandDTD;
+
+<!ENTITY playButton.playLabel "Граць">
+<!ENTITY playButton.pauseLabel "Прыпыніць">
+<!ENTITY muteButton.muteLabel "Заглушыць">
+<!ENTITY muteButton.unmuteLabel "Уключыць гук">
+<!ENTITY fullscreenButton.enterfullscreenlabel "Увесь экран">
+<!ENTITY fullscreenButton.exitfullscreenlabel "Закрыць поўны экран">
+<!ENTITY castingButton.castingLabel "Перакінуць на экран">
+<!ENTITY closedCaption.off "Адключана">
+<!-- LOCALIZATION NOTE (volumeScrubber.label): This label is exposed to
+     accessibility software to clarify what the slider is for. -->
+<!ENTITY volumeScrubber.label "Рэгулятар гучнасці">
+
+<!-- LOCALIZATION NOTE (pictureInPicture.label): This string is used as part of
+the Picture-in-Picture video toggle button when the mouse is hovering it. -->
+<!ENTITY pictureInPicture.label "Выява ў выяве">
+
+<!-- LOCALIZATION NOTE (pictureInPictureToggle.label): This string is used as the
+label for a variation of the Picture-in-Picture video toggle button when the mouse is
+hovering over the video. -->
+<!ENTITY pictureInPictureToggle.label "Глядзець у рэжыме „выява ў выяве”">
+<!-- LOCALIZATION NOTE (pictureInPictureExplainer): This string is used as part of
+a variation of the Picture-in-Picture video toggle button. When using this variation,
+this string appears below the toggle when the mouse hovers the toggle. -->
+<!ENTITY pictureInPictureExplainer "Прайгравайце відэа на пярэднім плане, пакуль вы робіце іншыя рэчы ў &brandShortName;">
+
+<!ENTITY error.aborted "Загрузка відэа прыпынена.">
+<!ENTITY error.network "Прайграванне відэа абарвана праз сеткавую памылку.">
+<!ENTITY error.decode "Відэа не можа быць прайграна, бо файл пашкоджаны.">
+<!ENTITY error.srcNotSupported "Фармат відэая або тып MIME не падтрымліваюцца.">
+<!ENTITY error.noSource2 "Не знойдзены відэа, фармат якіх або тып MIME якіх падтрымліваецца.">
+<!ENTITY error.generic "Прайграванне відэа абарвана праз невядомую памылку.">
+
+<!ENTITY status.pictureInPicture "Гэта відэа прайграваецца ў рэжыме „выява ў выяве“.">
+
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">
+

@@ -32,8 +32,8 @@ pub enum ExternalName {
         /// Arbitrary.
         index: u32,
     },
-    /// A test case function name of up to 10 ascii characters. This is
-    /// not intended to be used outside test cases.
+    /// A test case function name of up to a hardcoded amount of ascii
+    /// characters. This is not intended to be used outside test cases.
     TestCase {
         /// How many of the bytes in `ascii` are valid?
         length: u8,
@@ -62,7 +62,7 @@ impl ExternalName {
         let mut bytes = [0u8; TESTCASE_NAME_LENGTH];
         bytes[0..len].copy_from_slice(&vec[0..len]);
 
-        ExternalName::TestCase {
+        Self::TestCase {
             length: len as u8,
             ascii: bytes,
         }
@@ -78,7 +78,7 @@ impl ExternalName {
     /// assert_eq!(name.to_string(), "u123:456");
     /// ```
     pub fn user(namespace: u32, index: u32) -> Self {
-        ExternalName::User { namespace, index }
+        Self::User { namespace, index }
     }
 }
 
@@ -91,15 +91,15 @@ impl Default for ExternalName {
 impl fmt::Display for ExternalName {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            ExternalName::User { namespace, index } => write!(f, "u{}:{}", namespace, index),
-            ExternalName::TestCase { length, ascii } => {
+            Self::User { namespace, index } => write!(f, "u{}:{}", namespace, index),
+            Self::TestCase { length, ascii } => {
                 f.write_char('%')?;
                 for byte in ascii.iter().take(length as usize) {
                     f.write_char(*byte as char)?;
                 }
                 Ok(())
             }
-            ExternalName::LibCall(lc) => write!(f, "%{}", lc),
+            Self::LibCall(lc) => write!(f, "%{}", lc),
         }
     }
 }
@@ -110,7 +110,7 @@ impl FromStr for ExternalName {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         // Try to parse as a libcall name, otherwise it's a test case.
         match s.parse() {
-            Ok(lc) => Ok(ExternalName::LibCall(lc)),
+            Ok(lc) => Ok(Self::LibCall(lc)),
             Err(_) => Ok(Self::testcase(s.as_bytes())),
         }
     }
@@ -120,8 +120,8 @@ impl FromStr for ExternalName {
 mod tests {
     use super::ExternalName;
     use crate::ir::LibCall;
+    use alloc::string::ToString;
     use core::u32;
-    use std::string::ToString;
 
     #[test]
     fn display_testcase() {

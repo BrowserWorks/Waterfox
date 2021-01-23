@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY printCmd.commandkey            "P">
+
+<!ENTITY findOnCmd.commandkey           "F">
+<!ENTITY findAgainCmd.commandkey        "G">
+<!ENTITY findAgainCmd.commandkey2       "VK_F3">
+
+<!ENTITY backButton.label               "Înapoi">
+<!ENTITY backButton.accesskey           "p">
+<!ENTITY backButton.tooltip             "Mergi cu o pagină înapoi">
+<!ENTITY forwardButton.label            "Înainte">
+<!ENTITY forwardButton.accesskey        "n">
+<!ENTITY forwardButton.tooltip          "Mergi cu o pagină înainte">
+<!ENTITY copyCmd.label                  "Copiază">
+<!ENTITY copyCmd.accesskey              "C">
+<!ENTITY selectAllCmd.label             "Selectează tot">
+<!ENTITY selectAllCmd.accesskey         "a">
+<!ENTITY goBackCmd.commandkey           "[">
+<!ENTITY goForwardCmd.commandkey        "]">
+<!ENTITY homeButton.label               "Acasă">
+<!ENTITY homeButton.tooltip             "Mergi la prima pagină a manualului">
+<!ENTITY printButton.label              "Tipărește">
+<!ENTITY printButton.tooltip            "Tipărește această pagină">
+<!ENTITY closeWindow.commandkey         "W">
+
+<!ENTITY search.emptytext               "Căutare">
+<!ENTITY searchHeader.label             "Rezultatele căutării">
+<!ENTITY toctab.label                   "Cuprins">
+<!ENTITY toctab.accesskey               "s">
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> 
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY helpSearch.commandkey          "k">
+
+<!ENTITY zLevel.label                   "Mereu deasupra">
+<!ENTITY zLevel.accesskey               "M">
+
+<!ENTITY fullZoomReduceBtn.label        "Micșorează mărimea textului">
+<!ENTITY fullZoomReduceBtn.accesskey    "c">
+<!ENTITY fullZoomEnlargeBtn.label       "Mărește mărimea textului">
+<!ENTITY fullZoomEnlargeBtn.accesskey   "i">

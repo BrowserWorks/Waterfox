@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Vlastnosti textovej plochy">
+
+<!ENTITY Settings.label "Nastavenia">
+
+<!ENTITY TextAreaName.label "Názov poľa:">
+<!ENTITY TextAreaName.accessKey "N">
+<!ENTITY TextAreaRows.label "Riadky:">
+<!ENTITY TextAreaRows.accessKey "R">
+<!ENTITY TextAreaCols.label "Stĺpce:">
+<!ENTITY TextAreaCols.accessKey "S">
+<!ENTITY TextAreaReadOnly.label "Iba na čítanie">
+<!ENTITY TextAreaReadOnly.accessKey "I">
+<!ENTITY TextAreaDisabled.label "Zakázané">
+<!ENTITY TextAreaDisabled.accessKey "a">
+<!ENTITY TextAreaTabIndex.label "Poradie:">
+<!ENTITY TextAreaTabIndex.accessKey "P">
+<!ENTITY TextAreaAccessKey.label "Prístupový kláves:">
+<!ENTITY TextAreaAccessKey.accessKey "k">
+<!ENTITY InitialText.label "Pôvodný text:">
+<!ENTITY InitialText.accessKey "t">
+
+<!ENTITY TextAreaWrap.label "Spôsob zalamovania:">
+<!ENTITY TextAreaWrap.accessKey "b">
+<!ENTITY WrapDefault.value "Pôvodné">
+<!ENTITY WrapOff.value "Vypnuté">
+<!ENTITY WrapHard.value "Tvrdé">
+<!ENTITY WrapSoft.value "Mäkké">
+<!ENTITY WrapPhysical.value "Fyzické">
+<!ENTITY WrapVirtual.value "Virtuálne">

@@ -1,65 +1,73 @@
-use crate::cdsl::operands::{OperandKind, OperandKindBuilder as Builder, OperandKindFields};
+use crate::cdsl::operands::{OperandKind, OperandKindFields};
 
 /// Small helper to initialize an OperandBuilder with the right kind, for a given name and doc.
-fn create(name: &'static str, doc: &'static str) -> Builder {
-    Builder::new(name, OperandKindFields::EntityRef).doc(doc)
+fn new(format_field_name: &'static str, rust_type: &'static str, doc: &'static str) -> OperandKind {
+    OperandKind::new(format_field_name, rust_type, OperandKindFields::EntityRef).with_doc(doc)
 }
 
-pub fn define() -> Vec<OperandKind> {
-    let mut kinds = Vec::new();
+pub(crate) struct EntityRefs {
+    /// A reference to a basic block in the same function.
+    /// This is primarliy used in control flow instructions.
+    pub(crate) block: OperandKind,
 
-    // A reference to an extended basic block in the same function.
-    // This is primarliy used in control flow instructions.
-    let ebb = create("ebb", "An extended basic block in the same function.")
-        .default_member("destination")
-        .finish();
-    kinds.push(ebb);
+    /// A reference to a stack slot declared in the function preamble.
+    pub(crate) stack_slot: OperandKind,
 
-    // A reference to a stack slot declared in the function preamble.
-    let stack_slot = create("stack_slot", "A stack slot").finish();
-    kinds.push(stack_slot);
+    /// A reference to a global value.
+    pub(crate) global_value: OperandKind,
 
-    // A reference to a global value.
-    let global_value = create("global_value", "A global value.").finish();
-    kinds.push(global_value);
+    /// A reference to a function signature declared in the function preamble.
+    /// This is used to provide the call signature in a call_indirect instruction.
+    pub(crate) sig_ref: OperandKind,
 
-    // A reference to a function signature declared in the function preamble.
-    // This is used to provide the call signature in a call_indirect instruction.
-    let sig_ref = create("sig_ref", "A function signature.").finish();
-    kinds.push(sig_ref);
+    /// A reference to an external function declared in the function preamble.
+    /// This is used to provide the callee and signature in a call instruction.
+    pub(crate) func_ref: OperandKind,
 
-    // A reference to an external function declared in the function preamble.
-    // This is used to provide the callee and signature in a call instruction.
-    let func_ref = create("func_ref", "An external function.").finish();
-    kinds.push(func_ref);
+    /// A reference to a jump table declared in the function preamble.
+    pub(crate) jump_table: OperandKind,
 
-    // A reference to a jump table declared in the function preamble.
-    let jump_table = create("jump_table", "A jump table.")
-        .default_member("table")
-        .finish();
-    kinds.push(jump_table);
+    /// A reference to a heap declared in the function preamble.
+    pub(crate) heap: OperandKind,
 
-    // A reference to a heap declared in the function preamble.
-    let heap = create("heap", "A heap.").finish();
-    kinds.push(heap);
+    /// A reference to a table declared in the function preamble.
+    pub(crate) table: OperandKind,
 
-    // A reference to a table declared in the function preamble.
-    let table = create("table", "A table.").finish();
-    kinds.push(table);
+    /// A variable-sized list of value operands. Use for Block and function call arguments.
+    pub(crate) varargs: OperandKind,
+}
 
-    // A variable-sized list of value operands. Use for Ebb and function call arguments.
-    let varargs = Builder::new("variable_args", OperandKindFields::VariableArgs)
-        .doc(
-            r#"
-            A variable size list of `value` operands.
+impl EntityRefs {
+    pub fn new() -> Self {
+        Self {
+            block: new(
+                "destination",
+                "ir::Block",
+                "a basic block in the same function.",
+            ),
+            stack_slot: new("stack_slot", "ir::StackSlot", "A stack slot"),
 
-            Use this to represent arguments passed to a function call, arguments
-            passed to an extended basic block, or a variable number of results
-            returned from an instruction.
-        "#,
-        )
-        .finish();
-    kinds.push(varargs);
+            global_value: new("global_value", "ir::GlobalValue", "A global value."),
 
-    return kinds;
+            sig_ref: new("sig_ref", "ir::SigRef", "A function signature."),
+
+            func_ref: new("func_ref", "ir::FuncRef", "An external function."),
+
+            jump_table: new("table", "ir::JumpTable", "A jump table."),
+
+            heap: new("heap", "ir::Heap", "A heap."),
+
+            table: new("table", "ir::Table", "A table."),
+
+            varargs: OperandKind::new("", "&[Value]", OperandKindFields::VariableArgs).with_doc(
+                r#"
+                        A variable size list of `value` operands.
+
+                        Use this to represent arguments passed to a function call, arguments
+                        passed to a basic block, or a variable number of results
+                        returned from an instruction.
+                    "#,
+            ),
+        }
+    }
 }

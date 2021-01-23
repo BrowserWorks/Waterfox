@@ -1,7 +1,6 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
-/* Any copyright is dedicated to the Public Domain.
- * http://creativecommons.org/publicdomain/zero/1.0/ */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
 
 /**
  * The Mochitest API documentation
@@ -45,7 +44,6 @@ Services.scriptloader.loadSubScript(
 
 const EXAMPLE_URL =
   "http://example.com/browser/devtools/client/debugger/test/mochitest/examples/";
-
 
 // NOTE: still experimental, the screenshots might not be exactly correct
 async function takeScreenshot(dbg) {

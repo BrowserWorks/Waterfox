@@ -1,0 +1,149 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Context Menu -->
+
+<!ENTITY popupWindowRejectCmd.label     "Rebutja les finestres emergents d'aquest lloc">
+<!ENTITY popupWindowRejectCmd.accesskey "o">
+<!ENTITY popupWindowAllowCmd.label      "Permet les finestres emergents d'aquest lloc">
+<!ENTITY popupWindowAllowCmd.accesskey  "o">
+<!ENTITY openLinkCmdInTab.label       "Obre l'enllaç en una pestanya nova">
+<!ENTITY openLinkCmdInTab.accesskey   "t">
+<!ENTITY openLinkCmd.label            "Obre l'enllaç en una finestra nova">
+<!ENTITY openLinkCmd.accesskey        "f">
+<!ENTITY openLinkCmdInPrivateWindow.label     "Obre l'enllaç en una finestra privada">
+<!ENTITY openLinkCmdInPrivateWindow.accesskey "d">
+<!ENTITY openLinkInWindowCmd.label    "Obre">
+<!ENTITY openLinkInWindowCmd.accesskey "b">
+<!ENTITY openFrameCmd.label           "Obre el marc en una finestra nova">
+<!ENTITY openFrameCmd.accesskey       "O">
+<!ENTITY openFrameCmdInTab.label      "Obre el marc en una pestanya nova">
+<!ENTITY openFrameCmdInTab.accesskey  "t">
+<!ENTITY keywordfield.label           "Afegeix una paraula clau per a la cerca…">
+<!ENTITY keywordfield.accesskey       "l">
+<!ENTITY showOnlyThisFrameCmd.label     "Mostra només aquest marc">
+<!ENTITY showOnlyThisFrameCmd.accesskey "M">
+<!ENTITY goBackCmd.label              "Enrere">
+<!ENTITY goBackCmd.accesskey          "E">
+<!ENTITY goForwardCmd.label           "Endavant">
+<!ENTITY goForwardCmd.accesskey       "v">
+<!ENTITY goUpCmd.label                "Amunt">
+<!ENTITY goUpCmd.accesskey            "u">
+<!ENTITY reloadCmd.label              "Actualitza">
+<!ENTITY reloadCmd.accesskey          "z">
+<!ENTITY reloadCmd.commandkey         "r">
+<!ENTITY stopCmd.label                "Atura">
+<!ENTITY stopCmd.accesskey            "r">
+<!ENTITY reloadFrameCmd.label         "Actualitza el marc">
+<!ENTITY reloadFrameCmd.accesskey     "r">
+<!ENTITY viewPartialSourceForSelectionCmd.label "Codi font de la selecció">
+<!ENTITY viewPartialSourceForMathMLCmd.label    "Mostra la font MathML">
+<!ENTITY viewPartialSourceCmd.accesskey "e">
+<!ENTITY viewPageSourceCmd.label      "Visualitza el codi font de la pàgina">
+<!ENTITY viewPageSourceCmd.accesskey  "z">
+<!ENTITY viewFrameSourceCmd.label     "Visualitza el codi font del marc">
+<!ENTITY viewFrameSourceCmd.accesskey "o">
+<!ENTITY viewPageInfoCmd.label        "Visualitza la informació de la pàgina">
+<!ENTITY viewPageInfoCmd.accesskey    "i">
+<!ENTITY viewFrameInfoCmd.label       "Visualitza la informació del marc">
+<!ENTITY viewFrameInfoCmd.accesskey   "r">
+<!ENTITY fitImageCmd.label            "Ajusta la imatge a la finestra">
+<!ENTITY fitImageCmd.accesskey        "A">
+<!ENTITY reloadImageCmd.label         "Actualitza la imatge">
+<!ENTITY reloadImageCmd.accesskey     "e">
+<!ENTITY viewImageCmd.label           "Visualitza la imatge">
+<!ENTITY viewImageCmd.accesskey       "V">
+<!ENTITY viewVideoCmd.label           "Visualitza el vídeo">
+<!ENTITY viewVideoCmd.accesskey       "i">
+<!ENTITY viewBGImageCmd.label         "Visualitza la imatge de fons">
+<!ENTITY viewBGImageCmd.accesskey     "f">
+<!ENTITY setDesktopBackgroundCmd.label     "Defineix el fons d'escriptori...">
+<!ENTITY setDesktopBackgroundCmd.accesskey "o">
+<!ENTITY bookmarkPageCmd.label        "Afegeix aquesta pàgina a les adreces d'interès…">
+<!ENTITY bookmarkPageCmd.accesskey    "p">
+<!ENTITY bookmarkLinkCmd.label        "Afegeix aquest enllaç a les adreces d'interès…">
+<!ENTITY bookmarkLinkCmd.accesskey    "l">
+<!ENTITY bookmarkFrameCmd.label       "Desa aquest marc com a adreça d'interès…">
+<!ENTITY bookmarkFrameCmd.accesskey   "m">
+<!ENTITY savePageAsCmd.label          "Anomena i desa la pàgina…">
+<!ENTITY savePageCmd.label            "Anomena i desa la pàgina">
+<!ENTITY savePageCmd.accesskey        "s">
+<!ENTITY savePageCmd.commandkey       "s">
+<!ENTITY saveFrameAsCmd.label         "Anomena i desa el marc...">
+<!ENTITY saveFrameCmd.label           "Anomena i desa el marc">
+<!ENTITY saveFrameCmd.accesskey       "m">
+<!ENTITY saveLinkAsCmd.label          "Anomena i desa l'enllaç...">
+<!ENTITY saveLinkCmd.label            "Anomena i desa l'enllaç">
+<!ENTITY saveLinkCmd.accesskey        "d">
+<!ENTITY saveImageAsCmd.label         "Anomena i desa la imatge...">
+<!ENTITY saveImageCmd.label           "Anomena i desa la imatge...">
+<!ENTITY saveImageCmd.accesskey       "i">
+<!ENTITY saveVideoCmd.label           "Anomena i desa el vídeo…">
+<!ENTITY saveVideoCmd.accesskey       "v">
+<!ENTITY saveAudioCmd.label           "Anomena i desa l'àudio…">
+<!ENTITY saveAudioCmd.accesskey       "d">
+<!ENTITY copyLinkCmd.label            "Copia l'enllaç">
+<!ENTITY copyLinkCmd.accesskey        "n">
+<!ENTITY copyImageCmd.label           "Copia la ubicació de la imatge">
+<!ENTITY copyImageCmd.accesskey       "m">
+<!ENTITY copyVideoURLCmd.label        "Copia la ubicació del vídeo">
+<!ENTITY copyVideoURLCmd.accesskey    "o">
+<!ENTITY copyAudioURLCmd.label        "Copia la ubicació de l'àudio">
+<!ENTITY copyAudioURLCmd.accesskey    "o">
+<!ENTITY metadataCmd.label            "Propietats">
+<!ENTITY metadataCmd.accesskey        "P">
+<!ENTITY copyEmailCmd.label           "Copia l'adreça electrònica">
+<!ENTITY copyEmailCmd.accesskey       "e">
+<!ENTITY thisFrameMenu.label          "Aquest marc">
+<!ENTITY thisFrameMenu.accesskey      "t">
+<!ENTITY mediaPlay.label              "Reprodueix">
+<!ENTITY mediaPlay.accesskey          "p">
+<!ENTITY mediaPause.label             "Pausa">
+<!ENTITY mediaPause.accesskey         "P">
+<!ENTITY mediaMute.label              "Sense so">
+<!ENTITY mediaMute.accesskey          "e">
+<!ENTITY mediaUnmute.label            "Amb so">
+<!ENTITY mediaUnmute.accesskey        "m">
+<!ENTITY mediaPlaybackRate.label        "Velocitat de reproducció">
+<!ENTITY mediaPlaybackRate.accesskey    "V">
+<!ENTITY mediaPlaybackRate050.label     "Velocitat lenta (½×)">
+<!ENTITY mediaPlaybackRate050.accesskey "l">
+<!ENTITY mediaPlaybackRate100.label     "Velocitat normal">
+<!ENTITY mediaPlaybackRate100.accesskey "n">
+<!ENTITY mediaPlaybackRate150.label     "Velocitat alta (1½×)">
+<!ENTITY mediaPlaybackRate150.accesskey "t">
+<!ENTITY mediaPlaybackRate200.label     "Velocitat doble">
+<!ENTITY mediaPlaybackRate200.accesskey "d">
+<!-- LOCALIZATION NOTE: The access keys for "Show Controls" and
+"Hide Controls" are the same because the two context-menu
+items are mutually exclusive. -->
+<!ENTITY mediaShowControls.label      "Mostra els controls multimèdia">
+<!ENTITY mediaShowControls.accesskey  "a">
+<!ENTITY mediaHideControls.label      "Amaga els controls multimèdia">
+<!ENTITY mediaHideControls.accesskey  "A">
+<!ENTITY videoFullScreen.label        "Pantalla completa">
+<!ENTITY videoFullScreen.accesskey    "P">
+<!ENTITY videoSaveImage.label         "Anomena i desa una instantània...">
+<!ENTITY videoSaveImage.accesskey     "A">
+<!ENTITY videoShowStats.label         "Mostra les estadístiques">
+<!ENTITY videoShowStats.accesskey     "t">
+<!ENTITY videoHideStats.label         "Oculta les estadístiques">
+<!ENTITY videoHideStats.accesskey     "t">
+<!ENTITY search.accesskey             "W">
+<!ENTITY bidiSwitchPageDirectionItem.label        "Commuta la direcció de la pàgina">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey    "g">
+<!ENTITY bidiSwitchTextDirectionItem.label        "Commuta la direcció del text">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey    "x">
+<!ENTITY spellAddToDictionary.label     "Afegeix al diccionari">
+<!ENTITY spellAddToDictionary.accesskey "d">
+<!ENTITY spellUndoAddToDictionary.label      "Desfés afegir al diccionari">
+<!ENTITY spellUndoAddToDictionary.accesskey  "a">
+<!ENTITY spellIgnoreWord.label          "Ignora la paraula">
+<!ENTITY spellIgnoreWord.accesskey      "p">
+<!ENTITY spellCheckEnable.label         "Verifica l'ortografia">
+<!ENTITY spellCheckEnable.accesskey     "V">
+<!ENTITY spellNoSuggestions.label       "(No hi ha cap suggeriment)">
+<!ENTITY spellDictionaries.label        "Llengües">
+<!ENTITY spellDictionaries.accesskey    "L">
+<!ENTITY spellAddDictionaries.label     "Baixa més diccionaris...">
+<!ENTITY spellAddDictionaries.accesskey "B">

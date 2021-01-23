@@ -2,7 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "nsIDirectoryService.h"
 #include "DirectoryProvider.h"
 
 #include "nsIFile.h"
@@ -23,7 +22,6 @@
 #include "nsServiceManagerUtils.h"
 #include "nsString.h"
 #include "nsXULAppAPI.h"
-#include "nsIPrefLocalizedString.h"
 
 using mozilla::intl::LocaleService;
 
@@ -64,16 +62,11 @@ static void AppendDistroSearchDirs(nsIProperties* aDirSvc,
   if (NS_FAILED(rv)) return;
   searchPlugins->AppendNative(NS_LITERAL_CSTRING("searchplugins"));
 
-  bool exists;
-  rv = searchPlugins->Exists(&exists);
-  if (NS_FAILED(rv) || !exists) return;
-
   nsCOMPtr<nsIFile> commonPlugins;
   rv = searchPlugins->Clone(getter_AddRefs(commonPlugins));
   if (NS_SUCCEEDED(rv)) {
     commonPlugins->AppendNative(NS_LITERAL_CSTRING("common"));
-    rv = commonPlugins->Exists(&exists);
-    if (NS_SUCCEEDED(rv) && exists) array.AppendObject(commonPlugins);
+    array.AppendObject(commonPlugins);
   }
 
   nsCOMPtr<nsIPrefBranch> prefs(do_GetService(NS_PREFSERVICE_CONTRACTID));
@@ -92,27 +85,21 @@ static void AppendDistroSearchDirs(nsIProperties* aDirSvc,
       rv = localePlugins->Clone(getter_AddRefs(defLocalePlugins));
       if (NS_SUCCEEDED(rv)) {
         defLocalePlugins->AppendNative(defLocale);
-        rv = defLocalePlugins->Exists(&exists);
-        if (NS_SUCCEEDED(rv) && exists) {
-          array.AppendObject(defLocalePlugins);
-          return;  // all done
-        }
+        array.AppendObject(defLocalePlugins);
+        return;  // all done
       }
     }
 
     // we didn't have a defaultLocale, use the user agent locale
     nsAutoCString locale;
-    LocaleService::GetInstance()->GetAppLocaleAsLangTag(locale);
+    LocaleService::GetInstance()->GetAppLocaleAsBCP47(locale);
 
     nsCOMPtr<nsIFile> curLocalePlugins;
     rv = localePlugins->Clone(getter_AddRefs(curLocalePlugins));
     if (NS_SUCCEEDED(rv)) {
       curLocalePlugins->AppendNative(locale);
-      rv = curLocalePlugins->Exists(&exists);
-      if (NS_SUCCEEDED(rv) && exists) {
-        array.AppendObject(curLocalePlugins);
-        return;  // all done
-      }
+      array.AppendObject(curLocalePlugins);
+      return;  // all done
     }
   }
 }
@@ -145,8 +132,6 @@ DirectoryProvider::AppendingEnumerator::GetNext(nsISupports** aResult) {
 
   mNext = nullptr;
 
-  nsresult rv;
-
   // Ignore all errors
 
   bool more;
@@ -165,10 +150,6 @@ DirectoryProvider::AppendingEnumerator::GetNext(nsISupports** aResult) {
       mNext->AppendNative(nsDependentCString(*i));
       ++i;
     }
-
-    bool exists;
-    rv = mNext->Exists(&exists);
-    if (NS_SUCCEEDED(rv) && exists) break;
 
     mNext = nullptr;
   }

@@ -80,14 +80,14 @@ enum hb_ot_layout_glyph_props_flags_t
   HB_OT_LAYOUT_GLYPH_PROPS_LIGATURE	= 0x04u,
   HB_OT_LAYOUT_GLYPH_PROPS_MARK		= 0x08u,
 
+  HB_OT_LAYOUT_GLYPH_PROPS_CLASS_MASK   = HB_OT_LAYOUT_GLYPH_PROPS_BASE_GLYPH |
+					  HB_OT_LAYOUT_GLYPH_PROPS_LIGATURE |
+					  HB_OT_LAYOUT_GLYPH_PROPS_MARK,
+
   /* The following are used internally; not derived from GDEF. */
   HB_OT_LAYOUT_GLYPH_PROPS_SUBSTITUTED	= 0x10u,
   HB_OT_LAYOUT_GLYPH_PROPS_LIGATED	= 0x20u,
   HB_OT_LAYOUT_GLYPH_PROPS_MULTIPLIED	= 0x40u,
-
-  HB_OT_LAYOUT_GLYPH_PROPS_PRESERVE     = HB_OT_LAYOUT_GLYPH_PROPS_SUBSTITUTED |
-					  HB_OT_LAYOUT_GLYPH_PROPS_LIGATED |
-					  HB_OT_LAYOUT_GLYPH_PROPS_MULTIPLIED
 };
 HB_MARK_AS_FLAG_T (hb_ot_layout_glyph_props_flags_t);
 
@@ -166,6 +166,17 @@ _hb_next_syllable (hb_buffer_t *buffer, unsigned int start)
     ;
 
   return start;
+}
+
+static inline void
+_hb_clear_syllables (const hb_ot_shape_plan_t *plan HB_UNUSED,
+		     hb_font_t *font HB_UNUSED,
+		     hb_buffer_t *buffer)
+{
+  hb_glyph_info_t *info = buffer->info;
+  unsigned int count = buffer->len;
+  for (unsigned int i = 0; i < count; i++)
+    info[i].syllable() = 0;
 }
 
 
@@ -549,6 +560,17 @@ static inline void
 _hb_glyph_info_clear_substituted (hb_glyph_info_t *info)
 {
   info->glyph_props() &= ~(HB_OT_LAYOUT_GLYPH_PROPS_SUBSTITUTED);
+}
+
+static inline void
+_hb_clear_substitution_flags (const hb_ot_shape_plan_t *plan HB_UNUSED,
+			      hb_font_t *font HB_UNUSED,
+			      hb_buffer_t *buffer)
+{
+  hb_glyph_info_t *info = buffer->info;
+  unsigned int count = buffer->len;
+  for (unsigned int i = 0; i < count; i++)
+    _hb_glyph_info_clear_substituted (&info[i]);
 }
 
 

@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -11,6 +9,12 @@
 // It is therefore quite long to run.
 
 requestLongerTimeout(10);
+const { PromiseTestUtils } = ChromeUtils.import(
+  "resource://testing-common/PromiseTestUtils.jsm"
+);
+
+// whitelist a context error because it is harmless. This could likely be removed in the next patch because it is a symptom of events coming from the target-list and debugger targets module...
+PromiseTestUtils.whitelistRejectionsGlobally(/Page has navigated/);
 
 const TEST_URL =
   "data:text/html;charset=utf-8," +
@@ -94,28 +98,59 @@ async function testOneTool(toolbox, toolID) {
   info(`Select tool ${toolID}`);
   await toolbox.selectTool(toolID);
 
-  await testReload("toolbox.reload.key", toolbox, toolID);
-  await testReload("toolbox.reload2.key", toolbox, toolID);
-  await testReload("toolbox.forceReload.key", toolbox, toolID);
-  await testReload("toolbox.forceReload2.key", toolbox, toolID);
+  await testReload("toolbox.reload.key", toolbox);
+  await testReload("toolbox.reload2.key", toolbox);
+  await testReload("toolbox.forceReload.key", toolbox);
+  await testReload("toolbox.forceReload2.key", toolbox);
 }
 
-function testReload(shortcut, toolbox, toolID) {
+async function testReload(shortcut, toolbox) {
   info(`Reload with ${shortcut}`);
 
   const mm = gBrowser.selectedBrowser.messageManager;
+  const walker = (await toolbox.target.getFront("inspector")).walker;
 
   return new Promise(resolve => {
-    // The inspector needs some special care.
-    const toolUpdated =
-      toolID === "inspector"
-        ? toolbox.getPanel("inspector").once("new-root")
-        : Promise.resolve();
-
-    const complete = () => {
-      mm.removeMessageListener("devtools:test:load", complete);
-      toolUpdated.then(resolve);
+    const observer = {
+      _isDocumentUnloaded: false,
+      _isNewRooted: false,
+      onMutation(mutations) {
+        for (const { type } of mutations) {
+          if (type === "documentUnload") {
+            this._isDocumentUnloaded = true;
+          }
+        }
+      },
+      onNewRootNode() {
+        this._isNewRooted = true;
+      },
+      isReady() {
+        return this._isDocumentUnloaded && this._isNewRooted;
+      },
     };
+
+    observer.onMutation = observer.onMutation.bind(observer);
+    observer.onNewRootNode = observer.onNewRootNode.bind(observer);
+    walker.on("mutations", observer.onMutation);
+    walker.watchRootNode(observer.onNewRootNode);
+
+    // If we have a jsdebugger panel, wait for it to complete its reload
+    const jsdebugger = toolbox.getPanel("jsdebugger");
+    let onReloaded = Promise.resolve;
+    if (jsdebugger) {
+      onReloaded = jsdebugger.once("reloaded");
+    }
+
+    const complete = async () => {
+      mm.removeMessageListener("devtools:test:load", complete);
+      // Wait for the documentUnload and newRoot were fired.
+      await waitUntil(() => observer.isReady());
+      walker.off("mutations", observer.onMutation);
+      walker.unwatchRootNode(observer.onNewRootNode);
+      await onReloaded;
+      resolve();
+    };
+
     mm.addMessageListener("devtools:test:load", complete);
 
     toolbox.win.focus();

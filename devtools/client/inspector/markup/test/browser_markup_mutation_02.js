@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -8,10 +7,7 @@
 // corresponding DOM nodes mutate
 
 // Have to use the same timer functions used by the inspector.
-const { clearTimeout } = ChromeUtils.import(
-  "resource://gre/modules/Timer.jsm",
-  {}
-);
+const { clearTimeout } = ChromeUtils.import("resource://gre/modules/Timer.jsm");
 ChromeUtils.defineModuleGetter(
   this,
   "Preferences",

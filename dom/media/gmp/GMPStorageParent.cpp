@@ -7,7 +7,6 @@
 #include "GMPParent.h"
 #include "gmp-storage.h"
 #include "mozilla/Unused.h"
-#include "mozIGeckoMediaPluginService.h"
 
 namespace mozilla {
 
@@ -124,7 +123,7 @@ mozilla::ipc::IPCResult GMPStorageParent::RecvRead(
 }
 
 mozilla::ipc::IPCResult GMPStorageParent::RecvWrite(
-    const nsCString& aRecordName, InfallibleTArray<uint8_t>&& aBytes) {
+    const nsCString& aRecordName, nsTArray<uint8_t>&& aBytes) {
   LOGD(("GMPStorageParent[%p]::RecvWrite(record='%s') %zu bytes", this,
         aRecordName.get(), aBytes.Length()));
 

@@ -2,24 +2,26 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from __future__ import absolute_import, print_function
+
 import os
 import posixpath
 import psutil
 import signal
+import subprocess
 import sys
 import tempfile
 import time
 import traceback
-import urllib2
 from contextlib import closing
 
+from six.moves.urllib_request import urlopen
+
 from mozdevice import ADBDevice, ADBTimeoutError
-import mozinfo
-from automation import Automation
 from remoteautomation import RemoteAutomation, fennecLogcatFilters
 
 from output import OutputHandler
-from runreftest import RefTest, ReftestResolver
+from runreftest import RefTest, ReftestResolver, build_obj
 import reftestcommandline
 
 # We need to know our current directory so that we can serve our test files from it.
@@ -34,14 +36,26 @@ class RemoteReftestResolver(ReftestResolver):
         elif os.path.exists(os.path.abspath(path)):
             rv = os.path.abspath(path)
         else:
-            print >> sys.stderr, "Could not find manifest %s" % script_abs_path
+            print("Could not find manifest %s" % script_abs_path, file=sys.stderr)
             sys.exit(1)
         return os.path.normpath(rv)
 
     def manifestURL(self, options, path):
-        # Dynamically build the reftest URL if possible, beware that args[0] should exist 'inside'
-        # webroot. It's possible for this url to have a leading "..", but reftest.js will fix that
-        relPath = os.path.relpath(path, SCRIPT_DIRECTORY)
+        # Dynamically build the reftest URL if possible, beware that
+        # args[0] should exist 'inside' webroot. It's possible for
+        # this url to have a leading "..", but reftest.js will fix
+        # that.  Use the httpdPath to determine if we are running in
+        # production or locally.  If we are running the jsreftests
+        # locally, strip text up to jsreftest.  We want the docroot of
+        # the server to include a link jsreftest that points to the
+        # test-stage location of the test files. The desktop oriented
+        # setup has already created a link for tests which points
+        # directly into the source tree. For the remote tests we need
+        # a separate symbolic link to point to the staged test files.
+        if 'jsreftest' not in path or os.environ.get('MOZ_AUTOMATION'):
+            relPath = os.path.relpath(path, SCRIPT_DIRECTORY)
+        else:
+            relPath = 'jsreftest/' + path.split('jsreftest/')[-1]
         return "http://%s:%s/%s" % (options.remoteWebServer, options.httpPort, relPath)
 
 
@@ -52,8 +66,8 @@ class ReftestServer:
         Bug 581257 has been filed to refactor this wrapper around httpd.js into
         it's own class and use it in both remote and non-remote testing. """
 
-    def __init__(self, automation, options, scriptDir):
-        self.automation = automation
+    def __init__(self, options, scriptDir, log):
+        self.log = log
         self.utilityPath = options.utilityPath
         self.xrePath = options.xrePath
         self.profileDir = options.serverProfilePath
@@ -73,10 +87,17 @@ class ReftestServer:
     def start(self):
         "Run the Refest server, returning the process ID of the server."
 
-        env = self.automation.environment(xrePath=self.xrePath)
+        env = dict(os.environ)
         env["XPCOM_DEBUG_BREAK"] = "warn"
-        if self.automation.IS_WIN32:
+        bin_suffix = ""
+        if sys.platform in ('win32', 'msys', 'cygwin'):
             env["PATH"] = env["PATH"] + ";" + self.xrePath
+            bin_suffix = ".exe"
+        else:
+            if "LD_LIBRARY_PATH" not in env or env["LD_LIBRARY_PATH"] is None:
+                env["LD_LIBRARY_PATH"] = self.xrePath
+            else:
+                env["LD_LIBRARY_PATH"] = ":".join([self.xrePath, env["LD_LIBRARY_PATH"]])
 
         args = ["-g", self.xrePath,
                 "-f", os.path.join(self.httpdPath, "httpd.js"),
@@ -86,22 +107,21 @@ class ReftestServer:
                       "server": self.webServer},
                 "-f", os.path.join(self.scriptDir, "server.js")]
 
-        xpcshell = os.path.join(self.utilityPath,
-                                "xpcshell" + self.automation.BIN_SUFFIX)
+        xpcshell = os.path.join(self.utilityPath, "xpcshell" + bin_suffix)
 
         if not os.access(xpcshell, os.F_OK):
             raise Exception('xpcshell not found at %s' % xpcshell)
-        if self.automation.elf_arm(xpcshell):
+        if RemoteAutomation.elf_arm(xpcshell):
             raise Exception('xpcshell at %s is an ARM binary; please use '
                             'the --utility-path argument to specify the path '
                             'to a desktop version.' % xpcshell)
 
-        self._process = self.automation.Process([xpcshell] + args, env=env)
+        self._process = subprocess.Popen([xpcshell] + args, env=env)
         pid = self._process.pid
         if pid < 0:
-            print "TEST-UNEXPECTED-FAIL | remotereftests.py | Error starting server."
+            self.log.error("TEST-UNEXPECTED-FAIL | remotereftests.py | Error starting server.")
             return 2
-        self.automation.log.info("INFO | remotereftests.py | Server pid: %d", pid)
+        self.log.info("INFO | remotereftests.py | Server pid: %d" % pid)
 
     def ensureReady(self, timeout):
         assert timeout >= 0
@@ -114,23 +134,22 @@ class ReftestServer:
             time.sleep(1)
             i += 1
         else:
-            print ("TEST-UNEXPECTED-FAIL | remotereftests.py | "
-                   "Timed out while waiting for server startup.")
+            self.log.error("TEST-UNEXPECTED-FAIL | remotereftests.py | "
+                           "Timed out while waiting for server startup.")
             self.stop()
             return 1
 
     def stop(self):
         if hasattr(self, '_process'):
             try:
-                with closing(urllib2.urlopen(self.shutdownURL)) as c:
+                with closing(urlopen(self.shutdownURL)) as c:
                     c.read()
 
                 rtncode = self._process.poll()
                 if (rtncode is None):
                     self._process.terminate()
             except Exception:
-                self.automation.log.info("Failed to shutdown server at %s" %
-                                         self.shutdownURL)
+                self.log.info("Failed to shutdown server at %s" % self.shutdownURL)
                 traceback.print_exc()
                 self._process.kill()
 
@@ -148,7 +167,7 @@ class RemoteReftest(RefTest):
         verbose = False
         if options.log_tbpl_level == 'debug' or options.log_mach_level == 'debug':
             verbose = True
-            print "set verbose!"
+            print("set verbose!")
         self.device = ADBDevice(adb=options.adb_path or 'adb',
                                 device=options.deviceSerial,
                                 test_root=options.remoteTestRoot,
@@ -184,10 +203,7 @@ class RemoteReftest(RefTest):
                                            processArgs=args)
 
         self.environment = self.automation.environment
-        if self.automation.IS_DEBUG_BUILD:
-            self.SERVER_STARTUP_TIMEOUT = 180
-        else:
-            self.SERVER_STARTUP_TIMEOUT = 90
+        self.SERVER_STARTUP_TIMEOUT = 90
 
         self.remoteCache = os.path.join(options.remoteTestRoot, "cache/")
 
@@ -198,7 +214,7 @@ class RemoteReftest(RefTest):
 
         self.device.clear_logcat()
 
-        self.device.rm(self.remoteCache, force=True, recursive=True)
+        self.device.rm(self.remoteCache, force=True, recursive=True, root=True)
 
         procName = options.app.split('/')[-1]
         self.device.stop_application(procName)
@@ -218,26 +234,14 @@ class RemoteReftest(RefTest):
         """ Create the webserver on the host and start it up """
         remoteXrePath = options.xrePath
         remoteUtilityPath = options.utilityPath
-        localAutomation = Automation()
-        localAutomation.IS_WIN32 = False
-        localAutomation.IS_LINUX = False
-        localAutomation.IS_MAC = False
-        localAutomation.UNIXISH = False
-        hostos = sys.platform
-        if (hostos == 'mac' or hostos == 'darwin'):
-            localAutomation.IS_MAC = True
-        elif (hostos == 'linux' or hostos == 'linux2'):
-            localAutomation.IS_LINUX = True
-            localAutomation.UNIXISH = True
-        elif (hostos == 'win32' or hostos == 'win64'):
-            localAutomation.BIN_SUFFIX = ".exe"
-            localAutomation.IS_WIN32 = True
 
-        paths = [options.xrePath, localAutomation.DIST_BIN]
+        paths = [options.xrePath]
+        if build_obj:
+            paths.append(os.path.join(build_obj.topobjdir, "dist", "bin"))
         options.xrePath = self.findPath(paths)
         if options.xrePath is None:
-            print ("ERROR: unable to find xulrunner path for %s, "
-                   "please specify with --xre-path" % (os.name))
+            print("ERROR: unable to find xulrunner path for %s, "
+                  "please specify with --xre-path" % (os.name))
             return 1
         paths.append("bin")
         paths.append(os.path.join("..", "bin"))
@@ -250,12 +254,12 @@ class RemoteReftest(RefTest):
             paths.insert(0, options.utilityPath)
         options.utilityPath = self.findPath(paths, xpcshell)
         if options.utilityPath is None:
-            print ("ERROR: unable to find utility path for %s, "
-                   "please specify with --utility-path" % (os.name))
+            print("ERROR: unable to find utility path for %s, "
+                  "please specify with --utility-path" % (os.name))
             return 1
 
         options.serverProfilePath = tempfile.mkdtemp()
-        self.server = ReftestServer(localAutomation, options, self.scriptDir)
+        self.server = ReftestServer(options, self.scriptDir, self.log)
         retVal = self.server.start()
         if retVal:
             return retVal
@@ -314,9 +318,12 @@ class RemoteReftest(RefTest):
 
         try:
             self.device.push(profileDir, options.remoteProfile)
-            self.device.chmod(options.remoteProfile, recursive=True, root=True)
+            # make sure the parent directories of the profile which
+            # may have been created by the push, also have their
+            # permissions set to allow access.
+            self.device.chmod(options.remoteTestRoot, recursive=True, root=True)
         except Exception:
-            print "Automation Error: Failed to copy profiledir to device"
+            print("Automation Error: Failed to copy profiledir to device")
             raise
 
         return profile
@@ -328,21 +335,21 @@ class RemoteReftest(RefTest):
                 for l in logcat:
                     ul = l.decode('utf-8', errors='replace')
                     sl = ul.encode('iso8859-1', errors='replace')
-                    print "%s\n" % sl
-            print "Device info:"
+                    print("%s\n" % sl)
+            print("Device info:")
             devinfo = self.device.get_info()
             for category in devinfo:
                 if type(devinfo[category]) is list:
-                    print "  %s:" % category
+                    print("  %s:" % category)
                     for item in devinfo[category]:
-                        print "     %s" % item
+                        print("     %s" % item)
                 else:
-                    print "  %s: %s" % (category, devinfo[category])
-            print "Test root: %s" % self.device.test_root
+                    print("  %s: %s" % (category, devinfo[category]))
+            print("Test root: %s" % self.device.test_root)
         except ADBTimeoutError:
             raise
         except Exception as e:
-            print "WARNING: Error getting device information: %s" % str(e)
+            print("WARNING: Error getting device information: %s" % str(e))
 
     def environment(self, **kwargs):
         return self.automation.environment(**kwargs)
@@ -384,23 +391,30 @@ class RemoteReftest(RefTest):
         return status
 
     def cleanup(self, profileDir):
-        self.device.rm(self.remoteTestRoot,  force=True, recursive=True)
-        self.device.rm(self.remoteProfile, force=True, recursive=True)
-        self.device.rm(self.remoteCache, force=True, recursive=True)
+        self.device.rm(self.remoteTestRoot,  force=True, recursive=True, root=True)
+        self.device.rm(self.remoteProfile, force=True, recursive=True, root=True)
+        self.device.rm(self.remoteCache, force=True, recursive=True, root=True)
         RefTest.cleanup(self, profileDir)
 
 
 def run_test_harness(parser, options):
     reftest = RemoteReftest(options, SCRIPT_DIRECTORY)
-    parser.validate_remote(options, reftest.automation)
+    parser.validate_remote(options)
     parser.validate(options, reftest)
 
-    if mozinfo.info['debug']:
-        print "changing timeout for remote debug reftests from %s to 600 seconds" % options.timeout
-        options.timeout = 600
-
-    # Hack in a symbolic link for jsreftest
-    os.system("ln -s ../jsreftest " + str(os.path.join(SCRIPT_DIRECTORY, "jsreftest")))
+    # Hack in a symbolic link for jsreftest in the SCRIPT_DIRECTORY
+    # which is the document root for the reftest web server. This
+    # allows a separate redirection for the jsreftests which must
+    # run through the web server using the staged tests files and
+    # the desktop which will use the tests symbolic link to find
+    # the JavaScript tests.
+    jsreftest_target = str(os.path.join(SCRIPT_DIRECTORY, "jsreftest"))
+    if os.environ.get('MOZ_AUTOMATION'):
+        os.system("ln -s ../jsreftest " + jsreftest_target)
+    else:
+        jsreftest_source = os.path.join(build_obj.topobjdir, "dist", "test-stage", "jsreftest")
+        if not os.path.islink(jsreftest_target):
+            os.symlink(jsreftest_source, jsreftest_target)
 
     # Despite our efforts to clean up servers started by this script, in practice
     # we still see infrequent cases where a process is orphaned and interferes
@@ -425,7 +439,7 @@ def run_test_harness(parser, options):
         else:
             retVal = reftest.runTests(options.tests, options)
     except Exception:
-        print "Automation Error: Exception caught while running tests"
+        print("Automation Error: Exception caught while running tests")
         traceback.print_exc()
         retVal = 1
 

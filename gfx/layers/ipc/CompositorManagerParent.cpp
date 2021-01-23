@@ -11,8 +11,8 @@
 #include "mozilla/layers/ContentCompositorBridgeParent.h"
 #include "mozilla/layers/CompositorThread.h"
 #include "mozilla/layers/SharedSurfacesParent.h"
+#include "mozilla/UniquePtr.h"
 #include "mozilla/Unused.h"
-#include "nsAutoPtr.h"
 #include "VsyncSource.h"
 
 namespace mozilla {
@@ -29,7 +29,7 @@ StaticAutoPtr<nsTArray<CompositorManagerParent*>>
 /* static */
 already_AddRefed<CompositorManagerParent>
 CompositorManagerParent::CreateSameProcess() {
-  MOZ_ASSERT(XRE_IsParentProcess() || recordreplay::IsRecordingOrReplaying());
+  MOZ_ASSERT(XRE_IsParentProcess());
   MOZ_ASSERT(NS_IsMainThread());
   StaticMutexAutoLock lock(sMutex);
 
@@ -68,7 +68,7 @@ bool CompositorManagerParent::Create(
       NewRunnableMethod<Endpoint<PCompositorManagerParent>&&, bool>(
           "CompositorManagerParent::Bind", bridge,
           &CompositorManagerParent::Bind, std::move(aEndpoint), aIsRoot);
-  CompositorThreadHolder::Loop()->PostTask(runnable.forget());
+  CompositorThread()->Dispatch(runnable.forget());
   return true;
 }
 
@@ -77,7 +77,7 @@ already_AddRefed<CompositorBridgeParent>
 CompositorManagerParent::CreateSameProcessWidgetCompositorBridge(
     CSSToLayoutDeviceScale aScale, const CompositorOptions& aOptions,
     bool aUseExternalSurfaceSize, const gfx::IntSize& aSurfaceSize) {
-  MOZ_ASSERT(XRE_IsParentProcess() || recordreplay::IsRecordingOrReplaying());
+  MOZ_ASSERT(XRE_IsParentProcess());
   MOZ_ASSERT(NS_IsMainThread());
 
   // When we are in a combined UI / GPU process, InProcessCompositorSession
@@ -116,7 +116,7 @@ CompositorManagerParent::CreateSameProcessWidgetCompositorBridge(
 CompositorManagerParent::CompositorManagerParent()
     : mCompositorThreadHolder(CompositorThreadHolder::GetSingleton()) {}
 
-CompositorManagerParent::~CompositorManagerParent() {}
+CompositorManagerParent::~CompositorManagerParent() = default;
 
 void CompositorManagerParent::Bind(
     Endpoint<PCompositorManagerParent>&& aEndpoint, bool aIsRoot) {
@@ -158,7 +158,7 @@ void CompositorManagerParent::ActorDestroy(ActorDestroyReason aReason) {
   }
 }
 
-void CompositorManagerParent::DeallocPCompositorManagerParent() {
+void CompositorManagerParent::ActorDealloc() {
   MessageLoop::current()->PostTask(
       NewRunnableMethod("layers::CompositorManagerParent::DeferredDestroy",
                         this, &CompositorManagerParent::DeferredDestroy));
@@ -179,13 +179,13 @@ void CompositorManagerParent::DeferredDestroy() {
 #ifdef COMPOSITOR_MANAGER_PARENT_EXPLICIT_SHUTDOWN
 /* static */
 void CompositorManagerParent::ShutdownInternal() {
-  nsAutoPtr<nsTArray<CompositorManagerParent*>> actors;
+  UniquePtr<nsTArray<CompositorManagerParent*>> actors;
 
   // We move here because we may attempt to acquire the same lock during the
   // destroy to remove the reference in sActiveActors.
   {
     StaticMutexAutoLock lock(sMutex);
-    actors = sActiveActors.forget();
+    actors = WrapUnique(sActiveActors.forget());
   }
 
   if (actors) {
@@ -201,20 +201,20 @@ void CompositorManagerParent::Shutdown() {
   MOZ_ASSERT(NS_IsMainThread());
 
 #ifdef COMPOSITOR_MANAGER_PARENT_EXPLICIT_SHUTDOWN
-  CompositorThreadHolder::Loop()->PostTask(NS_NewRunnableFunction(
+  CompositorThread()->Dispatch(NS_NewRunnableFunction(
       "layers::CompositorManagerParent::Shutdown",
       []() -> void { CompositorManagerParent::ShutdownInternal(); }));
 #endif
 }
 
-PCompositorBridgeParent* CompositorManagerParent::AllocPCompositorBridgeParent(
+already_AddRefed<PCompositorBridgeParent>
+CompositorManagerParent::AllocPCompositorBridgeParent(
     const CompositorBridgeOptions& aOpt) {
   switch (aOpt.type()) {
     case CompositorBridgeOptions::TContentCompositorOptions: {
-      ContentCompositorBridgeParent* bridge =
+      RefPtr<ContentCompositorBridgeParent> bridge =
           new ContentCompositorBridgeParent(this);
-      bridge->AddRef();
-      return bridge;
+      return bridge.forget();
     }
     case CompositorBridgeOptions::TWidgetCompositorOptions: {
       // Only the UI process is allowed to create widget compositors in the
@@ -226,11 +226,10 @@ PCompositorBridgeParent* CompositorManagerParent::AllocPCompositorBridgeParent(
       }
 
       const WidgetCompositorOptions& opt = aOpt.get_WidgetCompositorOptions();
-      CompositorBridgeParent* bridge = new CompositorBridgeParent(
+      RefPtr<CompositorBridgeParent> bridge = new CompositorBridgeParent(
           this, opt.scale(), opt.vsyncRate(), opt.options(),
           opt.useExternalSurfaceSize(), opt.surfaceSize());
-      bridge->AddRef();
-      return bridge;
+      return bridge.forget();
     }
     case CompositorBridgeOptions::TSameProcessWidgetCompositorOptions: {
       // If the GPU and UI process are combined, we actually already created the
@@ -248,22 +247,15 @@ PCompositorBridgeParent* CompositorManagerParent::AllocPCompositorBridgeParent(
         break;
       }
 
-      CompositorBridgeParent* bridge = mPendingCompositorBridges[0];
-      bridge->AddRef();
+      RefPtr<CompositorBridgeParent> bridge = mPendingCompositorBridges[0];
       mPendingCompositorBridges.RemoveElementAt(0);
-      return bridge;
+      return bridge.forget();
     }
     default:
       break;
   }
 
   return nullptr;
-}
-
-bool CompositorManagerParent::DeallocPCompositorBridgeParent(
-    PCompositorBridgeParent* aActor) {
-  static_cast<CompositorBridgeParentBase*>(aActor)->Release();
-  return true;
 }
 
 mozilla::ipc::IPCResult CompositorManagerParent::RecvAddSharedSurface(
@@ -315,7 +307,7 @@ mozilla::ipc::IPCResult CompositorManagerParent::RecvReportMemory(
   // thread, so we can't just pass it over to the renderer thread. We use
   // an intermediate MozPromise instead.
   wr::RenderThread::AccumulateMemoryReport(aggregate)->Then(
-      CompositorThreadHolder::Loop()->SerialEventTarget(), __func__,
+      CompositorThread(), __func__,
       [resolver = std::move(aResolver)](MemoryReport aReport) {
         resolver(aReport);
       },

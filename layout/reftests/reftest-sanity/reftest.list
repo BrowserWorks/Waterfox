@@ -3,7 +3,7 @@
 != data:text/plain,HELLO about:blank
 
 # these tests make sure async reftests work:
-== test-async.xul test-async-ref.xul
+== chrome://reftest/content/reftest-sanity/test-async.xhtml chrome://reftest/content/reftest-sanity/test-async-ref.xhtml
 == test-async.html test-async-ref.html
 
 # test that zoom works (and really zooms, not just scales)
@@ -39,8 +39,8 @@ HTTP == data:text/html,<div>Text</div> default.html
 != blank.html default.html
 HTTP != blank.html default.html
 
-== filter-1.xhtml filter-1-ref.xhtml
-== filter-2.xhtml filter-2-ref.xhtml
+fails-if(geckoview&&webrender&&device) == filter-1.xhtml filter-1-ref.xhtml
+fails-if(geckoview&&webrender&&device) == filter-2.xhtml filter-2-ref.xhtml
 
 # test that the MozReftestInvalidate event fires
 == invalidation.html about:blank
@@ -68,8 +68,8 @@ include scripttests.list
 # test url-prefix
 include urlprefixtests.list
 
-# test default-preferences
-include default-preferences-tests.list
+# test defaults
+include defaults-tests.list
 
 # test that all corners are visible
 != corners-1.html corners-1-ref.html
@@ -152,21 +152,21 @@ ref-pref(font.size.variable.x-western,24) test-pref(font.size.variable.x-western
 ref-pref(font.size.variable.x-western,24) test-pref(font.size.variable.x-western,24) == font-default.html font-default.html
 
 # reftest syntax: fuzzy(0-maxPixelDifference,0-maxNumberDifferingPixels)
-fuzzy(0-1,0-250000) == fuzzy.html fuzzy-ref.html
-fuzzy(0-1,0-250000) != too-fuzzy.html fuzzy-ref.html
-fuzzy-if(true,0-1,0-250000) == fuzzy.html fuzzy-ref.html
-fuzzy-if(false,0-2,0-1) == fuzzy-ref.html fuzzy-ref.html
+noautofuzz fuzzy(0-1,0-250000) == fuzzy.html fuzzy-ref.html
+noautofuzz fuzzy(0-1,0-250000) != too-fuzzy.html fuzzy-ref.html
+noautofuzz fuzzy-if(true,0-1,0-250000) == fuzzy.html fuzzy-ref.html
+noautofuzz fuzzy-if(false,0-2,0-1) == fuzzy-ref.html fuzzy-ref.html
 # test some ranged fuzzes
-fuzzy(1-10,1-250000) fuzzy-if(false,5-10,0-250000) == fuzzy.html fuzzy-ref.html
-fuzzy(0-0,0-250000) != fuzzy.html fuzzy-ref.html
-fuzzy(0-1,0-2) != fuzzy.html fuzzy-ref.html
+noautofuzz fuzzy(1-10,1-250000) fuzzy-if(false,5-10,0-250000) == fuzzy.html fuzzy-ref.html
+noautofuzz fuzzy(0-0,0-250000) != fuzzy.html fuzzy-ref.html
+noautofuzz fuzzy(0-1,0-2) != fuzzy.html fuzzy-ref.html
 # If enabled, the following two should result in UNEXPECTED-PASS because
 # they are both overfuzzed
-# fuzzy(3-4,0-250000) == fuzzy.html fuzzy-ref.html
-# fuzzy(0-1,250001-250002) == fuzzy.html fuzzy-ref.html
+# noautofuzz fuzzy(3-4,0-250000) == fuzzy.html fuzzy-ref.html
+# noautofuzz fuzzy(0-1,250001-250002) == fuzzy.html fuzzy-ref.html
 #
 # When using 565 fuzzy.html and fuzzy-ref.html will compare as equal
-fails fuzzy-if(false,0-2,0-1) random-if(Android) == fuzzy.html fuzzy-ref.html
+noautofuzz fails fuzzy-if(false,0-2,0-1) == fuzzy.html fuzzy-ref.html
 
 # Test that reftest-no-paint fails correctly.
 fails-if(layerChecksEnabled) == reftest-no-paint.html reftest-no-paint-ref.html
@@ -175,9 +175,9 @@ skip-if(!asyncPan||!browserIsRemote) == async-scroll-1a.html async-scroll-1-ref.
 
 # Disable low-res painting for this test as it will cause more to
 # be drawn than we want.
-default-preferences pref(layers.low-precision-buffer,false)
+defaults pref(layers.low-precision-buffer,false)
 skip-if(!asyncPan||!browserIsRemote) != async-scroll-1b.html async-scroll-1-ref.html
-default-preferences
+defaults
 
 skip-if(!Android) pref(apz.allow_zooming,true) != async-zoom-1.html async-zoom-1-ref.html
 fuzzy(0-112,0-800) skip-if(!Android) pref(apz.allow_zooming,true) == async-zoom-2.html async-zoom-2-ref.html
@@ -208,3 +208,6 @@ fails-if(layerChecksEnabled) != reftest-assigned-layer-fail-1.html about:blank
 fails-if(layerChecksEnabled) != reftest-assigned-layer-fail-2.html about:blank
 fails-if(layerChecksEnabled) != reftest-assigned-layer-fail-3.html about:blank
 fails-if(layerChecksEnabled) != reftest-assigned-layer-fail-4.html about:blank
+
+# reftest-resolution
+pref(apz.allow_zooming,true) == reftest-resolution.html reftest-resolution-ref.html

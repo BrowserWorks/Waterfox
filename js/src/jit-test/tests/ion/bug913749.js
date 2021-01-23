@@ -6,7 +6,7 @@ Object.defineProperty(x, 18, {
         y.length;
     }),
 });
-this.toSource();
+JSON.stringify(this);
 
 y = undefined;
 
@@ -15,6 +15,7 @@ y = undefined;
 var variations = [
     `y is undefined`,
     `can't access property "length" of undefined`,
+    `can't access property "length", y is undefined`,
     `undefined has no properties`,
 ];
 
@@ -25,7 +26,7 @@ for (var i = 0; i < 3; i++) {
     } catch (e) {
         assertEq(e.constructor.name, 'TypeError');
         if (!variations.includes(e.message))
-            throw new Error(`expected one of ${uneval(variations)}; got ${uneval(e.message)}`);
+            throw new Error(`expected one of ${JSON.stringify(variations)}; got ${String(e.message)}`);
         hits++;
     }
 }

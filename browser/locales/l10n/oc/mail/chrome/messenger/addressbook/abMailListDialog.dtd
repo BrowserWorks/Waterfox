@@ -1,0 +1,25 @@
+<!-- ***** BEGIN LICENSE BLOCK *****
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Labels -->
+<!ENTITY addToAddressBook.label	"Apondre a :">
+
+<!-- Access Keys -->
+<!ENTITY addToAddressBook.accesskey "A">
+<!ENTITY ListName.label "Nom de la lista :">
+<!ENTITY ListName.accesskey "L">
+<!ENTITY ListNickName.label "Escais de la lista :">
+<!ENTITY ListNickName.accesskey "P">
+<!ENTITY ListDescription.label "Descripcion :">
+<!ENTITY ListDescription.accesskey "e">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label "Picatz las adreças d'apondre a la lista de difusion :">
+<!ENTITY UpButton.label "Cap amont">
+<!ENTITY DownButton.label "Cap aval">
+

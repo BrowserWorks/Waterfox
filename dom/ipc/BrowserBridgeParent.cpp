@@ -4,12 +4,16 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#ifdef ACCESSIBILITY
+#  include "mozilla/a11y/DocAccessibleParent.h"
+#endif
 #include "mozilla/dom/BrowserBridgeParent.h"
 #include "mozilla/dom/BrowserParent.h"
 #include "mozilla/dom/ContentParent.h"
 #include "mozilla/dom/ContentProcessManager.h"
 #include "mozilla/dom/CanonicalBrowsingContext.h"
 #include "mozilla/dom/BrowsingContextGroup.h"
+#include "mozilla/dom/WindowGlobalParent.h"
 #include "mozilla/layers/InputAPZContext.h"
 
 using namespace mozilla::ipc;
@@ -19,84 +23,90 @@ using namespace mozilla::hal;
 namespace mozilla {
 namespace dom {
 
-BrowserBridgeParent::BrowserBridgeParent() : mIPCOpen(false) {}
+BrowserBridgeParent::BrowserBridgeParent() = default;
 
 BrowserBridgeParent::~BrowserBridgeParent() { Destroy(); }
 
-nsresult BrowserBridgeParent::Init(const nsString& aPresentationURL,
-                                   const nsString& aRemoteType,
-                                   CanonicalBrowsingContext* aBrowsingContext,
-                                   const uint32_t& aChromeFlags) {
-  mIPCOpen = true;
+nsresult BrowserBridgeParent::InitWithProcess(
+    BrowserParent* aParentBrowser, ContentParent* aContentParent,
+    const WindowGlobalInit& aWindowInit, uint32_t aChromeFlags, TabId aTabId) {
+  MOZ_ASSERT(!CanSend(),
+             "This should be called before the object is connected to IPC");
 
-  // FIXME: This should actually use a non-bogus TabContext, probably inherited
-  // from our Manager().
-  OriginAttributes attrs;
-  attrs.mInIsolatedMozBrowser = false;
-  attrs.SyncAttributesWithPrivateBrowsing(false);
-  MutableTabContext tabContext;
-  tabContext.SetTabContext(false, 0, UIStateChangeType_Set,
-                           UIStateChangeType_Set, attrs, aPresentationURL);
+  RefPtr<CanonicalBrowsingContext> browsingContext =
+      CanonicalBrowsingContext::Get(aWindowInit.context().mBrowsingContextId);
+  if (!browsingContext || browsingContext->IsDiscarded()) {
+    return NS_ERROR_UNEXPECTED;
+  }
 
-  ProcessPriority initialPriority = PROCESS_PRIORITY_FOREGROUND;
-
-  // Get our ConstructorSender object.
-  RefPtr<ContentParent> constructorSender =
-      ContentParent::GetNewOrUsedBrowserProcess(
-          nullptr, aRemoteType, initialPriority, nullptr, false);
-  if (NS_WARN_IF(!constructorSender)) {
-    MOZ_ASSERT(false, "Unable to allocate content process!");
-    return NS_ERROR_FAILURE;
+  // Unfortunately, due to the current racy destruction of BrowsingContext
+  // instances when Fission is enabled, while `browsingContext` may not be
+  // discarded, an ancestor might be.
+  //
+  // A discarded ancestor will cause us issues when creating our `BrowserParent`
+  // in the new content process, so abort the attempt if we have one.
+  //
+  // FIXME: We should never have a non-discarded BrowsingContext with discarded
+  // ancestors. (bug 1634759)
+  CanonicalBrowsingContext* ancestor = browsingContext->GetParent();
+  while (ancestor) {
+    if (NS_WARN_IF(ancestor->IsDiscarded())) {
+      return NS_ERROR_UNEXPECTED;
+    }
+    ancestor = ancestor->GetParent();
   }
 
   // Ensure that our content process is subscribed to our newly created
   // BrowsingContextGroup.
-  aBrowsingContext->Group()->EnsureSubscribed(constructorSender);
-  aBrowsingContext->SetOwnerProcessId(constructorSender->ChildID());
-
-  ContentProcessManager* cpm = ContentProcessManager::GetSingleton();
-  TabId tabId(nsContentUtils::GenerateTabId());
-  cpm->RegisterRemoteFrame(tabId, ContentParentId(0), TabId(0),
-                           tabContext.AsIPCTabContext(),
-                           constructorSender->ChildID());
+  browsingContext->Group()->EnsureSubscribed(aContentParent);
+  browsingContext->SetOwnerProcessId(aContentParent->ChildID());
 
   // Construct the BrowserParent object for our subframe.
-  RefPtr<BrowserParent> browserParent(
-      new BrowserParent(constructorSender, tabId, tabContext, aBrowsingContext,
-                        aChromeFlags, this));
+  auto browserParent = MakeRefPtr<BrowserParent>(
+      aContentParent, aTabId, *aParentBrowser, browsingContext, aChromeFlags);
+  browserParent->SetBrowserBridgeParent(this);
 
-  // Open a remote endpoint for our PBrowser actor. DeallocPBrowserParent
-  // releases the ref taken.
+  // Open a remote endpoint for our PBrowser actor.
   ManagedEndpoint<PBrowserChild> childEp =
-      constructorSender->OpenPBrowserEndpoint(do_AddRef(browserParent).take());
+      aContentParent->OpenPBrowserEndpoint(browserParent);
   if (NS_WARN_IF(!childEp.IsValid())) {
     MOZ_ASSERT(false, "Browser Open Endpoint Failed");
     return NS_ERROR_FAILURE;
   }
 
+  ContentProcessManager* cpm = ContentProcessManager::GetSingleton();
+  cpm->RegisterRemoteFrame(browserParent);
+
+  RefPtr<WindowGlobalParent> windowParent =
+      WindowGlobalParent::CreateDisconnected(aWindowInit);
+  if (!windowParent) {
+    return NS_ERROR_UNEXPECTED;
+  }
+
+  ManagedEndpoint<PWindowGlobalChild> windowChildEp =
+      browserParent->OpenPWindowGlobalEndpoint(windowParent);
+  if (NS_WARN_IF(!windowChildEp.IsValid())) {
+    MOZ_ASSERT(false, "WindowGlobal Open Endpoint Failed");
+    return NS_ERROR_FAILURE;
+  }
+
   // Tell the content process to set up its PBrowserChild.
-  bool ok = constructorSender->SendConstructBrowser(
-      std::move(childEp), tabId, TabId(0), tabContext.AsIPCTabContext(),
-      aBrowsingContext, aChromeFlags, constructorSender->ChildID(),
-      constructorSender->IsForBrowser());
+  bool ok = aContentParent->SendConstructBrowser(
+      std::move(childEp), std::move(windowChildEp), aTabId,
+      browserParent->AsIPCTabContext(), aWindowInit, aChromeFlags,
+      aContentParent->ChildID(), aContentParent->IsForBrowser(),
+      /* aIsTopLevel */ false);
   if (NS_WARN_IF(!ok)) {
     MOZ_ASSERT(false, "Browser Constructor Failed");
     return NS_ERROR_FAILURE;
   }
 
   // Set our BrowserParent object to the newly created browser.
-  mBrowserParent = browserParent.forget();
-  mBrowserParent->SetOwnerElement(Manager()->GetOwnerElement());
+  mBrowserParent = std::move(browserParent);
+  mBrowserParent->SetOwnerElement(aParentBrowser->GetOwnerElement());
   mBrowserParent->InitRendering();
 
-  RenderFrame* rf = mBrowserParent->GetRenderFrame();
-  if (NS_WARN_IF(!rf)) {
-    MOZ_ASSERT(false, "No RenderFrame");
-    return NS_ERROR_FAILURE;
-  }
-
-  // Send the newly created layers ID back into content.
-  Unused << SendSetLayersId(rf->GetLayersId());
+  windowParent->Init();
   return NS_OK;
 }
 
@@ -105,32 +115,34 @@ CanonicalBrowsingContext* BrowserBridgeParent::GetBrowsingContext() {
 }
 
 BrowserParent* BrowserBridgeParent::Manager() {
-  MOZ_ASSERT(mIPCOpen);
+  MOZ_ASSERT(CanSend());
   return static_cast<BrowserParent*>(PBrowserBridgeParent::Manager());
 }
 
 void BrowserBridgeParent::Destroy() {
   if (mBrowserParent) {
     mBrowserParent->Destroy();
+    mBrowserParent->SetBrowserBridgeParent(nullptr);
     mBrowserParent = nullptr;
   }
 }
 
-IPCResult BrowserBridgeParent::RecvShow(const ScreenIntSize& aSize,
-                                        const bool& aParentIsActive,
-                                        const nsSizeMode& aSizeMode) {
-  RenderFrame* rf = mBrowserParent->GetRenderFrame();
-  if (!rf->AttachLayerManager()) {
-    MOZ_CRASH();
-  }
-
-  Unused << mBrowserParent->SendShow(aSize, mBrowserParent->GetShowInfo(),
-                                     aParentIsActive, aSizeMode);
+IPCResult BrowserBridgeParent::RecvShow(const OwnerShowInfo& aOwnerInfo) {
+  mBrowserParent->AttachLayerManager();
+  Unused << mBrowserParent->SendShow(mBrowserParent->GetShowInfo(), aOwnerInfo);
   return IPC_OK();
 }
 
-IPCResult BrowserBridgeParent::RecvLoadURL(const nsCString& aUrl) {
-  Unused << mBrowserParent->SendLoadURL(aUrl, mBrowserParent->GetShowInfo());
+IPCResult BrowserBridgeParent::RecvScrollbarPreferenceChanged(
+    ScrollbarPreference aPref) {
+  Unused << mBrowserParent->SendScrollbarPreferenceChanged(aPref);
+  return IPC_OK();
+}
+
+IPCResult BrowserBridgeParent::RecvLoadURL(const nsCString& aUrl,
+                                           nsIPrincipal* aTriggeringPrincipal) {
+  Unused << mBrowserParent->SendLoadURL(aUrl, aTriggeringPrincipal,
+                                        mBrowserParent->GetShowInfo());
   return IPC_OK();
 }
 
@@ -140,15 +152,19 @@ IPCResult BrowserBridgeParent::RecvResumeLoad(uint64_t aPendingSwitchID) {
 }
 
 IPCResult BrowserBridgeParent::RecvUpdateDimensions(
-    const DimensionInfo& aDimensions) {
-  Unused << mBrowserParent->SendUpdateDimensions(aDimensions);
+    const nsIntRect& aRect, const ScreenIntSize& aSize) {
+  mBrowserParent->UpdateDimensions(aRect, aSize);
+  return IPC_OK();
+}
+
+IPCResult BrowserBridgeParent::RecvUpdateEffects(const EffectsInfo& aEffects) {
+  Unused << mBrowserParent->SendUpdateEffects(aEffects);
   return IPC_OK();
 }
 
 IPCResult BrowserBridgeParent::RecvRenderLayers(
-    const bool& aEnabled, const bool& aForceRepaint,
-    const layers::LayersObserverEpoch& aEpoch) {
-  Unused << mBrowserParent->SendRenderLayers(aEnabled, aForceRepaint, aEpoch);
+    const bool& aEnabled, const layers::LayersObserverEpoch& aEpoch) {
+  Unused << mBrowserParent->SendRenderLayers(aEnabled, aEpoch);
   return IPC_OK();
 }
 
@@ -182,8 +198,8 @@ IPCResult BrowserBridgeParent::RecvDispatchSynthesizedMouseEvent(
   return IPC_OK();
 }
 
-IPCResult BrowserBridgeParent::RecvSkipBrowsingContextDetach() {
-  mBrowserParent->SkipBrowsingContextDetach();
+IPCResult BrowserBridgeParent::RecvWillChangeProcess() {
+  Unused << mBrowserParent->SendWillChangeProcess();
   return IPC_OK();
 }
 
@@ -204,10 +220,27 @@ IPCResult BrowserBridgeParent::RecvSetIsUnderHiddenEmbedderElement(
   return IPC_OK();
 }
 
-void BrowserBridgeParent::ActorDestroy(ActorDestroyReason aWhy) {
-  mIPCOpen = false;
-  Destroy();
+#ifdef ACCESSIBILITY
+IPCResult BrowserBridgeParent::RecvSetEmbedderAccessible(
+    PDocAccessibleParent* aDoc, uint64_t aID) {
+  mEmbedderAccessibleDoc = static_cast<a11y::DocAccessibleParent*>(aDoc);
+  mEmbedderAccessibleID = aID;
+  if (auto embeddedBrowser = GetBrowserParent()) {
+    a11y::DocAccessibleParent* childDocAcc =
+        embeddedBrowser->GetTopLevelDocAccessible();
+    if (childDocAcc && !childDocAcc->IsShutdown()) {
+      // The embedded DocAccessibleParent has already been created. This can
+      // happen if, for example, an iframe is hidden and then shown or
+      // an iframe is reflowed by layout.
+      mEmbedderAccessibleDoc->AddChildDoc(childDocAcc, aID,
+                                          /* aCreating */ false);
+    }
+  }
+  return IPC_OK();
 }
+#endif
+
+void BrowserBridgeParent::ActorDestroy(ActorDestroyReason aWhy) { Destroy(); }
 
 }  // namespace dom
 }  // namespace mozilla

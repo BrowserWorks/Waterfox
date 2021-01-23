@@ -7,21 +7,26 @@
 XPIDL_SOURCES += [
     'nsIResProtocolHandler.idl',
     'nsISubstitutingProtocolHandler.idl',
-    'nsISubstitutionObserver.idl',
 ]
 
 XPIDL_MODULE = 'necko_res'
 
 EXPORTS.mozilla.net += [
     'ExtensionProtocolHandler.h',
+    'PageThumbProtocolHandler.h',
     'SubstitutingJARURI.h',
     'SubstitutingProtocolHandler.h',
     'SubstitutingURL.h',
 ]
 
+EXPORTS += [
+    'nsResProtocolHandler.h',
+]
+
 UNIFIED_SOURCES += [
     'ExtensionProtocolHandler.cpp',
     'nsResProtocolHandler.cpp',
+    'PageThumbProtocolHandler.cpp',
     'SubstitutingProtocolHandler.cpp',
 ]
 
@@ -31,4 +36,5 @@ FINAL_LIBRARY = 'xul'
 
 LOCAL_INCLUDES += [
     '/netwerk/base',
+    '/xpcom/base',
 ]

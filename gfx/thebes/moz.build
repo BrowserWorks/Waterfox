@@ -10,6 +10,12 @@ with Files('*Text*'):
 with Files('*DWrite*'):
     BUG_COMPONENT = ('Core', 'Graphics: Text')
 
+XPIDL_SOURCES += [
+    'nsIFontLoadCompleteCallback.idl',
+]
+
+XPIDL_MODULE = 'gfx'
+
 EXPORTS += [
     'DrawMode.h',
     'gfx2DGlue.h',
@@ -38,11 +44,11 @@ EXPORTS += [
     'gfxLineSegment.h',
     'gfxMathTable.h',
     'gfxMatrix.h',
+    'gfxOTSUtils.h',
     'gfxPattern.h',
     'gfxPlatform.h',
     'gfxPlatformFontList.h',
     'gfxPoint.h',
-    'gfxPrefs.h',
     'gfxQuad.h',
     'gfxQuaternion.h',
     'gfxRect.h',
@@ -55,14 +61,17 @@ EXPORTS += [
     'gfxUtils.h',
     'SharedFontList.h',
     'SoftwareVsyncSource.h',
+    'ThebesRLBoxTypes.h',
     'VsyncSource.h',
 ]
 
 EXPORTS.mozilla.gfx += [
     'D3D11Checks.h',
     'DeviceManagerDx.h',
+    'DisplayConfigWindows.h',
     'PrintTarget.h',
     'PrintTargetThebes.h',
+    'ThebesRLBox.h',
 ]
 
 if CONFIG['MOZ_ENABLE_SKIA']:
@@ -104,7 +113,7 @@ elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
         'gfxQuartzSurface.cpp',
         'PrintTargetCG.mm',
     ]
-elif 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
+elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk':
     EXPORTS += [
         'gfxFT2FontBase.h',
         'gfxGdkNativeRenderer.h',
@@ -148,6 +157,7 @@ elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
         'PrintTargetWindows.h',
     ]
     SOURCES += [
+        'DisplayConfigWindows.cpp',
         'gfxDWriteCommon.cpp',
         'gfxDWriteFonts.cpp',
         'gfxGDIFont.cpp',
@@ -180,7 +190,6 @@ SOURCES += [
     # gfxFontUtils.cpp and gfxPlatform.cpp include mac system header conflicting with point/size
     'gfxFontUtils.cpp',
     'gfxPlatform.cpp',
-    'gfxPrefs.cpp',
     'PrintTarget.cpp',
     'PrintTargetThebes.cpp',
 ]
@@ -256,7 +265,7 @@ LOCAL_INCLUDES += [
     '/dom/xml',
 ]
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android', 'gtk3'):
+if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android', 'gtk'):
     DEFINES['MOZ_ENABLE_FREETYPE'] = True
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
@@ -272,8 +281,11 @@ CFLAGS += CONFIG['TK_CFLAGS']
 if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android'):
     CXXFLAGS += CONFIG['CAIRO_FT_CFLAGS']
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk3':
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk':
     CXXFLAGS += CONFIG['MOZ_PANGO_CFLAGS']
+
+if CONFIG['MOZ_WAYLAND']:
+    CXXFLAGS += CONFIG['MOZ_WAYLAND_CFLAGS']
 
 LOCAL_INCLUDES += CONFIG['SKIA_INCLUDES']
 

@@ -5,15 +5,17 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "VideoFrameContainer.h"
-#include "mozilla/Telemetry.h"
+
+#ifdef MOZ_WIDGET_ANDROID
+#  include "GLImages.h"  // for SurfaceTextureImage
+#endif
 #include "MediaDecoderOwner.h"
+#include "mozilla/Telemetry.h"
+#include "mozilla/AbstractThread.h"
 
 using namespace mozilla::layers;
 
 namespace mozilla {
-static LazyLogModule gVideoFrameContainerLog("VideoFrameContainer");
-#define CONTAINER_LOG(type, msg) MOZ_LOG(gVideoFrameContainerLog, type, msg)
-
 #define NS_DispatchToMainThread(...) CompileError_UseAbstractMainThreadInstead
 
 namespace {
@@ -50,7 +52,7 @@ VideoFrameContainer::VideoFrameContainer(
   NS_ASSERTION(mImageContainer, "aContainer must not be null");
 }
 
-VideoFrameContainer::~VideoFrameContainer() {}
+VideoFrameContainer::~VideoFrameContainer() = default;
 
 PrincipalHandle VideoFrameContainer::GetLastPrincipalHandle() {
   MutexAutoLock lock(mMutex);
@@ -78,12 +80,29 @@ void VideoFrameContainer::UpdatePrincipalHandleForFrameIDLocked(
   mFrameIDForPendingPrincipalHandle = aFrameID;
 }
 
+#ifdef MOZ_WIDGET_ANDROID
+static void NotifySetCurrent(Image* aImage) {
+  if (aImage == nullptr) {
+    return;
+  }
+
+  SurfaceTextureImage* image = aImage->AsSurfaceTextureImage();
+  if (image == nullptr) {
+    return;
+  }
+
+  image->OnSetCurrent();
+}
+#endif
+
 void VideoFrameContainer::SetCurrentFrame(const gfx::IntSize& aIntrinsicSize,
                                           Image* aImage,
                                           const TimeStamp& aTargetTime) {
+#ifdef MOZ_WIDGET_ANDROID
+  NotifySetCurrent(aImage);
+#endif
   if (aImage) {
     MutexAutoLock lock(mMutex);
-    AutoTimer<Telemetry::VFC_SETCURRENTFRAME_LOCK_HOLD_MS> lockHold;
     AutoTArray<ImageContainer::NonOwningImage, 1> imageList;
     imageList.AppendElement(
         ImageContainer::NonOwningImage(aImage, aTargetTime, ++mFrameID));
@@ -96,8 +115,16 @@ void VideoFrameContainer::SetCurrentFrame(const gfx::IntSize& aIntrinsicSize,
 void VideoFrameContainer::SetCurrentFrames(
     const gfx::IntSize& aIntrinsicSize,
     const nsTArray<ImageContainer::NonOwningImage>& aImages) {
+#ifdef MOZ_WIDGET_ANDROID
+  // When there are multiple frames, only the last one is effective
+  // (see bug 1299068 comment 4). Here I just count on VideoSink and VideoOutput
+  // to send one frame at a time and warn if not.
+  Unused << NS_WARN_IF(aImages.Length() > 1);
+  for (auto& image : aImages) {
+    NotifySetCurrent(image.mImage);
+  }
+#endif
   MutexAutoLock lock(mMutex);
-  AutoTimer<Telemetry::VFC_SETIMAGES_LOCK_HOLD_MS> lockHold;
   SetCurrentFramesLocked(aIntrinsicSize, aImages);
 }
 
@@ -170,7 +197,6 @@ void VideoFrameContainer::SetCurrentFramesLocked(
 
 void VideoFrameContainer::ClearCurrentFrame() {
   MutexAutoLock lock(mMutex);
-  AutoTimer<Telemetry::VFC_CLEARCURRENTFRAME_LOCK_HOLD_MS> lockHold;
 
   // See comment in SetCurrentFrame for the reasoning behind
   // using a kungFuDeathGrip here.
@@ -181,18 +207,24 @@ void VideoFrameContainer::ClearCurrentFrame() {
   mImageContainer->ClearCachedResources();
 }
 
-void VideoFrameContainer::ClearFutureFrames() {
+void VideoFrameContainer::ClearFutureFrames(TimeStamp aNow) {
   MutexAutoLock lock(mMutex);
-  AutoTimer<Telemetry::VFC_CLEARFUTUREFRAMES_LOCK_HOLD_MS> lockHold;
 
   // See comment in SetCurrentFrame for the reasoning behind
   // using a kungFuDeathGrip here.
-  nsTArray<ImageContainer::OwningImage> kungFuDeathGrip;
+  AutoTArray<ImageContainer::OwningImage, 10> kungFuDeathGrip;
   mImageContainer->GetCurrentImages(&kungFuDeathGrip);
 
   if (!kungFuDeathGrip.IsEmpty()) {
-    nsTArray<ImageContainer::NonOwningImage> currentFrame;
-    const ImageContainer::OwningImage& img = kungFuDeathGrip[0];
+    AutoTArray<ImageContainer::NonOwningImage, 1> currentFrame;
+    ImageContainer::OwningImage& img = kungFuDeathGrip[0];
+    // Find the current image in case there are several.
+    for (const auto& image : kungFuDeathGrip) {
+      if (image.mTimeStamp > aNow) {
+        break;
+      }
+      img = image;
+    }
     currentFrame.AppendElement(ImageContainer::NonOwningImage(
         img.mImage, img.mTimeStamp, img.mFrameID, img.mProducerID));
     mImageContainer->SetCurrentImages(currentFrame);

@@ -3,36 +3,52 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef WEBGPU_Texture_H_
-#define WEBGPU_Texture_H_
+#ifndef GPU_Texture_H_
+#define GPU_Texture_H_
 
 #include "nsWrapperCache.h"
 #include "ObjectModel.h"
 
 namespace mozilla {
 namespace dom {
-struct WebGPUTextureViewDescriptor;
+struct GPUTextureDescriptor;
+struct GPUTextureViewDescriptor;
+class HTMLCanvasElement;
 }  // namespace dom
 
 namespace webgpu {
+namespace ffi {
+struct WGPUTextureViewDescriptor;
+}  // namespace ffi
 
 class Device;
 class TextureView;
 
-class Texture final : public ChildOf<Device> {
+class Texture final : public ObjectBase, public ChildOf<Device> {
  public:
-  WEBGPU_DECL_GOOP(Texture)
+  GPU_DECL_CYCLE_COLLECTION(Texture)
+  GPU_DECL_JS_WRAP(Texture)
+
+  Texture(Device* const aParent, RawId aId,
+          const dom::GPUTextureDescriptor& aDesc);
+  Device* GetParentDevice() { return mParent; }
+  const RawId mId;
+
+  WeakPtr<dom::HTMLCanvasElement> mTargetCanvasElement;
 
  private:
-  Texture() = delete;
   virtual ~Texture();
+  void Cleanup();
+
+  const UniquePtr<ffi::WGPUTextureViewDescriptor> mDefaultViewDescriptor;
 
  public:
-  already_AddRefed<TextureView> CreateTextureView(
-      const dom::WebGPUTextureViewDescriptor&) const;
+  already_AddRefed<TextureView> CreateView(
+      const dom::GPUTextureViewDescriptor& aDesc);
+  void Destroy();
 };
 
 }  // namespace webgpu
 }  // namespace mozilla
 
-#endif  // WEBGPU_Texture_H_
+#endif  // GPU_Texture_H_

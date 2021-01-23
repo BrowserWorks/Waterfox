@@ -44,6 +44,7 @@ type Props = {
   group: Frame[],
   selectedFrame: Frame,
   selectFrame: typeof actions.selectFrame,
+  selectLocation: typeof actions.selectLocation,
   toggleFrameworkGrouping: Function,
   copyStackTrace: Function,
   toggleBlackBox: Function,
@@ -51,7 +52,7 @@ type Props = {
   displayFullUrl: boolean,
   getFrameTitle?: string => string,
   disableContextMenu: boolean,
-  selectable: boolean,
+  panel: "debugger" | "webconsole",
 };
 
 type State = {
@@ -66,6 +67,10 @@ export default class Group extends Component<Props, State> {
     this.state = { expanded: false };
   }
 
+  get isSelectable() {
+    return this.props.panel == "webconsole";
+  }
+
   onContextMenu(event: SyntheticMouseEvent<HTMLElement>) {
     const {
       group,
@@ -73,13 +78,15 @@ export default class Group extends Component<Props, State> {
       toggleFrameworkGrouping,
       toggleBlackBox,
       frameworkGroupingOn,
+      cx,
     } = this.props;
     const frame = group[0];
     FrameMenu(
       frame,
       frameworkGroupingOn,
       { copyStackTrace, toggleFrameworkGrouping, toggleBlackBox },
-      event
+      event,
+      cx
     );
   }
 
@@ -93,6 +100,7 @@ export default class Group extends Component<Props, State> {
       cx,
       group,
       selectFrame,
+      selectLocation,
       selectedFrame,
       toggleFrameworkGrouping,
       frameworkGroupingOn,
@@ -101,7 +109,7 @@ export default class Group extends Component<Props, State> {
       displayFullUrl,
       getFrameTitle,
       disableContextMenu,
-      selectable,
+      panel,
     } = this.props;
 
     const { expanded } = this.state;
@@ -112,7 +120,7 @@ export default class Group extends Component<Props, State> {
     return (
       <div className="frames-list">
         {group.reduce((acc, frame, i) => {
-          if (selectable) {
+          if (this.isSelectable) {
             acc.push(<FrameIndent key={`frame-indent-${i}`} />);
           }
           return acc.concat(
@@ -125,13 +133,14 @@ export default class Group extends Component<Props, State> {
               key={frame.id}
               selectedFrame={selectedFrame}
               selectFrame={selectFrame}
+              selectLocation={selectLocation}
               shouldMapDisplayName={false}
               toggleBlackBox={toggleBlackBox}
               toggleFrameworkGrouping={toggleFrameworkGrouping}
               displayFullUrl={displayFullUrl}
               getFrameTitle={getFrameTitle}
               disableContextMenu={disableContextMenu}
-              selectable={selectable}
+              panel={panel}
             />
           );
         }, [])}
@@ -141,11 +150,11 @@ export default class Group extends Component<Props, State> {
 
   renderDescription() {
     const { l10n } = this.context;
-    const { selectable, group } = this.props;
+    const { group } = this.props;
+    const { expanded } = this.state;
 
     const frame = group[0];
-    const expanded = this.state.expanded;
-    const l10NEntry = this.state.expanded
+    const l10NEntry = expanded
       ? "callStack.group.collapseTooltip"
       : "callStack.group.expandTooltip";
     const title = l10n.getFormatStr(l10NEntry, frame.library);
@@ -159,11 +168,11 @@ export default class Group extends Component<Props, State> {
         tabIndex={0}
         title={title}
       >
-        {selectable && <FrameIndent />}
+        {this.isSelectable && <FrameIndent />}
         <FrameLocation frame={frame} expanded={expanded} />
-        {selectable && <span className="clipboard-only"> </span>}
+        {this.isSelectable && <span className="clipboard-only"> </span>}
         <Badge>{this.props.group.length}</Badge>
-        {selectable && <br className="clipboard-only" />}
+        {this.isSelectable && <br className="clipboard-only" />}
       </div>
     );
   }

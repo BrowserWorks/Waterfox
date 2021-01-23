@@ -20,7 +20,7 @@ const Cm = Components.manager;
 const { updateAppInfo } = ChromeUtils.import(
   "resource://testing-common/AppInfo.jsm"
 ); // Imported via AppInfo.jsm.
-/* global updateAppInfo:false */ updateAppInfo();
+updateAppInfo();
 
 // We must get the profile before performing operations on the cert db.
 do_get_profile();
@@ -109,7 +109,7 @@ function run_test() {
     false,
     Date.now() + 24000 * 60 * 60,
     {},
-    Ci.nsICookie2.SAMESITE_UNSET
+    Ci.nsICookie.SAMESITE_NONE
   );
 
   registerCleanupFunction(() => {
@@ -117,7 +117,7 @@ function run_test() {
   });
 
   // start a TLS server
-  add_tls_server_setup("BadCertServer", "bad_certs");
+  add_tls_server_setup("BadCertAndPinningServer", "bad_certs");
 
   // Add a user-specified trust anchor.
   addCertFromFile(certdb, "bad_certs/other-test-ca.pem", "CTu,u,u");

@@ -7,7 +7,7 @@
 var EXPORTED_SYMBOLS = ["Tabs"];
 
 const CUST_TAB = "chrome://browser/skin/customize.svg";
-const PREFS_TAB = "chrome://browser/skin/settings.svg";
+const PREFS_TAB = "chrome://global/skin/icons/settings.svg";
 const DEFAULT_FAVICON_TAB = `data:text/html,<meta%20charset="utf-8"><title>No%20favicon</title>`;
 
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
@@ -69,11 +69,7 @@ var Tabs = {
         browserWindow.gBrowser.selectTabAtIndex(5);
         hoverTab(browserWindow.gBrowser.tabs[2]);
         // also hover the new tab button
-        let newTabButton = browserWindow.document.getAnonymousElementByAttribute(
-          browserWindow.gBrowser.tabContainer,
-          "anonid",
-          "tabs-newtab-button"
-        );
+        let newTabButton = browserWindow.gBrowser.tabContainer.newTabButton;
         hoverTab(newTabButton);
         browserWindow.gBrowser.tabs[
           browserWindow.gBrowser.tabs.length - 1
@@ -142,7 +138,7 @@ var Tabs = {
         });
         // Make sure the tabstrip is scrolled all the way to the left.
         let scrolled = BrowserTestUtils.waitForEvent(
-          browserWindow.gBrowser.tabContainer,
+          browserWindow.gBrowser.tabContainer.arrowScrollbox,
           "scrollend"
         );
         browserWindow.gBrowser.tabContainer.arrowScrollbox.scrollByIndex(-100);
@@ -163,7 +159,7 @@ async function allTabTitlesDisplayed(browserWindow) {
     "about:addons": "Add-ons Manager",
     "about:privatebrowsing": "about:privatebrowsing",
   };
-  specToTitleMap[PREFS_TAB] = "browser/skin/settings.svg";
+  specToTitleMap[PREFS_TAB] = "global/skin/icons/settings.svg";
   specToTitleMap[CUST_TAB] = "browser/skin/customize.svg";
   specToTitleMap[DEFAULT_FAVICON_TAB] = "No favicon";
 
@@ -227,11 +223,7 @@ function closeAllButOneTab(url = "about:blank") {
   if (gBrowser.selectedTab.pinned) {
     gBrowser.unpinTab(gBrowser.selectedTab);
   }
-  let newTabButton = browserWindow.document.getAnonymousElementByAttribute(
-    browserWindow.gBrowser.tabContainer,
-    "class",
-    "tabs-newtab-button toolbarbutton-1"
-  );
+  let newTabButton = gBrowser.tabContainer.newTabButton;
   hoverTab(newTabButton, false);
 }
 

@@ -1,7 +1,10 @@
-/* vim:set ts=2 sw=2 sts=2 et: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+:root {
+  --min-container-width: 300px;
+}
 
 * {
   box-sizing: border-box;
@@ -30,7 +33,6 @@ window {
   min-width: 125px;
   display: flex;
   flex-direction: column;
-  flex: 1 1 auto;
 }
 
 /* Inspector Panel Splitter */
@@ -122,6 +124,7 @@ window {
 #inspector-breadcrumbs-toolbar,
 #inspector-breadcrumbs-toolbar * {
   box-sizing: border-box;
+  direction: ltr;
 }
 
 #inspector-breadcrumbs {
@@ -148,7 +151,6 @@ window {
   flex: 1;
   display: flex;
   overflow: hidden;
-  direction: ltr;
 }
 
 #inspector-breadcrumbs .breadcrumbs-widget-item {
@@ -194,8 +196,8 @@ iframe {
   width: 100%;
 }
 
-/* Animation inspector */
-#sidebar-panel-animationinspector {
+/* Extension Sidebar */
+.inspector-tabpanel.extension-sidebar {
   height: 100%;
-  width: 100%;
+  overflow-y: auto;
 }

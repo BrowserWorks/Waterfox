@@ -13,7 +13,7 @@ add_task(async function run_test() {
 
   // Test fixtures
   let { Service } = ChromeUtils.import("resource://services-sync/service.js");
-  Service.identity.username = "johndoe";
+  Services.prefs.setStringPref("services.sync.username", "johndoe");
   Assert.ok(xps.enabled);
 
   _("Service is enabled.");
@@ -31,12 +31,10 @@ add_task(async function run_test() {
   _("Engines are registered.");
   let engines = Service.engineManager.getAll();
   Assert.ok(
-    Utils.deepEquals(engines.map(engine => engine.name), [
-      "tabs",
-      "bookmarks",
-      "forms",
-      "history",
-    ])
+    Utils.deepEquals(
+      engines.map(engine => engine.name),
+      ["tabs", "bookmarks", "forms", "history"]
+    )
   );
 
   // Clean up.

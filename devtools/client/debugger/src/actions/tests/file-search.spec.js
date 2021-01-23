@@ -22,14 +22,17 @@ describe("file text search", () => {
       count: 0,
     });
 
-    const matches = [{ line: 1, ch: 3 }, { line: 3, ch: 2 }];
+    const matches = [
+      { line: 1, ch: 3 },
+      { line: 3, ch: 2 },
+    ];
     dispatch(actions.updateSearchResults(cx, 2, 3, matches));
 
     expect(getFileSearchResults(getState())).toEqual({
       count: 2,
       index: 2,
       matchIndex: 1,
-      matches: matches,
+      matches,
     });
   });
 
@@ -45,10 +48,10 @@ describe("file text search", () => {
   it("should toggle a file search modifier", () => {
     const { dispatch, getState, cx } = createStore();
     let fileSearchModState = getFileSearchModifiers(getState());
-    expect(fileSearchModState.get("caseSensitive")).toBe(false);
+    expect(fileSearchModState.caseSensitive).toBe(false);
     dispatch(actions.toggleFileSearchModifier(cx, "caseSensitive"));
     fileSearchModState = getFileSearchModifiers(getState());
-    expect(fileSearchModState.get("caseSensitive")).toBe(true);
+    expect(fileSearchModState.caseSensitive).toBe(true);
   });
 
   it("should toggle a file search query cleaning", () => {

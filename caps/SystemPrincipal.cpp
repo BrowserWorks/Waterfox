@@ -7,15 +7,11 @@
 
 #include "nscore.h"
 #include "SystemPrincipal.h"
-#include "nsIComponentManager.h"
-#include "nsIServiceManager.h"
-#include "nsIURL.h"
 #include "nsCOMPtr.h"
 #include "nsReadableUtils.h"
 #include "nsCRT.h"
 #include "nsString.h"
 #include "nsIClassInfoImpl.h"
-#include "nsIScriptSecurityManager.h"
 #include "pratom.h"
 
 using namespace mozilla;
@@ -52,37 +48,9 @@ SystemPrincipal::GetURI(nsIURI** aURI) {
 }
 
 NS_IMETHODIMP
-SystemPrincipal::GetCsp(nsIContentSecurityPolicy** aCsp) {
-  *aCsp = nullptr;
+SystemPrincipal::GetIsOriginPotentiallyTrustworthy(bool* aResult) {
+  *aResult = true;
   return NS_OK;
-}
-
-NS_IMETHODIMP
-SystemPrincipal::SetCsp(nsIContentSecurityPolicy* aCsp) {
-  // Never destroy an existing CSP on the principal.
-  // This method should only be called in rare cases.
-
-  return NS_ERROR_FAILURE;
-}
-
-NS_IMETHODIMP
-SystemPrincipal::EnsureCSP(dom::Document* aDocument,
-                           nsIContentSecurityPolicy** aCSP) {
-  // CSP on a system principal makes no sense
-  return NS_ERROR_FAILURE;
-}
-
-NS_IMETHODIMP
-SystemPrincipal::GetPreloadCsp(nsIContentSecurityPolicy** aPreloadCSP) {
-  *aPreloadCSP = nullptr;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-SystemPrincipal::EnsurePreloadCSP(dom::Document* aDocument,
-                                  nsIContentSecurityPolicy** aPreloadCSP) {
-  // CSP on a system principal makes no sense
-  return NS_ERROR_FAILURE;
 }
 
 NS_IMETHODIMP
@@ -118,6 +86,7 @@ SystemPrincipal::Read(nsIObjectInputStream* aStream) {
 
 NS_IMETHODIMP
 SystemPrincipal::Write(nsIObjectOutputStream* aStream) {
-  // no-op: CID is sufficient to identify the mSystemPrincipal singleton
+  // Read is used still for legacy principals
+  MOZ_RELEASE_ASSERT(false, "Old style serialization is removed");
   return NS_OK;
 }

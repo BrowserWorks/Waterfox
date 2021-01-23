@@ -11,10 +11,12 @@
  * related or neighboring rights to this work.
  */
 
-[Constructor(DOMString title, optional NotificationOptions options),
- Exposed=(Window,Worker),
+[Exposed=(Window,Worker),
  Func="mozilla::dom::Notification::PrefEnabled"]
 interface Notification : EventTarget {
+  [Throws]
+  constructor(DOMString title, optional NotificationOptions options = {});
+
   [GetterThrows]
   static readonly attribute NotificationPermission permission;
 
@@ -22,7 +24,7 @@ interface Notification : EventTarget {
   static Promise<NotificationPermission> requestPermission(optional NotificationPermissionCallback permissionCallback);
 
   [Throws, Func="mozilla::dom::Notification::IsGetEnabled"]
-  static Promise<sequence<Notification>> get(optional GetNotificationOptions filter);
+  static Promise<sequence<Notification>> get(optional GetNotificationOptions filter = {});
 
   attribute EventHandler onclick;
 
@@ -50,7 +52,7 @@ interface Notification : EventTarget {
   [Pure]
   readonly attribute DOMString? icon;
 
-  [Constant, Func="mozilla::dom::DOMPrefs::dom_webnotifications_requireinteraction_enabled"]
+  [Constant, Pref="dom.webnotifications.requireinteraction.enabled"]
   readonly attribute boolean requireInteraction;
 
   [Constant]
@@ -67,13 +69,14 @@ dictionary NotificationOptions {
   DOMString icon = "";
   boolean requireInteraction = false;
   any data = null;
-  NotificationBehavior mozbehavior = null;
+  NotificationBehavior mozbehavior = {};
 };
 
 dictionary GetNotificationOptions {
   DOMString tag = "";
 };
 
+[GenerateToJSON]
 dictionary NotificationBehavior {
   boolean noscreen = false;
   boolean noclear = false;

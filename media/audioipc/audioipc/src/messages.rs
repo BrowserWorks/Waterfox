@@ -3,8 +3,10 @@
 // This program is made available under an ISC-style license.  See the
 // accompanying file LICENSE for details
 
-use PlatformHandle;
-use PlatformHandleType;
+use crate::PlatformHandle;
+use crate::PlatformHandleType;
+#[cfg(target_os = "linux")]
+use audio_thread_priority::RtPriorityThreadInfo;
 use cubeb::{self, ffi};
 use std::ffi::{CStr, CString};
 use std::os::raw::{c_char, c_int, c_uint};
@@ -174,6 +176,12 @@ pub struct StreamCreate {
     pub target_pid: u32,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RegisterDeviceCollectionChanged {
+    pub platform_handles: [PlatformHandle; 3],
+    pub target_pid: u32,
+}
+
 // Client -> Server messages.
 // TODO: Callbacks should be different messages types so
 // ServerConn::process_msg doesn't have a catch-all case.
@@ -187,6 +195,8 @@ pub enum ServerMessage {
     ContextGetMinLatency(StreamParams),
     ContextGetPreferredSampleRate,
     ContextGetDeviceEnumeration(ffi::cubeb_device_type),
+    ContextSetupDeviceCollectionCallback,
+    ContextRegisterDeviceCollectionChanged(ffi::cubeb_device_type, bool),
 
     StreamInit(StreamInitParams),
     StreamDestroy(usize),
@@ -196,9 +206,13 @@ pub enum ServerMessage {
     StreamResetDefaultDevice(usize),
     StreamGetPosition(usize),
     StreamGetLatency(usize),
+    StreamGetInputLatency(usize),
     StreamSetVolume(usize, f32),
-    StreamSetPanning(usize, f32),
     StreamGetCurrentDevice(usize),
+    StreamRegisterDeviceChangeCallback(usize, bool),
+
+    #[cfg(target_os = "linux")]
+    PromoteThreadToRealTime([u8; std::mem::size_of::<RtPriorityThreadInfo>()]),
 }
 
 // Server -> Client messages.
@@ -208,11 +222,13 @@ pub enum ClientMessage {
     ClientConnected,
     ClientDisconnected,
 
-    ContextBackendId(),
+    ContextBackendId(String),
     ContextMaxChannelCount(u32),
     ContextMinLatency(u32),
     ContextPreferredSampleRate(u32),
     ContextEnumeratedDevices(Vec<DeviceInfo>),
+    ContextSetupDeviceCollectionCallback(RegisterDeviceCollectionChanged),
+    ContextRegisteredDeviceCollectionChanged,
 
     StreamCreated(StreamCreate),
     StreamDestroyed,
@@ -222,25 +238,43 @@ pub enum ClientMessage {
     StreamDefaultDeviceReset,
     StreamPosition(u64),
     StreamLatency(u32),
+    StreamInputLatency(u32),
     StreamVolumeSet,
-    StreamPanningSet,
     StreamCurrentDevice(Device),
+    StreamRegisterDeviceChangeCallback,
+
+    #[cfg(target_os = "linux")]
+    ThreadPromoted,
 
     Error(c_int),
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 pub enum CallbackReq {
-    Data { nframes: isize,
-           input_frame_size: usize,
-           output_frame_size: usize },
+    Data {
+        nframes: isize,
+        input_frame_size: usize,
+        output_frame_size: usize,
+    },
     State(ffi::cubeb_state),
+    DeviceChange,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 pub enum CallbackResp {
     Data(isize),
     State,
+    DeviceChange,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub enum DeviceCollectionReq {
+    DeviceChange(ffi::cubeb_device_type),
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub enum DeviceCollectionResp {
+    DeviceChange,
 }
 
 pub trait AssocRawPlatformHandle {
@@ -250,7 +284,8 @@ pub trait AssocRawPlatformHandle {
 
     fn take_platform_handles<F>(&mut self, f: F)
     where
-        F: FnOnce() -> Option<[PlatformHandleType; 3]> {
+        F: FnOnce() -> Option<[PlatformHandleType; 3]>,
+    {
         assert!(f().is_none());
     }
 }
@@ -259,12 +294,26 @@ impl AssocRawPlatformHandle for ServerMessage {}
 
 impl AssocRawPlatformHandle for ClientMessage {
     fn platform_handles(&self) -> Option<([PlatformHandleType; 3], u32)> {
-        match *self {
-            ClientMessage::StreamCreated(ref data) => Some(([data.platform_handles[0].as_raw(),
-                                                             data.platform_handles[1].as_raw(),
-                                                             data.platform_handles[2].as_raw()],
-                                                            data.target_pid)),
-            _ => None,
+        unsafe {
+            match *self {
+                ClientMessage::StreamCreated(ref data) => Some((
+                    [
+                        data.platform_handles[0].into_raw(),
+                        data.platform_handles[1].into_raw(),
+                        data.platform_handles[2].into_raw(),
+                    ],
+                    data.target_pid,
+                )),
+                ClientMessage::ContextSetupDeviceCollectionCallback(ref data) => Some((
+                    [
+                        data.platform_handles[0].into_raw(),
+                        data.platform_handles[1].into_raw(),
+                        data.platform_handles[2].into_raw(),
+                    ],
+                    data.target_pid,
+                )),
+                _ => None,
+            }
         }
     }
 
@@ -272,11 +321,26 @@ impl AssocRawPlatformHandle for ClientMessage {
     where
         F: FnOnce() -> Option<[PlatformHandleType; 3]>,
     {
-        if let ClientMessage::StreamCreated(ref mut data) = *self {
-            let handles = f().expect("platform_handles must be available when processing StreamCreated");
-            data.platform_handles = [PlatformHandle::new(handles[0]),
-                                     PlatformHandle::new(handles[1]),
-                                     PlatformHandle::new(handles[2])]
+        let owned = cfg!(unix);
+        match *self {
+            ClientMessage::StreamCreated(ref mut data) => {
+                let handles =
+                    f().expect("platform_handles must be available when processing StreamCreated");
+                data.platform_handles = [
+                    PlatformHandle::new(handles[0], owned),
+                    PlatformHandle::new(handles[1], owned),
+                    PlatformHandle::new(handles[2], owned),
+                ]
+            }
+            ClientMessage::ContextSetupDeviceCollectionCallback(ref mut data) => {
+                let handles = f().expect("platform_handles must be available when processing ContextSetupDeviceCollectionCallback");
+                data.platform_handles = [
+                    PlatformHandle::new(handles[0], owned),
+                    PlatformHandle::new(handles[1], owned),
+                    PlatformHandle::new(handles[2], owned),
+                ]
+            }
+            _ => {}
         }
     }
 }

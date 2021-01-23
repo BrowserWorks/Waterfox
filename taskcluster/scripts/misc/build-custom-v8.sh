@@ -19,18 +19,14 @@ fi
 echo "Config: $CONFIG"
 echo "Artifact name: $ARTIFACT_NAME"
 
-WORKSPACE=$HOME/workspace
-HOME_DIR=$WORKSPACE/build
-UPLOAD_DIR=$HOME/artifacts
-
-cd $HOME_DIR/src
+cd $GECKO_PATH
 
 # Setup depot_tools
 git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
-export PATH=$PATH:$HOME_DIR/src/depot_tools
+export PATH=$PATH:$GECKO_PATH/depot_tools
 
 # Get v8 source code and dependencies
-fetch v8
+fetch --force v8
 cd v8
 
 # Build v8

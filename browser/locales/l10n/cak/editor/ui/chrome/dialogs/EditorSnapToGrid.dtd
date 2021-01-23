@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Titz'ajüx pa ri Wachkokal">
+
+<!ENTITY enableSnapToGrid.label "titzij Titz'ajüx pa ri Wachkokal">
+<!ENTITY enableSnapToGrid.accessKey "t">
+
+<!ENTITY sizeEditField.label "Nimilem:">
+<!ENTITY sizeEditField.accessKey "N">
+
+<!ENTITY pixelsLabel.value "taq piksel">

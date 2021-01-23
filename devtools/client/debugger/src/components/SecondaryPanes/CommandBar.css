@@ -15,16 +15,8 @@ html[dir="rtl"] .command-bar {
   border-right: 1px solid var(--theme-splitter-color);
 }
 
-.theme-dark .command-bar {
-  background-color: var(--theme-toolbar-background);
-}
-
 .command-bar .filler {
   flex-grow: 1;
-}
-
-.command-bar .replay-inactive {
-  opacity: 0.5;
 }
 
 .command-bar .step-position {
@@ -33,32 +25,8 @@ html[dir="rtl"] .command-bar {
   margin-inline-end: 4px;
 }
 
-.command-bar .replay-active {
-  color: var(--theme-highlight-blue);
-}
-
 .command-bar .active .disable-pausing {
   background-color: var(--theme-icon-checked-color);
-}
-
-.bottom {
-  border-bottom: none;
-  background-color: var(--theme-body-background);
-  border-top: 1px solid var(--theme-splitter-color);
-  flex: none;
-  height: var(--editor-footer-height);
-}
-
-.command-bar.bottom {
-  justify-content: flex-end;
-}
-
-.command-bar.bottom > button {
-  color: var(--theme-comment);
-  width: 26px;
-}
-.command-bar.bottom > button:hover {
-  color: var(--theme-body-color);
 }
 
 .command-bar .divider {

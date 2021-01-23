@@ -7,30 +7,56 @@
 #ifndef CodeAddressService_h__
 #define CodeAddressService_h__
 
+#include "mozilla/AllocPolicy.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/HashFunctions.h"
+#include "mozilla/HashTable.h"
 #include "mozilla/IntegerPrintfMacros.h"
 #include "mozilla/MemoryReporting.h"
-#include "mozilla/Types.h"
-
 #include "mozilla/StackWalk.h"
+#include "mozilla/Types.h"
 
 namespace mozilla {
 
+namespace detail {
+
+template <class AllocPolicy>
+class CodeAddressServiceAllocPolicy : public AllocPolicy {
+ public:
+  char* strdup_(const char* aStr) {
+    char* s = AllocPolicy::template pod_malloc<char>(strlen(aStr) + 1);
+    if (!s) {
+      MOZ_CRASH("CodeAddressService OOM");
+    }
+    strcpy(s, aStr);
+    return s;
+  }
+};
+
+// Default implementation of DescribeCodeAddressLock.
+struct DefaultDescribeCodeAddressLock {
+  static void Unlock() {}
+  static void Lock() {}
+  // Because CodeAddressService asserts that IsLocked() is true, returning true
+  // here is a sensible default when there is no relevant lock.
+  static bool IsLocked() { return true; }
+};
+
+}  // namespace detail
+
 // This class is used to print details about code locations.
 //
-// |StringTable| must implement an Intern() method that returns an interned
-// copy of the string that was passed in, as well as a standard
-// SizeOfExcludingThis() method.
-//
-// |StringAlloc| must implement |copy| and |free|. |copy| copies a string,
-// while |free| is used to free strings created by |copy|.
+// |AllocPolicy_| must adhere to the description in mfbt/AllocPolicy.h.
 //
 // |DescribeCodeAddressLock| is needed when the callers may be holding a lock
 // used by MozDescribeCodeAddress.  |DescribeCodeAddressLock| must implement
 // static methods IsLocked(), Unlock() and Lock().
-template <class StringTable, class StringAlloc, class DescribeCodeAddressLock>
-class CodeAddressService {
+template <class AllocPolicy_ = MallocAllocPolicy,
+          class DescribeCodeAddressLock =
+              detail::DefaultDescribeCodeAddressLock>
+class CodeAddressService
+    : private detail::CodeAddressServiceAllocPolicy<AllocPolicy_> {
+ protected:
   // GetLocation() is the key function in this class.  It's basically a wrapper
   // around MozDescribeCodeAddress.
   //
@@ -49,9 +75,12 @@ class CodeAddressService {
   //   overwritten, and their copies released.  In addition, empty function
   //   names are common, so we use nullptr to represent them compactly.
 
-  StringTable mLibraryStrings;
+  using AllocPolicy = detail::CodeAddressServiceAllocPolicy<AllocPolicy_>;
+  using StringHashSet = HashSet<const char*, CStringHasher, AllocPolicy>;
 
-  struct Entry {
+  StringHashSet mLibraryStrings;
+
+  struct Entry : private AllocPolicy {
     const void* mPc;
     char* mFunction;       // owned by the Entry;  may be null
     const char* mLibrary;  // owned by mLibraryStrings;  never null
@@ -72,8 +101,8 @@ class CodeAddressService {
 
     ~Entry() {
       // We don't free mLibrary because it's externally owned.
-      StringAlloc::free(mFunction);
-      StringAlloc::free(mFileName);
+      AllocPolicy::free_(mFunction);
+      AllocPolicy::free_(mFileName);
     }
 
     void Replace(const void* aPc, const char* aFunction, const char* aLibrary,
@@ -82,10 +111,10 @@ class CodeAddressService {
       mPc = aPc;
 
       // Convert "" to nullptr.  Otherwise, make a copy of the name.
-      StringAlloc::free(mFunction);
-      mFunction = !aFunction[0] ? nullptr : StringAlloc::copy(aFunction);
-      StringAlloc::free(mFileName);
-      mFileName = !aFileName[0] ? nullptr : StringAlloc::copy(aFileName);
+      AllocPolicy::free_(mFunction);
+      mFunction = !aFunction[0] ? nullptr : AllocPolicy::strdup_(aFunction);
+      AllocPolicy::free_(mFileName);
+      mFileName = !aFileName[0] ? nullptr : AllocPolicy::strdup_(aFileName);
 
       mLibrary = aLibrary;
       mLOffset = aLOffset;
@@ -103,24 +132,20 @@ class CodeAddressService {
     }
   };
 
-  // A direct-mapped cache.  When doing dmd::Analyze() just after starting
-  // desktop Firefox (which is similar to analyzing after a longer-running
-  // session, thanks to the limit on how many records we print), a cache with
-  // 2^24 entries (which approximates an infinite-entry cache) has a ~91% hit
-  // rate.  A cache with 2^12 entries has a ~83% hit rate, and takes up ~85 KiB
-  // (on 32-bit platforms) or ~150 KiB (on 64-bit platforms).
-  static const size_t kNumEntries = 1 << 12;
-  static const size_t kMask = kNumEntries - 1;
-  Entry mEntries[kNumEntries];
+  const char* InternLibraryString(const char* aString) {
+    auto p = mLibraryStrings.lookupForAdd(aString);
+    if (p) {
+      return *p;
+    }
 
-  size_t mNumCacheHits;
-  size_t mNumCacheMisses;
+    const char* newString = AllocPolicy::strdup_(aString);
+    if (!mLibraryStrings.add(p, newString)) {
+      MOZ_CRASH("CodeAddressService OOM");
+    }
+    return newString;
+  }
 
- public:
-  CodeAddressService() : mEntries(), mNumCacheHits(0), mNumCacheMisses(0) {}
-
-  void GetLocation(uint32_t aFrameNumber, const void* aPc, char* aBuf,
-                   size_t aBufLen) {
+  Entry& GetEntry(const void* aPc) {
     MOZ_ASSERT(DescribeCodeAddressLock::IsLocked());
 
     uint32_t index = HashGeneric(aPc) & kMask;
@@ -142,7 +167,7 @@ class CodeAddressService {
         DescribeCodeAddressLock::Lock();
       }
 
-      const char* library = mLibraryStrings.Intern(details.library);
+      const char* library = InternLibraryString(details.library);
       entry.Replace(aPc, details.function, library, details.loffset,
                     details.filename, details.lineno);
 
@@ -152,6 +177,35 @@ class CodeAddressService {
 
     MOZ_ASSERT(entry.mPc == aPc);
 
+    return entry;
+  }
+
+  // A direct-mapped cache.  When doing dmd::Analyze() just after starting
+  // desktop Firefox (which is similar to analyzing after a longer-running
+  // session, thanks to the limit on how many records we print), a cache with
+  // 2^24 entries (which approximates an infinite-entry cache) has a ~91% hit
+  // rate.  A cache with 2^12 entries has a ~83% hit rate, and takes up ~85 KiB
+  // (on 32-bit platforms) or ~150 KiB (on 64-bit platforms).
+  static const size_t kNumEntries = 1 << 12;
+  static const size_t kMask = kNumEntries - 1;
+  Entry mEntries[kNumEntries];
+
+  size_t mNumCacheHits;
+  size_t mNumCacheMisses;
+
+ public:
+  CodeAddressService()
+      : mLibraryStrings(64), mEntries(), mNumCacheHits(0), mNumCacheMisses(0) {}
+
+  ~CodeAddressService() {
+    for (auto iter = mLibraryStrings.iter(); !iter.done(); iter.next()) {
+      AllocPolicy::free_(const_cast<char*>(iter.get()));
+    }
+  }
+
+  void GetLocation(uint32_t aFrameNumber, const void* aPc, char* aBuf,
+                   size_t aBufLen) {
+    Entry& entry = GetEntry(aPc);
     MozFormatCodeAddress(aBuf, aBufLen, aFrameNumber, entry.mPc,
                          entry.mFunction, entry.mLibrary, entry.mLOffset,
                          entry.mFileName, entry.mLineNo);
@@ -163,7 +217,10 @@ class CodeAddressService {
       n += mEntries[i].SizeOfExcludingThis(aMallocSizeOf);
     }
 
-    n += mLibraryStrings.SizeOfExcludingThis(aMallocSizeOf);
+    n += mLibraryStrings.shallowSizeOfExcludingThis(aMallocSizeOf);
+    for (auto iter = mLibraryStrings.iter(); !iter.done(); iter.next()) {
+      n += aMallocSizeOf(iter.get());
+    }
 
     return n;
   }

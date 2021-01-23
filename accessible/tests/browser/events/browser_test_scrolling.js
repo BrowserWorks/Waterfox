@@ -8,13 +8,15 @@ addAccessibleTask(
   `
     <div style="height: 100vh" id="one">one</div>
     <div style="height: 100vh" id="two">two</div>
-    <div style="height: 100vh; width: 200vw" id="three">three</div>`,
+    <div style="height: 100vh; width: 200vw; overflow: auto;" id="three">
+      <div style="height: 300%;">three</div>
+    </div>`,
   async function(browser, accDoc) {
     let onScrolling = waitForEvents([
       [EVENT_SCROLLING, accDoc],
       [EVENT_SCROLLING_END, accDoc],
     ]);
-    await ContentTask.spawn(browser, null, () => {
+    await SpecialPowers.spawn(browser, [], () => {
       content.location.hash = "#two";
     });
     let [scrollEvent1, scrollEndEvent1] = await onScrolling;
@@ -33,7 +35,7 @@ addAccessibleTask(
       [EVENT_SCROLLING, accDoc],
       [EVENT_SCROLLING_END, accDoc],
     ]);
-    await ContentTask.spawn(browser, null, () => {
+    await SpecialPowers.spawn(browser, [], () => {
       content.location.hash = "#three";
     });
     let [scrollEvent2, scrollEndEvent2] = await onScrolling;
@@ -52,7 +54,7 @@ addAccessibleTask(
       [EVENT_SCROLLING, accDoc],
       [EVENT_SCROLLING_END, accDoc],
     ]);
-    await ContentTask.spawn(browser, null, () => {
+    await SpecialPowers.spawn(browser, [], () => {
       content.scrollTo(10, 0);
     });
     let [scrollEvent3, scrollEndEvent3] = await onScrolling;
@@ -69,6 +71,26 @@ addAccessibleTask(
     ok(
       scrollEvent3.scrollX > scrollEvent2.scrollX,
       `${scrollEvent3.scrollX} > ${scrollEvent2.scrollX}`
+    );
+
+    // non-doc scrolling
+    onScrolling = waitForEvents([
+      [EVENT_SCROLLING, "three"],
+      [EVENT_SCROLLING_END, "three"],
+    ]);
+    await SpecialPowers.spawn(browser, [], () => {
+      content.document.querySelector("#three").scrollTo(0, 10);
+    });
+    let [scrollEvent4, scrollEndEvent4] = await onScrolling;
+    scrollEvent4.QueryInterface(nsIAccessibleScrollingEvent);
+    ok(
+      scrollEvent4.maxScrollY >= scrollEvent4.scrollY,
+      "scrollY is within max"
+    );
+    scrollEndEvent4.QueryInterface(nsIAccessibleScrollingEvent);
+    ok(
+      scrollEndEvent4.maxScrollY >= scrollEndEvent4.scrollY,
+      "scrollY is within max"
     );
   }
 );

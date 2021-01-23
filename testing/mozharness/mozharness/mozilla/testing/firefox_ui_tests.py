@@ -36,7 +36,7 @@ firefox_ui_tests_config_options = [
         "action": "store_true",
         "dest": "enable_webrender",
         "default": False,
-        "help": "Tries to enable the WebRender compositor.",
+        "help": "Enable the WebRender compositor in Gecko.",
     }],
     [['--dry-run'], {
         'dest': 'dry_run',
@@ -48,6 +48,12 @@ firefox_ui_tests_config_options = [
         'action': 'store_false',
         'default': True,
         'help': 'Disable multi-process (e10s) mode when running tests.',
+    }],
+    [["--setpref"], {
+        'dest': 'extra_prefs',
+        'action': 'append',
+        'default': [],
+        'help': 'Extra user prefs.',
     }],
     [['--symbols-path=SYMBOLS_PATH'], {
         'dest': 'symbols_path',
@@ -234,11 +240,16 @@ class FirefoxUITests(TestingMixin, VCSToolsScript, CodeCoverageMixin):
             '-vv',
         ]
 
+        if self.config['enable_webrender']:
+            cmd.append('--enable-webrender')
+
         # Collect all pass-through harness options to the script
         cmd.extend(self.query_harness_args())
 
         if not self.config.get('e10s'):
             cmd.append('--disable-e10s')
+
+        cmd.extend(['--setpref={}'.format(p) for p in self.config.get('extra_prefs')])
 
         if self.symbols_url:
             cmd.extend(['--symbols-path', self.symbols_url])
@@ -269,9 +280,6 @@ class FirefoxUITests(TestingMixin, VCSToolsScript, CodeCoverageMixin):
 
         if self.config['allow_software_gl_layers']:
             env['MOZ_LAYERS_ALLOW_SOFTWARE_GL'] = '1'
-        if self.config['enable_webrender']:
-            env['MOZ_WEBRENDER'] = '1'
-            env['MOZ_ACCELERATED'] = '1'
 
         return_code = self.run_command(cmd,
                                        cwd=dirs['abs_fxui_dir'],
@@ -302,7 +310,6 @@ class FirefoxUIFunctionalTests(FirefoxUITests):
 
     cli_script = 'cli_functional.py'
     default_tests = [
-        os.path.join('puppeteer', 'manifest.ini'),
         os.path.join('functional', 'manifest.ini'),
     ]
 

@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizeDialog2.title         "Vacuar le chronologia recente">
+
+<!-- XXX rearrange entities to match physical layout when l10n isn't an issue -->
+<!-- LOCALIZATION NOTE (clearTimeDuration.*): "Time range to clear" dropdown.
+     See UI mockup at bug 480169 -->
+<!ENTITY clearTimeDuration.label          "Intervallo de tempore pro vacuar: ">
+<!ENTITY clearTimeDuration.accesskey      "t">
+<!ENTITY clearTimeDuration.lastHour       "Ultime hora">
+<!ENTITY clearTimeDuration.last2Hours     "Ultime duo horas">
+<!ENTITY clearTimeDuration.last4Hours     "Ultime quatro horas">
+<!ENTITY clearTimeDuration.today          "Hodie">
+<!ENTITY clearTimeDuration.everything     "Toto">
+<!-- Localization note (clearTimeDuration.suffix) - trailing entity for languages
+that require it.  -->
+<!ENTITY clearTimeDuration.suffix         "">
+
+<!-- LOCALIZATION NOTE (detailsProgressiveDisclosure.*): Labels and accesskeys
+     of the "Details" progressive disclosure button.  See UI mockup at bug
+     480169 -->
+<!ENTITY detailsProgressiveDisclosure.label     "Detalios">
+<!ENTITY detailsProgressiveDisclosure.accesskey "e">
+
+
+<!ENTITY historyGroup.label                "Chronologia">
+
+<!ENTITY itemHistory.label                 "Chronologia de navigation">
+<!ENTITY itemHistory.accesskey             "n">
+<!ENTITY itemCookies.label                 "Cookies">
+<!ENTITY itemCookies.accesskey             "C">
+<!ENTITY itemCache.label                   "Cache">
+<!ENTITY itemCache.accesskey               "a">
+
+<!-- LOCALIZATION NOTE (sanitizeEverythingUndoWarning): Second warning paragraph
+     that appears when "Time range to clear" is set to "Everything".  See UI
+     mockup at bug 480169 -->
+<!ENTITY sanitizeEverythingUndoWarning     "Iste action es irrevocabile.">
+
+<!ENTITY dialog.width                 "28em">

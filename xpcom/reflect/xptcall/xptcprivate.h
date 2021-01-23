@@ -9,7 +9,6 @@
 #define xptcprivate_h___
 
 #include "xptcall.h"
-#include "nsAutoPtr.h"
 #include "mozilla/Attributes.h"
 
 #if !defined(__ia64) || \
@@ -54,7 +53,7 @@ class nsXPTCStubBase final : public nsIXPTCStubBase {
   nsIXPTCProxy* mOuter;
   const nsXPTInterfaceInfo* mEntry;
 
-  ~nsXPTCStubBase() {}
+  ~nsXPTCStubBase() = default;
 };
 
 #undef STUB_ENTRY

@@ -1,75 +1,140 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 "use strict";
 
-const l10n = require("devtools/client/webconsole/webconsole-l10n");
+const Services = require("Services");
+const l10n = require("devtools/client/webconsole/utils/l10n");
 const {
   getUrlDetails,
 } = require("devtools/client/netmonitor/src/utils/request-utils");
+const {
+  ResourceWatcher,
+} = require("devtools/shared/resources/resource-watcher");
 
-const { MESSAGE_SOURCE, MESSAGE_TYPE, MESSAGE_LEVEL } = require("../constants");
-const { ConsoleMessage, NetworkEventMessage } = require("../types");
+// URL Regex, common idioms:
+//
+// Lead-in (URL):
+// (                     Capture because we need to know if there was a lead-in
+//                       character so we can include it as part of the text
+//                       preceding the match. We lack look-behind matching.
+//  ^|                   The URL can start at the beginning of the string.
+//  [\s(,;'"`“]          Or whitespace or some punctuation that does not imply
+//                       a context which would preclude a URL.
+// )
+//
+// We do not need a trailing look-ahead because our regex's will terminate
+// because they run out of characters they can eat.
 
-function prepareMessage(packet, idGenerator) {
-  if (!packet.source) {
-    packet = transformPacket(packet);
+// What we do not attempt to have the regexp do:
+// - Avoid trailing '.' and ')' characters.  We let our greedy match absorb
+//   these, but have a separate regex for extra characters to leave off at the
+//   end.
+//
+// The Regex (apart from lead-in/lead-out):
+// (                     Begin capture of the URL
+//  (?:                  (potential detect beginnings)
+//   https?:\/\/|        Start with "http" or "https"
+//   www\d{0,3}[.][a-z0-9.\-]{2,249}|
+//                      Start with "www", up to 3 numbers, then "." then
+//                       something that looks domain-namey.  We differ from the
+//                       next case in that we do not constrain the top-level
+//                       domain as tightly and do not require a trailing path
+//                       indicator of "/".  This is IDN root compatible.
+//   [a-z0-9.\-]{2,250}[.][a-z]{2,4}\/
+//                       Detect a non-www domain, but requiring a trailing "/"
+//                       to indicate a path.  This only detects IDN domains
+//                       with a non-IDN root.  This is reasonable in cases where
+//                       there is no explicit http/https start us out, but
+//                       unreasonable where there is.  Our real fix is the bug
+//                       to port the Thunderbird/gecko linkification logic.
+//
+//                       Domain names can be up to 253 characters long, and are
+//                       limited to a-zA-Z0-9 and '-'.  The roots don't have
+//                       hyphens unless they are IDN roots.  Root zones can be
+//                       found here: http://www.iana.org/domains/root/db
+//  )
+//  [-\w.!~*'();,/?:@&=+$#%]*
+//                       path onwards. We allow the set of characters that
+//                       encodeURI does not escape plus the result of escaping
+//                       (so also '%')
+// )
+// eslint-disable-next-line max-len
+const urlRegex = /(^|[\s(,;'"`“])((?:https?:\/\/|www\d{0,3}[.][a-z0-9.\-]{2,249}|[a-z0-9.\-]{2,250}[.][a-z]{2,4}\/)[-\w.!~*'();,/?:@&=+$#%]*)/im;
+
+// Set of terminators that are likely to have been part of the context rather
+// than part of the URL and so should be uneaten. This is '(', ',', ';', plus
+// quotes and question end-ing punctuation and the potential permutations with
+// parentheses (english-specific).
+const uneatLastUrlCharsRegex = /(?:[),;.!?`'"]|[.!?]\)|\)[.!?])$/;
+
+const {
+  MESSAGE_SOURCE,
+  MESSAGE_TYPE,
+  MESSAGE_LEVEL,
+} = require("devtools/client/webconsole/constants");
+const {
+  ConsoleMessage,
+  NetworkEventMessage,
+} = require("devtools/client/webconsole/types");
+
+function prepareMessage(resource, idGenerator) {
+  if (!resource.source) {
+    resource = transformResource(resource);
   }
 
-  if (packet.allowRepeating) {
-    packet.repeatId = getRepeatId(packet);
+  if (resource.allowRepeating) {
+    resource.repeatId = getRepeatId(resource);
   }
-  packet.id = idGenerator.getNextId(packet);
-  return packet;
+  resource.id = idGenerator.getNextId(resource);
+  return resource;
 }
 
 /**
- * Transforms a packet from Firefox RDP structure to Chrome RDP structure.
+ * Transforms a resource given its type.
+ *
+ * @param {Object} resource: This can be either a simple RDP packet or an object emitted
+ *                           by the Resource API.
  */
-function transformPacket(packet) {
-  if (packet._type) {
-    packet = convertCachedPacket(packet);
-  }
-
-  switch (packet.type) {
-    case "consoleAPICall": {
-      return transformConsoleAPICallPacket(packet);
+function transformResource(resource) {
+  switch (resource.resourceType || resource.type) {
+    case ResourceWatcher.TYPES.CONSOLE_MESSAGE: {
+      return transformConsoleAPICallResource(resource);
     }
 
-    case "will-navigate": {
-      return transformNavigationMessagePacket(packet);
+    case ResourceWatcher.TYPES.PLATFORM_MESSAGE: {
+      return transformPlatformMessageResource(resource);
     }
 
-    case "logMessage": {
-      return transformLogMessagePacket(packet);
-    }
-
-    case "pageError": {
-      return transformPageErrorPacket(packet);
+    case ResourceWatcher.TYPES.ERROR_MESSAGE: {
+      return transformPageErrorResource(resource);
     }
 
     case "networkEvent": {
-      return transformNetworkEventPacket(packet);
+      return transformNetworkEventResource(resource);
+    }
+
+    case "will-navigate": {
+      return transformNavigationMessagePacket(resource);
     }
 
     case "evaluationResult":
     default: {
-      return transformEvaluationResultPacket(packet);
+      return transformEvaluationResultPacket(resource);
     }
   }
 }
 
-function transformConsoleAPICallPacket(packet) {
-  const { message } = packet;
+// eslint-disable-next-line complexity
+function transformConsoleAPICallResource(consoleMessageResource) {
+  const { message, targetFront } = consoleMessageResource;
 
   let parameters = message.arguments;
   let type = message.level;
   let level = getLevelFromType(type);
   let messageText = null;
-  const timer = message.timer;
+  const { timer } = message;
 
   // Special per-type conversion.
   switch (type) {
@@ -141,17 +206,19 @@ function transformConsoleAPICallPacket(packet) {
       break;
     case "table":
       const supportedClasses = [
-        "Array",
         "Object",
         "Map",
         "Set",
         "WeakMap",
         "WeakSet",
-      ];
+      ].concat(getArrayTypeNames());
+
       if (
         !Array.isArray(parameters) ||
         parameters.length === 0 ||
-        !supportedClasses.includes(parameters[0].class)
+        !parameters[0] ||
+        !parameters[0].getGrip ||
+        !supportedClasses.includes(parameters[0].getGrip().class)
       ) {
         // If the class of the first parameter is not supported,
         // we handle the call as a simple console.log
@@ -189,7 +256,12 @@ function transformConsoleAPICallPacket(packet) {
       }
     : null;
 
+  if (frame && (type === "logPointError" || type === "logPoint")) {
+    frame.options = { logPoint: true };
+  }
+
   return new ConsoleMessage({
+    targetFront,
     source: MESSAGE_SOURCE.CONSOLE_API,
     type,
     level,
@@ -201,7 +273,6 @@ function transformConsoleAPICallPacket(packet) {
     userProvidedStyles: message.styles,
     prefix: message.prefix,
     private: message.private,
-    executionPoint: message.executionPoint,
     logpointId: message.logpointId,
     chromeContext: message.chromeContext,
   });
@@ -214,14 +285,16 @@ function transformNavigationMessagePacket(packet) {
     type: MESSAGE_TYPE.NAVIGATION_MARKER,
     level: MESSAGE_LEVEL.LOG,
     messageText: l10n.getFormatStr("webconsole.navigated", [url]),
-    timeStamp: Date.now(),
+    timeStamp: packet.timeStamp,
+    allowRepeating: false,
   });
 }
 
-function transformLogMessagePacket(packet) {
-  const { message, timeStamp } = packet;
+function transformPlatformMessageResource(platformMessageResource) {
+  const { message, timeStamp, targetFront } = platformMessageResource;
 
   return new ConsoleMessage({
+    targetFront,
     source: MESSAGE_SOURCE.CONSOLE_API,
     type: MESSAGE_TYPE.LOG,
     level: MESSAGE_LEVEL.LOG,
@@ -232,10 +305,10 @@ function transformLogMessagePacket(packet) {
   });
 }
 
-function transformPageErrorPacket(packet) {
-  const { pageError } = packet;
+function transformPageErrorResource(pageErrorResource) {
+  const { pageError, targetFront } = pageErrorResource;
   let level = MESSAGE_LEVEL.ERROR;
-  if (pageError.warning || pageError.strict) {
+  if (pageError.warning) {
     level = MESSAGE_LEVEL.WARN;
   } else if (pageError.info) {
     level = MESSAGE_LEVEL.INFO;
@@ -250,11 +323,12 @@ function transformPageErrorPacket(packet) {
       }
     : null;
 
-  const matchesCSS = /^(?:CSS|Layout)\b/.test(pageError.category);
+  const matchesCSS = pageError.category == "CSS Parser";
   const messageSource = matchesCSS
     ? MESSAGE_SOURCE.CSS
     : MESSAGE_SOURCE.JAVASCRIPT;
   return new ConsoleMessage({
+    targetFront,
     innerWindowID: pageError.innerWindowID,
     source: messageSource,
     type: MESSAGE_TYPE.LOG,
@@ -265,36 +339,34 @@ function transformPageErrorPacket(packet) {
     frame,
     errorMessageName: pageError.errorMessageName,
     exceptionDocURL: pageError.exceptionDocURL,
+    hasException: pageError.hasException,
+    parameters: pageError.hasException ? [pageError.exception] : null,
     timeStamp: pageError.timeStamp,
     notes: pageError.notes,
     private: pageError.private,
-    executionPoint: pageError.executionPoint,
     chromeContext: pageError.chromeContext,
-    // Backward compatibility: cssSelectors might not be available when debugging
-    // Firefox 67 or older.
-    // Remove `|| ""` when Firefox 68 is on the release channel.
-    cssSelectors: pageError.cssSelectors || "",
+    cssSelectors: pageError.cssSelectors,
+    isPromiseRejection: pageError.isPromiseRejection,
   });
 }
 
-function transformNetworkEventPacket(packet) {
-  const { networkEvent } = packet;
-
+function transformNetworkEventResource(networkEventResource) {
   return new NetworkEventMessage({
-    actor: networkEvent.actor,
-    isXHR: networkEvent.isXHR,
-    request: networkEvent.request,
-    response: networkEvent.response,
-    timeStamp: networkEvent.timeStamp,
-    totalTime: networkEvent.totalTime,
-    url: networkEvent.request.url,
-    urlDetails: getUrlDetails(networkEvent.request.url),
-    method: networkEvent.request.method,
-    updates: networkEvent.updates,
-    cause: networkEvent.cause,
-    private: networkEvent.private,
-    securityState: networkEvent.securityState,
-    chromeContext: networkEvent.chromeContext,
+    targetFront: networkEventResource.targetFront,
+    actor: networkEventResource.actor,
+    isXHR: networkEventResource.isXHR,
+    request: networkEventResource.request,
+    response: networkEventResource.response,
+    timeStamp: networkEventResource.timeStamp,
+    totalTime: networkEventResource.totalTime,
+    url: networkEventResource.request.url,
+    urlDetails: getUrlDetails(networkEventResource.request.url),
+    method: networkEventResource.request.method,
+    updates: networkEventResource.updates,
+    cause: networkEventResource.cause,
+    private: networkEventResource.private,
+    securityState: networkEventResource.securityState,
+    chromeContext: networkEventResource.chromeContext,
   });
 }
 
@@ -305,6 +377,7 @@ function transformEvaluationResultPacket(packet) {
     exceptionDocURL,
     exception,
     exceptionStack,
+    hasException,
     frame,
     result,
     helperResult,
@@ -312,22 +385,27 @@ function transformEvaluationResultPacket(packet) {
     notes,
   } = packet;
 
-  const parameter =
-    helperResult && helperResult.object ? helperResult.object : result;
+  let parameter;
 
-  if (helperResult && helperResult.type === "error") {
+  if (hasException) {
+    // If we have an exception, we prefix it, and we reset the exception message, as we're
+    // not going to use it.
+    parameter = exception;
+    exceptionMessage = null;
+  } else if (helperResult?.object) {
+    parameter = helperResult.object;
+  } else if (helperResult?.type === "error") {
     try {
       exceptionMessage = l10n.getStr(helperResult.message);
     } catch (ex) {
       exceptionMessage = helperResult.message;
     }
-  } else if (typeof exception === "string") {
-    // Wrap thrown strings in Error objects, so `throw "foo"` outputs "Error: foo"
-    exceptionMessage = new Error(exceptionMessage).toString();
+  } else {
+    parameter = result;
   }
 
   const level =
-    typeof exceptionMessage !== "undefined" && exceptionMessage !== null
+    typeof exceptionMessage !== "undefined" && packet.exceptionMessage !== null
       ? MESSAGE_LEVEL.ERROR
       : MESSAGE_LEVEL.LOG;
 
@@ -337,6 +415,7 @@ function transformEvaluationResultPacket(packet) {
     helperType: helperResult ? helperResult.type : null,
     level,
     messageText: exceptionMessage,
+    hasException,
     parameters: [parameter],
     errorMessageName,
     exceptionDocURL,
@@ -345,49 +424,38 @@ function transformEvaluationResultPacket(packet) {
     timeStamp,
     notes,
     private: packet.private,
+    allowRepeating: false,
   });
 }
 
 // Helpers
 function getRepeatId(message) {
-  return JSON.stringify({
-    frame: message.frame,
-    groupId: message.groupId,
-    indent: message.indent,
-    level: message.level,
-    messageText: message.messageText,
-    parameters: message.parameters,
-    source: message.source,
-    type: message.type,
-    userProvidedStyles: message.userProvidedStyles,
-    private: message.private,
-    stacktrace: message.stacktrace,
-    executionPoint: message.executionPoint,
-  });
-}
+  return JSON.stringify(
+    {
+      frame: message.frame,
+      groupId: message.groupId,
+      indent: message.indent,
+      level: message.level,
+      messageText: message.messageText,
+      parameters: message.parameters,
+      source: message.source,
+      type: message.type,
+      userProvidedStyles: message.userProvidedStyles,
+      private: message.private,
+      stacktrace: message.stacktrace,
+    },
+    function(_, value) {
+      if (typeof value === "bigint") {
+        return value.toString() + "n";
+      }
 
-function convertCachedPacket(packet) {
-  // The devtools server provides cached message packets in a different shape, so we
-  // transform them here.
-  let convertPacket = {};
-  if (packet._type === "ConsoleAPI") {
-    convertPacket.message = packet;
-    convertPacket.type = "consoleAPICall";
-  } else if (packet._type === "PageError") {
-    convertPacket.pageError = packet;
-    convertPacket.type = "pageError";
-  } else if (packet._type === "NetworkEvent") {
-    convertPacket.networkEvent = packet;
-    convertPacket.type = "networkEvent";
-  } else if (packet._type === "LogMessage") {
-    convertPacket = {
-      ...packet,
-      type: "logMessage",
-    };
-  } else {
-    throw new Error("Unexpected packet type: " + packet._type);
-  }
-  return convertPacket;
+      if (value && value._grip) {
+        return value._grip;
+      }
+
+      return value;
+    }
+  );
 }
 
 /**
@@ -407,6 +475,7 @@ function getLevelFromType(type) {
     error: levels.LEVEL_ERROR,
     exception: levels.LEVEL_ERROR,
     assert: levels.LEVEL_ERROR,
+    logPointError: levels.LEVEL_ERROR,
     warn: levels.LEVEL_WARNING,
     info: levels.LEVEL_INFO,
     log: levels.LEVEL_LOG,
@@ -449,19 +518,92 @@ function isPacketPrivate(packet) {
 }
 
 function createWarningGroupMessage(id, type, firstMessage) {
-  let messageText;
-  if (type === MESSAGE_TYPE.CONTENT_BLOCKING_GROUP) {
-    messageText = l10n.getStr("webconsole.group.contentBlocked");
-  }
   return new ConsoleMessage({
     id,
     level: MESSAGE_LEVEL.WARN,
     source: MESSAGE_SOURCE.CONSOLE_FRONTEND,
     type,
-    messageText,
+    messageText: getWarningGroupLabel(firstMessage),
     timeStamp: firstMessage.timeStamp,
     innerWindowID: firstMessage.innerWindowID,
   });
+}
+
+/**
+ * Given the a regular warning message, compute the label of the warning group the message
+ * could be in.
+ * For example, if the message text is:
+ * The resource at “http://evil.com” was blocked because content blocking is enabled
+ *
+ * it may be turned into
+ *
+ * The resource at “<URL>” was blocked because content blocking is enabled
+ *
+ * @param {ConsoleMessage} firstMessage
+ * @returns {String} The computed label
+ */
+function getWarningGroupLabel(firstMessage) {
+  if (
+    isContentBlockingMessage(firstMessage) ||
+    isTrackingProtectionMessage(firstMessage)
+  ) {
+    return replaceURL(firstMessage.messageText, "<URL>");
+  }
+
+  if (isCookieSameSiteMessage(firstMessage)) {
+    if (Services.prefs.getBoolPref("network.cookie.sameSite.laxByDefault")) {
+      return l10n.getStr("webconsole.group.cookieSameSiteLaxByDefaultEnabled");
+    }
+    return l10n.getStr("webconsole.group.cookieSameSiteLaxByDefaultDisabled");
+  }
+
+  return "";
+}
+
+/**
+ * Replace any URL in the provided text by the provided replacement text, or an empty
+ * string.
+ *
+ * @param {String} text
+ * @param {String} replacementText
+ * @returns {String}
+ */
+function replaceURL(text, replacementText = "") {
+  let result = "";
+  let currentIndex = 0;
+  let contentStart;
+  while (true) {
+    const url = urlRegex.exec(text);
+    // Pick the regexp with the earlier content; index will always be zero.
+    if (!url) {
+      break;
+    }
+    contentStart = url.index + url[1].length;
+    if (contentStart > 0) {
+      const nonUrlText = text.substring(0, contentStart);
+      result += nonUrlText;
+    }
+
+    // There are some final characters for a URL that are much more likely
+    // to have been part of the enclosing text rather than the end of the
+    // URL.
+    let useUrl = url[2];
+    const uneat = uneatLastUrlCharsRegex.exec(useUrl);
+    if (uneat) {
+      useUrl = useUrl.substring(0, uneat.index);
+    }
+
+    if (useUrl) {
+      result += replacementText;
+    }
+
+    currentIndex = currentIndex + contentStart;
+
+    currentIndex = currentIndex + useUrl.length;
+    text = text.substring(url.index + url[1].length + useUrl.length);
+  }
+
+  return result + text;
 }
 
 /**
@@ -473,6 +615,15 @@ function getWarningGroupType(message) {
   if (isContentBlockingMessage(message)) {
     return MESSAGE_TYPE.CONTENT_BLOCKING_GROUP;
   }
+
+  if (isTrackingProtectionMessage(message)) {
+    return MESSAGE_TYPE.TRACKING_PROTECTION_GROUP;
+  }
+
+  if (isCookieSameSiteMessage(message)) {
+    return MESSAGE_TYPE.COOKIE_SAMESITE_GROUP;
+  }
+
   return null;
 }
 
@@ -484,7 +635,12 @@ function getWarningGroupType(message) {
  * @returns {String}
  */
 function getParentWarningGroupMessageId(message) {
-  return `${message.type}-${message.innerWindowID}`;
+  const warningGroupType = getWarningGroupType(message);
+  if (!warningGroupType) {
+    return null;
+  }
+
+  return `${warningGroupType}-${message.innerWindowID}`;
 }
 
 /**
@@ -495,6 +651,8 @@ function getParentWarningGroupMessageId(message) {
 function isWarningGroup(message) {
   return (
     message.type === MESSAGE_TYPE.CONTENT_BLOCKING_GROUP ||
+    message.type === MESSAGE_TYPE.TRACKING_PROTECTION_GROUP ||
+    message.type === MESSAGE_TYPE.COOKIE_SAMESITE_GROUP ||
     message.type === MESSAGE_TYPE.CORS_GROUP ||
     message.type === MESSAGE_TYPE.CSP_GROUP
   );
@@ -511,14 +669,102 @@ function isContentBlockingMessage(message) {
     category == "cookieBlockedPermission" ||
     category == "cookieBlockedTracker" ||
     category == "cookieBlockedAll" ||
-    category == "cookieBlockedForeign" ||
-    category == "Tracking Protection"
+    category == "cookieBlockedForeign"
   );
+}
+
+/**
+ * Returns true if the message is a tracking protection message.
+ * @param {ConsoleMessage} message
+ * @returns {Boolean}
+ */
+function isTrackingProtectionMessage(message) {
+  const { category } = message;
+  return category == "Tracking Protection";
+}
+
+/**
+ * Returns true if the message is a cookie message.
+ * @param {ConsoleMessage} message
+ * @returns {Boolean}
+ */
+function isCookieSameSiteMessage(message) {
+  const { category } = message;
+  return category == "cookieSameSite";
+}
+
+function getArrayTypeNames() {
+  return [
+    "Array",
+    "Int8Array",
+    "Uint8Array",
+    "Int16Array",
+    "Uint16Array",
+    "Int32Array",
+    "Uint32Array",
+    "Float32Array",
+    "Float64Array",
+    "Uint8ClampedArray",
+    "BigInt64Array",
+    "BigUint64Array",
+  ];
+}
+
+function getDescriptorValue(descriptor) {
+  if (!descriptor) {
+    return descriptor;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(descriptor, "safeGetterValues")) {
+    return descriptor.safeGetterValues;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(descriptor, "getterValue")) {
+    return descriptor.getterValue;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(descriptor, "value")) {
+    return descriptor.value;
+  }
+  return descriptor;
+}
+
+function getNaturalOrder(messageA, messageB) {
+  const aFirst = -1;
+  const bFirst = 1;
+
+  // It can happen that messages are emitted in the same microsecond, making their
+  // timestamp similar. In such case, we rely on which message came first through
+  // the console API service, checking their id, except for expression result, which we'll
+  // always insert after because console API messages emitted from the expression need to
+  // be rendered before.
+  if (messageA.timeStamp === messageB.timeStamp) {
+    if (messageA.type === "result") {
+      return bFirst;
+    }
+
+    if (messageB.type === "result") {
+      return aFirst;
+    }
+
+    if (
+      !Number.isNaN(parseInt(messageA.id, 10)) &&
+      !Number.isNaN(parseInt(messageB.id, 10))
+    ) {
+      return parseInt(messageA.id, 10) < parseInt(messageB.id, 10)
+        ? aFirst
+        : bFirst;
+    }
+  }
+  return messageA.timeStamp < messageB.timeStamp ? aFirst : bFirst;
 }
 
 module.exports = {
   createWarningGroupMessage,
+  getArrayTypeNames,
+  getDescriptorValue,
   getInitialMessageCountForViewport,
+  getNaturalOrder,
   getParentWarningGroupMessageId,
   getWarningGroupType,
   isContentBlockingMessage,

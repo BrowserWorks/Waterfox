@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title        "Eduki taula">
+<!ENTITY buildToc.label      "Honen eduki taula sortu:">
+<!ENTITY tag.label           "Etiketa:">
+<!ENTITY class.label         "Klasea:">
+<!ENTITY header1.label       "1 maila">
+<!ENTITY header2.label       "2 maila">
+<!ENTITY header3.label       "3 maila">
+<!ENTITY header4.label       "4 maila">
+<!ENTITY header5.label       "5 maila">
+<!ENTITY header6.label       "6 maila">
+<!ENTITY makeReadOnly.label  "Eduki taula irakurketa soilekoa egin">
+<!ENTITY orderedList.label   "Eduki taulako sarrerak zenbatu">

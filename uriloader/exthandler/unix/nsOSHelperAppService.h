@@ -16,6 +16,7 @@
 #include "nsCExternalHandlerService.h"
 #include "nsCOMPtr.h"
 
+class nsIFileInputStream;
 class nsILineInputStream;
 class nsMIMEInfoBase;
 
@@ -36,6 +37,8 @@ class nsOSHelperAppService : public nsExternalHelperAppService {
                                    bool* aHandlerExists) override;
   NS_IMETHOD GetApplicationDescription(const nsACString& aScheme,
                                        nsAString& _retval) override;
+  NS_IMETHOD IsCurrentAppOSDefaultForProtocol(const nsACString& aScheme,
+                                              bool* _retval) override;
 
   // GetFileTokenForPath must be implemented by each platform.
   // platformAppPath --> a platform specific path to an application that we got

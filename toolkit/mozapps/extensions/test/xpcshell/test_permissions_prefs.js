@@ -9,7 +9,7 @@ const PREF_XPI_WHITELIST_PERMISSIONS = "xpinstall.whitelist.add";
 const PREF_XPI_BLACKLIST_PERMISSIONS = "xpinstall.blacklist.add";
 
 function newPrincipal(uri) {
-  return Services.scriptSecurityManager.createCodebasePrincipal(
+  return Services.scriptSecurityManager.createContentPrincipal(
     NetUtil.newURI(uri),
     {}
   );
@@ -51,12 +51,10 @@ add_task(async function setup() {
 
   // Get list of preferences to check
   var whitelistPreferences = Services.prefs.getChildList(
-    PREF_XPI_WHITELIST_PERMISSIONS,
-    {}
+    PREF_XPI_WHITELIST_PERMISSIONS
   );
   var blacklistPreferences = Services.prefs.getChildList(
-    PREF_XPI_BLACKLIST_PERMISSIONS,
-    {}
+    PREF_XPI_BLACKLIST_PERMISSIONS
   );
   var preferences = whitelistPreferences.concat(blacklistPreferences);
 

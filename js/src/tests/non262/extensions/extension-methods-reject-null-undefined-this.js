@@ -1,3 +1,5 @@
+// |reftest| skip-if(!Object.prototype.toSource)
+
 /*
  * Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/licenses/publicdomain/
@@ -20,21 +22,13 @@ print(BUGNUMBER + ": " + summary);
 
 var ClassToMethodMap =
   {
-    Object:   [/*
-                * Don't box this just yet for these methods -- they're used too
-                * much without qualification to do that.  :-(
-                */
-               /* "__defineGetter__", "__defineSetter__", */
-               "__lookupGetter__", "__lookupSetter__", "watch", "unwatch",
-               "toSource"],
+    Object:   ["toSource"],
     Function: ["toSource"],
     Array:    ["toSource"],
-    String:   ["toSource", "quote", "bold", "italics", "fixed", "fontsize",
-               "fontcolor", "link", "anchor", "strike", "small", "big", "blink",
-               "sup", "sub", "substr", "trimLeft", "trimRight", "toJSON"],
-    Boolean:  ["toSource", "toJSON"],
-    Number:   ["toSource", "toJSON"],
-    Date:     ["toSource", "getYear", "setYear",  "toGMTString"],
+    String:   ["toSource"],
+    Boolean:  ["toSource"],
+    Number:   ["toSource"],
+    Date:     ["toSource"],
     RegExp:   ["toSource"],
     Error:    ["toSource"],
   };

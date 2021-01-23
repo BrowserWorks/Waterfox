@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "הסרת חשבון ונתונים">
+<!ENTITY removeButton.label           "הסרה">
+<!ENTITY removeButton.accesskey       "ס">
+<!ENTITY removeAccount.label          "הסרת נתוני חשבון">
+<!ENTITY removeAccount.accesskey      "נ">
+<!ENTITY removeData.accesskey         "ד">
+<!ENTITY removeDataChat.label         "הסרת נתוני דיון">
+<!ENTITY removeDataChat.accesskey     "ד">
+<!ENTITY showData.label               "הצגת מיקום הנתונים">
+<!ENTITY showData.accesskey           "צ">

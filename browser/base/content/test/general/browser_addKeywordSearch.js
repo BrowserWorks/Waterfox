@@ -27,11 +27,11 @@ add_task(async function() {
       let contextMenuPromise = BrowserTestUtils.waitForEvent(
         contextMenu,
         "popupshown"
-      ).then(() => gContextMenuContentData.target);
+      );
 
-      await ContentTask.spawn(
+      await SpecialPowers.spawn(
         tab.linkedBrowser,
-        { action, param, method, id },
+        [{ action, param, method, id }],
         async function(args) {
           let doc = content.document;
           let form = doc.createElement("form");
@@ -51,44 +51,30 @@ add_task(async function() {
         { type: "contextmenu", button: 2 },
         tab.linkedBrowser
       );
-      let target = await contextMenuPromise;
+      await contextMenuPromise;
+      let url = action || tab.linkedBrowser.currentURI.spec;
+      let actor = gContextMenu.actor;
 
-      await new Promise(resolve => {
-        let url = action || tab.linkedBrowser.currentURI.spec;
-        let mm = tab.linkedBrowser.messageManager;
-        let onMessage = message => {
-          mm.removeMessageListener(
-            "ContextMenu:SearchFieldBookmarkData:Result",
-            onMessage
-          );
-          if (method == "GET") {
-            ok(
-              message.data.spec.endsWith(`${param}=%s`),
-              `Check expected url for field named ${param} and action ${action}`
-            );
-          } else {
-            is(
-              message.data.spec,
-              url,
-              `Check expected url for field named ${param} and action ${action}`
-            );
-            is(
-              message.data.postData,
-              `${param}%3D%25s`,
-              `Check expected POST data for field named ${param} and action ${action}`
-            );
-          }
-          resolve();
-        };
-        mm.addMessageListener(
-          "ContextMenu:SearchFieldBookmarkData:Result",
-          onMessage
+      let data = await actor.getSearchFieldBookmarkData(
+        gContextMenu.targetIdentifier
+      );
+      if (method == "GET") {
+        ok(
+          data.spec.endsWith(`${param}=%s`),
+          `Check expected url for field named ${param} and action ${action}`
         );
-
-        mm.sendAsyncMessage("ContextMenu:SearchFieldBookmarkData", null, {
-          target,
-        });
-      });
+      } else {
+        is(
+          data.spec,
+          url,
+          `Check expected url for field named ${param} and action ${action}`
+        );
+        is(
+          data.postData,
+          `${param}%3D%25s`,
+          `Check expected POST data for field named ${param} and action ${action}`
+        );
+      }
 
       let popupHiddenPromise = BrowserTestUtils.waitForEvent(
         contextMenu,

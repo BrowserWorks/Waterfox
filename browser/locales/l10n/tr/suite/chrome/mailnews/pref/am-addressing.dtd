@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!ENTITY addressing.label "Düzenleme ve adresler">
+<!ENTITY addressingGroupTitle.label "Adresler">
+<!ENTITY autocompleteToMyDomain.label "Alan adımı adreslere otomatik olarak ekle">
+<!ENTITY autocompleteToMyDomain.accesskey "A">
+<!ENTITY addressingText.label "Adreslere bakılırken,">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label "LDAP sunucumun ayarlarını bu hesap için kullan">
+<!ENTITY useGlobal.accesskey "L">
+<!ENTITY editDirectories.label "Dizinleri düzenle…">
+<!ENTITY editDirectories.accesskey "e">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label "Farklı  LDAP sunucusu kullan:">
+<!ENTITY directories.accesskey "F">
+<!ENTITY directoriesNone.label "Hiçbiri">
+<!-- am-addressing.xul -->
+
+
+<!ENTITY compositionGroupTitle.label "Düzenle">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label "İletiyi HTML olarak yaz">
+<!ENTITY useHtml.accesskey "H">
+<!ENTITY autoQuote.label "Cevap yazarken özgün metni alıntı olarak tekrar yaz">
+<!ENTITY autoQuote.accesskey "a">
+<!-- LOCALIZATION NOTE (then.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY then.label "Sonra">
+<!ENTITY then.accesskey "S">
+<!ENTITY aboveQuote.label "Yanıt alıntı metnin üstünden başla">
+<!ENTITY belowQuote.label "Yanıt alıntı metnin altında başla">
+<!ENTITY selectAndQuote.label "alıntı metni işaretle">
+<!ENTITY place.label "ve benim imzam">
+<!ENTITY place.accesskey "v">
+<!ENTITY belowText.label "alıntı metnin altına koy (tavsiye edilen)">
+<!ENTITY aboveText.label "benim yanıtımın altına koy (alıntı metnin üstüne)">
+<!ENTITY includeSigOnReply.label "Include signature for replies">
+<!ENTITY includeSigOnReply.accesskey "I">
+<!ENTITY includeSigOnForward.label "İletilenlere imzayı ekle">
+<!ENTITY includeSigOnForward.accesskey "z">

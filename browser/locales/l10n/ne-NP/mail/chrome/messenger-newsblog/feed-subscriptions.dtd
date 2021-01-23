@@ -1,0 +1,17 @@
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY feedTitle.label "शीर्षक:">
+
+<!ENTITY button.addFeed.label "थप्नुहोस्">
+<!ENTITY button.addFeed.accesskey "A">
+<!ENTITY button.removeFeed.label "हटाउनुहोस्">
+<!ENTITY button.removeFeed.accesskey "R">
+<!ENTITY button.importOPML.label "आयात">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label "निर्यात">
+<!ENTITY button.exportOPML.accesskey "X">
+
+<!ENTITY cmd.close.commandKey "w">

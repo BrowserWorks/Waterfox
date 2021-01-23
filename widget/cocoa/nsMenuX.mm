@@ -30,16 +30,10 @@
 #include "nsIDocumentObserver.h"
 #include "nsIComponentManager.h"
 #include "nsIRollupListener.h"
-#include "nsBindingManager.h"
 #include "nsIServiceManager.h"
 #include "nsXULPopupManager.h"
 #include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/EventDispatcher.h"
-
-#include "jsapi.h"
-#include "nsIScriptGlobalObject.h"
-#include "nsIScriptContext.h"
-#include "nsIXPConnect.h"
 
 #include "mozilla/MouseEvents.h"
 
@@ -96,8 +90,7 @@ nsMenuX::nsMenuX()
       mDestroyHandlerCalled(false),
       mNeedsRebuild(true),
       mConstructed(false),
-      mVisible(true),
-      mXBLAttached(false) {
+      mVisible(true) {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK;
 
   if (!gMenuMethodsSwizzled) {
@@ -389,20 +382,6 @@ void nsMenuX::MenuConstruct() {
   if (!menuPopup) {
     gConstructingMenu = false;
     return;
-  }
-
-  // bug 365405: Manually wrap the menupopup node to make sure it's bounded
-  if (!mXBLAttached) {
-    nsCOMPtr<nsIXPConnect> xpconnect = nsIXPConnect::XPConnect();
-    dom::Document* ownerDoc = menuPopup->OwnerDoc();
-    dom::AutoJSAPI jsapi;
-    if (ownerDoc && jsapi.Init(ownerDoc->GetInnerWindow())) {
-      JSContext* cx = jsapi.cx();
-      JS::RootedObject ignoredObj(cx);
-      xpconnect->WrapNative(cx, JS::CurrentGlobalOrNull(cx), menuPopup, NS_GET_IID(nsISupports),
-                            ignoredObj.address());
-      mXBLAttached = true;
-    }
   }
 
   // Iterate over the kids

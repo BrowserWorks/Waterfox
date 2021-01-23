@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft= javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -8,9 +6,8 @@
 
 loader.lazyRequireGetter(
   this,
-  "HUDService",
-  "devtools/client/webconsole/hudservice",
-  true
+  "WebConsole",
+  "devtools/client/webconsole/webconsole"
 );
 loader.lazyGetter(this, "EventEmitter", () =>
   require("devtools/shared/event-emitter")
@@ -68,11 +65,12 @@ WebConsolePanel.prototype = {
       const chromeWindow = iframe.ownerDocument.defaultView;
 
       // Open the Web Console.
-      this.hud = await HUDService.openWebConsole(
-        this.target,
+      this.hud = new WebConsole(
+        this._toolbox,
         webConsoleUIWindow,
         chromeWindow
       );
+      await this.hud.init();
 
       // Pipe 'reloaded' event from WebConsoleUI to WebConsolePanel.
       // These events are listened by the Toolbox.
@@ -91,7 +89,7 @@ WebConsolePanel.prototype = {
     return this;
   },
 
-  get target() {
+  get currentTarget() {
     return this._toolbox.target;
   },
 
@@ -101,17 +99,13 @@ WebConsolePanel.prototype = {
   },
 
   destroy: function() {
-    if (this._destroyer) {
-      return this._destroyer;
+    if (!this._toolbox) {
+      return;
     }
-
-    this._destroyer = this.hud.destroy();
-    this._destroyer.then(() => {
-      this._frameWindow = null;
-      this._toolbox = null;
-      this.emit("destroyed");
-    });
-
-    return this._destroyer;
+    this.hud.destroy();
+    this.hud = null;
+    this._frameWindow = null;
+    this._toolbox = null;
+    this.emit("destroyed");
   },
 };

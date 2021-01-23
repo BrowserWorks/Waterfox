@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label          "Kartelë">
+<!ENTITY fileMenu.accesskey        "K">
+<!ENTITY newMenu.label            "E re">
+<!ENTITY newMenu.accesskey          "E">
+
+<!ENTITY editMenu.label          "Përpunim">
+<!ENTITY editMenu.accesskey        "P">
+<!ENTITY undoCmd.label            "Zhbëje">
+<!ENTITY undoCmd.accesskey          "Z">
+<!ENTITY redoCmd.label            "Ribëje">
+<!ENTITY redoCmd.accesskey          "R">
+<!ENTITY deleteCmd.label          "Fshije">
+<!ENTITY deleteCmd.accesskey        "F">
+<!ENTITY preferencesCmd2.label "Mundësi">
+<!ENTITY preferencesCmd2.accesskey "M">
+<!ENTITY preferencesCmdUnix.label       "Parapëlqime">
+<!ENTITY preferencesCmdUnix.accesskey     "a">
+
+<!ENTITY customizeCmd.label "Përshtateni">
+<!ENTITY customizeCmd.accesskey "t">
+
+<!ENTITY viewMenu.label          "Shfaqje">
+<!ENTITY viewMenu.accesskey        "S">
+<!ENTITY viewToolbarsMenu.label        "Panele">
+<!ENTITY viewToolbarsMenu.accesskey      "P">
+<!ENTITY showTaskbarCmd.label          "Shtyllë Gjendjesh">
+<!ENTITY showTaskbarCmd.accesskey        "G">
+
+<!ENTITY closeCmd.label      "Mbylleni">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "M">
+
+<!ENTITY quitApplicationCmd.label  "Dilni">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "D">
+
+<!ENTITY quitApplicationCmdUnix.label  "Dilni">
+<!ENTITY quitApplicationCmdUnix.accesskey  "d">
+
+<!ENTITY quitApplicationCmdMac.label  "Dilni nga &brandShortName;-i">
+<!ENTITY quitApplicationCmdMac.accesskey  "D">

@@ -7,7 +7,6 @@
 #ifndef CDMCaps_h_
 #define CDMCaps_h_
 
-#include "nsIThread.h"
 #include "nsTArray.h"
 #include "nsString.h"
 #include "SamplesWaitingForKey.h"
@@ -29,9 +28,9 @@ class CDMCaps {
   struct KeyStatus {
     KeyStatus(const CencKeyId& aId, const nsString& aSessionId,
               dom::MediaKeyStatus aStatus)
-        : mId(aId), mSessionId(aSessionId), mStatus(aStatus) {}
+        : mId(aId.Clone()), mSessionId(aSessionId), mStatus(aStatus) {}
     KeyStatus(const KeyStatus& aOther)
-        : mId(aOther.mId),
+        : mId(aOther.mId.Clone()),
           mSessionId(aOther.mSessionId),
           mStatus(aOther.mStatus) {}
     bool operator==(const KeyStatus& aOther) const {
@@ -64,7 +63,7 @@ class CDMCaps {
  private:
   struct WaitForKeys {
     WaitForKeys(const CencKeyId& aKeyId, SamplesWaitingForKey* aListener)
-        : mKeyId(aKeyId), mListener(aListener) {}
+        : mKeyId(aKeyId.Clone()), mListener(aListener) {}
     CencKeyId mKeyId;
     RefPtr<SamplesWaitingForKey> mListener;
   };

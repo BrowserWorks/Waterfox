@@ -26,8 +26,10 @@ callback PeerConnectionLifecycleCallback = void (RTCPeerConnection pc,
 [ChromeOnly,
  Pref="media.peerconnection.enabled",
  JSImplementation="@mozilla.org/dom/peerconnectionstatic;1",
- Constructor()]
+ Exposed=Window]
 interface RTCPeerConnectionStatic {
+  [Throws]
+  constructor();
 
   /* One slot per window (the window in which the register call is made),
      automatically unregistered when window goes away.

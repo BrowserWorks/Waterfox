@@ -17,8 +17,8 @@ kind-dependencies:
     - build-signing
     - repackage
     - repackage-signing
-    - nightly-l10n
-    - nightly-l10n-signing
+    - shippable-l10n
+    - shippable-l10n-signing
     - repackage-l10n
     - repackage-signing-l10n
     - partials
@@ -38,20 +38,14 @@ only-for-build-platforms:
     - win32-shippable/opt
     - win64-shippable/opt
     - win64-aarch64-shippable/opt
-    - linux-nightly/opt
-    - linux64-nightly/opt
-    - macosx64-nightly/opt
-    - win32-nightly/opt
-    - win64-nightly/opt
-    - win64-aarch64-nightly/opt
-    - linux-devedition-nightly/opt
-    - linux64-devedition-nightly/opt
-    - macosx64-devedition-nightly/opt
-    - win32-devedition-nightly/opt
-    - win64-devedition-nightly/opt
-    - win64-aarch64-devedition-nightly/opt
-    - linux64-asan-reporter-nightly/opt
-    - win64-asan-reporter-nightly/opt
+    - linux-devedition/opt
+    - linux64-devedition/opt
+    - macosx64-devedition/opt
+    - win32-devedition/opt
+    - win64-devedition/opt
+    - win64-aarch64-devedition/opt
+    - linux64-asan-reporter-shippable/opt
+    - win64-asan-reporter-shippable/opt
 
 job-template:
     shipping-phase: promote

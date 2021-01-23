@@ -3,7 +3,7 @@
  * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
 
 // @flow
-/* eslint complexity: ["error", 30]*/
+/* eslint complexity: ["error", 35]*/
 
 /**
  * Pause reducer
@@ -28,22 +28,19 @@ import type {
   ThreadId,
   Context,
   ThreadContext,
+  Previews,
+  SourceLocation,
+  HighlightedCalls,
 } from "../types";
 
-export type Command =
-  | null
-  | "stepOver"
-  | "stepIn"
-  | "stepOut"
-  | "resume"
-  | "rewind"
-  | "reverseStepOver";
+export type Command = null | "stepOver" | "stepIn" | "stepOut" | "resume";
 
 // Pause state associated with an individual thread.
 type ThreadPauseState = {
   why: ?Why,
   isWaitingOnBreak: boolean,
   frames: ?(any[]),
+  framesLoading: boolean,
   frameScopes: {
     generated: {
       [FrameId]: {
@@ -64,22 +61,38 @@ type ThreadPauseState = {
     },
   },
   selectedFrameId: ?string,
+
+  // Scope items that have been expanded in the current pause.
+  expandedScopes: Set<string>,
+
+  // Scope items that were expanded in the last pause. This is separate from
+  // expandedScopes so that (a) the scope pane's ObjectInspector does not depend
+  // on the current expanded scopes and we don't have to re-render the entire
+  // ObjectInspector when an element is expanded or collapsed, and (b) so that
+  // the expanded scopes are regenerated when we pause at a new location and we
+  // don't have to worry about pruning obsolete scope entries.
+  lastExpandedScopes: string[],
+
   command: Command,
   lastCommand: Command,
   wasStepping: boolean,
   previousLocation: ?MappedLocation,
+  inlinePreview: {
+    [FrameId]: Object,
+  },
+  highlightedCalls: ?HighlightedCalls,
 };
 
 // Pause state describing all threads.
 export type PauseState = {
   cx: Context,
   threadcx: ThreadContext,
-  canRewind: boolean,
   threads: { [ThreadId]: ThreadPauseState },
   skipPausing: boolean,
   mapScopes: boolean,
   shouldPauseOnExceptions: boolean,
   shouldPauseOnCaughtExceptions: boolean,
+  previewLocation: ?SourceLocation,
 };
 
 function createPauseState(thread: ThreadId = "UnknownThread") {
@@ -93,8 +106,9 @@ function createPauseState(thread: ThreadId = "UnknownThread") {
       isPaused: false,
       pauseCounter: 0,
     },
+    previewLocation: null,
+    highlightedCalls: null,
     threads: {},
-    canRewind: false,
     skipPausing: prefs.skipPausing,
     mapScopes: prefs.mapScopes,
     shouldPauseOnExceptions: prefs.pauseOnExceptions,
@@ -104,6 +118,7 @@ function createPauseState(thread: ThreadId = "UnknownThread") {
 
 const resumedPauseState = {
   frames: null,
+  framesLoading: false,
   frameScopes: {
     generated: {},
     original: {},
@@ -111,15 +126,18 @@ const resumedPauseState = {
   },
   selectedFrameId: null,
   why: null,
+  inlinePreview: {},
+  highlightedCalls: null,
 };
 
 const createInitialPauseState = () => ({
   ...resumedPauseState,
   isWaitingOnBreak: false,
-  canRewind: false,
   command: null,
   lastCommand: null,
   previousLocation: null,
+  expandedScopes: new Set(),
+  lastExpandedScopes: [],
 });
 
 function getThreadPauseState(state: PauseState, thread: ThreadId) {
@@ -168,10 +186,11 @@ function update(
     }
 
     case "PAUSED": {
-      const { thread, selectedFrameId, frames, why } = action;
+      const { thread, frame, why } = action;
 
       state = {
         ...state,
+        previewLocation: null,
         threadcx: {
           ...state.threadcx,
           pauseCounter: state.threadcx.pauseCounter + 1,
@@ -181,16 +200,35 @@ function update(
       };
       return updateThreadState({
         isWaitingOnBreak: false,
-        selectedFrameId,
-        frames,
+        selectedFrameId: frame ? frame.id : undefined,
+        frames: frame ? [frame] : undefined,
+        framesLoading: true,
         frameScopes: { ...resumedPauseState.frameScopes },
         why,
       });
     }
 
+    case "FETCHED_FRAMES": {
+      const { frames } = action;
+      return updateThreadState({ frames, framesLoading: false });
+    }
+
+    case "PREVIEW_PAUSED_LOCATION": {
+      return { ...state, previewLocation: action.location };
+    }
+
+    case "CLEAR_PREVIEW_PAUSED_LOCATION": {
+      return { ...state, previewLocation: null };
+    }
+
     case "MAP_FRAMES": {
       const { selectedFrameId, frames } = action;
       return updateThreadState({ frames, selectedFrameId });
+    }
+
+    case "MAP_FRAME_DISPLAY_NAMES": {
+      const { frames } = action;
+      return updateThreadState({ frames });
     }
 
     case "ADD_SCOPES": {
@@ -221,13 +259,13 @@ function update(
         ...threadState().frameScopes.original,
         [selectedFrameId]: {
           pending: status !== "done",
-          scope: value && value.scope,
+          scope: value?.scope,
         },
       };
 
       const mappings = {
         ...threadState().frameScopes.mappings,
-        [selectedFrameId]: value && value.mappings,
+        [selectedFrameId]: value?.mappings,
       };
 
       return updateThreadState({
@@ -248,7 +286,6 @@ function update(
     case "CONNECT":
       return {
         ...createPauseState(action.mainThread.actor),
-        canRewind: action.canRewind,
       };
 
     case "PAUSE_ON_EXCEPTIONS": {
@@ -292,6 +329,8 @@ function update(
       return updateThreadState({
         ...resumedPauseState,
         wasStepping: !!action.wasStepping,
+        expandedScopes: new Set(),
+        lastExpandedScopes: [...threadState().expandedScopes],
       });
     }
 
@@ -315,7 +354,7 @@ function update(
         },
         threads: {
           [action.mainThread.actor]: {
-            ...state.threads[action.mainThread.actor],
+            ...getThreadPauseState(state, action.mainThread.actor),
             ...resumedPauseState,
           },
         },
@@ -334,6 +373,41 @@ function update(
       prefs.mapScopes = mapScopes;
       return { ...state, mapScopes };
     }
+
+    case "SET_EXPANDED_SCOPE": {
+      const { path, expanded } = action;
+      const expandedScopes = new Set(threadState().expandedScopes);
+      if (expanded) {
+        expandedScopes.add(path);
+      } else {
+        expandedScopes.delete(path);
+      }
+      return updateThreadState({ expandedScopes });
+    }
+
+    case "ADD_INLINE_PREVIEW": {
+      const { frame, previews } = action;
+      const selectedFrameId = frame.id;
+
+      return updateThreadState({
+        inlinePreview: {
+          ...threadState().inlinePreview,
+          [selectedFrameId]: previews,
+        },
+      });
+    }
+
+    case "HIGHLIGHT_CALLS": {
+      const { highlightedCalls } = action;
+      return updateThreadState({ ...threadState(), highlightedCalls });
+    }
+
+    case "UNHIGHLIGHT_CALLS": {
+      return updateThreadState({
+        ...threadState(),
+        highlightedCalls: null,
+      });
+    }
   }
 
   return state;
@@ -348,7 +422,7 @@ function getPauseLocation(state, action) {
     return null;
   }
 
-  const frame = frames && frames[0];
+  const frame = frames?.[0];
   if (!frame) {
     return previousLocation;
   }
@@ -415,16 +489,17 @@ export function getShouldPauseOnCaughtExceptions(state: State) {
   return state.pause.shouldPauseOnCaughtExceptions;
 }
 
-export function getCanRewind(state: State) {
-  return state.pause.canRewind;
-}
-
 export function getFrames(state: State, thread: ThreadId) {
-  return getThreadPauseState(state.pause, thread).frames;
+  const { frames, framesLoading } = getThreadPauseState(state.pause, thread);
+  return framesLoading ? null : frames;
 }
 
 export function getCurrentThreadFrames(state: State) {
-  return getThreadPauseState(state.pause, getCurrentThread(state)).frames;
+  const { frames, framesLoading } = getThreadPauseState(
+    state.pause,
+    getCurrentThread(state)
+  );
+  return framesLoading ? null : frames;
 }
 
 function getGeneratedFrameId(frameId: string): string {
@@ -563,23 +638,74 @@ export function getSelectedFrameId(state: State, thread: ThreadId) {
   return getThreadPauseState(state.pause, thread).selectedFrameId;
 }
 
+export function isTopFrameSelected(state: State, thread: ThreadId) {
+  const selectedFrameId = getSelectedFrameId(state, thread);
+  const topFrame = getTopFrame(state, thread);
+  return selectedFrameId == topFrame?.id;
+}
+
 export function getTopFrame(state: State, thread: ThreadId) {
   const frames = getFrames(state, thread);
-  return frames && frames[0];
+  return frames?.[0];
 }
 
 export function getSkipPausing(state: State) {
   return state.pause.skipPausing;
 }
 
+export function getHighlightedCalls(state: State, thread: ThreadId) {
+  return getThreadPauseState(state.pause, thread).highlightedCalls;
+}
+
 export function isMapScopesEnabled(state: State) {
   return state.pause.mapScopes;
+}
+
+export function getInlinePreviews(
+  state: State,
+  thread: ThreadId,
+  frameId: string
+): Previews {
+  return getThreadPauseState(state.pause, thread).inlinePreview[
+    getGeneratedFrameId(frameId)
+  ];
+}
+
+export function getSelectedInlinePreviews(state: State) {
+  const thread = getCurrentThread(state);
+  const frameId = getSelectedFrameId(state, thread);
+  if (!frameId) {
+    return null;
+  }
+
+  return getInlinePreviews(state, thread, frameId);
+}
+
+export function getInlinePreviewExpression(
+  state: State,
+  thread: ThreadId,
+  frameId: string,
+  line: number,
+  expression: string
+) {
+  const previews = getThreadPauseState(state.pause, thread).inlinePreview[
+    getGeneratedFrameId(frameId)
+  ];
+  return previews?.[line]?.[expression];
 }
 
 // NOTE: currently only used for chrome
 export function getChromeScopes(state: State, thread: ThreadId) {
   const frame: ?ChromeFrame = (getSelectedFrame(state, thread): any);
-  return frame ? frame.scopeChain : undefined;
+  return frame?.scopeChain;
+}
+
+export function getLastExpandedScopes(state: State, thread: ThreadId) {
+  return getThreadPauseState(state.pause, thread).lastExpandedScopes;
+}
+
+export function getPausePreviewLocation(state: State) {
+  return state.pause.previewLocation;
 }
 
 export default update;

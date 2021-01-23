@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import absolute_import
 from collections import OrderedDict
 
 
@@ -329,20 +330,14 @@ with modules["NETWORK"]:
     errors["NS_ERROR_NET_INTERRUPT"] = FAILURE(71)
     # The connection attempt to a proxy failed.
     errors["NS_ERROR_PROXY_CONNECTION_REFUSED"] = FAILURE(72)
-    # The proxy requires authentication; used when we can't easily propagate 407s.
-    errors["NS_ERROR_PROXY_AUTHENTICATION_FAILED"] = FAILURE(407)
-    # Indicates that we have sent too many requests in a given amount of time.
-    errors["NS_ERROR_TOO_MANY_REQUESTS"] = FAILURE(429)
-    # The proxy failed to connect the remote server.
-    errors["NS_ERROR_PROXY_BAD_GATEWAY"] = FAILURE(502)
-    # The proxy did get any response from the remote server in time.
-    errors["NS_ERROR_PROXY_GATEWAY_TIMEOUT"] = FAILURE(504)
     # A transfer was only partially done when it completed.
     errors["NS_ERROR_NET_PARTIAL_TRANSFER"] = FAILURE(76)
     # HTTP/2 detected invalid TLS configuration
     errors["NS_ERROR_NET_INADEQUATE_SECURITY"] = FAILURE(82)
     # HTTP/2 sent a GOAWAY
     errors["NS_ERROR_NET_HTTP2_SENT_GOAWAY"] = FAILURE(83)
+    # HTTP/3 protocol internal error
+    errors["NS_ERROR_NET_HTTP3_PROTOCOL_ERROR"] = FAILURE(84)
 
     # XXX really need to better rationalize these error codes.  are consumers of
     # necko really expected to know how to discern the meaning of these??
@@ -457,6 +452,61 @@ with modules["NETWORK"]:
     # Generic error for non-specific failures during service worker interception
     errors["NS_ERROR_INTERCEPTION_FAILED"] = FAILURE(100)
 
+    # All Http proxy CONNECT response codes
+    errors["NS_ERROR_PROXY_CODE_BASE"] = FAILURE(1000)
+    # Redirection 3xx
+    errors["NS_ERROR_PROXY_MULTIPLE_CHOICES"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 300
+    errors["NS_ERROR_PROXY_MOVED_PERMANENTLY"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 301
+    errors["NS_ERROR_PROXY_FOUND"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 302
+    errors["NS_ERROR_PROXY_SEE_OTHER"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 303
+    errors["NS_ERROR_PROXY_NOT_MODIFIED"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 304
+    errors["NS_ERROR_PROXY_TEMPORARY_REDIRECT"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 307
+    errors["NS_ERROR_PROXY_PERMANENT_REDIRECT"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 308
+
+    # Client error 4xx
+    errors["NS_ERROR_PROXY_BAD_REQUEST"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 400
+    errors["NS_ERROR_PROXY_UNAUTHORIZED"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 401
+    errors["NS_ERROR_PROXY_PAYMENT_REQUIRED"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 402
+    errors["NS_ERROR_PROXY_FORBIDDEN"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 403
+    errors["NS_ERROR_PROXY_NOT_FOUND"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 404
+    errors["NS_ERROR_PROXY_METHOD_NOT_ALLOWED"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 405
+    errors["NS_ERROR_PROXY_NOT_ACCEPTABLE"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 406
+    # The proxy requires authentication; used when we can't easily propagate 407s.
+    errors["NS_ERROR_PROXY_AUTHENTICATION_FAILED"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 407
+    errors["NS_ERROR_PROXY_REQUEST_TIMEOUT"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 408
+    errors["NS_ERROR_PROXY_CONFLICT"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 409
+    errors["NS_ERROR_PROXY_GONE"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 410
+    errors["NS_ERROR_PROXY_LENGTH_REQUIRED"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 411
+    errors["NS_ERROR_PROXY_PRECONDITION_FAILED"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 412
+    errors["NS_ERROR_PROXY_REQUEST_ENTITY_TOO_LARGE"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 413
+    errors["NS_ERROR_PROXY_REQUEST_URI_TOO_LONG"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 414
+    errors["NS_ERROR_PROXY_UNSUPPORTED_MEDIA_TYPE"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 415
+    errors["NS_ERROR_PROXY_REQUESTED_RANGE_NOT_SATISFIABLE"] = \
+        errors["NS_ERROR_PROXY_CODE_BASE"] + 416
+    errors["NS_ERROR_PROXY_EXPECTATION_FAILED"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 417
+    errors["NS_ERROR_PROXY_MISDIRECTED_REQUEST"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 421
+    errors["NS_ERROR_PROXY_TOO_EARLY"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 425
+    errors["NS_ERROR_PROXY_UPGRADE_REQUIRED"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 426
+    errors["NS_ERROR_PROXY_PRECONDITION_REQUIRED"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 428
+    # Indicates that we have sent too many requests in a given amount of time.
+    errors["NS_ERROR_PROXY_TOO_MANY_REQUESTS"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 429
+    errors["NS_ERROR_PROXY_REQUEST_HEADER_FIELDS_TOO_LARGE"] = \
+        errors["NS_ERROR_PROXY_CODE_BASE"] + 431
+    errors["NS_ERROR_PROXY_UNAVAILABLE_FOR_LEGAL_REASONS"] = \
+        errors["NS_ERROR_PROXY_CODE_BASE"] + 451
+
+    # Server error 5xx
+    errors["NS_ERROR_PROXY_INTERNAL_SERVER_ERROR"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 500
+    errors["NS_ERROR_PROXY_NOT_IMPLEMENTED"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 501
+    errors["NS_ERROR_PROXY_BAD_GATEWAY"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 502
+    errors["NS_ERROR_PROXY_SERVICE_UNAVAILABLE"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 503
+    # The proxy did get any response from the remote server in time.
+    errors["NS_ERROR_PROXY_GATEWAY_TIMEOUT"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 504
+    errors["NS_ERROR_PROXY_VERSION_NOT_SUPPORTED"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 505
+    errors["NS_ERROR_PROXY_VARIANT_ALSO_NEGOTIATES"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 506
+    errors["NS_ERROR_PROXY_NOT_EXTENDED"] = errors["NS_ERROR_PROXY_CODE_BASE"] + 510
+    errors["NS_ERROR_PROXY_NETWORK_AUTHENTICATION_REQUIRED"] = \
+        errors["NS_ERROR_PROXY_CODE_BASE"] + 511
 
 # =======================================================================
 # 7: NS_ERROR_MODULE_PLUGINS
@@ -604,9 +654,6 @@ with modules["DOM"]:
     errors["NS_ERROR_DOM_TIMEOUT_ERR"] = FAILURE(23)
     errors["NS_ERROR_DOM_INVALID_NODE_TYPE_ERR"] = FAILURE(24)
     errors["NS_ERROR_DOM_DATA_CLONE_ERR"] = FAILURE(25)
-    # XXX Should be JavaScript native errors
-    errors["NS_ERROR_TYPE_ERR"] = FAILURE(26)
-    errors["NS_ERROR_RANGE_ERR"] = FAILURE(27)
     # StringEncoding API errors from http://wiki.whatwg.org/wiki/StringEncoding
     errors["NS_ERROR_DOM_ENCODING_NOT_SUPPORTED_ERR"] = FAILURE(28)
     errors["NS_ERROR_DOM_INVALID_POINTER_ERR"] = FAILURE(29)
@@ -639,7 +686,8 @@ with modules["DOM"]:
     errors["NS_ERROR_DOM_INVALID_STATE_XHR_HAS_INVALID_CONTEXT"] = FAILURE(1018)
     errors["NS_ERROR_DOM_INVALID_STATE_XHR_MUST_BE_OPENED"] = FAILURE(1019)
     errors["NS_ERROR_DOM_INVALID_STATE_XHR_MUST_NOT_BE_SENDING"] = FAILURE(1020)
-    errors["NS_ERROR_DOM_INVALID_STATE_XHR_MUST_NOT_BE_LOADING_OR_DONE"] = FAILURE(1021)
+    errors["NS_ERROR_DOM_INVALID_STATE_XHR_MUST_NOT_BE_LOADING_OR_DONE_RESPONSE_TYPE"] = FAILURE(1021)  # NOQA: E501
+    errors["NS_ERROR_DOM_INVALID_STATE_XHR_MUST_NOT_BE_LOADING_OR_DONE_OVERRIDE_MIME_TYPE"] = FAILURE(1037)  # NOQA: E501
     errors["NS_ERROR_DOM_INVALID_STATE_XHR_HAS_WRONG_RESPONSETYPE_FOR_RESPONSEXML"] = FAILURE(1022)
     errors["NS_ERROR_DOM_INVALID_STATE_XHR_HAS_WRONG_RESPONSETYPE_FOR_RESPONSETEXT"] = FAILURE(1023)  # NOQA: E501
     errors["NS_ERROR_DOM_INVALID_STATE_XHR_CHUNKED_RESPONSETYPES_UNSUPPORTED_FOR_SYNC"] = FAILURE(1024)  # NOQA: E501
@@ -654,6 +702,19 @@ with modules["DOM"]:
     errors["NS_ERROR_DOM_IMAGE_INACTIVE_DOCUMENT"] = FAILURE(1027)
     errors["NS_ERROR_DOM_IMAGE_INVALID_REQUEST"] = FAILURE(1028)
     errors["NS_ERROR_DOM_IMAGE_BROKEN"] = FAILURE(1029)
+
+    # Editing command errors.
+    errors["NS_ERROR_DOM_INVALID_STATE_DOCUMENT_EXEC_COMMAND"] = FAILURE(1030)
+    errors["NS_ERROR_DOM_INVALID_STATE_DOCUMENT_QUERY_COMMAND_ENABLED"] = FAILURE(1031)
+    errors["NS_ERROR_DOM_INVALID_STATE_DOCUMENT_QUERY_COMMAND_INDETERM"] = FAILURE(1032)
+    errors["NS_ERROR_DOM_INVALID_STATE_DOCUMENT_QUERY_COMMAND_STATE"] = FAILURE(1033)
+    errors["NS_ERROR_DOM_INVALID_STATE_DOCUMENT_QUERY_COMMAND_SUPPORTED"] = FAILURE(1034)
+    errors["NS_ERROR_DOM_INVALID_STATE_DOCUMENT_QUERY_COMMAND_VALUE"] = FAILURE(1035)
+
+    # Used to indicate that a resource with the Cross-Origin-Resource-Policy
+    # response header set failed the origin check.
+    # https://fetch.spec.whatwg.org/#cross-origin-resource-policy-header
+    errors["NS_ERROR_DOM_CORP_FAILED"] = FAILURE(1036)
 
     # May be used to indicate when e.g. setting a property value didn't
     # actually change the value, like for obj.foo = "bar"; obj.foo = "bar";
@@ -760,7 +821,6 @@ with modules["XPCONNECT"]:
     errors["NS_ERROR_XPC_HAS_BEEN_SHUTDOWN"] = FAILURE(51)
     errors["NS_ERROR_XPC_CANT_MODIFY_PROP_ON_WN"] = FAILURE(52)
     errors["NS_ERROR_XPC_BAD_CONVERT_JS_ZERO_ISNOT_NULL"] = FAILURE(53)
-    errors["NS_ERROR_XPC_CANT_PASS_CPOW_TO_NATIVE"] = FAILURE(54)
     # any new errors here should have an associated entry added in xpc.msg
 
 
@@ -777,7 +837,11 @@ with modules["PROFILE"]:
 # 21: NS_ERROR_MODULE_SECURITY
 # =======================================================================
 with modules["SECURITY"]:
+    # Error code for XFO
+    errors["NS_ERROR_XFO_VIOLATION"] = FAILURE(96)
+
     # Error code for CSP
+    errors["NS_ERROR_CSP_NAVIGATE_TO_VIOLATION"] = FAILURE(97)
     errors["NS_ERROR_CSP_FORM_ACTION_VIOLATION"] = FAILURE(98)
     errors["NS_ERROR_CSP_FRAME_ANCESTOR_VIOLATION"] = FAILURE(99)
 
@@ -815,7 +879,6 @@ with modules["SECURITY"]:
 with modules["DOM_XPATH"]:
     # DOM error codes from http://www.w3.org/TR/DOM-Level-3-XPath/
     errors["NS_ERROR_DOM_INVALID_EXPRESSION_ERR"] = FAILURE(51)
-    errors["NS_ERROR_DOM_TYPE_ERR"] = FAILURE(52)
 
 
 # =======================================================================
@@ -831,10 +894,9 @@ with modules["URILOADER"]:
     errors["NS_ERROR_UNWANTED_URI"] = FAILURE(35)
     errors["NS_ERROR_BLOCKED_URI"] = FAILURE(37)
     errors["NS_ERROR_HARMFUL_URI"] = FAILURE(38)
-    errors["NS_ERROR_MAYBE_TRACKING_URI"] = FAILURE(39)
-    errors["NS_ERROR_TRACKING_ANNOTATION_URI"] = FAILURE(40)
     errors["NS_ERROR_FINGERPRINTING_URI"] = FAILURE(41)
     errors["NS_ERROR_CRYPTOMINING_URI"] = FAILURE(42)
+    errors["NS_ERROR_SOCIALTRACKING_URI"] = FAILURE(43)
     # Used when "Save Link As..." doesn't see the headers quickly enough to
     # choose a filename.  See nsContextMenu.js.
     errors["NS_ERROR_SAVE_LINK_AS_TIMEOUT"] = FAILURE(32)
@@ -856,8 +918,6 @@ with modules["CONTENT"]:
     errors["NS_ERROR_CONTENT_BLOCKED_SHOW_ALT"] = FAILURE(7)
     # Success variations of content policy blocking
     errors["NS_PROPTABLE_PROP_NOT_THERE"] = FAILURE(10)
-    # Error code for XBL
-    errors["NS_ERROR_XBL_BLOCKED"] = FAILURE(15)
     # Error code for when the content process crashed
     errors["NS_ERROR_CONTENT_CRASHED"] = FAILURE(16)
     # Error code for when a subframe process crashed
@@ -867,7 +927,7 @@ with modules["CONTENT"]:
     errors["NS_ERROR_BUILDID_MISMATCH"] = FAILURE(17)
 
     errors["NS_PROPTABLE_PROP_OVERWRITTEN"] = SUCCESS(11)
-    # Error codes for FindBroadcaster in XULDocument.cpp
+    # Error codes for FindBroadcaster in XULBroadcastManager.cpp
     errors["NS_FINDBROADCASTER_NOT_FOUND"] = SUCCESS(12)
     errors["NS_FINDBROADCASTER_FOUND"] = SUCCESS(13)
 
@@ -1172,11 +1232,11 @@ def error_list_h(output):
 
     output.write("#define NS_ERROR_MODULE_BASE_OFFSET {}\n".format(MODULE_BASE_OFFSET))
 
-    for mod, val in modules.iteritems():
+    for mod, val in modules.items():
         output.write("#define NS_ERROR_MODULE_{} {}\n".format(mod, val.num))
 
     items = []
-    for error, val in errors.iteritems():
+    for error, val in errors.items():
         items.append("  {} = 0x{:X}".format(error, val))
     output.write("""
 enum class nsresult : uint32_t
@@ -1187,7 +1247,7 @@ enum class nsresult : uint32_t
 """.format(",\n".join(items)))
 
     items = []
-    for error, val in errors.iteritems():
+    for error, val in errors.items():
         items.append("  {0} = nsresult::{0}".format(error))
 
     output.write("""
@@ -1224,7 +1284,7 @@ GetErrorNameInternal(nsresult rv)
     # NOTE: Making sure we don't write out duplicate values is important as
     # we're using a switch statement to implement this.
     seen = set()
-    for error, val in errors.iteritems():
+    for error, val in errors.items():
         if val not in seen:
             output.write('  case nsresult::{0}: return "{0}";\n'.format(error))
         seen.add(val)
@@ -1251,9 +1311,9 @@ use super::nsresult;
     output.write("pub const NS_ERROR_MODULE_BASE_OFFSET: nsresult = nsresult({});\n"
                  .format(MODULE_BASE_OFFSET))
 
-    for mod, val in modules.iteritems():
+    for mod, val in modules.items():
         output.write("pub const NS_ERROR_MODULE_{}: nsresult = nsresult({});\n"
                      .format(mod, val.num))
 
-    for error, val in errors.iteritems():
+    for error, val in errors.items():
         output.write("pub const {}: nsresult = nsresult(0x{:X});\n".format(error, val))

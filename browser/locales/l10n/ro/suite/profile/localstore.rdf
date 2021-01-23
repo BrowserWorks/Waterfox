@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<RDF:RDF
+     xmlns:NC="http://home.netscape.com/NC-rdf#"
+     xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+  <RDF:Description about="chrome://navigator/content/navigator.xul#sidebar-panels">
+    <last-selected-panel>urn:sidebar:panel:bookmarks</last-selected-panel>
+  </RDF:Description>
+  <RDF:Description about="chrome://navigator/content/navigator.xul#sidebar-box">
+    <hidden>true</hidden>
+  </RDF:Description>
+  <RDF:Description about="chrome://navigator/content/navigator.xul#sidebar-splitter">
+    <hidden>true</hidden>
+  </RDF:Description>
+  <RDF:Description about="chrome://navigator/content/navigator.xul">
+    <NC:persist resource="chrome://navigator/content/navigator.xul#sidebar-panels"/>
+    <NC:persist resource="chrome://navigator/content/navigator.xul#sidebar-box"/>
+    <NC:persist resource="chrome://navigator/content/navigator.xul#sidebar-splitter"/>
+  </RDF:Description>
+</RDF:RDF>

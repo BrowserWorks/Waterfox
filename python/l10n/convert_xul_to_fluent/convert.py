@@ -1,3 +1,7 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 from __future__ import absolute_import
 from __future__ import print_function
 from lib.xul import collect_messages
@@ -10,6 +14,8 @@ import argparse
 import sys
 # import re
 
+# To run this, you'll need to have lxml installed:
+#   `pip install lxml`
 
 # default migration directions
 data = {
@@ -91,7 +97,7 @@ def main():
     print('======== Fluent ========')
     print(ftl.encode("utf-8"))
     if not dry_run:
-        write_file(data['ftl'], ftl.encode("utf-8"), data['mozilla-central'])
+        write_file(data['ftl'], ftl.encode("utf-8"), data['mozilla-central'], append=True)
 
 
 if __name__ == '__main__':

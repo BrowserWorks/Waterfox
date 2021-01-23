@@ -79,7 +79,7 @@ nsNativeMenuDocListener::AttributeChanged(mozilla::dom::Element *aElement,
         return;
     }
 
-    MutationRecord *m = *mPendingMutations.AppendElement(new MutationRecord);
+    MutationRecord *m = mPendingMutations.AppendElement(MakeUnique<MutationRecord>())->get();
     m->mType = MutationRecord::eAttributeChanged;
     m->mTarget = aElement;
     m->mAttribute = aAttribute;
@@ -110,7 +110,7 @@ nsNativeMenuDocListener::ContentInserted(nsIContent *aChild)
         return;
     }
 
-    MutationRecord *m = *mPendingMutations.AppendElement(new MutationRecord);
+    MutationRecord *m = mPendingMutations.AppendElement(MakeUnique<MutationRecord>())->get();
     m->mType = MutationRecord::eContentInserted;
     m->mTarget = container;
     m->mChild = aChild;
@@ -133,7 +133,7 @@ nsNativeMenuDocListener::ContentRemoved(nsIContent *aChild,
         return;
     }
 
-    MutationRecord *m = *mPendingMutations.AppendElement(new MutationRecord);
+    MutationRecord *m = mPendingMutations.AppendElement(MakeUnique<MutationRecord>())->get();
     m->mType = MutationRecord::eContentRemoved;
     m->mTarget = container;
     m->mChild = aChild;
@@ -203,7 +203,7 @@ nsNativeMenuDocListener::FlushPendingMutations()
     bool inUpdateSequence = false;
 
     while (mPendingMutations.Length() > 0) {
-        MutationRecord *m = mPendingMutations[0];
+        MutationRecord *m = mPendingMutations[0].get();
 
         if (m->mTarget != currentTarget) {
             if (inUpdateSequence) {

@@ -51,9 +51,10 @@ class InsertNodeTransaction final : public EditTransactionBase {
                                            EditTransactionBase)
 
   NS_DECL_EDITTRANSACTIONBASE
+  NS_DECL_EDITTRANSACTIONBASE_GETASMETHODS_OVERRIDE(InsertNodeTransaction)
 
  protected:
-  virtual ~InsertNodeTransaction();
+  virtual ~InsertNodeTransaction() = default;
 
   // The element to insert.
   nsCOMPtr<nsIContent> mContentToInsert;

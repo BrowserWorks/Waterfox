@@ -33,9 +33,11 @@ using namespace js;
 using namespace js::jit;
 using namespace js::wasm;
 
+using mozilla::AsChars;
 using mozilla::CheckedInt;
 using mozilla::CheckedInt32;
-using mozilla::IsValidUtf8;
+using mozilla::IsUtf8;
+using mozilla::MakeSpan;
 using mozilla::Unused;
 
 // Decoder implementation.
@@ -356,11 +358,14 @@ bool wasm::EncodeLocalEntries(Encoder& e, const ValTypeVector& locals) {
   }
 
   uint32_t numLocalEntries = 0;
-  ValType prev;
-  for (ValType t : locals) {
-    if (t != prev) {
-      numLocalEntries++;
-      prev = t;
+  if (locals.length()) {
+    ValType prev = locals[0];
+    numLocalEntries++;
+    for (ValType t : locals) {
+      if (t != prev) {
+        numLocalEntries++;
+        prev = t;
+      }
     }
   }
 
@@ -369,7 +374,7 @@ bool wasm::EncodeLocalEntries(Encoder& e, const ValTypeVector& locals) {
   }
 
   if (numLocalEntries) {
-    prev = locals[0];
+    ValType prev = locals[0];
     uint32_t count = 1;
     for (uint32_t i = 1; i < locals.length(); i++, count++) {
       if (prev != locals[i]) {
@@ -395,7 +400,8 @@ bool wasm::EncodeLocalEntries(Encoder& e, const ValTypeVector& locals) {
 }
 
 bool wasm::DecodeLocalEntries(Decoder& d, const TypeDefVector& types,
-                              bool gcTypesEnabled, ValTypeVector* locals) {
+                              bool refTypesEnabled, bool gcTypesEnabled,
+                              ValTypeVector* locals) {
   uint32_t numLocalEntries;
   if (!d.readVarU32(&numLocalEntries)) {
     return d.fail("failed to read number of local entries");
@@ -412,7 +418,7 @@ bool wasm::DecodeLocalEntries(Decoder& d, const TypeDefVector& types,
     }
 
     ValType type;
-    if (!d.readValType(types, gcTypesEnabled, &type)) {
+    if (!d.readValType(types, refTypesEnabled, gcTypesEnabled, &type)) {
       return false;
     }
 
@@ -441,20 +447,30 @@ bool wasm::DecodeValidatedLocalEntries(Decoder& d, ValTypeVector* locals) {
 
 // Function body validation.
 
-struct ValidatingPolicy {
-  typedef Nothing Value;
-  typedef Nothing ControlItem;
+class NothingVector {
+  Nothing unused_;
+
+ public:
+  bool resize(size_t length) { return true; }
+  Nothing& operator[](size_t) { return unused_; }
+  Nothing& back() { return unused_; }
 };
 
-typedef OpIter<ValidatingPolicy> ValidatingOpIter;
+struct ValidatingPolicy {
+  using Value = Nothing;
+  using ValueVector = NothingVector;
+  using ControlItem = Nothing;
+};
+
+using ValidatingOpIter = OpIter<ValidatingPolicy>;
 
 static bool DecodeFunctionBodyExprs(const ModuleEnvironment& env,
-                                    const FuncType& funcType,
+                                    uint32_t funcIndex,
                                     const ValTypeVector& locals,
                                     const uint8_t* bodyEnd, Decoder* d) {
   ValidatingOpIter iter(env, *d);
 
-  if (!iter.readFunctionStart(funcType.ret())) {
+  if (!iter.readFunctionStart(funcIndex)) {
     return false;
   }
 
@@ -469,12 +485,13 @@ static bool DecodeFunctionBodyExprs(const ModuleEnvironment& env,
     }
 
     Nothing nothing;
+    NothingVector nothings;
+    ResultType unusedType;
 
     switch (op.b0) {
       case uint16_t(Op::End): {
         LabelKind unusedKind;
-        ExprType unusedType;
-        if (!iter.readEnd(&unusedKind, &unusedType, &nothing)) {
+        if (!iter.readEnd(&unusedKind, &unusedType, &nothings, &nothings)) {
           return false;
         }
         iter.popEnd();
@@ -489,12 +506,12 @@ static bool DecodeFunctionBodyExprs(const ModuleEnvironment& env,
         CHECK(iter.readDrop());
       case uint16_t(Op::Call): {
         uint32_t unusedIndex;
-        ValidatingOpIter::ValueVector unusedArgs;
+        NothingVector unusedArgs;
         CHECK(iter.readCall(&unusedIndex, &unusedArgs));
       }
       case uint16_t(Op::CallIndirect): {
         uint32_t unusedIndex, unusedIndex2;
-        ValidatingOpIter::ValueVector unusedArgs;
+        NothingVector unusedArgs;
         CHECK(iter.readCallIndirect(&unusedIndex, &unusedIndex2, &nothing,
                                     &unusedArgs));
       }
@@ -536,28 +553,41 @@ static bool DecodeFunctionBodyExprs(const ModuleEnvironment& env,
       }
 #ifdef ENABLE_WASM_REFTYPES
       case uint16_t(Op::TableGet): {
+        if (!env.refTypesEnabled()) {
+          return iter.unrecognizedOpcode(&op);
+        }
         uint32_t unusedTableIndex;
         CHECK(iter.readTableGet(&unusedTableIndex, &nothing));
       }
       case uint16_t(Op::TableSet): {
+        if (!env.refTypesEnabled()) {
+          return iter.unrecognizedOpcode(&op);
+        }
         uint32_t unusedTableIndex;
         CHECK(iter.readTableSet(&unusedTableIndex, &nothing, &nothing));
       }
 #endif
-      case uint16_t(Op::Select): {
+      case uint16_t(Op::SelectNumeric): {
         StackType unused;
-        CHECK(iter.readSelect(&unused, &nothing, &nothing, &nothing));
+        CHECK(iter.readSelect(/*typed*/ false, &unused, &nothing, &nothing,
+                              &nothing));
+      }
+      case uint16_t(Op::SelectTyped): {
+        if (!env.refTypesEnabled()) {
+          return iter.unrecognizedOpcode(&op);
+        }
+        StackType unused;
+        CHECK(iter.readSelect(/*typed*/ true, &unused, &nothing, &nothing,
+                              &nothing));
       }
       case uint16_t(Op::Block):
-        CHECK(iter.readBlock());
+        CHECK(iter.readBlock(&unusedType));
       case uint16_t(Op::Loop):
-        CHECK(iter.readLoop());
+        CHECK(iter.readLoop(&unusedType));
       case uint16_t(Op::If):
-        CHECK(iter.readIf(&nothing));
-      case uint16_t(Op::Else): {
-        ExprType type;
-        CHECK(iter.readElse(&type, &nothing));
-      }
+        CHECK(iter.readIf(&unusedType, &nothing));
+      case uint16_t(Op::Else):
+        CHECK(iter.readElse(&unusedType, &unusedType, &nothings));
       case uint16_t(Op::I32Clz):
       case uint16_t(Op::I32Ctz):
       case uint16_t(Op::I32Popcnt):
@@ -796,25 +826,330 @@ static bool DecodeFunctionBodyExprs(const ModuleEnvironment& env,
         CHECK(iter.readMemorySize());
       case uint16_t(Op::Br): {
         uint32_t unusedDepth;
-        ExprType unusedType;
-        CHECK(iter.readBr(&unusedDepth, &unusedType, &nothing));
+        CHECK(iter.readBr(&unusedDepth, &unusedType, &nothings));
       }
       case uint16_t(Op::BrIf): {
         uint32_t unusedDepth;
-        ExprType unusedType;
-        CHECK(iter.readBrIf(&unusedDepth, &unusedType, &nothing, &nothing));
+        CHECK(iter.readBrIf(&unusedDepth, &unusedType, &nothings, &nothing));
       }
       case uint16_t(Op::BrTable): {
         Uint32Vector unusedDepths;
         uint32_t unusedDefault;
-        ExprType unusedType;
         CHECK(iter.readBrTable(&unusedDepths, &unusedDefault, &unusedType,
-                               &nothing, &nothing));
+                               &nothings, &nothing));
       }
       case uint16_t(Op::Return):
-        CHECK(iter.readReturn(&nothing));
+        CHECK(iter.readReturn(&nothings));
       case uint16_t(Op::Unreachable):
         CHECK(iter.readUnreachable());
+#ifdef ENABLE_WASM_GC
+      case uint16_t(Op::GcPrefix): {
+        switch (op.b1) {
+          case uint32_t(GcOp::StructNew): {
+            if (!env.gcTypesEnabled()) {
+              return iter.unrecognizedOpcode(&op);
+            }
+            uint32_t unusedUint;
+            NothingVector unusedArgs;
+            CHECK(iter.readStructNew(&unusedUint, &unusedArgs));
+          }
+          case uint32_t(GcOp::StructGet): {
+            if (!env.gcTypesEnabled()) {
+              return iter.unrecognizedOpcode(&op);
+            }
+            uint32_t unusedUint1, unusedUint2;
+            CHECK(iter.readStructGet(&unusedUint1, &unusedUint2, &nothing));
+          }
+          case uint32_t(GcOp::StructSet): {
+            if (!env.gcTypesEnabled()) {
+              return iter.unrecognizedOpcode(&op);
+            }
+            uint32_t unusedUint1, unusedUint2;
+            CHECK(iter.readStructSet(&unusedUint1, &unusedUint2, &nothing,
+                                     &nothing));
+          }
+          case uint32_t(GcOp::StructNarrow): {
+            if (!env.gcTypesEnabled()) {
+              return iter.unrecognizedOpcode(&op);
+            }
+            ValType unusedTy, unusedTy2;
+            CHECK(iter.readStructNarrow(&unusedTy, &unusedTy2, &nothing));
+          }
+          default:
+            return iter.unrecognizedOpcode(&op);
+        }
+        break;
+      }
+#endif
+
+#ifdef ENABLE_WASM_SIMD
+      case uint16_t(Op::SimdPrefix): {
+        if (!env.v128Enabled()) {
+          return iter.unrecognizedOpcode(&op);
+        }
+        uint32_t noIndex;
+        switch (op.b1) {
+          case uint32_t(SimdOp::I8x16ExtractLaneS):
+          case uint32_t(SimdOp::I8x16ExtractLaneU):
+            CHECK(iter.readExtractLane(ValType::I32, 16, &noIndex, &nothing));
+          case uint32_t(SimdOp::I16x8ExtractLaneS):
+          case uint32_t(SimdOp::I16x8ExtractLaneU):
+            CHECK(iter.readExtractLane(ValType::I32, 8, &noIndex, &nothing));
+          case uint32_t(SimdOp::I32x4ExtractLane):
+            CHECK(iter.readExtractLane(ValType::I32, 4, &noIndex, &nothing));
+          case uint32_t(SimdOp::I64x2ExtractLane):
+            CHECK(iter.readExtractLane(ValType::I64, 2, &noIndex, &nothing));
+          case uint32_t(SimdOp::F32x4ExtractLane):
+            CHECK(iter.readExtractLane(ValType::F32, 4, &noIndex, &nothing));
+          case uint32_t(SimdOp::F64x2ExtractLane):
+            CHECK(iter.readExtractLane(ValType::F64, 2, &noIndex, &nothing));
+
+          case uint32_t(SimdOp::I8x16Splat):
+          case uint32_t(SimdOp::I16x8Splat):
+          case uint32_t(SimdOp::I32x4Splat):
+            CHECK(iter.readConversion(ValType::I32, ValType::V128, &nothing));
+          case uint32_t(SimdOp::I64x2Splat):
+            CHECK(iter.readConversion(ValType::I64, ValType::V128, &nothing));
+          case uint32_t(SimdOp::F32x4Splat):
+            CHECK(iter.readConversion(ValType::F32, ValType::V128, &nothing));
+          case uint32_t(SimdOp::F64x2Splat):
+            CHECK(iter.readConversion(ValType::F64, ValType::V128, &nothing));
+
+          case uint32_t(SimdOp::I8x16AnyTrue):
+          case uint32_t(SimdOp::I8x16AllTrue):
+          case uint32_t(SimdOp::I16x8AnyTrue):
+          case uint32_t(SimdOp::I16x8AllTrue):
+          case uint32_t(SimdOp::I32x4AnyTrue):
+          case uint32_t(SimdOp::I32x4AllTrue):
+            CHECK(iter.readConversion(ValType::V128, ValType::I32, &nothing));
+
+          case uint32_t(SimdOp::I8x16ReplaceLane):
+            CHECK(iter.readReplaceLane(ValType::I32, 16, &noIndex, &nothing,
+                                       &nothing));
+          case uint32_t(SimdOp::I16x8ReplaceLane):
+            CHECK(iter.readReplaceLane(ValType::I32, 8, &noIndex, &nothing,
+                                       &nothing));
+          case uint32_t(SimdOp::I32x4ReplaceLane):
+            CHECK(iter.readReplaceLane(ValType::I32, 4, &noIndex, &nothing,
+                                       &nothing));
+          case uint32_t(SimdOp::I64x2ReplaceLane):
+            CHECK(iter.readReplaceLane(ValType::I64, 2, &noIndex, &nothing,
+                                       &nothing));
+          case uint32_t(SimdOp::F32x4ReplaceLane):
+            CHECK(iter.readReplaceLane(ValType::F32, 4, &noIndex, &nothing,
+                                       &nothing));
+          case uint32_t(SimdOp::F64x2ReplaceLane):
+            CHECK(iter.readReplaceLane(ValType::F64, 2, &noIndex, &nothing,
+                                       &nothing));
+
+          case uint32_t(SimdOp::I8x16Eq):
+          case uint32_t(SimdOp::I8x16Ne):
+          case uint32_t(SimdOp::I8x16LtS):
+          case uint32_t(SimdOp::I8x16LtU):
+          case uint32_t(SimdOp::I8x16GtS):
+          case uint32_t(SimdOp::I8x16GtU):
+          case uint32_t(SimdOp::I8x16LeS):
+          case uint32_t(SimdOp::I8x16LeU):
+          case uint32_t(SimdOp::I8x16GeS):
+          case uint32_t(SimdOp::I8x16GeU):
+          case uint32_t(SimdOp::I16x8Eq):
+          case uint32_t(SimdOp::I16x8Ne):
+          case uint32_t(SimdOp::I16x8LtS):
+          case uint32_t(SimdOp::I16x8LtU):
+          case uint32_t(SimdOp::I16x8GtS):
+          case uint32_t(SimdOp::I16x8GtU):
+          case uint32_t(SimdOp::I16x8LeS):
+          case uint32_t(SimdOp::I16x8LeU):
+          case uint32_t(SimdOp::I16x8GeS):
+          case uint32_t(SimdOp::I16x8GeU):
+          case uint32_t(SimdOp::I32x4Eq):
+          case uint32_t(SimdOp::I32x4Ne):
+          case uint32_t(SimdOp::I32x4LtS):
+          case uint32_t(SimdOp::I32x4LtU):
+          case uint32_t(SimdOp::I32x4GtS):
+          case uint32_t(SimdOp::I32x4GtU):
+          case uint32_t(SimdOp::I32x4LeS):
+          case uint32_t(SimdOp::I32x4LeU):
+          case uint32_t(SimdOp::I32x4GeS):
+          case uint32_t(SimdOp::I32x4GeU):
+          case uint32_t(SimdOp::F32x4Eq):
+          case uint32_t(SimdOp::F32x4Ne):
+          case uint32_t(SimdOp::F32x4Lt):
+          case uint32_t(SimdOp::F32x4Gt):
+          case uint32_t(SimdOp::F32x4Le):
+          case uint32_t(SimdOp::F32x4Ge):
+          case uint32_t(SimdOp::F64x2Eq):
+          case uint32_t(SimdOp::F64x2Ne):
+          case uint32_t(SimdOp::F64x2Lt):
+          case uint32_t(SimdOp::F64x2Gt):
+          case uint32_t(SimdOp::F64x2Le):
+          case uint32_t(SimdOp::F64x2Ge):
+          case uint32_t(SimdOp::V128And):
+          case uint32_t(SimdOp::V128Or):
+          case uint32_t(SimdOp::V128Xor):
+          case uint32_t(SimdOp::V128AndNot):
+          case uint32_t(SimdOp::I8x16AvgrU):
+          case uint32_t(SimdOp::I16x8AvgrU):
+          case uint32_t(SimdOp::I8x16Add):
+          case uint32_t(SimdOp::I8x16AddSaturateS):
+          case uint32_t(SimdOp::I8x16AddSaturateU):
+          case uint32_t(SimdOp::I8x16Sub):
+          case uint32_t(SimdOp::I8x16SubSaturateS):
+          case uint32_t(SimdOp::I8x16SubSaturateU):
+          case uint32_t(SimdOp::I8x16MinS):
+          case uint32_t(SimdOp::I8x16MinU):
+          case uint32_t(SimdOp::I8x16MaxS):
+          case uint32_t(SimdOp::I8x16MaxU):
+          case uint32_t(SimdOp::I16x8Add):
+          case uint32_t(SimdOp::I16x8AddSaturateS):
+          case uint32_t(SimdOp::I16x8AddSaturateU):
+          case uint32_t(SimdOp::I16x8Sub):
+          case uint32_t(SimdOp::I16x8SubSaturateS):
+          case uint32_t(SimdOp::I16x8SubSaturateU):
+          case uint32_t(SimdOp::I16x8Mul):
+          case uint32_t(SimdOp::I16x8MinS):
+          case uint32_t(SimdOp::I16x8MinU):
+          case uint32_t(SimdOp::I16x8MaxS):
+          case uint32_t(SimdOp::I16x8MaxU):
+          case uint32_t(SimdOp::I32x4Add):
+          case uint32_t(SimdOp::I32x4Sub):
+          case uint32_t(SimdOp::I32x4Mul):
+          case uint32_t(SimdOp::I32x4MinS):
+          case uint32_t(SimdOp::I32x4MinU):
+          case uint32_t(SimdOp::I32x4MaxS):
+          case uint32_t(SimdOp::I32x4MaxU):
+          case uint32_t(SimdOp::I64x2Add):
+          case uint32_t(SimdOp::I64x2Sub):
+          case uint32_t(SimdOp::I64x2Mul):
+          case uint32_t(SimdOp::F32x4Add):
+          case uint32_t(SimdOp::F32x4Sub):
+          case uint32_t(SimdOp::F32x4Mul):
+          case uint32_t(SimdOp::F32x4Div):
+          case uint32_t(SimdOp::F32x4Min):
+          case uint32_t(SimdOp::F32x4Max):
+          case uint32_t(SimdOp::F64x2Add):
+          case uint32_t(SimdOp::F64x2Sub):
+          case uint32_t(SimdOp::F64x2Mul):
+          case uint32_t(SimdOp::F64x2Div):
+          case uint32_t(SimdOp::F64x2Min):
+          case uint32_t(SimdOp::F64x2Max):
+          case uint32_t(SimdOp::I8x16NarrowSI16x8):
+          case uint32_t(SimdOp::I8x16NarrowUI16x8):
+          case uint32_t(SimdOp::I16x8NarrowSI32x4):
+          case uint32_t(SimdOp::I16x8NarrowUI32x4):
+          case uint32_t(SimdOp::V8x16Swizzle):
+            CHECK(iter.readBinary(ValType::V128, &nothing, &nothing));
+
+          case uint32_t(SimdOp::I8x16Neg):
+          case uint32_t(SimdOp::I16x8Neg):
+          case uint32_t(SimdOp::I16x8WidenLowSI8x16):
+          case uint32_t(SimdOp::I16x8WidenHighSI8x16):
+          case uint32_t(SimdOp::I16x8WidenLowUI8x16):
+          case uint32_t(SimdOp::I16x8WidenHighUI8x16):
+          case uint32_t(SimdOp::I32x4Neg):
+          case uint32_t(SimdOp::I32x4WidenLowSI16x8):
+          case uint32_t(SimdOp::I32x4WidenHighSI16x8):
+          case uint32_t(SimdOp::I32x4WidenLowUI16x8):
+          case uint32_t(SimdOp::I32x4WidenHighUI16x8):
+          case uint32_t(SimdOp::I32x4TruncSSatF32x4):
+          case uint32_t(SimdOp::I32x4TruncUSatF32x4):
+          case uint32_t(SimdOp::I64x2Neg):
+          case uint32_t(SimdOp::F32x4Abs):
+          case uint32_t(SimdOp::F32x4Neg):
+          case uint32_t(SimdOp::F32x4Sqrt):
+          case uint32_t(SimdOp::F32x4ConvertSI32x4):
+          case uint32_t(SimdOp::F32x4ConvertUI32x4):
+          case uint32_t(SimdOp::F64x2Abs):
+          case uint32_t(SimdOp::F64x2Neg):
+          case uint32_t(SimdOp::F64x2Sqrt):
+          case uint32_t(SimdOp::V128Not):
+          case uint32_t(SimdOp::I8x16Abs):
+          case uint32_t(SimdOp::I16x8Abs):
+          case uint32_t(SimdOp::I32x4Abs):
+            CHECK(iter.readUnary(ValType::V128, &nothing));
+
+          case uint32_t(SimdOp::I8x16Shl):
+          case uint32_t(SimdOp::I8x16ShrS):
+          case uint32_t(SimdOp::I8x16ShrU):
+          case uint32_t(SimdOp::I16x8Shl):
+          case uint32_t(SimdOp::I16x8ShrS):
+          case uint32_t(SimdOp::I16x8ShrU):
+          case uint32_t(SimdOp::I32x4Shl):
+          case uint32_t(SimdOp::I32x4ShrS):
+          case uint32_t(SimdOp::I32x4ShrU):
+          case uint32_t(SimdOp::I64x2Shl):
+          case uint32_t(SimdOp::I64x2ShrS):
+          case uint32_t(SimdOp::I64x2ShrU):
+            CHECK(iter.readVectorShift(&nothing, &nothing));
+
+          case uint32_t(SimdOp::V128Bitselect):
+            CHECK(iter.readVectorSelect(&nothing, &nothing, &nothing));
+
+          case uint32_t(SimdOp::V8x16Shuffle): {
+            V128 mask;
+            CHECK(iter.readVectorShuffle(&nothing, &nothing, &mask));
+          }
+
+          case uint32_t(SimdOp::V128Const): {
+            V128 noVector;
+            CHECK(iter.readV128Const(&noVector));
+          }
+
+          case uint32_t(SimdOp::V128Load): {
+            LinearMemoryAddress<Nothing> addr;
+            CHECK(iter.readLoad(ValType::V128, 16, &addr));
+          }
+
+          case uint32_t(SimdOp::V8x16LoadSplat): {
+            LinearMemoryAddress<Nothing> addr;
+            CHECK(iter.readLoadSplat(1, &addr));
+          }
+
+          case uint32_t(SimdOp::V16x8LoadSplat): {
+            LinearMemoryAddress<Nothing> addr;
+            CHECK(iter.readLoadSplat(2, &addr));
+          }
+
+          case uint32_t(SimdOp::V32x4LoadSplat): {
+            LinearMemoryAddress<Nothing> addr;
+            CHECK(iter.readLoadSplat(4, &addr));
+          }
+
+          case uint32_t(SimdOp::V64x2LoadSplat): {
+            LinearMemoryAddress<Nothing> addr;
+            CHECK(iter.readLoadSplat(8, &addr));
+          }
+
+          case uint32_t(SimdOp::I16x8LoadS8x8):
+          case uint32_t(SimdOp::I16x8LoadU8x8): {
+            LinearMemoryAddress<Nothing> addr;
+            CHECK(iter.readLoadExtend(&addr));
+          }
+
+          case uint32_t(SimdOp::I32x4LoadS16x4):
+          case uint32_t(SimdOp::I32x4LoadU16x4): {
+            LinearMemoryAddress<Nothing> addr;
+            CHECK(iter.readLoadExtend(&addr));
+          }
+
+          case uint32_t(SimdOp::I64x2LoadS32x2):
+          case uint32_t(SimdOp::I64x2LoadU32x2): {
+            LinearMemoryAddress<Nothing> addr;
+            CHECK(iter.readLoadExtend(&addr));
+          }
+
+          case uint32_t(SimdOp::V128Store): {
+            LinearMemoryAddress<Nothing> addr;
+            CHECK(iter.readStore(ValType::V128, 16, &addr, &nothing));
+          }
+
+          default:
+            return iter.unrecognizedOpcode(&op);
+        }
+        break;
+      }
+#endif  // ENABLE_WASM_SIMD
+
       case uint16_t(Op::MiscPrefix): {
         switch (op.b1) {
           case uint32_t(MiscOp::I32TruncSSatF32):
@@ -829,8 +1164,13 @@ static bool DecodeFunctionBodyExprs(const ModuleEnvironment& env,
           case uint32_t(MiscOp::I64TruncSSatF64):
           case uint32_t(MiscOp::I64TruncUSatF64):
             CHECK(iter.readConversion(ValType::F64, ValType::I64, &nothing));
-#ifdef ENABLE_WASM_BULKMEM_OPS
           case uint32_t(MiscOp::MemCopy): {
+#ifndef ENABLE_WASM_BULKMEM_OPS
+            // Bulk memory must be available if shared memory is enabled.
+            if (env.sharedMemoryEnabled == Shareable::False) {
+              return iter.fail("bulk memory ops disabled");
+            }
+#endif
             uint32_t unusedDestMemIndex;
             uint32_t unusedSrcMemIndex;
             CHECK(iter.readMemOrTableCopy(/*isMem=*/true, &unusedDestMemIndex,
@@ -838,12 +1178,30 @@ static bool DecodeFunctionBodyExprs(const ModuleEnvironment& env,
                                           &nothing, &nothing));
           }
           case uint32_t(MiscOp::DataDrop): {
+#ifndef ENABLE_WASM_BULKMEM_OPS
+            // Bulk memory must be available if shared memory is enabled.
+            if (env.sharedMemoryEnabled == Shareable::False) {
+              return iter.fail("bulk memory ops disabled");
+            }
+#endif
             uint32_t unusedSegIndex;
             CHECK(iter.readDataOrElemDrop(/*isData=*/true, &unusedSegIndex));
           }
           case uint32_t(MiscOp::MemFill):
+#ifndef ENABLE_WASM_BULKMEM_OPS
+            // Bulk memory must be available if shared memory is enabled.
+            if (env.sharedMemoryEnabled == Shareable::False) {
+              return iter.fail("bulk memory ops disabled");
+            }
+#endif
             CHECK(iter.readMemFill(&nothing, &nothing, &nothing));
           case uint32_t(MiscOp::MemInit): {
+#ifndef ENABLE_WASM_BULKMEM_OPS
+            // Bulk memory must be available if shared memory is enabled.
+            if (env.sharedMemoryEnabled == Shareable::False) {
+              return iter.fail("bulk memory ops disabled");
+            }
+#endif
             uint32_t unusedSegIndex;
             uint32_t unusedTableIndex;
             CHECK(iter.readMemOrTableInit(/*isMem=*/true, &unusedSegIndex,
@@ -851,6 +1209,12 @@ static bool DecodeFunctionBodyExprs(const ModuleEnvironment& env,
                                           &nothing));
           }
           case uint32_t(MiscOp::TableCopy): {
+#ifndef ENABLE_WASM_BULKMEM_OPS
+            // Bulk memory must be available if shared memory is enabled.
+            if (env.sharedMemoryEnabled == Shareable::False) {
+              return iter.fail("bulk memory ops disabled");
+            }
+#endif
             uint32_t unusedDestTableIndex;
             uint32_t unusedSrcTableIndex;
             CHECK(iter.readMemOrTableCopy(
@@ -858,62 +1222,50 @@ static bool DecodeFunctionBodyExprs(const ModuleEnvironment& env,
                 &unusedSrcTableIndex, &nothing, &nothing));
           }
           case uint32_t(MiscOp::ElemDrop): {
+#ifndef ENABLE_WASM_BULKMEM_OPS
+            // Bulk memory must be available if shared memory is enabled.
+            if (env.sharedMemoryEnabled == Shareable::False) {
+              return iter.fail("bulk memory ops disabled");
+            }
+#endif
             uint32_t unusedSegIndex;
             CHECK(iter.readDataOrElemDrop(/*isData=*/false, &unusedSegIndex));
           }
           case uint32_t(MiscOp::TableInit): {
+#ifndef ENABLE_WASM_BULKMEM_OPS
+            // Bulk memory must be available if shared memory is enabled.
+            if (env.sharedMemoryEnabled == Shareable::False) {
+              return iter.fail("bulk memory ops disabled");
+            }
+#endif
             uint32_t unusedSegIndex;
             uint32_t unusedTableIndex;
             CHECK(iter.readMemOrTableInit(/*isMem=*/false, &unusedSegIndex,
                                           &unusedTableIndex, &nothing, &nothing,
                                           &nothing));
           }
-#endif
 #ifdef ENABLE_WASM_REFTYPES
           case uint32_t(MiscOp::TableFill): {
+            if (!env.refTypesEnabled()) {
+              return iter.unrecognizedOpcode(&op);
+            }
             uint32_t unusedTableIndex;
             CHECK(iter.readTableFill(&unusedTableIndex, &nothing, &nothing,
                                      &nothing));
           }
           case uint32_t(MiscOp::TableGrow): {
+            if (!env.refTypesEnabled()) {
+              return iter.unrecognizedOpcode(&op);
+            }
             uint32_t unusedTableIndex;
             CHECK(iter.readTableGrow(&unusedTableIndex, &nothing, &nothing));
           }
           case uint32_t(MiscOp::TableSize): {
+            if (!env.refTypesEnabled()) {
+              return iter.unrecognizedOpcode(&op);
+            }
             uint32_t unusedTableIndex;
             CHECK(iter.readTableSize(&unusedTableIndex));
-          }
-#endif
-#ifdef ENABLE_WASM_GC
-          case uint32_t(MiscOp::StructNew): {
-            if (!env.gcTypesEnabled()) {
-              return iter.unrecognizedOpcode(&op);
-            }
-            uint32_t unusedUint;
-            ValidatingOpIter::ValueVector unusedArgs;
-            CHECK(iter.readStructNew(&unusedUint, &unusedArgs));
-          }
-          case uint32_t(MiscOp::StructGet): {
-            if (!env.gcTypesEnabled()) {
-              return iter.unrecognizedOpcode(&op);
-            }
-            uint32_t unusedUint1, unusedUint2;
-            CHECK(iter.readStructGet(&unusedUint1, &unusedUint2, &nothing));
-          }
-          case uint32_t(MiscOp::StructSet): {
-            if (!env.gcTypesEnabled()) {
-              return iter.unrecognizedOpcode(&op);
-            }
-            uint32_t unusedUint1, unusedUint2;
-            CHECK(iter.readStructSet(&unusedUint1, &unusedUint2, &nothing,
-                                     &nothing));
-          }
-          case uint32_t(MiscOp::StructNarrow): {
-            if (!env.gcTypesEnabled()) {
-              return iter.unrecognizedOpcode(&op);
-            }
-            ValType unusedTy, unusedTy2;
-            CHECK(iter.readStructNarrow(&unusedTy, &unusedTy2, &nothing));
           }
 #endif
           default:
@@ -926,18 +1278,26 @@ static bool DecodeFunctionBodyExprs(const ModuleEnvironment& env,
         if (!env.gcTypesEnabled()) {
           return iter.unrecognizedOpcode(&op);
         }
-        CHECK(iter.readComparison(ValType::AnyRef, &nothing, &nothing));
-        break;
+        CHECK(iter.readComparison(RefType::any(), &nothing, &nothing));
       }
 #endif
 #ifdef ENABLE_WASM_REFTYPES
+      case uint16_t(Op::RefFunc): {
+        uint32_t unusedIndex;
+        CHECK(iter.readRefFunc(&unusedIndex));
+      }
       case uint16_t(Op::RefNull): {
+        if (!env.refTypesEnabled()) {
+          return iter.unrecognizedOpcode(&op);
+        }
         CHECK(iter.readRefNull());
-        break;
       }
       case uint16_t(Op::RefIsNull): {
-        CHECK(iter.readConversion(ValType::AnyRef, ValType::I32, &nothing));
-        break;
+        if (!env.refTypesEnabled()) {
+          return iter.unrecognizedOpcode(&op);
+        }
+        Nothing nothing;
+        CHECK(iter.readRefIsNull(&nothing));
       }
 #endif
       case uint16_t(Op::ThreadPrefix): {
@@ -953,6 +1313,9 @@ static bool DecodeFunctionBodyExprs(const ModuleEnvironment& env,
           case uint32_t(ThreadOp::I64Wait): {
             LinearMemoryAddress<Nothing> addr;
             CHECK(iter.readWait(&addr, ValType::I64, 8, &nothing, &nothing));
+          }
+          case uint32_t(ThreadOp::Fence): {
+            CHECK(iter.readFence());
           }
           case uint32_t(ThreadOp::I32AtomicLoad): {
             LinearMemoryAddress<Nothing> addr;
@@ -1128,20 +1491,19 @@ static bool DecodeFunctionBodyExprs(const ModuleEnvironment& env,
 bool wasm::ValidateFunctionBody(const ModuleEnvironment& env,
                                 uint32_t funcIndex, uint32_t bodySize,
                                 Decoder& d) {
-  const FuncType& funcType = *env.funcTypes[funcIndex];
-
   ValTypeVector locals;
-  if (!locals.appendAll(funcType.args())) {
+  if (!locals.appendAll(env.funcTypes[funcIndex]->args())) {
     return false;
   }
 
   const uint8_t* bodyBegin = d.currentPosition();
 
-  if (!DecodeLocalEntries(d, env.types, env.gcTypesEnabled(), &locals)) {
+  if (!DecodeLocalEntries(d, env.types, env.refTypesEnabled(),
+                          env.gcTypesEnabled(), &locals)) {
     return false;
   }
 
-  if (!DecodeFunctionBodyExprs(env, funcType, locals, bodyBegin + bodySize,
+  if (!DecodeFunctionBodyExprs(env, funcIndex, locals, bodyBegin + bodySize,
                                &d)) {
     return false;
   }
@@ -1176,11 +1538,11 @@ typedef Vector<TypeState, 0, SystemAllocPolicy> TypeStateVector;
 
 static bool ValidateTypeState(Decoder& d, TypeStateVector* typeState,
                               ValType type) {
-  if (!type.isRef()) {
+  if (!type.isTypeIndex()) {
     return true;
   }
 
-  uint32_t refTypeIndex = type.refTypeIndex();
+  uint32_t refTypeIndex = type.refType().typeIndex();
   switch ((*typeState)[refTypeIndex]) {
     case TypeState::None:
       (*typeState)[refTypeIndex] = TypeState::ForwardStruct;
@@ -1196,12 +1558,31 @@ static bool ValidateTypeState(Decoder& d, TypeStateVector* typeState,
 
 #ifdef WASM_PRIVATE_REFTYPES
 static bool FuncTypeIsJSCompatible(Decoder& d, const FuncType& ft) {
-  if (ft.exposesRef()) {
-    return d.fail("cannot expose reference type");
+  if (ft.exposesTypeIndex()) {
+    return d.fail("cannot expose indexed reference type");
   }
   return true;
 }
 #endif
+
+static bool DecodeTypeVector(Decoder& d, ModuleEnvironment* env,
+                             TypeStateVector* typeState, uint32_t count,
+                             ValTypeVector* types) {
+  if (!types->resize(count)) {
+    return false;
+  }
+
+  for (uint32_t i = 0; i < count; i++) {
+    if (!d.readValType(env->types.length(), env->refTypesEnabled(),
+                       env->gcTypesEnabled(), &(*types)[i])) {
+      return false;
+    }
+    if (!ValidateTypeState(d, typeState, (*types)[i])) {
+      return false;
+    }
+  }
+  return true;
+}
 
 static bool DecodeFuncType(Decoder& d, ModuleEnvironment* env,
                            TypeStateVector* typeState, uint32_t typeIndex) {
@@ -1209,53 +1590,32 @@ static bool DecodeFuncType(Decoder& d, ModuleEnvironment* env,
   if (!d.readVarU32(&numArgs)) {
     return d.fail("bad number of function args");
   }
-
   if (numArgs > MaxParams) {
     return d.fail("too many arguments in signature");
   }
-
   ValTypeVector args;
-  if (!args.resize(numArgs)) {
+  if (!DecodeTypeVector(d, env, typeState, numArgs, &args)) {
     return false;
   }
 
-  for (uint32_t i = 0; i < numArgs; i++) {
-    if (!d.readValType(env->types.length(), env->gcTypesEnabled(), &args[i])) {
-      return false;
-    }
-    if (!ValidateTypeState(d, typeState, args[i])) {
-      return false;
-    }
-  }
-
-  uint32_t numRets;
-  if (!d.readVarU32(&numRets)) {
+  uint32_t numResults;
+  if (!d.readVarU32(&numResults)) {
     return d.fail("bad number of function returns");
   }
-
-  if (numRets > 1) {
+  if (numResults > env->funcMaxResults()) {
     return d.fail("too many returns in signature");
   }
-
-  ExprType result = ExprType::Void;
-
-  if (numRets == 1) {
-    ValType type;
-    if (!d.readValType(env->types.length(), env->gcTypesEnabled(), &type)) {
-      return false;
-    }
-    if (!ValidateTypeState(d, typeState, type)) {
-      return false;
-    }
-
-    result = ExprType(type);
+  ValTypeVector results;
+  if (!DecodeTypeVector(d, env, typeState, numResults, &results)) {
+    return false;
   }
 
   if ((*typeState)[typeIndex] != TypeState::None) {
     return d.fail("function type entry referenced as struct");
   }
 
-  env->types[typeIndex] = TypeDef(FuncType(std::move(args), result));
+  env->types[typeIndex] =
+      TypeDef(FuncType(std::move(args), std::move(results)));
   (*typeState)[typeIndex] = TypeState::Func;
 
   return true;
@@ -1283,6 +1643,11 @@ static bool DecodeStructType(Decoder& d, ModuleEnvironment* env,
 
   StructMetaTypeDescr::Layout layout;
   for (uint32_t i = 0; i < numFields; i++) {
+    if (!d.readValType(env->types.length(), env->refTypesEnabled(),
+                       env->gcTypesEnabled(), &fields[i].type)) {
+      return false;
+    }
+
     uint8_t flags;
     if (!d.readFixedU8(&flags)) {
       return d.fail("expected flag");
@@ -1291,16 +1656,13 @@ static bool DecodeStructType(Decoder& d, ModuleEnvironment* env,
       return d.fail("garbage flag bits");
     }
     fields[i].isMutable = flags & uint8_t(FieldFlags::Mutable);
-    if (!d.readValType(env->types.length(), env->gcTypesEnabled(),
-                       &fields[i].type)) {
-      return false;
-    }
+
     if (!ValidateTypeState(d, typeState, fields[i].type)) {
       return false;
     }
 
     CheckedInt32 offset;
-    switch (fields[i].type.code()) {
+    switch (fields[i].type.kind()) {
       case ValType::I32:
         offset = layout.addScalar(Scalar::Int32);
         break;
@@ -1313,15 +1675,20 @@ static bool DecodeStructType(Decoder& d, ModuleEnvironment* env,
       case ValType::F64:
         offset = layout.addScalar(Scalar::Float64);
         break;
+      case ValType::V128:
+        offset = layout.addScalar(Scalar::Simd128);
+        break;
       case ValType::Ref:
-        offset = layout.addReference(ReferenceType::TYPE_OBJECT);
+        switch (fields[i].type.refTypeKind()) {
+          case RefType::TypeIndex:
+            offset = layout.addReference(ReferenceType::TYPE_OBJECT);
+            break;
+          case RefType::Func:
+          case RefType::Any:
+            offset = layout.addReference(ReferenceType::TYPE_WASM_ANYREF);
+            break;
+        }
         break;
-      case ValType::FuncRef:
-      case ValType::AnyRef:
-        offset = layout.addReference(ReferenceType::TYPE_WASM_ANYREF);
-        break;
-      default:
-        MOZ_CRASH("Unknown type");
     }
     if (!offset.isValid()) {
       return d.fail("Object too large");
@@ -1354,55 +1721,6 @@ static bool DecodeStructType(Decoder& d, ModuleEnvironment* env,
 
   return true;
 }
-
-#ifdef ENABLE_WASM_GC
-static bool DecodeGCFeatureOptInSection(Decoder& d, ModuleEnvironment* env) {
-  MaybeSectionRange range;
-  if (!d.startSection(SectionId::GcFeatureOptIn, env, &range,
-                      "gcfeatureoptin")) {
-    return false;
-  }
-  if (!range) {
-    return true;
-  }
-
-  uint32_t version;
-  if (!d.readVarU32(&version)) {
-    return d.fail("expected gc feature version");
-  }
-
-  // For documentation of what's in the various versions, see
-  // https://github.com/lars-t-hansen/moz-gc-experiments
-  //
-  // Version 1 is complete and obsolete.
-  // Version 2 is incomplete but obsolete.
-  // Version 3 is in progress.
-
-  switch (version) {
-    case 1:
-    case 2:
-      return d.fail(
-          "Wasm GC feature versions 1 and 2 are no longer supported by this "
-          "engine.\n"
-          "The current version is 3, which is not backward-compatible with "
-          "earlier\n"
-          "versions:\n"
-          " - The v1 encoding of ref.null is no longer accepted.\n"
-          " - The v2 encodings of ref.eq, table.get, table.set, and "
-          "table.size\n"
-          "   are no longer accepted.\n");
-    case 3:
-      break;
-    default:
-      return d.fail(
-          "The specified Wasm GC feature version is unknown.\n"
-          "The current version is 3.");
-  }
-
-  env->gcFeatureOptIn = true;
-  return d.finishSection(*range, "gcfeatureoptin");
-}
-#endif
 
 static bool DecodeTypeSection(Decoder& d, ModuleEnvironment* env) {
   MaybeSectionRange range;
@@ -1471,7 +1789,7 @@ static UniqueChars DecodeName(Decoder& d) {
     return nullptr;
   }
 
-  if (!IsValidUtf8(bytes, numBytes)) {
+  if (!IsUtf8(AsChars(MakeSpan(bytes, numBytes)))) {
     return nullptr;
   }
 
@@ -1496,7 +1814,9 @@ static bool DecodeSignatureIndex(Decoder& d, const TypeDefVector& types,
     return d.fail("signature index out of range");
   }
 
-  if (!types[*funcTypeIndex].isFuncType()) {
+  const TypeDef& def = types[*funcTypeIndex];
+
+  if (!def.isFuncType()) {
     return d.fail("signature index references non-signature");
   }
 
@@ -1516,7 +1836,7 @@ static bool DecodeLimits(Decoder& d, Limits* limits,
 
   if (flags & ~uint8_t(mask)) {
     return d.failf("unexpected bits set in flags: %" PRIu32,
-                   (flags & ~uint8_t(mask)));
+                   uint32_t(flags & ~uint8_t(mask)));
   }
 
   if (!d.readVarU32(&limits->initial)) {
@@ -1555,7 +1875,7 @@ static bool DecodeLimits(Decoder& d, Limits* limits,
   return true;
 }
 
-static bool DecodeTableTypeAndLimits(Decoder& d, bool gcTypesEnabled,
+static bool DecodeTableTypeAndLimits(Decoder& d, bool refTypesEnabled,
                                      TableDescVector* tables) {
   uint8_t elementType;
   if (!d.readFixedU8(&elementType)) {
@@ -1567,11 +1887,14 @@ static bool DecodeTableTypeAndLimits(Decoder& d, bool gcTypesEnabled,
     tableKind = TableKind::FuncRef;
 #ifdef ENABLE_WASM_REFTYPES
   } else if (elementType == uint8_t(TypeCode::AnyRef)) {
+    if (!refTypesEnabled) {
+      return d.fail("expected 'funcref' element type");
+    }
     tableKind = TableKind::AnyRef;
 #endif
   } else {
 #ifdef ENABLE_WASM_REFTYPES
-    return d.fail("expected 'funcref' or 'anyref' element type");
+    return d.fail("expected reference element type");
 #else
     return d.fail("expected 'funcref' element type");
 #endif
@@ -1597,19 +1920,29 @@ static bool DecodeTableTypeAndLimits(Decoder& d, bool gcTypesEnabled,
   return tables->emplaceBack(tableKind, limits);
 }
 
-static bool GlobalIsJSCompatible(Decoder& d, ValType type, bool isMutable) {
-  switch (type.code()) {
+static bool GlobalIsJSCompatible(Decoder& d, ValType type) {
+  switch (type.kind()) {
     case ValType::I32:
     case ValType::F32:
     case ValType::F64:
     case ValType::I64:
-    case ValType::FuncRef:
-    case ValType::AnyRef:
+    case ValType::V128:
       break;
-#ifdef WASM_PRIVATE_REFTYPES
     case ValType::Ref:
-      return d.fail("cannot expose reference type");
+      switch (type.refTypeKind()) {
+        case RefType::Func:
+        case RefType::Any:
+          break;
+        case RefType::TypeIndex:
+#ifdef WASM_PRIVATE_REFTYPES
+          return d.fail("cannot expose indexed reference type");
+#else
+          break;
 #endif
+        default:
+          return d.fail("unexpected variable type in global import/export");
+      }
+      break;
     default:
       return d.fail("unexpected variable type in global import/export");
   }
@@ -1618,10 +1951,10 @@ static bool GlobalIsJSCompatible(Decoder& d, ValType type, bool isMutable) {
 }
 
 static bool DecodeGlobalType(Decoder& d, const TypeDefVector& types,
-                             bool gcTypesEnabled, ValType* type,
-                             bool* isMutable) {
-  if (!d.readValType(types, gcTypesEnabled, type)) {
-    return false;
+                             bool refTypesEnabled, bool gcTypesEnabled,
+                             ValType* type, bool* isMutable) {
+  if (!d.readValType(types, refTypesEnabled, gcTypesEnabled, type)) {
+    return d.fail("expected global type");
   }
 
   uint8_t flags;
@@ -1734,7 +2067,7 @@ static bool DecodeImport(Decoder& d, ModuleEnvironment* env) {
       break;
     }
     case DefinitionKind::Table: {
-      if (!DecodeTableTypeAndLimits(d, env->gcTypesEnabled(), &env->tables)) {
+      if (!DecodeTableTypeAndLimits(d, env->refTypesEnabled(), &env->tables)) {
         return false;
       }
       env->tables.back().importedOrExported = true;
@@ -1749,11 +2082,11 @@ static bool DecodeImport(Decoder& d, ModuleEnvironment* env) {
     case DefinitionKind::Global: {
       ValType type;
       bool isMutable;
-      if (!DecodeGlobalType(d, env->types, env->gcTypesEnabled(), &type,
-                            &isMutable)) {
+      if (!DecodeGlobalType(d, env->types, env->refTypesEnabled(),
+                            env->gcTypesEnabled(), &type, &isMutable)) {
         return false;
       }
-      if (!GlobalIsJSCompatible(d, type, isMutable)) {
+      if (!GlobalIsJSCompatible(d, type)) {
         return false;
       }
       if (!env->globals.append(
@@ -1859,7 +2192,7 @@ static bool DecodeTableSection(Decoder& d, ModuleEnvironment* env) {
   }
 
   for (uint32_t i = 0; i < numTables; ++i) {
-    if (!DecodeTableTypeAndLimits(d, env->gcTypesEnabled(), &env->tables)) {
+    if (!DecodeTableTypeAndLimits(d, env->refTypesEnabled(), &env->tables)) {
       return false;
     }
   }
@@ -1907,7 +2240,7 @@ static bool DecodeInitializerExpression(Decoder& d, ModuleEnvironment* env,
       if (!d.readVarS32(&i32)) {
         return d.fail("failed to read initializer i32 expression");
       }
-      *init = InitExpr(LitVal(uint32_t(i32)));
+      *init = InitExpr::fromConstant(LitVal(uint32_t(i32)));
       break;
     }
     case uint16_t(Op::I64Const): {
@@ -1915,7 +2248,7 @@ static bool DecodeInitializerExpression(Decoder& d, ModuleEnvironment* env,
       if (!d.readVarS64(&i64)) {
         return d.fail("failed to read initializer i64 expression");
       }
-      *init = InitExpr(LitVal(uint64_t(i64)));
+      *init = InitExpr::fromConstant(LitVal(uint64_t(i64)));
       break;
     }
     case uint16_t(Op::F32Const): {
@@ -1923,7 +2256,7 @@ static bool DecodeInitializerExpression(Decoder& d, ModuleEnvironment* env,
       if (!d.readFixedF32(&f32)) {
         return d.fail("failed to read initializer f32 expression");
       }
-      *init = InitExpr(LitVal(f32));
+      *init = InitExpr::fromConstant(LitVal(f32));
       break;
     }
     case uint16_t(Op::F64Const): {
@@ -1931,18 +2264,55 @@ static bool DecodeInitializerExpression(Decoder& d, ModuleEnvironment* env,
       if (!d.readFixedF64(&f64)) {
         return d.fail("failed to read initializer f64 expression");
       }
-      *init = InitExpr(LitVal(f64));
+      *init = InitExpr::fromConstant(LitVal(f64));
       break;
     }
+#ifdef ENABLE_WASM_SIMD
+    case uint16_t(Op::SimdPrefix): {
+      if (op.b1 != uint32_t(SimdOp::V128Const)) {
+        return d.fail("unexpected initializer expression");
+      }
+      V128 v128;
+      if (!d.readFixedV128(&v128)) {
+        return d.fail("failed to read initializer v128 expression");
+      }
+      *init = InitExpr::fromConstant(LitVal(v128));
+      break;
+    }
+#endif
+#ifdef ENABLE_WASM_REFTYPES
     case uint16_t(Op::RefNull): {
-      if (!expected.isReference()) {
+      MOZ_ASSERT_IF(env->isStructType(expected), env->gcTypesEnabled());
+      RefType initType;
+      if (!d.readRefType(env->types, env->gcTypesEnabled(), &initType)) {
+        return false;
+      }
+      if (!expected.isReference() ||
+          !env->isRefSubtypeOf(ValType(initType), ValType(expected))) {
         return d.fail(
             "type mismatch: initializer type and expected type don't match");
       }
-      MOZ_ASSERT_IF(expected.isRef(), env->gcTypesEnabled());
-      *init = InitExpr(LitVal(expected, AnyRef::null()));
+      *init = InitExpr::fromConstant(LitVal(expected, AnyRef::null()));
       break;
     }
+    case uint16_t(Op::RefFunc): {
+      if (!expected.isReference() || expected.refType() != RefType::func()) {
+        return d.fail(
+            "type mismatch: initializer type and expected type don't match");
+      }
+      uint32_t i;
+      if (!d.readVarU32(&i)) {
+        return d.fail(
+            "failed to read ref.func index in initializer expression");
+      }
+      if (i >= env->numFuncs()) {
+        return d.fail("function index out of range in initializer expression");
+      }
+      env->validForRefFunc.setBit(i);
+      *init = InitExpr::fromRefFunc(i);
+      break;
+    }
+#endif
     case uint16_t(Op::GetGlobal): {
       uint32_t i;
       const GlobalDescVector& globals = env->globals;
@@ -1959,20 +2329,22 @@ static bool DecodeInitializerExpression(Decoder& d, ModuleEnvironment* env,
       }
       if (expected.isReference()) {
         bool fail = false;
-        if ((expected.isRef() || globals[i].type().isRef()) &&
-            !env->gcTypesEnabled()) {
+        if (!globals[i].type().isReference()) {
           fail = true;
-        } else if (!(globals[i].type().isReference() &&
-                     env->isRefSubtypeOf(globals[i].type(), expected))) {
+        } else if ((env->isStructType(expected) ||
+                    env->isStructType(globals[i].type())) &&
+                   !env->gcTypesEnabled()) {
+          fail = true;
+        } else if (!env->isRefSubtypeOf(globals[i].type(), expected)) {
           fail = true;
         }
         if (fail) {
           return d.fail(
               "type mismatch: initializer type and expected type don't match");
         }
-        *init = InitExpr(i, expected);
+        *init = InitExpr::fromGetGlobal(i, expected);
       } else {
-        *init = InitExpr(i, globals[i].type());
+        *init = InitExpr::fromGetGlobal(i, globals[i].type());
       }
       break;
     }
@@ -2021,8 +2393,8 @@ static bool DecodeGlobalSection(Decoder& d, ModuleEnvironment* env) {
   for (uint32_t i = 0; i < numDefs; i++) {
     ValType type;
     bool isMutable;
-    if (!DecodeGlobalType(d, env->types, env->gcTypesEnabled(), &type,
-                          &isMutable)) {
+    if (!DecodeGlobalType(d, env->types, env->refTypesEnabled(),
+                          env->gcTypesEnabled(), &type, &isMutable)) {
       return false;
     }
 
@@ -2088,6 +2460,7 @@ static bool DecodeExport(Decoder& d, ModuleEnvironment* env,
       }
 #endif
 
+      env->validForRefFunc.setBit(funcIndex);
       return env->exports.emplaceBack(std::move(fieldName), funcIndex,
                                       DefinitionKind::Function);
     }
@@ -2129,7 +2502,7 @@ static bool DecodeExport(Decoder& d, ModuleEnvironment* env,
 
       GlobalDesc* global = &env->globals[globalIndex];
       global->setIsExport();
-      if (!GlobalIsJSCompatible(d, global->type(), global->isMutable())) {
+      if (!GlobalIsJSCompatible(d, global->type())) {
         return false;
       }
 
@@ -2191,7 +2564,7 @@ static bool DecodeStartSection(Decoder& d, ModuleEnvironment* env) {
   }
 
   const FuncType& funcType = *env->funcTypes[funcIndex];
-  if (!IsVoid(funcType.ret())) {
+  if (funcType.results().length() > 0) {
     return d.fail("start function must not return anything");
   }
 
@@ -2202,6 +2575,23 @@ static bool DecodeStartSection(Decoder& d, ModuleEnvironment* env) {
   env->startFuncIndex = Some(funcIndex);
 
   return d.finishSection(*range, "start");
+}
+
+static inline ElemSegment::Kind NormalizeElemSegmentKind(
+    ElemSegmentKind decodedKind) {
+  switch (decodedKind) {
+    case ElemSegmentKind::Active:
+    case ElemSegmentKind::ActiveWithTableIndex: {
+      return ElemSegment::Kind::Active;
+    }
+    case ElemSegmentKind::Passive: {
+      return ElemSegment::Kind::Passive;
+    }
+    case ElemSegmentKind::Declared: {
+      return ElemSegment::Kind::Declared;
+    }
+  }
+  MOZ_CRASH("unexpected elem segment kind");
 }
 
 static bool DecodeElemSection(Decoder& d, ModuleEnvironment* env) {
@@ -2227,24 +2617,14 @@ static bool DecodeElemSection(Decoder& d, ModuleEnvironment* env) {
   }
 
   for (uint32_t i = 0; i < numSegments; i++) {
-    uint32_t initializerKindVal;
-    if (!d.readVarU32(&initializerKindVal)) {
-      return d.fail("expected elem initializer-kind field");
-    }
-    switch (initializerKindVal) {
-      case uint32_t(InitializerKind::Active):
-      case uint32_t(InitializerKind::Passive):
-      case uint32_t(InitializerKind::ActiveWithIndex):
-        break;
-      default:
-        return d.fail("invalid elem initializer-kind field");
+    uint32_t segmentFlags;
+    if (!d.readVarU32(&segmentFlags)) {
+      return d.fail("expected elem segment flags field");
     }
 
-    InitializerKind initializerKind = InitializerKind(initializerKindVal);
-
-    if (initializerKind != InitializerKind::Passive &&
-        env->tables.length() == 0) {
-      return d.fail("active elem segment requires a table section");
+    Maybe<ElemSegmentFlags> flags = ElemSegmentFlags::construct(segmentFlags);
+    if (!flags) {
+      return d.fail("invalid elem segment flags field");
     }
 
     MutableElemSegment seg = js_new<ElemSegment>();
@@ -2252,49 +2632,108 @@ static bool DecodeElemSection(Decoder& d, ModuleEnvironment* env) {
       return false;
     }
 
-    uint32_t tableIndex = 0;
-    if (initializerKind == InitializerKind::ActiveWithIndex) {
-      if (!d.readVarU32(&tableIndex)) {
+    ElemSegmentKind kind = flags->kind();
+    seg->kind = NormalizeElemSegmentKind(kind);
+
+    if (kind == ElemSegmentKind::Active ||
+        kind == ElemSegmentKind::ActiveWithTableIndex) {
+      if (env->tables.length() == 0) {
+        return d.fail("active elem segment requires a table");
+      }
+
+      uint32_t tableIndex = 0;
+      if (kind == ElemSegmentKind::ActiveWithTableIndex &&
+          !d.readVarU32(&tableIndex)) {
         return d.fail("expected table index");
       }
-    }
-    if (initializerKind != InitializerKind::Passive &&
-        tableIndex >= env->tables.length()) {
-      return d.fail("table index out of range for element segment");
-    }
-    if (initializerKind == InitializerKind::Passive) {
+      if (tableIndex >= env->tables.length()) {
+        return d.fail("table index out of range for element segment");
+      }
+      seg->tableIndex = tableIndex;
+
+      InitExpr offset;
+      if (!DecodeInitializerExpression(d, env, ValType::I32, &offset)) {
+        return false;
+      }
+      seg->offsetIfActive.emplace(offset);
+    } else {
       // Too many bugs result from keeping this value zero.  For passive
-      // segments, there really is no segment index, and we should never
-      // touch the field.
-      tableIndex = (uint32_t)-1;
-    } else if (env->tables[tableIndex].kind != TableKind::FuncRef) {
-      return d.fail("only tables of 'funcref' may have element segments");
+      // or declared segments, there really is no table index, and we should
+      // never touch the field.
+      MOZ_ASSERT(kind == ElemSegmentKind::Passive ||
+                 kind == ElemSegmentKind::Declared);
+      seg->tableIndex = (uint32_t)-1;
     }
 
-    seg->tableIndex = tableIndex;
+    ElemSegmentPayload payload = flags->payload();
+    ValType elemType;
 
-    switch (initializerKind) {
-      case InitializerKind::Active:
-      case InitializerKind::ActiveWithIndex: {
-        InitExpr offset;
-        if (!DecodeInitializerExpression(d, env, ValType::I32, &offset)) {
-          return false;
-        }
-        seg->offsetIfActive.emplace(offset);
-        break;
+    // `ActiveWithTableIndex`, `Declared`, and `Passive` element segments encode
+    // the type or definition kind of the payload. `Active` element segments are
+    // restricted to MVP behavior, which assumes only function indices.
+    if (kind == ElemSegmentKind::Active) {
+      elemType = RefType::func();
+    } else {
+      uint8_t form;
+      if (!d.readFixedU8(&form)) {
+        return d.fail("expected type or extern kind");
       }
-      case InitializerKind::Passive: {
-        uint8_t form;
-        if (!d.readFixedU8(&form)) {
-          return d.fail("expected type form");
+
+      switch (payload) {
+        case ElemSegmentPayload::ElemExpression: {
+          switch (form) {
+            case uint8_t(TypeCode::FuncRef):
+              elemType = RefType::func();
+              break;
+            case uint8_t(TypeCode::AnyRef):
+              elemType = RefType::any();
+              break;
+            default:
+              return d.fail(
+                  "segments with element expressions can only contain "
+                  "references");
+          }
+          break;
         }
-        if (form != uint8_t(TypeCode::FuncRef)) {
+        case ElemSegmentPayload::ExternIndex: {
+          if (form != uint8_t(DefinitionKind::Function)) {
+            return d.fail(
+                "segments with extern indices can only contain function "
+                "references");
+          }
+          elemType = RefType::func();
+        }
+      }
+    }
+
+    // Check constraints on the element type.
+    switch (kind) {
+      case ElemSegmentKind::Declared: {
+        if (!(elemType.isReference() &&
+              env->isRefSubtypeOf(elemType, RefType::func()))) {
           return d.fail(
-              "passive segments can only contain function references");
+              "declared segment's element type must be subtype of funcref");
         }
         break;
       }
+      case ElemSegmentKind::Active:
+      case ElemSegmentKind::ActiveWithTableIndex: {
+        ValType tblElemType = ToElemValType(env->tables[seg->tableIndex].kind);
+        if (!(elemType == tblElemType ||
+              (elemType.isReference() && tblElemType.isReference() &&
+               env->isRefSubtypeOf(elemType, tblElemType)))) {
+          return d.fail(
+              "segment's element type must be subtype of table's element type");
+        }
+        break;
+      }
+      case ElemSegmentKind::Passive: {
+        // By construction, above.
+        MOZ_ASSERT(elemType.isReference());
+        break;
+      }
     }
+    seg->elementType = elemType;
 
     uint32_t numElems;
     if (!d.readVarU32(&numElems)) {
@@ -2310,12 +2749,13 @@ static bool DecodeElemSection(Decoder& d, ModuleEnvironment* env) {
     }
 
 #ifdef WASM_PRIVATE_REFTYPES
-    // We assume that passive segments may be applied to external tables.
-    // We can do slightly better: if there are no external tables in the
-    // module then we don't need to worry about passive segments either.
-    // But this is a temporary restriction.
-    bool exportedTable = initializerKind == InitializerKind::Passive ||
-                         env->tables[tableIndex].importedOrExported;
+    // We assume that passive or declared segments may be applied to external
+    // tables. We can do slightly better: if there are no external tables in
+    // the module then we don't need to worry about passive or declared
+    // segments either. But this is a temporary restriction.
+    bool exportedTable = kind == ElemSegmentKind::Passive ||
+                         kind == ElemSegmentKind::Declared ||
+                         env->tables[seg->tableIndex].importedOrExported;
 #endif
 
     // For passive segments we should use DecodeInitializerExpression() but we
@@ -2325,19 +2765,28 @@ static bool DecodeElemSection(Decoder& d, ModuleEnvironment* env) {
     for (uint32_t i = 0; i < numElems; i++) {
       bool needIndex = true;
 
-      if (initializerKind == InitializerKind::Passive) {
+      if (payload == ElemSegmentPayload::ElemExpression) {
         OpBytes op;
         if (!d.readOp(&op)) {
           return d.fail("failed to read initializer operation");
         }
+
+        RefType initType = RefType::any();
         switch (op.b0) {
           case uint16_t(Op::RefFunc):
+            initType = RefType::func();
             break;
           case uint16_t(Op::RefNull):
+            if (!d.readRefType(env->types, env->gcTypesEnabled(), &initType)) {
+              return false;
+            }
             needIndex = false;
             break;
           default:
             return d.fail("failed to read initializer operation");
+        }
+        if (!env->isRefSubtypeOf(ValType(initType), ValType(elemType))) {
+          return d.fail("initializer type must be subtype of element type");
         }
       }
 
@@ -2357,7 +2806,7 @@ static bool DecodeElemSection(Decoder& d, ModuleEnvironment* env) {
 #endif
       }
 
-      if (initializerKind == InitializerKind::Passive) {
+      if (payload == ElemSegmentPayload::ElemExpression) {
         OpBytes end;
         if (!d.readOp(&end) || end.b0 != uint16_t(Op::End)) {
           return d.fail("failed to read end of initializer expression");
@@ -2365,6 +2814,9 @@ static bool DecodeElemSection(Decoder& d, ModuleEnvironment* env) {
       }
 
       seg->elemFuncIndices.infallibleAppend(funcIndex);
+      if (funcIndex != NullFuncIndex) {
+        env->validForRefFunc.setBit(funcIndex);
+      }
     }
 
     env->elemSegments.infallibleAppend(std::move(seg));
@@ -2373,7 +2825,6 @@ static bool DecodeElemSection(Decoder& d, ModuleEnvironment* env) {
   return d.finishSection(*range, "elem");
 }
 
-#ifdef ENABLE_WASM_BULKMEM_OPS
 static bool DecodeDataCountSection(Decoder& d, ModuleEnvironment* env) {
   MaybeSectionRange range;
   if (!d.startSection(SectionId::DataCount, env, &range, "datacount")) {
@@ -2382,6 +2833,13 @@ static bool DecodeDataCountSection(Decoder& d, ModuleEnvironment* env) {
   if (!range) {
     return true;
   }
+
+#ifndef ENABLE_WASM_BULKMEM_OPS
+  // Bulk memory must be available if shared memory is enabled.
+  if (env->sharedMemoryEnabled == Shareable::False) {
+    return d.fail("bulk memory ops disabled");
+  }
+#endif
 
   uint32_t dataCount;
   if (!d.readVarU32(&dataCount)) {
@@ -2392,7 +2850,6 @@ static bool DecodeDataCountSection(Decoder& d, ModuleEnvironment* env) {
 
   return d.finishSection(*range, "datacount");
 }
-#endif
 
 bool wasm::StartsCodeSection(const uint8_t* begin, const uint8_t* end,
                              SectionRange* codeSection) {
@@ -2428,16 +2885,7 @@ bool wasm::DecodeModuleEnvironment(Decoder& d, ModuleEnvironment* env) {
     return false;
   }
 
-#ifdef ENABLE_WASM_GC
-  if (!DecodeGCFeatureOptInSection(d, env)) {
-    return false;
-  }
-  bool gcFeatureOptIn = env->gcFeatureOptIn;
-#else
-  bool gcFeatureOptIn = false;
-#endif
-
-  env->compilerEnv->computeParameters(d, gcFeatureOptIn);
+  env->compilerEnv->computeParameters(d);
 
   if (!DecodeTypeSection(d, env)) {
     return false;
@@ -2475,11 +2923,9 @@ bool wasm::DecodeModuleEnvironment(Decoder& d, ModuleEnvironment* env) {
     return false;
   }
 
-#ifdef ENABLE_WASM_BULKMEM_OPS
   if (!DecodeDataCountSection(d, env)) {
     return false;
   }
-#endif
 
   if (!d.startSection(SectionId::Code, env, &env->codeSection, "code")) {
     return false;
@@ -2573,22 +3019,22 @@ static bool DecodeDataSection(Decoder& d, ModuleEnvironment* env) {
     }
 
     switch (initializerKindVal) {
-      case uint32_t(InitializerKind::Active):
-      case uint32_t(InitializerKind::Passive):
-      case uint32_t(InitializerKind::ActiveWithIndex):
+      case uint32_t(DataSegmentKind::Active):
+      case uint32_t(DataSegmentKind::Passive):
+      case uint32_t(DataSegmentKind::ActiveWithMemoryIndex):
         break;
       default:
         return d.fail("invalid data initializer-kind field");
     }
 
-    InitializerKind initializerKind = InitializerKind(initializerKindVal);
+    DataSegmentKind initializerKind = DataSegmentKind(initializerKindVal);
 
-    if (initializerKind != InitializerKind::Passive && !env->usesMemory()) {
+    if (initializerKind != DataSegmentKind::Passive && !env->usesMemory()) {
       return d.fail("active data segment requires a memory section");
     }
 
     uint32_t memIndex = 0;
-    if (initializerKind == InitializerKind::ActiveWithIndex) {
+    if (initializerKind == DataSegmentKind::ActiveWithMemoryIndex) {
       if (!d.readVarU32(&memIndex)) {
         return d.fail("expected memory index");
       }
@@ -2598,8 +3044,8 @@ static bool DecodeDataSection(Decoder& d, ModuleEnvironment* env) {
     }
 
     DataSegmentEnv seg;
-    if (initializerKind == InitializerKind::Active ||
-        initializerKind == InitializerKind::ActiveWithIndex) {
+    if (initializerKind == DataSegmentKind::Active ||
+        initializerKind == DataSegmentKind::ActiveWithMemoryIndex) {
       InitExpr segOffset;
       if (!DecodeInitializerExpression(d, env, ValType::I32, &segOffset)) {
         return false;
@@ -2783,17 +3229,18 @@ bool wasm::Validate(JSContext* cx, const ShareableBytes& bytecode,
                     UniqueChars* error) {
   Decoder d(bytecode.bytes, 0, error);
 
-#ifdef ENABLE_WASM_GC
-  bool gcTypesConfigured = HasGcSupport(cx);
-#else
-  bool gcTypesConfigured = false;
-#endif
+  bool gcTypesConfigured = GcTypesAvailable(cx);
+  bool refTypesConfigured = ReftypesAvailable(cx);
+  bool multiValueConfigured = MultiValuesAvailable(cx);
+  bool hugeMemory = false;
+  bool v128Configured = SimdAvailable(cx);
 
-  CompilerEnvironment compilerEnv(CompileMode::Once, Tier::Optimized,
-                                  OptimizedBackend::Ion, DebugEnabled::False,
-                                  gcTypesConfigured);
+  CompilerEnvironment compilerEnv(
+      CompileMode::Once, Tier::Optimized, OptimizedBackend::Ion,
+      DebugEnabled::False, multiValueConfigured, refTypesConfigured,
+      gcTypesConfigured, hugeMemory, v128Configured);
   ModuleEnvironment env(
-      gcTypesConfigured, &compilerEnv,
+      &compilerEnv,
       cx->realm()->creationOptions().getSharedMemoryAndAtomicsEnabled()
           ? Shareable::True
           : Shareable::False);

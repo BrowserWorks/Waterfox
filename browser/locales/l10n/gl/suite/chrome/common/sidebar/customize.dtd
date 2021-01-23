@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from ./customize.xul -->
+
+<!-- LOCALIZATION NOTE  sidebar.customize.title.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.title.label          "Personalizar a &sidebarName;">
+<!-- LOCALIZATION NOTE  sidebar.customize.current.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.current.label        "Lapelas na &sidebarName;:">
+<!ENTITY sidebar.customize.current.accesskey    "L">
+<!ENTITY sidebar.customize.customize.label      "Personalizar lapela…">
+<!ENTITY sidebar.customize.customize.accesskey  "P">
+<!ENTITY sidebar.customize.remove.label         "Eliminar">
+<!ENTITY sidebar.customize.remove.accesskey     "r">
+<!ENTITY sidebar.customize.additional.label     "Lapelas dispoñíbeis:">
+<!ENTITY sidebar.customize.additional.accesskey "ñ">
+<!ENTITY sidebar.customize.add.label            "Engadir">
+<!ENTITY sidebar.customize.add.accesskey        "a">
+<!ENTITY sidebar.customize.preview.label        "Previsualización…">
+<!ENTITY sidebar.customize.preview.accesskey    "P">
+<!ENTITY sidebar.customize.up.label             "Subir">
+<!ENTITY sidebar.customize.up.accesskey         "u">
+<!ENTITY sidebar.customize.down.label           "Baixar">
+<!ENTITY sidebar.customize.down.accesskey       "B">
+<!ENTITY sidebar.more.label                     "Atopar máis lapelas…">
+<!ENTITY sidebar.more.accesskey                 "t">

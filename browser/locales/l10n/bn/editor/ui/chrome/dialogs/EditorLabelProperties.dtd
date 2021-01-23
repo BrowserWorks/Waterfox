@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "লেবেলের বৈশিষ্ট্য">
+
+<!ENTITY Settings.label "সেটিং (S)">
+<!ENTITY Settings.accesskey "S">
+
+<!ENTITY EditLabelText.label "পাঠ্য সম্পাদনা (T):">
+<!ENTITY EditLabelText.accesskey "T">
+<!ENTITY LabelFor.label "নিয়ন্ত্রণের জন্য (F):">
+<!ENTITY LabelFor.accesskey "F">
+<!ENTITY AccessKey.label "প্রবেশ কী (K):">
+<!ENTITY AccessKey.accesskey "K">
+
+<!ENTITY RemoveLabel.label "লেবেল মুছে দেয়া (R)">
+<!ENTITY RemoveLabel.accesskey "R">

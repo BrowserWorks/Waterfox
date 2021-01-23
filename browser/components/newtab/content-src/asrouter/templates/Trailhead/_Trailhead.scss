@@ -4,11 +4,11 @@
   $benefit-icon-size-small: 40px;
   $benefit-icon-spacing-small: $benefit-icon-size-small + 12px;
   $responsive-breakpoint: 850px;
+  $logo-size: 100px;
 
   background: url('#{$image-path}trailhead/accounts-form-bg.jpg') bottom / cover;
   color: $white;
   height: auto;
-  top: 100px;
 
   a {
     color: $white;
@@ -46,6 +46,13 @@
         margin-inline-start: $benefit-icon-spacing;
       }
     }
+  }
+
+  .trailhead-join-form {
+    background: url('#{$image-path}trailhead/firefox-logo.png') top center / $logo-size no-repeat;
+    color: $white;
+    min-width: 260px;
+    padding-top: $logo-size;
   }
 
   &.syncCohort {
@@ -101,10 +108,12 @@
         background-position-x: right;
       }
 
-      &.knowledge {
+      &.knowledge,
+      &.monitor {
         background-image: url('#{$image-path}trailhead/benefit-knowledge.png');
       }
 
+      &.lockwise,
       &.privacy {
         background-image: url('#{$image-path}trailhead/benefit-privacy.png');
       }
@@ -112,9 +121,15 @@
       &.products {
         background-image: url('#{$image-path}trailhead/benefit-products.png');
       }
+
+      &.sync {
+        background-image: url('#{$image-path}trailhead/benefit-sync.png');
+      }
     }
 
-    h3 {
+    h2 {
+      text-align: start;
+      line-height: inherit;
       color: $violet-20;
       font-size: 22px;
       font-weight: 400;
@@ -131,103 +146,6 @@
       font-size: 15px;
       line-height: 22px;
       margin: 4px 0 15px;
-    }
-  }
-
-  .trailheadForm {
-    $logo-size: 100px;
-
-    background: url('#{$image-path}trailhead/firefox-logo.png') top center / $logo-size no-repeat;
-    min-width: 260px;
-    padding-top: $logo-size;
-    text-align: center;
-
-    h3 {
-      font-size: 36px;
-      font-weight: 200;
-      line-height: 46px;
-      margin: 12px 0 4px;
-    }
-
-    p {
-      color: $white;
-      font-size: 15px;
-      line-height: 22px;
-      margin: 0 0 20px;
-    }
-
-    .trailheadTerms {
-      margin: 4px 30px 20px;
-
-      a,
-      & {
-        color: $white-70;
-        font-size: 12px;
-        line-height: 20px;
-      }
-    }
-
-    form {
-      position: relative;
-
-      .error.active {
-        inset-inline-start: 0;
-        z-index: 0;
-      }
-    }
-
-    button,
-    input {
-      width: 100%;
-    }
-
-    input {
-      background-color: $white;
-      border: 1px solid $grey-50;
-      box-shadow: none;
-      color: $grey-70;
-      font-size: 15px;
-      transition: border-color 150ms, box-shadow 150ms;
-
-      &:hover {
-        border-color: $grey-90;
-      }
-
-      &:focus {
-        border-color: $blue-50;
-        box-shadow: 0 0 0 3px $email-input-focus;
-      }
-
-      &.invalid {
-        border-color: $red-60;
-      }
-
-      &.invalid:focus {
-        box-shadow: 0 0 0 3px $email-input-invalid;
-      }
-    }
-
-    button {
-      background-color: $blue-60;
-      border: 0;
-      cursor: pointer;
-      display: block;
-      font-size: 15px;
-      font-weight: 400;
-      padding: 14px;
-
-      &:hover,
-      &:focus {
-        background-color: $trailhead-blue-60;
-      }
-
-      &:focus {
-        outline: dotted 1px;
-      }
-
-      &:active {
-        background-color: $trailhead-blue-70;
-      }
     }
   }
 
@@ -264,11 +182,15 @@
 
 .trailheadCards {
   background: var(--trailhead-cards-background-color);
-  max-height: 1000px;
   overflow: hidden;
   text-align: center;
+  // Note: should match TRANSITION_LENGTH in FirstRun.jsx
   transition: max-height 0.5s $photon-easing;
 
+  // This is needed for the transition to work, but will cut off content at the smallest breakpoint
+  @media (min-width: $break-point-medium) {
+    max-height: 1000px;
+  }
 
   &.collapsed {
     max-height: 0;
@@ -300,6 +222,7 @@
 
   .icon-dismiss {
     border: 0;
+    border-radius: 4px;
     cursor: pointer;
     inset-inline-end: 15px;
     padding: 15px;
@@ -309,7 +232,7 @@
 
     &:hover,
     &:focus {
-      background-color: var(--newtab-element-hover-color);
+      background-color: var(--newtab-element-active-color);
     }
   }
 }
@@ -321,6 +244,7 @@
   opacity: 0;
   transition: opacity 0.4s;
   transition-delay: 0.1s;
+  grid-auto-rows: 1fr;
 
   &.show {
     opacity: 1;
@@ -342,11 +266,14 @@
   box-shadow: var(--newtab-card-shadow);
 
   font-size: 13px;
-  padding: 20px;
+  padding: 20px 20px 60px;
+
+  @media (max-width: 865px) {
+    padding: 20px;
+  }
 
   @media (min-width: $break-point-widest) {
     font-size: 15px;
-    padding: 40px;
   }
 
   .onboardingTitle {
@@ -400,17 +327,18 @@
   }
 }
 
+.activity-stream.welcome {
+  overflow: hidden;
+}
+
 .inline-onboarding {
   &.activity-stream.welcome {
-    overflow-y: scroll;
-  }
-
-  .modalOverlayInner {
-    position: absolute;
+    overflow-y: hidden;
   }
 
   .outer-wrapper {
     position: relative;
+    display: block;
 
     .prefs-button {
       button {
@@ -421,5 +349,49 @@
 
   .asrouter-toggle {
     position: absolute;
+  }
+}
+
+.error {
+  display: none;
+}
+
+.error.active {
+  display: block;
+  padding: 5px 12px;
+  animation: fade-down 450ms;
+  font-size: 12px;
+  font-weight: 500;
+  color: $white;
+  background-color: $red-60;
+  position: absolute;
+  inset-inline-start: 50px;
+  top: -28px;
+  border-radius: 2px;
+
+  &::before {
+    inset-inline-start: 12px;
+    background: $red-60;
+    bottom: -8px;
+    content: '.';
+    height: 16px;
+    position: absolute;
+    text-indent: -999px;
+    transform: rotate(45deg);
+    white-space: nowrap;
+    width: 16px;
+    z-index: -1;
+  }
+}
+
+@keyframes fade-down {
+  0% {
+    opacity: 0;
+    transform: translateY(-15px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

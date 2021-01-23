@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.history.title                "Sejarah">
+
+<!ENTITY  pref.history.caption              "Sejarah Pelayaran">
+<!ENTITY  historyPages.label                "Sejarah ialah senarai halaman yang dilawati sebelum ini.">
+<!ENTITY  enableHistory.label               "Ingat halaman yang dilawati">
+<!ENTITY  enableHistory.accesskey           "I">
+<!ENTITY  clearHistory.label                "Buang Sejarah">
+<!ENTITY  clearHistory.accesskey            "r">
+
+<!ENTITY  locationBarHistory.caption        "Sejarah Bar Lokasi">
+<!ENTITY  urlBarHistoryEnabled.caption      "Dayakan Sejarah Bar Lokasi">
+<!ENTITY  urlBarHistoryEnabled.accesskey    "D">
+<!ENTITY  clearLocationBar.label            "Buang senarai laman web yang disimpan dalam menu bar lokasi.">
+<!ENTITY  clearLocationBarButton.label      "Kosongkan Bar Lokasi">
+<!ENTITY  clearLocationBarButton.accesskey  "L">
+<!ENTITY  formfillHistory.caption           "Sejarah Borang dan Carian">
+<!ENTITY  enableFormfill.label              "Dayakan sejarah borang dan carian">
+<!ENTITY  enableFormfill.accesskey          "n">
+<!ENTITY  formfillExpire.label              "Ingat sejarah borang dan carian sehingga">
+<!ENTITY  formfillExpire.accesskey          "b">
+<!ENTITY  formfillDays.label                "hari">

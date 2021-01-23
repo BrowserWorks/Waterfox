@@ -20,8 +20,7 @@
 
 using namespace mozilla::gfx;
 
-namespace mozilla {
-namespace layers {
+namespace mozilla::layers {
 
 class BasicImageLayer : public ImageLayer, public BasicImplData {
  public:
@@ -32,7 +31,7 @@ class BasicImageLayer : public ImageLayer, public BasicImplData {
   }
 
  protected:
-  virtual ~BasicImageLayer() { MOZ_COUNT_DTOR(BasicImageLayer); }
+  MOZ_COUNTED_DTOR_OVERRIDE(BasicImageLayer)
 
  public:
   void SetVisibleRegion(const LayerIntRegion& aRegion) override {
@@ -106,5 +105,4 @@ already_AddRefed<ImageLayer> BasicLayerManager::CreateImageLayer() {
   return layer.forget();
 }
 
-}  // namespace layers
-}  // namespace mozilla
+}  // namespace mozilla::layers

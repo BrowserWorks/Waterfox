@@ -1,0 +1,289 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY appmenu.tooltip                     "פתיחת תפריט">
+<!ENTITY navbarOverflow.label                "כלים נוספים…">
+
+<!-- Tab context menu -->
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "נעיצת לשונית">
+<!ENTITY  unpinTab.label                     "ביטול נעיצת לשונית">
+
+<!ENTITY  listAllTabs.label      "רשימת כל הלשוניות">
+
+<!ENTITY tabCmd.label "לשונית חדשה">
+<!ENTITY openFileCmd.label "פתיחת קובץ…">
+<!ENTITY printCmd.label "הדפסה…">
+
+<!ENTITY taskManagerCmd.label "מנהל משימות">
+
+<!ENTITY menubarCmd.label "שורת תפריט">
+<!ENTITY menubarCmd.accesskey "פ">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY navbar.accessibleLabel "ניווט">
+<!ENTITY personalbarCmd.label "סרגל כלים סימניות">
+<!ENTITY personalbarCmd.accesskey "ס">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY personalbar.accessibleLabel "סימניות">
+<!ENTITY bookmarksToolbarItem.label "פריטי סרגל כלים סימניות">
+
+<!ENTITY fullScreenCmd.label "מסך מלא">
+
+
+<!ENTITY pictureInPictureHideToggle.label "הסתרת הכפתור של תמונה בתוך תמונה">
+<!ENTITY pictureInPictureHideToggle.accesskey "ה">
+
+<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
+     for the Waterfox Account toolbar menu screen. The `Signed in as` text is
+     followed by the user's email. -->
+<!ENTITY fxa.menu.syncSettings2.label "הגדרות &syncBrand.shortName.label;">
+<!ENTITY fxa.menu.connectAnotherDevice2.label "חיבור מכשיר נוסף…">
+<!ENTITY fxa.menu.firefoxAccount "&syncBrand.fxAccount.label;">
+
+<!ENTITY fxa.menu.signin.label "התחברות אל &brandProductName;">
+<!ENTITY fxa.menu.turnOnSync.label "הפעלת &syncBrand.shortName.label;">
+<!ENTITY fxa.menu.firefoxServices.label "שירותי &brandProductName;">
+<!ENTITY fxa.menu.account.label "חשבון">
+<!ENTITY fxa.menu.settings.label "הגדרות">
+<!ENTITY fxa.menu.accountSettings.label "הגדרות חשבון">
+<!ENTITY fxa.menu.manageAccount2.label "ניהול חשבון">
+<!ENTITY fxa.menu.signOut.label "התנתקות…">
+<!ENTITY fxa.menu.setupSync.label "הגדרת &syncBrand.shortName.label;…">
+
+<!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
+     for the Waterfox Account toolbar menu screen.  -->
+<!ENTITY fxa.service.sendTab.description "ניתן לשלוח לשוניות לכל מכשיר בו נכנסת לחשבונך.">
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "כעת במסך מלא">
+<!ENTITY fullscreenWarning.generic.label "מסמך זה כעת במסך מלא">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "יציאה ממסך מלא (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "יציאה ממסך מלא (Esc)">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "לאתר בכתובת ">
+<!ENTITY pointerlockWarning.afterDomain.label "יש שליטה על הסמן שלך. לחיצה על ESC תחזיר את השליטה אליך.">
+<!ENTITY pointerlockWarning.generic.label "למסמך זה יש שליטה על הסמן שלך. לחיצה על ESC תחזיר את השליטה אליך.">
+
+<!ENTITY showAllBookmarks2.label "הצגת כל הסימניות">
+<!ENTITY recentBookmarks.label "סימניות שנוספו לאחרונה">
+<!ENTITY bookmarksToolbarChevron.tooltip "הצגת סימניות נוספות">
+
+<!ENTITY printButton.label            "הדפסה">
+<!ENTITY printButton.tooltip          "הדפסת דף זה">
+
+
+<!ENTITY searchItem.title             "חיפוש">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "דף הבית">
+<!ENTITY homeButton.defaultPage.tooltip "דף הבית של &brandShortName;">
+
+<!ENTITY bookmarksButton.label          "סימניות">
+
+<!ENTITY bookmarksSubview.label             "סימניות">
+<!ENTITY bookmarksMenuButton2.label         "תפריט סימניות">
+<!ENTITY bookmarksMenuButton.other.label    "סימניות אחרות">
+<!ENTITY bookmarksMenuButton.mobile.label   "סימניות מהנייד">
+<!ENTITY viewBookmarksSidebar2.label        "הצגת סרגל הצד">
+<!ENTITY hideBookmarksSidebar.label         "הסתרת סרגל הצד סימניות">
+<!ENTITY viewBookmarksToolbar.label         "הצגת סרגל הכלים סימניות">
+<!ENTITY hideBookmarksToolbar.label         "הסתרת סרגל הכלים סימניות">
+<!ENTITY searchBookmarks.label              "חיפוש בסימניות">
+<!ENTITY bookmarkingTools.label             "כלי סימניות">
+<!ENTITY addBookmarksMenu.label             "הוספת תפריט הסימניות לסרגל הכלים">
+<!ENTITY removeBookmarksMenu.label          "הסרת תפריט הסימניות מסרגל הכלים">
+
+<!ENTITY historyButton.label            "היסטוריה">
+
+<!ENTITY downloads.label              "הורדות">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "הורדות">
+<!ENTITY addons.label                 "תוספות">
+
+<!ENTITY webDeveloperMenu.label       "כלי פיתוח">
+
+<!ENTITY newNavigatorCmd.label        "חלון חדש">
+<!ENTITY newPrivateWindow.label     "חלון פרטי חדש">
+
+<!ENTITY editMenu.label         "עריכה">
+<!ENTITY preferencesCmd2.label       "אפשרויות">
+<!ENTITY preferencesCmdUnix.label       "העדפות">
+<!ENTITY logins.label                           "כניסות וססמאות">
+
+<!ENTITY overflowCustomizeToolbar.label       "התאמה אישית של סרגל הכלים…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "ס">
+
+<!ENTITY historyMenu.label "היסטוריה">
+<!ENTITY historyUndoMenu.label "לשוניות שנסגרו לאחרונה">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "חלונות שנסגרו לאחרונה">
+
+<!ENTITY appMenuHistory.showAll.label "הצגת כל ההיסטוריה">
+<!ENTITY appMenuHistory.clearRecent.label "ניקוי היסטוריה אחרונה…">
+<!ENTITY appMenuHistory.restoreSession.label "שחזור הפעלה קודמת">
+<!ENTITY appMenuHistory.viewSidebar.label "הצגת סרגל הצד היסטוריה">
+<!ENTITY appMenuHistory.hideSidebar.label "הסתרת סרגל הצד היסטוריה">
+<!ENTITY appMenuHistory.recentHistory.label "היסטוריה אחרונה">
+<!ENTITY appMenuHelp.label "עזרה">
+
+<!ENTITY appMenuRemoteTabs.label "לשוניות מסונכרנות">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "אין לשוניות פתוחות">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "הצגת לשוניות נוספות">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "הצגת לשוניות נוספות ממכשיר זה">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "הצגת הכל">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "הצגת כל הלשוניות ממכשיר זה">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "יש להפעיל סנכרון לשוניות כדי לצפות ברשימת הלשוניות שלך ממכשירים אחרים.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Waterfox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "להציג כאן את הלשוניות שלך ממכשירים אחרים?">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "פתיחת העדפות Sync">
+<!ENTITY appMenuRemoteTabs.welcome.label "הצגת רשימה של הלשוניות שלך ממכשירים אחרים.">
+<!ENTITY appMenuRemoteTabs.unverified.label "יש לאמת את החשבון שלך.">
+<!ENTITY appMenuRemoteTabs.signintosync.label "התחברות אל &syncBrand.shortName.label;…">
+<!ENTITY appMenuRemoteTabs.turnonsync.label "הפעלת &syncBrand.shortName.label;…">
+<!ENTITY appMenuRemoteTabs.managedevices.label "ניהול מכשירים…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "הצגת סרגל צד של לשוניות מסונכרנות">
+<!ENTITY appMenuRemoteTabs.hidesidebar.label "הסתרת סרגל צד של לשוניות מסונכרנות">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "חיבור מכשיר נוסף">
+
+<!ENTITY appMenuRecentHighlights.label "הדגשות אחרונות">
+
+<!ENTITY customizeMenu.addToToolbar.label "הוספה לסרגל כלים">
+<!ENTITY customizeMenu.addToToolbar.accesskey "ר">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "הוספה לתפריט הצף">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "ס">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "הסרת הצמדה מהתפריט הצף">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "מ">
+<!ENTITY customizeMenu.removeFromToolbar.label "הסרה מסרגל הכלים">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "ר">
+<!ENTITY customizeMenu.addMoreItems.label "הוספת פריטים נוספים…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "נ">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "עוד">
+
+<!ENTITY contentSearchSubmit.tooltip  "שליחת החיפוש">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "חיפוש">
+<!ENTITY searchIcon.tooltip           "חיפוש">
+
+<!ENTITY openLinkCmdInTab.accesskey   "ל">
+
+<!ENTITY pageAction.copyLink.label    "העתקת קישור">
+
+<!ENTITY saveToPocketCmd.label        "שמירת דף אל Pocket">
+<!ENTITY pocketMenuitem.label         "הצגת רשימת Pocket">
+
+<!ENTITY emailPageCmd.label           "שליחת קישור בדוא״ל…">
+
+<!-- Media (video/audio) controls -->
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoom.label                 "מרחק מתצוגה">
+
+<!ENTITY sidebarCloseButton.tooltip     "סגירת סרגל הצד">
+
+<!ENTITY quitApplicationCmdWin2.label       "יציאה">
+<!ENTITY quitApplicationCmdWin2.accesskey   "צ">
+<!ENTITY quitApplicationCmdWin2.tooltip     "יציאה מ־&brandShorterName;">
+<!ENTITY quitApplicationCmd.label       "יציאה">
+<!ENTITY quitApplicationCmd.accesskey   "צ">
+<!ENTITY quitApplicationCmdMac2.label   "יציאה מ־&brandShorterName;">
+
+<!ENTITY allowPopups.accesskey "ח">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "עריכת העדפות חסימת חלונות קופצים…">
+<!ENTITY editPopupSettings.label "עריכת אפשרויות חסימת חלונות קופצים…">
+<!ENTITY editPopupSettings.accesskey "ע">
+<!ENTITY dontShowMessage.accesskey "א">
+
+<!ENTITY findOnCmd.label     "חיפוש בדף זה…">
+
+<!ENTITY spellAddDictionaries.label "הוספת מילונים…">
+<!ENTITY spellAddDictionaries.accesskey "ה">
+
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "לשוניות הדפדפן">
+
+<!ENTITY syncBrand.shortName.label    "Sync">
+
+<!ENTITY customizeMode.autoHideDownloadsButton.label "הסתרה אוטומטית">
+
+
+<!ENTITY uiTour.infoPanel.close "סגירה">
+
+<!ENTITY panicButton.thankyou.msg1                "ההיסטוריה האחרונה שלך נמחקה.">
+<!ENTITY panicButton.thankyou.msg2                "המשך גלישה בטוחה!">
+<!ENTITY panicButton.thankyou.buttonlabel         "תודה!">
+
+<!ENTITY updateAvailable.panelUI.label "הורדת עדכון &brandShorterName;">
+<!ENTITY updateManual.panelUI.label "הורדת עותק חדש של &brandShorterName;">
+<!ENTITY updateUnsupported.panelUI.label "לא ניתן לבצע עדכונים נוספים">
+<!ENTITY updateRestart.panelUI.label2 "הפעלה מחדש לעדכון &brandShorterName;">
+
+<!ENTITY sendToDevice.syncNotReady.label "סנכרון מכשירים…">
+
+<!ENTITY pageAction.shareUrl.label "שיתוף">
+<!ENTITY pageAction.shareMore.label "עוד…">
+
+<!ENTITY libraryButton.tooltip "צפייה בהיסטוריה, סימניות שמורות ועוד">
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+<!ENTITY accessibilityIndicator.tooltip "תכונות נגישות מופעלות">

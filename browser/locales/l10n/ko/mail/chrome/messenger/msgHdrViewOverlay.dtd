@@ -1,0 +1,114 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "받는 사람 ">
+<!ENTITY fromField4.label "보낸 사람 ">
+<!ENTITY senderField4.label "보낸 사람 ">
+<!ENTITY author.label "저자">
+<!ENTITY organizationField4.label "조직 ">
+<!ENTITY replyToField4.label "답장 주소 ">
+
+<!ENTITY subjectField4.label "제목 ">
+<!ENTITY ccField4.label "Cc ">
+<!ENTITY bccField4.label "Bcc ">
+<!ENTITY newsgroupsField4.label "뉴스 그룹 ">
+<!ENTITY followupToField4.label "전달 ">
+<!ENTITY tagsHdr4.label "태그  ">
+<!ENTITY dateField4.label "보낸 일자 ">
+<!ENTITY userAgentField4.label "User Agent ">
+<!ENTITY referencesField4.label "References ">
+<!ENTITY messageIdField4.label "Message ID ">
+<!ENTITY inReplyToField4.label "In Reply To ">
+<!ENTITY originalWebsite4.label "웹 사이트 ">
+
+<!ENTITY hdrArchiveButton1.label "보관">
+<!ENTITY hdrArchiveButton1.tooltip "이 메시지 보관">
+<!ENTITY hdrSmartReplyButton1.label "빠른 답장">
+<!ENTITY hdrReplyButton1.label "답장">
+<!ENTITY hdrReplyButton2.tooltip "이 메시지를 보낸 사람에게 답장">
+<!ENTITY hdrReplyAllButton1.label "전체 답장">
+<!ENTITY hdrReplyAllButton1.tooltip "보낸이와 모든 수신자에 답장">
+<!ENTITY hdrReplyListButton1.label "리스트로 답장">
+<!ENTITY hdrReplyListButton1.tooltip "메일링 리스트로 답장">
+<!ENTITY hdrFollowupButton1.label "팔로우업">
+<!ENTITY hdrFollowupButton1.tooltip "이 뉴스 그룹에 팔로우업 투고">
+<!ENTITY hdrForwardButton1.label "전달">
+<!ENTITY hdrForwardButton1.tooltip "이 메시지를 전달">
+<!ENTITY hdrJunkButton1.label "스팸 표시">
+<!ENTITY hdrJunkButton1.tooltip "이 메시지를 스팸으로 표시">
+<!ENTITY hdrTrashButton1.label "삭제">
+<!ENTITY hdrTrashButton1.tooltip "이 메시지 삭제">
+
+<!ENTITY hdrViewToolbarShowFull.label "아이콘 텍스트 모두 보기">
+<!ENTITY hdrViewToolbarShowFull.accesskey "a">
+<!ENTITY hdrViewToolbarShowIcons.label "아이콘만 보기">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "I">
+<!ENTITY hdrViewToolbarShowText.label "텍스트만 보기">
+<!ENTITY hdrViewToolbarShowText.accesskey "T">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "보낸이에게 답장 항상 보기">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "R">
+
+<!ENTITY otherActionsButton2.label "기타">
+<!ENTITY otherActionsButton.tooltip "기타 기능">
+<!ENTITY otherActionsOpenConversation1.label "대화 모드를 탭으로 열기">
+<!ENTITY otherActionsOpenConversation1.accesskey "C">
+<!ENTITY otherActionsOpenInNewWindow1.label "새 창으로 열기">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "W">
+<!ENTITY otherActionsOpenInNewTab1.label "새 탭으로 열기">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "T">
+<!ENTITY markAsReadMenuItem1.label "읽은 메일로 표시">
+<!ENTITY markAsReadMenuItem1.accesskey "R">
+<!ENTITY markAsUnreadMenuItem1.label "읽지 않은 메일로 표시">
+<!ENTITY markAsUnreadMenuItem1.accesskey "R">
+<!ENTITY saveAsMenuItem1.label "다른 이름으로 저장…">
+<!ENTITY saveAsMenuItem1.accesskey "S">
+<!ENTITY viewSourceMenuItem1.label "소스 보기">
+<!ENTITY viewSourceMenuItem1.accesskey "V">
+<!ENTITY otherActionsPrint1.label "인쇄…">
+<!ENTITY otherActionsPrint1.accesskey "P">
+
+<!-- Attachment bar context menu items -->
+<!ENTITY startExpandedCmd.label    "시작할 때 첨부파일 창 보이기">
+<!ENTITY startExpandedCmd.accesskey    "S">
+
+<!-- Attachment context menu items -->
+<!ENTITY openAttachmentCmd.label    "열기">
+<!ENTITY openAttachmentCmd.accesskey    "O">
+<!ENTITY saveAsAttachmentCmd.label    "다른 이름으로 저장…">
+<!ENTITY saveAsAttachmentCmd.accesskey    "A">
+<!ENTITY detachAttachmentCmd.label    "첨부 파일 분리…">
+<!ENTITY detachAttachmentCmd.accesskey    "D">
+<!ENTITY deleteAttachmentCmd.label    "삭제">
+<!ENTITY deleteAttachmentCmd.accesskey    "e">
+<!ENTITY openAllAttachmentsCmd.label    "모두 열기…">
+<!ENTITY openAllAttachmentsCmd.accesskey    "O">
+<!ENTITY saveAllAttachmentsCmd.label    "모두 저장…">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "S">
+<!ENTITY detachAllAttachmentsCmd.label    "모든 첨부 분리…">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "D">
+<!ENTITY deleteAllAttachmentsCmd.label    "모두 삭제…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "e">
+
+<!ENTITY openAttachment.tooltip "첨부 파일 열기">
+
+<!ENTITY detachedAttachmentFolder.show.label        "저장 폴더 열기">
+<!ENTITY detachedAttachmentFolder.show.accesskey    "F">
+<!ENTITY detachedAttachmentFolder.showMac.label     "Finder에서 보기">
+<!ENTITY detachedAttachmentFolder.showMac.accesskey "F">
+
+<!-- Attachment toolbar items -->
+<!ENTITY saveAttachmentButton1.label       "저장">
+<!ENTITY saveAttachmentButton1.tooltip     "첨부 파일을 저장합니다">
+<!ENTITY saveAllAttachmentsButton1.label   "모두 저장">
+<!ENTITY saveAllAttachmentsButton1.tooltip "첨부된 모든 파일을 저장합니다">
+
+<!ENTITY copyLinkCmd.label        "링크 URL 복사">
+<!ENTITY copyLinkCmd.accesskey    "C">
+
+<!ENTITY CopyMessageId.label "메시지 ID를 카피">
+<!ENTITY CopyMessageId.accesskey "C">
+<!ENTITY OpenMessageForMsgId.label "Message-ID로 열기">
+<!ENTITY OpenMessageForMsgId.accesskey "O">
+<!ENTITY OpenBrowserWithMsgId.label "Message-ID로 웹 브라우저 열기">
+<!ENTITY OpenBrowserWithMsgId.accesskey "B">

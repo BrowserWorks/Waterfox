@@ -44,14 +44,9 @@ void InProcessCompositorWidget::PostRender(WidgetRenderingContext* aContext) {
   mWidget->PostRender(aContext);
 }
 
-void InProcessCompositorWidget::DrawWindowUnderlay(
-    WidgetRenderingContext* aContext, LayoutDeviceIntRect aRect) {
-  mWidget->DrawWindowUnderlay(aContext, aRect);
-}
-
-void InProcessCompositorWidget::DrawWindowOverlay(
-    WidgetRenderingContext* aContext, LayoutDeviceIntRect aRect) {
-  mWidget->DrawWindowOverlay(aContext, aRect);
+RefPtr<layers::NativeLayerRoot>
+InProcessCompositorWidget::GetNativeLayerRoot() {
+  return mWidget->GetNativeLayerRoot();
 }
 
 already_AddRefed<gfx::DrawTarget>
@@ -70,7 +65,7 @@ void InProcessCompositorWidget::EndRemoteDrawing() {
 }
 
 void InProcessCompositorWidget::EndRemoteDrawingInRegion(
-    gfx::DrawTarget* aDrawTarget, LayoutDeviceIntRegion& aInvalidRegion) {
+    gfx::DrawTarget* aDrawTarget, const LayoutDeviceIntRegion& aInvalidRegion) {
   mWidget->EndRemoteDrawingInRegion(aDrawTarget, aInvalidRegion);
 }
 
@@ -100,6 +95,12 @@ uintptr_t InProcessCompositorWidget::GetWidgetKey() {
 }
 
 nsIWidget* InProcessCompositorWidget::RealWidget() { return mWidget; }
+
+#ifdef XP_MACOSX
+LayoutDeviceIntRegion InProcessCompositorWidget::GetOpaqueWidgetRegion() {
+  return mWidget->GetOpaqueWidgetRegion();
+}
+#endif
 
 void InProcessCompositorWidget::ObserveVsync(VsyncObserver* aObserver) {
   if (RefPtr<CompositorVsyncDispatcher> cvd =

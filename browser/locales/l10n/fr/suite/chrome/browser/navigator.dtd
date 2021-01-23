@@ -1,0 +1,91 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/navigator.xul -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items --> 
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE --> 
+<!ENTITY mainWindow.title "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+
+<!ENTITY mainWindow.titleprivate "Navigation privée">
+
+<!ENTITY editPageCmd.label "Modifier la page">
+<!ENTITY editPageCmd.accesskey "d">
+<!ENTITY editPageCmd.commandkey "e">
+
+<!ENTITY navbarCmd.label "Barre de navigation">
+<!ENTITY navbarCmd.accesskey "n">
+<!ENTITY bookmarksToolbarCmd.label     "Barre d’outils des marque-pages">
+<!ENTITY bookmarksToolbarCmd.accesskey "p">
+
+<!ENTITY closeWindow.label "Fermer la fenêtre">
+<!ENTITY closeWindow.accesskey "r">
+
+<!ENTITY minimizeButton.tooltip       "Réduire">
+<!ENTITY restoreButton.tooltip        "Restaurer">
+
+<!ENTITY feedsMenu.label "S’abonner à cette page">
+<!ENTITY feedsMenu.accesskey "S">
+
+<!ENTITY menuBar.tooltip                  "Barre de menu">
+<!ENTITY bookmarksToolbar.tooltip         "Barre d’outils des marque-pages">
+<!ENTITY navigationToolbar.tooltip        "Barre de navigation">
+
+<!ENTITY editBookmark.done.label "Terminer">
+<!ENTITY editBookmark.cancel.label "Annuler">
+<!ENTITY editBookmark.removeBookmark.accessKey "S">
+
+<!-- Toolbar items --> 
+<!ENTITY backButton.label             "Précédent">
+<!ENTITY backButton.tooltip           "Reculer d’une page">
+<!ENTITY forwardButton.label          "Suivant">
+<!ENTITY forwardButton.tooltip        "Avancer d’une page">
+<!ENTITY reloadButton.label           "Actualiser">
+<!ENTITY reloadButton.tooltip         "Actualiser la page courante">
+<!ENTITY stopButton.label             "Arrêter">
+<!ENTITY stopButton.tooltip           "Arrêter le chargement de la page">
+<!ENTITY searchButton.label           "Rechercher">
+<!ENTITY searchButton.tooltip         "Saisissez une requête dans la barre d’adresse puis cliquez sur Rechercher">
+<!ENTITY goButton.label               "Go">
+<!ENTITY goButton.tooltip             "Saisissez une adresse dans le champ à gauche puis cliquez sur Go">
+<!ENTITY printButton.label            "Imprimer">
+<!ENTITY printButton.tooltip          "Imprimer cette page">
+
+<!ENTITY throbber.tooltip             "Visiter le site web de &vendorShortName;">
+
+<!ENTITY throbber.tooltip2            "Visiter le site web de &brandShortName;">
+
+<!ENTITY locationBar.tooltip          "Saisir un terme à rechercher, un mot-clé ou une adresse web">
+<!ENTITY locationBar.accesskey        "d">
+<!ENTITY locationBar.title            "Adresse">
+<!ENTITY proxyIcon.tooltip            "Glisser-déposer cette icône pour créer un lien vers cette page">
+
+<!ENTITY searchItem.title             "Rechercher">
+
+<!ENTITY bookmarksButton.label        "Marque-pages">
+<!ENTITY bookmarksButton.tooltip      "Liste des marque-pages">
+<!ENTITY homeButton.label             "Accueil">
+<!ENTITY bookmarksToolbarItem.label   "Éléments de la barre d’outils des marque-pages">
+<!ENTITY bookmarksToolbarChevron.tooltip "Afficher plus de marque-pages">
+
+<!-- Statusbar -->
+<!ENTITY  statusText.label            "Chargé">
+
+<!ENTITY popupIcon.tooltiptext      "Débloquer les fenêtres popup de ce site">
+
+<!ENTITY viewSecurityInfo.label      "Afficher les informations de sécurité">
+<!ENTITY viewSecurityInfo.accesskey  "S">
+<!ENTITY viewCertificate.label       "Afficher le certificat">
+<!ENTITY viewCertificate.accesskey   "C">
+<!ENTITY viewCertManager.label       "Ouvrir le gestionnaire de certificats">
+<!ENTITY viewCertManager.accesskey   "g">
+
+<!ENTITY zoomIn.tooltiptext          "Zoom avant">
+<!ENTITY zoomOut.tooltiptext         "Zoom arrière">

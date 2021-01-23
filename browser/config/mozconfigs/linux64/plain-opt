@@ -1,14 +1,20 @@
 export TOOLTOOL_DIR="$topsrcdir"
-export LLVM_CONFIG="${TOOLTOOL_DIR}/clang/bin/llvm-config"
+export LLVM_CONFIG="${MOZ_FETCHES_DIR}/clang/bin/llvm-config"
 
-CARGO="${TOOLTOOL_DIR}/rustc/bin/cargo"
-RUSTC="${TOOLTOOL_DIR}/rustc/bin/rustc"
-RUSTDOC="${TOOLTOOL_DIR}/rustc/bin/rustdoc"
-RUSTFMT="${TOOLTOOL_DIR}/rustc/bin/rustfmt"
-CBINDGEN="${TOOLTOOL_DIR}/cbindgen/cbindgen"
+export WASM_SANDBOXED_LIBRARIES=graphite,ogg
+export LUCETC="${MOZ_FETCHES_DIR}/lucetc/lucetc"
+export WASI_SYSROOT="${MOZ_FETCHES_DIR}/wasi-sysroot/share/wasi-sysroot"
+export WASM_CC="${MOZ_FETCHES_DIR}/clang/bin/clang --target=wasm32-wasi"
+export WASM_CXX="${MOZ_FETCHES_DIR}/clang/bin/clang++ --target=wasm32-wasi"
 
-export NODEJS="${TOOLTOOL_DIR}/node/bin/node"
-NASM="${TOOLTOOL_DIR}/nasm/nasm"
+CARGO="${MOZ_FETCHES_DIR}/rustc/bin/cargo"
+RUSTC="${MOZ_FETCHES_DIR}/rustc/bin/rustc"
+RUSTDOC="${MOZ_FETCHES_DIR}/rustc/bin/rustdoc"
+RUSTFMT="${MOZ_FETCHES_DIR}/rustc/bin/rustfmt"
+CBINDGEN="${MOZ_FETCHES_DIR}/cbindgen/cbindgen"
 
-CC="${TOOLTOOL_DIR}/clang/bin/clang"
-CXX="${TOOLTOOL_DIR}/clang/bin/clang++"
+export NODEJS="${MOZ_FETCHES_DIR}/node/bin/node"
+NASM="${MOZ_FETCHES_DIR}/nasm/nasm"
+
+CC="${MOZ_FETCHES_DIR}/clang/bin/clang"
+CXX="${MOZ_FETCHES_DIR}/clang/bin/clang++"

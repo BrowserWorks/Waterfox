@@ -29,7 +29,7 @@ IIRFilter::IIRFilter(const AudioDoubleArray* feedforwardCoef,
   reset();
 }
 
-IIRFilter::~IIRFilter() {}
+IIRFilter::~IIRFilter() = default;
 
 void IIRFilter::reset() {
   memset(m_xBuffer.Elements(), 0, m_xBuffer.Length() * sizeof(double));
@@ -106,8 +106,8 @@ void IIRFilter::process(const float* sourceP, float* destP,
 
     // Avoid introducing a stream of subnormals
     destP[n] = WebCore::DenormalDisabler::flushDenormalFloatToZero(yn);
-    MOZ_ASSERT(destP[n] == 0.0 || fabs(destP[n]) > FLT_MIN,
-               "output should not be subnormal");
+    MOZ_ASSERT(destP[n] == 0.0 || fabs(destP[n]) > FLT_MIN || IsNaN(destP[n]),
+               "output should not be subnormal, but can be NaN");
   }
 }
 

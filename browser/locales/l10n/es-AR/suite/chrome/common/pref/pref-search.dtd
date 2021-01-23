@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-search.xul -->
+
+<!-- LOCALIZATION NOTE : FILE The Search prefs dialog -->
+
+<!ENTITY pref.search.title                "Búsqueda en Internet">
+<!ENTITY legendHeader                     "Buscador predeterminado">
+<!ENTITY defaultSearchEngine.label        "Buscar usando:">
+<!ENTITY defaultSearchEngine.accesskey    "s">
+
+<!-- Will be used by bug 595246 -->
+<!ENTITY engineManager.label              "Administrar buscadores…">
+
+<!ENTITY searchResults.label              "Resultados de búsqueda">
+
+<!ENTITY openInTab.label                  "Abrir nuevas pestañas para los resultados de búsqueda en la barra lateral">
+<!ENTITY openInTab.accesskey              "n">
+ <!ENTITY openContextSearchTab.label       "Abrir una pestaña en vez de una ventana para una búsqueda web desde el menú contextual">
+<!ENTITY openContextSearchTab.accesskey   "t">
+<!ENTITY openSidebarSearchPanel.label     "Abrir la pestaña de búsqueda en la barra lateral cuando se invoque una búsqueda">
+<!ENTITY openSidebarSearchPanel.accesskey "o">
+

@@ -1,15 +1,32 @@
 "use strict";
 
-ChromeUtils.import("resource://gre/modules/TelemetryArchive.jsm", this);
-ChromeUtils.import("resource://gre/modules/TelemetryUtils.jsm", this);
+const { TelemetryArchive } = ChromeUtils.import(
+  "resource://gre/modules/TelemetryArchive.jsm"
+);
+const { TelemetryUtils } = ChromeUtils.import(
+  "resource://gre/modules/TelemetryUtils.jsm"
+);
+const { TelemetryTestUtils } = ChromeUtils.import(
+  "resource://testing-common/TelemetryTestUtils.jsm"
+);
+
+const { TelemetryStorage } = ChromeUtils.import(
+  "resource://gre/modules/TelemetryStorage.jsm"
+);
 
 // All tests run privileged unless otherwise specified not to.
-function createExtension(backgroundScript, permissions, isPrivileged = true) {
+function createExtension(
+  backgroundScript,
+  permissions,
+  isPrivileged = true,
+  telemetry
+) {
   let extensionData = {
     background: backgroundScript,
-    manifest: { permissions },
+    manifest: { permissions, telemetry },
     isPrivileged,
   };
+
   return ExtensionTestUtils.loadExtension(extensionData);
 }
 
@@ -17,7 +34,8 @@ async function run(test) {
   let extension = createExtension(
     test.backgroundScript,
     test.permissions || ["telemetry"],
-    test.isPrivileged
+    test.isPrivileged,
+    test.telemetry
   );
   await extension.startup();
   await extension.awaitFinish(test.doneSignal);
@@ -60,7 +78,6 @@ if (AppConstants.MOZ_BUILD_APP === "browser") {
 
   add_task(async function test_telemetry_scalar_add() {
     Services.telemetry.clearScalars();
-
     await run({
       backgroundScript: async () => {
         await browser.telemetry.scalarAdd(
@@ -71,11 +88,11 @@ if (AppConstants.MOZ_BUILD_APP === "browser") {
       },
       doneSignal: "scalar_add",
     });
-
-    const scalars = Services.telemetry.getSnapshotForScalars("main", false);
-    equal(scalars.parent["telemetry.test.unsigned_int_kind"], 1);
-
-    Services.telemetry.clearScalars();
+    TelemetryTestUtils.assertScalar(
+      TelemetryTestUtils.getProcessScalars("parent", false, true),
+      "telemetry.test.unsigned_int_kind",
+      1
+    );
   });
 
   add_task(async function test_telemetry_scalar_add_unknown_name() {
@@ -88,14 +105,9 @@ if (AppConstants.MOZ_BUILD_APP === "browser") {
         doneSignal: "scalar_add_unknown_name",
       });
     });
-
-    messages = messages.filter(
-      msg => /telemetry.test.does_not_exist - Unknown scalar./
-    );
-    equal(
-      messages.length,
-      1,
-      "Telemetry should throw if an unknown scalar is incremented"
+    Assert.ok(
+      messages.find(({ message }) => message.includes("Unknown scalar")),
+      "Telemetry should warn if an unknown scalar is incremented"
     );
   });
 
@@ -127,20 +139,16 @@ if (AppConstants.MOZ_BUILD_APP === "browser") {
         doneSignal: "scalar_add_invalid_keyed_scalar",
       });
     });
-
-    messages = messages.filter(
-      msg => /Attempting to manage a keyed scalar as a scalar/
-    );
-    equal(
-      messages.length,
-      1,
-      "Telemetry should throw if a keyed scalar is incremented"
+    Assert.ok(
+      messages.find(({ message }) =>
+        message.includes("Attempting to manage a keyed scalar as a scalar")
+      ),
+      "Telemetry should warn if a scalarAdd is called for a keyed scalar"
     );
   });
 
   add_task(async function test_telemetry_scalar_set() {
     Services.telemetry.clearScalars();
-
     await run({
       backgroundScript: async () => {
         await browser.telemetry.scalarSet("telemetry.test.boolean_kind", true);
@@ -148,11 +156,11 @@ if (AppConstants.MOZ_BUILD_APP === "browser") {
       },
       doneSignal: "scalar_set",
     });
-
-    const scalars = Services.telemetry.getSnapshotForScalars("main", false);
-    equal(scalars.parent["telemetry.test.boolean_kind"], true);
-
-    Services.telemetry.clearScalars();
+    TelemetryTestUtils.assertScalar(
+      TelemetryTestUtils.getProcessScalars("parent", false, true),
+      "telemetry.test.boolean_kind",
+      true
+    );
   });
 
   add_task(async function test_telemetry_scalar_set_unknown_name() {
@@ -168,18 +176,14 @@ if (AppConstants.MOZ_BUILD_APP === "browser") {
         doneSignal: "scalar_set_unknown_name",
       });
     });
-
-    messages = messages.filter(msg => /Unknown scalar/);
-    equal(
-      messages.length,
-      1,
-      "Telemetry should throw if an unknown scalar is set"
+    Assert.ok(
+      messages.find(({ message }) => message.includes("Unknown scalar")),
+      "Telemetry should warn if an unknown scalar is set"
     );
   });
 
   add_task(async function test_telemetry_scalar_set_maximum() {
     Services.telemetry.clearScalars();
-
     await run({
       backgroundScript: async () => {
         await browser.telemetry.scalarSetMaximum(
@@ -190,11 +194,11 @@ if (AppConstants.MOZ_BUILD_APP === "browser") {
       },
       doneSignal: "scalar_set_maximum",
     });
-
-    const scalars = Services.telemetry.getSnapshotForScalars("main", false);
-    equal(scalars.parent["telemetry.test.unsigned_int_kind"], 123);
-
-    Services.telemetry.clearScalars();
+    TelemetryTestUtils.assertScalar(
+      TelemetryTestUtils.getProcessScalars("parent", false, true),
+      "telemetry.test.unsigned_int_kind",
+      123
+    );
   });
 
   add_task(async function test_telemetry_scalar_set_maximum_unknown_name() {
@@ -210,12 +214,9 @@ if (AppConstants.MOZ_BUILD_APP === "browser") {
         doneSignal: "scalar_set_maximum_unknown_name",
       });
     });
-
-    messages = messages.filter(msg => /Unknown scalar/);
-    equal(
-      messages.length,
-      1,
-      "Telemetry should throw if an unknown scalar is set"
+    Assert.ok(
+      messages.find(({ message }) => message.includes("Unknown scalar")),
+      "Telemetry should warn if an unknown scalar is set"
     );
   });
 
@@ -237,6 +238,261 @@ if (AppConstants.MOZ_BUILD_APP === "browser") {
     });
   });
 
+  add_task(async function test_telemetry_keyed_scalar_add() {
+    Services.telemetry.clearScalars();
+    await run({
+      backgroundScript: async () => {
+        await browser.telemetry.keyedScalarAdd(
+          "telemetry.test.keyed_unsigned_int",
+          "foo",
+          1
+        );
+        browser.test.notifyPass("keyed_scalar_add");
+      },
+      doneSignal: "keyed_scalar_add",
+    });
+    TelemetryTestUtils.assertKeyedScalar(
+      TelemetryTestUtils.getProcessScalars("parent", true, true),
+      "telemetry.test.keyed_unsigned_int",
+      "foo",
+      1
+    );
+  });
+
+  add_task(async function test_telemetry_keyed_scalar_add_unknown_name() {
+    let { messages } = await promiseConsoleOutput(async () => {
+      await run({
+        backgroundScript: async () => {
+          await browser.telemetry.keyedScalarAdd(
+            "telemetry.test.does_not_exist",
+            "foo",
+            1
+          );
+          browser.test.notifyPass("keyed_scalar_add_unknown_name");
+        },
+        doneSignal: "keyed_scalar_add_unknown_name",
+      });
+    });
+    Assert.ok(
+      messages.find(({ message }) => message.includes("Unknown scalar")),
+      "Telemetry should warn if an unknown keyed scalar is incremented"
+    );
+  });
+
+  add_task(async function test_telemetry_keyed_scalar_add_illegal_value() {
+    await run({
+      backgroundScript: () => {
+        browser.test.assertThrows(
+          () =>
+            browser.telemetry.keyedScalarAdd(
+              "telemetry.test.keyed_unsigned_int",
+              "foo",
+              {}
+            ),
+          /Incorrect argument types for telemetry.keyedScalarAdd/,
+          "The second 'value' argument to keyedScalarAdd must be an integer, string, or boolean"
+        );
+        browser.test.notifyPass("keyed_scalar_add_illegal_value");
+      },
+      doneSignal: "keyed_scalar_add_illegal_value",
+    });
+  });
+
+  add_task(async function test_telemetry_keyed_scalar_add_invalid_scalar() {
+    let { messages } = await promiseConsoleOutput(async function() {
+      await run({
+        backgroundScript: async () => {
+          await browser.telemetry.keyedScalarAdd(
+            "telemetry.test.unsigned_int_kind",
+            "foo",
+            1
+          );
+          browser.test.notifyPass("keyed_scalar_add_invalid_scalar");
+        },
+        doneSignal: "keyed_scalar_add_invalid_scalar",
+      });
+    });
+    Assert.ok(
+      messages.find(({ message }) =>
+        message.includes(
+          "Attempting to manage a keyed scalar as a scalar (or vice-versa)"
+        )
+      ),
+      "Telemetry should warn if a scalar is incremented as a keyed scalar"
+    );
+  });
+
+  add_task(async function test_telemetry_keyed_scalar_add_long_key() {
+    let { messages } = await promiseConsoleOutput(async () => {
+      await run({
+        backgroundScript: async () => {
+          await browser.telemetry.keyedScalarAdd(
+            "telemetry.test.keyed_unsigned_int",
+            "X".repeat(73),
+            1
+          );
+          browser.test.notifyPass("keyed_scalar_add_long_key");
+        },
+        doneSignal: "keyed_scalar_add_long_key",
+      });
+    });
+    Assert.ok(
+      messages.find(({ message }) =>
+        message.includes("The key length must be limited to 72 characters.")
+      ),
+      "Telemetry should warn if keyed scalar's key is too long"
+    );
+  });
+
+  add_task(async function test_telemetry_keyed_scalar_set() {
+    Services.telemetry.clearScalars();
+    await run({
+      backgroundScript: async () => {
+        await browser.telemetry.keyedScalarSet(
+          "telemetry.test.keyed_boolean_kind",
+          "foo",
+          true
+        );
+        browser.test.notifyPass("keyed_scalar_set");
+      },
+      doneSignal: "keyed_scalar_set",
+    });
+    TelemetryTestUtils.assertKeyedScalar(
+      TelemetryTestUtils.getProcessScalars("parent", true, true),
+      "telemetry.test.keyed_boolean_kind",
+      "foo",
+      true
+    );
+  });
+
+  add_task(async function test_telemetry_keyed_scalar_set_unknown_name() {
+    let { messages } = await promiseConsoleOutput(async function() {
+      await run({
+        backgroundScript: async () => {
+          await browser.telemetry.keyedScalarSet(
+            "telemetry.test.does_not_exist",
+            "foo",
+            true
+          );
+          browser.test.notifyPass("keyed_scalar_set_unknown_name");
+        },
+        doneSignal: "keyed_scalar_set_unknown_name",
+      });
+    });
+    Assert.ok(
+      messages.find(({ message }) => message.includes("Unknown scalar")),
+      "Telemetry should warn if an unknown keyed scalar is incremented"
+    );
+  });
+
+  add_task(async function test_telemetry_keyed_scalar_set_long_key() {
+    let { messages } = await promiseConsoleOutput(async () => {
+      await run({
+        backgroundScript: async () => {
+          await browser.telemetry.keyedScalarSet(
+            "telemetry.test.keyed_unsigned_int",
+            "X".repeat(73),
+            1
+          );
+          browser.test.notifyPass("keyed_scalar_set_long_key");
+        },
+        doneSignal: "keyed_scalar_set_long_key",
+      });
+    });
+    Assert.ok(
+      messages.find(({ message }) =>
+        message.includes("The key length must be limited to 72 characters")
+      ),
+      "Telemetry should warn if keyed scalar's key is too long"
+    );
+  });
+
+  add_task(async function test_telemetry_keyed_scalar_set_maximum() {
+    Services.telemetry.clearScalars();
+    await run({
+      backgroundScript: async () => {
+        await browser.telemetry.keyedScalarSetMaximum(
+          "telemetry.test.keyed_unsigned_int",
+          "foo",
+          123
+        );
+        browser.test.notifyPass("keyed_scalar_set_maximum");
+      },
+      doneSignal: "keyed_scalar_set_maximum",
+    });
+    TelemetryTestUtils.assertKeyedScalar(
+      TelemetryTestUtils.getProcessScalars("parent", true, true),
+      "telemetry.test.keyed_unsigned_int",
+      "foo",
+      123
+    );
+  });
+
+  add_task(
+    async function test_telemetry_keyed_scalar_set_maximum_unknown_name() {
+      let { messages } = await promiseConsoleOutput(async function() {
+        await run({
+          backgroundScript: async () => {
+            await browser.telemetry.keyedScalarSetMaximum(
+              "telemetry.test.does_not_exist",
+              "foo",
+              1
+            );
+            browser.test.notifyPass("keyed_scalar_set_maximum_unknown_name");
+          },
+          doneSignal: "keyed_scalar_set_maximum_unknown_name",
+        });
+      });
+      Assert.ok(
+        messages.find(({ message }) => message.includes("Unknown scalar")),
+        "Telemetry should warn if an unknown keyed scalar is set"
+      );
+    }
+  );
+
+  add_task(
+    async function test_telemetry_keyed_scalar_set_maximum_illegal_value() {
+      await run({
+        backgroundScript: () => {
+          browser.test.assertThrows(
+            () =>
+              browser.telemetry.keyedScalarSetMaximum(
+                "telemetry.test.keyed_unsigned_int",
+                "foo",
+                "string"
+              ),
+            /Incorrect argument types for telemetry.keyedScalarSetMaximum/,
+            "The third 'value' argument to keyedScalarSetMaximum must be a scalar"
+          );
+          browser.test.notifyPass("keyed_scalar_set_maximum_illegal_value");
+        },
+        doneSignal: "keyed_scalar_set_maximum_illegal_value",
+      });
+    }
+  );
+
+  add_task(async function test_telemetry_keyed_scalar_set_maximum_long_key() {
+    let { messages } = await promiseConsoleOutput(async () => {
+      await run({
+        backgroundScript: async () => {
+          await browser.telemetry.keyedScalarSetMaximum(
+            "telemetry.test.keyed_unsigned_int",
+            "X".repeat(73),
+            1
+          );
+          browser.test.notifyPass("keyed_scalar_set_maximum_long_key");
+        },
+        doneSignal: "keyed_scalar_set_maximum_long_key",
+      });
+    });
+    Assert.ok(
+      messages.find(({ message }) =>
+        message.includes("The key length must be limited to 72 characters")
+      ),
+      "Telemetry should warn if keyed scalar's key is too long"
+    );
+  });
+
   add_task(async function test_telemetry_record_event() {
     Services.telemetry.clearEvents();
     Services.telemetry.setEventRecordingEnabled("telemetry.test", true);
@@ -253,12 +509,16 @@ if (AppConstants.MOZ_BUILD_APP === "browser") {
       doneSignal: "record_event_ok",
     });
 
-    let events = Services.telemetry.snapshotEvents(
-      Ci.nsITelemetry.DATASET_PRERELEASE_CHANNELS,
-      true
+    TelemetryTestUtils.assertEvents(
+      [
+        {
+          category: "telemetry.test",
+          method: "test1",
+          object: "object1",
+        },
+      ],
+      { category: "telemetry.test" }
     );
-    equal(events.parent.length, 1);
-    equal(events.parent[0][1], "telemetry.test");
 
     Services.telemetry.setEventRecordingEnabled("telemetry.test", false);
     Services.telemetry.clearEvents();
@@ -290,14 +550,17 @@ if (AppConstants.MOZ_BUILD_APP === "browser") {
       doneSignal: "record_event_string_value",
     });
 
-    let events = Services.telemetry.snapshotEvents(
-      Ci.nsITelemetry.DATASET_PRERELEASE_CHANNELS,
-      true
+    TelemetryTestUtils.assertEvents(
+      [
+        {
+          category: "telemetry.test",
+          method: "test1",
+          object: "object1",
+          value: "value1",
+        },
+      ],
+      { category: "telemetry.test" }
     );
-    equal(events.parent.length, 1);
-    equal(events.parent[0][1], "telemetry.test");
-    equal(events.parent[0][3], "object1");
-    equal(events.parent[0][4], "value1");
 
     Services.telemetry.setEventRecordingEnabled("telemetry.test", false);
     Services.telemetry.clearEvents();
@@ -305,7 +568,6 @@ if (AppConstants.MOZ_BUILD_APP === "browser") {
 
   add_task(async function test_telemetry_register_scalars_string() {
     Services.telemetry.clearScalars();
-
     await run({
       backgroundScript: async () => {
         await browser.telemetry.registerScalars("telemetry.test.dynamic", {
@@ -323,16 +585,15 @@ if (AppConstants.MOZ_BUILD_APP === "browser") {
       },
       doneSignal: "register_scalars_string",
     });
-
-    const scalars = Services.telemetry.getSnapshotForScalars("main", false);
-    equal(scalars.dynamic["telemetry.test.dynamic.webext_string"], "hello");
-
-    Services.telemetry.clearScalars();
+    TelemetryTestUtils.assertScalar(
+      TelemetryTestUtils.getProcessScalars("parent", false, true),
+      "telemetry.test.dynamic.webext_string",
+      "hello"
+    );
   });
 
   add_task(async function test_telemetry_register_scalars_multiple() {
     Services.telemetry.clearScalars();
-
     await run({
       backgroundScript: async () => {
         await browser.telemetry.registerScalars("telemetry.test.dynamic", {
@@ -359,17 +620,21 @@ if (AppConstants.MOZ_BUILD_APP === "browser") {
       },
       doneSignal: "register_scalars_multiple",
     });
-
-    const scalars = Services.telemetry.getSnapshotForScalars("main", false);
-    equal(scalars.dynamic["telemetry.test.dynamic.webext_string"], "hello");
-    equal(scalars.dynamic["telemetry.test.dynamic.webext_string_too"], "world");
-
-    Services.telemetry.clearScalars();
+    const scalars = TelemetryTestUtils.getProcessScalars("parent", false, true);
+    TelemetryTestUtils.assertScalar(
+      scalars,
+      "telemetry.test.dynamic.webext_string",
+      "hello"
+    );
+    TelemetryTestUtils.assertScalar(
+      scalars,
+      "telemetry.test.dynamic.webext_string_too",
+      "world"
+    );
   });
 
   add_task(async function test_telemetry_register_scalars_boolean() {
     Services.telemetry.clearScalars();
-
     await run({
       backgroundScript: async () => {
         await browser.telemetry.registerScalars("telemetry.test.dynamic", {
@@ -387,16 +652,15 @@ if (AppConstants.MOZ_BUILD_APP === "browser") {
       },
       doneSignal: "register_scalars_boolean",
     });
-
-    const scalars = Services.telemetry.getSnapshotForScalars("main", false);
-    equal(scalars.dynamic["telemetry.test.dynamic.webext_boolean"], true);
-
-    Services.telemetry.clearScalars();
+    TelemetryTestUtils.assertScalar(
+      TelemetryTestUtils.getProcessScalars("dynamic", false, true),
+      "telemetry.test.dynamic.webext_boolean",
+      true
+    );
   });
 
   add_task(async function test_telemetry_register_scalars_count() {
     Services.telemetry.clearScalars();
-
     await run({
       backgroundScript: async () => {
         await browser.telemetry.registerScalars("telemetry.test.dynamic", {
@@ -414,11 +678,11 @@ if (AppConstants.MOZ_BUILD_APP === "browser") {
       },
       doneSignal: "register_scalars_count",
     });
-
-    const scalars = Services.telemetry.getSnapshotForScalars("main", false);
-    equal(scalars.dynamic["telemetry.test.dynamic.webext_count"], 123);
-
-    Services.telemetry.clearScalars();
+    TelemetryTestUtils.assertScalar(
+      TelemetryTestUtils.getProcessScalars("dynamic", false, true),
+      "telemetry.test.dynamic.webext_count",
+      123
+    );
   });
 
   add_task(async function test_telemetry_register_events() {
@@ -443,14 +707,17 @@ if (AppConstants.MOZ_BUILD_APP === "browser") {
       doneSignal: "register_events",
     });
 
-    let events = Services.telemetry.snapshotEvents(
-      Ci.nsITelemetry.DATASET_PRERELEASE_CHANNELS
+    TelemetryTestUtils.assertEvents(
+      [
+        {
+          category: "telemetry.test.dynamic",
+          method: "test1",
+          object: "object1",
+        },
+      ],
+      { category: "telemetry.test.dynamic" },
+      { process: "dynamic" }
     );
-    let expected = [["telemetry.test.dynamic", "test1", "object1"]];
-    equal(events.dynamic.length, expected.length);
-    deepEqual(events.dynamic.map(e => e.slice(1)), expected);
-
-    Services.telemetry.clearEvents();
   });
 
   add_task(async function test_telemetry_submit_ping() {
@@ -465,6 +732,94 @@ if (AppConstants.MOZ_BUILD_APP === "browser") {
     let pings = await TelemetryArchive.promiseArchivedPingList();
     equal(pings.length, 1);
     equal(pings[0].type, "webext-test");
+  });
+
+  add_task(async function test_telemetry_submit_encrypted_ping() {
+    await run({
+      backgroundScript: async () => {
+        try {
+          await browser.telemetry.submitEncryptedPing(
+            { payload: "encrypted-webext-test" },
+            {
+              schemaName: "schema-name",
+              schemaVersion: 123,
+            }
+          );
+          browser.test.fail(
+            "Expected exception without required manifest entries set."
+          );
+        } catch (e) {
+          browser.test.assertTrue(
+            e,
+            /Encrypted telemetry pings require ping_type and public_key to be set in manifest./
+          );
+          browser.test.notifyPass("submit_encrypted_ping_fail");
+        }
+      },
+      doneSignal: "submit_encrypted_ping_fail",
+    });
+
+    const telemetryManifestEntries = {
+      ping_type: "encrypted-webext-ping",
+      schemaNamespace: "schema-namespace",
+      public_key: {
+        id: "pioneer-dev-20200423",
+        key: {
+          crv: "P-256",
+          kty: "EC",
+          x: "Qqihp7EryDN2-qQ-zuDPDpy5mJD5soFBDZmzPWTmjwk",
+          y: "PiEQVUlywi2bEsA3_5D0VFrCHClCyUlLW52ajYs-5uc",
+        },
+      },
+    };
+
+    await run({
+      backgroundScript: async () => {
+        await browser.telemetry.submitEncryptedPing(
+          {
+            payload: "encrypted-webext-test",
+          },
+          {
+            schemaName: "schema-name",
+            schemaVersion: 123,
+          }
+        );
+        browser.test.notifyPass("submit_encrypted_ping_pass");
+      },
+      permissions: ["telemetry"],
+      doneSignal: "submit_encrypted_ping_pass",
+      isPrivileged: true,
+      telemetry: telemetryManifestEntries,
+    });
+
+    telemetryManifestEntries.pioneer_id = true;
+    telemetryManifestEntries.study_name = "test123";
+    Services.prefs.setStringPref("toolkit.telemetry.pioneerId", "test123");
+
+    await run({
+      backgroundScript: async () => {
+        await browser.telemetry.submitEncryptedPing(
+          { payload: "encrypted-webext-test" },
+          {
+            schemaName: "schema-name",
+            schemaVersion: 123,
+          }
+        );
+        browser.test.notifyPass("submit_encrypted_ping_pass");
+      },
+      permissions: ["telemetry"],
+      doneSignal: "submit_encrypted_ping_pass",
+      isPrivileged: true,
+      telemetry: telemetryManifestEntries,
+    });
+
+    // Wait for any pending pings to settle.
+    await TelemetryStorage.testClearPendingPings();
+
+    let pings = await TelemetryArchive.promiseArchivedPingList();
+    equal(pings.length, 3);
+    equal(pings[1].type, "encrypted-webext-ping");
+    equal(pings[2].type, "encrypted-webext-ping");
   });
 
   add_task(async function test_telemetry_can_upload_enabled() {

@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "Адресна книга">
+<!ENTITY Addrbook.accesskey                    "А">
+<!ENTITY GeneratedName.label                   "Назва">
+<!ENTITY GeneratedName.accesskey               "Н">
+<!ENTITY PrimaryEmail.label                    "Е-пошта">
+<!ENTITY PrimaryEmail.accesskey                "Е">
+<!ENTITY Company.label                         "Організація">
+<!ENTITY Company.accesskey                     "О">
+<!ENTITY _PhoneticName.label                   "Вимова">
+<!ENTITY _PhoneticName.accesskey               "В">
+<!ENTITY NickName.label                        "Псевдонім">
+<!ENTITY NickName.accesskey                    "П">
+<!ENTITY SecondEmail.label                     "Додаткова Е-пошта">
+<!ENTITY SecondEmail.accesskey                 "т">
+<!ENTITY Department.label                      "Відділ">
+<!ENTITY Department.accesskey                  "і">
+<!ENTITY JobTitle.label                        "Заголовок">
+<!ENTITY JobTitle.accesskey                    "З">
+<!ENTITY CellularNumber.label                  "Мобільний">
+<!ENTITY CellularNumber.accesskey              "М">
+<!ENTITY PagerNumber.label                     "Пейджер">
+<!ENTITY PagerNumber.accesskey                 "й">
+<!ENTITY FaxNumber.label                       "Факс">
+<!ENTITY FaxNumber.accesskey                   "Ф">
+<!ENTITY HomePhone.label                       "Домашній телефон">
+<!ENTITY HomePhone.accesskey                   "ш">
+<!ENTITY WorkPhone.label                       "Робочий телефон">
+<!ENTITY WorkPhone.accesskey                   "Р">
+<!ENTITY ChatName.label                        "Ім’я в чаті">
+<!ENTITY ChatName.accesskey                    "ч">
+<!ENTITY sortAscending.label                   "За зростанням">
+<!ENTITY sortAscending.accesskey               "с">
+<!ENTITY sortDescending.label                  "За спаданням">
+<!ENTITY sortDescending.accesskey              "я">

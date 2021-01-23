@@ -13,11 +13,6 @@
   padding-top: 1px;
 }
 
-/* Add some space at the top because there are no headers: */
-#BMB_bookmarksPopup menupopup > hbox > .popup-internal-box > .arrowscrollbox-scrollbox  {
-  padding-top: 4px;
-}
-
 menuitem.subviewbutton {
   -moz-appearance: none !important;
 }
@@ -32,7 +27,6 @@ menuitem.subviewbutton {
  * overflow:hidden wasn't applied. Disabling the box-shadow for this panel on
  * Linux works around this issue. This bug is on file as 1394575.
  */
-#pageActionFeedback > .panel-arrowcontainer > .panel-arrowcontent {
+#pageActionFeedback::part(arrowcontent) {
   box-shadow: none;
 }
-

@@ -40,10 +40,13 @@ pub(crate) use parking_lot_core::deadlock::{acquire_resource, release_resource};
 #[cfg(test)]
 #[cfg(feature = "deadlock_detection")]
 mod tests {
+    use crate::{Mutex, ReentrantMutex, RwLock};
     use std::sync::{Arc, Barrier};
     use std::thread::{self, sleep};
     use std::time::Duration;
-    use {Mutex, ReentrantMutex, RwLock};
+
+    // We need to serialize these tests since deadlock detection uses global state
+    static DEADLOCK_DETECTION_LOCK: Mutex<()> = crate::const_mutex(());
 
     fn check_deadlock() -> bool {
         use parking_lot_core::deadlock::check_deadlock;
@@ -52,6 +55,8 @@ mod tests {
 
     #[test]
     fn test_mutex_deadlock() {
+        let _guard = DEADLOCK_DETECTION_LOCK.lock();
+
         let m1: Arc<Mutex<()>> = Default::default();
         let m2: Arc<Mutex<()>> = Default::default();
         let m3: Arc<Mutex<()>> = Default::default();
@@ -95,6 +100,8 @@ mod tests {
 
     #[test]
     fn test_mutex_deadlock_reentrant() {
+        let _guard = DEADLOCK_DETECTION_LOCK.lock();
+
         let m1: Arc<Mutex<()>> = Default::default();
 
         assert!(!check_deadlock());
@@ -112,6 +119,8 @@ mod tests {
 
     #[test]
     fn test_remutex_deadlock() {
+        let _guard = DEADLOCK_DETECTION_LOCK.lock();
+
         let m1: Arc<ReentrantMutex<()>> = Default::default();
         let m2: Arc<ReentrantMutex<()>> = Default::default();
         let m3: Arc<ReentrantMutex<()>> = Default::default();
@@ -158,6 +167,8 @@ mod tests {
 
     #[test]
     fn test_rwlock_deadlock() {
+        let _guard = DEADLOCK_DETECTION_LOCK.lock();
+
         let m1: Arc<RwLock<()>> = Default::default();
         let m2: Arc<RwLock<()>> = Default::default();
         let m3: Arc<RwLock<()>> = Default::default();
@@ -199,8 +210,11 @@ mod tests {
         assert!(!check_deadlock());
     }
 
+    #[cfg(rwlock_deadlock_detection_not_supported)]
     #[test]
     fn test_rwlock_deadlock_reentrant() {
+        let _guard = DEADLOCK_DETECTION_LOCK.lock();
+
         let m1: Arc<RwLock<()>> = Default::default();
 
         assert!(!check_deadlock());

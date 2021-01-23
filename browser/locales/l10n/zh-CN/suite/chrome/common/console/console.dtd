@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY errorConsole.title   "错误控制台">
+
+<!ENTITY errFile.label        "源文件：">
+<!ENTITY errLine.label        "行：">
+<!ENTITY errColumn.label      "列：">
+
+<!ENTITY all.label            "所有消息">
+<!ENTITY all.accesskey        "A">
+<!ENTITY errors.label         "错误">
+<!ENTITY errors.accesskey     "E">
+<!ENTITY warnings.label       "警告">
+<!ENTITY warnings.accesskey   "W">
+<!ENTITY messages.label       "消息">
+<!ENTITY messages.accesskey   "M">
+<!ENTITY clear.label          "清除">
+<!ENTITY clear.accesskey      "C">
+<!ENTITY codeEval.label       "代码：">
+<!ENTITY codeEval.accesskey   "o">
+<!ENTITY evaluate.label       "评估">
+<!ENTITY evaluate.accesskey   "v">
+<!ENTITY filter2.label        "过滤：">
+<!ENTITY filter2.accesskey    "F">
+
+<!ENTITY copyCmd.label         "复制">
+<!ENTITY copyCmd.accesskey     "C">
+<!ENTITY copyCmd.commandkey    "C">
+<!ENTITY sortFirst.label       "最早>最近 排列顺序">
+<!ENTITY sortFirst.accesskey   "f">
+<!ENTITY sortLast.label        "最近>最早 排列顺序">
+<!ENTITY sortLast.accesskey    "l">
+<!ENTITY closeCmd.commandkey   "w">
+<!ENTITY focus1.commandkey     "l">
+<!ENTITY focus2.commandkey     "d">
+
+<!ENTITY menuBar.tooltip       "菜单栏">
+<!ENTITY modeToolbar.tooltip   "模式工具栏">
+<!ENTITY entryToolbar.tooltip  "Javascript 项工具栏">
+<!ENTITY toolbarsCmd.label     "显示/隐藏">
+<!ENTITY toolbarsCmd.accesskey "w">
+<!ENTITY toolbarMode.label     "模式">
+<!ENTITY toolbarMode.accesskey "M">
+<!ENTITY toolbarEval.label     "JavaScript 项">
+<!ENTITY toolbarEval.accesskey "J">

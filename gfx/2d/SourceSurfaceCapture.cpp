@@ -62,13 +62,44 @@ SourceSurfaceCapture::SourceSurfaceCapture(DrawTargetCaptureImpl* aOwner,
   mRefDT = mOwner->mRefDT;
 }
 
-SourceSurfaceCapture::~SourceSurfaceCapture() {}
+SourceSurfaceCapture::~SourceSurfaceCapture() = default;
+
+void SourceSurfaceCapture::SizeOfExcludingThis(MallocSizeOf aMallocSizeOf,
+                                               SizeOfInfo& aInfo) const {
+  MutexAutoLock lock(mLock);
+  aInfo.AddType(SurfaceType::CAPTURE);
+  if (mSurfToOptimize) {
+    mSurfToOptimize->SizeOfExcludingThis(aMallocSizeOf, aInfo);
+    return;
+  }
+  if (mResolved) {
+    mResolved->SizeOfExcludingThis(aMallocSizeOf, aInfo);
+    return;
+  }
+  if (mHasCommandList) {
+    aInfo.mHeapBytes += mCommands.BufferCapacity();
+    return;
+  }
+}
 
 bool SourceSurfaceCapture::IsValid() const {
   // We must either be able to source a command list, or we must have a cached
   // and rasterized surface.
   MutexAutoLock lock(mLock);
-  return (mOwner || mHasCommandList || mSurfToOptimize) || mResolved;
+
+  if (mSurfToOptimize) {
+    // We were given a surface, but we haven't tried to optimize it yet
+    // with the reference draw target.
+    return mSurfToOptimize->IsValid();
+  }
+  if (mResolved) {
+    // We were given a surface, and we already optimized it with the
+    // reference draw target.
+    return mResolved->IsValid();
+  }
+
+  // We have no underlying surface, so it must be a set of drawing commands.
+  return mOwner || mHasCommandList;
 }
 
 RefPtr<SourceSurface> SourceSurfaceCapture::Resolve(BackendType aBackendType) {
@@ -151,7 +182,7 @@ RefPtr<SourceSurface> SourceSurfaceCapture::ResolveImpl(
     surf->AddUserData(reinterpret_cast<UserDataKey*>(dt.get()), data, free);
   }
 
-  return surf.forget();
+  return surf;
 }
 
 already_AddRefed<DataSourceSurface> SourceSurfaceCapture::GetDataSurface() {

@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY time.midnight "เที่ยงคืน" >
+<!ENTITY time.noon "เที่ยงวัน" >
+
+<!-- Day Names -->
+<!-- LOCALIZATION NOTE : Accesskeys for day.1.Ddd to day.7.Ddd are currently
+     only used in Preferences > Views > Workweek groupbox -->
+<!ENTITY day.1.Ddd "อาทิตย์" >
+<!ENTITY day.1.Ddd.accesskey "า">
+<!ENTITY day.2.Ddd "จันทร์" >
+<!ENTITY day.2.Ddd.accesskey "จ">
+<!ENTITY day.3.Ddd "อังคาร" >
+<!ENTITY day.3.Ddd.accesskey "อ">
+<!ENTITY day.4.Ddd "พุธ" >
+<!ENTITY day.4.Ddd.accesskey "พ">
+<!ENTITY day.5.Ddd "พฤหัสบดี" >
+<!ENTITY day.5.Ddd.accesskey "ฤ">
+<!ENTITY day.6.Ddd "ศุกร์" >
+<!ENTITY day.6.Ddd.accesskey "ศ">
+<!ENTITY day.7.Ddd "เสาร์" >
+<!ENTITY day.7.Ddd.accesskey "ส">
+
+<!ENTITY day.1.name "วันอาทิตย์" >
+<!ENTITY day.2.name "วันจันทร์" >
+<!ENTITY day.3.name "วันอังคาร" >
+<!ENTITY day.4.name "วันพุธ" >
+<!ENTITY day.5.name "วันพฤหัสบดี" >
+<!ENTITY day.6.name "วันศุกร์" >
+<!ENTITY day.7.name "วันเสาร์" >
+
+<!ENTITY month.1.name "มกราคม" >
+<!ENTITY month.2.name "กุมภาพันธ์" >
+<!ENTITY month.3.name "มีนาคม" >
+<!ENTITY month.4.name "เมษายน" >
+<!ENTITY month.5.name "พฤษภาคม" >
+<!ENTITY month.6.name "มิถุนายน" >
+<!ENTITY month.7.name "กรกฎาคม" >
+<!ENTITY month.8.name "สิงหาคม" >
+<!ENTITY month.9.name "กันยายน" >
+<!ENTITY month.10.name "ตุลาคม" >
+<!ENTITY month.11.name "พฤศจิกายน" >
+<!ENTITY month.12.name "ธันวาคม" >
+
+<!ENTITY onemonthbackward.tooltip "ย้อนกลับหนึ่งเดือน" >
+<!ENTITY onemonthforward.tooltip "เดินหน้าหนึ่งเดือน" >
+<!ENTITY oneyearbackward.tooltip "ย้อนกลับหนึ่งปี" >
+<!ENTITY oneyearforward.tooltip "เดินหน้าหนึ่งปี" >
+<!ENTITY showToday.tooltip "ไปยังวันนี้">
+<!ENTITY onedayforward.tooltip "เดินหน้าหนึ่งวัน">
+<!ENTITY onedaybackward.tooltip "ย้อนกลับหนึ่งวัน">
+<!ENTITY showselectedday.tooltip "แสดงเหตุการณ์สำหรับวันที่เลือก">

@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Kättesaamise kinnitus">
+<!ENTITY useGlobalPrefs.label         "Kasutatakse üldiseid kättesaamise kinnituse sätteid">
+<!ENTITY useGlobalPrefs.accesskey     "K">
+<!ENTITY globalReceipts.label         "Üldised sätted…">
+<!ENTITY globalReceipts.accesskey     "d">
+<!ENTITY useCustomPrefs.label         "Kohandatud kättesaamise kinnitus">
+<!ENTITY useCustomPrefs.accesskey     "o">
+<!ENTITY requestReceipt.label         "Kirjade saatmisel nõutakse alati kättesaamise kinnitust">
+<!ENTITY requestReceipt.accesskey     "i">
+<!ENTITY receiptArrive.label          "Kui kinnitus saabub:">
+<!ENTITY leaveIt.label                "jäetakse see saabuva e-posti kausta">
+<!ENTITY leaveIt.accesskey            "j">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "liigutatakse see saadetud kirjade kausta">
+<!ENTITY moveToSent.accesskey         "l">
+<!ENTITY requestMDN.label             "Kui saadakse kättesaamise kinnituse nõue:">
+<!ENTITY returnSome.label             "lubatakse kinnituse saatmine teatud kirjade korral">
+<!ENTITY returnSome.accesskey         "u">
+<!ENTITY never.label                  "ei saadeta kunagi vastavat kinnitust">
+<!ENTITY never.accesskey              "s">
+<!ENTITY notInToCc.label              "kui mind pole kirja või kirja koopia saajate seas:">
+<!ENTITY notInToCc.accesskey          "m">
+<!ENTITY outsideDomain.label          "kui saajal pole saatjaga sama domeen:">
+<!ENTITY outsideDomain.accesskey      "j">
+<!ENTITY otherCases.label             "kõigil muudel juhtudel:">
+<!ENTITY otherCases.accesskey         "g">
+<!ENTITY askMe.label                  "küsitakse">
+<!ENTITY alwaysSend.label             "saadetakse alati">
+<!ENTITY neverSend.label              "ei saadeta kunagi">

@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Wó cajkowem posće">
+<!ENTITY window.width  "450">
+<!ENTITY info1a.label  "&brandShortName; namakajo awtomatiski pśichadajuce powěsći, kótarež su zazdaśim cajkowa e-mail (teke ako spam znata). Pśi powěsćach, kótarež &brandShortName; ma za cajk, cajkowy symbol se pokažo">
+<!ENTITY info1b.label  ".">
+<!ENTITY info2.label   "Ako prědne musyśo &brandShortName; za identificěrowanje cajkoweje e-maile z pomocu cajkowego bublinka na symbolowej rědce treněrowaś a powěsći ako cajk abo njecajk markěrowaś.">
+<!ENTITY info3.label   "Gaž &brandShortName; korektnje identificěrujo cajkowu e-mail, móžośo funkcije za cajkowu e-mail wužywaś, aby pśichadajucu cajkowu e-mail do zarědnika Cajk pśesunuś.">
+<!ENTITY info4.label   "Za dalšne informacije klikniśo na Pomoc.">

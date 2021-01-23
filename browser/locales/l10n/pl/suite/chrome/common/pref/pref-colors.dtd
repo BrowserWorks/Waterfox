@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-colors.xul -->
+
+<!-- LOCALIZATION NOTE : FILE Color management prefs -->
+<!ENTITY pref.colors.title "Kolory">
+<!ENTITY color "Kolory">
+<!ENTITY textColor.label "Tekst:">
+<!ENTITY textColor.accesskey "e">
+<!ENTITY backgroundColor.label "Tło:">
+<!ENTITY backgroundColor.accesskey "T">
+<!ENTITY useSystemColors.label "Używaj kolorów systemowych">
+<!ENTITY useSystemColors.accesskey "m">
+
+<!ENTITY underlineLinks.label "Podkreślaj odnośniki">
+<!ENTITY underlineLinks.accesskey "d">
+<!ENTITY links "Kolor odnośników">
+<!ENTITY linkColor.label "Nieodwiedzone odnośniki:">
+<!ENTITY linkColor.accesskey "N">
+<!ENTITY activeLinkColor.label "Aktywne odnośniki:">
+<!ENTITY activeLinkColor.accesskey "k">
+<!ENTITY visitedLinkColor.label "Odwiedzone odnośniki:">
+<!ENTITY visitedLinkColor.accesskey "O">
+<!-- LOCALIZATION NOTE (someProvColors): This is the start of a sentence and will be followed by the following radio buttons. -->
+<!ENTITY someProvColors "W przypadku, gdy kolor tła i tekstu został określony przez witrynę">
+<!-- LOCALIZATION NOTE (alwaysUseDocColors.label): This is option one, and it appends to 'someProvColors' above. -->
+<!ENTITY alwaysUseDocumentColors.label "Zawsze używaj kolorów i tła określonych przez witrynę">
+<!ENTITY alwaysUseDocumentColors.accesskey "a">
+<!-- LOCALIZATION NOTE (ignoreDocColors.label): This is option two, and it appends to 'someProvColors' above.  -->
+<!ENTITY useMyColors.label "Używaj kolorów użytkownika, ignorując kolory oraz tło określone przez witryny WWW">
+<!ENTITY useMyColors.accesskey "U">
+<!ENTITY automaticColors.label "Ignoruj kolory określone przez witrynę wyłącznie w motywach o wysokim kontraście">
+<!ENTITY automaticColors.accesskey "g">

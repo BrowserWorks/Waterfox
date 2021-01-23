@@ -7,6 +7,7 @@
 <body onload="createCookies()">
 <script type="application/javascript">
 "use strict";
+// eslint-disable-next-line no-unused-vars
 function createCookies() {
   document.cookie = "name=value1;path=/;";
   document.cookie = "name=value2;path=/path2/;";
@@ -18,9 +19,9 @@ window.removeCookie = function (name) {
 };
 
 window.clearCookies = function () {
-  let cookies = document.cookie;
-  for (let cookie of cookies.split(";")) {
-    removeCookie(cookie.split("=")[0]);
+  const cookies = document.cookie;
+  for (const cookie of cookies.split(";")) {
+    window.removeCookie(cookie.split("=")[0]);
   }
 };
 </script>

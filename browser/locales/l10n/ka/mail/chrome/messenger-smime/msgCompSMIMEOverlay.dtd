@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSMIMEOverlay.dtd UI for s/mime hooks in message composition -->
+
+<!ENTITY menu_securityDoNotEncrypt.label "დაშიფვრის გარეშე">
+<!ENTITY menu_securityDoNotEncrypt.accesskey "ე">
+
+<!-- not yet used
+<!ENTITY menu_securityEncryptOptional.label "Allow Encryption">
+<!ENTITY menu_securityEncryptOptional.accesskey "w">
+-->
+
+<!ENTITY menu_securityEncryptRequire2.label "საჭიროებს დაშიფვრას">
+<!ENTITY menu_securityEncryptRequire.accesskey "შ">
+
+<!ENTITY menu_securitySign.label "წერილის ციფრულად ხელმოწერა">
+<!ENTITY menu_securitySign.accesskey "ც">
+
+<!ENTITY menu_securityAttachMyKey.label "ჩემი საჯაროს გასაღების დართვა">
+<!ENTITY menu_securityAttachMyKey.accesskey "დ">
+
+<!ENTITY menu_securityTech.label "დაშიფვრის საშუალება">
+<!ENTITY menu_securityTech.accesskey "უ">
+
+<!ENTITY menu_techPGP.label "OpenPGP">
+<!ENTITY menu_techPGP.accesskey "O">
+<!ENTITY menu_techSMIME.label "S/MIME">
+<!ENTITY menu_techSMIME.accesskey "S">
+
+<!ENTITY menu_securityStatus.label "წერილის უსაფრთხოების ჩვენება">
+<!ENTITY menu_securityStatus.accesskey "უ">
+
+<!ENTITY securityButton.label "უსაფრთხოება">
+<!ENTITY securityButton.tooltip "უსაფრთხოების პარამეტრების ჩვენება ან მითითება">
+
+<!ENTITY menu_viewSecurityStatus.label "წერილის უსაფრთხოების მონაცემები">
+<!ENTITY menu_viewSecurityStatus.accesskey "მ">

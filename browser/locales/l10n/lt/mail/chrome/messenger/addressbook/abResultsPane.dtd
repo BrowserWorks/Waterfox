@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "Adresų knyga">
+<!ENTITY Addrbook.accesskey                    "A">
+<!ENTITY GeneratedName.label                   "Vardas">
+<!ENTITY GeneratedName.accesskey               "V">
+<!ENTITY PrimaryEmail.label                    "El. paštas">
+<!ENTITY PrimaryEmail.accesskey                "E">
+<!ENTITY Company.label                         "Organizacija">
+<!ENTITY Company.accesskey                     "z">
+<!ENTITY _PhoneticName.label                   "Fonetinis vardas">
+<!ENTITY _PhoneticName.accesskey               "F">
+<!ENTITY NickName.label                        "Slapyvardis">
+<!ENTITY NickName.accesskey                    "S">
+<!ENTITY SecondEmail.label                     "Papildomas el. pašto adresas">
+<!ENTITY SecondEmail.accesskey                 "p">
+<!ENTITY Department.label                      "Padalinys">
+<!ENTITY Department.accesskey                  "d">
+<!ENTITY JobTitle.label                        "Pareigos">
+<!ENTITY JobTitle.accesskey                    "a">
+<!ENTITY CellularNumber.label                  "Mobilusis telefonas">
+<!ENTITY CellularNumber.accesskey              "M">
+<!ENTITY PagerNumber.label                     "Pranešimų gaviklis">
+<!ENTITY PagerNumber.accesskey                 "P">
+<!ENTITY FaxNumber.label                       "Faksas">
+<!ENTITY FaxNumber.accesskey                   "F">
+<!ENTITY HomePhone.label                       "Namų telefonas">
+<!ENTITY HomePhone.accesskey                   "N">
+<!ENTITY WorkPhone.label                       "Darbo telefonas">
+<!ENTITY WorkPhone.accesskey                   "D">
+<!ENTITY ChatName.label                        "Slapyvardis pokalbiuose">
+<!ENTITY ChatName.accesskey                    "p">
+<!ENTITY sortAscending.label                   "Pagal abėcėlę">
+<!ENTITY sortAscending.accesskey               "b">
+<!ENTITY sortDescending.label                  "Atvirkščiai">
+<!ENTITY sortDescending.accesskey              "k">

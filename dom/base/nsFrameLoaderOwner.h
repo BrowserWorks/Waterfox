@@ -14,6 +14,7 @@ namespace mozilla {
 class ErrorResult;
 namespace dom {
 class BrowsingContext;
+class BrowserBridgeChild;
 struct RemotenessOptions;
 }  // namespace dom
 }  // namespace mozilla
@@ -41,7 +42,7 @@ class nsFrameLoaderOwner : public nsISupports {
   already_AddRefed<nsFrameLoader> GetFrameLoader();
   void SetFrameLoader(nsFrameLoader* aNewFrameLoader);
 
-  already_AddRefed<mozilla::dom::BrowsingContext> GetBrowsingContext();
+  mozilla::dom::BrowsingContext* GetBrowsingContext();
 
   // Destroy (if it exists) and recreate our frameloader, based on new
   // remoteness requirements. This should follow the same path as
@@ -51,6 +52,36 @@ class nsFrameLoaderOwner : public nsISupports {
   // DOM.
   void ChangeRemoteness(const mozilla::dom::RemotenessOptions& aOptions,
                         mozilla::ErrorResult& rv);
+
+  void ChangeRemotenessWithBridge(mozilla::dom::BrowserBridgeChild* aBridge,
+                                  mozilla::ErrorResult& rv);
+
+  void SubframeCrashed();
+
+ private:
+  bool UseRemoteSubframes();
+  bool ShouldPreserveBrowsingContext(
+      const mozilla::dom::RemotenessOptions& aOptions);
+
+  // The enum class for determine how to handle previous BrowsingContext during
+  // the change remoteness. It could be followings
+  // 1. DONT_PRESERVE
+  //    Create a whole new BrowsingContext.
+  // 2. DONT_PRESERVE_BUT_PROPAGETE
+  //    Create a whole new BrowsingContext, but propagate necessary feilds from
+  //    previous BrowsingContext, i.e. COEP.
+  // 3. PRESERVE
+  //    Preserve the previous BrowsingContext.
+  enum class ChangeRemotenessContextType {
+    DONT_PRESERVE = 0,
+    DONT_PRESERVE_BUT_PROPAGATE = 1,
+    PRESERVE = 2,
+  };
+  void ChangeRemotenessCommon(const ChangeRemotenessContextType& aContextType,
+                              bool aSwitchingInProgressLoad,
+                              const nsAString& aRemoteType,
+                              std::function<void()>& aFrameLoaderInit,
+                              mozilla::ErrorResult& aRv);
 
  protected:
   virtual ~nsFrameLoaderOwner() = default;

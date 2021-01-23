@@ -20,7 +20,6 @@
 #include "mozilla/net/MozURL.h"
 #include "mozIStorageConnection.h"
 #include "mozIStorageStatement.h"
-#include "mozIThirdPartyUtil.h"
 #include "mozStorageHelper.h"
 #include "nsCOMPtr.h"
 #include "nsCRT.h"
@@ -229,7 +228,7 @@ static_assert(int(HeadersGuardEnum::None) == 0 &&
                   int(HeadersGuardEnum::Request_no_cors) == 2 &&
                   int(HeadersGuardEnum::Response) == 3 &&
                   int(HeadersGuardEnum::Immutable) == 4 &&
-                  int(HeadersGuardEnum::EndGuard_) == 5,
+                  HeadersGuardEnumValues::Count == 5,
               "HeadersGuardEnum values are as expected");
 static_assert(int(ReferrerPolicy::_empty) == 0 &&
                   int(ReferrerPolicy::No_referrer) == 1 &&
@@ -240,18 +239,18 @@ static_assert(int(ReferrerPolicy::_empty) == 0 &&
                   int(ReferrerPolicy::Same_origin) == 6 &&
                   int(ReferrerPolicy::Strict_origin) == 7 &&
                   int(ReferrerPolicy::Strict_origin_when_cross_origin) == 8 &&
-                  int(ReferrerPolicy::EndGuard_) == 9,
+                  ReferrerPolicyValues::Count == 9,
               "ReferrerPolicy values are as expected");
 static_assert(int(RequestMode::Same_origin) == 0 &&
                   int(RequestMode::No_cors) == 1 &&
                   int(RequestMode::Cors) == 2 &&
                   int(RequestMode::Navigate) == 3 &&
-                  int(RequestMode::EndGuard_) == 4,
+                  RequestModeValues::Count == 4,
               "RequestMode values are as expected");
 static_assert(int(RequestCredentials::Omit) == 0 &&
                   int(RequestCredentials::Same_origin) == 1 &&
                   int(RequestCredentials::Include) == 2 &&
-                  int(RequestCredentials::EndGuard_) == 3,
+                  RequestCredentialsValues::Count == 3,
               "RequestCredentials values are as expected");
 static_assert(int(RequestCache::Default) == 0 &&
                   int(RequestCache::No_store) == 1 &&
@@ -259,19 +258,19 @@ static_assert(int(RequestCache::Default) == 0 &&
                   int(RequestCache::No_cache) == 3 &&
                   int(RequestCache::Force_cache) == 4 &&
                   int(RequestCache::Only_if_cached) == 5 &&
-                  int(RequestCache::EndGuard_) == 6,
+                  RequestCacheValues::Count == 6,
               "RequestCache values are as expected");
 static_assert(int(RequestRedirect::Follow) == 0 &&
                   int(RequestRedirect::Error) == 1 &&
                   int(RequestRedirect::Manual) == 2 &&
-                  int(RequestRedirect::EndGuard_) == 3,
+                  RequestRedirectValues::Count == 3,
               "RequestRedirect values are as expected");
 static_assert(int(ResponseType::Basic) == 0 && int(ResponseType::Cors) == 1 &&
                   int(ResponseType::Default) == 2 &&
                   int(ResponseType::Error) == 3 &&
                   int(ResponseType::Opaque) == 4 &&
                   int(ResponseType::Opaqueredirect) == 5 &&
-                  int(ResponseType::EndGuard_) == 6,
+                  ResponseTypeValues::Count == 6,
               "ResponseType values are as expected");
 
 // If the static_asserts below fails, it means that you have changed the
@@ -295,7 +294,6 @@ static_assert(nsIContentPolicy::TYPE_INVALID == 0 &&
                   nsIContentPolicy::TYPE_DOCUMENT == 6 &&
                   nsIContentPolicy::TYPE_SUBDOCUMENT == 7 &&
                   nsIContentPolicy::TYPE_REFRESH == 8 &&
-                  nsIContentPolicy::TYPE_XBL == 9 &&
                   nsIContentPolicy::TYPE_PING == 10 &&
                   nsIContentPolicy::TYPE_XMLHTTPREQUEST == 11 &&
                   nsIContentPolicy::TYPE_DATAREQUEST == 11 &&
@@ -333,7 +331,12 @@ static_assert(nsIContentPolicy::TYPE_INVALID == 0 &&
                   nsIContentPolicy::TYPE_SAVEAS_DOWNLOAD == 43 &&
                   nsIContentPolicy::TYPE_SPECULATIVE == 44 &&
                   nsIContentPolicy::TYPE_INTERNAL_MODULE == 45 &&
-                  nsIContentPolicy::TYPE_INTERNAL_MODULE_PRELOAD == 46,
+                  nsIContentPolicy::TYPE_INTERNAL_MODULE_PRELOAD == 46 &&
+                  nsIContentPolicy::TYPE_INTERNAL_DTD == 47 &&
+                  nsIContentPolicy::TYPE_INTERNAL_FORCE_ALLOWED_DTD == 48 &&
+                  nsIContentPolicy::TYPE_INTERNAL_AUDIOWORKLET == 49 &&
+                  nsIContentPolicy::TYPE_INTERNAL_PAINTWORKLET == 50 &&
+                  nsIContentPolicy::TYPE_INTERNAL_FONT_PRELOAD == 51,
               "nsContentPolicyType values are as expected");
 
 namespace {
@@ -2492,9 +2495,6 @@ nsresult ReadResponse(mozIStorageConnection* aConn, EntryId aEntryId,
     nsCString origin;
     url->Origin(origin);
 
-    // CSP is recovered from the headers, no need to initialise it here.
-    nsTArray<mozilla::ipc::ContentSecurityPolicy> policies;
-
     nsCString baseDomain;
     rv = url->BaseDomain(baseDomain);
     if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -2503,8 +2503,7 @@ nsresult ReadResponse(mozIStorageConnection* aConn, EntryId aEntryId,
 
     aSavedResponseOut->mValue.principalInfo() =
         Some(mozilla::ipc::ContentPrincipalInfo(attrs, origin, specNoSuffix,
-                                                Nothing(), std::move(policies),
-                                                baseDomain));
+                                                Nothing(), baseDomain));
   }
 
   bool nullPadding = false;
@@ -2513,17 +2512,7 @@ nsresult ReadResponse(mozIStorageConnection* aConn, EntryId aEntryId,
     return rv;
   }
 
-#ifdef NIGHTLY_BUILD
-  bool shouldUpdateTo26 = false;
-  if (nullPadding && aSavedResponseOut->mValue.type() == ResponseType::Opaque) {
-    // XXXtt: This should be removed in the future (e.g. Nightly 58) by
-    // bug 1398167.
-    shouldUpdateTo26 = true;
-    aSavedResponseOut->mValue.paddingSize() = 0;
-  } else if (nullPadding) {
-#else
   if (nullPadding) {
-#endif  // NIGHTLY_BUILD
     MOZ_DIAGNOSTIC_ASSERT(aSavedResponseOut->mValue.type() !=
                           ResponseType::Opaque);
     aSavedResponseOut->mValue.paddingSize() =
@@ -2546,21 +2535,6 @@ nsresult ReadResponse(mozIStorageConnection* aConn, EntryId aEntryId,
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
-
-#ifdef NIGHTLY_BUILD
-  if (shouldUpdateTo26) {
-    // XXXtt: This is a quick fix for not updating properly in Nightly 57.
-    // Note: This should be removed in the future (e.g. Nightly 58) by
-    // bug 1398167.
-    rv = aConn->ExecuteSimpleSQL(
-        NS_LITERAL_CSTRING("UPDATE entries SET response_padding_size = 0 "
-                           "WHERE response_type = 4 "  // opaque response
-                           "AND response_padding_size IS NULL"));
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      return rv;
-    }
-  }
-#endif  // NIGHTLY_BUILD
 
   rv = aConn->CreateStatement(NS_LITERAL_CSTRING("SELECT "
                                                  "name, "

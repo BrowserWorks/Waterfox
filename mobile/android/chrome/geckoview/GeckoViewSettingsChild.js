@@ -60,6 +60,10 @@ class GeckoViewSettingsChild extends GeckoViewChildModule {
     this.userAgentOverride = this.settings.userAgentOverride;
     this.viewportMode = this.settings.viewportMode;
     this.allowJavascript = this.settings.allowJavascript;
+    if (this.settings.isPopup) {
+      // Allow web extensions to close their own action popups (bz1612363)
+      content.windowUtils.allowScriptsToClose();
+    }
   }
 
   get useTrackingProtection() {
@@ -94,6 +98,8 @@ class GeckoViewSettingsChild extends GeckoViewChildModule {
     this._userAgentMode = aMode;
     const docShell = content && GeckoViewUtils.getRootDocShell(content);
     if (docShell) {
+      // Bug 1637496: TODO - customUserAgent should only be set from parent
+      // process.
       docShell.customUserAgent = this.userAgent;
     } else {
       warn`Failed to set custom user agent. Doc shell not found`;
@@ -111,6 +117,8 @@ class GeckoViewSettingsChild extends GeckoViewChildModule {
     this._userAgentOverride = aUserAgent;
     const docShell = content && GeckoViewUtils.getRootDocShell(content);
     if (docShell) {
+      // Bug 1637496: TODO - customUserAgent should only be set from parent
+      // process.
       docShell.customUserAgent = this.userAgent;
     } else {
       warn`Failed to set custom user agent. Doc shell not found`;

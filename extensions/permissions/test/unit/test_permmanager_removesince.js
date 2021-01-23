@@ -15,21 +15,18 @@ function continue_test() {
 }
 
 function* do_run_test() {
-  // Set up a profile.
-  let profile = do_get_profile();
-
   let pm = Services.perms;
 
   // to help with testing edge-cases, we will arrange for .removeAllSince to
   // remove *all* permissions from one principal and one permission from another.
   let permURI1 = NetUtil.newURI("http://example.com");
-  let principal1 = Services.scriptSecurityManager.createCodebasePrincipal(
+  let principal1 = Services.scriptSecurityManager.createContentPrincipal(
     permURI1,
     {}
   );
 
   let permURI2 = NetUtil.newURI("http://example.org");
-  let principal2 = Services.scriptSecurityManager.createCodebasePrincipal(
+  let principal2 = Services.scriptSecurityManager.createContentPrincipal(
     permURI2,
     {}
   );
@@ -43,7 +40,7 @@ function* do_run_test() {
 
   let since = Number(Date.now());
 
-  // *sob* - on Windows at least, the now recorded by nsPermissionManager.cpp
+  // *sob* - on Windows at least, the now recorded by PermissionManager.cpp
   // might be a couple of ms *earlier* than what JS sees.  So another sleep
   // to ensure our |since| is greater than the time of the permissions we
   // are now adding.  Sadly this means we'll never be able to test when since

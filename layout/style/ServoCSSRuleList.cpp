@@ -124,10 +124,15 @@ static void DropRule(already_AddRefed<css::Rule> aRule) {
 void ServoCSSRuleList::DropAllRules() {
   mStyleSheet = nullptr;
   mParentRule = nullptr;
-  EnumerateInstantiatedRules(
-      [](css::Rule* rule) { DropRule(already_AddRefed<css::Rule>(rule)); });
-  mRules.Clear();
   mRawRules = nullptr;
+  // DropRule could reenter here via the cycle collector.
+  auto rules = std::move(mRules);
+  for (uintptr_t rule : rules) {
+    if (rule > kMaxRuleType) {
+      DropRule(already_AddRefed<css::Rule>(CastToPtr(rule)));
+    }
+  }
+  MOZ_ASSERT(mRules.IsEmpty());
 }
 
 void ServoCSSRuleList::DropSheetReference() {
@@ -162,6 +167,9 @@ nsresult ServoCSSRuleList::InsertRule(const nsAString& aRule, uint32_t aIndex) {
   NS_ConvertUTF16toUTF8 rule(aRule);
   bool nested = !!mParentRule;
   css::Loader* loader = nullptr;
+  auto allowImportRules = mStyleSheet->SelfOrAncestorIsConstructed()
+                              ? StyleAllowImportRules::No
+                              : StyleAllowImportRules::Yes;
 
   // TODO(emilio, bug 1535456): Should probably always be able to get a handle
   // to some loader if we're parsing an @import rule, but which one?
@@ -172,9 +180,9 @@ nsresult ServoCSSRuleList::InsertRule(const nsAString& aRule, uint32_t aIndex) {
     loader = doc->CSSLoader();
   }
   uint16_t type;
-  nsresult rv =
-      Servo_CssRules_InsertRule(mRawRules, mStyleSheet->RawContents(), &rule,
-                                aIndex, nested, loader, mStyleSheet, &type);
+  nsresult rv = Servo_CssRules_InsertRule(mRawRules, mStyleSheet->RawContents(),
+                                          &rule, aIndex, nested, loader,
+                                          allowImportRules, mStyleSheet, &type);
   if (NS_FAILED(rv)) {
     return rv;
   }
@@ -190,10 +198,10 @@ nsresult ServoCSSRuleList::DeleteRule(uint32_t aIndex) {
   nsresult rv = Servo_CssRules_DeleteRule(mRawRules, aIndex);
   if (!NS_FAILED(rv)) {
     uintptr_t rule = mRules[aIndex];
+    mRules.RemoveElementAt(aIndex);
     if (rule > kMaxRuleType) {
       DropRule(already_AddRefed<css::Rule>(CastToPtr(rule)));
     }
-    mRules.RemoveElementAt(aIndex);
   }
   return rv;
 }

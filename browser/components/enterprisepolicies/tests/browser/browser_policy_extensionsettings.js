@@ -52,7 +52,7 @@ add_task(async function test_install_source_blocked_link() {
     waitForStateStop: true,
   });
 
-  await ContentTask.spawn(tab.linkedBrowser, {}, () => {
+  await SpecialPowers.spawn(tab.linkedBrowser, [], () => {
     content.document.getElementById("policytest").click();
   });
   await popupPromise;
@@ -79,7 +79,7 @@ add_task(async function test_install_source_blocked_installtrigger() {
     waitForStateStop: true,
   });
 
-  await ContentTask.spawn(tab.linkedBrowser, {}, () => {
+  await SpecialPowers.spawn(tab.linkedBrowser, [], () => {
     content.document.getElementById("policytest_installtrigger").click();
   });
   let popup = await popupPromise;
@@ -110,7 +110,7 @@ add_task(async function test_install_source_blocked_otherdomain() {
     waitForStateStop: true,
   });
 
-  await ContentTask.spawn(tab.linkedBrowser, {}, () => {
+  await SpecialPowers.spawn(tab.linkedBrowser, [], () => {
     content.document.getElementById("policytest_otherdomain").click();
   });
   await popupPromise;
@@ -136,9 +136,9 @@ add_task(async function test_install_source_blocked_direct() {
     waitForStateStop: true,
   });
 
-  await ContentTask.spawn(
+  await SpecialPowers.spawn(
     tab.linkedBrowser,
-    { baseUrl: BASE_URL },
+    [{ baseUrl: BASE_URL }],
     async function({ baseUrl }) {
       content.document.location.href = baseUrl + "policytest_v0.1.xpi";
     }
@@ -164,7 +164,7 @@ add_task(async function test_install_source_allowed_link() {
     waitForStateStop: true,
   });
 
-  await ContentTask.spawn(tab.linkedBrowser, {}, () => {
+  await SpecialPowers.spawn(tab.linkedBrowser, [], () => {
     content.document.getElementById("policytest").click();
   });
   await popupPromise;
@@ -188,7 +188,7 @@ add_task(async function test_install_source_allowed_installtrigger() {
     waitForStateStop: true,
   });
 
-  await ContentTask.spawn(tab.linkedBrowser, {}, () => {
+  await SpecialPowers.spawn(tab.linkedBrowser, [], () => {
     content.document.getElementById("policytest_installtrigger").click();
   });
   await popupPromise;
@@ -212,7 +212,7 @@ add_task(async function test_install_source_allowed_otherdomain() {
     waitForStateStop: true,
   });
 
-  await ContentTask.spawn(tab.linkedBrowser, {}, () => {
+  await SpecialPowers.spawn(tab.linkedBrowser, [], () => {
     content.document.getElementById("policytest_otherdomain").click();
   });
   await popupPromise;
@@ -236,9 +236,9 @@ add_task(async function test_install_source_allowed_direct() {
     waitForStateStop: true,
   });
 
-  await ContentTask.spawn(
+  await SpecialPowers.spawn(
     tab.linkedBrowser,
-    { baseUrl: BASE_URL },
+    [{ baseUrl: BASE_URL }],
     async function({ baseUrl }) {
       content.document.location.href = baseUrl + "policytest_v0.1.xpi";
     }

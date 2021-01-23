@@ -10,6 +10,8 @@
 #include "nsString.h"
 #include <functional>
 
+#include "mozilla/dom/FeaturePolicy.h"
+
 namespace mozilla {
 namespace dom {
 
@@ -36,6 +38,9 @@ class FeaturePolicyUtils final {
   // Returns true if aFeatureName is a known feature policy name.
   static bool IsSupportedFeature(const nsAString& aFeatureName);
 
+  // Returns true if aFeatureName is a experimental feature policy name.
+  static bool IsExperimentalFeature(const nsAString& aFeatureName);
+
   // Runs aCallback for each known feature policy, with the feature name as
   // argument.
   static void ForEachFeature(const std::function<void(const char*)>& aCallback);
@@ -44,12 +49,36 @@ class FeaturePolicyUtils final {
   static FeaturePolicyValue DefaultAllowListFeature(
       const nsAString& aFeatureName);
 
+  // This method returns true if aFeatureName is in unsafe allowed "*" case.
+  // We are in "unsafe" case when there is 'allow "*"' presents for an origin
+  // that's not presented in the ancestor feature policy chain, via src, via
+  // explicitly listed in allow, and not being the top-level origin.
+  static bool IsFeatureUnsafeAllowedAll(Document* aDocument,
+                                        const nsAString& aFeatureName);
+
  private:
   static void ReportViolation(Document* aDocument,
                               const nsAString& aFeatureName);
 };
 
 }  // namespace dom
+
+namespace ipc {
+
+class IProtocol;
+
+template <typename T>
+struct IPDLParamTraits;
+
+template <>
+struct IPDLParamTraits<mozilla::dom::FeaturePolicy*> {
+  static void Write(IPC::Message* aMsg, IProtocol* aActor,
+                    mozilla::dom::FeaturePolicy* aParam);
+  static bool Read(const IPC::Message* aMsg, PickleIterator* aIter,
+                   IProtocol* aActor,
+                   RefPtr<mozilla::dom::FeaturePolicy>* aResult);
+};
+}  // namespace ipc
 }  // namespace mozilla
 
 #endif  // mozilla_dom_FeaturePolicyUtils_h

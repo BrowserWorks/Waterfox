@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "Tiyuj">
+<!ENTITY editContactPanelDeleteContact.accesskey "y">
+
+<!ENTITY editContactName.label "B'i'aj:">
+<!ENTITY editContactName.accesskey "B">
+
+<!ENTITY editContactEmail.label "Taqoya'l:">
+<!ENTITY editContactEmail.accesskey "T">
+
+<!ENTITY editContactAddressBook.label "Kiwujil taq Ochochib'äl:">
+<!ENTITY editContactAddressBook.accesskey "O">
+
+<!ENTITY editContactPanelDone.label "Xk'is">
+<!ENTITY editContactPanelDone.accesskey "k">
+
+<!ENTITY contactMoveDisabledWarning.description "Man tikirel ta nik'ex ri kitz'ib'awuj ochochib'äl ruma chi ri rub'i' achib'il k'o pa jun kicholajem taqoya'l.">

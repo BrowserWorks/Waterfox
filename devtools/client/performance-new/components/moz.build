@@ -4,9 +4,13 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 DevToolsModules(
+    'AboutProfiling.js',
     'Description.js',
+    'DevToolsPanel.js',
+    'DevToolsPresetSelection.js',
     'DirectoryPicker.js',
-    'Perf.js',
+    'Presets.js',
+    'ProfilerEventHandling.js',
     'Range.js',
     'RecordingButton.js',
     'Settings.js',

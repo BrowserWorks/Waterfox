@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Postafiók beállításai">
+<!ENTITY accountName.label "Postafiók neve:">
+<!ENTITY accountName.accesskey "f">
+<!ENTITY identityTitle.label "Alapértelmezett személyazonosság">
+<!ENTITY identityDesc.label "Minden postafióknál be lehet állítani különböző személyi adatokat, ezeket a címzett látja a levél olvasásakor">
+<!ENTITY name.label "Név:">
+<!ENTITY name.accesskey "N">
+<!ENTITY email.label "E-mail cím:">
+<!ENTITY email.accesskey "E">
+<!ENTITY catchAll.label "Válasz ettől a személyazonosságról, ha a kézbesítési fejlécek megegyeznek:">
+<!ENTITY catchAll.accesskey "k">
+<!ENTITY replyTo.label "Válaszcím:">
+<!ENTITY replyTo.accesskey "V">
+<!ENTITY replyTo.placeholder "A levél címzettjei erre a másik címre válaszolhatnak">
+<!ENTITY organization.label "Szervezet:">
+<!ENTITY organization.accesskey "S">
+<!ENTITY signatureText.label "Aláírás szövege:">
+<!ENTITY signatureText.accesskey "A">
+<!ENTITY signatureHtml.label "HTML használata (pl. &lt;b&gt;félkövér&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "L">
+<!ENTITY signatureFile.label "Aláírás fájlból (szöveg, HTML vagy kép):">
+<!ENTITY signatureFile.accesskey "f">
+<!ENTITY edit.label "Szerkesztés…">
+<!ENTITY choose.label "Tallózás…">
+<!ENTITY choose.accesskey "T">
+<!ENTITY editVCard.label "Névjegy szerkesztése…">
+<!ENTITY editVCard.accesskey "N">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "A vCard csatolása a levelekhez">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "Személyazonosságok kezelése…">
+<!ENTITY manageIdentities.accesskey "a">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Levélküldő kiszolgáló (SMTP):">
+<!ENTITY smtpName.accesskey "k">
+<!ENTITY smtpDefaultServer.label "Alapértelmezett kiszolgáló használata">
+
+<!ENTITY smtpServerEdit.label "SMTP kiszolgáló szerkesztése…">
+<!ENTITY smtpServerEdit.accesskey "P">

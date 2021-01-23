@@ -17,6 +17,8 @@ namespace mozilla {
 class ErrorResult;
 class SVGStringList;
 
+namespace dom {
+
 /**
  * Class DOMSVGStringList
  *
@@ -98,6 +100,8 @@ class DOMSVGStringList final : public nsISupports, public nsWrapperCache {
 
   SVGStringList& InternalList() const;
 
+  void RemoveFromTearoffTable();
+
   // Strong ref to our element to keep it alive.
   RefPtr<dom::SVGElement> mElement;
 
@@ -106,6 +110,7 @@ class DOMSVGStringList final : public nsISupports, public nsWrapperCache {
   bool mIsConditionalProcessingAttribute;
 };
 
+}  // namespace dom
 }  // namespace mozilla
 
 #endif  // MOZILLA_DOMSVGSTRINGLIST_H__

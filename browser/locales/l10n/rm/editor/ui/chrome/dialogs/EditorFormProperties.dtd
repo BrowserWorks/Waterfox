@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Caracteristicas da formular">
+
+<!ENTITY Settings.label "Parameters">
+
+<!ENTITY FormName.label "Num dal formular:">
+<!ENTITY FormName.accesskey "N">
+<!ENTITY FormAction.label "URL dad acziun:">
+<!ENTITY FormAction.accesskey "A">
+<!ENTITY FormMethod.label "Metoda:">
+<!ENTITY FormMethod.accesskey "M">
+<!ENTITY FormEncType.label "Codaziun:">
+<!ENTITY FormEncType.accesskey "c">
+<!ENTITY FormTarget.label "Frame da destinaziun:">
+<!ENTITY FormTarget.accesskey "T">
+
+<!ENTITY RemoveForm.label "Allontanar il formular">
+<!ENTITY RemoveForm.accesskey "R">

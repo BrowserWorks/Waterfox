@@ -85,15 +85,7 @@ NSINSTALL_DIR  = $(CORE_DEPTH)/coreconf/nsinstall
 endif
 NSINSTALL      = nsinstall
 
-MKDEPEND_DIR    = $(CORE_DEPTH)/coreconf/mkdepend
-MKDEPEND        = $(MKDEPEND_DIR)/$(OBJDIR_NAME)/mkdepend.exe
-# Note: MKDEPENDENCIES __MUST__ be a relative pathname, not absolute.
-# If it is absolute, gmake will crash unless the named file exists.
-MKDEPENDENCIES  = $(OBJDIR_NAME)/depend.mk
-
 INSTALL      = $(NSINSTALL)
-MAKE_OBJDIR  = mkdir
-MAKE_OBJDIR += $(OBJDIR)
 GARBAGE     += $(OBJDIR)/vc20.pdb $(OBJDIR)/vc40.pdb
 XP_DEFINE   += -DXP_PC
 ifdef NS_USE_GCC
@@ -103,8 +95,12 @@ LIB_SUFFIX   = lib
 endif
 DLL_SUFFIX   = dll
 
+define MAKE_OBJDIR
+if test ! -d $(@D); then mkdir -p $(@D); fi
+endef
+
 ifdef NS_USE_GCC
-    OS_CFLAGS += -mwindows -mms-bitfields
+    OS_CFLAGS += -mwindows
     _GEN_IMPORT_LIB=-Wl,--out-implib,$(IMPORT_LIBRARY)
     DLLFLAGS  += -mwindows -o $@ -shared -Wl,--export-all-symbols $(if $(IMPORT_LIBRARY),$(_GEN_IMPORT_LIB))
     ifdef BUILD_OPT
@@ -116,11 +112,7 @@ ifdef NS_USE_GCC
 	DEFINES    += -UDEBUG -DNDEBUG
     else
 	OPTIMIZER  += -g
-	NULLSTRING :=
-	SPACE      := $(NULLSTRING) # end of the line
-	USERNAME   := $(subst $(SPACE),_,$(USERNAME))
-	USERNAME   := $(subst -,_,$(USERNAME))
-	DEFINES    += -DDEBUG -UNDEBUG -DDEBUG_$(USERNAME)
+	DEFINES    += -DDEBUG -UNDEBUG
     endif
 else # !NS_USE_GCC
     WARNING_CFLAGS = -W3 -nologo -D_CRT_SECURE_NO_WARNINGS \
@@ -179,10 +171,7 @@ else # !NS_USE_GCC
     else
 	OPTIMIZER += -Zi -Fd$(OBJDIR)/ -Od
 	NULLSTRING :=
-	SPACE      := $(NULLSTRING) # end of the line
-	USERNAME   := $(subst $(SPACE),_,$(USERNAME))
-	USERNAME   := $(subst -,_,$(USERNAME))
-	DEFINES    += -DDEBUG -UNDEBUG -DDEBUG_$(USERNAME)
+	DEFINES    += -DDEBUG -UNDEBUG
 	DLLFLAGS   += -DEBUG -OUT:$@
 	LDFLAGS    += -DEBUG 
 ifeq ($(_MSC_VER),$(_MSC_VER_6))
@@ -192,6 +181,8 @@ endif
 endif
 	# Purify requires /FIXED:NO when linking EXEs.
 	LDFLAGS    += /FIXED:NO
+	# So the linker will find main in the gtestutil library
+	LDFLAGS    += -SUBSYSTEM:CONSOLE
     endif
 ifneq ($(_MSC_VER),$(_MSC_VER_6))
     # NSS has too many of these to fix, downgrade the warning
@@ -266,6 +257,12 @@ else
 	AS	= ml.exe
 	ASFLAGS = -nologo -Cp -Sn -Zi -coff -safeseh $(INCLUDES)
 endif
+endif
+
+# clear any CSTD and CXXSTD unless we're using GCC
+ifndef NS_USE_GCC
+        CSTD    =
+        CXXSTD  =
 endif
 
 #
@@ -359,15 +356,6 @@ endif
 #
 ifneq ($(CPU_ARCH),x386)
     CPU_TAG = _$(CPU_ARCH)
-endif
-
-#
-# override ruleset.mk, removing the "lib" prefix for library names, and
-# adding the "32" after the LIBRARY_VERSION.
-#
-ifdef LIBRARY_NAME
-    SHARED_LIBRARY = $(OBJDIR)/$(LIBRARY_NAME)$(LIBRARY_VERSION)32$(JDK_DEBUG_SUFFIX).dll
-    IMPORT_LIBRARY = $(OBJDIR)/$(LIBRARY_NAME)$(LIBRARY_VERSION)32$(JDK_DEBUG_SUFFIX).lib
 endif
 
 #

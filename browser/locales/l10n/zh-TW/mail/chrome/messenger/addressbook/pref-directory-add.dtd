@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY directoryName.label               "名稱:">
+<!ENTITY directoryName.accesskey           "N">
+<!ENTITY directoryHostname.label           "主機名稱:">
+<!ENTITY directoryHostname.accesskey       "o">
+<!ENTITY directoryBaseDN.label             "Base DN:">
+<!ENTITY directoryBaseDN.accesskey         "B">
+<!ENTITY findButton.label                  "尋找">
+<!ENTITY findButton.accesskey              "F">
+<!ENTITY directorySecure.label             "使用安全連線 (SSL)">
+<!ENTITY directorySecure.accesskey         "U">
+<!ENTITY directoryLogin.label              "Bind DN: ">
+<!ENTITY directoryLogin.accesskey          "i">
+<!ENTITY General.tab                       "一般">
+<!ENTITY Offline.tab                       "離線模式">
+<!ENTITY Advanced.tab                      "進階">
+<!ENTITY portNumber.label                  "Port:">
+<!ENTITY portNumber.accesskey              "P">
+<!ENTITY searchFilter.label                "搜尋篩選條件 (Filter)">
+<!ENTITY searchFilter.accesskey            "F">
+<!ENTITY scope.label                       "範圍 (Scope): ">
+<!ENTITY scope.accesskey                   "c">
+<!ENTITY scopeOneLevel.label               "一層">
+<!ENTITY scopeOneLevel.accesskey           "L">
+<!ENTITY scopeSubtree.label                "遞迴 (Subtree)">
+<!ENTITY scopeSubtree.accesskey            "S">
+<!ENTITY return.label                      "不要傳回超過">
+<!ENTITY return.accesskey                  "r">
+<!ENTITY results.label                     "個結果">
+<!ENTITY offlineText.label                 "您可以下載此目錄以供離線閱讀。">
+<!ENTITY saslMechanism.label               "登入方式: ">
+<!ENTITY saslMechanism.accesskey           "m">
+<!ENTITY saslOff.label                     "簡單">
+<!ENTITY saslOff.accesskey                 "l">
+<!ENTITY saslGSSAPI.label                  "Kerberos (GSSAPI)">
+<!ENTITY saslGSSAPI.accesskey              "K">
+
+<!-- Localization note: this is here because the width of the dialog 
+     is determined by the width of the base DN box; and that is likely
+     to vary somewhat with the language.
+-->
+<!ENTITY newDirectoryWidth                 "36em">
+

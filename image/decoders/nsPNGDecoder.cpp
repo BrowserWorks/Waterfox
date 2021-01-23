@@ -14,7 +14,6 @@
 #include "gfxPlatform.h"
 #include "imgFrame.h"
 #include "nsColor.h"
-#include "nsIInputStream.h"
 #include "nsMemory.h"
 #include "nsRect.h"
 #include "nspr.h"
@@ -109,15 +108,13 @@ nsPNGDecoder::nsPNGDecoder(RasterImage* aImage)
       mInfo(nullptr),
       mCMSLine(nullptr),
       interlacebuf(nullptr),
-      mInProfile(nullptr),
-      mTransform(nullptr),
       mFormat(SurfaceFormat::UNKNOWN),
-      mCMSMode(0),
       mChannels(0),
       mPass(0),
       mFrameIsHidden(false),
       mDisablePremultipliedAlpha(false),
       mGotInfoCallback(false),
+      mUsePipeTransform(false),
       mNumFrames(0) {}
 
 nsPNGDecoder::~nsPNGDecoder() {
@@ -129,14 +126,6 @@ nsPNGDecoder::~nsPNGDecoder() {
   }
   if (interlacebuf) {
     free(interlacebuf);
-  }
-  if (mInProfile) {
-    qcms_profile_release(mInProfile);
-
-    // mTransform belongs to us only if mInProfile is non-null
-    if (mTransform) {
-      qcms_transform_release(mTransform);
-    }
   }
 }
 
@@ -184,8 +173,8 @@ nsresult nsPNGDecoder::CreateFrame(const FrameInfo& aFrameInfo) {
   // Check if we have transparency, and send notifications if needed.
   auto transparency = GetTransparencyType(aFrameInfo.mFrameRect);
   PostHasTransparencyIfNeeded(transparency);
-  mFormat = transparency == TransparencyType::eNone ? SurfaceFormat::B8G8R8X8
-                                                    : SurfaceFormat::B8G8R8A8;
+  mFormat = transparency == TransparencyType::eNone ? SurfaceFormat::OS_RGBX
+                                                    : SurfaceFormat::OS_RGBA;
 
   // Make sure there's no animation or padding if we're downscaling.
   MOZ_ASSERT_IF(Size() != OutputSize(), mNumFrames == 0);
@@ -222,9 +211,29 @@ nsresult nsPNGDecoder::CreateFrame(const FrameInfo& aFrameInfo) {
     pipeFlags |= SurfacePipeFlags::PROGRESSIVE_DISPLAY;
   }
 
+  SurfaceFormat inFormat;
+  if (mTransform && !mUsePipeTransform) {
+    // QCMS will output in the correct format.
+    inFormat = mFormat;
+  } else if (transparency == TransparencyType::eAlpha) {
+    // We are outputting directly as RGBA, so we need to swap at this step.
+    inFormat = SurfaceFormat::R8G8B8A8;
+  } else {
+    // We have no alpha channel, so we need to unpack from RGB to BGRA.
+    inFormat = SurfaceFormat::R8G8B8;
+  }
+
+  // Only apply premultiplication if the frame has true alpha. If we ever
+  // support downscaling animated images, we will need to premultiply for frame
+  // rect transparency when downscaling as well.
+  if (transparency == TransparencyType::eAlpha && !mDisablePremultipliedAlpha) {
+    pipeFlags |= SurfacePipeFlags::PREMULTIPLY_ALPHA;
+  }
+
+  qcms_transform* pipeTransform = mUsePipeTransform ? mTransform : nullptr;
   Maybe<SurfacePipe> pipe = SurfacePipeFactory::CreateSurfacePipe(
-      this, Size(), OutputSize(), aFrameInfo.mFrameRect, mFormat, animParams,
-      pipeFlags);
+      this, Size(), OutputSize(), aFrameInfo.mFrameRect, inFormat, mFormat,
+      animParams, pipeTransform, pipeFlags);
 
   if (!pipe) {
     mPipe = SurfacePipe();
@@ -252,7 +261,7 @@ void nsPNGDecoder::EndImageFrame() {
 
   mNumFrames++;
 
-  Opacity opacity = mFormat == SurfaceFormat::B8G8R8X8
+  Opacity opacity = mFormat == SurfaceFormat::OS_RGBX
                         ? Opacity::FULLY_OPAQUE
                         : Opacity::SOME_TRANSPARENCY;
 
@@ -260,10 +269,6 @@ void nsPNGDecoder::EndImageFrame() {
 }
 
 nsresult nsPNGDecoder::InitInternal() {
-  mCMSMode = gfxPlatform::GetCMSMode();
-  if (GetSurfaceFlags() & SurfaceFlags::NO_COLORSPACE_CONVERSION) {
-    mCMSMode = eCMSMode_Off;
-  }
   mDisablePremultipliedAlpha =
       bool(GetSurfaceFlags() & SurfaceFlags::NO_PREMULTIPLY_ALPHA);
 
@@ -422,12 +427,8 @@ static void PNGDoGammaCorrection(png_structp png_ptr, png_infop info_ptr) {
 }
 
 // Adapted from http://www.littlecms.com/pngchrm.c example code
-static qcms_profile* PNGGetColorProfile(png_structp png_ptr, png_infop info_ptr,
-                                        int color_type, qcms_data_type* inType,
-                                        uint32_t* intent) {
-  qcms_profile* profile = nullptr;
-  *intent = QCMS_INTENT_PERCEPTUAL;  // Our default
-
+uint32_t nsPNGDecoder::ReadColorProfile(png_structp png_ptr, png_infop info_ptr,
+                                        int color_type, bool* sRGBTag) {
   // First try to see if iCCP chunk is present
   if (png_get_valid(png_ptr, info_ptr, PNG_INFO_iCCP)) {
     png_uint_32 profileLen;
@@ -438,9 +439,9 @@ static qcms_profile* PNGGetColorProfile(png_structp png_ptr, png_infop info_ptr,
     png_get_iCCP(png_ptr, info_ptr, &profileName, &compression, &profileData,
                  &profileLen);
 
-    profile = qcms_profile_from_memory((char*)profileData, profileLen);
-    if (profile) {
-      uint32_t profileSpace = qcms_profile_get_color_space(profile);
+    mInProfile = qcms_profile_from_memory((char*)profileData, profileLen);
+    if (mInProfile) {
+      uint32_t profileSpace = qcms_profile_get_color_space(mInProfile);
 
       bool mismatch = false;
       if (color_type & PNG_COLOR_MASK_COLOR) {
@@ -456,31 +457,29 @@ static qcms_profile* PNGGetColorProfile(png_structp png_ptr, png_infop info_ptr,
       }
 
       if (mismatch) {
-        qcms_profile_release(profile);
-        profile = nullptr;
+        qcms_profile_release(mInProfile);
+        mInProfile = nullptr;
       } else {
-        *intent = qcms_profile_get_rendering_intent(profile);
+        return qcms_profile_get_rendering_intent(mInProfile);
       }
     }
   }
 
   // Check sRGB chunk
-  if (!profile && png_get_valid(png_ptr, info_ptr, PNG_INFO_sRGB)) {
-    profile = qcms_profile_sRGB();
+  if (png_get_valid(png_ptr, info_ptr, PNG_INFO_sRGB)) {
+    *sRGBTag = true;
 
-    if (profile) {
-      int fileIntent;
-      png_set_gray_to_rgb(png_ptr);
-      png_get_sRGB(png_ptr, info_ptr, &fileIntent);
-      uint32_t map[] = {
-          QCMS_INTENT_PERCEPTUAL, QCMS_INTENT_RELATIVE_COLORIMETRIC,
-          QCMS_INTENT_SATURATION, QCMS_INTENT_ABSOLUTE_COLORIMETRIC};
-      *intent = map[fileIntent];
-    }
+    int fileIntent;
+    png_set_gray_to_rgb(png_ptr);
+    png_get_sRGB(png_ptr, info_ptr, &fileIntent);
+    uint32_t map[] = {QCMS_INTENT_PERCEPTUAL, QCMS_INTENT_RELATIVE_COLORIMETRIC,
+                      QCMS_INTENT_SATURATION,
+                      QCMS_INTENT_ABSOLUTE_COLORIMETRIC};
+    return map[fileIntent];
   }
 
   // Check gAMA/cHRM chunks
-  if (!profile && png_get_valid(png_ptr, info_ptr, PNG_INFO_gAMA) &&
+  if (png_get_valid(png_ptr, info_ptr, PNG_INFO_gAMA) &&
       png_get_valid(png_ptr, info_ptr, PNG_INFO_cHRM)) {
     qcms_CIE_xyYTRIPLE primaries;
     qcms_CIE_xyY whitePoint;
@@ -494,33 +493,15 @@ static qcms_profile* PNGGetColorProfile(png_structp png_ptr, png_infop info_ptr,
 
     png_get_gAMA(png_ptr, info_ptr, &gammaOfFile);
 
-    profile = qcms_profile_create_rgb_with_gamma(whitePoint, primaries,
-                                                 1.0 / gammaOfFile);
+    mInProfile = qcms_profile_create_rgb_with_gamma(whitePoint, primaries,
+                                                    1.0 / gammaOfFile);
 
-    if (profile) {
+    if (mInProfile) {
       png_set_gray_to_rgb(png_ptr);
     }
   }
 
-  if (profile) {
-    uint32_t profileSpace = qcms_profile_get_color_space(profile);
-    if (profileSpace == icSigGrayData) {
-      if (color_type & PNG_COLOR_MASK_ALPHA) {
-        *inType = QCMS_DATA_GRAYA_8;
-      } else {
-        *inType = QCMS_DATA_GRAY_8;
-      }
-    } else {
-      if (color_type & PNG_COLOR_MASK_ALPHA ||
-          png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) {
-        *inType = QCMS_DATA_RGBA_8;
-      } else {
-        *inType = QCMS_DATA_RGB_8;
-      }
-    }
-  }
-
-  return profile;
+  return QCMS_INTENT_PERCEPTUAL;  // Our default
 }
 
 void nsPNGDecoder::info_callback(png_structp png_ptr, png_infop info_ptr) {
@@ -597,43 +578,27 @@ void nsPNGDecoder::info_callback(png_structp png_ptr, png_infop info_ptr) {
     png_set_scale_16(png_ptr);
   }
 
-  qcms_data_type inType = QCMS_DATA_RGBA_8;
+  // We only need to extract the color profile for non-metadata decodes. It is
+  // fairly expensive to read the profile and create the transform so we should
+  // avoid it if not necessary.
   uint32_t intent = -1;
-  uint32_t pIntent;
-  if (decoder->mCMSMode != eCMSMode_Off) {
-    intent = gfxPlatform::GetRenderingIntent();
-    decoder->mInProfile =
-        PNGGetColorProfile(png_ptr, info_ptr, color_type, &inType, &pIntent);
-    // If we're not mandating an intent, use the one from the image.
-    if (intent == uint32_t(-1)) {
-      intent = pIntent;
-    }
-  }
-  if (decoder->mInProfile && gfxPlatform::GetCMSOutputProfile()) {
-    qcms_data_type outType;
-
-    if (color_type & PNG_COLOR_MASK_ALPHA || num_trans) {
-      outType = QCMS_DATA_RGBA_8;
-    } else {
-      outType = QCMS_DATA_RGB_8;
-    }
-
-    decoder->mTransform = qcms_transform_create(
-        decoder->mInProfile, inType, gfxPlatform::GetCMSOutputProfile(),
-        outType, (qcms_intent)intent);
-  } else {
-    png_set_gray_to_rgb(png_ptr);
-
-    // only do gamma correction if CMS isn't entirely disabled
+  bool sRGBTag = false;
+  if (!decoder->IsMetadataDecode()) {
     if (decoder->mCMSMode != eCMSMode_Off) {
-      PNGDoGammaCorrection(png_ptr, info_ptr);
+      intent = gfxPlatform::GetRenderingIntent();
+      uint32_t pIntent =
+          decoder->ReadColorProfile(png_ptr, info_ptr, color_type, &sRGBTag);
+      // If we're not mandating an intent, use the one from the image.
+      if (intent == uint32_t(-1)) {
+        intent = pIntent;
+      }
     }
+    if (!decoder->mInProfile || !decoder->GetCMSOutputProfile()) {
+      png_set_gray_to_rgb(png_ptr);
 
-    if (decoder->mCMSMode == eCMSMode_All) {
-      if (color_type & PNG_COLOR_MASK_ALPHA || num_trans) {
-        decoder->mTransform = gfxPlatform::GetCMSRGBATransform();
-      } else {
-        decoder->mTransform = gfxPlatform::GetCMSRGBTransform();
+      // only do gamma correction if CMS isn't entirely disabled
+      if (decoder->mCMSMode != eCMSMode_Off) {
+        PNGDoGammaCorrection(png_ptr, info_ptr);
       }
     }
   }
@@ -673,6 +638,7 @@ void nsPNGDecoder::info_callback(png_structp png_ptr, png_infop info_ptr) {
   }
 #endif
 
+  auto transparency = decoder->GetTransparencyType(frameRect);
   if (decoder->IsMetadataDecode()) {
     // If we are animated then the first frame rect is either:
     // 1) the whole image if the IDAT chunk is part of the animation
@@ -681,12 +647,58 @@ void nsPNGDecoder::info_callback(png_structp png_ptr, png_infop info_ptr) {
     // PostHasTransparency in the metadata decode if we need to. So it's
     // okay to pass IntRect(0, 0, width, height) here for animated images;
     // they will call with the proper first frame rect in the full decode.
-    auto transparency = decoder->GetTransparencyType(frameRect);
     decoder->PostHasTransparencyIfNeeded(transparency);
 
     // We have the metadata we're looking for, so stop here, before we allocate
     // buffers below.
     return decoder->DoTerminate(png_ptr, TerminalState::SUCCESS);
+  }
+
+  if (decoder->mInProfile && decoder->GetCMSOutputProfile()) {
+    qcms_data_type inType;
+    qcms_data_type outType;
+
+    uint32_t profileSpace = qcms_profile_get_color_space(decoder->mInProfile);
+    decoder->mUsePipeTransform = profileSpace != icSigGrayData;
+    if (decoder->mUsePipeTransform) {
+      // If the transform happens with SurfacePipe, it will be in RGBA if we
+      // have an alpha channel, because the swizzle and premultiplication
+      // happens after color management. Otherwise it will be in BGRA because
+      // the swizzle happens at the start.
+      if (transparency == TransparencyType::eAlpha) {
+        inType = QCMS_DATA_RGBA_8;
+        outType = QCMS_DATA_RGBA_8;
+      } else {
+        inType = gfxPlatform::GetCMSOSRGBAType();
+        outType = inType;
+      }
+    } else {
+      if (color_type & PNG_COLOR_MASK_ALPHA) {
+        inType = QCMS_DATA_GRAYA_8;
+        outType = gfxPlatform::GetCMSOSRGBAType();
+      } else {
+        inType = QCMS_DATA_GRAY_8;
+        outType = gfxPlatform::GetCMSOSRGBAType();
+      }
+    }
+
+    decoder->mTransform = qcms_transform_create(decoder->mInProfile, inType,
+                                                decoder->GetCMSOutputProfile(),
+                                                outType, (qcms_intent)intent);
+  } else if ((sRGBTag && decoder->mCMSMode == eCMSMode_TaggedOnly) ||
+             decoder->mCMSMode == eCMSMode_All) {
+    // If the transform happens with SurfacePipe, it will be in RGBA if we
+    // have an alpha channel, because the swizzle and premultiplication
+    // happens after color management. Otherwise it will be in OS_RGBA because
+    // the swizzle happens at the start.
+    if (transparency == TransparencyType::eAlpha) {
+      decoder->mTransform =
+          decoder->GetCMSsRGBTransform(SurfaceFormat::R8G8B8A8);
+    } else {
+      decoder->mTransform =
+          decoder->GetCMSsRGBTransform(SurfaceFormat::OS_RGBA);
+    }
+    decoder->mUsePipeTransform = true;
   }
 
 #ifdef PNG_APNG_SUPPORTED
@@ -708,10 +720,9 @@ void nsPNGDecoder::info_callback(png_structp png_ptr, png_infop info_ptr) {
   }
 #endif
 
-  if (decoder->mTransform && (channels <= 2 || isInterlaced)) {
-    uint32_t bpp[] = {0, 3, 4, 3, 4};
+  if (decoder->mTransform && !decoder->mUsePipeTransform) {
     decoder->mCMSLine =
-        static_cast<uint8_t*>(malloc(bpp[channels] * frameRect.Width()));
+        static_cast<uint8_t*>(malloc(sizeof(uint32_t) * frameRect.Width()));
     if (!decoder->mCMSLine) {
       png_error(decoder->mPNG, "malloc of mCMSLine failed");
     }
@@ -743,29 +754,6 @@ void nsPNGDecoder::PostInvalidationIfNeeded() {
 
   PostInvalidation(invalidRect->mInputSpaceRect,
                    Some(invalidRect->mOutputSpaceRect));
-}
-
-static NextPixel<uint32_t> PackRGBPixelAndAdvance(uint8_t*& aRawPixelInOut) {
-  const uint32_t pixel = gfxPackedPixel(0xFF, aRawPixelInOut[0],
-                                        aRawPixelInOut[1], aRawPixelInOut[2]);
-  aRawPixelInOut += 3;
-  return AsVariant(pixel);
-}
-
-static NextPixel<uint32_t> PackRGBAPixelAndAdvance(uint8_t*& aRawPixelInOut) {
-  const uint32_t pixel = gfxPackedPixel(aRawPixelInOut[3], aRawPixelInOut[0],
-                                        aRawPixelInOut[1], aRawPixelInOut[2]);
-  aRawPixelInOut += 4;
-  return AsVariant(pixel);
-}
-
-static NextPixel<uint32_t> PackUnpremultipliedRGBAPixelAndAdvance(
-    uint8_t*& aRawPixelInOut) {
-  const uint32_t pixel =
-      gfxPackedPixelNoPreMultiply(aRawPixelInOut[3], aRawPixelInOut[0],
-                                  aRawPixelInOut[1], aRawPixelInOut[2]);
-  aRawPixelInOut += 4;
-  return AsVariant(pixel);
 }
 
 void nsPNGDecoder::row_callback(png_structp png_ptr, png_bytep new_row,
@@ -828,19 +816,21 @@ void nsPNGDecoder::row_callback(png_structp png_ptr, png_bytep new_row,
   // Note that |new_row| may be null here, indicating that this is an interlaced
   // image and |row_callback| is being called for a row that hasn't changed.
   MOZ_ASSERT_IF(!new_row, decoder->interlacebuf);
-  uint8_t* rowToWrite = new_row;
 
   if (decoder->interlacebuf) {
     uint32_t width = uint32_t(decoder->mFrameRect.Width());
 
     // We'll output the deinterlaced version of the row.
-    rowToWrite = decoder->interlacebuf + (row_num * decoder->mChannels * width);
+    uint8_t* rowToWrite =
+        decoder->interlacebuf + (row_num * decoder->mChannels * width);
 
     // Update the deinterlaced version of this row with the new data.
     png_progressive_combine_row(png_ptr, rowToWrite, new_row);
-  }
 
-  decoder->WriteRow(rowToWrite);
+    decoder->WriteRow(rowToWrite);
+  } else {
+    decoder->WriteRow(new_row);
+  }
 }
 
 void nsPNGDecoder::WriteRow(uint8_t* aRow) {
@@ -850,38 +840,16 @@ void nsPNGDecoder::WriteRow(uint8_t* aRow) {
   uint32_t width = uint32_t(mFrameRect.Width());
 
   // Apply color management to the row, if necessary, before writing it out.
-  if (mTransform) {
-    if (mCMSLine) {
-      qcms_transform_data(mTransform, rowToWrite, mCMSLine, width);
-
-      // Copy alpha over.
-      if (HasAlphaChannel()) {
-        for (uint32_t i = 0; i < width; ++i) {
-          mCMSLine[4 * i + 3] = rowToWrite[mChannels * i + mChannels - 1];
-        }
-      }
-
-      rowToWrite = mCMSLine;
-    } else {
-      qcms_transform_data(mTransform, rowToWrite, rowToWrite, width);
-    }
+  // This is only needed for grayscale images.
+  if (mTransform && !mUsePipeTransform) {
+    MOZ_ASSERT(mCMSLine);
+    qcms_transform_data(mTransform, rowToWrite, mCMSLine, width);
+    rowToWrite = mCMSLine;
   }
 
   // Write this row to the SurfacePipe.
-  DebugOnly<WriteState> result;
-  if (HasAlphaChannel()) {
-    if (mDisablePremultipliedAlpha) {
-      result = mPipe.WritePixelsToRow<uint32_t>(
-          [&] { return PackUnpremultipliedRGBAPixelAndAdvance(rowToWrite); });
-    } else {
-      result = mPipe.WritePixelsToRow<uint32_t>(
-          [&] { return PackRGBAPixelAndAdvance(rowToWrite); });
-    }
-  } else {
-    result = mPipe.WritePixelsToRow<uint32_t>(
-        [&] { return PackRGBPixelAndAdvance(rowToWrite); });
-  }
-
+  DebugOnly<WriteState> result =
+      mPipe.WriteBuffer(reinterpret_cast<uint32_t*>(rowToWrite));
   MOZ_ASSERT(WriteState(result) != WriteState::FAILURE);
 
   PostInvalidationIfNeeded();

@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY errorConsole.title   "Consola de errores">
+
+<!ENTITY errFile.label        "Archivo fuente:">
+<!ENTITY errLine.label        "Línea:">
+<!ENTITY errColumn.label      "Columna:">
+
+<!ENTITY all.label            "Todo">
+<!ENTITY all.accesskey        "T">
+<!ENTITY errors.label         "Errores">
+<!ENTITY errors.accesskey     "E">
+<!ENTITY warnings.label       "Advertencias">
+<!ENTITY warnings.accesskey   "v">
+<!ENTITY messages.label       "Mensajes">
+<!ENTITY messages.accesskey   "M">
+<!ENTITY clear.label          "Limpiar">
+<!ENTITY clear.accesskey      "L">
+<!ENTITY codeEval.label       "Código:">
+<!ENTITY codeEval.accesskey   "o">
+<!ENTITY evaluate.label       "Evaluar">
+<!ENTITY evaluate.accesskey   "v">
+<!ENTITY filter2.label        "Filtrar:">
+<!ENTITY filter2.accesskey    "F">
+
+<!ENTITY copyCmd.label         "Copiar">
+<!ENTITY copyCmd.accesskey     "C">
+<!ENTITY copyCmd.commandkey    "C">
+<!ENTITY sortFirst.label       "Ordenado primero > último">
+<!ENTITY sortFirst.accesskey   "p">
+<!ENTITY sortLast.label        "Ordenado último > primero">
+<!ENTITY sortLast.accesskey    "l">
+<!ENTITY closeCmd.commandkey   "w">
+<!ENTITY focus1.commandkey     "l">
+<!ENTITY focus2.commandkey     "d">
+
+<!ENTITY menuBar.tooltip       "Barra de menú">
+<!ENTITY modeToolbar.tooltip   "Barra de modo">
+<!ENTITY entryToolbar.tooltip  "Barra de entrada de JavaScript">
+<!ENTITY toolbarsCmd.label     "Mostrar/Ocultar">
+<!ENTITY toolbarsCmd.accesskey "o">
+<!ENTITY toolbarMode.label     "Modo">
+<!ENTITY toolbarMode.accesskey "M">
+<!ENTITY toolbarEval.label     "Entrada de JavaScript">
+<!ENTITY toolbarEval.accesskey "J">

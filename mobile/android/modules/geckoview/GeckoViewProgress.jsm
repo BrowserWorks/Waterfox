@@ -28,6 +28,10 @@ XPCOMUtils.defineLazyServiceGetter(
   "nsIIDNService"
 );
 
+XPCOMUtils.defineLazyModuleGetters(this, {
+  BrowserUtils: "resource://gre/modules/BrowserUtils.jsm",
+});
+
 var IdentityHandler = {
   // The definitions below should be kept in sync with those in GeckoView.ProgressListener.SecurityInformation
   // No trusted identity information. No site identity icon is shown.
@@ -131,7 +135,7 @@ var IdentityHandler = {
 
     let uri = aBrowser.currentURI || {};
     try {
-      uri = Services.uriFixup.createExposableURI(uri);
+      uri = Services.io.createExposableURI(uri);
     } catch (e) {}
 
     try {
@@ -142,10 +146,7 @@ var IdentityHandler = {
 
     const cert = aBrowser.securityUI.secInfo.serverCert;
 
-    result.organization = cert.organization;
-    result.subjectName = cert.subjectName;
-    result.issuerOrganization = cert.issuerOrganization;
-    result.issuerCommonName = cert.issuerCommonName;
+    result.certificate = aBrowser.securityUI.secInfo.serverCert.getBase64DERString();
 
     try {
       result.securityException = OverrideService.hasMatchingOverride(
@@ -163,12 +164,14 @@ var IdentityHandler = {
 
 class GeckoViewProgress extends GeckoViewModule {
   onInit() {
+    debug`onInit`;
     this._hostChanged = false;
   }
 
   onEnable() {
     debug`onEnable`;
 
+    this._initialAboutBlank = true;
     const flags =
       Ci.nsIWebProgress.NOTIFY_STATE_NETWORK |
       Ci.nsIWebProgress.NOTIFY_SECURITY |
@@ -180,6 +183,10 @@ class GeckoViewProgress extends GeckoViewModule {
     this.browser.addProgressListener(this.progressFilter, flags);
     Services.obs.addObserver(this, "oop-frameloader-crashed");
     this.registerListener("GeckoView:FlushSessionState");
+    this.messageManager.addMessageListener(
+      "GeckoView:ContentModuleLoaded",
+      this
+    );
   }
 
   onDisable() {
@@ -204,6 +211,21 @@ class GeckoViewProgress extends GeckoViewModule {
     }
   }
 
+  receiveMessage(aMsg) {
+    debug`receiveMessage ${aMsg.name} ${aMsg.data}`;
+    switch (aMsg.name) {
+      case "GeckoView:ContentModuleLoaded": {
+        if (
+          this._initialAboutBlank &&
+          aMsg.data.module === "GeckoViewProgress"
+        ) {
+          this._fireInitialLoad();
+        }
+        break;
+      }
+    }
+  }
+
   onSettingsUpdate() {
     const settings = this.settings;
     debug`onSettingsUpdate: ${settings}`;
@@ -218,19 +240,25 @@ class GeckoViewProgress extends GeckoViewModule {
       return;
     }
 
-    const uriSpec = aRequest.QueryInterface(Ci.nsIChannel).URI.displaySpec;
+    const { displaySpec, spec } = aRequest.QueryInterface(Ci.nsIChannel).URI;
     const isSuccess = aStatus == Cr.NS_OK;
     const isStart = (aStateFlags & Ci.nsIWebProgressListener.STATE_START) != 0;
     const isStop = (aStateFlags & Ci.nsIWebProgressListener.STATE_STOP) != 0;
 
-    debug`onStateChange: uri=${uriSpec} isSuccess=${isSuccess}
+    debug`onStateChange: uri=${spec} isSuccess=${isSuccess}
            isStart=${isStart} isStop=${isStop}`;
+
+    // GeckoView never gets PageStart or PageStop for about:blank because we
+    // set nodefaultsrc to true unconditionally so we can assume here that
+    // we're starting a page load for a non-blank page (or a consumer-initiated
+    // about:blank load).
+    this._initialAboutBlank = false;
 
     if (isStart) {
       this._inProgress = true;
       const message = {
         type: "GeckoView:PageStart",
-        uri: uriSpec,
+        uri: displaySpec,
       };
 
       this.eventDispatcher.sendRequest(message);
@@ -243,7 +271,35 @@ class GeckoViewProgress extends GeckoViewModule {
       };
 
       this.eventDispatcher.sendRequest(message);
+
+      BrowserUtils.recordSiteOriginTelemetry(
+        Services.wm.getEnumerator("navigator:geckoview"),
+        true
+      );
     }
+  }
+
+  // The initial about:blank load events are unreliable because docShell starts
+  // up concurrently with loading geckoview.js so we're never guaranteed to get
+  // the events.
+  // What we do instead is ignore all initial about:blank events and fire them
+  // manually once the child process has booted up.
+  _fireInitialLoad() {
+    this.eventDispatcher.sendRequest({
+      type: "GeckoView:PageStart",
+      uri: "about:blank",
+    });
+    this.eventDispatcher.sendRequest({
+      type: "GeckoView:LocationChange",
+      uri: "about:blank",
+      canGoBack: false,
+      canGoForward: false,
+      isTopLevel: true,
+    });
+    this.eventDispatcher.sendRequest({
+      type: "GeckoView:PageStop",
+      success: true,
+    });
   }
 
   onSecurityChange(aWebProgress, aRequest, aState) {
@@ -254,6 +310,11 @@ class GeckoViewProgress extends GeckoViewModule {
       return;
     }
 
+    // We don't report messages about the initial about:blank
+    if (this._initialAboutBlank) {
+      return;
+    }
+
     this._state = aState;
     this._hostChanged = false;
 
@@ -261,7 +322,7 @@ class GeckoViewProgress extends GeckoViewModule {
 
     const message = {
       type: "GeckoView:SecurityChanged",
-      identity: identity,
+      identity,
     };
 
     this.eventDispatcher.sendRequest(message);

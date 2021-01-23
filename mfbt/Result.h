@@ -9,11 +9,11 @@
 #ifndef mozilla_Result_h
 #define mozilla_Result_h
 
+#include <type_traits>
 #include "mozilla/Alignment.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/Types.h"
-#include "mozilla/TypeTraits.h"
 #include "mozilla/Variant.h"
 
 namespace mozilla {
@@ -47,16 +47,28 @@ class ResultImplementation<V, E, PackingStrategy::Variant> {
   mozilla::Variant<V, E> mStorage;
 
  public:
-  explicit ResultImplementation(V aValue) : mStorage(aValue) {}
-  explicit ResultImplementation(E aErrorValue) : mStorage(aErrorValue) {}
+  ResultImplementation(ResultImplementation&&) = default;
+  ResultImplementation(const ResultImplementation&) = default;
+  ResultImplementation& operator=(const ResultImplementation&) = default;
+  ResultImplementation& operator=(ResultImplementation&&) = default;
+
+  explicit ResultImplementation(V&& aValue)
+      : mStorage(std::forward<V>(aValue)) {}
+  explicit ResultImplementation(const V& aValue) : mStorage(aValue) {}
+  explicit ResultImplementation(const E& aErrorValue) : mStorage(aErrorValue) {}
+  explicit ResultImplementation(E&& aErrorValue)
+      : mStorage(std::forward<E>(aErrorValue)) {}
 
   bool isOk() const { return mStorage.template is<V>(); }
 
   // The callers of these functions will assert isOk() has the proper value, so
   // these functions (in all ResultImplementation specializations) don't need
   // to do so.
-  V unwrap() const { return mStorage.template as<V>(); }
-  E unwrapErr() const { return mStorage.template as<E>(); }
+  V unwrap() { return std::move(mStorage.template as<V>()); }
+  const V& inspect() const { return mStorage.template as<V>(); }
+
+  E unwrapErr() { return std::move(mStorage.template as<E>()); }
+  const E& inspectErr() const { return mStorage.template as<E>(); }
 };
 
 /**
@@ -68,12 +80,18 @@ class ResultImplementation<V, E&, PackingStrategy::Variant> {
   mozilla::Variant<V, E*> mStorage;
 
  public:
-  explicit ResultImplementation(V aValue) : mStorage(aValue) {}
+  explicit ResultImplementation(V&& aValue)
+      : mStorage(std::forward<V>(aValue)) {}
+  explicit ResultImplementation(const V& aValue) : mStorage(aValue) {}
   explicit ResultImplementation(E& aErrorValue) : mStorage(&aErrorValue) {}
 
   bool isOk() const { return mStorage.template is<V>(); }
-  V unwrap() const { return mStorage.template as<V>(); }
-  E& unwrapErr() const { return *mStorage.template as<E*>(); }
+
+  const V& inspect() const { return mStorage.template as<V>(); }
+  V unwrap() { return std::move(mStorage.template as<V>()); }
+
+  E& unwrapErr() { return *mStorage.template as<E*>(); }
+  const E& inspectErr() const { return *mStorage.template as<E*>(); }
 };
 
 /**
@@ -90,8 +108,11 @@ class ResultImplementation<V, E&, PackingStrategy::NullIsOk> {
 
   bool isOk() const { return mErrorValue == nullptr; }
 
-  V unwrap() const { return V(); }
-  E& unwrapErr() const { return *mErrorValue; }
+  const V& inspect() const = delete;
+  V unwrap() { return V(); }
+
+  const E& inspectErr() const { return *mErrorValue; }
+  E& unwrapErr() { return *mErrorValue; }
 };
 
 /**
@@ -113,8 +134,11 @@ class ResultImplementation<V, E, PackingStrategy::NullIsOk> {
 
   bool isOk() const { return mErrorValue == NullValue; }
 
-  V unwrap() const { return V(); }
-  E unwrapErr() const { return mErrorValue; }
+  const V& inspect() const = delete;
+  V unwrap() { return V(); }
+
+  const E& inspectErr() const { return mErrorValue; }
+  E unwrapErr() { return std::move(mErrorValue); }
 };
 
 /**
@@ -139,8 +163,11 @@ class ResultImplementation<V*, E&, PackingStrategy::LowBitTagIsError> {
 
   bool isOk() const { return (mBits & 1) == 0; }
 
-  V* unwrap() const { return reinterpret_cast<V*>(mBits); }
-  E& unwrapErr() const { return *reinterpret_cast<E*>(mBits ^ 1); }
+  V* inspect() const { return reinterpret_cast<V*>(mBits); }
+  V* unwrap() { return inspect(); }
+
+  E& inspectErr() const { return *reinterpret_cast<E*>(mBits ^ 1); }
+  E& unwrapErr() { return inspectErr(); }
 };
 
 // Return true if any of the struct can fit in a word.
@@ -157,8 +184,8 @@ struct IsPackableVariant {
     bool ok;
   };
 
-  using Impl = typename Conditional<sizeof(VEbool) <= sizeof(EVbool), VEbool,
-                                    EVbool>::Type;
+  using Impl =
+      std::conditional_t<sizeof(VEbool) <= sizeof(EVbool), VEbool, EVbool>;
 
   static const bool value = sizeof(Impl) <= sizeof(uintptr_t);
 };
@@ -174,18 +201,21 @@ class ResultImplementation<V, E, PackingStrategy::PackedVariant> {
 
  public:
   explicit ResultImplementation(V aValue) {
-    data.v = aValue;
+    data.v = std::move(aValue);
     data.ok = true;
   }
   explicit ResultImplementation(E aErrorValue) {
-    data.e = aErrorValue;
+    data.e = std::move(aErrorValue);
     data.ok = false;
   }
 
   bool isOk() const { return data.ok; }
 
-  V unwrap() const { return data.v; }
-  E unwrapErr() const { return data.e; }
+  const V& inspect() const { return data.v; }
+  V unwrap() { return std::move(data.v); }
+
+  const E& inspectErr() const { return data.e; }
+  E unwrapErr() { return std::move(data.e); }
 };
 
 // To use nullptr as a special value, we need the counter part to exclude zero
@@ -237,12 +267,12 @@ struct HasFreeLSB<T&> {
 template <typename V, typename E>
 struct SelectResultImpl {
   static const PackingStrategy value =
-      (IsEmpty<V>::value && UnusedZero<E>::value)
+      (std::is_empty_v<V> && UnusedZero<E>::value)
           ? PackingStrategy::NullIsOk
           : (detail::HasFreeLSB<V>::value && detail::HasFreeLSB<E>::value)
                 ? PackingStrategy::LowBitTagIsError
-                : (IsDefaultConstructible<V>::value &&
-                   IsDefaultConstructible<E>::value &&
+                : (std::is_default_constructible_v<V> &&
+                   std::is_default_constructible_v<E> &&
                    IsPackableVariant<V, E>::value)
                       ? PackingStrategy::PackedVariant
                       : PackingStrategy::Variant;
@@ -251,10 +281,10 @@ struct SelectResultImpl {
 };
 
 template <typename T>
-struct IsResult : FalseType {};
+struct IsResult : std::false_type {};
 
 template <typename V, typename E>
-struct IsResult<Result<V, E>> : TrueType {};
+struct IsResult<Result<V, E>> : std::true_type {};
 
 }  // namespace detail
 
@@ -297,15 +327,32 @@ class MOZ_MUST_USE_TYPE Result final {
   Impl mImpl;
 
  public:
-  /**
-   * Create a success result.
-   */
-  MOZ_IMPLICIT Result(V aValue) : mImpl(aValue) { MOZ_ASSERT(isOk()); }
+  using ok_type = V;
+  using err_type = E;
+
+  /** Create a success result. */
+  MOZ_IMPLICIT Result(V&& aValue) : mImpl(std::forward<V>(aValue)) {
+    MOZ_ASSERT(isOk());
+  }
+
+  /** Create a success result. */
+  MOZ_IMPLICIT Result(const V& aValue) : mImpl(aValue) { MOZ_ASSERT(isOk()); }
+
+  /** Create an error result. */
+  explicit Result(E aErrorValue) : mImpl(std::forward<E>(aErrorValue)) {
+    MOZ_ASSERT(isErr());
+  }
 
   /**
-   * Create an error result.
+   * Implementation detail of MOZ_TRY().
+   * Create an error result from another error result.
    */
-  explicit Result(E aErrorValue) : mImpl(aErrorValue) { MOZ_ASSERT(isErr()); }
+  template <typename E2>
+  MOZ_IMPLICIT Result(GenericErrorResult<E2>&& aErrorResult)
+      : mImpl(std::forward<E2>(aErrorResult.mErrorValue)) {
+    static_assert(std::is_convertible_v<E2, E>, "E2 must be convertible to E");
+    MOZ_ASSERT(isErr());
+  }
 
   /**
    * Implementation detail of MOZ_TRY().
@@ -314,13 +361,14 @@ class MOZ_MUST_USE_TYPE Result final {
   template <typename E2>
   MOZ_IMPLICIT Result(const GenericErrorResult<E2>& aErrorResult)
       : mImpl(aErrorResult.mErrorValue) {
-    static_assert(mozilla::IsConvertible<E2, E>::value,
-                  "E2 must be convertible to E");
+    static_assert(std::is_convertible_v<E2, E>, "E2 must be convertible to E");
     MOZ_ASSERT(isErr());
   }
 
   Result(const Result&) = default;
+  Result(Result&&) = default;
   Result& operator=(const Result&) = default;
+  Result& operator=(Result&&) = default;
 
   /** True if this Result is a success result. */
   bool isOk() const { return mImpl.isOk(); }
@@ -328,27 +376,54 @@ class MOZ_MUST_USE_TYPE Result final {
   /** True if this Result is an error result. */
   bool isErr() const { return !mImpl.isOk(); }
 
-  /** Get the success value from this Result, which must be a success result. */
-  V unwrap() const {
+  /** Take the success value from this Result, which must be a success result.
+   */
+  V unwrap() {
     MOZ_ASSERT(isOk());
     return mImpl.unwrap();
   }
 
   /**
-   *  Get the success value from this Result, which must be a success result.
-   *  If it is an error result, then return the aValue.
+   * Take the success value from this Result, which must be a success result.
+   * If it is an error result, then return the aValue.
    */
-  V unwrapOr(V aValue) const { return isOk() ? mImpl.unwrap() : aValue; }
+  V unwrapOr(V aValue) {
+    return MOZ_LIKELY(isOk()) ? mImpl.unwrap() : std::move(aValue);
+  }
 
-  /** Get the error value from this Result, which must be an error result. */
-  E unwrapErr() const {
+  /** Take the error value from this Result, which must be an error result. */
+  E unwrapErr() {
     MOZ_ASSERT(isErr());
     return mImpl.unwrapErr();
   }
 
+  /** See the success value from this Result, which must be a success result. */
+  const V& inspect() const { return mImpl.inspect(); }
+
+  /** See the error value from this Result, which must be an error result. */
+  const E& inspectErr() const {
+    MOZ_ASSERT(isErr());
+    return mImpl.inspectErr();
+  }
+
+  /** Propagate the error value from this Result, which must be an error result.
+   *
+   * This can be used to propagate an error from a function call to the caller
+   * with a different value type, but the same error type:
+   *
+   *    Result<T1, E> Func1() {
+   *       Result<T2, E> res = Func2();
+   *       if (res.isErr()) { return res.propagateErr(); }
+   *    }
+   */
+  GenericErrorResult<E> propagateErr() {
+    MOZ_ASSERT(isErr());
+    return GenericErrorResult<E>{mImpl.unwrapErr()};
+  }
+
   /**
    * Map a function V -> W over this result's success variant. If this result is
-   * an error, do not invoke the function and return a copy of the error.
+   * an error, do not invoke the function and propagate the error.
    *
    * Mapping over success values invokes the function to produce a new success
    * value:
@@ -363,7 +438,8 @@ class MOZ_MUST_USE_TYPE Result final {
    *     Result<size_t, E> res2 = res.map(strlen);
    *     MOZ_ASSERT(res2.unwrap() == 11);
    *
-   * Mapping over an error does not invoke the function and copies the error:
+   * Mapping over an error does not invoke the function and propagates the
+   * error:
    *
    *     Result<V, int> res(5);
    *     MOZ_ASSERT(res.isErr());
@@ -372,15 +448,45 @@ class MOZ_MUST_USE_TYPE Result final {
    *     MOZ_ASSERT(res2.unwrapErr() == 5);
    */
   template <typename F>
-  auto map(F f) const -> Result<decltype(f(*((V*)nullptr))), E> {
+  auto map(F f) -> Result<decltype(f(*((V*)nullptr))), E> {
     using RetResult = Result<decltype(f(*((V*)nullptr))), E>;
-    return isOk() ? RetResult(f(unwrap())) : RetResult(unwrapErr());
+    return MOZ_LIKELY(isOk()) ? RetResult(f(unwrap())) : RetResult(unwrapErr());
+  }
+
+  /**
+   * Map a function V -> W over this result's error variant. If this result is
+   * a success, do not invoke the function and move the success over.
+   *
+   * Mapping over error values invokes the function to produce a new error
+   * value:
+   *
+   *     // Map Result<V, int> to another Result<V, int>
+   *     Result<V, int> res(5);
+   *     Result<V, int> res2 = res.mapErr([](int x) { return x * x; });
+   *     MOZ_ASSERT(res2.unwrapErr() == 25);
+   *
+   *     // Map Result<V, const char*> to Result<V, size_t>
+   *     Result<V, const char*> res("hello, map!");
+   *     Result<size_t, E> res2 = res.mapErr(strlen);
+   *     MOZ_ASSERT(res2.unwrapErr() == 11);
+   *
+   * Mapping over a success does not invoke the function and copies the error:
+   *
+   *     Result<int, V> res(5);
+   *     MOZ_ASSERT(res.isOk());
+   *     Result<int, W> res2 = res.mapErr([](V v) { ... });
+   *     MOZ_ASSERT(res2.isOk());
+   *     MOZ_ASSERT(res2.unwrap() == 5);
+   */
+  template <typename F>
+  auto mapErr(F f) -> Result<V, std::result_of_t<F(E)>> {
+    using RetResult = Result<V, std::result_of_t<F(E)>>;
+    return isOk() ? RetResult(unwrap()) : RetResult(f(unwrapErr()));
   }
 
   /**
    * Given a function V -> Result<W, E>, apply it to this result's success value
-   * and return its result. If this result is an error value, then return a
-   * copy.
+   * and return its result. If this result is an error value, it is propagated.
    *
    * This is sometimes called "flatMap" or ">>=" in other contexts.
    *
@@ -398,17 +504,17 @@ class MOZ_MUST_USE_TYPE Result final {
    *     MOZ_ASSERT(res2.unwrap() == HtmlFreeString("hello, andThen!");
    *
    * `andThen`ing over error results does not invoke the function, and just
-   * produces a new copy of the error result:
+   * propagates the error result:
    *
    *     Result<int, const char*> res("some error");
    *     auto res2 = res.andThen([](int x) { ... });
    *     MOZ_ASSERT(res2.isErr());
    *     MOZ_ASSERT(res.unwrapErr() == res2.unwrapErr());
    */
-  template <typename F, typename = typename EnableIf<detail::IsResult<decltype(
-                            (*((F*)nullptr))(*((V*)nullptr)))>::value>::Type>
-  auto andThen(F f) const -> decltype(f(*((V*)nullptr))) {
-    return isOk() ? f(unwrap()) : GenericErrorResult<E>(unwrapErr());
+  template <typename F, typename = std::enable_if_t<detail::IsResult<
+                            decltype((*((F*)nullptr))(*((V*)nullptr)))>::value>>
+  auto andThen(F f) -> decltype(f(*((V*)nullptr))) {
+    return MOZ_LIKELY(isOk()) ? f(unwrap()) : propagateErr();
   }
 };
 
@@ -426,12 +532,13 @@ class MOZ_MUST_USE_TYPE GenericErrorResult {
   friend class Result;
 
  public:
-  explicit GenericErrorResult(E aErrorValue) : mErrorValue(aErrorValue) {}
+  explicit GenericErrorResult(E&& aErrorValue)
+      : mErrorValue(std::forward<E>(aErrorValue)) {}
 };
 
 template <typename E>
 inline GenericErrorResult<E> Err(E&& aErrorValue) {
-  return GenericErrorResult<E>(aErrorValue);
+  return GenericErrorResult<E>(std::forward<E>(aErrorValue));
 }
 
 }  // namespace mozilla
@@ -442,12 +549,12 @@ inline GenericErrorResult<E> Err(E&& aErrorValue) {
  * discards the result altogether. On error, it immediately returns an error
  * Result from the enclosing function.
  */
-#define MOZ_TRY(expr)                                       \
-  do {                                                      \
-    auto mozTryTempResult_ = ::mozilla::ToResult(expr);     \
-    if (mozTryTempResult_.isErr()) {                        \
-      return ::mozilla::Err(mozTryTempResult_.unwrapErr()); \
-    }                                                       \
+#define MOZ_TRY(expr)                                   \
+  do {                                                  \
+    auto mozTryTempResult_ = ::mozilla::ToResult(expr); \
+    if (MOZ_UNLIKELY(mozTryTempResult_.isErr())) {      \
+      return mozTryTempResult_.propagateErr();          \
+    }                                                   \
   } while (0)
 
 /**
@@ -457,13 +564,13 @@ inline GenericErrorResult<E> Err(E&& aErrorValue) {
  * immediately returns the error result. |target| must evaluate to a reference
  * without any side effects.
  */
-#define MOZ_TRY_VAR(target, expr)                              \
-  do {                                                         \
-    auto mozTryVarTempResult_ = (expr);                        \
-    if (mozTryVarTempResult_.isErr()) {                        \
-      return ::mozilla::Err(mozTryVarTempResult_.unwrapErr()); \
-    }                                                          \
-    (target) = mozTryVarTempResult_.unwrap();                  \
+#define MOZ_TRY_VAR(target, expr)                     \
+  do {                                                \
+    auto mozTryVarTempResult_ = (expr);               \
+    if (MOZ_UNLIKELY(mozTryVarTempResult_.isErr())) { \
+      return mozTryVarTempResult_.propagateErr();     \
+    }                                                 \
+    (target) = mozTryVarTempResult_.unwrap();         \
   } while (0)
 
 #endif  // mozilla_Result_h

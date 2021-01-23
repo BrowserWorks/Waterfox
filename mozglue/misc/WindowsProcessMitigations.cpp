@@ -15,12 +15,39 @@ BOOL WINAPI GetProcessMitigationPolicy(
     SIZE_T dwLength);
 #endif  // (_WIN32_WINNT < 0x0602)
 
+// MinGW does not have these definitions in winnt.h yet
+#if defined(__MINGW32__)
+constexpr PROCESS_MITIGATION_POLICY ProcessPayloadRestrictionPolicy =
+    static_cast<PROCESS_MITIGATION_POLICY>(12);
+
+typedef struct _PROCESS_MITIGATION_PAYLOAD_RESTRICTION_POLICY {
+  union {
+    DWORD Flags;
+    struct {
+      DWORD EnableExportAddressFilter : 1;
+      DWORD AuditExportAddressFilter : 1;
+      DWORD EnableExportAddressFilterPlus : 1;
+      DWORD AuditExportAddressFilterPlus : 1;
+      DWORD EnableImportAddressFilter : 1;
+      DWORD AuditImportAddressFilter : 1;
+      DWORD EnableRopStackPivot : 1;
+      DWORD AuditRopStackPivot : 1;
+      DWORD EnableRopCallerCheck : 1;
+      DWORD AuditRopCallerCheck : 1;
+      DWORD EnableRopSimExec : 1;
+      DWORD AuditRopSimExec : 1;
+      DWORD ReservedFlags : 20;
+    } DUMMYSTRUCTNAME;
+  } DUMMYUNIONNAME;
+} PROCESS_MITIGATION_PAYLOAD_RESTRICTION_POLICY,
+    *PPROCESS_MITIGATION_PAYLOAD_RESTRICTION_POLICY;
+#endif  // defined(__MINGW32__)
+
 namespace mozilla {
 
-static const DynamicallyLinkedFunctionPtr<
-    decltype(&::GetProcessMitigationPolicy)>&
+static decltype(&::GetProcessMitigationPolicy)
 FetchGetProcessMitigationPolicyFunc() {
-  static const DynamicallyLinkedFunctionPtr<decltype(
+  static const StaticDynamicallyLinkedFunctionPtr<decltype(
       &::GetProcessMitigationPolicy)>
       pGetProcessMitigationPolicy(L"kernel32.dll",
                                   "GetProcessMitigationPolicy");
@@ -28,7 +55,7 @@ FetchGetProcessMitigationPolicyFunc() {
 }
 
 MFBT_API bool IsWin32kLockedDown() {
-  auto& pGetProcessMitigationPolicy = FetchGetProcessMitigationPolicyFunc();
+  auto pGetProcessMitigationPolicy = FetchGetProcessMitigationPolicyFunc();
   if (!pGetProcessMitigationPolicy) {
     return false;
   }
@@ -44,7 +71,7 @@ MFBT_API bool IsWin32kLockedDown() {
 }
 
 MFBT_API bool IsDynamicCodeDisabled() {
-  auto& pGetProcessMitigationPolicy = FetchGetProcessMitigationPolicyFunc();
+  auto pGetProcessMitigationPolicy = FetchGetProcessMitigationPolicyFunc();
   if (!pGetProcessMitigationPolicy) {
     return false;
   }
@@ -57,6 +84,22 @@ MFBT_API bool IsDynamicCodeDisabled() {
   }
 
   return polInfo.ProhibitDynamicCode;
+}
+
+MFBT_API bool IsEafPlusEnabled() {
+  auto pGetProcessMitigationPolicy = FetchGetProcessMitigationPolicyFunc();
+  if (!pGetProcessMitigationPolicy) {
+    return false;
+  }
+
+  PROCESS_MITIGATION_PAYLOAD_RESTRICTION_POLICY polInfo;
+  if (!pGetProcessMitigationPolicy(::GetCurrentProcess(),
+                                   ProcessPayloadRestrictionPolicy, &polInfo,
+                                   sizeof(polInfo))) {
+    return false;
+  }
+
+  return polInfo.EnableExportAddressFilterPlus;
 }
 
 }  // namespace mozilla

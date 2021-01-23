@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "Ел. адрес">
+<!ENTITY readMsgsLink.label           "Четене на писма">
+<!ENTITY composeMsgLink.label         "Писане на писмо">
+
+<!ENTITY newsSectionHdr.label         "Дискусионни групи">
+<!ENTITY subscribeNewsLink.label      "Управление на абонирането за дискусионни групи">
+
+<!ENTITY feedsSectionHdr.label        "Емисии">
+<!ENTITY subscribeFeeds.label         "Управление на абонаменти">
+
+<!ENTITY chat.label                   "Разговори">
+<!ENTITY movemail.label               "Преместване на писма">
+
+<!ENTITY accountsSectionHdr.label     "Регистрации">
+<!ENTITY subscribeImapFolders.label   "Управление на абонирането за папка">
+<!ENTITY settingsLink.label           "Преглед на настройките">
+<!ENTITY setupNewAcct.label           "Създаване на сметка:">
+
+<!ENTITY advFeaturesSectionHdr.label  "Допълнителни възможности">
+<!ENTITY searchMsgsLink.label         "Търсене на писма">
+<!ENTITY filtersLink.label            "Управление на филтри">
+<!ENTITY junkSettings.label           "Настройки за нежелана поща">
+<!ENTITY offlineLink.label            "Настройки за работа извън мрежа">

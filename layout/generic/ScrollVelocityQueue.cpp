@@ -6,7 +6,8 @@
 
 #include "ScrollVelocityQueue.h"
 
-#include "gfxPrefs.h"
+#include "mozilla/StaticPrefs_apz.h"
+#include "mozilla/StaticPrefs_layout.h"
 #include "nsPresContext.h"
 #include "nsRefreshDriver.h"
 
@@ -14,8 +15,10 @@ namespace mozilla {
 namespace layout {
 
 void ScrollVelocityQueue::Sample(const nsPoint& aScrollPosition) {
-  float flingSensitivity = gfxPrefs::ScrollSnapPredictionSensitivity();
-  int maxVelocity = gfxPrefs::ScrollSnapPredictionMaxVelocity();
+  float flingSensitivity =
+      StaticPrefs::layout_css_scroll_snap_prediction_sensitivity();
+  int maxVelocity =
+      StaticPrefs::layout_css_scroll_snap_prediction_max_velocity();
   maxVelocity = nsPresContext::CSSPixelsToAppUnits(maxVelocity);
   int maxOffset = maxVelocity * flingSensitivity;
   TimeStamp currentRefreshTime =
@@ -24,7 +27,7 @@ void ScrollVelocityQueue::Sample(const nsPoint& aScrollPosition) {
     mAccumulator = nsPoint();
   } else {
     uint32_t durationMs = (currentRefreshTime - mSampleTime).ToMilliseconds();
-    if (durationMs > gfxPrefs::APZVelocityRelevanceTime()) {
+    if (durationMs > StaticPrefs::apz_velocity_relevance_time_ms()) {
       mAccumulator = nsPoint();
       mQueue.Clear();
     } else if (durationMs == 0) {
@@ -50,11 +53,10 @@ void ScrollVelocityQueue::TrimQueue() {
 
   TimeStamp currentRefreshTime =
       mPresContext->RefreshDriver()->MostRecentRefresh();
-  nsPoint velocity;
   uint32_t timeDelta = (currentRefreshTime - mSampleTime).ToMilliseconds();
   for (int i = mQueue.Length() - 1; i >= 0; i--) {
     timeDelta += mQueue[i].first;
-    if (timeDelta >= gfxPrefs::APZVelocityRelevanceTime()) {
+    if (timeDelta >= StaticPrefs::apz_velocity_relevance_time_ms()) {
       // The rest of the samples have expired and should be dropped
       for (; i >= 0; i--) {
         mQueue.RemoveElementAt(0);

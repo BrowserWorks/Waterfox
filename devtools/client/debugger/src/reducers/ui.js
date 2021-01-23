@@ -3,27 +3,24 @@
  * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
 
 // @flow
+/* eslint complexity: ["error", 35]*/
 
 /**
  * UI reducer
  * @module reducers/ui
  */
 
-import makeRecord from "../utils/makeRecord";
-import { prefs } from "../utils/prefs";
+import { prefs, features } from "../utils/prefs";
 
-import type { Source, PartialRange, SourceLocation } from "../types";
+import type { Source, SourceLocation, Range } from "../types";
 
 import type { Action, panelPositionType } from "../actions/types";
-import type { Record } from "../utils/makeRecord";
 
 export type ActiveSearchType = "project" | "file";
 
 export type OrientationType = "horizontal" | "vertical";
 
 export type SelectedPrimaryPaneTabType = "sources" | "outline";
-
-type Viewport = PartialRange;
 
 export type UIState = {
   selectedPrimaryPaneTab: SelectedPrimaryPaneTabType,
@@ -33,7 +30,8 @@ export type UIState = {
   endPanelCollapsed: boolean,
   frameworkGroupingOn: boolean,
   orientation: OrientationType,
-  viewport: ?Viewport,
+  viewport: ?Range,
+  cursorPosition: ?SourceLocation,
   highlightedLineRange?: {
     start?: number,
     end?: number,
@@ -41,9 +39,12 @@ export type UIState = {
   },
   conditionalPanelLocation: null | SourceLocation,
   isLogPoint: boolean,
+  inlinePreviewEnabled: boolean,
+  sourceMapsEnabled: boolean,
+  javascriptEnabled: boolean,
 };
 
-export const createUIState: () => Record<UIState> = makeRecord({
+export const createUIState = (): UIState => ({
   selectedPrimaryPaneTab: "sources",
   activeSearch: null,
   shownSource: null,
@@ -55,38 +56,53 @@ export const createUIState: () => Record<UIState> = makeRecord({
   isLogPoint: false,
   orientation: "horizontal",
   viewport: null,
+  cursorPosition: null,
+  inlinePreviewEnabled: features.inlinePreview,
+  sourceMapsEnabled: prefs.clientSourceMapsEnabled,
+  javascriptEnabled: true,
 });
 
-function update(
-  state: Record<UIState> = createUIState(),
-  action: Action
-): Record<UIState> {
+function update(state: UIState = createUIState(), action: Action): UIState {
   switch (action.type) {
     case "TOGGLE_ACTIVE_SEARCH": {
-      return state.set("activeSearch", action.value);
+      return { ...state, activeSearch: action.value };
     }
 
     case "TOGGLE_FRAMEWORK_GROUPING": {
       prefs.frameworkGroupingOn = action.value;
-      return state.set("frameworkGroupingOn", action.value);
+      return { ...state, frameworkGroupingOn: action.value };
+    }
+
+    case "TOGGLE_INLINE_PREVIEW": {
+      features.inlinePreview = action.value;
+      return { ...state, inlinePreviewEnabled: action.value };
+    }
+
+    case "TOGGLE_JAVASCRIPT_ENABLED": {
+      return { ...state, javascriptEnabled: action.value };
+    }
+
+    case "TOGGLE_SOURCE_MAPS_ENABLED": {
+      prefs.clientSourceMapsEnabled = action.value;
+      return { ...state, sourceMapsEnabled: action.value };
     }
 
     case "SET_ORIENTATION": {
-      return state.set("orientation", action.orientation);
+      return { ...state, orientation: action.orientation };
     }
 
     case "SHOW_SOURCE": {
-      return state.set("shownSource", action.source);
+      return { ...state, shownSource: action.source };
     }
 
     case "TOGGLE_PANE": {
       if (action.position == "start") {
         prefs.startPanelCollapsed = action.paneCollapsed;
-        return state.set("startPanelCollapsed", action.paneCollapsed);
+        return { ...state, startPanelCollapsed: action.paneCollapsed };
       }
 
       prefs.endPanelCollapsed = action.paneCollapsed;
-      return state.set("endPanelCollapsed", action.paneCollapsed);
+      return { ...state, endPanelCollapsed: action.paneCollapsed };
     }
 
     case "HIGHLIGHT_LINES":
@@ -97,36 +113,42 @@ function update(
         lineRange = { start, end, sourceId };
       }
 
-      return state.set("highlightedLineRange", lineRange);
+      return { ...state, highlightedLineRange: lineRange };
 
     case "CLOSE_QUICK_OPEN":
     case "CLEAR_HIGHLIGHT_LINES":
-      return state.set("highlightedLineRange", {});
+      return { ...state, highlightedLineRange: {} };
 
     case "OPEN_CONDITIONAL_PANEL":
-      return state
-        .set("conditionalPanelLocation", action.location)
-        .set("isLogPoint", action.log);
+      return {
+        ...state,
+        conditionalPanelLocation: action.location,
+        isLogPoint: action.log,
+      };
 
     case "CLOSE_CONDITIONAL_PANEL":
-      return state.set("conditionalPanelLocation", null);
+      return { ...state, conditionalPanelLocation: null };
 
     case "SET_PRIMARY_PANE_TAB":
-      return state.set("selectedPrimaryPaneTab", action.tabName);
+      return { ...state, selectedPrimaryPaneTab: action.tabName };
 
     case "CLOSE_PROJECT_SEARCH": {
-      if (state.get("activeSearch") === "project") {
-        return state.set("activeSearch", null);
+      if (state.activeSearch === "project") {
+        return { ...state, activeSearch: null };
       }
       return state;
     }
 
     case "SET_VIEWPORT": {
-      return state.set("viewport", action.viewport);
+      return { ...state, viewport: action.viewport };
+    }
+
+    case "SET_CURSOR_POSITION": {
+      return { ...state, cursorPosition: action.cursorPosition };
     }
 
     case "NAVIGATE": {
-      return state.set("activeSearch", null).set("highlightedLineRange", {});
+      return { ...state, activeSearch: null, highlightedLineRange: {} };
     }
 
     default: {
@@ -137,24 +159,24 @@ function update(
 
 // NOTE: we'd like to have the app state fully typed
 // https://github.com/firefox-devtools/debugger/blob/master/src/reducers/sources.js#L179-L185
-type OuterState = { ui: Record<UIState> };
+type OuterState = { ui: UIState };
 
 export function getSelectedPrimaryPaneTab(
   state: OuterState
 ): SelectedPrimaryPaneTabType {
-  return state.ui.get("selectedPrimaryPaneTab");
+  return state.ui.selectedPrimaryPaneTab;
 }
 
-export function getActiveSearch(state: OuterState): ActiveSearchType {
-  return state.ui.get("activeSearch");
+export function getActiveSearch(state: OuterState): ?ActiveSearchType {
+  return state.ui.activeSearch;
 }
 
 export function getFrameworkGroupingState(state: OuterState): boolean {
-  return state.ui.get("frameworkGroupingOn");
+  return state.ui.frameworkGroupingOn;
 }
 
-export function getShownSource(state: OuterState): Source {
-  return state.ui.get("shownSource");
+export function getShownSource(state: OuterState): ?Source {
+  return state.ui.shownSource;
 }
 
 export function getPaneCollapse(
@@ -162,32 +184,40 @@ export function getPaneCollapse(
   position: panelPositionType
 ): boolean {
   if (position == "start") {
-    return state.ui.get("startPanelCollapsed");
+    return state.ui.startPanelCollapsed;
   }
 
-  return state.ui.get("endPanelCollapsed");
+  return state.ui.endPanelCollapsed;
 }
 
 export function getHighlightedLineRange(state: OuterState) {
-  return state.ui.get("highlightedLineRange");
+  return state.ui.highlightedLineRange;
 }
 
 export function getConditionalPanelLocation(
   state: OuterState
 ): null | SourceLocation {
-  return state.ui.get("conditionalPanelLocation");
+  return state.ui.conditionalPanelLocation;
 }
 
 export function getLogPointStatus(state: OuterState): boolean {
-  return state.ui.get("isLogPoint");
+  return state.ui.isLogPoint;
 }
 
 export function getOrientation(state: OuterState): OrientationType {
-  return state.ui.get("orientation");
+  return state.ui.orientation;
 }
 
 export function getViewport(state: OuterState) {
-  return state.ui.get("viewport");
+  return state.ui.viewport;
+}
+
+export function getCursorPosition(state: OuterState) {
+  return state.ui.cursorPosition;
+}
+
+export function getInlinePreview(state: OuterState) {
+  return state.ui.inlinePreviewEnabled;
 }
 
 export default update;

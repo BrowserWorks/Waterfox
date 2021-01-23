@@ -6,10 +6,13 @@ from __future__ import absolute_import
 
 from setuptools import setup
 
-PACKAGE_VERSION = "1.1.0"
+PACKAGE_VERSION = "1.2.1"
 
 # dependencies
-deps = ["mozfile >= 0.12"]
+deps = [
+    "distro == 1.4.0",
+    "mozfile >= 0.12",
+]
 
 setup(
     name="mozinfo",

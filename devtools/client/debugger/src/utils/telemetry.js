@@ -53,7 +53,7 @@ const telemetry = new Telemetry();
  * @memberof utils/telemetry
  * @static
  */
-export function recordEvent(eventName: string, fields: {} = {}) {
+export function recordEvent(eventName: string, fields: {} = {}): void {
   let sessionId = -1;
 
   if (typeof window !== "object") {
@@ -72,7 +72,7 @@ export function recordEvent(eventName: string, fields: {} = {}) {
   /* eslint-enable camelcase */
 
   if (!isFirefoxPanel() && window.dbg) {
-    const events = window.dbg._telemetry.events;
+    const { events } = window.dbg._telemetry;
     if (!events[eventName]) {
       events[eventName] = [];
     }

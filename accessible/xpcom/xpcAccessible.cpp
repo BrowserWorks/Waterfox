@@ -18,6 +18,10 @@
 #include "nsIMutableArray.h"
 #include "nsPersistentProperties.h"
 
+#ifdef MOZ_WIDGET_COCOA
+#  include "xpcAccessibleMacInterface.h"
+#endif
+
 using namespace mozilla::a11y;
 
 NS_IMETHODIMP
@@ -155,6 +159,21 @@ xpcAccessible::GetIndexInParent(int32_t* aIndexInParent) {
   }
 
   return *aIndexInParent != -1 ? NS_OK : NS_ERROR_FAILURE;
+}
+
+NS_IMETHODIMP
+xpcAccessible::GetUniqueID(int64_t* aUniqueID) {
+  NS_ENSURE_ARG_POINTER(aUniqueID);
+
+  if (IntlGeneric().IsNull()) return NS_ERROR_FAILURE;
+
+  if (IntlGeneric().IsAccessible()) {
+    *aUniqueID = reinterpret_cast<uintptr_t>(Intl()->UniqueID());
+  } else if (IntlGeneric().IsProxy()) {
+    *aUniqueID = IntlGeneric().AsProxy()->ID();
+  }
+
+  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -384,6 +403,23 @@ xpcAccessible::GetAttributes(nsIPersistentProperties** aAttributes) {
 }
 
 NS_IMETHODIMP
+xpcAccessible::GetNativeInterface(nsISupports** aNativeInterface) {
+#ifdef MOZ_WIDGET_COCOA
+  NS_ENSURE_ARG_POINTER(aNativeInterface);
+
+  // We don't cache or store this instance anywhere so each get returns a
+  // different instance. So `acc.nativeInterface != acc.nativeInterface`. This
+  // just seems simpler and more robust for now.
+  nsCOMPtr<nsISupports> macIface = new xpcAccessibleMacInterface(IntlGeneric());
+  macIface.swap(*aNativeInterface);
+
+  return NS_OK;
+#else
+  return NS_ERROR_NOT_IMPLEMENTED;
+#endif
+}
+
+NS_IMETHODIMP
 xpcAccessible::GetBounds(int32_t* aX, int32_t* aY, int32_t* aWidth,
                          int32_t* aHeight) {
   NS_ENSURE_ARG_POINTER(aX);
@@ -448,9 +484,16 @@ xpcAccessible::GroupPosition(int32_t* aGroupLevel,
   NS_ENSURE_ARG_POINTER(aPositionInGroup);
   *aPositionInGroup = 0;
 
-  if (!Intl()) return NS_ERROR_FAILURE;
-
-  GroupPos groupPos = Intl()->GroupPosition();
+  GroupPos groupPos;
+  if (Accessible* acc = IntlGeneric().AsAccessible()) {
+    groupPos = acc->GroupPosition();
+  } else {
+#if defined(XP_WIN)
+    return NS_ERROR_NOT_IMPLEMENTED;
+#else
+    groupPos = IntlGeneric().AsProxy()->GroupPosition();
+#endif
+  }
 
   *aGroupLevel = groupPos.level;
   *aSimilarItemsInGroup = groupPos.setSize;
@@ -559,17 +602,8 @@ xpcAccessible::GetChildAtPoint(int32_t aX, int32_t aY,
 
   if (IntlGeneric().IsNull()) return NS_ERROR_FAILURE;
 
-  if (ProxyAccessible* proxy = IntlGeneric().AsProxy()) {
-#if defined(XP_WIN)
-    return NS_ERROR_NOT_IMPLEMENTED;
-#else
-    NS_IF_ADDREF(*aAccessible = ToXPC(
-                     proxy->ChildAtPoint(aX, aY, Accessible::eDirectChild)));
-#endif
-  } else {
-    NS_IF_ADDREF(*aAccessible = ToXPC(
-                     Intl()->ChildAtPoint(aX, aY, Accessible::eDirectChild)));
-  }
+  NS_IF_ADDREF(*aAccessible = ToXPC(IntlGeneric().ChildAtPoint(
+                   aX, aY, Accessible::eDirectChild)));
 
   return NS_OK;
 }
@@ -582,18 +616,25 @@ xpcAccessible::GetDeepestChildAtPoint(int32_t aX, int32_t aY,
 
   if (IntlGeneric().IsNull()) return NS_ERROR_FAILURE;
 
-  if (ProxyAccessible* proxy = IntlGeneric().AsProxy()) {
-#if defined(XP_WIN)
-    return NS_ERROR_NOT_IMPLEMENTED;
-#else
-    NS_IF_ADDREF(*aAccessible = ToXPC(
-                     proxy->ChildAtPoint(aX, aY, Accessible::eDeepestChild)));
-#endif
-  } else {
-    NS_IF_ADDREF(*aAccessible = ToXPC(
-                     Intl()->ChildAtPoint(aX, aY, Accessible::eDeepestChild)));
+  NS_IF_ADDREF(*aAccessible = ToXPC(IntlGeneric().ChildAtPoint(
+                   aX, aY, Accessible::eDeepestChild)));
+
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+xpcAccessible::GetDeepestChildAtPointInProcess(int32_t aX, int32_t aY,
+                                               nsIAccessible** aAccessible) {
+  NS_ENSURE_ARG_POINTER(aAccessible);
+  *aAccessible = nullptr;
+
+  AccessibleOrProxy generic = IntlGeneric();
+  if (generic.IsNull() || generic.IsProxy()) {
+    return NS_ERROR_FAILURE;
   }
 
+  NS_IF_ADDREF(*aAccessible = ToXPC(
+                   Intl()->ChildAtPoint(aX, aY, Accessible::eDeepestChild)));
   return NS_OK;
 }
 
@@ -636,11 +677,7 @@ xpcAccessible::TakeFocus() {
   if (IntlGeneric().IsNull()) return NS_ERROR_FAILURE;
 
   if (ProxyAccessible* proxy = IntlGeneric().AsProxy()) {
-#if defined(XP_WIN)
-    return NS_ERROR_NOT_IMPLEMENTED;
-#else
     proxy->TakeFocus();
-#endif
   } else {
     Intl()->TakeFocus();
   }

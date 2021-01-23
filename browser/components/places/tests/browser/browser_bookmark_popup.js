@@ -9,6 +9,7 @@
  * Test opening and closing the bookmarks panel.
  */
 
+StarUI._createPanelIfNeeded();
 let bookmarkPanel = document.getElementById("editBookmarkPanel");
 let bookmarkStar = BookmarkingUI.star;
 let bookmarkPanelTitle = document.getElementById("editBookmarkPanelTitle");
@@ -126,13 +127,17 @@ async function test_bookmarks_popup({
         );
       }
 
-      let onItemRemovedPromise = Promise.resolve();
+      let bookmarkRemovedPromise = Promise.resolve();
       if (isBookmarkRemoved) {
-        onItemRemovedPromise = PlacesTestUtils.waitForNotification(
-          "onItemRemoved",
-          (id, parentId, index, type, uri, guid, parentGuid) =>
-            parentGuid == PlacesUtils.bookmarks.unfiledGuid &&
-            TEST_URL == uri.spec
+        bookmarkRemovedPromise = PlacesTestUtils.waitForNotification(
+          "bookmark-removed",
+          events =>
+            events.some(
+              event =>
+                event.parentGuid == PlacesUtils.bookmarks.unfiledGuid &&
+                TEST_URL == event.url
+            ),
+          "places"
         );
       }
 
@@ -140,7 +145,7 @@ async function test_bookmarks_popup({
       if (popupHideFn) {
         await popupHideFn();
       }
-      await Promise.all([hiddenPromise, onItemRemovedPromise]);
+      await Promise.all([hiddenPromise, bookmarkRemovedPromise]);
 
       Assert.equal(
         bookmarkStar.hasAttribute("starred"),
@@ -578,7 +583,7 @@ add_task(async function enter_during_autocomplete_should_prevent_autoclose() {
 
       // Start autocomplete with the registered tag.
       tagsField.value = "";
-      let popup = document.getElementById("PopupAutoComplete");
+      let popup = document.getElementById("editBMPanel_tagsAutocomplete");
       let promiseShown = BrowserTestUtils.waitForEvent(popup, "popupshown");
       tagsField.focus();
       EventUtils.sendString("a", window);
@@ -622,7 +627,7 @@ add_task(async function escape_during_autocomplete_should_prevent_autoclose() {
 
       // Start autocomplete with the registered tag.
       tagsField.value = "";
-      let popup = document.getElementById("PopupAutoComplete");
+      let popup = document.getElementById("editBMPanel_tagsAutocomplete");
       let promiseShown = BrowserTestUtils.waitForEvent(popup, "popupshown");
       tagsField.focus();
       EventUtils.sendString("a", window);

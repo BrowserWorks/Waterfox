@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newMessageCmd.label "İleti">
+<!ENTITY newMessageCmd.accesskey "İ">
+<!ENTITY newMessageCmd.key "M">
+
+<!ENTITY newContactCmd.label "Adres…">
+<!ENTITY newContactCmd.accesskey "A">
+
+<!ENTITY sendPage.label "Sayfa gönder…">
+<!ENTITY sendPage.accesskey "g">
+
+<!ENTITY contextSendThisPage.label "Bu sayfayı gönder…">
+<!ENTITY contextSendThisPage.accesskey "B">
+<!ENTITY contextSendThisLink.label "Bu bağlantıyı gönder…">
+<!ENTITY contextSendThisLink.accesskey "u">
+<!ENTITY contextSendImage.label "Resmi gönder…">
+<!ENTITY contextSendImage.accesskey "n">
+<!ENTITY contextSendVideo.label "Videoyu gönder…">
+<!ENTITY contextSendVideo.accesskey "n">
+<!ENTITY contextSendAudio.label "Sesi gönder…">
+<!ENTITY contextSendAudio.accesskey "n">
+<!ENTITY contextSendFrame.label "Çerçeveyi gönder…">
+<!ENTITY contextSendFrame.accesskey "n">
+
+<!ENTITY sendLinkCmd.label "Bağlantıyı gönder…">
+<!ENTITY sendLinkCmd.accesskey "t">
+

@@ -48,13 +48,14 @@ class GeckoMVMContext : public MVMContext {
   Maybe<LayoutDeviceIntSize> GetContentViewerSize() const override;
   bool AllowZoomingForDocument() const override;
   bool IsInReaderMode() const override;
+  bool IsDocumentLoading() const override;
 
-  void SetResolutionAndScaleTo(float aResolution) override;
+  void SetResolutionAndScaleTo(float aResolution,
+                               ResolutionChangeOrigin aOrigin) override;
   void SetVisualViewportSize(const CSSSize& aSize) override;
+  void PostVisualViewportResizeEventByDynamicToolbar() override;
   void UpdateDisplayPortMargins() override;
-  MOZ_CAN_RUN_SCRIPT_BOUNDARY
-  void Reflow(const CSSSize& aNewSize, const CSSSize& aOldSize,
-              ResizeEventFlag aResizeEventFlag) override;
+  MOZ_CAN_RUN_SCRIPT_BOUNDARY void Reflow(const CSSSize& aNewSize) override;
 
  private:
   RefPtr<dom::Document> mDocument;

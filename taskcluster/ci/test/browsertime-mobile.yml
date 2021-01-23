@@ -1,0 +1,291 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+---
+job-defaults:
+    max-run-time: 3600
+    suite: raptor
+    workdir: /builds/worker
+    run-on-projects:
+        by-app:
+            refbrow: []
+            default:
+                by-test-platform:
+                    android-hw-p2-.*aarch64.*/pgo: ["mozilla-central", "try"]
+                    android-hw-p2-.*aarch64-shippable/opt: ["mozilla-central", "try"]
+                    default: []
+    tier: 3
+    target:
+        by-app:
+            fenix:
+                by-test-platform:
+                    android-hw.*-aarch64.*/.*:
+                        index: project.mobile.fenix.v2.nightly.latest
+                        name: build/arm64-v8a/geckoNightly/target.apk
+                    default:
+                        index: project.mobile.fenix.v2.nightly.latest
+                        name: build/armeabi-v7a/geckoNightly/target.apk
+            fennec:
+                by-test-platform:
+                    android-hw-p2-8-0-android-aarch64.*:
+                        index: gecko.v2.mozilla-esr68.latest.mobile.android-aarch64-opt
+                        name: build/target.apk
+                    default:
+                        index: gecko.v2.mozilla-esr68.latest.mobile.android-api-16-opt
+                        name: build/target.apk
+            refbrow:
+                by-test-platform:
+                    android-hw.*-aarch64.*/.*:
+                        index: project.mobile.reference-browser.v2.raptor.latest.aarch64
+                        name: target.apk
+                    default:
+                        index: project.mobile.reference-browser.v2.raptor.latest.arm
+                        name: target.apk
+            default: geckoview_example.apk
+    e10s: true
+    virtualization: hardware
+    activity:
+        by-app:
+            fenix: org.mozilla.fenix.IntentReceiverActivity
+            geckoview: org.mozilla.geckoview_example.GeckoViewActivity
+            fennec: org.mozilla.gecko.BrowserApp
+            refbrow: org.mozilla.reference.browser.BrowserTestActivity
+            default: None
+    binary-path:
+        by-app:
+            fenix: org.mozilla.fenix.nightly
+            geckoview: org.mozilla.geckoview_example
+            fennec: org.mozilla.fennec_aurora
+            refbrow: org.mozilla.reference.browser.raptor
+            default: None
+    mozharness:
+        script: raptor_script.py
+        config:
+            - raptor/android_hw_config.py
+        extra-options:
+            - --browsertime
+    optimization:
+        push-interval-25:
+            - android
+
+browsertime-tp6m:
+    description: "Raptor (browsertime) tp6 page-load tests on android"
+    raptor-test: tp6m
+    raptor-subtests:
+        by-app:
+            fennec:
+                - amazon
+                - youtube
+            chrome-m:
+                - amazon
+                - youtube
+            default:
+                - allrecipes
+                - amazon
+                - [amazon-search, amazon-s]
+                - bbc
+                - bing
+                - [bing-search-restaurants, bing-s-r]
+                - booking
+                - cnn
+                - [cnn-ampstories, cnn-amp]
+                - [ebay-kleinanzeigen, ebay-k]
+                - [ebay-kleinanzeigen-search, ebay-k-s]
+                - espn
+                - facebook
+                - [facebook-cristiano, fb-cris]
+                - google
+                - [google-maps, gmaps]
+                - [google-search-restaurants, gsearch-r]
+                - instagram
+                - imdb
+                - jianshu
+                - [microsoft-support, micros-sup]
+                - reddit
+                - [stackoverflow, stacko]
+                - web-de
+                - wikipedia
+                - youtube
+                - [youtube-watch, youtube-w]
+    apps: ["geckoview", "fenix", "fennec", "chrome-m"]
+    tier:
+        by-raptor-test:
+            amazon:
+                by-app:
+                    fenix: 1
+                    geckoview: 1
+                    default: 3
+            default:
+                by-app:
+                    geckoview: 1
+                    default: 3
+    run-on-projects:
+        by-raptor-test:
+            amazon:
+                by-app:
+                    fenix: []
+                    chrome-m: []
+                    geckoview:
+                        by-pageload:
+                            cold:
+                                by-test-platform:
+                                    android-hw-.*(?<!-shippable)/opt: []
+                                    android-hw-p2-.*api-16/pgo: []
+                                    android-hw-p2-.*api-16-shippable/opt: []
+                                    default: ['trunk', 'mozilla-beta']
+                            warm:
+                                by-test-platform:
+                                    android-hw-p2-.*-api-16/(?!opt).*: []
+                                    android-hw-p2-.*-api-16-shippable/opt: []
+                                    android-hw-p2-.*?(?<!-aarch64-shippable)/opt.*: []
+                                    android-hw(?!-p2).*(?<!-api-16-shippable)/opt.*: []
+                                    default: ['mozilla-central']
+                    default:
+                        by-test-platform:
+                            android-hw-p2-.*aarch64-shippable/opt: ["mozilla-central", "try"]
+                            default: []
+            youtube:
+                by-app:
+                    fenix: []
+                    chrome-m: []
+                    geckoview:
+                        by-pageload:
+                            cold:
+                                by-test-platform:
+                                    android-hw-.*(?<!-shippable)/opt: []
+                                    android-hw-p2-.*api-16/pgo: []
+                                    android-hw-p2-.*api-16-shippable/opt: []
+                                    default: ['trunk', 'mozilla-beta']
+                            warm:
+                                by-test-platform:
+                                    android-hw-p2-.*-api-16/(?!opt).*: []
+                                    android-hw-p2-.*-api-16-shippable/opt: []
+                                    android-hw-p2-.*?(?<!-aarch64-shippable)/opt.*: []
+                                    android-hw(?!-p2).*(?<!-api-16-shippable)/opt.*: []
+                                    default: ['mozilla-central']
+                    default:
+                        by-test-platform:
+                            android-hw-p2-.*aarch64.*/pgo: ["mozilla-central", "try"]
+                            android-hw-p2-.*aarch64-shippable/opt: ["mozilla-central", "try"]
+                            default: []
+            default:
+                by-pageload:
+                    cold:
+                        by-app:
+                            geckoview:
+                                by-test-platform:
+                                    android-hw-.*(?<!-shippable)/opt: []
+                                    android-hw-p2-.*api-16/pgo: []
+                                    android-hw-p2-.*api-16-shippable/opt: []
+                                    default: ['trunk', 'mozilla-beta']
+                            default: []
+                    warm:
+                        by-app:
+                            geckoview:
+                                by-test-platform:
+                                    android-hw-p2-.*-api-16/(?!opt).*: []
+                                    android-hw-p2-.*-api-16-shippable/opt: []
+                                    android-hw-p2-.*?(?<!-aarch64-shippable)/opt.*: []
+                                    android-hw(?!-p2).*(?<!-api-16-shippable)/opt.*: []
+                                    default: ['mozilla-central']
+                            default: []
+    pageload:
+        by-app:
+            fenix: both
+            geckoview: both
+            default: cold
+    run-visual-metrics:
+        by-app:
+            fennec: false
+            default: true
+    treeherder-symbol: Btime(tp6m)
+
+browsertime-tp6m-live:
+    description: "Raptor (browsertime) tp6 live site page-load tests on android"
+    raptor-test: tp6m
+    raptor-subtests:
+        - allrecipes
+        - amazon
+        - [amazon-search, amazon-s]
+        - bbc
+        - bing
+        - [bing-search-restaurants, bing-s-r]
+        - booking
+        - booking-sf
+        - cnn
+        - [cnn-ampstories, cnn-amp]
+        - discord
+        - [ebay-kleinanzeigen, ebay-k]
+        - [ebay-kleinanzeigen-search, ebay-k-s]
+        - espn
+        - expedia
+        - facebook
+        - [facebook-cristiano, fb-cris]
+        - [fashionbeans, fashbea]
+        - google
+        - [google-accounts, gacc]
+        - [google-maps, gmaps]
+        - [google-search-restaurants, gsearch-r]
+        - instagram
+        - imdb
+        - [imdb-firefox, imdb-f]
+        - jianshu
+        - [medium-article, medium]
+        - [microsoft-support, micros-sup]
+        - nytimes
+        - [people-article, people]
+        - reddit
+        - [reddit-thread, reddit-thr]
+        - rumble-fox
+        - [stackoverflow, stacko]
+        - [stackoverflow-question, stack-q]
+        - [urbandictionary-define, urbict-def]
+        - web-de
+        - [wikia-marvel, wikia-m]
+        - wikipedia
+        - youtube
+        - [youtube-watch, youtube-w]
+    apps: ["fenix", "chrome-m"]
+    run-on-projects: []
+    pageload: cold
+    run-visual-metrics: true
+    treeherder-symbol: Btime-live(tp6m)
+    mozharness:
+        extra-options:
+            - --live-sites
+
+browsertime-tp6m-profiling:
+    description: "Raptor (browsertime) tp6 page-load tests on android with Gecko profiling"
+    raptor-test: tp6m
+    raptor-subtests: ['amazon', 'youtube']
+    apps: ["geckoview"]
+    pageload: cold
+    treeherder-symbol: Btime-Prof(tp6m)
+    mozharness:
+        script: raptor_script.py
+        config:
+            - raptor/android_hw_config.py
+        extra-options:
+            - --browsertime
+            - --gecko-profile
+
+browsertime-speedometer-mobile:
+    description: "Browsertime Speedometer on Android"
+    apps: ["geckoview", "fenix", "fennec"]
+    tier:
+        by-app:
+            fenix: 1
+            default: 3
+    run-on-projects:
+        by-app:
+            fenix: []
+            default:
+                by-test-platform:
+                    android-hw-p2-.*aarch64.*/pgo: ["mozilla-central", "try"]
+                    android-hw-p2-.*aarch64-shippable/opt: ["mozilla-central", "try"]
+                    default: []
+    treeherder-symbol: Btime(sp)
+    mozharness:
+        extra-options:
+            - --browsertime
+            - --test=speedometer

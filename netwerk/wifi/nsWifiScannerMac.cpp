@@ -8,14 +8,12 @@
 
 #include "osx_wifi.h"
 
-#include "nsAutoPtr.h"
 #include "nsCOMArray.h"
 #include "nsWifiMonitor.h"
 #include "nsWifiAccessPoint.h"
 
 #include "nsServiceManagerUtils.h"
 #include "nsComponentManagerUtils.h"
-#include "nsIMutableArray.h"
 
 using namespace mozilla;
 

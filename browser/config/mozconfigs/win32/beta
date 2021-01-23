@@ -1,6 +1,5 @@
-export MOZ_PGO=1
-
 . "$topsrcdir/build/mozconfig.win-common"
+. "$topsrcdir/browser/config/mozconfigs/win32/common-win32"
 . "$topsrcdir/browser/config/mozconfigs/win32/common-opt"
 
 ac_add_options --enable-official-branding

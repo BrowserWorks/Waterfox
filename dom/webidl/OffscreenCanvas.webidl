@@ -7,10 +7,11 @@
  * https://wiki.whatwg.org/wiki/OffscreenCanvas
  */
 
-[Constructor(unsigned long width, unsigned long height),
- Exposed=(Window,Worker),
- Func="mozilla::dom::DOMPrefs::gfx_offscreencanvas_enabled"]
+[Exposed=(Window,Worker),
+ Pref="gfx.offscreencanvas.enabled"]
 interface OffscreenCanvas : EventTarget {
+  constructor(unsigned long width, unsigned long height);
+
   [Pure, SetterThrows]
   attribute unsigned long width;
   [Pure, SetterThrows]
@@ -27,4 +28,3 @@ interface OffscreenCanvas : EventTarget {
                        optional any encoderOptions);
 };
 
-// OffscreenCanvas implements Transferable;

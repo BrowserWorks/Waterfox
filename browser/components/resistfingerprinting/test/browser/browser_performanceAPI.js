@@ -78,7 +78,6 @@ let isRounded = (x, expectedPrecision) => {
 };
 
 let setupTest = async function(
-  tab,
   resistFingerprinting,
   reduceTimerPrecision,
   expectedPrecision,
@@ -95,30 +94,35 @@ let setupTest = async function(
       ],
     ],
   });
+
+  let win = await BrowserTestUtils.openNewBrowserWindow();
+  let tab = await BrowserTestUtils.openNewForegroundTab(
+    win.gBrowser,
+    TEST_PATH + "file_dummy.html"
+  );
+
   // No matter what we set the precision to, if we're in ResistFingerprinting mode
   // we use the larger of the precision pref and the constant 100ms
   if (resistFingerprinting) {
     expectedPrecision = expectedPrecision < 100 ? 100 : expectedPrecision;
   }
-  await ContentTask.spawn(
+  await SpecialPowers.spawn(
     tab.linkedBrowser,
-    {
-      list: PERFORMANCE_TIMINGS,
-      precision: expectedPrecision,
-      isRoundedFunc: isRounded.toString(),
-      workerCall,
-    },
+    [
+      {
+        list: PERFORMANCE_TIMINGS,
+        precision: expectedPrecision,
+        isRoundedFunc: isRounded.toString(),
+        workerCall,
+      },
+    ],
     runTests
   );
+  await BrowserTestUtils.closeWindow(win);
 };
 // ================================================================================================
 // ================================================================================================
 add_task(async function runRPTests() {
-  let tab = await BrowserTestUtils.openNewForegroundTab(
-    gBrowser,
-    TEST_PATH + "file_dummy.html"
-  );
-
   let runTests = async function(data) {
     let timerlist = data.list;
     let expectedPrecision = data.precision;
@@ -165,21 +169,14 @@ add_task(async function runRPTests() {
     );
   };
 
-  await setupTest(tab, true, true, 100, runTests);
-  await setupTest(tab, true, false, 13, runTests);
-  await setupTest(tab, true, false, 0.13, runTests);
-
-  BrowserTestUtils.removeTab(tab);
+  await setupTest(true, true, 100, runTests);
+  await setupTest(true, false, 13, runTests);
+  await setupTest(true, false, 0.13, runTests);
 });
 
 // ================================================================================================
 // ================================================================================================
 add_task(async function runRTPTests() {
-  let tab = await BrowserTestUtils.openNewForegroundTab(
-    gBrowser,
-    TEST_PATH + "file_dummy.html"
-  );
-
   let runTests = async function(data) {
     let timerlist = data.list;
     let expectedPrecision = data.precision;
@@ -215,6 +212,7 @@ add_task(async function runRTPTests() {
       content.performance.getEntries().length,
       4,
       "For reduceTimerPrecision, there should be 4 entries for performance.getEntries()"
+      // PerformanceNavigationTiming, PerformanceMark, PerformanceMark, PerformanceMeasure
     );
     for (var i = 0; i < 4; i++) {
       let startTime = content.performance.getEntries()[i].startTime;
@@ -253,11 +251,9 @@ add_task(async function runRTPTests() {
     content.performance.clearResourceTimings();
   };
 
-  await setupTest(tab, false, true, 100, runTests);
-  await setupTest(tab, false, true, 13, runTests);
-  await setupTest(tab, false, true, 0.13, runTests);
-
-  BrowserTestUtils.removeTab(tab);
+  await setupTest(false, true, 100, runTests);
+  await setupTest(false, true, 13, runTests);
+  await setupTest(false, true, 0.13, runTests);
 });
 
 // ================================================================================================
@@ -284,27 +280,13 @@ let runWorkerTest = async function(data) {
 };
 
 add_task(async function runRPTestsForWorker() {
-  let tab = await BrowserTestUtils.openNewForegroundTab(
-    gBrowser,
-    TEST_PATH + "file_dummy.html"
-  );
-
-  await setupTest(tab, true, true, 100, runWorkerTest, "runRPTests");
-  await setupTest(tab, true, false, 13, runWorkerTest, "runRPTests");
-  await setupTest(tab, true, true, 0.13, runWorkerTest, "runRPTests");
-
-  BrowserTestUtils.removeTab(tab);
+  await setupTest(true, true, 100, runWorkerTest, "runRPTests");
+  await setupTest(true, false, 13, runWorkerTest, "runRPTests");
+  await setupTest(true, true, 0.13, runWorkerTest, "runRPTests");
 });
 
 add_task(async function runRTPTestsForWorker() {
-  let tab = await BrowserTestUtils.openNewForegroundTab(
-    gBrowser,
-    TEST_PATH + "file_dummy.html"
-  );
-
-  await setupTest(tab, false, true, 100, runWorkerTest, "runRTPTests");
-  await setupTest(tab, false, true, 13, runWorkerTest, "runRTPTests");
-  await setupTest(tab, false, true, 0.13, runWorkerTest, "runRTPTests");
-
-  BrowserTestUtils.removeTab(tab);
+  await setupTest(false, true, 100, runWorkerTest, "runRTPTests");
+  await setupTest(false, true, 13, runWorkerTest, "runRTPTests");
+  await setupTest(false, true, 0.13, runWorkerTest, "runRTPTests");
 });

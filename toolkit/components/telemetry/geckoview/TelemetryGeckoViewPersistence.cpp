@@ -18,16 +18,17 @@
 #include "mozilla/Preferences.h"
 #include "mozilla/ScopeExit.h"
 #include "mozilla/StaticPtr.h"
-#include "mozilla/SystemGroup.h"
 #include "nsDirectoryServiceDefs.h"
 #include "nsIFile.h"
 #include "nsIInputStream.h"
 #include "nsIObserverService.h"
 #include "nsIOutputStream.h"
 #include "nsISafeOutputStream.h"
+#include "nsIThread.h"
 #include "nsITimer.h"
 #include "nsLocalFile.h"
 #include "nsNetUtil.h"
+#include "nsThreadUtils.h"
 #include "nsXULAppAPI.h"
 #include "prenv.h"
 #include "prio.h"
@@ -37,7 +38,6 @@ using mozilla::GetErrorName;
 using mozilla::MakeScopeExit;
 using mozilla::Preferences;
 using mozilla::StaticRefPtr;
-using mozilla::SystemGroup;
 using mozilla::TaskCategory;
 using mozilla::dom::AutoJSAPI;
 using mozilla::dom::SimpleGlobalObject;
@@ -114,6 +114,11 @@ class StreamingJSONWriter : public mozilla::JSONWriteFunc {
   void Write(const char* aStr) override {
     uint32_t count;
     mozilla::Unused << mStream->Write(aStr, strlen(aStr), &count);
+  }
+
+  void Write(const char* aStr, size_t aLen) override {
+    uint32_t count;
+    mozilla::Unused << mStream->Write(aStr, aLen, &count);
   }
 
  private:
@@ -205,8 +210,7 @@ void MainThreadArmPersistenceTimer() {
   // We won't have a persistence timer the first time this runs, so take
   // care of that.
   if (!gPersistenceTimer) {
-    gPersistenceTimer =
-        NS_NewTimer(SystemGroup::EventTargetFor(TaskCategory::Other)).take();
+    gPersistenceTimer = NS_NewTimer().take();
     if (!gPersistenceTimer) {
       ANDROID_LOG("MainThreadArmPersistenceTimer - Timer creation failed.");
       return;
@@ -243,8 +247,10 @@ void MainThreadParsePersistedProbes(const nsACString& aProbeData) {
   ANDROID_LOG("MainThreadParsePersistedProbes");
 
   // We need a JS context to run the parsing stuff in.
-  JS::Rooted<JSObject*> cleanGlobal(mozilla::dom::RootingCx(),
-                                    SimpleGlobalObject::Create(SimpleGlobalObject::GlobalType::BindingDetail));
+  JS::Rooted<JSObject*> cleanGlobal(
+      mozilla::dom::RootingCx(),
+      SimpleGlobalObject::Create(
+          SimpleGlobalObject::GlobalType::BindingDetail));
   if (!cleanGlobal) {
     ANDROID_LOG(
         "MainThreadParsePersistedProbes - Failed to create a JS global object");
@@ -371,9 +377,6 @@ void PersistenceThreadPersist() {
         "MainThreadArmPersistenceTimer",
         []() -> void { MainThreadArmPersistenceTimer(); }));
   });
-
-  TelemetryScalar::Add(
-      mozilla::Telemetry::ScalarID::TELEMETRY_PERSISTENCE_TIMER_HIT_COUNT, 1);
 
   nsCOMPtr<nsIFile> persistenceFile;
   if (NS_FAILED(GetPersistenceFile(persistenceFile))) {
@@ -526,7 +529,7 @@ void TelemetryGeckoViewPersistence::InitPersistence() {
     return;
   }
 
-  gPersistenceThread = thread.forget();
+  gPersistenceThread = ToRefPtr(std::move(thread));
 
   // From now on all scalar operations should be recorded.
   TelemetryScalar::DeserializationStarted();

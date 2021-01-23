@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title "ಖಾಸಗಿ ವೀಕ್ಷಣೆ">
+<!-- Localisation note: the plus sign here is a shorthand way of expressing the word "and". Contextually the privatebrowsingpage.title.private string
+                        is used as a title, with the privatebrowsingpage.title string preceding it but on a separate line.
+                        So the final line will say "Private Browsing + Tracking Protection". -->
+
+<!ENTITY privatebrowsingpage.title.private "+ ಜಾಡು ಇರಿಸುವಿಕೆಗೆ ರಕ್ಷಣೆ">
+<!-- Localization note (privatebrowsingpage.title.normal1): "Private Browsing"
+     is capitalized in English to be consistent with our existing uses of the
+     term. -->
+<!ENTITY privatebrowsingpage.title.normal1 "ನೀವು ಖಾಸಗಿ ಜಾಲಾಟದಲ್ಲಿ ಇಲ್ಲ.">
+
+<!ENTITY privatebrowsingpage.description.trackingProtection "&brandShortName; ನಿಮ್ಮ ಜಾಲಾಟದ ಜಾಡನ್ನು ಇರಿಸಿಕೊಳ್ಳುವ ಪುಟದ ಕೆಲವು ಭಾಗಗಳನ್ನು ನಿರ್ಬಂಧಿಸುತ್ತಿದೆ.">
+<!ENTITY privatebrowsingpage.description.privateDetails "ನಾವು ಹಿಂದಿನ ಇತಿಹಾಸ ನೆನಪಿನಲ್ಲಿಡುವುದಿಲ್ಲ, ಆದರೆ ಡೌನ್ಲೋಡ್ ಮಾಡಿದ ಕಡತಗಳು ಮತ್ತು ಹೊಸ ಪುಟಗುರುತುಗಳು ನಿಮ್ಮ ಸಾಧನದಲ್ಲಿ ಉಳಿದುಕೊಳ್ಳುತ್ತವೆ.">
+<!-- Localization note (privatebrowsingpage.description.normal2): "Private
+     Browsing is capitalized in English to be consistent with our existing uses
+     of the term. -->
+
+<!ENTITY privatebrowsingpage.description.normal2 "ಖಾಸಗಿ ವೀಕ್ಷಣೆಯಲ್ಲಿ, ನಾವು ನಿಮ್ಮ ಯಾವುದೆ ಜಾಲವೀಕ್ಷಣಾ ಇತಿಹಾಸ ಅಥವಾ ಕುಕಿಗಳನ್ನು ಉಳಿಸಿಕೊಳ್ಳುವುದಿಲ್ಲ. ನೀವು ಸೇರಿಸಿದ ಪುಟಗುರುತುಗಳನ್ನು ಮತ್ತು ನೀವು ಡೌನ್‌ಲೋಡ್ ಮಾಡಿಕೊಂಡ ಕಡತಗಳನ್ನು ನಿಮ್ಮ ಸಾಧನದಲ್ಲಿ ಉಳಿಸಿಕೊಳ್ಳಲಾಗುತ್ತದೆ.">
+
+<!ENTITY privatebrowsingpage.link.private "ಹೆಚ್ಚಿನದನ್ನು ಕಲಿಯಬೇಕೆ?">
+<!ENTITY privatebrowsingpage.link.normal "ಹೊಸ ಖಾಸಗಿ ಹಾಳೆಯನ್ನು ತೆರೆ">

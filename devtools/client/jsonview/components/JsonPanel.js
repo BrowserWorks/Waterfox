@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -18,7 +16,9 @@ define(function(require, exports, module) {
   const TreeView = createFactory(
     require("devtools/client/shared/components/tree/TreeView")
   );
-  const { JsonToolbar } = createFactories(require("./JsonToolbar"));
+  const { JsonToolbar } = createFactories(
+    require("devtools/client/jsonview/components/JsonToolbar")
+  );
 
   const { REPS, MODE } = require("devtools/client/shared/components/reps/reps");
   const { Rep } = REPS;

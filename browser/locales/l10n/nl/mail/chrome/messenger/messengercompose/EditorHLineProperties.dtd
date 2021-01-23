@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Horizontale-lijneigenschappen">
+
+<!ENTITY dimensionsBox.label "Afmetingen">
+<!ENTITY heightEditField.label "Hoogte:">
+<!ENTITY heightEditField.accessKey "H">
+<!ENTITY widthEditField.label "Breedte:">
+<!ENTITY widthEditField.accessKey "B">
+<!ENTITY pixelsPopup.value "pixels">
+<!ENTITY alignmentBox.label "Uitlijning">
+<!ENTITY leftRadio.label "Links">
+<!ENTITY leftRadio.accessKey "L">
+<!ENTITY centerRadio.label "Gecentreerd">
+<!ENTITY centerRadio.accessKey "c">
+<!ENTITY rightRadio.label "Rechts">
+<!ENTITY rightRadio.accessKey "R">
+
+<!ENTITY threeDShading.label "3D-arcering">
+<!ENTITY threeDShading.accessKey "a">
+<!ENTITY saveSettings.label "Als standaard gebruiken">
+<!ENTITY saveSettings.accessKey "d">
+<!ENTITY saveSettings.tooltip "Deze instellingen opslaan om te gebruiken bij het invoegen van nieuwe horizontale lijnen">

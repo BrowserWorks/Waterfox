@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Kichinil ri taq Ruk'ojlem Nojwuj">
+<!ENTITY windowTitleImage.label "Taq Richinil Ruwachib'al Nojwuj">
+
+<!ENTITY InputType.label "Ruwäch K'ojlem">
+<!ENTITY InputType.accesskey "R">
+<!ENTITY text.value "Tz'ib'atzij">
+<!ENTITY password.value "Ewan tzij">
+<!ENTITY checkbox.value "Ruch'utikajtz'ik Nik'oj">
+<!ENTITY radio.value "Rupitz'b'al Talutzij">
+<!ENTITY submit.value "Rupitz'b'al Taqoj">
+<!ENTITY reset.value "Titzolïx Pitz'b'äl">
+<!ENTITY file.value "Yakb'äl">
+<!ENTITY hidden.value "Ewan">
+<!ENTITY image.value "Wachib'äl">
+<!ENTITY button.value "Pitz'b'äl">
+
+<!ENTITY InputSettings.label "Kik'ojlib'al taq Nuk'ulem">
+<!ENTITY InputName.label "Ruk'ojlib'al B'i'aj:">
+<!ENTITY InputName.accesskey "B">
+<!ENTITY GroupName.label "Rumolaj B'i'aj:">
+<!ENTITY GroupName.accesskey "B">
+<!ENTITY InputValue.label "Rejqalem k'ojlib'äl:">
+<!ENTITY InputValue.accesskey "R">
+<!ENTITY InitialValue.label "Nab'ey Rajil:">
+<!ENTITY InitialValue.accesskey "R">
+<!ENTITY InputChecked.label "Nab'ey Jikib'an">
+<!ENTITY InputChecked.accesskey "J">
+<!ENTITY InputSelected.label "Nab'ey Cha'on">
+<!ENTITY InputSelected.accesskey "C">
+<!ENTITY InputReadOnly.label "Xa xe Sik'inïk">
+<!ENTITY InputReadOnly.accesskey "S">
+<!ENTITY InputDisabled.label "Chupun">
+<!ENTITY InputDisabled.accesskey "C">
+<!ENTITY tabIndex.label "Rucholajem Ruwi':">
+<!ENTITY tabIndex.accesskey "R">
+<!ENTITY TextSize.label "Runimilem K'ojlib'äl:">
+<!ENTITY TextSize.accesskey "K">
+<!ENTITY TextLength.label "Nïm Raqän:">
+<!ENTITY TextLength.accesskey "R">
+<!ENTITY AccessKey.label "Rupitz'b'al Okem:">
+<!ENTITY AccessKey.accesskey "R">
+<!ENTITY Accept.label "Kek'ul ri taq Ruwäch:">
+<!ENTITY Accept.accesskey "K">
+
+<!ENTITY ImageProperties.label "Taq Richinil Wachib'äl…">
+<!ENTITY ImageProperties.accesskey "W">

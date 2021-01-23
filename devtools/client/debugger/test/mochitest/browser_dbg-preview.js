@@ -2,6 +2,43 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
 
+// Test hovering on an object, which will show a popup and on a
+// simple value, which will show a tooltip.
+add_task(async function() {
+  const dbg = await initDebugger("doc-preview.html", "preview.js");
+
+  await previews(dbg, "testInline", [
+    { line: 17, column: 16, expression: "obj?.prop", result: 2 },
+  ]);
+
+  await selectSource(dbg, "preview.js");
+  await testBucketedArray(dbg);
+
+  await previews(dbg, "empties", [
+    { line: 6, column: 9, expression: "a", result: '""' },
+    { line: 7, column: 9, expression: "b", result: "false" },
+    { line: 8, column: 9, expression: "c", result: "undefined" },
+    { line: 9, column: 9, expression: "d", result: "null" },
+  ]);
+
+  await previews(dbg, "objects", [
+    { line: 27, column: 10, expression: "empty", result: "No properties" },
+    { line: 28, column: 22, expression: "obj?.foo", result: 1 },
+  ]);
+
+  await previews(dbg, "smalls", [
+    { line: 14, column: 9, expression: "a", result: '"..."' },
+    { line: 15, column: 9, expression: "b", result: "true" },
+    { line: 16, column: 9, expression: "c", result: "1" },
+    {
+      line: 17,
+      column: 9,
+      expression: "d",
+      fields: [["length", "0"]],
+    },
+  ]);
+});
+
 async function previews(dbg, fnName, previews) {
   const invokeResult = invokeInTab(fnName);
   await waitForPaused(dbg);
@@ -15,7 +52,7 @@ async function previews(dbg, fnName, previews) {
 async function testBucketedArray(dbg) {
   const invokeResult = invokeInTab("largeArray");
   await waitForPaused(dbg);
-  const preview = await hoverOnToken(dbg, 27, 8, "popup");
+  const preview = await hoverOnToken(dbg, 34, 10, "popup");
 
   is(
     preview.properties.map(p => p.name).join(" "),
@@ -27,31 +64,3 @@ async function testBucketedArray(dbg) {
   is(preview.properties[2].contents.value, 101, "length is 101");
   await resume(dbg);
 }
-
-// Test hovering on an object, which will show a popup and on a
-// simple value, which will show a tooltip.
-add_task(async function() {
-  const dbg = await initDebugger("doc-preview.html", "preview.js");
-  await selectSource(dbg, "preview.js");
-
-  await testBucketedArray(dbg);
-
-  await previews(dbg, "empties", [
-    { line: 2, column: 9, expression: "a", result: '""' },
-    { line: 3, column: 9, expression: "b", result: "false" },
-    { line: 4, column: 9, expression: "c", result: "undefined" },
-    { line: 5, column: 9, expression: "d", result: "null" }
-  ]);
-
-  await previews(dbg, "smalls", [
-    { line: 10, column: 9, expression: "a", result: '"..."' },
-    { line: 11, column: 9, expression: "b", result: "true" },
-    { line: 12, column: 9, expression: "c", result: "1" },
-    {
-      line: 13,
-      column: 9,
-      expression: "d",
-      fields: [["length", "0"]]
-    }
-  ]);
-});

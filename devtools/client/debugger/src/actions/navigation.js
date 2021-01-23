@@ -6,15 +6,14 @@
 
 import { clearDocuments } from "../utils/editor";
 import sourceQueue from "../utils/source-queue";
-import { getSourceList } from "../reducers/sources";
-import { waitForMs } from "../utils/utils";
 
-import { newGeneratedSources } from "./sources";
-import { updateWorkers } from "./debuggee";
+import { updateThreads } from "./threads";
+import { evaluateExpressions } from "./expressions";
 
 import { clearWasmStates } from "../utils/wasm";
-import { getMainThread } from "../selectors";
+import { getMainThread, getThreadContext } from "../selectors";
 import type { Action, ThunkArgs } from "./types";
+import type { ActorId, URL } from "../types";
 
 /**
  * Redux actions for the navigation state
@@ -38,7 +37,6 @@ export function willNavigate(event: Object) {
     clearWasmStates();
     clearDocuments();
     parser.clear();
-    client.detachWorkers();
     const thread = getMainThread(getState());
 
     dispatch({
@@ -49,21 +47,29 @@ export function willNavigate(event: Object) {
 }
 
 export function connect(
-  url: string,
-  actor: string,
-  canRewind: boolean,
+  url: URL,
+  actor: ActorId,
+  traits: Object,
   isWebExtension: boolean
 ) {
-  return async function({ dispatch }: ThunkArgs) {
-    await dispatch(updateWorkers());
-    dispatch(
+  return async function({ dispatch, getState }: ThunkArgs) {
+    await dispatch(updateThreads());
+    await dispatch(
       ({
         type: "CONNECT",
-        mainThread: { url, actor, type: -1, name: "" },
-        canRewind,
+        mainThread: {
+          url,
+          actor,
+          type: "mainThread",
+          name: L10N.getStr("mainThread"),
+        },
+        traits,
         isWebExtension,
       }: Action)
     );
+
+    const cx = getThreadContext(getState());
+    dispatch(evaluateExpressions(cx));
   };
 }
 
@@ -72,15 +78,8 @@ export function connect(
  * @static
  */
 export function navigated() {
-  return async function({ dispatch, getState, client, panel }: ThunkArgs) {
-    // this time out is used to wait for sources. If we have 0 sources,
-    // it is likely that the sources are being loaded from the bfcache,
-    // and we should make an explicit request to the server to load them.
-    await waitForMs(100);
-    if (getSourceList(getState()).length == 0) {
-      const sources = await client.fetchSources();
-      dispatch(newGeneratedSources(sources));
-    }
+  return async function({ dispatch, panel }: ThunkArgs) {
+    await dispatch(updateThreads());
     panel.emit("reloaded");
   };
 }

@@ -1,10 +1,4 @@
-const PREF_MULTISELECT_TABS = "browser.tabs.multiselect";
-
 add_task(async function test() {
-  await SpecialPowers.pushPrefEnv({
-    set: [[PREF_MULTISELECT_TABS, true]],
-  });
-
   let tab1 = await addTab("http://example.com/1");
   let tab2 = await addTab("http://example.com/2");
   let tab3 = await addTab("http://example.com/3");
@@ -19,12 +13,7 @@ add_task(async function test() {
   let metaKeyEvent =
     AppConstants.platform == "macosx" ? { metaKey: true } : { ctrlKey: true };
 
-  let tabs = document.getElementById("tabbrowser-tabs");
-  let newTabButton = document.getAnonymousElementByAttribute(
-    tabs,
-    "anonid",
-    "tabs-newtab-button"
-  );
+  let newTabButton = gBrowser.tabContainer.newTabButton;
   let promiseTabOpened = BrowserTestUtils.waitForEvent(
     gBrowser.tabContainer,
     "TabOpen"
@@ -82,13 +71,15 @@ add_task(async function test() {
   EventUtils.synthesizeMouseAtCenter(newTabButton, metaKeyEvent);
   openEvent = await promiseTabOpened;
   newTab = openEvent.target;
+  let previous = gBrowser.tabContainer.findNextTab(newTab, { direction: -1 });
   is(
-    newTab.previousElementSibling,
+    previous,
     tab3,
     "New tab should be opened after tab3 when tab1 and tab3 are selected"
   );
+  let next = gBrowser.tabContainer.findNextTab(newTab, { direction: 1 });
   is(
-    newTab.nextElementSibling,
+    next,
     null,
     "New tab should be opened at the end of the tabstrip when tab1 and tab3 are selected"
   );
@@ -106,13 +97,15 @@ add_task(async function test() {
   EventUtils.synthesizeMouseAtCenter(newTabButton, {});
   openEvent = await promiseTabOpened;
   newTab = openEvent.target;
+  previous = gBrowser.tabContainer.findNextTab(newTab, { direction: -1 });
   is(
-    newTab.previousElementSibling,
+    previous,
     tab3,
     "New tab should be opened after tab3 when ctrlKey is not used without multiselection"
   );
+  next = gBrowser.tabContainer.findNextTab(newTab, { direction: 1 });
   is(
-    newTab.nextElementSibling,
+    next,
     null,
     "New tab should be opened at the end of the tabstrip when ctrlKey is not used without multiselection"
   );
@@ -131,13 +124,15 @@ add_task(async function test() {
   EventUtils.synthesizeMouseAtCenter(newTabButton, {});
   openEvent = await promiseTabOpened;
   newTab = openEvent.target;
+  previous = gBrowser.tabContainer.findNextTab(newTab, { direction: -1 });
   is(
-    newTab.previousElementSibling,
+    previous,
     tab3,
     "New tab should be opened after tab3 when ctrlKey is not used with multiselection"
   );
+  next = gBrowser.tabContainer.findNextTab(newTab, { direction: 1 });
   is(
-    newTab.nextElementSibling,
+    next,
     null,
     "New tab should be opened at the end of the tabstrip when ctrlKey is not used with multiselection"
   );

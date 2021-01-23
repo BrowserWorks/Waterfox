@@ -1,0 +1,45 @@
+<!--
+# Translator(s):
+#
+# Laudatti <Laudatti@gmail.com>
+# Alexandru Szasz <alexxed@gmail.com>
+# anonymous <anonymous@n.a>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY selectAddressWindow.title           "Selecție adrese">
+
+<!-- Buttons -->
+<!ENTITY toButton.label                      "Către->"> 
+<!ENTITY toButton.accesskey                  "t"> 
+<!ENTITY ccButton.label                      "Cc->"> 
+<!ENTITY ccButton.accesskey                  "C"> 
+<!ENTITY bccButton.label                     "Bcc->">  
+<!ENTITY bccButton.accesskey                 "B">  
+<!ENTITY newButton.label                     "Nou…"> 
+<!ENTITY newButton.accesskey                 "N"> 
+<!ENTITY editButton.label                    "Editează"> 
+<!ENTITY editButton.accesskey                "E">
+<!ENTITY removeButton.label                  "Eliminați"> 
+<!ENTITY removeButton.accesskey              "E"> 
+<!ENTITY lookIn.label                        "Privește în:"> 
+<!ENTITY lookIn.accesskey                    "P"> 
+<!ENTITY for.label                           "pentru:"> 
+<!ENTITY for.accesskey                       "p"> 
+<!ENTITY for.placeholder                     "Name or Email">
+<!ENTITY addressMessageTo.label              "Mesaj adresat către:"> 
+
+<!-- Tooltips items -->  
+<!ENTITY addressPickerNewButton.tooltip      "Creează o nouă fișă în cartea de adrese"> 
+<!ENTITY addressPickerEditButton.tooltip     "Editează fișa selectată"> 
+

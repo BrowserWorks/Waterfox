@@ -1,4 +1,6 @@
-// |jit-test| error: cache does not have the same size
+// |jit-test| error: cache does not have the same size; skip-if: isLcovEnabled()
+
+
 load(libdir + 'bytecode-cache.js');
 
 var test = (function () {
@@ -10,6 +12,6 @@ var test = (function () {
       return ifTrue();
     return ifFalse();
   }
-  return f.toSource() + "; f()";
+  return f.toString() + "; f()";
 })();
 evalWithCache(test, { assertEqBytecode: true, assertEqResult : true });

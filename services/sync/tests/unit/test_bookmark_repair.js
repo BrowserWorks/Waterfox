@@ -10,7 +10,7 @@ const { Service } = ChromeUtils.import("resource://services-sync/service.js");
 const { ClientEngine } = ChromeUtils.import(
   "resource://services-sync/engines/clients.js"
 );
-const { BufferedBookmarksEngine } = ChromeUtils.import(
+const { BookmarksEngine } = ChromeUtils.import(
   "resource://services-sync/engines/bookmarks.js"
 );
 
@@ -28,7 +28,7 @@ var recordedEvents = [];
 
 add_task(async function setup() {
   await Service.engineManager.unregister("bookmarks");
-  await Service.engineManager.register(BufferedBookmarksEngine);
+  await Service.engineManager.register(BookmarksEngine);
 
   clientsEngine = Service.clientsEngine;
   clientsEngine.ignoreLastModifiedOnProcessCommands = true;
@@ -42,9 +42,7 @@ add_task(async function setup() {
 });
 
 function checkRecordedEvents(expected, message) {
-  // Ignore event telemetry from the merger.
-  let repairEvents = recordedEvents.filter(event => event.object != "mirror");
-  deepEqual(repairEvents, expected, message);
+  deepEqual(recordedEvents, expected, message);
   // and clear the list so future checks are easier to write.
   recordedEvents = [];
 }
@@ -69,7 +67,7 @@ async function promiseValidationDone(expected) {
   let obs = promiseOneObserver("weave:engine:validate:finish");
   let { subject: validationResult } = await obs;
   // check the results - anything non-zero is checked against |expected|
-  let summary = validationResult.problems.getSummary();
+  let summary = validationResult.problems;
   let actual = summary.filter(({ name, count }) => count);
   actual.sort((a, b) => String(a.name).localeCompare(b.name));
   expected.sort((a, b) => String(a.name).localeCompare(b.name));
@@ -143,16 +141,7 @@ add_task(async function test_bookmark_repair_integration() {
     checkRecordedEvents([], "Should not start repair after first sync");
 
     _("Back up last sync timestamps for remote client");
-    let buf = await bookmarksEngine._store.ensureOpenMirror();
-    let metaRows = await buf.db.execute(`
-      SELECT key, value FROM meta`);
-    let metaInfos = [];
-    for (let row of metaRows) {
-      metaInfos.push({
-        key: row.getResultByName("key"),
-        value: row.getResultByName("value"),
-      });
-    }
+    let lastSync = await PlacesSyncUtils.bookmarks.getLastSync();
 
     _(`Delete ${bookmarkInfo.guid} locally and on server`);
     // Now we will reach into the server and hard-delete the bookmark
@@ -168,36 +157,11 @@ add_task(async function test_bookmark_repair_integration() {
       `Should not upload tombstone for ${bookmarkInfo.guid}`
     );
 
-    // Remove the bookmark from the mirror, too.
-    let itemRows = await buf.db.execute(
-      `
-      SELECT guid, kind, title, urlId
-      FROM items
-      WHERE guid = :guid`,
-      { guid: bookmarkInfo.guid }
-    );
-    equal(
-      itemRows.length,
-      1,
-      `Bookmark ${bookmarkInfo.guid} should exist in mirror`
-    );
-    let bufInfos = [];
-    for (let row of itemRows) {
-      bufInfos.push({
-        guid: row.getResultByName("guid"),
-        kind: row.getResultByName("kind"),
-        title: row.getResultByName("title"),
-        urlId: row.getResultByName("urlId"),
-      });
-    }
-    await buf.db.execute(`DELETE FROM items WHERE guid = :guid`, {
-      guid: bookmarkInfo.guid,
-    });
-
     // sync again - we should have a few problems...
     _("Sync again to trigger repair");
     validationPromise = promiseValidationDone([
       { name: "missingChildren", count: 1 },
+      { name: "sdiff:childGUIDs", count: 1 },
       { name: "structuralDifferences", count: 1 },
     ]);
     await Service.sync();
@@ -257,6 +221,7 @@ add_task(async function test_bookmark_repair_integration() {
 
     _("Back up repair state to restore later");
     let restoreInitialRepairState = backupPrefs(BOOKMARK_REPAIR_STATE_PREFS);
+    let initialLastSync = await PlacesSyncUtils.bookmarks.getLastSync();
 
     // so now let's take over the role of that other client!
     _("Create new clients engine pretending to be remote client");
@@ -272,18 +237,7 @@ add_task(async function test_bookmark_repair_integration() {
     // repair instead of the sync.
     bookmarkInfo.source = PlacesUtils.bookmarks.SOURCE_SYNC;
     await PlacesUtils.bookmarks.insert(bookmarkInfo);
-    await buf.db.execute(
-      `
-      INSERT INTO items(guid, urlId, kind, title)
-      VALUES(:guid, :urlId, :kind, :title)`,
-      bufInfos
-    );
-    await buf.db.execute(
-      `
-      REPLACE INTO meta(key, value)
-      VALUES(:key, :value)`,
-      metaInfos
-    );
+    await PlacesSyncUtils.bookmarks.setLastSync(lastSync);
 
     _("Sync as remote client");
     await Service.sync();
@@ -362,16 +316,8 @@ add_task(async function test_bookmark_repair_integration() {
     await PlacesUtils.bookmarks.remove(bookmarkInfo.guid, {
       source: PlacesUtils.bookmarks.SOURCE_SYNC,
     });
-    await buf.db.execute(`DELETE FROM items WHERE guid = :guid`, {
-      guid: bookmarkInfo.guid,
-    });
-    await buf.db.execute(
-      `
-      REPLACE INTO meta(key, value)
-      VALUES(:key, :value)`,
-      metaInfos
-    );
     restoreInitialRepairState();
+    await PlacesSyncUtils.bookmarks.setLastSync(initialLastSync);
     ok(
       Services.prefs.prefHasUserValue("services.sync.repairs.bookmarks.state"),
       "Initial client should still be repairing"
@@ -385,9 +331,7 @@ add_task(async function test_bookmark_repair_integration() {
     );
     ok(
       restoredBookmarkInfo,
-      `Missing bookmark ${
-        bookmarkInfo.guid
-      } should be downloaded to initial client`
+      `Missing bookmark ${bookmarkInfo.guid} should be downloaded to initial client`
     );
     checkRecordedEvents([
       {
@@ -482,11 +426,6 @@ add_task(async function test_repair_client_missing() {
     await PlacesUtils.bookmarks.remove(bookmarkInfo.guid, {
       source: PlacesUtils.bookmarks.SOURCE_SYNC,
     });
-    // Delete the bookmark from the mirror, too.
-    let buf = await bookmarksEngine._store.ensureOpenMirror();
-    await buf.db.execute(`DELETE FROM items WHERE guid = :guid`, {
-      guid: bookmarkInfo.guid,
-    });
 
     // Ensure we won't upload a tombstone for the removed bookmark.
     Assert.deepEqual(await PlacesSyncUtils.bookmarks.pullChanges(), {});
@@ -497,6 +436,7 @@ add_task(async function test_repair_client_missing() {
     _("Syncing again.");
     validationPromise = promiseValidationDone([
       { name: "clientMissing", count: 1 },
+      { name: "sdiff:childGUIDs", count: 1 },
       { name: "structuralDifferences", count: 1 },
     ]);
     await Service.sync();

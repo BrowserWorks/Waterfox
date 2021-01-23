@@ -9,7 +9,6 @@
 #include "nsWeakReference.h"
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsIObserver.h"
-#include "nsIAsyncShutdown.h"
 #include "mozilla/storage.h"
 #include "mozilla/storage/StatementCache.h"
 #include "mozilla/Attributes.h"
@@ -19,7 +18,7 @@
 
 // This is the schema version. Update it at any schema change and add a
 // corresponding migrateVxx method below.
-#define DATABASE_SCHEMA_VERSION 52
+#define DATABASE_SCHEMA_VERSION 53
 
 // Fired after Places inited.
 #define TOPIC_PLACES_INIT_COMPLETE "places-init-complete"
@@ -39,6 +38,8 @@
 // calling `observe` directly on the database. Used for testing only.
 #define TOPIC_SIMULATE_PLACES_SHUTDOWN "test-simulate-places-shutdown"
 
+class mozIStorageService;
+class nsIAsyncShutdownClient;
 class nsIRunnable;
 
 namespace mozilla {
@@ -319,11 +320,6 @@ class Database final : public nsIObserver, public nsSupportsWeakReference {
   /**
    * Helpers used by schema upgrades.
    */
-  nsresult MigrateV31Up();
-  nsresult MigrateV32Up();
-  nsresult MigrateV33Up();
-  nsresult MigrateV34Up();
-  nsresult MigrateV35Up();
   nsresult MigrateV36Up();
   nsresult MigrateV37Up();
   nsresult MigrateV38Up();
@@ -341,6 +337,7 @@ class Database final : public nsIObserver, public nsSupportsWeakReference {
   nsresult MigrateV50Up();
   nsresult MigrateV51Up();
   nsresult MigrateV52Up();
+  nsresult MigrateV53Up();
 
   void MigrateV52OriginFrecencies();
 
@@ -350,9 +347,6 @@ class Database final : public nsIObserver, public nsSupportsWeakReference {
 
   int64_t CreateMobileRoot();
   nsresult ConvertOldStyleQuery(nsCString& aURL);
-  nsresult GetItemsWithAnno(const nsACString& aAnnoName, int32_t aItemType,
-                            nsTArray<int64_t>& aItemIds);
-  nsresult DeleteBookmarkItem(int32_t aItemId);
 
  private:
   ~Database();

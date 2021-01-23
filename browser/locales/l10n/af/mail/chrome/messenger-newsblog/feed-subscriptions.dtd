@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Subscription Dialog -->
+
+<!ENTITY feedSubscriptions.label     "Voerintekeninge">
+
+
+
+
+
+
+
+
+
+
+<!-- Account Settings and Subscription Dialog -->
+
+
+
+
+
+
+
+<!ENTITY quickMode.label             "Wys die artikelopsomming in plaas daarvan om die webbladsy te laai">
+<!ENTITY quickMode.accesskey         "s">
+
+
+
+
+
+<!-- Subscription Dialog -->
+
+<!ENTITY button.addFeed.label        "Voeg by">
+<!ENTITY button.addFeed.accesskey    "V">
+
+
+<!ENTITY button.removeFeed.label     "Verwyder">
+<!ENTITY button.removeFeed.accesskey "V">
+<!ENTITY button.importOPML.label     "Invoer">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "Uitvoer">
+<!ENTITY button.exportOPML.accesskey "i">
+
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Sluit">

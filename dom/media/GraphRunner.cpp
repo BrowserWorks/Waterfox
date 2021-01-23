@@ -7,37 +7,43 @@
 #include "GraphRunner.h"
 
 #include "GraphDriver.h"
-#include "MediaStreamGraph.h"
-#include "MediaStreamGraphImpl.h"
-#include "mozilla/dom/WorkletThread.h"
+#include "MediaTrackGraph.h"
+#include "MediaTrackGraphImpl.h"
 #include "nsISupportsImpl.h"
+#include "nsISupportsPriority.h"
 #include "prthread.h"
 #include "Tracing.h"
+#include "audio_thread_priority.h"
 
 namespace mozilla {
 
-static void Start(void* aArg) {
-  GraphRunner* th = static_cast<GraphRunner*>(aArg);
-  th->Run();
-}
-
-GraphRunner::GraphRunner(MediaStreamGraphImpl* aGraph)
-    : mMonitor("GraphRunner::mMonitor"),
+GraphRunner::GraphRunner(MediaTrackGraphImpl* aGraph,
+                         already_AddRefed<nsIThread> aThread)
+    : Runnable("GraphRunner"),
+      mMonitor("GraphRunner::mMonitor"),
       mGraph(aGraph),
-      mStateEnd(0),
-      mStillProcessing(true),
       mThreadState(ThreadState::Wait),
-      // Note that mThread needs to be initialized last, as it may pre-empt the
-      // thread running this ctor and enter Run() with uninitialized members.
-      mThread(PR_CreateThread(PR_SYSTEM_THREAD, &Start, this,
-                              PR_PRIORITY_URGENT, PR_GLOBAL_THREAD,
-                              PR_JOINABLE_THREAD, 0)) {
-  MOZ_COUNT_CTOR(GraphRunner);
+      mThread(aThread) {
+  mThread->Dispatch(do_AddRef(this));
 }
 
 GraphRunner::~GraphRunner() {
-  MOZ_COUNT_DTOR(GraphRunner);
   MOZ_ASSERT(mThreadState == ThreadState::Shutdown);
+}
+
+/* static */
+already_AddRefed<GraphRunner> GraphRunner::Create(MediaTrackGraphImpl* aGraph) {
+  nsCOMPtr<nsIThread> thread;
+  if (NS_WARN_IF(NS_FAILED(
+          NS_NewNamedThread("GraphRunner", getter_AddRefs(thread))))) {
+    return nullptr;
+  }
+  nsCOMPtr<nsISupportsPriority> supportsPriority = do_QueryInterface(thread);
+  MOZ_ASSERT(supportsPriority);
+  MOZ_ALWAYS_SUCCEEDS(
+      supportsPriority->SetPriority(nsISupportsPriority::PRIORITY_HIGHEST));
+
+  return do_AddRef(new GraphRunner(aGraph, thread.forget()));
 }
 
 void GraphRunner::Shutdown() {
@@ -47,20 +53,16 @@ void GraphRunner::Shutdown() {
     mThreadState = ThreadState::Shutdown;
     mMonitor.Notify();
   }
-  // We need to wait for runner thread shutdown here for the sake of the
-  // xpcomWillShutdown case, so that the main thread is not shut down before
-  // cleanup messages are sent for objects destroyed in
-  // CycleCollectedJSContext shutdown.
-  PR_JoinThread(mThread);
-  mThread = nullptr;
+  mThread->Shutdown();
 }
 
-bool GraphRunner::OneIteration(GraphTime aStateEnd) {
-  TRACE_AUDIO_CALLBACK();
+auto GraphRunner::OneIteration(GraphTime aStateEnd, GraphTime aIterationEnd,
+                               AudioMixer* aMixer) -> IterationResult {
+  TRACE();
 
   MonitorAutoLock lock(mMonitor);
   MOZ_ASSERT(mThreadState == ThreadState::Wait);
-  mStateEnd = aStateEnd;
+  mIterationState = Some(IterationState(aStateEnd, aIterationEnd, aMixer));
 
 #ifdef DEBUG
   if (auto audioDriver = mGraph->CurrentDriver()->AsAudioCallbackDriver()) {
@@ -72,10 +74,10 @@ bool GraphRunner::OneIteration(GraphTime aStateEnd) {
     MOZ_CRASH("Unknown GraphDriver");
   }
 #endif
-  // Signal that mStateEnd was updated
+  // Signal that mIterationState was updated
   mThreadState = ThreadState::Run;
   mMonitor.Notify();
-  // Wait for mStillProcessing to update
+  // Wait for mIterationResult to update
   do {
     mMonitor.Wait();
   } while (mThreadState == ThreadState::Run);
@@ -85,33 +87,51 @@ bool GraphRunner::OneIteration(GraphTime aStateEnd) {
   mClockDriverThread = nullptr;
 #endif
 
-  return mStillProcessing;
+  mIterationState = Nothing();
+
+  IterationResult result = std::move(mIterationResult);
+  mIterationResult = IterationResult();
+  return result;
 }
 
-void GraphRunner::Run() {
-  PR_SetCurrentThreadName("GraphRunner");
+NS_IMETHODIMP GraphRunner::Run() {
+  atp_handle* handle =
+      atp_promote_current_thread_to_real_time(0, mGraph->GraphRate());
+
+  nsCOMPtr<nsIThreadInternal> threadInternal = do_QueryInterface(mThread);
+  threadInternal->SetObserver(mGraph);
+
   MonitorAutoLock lock(mMonitor);
   while (true) {
     while (mThreadState == ThreadState::Wait) {
-      mMonitor.Wait();  // Wait for mStateEnd to update or for shutdown
+      mMonitor.Wait();  // Wait for mIterationState to update or for shutdown
     }
     if (mThreadState == ThreadState::Shutdown) {
       break;
     }
+    MOZ_DIAGNOSTIC_ASSERT(mIterationState.isSome());
     TRACE();
-    mStillProcessing = mGraph->OneIterationImpl(mStateEnd);
-    // Signal that mStillProcessing was updated
+    mIterationResult = mGraph->OneIterationImpl(mIterationState->StateEnd(),
+                                                mIterationState->IterationEnd(),
+                                                mIterationState->Mixer());
+    // Signal that mIterationResult was updated
     mThreadState = ThreadState::Wait;
     mMonitor.Notify();
   }
 
-  dom::WorkletThread::DeleteCycleCollectedJSContext();
+  if (handle) {
+    atp_demote_current_thread_from_real_time(handle);
+  }
+
+  return NS_OK;
 }
 
-bool GraphRunner::OnThread() { return PR_GetCurrentThread() == mThread; }
+bool GraphRunner::OnThread() {
+  return mThread->EventTarget()->IsOnCurrentThread();
+}
 
 #ifdef DEBUG
-bool GraphRunner::RunByGraphDriver(GraphDriver* aDriver) {
+bool GraphRunner::InDriverIteration(GraphDriver* aDriver) {
   if (!OnThread()) {
     return false;
   }

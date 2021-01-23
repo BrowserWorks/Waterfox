@@ -13,11 +13,8 @@ with Files("distribution.js"):
 with Files("tests/**"):
     BUG_COMPONENT = ("Firefox", "General")
 
-with Files("tests/browser/browser_bug538331.js"):
-    BUG_COMPONENT = ("Toolkit", "Application Update")
-
 with Files("tests/browser/browser_contentpermissionprompt.js"):
-    BUG_COMPONENT = ("Firefox", "Site Identity and Permission Panels")
+    BUG_COMPONENT = ("Firefox", "Site Permissions")
 
 with Files("tests/unit/test_distribution.js"):
     BUG_COMPONENT = ("Firefox", "Distributions")
@@ -31,26 +28,33 @@ with Files('controlcenter/**'):
 
 DIRS += [
     'about',
+    'aboutconfig',
     'aboutlogins',
     'attribution',
     'contextualidentity',
     'customizableui',
     'dirprovider',
+    'doh',
     'downloads',
     'enterprisepolicies',
     'extensions',
-    'library',
+    'fxmonitor',
     'migration',
     'newtab',
     'originattributes',
+    'pioneer',
     'places',
+    'pocket',
     'preferences',
     'privatebrowsing',
+    'prompts',
+    'protections',
     'protocolhandler',
     'resistfingerprinting',
     'search',
     'sessionstore',
     'shell',
+    'ssb',
     'syncedtabs',
     'uitour',
     'urlbar',
@@ -61,12 +65,13 @@ DIRS += ['build']
 
 if CONFIG['NIGHTLY_BUILD']:
     DIRS += [
-        'aboutconfig',
         'payments',
     ]
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
     DIRS += ['touchbar']
+elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
+    DIRS += ['installerprefs']
 
 XPIDL_SOURCES += [
     'nsIBrowserHandler.idl',
@@ -92,8 +97,13 @@ EXTRA_JS_MODULES += [
 
 BROWSER_CHROME_MANIFESTS += [
     'safebrowsing/content/test/browser.ini',
-    'tests/browser/browser.ini'
+    'tests/browser/browser.ini',
 ]
+
+if CONFIG['MOZ_UPDATER']:
+    BROWSER_CHROME_MANIFESTS += [
+        'tests/browser/whats_new_page/browser.ini',
+    ]
 
 XPCSHELL_TESTS_MANIFESTS += [
     'tests/unit/xpcshell.ini'

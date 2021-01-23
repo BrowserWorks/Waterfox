@@ -17,6 +17,7 @@
 #include "mozilla/dom/ImageEncoder.h"
 #include "mozilla/dom/WorkerPrivate.h"
 #include "mozilla/dom/WorkerRunnable.h"
+#include "mozilla/ipc/CrossProcessSemaphore.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/gfx/DataSurfaceHelpers.h"
 #include "mozilla/gfx/Logging.h"
@@ -27,8 +28,11 @@
 #include "mozilla/image/nsICOEncoder.h"
 #include "mozilla/image/nsJPEGEncoder.h"
 #include "mozilla/image/nsPNGEncoder.h"
+#include "mozilla/layers/SynchronousTask.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/RefPtr.h"
+#include "mozilla/StaticPrefs_gfx.h"
+#include "mozilla/StaticPrefs_layout.h"
 #include "mozilla/UniquePtrExtensions.h"
 #include "mozilla/Unused.h"
 #include "mozilla/Vector.h"
@@ -46,7 +50,6 @@
 #include "ImageContainer.h"
 #include "ImageRegion.h"
 #include "gfx2DGlue.h"
-#include "gfxPrefs.h"
 
 #ifdef XP_WIN
 #  include "gfxWindowsPlatform.h"
@@ -887,20 +890,22 @@ gfxUtils::CopySurfaceToDataSourceSurfaceWithFormat(SourceSurface* aSurface,
 const uint32_t gfxUtils::sNumFrameColors = 8;
 
 /* static */
-const gfx::Color& gfxUtils::GetColorForFrameNumber(uint64_t aFrameNumber) {
+const gfx::DeviceColor& gfxUtils::GetColorForFrameNumber(
+    uint64_t aFrameNumber) {
   static bool initialized = false;
-  static gfx::Color colors[sNumFrameColors];
+  static gfx::DeviceColor colors[sNumFrameColors];
 
   if (!initialized) {
+    // This isn't truly device color, but it is just for debug.
     uint32_t i = 0;
-    colors[i++] = gfx::Color::FromABGR(0xffff0000);
-    colors[i++] = gfx::Color::FromABGR(0xffcc00ff);
-    colors[i++] = gfx::Color::FromABGR(0xff0066cc);
-    colors[i++] = gfx::Color::FromABGR(0xff00ff00);
-    colors[i++] = gfx::Color::FromABGR(0xff33ffff);
-    colors[i++] = gfx::Color::FromABGR(0xffff0099);
-    colors[i++] = gfx::Color::FromABGR(0xff0000ff);
-    colors[i++] = gfx::Color::FromABGR(0xff999999);
+    colors[i++] = gfx::DeviceColor::FromABGR(0xffff0000);
+    colors[i++] = gfx::DeviceColor::FromABGR(0xffcc00ff);
+    colors[i++] = gfx::DeviceColor::FromABGR(0xff0066cc);
+    colors[i++] = gfx::DeviceColor::FromABGR(0xff00ff00);
+    colors[i++] = gfx::DeviceColor::FromABGR(0xff33ffff);
+    colors[i++] = gfx::DeviceColor::FromABGR(0xffff0099);
+    colors[i++] = gfx::DeviceColor::FromABGR(0xff0000ff);
+    colors[i++] = gfx::DeviceColor::FromABGR(0xff999999);
     MOZ_ASSERT(i == sNumFrameColors);
     initialized = true;
   }
@@ -1355,11 +1360,13 @@ nsresult gfxUtils::GetInputStream(gfx::DataSourceSurface* aSurface,
       format, encoder, aEncoderOptions, outStream);
 }
 
-class GetFeatureStatusRunnable final : public dom::WorkerMainThreadRunnable {
+class GetFeatureStatusWorkerRunnable final
+    : public dom::WorkerMainThreadRunnable {
  public:
-  GetFeatureStatusRunnable(dom::WorkerPrivate* workerPrivate,
-                           const nsCOMPtr<nsIGfxInfo>& gfxInfo, int32_t feature,
-                           nsACString& failureId, int32_t* status)
+  GetFeatureStatusWorkerRunnable(dom::WorkerPrivate* workerPrivate,
+                                 const nsCOMPtr<nsIGfxInfo>& gfxInfo,
+                                 int32_t feature, nsACString& failureId,
+                                 int32_t* status)
       : WorkerMainThreadRunnable(workerPrivate,
                                  NS_LITERAL_CSTRING("GFX :: GetFeatureStatus")),
         mGfxInfo(gfxInfo),
@@ -1378,7 +1385,7 @@ class GetFeatureStatusRunnable final : public dom::WorkerMainThreadRunnable {
   nsresult GetNSResult() const { return mNSResult; }
 
  protected:
-  ~GetFeatureStatusRunnable() {}
+  ~GetFeatureStatusWorkerRunnable() = default;
 
  private:
   nsCOMPtr<nsIGfxInfo> mGfxInfo;
@@ -1392,11 +1399,23 @@ class GetFeatureStatusRunnable final : public dom::WorkerMainThreadRunnable {
 nsresult gfxUtils::ThreadSafeGetFeatureStatus(
     const nsCOMPtr<nsIGfxInfo>& gfxInfo, int32_t feature, nsACString& failureId,
     int32_t* status) {
-  if (!NS_IsMainThread()) {
+  if (NS_IsMainThread()) {
+    return gfxInfo->GetFeatureStatus(feature, failureId, status);
+  }
+
+  // In a content process, we must call this on the main thread.
+  // In a composition process (parent or GPU), this needs to be called on the
+  // compositor thread.
+  bool isCompositionProcess = XRE_IsGPUProcess() || XRE_IsParentProcess();
+  MOZ_ASSERT(!isCompositionProcess || NS_IsInCompositorThread());
+
+  // Content-process non-main-thread case:
+  if (!isCompositionProcess) {
     dom::WorkerPrivate* workerPrivate = dom::GetCurrentThreadWorkerPrivate();
 
-    RefPtr<GetFeatureStatusRunnable> runnable = new GetFeatureStatusRunnable(
-        workerPrivate, gfxInfo, feature, failureId, status);
+    RefPtr<GetFeatureStatusWorkerRunnable> runnable =
+        new GetFeatureStatusWorkerRunnable(workerPrivate, gfxInfo, feature,
+                                           failureId, status);
 
     ErrorResult rv;
     runnable->Dispatch(dom::WorkerStatus::Canceling, rv);
@@ -1406,11 +1425,17 @@ nsresult gfxUtils::ThreadSafeGetFeatureStatus(
       // exception.  Ah, well.
       return rv.StealNSResult();
     }
-
     return runnable->GetNSResult();
   }
 
-  return gfxInfo->GetFeatureStatus(feature, failureId, status);
+  nsresult rv;
+  SynchronousTask task("GetFeatureStatusSync");
+  NS_DispatchToMainThread(NS_NewRunnableFunction("GetFeatureStatusMain", [&]() {
+    AutoCompleteTask complete(&task);
+    rv = gfxInfo->GetFeatureStatus(feature, failureId, status);
+  }));
+  task.Wait();
+  return rv;
 }
 
 #define GFX_SHADER_CHECK_BUILD_VERSION_PREF "gfx-shader-check.build-version"
@@ -1456,83 +1481,15 @@ void gfxUtils::RemoveShaderCacheFromDiskIfNecessary() {
   Preferences::SetCString(GFX_SHADER_CHECK_BUILD_VERSION_PREF, buildID);
   Preferences::SetString(GFX_SHADER_CHECK_DEVICE_ID_PREF, deviceID);
   Preferences::SetString(GFX_SHADER_CHECK_DRIVER_VERSION_PREF, driverVersion);
-  return;
 }
 
 /* static */
 bool gfxUtils::DumpDisplayList() {
-  return gfxPrefs::LayoutDumpDisplayList() ||
-         (gfxPrefs::LayoutDumpDisplayListParent() && XRE_IsParentProcess()) ||
-         (gfxPrefs::LayoutDumpDisplayListContent() && XRE_IsContentProcess());
-}
-
-wr::RenderRoot gfxUtils::GetContentRenderRoot() {
-  if (gfx::gfxVars::UseWebRender() && gfxPrefs::WebRenderSplitRenderRoots()) {
-    return wr::RenderRoot::Content;
-  }
-  return wr::RenderRoot::Default;
-}
-
-Maybe<wr::RenderRoot> gfxUtils::GetRenderRootForFrame(const nsIFrame* aFrame) {
-  if (!gfxVars::UseWebRender() || !gfxPrefs::WebRenderSplitRenderRoots()) {
-    return Nothing();
-  }
-  if (!aFrame->GetContent()) {
-    return Nothing();
-  }
-  return gfxUtils::GetRenderRootForElement(aFrame->GetContent()->AsElement());
-}
-
-Maybe<wr::RenderRoot> gfxUtils::GetRenderRootForElement(
-    const dom::Element* aElement) {
-  if (!aElement) {
-    return Nothing();
-  }
-  if (!gfxVars::UseWebRender() || !gfxPrefs::WebRenderSplitRenderRoots()) {
-    return Nothing();
-  }
-  if (!aElement->IsXULElement()) {
-    return Nothing();
-  }
-  if (aElement->AttrValueIs(kNameSpaceID_None, nsGkAtoms::renderroot,
-                            NS_LITERAL_STRING("content"), eCaseMatters)) {
-    return Some(wr::RenderRoot::Content);
-  }
-  return Nothing();
-}
-
-wr::RenderRoot gfxUtils::RecursivelyGetRenderRootForFrame(
-    const nsIFrame* aFrame) {
-  if (!gfxVars::UseWebRender() || !gfxPrefs::WebRenderSplitRenderRoots()) {
-    return wr::RenderRoot::Default;
-  }
-
-  for (const nsIFrame* current = aFrame; current;
-       current = current->GetParent()) {
-    auto renderRoot = gfxUtils::GetRenderRootForFrame(current);
-    if (renderRoot) {
-      return *renderRoot;
-    }
-  }
-
-  return wr::RenderRoot::Default;
-}
-
-wr::RenderRoot gfxUtils::RecursivelyGetRenderRootForElement(
-    const dom::Element* aElement) {
-  if (!gfxVars::UseWebRender() || !gfxPrefs::WebRenderSplitRenderRoots()) {
-    return wr::RenderRoot::Default;
-  }
-
-  for (const dom::Element* current = aElement; current;
-       current = current->GetParentElement()) {
-    auto renderRoot = gfxUtils::GetRenderRootForElement(current);
-    if (renderRoot) {
-      return *renderRoot;
-    }
-  }
-
-  return wr::RenderRoot::Default;
+  return StaticPrefs::layout_display_list_dump() ||
+         (StaticPrefs::layout_display_list_dump_parent() &&
+          XRE_IsParentProcess()) ||
+         (StaticPrefs::layout_display_list_dump_content() &&
+          XRE_IsContentProcess());
 }
 
 FILE* gfxUtils::sDumpPaintFile = stderr;
@@ -1540,7 +1497,7 @@ FILE* gfxUtils::sDumpPaintFile = stderr;
 namespace mozilla {
 namespace gfx {
 
-Color ToDeviceColor(Color aColor) {
+DeviceColor ToDeviceColor(const sRGBColor& aColor) {
   // aColor is pass-by-value since to get return value optimization goodness we
   // need to return the same object from all return points in this function. We
   // could declare a local Color variable and use that, but we might as well
@@ -1548,19 +1505,19 @@ Color ToDeviceColor(Color aColor) {
   if (gfxPlatform::GetCMSMode() == eCMSMode_All) {
     qcms_transform* transform = gfxPlatform::GetCMSRGBTransform();
     if (transform) {
-      gfxPlatform::TransformPixel(aColor, aColor, transform);
+      return gfxPlatform::TransformPixel(aColor, transform);
       // Use the original alpha to avoid unnecessary float->byte->float
       // conversion errors
     }
   }
-  return aColor;
+  return DeviceColor(aColor.r, aColor.g, aColor.b, aColor.a);
 }
 
-Color ToDeviceColor(nscolor aColor) {
-  return ToDeviceColor(Color::FromABGR(aColor));
+DeviceColor ToDeviceColor(nscolor aColor) {
+  return ToDeviceColor(sRGBColor::FromABGR(aColor));
 }
 
-Color ToDeviceColor(const StyleRGBA& aColor) {
+DeviceColor ToDeviceColor(const StyleRGBA& aColor) {
   return ToDeviceColor(aColor.ToColor());
 }
 

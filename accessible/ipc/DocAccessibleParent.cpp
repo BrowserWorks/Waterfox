@@ -6,6 +6,7 @@
 
 #include "DocAccessibleParent.h"
 #include "mozilla/a11y/Platform.h"
+#include "mozilla/dom/BrowserBridgeParent.h"
 #include "mozilla/dom/BrowserParent.h"
 #include "xpcAccessibleDocument.h"
 #include "xpcAccEvents.h"
@@ -19,9 +20,25 @@
 #  include "mozilla/mscom/Ptr.h"
 #  include "nsWinUtils.h"
 #  include "RootAccessible.h"
+#else
+#  include "mozilla/a11y/DocAccessiblePlatformExtParent.h"
 #endif
 
 namespace mozilla {
+
+#if defined(XP_WIN)
+namespace mscom {
+namespace detail {
+// Needed by mscom::PassthruProxy::Wrap<IAccessible>.
+template <>
+struct VTableSizer<IAccessible> {
+  // 3 methods in IUnknown + 4 in IDispatch + 21 in IAccessible = 28 total
+  enum { Size = 28 };
+};
+}  // namespace detail
+}  // namespace mscom
+#endif  // defined (XP_WIN)
+
 namespace a11y {
 uint64_t DocAccessibleParent::sMaxDocID = 0;
 
@@ -125,6 +142,19 @@ uint32_t DocAccessibleParent::AddSubtree(
   WrapperFor(newProxy)->SetID(newChild.MsaaID());
 #endif
 
+  for (uint32_t index = 0, len = mPendingChildDocs.Length(); index < len;
+       ++index) {
+    PendingChildDoc& pending = mPendingChildDocs[index];
+    if (pending.mParentID == newChild.ID()) {
+      if (!pending.mChildDoc->IsShutdown()) {
+        AddChildDoc(pending.mChildDoc, pending.mParentID, false);
+      }
+      mPendingChildDocs.RemoveElementAt(index);
+      break;
+    }
+  }
+  DebugOnly<bool> isOuterDoc = newProxy->ChildrenCount() == 1;
+
   uint32_t accessibles = 1;
   uint32_t kids = newChild.ChildrenCount();
   for (uint32_t i = 0; i < kids; i++) {
@@ -134,7 +164,7 @@ uint32_t DocAccessibleParent::AddSubtree(
     accessibles += consumed;
   }
 
-  MOZ_ASSERT(newProxy->ChildrenCount() == kids);
+  MOZ_ASSERT((isOuterDoc && kids == 0) || newProxy->ChildrenCount() == kids);
 
   return accessibles;
 }
@@ -507,6 +537,24 @@ ipc::IPCResult DocAccessibleParent::AddChildDoc(DocAccessibleParent* aChildDoc,
   // document it self.
   ProxyEntry* e = mAccessibles.GetEntry(aParentID);
   if (!e) {
+    if (aChildDoc->IsTopLevelInContentProcess()) {
+      // aChildDoc is an embedded document in a different content process to
+      // this document. Sometimes, AddChildDoc gets called before the embedder
+      // sends us the OuterDocAccessible. We must add the child when the
+      // OuterDocAccessible proxy gets created later.
+#ifdef DEBUG
+      for (uint32_t index = 0, len = mPendingChildDocs.Length(); index < len;
+           ++index) {
+        MOZ_ASSERT(mPendingChildDocs[index].mChildDoc != aChildDoc,
+                   "Child doc already pending addition!");
+      }
+#endif
+      mPendingChildDocs.AppendElement(PendingChildDoc(aChildDoc, aParentID));
+      if (aCreating) {
+        ProxyCreated(aChildDoc, Interfaces::DOCUMENT | Interfaces::HYPERTEXT);
+      }
+      return IPC_OK();
+    }
     return IPC_FAIL(this, "binding to nonexistant proxy!");
   }
 
@@ -533,6 +581,74 @@ ipc::IPCResult DocAccessibleParent::AddChildDoc(DocAccessibleParent* aChildDoc,
 
   if (aCreating) {
     ProxyCreated(aChildDoc, Interfaces::DOCUMENT | Interfaces::HYPERTEXT);
+  }
+
+  if (aChildDoc->IsTopLevelInContentProcess()) {
+    // aChildDoc is an embedded document in a different content process to
+    // this document.
+    auto embeddedBrowser =
+        static_cast<dom::BrowserParent*>(aChildDoc->Manager());
+    dom::BrowserBridgeParent* bridge =
+        embeddedBrowser->GetBrowserBridgeParent();
+    if (bridge) {
+#if defined(XP_WIN)
+      // Send a COM proxy for the embedded document to the embedder process
+      // hosting the iframe. This will be returned as the child of the
+      // embedder OuterDocAccessible.
+      RefPtr<IDispatch> docAcc;
+      aChildDoc->GetCOMInterface((void**)getter_AddRefs(docAcc));
+      RefPtr<IDispatch> docWrapped(
+          mscom::PassthruProxy::Wrap<IDispatch>(WrapNotNull(docAcc)));
+      IDispatchHolder::COMPtrType docPtr(
+          mscom::ToProxyUniquePtr(std::move(docWrapped)));
+      IDispatchHolder docHolder(std::move(docPtr));
+      if (bridge->SendSetEmbeddedDocAccessibleCOMProxy(docHolder)) {
+#  if defined(MOZ_SANDBOX)
+        aChildDoc->mDocProxyStream = docHolder.GetPreservedStream();
+#  endif  // defined(MOZ_SANDBOX)
+      }
+      // Send a COM proxy for the embedder OuterDocAccessible to the embedded
+      // document process. This will be returned as the parent of the
+      // embedded document.
+      aChildDoc->SendParentCOMProxy(WrapperFor(outerDoc));
+      if (nsWinUtils::IsWindowEmulationStarted()) {
+        // The embedded document should use the same emulated window handle as
+        // its embedder. It will return the embedder document (not a window
+        // accessible) as the parent accessible, so we pass a null accessible
+        // when sending the window to the embedded document.
+        aChildDoc->SetEmulatedWindowHandle(mEmulatedWindowHandle);
+        Unused << aChildDoc->SendEmulatedWindow(
+            reinterpret_cast<uintptr_t>(mEmulatedWindowHandle), nullptr);
+      }
+      // Send a COM proxy for the top level document to the embedded document
+      // process. This will be returned when the client calls QueryService
+      // with SID_IAccessibleContentDocument on an accessible in the embedded
+      // document.
+      DocAccessibleParent* topDoc = this;
+      while (DocAccessibleParent* parentDoc = topDoc->ParentDoc()) {
+        topDoc = parentDoc;
+      }
+      MOZ_ASSERT(topDoc && topDoc->IsTopLevel());
+      RefPtr<IAccessible> topDocAcc;
+      topDoc->GetCOMInterface((void**)getter_AddRefs(topDocAcc));
+      RefPtr<IAccessible> topDocWrapped(
+          mscom::PassthruProxy::Wrap<IAccessible>(WrapNotNull(topDocAcc)));
+      IAccessibleHolder::COMPtrType topDocPtr(
+          mscom::ToProxyUniquePtr(std::move(topDocWrapped)));
+      IAccessibleHolder topDocHolder(std::move(topDocPtr));
+      if (aChildDoc->SendTopLevelDocCOMProxy(topDocHolder)) {
+#  if defined(MOZ_SANDBOX)
+        aChildDoc->mTopLevelDocProxyStream = topDocHolder.GetPreservedStream();
+#  endif  // defined(MOZ_SANDBOX)
+      }
+#endif  // defined(XP_WIN)
+      // We need to fire a reorder event on the outer doc accessible.
+      // For same-process documents, this is fired by the content process, but
+      // this isn't possible when the document is in a different process to its
+      // embedder.
+      // RecvEvent fires both OS and XPCOM events.
+      Unused << RecvEvent(aParentID, nsIAccessibleEvent::EVENT_REORDER);
+    }
   }
 
   return IPC_OK();
@@ -672,16 +788,21 @@ void DocAccessibleParent::MaybeInitWindowEmulation() {
     rect.MoveToX(rootRect.X() - rect.X());
     rect.MoveToY(rect.Y() - rootRect.Y());
 
-    auto tab = static_cast<dom::BrowserParent*>(Manager());
-    tab->GetDocShellIsActive(&isActive);
+    auto browserParent = static_cast<dom::BrowserParent*>(Manager());
+    isActive = browserParent->GetDocShellIsActive();
   }
 
-  nsWinUtils::NativeWindowCreateProc onCreate([this](HWND aHwnd) -> void {
+  // onCreate is guaranteed to be called synchronously by
+  // nsWinUtils::CreateNativeWindow, so this reference isn't really necessary.
+  // However, static analysis complains without it.
+  RefPtr<DocAccessibleParent> thisRef = this;
+  nsWinUtils::NativeWindowCreateProc onCreate([thisRef](HWND aHwnd) -> void {
     IDispatchHolder hWndAccHolder;
 
-    ::SetPropW(aHwnd, kPropNameDocAccParent, reinterpret_cast<HANDLE>(this));
+    ::SetPropW(aHwnd, kPropNameDocAccParent,
+               reinterpret_cast<HANDLE>(thisRef.get()));
 
-    SetEmulatedWindowHandle(aHwnd);
+    thisRef->SetEmulatedWindowHandle(aHwnd);
 
     RefPtr<IAccessible> hwndAcc;
     if (SUCCEEDED(::AccessibleObjectFromWindow(
@@ -692,8 +813,9 @@ void DocAccessibleParent::MaybeInitWindowEmulation() {
           mscom::ToProxyUniquePtr(std::move(wrapped))));
     }
 
-    Unused << SendEmulatedWindow(
-        reinterpret_cast<uintptr_t>(mEmulatedWindowHandle), hWndAccHolder);
+    Unused << thisRef->SendEmulatedWindow(
+        reinterpret_cast<uintptr_t>(thisRef->mEmulatedWindowHandle),
+        hWndAccHolder);
   });
 
   HWND parentWnd = reinterpret_cast<HWND>(rootDocument->GetNativeWindow());
@@ -713,7 +835,12 @@ void DocAccessibleParent::SendParentCOMProxy(Accessible* aOuterDoc) {
 
   RefPtr<IAccessible> nativeAcc;
   aOuterDoc->GetNativeInterface(getter_AddRefs(nativeAcc));
-  MOZ_ASSERT(nativeAcc);
+  if (NS_WARN_IF(!nativeAcc)) {
+    // Couldn't get a COM proxy for the outer doc. That probably means it died,
+    // but the parent process hasn't received a message to remove it from the
+    // ProxyAccessible tree yet.
+    return;
+  }
 
   RefPtr<IDispatch> wrapped(
       mscom::PassthruProxy::Wrap<IDispatch>(WrapNotNull(nativeAcc)));
@@ -802,11 +929,18 @@ mozilla::ipc::IPCResult DocAccessibleParent::RecvBatch(
   // Only do something in Android. We can't ifdef the entire protocol out in
   // the ipdl because it doesn't allow preprocessing.
 #  if defined(ANDROID)
+  if (mShutdown) {
+    return IPC_OK();
+  }
   nsTArray<ProxyAccessible*> proxies(aData.Length());
   for (size_t i = 0; i < aData.Length(); i++) {
     DocAccessibleParent* doc = static_cast<DocAccessibleParent*>(
         aData.ElementAt(i).Document().get_PDocAccessibleParent());
     MOZ_ASSERT(doc);
+
+    if (doc->IsShutdown()) {
+      continue;
+    }
 
     ProxyAccessible* proxy = doc->GetAccessible(aData.ElementAt(i).ID());
     if (!proxy) {
@@ -820,7 +954,42 @@ mozilla::ipc::IPCResult DocAccessibleParent::RecvBatch(
 #  endif  // defined(XP_WIN)
   return IPC_OK();
 }
+
+bool DocAccessibleParent::DeallocPDocAccessiblePlatformExtParent(
+    PDocAccessiblePlatformExtParent* aActor) {
+  delete aActor;
+  return true;
+}
+
+PDocAccessiblePlatformExtParent*
+DocAccessibleParent::AllocPDocAccessiblePlatformExtParent() {
+  return new DocAccessiblePlatformExtParent();
+}
+
+DocAccessiblePlatformExtParent* DocAccessibleParent::GetPlatformExtension() {
+  return static_cast<DocAccessiblePlatformExtParent*>(
+      SingleManagedOrNull(ManagedPDocAccessiblePlatformExtParent()));
+}
+
 #endif  // !defined(XP_WIN)
+
+Tuple<DocAccessibleParent*, uint64_t> DocAccessibleParent::GetRemoteEmbedder() {
+  dom::BrowserParent* embeddedBrowser = dom::BrowserParent::GetFrom(Manager());
+  dom::BrowserBridgeParent* bridge = embeddedBrowser->GetBrowserBridgeParent();
+  if (!bridge) {
+    return Tuple<DocAccessibleParent*, uint64_t>(nullptr, 0);
+  }
+  DocAccessibleParent* doc;
+  uint64_t id;
+  Tie(doc, id) = bridge->GetEmbedderAccessible();
+  if (doc && doc->IsShutdown()) {
+    // Sometimes, the embedder document is destroyed before its
+    // BrowserBridgeParent. Don't return a destroyed document.
+    doc = nullptr;
+    id = 0;
+  }
+  return Tuple<DocAccessibleParent*, uint64_t>(doc, id);
+}
 
 }  // namespace a11y
 }  // namespace mozilla

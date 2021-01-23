@@ -1,3 +1,9 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 #include <utility>
 
 #define ANNOTATE(property) __attribute__((annotate(property)))
@@ -73,14 +79,18 @@ void usecontainer(T* value) {
   if (value) asm("");
 }
 
+Cell* cell() {
+  static Cell c;
+  return &c;
+}
+
 Cell* f() {
   GCInDestructor kaboom;
 
-  Cell cell;
-  Cell* cell1 = &cell;
-  Cell* cell2 = &cell;
-  Cell* cell3 = &cell;
-  Cell* cell4 = &cell;
+  Cell* cell1 = cell();
+  Cell* cell2 = cell();
+  Cell* cell3 = cell();
+  Cell* cell4 = cell();
   {
     AutoSuppressGC nogc;
     suppressedFunction();
@@ -96,7 +106,7 @@ Cell* f() {
     AutoSuppressGC nogc;
   }
   usecell(cell3);
-  Cell* cell5 = &cell;
+  Cell* cell5 = cell();
   usecell(cell5);
 
   {
@@ -117,7 +127,7 @@ Cell* f() {
   }
 
   // Hazard in return value due to ~GCInDestructor
-  Cell* cell6 = &cell;
+  Cell* cell6 = cell();
   return cell6;
 }
 

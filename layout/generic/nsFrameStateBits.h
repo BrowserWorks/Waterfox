@@ -78,8 +78,7 @@ FRAME_STATE_BIT(Generic, 1, NS_FRAME_FIRST_REFLOW)
 // continuation, e.g. a bidi continuation.
 FRAME_STATE_BIT(Generic, 2, NS_FRAME_IS_FLUID_CONTINUATION)
 
-// For nsIAnonymousContentCreator content that's created using ContentInfo.
-FRAME_STATE_BIT(Generic, 3, NS_FRAME_ANONYMOUSCONTENTCREATOR_CONTENT)
+// Free bit here.
 
 // If this bit is set, then a reference to the frame is being held
 // elsewhere.  The frame may want to send a notification when it is
@@ -328,8 +327,6 @@ FRAME_STATE_BIT(Box, 28, NS_STATE_MENU_HAS_POPUP_LIST)
 FRAME_STATE_BIT(Box, 29, NS_STATE_BOX_WRAPS_KIDS_IN_BLOCK)
 FRAME_STATE_BIT(Box, 30, NS_STATE_EQUAL_SIZE)
 FRAME_STATE_BIT(Box, 31, NS_STATE_IS_DIRECTION_NORMAL)
-FRAME_STATE_BIT(Box, 60, NS_FRAME_MOUSE_THROUGH_ALWAYS)
-FRAME_STATE_BIT(Box, 61, NS_FRAME_MOUSE_THROUGH_NEVER)
 
 // == Frame state bits that apply to flex container frames ====================
 
@@ -353,6 +350,15 @@ FRAME_STATE_BIT(FlexContainer, 23, NS_STATE_FLEX_SYNTHESIZE_BASELINE)
 // True if any flex item in the container has a line with a
 // -webkit-line-ellipsis marker.
 FRAME_STATE_BIT(FlexContainer, 24, NS_STATE_FLEX_HAS_LINE_CLAMP_ELLIPSIS)
+
+// True iff some first-in-flow in-flow children were pushed.
+// Note that those child frames may have been removed without this bit
+// being updated for performance reasons, so code shouldn't depend on
+// actually finding any pushed items when this bit is set.
+FRAME_STATE_BIT(FlexContainer, 25, NS_STATE_FLEX_DID_PUSH_ITEMS)
+
+// We've merged some OverflowList children since last reflow.
+FRAME_STATE_BIT(FlexContainer, 26, NS_STATE_FLEX_HAS_CHILD_NIFS)
 
 // == Frame state bits that apply to grid container frames ====================
 
@@ -390,6 +396,14 @@ FRAME_STATE_BIT(GridContainer, 27, NS_STATE_GRID_HAS_ROW_SUBGRID_ITEM)
 
 // We've merged some OverflowList children since last reflow.
 FRAME_STATE_BIT(GridContainer, 28, NS_STATE_GRID_HAS_CHILD_NIFS)
+
+// True if the container has masonry layout in its inline axis.
+// (mutually exclusive with NS_STATE_GRID_IS_ROW_MASONRY)
+FRAME_STATE_BIT(GridContainer, 29, NS_STATE_GRID_IS_COL_MASONRY)
+
+// True if the container has masonry layout in its block axis.
+// (mutually exclusive with NS_STATE_GRID_IS_COL_MASONRY)
+FRAME_STATE_BIT(GridContainer, 30, NS_STATE_GRID_IS_ROW_MASONRY)
 
 // == Frame state bits that apply to SVG frames ===============================
 
@@ -671,9 +685,8 @@ FRAME_STATE_BIT(Placeholder, 27, PLACEHOLDER_HAVE_LINE_IS_EMPTY_SO_FAR)
 
 FRAME_STATE_GROUP(TableCell, nsTableCellFrame)
 
-FRAME_STATE_BIT(TableCell, 28, NS_TABLE_CELL_HAS_PCT_OVER_BSIZE)
-FRAME_STATE_BIT(TableCell, 29, NS_TABLE_CELL_HAD_SPECIAL_REFLOW)
-FRAME_STATE_BIT(TableCell, 31, NS_TABLE_CELL_CONTENT_EMPTY)
+FRAME_STATE_BIT(TableCell, 20, NS_TABLE_CELL_HAD_SPECIAL_REFLOW)
+FRAME_STATE_BIT(TableCell, 21, NS_TABLE_CELL_CONTENT_EMPTY)
 
 // == Frame state bits that apply to table column frames ======================
 

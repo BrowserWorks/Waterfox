@@ -6,7 +6,8 @@
  * http://w3c.github.io/webrtc-pc/ (with https://github.com/w3c/webrtc-pc/pull/178)
  */
 
-[NoInterfaceObject]
+[NoInterfaceObject,
+ Exposed=Window]
 interface RTCIdentityProviderRegistrar {
   void register(RTCIdentityProvider idp);
 
@@ -23,7 +24,7 @@ interface RTCIdentityProviderRegistrar {
   [ChromeOnly, Throws]
   Promise<RTCIdentityAssertionResult>
   generateAssertion(DOMString contents, DOMString origin,
-                    optional RTCIdentityProviderOptions options);
+                    optional RTCIdentityProviderOptions options = {});
   /* Forward to idp.validateAssertion() */
   [ChromeOnly, Throws]
   Promise<RTCIdentityValidationResult>

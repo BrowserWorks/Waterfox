@@ -4,9 +4,17 @@
 
 "use strict";
 
-const { ACTIVITY_TYPE } = require("../constants");
-const { CDPConnector } = require("./chrome/events");
+const { ACTIVITY_TYPE } = require("devtools/client/netmonitor/src/constants");
+const {
+  CDPConnector,
+} = require("devtools/client/netmonitor/src/connector/chrome/events");
 
+/**
+ * DO NOT DELETE THIS FILE
+ *
+ * The ChromeConnector is currently not used, but is kept in tree to illustrate
+ * the Connector abstraction.
+ */
 class ChromeConnector {
   constructor() {
     // Internal properties
@@ -31,7 +39,7 @@ class ChromeConnector {
     this.connector.willNavigate(this.willNavigate);
   }
 
-  async disconnect() {
+  disconnect() {
     this.connector.disconnect();
   }
 
@@ -88,21 +96,12 @@ class ChromeConnector {
   }
 
   /**
-   * Block future requests matching a filter.
+   * Updates the list of block requests
    *
-   * @param {object} filter request filter specifying what to block
+   * @param {array} urls An array of URLS which are blocked
    */
-  blockRequest(filter) {
-    // TODO: Implement for Chrome as well.
-  }
-
-  /**
-   * Unblock future requests matching a filter.
-   *
-   * @param {object} filter request filter specifying what to unblock
-   */
-  unblockRequest(filter) {
-    // TODO: Implement for Chrome as well.
+  setBlockedUrls(urls) {
+    // TODO : implement.
   }
 
   setPreferences() {

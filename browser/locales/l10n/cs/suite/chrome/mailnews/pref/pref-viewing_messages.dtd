@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.viewing.messages.title      "Zobrazení zpráv">
+<!ENTITY style.label                      "Styl:">
+<!ENTITY style.accesskey                  "S">
+<!ENTITY regular.label                    "Normální">
+<!ENTITY bold.label                       "Tučné">
+<!ENTITY italic.label                     "Kurzíva">
+<!ENTITY boldItalic.label                 "Tučná kurzíva">
+<!ENTITY size.label                       "Velikost:">
+<!ENTITY size.accesskey                   "V">
+<!ENTITY bigger.label                     "Větší">
+<!ENTITY smaller.label                    "Menší">
+<!ENTITY color.label                      "Barva:">
+<!ENTITY color.accesskey                  "a">
+<!ENTITY displayPlainText.caption         "Při zobrazování textových zpráv">
+<!ENTITY fontPlainText.label              "Písmo:">
+<!ENTITY fontPlainText.accesskey          "P">
+<!ENTITY displayQuoted.label              "Nastavení pro citované zprávy:">
+<!ENTITY wrapInMsg.label                  "Zalamovat text na šířku okna">
+<!ENTITY wrapInMsg.accesskey              "t">
+<!-- LOCALIZATION NOTE : (convertEmoticons.label) 'Emoticons' are also known as 'Smileys', e.g. :-)   -->
+<!ENTITY convertEmoticons.label           "Zobrazit smajlíky jako ikony">
+<!ENTITY convertEmoticons.accesskey       "Z">
+<!ENTITY generalMessageDisplay.caption    "Obecné">
+<!ENTITY autoMarkAsRead.label             "Automaticky označit zprávu jako přečtenou">
+<!ENTITY autoMarkAsRead.accesskey         "A">
+<!-- LOCALIZATION NOTE (markAsReadAfter.label): This will concatenate to
+     "Only after displaying for [___] seconds",
+     using (markAsReadAfter.label) and a number (secondsLabel.label). -->
+<!ENTITY markAsReadAfter.label            "Pouze při zobrazení po">
+<!ENTITY markAsReadAfter.accesskey        "z">
+<!ENTITY secondsLabel.label               "sekundách">
+
+<!ENTITY openingMessages.label            "Otevírat zprávy v:">
+<!ENTITY newWindowRadio.label             "Novém okně">
+<!ENTITY newWindowRadio.accesskey         "N">
+<!ENTITY existingWindowRadio.label        "Existujícím okně se zprávou">
+<!ENTITY existingWindowRadio.accesskey    "x">
+<!ENTITY disableContent.label             "Blokovat ve zprávách načítání obrázků a jiného obsahu ze vzdálených serverů">
+<!ENTITY disableContent.accesskey         "B">
+<!ENTITY showCondensedAddresses.label     "U lidí z mých kontaktů zobrazovat pouze jméno">
+<!ENTITY showCondensedAddresses.accesskey "U">
+<!ENTITY closeMsgWindowOnDelete.label     "Při smazání zprávy zavřít okno">
+<!ENTITY closeMsgWindowOnDelete.accesskey "s">

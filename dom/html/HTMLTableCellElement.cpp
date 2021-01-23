@@ -18,7 +18,7 @@ NS_IMPL_NS_NEW_HTML_ELEMENT(TableCell)
 namespace mozilla {
 namespace dom {
 
-HTMLTableCellElement::~HTMLTableCellElement() {}
+HTMLTableCellElement::~HTMLTableCellElement() = default;
 
 JSObject* HTMLTableCellElement::WrapNode(JSContext* aCx,
                                          JS::Handle<JSObject*> aGivenProto) {
@@ -119,10 +119,6 @@ bool HTMLTableCellElement::ParseAttribute(int32_t aNamespaceID,
     /* ignore these attributes, stored simply as strings
        abbr, axis, ch, headers
     */
-    if (aAttribute == nsGkAtoms::charoff) {
-      /* attributes that resolve to integers with a min of 0 */
-      return aResult.ParseIntWithBounds(aValue, 0);
-    }
     if (aAttribute == nsGkAtoms::colspan) {
       aResult.ParseClampedNonNegativeInt(aValue, 1, 1, MAX_COLSPAN);
       return true;
@@ -136,10 +132,10 @@ bool HTMLTableCellElement::ParseAttribute(int32_t aNamespaceID,
       return true;
     }
     if (aAttribute == nsGkAtoms::height) {
-      return aResult.ParseSpecialIntValue(aValue);
+      return aResult.ParseNonzeroHTMLDimension(aValue);
     }
     if (aAttribute == nsGkAtoms::width) {
-      return aResult.ParseSpecialIntValue(aValue);
+      return aResult.ParseNonzeroHTMLDimension(aValue);
     }
     if (aAttribute == nsGkAtoms::align) {
       return ParseTableCellHAlignValue(aValue, aResult);
@@ -163,34 +159,8 @@ bool HTMLTableCellElement::ParseAttribute(int32_t aNamespaceID,
 
 void HTMLTableCellElement::MapAttributesIntoRule(
     const nsMappedAttributes* aAttributes, MappedDeclarations& aDecls) {
-  // width: value
-  if (!aDecls.PropertyIsSet(eCSSProperty_width)) {
-    const nsAttrValue* value = aAttributes->GetAttr(nsGkAtoms::width);
-    if (value && value->Type() == nsAttrValue::eInteger) {
-      if (value->GetIntegerValue() > 0)
-        aDecls.SetPixelValue(eCSSProperty_width,
-                             (float)value->GetIntegerValue());
-      // else 0 implies auto for compatibility.
-    } else if (value && value->Type() == nsAttrValue::ePercent) {
-      if (value->GetPercentValue() > 0.0f)
-        aDecls.SetPercentValue(eCSSProperty_width, value->GetPercentValue());
-      // else 0 implies auto for compatibility
-    }
-  }
-  // height: value
-  if (!aDecls.PropertyIsSet(eCSSProperty_height)) {
-    const nsAttrValue* value = aAttributes->GetAttr(nsGkAtoms::height);
-    if (value && value->Type() == nsAttrValue::eInteger) {
-      if (value->GetIntegerValue() > 0)
-        aDecls.SetPixelValue(eCSSProperty_height,
-                             (float)value->GetIntegerValue());
-      // else 0 implies auto for compatibility.
-    } else if (value && value->Type() == nsAttrValue::ePercent) {
-      if (value->GetPercentValue() > 0.0f)
-        aDecls.SetPercentValue(eCSSProperty_height, value->GetPercentValue());
-      // else 0 implies auto for compatibility
-    }
-  }
+  MapImageSizeAttributesInto(aAttributes, aDecls);
+
   if (!aDecls.PropertyIsSet(eCSSProperty_white_space)) {
     // nowrap: enum
     if (aAttributes->GetAttr(nsGkAtoms::nowrap)) {

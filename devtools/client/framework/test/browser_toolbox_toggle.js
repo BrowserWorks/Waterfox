@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -18,8 +16,8 @@ add_task(async function() {
   Services.prefs.clearUserPref("devtools.toolbox.selectedTool");
 
   // Test with ACCEL+SHIFT+I / ACCEL+ALT+I (MacOSX) ; modifiers should match :
-  // - toolbox-key-toggle in devtools/client/framework/toolbox-window.xul
-  // - key_devToolboxMenuItem in browser/base/content/browser.xul
+  // - toolbox-key-toggle in devtools/client/framework/toolbox-window.xhtml
+  // - key_devToolboxMenuItem in browser/base/content/browser.xhtml
   info("Test toggle using CTRL+SHIFT+I/CMD+ALT+I");
   await testToggle("I", {
     accelKey: true,

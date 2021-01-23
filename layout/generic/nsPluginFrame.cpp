@@ -28,7 +28,6 @@
 #include "nsViewManager.h"
 #include "nsString.h"
 #include "nsGkAtoms.h"
-#include "nsIPluginInstanceOwner.h"
 #include "nsNPAPIPluginInstance.h"
 #include "npapi.h"
 #include "nsIObjectLoadingContent.h"
@@ -72,7 +71,6 @@
 
 #ifdef MOZ_X11
 #  include "mozilla/X11Util.h"
-using mozilla::DefaultXDisplay;
 #endif
 
 #ifdef XP_WIN
@@ -357,8 +355,7 @@ nscoord nsPluginFrame::GetMinISize(gfxContext* aRenderingContext) {
   nscoord result = 0;
 
   if (!IsHidden(false)) {
-    if (mContent->IsAnyOfHTMLElements(nsGkAtoms::applet,
-                                      nsGkAtoms::embed)) {
+    if (mContent->IsAnyOfHTMLElements(nsGkAtoms::applet, nsGkAtoms::embed)) {
       bool vertical = GetWritingMode().IsVertical();
       result = nsPresContext::CSSPixelsToAppUnits(vertical ? EMBED_DEF_HEIGHT
                                                            : EMBED_DEF_WIDTH);
@@ -394,7 +391,7 @@ void nsPluginFrame::GetWidgetConfiguration(
   nsIWidget::Configuration* configuration = aConfigurations->AppendElement();
   configuration->mChild = mWidget;
   configuration->mBounds = mNextConfigurationBounds;
-  configuration->mClipRegion = mNextConfigurationClipRegion;
+  configuration->mClipRegion = mNextConfigurationClipRegion.Clone();
 #if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
   if (XRE_IsContentProcess()) {
     configuration->mWindowID =
@@ -417,9 +414,8 @@ void nsPluginFrame::GetDesiredSize(nsPresContext* aPresContext,
   aMetrics.Width() = aReflowInput.ComputedWidth();
   aMetrics.Height() = aReflowInput.ComputedHeight();
 
-  // for EMBED and APPLET, default to 240x200 for compatibility
-  if (mContent->IsAnyOfHTMLElements(nsGkAtoms::applet,
-                                    nsGkAtoms::embed)) {
+  // for EMBED, default to 240x200 for compatibility
+  if (mContent->IsAnyOfHTMLElements(nsGkAtoms::applet, nsGkAtoms::embed)) {
     if (aMetrics.Width() == NS_UNCONSTRAINEDSIZE) {
       aMetrics.Width() = clamped(
           nsPresContext::CSSPixelsToAppUnits(EMBED_DEF_WIDTH),
@@ -743,7 +739,7 @@ mozilla::LayoutDeviceIntPoint nsPluginFrame::GetRemoteTabChromeOffset() {
   LayoutDeviceIntPoint offset;
   if (XRE_IsContentProcess()) {
     if (nsPIDOMWindowOuter* window = GetContent()->OwnerDoc()->GetWindow()) {
-      if (nsCOMPtr<nsPIDOMWindowOuter> topWindow = window->GetTop()) {
+      if (nsCOMPtr<nsPIDOMWindowOuter> topWindow = window->GetInProcessTop()) {
         dom::BrowserChild* tc = dom::BrowserChild::GetFrom(topWindow);
         if (tc) {
           offset += tc->GetChromeOffset();
@@ -1483,13 +1479,13 @@ nsresult nsPluginFrame::HandleEvent(nsPresContext* aPresContext,
   if (anEvent->mMessage == ePluginActivate) {
     nsIFocusManager* fm = nsFocusManager::GetFocusManager();
     if (fm) {
-      RefPtr<Element> elem = GetContent()->AsElement();
+      RefPtr<dom::Element> elem = GetContent()->AsElement();
       return fm->SetFocus(elem, 0);
     }
   } else if (anEvent->mMessage == ePluginFocus) {
     nsIFocusManager* fm = nsFocusManager::GetFocusManager();
     if (fm) {
-      RefPtr<Element> elem = GetContent()->AsElement();
+      RefPtr<dom::Element> elem = GetContent()->AsElement();
       return fm->FocusPlugin(elem);
     }
   }
@@ -1635,7 +1631,7 @@ nsIObjectFrame* nsPluginFrame::GetNextObjectFrame(nsPresContext* aPresContext,
 }
 
 /*static*/
-void nsPluginFrame::BeginSwapDocShells(nsISupports* aSupports, void*) {
+void nsPluginFrame::BeginSwapDocShells(nsISupports* aSupports) {
   MOZ_ASSERT(aSupports, "null parameter");
   nsCOMPtr<nsIContent> content(do_QueryInterface(aSupports));
   if (!content) {
@@ -1654,7 +1650,7 @@ void nsPluginFrame::BeginSwapDocShells(nsISupports* aSupports, void*) {
 }
 
 /*static*/
-void nsPluginFrame::EndSwapDocShells(nsISupports* aSupports, void*) {
+void nsPluginFrame::EndSwapDocShells(nsISupports* aSupports) {
   MOZ_ASSERT(aSupports, "null parameter");
   nsCOMPtr<nsIContent> content(do_QueryInterface(aSupports));
   if (!content) {

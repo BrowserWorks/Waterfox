@@ -30,10 +30,7 @@ void WebRenderCanvasRendererAsync::Initialize(
     const CanvasInitializeData& aData) {
   WebRenderCanvasRenderer::Initialize(aData);
 
-  if (mPipelineId.isSome()) {
-    mManager->RemovePipelineIdForCompositable(mPipelineId.ref());
-    mPipelineId.reset();
-  }
+  ClearCachedResources();
 }
 
 bool WebRenderCanvasRendererAsync::CreateCompositable() {
@@ -41,6 +38,10 @@ bool WebRenderCanvasRendererAsync::CreateCompositable() {
     TextureFlags flags = TextureFlags::DEFAULT;
     if (mOriginPos == gl::OriginPos::BottomLeft) {
       flags |= TextureFlags::ORIGIN_BOTTOM_LEFT;
+    }
+
+    if (IsOpaque()) {
+      flags |= TextureFlags::IS_OPAQUE;
     }
 
     if (!mIsAlphaPremultiplied) {
@@ -83,8 +84,9 @@ void WebRenderCanvasRendererAsync::Destroy() {
 
 void WebRenderCanvasRendererAsync::
     UpdateCompositableClientForEmptyTransaction() {
-  UpdateCompositableClient(mManager->GetRenderRoot());
-  if (mPipelineId.isSome()) {
+  bool wasDirty = IsDirty();
+  UpdateCompositableClient();
+  if (wasDirty && mPipelineId.isSome()) {
     // Notify an update of async image pipeline during empty transaction.
     // During non empty transaction, WebRenderBridgeParent receives
     // OpUpdateAsyncImagePipeline message, but during empty transaction, the

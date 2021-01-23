@@ -3,7 +3,7 @@ var { XPCOMUtils } = ChromeUtils.import(
 );
 
 // This url must sync with the table, url in SafeBrowsing.jsm addMozEntries
-const PHISH_TABLE = "test-phish-simple";
+const PHISH_TABLE = "moztest-phish-simple";
 const PHISH_URL = "https://www.itisatrap.org/firefox/its-a-trap.html";
 
 /**
@@ -79,7 +79,7 @@ function waitForDBInit(callback) {
   // The second part: we might have missed the event. Just do
   // an internal database lookup to confirm if the url has been
   // added.
-  let principal = Services.scriptSecurityManager.createCodebasePrincipal(
+  let principal = Services.scriptSecurityManager.createContentPrincipal(
     Services.io.newURI(PHISH_URL),
     {}
   );
@@ -97,8 +97,11 @@ function waitForDBInit(callback) {
 
 Services.prefs.setCharPref(
   "urlclassifier.malwareTable",
-  "test-malware-simple,test-unwanted-simple,test-harmful.simple"
+  "moztest-malware-simple,moztest-unwanted-simple,moztest-harmful-simple"
 );
-Services.prefs.setCharPref("urlclassifier.phishTable", "test-phish-simple");
-Services.prefs.setCharPref("urlclassifier.blockedTable", "test-block-simple");
+Services.prefs.setCharPref("urlclassifier.phishTable", "moztest-phish-simple");
+Services.prefs.setCharPref(
+  "urlclassifier.blockedTable",
+  "moztest-block-simple"
+);
 SafeBrowsing.init();

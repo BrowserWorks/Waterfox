@@ -1,7 +1,7 @@
-import {actionTypes as at} from "common/Actions.jsm";
-import {_CollapsibleSection as CollapsibleSection} from "content-src/components/CollapsibleSection/CollapsibleSection";
-import {ErrorBoundary} from "content-src/components/ErrorBoundary/ErrorBoundary";
-import {mountWithIntl} from "test/unit/utils";
+import { actionTypes as at } from "common/Actions.jsm";
+import { CollapsibleSection } from "content-src/components/CollapsibleSection/CollapsibleSection";
+import { ErrorBoundary } from "content-src/components/ErrorBoundary/ErrorBoundary";
+import { mount } from "enzyme";
 import React from "react";
 
 const DEFAULT_PROPS = {
@@ -9,7 +9,6 @@ const DEFAULT_PROPS = {
   className: "cool-section",
   title: "Cool Section",
   prefName: "collapseSection",
-  disclaimer: {text: {id: "section_disclaimer_topstories_linktext"}, link: {id: "menu_action_remove_bookmark"}, button: {id: "search_button"}},
   collapsed: false,
   document: {
     addEventListener: () => {},
@@ -24,7 +23,9 @@ describe("CollapsibleSection", () => {
 
   function setup(props = {}) {
     const customProps = Object.assign({}, DEFAULT_PROPS, props);
-    wrapper = mountWithIntl(<CollapsibleSection {...customProps}>foo</CollapsibleSection>);
+    wrapper = mount(
+      <CollapsibleSection {...customProps}>foo</CollapsibleSection>
+    );
   }
 
   beforeEach(() => setup());
@@ -35,13 +36,22 @@ describe("CollapsibleSection", () => {
 
   it("should render an ErrorBoundary with class section-body-fallback", () => {
     assert.equal(
-      wrapper.find(ErrorBoundary).first().prop("className"),
-      "section-body-fallback");
+      wrapper
+        .find(ErrorBoundary)
+        .first()
+        .prop("className"),
+      "section-body-fallback"
+    );
   });
 
   it("should have collapsed class if 'prefName' pref is true", () => {
-    setup({collapsed: true});
-    assert.ok(wrapper.find(".collapsible-section").first().hasClass("collapsed"));
+    setup({ collapsed: true });
+    assert.ok(
+      wrapper
+        .find(".collapsible-section")
+        .first()
+        .hasClass("collapsed")
+    );
   });
 
   it("should fire a pref change event when section title is clicked", done => {
@@ -52,28 +62,22 @@ describe("CollapsibleSection", () => {
         done();
       }
     }
-    setup({dispatch});
-    wrapper.find(".click-target").at(0).simulate("click");
-  });
-
-  it("should fire a pref change event when section title arrow is clicked", done => {
-    function dispatch(a) {
-      if (a.type === at.UPDATE_SECTION_PREFS) {
-        assert.equal(a.data.id, DEFAULT_PROPS.id);
-        assert.equal(a.data.value.collapsed, true);
-        done();
-      }
-    }
-    setup({dispatch});
-    wrapper.find(".click-target").at(1).simulate("click");
+    setup({ dispatch });
+    wrapper
+      .find(".click-target")
+      .at(0)
+      .simulate("click");
   });
 
   it("should not fire a pref change when section title is clicked if sectionBody is falsy", () => {
     const dispatch = sinon.spy();
-    setup({dispatch});
+    setup({ dispatch });
     delete wrapper.find(CollapsibleSection).instance().sectionBody;
 
-    wrapper.find(".click-target").at(0).simulate("click");
+    wrapper
+      .find(".click-target")
+      .at(0)
+      .simulate("click");
 
     assert.notCalled(dispatch);
   });
@@ -84,8 +88,10 @@ describe("CollapsibleSection", () => {
   });
 
   it("should disable animations if the tab is in the background", () => {
-    const doc = Object.assign({}, DEFAULT_PROPS.document, {visibilityState: "hidden"});
-    setup({document: doc});
+    const doc = Object.assign({}, DEFAULT_PROPS.document, {
+      visibilityState: "hidden",
+    });
+    setup({ document: doc });
     wrapper.instance().enableOrDisableAnimation();
     assert.isFalse(wrapper.instance().state.enableAnimation);
   });
@@ -94,10 +100,15 @@ describe("CollapsibleSection", () => {
     let dispatch;
     beforeEach(() => {
       dispatch = sinon.stub();
-      setup({collapsed: undefined, dispatch});
+      setup({ collapsed: undefined, dispatch });
     });
     it("should render the section uncollapsed", () => {
-      assert.isFalse(wrapper.find(".collapsible-section").first().hasClass("collapsed"));
+      assert.isFalse(
+        wrapper
+          .find(".collapsible-section")
+          .first()
+          .hasClass("collapsed")
+      );
     });
 
     it("should not render the arrow if no collapsible pref exists for the section", () => {
@@ -105,7 +116,10 @@ describe("CollapsibleSection", () => {
     });
 
     it("should not trigger a dispatch when the section title is clicked ", () => {
-      wrapper.find(".click-target").at(0).simulate("click");
+      wrapper
+        .find(".click-target")
+        .at(0)
+        .simulate("click");
 
       assert.notCalled(dispatch);
     });
@@ -114,24 +128,42 @@ describe("CollapsibleSection", () => {
   describe("icon", () => {
     it("should use the icon prop value as the url if it starts with `moz-extension://`", () => {
       const icon = "moz-extension://some/extension/path";
-      setup({icon});
-      const props = wrapper.find(".icon").first().props();
+      setup({ icon });
+      const props = wrapper
+        .find(".icon")
+        .first()
+        .props();
       assert.equal(props.style.backgroundImage, `url('${icon}')`);
     });
     it("should use set the icon-* class if a string that doesn't start with `moz-extension://` is provided", () => {
-      setup({icon: "cool"});
-      assert.ok(wrapper.find(".icon").first().hasClass("icon-cool"));
+      setup({ icon: "cool" });
+      assert.ok(
+        wrapper
+          .find(".icon")
+          .first()
+          .hasClass("icon-cool")
+      );
     });
     it("should use the icon `webextension` if no other is provided", () => {
-      setup({icon: undefined});
-      assert.ok(wrapper.find(".icon").first().hasClass("icon-webextension"));
+      setup({ icon: undefined });
+      assert.ok(
+        wrapper
+          .find(".icon")
+          .first()
+          .hasClass("icon-webextension")
+      );
     });
   });
 
   describe("maxHeight", () => {
     const maxHeight = "123px";
-    const setState = state => wrapper.setState(Object.assign({maxHeight}, state || {}));
-    const checkHeight = val => assert.equal(wrapper.find(".section-body").instance().style.maxHeight, val);
+    const setState = state =>
+      wrapper.setState(Object.assign({ maxHeight }, state || {}));
+    const checkHeight = val =>
+      assert.equal(
+        wrapper.find(".section-body").instance().style.maxHeight,
+        val
+      );
 
     it("should have no max-height normally to avoid unexpected cropping", () => {
       setState();
@@ -139,18 +171,18 @@ describe("CollapsibleSection", () => {
       checkHeight("");
     });
     it("should have a max-height when animating open to a target height", () => {
-      setState({isAnimating: true});
+      setState({ isAnimating: true });
 
       checkHeight(maxHeight);
     });
     it("should not have a max-height when already collapsed", () => {
-      setup({collapsed: true});
+      setup({ collapsed: true });
 
       checkHeight("");
     });
     it("should not have a max-height when animating closed to a css-set 0", () => {
-      setup({collapsed: true});
-      setState({isAnimating: true});
+      setup({ collapsed: true });
+      setState({ isAnimating: true });
 
       checkHeight("");
     });

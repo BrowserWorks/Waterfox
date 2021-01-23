@@ -62,6 +62,7 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
 if CONFIG['MOZ_ENABLE_D3D10_LAYER']:
     DEFINES['MOZ_ENABLE_D3D10_LAYER'] = True
     EXPORTS.mozilla.webrender += [
+        'DCLayerTree.h',
         'RenderCompositorANGLE.h',
         'RenderD3D11TextureHostOGL.h',
     ]
@@ -69,37 +70,36 @@ if CONFIG['MOZ_ENABLE_D3D10_LAYER']:
         'RenderD3D11TextureHostOGL.cpp',
     ]
     SOURCES += [
+        'DCLayerTree.cpp',
         'RenderCompositorANGLE.cpp',
     ]
 
 if CONFIG['MOZ_WAYLAND']:
     EXPORTS.mozilla.webrender += [
         'RenderCompositorEGL.h',
+        'RenderWaylandDMABUFTextureHostOGL.h',
     ]
     SOURCES += [
         'RenderCompositorEGL.cpp',
+        'RenderWaylandDMABUFTextureHostOGL.cpp',
     ]
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android', 'gtk3'):
+if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android', 'gtk'):
     CXXFLAGS += CONFIG['MOZ_CAIRO_CFLAGS']
     CXXFLAGS += CONFIG['CAIRO_FT_CFLAGS']
 
 if CONFIG['COMPILE_ENVIRONMENT']:
-    GENERATED_FILES += [
-        'webrender_ffi_generated.h',
-    ]
-
     EXPORTS.mozilla.webrender += [
         '!webrender_ffi_generated.h',
     ]
 
-    ffi_generated = GENERATED_FILES['webrender_ffi_generated.h']
-    ffi_generated.script = '/layout/style/RunCbindgen.py:generate'
-    ffi_generated.inputs = [
-        '/gfx/webrender_bindings',
-        '/gfx/wr/webrender',
-        '/gfx/wr/webrender_api',
-    ]
+    GeneratedFile('webrender_ffi_generated.h',
+                  script='/build/RunCbindgen.py', entry_point='generate',
+                  inputs=[
+                      '/gfx/webrender_bindings',
+                      '/gfx/wr/webrender',
+                      '/gfx/wr/webrender_api',
+                  ])
 
 
 include('/ipc/chromium/chromium-config.mozbuild')

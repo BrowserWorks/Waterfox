@@ -1,0 +1,345 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "Scrie mesajul: (fără subiect)">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label "Fișier">
+<!ENTITY fileMenu.accesskey "F">
+<!ENTITY newMenu.label "Creează">
+<!ENTITY newMenu.accesskey "C">
+<!ENTITY newMessage.label "Mesaj">
+<!ENTITY newMessage.key "M">
+<!ENTITY newMessageCmd2.key "N">
+<!ENTITY newMessage.accesskey "M">
+<!ENTITY newContact.label "Contact în agendă…">
+<!ENTITY newContact.accesskey "C">
+<!ENTITY attachMenu.label "Atașează">
+<!ENTITY attachMenu.accesskey "x">
+<!ENTITY attachFileCmd.label "Fișier(e)…">
+<!ENTITY attachFileCmd.accesskey "F">
+<!ENTITY attachFileCmd.key "A">
+<!ENTITY attachCloudCmd.label "Filelink">
+<!ENTITY attachCloudCmd.accesskey "i">
+<!ENTITY attachPageCmd.label "Pagină web…">
+<!ENTITY attachPageCmd.accesskey "w">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "Fișă personală (vCard)">
+<!ENTITY attachVCardCmd.accesskey "F">
+<!ENTITY remindLater.label "Amintește-mi mai târziu">
+<!ENTITY remindLater.accesskey "m">
+<!ENTITY closeCmd.label "Închide">
+<!ENTITY closeCmd.key "w">
+<!ENTITY closeCmd.accesskey "c">
+<!ENTITY saveCmd.label "Salvează">
+<!ENTITY saveCmd.key "S">
+<!ENTITY saveCmd.accesskey "S">
+<!ENTITY saveAsCmd.label "Salvează ca">
+<!ENTITY saveAsCmd.accesskey "c">
+<!ENTITY saveAsFileCmd.label "Fișier…">
+<!ENTITY saveAsFileCmd.accesskey "F">
+<!ENTITY saveAsDraftCmd.label "Mesaj nefinalizat">
+<!ENTITY saveAsDraftCmd.accesskey "D">
+<!ENTITY saveAsTemplateCmd.label "Șablon">
+<!ENTITY saveAsTemplateCmd.accesskey "l">
+<!ENTITY sendNowCmd.label "Trimite acum">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "T">
+<!ENTITY sendLaterCmd.label "Trimite mai târziu">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "r">
+<!ENTITY printSetupCmd.label "Aranjare în pagină…">
+<!ENTITY printSetupCmd.accesskey "j">
+<!ENTITY printPreviewCmd.label "Previzualizează pentru tipărire">
+<!ENTITY printPreviewCmd.accesskey "v">
+<!ENTITY printCmd.label "Tipărește…">
+<!ENTITY printCmd.key "P">
+<!ENTITY printCmd.accesskey "p">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label "Editare">
+<!ENTITY editMenu.accesskey "E">
+<!ENTITY undoCmd.label "Anulează">
+<!ENTITY undoCmd.key "Z">
+<!ENTITY undoCmd.accesskey "u">
+<!ENTITY redoCmd.label "Restaurează">
+<!ENTITY redoCmd.key "Y">
+<!ENTITY redoCmd.accesskey "R">
+<!ENTITY cutCmd.key "X">
+<!ENTITY copyCmd.key "C">
+<!ENTITY pasteCmd.key "v">
+<!ENTITY pasteNoFormattingCmd.key "V">
+<!ENTITY pasteAsQuotationCmd.key "o">
+<!ENTITY editRewrapCmd.accesskey "n">
+<!ENTITY deleteCmd.label "Șterge">
+<!ENTITY deleteCmd.accesskey "t">
+<!ENTITY editRewrapCmd.label "Reîncadrează">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY renameAttachmentCmd.label "Redenumește un atașament…">
+<!ENTITY renameAttachmentCmd.accesskey "R">
+<!ENTITY reorderAttachmentsCmd.label "Rearanjează atașamentele…">
+<!ENTITY reorderAttachmentsCmd.accesskey "s">
+<!ENTITY reorderAttachmentsCmd.key "x">
+<!ENTITY toggleAttachmentPaneCmd.label "Panou de atașamente">
+<!ENTITY toggleAttachmentPaneCmd.accesskey "m">
+<!ENTITY selectAllCmd.accesskey "a">
+<!ENTITY findBarCmd.label "Caută…">
+<!ENTITY findBarCmd.accesskey "G">
+<!ENTITY findBarCmd.key "F">
+<!ENTITY findReplaceCmd.label "Caută și înlocuiește…">
+<!ENTITY findReplaceCmd.accesskey "l">
+<!ENTITY findReplaceCmd.key "s">
+<!ENTITY findAgainCmd.label "Caută din nou">
+<!ENTITY findAgainCmd.accesskey "G">
+<!ENTITY findAgainCmd.key "G">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "Mergi la rezultatul anterior">
+<!ENTITY findPrevCmd.accesskey "n">
+<!ENTITY findPrevCmd.key "G">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+
+<!-- Reorder Attachment Panel -->
+<!ENTITY reorderAttachmentsPanel.label "Rearanjează atașamentele">
+<!ENTITY moveAttachmentTopPanelBtn.label "Mută în cea mai de sus poziție">
+<!ENTITY moveAttachmentUpPanelBtn.label "Mută în sus">
+<!ENTITY moveAttachmentBundleUpPanelBtn.label "Mută împreună">
+<!ENTITY moveAttachmentDownPanelBtn.label "Mută în jos">
+<!ENTITY moveAttachmentBottomPanelBtn.label "Mută în cea mai de jos poziție">
+
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.Sort.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.Sort.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.Sort.AZ.label "Ordonează: A - Z">
+<!ENTITY sortAttachmentsPanelBtn.Sort.ZA.label "Ordonează: Z - A">
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.SortSelection.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.SortSelection.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.AZ.label "Ordonează selecția: A - Z">
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.ZA.label "Ordonează selecția: Z - A">
+<!ENTITY sortAttachmentsPanelBtn.key "y">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label "Vizualizare">
+<!ENTITY viewMenu.accesskey "V">
+<!ENTITY viewToolbarsMenuNew.label "Bare de unelte">
+<!ENTITY viewToolbarsMenuNew.accesskey "t">
+<!ENTITY menubarCmd.label "Bară de meniu">
+<!ENTITY menubarCmd.accesskey "m">
+<!ENTITY showCompositionToolbarCmd.label "Bară de redactare">
+<!ENTITY showCompositionToolbarCmd.accesskey "B">
+<!ENTITY showFormattingBarCmd.label "Bară de formatare">
+<!ENTITY showFormattingBarCmd.accesskey "f">
+<!ENTITY showTaskbarCmd.label "Bară de stare">
+<!ENTITY showTaskbarCmd.accesskey "s">
+<!ENTITY customizeToolbar.label "Personalizează…">
+<!ENTITY customizeToolbar.accesskey "P">
+
+<!ENTITY addressSidebar.label "Listă de contacte">
+<!ENTITY addressSidebar.accesskey "o">
+
+<!-- Format Menu -->
+<!ENTITY formatMenu.label "Formatare">
+<!ENTITY formatMenu.accesskey "o">
+
+<!-- Options Menu -->
+<!ENTITY optionsMenu.label "Opțiuni">
+<!ENTITY optionsMenu.accesskey "p">
+<!ENTITY checkSpellingCmd2.label "Verifică ortografia…">
+<!ENTITY checkSpellingCmd2.key "o">
+<!ENTITY checkSpellingCmd2.key2 "VK_F7">
+<!ENTITY checkSpellingCmd2.accesskey "V">
+<!ENTITY enableInlineSpellChecker.label "Corectare ortografică în timpul scrierii">
+<!ENTITY enableInlineSpellChecker.accesskey "s">
+<!ENTITY quoteCmd.label "Citează mesajul">
+<!ENTITY quoteCmd.accesskey "C">
+
+<!--LOCALIZATION NOTE attachVCard.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCard.label "Atașează card personal (vCard)">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY returnReceiptMenu.label "Confirmare de primire">
+<!ENTITY returnReceiptMenu.accesskey "C">
+<!ENTITY dsnMenu.label "Notificare asupra stadiului livrării">
+<!ENTITY dsnMenu.accesskey "N">
+<!ENTITY deliveryFormatMenu.label "Format de trimitere">
+<!ENTITY deliveryFormatMenu.accesskey "F">
+<!ENTITY autoFormatCmd.label "Detectare automată">
+<!ENTITY autoFormatCmd.accesskey "A">
+<!ENTITY plainTextFormatCmd.label "Doar text">
+<!ENTITY plainTextFormatCmd.accesskey "x">
+<!ENTITY htmlFormatCmd.label "Doar text îmbogățit (HTML)">
+<!ENTITY htmlFormatCmd.accesskey "b">
+<!ENTITY bothFormatCmd.label "Text simplu și îmbunătățit (HTML)">
+<!ENTITY bothFormatCmd.accesskey "l">
+<!ENTITY priorityMenu.label "Prioritate">
+<!ENTITY priorityMenu.accesskey "P">
+<!ENTITY priorityButton.title "Prioritate">
+<!ENTITY priorityButton.tooltiptext "Schimbă prioritatea mesajului">
+<!ENTITY priorityButton.label "Prioritate:">
+<!ENTITY lowestPriorityCmd.label "Cea mai mică">
+<!ENTITY lowestPriorityCmd.accesskey "C">
+<!ENTITY lowPriorityCmd.label "Mică">
+<!ENTITY lowPriorityCmd.accesskey "M">
+<!ENTITY normalPriorityCmd.label "Normală">
+<!ENTITY normalPriorityCmd.accesskey "N">
+<!ENTITY highPriorityCmd.label "Mare">
+<!ENTITY highPriorityCmd.accesskey "M">
+<!ENTITY highestPriorityCmd.label "Cea mai mare">
+<!ENTITY highestPriorityCmd.accesskey "C">
+<!ENTITY fileCarbonCopyCmd.label "Trimite copie în">
+<!ENTITY fileCarbonCopyCmd.accesskey "T">
+<!ENTITY fileHereMenu.label "Îndosariază aici">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label "Unelte">
+<!ENTITY tasksMenu.accesskey "t">
+<!ENTITY messengerCmd.label "E-mail și grupuri de discuții">
+<!ENTITY messengerCmd.accesskey "C">
+<!ENTITY messengerCmd.commandkey "1">
+<!ENTITY addressBookCmd.label "Agendă de contacte">
+<!ENTITY addressBookCmd.accesskey "A">
+<!ENTITY addressBookCmd.key "B">
+<!ENTITY accountManagerCmd2.label "Setări pentru conturi">
+<!ENTITY accountManagerCmd2.accesskey "c">
+<!ENTITY accountManagerCmdUnix2.accesskey "S">
+<!ENTITY preferencesCmd2.label "Opțiuni">
+<!ENTITY preferencesCmd2.accesskey "O">
+<!ENTITY preferencesCmdUnix.label "Preferințe">
+<!ENTITY preferencesCmdUnix.accesskey "n">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY minimizeWindow.key "M">
+<!ENTITY minimizeWindow.label "Minimizează">
+<!ENTITY bringAllToFront.label "Adu-le pe toate în prim-plan">
+<!ENTITY zoomWindow.label "Zoom">
+<!ENTITY windowMenu.label "Fereastră">
+
+<!-- Mail Toolbar -->
+<!ENTITY sendButton.label "Trimite">
+<!ENTITY quoteButton.label "Citează">
+<!ENTITY addressButton.label "Adrese">
+<!ENTITY attachButton.label "Atașează">
+<!ENTITY spellingButton.label "Ortografie">
+<!ENTITY saveButton.label "Salvează">
+<!ENTITY printButton.label "Tipărește">
+
+<!-- Mail Toolbar Tooltips -->
+<!ENTITY sendButton.tooltip "Trimite acum acest mesaj">
+<!ENTITY sendlaterButton.tooltip "Trimite acest mesaj mai târziu">
+<!ENTITY quoteButton.tooltip "Citează din mesajul anterior">
+<!ENTITY addressButton.tooltip "Selectează destinatarul din agenda de contacte">
+<!ENTITY attachButton.tooltip2 "Adaugă un atașament">
+<!ENTITY spellingButton.tooltip "Verifică ortografia pentru zona selectată sau pentru întregul mesaj">
+<!ENTITY saveButton.tooltip "Salvează acest mesaj">
+<!ENTITY cutButton.tooltip              "Taie">
+<!ENTITY copyButton.tooltip             "Copiază">
+<!ENTITY pasteButton.tooltip            "Lipește">
+<!ENTITY printButton.tooltip "Tipărește acest mesaj">
+
+<!-- Headers -->
+<!--LOCALIZATION NOTE headersSpaces.style is for aligning  the From:, To: and
+    Subject: rows. It should be larger than the largest Header label  -->
+<!ENTITY headersSpace2.style "width: 8em;">
+<!ENTITY extraRecipients.tooltip "Alte tipuri de câmpuri de adresare">
+<!ENTITY fromAddr2.label "De la">
+<!ENTITY fromAddr.accesskey "D">
+<!ENTITY toAddr2.label "Către">
+<!ENTITY ccAddr2.label "Cc">
+<!ENTITY bccAddr2.label "Bcc">
+<!ENTITY replyAddr2.label "Răspuns către">
+<!ENTITY newsgroupsAddr2.label "Grup de știri">
+<!ENTITY followupAddr2.label "Mesaj de revenire">
+<!ENTITY subject2.label "Subiect">
+<!ENTITY subject.accesskey "S">
+<!ENTITY attachmentBucketCloseButton.tooltip "Ascunde panoul de atașamente">
+
+<!-- Format Toolbar, imported from editorAppShell.xhtml -->
+<!ENTITY SmileButton.tooltip "Inserează un chip zâmbitor">
+<!ENTITY smiley1Cmd.label "Zâmbet">
+<!ENTITY smiley2Cmd.label "Încruntat">
+<!ENTITY smiley3Cmd.label "Făcând cu ochiul">
+<!ENTITY smiley4Cmd.label "Cu limba scoasă">
+<!ENTITY smiley5Cmd.label "Râzând">
+<!ENTITY smiley6Cmd.label "Rușinat">
+<!ENTITY smiley7Cmd.label "Nehotărât">
+<!ENTITY smiley8Cmd.label "Surprins">
+<!ENTITY smiley9Cmd.label "Sărut">
+<!ENTITY smiley10Cmd.label "Țipăt">
+<!ENTITY smiley11Cmd.label "Cool">
+<!ENTITY smiley12Cmd.label "Cu bani în gură">
+<!ENTITY smiley13Cmd.label "Cu piciorul în gură">
+<!ENTITY smiley14Cmd.label "Inocent">
+<!ENTITY smiley15Cmd.label "Plânset">
+<!ENTITY smiley16Cmd.label "Cu buzele pecetluite">
+
+<!-- Message Pane Context Menu -->
+<!ENTITY spellCheckNoSuggestions.label "Nicio sugestie găsită">
+<!ENTITY spellCheckIgnoreWord.label "Ignoră cuvântul">
+<!ENTITY spellCheckIgnoreWord.accesskey "I">
+<!ENTITY spellCheckAddToDictionary.label "Adaugă în dicționar">
+<!ENTITY spellCheckAddToDictionary.accesskey "n">
+<!ENTITY undo.label "Anulează">
+<!ENTITY undo.accesskey "u">
+<!ENTITY cut.label "Taie">
+<!ENTITY cut.accesskey "T">
+<!ENTITY copy.label "Copiază">
+<!ENTITY copy.accesskey "C">
+<!ENTITY paste.label "Lipește">
+<!ENTITY paste.accesskey "i">
+<!ENTITY pasteQuote.label "Lipește ca citat">
+<!ENTITY pasteQuote.accesskey "p">
+
+<!-- Attachment Item and List Context Menus -->
+<!ENTITY openAttachment.label "Deschide">
+<!ENTITY openAttachment.accesskey "D">
+<!ENTITY delete.label "Șterge">
+<!ENTITY delete.accesskey "t">
+<!ENTITY removeAttachment.label "Elimină atașamentul">
+<!ENTITY removeAttachment.accesskey "m">
+<!ENTITY renameAttachment.label "Redenumește…">
+<!ENTITY renameAttachment.accesskey "R">
+<!ENTITY reorderAttachments.label "Rearanjează atașamentele…">
+<!ENTITY reorderAttachments.accesskey "s">
+<!ENTITY removeAllAttachments.label "Elimină toate atașamentele">
+<!ENTITY removeAllAttachments.accesskey "v">
+<!ENTITY selectAll.label "Selectează tot">
+<!ENTITY selectAll.accesskey "a">
+<!ENTITY attachFile.label "Atașează fișier(e)…">
+<!ENTITY attachFile.accesskey "f">
+<!ENTITY attachCloud.label "Filelink…">
+<!ENTITY attachCloud.accesskey "k">
+<!ENTITY convertCloud.label "Convertire la…">
+<!ENTITY convertCloud.accesskey "C">
+<!ENTITY cancelUpload.label "Anulare încărcare">
+<!ENTITY cancelUpload.accesskey "A">
+<!ENTITY convertRegularAttachment.label "Atașament normal">
+<!ENTITY convertRegularAttachment.accesskey "t">
+<!ENTITY attachPage.label "Atașează pagină web…">
+<!ENTITY attachPage.accesskey "w">
+
+<!-- Attachment Pane Header Bar Context Menu -->
+<!-- LOCALIZATION NOTE (initiallyShowAttachmentPane.label):
+     Should use the same wording as startExpandedCmd.label
+     in msgHdrViewOverlay.dtd. -->
+<!ENTITY initiallyShowAttachmentPane.label "Afișează inițial panoul de atașamente">
+<!ENTITY initiallyShowAttachmentPane.accesskey "s">
+
+<!-- Spell checker context menu items -->
+<!ENTITY spellAddDictionaries.label "Adaugă dicționare">
+<!ENTITY spellAddDictionaries.accesskey "A">
+
+<!-- Title for the address picker panel -->
+<!ENTITY addressesSidebarTitle.label "Adrese">
+
+<!-- Identity popup customize menuitem -->
+<!ENTITY customizeFromAddress.label "Personalizează adresa de trimitere…">
+<!ENTITY customizeFromAddress.accesskey "a">
+
+<!-- Accessibility name for the document -->
+<!ENTITY aria.message.bodyName "Corpul mesajului">
+
+<!-- Status Bar -->
+<!ENTITY languageStatusButton.tooltip "Verifică ortografia limbii">
+<!ENTITY encodingStatusPanel.tooltip "Codarea textului">

@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 "use strict";
@@ -17,15 +16,15 @@ add_task(async function() {
   info("Starting element picker.");
   await startPicker(toolbox);
 
-  info("Waiting for highlighter to activate.");
-  const highlighterShowing = toolbox.once("highlighter-ready");
+  info("Waiting for body to be hovered.");
+  const onHovered = toolbox.nodePicker.once("picker-node-hovered");
   testActor.synthesizeMouse({
     selector: "body",
     options: { type: "mousemove" },
     x: 1,
     y: 1,
   });
-  await highlighterShowing;
+  await onHovered;
 
   let isVisible = await testActor.isHighlighting();
   ok(isVisible, "Inspector is highlighting.");
@@ -40,5 +39,5 @@ add_task(async function() {
   ok(isVisible, "Inspector is highlighting after iframe nav.");
 
   info("Stopping element picker.");
-  await toolbox.inspector.nodePicker.stop();
+  await toolbox.nodePicker.stop();
 });

@@ -38,8 +38,15 @@ function updateTabContextMenu(tab = gBrowser.selectedTab) {
 
 add_task(async function setup() {
   await promiseSyncReady();
+  await Services.search.init();
   // gSync.init() is called in a requestIdleCallback. Force its initialization.
   gSync.init();
+  sinon
+    .stub(Weave.Service.clientsEngine, "getClientByFxaDeviceId")
+    .callsFake(fxaDeviceId => {
+      let target = fxaDevices.find(c => c.id == fxaDeviceId);
+      return target ? target.clientRecord : null;
+    });
   sinon.stub(Weave.Service.clientsEngine, "getClientType").returns("desktop");
   await BrowserTestUtils.openNewForegroundTab(gBrowser, "about:mozilla");
   registerCleanupFunction(() => {
@@ -177,9 +184,9 @@ add_task(async function test_tab_contextmenu_sync_not_ready_other_state() {
 });
 
 add_task(async function test_tab_contextmenu_fxa_disabled() {
-  const getter = sinon.stub(gSync, "SYNC_ENABLED").get(() => false);
-  // Simulate onSyncDisabled() being called on window open.
-  gSync.onSyncDisabled();
+  const getter = sinon.stub(gSync, "FXA_ENABLED").get(() => false);
+  // Simulate onFxaDisabled() being called on window open.
+  gSync.onFxaDisabled();
 
   updateTabContextMenu(testTab);
   is(
@@ -195,6 +202,7 @@ add_task(async function test_tab_contextmenu_fxa_disabled() {
 });
 
 add_task(async function teardown() {
+  Weave.Service.clientsEngine.getClientByFxaDeviceId.restore();
   Weave.Service.clientsEngine.getClientType.restore();
 });
 

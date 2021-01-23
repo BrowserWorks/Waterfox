@@ -1,23 +1,29 @@
+//! Types for "shape" validation. This allows types deriving `FromDeriveInput` etc. to declare
+//! that they only work on - for example - structs with named fields, or newtype enum variants.
+
 use proc_macro2::TokenStream;
 use quote::{ToTokens, TokenStreamExt};
 use syn::{Meta, NestedMeta};
 
 use {Error, FromMeta, Result};
 
+/// Receiver struct for shape validation. Shape validation allows a deriving type
+/// to declare that it only accepts - for example - named structs, or newtype enum
+/// variants.
+///
+/// # Usage
+/// Because `Shape` implements `FromMeta`, the name of the field where it appears is
+/// controlled by the struct that declares `Shape` as a member. That field name is
+/// shown as `ignore` below.
+///
+/// ```rust,ignore
+/// #[ignore(any, struct_named, enum_newtype)]
+/// ```
 #[derive(Debug, Clone)]
 pub struct Shape {
     enum_values: DataShape,
     struct_values: DataShape,
     any: bool,
-}
-
-impl Shape {
-    pub fn all() -> Self {
-        Shape {
-            any: true,
-            ..Default::default()
-        }
-    }
 }
 
 impl Default for Shape {
@@ -34,21 +40,21 @@ impl FromMeta for Shape {
     fn from_list(items: &[NestedMeta]) -> Result<Self> {
         let mut new = Shape::default();
         for item in items {
-            if let NestedMeta::Meta(Meta::Word(ref ident)) = *item {
+            if let NestedMeta::Meta(Meta::Path(ref path)) = *item {
+                let ident = &path.segments.first().unwrap().ident;
                 let word = ident.to_string();
-                let word = word.as_str();
                 if word == "any" {
                     new.any = true;
                 } else if word.starts_with("enum_") {
                     new.enum_values
-                        .set_word(word)
-                        .map_err(|e| e.with_span(ident))?;
+                        .set_word(&word)
+                        .map_err(|e| e.with_span(&ident))?;
                 } else if word.starts_with("struct_") {
                     new.struct_values
-                        .set_word(word)
-                        .map_err(|e| e.with_span(ident))?;
+                        .set_word(&word)
+                        .map_err(|e| e.with_span(&ident))?;
                 } else {
-                    return Err(Error::unknown_value(word).with_span(ident));
+                    return Err(Error::unknown_value(&word).with_span(&ident));
                 }
             } else {
                 return Err(Error::unsupported_format("non-word").with_span(item));
@@ -97,6 +103,8 @@ impl ToTokens for Shape {
     }
 }
 
+/// Receiver for shape information within a struct or enum context. See `Shape` for more information
+/// on valid uses of shape validation.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct DataShape {
     /// The kind of shape being described. This can be `struct_` or `enum_`.
@@ -158,9 +166,9 @@ impl FromMeta for DataShape {
         let mut new = DataShape::default();
 
         for item in items {
-            if let NestedMeta::Meta(Meta::Word(ref ident)) = *item {
-                if let Err(e) = new.set_word(&ident.to_string()) {
-                    errors.push(e.with_span(ident));
+            if let NestedMeta::Meta(Meta::Path(ref path)) = *item {
+                if let Err(e) = new.set_word(&path.segments.first().unwrap().ident.to_string()) {
+                    errors.push(e.with_span(&path));
                 }
             } else {
                 errors.push(Error::unsupported_format("non-word").with_span(item));

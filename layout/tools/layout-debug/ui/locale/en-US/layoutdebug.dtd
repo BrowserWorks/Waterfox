@@ -4,35 +4,12 @@
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-<!ENTITY app.name.short "layoutdebug">
-<!ENTITY app.name.long "Layout Debugger">
-<!ENTITY app.version "prototype_a">
-<!ENTITY app.author "mozilla.org">
-
 <!ENTITY ldb.MainWindow.title "Layout Debugger">
-
-<!ENTITY ldb.Open.label "Open File…">
-<!ENTITY ldb.Open.accesskey "o">
-<!ENTITY ldb.Open.commandkey "o">
 
 <!ENTITY ldb.BackButton.label "Back">
 <!ENTITY ldb.ForwardButton.label "Forward">
 <!ENTITY ldb.ReloadButton.label "Reload">
 <!ENTITY ldb.StopButton.label "Stop">
-
-
-<!ENTITY ldb.RegressionTestMenu.label "Regression-Test">
-<!ENTITY ldb.RegressionTestMenu.accesskey "R">
-<!ENTITY ldb.RunBaselineMenu.label "Run Baseline">
-<!ENTITY ldb.RunBaselineMenu.accesskey "B">
-<!ENTITY ldb.RunVerifyMenu.label "Run Verify">
-<!ENTITY ldb.RunVerifyMenu.accesskey "V">
-<!ENTITY ldb.RegressionPrintMode.label "Print Mode">
-<!ENTITY ldb.RegressionPrintMode.accesskey "P">
-<!ENTITY ldb.AddNewList.label "Add New List…">
-<!ENTITY ldb.AddNewList.accesskey "A">
-<!ENTITY ldb.RemoveListMenu.label "Remove List">
-<!ENTITY ldb.RemoveListMenu.accesskey "R">
 
 
 <!ENTITY ldb.ToggleMenu.label "Toggle">
@@ -56,6 +33,8 @@
 <!ENTITY ldb.crossingEventDumping.accesskey "C">
 <!ENTITY ldb.reflowCounts.label "Reflow Counts">
 <!ENTITY ldb.reflowCounts.accesskey "R">
+<!ENTITY ldb.pagedMode.label "Paged Mode">
+<!ENTITY ldb.pagedMode.accesskey "G">
 
 <!ENTITY ldb.DumpMenu.label "Dump">
 <!ENTITY ldb.DumpMenu.accesskey "D">
@@ -64,8 +43,10 @@
 <!ENTITY ldb.dumpWebShells.accesskey "W">
 <!ENTITY ldb.dumpContent.label "Content">
 <!ENTITY ldb.dumpContent.accesskey "C">
-<!ENTITY ldb.dumpFrames.label "Frames">
+<!ENTITY ldb.dumpFrames.label "Frames (app units)">
 <!ENTITY ldb.dumpFrames.accesskey "F">
+<!ENTITY ldb.dumpFramesInCSSPixels.label "Frames (CSS pixels)">
+<!ENTITY ldb.dumpFramesInCSSPixels.accesskey "P">
 <!ENTITY ldb.dumpViews.label "Views and Widgets">
 <!ENTITY ldb.dumpViews.accesskey "V">
 <!ENTITY ldb.dumpStyleSheets.label "Style Sheets">

@@ -22,10 +22,9 @@ nsROCSSPrimitiveValue::nsROCSSPrimitiveValue() : CSSValue(), mType(CSS_PX) {
 
 nsROCSSPrimitiveValue::~nsROCSSPrimitiveValue() { Reset(); }
 
-nsresult nsROCSSPrimitiveValue::GetCssText(nsAString& aCssText) {
+void nsROCSSPrimitiveValue::GetCssText(nsString& aCssText, ErrorResult& aRv) {
   nsAutoString tmpStr;
   aCssText.Truncate();
-  nsresult result = NS_OK;
 
   switch (mType) {
     case CSS_PX: {
@@ -34,13 +33,7 @@ nsresult nsROCSSPrimitiveValue::GetCssText(nsAString& aCssText) {
       tmpStr.AppendLiteral("px");
       break;
     }
-    case CSS_IDENT: {
-      AppendUTF8toUTF16(nsCSSKeywords::GetStringValue(mValue.mKeyword), tmpStr);
-      break;
-    }
-    case CSS_STRING:
-    case CSS_COUNTER: /* FIXME: COUNTER should use an object */
-    {
+    case CSS_STRING: {
       tmpStr.Append(mValue.mString);
       break;
     }
@@ -48,7 +41,10 @@ nsresult nsROCSSPrimitiveValue::GetCssText(nsAString& aCssText) {
       if (mValue.mURI) {
         nsAutoCString specUTF8;
         nsresult rv = mValue.mURI->GetSpec(specUTF8);
-        NS_ENSURE_SUCCESS(rv, rv);
+        if (NS_FAILED(rv)) {
+          aRv.ThrowInvalidStateError("Can't get URL string for url()");
+          return;
+        }
 
         tmpStr.AssignLiteral("url(");
         nsStyleUtil::AppendEscapedCSSString(NS_ConvertUTF8toUTF16(specUTF8),
@@ -61,12 +57,6 @@ nsresult nsROCSSPrimitiveValue::GetCssText(nsAString& aCssText) {
         // for invalid URLs.
         tmpStr.AssignLiteral(u"url(about:invalid)");
       }
-      break;
-    }
-    case CSS_ATTR: {
-      tmpStr.AppendLiteral("attr(");
-      tmpStr.Append(mValue.mString);
-      tmpStr.Append(char16_t(')'));
       break;
     }
     case CSS_PERCENTAGE: {
@@ -109,18 +99,11 @@ nsresult nsROCSSPrimitiveValue::GetCssText(nsAString& aCssText) {
     case CSS_KHZ:
     case CSS_DIMENSION:
       NS_ERROR("We have a bogus value set.  This should not happen");
-      return NS_ERROR_DOM_INVALID_ACCESS_ERR;
+      aRv.ThrowInvalidAccessError("Unexpected value in computed style");
+      return;
   }
 
-  if (NS_SUCCEEDED(result)) {
-    aCssText.Assign(tmpStr);
-  }
-
-  return NS_OK;
-}
-
-void nsROCSSPrimitiveValue::GetCssText(nsString& aText, ErrorResult& aRv) {
-  aRv = GetCssText(aText);
+  aCssText.Assign(tmpStr);
 }
 
 uint16_t nsROCSSPrimitiveValue::CssValueType() const {
@@ -167,35 +150,22 @@ void nsROCSSPrimitiveValue::SetAppUnits(float aValue) {
   SetAppUnits(NSToCoordRound(aValue));
 }
 
-void nsROCSSPrimitiveValue::SetIdent(nsCSSKeyword aKeyword) {
-  MOZ_ASSERT(aKeyword != eCSSKeyword_UNKNOWN && 0 <= aKeyword &&
-                 aKeyword < eCSSKeyword_COUNT,
-             "bad keyword");
+void nsROCSSPrimitiveValue::SetString(const nsACString& aString) {
   Reset();
-  mValue.mKeyword = aKeyword;
-  mType = CSS_IDENT;
-}
-
-// FIXME: CSS_STRING should imply a string with "" and a need for escaping.
-void nsROCSSPrimitiveValue::SetString(const nsACString& aString,
-                                      uint16_t aType) {
-  Reset();
-  mValue.mString = ToNewUnicode(aString);
+  mValue.mString = ToNewUnicode(aString, mozilla::fallible);
   if (mValue.mString) {
-    mType = aType;
+    mType = CSS_STRING;
   } else {
     // XXXcaa We should probably let the caller know we are out of memory
     mType = CSS_UNKNOWN;
   }
 }
 
-// FIXME: CSS_STRING should imply a string with "" and a need for escaping.
-void nsROCSSPrimitiveValue::SetString(const nsAString& aString,
-                                      uint16_t aType) {
+void nsROCSSPrimitiveValue::SetString(const nsAString& aString) {
   Reset();
-  mValue.mString = ToNewUnicode(aString);
+  mValue.mString = ToNewUnicode(aString, mozilla::fallible);
   if (mValue.mString) {
-    mType = aType;
+    mType = CSS_STRING;
   } else {
     // XXXcaa We should probably let the caller know we are out of memory
     mType = CSS_UNKNOWN;
@@ -217,11 +187,7 @@ void nsROCSSPrimitiveValue::SetTime(float aValue) {
 
 void nsROCSSPrimitiveValue::Reset() {
   switch (mType) {
-    case CSS_IDENT:
-      break;
     case CSS_STRING:
-    case CSS_ATTR:
-    case CSS_COUNTER:  // FIXME: Counter should use an object
       NS_ASSERTION(mValue.mString, "Null string should never happen");
       free(mValue.mString);
       mValue.mString = nullptr;

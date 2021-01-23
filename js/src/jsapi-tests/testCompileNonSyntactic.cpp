@@ -4,10 +4,10 @@
 
 #include "mozilla/Utf8.h"  // mozilla::Utf8Unit
 
-#include "gc/GCInternals.h"
-#include "js/CompilationAndEvaluation.h"  // JS::Compile{,ForNonSyntacticScope}{,DontInflate}
+#include "js/CompilationAndEvaluation.h"  // JS::Compile{,ForNonSyntacticScope}
 #include "js/SourceText.h"                // JS::Source{Ownership,Text}
 #include "jsapi-tests/tests.h"
+#include "vm/HelperThreads.h"
 #include "vm/Monitor.h"
 #include "vm/MutexIDs.h"
 
@@ -18,7 +18,7 @@ struct OffThreadTask {
   OffThreadTask() : monitor(js::mutexid::ShellOffThreadState), token(nullptr) {}
 
   OffThreadToken* waitUntilDone(JSContext* cx) {
-    if (OffThreadParsingMustWaitForGC(cx->runtime())) {
+    if (js::OffThreadParsingMustWaitForGC(cx->runtime())) {
       js::gc::FinishGC(cx);
     }
 
@@ -78,7 +78,7 @@ bool testCompile(bool nonSyntactic) {
   JS::SourceText<mozilla::Utf8Unit> buf8;
   CHECK(buf8.init(cx, src, length, JS::SourceOwnership::Borrowed));
 
-  script = CompileForNonSyntacticScopeDontInflate(cx, options, buf8);
+  script = CompileForNonSyntacticScope(cx, options, buf8);
   CHECK(script);
   CHECK_EQUAL(script->hasNonSyntacticScope(), true);
 
@@ -95,7 +95,7 @@ bool testCompile(bool nonSyntactic) {
   CHECK(script);
   CHECK_EQUAL(script->hasNonSyntacticScope(), nonSyntactic);
 
-  script = CompileDontInflate(cx, options, buf8);
+  script = Compile(cx, options, buf8);
   CHECK(script);
   CHECK_EQUAL(script->hasNonSyntacticScope(), nonSyntactic);
 

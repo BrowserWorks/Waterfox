@@ -26,7 +26,7 @@ TooltipTextProvider.prototype = {
     }
 
     const XLinkNS = "http://www.w3.org/1999/xlink";
-    const XULNS =
+    const XUL_NS =
       "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
     var titleText = null;
@@ -65,7 +65,7 @@ TooltipTextProvider.prototype = {
         var bundle = Services.strings.createBundle(
           "chrome://global/locale/layout/HtmlForm.properties"
         );
-        if (files.length == 0) {
+        if (!files.length) {
           if (tipElement.multiple) {
             titleText = bundle.GetStringFromName("NoFilesSelected");
           } else {
@@ -109,8 +109,10 @@ TooltipTextProvider.prototype = {
       XULtooltiptextText == null
     ) {
       if (tipElement.nodeType == defView.Node.ELEMENT_NODE) {
-        if (tipElement.namespaceURI == XULNS) {
-          XULtooltiptextText = tipElement.getAttribute("tooltiptext");
+        if (tipElement.namespaceURI == XUL_NS) {
+          XULtooltiptextText = tipElement.hasAttribute("tooltiptext")
+            ? tipElement.getAttribute("tooltiptext")
+            : null;
         } else if (!(tipElement instanceof defView.SVGElement)) {
           titleText = tipElement.getAttribute("title");
         }

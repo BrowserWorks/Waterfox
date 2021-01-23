@@ -5,7 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "GPUVideoTextureClient.h"
-#include "mozilla/VideoDecoderManagerChild.h"
+#include "GPUVideoImage.h"
 #include "mozilla/gfx/2D.h"
 
 namespace mozilla {
@@ -13,12 +13,12 @@ namespace layers {
 
 using namespace gfx;
 
-GPUVideoTextureData::GPUVideoTextureData(VideoDecoderManagerChild* aManager,
+GPUVideoTextureData::GPUVideoTextureData(IGPUVideoSurfaceManager* aManager,
                                          const SurfaceDescriptorGPUVideo& aSD,
                                          const gfx::IntSize& aSize)
     : mManager(aManager), mSD(aSD), mSize(aSize) {}
 
-GPUVideoTextureData::~GPUVideoTextureData() {}
+GPUVideoTextureData::~GPUVideoTextureData() = default;
 
 bool GPUVideoTextureData::Serialize(SurfaceDescriptor& aOutDescriptor) {
   aOutDescriptor = mSD;
@@ -42,7 +42,7 @@ already_AddRefed<SourceSurface> GPUVideoTextureData::GetAsSourceSurface() {
 }
 
 void GPUVideoTextureData::Deallocate(LayersIPCChannel* aAllocator) {
-  mManager->DeallocateSurfaceDescriptorGPUVideo(mSD);
+  mManager->DeallocateSurfaceDescriptor(mSD);
   mSD = SurfaceDescriptorGPUVideo();
 }
 

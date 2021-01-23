@@ -5,9 +5,7 @@
  * found in the LICENSE file.
  */
 
-// As described in https://gcc.gnu.org/bugzilla/show_bug.cgi?id=85525, MinGW will produce
-// unaligned instructions for this code, resulting in a crash.
-#if defined(__AVX2__) && !defined(__MINGW32__)
+#if defined(__AVX2__)
 
 #include <immintrin.h>
 #include <stdint.h>
@@ -99,11 +97,14 @@ namespace hsw {
 
 }
 
-#include "SkOpts.h"
+#include "src/core/SkOpts.h"
 
 #define SK_OPTS_NS hsw
-#include "SkRasterPipeline_opts.h"
-#include "SkUtils_opts.h"
+#include "src/core/SkCubicSolver.h"
+#include "src/opts/SkBitmapProcState_opts.h"
+#include "src/opts/SkBlitRow_opts.h"
+#include "src/opts/SkRasterPipeline_opts.h"
+#include "src/opts/SkUtils_opts.h"
 
 namespace SkOpts {
     // See SkOpts.h, writing SkConvolutionFilter1D::ConvolutionFixed as the underlying type.
@@ -112,6 +113,13 @@ namespace SkOpts {
                                        uint8_t* out, bool hasAlpha);
     void Init_hsw() {
         convolve_vertically = hsw::convolve_vertically;
+
+        blit_row_color32     = hsw::blit_row_color32;
+        blit_row_s32a_opaque = hsw::blit_row_s32a_opaque;
+
+        S32_alpha_D32_filter_DX  = hsw::S32_alpha_D32_filter_DX;
+
+        cubic_solver = SK_OPTS_NS::cubic_solver;
 
     #define M(st) stages_highp[SkRasterPipeline::st] = (StageFn)SK_OPTS_NS::st;
         SK_RASTER_PIPELINE_STAGES(M)

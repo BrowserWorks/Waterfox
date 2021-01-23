@@ -8,6 +8,7 @@
 #include "AudioDeviceInfo.h"
 #include "CubebUtils.h"
 #include "cubeb/cubeb.h"
+#include "MediaEventSource.h"
 #include "mozilla/Mutex.h"
 #include "nsTArray.h"
 
@@ -18,7 +19,7 @@ class CubebDeviceEnumerator final {
  public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(CubebDeviceEnumerator)
 
-  static already_AddRefed<CubebDeviceEnumerator> GetInstance();
+  static CubebDeviceEnumerator* GetInstance();
   static void Shutdown();
   // This method returns a list of all the input audio devices
   // (sources) available on this machine.
@@ -43,6 +44,18 @@ class CubebDeviceEnumerator final {
   };
   already_AddRefed<AudioDeviceInfo> DeviceInfoFromName(const nsString& aName,
                                                        Side aSide);
+  // Event source to listen for changes to the audio input device list on.
+  MediaEventSource<void>& OnAudioInputDeviceListChange() {
+    return mOnInputDeviceListChange;
+  }
+
+  // Event source to listen for changes to the audio output device list on.
+  MediaEventSource<void>& OnAudioOutputDeviceListChange() {
+    return mOnOutputDeviceListChange;
+  }
+
+  // Return the default device for a particular side.
+  RefPtr<AudioDeviceInfo> DefaultDevice(Side aSide);
 
  private:
   CubebDeviceEnumerator();
@@ -65,6 +78,8 @@ class CubebDeviceEnumerator final {
   // cubeb itself. Set in the constructor and then can be access on any thread.
   bool mManualInputInvalidation;
   bool mManualOutputInvalidation;
+  MediaEventProducer<void> mOnInputDeviceListChange;
+  MediaEventProducer<void> mOnOutputDeviceListChange;
   // The singleton instance.
   static StaticRefPtr<CubebDeviceEnumerator> sInstance;
 };

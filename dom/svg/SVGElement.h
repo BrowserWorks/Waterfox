@@ -19,7 +19,7 @@
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/SVGAnimatedClass.h"
 #include "mozilla/gfx/MatrixFwd.h"
-#include "nsAutoPtr.h"
+#include "mozilla/UniquePtr.h"
 #include "nsChangeHint.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsError.h"
@@ -30,10 +30,11 @@
 nsresult NS_NewSVGElement(mozilla::dom::Element** aResult,
                           already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo);
 
+class mozAutoDocUpdate;
+
 namespace mozilla {
 class DeclarationBlock;
 
-class DOMSVGStringList;
 class SVGAnimatedBoolean;
 class SVGAnimatedEnumeration;
 class SVGAnimatedInteger;
@@ -57,6 +58,7 @@ class SVGUserUnitList;
 struct SVGEnumMapping;
 
 namespace dom {
+class DOMSVGStringList;
 class SVGSVGElement;
 class SVGViewportElement;
 
@@ -76,15 +78,31 @@ class SVGElement : public SVGElementBase  // nsIContent
   virtual nsresult Clone(mozilla::dom::NodeInfo*,
                          nsINode** aResult) const MOZ_MUST_OVERRIDE override;
 
+  // From Element
+  nsresult CopyInnerTo(mozilla::dom::Element* aDest);
+
   // nsISupports
   NS_INLINE_DECL_REFCOUNTING_INHERITED(SVGElement, SVGElementBase)
 
+  NS_DECL_ADDSIZEOFEXCLUDINGTHIS
+
   void DidAnimateClass();
+
+  void SetNonce(const nsAString& aNonce) {
+    SetProperty(nsGkAtoms::nonce, new nsString(aNonce),
+                nsINode::DeleteProperty<nsString>);
+  }
+  void RemoveNonce() { RemoveProperty(nsGkAtoms::nonce); }
+  void GetNonce(nsAString& aNonce) const {
+    nsString* cspNonce = static_cast<nsString*>(GetProperty(nsGkAtoms::nonce));
+    if (cspNonce) {
+      aNonce = *cspNonce;
+    }
+  }
 
   // nsIContent interface methods
 
-  virtual nsresult BindToTree(Document* aDocument, nsIContent* aParent,
-                              nsIContent* aBindingParent) override;
+  virtual nsresult BindToTree(BindContext&, nsINode& aParent) override;
 
   virtual nsChangeHint GetAttributeChangeHint(const nsAtom* aAttribute,
                                               int32_t aModType) const override;
@@ -165,43 +183,66 @@ class SVGElement : public SVGElementBase  // nsIContent
   virtual bool HasValidDimensions() const { return true; }
   void SetLength(nsAtom* aName, const SVGAnimatedLength& aLength);
 
-  nsAttrValue WillChangeLength(uint8_t aAttrEnum);
-  nsAttrValue WillChangeNumberPair(uint8_t aAttrEnum);
-  nsAttrValue WillChangeIntegerPair(uint8_t aAttrEnum);
-  nsAttrValue WillChangeOrient();
-  nsAttrValue WillChangeViewBox();
-  nsAttrValue WillChangePreserveAspectRatio();
-  nsAttrValue WillChangeNumberList(uint8_t aAttrEnum);
-  nsAttrValue WillChangeLengthList(uint8_t aAttrEnum);
-  nsAttrValue WillChangePointList();
-  nsAttrValue WillChangePathSegList();
-  nsAttrValue WillChangeTransformList();
-  nsAttrValue WillChangeStringList(bool aIsConditionalProcessingAttribute,
-                                   uint8_t aAttrEnum);
+  enum class ValToUse { Base, Anim };
+  static bool UpdateDeclarationBlockFromLength(DeclarationBlock& aBlock,
+                                               nsCSSPropertyID aPropId,
+                                               const SVGAnimatedLength& aLength,
+                                               ValToUse aValToUse);
 
-  void DidChangeLength(uint8_t aAttrEnum, const nsAttrValue& aEmptyOrOldValue);
+  nsAttrValue WillChangeLength(uint8_t aAttrEnum,
+                               const mozAutoDocUpdate& aProofOfUpdate);
+  nsAttrValue WillChangeNumberPair(uint8_t aAttrEnum);
+  nsAttrValue WillChangeIntegerPair(uint8_t aAttrEnum,
+                                    const mozAutoDocUpdate& aProofOfUpdate);
+  nsAttrValue WillChangeOrient(const mozAutoDocUpdate& aProofOfUpdate);
+  nsAttrValue WillChangeViewBox(const mozAutoDocUpdate& aProofOfUpdate);
+  nsAttrValue WillChangePreserveAspectRatio(
+      const mozAutoDocUpdate& aProofOfUpdate);
+  nsAttrValue WillChangeNumberList(uint8_t aAttrEnum,
+                                   const mozAutoDocUpdate& aProofOfUpdate);
+  nsAttrValue WillChangeLengthList(uint8_t aAttrEnum,
+                                   const mozAutoDocUpdate& aProofOfUpdate);
+  nsAttrValue WillChangePointList(const mozAutoDocUpdate& aProofOfUpdate);
+  nsAttrValue WillChangePathSegList(const mozAutoDocUpdate& aProofOfUpdate);
+  nsAttrValue WillChangeTransformList(const mozAutoDocUpdate& aProofOfUpdate);
+  nsAttrValue WillChangeStringList(bool aIsConditionalProcessingAttribute,
+                                   uint8_t aAttrEnum,
+                                   const mozAutoDocUpdate& aProofOfUpdate);
+
+  void DidChangeLength(uint8_t aAttrEnum, const nsAttrValue& aEmptyOrOldValue,
+                       const mozAutoDocUpdate& aProofOfUpdate);
   void DidChangeNumber(uint8_t aAttrEnum);
   void DidChangeNumberPair(uint8_t aAttrEnum,
                            const nsAttrValue& aEmptyOrOldValue);
   void DidChangeInteger(uint8_t aAttrEnum);
   void DidChangeIntegerPair(uint8_t aAttrEnum,
-                            const nsAttrValue& aEmptyOrOldValue);
+                            const nsAttrValue& aEmptyOrOldValue,
+                            const mozAutoDocUpdate& aProofOfUpdate);
   void DidChangeBoolean(uint8_t aAttrEnum);
   void DidChangeEnum(uint8_t aAttrEnum);
-  void DidChangeOrient(const nsAttrValue& aEmptyOrOldValue);
-  void DidChangeViewBox(const nsAttrValue& aEmptyOrOldValue);
-  void DidChangePreserveAspectRatio(const nsAttrValue& aEmptyOrOldValue);
+  void DidChangeOrient(const nsAttrValue& aEmptyOrOldValue,
+                       const mozAutoDocUpdate& aProofOfUpdate);
+  void DidChangeViewBox(const nsAttrValue& aEmptyOrOldValue,
+                        const mozAutoDocUpdate& aProofOfUpdate);
+  void DidChangePreserveAspectRatio(const nsAttrValue& aEmptyOrOldValue,
+                                    const mozAutoDocUpdate& aProofOfUpdate);
   void DidChangeNumberList(uint8_t aAttrEnum,
-                           const nsAttrValue& aEmptyOrOldValue);
+                           const nsAttrValue& aEmptyOrOldValue,
+                           const mozAutoDocUpdate& aProofOfUpdate);
   void DidChangeLengthList(uint8_t aAttrEnum,
-                           const nsAttrValue& aEmptyOrOldValue);
-  void DidChangePointList(const nsAttrValue& aEmptyOrOldValue);
-  void DidChangePathSegList(const nsAttrValue& aEmptyOrOldValue);
-  void DidChangeTransformList(const nsAttrValue& aEmptyOrOldValue);
+                           const nsAttrValue& aEmptyOrOldValue,
+                           const mozAutoDocUpdate& aProofOfUpdate);
+  void DidChangePointList(const nsAttrValue& aEmptyOrOldValue,
+                          const mozAutoDocUpdate& aProofOfUpdate);
+  void DidChangePathSegList(const nsAttrValue& aEmptyOrOldValue,
+                            const mozAutoDocUpdate& aProofOfUpdate);
+  void DidChangeTransformList(const nsAttrValue& aEmptyOrOldValue,
+                              const mozAutoDocUpdate& aProofOfUpdate);
   void DidChangeString(uint8_t aAttrEnum) {}
   void DidChangeStringList(bool aIsConditionalProcessingAttribute,
                            uint8_t aAttrEnum,
-                           const nsAttrValue& aEmptyOrOldValue);
+                           const nsAttrValue& aEmptyOrOldValue,
+                           const mozAutoDocUpdate& aProofOfUpdate);
 
   void DidAnimateLength(uint8_t aAttrEnum);
   void DidAnimateNumber(uint8_t aAttrEnum);
@@ -280,7 +321,7 @@ class SVGElement : public SVGElementBase  // nsIContent
     if (!mClassAttribute.IsAnimated()) {
       return nullptr;
     }
-    return mClassAnimAttr;
+    return mClassAnimAttr.get();
   }
 
   virtual void ClearAnyCachedPath() {}
@@ -318,11 +359,13 @@ class SVGElement : public SVGElementBase  // nsIContent
                                               nsAtom* aAttribute,
                                               const nsAString& aValue);
 
-  nsAttrValue WillChangeValue(nsAtom* aName);
+  nsAttrValue WillChangeValue(nsAtom* aName,
+                              const mozAutoDocUpdate& aProofOfUpdate);
   // aNewValue is set to the old value. This value may be invalid if
   // !StoresOwnData.
   void DidChangeValue(nsAtom* aName, const nsAttrValue& aEmptyOrOldValue,
-                      nsAttrValue& aNewValue);
+                      nsAttrValue& aNewValue,
+                      const mozAutoDocUpdate& aProofOfUpdate);
   void MaybeSerializeAttrBeforeRemoval(nsAtom* aName, bool aNotify);
 
   static nsAtom* GetEventNameForAttr(nsAtom* aAttr);
@@ -537,7 +580,7 @@ class SVGElement : public SVGElementBase  // nsIContent
     void Reset(uint8_t aAttrEnum);
   };
 
-  friend class mozilla::DOMSVGStringList;
+  friend class DOMSVGStringList;
 
   struct StringListInfo {
     nsStaticAtom* const mName;
@@ -581,49 +624,53 @@ class SVGElement : public SVGElementBase  // nsIContent
   void UnsetAttrInternal(int32_t aNameSpaceID, nsAtom* aName, bool aNotify);
 
   SVGAnimatedClass mClassAttribute;
-  nsAutoPtr<nsAttrValue> mClassAnimAttr;
+  UniquePtr<nsAttrValue> mClassAnimAttr;
   RefPtr<mozilla::DeclarationBlock> mContentDeclarationBlock;
 };
 
 /**
  * A macro to implement the NS_NewSVGXXXElement() functions.
  */
-#define NS_IMPL_NS_NEW_SVG_ELEMENT(_elementName)                            \
-  nsresult NS_NewSVG##_elementName##Element(                                \
-      nsIContent** aResult,                                                 \
-      already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo) {               \
-    RefPtr<mozilla::dom::SVG##_elementName##Element> it =                   \
-        new mozilla::dom::SVG##_elementName##Element(std::move(aNodeInfo)); \
-                                                                            \
-    nsresult rv = it->Init();                                               \
-                                                                            \
-    if (NS_FAILED(rv)) {                                                    \
-      return rv;                                                            \
-    }                                                                       \
-                                                                            \
-    it.forget(aResult);                                                     \
-                                                                            \
-    return rv;                                                              \
+#define NS_IMPL_NS_NEW_SVG_ELEMENT(_elementName)                               \
+  nsresult NS_NewSVG##_elementName##Element(                                   \
+      nsIContent** aResult,                                                    \
+      already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo) {                  \
+    RefPtr<mozilla::dom::NodeInfo> nodeInfo(aNodeInfo);                        \
+    auto* nim = nodeInfo->NodeInfoManager();                                   \
+    RefPtr<mozilla::dom::SVG##_elementName##Element> it =                      \
+        new (nim) mozilla::dom::SVG##_elementName##Element(nodeInfo.forget()); \
+                                                                               \
+    nsresult rv = it->Init();                                                  \
+                                                                               \
+    if (NS_FAILED(rv)) {                                                       \
+      return rv;                                                               \
+    }                                                                          \
+                                                                               \
+    it.forget(aResult);                                                        \
+                                                                               \
+    return rv;                                                                 \
   }
 
-#define NS_IMPL_NS_NEW_SVG_ELEMENT_CHECK_PARSER(_elementName)              \
-  nsresult NS_NewSVG##_elementName##Element(                               \
-      nsIContent** aResult,                                                \
-      already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo,                \
-      mozilla::dom::FromParser aFromParser) {                              \
-    RefPtr<mozilla::dom::SVG##_elementName##Element> it =                  \
-        new mozilla::dom::SVG##_elementName##Element(std::move(aNodeInfo), \
-                                                     aFromParser);         \
-                                                                           \
-    nsresult rv = it->Init();                                              \
-                                                                           \
-    if (NS_FAILED(rv)) {                                                   \
-      return rv;                                                           \
-    }                                                                      \
-                                                                           \
-    it.forget(aResult);                                                    \
-                                                                           \
-    return rv;                                                             \
+#define NS_IMPL_NS_NEW_SVG_ELEMENT_CHECK_PARSER(_elementName)                 \
+  nsresult NS_NewSVG##_elementName##Element(                                  \
+      nsIContent** aResult,                                                   \
+      already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo,                   \
+      mozilla::dom::FromParser aFromParser) {                                 \
+    RefPtr<mozilla::dom::NodeInfo> nodeInfo(aNodeInfo);                       \
+    auto* nim = nodeInfo->NodeInfoManager();                                  \
+    RefPtr<mozilla::dom::SVG##_elementName##Element> it =                     \
+        new (nim) mozilla::dom::SVG##_elementName##Element(nodeInfo.forget(), \
+                                                           aFromParser);      \
+                                                                              \
+    nsresult rv = it->Init();                                                 \
+                                                                              \
+    if (NS_FAILED(rv)) {                                                      \
+      return rv;                                                              \
+    }                                                                         \
+                                                                              \
+    it.forget(aResult);                                                       \
+                                                                              \
+    return rv;                                                                \
   }
 
 // No unlinking, we'd need to null out the value pointer (the object it

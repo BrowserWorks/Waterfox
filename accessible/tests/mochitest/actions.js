@@ -1,3 +1,6 @@
+/* import-globals-from common.js */
+/* import-globals-from events.js */
+
 // //////////////////////////////////////////////////////////////////////////////
 // Event constants
 
@@ -34,6 +37,10 @@ const XUL_EVENTS = CLICK_EVENTS | COMMAND_EVENT;
  *    // [optional] identifier of target DOM events listeners are registered on,
  *    // used with 'events', if missing then 'ID' is used instead.
  *    get targetID() {},
+ *
+ *    // [optional] true to match DOM events bubbled up to the target,
+ *    // false (default) to only match events fired directly on the target.
+ *    get allowBubbling() {},
  *
  *    // [optional] perform checks when 'click' event is handled if 'events'
  *    // is used.
@@ -180,6 +187,17 @@ function checkerOfActionInvoker(aType, aTarget, aActionObj) {
 
   if (aActionObj && "eventTarget" in aActionObj) {
     this.eventTarget = aActionObj.eventTarget;
+  }
+
+  if (aActionObj && aActionObj.allowBubbling) {
+    // Normally, we add event listeners on the document. To catch bubbled
+    // events, we need to add the listener on the target itself.
+    this.eventTarget = "element";
+    // Normally, we only match an event fired directly on the target. Override
+    // this to match a bubbled event.
+    this.match = function(aEvent) {
+      return aEvent.currentTarget == aTarget;
+    };
   }
 
   this.phase = false;

@@ -26,15 +26,15 @@ include protocol PParentToChildStream; //FIXME: bug #792908
 include protocol PStunAddrsRequest;
 include protocol PFileChannel;
 include protocol PClassifierDummyChannel;
-include protocol PWebrtcProxyChannel;
+include protocol PWebrtcTCPSocket;
 include protocol PSocketProcessBridge;
+include protocol PDocumentChannel;
 
 include IPCStream;
-include URIParams;
 include NeckoChannelParams;
-include PBrowserOrId;
 include protocol PAltDataOutputStream;
 
+using mozilla::dom::MaybeDiscardedBrowsingContext from "mozilla/dom/BrowsingContext.h";
 using class IPC::SerializedLoadContext from "SerializedLoadContext.h";
 using mozilla::dom::TabId from "mozilla/dom/ipc/IdType.h";
 using refcounted class nsIInputStream from "mozilla/ipc/IPCStreamUtils.h";
@@ -66,42 +66,46 @@ nested(upto inside_cpow) sync protocol PNecko
   manages PAltDataOutputStream;
   manages PStunAddrsRequest;
   manages PClassifierDummyChannel;
-  manages PWebrtcProxyChannel;
+  manages PWebrtcTCPSocket;
+  manages PDocumentChannel;
 
 parent:
   async __delete__();
 
   nested(inside_cpow) async PCookieService();
-  async PHttpChannel(PBrowserOrId browser,
+  async PHttpChannel(nullable PBrowser browser,
                      SerializedLoadContext loadContext,
                      HttpChannelCreationArgs args);
-  async PFTPChannel(PBrowserOrId browser, SerializedLoadContext loadContext,
+  async PFTPChannel(nullable PBrowser browser, SerializedLoadContext loadContext,
                     FTPChannelCreationArgs args);
 
-  async PWebSocket(PBrowserOrId browser, SerializedLoadContext loadContext,
+  async PWebSocket(nullable PBrowser browser, SerializedLoadContext loadContext,
                    uint32_t aSerialID);
   async PTCPServerSocket(uint16_t localPort, uint16_t backlog, bool useArrayBuffers);
   async PUDPSocket(nsIPrincipal principal, nsCString filter);
 
-  async PDNSRequest(nsCString hostName, OriginAttributes originAttributes,
-                    uint32_t flags);
+  async PDNSRequest(nsCString hostName, nsCString trrServer, uint16_t type,
+                    OriginAttributes originAttributes, uint32_t flags);
+
+  async PDocumentChannel(MaybeDiscardedBrowsingContext browsingContext,
+                         DocumentChannelCreationArgs args);
 
   async PWebSocketEventListener(uint64_t aInnerWindowID);
 
   /* Predictor Methods */
-  async PredPredict(URIParams? targetURI, URIParams? sourceURI,
+  async PredPredict(nsIURI targetURI, nsIURI sourceURI,
                     uint32_t reason, OriginAttributes originAttributes,
                     bool hasVerifier);
-  async PredLearn(URIParams targetURI, URIParams? sourceURI,
+  async PredLearn(nsIURI targetURI, nsIURI sourceURI,
                   uint32_t reason, OriginAttributes originAttributes);
   async PredReset();
 
-  async SpeculativeConnect(URIParams uri, nsIPrincipal principal, bool anonymous);
+  async SpeculativeConnect(nsIURI uri, nsIPrincipal principal, bool anonymous);
   async HTMLDNSPrefetch(nsString hostname, bool isHttps,
-                        OriginAttributes originAttributes, uint16_t flags);
+                        OriginAttributes originAttributes, uint32_t flags);
   async CancelHTMLDNSPrefetch(nsString hostname, bool isHttps,
                               OriginAttributes originAttributes,
-                              uint16_t flags, nsresult reason);
+                              uint32_t flags, nsresult reason);
 
   /**
    * channelId is used to establish a connection between redirect channels in
@@ -134,19 +138,25 @@ parent:
 
   async PStunAddrsRequest();
 
-  async PWebrtcProxyChannel(TabId tabId);
+  /* tabId is only required for web-proxy support, which isn't always needed */
+  async PWebrtcTCPSocket(TabId? tabId);
 
   /**
    * WebExtension-specific remote resource loading
    */
-  async GetExtensionStream(URIParams uri) returns (nsIInputStream stream);
-  async GetExtensionFD(URIParams uri) returns (FileDescriptor fd);
+  async GetExtensionStream(nsIURI uri) returns (nsIInputStream stream);
+  async GetExtensionFD(nsIURI uri) returns (FileDescriptor fd);
 
   async InitSocketProcessBridge()
     returns (Endpoint<PSocketProcessBridgeChild> endpoint);
 
   async EnsureHSTSData()
     returns (bool result);
+
+  /**
+   * Page thumbnails remote resource loading
+   */
+  async GetPageThumbStream(nsIURI uri) returns (nsIInputStream stream);
 
 child:
   /*
@@ -158,15 +168,15 @@ child:
                                       nsString realm, uint64_t callbackId);
 
   /* Predictor Methods */
-  async PredOnPredictPrefetch(URIParams uri, uint32_t httpStatus);
-  async PredOnPredictPreconnect(URIParams uri);
-  async PredOnPredictDNS(URIParams uri);
+  async PredOnPredictPrefetch(nsIURI uri, uint32_t httpStatus);
+  async PredOnPredictPreconnect(nsIURI uri);
+  async PredOnPredictDNS(nsIURI uri);
 
   async SpeculativeConnectRequest();
 
-  // Using high priority to deliver this notification possibly sooner than we
+  // Using medium high priority to deliver this notification possibly sooner than we
   // enter poll() on the child process with infinite timeout.
-  prio(high) async NetworkChangeNotification(nsCString type);
+  prio(mediumhigh) async NetworkChangeNotification(nsCString type);
 
   async PTransportProvider();
 

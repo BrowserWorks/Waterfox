@@ -1,0 +1,114 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "Chi re">
+<!ENTITY fromField4.label "Richin">
+<!ENTITY senderField4.label "Taqonel">
+<!ENTITY author.label "B'anel">
+<!ENTITY organizationField4.label "Moloj">
+<!ENTITY replyToField4.label "Titzolïx tzij chi re">
+
+<!ENTITY subjectField4.label "Taqikil">
+<!ENTITY ccField4.label "Cc">
+<!ENTITY bccField4.label "Bcc">
+<!ENTITY newsgroupsField4.label "Rumolaj tzijol">
+<!ENTITY followupToField4.label "Titaq chik chi re">
+<!ENTITY tagsHdr4.label "Taq etal">
+<!ENTITY dateField4.label "Q'ijul">
+<!ENTITY userAgentField4.label "Rub'anel winäq">
+<!ENTITY referencesField4.label "Taq retal">
+<!ENTITY messageIdField4.label "Tzijol ID">
+<!ENTITY inReplyToField4.label "Chi rutzolixik tzij chi re">
+<!ENTITY originalWebsite4.label "Ruxaq Ajk'amaya'l">
+
+<!ENTITY hdrArchiveButton1.label "Yakb'äl">
+<!ENTITY hdrArchiveButton1.tooltip "Tiyak re tzijol re'">
+<!ENTITY hdrSmartReplyButton1.label "Na'owinäq taq Tzolin Tzij">
+<!ENTITY hdrReplyButton1.label "Titzolïx tzij">
+<!ENTITY hdrReplyButton2.tooltip "Titzolïx tzij chi re ri rutaqonel re tzijol re'">
+<!ENTITY hdrReplyAllButton1.label "Titzolïx tzij chi ke Konojel">
+<!ENTITY hdrReplyAllButton1.tooltip "Titzolïx tzij chi re ri taqonel chuqa' chi ke konojel ri ruk'ulb'anela' tzij">
+<!ENTITY hdrReplyListButton1.label "Titzolïx tzij chi re ri Cholb'äl">
+<!ENTITY hdrReplyListButton1.tooltip "Titzolïx tzij chi re jun kicholb'al taqotz'ib'">
+<!ENTITY hdrFollowupButton1.label "Tizolïx tzij">
+<!ENTITY hdrFollowupButton1.tooltip "Titalüx rutzijol jun tzolin tzij pa re kimolaj tzijol re'">
+<!ENTITY hdrForwardButton1.label "Titaq chik">
+<!ENTITY hdrForwardButton1.tooltip "Titaq chik re rutzijol re'">
+<!ENTITY hdrJunkButton1.label "Seq'">
+<!ENTITY hdrJunkButton1.tooltip "Tiya' ketal re taq rutzijol re' achi'el seq'">
+<!ENTITY hdrTrashButton1.label "Tiyuj">
+<!ENTITY hdrTrashButton1.tooltip "Tiyuj re rutzijol re'">
+
+<!ENTITY hdrViewToolbarShowFull.label "Kek'ut taq Wachib'äl chuqa' Rucholajem Tzij">
+<!ENTITY hdrViewToolbarShowFull.accesskey "c">
+<!ENTITY hdrViewToolbarShowIcons.label "Xa xe Kek'ut taq Wachaj">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "W">
+<!ENTITY hdrViewToolbarShowText.label "Xa xe Tik'ut Rucholajem Tzij">
+<!ENTITY hdrViewToolbarShowText.accesskey "R">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "Junelïk Tik'ut Titzolïx Tzij chi re ri Taqonel">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "z">
+
+<!ENTITY otherActionsButton2.label "Ch'aqa' chik">
+<!ENTITY otherActionsButton.tooltip "Ch'aqa' chik taq b'anoj">
+<!ENTITY otherActionsOpenConversation1.label "Tijaq pa Tzijonem">
+<!ENTITY otherActionsOpenConversation1.accesskey "z">
+<!ENTITY otherActionsOpenInNewWindow1.label "Tijaq pa K'ak'a' Tzuwäch">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "W">
+<!ENTITY otherActionsOpenInNewTab1.label "Tijaq pa K'ak'a' Ruwi'">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "R">
+<!ENTITY markAsReadMenuItem1.label "Tiya' Retal achi'el Sik'in">
+<!ENTITY markAsReadMenuItem1.accesskey "S">
+<!ENTITY markAsUnreadMenuItem1.label "Tiya' Retal achi'el Man Sik'in Ta">
+<!ENTITY markAsUnreadMenuItem1.accesskey "e">
+<!ENTITY saveAsMenuItem1.label "Tiyak Achi'el…">
+<!ENTITY saveAsMenuItem1.accesskey "k">
+<!ENTITY viewSourceMenuItem1.label "Titz'et Xe'el">
+<!ENTITY viewSourceMenuItem1.accesskey "T">
+<!ENTITY otherActionsPrint1.label "Titz'ajb'äx…">
+<!ENTITY otherActionsPrint1.accesskey "z">
+
+<!-- Attachment bar context menu items -->
+<!ENTITY startExpandedCmd.label    "Pa Rutikirib'al Kek'ut Kipas Tz'aqatisan taq Tzij">
+<!ENTITY startExpandedCmd.accesskey    "K">
+
+<!-- Attachment context menu items -->
+<!ENTITY openAttachmentCmd.label    "Tijaq">
+<!ENTITY openAttachmentCmd.accesskey    "j">
+<!ENTITY saveAsAttachmentCmd.label    "Tiyak Achi'el…">
+<!ENTITY saveAsAttachmentCmd.accesskey    "y">
+<!ENTITY detachAttachmentCmd.label    "Tixik'an…">
+<!ENTITY detachAttachmentCmd.accesskey    "x">
+<!ENTITY deleteAttachmentCmd.label    "Tiyuj">
+<!ENTITY deleteAttachmentCmd.accesskey    "y">
+<!ENTITY openAllAttachmentsCmd.label    "Tijaq Ronojel…">
+<!ENTITY openAllAttachmentsCmd.accesskey    "j">
+<!ENTITY saveAllAttachmentsCmd.label    "Tiyak Ronojel…">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "y">
+<!ENTITY detachAllAttachmentsCmd.label    "Tixik'an Ronojel…">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "x">
+<!ENTITY deleteAllAttachmentsCmd.label    "Tiyuj Ronojel…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "u">
+
+<!ENTITY openAttachment.tooltip "Tijaq ri tz'aqatisan yakb'äl">
+
+<!ENTITY detachedAttachmentFolder.show.label        "Tijaq K'wayöl Yakwuj">
+<!ENTITY detachedAttachmentFolder.show.accesskey    "Y">
+<!ENTITY detachedAttachmentFolder.showMac.label     "Tik'ut Pa Finder">
+<!ENTITY detachedAttachmentFolder.showMac.accesskey "I">
+
+<!-- Attachment toolbar items -->
+<!ENTITY saveAttachmentButton1.label       "Tiyak">
+<!ENTITY saveAttachmentButton1.tooltip     "Tiyak ri tz'aqatisan yakb'äl">
+<!ENTITY saveAllAttachmentsButton1.label   "Tiyak Ronojel">
+<!ENTITY saveAllAttachmentsButton1.tooltip "Tiyak ronojel ri tz'aqatisan taq yakb'äl">
+
+<!ENTITY copyLinkCmd.label        "Tiwachib'ëx Ruk'ojlib'al Ximonel">
+<!ENTITY copyLinkCmd.accesskey    "w">
+
+<!ENTITY CopyMessageId.label "Tiwachib'ëx Tzijol-ID">
+<!ENTITY CopyMessageId.accesskey "w">
+<!ENTITY OpenMessageForMsgId.label "Tijaq Tzijol Chi ID">
+<!ENTITY OpenMessageForMsgId.accesskey "j">
+<!ENTITY OpenBrowserWithMsgId.label "Tijaq Okik'amaya'l Rik'in ri Tzijol-ID">
+<!ENTITY OpenBrowserWithMsgId.accesskey "O">

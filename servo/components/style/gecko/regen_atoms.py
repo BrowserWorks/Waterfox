@@ -94,7 +94,7 @@ class FileAvoidWrite(BytesIO):
         self.name = filename
 
     def write(self, buf):
-        if isinstance(buf, unicode):
+        if isinstance(buf, str):
             buf = buf.encode('utf-8')
         BytesIO.write(self, buf)
 
@@ -132,7 +132,7 @@ PRELUDE = '''
 RULE_TEMPLATE = '''
     ("{atom}") => {{{{
         #[allow(unsafe_code)] #[allow(unused_unsafe)]
-        unsafe {{ $crate::string_cache::Atom::from_index({index}) }}
+        unsafe {{ $crate::string_cache::Atom::from_index_unchecked({index}) }}
     }}}};
 '''[1:]
 

@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label               "Atributoj">
+<!ENTITY propertiesMenu.accesskey           "A">
+<!ENTITY propertiesCmd.key                  "i">
+<!ENTITY abPropertiesMenu.label             "Atributoj de adresaro">
+<!ENTITY abPropertiesMenu.accesskey         "A">
+<!ENTITY contactPropertiesMenu.label        "Atributoj de kontakto">
+<!ENTITY contactPropertiesMenu.accesskey    "A">
+<!ENTITY mailingListPropertiesMenu.label    "Atributoj de dissendolisto">
+<!ENTITY mailingListPropertiesMenu.accesskey "A">
+
+<!ENTITY abContextMenuButton.tooltip        "Montri kuntekstan menuon de adresaro">
+<!ENTITY addressbookPicker.label            "Adresaro:">
+<!ENTITY addressbookPicker.accesskey        "d">
+<!ENTITY searchContacts.label               "Serĉi en kontaktoj:">
+<!ENTITY searchContacts.accesskey           "S">
+<!ENTITY SearchNameOrEmail.label            "Nomo aŭ retpoŝta adreso">
+
+<!ENTITY addtoToFieldMenu.label             "Aldoni al kampo “al”">
+<!ENTITY addtoToFieldMenu.accesskey         "a">
+<!ENTITY addtoCcFieldMenu.label             "Aldoni al kampo “kopio”">
+<!ENTITY addtoCcFieldMenu.accesskey         "k">
+<!ENTITY addtoBccFieldMenu.label            "Aldoni al kampo “kaŝkopio”">
+<!ENTITY addtoBccFieldMenu.accesskey        "i">
+<!ENTITY deleteAddrBookCard.label           "Forigi">
+<!ENTITY deleteAddrBookCard.accesskey       "F">
+<!ENTITY propertiesContext.label            "Atributoj">
+<!ENTITY propertiesContext.accesskey        "A">
+<!ENTITY abPropertiesContext.label          "Atributoj">
+<!ENTITY abPropertiesContext.accesskey      "A">
+<!ENTITY editContactContext.label           "Redakti kontakton">
+<!ENTITY editContactContext.accesskey       "R">
+<!ENTITY editMailingListContext.label       "Redakti liston">
+<!ENTITY editMailingListContext.accesskey   "R">
+
+<!ENTITY newContactAbContext.label          "Nova kontakto">
+<!ENTITY newContactAbContext.accesskey      "k">
+<!ENTITY newListAbContext.label             "Nova dissendolisto">
+<!ENTITY newListAbContext.accesskey         "d">
+
+<!ENTITY toButton.label                     "→“al”:">
+<!ENTITY toButton.accesskey                 "a">
+<!ENTITY ccButton.label                     "→“kopio”:">
+<!ENTITY ccButton.accesskey                 "k">
+<!ENTITY bccButton.label                    "→“kaŝkopio”:">
+<!ENTITY bccButton.accesskey                "i">

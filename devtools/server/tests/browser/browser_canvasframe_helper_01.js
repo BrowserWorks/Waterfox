@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -12,7 +11,7 @@ const TEST_URL =
 add_task(async function() {
   const browser = await addTab(TEST_URL);
 
-  await ContentTask.spawn(browser, null, async function() {
+  await SpecialPowers.spawn(browser, [], async function() {
     const { require } = ChromeUtils.import(
       "resource://devtools/shared/Loader.jsm"
     );
@@ -108,6 +107,44 @@ add_task(async function() {
       el.getAttribute("class"),
       "child-element",
       "The class attribute was retrieve correctly"
+    );
+
+    info("Test the toggle API");
+    el.classList.toggle("test"); // This will set the class
+    is(
+      el.getAttribute("class"),
+      "child-element test",
+      "After toggling the class 'test', the class attribute contained the 'test' class"
+    );
+    el.classList.toggle("test"); // This will remove the class
+    is(
+      el.getAttribute("class"),
+      "child-element",
+      "After toggling the class 'test' again, the class attribute removed the 'test' class"
+    );
+    el.classList.toggle("test", true); // This will set the class
+    is(
+      el.getAttribute("class"),
+      "child-element test",
+      "After toggling the class 'test' again and keeping force=true, the class attribute added the 'test' class"
+    );
+    el.classList.toggle("test", true); // This will keep the class set
+    is(
+      el.getAttribute("class"),
+      "child-element test",
+      "After toggling the class 'test' again and keeping force=true,the class attribute contained the 'test' class"
+    );
+    el.classList.toggle("test", false); // This will remove the class
+    is(
+      el.getAttribute("class"),
+      "child-element",
+      "After toggling the class 'test' again and keeping force=false, the class attribute removed the 'test' class"
+    );
+    el.classList.toggle("test", false); // This will keep the class removed
+    is(
+      el.getAttribute("class"),
+      "child-element",
+      "After toggling the class 'test' again and keeping force=false, the class attribute removed the 'test' class"
     );
 
     info("Destroying the helper");

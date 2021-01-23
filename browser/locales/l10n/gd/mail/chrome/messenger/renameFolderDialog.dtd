@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+   
+<!ENTITY renameFolderDialog.title          "Cuir ainm ùr air a' phasgan">
+<!ENTITY rename.label                      "Cuir a-steach an t-ainm ùr airson a' phasgain agad:">
+<!ENTITY rename.accesskey                  "e">
+<!ENTITY accept.label                      "Cuir ainm ùr air">
+<!ENTITY accept.accesskey                  "r">

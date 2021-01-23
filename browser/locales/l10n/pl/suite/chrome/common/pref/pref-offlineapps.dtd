@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-offlineapps.xul -->
+
+<!ENTITY pref.offlineapps.title "Aplikacje internetowe trybu offline">
+<!ENTITY pref.offlineCache.caption "Dane witryn oraz użytkownika dla trybu offline">
+
+<!ENTITY clearOfflineAppCache.label "Wyczyść">
+<!ENTITY clearOfflineAppCache.accesskey "W">
+
+<!ENTITY offlineAlwaysAllow.label "Pozwalaj wszystkim witrynom przechowywać dane trybu offline">
+<!ENTITY offlineAlwaysAllow.accesskey "o">
+<!ENTITY offlineExplicit.label "Zezwalaj jedynie witrynom, które mają do tego uprawnienia">
+<!ENTITY offlineExplicit.accesskey "Z">
+<!ENTITY offlineNotifyAsk.label "Powiadamiaj, jeżeli witryna chce przechowywać dane trybu offline">
+<!ENTITY offlineNotifyAsk.accesskey "a">
+<!ENTITY offlineNotifyPermissions.label "Zarządzaj uprawnieniami">
+<!ENTITY offlineNotifyPermissions.accesskey "P">
+
+<!ENTITY offlineAppsUsage.label "Następujące witryny przechowują dane trybu offline:">
+<!ENTITY offlineAppsListRemove.label "Wyczyść dane…">
+<!ENTITY offlineAppsListRemove.accesskey "d">

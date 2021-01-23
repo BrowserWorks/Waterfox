@@ -121,7 +121,7 @@ const MacroAssembler& MacroAssemblerX86Shared::asMasm() const {
 template <class T, class Map>
 T* MacroAssemblerX86Shared::getConstant(const typename T::Pod& value, Map& map,
                                         Vector<T, 0, SystemAllocPolicy>& vec) {
-  typedef typename Map::AddPtr AddPtr;
+  using AddPtr = typename Map::AddPtr;
   size_t index;
   if (AddPtr p = map.lookupForAdd(value)) {
     index = p->value();
@@ -379,14 +379,14 @@ void MacroAssembler::PushRegsInMask(LiveRegisterSet set) {
     } else if (reg.isSingle()) {
       storeFloat32(reg, spillAddress);
     } else if (reg.isSimd128()) {
-      storeUnalignedSimd128Float(reg, spillAddress);
+      storeUnalignedSimd128(reg, spillAddress);
     } else {
       MOZ_CRASH("Unknown register type.");
     }
   }
   MOZ_ASSERT(numFpu == 0);
   // x64 padding to keep the stack aligned on uintptr_t. Keep in sync with
-  // GetPushBytesInSize.
+  // GetPushSizeInBytes.
   diffF -= diffF % sizeof(uintptr_t);
   MOZ_ASSERT(diffF == 0);
 }
@@ -417,7 +417,7 @@ void MacroAssembler::storeRegsInMask(LiveRegisterSet set, Address dest,
     } else if (reg.isSingle()) {
       storeFloat32(reg, dest);
     } else if (reg.isSimd128()) {
-      storeUnalignedSimd128Float(reg, dest);
+      storeUnalignedSimd128(reg, dest);
     } else {
       MOZ_CRASH("Unknown register type.");
     }
@@ -452,7 +452,7 @@ void MacroAssembler::PopRegsInMaskIgnore(LiveRegisterSet set,
     } else if (reg.isSingle()) {
       loadFloat32(spillAddress, reg);
     } else if (reg.isSimd128()) {
-      loadUnalignedSimd128Float(spillAddress, reg);
+      loadUnalignedSimd128(spillAddress, reg);
     } else {
       MOZ_CRASH("Unknown register type.");
     }
@@ -595,12 +595,9 @@ void MacroAssembler::patchFarJump(CodeOffset farJump, uint32_t targetOffset) {
   Assembler::patchFarJump(farJump, targetOffset);
 }
 
-CodeOffset MacroAssembler::nopPatchableToCall(const wasm::CallSiteDesc& desc) {
-  CodeOffset offset(currentOffset());
+CodeOffset MacroAssembler::nopPatchableToCall() {
   masm.nop_five();
-  append(desc, CodeOffset(currentOffset()));
-  MOZ_ASSERT_IF(!oom(), size() - offset.offset() == ToggledCallSize(nullptr));
-  return offset;
+  return CodeOffset(currentOffset());
 }
 
 void MacroAssembler::patchNopToCall(uint8_t* callsite, uint8_t* target) {
@@ -1538,6 +1535,378 @@ void MacroAssembler::speculationBarrier() {
   // a way to force all speculative execution of instructions to end.
   MOZ_ASSERT(HasSSE2());
   masm.lfence();
+}
+
+void MacroAssembler::floorFloat32ToInt32(FloatRegister src, Register dest,
+                                         Label* fail) {
+  if (HasSSE41()) {
+    // Fail on negative-zero.
+    branchNegativeZeroFloat32(src, dest, fail);
+
+    // Round toward -Infinity.
+    {
+      ScratchFloat32Scope scratch(*this);
+      vroundss(X86Encoding::RoundDown, src, scratch, scratch);
+      truncateFloat32ToInt32(scratch, dest, fail);
+    }
+  } else {
+    Label negative, end;
+
+    // Branch to a slow path for negative inputs. Doesn't catch NaN or -0.
+    {
+      ScratchFloat32Scope scratch(*this);
+      zeroFloat32(scratch);
+      branchFloat(Assembler::DoubleLessThan, src, scratch, &negative);
+    }
+
+    // Fail on negative-zero.
+    branchNegativeZeroFloat32(src, dest, fail);
+
+    // Input is non-negative, so truncation correctly rounds.
+    truncateFloat32ToInt32(src, dest, fail);
+    jump(&end);
+
+    // Input is negative, but isn't -0.
+    // Negative values go on a comparatively expensive path, since no
+    // native rounding mode matches JS semantics. Still better than callVM.
+    bind(&negative);
+    {
+      // Truncate and round toward zero.
+      // This is off-by-one for everything but integer-valued inputs.
+      truncateFloat32ToInt32(src, dest, fail);
+
+      // Test whether the input double was integer-valued.
+      {
+        ScratchFloat32Scope scratch(*this);
+        convertInt32ToFloat32(dest, scratch);
+        branchFloat(Assembler::DoubleEqualOrUnordered, src, scratch, &end);
+      }
+
+      // Input is not integer-valued, so we rounded off-by-one in the
+      // wrong direction. Correct by subtraction.
+      subl(Imm32(1), dest);
+      // Cannot overflow: output was already checked against INT_MIN.
+    }
+
+    bind(&end);
+  }
+}
+
+void MacroAssembler::floorDoubleToInt32(FloatRegister src, Register dest,
+                                        Label* fail) {
+  if (HasSSE41()) {
+    // Fail on negative-zero.
+    branchNegativeZero(src, dest, fail);
+
+    // Round toward -Infinity.
+    {
+      ScratchDoubleScope scratch(*this);
+      vroundsd(X86Encoding::RoundDown, src, scratch, scratch);
+      truncateDoubleToInt32(scratch, dest, fail);
+    }
+  } else {
+    Label negative, end;
+
+    // Branch to a slow path for negative inputs. Doesn't catch NaN or -0.
+    {
+      ScratchDoubleScope scratch(*this);
+      zeroDouble(scratch);
+      branchDouble(Assembler::DoubleLessThan, src, scratch, &negative);
+    }
+
+    // Fail on negative-zero.
+    branchNegativeZero(src, dest, fail);
+
+    // Input is non-negative, so truncation correctly rounds.
+    truncateDoubleToInt32(src, dest, fail);
+    jump(&end);
+
+    // Input is negative, but isn't -0.
+    // Negative values go on a comparatively expensive path, since no
+    // native rounding mode matches JS semantics. Still better than callVM.
+    bind(&negative);
+    {
+      // Truncate and round toward zero.
+      // This is off-by-one for everything but integer-valued inputs.
+      truncateDoubleToInt32(src, dest, fail);
+
+      // Test whether the input double was integer-valued.
+      {
+        ScratchDoubleScope scratch(*this);
+        convertInt32ToDouble(dest, scratch);
+        branchDouble(Assembler::DoubleEqualOrUnordered, src, scratch, &end);
+      }
+
+      // Input is not integer-valued, so we rounded off-by-one in the
+      // wrong direction. Correct by subtraction.
+      subl(Imm32(1), dest);
+      // Cannot overflow: output was already checked against INT_MIN.
+    }
+
+    bind(&end);
+  }
+}
+
+void MacroAssembler::ceilFloat32ToInt32(FloatRegister src, Register dest,
+                                        Label* fail) {
+  ScratchFloat32Scope scratch(*this);
+
+  Label lessThanOrEqualMinusOne;
+
+  // If x is in ]-1,0], ceil(x) is -0, which cannot be represented as an int32.
+  // Fail if x > -1 and the sign bit is set.
+  loadConstantFloat32(-1.f, scratch);
+  branchFloat(Assembler::DoubleLessThanOrEqualOrUnordered, src, scratch,
+              &lessThanOrEqualMinusOne);
+  vmovmskps(src, dest);
+  branchTest32(Assembler::NonZero, dest, Imm32(1), fail);
+
+  if (HasSSE41()) {
+    // x <= -1 or x > -0
+    bind(&lessThanOrEqualMinusOne);
+    // Round toward +Infinity.
+    vroundss(X86Encoding::RoundUp, src, scratch, scratch);
+    truncateFloat32ToInt32(scratch, dest, fail);
+    return;
+  }
+
+  // No SSE4.1
+  Label end;
+
+  // x >= 0 and x is not -0.0. We can truncate integer values, and truncate and
+  // add 1 to non-integer values. This will also work for values >= INT_MAX + 1,
+  // as the truncate operation will return INT_MIN and we'll fail.
+  truncateFloat32ToInt32(src, dest, fail);
+  convertInt32ToFloat32(dest, scratch);
+  branchFloat(Assembler::DoubleEqualOrUnordered, src, scratch, &end);
+
+  // Input is not integer-valued, add 1 to obtain the ceiling value.
+  // If input > INT_MAX, output == INT_MAX so adding 1 will overflow.
+  branchAdd32(Assembler::Overflow, Imm32(1), dest, fail);
+  jump(&end);
+
+  // x <= -1, truncation is the way to go.
+  bind(&lessThanOrEqualMinusOne);
+  truncateFloat32ToInt32(src, dest, fail);
+
+  bind(&end);
+}
+
+void MacroAssembler::ceilDoubleToInt32(FloatRegister src, Register dest,
+                                       Label* fail) {
+  ScratchDoubleScope scratch(*this);
+
+  Label lessThanOrEqualMinusOne;
+
+  // If x is in ]-1,0], ceil(x) is -0, which cannot be represented as an int32.
+  // Fail if x > -1 and the sign bit is set.
+  loadConstantDouble(-1.0, scratch);
+  branchDouble(Assembler::DoubleLessThanOrEqualOrUnordered, src, scratch,
+               &lessThanOrEqualMinusOne);
+  vmovmskpd(src, dest);
+  branchTest32(Assembler::NonZero, dest, Imm32(1), fail);
+
+  if (HasSSE41()) {
+    // x <= -1 or x > -0
+    bind(&lessThanOrEqualMinusOne);
+    // Round toward +Infinity.
+    vroundsd(X86Encoding::RoundUp, src, scratch, scratch);
+    truncateDoubleToInt32(scratch, dest, fail);
+    return;
+  }
+
+  // No SSE4.1
+  Label end;
+
+  // x >= 0 and x is not -0.0. We can truncate integer values, and truncate and
+  // add 1 to non-integer values. This will also work for values >= INT_MAX + 1,
+  // as the truncate operation will return INT_MIN and we'll fail.
+  truncateDoubleToInt32(src, dest, fail);
+  convertInt32ToDouble(dest, scratch);
+  branchDouble(Assembler::DoubleEqualOrUnordered, src, scratch, &end);
+
+  // Input is not integer-valued, add 1 to obtain the ceiling value.
+  // If input > INT_MAX, output == INT_MAX so adding 1 will overflow.
+  branchAdd32(Assembler::Overflow, Imm32(1), dest, fail);
+  jump(&end);
+
+  // x <= -1, truncation is the way to go.
+  bind(&lessThanOrEqualMinusOne);
+  truncateDoubleToInt32(src, dest, fail);
+
+  bind(&end);
+}
+
+void MacroAssembler::roundFloat32ToInt32(FloatRegister src, Register dest,
+                                         FloatRegister temp, Label* fail) {
+  ScratchFloat32Scope scratch(*this);
+
+  Label negativeOrZero, negative, end;
+
+  // Branch to a slow path for non-positive inputs. Doesn't catch NaN.
+  zeroFloat32(scratch);
+  loadConstantFloat32(GetBiggestNumberLessThan(0.5f), temp);
+  branchFloat(Assembler::DoubleLessThanOrEqual, src, scratch, &negativeOrZero);
+  {
+    // Input is non-negative. Add the biggest float less than 0.5 and truncate,
+    // rounding down (because if the input is the biggest float less than 0.5,
+    // adding 0.5 would undesirably round up to 1). Note that we have to add the
+    // input to the temp register because we're not allowed to modify the input
+    // register.
+    addFloat32(src, temp);
+    truncateFloat32ToInt32(temp, dest, fail);
+    jump(&end);
+  }
+
+  // Input is negative, +0 or -0.
+  bind(&negativeOrZero);
+  {
+    // Branch on negative input.
+    j(Assembler::NotEqual, &negative);
+
+    // Fail on negative-zero.
+    branchNegativeZeroFloat32(src, dest, fail);
+
+    // Input is +0.
+    xor32(dest, dest);
+    jump(&end);
+  }
+
+  // Input is negative.
+  bind(&negative);
+  {
+    // Inputs in ]-0.5; 0] need to be added 0.5, other negative inputs need to
+    // be added the biggest double less than 0.5.
+    Label loadJoin;
+    loadConstantFloat32(-0.5f, scratch);
+    branchFloat(Assembler::DoubleLessThan, src, scratch, &loadJoin);
+    loadConstantFloat32(0.5f, temp);
+    bind(&loadJoin);
+
+    if (HasSSE41()) {
+      // Add 0.5 and round toward -Infinity. The result is stored in the temp
+      // register (currently contains 0.5).
+      addFloat32(src, temp);
+      vroundss(X86Encoding::RoundDown, temp, scratch, scratch);
+
+      // Truncate.
+      truncateFloat32ToInt32(scratch, dest, fail);
+
+      // If the result is positive zero, then the actual result is -0. Fail.
+      // Otherwise, the truncation will have produced the correct negative
+      // integer.
+      branchTest32(Assembler::Zero, dest, dest, fail);
+    } else {
+      addFloat32(src, temp);
+      // Round toward -Infinity without the benefit of ROUNDSS.
+      {
+        // If input + 0.5 >= 0, input is a negative number >= -0.5 and the
+        // result is -0.
+        branchFloat(Assembler::DoubleGreaterThanOrEqual, temp, scratch, fail);
+
+        // Truncate and round toward zero.
+        // This is off-by-one for everything but integer-valued inputs.
+        truncateFloat32ToInt32(temp, dest, fail);
+
+        // Test whether the truncated double was integer-valued.
+        convertInt32ToFloat32(dest, scratch);
+        branchFloat(Assembler::DoubleEqualOrUnordered, temp, scratch, &end);
+
+        // Input is not integer-valued, so we rounded off-by-one in the
+        // wrong direction. Correct by subtraction.
+        subl(Imm32(1), dest);
+        // Cannot overflow: output was already checked against INT_MIN.
+      }
+    }
+  }
+
+  bind(&end);
+}
+
+void MacroAssembler::roundDoubleToInt32(FloatRegister src, Register dest,
+                                        FloatRegister temp, Label* fail) {
+  ScratchDoubleScope scratch(*this);
+
+  Label negativeOrZero, negative, end;
+
+  // Branch to a slow path for non-positive inputs. Doesn't catch NaN.
+  zeroDouble(scratch);
+  loadConstantDouble(GetBiggestNumberLessThan(0.5), temp);
+  branchDouble(Assembler::DoubleLessThanOrEqual, src, scratch, &negativeOrZero);
+  {
+    // Input is positive. Add the biggest double less than 0.5 and truncate,
+    // rounding down (because if the input is the biggest double less than 0.5,
+    // adding 0.5 would undesirably round up to 1). Note that we have to add the
+    // input to the temp register because we're not allowed to modify the input
+    // register.
+    addDouble(src, temp);
+    truncateDoubleToInt32(temp, dest, fail);
+    jump(&end);
+  }
+
+  // Input is negative, +0 or -0.
+  bind(&negativeOrZero);
+  {
+    // Branch on negative input.
+    j(Assembler::NotEqual, &negative);
+
+    // Fail on negative-zero.
+    branchNegativeZero(src, dest, fail, /* maybeNonZero = */ false);
+
+    // Input is +0
+    xor32(dest, dest);
+    jump(&end);
+  }
+
+  // Input is negative.
+  bind(&negative);
+  {
+    // Inputs in ]-0.5; 0] need to be added 0.5, other negative inputs need to
+    // be added the biggest double less than 0.5.
+    Label loadJoin;
+    loadConstantDouble(-0.5, scratch);
+    branchDouble(Assembler::DoubleLessThan, src, scratch, &loadJoin);
+    loadConstantDouble(0.5, temp);
+    bind(&loadJoin);
+
+    if (HasSSE41()) {
+      // Add 0.5 and round toward -Infinity. The result is stored in the temp
+      // register (currently contains 0.5).
+      addDouble(src, temp);
+      vroundsd(X86Encoding::RoundDown, temp, scratch, scratch);
+
+      // Truncate.
+      truncateDoubleToInt32(scratch, dest, fail);
+
+      // If the result is positive zero, then the actual result is -0. Fail.
+      // Otherwise, the truncation will have produced the correct negative
+      // integer.
+      branchTest32(Assembler::Zero, dest, dest, fail);
+    } else {
+      addDouble(src, temp);
+      // Round toward -Infinity without the benefit of ROUNDSD.
+      {
+        // If input + 0.5 >= 0, input is a negative number >= -0.5 and the
+        // result is -0.
+        branchDouble(Assembler::DoubleGreaterThanOrEqual, temp, scratch, fail);
+
+        // Truncate and round toward zero.
+        // This is off-by-one for everything but integer-valued inputs.
+        truncateDoubleToInt32(temp, dest, fail);
+
+        // Test whether the truncated double was integer-valued.
+        convertInt32ToDouble(dest, scratch);
+        branchDouble(Assembler::DoubleEqualOrUnordered, temp, scratch, &end);
+
+        // Input is not integer-valued, so we rounded off-by-one in the
+        // wrong direction. Correct by subtraction.
+        subl(Imm32(1), dest);
+        // Cannot overflow: output was already checked against INT_MIN.
+      }
+    }
+  }
+
+  bind(&end);
 }
 
 //}}} check_macroassembler_style

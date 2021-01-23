@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSecurityInfo.dtd UI for viewing security status when composing a message -->
+
+<!ENTITY title.label "ความปลอดภัยข้อความ">
+<!ENTITY subject.plaintextWarning "โปรดทราบ: บรรทัดหัวเรื่องของข้อความอีเมลจะไม่ถูกเข้ารหัส">
+<!ENTITY status.heading "เนื้อหาของข้อความของคุณจะถูกส่งดังนี้:">
+<!ENTITY status.signed "ลงลายเซ็นดิจิทัล:">
+<!ENTITY status.encrypted "เข้ารหัส:">
+<!ENTITY status.certificates "ใบรับรอง:">
+<!ENTITY view.label "ดู">
+<!ENTITY view.accesskey "ด">
+<!ENTITY tree.recipient "ผู้รับ">
+<!ENTITY tree.status "สถานะ">
+<!ENTITY tree.issuedDate "วันที่ออก">
+<!ENTITY tree.expiresDate "หมดอายุ">

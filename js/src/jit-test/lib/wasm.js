@@ -21,7 +21,12 @@ function wasmEvalText(str, imports) {
 }
 
 function wasmValidateText(str) {
-    assertEq(WebAssembly.validate(wasmTextToBinary(str)), true);
+    let binary = wasmTextToBinary(str);
+    let valid = WebAssembly.validate(binary);
+    if (!valid) {
+        new WebAssembly.Module(binary);
+    }
+    assertEq(valid, true);
 }
 
 function wasmFailValidateText(str, pattern) {
@@ -65,9 +70,9 @@ const unusedValuesError = /unused values not explicitly dropped by end of block/
 function jsify(wasmVal) {
     if (wasmVal === 'nan')
         return NaN;
-    if (wasmVal === 'infinity')
+    if (wasmVal === 'inf')
         return Infinity;
-    if (wasmVal === '-infinity')
+    if (wasmVal === '-inf')
         return Infinity;
     if (wasmVal === '-0')
         return -0;
@@ -96,6 +101,11 @@ function _augmentSrc(src, assertions) {
          i64.reinterpret/f64
          i64.const ${expected}
          i64.eq`;
+                    break;
+                case 'i32':
+                    newSrc += `
+         i32.const ${expected}
+         i32.eq`;
                     break;
                 case 'i64':
                     newSrc += `
@@ -185,13 +195,19 @@ const WasmHelpers = {};
     WasmHelpers.isSingleStepProfilingEnabled = enabled;
 })();
 
+// The cache of matched and unmatched strings seriously speeds up matching on
+// the emulators and makes tests time out less often.
+
+var matched = {};
+var unmatched = {};
+
 WasmHelpers._normalizeStack = (stack, preciseStacks) => {
     var wasmFrameTypes = [
-        {re:/^jit call to int64 wasm function$/,                          sub:"i64>"},
+        {re:/^jit call to int64(?: or v128)? wasm function$/,             sub:"i64>"},
         {re:/^out-of-line coercion for jit entry arguments \(in wasm\)$/, sub:"ool>"},
         {re:/^wasm-function\[(\d+)\] \(.*\)$/,                            sub:"$1"},
-        {re:/^(fast|slow) exit trampoline (to native )?\(in wasm\)$/,     sub:"<"},
-        {re:/^call to[ asm.js]? native (.*) \(in wasm\)$/,                sub:"$1"},
+        {re:/^(fast|slow) exit trampoline (?:to native )?\(in wasm\)$/,   sub:"<"},
+        {re:/^call to(?: asm.js)? native (.*) \(in wasm\)$/,              sub:"$1"},
         {re:/ \(in wasm\)$/,                                              sub:""}
     ];
 
@@ -210,13 +226,24 @@ WasmHelpers._normalizeStack = (stack, preciseStacks) => {
 
     var framesIn = stack.split(',');
     var framesOut = [];
+  outer:
     for (let frame of framesIn) {
+        if (unmatched[frame])
+            continue;
+        let probe = matched[frame];
+        if (probe !== undefined) {
+            framesOut.push(probe);
+            continue;
+        }
         for (let {re, sub} of wasmFrameTypes) {
             if (re.test(frame)) {
-                framesOut.push(frame.replace(re, sub));
-                break;
+                let repr = frame.replace(re, sub);
+                framesOut.push(repr);
+                matched[frame] = repr;
+                continue outer;
             }
         }
+        unmatched[frame] = true;
     }
 
     return framesOut.join(',');

@@ -105,13 +105,8 @@
           }
         }
 
-        // Test anonymous buttons
-        var dlg = window.top.document;
-        var buttonBox = dlg.getAnonymousElementByAttribute(
-          dlg.documentElement,
-          "anonid",
-          "buttons"
-        );
+        // Test dialog buttons
+        let buttonBox = window.top.document.documentElement.buttonBox;
         if (buttonBox) {
           this.fireAccessKeyButton(buttonBox, charPressedLower);
         }
@@ -138,15 +133,6 @@
 
     get disabled() {
       return this.getAttribute("disabled") == "true";
-    }
-
-    set dlgType(val) {
-      this.setAttribute("dlgtype", val);
-      return val;
-    }
-
-    get dlgType() {
-      return this.getAttribute("dlgtype");
     }
 
     set group(val) {
@@ -249,6 +235,8 @@
     Ci.nsIDOMXULButtonElement,
   ]);
 
+  MozElements.ButtonBase = MozButtonBase;
+
   class MozButton extends MozButtonBase {
     static get inheritedAttributes() {
       return {
@@ -267,8 +255,8 @@
       let frag = document.importNode(
         MozXULElement.parseXULToFragment(`
         <hbox class="box-inherit button-box" align="center" pack="center" flex="1" anonid="button-box">
-          <image class="button-icon"></image>
-          <label class="button-text"></label>
+          <image class="button-icon"/>
+          <label class="button-text"/>
         </hbox>`),
         true
       );
@@ -281,10 +269,10 @@
         MozXULElement.parseXULToFragment(`
         <hbox class="box-inherit button-box" align="center" pack="center" flex="1">
           <hbox class="box-inherit" align="center" pack="center" flex="1">
-            <image class="button-icon"></image>
-            <label class="button-text"></label>
+            <image class="button-icon"/>
+            <label class="button-text"/>
           </hbox>
-          <dropmarker class="button-menu-dropmarker"></dropmarker>
+          <dropmarker class="button-menu-dropmarker"/>
         </hbox>`),
         true
       );

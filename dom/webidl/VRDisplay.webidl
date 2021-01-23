@@ -1,7 +1,11 @@
 /* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * The origin of this IDL file is
+ * https://immersive-web.github.io/webvr/spec/1.1/
+ */
 
 enum VREye {
   "left",
@@ -9,7 +13,9 @@ enum VREye {
 };
 
 [Pref="dom.vr.enabled",
- HeaderFile="mozilla/dom/VRDisplay.h"]
+ HeaderFile="mozilla/dom/VRDisplay.h",
+ SecureContext,
+ Exposed=Window]
 interface VRFieldOfView {
   readonly attribute double upDegrees;
   readonly attribute double rightDegrees;
@@ -49,7 +55,9 @@ dictionary VRLayer {
  * These are expected to be static per-device/per-user.
  */
 [Pref="dom.vr.enabled",
- HeaderFile="mozilla/dom/VRDisplay.h"]
+ HeaderFile="mozilla/dom/VRDisplay.h",
+ SecureContext,
+ Exposed=Window]
 interface VRDisplayCapabilities {
   /**
    * hasPosition is true if the VRDisplay is capable of tracking its position.
@@ -90,7 +98,9 @@ interface VRDisplayCapabilities {
  * that support room-scale experiences.
  */
 [Pref="dom.vr.enabled",
- HeaderFile="mozilla/dom/VRDisplay.h"]
+ HeaderFile="mozilla/dom/VRDisplay.h",
+ SecureContext,
+ Exposed=Window]
 interface VRStageParameters {
   /**
    * A 16-element array containing the components of a column-major 4x4
@@ -115,7 +125,9 @@ interface VRStageParameters {
 };
 
 [Pref="dom.vr.enabled",
- HeaderFile="mozilla/dom/VRDisplay.h"]
+ HeaderFile="mozilla/dom/VRDisplay.h",
+ SecureContext,
+ Exposed=Window]
 interface VRPose
 {
   /**
@@ -134,10 +146,13 @@ interface VRPose
   [Constant, Throws] readonly attribute Float32Array? angularAcceleration;
 };
 
-[Constructor,
- Pref="dom.vr.enabled",
- HeaderFile="mozilla/dom/VRDisplay.h"]
+[Pref="dom.vr.enabled",
+ HeaderFile="mozilla/dom/VRDisplay.h",
+ SecureContext,
+ Exposed=Window]
 interface VRFrameData {
+  constructor();
+
   readonly attribute DOMHighResTimeStamp timestamp;
 
   [Throws, Pure] readonly attribute Float32Array leftProjectionMatrix;
@@ -149,16 +164,10 @@ interface VRFrameData {
   [Pure] readonly attribute VRPose pose;
 };
 
-[Constructor,
- Pref="dom.vr.test.enabled",
- HeaderFile="mozilla/dom/VRDisplay.h"]
-interface VRSubmitFrameResult {
-  readonly attribute unsigned long frameNum;
-  readonly attribute DOMString? base64Image;
-};
-
 [Pref="dom.vr.enabled",
- HeaderFile="mozilla/dom/VRDisplay.h"]
+ HeaderFile="mozilla/dom/VRDisplay.h",
+ SecureContext,
+ Exposed=Window]
 interface VREyeParameters {
   /**
    * offset is a 3-component vector representing an offset to
@@ -181,7 +190,9 @@ interface VREyeParameters {
 };
 
 [Pref="dom.vr.enabled",
- HeaderFile="mozilla/dom/VRDisplay.h"]
+ HeaderFile="mozilla/dom/VRDisplay.h",
+ SecureContext,
+ Exposed=Window]
 interface VRDisplay : EventTarget {
   /**
    * presentingGroups is a bitmask indicating which VR session groups
@@ -247,9 +258,6 @@ interface VRDisplay : EventTarget {
    * and acceleration of each of these properties.
    */
   [NewObject] VRPose getPose();
-
-  [Pref="dom.vr.test.enabled"]
-  boolean getSubmitFrameResult(VRSubmitFrameResult result);
 
   /**
    * Reset the pose for this display, treating its current position and

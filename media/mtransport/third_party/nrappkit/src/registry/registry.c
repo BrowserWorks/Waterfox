@@ -44,7 +44,7 @@
 
 #include <assert.h>
 #include <string.h>
-#ifndef _MSC_VER
+#if !defined(__MINGW32__) && !defined(_MSC_VER)
 #include <strings.h>
 #include <sys/param.h>
 #include <netinet/in.h>

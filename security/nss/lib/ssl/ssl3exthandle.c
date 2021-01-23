@@ -246,7 +246,7 @@ ssl3_ClientSendSessionTicketXtn(const sslSocket *ss, TLSExtensionData *xtnData,
     session_ticket = &sid->u.ssl3.locked.sessionTicket;
     if (session_ticket->ticket.data &&
         (xtnData->ticketTimestampVerified ||
-         ssl_TicketTimeValid(session_ticket))) {
+         ssl_TicketTimeValid(ss, session_ticket))) {
 
         xtnData->ticketTimestampVerified = PR_FALSE;
 
@@ -608,7 +608,6 @@ ssl3_ClientHandleStatusRequestXtn(const sslSocket *ss, TLSExtensionData *xtnData
     return SECSuccess;
 }
 
-PRUint32 ssl_ticket_lifetime = 2 * 24 * 60 * 60; /* 2 days in seconds */
 #define TLS_EX_SESS_TICKET_VERSION (0x010a)
 
 /*
@@ -742,7 +741,7 @@ ssl3_EncodeSessionTicket(sslSocket *ss, const NewSessionTicket *ticket,
     }
 
     /* timestamp */
-    now = ssl_TimeUsec();
+    now = ssl_Time(ss);
     PORT_Assert(sizeof(now) == 8);
     rv = sslBuffer_AppendNumber(&plaintext, now, 8);
     if (rv != SECSuccess)
@@ -797,7 +796,7 @@ ssl3_EncodeSessionTicket(sslSocket *ss, const NewSessionTicket *ticket,
      * This is compared to the expected time, which should differ only as a
      * result of clock errors or errors in the RTT estimate.
      */
-    ticketAgeBaseline = (ssl_TimeUsec() - ss->ssl3.hs.serverHelloTime) / PR_USEC_PER_MSEC;
+    ticketAgeBaseline = (ssl_Time(ss) - ss->ssl3.hs.serverHelloTime) / PR_USEC_PER_MSEC;
     ticketAgeBaseline -= ticket->ticket_age_add;
     rv = sslBuffer_AppendNumber(&plaintext, ticketAgeBaseline, 4);
     if (rv != SECSuccess)
@@ -1035,7 +1034,9 @@ ssl_ParseSessionTicket(sslSocket *ss, const SECItem *decryptedTicket,
         PORT_SetError(SEC_ERROR_LIBRARY_FAILURE);
         return SECFailure;
     }
-    parsedTicket->timestamp = (PRTime)temp << 32;
+
+    /* Cast to avoid undefined behavior if the top bit is set. */
+    parsedTicket->timestamp = (PRTime)((PRUint64)temp << 32);
     rv = ssl3_ExtConsumeHandshakeNumber(ss, &temp, 4, &buffer, &len);
     if (rv != SECSuccess) {
         PORT_SetError(SEC_ERROR_LIBRARY_FAILURE);
@@ -1057,8 +1058,11 @@ ssl_ParseSessionTicket(sslSocket *ss, const SECItem *decryptedTicket,
         PORT_SetError(SEC_ERROR_LIBRARY_FAILURE);
         return SECFailure;
     }
+#ifndef UNSAFE_FUZZER_MODE
+    /* A well-behaving server should only write 0 or 1. */
     PORT_Assert(temp == PR_TRUE || temp == PR_FALSE);
-    parsedTicket->extendedMasterSecretUsed = (PRBool)temp;
+#endif
+    parsedTicket->extendedMasterSecretUsed = temp ? PR_TRUE : PR_FALSE;
 
     rv = ssl3_ExtConsumeHandshake(ss, &temp, 4, &buffer, &len);
     if (rv != SECSuccess) {
@@ -1242,8 +1246,8 @@ ssl3_ProcessSessionTicketCommon(sslSocket *ss, const SECItem *ticket,
     }
 
     /* Use the ticket if it is valid and unexpired. */
-    if (parsedTicket.timestamp + ssl_ticket_lifetime * PR_USEC_PER_SEC >
-        ssl_TimeUsec()) {
+    PRTime end = parsedTicket.timestamp + (ssl_ticket_lifetime * PR_USEC_PER_SEC);
+    if (end > ssl_Time(ss)) {
 
         rv = ssl_CreateSIDFromTicket(ss, ticket, &parsedTicket, &sid);
         if (rv != SECSuccess) {
@@ -1637,13 +1641,18 @@ SECStatus
 ssl3_SendSigAlgsXtn(const sslSocket *ss, TLSExtensionData *xtnData,
                     sslBuffer *buf, PRBool *added)
 {
-    SECStatus rv;
-
     if (ss->vrange.max < SSL_LIBRARY_VERSION_TLS_1_2) {
         return SECSuccess;
     }
 
-    rv = ssl3_EncodeSigAlgs(ss, buf);
+    PRUint16 minVersion;
+    if (ss->sec.isServer) {
+        minVersion = ss->version; /* CertificateRequest */
+    } else {
+        minVersion = ss->vrange.min; /* ClientHello */
+    }
+
+    SECStatus rv = ssl3_EncodeSigAlgs(ss, minVersion, buf);
     if (rv != SECSuccess) {
         return SECFailure;
     }

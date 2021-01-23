@@ -12,7 +12,6 @@
 
 function startTest() {
   var context = new AudioContext();
-  var hasonstop = false;
   var buffer = context.createBuffer(1, 80920, context.sampleRate);
   for (var i = 0; i < 80920; ++i) {
     buffer.getChannelData(0)[i] = Math.sin(1000 * 2 * Math.PI * i / context.sampleRate);
@@ -26,10 +25,9 @@ function startTest() {
   source.connect(dest);
   var elem = document.createElement('audio');
   elem.srcObject = dest.stream;
-  mMediaStream = dest.stream;
   source.start(0);
   elem.play();
-  mMediaRecorder = new MediaRecorder(dest.stream);
+  let mMediaRecorder = new MediaRecorder(dest.stream);
   mMediaRecorder.onwarning = function() {
     ok(false, 'onwarning unexpectedly fired');
   };
@@ -45,7 +43,8 @@ function startTest() {
   };
   mMediaRecorder.ondataavailable = function (e) {
     if (mMediaRecorder.state == 'recording') {
-      is('audio/ogg', mMediaRecorder.mimeType, "check the record mimetype return " + mMediaRecorder.mimeType);
+      is(mMediaRecorder.mimeType, 'audio/ogg; codecs=opus', 'Expected MediaRecorder mimetype');
+      is(e.data.type, 'audio/ogg; codecs=opus', 'Expected Blob mimetype');
       ok(e.data.size > 0, 'check blob has data');
       mMediaRecorder.stop();
     }

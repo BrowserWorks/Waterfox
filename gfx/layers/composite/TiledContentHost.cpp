@@ -5,7 +5,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "TiledContentHost.h"
-#include "gfxPrefs.h"                   // for gfxPrefs
 #include "PaintedLayerComposite.h"      // for PaintedLayerComposite
 #include "mozilla/gfx/BaseSize.h"       // for BaseSize
 #include "mozilla/gfx/Matrix.h"         // for Matrix4x4
@@ -16,7 +15,8 @@
 // clang-format on
 #include "mozilla/layers/Effects.h"  // for TexturedEffect, Effect, etc
 #include "mozilla/layers/LayerMetricsWrapper.h"  // for LayerMetricsWrapper
-#include "mozilla/layers/TextureHostOGL.h"       // for TextureHostOGL
+#include "mozilla/layers/PTextureParent.h"
+#include "mozilla/layers/TextureHostOGL.h"  // for TextureHostOGL
 #ifdef XP_DARWIN
 #  include "mozilla/layers/TextureSync.h"  // for TextureSync
 #endif
@@ -25,6 +25,7 @@
 #include "nsPoint.h"          // for IntPoint
 #include "nsPrintfCString.h"  // for nsPrintfCString
 #include "nsRect.h"           // for IntRect
+#include "mozilla/StaticPrefs_layers.h"
 #include "mozilla/layers/TextureClient.h"
 
 namespace mozilla {
@@ -35,12 +36,12 @@ class Layer;
 
 float TileHost::GetFadeInOpacity(float aOpacity) {
   TimeStamp now = TimeStamp::Now();
-  if (!gfxPrefs::LayerTileFadeInEnabled() || mFadeStart.IsNull() ||
+  if (!StaticPrefs::layers_tiles_fade_in_enabled() || mFadeStart.IsNull() ||
       now < mFadeStart) {
     return aOpacity;
   }
 
-  float duration = gfxPrefs::LayerTileFadeInDuration();
+  float duration = StaticPrefs::layers_tiles_fade_in_duration_ms();
   float elapsed = (now - mFadeStart).ToMilliseconds();
   if (elapsed > duration) {
     mFadeStart = TimeStamp();
@@ -263,7 +264,7 @@ bool TiledLayerBufferComposite::UseTiles(const SurfaceDescriptorTiles& aTiles,
   TilesPlacement newTiles(aTiles.firstTileX(), aTiles.firstTileY(),
                           aTiles.retainedWidth(), aTiles.retainedHeight());
 
-  const InfallibleTArray<TileDescriptor>& tileDescriptors = aTiles.tiles();
+  const nsTArray<TileDescriptor>& tileDescriptors = aTiles.tiles();
 
   TextureSourceRecycler oldRetainedTiles(std::move(mRetainedTiles));
   mRetainedTiles.SetLength(tileDescriptors.Length());
@@ -339,7 +340,8 @@ bool TiledLayerBufferComposite::UseTiles(const SurfaceDescriptorTiles& aTiles,
 
       aLayerManager->CompositeUntil(
           tile.mFadeStart +
-          TimeDuration::FromMilliseconds(gfxPrefs::LayerTileFadeInDuration()));
+          TimeDuration::FromMilliseconds(
+              StaticPrefs::layers_tiles_fade_in_duration_ms()));
     }
   }
 
@@ -421,8 +423,8 @@ void TiledContentHost::Composite(
   // already has some opacity, we want to skip this behaviour. Otherwise
   // we end up changing the expected overall transparency of the content,
   // and it just looks wrong.
-  Color backgroundColor;
-  if (aOpacity == 1.0f && gfxPrefs::LowPrecisionOpacity() < 1.0f) {
+  DeviceColor backgroundColor;
+  if (aOpacity == 1.0f && StaticPrefs::layers_low_precision_opacity() < 1.0f) {
     // Background colors are only stored on scrollable layers. Grab
     // the one from the nearest scrollable ancestor layer.
     for (LayerMetricsWrapper ancestor(GetLayer(),
@@ -436,7 +438,7 @@ void TiledContentHost::Composite(
   }
   float lowPrecisionOpacityReduction =
       (aOpacity == 1.0f && backgroundColor.a == 1.0f)
-          ? gfxPrefs::LowPrecisionOpacity()
+          ? StaticPrefs::layers_low_precision_opacity()
           : 1.0f;
 
   nsIntRegion tmpRegion;
@@ -524,10 +526,10 @@ void TiledContentHost::RenderTile(
 
 void TiledContentHost::RenderLayerBuffer(
     TiledLayerBufferComposite& aLayerBuffer, Compositor* aCompositor,
-    const Color* aBackgroundColor, EffectChain& aEffectChain, float aOpacity,
-    const gfx::SamplingFilter aSamplingFilter, const gfx::IntRect& aClipRect,
-    nsIntRegion aVisibleRegion, gfx::Matrix4x4 aTransform,
-    const Maybe<Polygon>& aGeometry) {
+    const DeviceColor* aBackgroundColor, EffectChain& aEffectChain,
+    float aOpacity, const gfx::SamplingFilter aSamplingFilter,
+    const gfx::IntRect& aClipRect, nsIntRegion aVisibleRegion,
+    gfx::Matrix4x4 aTransform, const Maybe<Polygon>& aGeometry) {
   float resolution = aLayerBuffer.GetResolution();
   gfx::Size layerScale(1, 1);
 
@@ -631,7 +633,7 @@ void TiledContentHost::PrintInfo(std::stringstream& aStream,
   aStream << nsPrintfCString("TiledContentHost (0x%p)", this).get();
 
 #if defined(MOZ_DUMP_PAINTING)
-  if (gfxPrefs::LayersDumpTexture()) {
+  if (StaticPrefs::layers_dump_texture()) {
     nsAutoCString pfx(aPrefix);
     pfx += "  ";
 

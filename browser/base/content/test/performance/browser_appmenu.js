@@ -25,8 +25,8 @@ const EXPECTED_APPMENU_OPEN_REFLOWS = [
 
   {
     stack: [
-      "adjustArrowPosition@chrome://global/content/bindings/popup.xml",
-      "onxblpopuppositioned@chrome://global/content/bindings/popup.xml",
+      "adjustArrowPosition@chrome://global/content/elements/panel.js",
+      "on_popuppositioned@chrome://global/content/elements/panel.js",
     ],
 
     maxCount: 22, // This number should only ever go down - never up.
@@ -44,23 +44,27 @@ const EXPECTED_APPMENU_OPEN_REFLOWS = [
 
 add_task(async function() {
   await ensureNoPreloadedBrowser();
+  await disableFxaBadge();
 
-  let textBoxRect = document
-    .getAnonymousElementByAttribute(gURLBar.textbox, "anonid", "moz-input-box")
+  let textBoxRect = gURLBar
+    .querySelector("moz-input-box")
     .getBoundingClientRect();
   let menuButtonRect = document
     .getElementById("PanelUI-menu-button")
     .getBoundingClientRect();
+  let firstTabRect = gBrowser.selectedTab.getBoundingClientRect();
   let frameExpectations = {
     filter: rects =>
       rects.filter(
         r =>
-          !// We expect the menu button to get into the active state.
-          (
-            r.y1 >= menuButtonRect.top &&
-            r.y2 <= menuButtonRect.bottom &&
-            r.x1 >= menuButtonRect.left &&
-            r.x2 <= menuButtonRect.right
+          !(
+            // We expect the menu button to get into the active state.
+            (
+              r.y1 >= menuButtonRect.top &&
+              r.y2 <= menuButtonRect.bottom &&
+              r.x1 >= menuButtonRect.left &&
+              r.x2 <= menuButtonRect.right
+            )
           )
         // XXX For some reason the menu panel isn't in our screenshots,
         // but that's where we actually expect many changes.
@@ -73,6 +77,14 @@ add_task(async function() {
           r.x2 <= textBoxRect.right &&
           r.y1 >= textBoxRect.top &&
           r.y2 <= textBoxRect.bottom,
+      },
+      {
+        name: "bug 1547341 - a first tab gets drawn early",
+        condition: r =>
+          r.x1 >= firstTabRect.left &&
+          r.x2 <= firstTabRect.right &&
+          r.y1 >= firstTabRect.top &&
+          r.y2 <= firstTabRect.bottom,
       },
     ],
   };
@@ -94,7 +106,8 @@ add_task(async function() {
       // exhausted, we go back up a level.
       async function openSubViewsRecursively(currentView) {
         let navButtons = Array.from(
-          currentView.querySelectorAll(".subviewbutton-nav")
+          // Ensure that only enabled buttons are tested
+          currentView.querySelectorAll(".subviewbutton-nav:not([disabled])")
         );
         if (!navButtons) {
           return;
@@ -113,7 +126,7 @@ add_task(async function() {
           let container = PanelUI.multiView.querySelector(
             ".panel-viewcontainer"
           );
-          await BrowserTestUtils.waitForCondition(() => {
+          await TestUtils.waitForCondition(() => {
             return !container.hasAttribute("width");
           });
 
@@ -127,7 +140,7 @@ add_task(async function() {
           await promiseViewShown;
 
           // Workaround until bug 1363756 is fixed, then this can be removed.
-          await BrowserTestUtils.waitForCondition(() => {
+          await TestUtils.waitForCondition(() => {
             return !container.hasAttribute("width");
           });
         }

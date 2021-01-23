@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -35,6 +33,7 @@ const {
   getBindingElementAndPseudo,
   getCSSStyleRules,
   l10n,
+  hasVisitedState,
   isAgentStylesheet,
   isAuthorStylesheet,
   isUserStylesheet,
@@ -49,13 +48,7 @@ const COMPAREMODE = {
   INTEGER: "int",
 };
 
-/**
- * @param {function} isInherited A function that determines if the CSS property
- *                   is inherited.
- */
-function CssLogic(isInherited) {
-  // The cache of examined CSS properties.
-  this._isInherited = isInherited;
+function CssLogic() {
   this._propertyInfos = {};
 }
 
@@ -216,7 +209,7 @@ CssLogic.prototype = {
 
     let info = this._propertyInfos[property];
     if (!info) {
-      info = new CssPropertyInfo(this, property, this._isInherited);
+      info = new CssPropertyInfo(this, property);
       this._propertyInfos[property] = info;
     }
 
@@ -327,7 +320,7 @@ CssLogic.prototype = {
 
     if (domSheet.href) {
       cacheId = domSheet.href;
-    } else if (domSheet.ownerNode && domSheet.ownerNode.ownerDocument) {
+    } else if (domSheet.ownerNode?.ownerDocument) {
       cacheId = domSheet.ownerNode.ownerDocument.location;
     }
 
@@ -517,7 +510,8 @@ CssLogic.prototype = {
         if (
           rule.getPropertyValue(property) &&
           (status == STATUS.MATCHED ||
-            (status == STATUS.PARENT_MATCH && this._isInherited(property)))
+            (status == STATUS.PARENT_MATCH &&
+              InspectorUtils.isInheritedProperty(property)))
         ) {
           result[property] = true;
           return false;
@@ -660,6 +654,12 @@ CssLogic.getShortName = function(element) {
  *         An array of string selectors.
  */
 CssLogic.getSelectors = function(domRule) {
+  if (domRule.type !== CSSRule.STYLE_RULE) {
+    // Return empty array since InspectorUtils.getSelectorCount() assumes
+    // only STYLE_RULE type.
+    return [];
+  }
+
   const selectors = [];
 
   const len = InspectorUtils.getSelectorCount(domRule);
@@ -730,6 +730,11 @@ CssLogic.href = function(sheet) {
 
   return href;
 };
+
+/**
+ * Returns true if the given node has visited state.
+ */
+CssLogic.hasVisitedState = hasVisitedState;
 
 /**
  * A safe way to access cached bits of information about a stylesheet.
@@ -1228,15 +1233,12 @@ CssSelector.prototype = {
  *
  * @param {CssLogic} cssLogic Reference to the parent CssLogic instance
  * @param {string} property The CSS property we are gathering information for
- * @param {function} isInherited A function that determines if the CSS property
- *                   is inherited.
  * @constructor
  */
-function CssPropertyInfo(cssLogic, property, isInherited) {
+function CssPropertyInfo(cssLogic, property) {
   this._cssLogic = cssLogic;
   this.property = property;
   this._value = "";
-  this._isInherited = isInherited;
 
   // An array holding CssSelectorInfo objects for each of the matched selectors
   // that are inside a CSS rule. Only rules that hold the this.property are
@@ -1325,7 +1327,8 @@ CssPropertyInfo.prototype = {
     if (
       value &&
       (status == STATUS.MATCHED ||
-        (status == STATUS.PARENT_MATCH && this._isInherited(this.property)))
+        (status == STATUS.PARENT_MATCH &&
+          InspectorUtils.isInheritedProperty(this.property)))
     ) {
       const selectorInfo = new CssSelectorInfo(
         selector,

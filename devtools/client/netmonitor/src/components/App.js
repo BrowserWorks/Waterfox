@@ -16,13 +16,19 @@ const {
 
 // Components
 loader.lazyGetter(this, "MonitorPanel", function() {
-  return createFactory(require("./MonitorPanel"));
+  return createFactory(
+    require("devtools/client/netmonitor/src/components/MonitorPanel")
+  );
 });
 loader.lazyGetter(this, "StatisticsPanel", function() {
-  return createFactory(require("./StatisticsPanel"));
+  return createFactory(
+    require("devtools/client/netmonitor/src/components/StatisticsPanel")
+  );
 });
 loader.lazyGetter(this, "DropHarHandler", function() {
-  return createFactory(require("./DropHarHandler"));
+  return createFactory(
+    require("devtools/client/netmonitor/src/components/DropHarHandler")
+  );
 });
 
 const { div } = dom;
@@ -46,6 +52,8 @@ class App extends Component {
       sourceMapService: PropTypes.object,
       // True if the stats panel is opened.
       statisticsOpen: PropTypes.bool.isRequired,
+      // Document which settings menu will be injected to
+      toolboxDoc: PropTypes.object.isRequired,
     };
   }
 
@@ -59,6 +67,7 @@ class App extends Component {
       openSplitConsole,
       sourceMapService,
       statisticsOpen,
+      toolboxDoc,
     } = this.props;
 
     return div(
@@ -75,6 +84,7 @@ class App extends Component {
               openSplitConsole,
               sourceMapService,
               openLink,
+              toolboxDoc,
             })
           )
         : StatisticsPanel({

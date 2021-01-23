@@ -8,13 +8,16 @@
 #include "WrapperFactory.h"
 #include "AccessCheck.h"
 #include "jsfriendapi.h"
+#include "js/Exception.h"
 #include "js/Proxy.h"
 #include "js/Wrapper.h"
+#include "mozilla/ErrorResult.h"
+#include "mozilla/Unused.h"
 #include "mozilla/dom/BindingUtils.h"
 #include "mozilla/dom/BlobBinding.h"
 #include "mozilla/dom/File.h"
-#include "mozilla/dom/FileListBinding.h"
 #include "mozilla/dom/StructuredCloneHolder.h"
+#include "nsContentUtils.h"
 #include "nsGlobalWindow.h"
 #include "nsJSUtils.h"
 
@@ -39,18 +42,6 @@ enum StackScopedCloneTags {
   SCTAG_FUNCTION,
 };
 
-// The HTML5 structured cloning algorithm includes a few DOM objects, notably
-// FileList. That wouldn't in itself be a reason to support them here,
-// but we've historically supported them for Cu.cloneInto (where we didn't
-// support other reflectors), so we need to continue to do so in the
-// wrapReflectors == false case to maintain compatibility.
-//
-// FileList clones are supposed to give brand new objects, rather than
-// cross-compartment wrappers. For this, our current implementation relies on
-// the fact that these objects are implemented with XPConnect and have one
-// reflector per scope.
-bool IsFileList(JSObject* obj) { return IS_INSTANCE_OF(FileList, obj); }
-
 class MOZ_STACK_CLASS StackScopedCloneData : public StructuredCloneHolderBase {
  public:
   StackScopedCloneData(JSContext* aCx, StackScopedCloneOptions* aOptions)
@@ -59,6 +50,7 @@ class MOZ_STACK_CLASS StackScopedCloneData : public StructuredCloneHolderBase {
   ~StackScopedCloneData() { Clear(); }
 
   JSObject* CustomReadHandler(JSContext* aCx, JSStructuredCloneReader* aReader,
+                              const JS::CloneDataPolicy& aCloneDataPolicy,
                               uint32_t aTag, uint32_t aData) override {
     if (aTag == SCTAG_REFLECTOR) {
       MOZ_ASSERT(!aData);
@@ -116,6 +108,10 @@ class MOZ_STACK_CLASS StackScopedCloneData : public StructuredCloneHolderBase {
       JS::Rooted<JS::Value> val(aCx);
       {
         RefPtr<Blob> blob = Blob::Create(global, mBlobImpls[idx]);
+        if (NS_WARN_IF(!blob)) {
+          return nullptr;
+        }
+
         if (!ToJSValue(aCx, blob, &val)) {
           return nullptr;
         }
@@ -129,7 +125,8 @@ class MOZ_STACK_CLASS StackScopedCloneData : public StructuredCloneHolderBase {
   }
 
   bool CustomWriteHandler(JSContext* aCx, JSStructuredCloneWriter* aWriter,
-                          JS::Handle<JSObject*> aObj) override {
+                          JS::Handle<JSObject*> aObj,
+                          bool* aSameProcessScopeRequired) override {
     {
       JS::Rooted<JSObject*> obj(aCx, aObj);
       Blob* blob = nullptr;
@@ -137,9 +134,9 @@ class MOZ_STACK_CLASS StackScopedCloneData : public StructuredCloneHolderBase {
         BlobImpl* blobImpl = blob->Impl();
         MOZ_ASSERT(blobImpl);
 
-        if (!mBlobImpls.AppendElement(blobImpl)) {
-          return false;
-        }
+        // XXX(Bug 1631371) Check if this should use a fallible operation as it
+        // pretended earlier.
+        mBlobImpls.AppendElement(blobImpl);
 
         size_t idx = mBlobImpls.Length() - 1;
         return JS_WriteUint32Pair(aWriter, SCTAG_BLOB, 0) &&
@@ -147,8 +144,7 @@ class MOZ_STACK_CLASS StackScopedCloneData : public StructuredCloneHolderBase {
       }
     }
 
-    if ((mOptions->wrapReflectors && IsReflector(aObj, aCx)) ||
-        IsFileList(aObj)) {
+    if (mOptions->wrapReflectors && IsReflector(aObj, aCx)) {
       if (!mReflectors.append(aObj)) {
         return false;
       }
@@ -269,6 +265,62 @@ static bool CheckSameOriginArg(JSContext* cx, FunctionForwarderOptions& options,
   return false;
 }
 
+// Sanitize the exception on cx (which comes from calling unwrappedFun), if the
+// current Realm of cx shouldn't have access to it.  unwrappedFun is generally
+// _not_ in the current Realm of cx here.
+static void MaybeSanitizeException(JSContext* cx,
+                                   JS::Handle<JSObject*> unwrappedFun) {
+  // Ensure that we are not propagating more-privileged exceptions
+  // to less-privileged code.
+  nsIPrincipal* callerPrincipal = nsContentUtils::SubjectPrincipal(cx);
+
+  // Re-enter the unwrappedFun Realm to do get the current exception, so we
+  // don't end up unnecessarily wrapping exceptions.
+  {  // Scope for JSAutoRealm
+    JSAutoRealm ar(cx, unwrappedFun);
+
+    JS::ExceptionStack exnStack(cx);
+    // If JS::GetPendingExceptionStack returns false, this was an uncatchable
+    // exception, or we somehow failed to wrap the exception into our
+    // compartment.  In either case, treating this as uncatchable exception,
+    // by returning without setting any exception on the JSContext,
+    // seems fine.
+    if (!JS::GetPendingExceptionStack(cx, &exnStack)) {
+      JS_ClearPendingException(cx);
+      return;
+    }
+
+    // Let through non-objects as-is, because some APIs rely on
+    // that and accidental exceptions are never non-objects.
+    if (!exnStack.exception().isObject() ||
+        callerPrincipal->Subsumes(nsContentUtils::ObjectPrincipal(
+            js::UncheckedUnwrap(&exnStack.exception().toObject())))) {
+      // Just leave exn as-is.
+      return;
+    }
+
+    // Whoever we are throwing the exception to should not have access to
+    // the exception.  Sanitize it. First clear the existing exception.
+    JS_ClearPendingException(cx);
+    {  // Scope for AutoJSAPI
+      AutoJSAPI jsapi;
+      if (jsapi.Init(unwrappedFun)) {
+        JS::SetPendingExceptionStack(cx, exnStack);
+      }
+      // If Init() fails, we can't report the exception, but oh, well.
+
+      // Now just let the AutoJSAPI go out of scope and it will report the
+      // exception in its destructor.
+    }
+  }
+
+  // Now back in our original Realm again, throw a sanitized exception.
+  ErrorResult rv;
+  rv.ThrowInvalidStateError("An exception was thrown");
+  // Can we provide a better context here?
+  Unused << rv.MaybeSetPendingException(cx);
+}
+
 static bool FunctionForwarder(JSContext* cx, unsigned argc, Value* vp) {
   CallArgs args = CallArgsFromVp(argc, vp);
 
@@ -293,6 +345,7 @@ static bool FunctionForwarder(JSContext* cx, unsigned argc, Value* vp) {
     thisVal.setObject(*thisObject);
   }
 
+  bool ok = true;
   {
     // We manually implement the contents of CrossCompartmentWrapper::call
     // here, because certain function wrappers (notably content->nsEP) are
@@ -317,15 +370,20 @@ static bool FunctionForwarder(JSContext* cx, unsigned argc, Value* vp) {
     RootedValue fval(cx, ObjectValue(*unwrappedFun));
     if (args.isConstructing()) {
       RootedObject obj(cx);
-      if (!JS::Construct(cx, fval, args, &obj)) {
-        return false;
+      ok = JS::Construct(cx, fval, args, &obj);
+      if (ok) {
+        args.rval().setObject(*obj);
       }
-      args.rval().setObject(*obj);
     } else {
-      if (!JS::Call(cx, thisVal, fval, args, args.rval())) {
-        return false;
-      }
+      ok = JS::Call(cx, thisVal, fval, args, args.rval());
     }
+  }
+
+  // Now that we are back in our original Realm, we can check whether to
+  // sanitize the exception.
+  if (!ok) {
+    MaybeSanitizeException(cx, unwrappedFun);
+    return false;
   }
 
   // Rewrap the return value into our compartment.
@@ -424,10 +482,14 @@ bool ExportFunction(JSContext* cx, HandleValue vfunction, HandleValue vscope,
 
     RootedId id(cx, options.defineAs);
     if (JSID_IS_VOID(id)) {
-      // If there wasn't any function name specified,
-      // copy the name from the function being imported.
+      // If there wasn't any function name specified, copy the name from the
+      // function being imported.  But be careful in case the callable we have
+      // is not actually a JSFunction.
+      RootedString funName(cx);
       JSFunction* fun = JS_GetObjectFunction(funObj);
-      RootedString funName(cx, JS_GetFunctionId(fun));
+      if (fun) {
+        funName = JS_GetFunctionId(fun);
+      }
       if (!funName) {
         funName = JS_AtomizeAndPinString(cx, "");
       }

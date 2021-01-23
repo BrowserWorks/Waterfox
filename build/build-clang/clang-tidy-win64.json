@@ -1,5 +1,4 @@
 {
-    "llvm_revision": "d2298e74235598f15594fe2c99bbac870a507c59",
     "stages": "1",
     "build_libcxx": false,
     "build_type": "Release",
@@ -10,6 +9,8 @@
     "cxx": "cl.exe",
     "ml": "ml64.exe",
     "patches": [
-      "clang-tidy-8.patch"
+        "clang-tidy-ci.patch",
+        "clang-tidy-no-errors.patch",
+        "clang_format_10.patch"
     ]
 }

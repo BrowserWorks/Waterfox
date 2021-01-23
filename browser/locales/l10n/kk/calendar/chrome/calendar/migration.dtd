@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migration.title "&brandFullName;: деректер импорты">
+<!ENTITY migration.welcome "Қош келдіңіз">
+<!ENTITY migration.importing "Импорттау">
+<!ENTITY migration.list.description "&brandShortName; күнтізбе деректерін көптеген әйгілі қолданбалардан импорттай алады. Келесі қолданбалар деректері сіздің компьютеріңізден табылды. Олардың қайсысын импорттау керектігін таңдаңыз.">
+<!ENTITY migration.progress.description "Таңдалған деректерді импорттау">

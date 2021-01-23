@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Importěrowański asistent">
+
+<!ENTITY importFromWin.label            "Nastajenja, kontowe nastajenja, adresnik, filtry a druge daty importěrowaś z:">
+<!ENTITY importFromNonWin.label         "Nastajenja, kontowe nastajenja, adresnik, filtry a druge daty importěrowaś z:">
+<!ENTITY importSourceNotFound.label     "Žedno nałoženje, z kótaregož daju se daty importěrowaś.">
+
+<!ENTITY importFromNothing.label        "Nic njeimportěrowaś">
+<!ENTITY importFromNothing.accesskey    "i">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 abo nowšy">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "Nastajenja a postowe zarědniki importěrowaś">
+<!ENTITY importItems.title              "Zapiski, kótarež maju se importěrowaś">
+<!ENTITY importItems.label              "Zapiski wubraś, kótarež maju se importěrowaś:">
+
+<!ENTITY migrating.title                "Importěrujo se…">
+<!ENTITY migrating.label                "Slědujuce zapiski se tuchylu importěruju…">
+
+<!ENTITY selectProfile.title            "Profil wubraś">
+<!ENTITY selectProfile.label            "Slědujuce profile mógu se importěrowaś z:">
+
+<!ENTITY done.title                     "Import skóńcony">
+<!ENTITY done.label                     "Slědujuce zapiski su se wuspěšnje importěrowali:">

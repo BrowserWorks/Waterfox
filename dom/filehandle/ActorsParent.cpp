@@ -16,9 +16,7 @@
 #include "mozilla/dom/indexedDB/ActorsParent.h"
 #include "mozilla/dom/indexedDB/PBackgroundIDBDatabaseParent.h"
 #include "mozilla/dom/IPCBlobUtils.h"
-#include "mozilla/dom/PendingIPCBlobParent.h"
 #include "mozilla/dom/quota/MemoryOutputStream.h"
-#include "nsAutoPtr.h"
 #include "nsComponentManagerUtils.h"
 #include "nsDebug.h"
 #include "nsError.h"
@@ -88,7 +86,7 @@ class FileHandleThreadPool::FileHandleQueue final : public Runnable {
   void ProcessQueue();
 
  private:
-  ~FileHandleQueue() {}
+  ~FileHandleQueue() = default;
 
   NS_DECL_NSIRUNNABLE
 };
@@ -143,7 +141,7 @@ class FileHandleThreadPool::DirectoryInfo {
 };
 
 struct FileHandleThreadPool::StoragesCompleteCallback final {
-  friend class nsAutoPtr<StoragesCompleteCallback>;
+  friend class DefaultDelete<StoragesCompleteCallback>;
 
   nsTArray<nsCString> mDirectoryIds;
   nsCOMPtr<nsIRunnable> mCallback;
@@ -307,6 +305,9 @@ class FileHandleOp {
  protected:
   nsCOMPtr<nsIEventTarget> mOwningEventTarget;
   RefPtr<FileHandle> mFileHandle;
+#ifdef DEBUG
+  bool mEnqueued;
+#endif
 
  public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(FileHandleOp)
@@ -335,12 +336,17 @@ class FileHandleOp {
  protected:
   FileHandleOp(FileHandle* aFileHandle)
       : mOwningEventTarget(GetCurrentThreadSerialEventTarget()),
-        mFileHandle(aFileHandle) {
+        mFileHandle(aFileHandle)
+#ifdef DEBUG
+        ,
+        mEnqueued(false)
+#endif
+  {
     AssertIsOnOwningThread();
     MOZ_ASSERT(aFileHandle);
   }
 
-  virtual ~FileHandleOp() {}
+  virtual ~FileHandleOp() = default;
 };
 
 class FileHandle::FinishOp : public FileHandleOp {
@@ -354,7 +360,7 @@ class FileHandle::FinishOp : public FileHandleOp {
     MOZ_ASSERT(aFileHandle);
   }
 
-  ~FinishOp() {}
+  ~FinishOp() = default;
 
   virtual void RunOnThreadPool() override;
 
@@ -476,7 +482,7 @@ class CopyFileHandleOp::ProgressRunnable final : public Runnable {
         mProgressMax(aProgressMax) {}
 
  private:
-  ~ProgressRunnable() {}
+  ~ProgressRunnable() = default;
 
   NS_DECL_NSIRUNNABLE
 };
@@ -493,7 +499,7 @@ class GetMetadataOp : public NormalFileHandleOp {
   // Only created by FileHandle.
   GetMetadataOp(FileHandle* aFileHandle, const FileRequestParams& aParams);
 
-  ~GetMetadataOp() {}
+  ~GetMetadataOp() = default;
 
   virtual nsresult DoFileWork(FileHandle* aFileHandle) override;
 
@@ -509,7 +515,7 @@ class ReadOp final : public CopyFileHandleOp {
   // Only created by FileHandle.
   ReadOp(FileHandle* aFileHandle, const FileRequestParams& aParams);
 
-  ~ReadOp() {}
+  ~ReadOp() = default;
 
   virtual bool Init(FileHandle* aFileHandle) override;
 
@@ -525,7 +531,7 @@ class WriteOp final : public CopyFileHandleOp {
   // Only created by FileHandle.
   WriteOp(FileHandle* aFileHandle, const FileRequestParams& aParams);
 
-  ~WriteOp() {}
+  ~WriteOp() = default;
 
   virtual bool Init(FileHandle* aFileHandle) override;
 
@@ -541,7 +547,7 @@ class TruncateOp final : public NormalFileHandleOp {
   // Only created by FileHandle.
   TruncateOp(FileHandle* aFileHandle, const FileRequestParams& aParams);
 
-  ~TruncateOp() {}
+  ~TruncateOp() = default;
 
   virtual nsresult DoFileWork(FileHandle* aFileHandle) override;
 
@@ -557,23 +563,9 @@ class FlushOp final : public NormalFileHandleOp {
   // Only created by FileHandle.
   FlushOp(FileHandle* aFileHandle, const FileRequestParams& aParams);
 
-  ~FlushOp() {}
+  ~FlushOp() = default;
 
   virtual nsresult DoFileWork(FileHandle* aFileHandle) override;
-
-  virtual void GetResponse(FileRequestResponse& aResponse) override;
-};
-
-class GetFileOp final : public GetMetadataOp {
-  friend class FileHandle;
-
-  PBackgroundParent* mBackgroundParent;
-
- private:
-  // Only created by FileHandle.
-  GetFileOp(FileHandle* aFileHandle, const FileRequestParams& aParams);
-
-  ~GetFileOp() {}
 
   virtual void GetResponse(FileRequestResponse& aResponse) override;
 };
@@ -592,6 +584,21 @@ FileHandleThreadPool* GetFileHandleThreadPoolFor(FileHandleStorage aStorage) {
     default:
       MOZ_CRASH("Bad file handle storage value!");
   }
+}
+
+nsresult ClampResultCode(nsresult aResultCode) {
+  if (NS_SUCCEEDED(aResultCode) ||
+      NS_ERROR_GET_MODULE(aResultCode) == NS_ERROR_MODULE_DOM_FILEHANDLE) {
+    return aResultCode;
+  }
+
+  NS_WARNING(nsPrintfCString("Converting non-filehandle error code (0x%" PRIX32
+                             ") to "
+                             "NS_ERROR_DOM_FILEHANDLE_UNKNOWN_ERR",
+                             static_cast<uint32_t>(aResultCode))
+                 .get());
+
+  return NS_ERROR_DOM_FILEHANDLE_UNKNOWN_ERR;
 }
 
 }  // namespace
@@ -665,11 +672,8 @@ void FileHandleThreadPool::Enqueue(FileHandle* aFileHandle,
 
   DirectoryInfo* directoryInfo;
   if (!mDirectoryInfos.Get(directoryId, &directoryInfo)) {
-    nsAutoPtr<DirectoryInfo> newDirectoryInfo(new DirectoryInfo(this));
-
-    mDirectoryInfos.Put(directoryId, newDirectoryInfo);
-
-    directoryInfo = newDirectoryInfo.forget();
+    directoryInfo = new DirectoryInfo(this);
+    mDirectoryInfos.Put(directoryId, directoryInfo);
   }
 
   FileHandleQueue* existingFileHandleQueue =
@@ -718,11 +722,11 @@ void FileHandleThreadPool::WaitForDirectoriesToComplete(
   MOZ_ASSERT(!aDirectoryIds.IsEmpty());
   MOZ_ASSERT(aCallback);
 
-  nsAutoPtr<StoragesCompleteCallback> callback(
-      new StoragesCompleteCallback(std::move(aDirectoryIds), aCallback));
+  auto callback =
+      MakeUnique<StoragesCompleteCallback>(std::move(aDirectoryIds), aCallback);
 
-  if (!MaybeFireCallback(callback)) {
-    mCompleteCallbacks.AppendElement(callback.forget());
+  if (!MaybeFireCallback(callback.get())) {
+    mCompleteCallbacks.AppendElement(std::move(callback));
   }
 }
 
@@ -792,8 +796,8 @@ void FileHandleThreadPool::Cleanup() {
     // Run all callbacks manually now.
     for (uint32_t count = mCompleteCallbacks.Length(), index = 0; index < count;
          index++) {
-      nsAutoPtr<StoragesCompleteCallback> completeCallback(
-          mCompleteCallbacks[index].forget());
+      UniquePtr<StoragesCompleteCallback> completeCallback =
+          std::move(mCompleteCallbacks[index]);
       MOZ_ASSERT(completeCallback);
       MOZ_ASSERT(completeCallback->mCallback);
 
@@ -833,7 +837,7 @@ void FileHandleThreadPool::FinishFileHandle(FileHandle* aFileHandle) {
     // See if we need to fire any complete callbacks.
     uint32_t index = 0;
     while (index < mCompleteCallbacks.Length()) {
-      if (MaybeFireCallback(mCompleteCallbacks[index])) {
+      if (MaybeFireCallback(mCompleteCallbacks[index].get())) {
         mCompleteCallbacks.RemoveElementAt(index);
       } else {
         index++;
@@ -1097,7 +1101,7 @@ void BackgroundMutableFileParentBase::Invalidate() {
 
       if (count) {
         for (uint32_t index = 0; index < count; index++) {
-          RefPtr<FileHandle> fileHandle = fileHandles[index].forget();
+          RefPtr<FileHandle> fileHandle = std::move(fileHandles[index]);
           MOZ_ASSERT(fileHandle);
 
           fileHandle->Invalidate();
@@ -1407,6 +1411,11 @@ bool FileHandle::VerifyRequestParams(const FileRequestParams& aParams) const {
         return false;
       }
 
+      if (NS_WARN_IF(params.size() > UINT32_MAX)) {
+        ASSERT_UNLESS_FUZZING();
+        return false;
+      }
+
       break;
     }
 
@@ -1455,10 +1464,6 @@ bool FileHandle::VerifyRequestParams(const FileRequestParams& aParams) const {
         return false;
       }
 
-      break;
-    }
-
-    case FileRequestParams::TFileRequestGetFileParams: {
       break;
     }
 
@@ -1618,10 +1623,6 @@ PBackgroundFileRequestParent* FileHandle::AllocPBackgroundFileRequestParent(
       actor = new FlushOp(this, aParams);
       break;
 
-    case FileRequestParams::TFileRequestGetFileParams:
-      actor = new GetFileOp(this, aParams);
-      break;
-
     default:
       MOZ_CRASH("Should never get here!");
   }
@@ -1672,6 +1673,10 @@ void FileHandleOp::Enqueue() {
   MOZ_ASSERT(fileHandleThreadPool);
 
   fileHandleThreadPool->Enqueue(mFileHandle, this, false);
+
+#ifdef DEBUG
+  mEnqueued = true;
+#endif
 
   mFileHandle->NoteActiveRequest();
 }
@@ -1725,7 +1730,7 @@ bool NormalFileHandleOp::Init(FileHandle* aFileHandle) {
 void NormalFileHandleOp::Cleanup() {
   AssertIsOnOwningThread();
   MOZ_ASSERT(mFileHandle);
-  MOZ_ASSERT_IF(!IsActorDestroyed(), mResponseSent);
+  MOZ_ASSERT_IF(mEnqueued && !IsActorDestroyed(), mResponseSent);
 
   mFileHandle = nullptr;
 }
@@ -1765,7 +1770,8 @@ bool NormalFileHandleOp::SendFailureResult(nsresult aResultCode) {
   bool result = false;
 
   if (!IsActorDestroyed()) {
-    result = PBackgroundFileRequestParent::Send__delete__(this, aResultCode);
+    result = PBackgroundFileRequestParent::Send__delete__(
+        this, ClampResultCode(aResultCode));
   }
 
 #ifdef DEBUG
@@ -1918,6 +1924,10 @@ nsresult CopyFileHandleOp::DoFileWork(FileHandle* aFileHandle) {
     mOwningEventTarget->Dispatch(runnable, NS_DISPATCH_NORMAL);
   } while (true);
 
+  if (mOffset < mSize) {
+    // end-of-file reached
+    return NS_ERROR_FAILURE;
+  }
   MOZ_ASSERT(mOffset == mSize);
 
   if (mRead) {
@@ -2127,6 +2137,25 @@ nsresult TruncateOp::DoFileWork(FileHandle* aFileHandle) {
   nsCOMPtr<nsISeekableStream> sstream = do_QueryInterface(mFileStream);
   MOZ_ASSERT(sstream);
 
+  if (mParams.offset()) {
+    nsCOMPtr<nsIFileMetadata> fileMetadata = do_QueryInterface(mFileStream);
+    MOZ_ASSERT(fileMetadata);
+
+    int64_t size;
+    nsresult rv = fileMetadata->GetSize(&size);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+    MOZ_ASSERT(size >= 0);
+
+    if (mParams.offset() > static_cast<uint64_t>(size)) {
+      // Cannot extend the size of a file through truncate.
+      return NS_ERROR_DOM_INVALID_MODIFICATION_ERR;
+    }
+  }
+
+  // XXX If we allowed truncate to extend the file size, we would to ensure that
+  // the quota limit is checked, e.g. by making FileQuotaStream override Seek.
   nsresult rv = sstream->Seek(nsISeekableStream::NS_SEEK_SET, mParams.offset());
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
@@ -2168,34 +2197,6 @@ nsresult FlushOp::DoFileWork(FileHandle* aFileHandle) {
 void FlushOp::GetResponse(FileRequestResponse& aResponse) {
   AssertIsOnOwningThread();
   aResponse = FileRequestFlushResponse();
-}
-
-GetFileOp::GetFileOp(FileHandle* aFileHandle, const FileRequestParams& aParams)
-    : GetMetadataOp(aFileHandle, FileRequestGetMetadataParams(true, true)),
-      mBackgroundParent(aFileHandle->GetBackgroundParent()) {
-  MOZ_ASSERT(aParams.type() == FileRequestParams::TFileRequestGetFileParams);
-  MOZ_ASSERT(mBackgroundParent);
-}
-
-void GetFileOp::GetResponse(FileRequestResponse& aResponse) {
-  AssertIsOnOwningThread();
-
-  RefPtr<BlobImpl> blobImpl = mFileHandle->GetMutableFile()->CreateBlobImpl();
-  MOZ_ASSERT(blobImpl);
-
-  PendingIPCBlobParent* actor =
-      PendingIPCBlobParent::Create(mBackgroundParent, blobImpl);
-  if (NS_WARN_IF(!actor)) {
-    // This can only fail if the child has crashed.
-    aResponse = NS_ERROR_DOM_FILEHANDLE_UNKNOWN_ERR;
-    return;
-  }
-
-  FileRequestGetFileResponse response;
-  response.fileParent() = actor;
-  response.metadata() = mMetadata;
-
-  aResponse = response;
 }
 
 }  // namespace dom

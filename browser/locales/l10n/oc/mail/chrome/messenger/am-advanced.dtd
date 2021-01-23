@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpServer.label "Servidor SMTP">
+
+<!ENTITY smtpListAdd.label  "Apondre…">
+<!ENTITY smtpListAdd.accesskey  "A">
+<!ENTITY smtpListEdit.label "Modificar…">
+<!ENTITY smtpListEdit.accesskey "M">
+<!ENTITY smtpListDelete.label "Suprimir">
+<!ENTITY smtpListDelete.accesskey "S">
+<!ENTITY smtpListSetDefault.label "Utilizar per defaut">
+<!ENTITY smtpListSetDefault.accesskey "d">
+
+<!ENTITY serverDescription.label "Descripcion : ">
+<!ENTITY serverName.label "Nom del servidor : ">
+<!ENTITY serverPort.label "Pòrt : ">
+<!ENTITY userName.label   "Nom d'utilizaire : ">
+<!ENTITY connectionSecurity.label "Seguretat de la connexion : ">

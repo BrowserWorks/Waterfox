@@ -4,6 +4,7 @@
 
 // @flow
 
+import * as ast from "./ast";
 import * as breakpoints from "./breakpoints";
 import * as expressions from "./expressions";
 import * as eventListeners from "./event-listeners";
@@ -11,18 +12,21 @@ import * as pause from "./pause";
 import * as navigation from "./navigation";
 import * as ui from "./ui";
 import * as fileSearch from "./file-search";
-import * as ast from "./ast";
 import * as projectTextSearch from "./project-text-search";
 import * as quickOpen from "./quick-open";
 import * as sourceTree from "./source-tree";
 import * as sources from "./sources";
 import * as sourcesActors from "./source-actors";
 import * as tabs from "./tabs";
-import * as debuggee from "./debuggee";
+import * as threads from "./threads";
 import * as toolbox from "./toolbox";
 import * as preview from "./preview";
 
+// eslint-disable-next-line import/named
+import { objectInspector } from "devtools-reps";
+
 export default {
+  ...ast,
   ...navigation,
   ...breakpoints,
   ...expressions,
@@ -33,11 +37,11 @@ export default {
   ...pause,
   ...ui,
   ...fileSearch,
-  ...ast,
+  ...objectInspector.actions,
   ...projectTextSearch,
   ...quickOpen,
   ...sourceTree,
-  ...debuggee,
+  ...threads,
   ...toolbox,
   ...preview,
 };

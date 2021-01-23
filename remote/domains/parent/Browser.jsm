@@ -13,11 +13,17 @@ const { Domain } = ChromeUtils.import(
 
 class Browser extends Domain {
   getVersion() {
+    const { isHeadless } = Cc["@mozilla.org/gfx/info;1"].getService(
+      Ci.nsIGfxInfo
+    );
+    const { userAgent } = Cc[
+      "@mozilla.org/network/protocol;1?name=http"
+    ].getService(Ci.nsIHttpProtocolHandler);
     return {
-      protocolVersion: "1",
-      product: "Firefox",
+      protocolVersion: "1.3",
+      product: (isHeadless ? "Headless " : "") + "Firefox",
       revision: "1",
-      userAgent: "Firefox",
+      userAgent,
       jsVersion: "1.8.5",
     };
   }

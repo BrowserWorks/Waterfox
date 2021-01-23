@@ -326,7 +326,7 @@ class nsAutoRetainUIKitObject {
     targetSurface = new gfxQuartzSurface(aContext, backingSize);
     targetSurface->SetAllowUseAsSource(false);
     RefPtr<gfx::DrawTarget> dt =
-        gfxPlatform::GetPlatform()->CreateDrawTargetForSurface(targetSurface, backingSize);
+        gfxPlatform::CreateDrawTargetForSurface(targetSurface, backingSize);
     if (!dt || !dt->IsValid()) {
       gfxDevCrash(mozilla::gfx::LogReason::InvalidContext)
           << "Window context problem 2 " << backingSize;
@@ -591,10 +591,9 @@ void nsWindow::Invalidate(const LayoutDeviceIntRect& aRect) {
   [mNativeView setNeedsDisplayInRect:DevPixelsToUIKitPoints(mBounds, BackingScaleFactor())];
 }
 
-nsresult nsWindow::SetFocus(bool aRaise) {
+void nsWindow::SetFocus(Raise) {
   [[mNativeView window] makeKeyWindow];
   [mNativeView becomeFirstResponder];
-  return NS_OK;
 }
 
 void nsWindow::WillPaintWindow() {

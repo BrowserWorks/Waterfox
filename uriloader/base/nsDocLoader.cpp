@@ -4,6 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nspr.h"
+#include "mozilla/dom/BrowserChild.h"
 #include "mozilla/dom/Document.h"
 #include "mozilla/BasicEvents.h"
 #include "mozilla/Components.h"
@@ -13,42 +14,41 @@
 #include "mozilla/PresShell.h"
 
 #include "nsDocLoader.h"
+#include "nsDocShell.h"
+#include "nsLoadGroup.h"
 #include "nsNetUtil.h"
 #include "nsIHttpChannel.h"
 #include "nsIWebNavigation.h"
 #include "nsIWebProgressListener2.h"
 
-#include "nsIServiceManager.h"
 #include "nsString.h"
 
-#include "nsIURL.h"
 #include "nsCOMPtr.h"
 #include "nscore.h"
 #include "nsIWeakReferenceUtils.h"
-#include "nsAutoPtr.h"
 #include "nsQueryObject.h"
 
-#include "nsIDOMWindow.h"
 #include "nsPIDOMWindow.h"
+#include "nsGlobalWindow.h"
 
 #include "nsIStringBundle.h"
-#include "nsIScriptSecurityManager.h"
 
-#include "nsITransport.h"
-#include "nsISocketTransport.h"
 #include "nsIDocShell.h"
 #include "mozilla/dom/Document.h"
+#include "mozilla/dom/DocGroup.h"
 #include "nsPresContext.h"
 #include "nsIAsyncVerifyRedirectCallback.h"
-#include "nsILoadURIDelegate.h"
 #include "nsIBrowserDOMWindow.h"
-
+#include "nsGlobalWindow.h"
+#include "mozilla/ThrottledEventQueue.h"
 using namespace mozilla;
 using mozilla::DebugOnly;
 using mozilla::eLoad;
 using mozilla::EventDispatcher;
 using mozilla::LogLevel;
 using mozilla::WidgetEvent;
+using mozilla::dom::BrowserChild;
+using mozilla::dom::BrowsingContext;
 using mozilla::dom::Document;
 
 //
@@ -116,6 +116,9 @@ nsDocLoader::nsDocLoader()
       mIsRestoringDocument(false),
       mDontFlushLayout(false),
       mIsFlushingLayout(false),
+      mTreatAsBackgroundLoad(false),
+      mHasFakeOnLoadDispatched(false),
+      mIsReadyToHandlePostMessage(false),
       mDocumentOpenedButNotLoaded(false) {
   ClearInternalProgress();
 
@@ -130,6 +133,27 @@ nsresult nsDocLoader::SetDocLoaderParent(nsDocLoader* aParent) {
 nsresult nsDocLoader::Init() {
   nsresult rv = NS_NewLoadGroup(getter_AddRefs(mLoadGroup), this);
   if (NS_FAILED(rv)) return rv;
+
+  MOZ_LOG(gDocLoaderLog, LogLevel::Debug,
+          ("DocLoader:%p: load group %p.\n", this, mLoadGroup.get()));
+
+  return NS_OK;
+}
+
+nsresult nsDocLoader::InitWithBrowsingContext(
+    BrowsingContext* aBrowsingContext) {
+  RefPtr<net::nsLoadGroup> loadGroup = new net::nsLoadGroup();
+  if (!aBrowsingContext->GetRequestContextId()) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+  nsresult rv = loadGroup->InitWithRequestContextId(
+      aBrowsingContext->GetRequestContextId());
+  if (NS_FAILED(rv)) return rv;
+
+  rv = loadGroup->SetGroupObserver(this);
+  if (NS_FAILED(rv)) return rv;
+
+  mLoadGroup = loadGroup;
 
   MOZ_LOG(gDocLoaderLog, LogLevel::Debug,
           ("DocLoader:%p: load group %p.\n", this, mLoadGroup.get()));
@@ -177,7 +201,7 @@ NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(nsDocLoader)
   NS_INTERFACE_MAP_ENTRY_CONCRETE(nsDocLoader)
 NS_INTERFACE_MAP_END
 
-NS_IMPL_CYCLE_COLLECTION(nsDocLoader, mChildrenInOnload)
+NS_IMPL_CYCLE_COLLECTION_WEAK(nsDocLoader, mChildrenInOnload)
 
 /*
  * Implementation of nsIInterfaceRequestor methods...
@@ -237,6 +261,7 @@ nsDocLoader::Stop(void) {
   // after this, since mDocumentRequest will be null after the
   // DocLoaderIsEmpty() call.
   mChildrenInOnload.Clear();
+  mOOPChildrenLoading.Clear();
 
   // Make sure to call DocLoaderIsEmpty now so that we reset mDocumentRequest,
   // etc, as needed.  We could be getting into here from a subframe onload, in
@@ -254,6 +279,10 @@ nsDocLoader::Stop(void) {
   return rv;
 }
 
+bool nsDocLoader::TreatAsBackgroundLoad() { return mTreatAsBackgroundLoad; }
+
+void nsDocLoader::SetBackgroundLoadIframe() { mTreatAsBackgroundLoad = true; }
+
 bool nsDocLoader::IsBusy() {
   nsresult rv;
 
@@ -267,7 +296,8 @@ bool nsDocLoader::IsBusy() {
   //   3. It's currently flushing layout in DocLoaderIsEmpty().
   //
 
-  if (mChildrenInOnload.Count() || mIsFlushingLayout) {
+  if (!mChildrenInOnload.IsEmpty() || !mOOPChildrenLoading.IsEmpty() ||
+      mIsFlushingLayout) {
     return true;
   }
 
@@ -276,6 +306,7 @@ bool nsDocLoader::IsBusy() {
     return false;
   }
 
+  // Check if any in-process sub-document is awaiting its 'load' event:
   bool busy;
   rv = mLoadGroup->IsPending(&busy);
   if (NS_FAILED(rv)) {
@@ -290,6 +321,11 @@ bool nsDocLoader::IsBusy() {
   for (uint32_t i = 0; i < count; i++) {
     nsIDocumentLoader* loader = ChildAt(i);
 
+    // If 'dom.cross_origin_iframes_loaded_in_background' is set, the parent
+    // document treats cross domain iframes as background loading frame
+    if (loader && static_cast<nsDocLoader*>(loader)->TreatAsBackgroundLoad()) {
+      continue;
+    }
     // This is a safe cast, because we only put nsDocLoader objects into the
     // array
     if (loader && static_cast<nsDocLoader*>(loader)->IsBusy()) return true;
@@ -710,9 +746,7 @@ void nsDocLoader::DocLoaderIsEmpty(bool aFlushLayout) {
         //
         doStopDocumentLoad(docRequest, loadGroupStatus);
 
-        if (parent) {
-          parent->ChildDoneWithOnload(this);
-        }
+        NotifyDoneWithOnload(parent);
       }
     } else {
       MOZ_ASSERT(mDocumentOpenedButNotLoaded);
@@ -738,43 +772,63 @@ void nsDocLoader::DocLoaderIsEmpty(bool aFlushLayout) {
 
             nsCOMPtr<nsPIDOMWindowOuter> window = doc->GetWindow();
             if (window && !doc->SkipLoadEventAfterClose()) {
-              MOZ_LOG(gDocLoaderLog, LogLevel::Debug,
-                      ("DocLoader:%p: Firing load event for document.open\n",
-                       this));
+              if (!mozilla::dom::DocGroup::TryToLoadIframesInBackground() ||
+                  (mozilla::dom::DocGroup::TryToLoadIframesInBackground() &&
+                   !HasFakeOnLoadDispatched())) {
+                MOZ_LOG(gDocLoaderLog, LogLevel::Debug,
+                        ("DocLoader:%p: Firing load event for document.open\n",
+                         this));
 
-              // This is a very cut-down version of
-              // nsDocumentViewer::LoadComplete that doesn't do various things
-              // that are not relevant here because this wasn't an actual
-              // navigation.
-              WidgetEvent event(true, eLoad);
-              event.mFlags.mBubbles = false;
-              event.mFlags.mCancelable = false;
-              // Dispatching to |window|, but using |document| as the target,
-              // per spec.
-              event.mTarget = doc;
-              nsEventStatus unused = nsEventStatus_eIgnore;
-              doc->SetLoadEventFiring(true);
-              EventDispatcher::Dispatch(window, nullptr, &event, nullptr,
-                                        &unused);
-              doc->SetLoadEventFiring(false);
+                // This is a very cut-down version of
+                // nsDocumentViewer::LoadComplete that doesn't do various things
+                // that are not relevant here because this wasn't an actual
+                // navigation.
+                WidgetEvent event(true, eLoad);
+                event.mFlags.mBubbles = false;
+                event.mFlags.mCancelable = false;
+                // Dispatching to |window|, but using |document| as the target,
+                // per spec.
+                event.mTarget = doc;
+                nsEventStatus unused = nsEventStatus_eIgnore;
+                doc->SetLoadEventFiring(true);
+                EventDispatcher::Dispatch(window, nullptr, &event, nullptr,
+                                          &unused);
+                doc->SetLoadEventFiring(false);
 
-              // Now unsuppress painting on the presshell, if we
-              // haven't done that yet.
-              RefPtr<PresShell> presShell = doc->GetPresShell();
-              if (presShell && !presShell->IsDestroying()) {
-                presShell->UnsuppressPainting();
+                // Now unsuppress painting on the presshell, if we
+                // haven't done that yet.
+                RefPtr<PresShell> presShell = doc->GetPresShell();
+                if (presShell && !presShell->IsDestroying()) {
+                  presShell->UnsuppressPainting();
 
-                if (!presShell->IsDestroying()) {
-                  presShell->LoadComplete();
+                  if (!presShell->IsDestroying()) {
+                    presShell->LoadComplete();
+                  }
                 }
               }
             }
           }
         }
-        if (parent) {
-          parent->ChildDoneWithOnload(this);
-        }
+        NotifyDoneWithOnload(parent);
       }
+    }
+  }
+}
+
+void nsDocLoader::NotifyDoneWithOnload(nsDocLoader* aParent) {
+  if (aParent) {
+    // In-process parent:
+    aParent->ChildDoneWithOnload(this);
+  }
+  nsCOMPtr<nsIDocShell> docShell = do_QueryInterface(this);
+  if (!docShell) {
+    return;
+  }
+  BrowsingContext* bc = nsDocShell::Cast(docShell)->GetBrowsingContext();
+  if (bc->IsContentSubframe() && !bc->GetParent()->IsInProcess()) {
+    if (BrowserChild* browserChild = BrowserChild::GetFrom(docShell)) {
+      mozilla::Unused << browserChild->SendMaybeFireEmbedderLoadEvents(
+          dom::EmbedderElementEventType::NoEvent);
     }
   }
 }
@@ -962,7 +1016,7 @@ nsDocLoader::GetIsTopLevel(bool* aResult) {
     nsCOMPtr<nsPIDOMWindowOuter> piwindow = nsPIDOMWindowOuter::From(window);
     NS_ENSURE_STATE(piwindow);
 
-    nsCOMPtr<nsPIDOMWindowOuter> topWindow = piwindow->GetTop();
+    nsCOMPtr<nsPIDOMWindowOuter> topWindow = piwindow->GetInProcessTop();
     *aResult = piwindow == topWindow;
   }
 
@@ -1037,8 +1091,8 @@ int64_t nsDocLoader::GetMaxTotalProgress() {
 // on this information.
 ////////////////////////////////////////////////////////////////////////////////////
 
-NS_IMETHODIMP nsDocLoader::OnProgress(nsIRequest* aRequest, nsISupports* ctxt,
-                                      int64_t aProgress, int64_t aProgressMax) {
+NS_IMETHODIMP nsDocLoader::OnProgress(nsIRequest* aRequest, int64_t aProgress,
+                                      int64_t aProgressMax) {
   int64_t progressDelta = 0;
 
   //
@@ -1133,8 +1187,7 @@ NS_IMETHODIMP nsDocLoader::OnProgress(nsIRequest* aRequest, nsISupports* ctxt,
   return NS_OK;
 }
 
-NS_IMETHODIMP nsDocLoader::OnStatus(nsIRequest* aRequest, nsISupports* ctxt,
-                                    nsresult aStatus,
+NS_IMETHODIMP nsDocLoader::OnStatus(nsIRequest* aRequest, nsresult aStatus,
                                     const char16_t* aStatusArg) {
   //
   // Fire progress notifications out to any registered nsIWebProgressListeners
@@ -1173,7 +1226,7 @@ NS_IMETHODIMP nsDocLoader::OnStatus(nsIRequest* aRequest, nsISupports* ctxt,
     // already done.
     if (info) {
       if (!info->mLastStatus) {
-        info->mLastStatus = new nsStatusInfo(aRequest);
+        info->mLastStatus = MakeUnique<nsStatusInfo>(aRequest);
       } else {
         // We're going to move it to the front of the list, so remove
         // it from wherever it is now.
@@ -1182,7 +1235,7 @@ NS_IMETHODIMP nsDocLoader::OnStatus(nsIRequest* aRequest, nsISupports* ctxt,
       info->mLastStatus->mStatusMessage = msg;
       info->mLastStatus->mStatusCode = aStatus;
       // Put the info at the front of the list
-      mStatusInfoList.insertFront(info->mLastStatus);
+      mStatusInfoList.insertFront(info->mLastStatus.get());
     }
     FireOnStatusChange(this, aRequest, aStatus, msg.get());
   }
@@ -1322,8 +1375,8 @@ void nsDocLoader::FireOnLocationChange(nsIWebProgress* aWebProgress,
   NOTIFY_LISTENERS(
       nsIWebProgress::NOTIFY_LOCATION,
       MOZ_LOG(gDocLoaderLog, LogLevel::Debug,
-              ("DocLoader [%p] calling %p->OnLocationChange", this,
-               listener.get()));
+              ("DocLoader [%p] calling %p->OnLocationChange to %s %x", this,
+               listener.get(), aUri->GetSpecOrDefault().get(), aFlags));
       listener->OnLocationChange(aWebProgress, aRequest, aUri, aFlags););
 
   // Pass the notification up to the parent...
@@ -1410,42 +1463,6 @@ int64_t nsDocLoader::CalculateMaxProgress() {
 NS_IMETHODIMP nsDocLoader::AsyncOnChannelRedirect(
     nsIChannel* aOldChannel, nsIChannel* aNewChannel, uint32_t aFlags,
     nsIAsyncVerifyRedirectCallback* cb) {
-  if (aFlags & (nsIChannelEventSink::REDIRECT_TEMPORARY |
-                nsIChannelEventSink::REDIRECT_PERMANENT)) {
-    nsCOMPtr<nsIDocShell> docShell =
-        do_QueryInterface(static_cast<nsIRequestObserver*>(this));
-
-    nsCOMPtr<nsILoadURIDelegate> delegate;
-    if (docShell) {
-      docShell->GetLoadURIDelegate(getter_AddRefs(delegate));
-    }
-
-    nsCOMPtr<nsIURI> newURI;
-    nsCOMPtr<nsILoadInfo> info = nullptr;
-    if (delegate) {
-      // No point in getting the URI if we don't have a LoadURIDelegate.
-      aNewChannel->GetURI(getter_AddRefs(newURI));
-      info = aNewChannel->LoadInfo();
-    }
-
-    RefPtr<Document> loadingDoc;
-    if (info) {
-      info->GetLoadingDocument(getter_AddRefs(loadingDoc));
-    }
-
-    if (newURI && info && !loadingDoc) {
-      const int where = nsIBrowserDOMWindow::OPEN_CURRENTWINDOW;
-      bool loadURIHandled = false;
-      nsresult rv = delegate->LoadURI(
-          newURI, where, nsIWebNavigation::LOAD_FLAGS_IS_REDIRECT,
-          /* triggering principal */ nullptr, &loadURIHandled);
-      if (NS_SUCCEEDED(rv) && loadURIHandled) {
-        cb->OnRedirectVerifyCallback(NS_OK);
-        return NS_OK;
-      }
-    }
-  }
-
   if (aOldChannel) {
     nsLoadFlags loadFlags = 0;
     int32_t stateFlags = nsIWebProgressListener::STATE_REDIRECTING |
@@ -1489,25 +1506,6 @@ void nsDocLoader::OnSecurityChange(nsISupports* aContext, uint32_t aState) {
   // Pass the notification up to the parent...
   if (mParent) {
     mParent->OnSecurityChange(aContext, aState);
-  }
-}
-
-void nsDocLoader::OnContentBlockingEvent(nsISupports* aContext,
-                                         uint32_t aEvent) {
-  //
-  // Fire progress notifications out to any registered nsIWebProgressListeners.
-  //
-
-  nsCOMPtr<nsIRequest> request = do_QueryInterface(aContext);
-  nsIWebProgress* webProgress = static_cast<nsIWebProgress*>(this);
-
-  NOTIFY_LISTENERS(
-      nsIWebProgress::NOTIFY_CONTENT_BLOCKING,
-      listener->OnContentBlockingEvent(webProgress, request, aEvent););
-
-  // Pass the notification up to the parent...
-  if (mParent) {
-    mParent->OnContentBlockingEvent(aContext, aEvent);
   }
 }
 

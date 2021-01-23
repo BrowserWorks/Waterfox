@@ -1,0 +1,82 @@
+<!--
+# Reviewer(s):
+#
+# http://tomercohen.com/ <tomer.mozilla@tomercohen.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "מאפייני טבלה">
+<!ENTITY applyButton.label                "החל">
+<!ENTITY applyButton.accesskey            "A">
+<!ENTITY closeButton.label                "סגירה">
+<!ENTITY tableTab.label                   "טבלה">
+<!ENTITY cellTab.label                    "תאים">
+<!ENTITY tableRows.label                  "שורות:">
+<!ENTITY tableRows.accessKey              "ש">
+<!ENTITY tableColumns.label               "עמודות:">
+<!ENTITY tableColumns.accessKey           "ע">
+<!ENTITY tableHeight.label                "גובה:">
+<!ENTITY tableHeight.accessKey            "ג">
+<!ENTITY tableWidth.label                 "רוחב:">
+<!ENTITY tableWidth.accessKey             "ר">
+<!ENTITY tableBorderSpacing.label         "גבולות ורווחים">
+<!ENTITY tableBorderWidth.label           "גבול:">
+<!ENTITY tableBorderWidth.accessKey       "ב">
+<!ENTITY tableSpacing.label               "ריווח:">
+<!ENTITY tableSpacing.accessKey           "ר">
+<!ENTITY tablePadding.label               "ריפוד:">
+<!ENTITY tablePadding.accessKey           "פ">
+<!ENTITY tablePxBetwCells.label           "פיקסלים בין תאים">
+<!ENTITY tablePxBetwBrdrCellContent.label "פיקסלים בין גבול התא ותכולתו">
+<!ENTITY tableAlignment.label             "יישור טבלה:">
+<!ENTITY tableAlignment.accessKey         "י">
+<!ENTITY tableCaption.label               "כותרת:">
+<!ENTITY tableCaption.accessKey           "N">
+<!ENTITY tableCaptionAbove.label          "מעל הטבלה">
+<!ENTITY tableCaptionBelow.label          "מתחת לטבלה">
+<!ENTITY tableCaptionLeft.label           "משמאל לטבלה">
+<!ENTITY tableCaptionRight.label          "מימין לטבלה">
+<!ENTITY tableCaptionNone.label           "ללא">
+<!ENTITY tableInheritColor.label           "(הנח לצבע הדף להיראות)">
+
+<!ENTITY cellSelection.label              "בחירה">
+<!ENTITY cellSelectCell.label             "תא">
+<!ENTITY cellSelectRow.label              "שורה">
+<!ENTITY cellSelectColumn.label           "עמודה">
+<!ENTITY cellSelectNext.label             "הבא">
+<!ENTITY cellSelectNext.accessKey         "N">
+<!ENTITY cellSelectPrevious.label         "הקודם">
+<!ENTITY cellSelectPrevious.accessKey     "ק">
+<!ENTITY applyBeforeChange.label          "שינויים נוכחיים יחולו לפני שינוי הבחירה.">
+<!ENTITY cellContentAlignment.label       "ישור תכולה">
+<!ENTITY cellHorizontal.label             "אופקי:">
+<!ENTITY cellHorizontal.accessKey         "Z">
+<!ENTITY cellVertical.label               "אנכי:">
+<!ENTITY cellVertical.accessKey           "V">
+<!ENTITY cellStyle.label                  "סגנון תא:">
+<!ENTITY cellStyle.accessKey              "ס">
+<!ENTITY cellNormal.label                 "רגילה">
+<!ENTITY cellHeader.label                 "כותרת">
+<!ENTITY cellTextWrap.label               "גלישת טקסט:">
+<!ENTITY cellTextWrap.accessKey           "ג">
+<!ENTITY cellWrap.label                   "עם גלישה">
+<!ENTITY cellNoWrap.label                 "ללא גלישה">
+<!ENTITY cellAlignTop.label               "למעלה">
+<!ENTITY cellAlignMiddle.label            "מרכז">
+<!ENTITY cellAlignBottom.label            "למטה">
+<!ENTITY cellAlignJustify.label           "יישור דו־צידי">
+<!ENTITY cellInheritColor.label           "(הנח לצבע הטבלה להיראות)">
+<!ENTITY cellUseCheckboxHelp.label        "השתמש בתיבות הסימון כדי לקבוע אלו תכונות יוחלו לכל התאים שנבחרו">
+
+<!-- Used in both Table and Cell panels  -->
+<!ENTITY size.label                       "גודל">
+<!ENTITY pixels.label                     "פיקסלים">
+<!ENTITY backgroundColor.label            "צבע רקע:">
+<!ENTITY backgroundColor.accessKey        "ר">
+<!ENTITY AlignLeft.label                  "שמאל">
+<!ENTITY AlignCenter.label                "מרכז">
+<!ENTITY AlignRight.label                 "ימין">
+

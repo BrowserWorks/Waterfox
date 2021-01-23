@@ -31,7 +31,6 @@
 #define WEBCRYPTO_ALG_RSA_PSS "RSA-PSS"
 #define WEBCRYPTO_ALG_ECDH "ECDH"
 #define WEBCRYPTO_ALG_ECDSA "ECDSA"
-#define WEBCRYPTO_ALG_DH "DH"
 
 // WebCrypto key formats
 #define WEBCRYPTO_KEY_FORMAT_RAW "raw"
@@ -110,46 +109,8 @@ const SECItem SEC_OID_DATA_EC_DH = {
     siBuffer, (unsigned char*)id_ecDH,
     static_cast<unsigned int>(mozilla::ArrayLength(id_ecDH))};
 
-// clang-format off
-// python security/pkix/tools/DottedOIDToCode.py dhKeyAgreement 1.2.840.113549.1.3.1
-// clang-format on
-static const uint8_t dhKeyAgreement[] = {0x2a, 0x86, 0x48, 0x86, 0xf7,
-                                         0x0d, 0x01, 0x03, 0x01};
-const SECItem SEC_OID_DATA_DH_KEY_AGREEMENT = {
-    siBuffer, (unsigned char*)dhKeyAgreement,
-    static_cast<unsigned int>(mozilla::ArrayLength(dhKeyAgreement))};
-
 namespace mozilla {
 namespace dom {
-
-// Helper functions for structured cloning
-inline bool ReadString(JSStructuredCloneReader* aReader, nsString& aString) {
-  bool read;
-  uint32_t nameLength, zero;
-  read = JS_ReadUint32Pair(aReader, &nameLength, &zero);
-  if (!read) {
-    return false;
-  }
-
-  if (NS_WARN_IF(!aString.SetLength(nameLength, fallible))) {
-    return false;
-  }
-  size_t charSize = sizeof(nsString::char_type);
-  read = JS_ReadBytes(aReader, (void*)aString.BeginWriting(),
-                      nameLength * charSize);
-  if (!read) {
-    return false;
-  }
-
-  return true;
-}
-
-inline bool WriteString(JSStructuredCloneWriter* aWriter,
-                        const nsString& aString) {
-  size_t charSize = sizeof(nsString::char_type);
-  return JS_WriteUint32Pair(aWriter, aString.Length(), 0) &&
-         JS_WriteBytes(aWriter, aString.get(), aString.Length() * charSize);
-}
 
 inline bool ReadBuffer(JSStructuredCloneReader* aReader,
                        CryptoBuffer& aBuffer) {
@@ -212,8 +173,6 @@ inline CK_MECHANISM_TYPE MapAlgorithmNameToMechanism(const nsString& aName) {
     mechanism = CKM_RSA_PKCS_PSS;
   } else if (aName.EqualsLiteral(WEBCRYPTO_ALG_ECDH)) {
     mechanism = CKM_ECDH1_DERIVE;
-  } else if (aName.EqualsLiteral(WEBCRYPTO_ALG_DH)) {
-    mechanism = CKM_DH_PKCS_DERIVE;
   }
 
   return mechanism;
@@ -256,8 +215,6 @@ inline bool NormalizeToken(const nsString& aName, nsString& aDest) {
     aDest.AssignLiteral(WEBCRYPTO_ALG_ECDH);
   } else if (NORMALIZED_EQUALS(aName, WEBCRYPTO_ALG_ECDSA)) {
     aDest.AssignLiteral(WEBCRYPTO_ALG_ECDSA);
-  } else if (NORMALIZED_EQUALS(aName, WEBCRYPTO_ALG_DH)) {
-    aDest.AssignLiteral(WEBCRYPTO_ALG_DH);
     // Named curve values
   } else if (NORMALIZED_EQUALS(aName, WEBCRYPTO_NAMED_CURVE_P256)) {
     aDest.AssignLiteral(WEBCRYPTO_NAMED_CURVE_P256);

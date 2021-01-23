@@ -7,11 +7,14 @@
 //! [custom]: https://drafts.csswg.org/css-variables/
 
 use crate::hash::map::Entry;
+use crate::media_queries::Device;
 use crate::properties::{CSSWideKeyword, CustomDeclaration, CustomDeclarationValue};
 use crate::selector_map::{PrecomputedHashMap, PrecomputedHashSet, PrecomputedHasher};
 use crate::stylesheets::{Origin, PerOrigin};
 use crate::Atom;
-use cssparser::{Delimiter, Parser, ParserInput, SourcePosition, Token, TokenSerializationType};
+use cssparser::{
+    CowRcStr, Delimiter, Parser, ParserInput, SourcePosition, Token, TokenSerializationType,
+};
 use indexmap::IndexMap;
 use selectors::parser::SelectorParseErrorKind;
 use servo_arc::Arc;
@@ -29,50 +32,50 @@ use style_traits::{CssWriter, ParseError, StyleParseErrorKind, ToCss};
 #[derive(Debug, MallocSizeOf)]
 pub struct CssEnvironment;
 
+type EnvironmentEvaluator = fn(device: &Device) -> VariableValue;
+
 struct EnvironmentVariable {
     name: Atom,
-    value: VariableValue,
+    evaluator: EnvironmentEvaluator,
 }
 
 macro_rules! make_variable {
-    ($name:expr, $value:expr) => {{
+    ($name:expr, $evaluator:expr) => {{
         EnvironmentVariable {
             name: $name,
-            value: {
-                // TODO(emilio): We could make this be more efficient (though a
-                // bit less convenient).
-                let mut input = ParserInput::new($value);
-                let mut input = Parser::new(&mut input);
-
-                let (first_token_type, css, last_token_type) =
-                    parse_self_contained_declaration_value(&mut input, None).unwrap();
-
-                VariableValue {
-                    css: css.into_owned(),
-                    first_token_type,
-                    last_token_type,
-                    references: Default::default(),
-                    references_environment: false,
-                }
-            },
+            evaluator: $evaluator,
         }
     }};
 }
 
-lazy_static! {
-    static ref ENVIRONMENT_VARIABLES: [EnvironmentVariable; 4] = [
-        make_variable!(atom!("safe-area-inset-top"), "0px"),
-        make_variable!(atom!("safe-area-inset-bottom"), "0px"),
-        make_variable!(atom!("safe-area-inset-left"), "0px"),
-        make_variable!(atom!("safe-area-inset-right"), "0px"),
-    ];
+fn get_safearea_inset_top(device: &Device) -> VariableValue {
+    VariableValue::pixel(device.safe_area_insets().top)
 }
+
+fn get_safearea_inset_bottom(device: &Device) -> VariableValue {
+    VariableValue::pixel(device.safe_area_insets().bottom)
+}
+
+fn get_safearea_inset_left(device: &Device) -> VariableValue {
+    VariableValue::pixel(device.safe_area_insets().left)
+}
+
+fn get_safearea_inset_right(device: &Device) -> VariableValue {
+    VariableValue::pixel(device.safe_area_insets().right)
+}
+
+static ENVIRONMENT_VARIABLES: [EnvironmentVariable; 4] = [
+    make_variable!(atom!("safe-area-inset-top"), get_safearea_inset_top),
+    make_variable!(atom!("safe-area-inset-bottom"), get_safearea_inset_bottom),
+    make_variable!(atom!("safe-area-inset-left"), get_safearea_inset_left),
+    make_variable!(atom!("safe-area-inset-right"), get_safearea_inset_right),
+];
 
 impl CssEnvironment {
     #[inline]
-    fn get(&self, name: &Atom) -> Option<&VariableValue> {
+    fn get(&self, name: &Atom, device: &Device) -> Option<VariableValue> {
         let var = ENVIRONMENT_VARIABLES.iter().find(|var| var.name == *name)?;
-        Some(&var.value)
+        Some((var.evaluator)(device))
     }
 }
 
@@ -252,6 +255,28 @@ impl VariableValue {
             references_environment: references.references_environment,
         }))
     }
+
+    /// Create VariableValue from css pixel value
+    pub fn pixel(number: f32) -> Self {
+        // FIXME (https://github.com/servo/rust-cssparser/issues/266):
+        // No way to get TokenSerializationType::Dimension without creating
+        // Token object.
+        let token = Token::Dimension {
+            has_sign: false,
+            value: number,
+            int_value: None,
+            unit: CowRcStr::from("px"),
+        };
+        let token_type = token.serialization_type();
+
+        VariableValue {
+            css: token.to_css_string(),
+            first_token_type: token_type,
+            last_token_type: token_type,
+            references: Default::default(),
+            references_environment: false,
+        }
+    }
 }
 
 /// Parse the value of a non-custom property that contains `var()` references.
@@ -306,8 +331,7 @@ fn parse_declaration_value_block<'i, 't>(
 ) -> Result<(TokenSerializationType, TokenSerializationType), ParseError<'i>> {
     let mut token_start = input.position();
     let mut token = match input.next_including_whitespace_and_comments() {
-        // FIXME: remove clone() when borrows are non-lexical
-        Ok(token) => token.clone(),
+        Ok(token) => token,
         Err(_) => {
             return Ok((
                 TokenSerializationType::nothing(),
@@ -335,8 +359,9 @@ fn parse_declaration_value_block<'i, 't>(
                 }
             };
         }
-        let last_token_type = match token {
+        let last_token_type = match *token {
             Token::Comment(_) => {
+                let serialization_type = token.serialization_type();
                 let token_slice = input.slice_from(token_start);
                 if !token_slice.ends_with("*/") {
                     missing_closing_characters.push_str(if token_slice.ends_with('*') {
@@ -345,14 +370,14 @@ fn parse_declaration_value_block<'i, 't>(
                         "*/"
                     })
                 }
-                token.serialization_type()
+                serialization_type
             },
-            Token::BadUrl(u) => {
-                let e = StyleParseErrorKind::BadUrlInDeclarationValueBlock(u);
+            Token::BadUrl(ref u) => {
+                let e = StyleParseErrorKind::BadUrlInDeclarationValueBlock(u.clone());
                 return Err(input.new_custom_error(e));
             },
-            Token::BadString(s) => {
-                let e = StyleParseErrorKind::BadStringInDeclarationValueBlock(s);
+            Token::BadString(ref s) => {
+                let e = StyleParseErrorKind::BadStringInDeclarationValueBlock(s.clone());
                 return Err(input.new_custom_error(e));
             },
             Token::CloseParenthesis => {
@@ -401,13 +426,14 @@ fn parse_declaration_value_block<'i, 't>(
                 Token::CloseSquareBracket.serialization_type()
             },
             Token::QuotedString(_) => {
+                let serialization_type = token.serialization_type();
                 let token_slice = input.slice_from(token_start);
                 let quote = &token_slice[..1];
                 debug_assert!(matches!(quote, "\"" | "'"));
                 if !(token_slice.ends_with(quote) && token_slice.len() > 1) {
                     missing_closing_characters.push_str(quote)
                 }
-                token.serialization_type()
+                serialization_type
             },
             Token::Ident(ref value) |
             Token::AtKeyword(ref value) |
@@ -417,6 +443,8 @@ fn parse_declaration_value_block<'i, 't>(
             Token::Dimension {
                 unit: ref value, ..
             } => {
+                let serialization_type = token.serialization_type();
+                let is_unquoted_url = matches!(token, Token::UnquotedUrl(_));
                 if value.ends_with("�") && input.slice_from(token_start).ends_with("\\") {
                     // Unescaped backslash at EOF in these contexts is interpreted as U+FFFD
                     // Check the value in case the final backslash was itself escaped.
@@ -424,18 +452,17 @@ fn parse_declaration_value_block<'i, 't>(
                     // (Unescaped U+FFFD would also work, but removing the backslash is annoying.)
                     missing_closing_characters.push_str("�")
                 }
-                if matches!(token, Token::UnquotedUrl(_)) {
+                if is_unquoted_url {
                     check_closed!(")");
                 }
-                token.serialization_type()
+                serialization_type
             },
             _ => token.serialization_type(),
         };
 
         token_start = input.position();
         token = match input.next_including_whitespace_and_comments() {
-            // FIXME: remove clone() when borrows are non-lexical
-            Ok(token) => token.clone(),
+            Ok(token) => token,
             Err(..) => return Ok((first_token_type, last_token_type)),
         };
     }
@@ -495,22 +522,19 @@ pub struct CustomPropertiesBuilder<'a> {
     may_have_cycles: bool,
     custom_properties: Option<CustomPropertiesMap>,
     inherited: Option<&'a Arc<CustomPropertiesMap>>,
-    environment: &'a CssEnvironment,
+    device: &'a Device,
 }
 
 impl<'a> CustomPropertiesBuilder<'a> {
     /// Create a new builder, inheriting from a given custom properties map.
-    pub fn new(
-        inherited: Option<&'a Arc<CustomPropertiesMap>>,
-        environment: &'a CssEnvironment,
-    ) -> Self {
+    pub fn new(inherited: Option<&'a Arc<CustomPropertiesMap>>, device: &'a Device) -> Self {
         Self {
             seen: PrecomputedHashSet::default(),
             reverted: Default::default(),
             may_have_cycles: false,
             custom_properties: None,
             inherited,
-            environment,
+            device,
         }
     }
 
@@ -551,12 +575,12 @@ impl<'a> CustomPropertiesBuilder<'a> {
                 // environment variable here, perform substitution here instead
                 // of forcing a full traversal in `substitute_all` afterwards.
                 let value = if !has_references && unparsed_value.references_environment {
-                    let result =
-                        substitute_references_in_value(unparsed_value, &map, &self.environment);
+                    let result = substitute_references_in_value(unparsed_value, &map, &self.device);
                     match result {
                         Ok(new_value) => Arc::new(new_value),
                         Err(..) => {
-                            map.remove(name);
+                            // Don't touch the map, this has the same effect as
+                            // making it compute to the inherited one.
                             return;
                         },
                     }
@@ -630,16 +654,22 @@ impl<'a> CustomPropertiesBuilder<'a> {
             None => return self.inherited.cloned(),
         };
         if self.may_have_cycles {
-            substitute_all(&mut map, self.environment);
+            let inherited = self.inherited.as_ref().map(|m| &***m);
+            substitute_all(&mut map, inherited, self.device);
         }
         Some(Arc::new(map))
     }
 }
 
-/// Resolve all custom properties to either substituted or invalid.
+/// Resolve all custom properties to either substituted, invalid, or unset
+/// (meaning we should use the inherited value).
 ///
 /// It does cycle dependencies removal at the same time as substitution.
-fn substitute_all(custom_properties_map: &mut CustomPropertiesMap, environment: &CssEnvironment) {
+fn substitute_all(
+    custom_properties_map: &mut CustomPropertiesMap,
+    inherited: Option<&CustomPropertiesMap>,
+    device: &Device,
+) {
     // The cycle dependencies removal in this function is a variant
     // of Tarjan's algorithm. It is mostly based on the pseudo-code
     // listed in
@@ -675,8 +705,11 @@ fn substitute_all(custom_properties_map: &mut CustomPropertiesMap, environment: 
         /// all unfinished strong connected components.
         stack: SmallVec<[usize; 5]>,
         map: &'a mut CustomPropertiesMap,
-        /// The environment to substitute `env()` variables.
-        environment: &'a CssEnvironment,
+        /// The inherited variables. We may need to restore some if we fail
+        /// substitution.
+        inherited: Option<&'a CustomPropertiesMap>,
+        /// to resolve the environment to substitute `env()` variables.
+        device: &'a Device,
     }
 
     /// This function combines the traversal for cycle removal and value
@@ -808,17 +841,25 @@ fn substitute_all(custom_properties_map: &mut CustomPropertiesMap, environment: 
             return None;
         }
 
-        // Now we have shown that this variable is not in a loop, and
-        // all of its dependencies should have been resolved. We can
-        // start substitution now.
-        let result = substitute_references_in_value(&value, &context.map, &context.environment);
-
+        // Now we have shown that this variable is not in a loop, and all of its
+        // dependencies should have been resolved. We can start substitution
+        // now.
+        let result = substitute_references_in_value(&value, &context.map, &context.device);
         match result {
             Ok(computed_value) => {
                 context.map.insert(name, Arc::new(computed_value));
             },
             Err(..) => {
-                context.map.remove(&name);
+                // This is invalid, reset it to the unset (inherited) value.
+                let inherited = context.inherited.and_then(|m| m.get(&name)).cloned();
+                match inherited {
+                    Some(computed_value) => {
+                        context.map.insert(name, computed_value);
+                    },
+                    None => {
+                        context.map.remove(&name);
+                    },
+                };
             },
         }
 
@@ -836,7 +877,8 @@ fn substitute_all(custom_properties_map: &mut CustomPropertiesMap, environment: 
             stack: SmallVec::new(),
             var_info: SmallVec::new(),
             map: custom_properties_map,
-            environment,
+            inherited,
+            device,
         };
         traverse(name, &mut context);
     }
@@ -846,7 +888,7 @@ fn substitute_all(custom_properties_map: &mut CustomPropertiesMap, environment: 
 fn substitute_references_in_value<'i>(
     value: &'i VariableValue,
     custom_properties: &CustomPropertiesMap,
-    environment: &CssEnvironment,
+    device: &Device,
 ) -> Result<ComputedValue, ParseError<'i>> {
     debug_assert!(!value.references.is_empty() || value.references_environment);
 
@@ -860,7 +902,7 @@ fn substitute_references_in_value<'i>(
         &mut position,
         &mut computed_value,
         custom_properties,
-        environment,
+        device,
     )?;
 
     computed_value.push_from(&input, position, last_token_type)?;
@@ -882,21 +924,18 @@ fn substitute_block<'i>(
     position: &mut (SourcePosition, TokenSerializationType),
     partial_computed_value: &mut ComputedValue,
     custom_properties: &CustomPropertiesMap,
-    env: &CssEnvironment,
+    device: &Device,
 ) -> Result<TokenSerializationType, ParseError<'i>> {
     let mut last_token_type = TokenSerializationType::nothing();
     let mut set_position_at_next_iteration = false;
     loop {
         let before_this_token = input.position();
-        // FIXME: remove clone() when borrows are non-lexical
-        let next = input
-            .next_including_whitespace_and_comments()
-            .map(|t| t.clone());
+        let next = input.next_including_whitespace_and_comments();
         if set_position_at_next_iteration {
             *position = (
                 before_this_token,
                 match next {
-                    Ok(ref token) => token.serialization_type(),
+                    Ok(token) => token.serialization_type(),
                     Err(_) => TokenSerializationType::nothing(),
                 },
             );
@@ -929,8 +968,14 @@ fn substitute_block<'i>(
                         }
                     };
 
+                    let env_value;
                     let value = if is_env {
-                        env.get(&name)
+                        if let Some(v) = device.environment().get(&name, device) {
+                            env_value = v;
+                            Some(&env_value)
+                        } else {
+                            None
+                        }
                     } else {
                         custom_properties.get(&name).map(|v| &**v)
                     };
@@ -957,7 +1002,7 @@ fn substitute_block<'i>(
                             &mut position,
                             partial_computed_value,
                             custom_properties,
-                            env,
+                            device,
                         )?;
                         partial_computed_value.push_from(input, position, last_token_type)?;
                     }
@@ -975,7 +1020,7 @@ fn substitute_block<'i>(
                         position,
                         partial_computed_value,
                         custom_properties,
-                        env,
+                        device,
                     )
                 })?;
                 // It's the same type for CloseCurlyBracket and CloseSquareBracket.
@@ -1001,7 +1046,7 @@ pub fn substitute<'i>(
     input: &'i str,
     first_token_type: TokenSerializationType,
     computed_values_map: Option<&Arc<CustomPropertiesMap>>,
-    env: &CssEnvironment,
+    device: &Device,
 ) -> Result<String, ParseError<'i>> {
     let mut substituted = ComputedValue::empty();
     let mut input = ParserInput::new(input);
@@ -1017,7 +1062,7 @@ pub fn substitute<'i>(
         &mut position,
         &mut substituted,
         &custom_properties,
-        env,
+        device,
     )?;
     substituted.push_from(&input, position, last_token_type)?;
     Ok(substituted.css)

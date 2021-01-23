@@ -1,0 +1,47 @@
+--- /home/romi/id_ID.dic	2004-08-10 23:48:42.000000000 +0200
++++ id.dic	2008-02-09 19:18:30.000000000 +0100
+@@ -1,4 +1,4 @@
+-23418
++23453
+ deponir/M
+ tali/B
+ kenek
+@@ -23417,3 +23417,38 @@
+ pencirian
+ aksi/B
+ suratku
++blog
++blogger
++Debian
++eBay
++email
++Firefox
++ftp
++Gentoo
++Google
++http
++https
++internet
++JavaScript
++Mozilla
++online
++offline
++PayPal
++phisher
++phishing
++podcast
++PowerPoint
++SeaMonkey
++Slackware
++scam
++spam
++spammer
++Sunbird
++SUSE
++Thunderbird
++Ubuntu
++unsubscribe
++uninstall
++uninstaller
++webmaster
++webmistress

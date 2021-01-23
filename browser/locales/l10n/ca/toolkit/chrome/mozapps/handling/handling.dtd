@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.emWidth "31em">
+<!ENTITY window.emHeight "31em">
+<!ENTITY ChooseOtherApp.description "Trieu una altra aplicació">
+<!ENTITY ChooseApp.label "Trieu…">
+<!ENTITY ChooseApp.accessKey "T">
+<!ENTITY accept "Obre l'enllaç">

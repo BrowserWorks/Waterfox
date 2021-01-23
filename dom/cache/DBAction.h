@@ -18,7 +18,7 @@ namespace mozilla {
 namespace dom {
 namespace cache {
 
-nsresult OpenDBConnection(const QuotaInfo& aQuotaInfo, nsIFile* aDBDir,
+nsresult OpenDBConnection(const QuotaInfo& aQuotaInfo, nsIFile* aDBFile,
                           mozIStorageConnection** aConnOut);
 
 class DBAction : public Action {
@@ -40,8 +40,8 @@ class DBAction : public Action {
                                  mozIStorageConnection* aConn) = 0;
 
  private:
-  virtual void RunOnTarget(Resolver* aResolver, const QuotaInfo& aQuotaInfo,
-                           Data* aOptionalData) override;
+  void RunOnTarget(Resolver* aResolver, const QuotaInfo& aQuotaInfo,
+                   Data* aOptionalData) override;
 
   nsresult OpenConnection(const QuotaInfo& aQuotaInfo, nsIFile* aQuotaDir,
                           mozIStorageConnection** aConnOut);

@@ -11,15 +11,8 @@
 #include "mozilla/dom/WorkerPrivate.h"
 #include "mozilla/dom/WorkerRunnable.h"
 #include "mozilla/dom/WorkerScope.h"
-#include "mozilla/Unused.h"
-#include "nsProxyRelease.h"
-#include "nsStandardURL.h"
-#include "nsURLHelper.h"
 
 namespace mozilla {
-
-using net::nsStandardURL;
-
 namespace dom {
 
 // This class creates an URL from a DOM Blob on the main thread.
@@ -36,20 +29,12 @@ class CreateURLRunnable : public WorkerMainThreadRunnable {
         mBlobImpl(aBlobImpl),
         mURL(aURL) {
     MOZ_ASSERT(aBlobImpl);
-
-    DebugOnly<bool> isMutable;
-    MOZ_ASSERT(NS_SUCCEEDED(aBlobImpl->GetMutable(&isMutable)));
-    MOZ_ASSERT(!isMutable);
   }
 
   bool MainThreadRun() override {
     using namespace mozilla::ipc;
 
     AssertIsOnMainThread();
-
-    DebugOnly<bool> isMutable;
-    MOZ_ASSERT(NS_SUCCEEDED(mBlobImpl->GetMutable(&isMutable)));
-    MOZ_ASSERT(!isMutable);
 
     nsCOMPtr<nsIPrincipal> principal = mWorkerPrivate->GetPrincipal();
 
@@ -61,24 +46,6 @@ class CreateURLRunnable : public WorkerMainThreadRunnable {
       NS_WARNING("Failed to add data entry for the blob!");
       SetDOMStringToNull(mURL);
       return false;
-    }
-
-    if (!mWorkerPrivate->IsSharedWorker() &&
-        !mWorkerPrivate->IsServiceWorker()) {
-      // Walk up to top worker object.
-      WorkerPrivate* wp = mWorkerPrivate;
-      while (WorkerPrivate* parent = wp->GetParent()) {
-        wp = parent;
-      }
-
-      nsCOMPtr<nsIScriptContext> sc = wp->GetScriptContext();
-      // We could not have a ScriptContext in JSM code. In this case, we leak.
-      if (sc) {
-        nsCOMPtr<nsIGlobalObject> global = sc->GetGlobalObject();
-        MOZ_ASSERT(global);
-
-        global->RegisterHostObjectURI(url);
-      }
     }
 
     mURL = NS_ConvertUTF8toUTF16(url);
@@ -114,24 +81,6 @@ class RevokeURLRunnable : public WorkerMainThreadRunnable {
       BlobURLProtocolHandler::RemoveDataEntry(url);
     }
 
-    if (!mWorkerPrivate->IsSharedWorker() &&
-        !mWorkerPrivate->IsServiceWorker()) {
-      // Walk up to top worker object.
-      WorkerPrivate* wp = mWorkerPrivate;
-      while (WorkerPrivate* parent = wp->GetParent()) {
-        wp = parent;
-      }
-
-      nsCOMPtr<nsIScriptContext> sc = wp->GetScriptContext();
-      // We could not have a ScriptContext in JSM code. In this case, we leak.
-      if (sc) {
-        nsCOMPtr<nsIGlobalObject> global = sc->GetGlobalObject();
-        MOZ_ASSERT(global);
-
-        global->UnregisterHostObjectURI(url);
-      }
-    }
-
     return true;
   }
 };
@@ -161,163 +110,6 @@ class IsValidURLRunnable : public WorkerMainThreadRunnable {
   bool IsValidURL() const { return mValid; }
 };
 
-// This class creates a URL object on the main thread.
-class ConstructorRunnable : public WorkerMainThreadRunnable {
- private:
-  const nsString mURL;
-
-  nsString mBase;  // IsVoid() if we have no base URI string.
-
-  nsCOMPtr<nsIURI> mRetval;
-
- public:
-  ConstructorRunnable(WorkerPrivate* aWorkerPrivate, const nsAString& aURL,
-                      const Optional<nsAString>& aBase)
-      : WorkerMainThreadRunnable(aWorkerPrivate,
-                                 NS_LITERAL_CSTRING("URL :: Constructor")),
-        mURL(aURL) {
-    if (aBase.WasPassed()) {
-      mBase = aBase.Value();
-    } else {
-      mBase.SetIsVoid(true);
-    }
-    mWorkerPrivate->AssertIsOnWorkerThread();
-  }
-
-  bool MainThreadRun() override {
-    AssertIsOnMainThread();
-
-    nsCOMPtr<nsIURI> baseUri;
-    if (!mBase.IsVoid()) {
-      nsresult rv = NS_NewURI(getter_AddRefs(baseUri), mBase, nullptr, nullptr,
-                              nsContentUtils::GetIOService());
-      if (NS_WARN_IF(NS_FAILED(rv))) {
-        return true;
-      }
-    }
-
-    nsCOMPtr<nsIURI> uri;
-    nsresult rv = NS_NewURI(getter_AddRefs(uri), mURL, nullptr, baseUri,
-                            nsContentUtils::GetIOService());
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      return true;
-    }
-
-    mRetval = std::move(uri);
-    return true;
-  }
-
-  nsIURI* GetURI(ErrorResult& aRv) const {
-    MOZ_ASSERT(mWorkerPrivate);
-    mWorkerPrivate->AssertIsOnWorkerThread();
-
-    if (!mRetval) {
-      aRv.ThrowTypeError<MSG_INVALID_URL>(mURL);
-    }
-
-    return mRetval;
-  }
-};
-
-class OriginGetterRunnable : public WorkerMainThreadRunnable {
- public:
-  OriginGetterRunnable(WorkerPrivate* aWorkerPrivate, nsAString& aValue,
-                       nsIURI* aURI)
-      : WorkerMainThreadRunnable(aWorkerPrivate,
-                                 NS_LITERAL_CSTRING("URL :: origin getter")),
-        mValue(aValue),
-        mURI(aURI) {
-    mWorkerPrivate->AssertIsOnWorkerThread();
-  }
-
-  bool MainThreadRun() override {
-    AssertIsOnMainThread();
-    ErrorResult rv;
-    nsContentUtils::GetUTFOrigin(mURI, mValue);
-    return true;
-  }
-
-  void Dispatch(ErrorResult& aRv) {
-    WorkerMainThreadRunnable::Dispatch(Canceling, aRv);
-  }
-
- private:
-  nsAString& mValue;
-  nsCOMPtr<nsIURI> mURI;
-};
-
-class ProtocolSetterRunnable : public WorkerMainThreadRunnable {
- public:
-  ProtocolSetterRunnable(WorkerPrivate* aWorkerPrivate,
-                         const nsACString& aValue, nsIURI* aURI)
-      : WorkerMainThreadRunnable(aWorkerPrivate,
-                                 NS_LITERAL_CSTRING("ProtocolSetterRunnable")),
-        mValue(aValue),
-        mURI(aURI) {
-    mWorkerPrivate->AssertIsOnWorkerThread();
-  }
-
-  bool MainThreadRun() override {
-    AssertIsOnMainThread();
-
-    nsCOMPtr<nsIURI> clone;
-    nsresult rv = NS_MutateURI(mURI).SetScheme(mValue).Finalize(clone);
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      return true;
-    }
-
-    nsAutoCString href;
-    rv = clone->GetSpec(href);
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      return true;
-    }
-
-    nsCOMPtr<nsIURI> uri;
-    rv = NS_NewURI(getter_AddRefs(uri), href);
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      return true;
-    }
-
-    mRetval = std::move(uri);
-    return true;
-  }
-
-  void Dispatch(ErrorResult& aRv) {
-    WorkerMainThreadRunnable::Dispatch(Canceling, aRv);
-  }
-
-  nsIURI* GetRetval() const { return mRetval; }
-
- private:
-  const nsCString mValue;
-  nsCOMPtr<nsIURI> mURI;
-  nsCOMPtr<nsIURI> mRetval;
-};
-
-/* static */
-already_AddRefed<URLWorker> URLWorker::Constructor(
-    const GlobalObject& aGlobal, const nsAString& aURL,
-    const Optional<nsAString>& aBase, ErrorResult& aRv) {
-  JSContext* cx = aGlobal.Context();
-  WorkerPrivate* workerPrivate = GetWorkerPrivateFromContext(cx);
-
-  RefPtr<URLWorker> url = new URLWorker(workerPrivate);
-  url->Init(aURL, aBase, aRv);
-
-  return aRv.Failed() ? nullptr : url.forget();
-}
-
-/* static */
-already_AddRefed<URLWorker> URLWorker::Constructor(const GlobalObject& aGlobal,
-                                                   const nsAString& aURL,
-                                                   const nsAString& aBase,
-                                                   ErrorResult& aRv) {
-  Optional<nsAString> base;
-  base = &aBase;
-
-  return Constructor(aGlobal, aURL, base, aRv);
-}
-
 /* static */
 void URLWorker::CreateObjectURL(const GlobalObject& aGlobal, Blob& aBlob,
                                 nsAString& aResult, mozilla::ErrorResult& aRv) {
@@ -327,11 +119,6 @@ void URLWorker::CreateObjectURL(const GlobalObject& aGlobal, Blob& aBlob,
   RefPtr<BlobImpl> blobImpl = aBlob.Impl();
   MOZ_ASSERT(blobImpl);
 
-  aRv = blobImpl->SetMutable(false);
-  if (NS_WARN_IF(aRv.Failed())) {
-    return;
-  }
-
   RefPtr<CreateURLRunnable> runnable =
       new CreateURLRunnable(workerPrivate, blobImpl, aResult);
 
@@ -340,12 +127,10 @@ void URLWorker::CreateObjectURL(const GlobalObject& aGlobal, Blob& aBlob,
     return;
   }
 
-  if (workerPrivate->IsSharedWorker() || workerPrivate->IsServiceWorker()) {
-    WorkerGlobalScope* scope = workerPrivate->GlobalScope();
-    MOZ_ASSERT(scope);
+  WorkerGlobalScope* scope = workerPrivate->GlobalScope();
+  MOZ_ASSERT(scope);
 
-    scope->RegisterHostObjectURI(NS_ConvertUTF16toUTF8(aResult));
-  }
+  scope->RegisterHostObjectURI(NS_ConvertUTF16toUTF8(aResult));
 }
 
 /* static */
@@ -362,12 +147,10 @@ void URLWorker::RevokeObjectURL(const GlobalObject& aGlobal,
     return;
   }
 
-  if (workerPrivate->IsSharedWorker() || workerPrivate->IsServiceWorker()) {
-    WorkerGlobalScope* scope = workerPrivate->GlobalScope();
-    MOZ_ASSERT(scope);
+  WorkerGlobalScope* scope = workerPrivate->GlobalScope();
+  MOZ_ASSERT(scope);
 
-    scope->UnregisterHostObjectURI(NS_ConvertUTF16toUTF8(aUrl));
-  }
+  scope->UnregisterHostObjectURI(NS_ConvertUTF16toUTF8(aUrl));
 }
 
 /* static */
@@ -385,139 +168,6 @@ bool URLWorker::IsValidURL(const GlobalObject& aGlobal, const nsAString& aUrl,
   }
 
   return runnable->IsValidURL();
-}
-
-URLWorker::URLWorker(WorkerPrivate* aWorkerPrivate)
-    : URL(nullptr), mWorkerPrivate(aWorkerPrivate) {}
-
-void URLWorker::Init(const nsAString& aURL, const Optional<nsAString>& aBase,
-                     ErrorResult& aRv) {
-  nsAutoCString scheme;
-  nsresult rv = net_ExtractURLScheme(NS_ConvertUTF16toUTF8(aURL), scheme);
-  if (NS_FAILED(rv)) {
-    // this may be a relative URL, check baseURL
-    if (!aBase.WasPassed()) {
-      aRv.ThrowTypeError<MSG_INVALID_URL>(aURL);
-      return;
-    }
-    rv = net_ExtractURLScheme(NS_ConvertUTF16toUTF8(aBase.Value()), scheme);
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      aRv.ThrowTypeError<MSG_INVALID_URL>(aURL);
-      return;
-    }
-  }
-
-  // Let's check if the baseURI was passed and if it can be parsed on the worker
-  // thread.
-  bool useProxy = false;
-  nsCOMPtr<nsIURI> baseURI;
-  if (aBase.WasPassed()) {
-    rv = NS_NewURIOnAnyThread(getter_AddRefs(baseURI),
-                              NS_ConvertUTF16toUTF8(aBase.Value()));
-    if (NS_FAILED(rv)) {
-      if (rv != NS_ERROR_UNKNOWN_PROTOCOL) {
-        aRv.ThrowTypeError<MSG_INVALID_URL>(aBase.Value());
-        return;
-      }
-      useProxy = true;
-    }
-  }
-
-  // Let's see if we can parse aURI on this thread.
-  nsCOMPtr<nsIURI> uri;
-  if (!useProxy) {
-    rv = NS_NewURIOnAnyThread(getter_AddRefs(uri), NS_ConvertUTF16toUTF8(aURL),
-                              nullptr, baseURI);
-    if (NS_FAILED(rv)) {
-      if (rv != NS_ERROR_UNKNOWN_PROTOCOL) {
-        aRv.ThrowTypeError<MSG_INVALID_URL>(aURL);
-        return;
-      }
-      useProxy = true;
-    }
-  }
-
-  // Fallback by proxy.
-  if (useProxy) {
-    RefPtr<ConstructorRunnable> runnable =
-        new ConstructorRunnable(mWorkerPrivate, aURL, aBase);
-    runnable->Dispatch(Canceling, aRv);
-    if (NS_WARN_IF(aRv.Failed())) {
-      return;
-    }
-
-    uri = runnable->GetURI(aRv);
-    if (NS_WARN_IF(aRv.Failed())) {
-      return;
-    }
-  }
-
-  SetURI(uri.forget());
-}
-
-URLWorker::~URLWorker() = default;
-
-void URLWorker::SetHref(const nsAString& aHref, ErrorResult& aRv) {
-  nsAutoCString scheme;
-  nsresult rv = net_ExtractURLScheme(NS_ConvertUTF16toUTF8(aHref), scheme);
-  if (NS_FAILED(rv)) {
-    aRv.ThrowTypeError<MSG_INVALID_URL>(aHref);
-    return;
-  }
-
-  RefPtr<ConstructorRunnable> runnable =
-      new ConstructorRunnable(mWorkerPrivate, aHref, Optional<nsAString>());
-  runnable->Dispatch(Canceling, aRv);
-  if (NS_WARN_IF(aRv.Failed())) {
-    return;
-  }
-
-  nsCOMPtr<nsIURI> uri = runnable->GetURI(aRv);
-  if (NS_WARN_IF(aRv.Failed())) {
-    return;
-  }
-
-  SetURI(uri.forget());
-  UpdateURLSearchParams();
-}
-
-void URLWorker::GetOrigin(nsAString& aOrigin, ErrorResult& aRv) const {
-  nsresult rv = nsContentUtils::GetThreadSafeUTFOrigin(GetURI(), aOrigin);
-  if (rv == NS_ERROR_UNKNOWN_PROTOCOL) {
-    RefPtr<OriginGetterRunnable> runnable =
-        new OriginGetterRunnable(mWorkerPrivate, aOrigin, GetURI());
-
-    runnable->Dispatch(aRv);
-    return;
-  }
-
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    aOrigin.Truncate();
-  }
-}
-
-void URLWorker::SetProtocol(const nsAString& aProtocol, ErrorResult& aRv) {
-  nsAString::const_iterator start, end;
-  aProtocol.BeginReading(start);
-  aProtocol.EndReading(end);
-  nsAString::const_iterator iter(start);
-
-  FindCharInReadable(':', iter, end);
-  NS_ConvertUTF16toUTF8 scheme(Substring(start, iter));
-
-  RefPtr<ProtocolSetterRunnable> runnable =
-      new ProtocolSetterRunnable(mWorkerPrivate, scheme, GetURI());
-  runnable->Dispatch(aRv);
-  if (NS_WARN_IF(aRv.Failed())) {
-    return;
-  }
-
-  nsCOMPtr<nsIURI> uri = runnable->GetRetval();
-  if (NS_WARN_IF(!uri)) {
-    return;
-  }
-
-  SetURI(uri.forget());
 }
 
 }  // namespace dom

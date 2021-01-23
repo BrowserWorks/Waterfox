@@ -19,9 +19,22 @@
       "type": "string",
       "description": "Attribute used for different groups of messages from the same provider"
     },
+    "layout": {
+      "type": "string",
+      "description": "Attribute used for different groups of messages from the same provider",
+      "enum": ["short_message", "message_and_animation", "icon_and_message", "addon_recommendation"]
+    },
+    "anchor_id": {
+      "type": "string",
+      "description": "A DOM element ID that the pop-over will be anchored."
+    },
     "bucket_id": {
       "type": "string",
       "description": "A bucket identifier for the addon. This is used in order to anonymize telemetry for history-sensitive targeting."
+    },
+    "skip_address_bar_notifier": {
+      "type": "boolean",
+      "description": "Skip the 'Recommend' notifier and show directly."
     },
     "notification_text": {
       "description": "The text in the small blue chicklet that appears in the URL bar. This can be a reference to a localized string in Firefox or just a plain string.",
@@ -83,6 +96,11 @@
         }
       }
     },
+    "learn_more": {
+      "type": "string",
+      "description": "Last part of the path in the SUMO URL to the support page with the information about the doorhanger.",
+      "examples": ["extensionpromotions", "extensionrecommendations"]
+    },
     "heading_text": {
       "description": "The larger heading text displayed in the pop-over. This can be a reference to a localized string in Firefox or just a plain string.",
       "oneOf": [
@@ -101,6 +119,21 @@
           "description": "Id of localized string for extension doorhanger title"
         }
       ]
+    },
+    "icon": {
+      "description": "The icon displayed in the pop-over. Should be 32x32px or 64x64px and png/svg.",
+      "allOf": [
+        {"$ref": "#/definitions/linkUrl"},
+        {"description": "Icon associated with the message"}
+      ]
+    },
+    "icon_dark_theme": {
+      "type": "string",
+      "description": "Pop-over icon, dark theme variant. Should be 32x32px or 64x64px and png/svg."
+    },
+    "icon_class": {
+      "type": "string",
+      "description": "CSS class of the pop-over icon."
     },
     "addon": {
       "description": "Addon information including AMO URL.",
@@ -324,5 +357,5 @@
     }
   },
   "additionalProperties": false,
-  "required": ["category", "bucket_id", "notification_text", "heading_text", "text", "buttons"]
+  "required": ["layout", "category", "bucket_id", "notification_text", "heading_text", "text", "buttons"]
 }

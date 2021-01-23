@@ -24,7 +24,7 @@ class UsageResult : public nsIQuotaUsageResult {
               uint64_t aLastAccessed);
 
  private:
-  virtual ~UsageResult() {}
+  virtual ~UsageResult() = default;
 
   NS_DECL_ISUPPORTS
   NS_DECL_NSIQUOTAUSAGERESULT
@@ -33,29 +33,29 @@ class UsageResult : public nsIQuotaUsageResult {
 class OriginUsageResult : public nsIQuotaOriginUsageResult {
   uint64_t mUsage;
   uint64_t mFileUsage;
-  uint64_t mLimit;
 
  public:
-  OriginUsageResult(uint64_t aUsage, uint64_t aFileUsage, uint64_t aLimit);
+  OriginUsageResult(uint64_t aUsage, uint64_t aFileUsage);
 
  private:
-  virtual ~OriginUsageResult() {}
+  virtual ~OriginUsageResult() = default;
 
   NS_DECL_ISUPPORTS
   NS_DECL_NSIQUOTAORIGINUSAGERESULT
 };
 
-class InitializedOriginsResult : public nsIQuotaInitializedOriginsResult {
-  nsCString mOrigin;
+class EstimateResult : public nsIQuotaEstimateResult {
+  uint64_t mUsage;
+  uint64_t mLimit;
 
  public:
-  explicit InitializedOriginsResult(const nsACString& aOrigin);
+  EstimateResult(uint64_t aUsage, uint64_t aLimit);
 
  private:
-  virtual ~InitializedOriginsResult() = default;
+  virtual ~EstimateResult() = default;
 
   NS_DECL_ISUPPORTS
-  NS_DECL_NSIQUOTAINITIALIZEDORIGINSRESULT
+  NS_DECL_NSIQUOTAESTIMATERESULT
 };
 
 }  // namespace quota

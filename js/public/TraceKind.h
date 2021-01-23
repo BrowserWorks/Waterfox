@@ -13,8 +13,8 @@
 
 // Forward declarations of all the types a TraceKind can denote.
 namespace js {
+class BaseScript;
 class BaseShape;
-class LazyScript;
 class ObjectGroup;
 class RegExpShared;
 class Shape;
@@ -40,11 +40,9 @@ enum class TraceKind {
   // Note: The order here is determined by our Value packing. Other users
   //       should sort alphabetically, for consistency.
   Object = 0x00,
+  BigInt = 0x01,
   String = 0x02,
   Symbol = 0x03,
-
-  // 0x1 is not used for any GCThing Value tag, so we use it for Script.
-  Script = 0x01,
 
   // Shape details are exposed through JS_TraceShapeCycleCollectorChildren.
   Shape = 0x04,
@@ -59,10 +57,9 @@ enum class TraceKind {
   // The following kinds do not have an exposed C++ idiom.
   BaseShape = 0x0F,
   JitCode = 0x1F,
-  LazyScript = 0x2F,
+  Script = 0x2F,
   Scope = 0x3F,
-  RegExpShared = 0x4F,
-  BigInt = 0x5F
+  RegExpShared = 0x4F
 };
 const static uintptr_t OutOfLineTraceKindMask = 0x07;
 
@@ -72,7 +69,7 @@ const static uintptr_t OutOfLineTraceKindMask = 0x07;
       "mask bits are set")
 ASSERT_TRACE_KIND(JS::TraceKind::BaseShape);
 ASSERT_TRACE_KIND(JS::TraceKind::JitCode);
-ASSERT_TRACE_KIND(JS::TraceKind::LazyScript);
+ASSERT_TRACE_KIND(JS::TraceKind::Script);
 ASSERT_TRACE_KIND(JS::TraceKind::Scope);
 ASSERT_TRACE_KIND(JS::TraceKind::RegExpShared);
 #undef ASSERT_TRACE_KIND
@@ -98,11 +95,10 @@ struct MapTypeToTraceKind {
   /* name         type              canBeGray       inCCGraph */ \
   D(BaseShape,    js::BaseShape,    true,           false)       \
   D(JitCode,      js::jit::JitCode, true,           false)       \
-  D(LazyScript,   js::LazyScript,   true,           true)        \
   D(Scope,        js::Scope,        true,           true)        \
   D(Object,       JSObject,         true,           true)        \
   D(ObjectGroup,  js::ObjectGroup,  true,           false)       \
-  D(Script,       JSScript,         true,           true)        \
+  D(Script,       js::BaseScript,   true,           true)        \
   D(Shape,        js::Shape,        true,           false)       \
   D(String,       JSString,         false,          false)       \
   D(Symbol,       JS::Symbol,       false,          false)       \
@@ -123,6 +119,21 @@ inline constexpr bool IsCCTraceKind(JS::TraceKind aKind) {
       return false;
   }
 }
+
+// Helper for SFINAE to ensure certain methods are only used on appropriate base
+// types. This avoids common footguns such as `Cell::is<JSFunction>()` which
+// match any type of JSObject.
+template <typename T>
+struct IsBaseTraceType : std::false_type {};
+
+#define JS_EXPAND_DEF(_, type, _1, _2) \
+  template <>                          \
+  struct IsBaseTraceType<type> : std::true_type {};
+JS_FOR_EACH_TRACEKIND(JS_EXPAND_DEF);
+#undef JS_EXPAND_DEF
+
+template <typename T>
+inline constexpr bool IsBaseTraceType_v = IsBaseTraceType<T>::value;
 
 // Map from all public types to their trace kind.
 #define JS_EXPAND_DEF(name, type, _, _1)                   \
@@ -194,6 +205,9 @@ struct MapTypeToRootKind<jsid> {
 };
 template <>
 struct MapTypeToRootKind<JSFunction*> : public MapTypeToRootKind<JSObject*> {};
+template <>
+struct MapTypeToRootKind<JSScript*>
+    : public MapTypeToRootKind<js::BaseScript*> {};
 
 // Fortunately, few places in the system need to deal with fully abstract
 // cells. In those places that do, we generally want to move to a layout
@@ -208,31 +222,18 @@ struct MapTypeToRootKind<JSFunction*> : public MapTypeToRootKind<JSObject*> {};
 // and pass it to the functor |f| along with |... args|, forwarded. Pass the
 // type designated by |traceKind| as the functor's template argument. The
 // |thing| parameter is optional; without it, we simply pass through |... args|.
-
-// VS2017+, GCC and Clang require an explicit template declaration in front of
-// the specialization of operator() because it is a dependent template. VS2015,
-// on the other hand, gets very confused if we have a |template| token there.
-// The clang-cl front end defines _MSC_VER, but still requires the explicit
-// template declaration, so we must test for __clang__ here as well.
-#if (defined(_MSC_VER) && _MSC_VER < 1910) && !defined(__clang__)
-#  define JS_DEPENDENT_TEMPLATE_HINT
-#else
-#  define JS_DEPENDENT_TEMPLATE_HINT template
-#endif
 template <typename F, typename... Args>
 auto DispatchTraceKindTyped(F f, JS::TraceKind traceKind, Args&&... args) {
   switch (traceKind) {
-#define JS_EXPAND_DEF(name, type, _, _1)                  \
-  case JS::TraceKind::name:                               \
-    return f.JS_DEPENDENT_TEMPLATE_HINT operator()<type>( \
-        std::forward<Args>(args)...);
+#define JS_EXPAND_DEF(name, type, _, _1) \
+  case JS::TraceKind::name:              \
+    return f.template operator()<type>(std::forward<Args>(args)...);
     JS_FOR_EACH_TRACEKIND(JS_EXPAND_DEF);
 #undef JS_EXPAND_DEF
     default:
       MOZ_CRASH("Invalid trace kind in DispatchTraceKindTyped.");
   }
 }
-#undef JS_DEPENDENT_TEMPLATE_HINT
 
 // Given a GC thing specified by pointer and trace kind, calls the functor |f|
 // with a template argument of the actual type of the pointer and returns the

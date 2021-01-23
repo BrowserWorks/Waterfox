@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "ספרייה">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "ארגון">
+<!ENTITY organize.accesskey    "א">
+<!ENTITY organize.tooltip      "ארגון הסימניות שלך">
+
+<!ENTITY file.close.label               "סגירה">
+<!ENTITY file.close.accesskey           "ס">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "תצוגות">
+<!ENTITY views.accesskey                "ת">
+<!ENTITY views.tooltip                  "שינוי התצוגה שלך">
+<!ENTITY view.columns.label             "הצגת עמודות">
+<!ENTITY view.columns.accesskey         "ה">
+<!ENTITY view.sort.label                "מיון">
+<!ENTITY view.sort.accesskey            "מ">
+<!ENTITY view.unsorted.label            "לא ממוין">
+<!ENTITY view.unsorted.accesskey        "ל">
+<!ENTITY view.sortAscending.label       "מיון בסדר עולה">
+<!ENTITY view.sortAscending.accesskey   "ע">
+<!ENTITY view.sortDescending.label      "מיון בסדר יורד">
+<!ENTITY view.sortDescending.accesskey  "י">
+
+<!ENTITY importBookmarksFromHTML.label     "ייבוא סימניות מקובץ HTML…">
+<!ENTITY importBookmarksFromHTML.accesskey "ב">
+<!ENTITY exportBookmarksToHTML.label       "ייצוא סימניות לקובץ HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "צ">
+<!ENTITY importOtherBrowser.label          "ייבוא מידע מדפדפן אחר…">
+<!ENTITY importOtherBrowser.accesskey      "ד">
+
+<!ENTITY cmd.backup.label               "גיבוי…">
+<!ENTITY cmd.backup.accesskey           "ג">
+<!ENTITY cmd.restore2.label             "שחזור">
+<!ENTITY cmd.restore2.accesskey         "ש">
+<!ENTITY cmd.restoreFromFile.label      "בחירת קובץ…">
+<!ENTITY cmd.restoreFromFile.accesskey  "ב">
+
+<!ENTITY col.name.label          "שם">
+<!ENTITY col.tags.label          "תגיות">
+<!ENTITY col.url.label           "כתובת">
+<!ENTITY col.mostrecentvisit.label "ביקור אחרון">
+<!ENTITY col.visitcount.label    "מספר ביקורים">
+<!ENTITY col.dateadded.label     "תאריך הוספה">
+<!ENTITY col.lastmodified.label  "שינוי אחרון">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "ייבוא וגיבוי">
+<!ENTITY maintenance.accesskey  "י">
+<!ENTITY maintenance.tooltip    "ייבוא וגיבוי הסימניות שלך">
+
+<!ENTITY backButton.tooltip  "חזרה אחורה">
+
+<!ENTITY forwardButton.tooltip  "המשך קדימה">
+
+<!ENTITY detailsPane.selectAnItemText.description "נא לבחור פריט כדי לצפות ולערוך את המאפיינים שלו">
+

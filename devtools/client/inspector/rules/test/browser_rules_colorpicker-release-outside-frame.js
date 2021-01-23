@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -65,7 +64,7 @@ add_task(async function() {
 
 async function openColorPickerForSwatch(swatch, view) {
   const cPicker = view.tooltips.getTooltip("colorPicker");
-  ok(cPicker, "The rule-view has the expected colorPicker property");
+  ok(cPicker, "The rule-view has an expected colorPicker widget");
 
   const cPickerPanel = cPicker.tooltip.panel;
   ok(cPickerPanel, "The XUL panel for the color picker exists");

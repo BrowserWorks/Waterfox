@@ -31,7 +31,12 @@ public class RendererCommon {
     public void onFrameResolutionChanged(int videoWidth, int videoHeight, int rotation);
   }
 
-  /** Interface for rendering frames on an EGLSurface. */
+  /**
+   * Interface for rendering frames on an EGLSurface with specified viewport location. Rotation,
+   * mirror, and cropping is specified using a 4x4 texture coordinate transform matrix. The frame
+   * input can either be an OES texture, RGB texture, or YUV textures in I420 format. The function
+   * release() must be called manually to free the resources held by this object.
+   */
   public static interface GlDrawer {
     /**
      * Functions for drawing frames with different sources. The rendering surface target is
@@ -59,18 +64,28 @@ public class RendererCommon {
     // The scaling type determines how the video will fill the allowed layout area in measure(). It
     // can be specified separately for the case when video has matched orientation with layout size
     // and when there is an orientation mismatch.
-    private ScalingType scalingTypeMatchOrientation = ScalingType.SCALE_ASPECT_BALANCED;
-    private ScalingType scalingTypeMismatchOrientation = ScalingType.SCALE_ASPECT_BALANCED;
+    private float visibleFractionMatchOrientation =
+        convertScalingTypeToVisibleFraction(ScalingType.SCALE_ASPECT_BALANCED);
+    private float visibleFractionMismatchOrientation =
+        convertScalingTypeToVisibleFraction(ScalingType.SCALE_ASPECT_BALANCED);
 
     public void setScalingType(ScalingType scalingType) {
-      this.scalingTypeMatchOrientation = scalingType;
-      this.scalingTypeMismatchOrientation = scalingType;
+      setScalingType(/* scalingTypeMatchOrientation= */ scalingType,
+          /* scalingTypeMismatchOrientation= */ scalingType);
     }
 
     public void setScalingType(
         ScalingType scalingTypeMatchOrientation, ScalingType scalingTypeMismatchOrientation) {
-      this.scalingTypeMatchOrientation = scalingTypeMatchOrientation;
-      this.scalingTypeMismatchOrientation = scalingTypeMismatchOrientation;
+      this.visibleFractionMatchOrientation =
+          convertScalingTypeToVisibleFraction(scalingTypeMatchOrientation);
+      this.visibleFractionMismatchOrientation =
+          convertScalingTypeToVisibleFraction(scalingTypeMismatchOrientation);
+    }
+
+    public void setVisibleFraction(
+        float visibleFractionMatchOrientation, float visibleFractionMismatchOrientation) {
+      this.visibleFractionMatchOrientation = visibleFractionMatchOrientation;
+      this.visibleFractionMismatchOrientation = visibleFractionMismatchOrientation;
     }
 
     public Point measure(int widthSpec, int heightSpec, int frameWidth, int frameHeight) {
@@ -84,10 +99,10 @@ public class RendererCommon {
       // and maximum layout size.
       final float frameAspect = frameWidth / (float) frameHeight;
       final float displayAspect = maxWidth / (float) maxHeight;
-      final ScalingType scalingType = (frameAspect > 1.0f) == (displayAspect > 1.0f)
-          ? scalingTypeMatchOrientation
-          : scalingTypeMismatchOrientation;
-      final Point layoutSize = getDisplaySize(scalingType, frameAspect, maxWidth, maxHeight);
+      final float visibleFraction = (frameAspect > 1.0f) == (displayAspect > 1.0f)
+          ? visibleFractionMatchOrientation
+          : visibleFractionMismatchOrientation;
+      final Point layoutSize = getDisplaySize(visibleFraction, frameAspect, maxWidth, maxHeight);
 
       // If the measure specification is forcing a specific size - yield.
       if (View.MeasureSpec.getMode(widthSpec) == View.MeasureSpec.EXACTLY) {
@@ -113,52 +128,6 @@ public class RendererCommon {
   // The minimum fraction of the frame content that will be shown for |SCALE_ASPECT_BALANCED|.
   // This limits excessive cropping when adjusting display size.
   private static float BALANCED_VISIBLE_FRACTION = 0.5625f;
-  // clang-format off
-  public static final float[] identityMatrix() {
-    return new float[] {
-        1, 0, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 1};
-  }
-  // Matrix with transform y' = 1 - y.
-  public static final float[] verticalFlipMatrix() {
-    return new float[] {
-        1,  0, 0, 0,
-        0, -1, 0, 0,
-        0,  0, 1, 0,
-        0,  1, 0, 1};
-  }
-
-  // Matrix with transform x' = 1 - x.
-  public static final float[] horizontalFlipMatrix() {
-    return new float[] {
-        -1, 0, 0, 0,
-         0, 1, 0, 0,
-         0, 0, 1, 0,
-         1, 0, 0, 1};
-  }
-  // clang-format on
-
-  /**
-   * Returns texture matrix that will have the effect of rotating the frame |rotationDegree|
-   * clockwise when rendered.
-   */
-  public static float[] rotateTextureMatrix(float[] textureMatrix, float rotationDegree) {
-    final float[] rotationMatrix = new float[16];
-    Matrix.setRotateM(rotationMatrix, 0, rotationDegree, 0, 0, 1);
-    adjustOrigin(rotationMatrix);
-    return multiplyMatrices(textureMatrix, rotationMatrix);
-  }
-
-  /**
-   * Returns new matrix with the result of a * b.
-   */
-  public static float[] multiplyMatrices(float[] a, float[] b) {
-    final float[] resultMatrix = new float[16];
-    Matrix.multiplyMM(resultMatrix, 0, a, 0, b, 0);
-    return resultMatrix;
-  }
 
   /**
    * Returns layout transformation matrix that applies an optional mirror effect and compensates
@@ -274,7 +243,7 @@ public class RendererCommon {
    * Calculate display size based on minimum fraction of the video that must remain visible,
    * video aspect ratio, and maximum display size.
    */
-  private static Point getDisplaySize(
+  public static Point getDisplaySize(
       float minVisibleFraction, float videoAspectRatio, int maxDisplayWidth, int maxDisplayHeight) {
     // If there is no constraint on the amount of cropping, fill the allowed display area.
     if (minVisibleFraction == 0 || videoAspectRatio == 0) {

@@ -1,0 +1,138 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- File Menu -->
+
+<!ENTITY tabCmd.label "Pestaña d'o navegador">
+<!ENTITY tabCmd.accesskey "t">
+<!ENTITY tabCmd.commandkey "t">
+<!ENTITY openCmd.label "Ubrir adreza web…">
+<!ENTITY openCmd.accesskey "w">
+<!ENTITY openCmd.commandkey "l">
+<!ENTITY openFileCmd.label "Ubrir un fichero…">
+<!ENTITY openFileCmd.accesskey "U">
+<!ENTITY openFileCmd.commandkey "u">
+
+<!ENTITY closeOtherTabs.label "Zarrar as udimpués de pestanyas">
+<!ENTITY closeOtherTabs.accesskey "d">
+
+<!ENTITY uploadFile.label "O suyobir fichero…">
+<!ENTITY uploadFile.accesskey "b">
+
+<!ENTITY printSetupCmd.label "Configurar pachina…">
+<!ENTITY printSetupCmd.accesskey "u">
+<!-- Edit Menu -->
+
+<!ENTITY findOnCmd.label "Buscar en ista pachina…">
+<!-- View Menu -->
+
+<!ENTITY toolbarsCmd.label "Amostrar/Amagar">
+<!ENTITY toolbarsCmd.accesskey "A">
+<!ENTITY tabbarCmd.label "Barra de pestañas">
+<!ENTITY tabbarCmd.accesskey "t">
+<!ENTITY taskbarCmd.label "Barra de ystado">
+<!ENTITY taskbarCmd.accesskey "s">
+<!ENTITY componentbarCmd.label "Barra de componentes">
+<!ENTITY componentbarCmd.accesskey "c">
+
+<!ENTITY fullScreenCmd.label "Pantalla completa">
+<!ENTITY fullScreenCmd.accesskey "n">
+
+<!ENTITY useStyleSheetMenu.label "Utilizar fuella d'estilos">
+<!ENTITY useStyleSheetMenu.accesskey "U">
+<!ENTITY useStyleSheetNone.label "Garra">
+<!ENTITY useStyleSheetNone.accesskey "G">
+<!ENTITY useStyleSheetPersistentOnly.label "Estilo predeterminau">
+<!ENTITY useStyleSheetPersistentOnly.accesskey "d">
+<!ENTITY bidiSwitchPageDirectionItem.label "Cambiar adreza d'a pachina">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey "C">
+<!ENTITY pageSourceCmd.label "Códigu fuent d'a pachina">
+<!ENTITY pageSourceCmd.accesskey "u">
+<!ENTITY pageSourceCmd.commandkey "u">
+<!ENTITY pageInfoCmd.label "Información d'a pachina">
+<!ENTITY pageInfoCmd.accesskey "I">
+<!ENTITY pageInfoCmd.commandkey "i">
+<!-- Go Menu -->
+
+<!ENTITY goMenu.label "Ir">
+<!ENTITY goMenu.accesskey "I">
+<!ENTITY goHomeCmd.label "Inicio">
+<!ENTITY goHomeCmd.accesskey "n">
+<!ENTITY historyCmd.label "Historial">
+<!ENTITY historyCmd.accesskey "H">
+<!ENTITY history.commandKey "h">
+<!ENTITY recentTabs.label "Pestanyas cerradas recientment">
+<!ENTITY recentTabs.accesskey "P">
+<!ENTITY recentTabs.commandkey "t">
+<!ENTITY recentWindows.label "Finestras cerradas recientmente">
+<!ENTITY recentWindows.accesskey "m">
+<!ENTITY recentWindows.commandkey "y">
+<!ENTITY historyRestoreLastSession.label "Restaurar sesión anterior">
+<!ENTITY historyRestoreLastSession.accesskey "R">
+<!ENTITY syncTabsMenu.label "Pestanyas de atros equipos">
+<!ENTITY syncTabsMenu.accesskey "a">
+<!-- Bookmarks Menu -->
+
+<!ENTITY bookmarksMenu.label "Marcadors">
+<!ENTITY bookmarksMenu.accesskey "M">
+<!ENTITY addCurPageCmd.label "Añadir a marcadors">
+<!ENTITY addCurPageCmd.accesskey "d">
+<!ENTITY addCurPageAsCmd.label "Archivar marcador…">
+<!ENTITY addCurPageAsCmd.accesskey "A">
+<!ENTITY addCurPageAsCmd.commandkey "d">
+<!ENTITY addCurTabsAsCmd.label "Adhibir iste grupo de pestanyas a marcadors…">
+<!ENTITY addCurTabsAsCmd.accesskey "u">
+<!ENTITY manBookmarksCmd.label "Administrar marcadors…">
+<!ENTITY manBookmarksCmd.accesskey "m">
+<!ENTITY manBookmarksCmd.commandkey "b">
+<!-- Tools Menu -->
+
+<!ENTITY searchInternetCmd.label "Search the Web">
+<!ENTITY searchInternetCmd.accesskey "b">
+<!ENTITY searchInternet.commandKey "s">
+<!ENTITY translateMenu.label "Traducir a pachina">
+<!ENTITY translateMenu.accesskey "T">
+
+<!ENTITY cookieMessageTitle.label "Permisos de cookies cambiaus">
+<!ENTITY cookieDisplayCookiesCmd.label "Administrar cookies alzadas">
+<!ENTITY cookieDisplayCookiesCmd.accesskey "A">
+<!ENTITY cookieAllowCookiesCmd.label "Permitir cookies d'iste puesto web">
+<!ENTITY cookieAllowCookiesCmd.accesskey "P">
+<!ENTITY cookieAllowCookiesMsg.label "As cookies d'iste puesto web serán siempre permitidas.">
+<!ENTITY cookieAllowSessionCookiesCmd.label "Permitir cookies de sesión d'iste puesto web">
+<!ENTITY cookieAllowSessionCookiesCmd.accesskey "c">
+<!ENTITY cookieAllowSessionCookiesMsg.label "Iste puesto web podrá ninviar cookies solament t'a sesión en curso.">
+<!ENTITY cookieCookiesDefaultCmd.label "Usar permisos predeterminaus ta cookies">
+<!ENTITY cookieCookiesDefaultCmd.accesskey "U">
+<!ENTITY cookieCookiesDefaultMsg.label "As cookies d'iste puesto web s'acceptarán u refusarán basar en a configuración predeterminada.">
+<!ENTITY cookieBlockCookiesCmd.label "Bloqueyar cookies d'iste puesto web">
+<!ENTITY cookieBlockCookiesCmd.accesskey "B">
+<!ENTITY cookieBlockCookiesMsg.label "As cookies d'iste puesto web serán siempre refusadas.">
+
+<!ENTITY cookieImageMessageTitle.label "Permisos d'imachens cambiaus">
+<!ENTITY cookieDisplayImagesCmd.label "Administrar permisos d'imachens">
+<!ENTITY cookieDisplayImagesCmd.accesskey "d">
+<!ENTITY cookieAllowImagesCmd.label "Permitir imachens d'iste puesto web">
+<!ENTITY cookieAllowImagesCmd.accesskey "e">
+<!ENTITY cookieAllowImagesMsg.label "As imachens d'iste puesto web se descargarán siempre.">
+<!ENTITY cookieImagesDefaultCmd.label "Usar permisos predeterminaus ta imachens">
+<!ENTITY cookieImagesDefaultCmd.accesskey "m">
+<!ENTITY cookieImagesDefaultMsg.label "As imachens d'iste puesto web se descargarán basar en a configuración predeterminada.">
+<!ENTITY cookieBlockImagesCmd.label "Bloqueyar imágenes d'iste puesto web">
+<!ENTITY cookieBlockImagesCmd.accesskey "n">
+<!ENTITY cookieBlockImagesMsg.label "As imachens d'iste puesto web no se descargarán nunca.">
+
+<!ENTITY cookieAllowPopupsCmd.label "Permitir finestras emerchents d'iste sitiu web">
+<!ENTITY cookieAllowPopupsCmd.accesskey "u">
+<!ENTITY cookieManagePopups.label "Administrar finestras emerchents">
+<!ENTITY cookieManagePopups.accesskey "s">
+
+<!ENTITY cookieCookieManager.label "Administrador de cookies">
+<!ENTITY cookieCookieManager.accesskey "k">
+<!ENTITY cookieImageManager.label "Administrador d'imachens">
+<!ENTITY cookieImageManager.accesskey "i">
+<!ENTITY cookiePopupManager.label "Administrador de finestras emerchents">
+<!ENTITY cookiePopupManager.accesskey "f">
+
+<!ENTITY clearPrivateDataCmd.label "Limpiar datos privaus…">
+<!ENTITY clearPrivateDataCmd.accesskey "L">

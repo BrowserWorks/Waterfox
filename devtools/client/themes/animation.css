@@ -9,7 +9,6 @@
   --animation-item-selected-color: rgba(215, 215, 219, 0.9);
   --cssanimation-color: var(--purple-50);
   --csstransition-color: var(--blue-55);
-  --devtools-toolbar-height: 24px;
   --fast-track-image: url("images/animation-fast-track.svg");
   --graph-height: 30px;
   --graph-right-offset: 10px;
@@ -33,6 +32,10 @@
   --scrubber-color: var(--magenta-50);
 }
 
+#animationinspector-panel {
+  overflow-x: auto;
+}
+
 /* Root element of animation inspector */
 #animation-container {
   cursor: default;
@@ -40,6 +43,7 @@
   flex-direction: column;
   height: 100%;
   outline: none;
+  min-width: var(--min-container-width);
 }
 
 #animation-container .uncontrolled {
@@ -92,7 +96,7 @@ select.playback-rate-selector.devtools-button:not(:empty):not(:disabled):not(.ch
 .animation-list-container {
   overflow: hidden;
   width: 100%;
-  -moz-user-select: none;
+  user-select: none;
 }
 
 .animation-list-container.active-scrubber,
@@ -110,7 +114,7 @@ select.playback-rate-selector.devtools-button:not(:empty):not(:disabled):not(.ch
 .current-time-scrubber-area::before {
   content: "";
   cursor: col-resize;
-  height: var(--devtools-toolbar-height);
+  height: var(--theme-toolbar-height);
   pointer-events: auto;
   position: absolute;
   /* In order to click on edge of current-time-scrubber-controller element */
@@ -172,7 +176,7 @@ select.playback-rate-selector.devtools-button:not(:empty):not(:disabled):not(.ch
   align-items: center;
   display: flex;
   grid-column: 1 / 2;
-  height: var(--graph-height);
+  height: inherit;
   padding-inline-start: 4px;
   /* animation-target is tech term, so it should be displayed as ltr. */
   direction: ltr;
@@ -212,7 +216,7 @@ select.playback-rate-selector.devtools-button:not(:empty):not(:disabled):not(.ch
 .animation-summary-graph {
   cursor: pointer;
   grid-column: 2 / 3;
-  height: var(--graph-height);
+  height: inherit;
   padding-bottom: 3px;
   padding-top: 3px;
   position: relative;
@@ -421,7 +425,7 @@ select.playback-rate-selector.devtools-button:not(:empty):not(:disabled):not(.ch
 .animated-property-list-container {
   flex: 1;
   overflow: hidden;
-  -moz-user-select: none;
+  user-select: none;
 }
 
 /* Keyframes Progress Bar */
@@ -450,7 +454,7 @@ select.playback-rate-selector.devtools-button:not(:empty):not(:disabled):not(.ch
 .animated-property-name {
   align-items: center;
   display: flex;
-  height: var(--graph-height);
+  height: inherit;
   justify-content: flex-end;
   padding-inline-end: 10px;
 }
@@ -495,7 +499,7 @@ select.playback-rate-selector.devtools-button:not(:empty):not(:disabled):not(.ch
 /* Keyframes Graph */
 .keyframes-graph {
   grid-column: 2 / 3;
-  height: var(--graph-height);
+  height: inherit;
   padding-top: 5px;
   position: relative;
 }
@@ -600,26 +604,77 @@ select.playback-rate-selector.devtools-button:not(:empty):not(:disabled):not(.ch
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
+
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr var(--graph-right-offset);
+  grid-template-rows: var(--theme-toolbar-height) calc(100% - var(--theme-toolbar-height));
+}
+
+.progress-inspection-panel > .background {
+  grid-column: 1 / -1;
+  grid-row: 1 / -1;
+
+  position: sticky;
+  top: 0;
+
+  /* Correspond to the bug 1462235 */
+  height: calc(100% - 1px);
+
+  pointer-events: none;
+
+  display: grid;
+  grid-template-columns: subgrid;
 }
 
 .progress-inspection-panel > .header {
-  padding: 0;
+  grid-column: 1 / -1;
+  grid-row: 1 / 2;
+
   position: sticky;
   top: 0;
+
+  padding: 0;
   z-index: 1;
+
+  display: grid;
+  grid-template-columns: subgrid;
+}
+
+.progress-inspection-panel > .indicator {
+  grid-column: 1 / -1;
+  grid-row: 1 / -1;
+
+  position: sticky;
+  top: 0;
+
+  /* Correspond to the bug 1462235 */
+  height: calc(100% - 1px);
+
+  pointer-events: none;
+  z-index: 2;
+
+  display: grid;
+  grid-template-columns: subgrid;
 }
 
 .progress-inspection-panel > ul {
+  grid-column: 1 / -1;
+  grid-row: 2 / -1;
+
   list-style-type: none;
   margin: 0;
   padding: 0;
+
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-auto-rows: min-content;
 }
 
-.progress-inspection-panel > div,
 .progress-inspection-panel > ul > li {
+  grid-column: 1 / -1;
+  height: var(--graph-height);
   display: grid;
-  grid-template-columns:
-    var(--sidebar-width) calc(100% - var(--sidebar-width) - var(--graph-right-offset)) var(--graph-right-offset);
+  grid-template-columns: subgrid;
 }
 
 /* Tick Lines */
@@ -630,13 +685,8 @@ select.playback-rate-selector.devtools-button:not(:empty):not(:disabled):not(.ch
 
 .tick-line {
   position: absolute;
-}
-
-.tick-line::before {
+  height: 100%;
   border-inline-start: var(--tick-line-style);
-  content: "";
-  height: 100vh;
-  position: fixed;
 }
 
 /* Tick Labels */
@@ -668,6 +718,7 @@ select.playback-rate-selector.devtools-button:not(:empty):not(:disabled):not(.ch
 /* Indication Bar */
 .indication-bar {
   position: absolute;
+  height: 100%;
 }
 
 .indication-bar::before {
@@ -675,27 +726,23 @@ select.playback-rate-selector.devtools-button:not(:empty):not(:disabled):not(.ch
   border-inline-end: 5px solid transparent;
   border-top: 5px solid;
   content: "";
-  height: 100vh;
-  position: fixed;
+  height: calc(100% - 5px);
+  position: absolute;
   transform: translateX(-6px);
   width: 1px;
 }
 
 .indication-bar::after {
   content: "";
-  height: 100vh;
-  position: fixed;
+  height: 100%;
+  position: absolute;
   transform: translateX(-1px);
   width: 1px;
 }
 
 /* No Animation Panel */
-.animation-error-message {
-  overflow: auto;
-}
-
 .animation-error-message > p {
-  white-space: pre;
+  white-space: pre-wrap;
 }
 
 .animation-element-picker::before {

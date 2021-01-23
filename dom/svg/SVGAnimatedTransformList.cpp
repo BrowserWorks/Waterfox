@@ -6,15 +6,16 @@
 
 #include "SVGAnimatedTransformList.h"
 
-#include "mozilla/dom/MutationEventBinding.h"
-#include "mozilla/dom/SVGAnimationElement.h"
-#include "mozilla/Move.h"
-#include "mozilla/SMILValue.h"
-#include "mozilla/SVGContentUtils.h"
-#include "nsCharSeparatedTokenizer.h"
+#include <utility>
+
 #include "DOMSVGAnimatedTransformList.h"
 #include "SVGTransform.h"
 #include "SVGTransformListSMILType.h"
+#include "mozilla/SMILValue.h"
+#include "mozilla/SVGContentUtils.h"
+#include "mozilla/dom/MutationEventBinding.h"
+#include "mozilla/dom/SVGAnimationElement.h"
+#include "nsCharSeparatedTokenizer.h"
 
 using namespace mozilla::dom;
 using namespace mozilla::dom::SVGTransform_Binding;
@@ -59,16 +60,16 @@ nsresult SVGAnimatedTransformList::SetBaseValue(const SVGTransformList& aValue,
     domWrapper->InternalBaseValListWillChangeLengthTo(mBaseVal.Length());
   } else {
     mIsAttrSet = true;
-    // We only need to reconstruct the frame for aSVGElement if it already
-    // exists and the stacking context changes because a transform is created.
-    mRequiresFrameReconstruction =
+    // We only need to treat this as a creation or removal of a transform if the
+    // frame already exists and it didn't have an existing one.
+    mCreatedOrRemovedOnLastChange =
         aSVGElement->GetPrimaryFrame() && !hadTransform;
   }
   return rv;
 }
 
 void SVGAnimatedTransformList::ClearBaseValue() {
-  mRequiresFrameReconstruction = !HasTransform();
+  mCreatedOrRemovedOnLastChange = !HasTransform();
 
   DOMSVGAnimatedTransformList* domWrapper =
       DOMSVGAnimatedTransformList::GetDOMWrapperIfExists(this);
@@ -106,7 +107,7 @@ nsresult SVGAnimatedTransformList::SetAnimValue(const SVGTransformList& aValue,
     domWrapper->InternalAnimValListWillChangeLengthTo(aValue.Length());
   }
   if (!mAnimVal) {
-    mAnimVal = new SVGTransformList();
+    mAnimVal = MakeUnique<SVGTransformList>();
   }
   nsresult rv = mAnimVal->CopyFrom(aValue);
   if (NS_FAILED(rv)) {
@@ -121,6 +122,7 @@ nsresult SVGAnimatedTransformList::SetAnimValue(const SVGTransformList& aValue,
   } else {
     modType = MutationEvent_Binding::ADDITION;
   }
+  mCreatedOrRemovedOnLastChange = modType == MutationEvent_Binding::ADDITION;
   aElement->DidAnimateTransformList(modType);
   return NS_OK;
 }
@@ -143,6 +145,7 @@ void SVGAnimatedTransformList::ClearAnimValue(SVGElement* aElement) {
   } else {
     modType = MutationEvent_Binding::REMOVAL;
   }
+  mCreatedOrRemovedOnLastChange = modType == MutationEvent_Binding::REMOVAL;
   aElement->DidAnimateTransformList(modType);
 }
 

@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label            "Cyhoeddi Tudalen">
+<!ENTITY windowTitleSettings.label    "Gosodiadau Cyhoeddi">
+<!ENTITY publishTab.label             "Cyhoeddi">
+<!ENTITY settingsTab.label            "Gosodiadau">
+<!ENTITY publishButton.label          "Cyhoeddi">
+<!-- Publish Tab Panel -->
+
+<!ENTITY siteList.label               "Enw Gwefan:">
+<!ENTITY siteList.accesskey           "E">
+<!ENTITY siteList.tooltip             "Dewis y wefan rydych eisiau cyhoeddi iddi">
+<!ENTITY newSiteButton.label          "Gwefan Newydd">
+<!ENTITY newSiteButton.accesskey      "N">
+<!ENTITY docDirList.label             "Is gyfeiriadur gwefan y dudalen:">
+<!ENTITY docDirList.accesskey         "I">
+<!ENTITY docDirList.tooltip           "Dewis neu rhoi enw'r is gyfeiriadur ar gyfer y dudalen hon">
+<!ENTITY publishImgCheckbox.label     "Cynnwys delweddau a ffeiliau eraill">
+<!ENTITY publishImgCheckbox.accesskey "C">
+<!ENTITY publishImgCheckbox.tooltip   "Cyhoeddi delweddau a ffeiliau eraill cyfeiriwyd atynt gan y dudalen hon">
+<!ENTITY sameLocationRadio.label      "Defnyddio'r un lleoliad a'r dudalen">
+<!ENTITY sameLocationRadio.accesskey  "D">
+<!ENTITY sameLocationRadio.tooltip    "Cyhoeddi ffeiliau i'r un lleoliad â'r dudalen">
+<!ENTITY useSubdirRadio.label         "Defnyddio is gyfeiriadur y wefan:">
+<!ENTITY useSubdirRadio.accesskey     "e">
+<!ENTITY useSubdirRadio.tooltip       "Cyhoeddi ffeiliau i'r is gyfeiriadur pell">
+<!ENTITY otherDirList.tooltip         "Dewis neu rhoi enw'r is gyfeiriadur pell lle bydd y ffeiliau'n cael eu cyhoeddi">
+<!ENTITY pageTitle.label              "Teitl Tudalen:">
+<!ENTITY pageTitle.accesskey          "T">
+<!ENTITY pageTitle.tooltip            "Rhoi teitl i adnabod y dudalen yn y ffenestr ac yn y nodau tudalen">
+<!ENTITY pageTitleExample.label       "e.e.: &quot;Tudalen Gwe&quot;">
+<!ENTITY filename.label               "Enw Ffeil:">
+<!ENTITY filename.accesskey           "F">
+<!ENTITY filename.tooltip             "Rhoi enw ar gyfer y ffeil hon, gan gynnwys '.html' ar gyfer tudalen gwe">
+<!ENTITY filenameExample.label        "e.e,: &quot;tudalen.html&quot;">
+<!ENTITY setDefaultButton.label       "Gosod fel y Rhagosodiad">
+<!ENTITY setDefaultButton.accesskey   "R">
+<!ENTITY removeButton.label           "Tynnu Gwefan">
+<!ENTITY removeButton.accesskey       "T">
+<!-- Settings Tab Panel -->
+
+<!ENTITY publishSites.label           "Gwefannau Cyhoeddi">
+<!ENTITY serverInfo.label             "Gwybodaeth am y Gweinydd">
+<!ENTITY loginInfo.label              "Gwybodaeth Mewngofnodi">
+<!ENTITY siteName.label               "Enw Gwefan:">
+<!ENTITY siteName.accesskey           "E">
+<!ENTITY siteName.tooltip             "Llys Enw sy'n hysbysu'r wefan cyhoeddi (e.e.: 'Gwefan')">
+<!ENTITY siteUrl.label                "Cyfeiriad cyhoeddi (e.e.: 'ftp://ftp.fyisp.com/fyenwdefnyddiwr'):">
+<!ENTITY siteUrl.accesskey            "y">
+<!ENTITY siteUrl.tooltip              "Cyfeiriad FTP:// neu HTTP:// sy'n cael ei ddarparu gan eich ISP neu wasanaeth gwesteio">
+<!ENTITY browseUrl.label              "Cyfeiriad HTTP eich tudalen cartref (e.e.: 'http://www.fyisp.com/fyenwdefnyddiwr'):">
+<!ENTITY browseUrl.accesskey          "H">
+<!ENTITY browseUrl.tooltip            "Cyfeiriad HTTP:// eich cyfeiriadur cartref (peidiwch cynnwys yr enw ffeil)">
+<!ENTITY username.label               "Enw defnyddiwr:">
+<!ENTITY username.accesskey           "E">
+<!ENTITY username.tooltip             "Enw defnyddiwr i chi gael mewngofnodi i'ch gwasanaeth ISP neu westeio">
+<!ENTITY password.label               "Cyfrinair:">
+<!ENTITY password.accesskey           "C">
+<!ENTITY password.tooltip             "Cyfrinair sy'n gysylltiedig â'ch enw defnyddiwr">
+<!ENTITY savePassword.label           "Cadw'r Cyfrinair">
+<!ENTITY savePassword.accesskey       "a">
+<!ENTITY savePassword.tooltip         "Dewis hwn i gadw eich cyfrinair yn ddiogel gan ddefnyddio'r Rheolwr Cyfrineiriau">

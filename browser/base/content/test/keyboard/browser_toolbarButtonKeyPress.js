@@ -227,6 +227,7 @@ add_task(async function testBookmarkButtonPress() {
   ) {
     let button = document.getElementById("star-button");
     forceFocus(button);
+    StarUI._createPanelIfNeeded();
     let panel = document.getElementById("editBookmarkPanel");
     let focused = BrowserTestUtils.waitForEvent(panel, "focus", true);
     // The button ignores activation while the bookmarked status is being
@@ -301,4 +302,33 @@ add_task(async function testDownloadsButtonPress() {
   panel.hidePopup();
   await hidden;
   DownloadsButton.hide();
+});
+
+// Test activation of the Save to Pocket button from the keyboard.
+// This is a page action button which shows an iframe (wantsIframe: true).
+// The Pocket iframe should appear and focus should move inside it.
+add_task(async function testPocketButtonPress() {
+  await BrowserTestUtils.withNewTab("https://example.com", async function(
+    aBrowser
+  ) {
+    let button = document.getElementById("pocket-button");
+    forceFocus(button);
+    // The panel is created on the fly, so we can't simply wait for focus
+    // inside it.
+    let showing = BrowserTestUtils.waitForEvent(document, "popupshowing", true);
+    EventUtils.synthesizeKey(" ");
+    let event = await showing;
+    let panel = event.target;
+    is(panel.id, "pageActionActivatedActionPanel");
+    let focused = BrowserTestUtils.waitForEvent(panel, "focus", true);
+    await focused;
+    is(
+      document.activeElement.tagName,
+      "iframe",
+      "Focus inside Pocket iframe after Bookmark button pressed"
+    );
+    let hidden = BrowserTestUtils.waitForEvent(panel, "popuphidden");
+    EventUtils.synthesizeKey("KEY_Escape");
+    await hidden;
+  });
 });

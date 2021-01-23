@@ -16,10 +16,6 @@
 }
 
 .tree.noselect {
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  -o-user-select: none;
   user-select: none;
 }
 
@@ -75,7 +71,7 @@
   transform: rotate(-90deg);
 }
 
-html[dir="rtl"] .tree-node button:not(.expanded) {
+html[dir="rtl"] .tree-node button.arrow:not(.expanded) {
   transform: rotate(90deg);
 }
 

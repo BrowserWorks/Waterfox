@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of 
+Netscape Communicator, Please translate using the brandname in respective 
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurances of the word 
+"&brandShortName;" below.
+-->
+
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Увезување">
+
+<!ENTITY window.width "40em">
+<!ENTITY window.macWidth "45em">
+
+<!ENTITY importTitle.label "Волжебник за увоз на пошта на &brandShortName;">
+
+<!ENTITY importDescription2.label "Откога ќе бидат увезени, до нив ќе можете да  пристапите преку поштата и/или адресарот на &brandShortName;.">
+
+<!ENTITY selectDescription.label "Изберете ја програмата од која сакате да увезете:">
+
+<!ENTITY back.label "&lt; Назад">
+<!ENTITY forward.label "Напред &gt;">
+<!ENTITY finish.label "Крај">
+<!ENTITY cancel.label "Откажи">
+
+<!ENTITY select.label "Изберете го типот на материјал за увоз:">
+
+<!ENTITY title.label "Наслов">
+<!ENTITY processing.label "Увезувам…">
+

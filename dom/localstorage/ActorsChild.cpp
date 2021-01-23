@@ -133,12 +133,12 @@ mozilla::ipc::IPCResult LSObserverChild::RecvObserve(
     return IPC_OK();
   }
 
-  nsresult rv;
-  nsCOMPtr<nsIPrincipal> principal =
-      PrincipalInfoToPrincipal(aPrincipalInfo, &rv);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
+  auto principalOrErr = PrincipalInfoToPrincipal(aPrincipalInfo);
+  if (NS_WARN_IF(principalOrErr.isErr())) {
     return IPC_FAIL_NO_REASON(this);
   }
+
+  nsCOMPtr<nsIPrincipal> principal = principalOrErr.unwrap();
 
   Storage::NotifyChange(/* aStorage */ nullptr, principal, aKey,
                         aOldValue.AsString(), aNewValue.AsString(),
@@ -153,8 +153,7 @@ mozilla::ipc::IPCResult LSObserverChild::RecvObserve(
  * LocalStorageRequestChild
  ******************************************************************************/
 
-LSRequestChild::LSRequestChild(LSRequestChildCallback* aCallback)
-    : mCallback(aCallback), mFinishing(false) {
+LSRequestChild::LSRequestChild() : mFinishing(false) {
   AssertIsOnOwningThread();
 
   MOZ_COUNT_CTOR(LSRequestChild);
@@ -162,8 +161,18 @@ LSRequestChild::LSRequestChild(LSRequestChildCallback* aCallback)
 
 LSRequestChild::~LSRequestChild() {
   AssertIsOnOwningThread();
+  MOZ_ASSERT(!mCallback);
 
   MOZ_COUNT_DTOR(LSRequestChild);
+}
+
+void LSRequestChild::SetCallback(LSRequestChildCallback* aCallback) {
+  AssertIsOnOwningThread();
+  MOZ_ASSERT(aCallback);
+  MOZ_ASSERT(!mCallback);
+  MOZ_ASSERT(Manager());
+
+  mCallback = aCallback;
 }
 
 bool LSRequestChild::Finishing() const {
@@ -174,6 +183,14 @@ bool LSRequestChild::Finishing() const {
 
 void LSRequestChild::ActorDestroy(ActorDestroyReason aWhy) {
   AssertIsOnOwningThread();
+
+  if (mCallback) {
+    MOZ_ASSERT(aWhy != Deletion);
+
+    mCallback->OnResponse(NS_ERROR_FAILURE);
+
+    mCallback = nullptr;
+  }
 }
 
 mozilla::ipc::IPCResult LSRequestChild::Recv__delete__(
@@ -182,6 +199,8 @@ mozilla::ipc::IPCResult LSRequestChild::Recv__delete__(
   MOZ_ASSERT(mCallback);
 
   mCallback->OnResponse(aResponse);
+
+  mCallback = nullptr;
 
   return IPC_OK();
 }
@@ -193,7 +212,7 @@ mozilla::ipc::IPCResult LSRequestChild::RecvReady() {
 
   // We only expect this to return false if the channel has been closed, but
   // PBackground's channel never gets shutdown.
-  MOZ_DIAGNOSTIC_ALWAYS_TRUE(SendFinish());
+  MOZ_ALWAYS_TRUE(SendFinish());
 
   return IPC_OK();
 }
@@ -202,30 +221,49 @@ mozilla::ipc::IPCResult LSRequestChild::RecvReady() {
  * LSSimpleRequestChild
  ******************************************************************************/
 
-LSSimpleRequestChild::LSSimpleRequestChild(
-    LSSimpleRequestChildCallback* aCallback)
-    : mCallback(aCallback) {
+LSSimpleRequestChild::LSSimpleRequestChild() {
   AssertIsOnOwningThread();
-  MOZ_ASSERT(aCallback);
 
   MOZ_COUNT_CTOR(LSSimpleRequestChild);
 }
 
 LSSimpleRequestChild::~LSSimpleRequestChild() {
   AssertIsOnOwningThread();
+  MOZ_ASSERT(!mCallback);
 
   MOZ_COUNT_DTOR(LSSimpleRequestChild);
 }
 
+void LSSimpleRequestChild::SetCallback(
+    LSSimpleRequestChildCallback* aCallback) {
+  AssertIsOnOwningThread();
+  MOZ_ASSERT(aCallback);
+  MOZ_ASSERT(!mCallback);
+  MOZ_ASSERT(Manager());
+
+  mCallback = aCallback;
+}
+
 void LSSimpleRequestChild::ActorDestroy(ActorDestroyReason aWhy) {
   AssertIsOnOwningThread();
+
+  if (mCallback) {
+    MOZ_ASSERT(aWhy != Deletion);
+
+    mCallback->OnResponse(NS_ERROR_FAILURE);
+
+    mCallback = nullptr;
+  }
 }
 
 mozilla::ipc::IPCResult LSSimpleRequestChild::Recv__delete__(
     const LSSimpleRequestResponse& aResponse) {
   AssertIsOnOwningThread();
+  MOZ_ASSERT(mCallback);
 
   mCallback->OnResponse(aResponse);
+
+  mCallback = nullptr;
 
   return IPC_OK();
 }

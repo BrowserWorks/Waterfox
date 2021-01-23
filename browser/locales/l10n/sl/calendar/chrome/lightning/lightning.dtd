@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+
+<!-- Tools menu -->
+<!ENTITY lightning.preferencesLabel "Lightning">
+
+<!-- New menu popup in File menu -->
+<!ENTITY lightning.menupopup.new.event.label    "Dogodek …">
+<!ENTITY lightning.menupopup.new.event.accesskey "D">
+<!ENTITY lightning.menupopup.new.task.label     "Opravilo …">
+<!ENTITY lightning.menupopup.new.task.accesskey "O">
+<!ENTITY lightning.menupopup.new.calendar.label "Koledar …">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "K">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.label               "Odpri">
+<!ENTITY lightning.menupopup.open.accesskey           "O">
+<!ENTITY lightning.menupopup.open.message.label       "Shranjeno sporočilo …">
+<!ENTITY lightning.menupopup.open.message.accesskey   "S">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.calendar.label      "Datoteko koledarja …">
+<!ENTITY lightning.menupopup.open.calendar.accesskey  "D">
+
+<!-- View Menu -->
+<!ENTITY lightning.menu.view.calendar.label            "Koledar">
+<!ENTITY lightning.menu.view.calendar.accesskey        "K">
+<!ENTITY lightning.menu.view.tasks.label               "Opravila">
+<!ENTITY lightning.menu.view.tasks.accesskey           "O">
+
+<!-- Events and Tasks menu -->
+<!ENTITY lightning.menu.eventtask.label                "Dogodki in opravila">
+<!ENTITY lightning.menu.eventtask.accesskey            "k">
+
+<!-- properties dialog, calendar creation wizard -->
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.email.label,
+     lightning.calendarproperties.forceEmailScheduling.label)
+     These strings are used in the calendar wizard and the calendar properties dialog, but are only
+     displayed when setting/using a caldav calendar -->
+<!ENTITY lightning.calendarproperties.email.label                           "E-poštno sporočilo:">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.label            "Daj prednost odjemalčevemu e-poštnemu časovnemu razvrščanju">
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.forceEmailScheduling.tooltiptext1,
+     lightning.calendarproperties.forceEmailScheduling.tooltiptext2)
+     - tooltiptext1 is used in the calendar wizard when setting a new caldav calendar
+     - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "Za zdaj lahko to omogočite samo po nastavitvi tega koledarja v pripadajočem pogovornem oknu lastnosti, če strežnik koledarja poskrbi za časovno razvrščanje.">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "Ta možnost je na voljo samo, če strežnik koledarja podpira časovno razvrščanje. Omogoča nadomestno e-poštno časovno razvrščanje, namesto da bi se ga prepustilo strežniku.">
+
+<!-- iMIP Bar (meeting support) -->
+<!ENTITY lightning.imipbar.btnAccept.label                                  "Sprejmi">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext                           "Sprejmi povabilo na dogodek">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label                       "Sprejmi vse">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences2.tooltiptext                "Sprejmi povabilo na dogodek za vse ponovitve tega dogodka">
+<!ENTITY lightning.imipbar.btnAdd.label                                     "Dodaj">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext                               "Dodaj dogodek h koledarju">
+<!ENTITY lightning.imipbar.btnDecline.label                                 "Zavrni">
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext                          "Zavrni povabilo k dogodku">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label                      "Zavrni vse">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences2.tooltiptext               "Zavrni povabila k dogodku za vse ponovitve dogodka">
+<!ENTITY lightning.imipbar.btnDeclineCounter.label                          "Odkloni">
+<!ENTITY lightning.imipbar.btnDeclineCounter.tooltiptext                    "Odkloni nadomestni predlog">
+<!ENTITY lightning.imipbar.btnDelete.label                                  "Izbriši">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext                            "Izbriši iz koledarja">
+<!ENTITY lightning.imipbar.btnDetails.label                                 "Podrobnosti …">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext                           "Prikaži podrobnosti dogodka">
+<!ENTITY lightning.imipbar.btnDoNotShowImipBar.label                        "Ne prikazuj mi teh sporočil">
+<!ENTITY lightning.imipbar.btnGoToCalendar.label                            "Koledar">
+<!ENTITY lightning.imipbar.btnGoToCalendar.tooltiptext                      "Pojdi na zavihek koledarja">
+<!ENTITY lightning.imipbar.btnMore.label                                    "Več">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext                              "Kliknite za več možnosti">
+<!ENTITY lightning.imipbar.btnReconfirm2.label                              "Ponovno potrdi">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext                         "Pošlje ponovno potrditev organizatorju">
+<!ENTITY lightning.imipbar.btnReschedule.label                              "Prestavi">
+<!ENTITY lightning.imipbar.btnReschedule.tooltiptext                        "Prestavi dogodek">
+<!ENTITY lightning.imipbar.btnSaveCopy.label                                "Shrani kopijo">
+<!ENTITY lightning.imipbar.btnSaveCopy.tooltiptext                          "Shrani kopijo dogodka v koledar neodvisno od odgovora organizatorju. Seznam udeležencev bo izbrisan.">
+<!ENTITY lightning.imipbar.btnTentative.label                               "Neodločeno">
+<!ENTITY lightning.imipbar.btnTentative2.tooltiptext                        "Pogojno sprejmi povabilo na dogodek">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences.label                    "Okvirno vse">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences2.tooltiptext             "Pogojno sprejmi povabilo na dogodek za vse ponovitve dogodka">
+<!ENTITY lightning.imipbar.btnUpdate.label                                  "Posodobi">
+<!ENTITY lightning.imipbar.btnUpdate.tooltiptext                            "Posodobi koledar dogodkov">
+<!ENTITY lightning.imipbar.description                                      "To sporočilo vsebuje povabilo na dogodek.">
+
+<!ENTITY lightning.imipbar.btnSend.label                                    "Pošlji odziv zdaj">
+<!ENTITY lightning.imipbar.btnSend.tooltiptext                              "Pošlji odziv organizatorju">
+<!ENTITY lightning.imipbar.btnSendSeries.tooltiptext                        "Pošlji odziv za celotno serijo organizatorju">
+<!ENTITY lightning.imipbar.btnDontSend.label                                "Ne pošlji odziva">
+<!ENTITY lightning.imipbar.btnDontSend.tooltiptext                          "Spremenite stanje udeležbe brez pošiljanja odziva organizatorju">
+<!ENTITY lightning.imipbar.btnDontSendSeries.tooltiptext                    "Spremenite stanje udeležbe za serijo, brez pošiljanja odziva organizatorju">
+
+<!-- Lightning specific keybindings -->
+<!ENTITY lightning.keys.event.showCalendar.key "K">
+<!ENTITY lightning.keys.event.showTasks.key "D">
+<!ENTITY lightning.keys.event.new "d">
+<!ENTITY lightning.keys.todo.new "o">
+
+<!-- Account Central page -->
+<!ENTITY lightning.acctCentral.newCalendar.label "Ustvari nov koledar">
+
+<!-- today-pane-specific -->
+<!ENTITY todaypane.showMinimonth.label "Prikaži mini mesec">
+<!ENTITY todaypane.showMinimonth.accesskey "e">
+<!ENTITY todaypane.showMiniday.label "Prikaži mini dan">
+<!ENTITY todaypane.showMiniday.accesskey  "a">
+<!ENTITY todaypane.showNone.label "Ne prikaži ničesar">
+<!ENTITY todaypane.showNone.accesskey "N">
+<!ENTITY todaypane.showTodayPane.label "Prikaži današnji dan">
+<!ENTITY todaypane.showTodayPane.accesskey "d">
+<!ENTITY todaypane.statusButton.label "Današnji dan">

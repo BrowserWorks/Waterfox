@@ -2,10 +2,13 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import, print_function, unicode_literals
+
+import time
+
+import six
 
 from .base import MachError
-import time
 
 INVALID_COMMAND_CONTEXT = r'''
 It looks like you tried to run a mach command from an invalid context. The %s
@@ -47,35 +50,11 @@ class MachRegistrar(object):
         self.categories[name] = (title, description, priority)
         self.commands_by_category[name] = set()
 
-    def register_conditional_names(self, context):
-        """For every handler with a conditional name, use that name if
-        the handler's conditions are met."""
-
-        # Avoid updating while iterating.
-        names = list(self.command_handlers.keys())
-
-        for name in names:
-            handler = self.command_handlers[name]
-            if handler.conditional_name:
-                instance = MachRegistrar._instance(handler, context)
-                fail_conditions = MachRegistrar._fail_conditions(handler, instance)
-
-                if fail_conditions:
-                    continue
-
-                # We passed our conditions.  Unregister the existing name.
-                del self.command_handlers[name]
-                self.commands_by_category[handler.category].remove(name)
-
-                # Register with the new name.
-                handler.name = handler.conditional_name
-                self.register_command_handler(handler)
-
     @classmethod
     def _condition_failed_message(cls, name, conditions):
         msg = ['\n']
         for c in conditions:
-            part = ['  %s' % c.__name__]
+            part = ['  %s' % getattr(c, '__name__', c)]
             if c.__doc__ is not None:
                 part.append(c.__doc__)
             msg.append(' - '.join(part))
@@ -132,7 +111,7 @@ class MachRegistrar(object):
         end_time = time.time()
 
         result = result or 0
-        assert isinstance(result, (int, long))
+        assert isinstance(result, six.integer_types)
 
         if context and not debug_command:
             postrun = getattr(context, 'post_dispatch_handler', None)

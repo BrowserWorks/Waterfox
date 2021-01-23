@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -251,18 +250,4 @@ function getPropertyValue(viewDoc, name) {
  */
 function isRemote(fontEl) {
   return fontEl.querySelector(".font-origin").classList.contains("remote");
-}
-
-/**
- * Wait for a predicate to return a result.
- *
- * @param  {Function} condition
- *         Invoked every 10ms for a maximum of 500 retries until it returns a truthy
- *         value.
- * @return {Promise}
- *         A promise that is resolved with the result of the condition.
- */
-async function waitFor(condition) {
-  await BrowserTestUtils.waitForCondition(condition, "waitFor", 10, 500);
-  return condition();
 }

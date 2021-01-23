@@ -42,7 +42,7 @@ interface nsIFilePicker : nsISupports
                                                 // *.png; *.bmp; *.ico; *.svg;
                                                 // *.svgz; *.tif; *.tiff; *.ai;
                                                 // *.drw; *.pct; *.psp; *.xcf;
-                                                // *.psd; *.raw
+                                                // *.psd; *.raw; *.webp
   const long filterXML        = 0x010;          // *.xml
   const long filterXUL        = 0x020;          // *.xul
   const long filterApps       = 0x040;          // Applications (per-platform implementation)
@@ -57,6 +57,11 @@ interface nsIFilePicker : nsISupports
                                                 // *.mpg; *.ogm; *.ogv; *.ogx;
                                                 // *.rm; *.rmvb; *.smil; *.webm;
                                                 // *.wmv; *.xvid
+
+  const short captureNone     = 0;              // No capture target specified.
+  const short captureDefault  = 1;              // Missing/invalid value default.
+  const short captureUser     = 2;              // "user" capture target specified.
+  const short captureEnv      = 3;              // "environment" capture target specified.
 
  /**
   * Initialize the file picker widget.  The file picker is not valid until this
@@ -109,14 +114,14 @@ interface nsIFilePicker : nsISupports
  /**
   * The extension that should be associated with files of the type we
   * want to work with.  On some platforms, this extension will be
-  * automatically appended to filenames the user enters, if needed.  
+  * automatically appended to filenames the user enters, if needed.
   */
   attribute AString defaultExtension;
-  
+
  /**
   * The filter which is currently selected in the File Picker dialog
   *
-  * @return Returns the index (0 based) of the selected filter in the filter list. 
+  * @return Returns the index (0 based) of the selected filter in the filter list.
   */
   attribute long filterIndex;
 
@@ -205,4 +210,6 @@ interface nsIFilePicker : nsISupports
    * file selection.
    */
   attribute AString okButtonLabel;
+
+  attribute short capture;
 };

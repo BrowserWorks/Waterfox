@@ -1,5 +1,12 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 #include "CubebDeviceEnumerator.h"
 #include "mozilla/StaticPtr.h"
+#include "nsThreadUtils.h"
 
 namespace mozilla {
 
@@ -9,13 +16,11 @@ using namespace CubebUtils;
 StaticRefPtr<CubebDeviceEnumerator> CubebDeviceEnumerator::sInstance;
 
 /* static */
-already_AddRefed<CubebDeviceEnumerator> CubebDeviceEnumerator::GetInstance() {
+CubebDeviceEnumerator* CubebDeviceEnumerator::GetInstance() {
   if (!sInstance) {
     sInstance = new CubebDeviceEnumerator();
   }
-  RefPtr<CubebDeviceEnumerator> instance = sInstance.get();
-  MOZ_ASSERT(instance);
-  return instance.forget();
+  return sInstance.get();
 }
 
 CubebDeviceEnumerator::CubebDeviceEnumerator()
@@ -217,6 +222,8 @@ void CubebDeviceEnumerator::EnumerateAudioDevices(
 #else
   if (devices.IsEmpty() || manualInvalidation) {
     devices.Clear();
+
+    MutexAutoUnlock unlock(mMutex);
     GetDeviceCollection(devices, (aSide == Side::INPUT) ? CubebUtils::Input
                                                         : CubebUtils::Output);
   }
@@ -236,9 +243,9 @@ already_AddRefed<AudioDeviceInfo> CubebDeviceEnumerator::DeviceInfoFromID(
   if (mInputDevices.IsEmpty() || mManualInputInvalidation) {
     EnumerateAudioDevices(Side::INPUT);
   }
-  for (uint32_t i = 0; i < mInputDevices.Length(); i++) {
-    if (mInputDevices[i]->DeviceID() == aID) {
-      RefPtr<AudioDeviceInfo> other = mInputDevices[i];
+  for (RefPtr<AudioDeviceInfo>& device : mInputDevices) {
+    if (device->DeviceID() == aID) {
+      RefPtr<AudioDeviceInfo> other = device;
       return other.forget();
     }
   }
@@ -246,9 +253,9 @@ already_AddRefed<AudioDeviceInfo> CubebDeviceEnumerator::DeviceInfoFromID(
   if (mOutputDevices.IsEmpty() || mManualOutputInvalidation) {
     EnumerateAudioDevices(Side::OUTPUT);
   }
-  for (uint32_t i = 0; i < mOutputDevices.Length(); i++) {
-    if (mOutputDevices[i]->DeviceID() == aID) {
-      RefPtr<AudioDeviceInfo> other = mOutputDevices[i];
+  for (RefPtr<AudioDeviceInfo>& device : mOutputDevices) {
+    if (device->DeviceID() == aID) {
+      RefPtr<AudioDeviceInfo> other = device;
       return other.forget();
     }
   }
@@ -276,9 +283,30 @@ already_AddRefed<AudioDeviceInfo> CubebDeviceEnumerator::DeviceInfoFromName(
   if (devices.IsEmpty() || manualInvalidation) {
     EnumerateAudioDevices(aSide);
   }
-  for (uint32_t i = 0; i < devices.Length(); i++) {
-    if (devices[i]->Name().Equals(aName)) {
-      RefPtr<AudioDeviceInfo> other = devices[i];
+  for (RefPtr<AudioDeviceInfo>& device : devices) {
+    if (device->Name().Equals(aName)) {
+      RefPtr<AudioDeviceInfo> other = device;
+      return other.forget();
+    }
+  }
+
+  return nullptr;
+}
+
+RefPtr<AudioDeviceInfo> CubebDeviceEnumerator::DefaultDevice(Side aSide) {
+  MutexAutoLock lock(mMutex);
+
+  nsTArray<RefPtr<AudioDeviceInfo>>& devices =
+      (aSide == Side::INPUT) ? mInputDevices : mOutputDevices;
+  bool manualInvalidation = (aSide == Side::INPUT) ? mManualInputInvalidation
+                                                   : mManualOutputInvalidation;
+
+  if (devices.IsEmpty() || manualInvalidation) {
+    EnumerateAudioDevices(aSide);
+  }
+  for (RefPtr<AudioDeviceInfo>& device : devices) {
+    if (device->Preferred()) {
+      RefPtr<AudioDeviceInfo> other = device;
       return other.forget();
     }
   }
@@ -299,13 +327,16 @@ void CubebDeviceEnumerator::OutputAudioDeviceListChanged_s(cubeb* aContext,
 }
 
 void CubebDeviceEnumerator::AudioDeviceListChanged(Side aSide) {
-  MutexAutoLock lock(mMutex);
-
-  if (aSide == Side::INPUT) {
-    mInputDevices.Clear();
-  } else {
-    MOZ_ASSERT(aSide == Side::OUTPUT);
-    mOutputDevices.Clear();
+  {
+    MutexAutoLock lock(mMutex);
+    if (aSide == Side::INPUT) {
+      mInputDevices.Clear();
+      mOnInputDeviceListChange.Notify();
+    } else {
+      MOZ_ASSERT(aSide == Side::OUTPUT);
+      mOutputDevices.Clear();
+      mOnOutputDeviceListChange.Notify();
+    }
   }
 }
 

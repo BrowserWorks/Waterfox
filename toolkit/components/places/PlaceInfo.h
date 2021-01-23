@@ -8,7 +8,6 @@
 #include "mozIAsyncHistory.h"
 #include "nsString.h"
 #include "nsTArray.h"
-#include "nsAutoPtr.h"
 #include "mozilla/Attributes.h"
 
 class nsIURI;
@@ -31,7 +30,7 @@ class PlaceInfo final : public mozIPlaceInfo {
             const VisitsArray& aVisits);
 
  private:
-  ~PlaceInfo() {}
+  ~PlaceInfo() = default;
 
   const int64_t mId;
   const nsCString mGUID;

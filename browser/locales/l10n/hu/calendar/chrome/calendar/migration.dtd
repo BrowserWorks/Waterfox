@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migration.title "&brandFullName;: Adatok importálása">
+<!ENTITY migration.welcome "Üdvözöljük">
+<!ENTITY migration.importing "Importálás">
+<!ENTITY migration.list.description "A &brandShortName; sok népszerű alkalmazásból képes adatokat importálni. A következő alkalmazásokból származó adatok találhatók a számítógépen. Válassza ki, hogy ezek közül melyikből szeretne adatokat importálni.">
+<!ENTITY migration.progress.description "Kijelölt adatok importálása">

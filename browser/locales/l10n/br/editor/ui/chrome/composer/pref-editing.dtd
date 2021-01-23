@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "Arventennoù ar pajennoù nevez">
+
+<!ENTITY  authorName.label          "Aozer:">
+<!ENTITY  authorName.accesskey      "A">
+<!ENTITY  pageColorHeader           "Neuz ar bajenn dre ziouer">
+
+<!ENTITY defaultColors.label        "Livioù dre ziouer al lenner (na gemmañ livioù ar pajennadoù)">
+<!ENTITY defaultColors.accesskey    "L">
+<!ENTITY customColors.label         "Implijout livioù personelaet:">
+<!ENTITY customColors.accesskey     "I">
+
+<!ENTITY normalText.label           "Testenn reizh">
+<!ENTITY normalText.accesskey       "r">
+<!ENTITY linkText.label             "Testenn an ere">
+<!ENTITY linkText.accesskey         "e">
+<!ENTITY activeLinkText.label       "Testenn an ere oberiant">
+<!ENTITY activeLinkText.accesskey   "o">
+<!ENTITY visitedLinkText.label      "Testenn an ere gweladennet">
+<!ENTITY visitedLinkText.accesskey  "g">
+<!ENTITY background.label           "Drekleur:">
+<!ENTITY background.accesskey       "D">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "Skeudenn an drekleur:">
+<!ENTITY backgroundImage.accesskey  "k">
+<!ENTITY chooseFile.label           "Dibab ur restr…">
+<!ENTITY chooseFile.accesskey       "b">
+

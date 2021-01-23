@@ -9,7 +9,7 @@
  */
 
 const HTML_NS = "http://www.w3.org/1999/xhtml";
-const TEST_URI = CHROME_URL_ROOT + "doc_html_tooltip-05.xul";
+const TEST_URI = CHROME_URL_ROOT + "doc_html_tooltip-05.xhtml";
 
 const {
   HTMLTooltip,
@@ -26,20 +26,21 @@ add_task(async function() {
   // Force the toolbox to be 200px high;
   await pushPref("devtools.toolbox.footer.height", 200);
 
-  const [, win, doc] = await createHost("bottom", TEST_URI);
+  const { win, doc } = await createHost("bottom", TEST_URI);
 
   info("Resize and move the window to have space below.");
-  const originalWidth = win.top.outerWidth;
-  const originalHeight = win.top.outerHeight;
-  win.top.resizeBy(-100, -200);
-  const originalTop = win.top.screenTop;
-  const originalLeft = win.top.screenLeft;
-  win.top.moveTo(100, 100);
+  const originalWidth = win.outerWidth;
+  const originalHeight = win.outerHeight;
+  win.resizeBy(-100, -200);
 
-  registerCleanupFunction(() => {
+  const originalTop = win.screenTop;
+  const originalLeft = win.screenLeft;
+  await moveWindowTo(win, 100, 100);
+
+  registerCleanupFunction(async () => {
     info("Restore original window dimensions and position.");
-    win.top.resizeTo(originalWidth, originalHeight);
-    win.top.moveTo(originalTop, originalLeft);
+    win.resizeTo(originalWidth, originalHeight);
+    await moveWindowTo(win, originalLeft, originalTop);
   });
 
   info("Create HTML tooltip");

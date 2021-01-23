@@ -1,6 +1,12 @@
-use encode::{add_padding, encode_to_slice};
-use std::{cmp, str};
-use Config;
+use crate::{
+    encode::{add_padding, encode_to_slice},
+    Config,
+};
+#[cfg(any(feature = "alloc", feature = "std", test))]
+use alloc::string::String;
+use core::cmp;
+#[cfg(any(feature = "alloc", feature = "std", test))]
+use core::str;
 
 /// The output mechanism for ChunkedEncoder's encoded bytes.
 pub trait Sink {
@@ -22,7 +28,7 @@ impl ChunkedEncoder {
     pub fn new(config: Config) -> ChunkedEncoder {
         ChunkedEncoder {
             config,
-            max_input_chunk_len: max_input_length(BUF_SIZE, &config),
+            max_input_chunk_len: max_input_length(BUF_SIZE, config),
         }
     }
 
@@ -63,7 +69,7 @@ impl ChunkedEncoder {
 ///
 /// The input length will always be a multiple of 3 so that no encoding state has to be carried over
 /// between chunks.
-fn max_input_length(encoded_buf_len: usize, config: &Config) -> usize {
+fn max_input_length(encoded_buf_len: usize, config: Config) -> usize {
     let effective_buf_len = if config.pad {
         // make room for padding
         encoded_buf_len
@@ -77,20 +83,20 @@ fn max_input_length(encoded_buf_len: usize, config: &Config) -> usize {
     (effective_buf_len / 4) * 3
 }
 
-
 // A really simple sink that just appends to a string
+#[cfg(any(feature = "alloc", feature = "std", test))]
 pub(crate) struct StringSink<'a> {
     string: &'a mut String,
 }
 
+#[cfg(any(feature = "alloc", feature = "std", test))]
 impl<'a> StringSink<'a> {
     pub(crate) fn new(s: &mut String) -> StringSink {
-        StringSink {
-            string: s,
-        }
+        StringSink { string: s }
     }
 }
 
+#[cfg(any(feature = "alloc", feature = "std", test))]
 impl<'a> Sink for StringSink<'a> {
     type Error = ();
 
@@ -103,14 +109,13 @@ impl<'a> Sink for StringSink<'a> {
 
 #[cfg(test)]
 pub mod tests {
-    extern crate rand;
-
     use super::*;
-    use tests::random_config;
-    use *;
+    use crate::{encode_config_buf, tests::random_config, CharacterSet, STANDARD};
 
-    use self::rand::distributions::{Distribution, Range};
-    use self::rand::{Rng, FromEntropy};
+    use rand::{
+        distributions::{Distribution, Uniform},
+        FromEntropy, Rng,
+    };
 
     #[test]
     fn chunked_encode_empty() {
@@ -150,41 +155,38 @@ pub mod tests {
     #[test]
     fn max_input_length_no_pad() {
         let config = config_with_pad(false);
-        assert_eq!(768, max_input_length(1024, &config));
+        assert_eq!(768, max_input_length(1024, config));
     }
 
     #[test]
     fn max_input_length_with_pad_decrements_one_triple() {
         let config = config_with_pad(true);
-        assert_eq!(765, max_input_length(1024, &config));
+        assert_eq!(765, max_input_length(1024, config));
     }
 
     #[test]
     fn max_input_length_with_pad_one_byte_short() {
         let config = config_with_pad(true);
-        assert_eq!(765, max_input_length(1025, &config));
+        assert_eq!(765, max_input_length(1025, config));
     }
 
     #[test]
     fn max_input_length_with_pad_fits_exactly() {
         let config = config_with_pad(true);
-        assert_eq!(768, max_input_length(1026, &config));
+        assert_eq!(768, max_input_length(1026, config));
     }
 
     #[test]
     fn max_input_length_cant_use_extra_single_encoded_byte() {
-        let config = Config::new(
-            CharacterSet::Standard,
-            false,
-        );
-        assert_eq!(300, max_input_length(401, &config));
+        let config = Config::new(crate::CharacterSet::Standard, false);
+        assert_eq!(300, max_input_length(401, config));
     }
 
     pub fn chunked_encode_matches_normal_encode_random<S: SinkTestHelper>(sink_test_helper: &S) {
         let mut input_buf: Vec<u8> = Vec::new();
         let mut output_buf = String::new();
         let mut rng = rand::rngs::SmallRng::from_entropy();
-        let input_len_range = Range::new(1, 10_000);
+        let input_len_range = Uniform::new(1, 10_000);
 
         for _ in 0..5_000 {
             input_buf.clear();
@@ -242,5 +244,4 @@ pub mod tests {
             s
         }
     }
-
 }

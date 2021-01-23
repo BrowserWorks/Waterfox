@@ -6,23 +6,41 @@
 
 #include "mozilla/dom/ChildSHistory.h"
 #include "mozilla/dom/ChildSHistoryBinding.h"
+#include "mozilla/dom/ContentChild.h"
 #include "mozilla/dom/ContentFrameMessageManager.h"
-#include "nsIMessageManager.h"
+#include "mozilla/StaticPrefs_fission.h"
 #include "nsComponentManagerUtils.h"
+#include "nsSHEntry.h"
 #include "nsSHistory.h"
 #include "nsDocShell.h"
-#include "nsISHEntry.h"
 #include "nsXULAppAPI.h"
 
 namespace mozilla {
 namespace dom {
 
-ChildSHistory::ChildSHistory(nsDocShell* aDocShell)
-    : mDocShell(aDocShell), mHistory(new nsSHistory(aDocShell)) {}
+ChildSHistory::ChildSHistory(BrowsingContext* aBrowsingContext)
+    : mBrowsingContext(aBrowsingContext) {}
 
-ChildSHistory::~ChildSHistory() {}
+void ChildSHistory::SetIsInProcess(bool aIsInProcess) {
+  if (!aIsInProcess) {
+    mHistory = nullptr;
 
-int32_t ChildSHistory::Count() { return mHistory->GetCount(); }
+    return;
+  }
+
+  if (mHistory) {
+    return;
+  }
+
+  mHistory = new nsSHistory(mBrowsingContext);
+}
+
+int32_t ChildSHistory::Count() {
+  if (StaticPrefs::fission_sessionHistoryInParent()) {
+    return mLength;
+  }
+  return mHistory->GetCount();
+}
 
 int32_t ChildSHistory::Index() {
   int32_t index;
@@ -50,21 +68,43 @@ void ChildSHistory::Go(int32_t aOffset, ErrorResult& aRv) {
     aRv.Throw(NS_ERROR_FAILURE);
     return;
   }
-  aRv = mHistory->GotoIndex(index.value());
+  if (StaticPrefs::fission_sessionHistoryInParent()) {
+    nsCOMPtr<nsISHistory> shistory = mHistory;
+    ContentChild::GetSingleton()->SendHistoryGo(
+        mBrowsingContext, index.value(),
+        [shistory](int32_t&& aRequestedIndex) {
+          // FIXME Should probably only do this for non-fission.
+          shistory->InternalSetRequestedIndex(aRequestedIndex);
+        },
+        [](mozilla::ipc::
+               ResponseRejectReason) { /* FIXME Is ignoring this fine? */ });
+  } else {
+    aRv = mHistory->GotoIndex(index.value());
+  }
+}
+
+void ChildSHistory::AsyncGo(int32_t aOffset) {
+  if (!CanGo(aOffset)) {
+    return;
+  }
+
+  RefPtr<PendingAsyncHistoryNavigation> asyncNav =
+      new PendingAsyncHistoryNavigation(this, aOffset);
+  mPendingNavigations.insertBack(asyncNav);
+  NS_DispatchToCurrentThread(asyncNav.forget());
+}
+
+void ChildSHistory::RemovePendingHistoryNavigations() {
+  mPendingNavigations.clear();
 }
 
 void ChildSHistory::EvictLocalContentViewers() {
   mHistory->EvictAllContentViewers();
 }
 
-nsISHistory* ChildSHistory::LegacySHistory() { return mHistory; }
-
-ParentSHistory* ChildSHistory::GetParentIfSameProcess() {
-  if (XRE_IsContentProcess()) {
-    return nullptr;
-  }
-
-  MOZ_CRASH("Unimplemented!");
+nsISHistory* ChildSHistory::LegacySHistory() {
+  MOZ_RELEASE_ASSERT(mHistory);
+  return mHistory;
 }
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(ChildSHistory)
@@ -75,7 +115,7 @@ NS_INTERFACE_MAP_END
 NS_IMPL_CYCLE_COLLECTING_ADDREF(ChildSHistory)
 NS_IMPL_CYCLE_COLLECTING_RELEASE(ChildSHistory)
 
-NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(ChildSHistory, mDocShell, mHistory)
+NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(ChildSHistory, mBrowsingContext, mHistory)
 
 JSObject* ChildSHistory::WrapObject(JSContext* cx,
                                     JS::Handle<JSObject*> aGivenProto) {
@@ -83,14 +123,7 @@ JSObject* ChildSHistory::WrapObject(JSContext* cx,
 }
 
 nsISupports* ChildSHistory::GetParentObject() const {
-  // We want to get the BrowserChildMessageManager, which is the
-  // messageManager on mDocShell.
-  RefPtr<ContentFrameMessageManager> mm;
-  if (mDocShell) {
-    mm = mDocShell->GetMessageManager();
-  }
-  // else we must be unlinked... can that happen here?
-  return ToSupports(mm);
+  return xpc::NativeGlobal(xpc::PrivilegedJunkScope());
 }
 
 }  // namespace dom

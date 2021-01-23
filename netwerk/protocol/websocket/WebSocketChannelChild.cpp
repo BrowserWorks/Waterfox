@@ -121,19 +121,19 @@ bool WebSocketChannelChild::IsEncrypted() const { return mEncrypted; }
 
 class WebSocketEvent {
  public:
-  WebSocketEvent() { MOZ_COUNT_CTOR(WebSocketEvent); }
-  virtual ~WebSocketEvent() { MOZ_COUNT_DTOR(WebSocketEvent); }
+  MOZ_COUNTED_DEFAULT_CTOR(WebSocketEvent)
+  MOZ_COUNTED_DTOR_VIRTUAL(WebSocketEvent)
   virtual void Run(WebSocketChannelChild* aChild) = 0;
 };
 
 class WrappedWebSocketEvent : public Runnable {
  public:
   WrappedWebSocketEvent(WebSocketChannelChild* aChild,
-                        WebSocketEvent* aWebSocketEvent)
+                        UniquePtr<WebSocketEvent>&& aWebSocketEvent)
       : Runnable("net::WrappedWebSocketEvent"),
         mChild(aChild),
-        mWebSocketEvent(aWebSocketEvent) {
-    MOZ_RELEASE_ASSERT(aWebSocketEvent);
+        mWebSocketEvent(std::move(aWebSocketEvent)) {
+    MOZ_RELEASE_ASSERT(!!mWebSocketEvent);
   }
   NS_IMETHOD Run() override {
     mWebSocketEvent->Run(mChild);
@@ -142,7 +142,7 @@ class WrappedWebSocketEvent : public Runnable {
 
  private:
   RefPtr<WebSocketChannelChild> mChild;
-  nsAutoPtr<WebSocketEvent> mWebSocketEvent;
+  UniquePtr<WebSocketEvent> mWebSocketEvent;
 };
 
 class EventTargetDispatcher : public ChannelEvent {
@@ -157,7 +157,7 @@ class EventTargetDispatcher : public ChannelEvent {
   void Run() override {
     if (mEventTarget) {
       mEventTarget->Dispatch(
-          new WrappedWebSocketEvent(mChild, mWebSocketEvent.forget()),
+          new WrappedWebSocketEvent(mChild, std::move(mWebSocketEvent)),
           NS_DISPATCH_NORMAL);
       return;
     }
@@ -176,7 +176,7 @@ class EventTargetDispatcher : public ChannelEvent {
  private:
   // The lifetime of the child is ensured by ChannelEventQueue.
   WebSocketChannelChild* mChild;
-  nsAutoPtr<WebSocketEvent> mWebSocketEvent;
+  UniquePtr<WebSocketEvent> mWebSocketEvent;
   nsCOMPtr<nsIEventTarget> mEventTarget;
 };
 
@@ -443,9 +443,6 @@ WebSocketChannelChild::AsyncOpen(nsIURI* aURI, const nsACString& aOrigin,
     browserChild =
         static_cast<mozilla::dom::BrowserChild*>(iBrowserChild.get());
   }
-  if (MissingRequiredBrowserChild(browserChild, "websocket")) {
-    return NS_ERROR_ILLEGAL_VALUE;
-  }
 
   ContentChild* cc = static_cast<ContentChild*>(gNeckoChild->Manager());
   if (cc->IsShuttingDown()) {
@@ -455,13 +452,12 @@ WebSocketChannelChild::AsyncOpen(nsIURI* aURI, const nsACString& aOrigin,
   // Corresponding release in DeallocPWebSocket
   AddIPDLReference();
 
-  Maybe<URIParams> uri;
+  nsCOMPtr<nsIURI> uri;
   Maybe<LoadInfoArgs> loadInfoArgs;
   Maybe<PTransportProviderChild*> transportProvider;
 
   if (!mIsServerSide) {
-    uri.emplace(URIParams());
-    SerializeURI(aURI, uri.ref());
+    uri = aURI;
     nsresult rv = LoadInfoToLoadInfoArgs(mLoadInfo, &loadInfoArgs);
     NS_ENSURE_SUCCESS(rv, rv);
 

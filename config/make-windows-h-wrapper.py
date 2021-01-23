@@ -2,10 +2,10 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from __future__ import absolute_import
 import re
 import textwrap
 import string
-from system_header_util import header_path
 
 comment_re = re.compile(r'//[^\n]*\n|/\*.*\*/', re.S)
 decl_re = re.compile(r'''^(.+)\s+        # type
@@ -80,7 +80,5 @@ def generate(fd, consts_path, unicodes_path, template_path, compiler):
             #endif
             """.format(ty=ty, name=name, params=params, args=args))
 
-    path = header_path('windows.h', compiler)
-
     # Write out the resulting file
-    fd.write(template.substitute(header_path=path, decls=decls))
+    fd.write(template.substitute(decls=decls))

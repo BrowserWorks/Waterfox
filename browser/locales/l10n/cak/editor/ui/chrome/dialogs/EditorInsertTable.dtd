@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Tich'ap Kemoj Kajtz'ik">
+
+<!ENTITY size.label "Nimilem">
+<!ENTITY numRowsEditField.label "Taq cholaj:">
+<!ENTITY numRowsEditField.accessKey "c">
+<!ENTITY numColumnsEditField.label "Taq tem:">
+<!ENTITY numColumnsEditField.accessKey "t">
+<!ENTITY widthEditField.label "Ruwa:">
+<!ENTITY widthEditField.accessKey "R">
+<!ENTITY borderEditField.label "Ruchi':">
+<!ENTITY borderEditField.accessKey "R">
+<!ENTITY borderEditField.tooltip "Titz'ib'äx jun rajilab'al ruchi' ri kemon kajtz'ik o wa'ix (0) richin majun ruchi'">
+<!ENTITY pixels.label "taq piksel">

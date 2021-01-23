@@ -1,0 +1,112 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailWizard.title               "Налаштуйте свою існуючу електронну адресу">
+<!ENTITY emailWizard.caption             "Використовуйте вашу поточну електронну адресу">
+<!ENTITY name.label                      "Ваше ім’я:">
+<!ENTITY name.accesskey                  "і">
+<!ENTITY fullname.placeholder            "Ваше ім'я та прізвище">
+<!ENTITY name.text                       "Ваше ім’я, яким його бачитимуть інші">
+<!ENTITY name.error                      "Введіть своє ім’я або псевдонім">
+<!ENTITY email.label                     "Поштова адреса:">
+<!ENTITY email.accesskey                 "а">
+<!ENTITY email3.placeholder              "Ваша адреса електронної пошти">
+<!ENTITY email.text                      "Ваша наявна адреса електронної пошти">
+<!ENTITY email.error                     "Неправильна адреса електронної пошти">
+<!ENTITY password.label                  "Пароль:">
+<!ENTITY password.accesskey              "П">
+<!ENTITY password.placeholder            "Пароль">
+<!ENTITY password.text                   "Додатково, буде використане лише для перевірки імені користувача">
+<!ENTITY password.toggle                 "Показати/Приховати пароль">
+<!ENTITY rememberPassword.label          "Запам’ятати пароль">
+<!ENTITY rememberPassword.accesskey      "з">
+<!ENTITY usernameEx.label                "Ваше ім'я користувача:">
+<!ENTITY usernameEx.accesskey            "м">
+<!-- LOCALIZATION NOTE(usernameEx.placeholder): YOURDOMAIN refers to the Windows domain in ActiveDirectory. yourusername refers to the user's account name in Windows. -->
+<!ENTITY usernameEx.placeholder          "ДОМЕН\користувач">
+<!-- LOCALIZATION NOTE(usernameEx.text): Domain refers to the Windows domain in ActiveDirectory. We mean the user's login in Windows at the local corporate network. -->
+<!ENTITY usernameEx.text                 "Ім'я користувача домену">
+
+<!ENTITY protocol.label                  "Протокол:">
+<!ENTITY imapLong.label                  "IMAP (віддалені теки)">
+<!ENTITY pop3Long.label                  "POP3 (зберігати пошту на вашому комп’ютері)">
+
+<!ENTITY manualConfigTable.summary       "Параметри сервера">
+<!ENTITY incoming.label                  "Вхідні:">
+<!ENTITY incomingColumn.label            "Вхідні">
+<!ENTITY outgoing.label                  "Вихідні:">
+<!ENTITY outgoingColumn.label            "Вихідні">
+<!ENTITY username.label                  "Користувач:">
+<!ENTITY serverRow.label                 "Сервер:">
+<!ENTITY portRow.label                   "Порт:">
+<!ENTITY sslRow.label                    "SSL:">
+<!ENTITY auth.label                      "Автентифікація">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label                      "POP3">
+<!-- LOCALIZATION NOTE(exchange.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange.label                  "Exchange">
+<!ENTITY smtp.label                      "SMTP">
+<!ENTITY autodetect.label                "Автодетект">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "Жодної">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!-- LOCALIZATION NOTE(exchange-hostname.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange-hostname.label         "Exchange сервер:">
+
+<!ENTITY advancedSetup.label             "Розширена конфігурація">
+<!ENTITY advancedSetup.accesskey         "Р">
+<!ENTITY cancel.label                    "Скасувати">
+<!ENTITY cancel.accesskey                "к">
+<!ENTITY continue.label                  "Далі">
+<!ENTITY continue.accesskey              "Д">
+<!ENTITY stop.label                      "Зупинити">
+<!ENTITY stop.accesskey                  "З">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual config mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "Спробувати">
+<!ENTITY half-manual-test.accesskey      "т">
+<!ENTITY manual-config.label             "Налаштувати вручну…">
+<!ENTITY manual-config.accesskey         "Н">
+<!ENTITY open-provisioner.label          "Отримати нову адресу електронної пошти…">
+<!ENTITY open-provisioner.accesskey      "О">
+
+
+<!ENTITY get-help.label                  "Отримати допомогу">
+<!ENTITY get-help.accesskey              "д">
+
+
+<!ENTITY warning.label                   "Увага!">
+<!ENTITY incomingSettings.label          "Вхідні настройки:">
+<!ENTITY outgoingSettings.label          "Вихідні настройки:">
+<!ENTITY technicaldetails.label          "Технічні подробиці">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "Я розумію ризик.">
+<!ENTITY confirmWarning.accesskey        "р">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "Готово">
+<!ENTITY doneAccount.accesskey           "Г">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "Змінити настройки">
+<!ENTITY changeSettings.accesskey        "З">
+
+<!ENTITY contactYourProvider.description "&brandShortName; може дозволити вам отримати вашу пошту з використанням зазначеної конфігурації. Однак, вам варто звернутись до вашого адміністратора чи поштового провайдера щодо цих невластивих з’єднань. Перегляньте довідку Thunderbird для отримання додаткової інформації.">
+
+<!ENTITY insecureServer.tooltip.title    "Увага! Це небезпечний сервер.">
+<!ENTITY insecureServer.tooltip.details  "Клацніть по кружечку щоб дізнатись подробиці.">
+
+<!ENTITY insecureUnencrypted.description "Ваша пошта та пароль надсилаються без шифрування, тому ваш пароль (та ваше повідомлення) можуть бути легко прочитані іншими людьми. &brandShortName; дозволить вам отримати вашу пошту, але вам варто звернутись вашого поштового провайдера щодо налаштування сервера з безпечним з’єднанням.">
+<!ENTITY insecureSelfSigned.description  "Сервер використовує сетрифікат, якому ми не можемо довіряти, отже ми не можемо бути впевнені в тому, що хтось не перехоплює передачу даних між &brandShortName; і вашим сервером. &brandShortName; дозволить вам працювати зі своєю поштою, але ми наполегливо рекомендуємо попросити свого провайдера електронної пошти налаштувати сервер на роботу з довіреним сертифікатом.">
+<!ENTITY secureServer.description        "Вітаємо! Це безпечний сервер.">

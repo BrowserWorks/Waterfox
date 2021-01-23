@@ -3,9 +3,9 @@
 // This program is made available under an ISC-style license.  See the
 // accompanying file LICENSE for details
 
+use crate::codec::Codec;
 use bytes::{Buf, Bytes, BytesMut, IntoBuf};
-use codec::Codec;
-use futures::{AsyncSink, Poll, Sink, StartSend, Stream};
+use futures::{AsyncSink, Poll, Sink, StartSend, Stream, task};
 use std::io;
 use tokio_io::{AsyncRead, AsyncWrite};
 
@@ -79,13 +79,13 @@ where
             // readable again, at which point the stream is terminated.
             if self.is_readable {
                 if self.eof {
-                    let frame = try!(self.codec.decode_eof(&mut self.read_buf));
+                    let frame = self.codec.decode_eof(&mut self.read_buf)?;
                     return Ok(Some(frame).into());
                 }
 
                 trace!("attempting to decode a frame");
 
-                if let Some(frame) = try!(self.codec.decode(&mut self.read_buf)) {
+                if let Some(frame) = self.codec.decode(&mut self.read_buf)? {
                     trace!("frame decoded from buffer");
                     return Ok(Some(frame).into());
                 }
@@ -94,6 +94,9 @@ where
             }
 
             assert!(!self.eof);
+
+            // XXX(kinetik): work around tokio_named_pipes assuming at least 1kB available.
+            self.read_buf.reserve(INITIAL_CAPACITY);
 
             // Otherwise, try to read more data and try again. Make sure we've
             // got room for at least one byte to read to ensure that we don't
@@ -120,13 +123,13 @@ where
         // then attempt to flush it. If after flush it's *still*
         // over BACKPRESSURE_THRESHOLD, then reject the send.
         if self.write_buf.len() > BACKPRESSURE_THRESHOLD {
-            try!(self.poll_complete());
+            self.poll_complete()?;
             if self.write_buf.len() > BACKPRESSURE_THRESHOLD {
                 return Ok(AsyncSink::NotReady(item));
             }
         }
 
-        try!(self.codec.encode(item, &mut self.write_buf));
+        self.codec.encode(item, &mut self.write_buf)?;
         Ok(AsyncSink::Ready)
     }
 
@@ -142,15 +145,17 @@ where
     }
 
     fn close(&mut self) -> Poll<(), Self::SinkError> {
-        try_ready!(self.poll_complete());
+        if task::is_in_task() {
+            try_ready!(self.poll_complete());
+        }
         self.io.shutdown()
     }
 }
 
 pub fn framed<A, C>(io: A, codec: C) -> Framed<A, C> {
     Framed {
-        io: io,
-        codec: codec,
+        io,
+        codec,
         read_buf: BytesMut::with_capacity(INITIAL_CAPACITY),
         write_buf: BytesMut::with_capacity(INITIAL_CAPACITY),
         frame: None,

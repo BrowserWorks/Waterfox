@@ -24,8 +24,6 @@ with Files('IdpSandbox.jsm'):
     BUG_COMPONENT = component_signaling
 with Files('PeerConnection*'):
     BUG_COMPONENT = component_signaling
-with Files('RTC*'):
-    BUG_COMPONENT = component_signaling
 
 component_av = ('Core', 'WebRTC: Audio/Video')
 with Files('GetUserMedia*'):
@@ -42,8 +40,10 @@ DIRS += [
     'imagecapture',
     'ipc',
     'mediacapabilities',
+    'mediacontrol',
     'mediasink',
     'mediasource',
+    'mediasession',
     'mp3',
     'ogg',
     'platforms',
@@ -69,15 +69,26 @@ TEST_DIRS += [
     'gtest',
 ]
 
+# Add libFuzzer configuration directives
+include('/tools/fuzzing/libfuzzer-config.mozbuild')
+
+if CONFIG['FUZZING_INTERFACES']:
+    TEST_DIRS += [
+        'fuzz'
+    ]
+
 MOCHITEST_MANIFESTS += [
     'test/mochitest.ini',
     'tests/mochitest/identity/mochitest.ini',
 ]
 
+BROWSER_CHROME_MANIFESTS += [
+    'mediacontrol/tests/browser.ini',
+    'mediasession/test/browser.ini',
+]
+
 if CONFIG['MOZ_WEBRTC']:
     MOCHITEST_MANIFESTS += ['tests/mochitest/mochitest.ini']
-    WEBRTC_SIGNALLING_TEST_MANIFESTS += ['tests/mochitest/steeplechase.ini']
-    WEBRTC_SIGNALLING_TEST_MANIFESTS += ['tests/mochitest/steeplechase_long/steeplechase_long.ini']
 
 XPIDL_SOURCES += [
     'nsIAudioDeviceInfo.idl',
@@ -89,6 +100,7 @@ XPIDL_SOURCES += [
 XPIDL_MODULE = 'dom_media'
 
 EXPORTS += [
+    '../../third_party/rust/audio_thread_priority/audio_thread_priority.h',
     'ADTSDecoder.h',
     'ADTSDemuxer.h',
     'AsyncLogger.h',
@@ -117,7 +129,11 @@ EXPORTS += [
     'DOMMediaStream.h',
     'DriftCompensation.h',
     'FileBlockCache.h',
+    'ForwardedInputTrack.h',
     'FrameStatistics.h',
+    'GVAutoplayPermissionRequest.h',
+    'GVAutoplayRequestStatusIPC.h',
+    'GVAutoplayRequestUtils.h',
     'ImageToI420.h',
     'Intervals.h',
     'MediaCache.h',
@@ -132,6 +148,7 @@ EXPORTS += [
     'MediaInfo.h',
     'MediaMetadataManager.h',
     'MediaMIMETypes.h',
+    'MediaPlaybackDelayPolicy.h',
     'MediaPromiseDefs.h',
     'MediaQueue.h',
     'MediaRecorder.h',
@@ -140,37 +157,38 @@ EXPORTS += [
     'MediaResult.h',
     'MediaSegment.h',
     'MediaShutdownManager.h',
+    'MediaSpan.h',
     'MediaStatistics.h',
-    'MediaStreamGraph.h',
-    'MediaStreamListener.h',
-    'MediaStreamTypes.h',
+    'MediaStreamWindowCapturer.h',
     'MediaTimer.h',
     'MediaTrack.h',
+    'MediaTrackGraph.h',
     'MediaTrackList.h',
+    'MediaTrackListener.h',
     'MemoryBlockCache.h',
     'nsIDocumentActivity.h',
     'PrincipalChangeObserver.h',
+    'PrincipalHandle.h',
     'QueueObject.h',
     'SeekJob.h',
     'SeekTarget.h',
     'SelfRef.h',
     'SharedBuffer.h',
-    'StreamTracks.h',
     'ThreadPoolCOMListener.h',
     'TimeUnits.h',
     'Tracing.h',
-    'TrackID.h',
-    'TrackUnionStream.h',
     'VideoFrameContainer.h',
     'VideoLimits.h',
     'VideoSegment.h',
     'VideoUtils.h',
     'VorbisUtils.h',
+    'WavDumper.h',
     'XiphExtradata.h',
 ]
 
 EXPORTS.mozilla += [
     'MediaManager.h',
+    'UnderrunHandler.h',
 ]
 
 EXPORTS.mozilla.media.webrtc += [
@@ -182,10 +200,6 @@ if not CONFIG['MOZ_WEBRTC']:
   EXPORTS.mtransport += [
       '../../media/mtransport/runnable_utils.h',
   ]
-
-IPDL_SOURCES += [
-    'webrtc/PWebrtcGlobal.ipdl',
-]
 
 EXPORTS.mozilla.dom += [
     'AudioDeviceInfo.h',
@@ -214,7 +228,7 @@ EXPORTS.mozilla.dom += [
 UNIFIED_SOURCES += [
     'ADTSDecoder.cpp',
     'ADTSDemuxer.cpp',
-    'AudioCaptureStream.cpp',
+    'AudioCaptureTrack.cpp',
     'AudioChannelFormat.cpp',
     'AudioCompactor.cpp',
     'AudioConfig.cpp',
@@ -238,9 +252,11 @@ UNIFIED_SOURCES += [
     'DOMMediaStream.cpp',
     'FileBlockCache.cpp',
     'FileMediaResource.cpp',
+    'ForwardedInputTrack.cpp',
     'GetUserMediaRequest.cpp',
     'GraphDriver.cpp',
     'GraphRunner.cpp',
+    'GVAutoplayPermissionRequest.cpp',
     'ImageToI420.cpp',
     'MediaCache.cpp',
     'MediaContainerType.cpp',
@@ -253,28 +269,28 @@ UNIFIED_SOURCES += [
     'MediaInfo.cpp',
     'MediaManager.cpp',
     'MediaMIMETypes.cpp',
+    'MediaPlaybackDelayPolicy.cpp',
     'MediaRecorder.cpp',
     'MediaResource.cpp',
     'MediaShutdownManager.cpp',
     'MediaStreamError.cpp',
-    'MediaStreamGraph.cpp',
-    'MediaStreamListener.cpp',
     'MediaStreamTrack.cpp',
+    'MediaStreamWindowCapturer.cpp',
     'MediaTimer.cpp',
     'MediaTrack.cpp',
+    'MediaTrackGraph.cpp',
     'MediaTrackList.cpp',
+    'MediaTrackListener.cpp',
     'MemoryBlockCache.cpp',
     'QueueObject.cpp',
     'ReaderProxy.cpp',
     'SeekJob.cpp',
-    'StreamTracks.cpp',
     'TextTrack.cpp',
     'TextTrackCue.cpp',
     'TextTrackCueList.cpp',
     'TextTrackList.cpp',
     'TextTrackRegion.cpp',
     'Tracing.cpp',
-    'TrackUnionStream.cpp',
     'VideoFrameContainer.cpp',
     'VideoPlaybackQuality.cpp',
     'VideoSegment.cpp',
@@ -285,6 +301,11 @@ UNIFIED_SOURCES += [
     'WebVTTListener.cpp',
     'XiphExtradata.cpp',
 ]
+
+if CONFIG['OS_TARGET'] == 'Linux':
+    UNIFIED_SOURCES += [ 'UnderrunHandlerLinux.cpp' ]
+else:
+    UNIFIED_SOURCES += [ 'UnderrunHandlerNoop.cpp']
 
 if CONFIG['OS_TARGET'] == 'WINNT':
   EXPORTS.mozilla.audio += [
@@ -321,7 +342,6 @@ if CONFIG['MOZ_WEBRTC']:
 EXTRA_JS_MODULES.media += [
     'IdpSandbox.jsm',
     'PeerConnectionIdp.jsm',
-    'RTCStatsReport.jsm',
 ]
 
 LOCAL_INCLUDES += [
@@ -332,6 +352,7 @@ LOCAL_INCLUDES += [
     '/layout/xul',
     '/media/libyuv/libyuv/include',
     '/netwerk/base',
+    '/toolkit/content/tests/browser/',
 ]
 
 if CONFIG['MOZ_WEBRTC']:
@@ -347,6 +368,24 @@ DEFINES['TRACING'] = True
 if CONFIG['MOZ_ANDROID_HLS_SUPPORT']:
     DEFINES['MOZ_ANDROID_HLS_SUPPORT'] = True
 
+if CONFIG['COMPILE_ENVIRONMENT']:
+    EXPORTS += [
+        '!audioipc_client_ffi_generated.h',
+        '!audioipc_server_ffi_generated.h',
+    ]
+
+    GeneratedFile('audioipc_client_ffi_generated.h',
+                  script='/build/RunCbindgen.py', entry_point='generate',
+                  inputs=[
+                      '/media/audioipc/client',
+                  ])
+
+    GeneratedFile('audioipc_server_ffi_generated.h',
+                  script='/build/RunCbindgen.py', entry_point='generate',
+                  inputs=[
+                      '/media/audioipc/server',
+                  ])
+
 include('/ipc/chromium/chromium-config.mozbuild')
 
 # Suppress some GCC warnings being treated as errors:
@@ -359,7 +398,3 @@ if CONFIG['CC_TYPE'] in ('clang', 'gcc'):
     ]
 
 FINAL_LIBRARY = 'xul'
-
-MARIONETTE_DOM_MEDIA_MANIFESTS += [
- 'test/marionette/manifest.ini'
-]

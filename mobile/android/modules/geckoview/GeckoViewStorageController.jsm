@@ -47,7 +47,7 @@ const ClearFlags = [
     1 << 4,
     Ci.nsIClearDataService.CLEAR_APPCACHE |
       Ci.nsIClearDataService.CLEAR_DOM_QUOTA |
-      Ci.nsIClearDataService.CLEAR_PUSH_NOTIFICATIONS |
+      Ci.nsIClearDataService.CLEAR_DOM_PUSH_NOTIFICATIONS |
       Ci.nsIClearDataService.CLEAR_REPORTS,
   ],
   [
@@ -86,9 +86,7 @@ function convertFlags(aJavaFlags) {
   }).reduce((acc, cf) => {
     return acc | cf[1];
   }, 0);
-  return (
-    flags /* TODO: fix bug 1553454 */ & ~Ci.nsIClearDataService.CLEAR_HISTORY
-  );
+  return flags;
 }
 
 const GeckoViewStorageController = {
@@ -98,6 +96,10 @@ const GeckoViewStorageController = {
     switch (aEvent) {
       case "GeckoView:ClearData": {
         this.clearData(aData.flags, aCallback);
+        break;
+      }
+      case "GeckoView:ClearSessionContextData": {
+        this.clearSessionContextData(aData.contextId);
         break;
       }
       case "GeckoView:ClearHostData": {
@@ -126,5 +128,15 @@ const GeckoViewStorageController = {
     }).then(resultFlags => {
       aCallback.onSuccess();
     });
+  },
+
+  clearSessionContextData(aContextId) {
+    const pattern = { geckoViewSessionContextId: aContextId };
+    debug`clearSessionContextData ${pattern}`;
+    Services.clearData.deleteDataFromOriginAttributesPattern(pattern);
+    // Call QMS explicitly to work around bug 1537882.
+    Services.qms.clearStoragesForOriginAttributesPattern(
+      JSON.stringify(pattern)
+    );
   },
 };

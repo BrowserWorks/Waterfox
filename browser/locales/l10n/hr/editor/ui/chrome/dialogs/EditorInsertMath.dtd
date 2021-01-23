@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Umetni Math">
+
+<!ENTITY sourceEditField.label "Unesite LaTeX izvorni kod:">
+
+<!ENTITY options.label "Mogućnosti">
+<!ENTITY optionInline.label "Ugrađeni način rada">
+<!ENTITY optionInline.accesskey "n">
+<!ENTITY optionDisplay.label "Način prikaza">
+<!ENTITY optionDisplay.accesskey "N">
+<!ENTITY optionLTR.label "Smjer slijeva nadesno">
+<!ENTITY optionLTR.accesskey "l">
+<!ENTITY optionRTL.label "Smjer zdesna nalijevo">
+<!ENTITY optionRTL.accesskey "r">
+
+<!ENTITY insertButton.label "Umetni">
+<!ENTITY insertButton.accesskey "i">

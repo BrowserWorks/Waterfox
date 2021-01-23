@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Proprietăți set de câmpuri">
+
+<!ENTITY Legend.label "Legendă">
+<!ENTITY Legend.accesskey "L">
+
+<!ENTITY EditLegendText.label "Editează legenda:">
+<!ENTITY EditLegendText.accesskey "t">
+<!ENTITY LegendAlign.label "Aliniază legenda:">
+<!ENTITY LegendAlign.accesskey "A">
+<!ENTITY AlignDefault.label "Implicit">
+<!ENTITY AlignLeft.label "La stânga">
+<!ENTITY AlignCenter.label "La centru">
+<!ENTITY AlignRight.label "La dreapta">
+
+<!ENTITY RemoveFieldSet.label "Elimină setul de câmpuri">
+<!ENTITY RemoveFieldSet.accesskey "E">

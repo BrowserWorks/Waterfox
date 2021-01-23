@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProduct2.label      "Ynghylch &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "n">
+
+<!ENTITY preferencesCmdMac.label        "Dewisiadau…">
+
+<!ENTITY servicesMenuMac.label          "Gwasanaethau">
+
+<!ENTITY hideThisAppCmdMac2.label       "Cuddio &brandShorterName;">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Cuddio Eraill">
+
+<!ENTITY showAllAppsCmdMac.label        "Dangos Popeth">
+
+<!ENTITY touchBarCmdMac.label           "Cyfaddasu'r Bar Cyffwrdd…">

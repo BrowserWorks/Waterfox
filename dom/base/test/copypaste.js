@@ -50,15 +50,12 @@ async function testCopyPaste(isXHTML) {
     );
     if (!suppressUnicodeCheck) {
       ok(
-        clipboard.hasDataMatchingFlavors(["text/unicode"], 1, 1),
+        clipboard.hasDataMatchingFlavors(["text/unicode"], 1),
         "check text/unicode"
       );
     }
     if (!suppressHTMLCheck) {
-      ok(
-        clipboard.hasDataMatchingFlavors(["text/html"], 1, 1),
-        "check text/html"
-      );
+      ok(clipboard.hasDataMatchingFlavors(["text/html"], 1), "check text/html");
     }
   }
   function clear(node, suppressUnicodeCheck) {
@@ -453,12 +450,9 @@ async function testCopyPaste(isXHTML) {
   var val = "1\n 2\n  3";
   textarea.value = val;
   textarea.select();
-  await SimpleTest.promiseClipboardChange(
-    () => true,
-    () => {
-      textarea.editor.copy();
-    }
-  );
+  await SimpleTest.promiseClipboardChange(textarea.value, () => {
+    textarea.editor.copy();
+  });
   textarea.value = "";
   textarea.editor.paste(1);
   is(textarea.value, val);

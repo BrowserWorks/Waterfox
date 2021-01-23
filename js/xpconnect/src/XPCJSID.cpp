@@ -9,7 +9,6 @@
 #include "xpcprivate.h"
 #include "mozilla/dom/BindingUtils.h"
 #include "mozilla/Attributes.h"
-#include "mozilla/jsipc/CrossProcessObjectWrappers.h"
 #include "js/Symbol.h"
 
 using namespace mozilla::dom;
@@ -35,7 +34,7 @@ static bool ID_GetNumber(JSContext* aCx, unsigned aArgc, Value* aVp);
 // 1/4 of the representation of the nsID value. This allows us to avoid an extra
 // allocation for the nsID object, and eliminates the need for a finalizer.
 enum { kID_Slot0, kID_Slot1, kID_Slot2, kID_Slot3, kID_SlotCount };
-static const js::Class sID_Class = {
+static const JSClass sID_Class = {
     "nsJSID", JSCLASS_HAS_RESERVED_SLOTS(kID_SlotCount), JS_NULL_CLASS_OPS};
 
 /******************************************************************************
@@ -51,7 +50,7 @@ static bool IID_GetName(JSContext* aCx, unsigned aArgc, Value* aVp);
 // Interface ID objects use a single reserved slot containing a pointer to the
 // nsXPTInterfaceInfo object for the interface in question.
 enum { kIID_InfoSlot, kIID_SlotCount };
-static const js::Class sIID_Class = {
+static const JSClass sIID_Class = {
     "nsJSIID", JSCLASS_HAS_RESERVED_SLOTS(kIID_SlotCount), JS_NULL_CLASS_OPS};
 
 /******************************************************************************
@@ -68,14 +67,14 @@ static bool CID_GetName(JSContext* aCx, unsigned aArgc, Value* aVp);
 // ContractID objects use a single reserved slot, containing the ContractID. The
 // nsCID value for this object is looked up when the object is being unwrapped.
 enum { kCID_ContractSlot, kCID_SlotCount };
-static const js::Class sCID_Class = {
+static const JSClass sCID_Class = {
     "nsJSCID", JSCLASS_HAS_RESERVED_SLOTS(kCID_SlotCount), JS_NULL_CLASS_OPS};
 
 /**
  * Ensure that the nsID prototype objects have been created for the current
  * global, and extract the prototype values.
  */
-static JSObject* GetIDPrototype(JSContext* aCx, const js::Class* aClass) {
+static JSObject* GetIDPrototype(JSContext* aCx, const JSClass* aClass) {
   XPCWrappedNativeScope* scope = ObjectScope(CurrentGlobalOrNull(aCx));
   if (NS_WARN_IF(!scope)) {
     return nullptr;
@@ -145,7 +144,7 @@ static JSObject* GetIDPrototype(JSContext* aCx, const js::Class* aClass) {
 }
 
 // Unwrap the given value to an object with the correct class, or nullptr.
-static JSObject* GetIDObject(HandleValue aVal, const Class* aClass) {
+static JSObject* GetIDObject(HandleValue aVal, const JSClass* aClass) {
   if (aVal.isObject()) {
     // We care only about IID/CID objects here, so CheckedUnwrapStatic is fine.
     JSObject* obj = js::CheckedUnwrapStatic(&aVal.toObject());
@@ -220,10 +219,10 @@ Maybe<nsID> JSValue2ID(JSContext* aCx, HandleValue aVal) {
 /**
  * Public ID Object Constructor Methods
  */
-static JSObject* NewIDObjectHelper(JSContext* aCx, const js::Class* aClass) {
+static JSObject* NewIDObjectHelper(JSContext* aCx, const JSClass* aClass) {
   RootedObject proto(aCx, GetIDPrototype(aCx, aClass));
   if (proto) {
-    return JS_NewObjectWithGivenProto(aCx, Jsvalify(aClass), proto);
+    return JS_NewObjectWithGivenProto(aCx, aClass, proto);
   }
   return nullptr;
 }
@@ -370,7 +369,6 @@ static bool ID_Equals(JSContext* aCx, unsigned aArgc, Value* aVp) {
  */
 static nsresult FindObjectForHasInstance(JSContext* cx, HandleObject objArg,
                                          MutableHandleObject target) {
-  using namespace mozilla::jsipc;
   RootedObject obj(cx, objArg), proto(cx);
   while (true) {
     // Try the object, or the wrappee if allowed.  We want CheckedUnwrapDynamic
@@ -378,7 +376,7 @@ static nsresult FindObjectForHasInstance(JSContext* cx, HandleObject objArg,
     // our current global.
     JSObject* o =
         js::IsWrapper(obj) ? js::CheckedUnwrapDynamic(obj, cx, false) : obj;
-    if (o && (IS_WN_REFLECTOR(o) || IsDOMObject(o) || IsCPOW(o))) {
+    if (o && (IS_WN_REFLECTOR(o) || IsDOMObject(o))) {
       target.set(o);
       return NS_OK;
     }
@@ -408,10 +406,6 @@ nsresult HasInstance(JSContext* cx, HandleObject objArg, const nsID* iid,
 
   if (!obj) {
     return NS_OK;
-  }
-
-  if (mozilla::jsipc::IsCPOW(obj)) {
-    return mozilla::jsipc::InstanceOf(obj, iid, bp);
   }
 
   // Need to unwrap Window correctly here, so use ReflectorToISupportsDynamic.

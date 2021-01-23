@@ -34,7 +34,22 @@ function URLFetcher(url, timeout) {
   // Prevent privacy leaks
   xhr.channel.loadFlags |= Ci.nsIRequest.LOAD_ANONYMOUS;
   // Use the system's resolver for this check
-  xhr.channel.loadFlags |= Ci.nsIRequest.LOAD_DISABLE_TRR;
+  xhr.channel.setTRRMode(Ci.nsIRequest.TRR_DISABLED_MODE);
+  // We except this from being classified
+  xhr.channel.loadFlags |= Ci.nsIChannel.LOAD_BYPASS_URL_CLASSIFIER;
+  // Prevent HTTPS-Only Mode from upgrading the request.
+  xhr.channel.loadInfo.httpsOnlyStatus |= Ci.nsILoadInfo.HTTPS_ONLY_EXEMPT;
+  // Allow deprecated HTTP request from SystemPrincipal
+  xhr.channel.loadInfo.allowDeprecatedSystemRequests = true;
+
+  // We don't want to follow _any_ redirects
+  xhr.channel.QueryInterface(Ci.nsIHttpChannel).redirectionLimit = 0;
+
+  // bug 1666072 - firefox.com returns a HSTS header triggering a https upgrade
+  // but the upgrade triggers an internal redirect causing an incorrect locked
+  // portal notification. We exclude CP detection from STS.
+  xhr.channel.QueryInterface(Ci.nsIHttpChannel).allowSTS = false;
+
   // The Cache-Control header is only interpreted by proxies and the
   // final destination. It does not help if a resource is already
   // cached locally.
@@ -59,6 +74,15 @@ function URLFetcher(url, timeout) {
         self.onsuccess(xhr.responseText);
       } else if (xhr.status) {
         self.onredirectorerror(xhr.status);
+      } else if (
+        xhr.channel &&
+        xhr.channel.status == Cr.NS_ERROR_REDIRECT_LOOP
+      ) {
+        // For some redirects we don't get a status, so we need to check it
+        // this way. This only works because we set the redirectionLimit to 0.
+        self.onredirectorerror(300);
+        // No need to invoke the onerror callback, we handled it here.
+        xhr.onerror = null;
       }
     }
   };
@@ -196,7 +220,7 @@ function LoginObserver(captivePortalDetector) {
         case LOGIN_OBSERVER_STATE_BURST:
           // Wait while network stays idle for a short period
           state = LOGIN_OBSERVER_STATE_VERIFY_NEEDED;
-        // Fall though to start polling timer
+        // Fall through to start polling timer
         case LOGIN_OBSERVER_STATE_IDLE:
         // Just fall through to perform a captive portal check.
         case LOGIN_OBSERVER_STATE_VERIFY_NEEDED:
@@ -387,7 +411,10 @@ CaptivePortalDetector.prototype = {
   },
 
   _mayRetry: function _mayRetry() {
-    if (this._runningRequest.retryCount++ < this._maxRetryCount) {
+    if (
+      this._runningRequest &&
+      this._runningRequest.retryCount++ < this._maxRetryCount
+    ) {
       debug(
         "retry-Detection: " +
           this._runningRequest.retryCount +
@@ -512,13 +539,14 @@ CaptivePortalDetector.prototype = {
   },
 };
 
-/* globals debug: true */
 var debug;
 if (DEBUG) {
+  // eslint-disable-next-line no-global-assign
   debug = function(s) {
     dump("-*- CaptivePortalDetector component: " + s + "\n");
   };
 } else {
+  // eslint-disable-next-line no-global-assign
   debug = function(s) {};
 }
 

@@ -1,6 +1,6 @@
-/* import-globals-from storageprincipal_head.js */
+/* import-globals-from partitionedstorage_head.js */
 
-StoragePrincipalHelper.runTest(
+PartitionedStorageHelper.runTestInNormalAndPrivateMode(
   "HTTP Cookies",
   async (win3rdParty, win1stParty, allowed) => {
     await win3rdParty.fetch("cookies.sjs?3rd").then(r => r.text());
@@ -48,7 +48,7 @@ StoragePrincipalHelper.runTest(
   }
 );
 
-StoragePrincipalHelper.runTest(
+PartitionedStorageHelper.runTestInNormalAndPrivateMode(
   "DOM Cookies",
   async (win3rdParty, win1stParty, allowed) => {
     win3rdParty.document.cookie = "foo=3rd";
@@ -72,6 +72,61 @@ StoragePrincipalHelper.runTest(
     }
   },
 
+  async _ => {
+    await new Promise(resolve => {
+      Services.clearData.deleteData(Ci.nsIClearDataService.CLEAR_ALL, value =>
+        resolve()
+      );
+    });
+  }
+);
+
+PartitionedStorageHelper.runPartitioningTestInNormalAndPrivateMode(
+  "Partitioned tabs - DOM Cookies",
+  "cookies",
+
+  // getDataCallback
+  async win => {
+    return win.document.cookie;
+  },
+
+  // addDataCallback
+  async (win, value) => {
+    win.document.cookie = value;
+    return true;
+  },
+
+  // cleanup
+  async _ => {
+    await new Promise(resolve => {
+      Services.clearData.deleteData(Ci.nsIClearDataService.CLEAR_ALL, value =>
+        resolve()
+      );
+    });
+  }
+);
+
+PartitionedStorageHelper.runPartitioningTestInNormalAndPrivateMode(
+  "Partitioned tabs - Network Cookies",
+  "cookies",
+
+  // getDataCallback
+  async win => {
+    return win
+      .fetch("cookies.sjs")
+      .then(r => r.text())
+      .then(text => {
+        return text.substring("cookie:foopy=".length);
+      });
+  },
+
+  // addDataCallback
+  async (win, value) => {
+    await win.fetch("cookies.sjs?" + value).then(r => r.text());
+    return true;
+  },
+
+  // cleanup
   async _ => {
     await new Promise(resolve => {
       Services.clearData.deleteData(Ci.nsIClearDataService.CLEAR_ALL, value =>

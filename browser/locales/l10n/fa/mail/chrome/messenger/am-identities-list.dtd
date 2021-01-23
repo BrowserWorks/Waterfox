@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identitiesListAdd.label  "Add…">
+<!ENTITY identitiesListAdd.accesskey  "A">
+<!ENTITY identitiesListEdit.label "ویرایش…">
+<!ENTITY identitiesListEdit.accesskey "و">
+
+
+<!ENTITY identitiesListDelete.label "حذف">
+<!ENTITY identitiesListDelete.accesskey "ح">
+
+

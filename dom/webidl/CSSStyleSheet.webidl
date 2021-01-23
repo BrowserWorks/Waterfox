@@ -5,6 +5,7 @@
  *
  * The origin of this IDL file is
  * http://dev.w3.org/csswg/cssom/
+ * https://wicg.github.io/construct-stylesheets/
  */
 
 enum CSSStyleSheetParsingMode {
@@ -13,8 +14,17 @@ enum CSSStyleSheetParsingMode {
   "agent"
 };
 
+dictionary CSSStyleSheetInit {
+  (MediaList or DOMString) media = "";
+  boolean disabled = false;
+  UTF8String baseURL;
+};
+
+[Exposed=Window]
 interface CSSStyleSheet : StyleSheet {
-  [Pure]
+  [Throws, Pref="layout.css.constructable-stylesheets.enabled"]
+  constructor(optional CSSStyleSheetInit options = {});
+  [Pure, BinaryName="DOMOwnerRule"]
   readonly attribute CSSRule? ownerRule;
   [Throws, NeedsSubjectPrincipal]
   readonly attribute CSSRuleList cssRules;
@@ -24,6 +34,10 @@ interface CSSStyleSheet : StyleSheet {
   unsigned long insertRule(DOMString rule, optional unsigned long index = 0);
   [Throws, NeedsSubjectPrincipal]
   void deleteRule(unsigned long index);
+  [Throws, Pref="layout.css.constructable-stylesheets.enabled"]
+  Promise<CSSStyleSheet> replace(UTF8String text);
+  [Throws, Pref="layout.css.constructable-stylesheets.enabled"]
+  void replaceSync(UTF8String text);
 
   // Non-standard WebKit things.
   [Throws, NeedsSubjectPrincipal, BinaryName="cssRules"]

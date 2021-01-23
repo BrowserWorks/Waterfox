@@ -1,0 +1,141 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Ugur deg usali n usebter">
+<!ENTITY retry.label "Ɛreḍ i tikelt-nniḍen">
+<!ENTITY returnToPreviousPage.label "Uɣal ɣeṛ deffir">
+<!ENTITY returnToPreviousPage1.label "Uɣal ɣer deffir (Yelha)">
+<!ENTITY advanced2.label "Talqayt…">
+<!ENTITY viewCertificate.label "Sken aselkin">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "Ulac aqeddac">
+<!ENTITY dnsNotFound.longDesc1 "<strong>Ma tella tansa-agi d tameɣtut, llant tɣawsiwin-nniḍen ara tɛerḍeḍ:</strong>
+<ul>
+  <li>Ɛreḍ tikkelt-nniḍen ticki.</li>
+  <li>Senqed tuqqna-ik ɣer uẓeṭṭa.</li>
+  <li>Ma telliḍ teqqneḍ maca s uɣrab n tmes, senqed ma yella &brandShortName; yesεa tisirag n unekcum ɣer Web.</li>
+</ul>">
+
+<!ENTITY fileNotFound.longDesc "<ul>
+  <li>Senqed isem n ufaylu ma yura s usekkil meqqren neɣ meẓẓi neɣ tuccdiwin n tira-nniḍen.</li>
+  <li>Senqed ma yella afaylu ur ittusenkez ara, ur ibeddel ara isem neɣ ur ittwakkes ara.</li>
+</ul>">
+
+<!ENTITY fileAccessDenied.longDesc "<ul><li>Ahat yettwakkes, yettusenkez, neɣ tisirag uggint anekcum.</li></ul>">
+
+<!ENTITY generic.longDesc "<p> &brandShortName; ur izmir ara ad d-yessali asebter-a.</p>">
+
+<!ENTITY captivePortal.title "Kcem ɣer uẓeṭṭa">
+<!ENTITY captivePortal.longDesc2 "<p>Yessefk ad tkecmeḍ ar uẓeṭṭa-a send ad tizmireḍ ad tkecmeḍ ar Internet</p>">
+
+<!ENTITY openPortalLoginPage.label2 "Ldi asebter n unekcum ɣer uẓeṭṭa">
+
+<!ENTITY malformedURI.pageTitle "URL mačči d tarameɣtut">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>Isemli ittusutren ulac-it deg tuffirt n &brandShortName;.</p><ul><li>I lmendad n tɣellist, &brandShortName; ur yessutur ara s twurmant isemliyen imḥulfuyen.</li><li>Sit ɣef Ɛreḍ i usuter n isemli-a seg usmel web.</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "<ul><li>Sit ɣef &quot;Ɛreḍ tikelt-nniḍen&quot; akken ad tuɣaleḍ ɣer uskar uqqin sakin smiren asebter</li></ul>">
+
+<!ENTITY contentEncodingError.longDesc "<ul> <li>M'ulac aɣilif, nermes imawlan n usmel web ɣef wugur-a.</li> </ul>">
+
+<!ENTITY unsafeContentType.longDesc "<ul> 
+  <li>M'ulac aɣilif, nermes imawlan n usmel web ɣef wugur-a.</li>
+ </ul>">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "<ul><li>Ahat issefk ad tesbeddeḍ asnas nniḍen akken ad tizmireḍ ad teldiḍ tawsit n tansa-a.</li></ul>">
+
+<!ENTITY proxyConnectFailure.longDesc "<ul><li>Senqed iɣewwaṛen n upṛuksi ma llan d imeɣta.</li> <li>Nermes anedbal n uẓeṭṭa akken ad twaliḍ ma yella aqeddac apṛuksi itteddu.</li></ul>">
+
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Senqed ma yella iɣewwaren n upṛuksi ma llan d imeɣta.</li> <li>Senqed ma yella tuqqna n uẓeṭṭa n uselkim-inek tetteddu.</li> <li>Ma yella aselkim-inek neɣ aẓeṭṭa-inek ittummesten s uɣwṛab n tmes, Wali ma yella &brandShortName; ɣur-s tasiregt n unekcum ɣer Web.</li> </ul>">
+
+<!ENTITY redirectLoop.longDesc "<ul><li>Ugur-a ahat yekka-d seg tukksa n urmad neɣ asewḥel n inagan n tuqqna.</li> </ul>">
+
+<!ENTITY unknownSocketType.longDesc "<ul><li>Senqed ma yella amsefrak n tɣellist tudmawant tebded ɣef unagraw-ik.</li><li>Ahat aqeddac ur ittuswel ara akken iwata.</li></ul>">
+
+<!ENTITY nssFailure2.longDesc2 "<ul>
+  <li>Asebter-a i tebɣiḍ ad twaliḍ ur yizmir ara ad d-yettwasken, acku ur nezmir ara ad nsenqed tasestebt n yisefka i d-itturemsen</li> 
+  <li>Ma uulac aɣilif, nermes imawlan n usmel web ɣef ugur-a.</li>
+</ul>">
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara2 "&brandShortName; yufa-d dakken izmer ad yili ugur n teɣlist u ur ikemmel ara ɣer <span class='hostname'/>. Ma terziḍ ɣer usmel, Imakwaren zemren ad ɛerḍen ad akren talɣut yecban awalen uffiren, imaylen, neɣ talqayt n tkerḍa n usmad.">
+<!ENTITY certerror.sts.introPara "&brandShortName; yufa-d dakken izmer ad yili ugur n teɣlist u ur ikemmel ara ɣer <span class='hostname'/> acku asmel-agi isra tuqqna tɣelsant.">
+
+<!ENTITY certerror.expiredCert.introPara "&brandShortName; Yufa-d ugur u ur ikemmel ara ɣer <span class='hostname'/>. Asmel web atan ur ittwasbadu ara neɣ tamrilt n uselkim-ik/im ur tettwasbadu ara ɣer wakud iwatan.">
+<!ENTITY certerror.expiredCert.secondPara2 "Aselkin n usmel web-agi ad yili yemmut, dɣa issewḥal tuqqna taɣelsant n &brandShortName; Ma terziḍ ɣer usmel-agi, Imakwaren zemren ad ɛerḍen ad akren talɣut yecban awalen uffiren, imaylen, neɣ talqayt n tkerḍa n usmad.">
+<!ENTITY certerror.expiredCert.sts.secondPara "Aselkin n usmel web ad yili yemmut, issewḥal tuqqna tɣelsant n &brandShortName;">
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "D acu i tzemreḍ ad txedmeḍ i waya?">
+
+<!ENTITY certerror.unknownIssuer.whatCanYouDoAboutIt "<p>Ugur iḍurr-d aṭas akked usmel, ulac ayen ara txedmeḍ akken ad ifru</p>
+<p>ma telliḍ teqneḍ s uẓeṭṭa n tkebbanit neɣ tseqdaceḍ amgal avirus, Tzemreḍ ad tsutreḍ tallelt sɣur tarbaɛt. Tzemreḍ daɣen ad tnremseḍ anedbal n usmel ɣef ugur-agi</p>
+">
+
+<!ENTITY certerror.expiredCert.whatCanYouDoAboutIt2 "<p>Tamrilt n uselkim tettwasbadu ɣer <span id='wrongSystemTime_systemDate2'/>. Senqeḍ d akken aselkim-inek ittwasbadu ɣer uzemz, akud, akked tamnaḍt takudant iwatan deg iɣewwaṛen n unagraw, sakin smiren <span class='hostname'/></p><p> ma yellan tamrilt-inek tettwasbadu yakan ɣer wakud iwatan, izmer ahat asmel web ur ittwasbadu ara, da ulac ayen ara txedmeḍ akken ad ifru wugur-agi</p>">
+
+<!ENTITY certerror.badCertDomain.whatCanYouDoAboutIt "<p>Ugur iḍurr-d aṭas akked usmel, ulac ayen ara txedmeḍ akken ad ifru. Tzemreḍ ad tnremseḍ anedbal n usmel ɣef ugur-agi.</p>">
+
+<!ENTITY sharedLongDesc "<ul><li>Asmel-a ulac-it akka tura neɣ ahat ur d-yelhi ara. Ɛreḍ akka kra n wakud  ticki.</li> <li>Ma yella ur tezmiṛeḍ ara ad d-tessaliḍ isebtar, senqed tuqqna ɣeṛ uẓeṭṭa n uselkim-inek.</li><li>Ma yella aselkim-inek neɣ aẓeṭṭa-inek ittummesten s uɣwṛab n tmes neɣ apṛuksi, wali ma yella &brandShortName; yezmer ad yekcem ɣer Web.</li></ul>">
+
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; isewḥel asali n usebter-a acku tasertit n tɣellist n ugbur ur tt-iǧǧi ara.</p>">
+
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; isewḥel asali n usebter-a deg usatal-a acku asebter ɣur-s tasertit X-Frame-Options ur t-yeǧǧan ara.</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Asebter-agi i tebɣiḍ ad twaliḍ ur yizmir ara ad d-yettwasken, acku tella tuccḍa deg tuzna n yisefka.</p><ul><li>Ma ulac aɣilif nermes imawlan n usmel web ɣef ugur-agi.</li></ul>">
+
+<!ENTITY securityOverride.exceptionButton1Label "Qbel ugur u kemmel">
+
+<!ENTITY errorReporting.automatic2 "Tuzzna n tuccḍiwin am ta, d tallelt ad d-tmuddeḍ i Mozilla akken ad isulu u ad isewḥel ismal web n ukellex">
+<!ENTITY errorReporting.learnMore "Issin ugar…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Ma ulac aɣilif, nermes imawlan n usmel web ɣef wugur-agi.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Talɣut leqqayen: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.pagetitle2  "Ɣur-k: izmer ad yili ugur n teɣlist">
+<!ENTITY certerror.sts.pagetitle  "Ur yeqqin ara: Yezmer ad yili ugur n teɣlist">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation1 "<span class='hostname'></span> ɣur-s tasertit n tɣellist HTTP Strict Transport Security (HSTS), ay-agi yemmal-d d akken &brandShortName; izmer kan ad iqqen ɣur-s s tɣellist. Ur tezmireḍ ara ad ternuḍ tasureft akken ad twaliḍ asmel-agi.">
+<!ENTITY certerror.copyToClipboard.label "Nɣel aḍris ɣef afus">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span>yesseqdac tatiknulujit yezrin ur yezmiren ara ad temmesten mgal azḍam. Azeddam yezmer ad yakker talɣut i tɣileḍ tettummesten. Anedbal n usmel yesra di tazwara ad yefru aqeddac send ad tinigeḍ ɣer usmel.</p><p>Tangalt n tuccḍa: NS_ERROR_NET_INADEQUATE_SECURIT</p>">
+
+<!ENTITY blockedByPolicy.title "Asebter iwḥel">
+
+<!ENTITY certerror.mitm.longDesc "<span class='hostname'></span> ahat d asmel aɣelsan, maca ilaq ad termed tuqqna taɣelsant. Ugur-a iḍra-d sɣur <span class='mitm-name'/>, i yellan d aseɣẓan deg uselkim-inek neɣ deg uẓeṭṭa-inek.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt1 "Ma yeqber aseɣẓan-ik n mgalavirus timahaltin ittnadin deg iẓeḍwa ( isem-nsent aḍuman web neɣ aḍuman https), tzemreḍ ad tsenseḍ tamahilt-a. ma yella ur teddu ara, tzemreḍ ad tt-tekseḍ neɣ ad talseḍ asebded n useɣẓan mgalavirus.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt2 "Ma tedceḍ aẓeṭṭa n tkebbanit; nermes anedbal n ugezdu IT.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt3 "Ma ur tuɣeḍ ara tanumi akked <span class='mitm-name'/>, Aya izmer ad yili d attεeddi ihi ur isefk ara ad tkemleḍ ɣer usmel-a.">
+<!ENTITY certerror.mitm.sts.whatCanYouDoAboutIt3 "Ma ur tuɣeḍ ara tanumi akked <span class='mitm-name'/>, Aya izmer ad yili d attεeddi ihi ulac ayen ara txedmeḍ akken ad tkemleḍ ɣer usmel-a.">
+
+<!ENTITY clockSkewError.longDesc "Aselkim-inek iɣil d <span id='wrongSystemTime_systemDate1'/>, aya isewḥel tuqqna n &brandShortName; s tɣellist. Akken ad terzuḍ ɣer <span class='hostname'></span>, leqqem asarag n uselkim-inek deg iɣewwaṛen n unagraw ɣer uzemz, akud, akked tamnaḍt takudant iwatan, sakin smiren <span class='hostname'></span>.">
+
+<!ENTITY prefReset.longDesc "Akken nettwali, d iɣewwaṛen n tɣellist n uzeṭṭa-inek i d-yewwin ugur-a. Tebɣiḍ ad terreḍ iɣewwaṛen imezwar?">
+<!ENTITY prefReset.label "Err-d iɣewwaṛen imezwar">
+
+<!ENTITY enableTls10.longDesc "Asmel-a izmer ur isefrak ara asali n uneggaf TLS 1.2, i yellan deg lqem adday i yessefrak &brandShortName;. Armad n TLS 1.0 akked TLS 1.1 izmer ad yeǧǧ tuqqna ad teddu.">
+<!ENTITY enableTls10.note "TLS 1.0 d TLS 1.1 ad ttwasensen i lebda di lqem i d-iteddun.">
+<!ENTITY enableTls10.label "Rmed TLS1.0 akked 1.1">
+
+<!ENTITY networkProtocolError.longDesc "<p>Asebter amiran aniɣer i tetteɛraḍeḍ ad tkecmeḍ ur yezmir ara ad d-iban, acku tuccḍa n uneggaf n uẓeṭṭa teḍra-d.</p><ul><li>Nermes bab n usmel web akken ad iẓeṛ ugur-a.</li></ul>">

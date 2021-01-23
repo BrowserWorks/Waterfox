@@ -6,14 +6,27 @@
 #include "RenderPipeline.h"
 
 #include "Device.h"
-#include "mozilla/dom/WebGPUBinding.h"
 
 namespace mozilla {
 namespace webgpu {
 
-RenderPipeline::~RenderPipeline() = default;
+GPU_IMPL_CYCLE_COLLECTION(RenderPipeline, mParent)
+GPU_IMPL_JS_WRAP(RenderPipeline)
 
-WEBGPU_IMPL_GOOP_0(RenderPipeline)
+RenderPipeline::RenderPipeline(Device* const aParent, RawId aId)
+    : ChildOf(aParent), mId(aId) {}
+
+RenderPipeline::~RenderPipeline() { Cleanup(); }
+
+void RenderPipeline::Cleanup() {
+  if (mValid && mParent) {
+    mValid = false;
+    auto bridge = mParent->GetBridge();
+    if (bridge && bridge->IsOpen()) {
+      bridge->SendRenderPipelineDestroy(mId);
+    }
+  }
+}
 
 }  // namespace webgpu
 }  // namespace mozilla

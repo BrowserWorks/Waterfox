@@ -13,8 +13,10 @@
 #include <string.h>
 #include "gtkdrawing.h"
 #include "mozilla/Assertions.h"
+#include "mozilla/ScopeExit.h"
 #include "prinrval.h"
 #include "WidgetStyleCache.h"
+#include "nsString.h"
 #include "nsDebug.h"
 
 #include <math.h>
@@ -27,7 +29,13 @@ static ScrollbarGTKMetrics sScrollbarMetrics[2];
 static ScrollbarGTKMetrics sActiveScrollbarMetrics[2];
 static ToggleGTKMetrics sCheckboxMetrics;
 static ToggleGTKMetrics sRadioMetrics;
+static ToggleGTKMetrics sMenuRadioMetrics;
+static ToggleGTKMetrics sMenuCheckboxMetrics;
 static ToolbarGTKMetrics sToolbarMetrics;
+static CSDWindowDecorationSize sToplevelWindowDecorationSize;
+static CSDWindowDecorationSize sPopupWindowDecorationSize;
+
+using mozilla::Span;
 
 #define ARROW_UP 0
 #define ARROW_DOWN G_PI
@@ -88,9 +96,9 @@ static gint moz_gtk_menu_item_paint(WidgetNodeType widget, cairo_t* cr,
 
 static GtkBorder GetMarginBorderPadding(GtkStyleContext* aStyle);
 
-static void Inset(GdkRectangle* rect, const GtkBorder& aBorder);
+static void Inset(GdkRectangle*, const GtkBorder&);
 
-static void InsetByMargin(GdkRectangle* rect, GtkStyleContext* style);
+static void InsetByMargin(GdkRectangle*, GtkStyleContext* style);
 
 static void moz_gtk_add_style_margin(GtkStyleContext* style, gint* left,
                                      gint* top, gint* right, gint* bottom) {
@@ -142,6 +150,19 @@ static void moz_gtk_add_border_padding(GtkStyleContext* style, gint* left,
                                        gint* top, gint* right, gint* bottom) {
   moz_gtk_add_style_border(style, left, top, right, bottom);
   moz_gtk_add_style_padding(style, left, top, right, bottom);
+}
+
+// In case there's an error in Gtk theme and preferred size is zero,
+// return some sane values to pass mozilla automation tests.
+// It should not happen in real-life.
+#define MIN_WIDGET_SIZE 10
+static void moz_gtk_sanity_preferred_size(GtkRequisition* requisition) {
+  if (requisition->width <= 0) {
+    requisition->width = MIN_WIDGET_SIZE;
+  }
+  if (requisition->height <= 0) {
+    requisition->height = MIN_WIDGET_SIZE;
+  }
 }
 
 // GetStateFlagsFromGtkWidgetState() can be safely used for the specific
@@ -212,38 +233,24 @@ void moz_gtk_refresh() {
   sActiveScrollbarMetrics[GTK_ORIENTATION_VERTICAL].initialized = false;
   sCheckboxMetrics.initialized = false;
   sRadioMetrics.initialized = false;
+  sMenuCheckboxMetrics.initialized = false;
+  sMenuRadioMetrics.initialized = false;
   sToolbarMetrics.initialized = false;
+  sToplevelWindowDecorationSize.initialized = false;
+  sPopupWindowDecorationSize.initialized = false;
 
   /* This will destroy all of our widgets */
   ResetWidgetCache();
-}
-
-gint moz_gtk_checkbox_get_metrics(gint* indicator_size,
-                                  gint* indicator_spacing) {
-  gtk_widget_style_get(GetWidget(MOZ_GTK_CHECKBUTTON_CONTAINER),
-                       "indicator_size", indicator_size, "indicator_spacing",
-                       indicator_spacing, NULL);
-  return MOZ_GTK_SUCCESS;
-}
-
-gint moz_gtk_radio_get_metrics(gint* indicator_size, gint* indicator_spacing) {
-  gtk_widget_style_get(GetWidget(MOZ_GTK_RADIOBUTTON_CONTAINER),
-                       "indicator_size", indicator_size, "indicator_spacing",
-                       indicator_spacing, NULL);
-  return MOZ_GTK_SUCCESS;
 }
 
 static gint moz_gtk_get_focus_outline_size(GtkStyleContext* style,
                                            gint* focus_h_width,
                                            gint* focus_v_width) {
   GtkBorder border;
-  GtkBorder padding;
   gtk_style_context_get_border(style, gtk_style_context_get_state(style),
                                &border);
-  gtk_style_context_get_padding(style, gtk_style_context_get_state(style),
-                                &padding);
-  *focus_h_width = border.left + padding.left;
-  *focus_v_width = border.top + padding.top;
+  *focus_h_width = border.left;
+  *focus_v_width = border.top;
   return MOZ_GTK_SUCCESS;
 }
 
@@ -387,61 +394,64 @@ static void CalculateToolbarButtonSpacing(WidgetNodeType aAppearance,
       aMetrics->buttonMargin.top + aMetrics->buttonMargin.bottom;
 }
 
-int GetGtkHeaderBarButtonLayout(WidgetNodeType* aButtonLayout,
-                                int aMaxButtonNums,
-                                bool* aReversedButtonsPlacement) {
-#if DEBUG
-  if (aButtonLayout) {
-    NS_ASSERTION(
-        aMaxButtonNums >= TOOLBAR_BUTTONS,
-        "Requested number of buttons is higher than storage capacity!");
-  }
-#endif
-
-  const gchar* decorationLayout = nullptr;
+size_t GetGtkHeaderBarButtonLayout(Span<ButtonLayout> aButtonLayout,
+                                   bool* aReversedButtonsPlacement) {
+  gchar* decorationLayoutSetting = nullptr;
   GtkSettings* settings = gtk_settings_get_for_screen(gdk_screen_get_default());
-  g_object_get(settings, "gtk-decoration-layout", &decorationLayout, nullptr);
+  g_object_get(settings, "gtk-decoration-layout", &decorationLayoutSetting,
+               nullptr);
+  auto free = mozilla::MakeScopeExit([&] { g_free(decorationLayoutSetting); });
 
   // Use a default layout
-  if (!decorationLayout) {
-    decorationLayout = "menu:minimize,maximize,close";
+  const gchar* decorationLayout = "menu:minimize,maximize,close";
+  if (decorationLayoutSetting) {
+    decorationLayout = decorationLayoutSetting;
   }
 
   // "minimize,maximize,close:" layout means buttons are on the opposite
   // titlebar side. close button is always there.
-  bool reversedButtonsPlacement = false;
-  const char* closeButton = strstr(decorationLayout, "close");
-  const char* separator = strchr(decorationLayout, ':');
-  if (closeButton != nullptr && separator != nullptr) {
-    reversedButtonsPlacement = closeButton < separator;
-  }
-
-  // We support only default button order now:
-  // minimize/maximize/close for right placement
-  // close/minimize/maximize for left placement
-  int activeButtonNums = 0;
-  if (aButtonLayout) {
-    if (reversedButtonsPlacement &&
-        strstr(decorationLayout, "close") != nullptr) {
-      aButtonLayout[activeButtonNums++] = MOZ_GTK_HEADER_BAR_BUTTON_CLOSE;
-    }
-    if (strstr(decorationLayout, "minimize") != nullptr) {
-      aButtonLayout[activeButtonNums++] = MOZ_GTK_HEADER_BAR_BUTTON_MINIMIZE;
-    }
-    if (strstr(decorationLayout, "maximize") != nullptr) {
-      aButtonLayout[activeButtonNums++] = MOZ_GTK_HEADER_BAR_BUTTON_MAXIMIZE;
-    }
-    if (!reversedButtonsPlacement &&
-        strstr(decorationLayout, "close") != nullptr) {
-      aButtonLayout[activeButtonNums++] = MOZ_GTK_HEADER_BAR_BUTTON_CLOSE;
-    }
-  }
-
   if (aReversedButtonsPlacement) {
-    *aReversedButtonsPlacement = reversedButtonsPlacement;
+    const char* closeButton = strstr(decorationLayout, "close");
+    const char* separator = strchr(decorationLayout, ':');
+    *aReversedButtonsPlacement =
+        closeButton && separator && closeButton < separator;
   }
 
-  return activeButtonNums;
+  // We check what position a button string is stored in decorationLayout.
+  //
+  // decorationLayout gets its value from the GNOME preference:
+  // org.gnome.desktop.vm.preferences.button-layout via the
+  // gtk-decoration-layout property.
+  //
+  // Documentation of the gtk-decoration-layout property can be found here:
+  // https://developer.gnome.org/gtk3/stable/GtkSettings.html#GtkSettings--gtk-decoration-layout
+  if (aButtonLayout.IsEmpty()) {
+    return 0;
+  }
+
+  nsDependentCSubstring layout(decorationLayout, strlen(decorationLayout));
+
+  bool right = false;
+  size_t activeButtons = 0;
+  for (const auto& part : layout.Split(':')) {
+    for (const auto& button : part.Split(',')) {
+      if (button.EqualsLiteral("close")) {
+        aButtonLayout[activeButtons++] = {MOZ_GTK_HEADER_BAR_BUTTON_CLOSE,
+                                          right};
+      } else if (button.EqualsLiteral("minimize")) {
+        aButtonLayout[activeButtons++] = {MOZ_GTK_HEADER_BAR_BUTTON_MINIMIZE,
+                                          right};
+      } else if (button.EqualsLiteral("maximize")) {
+        aButtonLayout[activeButtons++] = {MOZ_GTK_HEADER_BAR_BUTTON_MAXIMIZE,
+                                          right};
+      }
+      if (activeButtons == aButtonLayout.Length()) {
+        return activeButtons;
+      }
+    }
+    right = true;
+  }
+  return activeButtons;
 }
 
 static void EnsureToolbarMetrics(void) {
@@ -457,12 +467,13 @@ static void EnsureToolbarMetrics(void) {
     }
 
     // Calculate titlebar button visibility and positions.
-    WidgetNodeType aButtonLayout[TOOLBAR_BUTTONS];
-    int activeButtonNums =
-        GetGtkHeaderBarButtonLayout(aButtonLayout, TOOLBAR_BUTTONS, nullptr);
+    ButtonLayout aButtonLayout[TOOLBAR_BUTTONS];
+    size_t activeButtonNums =
+        GetGtkHeaderBarButtonLayout(mozilla::MakeSpan(aButtonLayout), nullptr);
 
-    for (int i = 0; i < activeButtonNums; i++) {
-      int buttonIndex = (aButtonLayout[i] - MOZ_GTK_HEADER_BAR_BUTTON_CLOSE);
+    for (size_t i = 0; i < activeButtonNums; i++) {
+      int buttonIndex =
+          (aButtonLayout[i].mType - MOZ_GTK_HEADER_BAR_BUTTON_CLOSE);
       ToolbarButtonGTKMetrics* metrics = sToolbarMetrics.button + buttonIndex;
       metrics->visible = true;
       // Mark first button
@@ -474,8 +485,8 @@ static void EnsureToolbarMetrics(void) {
         metrics->lastButton = true;
       }
 
-      CalculateToolbarButtonMetrics(aButtonLayout[i], metrics);
-      CalculateToolbarButtonSpacing(aButtonLayout[i], metrics);
+      CalculateToolbarButtonMetrics(aButtonLayout[i].mType, metrics);
+      CalculateToolbarButtonSpacing(aButtonLayout[i].mType, metrics);
     }
 
     sToolbarMetrics.initialized = true;
@@ -504,7 +515,7 @@ static gint moz_gtk_window_paint(cairo_t* cr, GdkRectangle* rect,
   return MOZ_GTK_SUCCESS;
 }
 
-static gint moz_gtk_button_paint(cairo_t* cr, GdkRectangle* rect,
+static gint moz_gtk_button_paint(cairo_t* cr, const GdkRectangle* rect,
                                  GtkWidgetState* state, GtkReliefStyle relief,
                                  GtkWidget* widget,
                                  GtkTextDirection direction) {
@@ -515,6 +526,7 @@ static gint moz_gtk_button_paint(cairo_t* cr, GdkRectangle* rect,
   gtk_widget_set_direction(widget, direction);
 
   gtk_style_context_save(style);
+  StyleContextSetScale(style, state->scale);
   gtk_style_context_set_state(style, state_flags);
 
   if (state->isDefault && relief == GTK_RELIEF_NORMAL) {
@@ -556,7 +568,8 @@ static gint moz_gtk_button_paint(cairo_t* cr, GdkRectangle* rect,
   return MOZ_GTK_SUCCESS;
 }
 
-static gint moz_gtk_header_bar_button_paint(cairo_t* cr, GdkRectangle* rect,
+static gint moz_gtk_header_bar_button_paint(cairo_t* cr,
+                                            const GdkRectangle* aRect,
                                             GtkWidgetState* state,
                                             GtkReliefStyle relief,
                                             WidgetNodeType aIconWidgetType,
@@ -566,14 +579,15 @@ static gint moz_gtk_header_bar_button_paint(cairo_t* cr, GdkRectangle* rect,
           ? MOZ_GTK_HEADER_BAR_BUTTON_MAXIMIZE
           : aIconWidgetType;
 
+  GdkRectangle rect = *aRect;
   // We need to inset our calculated margin because it also
   // contains titlebar button spacing.
   const ToolbarButtonGTKMetrics* metrics =
       GetToolbarButtonMetrics(buttonWidgetType);
-  Inset(rect, metrics->buttonMargin);
+  Inset(&rect, metrics->buttonMargin);
 
   GtkWidget* buttonWidget = GetWidget(buttonWidgetType);
-  moz_gtk_button_paint(cr, rect, state, relief, buttonWidget, direction);
+  moz_gtk_button_paint(cr, &rect, state, relief, buttonWidget, direction);
 
   GtkWidget* iconWidget =
       gtk_bin_get_child(GTK_BIN(GetWidget(aIconWidgetType)));
@@ -584,6 +598,7 @@ static gint moz_gtk_header_bar_button_paint(cairo_t* cr, GdkRectangle* rect,
     GtkStateFlags state_flags = GetStateFlagsFromGtkWidgetState(state);
 
     gtk_style_context_save(style);
+    StyleContextSetScale(style, state->scale);
     gtk_style_context_set_state(style, state_flags);
 
     const ToolbarButtonGTKMetrics* metrics =
@@ -595,8 +610,8 @@ static gint moz_gtk_header_bar_button_paint(cairo_t* cr, GdkRectangle* rect,
                   gdouble))dlsym(RTLD_DEFAULT, "gtk_render_icon_surface");
 
     sGtkRenderIconSurfacePtr(style, cr, surface,
-                             rect->x + metrics->iconXPosition,
-                             rect->y + metrics->iconYPosition);
+                             rect.x + metrics->iconXPosition,
+                             rect.y + metrics->iconYPosition);
     gtk_style_context_restore(style);
   }
 
@@ -611,8 +626,10 @@ static gint moz_gtk_toggle_paint(cairo_t* cr, GdkRectangle* rect,
   gint x, y, width, height;
   GtkStyleContext* style;
 
-  const ToggleGTKMetrics* metrics = GetToggleMetrics(isradio);
-
+  // We need to call this before GetStyleContext, because otherwise we would
+  // reset state flags
+  const ToggleGTKMetrics* metrics =
+      GetToggleMetrics(isradio ? MOZ_GTK_RADIOBUTTON : MOZ_GTK_CHECKBUTTON);
   // Clamp the rect and paint it center aligned in the rect.
   x = rect->x;
   y = rect->y;
@@ -670,7 +687,8 @@ static gint moz_gtk_toggle_paint(cairo_t* cr, GdkRectangle* rect,
   return MOZ_GTK_SUCCESS;
 }
 
-static gint calculate_button_inner_rect(GtkWidget* button, GdkRectangle* rect,
+static gint calculate_button_inner_rect(GtkWidget* button,
+                                        const GdkRectangle* rect,
                                         GdkRectangle* inner_rect,
                                         GtkTextDirection direction) {
   GtkStyleContext* style;
@@ -763,7 +781,6 @@ static MozGtkSize GetMinMarginBox(GtkStyleContext* style) {
 }
 
 static void Inset(GdkRectangle* rect, const GtkBorder& aBorder) {
-  MOZ_ASSERT(rect);
   rect->x += aBorder.left;
   rect->y += aBorder.top;
   rect->width -= aBorder.left + aBorder.right;
@@ -772,9 +789,7 @@ static void Inset(GdkRectangle* rect, const GtkBorder& aBorder) {
 
 // Inset a rectangle by the margins specified in a style context.
 static void InsetByMargin(GdkRectangle* rect, GtkStyleContext* style) {
-  MOZ_ASSERT(rect);
   GtkBorder margin;
-
   gtk_style_context_get_margin(style, gtk_style_context_get_state(style),
                                &margin);
   Inset(rect, margin);
@@ -818,6 +833,7 @@ static gint moz_gtk_scrollbar_button_paint(cairo_t* cr,
 
   gtk_style_context_save(style);
   gtk_style_context_add_class(style, GTK_STYLE_CLASS_BUTTON);
+  StyleContextSetScale(style, state->scale);
   gtk_style_context_set_state(style, state_flags);
   if (arrow_angle == ARROW_RIGHT) {
     gtk_style_context_add_class(style, GTK_STYLE_CLASS_RIGHT);
@@ -1163,30 +1179,28 @@ static gint moz_gtk_vpaned_paint(cairo_t* cr, GdkRectangle* rect,
 }
 
 // See gtk_entry_draw() for reference.
-static gint moz_gtk_entry_paint(cairo_t* cr, GdkRectangle* rect,
+static gint moz_gtk_entry_paint(cairo_t* cr, const GdkRectangle* aRect,
                                 GtkWidgetState* state, GtkStyleContext* style,
                                 WidgetNodeType widget) {
-  gint x = rect->x, y = rect->y, width = rect->width, height = rect->height;
-  int draw_focus_outline_only =
-      state->depressed;  // StyleAppearance::FocusOutline
+  // StyleAppearance::FocusOutline
+  int draw_focus_outline_only = state->depressed;
+  GdkRectangle rect = *aRect;
 
   if (draw_focus_outline_only) {
     // Inflate the given 'rect' with the focus outline size.
     gint h, v;
     moz_gtk_get_focus_outline_size(style, &h, &v);
-    rect->x -= h;
-    rect->width += 2 * h;
-    rect->y -= v;
-    rect->height += 2 * v;
-    width = rect->width;
-    height = rect->height;
+    rect.x -= h;
+    rect.width += 2 * h;
+    rect.y -= v;
+    rect.height += 2 * v;
   } else {
-    gtk_render_background(style, cr, x, y, width, height);
+    gtk_render_background(style, cr, rect.x, rect.y, rect.width, rect.height);
   }
 
   // Paint the border, except for 'menulist-textfield' that isn't focused:
   if (widget != MOZ_GTK_DROPDOWN_ENTRY || state->focused) {
-    gtk_render_frame(style, cr, x, y, width, height);
+    gtk_render_frame(style, cr, rect.x, rect.y, rect.width, rect.height);
   }
 
   return MOZ_GTK_SUCCESS;
@@ -1257,11 +1271,12 @@ static gint moz_gtk_treeview_paint(cairo_t* cr, GdkRectangle* rect,
   return MOZ_GTK_SUCCESS;
 }
 
-static gint moz_gtk_tree_header_cell_paint(cairo_t* cr, GdkRectangle* rect,
+static gint moz_gtk_tree_header_cell_paint(cairo_t* cr,
+                                           const GdkRectangle* aRect,
                                            GtkWidgetState* state,
                                            gboolean isSorted,
                                            GtkTextDirection direction) {
-  moz_gtk_button_paint(cr, rect, state, GTK_RELIEF_NORMAL,
+  moz_gtk_button_paint(cr, aRect, state, GTK_RELIEF_NORMAL,
                        GetWidget(MOZ_GTK_TREE_HEADER_CELL), direction);
   return MOZ_GTK_SUCCESS;
 }
@@ -1340,7 +1355,7 @@ static gint moz_gtk_treeview_expander_paint(cairo_t* cr, GdkRectangle* rect,
 
 /* See gtk_separator_draw() for reference.
  */
-static gint moz_gtk_combo_box_paint(cairo_t* cr, GdkRectangle* rect,
+static gint moz_gtk_combo_box_paint(cairo_t* cr, const GdkRectangle* aRect,
                                     GtkWidgetState* state,
                                     GtkTextDirection direction) {
   GdkRectangle arrow_rect, real_arrow_rect;
@@ -1354,13 +1369,14 @@ static gint moz_gtk_combo_box_paint(cairo_t* cr, GdkRectangle* rect,
 
   /* Also sets the direction on gComboBoxButtonWidget, which is then
    * inherited by the separator and arrow */
-  moz_gtk_button_paint(cr, rect, state, GTK_RELIEF_NORMAL, comboBoxButton,
+  moz_gtk_button_paint(cr, aRect, state, GTK_RELIEF_NORMAL, comboBoxButton,
                        direction);
 
-  calculate_button_inner_rect(comboBoxButton, rect, &arrow_rect, direction);
+  calculate_button_inner_rect(comboBoxButton, aRect, &arrow_rect, direction);
   /* Now arrow_rect contains the inner rect ; we want to correct the width
    * to what the arrow needs (see gtk_combo_box_size_allocate) */
   gtk_widget_get_preferred_size(comboBoxArrow, NULL, &arrow_req);
+  moz_gtk_sanity_preferred_size(&arrow_req);
 
   if (direction == GTK_TEXT_DIR_LTR)
     arrow_rect.x += arrow_rect.width - arrow_req.width;
@@ -1376,6 +1392,7 @@ static gint moz_gtk_combo_box_paint(cairo_t* cr, GdkRectangle* rect,
   GtkWidget* widget = GetWidget(MOZ_GTK_COMBOBOX_SEPARATOR);
   if (!widget) return MOZ_GTK_SUCCESS;
   style = gtk_widget_get_style_context(widget);
+  StyleContextSetScale(style, state->scale);
   gtk_style_context_get_style(style, "wide-separators", &wide_separators,
                               "separator-width", &separator_width, NULL);
 
@@ -1458,6 +1475,7 @@ static gint moz_gtk_combo_box_entry_button_paint(cairo_t* cr,
 
   if (state_flags & GTK_STATE_FLAG_ACTIVE) {
     style = gtk_widget_get_style_context(comboBoxEntry);
+    StyleContextSetScale(style, state->scale);
     gtk_style_context_get_style(style, "child-displacement-x", &x_displacement,
                                 "child-displacement-y", &y_displacement, NULL);
     arrow_rect.x += x_displacement;
@@ -1976,10 +1994,7 @@ static gint moz_gtk_menu_bar_paint(cairo_t* cr, GdkRectangle* rect,
   style = gtk_widget_get_style_context(widget);
   gtk_style_context_save(style);
   gtk_style_context_add_class(style, GTK_STYLE_CLASS_MENUBAR);
-
-  if (state->scale != 1) {
-    StyleContextSetScale(style, state->scale);
-  }
+  StyleContextSetScale(style, state->scale);
 
   gtk_render_background(style, cr, rect->x, rect->y, rect->width, rect->height);
   gtk_render_frame(style, cr, rect->x, rect->y, rect->width, rect->height);
@@ -2004,10 +2019,7 @@ static gint moz_gtk_menu_popup_paint(cairo_t* cr, GdkRectangle* rect,
   style = gtk_widget_get_style_context(widget);
   gtk_style_context_save(style);
   gtk_style_context_add_class(style, GTK_STYLE_CLASS_MENU);
-
-  if (state->scale != 1) {
-    StyleContextSetScale(style, state->scale);
-  }
+  StyleContextSetScale(style, state->scale);
 
   gtk_render_background(style, cr, rect->x, rect->y, rect->width, rect->height);
   gtk_render_frame(style, cr, rect->x, rect->y, rect->width, rect->height);
@@ -2151,6 +2163,7 @@ static gint moz_gtk_check_menu_item_paint(WidgetNodeType widgetType,
   bool isRadio = (widgetType == MOZ_GTK_RADIOMENUITEM);
   WidgetNodeType indicatorType = isRadio ? MOZ_GTK_RADIOMENUITEM_INDICATOR
                                          : MOZ_GTK_CHECKMENUITEM_INDICATOR;
+  const ToggleGTKMetrics* metrics = GetToggleMetrics(indicatorType);
   style = GetStyleContext(indicatorType, state->scale, direction, state_flags);
 
   if (direction == GTK_TEXT_DIR_RTL) {
@@ -2160,15 +2173,25 @@ static gint moz_gtk_check_menu_item_paint(WidgetNodeType widgetType,
   }
   y = rect->y + (rect->height - indicator_size) / 2;
 
+  gint indicator_width, indicator_height;
+  indicator_width = indicator_height = indicator_size;
   if (!pre_3_20) {
     gtk_render_background(style, cr, x, y, indicator_size, indicator_size);
     gtk_render_frame(style, cr, x, y, indicator_size, indicator_size);
+    x = x + metrics->borderAndPadding.left;
+    y = y + metrics->borderAndPadding.top;
+    indicator_width = metrics->minSizeWithBorder.width -
+                      metrics->borderAndPadding.left -
+                      metrics->borderAndPadding.right;
+    indicator_height = metrics->minSizeWithBorder.height -
+                       metrics->borderAndPadding.top -
+                       metrics->borderAndPadding.bottom;
   }
 
   if (isRadio) {
-    gtk_render_option(style, cr, x, y, indicator_size, indicator_size);
+    gtk_render_option(style, cr, x, y, indicator_width, indicator_height);
   } else {
-    gtk_render_check(style, cr, x, y, indicator_size, indicator_size);
+    gtk_render_check(style, cr, x, y, indicator_width, indicator_height);
   }
 
   return MOZ_GTK_SUCCESS;
@@ -2201,7 +2224,7 @@ static gint moz_gtk_header_bar_paint(WidgetNodeType widgetType, cairo_t* cr,
   // i.e. when main window is maximized.
   if (widgetType == MOZ_GTK_HEADER_BAR) {
     GtkStyleContext* windowStyle =
-        GetStyleContext(MOZ_GTK_WINDOW, state->scale);
+        GetStyleContext(MOZ_GTK_HEADERBAR_WINDOW, state->scale);
     bool solidDecorations =
         gtk_style_context_has_class(windowStyle, "solid-csd");
     GtkStyleContext* decorationStyle =
@@ -2331,6 +2354,7 @@ gint moz_gtk_get_widget_border(WidgetNodeType widget, gint* left, gint* top,
 
       gtk_widget_get_preferred_size(GetWidget(MOZ_GTK_COMBOBOX_ARROW), NULL,
                                     &arrow_req);
+      moz_gtk_sanity_preferred_size(&arrow_req);
 
       if (direction == GTK_TEXT_DIR_RTL)
         *left += separator_width + arrow_req.width;
@@ -2410,8 +2434,8 @@ gint moz_gtk_get_widget_border(WidgetNodeType widget, gint* left, gint* top,
       style = GetStyleContext(MOZ_GTK_HEADER_BAR);
       moz_gtk_add_border_padding(style, left, top, right, bottom);
       *top = *bottom = 0;
-      bool leftButtonsPlacement;
-      GetGtkHeaderBarButtonLayout(nullptr, 0, &leftButtonsPlacement);
+      bool leftButtonsPlacement = false;
+      GetGtkHeaderBarButtonLayout({}, &leftButtonsPlacement);
       if (direction == GTK_TEXT_DIR_RTL) {
         leftButtonsPlacement = !leftButtonsPlacement;
       }
@@ -2525,6 +2549,8 @@ gint moz_gtk_get_combo_box_entry_button_size(gint* width, gint* height) {
 
   gtk_widget_get_preferred_size(GetWidget(MOZ_GTK_COMBOBOX_ENTRY_BUTTON), NULL,
                                 &requisition);
+  moz_gtk_sanity_preferred_size(&requisition);
+
   *width = requisition.width;
   *height = requisition.height;
 
@@ -2556,6 +2582,8 @@ void moz_gtk_get_arrow_size(WidgetNodeType widgetType, gint* width,
 
   GtkRequisition requisition;
   gtk_widget_get_preferred_size(widget, NULL, &requisition);
+  moz_gtk_sanity_preferred_size(&requisition);
+
   *width = requisition.width;
   *height = requisition.height;
 }
@@ -2611,13 +2639,14 @@ gint moz_gtk_get_menu_separator_height(gint* size) {
   return MOZ_GTK_SUCCESS;
 }
 
-void moz_gtk_get_entry_min_height(gint* height) {
+void moz_gtk_get_entry_min_height(gint* min_content_height,
+                                  gint* border_padding_height) {
   GtkStyleContext* style = GetStyleContext(MOZ_GTK_ENTRY);
   if (!gtk_check_version(3, 20, 0)) {
     gtk_style_context_get(style, gtk_style_context_get_state(style),
-                          "min-height", height, nullptr);
+                          "min-height", min_content_height, nullptr);
   } else {
-    *height = 0;
+    *min_content_height = 0;
   }
 
   GtkBorder border;
@@ -2627,7 +2656,8 @@ void moz_gtk_get_entry_min_height(gint* height) {
   gtk_style_context_get_padding(style, gtk_style_context_get_state(style),
                                 &padding);
 
-  *height += (border.top + border.bottom + padding.top + padding.bottom);
+  *border_padding_height =
+      (border.top + border.bottom + padding.top + padding.bottom);
 }
 
 void moz_gtk_get_scale_metrics(GtkOrientation orient, gint* scale_width,
@@ -2702,23 +2732,30 @@ static MozGtkSize SizeFromLengthAndBreadth(GtkOrientation aOrientation,
              : MozGtkSize({aBreadth, aLength});
 }
 
-const ToggleGTKMetrics* GetToggleMetrics(bool isRadio) {
+const ToggleGTKMetrics* GetToggleMetrics(WidgetNodeType aWidgetType) {
   ToggleGTKMetrics* metrics;
-  if (isRadio) {
-    metrics = &sRadioMetrics;
-  } else {
-    metrics = &sCheckboxMetrics;
+
+  switch (aWidgetType) {
+    case MOZ_GTK_RADIOBUTTON:
+      metrics = &sRadioMetrics;
+      break;
+    case MOZ_GTK_CHECKBUTTON:
+      metrics = &sCheckboxMetrics;
+      break;
+    case MOZ_GTK_RADIOMENUITEM_INDICATOR:
+      metrics = &sMenuRadioMetrics;
+      break;
+    case MOZ_GTK_CHECKMENUITEM_INDICATOR:
+      metrics = &sMenuCheckboxMetrics;
+      break;
+    default:
+      MOZ_CRASH("Unsupported widget type for getting metrics");
+      return nullptr;
   }
-  if (metrics->initialized) return metrics;
 
   metrics->initialized = true;
   if (gtk_check_version(3, 20, 0) == nullptr) {
-    GtkStyleContext* style;
-    if (isRadio) {
-      style = GetStyleContext(MOZ_GTK_RADIOBUTTON);
-    } else {
-      style = GetStyleContext(MOZ_GTK_CHECKBUTTON);
-    }
+    GtkStyleContext* style = GetStyleContext(aWidgetType);
     GtkStateFlags state_flags = gtk_style_context_get_state(style);
     gtk_style_context_get(style, state_flags, "min-height",
                           &(metrics->minSizeWithBorder.height), "min-width",
@@ -2947,35 +2984,37 @@ const ScrollbarGTKMetrics* GetActiveScrollbarMetrics(
  * get_shadow_width() from gtkwindow.c is not public so we need
  * to implement it.
  */
-bool GetCSDDecorationSize(GtkWindow* aGtkWindow, GtkBorder* aDecorationSize) {
+void InitWindowDecorationSize(CSDWindowDecorationSize* sWindowDecorationSize,
+                              bool aPopupWindow) {
+  bool solidDecorations = gtk_style_context_has_class(
+      GetStyleContext(MOZ_GTK_HEADERBAR_WINDOW, 1), "solid-csd");
+  // solid-csd does not use frame extents, quit now.
+  if (solidDecorations) {
+    sWindowDecorationSize->decorationSize = {0, 0, 0, 0};
+    return;
+  }
+
+  // Scale factor is applied later when decoration size is used for actual
+  // gtk windows.
+  GtkStyleContext* context = GetStyleContext(MOZ_GTK_WINDOW_DECORATION);
+
+  /* Always sum border + padding */
+  GtkBorder padding;
+  GtkStateFlags state = gtk_style_context_get_state(context);
+  gtk_style_context_get_border(context, state,
+                               &sWindowDecorationSize->decorationSize);
+  gtk_style_context_get_padding(context, state, &padding);
+  sWindowDecorationSize->decorationSize += padding;
+
   // Available on GTK 3.20+.
   static auto sGtkRenderBackgroundGetClip = (void (*)(
       GtkStyleContext*, gdouble, gdouble, gdouble, gdouble,
       GdkRectangle*))dlsym(RTLD_DEFAULT, "gtk_render_background_get_clip");
 
   if (!sGtkRenderBackgroundGetClip) {
-    *aDecorationSize = {0, 0, 0, 0};
-    return false;
+    return;
   }
 
-  GtkStyleContext* context =
-      gtk_widget_get_style_context(GTK_WIDGET(aGtkWindow));
-  bool solidDecorations = gtk_style_context_has_class(context, "solid-csd");
-  context = GetStyleContext(solidDecorations ? MOZ_GTK_WINDOW_DECORATION_SOLID
-                                             : MOZ_GTK_WINDOW_DECORATION);
-
-  /* Always sum border + padding */
-  GtkBorder padding;
-  GtkStateFlags state = gtk_style_context_get_state(context);
-  gtk_style_context_get_border(context, state, aDecorationSize);
-  gtk_style_context_get_padding(context, state, &padding);
-  *aDecorationSize += padding;
-
-  GtkBorder margin;
-  gtk_style_context_get_margin(context, state, &margin);
-
-  /* Get shadow extents but combine with style margin; use the bigger value.
-   */
   GdkRectangle clip;
   sGtkRenderBackgroundGetClip(context, 0, 0, 0, 0, &clip);
 
@@ -2985,17 +3024,30 @@ bool GetCSDDecorationSize(GtkWindow* aGtkWindow, GtkBorder* aDecorationSize) {
   extents.bottom = clip.height + clip.y;
   extents.left = -clip.x;
 
+  // Get shadow extents but combine with style margin; use the bigger value.
   // Margin is used for resize grip size - it's not present on
   // popup windows.
-  if (gtk_window_get_window_type(aGtkWindow) != GTK_WINDOW_POPUP) {
+  if (!aPopupWindow) {
+    GtkBorder margin;
+    gtk_style_context_get_margin(context, state, &margin);
+
     extents.top = MAX(extents.top, margin.top);
     extents.right = MAX(extents.right, margin.right);
     extents.bottom = MAX(extents.bottom, margin.bottom);
     extents.left = MAX(extents.left, margin.left);
   }
 
-  *aDecorationSize += extents;
-  return true;
+  sWindowDecorationSize->decorationSize += extents;
+}
+
+GtkBorder GetCSDDecorationSize(bool aIsPopup) {
+  auto metrics =
+      aIsPopup ? &sPopupWindowDecorationSize : &sToplevelWindowDecorationSize;
+  if (!metrics->initialized) {
+    InitWindowDecorationSize(metrics, aIsPopup);
+    metrics->initialized = true;
+  }
+  return metrics->decorationSize;
 }
 
 /* cairo_t *cr argument has to be a system-cairo. */

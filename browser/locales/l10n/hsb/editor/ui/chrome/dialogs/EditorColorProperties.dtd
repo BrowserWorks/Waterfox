@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Barby strony a pozadk">
+<!ENTITY pageColors.label "Barby strony">
+<!ENTITY defaultColorsRadio.label "Standardne barby čitarja (Žane barby na stronje njenastajić)">
+<!ENTITY defaultColorsRadio.accessKey "d">
+<!ENTITY defaultColorsRadio.tooltip "Jenož barbowe nastajenja wobhladowaka wobhladowarja (čitarja) wužić">
+<!ENTITY customColorsRadio.label "Swójske barby wužić:">
+<!ENTITY customColorsRadio.accessKey "w">
+<!ENTITY customColorsRadio.tooltip "Tute barbowe nastajenja wobhladowakowe nastajenja wobhladowarja změnja">
+
+<!ENTITY normalText.label "Normalny tekst">
+<!ENTITY normalText.accessKey "N">
+<!ENTITY linkText.label "Tekst wotkaza">
+<!ENTITY linkText.accessKey "k">
+<!ENTITY activeLinkText.label "Tekst aktiwneho wotkaza">
+<!ENTITY activeLinkText.accessKey "a">
+<!ENTITY visitedLinkText.label "Tekst wopytaneho wotkaza">
+<!ENTITY visitedLinkText.accessKey "o">
+<!ENTITY background.label "Pozadk:">
+<!ENTITY background.accessKey "z">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Pozadkowy wobraz:">
+<!ENTITY backgroundImage.accessKey "b">
+<!ENTITY backgroundImage.tooltip "Wobrazowu dataju jako pozadk za wašu stronu wužić">
+<!ENTITY backgroundImage.shortenedDataURI "Skrótšeny datowy URI (kopija placěruje dospołny URI w mjezyskładźe)">

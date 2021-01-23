@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageStorage.label "Storfa Negeseuon">
+<!ENTITY securitySettings.label "Gosodiadau Diogelwch">
+<!ENTITY serverSettings.label "Gosodiadau'r Gweinydd">
+<!ENTITY serverType.label "Math o Weinydd:">
+<!ENTITY serverName.label "Enw'r Gweinydd:">
+<!ENTITY serverName.accesskey "G">
+<!ENTITY userName.label "Enw Defnyddiwr:">
+<!ENTITY userName.accesskey "D">
+<!ENTITY port.label "Porth:">
+<!ENTITY port.accesskey "P">
+<!ENTITY serverPortDefault.label "Rhagosodiad:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammar dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "Gwirio am negeseuon newydd bob ">
+<!ENTITY biffStart.accesskey "w">
+<!ENTITY biffEnd.label "munud">
+<!ENTITY useIdleNotifications.label "Caniatáu hysbysiadau gweinydd di-oed wrth i negeseuon newydd gyrraedd">
+<!ENTITY useIdleNotifications.accesskey "a">
+<!ENTITY connectionSecurity.label "Diogelwch y cysylltiad:">
+<!ENTITY connectionSecurity.accesskey "D">
+<!ENTITY connectionSecurityType-0.label "Dim">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, os ar gael">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "Dull dilysu:">
+<!ENTITY authMethod.accesskey "u">
+<!ENTITY leaveOnServer.label "Gadael negeseuon ar y gweinydd">
+<!ENTITY leaveOnServer.accesskey "a">
+<!ENTITY headersOnly.label "Estyn penynnau'n unig">
+<!ENTITY headersOnly.accesskey "p">
+<!ENTITY deleteByAgeFromServer.label "Ar y mwyaf">
+<!ENTITY deleteByAgeFromServer.accesskey "m">
+<!ENTITY daysEnd.label "diwrnod">
+<!ENTITY deleteOnServer2.label "Nes i mi eu dileu">
+<!ENTITY deleteOnServer2.accesskey "d">
+<!ENTITY downloadOnBiff.label "Llwytho i lawr negeseuon newydd yn awtomatig">
+<!ENTITY downloadOnBiff.accesskey "a">
+<!ENTITY deleteMessagePrefix.label "Pan fyddaf yn dileu neges:">
+<!ENTITY modelMoveToTrash.label "Ei symud i'r ffolder yma:">
+<!ENTITY modelMoveToTrash.accesskey "y">
+<!ENTITY modelMarkDeleted.label "Marcio fel ei fod wedi'i ddileu">
+<!ENTITY modelMarkDeleted.accesskey "M">
+<!ENTITY modelDeleteImmediately.label "Diddymu'n syth">
+<!ENTITY modelDeleteImmediately.accesskey "i">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "Glanhau&apos;r (&quot;Expunge&quot;) Blwch Derbyn wrth Adael">
+<!ENTITY expungeOnExit.accesskey "G">
+<!ENTITY emptyTrashOnExit.label "Gwagio'r Sbwriel wrth Adael">
+<!ENTITY emptyTrashOnExit.accesskey "A">
+<!ENTITY loginAtStartup.label "Gwirio am negeseuon newydd wrth gychwyn">
+<!ENTITY loginAtStartup.accesskey "w">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+    of messages between them
+-->
+<!ENTITY maxMessagesStart.label "Gofyn cyn llwytho i lawr mwy na">
+<!ENTITY maxMessagesStart.accesskey "o">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "neges">
+<!ENTITY alwaysAuthenticate.label "Gofyn bob tro am ddilysiad wrth gysylltu â'r gweinydd hwn">
+<!ENTITY alwaysAuthenticate.accesskey "b">
+<!ENTITY newsrcFilePath1.label "Ffeil News.rc:">
+<!ENTITY newsrcPicker1.label "Dewis Ffeil News.rc">
+<!ENTITY abbreviate.label "Dangos enwau'r grŵp newyddion yn y paen Ffolder E-bost, fel:">
+<!ENTITY abbreviateOn.label "Enwau llawn (e.e, 'netscape.public.mozilla.mail-news')">
+<!ENTITY abbreviateOff.label "Enwau byr (e.e. 'n.p.m.mail-news')">
+<!ENTITY advancedButton.label "Uwch…">
+<!ENTITY advancedButton.accesskey "U">
+<!ENTITY serverDefaultCharset2.label "Amgodiad Testun Rhagosodedig:">
+<!ENTITY localPath1.label "Cyfeiriadur Lleol:">
+<!ENTITY localFolderPicker.label "Dewis Cyfeiriadur Lleol">
+<!ENTITY browseFolder.label "Pori…">
+<!ENTITY browseFolder.accesskey "P">
+<!ENTITY browseNewsrc.label "Pori…">
+<!ENTITY browseNewsrc.accesskey "o">
+
+<!ENTITY accountTitle.label "Gosodiadau Cyfrif">
+<!ENTITY accountSettingsDesc.label "Mae hwn yn gyfrif arbennig.  Nid oes hunaniaethau wedi'u cysylltu ag ef.">
+<!ENTITY storeType.label "Math o Storio Negeseuon:">
+<!ENTITY storeType.accesskey "S">
+<!ENTITY mboxStore2.label "Ffeil i'r ffolder (mbox)">
+<!ENTITY maildirStore.label "Ffeil y neges (maildir)">

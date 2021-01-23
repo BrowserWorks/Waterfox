@@ -1,0 +1,114 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "Saaja">
+<!ENTITY fromField4.label "Saatja">
+<!ENTITY senderField4.label "Saatja">
+<!ENTITY author.label "Autor">
+<!ENTITY organizationField4.label "Organisatsioon">
+<!ENTITY replyToField4.label "Vastamise aadress">
+
+<!ENTITY subjectField4.label "Teema">
+<!ENTITY ccField4.label "Koopia">
+<!ENTITY bccField4.label "Pimekoopia">
+<!ENTITY newsgroupsField4.label "Uudistegrupid">
+<!ENTITY followupToField4.label "Järg postitusele">
+<!ENTITY tagsHdr4.label "Sildid">
+<!ENTITY dateField4.label "Kuupäev">
+<!ENTITY userAgentField4.label "E-posti klient">
+<!ENTITY referencesField4.label "Viited">
+<!ENTITY messageIdField4.label "Kirja-ID">
+<!ENTITY inReplyToField4.label "Vastus-kirjale">
+<!ENTITY originalWebsite4.label "Veebileht">
+
+<!ENTITY hdrArchiveButton1.label "Arhiveeri">
+<!ENTITY hdrArchiveButton1.tooltip "Arhiveeri see kiri">
+<!ENTITY hdrSmartReplyButton1.label "Tark vastamine">
+<!ENTITY hdrReplyButton1.label "Vasta">
+<!ENTITY hdrReplyButton2.tooltip "Vasta selle kirja saatjale">
+<!ENTITY hdrReplyAllButton1.label "Vasta kõigile">
+<!ENTITY hdrReplyAllButton1.tooltip "Vasta saatjale ja kõigile saajatele">
+<!ENTITY hdrReplyListButton1.label "Vasta listile">
+<!ENTITY hdrReplyListButton1.tooltip "Vasta meililistile">
+<!ENTITY hdrFollowupButton1.label "Vasta uudistegruppi">
+<!ENTITY hdrFollowupButton1.tooltip "Postita vastus sellesse uudistegruppi">
+<!ENTITY hdrForwardButton1.label "Edasta">
+<!ENTITY hdrForwardButton1.tooltip "Edasta see kiri">
+<!ENTITY hdrJunkButton1.label "Märgi rämpsuks">
+<!ENTITY hdrJunkButton1.tooltip "Märgi see kiri rämpspostiks">
+<!ENTITY hdrTrashButton1.label "Kustuta">
+<!ENTITY hdrTrashButton1.tooltip "Kustuta see kiri">
+
+<!ENTITY hdrViewToolbarShowFull.label "Kuvatakse ikoone ja teksti">
+<!ENTITY hdrViewToolbarShowFull.accesskey "K">
+<!ENTITY hdrViewToolbarShowIcons.label "Kuvatakse ainult ikoone">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "u">
+<!ENTITY hdrViewToolbarShowText.label "Kuvatakse ainult teksti">
+<!ENTITY hdrViewToolbarShowText.accesskey "v">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "Alati kuvatakse saatjale vastamise nuppu">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "A">
+
+<!ENTITY otherActionsButton2.label "Muud tegevused">
+<!ENTITY otherActionsButton.tooltip "Kuva rohkem tegevusi">
+<!ENTITY otherActionsOpenConversation1.label "Ava vestlusena">
+<!ENTITY otherActionsOpenConversation1.accesskey "s">
+<!ENTITY otherActionsOpenInNewWindow1.label "Ava uues aknas">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "v">
+<!ENTITY otherActionsOpenInNewTab1.label "Ava uuel kaardil">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "u">
+<!ENTITY markAsReadMenuItem1.label "Märgi loetuks">
+<!ENTITY markAsReadMenuItem1.accesskey "M">
+<!ENTITY markAsUnreadMenuItem1.label "Märgi mitteloetuks">
+<!ENTITY markAsUnreadMenuItem1.accesskey "g">
+<!ENTITY saveAsMenuItem1.label "Salvesta kui...">
+<!ENTITY saveAsMenuItem1.accesskey "S">
+<!ENTITY viewSourceMenuItem1.label "Vaata lähtekoodi...">
+<!ENTITY viewSourceMenuItem1.accesskey "V">
+<!ENTITY otherActionsPrint1.label "Prindi…">
+<!ENTITY otherActionsPrint1.accesskey "P">
+
+<!-- Attachment bar context menu items -->
+<!ENTITY startExpandedCmd.label    "Kirja avamisel kuvatakse manused kohe">
+<!ENTITY startExpandedCmd.accesskey    "i">
+
+<!-- Attachment context menu items -->
+<!ENTITY openAttachmentCmd.label    "Ava">
+<!ENTITY openAttachmentCmd.accesskey    "A">
+<!ENTITY saveAsAttachmentCmd.label    "Salvesta kui...">
+<!ENTITY saveAsAttachmentCmd.accesskey    "k">
+<!ENTITY detachAttachmentCmd.label    "Eemalda...">
+<!ENTITY detachAttachmentCmd.accesskey    "m">
+<!ENTITY deleteAttachmentCmd.label    "Kustuta">
+<!ENTITY deleteAttachmentCmd.accesskey    "s">
+<!ENTITY openAllAttachmentsCmd.label    "Ava kõik…">
+<!ENTITY openAllAttachmentsCmd.accesskey    "v">
+<!ENTITY saveAllAttachmentsCmd.label    "Salvesta kõik...">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "l">
+<!ENTITY detachAllAttachmentsCmd.label    "Eemalda kõik...">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "E">
+<!ENTITY deleteAllAttachmentsCmd.label    "Kustuta kõik...">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "U">
+
+<!ENTITY openAttachment.tooltip "Ava kaasatud fail">
+
+<!ENTITY detachedAttachmentFolder.show.label        "Ava faili sisaldav kaust">
+<!ENTITY detachedAttachmentFolder.show.accesskey    "f">
+<!ENTITY detachedAttachmentFolder.showMac.label     "Näita Finderis">
+<!ENTITY detachedAttachmentFolder.showMac.accesskey "F">
+
+<!-- Attachment toolbar items -->
+<!ENTITY saveAttachmentButton1.label       "Salvesta">
+<!ENTITY saveAttachmentButton1.tooltip     "Salvesta lisatud fail">
+<!ENTITY saveAllAttachmentsButton1.label   "Salvesta kõik">
+<!ENTITY saveAllAttachmentsButton1.tooltip "Salvesta kõik lisatud failid">
+
+<!ENTITY copyLinkCmd.label        "Kopeeri lingi asukoht">
+<!ENTITY copyLinkCmd.accesskey    "g">
+
+<!ENTITY CopyMessageId.label "Kopeeri kirja ID">
+<!ENTITY CopyMessageId.accesskey "K">
+<!ENTITY OpenMessageForMsgId.label "Ava kiri ID-ga">
+<!ENTITY OpenMessageForMsgId.accesskey "A">
+<!ENTITY OpenBrowserWithMsgId.label "Ava brauser kirja ID-ga">
+<!ENTITY OpenBrowserWithMsgId.accesskey "v">

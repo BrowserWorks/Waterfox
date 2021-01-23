@@ -11,7 +11,6 @@ interface nsIX509Cert;
 interface nsIFile;
 interface nsIInterfaceRequestor;
 interface nsIZipReader;
-interface nsIX509CertList;
 interface nsIInputStream;
 
 %{C++
@@ -40,7 +39,7 @@ interface nsIOpenSignedAppFileCallback : nsISupports
 [scriptable, function, uuid(49e16fc8-efac-4f57-8361-956ef6b960a4)]
 interface nsICertVerificationCallback : nsISupports {
   void verifyCertFinished(in int32_t aPRErrorCode,
-                          in nsIX509CertList aVerifiedChain,
+                          in Array<nsIX509Cert> aVerifiedChain,
                           in bool aHasEVPolicy);
 };
 
@@ -203,8 +202,7 @@ interface nsIX509CertDB : nsISupports {
    */
   [must_use]
   uint32_t exportPKCS12File(in nsIFile aFile,
-                            in unsigned long count,
-                            [array, size_is(count)] in nsIX509Cert aCerts,
+                            in Array<nsIX509Cert> aCerts,
                             in AString aPassword);
 
   /*
@@ -225,7 +223,7 @@ interface nsIX509CertDB : nsISupports {
    *  @return The new certificate object.
    */
   [must_use]
-  nsIX509Cert constructX509(in ACString certDER);
+  nsIX509Cert constructX509(in Array<uint8_t> certDER);
 
   /**
    *  Verifies the signature on the given JAR file to verify that it has a
@@ -251,15 +249,6 @@ interface nsIX509CertDB : nsISupports {
   const AppTrustedRoot AppXPCShellRoot = 6;
   const AppTrustedRoot AddonsPublicRoot = 7;
   const AppTrustedRoot AddonsStageRoot = 8;
-  const AppTrustedRoot PrivilegedPackageRoot = 9;
-  /*
-   * If DeveloperImportedRoot is set as trusted root, a CA from local file
-   * system will be imported. Only used when preference
-   * "network.http.packaged-apps-developer-mode" is set.
-   * The path of the CA is specified by preference
-   * "network.http.packaged-apps-developer-trusted-root".
-   */
-  const AppTrustedRoot DeveloperImportedRoot = 10;
   [must_use]
   void openSignedAppFileAsync(in AppTrustedRoot trustedRoot,
                               in nsIFile aJarFile,
@@ -337,5 +326,13 @@ interface nsIX509CertDB : nsISupports {
    * Get all the known certs in the database
    */
   [must_use]
-  nsIX509CertList getCerts();
+  Array<nsIX509Cert> getCerts();
+
+  /**
+   * Encode the list of certificates as a PKCS#7 SignedData structure. No data
+   * is actually signed - this is merely a way of exporting a collection of
+   * certificates.
+   */
+  [must_use]
+  ACString asPKCS7Blob(in Array<nsIX509Cert> certList);
 };

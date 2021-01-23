@@ -9,10 +9,18 @@
 ChromeUtils.import("resource://gre/modules/Integration.jsm", this);
 ChromeUtils.import("resource:///modules/PermissionUI.jsm", this);
 ChromeUtils.import("resource:///modules/SitePermissions.jsm", this);
+const { PermissionTestUtils } = ChromeUtils.import(
+  "resource://testing-common/PermissionTestUtils.jsm"
+);
 
 // Tests that GeolocationPermissionPrompt works as expected
 add_task(async function test_geo_permission_prompt() {
   await testPrompt(PermissionUI.GeolocationPermissionPrompt);
+});
+
+// Tests that XRPermissionPrompt works as expected
+add_task(async function test_xr_permission_prompt() {
+  await testPrompt(PermissionUI.XRPermissionPrompt);
 });
 
 // Tests that DesktopNotificationPermissionPrompt works as expected
@@ -21,8 +29,15 @@ add_task(async function test_desktop_notification_permission_prompt() {
     "dom.webnotifications.requireuserinteraction",
     false
   );
+  Services.prefs.setBoolPref(
+    "permissions.desktop-notification.notNow.enabled",
+    true
+  );
   await testPrompt(PermissionUI.DesktopNotificationPermissionPrompt);
   Services.prefs.clearUserPref("dom.webnotifications.requireuserinteraction");
+  Services.prefs.clearUserPref(
+    "permissions.desktop-notification.notNow.enabled"
+  );
 });
 
 // Tests that PersistentStoragePermissionPrompt works as expected
@@ -57,7 +72,7 @@ async function testPrompt(Prompt) {
 
       registerCleanupFunction(function() {
         if (permissionKey) {
-          SitePermissions.remove(principal.URI, permissionKey);
+          PermissionTestUtils.remove(principal.URI, permissionKey);
         }
       });
 
@@ -75,7 +90,11 @@ async function testPrompt(Prompt) {
 
       let curPerm;
       if (permissionKey) {
-        curPerm = SitePermissions.get(principal.URI, permissionKey, browser);
+        curPerm = SitePermissions.getForPrincipal(
+          principal,
+          permissionKey,
+          browser
+        );
         Assert.equal(
           curPerm.state,
           SitePermissions.UNKNOWN,
@@ -91,15 +110,9 @@ async function testPrompt(Prompt) {
         Prompt == PermissionUI.DesktopNotificationPermissionPrompt;
       let isPersistentStoragePrompt =
         Prompt == PermissionUI.PersistentStoragePermissionPrompt;
-      let isStorageAccessPrompt =
-        Prompt == PermissionUI.StorageAccessPermissionPrompt;
 
       let expectedSecondaryActionsCount =
-        isNotificationPrompt ||
-        isPersistentStoragePrompt ||
-        isStorageAccessPrompt
-          ? 2
-          : 1;
+        isNotificationPrompt || isPersistentStoragePrompt ? 2 : 1;
       Assert.equal(
         notification.secondaryActions.length,
         expectedSecondaryActionsCount,
@@ -109,7 +122,11 @@ async function testPrompt(Prompt) {
       );
       await clickSecondaryAction();
       if (permissionKey) {
-        curPerm = SitePermissions.get(principal.URI, permissionKey, browser);
+        curPerm = SitePermissions.getForPrincipal(
+          principal,
+          permissionKey,
+          browser
+        );
         Assert.deepEqual(
           curPerm,
           {
@@ -128,7 +145,7 @@ async function testPrompt(Prompt) {
           "The request should not have been allowed"
         );
 
-        SitePermissions.remove(principal.URI, permissionKey, browser);
+        SitePermissions.removeFromPrincipal(principal, permissionKey, browser);
         mockRequest._cancelled = false;
       }
 
@@ -159,15 +176,16 @@ async function testPrompt(Prompt) {
       );
       await clickSecondaryAction(secondaryActionToClickIndex);
       if (permissionKey) {
-        curPerm = SitePermissions.get(principal.URI, permissionKey);
-        Assert.deepEqual(
-          curPerm,
-          {
-            state: SitePermissions.BLOCK,
-            scope: SitePermissions.SCOPE_PERSISTENT,
-          },
-          "Should have denied the action permanently"
+        curPerm = PermissionTestUtils.getPermissionObject(
+          principal.URI,
+          permissionKey
         );
+        Assert.equal(
+          curPerm.capability,
+          Services.perms.DENY_ACTION,
+          "Should have denied the action"
+        );
+        Assert.equal(curPerm.expireTime, 0, "Deny should be permanent");
         Assert.ok(
           mockRequest._cancelled,
           "The request should have been cancelled"
@@ -179,7 +197,7 @@ async function testPrompt(Prompt) {
       }
 
       if (permissionKey) {
-        SitePermissions.remove(principal.URI, permissionKey);
+        PermissionTestUtils.remove(principal.URI, permissionKey);
         mockRequest._cancelled = false;
       }
 
@@ -197,15 +215,16 @@ async function testPrompt(Prompt) {
 
       await clickMainAction();
       if (permissionKey) {
-        curPerm = SitePermissions.get(principal.URI, permissionKey);
-        Assert.deepEqual(
-          curPerm,
-          {
-            state: SitePermissions.ALLOW,
-            scope: SitePermissions.SCOPE_PERSISTENT,
-          },
-          "Should have allowed the action permanently"
+        curPerm = PermissionTestUtils.getPermissionObject(
+          principal.URI,
+          permissionKey
         );
+        Assert.equal(
+          curPerm.capability,
+          Services.perms.ALLOW_ACTION,
+          "Should have allowed the action"
+        );
+        Assert.equal(curPerm.expireTime, 0, "Allow should be permanent");
         Assert.ok(
           !mockRequest._cancelled,
           "The request should not have been cancelled"

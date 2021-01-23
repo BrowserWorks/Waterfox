@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Liv">
+<!ENTITY lastPickedColor.label "Liv diuzet da ziwezhañ">
+<!ENTITY lastPickedColor.accessKey "L">
+<!ENTITY chooseColor1.label "Dibabit ul liv:">
+<!ENTITY chooseColor2.label "Enankit ur chadenn liv HTML">
+<!ENTITY chooseColor2.accessKey "H">
+<!ENTITY setColorExample.label "(d.sk.: &quot;#0000ff&quot; pe &quot;blue&quot;):">
+<!ENTITY default.label "Dre ziouer">
+<!ENTITY default.accessKey "D">
+<!ENTITY palette.label "Liviaoueg">
+<!ENTITY standardPalette.label "Skoueriek">
+<!ENTITY webPalette.label "An holl livioù internet">
+<!ENTITY background.label "Drekleur evit :">
+<!ENTITY background.accessKey "D">
+<!ENTITY table.label "Taolenn">
+<!ENTITY table.accessKey "T">
+<!ENTITY cell.label "Kellig(où)">
+<!ENTITY cell.accessKey "K">

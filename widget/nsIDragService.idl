@@ -20,12 +20,14 @@ namespace mozilla {
 namespace dom {
 class ContentParent;
 class DataTransfer;
+class RemoteDragStartData;
 } // namespace dom
 } // namespace mozilla
 %}
 
 [ptr] native ContentParentPtr(mozilla::dom::ContentParent);
 [ptr] native DataTransferPtr(mozilla::dom::DataTransfer);
+[ptr] native RemoteDragStartDataPtr(mozilla::dom::RemoteDragStartData);
 native EventMessage(mozilla::EventMessage);
 
 [scriptable, uuid(ebd6b3a2-af16-43af-a698-3091a087dd62), builtinclass]
@@ -44,6 +46,7 @@ interface nsIDragService : nsISupports
     *
     * @param  aPrincipal - the triggering principal of the drag, or null if
     *                      it's from browser chrome or OS
+    * @param aCsp - The csp of the triggering Document
     * @param  aTransferables - an array of transferables to be dragged
     * @param  aActionType - specified which of copy/move/link are allowed
     * @param  aContentPolicyType - the contentPolicyType that will be
@@ -53,6 +56,7 @@ interface nsIDragService : nsISupports
   [can_run_script]
   void invokeDragSession (in Node aDOMNode,
                           in nsIPrincipal aPrincipal,
+                          in nsIContentSecurityPolicy aCsp,
                           in nsIArray aTransferables,
                           in unsigned long aActionType,
                           [optional] in nsContentPolicyType aContentPolicyType);
@@ -87,6 +91,7 @@ interface nsIDragService : nsISupports
   [noscript, can_run_script]
   void invokeDragSessionWithImage(in Node aDOMNode,
                                   in nsIPrincipal aPrincipal,
+                                  in nsIContentSecurityPolicy aCsp,
                                   in nsIArray aTransferableArray,
                                   in unsigned long aActionType,
                                   in Node aImage,
@@ -94,6 +99,19 @@ interface nsIDragService : nsISupports
                                   in long aImageY,
                                   in DragEvent aDragEvent,
                                   in DataTransferPtr aDataTransfer);
+
+  /** Start a drag session with the data in aDragStartData from a child process.
+   *  Other arguments are the same as invokeDragSessionWithImage.
+   */
+  [noscript, can_run_script]
+  void invokeDragSessionWithRemoteImage(in Node aDOMNode,
+                                        in nsIPrincipal aPrincipal,
+                                        in nsIContentSecurityPolicy aCsp,
+                                        in nsIArray aTransferableArray,
+                                        in unsigned long aActionType,
+                                        in RemoteDragStartDataPtr aDragStartData,
+                                        in DragEvent aDragEvent,
+                                        in DataTransferPtr aDataTransfer);
 
   /**
    * Start a modal drag session using the selection as the drag image.
@@ -105,6 +123,7 @@ interface nsIDragService : nsISupports
   [can_run_script]
   void invokeDragSessionWithSelection(in Selection aSelection,
                                       in nsIPrincipal aPrincipal,
+                                      in nsIContentSecurityPolicy aCsp,
                                       in nsIArray aTransferableArray,
                                       in unsigned long aActionType,
                                       in DragEvent aDragEvent,
@@ -119,7 +138,20 @@ interface nsIDragService : nsISupports
     * Tells the Drag Service to start a drag session. This is called when
     * an external drag occurs
     */
-  void startDragSession ( ) ;
+  void startDragSession() ;
+
+  /**
+   * Similar to startDragSession(), automated tests may want to start
+   * session for emulating an external drag.  At that time, this should
+   * be used instead of startDragSession().
+   *
+   * @param aAllowedEffect Set default drag action which means allowed effects
+   *                       in the session and every DnD events are initialized
+   *                       with one of specified value.  So, the value can be
+   *                       DRAGDROP_ACTION_NONE, or one or more values of
+   *                       DRAGDROP_ACTION_(MOVE|COPY|LINK).
+   */
+  void startDragSessionForTests(in unsigned long aAllowedEffect);
 
   /**
     * Tells the Drag Service to end a drag session. This is called when
@@ -153,6 +185,7 @@ interface nsIDragService : nsISupports
   [noscript] void dragMoved(in long aX, in long aY);
 
   [notxpcom, nostdcall] boolean maybeAddChildProcess(in ContentParentPtr aChild);
+  [notxpcom, nostdcall] boolean removeAllChildProcesses();
 };
 
 

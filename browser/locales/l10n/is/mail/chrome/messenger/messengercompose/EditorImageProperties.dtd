@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Mynd eiginleikar">
+
+<!ENTITY pixelsPopup.value "punktar">
+
+<!-- These are in the Location tab panel -->
+<!ENTITY locationEditField.label "Staðsetning myndar:">
+<!ENTITY locationEditField.accessKey "m">
+<!ENTITY locationEditField.tooltip "Sláðu inn skráarnafn á mynd eða staðsetningu">
+<!ENTITY locationEditField.shortenedDataURI "Minnkað gagna URI (afritun setur fulla slóð á klemmuspjald)">
+<!ENTITY title.label "Ábending:">
+<!ENTITY title.accessKey "b">
+<!ENTITY title.tooltip "Html 'title' eigindið sem birtist sem ábending">
+<!ENTITY altText.label "Aukatexti:">
+<!ENTITY altText.accessKey "A">
+<!ENTITY altTextEditField.tooltip "Sláðu inn texta til að sýna í staðinn fyrir mynd">
+<!ENTITY noAltText.label "Ekki nota auka texta">
+<!ENTITY noAltText.accessKey "k">
+
+<!ENTITY previewBox.label "Forskoðun myndar">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+<!ENTITY actualSize.label "Raunstærð:">
+<!ENTITY actualSizeRadio.label "Raunstærð">
+<!ENTITY actualSizeRadio.accessKey "a">
+<!ENTITY actualSizeRadio.tooltip "Endurheimta raunstærð myndar">
+<!ENTITY customSizeRadio.label "Sérsniðin stærð">
+<!ENTITY customSizeRadio.accessKey "S">
+<!ENTITY customSizeRadio.tooltip "Breyta stærð myndar eins og sést á síðunni">
+<!ENTITY heightEditField.label "Hæð:">
+<!ENTITY heightEditField.accessKey "H">
+<!ENTITY widthEditField.label "Breidd:">
+<!ENTITY widthEditField.accessKey "B">
+<!ENTITY constrainCheckbox.label "Skorður">
+<!ENTITY constrainCheckbox.accessKey "k">
+<!ENTITY constrainCheckbox.tooltip "Læsa hlutföllum á mynd">
+
+<!-- These controls are in the Image Map box of the expanded area -->
+<!ENTITY imagemapBox.label "Myndvörpun">
+<!ENTITY removeImageMapButton.label "Fjarlægja">
+<!ENTITY removeImageMapButton.accessKey "r">
+
+<!-- These are the options for image alignment -->
+<!ENTITY alignment.label "Jafna texta við mynd">
+<!ENTITY bottomPopup.value "Neðst">
+<!ENTITY topPopup.value "Efst">
+<!ENTITY centerPopup.value "Í miðju">
+<!ENTITY wrapRightPopup.value "Orðskipta til hægri">
+<!ENTITY wrapLeftPopup.value "Orðskipta til vinstri">
+
+<!-- These controls are in the Spacing Box -->
+<!ENTITY spacingBox.label "Millibil">
+<!ENTITY leftRightEditField.label "Vinstri og hægri:">
+<!ENTITY leftRightEditField.accessKey "V">
+<!ENTITY topBottomEditField.label "Efst og neðst:">
+<!ENTITY topBottomEditField.accessKey "t">
+<!ENTITY borderEditField.label "Óbrotin rammi:">
+<!ENTITY borderEditField.accessKey "b">
+
+<!-- These controls are in the Link Box -->
+<!ENTITY showImageLinkBorder.label "Sýna ramma í kringum tengda mynd">
+<!ENTITY showImageLinkBorder.accessKey "S">
+<!ENTITY LinkAdvancedEditButton.label "Breyta tengli (ítarlegt)…">
+<!ENTITY LinkAdvancedEditButton.accessKey "l">
+<!ENTITY LinkAdvancedEditButton.tooltip "Bæta við eða breyta HTML eigindum, snið eigindum, og JavaScript">
+
+<!-- These tabs are currently used in the image input dialog -->
+<!ENTITY imageInputTab.label "Eyðublað">
+<!ENTITY imageLocationTab.label "Staðsetning">
+<!ENTITY imageDimensionsTab.label "Stærðir">
+<!ENTITY imageAppearanceTab.label "Viðmót">
+<!ENTITY imageLinkTab.label "Tengill">

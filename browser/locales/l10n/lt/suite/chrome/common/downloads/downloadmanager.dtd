@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY downloadManager.title           "Atsiuntimų tvarkytuvė">
+
+<!ENTITY menuBar.tooltip                 "Meniu juosta">
+<!ENTITY searchBar.tooltip               "Paieškos laukas">
+
+<!ENTITY search.placeholder              "Ieškoti atsiuntimo">
+<!ENTITY search.label                    "Atsiuntimo paieška">
+<!ENTITY search.accesskey                "p">
+<!ENTITY search.key                      "f">
+
+<!ENTITY cmd.clearList.label             "Išvalyti sąrašą">
+<!ENTITY cmd.clearList.tooltip           "Iš sąrašo pašalinami užbaigtų, atsisakytų ir nepavykusių atsiuntimų aprašai">
+<!ENTITY cmd.clearList.accesskey         "v">
+
+<!ENTITY col.name.label                  "Vardas">
+<!ENTITY col.name.accesskey              "V">
+<!ENTITY col.name.tooltip                "Failo vardas">
+<!ENTITY col.status.label                "Būsena">
+<!ENTITY col.status.accesskey            "B">
+<!ENTITY col.status.tooltip              "Būsena">
+<!ENTITY col.actionPlay.label            "Pristabdyti/Tęsti/Iš naujo">
+<!ENTITY col.actionPlay.accesskey        "s">
+<!ENTITY col.actionPlay.tooltip          "Pristabdyti/Tęsti/Iš naujo">
+<!ENTITY col.actionStop.label            "Atsisakyti/Pašalinti">
+<!ENTITY col.actionStop.accesskey        "š">
+<!ENTITY col.actionStop.tooltip          "Atsisakyti/Pašalinti">
+<!ENTITY col.progress.label              "Eiga">
+<!ENTITY col.progress.accesskey          "E">
+<!ENTITY col.progress.tooltip            "Eiga">
+<!ENTITY col.timeremaining.label         "Liko">
+<!ENTITY col.timeremaining.accesskey     "L">
+<!ENTITY col.timeremaining.tooltip       "Likęs laikas">
+<!ENTITY col.transferred.label           "Atsiųsta">
+<!ENTITY col.transferred.accesskey       "A">
+<!ENTITY col.transferred.tooltip         "Atsiųsta">
+<!ENTITY col.transferrate.label          "Sparta">
+<!ENTITY col.transferrate.accesskey      "t">
+<!ENTITY col.transferrate.tooltip        "Sparta">
+<!ENTITY col.timeelapsed.label           "Trukmė">
+<!ENTITY col.timeelapsed.accesskey       "ė">
+<!ENTITY col.timeelapsed.tooltip         "Sugaištas laikas">
+<!ENTITY col.starttime.label             "Pradžia">
+<!ENTITY col.starttime.accesskey         "P">
+<!ENTITY col.starttime.tooltip           "Pradžios laikas">
+<!ENTITY col.endtime.label               "Pabaiga">
+<!ENTITY col.endtime.accesskey           "i">
+<!ENTITY col.endtime.tooltip             "Pabaigos laikas">
+<!ENTITY col.progresstext.label          "&#037;">
+<!ENTITY col.progresstext.accesskey      "&#037;">
+<!ENTITY col.progresstext.tooltip        "Eiga (&#037;)">
+<!ENTITY col.source.label                "Šaltinis">
+<!ENTITY col.source.accesskey            "n">
+<!ENTITY col.source.tooltip              "Šaltinis">
+
+<!ENTITY view.columns.label              "Rodomi stulpeliai">
+<!ENTITY view.columns.accesskey          "o">
+<!ENTITY view.sortBy.label               "Rikiuoti pagal">
+<!ENTITY view.sortBy.accesskey           "R">
+
+<!ENTITY view.unsorted.label             "Nerikiuoti">
+<!ENTITY view.unsorted.accesskey         "N">
+<!ENTITY view.sortAscending.label        "Pagal abėcėlę">
+<!ENTITY view.sortAscending.accesskey    "a">
+<!ENTITY view.sortDescending.label       "Prieš abėcėlę">
+<!ENTITY view.sortDescending.accesskey   "r">
+
+<!ENTITY cmd.pause.label                 "Pristabdyti">
+<!ENTITY cmd.pause.accesskey             "t">
+<!ENTITY cmd.resume.label                "Tęsti">
+<!ENTITY cmd.resume.accesskey            "T">
+<!ENTITY cmd.retry.label                 "Iš naujo">
+<!ENTITY cmd.retry.accesskey             "n">
+<!ENTITY cmd.cancel.label                "Atsisakyti">
+<!ENTITY cmd.cancel.accesskey            "A">
+<!ENTITY cmd.remove.label                "Pašalinti iš sąrašo">
+<!ENTITY cmd.remove.accesskey            "š">
+<!ENTITY cmd.open.label                  "Atverti">
+<!ENTITY cmd.open.accesskey              "A">
+<!ENTITY cmd.show.label                  "Atverti aplanką">
+<!ENTITY cmd.show.accesskey              "v">
+<!ENTITY cmd.goToDownloadPage.label      "Eiti į atsisiuntimo tinklalapį">
+<!ENTITY cmd.goToDownloadPage.accesskey  "E">
+<!ENTITY cmd.copyDownloadLink.label      "Kopijuoti šaltinio adresą">
+<!ENTITY cmd.copyDownloadLink.accesskey  "K">
+<!ENTITY cmd.properties.label            "Savybės…">
+<!ENTITY cmd.properties.accesskey        "S">

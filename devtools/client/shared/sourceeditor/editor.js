@@ -1,6 +1,4 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2; fill-column: 80 -*- */
-/* vim:set ts=2 sw=2 sts=2 et tw=80:
- * This Source Code Form is subject to the terms of the Mozilla Public
+/* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -17,6 +15,7 @@ const ENABLE_CODE_FOLDING = "devtools.editor.enableCodeFolding";
 const KEYMAP_PREF = "devtools.editor.keymap";
 const AUTO_CLOSE = "devtools.editor.autoclosebrackets";
 const AUTOCOMPLETE = "devtools.editor.autocomplete";
+const CARET_BLINK_TIME = "ui.caretBlinkTime";
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
 const VALID_KEYMAPS = new Map([
@@ -38,9 +37,6 @@ const VALID_KEYMAPS = new Map([
 // while shifting to a line which was initially out of view.
 const MAX_VERTICAL_OFFSET = 3;
 
-// Match @Scratchpad/N:LINE[:COLUMN] or (LINE[:COLUMN]) anywhere at an end of
-// line in text selection.
-const RE_SCRATCHPAD_ERROR = /(?:@Scratchpad\/\d+:|\()(\d+):?(\d+)?(?:\)|\n)/;
 const RE_JUMP_TO_LINE = /^(\d+):?(\d+)?/;
 const AUTOCOMPLETE_MARK_CLASSNAME = "cm-auto-complete-shadow-text";
 
@@ -154,10 +150,13 @@ function Editor(config) {
     themeSwitching: true,
     autocomplete: false,
     autocompleteOpts: {},
-    // Expect a CssProperties object (see devtools/shared/fronts/css-properties.js)
+    // Expect a CssProperties object (see devtools/client/fronts/css-properties.js)
     cssProperties: null,
     // Set to true to prevent the search addon to be activated.
     disableSearchAddon: false,
+    maxHighlightLength: 1000,
+    // Disable codeMirror setTimeout-based cursor blinking (will be replaced by a CSS animation)
+    cursorBlinkRate: 0,
   };
 
   // Additional shortcuts.
@@ -213,7 +212,7 @@ function Editor(config) {
   // indenting with tabs, insert one tab. Otherwise insert N
   // whitespaces where N == indentUnit option.
   this.config.extraKeys.Tab = cm => {
-    if (config.extraKeys && config.extraKeys.Tab) {
+    if (config.extraKeys?.Tab) {
       // If a consumer registers its own extraKeys.Tab, we execute it before doing
       // anything else. If it returns false, that mean that all the key handling work is
       // done, so we can do an early return.
@@ -260,7 +259,7 @@ Editor.prototype = {
    */
   get CodeMirror() {
     const codeMirror = editors.get(this);
-    return codeMirror && codeMirror.constructor;
+    return codeMirror?.constructor;
   },
 
   /**
@@ -428,7 +427,7 @@ Editor.prototype = {
       "scroll",
     ];
     for (const eventName of pipedEvents) {
-      cm.on(eventName, () => this.emit(eventName));
+      cm.on(eventName, (...args) => this.emit(eventName, ...args));
     }
 
     cm.on("change", () => {
@@ -464,6 +463,23 @@ Editor.prototype = {
         replaceAll: null,
       });
     }
+
+    // Retrieve the cursor blink rate from user preference, or fall back to CodeMirror's
+    // default value.
+    let cursorBlinkingRate = win.CodeMirror.defaults.cursorBlinkRate;
+    if (Services.prefs.prefHasUserValue(CARET_BLINK_TIME)) {
+      cursorBlinkingRate = Services.prefs.getIntPref(
+        CARET_BLINK_TIME,
+        cursorBlinkingRate
+      );
+    }
+    // This will be used in the animation-duration property we set on the cursor to
+    // implement the blinking animation. If cursorBlinkingRate is 0 or less, the cursor
+    // won't blink.
+    cm.getWrapperElement().style.setProperty(
+      "--caret-blink-time",
+      `${Math.max(0, cursorBlinkingRate)}ms`
+    );
 
     editors.set(this, cm);
 
@@ -550,7 +566,7 @@ Editor.prototype = {
 
   /**
    * The source editor can expose several commands linked from system and context menus.
-   * Kept for backward compatibility with scratchpad and styleeditor.
+   * Kept for backward compatibility with styleeditor.
    */
   insertCommandsController: function() {
     const {
@@ -1096,20 +1112,6 @@ Editor.prototype = {
     div.appendChild(txt);
     div.appendChild(inp);
 
-    if (!this.hasMultipleSelections()) {
-      const cm = editors.get(this);
-      const sel = cm.getSelection();
-      // Scratchpad inserts and selects a comment after an error happens:
-      // "@Scratchpad/1:10:2". Parse this to get the line and column.
-      // In the string above this is line 10, column 2.
-      const match = sel.match(RE_SCRATCHPAD_ERROR);
-      if (match) {
-        const [, line, column] = match;
-        inp.value = column ? line + ":" + column : line;
-        inp.selectionStart = inp.selectionEnd = inp.value.length;
-      }
-    }
-
     this.openDialog(div, line => {
       // Handle LINE:COLUMN as well as LINE
       const match = line.toString().match(RE_JUMP_TO_LINE);
@@ -1336,7 +1338,7 @@ Editor.prototype = {
     // The autocomplete module will overwrite this.initializeAutoCompletion
     // with a mode specific autocompletion handler.
     if (!this.initializeAutoCompletion) {
-      this.extend(require("./autocomplete"));
+      this.extend(require("devtools/client/shared/sourceeditor/autocomplete"));
     }
 
     if (this.config.autocomplete && Services.prefs.getBoolPref(AUTOCOMPLETE)) {
@@ -1355,7 +1357,7 @@ Editor.prototype = {
       return "";
     }
 
-    return mark.title || "";
+    return mark.attributes["data-completion"] || "";
   },
 
   setAutoCompletionText: function(text) {
@@ -1373,7 +1375,9 @@ Editor.prototype = {
       if (text) {
         cm.markText({ ...cursor, ch: cursor.ch - 1 }, cursor, {
           className,
-          title: text,
+          attributes: {
+            "data-completion": text,
+          },
         });
       }
     });
@@ -1432,7 +1436,7 @@ Editor.prototype = {
 
     // Remove the link between the document and code-mirror.
     const cm = editors.get(this);
-    if (cm && cm.doc) {
+    if (cm?.doc) {
       cm.doc.cm = null;
     }
 

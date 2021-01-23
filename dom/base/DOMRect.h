@@ -7,6 +7,7 @@
 #ifndef MOZILLA_DOMRECT_H_
 #define MOZILLA_DOMRECT_H_
 
+#include "js/StructuredClone.h"
 #include "nsTArray.h"
 #include "nsCOMPtr.h"
 #include "nsWrapperCache.h"
@@ -14,16 +15,19 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/dom/BindingDeclarations.h"
 #include "mozilla/ErrorResult.h"
-#include <algorithm>
+#include "mozilla/FloatingPoint.h"
 
 struct nsRect;
+class nsIGlobalObject;
 
 namespace mozilla {
 namespace dom {
 
+struct DOMRectInit;
+
 class DOMRectReadOnly : public nsISupports, public nsWrapperCache {
  protected:
-  virtual ~DOMRectReadOnly() {}
+  virtual ~DOMRectReadOnly() = default;
 
  public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -41,9 +45,12 @@ class DOMRectReadOnly : public nsISupports, public nsWrapperCache {
   virtual JSObject* WrapObject(JSContext* aCx,
                                JS::Handle<JSObject*> aGivenProto) override;
 
+  static already_AddRefed<DOMRectReadOnly> FromRect(const GlobalObject& aGlobal,
+                                                    const DOMRectInit& aInit);
+
   static already_AddRefed<DOMRectReadOnly> Constructor(
       const GlobalObject& aGlobal, double aX, double aY, double aWidth,
-      double aHeight, ErrorResult& aRv);
+      double aHeight);
 
   double X() const { return mX; }
   double Y() const { return mY; }
@@ -52,22 +59,33 @@ class DOMRectReadOnly : public nsISupports, public nsWrapperCache {
 
   double Left() const {
     double x = X(), w = Width();
-    return std::min(x, x + w);
+    return NaNSafeMin(x, x + w);
   }
   double Top() const {
     double y = Y(), h = Height();
-    return std::min(y, y + h);
+    return NaNSafeMin(y, y + h);
   }
   double Right() const {
     double x = X(), w = Width();
-    return std::max(x, x + w);
+    return NaNSafeMax(x, x + w);
   }
   double Bottom() const {
     double y = Y(), h = Height();
-    return std::max(y, y + h);
+    return NaNSafeMax(y, y + h);
   }
 
+  bool WriteStructuredClone(JSContext* aCx,
+                            JSStructuredCloneWriter* aWriter) const;
+
+  static already_AddRefed<DOMRectReadOnly> ReadStructuredClone(
+      JSContext* aCx, nsIGlobalObject* aGlobal,
+      JSStructuredCloneReader* aReader);
+
  protected:
+  // Shared implementation of ReadStructuredClone for DOMRect and
+  // DOMRectReadOnly.
+  bool ReadStructuredClone(JSStructuredCloneReader* aReader);
+
   nsCOMPtr<nsISupports> mParent;
   double mX, mY, mWidth, mHeight;
 };
@@ -80,13 +98,20 @@ class DOMRect final : public DOMRectReadOnly {
 
   NS_INLINE_DECL_REFCOUNTING_INHERITED(DOMRect, DOMRectReadOnly)
 
+  static already_AddRefed<DOMRect> FromRect(const GlobalObject& aGlobal,
+                                            const DOMRectInit& aInit);
+
   static already_AddRefed<DOMRect> Constructor(const GlobalObject& aGlobal,
                                                double aX, double aY,
-                                               double aWidth, double aHeight,
-                                               ErrorResult& aRv);
+                                               double aWidth, double aHeight);
 
   virtual JSObject* WrapObject(JSContext* aCx,
                                JS::Handle<JSObject*> aGivenProto) override;
+
+  static already_AddRefed<DOMRect> ReadStructuredClone(
+      JSContext* aCx, nsIGlobalObject* aGlobal,
+      JSStructuredCloneReader* aReader);
+  using DOMRectReadOnly::ReadStructuredClone;
 
   void SetRect(float aX, float aY, float aWidth, float aHeight) {
     mX = aX;
@@ -106,11 +131,11 @@ class DOMRect final : public DOMRectReadOnly {
   }
 
  private:
-  ~DOMRect() {}
+  ~DOMRect() = default;
 };
 
 class DOMRectList final : public nsISupports, public nsWrapperCache {
-  ~DOMRectList() {}
+  ~DOMRectList() = default;
 
  public:
   explicit DOMRectList(nsISupports* aParent) : mParent(aParent) {}

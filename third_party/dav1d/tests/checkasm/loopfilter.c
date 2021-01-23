@@ -95,8 +95,8 @@ static void check_lpf_sb(loopfilter_sb_fn fn, const char *const name,
                          const int n_blks, const int lf_idx,
                          const int is_chroma, const int dir)
 {
-    ALIGN_STK_32(pixel, c_dst_mem, 128 * 16,);
-    ALIGN_STK_32(pixel, a_dst_mem, 128 * 16,);
+    ALIGN_STK_64(pixel, c_dst_mem, 128 * 16,);
+    ALIGN_STK_64(pixel, a_dst_mem, 128 * 16,);
 
     declare_func(void, pixel *dst, ptrdiff_t dst_stride, const uint32_t *mask,
                  const uint8_t (*l)[4], ptrdiff_t b4_stride,
@@ -104,17 +104,21 @@ static void check_lpf_sb(loopfilter_sb_fn fn, const char *const name,
 
     pixel *a_dst, *c_dst;
     ptrdiff_t stride, b4_stride;
+    int w, h;
     if (dir) {
         a_dst = a_dst_mem + 128 * 8;
         c_dst = c_dst_mem + 128 * 8;
-        stride = 128 * sizeof(pixel);
+        w = 128;
+        h = 16;
         b4_stride = 32;
     } else {
         a_dst = a_dst_mem + 8;
         c_dst = c_dst_mem + 8;
-        stride = 16 * sizeof(pixel);
+        w = 16;
+        h = 128;
         b4_stride = 2;
     }
+    stride = w * sizeof(pixel);
 
     Av1FilterLUT lut;
     const int sharp = rnd() & 7;
@@ -177,8 +181,9 @@ static void check_lpf_sb(loopfilter_sb_fn fn, const char *const name,
             call_new(a_dst, stride,
                      vmask, (const uint8_t(*)[4]) &l[dir ? 32 : 1][lf_idx], b4_stride,
                      &lut, n_blks HIGHBD_TAIL_SUFFIX);
-            if (memcmp(c_dst_mem, a_dst_mem, 128 * 16 * sizeof(*a_dst)))  fail();
 
+            checkasm_check_pixel(c_dst_mem, stride, a_dst_mem, stride,
+                                 w, h, "dst");
             bench_new(a_dst, stride,
                       vmask, (const uint8_t(*)[4]) &l[dir ? 32 : 1][lf_idx], b4_stride,
                       &lut, n_blks HIGHBD_TAIL_SUFFIX);

@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Filterlochboek">
+<!ENTITY viewLogInfo.text "It filterlochboek registrearret hokker filters tapast binne foar dizze account. Brûk it seleksjefakje om it loggen te aktifearjen.">
+<!ENTITY clearLog.label "Lochboek fuortsmite">
+<!ENTITY clearLog.accesskey "f">
+<!ENTITY enableLog.label "Filterregistraasje aktivearje">
+<!ENTITY enableLog.accesskey "a">
+<!ENTITY closeLog.label "Slute">
+<!ENTITY closeLog.accesskey "S">

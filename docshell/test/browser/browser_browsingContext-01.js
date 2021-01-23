@@ -6,7 +6,7 @@
 const URL = "about:blank";
 
 async function getBrowsingContextId(browser, id) {
-  return ContentTask.spawn(browser, id, async function(id) {
+  return SpecialPowers.spawn(browser, [id], async function(id) {
     let contextId = content.window.docShell.browsingContext.id;
 
     let frames = [content.window];
@@ -26,7 +26,7 @@ async function getBrowsingContextId(browser, id) {
 }
 
 async function addFrame(browser, id, parentId) {
-  return ContentTask.spawn(browser, { parentId, id }, async function({
+  return SpecialPowers.spawn(browser, [{ parentId, id }], async function({
     parentId,
     id,
   }) {
@@ -56,7 +56,7 @@ async function addFrame(browser, id, parentId) {
 }
 
 async function removeFrame(browser, id) {
-  return ContentTask.spawn(browser, id, async function(id) {
+  return SpecialPowers.spawn(browser, [id], async function(id) {
     let frames = [content.window];
     while (frames.length) {
       let frame = frames.pop();
@@ -106,7 +106,7 @@ add_task(async function() {
 
     await removeFrame(browser, "frame2");
 
-    is(browsingContext1.getChildren().indexOf(browsingContext2), -1);
+    is(browsingContext1.children.indexOf(browsingContext2), -1);
 
     // TODO(farre): Handle browsingContext removal [see Bug 1486719].
     todo_isnot(browsingContext2.parent, browsingContext1);
@@ -128,7 +128,7 @@ add_task(async function() {
         "chrome://mochitests/content",
         "http://example.com"
       );
-      await ContentTask.spawn(browser, path, async function(path) {
+      await SpecialPowers.spawn(browser, [path], async function(path) {
         function waitForMessage(command) {
           let r;
           let p = new Promise(resolve => {
@@ -190,7 +190,7 @@ add_task(async function() {
           "BF cached BC's have same id"
         );
         is(
-          win.docShell.browsingContext.getChildren()[0],
+          win.docShell.browsingContext.children[0],
           frameBC,
           "BF cached BC's should still be a child of its parent"
         );

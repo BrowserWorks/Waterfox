@@ -43,16 +43,14 @@ exports.MarkerDOMUtils = {
   buildTitle: function(doc, marker) {
     const blueprint = MarkerBlueprintUtils.getBlueprintFor(marker);
 
-    const hbox = doc.createElement("hbox");
+    const hbox = doc.createXULElement("hbox");
     hbox.setAttribute("align", "center");
 
-    const bullet = doc.createElement("hbox");
-    bullet.className = `marker-details-bullet marker-color-${
-      blueprint.colorName
-    }`;
+    const bullet = doc.createXULElement("hbox");
+    bullet.className = `marker-details-bullet marker-color-${blueprint.colorName}`;
 
     const title = MarkerBlueprintUtils.getMarkerLabel(marker);
-    const label = doc.createElement("label");
+    const label = doc.createXULElement("label");
     label.className = "marker-details-type";
     label.setAttribute("value", title);
 
@@ -95,15 +93,15 @@ exports.MarkerDOMUtils = {
    * @return Node
    */
   buildNameValueLabel: function(doc, field, value) {
-    const hbox = doc.createElement("hbox");
+    const hbox = doc.createXULElement("hbox");
     hbox.className = "marker-details-labelcontainer";
 
-    const nameLabel = doc.createElement("label");
+    const nameLabel = doc.createXULElement("label");
     nameLabel.className = "plain marker-details-name-label";
     nameLabel.setAttribute("value", field);
     hbox.appendChild(nameLabel);
 
-    const valueLabel = doc.createElement("label");
+    const valueLabel = doc.createXULElement("label");
     valueLabel.className = "plain marker-details-value-label";
     valueLabel.setAttribute("value", value);
     hbox.appendChild(valueLabel);
@@ -127,7 +125,7 @@ exports.MarkerDOMUtils = {
     container.className = "marker-details-stack";
     container.setAttribute("type", type);
 
-    const nameLabel = doc.createElement("label");
+    const nameLabel = doc.createXULElement("label");
     nameLabel.className = "plain marker-details-name-label";
     nameLabel.setAttribute("value", L10N.getStr(`marker.field.${type}`));
     container.appendChild(nameLabel);
@@ -155,8 +153,8 @@ exports.MarkerDOMUtils = {
           "marker.field.asyncStack",
           frame.asyncCause
         );
-        const asyncBox = doc.createElement("hbox");
-        const asyncLabel = doc.createElement("label");
+        const asyncBox = doc.createXULElement("hbox");
+        const asyncLabel = doc.createXULElement("label");
         asyncLabel.className = "devtools-monospace";
         asyncLabel.setAttribute("value", asyncStr);
         asyncBox.appendChild(asyncLabel);
@@ -164,28 +162,28 @@ exports.MarkerDOMUtils = {
         wasAsyncParent = false;
       }
 
-      const hbox = doc.createElement("hbox");
+      const hbox = doc.createXULElement("hbox");
 
       if (displayName) {
-        const functionLabel = doc.createElement("label");
+        const functionLabel = doc.createXULElement("label");
         functionLabel.className = "devtools-monospace";
         functionLabel.setAttribute("value", displayName);
         hbox.appendChild(functionLabel);
       }
 
       if (url) {
-        const linkNode = doc.createElement("a");
+        const linkNode = doc.createXULElement("a");
         linkNode.className = "waterfall-marker-location devtools-source-link";
         linkNode.href = url;
         linkNode.draggable = false;
         linkNode.setAttribute("title", url);
 
-        const urlLabel = doc.createElement("label");
+        const urlLabel = doc.createXULElement("label");
         urlLabel.className = "filename";
         urlLabel.setAttribute("value", getSourceNames(url).short);
         linkNode.appendChild(urlLabel);
 
-        const lineLabel = doc.createElement("label");
+        const lineLabel = doc.createXULElement("label");
         lineLabel.className = "line-number";
         lineLabel.setAttribute("value", `:${line}`);
         linkNode.appendChild(lineLabel);
@@ -205,7 +203,7 @@ exports.MarkerDOMUtils = {
       }
 
       if (!displayName && !url) {
-        const unknownLabel = doc.createElement("label");
+        const unknownLabel = doc.createXULElement("label");
         unknownLabel.setAttribute(
           "value",
           L10N.getStr("marker.value.unknownFrame")
@@ -238,10 +236,10 @@ exports.MarkerDOMUtils = {
     const elements = [];
 
     if (options.allocations && shouldShowAllocationsTrigger(marker)) {
-      const hbox = doc.createElement("hbox");
+      const hbox = doc.createXULElement("hbox");
       hbox.className = "marker-details-customcontainer";
 
-      const label = doc.createElement("label");
+      const label = doc.createXULElement("label");
       label.className = "custom-button";
       label.setAttribute("value", "Show allocation triggers");
       label.setAttribute("type", "show-allocations");

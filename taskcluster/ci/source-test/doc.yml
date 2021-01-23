@@ -4,13 +4,13 @@
 ---
 generate:
     description: Generate the Sphinx documentation
-    platform: lint/opt
+    platform: doc/opt
     treeherder:
-        symbol: Doc
+        symbol: doc(generate)
         kind: test
         tier: 1
-    run-on-projects: ['trunk', 'try']
-    worker-type: t-linux-xlarge
+    run-on-projects: ['trunk']
+    worker-type: t-linux-xlarge-source
     worker:
         docker-image: {in-tree: "lint"}
         max-run-time: 1800
@@ -27,13 +27,13 @@ generate:
 
 upload:
     description: Generate and upload the Sphinx documentation
-    platform: lint/opt
+    platform: doc/opt
     treeherder:
-        symbol: DocUp
+        symbol: doc(upload)
         kind: test
         tier: 2
     run-on-projects: [mozilla-central]
-    worker-type: t-linux-xlarge
+    worker-type: t-linux-xlarge-source
     worker:
         docker-image: {in-tree: "lint"}
         max-run-time: 1800

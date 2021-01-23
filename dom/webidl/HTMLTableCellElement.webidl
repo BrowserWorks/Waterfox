@@ -11,8 +11,10 @@
  * and create derivative works of this document.
  */
 
-[HTMLConstructor]
+[Exposed=Window]
 interface HTMLTableCellElement : HTMLElement {
+  [HTMLConstructor] constructor();
+
            [CEReactions, SetterThrows]
            attribute unsigned long colSpan;
            [CEReactions, SetterThrows]

@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Sobre o correu vasuera">
+<!ENTITY window.width  "450">
+<!ENTITY info1a.label  "&brandShortName; detecta automaticament os mensaches entrantes que pareixen estar correu vasuera (u &quot;spam&quot;). Os mensaches que o correu identifica asinas amostrarán un icono de vasuera">
+<!ENTITY info1b.label  ".">
+<!ENTITY info2.label   "Al prencipio, debe amostrar a &brandShortName; a identificar o correu vasuera usando o botón Vasuera d'a barra de ferramientas ta marcar u desmarcar mensaches como vasuera.">
+<!ENTITY info3.label   "Una vez &brandShortName; identifique correctament o correu vasuera, puede usar os controls de correu vasuera ta tresladar automaticament o correu vasuera entrante a la carpeta de correu vasuera (Junk).">
+<!ENTITY info4.label   "Ta mas información, prete Aduya.">

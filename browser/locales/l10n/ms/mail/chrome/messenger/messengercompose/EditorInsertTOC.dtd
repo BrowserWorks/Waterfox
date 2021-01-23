@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title        "Jadual Kandungan">
+<!ENTITY buildToc.label      "Bina jadual kandungan daripada:">
+<!ENTITY tag.label           "Tag:">
+<!ENTITY class.label         "Kelas:">
+<!ENTITY header1.label       "Tahap 1">
+<!ENTITY header2.label       "Tahap 2">
+<!ENTITY header3.label       "Tahap 3">
+<!ENTITY header4.label       "Tahap 4">
+<!ENTITY header5.label       "Tahap 5">
+<!ENTITY header6.label       "Tahap 6">
+<!ENTITY makeReadOnly.label  "Jadikan jadual kandungan baca-sahaja">
+<!ENTITY orderedList.label   "Nombor semua entri dalam jadual kandungan">

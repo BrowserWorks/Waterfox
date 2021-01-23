@@ -17,11 +17,11 @@
 #include "UnitTransforms.h"  // for ViewAs
 #include "gfxEnv.h"
 #include "gfxPlatform.h"  // for gfxPlatform
-#include "gfxPrefs.h"
-#include "gfxUtils.h"  // for gfxUtils, etc
+#include "gfxUtils.h"     // for gfxUtils, etc
 #include "gfx2DGlue.h"
 #include "mozilla/DebugOnly.h"  // for DebugOnly
 #include "mozilla/IntegerPrintfMacros.h"
+#include "mozilla/StaticPrefs_layers.h"
 #include "mozilla/Telemetry.h"  // for Accumulate
 #include "mozilla/ToString.h"
 #include "mozilla/gfx/2D.h"        // for DrawTarget
@@ -138,8 +138,19 @@ already_AddRefed<ImageContainer> LayerManager::CreateImageContainer(
   return container.forget();
 }
 
+bool LayerManager::LayersComponentAlphaEnabled() {
+  // If MOZ_GFX_OPTIMIZE_MOBILE is defined, we force component alpha off
+  // and ignore the preference.
+#ifdef MOZ_GFX_OPTIMIZE_MOBILE
+  return false;
+#else
+  return StaticPrefs::
+      layers_componentalpha_enabled_AtStartup_DoNotUseDirectly();
+#endif
+}
+
 bool LayerManager::AreComponentAlphaLayersEnabled() {
-  return gfxPrefs::ComponentAlphaEnabled();
+  return LayerManager::LayersComponentAlphaEnabled();
 }
 
 /*static*/
@@ -174,7 +185,7 @@ Layer::Layer(LayerManager* aManager, void* aImplData)
 {
 }
 
-Layer::~Layer() {}
+Layer::~Layer() = default;
 
 void Layer::SetCompositorAnimations(
     const CompositorAnimations& aCompositorAnimations) {
@@ -530,16 +541,6 @@ bool Layer::HasScrollableFrameMetrics() const {
   return false;
 }
 
-bool Layer::HasRootScrollableFrameMetrics() const {
-  for (uint32_t i = 0; i < GetScrollMetadataCount(); i++) {
-    if (GetFrameMetrics(i).IsScrollable() &&
-        GetFrameMetrics(i).IsRootContent()) {
-      return true;
-    }
-  }
-  return false;
-}
-
 bool Layer::IsScrollableWithoutContent() const {
   // A scrollable container layer with no children
   return AsContainerLayer() && HasScrollableFrameMetrics() && !GetFirstChild();
@@ -769,7 +770,7 @@ ContainerLayer::ContainerLayer(LayerManager* aManager, void* aImplData)
       mMayHaveReadbackChild(false),
       mChildrenChanged(false) {}
 
-ContainerLayer::~ContainerLayer() {}
+ContainerLayer::~ContainerLayer() = default;
 
 bool ContainerLayer::InsertAfter(Layer* aChild, Layer* aAfter) {
   if (aChild->Manager() != Manager()) {
@@ -969,7 +970,8 @@ bool ContainerLayer::HasMultipleChildren() {
   for (Layer* child = GetFirstChild(); child; child = child->GetNextSibling()) {
     const Maybe<ParentLayerIntRect>& clipRect = child->GetLocalClipRect();
     if (clipRect && clipRect->IsEmpty()) continue;
-    if (child->GetLocalVisibleRegion().IsEmpty()) continue;
+    if (!child->Extend3DContext() && child->GetLocalVisibleRegion().IsEmpty())
+      continue;
     ++count;
     if (count > 1) return true;
   }
@@ -1181,7 +1183,8 @@ void ContainerLayer::DefaultComputeEffectiveTransforms(
            * above. Nor for a child with a mask layer.
            */
           if (checkClipRect && (clipRect && !clipRect->IsEmpty() &&
-                                !child->GetLocalVisibleRegion().IsEmpty())) {
+                                (child->Extend3DContext() ||
+                                 !child->GetLocalVisibleRegion().IsEmpty()))) {
             useIntermediateSurface = true;
             break;
           }
@@ -1299,7 +1302,8 @@ void ContainerLayer::DidInsertChild(Layer* aLayer) {
 }
 
 void RefLayer::FillSpecificAttributes(SpecificLayerAttributes& aAttrs) {
-  aAttrs = RefLayerAttributes(GetReferentId(), mEventRegionsOverride);
+  aAttrs = RefLayerAttributes(GetReferentId(), mEventRegionsOverride,
+                              mRemoteDocumentSize);
 }
 
 /**
@@ -1718,11 +1722,12 @@ void Layer::PrintInfo(std::stringstream& aStream, const char* aPrefix) {
   }
   if (GetIsFixedPosition()) {
     LayerPoint anchor = GetFixedPositionAnchor();
-    aStream << nsPrintfCString(" [isFixedPosition scrollId=%" PRIu64
-                               " sides=0x%x anchor=%s]",
-                               GetFixedPositionScrollContainerId(),
-                               GetFixedPositionSides(),
-                               ToString(anchor).c_str())
+    aStream << nsPrintfCString(
+                   " [isFixedPosition scrollId=%" PRIu64
+                   " sides=0x%x anchor=%s]",
+                   GetFixedPositionScrollContainerId(),
+                   static_cast<unsigned int>(GetFixedPositionSides()),
+                   ToString(anchor).c_str())
                    .get();
   }
   if (GetIsStickyPosition()) {
@@ -2213,47 +2218,31 @@ bool LayerManager::IsLogEnabled() {
 }
 
 bool LayerManager::SetPendingScrollUpdateForNextTransaction(
-    ScrollableLayerGuid::ViewID aScrollId, const ScrollUpdateInfo& aUpdateInfo,
-    wr::RenderRoot aRenderRoot) {
+    ScrollableLayerGuid::ViewID aScrollId,
+    const ScrollUpdateInfo& aUpdateInfo) {
   Layer* withPendingTransform = DepthFirstSearch<ForwardIterator>(
       GetRoot(), [](Layer* aLayer) { return aLayer->HasPendingTransform(); });
   if (withPendingTransform) {
     return false;
   }
 
-  // If this is called on a LayerManager that's not a WebRenderLayerManager,
-  // then we don't actually need the aRenderRoot information. We force it to
-  // RenderRoot::Default so that we can make assumptions in
-  // GetPendingScrollInfoUpdate.
-  wr::RenderRoot renderRoot = (GetBackendType() == LayersBackend::LAYERS_WR)
-                                  ? aRenderRoot
-                                  : wr::RenderRoot::Default;
-  mPendingScrollUpdates[renderRoot][aScrollId] = aUpdateInfo;
+  mPendingScrollUpdates.Put(aScrollId, aUpdateInfo);
   return true;
 }
 
 Maybe<ScrollUpdateInfo> LayerManager::GetPendingScrollInfoUpdate(
     ScrollableLayerGuid::ViewID aScrollId) {
-  // This never gets called for WebRenderLayerManager, so we assume that all
-  // pending scroll info updates are stored under the default RenderRoot.
-  MOZ_ASSERT(GetBackendType() != LayersBackend::LAYERS_WR);
-  auto it = mPendingScrollUpdates[wr::RenderRoot::Default].find(aScrollId);
-  if (it != mPendingScrollUpdates[wr::RenderRoot::Default].end()) {
-    return Some(it->second);
-  }
-  return Nothing();
+  auto p = mPendingScrollUpdates.Lookup(aScrollId);
+  return p ? Some(p.Data()) : Nothing();
 }
 
 std::unordered_set<ScrollableLayerGuid::ViewID>
 LayerManager::ClearPendingScrollInfoUpdate() {
   std::unordered_set<ScrollableLayerGuid::ViewID> scrollIds;
-  for (auto renderRoot : wr::kRenderRoots) {
-    auto& updates = mPendingScrollUpdates[renderRoot];
-    for (const auto& update : updates) {
-      scrollIds.insert(update.first);
-    }
-    updates.clear();
+  for (auto it = mPendingScrollUpdates.Iter(); !it.Done(); it.Next()) {
+    scrollIds.insert(it.Key());
   }
+  mPendingScrollUpdates.Clear();
   return scrollIds;
 }
 
@@ -2269,7 +2258,8 @@ void PrintInfo(std::stringstream& aStream, HostLayer* aLayerComposite) {
     AppendToString(aStream, aLayerComposite->GetShadowBaseTransform(),
                    " [shadow-transform=", "]");
   }
-  if (!aLayerComposite->GetShadowVisibleRegion().IsEmpty()) {
+  if (!aLayerComposite->GetLayer()->Extend3DContext() &&
+      !aLayerComposite->GetShadowVisibleRegion().IsEmpty()) {
     AppendToString(aStream,
                    aLayerComposite->GetShadowVisibleRegion().ToUnknownRegion(),
                    " [shadow-visible=", "]");
@@ -2308,18 +2298,22 @@ void RecordCompositionPayloadsPresented(
     TimeStamp presented = TimeStamp::Now();
     for (const CompositionPayload& payload : aPayloads) {
 #if MOZ_GECKO_PROFILER
-      if (profiler_is_active()) {
+      if (profiler_can_accept_markers()) {
         nsPrintfCString marker(
             "Payload Presented, type: %d latency: %dms\n",
             int32_t(payload.mType),
             int32_t((presented - payload.mTimeStamp).ToMilliseconds()));
-        profiler_add_marker(marker.get(), JS::ProfilingCategoryPair::GRAPHICS);
+        PROFILER_ADD_MARKER(marker.get(), GRAPHICS);
       }
 #endif
 
       if (payload.mType == CompositionPayloadType::eKeyPress) {
         Telemetry::AccumulateTimeDelta(
             mozilla::Telemetry::KEYPRESS_PRESENT_LATENCY, payload.mTimeStamp,
+            presented);
+      } else if (payload.mType == CompositionPayloadType::eAPZScroll) {
+        Telemetry::AccumulateTimeDelta(
+            mozilla::Telemetry::SCROLL_PRESENT_LATENCY, payload.mTimeStamp,
             presented);
       }
     }

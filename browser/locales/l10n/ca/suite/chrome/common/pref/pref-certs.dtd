@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  managecerts.caption      "Gestió dels certificats">
+<!ENTITY  managecerts.text         "Utilitzeu el gestor de certificats per gestionar els vostres certificats personals, com també els d'altra gent i d'entitats certificadores.">
+<!ENTITY  managecerts.button       "Gestiona els certificats…">
+<!ENTITY  managecerts.accesskey    "G">
+<!ENTITY  managedevices.caption    "Gestiona els dispositius de seguretat">
+<!ENTITY  managedevices.text       "Utilitzeu aquest botó per gestionar els dispositius de seguretat, com ara les targetes intel·ligents.">
+<!ENTITY  managedevices.button     "Gestiona els dispositius de seguretat…">
+<!ENTITY  managedevices.accesskey  "s">
+
+<!ENTITY  ssl.label                "SSL">
+
+<!ENTITY  pref.certs.title         "Certificats">
+<!ENTITY  certs.label              "Certificats">
+
+<!ENTITY validation.ocsp.caption                  "OCSP">
+<!ENTITY enableOCSP.label                         "Utilitza el protocol d'estat de certificació en línia (OCSP) per confirmar la validesa actual dels certificats">
+<!ENTITY enableOCSP.accesskey                     "U">
+<!ENTITY validation.requireOCSP.description       "Quan la connexió a un servidor OCSP falla, es tracta el certificat com a no vàlid">
+<!ENTITY validation.requireOCSP.accesskey         "Q">

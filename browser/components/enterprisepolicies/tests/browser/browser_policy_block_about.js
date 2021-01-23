@@ -11,13 +11,16 @@ const policiesToTest = {
 
 add_task(async function testAboutTask() {
   for (let policy in policiesToTest) {
-    await testPageBlockedByPolicy(policy, policiesToTest[policy]);
+    let policyJSON = { policies: {} };
+    policyJSON.policies[policy] = true;
+    await testPageBlockedByPolicy(policyJSON, policiesToTest[policy]);
   }
+  let policyJSON = { policies: {} };
+  policyJSON.policies.PasswordManagerEnabled = false;
+  await testPageBlockedByPolicy(policyJSON, "about:logins");
 });
 
-async function testPageBlockedByPolicy(policy, page) {
-  let policyJSON = { policies: {} };
-  policyJSON.policies[policy] = true;
+async function testPageBlockedByPolicy(policyJSON, page) {
   await setupPolicyEngineWithJson(policyJSON);
 
   await BrowserTestUtils.withNewTab(
@@ -25,7 +28,7 @@ async function testPageBlockedByPolicy(policy, page) {
     async browser => {
       BrowserTestUtils.loadURI(browser, page);
       await BrowserTestUtils.browserLoaded(browser, false, page, true);
-      await ContentTask.spawn(browser, page, async function(innerPage) {
+      await SpecialPowers.spawn(browser, [page], async function(innerPage) {
         ok(
           content.document.documentURI.startsWith(
             "about:neterror?e=blockedByPolicy"

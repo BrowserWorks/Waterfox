@@ -3,8 +3,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef WEBGPU_Queue_H_
-#define WEBGPU_Queue_H_
+#ifndef GPU_Queue_H_
+#define GPU_Queue_H_
 
 #include "nsWrapperCache.h"
 #include "ObjectModel.h"
@@ -13,28 +13,35 @@ namespace mozilla {
 namespace dom {
 template <typename T>
 class Sequence;
-}  // namespace dom
-
+}
 namespace webgpu {
 
 class CommandBuffer;
 class Device;
 class Fence;
 
-class Queue final : public ChildOf<Device> {
+class Queue final : public ObjectBase, public ChildOf<Device> {
  public:
-  WEBGPU_DECL_GOOP(Queue)
+  GPU_DECL_CYCLE_COLLECTION(Queue)
+  GPU_DECL_JS_WRAP(Queue)
+
+  Queue(Device* const aParent, WebGPUChild* aBridge, RawId aId);
+
+  void Submit(
+      const dom::Sequence<OwningNonNull<CommandBuffer>>& aCommandBuffers);
 
  private:
   Queue() = delete;
   virtual ~Queue();
+  void Cleanup() {}
+
+  RefPtr<WebGPUChild> mBridge;
+  const RawId mId;
 
  public:
-  void Submit(const dom::Sequence<OwningNonNull<CommandBuffer>>& buffers) const;
-  already_AddRefed<Fence> InsertFence() const;
 };
 
 }  // namespace webgpu
 }  // namespace mozilla
 
-#endif  // WEBGPU_Queue_H_
+#endif  // GPU_Queue_H_

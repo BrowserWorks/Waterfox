@@ -14,12 +14,12 @@ const { TargetFactory } = require("devtools/client/framework/target");
 function _getTopWindow() {
   // Try the main application window, such as a browser window.
   let win = Services.wm.getMostRecentWindow(gDevTools.chromeWindowType);
-  if (win && win.openWebLinkIn && win.openTrustedLinkIn) {
+  if (win?.openWebLinkIn && win?.openTrustedLinkIn) {
     return win;
   }
   // For non-browser cases like Browser Toolbox, try any chrome window.
   win = Services.wm.getMostRecentWindow(null);
-  if (win && win.openWebLinkIn && win.openTrustedLinkIn) {
+  if (win?.openWebLinkIn && win?.openTrustedLinkIn) {
     return win;
   }
   return null;
@@ -62,9 +62,8 @@ exports.openContentLink = async function(url, options = {}) {
   if (!options.triggeringPrincipal && top.gBrowser) {
     const tab = top.gBrowser.selectedTab;
     if (TargetFactory.isKnownTab(tab)) {
-      const target = await TargetFactory.forTab(tab);
-      options.triggeringPrincipal = target.contentPrincipal;
-      options.csp = target.csp;
+      options.triggeringPrincipal = tab.linkedBrowser.contentPrincipal;
+      options.csp = tab.linkedBrowser.csp;
     }
   }
   top.openWebLinkIn(url, "tab", options);

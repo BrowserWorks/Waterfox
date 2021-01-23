@@ -12,7 +12,6 @@
 
 #include "nsIAsyncInputStream.h"
 #include "nsIAsyncOutputStream.h"
-#include "nsISeekableStream.h"
 #include "nsIPipe.h"
 #include "nsITransport.h"
 #include "nsIObserverService.h"
@@ -30,22 +29,32 @@ namespace net {
 // and close-when-done semantics while utilizing NS_AsyncCopy.
 //-----------------------------------------------------------------------------
 
-class nsInputStreamTransport : public nsITransport, public nsIInputStream {
+class nsInputStreamTransport : public nsITransport,
+                               public nsIAsyncInputStream,
+                               public nsIInputStreamCallback {
  public:
-  // Record refcount changes to ensure that stream transports are destroyed
-  // on consistent threads when recording/replaying.
-  NS_DECL_THREADSAFE_ISUPPORTS_WITH_RECORDING(recordreplay::Behavior::Preserve)
+  NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSITRANSPORT
   NS_DECL_NSIINPUTSTREAM
+  NS_DECL_NSIASYNCINPUTSTREAM
+  NS_DECL_NSIINPUTSTREAMCALLBACK
 
   nsInputStreamTransport(nsIInputStream* source, bool closeWhenDone)
-      : mSource(source),
+      : mMutex("nsInputStreamTransport::mMutex"),
+        mSource(source),
         mOffset(0),
         mCloseWhenDone(closeWhenDone),
-        mInProgress(false) {}
+        mInProgress(false) {
+    mAsyncSource = do_QueryInterface(mSource);
+  }
 
  private:
   virtual ~nsInputStreamTransport() = default;
+
+  Mutex mMutex;
+
+  // This value is protected by mutex.
+  nsCOMPtr<nsIInputStreamCallback> mAsyncWaitCallback;
 
   nsCOMPtr<nsIAsyncInputStream> mPipeIn;
 
@@ -53,15 +62,28 @@ class nsInputStreamTransport : public nsITransport, public nsIInputStream {
   // nsIInputStream implementation.
   nsCOMPtr<nsITransportEventSink> mEventSink;
   nsCOMPtr<nsIInputStream> mSource;
+
+  // It can be null.
+  nsCOMPtr<nsIAsyncInputStream> mAsyncSource;
+
   int64_t mOffset;
-  bool mCloseWhenDone;
+  const bool mCloseWhenDone;
 
   // this variable serves as a lock to prevent the state of the transport
   // from being modified once the copy is in progress.
   bool mInProgress;
 };
 
-NS_IMPL_ISUPPORTS(nsInputStreamTransport, nsITransport, nsIInputStream)
+NS_IMPL_ADDREF(nsInputStreamTransport);
+NS_IMPL_RELEASE(nsInputStreamTransport);
+
+NS_INTERFACE_MAP_BEGIN(nsInputStreamTransport)
+  NS_INTERFACE_MAP_ENTRY(nsITransport)
+  NS_INTERFACE_MAP_ENTRY(nsIInputStream)
+  NS_INTERFACE_MAP_ENTRY_CONDITIONAL(nsIAsyncInputStream, !!mAsyncSource)
+  NS_INTERFACE_MAP_ENTRY_CONDITIONAL(nsIInputStreamCallback, !!mAsyncSource)
+  NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsITransport)
+NS_INTERFACE_MAP_END
 
 /** nsITransport **/
 
@@ -94,9 +116,11 @@ nsInputStreamTransport::OpenInputStream(uint32_t flags, uint32_t segsize,
   // startup async copy process...
   rv = NS_AsyncCopy(this, pipeOut, target, NS_ASYNCCOPY_VIA_WRITESEGMENTS,
                     segsize);
-  if (NS_SUCCEEDED(rv)) NS_ADDREF(*result = mPipeIn);
-
-  return rv;
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+  *result = do_AddRef(mPipeIn).take();
+  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -166,6 +190,53 @@ NS_IMETHODIMP
 nsInputStreamTransport::IsNonBlocking(bool* result) {
   *result = false;
   return NS_OK;
+}
+
+// nsIAsyncInputStream interface
+
+NS_IMETHODIMP
+nsInputStreamTransport::CloseWithStatus(nsresult aStatus) { return Close(); }
+
+NS_IMETHODIMP
+nsInputStreamTransport::AsyncWait(nsIInputStreamCallback* aCallback,
+                                  uint32_t aFlags, uint32_t aRequestedCount,
+                                  nsIEventTarget* aEventTarget) {
+  NS_ENSURE_STATE(!!mAsyncSource);
+
+  nsCOMPtr<nsIInputStreamCallback> callback = aCallback ? this : nullptr;
+
+  {
+    MutexAutoLock lock(mMutex);
+
+    if (mAsyncWaitCallback && aCallback) {
+      return NS_ERROR_FAILURE;
+    }
+
+    mAsyncWaitCallback = aCallback;
+  }
+
+  return mAsyncSource->AsyncWait(callback, aFlags, aRequestedCount,
+                                 aEventTarget);
+}
+
+// nsIInputStreamCallback
+
+NS_IMETHODIMP
+nsInputStreamTransport::OnInputStreamReady(nsIAsyncInputStream* aStream) {
+  nsCOMPtr<nsIInputStreamCallback> callback;
+  {
+    MutexAutoLock lock(mMutex);
+
+    // We have been canceled in the meanwhile.
+    if (!mAsyncWaitCallback) {
+      return NS_OK;
+    }
+
+    callback.swap(mAsyncWaitCallback);
+  }
+
+  MOZ_ASSERT(callback);
+  return callback->OnInputStreamReady(this);
 }
 
 //-----------------------------------------------------------------------------
@@ -254,10 +325,9 @@ NS_IMETHODIMP
 nsStreamTransportService::CreateInputTransport(nsIInputStream* stream,
                                                bool closeWhenDone,
                                                nsITransport** result) {
-  nsInputStreamTransport* trans =
+  RefPtr<nsInputStreamTransport> trans =
       new nsInputStreamTransport(stream, closeWhenDone);
-  if (!trans) return NS_ERROR_OUT_OF_MEMORY;
-  NS_ADDREF(*result = trans);
+  trans.forget(result);
   return NS_OK;
 }
 

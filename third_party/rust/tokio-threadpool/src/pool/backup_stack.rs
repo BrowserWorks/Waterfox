@@ -1,7 +1,7 @@
 use pool::{Backup, BackupId};
 
 use std::sync::atomic::AtomicUsize;
-use std::sync::atomic::Ordering::{Acquire, AcqRel};
+use std::sync::atomic::Ordering::{AcqRel, Acquire};
 
 #[derive(Debug)]
 pub(crate) struct BackupStack {
@@ -22,7 +22,7 @@ pub(crate) const EMPTY: BackupId = BackupId(MAX_BACKUP);
 /// Used to mark the stack as terminated
 pub(crate) const TERMINATED: BackupId = BackupId(EMPTY.0 + 1);
 
-/// How many bits the treiber ABA guard is offset by
+/// How many bits the Treiber ABA guard is offset by
 const ABA_GUARD_SHIFT: usize = 16;
 
 #[cfg(target_pointer_width = "64")]
@@ -65,8 +65,10 @@ impl BackupStack {
             entries[id.0].set_next_sleeper(head);
             next.set_head(id);
 
-            let actual = self.state.compare_and_swap(
-                state.into(), next.into(), AcqRel).into();
+            let actual = self
+                .state
+                .compare_and_swap(state.into(), next.into(), AcqRel)
+                .into();
 
             if state == actual {
                 return Ok(());
@@ -110,8 +112,10 @@ impl BackupStack {
                     return Ok(None);
                 }
 
-                let actual = self.state.compare_and_swap(
-                    state.into(), next.into(), AcqRel).into();
+                let actual = self
+                    .state
+                    .compare_and_swap(state.into(), next.into(), AcqRel)
+                    .into();
 
                 if actual != state {
                     state = actual;
@@ -138,8 +142,10 @@ impl BackupStack {
                 next.set_head(next_head);
             }
 
-            let actual = self.state.compare_and_swap(
-                state.into(), next.into(), AcqRel).into();
+            let actual = self
+                .state
+                .compare_and_swap(state.into(), next.into(), AcqRel)
+                .into();
 
             if actual == state {
                 debug_assert!(entries[head.0].is_pushed());
@@ -165,7 +171,7 @@ impl State {
     fn set_head(&mut self, val: BackupId) {
         let val = val.0;
 
-        // The ABA guard protects against the ABA problem w/ treiber stacks
+        // The ABA guard protects against the ABA problem w/ Treiber stacks
         let aba_guard = ((self.0 >> ABA_GUARD_SHIFT) + 1) & ABA_GUARD_MASK;
 
         self.0 = (aba_guard << ABA_GUARD_SHIFT) | val;

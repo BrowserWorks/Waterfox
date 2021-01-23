@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Записник филтрирања">
+<!ENTITY viewLogInfo.text "Записник филтрирања бележи филтере који су радили унутар овог налога. Искористите кућицу испод да бисте омогућили бележење.">
+<!ENTITY clearLog.label "Очисти записник">
+<!ENTITY clearLog.accesskey "О">
+<!ENTITY enableLog.label "Омогући записник филтрирања">
+<!ENTITY enableLog.accesskey "м">
+<!ENTITY closeLog.label "Затвори">
+<!ENTITY closeLog.accesskey "З">

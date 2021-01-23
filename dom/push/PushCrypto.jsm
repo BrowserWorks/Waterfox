@@ -15,7 +15,7 @@ XPCOMUtils.defineLazyGetter(this, "gDOMBundle", () =>
 
 XPCOMUtils.defineLazyGlobalGetters(this, ["crypto"]);
 
-const EXPORTED_SYMBOLS = ["PushCrypto", "concatArray"];
+const EXPORTED_SYMBOLS = ["PushCrypto"];
 
 const UTF8 = new TextEncoder("utf-8");
 
@@ -75,11 +75,7 @@ class CryptoError extends Error {
    */
   format(scope) {
     let params = [scope, ...this.params].map(String);
-    return gDOMBundle.formatStringFromName(
-      this.property,
-      params,
-      params.length
-    );
+    return gDOMBundle.formatStringFromName(this.property, params);
   }
 }
 
@@ -337,15 +333,11 @@ class Decoder {
       );
 
       let r = await Promise.all(
-        chunkArray(this.ciphertext, this.chunkSize).map(
-          (slice, index, chunks) =>
-            this.decodeChunk(
-              slice,
-              index,
-              nonce,
-              key,
-              index >= chunks.length - 1
-            )
+        chunkArray(
+          this.ciphertext,
+          this.chunkSize
+        ).map((slice, index, chunks) =>
+          this.decodeChunk(slice, index, nonce, key, index >= chunks.length - 1)
         )
       );
 
@@ -607,6 +599,8 @@ class aesgcm128Decoder extends OldSchemeDecoder {
 }
 
 var PushCrypto = {
+  concatArray,
+
   generateAuthenticationSecret() {
     return crypto.getRandomValues(new Uint8Array(16));
   },

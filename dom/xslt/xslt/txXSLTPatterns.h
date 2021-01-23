@@ -13,8 +13,8 @@
 
 class txPattern {
  public:
-  txPattern() { MOZ_COUNT_CTOR(txPattern); }
-  virtual ~txPattern() { MOZ_COUNT_DTOR(txPattern); }
+  MOZ_COUNTED_DEFAULT_CTOR(txPattern)
+  MOZ_COUNTED_DTOR_VIRTUAL(txPattern)
 
   /*
    * Determines whether this Pattern matches the given node.
@@ -103,8 +103,10 @@ class txPattern {
 class txUnionPattern : public txPattern {
  public:
   nsresult addPattern(txPattern* aPattern) {
-    return mLocPathPatterns.AppendElement(aPattern) ? NS_OK
-                                                    : NS_ERROR_OUT_OF_MEMORY;
+    // XXX(Bug 1631371) Check if this should use a fallible operation as it
+    // pretended earlier, or change the return type to void.
+    mLocPathPatterns.AppendElement(aPattern);
+    return NS_OK;
   }
 
   TX_DECL_PATTERN;
@@ -123,7 +125,7 @@ class txLocPathPattern : public txPattern {
  private:
   class Step {
    public:
-    nsAutoPtr<txPattern> pattern;
+    mozilla::UniquePtr<txPattern> pattern;
     bool isChild;
   };
 
@@ -187,14 +189,14 @@ class txStepPattern : public txPattern, public PredicateList {
   TX_DECL_PATTERN;
   Type getType() override;
 
-  txNodeTest* getNodeTest() { return mNodeTest; }
+  txNodeTest* getNodeTest() { return mNodeTest.get(); }
   void setNodeTest(txNodeTest* aNodeTest) {
-    mNodeTest.forget();
-    mNodeTest = aNodeTest;
+    mozilla::Unused << mNodeTest.release();
+    mNodeTest = mozilla::WrapUnique(aNodeTest);
   }
 
  private:
-  nsAutoPtr<txNodeTest> mNodeTest;
+  mozilla::UniquePtr<txNodeTest> mNodeTest;
   bool mIsAttr;
 };
 

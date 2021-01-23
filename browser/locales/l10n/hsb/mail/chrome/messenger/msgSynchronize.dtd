@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "Powěsće sćahnyć a synchronizować">
+<!ENTITY MsgSelect.label "Zapiski za wužiće offline">
+<!ENTITY MsgSyncDesc.label "Jeli sće hižo e-mejlowe rjadowaki abo diskusijne skupiny za wužiće offline wubrał, móžeće tute nětko sćahnyć a/abo synchronizować. Hewak wužijće tłóčatko &quot;Wubrać&quot;, zo byšće e-mejlowe rjadowaki a diskusijne skupiny za wužiće offline wubrał.">
+<!ENTITY MsgSyncDirections.label "Sćehńće a/abo synchronizujće:">
+<!ENTITY syncTypeMail.label "Póstowe powěsće">
+<!ENTITY syncTypeMail.accesskey "P">
+<!ENTITY syncTypeNews.label "Powěsće diskusijneje skupiny">
+<!ENTITY syncTypeNews.accesskey "w">
+<!ENTITY sendMessage.label "Njepósłane powěsće pósłać">
+<!ENTITY sendMessage.accesskey "N">
+<!ENTITY workOffline.label "Offline dźěłać, tak ruče kaž sćehnjenje a/abo synchronizowanje budźe skónčene">
+<!ENTITY workOffline.accesskey "O">
+<!ENTITY selectButton.label "Wubrać…">
+<!ENTITY selectButton.accesskey "b">
+<!ENTITY MsgSelectDesc.label "Wubjerće e-mejlowe rjadowaki a diskusijne skupiny, kotrež chceće za wužiće offline sćahnyć.">
+<!ENTITY MsgSelectInd.label "Sćahnyć">
+<!ENTITY MsgSelectItems.label "Rjadowaki a diskusijne skupiny">

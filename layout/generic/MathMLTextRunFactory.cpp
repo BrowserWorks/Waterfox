@@ -541,8 +541,7 @@ void MathMLTextRunFactory::RebuildTextRun(
     }
 
     uint32_t ch = str[i];
-    if (NS_IS_HIGH_SURROGATE(ch) && i < length - 1 &&
-        NS_IS_LOW_SURROGATE(str[i + 1])) {
+    if (i < length - 1 && NS_IS_SURROGATE_PAIR(ch, str[i + 1])) {
       ch = SURROGATE_TO_UCS4(ch, str[i + 1]);
     }
     uint32_t ch2 = MathVariant(ch, mathVar);
@@ -640,6 +639,7 @@ void MathMLTextRunFactory::RebuildTextRun(
     params.explicitLanguage = styles[0]->mExplicitLanguage;
     params.userFontSet = pc->GetUserFontSet();
     params.textPerf = pc->GetTextPerfMetrics();
+    params.fontStats = pc->GetFontMatchingStats();
     params.featureValueLookup = pc->GetFontFeatureValuesLookup();
     RefPtr<nsFontMetrics> metrics =
         pc->DeviceContext()->GetMetricsFor(font, params);

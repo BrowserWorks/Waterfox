@@ -1,0 +1,202 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Проблема при завантаженні сторінки">
+<!ENTITY retry.label "Спробувати знову">
+<!ENTITY returnToPreviousPage.label "Повернутися назад">
+<!ENTITY returnToPreviousPage1.label "Назад (Рекомендовано)">
+<!ENTITY advanced2.label "Додатково…">
+<!ENTITY viewCertificate.label "Переглянути сертифікат">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "Сервер не знайдено">
+<!ENTITY dnsNotFound.longDesc1 "
+<strong>Якщо ви впевнені у правильності адреси, є ще три інші речі, які ви можете зробити:</strong>
+<ul>
+  <li>Спробуйте ще раз пізніше.</li>
+  <li>Перевірте ваше мережеве з'єднання.</li>
+  <li>Якщо у вас встановлений мережевий екран, перевірте чи для &brandShortName; дозволений доступ до Інтернету.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>Перевірте правильність назви файлу, відповідність регістру та відсутність інших помилок.</li>
+  <li>Перевірте, чи файл не був переміщений, перейменований або видалений.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>Він міг бути вилучений, переміщений, або дозволи файлу забороняють доступ.</li>
+</ul>
+">
+
+<!ENTITY generic.longDesc "
+<p>&brandShortName; не може завантажити цю сторінку з невизначеної причини.</p>
+">
+
+<!ENTITY captivePortal.title "Вхід в мережу">
+<!ENTITY captivePortal.longDesc2 "
+<p>Перш, ніж отримати доступ до Інтернету, ви повинні увійти в цю мережу.</p>
+">
+
+<!ENTITY openPortalLoginPage.label2 "Відкрити сторінку входу в мережу">
+
+<!ENTITY malformedURI.pageTitle "Недійсна URL-адреса">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>Вказаний документ більше недоступний у кеші &brandShortName;.</p><ul><li>З міркувань безпеки, &brandShortName; не перезавантажує вразливі документи автоматично.</li><li>Клацніть Спробувати знову, щоб перезавантажити документ з вебсайту.</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "<ul>
+  <li>Натисніть «Спробувати знову» щоб перемкнутись в онлайновий режим і перезавантажити сторінку.</li>
+</ul>">
+
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>Будь ласка, зв'яжіться з власниками вебсайту і повідомте їх про цю проблему.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>Будь ласка, зв'яжіться з власниками вебсайту і повідомте їх про цю проблему.</li>
+</ul>
+">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Для відкриття цієї адреси вам, можливо, доведеться встановити стороннє програмне забезпечення.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>Перевірте налаштування проксі-сервера і переконайтеся, що вони правильні.</li>
+  <li>Зв’яжіться з вашим системним адміністратором і переконайтеся, що проксі-сервер
+    працює.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.longDesc "
+<ul>
+  <li>Перевірте правильність встановлених налаштувань проксі-сервера.</li>
+  <li>Перевірте з’єднання вашого комп’ютера з мережею.</li>
+  <li>Якщо ваш комп’ютер або мережа захищені мережевим екраном чи проксі-сервером — переконайтеся,
+    що для &brandShortName; дозволено доступ до Інтернету.</li>
+</ul>
+">
+
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Ця проблема може виникати при вимиканні або забороні прийняття
+    кук.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>Переконайтеся, що у вашій системі встановлено Менеджер особистого
+    захисту.</li>
+  <li>Можливо, це відбулося через нетипову конфігурацію сервера.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>Сторінка, яку ви намагаєтесь переглянути, не може бути показана, тому що неможливо перевірити достовірність отриманих даних.</li>
+  <li>Будь ласка, зв'яжіться з власниками вебсайту і повідомте їх про цю проблему.</li>
+</ul>
+">
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara2 "&brandShortName; виявив ймовірну загрозу безпеки і не продовжив перехід на <span class='hostname'/>. Якщо ви відвідаєте цей сайт, зловмисники можуть спробувати викрасти вашу інформацію, наприклад, паролі, електронні адреси, або дані платіжних карток.">
+<!ENTITY certerror.sts.introPara "&brandShortName; виявив потенційну вразливість безпеки і не продовжив встановлення з'єднання з <span class='hostname'/>, тому що цей вебсайт вимагає захищене з'єднання.">
+
+<!ENTITY certerror.expiredCert.introPara "&brandShortName; виявив проблему і не встановив з'єднання з <span class='hostname'/>. Вебсайт має неправильну конфігурацію, або годинник вашого комп'ютера має неправильний час.">
+<!ENTITY certerror.expiredCert.secondPara2 "Схоже, що термін дії сертифіката вебсайту завершився, що не дозволяє &brandShortName; встановити безпечне з'єднання. Якщо ви відвідаєте цей сайт, зловмисники можуть викрасти інформацію, наприклад, паролі, адреси електронної пошти чи дані кредитних карток.">
+<!ENTITY certerror.expiredCert.sts.secondPara "Схоже, що термін дії сертифіката вебсайту завершився, що не дозволяє &brandShortName; встановити безпечне з'єднання.">
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "Як ви можете це виправити?">
+
+<!ENTITY certerror.unknownIssuer.whatCanYouDoAboutIt "<p>Найімовірніше, ця проблема стосується вебсайту, і ви не зможете її виправити.</p>
+<p>Якщо ви використовуєте корпоративний комп'ютер, або антивірусне програмне забезпечення, ви можете зв'язатися зі службою підтримки для отримання допомоги. Ви також можете сповістити адміністратора вебсайту про цю проблему.</p>">
+
+<!ENTITY certerror.expiredCert.whatCanYouDoAboutIt2 "
+<p>Годинник вашого комп'ютера налаштовано на <span id='wrongSystemTime_systemDate2'/>. Переконайтеся, що ваш комп'ютер має правильні системні налаштування дати, часу та часового поясу, після чого оновіть <span class='hostname'/>.</p>
+<p>Якщо ваш годинник налаштовано правильно, ймовірно, конфігурація сайту є неправильною і вам не вдасться це виправити. Ви можете повідомити про цю проблему адміністратора вебсайту.</p>
+">
+
+<!ENTITY certerror.badCertDomain.whatCanYouDoAboutIt "<p>Найімовірніше, ця проблема стосується вебсайту, і ви не зможете її виправити. Ви можете сповістити адміністратора вебсайту про цю проблему.</p>">
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>Сайт може бути тимчасово недоступний, або перевантажений запитами. Спробуйте знову
+    трохи згодом.</li>
+  <li>Якщо жодна сторінка не завантажується, перевірте з’єднання комп'ютера
+    з Інтернетом.</li>
+  <li>Якщо ваш комп’ютер або мережа захищені мережевим екраном чи проксі-сервером, переконайтеся,
+    що для &brandShortName; дозволено доступ до Інтернету.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; не дозволив цій сторінці бути завантаженою таким чином, через те що її політика безпеки вмісту не дозволяє зробити це.</p>">
+
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; не дозволив цій сторінці завантажитись таким чином, тому що вона має політику X-Frame-Options, що забороняє це.</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Сторінка, яку ви намагаєтесь переглянути, не може бути показана через те, що було виявлено помилку в передачі даних.</p><ul><li>Будь ласка, зв'яжіться з власниками вебсайту та повідомте їх про цю проблему.</li></ul>">
+
+<!ENTITY securityOverride.exceptionButton1Label "Погодитись на ризик і продовжити">
+
+<!ENTITY errorReporting.automatic2 "Звітувати про подібні помилки, щоб допомогти Mozilla виявляти й блокувати зловмисні сайти">
+<!ENTITY errorReporting.learnMore "Докладніше…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Будь ласка, зв’яжіться з власниками сайта та поінформуйте їх про цю проблему.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Додаткова інформація: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.pagetitle2  "Обережно: Попереду ймовірна загроза безпеки">
+<!ENTITY certerror.sts.pagetitle  "З'єднання не встановлено: Ймовірна загроза безпеки">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation1 "<span class='hostname'></span> має політику безпеки, що називається HTTP Strict Transport Security (HSTS), і це означає, що &brandShortName; може перейти сюди лише з використанням захищеного з'єднання. Ви не можете додати виняток для відвідування цього сайту.">
+<!ENTITY certerror.copyToClipboard.label "Копіювати текст у буфер обміну">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> використовує застарілу і вразливу до атак технологію безпеки. Нападник може з легкістю викрити інформацію, яка, на вашу думку, знаходиться в безпеці. Адміністратору сайту доведеться спочатку виправити це на сервері перш, ніж ви зможете відвідати сайт.</p><p>Код помилки: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Заблокована сторінка">
+
+<!ENTITY certerror.mitm.longDesc "<span class='hostname'></span>, найімовірніше, є безпечним сайтом, але захищене з'єднання не вдалося встановити. Ця проблема спричинена <span class='mitm-name'/> - програмним забезпеченням на вашому комп'ютері чи у вашій мережі.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt1 "Якщо ваше антивірусне програмне забезпечення має функцію сканування зашифрованих з'єднань (“мережний сканер” чи “https-сканер”), ви можете вимкнути її. Якщо це не спрацює, ви можете спробувати перевстановити антивірусне програмне забезпечення.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt2 "Якщо ви знаходитесь в корпоративній мережі, зв'яжіться зі своїм адміністратором.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt3 "Якщо ви не знайомі з <span class='mitm-name'/>, в такому разі це могла бути атака і вам краще не переходити на цей сайт.">
+<!ENTITY certerror.mitm.sts.whatCanYouDoAboutIt3 "Якщо ви не знайомі з <span class='mitm-name'/>, в такому разі це могла бути атака і ви нічого не зможете зробити, щоб отримати доступ до цього сайту.">
+
+<!ENTITY clockSkewError.longDesc "Ваш комп'ютер вважає, що це <span id='wrongSystemTime_systemDate1'/>, тому &brandShortName; не може встановити захищене з'єднання. Для відвідання <span class='hostname'></span>, оновіть системні налаштування дати, часу та часового поясу, після чого оновіть <span class='hostname'></span>.">
+
+<!ENTITY prefReset.longDesc "Схоже, що це можуть спричиняти ваші налаштування безпеки мережі. Чи хочете ви, щоб були відновлені типові налаштування?">
+<!ENTITY prefReset.label "Відновити типові налаштування">
+
+<!ENTITY enableTls10.longDesc "Цей вебсайт може не підтримувати протокол TLS 1.2, який є мінімальною версією, що підтримується &brandShortName;. Увімкнення TLS 1.0 і TLS 1.1 може дозволити успішно виконати це з'єднання.">
+<!ENTITY enableTls10.note "TLS 1.0 і TLS 1.1 буде остаточно вимкнено в майбутньому випуску.">
+<!ENTITY enableTls10.label "Увімкнути TLS 1.0 і 1.1">
+
+<!ENTITY networkProtocolError.longDesc "<p>Неможливо відобразити сторінку, яку ви намагаєтесь переглянути, тому що виявлено помилку мережевого протоколу.</p><ul><li>Зв'яжіться з власниками вебсайту, щоб повідомити їх про цю проблему.</li></ul>">

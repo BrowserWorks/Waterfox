@@ -1,3 +1,7 @@
+const { PermissionTestUtils } = ChromeUtils.import(
+  "resource://testing-common/PermissionTestUtils.jsm"
+);
+
 const BEHAVIOR_ACCEPT = Ci.nsICookieService.BEHAVIOR_ACCEPT;
 const BEHAVIOR_REJECT = Ci.nsICookieService.BEHAVIOR_REJECT;
 
@@ -86,10 +90,8 @@ this.CookiePolicyHelper = {
         await SpecialPowers.pushPrefEnv({ set: prefs });
       }
 
-      let uri = Services.io.newURI(TEST_DOMAIN);
-
       // Let's set the first cookie pref.
-      Services.perms.add(uri, "cookie", config.fromPermission);
+      PermissionTestUtils.add(TEST_DOMAIN, "cookie", config.fromPermission);
       await SpecialPowers.pushPrefEnv({
         set: [["network.cookie.cookieBehavior", config.fromBehavior]],
       });
@@ -102,15 +104,19 @@ this.CookiePolicyHelper = {
       await BrowserTestUtils.browserLoaded(browser);
 
       // Let's create an iframe.
-      await ContentTask.spawn(browser, { url: TEST_TOP_PAGE }, async obj => {
-        return new content.Promise(resolve => {
-          let ifr = content.document.createElement("iframe");
-          ifr.setAttribute("id", "iframe");
-          ifr.src = obj.url;
-          ifr.onload = resolve;
-          content.document.body.appendChild(ifr);
-        });
-      });
+      await SpecialPowers.spawn(
+        browser,
+        [{ url: TEST_TOP_PAGE }],
+        async obj => {
+          return new content.Promise(resolve => {
+            let ifr = content.document.createElement("iframe");
+            ifr.setAttribute("id", "iframe");
+            ifr.src = obj.url;
+            ifr.onload = () => resolve();
+            content.document.body.appendChild(ifr);
+          });
+        }
+      );
 
       // Let's exec the "good" callback.
       info(
@@ -119,9 +125,9 @@ this.CookiePolicyHelper = {
           " and permission to " +
           config.fromPermission
       );
-      await ContentTask.spawn(
+      await SpecialPowers.spawn(
         browser,
-        { callback: goodCb.toString() },
+        [{ callback: goodCb.toString() }],
         async obj => {
           let runnableStr = `(() => {return (${obj.callback});})();`;
           let runnable = eval(runnableStr); // eslint-disable-line no-eval
@@ -133,7 +139,7 @@ this.CookiePolicyHelper = {
       );
 
       // Now, let's change the cookie settings
-      Services.perms.add(uri, "cookie", config.toPermission);
+      PermissionTestUtils.add(TEST_DOMAIN, "cookie", config.toPermission);
       await SpecialPowers.pushPrefEnv({
         set: [["network.cookie.cookieBehavior", config.toBehavior]],
       });
@@ -145,9 +151,9 @@ this.CookiePolicyHelper = {
           " and permission to " +
           config.toPermission
       );
-      await ContentTask.spawn(
+      await SpecialPowers.spawn(
         browser,
-        { callback: goodCb.toString() },
+        [{ callback: goodCb.toString() }],
         async obj => {
           let runnableStr = `(() => {return (${obj.callback});})();`;
           let runnable = eval(runnableStr); // eslint-disable-line no-eval
@@ -170,9 +176,9 @@ this.CookiePolicyHelper = {
 
       // Let's exec the "bad" callback.
       info("Executing the test in a new tab");
-      await ContentTask.spawn(
+      await SpecialPowers.spawn(
         browser,
-        { callback: badCb.toString() },
+        [{ callback: badCb.toString() }],
         async obj => {
           let runnableStr = `(() => {return (${obj.callback});})();`;
           let runnable = eval(runnableStr); // eslint-disable-line no-eval

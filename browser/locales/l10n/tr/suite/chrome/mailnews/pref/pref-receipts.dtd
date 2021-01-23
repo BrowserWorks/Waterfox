@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE pref-receipts.dtd: UI for Mail/News Return Receipts prefs -->
+
+<!ENTITY pref.receipts.title "Alındı onayı">
+<!ENTITY prefReceipts.caption "Alındı onayı">
+<!ENTITY requestReceipt.label "E-postaları gönderirken her zaman alındı onayı iste">
+<!ENTITY requestReceipt.accesskey "p">
+<!ENTITY receiptArrive.label "Alındı onayı geldiğinde:">
+<!ENTITY leaveIt.label "Gelen kutusunda bırak">
+<!ENTITY leaveIt.accesskey "G">
+<!ENTITY moveToSent.label "&quot;Gönderilen&quot; dizinine taşı">
+<!ENTITY moveToSent.accesskey "n">
+<!ENTITY requestMDN.label "Alındı onayı isteği aldığımda:">
+<!ENTITY returnSome.label "Bazılarına alındı onayı gönder">
+<!ENTITY returnSome.accesskey "r">
+<!ENTITY never.label "Asla alındı onayı gönderme">
+<!ENTITY never.accesskey "n">
+<!ENTITY notInToCc.label "Eğer ben Gönderilen veya Bilgilendirilen kısmında değil isem:">
+<!ENTITY notInToCc.accesskey "E">
+<!ENTITY outsideDomain.label "Gönderen benim ağımın dışında ise:">
+<!ENTITY outsideDomain.accesskey "n">
+<!ENTITY otherCases.label "Öteki tüm konular için:">
+<!ENTITY otherCases.accesskey "o">
+<!ENTITY askMe.label "Bana sor">
+<!ENTITY alwaysSend.label "Her zaman gönder">
+<!ENTITY neverSend.label "Asla gönderme">

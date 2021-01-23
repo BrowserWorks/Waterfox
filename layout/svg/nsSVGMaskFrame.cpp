@@ -24,19 +24,6 @@ using namespace mozilla::dom::SVGUnitTypes_Binding;
 using namespace mozilla::gfx;
 using namespace mozilla::image;
 
-static LuminanceType GetLuminanceType(uint8_t aNSMaskType) {
-  switch (aNSMaskType) {
-    case NS_STYLE_MASK_TYPE_LUMINANCE:
-      return LuminanceType::LUMINANCE;
-    case NS_STYLE_COLOR_INTERPOLATION_LINEARRGB:
-      return LuminanceType::LINEARRGB;
-    default: {
-      NS_WARNING("Unknown SVG mask type, defaulting to luminance");
-      return LuminanceType::LUMINANCE;
-    }
-  }
-}
-
 nsIFrame* NS_NewSVGMaskFrame(PresShell* aPresShell, ComputedStyle* aStyle) {
   return new (aPresShell) nsSVGMaskFrame(aStyle, aPresShell->GetPresContext());
 }
@@ -54,59 +41,43 @@ already_AddRefed<SourceSurface> nsSVGMaskFrame::GetMaskForMaskedFrame(
   }
 
   gfxRect maskArea = GetMaskArea(aParams.maskedFrame);
+  if (maskArea.IsEmpty()) {
+    return nullptr;
+  }
   gfxContext* context = aParams.ctx;
   // Get the clip extents in device space:
   // Minimizing the mask surface extents (using both the current clip extents
   // and maskArea) is important for performance.
-  context->Save();
-  nsSVGUtils::SetClipRect(context, aParams.toUserSpace, maskArea);
-  gfxRect maskSurfaceRect = context->GetClipExtents(gfxContext::eDeviceSpace);
+  //
+  gfxRect maskSurfaceRectDouble = aParams.toUserSpace.TransformBounds(maskArea);
+  Rect maskSurfaceRect = ToRect(maskSurfaceRectDouble);
   maskSurfaceRect.RoundOut();
-  context->Restore();
 
-  bool resultOverflows;
-  IntSize maskSurfaceSize = nsSVGUtils::ConvertToSurfaceSize(
-      maskSurfaceRect.Size(), &resultOverflows);
-
-  if (resultOverflows || maskSurfaceSize.IsEmpty()) {
-    // Return value other then ImgDrawResult::SUCCESS, so the caller can skip
-    // painting the masked frame(aParams.maskedFrame).
-    return nullptr;
-  }
-
-  uint8_t maskType;
+  StyleMaskType maskType;
   if (aParams.maskMode == StyleMaskMode::MatchSource) {
     maskType = StyleSVGReset()->mMaskType;
   } else {
     maskType = aParams.maskMode == StyleMaskMode::Luminance
-                   ? NS_STYLE_MASK_TYPE_LUMINANCE
-                   : NS_STYLE_MASK_TYPE_ALPHA;
+                   ? StyleMaskType::Luminance
+                   : StyleMaskType::Alpha;
   }
 
   RefPtr<DrawTarget> maskDT;
-  if (maskType == NS_STYLE_MASK_TYPE_LUMINANCE) {
+  if (maskType == StyleMaskType::Luminance) {
     maskDT = context->GetDrawTarget()->CreateClippedDrawTarget(
-        maskSurfaceSize,
-        Matrix::Translation(maskSurfaceRect.x, maskSurfaceRect.y),
-        SurfaceFormat::B8G8R8A8);
+        maskSurfaceRect, SurfaceFormat::B8G8R8A8);
   } else {
     maskDT = context->GetDrawTarget()->CreateClippedDrawTarget(
-        maskSurfaceSize,
-        Matrix::Translation(maskSurfaceRect.x, maskSurfaceRect.y),
-        SurfaceFormat::A8);
+        maskSurfaceRect, SurfaceFormat::A8);
   }
 
   if (!maskDT || !maskDT->IsValid()) {
     return nullptr;
   }
 
-  Matrix maskSurfaceMatrix =
-      context->CurrentMatrix() *
-      ToMatrix(gfxMatrix::Translation(-maskSurfaceRect.TopLeft()));
-
-  RefPtr<gfxContext> tmpCtx = gfxContext::CreateOrNull(maskDT);
+  RefPtr<gfxContext> tmpCtx =
+      gfxContext::CreatePreservingTransformOrNull(maskDT);
   MOZ_ASSERT(tmpCtx);  // already checked the draw target above
-  tmpCtx->SetMatrix(maskSurfaceMatrix);
 
   mMatrixForChildren =
       GetMaskTransform(aParams.maskedFrame) * aParams.toUserSpace;
@@ -125,36 +96,29 @@ already_AddRefed<SourceSurface> nsSVGMaskFrame::GetMaskForMaskedFrame(
   }
 
   RefPtr<SourceSurface> surface;
-  if (maskType == NS_STYLE_MASK_TYPE_LUMINANCE) {
-    if (StyleSVG()->mColorInterpolation ==
-        NS_STYLE_COLOR_INTERPOLATION_LINEARRGB) {
-      maskType = NS_STYLE_COLOR_INTERPOLATION_LINEARRGB;
+  if (maskType == StyleMaskType::Luminance) {
+    auto luminanceType = LuminanceType::LUMINANCE;
+    if (StyleSVG()->mColorInterpolation == StyleColorInterpolation::Linearrgb) {
+      luminanceType = LuminanceType::LINEARRGB;
     }
 
-    RefPtr<SourceSurface> maskSnapshot = maskDT->IntoLuminanceSource(
-        GetLuminanceType(maskType), aParams.opacity);
+    RefPtr<SourceSurface> maskSnapshot =
+        maskDT->IntoLuminanceSource(luminanceType, aParams.opacity);
     if (!maskSnapshot) {
       return nullptr;
     }
-    surface = maskSnapshot.forget();
+    surface = std::move(maskSnapshot);
   } else {
-    maskDT->SetTransform(Matrix());
-    maskDT->FillRect(Rect(0, 0, maskSurfaceSize.width, maskSurfaceSize.height),
-                     ColorPattern(Color(1.0f, 1.0f, 1.0f, aParams.opacity)),
+    maskDT->FillRect(maskSurfaceRect,
+                     ColorPattern(DeviceColor::MaskWhite(aParams.opacity)),
                      DrawOptions(1, CompositionOp::OP_IN));
     RefPtr<SourceSurface> maskSnapshot = maskDT->Snapshot();
     if (!maskSnapshot) {
       return nullptr;
     }
-    surface = maskSnapshot.forget();
+    surface = std::move(maskSnapshot);
   }
 
-  // Moz2D transforms in the opposite direction to Thebes
-  if (!maskSurfaceMatrix.Invert()) {
-    return nullptr;
-  }
-
-  *aParams.maskTransform = maskSurfaceMatrix;
   return surface.forget();
 }
 

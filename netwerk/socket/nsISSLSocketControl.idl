@@ -33,17 +33,6 @@ interface nsISSLSocketControl : nsISupports {
 
     [noscript] void setNPNList(in nsCStringTArrayRef aNPNList);
 
-    /* negotiatedNPN is '' if no NPN list was provided by the client,
-     * or if the server did not select any protocol choice from that
-     * list. That also includes the case where the server does not
-     * implement NPN.
-     *
-     * If negotiatedNPN is read before NPN has progressed to the point
-     * where this information is available NS_ERROR_NOT_CONNECTED is
-     * raised.
-     */
-    readonly attribute ACString negotiatedNPN;
-
     /* For 0RTT we need to know the alpn protocol selected for the last tls
      * session. This function will return a value if applicable or an error
      * NS_ERROR_NOT_AVAILABLE.
@@ -149,16 +138,10 @@ interface nsISSLSocketControl : nsISupports {
      */
     [infallible] readonly attribute boolean clientCertSent;
 
-    /**
-     * bypassAuthentication is true if the server certificate checks are
-     * not be enforced. This is to enable non-secure transport over TLS.
-     */
-    [infallible] readonly attribute boolean bypassAuthentication;
-
     /*
      * failedVerification is true if any enforced certificate checks have failed.
-     * Connections that have not yet tried to verify, have verifications bypassed,
-     * or are using acceptable exceptions will all return false.
+     * Connections that have not yet tried to verify, or are using acceptable
+     * exceptions will all return false.
      */
     [infallible] readonly attribute boolean failedVerification;
 
@@ -169,14 +152,8 @@ interface nsISSLSocketControl : nsISupports {
     attribute ACString esniTxt;
 
     /**
-     * If the server certificate is present, serverCertIsBuiltInRoot is true if
-     * the root certificate for the server certificate is built in.
+     * The id used to uniquely identify the connection to the peer.
      */
-    readonly attribute boolean serverRootCertIsBuiltInRoot;
-
-    /**
-     * True iff the connection was resumed using the resumption token.
-     */
-    readonly attribute boolean resumed;
+    readonly attribute ACString peerId;
 };
 

@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -55,45 +54,45 @@ async function testCreateNewMultiUnfinished(inspector, view) {
   );
 
   is(
-    ruleEditor.rule.textProps[0].name,
+    getTextProperty(view, 0, { color: "blue" }).name,
     "color",
     "Should have correct property name"
   );
   is(
-    ruleEditor.rule.textProps[0].value,
+    getTextProperty(view, 0, { color: "blue" }).value,
     "blue",
     "Should have correct property value"
   );
 
   is(
-    ruleEditor.rule.textProps[1].name,
+    getTextProperty(view, 0, { background: "orange" }).name,
     "background",
     "Should have correct property name"
   );
   is(
-    ruleEditor.rule.textProps[1].value,
+    getTextProperty(view, 0, { background: "orange" }).value,
     "orange",
     "Should have correct property value"
   );
 
   is(
-    ruleEditor.rule.textProps[2].name,
+    getTextProperty(view, 0, { "text-align": "center" }).name,
     "text-align",
     "Should have correct property name"
   );
   is(
-    ruleEditor.rule.textProps[2].value,
+    getTextProperty(view, 0, { "text-align": "center" }).value,
     "center",
     "Should have correct property value"
   );
 
   is(
-    ruleEditor.rule.textProps[3].name,
+    getTextProperty(view, 0, { "border-color": "red" }).name,
     "border-color",
     "Should have correct property name"
   );
   is(
-    ruleEditor.rule.textProps[3].value,
+    getTextProperty(view, 0, { "border-color": "red" }).value,
     "red",
     "Should have correct property value"
   );

@@ -35,30 +35,6 @@ const int32_t nsAnnotationService::kAnnoIndex_Type = 6;
 const int32_t nsAnnotationService::kAnnoIndex_DateAdded = 7;
 const int32_t nsAnnotationService::kAnnoIndex_LastModified = 8;
 
-namespace {
-
-// Fires `onItemChanged` notifications for bookmark annotation changes.
-void NotifyItemChanged(const BookmarkData& aBookmark, const nsACString& aName,
-                       uint16_t aSource, bool aDontUpdateLastModified) {
-  if (aBookmark.id < 0) {
-    return;
-  }
-
-  ItemChangeData changeData;
-  changeData.bookmark = aBookmark;
-  changeData.isAnnotation = true;
-  changeData.updateLastModified = !aDontUpdateLastModified;
-  changeData.source = aSource;
-  changeData.property = aName;
-
-  nsNavBookmarks* bookmarks = nsNavBookmarks::GetBookmarksService();
-  if (bookmarks) {
-    bookmarks->NotifyItemChanged(changeData);
-  }
-}
-
-}  // namespace
-
 PLACES_FACTORY_SINGLETON_IMPLEMENTATION(nsAnnotationService, gAnnotationService)
 
 NS_IMPL_ISUPPORTS(nsAnnotationService, nsIAnnotationService,
@@ -139,7 +115,7 @@ nsAnnotationService::SetItemAnnotation(int64_t aItemId, const nsACString& aName,
         break;
       }
       // Fall through int64_t case otherwise.
-      MOZ_FALLTHROUGH;
+      [[fallthrough]];
     }
     case nsIDataType::VTYPE_INT64:
     case nsIDataType::VTYPE_UINT64: {
@@ -153,7 +129,7 @@ nsAnnotationService::SetItemAnnotation(int64_t aItemId, const nsACString& aName,
         break;
       }
       // Fall through double case otherwise.
-      MOZ_FALLTHROUGH;
+      [[fallthrough]];
     }
     case nsIDataType::VTYPE_FLOAT:
     case nsIDataType::VTYPE_DOUBLE: {
@@ -185,8 +161,6 @@ nsAnnotationService::SetItemAnnotation(int64_t aItemId, const nsACString& aName,
     default:
       return NS_ERROR_NOT_IMPLEMENTED;
   }
-
-  NotifyItemChanged(bookmark, aName, aSource, aDontUpdateLastModified);
 
   return NS_OK;
 }
@@ -308,70 +282,6 @@ nsAnnotationService::GetItemAnnotation(int64_t aItemId, const nsACString& aName,
   return GetValueFromStatement(statement, _retval);
 }
 
-NS_IMETHODIMP
-nsAnnotationService::GetItemAnnotationInfo(int64_t aItemId,
-                                           const nsACString& aName,
-                                           nsIVariant** _value, int32_t* _flags,
-                                           uint16_t* _expiration,
-                                           uint16_t* _storageType) {
-  NS_ENSURE_ARG_MIN(aItemId, 1);
-  NS_ENSURE_ARG_POINTER(_value);
-  NS_ENSURE_ARG_POINTER(_flags);
-  NS_ENSURE_ARG_POINTER(_expiration);
-  NS_ENSURE_ARG_POINTER(_storageType);
-
-  nsCOMPtr<mozIStorageStatement> statement;
-  nsresult rv = StartGetAnnotation(aItemId, aName, statement);
-  if (NS_FAILED(rv)) return rv;
-
-  mozStorageStatementScoper scoper(statement);
-  *_flags = statement->AsInt32(kAnnoIndex_Flags);
-  *_expiration = (uint16_t)statement->AsInt32(kAnnoIndex_Expiration);
-  int32_t type = (uint16_t)statement->AsInt32(kAnnoIndex_Type);
-  if (type == 0) {
-    // For annotations created before explicit typing,
-    // we can't determine type, just return as string type.
-    *_storageType = nsIAnnotationService::TYPE_STRING;
-  } else {
-    *_storageType = type;
-  }
-
-  return GetValueFromStatement(statement, _value);
-}
-
-NS_IMETHODIMP
-nsAnnotationService::GetItemAnnotationNames(int64_t aItemId,
-                                            nsTArray<nsCString>& _result) {
-  NS_ENSURE_ARG_MIN(aItemId, 1);
-
-  _result.Clear();
-
-  nsCOMPtr<mozIStorageStatement> statement;
-  statement = mDB->GetStatement(
-      "SELECT n.name "
-      "FROM moz_anno_attributes n "
-      "JOIN moz_items_annos a ON a.anno_attribute_id = n.id "
-      "WHERE a.item_id = :item_id");
-  NS_ENSURE_STATE(statement);
-  mozStorageStatementScoper scoper(statement);
-
-  nsresult rv =
-      statement->BindInt64ByName(NS_LITERAL_CSTRING("item_id"), aItemId);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  bool hasResult = false;
-  while (NS_SUCCEEDED(statement->ExecuteStep(&hasResult)) && hasResult) {
-    nsAutoCString name;
-    rv = statement->GetUTF8String(0, name);
-    NS_ENSURE_SUCCESS(rv, rv);
-    if (!_result.AppendElement(name, fallible)) {
-      return NS_ERROR_OUT_OF_MEMORY;
-    }
-  }
-
-  return NS_OK;
-}
-
 /**
  * @note We don't remove anything from the moz_anno_attributes table. If we
  *       delete the last item of a given name, that item really should go away.
@@ -418,8 +328,6 @@ nsAnnotationService::RemoveItemAnnotation(int64_t aItemId,
   BookmarkData bookmark;
   nsresult rv = RemoveAnnotationInternal(aItemId, &bookmark, aName);
   NS_ENSURE_SUCCESS(rv, rv);
-
-  NotifyItemChanged(bookmark, aName, aSource, false);
 
   return NS_OK;
 }

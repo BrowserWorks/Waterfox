@@ -22,7 +22,6 @@
 #include <unistd.h>
 
 #include "mozilla/Atomics.h"
-#include "mozilla/NullPtr.h"
 #include "mozilla/PodOperations.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/ipc/FileDescriptor.h"
@@ -87,7 +86,7 @@ class SandboxBrokerTest : public ::testing::Test {
     mServer = SandboxBroker::Create(GetPolicy(), getpid(), fd);
     ASSERT_NE(mServer, nullptr);
     ASSERT_TRUE(fd.IsValid());
-    auto rawFD = fd.ClonePlatformHandle();
+    auto rawFD = fd.TakePlatformHandle();
     mClient.reset(new SandboxBrokerClient(rawFD.release()));
   }
 

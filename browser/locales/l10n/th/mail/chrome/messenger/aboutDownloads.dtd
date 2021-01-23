@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "ไฟล์ที่บันทึกไว้">
+<!ENTITY aboutDownloads.empty                      "ไม่มีไฟล์ที่บันทึกไว้">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "เปิดโฟลเดอร์ที่บรรจุ">
+<!ENTITY cmd.show.accesskey                        "ด">
+<!ENTITY cmd.showMac.label                         "แสดงใน Finder">
+<!ENTITY cmd.showMac.accesskey                     "ส">
+<!ENTITY cmd.open.label                            "เปิด">
+<!ENTITY cmd.open.accesskey                        "ป">
+<!ENTITY cmd.removeFromHistory.label               "เอาออกจากประวัติ">
+<!ENTITY cmd.removeFromHistory.accesskey           "อ">
+<!ENTITY cmd.clearList.label                       "ล้างรายการ">
+<!ENTITY cmd.clearList.accesskey                   "ล">
+<!ENTITY cmd.clearList.tooltip                     "เอารายการทั้งหมดออกจากรายการไฟล์ที่บันทึกไว้ ยกเว้นการดาวน์โหลดที่ดำเนินอยู่">
+<!ENTITY cmd.searchDownloads.label                 "ค้นหา…">
+<!ENTITY cmd.searchDownloads.key                   "F">

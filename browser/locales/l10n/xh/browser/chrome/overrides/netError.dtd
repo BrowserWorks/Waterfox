@@ -1,0 +1,84 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Kukho ingxaki ngokulayisha ikhasi">
+<!ENTITY retry.label "Zama Kwakhona">
+<!ENTITY returnToPreviousPage.label "Yiya Emva">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!-- Localization note (dnsNotFound.title1) - "Hmm" is a sound made when considering or puzzling over something. You don't have to include it in your translation if your language does not have a written word like this. -->
+
+<!ENTITY fileNotFound.longDesc "<ul> <li>Khangela igama lefayile yoonobumba okanye ezinye iimpazamo zokutayipha.</li> <li>Khangela ubone ukuba ingaba ifayile yashenxiswa, yathiywa ngokutsha okanye yacinywa na.</li> </ul>">
+
+<!ENTITY fileAccessDenied.longDesc "<ul><li>Kusenokwenzeka isusiwe, ikhutshiwe, okanye imvume yefayile kungenzeka ithintela ufikelelo.</li></ul>">
+
+<!ENTITY generic.longDesc "<p>I-&brandShortName;ayinakho ukulayisha eli khasi ngesizathu esithile.</p>">
+
+<!ENTITY captivePortal.title "Loga ungene kwinethwekhi">
+<!ENTITY captivePortal.longDesc2 "<p>Umele ungene kule nethwekhi ngaphambi kokuba ufikelele kwi-Intanethi.</p>">
+
+<!ENTITY openPortalLoginPage.label2 "Vula iPhepha lokuLoga uNgene kwiNethwekhi">
+
+<!-- Localization note (malformedURI.title1) - "Hmm" is a sound made when considering or puzzling over something. You don't have to include it in your translation if your language does not have a written word like this. -->
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>Uxwebhu oluceliweyo alufumaneki kwikhetshi ye-&brandShortName;</p><ul><li>Njengesilumkiso sokhuseleko, i-&brandShortName; ayiwaceli kwakhona ngokwayo amaxwebhu anobuzaza.</li><li>Cofa uZama kwakhona ukucela kwakhona uxwebhu kwiwebhusayithi.</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "<ul> <li>Cinezela &quot;Zama Kwakhona&quot; ukutshintshela kwimo yeintanethi kwaye ulayishe ngokutsha ikhasi.</li> </ul>">
+
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Nceda uqhagamshelane nabanini bewebhusayithi ubachazele ngale ngxaki.</li> </ul>">
+
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Nceda uqhagamshelane nabanini bewebhusayithi ubachazele ngale ngxaki.</li> </ul>">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Kunokudingeka ukuba ufakele enye isoftwe ukuze uvule le dilesi.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Khangela iisethingi zommeli ukuqinisekisa ukuba zifanelekile.</li> <li>Qhagamshelana nomlawuli wakho wenethiwekhi ukuqinisekisa ukuba iseva yeproksi iyasebenza.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Khangela iisethingi zommeli ukuqinisekisa ukuba zifanelekile.</li> <li>Khangela uqinisekise ukuba ikhompyutha yakho inonxibelelwano olusebenzayo lwenethiwekhi.</li> <li>Ukuba ikhompyutha yakho okanye inethiwekhi ayikhuselwanga yi-firewall okanye iproksi, qiniseka ukuba i-&brandShortName; ivunyelwe ukufikelela kwiWebhu.</li> </ul>">
+
+<!ENTITY redirectLoop.longDesc "<ul> <li>Le ngxaki maxa wambi ingabangelwa ngokungasebenzisi okanye ngokwala ukwamkela iikhuki.</li> </ul>">
+
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Khangela ukuqinisekisa ukuba isistim yakho ine-Personal Security Manager efakelweyo.</li> <li>Oku kunokuba ngenxa yolungelelwano olungekho semgangathweni kwiseva.</li> </ul>">
+
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Ikhasi ozama ukulijonga alinakho ukuboniswa kuba ukufaneleka kweengcombolo ezifunyenweyo akunakuqinisekiswa.</li>  <li>Nceda uqhagamshelane nabanini bewebhusayithi ubachazele ngale ngxaki.</li> </ul>">
+
+<!ENTITY sharedLongDesc "<ul> <li>Isayithi isenokungafumaneki okwethutyana okanye ixakeke kakhulu. Zama kwakhona kwimizuzwana embalwa.</li> <li>Ukuba akukwazi ukulayisha nawaphi na amakhasi, khangela unxibelelwano lwenethiwekhi yekhompyutha yakho.</li> <li>Ukuba ikhompyutha yakho okanye inethiwekhi ayikhuselwanga yi-firewall okanye iproksi, qiniseka ukuba i-&brandShortName; ivunyelwe ukufikelela kwiWebhu.</li> </ul>">
+
+<!ENTITY cspBlocked.longDesc "<p>i-&brandShortName; ithintele eli khasi ukuba lilayishe ngale ndlela kuba ikhasi linomgaqonkqubo wokhuseleko lomxholo elingakuvumeliyo.</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Ikhasi ozama ukulijonga alinakuboniswa kuba kubhaqwe imposiso ekuthunyelweni kweengcombolo.</p><ul><li>Nceda uqhagamshelane nabanini bewebhusayithi ubachazele ngale ngxaki.</li></ul>">
+
+
+<!ENTITY errorReporting.automatic2 "Xela iimpazamo ezifana nale ukunceda uMozilla afumanise aze abhloke iisayithi eziyingozi">
+<!ENTITY errorReporting.learnMore "Funda okungakumbi…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Nceda uqhagamshelane nabanini bewebhusayithi ubachazele ngale ngxaki.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Inkcazelo ehambele phambili: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.copyToClipboard.label "Khuphela umbhalo kwiklipbhodi">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span>isebenzisa iteknoloji yokhuseleko ephelelwe lixesha nesesichengeni sokuhlaselwa. Umhlaseli unokuthi ngokulula atyhile inkcazelo obucinga ukuba ikhuselekile. Umlawuli wewebhsayithi kuya kufuneka aqale alungise iseva kuqala ngaphambi kokuba  utyelele isayithi.</p><p>ERROR CODE: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+
+<!ENTITY prefReset.longDesc "Kukhangeleka ngathi iisetingi zakho zokhuseleko lwenetwekhi kusenokwenzeka zibangela oku. Ngaba ufuna ukuba iisetingi zibuyiselwe?">
+<!ENTITY prefReset.label "Buyisela iisetingi zeedifolti">
+

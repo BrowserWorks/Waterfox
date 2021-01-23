@@ -78,7 +78,7 @@ GetEntryHelper::GetEntryHelper(FileSystemDirectoryEntry* aParentEntry,
                                FileSystemDirectoryEntry::GetInternalType aType)
     : mParentEntry(aParentEntry),
       mDirectory(aDirectory),
-      mParts(aParts),
+      mParts(aParts.Clone()),
       mFileSystem(aFileSystem),
       mSuccessCallback(aSuccessCallback),
       mErrorCallback(aErrorCallback),
@@ -90,7 +90,7 @@ GetEntryHelper::GetEntryHelper(FileSystemDirectoryEntry* aParentEntry,
   MOZ_ASSERT(aSuccessCallback || aErrorCallback);
 }
 
-GetEntryHelper::~GetEntryHelper() {}
+GetEntryHelper::~GetEntryHelper() = default;
 
 namespace {
 

@@ -355,11 +355,11 @@ var Scheduler = (this.Scheduler = {
           // The worker still holds resources. Report them.
 
           let msg = "";
-          if (openedFiles.length > 0) {
+          if (openedFiles.length) {
             msg +=
               "The following files are still open:\n" + openedFiles.join("\n");
           }
-          if (openedDirectoryIterators.length > 0) {
+          if (openedDirectoryIterators.length) {
             msg +=
               "The following directory iterators are still open:\n" +
               openedDirectoryIterators.join("\n");
@@ -625,7 +625,7 @@ if (SharedAll.Config.DEBUG && Scheduler.launched) {
 const PREF_OSFILE_TEST_SHUTDOWN_OBSERVER =
   "toolkit.osfile.test.shutdown.observer";
 
-AsyncShutdown.webWorkersShutdown.addBlocker(
+AsyncShutdown.xpcomWillShutdown.addBlocker(
   "OS.File: flush pending requests, warn about unclosed files, shut down service.",
   async function() {
     // Give clients a last chance to enqueue requests.
@@ -1518,10 +1518,10 @@ DirectoryIterator.prototype = {
     if (this._isClosed) {
       return { value: undefined, done: true };
     }
-    let { value, done } = await Scheduler.post(
-      "DirectoryIterator_prototype_next",
-      [iterator]
-    );
+    let {
+      value,
+      done,
+    } = await Scheduler.post("DirectoryIterator_prototype_next", [iterator]);
     if (done) {
       this.close();
       return { value: undefined, done: true };
@@ -1575,9 +1575,9 @@ File.Error = OSError;
 File.DirectoryIterator = DirectoryIterator;
 
 var OS = {};
-this.OS.File = File;
-this.OS.Constants = SharedAll.Constants;
-this.OS.Shared = {
+OS.File = File;
+OS.Constants = SharedAll.Constants;
+OS.Shared = {
   LOG: SharedAll.LOG,
   Type: SysAll.Type,
   get DEBUG() {
@@ -1587,8 +1587,8 @@ this.OS.Shared = {
     return (SharedAll.Config.DEBUG = x);
   },
 };
-Object.freeze(this.OS.Shared);
-this.OS.Path = Path;
+Object.freeze(OS.Shared);
+OS.Path = Path;
 
 // Returns a resolved promise when all the queued operation have been completed.
 Object.defineProperty(OS.File, "queue", {

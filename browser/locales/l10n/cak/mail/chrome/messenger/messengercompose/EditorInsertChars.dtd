@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Tich'ik Tz'ib'">
+<!ENTITY category.label "Ruwäch">
+<!ENTITY letter.label "Tz'ib':">
+<!ENTITY letter.accessKey "T">
+<!ENTITY character.label "Tz'ib':">
+<!ENTITY character.accessKey "T">
+<!ENTITY accentUpper.label "K'oxotz'ib' pa Nimatz'ib'">
+<!ENTITY accentLower.label "K'oxotz'ib' pa Ch'utitz'ib'">
+<!ENTITY otherUpper.label "Juley chik Nimatz'ib'">
+<!ENTITY otherLower.label "Juley chik Ch'utitz'ib'">
+<!ENTITY commonSymbols.label "Relik Tz'ib'">
+<!ENTITY insertButton.label "Tich'ap">
+<!ENTITY closeButton.label "Titz'apïx">

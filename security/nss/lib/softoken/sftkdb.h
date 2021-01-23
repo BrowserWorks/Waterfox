@@ -17,7 +17,8 @@ CK_RV sftkdb_GetAttributeValue(SFTKDBHandle *handle,
                                CK_OBJECT_HANDLE object_id, CK_ATTRIBUTE *template, CK_ULONG count);
 CK_RV sftkdb_SetAttributeValue(SFTKDBHandle *handle, SFTKObject *object,
                                const CK_ATTRIBUTE *template, CK_ULONG count);
-CK_RV sftkdb_DestroyObject(SFTKDBHandle *handle, CK_OBJECT_HANDLE object_id);
+CK_RV sftkdb_DestroyObject(SFTKDBHandle *handle, CK_OBJECT_HANDLE object_id,
+                           CK_OBJECT_CLASS objclass);
 CK_RV sftkdb_closeDB(SFTKDBHandle *handle);
 
 /* keydb functions */
@@ -25,6 +26,7 @@ CK_RV sftkdb_closeDB(SFTKDBHandle *handle);
 SECStatus sftkdb_PWIsInitialized(SFTKDBHandle *keydb);
 SECStatus sftkdb_CheckPassword(SFTKDBHandle *keydb, const char *pw,
                                PRBool *tokenRemoved);
+SECStatus sftkdb_CheckPasswordNull(SFTKDBHandle *keydb, PRBool *tokenRemoved);
 SECStatus sftkdb_PWCached(SFTKDBHandle *keydb);
 SECStatus sftkdb_HasPasswordSet(SFTKDBHandle *keydb);
 SECStatus sftkdb_ResetKeyDB(SFTKDBHandle *keydb);
@@ -69,3 +71,5 @@ SFTKDBHandle *sftk_getKeyDB(SFTKSlot *slot);
 SFTKDBHandle *sftk_getDBForTokenObject(SFTKSlot *slot,
                                        CK_OBJECT_HANDLE objectID);
 void sftk_freeDB(SFTKDBHandle *certHandle);
+
+PRBool sftk_isLegacyIterationCountAllowed(void);

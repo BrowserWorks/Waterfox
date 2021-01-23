@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title.private "Вы ў акне адасобленага азірання">
+<!ENTITY privatebrowsingpage.title.normal "Вы хочаце пачаць адасобленае азіранне?">
+<!ENTITY privatebrowsingpage.status.private "&brandShortName; не будзе запамінаць гісторыю для гэтага акна.">
+<!ENTITY privatebrowsingpage.status.normal "Вы зараз не ў адасобленым акне.">
+<!ENTITY privatebrowsingpage.common.description "У адасобленым вакне &brandShortName; не захоўвае ні гісторыі азірання, ні гісторыі пошуку, ні гісторыі сцягванняў, ні гісторыі формаў сеціва, ні бірак, ні часовых файлаў інтэрнэту.  Тым не менш, сцягнутыя вамі файлы і зробленыя вамі закладкі будуць захованы.">
+<!ENTITY privatebrowsingpage.track.warn "Нават калі гэты кампутар не мае запісу вашай гісторыі азірання, ваш наймальнік або дастаўшчык паслугаў Інтэрнэту могуць быць здольнымі адсочваць старонкі, якія вы наведваеце.">
+<!ENTITY privatebrowsingpage.learnmore.label "Падрабязней">
+<!ENTITY privatebrowsingpage.learnmore.accesskey "П">
+<!ENTITY privatebrowsingpage.close.info "Пасля завяршэння зачыніце гэтае акно, каб спыніць адасобленае азіранне.">
+<!ENTITY privatebrowsingpage.close.label "Закрыць гэтае акно.">
+<!ENTITY privatebrowsingpage.close.accesskey "к">
+<!ENTITY privatebrowsingpage.start.info "Каб пачаць адасобленае азіранне, пстрыкніце кнопку ніжэй або выберыце Файл ▶ Стварыць ▶ Адасобленае акно ў меню.">
+<!ENTITY privatebrowsingpage.private.label "Адчыніць новае акно адасобленага азірання.">
+<!ENTITY privatebrowsingpage.private.accesskey "А">

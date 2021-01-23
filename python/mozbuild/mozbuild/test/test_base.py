@@ -2,17 +2,16 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import unicode_literals
+from __future__ import absolute_import, print_function, unicode_literals
 
 import json
 import os
 import shutil
-import subprocess
 import sys
 import tempfile
 import unittest
 
-from cStringIO import StringIO
+from six import StringIO
 from mozfile.mozfile import NamedTemporaryFile
 
 from mozunit import main
@@ -23,7 +22,6 @@ from mozbuild.base import (
     BadEnvironmentException,
     MachCommandBase,
     MozbuildObject,
-    ObjdirMismatchException,
     PathArgument,
 )
 
@@ -56,8 +54,8 @@ class TestMozbuildObject(unittest.TestCase):
     def test_objdir_config_guess(self):
         base = self.get_base()
 
-        with NamedTemporaryFile() as mozconfig:
-            os.environ[b'MOZCONFIG'] = mozconfig.name
+        with NamedTemporaryFile(mode='wt') as mozconfig:
+            os.environ['MOZCONFIG'] = mozconfig.name
 
             self.assertIsNotNone(base.topobjdir)
             self.assertEqual(len(base.topobjdir.split()), 1)
@@ -70,22 +68,19 @@ class TestMozbuildObject(unittest.TestCase):
         """Trailing slashes in topobjdir should be removed."""
         base = self.get_base()
 
-        with NamedTemporaryFile() as mozconfig:
+        with NamedTemporaryFile(mode='wt') as mozconfig:
             mozconfig.write('mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/foo/')
             mozconfig.flush()
-            os.environ[b'MOZCONFIG'] = mozconfig.name
+            os.environ['MOZCONFIG'] = mozconfig.name
 
             self.assertEqual(base.topobjdir, mozpath.join(base.topsrcdir,
-                'foo'))
+                                                          'foo'))
             self.assertTrue(base.topobjdir.endswith('foo'))
 
     def test_objdir_config_status(self):
         """Ensure @CONFIG_GUESS@ is handled when loading mozconfig."""
         base = self.get_base()
-        cmd = base._normalize_command(
-            [os.path.join(topsrcdir, 'build', 'autoconf', 'config.guess')],
-            True)
-        guess = subprocess.check_output(cmd, cwd=topsrcdir).strip()
+        guess = base.resolve_config_guess()
 
         # There may be symlinks involved, so we use real paths to ensure
         # path consistency.
@@ -109,7 +104,7 @@ class TestMozbuildObject(unittest.TestCase):
                     mozconfig=mozconfig,
                 ), fh)
 
-            os.environ[b'MOZCONFIG'] = mozconfig.encode('utf-8')
+            os.environ['MOZCONFIG'] = mozconfig
             os.chdir(topobjdir)
 
             obj = MozbuildObject.from_environment(
@@ -138,7 +133,7 @@ class TestMozbuildObject(unittest.TestCase):
                     mozconfig=mozconfig,
                 ), fh)
 
-            os.environ[b'MOZCONFIG'] = mozconfig.encode('utf-8')
+            os.environ['MOZCONFIG'] = mozconfig
             child = os.path.join(topobjdir, 'foo', 'bar')
             os.makedirs(child)
             os.chdir(child)
@@ -152,7 +147,8 @@ class TestMozbuildObject(unittest.TestCase):
             os.chdir(self._old_cwd)
             shutil.rmtree(d)
 
-    @unittest.skipIf(not hasattr(os, 'symlink'), 'symlinks not available.')
+    @unittest.skipIf(not hasattr(os, 'symlink') or os.name == 'nt',
+                     'symlinks not available.')
     def test_symlink_objdir(self):
         """Objdir that is a symlink is loaded properly."""
         d = os.path.realpath(tempfile.mkdtemp())
@@ -214,7 +210,7 @@ class TestMozbuildObject(unittest.TestCase):
             context.topdir = topsrcdir
             context.settings = None
             context.log_manager = None
-            context.detect_virtualenv_mozinfo=False
+            context.detect_virtualenv_mozinfo = False
 
             o = MachCommandBase(context)
 
@@ -280,7 +276,7 @@ class TestMozbuildObject(unittest.TestCase):
             context.topdir = topsrcdir
             context.settings = None
             context.log_manager = None
-            context.detect_virtualenv_mozinfo=False
+            context.detect_virtualenv_mozinfo = False
 
             stdout = sys.stdout
             sys.stdout = StringIO()
@@ -298,16 +294,38 @@ class TestMozbuildObject(unittest.TestCase):
             shutil.rmtree(d)
 
     def test_config_environment(self):
-        base = self.get_base(topobjdir=topobjdir)
+        d = os.path.realpath(tempfile.mkdtemp())
 
-        ce = base.config_environment
-        self.assertIsInstance(ce, ConfigEnvironment)
+        try:
+            with open(os.path.join(d, 'config.status'), 'w') as fh:
+                fh.write('# coding=utf-8\n')
+                fh.write('from __future__ import unicode_literals\n')
+                fh.write("topobjdir = '%s'\n" % mozpath.normsep(d))
+                fh.write("topsrcdir = '%s'\n" % topsrcdir)
+                fh.write("mozconfig = None\n")
+                fh.write("defines = { 'FOO': 'foo' }\n")
+                fh.write("non_global_defines = ['BAR']\n")
+                fh.write("substs = { 'QUX': 'qux' }\n")
+                fh.write("__all__ = ['topobjdir', 'topsrcdir', 'defines', "
+                         "'non_global_defines', 'substs', 'mozconfig']")
 
-        self.assertEqual(base.defines, ce.defines)
-        self.assertEqual(base.substs, ce.substs)
+            base = self.get_base(topobjdir=d)
 
-        self.assertIsInstance(base.defines, dict)
-        self.assertIsInstance(base.substs, dict)
+            ce = base.config_environment
+            self.assertIsInstance(ce, ConfigEnvironment)
+
+            self.assertEqual(base.defines, ce.defines)
+            self.assertEqual(base.substs, ce.substs)
+
+            self.assertEqual(base.defines, {'FOO': 'foo'})
+            self.assertEqual(base.substs, {
+                'ACDEFINES': '-DFOO=foo',
+                'ALLEMPTYSUBSTS': '',
+                'ALLSUBSTS': 'ACDEFINES = -DFOO=foo\nQUX = qux',
+                'QUX': 'qux',
+            })
+        finally:
+            shutil.rmtree(d)
 
     def test_get_binary_path(self):
         base = self.get_base(topobjdir=topobjdir)
@@ -332,7 +350,7 @@ class TestMozbuildObject(unittest.TestCase):
             substs.append(('BIN_SUFFIX', ''))
 
         base._config_environment = ConfigEnvironment(base.topsrcdir,
-            base.topobjdir, substs=substs)
+                                                     base.topobjdir, substs=substs)
 
         p = base.get_binary_path('xpcshell', False)
         if platform.startswith('darwin'):
@@ -365,6 +383,7 @@ class TestMozbuildObject(unittest.TestCase):
             self.assertTrue(p.endswith('foobar.exe'))
         else:
             self.assertTrue(p.endswith('foobar'))
+
 
 class TestPathArgument(unittest.TestCase):
     def test_path_argument(self):
@@ -403,6 +422,7 @@ class TestPathArgument(unittest.TestCase):
         self.assertEqual(p.relpath(), "foo/bar")
         self.assertEqual(p.srcdir_path(), "/src/foo/bar")
         self.assertEqual(p.objdir_path(), "/src/obj/foo/bar")
+
 
 if __name__ == '__main__':
     main()

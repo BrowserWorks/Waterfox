@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Sayfa Renkleri ve Arka Plan">
+<!ENTITY pageColors.label "Sayfa Renkleri">
+<!ENTITY defaultColorsRadio.label "Okuyucunun varsayılan renkleri (Sayfada renk belirleme)">
+<!ENTITY defaultColorsRadio.accessKey "d">
+<!ENTITY defaultColorsRadio.tooltip "Sadece okuyucunun tarayıcısındaki renk ayarlarını kullan">
+<!ENTITY customColorsRadio.label "Özel renkleri kullan:">
+<!ENTITY customColorsRadio.accessKey "r">
+<!ENTITY customColorsRadio.tooltip "Bu renkler okuyucunun tarayıcı ayarlarından önceliklidir">
+
+<!ENTITY normalText.label "Normal metin">
+<!ENTITY normalText.accessKey "N">
+<!ENTITY linkText.label "Bağlantı metni">
+<!ENTITY linkText.accessKey "e">
+<!ENTITY activeLinkText.label "Etkin bağlantı metni">
+<!ENTITY activeLinkText.accessKey "E">
+<!ENTITY visitedLinkText.label "Ziyaret edilmiş bağlantı metni">
+<!ENTITY visitedLinkText.accessKey "b">
+<!ENTITY background.label "Arka plan:">
+<!ENTITY background.accessKey "A">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Arka Plan Resmi:">
+<!ENTITY backgroundImage.accessKey "k">
+<!ENTITY backgroundImage.tooltip "Bir resim dosyasını sayfanızda arka plan olarak kullanın">
+<!ENTITY backgroundImage.shortenedDataURI "Kısaltılmış veri URI'si (Kopyalarsanız panoya tam URI kopyalanacaktır)">

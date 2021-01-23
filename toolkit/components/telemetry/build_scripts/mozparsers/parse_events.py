@@ -7,9 +7,9 @@ import re
 import yaml
 import itertools
 import string
-import shared_telemetry_utils as utils
+from . import shared_telemetry_utils as utils
 
-from shared_telemetry_utils import ParserError
+from .shared_telemetry_utils import ParserError
 atexit.register(ParserError.exit_func)
 
 MAX_CATEGORY_NAME_LENGTH = 30
@@ -22,7 +22,7 @@ IDENTIFIER_PATTERN = r'^[a-zA-Z][a-zA-Z0-9_.]*[a-zA-Z0-9]$'
 
 
 def nice_type_name(t):
-    if issubclass(t, basestring):
+    if issubclass(t, str):
         return "string"
     return t.__name__
 
@@ -41,6 +41,7 @@ class OneOf:
 
 class AtomicTypeChecker:
     """Validate a simple value against a given type"""
+
     def __init__(self, instance_type):
         self.instance_type = instance_type
 
@@ -53,6 +54,7 @@ class AtomicTypeChecker:
 
 class MultiTypeChecker:
     """Validate a simple value against a list of possible types"""
+
     def __init__(self, *instance_types):
         if not instance_types:
             raise Exception("At least one instance type is required.")
@@ -68,6 +70,7 @@ class MultiTypeChecker:
 
 class ListTypeChecker:
     """Validate a list of values against a given type"""
+
     def __init__(self, instance_type):
         self.instance_type = instance_type
 
@@ -85,6 +88,7 @@ class ListTypeChecker:
 
 class DictTypeChecker:
     """Validate keys and values of a dict against a given type"""
+
     def __init__(self, keys_instance_type, values_instance_type):
         self.keys_instance_type = keys_instance_type
         self.values_instance_type = values_instance_type
@@ -93,14 +97,14 @@ class DictTypeChecker:
         if len(value.keys()) < 1:
             ParserError("%s: Failed check for %s - dict should not be empty." %
                         (identifier, key)).handle_now()
-        for x in value.iterkeys():
+        for x in value.keys():
             if not isinstance(x, self.keys_instance_type):
                 ParserError("%s: Failed dict type check for %s - expected key type %s, got "
                             "%s." %
                             (identifier, key,
                              nice_type_name(self.keys_instance_type),
                              nice_type_name(type(x)))).handle_later()
-        for k, v in value.iteritems():
+        for k, v in value.items():
             if not isinstance(v, self.values_instance_type):
                 ParserError("%s: Failed dict type check for %s - "
                             "expected value type %s for key %s, got %s." %
@@ -112,19 +116,19 @@ class DictTypeChecker:
 def type_check_event_fields(identifier, name, definition):
     """Perform a type/schema check on the event definition."""
     REQUIRED_FIELDS = {
-        'objects': ListTypeChecker(basestring),
+        'objects': ListTypeChecker(str),
         'bug_numbers': ListTypeChecker(int),
-        'notification_emails': ListTypeChecker(basestring),
-        'record_in_processes': ListTypeChecker(basestring),
-        'description': AtomicTypeChecker(basestring),
+        'notification_emails': ListTypeChecker(str),
+        'record_in_processes': ListTypeChecker(str),
+        'description': AtomicTypeChecker(str),
+        'products': ListTypeChecker(str),
     }
     OPTIONAL_FIELDS = {
-        'methods': ListTypeChecker(basestring),
-        'release_channel_collection': AtomicTypeChecker(basestring),
-        'expiry_version': AtomicTypeChecker(basestring),
-        'extra_keys': DictTypeChecker(basestring, basestring),
-        'products': ListTypeChecker(basestring),
-        'operating_systems': ListTypeChecker(basestring),
+        'methods': ListTypeChecker(str),
+        'release_channel_collection': AtomicTypeChecker(str),
+        'expiry_version': AtomicTypeChecker(str),
+        'extra_keys': DictTypeChecker(str, str),
+        'operating_systems': ListTypeChecker(str),
     }
     ALL_FIELDS = REQUIRED_FIELDS.copy()
     ALL_FIELDS.update(OPTIONAL_FIELDS)
@@ -141,7 +145,7 @@ def type_check_event_fields(identifier, name, definition):
         ParserError(identifier + ': Unknown fields: ' + ', '.join(unknown_fields)).handle_later()
 
     # Type-check fields.
-    for k, v in definition.iteritems():
+    for k, v in definition.items():
         ALL_FIELDS[k].check(identifier, k, v)
 
 
@@ -197,11 +201,14 @@ class EventData:
                             proc).handle_later()
 
         # Check products.
-        products = definition.get('products', [])
+        products = definition.get('products')
         for product in products:
             if not utils.is_valid_product(product):
                 ParserError(self.identifier + ': Unknown value in products: ' +
                             product).handle_later()
+            if utils.is_geckoview_streaming_product(product):
+                ParserError("{}: Product `{}` unsupported for Event Telemetry".format(
+                    self.identifier, product)).handle_later()
 
         # Check operating_systems.
         operating_systems = definition.get('operating_systems', [])
@@ -215,7 +222,7 @@ class EventData:
         if len(extra_keys.keys()) > MAX_EXTRA_KEYS_COUNT:
             ParserError("%s: Number of extra_keys exceeds limit %d." %
                         (self.identifier, MAX_EXTRA_KEYS_COUNT)).handle_later()
-        for key in extra_keys.iterkeys():
+        for key in extra_keys.keys():
             string_check(self.identifier, field='extra_keys', value=key,
                          min_length=1, max_length=MAX_EXTRA_KEY_NAME_LENGTH,
                          regex=IDENTIFIER_PATTERN)
@@ -272,7 +279,7 @@ class EventData:
     @property
     def products(self):
         """Get the non-empty list of products to record data on"""
-        return self._definition.get('products', ["all"])
+        return self._definition.get('products')
 
     @property
     def products_enum(self):
@@ -330,7 +337,7 @@ class EventData:
 
     @property
     def extra_keys(self):
-        return self._definition.get('extra_keys', {}).keys()
+        return list(sorted(self._definition.get('extra_keys', {}).keys()))
 
 
 def load_events(filename, strict_type_checks):
@@ -346,9 +353,9 @@ def load_events(filename, strict_type_checks):
     try:
         with open(filename, 'r') as f:
             events = yaml.safe_load(f)
-    except IOError, e:
+    except IOError as e:
         ParserError('Error opening ' + filename + ': ' + e.message + ".").handle_now()
-    except ParserError, e:
+    except ParserError as e:
         ParserError('Error parsing events in ' + filename + ': ' + e.message + ".").handle_now()
 
     event_list = []
@@ -361,7 +368,7 @@ def load_events(filename, strict_type_checks):
     #       <event definition>
     #      ...
     #   ...
-    for category_name, category in events.iteritems():
+    for category_name, category in sorted(events.items()):
         string_check("top level structure", field='category', value=category_name,
                      min_length=1, max_length=MAX_CATEGORY_NAME_LENGTH,
                      regex=IDENTIFIER_PATTERN)
@@ -371,7 +378,7 @@ def load_events(filename, strict_type_checks):
             ParserError('Category ' + category_name + ' must contain at least one entry.'
                         ).handle_now()
 
-        for name, entry in category.iteritems():
+        for name, entry in sorted(category.items()):
             string_check(category_name, field='event name', value=name,
                          min_length=1, max_length=MAX_METHOD_NAME_LENGTH,
                          regex=IDENTIFIER_PATTERN)

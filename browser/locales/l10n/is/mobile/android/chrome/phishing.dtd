@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Hjálpaðu mér út héðan!">
+<!ENTITY safeb.palm.decline.label "Hunsa þessa aðvörun">
+<!ENTITY safeb.palm.reportPage.label "Hvers vegna var lokað á þessa síðu? ">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Ráðleggingar frá <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "Tilkynna um árásar síðu!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Tilkynnt hefur verið að þessi vefsíða hér <span id='malware_sitename'/> sé árásar síða og hefur verið lokað á hana byggt á öryggisstillingum þínum.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Árásasíður reyna að setja inn forrit sem stela persónu upplýsingum, nota tækið þitt til að ráðast á aðra eða skemma kerfið þitt.</p><p>Sumar árásasíður dreifa meðvitað forritum sem eyðileggja en oft eru þetta vefsvæði sem búið er að ráðast á og breyta án vitundar eða leyfis eigenda.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "Svindlsvæði!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "Tilkynnt hefur verið að þessi vefsíða hér <span id='phishing_sitename'/> sé árásar síða og hefur verið lokað á hana byggt á öryggisstillingum þínum.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>Svindlsvæði eru gerð til að plata þig í að gera eitthvað varhugavert, eins og setja inn hugbúnað eða opinbera persónulegar upplýsingar, eins og lykilorð, símanúmer eða kortanúmer.</p><p>Ef þú slærð inn einhverjar upplýsingar á þetta vefsvæði gæti það leitt til þess að auðkenni þínu verði stolið eða annað svindl eigi sér stað.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Láta vita af óæskilegu hugbúnaðarsvæði!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Tilkynnt hefur verið að vefsíðan <span id='unwanted_sitename'/> innihaldi óæskilegan hugbúnaða og hefur því verið lokað á hana samkvæmt á öryggisstillingum þínum.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "Síður með óæskilegum hugbúnaði reyna að innsetja hugbúnað á tækið þitt sem getur verið villandi og haft óvænt áhrif á kerfið þitt.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "Vefsvæði þetta gæti innihaldið spilliforrit">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; lokaði á þessa síðu vegna þess að hún gæti reynt að setja inn hættulegt smáforrit sem rænir eða eyðir upplýsingum þínum (sem dæmi ljósmyndum, lykilorðum, skilaboðum og greiðslukortum).">

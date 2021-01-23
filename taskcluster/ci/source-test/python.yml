@@ -3,18 +3,23 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ---
 job-defaults:
-    platform: linux64/opt
+    platform: linux1804-64/opt
     always-target: true
     worker-type:
         by-platform:
-            linux64.*: t-linux-xlarge
+            linux1804-64.*: t-linux-xlarge-source
             macosx1014-64.*: t-osx-1014
-            windows10-64.*: t-win10-64
+            windows10-64.*: t-win10-64-source
     worker:
         by-platform:
-            linux64.*:
+            linux1804-64.*:
                 docker-image: {in-tree: "lint"}
                 max-run-time: 3600
+                env:
+                    RUSTFMT: /build/rust/bin/rustfmt
+                    RUSTUP_HOME: /build/rust
+                    CARGO_HOME: /build/rust
+                    CLANG_FORMAT: /builds/worker/fetches/clang-tidy/bin/clang-format
             default:
                 max-run-time: 3600
     treeherder:
@@ -29,7 +34,7 @@ job-defaults:
 
 taskgraph-tests:
     description: taskcluster/taskgraph unit tests
-    python-version: [2]
+    python-version: [2, 3]
     treeherder:
         symbol: tg
     run:
@@ -40,10 +45,26 @@ taskgraph-tests:
             - 'taskcluster/**/*.py'
             - 'python/mach/**/*.py'
 
+mach:
+    description: python/mach unit tests
+    platform:
+        - linux1804-64/opt
+        - macosx1014-64/opt
+        - windows10-64/opt
+    python-version: [2, 3]
+    treeherder:
+        symbol: mach
+    run:
+        using: python-test
+        subsuite: mach
+    when:
+        files-changed:
+            - 'python/mach/**'
+
 marionette-harness:
     description: testing/marionette/harness unit tests
     platform:
-        - linux64/opt
+        - linux1804-64/opt
         - windows10-64/opt
     python-version: [2]
     treeherder:
@@ -61,26 +82,29 @@ marionette-harness:
 mochitest-harness:
     description: testing/mochitest unittests
     platform:
-        - linux64/opt
-        - linux64/debug
-        - linux64-asan/opt
-    require-build: true
+        - linux1804-64/opt
+        - linux1804-64/debug
+        - linux1804-64-asan/opt
     always-target: false
+    require-build:
+        linux1804-64-asan/opt: build-linux64-asan/opt
+        linux1804-64/debug: build-linux64/debug
+        linux1804-64/opt: build-linux64-shippable/opt
     treeherder:
         symbol: py2(mch)
     worker:
         by-platform:
-            linux64.*:
-                docker-image: {in-tree: "desktop1604-test"}
+            linux1804-64.*:
+                docker-image: {in-tree: "ubuntu1804-test"}
                 max-run-time: 3600
     run:
         using: run-task
+        cwd: '{checkout}'
         command: >
             source /builds/worker/scripts/xvfb.sh &&
             start_xvfb '1600x1200x24' 0 &&
             export GECKO_BINARY_PATH=$MOZ_FETCHES_DIR/firefox/firefox &&
             export TEST_HARNESS_ROOT=$MOZ_FETCHES_DIR/tests &&
-            cd /builds/worker/checkouts/gecko &&
             ./mach python-test --python 2 --subsuite mochitest
     fetches:
         build:
@@ -89,19 +113,23 @@ mochitest-harness:
               dest: tests
             - artifact: target.mochitest.tests.tar.gz
               dest: tests
+        toolchain:
+            - linux64-fix-stacks
     when:
         files-changed:
             - 'testing/mochitest/**'
+            - 'testing/mozbase/mozrunner/mozrunner/**'
             - 'testing/mozbase/moztest/moztest/selftest/**'
             - 'testing/mozharness/mozharness/base/log.py'
             - 'testing/mozharness/mozharness/mozilla/structuredlog.py'
             - 'testing/mozharness/mozharness/mozilla/testing/errors.py'
             - 'testing/profiles/**'
 
+
 mozbase:
     description: testing/mozbase unit tests
     platform:
-        - linux64/opt
+        - linux1804-64/opt
         - macosx1014-64/opt
         - windows10-64/opt
     python-version: [2, 3]
@@ -121,9 +149,23 @@ mozharness:
     run:
         using: run-task
         cache-dotcache: true
+        cwd: '{checkout}/testing/mozharness'
         command: >
-            cd /builds/worker/checkouts/gecko/testing/mozharness &&
-            /usr/local/bin/tox -e py27-hg4.3
+            /usr/local/bin/tox -e py27-hg5.2
+    when:
+        files-changed:
+            - 'testing/mozharness/**'
+
+mozharness-py3:
+    description: mozharness integration tests
+    treeherder:
+        symbol: py3(mh)
+    run:
+        using: run-task
+        cache-dotcache: true
+        cwd: '{checkout}/testing/mozharness'
+        command: >
+            /usr/local/bin/tox -e py36-hg5.2
     when:
         files-changed:
             - 'testing/mozharness/**'
@@ -131,15 +173,18 @@ mozharness:
 mozlint:
     description: python/mozlint unit tests
     platform:
-        - linux64/opt
+        - linux1804-64/opt
         - macosx1014-64/opt
         - windows10-64/opt
-    python-version: [2]
+    python-version: [3]
     treeherder:
-        symbol: ml
+        symbol: mozlint
     run:
         using: python-test
         subsuite: mozlint
+    fetches:
+        toolchain:
+            - linux64-clang-tidy
     when:
         files-changed:
             - 'python/mozlint/**'
@@ -160,7 +205,7 @@ mozrelease:
 mozterm:
     description: python/mozterm unit tests
     platform:
-        - linux64/opt
+        - linux1804-64/opt
         - windows10-64/opt
     python-version: [2, 3]
     treeherder:
@@ -187,9 +232,10 @@ mozversioncontrol:
 raptor:
     description: testing/raptor unit tests
     platform:
-        - linux64/opt
+        - linux1804-64/opt
+        - macosx1014-64/opt
         - windows10-64/opt
-    python-version: [2]
+    python-version: [2, 3]
     treeherder:
         symbol: rap
     run:
@@ -202,26 +248,29 @@ raptor:
 reftest-harness:
     description: layout/tools/reftest unittests
     platform:
-        - linux64/opt
-        - linux64/debug
-        - linux64-asan/opt
-    require-build: true
+        - linux1804-64/opt
+        - linux1804-64/debug
+        - linux1804-64-asan/opt
+    require-build:
+        linux1804-64-asan/opt: build-linux64-asan/opt
+        linux1804-64/debug: build-linux64/debug
+        linux1804-64/opt: build-linux64-shippable/opt
     always-target: false
     treeherder:
         symbol: py2(ref)
     worker:
         by-platform:
-            linux64.*:
-                docker-image: {in-tree: "desktop1604-test"}
+            linux1804-64.*:
+                docker-image: {in-tree: "ubuntu1804-test"}
                 max-run-time: 3600
     run:
         using: run-task
+        cwd: '{checkout}'
         command: >
             source /builds/worker/scripts/xvfb.sh &&
             start_xvfb '1600x1200x24' 0 &&
             export GECKO_BINARY_PATH=$MOZ_FETCHES_DIR/firefox/firefox &&
             export TEST_HARNESS_ROOT=$MOZ_FETCHES_DIR/tests &&
-            cd /builds/worker/checkouts/gecko &&
             ./mach python-test --python 2 --subsuite reftest
     fetches:
         build:
@@ -230,9 +279,12 @@ reftest-harness:
               dest: tests
             - artifact: target.reftest.tests.tar.gz
               dest: tests
+        toolchain:
+            - linux64-fix-stacks
     when:
         files-changed:
             - 'layout/tools/reftest/**'
+            - 'testing/mozbase/mozrunner/mozrunner/**'
             - 'testing/mozbase/moztest/moztest/selftest/**'
             - 'testing/mozharness/mozharness/base/log.py'
             - 'testing/mozharness/mozharness/mozilla/structuredlog.py'
@@ -241,9 +293,9 @@ reftest-harness:
 tryselect:
     description: tools/tryselect unit tests
     platform:
-        - linux64/opt
+        - linux1804-64/opt
         - windows10-64/opt
-    python-version: [2]
+    python-version: [3]
     treeherder:
         symbol: try
     run:
@@ -254,3 +306,125 @@ tryselect:
             - 'taskcluster/ci/test/**'
             - 'taskcluster/taskgraph/transforms/**'
             - 'tools/tryselect/**'
+
+mozbuild:
+    description: mozbuild unit tests
+    platform:
+        - linux1804-64/opt
+        - macosx1014-64/opt
+        - windows10-64/opt
+    python-version: [2, 3]
+    treeherder:
+        symbol: mbu
+    run:
+        using: python-test
+        subsuite: mozbuild
+    fetches:
+        toolchain:
+            by-platform:
+                linux1804-64/opt:
+                    - linux64-node-10
+                macosx1014-64/opt:
+                    - macosx64-node-10
+                windows10-64/opt:
+                    - win64-node-10
+    when:
+        files-changed:
+            - '**/moz.configure'
+            - 'build/moz.configure/**'
+            - 'config/tests/**'
+            - 'python/mach/**'
+            - 'python/mozboot/**'
+            - 'python/mozbuild/**'
+            - 'python/mozterm/**'
+            - 'python/mozversioncontrol/**'
+            - 'testing/mozbase/**'
+            - 'testing/xpcshell/xpcshellcommandline.py'
+
+mozperftest:
+    description: mozperftest unit tests
+    platform:
+        - linux1804-64/opt
+        - macosx1014-64/opt
+        - windows10-64/opt
+    treeherder:
+        symbol: mpu
+    run:
+        mach: perftest-test
+    fetches:
+        toolchain:
+            by-platform:
+                linux1804-64/opt:
+                    - linux64-node-10
+                macosx1014-64/opt:
+                    - macosx64-node-10
+                windows10-64/opt:
+                    - win64-node-10
+    when:
+        files-changed:
+            - 'testing/performance/**'
+            - 'python/mozperftest/**'
+
+condprof:
+    description: testing/condprofile unit tests
+    platform:
+        - linux1804-64/opt
+        - macosx1014-64/opt
+        - windows10-64/opt
+    python-version: [2]
+    treeherder:
+        symbol: condprof
+    run:
+        using: python-test
+        subsuite: condprof
+    when:
+        files-changed:
+            - 'testing/condprofile/condprof**'
+            - 'testing/condprofile/setup.py'
+
+talos:
+    description: testing/talos unit tests
+    platform: windows10-64/opt
+    python-version: [2]
+    treeherder:
+        symbol: tal
+    run:
+        using: python-test
+        subsuite: talos
+    when:
+        files-changed:
+            - 'testing/talos/**'
+
+telemetry-integration-tests:
+    description: pytest-based integration tests for Telemetry
+    always-target: false
+    platform:
+        - linux1804-64/opt
+    worker:
+        by-platform:
+            linux1804-64.*:
+                docker-image: {in-tree: "ubuntu1804-test"}
+                max-run-time: 3600
+    require-build:
+        linux1804-64/opt: build-linux64-shippable/opt
+    treeherder:
+        symbol: tt(i)
+        tier: 3
+    run:
+        using: run-task
+        cwd: '{checkout}'
+        command: >
+            source /builds/worker/scripts/xvfb.sh &&
+            start_xvfb '1600x1200x24' 0 &&
+            export GECKO_BINARY_PATH=$MOZ_FETCHES_DIR/firefox/firefox &&
+            ./mach python-test --python 2 --subsuite telemetry-integration-tests
+    fetches:
+        build:
+            - target.tar.bz2
+            - artifact: target.common.tests.tar.gz
+              dest: tests
+            - artifact: target.reftest.tests.tar.gz
+              dest: tests
+    when:
+        files-changed:
+            - 'toolkit/components/telemetry/**'

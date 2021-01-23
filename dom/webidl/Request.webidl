@@ -10,15 +10,18 @@
 typedef (Request or USVString) RequestInfo;
 typedef unsigned long nsContentPolicyType;
 
-[Constructor(RequestInfo input, optional RequestInit init),
- Exposed=(Window,Worker)]
+[Exposed=(Window,Worker)]
 interface Request {
+  [Throws]
+  constructor(RequestInfo input, optional RequestInit init = {});
+
   readonly attribute ByteString method;
   readonly attribute USVString url;
-  [SameObject] readonly attribute Headers headers;
+  [SameObject, BinaryName="headers_"] readonly attribute Headers headers;
 
   readonly attribute RequestDestination destination;
   readonly attribute USVString referrer;
+  [BinaryName="referrerPolicy_"]
   readonly attribute ReferrerPolicy referrerPolicy;
   readonly attribute RequestMode mode;
   readonly attribute RequestCredentials credentials;
@@ -41,7 +44,7 @@ interface Request {
   [ChromeOnly]
   void overrideContentPolicyType(nsContentPolicyType context);
 };
-Request implements Body;
+Request includes Body;
 
 dictionary RequestInit {
   ByteString method;
@@ -60,7 +63,7 @@ dictionary RequestInit {
 
   AbortSignal? signal;
 
-  [Func="mozilla::dom::DOMPrefs::dom_fetchObserver_enabled"]
+  [Pref="dom.fetchObserver.enabled"]
   ObserverCallback observe;
 };
 
@@ -75,8 +78,3 @@ enum RequestMode { "same-origin", "no-cors", "cors", "navigate" };
 enum RequestCredentials { "omit", "same-origin", "include" };
 enum RequestCache { "default", "no-store", "reload", "no-cache", "force-cache", "only-if-cached" };
 enum RequestRedirect { "follow", "error", "manual" };
-enum ReferrerPolicy {
-  "", "no-referrer", "no-referrer-when-downgrade", "origin",
-  "origin-when-cross-origin", "unsafe-url", "same-origin", "strict-origin",
-  "strict-origin-when-cross-origin"
-};

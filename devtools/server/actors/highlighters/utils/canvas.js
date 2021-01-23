@@ -18,7 +18,9 @@ const {
   getCurrentZoom,
   getViewportDimensions,
 } = require("devtools/shared/layout/utils");
-const { getComputedStyle } = require("./markup");
+const {
+  getComputedStyle,
+} = require("devtools/server/actors/highlighters/utils/markup");
 
 // A set of utility functions for highlighters that render their content to a <canvas>
 // element.
@@ -30,8 +32,8 @@ const { getComputedStyle } = require("./markup");
 //
 // This canvas size value is the safest we can use because most GPUs can handle it.
 // It's also far from the maximum canvas memory allocation limit (4096x4096x4 is
-// 67.108.864 bytes, where the limit is 500.000.000 bytes, see:
-// http://searchfox.org/mozilla-central/source/gfx/thebes/gfxPrefs.h#401).
+// 67.108.864 bytes, where the limit is 500.000.000 bytes, see
+// gfx_max_alloc_size in modules/libpref/init/StaticPrefList.yaml.
 //
 // Note:
 // Once bug 1232491 lands, we could try to refactor this code to use the values from
@@ -449,7 +451,12 @@ function getPathDescriptionFromPoints(points) {
  * matrix given.
  */
 function getPointsFromDiagonal(x1, y1, x2, y2, matrix = identity()) {
-  return [[x1, y1], [x2, y1], [x2, y2], [x1, y2]].map(point => {
+  return [
+    [x1, y1],
+    [x2, y1],
+    [x2, y2],
+    [x1, y2],
+  ].map(point => {
     const transformedPoint = apply(matrix, point);
 
     return { x: transformedPoint[0], y: transformedPoint[1] };

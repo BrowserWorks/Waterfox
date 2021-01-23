@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY selectAddressWindow.title           "Pilih Alamat">
+
+<!-- Buttons -->
+<!ENTITY toButton.label                      "Kepada->"> 
+<!ENTITY toButton.accesskey                  "K"> 
+<!ENTITY ccButton.label                      "Cc->"> 
+<!ENTITY ccButton.accesskey                  "C"> 
+<!ENTITY bccButton.label                     "Bcc->">  
+<!ENTITY bccButton.accesskey                 "B">  
+<!ENTITY newButton.label                     "Baru…"> 
+<!ENTITY newButton.accesskey                 "B"> 
+<!ENTITY editButton.label                    "Edit…"> 
+<!ENTITY editButton.accesskey                "E">
+<!ENTITY removeButton.label                  "Buang"> 
+<!ENTITY removeButton.accesskey              "B"> 
+<!ENTITY lookIn.label                        "Cari dalam:"> 
+<!ENTITY lookIn.accesskey                    "C"> 
+<!ENTITY for.label                           "untuk:"> 
+<!ENTITY for.accesskey                       "u"> 
+<!ENTITY for.placeholder                     "Nama atau E-mel">
+<!ENTITY addressMessageTo.label              "Alamat mesej kepada:"> 
+
+<!-- Tooltips items -->  
+<!ENTITY addressPickerNewButton.tooltip      "Cipta kad buku alamat baru"> 
+<!ENTITY addressPickerEditButton.tooltip     "Edit kad yang dipilih"> 
+

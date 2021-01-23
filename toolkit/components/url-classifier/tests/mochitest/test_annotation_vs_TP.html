@@ -10,14 +10,18 @@
 <body>
 <script class="testbody" type="text/javascript">
 
-runTests(SpecialPowers.Ci.nsIHttpChannel.CLASSIFIED_TRACKING,
+runTests(SpecialPowers.Ci.nsIClassifiedChannel.CLASSIFIED_TRACKING,
          [
            ["privacy.trackingprotection.enabled", true],
            ["privacy.trackingprotection.annotate_channels", true],
-           ["privacy.trackingprotection.fingerprinting.annotate.enabled", false],
+           ["urlclassifier.features.fingerprinting.annotate.blacklistTables", ""],
+           ["urlclassifier.features.fingerprinting.annotate.blacklistHosts", ""],
            ["privacy.trackingprotection.fingerprinting.enabled", false],
-           ["privacy.trackingprotection.cryptomining.annotate.enabled", false],
+           ["urlclassifier.features.cryptomining.annotate.blacklistTables", ""],
+           ["urlclassifier.features.cryptomining.annotate.blacklistHosts", ""],
            ["privacy.trackingprotection.cryptomining.enabled", false],
+           ["urlclassifier.features.socialtracking.annotate.blacklistTables", ""],
+           ["urlclassifier.features.socialtracking.annotate.blacklistHosts", ""],
          ],
          true /* a tracking resource */);
 SimpleTest.waitForExplicitFinish();

@@ -90,25 +90,22 @@ add_task(async function checkTelemetryClickEvents() {
         `recorded telemetry for the load testing ${object}, useFrame: ${useFrame}`
       );
 
-      await ContentTask.spawn(
-        browser,
-        { frame: useFrame, objectId: object },
-        async function({ frame, objectId }) {
-          let doc = frame
-            ? content.document.querySelector("iframe").contentDocument
-            : content.document;
+      let bc = browser.browsingContext;
+      if (useFrame) {
+        bc = bc.children[0];
+      }
 
-          await ContentTaskUtils.waitForCondition(
-            () => doc.body.classList.contains("certerror"),
-            "Wait for certerror to be loaded"
-          );
+      await SpecialPowers.spawn(bc, [object], async function(objectId) {
+        let doc = content.document;
 
-          let domElement = doc.querySelector(
-            `[data-telemetry-id='${objectId}']`
-          );
-          domElement.click();
-        }
-      );
+        await ContentTaskUtils.waitForCondition(
+          () => doc.body.classList.contains("certerror"),
+          "Wait for certerror to be loaded"
+        );
+
+        let domElement = doc.querySelector(`[data-telemetry-id='${objectId}']`);
+        domElement.click();
+      });
 
       let clickEvents = await TestUtils.waitForCondition(() => {
         let events = Services.telemetry.snapshotEvents(

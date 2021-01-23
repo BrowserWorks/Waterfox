@@ -7,14 +7,16 @@
 #ifndef mozilla_image_imgFrame_h
 #define mozilla_image_imgFrame_h
 
+#include <functional>
+#include <utility>
+
+#include "AnimationParams.h"
+#include "MainThreadUtils.h"
+#include "gfxDrawable.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/Monitor.h"
-#include "mozilla/Move.h"
-#include "AnimationParams.h"
-#include "gfxDrawable.h"
-#include "imgIContainer.h"
-#include "MainThreadUtils.h"
+#include "nsRect.h"
 
 namespace mozilla {
 namespace image {
@@ -26,7 +28,6 @@ class RawAccessFrameRef;
 enum class Opacity : uint8_t { FULLY_OPAQUE, SOME_TRANSPARENCY };
 
 class imgFrame {
-  typedef gfx::Color Color;
   typedef gfx::DataSourceSurface DataSourceSurface;
   typedef gfx::DrawTarget DrawTarget;
   typedef gfx::SamplingFilter SamplingFilter;
@@ -170,7 +171,7 @@ class imgFrame {
   FrameTimeout GetTimeout() const { return mTimeout; }
   BlendMethod GetBlendMethod() const { return mBlendMethod; }
   DisposalMethod GetDisposalMethod() const { return mDisposalMethod; }
-  bool FormatHasAlpha() const { return mFormat == SurfaceFormat::B8G8R8A8; }
+  bool FormatHasAlpha() const { return mFormat == SurfaceFormat::OS_RGBA; }
   void GetImageData(uint8_t** aData, uint32_t* length) const;
   uint8_t* GetImageData() const;
 
@@ -182,15 +183,12 @@ class imgFrame {
   void FinalizeSurface();
   already_AddRefed<SourceSurface> GetSourceSurface();
 
-  struct AddSizeOfCbData {
+  struct AddSizeOfCbData : public SourceSurface::SizeOfInfo {
     AddSizeOfCbData()
-        : heap(0), nonHeap(0), handles(0), index(0), externalId(0) {}
+        : SourceSurface::SizeOfInfo(), mIndex(0), mFinished(false) {}
 
-    size_t heap;
-    size_t nonHeap;
-    size_t handles;
-    size_t index;
-    uint64_t externalId;
+    size_t mIndex;
+    bool mFinished;
   };
 
   typedef std::function<void(AddSizeOfCbData& aMetadata)> AddSizeOfCb;
@@ -349,17 +347,20 @@ class DrawableFrameRef final {
         mFrame = nullptr;
         mRef.reset();
       }
-    } else {
-      MOZ_ASSERT(aFrame->mOptSurface);
+    } else if (!aFrame->mOptSurface || !aFrame->mOptSurface->IsValid()) {
+      // The optimized surface has become invalid, so we need to redecode.
+      // For example, on Windows, there may have been a device reset, and
+      // all D2D surfaces now need to be recreated.
+      mFrame = nullptr;
     }
   }
 
   DrawableFrameRef(DrawableFrameRef&& aOther)
-      : mFrame(aOther.mFrame.forget()), mRef(std::move(aOther.mRef)) {}
+      : mFrame(std::move(aOther.mFrame)), mRef(std::move(aOther.mRef)) {}
 
   DrawableFrameRef& operator=(DrawableFrameRef&& aOther) {
     MOZ_ASSERT(this != &aOther, "Self-moves are prohibited");
-    mFrame = aOther.mFrame.forget();
+    mFrame = std::move(aOther.mFrame);
     mRef = std::move(aOther.mRef);
     return *this;
   }
@@ -422,7 +423,7 @@ class RawAccessFrameRef final {
   }
 
   RawAccessFrameRef(RawAccessFrameRef&& aOther)
-      : mFrame(aOther.mFrame.forget()), mData(aOther.mData) {
+      : mFrame(std::move(aOther.mFrame)), mData(aOther.mData) {
     aOther.mData = nullptr;
   }
 
@@ -439,7 +440,7 @@ class RawAccessFrameRef final {
       mFrame->UnlockImageData();
     }
 
-    mFrame = aOther.mFrame.forget();
+    mFrame = std::move(aOther.mFrame);
     mData = aOther.mData;
     aOther.mData = nullptr;
 

@@ -30,7 +30,7 @@ load 308752-1.html
 load 308752-2.html
 load 316636-1.html
 load 317876.html
-load 322779-1.xul
+load chrome://reftest/content/crashtests/layout/tables/crashtests/322779-1.xhtml
 load 323489-1.html
 load 323604-1.html
 load 323604-2.xhtml
@@ -95,7 +95,7 @@ load 398157-1.xhtml
 load 399209-1.xhtml
 load 403249-1.html
 load 403579-1.html
-load 404301-1.xhtml # bug 1323652
+load 404301-1.xhtml
 load 408753-1.xhtml
 load 410426-1.html
 load 410428-1.xhtml
@@ -164,3 +164,8 @@ load 1183896.html
 load 1223282.html
 load 1223232.html
 load 1243623-1.html
+load 1555757-1.html
+load 1555757-2.html
+load 1555757-3.html
+load 1555757-4.html
+load 1607045.html

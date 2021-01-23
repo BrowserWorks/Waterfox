@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+<!-- LOCALIZATION NOTE  (editorWindow.titlemodifier): DONT_TRANSLATE -->
+
+<!ENTITY editorWindow.titlemodifier "Composer"> 
+<!ENTITY editorWindow.titlemodifiermenuseparator " - ">
+<!-- Menu items:  the . means that the menu item isn't implemented yet -->
+<!-- Toolbar-only items -->
+
+
+<!ENTITY compositionToolbar.tooltip "Ստեղծագործության գործիքաշերտը">
+<!ENTITY previewToolbarCmd.label "Ընտրել">
+<!ENTITY previewToolbarCmd.tooltip "Բացել էջը դիտարկիչում">
+<!-- File menu items -->
+
+<!ENTITY exportToTextCmd.label "Արտածել տեքստով...">
+<!ENTITY exportToTextCmd.accesskey "ր">
+<!ENTITY previewCmd.label "Ընտրել էջը">
+<!ENTITY previewCmd.accesskey "w">
+<!ENTITY sendPageCmd.label "Ուղարկել էջը">
+<!ENTITY sendPageCmd.accesskey "d">
+<!-- View menu items -->
+
+<!ENTITY compositionToolbarCmd.label "Ստեղծագործության գործիքաշերտը">
+<!ENTITY compositionToolbarCmd.accesskey "C">
+<!ENTITY formattingToolbarCmd.label "Գործիքագոտու ձևաչափում">
+<!ENTITY formattingToolbarCmd.accesskey "Գ">
+<!ENTITY editmodeToolbarCmd.label "Խմբագրման գործիքաշերտը">
+<!ENTITY editmodeToolbarCmd.accesskey "E">
+<!-- Format menu items -->
+
+<!ENTITY formatMenu.label "Ձևաչափում">
+<!ENTITY formatMenu.accesskey "և">
+<!ENTITY grid.label "Տեսադրման ցանցը">
+<!ENTITY grid.accesskey "t">
+<!ENTITY pageProperties.label "Էջի անունը և հատկությունները...">
+<!ENTITY pageProperties.accesskey "g">
+<!-- Tools menu items -->
+
+<!ENTITY validateCmd.label "Ճիշտ HTML">
+<!ENTITY validateCmd.accesskey "V">
+<!-- Display Mode toolbar and View menu items -->
+
+<!ENTITY NormalModeTab.label "Նորմալ">
+<!ENTITY NormalMode.label "Խմբագրման նորմալ եղանակ">
+<!ENTITY NormalMode.accesskey "N">
+<!ENTITY NormalMode.tooltip "Ցուցադրել աղյուսակի եզրագծերը և անվանարկված խարիսխները">
+<!ENTITY AllTagsModeTab.label "HTML պիտակներ">
+<!ENTITY AllTagsMode.label "HTML պիտակներ">
+<!ENTITY AllTagsMode.accesskey "a">
+<!ENTITY AllTagsMode.tooltip "Ցուցադրել բոլոր HTML պիտակների պատկերները">
+<!-- LOCALIZATION NOTE: (HTMLSourceModeTab.dir, HTMLSourceModeTab.label)
+     Do NOT translate text for 'HTMLSourceModeTab.dir', use latin "ltr" if
+     you want the <html> image to left of the 'HTMLSourceModeTab.label' text,
+     or use latin "rtl" if you want this image to the right of text. You do
+     not need to include HTML in the label 'HTMLSourceModeTab.label' -->
+<!ENTITY HTMLSourceModeTab.dir "ltr">
+<!ENTITY HTMLSourceModeTab.label "Աղբյուրը">
+<!ENTITY HTMLSourceMode.label "HTML աղբյուր">
+<!ENTITY HTMLSourceMode.accesskey "H">
+<!ENTITY HTMLSourceMode.tooltip "Խմբագրել HTML աղբյուրը">
+<!ENTITY PreviewModeTab.label "Նախադիտել">
+<!ENTITY PreviewMode.label "Նախադիտել">
+<!ENTITY PreviewMode.accesskey "Ն">
+<!ENTITY PreviewMode.tooltip "Ցուցադրել որպես WYSIWYG (ինչպես որ դիտարկիչում)">

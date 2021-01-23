@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "Utforming og adressering">
+<!ENTITY addressingGroupTitle.label "Adressering">
+<!ENTITY addressingText.label      "Ved adresseoppslag:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Bruk globale LDAP-tenarinnstillingar for denne kontoen.">
+<!ENTITY useGlobal.accesskey       "u">
+<!ENTITY editDirectories.label     "Rediger mapper …">
+<!ENTITY editDirectories.accesskey "R">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Bruk ein annan LDAP-tenar:">
+<!ENTITY directories.accesskey     "B">
+<!ENTITY directoriesNone.label     "Ingen">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "Utforming">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Skriv meldingar i HTML-format">
+<!ENTITY useHtml.accesskey                    "k">
+<!ENTITY autoQuote.label                      "Siter den originale meldinga ved svar">
+<!ENTITY autoQuote.accesskey                  "i">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "Når du siterer,">
+<!ENTITY quoting.accesskey                    "s">
+<!ENTITY aboveQuote.label                     "Start svaret ovanfor den siterte teksten">
+<!ENTITY belowQuote.label                     "Start svaret nedanfor den siterte teksten">
+<!ENTITY selectAndQuote.label                 "Merk den siterte teksten">
+<!ENTITY place.label                          "Plasser signaturen min">
+<!ENTITY place.accesskey                      "P">
+<!ENTITY belowText.label                      "Under sitert tekst (tilrådd)">
+<!ENTITY aboveText.label                      "Under svaret mitt (over sitert tekst)">
+<!ENTITY includeSigOnReply.label              "Legg ved signaturen min i svar på meldingar">
+<!ENTITY includeSigOnReply.accesskey          "e">
+<!ENTITY includeSigOnForward.label            "Legg ved signaturen min i vidaresende meldingar">
+<!ENTITY includeSigOnForward.accesskey        "s">
+
+<!ENTITY globalComposingPrefs.label           "Globale utformings-innstillingar …">
+<!ENTITY globalComposingPrefs.accesskey       "G">
+
+<!ENTITY globalAddressingPrefs.label          "Globale adresse-innstillingar …">
+<!ENTITY globalAddressingPrefs.accesskey      "a">

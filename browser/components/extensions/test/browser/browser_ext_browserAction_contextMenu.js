@@ -2,16 +2,20 @@
 /* vim: set sts=2 sw=2 et tw=80: */
 "use strict";
 
+const { TelemetryTestUtils } = ChromeUtils.import(
+  "resource://testing-common/TelemetryTestUtils.jsm"
+);
+
+ChromeUtils.defineModuleGetter(
+  this,
+  "AbuseReporter",
+  "resource://gre/modules/AbuseReporter.jsm"
+);
+
 XPCOMUtils.defineLazyPreferenceGetter(
   this,
   "ABUSE_REPORT_ENABLED",
   "extensions.abuseReport.enabled",
-  false
-);
-XPCOMUtils.defineLazyPreferenceGetter(
-  this,
-  "HTML_ABOUTADDONS_ENABLED",
-  "extensions.htmlaboutaddons.enabled",
   false
 );
 
@@ -57,40 +61,16 @@ let contextMenuItems = {
   "context-bookmarkpage": "hidden",
 };
 
-const TELEMETRY_CATEGORY = "addonsManager";
-const TELEMETRY_METHODS = new Set(["action", "link", "view"]);
 const type = "extension";
 
 function assertTelemetryMatches(events) {
-  let snapshot = Services.telemetry.snapshotEvents(
-    Ci.nsITelemetry.DATASET_PRERELEASE_CHANNELS,
-    true
-  );
-
-  if (events.length == 0) {
-    ok(
-      !snapshot.parent || snapshot.parent.length == 0,
-      "There are no telemetry events"
-    );
-    return;
-  }
-
-  // Make sure we got some data.
-  ok(
-    snapshot.parent && snapshot.parent.length > 0,
-    "Got parent telemetry events in the snapshot"
-  );
-
-  // Only look at the related events after stripping the timestamp and category.
-  let relatedEvents = snapshot.parent
-    .filter(
-      ([timestamp, category, method]) =>
-        category == TELEMETRY_CATEGORY && TELEMETRY_METHODS.has(method)
-    )
-    .map(relatedEvent => relatedEvent.slice(2, 6));
-
-  // Events are now [method, object, value, extra] as expected.
-  Assert.deepEqual(relatedEvents, events, "The events are recorded correctly");
+  events = events.map(([method, object, value, extra]) => {
+    return { method, object, value, extra };
+  });
+  TelemetryTestUtils.assertEvents(events, {
+    category: "addonsManager",
+    method: /^(action|link|view)$/,
+  });
 }
 
 add_task(async function test_setup() {
@@ -228,7 +208,7 @@ add_task(async function browseraction_contextmenu_manage_extension() {
     );
     is(
       reportExtension.hidden,
-      !ABUSE_REPORT_ENABLED || !HTML_ABOUTADDONS_ENABLED || !visible,
+      !ABUSE_REPORT_ENABLED || !visible,
       `Report Extension should be ${expected}`
     );
     is(
@@ -254,21 +234,16 @@ add_task(async function browseraction_contextmenu_manage_extension() {
     );
     await closeChromeContextMenu(menuId, manageExtension, win);
     let managerWindow = (await addonManagerPromise).linkedBrowser.contentWindow;
-    if (managerWindow.useHtmlViews) {
-      // Check the UI to make sure that the correct view is loaded.
-      is(
-        managerWindow.gViewController.currentViewId,
-        `addons://detail/${encodeURIComponent(id)}`,
-        "Expected extension details view in about:addons"
-      );
-      // In HTML about:addons, the default view does not show the inline
-      // options browser, so we should not receive an "options-loaded" event.
-      // (if we do, the test will fail due to the unexpected message).
-    } else {
-      info("Waiting for inline options page in XUL about:addons");
-      // In XUL about:addons, the inline options page is shown by default.
-      await extension.awaitMessage("options-loaded");
-    }
+
+    // Check the UI to make sure that the correct view is loaded.
+    is(
+      managerWindow.gViewController.currentViewId,
+      `addons://detail/${encodeURIComponent(id)}`,
+      "Expected extension details view in about:addons"
+    );
+    // In HTML about:addons, the default view does not show the inline
+    // options browser, so we should not receive an "options-loaded" event.
+    // (if we do, the test will fail due to the unexpected message).
 
     info(
       `Remove the opened tab, and await customize mode to be restored if necessary`
@@ -329,11 +304,7 @@ add_task(async function browseraction_contextmenu_manage_extension() {
 
     info("Wait until the overflow menu is ready");
     let overflowButton = win.document.getElementById("nav-bar-overflow-button");
-    let icon = win.document.getAnonymousElementByAttribute(
-      overflowButton,
-      "class",
-      "toolbarbutton-icon"
-    );
+    let icon = overflowButton.icon;
     await waitForElementShown(icon);
 
     if (!customizing) {
@@ -435,11 +406,7 @@ async function runTestContextMenu({
 
   info("Wait until the overflow menu is ready");
   let overflowButton = win.document.getElementById("nav-bar-overflow-button");
-  let icon = win.document.getAnonymousElementByAttribute(
-    overflowButton,
-    "class",
-    "toolbarbutton-icon"
-  );
+  let icon = overflowButton.icon;
   await waitForElementShown(icon);
 
   if (!customizing) {
@@ -603,12 +570,9 @@ add_task(async function browseraction_contextmenu_remove_extension() {
 // mode enabled).
 add_task(async function browseraction_contextmenu_report_extension() {
   SpecialPowers.pushPrefEnv({
-    set: [
-      ["extensions.htmlaboutaddons.enabled", true],
-      ["extensions.abuseReport.enabled", true],
-    ],
+    set: [["extensions.abuseReport.enabled", true]],
   });
-  let win = await BrowserTestUtils.openNewBrowserWindow();
+  let win;
   let id = "addon_id@example.com";
   let name = "Bad Add-on";
   let buttonId = `${makeWidgetId(id)}-browser-action`;
@@ -623,6 +587,35 @@ add_task(async function browseraction_contextmenu_report_extension() {
     },
     useAddonManager: "temporary",
   });
+
+  async function testReportDialog() {
+    const reportDialogWindow = await BrowserTestUtils.waitForCondition(
+      () => AbuseReporter.getOpenDialog(),
+      "Wait for the abuse report dialog to have been opened"
+    );
+
+    const reportDialogParams = reportDialogWindow.arguments[0].wrappedJSObject;
+    is(
+      reportDialogParams.report.addon.id,
+      id,
+      "Abuse report dialog has the expected addon id"
+    );
+    is(
+      reportDialogParams.report.reportEntryPoint,
+      "toolbar_context_menu",
+      "Abuse report dialog has the expected reportEntryPoint"
+    );
+
+    info("Wait the report dialog to complete rendering");
+    await reportDialogParams.promiseReportPanel;
+    info("Close the report dialog");
+    reportDialogWindow.close();
+    is(
+      await reportDialogParams.promiseReport,
+      undefined,
+      "Report resolved as user cancelled when the window is closed"
+    );
+  }
 
   async function testContextMenu(menuId, customizing) {
     info(`Open browserAction context menu in ${menuId}`);
@@ -654,33 +647,19 @@ add_task(async function browseraction_contextmenu_report_extension() {
 
     await BrowserTestUtils.browserLoaded(browser);
 
-    const abuseReportFrame = await BrowserTestUtils.waitForCondition(() => {
-      return browser.contentDocument.querySelector(
-        "addon-abuse-report-xulframe"
-      );
-    }, "Wait the abuse report frame");
-
-    ok(
-      !abuseReportFrame.hidden,
-      "Abuse report frame has the expected visibility"
-    );
-    is(
-      abuseReportFrame.report.addon.id,
-      id,
-      "Abuse report frame has the expected addon id"
-    );
-    is(
-      abuseReportFrame.report.reportEntryPoint,
-      "toolbar_context_menu",
-      "Abuse report frame has the expected reportEntryPoint"
-    );
+    await testReportDialog();
 
     // Close the new about:addons tab when running in customize mode,
     // or cancel the abuse report if the about:addons page has been
     // loaded in the existing blank tab.
     if (customizing) {
       info("Closing the about:addons tab");
-      BrowserTestUtils.removeTab(win.gBrowser.selectedTab);
+      let customizationReady = BrowserTestUtils.waitForEvent(
+        win.gNavToolbox,
+        "customizationready"
+      );
+      win.gBrowser.removeTab(win.gBrowser.selectedTab);
+      await customizationReady;
     } else {
       info("Navigate the about:addons tab to about:blank");
       await BrowserTestUtils.loadURI(browser, "about:blank");
@@ -690,6 +669,8 @@ add_task(async function browseraction_contextmenu_report_extension() {
   }
 
   await extension.startup();
+
+  win = await BrowserTestUtils.openNewBrowserWindow();
 
   info("Run tests in normal mode");
   await runTestContextMenu({
@@ -707,7 +688,6 @@ add_task(async function browseraction_contextmenu_report_extension() {
     win,
   });
 
-  await extension.unload();
-
   await BrowserTestUtils.closeWindow(win);
+  await extension.unload();
 });

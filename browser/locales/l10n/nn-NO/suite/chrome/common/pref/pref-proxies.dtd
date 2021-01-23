@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-proxies.xul -->
+
+<!--LOCALIZATION NOTE : FILE The Proxies preferences dialog -->
+<!ENTITY  pref.proxies.title            "Proxiar">
+<!ENTITY  reload.label                  "Oppdater">
+<!ENTITY  reload.accesskey              "O">
+<!ENTITY  http.label                    "Proxy:">
+<!ENTITY  http.accesskey                "P">
+<!ENTITY  port.label                    "Port:">
+<!ENTITY  HTTPPort.accesskey            "p">
+<!ENTITY  advanced.label                "Avansert…">
+<!ENTITY  advanced.accesskey            "v">
+<!ENTITY  noproxy.label                 "Ingen proxy for:">
+<!ENTITY  noproxy.accesskey             "I">
+<!ENTITY  noproxyExplain.label          "Døme: .mozilla.org, .net.nz, 192.168.1.0/24">

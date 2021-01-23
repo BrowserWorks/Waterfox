@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Uneix-me al canal">
+
+<!ENTITY network.label     "Xarxa:">
+<!ENTITY network.accesskey "a">
+
+<!ENTITY channel.label     "Canal:">
+<!ENTITY channel.accesskey "C">
+
+<!ENTITY topics.label "Cerca els temes com també els noms dels canals">
+<!ENTITY topics.accesskey "t">
+
+<!ENTITY join.label "Uneix-me">
+<!ENTITY join.accesskey "U">
+
+<!ENTITY minusers.label "Mínim d'usuaris:">
+<!ENTITY minusers.accesskey "n">
+
+<!ENTITY maxusers.label "Màxim d'usuaris:">
+<!ENTITY maxusers.accesskey "x">
+
+<!ENTITY refresh.label "Actualitza ara">
+<!ENTITY refresh.accesskey "">
+
+<!ENTITY network.hint.label "Introduïu una xarxa o nom de servidor (podeu incloure el port) i el canal a què unir-vos.">
+
+<!ENTITY col.network "Xarxa">
+<!ENTITY col.name "Nom">
+<!ENTITY col.users "Usuaris">
+<!ENTITY col.topic "Assumpte">

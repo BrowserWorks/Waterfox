@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+<!ENTITY windowTitle.label "편집 변경 선택">
+<!ENTITY conflictWarning.label "이 페이지는 다른 프로그램으로 수정되었습니다. 편집기에서 저장할 수 없습니다.">
+<!ENTITY conflictResolve.label "버전 유지 선택:">
+<!ENTITY keepCurrentPageButton.label "현재 페이지 변경을 유지">
+<!ENTITY useOtherPageButton.label "다른 변경으로 현재 페이지 대치">

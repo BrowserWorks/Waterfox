@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Event Menu -->
+<!ENTITY event.new.event                        "Nij barren…">
+<!ENTITY event.new.event.accesskey              "N">
+
+<!ENTITY event.new.task                         "Nije taak…">
+<!ENTITY event.new.task.accesskey               "k">
+
+<!ENTITY calendar.import.label                  "Ymportearje…">
+<!ENTITY calendar.import.accesskey              "Y">
+
+<!ENTITY calendar.export.label         			"Eksportearje…">
+<!ENTITY calendar.export.accesskey     			"E">
+
+<!ENTITY calendar.publish.label                 "Publisearje…">
+<!ENTITY calendar.publish.accesskey             "b">
+
+<!ENTITY calendar.deletecalendar.label          "Selektearre aginda fuortsmite…">
+<!ENTITY calendar.deletecalendar.accesskey      "S">
+<!ENTITY calendar.unsubscribecalendar.label     "Selektearre aginda ôfmelde…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "m">
+
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+<!ENTITY calendar.removecalendar.label          "Selektearre aginda fuortsmite…">
+<!ENTITY calendar.removecalendar.accesskey      "f">
+
+
+<!ENTITY calendar.menu.customize.label          "Oanpasse…">
+<!ENTITY calendar.menu.customize.accesskey      "O">
+
+<!ENTITY showUnifinderCmd.label                 "Barren sykje">
+<!ENTITY showUnifinderCmd.accesskey             "s">
+<!ENTITY showUnifinderCmd.tooltip               "It sykfinster foar barrens yn-/útskeakelje">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "Taken yn aginda toane">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "T">
+
+<!ENTITY goTodayCmd.label                       "Hjoed">
+<!ENTITY goTodayCmd.accesskey                   "H">
+
+<!ENTITY showCurrentView.label                  "Aktuele werjefte">
+<!ENTITY showCurrentView.accesskey              "A">
+
+<!ENTITY calendar.properties.label              "Aginda-eigenskippen…">
+<!ENTITY calendar.properties.accesskey          "e">

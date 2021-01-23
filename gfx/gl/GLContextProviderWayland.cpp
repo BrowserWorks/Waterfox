@@ -10,8 +10,7 @@
 
 #include "GLContextProvider.h"
 
-namespace mozilla {
-namespace gl {
+namespace mozilla::gl {
 
 using namespace mozilla::gfx;
 using namespace mozilla::widget;
@@ -37,17 +36,6 @@ already_AddRefed<GLContext> GLContextProviderWayland::CreateForCompositorWidget(
   } else {
     return sGLContextProviderEGL.CreateForCompositorWidget(
         aCompositorWidget, aWebRender, aForceAccelerated);
-  }
-}
-
-already_AddRefed<GLContext> GLContextProviderWayland::CreateForWindow(
-    nsIWidget* aWidget, bool aWebRender, bool aForceAccelerated) {
-  if (GDK_IS_X11_DISPLAY(gdk_display_get_default())) {
-    return sGLContextProviderGLX.CreateForWindow(aWidget, aWebRender,
-                                                 aForceAccelerated);
-  } else {
-    return sGLContextProviderEGL.CreateForWindow(aWidget, aWebRender,
-                                                 aForceAccelerated);
   }
 }
 
@@ -92,5 +80,4 @@ void GLContextProviderWayland::Shutdown() {
   }
 }
 
-} /* namespace gl */
-} /* namespace mozilla */
+}  // namespace mozilla::gl

@@ -21,9 +21,7 @@
 var EXPORTED_SYMBOLS = ["TestUtils"];
 
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
-const { clearInterval, setInterval } = ChromeUtils.import(
-  "resource://gre/modules/Timer.jsm"
-);
+const { setTimeout } = ChromeUtils.import("resource://gre/modules/Timer.jsm");
 
 var TestUtils = {
   executeSoon(callbackFn) {
@@ -152,7 +150,7 @@ var TestUtils = {
    * @param condition
    *        A condition function that must return true or false. If the
    *        condition ever throws, this is also treated as a false. The
-   *        function can be a generator.
+   *        function can be an async function.
    * @param interval
    *        The time interval to poll the condition function. Defaults
    *        to 100ms.
@@ -163,13 +161,15 @@ var TestUtils = {
    * @return Promise
    *        Resolves with the return value of the condition function.
    *        Rejects if timeout is exceeded or condition ever throws.
+   *
+   * NOTE: This is intentionally not using setInterval, using setTimeout
+   * instead. setInterval is not promise-safe.
    */
   waitForCondition(condition, msg, interval = 100, maxTries = 50) {
     return new Promise((resolve, reject) => {
       let tries = 0;
-      let intervalID = setInterval(async function() {
+      async function tryOnce() {
         if (tries >= maxTries) {
-          clearInterval(intervalID);
           msg += ` - timed out after ${maxTries} tries.`;
           reject(msg);
           return;
@@ -180,17 +180,20 @@ var TestUtils = {
           conditionPassed = await condition();
         } catch (e) {
           msg += ` - threw exception: ${e}`;
-          clearInterval(intervalID);
           reject(msg);
           return;
         }
 
         if (conditionPassed) {
-          clearInterval(intervalID);
           resolve(conditionPassed);
+          return;
         }
         tries++;
-      }, interval);
+        setTimeout(tryOnce, interval);
+      }
+
+      // FIXME(bug 1596165): This could be a direct call, ideally.
+      setTimeout(tryOnce, interval);
     });
   },
 

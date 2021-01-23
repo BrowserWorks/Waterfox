@@ -24,23 +24,24 @@ const {
   CREDITCARDS_COLLECTION_NAME,
 } = FormAutofillUtils;
 
+let destroyed = false;
+
 var ParentUtils = {
-  async _getRecords(collectionName) {
-    return new Promise(resolve => {
-      Services.cpmm.addMessageListener(
-        "FormAutofill:Records",
-        function getResult({ data }) {
-          Services.cpmm.removeMessageListener(
-            "FormAutofill:Records",
-            getResult
-          );
-          resolve(data);
-        }
-      );
-      Services.cpmm.sendAsyncMessage("FormAutofill:GetRecords", {
+  getFormAutofillActor() {
+    let win = Services.wm.getMostRecentWindow("navigator:browser");
+    let selectedBrowser = win.gBrowser.selectedBrowser;
+    return selectedBrowser.browsingContext.currentWindowGlobal.getActor(
+      "FormAutofill"
+    );
+  },
+
+  _getRecords(collectionName) {
+    return this.getFormAutofillActor().receiveMessage({
+      name: "FormAutofill:GetRecords",
+      data: {
         searchString: "",
         collectionName,
-      });
+      },
     });
   },
 
@@ -58,17 +59,21 @@ var ParentUtils = {
         }
 
         // every notification type should have the collection name.
-        let allowedNames = [
-          ADDRESSES_COLLECTION_NAME,
-          CREDITCARDS_COLLECTION_NAME,
-        ];
-        assert.ok(
-          allowedNames.includes(subject.wrappedJSObject.collectionName),
-          "should include the collection name"
-        );
-        // every notification except removeAll should have a guid.
-        if (data != "removeAll") {
-          assert.ok(subject.wrappedJSObject.guid, "should have a guid");
+        // We're not allowed to trigger assertions during mochitest
+        // cleanup functions.
+        if (!destroyed) {
+          let allowedNames = [
+            ADDRESSES_COLLECTION_NAME,
+            CREDITCARDS_COLLECTION_NAME,
+          ];
+          assert.ok(
+            allowedNames.includes(subject.wrappedJSObject.collectionName),
+            "should include the collection name"
+          );
+          // every notification except removeAll should have a guid.
+          if (data != "removeAll") {
+            assert.ok(subject.wrappedJSObject.guid, "should have a guid");
+          }
         }
         Services.obs.removeObserver(observer, obsTopic);
         resolve();
@@ -76,59 +81,61 @@ var ParentUtils = {
     });
   },
 
-  async _operateRecord(collectionName, type, msgData, contentMsg) {
-    let times, topic;
+  async _operateRecord(collectionName, type, msgData) {
+    let msgName, times, topic;
 
     if (collectionName == ADDRESSES_COLLECTION_NAME) {
       switch (type) {
         case "add": {
-          Services.cpmm.sendAsyncMessage("FormAutofill:SaveAddress", msgData);
+          msgName = "FormAutofill:SaveAddress";
           break;
         }
         case "update": {
-          Services.cpmm.sendAsyncMessage("FormAutofill:SaveAddress", msgData);
+          msgName = "FormAutofill:SaveAddress";
           break;
         }
         case "remove": {
+          msgName = "FormAutofill:RemoveAddresses";
           times = msgData.guids.length;
-          Services.cpmm.sendAsyncMessage(
-            "FormAutofill:RemoveAddresses",
-            msgData
-          );
           break;
         }
+        default:
+          return;
       }
     } else {
       switch (type) {
         case "add": {
-          const msgDataCloned = Object.assign({}, msgData);
-
-          Services.cpmm.sendAsyncMessage(
-            "FormAutofill:SaveCreditCard",
-            msgDataCloned
-          );
+          msgData = Object.assign({}, msgData);
+          msgName = "FormAutofill:SaveCreditCard";
           break;
         }
         case "remove": {
+          msgName = "FormAutofill:RemoveCreditCards";
           times = msgData.guids.length;
-          Services.cpmm.sendAsyncMessage(
-            "FormAutofill:RemoveCreditCards",
-            msgData
-          );
           break;
         }
+        default:
+          return;
       }
     }
 
-    await this._storageChangeObserved({ type, times, topic });
-    sendAsyncMessage(contentMsg);
+    let storageChangePromise = this._storageChangeObserved({
+      type,
+      times,
+      topic,
+    });
+    this.getFormAutofillActor().receiveMessage({
+      name: msgName,
+      data: msgData,
+    });
+    await storageChangePromise;
   },
 
-  async operateAddress(type, msgData, contentMsg) {
+  async operateAddress(type, msgData) {
     await this._operateRecord(ADDRESSES_COLLECTION_NAME, ...arguments);
   },
 
-  async operateCreditCard(type, msgData, contentMsg) {
+  async operateCreditCard(type, msgData) {
     await this._operateRecord(CREDITCARDS_COLLECTION_NAME, ...arguments);
   },
 
@@ -137,8 +144,7 @@ var ParentUtils = {
       record => record.guid
     );
 
-    if (guids.length == 0) {
-      sendAsyncMessage("FormAutofillTest:AddressesCleanedUp");
+    if (!guids.length) {
       return;
     }
 
@@ -157,8 +163,7 @@ var ParentUtils = {
       record => record.guid
     );
 
-    if (guids.length == 0) {
-      sendAsyncMessage("FormAutofillTest:CreditCardsCleanedUp");
+    if (!guids.length) {
       return;
     }
 
@@ -225,25 +230,17 @@ var ParentUtils = {
   },
 
   async checkAddresses({ expectedAddresses }) {
-    const areMatched = await this._checkRecords(
-      ADDRESSES_COLLECTION_NAME,
-      expectedAddresses
-    );
-
-    sendAsyncMessage("FormAutofillTest:areAddressesMatching", areMatched);
+    return this._checkRecords(ADDRESSES_COLLECTION_NAME, expectedAddresses);
   },
 
   async checkCreditCards({ expectedCreditCards }) {
-    const areMatched = await this._checkRecords(
-      CREDITCARDS_COLLECTION_NAME,
-      expectedCreditCards
-    );
-
-    sendAsyncMessage("FormAutofillTest:areCreditCardsMatching", areMatched);
+    return this._checkRecords(CREDITCARDS_COLLECTION_NAME, expectedCreditCards);
   },
 
   observe(subject, topic, data) {
-    assert.ok(topic === "formautofill-storage-changed");
+    if (!destroyed) {
+      assert.ok(topic === "formautofill-storage-changed");
+    }
     sendAsyncMessage("formautofill-storage-changed", {
       subject: null,
       topic,
@@ -255,67 +252,58 @@ var ParentUtils = {
 Services.obs.addObserver(ParentUtils, "formautofill-storage-changed");
 
 Services.mm.addMessageListener("FormAutofill:FieldsIdentified", () => {
-  sendAsyncMessage("FormAutofillTest:FieldsIdentified");
+  return null;
 });
 
 addMessageListener("FormAutofillTest:AddAddress", msg => {
-  ParentUtils.operateAddress("add", msg, "FormAutofillTest:AddressAdded");
+  return ParentUtils.operateAddress("add", msg);
 });
 
 addMessageListener("FormAutofillTest:RemoveAddress", msg => {
-  ParentUtils.operateAddress("remove", msg, "FormAutofillTest:AddressRemoved");
+  return ParentUtils.operateAddress("remove", msg);
 });
 
 addMessageListener("FormAutofillTest:UpdateAddress", msg => {
-  ParentUtils.operateAddress("update", msg, "FormAutofillTest:AddressUpdated");
+  return ParentUtils.operateAddress("update", msg);
 });
 
 addMessageListener("FormAutofillTest:CheckAddresses", msg => {
-  ParentUtils.checkAddresses(msg);
+  return ParentUtils.checkAddresses(msg);
 });
 
 addMessageListener("FormAutofillTest:CleanUpAddresses", msg => {
-  ParentUtils.cleanUpAddresses();
+  return ParentUtils.cleanUpAddresses();
 });
 
 addMessageListener("FormAutofillTest:AddCreditCard", msg => {
-  ParentUtils.operateCreditCard("add", msg, "FormAutofillTest:CreditCardAdded");
+  return ParentUtils.operateCreditCard("add", msg);
 });
 
 addMessageListener("FormAutofillTest:RemoveCreditCard", msg => {
-  ParentUtils.operateCreditCard(
-    "remove",
-    msg,
-    "FormAutofillTest:CreditCardRemoved"
-  );
+  return ParentUtils.operateCreditCard("remove", msg);
 });
 
 addMessageListener("FormAutofillTest:CheckCreditCards", msg => {
-  ParentUtils.checkCreditCards(msg);
+  return ParentUtils.checkCreditCards(msg);
 });
 
 addMessageListener("FormAutofillTest:CleanUpCreditCards", msg => {
-  ParentUtils.cleanUpCreditCards();
+  return ParentUtils.cleanUpCreditCards();
 });
 
 addMessageListener("FormAutofillTest:CanTestOSKeyStoreLogin", msg => {
-  sendAsyncMessage("FormAutofillTest:CanTestOSKeyStoreLoginResult", {
-    canTest: OSKeyStoreTestUtils.canTestOSKeyStoreLogin(),
-  });
+  return { canTest: OSKeyStoreTestUtils.canTestOSKeyStoreLogin() };
 });
 
 addMessageListener("FormAutofillTest:OSKeyStoreLogin", async msg => {
   await OSKeyStoreTestUtils.waitForOSKeyStoreLogin(msg.login);
-  sendAsyncMessage("FormAutofillTest:OSKeyStoreLoggedIn");
 });
 
 addMessageListener("setup", async () => {
   ParentUtils.setup();
-  sendAsyncMessage("setup-finished", {});
 });
 
 addMessageListener("cleanup", async () => {
+  destroyed = true;
   await ParentUtils.cleanup();
-
-  sendAsyncMessage("cleanup-finished", {});
 });

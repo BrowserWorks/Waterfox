@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!-- LOCALIZATION NOTE  (editorWindow.titlemodifier): DONT_TRANSLATE -->
+<!ENTITY editorWindow.titlemodifier "Redaktilo">
+<!ENTITY editorWindow.titlemodifiermenuseparator " - ">
+
+<!-- Menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- Toolbar-only items -->
+<!ENTITY compositionToolbar.tooltip "Ilaro de redakto">
+<!ENTITY previewToolbarCmd.label "Retumi">
+<!ENTITY previewToolbarCmd.tooltip "Ŝargi tiun ĉi paĝon en la retumilo">
+
+<!-- File menu items -->
+<!ENTITY exportToTextCmd.label "Eksporti al teksto…">
+<!ENTITY exportToTextCmd.accesskey "k">
+<!ENTITY previewCmd.label "Montri paĝon">
+<!ENTITY previewCmd.accesskey "M">
+<!ENTITY sendPageCmd.label "Sendi paĝon…">
+<!ENTITY sendPageCmd.accesskey "S">
+
+<!-- View menu items -->
+<!ENTITY compositionToolbarCmd.label "Ilaro de redakto">
+<!ENTITY compositionToolbarCmd.accesskey "r">
+<!ENTITY formattingToolbarCmd.label "Ilaro de formo">
+<!ENTITY formattingToolbarCmd.accesskey "f">
+<!ENTITY editmodeToolbarCmd.label "Ilaro de redakta reĝimo">
+<!ENTITY editmodeToolbarCmd.accesskey "e">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "Formo">
+<!ENTITY formatMenu.accesskey "F">
+<!ENTITY grid.label "Pozicia krado">
+<!ENTITY grid.accesskey "k">
+<!ENTITY pageProperties.label "Titolo kaj atributoj de paĝo…">
+<!ENTITY pageProperties.accesskey "T">
+
+<!-- Tools menu items -->
+<!ENTITY validateCmd.label "Kontroli HTML">
+<!ENTITY validateCmd.accesskey "K">
+
+<!-- Display Mode toolbar and View menu items -->
+<!ENTITY NormalModeTab.label "Normala">
+<!ENTITY NormalMode.label "Normala redakta reĝimo">
+<!ENTITY NormalMode.accesskey "N">
+<!ENTITY NormalMode.tooltip "Montri randojn de tablo kaj nomitajn ankrojn">
+<!ENTITY AllTagsModeTab.label "Etikedoj HTML">
+<!ENTITY AllTagsMode.label "Etikedoj HTML">
+<!ENTITY AllTagsMode.accesskey "E">
+<!ENTITY AllTagsMode.tooltip "Montri bildsimbolojn por ĉiuj etikedoj HTML">
+<!-- LOCALIZATION NOTE: (HTMLSourceModeTab.dir, HTMLSourceModeTab.label)
+     Do NOT translate text for 'HTMLSourceModeTab.dir', use latin "ltr" if
+     you want the <html> image to left of the 'HTMLSourceModeTab.label' text,
+     or use latin "rtl" if you want this image to the right of text. You do
+     not need to include HTML in the label 'HTMLSourceModeTab.label' -->
+<!ENTITY HTMLSourceModeTab.dir "ltr">
+<!ENTITY HTMLSourceModeTab.label "Fonto">
+<!ENTITY HTMLSourceMode.label "Fonto HTML">
+<!ENTITY HTMLSourceMode.accesskey "H">
+<!ENTITY HTMLSourceMode.tooltip "Redakti fonton HTML">
+<!ENTITY PreviewModeTab.label "Antaŭvidi">
+<!ENTITY PreviewMode.label "Antaŭvidi">
+<!ENTITY PreviewMode.accesskey "A">
+<!ENTITY PreviewMode.tooltip "Montri kiel WYSIWYG (kiel en retumilo)">

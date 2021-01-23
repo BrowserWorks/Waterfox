@@ -4,10 +4,8 @@
 
 <!ENTITY  brandShorterName      "Waterfox">
 <!ENTITY  brandShortName        "Waterfox">
-<!ENTITY  brandFullName         "Waterfox Current">
+<!ENTITY  brandFullName         "Waterfox">
 <!-- LOCALIZATION NOTE (brandProductName):
    This brand name can be used in messages where the product name needs to
    remain unchanged across different versions (Nightly, Beta, etc.). -->
 <!ENTITY  brandProductName      "Waterfox">
-<!ENTITY  vendorShortName       "Waterfox">
-<!ENTITY  trademarkInfo.part1   "Waterfox is a registered Trademark of Waterfox Ltd.">

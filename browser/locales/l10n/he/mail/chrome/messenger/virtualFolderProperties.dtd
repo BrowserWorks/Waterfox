@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "תיקייה חדשה של חיפוש שמור">
+<!ENTITY name.label                 "שם:">
+<!ENTITY name.accesskey             "ש">
+<!ENTITY description.label          "צור כתת־תיקייה של:">
+<!ENTITY description.accesskey      "ת">
+
+<!ENTITY searchTermCaption.label "הגדר את קריטריון החיפוש שבשימוש עבור תיקיית חיפוש זו:">
+
+<!ENTITY folderSelectionCaption.label "בחר את התיקיות לחיפוש:">
+<!ENTITY chooseFoldersButton.label "בחירה…">
+<!ENTITY chooseFoldersButton.accesskey "ב">
+
+<!ENTITY searchOnline.label "חפש באופן מקוון (נותן תוצאות מעודכנות עבור IMAP ותיקיות קבוצות דיון, אולם מגדיל את הזמן הדרוש לפתיחת התיקייה)">
+<!ENTITY searchOnline.accesskey "ח">
+<!ENTITY newFolderButton.label       "יצירה">
+<!ENTITY newFolderButton.accesskey   "י">
+<!ENTITY editFolderButton.label      "עדכונים">
+<!ENTITY editFolderButton.accesskey  "ע">
+
+

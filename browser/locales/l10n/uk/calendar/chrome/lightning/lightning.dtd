@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+
+<!-- Tools menu -->
+<!ENTITY lightning.preferencesLabel "Календар">
+
+<!-- New menu popup in File menu -->
+<!ENTITY lightning.menupopup.new.event.label    "Подія…">
+<!ENTITY lightning.menupopup.new.event.accesskey "П">
+<!ENTITY lightning.menupopup.new.task.label     "Завдання…">
+<!ENTITY lightning.menupopup.new.task.accesskey "З">
+<!ENTITY lightning.menupopup.new.calendar.label "Календар…">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "К">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.label               "Відкрити">
+<!ENTITY lightning.menupopup.open.accesskey           "В">
+<!ENTITY lightning.menupopup.open.message.label       "Збережене повідомлення…">
+<!ENTITY lightning.menupopup.open.message.accesskey   "п">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.calendar.label      "Файл календаря…">
+<!ENTITY lightning.menupopup.open.calendar.accesskey  "к">
+
+<!-- View Menu -->
+<!ENTITY lightning.menu.view.calendar.label            "Календар">
+<!ENTITY lightning.menu.view.calendar.accesskey        "К">
+<!ENTITY lightning.menu.view.tasks.label               "Завдання">
+<!ENTITY lightning.menu.view.tasks.accesskey           "З">
+
+<!-- Events and Tasks menu -->
+<!ENTITY lightning.menu.eventtask.label                "Події та завдання">
+<!ENTITY lightning.menu.eventtask.accesskey            "з">
+
+<!-- properties dialog, calendar creation wizard -->
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.email.label,
+     lightning.calendarproperties.forceEmailScheduling.label)
+     These strings are used in the calendar wizard and the calendar properties dialog, but are only
+     displayed when setting/using a caldav calendar -->
+<!ENTITY lightning.calendarproperties.email.label                           "E-Mail:">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.label            "Віддавати перевагу надсилати листи із запрошеннями зі сторони клієнта">
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.forceEmailScheduling.tooltiptext1,
+     lightning.calendarproperties.forceEmailScheduling.tooltiptext2)
+     - tooltiptext1 is used in the calendar wizard when setting a new caldav calendar
+     - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "В даний момент ви можете увімкнути це лише після налаштування цього календаря в діалоговому вікні його властивостей, якщо сервер календаря сам обробляє запрошення.">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "Це налаштування доступне лише тоді, коли сервер календаря сам може обробляти запрошення. Увімкнення цього дозволить повернутися до стандартного надсилання електронних листів із запрошеннями замість доручення цього серверу.">
+
+<!-- iMIP Bar (meeting support) -->
+<!ENTITY lightning.imipbar.btnAccept.label                                  "Прийняти">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext                           "Прийняти запрошення на подію">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label                       "Прийняти все">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences2.tooltiptext                "Прийняти запрошення на подію для всіх випадків події">
+<!ENTITY lightning.imipbar.btnAdd.label                                     "Додати">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext                               "Додати подію в календар">
+<!ENTITY lightning.imipbar.btnDecline.label                                 "Відхилити">
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext                          "Відхилити запрошення на подію">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label                      "Відхилити все">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences2.tooltiptext               "Відхилити запрошення на подію для всіх випадків події">
+<!ENTITY lightning.imipbar.btnDeclineCounter.label                          "Відхилити">
+<!ENTITY lightning.imipbar.btnDeclineCounter.tooltiptext                    "Відхилити зустрічну пропозицію">
+<!ENTITY lightning.imipbar.btnDelete.label                                  "Видалити">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext                            "Видалити з календаря">
+<!ENTITY lightning.imipbar.btnDetails.label                                 "Подробиці…">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext                           "Показати подробиці події">
+<!ENTITY lightning.imipbar.btnDoNotShowImipBar.label                        "Не показувати мені ці повідомлення">
+<!ENTITY lightning.imipbar.btnGoToCalendar.label                            "Календар">
+<!ENTITY lightning.imipbar.btnGoToCalendar.tooltiptext                      "Перейти на вкладку календаря">
+<!ENTITY lightning.imipbar.btnMore.label                                    "Більше">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext                              "Натисніть для показу додаткових можливостей">
+<!ENTITY lightning.imipbar.btnReconfirm2.label                              "Підтвердити заново">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext                         "Надсилає повторне підтвердження організатору">
+<!ENTITY lightning.imipbar.btnReschedule.label                              "Змінити розклад">
+<!ENTITY lightning.imipbar.btnReschedule.tooltiptext                        "Змінити розклад події">
+<!ENTITY lightning.imipbar.btnSaveCopy.label                                "Зберегти копію">
+<!ENTITY lightning.imipbar.btnSaveCopy.tooltiptext                          "Зберегти копію події в календар незалежно від відповіді організатору. Список присутніх буде очищений.">
+<!ENTITY lightning.imipbar.btnTentative.label                               "Попередньо">
+<!ENTITY lightning.imipbar.btnTentative2.tooltiptext                        "Попередньо прийняти запрошення на подію">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences.label                    "Попередньо все">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences2.tooltiptext             "Попередньо прийняти запрошення на подію для всіх випадків події">
+<!ENTITY lightning.imipbar.btnUpdate.label                                  "Оновити">
+<!ENTITY lightning.imipbar.btnUpdate.tooltiptext                            "Оновити подію в календарі">
+<!ENTITY lightning.imipbar.description                                      "Це повідомлення містить запрошення на подію.">
+
+<!ENTITY lightning.imipbar.btnSend.label                                    "Надіслати відповідь зараз">
+<!ENTITY lightning.imipbar.btnSend.tooltiptext                              "Надіслати відповідь організатору">
+<!ENTITY lightning.imipbar.btnSendSeries.tooltiptext                        "Надіслати відповідь організатору для усієї серії">
+<!ENTITY lightning.imipbar.btnDontSend.label                                "Не надсилати відповідь">
+<!ENTITY lightning.imipbar.btnDontSend.tooltiptext                          "Змінити свій статус участі без надсилання відповіді організатору">
+<!ENTITY lightning.imipbar.btnDontSendSeries.tooltiptext                    "Змінити свій статус участі для серії без надсилання відповіді організатору">
+
+<!-- Lightning specific keybindings -->
+<!ENTITY lightning.keys.event.showCalendar.key "C">
+<!ENTITY lightning.keys.event.showTasks.key "D">
+<!ENTITY lightning.keys.event.new "I">
+<!ENTITY lightning.keys.todo.new "D">
+
+<!-- Account Central page -->
+<!ENTITY lightning.acctCentral.newCalendar.label "Створити новий календар">
+
+<!-- today-pane-specific -->
+<!ENTITY todaypane.showMinimonth.label "Показувати календарик">
+<!ENTITY todaypane.showMinimonth.accesskey "к">
+<!ENTITY todaypane.showMiniday.label "Показувати день">
+<!ENTITY todaypane.showMiniday.accesskey  "д">
+<!ENTITY todaypane.showNone.label "Нічого не показувати">
+<!ENTITY todaypane.showNone.accesskey "Н">
+<!ENTITY todaypane.showTodayPane.label "Показувати панель дня">
+<!ENTITY todaypane.showTodayPane.accesskey "п">
+<!ENTITY todaypane.statusButton.label "Сьогодні">

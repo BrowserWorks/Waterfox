@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-archiveoptions.xul -->
+
+<!-- extracted from am-archiveoptions.xhtml -->
+
+<!ENTITY dialogTitle.label "Agordoj de arĥivigo">
+<!ENTITY archiveGranularityPrefix.label "Konservi arĥivon de mesaĝoj en:">
+<!ENTITY archiveFlat.label "unuopan mesaĝujon">
+<!ENTITY archiveFlat.accesskey "u">
+<!ENTITY archiveYearly.label "jarajn mesaĝujojn">
+<!ENTITY archiveYearly.accesskey "j">
+<!ENTITY archiveMonthly.label "monatajn mesaĝujojn">
+<!ENTITY archiveMonthly.accesskey "m">
+<!ENTITY keepFolderStructure.label "Teni la ekzistantan strukturon de mesaĝujoj en la arĥivo">
+<!ENTITY keepFolderStructure.accesskey "T">
+<!ENTITY archiveExample.label "Ekzemplo">
+<!-- LOCALIZATION NOTE (archiveFolderName.label): this should match the default
+     name for the "Archives" folder -->
+<!ENTITY archiveFolderName.label "Arĥivo">
+<!-- LOCALIZATION NOTE (inboxFolderName.label): this should match the default
+     name for the "Inbox" folder -->
+<!ENTITY inboxFolderName.label "Ricevujo">

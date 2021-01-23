@@ -7,35 +7,59 @@
 #include "MediaElementAudioSourceNode.h"
 #include "mozilla/dom/MediaElementAudioSourceNodeBinding.h"
 #include "AudioDestinationNode.h"
-#include "nsIScriptError.h"
-#include "AudioNodeStream.h"
+#include "AudioNodeTrack.h"
+#include "MediaStreamTrack.h"
 
 namespace mozilla {
 namespace dom {
 
-MediaElementAudioSourceNode::MediaElementAudioSourceNode(AudioContext* aContext)
-    : MediaStreamAudioSourceNode(aContext) {}
+NS_IMPL_CYCLE_COLLECTION_CLASS(MediaElementAudioSourceNode)
+
+NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(MediaElementAudioSourceNode)
+  tmp->Destroy();
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mElement)
+NS_IMPL_CYCLE_COLLECTION_UNLINK_END_INHERITED(AudioNode)
+
+NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(MediaElementAudioSourceNode,
+                                                  MediaStreamAudioSourceNode)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mElement)
+NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
+
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(MediaElementAudioSourceNode)
+NS_INTERFACE_MAP_END_INHERITING(MediaStreamAudioSourceNode)
+
+NS_IMPL_ADDREF_INHERITED(MediaElementAudioSourceNode,
+                         MediaStreamAudioSourceNode)
+NS_IMPL_RELEASE_INHERITED(MediaElementAudioSourceNode,
+                          MediaStreamAudioSourceNode)
+
+MediaElementAudioSourceNode::MediaElementAudioSourceNode(
+    AudioContext* aContext, HTMLMediaElement* aElement)
+    : MediaStreamAudioSourceNode(aContext, TrackChangeBehavior::FollowChanges),
+      mElement(aElement) {
+  MOZ_ASSERT(aElement);
+}
 
 /* static */
 already_AddRefed<MediaElementAudioSourceNode>
 MediaElementAudioSourceNode::Create(
     AudioContext& aAudioContext, const MediaElementAudioSourceOptions& aOptions,
     ErrorResult& aRv) {
-  if (aAudioContext.IsOffline()) {
-    aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
-    return nullptr;
-  }
+  // The spec has a pointless check here.  See
+  // https://github.com/WebAudio/web-audio-api/issues/2149
+  MOZ_RELEASE_ASSERT(!aAudioContext.IsOffline(), "Bindings messed up?");
 
   RefPtr<MediaElementAudioSourceNode> node =
-      new MediaElementAudioSourceNode(&aAudioContext);
+      new MediaElementAudioSourceNode(&aAudioContext, aOptions.mMediaElement);
 
   RefPtr<DOMMediaStream> stream = aOptions.mMediaElement->CaptureAudio(
-      aRv, aAudioContext.Destination()->Stream()->Graph());
+      aRv, aAudioContext.Destination()->Track()->Graph());
   if (aRv.Failed()) {
     return nullptr;
   }
+  MOZ_ASSERT(stream, "CaptureAudio should report failure via aRv!");
 
-  node->Init(stream, aRv);
+  node->Init(*stream, aRv);
   if (aRv.Failed()) {
     return nullptr;
   }
@@ -51,6 +75,11 @@ JSObject* MediaElementAudioSourceNode::WrapObject(
 
 void MediaElementAudioSourceNode::ListenForAllowedToPlay(
     const MediaElementAudioSourceOptions& aOptions) {
+  if (!GetAbstractMainThread()) {
+    // The AudioContext must have been closed. It won't be able to start anyway.
+    return;
+  }
+
   aOptions.mMediaElement->GetAllowedToPlayPromise()
       ->Then(
           GetAbstractMainThread(), __func__,
@@ -58,7 +87,7 @@ void MediaElementAudioSourceNode::ListenForAllowedToPlay(
           // static analysis. We capture a non-owning reference so as to allow
           // cycle collection of the node. The reference is cleared via
           // DisconnectIfExists() from Destroy() when the node is collected.
-          [& self = *this]() {
+          [&self = *this]() {
             self.Context()->StartBlockedAudioContextIfAllowed();
             self.mAllowedToPlayRequest.Complete();
           })
@@ -68,6 +97,10 @@ void MediaElementAudioSourceNode::ListenForAllowedToPlay(
 void MediaElementAudioSourceNode::Destroy() {
   mAllowedToPlayRequest.DisconnectIfExists();
   MediaStreamAudioSourceNode::Destroy();
+}
+
+HTMLMediaElement* MediaElementAudioSourceNode::MediaElement() {
+  return mElement;
 }
 
 }  // namespace dom

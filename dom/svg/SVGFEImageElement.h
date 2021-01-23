@@ -65,13 +65,12 @@ class SVGFEImageElement final : public SVGFEImageElementBase,
                                 const nsAttrValue* aOldValue,
                                 nsIPrincipal* aSubjectPrincipal,
                                 bool aNotify) override;
-  virtual nsresult BindToTree(Document* aDocument, nsIContent* aParent,
-                              nsIContent* aBindingParent) override;
-  virtual void UnbindFromTree(bool aDeep, bool aNullParent) override;
+  virtual nsresult BindToTree(BindContext&, nsINode& aParent) override;
+  virtual void UnbindFromTree(bool aNullParent) override;
   virtual EventStates IntrinsicState() const override;
 
-  NS_IMETHOD Notify(imgIRequest* aRequest, int32_t aType,
-                    const nsIntRect* aData) override;
+  void Notify(imgIRequest* aRequest, int32_t aType,
+              const nsIntRect* aData) override;
 
   // Override for nsIImageLoadingContent.
   NS_IMETHOD_(void) FrameCreated(nsIFrame* aFrame) override;

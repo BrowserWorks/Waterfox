@@ -16,6 +16,12 @@ var gPopupShownListener;
 var gLastAutoCompleteResults;
 var gChromeScript;
 
+const TelemetryFilterPropsAC = Object.freeze({
+  category: "form_autocomplete",
+  method: "show",
+  object: "logins",
+});
+
 /*
  * Returns the element with the specified |name| attribute.
  */
@@ -90,7 +96,7 @@ var checkObserver = {
   },
 
   waitForChecks(callback) {
-    if (this.verifyStack.length == 0) {
+    if (!this.verifyStack.length) {
       callback();
     } else {
       this.callback = callback;
@@ -101,7 +107,7 @@ var checkObserver = {
     if (data != "formhistory-add" && data != "formhistory-update") {
       return;
     }
-    ok(this.verifyStack.length > 0, "checking if saved form data was expected");
+    ok(!!this.verifyStack.length, "checking if saved form data was expected");
 
     // Make sure that every piece of data we expect to be saved is saved, and no
     // more. Here it is assumed that for every entry satchel saves or modifies, a
@@ -116,7 +122,7 @@ var checkObserver = {
 
     countEntries(expected.name, expected.value, function(num) {
       ok(num > 0, expected.message);
-      if (checkObserver.verifyStack.length == 0) {
+      if (!checkObserver.verifyStack.length) {
         let callback = checkObserver.callback;
         checkObserver.callback = null;
         callback();
@@ -274,6 +280,21 @@ function promiseACShown() {
       resolve(results);
     };
   });
+}
+
+function checkACTelemetryEvent(actualEvent, input, augmentedExtra) {
+  ok(
+    parseInt(actualEvent[4], 10) > 0,
+    "elapsed time is a positive integer after converting from a string"
+  );
+  let expectedExtra = {
+    acFieldName: SpecialPowers.wrap(input).getAutocompleteInfo().fieldName,
+    typeWasPassword: SpecialPowers.wrap(input).hasBeenTypePassword ? "1" : "0",
+    fieldType: input.type,
+    stringLength: input.value.length + "",
+    ...augmentedExtra,
+  };
+  isDeeply(actualEvent[5], expectedExtra, "Check event extra object");
 }
 
 function satchelCommonSetup() {

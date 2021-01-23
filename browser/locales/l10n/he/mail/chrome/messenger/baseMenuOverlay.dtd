@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Help Menu -->
+<!ENTITY helpMenu.label "עזרה">
+<!ENTITY helpMenu.accesskey "ע">
+<!-- LOCALIZATION NOTE some localizations of Windows use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label "עזרה">
+<!ENTITY helpMenuWin.accesskey "ע">
+<!ENTITY helpTroubleshootingInfo.label     "מידע לפתרון בעיות">
+<!ENTITY helpTroubleshootingInfo.accesskey "מ">
+<!ENTITY helpSafeMode.label     "הפעלה מחדש עם תוספות מנוטרלות…">
+<!ENTITY helpSafeMode.accesskey "מ">
+

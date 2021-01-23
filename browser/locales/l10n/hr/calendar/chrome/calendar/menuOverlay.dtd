@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Event Menu -->
+
+<!ENTITY event.new.event                        "Novi događaj…">
+<!ENTITY event.new.event.accesskey              "N">
+
+<!ENTITY event.new.task                         "Novi zadatak…">
+<!ENTITY event.new.task.accesskey               "z">
+
+<!ENTITY calendar.import.label                  "Uvezi…">
+<!ENTITY calendar.import.accesskey              "U">
+
+<!ENTITY calendar.export.label                  "Izvezi…">
+<!ENTITY calendar.export.accesskey              "e">
+
+<!ENTITY calendar.publish.label                 "Objavi…">
+<!ENTITY calendar.publish.accesskey             "b">
+
+<!ENTITY calendar.deletecalendar.label          "Obriši odabrani kalendar…">
+<!ENTITY calendar.deletecalendar.accesskey      "d">
+<!ENTITY calendar.unsubscribecalendar.label     "Ukini pretplatu na odabrani kalendar…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "U">
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+
+<!ENTITY calendar.removecalendar.label          "Ukloni odabrani kalendar…">
+<!ENTITY calendar.removecalendar.accesskey      "r">
+
+
+<!ENTITY calendar.menu.customize.label          "Prilagodi…">
+<!ENTITY calendar.menu.customize.accesskey      "r">
+
+<!ENTITY showUnifinderCmd.label                 "Pronađi događaje">
+<!ENTITY showUnifinderCmd.accesskey             "a">
+<!ENTITY showUnifinderCmd.tooltip               "Uključi/isključi okno za traženje događaja">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "Prikaži zadatke u kalendaru">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "t">
+
+<!ENTITY goTodayCmd.label                       "Danas">
+<!ENTITY goTodayCmd.accesskey                   "s">
+
+<!ENTITY showCurrentView.label                  "Trenutni pogled">
+<!ENTITY showCurrentView.accesskey              "g">
+
+<!ENTITY calendar.properties.label              "Postavke kalendara…">
+<!ENTITY calendar.properties.accesskey          "a">

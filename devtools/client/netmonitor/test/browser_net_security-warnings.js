@@ -16,7 +16,9 @@ const TEST_CASES = [
 ];
 
 add_task(async function() {
-  const { tab, monitor } = await initNetMonitor(CUSTOM_GET_URL);
+  const { tab, monitor } = await initNetMonitor(CUSTOM_GET_URL, {
+    requestCount: 1,
+  });
   const { document, store, windowRequire } = monitor.panelWin;
   const Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
 
@@ -27,7 +29,9 @@ add_task(async function() {
 
     info("Performing request to " + test.uri);
     let wait = waitForNetworkEvents(monitor, 1);
-    await ContentTask.spawn(tab.linkedBrowser, test.uri, async function(url) {
+    await SpecialPowers.spawn(tab.linkedBrowser, [test.uri], async function(
+      url
+    ) {
       content.wrappedJSObject.performRequests(1, url);
     });
     await wait;

@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultClient.title "Змоўчны спажывец">
+<!ENTITY defaultClient.intro "Ужываць &brandShortName; як змоўчны спажывец:">
+<!ENTITY browser.label "Азіральнік">
+<!ENTITY email.label "Э-Пошты">
+<!ENTITY newsgroups.label "Навінакупы">
+<!ENTITY feeds.label "Жывільнікі">
+<!ENTITY checkOnStartup.label "Заўсёды рабіць гэтую праверку падчас запуску &brandShortName;">
+<!ENTITY checkOnStartup.accesskey "З">

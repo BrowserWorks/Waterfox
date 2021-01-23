@@ -52,6 +52,7 @@ function prefillAlertInfo() {
         icon.src = window.arguments[12];
       }
     }
+    // fall through
     case 12: {
       if (window.arguments[11]) {
         let alertBox = document.getElementById("alertBox");
@@ -68,18 +69,16 @@ function prefillAlertInfo() {
         let label = document.getElementById("alertSourceLabel");
         label.setAttribute(
           "value",
-          ALERT_BUNDLE.formatStringFromName("source.label", [hostPort], 1)
+          ALERT_BUNDLE.formatStringFromName("source.label", [hostPort])
         );
         let doNotDisturbMenuItem = document.getElementById(
           "doNotDisturbMenuItem"
         );
         doNotDisturbMenuItem.setAttribute(
           "label",
-          ALERT_BUNDLE.formatStringFromName(
-            "pauseNotifications.label",
-            [BRAND_NAME],
-            1
-          )
+          ALERT_BUNDLE.formatStringFromName("pauseNotifications.label", [
+            BRAND_NAME,
+          ])
         );
         let disableForOrigin = document.getElementById(
           "disableForOriginMenuItem"
@@ -88,8 +87,7 @@ function prefillAlertInfo() {
           "label",
           ALERT_BUNDLE.formatStringFromName(
             "webActions.disableForOrigin.label",
-            [hostPort],
-            1
+            [hostPort]
           )
         );
         let openSettings = document.getElementById("openSettingsMenuItem");
@@ -99,12 +97,16 @@ function prefillAlertInfo() {
         );
       }
     }
+    // fall through
     case 11:
       gAlertListener = window.arguments[10];
+    // fall through
     case 10:
       gReplacedWindow = window.arguments[9];
+    // fall through
     case 9:
       gRequireInteraction = window.arguments[8];
+    // fall through
     case 8:
       if (window.arguments[7]) {
         document
@@ -114,15 +116,19 @@ function prefillAlertInfo() {
           .getElementById("alertTextLabel")
           .setAttribute("lang", window.arguments[7]);
       }
+    // fall through
     case 7:
       if (window.arguments[6]) {
         document.getElementById("alertNotification").style.direction =
           window.arguments[6];
       }
+    // fall through
     case 6:
       gOrigin = window.arguments[5];
+    // fall through
     case 5:
       gAlertCookie = window.arguments[4];
+    // fall through
     case 4:
       gAlertTextClickable = window.arguments[3];
       if (gAlertTextClickable) {
@@ -133,6 +139,7 @@ function prefillAlertInfo() {
           .getElementById("alertTextLabel")
           .setAttribute("clickable", true);
       }
+    // fall through
     case 3:
       if (window.arguments[2]) {
         document.getElementById("alertBox").setAttribute("hasBodyText", true);
@@ -163,10 +170,12 @@ function prefillAlertInfo() {
         }
         bodyTextLabel.textContent = bodyText;
       }
+    // fall through
     case 2:
       document
         .getElementById("alertTitleLabel")
         .setAttribute("value", window.arguments[1]);
+    // fall through
     case 1:
       if (window.arguments[0]) {
         document.getElementById("alertBox").setAttribute("hasImage", true);
@@ -174,6 +183,7 @@ function prefillAlertInfo() {
           .getElementById("alertImage")
           .setAttribute("src", window.arguments[0]);
       }
+    // fall through
     case 0:
       break;
   }
@@ -201,7 +211,9 @@ function onAlertLoad() {
 
   // If the require interaction flag is set, prevent auto-closing the notification.
   if (!gRequireInteraction) {
-    if (!Services.prefs.getBoolPref("toolkit.cosmeticAnimations.enabled")) {
+    if (
+      !Services.prefs.getBoolPref("toolkit.cosmeticAnimations.enabled", true)
+    ) {
       setTimeout(function() {
         window.close();
       }, ALERT_DURATION_IMMEDIATE);

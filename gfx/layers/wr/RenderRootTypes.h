@@ -11,40 +11,44 @@
 #include "mozilla/webrender/WebRenderTypes.h"
 #include "mozilla/layers/WebRenderMessages.h"
 #include "mozilla/layers/WebRenderScrollData.h"
+#include "mozilla/Variant.h"
 
 namespace mozilla {
 
 namespace layers {
 
-struct RenderRootDisplayListData {
-  wr::RenderRoot mRenderRoot;
+struct DisplayListData {
+  wr::IdNamespace mIdNamespace;
   LayoutDeviceRect mRect;
   nsTArray<WebRenderParentCommand> mCommands;
   wr::LayoutSize mContentSize;
   Maybe<mozilla::ipc::ByteBuf> mDL;
   wr::BuiltDisplayListDescriptor mDLDesc;
+  nsTArray<wr::PipelineId> mRemotePipelineIds;
   nsTArray<OpUpdateResource> mResourceUpdates;
   nsTArray<RefCountedShmem> mSmallShmems;
   nsTArray<mozilla::ipc::Shmem> mLargeShmems;
   Maybe<WebRenderScrollData> mScrollData;
 };
 
-struct RenderRootUpdates {
-  wr::RenderRoot mRenderRoot;
+struct TransactionData {
   nsTArray<WebRenderParentCommand> mCommands;
   nsTArray<OpUpdateResource> mResourceUpdates;
   nsTArray<RefCountedShmem> mSmallShmems;
   nsTArray<mozilla::ipc::Shmem> mLargeShmems;
   ScrollUpdatesMap mScrollUpdates;
+  uint32_t mPaintSequenceNumber;
 };
+
+typedef Maybe<TransactionData> MaybeTransactionData;
 
 }  // namespace layers
 
 namespace ipc {
 
 template <>
-struct IPDLParamTraits<mozilla::layers::RenderRootDisplayListData> {
-  typedef mozilla::layers::RenderRootDisplayListData paramType;
+struct IPDLParamTraits<mozilla::layers::DisplayListData> {
+  typedef mozilla::layers::DisplayListData paramType;
 
   static void Write(IPC::Message* aMsg, IProtocol* aActor, paramType&& aParam);
 
@@ -53,8 +57,8 @@ struct IPDLParamTraits<mozilla::layers::RenderRootDisplayListData> {
 };
 
 template <>
-struct IPDLParamTraits<mozilla::layers::RenderRootUpdates> {
-  typedef mozilla::layers::RenderRootUpdates paramType;
+struct IPDLParamTraits<mozilla::layers::TransactionData> {
+  typedef mozilla::layers::TransactionData paramType;
 
   static void Write(IPC::Message* aMsg, IProtocol* aActor, paramType&& aParam);
 

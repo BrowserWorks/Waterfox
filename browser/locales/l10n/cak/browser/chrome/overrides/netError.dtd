@@ -1,0 +1,144 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "K'o k'ayewal toq nitikirisäx ri ruxaq k'amaya'l">
+<!ENTITY retry.label "Titojtob'ëx chik">
+<!ENTITY returnToPreviousPage.label "Titzolin">
+<!ENTITY returnToPreviousPage1.label "Titzolïx (Chilab'en)">
+<!ENTITY advanced2.label "Q'axinäq…">
+<!ENTITY viewCertificate.label "Titz'et iqitzijib'äl">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "Man Xilitäj ta ri K'uxasamaj">
+<!ENTITY dnsNotFound.longDesc1 "
+<strong>We ütz ri ochochib'äl, yatikïr nawojqaj re oxi' rub'eyal re':</strong>
+<ul>
+  <li>Tatojtob'ej pa jumej chik.</li>
+  <li>Tanik'oj rokem ak'amab'ey.</li>
+  <li>We atokinäq po k'o jun firewall chi rij, tanik'oj chi ri &brandShortName; ya'on q'ij chi re richin nok pan Ajk'amaya'l.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.longDesc "<ul> <li>Tanik'oj chi majun sachoj pa rub'i' ri yakb'äl achi'el rutz'ib'axik, achi'el chuqa' rokisaxik nimatz'ib'.</li> <li>Tanik'oj we ri yakb'äl xsilöx el, xk'ex rub'i' o xyuj el</li> </ul>">
+
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Rik'in jub'a' xyuj el, xsilöx el o ri niya'on q'ij chi ke ri yakb'äl niq'ato rutz'etik.</li> </ul>">
+
+<!ENTITY generic.longDesc "<p>&brandShortName; k'o jun achoq uma toq man nutikirisaj ta el re jun ruxaq k'amaya'l re'.</p>">
+
+<!ENTITY captivePortal.title "Tok pa k'amab'ey">
+<!ENTITY captivePortal.longDesc2 "<p>K'o chi natikirsaj molojri'ïl pa re k'amab'ey re' chuwäch yatok pa k'amaya'l.</p>">
+
+<!ENTITY openPortalLoginPage.label2 "Tijaq tikirib'äl ruxaq rumolojri'ïl k'amab'ey">
+
+<!ENTITY malformedURI.pageTitle "Me'okel URL">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>Man niq'alajin ta chik pa &brandShortName; jumejyak ri wuj nik'utüx.</p><ul><li>.Achi'el jun rub'eyal richin nichajin, &brandShortName; man nuk'utuj ta chik pa ruyonil chajin taq wuj.</li><li>Tapitz'a' qa pa Titojtob'ëx chik richin nik'utüx chik ri ruwujil k'amaya'l.</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "<ul> <li>Tapitz&apos;a&apos; &quot;Titojtob&apos;ëx chik&quot; richin niq&apos;ax pa majun okem chuqa&apos; tok chik pa ruxaq.</li> </ul>">
+
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Tab'ana' utzil, taya' rutzijol chi rij re k'ayewal re' chi ke ri rajaw ruxaq k'amaya'l.</li> </ul>">
+
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Tab'ana' utzil, taya' rutzijol chi rij re k'ayewal re' chi ke ri rajaw ruxaq k'amaya'l.</li> </ul>">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Rik'in jub'a' rajowaxik nayäk qa jun chik kema' richin nijaqatäj re ochochib'äl re'.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Tanik'oj chi ri runuk'ulem proxi ja ri' ri ütz.</li> <li>Katoyon rik'in ri runuk'samajel k'amab'ey richin nanik'oj chi ri ruk'u'x samaj proxi tajin nisamäj.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Tanik'oj runuk'ulem proxi richin najikib'a' chi ütz b'anikil.</li> <li>Tanik'oj chi ri asamajib'al k'o rokem richin nisamäj pa k'amab'ey.</li> <li>We ri asamajib'al o k'amab'ey chajin ruma jun chupq'aq' o proxi, tajikib'a' chi ri &brandShortName; ya'on q'ij chi re richin nok pa k'amaya'l.</li> </ul>">
+
+<!ENTITY redirectLoop.longDesc "<ul> <li>Re jun k'ayewal re' nik'ulwachitäj ruma nachüp o e'aq'aton kik'ulik ri taq kaxlanwey.</li> </ul>">
+
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Tanik'oj chi ruk'wan ri ichinan nuk'unel ri aq'inoj richin chajinïk, yakon.</li> <li>Ke ri' rik'in jub'a' ruma ri pa rub'eyal runuk'ulem ruk'u'x samaj.</li> </ul>">
+
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Man tikirel ta nik'ut pe ri ruxaq tajin natojtob'ej najäq ruma man tikirel ta nijikib'äx nitz'et chi e qitzij ri taq tzij.</li> <li>Tab'ana' utzil, taya' rutzijol chi rij re k'ayewal re' chi ke ri rajaw ruxaq k'amaya'l.</li> </ul>">
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara2 "&brandShortName; xrïl jun nïy ritzelanel jikomal ruma ri' toq man xub'än ta chik <span class='hostname'/>. We natz'et re ruxaq re', ri ojqanela' yetikïr nikitojtob'ej nikeleq'aj awetamab'al achi'el ewan taq atzij, ataqoya'l o rutzij ri ch'utit'im pwäq.">
+<!ENTITY certerror.sts.introPara "&brandShortName; xrïl jun itzilanel ruk'ayewal jikomal chuqa' man xb'e ta pa <span class='hostname'/> ruma re ajk'amaya'l ruxaq re' narajo' jun jikïl okem.">
+
+<!ENTITY certerror.expiredCert.introPara "&brandShortName; xrïl jun k'ayewal chuqa' man nisamäj ta chik pa <span class='hostname'/>. Itzel b'anon runuk'ulem ri ajk'amaya'l ruxaq o ri ruramaj akematz'ib' man ruk'wan ta ütz ri ramaj.">
+<!ENTITY certerror.expiredCert.secondPara2 "Rik'in jub'a' ri rijiqitzijib'al ajk'amaya'l ruxaq xik'o yan ruq'ijul, nuq'ät &brandShortName; richin ütz nok. We natz'ët re ruxaq re', ri ojqanela' yetikïr nikitojtob'ej nikeleq'aj ri awetamab'al achi'el ewan taq atzij, kib'i' ataqoya'l o rub'anikil at'impwäq.">
+<!ENTITY certerror.expiredCert.sts.secondPara "Rik'in jub'a' ri riqitzijib'al ajk'amaya'l ruxaq xk'is ruq'ijul, ri man nuya' taq q'ij chi ri &brandShortName; ütz nok.">
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "¿Achike yatikïr nab'än chi rij?">
+
+<!ENTITY certerror.unknownIssuer.whatCanYouDoAboutIt "
+<p>Rik'in jub'a' ja ri ajk'amaya'l ruxaq k'o ruk'ayewal, ruma ri' majun yatikïr nab'än.</p><p>We at k'o pa jun to'öy runimamoloj k'amab'ey, o nawokisaj jun rukema' chapöy chikopil, yatikïr yatzijon kik'in ri to'onel kimoloj richin yatkito'. Chuqa' yatikïr naya' rutzijol chi re ri ajrunuk'samajel ajk'amaya'l ruxaq chi rij ri k'ayewal.</p>">
+
+<!ENTITY certerror.expiredCert.whatCanYouDoAboutIt2 "<p>Ri ruch'utiq'ijub'al akematz'ib' b'anon runuk'ulem richin <span id='wrongSystemTime_systemDate2'/>. Tajikib'a' chi ri akematz'ib' b'anon ütz runuk'ulem ri ruq'ijul, ruramaj chuqa' rub'anikil ruq'ijul aq'inoj, k'a ri' tak'exa' <span class='hostname'/>.</p>
+<p>We ütz chik runuk'ulem ri ach'utiq'ijub'al, rik'in jub'a' man ütz rub'anon runuk'ulem ri ajk'amaya'l ruxaq, majun yatikïr nab'än richin nab'än rutzil. Yatikïr naya' rutzijol chi re ri runuk'samajel ajk'amaya'l ruxaq chi rij ri k'ayewal.</p>">
+
+<!ENTITY certerror.badCertDomain.whatCanYouDoAboutIt "<p>Rik'in jub'a' ja ri ajk'amaya'l ruxaq k'o ruk'ayewal, ruma ri' majun yatikïr nab'än. Yatikïr naya' rutzijol chi re ri ajrunuk'samajel ajk'amaya'l ruxaq chi rij ri k'ayewal.</p>">
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>Wakami rik'in jub'a' man wachel ta re ruxaq k'amaya'l re' o janila k'o yesamajin. Tatojtob'ej chik pa
+    jun ti ramaj.</li>
+  <li>We man yatikïr ta yatok pa majun ruxaq, tanik'oj ri awokem 
+  pa ruk'amab'ey ri akematz'ib'.</li>
+  <li>We ri asamajib'al o k'amab'ey tajin nichajïx ruma jun firewall o proxi, tajikib'a'
+    chi ri &brandShortName; ya'on q'ij chi re chi nok pa k'amaya'l.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; man xuya' ta q'ij chi xusamajib'ej ruxaq k'amaya'l pa rub'eyal re' ruma ruchajin jun runa'oj rujikomal rupam, ri man nuya' ta q'ij.</p>">
+
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; xuq'ät rusamajixik re ruxaq re' pa re rub'eyal re'. ruma chi ri ruxaq rojqan ri X-Frame-Options na'ojil, ri man nuya' taq 'ij chi re.</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Ri ruxaq wuj tajin natojtob'ej natz'ët man tikirel ta nik'ut pe ruma xilitäj jun sachoj toq yeq'alajisäx pe ri taq tzij.</p><ul><li>Tab'ana' utzil, taya' rutzijol chi rij re k'ayewal re' chi ke ri rajaw ruxaq k'amaya'l.</li></ul>">
+
+<!ENTITY securityOverride.exceptionButton1Label "Xinwetamaj ri K'ayewal chuqa' Tinsamajij el">
+
+<!ENTITY errorReporting.automatic2 "Taya' kitzijol k'ayewal achi'el re ruwäch re' richin nato' ri Mozilla chi nuya' ketal chuqa' yeruq'ät itzel taq ruxaq k'amaya'l.">
+<!ENTITY errorReporting.learnMore "Tetamäx ch'aqa' chik…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Tab'ana' utzil, taya' rutzijol chi rij re k'ayewal re' chi ke ri rajaw ruxaq k'amaya'l.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Q'axinäq chi etamab'äl: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.pagetitle2  "Rutzijol K'ayewal: Nimaläj Ruk'ayewal Jikomal Petenäq">
+<!ENTITY certerror.sts.pagetitle  "Man Xok Ta: Jikïl jun Ruk'ayewal Jikomal">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation1 "<span class='hostname'></span>k'o jun runa'ojil jikomal b'ina'am HTTP Jikïl Ruk'waxik Jikomal (HSTS), ri nuq'ajuj chi ri &brandShortName; xa xe nitikïr nok pa ütz jikomal. Man yatikïr ta natz'aqatisaj jun man relik ta richin natz'ët re ruxaq re'.">
+<!ENTITY certerror.copyToClipboard.label "Tiwachib'ëx ri rucholajem tzij pa molwuj">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> nrokisaj k'ak'a' samaj richin jikomal, ri e ojer chuqa' man k'ayew ta yeq'eleb'ëx. Jun q'eleb'enel chanin nuya' rutzijol ri etamab'äl, ri nina'ojïx chi echajin. Ri runuk'samajel ruxaq k'amaya'l k'o chi nutz'ët nab'ey ri ruk'u'x samaj chuwäch nitikïr nutz'ët ri ruxaq k'amaya'l.</p><p>Runimatz'ib' sachoj: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Xq'at Ruxaq">
+
+<!ENTITY certerror.mitm.longDesc "<span class='hostname'></span> rik'in jub'a' jun ütz ruxaq k'amaya'l, po man tikirel ta ri ütz okem. Re k'ayewal re' nik'ulwachïx ruma <span class='mitm-name'/>, ri jun kema' pan akematz'ib' o pan ak'amab'ey.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt1 "We ri achapöy chikopil yerutz'ajnik'oj ewan kisik'ixik taq okem (ri eb'ina'am “web scanning” o “https scanning”), yatikïr nachüp ri rub'anikil ri'. We man ütz ta nub'än, yatikïr nayüj chuqa' nayäk chik ri chapöy chikopil.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt2 "We at k'o pa ruk'amab'ey nimak'ayij, katzijon pa ri Kematz'ib'il ch'akulal.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt3 "We man ruk'ulun ta chawe ri <span class='mitm-name'/>, rik'in jub'a' yatkiq'eleb'ej ruma ri' man ütz ta yatok pa ri ruxaq k'amaya'l.">
+<!ENTITY certerror.mitm.sts.whatCanYouDoAboutIt3 "We man ruk'ulun ta chawe ri <span class='mitm-name'/>, rik'in jub'a' yatkiq'eleb'ej ruma ri' majun yatikïr nab'än richin yatok pa ri ruxaq k'amaya'l.">
+
+<!ENTITY clockSkewError.longDesc "Ri akematz'ib' nuna'ojij chi jun <span id='wrongSystemTime_systemDate1'/>, ri nuq'ät &brandShortName; richin ütz nok. Titz'et <span class='hostname'></span>, Tak'exa' ri ruch'utiq'ijub'al akematz'ib' pa runuk'ulem ruq'inoj q'ijul, ramaj chuqa' rub'anikil q'ijul k'o wakami, k'a ri' tak'exa' <span class='hostname'></span>.">
+
+<!ENTITY prefReset.longDesc "Achi'el ta chi ja ri runuk'ulem rujikomal k'amab'ey, ri nib'ano re re'. ¿La nawajo' chi nitzolïx ri runuk'ulem kan k'o wi?">
+<!ENTITY prefReset.label "Titzolïx ri runuk'ulem kan k'o wi">
+
+<!ENTITY enableTls10.longDesc "Rik'in jub'a' re ajk'amaya'l ruxaq man nuk'äm ta ri rik'in ri TLS 1.2 rub'eyal samaj, ja ri ruwäch nik'ul ruma &brandShortName;. TWe yetzij TLS 1.0 chuqa' TLS 1.1 rik'in jub'a' nuya' q'ij chi re okem re' ütz nub'än.">
+<!ENTITY enableTls10.note "TLS 1.0 chuqa' TLS 1.1 xkechuputäj pa jun ruwäch ri chwa'q kab'ij.">
+<!ENTITY enableTls10.label "Ketzij TLS 1.0 chuqa' 1.1">
+
+<!ENTITY networkProtocolError.longDesc "<p>Man tikirel ta nik'ut ri ruxaq nawajo' natz'ët ruma xilitäj jun sachoj chi rij rub'eyal nisamäj k'amab'ey.</p><ul><li>Katzijon rik'in ri rajaw ajk'amaya'l ruxaq richin naya' rutzijol re k'ayewal re'.</li></ul>">

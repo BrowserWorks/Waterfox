@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- File menu items -->
+
+<!ENTITY openFileCmd.label "Digeriñ ar restr…">
+<!ENTITY openFileCmd.accesskey "i">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Digeriñ ul lec'hiadur Internet…">
+<!ENTITY openRemoteCmd.accesskey "g">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Pajennoù nevesañ">
+<!ENTITY fileRecentMenu.accesskey "v">
+<!ENTITY saveCmd.label "Enrollañ">
+<!ENTITY saveCmd.accesskey "E">
+<!ENTITY saveAsCmd.label "Enrollañ evel…">
+<!ENTITY saveAsCmd.accesskey "E">
+<!ENTITY saveAsChangeEncodingCmd2.label "Enrollañ ha kemmañ bonegadur an arouezioù">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "E">
+<!ENTITY publishCmd.label "Brudañ">
+<!ENTITY publishCmd.accesskey "B">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Brudañ evel…">
+<!ENTITY publishAsCmd.accesskey "B">
+<!ENTITY fileRevert.label "Tuginañ">
+<!ENTITY fileRevert.accesskey "u">
+<!-- Edit menu items -->
+
+<!ENTITY publishSettings.label "Arventennoù brudañ lec'hiennoù…">
+<!ENTITY publishSettings.accesskey "b">
+<!-- Toolbar buttons/items -->
+
+<!ENTITY newToolbarCmd.label "Nevez">
+<!ENTITY newToolbarCmd.tooltip "Sevel ur bajenn embanner nevez">
+<!ENTITY openToolbarCmd.label "Digeriñ">
+<!ENTITY openToolbarCmd.tooltip "Digeriñ ur restr lec'hel">
+<!ENTITY saveToolbarCmd.tooltip "Enrollañ ar restr en ul lec'hiadur lec'hel">
+<!ENTITY publishToolbarCmd.tooltip "Kargañ ar restr etrezek ul lec'hiadur a-bell">

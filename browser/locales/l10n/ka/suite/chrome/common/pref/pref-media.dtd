@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-media.xul -->
+
+<!-- LOCALIZATION NOTE : FILE Media management prefs -->
+<!ENTITY pref.media.title               "მედიაფაილი">
+<!ENTITY mediaHTML5Preferences.label    "ხმოვანი/ვიდეო">
+<!ENTITY allowMediaAutoplay.label       "HTML5 შიგთავსის თვითგაშვება">
+<!ENTITY allowMediaAutoplay.accesskey   "ე">
+
+<!ENTITY enableDrmMedia.label           "ციფრული უფლებების მართვის (DRM) ჩართვა">
+<!ENTITY enableEmeForSuite.label        "მესამე მხარის შიგთავსის გამშიფრავი მოდულები">
+<!ENTITY enableEmeForSuite.accesskey    "გ">
+
+<!ENTITY animLoopingTitle.label         "მოძრავი სურათები გაეშვას">
+<!ENTITY animLoopAsSpecified.label      "იმდენჯერ, რამდენჯერაც მითითებული აქვს">
+<!ENTITY animLoopAsSpecified.accesskey  "ი">
+<!ENTITY animLoopOnce.label             "ერთხელ">
+<!ENTITY animLoopOnce.accesskey         "ე">
+<!ENTITY animLoopNever.label            "არასდროს">
+<!ENTITY animLoopNever.accesskey        "ა">

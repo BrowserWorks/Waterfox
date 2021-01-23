@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.offlineapps.title "Applicazioni web non in linea">
+<!ENTITY pref.offlineCache.caption "Contenuto web e dati utente non in linea">
+<!ENTITY clearOfflineAppCache.label "Pulisci">
+<!ENTITY clearOfflineAppCache.accesskey "P">
+<!ENTITY offlineAlwaysAllow.label "Permetti ai siti web di salvare dati per l'utilizzo non in linea.">
+<!ENTITY offlineAlwaysAllow.accesskey "P">
+<!ENTITY offlineExplicit.label "Consenti solo ai siti web con un permesso esplicito">
+<!ENTITY offlineExplicit.accesskey "C">
+<!ENTITY offlineNotifyAsk.label "Avvisami quando i siti web vogliono salvare dati per l'utilizzo non in linea">
+<!ENTITY offlineNotifyAsk.accesskey "v">
+<!ENTITY offlineNotifyPermissions.label "Gestione permessi">
+<!ENTITY offlineNotifyPermissions.accesskey "G">
+<!ENTITY offlineAppsUsage.label "I seguenti siti web stanno utilizzando l'archiviazione non in linea:">
+<!ENTITY offlineAppsListRemove.label "Pulisci dati…">
+<!ENTITY offlineAppsListRemove.accesskey "P">

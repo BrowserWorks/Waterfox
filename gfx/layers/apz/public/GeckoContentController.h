@@ -7,13 +7,15 @@
 #ifndef mozilla_layers_GeckoContentController_h
 #define mozilla_layers_GeckoContentController_h
 
-#include "InputData.h"                           // for PinchGestureInput
-#include "LayersTypes.h"                         // for ScrollDirection
-#include "Units.h"                               // for CSSPoint, CSSRect, etc
-#include "mozilla/Assertions.h"                  // for MOZ_ASSERT_HELPER2
-#include "mozilla/Attributes.h"                  // for MOZ_CAN_RUN_SCRIPT
-#include "mozilla/DefineEnum.h"                  // for MOZ_DEFINE_ENUM
-#include "mozilla/EventForwards.h"               // for Modifiers
+#include "GeckoContentControllerTypes.h"
+#include "InputData.h"              // for PinchGestureInput
+#include "LayersTypes.h"            // for ScrollDirection
+#include "Units.h"                  // for CSSPoint, CSSRect, etc
+#include "mozilla/Assertions.h"     // for MOZ_ASSERT_HELPER2
+#include "mozilla/Attributes.h"     // for MOZ_CAN_RUN_SCRIPT
+#include "mozilla/DefineEnum.h"     // for MOZ_DEFINE_ENUM
+#include "mozilla/EventForwards.h"  // for Modifiers
+#include "mozilla/layers/APZThreadUtils.h"
 #include "mozilla/layers/MatrixMessage.h"        // for MatrixMessage
 #include "mozilla/layers/RepaintRequest.h"       // for RepaintRequest
 #include "mozilla/layers/ScrollableLayerGuid.h"  // for ScrollableLayerGuid, etc
@@ -27,6 +29,8 @@ namespace layers {
 
 class GeckoContentController {
  public:
+  using APZStateChange = GeckoContentController_APZStateChange;
+  using TapType = GeckoContentController_TapType;
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(GeckoContentController)
 
   /**
@@ -50,30 +54,6 @@ class GeckoContentController {
   virtual void RequestContentRepaint(const RepaintRequest& aRequest) = 0;
 
   /**
-   * Different types of tap-related events that can be sent in
-   * the HandleTap function. The names should be relatively self-explanatory.
-   * Note that the eLongTapUp will always be preceded by an eLongTap, but not
-   * all eLongTap notifications will be followed by an eLongTapUp (for instance,
-   * if the user moves their finger after triggering the long-tap but before
-   * lifting it).
-   * The difference between eDoubleTap and eSecondTap is subtle - the eDoubleTap
-   * is for an actual double-tap "gesture" while eSecondTap is for the same user
-   * input but where a double-tap gesture is not allowed. This is used to fire
-   * a click event with detail=2 to web content (similar to what a mouse double-
-   * click would do).
-   */
-  // clang-format off
-  MOZ_DEFINE_ENUM_CLASS_AT_CLASS_SCOPE(
-    TapType, (
-      eSingleTap,
-      eDoubleTap,
-      eSecondTap,
-      eLongTap,
-      eLongTapUp
-  ));
-  // clang-format on
-
-  /**
    * Requests handling of a tap event. |aPoint| is in LD pixels, relative to the
    * current scroll offset.
    */
@@ -89,8 +69,9 @@ class GeckoContentController {
    * however it wishes. Note that this function is not called if the pinch is
    * prevented by content calling preventDefault() on the touch events, or via
    * use of the touch-action property.
-   * @param aType One of PINCHGESTURE_START, PINCHGESTURE_SCALE, or
-   *        PINCHGESTURE_END, indicating the phase of the pinch.
+   * @param aType One of PINCHGESTURE_START, PINCHGESTURE_SCALE,
+   *        PINCHGESTURE_FINGERLIFTED, or PINCHGESTURE_END, indicating the phase
+   *        of the pinch.
    * @param aGuid The guid of the APZ that is detecting the pinch. This is
    *        generally the root APZC for the layers id.
    * @param aSpanChange For the START or END event, this is always 0.
@@ -104,12 +85,14 @@ class GeckoContentController {
                                   Modifiers aModifiers) = 0;
 
   /**
-   * Schedules a runnable to run on the controller/UI thread at some time
+   * Schedules a runnable to run on the controller thread at some time
    * in the future.
    * This method must always be called on the controller thread.
    */
   virtual void PostDelayedTask(already_AddRefed<Runnable> aRunnable,
-                               int aDelayMs) = 0;
+                               int aDelayMs) {
+    APZThreadUtils::DelayedDispatch(std::move(aRunnable), aDelayMs);
+  }
 
   /**
    * Returns true if we are currently on the thread that can send repaint
@@ -121,34 +104,6 @@ class GeckoContentController {
    * Runs the given task on the "repaint" thread.
    */
   virtual void DispatchToRepaintThread(already_AddRefed<Runnable> aTask) = 0;
-
-  // clang-format off
-  MOZ_DEFINE_ENUM_CLASS_AT_CLASS_SCOPE(
-    APZStateChange, (
-      /**
-       * APZ started modifying the view (including panning, zooming, and fling).
-       */
-      eTransformBegin,
-      /**
-       * APZ finished modifying the view.
-       */
-      eTransformEnd,
-      /**
-       * APZ started a touch.
-       * |aArg| is 1 if touch can be a pan, 0 otherwise.
-       */
-      eStartTouch,
-      /**
-       * APZ started a pan.
-       */
-      eStartPanning,
-      /**
-       * APZ finished processing a touch.
-       * |aArg| is 1 if touch was a click, 0 otherwise.
-       */
-      eEndTouch
-  ));
-  // clang-format on
 
   /**
    * General notices of APZ state changes for consumers.
@@ -195,7 +150,7 @@ class GeckoContentController {
   virtual void UpdateOverscrollOffset(float aX, float aY, bool aIsRootContent) {
   }
 
-  GeckoContentController() {}
+  GeckoContentController() = default;
 
   /**
    * Needs to be called on the main thread.

@@ -35,7 +35,7 @@ async function test_decoder_doctor_notification(
       "decoder-doctor-notification"
     );
 
-    await ContentTask.spawn(browser, data, async function(aData) {
+    await SpecialPowers.spawn(browser, [data], async function(aData) {
       Services.obs.notifyObservers(
         content.window,
         "decoder-doctor-notification",
@@ -185,7 +185,11 @@ add_task(async function test_unsupported_libavcodec() {
 add_task(async function test_decode_error() {
   await SpecialPowers.pushPrefEnv({
     set: [
-      ["media.decoder-doctor.new-issue-endpoint", "http://127.0.0.1/webcompat"],
+      [
+        "media.decoder-doctor.new-issue-endpoint",
+        "http://example.com/webcompat",
+      ],
+      ["browser.fixup.fallback-to-https", false],
     ],
   });
   let message = gNavigatorBundle.getString("decoder.decodeError.message");
@@ -214,7 +218,10 @@ add_task(async function test_decode_error() {
 add_task(async function test_decode_warning() {
   await SpecialPowers.pushPrefEnv({
     set: [
-      ["media.decoder-doctor.new-issue-endpoint", "http://127.0.0.1/webcompat"],
+      [
+        "media.decoder-doctor.new-issue-endpoint",
+        "http://example.com/webcompat",
+      ],
     ],
   });
   let message = gNavigatorBundle.getString("decoder.decodeWarning.message");

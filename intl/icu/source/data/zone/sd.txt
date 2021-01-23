@@ -1,7 +1,7 @@
 ﻿// © 2016 and later: Unicode, Inc. and others.
 // License & terms of use: http://www.unicode.org/copyright.html#License
 sd{
-    Version{"2.1.49.82"}
+    Version{"37"}
     zoneStrings{
         "Africa:Abidjan"{
             ec{"ابي جان"}
@@ -806,6 +806,9 @@ sd{
         }
         "Asia:Qatar"{
             ec{"قطر"}
+        }
+        "Asia:Qostanay"{
+            ec{"ڪوٽانسي"}
         }
         "Asia:Qyzylorda"{
             ec{"ڪيزلورڊا"}
@@ -1705,7 +1708,9 @@ sd{
             ls{"نيووي جو وقت"}
         }
         "meta:Norfolk"{
-            ls{"نار فوڪ آئي لينڊ جو وقت"}
+            ld{"نار فوڪ آئي لينڊ جي ڏينهن جو وقت"}
+            lg{"نار فوڪ آئي لينڊ جو وقت"}
+            ls{"نار فوڪ آئي لينڊ جو معياري وقت"}
         }
         "meta:Noronha"{
             ld{"فرنانڊو دي نورونها جي اونهاري وقت"}

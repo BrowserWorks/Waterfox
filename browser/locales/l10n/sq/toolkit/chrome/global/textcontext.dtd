@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY spellAddToDictionary.label "Shtoje në fjalor">
+<!ENTITY spellAddToDictionary.accesskey "o">
+<!ENTITY spellUndoAddToDictionary.label "Zhbëje Shtimin Në Fjalor">
+<!ENTITY spellUndoAddToDictionary.accesskey "ë">
+<!ENTITY spellCheckToggle.label "Kontroll Drejtshkrimi">
+<!ENTITY spellCheckToggle.accesskey "D">
+<!ENTITY spellNoSuggestions.label "(Pa Sugjerime Drejtshkrimi)">
+<!ENTITY spellDictionaries.label "Gjuhë">
+<!ENTITY spellDictionaries.accesskey "G">
+
+<!ENTITY searchTextBox.clear.label "Spastroje">
+
+<!ENTITY fillLoginMenu.label          "Jepni Kredenciale Hyrjeje">
+<!ENTITY fillLoginMenu.accesskey      "J">
+<!ENTITY fillPasswordMenu.label       "Jepni Fjalëkalimin">
+<!ENTITY fillPasswordMenu.accesskey   "J">
+<!ENTITY fillUsernameMenu.label       "Jepni Emër Përdoruesi">
+<!ENTITY fillUsernameMenu.accesskey   "J">
+<!ENTITY noLoginSuggestions.label     "(Pa Sugjerim Kredencialesh Hyrjeje)">
+<!ENTITY viewSavedLogins.label        "Shihni Kredenciale të Ruajtura">

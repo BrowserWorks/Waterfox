@@ -359,7 +359,6 @@ static void PrintHelpAndExit(int status = 0) {
       "  licm          Loop invariant code motion\n"
       "  flac          Fold linear arithmetic constants\n"
       "  eaa           Effective address analysis\n"
-      "  sincos        Replace sin/cos by sincos\n"
       "  sink          Sink transformation\n"
       "  regalloc      Register allocation\n"
       "  inline        Inlining\n"
@@ -376,12 +375,10 @@ static void PrintHelpAndExit(int status = 0) {
       "  logs-sync     Same as logs, but flushes between each pass (sync. "
       "compiled functions only).\n"
       "  profiling     Profiling-related information\n"
-      "  trackopts     Optimization tracking information gathered by the "
-      "Gecko profiler. "
-      "(Note: call enableGeckoProfiling() in your script to enable it).\n"
-      "  trackopts-ext Encoding information about optimization tracking\n"
       "  dump-mir-expr Dump the MIR expressions\n"
-      "  cfg           Control flow graph generation\n"
+      "  scriptstats   Tracelogger summary stats\n"
+      "  warp-snapshots WarpSnapshots created by WarpOracle\n"
+      "  warp-transpiler Warp CacheIR transpiler\n"
       "  all           Everything\n"
       "\n"
       "  bl-aborts     Baseline compiler abort messages\n"
@@ -446,8 +443,6 @@ void jit::CheckLogging() {
       EnableChannel(JitSpew_FLAC);
     } else if (IsFlag(found, "eaa")) {
       EnableChannel(JitSpew_EAA);
-    } else if (IsFlag(found, "sincos")) {
-      EnableChannel(JitSpew_Sincos);
     } else if (IsFlag(found, "sink")) {
       EnableChannel(JitSpew_Sink);
     } else if (IsFlag(found, "regalloc")) {
@@ -476,15 +471,14 @@ void jit::CheckLogging() {
       EnableIonDebugSyncLogging();
     } else if (IsFlag(found, "profiling")) {
       EnableChannel(JitSpew_Profiling);
-    } else if (IsFlag(found, "trackopts")) {
-      JitOptions.disableOptimizationTracking = false;
-      EnableChannel(JitSpew_OptimizationTracking);
-    } else if (IsFlag(found, "trackopts-ext")) {
-      EnableChannel(JitSpew_OptimizationTrackingExtended);
     } else if (IsFlag(found, "dump-mir-expr")) {
       EnableChannel(JitSpew_MIRExpressions);
-    } else if (IsFlag(found, "cfg")) {
-      EnableChannel(JitSpew_CFG);
+    } else if (IsFlag(found, "scriptstats")) {
+      EnableChannel(JitSpew_ScriptStats);
+    } else if (IsFlag(found, "warp-snapshots")) {
+      EnableChannel(JitSpew_WarpSnapshots);
+    } else if (IsFlag(found, "warp-transpiler")) {
+      EnableChannel(JitSpew_WarpTranspiler);
     } else if (IsFlag(found, "all")) {
       LoggingBits = uint64_t(-1);
     } else if (IsFlag(found, "bl-aborts")) {

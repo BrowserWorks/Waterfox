@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "B'onil">
+<!ENTITY lastPickedColor.label "Ruk'isib'äl rub'onil cha'on">
+<!ENTITY lastPickedColor.accessKey "R">
+<!ENTITY chooseColor1.label "Tacha' jun b'onil:">
+<!ENTITY chooseColor2.label "Titz'ib'äx jun HTML rub'onil rucholajem tzij">
+<!ENTITY chooseColor2.accessKey "H">
+<!ENTITY setColorExample.label "(e.g.: &quot;#0000ff&quot; or &quot;blue&quot;):">
+<!ENTITY default.label "K'o wi">
+<!ENTITY default.accessKey "K">
+<!ENTITY palette.label "Tukb'äl:">
+<!ENTITY standardPalette.label "Pa rub'eyal">
+<!ENTITY webPalette.label "Ronojel ajk'amaya'l taq b'onil">
+<!ENTITY background.label "Rupam:">
+<!ENTITY background.accessKey "R">
+<!ENTITY table.label "Kemoj kajtz'ik">
+<!ENTITY table.accessKey "K">
+<!ENTITY cell.label "(taq)Ch'utikajtz'ik">
+<!ENTITY cell.accessKey "C">

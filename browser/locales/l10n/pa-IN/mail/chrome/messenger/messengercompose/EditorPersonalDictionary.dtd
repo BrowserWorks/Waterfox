@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "ਨਿੱਜੀ ਡਿਕਸ਼ਨਰੀ">
+
+<!ENTITY wordEditField.label "ਨਵਾਂ ਸ਼ਬਦ:">
+<!ENTITY wordEditField.accessKey "N">
+<!ENTITY AddButton.label "ਸ਼ਾਮਲ">
+<!ENTITY AddButton.accessKey "A">
+<!ENTITY DictionaryList.label "ਡਿਕਸ਼ਨਰੀ ਵਿੱਚ ਸ਼ਬਦ:">
+<!ENTITY DictionaryList.accessKey "W">
+<!ENTITY RemoveButton.label "ਹਟਾਓ">
+<!ENTITY RemoveButton.accessKey "e">
+
+<!ENTITY CloseButton.label "ਬੰਦ ਕਰੋ">
+<!ENTITY CloseButton.accessKey "C">

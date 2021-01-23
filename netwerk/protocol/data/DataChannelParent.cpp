@@ -23,26 +23,7 @@ bool DataChannelParent::Init(const uint32_t& channelId) {
 }
 
 NS_IMETHODIMP
-DataChannelParent::SetParentListener(HttpChannelParentListener* aListener) {
-  // Nothing to do.
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-DataChannelParent::NotifyChannelClassifierProtectionDisabled(
-    uint32_t aAcceptedReason) {
-  // Nothing to do.
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-DataChannelParent::NotifyCookieAllowed() {
-  // Nothing to do.
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-DataChannelParent::NotifyCookieBlocked(uint32_t aRejectedReason) {
+DataChannelParent::SetParentListener(ParentChannelListener* aListener) {
   // Nothing to do.
   return NS_OK;
 }
@@ -71,7 +52,7 @@ DataChannelParent::SetClassifierMatchedInfo(const nsACString& aList,
 
 NS_IMETHODIMP
 DataChannelParent::SetClassifierMatchedTrackingInfo(
-    const nsACString &aLists, const nsACString &aFullHashes) {
+    const nsACString& aLists, const nsACString& aFullHashes) {
   // nothing to do
   return NS_OK;
 }

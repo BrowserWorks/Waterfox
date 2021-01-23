@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Siloù ar c'hemennadennoù">
+<!ENTITY nameColumn.label "Anv ar sil">
+<!ENTITY activeColumn.label "Gweredekaet">
+<!ENTITY newButton.label "Nevez…">
+<!ENTITY newButton.accesskey "N">
+<!ENTITY newButton.popupCopy.label "Eilañ...">
+<!ENTITY newButton.popupCopy.accesskey "E">
+<!ENTITY editButton.label "Embann…">
+<!ENTITY editButton.accesskey "E">
+<!ENTITY deleteButton.label "Dilemel">
+<!ENTITY deleteButton.accesskey "D">
+<!ENTITY reorderTopButton "Dilec'hiañ d'ar c'hrec'h">
+<!ENTITY reorderTopButton.accessKey "l">
+<!ENTITY reorderTopButton.toolTip "Adkempenn ar sil evit erounit anezhañ a-raok ar re all">
+<!ENTITY reorderUpButton.label "Dilec'hiañ uheloc'h">
+<!ENTITY reorderUpButton.accesskey "u">
+<!ENTITY reorderDownButton.label "Dilec'hiañ izeloc'h">
+<!ENTITY reorderDownButton.accesskey "i">
+<!ENTITY reorderBottomButton "Dilec'hiañ d'an traoñ">
+<!ENTITY reorderBottomButton.accessKey "t">
+<!ENTITY reorderBottomButton.toolTip "Adkempenn ar sil evit erounit anezhañ goude ar re all">
+<!ENTITY filterHeader.label "Lañset eo ar siloù gweredekaet ent emgefreek diouzh an urzh da heul.">
+<!ENTITY filtersForPrefix.label "Siloù evit :">
+<!ENTITY filtersForPrefix.accesskey "S">
+<!ENTITY viewLogButton.label "Logaritm silañ">
+<!ENTITY viewLogButton.accesskey "t">
+<!ENTITY runFilters.label "Lañsañ diouzhtu">
+<!ENTITY runFilters.accesskey "d">
+<!ENTITY stopFilters.label "Paouez">
+<!ENTITY stopFilters.accesskey "P">
+<!ENTITY folderPickerPrefix.label "Lañsañ ar sil(où) diuzet war :">
+<!ENTITY folderPickerPrefix.accesskey "i">
+<!ENTITY helpButton.label "Skoazell">
+<!ENTITY helpButton.accesskey "S">
+<!ENTITY closeCmd.key "W"> 
+<!ENTITY searchBox.emptyText "Klask siloù dre o anvioù…">
+

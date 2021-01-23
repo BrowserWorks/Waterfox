@@ -36,7 +36,7 @@ interface nsILoginManagerCrypto : nsISupports {
    * Encrypts the specified strings, similar to encrypt, but returning a promise
    * which resolves with the the encrypted strings.
    */
-  jsval encryptMany(in jsval plainTexts);
+  Promise encryptMany(in jsval plainTexts);
 
   /**
    * decrypt
@@ -51,6 +51,18 @@ interface nsILoginManagerCrypto : nsISupports {
    * encrypted with some other key).
    */
   AString decrypt(in AString cipherText);
+
+  /**
+   * @param cipherTexts
+   *        The strings to be decrypted.
+   *
+   * Decrypts the specified strings, returning the plaintext values.
+   *
+   * Can throw if the user cancels entry of their master password, or if the
+   * cipherText value can not be successfully decrypted (eg, if it was
+   * encrypted with some other key).
+   */
+  Promise decryptMany(in jsval cipherTexts);
 
   /**
    * uiBusy

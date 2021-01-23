@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Անձնական բառարան">
+
+<!ENTITY wordEditField.label "Նոր բառ.">
+<!ENTITY wordEditField.accessKey "Ն">
+<!ENTITY AddButton.label "Ավելացնել">
+<!ENTITY AddButton.accessKey "Ա">
+<!ENTITY DictionaryList.label "Բառ բառարանում.">
+<!ENTITY DictionaryList.accessKey "Բ">
+<!ENTITY RemoveButton.label "Ջնջել">
+<!ENTITY RemoveButton.accessKey "Ջ">
+
+<!ENTITY CloseButton.label "Փակել">
+<!ENTITY CloseButton.accessKey "Փ">

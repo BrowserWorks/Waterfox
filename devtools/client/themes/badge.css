@@ -25,7 +25,8 @@
 }
 
 /* Inspector badge */
-.inspector-badge {
+.inspector-badge,
+.editor.text .whitespace::before {
   display: inline-block;
   /* 9px text is too blurry on low-resolution screens */
   font-size: 10px;
@@ -38,14 +39,20 @@
   border-radius: 3px;
   padding: 0px 2px;
   margin-inline-start: 5px;
-  -moz-user-select: none;
+  user-select: none;
   background-color: var(--badge-background-color);
   color: var(--badge-color);
   box-sizing: border-box;
 }
 
+.editor.text .whitespace::before {
+  content: attr(data-label);
+  margin-inline-start: 0;
+}
+
 @media (min-resolution: 1.1dppx) {
-  .inspector-badge {
+  .inspector-badge,
+  .editor.text .whitespace::before {
     font-size: 9px;
   }
 }

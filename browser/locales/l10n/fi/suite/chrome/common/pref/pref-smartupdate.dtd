@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE UI for Software Updates prefs -->
+<!ENTITY pref.smartUpdate.title               "Ohjelmistoasennukset">
+<!ENTITY addOnsTitle.label                    "Lisäosat">
+<!ENTITY addOnsAllow.label                    "Salli verkkosivustojen asentaa lisäosia ja päivityksiä">
+<!ENTITY addOnsAllow.accesskey                "S">
+<!ENTITY allowedSitesLink.label               "Sallitut sivustot">
+<!ENTITY autoAddOnsUpdates.label              "Tarkista päivitysten saatavuus">
+<!ENTITY autoAddOnsUpdates.accesskey          "T">
+<!ENTITY daily.label                          "päivittäin">
+<!ENTITY addOnsDaily.accesskey                "ä">
+<!ENTITY weekly.label                         "kerran viikossa">
+<!ENTITY addOnsWeekly.accesskey               "k">
+<!ENTITY addOnsModeAutomatic.label            "Lataa ja asenna päivitykset automaattisesti">
+<!ENTITY addOnsModeAutomatic.accesskey        "u">
+<!ENTITY enablePersonalized.label             "Muokkaa lisäosasuosituksia">
+<!ENTITY enablePersonalized.accesskey         "M">
+<!ENTITY addonManagerLink.label               "Tarkastele lisäosia">
+
+<!ENTITY appUpdates.caption                   "&brandShortName;">
+<!ENTITY autoAppUpdates.label                 "Tarkista päivitysten saatavuus">
+<!ENTITY autoAppUpdates.accesskey             "r">
+<!ENTITY appDaily.accesskey                   "i">
+<!ENTITY appWeekly.accesskey                  "e">
+<!ENTITY appModeAutomatic.label               "Lataa ja asenna päivitys automaattisesti">
+<!ENTITY appModeAutomatic.accesskey           "m">
+<!ENTITY appModeAutoAddonWarn.label           "Varoita, jos päivitys poistaa lisäosia käytöstä">
+<!ENTITY appModeAutoAddonWarn.accesskey       "V">
+<!ENTITY updateHistoryButton.label            "Näytä päivityshistoria…">
+<!ENTITY updateHistoryButton.accesskey        "N">

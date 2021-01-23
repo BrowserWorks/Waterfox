@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-proxies.xul -->
+
+<!--LOCALIZATION NOTE : FILE The Proxies preferences dialog -->
+<!ENTITY  pref.proxies.title            "Välityspalvelimet">
+<!ENTITY  pref.proxies.desc             "Välityspalvelin on palvelu, joka voi suodattaa ja nopeuttaa internet-yhteyttäsi.">
+<!ENTITY  proxyTitle.label              "Määritä välityspalvelinasetukset">
+<!ENTITY  directTypeRadio.label         "Ei välityspalvelinta">
+<!ENTITY  directTypeRadio.accesskey     "E">
+<!ENTITY  systemTypeRadio.label         "Käytä järjestelmän välityspalvelinasetuksia">
+<!ENTITY  systemTypeRadio.accesskey     "K">
+<!ENTITY  manualTypeRadio.label         "Aseta välityspalvelinasetukset käsin:">
+<!ENTITY  manualTypeRadio.accesskey     "s">
+<!ENTITY  wpadTypeRadio.label           "Automaattiset välityspalvelinasetukset">
+<!ENTITY  wpadTypeRadio.accesskey       "A">
+<!ENTITY  autoTypeRadio.label           "Nouda välityspalvelinasetukset osoitteesta:">
+<!ENTITY  autoTypeRadio.accesskey       "N">
+<!ENTITY  reload.label                  "Päivitä">
+<!ENTITY  reload.accesskey              "P">
+<!ENTITY  http.label                    "Välityspalvelin:">
+<!ENTITY  http.accesskey                "V">
+<!ENTITY  port.label                    "Portti:">
+<!ENTITY  HTTPPort.accesskey            "o">
+<!ENTITY  advanced.label                "Lisäasetukset…">
+<!ENTITY  advanced.accesskey            "L">
+<!ENTITY  noproxy.label                 "Ei välitystä osoitteille:">
+<!ENTITY  noproxy.accesskey             "i">
+<!ENTITY  noproxyExplain.label          "Esimerkiksi: 192.168.1.0/24, .mozilla.org, .fi">

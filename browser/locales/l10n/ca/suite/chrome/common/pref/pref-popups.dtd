@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.popups.title              "Finestres emergents">
+
+<!ENTITY pref.popups.caption            "Finestres emergents">
+
+<!ENTITY popupBlock.label               "Bloca les finestres emergents no sol·licitades">
+<!ENTITY popupBlock.accesskey           "B">
+
+<!ENTITY viewPermissions.label          "Gestiona els permisos">
+<!ENTITY viewPermissions.accesskey      "p">
+
+<!ENTITY whenBlock.description          "Quan una finestra emergent ha estat blocada:">
+<!ENTITY playSound.label                "Reprodueix un so:">
+<!ENTITY playSound.accesskey            "p">
+<!ENTITY systemSound.label              "Bip del sistema">
+<!ENTITY systemSound.accesskey          "s">
+<!ENTITY customSound.label              "Fitxer de so personalitzat">
+<!ENTITY customSound.accesskey          "z">
+
+<!ENTITY selectSound.label              "Selecciona...">
+<!ENTITY selectSound.accesskey          "e">
+<!ENTITY playSoundButton.label          "Reprodueix">
+<!ENTITY playSoundButton.accesskey      "R">
+
+<!ENTITY displayIcon.label              "Mostra una icona en la barra d'estat del navegador">
+<!ENTITY displayIcon.accesskey          "M">
+
+<!ENTITY displayNotification.label      "Mostra una barra de notificació a la part superior de l'àrea de contingut">
+<!ENTITY displayNotification.accesskey  "n">
+
+<!ENTITY popupNote.description          "Nota: Blocar totes les finestres emergents pot impedir que característiques importants d'alguns llocs web funcionin, com ara les finestres d'inici de sessió de llocs de compra o dels bancs. Per a més detalls de com permetre que uns llocs específics utilitzin emergents, mentre es bloca uns altres, feu clic a Ajuda. Fins i tot una vegada blocats, alguns llocs poden utilitzar altres mètodes per mostrar emergents.">
+

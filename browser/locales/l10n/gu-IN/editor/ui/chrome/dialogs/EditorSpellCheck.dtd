@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "જોડણી ચકાસો">
+
+<!ENTITY misspelledWord.label "ખોટી જોડણીવાળો શબ્દ:">
+<!ENTITY wordEditField.label "આની સાથે બદલો:">
+<!ENTITY wordEditField.accessKey "w">
+<!ENTITY checkwordButton.label "શબ્દ ચકાસો">
+<!ENTITY checkwordButton.accessKey "k">
+<!ENTITY suggestions.label "સૂચનો:">
+<!ENTITY suggestions.accessKey "u">
+<!ENTITY ignoreButton.label "અવગણો">
+<!ENTITY ignoreButton.accessKey "I">
+<!ENTITY ignoreAllButton.label "બધું અવગણો">
+<!ENTITY ignoreAllButton.accessKey "n">
+<!ENTITY replaceButton.label "બદલો">
+<!ENTITY replaceButton.accessKey "R">
+<!ENTITY replaceAllButton.label "બધું બદલો">
+<!ENTITY replaceAllButton.accessKey "A">
+<!ENTITY stopButton.label "અટકાવો">
+<!ENTITY stopButton.accessKey "t">
+<!ENTITY userDictionary.label "વ્યક્તિગત શબ્દકોષ:">
+<!ENTITY moreDictionaries.label "વધુ ડાઉનલોડ કરો">
+<!ENTITY addToUserDictionaryButton.label "શબ્દ એડ-ઓન">
+<!ENTITY addToUserDictionaryButton.accessKey "d">
+<!ENTITY editUserDictionaryButton.label "ફેરફાર કરો...">
+<!ENTITY editUserDictionaryButton.accessKey "E">
+<!ENTITY recheckButton.label "પાનું ફરી ચકાસો">
+<!ENTITY recheckButton.accessKey "P">
+<!ENTITY closeButton.label "બંધ કરો">
+<!ENTITY closeButton.accessKey "C">
+<!ENTITY sendButton.label "મોકલો">
+<!ENTITY sendButton.accessKey "S">
+<!ENTITY languagePopup.label "ભાષા:">
+<!ENTITY languagePopup.accessKey "L">

@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Gorizontal qator xossalari">
+
+<!ENTITY dimensionsBox.label "O‘lchamlari">
+<!ENTITY heightEditField.label "Bo‘yi:">
+<!ENTITY heightEditField.accessKey "B">
+<!ENTITY widthEditField.label "Eni:">
+<!ENTITY widthEditField.accessKey "E">
+<!ENTITY pixelsPopup.value "piksel">
+<!ENTITY alignmentBox.label "Taxlash">
+<!ENTITY leftRadio.label "Chap">
+<!ENTITY leftRadio.accessKey "C">
+<!ENTITY centerRadio.label "Markaz">
+<!ENTITY centerRadio.accessKey "M">
+<!ENTITY rightRadio.label "O‘ng">
+<!ENTITY rightRadio.accessKey "O">
+
+<!ENTITY threeDShading.label "3-D soyalash">
+<!ENTITY threeDShading.accessKey "s">
+<!ENTITY saveSettings.label "Standart sifatida foydalanish">
+<!ENTITY saveSettings.accessKey "S">
+<!ENTITY saveSettings.tooltip "Yangi gorizontal qatorlar kitishda foydalanish uchun sozlamalarni saqlang">

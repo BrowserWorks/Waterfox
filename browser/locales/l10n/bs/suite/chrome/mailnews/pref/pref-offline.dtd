@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-offline.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Offline' preferences dialog -->
+<!ENTITY pref.network.title               "Mreža i pohrana">
+<!ENTITY pref.offline.caption             "Van mreže">
+<!ENTITY textStartUp                      "Prilikom pokretanja:">
+<!ENTITY menuitemRememberPrevState        "Zapamti prethodno stanje rada na mreži">
+<!ENTITY menuitemAskMe                    "Pitaj me za stanje rada na mreži prilikom pokretanja">
+<!ENTITY menuitemAlwaysOnline             "Uvijek pokreni u režimu online">
+<!ENTITY menuitemAlwaysOffline            "Uvijek pokreni u režimu offline">
+<!ENTITY menuitemAutomatic                "Otkrij automatski (ako je dostupno)">
+<!ENTITY textGoingOnline                  "Poslati neposlane poruke prilikom povezivanja na mrežu?">
+<!ENTITY radioAutoSend                    "Da">
+<!ENTITY radioNotSend                     "Ne">
+<!ENTITY radioAskUnsent                   "Pitaj me">
+<!ENTITY textGoingOffline                 "Preuzmi poruke za korištenje van mreže prije odlaska u rad van mreže?">
+<!ENTITY radioAutoDownload                "Da">
+<!ENTITY radioNotDownload                 "Ne">
+<!ENTITY radioAskDownload                 "Pitaj me">
+<!ENTITY mailConnections.caption          "Povezivanja pošte">
+<!ENTITY mailnewsTimeout.label            "Vrijeme isteka veze:">
+<!ENTITY mailnewsTimeoutSeconds.label     "sekundi">
+<!ENTITY Diskspace                        "Prostor na disku">
+<!ENTITY offlineCompactFolders.label      "Sažmi sve direktorije kada će uštedjeti više od">
+<!ENTITY offlineCompactFoldersMB.label    "Ukupno MB">

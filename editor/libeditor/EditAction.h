@@ -7,7 +7,7 @@
 #define mozilla_EditAction_h
 
 #include "mozilla/EventForwards.h"
-#include "mozilla/StaticPrefs.h"
+#include "mozilla/StaticPrefs_dom.h"
 
 namespace mozilla {
 
@@ -134,12 +134,20 @@ enum class EditAction {
   // eRemoveTableColumn indicates to remove cell elements from each row.
   eRemoveTableColumn,
 
-  // eResizeElement indicates that user resizes an element size with dragging
-  // a resizer which is provided by Gecko.
+  // eResizingElement indicates that user starts to resize or keep resizing
+  // with dragging a resizer which is provided by Gecko.
+  eResizingElement,
+
+  // eResizeElement indicates that user resizes an element size with finishing
+  // dragging a resizer which is provided by Gecko.
   eResizeElement,
 
-  // eMoveElement indicates that user moves an element with grabber which is
-  // provided by Gecko.
+  // eMovingElement indicates that user starts to move or keep moving an
+  // element with grabber which is provided by Gecko.
+  eMovingElement,
+
+  // eMoveElement indicates that user finishes moving an element with grabber
+  // which is provided by Gecko.
   eMoveElement,
 
   // The following edit actions are not user's operation.  They are caused
@@ -161,12 +169,6 @@ enum class EditAction {
 
   // eDeleteNode indicates to remove a node form the tree.
   eRemoveNode,
-
-  // eSplitNode indicates to split a node.
-  eSplitNode,
-
-  // eJoinNodes indicates to join 2 nodes.
-  eJoinNodes,
 
   // eInsertBlockElement indicates to insert a block-level element like <div>,
   // <pre>, <li>, <dd> etc.
@@ -298,19 +300,6 @@ enum class EditAction {
   // eIncreaseOrDecreaseZIndex indicates to change z-index of an element.
   eIncreaseOrDecreaseZIndex,
 
-  // eAddOverrideStyleSheet indicates to add override style sheet.
-  eAddOverrideStyleSheet,
-
-  // eRemoveOverrideStyleSheet indicates to remove override style sheet.
-  eRemoveOverrideStyleSheet,
-
-  // eReplaceOverrideStyleSheet indicates to replace added override style
-  // sheet with new override style sheet.
-  eReplaceOverrideStyleSheet,
-
-  // eEnableStyleSheet indicates to apply a style sheet.
-  eEnableStyleSheet,
-
   // eEnableOrDisableCSS indicates to enable or disable CSS mode of HTMLEditor.
   eEnableOrDisableCSS,
 
@@ -348,9 +337,10 @@ enum class EditAction {
   // eHidePassword indicates that editor hides password with mask characters.
   eHidePassword,
 
-  // eCreateBogusNode indicates that editor wants to create a bogus node after
-  // the editor is modified, asynchronously.
-  eCreateBogusNode,
+  // eCreatePaddingBRElementForEmptyEditor indicates that editor wants to
+  // create a padding <br> element for empty editor after it modifies its
+  // content.
+  eCreatePaddingBRElementForEmptyEditor,
 };
 
 // This is int32_t instead of int16_t because nsIInlineSpellChecker.idl's
@@ -435,18 +425,27 @@ enum class EditSubAction : int32_t {
   // move its descendants to where the block was.
   eCreateOrRemoveBlock,
 
+  // eMergeBlockContents is not an actual sub-action, but this is used by
+  // HTMLEditor::MoveBlock() to request special handling in
+  // HTMLEditor::SplitInlinesAndCollectEditTargetNodesInOneHardLine().
+  eMergeBlockContents,
+
   // eRemoveList removes specific type of list but keep its content.
   eRemoveList,
 
-  // eCreateOrChangeDefinitionList indicates to create new definition list or
-  // change existing list to a definition list.
-  eCreateOrChangeDefinitionList,
+  // eCreateOrChangeDefinitionListItem indicates to format current hard line(s)
+  // `<dd>` or `<dt>`.  This may cause creating or changing existing list
+  // element to new `<dl>` element.
+  eCreateOrChangeDefinitionListItem,
 
   // eInsertElement indicates to insert an element.
   eInsertElement,
 
   // eInsertQuotation indicates to insert an element and make it "quoted text".
   eInsertQuotation,
+
+  // eInsertQuotedText indicates to insert text which has already been quoted.
+  eInsertQuotedText,
 
   // ePasteHTMLContent indicates to paste HTML content in clipboard.
   ePasteHTMLContent,
@@ -469,8 +468,9 @@ enum class EditSubAction : int32_t {
   eDecreaseZIndex,
   eIncreaseZIndex,
 
-  // eCreateBogusNode indicates to create a bogus <br> node.
-  eCreateBogusNode,
+  // eCreatePaddingBRElementForEmptyEditor indicates to create a padding <br>
+  // element for empty editor.
+  eCreatePaddingBRElementForEmptyEditor,
 };
 
 inline EditorInputType ToInputType(EditAction aEditAction) {

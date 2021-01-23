@@ -10,7 +10,6 @@ kind-dependencies:
 transforms:
     - taskgraph.transforms.build_attrs:transforms
     - taskgraph.transforms.build_lints:transforms
-    - taskgraph.transforms.use_toolchains:transforms
     - taskgraph.transforms.job:transforms
     - taskgraph.transforms.task:transforms
 
@@ -24,6 +23,7 @@ job-defaults:
         max-run-time: 3600
         env:
             PERFHERDER_EXTRA_OPTIONS: static-analysis-autotest
+    run-on-projects: ['mozilla-central']
     run:
         using: mozharness
         actions: [static-analysis-autotest]
@@ -46,7 +46,7 @@ jobs:
             env:
                 # clang-tidy needs a recent libstdc++, which can be found in the clang
                 # toolchain.
-                LD_LIBRARY_PATH: /builds/worker/workspace/build/src/clang/lib
+                LD_LIBRARY_PATH: /builds/worker/checkouts/gecko/clang/lib
                 PERFHERDER_EXTRA_OPTIONS: static-analysis-autotest
         run:
             config:
@@ -54,15 +54,18 @@ jobs:
                 - builds/releng_sub_linux_configs/64_stat_and_debug.py
             tooltool-downloads: public
             keep-artifacts: false
-        toolchains:
-            - linux64-clang
-            - linux64-clang-tidy
-            - linux64-infer
-            - linux64-rust
-            - linux64-sccache
-            - linux64-cbindgen
-            - linux64-nasm
-            - linux64-node
+        fetches:
+            toolchain:
+                - linux64-clang
+                - linux64-clang-tidy
+                - linux64-infer
+                - linux64-rust
+                - linux64-sccache
+                - linux64-cbindgen
+                - linux64-nasm
+                - linux64-node
+                - linux64-lucetc
+                - wasi-sysroot
 
     win64-st-autotest/debug:
         description: "Win64 Debug Static Analysis Autotest"
@@ -84,11 +87,14 @@ jobs:
             tooltool-downloads: internal
             extra-config:
                 mozconfig_variant: debug
-        toolchains:
-            - win64-clang-cl
-            - win64-rust
-            - win64-sccache
-            - win64-cbindgen
-            - win64-clang-tidy
-            - win64-nasm
-            - win64-node
+        fetches:
+            toolchain:
+                - win64-clang-cl
+                - win64-rust
+                - win64-sccache
+                - win64-cbindgen
+                - win64-clang-tidy
+                - win64-nasm
+                - win64-node
+                - win64-dump-syms
+                - win64-winchecksec

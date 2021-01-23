@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Rregullime Llogarie">
+<!ENTITY accountName.label "Emër Llogarie:">
+<!ENTITY accountName.accesskey "L">
+<!ENTITY identityTitle.label "Identitet Parazgjedhje">
+<!ENTITY identityDesc.label "Çdo llogari ka identitetin e vet, i cili përbëhet nga të dhënat që shohin persona të tjerë kur lexojnë mesazhet tuaj.">
+<!ENTITY name.label "Emri Juaj:">
+<!ENTITY name.accesskey "J">
+<!ENTITY email.label "Adresë Email:">
+<!ENTITY email.accesskey "E">
+<!ENTITY catchAll.label "Përgjigju prej këtij identiti, kur kryet e dërgimit kanë përputhje me:">
+<!ENTITY catchAll.accesskey "d">
+<!ENTITY replyTo.label "Adresë për Përgjigju:">
+<!ENTITY replyTo.accesskey "u">
+<!ENTITY replyTo.placeholder "Marrësit do të përgjigjen te kjo adresë tjetër">
+<!ENTITY organization.label "Ent:">
+<!ENTITY organization.accesskey "n">
+<!ENTITY signatureText.label "Tekst nënshkrimi:">
+<!ENTITY signatureText.accesskey "T">
+<!ENTITY signatureHtml.label "Përdor HTML (p.sh., &lt;b&gt;bold&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "H">
+<!ENTITY signatureFile.label "Bashkëngjiteni nënshkrimin prej një kartele, më mirë (tekst, HTML, ose figurë):">
+<!ENTITY signatureFile.accesskey "B">
+<!ENTITY edit.label "Përpunoni…">
+<!ENTITY choose.label "Zgjidhni…">
+<!ENTITY choose.accesskey "Z">
+<!ENTITY editVCard.label "Përpunoni Kartë…">
+<!ENTITY editVCard.accesskey "P">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Bashkëngjitu mesazheve vCard-in tim">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "Administroni Identitete…">
+<!ENTITY manageIdentities.accesskey "A">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Shërbyesi Dërgues (SMTP):">
+<!ENTITY smtpName.accesskey "S">
+<!ENTITY smtpDefaultServer.label "Përdor Shërbyesin Parazgjedhje">
+
+<!ENTITY smtpServerEdit.label "Përpunoni shërbyesin SMTP…">
+<!ENTITY smtpServerEdit.accesskey "P">

@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSMIMEOverlay.dtd UI for s/mime hooks in message composition -->
+
+
+<!-- not yet used
+<!ENTITY menu_securityEncryptOptional.label "Allow Encryption">
+<!ENTITY menu_securityEncryptOptional.accesskey "w">
+-->
+
+<!ENTITY menu_securityEncryptRequire.accesskey "C">
+
+<!ENTITY menu_securitySign.label "Sínigh an teachtaireacht seo go digiteach">
+<!ENTITY menu_securitySign.accesskey "t">
+
+<!ENTITY menu_securityStatus.label "Taispeáin Eolas Slándála">
+<!ENTITY menu_securityStatus.accesskey "i">
+
+<!ENTITY securityButton.label "Slándáil">
+<!ENTITY securityButton.tooltip "Amharc ar, nó athraigh na socruithe slándála">
+
+<!ENTITY menu_viewSecurityStatus.label "Eolas Slándála Faoin Teachtaireacht">
+<!ENTITY menu_viewSecurityStatus.accesskey "a">

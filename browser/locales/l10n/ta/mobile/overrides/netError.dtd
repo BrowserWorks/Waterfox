@@ -1,0 +1,121 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "பக்கத்தை ஏற்றுவதில் சிக்கல்">
+<!ENTITY retry.label "மீண்டும் முயற்சிக்கவும்">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "இணைக்க முடியவில்லை">
+<!ENTITY connectionFailure.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY deniedPortAccess.title "இந்த முகவரி தடுக்கப்பட்டுள்ளது">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "சேவையகத்தை அணுக முடியவில்லை">
+<!-- LOCALIZATION NOTE (dnsNotFound.longDesc4) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside tags should be localized.  Do not change the ids. -->
+<!ENTITY dnsNotFound.longDesc4 "<ul> <li>தட்டச்சு பிழைகளைக் காண முகவரியைச் சரிபார்க்கவும் <strong>www</strong>.example.com விற்கு பதிலாக <strong>ww</strong>.example.com</li> <div id='searchbox'> <input id='searchtext' type='search'></input> <button id='searchbutton'>தேடவும்</button> </div> <li>உங்களால் எந்த வலைப் பக்கத்தையும் அணுக முடியவில்லையெனில், கைப்பேசி (அ) அருகலை இணையத்தைச் சரிபாருங்கள். <button id='wifi'>அருகலை</button> </li> </ul>">
+
+<!ENTITY fileNotFound.title "கோப்பினை காணவில்லை">
+<!ENTITY fileNotFound.longDesc "<ul> <li>கோப்பின் பெயரை பெரிய எழுத்துக்களுக்கு அல்லது பிழைகழுக்காக சரிபார்.</li> <li>கோப்பு இடமாற்றப்பட்டதா அல்லது நீக்கப்பட்டதா, என சரி பார் .</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "கோப்பு அணுகல் மறுக்கப்பட்டது">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>கோப்பு நீக்க நகர்த்தப்பட்டிருக்கலாம் அல்லது அனுமதி மறுக்கப்பட்டிருக்கலாம்</li> </ul>">
+
+<!ENTITY generic.title "அச்சச்சோ.">
+<!ENTITY generic.longDesc "<p>சில காரணங்களால் &brandShortName; ஆல் இந்த பக்கத்தை ஏற்ற முடியவில்லை.</p>">
+
+<!ENTITY malformedURI.title "இந்த முகவரி தவறானது">
+<!-- LOCALIZATION NOTE (malformedURI.longDesc2) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY malformedURI.longDesc2 "<ul> <li>இணைய முகவரிகள் பொதுவாக பின்வருமாறு எழுதப்படும் <strong>http://www.example.com/</strong></li> <div id='searchbox'> <input id='searchtext' type='search'></input> <button id='searchbutton'>தேடவும்</button> </div> <li>முன்னோக்கிய சாய்வுக் கோடுகள் பயன்படுத்துவதை உறுதிச்செய்யவும் (அதாவது, <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "இணைப்பில் தடங்கல் உள்ளது">
+<!ENTITY netInterrupt.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY notCached.title "ஆவணம் காலாவதியாகிவிட்டது">
+<!ENTITY notCached.longDesc "<p>கோரப்பட்ட ஆவணம் &brandShortName; இன் தேக்ககத்தில் கிடைக்கவில்லை.</p><ul><li>பாதுகாப்பு எச்சரிக்கைக்காக, &brandShortName; ஆனது முக்கியமான ஆவணங்களை மறுமுறை கோராதபடி அமைக்கப்பட்டுள்ளது.</li><li>வலைத்தளத்திலிருந்து ஆவணத்தை மீண்டும் கோர மீண்டும் முயற்சி என்பதைச் சொடுக்கவும்.</li></ul>">
+
+<!ENTITY netOffline.title "இணைப்பில்லாத முறைமை">
+
+<!ENTITY contentEncodingError.title "உள்ளடக்க குறிமுறை பிழை">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>இந்த பிரச்சனையை தெரியப்படுத்த வலை உரிமையாளர்களை தொடர்பு கொள்ளவும்.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "பாதுகாப்பில்லாத கோப்பு வகை">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>இந்த பிரச்சனையை தெரியப்படுத்த வலை உரிமையாளர்களை தொடர்பு கொள்ளவும்.</li> </ul>">
+
+<!ENTITY netReset.title "இணைப்பு மீட்டமைக்கப்பட்டது">
+<!ENTITY netReset.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY netTimeout.title "இணைப்பு நேரம் முடிந்தது">
+<!ENTITY netTimeout.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY unknownProtocolFound.title "முகவரியை புரிந்து கொள்ள முடியவில்லை">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>இந்த இணைய முகவரியை திறக்க மற்ற மென்பொருட்களை நிறுவ வேண்டும்.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "ப்ராக்ஸி சேவையகம் இணைப்பை மறுக்கிறது">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>உங்களுடைய பிராக்சி அமைப்புகளை சரியா என பார்த்து உறுதிப்படுத்தவும்.</li> <li>உங்களுடைய பிணைய நிர்வாகியை அனுகி பிராக்சி சேவகன் சரியாக இயங்குகிறதா எனப் பார்க்கவும். </li></ul>">
+
+<!ENTITY proxyResolveFailure.title "பதிலி சேவையகத்தைக் கண்டறிய முடியவில்லை">
+<!-- LOCALIZATION NOTE (proxyResolveFailure.longDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY proxyResolveFailure.longDesc3 "<ul> <li>பதிலாளின் அமைவுகள் சரியா என சரிபார்க்கவும்.</li> <li>உங்கள் சாதனத்தில் கைப்பேசி இணையம் அல்லது அருகலை இணைப்பு உள்ளதா என உறுதிசெய்யவும். <button id='wifi'>அருகலையைச் செயல்படுத்து. </button> </li> </ul>">
+
+<!ENTITY redirectLoop.title "பக்கத்தை ஒழுங்காகத் திருப்பிவிடவில்லை">
+<!ENTITY redirectLoop.longDesc "<ul> <li>சில நேரங்களில் குக்கீகளை ஏற்க மறுத்தாலோ அல்லது செயலற்று இருந்தாலோ இந்த பிரச்சனை வரும்.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "சேவையகத்திலிருந்து எதிர்பாராத பதில்">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>உங்களுடைய கணினியில் சுய பாதுகாப்பு மேலாளர் நிறுவப்பட்டு .இருக்கிறதா சரிபார்</li> <li>இதற்கு சேவகனிலுள்ள ஒரு நிலையற்ற அமைப்புகளே காரணம் .</li> </ul>">
+
+<!ENTITY nssFailure2.title "பாதுகாப்பான இணைப்பு தவறி விடுந்தது">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>பெற்ற தரவின் நம்பகத்தன்மையை சரிபார்க்க முடியவில்லை, ஏனெனில் நீங்கள் காண முயற்சிக்கும் பக்கம் பார்க்க முடியாது.</li> <li>இந்த பிரச்சனை குறித்து இணையதளத்தில் உரிமையாளர்களை தொடர்பு கொள்க.</li> </ul>">
+
+<!ENTITY nssBadCert.title "பாதுகாப்பான இணைப்பு தவறி விடுந்தது">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>இந்த சேவகனின் கட்டமைப்பில் சிக்கல் இருக்க வேண்டும், அல்லது அதில் யாராவது ஆள்மாறாட்டம் செய்ய முயற்சி செய்திருப்பார்கள்.நீங்கள் இதற்கு முன்பு</li> <li>வெற்றிகரமாக இந்த சேவையகத்துடன் இணைந்து இருந்தால், இந்த பிழை தற்காலிகமானதாக இருக்கும், மேலும் நீங்கள் பிறகு மீண்டும் முயற்சி செய்யலாம்.</li> </ul>">
+
+<!-- LOCALIZATION NOTE (sharedLongDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY sharedLongDesc3 "<ul> <li>இந்தத் தளம் தற்சமயம் கிடைக்காமல் (அ) மிகவும் மும்முரமாக இருக்கலாம். சில நிமிடங்களில் மீண்டும் முயற்சிக்கவும்.</li> <li>உங்களால் எந்த பக்கத்தையும் ஏற்ற முடியாவிட்டால், சாதனத்தில் கைபேசி அல்லது அருகலை இணையம் உள்ளதா என உறுதிசெய்யவும். <button id='wifi'>அருகலையைச் செயல்படுத்து</button> </li> </ul>">
+
+<!ENTITY cspBlocked.title "உள்ளடக்க பாதுகாப்பு கொள்கையால் தடுக்கப்பட்டது">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; இந்த பக்கம் இந்த வழியில் ஏற்றப்படுவதை தடுத்தது ஏனெனில் இந்த பக்கத்தின் ஒரு உள்ளடக்க பாதுகாப்பு கொள்கை அதை தடுக்கிறது.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "சிதைந்த உள்ளடக்கப் பிழை">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>தரவுப் பரிமாற்றத்தில் ஒரு பிழை கண்டறியப்பட்டுள்ளதால், நீங்கள் காண முயற்சிக்கும் பக்கத்தைக் காண்பிக்க முடியாது.</p><ul><li>இணைய உரிமையாளர்களைத் தொடர்பு கொண்டு இந்த பிரச்சனை குறித்து தெரிவிக்கவும்.</li></ul>">
+
+<!ENTITY securityOverride.linkText "அல்லது நீங்க ஒரு விதிவிலக்கை சேரக்கவும்...">
+<!ENTITY securityOverride.getMeOutOfHereButton "இங்கிருந்து என்னை வெளியாக்கு!">
+<!ENTITY securityOverride.exceptionButtonLabel "விதிவிலக்கை சேர்…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <xul:button> tags.  The only language content is the label= field,
+which uses strings already defined above. The button is included here (instead of
+netError.xhtml) because it exposes functionality specific to firefox. -->
+
+<!ENTITY securityOverride.warningContent "<p>நீங்கள் முழுமையாக நம்பாத ஒரு இணைய இணைப்பைப் பயனப்டுத்தினால் அல்லது இந்த சேவையகத்திற்கு இதற்கு முன்பு நீங்கள் இப்படி எச்சரிக்கையைப் பார்த்திருக்காவிட்டால், நீங்கள் விதிவிலக்கைச் சேர்க்கக்கூடாது.</p>  <button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> <button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "தொலைநிலை XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>இந்த பிரச்னையை தெரியபடுத்த வலைதள உரிமையாளரை தொடர்புகொள்ளவும்.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "பாதுகாப்பாக இணைக்க இயலவில்லை">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc "அதிக தகவல்: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY weakCryptoUsed.title "உங்கள் இணைப்பு பாதுகாப்பற்றது">
+<!-- LOCALIZATION NOTE (weakCryptoUsed.longDesc) - Do not translate
+     "SSL_ERROR_NO_CYPHER_OVERLAP". -->
+<!ENTITY weakCryptoUsed.longDesc "மேம்பட்ட தகவல்: SSL_ERROR_NO_CYPHER_OVERLAP">
+
+<!ENTITY inadequateSecurityError.title "உங்கள் இணைப்பு பாதுகாப்பற்றது">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> பழமையான பாதுகாப்பு தொழில்நுட்பத்தை கொண்டிருப்பதால் பாதிப்பு ஏற்படம். இணைய திருடர்கள் பாதுகாப்பற்ற தரவுகளை வெளியாக்கலாம். நீங்கள் தளத்தை பார்வையிடும் முன் இந்த சேவகனை நிர்வகிப்பவர் தளத்தை சரி செய்தல் வேணடும்.</p><p>பிழைக் குறியீடு: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY networkProtocolError.title "பிணைய நெறிமுறை பிழை">
+<!ENTITY networkProtocolError.longDesc "<p>பிணைய நெறிமுறையில் பிழை ஏற்பட்டதால் நீங்கள் பார்க்க விரும்பும் பக்கத்தைக் காண்பிக்க முடியவில்லை.</p><ul><li>இந்த சிக்கலைத் தெரிவிக்க வலைத்தள உரிமையாளர்களை தொடர்பு கொள்ளவும்.</li></ul>">

@@ -6,12 +6,15 @@
 
 #include "gfxConfig.h"
 #include "gfxCrashReporterUtils.h"
+#include "gfxEnv.h"
 #include "gfxUtils.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/Tokenizer.h"
 #include "mozilla/ScopeExit.h"
+#include "mozilla/StaticPrefs_gfx.h"
+#include "mozilla/StaticPrefs_webgl.h"
 #include "mozilla/Unused.h"
 #include "mozilla/webrender/RenderThread.h"
 #include "nsDirectoryServiceDefs.h"
@@ -29,13 +32,14 @@
 #include "prsystem.h"
 #include "GLContext.h"
 #include "GLContextProvider.h"
-#include "gfxPrefs.h"
+#include "GLReadTexImageHelper.h"
 #include "ScopedGLHelpers.h"
 #ifdef MOZ_WIDGET_GTK
 #  include <gdk/gdk.h>
 #  ifdef MOZ_WAYLAND
 #    include <gdk/gdkwayland.h>
 #    include <dlfcn.h>
+#    include "mozilla/widget/nsWaylandDisplay.h"
 #  endif  // MOZ_WIDGET_GTK
 #endif    // MOZ_WAYLAND
 
@@ -70,7 +74,10 @@ static const char* sEGLExtensionNames[] = {
     "EGL_ANGLE_device_creation_d3d11",
     "EGL_KHR_surfaceless_context",
     "EGL_KHR_create_context_no_error",
-    "EGL_MOZ_create_context_provoking_vertex_dont_care"};
+    "EGL_MOZ_create_context_provoking_vertex_dont_care",
+    "EGL_EXT_swap_buffers_with_damage",
+    "EGL_KHR_swap_buffers_with_damage",
+    "EGL_EXT_buffer_age"};
 
 PRLibrary* LoadApitraceLibrary() {
   const char* path = nullptr;
@@ -85,8 +92,7 @@ PRLibrary* LoadApitraceLibrary() {
   if (!path) return nullptr;
 
   // Initialization of gfx prefs here is only needed during the unit tests...
-  gfxPrefs::GetSingleton();
-  if (!gfxPrefs::UseApitrace()) {
+  if (!StaticPrefs::gfx_apitrace_enabled_AtStartup()) {
     return nullptr;
   }
 
@@ -159,9 +165,7 @@ static EGLDisplay GetAndInitWARPDisplay(GLLibraryEGL& egl, void* displayType) {
 static EGLDisplay GetAndInitDisplayForWebRender(GLLibraryEGL& egl,
                                                 void* displayType) {
 #ifdef XP_WIN
-  const EGLint attrib_list[] = {LOCAL_EGL_EXPERIMENTAL_PRESENT_PATH_ANGLE,
-                                LOCAL_EGL_EXPERIMENTAL_PRESENT_PATH_FAST_ANGLE,
-                                LOCAL_EGL_NONE};
+  const EGLint attrib_list[] = {LOCAL_EGL_NONE};
   RefPtr<ID3D11Device> d3d11Device =
       gfx::DeviceManagerDx::Get()->GetCompositorDevice();
   if (!d3d11Device) {
@@ -212,9 +216,6 @@ static bool IsAccelAngleSupported(const nsCOMPtr<nsIGfxInfo>& gfxInfo,
   if (wr::RenderThread::IsInRenderThread()) {
     // We can only enter here with WebRender, so assert that this is a
     // WebRender-enabled build.
-#ifndef MOZ_BUILD_WEBRENDER
-    MOZ_ASSERT(false);
-#endif
     return true;
   }
   int32_t angleSupport;
@@ -288,16 +289,17 @@ static EGLDisplay GetAndInitDisplayForAccelANGLE(
     return GetAndInitDisplayForWebRender(egl, EGL_DEFAULT_DISPLAY);
   }
 
-  FeatureState& d3d11ANGLE = gfxConfig::GetFeature(Feature::D3D11_HW_ANGLE);
+  gfx::FeatureState& d3d11ANGLE =
+      gfx::gfxConfig::GetFeature(gfx::Feature::D3D11_HW_ANGLE);
 
-  if (!gfxPrefs::WebGLANGLETryD3D11())
+  if (!StaticPrefs::webgl_angle_try_d3d11()) {
     d3d11ANGLE.UserDisable("User disabled D3D11 ANGLE by pref",
                            NS_LITERAL_CSTRING("FAILURE_ID_ANGLE_PREF"));
-
-  if (gfxPrefs::WebGLANGLEForceD3D11())
+  }
+  if (StaticPrefs::webgl_angle_force_d3d11()) {
     d3d11ANGLE.UserForceEnable(
         "User force-enabled D3D11 ANGLE on disabled hardware");
-
+  }
   gAngleErrorReporter.SetFailureId(out_failureId);
 
   auto guardShutdown = mozilla::MakeScopeExit([&] {
@@ -307,7 +309,7 @@ static EGLDisplay GetAndInitDisplayForAccelANGLE(
     //       will live longer than the ANGLE display so we're fine.
   });
 
-  if (gfxConfig::IsForcedOnByUser(Feature::D3D11_HW_ANGLE)) {
+  if (gfx::gfxConfig::IsForcedOnByUser(gfx::Feature::D3D11_HW_ANGLE)) {
     return GetAndInitDisplay(egl, LOCAL_EGL_D3D11_ONLY_DISPLAY_ANGLE);
   }
 
@@ -348,8 +350,8 @@ bool GLLibraryEGL::ReadbackEGLImage(EGLImage image,
                               LOCAL_GL_NEAREST);
   mReadbackGL->fEGLImageTargetTexture2D(target, image);
 
-  ShaderConfigOGL config =
-      ShaderConfigFromTargetAndFormat(target, out_surface->GetFormat());
+  layers::ShaderConfigOGL config =
+      layers::ShaderConfigFromTargetAndFormat(target, out_surface->GetFormat());
   int shaderConfig = config.mFeatures;
   mReadbackGL->ReadTexImageHelper()->ReadTexImage(
       out_surface, 0, target, out_surface->GetSize(), shaderConfig);
@@ -446,7 +448,6 @@ bool GLLibraryEGL::DoEnsureInitialized(bool forceAccel,
 #  endif
 
   if (!mEGLLibrary) {
-    printf_stderr("Attempting load of libEGL.so\n");
     mEGLLibrary = PR_LoadLibrary("libEGL.so");
   }
 #  if defined(XP_UNIX)
@@ -707,6 +708,32 @@ bool GLLibraryEGL::DoEnsureInitialized(bool forceAccel,
     }
   }
 
+  if (IsExtensionSupported(EXT_swap_buffers_with_damage)) {
+    const SymLoadStruct symbols[] = {
+        {(PRFuncPtr*)&mSymbols.fSwapBuffersWithDamage,
+         {{"eglSwapBuffersWithDamageEXT"}}},
+        END_OF_SYMBOLS};
+    if (!fnLoadSymbols(symbols)) {
+      NS_ERROR(
+          "EGL supports EXT_swap_buffers_with_damage without exposing its "
+          "functions!");
+      MarkExtensionUnsupported(EXT_swap_buffers_with_damage);
+    }
+  }
+
+  if (IsExtensionSupported(KHR_swap_buffers_with_damage)) {
+    const SymLoadStruct symbols[] = {
+        {(PRFuncPtr*)&mSymbols.fSwapBuffersWithDamage,
+         {{"eglSwapBuffersWithDamageKHR"}}},
+        END_OF_SYMBOLS};
+    if (!fnLoadSymbols(symbols)) {
+      NS_ERROR(
+          "EGL supports KHR_swap_buffers_with_damage without exposing its "
+          "functions!");
+      MarkExtensionUnsupported(KHR_swap_buffers_with_damage);
+    }
+  }
+
   mInitialized = true;
   reporter.SetSuccessful();
   return true;
@@ -742,7 +769,7 @@ EGLDisplay GLLibraryEGL::CreateDisplay(bool forceAccel,
     bool shouldTryWARP = !forceAccel;  // Only if ANGLE not supported or fails
 
     // If WARP preferred, will override ANGLE support
-    if (gfxPrefs::WebGLANGLEForceWARP()) {
+    if (StaticPrefs::webgl_angle_force_warp()) {
       shouldTryWARP = true;
       shouldTryAccel = false;
       if (accelAngleFailureId.IsEmpty()) {
@@ -787,11 +814,8 @@ EGLDisplay GLLibraryEGL::CreateDisplay(bool forceAccel,
 #ifdef MOZ_WAYLAND
     // Some drivers doesn't support EGL_DEFAULT_DISPLAY
     GdkDisplay* gdkDisplay = gdk_display_get_default();
-    if (!GDK_IS_X11_DISPLAY(gdkDisplay)) {
-      static auto sGdkWaylandDisplayGetWlDisplay =
-          (wl_display * (*)(GdkDisplay*))
-              dlsym(RTLD_DEFAULT, "gdk_wayland_display_get_wl_display");
-      nativeDisplay = sGdkWaylandDisplayGetWlDisplay(gdkDisplay);
+    if (gdkDisplay && !GDK_IS_X11_DISPLAY(gdkDisplay)) {
+      nativeDisplay = widget::WaylandDisplayGetWLDisplay(gdkDisplay);
       if (!nativeDisplay) {
         NS_WARNING("Failed to get wl_display.");
         return nullptr;

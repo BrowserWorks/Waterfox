@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE 'Languages' preferences dialog -->
+
+<!ENTITY languages.customize.prefLangDescript           "Webové stránky sú niekedy dostupné vo viac ako jednom jazyku. Vyberte a usporiadajte podľa priority jazyky, v ktorých sa majú stránky zobrazovať.">
+<!ENTITY languages.customize.title                      "Jazyky">
+<!ENTITY langtitle.label                                "Jazyky pre webové stránky">
+<!ENTITY languages.customize.prefAddLangDescript        "Vyberte jazyky, ktoré chcete pridať.">
+<!ENTITY languages.customize.addButton.label            "Pridať…">
+<!ENTITY languages.customize.addButton.accesskey        "a">
+<!ENTITY languages.customize.deleteButton.label         "Odstrániť">
+<!ENTITY languages.customize.deleteButton.accesskey     "d">
+<!ENTITY languages.customize.add.title.label		        "Pridať jazyky">
+<!ENTITY languages.customize.available.label            "Jazyky:">
+<!ENTITY languages.customize.active.label               "Jazyky v poradí podľa priority:">
+<!ENTITY languages.customize.active.accesskey           "J">
+<!ENTITY languages.customize.others.label               "Ďalšie:">
+<!ENTITY languages.customize.others.accesskey           "a">
+<!ENTITY languages.customize.Fallback2.grouplabel       "Kódovanie textu pre starší obsah">
+<!ENTITY languages.customize.Fallback2.label            "Použiť nasledovné kódovanie:">
+<!ENTITY languages.customize.Fallback2.accesskey        "k">
+<!ENTITY languages.customize.Fallback2.desc             "Toto kódovanie textu je používané pre starší obsah, ktorý nedefinuje svoje kódovanie.">
+<!-- LOCALIZATION NOTE  Character Encoding Preferences Dialog: Do NOT localize the terms "en-bz, ar-jo"  -->
+<!ENTITY languages.customize.others.examples            "napr.: en-bz, ar-jo">
+<!ENTITY languages.customize.moveUp.label               "Posunúť nahor">
+<!ENTITY languages.customize.moveUp.accesskey           "h">
+<!ENTITY languages.customize.moveDown.label             "Posunúť nadol">
+<!ENTITY languages.customize.moveDown.accesskey         "n">

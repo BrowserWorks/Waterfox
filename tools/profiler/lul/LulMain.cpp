@@ -6,30 +6,27 @@
 
 #include "LulMain.h"
 
-#include <string.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>  // write(), only for testing LUL
 
 #include <algorithm>  // std::sort
 #include <string>
+#include <utility>
 
-#include "mozilla/Assertions.h"
+#include "GeckoProfiler.h"  // for profiler_current_thread_id()
+#include "LulCommonExt.h"
+#include "LulElfExt.h"
+#include "LulMainInt.h"
 #include "mozilla/ArrayUtils.h"
+#include "mozilla/Assertions.h"
 #include "mozilla/CheckedInt.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/MemoryChecking.h"
-#include "mozilla/Move.h"
 #include "mozilla/Sprintf.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/Unused.h"
-
-#include "LulCommonExt.h"
-#include "LulElfExt.h"
-
-#include "LulMainInt.h"
-
-#include "GeckoProfiler.h"  // for profiler_current_thread_id()
 
 // Set this to 1 for verbose logging
 #define DEBUG_MAIN 0
@@ -1408,7 +1405,9 @@ void LUL::Unwind(/*OUT*/ uintptr_t* aFramePCs,
       continue;
     }
 
-#if defined(GP_PLAT_amd64_linux) || defined(GP_PLAT_x86_linux)
+#if defined(GP_PLAT_amd64_linux) || defined(GP_PLAT_x86_linux) ||     \
+    defined(GP_PLAT_amd64_android) || defined(GP_PLAT_x86_android) || \
+    defined(GP_PLAT_amd64_freebsd)
     // There's no RuleSet for the specified address.  On amd64/x86_linux, see if
     // it's possible to recover the caller's frame by using the frame pointer.
 
@@ -1518,7 +1517,9 @@ void LUL::Unwind(/*OUT*/ uintptr_t* aFramePCs,
         }
       }
     }
-#endif  // defined(GP_PLAT_amd64_linux) || defined(GP_PLAT_x86_linux)
+#endif  // defined(GP_PLAT_amd64_linux) || defined(GP_PLAT_x86_linux) ||
+        // defined(GP_PLAT_amd64_android) || defined(GP_PLAT_x86_android) ||
+        // defined(GP_PLAT_amd64_freebsd)
 
     // We failed to recover a frame either using CFI or FP chasing, and we
     // have no other ways to recover the frame.  So we have to give up.

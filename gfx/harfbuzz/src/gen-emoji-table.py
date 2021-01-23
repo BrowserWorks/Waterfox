@@ -1,12 +1,15 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
-from __future__ import print_function, division, absolute_import
 import sys
 import os.path
 from collections import OrderedDict
+import packTab
 
 if len (sys.argv) != 2:
-	print("usage: ./gen-emoji-table.py emoji-data.txt", file=sys.stderr)
+	print("""usage: ./gen-emoji-table.py emoji-data.txt
+
+Input file, as of Unicode 12:
+* https://www.unicode.org/Public/emoji/12.0/emoji-data.txt""", file=sys.stderr)
 	sys.exit (1)
 
 f = open(sys.argv[1])
@@ -52,14 +55,19 @@ print ()
 print ('#include "hb-unicode.hh"')
 print ()
 
-for typ,s in ranges.items():
+for typ, s in ranges.items():
 	if typ != "Extended_Pictographic": continue
+
+	arr = dict()
+	for start,end in s:
+		for i in range(start,end):
+			arr[i] = 1
+
+	sol = packTab.pack_table(arr, 0, compression=3)
+	code = packTab.Code('_hb_emoji')
+	sol.genCode(code, 'is_'+typ)
+	code.print_c(linkage='static inline')
 	print()
-	print("static const struct hb_unicode_range_t _hb_unicode_emoji_%s_table[] =" % typ)
-	print("{")
-	for pair in sorted(s):
-		print("  {0x%04X, 0x%04X}," % pair)
-	print("};")
 
 print ()
 print ("#endif /* HB_UNICODE_EMOJI_TABLE_HH */")

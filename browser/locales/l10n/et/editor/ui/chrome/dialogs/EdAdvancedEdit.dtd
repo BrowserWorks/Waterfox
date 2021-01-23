@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label          "Lisaomaduste muutmine">
+<!ENTITY AttName.label              "Atribuut: ">
+<!ENTITY AttValue.label             "Väärtus: ">
+<!ENTITY PropertyName.label         "Omadus: ">
+<!ENTITY currentattributesfor.label "Objekt: ">
+<!ENTITY tree.attributeHeader.label "Atribuut">
+<!ENTITY tree.propertyHeader.label  "Omadus">
+<!ENTITY tree.valueHeader.label     "Väärtus">
+<!ENTITY tabHTML.label              "HTML-i atribuudid">
+<!ENTITY tabCSS.label               "Reasisene stiil">
+<!ENTITY tabJSE.label               "JavaScripti sündmused">
+
+<!ENTITY editAttribute.label        "Klõpsa väljal selle muutmiseks">
+<!ENTITY removeAttribute.label      "Eemalda">

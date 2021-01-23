@@ -1,13 +1,3 @@
-// Copyright 2014-2015 The Rust Project Developers. See the COPYRIGHT
-// file at the top-level directory of this distribution and at
-// http://rust-lang.org/COPYRIGHT.
-//
-// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
-// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
-// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
-// option. This file may not be copied, modified, or distributed
-// except according to those terms.
-
 // This is the backtracking matching engine. It has the same exact capability
 // as the full NFA simulation, except it is artificially restricted to small
 // regexes on small inputs because of its memory requirements.
@@ -28,7 +18,7 @@
 
 use exec::ProgramCache;
 use input::{Input, InputAt};
-use prog::{Program, InstPtr};
+use prog::{InstPtr, Program};
 use re_trait::Slot;
 
 type Bits = u32;
@@ -98,6 +88,7 @@ impl<'a, 'm, 'r, 's, I: Input> Bounded<'a, 'm, 'r, 's, I> {
         slots: &'s mut [Slot],
         input: I,
         start: usize,
+        end: usize,
     ) -> bool {
         let mut cache = cache.borrow_mut();
         let cache = &mut cache.backtrack;
@@ -109,7 +100,7 @@ impl<'a, 'm, 'r, 's, I: Input> Bounded<'a, 'm, 'r, 's, I> {
             slots: slots,
             m: cache,
         };
-        b.exec_(start)
+        b.exec_(start, end)
     }
 
     /// Clears the cache such that the backtracking engine can be executed
@@ -130,8 +121,7 @@ impl<'a, 'm, 'r, 's, I: Input> Bounded<'a, 'm, 'r, 's, I> {
         // inputs/regexes in the first place.)
         let visited_len =
             (self.prog.len() * (self.input.len() + 1) + BIT_SIZE - 1)
-            /
-            BIT_SIZE;
+                / BIT_SIZE;
         self.m.visited.truncate(visited_len);
         for v in &mut self.m.visited {
             *v = 0;
@@ -147,16 +137,12 @@ impl<'a, 'm, 'r, 's, I: Input> Bounded<'a, 'm, 'r, 's, I> {
 
     /// Start backtracking at the given position in the input, but also look
     /// for literal prefixes.
-    fn exec_(&mut self, mut at: InputAt) -> bool {
+    fn exec_(&mut self, mut at: InputAt, end: usize) -> bool {
         self.clear();
         // If this is an anchored regex at the beginning of the input, then
         // we're either already done or we only need to try backtracking once.
         if self.prog.is_anchored_start {
-            return if !at.is_start() {
-                false
-            } else {
-                self.backtrack(at)
-            };
+            return if !at.is_start() { false } else { self.backtrack(at) };
         }
         let mut matched = false;
         loop {
@@ -170,7 +156,7 @@ impl<'a, 'm, 'r, 's, I: Input> Bounded<'a, 'm, 'r, 's, I> {
             if matched && self.prog.matches.len() == 1 {
                 return true;
             }
-            if at.is_end() {
+            if at.pos() >= end {
                 break;
             }
             at = self.input.at(at.next_pos());

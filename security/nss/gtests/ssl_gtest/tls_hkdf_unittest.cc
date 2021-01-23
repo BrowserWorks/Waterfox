@@ -68,18 +68,6 @@ size_t GetHashLength(SSLHashType hash) {
   return 0;
 }
 
-CK_MECHANISM_TYPE GetHkdfMech(SSLHashType hash) {
-  switch (hash) {
-    case ssl_hash_sha256:
-      return CKM_NSS_HKDF_SHA256;
-    case ssl_hash_sha384:
-      return CKM_NSS_HKDF_SHA384;
-    default:
-      ADD_FAILURE() << "Unknown hash: " << hash;
-  }
-  return CKM_INVALID_MECHANISM;
-}
-
 PRUint16 GetSomeCipherSuiteForHash(SSLHashType hash) {
   switch (hash) {
     case ssl_hash_sha256:
@@ -173,7 +161,7 @@ class TlsHkdfTest : public ::testing::Test,
     ScopedPK11SymKey prkk(prk);
 
     DumpKey("Output", prkk);
-    VerifyKey(prkk, GetHkdfMech(base_hash), expected);
+    VerifyKey(prkk, CKM_HKDF_DERIVE, expected);
 
     // Now test the public wrapper.
     PRUint16 cs = GetSomeCipherSuiteForHash(base_hash);
@@ -181,7 +169,7 @@ class TlsHkdfTest : public ::testing::Test,
                          ikmk2.get(), &prk);
     ASSERT_EQ(SECSuccess, rv);
     ASSERT_NE(nullptr, prk);
-    VerifyKey(ScopedPK11SymKey(prk), GetHkdfMech(base_hash), expected);
+    VerifyKey(ScopedPK11SymKey(prk), CKM_HKDF_DERIVE, expected);
   }
 
   void HkdfExpandLabel(ScopedPK11SymKey* prk, SSLHashType base_hash,
@@ -192,9 +180,9 @@ class TlsHkdfTest : public ::testing::Test,
 
     std::vector<uint8_t> output(expected.len());
 
-    SECStatus rv = tls13_HkdfExpandLabelRaw(prk->get(), base_hash, session_hash,
-                                            session_hash_len, label, label_len,
-                                            &output[0], output.size());
+    SECStatus rv = tls13_HkdfExpandLabelRaw(
+        prk->get(), base_hash, session_hash, session_hash_len, label, label_len,
+        ssl_variant_stream, &output[0], output.size());
     ASSERT_EQ(SECSuccess, rv);
     DumpData("Output", &output[0], output.size());
     EXPECT_EQ(0, memcmp(expected.data(), &output[0], expected.len()));
@@ -207,7 +195,7 @@ class TlsHkdfTest : public ::testing::Test,
                              &secret);
     EXPECT_EQ(SECSuccess, rv);
     ASSERT_NE(nullptr, prk);
-    VerifyKey(ScopedPK11SymKey(secret), GetHkdfMech(base_hash), expected);
+    VerifyKey(ScopedPK11SymKey(secret), CKM_HKDF_DERIVE, expected);
 
     // Verify that a key can be created with a different key type and size.
     rv = SSL_HkdfExpandLabelWithMech(

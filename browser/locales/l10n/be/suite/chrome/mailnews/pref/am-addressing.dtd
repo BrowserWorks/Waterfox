@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressing.label "Укладанне і адрасаванне">
+<!ENTITY addressingGroupTitle.label "Адрасаванне">
+<!ENTITY autocompleteToMyDomain.label "Самастойна дадаваць мой дамен у адрасы">
+<!ENTITY autocompleteToMyDomain.accesskey "д">
+<!ENTITY addressingText.label "Калі шукаюцца адрасы:">
+<!ENTITY useGlobal.label "Ужываць мае агульныя перавагі паслугача LDAP для гэтага рахунку">
+<!ENTITY useGlobal.accesskey "У">
+<!ENTITY editDirectories.label "Рэдагаваць дырэкторыі…">
+<!ENTITY editDirectories.accesskey "Р">
+<!ENTITY directories.label "Карыстацца іншым паслугачом LDAP:">
+<!ENTITY directories.accesskey "і">
+<!ENTITY directoriesNone.label "Няма">
+<!ENTITY compositionGroupTitle.label "Укладанне">
+<!ENTITY useHtml.label "Укладаць лісты ў фармаце HTML">
+<!ENTITY useHtml.accesskey "У">
+<!ENTITY autoQuote.label "Самастойна цытаваць першапачатковы ліст у адказе">
+<!ENTITY autoQuote.accesskey "С">
+<!ENTITY then.label "Тады">
+<!ENTITY then.accesskey "Т">
+<!ENTITY aboveQuote.label "пачаць мой адказ над вытрымкаю">
+<!ENTITY belowQuote.label "пачаць мой адказ пад вытрымкаю">
+<!ENTITY selectAndQuote.label "вылучыць вытрымку">
+<!ENTITY place.label "і памясціць мой подпіс">
+<!ENTITY place.accesskey "м">
+<!ENTITY belowText.label "пад вытрымкаю (раіцца)">
+<!ENTITY aboveText.label "пад маім адказам (над вытрымкаю)">
+<!ENTITY includeSigOnReply.label "Уключаць подпіс у адказы">
+<!ENTITY includeSigOnReply.accesskey "а">
+<!ENTITY includeSigOnForward.label "Уключаць подпіс у перанакіраванні">
+<!ENTITY includeSigOnForward.accesskey "к">
+<!ENTITY globalComposingPrefs.label "Агульныя перавагі ўкладання…">
+<!ENTITY globalComposingPrefs.accesskey "ў">
+<!ENTITY globalAddressingPrefs.label "Агульныя перавагі адрасавання…">
+<!ENTITY globalAddressingPrefs.accesskey "а">

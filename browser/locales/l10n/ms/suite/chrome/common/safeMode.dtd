@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title         "Mod Selamat &brandShortName;">
+<!ENTITY window.width                 "37em">
+
+<!ENTITY safeModeDescription.label    "&brandShortName; sedang dalam Mod Selamat, yang secara sementara menyahaktifkan penyesuaian tetapan, tema dan ekstensi.">
+<!ENTITY safeModeDescription2.label   "Anda boleh buat beberapa atau semua perubahan ini kekal:">
+
+<!ENTITY disableAddons.label          "Nyahaktifkan semua add-ons">
+<!ENTITY disableAddons.accesskey      "N">
+
+<!ENTITY resetToolbars.label          "Mengeset semula bar alatan dan saiz tetingkap">
+<!ENTITY resetToolbars.accesskey      "M">
+
+<!ENTITY deleteBookmarks.label        "Buang semua tandabuku kecuali untuk sandaran">
+<!ENTITY deleteBookmarks.accesskey    "b">
+
+<!ENTITY resetUserPrefs.label         "Tetapkan semula keutamaan pengguna ke piawai &brandShortName;">
+<!ENTITY resetUserPrefs.accesskey     "p">
+
+<!ENTITY restoreSearch.label          "Pulih enjin carian piawai">
+<!ENTITY restoreSearch.accesskey      "c">
+
+<!ENTITY changeAndRestartButton.label "Buat Perubahan dan Mula semula">
+<!ENTITY continueButton.label         "Teruskan dalam Mod Selamat">

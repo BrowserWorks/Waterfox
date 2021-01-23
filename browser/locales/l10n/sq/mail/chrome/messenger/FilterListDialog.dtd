@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Filtra Mesazhesh">
+<!ENTITY nameColumn.label "Emër Filtri">
+<!ENTITY activeColumn.label "I aktivizuar">
+<!ENTITY newButton.label "I ri…">
+<!ENTITY newButton.accesskey "i">
+<!ENTITY newButton.popupCopy.label "Kopjoni…">
+<!ENTITY newButton.popupCopy.accesskey "K">
+<!ENTITY editButton.label "Përpunoni…">
+<!ENTITY editButton.accesskey "P">
+<!ENTITY deleteButton.label "Fshije">
+<!ENTITY deleteButton.accesskey "e">
+<!ENTITY reorderTopButton "Shpjere në Krye">
+<!ENTITY reorderTopButton.accessKey "k">
+<!ENTITY reorderTopButton.toolTip "Risistemojeni filtrin që të ekzekutohet përpara krejt të tjerëve">
+<!ENTITY reorderUpButton.label "Ngrije">
+<!ENTITY reorderUpButton.accesskey "S">
+<!ENTITY reorderDownButton.label "Shpjere Poshtë">
+<!ENTITY reorderDownButton.accesskey "o">
+<!ENTITY reorderBottomButton "Shpjere në Fund">
+<!ENTITY reorderBottomButton.accessKey "F">
+<!ENTITY reorderBottomButton.toolTip "Risistemojeni filtrin që të ekzekutohet pas krejt të tjerëve">
+<!ENTITY filterHeader.label "Filtrat veprues punojnë vetvetiu në radhën e treguar më poshtë.">
+<!ENTITY filtersForPrefix.label "Filtra për:">
+<!ENTITY filtersForPrefix.accesskey "F">
+<!ENTITY viewLogButton.label "Regjistër Filtrash">
+<!ENTITY viewLogButton.accesskey "R">
+<!ENTITY runFilters.label "Vëre në punë Tani">
+<!ENTITY runFilters.accesskey "V">
+<!ENTITY stopFilters.label "Ndale">
+<!ENTITY stopFilters.accesskey "N">
+<!ENTITY folderPickerPrefix.label "Filtrin(at) e përzgjedhur vëre në punë mbi:">
+<!ENTITY folderPickerPrefix.accesskey "u">
+<!ENTITY helpButton.label "Ndihmë">
+<!ENTITY helpButton.accesskey "d">
+<!ENTITY closeCmd.key "W">
+<!ENTITY searchBox.emptyText "Kërkoni sipas emrash te filtrat…">

@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Proprietățile imaginii">
+
+<!ENTITY pixelsPopup.value "pixeli">
+
+<!-- These are in the Location tab panel -->
+<!ENTITY locationEditField.label "Locație imagine:">
+<!ENTITY locationEditField.accessKey "L">
+<!ENTITY locationEditField.tooltip "Tastează denumirea fișierului sau locația imaginii">
+<!ENTITY locationEditField.shortenedDataURI "Date URI prescurtate (copierea va plasa întregul URI în clipboard)">
+<!ENTITY title.label "Pont unealtă:">
+<!ENTITY title.accessKey "d">
+<!ENTITY title.tooltip "Atribut HTML „title”, care este afișat ca pont de utilizare a uneltelor">
+<!ENTITY altText.label "Text alternativ:">
+<!ENTITY altText.accessKey "a">
+<!ENTITY altTextEditField.tooltip "Tastează textul de afișat în locul imaginii">
+<!ENTITY noAltText.label "Fără text alternativ">
+<!ENTITY noAltText.accessKey "F">
+
+<!ENTITY previewBox.label "Previzualizarea imaginii">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+<!ENTITY actualSize.label "Dimensiune reală:">
+<!ENTITY actualSizeRadio.label "Dimensiune reală">
+<!ENTITY actualSizeRadio.accessKey "r">
+<!ENTITY actualSizeRadio.tooltip "Revino la dimensiunea reală a imaginii">
+<!ENTITY customSizeRadio.label "Dimensiune personalizată">
+<!ENTITY customSizeRadio.accessKey "p">
+<!ENTITY customSizeRadio.tooltip "Modifică mărimea imaginii, așa cum va fi afișată pe pagină">
+<!ENTITY heightEditField.label "Înălțime:">
+<!ENTITY heightEditField.accessKey "n">
+<!ENTITY widthEditField.label "Lățime:">
+<!ENTITY widthEditField.accessKey "L">
+<!ENTITY constrainCheckbox.label "Restricționează">
+<!ENTITY constrainCheckbox.accessKey "C">
+<!ENTITY constrainCheckbox.tooltip "Menține raportul de aspect al imaginii">
+
+<!-- These controls are in the Image Map box of the expanded area -->
+<!ENTITY imagemapBox.label "Hartă imagine">
+<!ENTITY removeImageMapButton.label "Elimină">
+<!ENTITY removeImageMapButton.accessKey "E">
+
+<!-- These are the options for image alignment -->
+<!ENTITY alignment.label "Aliniază textul la imagine">
+<!ENTITY bottomPopup.value "În partea de jos">
+<!ENTITY topPopup.value "În partea de sus">
+<!ENTITY centerPopup.value "La centru">
+<!ENTITY wrapRightPopup.value "Încadrează la dreapta">
+<!ENTITY wrapLeftPopup.value "Încadrează la stânga">
+
+<!-- These controls are in the Spacing Box -->
+<!ENTITY spacingBox.label "Spațiere">
+<!ENTITY leftRightEditField.label "Stânga și dreapta:">
+<!ENTITY leftRightEditField.accessKey "S">
+<!ENTITY topBottomEditField.label "Sus și jos:">
+<!ENTITY topBottomEditField.accessKey "u">
+<!ENTITY borderEditField.label "Bordură plină:">
+<!ENTITY borderEditField.accessKey "B">
+
+<!-- These controls are in the Link Box -->
+<!ENTITY showImageLinkBorder.label "Afișează o bordură în jurul imaginii cu linkuri">
+<!ENTITY showImageLinkBorder.accessKey "A">
+<!ENTITY LinkAdvancedEditButton.label "Editare avansată a linkului…">
+<!ENTITY LinkAdvancedEditButton.accessKey "l">
+<!ENTITY LinkAdvancedEditButton.tooltip "Adaugă sau modifică atribute HTML, atribute de stiluri și cod JavaScript">
+
+<!-- These tabs are currently used in the image input dialog -->
+<!ENTITY imageInputTab.label "Formular">
+<!ENTITY imageLocationTab.label "Locație">
+<!ENTITY imageDimensionsTab.label "Dimensiuni">
+<!ENTITY imageAppearanceTab.label "Aspect">
+<!ENTITY imageLinkTab.label "Link">

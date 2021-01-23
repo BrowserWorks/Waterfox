@@ -1,0 +1,179 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<panel id="identity-popup"
+       class="panel-no-padding"
+       type="arrow"
+       hidden="true"
+       role="alertdialog"
+       noautofocus="true"
+       aria-labelledby="identity-popup-mainView-panel-header-span"
+       onpopupshown="gIdentityHandler.onPopupShown(event);"
+       onpopuphidden="gIdentityHandler.onPopupHidden(event);"
+       orient="vertical">
+
+  <panelmultiview id="identity-popup-multiView"
+                  mainViewId="identity-popup-mainView">
+    <panelview id="identity-popup-mainView"
+               role="document"
+               descriptionheightworkaround="true">
+      <vbox id="identity-popup-mainView-panel-header">
+        <label>
+          <html:span id="identity-popup-mainView-panel-header-span" role="heading" aria-level="1"/>
+        </label>
+      </vbox>
+
+      <!-- Security Section -->
+      <hbox id="identity-popup-security" class="identity-popup-section">
+        <vbox class="identity-popup-security-content" flex="1">
+
+          <vbox class="identity-popup-security-connection">
+            <description class="identity-popup-connection-not-secure"
+                         when-connection="not-secure secure-cert-user-overridden secure-custom-root cert-error-page" data-l10n-id="identity-connection-not-secure"></description>
+            <description class="identity-popup-connection-secure"
+                         when-connection="secure secure-ev" data-l10n-id="identity-connection-secure"></description>
+            <description when-connection="chrome" data-l10n-id="identity-connection-internal"></description>
+            <description when-connection="file" data-l10n-id="identity-connection-file"></description>
+            <description when-connection="extension" data-l10n-id="identity-extension-page"></description>
+          </vbox>
+
+          <vbox id="identity-popup-security-description">
+            <description id="identity-popup-security-ev-content-owner"
+                         when-connection="secure-ev"/>
+            <description class="identity-popup-warning-box identity-popup-warning-gray"
+                         when-mixedcontent="active-blocked" data-l10n-id="identity-active-blocked"></description>
+            <description id="identity-popup-security-decription-custom-root"
+                         class="identity-popup-warning-box identity-popup-warning-gray"
+                         when-customroot="true" data-l10n-id="identity-custom-root"></description>
+            <description class="identity-popup-warning-box identity-popup-warning-yellow"
+                         when-mixedcontent="passive-loaded" data-l10n-id="identity-passive-loaded"></description>
+            <description class="identity-popup-warning-box identity-popup-warning-yellow"
+                         when-mixedcontent="active-loaded" data-l10n-id="identity-active-loaded"></description>
+            <description class="identity-popup-warning-box identity-popup-warning-yellow"
+                         when-ciphers="weak" data-l10n-id="identity-weak-encryption"></description>
+          </vbox>
+        </vbox>
+        <button id="identity-popup-security-expander"
+                class="identity-popup-expander"
+                when-connection="not-secure secure secure-ev secure-cert-user-overridden cert-error-page"
+                oncommand="gIdentityHandler.showSecuritySubView();"/>
+      </hbox>
+
+      <!-- Permissions Section -->
+      <hbox class="identity-popup-section"
+            when-connection="not-secure secure secure-ev secure-cert-user-overridden file extension cert-error-page">
+        <vbox id="identity-popup-permissions-content" flex="1" role="group"
+              aria-labelledby="identity-popup-permissions-headline">
+          <hbox id="identity-popup-permissions-header" align="center">
+            <label id="identity-popup-permissions-headline"
+                   role="heading" aria-level="2"
+                   data-l10n-id="identity-permissions"/>
+          </hbox>
+          <vbox id="identity-popup-permission-list"/>
+          <description id="identity-popup-permission-reload-hint" data-l10n-id="identity-permissions-reload-hint"></description>
+          <description id="identity-popup-permission-empty-hint" data-l10n-id="identity-permissions-empty"></description>
+        </vbox>
+      </hbox>
+
+      <!-- Clear Site Data Button -->
+      <vbox hidden="true"
+            id="identity-popup-clear-sitedata-footer"
+            class="panel-footer">
+        <button id="identity-popup-clear-sitedata-button"
+                data-l10n-id="identity-clear-site-data"
+                oncommand="gIdentityHandler.clearSiteData(event);"/>
+      </vbox>
+    </panelview>
+
+    <!-- Security SubView -->
+    <panelview id="identity-popup-securityView"
+               role="document"
+               descriptionheightworkaround="true">
+      <vbox class="identity-popup-security-content">
+        <vbox class="identity-popup-security-connection">
+          <description class="identity-popup-connection-not-secure"
+                       when-connection="not-secure secure-cert-user-overridden cert-error-page" data-l10n-id="identity-connection-not-secure-security-view"></description>
+          <description class="identity-popup-connection-secure"
+                       when-connection="secure secure-ev" data-l10n-id="identity-connection-verified"></description>
+        </vbox>
+      </vbox>
+
+      <vbox id="identity-popup-securityView-body" class="panel-view-body-unscrollable">
+        <!-- (EV) Certificate Information -->
+        <description id="identity-popup-content-owner-label"
+                     when-connection="secure-ev" data-l10n-id="identity-ev-owner-label"></description>
+        <description id="identity-popup-content-owner"
+                     when-connection="secure-ev"
+                     class="header"/>
+        <description id="identity-popup-content-supplemental"
+                     when-connection="secure-ev"/>
+        <description id="identity-popup-content-verifier"
+                     when-connection="secure secure-ev secure-cert-user-overridden"/>
+        <description id="identity-popup-content-verifier-unknown"
+                     class="identity-popup-warning-box identity-popup-warning-gray"
+                     when-customroot="true"
+                     data-l10n-id="identity-description-custom-root"><label data-l10n-name="link" id="identity-popup-custom-root-learn-more" is="text-link" class="plain"/></description>
+
+        <!-- Remove Certificate Exception -->
+        <button when-connection="secure-cert-user-overridden"
+                data-l10n-id="identity-remove-cert-exception"
+                class="panel-button"
+                oncommand="gIdentityHandler.removeCertException()"/>
+
+        <!-- Connection is Not Secure -->
+        <description when-connection="not-secure cert-error-page"
+                     data-l10n-id="identity-description-insecure"></description> 
+
+        <!-- Weak Cipher -->
+        <description when-ciphers="weak" data-l10n-id="identity-description-weak-cipher-intro"></description>
+        <description class="identity-popup-warning-box identity-popup-warning-yellow"
+                     when-ciphers="weak" data-l10n-id="identity-description-weak-cipher-risk"></description>
+
+        <!-- Active Mixed Content Blocked -->
+        <description class="identity-popup-warning-box identity-popup-warning-gray"
+                     when-mixedcontent="active-blocked"
+                     data-l10n-id="identity-description-active-blocked"><label data-l10n-name="link" is="text-link" class="identity-popup-mcb-learn-more plain"/></description>
+
+        <!-- Passive Mixed Content Loaded -->
+        <description when-mixedcontent="passive-loaded" data-l10n-id="identity-description-passive-loaded"></description>
+        <description class="identity-popup-warning-box identity-popup-warning-yellow"
+                     when-mixedcontent="passive-loaded"
+                     data-l10n-id="identity-description-passive-loaded-insecure"><label data-l10n-name="link" is="text-link" class="identity-popup-mcb-learn-more plain"/></description>
+
+        <!-- Passive Mixed Content Loaded, Active Mixed Content Blocked -->
+        <description when-mixedcontent="passive-loaded active-blocked" data-l10n-id="identity-description-passive-loaded"></description>
+        <description when-mixedcontent="passive-loaded active-blocked"
+                     class="identity-popup-warning-box identity-popup-warning-yellow"
+                     data-l10n-id="identity-description-passive-loaded-mixed"><label data-l10n-name="link" is="text-link" class="identity-popup-mcb-learn-more plain"/></description>
+
+        <!-- Active Mixed Content Blocking Disabled -->
+        <description when-mixedcontent="active-loaded"
+                     data-l10n-id="identity-description-active-loaded"></description>
+        <description when-mixedcontent="active-loaded"
+                     data-l10n-id="identity-description-active-loaded-insecure"></description>
+        <label when-mixedcontent="active-loaded"
+                     and-when-loginforms="secure" is="text-link" class="identity-popup-mcb-learn-more" data-l10n-id="identity-learn-more"/>
+
+
+        <!-- Buttons to enable/disable mixed content blocking. -->
+        <button when-mixedcontent="active-blocked"
+                data-l10n-id="identity-disable-mixed-content-blocking"
+                class="panel-button"
+                oncommand="gIdentityHandler.disableMixedContentProtection()"/>
+        <button when-mixedcontent="active-loaded"
+                data-l10n-id="identity-enable-mixed-content-blocking"
+                class="panel-button"
+                oncommand="gIdentityHandler.enableMixedContentProtection()"/>
+      </vbox>
+
+      <vbox id="identity-popup-more-info-footer" class="panel-footer">
+        <!-- More Security Information -->
+        <button id="identity-popup-more-info"
+                data-l10n-id="identity-more-info-link-text"
+                oncommand="gIdentityHandler.handleMoreInfoClick(event);"/>
+      </vbox>
+
+    </panelview>
+  </panelmultiview>
+</panel>

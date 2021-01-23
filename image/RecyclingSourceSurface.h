@@ -8,6 +8,7 @@
 #define mozilla_image_RecyclingSourceSurface_h
 
 #include "mozilla/gfx/2D.h"
+#include "mozilla/NotNull.h"
 
 namespace mozilla {
 namespace image {
@@ -35,25 +36,27 @@ class RecyclingSourceSurface final : public gfx::DataSourceSurface {
     return mSurface->GetFormat();
   }
 
-  void AddSizeOfExcludingThis(MallocSizeOf aMallocSizeOf, size_t& aHeapSizeOut,
-                              size_t& aNonHeapSizeOut, size_t& aExtHandlesOut,
-                              uint64_t& aExtIdOut) const override {}
-
   bool OnHeap() const override { return mSurface->OnHeap(); }
   bool Map(MapType aType, MappedSurface* aMappedSurface) override {
     return mSurface->Map(aType, aMappedSurface);
   }
   void Unmap() override { mSurface->Unmap(); }
 
-  gfx::DataSourceSurface* GetChildSurface() const { return mSurface; }
+  void SizeOfExcludingThis(MallocSizeOf aMallocSizeOf,
+                           SizeOfInfo& aInfo) const override {
+    aInfo.AddType(mType);
+    mSurface->SizeOfExcludingThis(aMallocSizeOf, aInfo);
+  }
+
+  gfx::DataSourceSurface* GetChildSurface() const { return mSurface.get(); }
 
  protected:
   void GuaranteePersistance() override {}
 
   ~RecyclingSourceSurface() override;
 
-  RefPtr<imgFrame> mParent;
-  RefPtr<DataSourceSurface> mSurface;
+  NotNull<RefPtr<imgFrame>> mParent;
+  NotNull<RefPtr<DataSourceSurface>> mSurface;
   gfx::SurfaceType mType;
 };
 

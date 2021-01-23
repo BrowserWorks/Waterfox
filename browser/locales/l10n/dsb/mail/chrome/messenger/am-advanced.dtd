@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!ENTITY smtpServer.label "Nastajenja wuchadnego serwera (SMTP)">
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+
+<!ENTITY smtpDescription.label "Gaž zarědujośo swóje identity, móžośo serwer z lisćiny wužywaś, z tym až wuběraśo jen ako serwer za postowy wuchad (SMTP), abo móžośo standardny serwer z toś teje lisćiny wužywaś, z tym až wuběraśo &quot;Standardny serwer wužywaś&quot;.">
+
+<!ENTITY smtpListAdd.label  "Pśidaś…">
+<!ENTITY smtpListAdd.accesskey  "d">
+<!ENTITY smtpListEdit.label "Wobźěłaś…">
+<!ENTITY smtpListEdit.accesskey "b">
+<!ENTITY smtpListDelete.label "Wótpóraś">
+<!ENTITY smtpListDelete.accesskey "W">
+<!ENTITY smtpListSetDefault.label "Standard stajiś">
+<!ENTITY smtpListSetDefault.accesskey "S">
+
+<!ENTITY serverDetails.label "Drobnostki wubranego serwera:">
+<!ENTITY serverDescription.label "Wopisanje: ">
+<!ENTITY serverName.label "Serwerowe mě: ">
+<!ENTITY serverPort.label "Port: ">
+<!ENTITY userName.label   "Wužywarske mě: ">
+<!ENTITY connectionSecurity.label "Zwiskowa wěstota: ">
+<!ENTITY authMethod.label   "Awtentificěrowańska metoda: ">

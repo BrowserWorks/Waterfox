@@ -21,10 +21,7 @@
 #include "nsIRollupListener.h"
 #include "nsIWidget.h"
 #include "nsThreadUtils.h"
-#include "nsIWindowMediator.h"
 #include "nsServiceManagerUtils.h"
-#include "nsIInterfaceRequestor.h"
-#include "nsIWebBrowserChrome.h"
 #include "nsObjCExceptions.h"
 #include "nsCocoaFeatures.h"
 #include "nsCocoaUtils.h"
@@ -45,6 +42,9 @@
 #include <IOKit/pwr_mgt/IOPMLib.h>
 #include "nsIDOMWakeLockListener.h"
 #include "nsIPowerManagerService.h"
+
+#include "nsIObserverService.h"
+#include "mozilla/Services.h"
 
 using namespace mozilla;
 using namespace mozilla::widget;
@@ -83,6 +83,8 @@ class MacWakeLockListener final : public nsIDOMMozWakeLockListener {
         shouldKeepDisplayOn ? kIOPMAssertionTypeNoDisplaySleep : kIOPMAssertionTypeNoIdleSleep;
     IOPMAssertionID& assertionId =
         shouldKeepDisplayOn ? mAssertionNoDisplaySleepID : mAssertionNoIdleSleepID;
+    WAKE_LOCK_LOG("topic=%s, shouldKeepDisplayOn=%d", NS_ConvertUTF16toUTF8(aTopic).get(),
+                  shouldKeepDisplayOn);
 
     // Note the wake lock code ensures that we're not sent duplicate
     // "locked-foreground" notifications when multiple wake locks are held.
@@ -297,27 +299,14 @@ nsresult nsAppShell::Init() {
                                     (XRE_GetProcessType() != GeckoProcessType_Socket);
 
   if (isNSApplicationProcessType) {
-    // Get the path of the nib file, which lives in the GRE location
-    nsCOMPtr<nsIFile> nibFile;
-    nsresult rv = NS_GetSpecialDirectory(NS_GRE_DIR, getter_AddRefs(nibFile));
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    nibFile->AppendNative(NS_LITERAL_CSTRING("res"));
-    nibFile->AppendNative(NS_LITERAL_CSTRING("MainMenu.nib"));
-
-    nsAutoCString nibPath;
-    rv = nibFile->GetNativePath(nibPath);
-    NS_ENSURE_SUCCESS(rv, rv);
-
     // This call initializes NSApplication unless:
     // 1) we're using xre -- NSApp's already been initialized by
     //    MacApplicationDelegate.mm's EnsureUseCocoaDockAPI().
     // 2) an embedding app that uses NSApplicationMain() is running -- NSApp's
     //    already been initialized and its main run loop is already running.
-    [NSBundle loadNibFile:[NSString stringWithUTF8String:(const char*)nibPath.get()]
-        externalNameTable:[NSDictionary dictionaryWithObject:[GeckoNSApplication sharedApplication]
-                                                      forKey:@"NSOwner"]
-                 withZone:NSDefaultMallocZone()];
+    [[NSBundle mainBundle] loadNibNamed:@"res/MainMenu"
+                                  owner:[GeckoNSApplication sharedApplication]
+                        topLevelObjects:nil];
   }
 
   mDelegate = [[AppShellDelegate alloc] initWithAppShell:this];
@@ -368,8 +357,8 @@ nsresult nsAppShell::Init() {
   // The bug that this works around was introduced in OS X 10.10.0
   // and fixed in OS X 10.10.2. Order these version checks so as
   // few as possible will actually end up running.
-  if (nsCocoaFeatures::OSXVersionMinor() == 10 && nsCocoaFeatures::OSXVersionBugFix() < 2 &&
-      nsCocoaFeatures::OSXVersionMajor() == 10) {
+  if (nsCocoaFeatures::macOSVersionMinor() == 10 && nsCocoaFeatures::macOSVersionBugFix() < 2 &&
+      nsCocoaFeatures::macOSVersionMajor() == 10) {
     // Explicitly turn off CGEvent logging.  This works around bug 1092855.
     // If there are already CGEvents in the log, turning off logging also
     // causes those events to be written to disk.  But at this point no
@@ -879,6 +868,11 @@ nsAppShell::AfterProcessNextEvent(nsIThreadInternal* aThread, bool aEventWasProc
   if (currentEvent) {
     TextInputHandler::sLastModifierState =
         [currentEvent modifierFlags] & NSDeviceIndependentModifierFlagsMask;
+  }
+
+  nsCOMPtr<nsIObserverService> observerService = services::GetObserverService();
+  if (observerService) {
+    observerService->NotifyObservers(nullptr, NS_WIDGET_MAC_APP_ACTIVATE_OBSERVER_TOPIC, nullptr);
   }
 
   NS_OBJC_END_TRY_ABORT_BLOCK;

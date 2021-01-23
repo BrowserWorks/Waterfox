@@ -1,5 +1,9 @@
-use byteorder::{BigEndian, ByteOrder};
-use {Config, STANDARD};
+use crate::Config;
+#[cfg(any(feature = "alloc", feature = "std", test))]
+use crate::{chunked_encoder, STANDARD};
+#[cfg(any(feature = "alloc", feature = "std", test))]
+use alloc::{string::String, vec};
+use core::convert::TryInto;
 
 ///Encode arbitrary octets as base64.
 ///Returns a String.
@@ -15,7 +19,8 @@ use {Config, STANDARD};
 ///    println!("{}", b64);
 ///}
 ///```
-pub fn encode<T: ?Sized + AsRef<[u8]>>(input: &T) -> String {
+#[cfg(any(feature = "alloc", feature = "std", test))]
+pub fn encode<T: AsRef<[u8]>>(input: T) -> String {
     encode_config(input, STANDARD)
 }
 
@@ -35,16 +40,16 @@ pub fn encode<T: ?Sized + AsRef<[u8]>>(input: &T) -> String {
 ///    println!("{}", b64_url);
 ///}
 ///```
-pub fn encode_config<T: ?Sized + AsRef<[u8]>>(input: &T, config: Config) -> String {
-    let mut buf = match encoded_size(input.as_ref().len(), &config) {
+#[cfg(any(feature = "alloc", feature = "std", test))]
+pub fn encode_config<T: AsRef<[u8]>>(input: T, config: Config) -> String {
+    let mut buf = match encoded_size(input.as_ref().len(), config) {
         Some(n) => vec![0; n],
         None => panic!("integer overflow when calculating buffer size"),
     };
 
-    let encoded_len = encode_config_slice(input.as_ref(), config, &mut buf[..]);
-    debug_assert_eq!(encoded_len, buf.len());
+    encode_with_padding(input.as_ref(), config, buf.len(), &mut buf[..]);
 
-    return String::from_utf8(buf).expect("Invalid UTF8");
+    String::from_utf8(buf).expect("Invalid UTF8")
 }
 
 ///Encode arbitrary octets as base64.
@@ -65,16 +70,18 @@ pub fn encode_config<T: ?Sized + AsRef<[u8]>>(input: &T, config: Config) -> Stri
 ///    println!("{}", buf);
 ///}
 ///```
-pub fn encode_config_buf<T: ?Sized + AsRef<[u8]>>(input: &T, config: Config, buf: &mut String) {
+#[cfg(any(feature = "alloc", feature = "std", test))]
+pub fn encode_config_buf<T: AsRef<[u8]>>(input: T, config: Config, buf: &mut String) {
     let input_bytes = input.as_ref();
 
     {
-        let mut sink = ::chunked_encoder::StringSink::new(buf);
-        let encoder = ::chunked_encoder::ChunkedEncoder::new(config);
+        let mut sink = chunked_encoder::StringSink::new(buf);
+        let encoder = chunked_encoder::ChunkedEncoder::new(config);
 
-        encoder.encode(input_bytes, &mut sink).expect("Writing to a String shouldn't fail")
+        encoder
+            .encode(input_bytes, &mut sink)
+            .expect("Writing to a String shouldn't fail")
     }
-
 }
 
 /// Encode arbitrary octets as base64.
@@ -107,19 +114,15 @@ pub fn encode_config_buf<T: ?Sized + AsRef<[u8]>>(input: &T, config: Config, buf
 ///     assert_eq!(s, base64::decode(&buf).unwrap().as_slice());
 /// }
 /// ```
-pub fn encode_config_slice<T: ?Sized + AsRef<[u8]>>(
-    input: &T,
-    config: Config,
-    output: &mut [u8],
-) -> usize {
+pub fn encode_config_slice<T: AsRef<[u8]>>(input: T, config: Config, output: &mut [u8]) -> usize {
     let input_bytes = input.as_ref();
 
-    let encoded_size = encoded_size(input_bytes.len(), &config)
+    let encoded_size = encoded_size(input_bytes.len(), config)
         .expect("usize overflow when calculating buffer size");
 
     let mut b64_output = &mut output[0..encoded_size];
 
-    encode_with_padding(&input_bytes, &config, encoded_size, &mut b64_output);
+    encode_with_padding(&input_bytes, config, encoded_size, &mut b64_output);
 
     encoded_size
 }
@@ -134,12 +137,7 @@ pub fn encode_config_slice<T: ?Sized + AsRef<[u8]>>(
 /// `output` must be of size `encoded_size`.
 ///
 /// All bytes in `output` will be written to since it is exactly the size of the output.
-fn encode_with_padding(
-    input: &[u8],
-    config: &Config,
-    encoded_size: usize,
-    output: &mut [u8],
-) {
+fn encode_with_padding(input: &[u8], config: Config, encoded_size: usize, output: &mut [u8]) {
     debug_assert_eq!(encoded_size, output.len());
 
     let b64_bytes_written = encode_to_slice(input, output, config.char_set.encode_table());
@@ -155,6 +153,11 @@ fn encode_with_padding(
         .expect("usize overflow when calculating b64 length");
 
     debug_assert_eq!(encoded_size, encoded_bytes);
+}
+
+#[inline]
+fn read_u64(s: &[u8]) -> u64 {
+    u64::from_be_bytes(s[..8].try_into().unwrap())
 }
 
 /// Encode input bytes to utf8 base64 bytes. Does not pad.
@@ -187,7 +190,7 @@ pub fn encode_to_slice(input: &[u8], output: &mut [u8], encode_table: &[u8; 64])
             // Plus, single-digit percentage performance differences might well be quite different
             // on different hardware.
 
-            let input_u64 = BigEndian::read_u64(&input_chunk[0..]);
+            let input_u64 = read_u64(&input_chunk[0..]);
 
             output_chunk[0] = encode_table[((input_u64 >> 58) & LOW_SIX_BITS) as usize];
             output_chunk[1] = encode_table[((input_u64 >> 52) & LOW_SIX_BITS) as usize];
@@ -198,7 +201,7 @@ pub fn encode_to_slice(input: &[u8], output: &mut [u8], encode_table: &[u8; 64])
             output_chunk[6] = encode_table[((input_u64 >> 22) & LOW_SIX_BITS) as usize];
             output_chunk[7] = encode_table[((input_u64 >> 16) & LOW_SIX_BITS) as usize];
 
-            let input_u64 = BigEndian::read_u64(&input_chunk[6..]);
+            let input_u64 = read_u64(&input_chunk[6..]);
 
             output_chunk[8] = encode_table[((input_u64 >> 58) & LOW_SIX_BITS) as usize];
             output_chunk[9] = encode_table[((input_u64 >> 52) & LOW_SIX_BITS) as usize];
@@ -209,7 +212,7 @@ pub fn encode_to_slice(input: &[u8], output: &mut [u8], encode_table: &[u8; 64])
             output_chunk[14] = encode_table[((input_u64 >> 22) & LOW_SIX_BITS) as usize];
             output_chunk[15] = encode_table[((input_u64 >> 16) & LOW_SIX_BITS) as usize];
 
-            let input_u64 = BigEndian::read_u64(&input_chunk[12..]);
+            let input_u64 = read_u64(&input_chunk[12..]);
 
             output_chunk[16] = encode_table[((input_u64 >> 58) & LOW_SIX_BITS) as usize];
             output_chunk[17] = encode_table[((input_u64 >> 52) & LOW_SIX_BITS) as usize];
@@ -220,7 +223,7 @@ pub fn encode_to_slice(input: &[u8], output: &mut [u8], encode_table: &[u8; 64])
             output_chunk[22] = encode_table[((input_u64 >> 22) & LOW_SIX_BITS) as usize];
             output_chunk[23] = encode_table[((input_u64 >> 16) & LOW_SIX_BITS) as usize];
 
-            let input_u64 = BigEndian::read_u64(&input_chunk[18..]);
+            let input_u64 = read_u64(&input_chunk[18..]);
 
             output_chunk[24] = encode_table[((input_u64 >> 58) & LOW_SIX_BITS) as usize];
             output_chunk[25] = encode_table[((input_u64 >> 52) & LOW_SIX_BITS) as usize];
@@ -262,9 +265,9 @@ pub fn encode_to_slice(input: &[u8], output: &mut [u8], encode_table: &[u8; 64])
 
     if rem == 2 {
         output[output_index] = encode_table[(input[start_of_rem] >> 2) as usize];
-        output[output_index + 1] =
-            encode_table[((input[start_of_rem] << 4 | input[start_of_rem + 1] >> 4)
-                             & LOW_SIX_BITS_U8) as usize];
+        output[output_index + 1] = encode_table[((input[start_of_rem] << 4
+            | input[start_of_rem + 1] >> 4)
+            & LOW_SIX_BITS_U8) as usize];
         output[output_index + 2] =
             encode_table[((input[start_of_rem + 1] << 2) & LOW_SIX_BITS_U8) as usize];
         output_index += 3;
@@ -279,7 +282,7 @@ pub fn encode_to_slice(input: &[u8], output: &mut [u8], encode_table: &[u8; 64])
 }
 
 /// calculate the base64 encoded string size, including padding if appropriate
-pub fn encoded_size(bytes_len: usize, config: &Config) -> Option<usize> {
+pub fn encoded_size(bytes_len: usize, config: Config) -> Option<usize> {
     let rem = bytes_len % 3;
 
     let complete_input_chunks = bytes_len / 3;
@@ -318,15 +321,17 @@ pub fn add_padding(input_len: usize, output: &mut [u8]) -> usize {
 
 #[cfg(test)]
 mod tests {
-    extern crate rand;
-
     use super::*;
-    use decode::decode_config_buf;
-    use tests::{assert_encode_sanity, random_config};
-    use {Config, STANDARD, URL_SAFE_NO_PAD};
+    use crate::{
+        decode::decode_config_buf,
+        tests::{assert_encode_sanity, random_config},
+        Config, STANDARD, URL_SAFE_NO_PAD,
+    };
 
-    use self::rand::distributions::{Distribution, Range};
-    use self::rand::{Rng, FromEntropy};
+    use rand::{
+        distributions::{Distribution, Uniform},
+        FromEntropy, Rng,
+    };
     use std;
     use std::str;
 
@@ -382,7 +387,7 @@ mod tests {
 
     #[test]
     fn encoded_size_overflow() {
-        assert_eq!(None, encoded_size(std::usize::MAX, &STANDARD));
+        assert_eq!(None, encoded_size(std::usize::MAX, STANDARD));
     }
 
     #[test]
@@ -393,8 +398,8 @@ mod tests {
         let mut encoded_data_with_prefix = String::new();
         let mut decoded = Vec::new();
 
-        let prefix_len_range = Range::new(0, 1000);
-        let input_len_range = Range::new(0, 1000);
+        let prefix_len_range = Uniform::new(0, 1000);
+        let input_len_range = Uniform::new(0, 1000);
 
         let mut rng = rand::rngs::SmallRng::from_entropy();
 
@@ -427,8 +432,8 @@ mod tests {
                 encoded_data_no_prefix.len() + prefix_len,
                 encoded_data_with_prefix.len()
             );
-            assert_encode_sanity(&encoded_data_no_prefix, &config, input_len);
-            assert_encode_sanity(&encoded_data_with_prefix[prefix_len..], &config, input_len);
+            assert_encode_sanity(&encoded_data_no_prefix, config, input_len);
+            assert_encode_sanity(&encoded_data_with_prefix[prefix_len..], config, input_len);
 
             // append plain encode onto prefix
             prefix.push_str(&mut encoded_data_no_prefix);
@@ -447,7 +452,7 @@ mod tests {
         let mut encoded_data_original_state = Vec::new();
         let mut decoded = Vec::new();
 
-        let input_len_range = Range::new(0, 1000);
+        let input_len_range = Uniform::new(0, 1000);
 
         let mut rng = rand::rngs::SmallRng::from_entropy();
 
@@ -472,7 +477,7 @@ mod tests {
 
             let config = random_config(&mut rng);
 
-            let encoded_size = encoded_size(input_len, &config).unwrap();
+            let encoded_size = encoded_size(input_len, config).unwrap();
 
             assert_eq!(
                 encoded_size,
@@ -481,7 +486,7 @@ mod tests {
 
             assert_encode_sanity(
                 std::str::from_utf8(&encoded_data[0..encoded_size]).unwrap(),
-                &config,
+                config,
                 input_len,
             );
 
@@ -501,7 +506,7 @@ mod tests {
         let mut encoded_data = Vec::new();
         let mut decoded = Vec::new();
 
-        let input_len_range = Range::new(0, 1000);
+        let input_len_range = Uniform::new(0, 1000);
 
         let mut rng = rand::rngs::SmallRng::from_entropy();
 
@@ -518,7 +523,7 @@ mod tests {
 
             let config = random_config(&mut rng);
 
-            let encoded_size = encoded_size(input_len, &config).unwrap();
+            let encoded_size = encoded_size(input_len, config).unwrap();
 
             encoded_data.resize(encoded_size, 0);
 
@@ -529,7 +534,7 @@ mod tests {
 
             assert_encode_sanity(
                 std::str::from_utf8(&encoded_data[0..encoded_size]).unwrap(),
-                &config,
+                config,
                 input_len,
             );
 
@@ -543,7 +548,7 @@ mod tests {
         let mut input = Vec::new();
         let mut output = Vec::new();
 
-        let input_len_range = Range::new(0, 1000);
+        let input_len_range = Uniform::new(0, 1000);
 
         let mut rng = rand::rngs::SmallRng::from_entropy();
 
@@ -560,7 +565,7 @@ mod tests {
             let config = random_config(&mut rng);
 
             // fill up the output buffer with garbage
-            let encoded_size = encoded_size(input_len, &config).unwrap();
+            let encoded_size = encoded_size(input_len, config).unwrap();
             for _ in 0..encoded_size {
                 output.push(rng.gen());
             }
@@ -583,7 +588,7 @@ mod tests {
         let mut input = Vec::new();
         let mut output = Vec::new();
 
-        let input_len_range = Range::new(0, 1000);
+        let input_len_range = Uniform::new(0, 1000);
 
         let mut rng = rand::rngs::SmallRng::from_entropy();
 
@@ -600,19 +605,14 @@ mod tests {
             let config = random_config(&mut rng);
 
             // fill up the output buffer with garbage
-            let encoded_size = encoded_size(input_len, &config).unwrap();
+            let encoded_size = encoded_size(input_len, config).unwrap();
             for _ in 0..encoded_size + 1000 {
                 output.push(rng.gen());
             }
 
             let orig_output_buf = output.to_vec();
 
-            encode_with_padding(
-                &input,
-                &config,
-                encoded_size,
-                &mut output[0..encoded_size],
-            );
+            encode_with_padding(&input, config, encoded_size, &mut output[0..encoded_size]);
 
             // make sure the part beyond b64 is the same garbage it was before
             assert_eq!(orig_output_buf[encoded_size..], output[encoded_size..]);
@@ -650,7 +650,7 @@ mod tests {
     }
 
     fn assert_encoded_length(input_len: usize, encoded_len: usize, config: Config) {
-        assert_eq!(encoded_len, encoded_size(input_len, &config).unwrap());
+        assert_eq!(encoded_len, encoded_size(input_len, config).unwrap());
 
         let mut bytes: Vec<u8> = Vec::new();
         let mut rng = rand::rngs::SmallRng::from_entropy();
@@ -660,9 +660,16 @@ mod tests {
         }
 
         let encoded = encode_config(&bytes, config);
-        assert_encode_sanity(&encoded, &config, input_len);
+        assert_encode_sanity(&encoded, config, input_len);
 
         assert_eq!(encoded_len, encoded.len());
     }
 
+    #[test]
+    fn encode_imap() {
+        assert_eq!(
+            encode_config(b"\xFB\xFF", crate::IMAP_MUTF7),
+            encode_config(b"\xFB\xFF", crate::STANDARD_NO_PAD).replace("/", ",")
+        );
+    }
 }

@@ -27,7 +27,7 @@ const {
   treeMapState,
   dominatorTreeState,
   individualsState,
-} = require("./constants");
+} = require("devtools/client/memory/constants");
 
 /**
  * Takes a snapshot object and returns the localized form of its timestamp to be
@@ -104,6 +104,7 @@ exports.getCustomTreeMapDisplays = function() {
  * @param {snapshotState | diffingState} state
  * @return {String}
  */
+// eslint-disable-next-line complexity
 exports.getStatusText = function(state) {
   assert(state, "Must have a state");
 
@@ -179,6 +180,7 @@ exports.getStatusText = function(state) {
  * @param {snapshotState | diffingState} state
  * @return {String}
  */
+// eslint-disable-next-line complexity
 exports.getStatusTextFull = function(state) {
   assert(!!state, "Must have a state");
 
@@ -349,7 +351,8 @@ exports.canTakeCensus = function(snapshot) {
     snapshot.state === states.READ &&
     (!snapshot.census ||
       snapshot.census.state === censusState.SAVED ||
-      (!snapshot.treeMap || snapshot.treeMap.state === treeMapState.SAVED))
+      !snapshot.treeMap ||
+      snapshot.treeMap.state === treeMapState.SAVED)
   );
 };
 

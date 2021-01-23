@@ -6,6 +6,8 @@
 #if !defined(MediaQueue_h_)
 #  define MediaQueue_h_
 
+#  include <type_traits>
+
 #  include "mozilla/RecursiveMutex.h"
 #  include "mozilla/TaskQueue.h"
 
@@ -41,12 +43,17 @@ class MediaQueue : private nsDeque {
   }
 
   inline void Push(T* aItem) {
-    RecursiveMutexAutoLock lock(mRecursiveMutex);
     MOZ_DIAGNOSTIC_ASSERT(aItem);
-    NS_ADDREF(aItem);
-    MOZ_ASSERT(aItem->GetEndTime() >= aItem->mTime);
-    nsDeque::Push(aItem);
-    mPushEvent.Notify(RefPtr<T>(aItem));
+    Push(do_AddRef(aItem));
+  }
+
+  inline void Push(already_AddRefed<T> aItem) {
+    RecursiveMutexAutoLock lock(mRecursiveMutex);
+    T* item = aItem.take();
+    MOZ_DIAGNOSTIC_ASSERT(item);
+    MOZ_DIAGNOSTIC_ASSERT(item->GetEndTime() >= item->mTime);
+    nsDeque::Push(item);
+    mPushEvent.Notify(RefPtr<T>(item));
     // Pushing new data after queue has ended means that the stream is active
     // again, so we should not mark it as ended.
     if (mEndOfStream) {
@@ -58,6 +65,7 @@ class MediaQueue : private nsDeque {
     RecursiveMutexAutoLock lock(mRecursiveMutex);
     RefPtr<T> rv = dont_AddRef(static_cast<T*>(nsDeque::PopFront()));
     if (rv) {
+      MOZ_DIAGNOSTIC_ASSERT(rv->GetEndTime() >= rv->mTime);
       mPopFrontEvent.Notify(rv);
     }
     return rv.forget();
@@ -156,7 +164,7 @@ class MediaQueue : private nsDeque {
   }
 
   uint32_t AudioFramesCount() {
-    static_assert(mozilla::IsSame<T, AudioData>::value,
+    static_assert(std::is_same_v<T, AudioData>,
                   "Only usable with MediaQueue<AudioData>");
     RecursiveMutexAutoLock lock(mRecursiveMutex);
     uint32_t frames = 0;

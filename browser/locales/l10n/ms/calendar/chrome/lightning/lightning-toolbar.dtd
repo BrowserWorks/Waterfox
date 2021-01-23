@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name "Bar alatan Kalendar">
+<!ENTITY lightning.toolbar.calendar.name.accesskey "K">
+<!ENTITY lightning.toolbar.task.name "Bar alatan Tugasan">
+<!ENTITY lightning.toolbar.task.name.accesskey "T">
+
+<!ENTITY lightning.toolbar.sync.label "Selaraskan">
+<!ENTITY lightning.toolbar.sync.tooltip "Muat semula kalendar dan selaraskan perubahan">
+<!ENTITY lightning.toolbar.delete.label "Buang">
+<!ENTITY lightning.toolbar.delete.tooltip "Buang acara dan tugasan yang dipilih">
+<!ENTITY lightning.toolbar.edit.label "Edit">
+<!ENTITY lightning.toolbar.edit.tooltip "Edit acara dan tugasan yang dipilih">
+<!ENTITY lightning.toolbar.gototoday.label "Pergi ke Hari ini">
+<!ENTITY lightning.toolbar.gototoday.tooltip "Pergi ke Hari ini">
+<!ENTITY lightning.toolbar.print.label "Cetak">
+<!ENTITY lightning.toolbar.print.tooltip "Cetak acara dan tugasan">
+
+<!-- Mode Toolbar -->
+<!ENTITY lightning.toolbar.calendar.label     "Kalendar">
+<!ENTITY lightning.toolbar.calendar.tooltip   "Tukar ke tab kalendar">
+<!ENTITY lightning.toolbar.calendar.accesskey "K">
+<!ENTITY lightning.toolbar.task.label         "Tugasan">
+<!ENTITY lightning.toolbar.task.tooltip       "Tukar ke tab tugasan">
+<!ENTITY lightning.toolbar.task.accesskey     "T">
+
+<!-- Toolbar write button -->
+<!ENTITY lightning.toolbar.newevent.label     "Acara">
+<!ENTITY lightning.toolbar.newevent.tooltip   "Cipta acara baru">
+<!ENTITY lightning.toolbar.newtask.label      "Tugasan">
+<!ENTITY lightning.toolbar.newtask.tooltip    "Cipta tugasan baru">
+
+<!-- Calendar and Task Mode Toolbar -->
+<!ENTITY lightning.toolbar.day.label                 "Hari">
+<!ENTITY lightning.toolbar.day.accesskey             "H">
+<!ENTITY lightning.toolbar.week.label                "Minggu">
+<!ENTITY lightning.toolbar.week.accesskey            "M">
+<!ENTITY lightning.toolbar.multiweek.label           "Berbilang minggu">
+<!ENTITY lightning.toolbar.multiweek.accesskey       "b">
+<!ENTITY lightning.toolbar.month.label               "Bulan">
+<!ENTITY lightning.toolbar.month.accesskey           "B">
+<!-- LOCALIZATION NOTE: the same as appmenuButton.label and appmenuButton1.tooltip
+     from messenger.dtd -->
+<!ENTITY lightning.toolbar.appmenuButton.label       "AppMenu">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip    "Papar Menu &brandShortName;">
+<!ENTITY lightning.toolbar.calendarmenu.label        "Anak tetingkap Kalendar">
+<!ENTITY lightning.toolbar.calendarmenu.accesskey    "A">
+<!ENTITY lightning.toolbar.calendarpane.label        "Papar Anak tetingkap Kalendar">
+<!ENTITY lightning.toolbar.calendarpane.accesskey    "A">

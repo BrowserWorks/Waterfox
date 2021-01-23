@@ -40,12 +40,14 @@ add_task(async function() {
   let waitForConsole = new Promise(resolve => {
     SimpleTest.monitorConsole(resolve, [
       {
-        message: /Reading manifest: Error processing browser_action.unrecognized_property: An unexpected property was found/,
+        message: /Reading manifest: Warning processing browser_action.unrecognized_property: An unexpected property was found/,
       },
     ]);
   });
 
+  ExtensionTestUtils.failOnSchemaWarnings(false);
   await extension.startup();
+  ExtensionTestUtils.failOnSchemaWarnings(true);
 
   // Do this a few times to make sure the pop-up is reloaded each time.
   for (let i = 0; i < 3; i++) {

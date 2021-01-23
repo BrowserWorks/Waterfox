@@ -23,11 +23,6 @@ class FallbackEncoding : public nsIObserver, nsSupportsWeakReference {
   NS_DECL_NSIOBSERVER
 
   /**
-   * Whether FromTopLevelDomain() should be used.
-   */
-  static bool sGuessFallbackFromTopLevelDomain;
-
-  /**
    * Gets the locale-dependent fallback encoding for legacy HTML and plain
    * text content.
    *
@@ -73,7 +68,7 @@ class FallbackEncoding : public nsIObserver, nsSupportsWeakReference {
   static StaticRefPtr<FallbackEncoding> sInstance;
 
   FallbackEncoding();
-  virtual ~FallbackEncoding(){};
+  virtual ~FallbackEncoding() = default;
 
   /**
    * Invalidates the cache.

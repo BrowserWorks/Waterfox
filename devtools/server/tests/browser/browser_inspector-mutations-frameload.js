@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -37,7 +36,7 @@ add_task(async function loadNewChild() {
   // Load a bunch of fronts for actors inside the child frame.
   await loadChildSelector(walker, "#longlist div");
   const onMutations = waitForMutation(walker, isChildList);
-  await ContentTask.spawn(gBrowser.selectedBrowser, null, function() {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], function() {
     const childFrame = content.document.querySelector("#childFrame");
     childFrame.src = "data:text/html,<html>new child</html>";
   });
@@ -62,14 +61,14 @@ add_task(async function loadNewChild() {
   // Load a bunch of fronts for actors inside the child frame.
   await loadChildSelector(walker, "#longlist div");
   let onMutations = waitForMutation(walker, isChildList);
-  await ContentTask.spawn(gBrowser.selectedBrowser, null, function() {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], function() {
     const childFrame = content.document.querySelector("#childFrame");
     childFrame.src = "data:text/html,<html>new child</html>";
   });
   await onMutations;
 
   onMutations = waitForMutation(walker, isChildList);
-  await ContentTask.spawn(gBrowser.selectedBrowser, null, function() {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], function() {
     // The first load went through as expected (as tested in loadNewChild)
     // Now change the source again, but this time we *don't* expect
     // an unload, because we haven't seen the new child document yet.
@@ -94,7 +93,7 @@ add_task(async function loadNewChildTwiceAndCareAboutIt() {
   // Load a bunch of fronts for actors inside the child frame.
   await loadChildSelector(walker, "#longlist div");
   let onMutations = waitForMutation(walker, isChildList);
-  await ContentTask.spawn(gBrowser.selectedBrowser, null, function() {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], function() {
     const childFrame = content.document.querySelector("#childFrame");
     childFrame.src = "data:text/html,<html>new child</html>";
   });
@@ -103,7 +102,7 @@ add_task(async function loadNewChildTwiceAndCareAboutIt() {
   await loadChildSelector(walker, "#longlist div");
 
   onMutations = waitForMutation(walker, isChildList);
-  await ContentTask.spawn(gBrowser.selectedBrowser, null, function() {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], function() {
     // Now change the source again, and expect the same results as loadNewChild.
     const childFrame = content.document.querySelector("#childFrame");
     childFrame.src = "data:text/html,<html>second new child</html>";
@@ -130,7 +129,7 @@ add_task(async function testBack() {
   // Load a bunch of fronts for actors inside the child frame.
   await loadChildSelector(walker, "#longlist div");
   let onMutations = waitForMutation(walker, isChildList);
-  await ContentTask.spawn(gBrowser.selectedBrowser, null, function() {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], function() {
     const childFrame = content.document.querySelector("#childFrame");
     childFrame.src = "data:text/html,<html>new child</html>";
   });
@@ -140,7 +139,7 @@ add_task(async function testBack() {
   await loadChildSelector(walker, "#longlist div");
 
   onMutations = waitForMutation(walker, isChildList);
-  await ContentTask.spawn(gBrowser.selectedBrowser, null, function() {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], function() {
     // Now use history.back to change the source,
     // and expect the same results as loadNewChild.
     const childFrame = content.document.querySelector("#childFrame");

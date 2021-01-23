@@ -36,7 +36,9 @@
 # include "jit/PerfSpewer.h"
 #endif
 #include "vm/MatchPairs.h"
-#include "vtune/VTuneWrapper.h"
+#ifdef MOZ_VTUNE
+#  include "vtune/VTuneWrapper.h"
+#endif
 
 #include "jit/MacroAssembler-inl.h"
 
@@ -248,7 +250,7 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext* cx, bool match_only)
     Label load_char_start_regexp, start_regexp;
 
     // Load newline if index is at start, previous character otherwise.
-    masm.branchPtr(Assembler::NotEqual, 
+    masm.branchPtr(Assembler::NotEqual,
                    Address(masm.getStackPointer(), offsetof(FrameData, startIndex)), ImmWord(0),
                    &load_char_start_regexp);
     masm.movePtr(ImmWord('\n'), current_character);
@@ -505,7 +507,7 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext* cx, bool match_only)
         masm.jump(&return_temp0);
     }
 
-    Linker linker(masm, "RegExp");
+    Linker linker(masm);
     JitCode* code = linker.newCode(cx, CodeKind::RegExp);
     if (!code)
         return RegExpCode();

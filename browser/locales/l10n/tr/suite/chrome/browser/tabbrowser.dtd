@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY untitledTab "(Başlıksız)">
+<!ENTITY newTab.label "Yeni sekme">
+<!ENTITY newTab.accesskey "s">
+<!ENTITY closeTab.label "Sekmeyi kapat">
+<!ENTITY closeTab.accesskey "k">
+<!ENTITY closeOtherTabs.label "Diğer sekmeleri kapat">
+<!ENTITY closeOtherTabs.accesskey "D">
+<!ENTITY reloadAllTabs.label "Tüm sekmeleri tazele">
+<!ENTITY reloadAllTabs.accesskey "T">
+<!ENTITY reloadTab.label "Sekmeyi tazele">
+<!ENTITY reloadTab.accesskey "z">
+<!ENTITY bookmarkGroup.label "Sekme grubunu yer imlerine ekle">
+<!ENTITY bookmarkGroup.accesskey "g">
+<!ENTITY closeTabButton.tooltip "Sekmeyi kapat">
+<!ENTITY newTabButton.tooltip "Yeni sekme aç">
+<!ENTITY listAllTabs.tooltip "Tüm sekmeleri diz">
+<!ENTITY undoCloseTab.label "Kapatılan sekmeyi aç">
+<!ENTITY undoCloseTab.accesskey "K">

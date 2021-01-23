@@ -48,29 +48,23 @@ add_task(async function() {
   info("Previously chosen child is remembered. Passed.");
 
   info("Stopping the picker");
-  await toolbox.inspector.nodePicker.stop();
+  await toolbox.nodePicker.stop();
 
   function doKeyHover(args) {
     info("Key pressed. Waiting for element to be highlighted/hovered");
-    const onHighlighterReady = toolbox.once("highlighter-ready");
-    const onPickerNodeHovered = toolbox.inspector.nodePicker.once(
-      "picker-node-hovered"
-    );
+    const onPickerNodeHovered = toolbox.nodePicker.once("picker-node-hovered");
     testActor.synthesizeKey(args);
-    return promise.all([onHighlighterReady, onPickerNodeHovered]);
+    return onPickerNodeHovered;
   }
 
   function moveMouseOver(selector) {
     info("Waiting for element " + selector + " to be highlighted");
-    const onHighlighterReady = toolbox.once("highlighter-ready");
-    const onPickerNodeHovered = toolbox.inspector.nodePicker.once(
-      "picker-node-hovered"
-    );
+    const onPickerNodeHovered = toolbox.nodePicker.once("picker-node-hovered");
     testActor.synthesizeMouse({
       options: { type: "mousemove" },
       center: true,
       selector: selector,
     });
-    return promise.all([onHighlighterReady, onPickerNodeHovered]);
+    return onPickerNodeHovered;
   }
 });

@@ -1,5 +1,9 @@
 /* -*- Mode: indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set sts=2 sw=2 et tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
 
 const EXPORTED_SYMBOLS = ["ProfilerGetSymbols"];
@@ -17,6 +21,8 @@ ChromeUtils.defineModuleGetter(
 
 Cu.importGlobalProperties(["fetch"]);
 
+const global = this;
+
 // This module obtains symbol tables for binaries.
 // It does so with the help of a WASM module which gets pulled in from the
 // internet on demand. We're doing this purely for the purposes of saving on
@@ -32,16 +38,19 @@ Cu.importGlobalProperties(["fetch"]);
 // expect them to be.
 // The source code is at https://github.com/mstange/profiler-get-symbols/ .
 
-// Generated from https://github.com/mstange/profiler-get-symbols/commit/0a0aadc68d6196823a5f102feacb2f04424cd681
+// Generated from https://github.com/mstange/profiler-get-symbols/commit/90ee39f1d18d2727f07dc57bd93cff6bc73ce8a0
 const WASM_MODULE_URL =
-  "https://zealous-rosalind-a98ce8.netlify.com/wasm/4af7553b4848038c5a1e33a15ec107094bd0572e16fe2a367235bcb50a630b148ac4fe1d165859d7a9bb4ca4e2572c0e.wasm";
+  "https://zealous-rosalind-a98ce8.netlify.com/wasm/8f7ca2f70e1cd21b5a2dbe96545672752887bfbd4e7b3b9437e9fc7c3da0a3bedae4584ff734f0c9f08c642e6b66ffab.wasm";
 const WASM_MODULE_INTEGRITY =
-  "sha384-SvdVO0hIA4xaHjOhXsEHCUvQVy4W/io2cjW8tQpjCxSKxP4dFlhZ16m7TKTiVywO";
+  "sha384-j3yi9w4c0htaLb6WVFZydSiHv71OezuUN+n8fD2go77a5FhP9zTwyfCMZC5rZv+r";
 
 const EXPIRY_TIME_IN_MS = 5 * 60 * 1000; // 5 minutes
 
 let gCachedWASMModulePromise = null;
 let gCachedWASMModuleExpiryTimer = 0;
+
+// Keep active workers alive (see bug 1592227).
+let gActiveWorkers = new Set();
 
 function clearCachedWASMModule() {
   gCachedWASMModulePromise = null;
@@ -92,13 +101,56 @@ this.ProfilerGetSymbols = {
       const worker = new ChromeWorker(
         "resource://gre/modules/ProfilerGetSymbols-worker.js"
       );
-      worker.onmessage = e => {
-        if (e.data.error) {
-          reject(e.data.error);
+      gActiveWorkers.add(worker);
+
+      worker.onmessage = msg => {
+        gActiveWorkers.delete(worker);
+        if (msg.data.error) {
+          const error = msg.data.error;
+          if (error.name) {
+            // Turn the JSON error object into a real Error object.
+            const { name, message, fileName, lineNumber } = error;
+            const ErrorObjConstructor =
+              name in global && Error.isPrototypeOf(global[name])
+                ? global[name]
+                : Error;
+            const e = new ErrorObjConstructor(message, fileName, lineNumber);
+            e.name = name;
+            reject(e);
+          } else {
+            reject(error);
+          }
           return;
         }
-        resolve(e.data.result);
+        resolve(msg.data.result);
       };
+
+      // Handle uncaught errors from the worker script. onerror is called if
+      // there's a syntax error in the worker script, for example, or when an
+      // unhandled exception is thrown, but not for unhandled promise
+      // rejections. Without this handler, mistakes during development such as
+      // syntax errors can be hard to track down.
+      worker.onerror = errorEvent => {
+        gActiveWorkers.delete(worker);
+        worker.terminate();
+        const { message, filename, lineno } = errorEvent;
+        const error = new Error(message, filename, lineno);
+        error.name = "WorkerError";
+        reject(error);
+      };
+
+      // Handle errors from messages that cannot be deserialized. I'm not sure
+      // how to get into such a state, but having this handler seems like a good
+      // idea.
+      worker.onmessageerror = errorEvent => {
+        gActiveWorkers.delete(worker);
+        worker.terminate();
+        const { message, filename, lineno } = errorEvent;
+        const error = new Error(message, filename, lineno);
+        error.name = "WorkerMessageError";
+        reject(error);
+      };
+
       worker.postMessage({ binaryPath, debugPath, breakpadId, module });
     });
   },

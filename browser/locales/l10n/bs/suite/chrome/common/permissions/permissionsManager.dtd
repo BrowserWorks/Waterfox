@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowtitle.label              "Izuzeci">
+<!ENTITY treehead.sitename.label        "Web stranica">
+<!ENTITY treehead.status.label          "Status">
+<!ENTITY remove.label                   "Ukloni web stranicu">
+<!ENTITY removeall.label                "Ukloni sve web stranice">
+<!ENTITY address.label                  "Adresa web stranice:">
+<!ENTITY block.label                    "Blokiraj">
+<!ENTITY session.label                  "Dozvoli za sesiju">
+<!ENTITY allow.label                    "Dozvoli">

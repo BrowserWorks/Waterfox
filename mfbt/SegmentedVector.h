@@ -20,16 +20,20 @@
 #ifndef mozilla_SegmentedVector_h
 #define mozilla_SegmentedVector_h
 
+#include <new>  // for placement new
+#include <utility>
+
 #include "mozilla/AllocPolicy.h"
 #include "mozilla/Array.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/LinkedList.h"
 #include "mozilla/MemoryReporting.h"
-#include "mozilla/Move.h"
 #include "mozilla/OperatorNewExtensions.h"
-#include "mozilla/TypeTraits.h"
 
-#include <new>  // for placement new
+#ifdef IMPL_LIBXUL
+#  include "mozilla/Likely.h"
+#  include "mozilla/mozalloc_oom.h"
+#endif  // IMPL_LIBXUL
 
 namespace mozilla {
 
@@ -171,7 +175,14 @@ class SegmentedVector : private AllocPolicy {
   template <typename U>
   void InfallibleAppend(U&& aU) {
     bool ok = Append(std::forward<U>(aU));
+
+#ifdef IMPL_LIBXUL
+    if (MOZ_UNLIKELY(!ok)) {
+      mozalloc_handle_oom(sizeof(Segment));
+    }
+#else
     MOZ_RELEASE_ASSERT(ok);
+#endif  // MOZ_INTERNAL_API
   }
 
   void Clear() {

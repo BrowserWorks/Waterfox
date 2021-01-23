@@ -1,9 +1,7 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
-// Bug 1515290 - Ensure that DebuggerServer runs in its own compartment when debugging
+// Bug 1515290 - Ensure that DevToolsServer runs in its own compartment when debugging
 // chrome context. If not, Debugger API's addGlobal will throw when trying to attach
 // to chrome scripts as debugger actor's module and the chrome script will be in the same
 // compartment. Debugger and debuggee can't be running in the same compartment.
@@ -41,10 +39,10 @@ async function testChromeTab() {
   const target = await TargetFactory.forTab(tab);
   await target.attach();
 
-  const [, threadClient] = await target.attachThread();
-  await threadClient.resume();
+  const threadFront = await target.attachThread();
+  await threadFront.resume();
 
-  const { sources } = await threadClient.getSources();
+  const { sources } = await threadFront.getSources();
   ok(
     sources.find(s => s.url == CHROME_PAGE),
     "The thread actor is able to attach to the chrome page and its sources"
@@ -70,7 +68,7 @@ async function testChromeTab() {
 
   await target.destroy();
 
-  // Wait for the dedicated loader used for DebuggerServer to be destroyed
+  // Wait for the dedicated loader used for DevToolsServer to be destroyed
   // in order to prevent leak reports on try
   await onDedicatedLoaderDestroy;
 }
@@ -78,19 +76,21 @@ async function testChromeTab() {
 // Test that Main process Target can debug chrome scripts
 async function testMainProcess() {
   const { DevToolsLoader } = ChromeUtils.import(
-    "resource://devtools/shared/Loader.jsm",
-    {}
+    "resource://devtools/shared/Loader.jsm"
   );
-  const customLoader = new DevToolsLoader();
-  customLoader.invisibleToDebugger = true;
-  const { DebuggerServer } = customLoader.require("devtools/server/main");
-  const { DebuggerClient } = require("devtools/shared/client/debugger-client");
+  const customLoader = new DevToolsLoader({
+    invisibleToDebugger: true,
+  });
+  const { DevToolsServer } = customLoader.require(
+    "devtools/server/devtools-server"
+  );
+  const { DevToolsClient } = require("devtools/client/devtools-client");
 
-  DebuggerServer.init();
-  DebuggerServer.registerAllActors();
-  DebuggerServer.allowChromeProcess = true;
+  DevToolsServer.init();
+  DevToolsServer.registerAllActors();
+  DevToolsServer.allowChromeProcess = true;
 
-  const client = new DebuggerClient(DebuggerServer.connectPipe());
+  const client = new DevToolsClient(DevToolsServer.connectPipe());
   await client.connect();
 
   const onThreadActorInstantiated = new Promise(resolve => {
@@ -104,12 +104,13 @@ async function testMainProcess() {
     Services.obs.addObserver(observe, "devtools-thread-instantiated");
   });
 
-  const target = await client.mainRoot.getMainProcess();
+  const targetDescriptor = await client.mainRoot.getMainProcess();
+  const target = await targetDescriptor.getTarget();
   await target.attach();
 
-  const [, threadClient] = await target.attachThread();
-  await threadClient.resume();
-  const { sources } = await threadClient.getSources();
+  const threadFront = await target.attachThread();
+  await threadFront.resume();
+  const { sources } = await threadFront.getSources();
   ok(
     sources.find(
       s => s.url == "resource://devtools/client/framework/devtools.js"
@@ -128,11 +129,11 @@ async function testMainProcess() {
   await target.destroy();
 
   // As this target is remote (i.e. isn't a local tab) calling Target.destroy won't close
-  // the client. So do it manually here in order to ensure cleaning up the DebuggerServer
+  // the client. So do it manually here in order to ensure cleaning up the DevToolsServer
   // spawn for this main process actor.
   await client.close();
 
   // As we create the loader and server manually, we also destroy them manually here:
-  await DebuggerServer.destroy();
+  await DevToolsServer.destroy();
   await customLoader.destroy();
 }

@@ -12,7 +12,11 @@ import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 
 /**
  * WebResponse represents an HTTP[S] response. It is normally created
@@ -21,6 +25,11 @@ import java.io.InputStream;
 @WrapForJNI
 @AnyThread
 public class WebResponse extends WebMessage {
+    /**
+     * The default read timeout for the {@link #body} stream.
+     */
+    public static final long DEFAULT_READ_TIMEOUT_MS = 30000;
+
     /**
      * The HTTP status code for the response, e.g. 200.
      */
@@ -33,6 +42,16 @@ public class WebResponse extends WebMessage {
     public final boolean redirected;
 
     /**
+     * Whether or not this response was delivered via a secure connection.
+     */
+    public final boolean isSecure;
+
+    /**
+     * The server certificate used with this response, if any.
+     */
+    public final @Nullable X509Certificate certificate;
+
+    /**
      * An {@link InputStream} containing the response body, if available.
      */
     public final @Nullable InputStream body;
@@ -42,6 +61,24 @@ public class WebResponse extends WebMessage {
         this.statusCode = builder.mStatusCode;
         this.redirected = builder.mRedirected;
         this.body = builder.mBody;
+        this.isSecure = builder.mIsSecure;
+        this.certificate = builder.mCertificate;
+
+        this.setReadTimeoutMillis(DEFAULT_READ_TIMEOUT_MS);
+    }
+
+    /**
+     * Sets the maximum amount of time to wait for data in the {@link #body} read() method.
+     * By default, the read timeout is set to {@link #DEFAULT_READ_TIMEOUT_MS}.
+     *
+     * If 0, there will be no timeout and read() will block indefinitely.
+     *
+     * @param millis The duration in milliseconds for the timeout.
+     */
+    public void setReadTimeoutMillis(final long millis) {
+        if (this.body != null && this.body instanceof GeckoInputStream) {
+            ((GeckoInputStream)this.body).setReadTimeoutMillis(millis);
+        }
     }
 
     /**
@@ -53,6 +90,8 @@ public class WebResponse extends WebMessage {
         /* package */ int mStatusCode;
         /* package */ boolean mRedirected;
         /* package */ InputStream mBody;
+        /* package */ boolean mIsSecure;
+        /* package */ X509Certificate mCertificate;
 
         /**
          * Constructs a new Builder instance with the specified URI.
@@ -90,6 +129,38 @@ public class WebResponse extends WebMessage {
         public @NonNull Builder body(final @NonNull InputStream stream) {
             mBody = stream;
             return this;
+        }
+
+        /**
+         * @param isSecure Whether or not this response is secure.
+         * @return This Builder instance.
+         */
+        public @NonNull Builder isSecure(final boolean isSecure) {
+            mIsSecure = isSecure;
+            return this;
+        }
+
+        /**
+         * @param certificate The certificate used.
+         * @return This Builder instance.
+         */
+        public @NonNull Builder certificate(final @NonNull X509Certificate certificate) {
+            mCertificate = certificate;
+            return this;
+        }
+
+        /**
+         * @param encodedCert The certificate used, encoded via DER. Only used via JNI.
+         */
+        @WrapForJNI(exceptionMode = "nsresult")
+        private void certificateBytes(final @NonNull byte[] encodedCert) {
+            try {
+                final CertificateFactory factory = CertificateFactory.getInstance("X.509");
+                final X509Certificate cert = (X509Certificate) factory.generateCertificate(new ByteArrayInputStream(encodedCert));
+                certificate(cert);
+            } catch (CertificateException e) {
+                throw new IllegalArgumentException("Unable to parse DER certificate");
+            }
         }
 
         /**

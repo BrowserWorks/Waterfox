@@ -5,6 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/EventStates.h"
+#include "mozilla/dom/BindContext.h"
 #include "mozilla/dom/HTMLFormSubmission.h"
 #include "mozilla/dom/HTMLObjectElement.h"
 #include "mozilla/dom/HTMLObjectElementBinding.h"
@@ -51,9 +52,9 @@ HTMLObjectElement::~HTMLObjectElement() {
   DestroyImageLoadingContent();
 }
 
-bool HTMLObjectElement::IsInteractiveHTMLContent(bool aIgnoreTabindex) const {
+bool HTMLObjectElement::IsInteractiveHTMLContent() const {
   return HasAttr(kNameSpaceID_None, nsGkAtoms::usemap) ||
-         nsGenericHTMLFormElement::IsInteractiveHTMLContent(aIgnoreTabindex);
+         nsGenericHTMLFormElement::IsInteractiveHTMLContent();
 }
 
 void HTMLObjectElement::AsyncEventRunning(AsyncEventDispatcher* aEvent) {
@@ -196,31 +197,32 @@ HTMLObjectElement::PostHandleEvent(EventChainPostVisitor& aVisitor) {
 
 #endif  // #ifdef XP_MACOSX
 
-nsresult HTMLObjectElement::BindToTree(Document* aDocument, nsIContent* aParent,
-                                       nsIContent* aBindingParent) {
-  nsresult rv =
-      nsGenericHTMLFormElement::BindToTree(aDocument, aParent, aBindingParent);
+nsresult HTMLObjectElement::BindToTree(BindContext& aContext,
+                                       nsINode& aParent) {
+  nsresult rv = nsGenericHTMLFormElement::BindToTree(aContext, aParent);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  rv = nsObjectLoadingContent::BindToTree(aDocument, aParent, aBindingParent);
+  rv = nsObjectLoadingContent::BindToTree(aContext, aParent);
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Don't kick off load from being bound to a plugin document - the plugin
   // document will call nsObjectLoadingContent::InitializeFromChannel() for the
   // initial load.
-  nsCOMPtr<nsIPluginDocument> pluginDoc = do_QueryInterface(aDocument);
-
-  // If we already have all the children, start the load.
-  if (mIsDoneAddingChildren && !pluginDoc) {
-    void (HTMLObjectElement::*start)() = &HTMLObjectElement::StartObjectLoad;
-    nsContentUtils::AddScriptRunner(
-        NewRunnableMethod("dom::HTMLObjectElement::BindToTree", this, start));
+  if (IsInComposedDoc()) {
+    nsCOMPtr<nsIPluginDocument> pluginDoc =
+        do_QueryInterface(&aContext.OwnerDoc());
+    // If we already have all the children, start the load.
+    if (mIsDoneAddingChildren && !pluginDoc) {
+      void (HTMLObjectElement::*start)() = &HTMLObjectElement::StartObjectLoad;
+      nsContentUtils::AddScriptRunner(
+          NewRunnableMethod("dom::HTMLObjectElement::BindToTree", this, start));
+    }
   }
 
   return NS_OK;
 }
 
-void HTMLObjectElement::UnbindFromTree(bool aDeep, bool aNullParent) {
+void HTMLObjectElement::UnbindFromTree(bool aNullParent) {
 #ifdef XP_MACOSX
   // When a page is reloaded (when an Document's content is removed), the
   // focused element isn't necessarily sent an eBlur event. See
@@ -229,8 +231,8 @@ void HTMLObjectElement::UnbindFromTree(bool aDeep, bool aNullParent) {
   // disable text input in the browser window. See bug 1137229.
   OnFocusBlurPlugin(this, false);
 #endif
-  nsObjectLoadingContent::UnbindFromTree(aDeep, aNullParent);
-  nsGenericHTMLFormElement::UnbindFromTree(aDeep, aNullParent);
+  nsObjectLoadingContent::UnbindFromTree(aNullParent);
+  nsGenericHTMLFormElement::UnbindFromTree(aNullParent);
 }
 
 nsresult HTMLObjectElement::AfterSetAttr(int32_t aNamespaceID, nsAtom* aName,
@@ -274,17 +276,6 @@ nsresult HTMLObjectElement::AfterMaybeChangeAttr(int32_t aNamespaceID,
   return NS_OK;
 }
 
-bool HTMLObjectElement::IsFocusableForTabIndex() {
-  Document* doc = GetComposedDoc();
-  if (!doc || doc->HasFlag(NODE_IS_EDITABLE)) {
-    return false;
-  }
-
-  return IsEditableRoot() ||
-         ((Type() == eType_Document || Type() == eType_FakePlugin) &&
-          nsContentUtils::IsSubDocumentTabbable(this));
-}
-
 bool HTMLObjectElement::IsHTMLFocusable(bool aWithMouse, bool* aIsFocusable,
                                         int32_t* aTabIndex) {
   // TODO: this should probably be managed directly by IsHTMLFocusable.
@@ -292,38 +283,45 @@ bool HTMLObjectElement::IsHTMLFocusable(bool aWithMouse, bool* aIsFocusable,
   Document* doc = GetComposedDoc();
   if (!doc || doc->HasFlag(NODE_IS_EDITABLE)) {
     if (aTabIndex) {
-      *aTabIndex = TabIndex();
+      *aTabIndex = -1;
     }
 
     *aIsFocusable = false;
+    return false;
+  }
 
+  const nsAttrValue* attrVal = mAttrs.GetAttr(nsGkAtoms::tabindex);
+  bool isFocusable = attrVal && attrVal->Type() == nsAttrValue::eInteger;
+
+  // Has plugin content: let the plugin decide what to do in terms of
+  // internal focus from mouse clicks
+  if (Type() == eType_Plugin) {
+    if (aTabIndex) {
+      *aTabIndex = isFocusable ? attrVal->GetIntegerValue() : -1;
+    }
+
+    *aIsFocusable = true;
     return false;
   }
 
   // This method doesn't call nsGenericHTMLFormElement intentionally.
   // TODO: It should probably be changed when bug 597242 will be fixed.
-  if (Type() == eType_Plugin || IsEditableRoot() ||
+  if (IsEditableRoot() ||
       ((Type() == eType_Document || Type() == eType_FakePlugin) &&
        nsContentUtils::IsSubDocumentTabbable(this))) {
-    // Has plugin content: let the plugin decide what to do in terms of
-    // internal focus from mouse clicks
     if (aTabIndex) {
-      *aTabIndex = TabIndex();
+      *aTabIndex = isFocusable ? attrVal->GetIntegerValue() : 0;
     }
 
     *aIsFocusable = true;
-
     return false;
   }
 
   // TODO: this should probably be managed directly by IsHTMLFocusable.
   // See bug 597242.
-  const nsAttrValue* attrVal = mAttrs.GetAttr(nsGkAtoms::tabindex);
-
-  *aIsFocusable = attrVal && attrVal->Type() == nsAttrValue::eInteger;
-
-  if (aTabIndex && *aIsFocusable) {
+  if (aTabIndex && isFocusable) {
     *aTabIndex = attrVal->GetIntegerValue();
+    *aIsFocusable = true;
   }
 
   return false;
@@ -370,9 +368,7 @@ HTMLObjectElement::SubmitNamesValues(HTMLFormSubmission* aFormSubmission) {
   return aFormSubmission->AddNameValuePair(name, value);
 }
 
-int32_t HTMLObjectElement::TabIndexDefault() {
-  return IsFocusableForTabIndex() ? 0 : -1;
-}
+int32_t HTMLObjectElement::TabIndexDefault() { return 0; }
 
 Nullable<WindowProxyHolder> HTMLObjectElement::GetContentWindow(
     nsIPrincipal& aSubjectPrincipal) {

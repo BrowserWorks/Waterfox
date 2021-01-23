@@ -31,35 +31,25 @@ GARBAGE_DIRS += _javagen _profile staticlib
 # subdirectories to remove.  So we add to GARBAGE_DIRS once here, globally,
 # for it to have the desired effect.
 GARBAGE_DIRS += $(RUST_TARGET)
-DIST_GARBAGE = config.cache config.log config.status* config-defs.h \
+GARBAGE_DIRS += config.statusd
+DIST_GARBAGE = config.cache config.log config.status config-defs.h \
    config/autoconf.mk \
    mozilla-config.h \
-   netwerk/necko-config.h xpcom/xpcom-config.h xpcom/xpcom-private.h \
+   xpcom/xpcom-config.h xpcom/xpcom-private.h \
    .mozconfig.mk
 
-ifndef MOZ_PROFILE_USE
-# Automation builds should always have a new buildid, but for the sake of not
-# re-linking libxul on every incremental build we do not enforce this for
-# developer builds.  Tests always need a new buildid as well.
-ifneq (,$(MOZ_AUTOMATION)$(MOZ_BUILD_DATE)$(TEST_MOZBUILD))
+ifneq (mobile/android,$(MOZ_BUILD_APP))
 $(MDDEPDIR)/buildid.h.stub $(MDDEPDIR)/source-repo.h.stub: FORCE
 endif
-# Additionally, provide a dummy target during tests, because
-# faster/rules.mk will expect these targets to exist.
-ifdef TEST_MOZBUILD
 source-repo.h: $(MDDEPDIR)/source-repo.h.stub
 buildid.h: $(MDDEPDIR)/buildid.h.stub
-endif
-endif
 
 BUILD_BACKEND_FILES := $(addprefix backend.,$(addsuffix Backend,$(BUILD_BACKENDS)))
 
 ifndef TEST_MOZBUILD
-ifndef MOZ_PROFILE_USE
 # We need to explicitly put BUILD_BACKEND_FILES here otherwise the rule in
 # rules.mk doesn't run early enough.
-$(TIERS) binaries:: CLOBBER $(BUILD_BACKEND_FILES)
-endif
+$(RUNNABLE_TIERS) binaries:: CLOBBER $(BUILD_BACKEND_FILES)
 endif
 
 ifdef JS_STANDALONE
@@ -122,33 +112,17 @@ install-test-files:
 
 include $(topsrcdir)/build/moz-automation.mk
 
-# dist and _tests should be purged during cleaning. However, we don't want them
-# purged during PGO builds because they contain some auto-generated files.
-ifneq ($(filter-out maybe_clobber_profiledbuild,$(MAKECMDGOALS)),)
+# dist and _tests should be purged during cleaning.
 GARBAGE_DIRS += dist _tests
-endif
 
 # Dummy rule for the cases below where we don't depend on dist/include
 recurse_pre-export::
 
-# Windows PGO builds don't perform a clean before the 2nd pass. So, we want
-# to preserve content for the 2nd pass on Windows. Everywhere else, we always
-# process the install manifests as part of export.
 # For the binaries rule, not all the install manifests matter, so force only
 # the interesting ones to be done.
-ifdef MOZ_PROFILE_USE
-ifndef NO_PROFILE_GUIDED_OPTIMIZE
-ifneq ($(OS_ARCH)_$(GNU_CC), WINNT_)
 recurse_pre-export:: install-manifests
 binaries::
 	@$(MAKE) install-manifests install_manifests=dist/include
-endif
-endif
-else # !MOZ_PROFILE_USE (normal build)
-recurse_pre-export:: install-manifests
-binaries::
-	@$(MAKE) install-manifests install_manifests=dist/include
-endif
 
 # Host binaries are not produced for macOS consumers: that is, there's
 # no macOS-hosted job to produce them at this time.  Therefore we
@@ -164,6 +138,24 @@ recurse_win32-artifact:
 	mv $(DIST)/i686/bin/* $(DIST)/i686
 endif
 
+ifdef MOZ_ANDROID_FAT_AAR_ARCHITECTURES
+recurse_android-fat-aar-artifact:
+	$(call py_action,fat_aar,\
+    $(addprefix --armeabi-v7a $(MOZ_FETCHES_DIR)/,$(MOZ_ANDROID_FAT_AAR_ARMEABI_V7A)) \
+    $(addprefix --arm64-v8a $(MOZ_FETCHES_DIR)/,$(MOZ_ANDROID_FAT_AAR_ARM64_V8A)) \
+    $(addprefix --x86 $(MOZ_FETCHES_DIR)/,$(MOZ_ANDROID_FAT_AAR_X86)) \
+    $(addprefix --x86-64 $(MOZ_FETCHES_DIR)/,$(MOZ_ANDROID_FAT_AAR_X86_64)) \
+    --distdir $(abspath $(DIST)/fat-aar))
+endif
+
+ifeq ($(MOZ_BUILD_APP),mobile/android)
+
+recurse_android-stage-package: stage-package
+
+recurse_android-archive-geckoview:
+	GRADLE_INVOKED_WITHIN_MACH_BUILD=1 $(topsrcdir)/mach --log-no-times android archive-geckoview
+endif
+
 ifdef MOZ_WIDGET_TOOLKIT
 ifdef ENABLE_TESTS
 # Additional makefile targets to call automated test suites
@@ -173,37 +165,6 @@ endif
 
 default all::
 	$(call BUILDSTATUS,TIERS $(TIERS) $(if $(MOZ_AUTOMATION),$(MOZ_AUTOMATION_TIERS)))
-
-# PGO build target.
-profiledbuild::
-	$(call BUILDSTATUS,TIERS pgo_profile_generate pgo_package pgo_profile pgo_clobber pgo_profile_use)
-	$(call BUILDSTATUS,TIER_START pgo_profile_generate)
-	$(MAKE) default MOZ_PROFILE_GENERATE=1 MOZ_LTO=
-	$(call BUILDSTATUS,TIER_FINISH pgo_profile_generate)
-	$(call BUILDSTATUS,TIER_START pgo_package)
-	$(MAKE) package
-	rm -f jarlog/en-US.log
-	$(call BUILDSTATUS,TIER_FINISH pgo_package)
-	$(call BUILDSTATUS,TIER_START pgo_profile)
-	JARLOG_FILE=jarlog/en-US.log $(PYTHON) $(topsrcdir)/build/pgo/profileserver.py
-	$(call BUILDSTATUS,TIER_FINISH pgo_profile)
-	$(call BUILDSTATUS,TIER_START pgo_clobber)
-	$(MAKE) maybe_clobber_profiledbuild
-	$(call BUILDSTATUS,TIER_FINISH pgo_clobber)
-	$(call BUILDSTATUS,TIER_START pgo_profile_use)
-	$(MAKE) default MOZ_PROFILE_USE=1 $(if $(CLANG_CL),MOZ_PROFILE_ORDER_FILE=$(topobjdir)/cygprofile.txt)
-	$(call BUILDSTATUS,TIER_FINISH pgo_profile_use)
-
-# Change default target to PGO build if PGO is enabled.
-ifdef MOZ_PGO
-ifdef COMPILE_ENVIRONMENT
-# If one of these is already set in addition to PGO we are doing a single phase
-# of PGO in isolation, so don't override the default target.
-ifeq (,$(MOZ_PROFILE_GENERATE)$(MOZ_PROFILE_USE))
-OVERRIDE_DEFAULT_GOAL := profiledbuild
-endif
-endif
-endif
 
 include $(topsrcdir)/config/rules.mk
 
@@ -259,7 +220,7 @@ endif
 
 uploadsymbols:
 ifdef MOZ_CRASHREPORTER
-	$(PYTHON) -u $(topsrcdir)/toolkit/crashreporter/tools/upload_symbols.py '$(DIST)/$(PKG_PATH)$(SYMBOL_FULL_ARCHIVE_BASENAME).zip'
+	$(PYTHON3) -u $(topsrcdir)/toolkit/crashreporter/tools/upload_symbols.py '$(DIST)/$(PKG_PATH)$(SYMBOL_FULL_ARCHIVE_BASENAME).zip'
 endif
 
 .PHONY: update-packaging
@@ -269,19 +230,6 @@ update-packaging:
 .PHONY: package-generated-sources
 package-generated-sources:
 	$(call py_action,package_generated_sources,'$(DIST)/$(PKG_PATH)$(GENERATED_SOURCE_FILE_PACKAGE)')
-
-# PGO support, but we can't do this test in client.mk
-# No point in clobbering if PGO has been explicitly disabled.
-ifdef NO_PROFILE_GUIDED_OPTIMIZE
-maybe_clobber_profiledbuild:
-else
-maybe_clobber_profiledbuild: clean
-ifneq (,$(findstring clang,$(CC_TYPE)))
-	$(LLVM_PROFDATA) merge -o $(DEPTH)/merged.profdata $(DEPTH)/*.profraw
-endif
-endif # NO_PROFILE_GUIDED_OPTIMIZE
-
-.PHONY: maybe_clobber_profiledbuild
 
 ifdef JS_STANDALONE
 # Delegate js-specific rules to js

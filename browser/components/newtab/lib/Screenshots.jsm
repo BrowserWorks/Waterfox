@@ -5,18 +5,41 @@
 
 const EXPORTED_SYMBOLS = ["Screenshots"];
 
-Cu.importGlobalProperties(["fetch"]);
+const { XPCOMUtils } = ChromeUtils.import(
+  "resource://gre/modules/XPCOMUtils.jsm"
+);
 
-ChromeUtils.defineModuleGetter(this, "BackgroundPageThumbs",
-  "resource://gre/modules/BackgroundPageThumbs.jsm");
-ChromeUtils.defineModuleGetter(this, "PageThumbs",
-  "resource://gre/modules/PageThumbs.jsm");
-ChromeUtils.defineModuleGetter(this, "PrivateBrowsingUtils",
-  "resource://gre/modules/PrivateBrowsingUtils.jsm");
-ChromeUtils.defineModuleGetter(this, "Services",
-  "resource://gre/modules/Services.jsm");
+XPCOMUtils.defineLazyGlobalGetters(this, ["fetch"]);
+
+ChromeUtils.defineModuleGetter(
+  this,
+  "BackgroundPageThumbs",
+  "resource://gre/modules/BackgroundPageThumbs.jsm"
+);
+ChromeUtils.defineModuleGetter(
+  this,
+  "PageThumbs",
+  "resource://gre/modules/PageThumbs.jsm"
+);
+ChromeUtils.defineModuleGetter(
+  this,
+  "PrivateBrowsingUtils",
+  "resource://gre/modules/PrivateBrowsingUtils.jsm"
+);
+ChromeUtils.defineModuleGetter(
+  this,
+  "Services",
+  "resource://gre/modules/Services.jsm"
+);
 
 const GREY_10 = "#F9F9FA";
+
+XPCOMUtils.defineLazyPreferenceGetter(
+  this,
+  "gPrivilegedAboutProcessEnabled",
+  "browser.tabs.remote.separatePrivilegedContentProcess",
+  false
+);
 
 this.Screenshots = {
   /**
@@ -28,7 +51,18 @@ this.Screenshots = {
    */
   async getScreenshotForURL(url) {
     try {
-      await BackgroundPageThumbs.captureIfMissing(url, {backgroundColor: GREY_10});
+      await BackgroundPageThumbs.captureIfMissing(url, {
+        backgroundColor: GREY_10,
+      });
+
+      // The privileged about content process is able to use the moz-page-thumb
+      // protocol, so if it's enabled, send that down.
+      if (gPrivilegedAboutProcessEnabled) {
+        return PageThumbs.getThumbnailURL(url);
+      }
+
+      // Otherwise, for normal content processes, we fallback to using
+      // Blob URIs for the screenshots.
       const imgPath = PageThumbs.getThumbnailPath(url);
 
       const filePathResponse = await fetch(`file://${imgPath}`);
@@ -40,7 +74,7 @@ this.Screenshots = {
         return null;
       }
 
-      return {path: imgPath, data: fileContents};
+      return { path: imgPath, data: fileContents };
     } catch (err) {
       Cu.reportError(`getScreenshot(${url}) failed: ${err}`);
     }

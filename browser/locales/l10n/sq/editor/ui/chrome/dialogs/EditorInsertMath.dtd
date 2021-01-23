@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Futni Matematikë">
+
+<!ENTITY sourceEditField.label "Jepni kod burim LaTeX:">
+
+<!ENTITY options.label "Mundësi">
+<!ENTITY optionInline.label "Mënyra brendazi">
+<!ENTITY optionInline.accesskey "b">
+<!ENTITY optionDisplay.label "Mënyra normale">
+<!ENTITY optionDisplay.accesskey "o">
+<!ENTITY optionLTR.label "Nga e majta në të djathë">
+<!ENTITY optionLTR.accesskey "m">
+<!ENTITY optionRTL.label "Nga e djathta në të majtë">
+<!ENTITY optionRTL.accesskey "d">
+
+<!ENTITY insertButton.label "Fute">
+<!ENTITY insertButton.accesskey "F">

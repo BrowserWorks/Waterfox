@@ -21,18 +21,16 @@ ChromeUtils.defineModuleGetter(
 
 const kAutoDetectors = [
   ["off", ""],
-  ["ja", "ja_parallel_state_machine"],
   ["ru", "ruprob"],
   ["uk", "ukprob"],
 ];
 
 /**
  * This set contains encodings that are in the Encoding Standard, except:
- *  - XSS-dangerous encodings (except ISO-2022-JP which is assumed to be
- *    too common not to be included).
+ *  - Japanese encodings are represented by one autodetection item
  *  - x-user-defined, which practically never makes sense as an end-user-chosen
  *    override.
- *  - Encodings that IE11 doesn't have in its correspoding menu.
+ *  - Encodings that IE11 doesn't have in its corresponding menu.
  */
 const kEncodings = new Set([
   // Globally relevant
@@ -65,10 +63,8 @@ const kEncodings = new Set([
   // Hebrew
   "windows-1255",
   "ISO-8859-8",
-  // Japanese
-  "Shift_JIS",
-  "EUC-JP",
-  "ISO-2022-JP",
+  // Japanese (NOT AN ENCODING NAME)
+  "Japanese",
   // Korean
   "EUC-KR",
   // Thai
@@ -97,8 +93,7 @@ function CharsetComparator(a, b) {
   // happens to make the less frequently-used items first.
   let titleA = a.label.replace(/\(.*/, "") + b.value;
   let titleB = b.label.replace(/\(.*/, "") + a.value;
-  // Secondarily reverse sort by encoding name to sort "windows" or
-  // "shift_jis" first.
+  // Secondarily reverse sort by encoding name to sort "windows"
   return titleA.localeCompare(titleB) || b.value.localeCompare(a.value);
 }
 
@@ -132,7 +127,7 @@ var CharsetMenu = {
       );
     }
     function createDOMNode(doc, nodeInfo) {
-      let node = doc.createElement("menuitem");
+      let node = doc.createXULElement("menuitem");
       node.setAttribute("type", "radio");
       node.setAttribute("name", nodeInfo.name + "Group");
       node.setAttribute(nodeInfo.name, nodeInfo.value);
@@ -150,8 +145,11 @@ var CharsetMenu = {
     this._ensureDataReady();
     let doc = parent.ownerDocument;
 
-    if (showDetector) {
-      let menuNode = doc.createElement("menu");
+    if (
+      showDetector &&
+      !Services.prefs.getBoolPref("intl.charset.detector.ng.enabled")
+    ) {
+      let menuNode = doc.createXULElement("menu");
       menuNode.setAttribute(
         "label",
         gBundle.GetStringFromName("charsetMenuAutodet")
@@ -162,7 +160,7 @@ var CharsetMenu = {
       );
       parent.appendChild(menuNode);
 
-      let menuPopupNode = doc.createElement("menupopup");
+      let menuPopupNode = doc.createXULElement("menupopup");
       menuNode.appendChild(menuPopupNode);
       menuPopupNode.addEventListener("command", SetDetector);
       menuPopupNode.addEventListener("popupshown", UpdateDetectorMenu);
@@ -170,13 +168,13 @@ var CharsetMenu = {
       gDetectorInfoCache.forEach(detectorInfo =>
         menuPopupNode.appendChild(createDOMNode(doc, detectorInfo))
       );
-      parent.appendChild(doc.createElement("menuseparator"));
+      parent.appendChild(doc.createXULElement("menuseparator"));
     }
 
     gPinnedInfoCache.forEach(charsetInfo =>
       parent.appendChild(createDOMNode(doc, charsetInfo))
     );
-    parent.appendChild(doc.createElement("menuseparator"));
+    parent.appendChild(doc.createXULElement("menuseparator"));
     gCharsetInfoCache.forEach(charsetInfo =>
       parent.appendChild(createDOMNode(doc, charsetInfo))
     );
@@ -262,7 +260,17 @@ var CharsetMenu = {
    * For substantially similar encodings, treat two encodings as the same
    * for the purpose of the check mark.
    */
-  foldCharset(charset) {
+  foldCharset(charset, isAutodetected) {
+    if (isAutodetected) {
+      switch (charset) {
+        case "Shift_JIS":
+        case "EUC-JP":
+        case "ISO-2022-JP":
+          return "Japanese";
+        default:
+        // fall through
+      }
+    }
     switch (charset) {
       case "ISO-8859-8-I":
         return "windows-1255";
@@ -275,9 +283,12 @@ var CharsetMenu = {
     }
   },
 
+  /**
+   * This method is for comm-central callers only.
+   */
   update(parent, charset) {
     let menuitem = parent
-      .getElementsByAttribute("charset", this.foldCharset(charset))
+      .getElementsByAttribute("charset", this.foldCharset(charset, false))
       .item(0);
     if (menuitem) {
       menuitem.setAttribute("checked", "true");

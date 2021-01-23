@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "عنْ السخام">
+<!ENTITY window.width  "450">
+<!ENTITY info1a.label  "يتعرف &brandShortName; آليًّا على الرسائل الواردة التي تبدو كسخام (البريد غير المطلوب). الرسائل التي يعتقد &brandShortName; أنها سخام ستوضع أمامها أيقونة خاصة">
+<!ENTITY info1b.label  ".">
+<!ENTITY info2.label   "يجب أن تدرّب &brandShortName; أولًا علي تعرّف السخام بتعليم السخام يدويا مستخدمًا زر شريط الأدوات نفاية.">
+<!ENTITY info3.label   "بمجرّد تعرُّف &brandShortName; على السخام بشكل صحيح يمكنك استخدام تحكم السخام لتنقل آليًّا السخام الواردة إلى مجلد السخام.">
+<!ENTITY info4.label   "لمزيد من المعلومات، انقر ”مساعدة“.">

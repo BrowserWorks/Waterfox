@@ -13,6 +13,7 @@
 #include "vm/EqualityOperations.h"  // js::SameValue
 #include "vm/JSFunction.h"
 #include "vm/JSObject.h"
+#include "vm/PlainObject.h"  // js::PlainObject
 
 #include "vm/JSObject-inl.h"
 #include "vm/NativeObject-inl.h"
@@ -620,6 +621,12 @@ bool ScriptedProxyHandler::getOwnPropertyDescriptor(
     if (targetDesc.configurable()) {
       return js::Throw(cx, id, JSMSG_CANT_REPORT_C_AS_NC);
     }
+
+    if (resultDesc.hasWritable() && !resultDesc.writable()) {
+      if (targetDesc.writable()) {
+        return js::Throw(cx, id, JSMSG_CANT_REPORT_W_AS_NW);
+      }
+    }
   }
 
   // Step 18.
@@ -733,6 +740,17 @@ bool ScriptedProxyHandler::defineProperty(JSContext* cx, HandleObject proxy,
       return js::Throw(cx, id, JSMSG_CANT_DEFINE_INVALID,
                        DETAILS_CANT_REPORT_C_AS_NC);
     }
+
+    if (targetDesc.isDataDescriptor() && !targetDesc.configurable() &&
+        targetDesc.writable()) {
+      if (desc.hasWritable() && !desc.writable()) {
+        static const char DETAILS_CANT_DEFINE_NW[] =
+            "proxy can't define an existing non-configurable writable property "
+            "as non-writable";
+        return js::Throw(cx, id, JSMSG_CANT_DEFINE_INVALID,
+                         DETAILS_CANT_DEFINE_NW);
+      }
+    }
   }
 
   // Step 17.
@@ -744,8 +762,8 @@ bool ScriptedProxyHandler::defineProperty(JSContext* cx, HandleObject proxy,
 static bool CreateFilteredListFromArrayLike(JSContext* cx, HandleValue v,
                                             MutableHandleIdVector props) {
   // Step 2.
-  RootedObject obj(
-      cx, NonNullObjectWithName(cx, "return value of the ownKeys trap", v));
+  RootedObject obj(cx, RequireObject(cx, JSMSG_OBJECT_REQUIRED_RET_OWNKEYS,
+                                     JSDVG_IGNORE_STACK, v));
   if (!obj) {
     return false;
   }
@@ -992,12 +1010,26 @@ bool ScriptedProxyHandler::delete_(JSContext* cx, HandleObject proxy,
     return false;
   }
 
+  // Step 11.
+  if (!desc.object()) {
+    return result.succeed();
+  }
+
   // Step 12.
-  if (desc.object() && !desc.configurable()) {
+  if (!desc.configurable()) {
     return Throw(cx, id, JSMSG_CANT_DELETE);
   }
 
-  // Steps 11,13.
+  bool extensible;
+  if (!IsExtensible(cx, target, &extensible)) {
+    return false;
+  }
+
+  if (!extensible) {
+    return Throw(cx, id, JSMSG_CANT_DELETE_NON_EXTENSIBLE);
+  }
+
+  // Step 13.
   return result.succeed();
 }
 
@@ -1433,12 +1465,8 @@ bool ScriptedProxyHandler::isConstructor(JSObject* obj) const {
 const char ScriptedProxyHandler::family = 0;
 const ScriptedProxyHandler ScriptedProxyHandler::singleton;
 
-bool IsRevokedScriptedProxy(JSObject* obj) {
-  obj = CheckedUnwrapStatic(obj);
-  return obj && IsScriptedProxy(obj) && !obj->as<ProxyObject>().target();
-}
-
-// ES8 rev 0c1bd3004329336774cbc90de727cd0cf5f11e93
+// ES2021 rev c21b280a2c46e92decf3efeca9e9da35d5b9f622
+// Including the changes from: https://github.com/tc39/ecma262/pull/1814
 // 9.5.14 ProxyCreate.
 static bool ProxyCreate(JSContext* cx, CallArgs& args, const char* callerName) {
   if (!args.requireAtLeast(cx, callerName, 2)) {
@@ -1447,33 +1475,19 @@ static bool ProxyCreate(JSContext* cx, CallArgs& args, const char* callerName) {
 
   // Step 1.
   RootedObject target(cx,
-                      NonNullObjectArg(cx, "`target`", callerName, args[0]));
+                      RequireObjectArg(cx, "`target`", callerName, args[0]));
   if (!target) {
     return false;
   }
 
   // Step 2.
-  if (IsRevokedScriptedProxy(target)) {
-    JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
-                              JSMSG_PROXY_ARG_REVOKED, "1");
-    return false;
-  }
-
-  // Step 3.
   RootedObject handler(cx,
-                       NonNullObjectArg(cx, "`handler`", callerName, args[1]));
+                       RequireObjectArg(cx, "`handler`", callerName, args[1]));
   if (!handler) {
     return false;
   }
 
-  // Step 4.
-  if (IsRevokedScriptedProxy(handler)) {
-    JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
-                              JSMSG_PROXY_ARG_REVOKED, "2");
-    return false;
-  }
-
-  // Steps 5-6, 8.
+  // Steps 3-4, 6.
   RootedValue priv(cx, ObjectValue(*target));
   JSObject* proxy_ = NewProxyObject(cx, &ScriptedProxyHandler::singleton, priv,
                                     TaggedProto::LazyProto);
@@ -1481,12 +1495,12 @@ static bool ProxyCreate(JSContext* cx, CallArgs& args, const char* callerName) {
     return false;
   }
 
-  // Step 9 (reordered).
+  // Step 7 (reordered).
   Rooted<ProxyObject*> proxy(cx, &proxy_->as<ProxyObject>());
   proxy->setReservedSlot(ScriptedProxyHandler::HANDLER_EXTRA,
                          ObjectValue(*handler));
 
-  // Step 7.
+  // Step 5.
   uint32_t callable =
       target->isCallable() ? ScriptedProxyHandler::IS_CALLABLE : 0;
   uint32_t constructor =
@@ -1494,7 +1508,7 @@ static bool ProxyCreate(JSContext* cx, CallArgs& args, const char* callerName) {
   proxy->setReservedSlot(ScriptedProxyHandler::IS_CALLCONSTRUCT_EXTRA,
                          PrivateUint32Value(callable | constructor));
 
-  // Step 10.
+  // Step 8.
   args.rval().setObject(*proxy);
   return true;
 }

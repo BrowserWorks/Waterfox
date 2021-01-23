@@ -25,8 +25,8 @@
 #include "mozilla/RestyleManager.h"
 #include "mozilla/ServoBindings.h"  // Servo_GetProperties_Overriding_Animation
 #include "mozilla/ServoStyleSet.h"
+#include "mozilla/StaticPrefs_layers.h"
 #include "mozilla/StyleAnimationValue.h"
-#include "mozilla/TypeTraits.h"  // For std::forward<>
 #include "nsContentUtils.h"
 #include "nsCSSPseudoElements.h"
 #include "nsCSSPropertyIDSet.h"
@@ -73,7 +73,7 @@ bool EffectCompositor::AllowCompositorAnimationsOnFrame(
   }
 
   if (!nsLayoutUtils::AreAsyncAnimationsEnabled()) {
-    if (nsLayoutUtils::IsAnimationLoggingEnabled()) {
+    if (StaticPrefs::layers_offmainthreadcomposition_log_animations()) {
       nsCString message;
       message.AppendLiteral(
           "Performance warning: Async animations are "
@@ -107,6 +107,12 @@ bool EffectCompositor::AllowCompositorAnimationsOnFrame(
 bool FindAnimationsForCompositor(
     const nsIFrame* aFrame, const nsCSSPropertyIDSet& aPropertySet,
     nsTArray<RefPtr<dom::Animation>>* aMatches /*out*/) {
+  // Do not process any animations on the compositor when in print or print
+  // preview.
+  if (aFrame->PresContext()->IsPrintingOrPrintPreview()) {
+    return false;
+  }
+
   MOZ_ASSERT(
       aPropertySet.IsSubsetOf(LayerAnimationInfo::GetCSSPropertiesFor(
           DisplayItemType::TYPE_TRANSFORM)) ||
@@ -136,14 +142,6 @@ bool FindAnimationsForCompositor(
     if (tracker) {
       tracker->MarkAnimationsThatMightNeedSynchronization();
     }
-  }
-
-  // If the property will be added to the animations level of the cascade but
-  // there is an !important rule for that property in the cascade then the
-  // animation will not be applied since the !important rule overrides it.
-  if (effects->PropertiesWithImportantRules().Intersects(aPropertySet) &&
-      effects->PropertiesForAnimationsLevel().Intersects(aPropertySet)) {
-    return false;
   }
 
   AnimationPerformanceWarning::Type warning =
@@ -278,21 +276,27 @@ void EffectCompositor::PostRestyleForAnimation(dom::Element* aElement,
     return;
   }
 
+  // FIXME: Bug 1615083 KeyframeEffect::SetTarget() and
+  // KeyframeEffect::SetPseudoElement() may set a non-existing pseudo element,
+  // and we still have to update its style, based on the wpt. However, we don't
+  // have the generated element here, so we failed the wpt.
+  //
+  // See wpt for more info: web-animations/interfaces/KeyframeEffect/target.html
   dom::Element* element = GetElementToRestyle(aElement, aPseudoType);
   if (!element) {
     return;
   }
 
   RestyleHint hint = aCascadeLevel == CascadeLevel::Transitions
-                         ? StyleRestyleHint_RESTYLE_CSS_TRANSITIONS
-                         : StyleRestyleHint_RESTYLE_CSS_ANIMATIONS;
+                         ? RestyleHint::RESTYLE_CSS_TRANSITIONS
+                         : RestyleHint::RESTYLE_CSS_ANIMATIONS;
 
   MOZ_ASSERT(NS_IsMainThread(),
              "Restyle request during restyling should be requested only on "
              "the main-thread. e.g. after the parallel traversal");
   if (ServoStyleSet::IsInServoTraversal() || mIsInPreTraverse) {
-    MOZ_ASSERT(hint == StyleRestyleHint_RESTYLE_CSS_ANIMATIONS ||
-               hint == StyleRestyleHint_RESTYLE_CSS_TRANSITIONS);
+    MOZ_ASSERT(hint == RestyleHint::RESTYLE_CSS_ANIMATIONS ||
+               hint == RestyleHint::RESTYLE_CSS_TRANSITIONS);
 
     // We can't call Servo_NoteExplicitHints here since AtomicRefCell does not
     // allow us mutate ElementData of the |aElement| in SequentialTask.
@@ -394,12 +398,42 @@ class EffectCompositeOrderComparator {
 };
 }  // namespace
 
+static void ComposeSortedEffects(
+    const nsTArray<KeyframeEffect*>& aSortedEffects,
+    const EffectSet* aEffectSet, EffectCompositor::CascadeLevel aCascadeLevel,
+    RawServoAnimationValueMap* aAnimationValues) {
+  const bool isTransition =
+      aCascadeLevel == EffectCompositor::CascadeLevel::Transitions;
+  nsCSSPropertyIDSet propertiesToSkip;
+  // Transitions should be overridden by running animations of the same
+  // property per https://drafts.csswg.org/css-transitions/#application:
+  //
+  // > Implementations must add this value to the cascade if and only if that
+  // > property is not currently undergoing a CSS Animation on the same element.
+  //
+  // FIXME(emilio, bug 1606176): This should assert that
+  // aEffectSet->PropertiesForAnimationsLevel() is up-to-date, and it may not
+  // follow the spec in those cases. There are various places where we get style
+  // without flushing that would trigger the below assertion.
+  //
+  // MOZ_ASSERT_IF(aEffectSet, !aEffectSet->CascadeNeedsUpdate());
+  if (aEffectSet) {
+    propertiesToSkip =
+        isTransition ? aEffectSet->PropertiesForAnimationsLevel()
+                     : aEffectSet->PropertiesForAnimationsLevel().Inverse();
+  }
+
+  for (KeyframeEffect* effect : aSortedEffects) {
+    auto* animation = effect->GetAnimation();
+    MOZ_ASSERT(!isTransition || animation->CascadeLevel() == aCascadeLevel);
+    animation->ComposeStyle(*aAnimationValues, propertiesToSkip);
+  }
+}
+
 bool EffectCompositor::GetServoAnimationRule(
     const dom::Element* aElement, PseudoStyleType aPseudoType,
     CascadeLevel aCascadeLevel, RawServoAnimationValueMap* aAnimationValues) {
   MOZ_ASSERT(aAnimationValues);
-  MOZ_ASSERT(mPresContext && mPresContext->IsDynamic(),
-             "Should not be in print preview");
   // Gecko_GetAnimationRule should have already checked this
   MOZ_ASSERT(nsContentUtils::GetPresShellForContent(aElement),
              "Should not be trying to run animations on elements in documents"
@@ -410,26 +444,86 @@ bool EffectCompositor::GetServoAnimationRule(
     return false;
   }
 
+  const bool isTransition = aCascadeLevel == CascadeLevel::Transitions;
+
   // Get a list of effects sorted by composite order.
   nsTArray<KeyframeEffect*> sortedEffectList(effectSet->Count());
   for (KeyframeEffect* effect : *effectSet) {
+    if (isTransition &&
+        effect->GetAnimation()->CascadeLevel() != aCascadeLevel) {
+      // We may need to use transition rules for the animations level for the
+      // case of missing keyframes in animations, but we don't ever need to look
+      // at non-transition levels to build a transition rule. When the effect
+      // set information is out of date (see above), this avoids creating bogus
+      // transition rules, see bug 1605610.
+      continue;
+    }
     sortedEffectList.AppendElement(effect);
   }
+
+  if (sortedEffectList.IsEmpty()) {
+    return false;
+  }
+
   sortedEffectList.Sort(EffectCompositeOrderComparator());
 
-  // If multiple animations affect the same property, animations with higher
-  // composite order (priority) override or add or animations with lower
-  // priority.
-  const nsCSSPropertyIDSet propertiesToSkip =
-      aCascadeLevel == CascadeLevel::Animations
-          ? effectSet->PropertiesForAnimationsLevel().Inverse()
-          : effectSet->PropertiesForAnimationsLevel();
-  for (KeyframeEffect* effect : sortedEffectList) {
-    effect->GetAnimation()->ComposeStyle(*aAnimationValues, propertiesToSkip);
-  }
+  ComposeSortedEffects(sortedEffectList, effectSet, aCascadeLevel,
+                       aAnimationValues);
 
   MOZ_ASSERT(effectSet == EffectSet::GetEffectSet(aElement, aPseudoType),
              "EffectSet should not change while composing style");
+
+  return true;
+}
+
+bool EffectCompositor::ComposeServoAnimationRuleForEffect(
+    KeyframeEffect& aEffect, CascadeLevel aCascadeLevel,
+    RawServoAnimationValueMap* aAnimationValues) {
+  MOZ_ASSERT(aAnimationValues);
+  MOZ_ASSERT(mPresContext && mPresContext->IsDynamic(),
+             "Should not be in print preview");
+
+  NonOwningAnimationTarget target = aEffect.GetAnimationTarget();
+  if (!target) {
+    return false;
+  }
+
+  // Don't try to compose animations for elements in documents without a pres
+  // shell (e.g. XMLHttpRequest documents).
+  if (!nsContentUtils::GetPresShellForContent(target.mElement)) {
+    return false;
+  }
+
+  // GetServoAnimationRule is called as part of the regular style resolution
+  // where the cascade results are updated in the pre-traversal as needed.
+  // This function, however, is only called when committing styles so we
+  // need to ensure the cascade results are up-to-date manually.
+  MaybeUpdateCascadeResults(target.mElement, target.mPseudoType);
+
+  EffectSet* effectSet =
+      EffectSet::GetEffectSet(target.mElement, target.mPseudoType);
+
+  // Get a list of effects sorted by composite order up to and including
+  // |aEffect|, even if it is not in the EffectSet.
+  auto comparator = EffectCompositeOrderComparator();
+  nsTArray<KeyframeEffect*> sortedEffectList(effectSet ? effectSet->Count() + 1
+                                                       : 1);
+  if (effectSet) {
+    for (KeyframeEffect* effect : *effectSet) {
+      if (comparator.LessThan(effect, &aEffect)) {
+        sortedEffectList.AppendElement(effect);
+      }
+    }
+    sortedEffectList.Sort(comparator);
+  }
+  sortedEffectList.AppendElement(&aEffect);
+
+  ComposeSortedEffects(sortedEffectList, effectSet, aCascadeLevel,
+                       aAnimationValues);
+
+  MOZ_ASSERT(
+      effectSet == EffectSet::GetEffectSet(target.mElement, target.mPseudoType),
+      "EffectSet should not change while composing style");
 
   return true;
 }
@@ -828,8 +922,8 @@ bool EffectCompositor::PreTraverseInSubtree(ServoTraversalFlags aFlags,
       mPresContext->RestyleManager()->PostRestyleEventForAnimations(
           target.mElement, target.mPseudoType,
           cascadeLevel == CascadeLevel::Transitions
-              ? StyleRestyleHint_RESTYLE_CSS_TRANSITIONS
-              : StyleRestyleHint_RESTYLE_CSS_ANIMATIONS);
+              ? RestyleHint::RESTYLE_CSS_TRANSITIONS
+              : RestyleHint::RESTYLE_CSS_ANIMATIONS);
 
       foundElementsNeedingRestyle = true;
 
@@ -860,6 +954,55 @@ bool EffectCompositor::PreTraverseInSubtree(ServoTraversalFlags aFlags,
   }
 
   return foundElementsNeedingRestyle;
+}
+
+void EffectCompositor::NoteElementForReducing(
+    const NonOwningAnimationTarget& aTarget) {
+  if (!StaticPrefs::dom_animations_api_autoremove_enabled()) {
+    return;
+  }
+
+  Unused << mElementsToReduce.put(
+      OwningAnimationTarget{aTarget.mElement, aTarget.mPseudoType});
+}
+
+static void ReduceEffectSet(EffectSet& aEffectSet) {
+  // Get a list of effects sorted by composite order.
+  nsTArray<KeyframeEffect*> sortedEffectList(aEffectSet.Count());
+  for (KeyframeEffect* effect : aEffectSet) {
+    sortedEffectList.AppendElement(effect);
+  }
+  sortedEffectList.Sort(EffectCompositeOrderComparator());
+
+  nsCSSPropertyIDSet setProperties;
+
+  // Iterate in reverse
+  for (auto iter = sortedEffectList.rbegin(); iter != sortedEffectList.rend();
+       ++iter) {
+    MOZ_ASSERT(*iter && (*iter)->GetAnimation(),
+               "Effect in an EffectSet should have an animation");
+    KeyframeEffect& effect = **iter;
+    Animation& animation = *effect.GetAnimation();
+    if (animation.IsRemovable() &&
+        effect.GetPropertySet().IsSubsetOf(setProperties)) {
+      animation.Remove();
+    } else if (animation.IsReplaceable()) {
+      setProperties |= effect.GetPropertySet();
+    }
+  }
+}
+
+void EffectCompositor::ReduceAnimations() {
+  for (auto iter = mElementsToReduce.iter(); !iter.done(); iter.next()) {
+    const OwningAnimationTarget& target = iter.get();
+    EffectSet* effectSet =
+        EffectSet::GetEffectSet(target.mElement, target.mPseudoType);
+    if (effectSet) {
+      ReduceEffectSet(*effectSet);
+    }
+  }
+
+  mElementsToReduce.clear();
 }
 
 }  // namespace mozilla

@@ -14,7 +14,9 @@ EXPORTS.mozilla.dom += [
     'Animation.h',
     'AnimationEffect.h',
     'AnimationTimeline.h',
+    'CSSAnimation.h',
     'CSSPseudoElement.h',
+    'CSSTransition.h',
     'DocumentTimeline.h',
     'KeyframeEffect.h',
 ]
@@ -47,7 +49,9 @@ UNIFIED_SOURCES += [
     'AnimationTimeline.cpp',
     'AnimationUtils.cpp',
     'ComputedTimingFunction.cpp',
+    'CSSAnimation.cpp',
     'CSSPseudoElement.cpp',
+    'CSSTransition.cpp',
     'DocumentTimeline.cpp',
     'EffectCompositor.cpp',
     'EffectSet.cpp',
@@ -62,5 +66,7 @@ LOCAL_INCLUDES += [
     '/layout/base',
     '/layout/style',
 ]
+
+include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'

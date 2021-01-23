@@ -6,8 +6,7 @@
 
 #include "TextureHostOGL.h"
 
-#include "EGLUtils.h"
-#include "GLContext.h"     // for GLContext, etc
+#include "GLContextEGL.h"  // for GLContext, etc
 #include "GLLibraryEGL.h"  // for GLLibraryEGL
 #include "GLUploadHelpers.h"
 #include "GLReadTexImageHelper.h"
@@ -30,6 +29,10 @@
 
 #ifdef MOZ_WIDGET_ANDROID
 #  include "mozilla/webrender/RenderAndroidSurfaceTextureHostOGL.h"
+#endif
+
+#ifdef MOZ_WAYLAND
+#  include "mozilla/layers/WaylandDMABUFTextureHostOGL.h"
 #endif
 
 using namespace mozilla::gl;
@@ -77,6 +80,13 @@ already_AddRefed<TextureHost> CreateTextureHostOGL(
                                        desc.hasAlpha());
       break;
     }
+
+#ifdef MOZ_WAYLAND
+    case SurfaceDescriptor::TSurfaceDescriptorDMABuf: {
+      result = new WaylandDMABUFTextureHostOGL(aFlags, aDesc);
+      break;
+    }
+#endif
 
 #ifdef XP_MACOSX
     case SurfaceDescriptor::TSurfaceDescriptorMacIOSurface: {
@@ -605,6 +615,9 @@ void SurfaceTextureHost::SetTextureSourceProvider(
 
 void SurfaceTextureHost::NotifyNotUsed() {
   if (mSurfTex && mSurfTex->IsSingleBuffer()) {
+    if (!EnsureAttached()) {
+      return;
+    }
     mSurfTex->ReleaseTexImage();
   }
 
@@ -633,13 +646,16 @@ void SurfaceTextureHost::CreateRenderTexture(
                                                  texture.forget());
 }
 
+uint32_t SurfaceTextureHost::NumSubTextures() { return mSurfTex ? 1 : 0; }
+
 void SurfaceTextureHost::PushResourceUpdates(
     wr::TransactionBuilder& aResources, ResourceUpdateOp aOp,
     const Range<wr::ImageKey>& aImageKeys, const wr::ExternalImageId& aExtID) {
   auto method = aOp == TextureHost::ADD_IMAGE
                     ? &wr::TransactionBuilder::AddExternalImage
                     : &wr::TransactionBuilder::UpdateExternalImage;
-  auto bufferType = wr::WrExternalImageBufferType::TextureExternalHandle;
+  auto imageType =
+      wr::ExternalImageType::TextureHandle(wr::TextureTarget::External);
 
   switch (GetFormat()) {
     case gfx::SurfaceFormat::R8G8B8X8:
@@ -652,7 +668,7 @@ void SurfaceTextureHost::PushResourceUpdates(
                         ? gfx::SurfaceFormat::B8G8R8A8
                         : gfx::SurfaceFormat::B8G8R8X8;
       wr::ImageDescriptor descriptor(GetSize(), format);
-      (aResources.*method)(aImageKeys[0], descriptor, aExtID, bufferType, 0);
+      (aResources.*method)(aImageKeys[0], descriptor, aExtID, imageType, 0);
       break;
     }
     default: {
@@ -661,10 +677,12 @@ void SurfaceTextureHost::PushResourceUpdates(
   }
 }
 
-void SurfaceTextureHost::PushDisplayItems(
-    wr::DisplayListBuilder& aBuilder, const wr::LayoutRect& aBounds,
-    const wr::LayoutRect& aClip, wr::ImageRendering aFilter,
-    const Range<wr::ImageKey>& aImageKeys) {
+void SurfaceTextureHost::PushDisplayItems(wr::DisplayListBuilder& aBuilder,
+                                          const wr::LayoutRect& aBounds,
+                                          const wr::LayoutRect& aClip,
+                                          wr::ImageRendering aFilter,
+                                          const Range<wr::ImageKey>& aImageKeys,
+                                          const bool aPreferCompositorSurface) {
   switch (GetFormat()) {
     case gfx::SurfaceFormat::R8G8B8X8:
     case gfx::SurfaceFormat::R8G8B8A8:
@@ -672,7 +690,9 @@ void SurfaceTextureHost::PushDisplayItems(
     case gfx::SurfaceFormat::B8G8R8X8: {
       MOZ_ASSERT(aImageKeys.length() == 1);
       aBuilder.PushImage(aBounds, aClip, true, aFilter, aImageKeys[0],
-                         !(mFlags & TextureFlags::NON_PREMULTIPLIED));
+                         !(mFlags & TextureFlags::NON_PREMULTIPLIED),
+                         wr::ColorF{1.0f, 1.0f, 1.0f, 1.0f},
+                         aPreferCompositorSurface);
       break;
     }
     default: {
@@ -710,8 +730,16 @@ void EGLImageTextureSource::BindTexture(GLenum aTextureUnit,
     return;
   }
 
-  MOZ_ASSERT(DoesEGLContextSupportSharingWithEGLImage(gl),
-             "EGLImage not supported or disabled in runtime");
+#ifdef DEBUG
+  const bool supportsEglImage = [&]() {
+    const auto& gle = GLContextEGL::Cast(gl);
+    const auto& egl = gle->mEgl;
+
+    return egl->HasKHRImageBase() && egl->HasKHRImageTexture2D() &&
+           gl->IsExtensionSupported(GLContext::OES_EGL_image);
+  }();
+  MOZ_ASSERT(supportsEglImage, "EGLImage not supported or disabled in runtime");
+#endif
 
   GLuint tex = mCompositor->GetTemporaryTexture(mTextureTarget, aTextureUnit);
 
@@ -759,7 +787,7 @@ EGLImageTextureHost::EGLImageTextureHost(TextureFlags aFlags, EGLImage aImage,
       mSize(aSize),
       mHasAlpha(hasAlpha) {}
 
-EGLImageTextureHost::~EGLImageTextureHost() {}
+EGLImageTextureHost::~EGLImageTextureHost() = default;
 
 gl::GLContext* EGLImageTextureHost::gl() const {
   return mProvider ? mProvider->GetGLContext() : nullptr;
@@ -776,7 +804,7 @@ bool EGLImageTextureHost::Lock() {
 
   if (mSync) {
     MOZ_ASSERT(egl->IsExtensionSupported(GLLibraryEGL::KHR_fence_sync));
-    status = egl->fClientWaitSync(EGL_DISPLAY(), mSync, 0, LOCAL_EGL_FOREVER);
+    status = egl->fClientWaitSync(egl->Display(), mSync, 0, LOCAL_EGL_FOREVER);
   }
 
   if (status != LOCAL_EGL_CONDITION_SATISFIED) {
@@ -836,7 +864,8 @@ void EGLImageTextureHost::PushResourceUpdates(
   auto method = aOp == TextureHost::ADD_IMAGE
                     ? &wr::TransactionBuilder::AddExternalImage
                     : &wr::TransactionBuilder::UpdateExternalImage;
-  auto bufferType = wr::WrExternalImageBufferType::TextureExternalHandle;
+  auto imageType =
+      wr::ExternalImageType::TextureHandle(wr::TextureTarget::External);
 
   gfx::SurfaceFormat format =
       mHasAlpha ? gfx::SurfaceFormat::R8G8B8A8 : gfx::SurfaceFormat::R8G8B8X8;
@@ -848,16 +877,19 @@ void EGLImageTextureHost::PushResourceUpdates(
                        ? gfx::SurfaceFormat::B8G8R8A8
                        : gfx::SurfaceFormat::B8G8R8X8;
   wr::ImageDescriptor descriptor(GetSize(), formatTmp);
-  (aResources.*method)(aImageKeys[0], descriptor, aExtID, bufferType, 0);
+  (aResources.*method)(aImageKeys[0], descriptor, aExtID, imageType, 0);
 }
 
 void EGLImageTextureHost::PushDisplayItems(
     wr::DisplayListBuilder& aBuilder, const wr::LayoutRect& aBounds,
     const wr::LayoutRect& aClip, wr::ImageRendering aFilter,
-    const Range<wr::ImageKey>& aImageKeys) {
+    const Range<wr::ImageKey>& aImageKeys,
+    const bool aPreferCompositorSurface) {
   MOZ_ASSERT(aImageKeys.length() == 1);
   aBuilder.PushImage(aBounds, aClip, true, aFilter, aImageKeys[0],
-                     !(mFlags & TextureFlags::NON_PREMULTIPLIED));
+                     !(mFlags & TextureFlags::NON_PREMULTIPLIED),
+                     wr::ColorF{1.0f, 1.0f, 1.0f, 1.0f},
+                     aPreferCompositorSurface);
 }
 
 //
@@ -872,7 +904,7 @@ GLTextureHost::GLTextureHost(TextureFlags aFlags, GLuint aTextureHandle,
       mSize(aSize),
       mHasAlpha(aHasAlpha) {}
 
-GLTextureHost::~GLTextureHost() {}
+GLTextureHost::~GLTextureHost() = default;
 
 gl::GLContext* GLTextureHost::gl() const {
   return mProvider ? mProvider->GetGLContext() : nullptr;

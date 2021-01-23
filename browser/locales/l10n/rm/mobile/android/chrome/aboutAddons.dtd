@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "Supplements">
+<!ENTITY aboutAddons.header2                    "Tes supplements">
+
+<!ENTITY addonAction.enable                     "Activar">
+<!ENTITY addonAction.disable                    "Deactivar">
+<!ENTITY addonAction.uninstall                  "Deinstallar">
+<!ENTITY addonAction.undo                       "Revocar">
+<!ENTITY addonAction.update                     "Actualisar">
+
+<!ENTITY addonUnsigned.message                  "Quest supplement n'ha betg pudì vegnir verifitgà da &brandShortName;.">
+<!ENTITY addonUnsigned.learnMore                "Ulteriuras infurmaziuns">

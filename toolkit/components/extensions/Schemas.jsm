@@ -50,6 +50,13 @@ XPCOMUtils.defineLazyGetter(
   () => ExtensionParent.StartupCache
 );
 
+XPCOMUtils.defineLazyPreferenceGetter(
+  this,
+  "treatWarningsAsErrors",
+  "extensions.webextensions.warnings-as-errors",
+  false
+);
+
 var EXPORTED_SYMBOLS = ["SchemaRoot", "Schemas"];
 
 const KEY_CONTENT_SCHEMAS = "extensions-framework/schemas/content";
@@ -454,9 +461,12 @@ class Context {
    *        A caller may pass `null` to prevent a choice from being
    *        added, but this should *only* be done from code processing a
    *        choices type.
+   * @param {boolean} [warning = false]
+   *        If true, make message prefixed `Warning`. If false, make message
+   *        prefixed `Error`
    * @returns {object}
    */
-  error(errorMessage, choicesMessage = undefined) {
+  error(errorMessage, choicesMessage = undefined, warning = false) {
     if (choicesMessage !== null) {
       let { choicePath } = this;
       if (choicePath) {
@@ -470,7 +480,9 @@ class Context {
       let { currentTarget } = this;
       return {
         error: () =>
-          `Error processing ${currentTarget}: ${forceString(errorMessage)}`,
+          `${
+            warning ? "Warning" : "Error"
+          } processing ${currentTarget}: ${forceString(errorMessage)}`,
       };
     }
     return { error: errorMessage };
@@ -485,10 +497,12 @@ class Context {
    * the message, in the same way as for the `error` method.
    *
    * @param {string} message
+   * @param {object} [options]
+   * @param {boolean} [options.warning = false]
    * @returns {Error}
    */
-  makeError(message) {
-    let error = forceString(this.error(message).error);
+  makeError(message, { warning = false } = {}) {
+    let error = forceString(this.error(message, null, warning).error);
     if (this.cloneScope) {
       return new this.cloneScope.Error(error);
     }
@@ -1049,6 +1063,10 @@ const FORMATS = {
   contentSecurityPolicy(string, context) {
     let error = contentPolicyService.validateAddonCSP(string);
     if (error != null) {
+      // The SyntaxError raised below is not reported as part of the "choices" error message,
+      // we log the CSP validation error explicitly here to make it easier for the addon developers
+      // to see and fix the extension CSP.
+      context.logError(`Error processing ${context.currentTarget}: ${error}`);
       throw new SyntaxError(error);
     }
     return string;
@@ -1080,6 +1098,10 @@ const FORMATS = {
       `or a media key. For details see: ` +
       `https://developer.mozilla.org/en-US/Add-ons/WebExtensions/manifest.json/commands#Key_combinations`;
     throw new Error(errorMessage);
+  },
+
+  manifestShortcutKeyOrEmpty(string, context) {
+    return string === "" ? "" : FORMATS.manifestShortcutKey(string, context);
   },
 };
 
@@ -1186,7 +1208,31 @@ class Entry {
       }
     }
 
-    context.logError(context.makeError(message));
+    this.logWarning(context, message);
+  }
+
+  /**
+   * @param {Context} context
+   * @param {string} warningMessage
+   */
+  logWarning(context, warningMessage) {
+    let error = context.makeError(warningMessage, { warning: true });
+    context.logError(error);
+
+    if (treatWarningsAsErrors) {
+      // This pref is false by default, and true by default in tests to
+      // discourage the use of deprecated APIs in our unit tests.
+      // If a warning is an expected part of a test, temporarily set the pref
+      // to false, e.g. with the ExtensionTestUtils.failOnSchemaWarnings helper.
+      Services.console.logStringMessage(
+        "Treating warning as error because the preference " +
+          "extensions.webextensions.warnings-as-errors is set to true"
+      );
+      if (typeof error === "string") {
+        error = new Error(error);
+      }
+      throw error;
+    }
   }
 
   /**
@@ -1867,7 +1913,7 @@ class ObjectType extends Type {
 
     if (error) {
       if (onError == "warn") {
-        context.logError(forceString(error.error));
+        this.logWarning(context, forceString(error.error));
       } else if (onError != "ignore") {
         throw error;
       }
@@ -2165,7 +2211,7 @@ class ArrayType extends Type {
       );
       if (element.error) {
         if (this.onError == "warn") {
-          context.logError(forceString(element.error));
+          this.logWarning(context, forceString(element.error));
         } else if (this.onError != "ignore") {
           return element;
         }
@@ -2176,18 +2222,14 @@ class ArrayType extends Type {
 
     if (result.length < this.minItems) {
       return context.error(
-        `Array requires at least ${this.minItems} items; you have ${
-          result.length
-        }`,
+        `Array requires at least ${this.minItems} items; you have ${result.length}`,
         `have at least ${this.minItems} items`
       );
     }
 
     if (result.length > this.maxItems) {
       return context.error(
-        `Array requires at most ${this.maxItems} items; you have ${
-          result.length
-        }`,
+        `Array requires at most ${this.maxItems} items; you have ${result.length}`,
         `have at most ${this.maxItems} items`
       );
     }
@@ -2942,9 +2984,7 @@ class Namespace extends Map {
         );
       } else if (!(targetType instanceof ChoiceType)) {
         throw new Error(
-          `Internal error: Attempt to extend a non-extensible type ${
-            type.$extend
-          }`
+          `Internal error: Attempt to extend a non-extensible type ${type.$extend}`
         );
       }
     }
@@ -3153,7 +3193,7 @@ class SchemaRoots extends Namespaces {
       return results[0];
     }
 
-    if (results.length > 0) {
+    if (results.length) {
       return new Namespaces(this.root, name, name.split("."), results);
     }
     return null;
@@ -3505,6 +3545,32 @@ this.Schemas = {
    */
   checkPermissions(namespace, wrapperFuncs) {
     return this.rootSchema.checkPermissions(namespace, wrapperFuncs);
+  },
+
+  /**
+   * Returns a sorted array of permission names for the given permission types.
+   *
+   * @param {Array} types An array of permission types, defaults to all permissions.
+   * @returns {Array} sorted array of permission names
+   */
+  getPermissionNames(
+    types = [
+      "Permission",
+      "OptionalPermission",
+      "PermissionNoPrompt",
+      "OptionalPermissionNoPrompt",
+    ]
+  ) {
+    const ns = this.getNamespace("manifest");
+    let names = [];
+    for (let typeName of types) {
+      for (let choice of ns
+        .get(typeName)
+        .choices.filter(choice => choice.enumeration)) {
+        names = names.concat(choice.enumeration);
+      }
+    }
+    return names.sort();
   },
 
   exportLazyGetter,

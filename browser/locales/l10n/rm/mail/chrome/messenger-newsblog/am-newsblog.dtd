@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY biffAll.label                 "Activar las actualisaziuns per tut ils feeds">
+<!ENTITY biffAll.accesskey             "A">
+
+<!ENTITY newFeedSettings.label         "Configuraziun da standard per feeds da novitads">
+
+<!ENTITY manageSubscriptions.label     "Administrar abunaments…">
+<!ENTITY manageSubscriptions.accesskey "M">
+
+<!ENTITY feedWindowTitle.label         "Assistent per contos da feed">
+<!ENTITY feeds.accountName             "Blogs &amp; feeds da novitads">

@@ -20,6 +20,13 @@ namespace mozilla {
 //
 // But they only contain pointers so it is ok. Also, this warning hilariously
 // doesn't exist in GCC.
+//
+// A solution for this is to explicitly instantiate the template, but duplicate
+// instantiations are an error.
+//
+// https://github.com/eqrion/cbindgen/issues/402 tracks an improvement to
+// cbindgen that would allow it to autogenerate the template instantiations on
+// its own.
 #pragma GCC diagnostic push
 #ifdef __clang__
 #  pragma GCC diagnostic ignored "-Wreturn-type-c-linkage"
@@ -58,6 +65,22 @@ BASIC_RULE_FUNCS(CounterStyle)
 #undef GROUP_RULE_FUNCS
 #undef BASIC_RULE_FUNCS
 #undef BASIC_RULE_FUNCS_WITHOUT_GETTER
+
+#define BASIC_SERDE_FUNCS(type_)                                            \
+  bool Servo_##type_##_Deserialize(mozilla::ipc::ByteBuf* input, type_* v); \
+  bool Servo_##type_##_Serialize(const type_* v, mozilla::ipc::ByteBuf* output);
+
+using RayFunction = StyleRayFunction<StyleAngle>;
+BASIC_SERDE_FUNCS(LengthPercentage)
+BASIC_SERDE_FUNCS(StyleRotate)
+BASIC_SERDE_FUNCS(StyleScale)
+BASIC_SERDE_FUNCS(StyleTranslate)
+BASIC_SERDE_FUNCS(StyleTransform)
+BASIC_SERDE_FUNCS(StyleOffsetPath)
+BASIC_SERDE_FUNCS(StyleOffsetRotate)
+BASIC_SERDE_FUNCS(StylePositionOrAuto)
+
+#undef BASIC_SERDE_FUNCS
 
 void Servo_CounterStyleRule_GetDescriptorCssText(
     const RawServoCounterStyleRule* rule, nsCSSCounterDesc desc,

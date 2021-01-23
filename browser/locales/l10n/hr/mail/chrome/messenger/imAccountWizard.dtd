@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Čarobnjak računa za razgovor">
+
+<!ENTITY accountProtocolTitle.label   "Mreža za razgovor">
+<!ENTITY accountProtocolInfo.label    "Odaberite mrežu vašeg računa za razgovor.">
+<!ENTITY accountProtocolField.label   "Mreža:">
+<!ENTITY accountProtocolGetMore.label "Dohvati još…">
+
+<!ENTITY accountUsernameTitle.label   "Korisničko ime">
+<!ENTITY accountUsernameDuplicate.label "Ovaj račun je već podešen!">
+
+<!ENTITY accountPasswordTitle.label   "Lozinka">
+<!ENTITY accountPasswordInfo.label    "Unesite vašu lozinku u kućicu niže.">
+<!ENTITY accountPasswordField.label   "Lozinka:">
+<!ENTITY accountPasswordManager.label "Lozinka unesena ovdje će biti pohranjena u upravitelju lozinki. Ostavite ovu kućicu praznu ako želite biti upitani za vašu lozinku prilikom svakog povezivanja na ovaj račun.">
+
+<!ENTITY accountAdvancedTitle.label   "Napredne postavke">
+<!ENTITY accountAdvancedInfo.label    "Možete preskočiti ovaj korak ukoliko želite.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Obavjesti o novoj e-pošti">
+<!ENTITY accountAliasGroupbox.caption "Lokalni pseudonimi">
+<!ENTITY accountAliasField.label      "Pseudonim:">
+<!ENTITY accountAliasInfo.label       "Ovo će biti prikazano u vašim razgovorima dok pričate, vanjski kontakti ovo neće vidjeti.">
+<!ENTITY accountProxySettings.caption "Proxy postavke">
+<!ENTITY accountProxySettings.change.label     "Izmjeni…">
+<!ENTITY accountProxySettings.change.accessKey "I">
+
+<!ENTITY accountSummaryTitle.label   "Kratki pregled">
+<!ENTITY accountSummaryInfo.label    "Kratki pregled informacija koje ste unjeli je prikazan ispod. Provjerite ih prije stvaranja računa.">
+<!ENTITY accountSummary.connectNow.label "Povežite ovaj račun sada.">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "ග්‍රාහකත්වය">
+<!ENTITY subscribeButton.label        "ග්‍රාහකත්වය ලබාගන්න">
+<!ENTITY subscribeButton.accesskey    "S">
+<!ENTITY unsubscribeButton.label      "ග්‍රාහකත්වය අත්හරින්න">
+<!ENTITY unsubscribeButton.accesskey  "U">
+<!ENTITY newGroupsTab.label           "නව සමූහ">
+<!ENTITY newGroupsTab.accesskey       "N">
+<!ENTITY refreshButton.label          "නැවුම් කරන්න">
+<!ENTITY refreshButton.accesskey      "R">
+<!ENTITY stopButton.label             "නවතන්න">
+<!ENTITY stopButton.accesskey         "T">
+<!ENTITY server.label                 "ගිණුම:">
+<!ENTITY server.accesskey             "A">
+<!ENTITY subscribedHeader.label       "දායකත්වය">
+<!-- commenting out until bug 38906 is fixed 
+<!ENTITY messagesHeader.label         "Messages"> -->
+<!ENTITY namefield.label              "මේවා අඩංතු වන අයිතම පෙන්වන්න:">
+<!ENTITY namefield.accesskey          "O">

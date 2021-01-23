@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE msgCompSecurityInfo.dtd UI for viewing security status when composing a message -->
+
+
+<!ENTITY title.label "Pašto saugumas">
+<!ENTITY subject.plaintextWarning "Pastaba: laiško temos eilutė nešifruojama.">
+<!ENTITY status.heading "Jūsų laiško turinys bus išsiųstas su tokia informacija:">
+<!ENTITY status.signed "Skaitmeninis parašas:">
+<!ENTITY status.encrypted "Šifravimas:">
+<!ENTITY status.certificates "Liudijimai:">
+<!ENTITY view.label "Peržiūra">
+<!ENTITY view.accesskey "P">
+<!ENTITY tree.recipient "Gavėjas:">
+<!ENTITY tree.status "Būsena:">
+<!ENTITY tree.issuedDate "Išdavimo data:">
+<!ENTITY tree.expiresDate "Galioja iki:">

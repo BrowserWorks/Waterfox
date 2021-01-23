@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "SingleLineTextInputTypes.h"
+#include "mozilla/dom/SingleLineTextInputTypes.h"
 
 #include "mozilla/dom/HTMLInputElement.h"
 #include "mozilla/dom/BindingDeclarations.h"
@@ -33,8 +33,7 @@ bool SingleLineTextInputTypeBase::IsTooLong() const {
     return false;
   }
 
-  int32_t textLength =
-      mInputElement->InputTextLength(mozilla::dom::CallerType::System);
+  int32_t textLength = mInputElement->InputTextLength(CallerType::System);
 
   return textLength > maxLength;
 }
@@ -47,8 +46,7 @@ bool SingleLineTextInputTypeBase::IsTooShort() const {
     return false;
   }
 
-  int32_t textLength =
-      mInputElement->InputTextLength(mozilla::dom::CallerType::System);
+  int32_t textLength = mInputElement->InputTextLength(CallerType::System);
 
   return textLength && textLength < minLength;
 }
@@ -65,26 +63,26 @@ bool SingleLineTextInputTypeBase::IsValueMissing() const {
   return IsValueEmpty();
 }
 
-bool SingleLineTextInputTypeBase::HasPatternMismatch() const {
+Maybe<bool> SingleLineTextInputTypeBase::HasPatternMismatch() const {
   if (!mInputElement->HasPatternAttribute()) {
-    return false;
+    return Some(false);
   }
 
   nsAutoString pattern;
   if (!mInputElement->GetAttr(kNameSpaceID_None, nsGkAtoms::pattern, pattern)) {
-    return false;
+    return Some(false);
   }
 
   nsAutoString value;
   GetNonFileValueInternal(value);
 
   if (value.IsEmpty()) {
-    return false;
+    return Some(false);
   }
 
   Document* doc = mInputElement->OwnerDoc();
-
-  return !nsContentUtils::IsPatternMatching(value, pattern, doc);
+  Maybe<bool> result = nsContentUtils::IsPatternMatching(value, pattern, doc);
+  return result ? Some(!*result) : Nothing();
 }
 
 /* input type=url */
@@ -116,8 +114,9 @@ bool URLInputType::HasTypeMismatch() const {
 }
 
 nsresult URLInputType::GetTypeMismatchMessage(nsAString& aMessage) {
-  return nsContentUtils::GetLocalizedString(
-      nsContentUtils::eDOM_PROPERTIES, "FormValidationInvalidURL", aMessage);
+  return nsContentUtils::GetMaybeLocalizedString(
+      nsContentUtils::eDOM_PROPERTIES, "FormValidationInvalidURL",
+      mInputElement->OwnerDoc(), aMessage);
 }
 
 /* input type=email */
@@ -154,13 +153,15 @@ bool EmailInputType::HasBadInput() const {
 }
 
 nsresult EmailInputType::GetTypeMismatchMessage(nsAString& aMessage) {
-  return nsContentUtils::GetLocalizedString(
-      nsContentUtils::eDOM_PROPERTIES, "FormValidationInvalidEmail", aMessage);
+  return nsContentUtils::GetMaybeLocalizedString(
+      nsContentUtils::eDOM_PROPERTIES, "FormValidationInvalidEmail",
+      mInputElement->OwnerDoc(), aMessage);
 }
 
 nsresult EmailInputType::GetBadInputMessage(nsAString& aMessage) {
-  return nsContentUtils::GetLocalizedString(
-      nsContentUtils::eDOM_PROPERTIES, "FormValidationInvalidEmail", aMessage);
+  return nsContentUtils::GetMaybeLocalizedString(
+      nsContentUtils::eDOM_PROPERTIES, "FormValidationInvalidEmail",
+      mInputElement->OwnerDoc(), aMessage);
 }
 
 /* static */

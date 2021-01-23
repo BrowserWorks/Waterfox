@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-fonts.xul -->
+
+<!-- LOCALIZATION NOTE : FILE 'Fonts' prefs dialog -->
+<!ENTITY  pref.fonts.title                        "字型">
+
+<!ENTITY  language.label                          "對應此種語言:">
+<!ENTITY  language.accesskey                      "t">
+
+<!ENTITY  typefaces.label                         "字體">
+<!ENTITY  sizes.label                             "大小 (像素)">
+
+<!ENTITY  proportional.label                      "比例字型:">
+<!ENTITY  proportional.accesskey                  "P">
+
+<!ENTITY  serif.label                             "襯線字型:">
+<!ENTITY  serif.accesskey                         "S">
+<!ENTITY  sans-serif.label                        "無襯線字型:">
+<!ENTITY  sans-serif.accesskey                    "n">
+<!ENTITY  monospace.label                         "等寬字型:">
+<!ENTITY  monospace.accesskey                     "M">
+<!-- LOCALIZATION NOTE (fantasy.label): 'Fantasy' means 'Ornate' -->
+<!ENTITY  fantasy.label                           "華麗字型:">
+<!ENTITY  fantasy.accesskey                       "F">
+<!ENTITY  cursive.label                           "草寫字型:">
+<!ENTITY  cursive.accesskey                       "C">
+
+<!-- LOCALIZATION NOTE (font.langGroup.latin) :
+     Translate "Latin" as the name of Latin (Roman) script, not as the name of
+     the Latin language. -->
+<!ENTITY  font.langGroup.latin                    "拉丁文">
+<!ENTITY  font.langGroup.japanese                 "日文">
+<!ENTITY  font.langGroup.trad-chinese             "正體中文（繁體，臺灣）">
+<!ENTITY  font.langGroup.simpl-chinese            "簡體中文">
+<!ENTITY  font.langGroup.trad-chinese-hk          "正體中文（繁體，香港）">
+<!ENTITY  font.langGroup.korean                   "韓文">
+<!ENTITY  font.langGroup.cyrillic                 "俄文／西里爾文字">
+<!ENTITY  font.langGroup.el                       "希臘文">
+<!ENTITY  font.langGroup.thai                     "泰文">
+<!ENTITY  font.langGroup.hebrew                   "希伯來文">
+<!ENTITY  font.langGroup.arabic                   "阿拉伯文">
+<!ENTITY  font.langGroup.devanagari               "天城體（梵文）">
+<!ENTITY  font.langGroup.tamil                    "坦米爾文">
+<!ENTITY  font.langGroup.armenian                 "亞美尼亞文">
+<!ENTITY  font.langGroup.bengali                  "孟加拉文">
+<!ENTITY  font.langGroup.canadian                 "加拿大統一音節字">
+<!ENTITY  font.langGroup.ethiopic                 "衣索比亞文">
+<!ENTITY  font.langGroup.georgian                 "喬治亞文">
+<!ENTITY  font.langGroup.gujarati                 "古吉拉特文">
+<!ENTITY  font.langGroup.gurmukhi                 "古魯穆奇字">
+<!ENTITY  font.langGroup.khmer                    "高棉文">
+<!ENTITY  font.langGroup.malayalam                "馬拉亞拉姆文">
+<!ENTITY  font.langGroup.math                     "數學方程式">
+<!ENTITY  font.langGroup.odia                     "奧里亞文">
+<!ENTITY  font.langGroup.telugu                   "泰盧固文">
+<!ENTITY  font.langGroup.kannada                  "康納達文">
+<!ENTITY  font.langGroup.sinhala                  "僧加羅文">
+<!ENTITY  font.langGroup.tibetan                  "藏文">
+<!ENTITY  font.langGroup.other                    "其他文字系統">
+<!-- Minimum font size -->
+<!ENTITY minSize.label                            "最小字型大小:">
+<!ENTITY minSize.accesskey                        "z">
+<!ENTITY minSize.none                             "無">
+
+<!-- default font type -->
+<!ENTITY  useDefaultFontSerif.label               "襯線字型 (Serif)">
+<!ENTITY  useDefaultFontSansSerif.label           "無襯線字型 (Sans Serif)">
+
+<!ENTITY  useDocumentFonts.label                  "允許文件指定其它字型">
+<!ENTITY  useDocumentFonts.accesskey              "o">
+
+<!-- leaving this stuff in for now -->
+
+<!ENTITY  header2                                 "有時候網頁指定要用某種字型時:">
+<!ENTITY  useDefaultFont.label                    "忽略網頁的要求，使用我的預設字型">
+<!ENTITY  useDefaultFont.accesskey                "U">

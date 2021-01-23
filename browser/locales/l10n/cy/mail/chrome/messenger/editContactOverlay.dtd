@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "Dileu">
+<!ENTITY editContactPanelDeleteContact.accesskey "D">
+
+<!ENTITY editContactName.label "Enw:">
+<!ENTITY editContactName.accesskey "E">
+
+<!ENTITY editContactEmail.label "E-bost:">
+<!ENTITY editContactEmail.accesskey "b">
+
+<!ENTITY editContactAddressBook.label "Llyfr Cyfeiriadau:">
+<!ENTITY editContactAddressBook.accesskey "L">
+
+<!ENTITY editContactPanelDone.label "Gorffen">
+<!ENTITY editContactPanelDone.accesskey "G">
+
+<!ENTITY contactMoveDisabledWarning.description "Nid oes modd newid y llyfr cyfeiriadau gan fod y cysylltiad mewn rhestr e-bostio.">

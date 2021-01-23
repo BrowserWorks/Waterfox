@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "Omtinken ynstelle">
+<!ENTITY reminder.add.label                                "Tafoegje">
+<!ENTITY reminder.add.accesskey                            "T">
+<!ENTITY reminder.remove.label                             "Fuortsmite">
+<!ENTITY reminder.remove.accesskey                         "F">
+
+<!ENTITY reminder.reminderDetails.label                    "Omtinkingsdetails">
+<!ENTITY reminder.action.label                             "Kies in omtinkensaksje">
+
+<!ENTITY reminder.action.alert.label                       "In warskôging toane">
+<!ENTITY reminder.action.email.label                       "Stjoer in e-mail">
+
+<!ENTITY alarm.units.minutes                               "minuten" >
+<!ENTITY alarm.units.hours                                 "oer" >
+<!ENTITY alarm.units.days                                  "dagen" >

@@ -111,7 +111,11 @@ add_task(async function() {
       );
     }
 
-    await promiseAutocompleteResultPopup(testcase.input);
+    await UrlbarTestUtils.promiseAutocompleteResultPopup({
+      window,
+      waitForFocus: SimpleTest.waitForFocus,
+      value: testcase.input,
+    });
 
     Assert.greaterOrEqual(
       UrlbarTestUtils.getResultCount(window),
@@ -128,10 +132,9 @@ add_task(async function() {
     );
     // The Quantum Bar differs from the legacy urlbar in the fact that, if
     // bookmarks are filtered out, it won't show tags for history results.
-    let expected_tags =
-      UrlbarPrefs.get("quantumbar") && !testcase.expected.typeImageVisible
-        ? []
-        : [testcase.tagName];
+    let expected_tags = !testcase.expected.typeImageVisible
+      ? []
+      : [testcase.tagName];
     Assert.deepEqual(
       result.tags,
       expected_tags,
@@ -141,7 +144,7 @@ add_task(async function() {
     if (testcase.expected.typeImageVisible) {
       Assert.equal(
         result.displayed.typeIcon,
-        'url("chrome://browser/skin/bookmark.svg")',
+        'url("chrome://browser/skin/bookmark-12.svg")',
         "Should have the star image displayed or not as expected"
       );
     } else {

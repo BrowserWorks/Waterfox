@@ -41,19 +41,25 @@ s3_bucket_paths:
 default_locales:
     - en-US
 tasktype_map:
-    checksums-signing: signing
+    beetmover-repackage: beetmover
     release-beetmover-signed-langpacks: signing
 platform_names:
     path_platform:
         by-platform:
             linux-shippable: 'linux-i686'
+            linux-devedition: 'linux-i686'
             linux64-shippable: 'linux-x86_64'
-            linux64-asan-reporter-nightly: 'linux-x86_64-asan-reporter'
+            linux64-devedition: 'linux-x86_64'
+            linux64-asan-reporter-shippable: 'linux-x86_64-asan-reporter'
             macosx64-shippable: 'mac'
+            macosx64-devedition: 'mac'
             win32-shippable: 'win32'
+            win32-devedition: 'win32'
             win64-shippable: 'win64'
+            win64-devedition: 'win64'
             win64-aarch64-shippable: 'win64-aarch64'
-            win64-asan-reporter-nightly: 'win64-asan-reporter'
+            win64-aarch64-devedition: 'win64-aarch64'
+            win64-asan-reporter-shippable: 'win64-asan-reporter'
             linux: 'linux-i686'
             linux64: 'linux-x86_64'
             macosx64: 'mac'
@@ -62,7 +68,7 @@ platform_names:
 
 default: &default
     from:
-        - checksums-signing
+        - beetmover-repackage
     all_locales: true
     description: "TO_BE_OVERRIDDEN"
     locale_prefix: '${locale}/'
@@ -76,11 +82,6 @@ mapping:
         description: "Checksums file containing size, hash, sha algorithm and filename"
         pretty_name: firefox-${version}.checksums.beet
         checksums_path: beetmover-checksums/${path_platform}/${locale}/firefox-${version}.checksums.beet
-    target.checksums.asc:
-        <<: *default
-        description: "Detached signature for the checksums file"
-        pretty_name: firefox-${version}.checksums.asc
-        checksums_path: beetmover-checksums/${path_platform}/${locale}/firefox-${version}.checksums.asc
     target-langpack.checksums:
         <<: *default
         description: "Checksums file containing size, hash, sha algorithm and filename for the langpack"

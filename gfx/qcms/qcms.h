@@ -82,8 +82,7 @@ typedef enum {
 #endif
 
 #include <stdio.h>
-
-typedef int qcms_bool;
+#include <stdbool.h>
 
 struct _qcms_transform;
 typedef struct _qcms_transform qcms_transform;
@@ -110,6 +109,7 @@ typedef enum {
 typedef enum {
 	QCMS_DATA_RGB_8,
 	QCMS_DATA_RGBA_8,
+	QCMS_DATA_BGRA_8,
 	QCMS_DATA_GRAY_8,
 	QCMS_DATA_GRAYA_8
 } qcms_data_type;
@@ -128,6 +128,13 @@ typedef struct
 	qcms_CIE_xyY green;
 	qcms_CIE_xyY blue;
 } qcms_CIE_xyYTRIPLE;
+
+qcms_profile* qcms_profile_create_rgb_with_gamma_set(
+                qcms_CIE_xyY white_point,
+                qcms_CIE_xyYTRIPLE primaries,
+                float redGamma,
+                float blueGamma,
+                float greenGamma);
 
 qcms_profile* qcms_profile_create_rgb_with_gamma(
                 qcms_CIE_xyY white_point,
@@ -152,10 +159,13 @@ void qcms_data_from_path(const char *path, void **mem, size_t *size);
 qcms_profile* qcms_profile_from_unicode_path(const wchar_t *path);
 void qcms_data_from_unicode_path(const wchar_t *path, void **mem, size_t *size);
 #endif
+
+qcms_CIE_xyY qcms_white_point_sRGB(void);
 qcms_profile* qcms_profile_sRGB(void);
+
 void qcms_profile_release(qcms_profile *profile);
 
-qcms_bool qcms_profile_is_bogus(qcms_profile *profile);
+bool qcms_profile_is_bogus(qcms_profile *profile);
 qcms_intent qcms_profile_get_rendering_intent(qcms_profile *profile);
 icColorSpaceSignature qcms_profile_get_color_space(qcms_profile *profile);
 
@@ -168,9 +178,11 @@ qcms_transform* qcms_transform_create(
 
 void qcms_transform_release(qcms_transform *);
 
-void qcms_transform_data(qcms_transform *transform, void *src, void *dest, size_t length);
+void qcms_transform_data(qcms_transform *transform, const void *src, void *dest, size_t length);
 
 void qcms_enable_iccv4();
+void qcms_enable_neon();
+void qcms_enable_avx();
 
 #ifdef  __cplusplus
 }

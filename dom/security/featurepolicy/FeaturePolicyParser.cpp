@@ -20,32 +20,44 @@ namespace {
 
 void ReportToConsoleUnsupportedFeature(Document* aDocument,
                                        const nsString& aFeatureName) {
-  const char16_t* params[] = {aFeatureName.get()};
+  if (!aDocument) {
+    return;
+  }
+
+  AutoTArray<nsString, 1> params = {aFeatureName};
 
   nsContentUtils::ReportToConsole(
       nsIScriptError::warningFlag, NS_LITERAL_CSTRING("Feature Policy"),
       aDocument, nsContentUtils::eSECURITY_PROPERTIES,
-      "FeaturePolicyUnsupportedFeatureName", params, ArrayLength(params));
+      "FeaturePolicyUnsupportedFeatureName", params);
 }
 
 void ReportToConsoleInvalidEmptyAllowValue(Document* aDocument,
                                            const nsString& aFeatureName) {
-  const char16_t* params[] = {aFeatureName.get()};
+  if (!aDocument) {
+    return;
+  }
+
+  AutoTArray<nsString, 1> params = {aFeatureName};
 
   nsContentUtils::ReportToConsole(
       nsIScriptError::warningFlag, NS_LITERAL_CSTRING("Feature Policy"),
       aDocument, nsContentUtils::eSECURITY_PROPERTIES,
-      "FeaturePolicyInvalidEmptyAllowValue", params, ArrayLength(params));
+      "FeaturePolicyInvalidEmptyAllowValue", params);
 }
 
 void ReportToConsoleInvalidAllowValue(Document* aDocument,
                                       const nsString& aValue) {
-  const char16_t* params[] = {aValue.get()};
+  if (!aDocument) {
+    return;
+  }
+
+  AutoTArray<nsString, 1> params = {aValue};
 
   nsContentUtils::ReportToConsole(
       nsIScriptError::warningFlag, NS_LITERAL_CSTRING("Feature Policy"),
       aDocument, nsContentUtils::eSECURITY_PROPERTIES,
-      "FeaturePolicyInvalidAllowValue", params, ArrayLength(params));
+      "FeaturePolicyInvalidAllowValue", params);
 }
 
 }  // namespace
@@ -58,7 +70,7 @@ bool FeaturePolicyParser::ParseString(const nsAString& aPolicy,
                                       nsTArray<Feature>& aParsedFeatures) {
   MOZ_ASSERT(aSelfOrigin);
 
-  nsTArray<nsTArray<nsString>> tokens;
+  nsTArray<CopyableTArray<nsString>> tokens;
   PolicyTokenizer::tokenizePolicy(aPolicy, tokens);
 
   nsTArray<Feature> parsedFeatures;
@@ -113,7 +125,7 @@ bool FeaturePolicyParser::ParseString(const nsAString& aPolicy,
           continue;
         }
 
-        nsCOMPtr<nsIPrincipal> origin = BasePrincipal::CreateCodebasePrincipal(
+        nsCOMPtr<nsIPrincipal> origin = BasePrincipal::CreateContentPrincipal(
             uri, BasePrincipal::Cast(aSelfOrigin)->OriginAttributesRef());
         if (NS_WARN_IF(!origin)) {
           ReportToConsoleInvalidAllowValue(aDocument, curVal);

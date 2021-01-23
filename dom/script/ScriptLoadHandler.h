@@ -12,6 +12,7 @@
 #define mozilla_dom_ScriptLoadHandler_h
 
 #include "nsIIncrementalStreamLoader.h"
+#include "mozilla/UniquePtr.h"
 
 namespace mozilla {
 namespace dom {
@@ -22,15 +23,26 @@ class SRICheckDataVerifier;
 
 class ScriptLoadHandler final : public nsIIncrementalStreamLoaderObserver {
  public:
-  explicit ScriptLoadHandler(ScriptLoader* aScriptLoader,
-                             ScriptLoadRequest* aRequest,
-                             SRICheckDataVerifier* aSRIDataVerifier);
+  explicit ScriptLoadHandler(
+      ScriptLoader* aScriptLoader, ScriptLoadRequest* aRequest,
+      UniquePtr<SRICheckDataVerifier>&& aSRIDataVerifier);
 
   NS_DECL_ISUPPORTS
   NS_DECL_NSIINCREMENTALSTREAMLOADEROBSERVER
 
  private:
   virtual ~ScriptLoadHandler();
+
+  /*
+   * Decode the given data into the already-allocated internal
+   * |ScriptTextBuffer<Unit>|.
+   *
+   * This function is intended to be called only by |DecodeRawData| after
+   * determining which sort of |ScriptTextBuffer<Unit>| has been allocated.
+   */
+  template <typename Unit>
+  nsresult DecodeRawDataHelper(const uint8_t* aData, uint32_t aDataLength,
+                               bool aEndOfStream);
 
   /*
    * Once the charset is found by the EnsureDecoder function, we can
@@ -40,15 +52,28 @@ class ScriptLoadHandler final : public nsIIncrementalStreamLoaderObserver {
                          bool aEndOfStream);
 
   /*
-   * Discover the charset by looking at the stream data, the script
-   * tag, and other indicators.  Returns true if charset has been
-   * discovered.
+   * Discover the charset by looking at the stream data, the script tag, and
+   * other indicators.  Returns true if charset has been discovered.
    */
   bool EnsureDecoder(nsIIncrementalStreamLoader* aLoader, const uint8_t* aData,
+                     uint32_t aDataLength, bool aEndOfStream) {
+    // Check if the decoder has already been created.
+    if (mDecoder) {
+      return true;
+    }
+
+    return TrySetDecoder(aLoader, aData, aDataLength, aEndOfStream);
+  }
+
+  /*
+   * Attempt to determine how script data will be decoded, when such
+   * determination hasn't already been made.  (If you don't know whether it's
+   * been made yet, use |EnsureDecoder| above instead.)  Return false if there
+   * isn't enough information yet to make the determination, or true if a
+   * determination was made.
+   */
+  bool TrySetDecoder(nsIIncrementalStreamLoader* aLoader, const uint8_t* aData,
                      uint32_t aDataLength, bool aEndOfStream);
-  bool EnsureDecoder(nsIIncrementalStreamLoader* aLoader, const uint8_t* aData,
-                     uint32_t aDataLength, bool aEndOfStream,
-                     nsCString& oCharset);
 
   /*
    * When streaming bytecode, we have the opportunity to fallback early if SRI
@@ -66,13 +91,16 @@ class ScriptLoadHandler final : public nsIIncrementalStreamLoaderObserver {
   RefPtr<ScriptLoadRequest> mRequest;
 
   // SRI data verifier.
-  nsAutoPtr<SRICheckDataVerifier> mSRIDataVerifier;
+  UniquePtr<SRICheckDataVerifier> mSRIDataVerifier;
 
   // Status of SRI data operations.
   nsresult mSRIStatus;
 
   // Unicode decoder for charset.
   mozilla::UniquePtr<mozilla::Decoder> mDecoder;
+
+  // Flipped to true after calling NotifyStart the first time
+  bool mPreloadStartNotified = false;
 };
 
 }  // namespace dom

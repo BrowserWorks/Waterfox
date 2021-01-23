@@ -16,7 +16,7 @@
 }
 
 #filter-container.dragging {
-  -moz-user-select: none;
+  user-select: none;
 }
 
 #filter-container .filters-list,
@@ -46,6 +46,8 @@
   width: 0;
   border-left: none;
   padding-left: 0;
+  /* To hide also element's children, not on only the element */
+  overflow: hidden;
 }
 
 #filter-container.show-presets .filters-list {
@@ -96,7 +98,7 @@
 }
 
 #filter-container .filter-name label {
-  -moz-user-select: none;
+  user-select: none;
   flex-grow: 1;
 }
 

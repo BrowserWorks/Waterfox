@@ -68,9 +68,6 @@ pub static UTF8_DATA: Utf8Data = Utf8Data {
 // END GENERATED CODE
 
 pub fn utf8_valid_up_to(src: &[u8]) -> usize {
-    // This algorithm differs from the UTF-8 validation algorithm, but making
-    // this one consistent with that one makes this slower for reasons I don't
-    // understand.
     let mut read = 0;
     'outer: loop {
         let mut byte = {
@@ -96,9 +93,6 @@ pub fn utf8_valid_up_to(src: &[u8]) -> usize {
                 // At this point, `byte` is not included in `read`, because we
                 // don't yet know that a) the UTF-8 sequence is valid and b) that there
                 // is output space if it is an astral sequence.
-                // We know, thanks to `ascii_to_basic_latin` that there is output
-                // space for at least one UTF-16 code unit, so no need to check
-                // for output space in the BMP cases.
                 // Inspecting the lead byte directly is faster than what the
                 // std lib does!
                 if unsafe { likely(in_inclusive_range8(byte, 0xC2, 0xDF)) } {
@@ -236,9 +230,6 @@ pub fn utf8_valid_up_to(src: &[u8]) -> usize {
 
 #[cfg_attr(feature = "cargo-clippy", allow(never_loop, cyclomatic_complexity))]
 pub fn convert_utf8_to_utf16_up_to_invalid(src: &[u8], dst: &mut [u16]) -> (usize, usize) {
-    // This algorithm differs from the UTF-8 validation algorithm, but making
-    // this one consistent with that one makes this slower for reasons I don't
-    // understand.
     let mut read = 0;
     let mut written = 0;
     'outer: loop {
@@ -479,6 +470,10 @@ impl Utf8Decoder {
         VariantDecoder::Utf8(Utf8Decoder::new_inner())
     }
 
+    pub fn in_neutral_state(&self) -> bool {
+        self.bytes_needed == 0
+    }
+
     fn extra_from_state(&self) -> usize {
         if self.bytes_needed == 0 {
             0
@@ -612,7 +607,7 @@ impl Utf8Decoder {
 
 #[cfg_attr(feature = "cargo-clippy", allow(never_loop))]
 #[inline(never)]
-pub fn convert_utf16_to_utf16_partial_inner(src: &[u16], dst: &mut [u8]) -> (usize, usize) {
+pub fn convert_utf16_to_utf8_partial_inner(src: &[u16], dst: &mut [u8]) -> (usize, usize) {
     let mut read = 0;
     let mut written = 0;
     'outer: loop {
@@ -751,7 +746,7 @@ pub fn convert_utf16_to_utf16_partial_inner(src: &[u16], dst: &mut [u8]) -> (usi
 }
 
 #[inline(never)]
-pub fn convert_utf16_to_utf16_partial_tail(src: &[u16], dst: &mut [u8]) -> (usize, usize) {
+pub fn convert_utf16_to_utf8_partial_tail(src: &[u16], dst: &mut [u8]) -> (usize, usize) {
     // Everything below is cold code!
     let mut read = 0;
     let mut written = 0;
@@ -1633,5 +1628,4 @@ mod tests {
             assert_eq!(output[0], 0x00E4);
         }
     }
-
 }

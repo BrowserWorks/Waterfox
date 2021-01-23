@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label "Памылка загрузкі старонкі">
+<!ENTITY gopherAddon.title "Пратакол Gopher">
+<!ENTITY gopherAddon.shortDesc "gopher – не зарэгістраваны пратакол.">
+<!ENTITY gopherAddon.longDesc "Адрас прызначае пратакол gopher, які больш не падтрымліваецца, таму азіральнік не можа злучыцца з пляцоўкай. Вы можаце ўсталяваць дадатак сумяшчальнасці з Дадаткаў Mozilla, каб даступіцца да паслугача.">
+<!ENTITY goToAddOn.label "Перайсці на старонку дадатка">

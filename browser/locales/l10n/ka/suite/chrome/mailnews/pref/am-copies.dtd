@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!ENTITY copyAndFolderTitle.label "ასლები და საქაღალდეები">
+<!ENTITY sendingPrefix.label "წერილის გაგზავნისას, ავტომატურად: ">
+<!ENTITY fccMailFolder.label "ასლის განთავსება:">
+<!ENTITY fccMailFolder.accesskey "P">
+<!ENTITY fccReplyFollowsParent.label "პასუხების მოთავსება დედნის წერილის საქაღალდეში">
+<!ENTITY fccReplyFollowsParent.accesskey "R">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "ასლის გაგზავნა (Cc) ამ მისამართებზე:">
+<!ENTITY ccAddress.accesskey "C">
+<!ENTITY ccAddressList.placeholder "დაყავით მისამართები მძიმით">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "ფარული ასლები ამ მისამართებზე:">
+<!ENTITY bccAddress.accesskey "B">
+<!ENTITY bccAddressList.placeholder "დაყავით მისამართები მძიმით">
+<!ENTITY saveMessageDlg.label "თანხმობის დიალოგის ჩვენება წერილების შენახვისას">
+<!ENTITY saveMessageDlg.accesskey "w">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "„გაგზავნილი“ წერილების საქაღალდე:">
+<!ENTITY sentFolderOn.accesskey "S">
+<!ENTITY sentInOtherFolder.label "სხვა საქაღალდე:">
+<!ENTITY sentInOtherFolder.accesskey "O">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "წერილთა არქივები">
+<!ENTITY keepArchives.label "წერილთა არქივების შენახვა აქ:">
+<!ENTITY keepArchives.accesskey "K">
+<!ENTITY archiveHierarchyButton.label "არქივის პარამეტრები…">
+<!ENTITY archiveHierarchyButton.accesskey "A">
+<!ENTITY archivesFolderOn.label "საქაღალდეში „არქივი“:">
+<!ENTITY archivesFolderOn.accesskey "n">
+<!ENTITY archiveInOtherFolder.label "სხვა:">
+<!ENTITY archiveInOtherFolder.accesskey "h">
+<!ENTITY specialFolders.label "წინასწარი ნამუშევრები და ნიმუშები">
+<!ENTITY keepDrafts2.label "წინასწარი ნამუშევრის დატოვება:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "„წინასწარი“ ნამუშევრების საქაღალდე:">
+<!ENTITY draftsFolderOn.accesskey "ე">
+<!ENTITY draftInOtherFolder.label "სხვა:">
+<!ENTITY draftInOtherFolder.accesskey "ხ">
+<!ENTITY keepTemplates.label "წერილთა თარგების შენახვა:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "საქაღალდეში „ნიმუშები“:">
+<!ENTITY templatesFolderOn.accesskey "m">
+<!ENTITY templateInOtherFolder.label "სხვა:">
+<!ENTITY templateInOtherFolder.accesskey "e">

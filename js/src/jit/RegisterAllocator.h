@@ -21,6 +21,7 @@ namespace jit {
 
 class LIRGenerator;
 
+#ifdef DEBUG
 // Structure for running a liveness analysis on a finished register allocation.
 // This analysis can be used for two purposes:
 //
@@ -38,9 +39,8 @@ struct AllocationIntegrityState {
 
   // Perform the liveness analysis on the graph, and assert on an invalid
   // allocation. This must be called after register allocation, to pick up
-  // all assigned physical values. If populateSafepoints is specified,
-  // safepoints will be filled in with liveness information.
-  MOZ_MUST_USE bool check(bool populateSafepoints);
+  // all assigned physical values.
+  MOZ_MUST_USE bool check();
 
  private:
   LIRGraph& graph;
@@ -56,7 +56,7 @@ struct AllocationIntegrityState {
     Vector<LDefinition, 0, SystemAllocPolicy> temps;
     Vector<LDefinition, 1, SystemAllocPolicy> outputs;
 
-    InstructionInfo() {}
+    InstructionInfo() = default;
 
     InstructionInfo(const InstructionInfo& o) {
       AutoEnterOOMUnsafeRegion oomUnsafe;
@@ -70,7 +70,7 @@ struct AllocationIntegrityState {
 
   struct BlockInfo {
     Vector<InstructionInfo, 5, SystemAllocPolicy> phis;
-    BlockInfo() {}
+    BlockInfo() = default;
     BlockInfo(const BlockInfo& o) {
       AutoEnterOOMUnsafeRegion oomUnsafe;
       if (!phis.appendAll(o.phis)) {
@@ -93,7 +93,7 @@ struct AllocationIntegrityState {
     // Order of insertion into seen, for sorting.
     uint32_t index;
 
-    typedef IntegrityItem Lookup;
+    using Lookup = IntegrityItem;
     static HashNumber hash(const IntegrityItem& item) {
       HashNumber hash = item.alloc.hash();
       hash = mozilla::RotateLeft(hash, 4) ^ item.vreg;
@@ -115,16 +115,15 @@ struct AllocationIntegrityState {
   IntegrityItemSet seen;
 
   MOZ_MUST_USE bool checkIntegrity(LBlock* block, LInstruction* ins,
-                                   uint32_t vreg, LAllocation alloc,
-                                   bool populateSafepoints);
-  MOZ_MUST_USE bool checkSafepointAllocation(LInstruction* ins, uint32_t vreg,
-                                             LAllocation alloc,
-                                             bool populateSafepoints);
+                                   uint32_t vreg, LAllocation alloc);
+  void checkSafepointAllocation(LInstruction* ins, uint32_t vreg,
+                                LAllocation alloc);
   MOZ_MUST_USE bool addPredecessor(LBlock* block, uint32_t vreg,
                                    LAllocation alloc);
 
   void dump();
 };
+#endif  // DEBUG
 
 // Represents with better-than-instruction precision a position in the
 // instruction stream.

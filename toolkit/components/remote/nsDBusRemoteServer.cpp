@@ -7,14 +7,10 @@
 
 #include "nsDBusRemoteServer.h"
 
-#include "nsIBaseWindow.h"
-#include "nsIDocShell.h"
 #include "nsPIDOMWindow.h"
 #include "mozilla/ModuleUtils.h"
 #include "mozilla/Base64.h"
-#include "nsIServiceManager.h"
 #include "nsIWidget.h"
-#include "nsIAppShellService.h"
 #include "nsAppShellCID.h"
 #include "nsPrintfCString.h"
 
@@ -27,7 +23,7 @@
 
 #include <dlfcn.h>
 
-const char* introspect_template =
+static const char* introspect_template =
     "<!DOCTYPE node PUBLIC \"-//freedesktop//DTD D-BUS Object Introspection "
     "1.0//EN\"\n"
     "\"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd\";>\n"

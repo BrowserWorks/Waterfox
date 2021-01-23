@@ -62,8 +62,8 @@ class DataViewObject : public ArrayBufferViewObject {
       Handle<ArrayBufferObjectMaybeShared*> arrayBuffer, HandleObject proto);
 
  public:
-  static const Class class_;
-  static const Class protoClass_;
+  static const JSClass class_;
+  static const JSClass protoClass_;
 
   static Value byteOffsetValue(const DataViewObject* view) {
     Value v = view->getFixedSlot(BYTEOFFSET_SLOT);
@@ -80,6 +80,14 @@ class DataViewObject : public ArrayBufferViewObject {
   uint32_t byteOffset() const { return byteOffsetValue(this).toInt32(); }
 
   uint32_t byteLength() const { return byteLengthValue(this).toInt32(); }
+
+  static bool isOriginalByteOffsetGetter(Native native) {
+    return native == byteOffsetGetter;
+  }
+
+  static bool isOriginalByteLengthGetter(Native native) {
+    return native == byteLengthGetter;
+  }
 
   static bool construct(JSContext* cx, unsigned argc, Value* vp);
 

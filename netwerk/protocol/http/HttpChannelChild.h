@@ -17,20 +17,19 @@
 #include "mozilla/net/ChannelEventQueue.h"
 
 #include "nsIStreamListener.h"
-#include "nsILoadGroup.h"
 #include "nsIInterfaceRequestor.h"
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsIProgressEventSink.h"
 #include "nsICacheInfoChannel.h"
 #include "nsIApplicationCache.h"
 #include "nsIApplicationCacheChannel.h"
-#include "nsIUploadChannel2.h"
 #include "nsIResumableChannel.h"
 #include "nsIProxiedChannel.h"
 #include "nsIAsyncVerifyRedirectCallback.h"
 #include "nsIChildChannel.h"
 #include "nsIHttpChannelChild.h"
 #include "nsIDivertableChannel.h"
+#include "nsIMultiPartChannel.h"
 #include "nsIThreadRetargetableRequest.h"
 #include "mozilla/net/DNS.h"
 
@@ -65,6 +64,7 @@ class HttpChannelChild final : public PHttpChannelChild,
                                public nsIChildChannel,
                                public nsIHttpChannelChild,
                                public nsIDivertableChannel,
+                               public nsIMultiPartChannel,
                                public nsIThreadRetargetableRequest,
                                public NeckoTargetHolder {
   virtual ~HttpChannelChild();
@@ -79,6 +79,7 @@ class HttpChannelChild final : public PHttpChannelChild,
   NS_DECL_NSICHILDCHANNEL
   NS_DECL_NSIHTTPCHANNELCHILD
   NS_DECL_NSIDIVERTABLECHANNEL
+  NS_DECL_NSIMULTIPARTCHANNEL
   NS_DECL_NSITHREADRETARGETABLEREQUEST
   NS_DECLARE_STATIC_IID_ACCESSOR(HTTP_CHANNEL_CHILD_IID)
 
@@ -101,6 +102,7 @@ class HttpChannelChild final : public PHttpChannelChild,
   NS_IMETHOD RedirectTo(nsIURI* newURI) override;
   NS_IMETHOD UpgradeToSecure() override;
   NS_IMETHOD GetProtocolVersion(nsACString& aProtocolVersion) override;
+  void DoDiagnosticAssertWhenOnStopNotCalledOnDestroy() override;
   // nsIHttpChannelInternal
   NS_IMETHOD SetupFallbackChannel(const char* aFallbackKey) override;
   // nsISupportsPriority
@@ -112,15 +114,10 @@ class HttpChannelChild final : public PHttpChannelChild,
   // nsIResumableChannel
   NS_IMETHOD ResumeAt(uint64_t startPos, const nsACString& entityID) override;
 
-  // IPDL holds a reference while the PHttpChannel protocol is live (starting at
-  // AsyncOpen, and ending at either OnStopRequest or any IPDL error, either of
-  // which call NeckoChild::DeallocPHttpChannelChild()).
-  void AddIPDLReference();
-  void ReleaseIPDLReference();
+  nsresult SetReferrerHeader(const nsACString& aReferrer,
+                             bool aRespectBeforeConnect) override;
 
-  nsresult SetReferrerHeader(const nsACString& aReferrer) override;
-
-  MOZ_MUST_USE bool IsSuspended();
+  [[nodiscard]] bool IsSuspended();
 
   void FlushedForDiversion();
 
@@ -135,19 +132,19 @@ class HttpChannelChild final : public PHttpChannelChild,
 
  protected:
   mozilla::ipc::IPCResult RecvOnStartRequest(
-      const nsresult& channelStatus, const nsHttpResponseHead& responseHead,
-      const bool& useResponseHead, const nsHttpHeaderArray& requestHeaders,
-      const ParentLoadInfoForwarderArgs& loadInfoForwarder,
-      const bool& isFromCache, const bool& isRacing,
-      const bool& cacheEntryAvailable, const uint64_t& cacheEntryId,
-      const int32_t& cacheFetchCount, const uint32_t& cacheExpirationTime,
-      const nsCString& cachedCharset,
-      const nsCString& securityInfoSerialization, const NetAddr& selfAddr,
-      const NetAddr& peerAddr, const int16_t& redirectCount,
-      const uint32_t& cacheKey, const nsCString& altDataType,
-      const int64_t& altDataLen, const bool& deliveringAltData,
-      const bool& aApplyConversion, const bool& aIsResolvedByTRR,
-      const ResourceTimingStruct& aTiming) override;
+      const nsHttpResponseHead& aResponseHead, const bool& aUseResponseHead,
+      const nsHttpHeaderArray& aRequestHeaders,
+      const HttpChannelOnStartRequestArgs& aArgs) override;
+  mozilla::ipc::IPCResult RecvOnTransportAndData(
+      const nsresult& aChannelStatus, const nsresult& aTransportStatus,
+      const uint64_t& aOffset, const uint32_t& aCount,
+      const nsCString& aData) override;
+
+  mozilla::ipc::IPCResult RecvOnStopRequest(
+      const nsresult& aChannelStatus, const ResourceTimingStructArgs& aTiming,
+      const TimeStamp& aLastActiveTabOptHit,
+      const nsHttpHeaderArray& aResponseTrailers,
+      nsTArray<ConsoleReportCollected>&& aConsoleReports) override;
   mozilla::ipc::IPCResult RecvFailedAsyncOpen(const nsresult& status) override;
   mozilla::ipc::IPCResult RecvRedirect1Begin(
       const uint32_t& registrarId, const URIParams& newURI,
@@ -155,7 +152,8 @@ class HttpChannelChild final : public PHttpChannelChild,
       const ParentLoadInfoForwarderArgs& loadInfoForwarder,
       const nsHttpResponseHead& responseHead,
       const nsCString& securityInfoSerialization, const uint64_t& channelId,
-      const NetAddr& oldPeerAddr) override;
+      const NetAddr& oldPeerAddr,
+      const ResourceTimingStructArgs& aTiming) override;
   mozilla::ipc::IPCResult RecvRedirect3Complete() override;
   mozilla::ipc::IPCResult RecvAssociateApplicationCache(
       const nsCString& groupID, const nsCString& clientID) override;
@@ -182,6 +180,23 @@ class HttpChannelChild final : public PHttpChannelChild,
 
   mozilla::ipc::IPCResult RecvAltDataCacheInputStreamAvailable(
       const Maybe<IPCStream>& aStream) override;
+
+  mozilla::ipc::IPCResult RecvOverrideReferrerInfoDuringBeginConnect(
+      nsIReferrerInfo* aReferrerInfo) override;
+
+  mozilla::ipc::IPCResult RecvNotifyClassificationFlags(
+      const uint32_t& aClassificationFlags, const bool& aIsThirdParty) override;
+
+  mozilla::ipc::IPCResult RecvNotifyFlashPluginStateChanged(
+      const nsIHttpChannel::FlashPluginState& aState) override;
+
+  mozilla::ipc::IPCResult RecvSetClassifierMatchedInfo(
+      const ClassifierInfo& info) override;
+
+  mozilla::ipc::IPCResult RecvSetClassifierMatchedTrackingInfo(
+      const ClassifierInfo& info) override;
+
+  mozilla::ipc::IPCResult RecvOnAfterLastPart(const nsresult& aStatus) override;
 
   virtual void ActorDestroy(ActorDestroyReason aWhy) override;
 
@@ -214,6 +229,11 @@ class HttpChannelChild final : public PHttpChannelChild,
                                  const nsAString& aURL,
                                  const nsAString& aContentType) override;
 
+  mozilla::ipc::IPCResult RecvOnProgress(const int64_t& aProgress,
+                                         const int64_t& aProgressMax) override;
+
+  mozilla::ipc::IPCResult RecvOnStatus(const nsresult& aStatus) override;
+
  private:
   // We want to handle failure result of AsyncOpen, hence AsyncOpen calls the
   // Internal method
@@ -227,7 +247,7 @@ class HttpChannelChild final : public PHttpChannelChild,
     OverrideRunnable(HttpChannelChild* aChannel, HttpChannelChild* aNewChannel,
                      InterceptStreamListener* aListener, nsIInputStream* aInput,
                      nsIInterceptedBodyCallback* aCallback,
-                     nsAutoPtr<nsHttpResponseHead>& aHead,
+                     UniquePtr<nsHttpResponseHead>&& aHead,
                      nsICacheInfoChannel* aCacheInfo);
 
     NS_IMETHOD Run() override;
@@ -239,7 +259,7 @@ class HttpChannelChild final : public PHttpChannelChild,
     RefPtr<InterceptStreamListener> mListener;
     nsCOMPtr<nsIInputStream> mInput;
     nsCOMPtr<nsIInterceptedBodyCallback> mCallback;
-    nsAutoPtr<nsHttpResponseHead> mHead;
+    UniquePtr<nsHttpResponseHead> mHead;
     nsCOMPtr<nsICacheInfoChannel> mSynthesizedCacheInfo;
   };
 
@@ -252,7 +272,7 @@ class HttpChannelChild final : public PHttpChannelChild,
   // Get event target for ODA.
   already_AddRefed<nsIEventTarget> GetODATarget();
 
-  MOZ_MUST_USE nsresult ContinueAsyncOpen();
+  [[nodiscard]] nsresult ContinueAsyncOpen();
 
   // Callbacks while receiving OnTransportAndData/OnStopRequest/OnProgress/
   // OnStatus/FlushedForDiversion/DivertMessages on background IPC channel.
@@ -261,26 +281,12 @@ class HttpChannelChild final : public PHttpChannelChild,
                                  const uint64_t& aOffset,
                                  const uint32_t& aCount,
                                  const nsCString& aData);
-  void ProcessOnStopRequest(const nsresult& aStatusCode,
-                            const ResourceTimingStruct& aTiming,
-                            const nsHttpHeaderArray& aResponseTrailers);
-  void ProcessOnProgress(const int64_t& aProgress, const int64_t& aProgressMax);
-  void ProcessOnStatus(const nsresult& aStatus);
+  void ProcessOnStopRequest(
+      const nsresult& aChannelStatus, const ResourceTimingStructArgs& aTiming,
+      const nsHttpHeaderArray& aResponseTrailers,
+      const nsTArray<ConsoleReportCollected>& aConsoleReports);
   void ProcessFlushedForDiversion();
   void ProcessDivertMessages();
-  void ProcessNotifyChannelClassifierProtectionDisabled(
-      uint32_t aAcceptedReason);
-  void ProcessNotifyCookieAllowed();
-  void ProcessNotifyCookieBlocked(uint32_t aRejectedReason);
-  void ProcessNotifyClassificationFlags(uint32_t aClassificationFlags,
-                                        bool aIsThirdParty);
-  void ProcessNotifyFlashPluginStateChanged(
-      nsIHttpChannel::FlashPluginState aState);
-  void ProcessSetClassifierMatchedInfo(const nsCString& aList,
-                                       const nsCString& aProvider,
-                                       const nsCString& aFullHash);
-  void ProcessSetClassifierMatchedTrackingInfo(const nsCString& aLists,
-                                               const nsCString& aFullHashes);
 
   // Return true if we need to tell the parent the size of unreported received
   // data
@@ -307,7 +313,7 @@ class HttpChannelChild final : public PHttpChannelChild,
   // Override this channel's pending response with a synthesized one. The
   // content will be asynchronously read from the pump.
   void OverrideWithSynthesizedResponse(
-      nsAutoPtr<nsHttpResponseHead>& aResponseHead,
+      UniquePtr<nsHttpResponseHead>& aResponseHead,
       nsIInputStream* aSynthesizedInput,
       nsIInterceptedBodyCallback* aSynthesizedCallback,
       InterceptStreamListener* aStreamListener,
@@ -334,7 +340,6 @@ class HttpChannelChild final : public PHttpChannelChild,
   RefPtr<InterceptStreamListener> mInterceptListener;
   // Needed to call AsyncOpen in FinishInterceptedRedirect
   nsCOMPtr<nsIStreamListener> mInterceptedRedirectListener;
-  nsCOMPtr<nsISupports> mInterceptedRedirectContext;
 
   // Proxy release all members above on main thread.
   void ReleaseMainThreadOnlyReferences();
@@ -395,10 +400,12 @@ class HttpChannelChild final : public PHttpChannelChild,
   int32_t mCacheFetchCount;
   uint32_t mCacheExpirationTime;
 
+  // If we're handling a multi-part response, then this is set to the current
+  // part ID during OnStartRequest.
+  Maybe<uint32_t> mMultiPartID;
+
   // To ensure only one SendDeletingChannel is triggered.
   Atomic<bool> mDeletingChannelSent;
-
-  Atomic<bool> mIPCOpen;
 
   Atomic<bool, ReleaseAcquire> mUnknownDecoderInvolved;
 
@@ -414,6 +421,13 @@ class HttpChannelChild final : public PHttpChannelChild,
   Atomic<bool, SequentiallyConsistent> mCacheNeedToReportBytesReadInitialized;
   // True if we need to tell the parent the size of unreported received data
   Atomic<bool, SequentiallyConsistent> mNeedToReportBytesRead;
+
+#ifdef MOZ_DIAGNOSTIC_ASSERT_ENABLED
+  bool mDoDiagnosticAssertWhenOnStopNotCalledOnDestroy = false;
+  bool mAsyncOpenSucceeded = false;
+  bool mSuccesfullyRedirected = false;
+  Maybe<ActorDestroyReason> mActorDestroyReason;
+#endif
 
   uint8_t mCacheEntryAvailable : 1;
   uint8_t mAltDataCacheEntryAvailable : 1;
@@ -459,38 +473,32 @@ class HttpChannelChild final : public PHttpChannelChild,
   // is synthesized.
   uint8_t mSuspendParentAfterSynthesizeResponse : 1;
 
+  // True if this channel is a multi-part channel, and the last part
+  // is currently being processed.
+  uint8_t mIsLastPartOfMultiPart : 1;
+
   void FinishInterceptedRedirect();
   void CleanupRedirectingChannel(nsresult rv);
 
   // true after successful AsyncOpen until OnStopRequest completes.
-  bool RemoteChannelExists() { return mIPCOpen && !mKeptAlive; }
+  bool RemoteChannelExists() { return CanSend() && !mKeptAlive; }
 
   void AssociateApplicationCache(const nsCString& groupID,
                                  const nsCString& clientID);
-  void OnStartRequest(
-      const nsresult& channelStatus, const nsHttpResponseHead& responseHead,
-      const bool& useResponseHead, const nsHttpHeaderArray& requestHeaders,
-      const ParentLoadInfoForwarderArgs& loadInfoForwarder,
-      const bool& isFromCache, const bool& isRacing,
-      const bool& cacheEntryAvailable, const uint64_t& cacheEntryId,
-      const int32_t& cacheFetchCount, const uint32_t& cacheExpirationTime,
-      const nsCString& cachedCharset,
-      const nsCString& securityInfoSerialization, const NetAddr& selfAddr,
-      const NetAddr& peerAddr, const uint32_t& cacheKey,
-      const nsCString& altDataType, const int64_t& altDataLen,
-      const bool& deliveringAltData, const bool& aApplyConversion,
-      const bool& aIsResolvedByTRR, const ResourceTimingStruct& aTiming);
+  void OnStartRequest(const nsHttpResponseHead& aResponseHead,
+                      const bool& aUseResponseHead,
+                      const nsHttpHeaderArray& aRequestHeaders,
+                      const HttpChannelOnStartRequestArgs& aArgs);
   void MaybeDivertOnData(const nsCString& data, const uint64_t& offset,
                          const uint32_t& count);
   void OnTransportAndData(const nsresult& channelStatus, const nsresult& status,
                           const uint64_t& offset, const uint32_t& count,
                           const nsCString& data);
   void OnStopRequest(const nsresult& channelStatus,
-                     const ResourceTimingStruct& timing,
-                     const nsHttpHeaderArray& aResponseTrailers);
+                     const ResourceTimingStructArgs& timing,
+                     const nsHttpHeaderArray& aResponseTrailers,
+                     const nsTArray<ConsoleReportCollected>& aConsoleReports);
   void MaybeDivertOnStop(const nsresult& aChannelStatus);
-  void OnProgress(const int64_t& progress, const int64_t& progressMax);
-  void OnStatus(const nsresult& status);
   void FailedAsyncOpen(const nsresult& status);
   void HandleAsyncAbort();
   void Redirect1Begin(const uint32_t& registrarId, const URIParams& newUri,
@@ -499,18 +507,21 @@ class HttpChannelChild final : public PHttpChannelChild,
                       const ParentLoadInfoForwarderArgs& loadInfoForwarder,
                       const nsHttpResponseHead& responseHead,
                       const nsACString& securityInfoSerialization,
-                      const uint64_t& channelId);
+                      const uint64_t& channelId,
+                      const ResourceTimingStructArgs& timing);
   bool Redirect3Complete(OverrideRunnable* aRunnable);
   void DeleteSelf();
   void DoNotifyListener();
   void ContinueDoNotifyListener();
+  void OnAfterLastPart(const nsresult& aStatus);
+  void MaybeConnectToSocketProcess();
 
   // Create a a new channel to be used in a redirection, based on the provided
   // response headers.
-  MOZ_MUST_USE nsresult SetupRedirect(nsIURI* uri,
-                                      const nsHttpResponseHead* responseHead,
-                                      const uint32_t& redirectFlags,
-                                      nsIChannel** outChannel);
+  [[nodiscard]] nsresult SetupRedirect(nsIURI* uri,
+                                       const nsHttpResponseHead* responseHead,
+                                       const uint32_t& redirectFlags,
+                                       nsIChannel** outChannel);
 
   // Perform a redirection without communicating with the parent process at all.
   void BeginNonIPCRedirect(nsIURI* responseURI,
@@ -523,27 +534,11 @@ class HttpChannelChild final : public PHttpChannelChild,
   // Collect telemetry for the successful rate of OMT.
   void CollectOMTTelemetry();
 
-  friend class AssociateApplicationCacheEvent;
-  friend class StartRequestEvent;
-  friend class StopRequestEvent;
-  friend class TransportAndDataEvent;
-  friend class MaybeDivertOnDataHttpEvent;
-  friend class MaybeDivertOnStopHttpEvent;
-  friend class ProgressEvent;
-  friend class StatusEvent;
-  friend class FailedAsyncOpenEvent;
-  friend class Redirect1Event;
-  friend class Redirect3Event;
-  friend class DeleteSelfEvent;
-  friend class HttpFlushedForDiversionEvent;
-  friend class CancelEvent;
   friend class HttpAsyncAborter<HttpChannelChild>;
   friend class InterceptStreamListener;
   friend class InterceptedChannelContent;
-  friend class SyntheticDiversionListener;
   friend class HttpBackgroundChannelChild;
-  friend class NeckoTargetChannelEvent<HttpChannelChild>;
-  friend class ContinueDoNotifyListenerEvent;
+  friend class NeckoTargetChannelFunctionEvent;
 };
 
 NS_DEFINE_STATIC_IID_ACCESSOR(HttpChannelChild, HTTP_CHANNEL_CHILD_IID)

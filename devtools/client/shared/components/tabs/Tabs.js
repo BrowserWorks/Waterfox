@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -200,12 +198,24 @@ define(function(require, exports, module) {
       let activeTab = this.state.activeTab;
       const tabCount = this.props.children.length;
 
+      const ltr = event.target.ownerDocument.dir == "ltr";
+      const nextOrLastTab = Math.min(tabCount - 1, activeTab + 1);
+      const previousOrFirstTab = Math.max(0, activeTab - 1);
+
       switch (event.code) {
         case "ArrowRight":
-          activeTab = Math.min(tabCount - 1, activeTab + 1);
+          if (ltr) {
+            activeTab = nextOrLastTab;
+          } else {
+            activeTab = previousOrFirstTab;
+          }
           break;
         case "ArrowLeft":
-          activeTab = Math.max(0, activeTab - 1);
+          if (ltr) {
+            activeTab = previousOrFirstTab;
+          } else {
+            activeTab = nextOrLastTab;
+          }
           break;
       }
 
@@ -217,6 +227,13 @@ define(function(require, exports, module) {
     onClickTab(index, event) {
       this.setActive(index);
 
+      if (event) {
+        event.preventDefault();
+      }
+    }
+
+    onMouseDown(event) {
+      // Prevents click-dragging the tab headers
       if (event) {
         event.preventDefault();
       }
@@ -312,6 +329,7 @@ define(function(require, exports, module) {
                 "aria-selected": isTabSelected,
                 role: "tab",
                 onClick: this.onClickTab.bind(this, index),
+                onMouseDown: this.onMouseDown.bind(this),
               },
               title,
               badge && !isTabSelected && showBadge()
@@ -427,7 +445,11 @@ define(function(require, exports, module) {
     }
 
     render() {
-      return dom.div({ className: "tab-panel" }, this.props.children);
+      const { className } = this.props;
+      return dom.div(
+        { className: `tab-panel ${className || ""}` },
+        this.props.children
+      );
     }
   }
 

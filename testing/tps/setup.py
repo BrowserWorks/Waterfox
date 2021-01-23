@@ -2,6 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from __future__ import absolute_import
 
 from setuptools import setup, find_packages
 import sys
@@ -17,6 +18,7 @@ deps = ['httplib2 == 0.9.2',
         'mozprofile ~= 2.1',
         'mozrunner ~= 7.2',
         'mozversion == 1.5',
+        'PyYAML >= 4.0',
         ]
 
 # we only support python 2.6+ right now

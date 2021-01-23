@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newMessageCmd.label             "Laiškas">
+<!ENTITY newMessageCmd.accesskey         "L">
+
+
+<!ENTITY newContactCmd.label             "Adresatas…">
+<!ENTITY newContactCmd.accesskey         "A">
+
+<!ENTITY sendPage.label                  "Išsiųsti tinklalapį el. paštu…">
+<!ENTITY sendPage.accesskey              "l">
+
+<!ENTITY contextSendThisPage.label       "Išsiųsti tinklalapį el. paštu…">
+<!ENTITY contextSendThisPage.accesskey   "s">
+<!ENTITY contextSendThisLink.label       "Išsiųsti saitą el. paštu…">
+<!ENTITY contextSendThisLink.accesskey   "s">
+<!ENTITY contextSendImage.label          "Išsiųsti paveikslą el. paštu…">
+<!ENTITY contextSendImage.accesskey      "a">
+<!ENTITY contextSendVideo.label          "Išsiųsti vaizdą el. paštu…">
+<!ENTITY contextSendVideo.accesskey      "a">
+<!ENTITY contextSendAudio.label          "Išsiųsti garsą el. paštu…">
+<!ENTITY contextSendAudio.accesskey      "a">
+<!ENTITY contextSendFrame.label          "Išsiųsti kadrą el. paštu…">
+<!ENTITY contextSendFrame.accesskey      "s">
+
+<!ENTITY sendLinkCmd.label               "Išsiųsti adresą el. paštu…"> 
+<!ENTITY sendLinkCmd.accesskey           "d">
+

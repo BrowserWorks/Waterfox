@@ -10,11 +10,13 @@ using struct mozilla::null_t from "ipc/IPCMessageUtils.h";
 using mozilla::WindowsHandle from "ipc/IPCMessageUtils.h";
 using mozilla::gfx::YUVColorSpace from "mozilla/gfx/Types.h";
 using mozilla::gfx::ColorDepth from "mozilla/gfx/Types.h";
+using mozilla::gfx::ColorRange from "mozilla/gfx/Types.h";
 using mozilla::gfx::SurfaceFormat from "mozilla/gfx/Types.h";
 using mozilla::gfx::IntRect from "mozilla/gfx/Rect.h";
 using mozilla::gfx::IntSize from "mozilla/gfx/Point.h";
 using mozilla::ipc::SharedMemoryBasic::Handle from "mozilla/ipc/SharedMemoryBasic.h";
 using gfxImageFormat from "gfxTypes.h";
+using mozilla::layers::MaybeVideoBridgeSource from "mozilla/layers/VideoBridgeUtils.h";
 
 namespace mozilla {
 namespace layers {
@@ -35,6 +37,7 @@ struct SurfaceDescriptorD3D10 {
   SurfaceFormat format;
   IntSize size;
   YUVColorSpace yUVColorSpace;
+  ColorRange colorRange;
 };
 
 struct SurfaceDescriptorDXGIYCbCr {
@@ -46,6 +49,7 @@ struct SurfaceDescriptorDXGIYCbCr {
   IntSize sizeCbCr;
   ColorDepth colorDepth;
   YUVColorSpace yUVColorSpace;
+  ColorRange colorRange;
 };
 
 struct SurfaceDescriptorMacIOSurface {
@@ -53,6 +57,22 @@ struct SurfaceDescriptorMacIOSurface {
   double scaleFactor;
   bool isOpaque;
   YUVColorSpace yUVColorSpace;
+};
+
+struct SurfaceDescriptorDMABuf {
+  uint32_t bufferType;
+  uint64_t modifier;
+  uint32_t flags;
+  FileDescriptor[] fds;
+  uint32_t[] width;
+  uint32_t[] height;
+  uint32_t[] format;
+  uint32_t[] strides;
+  uint32_t[] offsets;
+  YUVColorSpace yUVColorSpace;
+  FileDescriptor[] fence;
+  uint32_t uid;
+  FileDescriptor[] refCount;
 };
 
 struct SurfaceTextureDescriptor {
@@ -79,15 +99,28 @@ struct SurfaceDescriptorSharedGLTexture {
 };
 
 
-union GPUVideoSubDescriptor {
+union RemoteDecoderVideoSubDescriptor {
   SurfaceDescriptorD3D10;
   SurfaceDescriptorDXGIYCbCr;
+  SurfaceDescriptorDMABuf;
   null_t;
 };
 
-struct SurfaceDescriptorGPUVideo {
+struct SurfaceDescriptorRemoteDecoder {
   uint64_t handle;
-  GPUVideoSubDescriptor subdesc;
+  RemoteDecoderVideoSubDescriptor subdesc;
+  MaybeVideoBridgeSource source;
+};
+
+struct SurfaceDescriptorPlugin {
+  uint64_t id;
+  SurfaceDescriptorD3D10 pluginSurf;
+  SurfaceDescriptorD3D10 displaySurf;
+};
+
+union SurfaceDescriptorGPUVideo {
+  SurfaceDescriptorRemoteDecoder;
+  SurfaceDescriptorPlugin;
 };
 
 struct RGBDescriptor {
@@ -107,6 +140,7 @@ struct YCbCrDescriptor {
   StereoMode stereoMode;
   ColorDepth colorDepth;
   YUVColorSpace yUVColorSpace;
+  ColorRange colorRange;
   bool hasIntermediateBuffer;
 };
 
@@ -133,6 +167,10 @@ struct SurfaceDescriptorShared
   Handle handle;
 };
 
+struct SurfaceDescriptorRecorded {
+  uintptr_t drawTarget;
+};
+
 union SurfaceDescriptor {
   SurfaceDescriptorBuffer;
   SurfaceDescriptorDIB;
@@ -140,11 +178,13 @@ union SurfaceDescriptor {
   SurfaceDescriptorFileMapping;
   SurfaceDescriptorDXGIYCbCr;
   SurfaceDescriptorX11;
+  SurfaceDescriptorDMABuf;
   SurfaceTextureDescriptor;
   EGLImageDescriptor;
   SurfaceDescriptorMacIOSurface;
   SurfaceDescriptorSharedGLTexture;
   SurfaceDescriptorGPUVideo;
+  SurfaceDescriptorRecorded;
   null_t;
 };
 

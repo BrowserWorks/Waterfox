@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.mailnews.title "Kurier Poczty">
+<!ENTITY generalSettings.caption "Ustawienia ogólne">
+<!ENTITY confirmMove.label "Wymagaj potwierdzenia przy usuwaniu folderów do kosza">
+<!ENTITY confirmMove.accesskey "p">
+<!ENTITY preserveThreading.label "Zachowuj wątki podczas sortowania wiadomości">
+<!ENTITY preserveThreading.accesskey "t">
+<!ENTITY mailBiffOnNewWindow.label "Sprawdzaj pocztę dopiero po uruchomieniu Kuriera Poczty">
+<!ENTITY mailBiffOnNewWindow.accesskey "w">
+
+<!ENTITY defaultMailSettings.description "Używaj &brandShortName; jako domyślnego programu dla:">
+<!ENTITY setDefaultMail.label "Poczty">
+<!ENTITY setDefaultMail.accesskey "P">
+<!ENTITY setDefaultNews.label "Grup dyskusyjnych">
+<!ENTITY setDefaultNews.accesskey "G">
+<!ENTITY setDefaultFeed.label "kanałów informacyjnych">
+<!ENTITY setDefaultFeed.accesskey "K">
+
+<!ENTITY useInternalSettings.description "Używaj Kuriera Poczty &brandShortName; w celu otwierania odnośników do:">
+<!ENTITY useInternalMail.label "poczty (mailto:)">
+<!ENTITY useInternalMail.accesskey "o">
+<!ENTITY useInternalNews.label "grup dyskusyjnych (news:, snews:, nntp:)">
+<!ENTITY useInternalNews.accesskey "g">
+
+<!ENTITY messengerStartPage.caption "Strona startowa Kuriera Poczty">
+<!ENTITY enableStartPage.label "Po uruchomieniu Kuriera Poczty wyświetl poniższą stronę startową w oknie wiadomości:">
+<!ENTITY enableStartPage.accesskey "s">
+<!ENTITY location.label "Adres:">
+<!ENTITY location.accesskey "A">
+<!ENTITY useDefault.label "Przywróć domyślną">
+<!ENTITY useDefault.accesskey "r">
+<!ENTITY rememberLastMsg.label "Zapamiętaj ostatnio wybraną wiadomość">
+<!ENTITY rememberLastMsg.accesskey "a">

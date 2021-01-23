@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.download.title            "Muat turun">
+
+<!ENTITY downloadBehavior.label         "Apabila memulakan muat turun">
+<!ENTITY doNothing.label                "Jangan buka apa-apa">
+<!ENTITY doNothing.accesskey            "J">
+<!ENTITY openProgressDialog.label       "Buka dialog kemajuan">
+<!ENTITY openProgressDialog.accesskey   "B">
+<!ENTITY openDM.label                   "Buka pengurus muat turun">
+<!ENTITY openDM.accesskey               "m">
+<!ENTITY flashWhenOpen.label            "Buka pengurus muat turun sekejap sahaja jika sudah dibuka">
+<!ENTITY flashWhenOpen.accesskey        "j">
+
+<!ENTITY downloadLocation.label         "Apabila menyimpan fail">
+<!ENTITY saveTo.label                   "Simpan fail ke">
+<!ENTITY saveTo.accesskey               "p">
+<!ENTITY chooseDownloadFolder.label     "Pilih Folder…">
+<!ENTITY chooseDownloadFolder.accesskey "F">
+<!ENTITY alwaysAsk.label                "Sentiasa tanya saya lokasi untuk simpan fail">
+<!ENTITY alwaysAsk.accesskey            "S">
+
+<!ENTITY downloadHistory.label          "Sejarah muat turun">
+<!ENTITY removeEntries.label            "Buang entri muat turun">
+<!ENTITY removeEntries.accesskey        "B">
+<!ENTITY whenCompleted.label            "Apabila sudah selesai">
+<!ENTITY whenQuittingApp.label          "Apabila keluar &brandShortName;">
+<!ENTITY neverRemove.label              "Jangan sesekali">
+
+<!ENTITY finishedBehavior.label         "Apabila muat turun selesai">
+<!ENTITY playSound.label                "Mainkan bunyian">
+<!ENTITY playSound.accesskey            "M">
+<!ENTITY showAlert.label                "Papar makluman">
+<!ENTITY showAlert.accesskey            "P">
+<!ENTITY browse.label                   "Cari…">
+<!ENTITY browse.accesskey               "C">
+<!ENTITY playButton.label               "Main">
+<!ENTITY playButton.accesskey           "i">

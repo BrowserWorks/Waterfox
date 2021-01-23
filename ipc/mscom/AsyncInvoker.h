@@ -7,18 +7,19 @@
 #ifndef mozilla_mscom_AsyncInvoker_h
 #define mozilla_mscom_AsyncInvoker_h
 
+#include <objidl.h>
+#include <windows.h>
+
+#include <utility>
+
 #include "mozilla/Assertions.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/Maybe.h"
-#include "mozilla/Move.h"
+#include "mozilla/Mutex.h"
 #include "mozilla/mscom/Aggregation.h"
 #include "mozilla/mscom/Utils.h"
-#include "mozilla/Mutex.h"
 #include "nsISupportsImpl.h"
-
-#include <objidl.h>
-#include <windows.h>
 
 namespace mozilla {
 namespace mscom {
@@ -282,7 +283,7 @@ class MOZ_RAII AsyncInvoker final : public WaitPolicy<AsyncInterface> {
    */
   template <typename SyncMethod, typename AsyncMethod, typename... Args>
   HRESULT Invoke(SyncMethod aSyncMethod, AsyncMethod aAsyncMethod,
-                 Args... aArgs) {
+                 Args&&... aArgs) {
     if (mSyncObj) {
       return (mSyncObj->*aSyncMethod)(std::forward<Args>(aArgs)...);
     }

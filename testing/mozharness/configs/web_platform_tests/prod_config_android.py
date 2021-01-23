@@ -8,21 +8,19 @@ import os
 config = {
     "options": [
         "--prefs-root=%(test_path)s/prefs",
-        "--processes=1",
         "--config=%(test_path)s/wptrunner.ini",
         "--ca-cert-path=%(test_path)s/tests/tools/certs/cacert.pem",
         "--host-key-path=%(test_path)s/tests/tools/certs/web-platform.test.key",
         "--host-cert-path=%(test_path)s/tests/tools/certs/web-platform.test.pem",
         "--certutil-binary=%(xre_path)s/certutil",
-        "--product=fennec",
+        "--product=firefox_android",
     ],
     "avds_dir": "/builds/worker/workspace/build/.android",
     "binary_path": "/tmp",
-    "geckodriver": "%(abs_test_bin_dir)s/geckodriver",
+    "geckodriver": "%(abs_fetches_dir)s/geckodriver",
     "hostutils_manifest_path": "testing/config/tooltool-manifests/linux64/hostutils.manifest",
     "log_tbpl_level": "info",
     "log_raw_level": "info",
-    "minidump_stackwalk_path": "linux64-minidump_stackwalk",
     "per_test_category": "web-platform",
     "tooltool_cache": os.environ.get("TOOLTOOL_CACHE"),
 }

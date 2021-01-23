@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  engineManager.title       "Administrar lista de buscadores">
+<!ENTITY  engineManager.style       "min-width: 35em;">
+<!ENTITY  engineManager.intro       "Tiene los siguientes buscadores instalados:">
+
+<!ENTITY  columnLabel.name          "Nombre">
+<!ENTITY  columnLabel.keyword       "Palabra clave">
+
+<!-- Buttons -->
+<!ENTITY  up.label                  "Mover arriba">
+<!ENTITY  up.accesskey              "M">
+<!ENTITY  dn.label                  "Mover abajo">
+<!ENTITY  dn.accesskey              "a">
+<!ENTITY  remove.label              "Eliminar">
+<!ENTITY  remove.accesskey          "r">
+<!ENTITY  edit.label                "Editar palabra clave…">
+<!ENTITY  edit.accesskey            "t">
+
+<!ENTITY  addEngine.label           "Obtener más buscadores…">
+<!ENTITY  addEngine.accesskey       "O">
+
+<!ENTITY  enableSuggest.label       "Mostrar sugerencias de búsqueda">
+<!ENTITY  enableSuggest.accesskey   "s">
+
+<!ENTITY  restoreDefaults.label     "Restaurar predeterminados">
+<!ENTITY  restoreDefaults.accesskey "e">

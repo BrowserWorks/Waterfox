@@ -12,7 +12,6 @@
 #include "builtin/RegExp.h"
 #include "builtin/String.h"
 #include "builtin/TypedObject.h"
-#include "gc/Heap.h"
 #include "jit/Ion.h"
 #include "jit/JitSpewer.h"
 #include "jit/JSJitFrameIter.h"
@@ -23,6 +22,7 @@
 #include "vm/Iteration.h"
 #include "vm/JSContext.h"
 #include "vm/JSObject.h"
+#include "vm/PlainObject.h"  // js::PlainObject
 #include "vm/StringType.h"
 
 #include "vm/Interpreter-inl.h"
@@ -83,13 +83,14 @@ bool MResumePoint::writeRecoverData(CompactBufferWriter& writer) const {
     }
 
     if (reachablePC) {
-      if (JSOp(*bailPC) == JSOP_FUNCALL) {
+      JSOp bailOp = JSOp(*bailPC);
+      if (bailOp == JSOp::FunCall) {
         // For fun.call(this, ...); the reconstructStackDepth will
         // include the this. When inlining that is not included.  So the
         // exprStackSlots will be one less.
         MOZ_ASSERT(stackDepth - exprStack <= 1);
-      } else if (JSOp(*bailPC) != JSOP_FUNAPPLY &&
-                 !IsIonInlinableGetterOrSetterPC(bailPC)) {
+      } else if (bailOp != JSOp::FunApply &&
+                 !IsIonInlinableGetterOrSetterOp(bailOp)) {
         // For fun.apply({}, arguments) the reconstructStackDepth will
         // have stackdepth 4, but it could be that we inlined the
         // funapply. In that case exprStackSlots, will have the real
@@ -284,7 +285,7 @@ bool RUrsh::recover(JSContext* cx, SnapshotIterator& iter) const {
   MOZ_ASSERT(!lhs.isObject() && !rhs.isObject());
 
   RootedValue result(cx);
-  if (!js::UrshOperation(cx, &lhs, &rhs, &result)) {
+  if (!js::UrshValues(cx, &lhs, &rhs, &result)) {
     return false;
   }
 
@@ -307,17 +308,18 @@ RSignExtendInt32::RSignExtendInt32(CompactBufferReader& reader) {
 bool RSignExtendInt32::recover(JSContext* cx, SnapshotIterator& iter) const {
   RootedValue operand(cx, iter.read());
 
+  int32_t i;
+  if (!ToInt32(cx, operand, &i)) {
+    return false;
+  }
+
   int32_t result;
   switch (MSignExtendInt32::Mode(mode_)) {
     case MSignExtendInt32::Byte:
-      if (!js::SignExtendOperation<int8_t>(cx, operand, &result)) {
-        return false;
-      }
+      result = static_cast<int8_t>(i);
       break;
     case MSignExtendInt32::Half:
-      if (!js::SignExtendOperation<int16_t>(cx, operand, &result)) {
-        return false;
-      }
+      result = static_cast<int16_t>(i);
       break;
   }
 
@@ -329,7 +331,7 @@ bool RSignExtendInt32::recover(JSContext* cx, SnapshotIterator& iter) const {
 bool MAdd::writeRecoverData(CompactBufferWriter& writer) const {
   MOZ_ASSERT(canRecoverOnBailout());
   writer.writeUnsigned(uint32_t(RInstruction::Recover_Add));
-  writer.writeByte(specialization_ == MIRType::Float32);
+  writer.writeByte(type() == MIRType::Float32);
   return true;
 }
 
@@ -360,7 +362,7 @@ bool RAdd::recover(JSContext* cx, SnapshotIterator& iter) const {
 bool MSub::writeRecoverData(CompactBufferWriter& writer) const {
   MOZ_ASSERT(canRecoverOnBailout());
   writer.writeUnsigned(uint32_t(RInstruction::Recover_Sub));
-  writer.writeByte(specialization_ == MIRType::Float32);
+  writer.writeByte(type() == MIRType::Float32);
   return true;
 }
 
@@ -391,7 +393,7 @@ bool RSub::recover(JSContext* cx, SnapshotIterator& iter) const {
 bool MMul::writeRecoverData(CompactBufferWriter& writer) const {
   MOZ_ASSERT(canRecoverOnBailout());
   writer.writeUnsigned(uint32_t(RInstruction::Recover_Mul));
-  writer.writeByte(specialization_ == MIRType::Float32);
+  writer.writeByte(type() == MIRType::Float32);
   MOZ_ASSERT(Mode(uint8_t(mode_)) == mode_);
   writer.writeByte(uint8_t(mode_));
   return true;
@@ -431,7 +433,7 @@ bool RMul::recover(JSContext* cx, SnapshotIterator& iter) const {
 bool MDiv::writeRecoverData(CompactBufferWriter& writer) const {
   MOZ_ASSERT(canRecoverOnBailout());
   writer.writeUnsigned(uint32_t(RInstruction::Recover_Div));
-  writer.writeByte(specialization_ == MIRType::Float32);
+  writer.writeByte(type() == MIRType::Float32);
   return true;
 }
 
@@ -890,22 +892,23 @@ bool RSign::recover(JSContext* cx, SnapshotIterator& iter) const {
 bool MMathFunction::writeRecoverData(CompactBufferWriter& writer) const {
   MOZ_ASSERT(canRecoverOnBailout());
   switch (function_) {
-    case Ceil:
+    case UnaryMathFunction::Ceil:
       writer.writeUnsigned(uint32_t(RInstruction::Recover_Ceil));
       return true;
-    case Floor:
+    case UnaryMathFunction::Floor:
       writer.writeUnsigned(uint32_t(RInstruction::Recover_Floor));
       return true;
-    case Round:
+    case UnaryMathFunction::Round:
       writer.writeUnsigned(uint32_t(RInstruction::Recover_Round));
       return true;
-    case Trunc:
+    case UnaryMathFunction::Trunc:
       writer.writeUnsigned(uint32_t(RInstruction::Recover_Trunc));
       return true;
-    case Sin:
-    case Log:
+    case UnaryMathFunction::Sin:
+    case UnaryMathFunction::Log:
+      static_assert(sizeof(UnaryMathFunction) == sizeof(uint8_t));
       writer.writeUnsigned(uint32_t(RInstruction::Recover_MathFunction));
-      writer.writeByte(function_);
+      writer.writeByte(uint8_t(function_));
       return true;
     default:
       MOZ_CRASH("Unknown math function.");
@@ -913,12 +916,12 @@ bool MMathFunction::writeRecoverData(CompactBufferWriter& writer) const {
 }
 
 RMathFunction::RMathFunction(CompactBufferReader& reader) {
-  function_ = reader.readByte();
+  function_ = UnaryMathFunction(reader.readByte());
 }
 
 bool RMathFunction::recover(JSContext* cx, SnapshotIterator& iter) const {
   switch (function_) {
-    case MMathFunction::Sin: {
+    case UnaryMathFunction::Sin: {
       RootedValue arg(cx, iter.read());
       RootedValue result(cx);
 
@@ -929,7 +932,7 @@ bool RMathFunction::recover(JSContext* cx, SnapshotIterator& iter) const {
       iter.storeInstructionResult(result);
       return true;
     }
-    case MMathFunction::Log: {
+    case UnaryMathFunction::Log: {
       RootedValue arg(cx, iter.read());
       RootedValue result(cx);
 
@@ -1295,13 +1298,13 @@ bool RNewIterator::recover(JSContext* cx, SnapshotIterator& iter) const {
   JSObject* resultObject = nullptr;
   switch (MNewIterator::Type(type_)) {
     case MNewIterator::ArrayIterator:
-      resultObject = NewArrayIteratorObject(cx);
+      resultObject = NewArrayIterator(cx);
       break;
     case MNewIterator::StringIterator:
-      resultObject = NewStringIteratorObject(cx);
+      resultObject = NewStringIterator(cx);
       break;
     case MNewIterator::RegExpStringIterator:
-      resultObject = NewRegExpStringIteratorObject(cx);
+      resultObject = NewRegExpStringIterator(cx);
       break;
   }
 
@@ -1310,31 +1313,6 @@ bool RNewIterator::recover(JSContext* cx, SnapshotIterator& iter) const {
   }
 
   result.setObject(*resultObject);
-  iter.storeInstructionResult(result);
-  return true;
-}
-
-bool MNewDerivedTypedObject::writeRecoverData(
-    CompactBufferWriter& writer) const {
-  MOZ_ASSERT(canRecoverOnBailout());
-  writer.writeUnsigned(uint32_t(RInstruction::Recover_NewDerivedTypedObject));
-  return true;
-}
-
-RNewDerivedTypedObject::RNewDerivedTypedObject(CompactBufferReader& reader) {}
-
-bool RNewDerivedTypedObject::recover(JSContext* cx,
-                                     SnapshotIterator& iter) const {
-  Rooted<TypeDescr*> descr(cx, &iter.read().toObject().as<TypeDescr>());
-  Rooted<TypedObject*> owner(cx, &iter.read().toObject().as<TypedObject>());
-  int32_t offset = iter.read().toInt32();
-
-  JSObject* obj = OutlineTypedObject::createDerived(cx, descr, owner, offset);
-  if (!obj) {
-    return false;
-  }
-
-  RootedValue result(cx, ObjectValue(*obj));
   iter.storeInstructionResult(result);
   return true;
 }
@@ -1401,6 +1379,31 @@ bool RLambdaArrow::recover(JSContext* cx, SnapshotIterator& iter) const {
   RootedFunction fun(cx, &iter.read().toObject().as<JSFunction>());
 
   JSObject* resultObject = js::LambdaArrow(cx, fun, scopeChain, newTarget);
+  if (!resultObject) {
+    return false;
+  }
+
+  RootedValue result(cx);
+  result.setObject(*resultObject);
+  iter.storeInstructionResult(result);
+  return true;
+}
+
+bool MFunctionWithProto::writeRecoverData(CompactBufferWriter& writer) const {
+  MOZ_ASSERT(canRecoverOnBailout());
+  writer.writeUnsigned(uint32_t(RInstruction::Recover_FunctionWithProto));
+  return true;
+}
+
+RFunctionWithProto::RFunctionWithProto(CompactBufferReader& reader) {}
+
+bool RFunctionWithProto::recover(JSContext* cx, SnapshotIterator& iter) const {
+  RootedObject scopeChain(cx, &iter.read().toObject());
+  RootedObject prototype(cx, &iter.read().toObject());
+  RootedFunction fun(cx, &iter.read().toObject().as<JSFunction>());
+
+  JSObject* resultObject =
+      js::FunWithProtoOperation(cx, fun, scopeChain, prototype);
   if (!resultObject) {
     return false;
   }

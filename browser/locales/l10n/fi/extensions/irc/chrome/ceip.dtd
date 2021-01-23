@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "ChatZillan käyttökokemuksen parannusohjelma">
+<!ENTITY window.size   "width: 42em;">
+
+<!ENTITY intro.label "ChatZillan käyttökokemuksen parannusohjelma kerää sinua keskeyttämättä tietoja siitä, kuinka käytät ChatZillaa. Tämä auttaa kehittäjiä tunnistamaan parantamisen tarpeessa olevat ominaisuudet. Mitään tietoja ei käytetä tunnistamaan sinua tai ottamaan yhteyttä sinuun.">
+
+<!ENTITY groupSend.label        "Lähetä seuraavat tiedot:">
+<!ENTITY sendClient.label       "Milloin ChatZilla avataan ja suljetaan">
+<!ENTITY sendClient.accesskey   "M">
+<!ENTITY sendCommand.label      "Käytetyt komennot, valikot ja dialogit">
+<!ENTITY sendCommand.accesskey  "K">
+<!ENTITY sendID.label           "Yksilöivä tunnisteesi:">
+<!ENTITY sendIDSrc.label        "(perustuu satunnaislukuun)">
+
+<!ENTITY groupNotSent.label     "Seuraavia tietoja ei koskaan lähetetä:">
+<!ENTITY notsentNickname.label  "Lempinimesi">
+<!ENTITY notsentMessages.label  "Viestien sisältö, mukaanlukien toiminnat ja ilmoitukset">
+<!ENTITY notsentArguments.label "Kaikille komennoille, valikoille ja dialogeille annetut pyynnöt sekä tiedot">
+<!ENTITY notsentURLs.label      "Verkkojen, palvelimien, kanavien ja käyttäjien nimet ja osoitteet">
+<!ENTITY notsentFiles.label     "Lähetettyjen ja vastaanotettujen tiedostojen nimi ja sisältö">

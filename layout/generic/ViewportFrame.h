@@ -34,7 +34,7 @@ class ViewportFrame : public nsContainerFrame {
   explicit ViewportFrame(ComputedStyle* aStyle, nsPresContext* aPresContext)
       : ViewportFrame(aStyle, aPresContext, kClassID) {}
 
-  virtual ~ViewportFrame() {}  // useful for debugging
+  virtual ~ViewportFrame() = default;  // useful for debugging
 
   virtual void Init(nsIContent* aContent, nsContainerFrame* aParent,
                     nsIFrame* aPrevInFlow) override;
@@ -43,6 +43,7 @@ class ViewportFrame : public nsContainerFrame {
   virtual void AppendFrames(ChildListID aListID,
                             nsFrameList& aFrameList) override;
   virtual void InsertFrames(ChildListID aListID, nsIFrame* aPrevFrame,
+                            const nsLineList::iterator* aPrevFrameLine,
                             nsFrameList& aFrameList) override;
   virtual void RemoveFrame(ChildListID aListID, nsIFrame* aOldFrame) override;
 #endif

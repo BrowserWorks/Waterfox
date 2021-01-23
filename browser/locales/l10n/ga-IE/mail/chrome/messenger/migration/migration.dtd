@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Treoraí Iompórtála">
+
+<!ENTITY importFromWin.label            "Iompórtáil Roghanna, Socruithe Cuntais, Leabhar Seoltaí, Scagairí agus sonraí eile ó:">
+<!ENTITY importFromNonWin.label         "Iompórtáil Roghanna, Socruithe Cuntais, Leabhar Seoltaí, Scagairí, agus sonraí eile ó:">
+<!ENTITY importSourceNotFound.label     "Níor aimsíodh feidhmchlár le sonraí a iompórtáil uaidh.">
+
+<!ENTITY importFromNothing.label        "Ná hiompórtáil rud ar bith">
+<!ENTITY importFromNothing.accesskey    "N">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 nó níos déanaí">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "Iompórtáil Socruithe agus Fillteáin Ríomhphoist">
+<!ENTITY importItems.title              "Rudaí le hIompórtáil">
+<!ENTITY importItems.label              "Roghnaigh na rudaí le hiompórtáil:">
+
+<!ENTITY migrating.title                "Á nIompórtáil…">
+<!ENTITY migrating.label                "Tá na rudaí seo á n-iompórtáil faoi láthair…">
+
+<!ENTITY selectProfile.title            "Roghnaigh Próifíl">
+<!ENTITY selectProfile.label            "Próifílí le fáil ónar féidir a iompórtáil:">
+
+<!ENTITY done.title                     "Iompórtáil curtha i gcrích">
+<!ENTITY done.label                     "Iompórtáladh na rudaí seo go rathúil:">

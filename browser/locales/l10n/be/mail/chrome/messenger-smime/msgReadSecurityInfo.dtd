@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgReadSecurityInfo.dtd UI for viewing security status when reading a received message -->
+
+<!ENTITY status.label "Бяспека ліста">
+<!ENTITY signatureCert.label "Праглядзець пасведчанне подпісу">
+<!ENTITY encryptionCert.label "Праглядзець пасведчанне шыфру">
+
+<!ENTITY signer.name "Падпісана:">
+<!ENTITY recipient.name "Зашыфравана для:">
+<!ENTITY email.address "Адрас э-пошты:">
+<!ENTITY issuer.name "Пасведчанне выдадзена:">
+

@@ -1,0 +1,4 @@
+<!ENTITY options.title "Επιλογές εργαλείων για προγραμματιστές">
+<!ENTITY options.status.label "Κατάσταση:">
+<!ENTITY options.port.label "Θύρα:">
+<!ENTITY options.forcelocal.label "Αποδοχή συνδέσεων από άλλους υπολογιστές">

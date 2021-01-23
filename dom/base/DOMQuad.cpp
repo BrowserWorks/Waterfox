@@ -6,17 +6,18 @@
 
 #include "mozilla/dom/DOMQuad.h"
 
-#include "mozilla/dom/DOMQuadBinding.h"
 #include "mozilla/dom/DOMPoint.h"
+#include "mozilla/dom/DOMQuadBinding.h"
 #include "mozilla/dom/DOMRect.h"
-#include <algorithm>
+#include "mozilla/dom/DOMRectBinding.h"
+#include "mozilla/FloatingPoint.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
 using namespace mozilla::gfx;
 
-NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(DOMQuad, mParent, mBounds, mPoints[0],
-                                      mPoints[1], mPoints[2], mPoints[3])
+NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(DOMQuad, mParent, mPoints[0], mPoints[1],
+                                      mPoints[2], mPoints[3])
 
 NS_IMPL_CYCLE_COLLECTION_ROOT_NATIVE(DOMQuad, AddRef)
 NS_IMPL_CYCLE_COLLECTION_UNROOT_NATIVE(DOMQuad, Release)
@@ -29,19 +30,42 @@ DOMQuad::DOMQuad(nsISupports* aParent, CSSPoint aPoints[4]) : mParent(aParent) {
 
 DOMQuad::DOMQuad(nsISupports* aParent) : mParent(aParent) {}
 
-DOMQuad::~DOMQuad() {}
+DOMQuad::~DOMQuad() = default;
 
 JSObject* DOMQuad::WrapObject(JSContext* aCx,
                               JS::Handle<JSObject*> aGivenProto) {
   return DOMQuad_Binding::Wrap(aCx, this, aGivenProto);
 }
 
+already_AddRefed<DOMQuad> DOMQuad::FromRect(const GlobalObject& aGlobal,
+                                            const DOMRectInit& aInit) {
+  nsISupports* parent = aGlobal.GetAsSupports();
+  RefPtr<DOMQuad> obj = new DOMQuad(parent);
+  obj->mPoints[0] = new DOMPoint(parent, aInit.mX, aInit.mY, 0, 1);
+  obj->mPoints[1] =
+      new DOMPoint(parent, aInit.mX + aInit.mWidth, aInit.mY, 0, 1);
+  obj->mPoints[2] = new DOMPoint(parent, aInit.mX + aInit.mWidth,
+                                 aInit.mY + aInit.mHeight, 0, 1);
+  obj->mPoints[3] =
+      new DOMPoint(parent, aInit.mX, aInit.mY + aInit.mHeight, 0, 1);
+  return obj.forget();
+}
+
+already_AddRefed<DOMQuad> DOMQuad::FromQuad(const GlobalObject& aGlobal,
+                                            const DOMQuadInit& aInit) {
+  RefPtr<DOMQuad> obj = new DOMQuad(aGlobal.GetAsSupports());
+  obj->mPoints[0] = DOMPoint::FromPoint(aGlobal, aInit.mP1);
+  obj->mPoints[1] = DOMPoint::FromPoint(aGlobal, aInit.mP2);
+  obj->mPoints[2] = DOMPoint::FromPoint(aGlobal, aInit.mP3);
+  obj->mPoints[3] = DOMPoint::FromPoint(aGlobal, aInit.mP4);
+  return obj.forget();
+}
+
 already_AddRefed<DOMQuad> DOMQuad::Constructor(const GlobalObject& aGlobal,
                                                const DOMPointInit& aP1,
                                                const DOMPointInit& aP2,
                                                const DOMPointInit& aP3,
-                                               const DOMPointInit& aP4,
-                                               ErrorResult& aRV) {
+                                               const DOMPointInit& aP4) {
   RefPtr<DOMQuad> obj = new DOMQuad(aGlobal.GetAsSupports());
   obj->mPoints[0] = DOMPoint::FromPoint(aGlobal, aP1);
   obj->mPoints[1] = DOMPoint::FromPoint(aGlobal, aP2);
@@ -51,8 +75,7 @@ already_AddRefed<DOMQuad> DOMQuad::Constructor(const GlobalObject& aGlobal,
 }
 
 already_AddRefed<DOMQuad> DOMQuad::Constructor(const GlobalObject& aGlobal,
-                                               const DOMRectReadOnly& aRect,
-                                               ErrorResult& aRV) {
+                                               const DOMRectReadOnly& aRect) {
   CSSPoint points[4];
   Float x = aRect.X(), y = aRect.Y(), w = aRect.Width(), h = aRect.Height();
   points[0] = CSSPoint(x, y);
@@ -68,8 +91,8 @@ void DOMQuad::GetHorizontalMinMax(double* aX1, double* aX2) const {
   x1 = x2 = Point(0)->X();
   for (uint32_t i = 1; i < 4; ++i) {
     double x = Point(i)->X();
-    x1 = std::min(x1, x);
-    x2 = std::max(x2, x);
+    x1 = NaNSafeMin(x1, x);
+    x2 = NaNSafeMax(x2, x);
   }
   *aX1 = x1;
   *aX2 = x2;
@@ -80,18 +103,11 @@ void DOMQuad::GetVerticalMinMax(double* aY1, double* aY2) const {
   y1 = y2 = Point(0)->Y();
   for (uint32_t i = 1; i < 4; ++i) {
     double y = Point(i)->Y();
-    y1 = std::min(y1, y);
-    y2 = std::max(y2, y);
+    y1 = NaNSafeMin(y1, y);
+    y2 = NaNSafeMax(y2, y);
   }
   *aY1 = y1;
   *aY2 = y2;
-}
-
-DOMRectReadOnly* DOMQuad::Bounds() {
-  if (!mBounds) {
-    mBounds = GetBounds();
-  }
-  return mBounds;
 }
 
 already_AddRefed<DOMRectReadOnly> DOMQuad::GetBounds() const {
@@ -106,9 +122,27 @@ already_AddRefed<DOMRectReadOnly> DOMQuad::GetBounds() const {
   return rval.forget();
 }
 
-void DOMQuad::ToJSON(DOMQuadJSON& aInit) {
-  aInit.mP1.Construct(RefPtr<DOMPoint>(P1()).forget());
-  aInit.mP2.Construct(RefPtr<DOMPoint>(P2()).forget());
-  aInit.mP3.Construct(RefPtr<DOMPoint>(P3()).forget());
-  aInit.mP4.Construct(RefPtr<DOMPoint>(P4()).forget());
+// https://drafts.fxtf.org/geometry/#structured-serialization
+bool DOMQuad::WriteStructuredClone(JSContext* aCx,
+                                   JSStructuredCloneWriter* aWriter) const {
+  for (const auto& point : mPoints) {
+    if (!point->WriteStructuredClone(aCx, aWriter)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+// static
+already_AddRefed<DOMQuad> DOMQuad::ReadStructuredClone(
+    JSContext* aCx, nsIGlobalObject* aGlobal,
+    JSStructuredCloneReader* aReader) {
+  RefPtr<DOMQuad> quad = new DOMQuad(aGlobal);
+  for (auto& point : quad->mPoints) {
+    point = DOMPoint::ReadStructuredClone(aCx, aGlobal, aReader);
+    if (!point) {
+      return nullptr;
+    }
+  }
+  return quad.forget();
 }

@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -25,7 +24,7 @@ add_task(async function() {
 
 async function testEditPropertyAndCancel(inspector, view) {
   const ruleEditor = getRuleViewRuleEditor(view, 1);
-  const propEditor = ruleEditor.rule.textProps[0].editor;
+  const propEditor = getTextProperty(view, 1, { margin: "0" }).editor;
 
   info("Test editor is created when clicking on property name");
   await focusEditableField(view, propEditor.nameSpan);

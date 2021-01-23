@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- The page shown when not logged in... -->
+
+<!ENTITY setupButton.label          "Configura el &syncBrand.fullName.label;">
+<!ENTITY setupButton.accesskey      "C">
+<!ENTITY weaveDesc.label            "El &syncBrand.fullName.label; us permet accedir al vostre historial, adreces d'interès, contrasenyes i pestanyes obertes des de qualsevol dels vostres dispositius.">
+<!-- The page shown when logged in... -->
+
+<!ENTITY accountGroupboxCaption.label "Compte del &syncBrand.fullName.label;">
+<!ENTITY accountName.label            "Nom del compte:">
+<!-- Login error feedback -->
+
+<!ENTITY updatePass.label             "Actualitza">
+<!ENTITY updatePass.accesskey         "u">
+<!ENTITY resetPass.label              "Reinicia">
+<!ENTITY resetPass.accesskey          "n">
+<!-- Manage Account -->
+
+<!ENTITY manageAccount.label          "Gestiona el compte">
+<!ENTITY manageAccount.accesskey      "a">
+<!ENTITY viewQuota.label              "Visualitza la quota">
+<!ENTITY viewQuota.accesskey          "V">
+<!ENTITY changePassword.label         "Canvia la contrasenya">
+<!ENTITY changePassword.accesskey     "C">
+<!ENTITY myRecoveryKey.label          "La meva clau de recuperació">
+<!ENTITY myRecoveryKey.accesskey      "m">
+<!ENTITY resetSync.label              "Reinicia la sincronització">
+<!ENTITY resetSync.accesskey          "e">
+<!ENTITY unlinkDevice.label           "Desvincula aquest dispositiu">
+<!ENTITY unlinkDevice.accesskey       "D">
+<!ENTITY addDevice.label              "Afegeix un dispositiu">
+<!ENTITY addDevice.accesskey          "A">
+<!-- Sync Settings -->
+
+<!ENTITY syncComputerName.label       "Nom de l'ordinador:">
+<!ENTITY syncComputerName.accesskey   "o">
+
+<!ENTITY syncMy2.label              "Sincronitza:">
+<!ENTITY engine.addons.label        "Complements">
+<!ENTITY engine.addons.accesskey    "C">
+<!ENTITY engine.bookmarks.label     "Adreces d'interès">
+<!ENTITY engine.bookmarks.accesskey "d">
+<!ENTITY engine.tabs.label          "Pestanyes">
+<!ENTITY engine.tabs.accesskey      "t">
+<!ENTITY engine.history.label       "Historial">
+<!ENTITY engine.history.accesskey   "r">
+<!ENTITY engine.passwords.label     "Contrasenyes">
+<!ENTITY engine.passwords.accesskey "y">
+<!ENTITY engine.prefs.label         "Preferències">
+<!ENTITY engine.prefs.accesskey     "s">
+<!-- Footer stuff -->
+
+<!ENTITY prefs.tosLink.label        "Condicions del servei">
+<!ENTITY prefs.ppLink.label         "Política de privadesa">

@@ -6,7 +6,6 @@
 #include "WebGL2Context.h"
 #include "GLContext.h"
 #include "WebGLQuery.h"
-#include "gfxPrefs.h"
 #include "nsThreadUtils.h"
 
 namespace mozilla {
@@ -22,8 +21,7 @@ namespace mozilla {
  *     implementation-dependent cases.
  */
 
-WebGLRefPtr<WebGLQuery>* WebGLContext::ValidateQuerySlotByTarget(
-    GLenum target) {
+RefPtr<WebGLQuery>* WebGLContext::ValidateQuerySlotByTarget(GLenum target) {
   if (IsWebGL2()) {
     switch (target) {
       case LOCAL_GL_ANY_SAMPLES_PASSED:
@@ -55,117 +53,67 @@ WebGLRefPtr<WebGLQuery>* WebGLContext::ValidateQuerySlotByTarget(
 // -------------------------------------------------------------------------
 // Query Objects
 
-already_AddRefed<WebGLQuery> WebGLContext::CreateQuery() {
+RefPtr<WebGLQuery> WebGLContext::CreateQuery() {
   const FuncScope funcScope(*this, "createQuery");
   if (IsContextLost()) return nullptr;
 
-  RefPtr<WebGLQuery> globj = new WebGLQuery(this);
-  return globj.forget();
-}
-
-void WebGLContext::DeleteQuery(WebGLQuery* query) {
-  const FuncScope funcScope(*this, "deleteQuery");
-  if (!ValidateDeleteObject(query)) return;
-
-  query->DeleteQuery();
+  return new WebGLQuery(this);
 }
 
 void WebGLContext::BeginQuery(GLenum target, WebGLQuery& query) {
-  const FuncScope funcScope(*this, "beginQuery");
+  FuncScope funcScope(*this, "beginQuery");
   if (IsContextLost()) return;
-
-  if (!ValidateObject("query", query)) return;
+  funcScope.mBindFailureGuard = true;
 
   const auto& slot = ValidateQuerySlotByTarget(target);
   if (!slot) return;
 
   if (*slot) return ErrorInvalidOperation("Query target already active.");
 
+  const auto& curTarget = query.Target();
+  if (curTarget && target != curTarget) {
+    ErrorInvalidOperation("Queries cannot change targets.");
+    return;
+  }
+
   ////
 
   query.BeginQuery(target, *slot);
+
+  funcScope.mBindFailureGuard = false;
 }
 
 void WebGLContext::EndQuery(GLenum target) {
-  const FuncScope funcScope(*this, "endQuery");
+  FuncScope funcScope(*this, "endQuery");
   if (IsContextLost()) return;
+  funcScope.mBindFailureGuard = true;
 
   const auto& slot = ValidateQuerySlotByTarget(target);
   if (!slot) return;
 
-  const auto& query = *slot;
+  const auto query = *slot;  // Grab a strong reference.
   if (!query) return ErrorInvalidOperation("Query target not active.");
 
   query->EndQuery();
+
+  funcScope.mBindFailureGuard = false;
 }
 
-void WebGLContext::GetQuery(JSContext* cx, GLenum target, GLenum pname,
-                            JS::MutableHandleValue retval) {
-  const FuncScope funcScope(*this, "getQuery");
-
-  retval.setNull();
-  if (IsContextLost()) return;
-
-  switch (pname) {
-    case LOCAL_GL_CURRENT_QUERY_EXT: {
-      if (IsExtensionEnabled(WebGLExtensionID::EXT_disjoint_timer_query) &&
-          target == LOCAL_GL_TIMESTAMP) {
-        // Doesn't seem illegal to ask about, but is always null.
-        // TIMESTAMP has no slot, so ValidateQuerySlotByTarget would generate
-        // INVALID_ENUM.
-        return;
-      }
-
-      const auto& slot = ValidateQuerySlotByTarget(target);
-      if (!slot || !*slot) return;
-
-      const auto& query = *slot;
-      if (target != query->Target()) return;
-
-      JS::Rooted<JS::Value> v(cx);
-      dom::GetOrCreateDOMReflector(cx, slot->get(), &v);
-      retval.set(v);
-    }
-      return;
-
-    case LOCAL_GL_QUERY_COUNTER_BITS_EXT:
-      if (!IsExtensionEnabled(WebGLExtensionID::EXT_disjoint_timer_query))
-        break;
-
-      if (target != LOCAL_GL_TIME_ELAPSED_EXT &&
-          target != LOCAL_GL_TIMESTAMP_EXT) {
-        ErrorInvalidEnumInfo("target", target);
-        return;
-      }
-
-      {
-        GLint bits = 0;
-        gl->fGetQueryiv(target, pname, &bits);
-
-        if (!Has64BitTimestamps() && bits > 32) {
-          bits = 32;
-        }
-        retval.set(JS::Int32Value(bits));
-      }
-      return;
-
-    default:
-      break;
-  }
-
-  ErrorInvalidEnumInfo("pname", pname);
-}
-
-void WebGLContext::GetQueryParameter(JSContext*, const WebGLQuery& query,
-                                     GLenum pname,
-                                     JS::MutableHandleValue retval) {
+Maybe<double> WebGLContext::GetQueryParameter(const WebGLQuery& query,
+                                              GLenum pname) const {
   const FuncScope funcScope(*this, "getQueryParameter");
-  retval.setNull();
+  if (IsContextLost()) return Nothing();
+
+  return query.GetQueryParameter(pname);
+}
+
+// disjoint_timer_queries
+
+void WebGLContext::QueryCounter(WebGLQuery& query) const {
+  const WebGLContext::FuncScope funcScope(*this, "queryCounterEXT");
   if (IsContextLost()) return;
 
-  if (!ValidateObject("query", query)) return;
-
-  query.GetQueryParameter(pname, retval);
+  query.QueryCounter();
 }
 
 }  // namespace mozilla

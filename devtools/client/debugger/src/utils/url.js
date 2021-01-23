@@ -3,8 +3,9 @@
  * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
 
 // @flow
-
 import { memoize } from "lodash";
+import { URL as URLParser } from "whatwg-url";
+import type { URL } from "../types";
 
 const defaultUrl = {
   hash: "",
@@ -23,9 +24,9 @@ const defaultUrl = {
   username: "",
 };
 
-export const parse = memoize(function parse(url: string): any {
+export const parse = memoize(function parse(url: URL): any {
   try {
-    const urlObj = new URL(url);
+    const urlObj = new URLParser(url);
     (urlObj: any).path = urlObj.pathname + urlObj.search;
     return urlObj;
   } catch (err) {
@@ -37,3 +38,7 @@ export const parse = memoize(function parse(url: string): any {
     return defaultUrl;
   }
 });
+
+export function sameOrigin(firstUrl: URL, secondUrl: URL): boolean {
+  return parse(firstUrl).origin == parse(secondUrl).origin;
+}

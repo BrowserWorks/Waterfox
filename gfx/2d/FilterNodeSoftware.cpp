@@ -595,9 +595,9 @@ void FilterNodeSoftware::Draw(DrawTarget* aDrawTarget, const Rect& aSourceRect,
   if (result->GetFormat() == SurfaceFormat::A8) {
     // Interpret the result as having implicitly black color channels.
     aDrawTarget->PushClipRect(renderedDestRect);
-    aDrawTarget->MaskSurface(ColorPattern(Color(0.0, 0.0, 0.0, 1.0)), result,
-                             Point(outputRect.TopLeft()) + sourceToDestOffset,
-                             aOptions);
+    aDrawTarget->MaskSurface(
+        ColorPattern(DeviceColor::MaskOpaqueBlack()), result,
+        Point(outputRect.TopLeft()) + sourceToDestOffset, aOptions);
     aDrawTarget->PopClip();
   } else {
     aDrawTarget->DrawSurface(result, renderedDestRect,
@@ -904,7 +904,7 @@ FilterNodeSoftware::FilterNodeSoftware()
 
 FilterNodeSoftware::~FilterNodeSoftware() {
   MOZ_ASSERT(
-      !mInvalidationListeners.size(),
+      mInvalidationListeners.empty(),
       "All invalidation listeners should have unsubscribed themselves by now!");
 
   for (std::vector<RefPtr<FilterNodeSoftware> >::iterator it =
@@ -1530,13 +1530,13 @@ IntRect FilterNodeColorMatrixSoftware::GetOutputRectInRect(
 }
 
 void FilterNodeFloodSoftware::SetAttribute(uint32_t aIndex,
-                                           const Color& aColor) {
+                                           const DeviceColor& aColor) {
   MOZ_ASSERT(aIndex == ATT_FLOOD_COLOR);
   mColor = aColor;
   Invalidate();
 }
 
-static uint32_t ColorToBGRA(const Color& aColor) {
+static uint32_t ColorToBGRA(const DeviceColor& aColor) {
   union {
     uint32_t color;
     uint8_t components[4];
@@ -1551,7 +1551,7 @@ static uint32_t ColorToBGRA(const Color& aColor) {
   return color;
 }
 
-static SurfaceFormat FormatForColor(Color aColor) {
+static SurfaceFormat FormatForColor(DeviceColor aColor) {
   if (aColor.r == 0 && aColor.g == 0 && aColor.b == 0) {
     return SurfaceFormat::A8;
   }
@@ -2296,15 +2296,18 @@ static inline void DebugOnlyCheckColorSamplingAccess(
 #  define DebugOnlyCheckColorSamplingAccess(address, boundsBegin, boundsEnd)
 #endif
 
-static inline uint8_t ColorComponentAtPoint(
-    const uint8_t* aData, int32_t aStride, const uint8_t* aBoundsBegin,
-    const uint8_t* aBoundsEnd, int32_t x, int32_t y, size_t bpp, ptrdiff_t c) {
+static inline uint8_t ColorComponentAtPoint(const uint8_t* aData,
+                                            ptrdiff_t aStride,
+                                            const uint8_t* aBoundsBegin,
+                                            const uint8_t* aBoundsEnd,
+                                            int32_t x, int32_t y, ptrdiff_t bpp,
+                                            ptrdiff_t c) {
   DebugOnlyCheckColorSamplingAccess(&aData[y * aStride + bpp * x + c],
                                     aBoundsBegin, aBoundsEnd);
   return aData[y * aStride + bpp * x + c];
 }
 
-static inline int32_t ColorAtPoint(const uint8_t* aData, int32_t aStride,
+static inline int32_t ColorAtPoint(const uint8_t* aData, ptrdiff_t aStride,
                                    const uint8_t* aBoundsBegin,
                                    const uint8_t* aBoundsEnd, int32_t x,
                                    int32_t y) {
@@ -2315,11 +2318,9 @@ static inline int32_t ColorAtPoint(const uint8_t* aData, int32_t aStride,
 
 // Accepts fractional x & y and does bilinear interpolation.
 // Only call this if the pixel (floor(x)+1, floor(y)+1) is accessible.
-static inline uint8_t ColorComponentAtPoint(const uint8_t* aData,
-                                            int32_t aStride,
-                                            const uint8_t* aBoundsBegin,
-                                            const uint8_t* aBoundsEnd, Float x,
-                                            Float y, size_t bpp, ptrdiff_t c) {
+static inline uint8_t ColorComponentAtPoint(
+    const uint8_t* aData, ptrdiff_t aStride, const uint8_t* aBoundsBegin,
+    const uint8_t* aBoundsEnd, Float x, Float y, ptrdiff_t bpp, ptrdiff_t c) {
   const uint32_t f = 256;
   const int32_t lx = floor(x);
   const int32_t ly = floor(y);
@@ -3410,7 +3411,7 @@ void FilterNodeLightingSoftware<LightType, LightingType>::SetAttribute(
 
 template <typename LightType, typename LightingType>
 void FilterNodeLightingSoftware<LightType, LightingType>::SetAttribute(
-    uint32_t aIndex, const Color& aColor) {
+    uint32_t aIndex, const DeviceColor& aColor) {
   MOZ_ASSERT(aIndex == ATT_LIGHTING_COLOR);
   mColor = aColor;
   Invalidate();

@@ -12,21 +12,38 @@
  *
  * This file should also not contain any app specific styling.  Defaults for
  * widgets of a particular application should be in that application's style
- * sheet.  For example, style definitions for navigator can be found in
- * navigator.css.
- *
- * THIS FILE IS LOCKED DOWN.  YOU ARE NOT ALLOWED TO MODIFY IT WITHOUT FIRST
- * HAVING YOUR CHANGES REVIEWED BY enndeakin@gmail.com
+ * sheet.  For example, style definitions for browser can be found in
+ * browser.css.
  */
 
 @import url("chrome://global/skin/tooltip.css");
 
 @namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"); /* set default namespace to XUL */
 @namespace html url("http://www.w3.org/1999/xhtml"); /* namespace for HTML elements */
-@namespace xbl url("http://www.mozilla.org/xbl"); /* namespace for XBL elements */
+
+/* TODO: investigate unifying these two root selectors
+ * https://bugzilla.mozilla.org/show_bug.cgi?id=1592344
+ */
+*|*:root {
+  --animation-easing-function: cubic-bezier(.07, .95, 0, 1);
+}
 
 :root {
-  --animation-easing-function: cubic-bezier(.07, .95, 0, 1);
+  text-rendering: optimizeLegibility;
+  -moz-control-character-visibility: visible;
+}
+
+:root:-moz-locale-dir(rtl) {
+  direction: rtl;
+}
+
+/*
+ * Native anonymous popups and tooltips in html are document-level, which means
+ * that they don't inherit from the root, so this is needed.
+ */
+popupgroup:-moz-native-anonymous:-moz-locale-dir(rtl),
+tooltip:-moz-native-anonymous:-moz-locale-dir(rtl) {
+  direction: rtl;
 }
 
 /* ::::::::::
@@ -34,13 +51,13 @@
    :: kinds of windows (not JUST browser windows) with toolbars
    ::::: */
 
-window[chromehidden~="menubar"] .chromeclass-menubar,
-window[chromehidden~="directories"] .chromeclass-directories,
-window[chromehidden~="status"] .chromeclass-status,
-window[chromehidden~="extrachrome"] .chromeclass-extrachrome,
-window[chromehidden~="location"] .chromeclass-location,
-window[chromehidden~="location"][chromehidden~="toolbar"] .chromeclass-toolbar,
-window[chromehidden~="toolbar"] .chromeclass-toolbar-additional {
+*|*:root[chromehidden~="menubar"] .chromeclass-menubar,
+*|*:root[chromehidden~="directories"] .chromeclass-directories,
+*|*:root[chromehidden~="status"] .chromeclass-status,
+*|*:root[chromehidden~="extrachrome"] .chromeclass-extrachrome,
+*|*:root[chromehidden~="location"] .chromeclass-location,
+*|*:root[chromehidden~="location"][chromehidden~="toolbar"] .chromeclass-toolbar,
+*|*:root[chromehidden~="toolbar"] .chromeclass-toolbar-additional {
   display: none;
 }
 
@@ -55,18 +72,11 @@ window[chromehidden~="toolbar"] .chromeclass-toolbar-additional {
 
 /****** elements that have no visual representation ******/
 
-script, data,
-commands, commandset, command,
+script, data, commandset, command,
 broadcasterset, broadcaster, observes,
-keyset, key, toolbarpalette, toolbarset,
-template, rule, conditions, action,
-bindings, binding, content, member, triple,
+keyset, key, toolbarpalette, template,
 treeitem, treeseparator, treerow, treecell {
   display: none;
-}
-
-xbl|children {
-  display: none !important;
 }
 
 /********** focus rules **********/
@@ -84,8 +94,7 @@ iframe {
 
 /******** window & page ******/
 
-window,
-page {
+window {
   overflow: -moz-hidden-unscrollable;
   -moz-box-orient: vertical;
 }
@@ -103,32 +112,15 @@ label.text-link, label[onclick] {
 
 label html|span.accesskey {
   text-decoration: underline;
+  text-decoration-skip-ink: none;
 }
 
 /********** toolbarbutton **********/
 
-toolbarbutton {
-  -moz-binding: url("chrome://global/content/bindings/toolbarbutton.xml#toolbarbutton");
-}
-
-toolbarbutton.badged-button > toolbarbutton,
-toolbarbutton.badged-button {
-  -moz-binding: url("chrome://global/content/bindings/toolbarbutton.xml#toolbarbutton-badged");
-}
-
-.toolbarbutton-badge:not([value]),
-.toolbarbutton-badge[value=""] {
-  display: none;
-}
-
-toolbarbutton:not([type="menu"]) > .toolbarbutton-menu-dropmarker,
 toolbar[mode="icons"] .toolbarbutton-text,
-toolbar[mode="icons"] .toolbarbutton-multiline-text,
 toolbar[mode="text"] .toolbarbutton-icon,
-.toolbarbutton-multiline-text:not([wrap="true"]),
-.toolbarbutton-text[wrap="true"] {
+html|label.toolbarbutton-badge:empty {
   display: none;
-  -moz-binding: none;
 }
 
 /******** browser, editor, iframe ********/
@@ -182,7 +174,8 @@ toolbaritem,
 toolbarbutton,
 toolbarseparator,
 button,
-textbox,
+search-textbox,
+html|input,
 tab,
 radio,
 splitter,
@@ -190,26 +183,14 @@ menulist {
   -moz-window-dragging: no-drag;
 }
 
-/******* toolbar *******/
-toolbar {
-  -moz-binding: url("chrome://browser/content/toolbar.xml#toolbar");
+titlebar {
+  pointer-events: auto !important;
 }
+
+/******* toolbar *******/
 
 toolbox {
-  -moz-binding: url("chrome://browser/content/toolbar.xml#toolbox");
   -moz-box-orient: vertical;
-}
-
-toolbar[customizing="true"][collapsed="true"] {
-  /* Some apps, e.g. Firefox, use 'collapsed' to hide toolbars.
-     Override it while customizing. */
-  visibility: visible;
-}
-
-toolbar[customizing="true"][hidden="true"] {
-  /* Some apps, e.g. SeaMonkey, use 'hidden' to hide toolbars.
-     Override it while customizing. */
-  display: -moz-box;
 }
 
 %ifdef XP_MACOSX
@@ -220,14 +201,9 @@ toolbar[type="menubar"] {
 %endif
 
 %ifdef MOZ_WIDGET_GTK
-window[shellshowingmenubar="true"] menubar {
-  display: none !important;
-}
-
-window[shellshowingmenubar="true"]
+*|*:root[shellshowingmenubar="true"]
 toolbar[type="menubar"]:not([customizing="true"]) {
-  min-height: 0 !important;
-  border: 0 !important;
+  display: none !important;
 }
 %endif
 
@@ -247,13 +223,8 @@ menubar > menu:empty {
 
 /********* menupopup, panel, & tooltip ***********/
 
-menupopup {
-  -moz-binding: url("chrome://global/content/bindings/popup.xml#popup");
-  -moz-box-orient: vertical;
-}
-
+menupopup,
 panel {
-  -moz-binding: url("chrome://global/content/bindings/popup.xml#panel");
   -moz-box-orient: vertical;
 }
 
@@ -271,11 +242,10 @@ tooltip {
   margin-top: 21px;
 }
 
-panel[type="arrow"] {
-  -moz-binding: url("chrome://global/content/bindings/popup.xml#arrowpanel");
-}
-
+% excluding Android here to work around bug 1637975:
+%ifndef ANDROID
 @supports -moz-bool-pref("xul.panel-animations.enabled") {
+@media (prefers-reduced-motion: no-preference) {
 %ifdef MOZ_WIDGET_COCOA
   /* On Mac, use the properties "-moz-window-transform" and "-moz-window-opacity"
      instead of "transform" and "opacity" for these animations.
@@ -340,6 +310,8 @@ panel[type="arrow"] {
   }
 %endif
 }
+}
+%endif
 
 panel[type="arrow"][animating] {
   pointer-events: none;
@@ -361,10 +333,7 @@ column {
   display: -moz-grid-line;
 }
 
-rows {
-  -moz-box-orient: vertical;
-}
-
+rows,
 column {
   -moz-box-orient: vertical;
 }
@@ -382,7 +351,6 @@ treechildren {
 }
 
 tree {
-  -moz-binding: none;
   -moz-box-orient: vertical;
   width: 10px;
   height: 10px;
@@ -417,6 +385,26 @@ deck {
 }
 
 stack {
+  display: grid;
+  position: relative;
+}
+
+/* We shouldn't style native anonymous children like scrollbars or what not */
+stack > *|*:not(:-moz-native-anonymous) {
+  grid-area: 1 / 1;
+  z-index: 0;
+
+  /*
+    The default `min-height: auto` value makes grid items refuse to be smaller
+    than their content. This doesn't match the traditional behavior of XUL stack,
+    which often shoehorns tall content into a smaller stack and allows the content
+    to decide how to handle overflow (e.g. by scaling down if it's an image, or
+    by adding scrollbars if it's scrollable).
+  */
+  min-height: 0;
+}
+
+legacy-stack {
   display: -moz-stack;
 }
 
@@ -427,12 +415,10 @@ tabbox {
 }
 
 tabs {
-  -moz-binding: url("chrome://global/content/bindings/tabbox.xml#tabs");
   -moz-box-orient: horizontal;
 }
 
 tab {
-  -moz-binding: url("chrome://global/content/bindings/tabbox.xml#tab");
   -moz-box-align: center;
   -moz-box-pack: center;
 }
@@ -464,14 +450,9 @@ tooltip[titletip="true"] {
 
 /********** textbox **********/
 
-textbox {
-  -moz-binding: url("chrome://global/content/bindings/textbox.xml#textbox");
+search-textbox {
   -moz-user-select: text;
   text-shadow: none;
-}
-
-textbox[is="search-textbox"] {
-  -moz-binding: none;
 }
 
 /* Prefix with (xul|*):root to workaround HTML tests loading xul.css */
@@ -487,22 +468,10 @@ textbox[is="search-textbox"] {
   }
 }
 
-.textbox-contextmenu:-moz-locale-dir(rtl) {
-  direction: rtl;
-}
-
 /********** autocomplete textbox **********/
 
 /* SeaMonkey uses its own autocomplete and the toolkit's autocomplete widget */
 %ifndef MOZ_SUITE
-
-textbox[type="autocomplete"] {
-  -moz-binding: url("chrome://global/content/bindings/autocomplete.xml#autocomplete");
-}
-
-panel[type="autocomplete-richlistbox"] {
-  -moz-binding: none;
-}
 
 .autocomplete-richlistbox {
   -moz-user-focus: ignore;
@@ -510,7 +479,6 @@ panel[type="autocomplete-richlistbox"] {
 }
 
 .autocomplete-richlistitem {
-  -moz-binding: none;
   -moz-box-orient: vertical;
   -moz-box-align: center;
   overflow: -moz-hidden-unscrollable;
@@ -532,27 +500,12 @@ panel[type="autocomplete-richlistbox"] {
 
 /********** menulist **********/
 
-menulist[popuponly="true"] {
+menulist[popuponly] {
   -moz-appearance: none !important;
   margin: 0 !important;
   height: 0 !important;
   min-height: 0 !important;
   border: 0 !important;
-}
-
-menulist > menupopup > .popup-internal-box > .scrollbutton-up,
-menulist > menupopup > .popup-internal-box > .arrowscrollbox-overflow-start-indicator,
-menulist > menupopup > .popup-internal-box > .arrowscrollbox-overflow-end-indicator,
-menulist > menupopup > .popup-internal-box > .scrollbutton-down {
-  display: none;
-}
-
-menulist > menupopup > .popup-internal-box > .arrowscrollbox-scrollbox {
-  overflow: auto;
-}
-
-dropmarker > .dropmarker-icon {
-  pointer-events: none;
 }
 
 /********** splitter **********/
@@ -584,10 +537,6 @@ scrollbox[smoothscroll=true] {
   scroll-behavior: smooth;
 }
 
-arrowscrollbox {
-  -moz-binding: url("chrome://global/content/bindings/scrollbox.xml#arrowscrollbox");
-}
-
 /********** stringbundle **********/
 
 stringbundle,
@@ -597,23 +546,15 @@ stringbundleset {
 
 /********** dialog **********/
 
-dialog,
-dialog:root /* override :root from above */ {
-  -moz-binding: url("chrome://global/content/bindings/dialog.xml#dialog");
-  -moz-box-orient: vertical;
-}
-
-/********* page ************/
-
-page {
+dialog {
+  -moz-box-flex: 1;
   -moz-box-orient: vertical;
 }
 
 /********** wizard **********/
 
-wizard,
-wizard:root /* override :root from above */ {
-  -moz-binding: url("chrome://global/content/bindings/wizard.xml#wizard");
+wizard {
+  -moz-box-flex: 1;
   -moz-box-orient: vertical;
   width: 40em;
   height: 30em;
@@ -631,11 +572,6 @@ richlistbox {
   -moz-box-orient: vertical;
 }
 
-richlistitem {
-  -moz-binding: url('chrome://global/content/bindings/richlistbox.xml#richlistitem');
-}
-
-
 /*********** findbar ************/
 findbar {
   overflow-x: hidden;
@@ -647,35 +583,34 @@ tabmodalprompt {
   text-shadow: none;
 }
 
-.menulist-highlightable-label:not([highlightable="true"]),
-.menulist-label[highlightable="true"],
+/* Some elements that in HTML blocks should be inline-level by default */
+label, button, image {
+  display: -moz-inline-box;
+}
+
 .menu-iconic-highlightable-text:not([highlightable="true"]),
 .menu-iconic-text[highlightable="true"] {
   display: none;
 }
 
+[orient="vertical"] { -moz-box-orient: vertical !important; }
+[orient="horizontal"] { -moz-box-orient: horizontal !important; }
+
+[align="start"] { -moz-box-align: start !important; }
+[align="center"] { -moz-box-align: center !important; }
+[align="end"] { -moz-box-align: end !important; }
+[align="baseline"] { -moz-box-align: baseline !important; }
+[align="stretch"] { -moz-box-align: stretch !important; }
+
+[pack="start"] { -moz-box-pack: start !important; }
+[pack="center"] { -moz-box-pack: center !important; }
+[pack="end"] { -moz-box-pack: end !important; }
+
 @supports -moz-bool-pref("layout.css.emulate-moz-box-with-flex") {
-  /* Support common XUL attributes in the emulated flex mode so we can
-     test the browser in this configuration without mass-changing existing
-     markup and CSS. */
-  [orient="vertical"] { -moz-box-orient: vertical; }
-  [orient="horizontal"] { -moz-box-orient: horizontal; }
-
-  [dir="reverse"] { -moz-box-direction: reverse; }
-
-  [align="start"] { -moz-box-align: start; }
-  [align="center"] { -moz-box-align: center; }
-  [align="end"] { -moz-box-align: end; }
-  [align="baseline"] { -moz-box-align: baseline; }
-  [align="stretch"] { -moz-box-align: stretch; }
-
-  [pack="start"] { -moz-box-pack: start; }
-  [pack="center"] { -moz-box-pack: center; }
-  [pack="end"] { -moz-box-pack: end; }
-
   /* This isn't a real solution for [flex] and [ordinal], but it covers enough
-     cases to render the browser chrome. If we get attr() in Bug 435426 this could
-     work for all cases. */
+     cases to render the browser chrome for us to test emulated flex mode without
+     mass-changing existing markup and CSS.
+     If we get attr() in Bug 435426 this could  work for all cases. */
   [flex="1"] { -moz-box-flex: 1; }
   [flex="2"] { -moz-box-flex: 2; }
   [flex="3"] { -moz-box-flex: 3; }
@@ -689,15 +624,4 @@ tabmodalprompt {
   [flex="400"] { -moz-box-flex: 400; }
   [flex="1000"] { -moz-box-flex: 1000; }
   [flex="10000"] { -moz-box-flex: 10000; }
-
-  [ordinal="1"] { -moz-box-ordinal-group: 1; }
-  [ordinal="2"] { -moz-box-ordinal-group: 2; }
-  [ordinal="3"] { -moz-box-ordinal-group: 3; }
-  [ordinal="4"] { -moz-box-ordinal-group: 4; }
-  [ordinal="5"] { -moz-box-ordinal-group: 5; }
-  [ordinal="6"] { -moz-box-ordinal-group: 6; }
-  [ordinal="7"] { -moz-box-ordinal-group: 7; }
-  [ordinal="8"] { -moz-box-ordinal-group: 8; }
-  [ordinal="9"] { -moz-box-ordinal-group: 9; }
-  [ordinal="1000"] { -moz-box-ordinal-group: 1000; }
 }

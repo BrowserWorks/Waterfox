@@ -147,7 +147,7 @@ async function testtag_tree(
 
   tree.startEditing(1, ecolumn);
   var inputField = tree.inputField;
-  is(inputField.localName, "textbox", testid + "inputField");
+  is(inputField.localName, "input", testid + "inputField");
   inputField.value = "Changed Value";
   tree.stopEditing(true);
   is(
@@ -450,9 +450,6 @@ function testtag_tree_TreeSelection(tree, testid, multiple) {
     2,
     []
   );
-
-  // XXXndeakin invertSelection isn't implemented
-  //  selection.invertSelection();
 
   is(selection.shiftSelectPivot, -1, testid + "shiftSelectPivot set to -1");
 
@@ -1312,7 +1309,7 @@ function testtag_tree_TreeView_rows(tree, testid, rowInfo, startRow) {
       return false;
     },
     isContainerEmpty(row) {
-      return row.children != null && row.children.rows.length == 0;
+      return row.children != null && !row.children.rows.length;
     },
     isSeparator(row) {
       return row.separator;
@@ -1814,8 +1811,8 @@ function getSortedColumnArray(aTree) {
   }
 
   array.sort(function(a, b) {
-    var o1 = parseInt(a.element.getAttribute("ordinal"));
-    var o2 = parseInt(b.element.getAttribute("ordinal"));
+    var o1 = parseInt(a.element.style.MozBoxOrdinalGroup);
+    var o2 = parseInt(b.element.style.MozBoxOrdinalGroup);
     return o1 - o2;
   });
   return array;

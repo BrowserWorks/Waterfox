@@ -10,7 +10,6 @@
 #include "nsCOMArray.h"
 #include "nsCOMPtr.h"
 #include "nsIContent.h"
-#include "nsIServiceManager.h"
 #include "nsGkAtoms.h"
 #include "nsNameSpaceManager.h"
 #include "nsXULContentUtils.h"
@@ -25,6 +24,7 @@
 
 #include "mozilla/dom/Element.h"
 
+using mozilla::dom::Element;
 const unsigned long SORT_COMPARECASE = 0x0001;
 const unsigned long SORT_INTEGER = 0x0100;
 
@@ -185,7 +185,7 @@ static int32_t CompareValues(const nsAString& aLeft, const nsAString& aRight,
     return result;
   }
 
-  return ::Compare(aLeft, aRight, nsCaseInsensitiveStringComparator());
+  return ::Compare(aLeft, aRight, nsCaseInsensitiveStringComparator);
 }
 
 static int testSortCallback(const void* data1, const void* data2,

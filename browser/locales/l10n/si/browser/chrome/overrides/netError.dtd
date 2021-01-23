@@ -1,0 +1,139 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "පිටුව පූරණය ගැටලු සහිතයි">
+<!ENTITY retry.label "නැවත උත්සාහ කරන්න">
+<!ENTITY returnToPreviousPage.label "පසුපසට යන්න">
+<!ENTITY returnToPreviousPage1.label "පසුපසට යන්න (නිර්දේශිත)">
+<!ENTITY viewCertificate.label "සහතිකය පෙන්වන්න">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "සේවාදායකය හමු නොවුනි">
+<!-- Localization note (dnsNotFound.title1) - "Hmm" is a sound made when considering or puzzling over something. You don't have to include it in your translation if your language does not have a written word like this. -->
+
+<!ENTITY fileNotFound.longDesc "<ul> 
+<li>විශාල අකුරු හෝ වෙනත් යතුරුකරණ දෝෂයන් සඳහා ගොනු නම පරික්‍ෂා කරන්න.</li> 
+<li>ගොනුව ඉවත්කර, නම වෙනස්කර හෝ මකා ඇති දැයි පරික්‍ෂා කරන්න.</li> 
+</ul>">
+
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>එය ඉවත් කර හෝ ස්ථාන මාරු කර තිබිය හැකි, හෝ පිවිසුම වළක්වමින් ගොනු බලතල සකසා තිබිය හැක.</li>
+</ul>
+">
+
+<!ENTITY generic.longDesc "<p> කුමන හෝ හේතුවක් නිසා මේ පිටුව &brandShortName; හට පූරණය කළ නොහැක.</p>">
+
+<!ENTITY captivePortal.title "ජාලයට පිවිසෙන්න">
+
+<!ENTITY openPortalLoginPage.label2 "ජාල පිවිසුම් පිටුව විවෘත කරන්න">
+
+<!ENTITY malformedURI.pageTitle "අවලංගු URL">
+<!-- Localization note (malformedURI.title1) - "Hmm" is a sound made when considering or puzzling over something. You don't have to include it in your translation if your language does not have a written word like this. -->
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>ඉල්ලූ ලේඛනය &brandShortName;හි කෑෂ් තුළ නැත.</p><ul><li> ආරක්ෂක ක්‍රමවේදයක් ලෙස, &brandShortName; ස්වයංක්‍රීයව සංවේදී දත්ත සහිත ලේඛන යළි ලබා ගන්නේ නැත.</li><li>වෙබ් අඩවියෙන් ලේඛන යළි ලබා ගැනීමට නැවත උත්සාහ කරන්න මත ක්ලික් කරන්න.</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "<ul> 
+<li>මාර්ගගත ප්‍රකාරයට මාරුවී පිටුව නැවුම් කිරීමට &quot;නැවත උත්සහ&quot; ඔබන්න.</li> 
+</ul>">
+
+<!ENTITY contentEncodingError.longDesc "<ul> 
+<li>කරුණාකර මෙම ගැටලුව පිළිබද අඩවියේ හිමිකරුට දන්වන්න.</li> 
+</ul>">
+
+<!ENTITY unsafeContentType.longDesc "<ul> 
+<li>කරුණාකර මෙම ගැටලුව පිළිබද අඩවියේ හිමිකරුට දන්වන්න.</li> 
+</ul>">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "<ul> 
+<li>මෙම ලිපිනය විවෘත කිරීම සඳහා ඔබට වෙනත් මෘදුකාංගයක් ස්ථාපනය කිරිමට සිදු විය හැක.</li> 
+</ul>">
+
+<!ENTITY proxyConnectFailure.longDesc "<ul> 
+<li>ප්‍රොක්සි සේවාදායකයේ සැකසුම් නිවැරදි දැයි පරික්‍ෂා කරන්න.</li> 
+<li>ප්‍රොක්සි සේවාදායකය ක්‍රියාකාරි දැයි පරික්‍ෂා කිරීම සඳහා 
+ ඔබගේ පද්ධති පරිපාළක හමුවන්න.</li> 
+</ul>">
+
+<!ENTITY proxyResolveFailure.longDesc "<ul> 
+<li>ප්‍රොක්සි සේවාදායකයේ සැකසුම් නිවැරදි දැයි පරික්‍ෂා කරන්න.</li> 
+<li>ඔබගේ පරිගණකයට ක්‍රියාකාරි ජාල සම්බන්ධතාවයක් ඇති දැයි පරික්‍ෂා කරන්න.</li> 
+<li>ඔබගේ පරිගණකය හෝ ජාලය ෆයර්වොලයක් මඟින් හෝ ප්‍රොක්සියක් මඟින් ආරක්‍ෂිතව ඇත්නම්, 
+ &brandShortName; වෙබ් අඩවියට ප්‍රවේශයට අවසර ඇති බවට තහවුරු කරගන්න.</li> 
+</ul>">
+
+<!ENTITY redirectLoop.longDesc "<ul> 
+<li>මෙම ගැටලුව සමහර විට කුකී අක්‍රීය වීම හෝ අනුමත කිරීම ප්‍රතික්‍ෂේප කිරීම නිසා 
+විය හැක.</li> 
+</ul>">
+
+<!ENTITY unknownSocketType.longDesc "<ul> 
+<li>ඔබගේ පද්ධතිය Personal Security Manager ස්ථාපනය කර ඇති දැයි පරික්‍ෂා 
+ කරන්න.</li> 
+<li>මෙය සමහරවිට සේවාදායකයේ අසම්මත මානකරණය නිසා සිදුවිය හැක.</li> 
+</ul>">
+
+<!ENTITY nssFailure2.longDesc2 "<ul> 
+<li>ලැබුණු දත්තවල තථ්‍යතාව නිර්ණය කරගත නොහැකි වීම හේතුවෙන් ඔබ පිවිසීමට උත්සාහ කරන පිටුව පෙන්විය නොහැක.</li> 
+<li>කරුණාකර අඩවියේ හිමිකරුට මෙම ගැටලුව දන්වා සිටින්න.</li> 
+</ul>">
+
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "එය ගැන ඔබට කුමක් කළ හැකි ද?">
+
+
+
+
+<!ENTITY sharedLongDesc "<ul> 
+<li>මෙම අඩවිය තාවකාලිකව ආභාවිතව හෝ ඉතාමත් කාර්යය බහුලව තිබිය හැක. 
+ මිනිත්තු කිහිපයකින් නැවත උත්සාහ කරන්න.</li> 
+<li>ඔබට මෙම පිටුව පූරණය කරගත නොහැකි නම් ඔබගේ පරිගණකයේ ජාල සමබන්ධතාව 
+ පරීක්‍ෂා කරන්න.</li> 
+<li>ඔබගේ පරිගණකය හෝ ජාලය,  ෆයර්වෝලයක් හෝ ප්‍රොක්සියක් මඟින් ආරක්‍ෂා කරයි නම් 
+ &brandShortName; මඟින් අන්තර්ජාල ප්‍රවේශය අනුමත කර ඇති බවට තහවුරු කරගන්න.</li> 
+</ul>">
+
+<!ENTITY cspBlocked.longDesc "<p>මේ සඳහා ඉඩ නොදෙන අන්තර්ගත ආරක්ෂක ප්‍රතිපත්තියක් පිටුවේ ඇති නිසා  &brandShortName; මේ ආකාරයෙන් පූරණය කිරීමෙන් වැලකී සිටී.</p>">
+
+
+
+<!ENTITY securityOverride.exceptionButton1Label "අවදානම පිළිගෙන ඉදිරියට යන්න">
+
+<!ENTITY errorReporting.automatic2 "Mozilla ට මෙවැනි ද්වේශ සහගත අඩවි පිළිබඳ දැන අවහිර කිරීමට උදව් වීම සඳහා මෙවැනි දෝෂ වාර්ථා කරන්න">
+<!ENTITY errorReporting.learnMore "තවත් දැනගන්න...">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>කරුණාකර මෙම ගැටලුව පිළිබද අඩවියේ හිමිකරුට දන්වන්න.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "සංකීර්ණ තොරතුරු: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!-- LOCALIZATION NOTE (certerror.wrongSystemTime2,
+                        certerror.wrongSystemTimeWithoutReference) - The <span id='..' />
+     tags will be injected with actual values, please leave them unchanged. -->
+
+<!ENTITY certerror.copyToClipboard.label "පෙළ පසුරු පුවරුවට පිටපත් කරන්න">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+
+
+
+
+<!ENTITY prefReset.label "පෙරනිමි සිටුවම් පිළිනගන්න">
+

@@ -8,6 +8,9 @@ const { Cc, Ci } = require("chrome");
 const Services = require("Services");
 const { Actor, ActorClassWithSpec } = require("devtools/shared/protocol");
 const { accessibleWalkerSpec } = require("devtools/shared/specs/accessibility");
+const {
+  simulation: { COLOR_TRANSFORMATION_MATRICES },
+} = require("devtools/server/actors/accessibility/constants");
 
 loader.lazyRequireGetter(
   this,
@@ -60,8 +63,8 @@ loader.lazyRequireGetter(
 );
 loader.lazyRequireGetter(
   this,
-  "loadSheet",
-  "devtools/shared/layout/utils",
+  "loadSheetForBackgroundCalculation",
+  "devtools/server/actors/utils/accessibility",
   true
 );
 loader.lazyRequireGetter(
@@ -72,8 +75,8 @@ loader.lazyRequireGetter(
 );
 loader.lazyRequireGetter(
   this,
-  "removeSheet",
-  "devtools/shared/layout/utils",
+  "removeSheetForBackgroundCalculation",
+  "devtools/server/actors/utils/accessibility",
   true
 );
 loader.lazyRequireGetter(
@@ -84,16 +87,6 @@ loader.lazyRequireGetter(
 );
 
 const kStateHover = 0x00000004; // NS_EVENT_STATE_HOVER
-
-const HIGHLIGHTER_STYLES_SHEET = `data:text/css;charset=utf-8,
-* {
-  transition: none !important;
-}
-
-:-moz-devtools-highlighted {
-  color: transparent !important;
-  text-shadow: none !important;
-}`;
 
 const {
   EVENT_TEXT_CHANGED,
@@ -165,6 +158,10 @@ const NAME_FROM_SUBTREE_RULE_ROLES = new Set([
 
 const IS_OSX = Services.appinfo.OS === "Darwin";
 
+const {
+  SCORES: { BEST_PRACTICES, FAIL, WARNING },
+} = accessibility;
+
 /**
  * Helper function that determines if nsIAccessible object is in stale state. When an
  * object is stale it means its subtree is not up to date.
@@ -187,13 +184,16 @@ function isStale(accessible) {
  *
  * @param {Object} acc
  *        AccessibileActor to be used as the root for the audit.
+ * @param {Object} options
+ *        Options for running audit, may include:
+ *        - types: Array of audit types to be performed during audit.
  * @param {Map} report
  *        An accumulator map to be used to store audit information.
  * @param {Object} progress
  *        An audit project object that is used to track the progress of the
  *        audit and send progress "audit-event" events to the client.
  */
-function getAudit(acc, report, progress) {
+function getAudit(acc, options, report, progress) {
   if (acc.isDefunct) {
     return;
   }
@@ -201,14 +201,14 @@ function getAudit(acc, report, progress) {
   // Audit returns a promise, save the actual value in the report.
   report.set(
     acc,
-    acc.audit().then(result => {
+    acc.audit(options).then(result => {
       report.set(acc, result);
       progress.increment();
     })
   );
 
   for (const child of acc.children()) {
-    getAudit(child, report, progress);
+    getAudit(child, options, report, progress);
   }
 }
 
@@ -324,6 +324,22 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
     return this.targetActor && this.targetActor.window.document;
   },
 
+  get colorMatrix() {
+    if (!this.targetActor.docShell) {
+      return null;
+    }
+
+    const colorMatrix = this.targetActor.docShell.getColorMatrix();
+    if (
+      colorMatrix.length === 0 ||
+      colorMatrix === COLOR_TRANSFORMATION_MATRICES.NONE
+    ) {
+      return null;
+    }
+
+    return colorMatrix;
+  },
+
   reset() {
     try {
       Services.obs.removeObserver(this, "accessible-event");
@@ -335,24 +351,20 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
     this.cancelPick();
 
     // Clean up accessible actors cache.
-    if (this.refMap.size > 0) {
-      try {
-        if (this.rootDoc) {
-          this.purgeSubtree(
-            this.getRawAccessibleFor(this.rootDoc),
-            this.rootDoc
-          );
-        }
-      } catch (e) {
-        // Accessibility service might be already destroyed.
-      } finally {
-        this.refMap.clear();
-      }
-    }
+    this.clearRefs();
 
     this._childrenPromise = null;
     delete this.a11yService;
     this.setA11yServiceGetter();
+  },
+
+  /**
+   * Remove existing cache (of accessible actors) from tree.
+   */
+  clearRefs() {
+    for (const actor of this.refMap.values()) {
+      actor.destroy();
+    }
   },
 
   destroy() {
@@ -380,6 +392,8 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
     }
 
     actor = new AccessibleActor(this, rawAccessible);
+    // Add the accessible actor as a child of this accessible walker actor,
+    // assigning it an actorID.
     this.manage(actor);
     this.refMap.set(rawAccessible, actor);
 
@@ -390,15 +404,13 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
    * Clean up accessible actors cache for a given accessible's subtree.
    *
    * @param  {null|nsIAccessible} rawAccessible
-   * @param  {null|Object}   rawNode
    */
-  purgeSubtree(rawAccessible, rawNode) {
+  purgeSubtree(rawAccessible) {
     if (!rawAccessible) {
       return;
     }
 
-    const actor = this.getRef(rawAccessible);
-    if (actor && rawAccessible && !actor.isDefunct) {
+    try {
       for (
         let child = rawAccessible.firstChild;
         child;
@@ -406,19 +418,21 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
       ) {
         this.purgeSubtree(child);
       }
+    } catch (e) {
+      // rawAccessible or its descendants are defunct.
     }
 
-    this.refMap.delete(rawAccessible);
-
+    const actor = this.getRef(rawAccessible);
     if (actor) {
-      events.emit(this, "accessible-destroy", actor);
       actor.destroy();
     }
+  },
 
-    // If corresponding DOMNode is a top level document, clear entire cache.
-    if (rawNode && rawNode === this.rootDoc) {
-      this.refMap.clear();
+  unmanage: function(actor) {
+    if (actor instanceof AccessibleActor) {
+      this.refMap.delete(actor.rawAccessible);
     }
+    Actor.prototype.unmanage.call(this, actor);
   },
 
   /**
@@ -453,7 +467,7 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
     }
 
     const doc = this.getRawAccessibleFor(this.rootDoc);
-    if (isStale(doc)) {
+    if (!doc || isStale(doc)) {
       return this.once("document-ready").then(docAcc => this.addRef(docAcc));
     }
 
@@ -470,9 +484,17 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
    */
   getAccessibleFor(domNode) {
     // We need to make sure that the document is loaded processed by a11y first.
-    return this.getDocument().then(() =>
-      this.addRef(this.getRawAccessibleFor(domNode.rawNode))
-    );
+    return this.getDocument().then(() => {
+      const rawAccessible = this.getRawAccessibleFor(domNode.rawNode);
+      // Not all DOM nodes have corresponding accessible objects. It's usually
+      // the case where there is no semantics or relevance to the accessibility
+      // client.
+      if (!rawAccessible) {
+        return null;
+      }
+
+      return this.addRef(rawAccessible);
+    });
   },
 
   /**
@@ -521,15 +543,19 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
    * Run accessibility audit and return relevant ancestries for AccessibleActors
    * that have non-empty audit checks.
    *
+   * @param  {Object} options
+   *         Options for running audit, may include:
+   *         - types: Array of audit types to be performed during audit.
+   *
    * @return {Promise}
    *         A promise that resolves when the audit is complete and all relevant
    *         ancestries are calculated.
    */
-  async audit() {
+  async audit(options) {
     const doc = await this.getDocument();
     const report = new Map();
     this._auditProgress = new AuditProgress(this);
-    getAudit(doc, report, this._auditProgress);
+    getAudit(doc, options, report, this._auditProgress);
     this._auditProgress.setTotal(report.size);
     await Promise.all(report.values());
 
@@ -542,7 +568,7 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
           check =>
             check != null &&
             !check.error &&
-            check.score === accessibility.SCORES.FAIL
+            [BEST_PRACTICES, FAIL, WARNING].includes(check.score)
         )
       ) {
         ancestries.push(this.getAncestry(acc));
@@ -556,14 +582,18 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
    * Start accessibility audit. The result of this function will not be an audit
    * report. Instead, an "audit-event" event will be fired when the audit is
    * completed or fails.
+   *
+   * @param {Object} options
+   *        Options for running audit, may include:
+   *        - types: Array of audit types to be performed during audit.
    */
-  startAudit() {
+  startAudit(options) {
     // Audit is already running, wait for the "audit-event" event.
     if (this._auditing) {
       return;
     }
 
-    this._auditing = this.audit()
+    this._auditing = this.audit(options)
       // We do not want to block on audit request, instead fire "audit-event"
       // event when internal audit is finished or failed.
       .then(ancestries =>
@@ -590,6 +620,7 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
    * @param {Ci.nsIAccessibleEvent} subject
    *                                      accessible event object.
    */
+  // eslint-disable-next-line complexity
   observe(subject) {
     const event = subject.QueryInterface(Ci.nsIAccessibleEvent);
     const rawAccessible = event.accessible;
@@ -598,7 +629,7 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
     if (rawAccessible instanceof Ci.nsIAccessibleDocument && !accessible) {
       const rootDocAcc = this.getRawAccessibleFor(this.rootDoc);
       if (rawAccessible === rootDocAcc && !isStale(rawAccessible)) {
-        this.purgeSubtree(rawAccessible, event.DOMNode);
+        this.clearRefs();
         // If it's a top level document notify listeners about the document
         // being ready.
         events.emit(this, "document-ready", rawAccessible);
@@ -615,8 +646,8 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
           // Only propagate state change events for active accessibles.
           if (isBusy && isEnabled) {
             if (rawAccessible instanceof Ci.nsIAccessibleDocument) {
-              // Remove its existing cache from tree.
-              this.purgeSubtree(rawAccessible, event.DOMNode);
+              // Remove existing cache from tree.
+              this.clearRefs();
             }
             return;
           }
@@ -632,8 +663,7 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
             rawAccessible.name,
             event.DOMNode == this.rootDoc
               ? undefined
-              : this.getRef(rawAccessible.parent),
-            this
+              : this.getRef(rawAccessible.parent)
           );
         }
         break;
@@ -658,11 +688,15 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
             .forEach(child =>
               events.emit(child, "index-in-parent-change", child.indexInParent)
             );
-          events.emit(accessible, "reorder", rawAccessible.childCount, this);
+          events.emit(accessible, "reorder", rawAccessible.childCount);
         }
         break;
       case EVENT_HIDE:
-        this.purgeSubtree(rawAccessible);
+        if (event.DOMNode == this.rootDoc) {
+          this.clearRefs();
+        } else {
+          this.purgeSubtree(rawAccessible);
+        }
         break;
       case EVENT_DEFACTION_CHANGE:
       case EVENT_ACTION_CHANGE:
@@ -674,7 +708,7 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
       case EVENT_TEXT_INSERTED:
       case EVENT_TEXT_REMOVED:
         if (accessible) {
-          events.emit(accessible, "text-change", this);
+          events.emit(accessible, "text-change");
           if (NAME_FROM_SUBTREE_RULE_ROLES.has(rawAccessible.role)) {
             events.emit(
               accessible,
@@ -682,8 +716,7 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
               rawAccessible.name,
               event.DOMNode == this.rootDoc
                 ? undefined
-                : this.getRef(rawAccessible.parent),
-              this
+                : this.getRef(rawAccessible.parent)
             );
           }
         }
@@ -729,7 +762,7 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
     // highlighter temporarily modifies text color related CSS properties. In case where
     // there are transitions that affect them, there might be unexpected side effects when
     // taking a snapshot for contrast measurement).
-    loadSheet(win, HIGHLIGHTER_STYLES_SHEET);
+    loadSheetForBackgroundCalculation(win);
     this._loadedSheets.set(win, 1);
     this.hideHighlighter();
   },
@@ -754,7 +787,7 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
     }
 
     this.showHighlighter();
-    removeSheet(win, HIGHLIGHTER_STYLES_SHEET);
+    removeSheetForBackgroundCalculation(win);
     this._loadedSheets.delete(win);
   },
 
@@ -1061,7 +1094,7 @@ const AccessibleWalkerActor = ActorClassWithSpec(accessibleWalkerSpec, {
     const docAcc = this.getRawAccessibleFor(this.rootDoc);
     const win = target.ownerGlobal;
     const scale = this.pixelRatio / getCurrentZoom(win);
-    const rawAccessible = docAcc.getDeepestChildAtPoint(
+    const rawAccessible = docAcc.getDeepestChildAtPointInProcess(
       event.screenX * scale,
       event.screenY * scale
     );

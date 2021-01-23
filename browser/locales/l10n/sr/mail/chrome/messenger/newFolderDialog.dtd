@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+   
+<!-- Labels -->
+<!ENTITY newFolderDialog.title      "Нова фасцикла">
+<!ENTITY name.label                 "Име:">
+<!ENTITY name.accesskey             "м">
+<!ENTITY description.label          "Направи као подфасциклу унутар:">
+<!ENTITY description.accesskey      "ц">
+<!ENTITY folderRestriction1.label   "Овај сервер ограничава фасцикле на две посебне врсте.">
+<!ENTITY folderRestriction2.label   "Дозволите следеће у вашој новој фасцикли:">
+<!ENTITY foldersOnly.label          "Само фасцикле">
+<!ENTITY messagesOnly.label         "Само поруке">
+<!ENTITY accept.label               "Направи фасциклу">
+<!ENTITY accept.accesskey           "ф">

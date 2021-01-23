@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -10,7 +8,6 @@ var gItemsToTest = {
     "devtools.chrome.enabled",
     "devtools.debugger.remote-enabled",
   ],
-  menu_devtools_connect: "devtools.debugger.remote-enabled",
 };
 
 function expectedAttributeValueFromPrefs(prefs) {
@@ -34,10 +31,7 @@ function checkItem(el, prefs) {
 function test() {
   for (const k in gItemsToTest) {
     const el = document.getElementById(k);
-    let prefs = gItemsToTest[k];
-    if (typeof prefs == "string") {
-      prefs = [prefs];
-    }
+    const prefs = gItemsToTest[k];
     checkItem(el, prefs);
     for (const pref of prefs) {
       Services.prefs.setBoolPref(pref, !Services.prefs.getBoolPref(pref));

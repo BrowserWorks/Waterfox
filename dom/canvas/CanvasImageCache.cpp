@@ -4,7 +4,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "CanvasImageCache.h"
-#include "nsAutoPtr.h"
 #include "nsIImageLoadingContent.h"
 #include "nsExpirationTracker.h"
 #include "imgIRequest.h"
@@ -13,7 +12,8 @@
 #include "mozilla/dom/HTMLCanvasElement.h"
 #include "nsContentUtils.h"
 #include "mozilla/Preferences.h"
-#include "mozilla/SystemGroup.h"
+#include "mozilla/StaticPrefs_canvas.h"
+#include "mozilla/UniquePtr.h"
 #include "mozilla/gfx/2D.h"
 #include "gfx2DGlue.h"
 
@@ -42,7 +42,8 @@ struct ImageCacheEntryData {
       : mImage(aOther.mImage),
         mCanvas(aOther.mCanvas),
         mSourceSurface(aOther.mSourceSurface),
-        mSize(aOther.mSize) {}
+        mSize(aOther.mSize),
+        mIntrinsicSize(aOther.mIntrinsicSize) {}
   explicit ImageCacheEntryData(const ImageCacheKey& aKey)
       : mImage(aKey.mImage), mCanvas(aKey.mCanvas) {}
 
@@ -55,6 +56,7 @@ struct ImageCacheEntryData {
   // Value
   RefPtr<SourceSurface> mSourceSurface;
   IntSize mSize;
+  IntSize mIntrinsicSize;
   nsExpirationState mState;
 };
 
@@ -67,7 +69,7 @@ class ImageCacheEntry : public PLDHashEntryHdr {
       : mData(new ImageCacheEntryData(*aKey)) {}
   ImageCacheEntry(const ImageCacheEntry& toCopy)
       : mData(new ImageCacheEntryData(*toCopy.mData)) {}
-  ~ImageCacheEntry() {}
+  ~ImageCacheEntry() = default;
 
   bool KeyEquals(KeyTypePointer key) const {
     return mData->mImage == key->mImage && mData->mCanvas == key->mCanvas;
@@ -79,7 +81,7 @@ class ImageCacheEntry : public PLDHashEntryHdr {
   }
   enum { ALLOW_MEMMOVE = true };
 
-  nsAutoPtr<ImageCacheEntryData> mData;
+  UniquePtr<ImageCacheEntryData> mData;
 };
 
 /**
@@ -102,7 +104,7 @@ class AllCanvasImageCacheEntry : public PLDHashEntryHdr {
   AllCanvasImageCacheEntry(const AllCanvasImageCacheEntry& toCopy)
       : mImage(toCopy.mImage), mSourceSurface(toCopy.mSourceSurface) {}
 
-  ~AllCanvasImageCacheEntry() {}
+  ~AllCanvasImageCacheEntry() = default;
 
   bool KeyEquals(KeyTypePointer key) const { return mImage == key->mImage; }
 
@@ -115,9 +117,6 @@ class AllCanvasImageCacheEntry : public PLDHashEntryHdr {
   nsCOMPtr<imgIContainer> mImage;
   RefPtr<SourceSurface> mSourceSurface;
 };
-
-static bool sPrefsInitialized = false;
-static int32_t sCanvasImageCacheLimit = 0;
 
 class ImageCacheObserver;
 
@@ -155,17 +154,18 @@ class ImageCacheObserver final : public nsIObserver {
 
   explicit ImageCacheObserver(ImageCache* aImageCache)
       : mImageCache(aImageCache) {
-    RegisterMemoryPressureEvent();
+    RegisterObserverEvents();
   }
 
   void Destroy() {
-    UnregisterMemoryPressureEvent();
+    UnregisterObserverEvents();
     mImageCache = nullptr;
   }
 
   NS_IMETHOD Observe(nsISupports* aSubject, const char* aTopic,
                      const char16_t* aSomeData) override {
-    if (!mImageCache || strcmp(aTopic, "memory-pressure")) {
+    if (!mImageCache || (strcmp(aTopic, "memory-pressure") != 0 &&
+                         strcmp(aTopic, "canvas-device-reset") != 0)) {
       return NS_OK;
     }
 
@@ -174,9 +174,9 @@ class ImageCacheObserver final : public nsIObserver {
   }
 
  private:
-  virtual ~ImageCacheObserver() {}
+  virtual ~ImageCacheObserver() = default;
 
-  void RegisterMemoryPressureEvent() {
+  void RegisterObserverEvents() {
     nsCOMPtr<nsIObserverService> observerService =
         mozilla::services::GetObserverService();
 
@@ -184,10 +184,11 @@ class ImageCacheObserver final : public nsIObserver {
 
     if (observerService) {
       observerService->AddObserver(this, "memory-pressure", false);
+      observerService->AddObserver(this, "canvas-device-reset", false);
     }
   }
 
-  void UnregisterMemoryPressureEvent() {
+  void UnregisterObserverEvents() {
     nsCOMPtr<nsIObserverService> observerService =
         mozilla::services::GetObserverService();
 
@@ -196,6 +197,7 @@ class ImageCacheObserver final : public nsIObserver {
     // no longer available. See bug 1029504.
     if (observerService) {
       observerService->RemoveObserver(this, "memory-pressure");
+      observerService->RemoveObserver(this, "canvas-device-reset");
     }
   }
 
@@ -205,7 +207,7 @@ class ImageCacheObserver final : public nsIObserver {
 NS_IMPL_ISUPPORTS(ImageCacheObserver, nsIObserver)
 
 class CanvasImageCacheShutdownObserver final : public nsIObserver {
-  ~CanvasImageCacheShutdownObserver() {}
+  ~CanvasImageCacheShutdownObserver() = default;
 
  public:
   NS_DECL_ISUPPORTS
@@ -213,15 +215,8 @@ class CanvasImageCacheShutdownObserver final : public nsIObserver {
 };
 
 ImageCache::ImageCache()
-    : nsExpirationTracker<ImageCacheEntryData, 4>(
-          GENERATION_MS, "ImageCache",
-          SystemGroup::EventTargetFor(TaskCategory::Other)),
+    : nsExpirationTracker<ImageCacheEntryData, 4>(GENERATION_MS, "ImageCache"),
       mTotal(0) {
-  if (!sPrefsInitialized) {
-    sPrefsInitialized = true;
-    Preferences::AddIntVarCache(&sCanvasImageCacheLimit,
-                                "canvas.image.cache.limit", 0);
-  }
   mImageCacheObserver = new ImageCacheObserver(this);
   MOZ_RELEASE_ASSERT(mImageCacheObserver,
                      "GFX: Can't alloc ImageCacheObserver");
@@ -257,7 +252,8 @@ static already_AddRefed<imgIContainer> GetImageContainer(dom::Element* aImage) {
 void CanvasImageCache::NotifyDrawImage(Element* aImage,
                                        HTMLCanvasElement* aCanvas,
                                        SourceSurface* aSource,
-                                       const IntSize& aSize) {
+                                       const IntSize& aSize,
+                                       const IntSize& aIntrinsicSize) {
   if (!gImageCache) {
     gImageCache = new ImageCache();
     nsContentUtils::RegisterShutdownObserver(
@@ -277,13 +273,14 @@ void CanvasImageCache::NotifyDrawImage(Element* aImage,
     if (entry->mData->mSourceSurface) {
       // We are overwriting an existing entry.
       gImageCache->mTotal -= entry->mData->SizeInBytes();
-      gImageCache->RemoveObject(entry->mData);
+      gImageCache->RemoveObject(entry->mData.get());
       gImageCache->mAllCanvasCache.RemoveEntry(allCanvasCacheKey);
     }
 
-    gImageCache->AddObject(entry->mData);
+    gImageCache->AddObject(entry->mData.get());
     entry->mData->mSourceSurface = aSource;
     entry->mData->mSize = aSize;
+    entry->mData->mIntrinsicSize = aIntrinsicSize;
     gImageCache->mTotal += entry->mData->SizeInBytes();
 
     AllCanvasImageCacheEntry* allEntry =
@@ -293,11 +290,15 @@ void CanvasImageCache::NotifyDrawImage(Element* aImage,
     }
   }
 
-  if (!sCanvasImageCacheLimit) return;
+  if (!StaticPrefs::canvas_image_cache_limit()) {
+    return;
+  }
 
   // Expire the image cache early if its larger than we want it to be.
-  while (gImageCache->mTotal > size_t(sCanvasImageCacheLimit))
+  while (gImageCache->mTotal >
+         size_t(StaticPrefs::canvas_image_cache_limit())) {
     gImageCache->AgeOneGeneration();
+  }
 }
 
 SourceSurface* CanvasImageCache::LookupAllCanvas(Element* aImage) {
@@ -321,7 +322,8 @@ SourceSurface* CanvasImageCache::LookupAllCanvas(Element* aImage) {
 
 SourceSurface* CanvasImageCache::LookupCanvas(Element* aImage,
                                               HTMLCanvasElement* aCanvas,
-                                              IntSize* aSizeOut) {
+                                              IntSize* aSizeOut,
+                                              IntSize* aIntrinsicSizeOut) {
   if (!gImageCache) {
     return nullptr;
   }
@@ -339,8 +341,9 @@ SourceSurface* CanvasImageCache::LookupCanvas(Element* aImage,
 
   MOZ_ASSERT(aSizeOut);
 
-  gImageCache->MarkUsed(entry->mData);
+  gImageCache->MarkUsed(entry->mData.get());
   *aSizeOut = entry->mData->mSize;
+  *aIntrinsicSizeOut = entry->mData->mIntrinsicSize;
   return entry->mData->mSourceSurface;
 }
 

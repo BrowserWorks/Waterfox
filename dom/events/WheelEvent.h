@@ -23,8 +23,7 @@ class WheelEvent : public MouseEvent {
 
   static already_AddRefed<WheelEvent> Constructor(const GlobalObject& aGlobal,
                                                   const nsAString& aType,
-                                                  const WheelEventInit& aParam,
-                                                  ErrorResult& aRv);
+                                                  const WheelEventInit& aParam);
 
   virtual JSObject* WrapObjectInternal(
       JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override {
@@ -48,7 +47,7 @@ class WheelEvent : public MouseEvent {
                       double aDeltaY, double aDeltaZ, uint32_t aDeltaMode);
 
  protected:
-  ~WheelEvent() {}
+  ~WheelEvent() = default;
 
  private:
   int32_t mAppUnitsPerDevPixel;

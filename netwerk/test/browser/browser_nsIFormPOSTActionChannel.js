@@ -3,7 +3,9 @@
  * should be able to accept form POST.
  */
 
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+/* eslint-env mozilla/frame-script */
+
+"use strict";
 
 const SCHEME = "x-bug1241377";
 
@@ -32,27 +34,21 @@ CustomProtocolHandler.prototype = {
       Ci.nsIProtocolHandler.URI_IS_LOCAL_RESOURCE
     );
   },
-  newURI: function(aSpec, aOriginCharset, aBaseURI) {
-    return Cc["@mozilla.org/network/standard-url-mutator;1"]
-      .createInstance(Ci.nsIURIMutator)
-      .setSpec(aSpec)
-      .finalize();
-  },
-  newChannel: function(aURI, aLoadInfo) {
+  newChannel(aURI, aLoadInfo) {
     return new CustomChannel(aURI, aLoadInfo);
   },
-  allowPort: function(port, scheme) {
+  allowPort(port, scheme) {
     return port != -1;
   },
 
   /** nsIFactory */
-  createInstance: function(aOuter, aIID) {
+  createInstance(aOuter, aIID) {
     if (aOuter) {
-      throw Cr.NS_ERROR_NO_AGGREGATION;
+      throw Components.Exception("", Cr.NS_ERROR_NO_AGGREGATION);
     }
     return this.QueryInterface(aIID);
   },
-  lockFactory: function() {},
+  lockFactory() {},
 
   /** nsISupports */
   QueryInterface: ChromeUtils.generateQI([
@@ -82,9 +78,9 @@ CustomChannel.prototype = {
     return this._uploadStream;
   },
   set uploadStream(val) {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+    throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
   },
-  setUploadStream: function(aStream, aContentType, aContentLength) {
+  setUploadStream(aStream, aContentType, aContentLength) {
     this._uploadStream = aStream;
   },
 
@@ -109,12 +105,12 @@ CustomChannel.prototype = {
     return -1;
   },
   set contentLength(val) {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+    throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
   },
-  open: function() {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+  open() {
+    throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
   },
-  asyncOpen: function(aListener) {
+  asyncOpen(aListener) {
     var data = `
 <!DOCTYPE html>
 <html>
@@ -194,13 +190,13 @@ document.getElementById('form').submit();
   get name() {
     return this.uri.spec;
   },
-  isPending: function() {
+  isPending() {
     return false;
   },
   get status() {
     return Cr.NS_OK;
   },
-  cancel: function(status) {},
+  cancel(status) {},
   loadGroup: null,
   loadFlags:
     Ci.nsIRequest.LOAD_NORMAL |

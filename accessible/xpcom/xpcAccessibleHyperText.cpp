@@ -8,6 +8,7 @@
 
 #include "Accessible-inl.h"
 #include "HyperTextAccessible-inl.h"
+#include "mozilla/a11y/PDocAccessible.h"
 #include "TextRange.h"
 #include "xpcAccessibleDocument.h"
 #include "xpcAccessibleTextRange.h"
@@ -293,11 +294,7 @@ xpcAccessibleHyperText::GetOffsetAtPoint(int32_t aX, int32_t aY,
   if (mIntl.IsAccessible()) {
     *aOffset = Intl()->OffsetAtPoint(aX, aY, aCoordType);
   } else {
-#if defined(XP_WIN)
-    return NS_ERROR_NOT_IMPLEMENTED;
-#else
     *aOffset = mIntl.AsProxy()->OffsetAtPoint(aX, aY, aCoordType);
-#endif
   }
   return NS_OK;
 }

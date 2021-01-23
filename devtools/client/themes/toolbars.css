@@ -1,21 +1,6 @@
-/* vim:set ts=2 sw=2 sts=2 et: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-
-/* CSS Variables specific to the devtools toolbar that aren't defined by the themes */
-:root {
-  --separator-block-margin: 4px;
-  --separator-inline-margin: 1px;
-}
-
-.theme-light {
-  --separator-border-color: rgba(0,0,0,.1);
-}
-
-.theme-dark {
-  --separator-border-color: rgba(100%,100%,100%,.2);
-}
 
 /* Toolbars */
 .devtools-toolbar,
@@ -25,8 +10,11 @@
   border-width: 0;
   border-bottom-width: 1px;
   border-style: solid;
-  height: 24px;
-  line-height: 24px;
+  /* Reserve 1px for the border */
+  height: calc(var(--theme-toolbar-height) + 1px);
+  /* Line-height based vertical centering technique used in panels
+     which don't use Flexbox (mostly XUL panels). */
+  line-height: var(--theme-toolbar-height);
   box-sizing: border-box;
 }
 
@@ -68,9 +56,9 @@
  * Some separators may be using a bigger, 6px horizontal margin.
  */
 .devtools-separator {
-  border-inline-start: 1px solid var(--separator-border-color);
-  height: calc(100% - 2 * var(--separator-block-margin));
-  margin: var(--separator-block-margin) var(--separator-inline-margin);
+  border-inline-start: 1px solid var(--theme-toolbar-separator);
+  height: calc(100% - 8px);
+  margin: 4px 1px;
 }
 
 /* In-tools sidebar */
@@ -184,14 +172,13 @@ splitter.devtools-horizontal-splitter,
   background-repeat: no-repeat !important;
   text-overflow: ellipsis;
   overflow: hidden;
-  padding-inline-start: 2px !important;
-  padding-inline-end: 10px !important;
+  padding-inline: 2px 10px !important;
   fill: var(--theme-icon-color);
   -moz-context-properties: fill;
 }
 
-html[dir="rtl"] .devtools-dropdown-button {
-  background-position: left center !important;
+.devtools-dropdown-button:dir(rtl) {
+  background-position-x: left !important;
 }
 
 .devtools-dropdown-button:not(:hover) {

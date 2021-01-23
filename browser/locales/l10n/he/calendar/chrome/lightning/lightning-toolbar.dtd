@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name "סרגל כלים לוח שנה">
+<!ENTITY lightning.toolbar.calendar.accesskey "ל">
+<!ENTITY lightning.toolbar.task.name "סרגל כלים משימות">
+<!ENTITY lightning.toolbar.task.accesskey     "מ">
+
+<!ENTITY lightning.toolbar.sync.label "סנכרון">
+<!ENTITY lightning.toolbar.delete.label "מחיקה">
+<!ENTITY lightning.toolbar.edit.label "עריכה">
+<!ENTITY lightning.toolbar.gototoday.label "מעבר להיום">
+<!ENTITY lightning.toolbar.print.label "הדפסה">
+
+<!-- Mode Toolbar -->
+<!ENTITY lightning.toolbar.mail.label         "דואר">
+<!ENTITY lightning.toolbar.mail.accesskey     "ד">
+<!ENTITY lightning.toolbar.calendar.label     "לוח שנה">
+<!ENTITY lightning.toolbar.calendar.tooltip   "מעבר ללשונית לוח השנה">
+<!ENTITY lightning.toolbar.task.label         "משימות">
+<!ENTITY lightning.toolbar.task.tooltip       "מעבר ללשונית משימות">
+
+<!-- Toolbar write button -->
+<!ENTITY lightning.toolbar.newevent.label     "אירוע">
+<!ENTITY lightning.toolbar.newtask.label      "משימה">
+
+<!-- Calendar and Task Mode Toolbar -->
+<!ENTITY lightning.toolbar.day.label                 "יומי">
+<!ENTITY lightning.toolbar.day.accesskey             "י">
+<!ENTITY lightning.toolbar.week.label                "שבועי">
+<!ENTITY lightning.toolbar.week.accesskey            "ש">
+<!ENTITY lightning.toolbar.multiweek.label           "רב שבועי">
+<!ENTITY lightning.toolbar.multiweek.accesskey       "ר">
+<!ENTITY lightning.toolbar.month.label               "חודשי">
+<!ENTITY lightning.toolbar.month.accesskey           "ח">
+

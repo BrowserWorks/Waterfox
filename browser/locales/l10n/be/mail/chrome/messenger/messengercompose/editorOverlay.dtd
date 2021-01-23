@@ -1,0 +1,303 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Attn: Localization - some of the menus in this dialog directly affect mail also. -->
+
+<!-- Edit menu items -->
+<!ENTITY pasteNoFormatting.label "Уставіць без фарматавання">
+<!ENTITY pasteNoFormatting.accesskey "б">
+<!ENTITY pasteNoFormatting.key "V">
+<!ENTITY pasteAsQuotationCmd.label "Уставіць як вытрымку">
+<!ENTITY pasteAsQuotationCmd.accesskey "в">
+
+<!-- Insert menu items -->
+<!ENTITY insertMenu.label "Уставіць">
+<!ENTITY insertMenu.accesskey "У">
+<!ENTITY insertLinkCmd2.label "Спасылка…">
+<!ENTITY insertLinkCmd2.accesskey "С">
+<!ENTITY insertLinkCmd2.key "K">
+<!ENTITY insertAnchorCmd.label "Іменаваны якар…">
+<!ENTITY insertAnchorCmd.accesskey "я">
+<!ENTITY insertImageCmd.label "Выява…">
+<!ENTITY insertImageCmd.accesskey "В">
+<!ENTITY insertHLineCmd.label "Гарызантальная рыска">
+<!ENTITY insertHLineCmd.accesskey "Г">
+<!ENTITY insertTableCmd.label "Табліца…">
+<!ENTITY insertTableCmd.accesskey "Т">
+<!ENTITY insertHTMLCmd.label "HTML…">
+<!ENTITY insertHTMLCmd.accesskey "H">
+<!ENTITY insertMathCmd.label "Math…">
+<!ENTITY insertMathCmd.accesskey "M">
+<!ENTITY insertCharsCmd.label "Знакі і сімвалы…">
+<!ENTITY insertCharsCmd.accesskey "З">
+<!ENTITY insertBreakAllCmd.label "Разрыў пад выявай(-мі)">
+<!ENTITY insertBreakAllCmd.accesskey "Р">
+
+<!-- Used just in context popup. -->
+<!ENTITY createLinkCmd.label "Стварыць спасылку…">
+<!ENTITY createLinkCmd.accesskey "ы">
+<!ENTITY editLinkCmd.label "Рэдагаваць спасылку ў новым Укладальніку.">
+<!ENTITY editLinkCmd.accesskey "ў">
+
+<!-- Font Face SubMenu -->
+<!ENTITY FontFaceSelect.tooltip "Выбраць шрыфт">
+<!ENTITY fontfaceMenu.label "Шрыфт">
+<!ENTITY fontfaceMenu.accesskey "Ш">
+<!ENTITY fontVarWidth.label "Зменная шырыня">
+<!ENTITY fontVarWidth.accesskey "З">
+<!ENTITY fontFixedWidth.label "Нязменная шырыня ">
+<!ENTITY fontFixedWidth.accesskey "Н">
+<!ENTITY fontFixedWidth.key "T">
+<!ENTITY fontHelvetica.label "Helvetica, Arial">
+<!ENTITY fontHelvetica.accesskey "l">
+<!ENTITY fontTimes.label "Times">
+<!ENTITY fontTimes.accesskey "T">
+<!ENTITY fontCourier.label "Courier">
+<!ENTITY fontCourier.accesskey "C">
+
+<!-- Font Size SubMenu -->
+<!ENTITY FontSizeSelect.tooltip "Выбраць памер шрыфту">
+<!ENTITY decreaseFontSize.label "Меншы">
+<!ENTITY decreaseFontSize.accesskey "е">
+<!ENTITY decrementFontSize.key "&lt;">
+<!ENTITY decrementFontSize.key2 ","> <!-- < is above this key on many keyboards -->
+<!ENTITY increaseFontSize.label "Большы">
+<!ENTITY increaseFontSize.accesskey "Б">
+<!ENTITY incrementFontSize.key "&gt;">
+<!ENTITY incrementFontSize.key2 "."> <!-- > is above this key on many keyboards -->
+
+<!ENTITY fontSizeMenu.label "Памер">
+<!ENTITY fontSizeMenu.accesskey "м">
+<!ENTITY size-tinyCmd.label "Драбнюткі">
+<!ENTITY size-tinyCmd.accesskey "Д">
+<!ENTITY size-smallCmd.label "малы">
+<!ENTITY size-smallCmd.accesskey "м">
+<!ENTITY size-mediumCmd.label "сярэдні">
+<!ENTITY size-mediumCmd.accesskey "с">
+<!ENTITY size-largeCmd.label "вялікі">
+<!ENTITY size-largeCmd.accesskey "в">
+<!ENTITY size-extraLargeCmd.label "Велізарны">
+<!ENTITY size-extraLargeCmd.accesskey "е">
+<!ENTITY size-hugeCmd.label "Гіганцкі">
+<!ENTITY size-hugeCmd.accesskey "Г">
+
+<!-- Font Style SubMenu -->
+<!ENTITY fontStyleMenu.label "Стыль тэксту">
+<!ENTITY fontStyleMenu.accesskey "С">
+<!ENTITY styleBoldCmd.label "Выразны">
+<!ENTITY styleBoldCmd.accesskey "В">
+<!ENTITY styleBoldCmd.key "B">
+<!ENTITY styleItalicCmd.label "Рукапісны">
+<!ENTITY styleItalicCmd.accesskey "Р">
+<!ENTITY styleItalicCmd.key "I">
+<!ENTITY styleUnderlineCmd.label "Падкрэслены">
+<!ENTITY styleUnderlineCmd.accesskey "П">
+<!ENTITY styleUnderlineCmd.key "U">
+<!ENTITY styleStrikeThruCmd.label "Закрэслены">
+<!ENTITY styleStrikeThruCmd.accesskey "З">
+<!ENTITY styleSuperscriptCmd.label "Надпіс">
+<!ENTITY styleSuperscriptCmd.accesskey "Н">
+<!ENTITY styleSubscriptCmd.label "Подпіс">
+<!ENTITY styleSubscriptCmd.accesskey "о">
+<!ENTITY styleNonbreakingCmd.label "Непарушны">
+<!ENTITY styleNonbreakingCmd.accesskey "е">
+<!ENTITY styleEm.label "Націск">
+<!ENTITY styleEm.accesskey "ц">
+<!ENTITY styleStrong.label "Мацнейшы націск">
+<!ENTITY styleStrong.accesskey "ц">
+<!ENTITY styleCite.label "Цытата">
+<!ENTITY styleCite.accesskey "Ц">
+<!ENTITY styleAbbr.label "Скарачэнне">
+<!ENTITY styleAbbr.accesskey "С">
+<!ENTITY styleAcronym.label "Скарачэнне">
+<!ENTITY styleAcronym.accesskey "к">
+<!ENTITY styleCode.label "Код">
+<!ENTITY styleCode.accesskey "о">
+<!ENTITY styleSamp.label "Узор вываду">
+<!ENTITY styleSamp.accesskey "ы">
+<!ENTITY styleVar.label "Зменная">
+<!ENTITY styleVar.accesskey "м">
+
+<!ENTITY formatFontColor.label "Колер тэксту…">
+<!ENTITY formatFontColor.accesskey "К">
+<!ENTITY tableOrCellColor.label "Фонавы колер табліцы або клеткі…">
+<!ENTITY tableOrCellColor.accesskey "Ф">
+
+<!ENTITY formatRemoveStyles.key "Y">
+<!ENTITY formatRemoveLinks.key "K">
+<!ENTITY formatRemoveNamedAnchors.label "Выдаліць іменаваныя якары">
+<!ENTITY formatRemoveNamedAnchors.accesskey "д">
+<!ENTITY formatRemoveNamedAnchors2.key "R">
+
+<!ENTITY paragraphMenu.label "Параграф">
+<!ENTITY paragraphMenu.accesskey "П">
+<!ENTITY paragraphParagraphCmd.label "Параграф">
+<!ENTITY paragraphParagraphCmd.accesskey "П">
+<!ENTITY heading1Cmd.label "Загаловак 1">
+<!ENTITY heading1Cmd.accesskey "1">
+<!ENTITY heading2Cmd.label "Загаловак 2">
+<!ENTITY heading2Cmd.accesskey "2">
+<!ENTITY heading3Cmd.label "Загаловак 3">
+<!ENTITY heading3Cmd.accesskey "3">
+<!ENTITY heading4Cmd.label "Загаловак 4">
+<!ENTITY heading4Cmd.accesskey "4">
+<!ENTITY heading5Cmd.label "Загаловак 5">
+<!ENTITY heading5Cmd.accesskey "5">
+<!ENTITY heading6Cmd.label "Загаловак 6">
+<!ENTITY heading6Cmd.accesskey "6">
+<!ENTITY paragraphAddressCmd.label "Адрас">
+<!ENTITY paragraphAddressCmd.accesskey "А">
+<!ENTITY paragraphPreformatCmd.label "Адфарматаваны">
+<!ENTITY paragraphPreformatCmd.accesskey "ф">
+
+<!-- List menu items -->
+<!ENTITY formatlistMenu.label "Спіс">
+<!ENTITY formatlistMenu.accesskey "С">
+<!ENTITY noneCmd.label "Няма">
+<!ENTITY noneCmd.accesskey "Н">
+<!ENTITY listBulletCmd.label "Маркаваны">
+<!ENTITY listBulletCmd.accesskey "М">
+<!ENTITY listNumberedCmd.label "Пранумараваны">
+<!ENTITY listNumberedCmd.accesskey "у">
+<!ENTITY listTermCmd.label "Тэрмінаў">
+<!ENTITY listTermCmd.accesskey "Т">
+<!ENTITY listDefinitionCmd.label "Азначэнняў">
+<!ENTITY listDefinitionCmd.accesskey "А">
+<!ENTITY listPropsCmd.label "Уласцівасці спіса…">
+<!ENTITY listPropsCmd.accesskey "с">
+
+<!ENTITY ParagraphSelect.tooltip "Выбраць фармат параграфа ">
+<!-- Shared in Paragraph, and Toolbar menulist -->
+<!ENTITY bodyTextCmd.label "Тэкст цела">
+<!ENTITY bodyTextCmd.accesskey "Т">
+
+<!-- Align menu items -->
+<!ENTITY alignMenu.label "Выраўноўванне">
+<!ENTITY alignMenu.accesskey "В">
+<!ENTITY alignLeft.label "Левае">
+<!ENTITY alignLeft.accesskey "Л">
+<!ENTITY alignLeft.tooltip "Выраўноўваць улева">
+<!ENTITY alignCenter.label "Пасярэдзіне">
+<!ENTITY alignCenter.accesskey "с">
+<!ENTITY alignCenter.tooltip "Выраўноўваць пасярэдзіне">
+<!ENTITY alignRight.label "Правае">
+<!ENTITY alignRight.accesskey "П">
+<!ENTITY alignRight.tooltip "Выраўноўваць направа">
+<!ENTITY alignJustify.label "Разасяродзіць">
+<!ENTITY alignJustify.accesskey "з">
+<!ENTITY alignJustify.tooltip "Выраўноўваць разасяроджана">
+
+<!ENTITY increaseIndent.label "Павялічыць водступ">
+<!ENTITY increaseIndent.accesskey "в">
+<!ENTITY increaseIndent.key "]">
+<!ENTITY decreaseIndent.label "Зменшыць водступ">
+<!ENTITY decreaseIndent.accesskey "м">
+<!ENTITY decreaseIndent.key "[">
+
+<!ENTITY colorsAndBackground.label "Колеры і фон старонкі…">
+<!ENTITY colorsAndBackground.accesskey "ф">
+
+<!-- Table Menu -->
+<!ENTITY tableMenu.label "Табліца">
+<!ENTITY tableMenu.accesskey "Т">
+
+<!-- Select Submenu -->
+<!ENTITY tableSelectMenu.label "Выбраць">
+<!ENTITY tableSelectMenu.accesskey "В">
+
+<!ENTITY tableSelectMenu2.label "Вылучэнне табліцы">
+<!ENTITY tableSelectMenu2.accesskey "В">
+<!ENTITY tableInsertMenu2.label "Устаўка табліцы">
+<!ENTITY tableInsertMenu2.accesskey "а">
+<!ENTITY tableDeleteMenu2.label "Выдаленне табліцы">
+<!ENTITY tableDeleteMenu2.accesskey "д">
+
+<!-- Insert SubMenu -->
+<!ENTITY tableInsertMenu.label "Уставіць">
+<!ENTITY tableInsertMenu.accesskey "У">
+<!ENTITY tableTable.label "Табліца">
+<!ENTITY tableTable.accesskey "Т">
+<!ENTITY tableRow.label "Радок">
+<!ENTITY tableRows.label "Радок(кі)">
+<!ENTITY tableRow.accesskey "Р">
+<!ENTITY tableRowAbove.label "Радок зверху">
+<!ENTITY tableRowAbove.accesskey "в">
+<!ENTITY tableRowBelow.label "Радок знізу">
+<!ENTITY tableRowBelow.accesskey "н">
+<!ENTITY tableColumn.label "Слупок">
+<!ENTITY tableColumns.label "Слупок(кі)">
+<!ENTITY tableColumn.accesskey "л">
+<!ENTITY tableColumnBefore.label "Слупок перад">
+<!ENTITY tableColumnBefore.accesskey "р">
+<!ENTITY tableColumnAfter.label "Слупок пасля">
+<!ENTITY tableColumnAfter.accesskey "а">
+<!ENTITY tableCell.label "Клетка">
+<!ENTITY tableCells.label "Клетка(і)">
+<!ENTITY tableCell.accesskey "К">
+<!ENTITY tableCellContents.label "Змесціва клеткі">
+<!ENTITY tableCellContents.accesskey "З">
+<!ENTITY tableAllCells.label "Усе клеткі">
+<!ENTITY tableAllCells.accesskey "У">
+<!ENTITY tableCellBefore.label "Клеткі перад">
+<!ENTITY tableCellBefore.accesskey "р">
+<!ENTITY tableCellAfter.label "Клетка пасля">
+<!ENTITY tableCellAfter.accesskey "а">
+<!-- Delete SubMenu -->
+<!ENTITY tableDeleteMenu.label "Выдаліць">
+<!ENTITY tableDeleteMenu.accesskey "д">
+
+<!-- text for "Join Cells" is in editor.properties
+     ("JoinSelectedCells" and "JoinCellToRight")
+     the access key must exist in both of those strings
+     But value must be set here for accesskey to draw properly
+-->
+<!ENTITY tableJoinCells.label "я">
+<!ENTITY tableJoinCells.accesskey "я">
+<!ENTITY tableSplitCell.label "Падзяліць клетку">
+<!ENTITY tableSplitCell.accesskey "к">
+<!ENTITY convertToTable.label "Стварыць табліцу з вылучэння">
+<!ENTITY convertToTable.accesskey "р">
+<!ENTITY tableProperties.label "Уласцівасці табліцы…">
+<!ENTITY tableProperties.accesskey "ц">
+
+<!ENTITY imageToolbarCmd.label "Выява">
+<!ENTITY imageToolbarCmd.tooltip "Уставіць новую выяву або правіць уласцівасці выбранай">
+<!ENTITY hruleToolbarCmd.label "Г.рыска">
+<!ENTITY hruleToolbarCmd.tooltip "Уставіць гарызантальную рыску або рэдагаваць уласцівасці выбраных рысак">
+<!ENTITY tableToolbarCmd.label "Табліца">
+<!ENTITY tableToolbarCmd.tooltip "Уставіць новую табліцу або рэдагаваць уласцівасці вылучанай табліцы">
+<!ENTITY linkToolbarCmd.label "Спасылка">
+<!ENTITY linkToolbarCmd.tooltip "Уставіць новую спасылку або рэдагаваць уласцівасці выбранай">
+<!ENTITY anchorToolbarCmd.label "Якар">
+<!ENTITY anchorToolbarCmd.tooltip "Уставіць новы іменаваны якар або рэдагаваць уласцівасці вылучанага якара ">
+<!ENTITY TextColorButton.tooltip "Выбраць колер тэксту">
+<!ENTITY BackgroundColorButton.tooltip "Выбраць колер фону">
+
+<!-- Editor toolbar -->
+<!ENTITY absoluteFontSizeToolbarCmd.tooltip "Ўсталяваць памер шрыфту">
+<!ENTITY decreaseFontSizeToolbarCmd.tooltip "Меншы памер шрыфту">
+<!ENTITY increaseFontSizeToolbarCmd.tooltip "Большы памер шрыфту">
+<!ENTITY boldToolbarCmd.tooltip "Выразны">
+<!ENTITY italicToolbarCmd.tooltip "Рукапісны">
+<!ENTITY underlineToolbarCmd.tooltip "Падкрэслены">
+<!ENTITY bulletListToolbarCmd.tooltip "Скарыстаць або выдаліць маркаваны спіс">
+<!ENTITY numberListToolbarCmd.tooltip "Скарыстаць або выдаліць пранумараваны спіс">
+<!ENTITY outdentToolbarCmd.tooltip "Уцягнуць тэкст (змясціць улева)">
+<!ENTITY indentToolbarCmd.tooltip "Адпіхнуць тэкст (змясціць направа)">
+<!ENTITY AlignPopupButton.tooltip "Выбраць выраўноўванне тэксту">
+<!ENTITY InsertPopupButton.tooltip "Уставіць спасылку, якар, выяву, гарызантальную рыску або табліцу">
+<!ENTITY alignLeftButton.tooltip "Выраўноўваць тэкст уздоўж левага прымежку">
+<!ENTITY alignCenterButton.tooltip "Цэнтраванае выраўноўванне тэксту">
+<!ENTITY alignRightButton.tooltip "Выраўноўваць тэкст уздоўж правага прымежку">
+<!ENTITY alignJustifyButton.tooltip "Выраўноваць тэкст да левага і правага прымежкаў">
+
+<!-- TOC manipulation -->
+<!ENTITY insertTOC.label          "Уставіць">
+<!ENTITY insertTOC.accesskey      "У">
+<!ENTITY updateTOC.label          "Абнавіць">
+<!ENTITY updateTOC.accesskey      "н">
+<!ENTITY removeTOC.label          "Выдаліць">
+<!ENTITY removeTOC.accesskey      "д">
+<!ENTITY tocMenu.label            "Табліца зместу…">
+<!ENTITY tocMenu.accesskey        "б">

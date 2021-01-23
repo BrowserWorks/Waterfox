@@ -14,14 +14,12 @@
 #include "nsNodeInfoManager.h"
 #include "nsContentCreatorFunctions.h"
 #include "nsContentPolicyUtils.h"
-#include "nsIPropertyBag2.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/PresShell.h"
 #include "nsObjectLoadingContent.h"
 #include "GeckoProfiler.h"
 
-namespace mozilla {
-namespace dom {
+namespace mozilla::dom {
 
 class PluginDocument final : public MediaDocument, public nsIPluginDocument {
  public:
@@ -106,7 +104,7 @@ PluginStreamListener::OnStartRequest(nsIRequest* request) {
   return MediaDocumentStreamListener::OnStartRequest(request);
 }
 
-PluginDocument::PluginDocument() {}
+PluginDocument::PluginDocument() = default;
 
 PluginDocument::~PluginDocument() = default;
 
@@ -259,8 +257,7 @@ PluginDocument::Print() {
   return NS_OK;
 }
 
-}  // namespace dom
-}  // namespace mozilla
+}  // namespace mozilla::dom
 
 nsresult NS_NewPluginDocument(mozilla::dom::Document** aResult) {
   auto* doc = new mozilla::dom::PluginDocument();

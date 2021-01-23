@@ -10,11 +10,15 @@
 #include "GLContext.h"
 #include "GLReadTexImageHelper.h"
 #include "GLScreenBuffer.h"
+#include "Layers.h"
 #include "mozilla/dom/HTMLCanvasElement.h"
+#include "nsICanvasRenderingContextInternal.h"
 #include "mozilla/layers/BufferTexture.h"
 #include "mozilla/layers/CanvasClient.h"
+#include "mozilla/layers/CompositableForwarder.h"
 #include "mozilla/layers/TextureClient.h"
 #include "mozilla/layers/TextureClientSharedSurface.h"
+#include "mozilla/layers/ShadowLayers.h"
 #include "mozilla/ReentrantMonitor.h"
 #include "nsIRunnable.h"
 #include "nsThreadUtils.h"
@@ -30,7 +34,8 @@ AsyncCanvasRenderer::AsyncCanvasRenderer()
       mWidth(0),
       mHeight(0),
       mCanvasClient(nullptr),
-      mMutex("AsyncCanvasRenderer::mMutex") {
+      mMutex("AsyncCanvasRenderer::mMutex"),
+      mContextType(dom::CanvasContextType::NoContext) {
   MOZ_COUNT_CTOR(AsyncCanvasRenderer);
 }
 
@@ -92,6 +97,18 @@ void AsyncCanvasRenderer::SetCanvasClient(CanvasClient* aClient) {
   mCanvasClient = aClient;
   if (aClient) {
     mCanvasClientAsyncHandle = aClient->GetAsyncHandle();
+    if (mContext) {
+      MOZ_ASSERT(mCanvasClient->GetForwarder() &&
+                 mCanvasClient->GetForwarder()->AsLayerForwarder() &&
+                 mCanvasClient->GetForwarder()
+                     ->AsLayerForwarder()
+                     ->GetShadowManager());
+      LayerTransactionChild* ltc =
+          mCanvasClient->GetForwarder()->AsLayerForwarder()->GetShadowManager();
+      DebugOnly<bool> success =
+          mContext->UpdateCompositableHandle(ltc, mCanvasClientAsyncHandle);
+      MOZ_ASSERT(success);
+    }
   } else {
     mCanvasClientAsyncHandle = CompositableHandle();
   }
@@ -112,6 +129,26 @@ AsyncCanvasRenderer::GetActiveEventTarget() {
   MutexAutoLock lock(mMutex);
   nsCOMPtr<nsISerialEventTarget> result = mActiveEventTarget;
   return result.forget();
+}
+
+ImageContainer* AsyncCanvasRenderer::GetImageContainer() {
+  MOZ_ASSERT(mContextType == dom::CanvasContextType::ImageBitmap);
+  MutexAutoLock lock(mMutex);
+  if (!mImageContainer) {
+    mImageContainer =
+        LayerManager::CreateImageContainer(ImageContainer::ASYNCHRONOUS);
+  }
+  return mImageContainer;
+}
+
+dom::CanvasContextType AsyncCanvasRenderer::GetContextType() {
+  MutexAutoLock lock(mMutex);
+  return mContextType;
+}
+
+void AsyncCanvasRenderer::SetContextType(dom::CanvasContextType aContextType) {
+  MutexAutoLock lock(mMutex);
+  mContextType = aContextType;
 }
 
 void AsyncCanvasRenderer::CopyFromTextureClient(TextureClient* aTextureClient) {

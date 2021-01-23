@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  untitledTab            "(bez názvu)">
+<!ENTITY  newTab.label           "Nová karta">
+<!ENTITY  newTab.accesskey       "N">
+<!ENTITY  closeTab.label         "Zavrieť kartu">
+<!ENTITY  closeTab.accesskey         "Z">
+<!ENTITY  closeOtherTabs.label   "Zavrieť ostatné karty">
+<!ENTITY  closeOtherTabs.accesskey         "a">
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label "Zavrieť karty napravo">
+<!ENTITY  closeTabsToTheEnd.accesskey "i">
+<!ENTITY  reloadAllTabs.label    "Obnoviť všetky karty">
+<!ENTITY  reloadAllTabs.accesskey         "b">
+<!ENTITY  reloadTab.label        "Obnoviť kartu">
+<!ENTITY  reloadTab.accesskey         "O">
+<!ENTITY  bookmarkGroup.label    "Pridať túto skupinu kariet medzi záložky">
+<!ENTITY  bookmarkGroup.accesskey  "P">
+<!ENTITY  closeTabButton.tooltip   "Zavrieť aktuálnu kartu">
+<!ENTITY  newTabButton.tooltip   "Otvoriť novú kartu">
+<!ENTITY  listAllTabs.tooltip    "Zoznam všetkých kariet">
+<!ENTITY  undoCloseTab.label    "Obnoviť zatvorenú kartu">
+<!ENTITY  undoCloseTab.accesskey  "r">

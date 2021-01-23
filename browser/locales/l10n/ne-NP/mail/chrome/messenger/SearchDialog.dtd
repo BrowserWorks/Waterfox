@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- for SearchDialog.xul -->
+<!ENTITY searchHeading.label "यसभित्र सन्देश खोजी गर्नुहोस्:">
+<!ENTITY searchHeading.accesskey "h">
+<!ENTITY searchSubfolders.label "उप-फोल्डर खोजी गर्नुहोस्">
+<!ENTITY searchSubfolders.accesskey "e">
+<!ENTITY resetButton.label "खाली गर्नुहोस्">
+<!ENTITY resetButton.accesskey "C">
+<!ENTITY openButton.label "खोल्नुहोस्">
+<!ENTITY openButton.accesskey "n">
+<!ENTITY deleteButton.label "मेट्नुहोस्">
+<!ENTITY deleteButton.accesskey "D">
+<!ENTITY searchDialogTitle.label "सन्देश खोजी गर्नुहोस्">
+<!ENTITY results.label "नतिजा">
+<!ENTITY closeCmd.key "W">
+<!ENTITY saveAsVFButton.label "खोजी फोल्डरका रूपमा बचत गर्नुहोस्">
+<!ENTITY saveAsVFButton.accesskey "v">
+<!-- for ABSearchDialog.xul -->
+
+<!ENTITY abSearchHeading.label "यसभित्र खोजी गर्नुहोस्:">
+<!ENTITY abSearchHeading.accesskey "h">
+<!ENTITY propertiesButton.label "गुण">
+<!ENTITY propertiesButton.accesskey "P">
+<!ENTITY composeButton.label "लेख्नुहोस्">
+<!ENTITY composeButton.accesskey "W">
+<!ENTITY abSearchDialogTitle.label "उन्नत ठेगाना पुस्तक खोजी गर्नुहोस्">
+<!-- Thread Pane -->
+
+<!-- Thread Pane Tooltips -->
+

@@ -16,16 +16,10 @@
 #include "nsAnnoProtocolHandler.h"
 #include "nsFaviconService.h"
 #include "nsIChannel.h"
-#include "nsIInputStreamChannel.h"
-#include "nsILoadGroup.h"
-#include "nsIStandardURL.h"
-#include "nsIStringStream.h"
 #include "nsIInputStream.h"
 #include "nsISupportsUtils.h"
 #include "nsIURI.h"
-#include "nsIURIMutator.h"
 #include "nsNetUtil.h"
-#include "nsIOutputStream.h"
 #include "nsInputStreamPump.h"
 #include "nsContentUtils.h"
 #include "nsServiceManagerUtils.h"
@@ -33,6 +27,8 @@
 #include "SimpleChannel.h"
 #include "mozilla/ScopeExit.h"
 #include "mozilla/storage.h"
+#include "mozIStorageResultSet.h"
+#include "mozIStorageRow.h"
 #include "Helpers.h"
 #include "FaviconHelpers.h"
 
@@ -165,7 +161,7 @@ class faviconAsyncLoader : public AsyncStatementCallback {
   }
 
  protected:
-  virtual ~faviconAsyncLoader() {}
+  virtual ~faviconAsyncLoader() = default;
 
  private:
   nsCOMPtr<nsIChannel> mChannel;
@@ -206,18 +202,6 @@ nsAnnoProtocolHandler::GetProtocolFlags(uint32_t* aProtocolFlags) {
   *aProtocolFlags = (URI_NORELATIVE | URI_NOAUTH | URI_DANGEROUS_TO_LOAD |
                      URI_IS_LOCAL_RESOURCE);
   return NS_OK;
-}
-
-// nsAnnoProtocolHandler::NewURI
-
-NS_IMETHODIMP
-nsAnnoProtocolHandler::NewURI(const nsACString& aSpec,
-                              const char* aOriginCharset, nsIURI* aBaseURI,
-                              nsIURI** _retval) {
-  *_retval = nullptr;
-  return NS_MutateURI(NS_SIMPLEURIMUTATOR_CONTRACTID)
-      .SetSpec(aSpec)
-      .Finalize(_retval);
 }
 
 // nsAnnoProtocolHandler::NewChannel
@@ -291,7 +275,7 @@ nsresult nsAnnoProtocolHandler::NewFaviconChannel(nsIURI* aURI,
           rv = chan->AsyncOpen(listener);
           NS_ENSURE_SUCCESS(rv, Err(rv));
 
-          return RequestOrReason(chan.forget());
+          return RequestOrReason(std::move(chan));
         };
 
         // Now we go ahead and get our data asynchronously for the favicon.

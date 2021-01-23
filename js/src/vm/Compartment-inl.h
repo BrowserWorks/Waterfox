@@ -23,6 +23,11 @@
 
 #include "vm/JSContext-inl.h"
 
+inline js::StringWrapperMap::Ptr JS::Compartment::lookupWrapper(
+    JSString* str) const {
+  return zone()->crossZoneStringWrappers().lookup(str);
+}
+
 inline bool JS::Compartment::wrap(JSContext* cx, JS::MutableHandleValue vp) {
   /* Only GC things have to be wrapped or copied. */
   if (!vp.isGCThing()) {
@@ -84,13 +89,11 @@ inline bool JS::Compartment::wrap(JSContext* cx, JS::MutableHandleValue vp) {
   JS::AssertValueIsNotGray(vp);
   JS::RootedObject cacheResult(cx);
 #endif
-  JS::RootedValue v(cx, vp);
-  if (js::WrapperMap::Ptr p =
-          crossCompartmentWrappers.lookup(js::CrossCompartmentKey(v))) {
+  if (js::ObjectWrapperMap::Ptr p = lookupWrapper(&vp.toObject())) {
 #ifdef DEBUG
-    cacheResult = &p->value().get().toObject();
+    cacheResult = p->value().get();
 #else
-    vp.set(p->value().get());
+    vp.setObject(*p->value().get());
     return true;
 #endif
   }
@@ -102,6 +105,15 @@ inline bool JS::Compartment::wrap(JSContext* cx, JS::MutableHandleValue vp) {
   vp.setObject(*obj);
   MOZ_ASSERT_IF(cacheResult, obj == cacheResult);
   return true;
+}
+
+inline bool JS::Compartment::wrap(JSContext* cx,
+                                  MutableHandle<mozilla::Maybe<Value>> vp) {
+  if (vp.get().isNothing()) {
+    return true;
+  }
+
+  return wrap(cx, MutableHandle<Value>::fromMarkedLocation(vp.get().ptr()));
 }
 
 namespace js {
@@ -154,7 +166,7 @@ MOZ_MUST_USE T* UnwrapAndTypeCheckValueSlowPath(JSContext* cx,
 template <class T, class ErrorCallback>
 inline MOZ_MUST_USE T* UnwrapAndTypeCheckValue(JSContext* cx, HandleValue value,
                                                ErrorCallback throwTypeError) {
-  static_assert(!std::is_convertible<T*, Wrapper*>::value,
+  static_assert(!std::is_convertible_v<T*, Wrapper*>,
                 "T can't be a Wrapper type; this function discards wrappers");
   cx->check(value);
   if (value.isObject() && value.toObject().is<T>()) {
@@ -222,7 +234,7 @@ inline MOZ_MUST_USE T* UnwrapAndTypeCheckArgument(JSContext* cx, CallArgs& args,
  */
 template <class T>
 MOZ_MUST_USE T* UnwrapAndDowncastObject(JSContext* cx, JSObject* obj) {
-  static_assert(!std::is_convertible<T*, Wrapper*>::value,
+  static_assert(!std::is_convertible_v<T*, Wrapper*>,
                 "T can't be a Wrapper type; this function discards wrappers");
 
   if (IsProxy(obj)) {
@@ -275,7 +287,7 @@ template <class T>
 inline MOZ_MUST_USE T* UnwrapInternalSlot(JSContext* cx,
                                           Handle<NativeObject*> unwrappedObj,
                                           uint32_t slot) {
-  static_assert(!std::is_convertible<T*, Wrapper*>::value,
+  static_assert(!std::is_convertible_v<T*, Wrapper*>,
                 "T can't be a Wrapper type; this function discards wrappers");
 
   return UnwrapAndDowncastValue<T>(cx, unwrappedObj->getFixedSlot(slot));

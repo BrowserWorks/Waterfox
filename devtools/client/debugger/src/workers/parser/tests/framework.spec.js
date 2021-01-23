@@ -11,7 +11,7 @@ import cases from "jest-in-case";
 cases(
   "Parser.getFramework",
   ({ name, file, value }) => {
-    const { source } = populateOriginalSource("frameworks/plainJavascript");
+    const source = populateOriginalSource("frameworks/plainJavascript");
     const symbols = getSymbols(source.id);
     expect(symbols.framework).toBeUndefined();
   },
@@ -50,6 +50,16 @@ cases(
       name: "recognizes component Vue file",
       file: "frameworks/vueFileComponent",
       value: "Vue",
+    },
+    {
+      name: "recognizes the react library file",
+      file: "framework/reactLibrary",
+      value: "React",
+    },
+    {
+      name: "recognizes the redux library file",
+      file: "framework/reduxLibrary",
+      value: "React",
     },
   ]
 );

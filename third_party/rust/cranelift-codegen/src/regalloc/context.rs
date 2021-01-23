@@ -8,11 +8,13 @@ use crate::dominator_tree::DominatorTree;
 use crate::flowgraph::ControlFlowGraph;
 use crate::ir::Function;
 use crate::isa::TargetIsa;
+use crate::regalloc::branch_splitting;
 use crate::regalloc::coalescing::Coalescing;
 use crate::regalloc::coloring::Coloring;
 use crate::regalloc::live_value_tracker::LiveValueTracker;
 use crate::regalloc::liveness::Liveness;
 use crate::regalloc::reload::Reload;
+use crate::regalloc::safepoint::emit_stackmaps;
 use crate::regalloc::spilling::Spilling;
 use crate::regalloc::virtregs::VirtRegs;
 use crate::result::CodegenResult;
@@ -75,9 +77,9 @@ impl Context {
     /// location that is consistent with instruction encoding constraints.
     pub fn run(
         &mut self,
-        isa: &TargetIsa,
+        isa: &dyn TargetIsa,
         func: &mut Function,
-        cfg: &ControlFlowGraph,
+        cfg: &mut ControlFlowGraph,
         domtree: &mut DominatorTree,
     ) -> CodegenResult<()> {
         let _tt = timing::regalloc();
@@ -91,6 +93,9 @@ impl Context {
         // Tracker state (dominator live sets) is actually reused between the spilling and coloring
         // phases.
         self.tracker.clear();
+
+        // Pass: Split branches, add space where to add copy & regmove instructions.
+        branch_splitting::run(isa, func, cfg, domtree, &mut self.topo);
 
         // Pass: Liveness analysis.
         self.liveness.compute(isa, func, cfg);
@@ -189,13 +194,33 @@ impl Context {
         }
 
         // Pass: Coloring.
-        self.coloring
-            .run(isa, func, domtree, &mut self.liveness, &mut self.tracker);
+        self.coloring.run(
+            isa,
+            func,
+            cfg,
+            domtree,
+            &mut self.liveness,
+            &mut self.tracker,
+        );
+
+        // This function runs after register allocation has taken
+        // place, meaning values have locations assigned already.
+        if isa.flags().enable_safepoints() {
+            emit_stackmaps(func, domtree, &self.liveness, &mut self.tracker, isa);
+        } else {
+            // Make sure no references are used.
+            for val in func.dfg.values() {
+                let ty = func.dfg.value_type(val);
+                if ty.lane_type().is_ref() {
+                    panic!("reference types were found but safepoints were not enabled.");
+                }
+            }
+        }
 
         if isa.flags().enable_verifier() {
             let ok = verify_context(func, cfg, domtree, isa, &mut errors).is_ok()
                 && verify_liveness(isa, func, cfg, &self.liveness, &mut errors).is_ok()
-                && verify_locations(isa, func, Some(&self.liveness), &mut errors).is_ok()
+                && verify_locations(isa, func, cfg, Some(&self.liveness), &mut errors).is_ok()
                 && verify_cssa(
                     func,
                     cfg,

@@ -69,22 +69,18 @@ add_task(async function test_urlbar_focus() {
 
   const active = document.activeElement;
   info(
-    `Active element: ${active.tagName}, id: ${active.id}, class: ${
-      active.className
-    }`
+    `Active element: ${active.tagName}, id: ${active.id}, class: ${active.className}`
   );
 
   const parent = active.parentNode;
   info(
-    `Parent element: ${parent.tagName}, id: ${parent.id}, class: ${
-      parent.className
-    }`
+    `Parent element: ${parent.tagName}, id: ${parent.id}, class: ${parent.className}`
   );
 
   info(`After opening an empty tab, gURLBar.focused: ${gURLBar.focused}`);
 
   is(active.tagName, "html:input", "Input element focused");
-  ok(active.classList.contains("urlbar-input"), "Urlbar focused");
+  is(active.id, "urlbar-input", "Urlbar focused");
 
   extension.sendMessage("remove", tab2.id);
   await extension.awaitMessage("result");

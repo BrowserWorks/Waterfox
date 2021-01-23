@@ -1,0 +1,4 @@
+<!ENTITY options.title "შემმუშავებლის ხელსაწყოების პარამეტრები">
+<!ENTITY options.status.label "მდგომარეობა:">
+<!ENTITY options.port.label "პორტი:">
+<!ENTITY options.forcelocal.label "სხვა კომპიუტერებიდან კავშირის დაშვება">

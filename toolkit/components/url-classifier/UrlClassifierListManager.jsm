@@ -66,6 +66,10 @@ this.PROT_ListManager = function PROT_ListManager() {
   // success, update failure, download error).
   this.updateCheckers_ = {};
   this.requestBackoffs_ = {};
+
+  // This is only used by testcases to ensure SafeBrowsing.jsm is inited
+  this.registered = false;
+
   this.dbService_ = Cc["@mozilla.org/url-classifier/dbservice;1"].getService(
     Ci.nsIUrlClassifierDBService
   );
@@ -87,6 +91,8 @@ PROT_ListManager.prototype.registerTable = function(
   updateUrl,
   gethashUrl
 ) {
+  this.registered = true;
+
   this.tablesData[tableName] = {};
   if (!updateUrl) {
     log("Can't register table " + tableName + " without updateUrl");
@@ -186,6 +192,10 @@ PROT_ListManager.prototype.enableUpdate = function(tableName) {
   }
 };
 
+PROT_ListManager.prototype.isRegistered = function() {
+  return this.registered;
+};
+
 /**
  * Returns true if any table associated with the updateUrl requires updates.
  * @param updateUrl - the updateUrl
@@ -264,7 +274,7 @@ PROT_ListManager.prototype.setUpdateCheckTimer = function(updateUrl, delay) {
 /**
  * Acts as a nsIUrlClassifierCallback for getTables.
  */
-PROT_ListManager.prototype.kickoffUpdate_ = function(onDiskTableData) {
+PROT_ListManager.prototype.kickoffUpdate_ = function() {
   this.startingUpdate_ = false;
   var initialUpdateDelay = 3000;
   // Add a fuzz of 0-1 minutes for both v2 and v4 according to Bug 1305478.
@@ -349,7 +359,7 @@ PROT_ListManager.prototype.maybeToggleUpdateChecking = function() {
     if (!this.startingUpdate_) {
       this.startingUpdate_ = true;
       // check the current state of tables in the database
-      this.dbService_.getTables(this.kickoffUpdate_.bind(this));
+      this.kickoffUpdate_();
     }
   } else {
     log("Stopping managing lists (if currently active)");
@@ -385,7 +395,7 @@ PROT_ListManager.prototype.forceUpdates = function(tables) {
     }
 
     // Trigger an update for the given url.
-    if (!this.checkForUpdates(url)) {
+    if (!this.checkForUpdates(url, true)) {
       ret = false;
     }
   });
@@ -398,11 +408,22 @@ PROT_ListManager.prototype.forceUpdates = function(tables) {
  *
  * @param updateUrl: request updates for tables associated with that url, or
  * for all tables if the url is empty.
+ * @param manual: the update is triggered manually
  */
-PROT_ListManager.prototype.checkForUpdates = function(updateUrl) {
+PROT_ListManager.prototype.checkForUpdates = function(
+  updateUrl,
+  manual = false
+) {
   log("checkForUpdates with " + updateUrl);
   // See if we've triggered the request backoff logic.
   if (!updateUrl) {
+    return false;
+  }
+
+  // Disable SafeBrowsing updates in Safe Mode, but still allow manually
+  // triggering an update for debugging.
+  if (Services.appinfo.inSafeMode && !manual) {
+    log("update is disabled in Safe Mode");
     return false;
   }
 
@@ -554,7 +575,7 @@ PROT_ListManager.prototype.makeUpdateRequest_ = function(updateUrl, tableData) {
   log("update request: " + JSON.stringify(streamerMap, undefined, 2) + "\n");
 
   // Don't send an empty request.
-  if (streamerMap.requestPayload.length > 0) {
+  if (streamerMap.requestPayload.length) {
     this.makeUpdateRequestForEntry_(
       updateUrl,
       streamerMap.tableList,

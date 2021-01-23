@@ -9,13 +9,15 @@
  *
  * See InspectorUtils.h for documentation on these methods.
  */
-[Func="nsContentUtils::IsCallerChromeOrFuzzingEnabled"]
+[Func="nsContentUtils::IsCallerChromeOrFuzzingEnabled",
+ Exposed=Window]
 namespace InspectorUtils {
   // documentOnly tells whether user and UA sheets should get included.
   sequence<StyleSheet> getAllStyleSheets(Document document, optional boolean documentOnly = false);
   sequence<CSSStyleRule> getCSSStyleRules(
     Element element,
-    optional [TreatNullAs=EmptyString] DOMString pseudo = "");
+    optional [TreatNullAs=EmptyString] DOMString pseudo = "",
+    optional boolean relevantLinkVisited = false);
   unsigned long getRuleLine(CSSRule rule);
   unsigned long getRuleColumn(CSSRule rule);
   unsigned long getRelativeRuleLine(CSSRule rule);
@@ -29,24 +31,24 @@ namespace InspectorUtils {
       Element element,
       CSSStyleRule rule,
       unsigned long selectorIndex,
-      optional [TreatNullAs=EmptyString] DOMString pseudo = "");
-  boolean isInheritedProperty(DOMString property);
-  sequence<DOMString> getCSSPropertyNames(optional PropertyNamesOptions options);
+      optional [TreatNullAs=EmptyString] DOMString pseudo = "",
+      optional boolean includeVisitedStyle = false);
+  boolean isInheritedProperty(UTF8String property);
+  sequence<DOMString> getCSSPropertyNames(optional PropertyNamesOptions options = {});
   sequence<PropertyPref> getCSSPropertyPrefs();
-  [Throws] sequence<DOMString> getCSSValuesForProperty(DOMString property);
+  [Throws] sequence<DOMString> getCSSValuesForProperty(UTF8String property);
   [Throws] DOMString rgbToColorName(octet r, octet g, octet b);
-  InspectorRGBATuple? colorToRGBA(DOMString colorString);
-  boolean isValidCSSColor(DOMString colorString);
-  [Throws] sequence<DOMString> getSubpropertiesForCSSProperty(DOMString property);
-  [Throws] boolean cssPropertyIsShorthand(DOMString property);
+  InspectorRGBATuple? colorToRGBA(UTF8String colorString);
+  boolean isValidCSSColor(UTF8String colorString);
+  [Throws] sequence<DOMString> getSubpropertiesForCSSProperty(UTF8String property);
+  [Throws] boolean cssPropertyIsShorthand(UTF8String property);
 
-  [Throws] boolean cssPropertySupportsType(DOMString property, InspectorPropertyType type);
+  [Throws] boolean cssPropertySupportsType(UTF8String property, InspectorPropertyType type);
 
   boolean isIgnorableWhitespace(CharacterData dataNode);
   Node? getParentForNode(Node node, boolean showingAnonymousContent);
   [NewObject] NodeList getChildrenForNode(Node node,
                                           boolean showingAnonymousContent);
-  sequence<DOMString> getBindingURLs(Element element);
   [Throws] boolean setContentState(Element element, unsigned long long state);
   [Throws] boolean removeContentState(
       Element element,
@@ -71,9 +73,13 @@ namespace InspectorUtils {
   void removePseudoClassLock(Element element, DOMString pseudoClass);
   boolean hasPseudoClassLock(Element element, DOMString pseudoClass);
   void clearPseudoClassLocks(Element element);
-  [Throws] void parseStyleSheet(CSSStyleSheet sheet, DOMString input);
+  [Throws] void parseStyleSheet(CSSStyleSheet sheet, UTF8String input);
   boolean isCustomElementName([TreatNullAs=EmptyString] DOMString name,
                               DOMString? namespaceURI);
+
+  boolean isElementThemed(Element element);
+
+  Element? containingBlockOf(Element element);
 };
 
 dictionary PropertyNamesOptions {
@@ -132,7 +138,8 @@ dictionary InspectorFontFeature {
   required DOMString languageSystem;
 };
 
-[Func="nsContentUtils::IsCallerChromeOrFuzzingEnabled"]
+[Func="nsContentUtils::IsCallerChromeOrFuzzingEnabled",
+ Exposed=Window]
 interface InspectorFontFace {
   // An indication of how we found this font during font-matching.
   // Note that the same physical font may have been found in multiple ways within a range.

@@ -29,14 +29,10 @@ add_task(async function test_ignoreList() {
     "settings-update-complete"
   );
 
-  await Services.search.addEngineWithDetails(
-    kSearchEngineID1,
-    "",
-    "",
-    "",
-    "get",
-    kSearchEngineURL1
-  );
+  await Services.search.addEngineWithDetails(kSearchEngineID1, {
+    method: "get",
+    template: kSearchEngineURL1,
+  });
 
   await updatePromise;
 
@@ -47,14 +43,10 @@ add_task(async function test_ignoreList() {
     "Engine with ignored search params should not exist"
   );
 
-  await Services.search.addEngineWithDetails(
-    kSearchEngineID2,
-    "",
-    "",
-    "",
-    "get",
-    kSearchEngineURL2
-  );
+  await Services.search.addEngineWithDetails(kSearchEngineID2, {
+    method: "get",
+    template: kSearchEngineURL2,
+  });
 
   // An ignored engine shouldn't be available at all
   engine = Services.search.getEngineByName(kSearchEngineID2);
@@ -64,15 +56,11 @@ add_task(async function test_ignoreList() {
     "Engine with ignored search params of a different case should not exist"
   );
 
-  await Services.search.addEngineWithDetails(
-    kSearchEngineID3,
-    "",
-    "",
-    "",
-    "get",
-    kSearchEngineURL3,
-    kExtensionID
-  );
+  await Services.search.addEngineWithDetails(kSearchEngineID3, {
+    method: "get",
+    template: kSearchEngineURL3,
+    extensionID: kExtensionID,
+  });
 
   // An ignored engine shouldn't be available at all
   engine = Services.search.getEngineByName(kSearchEngineID3);

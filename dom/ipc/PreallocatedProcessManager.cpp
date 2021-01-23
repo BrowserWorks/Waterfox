@@ -10,15 +10,11 @@
 #include "mozilla/Unused.h"
 #include "mozilla/dom/ContentParent.h"
 #include "mozilla/dom/ScriptSettings.h"
+#include "mozilla/StaticPrefs_dom.h"
 #include "nsIPropertyBag2.h"
 #include "ProcessPriorityManager.h"
 #include "nsServiceManagerUtils.h"
 #include "nsIXULRuntime.h"
-
-// This number is fairly arbitrary ... the intention is to put off
-// launching another app process until the last one has finished
-// loading its content, to reduce CPU/memory/IO contention.
-#define DEFAULT_ALLOCATE_DELAY 1000
 
 using namespace mozilla::hal;
 using namespace mozilla::dom;
@@ -40,10 +36,12 @@ class PreallocatedProcessManagerImpl final : public nsIObserver {
   void RemoveBlocker(ContentParent* aParent);
   already_AddRefed<ContentParent> Take();
   bool Provide(ContentParent* aParent);
+  void Erase(ContentParent* aParent);
 
  private:
+  static const char* const kObserverTopics[];
+
   static mozilla::StaticRefPtr<PreallocatedProcessManagerImpl> sSingleton;
-  static uint32_t sPrelaunchDelayMS;
 
   PreallocatedProcessManagerImpl();
   ~PreallocatedProcessManagerImpl();
@@ -61,8 +59,6 @@ class PreallocatedProcessManagerImpl final : public nsIObserver {
   void Disable();
   void CloseProcess();
 
-  void ObserveProcessShutdown(nsISupports* aSubject);
-
   bool mEnabled;
   bool mShutdown;
   bool mLaunchInProgress;
@@ -72,11 +68,15 @@ class PreallocatedProcessManagerImpl final : public nsIObserver {
   bool IsEmpty() const { return !mPreallocatedProcess && !mLaunchInProgress; }
 };
 
+const char* const PreallocatedProcessManagerImpl::kObserverTopics[] = {
+    "memory-pressure",
+    "profile-change-teardown",
+    NS_XPCOM_SHUTDOWN_OBSERVER_ID,
+};
+
 /* static */
 StaticRefPtr<PreallocatedProcessManagerImpl>
     PreallocatedProcessManagerImpl::sSingleton;
-/* static */
-uint32_t PreallocatedProcessManagerImpl::sPrelaunchDelayMS = 0;
 
 /* static */
 PreallocatedProcessManagerImpl* PreallocatedProcessManagerImpl::Singleton() {
@@ -102,21 +102,14 @@ PreallocatedProcessManagerImpl::~PreallocatedProcessManagerImpl() {
 }
 
 void PreallocatedProcessManagerImpl::Init() {
-  Preferences::AddUintVarCache(&sPrelaunchDelayMS,
-                               "dom.ipc.processPrelaunch.delayMs",
-                               DEFAULT_ALLOCATE_DELAY);
   Preferences::AddStrongObserver(this, "dom.ipc.processPrelaunch.enabled");
   // We have to respect processCount at all time. This is especially important
   // for testing.
   Preferences::AddStrongObserver(this, "dom.ipc.processCount");
   nsCOMPtr<nsIObserverService> os = services::GetObserverService();
-  if (os) {
-    os->AddObserver(this, "ipc:content-shutdown",
-                    /* weakRef = */ false);
-    os->AddObserver(this, NS_XPCOM_SHUTDOWN_OBSERVER_ID,
-                    /* weakRef = */ false);
-    os->AddObserver(this, "profile-change-teardown",
-                    /* weakRef = */ false);
+  MOZ_ASSERT(os);
+  for (auto topic : kObserverTopics) {
+    os->AddObserver(this, topic, /* ownsWeak */ false);
   }
   RereadPrefs();
 }
@@ -125,9 +118,7 @@ NS_IMETHODIMP
 PreallocatedProcessManagerImpl::Observe(nsISupports* aSubject,
                                         const char* aTopic,
                                         const char16_t* aData) {
-  if (!strcmp("ipc:content-shutdown", aTopic)) {
-    ObserveProcessShutdown(aSubject);
-  } else if (!strcmp("nsPref:changed", aTopic)) {
+  if (!strcmp("nsPref:changed", aTopic)) {
     // The only other observer we registered was for our prefs.
     RereadPrefs();
   } else if (!strcmp(NS_XPCOM_SHUTDOWN_OBSERVER_ID, aTopic) ||
@@ -135,18 +126,19 @@ PreallocatedProcessManagerImpl::Observe(nsISupports* aSubject,
     Preferences::RemoveObserver(this, "dom.ipc.processPrelaunch.enabled");
     Preferences::RemoveObserver(this, "dom.ipc.processCount");
     nsCOMPtr<nsIObserverService> os = services::GetObserverService();
-    if (os) {
-      os->RemoveObserver(this, "ipc:content-shutdown");
-      os->RemoveObserver(this, NS_XPCOM_SHUTDOWN_OBSERVER_ID);
-      os->RemoveObserver(this, "profile-change-teardown");
+    MOZ_ASSERT(os);
+    for (auto topic : kObserverTopics) {
+      os->RemoveObserver(this, topic);
     }
     // Let's prevent any new preallocated processes from starting. ContentParent
     // will handle the shutdown of the existing process and the
     // mPreallocatedProcess reference will be cleared by the ClearOnShutdown of
     // the manager singleton.
     mShutdown = true;
+  } else if (!strcmp("memory-pressure", aTopic)) {
+    CloseProcess();
   } else {
-    MOZ_ASSERT(false);
+    MOZ_ASSERT_UNREACHABLE("Unknown topic");
   }
 
   return NS_OK;
@@ -195,6 +187,13 @@ bool PreallocatedProcessManagerImpl::Provide(ContentParent* aParent) {
   return aParent == mPreallocatedProcess;
 }
 
+void PreallocatedProcessManagerImpl::Erase(ContentParent* aParent) {
+  if (mPreallocatedProcess == aParent) {
+    mBlockers.RemoveEntry(aParent->ChildID());
+    mPreallocatedProcess = nullptr;
+  }
+}
+
 void PreallocatedProcessManagerImpl::Enable() {
   if (mEnabled) {
     return;
@@ -239,7 +238,7 @@ void PreallocatedProcessManagerImpl::AllocateAfterDelay() {
   NS_DelayedDispatchToCurrentThread(
       NewRunnableMethod("PreallocatedProcessManagerImpl::AllocateOnIdle", this,
                         &PreallocatedProcessManagerImpl::AllocateOnIdle),
-      sPrelaunchDelayMS);
+      StaticPrefs::dom_ipc_processPrelaunch_delayMs());
 }
 
 void PreallocatedProcessManagerImpl::AllocateOnIdle() {
@@ -298,22 +297,6 @@ void PreallocatedProcessManagerImpl::CloseProcess() {
   }
 }
 
-void PreallocatedProcessManagerImpl::ObserveProcessShutdown(
-    nsISupports* aSubject) {
-  nsCOMPtr<nsIPropertyBag2> props = do_QueryInterface(aSubject);
-  NS_ENSURE_TRUE_VOID(props);
-
-  uint64_t childID = CONTENT_PROCESS_ID_UNKNOWN;
-  props->GetPropertyAsUint64(NS_LITERAL_STRING("childID"), &childID);
-  NS_ENSURE_TRUE_VOID(childID != CONTENT_PROCESS_ID_UNKNOWN);
-
-  if (mPreallocatedProcess && childID == mPreallocatedProcess->ChildID()) {
-    mPreallocatedProcess = nullptr;
-  }
-
-  mBlockers.RemoveEntry(childID);
-}
-
 inline PreallocatedProcessManagerImpl* GetPPMImpl() {
   return PreallocatedProcessManagerImpl::Singleton();
 }
@@ -336,6 +319,11 @@ already_AddRefed<ContentParent> PreallocatedProcessManager::Take() {
 /* static */
 bool PreallocatedProcessManager::Provide(ContentParent* aParent) {
   return GetPPMImpl()->Provide(aParent);
+}
+
+/* static */
+void PreallocatedProcessManager::Erase(ContentParent* aParent) {
+  return GetPPMImpl()->Erase(aParent);
 }
 
 }  // namespace mozilla

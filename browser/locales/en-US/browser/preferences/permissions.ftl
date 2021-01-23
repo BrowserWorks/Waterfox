@@ -46,8 +46,17 @@ permissions-button-ok =
     .label = Save Changes
     .accesskey = S
 
+permissions-autoplay-menu = Default for all websites:
+
 permissions-searchbox =
     .placeholder = Search Website
+
+permissions-capabilities-autoplay-allow =
+    .label = Allow Audio and Video
+permissions-capabilities-autoplay-block =
+    .label = Block Audio
+permissions-capabilities-autoplay-blockall =
+    .label = Block Audio and Video
 
 permissions-capabilities-allow =
     .label = Allow
@@ -70,10 +79,10 @@ permissions-invalid-uri-label = Please enter a valid hostname
 
 ## Exceptions - Tracking Protection
 
-permissions-exceptions-content-blocking-window =
-    .title = Exceptions - Content Blocking
+permissions-exceptions-etp-window =
+    .title = Exceptions for Enhanced Tracking Protection
     .style = { permissions-window.style }
-permissions-exceptions-content-blocking-desc = You have disabled content blocking on these websites.
+permissions-exceptions-etp-desc = You’ve turned off protections on these websites.
 
 ## Exceptions - Cookies
 
@@ -103,12 +112,12 @@ permissions-exceptions-addons-window =
     .style = { permissions-window.style }
 permissions-exceptions-addons-desc = You can specify which websites are allowed to install add-ons. Type the exact address of the site you want to allow and then click Allow.
 
-## Exceptions - Autoplay Media
+## Site Permissions - Autoplay
 
-permissions-exceptions-autoplay-media-window2 =
-    .title = Exceptions - Autoplay
+permissions-site-autoplay-window =
+    .title = Settings - Autoplay
     .style = { permissions-window.style }
-permissions-exceptions-autoplay-media-desc2 = You can specify which websites are always or never allowed to autoplay media with sound. Type the address of the site you want to manage and then click Block or Allow.
+permissions-site-autoplay-desc = You can manage the sites that do not follow your default autoplay settings here.
 
 ## Site Permissions - Notifications
 
@@ -130,6 +139,16 @@ permissions-site-location-disable-label =
     .label = Block new requests asking to access your location
 permissions-site-location-disable-desc = This will prevent any websites not listed above from requesting permission to access your location. Blocking access to your location may break some website features.
 
+## Site Permissions - Virtual Reality
+
+permissions-site-xr-window =
+    .title = Settings - Virtual Reality Permissions
+    .style = { permissions-window.style }
+permissions-site-xr-desc = The following websites have requested to access your virtual reality devices. You can specify which websites are allowed to access your virtual reality devices. You can also block new requests asking to access your virtual reality devices.
+permissions-site-xr-disable-label =
+    .label = Block new requests asking to access your virtual reality devices
+permissions-site-xr-disable-desc = This will prevent any websites not listed above from requesting permission to access your virtual reality devices. Blocking access to your virtual reality devices may break some website features.
+
 ## Site Permissions - Camera
 
 permissions-site-camera-window =
@@ -150,35 +169,16 @@ permissions-site-microphone-disable-label =
     .label = Block new requests asking to access your microphone
 permissions-site-microphone-disable-desc = This will prevent any websites not listed above from requesting permission to access your microphone. Blocking access to your microphone may break some website features.
 
-## Exceptions - Images
-
-permissions-exceptions-image-window =
-    .title = Exceptions - Images
-    .style = { permissions-window.style }
-permissions-exceptions-image-desc = You can specify which websites are allowed to load images. Type the exact address of the site you want to manage and then click Block or Allow.
-
 ## Advanced JS Settings
 
 advancedJSDialog =
     .title = Advanced JavaScript Settings
-
-moveResizePopupWindows =
-    .label = Move or resize popup windows
-
-raiseLowerWindows =
-    .label = Raise or lower windows
-
-disableContextMenus =
-    .label = Disable or replace context menus
 
 allowScripts =
     .value = Allow scripts to:
 
 moveResizePopupWindows =
     .label = Move or resize popup windows
-
-raiseLowerWindows =
-    .label = Raise or lower windows
 
 disableContextMenus =
     .label = Disable or replace context menus

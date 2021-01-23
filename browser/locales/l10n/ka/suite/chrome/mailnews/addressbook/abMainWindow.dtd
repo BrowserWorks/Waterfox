@@ -1,0 +1,128 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY addressbookWindow.title                        "წიგნაკი">
+
+<!-- Menus:  the . means that the menu item isn't implemented yet -->
+
+<!ENTITY blankResultsPaneMessage.label                  "ეს წიგნაკი აჩვენებს ხალხს, მხოლოდ ძიების შემდგომ">
+<!ENTITY localResultsOnlyMessage.label                  "ძიებისას, ვებმისამართზე არსებულ წიგნაკში მოცემული პირები არ გამოჩნდება">
+<!-- File Menu -->
+<!ENTITY newContact.label                               "პირი…">
+<!ENTITY newContact.accesskey                           "კ">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "დაგზავნის სია…">
+<!ENTITY newListCmd.accesskey                           "ს">
+<!ENTITY newAddressBookCmd.label                        "წიგნაკი…">
+<!ENTITY newAddressBookCmd.accesskey                    "წ">
+<!ENTITY newLDAPDirectoryCmd.label                      "LDAP საქაღალდე…">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "D">
+<!ENTITY newIM.label                                    "სწრაფი შეტყობინება">
+<!ENTITY printContactViewCmd.label                      "პირის მონაცემების ამობეჭდვა…">
+<!ENTITY printContactViewCmd.accesskey                  "მ">
+<!ENTITY printContactViewCmd.key                        "P">
+<!ENTITY printPreviewContactViewCmd.label               "პირის მონაცემების შეთვალიერება ამობეჭდვამდე">
+<!ENTITY printPreviewContactViewCmd.accesskey           "შ">
+<!ENTITY printAddressBook.label                         "წიგნაკის ამობეჭდვა…">
+<!ENTITY printAddressBook.accesskey                     "ბ">
+<!ENTITY printPreviewAddressBook.label                  "შეთვალიერება ამობეჭდვამდე">
+<!ENTITY printPreviewAddressBook.accesskey              "თ">
+
+<!-- Edit Menu -->
+<!ENTITY deleteAbCmd.label                              "წიგნაკის წაშლა">
+<!ENTITY deleteContactCmd.label                         "პირის ამოშლა">
+<!ENTITY deleteContactsCmd.label                        "შერჩეული ხალხის ამოშლა">
+<!ENTITY deleteListCmd.label                            "სიის წაშლა">
+<!ENTITY deleteListsCmd.label                           "შერჩეული სიების წაშლა">
+<!ENTITY deleteItemsCmd.label                           "შერჩეული ელემენტების წაშლა">
+<!ENTITY swapFirstNameLastNameCmd.label                 "სახელის/გვარის ადგილების გაცვლა">
+<!ENTITY swapFirstNameLastNameCmd.accesskey             "ც">
+<!ENTITY propertiesCmd.label                            "პარამეტრები…">
+<!ENTITY propertiesCmd.accesskey                        "პ">
+<!ENTITY propertiesCmd.key                              "i">
+
+<!-- View Menu -->
+<!ENTITY showAbToolbarCmd.label                         "წიგნაკის ხელსაწყოთა ზოლი">
+<!ENTITY showAbToolbarCmd.accesskey                     "ო">
+<!ENTITY layoutMenu.label                               "განლაგება">
+<!ENTITY layoutMenu.accesskey                           "გ">
+<!ENTITY showDirectoryPane.label                        "საქაღალდის არე">
+<!ENTITY showDirectoryPane.accesskey                    "რ">
+<!ENTITY showContactPane2.label                         "პირის მონაცემების არე">
+<!ENTITY showContactPane2.accesskey                     "კ">
+<!ENTITY menu_ShowNameAs.label                          "სახელის ჩვენება როგორც">
+<!ENTITY menu_ShowNameAs.accesskey                      "ხ">
+<!ENTITY firstLastCmd.label                             "სახელი, გვარი">
+<!ENTITY firstLastCmd.accesskey                         "ს">
+<!ENTITY lastFirstCmd.label                             "გვარი, სახელი">
+<!ENTITY lastFirstCmd.accesskey                         "გ">
+<!ENTITY displayNameCmd.label                           "გამოსაჩენი სახელი">
+<!ENTITY displayNameCmd.accesskey                       "ჩ">
+
+<!-- LOCALIZATION NOTE (toggleDirectoryPaneCmd.key): This is only used on the
+     mac platform, other platforms use VK_F9. -->
+<!ENTITY toggleDirectoryPaneCmd.key                     "S">
+
+<!-- Tasks Menu -->
+<!ENTITY importCmd.label                                "გადმოტანა…">
+<!ENTITY importCmd.accesskey                            "დ">
+<!ENTITY exportCmd.label                                "გატანა…">
+<!ENTITY exportCmd.accesskey                            "ტ">
+
+<!-- Toolbar and Popup items -->
+<!ENTITY newContactButton.label                         "ახალი პირი">
+<!ENTITY newContactButton.accesskey                     "ა">
+<!ENTITY newlistButton.label                            "ახალი სია">
+<!ENTITY newlistButton.accesskey                        "ს">
+<!ENTITY editItemButton.label                           "პარამეტრები">
+<!ENTITY editItemButton.accesskey                       "პ">
+<!ENTITY newmsgButton.label                             "შედგენა">
+<!ENTITY newmsgButton.accesskey                         "შ">
+<!ENTITY deleteItemButton.label                         "წაშლა">
+<!ENTITY deleteItemButton.accesskey                     "წ">
+<!ENTITY newimButton.label                              "სწრაფი შეტყობინება">
+<!ENTITY newimButton.accesskey                          "წ">
+<!ENTITY printButton.label                              "ამობეჭდვა">
+<!ENTITY printButton.accesskey                          "ჭ">
+<!ENTITY searchNameAndEmail.placeholder                 "სახელისა და ელფოსტის ძიება">
+<!ENTITY searchBox.title                                "ძიება">
+
+<!-- Tooltips -->
+<!ENTITY addressbookToolbar.tooltip                     "წიგნაკის ხელსაწყოთა ზოლი">
+<!ENTITY newContactButton.tooltip                       "წიგნაკში ახალი პირის მონაცემების შექმნა">
+<!ENTITY newlistButton.tooltip                          "ახალი სიის შექმნა">
+<!ENTITY editItemButton.tooltip                         "შერჩეული ელემენტის ჩასწორება">
+<!ENTITY newmsgButton.tooltip                           "ელფოსტის გაგზავნა">
+<!ENTITY newIM.tooltip                                  "მყისი გზავნილი ან გასუბრება">
+<!ENTITY printButton.tooltip                            "შერჩეულის ამობეჭდვა">
+<!ENTITY deleteItemButton.tooltip                       "შერჩეული ელემენტის წაშლა">
+<!ENTITY throbber.tooltip                               "&vendorShortName; – საწყის გვერდზე გადასვლა">
+<!ENTITY throbber.tooltip2                              "&brandShortName; – საწყის გვერდზე გადასვლა">
+<!ENTITY advancedButton.tooltip                         "მისამართის დეტალური ძიება">
+
+<!-- Dir Tree header -->
+<!ENTITY dirTreeHeader.label                            "წიგნაკები">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "პირი">
+<!ENTITY home.heading                                   "თავფურცელი">
+<!ENTITY other.heading                                  "სხვა">
+<!ENTITY chat.heading                                   "სასაუბრო">
+<!ENTITY phone.heading                                  "ტელეფონი">
+<!ENTITY work.heading                                   "სამსახური">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "აღწერილობა">
+<!ENTITY addresses.heading                              "მისამართები">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "რუკაზე ასახვა">
+<!ENTITY mapIt.tooltip                                  "ამ მისამართის ინტერნეტ რუკის ჩვენება">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label                               "">
+
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+<!-- Swap FN/LN UI  Set to "false" to show swap fn/ln UI -->
+<!ENTITY  hideSwapFnLnUI                                "true">

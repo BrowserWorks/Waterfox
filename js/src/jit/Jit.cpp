@@ -24,8 +24,7 @@ static EnterJitStatus JS_HAZ_JSNATIVE_CALLER EnterJit(JSContext* cx,
   // C++ -> interpreterStub -> C++ is slower than staying in C++).
   MOZ_ASSERT(code);
   MOZ_ASSERT(code != cx->runtime()->jitRuntime()->interpreterStub().value);
-
-  MOZ_ASSERT(IsBaselineEnabled(cx));
+  MOZ_ASSERT(IsBaselineInterpreterEnabled());
 
   if (!CheckRecursionLimit(cx)) {
     return EnterJitStatus::Error;
@@ -71,7 +70,7 @@ static EnterJitStatus JS_HAZ_JSNATIVE_CALLER EnterJit(JSContext* cx,
     envChain = nullptr;
     calleeToken = CalleeToToken(&args.callee().as<JSFunction>(), constructing);
 
-    unsigned numFormals = script->functionNonDelazifying()->nargs();
+    unsigned numFormals = script->function()->nargs();
     if (numFormals > numActualArgs) {
       code = cx->runtime()->jitRuntime()->getArgumentsRectifier().value;
     }
@@ -79,10 +78,6 @@ static EnterJitStatus JS_HAZ_JSNATIVE_CALLER EnterJit(JSContext* cx,
     numActualArgs = 0;
     constructing = false;
     if (script->isDirectEvalInFunction()) {
-      if (state.asExecute()->newTarget().isNull()) {
-        ScriptFrameIter iter(cx);
-        state.asExecute()->setNewTarget(iter.newTarget());
-      }
       maxArgc = 1;
       maxArgv = state.asExecute()->addressOfNewTarget();
     } else {
@@ -115,7 +110,7 @@ static EnterJitStatus JS_HAZ_JSNATIVE_CALLER EnterJit(JSContext* cx,
   MOZ_ASSERT(!cx->hasIonReturnOverride());
 
   // Release temporary buffer used for OSR into Ion.
-  cx->freeOsrTempData();
+  cx->runtime()->jitRuntime()->freeIonOsrTempData();
 
   if (result.isMagic()) {
     MOZ_ASSERT(result.isMagic(JS_ION_ERROR));
@@ -134,20 +129,25 @@ static EnterJitStatus JS_HAZ_JSNATIVE_CALLER EnterJit(JSContext* cx,
 }
 
 EnterJitStatus js::jit::MaybeEnterJit(JSContext* cx, RunState& state) {
+  if (!IsBaselineInterpreterEnabled()) {
+    // All JITs are disabled.
+    return EnterJitStatus::NotEntered;
+  }
+
+  // JITs do not respect the debugger's OnNativeCall hook, so JIT execution is
+  // disabled if this hook might need to be called.
+  if (cx->insideDebuggerEvaluationWithOnNativeCallHook) {
+    return EnterJitStatus::NotEntered;
+  }
+
   JSScript* script = state.script();
 
   uint8_t* code = script->jitCodeRaw();
   do {
-    // Make sure we can enter Baseline Interpreter or JIT code. Note that
-    // the prologue has warm-up checks to tier up if needed.
-    if (JitOptions.baselineInterpreter) {
-      if (script->types()) {
-        break;
-      }
-    } else {
-      if (script->hasBaselineScript()) {
-        break;
-      }
+    // Make sure we can enter Baseline Interpreter code. Note that the prologue
+    // has warm-up checks to tier up if needed.
+    if (script->hasJitScript()) {
+      break;
     }
 
     script->incWarmUpCounter();
@@ -165,7 +165,7 @@ EnterJitStatus js::jit::MaybeEnterJit(JSContext* cx, RunState& state) {
     }
 
     // Try to Baseline-compile.
-    if (jit::IsBaselineEnabled(cx)) {
+    if (jit::IsBaselineJitEnabled(cx)) {
       jit::MethodStatus status =
           jit::CanEnterBaselineMethod<BaselineTier::Compiler>(cx, state);
       if (status == jit::Method_Error) {
@@ -175,17 +175,18 @@ EnterJitStatus js::jit::MaybeEnterJit(JSContext* cx, RunState& state) {
         code = script->jitCodeRaw();
         break;
       }
+    }
 
-      if (JitOptions.baselineInterpreter) {
-        jit::MethodStatus status =
-            jit::CanEnterBaselineMethod<BaselineTier::Interpreter>(cx, state);
-        if (status == jit::Method_Error) {
-          return EnterJitStatus::Error;
-        }
-        if (status == jit::Method_Compiled) {
-          code = script->jitCodeRaw();
-          break;
-        }
+    // Try to enter the Baseline Interpreter.
+    if (IsBaselineInterpreterEnabled()) {
+      jit::MethodStatus status =
+          jit::CanEnterBaselineMethod<BaselineTier::Interpreter>(cx, state);
+      if (status == jit::Method_Error) {
+        return EnterJitStatus::Error;
+      }
+      if (status == jit::Method_Compiled) {
+        code = script->jitCodeRaw();
+        break;
       }
     }
 

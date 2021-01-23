@@ -9,6 +9,8 @@
 
 class nsWindowSizes;
 
+#include "mozilla/ServoStyleConsts.h"
+
 /*
  * ServoComputedData and its related types.
  */
@@ -56,10 +58,6 @@ struct ServoVisitedStyle {
   ComputedStyle* mPtr;
 };
 
-struct ServoComputedValueFlags {
-  uint16_t mFlags;
-};
-
 #define STYLE_STRUCT(name_) struct Gecko##name_;
 #include "nsStyleStructList.h"
 #undef STYLE_STRUCT
@@ -96,10 +94,12 @@ class ServoComputedData {
 
   void AddSizeOfExcludingThis(nsWindowSizes& aSizes) const;
 
+  mozilla::ServoWritingMode WritingMode() const { return writing_mode; }
+
  private:
   mozilla::ServoCustomPropertiesMap custom_properties;
   mozilla::ServoWritingMode writing_mode;
-  mozilla::ServoComputedValueFlags flags;
+  mozilla::StyleComputedValueFlags flags;
   /// The rule node representing the ordered list of rules matched for this
   /// node.  Can be None for default values and text nodes.  This is
   /// essentially an optimization to avoid referencing the root rule node.

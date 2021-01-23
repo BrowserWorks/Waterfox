@@ -34,14 +34,31 @@ nsresult nsOSHelperAppService::GetMIMEInfoFromOS(const nsACString& aMIMEType,
 
 nsresult nsOSHelperAppService::OSProtocolHandlerExists(const char* aScheme,
                                                        bool* aExists) {
-  *aExists = mozilla::AndroidBridge::Bridge()->GetHandlersForURL(
-      NS_ConvertUTF8toUTF16(aScheme));
+  // Support any URI barring a couple schemes we use in testing; let the
+  // app decide what to do with them.
+  nsAutoCString scheme(aScheme);
+  *aExists = !scheme.Equals(NS_LITERAL_CSTRING("unsupported")) &&
+             !scheme.Equals(NS_LITERAL_CSTRING("unknownextproto"));
   return NS_OK;
+}
+
+NS_IMETHODIMP
+nsOSHelperAppService::GetApplicationDescription(const nsACString& aScheme,
+                                                nsAString& _retval) {
+  return NS_ERROR_NOT_AVAILABLE;
+}
+
+NS_IMETHODIMP
+nsOSHelperAppService::IsCurrentAppOSDefaultForProtocol(
+    const nsACString& aScheme, bool* _retval) {
+  return NS_ERROR_NOT_AVAILABLE;
 }
 
 nsresult nsOSHelperAppService::GetProtocolHandlerInfoFromOS(
     const nsACString& aScheme, bool* found, nsIHandlerInfo** info) {
-  return nsMIMEInfoAndroid::GetMimeInfoForURL(aScheme, found, info);
+  // We don't want to get protocol handlers from the OS in GV; the app
+  // should take care of that in NavigationDelegate.onLoadRequest().
+  return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 nsIHandlerApp* nsOSHelperAppService::CreateAndroidHandlerApp(

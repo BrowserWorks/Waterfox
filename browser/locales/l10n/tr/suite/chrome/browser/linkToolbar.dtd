@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Link Toolbar Title -->
+
+<!ENTITY linkToolbar.label "Site gezinti çubuğu">
+<!ENTITY linkToolbar.accesskey "ç">
+<!-- Link Toolbar visibility options -->
+
+<!ENTITY linkToolbarAlways.label "Her zaman göster">
+<!ENTITY linkToolbarAlways.accesskey "H">
+<!ENTITY linkToolbarAsNeeded.label "Gerekli olduğunda göster">
+<!ENTITY linkToolbarAsNeeded.accesskey "G">
+<!ENTITY linkToolbarNever.label "Her zaman gizle">
+<!ENTITY linkToolbarNever.accesskey "z">
+<!-- Toolbar buttons, menus, and menuitems -->
+
+<!ENTITY topButton.label "Üst">
+<!ENTITY upButton.label "Yukarı">
+<!ENTITY firstButton.label "Birinci">
+<!ENTITY prevButton.label "Önceki">
+<!ENTITY nextButton.label "Sonraki">
+<!ENTITY lastButton.label "Sonuncu">
+
+<!ENTITY documentButton.label "Belge">
+
+<!ENTITY tocButton.label "İçerik tablosu">
+<!ENTITY chapterButton.label "Bölümler">
+<!ENTITY sectionButton.label "Kısımlar">
+<!ENTITY subSectionButton.label "Alt kısımlar">
+<!ENTITY appendixButton.label "Lahika">
+<!ENTITY glossaryButton.label "Terimler sözlüğü">
+<!ENTITY indexButton.label "İçerik">
+
+<!ENTITY moreButton.label "Daha fazla">
+
+<!ENTITY helpButton.label "Yardım">
+<!ENTITY searchButton.label "Ara">
+
+<!ENTITY authorButton.label "Yazar(lar)">
+<!ENTITY copyrightButton.label "Telif hakkı">
+
+<!ENTITY bookmarkButton.label "Yer imleri">
+
+<!ENTITY alternateButton.label "Diğer sürümler">
+
+<!ENTITY feedButton.label "Abone ol">

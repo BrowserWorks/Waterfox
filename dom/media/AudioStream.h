@@ -13,14 +13,17 @@
 #  include "mozilla/RefPtr.h"
 #  include "mozilla/TimeStamp.h"
 #  include "mozilla/UniquePtr.h"
-#  include "nsAutoPtr.h"
 #  include "nsCOMPtr.h"
 #  include "nsThreadUtils.h"
-#  include "soundtouch/SoundTouchFactory.h"
+#  include "WavDumper.h"
 
 #  if defined(XP_WIN)
 #    include "mozilla/audio/AudioNotificationReceiver.h"
 #  endif
+
+namespace soundtouch {
+class MOZ_EXPORT SoundTouch;
+}
 
 namespace mozilla {
 
@@ -84,7 +87,7 @@ class AudioClock {
   // True if the we are timestretching, false if we are resampling.
   bool mPreservesPitch;
   // The history of frames sent to the audio engine in each DataCallback.
-  const nsAutoPtr<FrameHistory> mFrameHistory;
+  const UniquePtr<FrameHistory> mFrameHistory;
 };
 
 /*
@@ -188,7 +191,7 @@ class AudioStream final
     virtual uint32_t Rate() const = 0;
     // Return a writable pointer for downmixing.
     virtual AudioDataValue* GetWritable() const = 0;
-    virtual ~Chunk() {}
+    virtual ~Chunk() = default;
   };
 
   class DataSource {
@@ -200,6 +203,8 @@ class AudioStream final
     virtual bool Ended() const = 0;
     // Notify that all data is drained by the AudioStream.
     virtual void Drained() = 0;
+    // Notify that a fatal error has occured during playback.
+    virtual void Errored() = 0;
 
    protected:
     virtual ~DataSource() = default;
@@ -308,8 +313,7 @@ class AudioStream final
   AudioClock mAudioClock;
   soundtouch::SoundTouch* mTimeStretcher;
 
-  // Output file for dumping audio
-  FILE* mDumpFile;
+  WavDumper mDumpFile;
 
   // Owning reference to a cubeb_stream.
   UniquePtr<cubeb_stream, CubebDestroyPolicy> mCubebStream;

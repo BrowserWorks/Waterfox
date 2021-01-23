@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Formas lauka īpašības">
+<!ENTITY windowTitleImage.label "Formas attēla īpašības">
+
+<!ENTITY InputType.label "Lauka tips">
+<!ENTITY InputType.accesskey "t">
+<!ENTITY text.value "Teksts">
+<!ENTITY password.value "Parole">
+<!ENTITY checkbox.value "Atzīmes rūtiņa">
+<!ENTITY radio.value "Radio poga">
+
+
+<!ENTITY file.value "Fails">
+<!ENTITY hidden.value "Slēpts">
+<!ENTITY image.value "Attēls">
+<!ENTITY button.value "Poga">
+
+<!ENTITY InputSettings.label "Lauka iestatījumi">
+<!ENTITY InputName.label "Lauka nosaukums:">
+<!ENTITY InputName.accesskey "n">
+<!ENTITY GroupName.label "Grupas nosaukums:">
+<!ENTITY GroupName.accesskey "n">
+<!ENTITY InputValue.label "Lauka vērtība:">
+<!ENTITY InputValue.accesskey "v">
+<!ENTITY InitialValue.label "Sākotnējā vērtība:">
+<!ENTITY InitialValue.accesskey "v">
+
+
+
+
+
+
+
+
+
+
+<!ENTITY TextSize.label "Lauka izmērs:">
+<!ENTITY TextSize.accesskey "L">
+<!ENTITY TextLength.label "Maksimālais garums:">
+<!ENTITY TextLength.accesskey "g">
+
+
+
+
+
+

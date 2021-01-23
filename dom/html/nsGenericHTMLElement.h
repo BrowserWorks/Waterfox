@@ -15,6 +15,7 @@
 #include "nsContentCreatorFunctions.h"
 #include "mozilla/ErrorResult.h"
 #include "mozilla/dom/BindingDeclarations.h"
+#include "mozilla/dom/Element.h"
 #include "mozilla/dom/DOMRect.h"
 #include "mozilla/dom/ValidityState.h"
 #include "mozilla/dom/Element.h"
@@ -35,6 +36,7 @@ class EventStates;
 class TextEditor;
 class PresState;
 namespace dom {
+class ElementInternals;
 class HTMLFormElement;
 class HTMLMenuElement;
 }  // namespace dom
@@ -139,6 +141,18 @@ class nsGenericHTMLElement : public nsGenericHTMLElementBase {
     return false;
   }
 
+  void SetNonce(const nsAString& aNonce) {
+    SetProperty(nsGkAtoms::nonce, new nsString(aNonce),
+                nsINode::DeleteProperty<nsString>);
+  }
+  void RemoveNonce() { RemoveProperty(nsGkAtoms::nonce); }
+  void GetNonce(nsAString& aNonce) const {
+    nsString* cspNonce = static_cast<nsString*>(GetProperty(nsGkAtoms::nonce));
+    if (cspNonce) {
+      aNonce = *cspNonce;
+    }
+  }
+
   /**
    * Returns the count of descendants (inclusive of this node) in
    * the uncomposed document that are explicitly set as editable.
@@ -158,6 +172,13 @@ class nsGenericHTMLElement : public nsGenericHTMLElementBase {
   void GetInnerText(mozilla::dom::DOMString& aValue,
                     mozilla::ErrorResult& aError);
   void SetInnerText(const nsAString& aValue);
+
+  void GetInputMode(nsAString& aValue) {
+    GetEnumAttr(nsGkAtoms::inputmode, nullptr, aValue);
+  }
+  void SetInputMode(const nsAString& aValue, ErrorResult& aRv) {
+    SetHTMLAttr(nsGkAtoms::inputmode, aValue, aRv);
+  }
 
   /**
    * Determine whether an attribute is an event (onclick, etc.)
@@ -226,8 +247,12 @@ class nsGenericHTMLElement : public nsGenericHTMLElementBase {
     return IsNodeInternal(aFirst, aArgs...);
   }
 
+  // https://html.spec.whatwg.org/multipage/custom-elements.html#dom-attachinternals
+  already_AddRefed<mozilla::dom::ElementInternals> AttachInternals(
+      ErrorResult& aRv);
+
  protected:
-  virtual ~nsGenericHTMLElement() {}
+  virtual ~nsGenericHTMLElement() = default;
 
  public:
   /**
@@ -240,10 +265,8 @@ class nsGenericHTMLElement : public nsGenericHTMLElementBase {
 
  public:
   // Implementation for nsIContent
-  virtual nsresult BindToTree(Document* aDocument, nsIContent* aParent,
-                              nsIContent* aBindingParent) override;
-  virtual void UnbindFromTree(bool aDeep = true,
-                              bool aNullParent = true) override;
+  virtual nsresult BindToTree(BindContext&, nsINode& aParent) override;
+  virtual void UnbindFromTree(bool aNullParent = true) override;
 
   virtual bool IsFocusableInternal(int32_t* aTabIndex,
                                    bool aWithMouse) override {
@@ -484,15 +507,16 @@ class nsGenericHTMLElement : public nsGenericHTMLElementBase {
    */
   static void MapImageMarginAttributeInto(const nsMappedAttributes* aAttributes,
                                           mozilla::MappedDeclarations&);
+
+  // Whether to map the width and height attributes to aspect-ratio.
+  enum class MapAspectRatio { No, Yes };
+
   /**
    * Helper to map the image position attribute into a style struct.
-   *
-   * @param aAttributes the list of attributes to map
-   * @param aData the returned rule data [INOUT]
-   * @see GetAttributeMappingFunction
    */
-  static void MapImageSizeAttributesInto(const nsMappedAttributes* aAttributes,
-                                         mozilla::MappedDeclarations&);
+  static void MapImageSizeAttributesInto(const nsMappedAttributes*,
+                                         mozilla::MappedDeclarations&,
+                                         MapAspectRatio = MapAspectRatio::No);
 
   /**
    * Helper to map `width` attribute into a style struct.
@@ -618,8 +642,6 @@ class nsGenericHTMLElement : public nsGenericHTMLElementBase {
 
   already_AddRefed<nsINodeList> Labels();
 
-  virtual bool IsInteractiveHTMLContent(bool aIgnoreTabindex) const override;
-
   static bool LegacyTouchAPIEnabled(JSContext* aCx, JSObject* aObj);
 
   static inline bool CanHaveName(nsAtom* aTag) {
@@ -639,6 +661,10 @@ class nsGenericHTMLElement : public nsGenericHTMLElementBase {
     // name (which doesn't have to match the id or anything).
     // HasName() is true precisely when name is nonempty.
     return aElement->IsHTMLElement(nsGkAtoms::img) && aElement->HasName();
+  }
+
+  virtual inline void ResultForDialogSubmit(nsAString& aResult) {
+    GetAttr(kNameSpaceID_None, nsGkAtoms::value, aResult);
   }
 
  protected:
@@ -789,6 +815,18 @@ class nsGenericHTMLElement : public nsGenericHTMLElementBase {
   }
 
   /**
+   * Gets the unsigned integer-value of an attribute that is stored as a
+   * dimension (i.e. could be an integer or a percentage), returns specified
+   * default value if the attribute isn't set or isn't set to a dimension. Only
+   * works for attributes in null namespace.
+   *
+   * @param aAttr    name of attribute.
+   * @param aDefault default-value to return if attribute isn't set.
+   */
+  uint32_t GetDimensionAttrAsUnsignedInt(nsAtom* aAttr,
+                                         uint32_t aDefault) const;
+
+  /**
    * Sets value of attribute to specified double. Only works for attributes
    * in null namespace.
    *
@@ -920,7 +958,7 @@ class nsGenericHTMLFormElement : public nsGenericHTMLElement,
 
   // nsIFormControl
   virtual mozilla::dom::HTMLFieldSetElement* GetFieldSet() override;
-  virtual mozilla::dom::Element* GetFormElement() override;
+  virtual mozilla::dom::HTMLFormElement* GetFormElement() override;
   mozilla::dom::HTMLFormElement* GetForm() const { return mForm; }
   virtual void SetForm(mozilla::dom::HTMLFormElement* aForm) override;
   virtual void ClearForm(bool aRemoveFromForm, bool aUnbindOrDelete) override;
@@ -933,10 +971,8 @@ class nsGenericHTMLFormElement : public nsGenericHTMLElement,
   virtual bool AllowDrop() override { return true; }
 
   // nsIContent
-  virtual nsresult BindToTree(Document* aDocument, nsIContent* aParent,
-                              nsIContent* aBindingParent) override;
-  virtual void UnbindFromTree(bool aDeep = true,
-                              bool aNullParent = true) override;
+  virtual nsresult BindToTree(BindContext&, nsINode& aParent) override;
+  virtual void UnbindFromTree(bool aNullParent = true) override;
   virtual IMEState GetDesiredIMEState() override;
   virtual mozilla::EventStates IntrinsicState() const override;
 
@@ -1075,7 +1111,8 @@ class nsGenericHTMLFormElement : public nsGenericHTMLElement,
 class nsGenericHTMLFormElementWithState : public nsGenericHTMLFormElement {
  public:
   nsGenericHTMLFormElementWithState(
-      already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo, uint8_t aType);
+      already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo,
+      mozilla::dom::FromParser aFromParser, uint8_t aType);
 
   /**
    * Get the presentation state for a piece of content, or create it if it does
@@ -1093,28 +1130,40 @@ class nsGenericHTMLFormElementWithState : public nsGenericHTMLFormElement {
   already_AddRefed<nsILayoutHistoryState> GetLayoutHistory(bool aRead);
 
   /**
-   * Restore the state for a form control.  Ends up calling
-   * nsIFormControl::RestoreState().
-   *
-   * @return false if RestoreState() was not called, the return
-   *         value of RestoreState() otherwise.
-   */
-  bool RestoreFormControlState();
-
-  /**
    * Called when we have been cloned and adopted, and the information of the
    * node has been changed.
    */
   virtual void NodeInfoChanged(Document* aOldDoc) override;
 
  protected:
+  /**
+   * Restore the state for a form control in response to the element being
+   * inserted into the document by the parser.  Ends up calling
+   * nsIFormControl::RestoreState().
+   *
+   * GenerateStateKey() must already have been called.
+   *
+   * @return false if RestoreState() was not called, the return
+   *         value of RestoreState() otherwise.
+   */
+  bool RestoreFormControlState();
+
   /* Generates the state key for saving the form state in the session if not
-     computed already. The result is stored in mStateKey on success */
-  nsresult GenerateStateKey();
+     computed already. The result is stored in mStateKey. */
+  void GenerateStateKey();
+
+  int32_t GetParserInsertedControlNumberForStateKey() const override {
+    return mControlNumber;
+  }
 
   /* Used to store the key to that element in the session. Is void until
      GenerateStateKey has been used */
   nsCString mStateKey;
+
+  // A number for this form control that is unique within its owner document.
+  // This is only set to a number for elements inserted into the document by
+  // the parser from the network.  Otherwise, it is -1.
+  int32_t mControlNumber;
 };
 
 #define NS_INTERFACE_MAP_ENTRY_IF_TAG(_interface, _tag) \
@@ -1154,20 +1203,26 @@ typedef nsGenericHTMLElement* (*HTMLContentCreatorFunction)(
 /**
  * A macro to implement the NS_NewHTMLXXXElement() functions.
  */
-#define NS_IMPL_NS_NEW_HTML_ELEMENT(_elementName)           \
-  nsGenericHTMLElement* NS_NewHTML##_elementName##Element(  \
-      already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo, \
-      mozilla::dom::FromParser aFromParser) {               \
-    return new mozilla::dom::HTML##_elementName##Element(   \
-        std::move(aNodeInfo));                              \
+#define NS_IMPL_NS_NEW_HTML_ELEMENT(_elementName)                     \
+  nsGenericHTMLElement* NS_NewHTML##_elementName##Element(            \
+      already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo,           \
+      mozilla::dom::FromParser aFromParser) {                         \
+    RefPtr<mozilla::dom::NodeInfo> nodeInfo(aNodeInfo);               \
+    auto* nim = nodeInfo->NodeInfoManager();                          \
+    MOZ_ASSERT(nim);                                                  \
+    return new (nim)                                                  \
+        mozilla::dom::HTML##_elementName##Element(nodeInfo.forget()); \
   }
 
-#define NS_IMPL_NS_NEW_HTML_ELEMENT_CHECK_PARSER(_elementName)                 \
-  nsGenericHTMLElement* NS_NewHTML##_elementName##Element(                     \
-      already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo,                    \
-      mozilla::dom::FromParser aFromParser) {                                  \
-    return new mozilla::dom::HTML##_elementName##Element(std::move(aNodeInfo), \
-                                                         aFromParser);         \
+#define NS_IMPL_NS_NEW_HTML_ELEMENT_CHECK_PARSER(_elementName)  \
+  nsGenericHTMLElement* NS_NewHTML##_elementName##Element(      \
+      already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo,     \
+      mozilla::dom::FromParser aFromParser) {                   \
+    RefPtr<mozilla::dom::NodeInfo> nodeInfo(aNodeInfo);         \
+    auto* nim = nodeInfo->NodeInfoManager();                    \
+    MOZ_ASSERT(nim);                                            \
+    return new (nim) mozilla::dom::HTML##_elementName##Element( \
+        nodeInfo.forget(), aFromParser);                        \
   }
 
 // Here, we expand 'NS_DECLARE_NS_NEW_HTML_ELEMENT()' by hand.

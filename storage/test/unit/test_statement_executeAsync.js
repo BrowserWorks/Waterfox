@@ -508,7 +508,7 @@ function test_bind_direct_binding_params_by_name() {
   stmt.bindByName("text", TEXT);
   stmt.bindByName("real", REAL);
   stmt.bindByName("null", null);
-  stmt.bindBlobByName("blob", BLOB, BLOB.length);
+  stmt.bindBlobByName("blob", BLOB);
   execAsync(stmt);
   stmt.finalize();
   verifyQuery(
@@ -600,7 +600,7 @@ function test_bind_multiple_rows_by_name() {
     bp.bindByName("text", TEXT);
     bp.bindByName("real", REAL);
     bp.bindByName("null", null);
-    bp.bindBlobByName("blob", BLOB, BLOB.length);
+    bp.bindBlobByName("blob", BLOB);
     array.addParams(bp);
     Assert.equal(array.length, i + 1);
   }
@@ -668,7 +668,7 @@ function test_bind_no_such_name_sync_immediate() {
   );
   // Check blob binding.
   expectError(Cr.NS_ERROR_INVALID_ARG, () =>
-    bp.bindBlobByName("doesnotexist", BLOB, BLOB.length)
+    bp.bindBlobByName("doesnotexist", BLOB)
   );
 
   stmt.finalize();

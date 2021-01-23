@@ -11,8 +11,10 @@
  * and create derivative works of this document.
  */
 
-[HTMLConstructor]
+[Exposed=Window]
 interface HTMLBodyElement : HTMLElement {
+  [HTMLConstructor] constructor();
+
 };
 
 partial interface HTMLBodyElement {
@@ -30,4 +32,4 @@ partial interface HTMLBodyElement {
   attribute DOMString background;
 };
 
-HTMLBodyElement implements WindowEventHandlers;
+HTMLBodyElement includes WindowEventHandlers;

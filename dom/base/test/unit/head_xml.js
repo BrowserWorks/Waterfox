@@ -12,8 +12,6 @@ const nsIProperties = I.nsIProperties;
 const nsIFileInputStream = I.nsIFileInputStream;
 const nsIInputStream = I.nsIInputStream;
 
-Cu.importGlobalProperties(["DOMParser", "Element", "Node", "XMLSerializer"]);
-
 function getParser() {
   var parser = new DOMParser();
   parser.forceEnableXULXBL();
@@ -105,6 +103,7 @@ function do_check_equiv(dom1, dom2) {
     case Node.PROCESSING_INSTRUCTION_NODE:
       Assert.equal(dom1.target, dom2.target);
       Assert.equal(dom1.data, dom2.data);
+    // fall through
     case Node.TEXT_NODE:
     case Node.CDATA_SECTION_NODE:
     case Node.COMMENT_NODE:

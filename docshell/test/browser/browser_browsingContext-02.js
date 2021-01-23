@@ -28,11 +28,11 @@ add_task(async function() {
         true,
         true
       );
-      await ContentTask.spawn(
+      await SpecialPowers.spawn(
         browser,
-        { base1: BASE1, base2: BASE2 },
+        [{ base1: BASE1, base2: BASE2 }],
         async function({ base1, base2 }) {
-          let top = content.window;
+          let top = content;
           top.name = "top";
           top.location.href += "#top";
 
@@ -48,28 +48,40 @@ add_task(async function() {
           };
 
           function addFrame(target, name) {
-            let doc = (target.contentWindow || target).document;
-            let frame = doc.createElement("iframe");
-            let p = new Promise(
-              resolve => (frame.onload = () => resolve(frame))
+            return content.SpecialPowers.spawn(
+              target,
+              [name, contexts[name]],
+              async (name, context) => {
+                let doc = this.content.document;
+
+                let frame = doc.createElement("iframe");
+                doc.body.appendChild(frame);
+                frame.name = name;
+                frame.src = context;
+                await new Promise(resolve => {
+                  frame.addEventListener("load", resolve, { once: true });
+                });
+                return frame.browsingContext;
+              }
             );
-            doc.body.appendChild(frame);
-            frame.name = name;
-            frame.src = contexts[name];
-            return p;
           }
 
           function addWindow(target, name, { options, resolve }) {
-            var win = target.contentWindow.open(contexts[name], name, options);
+            return content.SpecialPowers.spawn(
+              target,
+              [name, contexts[name], options, resolve],
+              (name, context, options, resolve) => {
+                let win = this.content.open(context, name, options);
+                let bc = win && win.docShell.browsingContext;
 
-            if (resolve) {
-              return new Promise(resolve =>
-                target.contentWindow.addEventListener("message", () =>
-                  resolve(win)
-                )
-              );
-            }
-            return Promise.resolve({ name });
+                if (resolve) {
+                  return new Promise(resolve =>
+                    this.content.addEventListener("message", () => resolve(bc))
+                  );
+                }
+                return Promise.resolve({ name });
+              }
+            );
           }
 
           // We're going to create a tree that looks like the
@@ -93,25 +105,29 @@ add_task(async function() {
           // wish to confirm that targeting is able to find
           // appropriate browsing contexts.
 
-          function bc(frame) {
-            return (frame.contentWindow || frame).docShell.browsingContext;
+          // BrowsingContext.findWithName requires access checks, which
+          // can only be performed in the process of the accessor BC's
+          // docShell.
+          function findWithName(bc, name) {
+            return content.SpecialPowers.spawn(bc, [bc, name], (bc, name) => {
+              return bc.findWithName(name);
+            });
           }
 
-          function reachable(start, targets) {
-            for (let target of targets) {
-              is(
-                bc(start).findWithName(target.name),
-                bc(target),
-                [bc(start).name, "can reach", target.name].join(" ")
-              );
-            }
-          }
-
-          function unreachable(start, target) {
+          async function reachable(start, target) {
+            info(start.name, target.name);
             is(
-              bc(start).findWithName(target.name),
+              await findWithName(start, target.name),
+              target,
+              [start.name, "can reach", target.name].join(" ")
+            );
+          }
+
+          async function unreachable(start, target) {
+            is(
+              await findWithName(start, target.name),
               null,
-              [bc(start).name, "can't reach", target.name].join(" ")
+              [start.name, "can't reach", target.name].join(" ")
             );
           }
 
@@ -132,10 +148,29 @@ add_task(async function() {
           });
           info("seventh");
 
-          let frames = [top, first, second, third, fourth, fifth, sixth];
-          for (let start of frames) {
-            reachable(start, frames);
-            unreachable(start, seventh);
+          let origin1 = [first, second, fifth, sixth];
+          let origin2 = [third, fourth];
+
+          let topBC = BrowsingContext.getFromWindow(top);
+          let frames = new Map([
+            [topBC, [topBC, first, second, third, fourth, fifth, sixth]],
+            [first, [topBC, ...origin1, third, fourth]],
+            [second, [topBC, ...origin1, third, fourth]],
+            [third, [topBC, ...origin2, fifth, sixth]],
+            [fourth, [topBC, ...origin2, fifth, sixth]],
+            [fifth, [topBC, ...origin1, third, fourth]],
+            [sixth, [...origin1, third, fourth]],
+          ]);
+
+          for (let [start, accessible] of frames) {
+            for (let frame of frames.keys()) {
+              if (accessible.includes(frame)) {
+                await reachable(start, frame);
+              } else {
+                await unreachable(start, frame);
+              }
+            }
+            await unreachable(start, seventh);
           }
         }
       );

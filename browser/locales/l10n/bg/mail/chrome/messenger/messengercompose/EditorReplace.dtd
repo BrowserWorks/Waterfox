@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from EdReplace.xul -->
+
+<!-- extracted from EdReplace.xhtml -->
+
+<!ENTITY replaceDialog.title "Търсене и замяна">
+<!ENTITY findField.label "Търсене на текст:">
+<!ENTITY findField.accesskey "Т">
+<!ENTITY replaceField.label "Замяна с:">
+<!ENTITY replaceField.accesskey "З">
+<!ENTITY caseSensitiveCheckbox.label "Съвпада с регистъра на буквите">
+<!ENTITY caseSensitiveCheckbox.accesskey "ъ">
+<!ENTITY wrapCheckbox.label "Обтичане">
+<!ENTITY wrapCheckbox.accesskey "О">
+<!ENTITY backwardsCheckbox.label "Търсене назад">
+<!ENTITY backwardsCheckbox.accesskey "н">
+<!ENTITY findNextButton.label "Търсене следващ">
+<!ENTITY findNextButton.accesskey "с">
+<!ENTITY replaceButton.label "Замяна">
+<!ENTITY replaceButton.accesskey "З">
+<!ENTITY replaceAndFindButton.label "Замяна и търсене">
+<!ENTITY replaceAndFindButton.accesskey "м">
+<!ENTITY replaceAllButton.label "Замяна на всички">
+<!ENTITY replaceAllButton.accesskey "я">
+<!ENTITY closeButton.label "Затваряне">
+<!ENTITY closeButton.accesskey "з">

@@ -17,7 +17,7 @@ function testPostPrompt(task) {
       "notifications icon is not visible at first"
     );
 
-    await ContentTask.spawn(browser, null, task);
+    await SpecialPowers.spawn(browser, [], task);
 
     await TestUtils.waitForCondition(
       () => BrowserTestUtils.is_visible(icon),
@@ -41,12 +41,12 @@ function testPostPrompt(task) {
     EventUtils.synthesizeMouseAtCenter(notification.button, {});
 
     is(
-      Services.perms.testPermission(uri, "desktop-notification"),
+      PermissionTestUtils.testPermission(uri, "desktop-notification"),
       Ci.nsIPermissionManager.ALLOW_ACTION,
       "User can override the default deny by using the prompt"
     );
 
-    Services.perms.remove(uri, "desktop-notification");
+    PermissionTestUtils.remove(uri, "desktop-notification");
   });
 }
 

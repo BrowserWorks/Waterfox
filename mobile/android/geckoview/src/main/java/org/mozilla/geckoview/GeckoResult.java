@@ -1,7 +1,10 @@
 package org.mozilla.geckoview;
 
 import org.mozilla.gecko.annotation.WrapForJNI;
+import org.mozilla.gecko.mozglue.JNIObject;
+import org.mozilla.gecko.util.IXPCOMEventTarget;
 import org.mozilla.gecko.util.ThreadUtils;
+import org.mozilla.gecko.util.XPCOMEventTarget;
 
 import android.os.Handler;
 import android.os.Looper;
@@ -9,8 +12,14 @@ import android.os.SystemClock;
 import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.util.SimpleArrayMap;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -156,9 +165,76 @@ import java.util.concurrent.TimeoutException;
 public class GeckoResult<T> {
     private static final String LOGTAG = "GeckoResult";
 
+    private interface Dispatcher {
+        void dispatch(Runnable r);
+    }
+
+    private static class HandlerDispatcher implements Dispatcher {
+        HandlerDispatcher(final Handler h) {
+            mHandler = h;
+        }
+        public void dispatch(final Runnable r) {
+            mHandler.post(r);
+        }
+        @Override
+        public boolean equals(final Object other) {
+            if (!(other instanceof HandlerDispatcher)) {
+                return false;
+            }
+            return mHandler.equals(((HandlerDispatcher)other).mHandler);
+        }
+        @Override
+        public int hashCode() {
+            return mHandler.hashCode();
+        }
+
+        Handler mHandler;
+    }
+
+    private static class XPCOMEventTargetDispatcher implements Dispatcher {
+        private IXPCOMEventTarget mEventTarget;
+
+        public XPCOMEventTargetDispatcher(final IXPCOMEventTarget eventTarget) {
+            mEventTarget = eventTarget;
+        }
+
+        @Override
+        public void dispatch(final Runnable r) {
+            mEventTarget.execute(r);
+        }
+    }
+
+    private static class DirectDispatcher implements Dispatcher {
+        public void dispatch(final Runnable r) {
+            r.run();
+        }
+        static DirectDispatcher sInstance = new DirectDispatcher();
+        private DirectDispatcher() {}
+
+    }
+
     public static final class UncaughtException extends RuntimeException {
         public UncaughtException(final Throwable cause) {
             super(cause);
+        }
+    }
+
+    /**
+     * Interface used to delegate cancellation operations for a {@link GeckoResult}.
+     */
+    @AnyThread
+    public interface CancellationDelegate {
+
+        /**
+         * This method should attempt to cancel the in-progress operation for the result
+         * to which this instance was attached. See {@link GeckoResult#cancel()} for more
+         * details.
+         *
+         * @return A {@link GeckoResult} resolving to "true" if cancellation was successful,
+         * "false" otherwise.
+         */
+        default @NonNull GeckoResult<Boolean> cancel() {
+            return GeckoResult.fromValue(false);
         }
     }
 
@@ -172,12 +248,17 @@ public class GeckoResult<T> {
      */
     public static final GeckoResult<AllowOrDeny> DENY = GeckoResult.fromValue(AllowOrDeny.DENY);
 
-    private final Handler mHandler;
+    // The default dispatcher for listeners on this GeckoResult. Other dispatchers can be specified
+    // when the listener is registered.
+    private final Dispatcher mDispatcher;
     private boolean mComplete;
     private T mValue;
     private Throwable mError;
     private boolean mIsUncaughtError;
-    private ArrayList<Runnable> mListeners;
+    private SimpleArrayMap<Dispatcher, ArrayList<Runnable>> mListeners = new SimpleArrayMap<>();
+
+    private GeckoResult<?> mParent;
+    private CancellationDelegate mCancellationDelegate;
 
     /**
      * Construct an incomplete GeckoResult. Call {@link #complete(Object)} or
@@ -186,11 +267,13 @@ public class GeckoResult<T> {
     @WrapForJNI
     public GeckoResult() {
         if (ThreadUtils.isOnUiThread()) {
-            mHandler = ThreadUtils.getUiHandler();
+            mDispatcher = new HandlerDispatcher(ThreadUtils.getUiHandler());
         } else if (Looper.myLooper() != null) {
-            mHandler = new Handler();
+            mDispatcher = new HandlerDispatcher(new Handler());
+        } else if (XPCOMEventTarget.launcherThread().isOnCurrentThread()) {
+            mDispatcher = new XPCOMEventTargetDispatcher(XPCOMEventTarget.launcherThread());
         } else {
-            mHandler = null;
+            mDispatcher = null;
         }
     }
 
@@ -202,7 +285,7 @@ public class GeckoResult<T> {
      *                listeners registered via {@link #then(OnValueListener, OnExceptionListener)}.
      */
     public GeckoResult(final Handler handler) {
-        mHandler = handler;
+        mDispatcher = new HandlerDispatcher(handler);
     }
 
     /**
@@ -295,6 +378,83 @@ public class GeckoResult<T> {
     }
 
     /**
+     * Replacement for {@link java.util.function.Consumer} for devices with minApi &lt; 24.
+     *
+     * @param <T> the type of the input for this consumer.
+     */
+    // TODO: Remove this when we move to min API 24
+    public interface Consumer<T> {
+        /**
+         * Run this consumer for the given input.
+         *
+         * @param t the input value.
+         */
+        @AnyThread
+        void accept(@Nullable T t);
+    }
+
+    /**
+     * Convenience method for {@link #accept(Consumer, Consumer)}.
+     *
+     * @param valueListener An instance of {@link Consumer}, called when the
+     *                      {@link GeckoResult} is completed with a value.
+     * @return A new {@link GeckoResult} that the listeners will complete.
+     */
+    public @NonNull GeckoResult<Void> accept(@Nullable final Consumer<T> valueListener) {
+        return accept(valueListener, null);
+    }
+
+    /**
+     * Adds listeners to be called when the {@link GeckoResult} is completed either with
+     * a value or {@link Throwable}. Listeners will be invoked on the {@link Looper} returned from
+     * {@link #getLooper()}. If null, this method will throw {@link IllegalThreadStateException}.
+     *
+     * If the result is already complete when this method is called, listeners will be invoked in
+     * a future {@link Looper} iteration.
+     *
+     * @param valueConsumer An instance of {@link Consumer}, called when the
+     *                      {@link GeckoResult} is completed with a value.
+     * @param exceptionConsumer An instance of {@link Consumer}, called when the
+     *                          {@link GeckoResult} is completed with an {@link Throwable}.
+     * @return A new {@link GeckoResult} that the listeners will complete.
+     */
+    public @NonNull GeckoResult<Void> accept(@Nullable final Consumer<T> valueConsumer,
+                                             @Nullable final Consumer<Throwable> exceptionConsumer) {
+        final OnValueListener<T, Void> valueListener = valueConsumer == null ? null :
+            value -> {
+                valueConsumer.accept(value);
+                return null;
+            };
+
+        final OnExceptionListener<Void> exceptionListener = exceptionConsumer == null ? null :
+            value -> {
+                exceptionConsumer.accept(value);
+                return null;
+            };
+
+        return then(valueListener, exceptionListener);
+    }
+
+    /* package */ @NonNull GeckoResult<Void> getOrAccept(@Nullable final Consumer<T> valueConsumer) {
+        return getOrAccept(valueConsumer, null);
+    }
+
+    /* package */ @NonNull GeckoResult<Void> getOrAccept(@Nullable final Consumer<T> valueConsumer,
+                                                         @Nullable final Consumer<Throwable> exceptionConsumer) {
+        if (haveValue() && valueConsumer != null) {
+            valueConsumer.accept(mValue);
+            return GeckoResult.fromValue(null);
+        }
+
+        if (haveError() && exceptionConsumer != null) {
+            exceptionConsumer.accept(mError);
+            return GeckoResult.fromValue(null);
+        }
+
+        return accept(valueConsumer, exceptionConsumer);
+    }
+
+    /**
      * Adds listeners to be called when the {@link GeckoResult} is completed either with
      * a value or {@link Throwable}. Listeners will be invoked on the {@link Looper} returned from
      * {@link #getLooper()}. If null, this method will throw {@link IllegalThreadStateException}.
@@ -311,16 +471,23 @@ public class GeckoResult<T> {
      */
     public @NonNull <U> GeckoResult<U> then(@Nullable final OnValueListener<T, U> valueListener,
                                             @Nullable final OnExceptionListener<U> exceptionListener) {
+        if (mDispatcher == null) {
+            throw new IllegalThreadStateException("Must have a Handler");
+        }
+
+        return thenInternal(mDispatcher, valueListener, exceptionListener);
+    }
+
+    private @NonNull <U> GeckoResult<U> thenInternal(@NonNull final Dispatcher dispatcher,
+                                                     @Nullable final OnValueListener<T, U> valueListener,
+                                                     @Nullable final OnExceptionListener<U> exceptionListener) {
         if (valueListener == null && exceptionListener == null) {
             throw new IllegalArgumentException("At least one listener should be non-null");
         }
 
-        if (mHandler == null) {
-            throw new IllegalThreadStateException("Must have a Handler");
-        }
-
         final GeckoResult<U> result = new GeckoResult<U>();
-        then(() -> {
+        result.mParent = this;
+        thenInternal(dispatcher, () -> {
             try {
                 if (haveValue()) {
                     result.completeFrom(valueListener != null ? valueListener.onValue(mValue)
@@ -338,21 +505,44 @@ public class GeckoResult<T> {
                 if (!result.mComplete) {
                     result.mIsUncaughtError = true;
                     result.completeExceptionally(e);
+                } else if (e instanceof RuntimeException) {
+                    // This should only be UncaughtException, but we rethrow all RuntimeExceptions
+                    // to avoid squelching logic errors in GeckoResult itself.
+                    throw (RuntimeException) e;
                 }
             }
         });
         return result;
     }
 
-    private synchronized void then(@NonNull final Runnable listener) {
+    private synchronized void thenInternal(@NonNull final Dispatcher dispatcher, @NonNull final Runnable listener) {
         if (mComplete) {
-            dispatchLocked(listener);
+            dispatcher.dispatch(listener);
         } else {
-            if (mListeners == null) {
-                mListeners = new ArrayList<>(1);
+            if (!mListeners.containsKey(dispatcher)) {
+                mListeners.put(dispatcher, new ArrayList<>(1));
             }
-            mListeners.add(listener);
+            mListeners.get(dispatcher).add(listener);
         }
+    }
+
+    @WrapForJNI
+    private void nativeThen(@NonNull final GeckoCallback accept, @NonNull final GeckoCallback reject) {
+        // NB: We could use the lambda syntax here, but given all the layers
+        // of abstraction it's helpful to see the types written explicitly.
+        thenInternal(DirectDispatcher.sInstance, new OnValueListener<T, Void>() {
+            @Override
+            public GeckoResult<Void> onValue(final T value) {
+                accept.call(value);
+                return null;
+            }
+        }, new OnExceptionListener<Void>() {
+            @Override
+            public GeckoResult<Void> onException(final Throwable exception) {
+                reject.call(exception);
+                return null;
+            }
+        });
     }
 
     /**
@@ -360,11 +550,11 @@ public class GeckoResult<T> {
      *         {@link #then(OnValueListener, OnExceptionListener)}.
      */
     public @Nullable Looper getLooper() {
-        if (mHandler == null) {
+        if (mDispatcher == null || !(mDispatcher instanceof HandlerDispatcher)) {
             return null;
         }
 
-        return mHandler.getLooper();
+        return ((HandlerDispatcher)mDispatcher).mHandler.getLooper();
     }
 
     /**
@@ -381,41 +571,132 @@ public class GeckoResult<T> {
         return result;
     }
 
+    /**
+     * Returns a {@link GeckoResult} that is completed when the given {@link GeckoResult}
+     * instances are complete.
+     *
+     * The returned {@link GeckoResult} will resolve with the list of values from the inputs.
+     * The list is guaranteed to be in the same order as the inputs.
+     *
+     * If any of the {@link GeckoResult} fails, the returned result will fail.
+     *
+     * If no inputs are provided, the returned {@link GeckoResult} will complete with the value
+     * <code>null</code>.
+     *
+     * @param pending the input {@link GeckoResult}s.
+     * @param <V> type of the {@link GeckoResult}'s values.
+     * @return a {@link GeckoResult} that will complete when all of the inputs are completed or
+     *         when at least one of the inputs fail.
+     */
+    @SuppressWarnings("varargs")
+    @SafeVarargs
+    @NonNull
+    public static <V> GeckoResult<List<V>> allOf(final @NonNull GeckoResult<V> ... pending) {
+        return allOf(Arrays.asList(pending));
+    }
+
+    /**
+     * Returns a {@link GeckoResult} that is completed when the given {@link GeckoResult}
+     * instances are complete.
+     *
+     * The returned {@link GeckoResult} will resolve with the list of values from the inputs.
+     * The list is guaranteed to be in the same order as the inputs.
+     *
+     * If any of the {@link GeckoResult} fails, the returned result will fail.
+     *
+     * If no inputs are provided, the returned {@link GeckoResult} will complete with the value
+     * <code>null</code>.
+     *
+     * @param pending the input {@link GeckoResult}s.
+     * @param <V> type of the {@link GeckoResult}'s values.
+     * @return a {@link GeckoResult} that will complete when all of the inputs are completed or
+     *         when at least one of the inputs fail.
+     */
+    @NonNull
+    public static <V> GeckoResult<List<V>> allOf(
+            final @Nullable List<GeckoResult<V>> pending) {
+        if (pending == null) {
+            return GeckoResult.fromValue(null);
+        }
+
+        return new AllOfResult<>(pending);
+    }
+
+    private static class AllOfResult<V> extends GeckoResult<List<V>> {
+        private boolean mFailed = false;
+        private int mResultCount = 0;
+        private final List<V> mAccumulator;
+        private final List<GeckoResult<V>> mPending;
+
+        public AllOfResult(final @NonNull List<GeckoResult<V>> pending) {
+            // Initialize the list with nulls so we can fill it in the same order as the input list
+            mAccumulator = new ArrayList<>(Collections.nCopies(pending.size(), null));
+            mPending = pending;
+
+            // If the input list is empty, there's nothing to do
+            if (pending.size() == 0) {
+                complete(mAccumulator);
+                return;
+            }
+
+            // We use iterators so we can access the index and preserve the list order
+            final ListIterator<GeckoResult<V>> it = pending.listIterator();
+            while (it.hasNext()) {
+                final int index = it.nextIndex();
+                it.next().accept(
+                    value -> onResult(value, index),
+                        this::onError);
+            }
+        }
+
+        private void onResult(final V value, final int index) {
+            if (mFailed) {
+                // Some other element in the list already failed, nothing to do here
+                return;
+            }
+
+            mResultCount++;
+            mAccumulator.set(index, value);
+
+            if (mResultCount == mPending.size()) {
+                complete(mAccumulator);
+            }
+        }
+
+        private void onError(final Throwable error) {
+            mFailed = true;
+            completeExceptionally(error);
+        }
+    }
+
     private void dispatchLocked() {
         if (!mComplete) {
             throw new IllegalStateException("Cannot dispatch unless result is complete");
         }
 
-        if (mListeners == null && !mIsUncaughtError) {
-            return;
-        }
-
-        final Runnable dispatcher = () -> {
-            if (mListeners != null) {
-                for (final Runnable listener : mListeners) {
-                    listener.run();
-                }
-            } else if (mIsUncaughtError) {
+        if (mListeners.isEmpty()) {
+            if (mIsUncaughtError) {
                 // We have no listeners to forward the uncaught exception to;
                 // rethrow the exception to make it visible.
                 throw new UncaughtException(mError);
             }
-        };
-
-        dispatchLocked(dispatcher);
-    }
-
-    private void dispatchLocked(final Runnable runnable) {
-        if (!mComplete) {
-            throw new IllegalStateException("Cannot dispatch unless result is complete");
-        }
-
-        if (mHandler == null) {
-            runnable.run();
             return;
         }
 
-        mHandler.post(runnable);
+        if (mDispatcher == null) {
+            throw new AssertionError("Shouldn't have listeners with null dispatcher");
+        }
+
+        for (int i = 0; i < mListeners.size(); ++i) {
+            Dispatcher dispatcher = mListeners.keyAt(i);
+            ArrayList<Runnable> jobs = mListeners.valueAt(i);
+            dispatcher.dispatch(() -> {
+                for (final Runnable job : jobs) {
+                    job.run();
+                }
+            });
+        }
+        mListeners.clear();
     }
 
     /**
@@ -429,7 +710,8 @@ public class GeckoResult<T> {
             return;
         }
 
-        other.then(() -> {
+        this.mCancellationDelegate = other.mCancellationDelegate;
+        other.thenInternal(DirectDispatcher.sInstance, () -> {
             if (other.haveValue()) {
                 complete(other.mValue);
             } else {
@@ -582,11 +864,73 @@ public class GeckoResult<T> {
         @Nullable GeckoResult<V> onException(@NonNull Throwable exception) throws Throwable;
     }
 
+    @WrapForJNI
+    private static class GeckoCallback extends JNIObject {
+        private native void call(Object arg);
+
+        @Override
+        protected native void disposeNative();
+    }
+
+
     private boolean haveValue() {
         return mComplete && mError == null;
     }
 
     private boolean haveError() {
         return mComplete && mError != null;
+    }
+
+    /**
+     * Attempts to cancel the operation associated with this result.
+     *
+     * If this result has a {@link CancellationDelegate} attached via
+     * {@link #setCancellationDelegate(CancellationDelegate)}, the return value
+     * will be the result of calling {@link CancellationDelegate#cancel()} on that instance.
+     * Otherwise, if this result is chained to another result
+     * (via return value from {@link OnValueListener}), we will walk up the chain until
+     * a CancellationDelegate is found and run it. If no CancellationDelegate is found,
+     * a result resolving to "false" will be returned.
+     *
+     * If this result is already complete, the returned result will always resolve to false.
+     *
+     * If the returned result resolves to true, this result will be completed
+     * with a {@link CancellationException}.
+     *
+     * @return A GeckoResult resolving to a boolean indicating success or failure of the cancellation attempt.
+     */
+    public synchronized @NonNull GeckoResult<Boolean> cancel() {
+        if (haveValue() || haveError()) {
+            return GeckoResult.fromValue(false);
+        }
+
+        if (mCancellationDelegate != null) {
+            return mCancellationDelegate.cancel().then(value -> {
+                if (value) {
+                    try {
+                        this.completeExceptionally(new CancellationException());
+                    } catch (IllegalStateException e) {
+                        // Can't really do anything about this.
+                    }
+                }
+                return GeckoResult.fromValue(value);
+            });
+        }
+
+        if (mParent != null) {
+            return mParent.cancel();
+        }
+
+        return GeckoResult.fromValue(false);
+    }
+
+    /**
+     * Sets the instance of {@link CancellationDelegate} that will be invoked by
+     * {@link #cancel()}.
+     *
+     * @param delegate an instance of CancellationDelegate.
+     */
+    public void setCancellationDelegate(final @Nullable CancellationDelegate delegate) {
+        mCancellationDelegate = delegate;
     }
 }

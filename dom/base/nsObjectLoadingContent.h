@@ -7,7 +7,7 @@
 /*
  * A base class implementing nsIObjectLoadingContent for use by
  * various content nodes that want to provide plugin/document/image
- * loading functionality (eg <embed>, <object>, <applet>, etc).
+ * loading functionality (eg <embed>, <object>, etc).
  */
 
 #ifndef NSOBJECTLOADINGCONTENT_H_
@@ -18,10 +18,8 @@
 #include "nsImageLoadingContent.h"
 #include "nsIStreamListener.h"
 #include "nsIChannelEventSink.h"
-#include "nsIContentPolicy.h"
 #include "nsIObjectLoadingContent.h"
 #include "nsIRunnable.h"
-#include "nsIThreadInternal.h"
 #include "nsIFrame.h"
 #include "nsFrameLoaderOwner.h"
 
@@ -35,6 +33,7 @@ class nsPluginInstanceOwner;
 
 namespace mozilla {
 namespace dom {
+struct BindContext;
 template <typename T>
 class Sequence;
 struct MozPluginParameter;
@@ -228,10 +227,6 @@ class nsObjectLoadingContent : public nsImageLoadingContent,
                         mozilla::ErrorResult& aRv) {
     aRv.Throw(NS_ERROR_NOT_IMPLEMENTED);
   }
-  void LegacyCall(JSContext* aCx, JS::Handle<JS::Value> aThisVal,
-                  const mozilla::dom::Sequence<JS::Value>& aArguments,
-                  JS::MutableHandle<JS::Value> aRetval,
-                  mozilla::ErrorResult& aRv);
 
   uint32_t GetRunID(mozilla::dom::SystemCallerGuarantee,
                     mozilla::ErrorResult& aRv);
@@ -320,9 +315,8 @@ class nsObjectLoadingContent : public nsImageLoadingContent,
 
   void DoStopPlugin(nsPluginInstanceOwner* aInstanceOwner);
 
-  nsresult BindToTree(mozilla::dom::Document* aDocument, nsIContent* aParent,
-                      nsIContent* aBindingParent);
-  void UnbindFromTree(bool aDeep = true, bool aNullParent = true);
+  nsresult BindToTree(mozilla::dom::BindContext&, nsINode& aParent);
+  void UnbindFromTree(bool aNullParent = true);
 
   /**
    * Return the content policy type used for loading the element.
@@ -375,7 +369,7 @@ class nsObjectLoadingContent : public nsImageLoadingContent,
    * @param aParameters     The array containing pairs of name/value strings
    *                        from nested <param> objects.
    */
-  void GetNestedParams(nsTArray<mozilla::dom::MozPluginParameter>& aParameters, bool aIgnoreCodebase = false);
+  void GetNestedParams(nsTArray<mozilla::dom::MozPluginParameter>& aParameters, bool aIgnoreCodebase);
 
   MOZ_MUST_USE nsresult BuildParametersArray();
 
@@ -477,11 +471,6 @@ class nsObjectLoadingContent : public nsImageLoadingContent,
    */
   bool PreferFallback(bool aIsPluginClickToPlay);
 
-  /*
-   * Helper to check if mBaseURI can be used by java as a codebase
-   */
-  bool CheckJavaCodebase();
-
   /**
    * Helper to check if our current URI passes policy
    *
@@ -559,6 +548,8 @@ class nsObjectLoadingContent : public nsImageLoadingContent,
    * Does not flush.
    */
   nsPluginFrame* GetExistingFrame();
+
+  bool CheckJavaCodebase();
 
   /**
    * Used for identifying whether we can rewrite a youtube flash embed to

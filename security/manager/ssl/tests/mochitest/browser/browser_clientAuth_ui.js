@@ -38,7 +38,7 @@ function openClientAuthDialog(cert) {
     Ci.nsIWritablePropertyBag2
   );
   let win = window.openDialog(
-    "chrome://pippki/content/clientauthask.xul",
+    "chrome://pippki/content/clientauthask.xhtml",
     "",
     "",
     TEST_HOSTNAME,
@@ -132,7 +132,7 @@ function checkDialogContents(win, notBefore, notAfter) {
 }
 
 function findCertByCommonName(commonName) {
-  for (let cert of certDB.getCerts().getEnumerator()) {
+  for (let cert of certDB.getCerts()) {
     if (cert.commonName == commonName) {
       return cert;
     }

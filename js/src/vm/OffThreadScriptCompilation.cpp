@@ -8,6 +8,7 @@
 
 #include "mozilla/Assertions.h"  // MOZ_ASSERT
 #include "mozilla/Range.h"       // mozilla::Range
+#include "mozilla/Utf8.h"        // mozilla::Utf8Unit
 #include "mozilla/Vector.h"      // mozilla::Vector
 
 #include <stddef.h>  // size_t
@@ -21,6 +22,8 @@
 #include "vm/Runtime.h"    // js::CanUseExtraThreads
 
 using namespace js;
+
+using mozilla::Utf8Unit;
 
 using JS::ReadOnlyCompileOptions;
 
@@ -58,8 +61,7 @@ static bool CanDoOffThread(JSContext* cx, const ReadOnlyCompileOptions& options,
     }
   }
 
-  return cx->runtime()->canUseParallelParsing() && CanUseExtraThreads() &&
-         !mozilla::recordreplay::IsRecordingOrReplaying();
+  return cx->runtime()->canUseParallelParsing() && CanUseExtraThreads();
 }
 
 JS_PUBLIC_API bool JS::CanCompileOffThread(
@@ -67,22 +69,18 @@ JS_PUBLIC_API bool JS::CanCompileOffThread(
   return CanDoOffThread(cx, options, length, OffThread::Compile);
 }
 
-JS_PUBLIC_API bool JS::CanDecodeOffThread(JSContext* cx,
-                                          const ReadOnlyCompileOptions& options,
-                                          size_t length) {
-  return CanDoOffThread(cx, options, length, OffThread::Decode);
-}
-
-#ifdef JS_BUILD_BINAST
-JS_PUBLIC_API bool JS::CanDecodeBinASTOffThread(
-    JSContext* cx, const ReadOnlyCompileOptions& options, size_t length) {
-  return CanDoOffThread(cx, options, length, OffThread::DecodeBinAST);
-}
-#endif
-
 JS_PUBLIC_API bool JS::CompileOffThread(JSContext* cx,
                                         const ReadOnlyCompileOptions& options,
                                         JS::SourceText<char16_t>& srcBuf,
+                                        OffThreadCompileCallback callback,
+                                        void* callbackData) {
+  MOZ_ASSERT(CanCompileOffThread(cx, options, srcBuf.length()));
+  return StartOffThreadParseScript(cx, options, srcBuf, callback, callbackData);
+}
+
+JS_PUBLIC_API bool JS::CompileOffThread(JSContext* cx,
+                                        const ReadOnlyCompileOptions& options,
+                                        JS::SourceText<Utf8Unit>& srcBuf,
                                         OffThreadCompileCallback callback,
                                         void* callbackData) {
   MOZ_ASSERT(CanCompileOffThread(cx, options, srcBuf.length()));
@@ -112,6 +110,14 @@ JS_PUBLIC_API bool JS::CompileOffThreadModule(
   return StartOffThreadParseModule(cx, options, srcBuf, callback, callbackData);
 }
 
+JS_PUBLIC_API bool JS::CompileOffThreadModule(
+    JSContext* cx, const ReadOnlyCompileOptions& options,
+    JS::SourceText<Utf8Unit>& srcBuf, OffThreadCompileCallback callback,
+    void* callbackData) {
+  MOZ_ASSERT(CanCompileOffThread(cx, options, srcBuf.length()));
+  return StartOffThreadParseModule(cx, options, srcBuf, callback, callbackData);
+}
+
 JS_PUBLIC_API JSObject* JS::FinishOffThreadModule(JSContext* cx,
                                                   JS::OffThreadToken* token) {
   MOZ_ASSERT(cx);
@@ -125,6 +131,12 @@ JS_PUBLIC_API void JS::CancelOffThreadModule(JSContext* cx,
   MOZ_ASSERT(CurrentThreadCanAccessRuntime(cx->runtime()));
   HelperThreadState().cancelParseTask(cx->runtime(), ParseTaskKind::Module,
                                       token);
+}
+
+JS_PUBLIC_API bool JS::CanDecodeOffThread(JSContext* cx,
+                                          const ReadOnlyCompileOptions& options,
+                                          size_t length) {
+  return CanDoOffThread(cx, options, length, OffThread::Decode);
 }
 
 JS_PUBLIC_API bool JS::DecodeOffThreadScript(
@@ -144,21 +156,6 @@ JS_PUBLIC_API bool JS::DecodeOffThreadScript(
   return StartOffThreadDecodeScript(cx, options, range, callback, callbackData);
 }
 
-JS_PUBLIC_API bool JS::DecodeMultiOffThreadScripts(
-    JSContext* cx, const ReadOnlyCompileOptions& options,
-    TranscodeSources& sources, OffThreadCompileCallback callback,
-    void* callbackData) {
-#ifdef DEBUG
-  size_t length = 0;
-  for (auto& source : sources) {
-    length += source.range.length();
-  }
-  MOZ_ASSERT(CanCompileOffThread(cx, options, length));
-#endif
-  return StartOffThreadDecodeMultiScripts(cx, options, sources, callback,
-                                          callbackData);
-}
-
 JS_PUBLIC_API JSScript* JS::FinishOffThreadScriptDecoder(
     JSContext* cx, JS::OffThreadToken* token) {
   MOZ_ASSERT(cx);
@@ -172,6 +169,21 @@ JS_PUBLIC_API void JS::CancelOffThreadScriptDecoder(JSContext* cx,
   MOZ_ASSERT(CurrentThreadCanAccessRuntime(cx->runtime()));
   HelperThreadState().cancelParseTask(cx->runtime(),
                                       ParseTaskKind::ScriptDecode, token);
+}
+
+JS_PUBLIC_API bool JS::DecodeMultiOffThreadScripts(
+    JSContext* cx, const ReadOnlyCompileOptions& options,
+    TranscodeSources& sources, OffThreadCompileCallback callback,
+    void* callbackData) {
+#ifdef DEBUG
+  size_t length = 0;
+  for (auto& source : sources) {
+    length += source.range.length();
+  }
+  MOZ_ASSERT(CanCompileOffThread(cx, options, length));
+#endif
+  return StartOffThreadDecodeMultiScripts(cx, options, sources, callback,
+                                          callbackData);
 }
 
 JS_PUBLIC_API bool JS::FinishMultiOffThreadScriptsDecoder(
@@ -188,4 +200,40 @@ JS_PUBLIC_API void JS::CancelMultiOffThreadScriptsDecoder(
   MOZ_ASSERT(CurrentThreadCanAccessRuntime(cx->runtime()));
   HelperThreadState().cancelParseTask(cx->runtime(),
                                       ParseTaskKind::MultiScriptsDecode, token);
+}
+
+JS_PUBLIC_API bool JS::CanDecodeBinASTOffThread(
+    JSContext* cx, const ReadOnlyCompileOptions& options, size_t length) {
+#ifdef JS_BUILD_BINAST
+  return CanDoOffThread(cx, options, length, OffThread::DecodeBinAST);
+#else   // !JS_BUILD_BINAST
+  return false;
+#endif  // JS_BUILD_BINAST
+}
+
+JS_PUBLIC_API bool JS::DecodeBinASTOffThread(
+    JSContext* cx, const ReadOnlyCompileOptions& options, const uint8_t* buf,
+    size_t length, JS::BinASTFormat format, OffThreadCompileCallback callback,
+    void* callbackData) {
+#ifdef JS_BUILD_BINAST
+  return StartOffThreadDecodeBinAST(cx, options, buf, length, format, callback,
+                                    callbackData);
+#else   // !JS_BUILD_BINAST
+  JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
+                            JSMSG_SUPPORT_NOT_ENABLED, "BinAST");
+  return false;
+#endif  // JS_BUILD_BINAST
+}
+
+JS_PUBLIC_API JSScript* JS::FinishOffThreadBinASTDecode(
+    JSContext* cx, JS::OffThreadToken* token) {
+#ifdef JS_BUILD_BINAST
+  MOZ_ASSERT(cx);
+  MOZ_ASSERT(CurrentThreadCanAccessRuntime(cx->runtime()));
+  return HelperThreadState().finishBinASTDecodeTask(cx, token);
+#else   // !JS_BUILD_BINAST
+  JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
+                            JSMSG_SUPPORT_NOT_ENABLED, "BinAST");
+  return nullptr;
+#endif  // JS_BUILD_BINAST
 }

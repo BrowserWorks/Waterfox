@@ -6,6 +6,9 @@
 [localization] @AB_CD@.jar:
   crashreporter                                    (%crashreporter/**/*.ftl)
   toolkit                                          (%toolkit/**/*.ftl)
+#if defined(NIGHTLY_BUILD)
+  preview/aboutProcesses.ftl                       (../components/aboutprocesses/content/aboutProcesses.ftl)
+#endif
 
 @AB_CD@.jar:
 % locale global @AB_CD@ %locale/@AB_CD@/global/
@@ -41,7 +44,7 @@
   locale/@AB_CD@/global/narrate.properties              (%chrome/global/narrate.properties)
 #endif
   locale/@AB_CD@/global/notification.dtd                (%chrome/global/notification.dtd)
-#ifndef MOZ_FENNEC
+#if !defined(XP_WIN) && !defined(MOZ_FENNEC)
   locale/@AB_CD@/global/printdialog.properties          (%chrome/global/printdialog.properties)
 #endif
   locale/@AB_CD@/global/resetProfile.dtd                (%chrome/global/resetProfile.dtd)
@@ -51,7 +54,6 @@
   locale/@AB_CD@/global/textcontext.dtd                 (%chrome/global/textcontext.dtd)
   locale/@AB_CD@/global/videocontrols.dtd               (%chrome/global/videocontrols.dtd)
   locale/@AB_CD@/global/viewSource.properties           (%chrome/global/viewSource.properties)
-  locale/@AB_CD@/global/wizard.dtd                      (%chrome/global/wizard.dtd)
   locale/@AB_CD@/global/wizard.properties               (%chrome/global/wizard.properties)
 % locale global-platform @AB_CD@ %locale/@AB_CD@/global-platform/unix/ os=LikeUnix os=Android
 % locale global-platform @AB_CD@ %locale/@AB_CD@/global-platform/mac/ os=Darwin
@@ -70,18 +72,11 @@
   locale/@AB_CD@/mozapps/extensions/extensions.dtd                (%chrome/mozapps/extensions/extensions.dtd)
 #ifndef MOZ_FENNEC
   locale/@AB_CD@/mozapps/extensions/extensions.properties         (%chrome/mozapps/extensions/extensions.properties)
-  locale/@AB_CD@/mozapps/extensions/blocklist.dtd                 (%chrome/mozapps/extensions/blocklist.dtd)
 #endif
   locale/@AB_CD@/mozapps/handling/handling.dtd                    (%chrome/mozapps/handling/handling.dtd)
   locale/@AB_CD@/mozapps/handling/handling.properties             (%chrome/mozapps/handling/handling.properties)
-  locale/@AB_CD@/mozapps/profile/createProfileWizard.dtd          (%chrome/mozapps/profile/createProfileWizard.dtd)
   locale/@AB_CD@/mozapps/profile/profileSelection.properties      (%chrome/mozapps/profile/profileSelection.properties)
-  locale/@AB_CD@/mozapps/profile/profileSelection.dtd             (%chrome/mozapps/profile/profileSelection.dtd)
-#ifdef MOZ_BLOCK_PROFILE_DOWNGRADE
-  locale/@AB_CD@/mozapps/profile/profileDowngrade.dtd             (%chrome/mozapps/profile/profileDowngrade.dtd)
-#endif
 #ifndef MOZ_FENNEC
-  locale/@AB_CD@/mozapps/update/updates.dtd                       (%chrome/mozapps/update/updates.dtd)
   locale/@AB_CD@/mozapps/update/updates.properties                (%chrome/mozapps/update/updates.properties)
 #endif
 % locale pluginproblem @AB_CD@ %locale/@AB_CD@/pluginproblem/

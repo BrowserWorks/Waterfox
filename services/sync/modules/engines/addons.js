@@ -32,7 +32,7 @@
  *  whether they allow installation of addons from insecure options (both of
  *  which are themselves influenced by the "extensions." pref branch)
  *
- * See the documentation in services-sync.js for the behavior of these prefs.
+ * See the documentation in all.js for the behavior of these prefs.
  */
 "use strict";
 
@@ -46,7 +46,7 @@ const { AddonUtils } = ChromeUtils.import(
 const { AddonsReconciler } = ChromeUtils.import(
   "resource://services-sync/addonsreconciler.js"
 );
-const { Store, SyncEngine, Tracker } = ChromeUtils.import(
+const { Store, SyncEngine, LegacyTracker } = ChromeUtils.import(
   "resource://services-sync/engines.js"
 );
 const { CryptoWrapper } = ChromeUtils.import(
@@ -733,10 +733,10 @@ AddonsStore.prototype = {
  * It hooks up to the reconciler and receives notifications directly from it.
  */
 function AddonsTracker(name, engine) {
-  Tracker.call(this, name, engine);
+  LegacyTracker.call(this, name, engine);
 }
 AddonsTracker.prototype = {
-  __proto__: Tracker.prototype,
+  __proto__: LegacyTracker.prototype,
 
   get reconciler() {
     return this.engine._reconciler;

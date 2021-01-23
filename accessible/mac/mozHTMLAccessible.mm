@@ -14,104 +14,44 @@
 
 @implementation mozHeadingAccessible
 
-- (NSString*)title {
+- (NSString*)moxTitle {
   nsAutoString title;
-  if (AccessibleWrap* accWrap = [self getGeckoAccessible]) {
+  if (Accessible* acc = mGeckoAccessible.AsAccessible()) {
     mozilla::ErrorResult rv;
     // XXX use the flattening API when there are available
     // see bug 768298
-    accWrap->GetContent()->GetTextContent(title, rv);
-  } else if (ProxyAccessible* proxy = [self getProxyAccessible]) {
+    acc->GetContent()->GetTextContent(title, rv);
+  } else if (ProxyAccessible* proxy = mGeckoAccessible.AsProxy()) {
     proxy->Title(title);
   }
 
   return nsCocoaUtils::ToNSString(title);
 }
 
-- (id)value {
-  uint32_t level = 0;
-  if (AccessibleWrap* accWrap = [self getGeckoAccessible]) {
-    level = accWrap->GetLevelInternal();
-  } else if (ProxyAccessible* proxy = [self getProxyAccessible]) {
-    level = proxy->GetLevelInternal();
+- (id)moxValue {
+  GroupPos groupPos;
+  if (Accessible* acc = mGeckoAccessible.AsAccessible()) {
+    groupPos = acc->GroupPosition();
+  } else if (ProxyAccessible* proxy = mGeckoAccessible.AsProxy()) {
+    groupPos = proxy->GroupPosition();
   }
 
-  return [NSNumber numberWithInt:level];
+  return [NSNumber numberWithInt:groupPos.level];
 }
 
-@end
-
-@interface mozLinkAccessible ()
-- (NSURL*)url;
 @end
 
 @implementation mozLinkAccessible
 
-- (NSArray*)accessibilityAttributeNames {
-  // if we're expired, we don't support any attributes.
-  if (![self getGeckoAccessible] && ![self getProxyAccessible]) return [NSArray array];
-
-  static NSMutableArray* attributes = nil;
-
-  if (!attributes) {
-    attributes = [[super accessibilityAttributeNames] mutableCopy];
-    [attributes addObject:NSAccessibilityURLAttribute];
-  }
-
-  return attributes;
-}
-
-- (id)accessibilityAttributeValue:(NSString*)attribute {
-  if ([attribute isEqualToString:NSAccessibilityURLAttribute]) return [self url];
-
-  return [super accessibilityAttributeValue:attribute];
-}
-
-- (NSArray*)accessibilityActionNames {
-  // if we're expired, we don't support any attributes.
-  if (![self getGeckoAccessible] && ![self getProxyAccessible]) return [NSArray array];
-
-  static NSArray* actionNames = nil;
-
-  if (!actionNames) {
-    actionNames = [[NSArray alloc] initWithObjects:NSAccessibilityPressAction, nil];
-  }
-
-  return actionNames;
-}
-
-- (void)accessibilityPerformAction:(NSString*)action {
-  AccessibleWrap* accWrap = [self getGeckoAccessible];
-  ProxyAccessible* proxy = [self getProxyAccessible];
-  if (!accWrap && !proxy) {
-    return;
-  }
-
-  if ([action isEqualToString:NSAccessibilityPressAction]) {
-    if (accWrap) {
-      accWrap->DoAction(0);
-    } else if (proxy) {
-      proxy->DoAction(0);
-    }
-    return;
-  }
-
-  [super accessibilityPerformAction:action];
-}
-
-- (NSString*)customDescription {
+- (NSString*)moxValue {
   return @"";
 }
 
-- (NSString*)value {
-  return @"";
-}
-
-- (NSURL*)url {
+- (NSURL*)moxURL {
   nsAutoString value;
-  if (AccessibleWrap* accWrap = [self getGeckoAccessible]) {
-    accWrap->Value(value);
-  } else if (ProxyAccessible* proxy = [self getProxyAccessible]) {
+  if (Accessible* acc = mGeckoAccessible.AsAccessible()) {
+    acc->Value(value);
+  } else if (ProxyAccessible* proxy = mGeckoAccessible.AsProxy()) {
     proxy->Value(value);
   }
 
@@ -119,6 +59,29 @@
   if (!urlString) return nil;
 
   return [NSURL URLWithString:urlString];
+}
+
+- (NSNumber*)moxVisited {
+  return @([self stateWithMask:states::TRAVERSED] != 0);
+}
+
+- (NSString*)moxRole {
+  // If this is not LINKED, just expose this as a generic group accessible.
+  // Chrome and Safari expose this as a childless AXStaticText, but
+  // the HTML Accessibility API Mappings spec says this should be an AXGroup.
+  if (![self stateWithMask:states::LINKED]) {
+    return NSAccessibilityGroupRole;
+  }
+
+  return [super moxRole];
+}
+
+@end
+
+@implementation MOXSummaryAccessible
+
+- (NSNumber*)moxExpanded {
+  return @([self stateWithMask:states::EXPANDED] != 0);
 }
 
 @end

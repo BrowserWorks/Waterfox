@@ -11,6 +11,12 @@ with Files('**'):
 with Files('devtools/**'):
     BUG_COMPONENT = ('DevTools', 'General')
 
+with Files('gdbpp/**'):
+    BUG_COMPONENT = ('Firefox Build System', 'General')
+
+with Files('lldbutils/**'):
+    BUG_COMPONENT = ('Core', 'General')
+
 with Files('mach/**'):
     BUG_COMPONENT = ('Firefox Build System', 'Mach Core')
 
@@ -21,7 +27,7 @@ with Files('mozbuild/**'):
     BUG_COMPONENT = ('Firefox Build System', 'General')
 
 with Files('mozlint/**'):
-    BUG_COMPONENT = ('Testing', 'Lint')
+    BUG_COMPONENT = ('Firefox Build System', 'Linting and Formatting')
 
 with Files('mozversioncontrol/**'):
     BUG_COMPONENT = ('Firefox Build System', 'General')
@@ -30,10 +36,14 @@ with Files('l10n/**'):
     BUG_COMPONENT = ('Firefox Build System', 'General')
 
 with Files('mozrelease/**'):
-    BUG_COMPONENT = ('Release Engineering', 'Release Automation')
+    BUG_COMPONENT = ('Release Engineering', 'General')
 
 with Files('mach_commands.py'):
     BUG_COMPONENT = ('Testing', 'Python Test')
+
+with Files('mozperftest/**'):
+    BUG_COMPONENT = ('Testing', 'mozperftest')
+
 
 SPHINX_PYTHON_PACKAGE_DIRS += [
     'mach',
@@ -46,9 +56,8 @@ SPHINX_PYTHON_PACKAGE_DIRS += [
 with Files('**.py'):
     SCHEDULES.inclusive += ['docs']
 
-SPHINX_TREES['mach'] = 'mach/docs'
-
-SPHINX_TREES['python'] = 'docs'
+SPHINX_TREES['/mach'] = 'mach/docs'
+SPHINX_TREES['/python'] = 'docs'
 
 with Files('mach/docs/**'):
     SCHEDULES.exclusive = ['docs']
@@ -57,14 +66,11 @@ PYTHON_UNITTEST_MANIFESTS += [
     'mach/mach/test/python.ini',
     'mozboot/mozboot/test/python.ini',
     'mozbuild/dumbmake/test/python.ini',
+    'mozbuild/mozbuild/test/python.ini',
+    'mozbuild/mozpack/test/python.ini',
     'mozlint/test/python.ini',
+    'mozperftest/mozperftest/tests/python.ini',
     'mozrelease/test/python.ini',
     'mozterm/test/python.ini',
     'mozversioncontrol/test/python.ini',
 ]
-
-if CONFIG['MOZ_BUILD_APP']:
-    PYTHON_UNITTEST_MANIFESTS += [
-        'mozbuild/mozbuild/test/python.ini',
-        'mozbuild/mozpack/test/python.ini',
-    ]

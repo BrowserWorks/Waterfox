@@ -10,15 +10,14 @@ async function test() {
   waitForExplicitFinish(); // have to call this ourselves because we're async.
   Harness.installConfirmCallback = confirm_install;
   Harness.installEndedCallback = install => {
-    install.cancel();
+    return install.addon.uninstall();
   };
   Harness.installsCompletedCallback = finish_test;
   Harness.finalContentEvent = "InstallComplete";
   win = await BrowserTestUtils.openNewBrowserWindow();
   Harness.setup(win);
 
-  const pm = Services.perms;
-  pm.add(exampleURI, "install", pm.ALLOW_ACTION);
+  PermissionTestUtils.add(exampleURI, "install", Services.perms.ALLOW_ACTION);
 
   const triggers = encodeURIComponent(
     JSON.stringify({
@@ -45,11 +44,11 @@ function confirm_install(panel) {
 async function finish_test(count) {
   is(count, 1, "1 Add-on should have been successfully installed");
 
-  Services.perms.remove(exampleURI, "install");
+  PermissionTestUtils.remove(exampleURI, "install");
 
-  const results = await ContentTask.spawn(
+  const results = await SpecialPowers.spawn(
     win.gBrowser.selectedBrowser,
-    null,
+    [],
     () => {
       return {
         return: content.document.getElementById("return").textContent,

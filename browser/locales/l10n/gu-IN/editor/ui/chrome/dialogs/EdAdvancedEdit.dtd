@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "અદ્યતન ગુણધર્મ સંપાદક">
+<!ENTITY AttName.label                  "લક્ષણ: ">
+<!ENTITY AttValue.label                 "કિંમત: ">
+<!ENTITY PropertyName.label             "ગુણધર્મ: ">
+<!ENTITY currentattributesfor.label     "માટેના વર્તમાન લક્ષણો: ">
+<!ENTITY tree.attributeHeader.label     "લક્ષણ">
+<!ENTITY tree.propertyHeader.label      "ગુણધર્મ">
+<!ENTITY tree.valueHeader.label         "કિમત">
+<!ENTITY tabHTML.label                  "HTML લક્ષણો">
+<!ENTITY tabCSS.label                   "લીટીમાંની શૈલી">
+<!ENTITY tabJSE.label                   "જાવાસ્ક્રિપ્ટ ઘટનાઓ">
+
+<!ENTITY editAttribute.label    "ઉપરની વસ્તુમાં તેની કિંમતમાં ફેરફાર કરવા માટે ક્લિક કરો">
+<!ENTITY removeAttribute.label  "દૂર કરો">

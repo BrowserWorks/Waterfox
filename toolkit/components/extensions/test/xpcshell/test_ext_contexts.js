@@ -15,6 +15,10 @@ class StubContext extends BaseContext {
     this.sandbox = Cu.Sandbox(global);
   }
 
+  logActivity(type, name, data) {
+    // no-op required by subclass
+  }
+
   get cloneScope() {
     return this.sandbox;
   }
@@ -121,16 +125,20 @@ class Context extends BaseContext {
     this.sandbox = Cu.Sandbox(principal, { wantXrays: false });
   }
 
+  logActivity(type, name, data) {
+    // no-op required by subclass
+  }
+
   get cloneScope() {
     return this.sandbox;
   }
 }
 
 let ssm = Services.scriptSecurityManager;
-const PRINCIPAL1 = ssm.createCodebasePrincipalFromOrigin(
+const PRINCIPAL1 = ssm.createContentPrincipalFromOrigin(
   "http://www.example.org"
 );
-const PRINCIPAL2 = ssm.createCodebasePrincipalFromOrigin(
+const PRINCIPAL2 = ssm.createContentPrincipalFromOrigin(
   "http://www.somethingelse.org"
 );
 

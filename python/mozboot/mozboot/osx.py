@@ -185,7 +185,11 @@ class OSXBootstrapper(BaseBootstrapper):
 
         choice = self.ensure_package_manager()
         self.package_manager = choice
-        getattr(self, 'ensure_%s_system_packages' % self.package_manager)()
+        _, hg_modern, _ = self.is_mercurial_modern()
+        if not hg_modern:
+            print("Mercurial wasn't found or is not sufficiently modern. "
+                  "It will be installed with %s" % self.package_manager)
+        getattr(self, 'ensure_%s_system_packages' % self.package_manager)(not hg_modern)
 
     def install_browser_packages(self):
         getattr(self, 'ensure_%s_browser_packages' % self.package_manager)()
@@ -267,7 +271,8 @@ class OSXBootstrapper(BaseBootstrapper):
                 print(INSTALL_XCODE_COMMAND_LINE_TOOLS_STEPS)
                 sys.exit(1)
 
-            output = self.check_output(['/usr/bin/clang', '--version'])
+            output = self.check_output(['/usr/bin/clang', '--version'],
+                                       universal_newlines=True)
             match = RE_CLANG_VERSION.search(output)
             if match is None:
                 raise Exception('Could not determine Clang version.')
@@ -293,35 +298,56 @@ class OSXBootstrapper(BaseBootstrapper):
 
     def _ensure_homebrew_packages(self, packages, extra_brew_args=[]):
         self._ensure_homebrew_found()
+        self._ensure_package_manager_updated()
         cmd = [self.brew] + extra_brew_args
 
-        installed = self.check_output(cmd + ['list']).split()
+        installed = set(self.check_output(cmd + ['list'],
+                                          universal_newlines=True).split())
+        to_install = set(
+            package for package in packages if package not in installed)
 
-        printed = False
+        # The "--quiet" tells "brew" to only list the package names, and not the
+        # comparison between current and new version.
+        outdated = set(self.check_output(cmd + ['outdated', '--quiet'],
+                                         universal_newlines=True).split())
+        to_upgrade = set(package for package in packages if package in outdated)
 
-        for package in packages:
-            if package in installed:
-                continue
-
-            if not printed:
-                print(PACKAGE_MANAGER_PACKAGES % ('Homebrew',))
-                printed = True
-
-            subprocess.check_call(cmd + ['install', package])
-
-        return printed
+        if to_install or to_upgrade:
+            print(PACKAGE_MANAGER_PACKAGES % ('Homebrew',))
+        if 'python@2' in to_install:
+            # Special handling for Python 2 since brew can't install it
+            # out-of-the-box any more.
+            to_install.remove('python@2')
+            subprocess.check_call(
+                cmd + ['install',
+                       'https://raw.githubusercontent.com/Homebrew/homebrew-core'
+                       '/86a44a0a552c673a05f11018459c9f5faae3becc'
+                       '/Formula/python@2.rb'])
+        if to_install:
+            subprocess.check_call(cmd + ['install'] + list(to_install))
+        if to_upgrade:
+            subprocess.check_call(cmd + ['upgrade'] + list(to_upgrade))
 
     def _ensure_homebrew_casks(self, casks):
         self._ensure_homebrew_found()
 
-        # Ensure that we can access old versions of packages.  This is
-        # idempotent, so no need to avoid repeat invocation.
-        self.check_output([self.brew, 'tap', 'homebrew/cask-versions'])
+        known_taps = self.check_output([self.brew, 'tap'])
+
+        # Ensure that we can access old versions of packages.
+        if b'homebrew/cask-versions' not in known_taps:
+            self.check_output([self.brew, 'tap', 'homebrew/cask-versions'])
+
+        # "caskroom/versions" has been renamed to "homebrew/cask-versions", so
+        # it is safe to remove the old tap. Removing the old tap is necessary
+        # to avoid the error "Cask [name of cask] exists in multiple taps".
+        # See https://bugzilla.mozilla.org/show_bug.cgi?id=1544981
+        if b'caskroom/versions' in known_taps:
+            self.check_output([self.brew, 'untap', 'caskroom/versions'])
 
         # Change |brew install cask| into |brew cask install cask|.
-        return self._ensure_homebrew_packages(casks, extra_brew_args=['cask'])
+        self._ensure_homebrew_packages(casks, extra_brew_args=['cask'])
 
-    def ensure_homebrew_system_packages(self):
+    def ensure_homebrew_system_packages(self, install_mercurial):
         # We need to install Python because Mercurial requires the
         # Python development headers which are missing from OS X (at
         # least on 10.8) and because the build system wants a version
@@ -330,13 +356,14 @@ class OSXBootstrapper(BaseBootstrapper):
             'autoconf@2.13',
             'git',
             'gnu-tar',
-            'llvm@9',
-            'mercurial',
             'node',
             'python',
+            'python@2',
             'terminal-notifier',
             'watchman',
         ]
+        if install_mercurial:
+            packages.append('mercurial')
         self._ensure_homebrew_packages(packages)
 
     def ensure_homebrew_browser_packages(self, artifact_mode=False):
@@ -380,36 +407,41 @@ class OSXBootstrapper(BaseBootstrapper):
 
     def suggest_homebrew_mobile_android_mozconfig(self, artifact_mode=False):
         from mozboot import android
-        # Path to java from the homebrew/cask-versions/adoptopenjdk8 cask.
-        android.suggest_mozconfig('macosx', artifact_mode=artifact_mode,
-                                  java_bin_path=JAVA_PATH)
+        android.suggest_mozconfig('macosx', artifact_mode=artifact_mode)
 
     def _ensure_macports_packages(self, packages):
         self.port = self.which('port')
         assert self.port is not None
 
-        installed = set(self.check_output([self.port, 'installed']).split())
+        installed = set(
+            self.check_output(
+                [self.port, 'installed'],
+                universal_newlines=True).split())
 
         missing = [package for package in packages if package not in installed]
         if missing:
             print(PACKAGE_MANAGER_PACKAGES % ('MacPorts',))
             self.run_as_root([self.port, '-v', 'install'] + missing)
 
-    def ensure_macports_system_packages(self):
+    def ensure_macports_system_packages(self, install_mercurial):
         packages = [
             'python27',
             'python36',
             'py27-gnureadline',
-            'mercurial',
             'autoconf213',
             'gnutar',
             'watchman',
             'nodejs8'
         ]
+        if install_mercurial:
+            packages.append('mercurial')
 
         self._ensure_macports_packages(packages)
 
-        pythons = set(self.check_output([self.port, 'select', '--list', 'python']).split('\n'))
+        pythons = set(
+            self.check_output(
+                [self.port, 'select', '--list', 'python'],
+                universal_newlines=True).split('\n'))
         active = ''
         for python in pythons:
             if 'active' in python:
@@ -424,8 +456,6 @@ class OSXBootstrapper(BaseBootstrapper):
         packages = [
             'nasm',
             'yasm',
-            'llvm-7.0',
-            'clang-7.0',
         ]
 
         self._ensure_macports_packages(packages)
@@ -463,7 +493,7 @@ class OSXBootstrapper(BaseBootstrapper):
         one.
         '''
         installed = []
-        for name, cmd in PACKAGE_MANAGER.iteritems():
+        for name, cmd in PACKAGE_MANAGER.items():
             if self.which(cmd) is not None:
                 installed.append(name)
 
@@ -512,12 +542,25 @@ class OSXBootstrapper(BaseBootstrapper):
         self.install_toolchain_static_analysis(
             state_dir, checkout_root, static_analysis.MACOS_CLANG_TIDY)
 
+    def ensure_sccache_packages(self, state_dir, checkout_root):
+        from mozboot import sccache
+
+        self.install_toolchain_artifact(state_dir, checkout_root, sccache.MACOS_SCCACHE)
+        self.install_toolchain_artifact(state_dir, checkout_root,
+                                        sccache.RUSTC_DIST_TOOLCHAIN,
+                                        no_unpack=True)
+        self.install_toolchain_artifact(state_dir, checkout_root,
+                                        sccache.CLANG_DIST_TOOLCHAIN,
+                                        no_unpack=True)
+
+    def ensure_fix_stacks_packages(self, state_dir, checkout_root):
+        from mozboot import fix_stacks
+
+        self.install_toolchain_artifact(state_dir, checkout_root, fix_stacks.MACOS_FIX_STACKS)
+
     def ensure_stylo_packages(self, state_dir, checkout_root):
         from mozboot import stylo
-        # We installed clang via homebrew earlier.  However, on Android, we're
-        # seeing many compiler errors so we use our own toolchain clang.
-        if 'mobile_android' in self.application:
-            self.install_toolchain_artifact(state_dir, checkout_root, stylo.MACOS_CLANG)
+        self.install_toolchain_artifact(state_dir, checkout_root, stylo.MACOS_CLANG)
         self.install_toolchain_artifact(state_dir, checkout_root, stylo.MACOS_CBINDGEN)
 
     def ensure_nasm_packages(self, state_dir, checkout_root):
@@ -528,6 +571,12 @@ class OSXBootstrapper(BaseBootstrapper):
         # XXX from necessary?
         from mozboot import node
         self.install_toolchain_artifact(state_dir, checkout_root, node.OSX)
+
+    def ensure_minidump_stackwalk_packages(self, state_dir, checkout_root):
+        from mozboot import minidump_stackwalk
+
+        self.install_toolchain_artifact(state_dir, checkout_root,
+                                        minidump_stackwalk.MACOS_MINIDUMP_STACKWALK)
 
     def install_homebrew(self):
         print(PACKAGE_MANAGER_INSTALL % ('Homebrew', 'Homebrew', 'Homebrew', 'brew'))

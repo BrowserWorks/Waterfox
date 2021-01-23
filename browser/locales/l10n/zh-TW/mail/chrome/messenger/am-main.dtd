@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "帳號設定">
+<!ENTITY accountName.label "帳號名稱:">
+<!ENTITY accountName.accesskey "n">
+<!ENTITY identityTitle.label "預設身份">
+<!ENTITY identityDesc.label "每個帳號都可以有自己的身份識別資料，這會出現於您寄出的郵件內。">
+<!ENTITY name.label "您的大名:">
+<!ENTITY name.accesskey "Y">
+<!ENTITY email.label "電子郵件地址:">
+<!ENTITY email.accesskey "E">
+<!ENTITY catchAll.label "當郵件遞送標頭符合條件時，使用此身份回覆:">
+<!ENTITY catchAll.accesskey "d">
+<!ENTITY replyTo.label "回函地址:">
+<!ENTITY replyTo.accesskey "s">
+<!ENTITY replyTo.placeholder "收件者將會回覆到這個地址">
+<!ENTITY organization.label "服務單位:">
+<!ENTITY organization.accesskey "O">
+<!ENTITY signatureText.label "簽名:">
+<!ENTITY signatureText.accesskey "x">
+<!ENTITY signatureHtml.label "使用HTML (例如, &lt;b&gt;bold&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "L">
+<!ENTITY signatureFile.label "從檔案附加簽名（文字、HTML 或圖片）:">
+<!ENTITY signatureFile.accesskey "T">
+<!ENTITY edit.label "編輯…">
+<!ENTITY choose.label "選擇…">
+<!ENTITY choose.accesskey "C">
+<!ENTITY editVCard.label "編輯電子名片…">
+<!ENTITY editVCard.accesskey "d">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "附加名片卡到郵件中">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "身份識別管理…">
+<!ENTITY manageIdentities.accesskey "M">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "寄件伺服器 (SMTP):">
+<!ENTITY smtpName.accesskey "u">
+<!ENTITY smtpDefaultServer.label "使用預設伺服器">
+
+<!ENTITY smtpServerEdit.label "編輯 SMTP 伺服器…">
+<!ENTITY smtpServerEdit.accesskey "P">

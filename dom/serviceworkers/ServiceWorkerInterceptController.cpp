@@ -7,9 +7,12 @@
 #include "ServiceWorkerInterceptController.h"
 
 #include "mozilla/BasePrincipal.h"
+#include "mozilla/StorageAccess.h"
+#include "nsCOMPtr.h"
 #include "nsContentUtils.h"
 #include "nsIChannel.h"
 #include "ServiceWorkerManager.h"
+#include "nsIPrincipal.h"
 
 namespace mozilla {
 namespace dom {
@@ -24,6 +27,8 @@ ServiceWorkerInterceptController::ShouldPrepareForIntercept(
 
   nsCOMPtr<nsILoadInfo> loadInfo = aChannel->LoadInfo();
 
+  RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
+
   // For subresource requests we base our decision solely on the client's
   // controller value.  Any settings that would have blocked service worker
   // access should have been set before the initial navigation created the
@@ -31,16 +36,50 @@ ServiceWorkerInterceptController::ShouldPrepareForIntercept(
   if (!nsContentUtils::IsNonSubresourceRequest(aChannel)) {
     const Maybe<ServiceWorkerDescriptor>& controller =
         loadInfo->GetController();
-    *aShouldIntercept = controller.isSome();
+    // For child intercept, only checking the loadInfo controller existence.
+    if (!ServiceWorkerParentInterceptEnabled()) {
+      *aShouldIntercept = controller.isSome();
+      return NS_OK;
+    }
+
+    // If the controller doesn't handle fetch events, return false
+    if (controller.isSome()) {
+      *aShouldIntercept = controller.ref().HandlesFetch();
+
+      // The service worker has no fetch event handler, try to schedule a
+      // soft-update through ServiceWorkerRegistrationInfo.
+      // Get ServiceWorkerRegistrationInfo by the ServiceWorkerInfo's principal
+      // and scope
+      if (!*aShouldIntercept && swm) {
+        nsCOMPtr<nsIPrincipal> principal =
+            controller.ref().GetPrincipal().unwrap();
+        RefPtr<ServiceWorkerRegistrationInfo> registration =
+            swm->GetRegistration(principal, controller.ref().Scope());
+        // Could not get ServiceWorkerRegistration here if unregister is
+        // executed before getting here.
+        if (NS_WARN_IF(!registration)) {
+          return NS_OK;
+        }
+        registration->MaybeScheduleTimeCheckAndUpdate();
+      }
+    } else {
+      *aShouldIntercept = false;
+    }
     return NS_OK;
   }
 
-  nsCOMPtr<nsIPrincipal> principal = BasePrincipal::CreateCodebasePrincipal(
+  nsCOMPtr<nsIPrincipal> principal = BasePrincipal::CreateContentPrincipal(
       aURI, loadInfo->GetOriginAttributes());
 
   // First check with the ServiceWorkerManager for a matching service worker.
-  RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
-  if (!swm || !swm->IsAvailable(principal, aURI)) {
+  if (!swm || !swm->IsAvailable(principal, aURI, aChannel)) {
+    return NS_OK;
+  }
+
+  // Check if we're in a secure context, unless service worker testing is
+  // enabled.
+  if (!nsContentUtils::ComputeIsSecureContext(aChannel) &&
+      !StaticPrefs::dom_serviceWorkers_testing_enabled()) {
     return NS_OK;
   }
 
@@ -48,8 +87,7 @@ ServiceWorkerInterceptController::ShouldPrepareForIntercept(
   // It is important to check for the availability of the service worker first
   // to avoid showing warnings about the use of third-party cookies in the UI
   // unnecessarily when no service worker is being accessed.
-  if (nsContentUtils::StorageAllowedForChannel(aChannel) !=
-      nsContentUtils::StorageAccess::eAllow) {
+  if (StorageAllowedForChannel(aChannel) != StorageAccess::eAllow) {
     return NS_OK;
   }
 

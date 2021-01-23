@@ -8,7 +8,6 @@
 #define mozilla_dom_File_h
 
 #include "mozilla/dom/Blob.h"
-#include "mozilla/dom/Date.h"
 
 class nsIFile;
 
@@ -25,23 +24,21 @@ class File final : public Blob {
  public:
   // Note: BlobImpl must be a File in order to use this method.
   // Check impl->IsFile().
-  static File* Create(nsISupports* aParent, BlobImpl* aImpl);
-
-  static already_AddRefed<File> Create(nsISupports* aParent,
-                                       const nsAString& aName,
-                                       const nsAString& aContentType,
-                                       uint64_t aLength,
-                                       int64_t aLastModifiedDate);
+  static File* Create(nsIGlobalObject* aGlobal, BlobImpl* aImpl);
 
   // The returned File takes ownership of aMemoryBuffer. aMemoryBuffer will be
   // freed by free so it must be allocated by malloc or something
   // compatible with it.
-  static already_AddRefed<File> CreateMemoryFile(nsISupports* aParent,
-                                                 void* aMemoryBuffer,
-                                                 uint64_t aLength,
-                                                 const nsAString& aName,
-                                                 const nsAString& aContentType,
-                                                 int64_t aLastModifiedDate);
+  static already_AddRefed<File> CreateMemoryFileWithLastModifiedNow(
+      nsIGlobalObject* aGlobal, void* aMemoryBuffer, uint64_t aLength,
+      const nsAString& aName, const nsAString& aContentType);
+
+  // You should not use this method! Please consider to use the
+  // CreateMemoryFileWithLastModifiedNow.
+  static already_AddRefed<File> CreateMemoryFileWithCustomLastModified(
+      nsIGlobalObject* aGlobal, void* aMemoryBuffer, uint64_t aLength,
+      const nsAString& aName, const nsAString& aContentType,
+      int64_t aLastModifiedDate);
 
   // This method creates a BlobFileImpl for the new File object. This is
   // thread-safe, cross-process, cross-thread as any other BlobImpl, but, when
@@ -49,10 +46,10 @@ class File final : public Blob {
   // order to use nsIMIMEService.
   // Would be nice if we try to avoid to use this method outside the
   // main-thread to avoid extra runnables.
-  static already_AddRefed<File> CreateFromFile(nsISupports* aParent,
+  static already_AddRefed<File> CreateFromFile(nsIGlobalObject* aGlobal,
                                                nsIFile* aFile);
 
-  static already_AddRefed<File> CreateFromFile(nsISupports* aParent,
+  static already_AddRefed<File> CreateFromFile(nsIGlobalObject* aGlobal,
                                                nsIFile* aFile,
                                                const nsAString& aName,
                                                const nsAString& aContentType);
@@ -98,7 +95,7 @@ class File final : public Blob {
  private:
   // File constructor should never be used directly. Use Blob::Create or
   // File::Create.
-  File(nsISupports* aParent, BlobImpl* aImpl);
+  File(nsIGlobalObject* aGlobal, BlobImpl* aImpl);
   ~File();
 };
 

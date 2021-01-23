@@ -68,8 +68,8 @@ nsresult nsScrollbarButtonFrame::HandleEvent(nsPresContext* aPresContext,
       mCursorOnThis = false;
       break;
     case eMouseMove: {
-      nsPoint cursor =
-          nsLayoutUtils::GetEventCoordinatesRelativeTo(aEvent, this);
+      nsPoint cursor = nsLayoutUtils::GetEventCoordinatesRelativeTo(
+          aEvent, RelativeTo{this});
       nsRect frameRect(nsPoint(0, 0), GetSize());
       mCursorOnThis = frameRect.Contains(cursor);
       break;
@@ -109,8 +109,8 @@ bool nsScrollbarButtonFrame::HandleButtonPress(nsPresContext* aPresContext,
 
   if (scrollbar == nullptr) return false;
 
-  static Element::AttrValuesArray strings[] = {nsGkAtoms::increment,
-                                               nsGkAtoms::decrement, nullptr};
+  static dom::Element::AttrValuesArray strings[] = {
+      nsGkAtoms::increment, nsGkAtoms::decrement, nullptr};
   int32_t index = mContent->AsElement()->FindAttrValueIn(
       kNameSpaceID_None, nsGkAtoms::type, strings, eCaseMatters);
   int32_t direction;

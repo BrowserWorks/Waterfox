@@ -1,11 +1,15 @@
-var {NetUtil} = ChromeUtils.import("resource://gre/modules/NetUtil.jsm");
+var { NetUtil } = ChromeUtils.import("resource://gre/modules/NetUtil.jsm");
 
 function updateDocumentSourceMaps(src) {
   const nsISAXXMLReader = Ci.nsISAXXMLReader;
-  const saxReader = Cc["@mozilla.org/saxparser/xmlreader;1"]
-                      .createInstance(nsISAXXMLReader);
+  const saxReader = Cc["@mozilla.org/saxparser/xmlreader;1"].createInstance(
+    nsISAXXMLReader
+  );
   try {
-    saxReader.setFeature("http://xml.org/sax/features/namespace-prefixes", true);
+    saxReader.setFeature(
+      "http://xml.org/sax/features/namespace-prefixes",
+      true
+    );
     saxReader.setFeature("http://xml.org/sax/features/namespace", true);
   } catch (e) {
     // do nothing, we'll accept it as it is.
@@ -16,16 +20,15 @@ function updateDocumentSourceMaps(src) {
    * to record errors and handle them after the parsing is finished.
    */
   function do_parse_check(aCondition, aMsg) {
-    if (!aCondition)
+    if (!aCondition) {
       parseErrorLog[parseErrorLog.length] = aMsg;
+    }
   }
 
   var contentHandler = {
-    startDocument() {
-    },
+    startDocument() {},
 
-    endDocument() {
-    },
+    endDocument() {},
 
     handleAttributes(aAttributes) {
       for (var i = 0; i < aAttributes.length; i++) {
@@ -48,8 +51,7 @@ function updateDocumentSourceMaps(src) {
       do_parse_check(aNodeName, "Missing element node name (endElement)");
     },
 
-    characters(aData) {
-    },
+    characters(aData) {},
 
     processingInstruction(aTarget, aData) {
       do_parse_check(aTarget, "Missing processing instruction target");
@@ -71,20 +73,23 @@ function updateDocumentSourceMaps(src) {
   };
 
   saxReader.contentHandler = contentHandler;
-  saxReader.errorHandler   = errorHandler;
+  saxReader.errorHandler = errorHandler;
 
   let type = "application/xml";
   let uri = NetUtil.newURI("http://example.org/");
 
-  let sStream = Cc["@mozilla.org/io/string-input-stream;1"]
-               .createInstance(Ci.nsIStringInputStream);
+  let sStream = Cc["@mozilla.org/io/string-input-stream;1"].createInstance(
+    Ci.nsIStringInputStream
+  );
   sStream.setData(src, src.length);
-  var bStream = Cc["@mozilla.org/network/buffered-input-stream;1"]
-                .createInstance(Ci.nsIBufferedInputStream);
+  var bStream = Cc[
+    "@mozilla.org/network/buffered-input-stream;1"
+  ].createInstance(Ci.nsIBufferedInputStream);
   bStream.init(sStream, 4096);
 
-  let channel = Cc["@mozilla.org/network/input-stream-channel;1"].
-    createInstance(Ci.nsIInputStreamChannel);
+  let channel = Cc[
+    "@mozilla.org/network/input-stream-channel;1"
+  ].createInstance(Ci.nsIInputStreamChannel);
   channel.setURI(uri);
   channel.contentStream = bStream;
   channel.QueryInterface(Ci.nsIChannel);
@@ -104,7 +109,7 @@ function updateDocumentSourceMaps(src) {
 
   // Just in case it leaks.
   saxReader.contentHandler = null;
-  saxReader.errorHandler   = null;
+  saxReader.errorHandler = null;
 
   return parseErrorLog;
 }
@@ -136,5 +141,8 @@ function run_test() {
 
   parseErrorLog = updateDocumentSourceMaps(src);
 
-  do_check_true_with_dump(parseErrorLog.length == 1 && parseErrorLog[0] == "XML fatal error", parseErrorLog);
+  do_check_true_with_dump(
+    parseErrorLog.length == 1 && parseErrorLog[0] == "XML fatal error",
+    parseErrorLog
+  );
 }

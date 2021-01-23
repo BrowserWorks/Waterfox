@@ -15,7 +15,7 @@
 namespace mozilla {
 
 /**
- * StaticAutoPtr and StaticRefPtr are like nsAutoPtr and nsRefPtr, except they
+ * StaticAutoPtr and StaticRefPtr are like UniquePtr and RefPtr, except they
  * are suitable for use as global variables.
  *
  * In particular, a global instance of Static{Auto,Ref}Ptr doesn't cause the
@@ -127,6 +127,12 @@ class MOZ_ONLY_USED_TO_AVOID_STATIC_CONSTRUCTORS StaticRefPtr {
 
   StaticRefPtr<T>& operator=(already_AddRefed<T>& aRhs) {
     AssignAssumingAddRef(aRhs.take());
+    return *this;
+  }
+
+  template <typename U>
+  StaticRefPtr<T>& operator=(RefPtr<U>&& aRhs) {
+    AssignAssumingAddRef(aRhs.forget().take());
     return *this;
   }
 

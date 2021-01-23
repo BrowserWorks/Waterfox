@@ -1,0 +1,8 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title             "메시지 요약">
+<!ENTITY selectedmessages.label   "선택된 메시지">
+<!ENTITY archiveButton.label            "보관">
+<!ENTITY deleteButton.label             "삭제">

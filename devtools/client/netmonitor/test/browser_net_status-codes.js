@@ -10,7 +10,9 @@
 add_task(async function() {
   const { L10N } = require("devtools/client/netmonitor/src/utils/l10n");
 
-  const { tab, monitor } = await initNetMonitor(STATUS_CODES_URL);
+  const { tab, monitor } = await initNetMonitor(STATUS_CODES_URL, {
+    requestCount: 1,
+  });
 
   info("Starting test... ");
 
@@ -103,7 +105,6 @@ add_task(async function() {
   info("Performing tests");
   await verifyRequests();
   await testTab(0, testHeaders);
-  await testTab(2, testParams);
 
   return teardown(monitor);
 
@@ -123,7 +124,7 @@ add_task(async function() {
     info("Verifying requests contain correct information.");
     let index = 0;
     for (const request of REQUEST_DATA) {
-      const item = getSortedRequests(store.getState()).get(index);
+      const item = getSortedRequests(store.getState())[index];
       requestItems[index] = item;
 
       info("Verifying request #" + index);
@@ -170,35 +171,31 @@ add_task(async function() {
       document.querySelectorAll(".request-list-item")[index]
     );
 
+    // wait till all the summary section is loaded
     await waitUntil(() =>
-      document.querySelector(
-        "#headers-panel .tabpanel-summary-value.textbox-input"
-      )
+      document.querySelector("#headers-panel .tabpanel-summary-value")
     );
-
     const panel = document.querySelector("#headers-panel");
-    const summaryValues = panel.querySelectorAll(
-      ".tabpanel-summary-value.textbox-input"
-    );
     const {
       method,
       correctUri,
       details: { status, statusText },
     } = data;
+
     const statusCode = panel.querySelector(".status-code");
-    const statusTextInput = panel.querySelector(".status-text");
+
     EventUtils.sendMouseEvent({ type: "mouseover" }, statusCode);
     await waitUntil(() => statusCode.title);
 
     is(
-      summaryValues[0].textContent,
+      panel.querySelector(".url-preview .url").textContent,
       correctUri,
       "The url summary value is incorrect."
     );
     is(
-      summaryValues[1].textContent,
+      panel.querySelectorAll(".treeLabel")[0].textContent,
       method,
-      "The method summary value is incorrect."
+      "The method value is incorrect."
     );
     is(
       statusCode.dataset.code,
@@ -209,79 +206,6 @@ add_task(async function() {
       statusCode.getAttribute("title"),
       status + " " + statusText,
       "The status summary value is incorrect."
-    );
-    is(
-      statusTextInput.value,
-      statusText,
-      "The status text value is incorrect."
-    );
-  }
-
-  /**
-   * A function that tests "Params" panel contains correct information.
-   */
-  function testParams(data, index) {
-    EventUtils.sendMouseEvent(
-      { type: "mousedown" },
-      document.querySelectorAll(".request-list-item")[index]
-    );
-    EventUtils.sendMouseEvent(
-      { type: "click" },
-      document.querySelector("#params-tab")
-    );
-
-    const panel = document.querySelector("#params-panel");
-    // Bug 1414981 - Request URL should not show #hash
-    const statusParamValue = data.uri
-      .split("=")
-      .pop()
-      .split("#")[0];
-    const treeSections = panel.querySelectorAll(".tree-section");
-
-    is(
-      treeSections.length,
-      1,
-      "There should be 1 param section displayed in this panel."
-    );
-    is(
-      panel.querySelectorAll("tr:not(.tree-section).treeRow").length,
-      1,
-      "There should be 1 param row displayed in this panel."
-    );
-    is(
-      panel.querySelectorAll(".empty-notice").length,
-      0,
-      "The empty notice should not be displayed in this panel."
-    );
-
-    const labels = panel.querySelectorAll(
-      "tr:not(.tree-section) .treeLabelCell .treeLabel"
-    );
-    const values = panel.querySelectorAll(
-      "tr:not(.tree-section) .treeValueCell .objectBox"
-    );
-
-    is(
-      treeSections[0].querySelector(".treeLabel").textContent,
-      L10N.getStr("paramsQueryString"),
-      "The params scope doesn't have the correct title."
-    );
-
-    is(labels[0].textContent, "sts", "The param name was incorrect.");
-    is(
-      values[0].textContent,
-      statusParamValue,
-      "The param value was incorrect."
-    );
-
-    ok(
-      panel.querySelector(".treeTable"),
-      "The request params tree view should be displayed."
-    );
-    is(
-      panel.querySelector(".editor-mount") === null,
-      true,
-      "The request post data editor should be hidden."
     );
   }
 });

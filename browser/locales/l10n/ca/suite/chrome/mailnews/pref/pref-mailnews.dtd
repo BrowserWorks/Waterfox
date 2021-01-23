@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.mailnews.title              "Missatgeria">
+<!ENTITY generalSettings.caption          "Paràmetres generals">
+<!ENTITY confirmMove.label                "Demana confirmació per moure carpetes a la paperera">
+<!ENTITY confirmMove.accesskey            "c">
+<!ENTITY preserveThreading.label          "Conserva la conversa en ordenar els missatges">
+<!ENTITY preserveThreading.accesskey      "t">
+<!ENTITY mailBiffOnNewWindow.label        "Només comprova si hi ha correu nou després d'obrir la Missatgeria">
+<!ENTITY mailBiffOnNewWindow.accesskey    "o">
+
+<!ENTITY defaultMailSettings.description  "Fes el &brandShortName; l'aplicació per defecte per a:">
+<!ENTITY setDefaultMail.label             "Correu electrònic">
+<!ENTITY setDefaultMail.accesskey         "o">
+<!ENTITY setDefaultNews.label             "Grups de discussió">
+<!ENTITY setDefaultNews.accesskey         "G">
+<!ENTITY setDefaultFeed.label             "Canals">
+<!ENTITY setDefaultFeed.accesskey         "n">
+
+<!ENTITY useInternalSettings.description  "Utilitza la Missatgeria del &brandShortName; en obrir enllaços del navegador per a:">
+<!ENTITY useInternalMail.label            "Correu electrònic (mailto:)">
+<!ENTITY useInternalMail.accesskey        "r">
+<!ENTITY useInternalNews.label            "Notícies (news:, snews:, nntp:)">
+<!ENTITY useInternalNews.accesskey        "s">
+
+<!ENTITY messengerStartPage.caption       "Pàgina d'inici de la Missatgeria">
+<!ENTITY enableStartPage.label            "Quan s'executi la Missatgeria, mostra aquesta pàgina a l'àrea de missatges">
+<!ENTITY enableStartPage.accesskey        "Q">
+<!ENTITY location.label                   "Ubicació:">
+<!ENTITY location.accesskey               "b">
+<!ENTITY useDefault.label                 "Reinicia">
+<!ENTITY useDefault.accesskey             "R">
+<!ENTITY rememberLastMsg.label            "Recorda el darrer missatge seleccionat">
+<!ENTITY rememberLastMsg.accesskey        "R">

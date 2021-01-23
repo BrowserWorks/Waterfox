@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from ./customize.xul -->
+
+<!-- LOCALIZATION NOTE  sidebar.customize.title.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.title.label          "Personalizar &sidebarName;">
+<!-- LOCALIZATION NOTE  sidebar.customize.current.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.current.label        "Separadores em &sidebarName;:">
+<!ENTITY sidebar.customize.current.accesskey    "S">
+
+<!ENTITY sidebar.customize.title                "Personalizar barra lateral">
+<!ENTITY sidebar.customize.current2.label       "Separadores na barra lateral:">
+<!ENTITY sidebar.customize.current2.accesskey   "S">
+<!ENTITY sidebar.customize.customize.label      "Personalizar separador…">
+<!ENTITY sidebar.customize.customize.accesskey  "P">
+<!ENTITY sidebar.customize.remove.label         "Remover">
+<!ENTITY sidebar.customize.remove.accesskey     "R">
+<!ENTITY sidebar.customize.additional.label     "Separadores disponíveis:">
+<!ENTITY sidebar.customize.additional.accesskey "v">
+<!ENTITY sidebar.customize.add.label            "Adicionar">
+<!ENTITY sidebar.customize.add.accesskey        "A">
+<!ENTITY sidebar.customize.preview.label        "Pré-visualizar…">
+<!ENTITY sidebar.customize.preview.accesskey    "P">
+<!ENTITY sidebar.customize.up.label             "Mover para cima">
+<!ENTITY sidebar.customize.up.accesskey         "c">
+<!ENTITY sidebar.customize.down.label           "Mover para baixo">
+<!ENTITY sidebar.customize.down.accesskey       "b">
+<!ENTITY sidebar.more.label                     "Localizar mais separadores…">
+<!ENTITY sidebar.more.accesskey                 "L">

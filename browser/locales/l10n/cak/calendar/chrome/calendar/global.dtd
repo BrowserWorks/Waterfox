@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY time.midnight "Nik'aj aq'a'" >
+<!ENTITY time.noon "Nik'aj q'ij" >
+
+<!-- Day Names -->
+<!-- LOCALIZATION NOTE : Accesskeys for day.1.Ddd to day.7.Ddd are currently
+     only used in Preferences > Views > Workweek groupbox -->
+<!ENTITY day.1.Ddd "Toq'" >
+<!ENTITY day.1.Ddd.accesskey "T">
+<!ENTITY day.2.Ddd "Luq'" >
+<!ENTITY day.2.Ddd.accesskey "L">
+<!ENTITY day.3.Ddd "Maq'" >
+<!ENTITY day.3.Ddd.accesskey "M">
+<!ENTITY day.4.Ddd "Miq'" >
+<!ENTITY day.4.Ddd.accesskey "M">
+<!ENTITY day.5.Ddd "Juq'" >
+<!ENTITY day.5.Ddd.accesskey "J">
+<!ENTITY day.6.Ddd "Wiq'" >
+<!ENTITY day.6.Ddd.accesskey "W">
+<!ENTITY day.7.Ddd "Saq'" >
+<!ENTITY day.7.Ddd.accesskey "a">
+
+<!ENTITY day.1.name "Toq'ij" >
+<!ENTITY day.2.name "Luq'ij" >
+<!ENTITY day.3.name "Maq'ij" >
+<!ENTITY day.4.name "Miq'ij" >
+<!ENTITY day.5.name "Juq'ij" >
+<!ENTITY day.6.name "Wiq'ij" >
+<!ENTITY day.7.name "Saq'ij" >
+
+<!ENTITY month.1.name "Nab'ey ik'" >
+<!ENTITY month.2.name "Ruka'n ik'" >
+<!ENTITY month.3.name "Rox ik'" >
+<!ENTITY month.4.name "Rukaj ik'" >
+<!ENTITY month.5.name "Ro' ik'" >
+<!ENTITY month.6.name "Ruwaq ik'" >
+<!ENTITY month.7.name "Ruwuq ik'" >
+<!ENTITY month.8.name "Ruwaqxaq ik'" >
+<!ENTITY month.9.name "Rub'elej ik'" >
+<!ENTITY month.10.name "Rulaj ik'" >
+<!ENTITY month.11.name "Rujulaj ik'" >
+<!ENTITY month.12.name "Rukab'laj ik'" >
+
+<!ENTITY onemonthbackward.tooltip "Jun Ik' Kan" >
+<!ENTITY onemonthforward.tooltip "Jun Ik' chwäch" >
+<!ENTITY oneyearbackward.tooltip "Jun Juna' Kan" >
+<!ENTITY oneyearforward.tooltip "Jun Juna' Yan" >
+<!ENTITY showToday.tooltip "Jo' wakami">
+<!ENTITY onedayforward.tooltip "Jun Q'ij Chwäch">
+<!ENTITY onedaybackward.tooltip "Jun q'ij kan">
+<!ENTITY showselectedday.tooltip "Tik'ut ri molojri'ïl richin ri q'ij xticha'">

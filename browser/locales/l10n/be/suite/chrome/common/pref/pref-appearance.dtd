@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.appearance.title "Выгляд">
+<!ENTITY onStartLegend.label "Калі &brandShortName; запускаецца, адчыняць">
+<!ENTITY navCheck.label "Азіральнік">
+<!ENTITY navCheck.accesskey "Н">
+<!ENTITY showToolsLegend.label "Паказваць паліцы з прыладамі як">
+<!ENTITY picsNtextRadio.label "Малюнкі і тэкст">
+<!ENTITY picsNtextRadio.accesskey "М">
+<!ENTITY picsOnlyRadio.label "Толькі малюнкі">
+<!ENTITY picsOnlyRadio.accesskey "ю">
+<!ENTITY textonlyRadio.label "Толькі тэкст">
+<!ENTITY textonlyRadio.accesskey "т">
+<!ENTITY showHideTooltips.label "Паказваць падказкі прылад">
+<!ENTITY showHideTooltips.accesskey "п">
+<!ENTITY pref.locales.title "Мова інтэрфэйсу карыстальніка">
+<!ENTITY selectLocale.label "Выберыце мову тэксту, які з'яўляецца ў дыялогах, меню, прыладапаліцах і метках кнопак:">
+<!ENTITY restartOnLangChange.label "Змяненні моўных перавагаў набудуць моц пасля перазапуску &brandShortName;.">

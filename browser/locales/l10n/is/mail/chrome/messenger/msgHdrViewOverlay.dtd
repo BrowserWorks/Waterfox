@@ -1,0 +1,109 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "Til">
+<!ENTITY fromField4.label "Frá">
+<!ENTITY senderField4.label "Sendandi">
+<!ENTITY author.label "Höfundur">
+<!ENTITY organizationField4.label "Fyrirtæki/Stofnun">
+<!ENTITY replyToField4.label "Svara á">
+
+<!ENTITY subjectField4.label "Efni">
+<!ENTITY ccField4.label "Cc">
+<!ENTITY bccField4.label "Bcc">
+<!ENTITY newsgroupsField4.label "Fréttahópa">
+<!ENTITY followupToField4.label "Áframsending á">
+<!ENTITY tagsHdr4.label "Flokkar">
+<!ENTITY dateField4.label "Dagsetning">
+<!ENTITY userAgentField4.label "Notandaauðkenni">
+<!ENTITY referencesField4.label "Tilvitnanir">
+<!ENTITY messageIdField4.label "Auðkenni skeytis">
+<!ENTITY inReplyToField4.label "Svar við">
+<!ENTITY originalWebsite4.label "Vefsvæði">
+
+<!ENTITY hdrArchiveButton1.label "Skjalageymsla">
+<!ENTITY hdrArchiveButton1.tooltip "Setja póst í skjalageymslu">
+<!ENTITY hdrSmartReplyButton1.label "Snjallsvar">
+<!ENTITY hdrReplyButton1.label "Svara">
+<!ENTITY hdrReplyButton2.tooltip "Svara sendanda þessa skeytis">
+<!ENTITY hdrReplyAllButton1.label "Svara öllum">
+<!ENTITY hdrReplyAllButton1.tooltip "Svara sendanda og öllum viðtakendum">
+<!ENTITY hdrReplyListButton1.label "Svarlisti">
+<!ENTITY hdrReplyListButton1.tooltip "Svara póstlista">
+<!ENTITY hdrFollowupButton1.label "Eftirfylgni">
+<!ENTITY hdrFollowupButton1.tooltip "Pósta svari á þennan fréttahóp">
+<!ENTITY hdrForwardButton1.label "Áfram">
+<!ENTITY hdrForwardButton1.tooltip "Áframsenda þennan póst">
+<!ENTITY hdrJunkButton1.label "Ruslpóstur">
+<!ENTITY hdrJunkButton1.tooltip "Merkja póst sem ruslpóst">
+<!ENTITY hdrTrashButton1.label "Eyða">
+<!ENTITY hdrTrashButton1.tooltip "Eyða pósti">
+
+<!ENTITY hdrViewToolbarShowFull.label "Sýna myndir og texta">
+<!ENTITY hdrViewToolbarShowFull.accesskey "a">
+<!ENTITY hdrViewToolbarShowIcons.label "Sýna aðeins myndir">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "i">
+<!ENTITY hdrViewToolbarShowText.label "Sýna einungis texta">
+<!ENTITY hdrViewToolbarShowText.accesskey "t">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "Alltaf sýna svar til sendanda">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "r">
+
+<!ENTITY otherActionsButton2.label "Meira">
+<!ENTITY otherActionsButton.tooltip "Fleiri aðgerðir">
+<!ENTITY otherActionsOpenConversation1.label "Opna í samtali">
+<!ENTITY otherActionsOpenConversation1.accesskey "s">
+<!ENTITY otherActionsOpenInNewWindow1.label "Opna í nýjum glugga">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "g">
+<!ENTITY otherActionsOpenInNewTab1.label "Opna í nýjum flipa">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "f">
+<!ENTITY markAsReadMenuItem1.label "Merkja sem lesið">
+<!ENTITY markAsReadMenuItem1.accesskey "r">
+<!ENTITY markAsUnreadMenuItem1.label "Merkja sem ólesið">
+<!ENTITY markAsUnreadMenuItem1.accesskey "r">
+<!ENTITY saveAsMenuItem1.label "Vista sem…">
+<!ENTITY saveAsMenuItem1.accesskey "s">
+<!ENTITY viewSourceMenuItem1.label "Sýna frumkóða">
+<!ENTITY viewSourceMenuItem1.accesskey "f">
+<!ENTITY otherActionsPrint1.label "Prenta…">
+<!ENTITY otherActionsPrint1.accesskey "P">
+
+<!-- Attachment bar context menu items -->
+<!ENTITY startExpandedCmd.label "Sýna viðhengjaflipa í byrjun">
+<!ENTITY startExpandedCmd.accesskey "S">
+
+<!-- Attachment context menu items -->
+<!ENTITY openAttachmentCmd.label "Opna">
+<!ENTITY openAttachmentCmd.accesskey "O">
+<!ENTITY saveAsAttachmentCmd.label "Vista sem…">
+<!ENTITY saveAsAttachmentCmd.accesskey "e">
+<!ENTITY detachAttachmentCmd.label "Taka út…">
+<!ENTITY detachAttachmentCmd.accesskey "t">
+<!ENTITY deleteAttachmentCmd.label "Eyða">
+<!ENTITY deleteAttachmentCmd.accesskey "ð">
+<!ENTITY openAllAttachmentsCmd.label "Open All…">
+<!ENTITY openAllAttachmentsCmd.accesskey "O">
+<!ENTITY saveAllAttachmentsCmd.label "Vista öll…">
+<!ENTITY saveAllAttachmentsCmd.accesskey "a">
+<!ENTITY detachAllAttachmentsCmd.label "Taka út öll…">
+<!ENTITY detachAllAttachmentsCmd.accesskey "ö">
+<!ENTITY deleteAllAttachmentsCmd.label "Eyða öllum…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey "E">
+
+<!ENTITY openAttachment.tooltip "Opna viðhengið">
+
+<!-- Attachment toolbar items -->
+<!ENTITY saveAttachmentButton1.label "Vista">
+<!ENTITY saveAttachmentButton1.tooltip "Vista viðhengi">
+<!ENTITY saveAllAttachmentsButton1.label "Vista allt">
+<!ENTITY saveAllAttachmentsButton1.tooltip "Vista öll viðhengi">
+
+<!ENTITY copyLinkCmd.label "Afrita tengil">
+<!ENTITY copyLinkCmd.accesskey "A">
+
+<!ENTITY CopyMessageId.label "Afrita Skeytis-Auðkenni">
+<!ENTITY CopyMessageId.accesskey "A">
+<!ENTITY OpenMessageForMsgId.label "Opna póst fyrir ákveðið auðkenni">
+<!ENTITY OpenMessageForMsgId.accesskey "O">
+<!ENTITY OpenBrowserWithMsgId.label "Opna vafra með Skeytis-Auðkenni">
+<!ENTITY OpenBrowserWithMsgId.accesskey "v">

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Timeẓliyin n tebzimt">
+
+<!ENTITY Settings.label "Iɣewwaṛen">
+<!ENTITY Settings.accesskey "w">
+
+<!ENTITY EditLabelText.label "Ẓreg aḍris:">
+<!ENTITY EditLabelText.accesskey "r">
+<!ENTITY LabelFor.label "I wesenqed:">
+<!ENTITY LabelFor.accesskey "s">
+<!ENTITY AccessKey.label "Tasarutt n unekcum:">
+<!ENTITY AccessKey.accesskey "s">
+
+<!ENTITY RemoveLabel.label "Kkes tabzimt">
+<!ENTITY RemoveLabel.accesskey "K">

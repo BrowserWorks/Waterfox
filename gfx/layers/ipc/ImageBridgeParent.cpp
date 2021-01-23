@@ -5,11 +5,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "ImageBridgeParent.h"
-#include <stdint.h>             // for uint64_t, uint32_t
-#include "CompositableHost.h"   // for CompositableParent, Create
-#include "base/message_loop.h"  // for MessageLoop
-#include "base/process.h"       // for ProcessId
-#include "base/task.h"          // for CancelableTask, DeleteTask, etc
+#include <stdint.h>            // for uint64_t, uint32_t
+#include "CompositableHost.h"  // for CompositableParent, Create
+#include "base/process.h"      // for ProcessId
+#include "base/task.h"         // for CancelableTask, DeleteTask, etc
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/gfx/Point.h"           // for IntSize
 #include "mozilla/Hal.h"                 // for hal::SetCurrentThreadPriority()
@@ -18,6 +17,7 @@
 #include "mozilla/ipc/ProtocolUtils.h"
 #include "mozilla/ipc/Transport.h"                           // for Transport
 #include "mozilla/media/MediaSystemResourceManagerParent.h"  // for MediaSystemResourceManagerParent
+#include "mozilla/layers/BufferTexture.h"
 #include "mozilla/layers/CompositableTransactionParent.h"
 #include "mozilla/layers/LayerManagerComposite.h"
 #include "mozilla/layers/LayersMessages.h"  // for EditReply
@@ -30,10 +30,14 @@
 #include "nsDebug.h"                 // for NS_ASSERTION, etc
 #include "nsISupportsImpl.h"         // for ImageBridgeParent::Release, etc
 #include "nsTArray.h"                // for nsTArray, nsTArray_Impl
-#include "nsTArrayForwardDeclare.h"  // for InfallibleTArray
+#include "nsTArrayForwardDeclare.h"  // for nsTArray
 #include "nsXULAppAPI.h"             // for XRE_GetIOMessageLoop
 #include "mozilla/layers/TextureHost.h"
 #include "nsThreadUtils.h"
+
+#if defined(OS_WIN)
+#  include "mozilla/layers/TextureD3D11.h"
+#endif
 
 namespace mozilla {
 namespace layers {
@@ -57,22 +61,22 @@ void ImageBridgeParent::Setup() {
   }
 }
 
-ImageBridgeParent::ImageBridgeParent(MessageLoop* aLoop,
+ImageBridgeParent::ImageBridgeParent(nsISerialEventTarget* aThread,
                                      ProcessId aChildProcessId)
-    : mMessageLoop(aLoop),
+    : mThread(aThread),
       mClosed(false),
       mCompositorThreadHolder(CompositorThreadHolder::GetSingleton()) {
   MOZ_ASSERT(NS_IsMainThread());
   SetOtherProcessId(aChildProcessId);
 }
 
-ImageBridgeParent::~ImageBridgeParent() {}
+ImageBridgeParent::~ImageBridgeParent() = default;
 
 /* static */
 ImageBridgeParent* ImageBridgeParent::CreateSameProcess() {
   base::ProcessId pid = base::GetCurrentProcId();
   RefPtr<ImageBridgeParent> parent =
-      new ImageBridgeParent(CompositorThreadHolder::Loop(), pid);
+      new ImageBridgeParent(CompositorThread(), pid);
   parent->mSelfRef = parent;
 
   {
@@ -90,15 +94,15 @@ bool ImageBridgeParent::CreateForGPUProcess(
     Endpoint<PImageBridgeParent>&& aEndpoint) {
   MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_GPU);
 
-  MessageLoop* loop = CompositorThreadHolder::Loop();
-  if (!loop) {
+  nsCOMPtr<nsISerialEventTarget> compositorThread = CompositorThread();
+  if (!compositorThread) {
     return false;
   }
 
   RefPtr<ImageBridgeParent> parent =
-      new ImageBridgeParent(loop, aEndpoint.OtherPid());
+      new ImageBridgeParent(compositorThread, aEndpoint.OtherPid());
 
-  loop->PostTask(NewRunnableMethod<Endpoint<PImageBridgeParent>&&>(
+  compositorThread->Dispatch(NewRunnableMethod<Endpoint<PImageBridgeParent>&&>(
       "layers::ImageBridgeParent::Bind", parent, &ImageBridgeParent::Bind,
       std::move(aEndpoint)));
 
@@ -128,7 +132,7 @@ void ImageBridgeParent::ShutdownInternal() {
 
 /* static */
 void ImageBridgeParent::Shutdown() {
-  CompositorThreadHolder::Loop()->PostTask(NS_NewRunnableFunction(
+  CompositorThread()->Dispatch(NS_NewRunnableFunction(
       "ImageBridgeParent::Shutdown",
       []() -> void { ImageBridgeParent::ShutdownInternal(); }));
 }
@@ -141,7 +145,7 @@ void ImageBridgeParent::ActorDestroy(ActorDestroyReason aWhy) {
     MonitorAutoLock lock(*sImageBridgesLock);
     sImageBridges.erase(OtherPid());
   }
-  MessageLoop::current()->PostTask(
+  GetThread()->Dispatch(
       NewRunnableMethod("layers::ImageBridgeParent::DeferredDestroy", this,
                         &ImageBridgeParent::DeferredDestroy));
 
@@ -157,7 +161,7 @@ class MOZ_STACK_CLASS AutoImageBridgeParentAsyncMessageSender final {
  public:
   explicit AutoImageBridgeParentAsyncMessageSender(
       ImageBridgeParent* aImageBridge,
-      InfallibleTArray<OpDestroy>* aToDestroy = nullptr)
+      nsTArray<OpDestroy>* aToDestroy = nullptr)
       : mImageBridge(aImageBridge), mToDestroy(aToDestroy) {
     mImageBridge->SetAboutToSendAsyncMessages();
   }
@@ -173,13 +177,13 @@ class MOZ_STACK_CLASS AutoImageBridgeParentAsyncMessageSender final {
 
  private:
   ImageBridgeParent* mImageBridge;
-  InfallibleTArray<OpDestroy>* mToDestroy;
+  nsTArray<OpDestroy>* mToDestroy;
 };
 
 mozilla::ipc::IPCResult ImageBridgeParent::RecvUpdate(
     EditArray&& aEdits, OpDestroyArray&& aToDestroy,
     const uint64_t& aFwdTransactionId) {
-  AUTO_PROFILER_TRACING("Paint", "ImageBridgeTransaction", GRAPHICS);
+  AUTO_PROFILER_TRACING_MARKER("Paint", "ImageBridgeTransaction", GRAPHICS);
   AUTO_PROFILER_LABEL("ImageBridgeParent::RecvUpdate", GRAPHICS);
 
   // This ensures that destroy operations are always processed. It is not safe
@@ -214,14 +218,14 @@ mozilla::ipc::IPCResult ImageBridgeParent::RecvUpdate(
 /* static */
 bool ImageBridgeParent::CreateForContent(
     Endpoint<PImageBridgeParent>&& aEndpoint) {
-  MessageLoop* loop = CompositorThreadHolder::Loop();
-  if (!loop) {
+  nsCOMPtr<nsISerialEventTarget> compositorThread = CompositorThread();
+  if (!compositorThread) {
     return false;
   }
 
   RefPtr<ImageBridgeParent> bridge =
-      new ImageBridgeParent(loop, aEndpoint.OtherPid());
-  loop->PostTask(NewRunnableMethod<Endpoint<PImageBridgeParent>&&>(
+      new ImageBridgeParent(compositorThread, aEndpoint.OtherPid());
+  compositorThread->Dispatch(NewRunnableMethod<Endpoint<PImageBridgeParent>&&>(
       "layers::ImageBridgeParent::Bind", bridge, &ImageBridgeParent::Bind,
       std::move(aEndpoint)));
 
@@ -260,7 +264,7 @@ mozilla::ipc::IPCResult ImageBridgeParent::RecvWillClose() {
   // device data (GL textures, etc.) now because shortly after SenStop() returns
   // on the child side the widget will be destroyed along with it's associated
   // GL context.
-  InfallibleTArray<PTextureParent*> textures;
+  nsTArray<PTextureParent*> textures;
   ManagedPTextureParent(textures);
   for (unsigned int i = 0; i < textures.Length(); ++i) {
     RefPtr<TextureHost> tex = TextureHost::AsTextureHost(textures[i]);
@@ -314,7 +318,7 @@ bool ImageBridgeParent::DeallocPMediaSystemResourceManagerParent(
 }
 
 void ImageBridgeParent::SendAsyncMessage(
-    const InfallibleTArray<AsyncParentMessageData>& aMessage) {
+    const nsTArray<AsyncParentMessageData>& aMessage) {
   mozilla::Unused << SendParentAsyncMessages(aMessage);
 }
 
@@ -399,11 +403,11 @@ bool ImageBridgeParent::AllocUnsafeShmem(
   return PImageBridgeParent::AllocUnsafeShmem(aSize, aType, aShmem);
 }
 
-void ImageBridgeParent::DeallocShmem(ipc::Shmem& aShmem) {
+bool ImageBridgeParent::DeallocShmem(ipc::Shmem& aShmem) {
   if (mClosed) {
-    return;
+    return false;
   }
-  PImageBridgeParent::DeallocShmem(aShmem);
+  return PImageBridgeParent::DeallocShmem(aShmem);
 }
 
 bool ImageBridgeParent::IsSameProcess() const {
@@ -427,6 +431,285 @@ void ImageBridgeParent::NotifyNotUsed(PTextureParent* aTexture,
   if (!IsAboutToSendAsyncMessages()) {
     SendPendingAsyncMessages();
   }
+}
+
+#if defined(OS_WIN)
+
+ImageBridgeParent::PluginTextureDatas::PluginTextureDatas(
+    UniquePtr<D3D11TextureData>&& aPluginTextureData,
+    UniquePtr<D3D11TextureData>&& aDisplayTextureData)
+    : mPluginTextureData(std::move(aPluginTextureData)),
+      mDisplayTextureData(std::move(aDisplayTextureData)) {}
+
+ImageBridgeParent::PluginTextureDatas::~PluginTextureDatas() {}
+
+#endif  // defined(OS_WIN)
+
+mozilla::ipc::IPCResult ImageBridgeParent::RecvMakeAsyncPluginSurfaces(
+    SurfaceFormat aFormat, IntSize aSize, SurfaceDescriptorPlugin* aSD) {
+#if defined(OS_WIN)
+  *aSD = SurfaceDescriptorPlugin();
+
+  RefPtr<ID3D11Device> d3dDevice =
+      DeviceManagerDx::Get()->GetCompositorDevice();
+  if (!d3dDevice) {
+    NS_WARNING("Failed to get D3D11 device for plugin display");
+    return IPC_OK();
+  }
+
+  auto pluginSurf = WrapUnique(D3D11TextureData::Create(
+      aSize, aFormat, ALLOC_FOR_OUT_OF_BAND_CONTENT, d3dDevice));
+  if (!pluginSurf) {
+    NS_ERROR("Failed to create plugin surface");
+    return IPC_OK();
+  }
+
+  auto dispSurf = WrapUnique(D3D11TextureData::Create(
+      aSize, aFormat, ALLOC_FOR_OUT_OF_BAND_CONTENT, d3dDevice));
+  if (!dispSurf) {
+    NS_ERROR("Failed to create plugin display surface");
+    return IPC_OK();
+  }
+
+  // Identify plugin surfaces with a simple non-zero 64-bit ID.
+  static uint64_t sPluginSurfaceId = 1;
+
+  SurfaceDescriptor pluginSD, dispSD;
+  if ((!pluginSurf->Serialize(pluginSD)) || (!dispSurf->Serialize(dispSD))) {
+    NS_ERROR("Failed to make surface descriptors for plugin");
+    return IPC_OK();
+  }
+
+  if (!mPluginTextureDatas.put(
+          sPluginSurfaceId, MakeUnique<PluginTextureDatas>(
+                                std::move(pluginSurf), std::move(dispSurf)))) {
+    NS_ERROR("Failed to add plugin surfaces to map");
+    return IPC_OK();
+  }
+
+  SurfaceDescriptorPlugin sd(sPluginSurfaceId, pluginSD, dispSD);
+  RefPtr<TextureHost> displayHost = CreateTextureHostD3D11(
+      dispSD, this, LayersBackend::LAYERS_NONE, TextureFlags::RECYCLE);
+  if (!displayHost) {
+    NS_ERROR("Failed to create plugin display texture host");
+    return IPC_OK();
+  }
+
+  if (!mGPUVideoTextureHosts.put(sPluginSurfaceId, displayHost)) {
+    NS_ERROR("Failed to add plugin display texture host to map");
+    return IPC_OK();
+  }
+
+  *aSD = sd;
+  ++sPluginSurfaceId;
+#endif  // defined(OS_WIN)
+
+  return IPC_OK();
+}
+
+mozilla::ipc::IPCResult ImageBridgeParent::RecvUpdateAsyncPluginSurface(
+    const SurfaceDescriptorPlugin& aSD) {
+#if defined(OS_WIN)
+  uint64_t surfaceId = aSD.id();
+  auto itTextures = mPluginTextureDatas.lookup(surfaceId);
+  if (!itTextures) {
+    return IPC_OK();
+  }
+
+  auto& textures = itTextures->value();
+  if (!textures->IsValid()) {
+    // The display texture may be gone.  The plugin texture should never be gone
+    // here.
+    MOZ_ASSERT(textures->mPluginTextureData);
+    return IPC_OK();
+  }
+
+  RefPtr<ID3D11Device> device = DeviceManagerDx::Get()->GetCompositorDevice();
+  if (!device) {
+    NS_WARNING("Failed to get D3D11 device for plugin display");
+    return IPC_OK();
+  }
+
+  RefPtr<ID3D11DeviceContext> context;
+  device->GetImmediateContext(getter_AddRefs(context));
+  if (!context) {
+    NS_WARNING("Could not get an immediate D3D11 context");
+    return IPC_OK();
+  }
+
+  RefPtr<IDXGIKeyedMutex> dispMutex;
+  HRESULT hr = textures->mDisplayTextureData->GetD3D11Texture()->QueryInterface(
+      __uuidof(IDXGIKeyedMutex), (void**)getter_AddRefs(dispMutex));
+  if (FAILED(hr) || !dispMutex) {
+    NS_WARNING("Could not acquire plugin display IDXGIKeyedMutex");
+    return IPC_OK();
+  }
+
+  RefPtr<IDXGIKeyedMutex> pluginMutex;
+  hr = textures->mPluginTextureData->GetD3D11Texture()->QueryInterface(
+      __uuidof(IDXGIKeyedMutex), (void**)getter_AddRefs(pluginMutex));
+  if (FAILED(hr) || !pluginMutex) {
+    NS_WARNING("Could not acquire plugin offscreen IDXGIKeyedMutex");
+    return IPC_OK();
+  }
+
+  {
+    AutoTextureLock lock1(dispMutex, hr);
+    if (hr == WAIT_ABANDONED || hr == WAIT_TIMEOUT || FAILED(hr)) {
+      NS_WARNING(
+          "Could not acquire DXGI surface lock - display forgot to release?");
+      return IPC_OK();
+    }
+
+    AutoTextureLock lock2(pluginMutex, hr);
+    if (hr == WAIT_ABANDONED || hr == WAIT_TIMEOUT || FAILED(hr)) {
+      NS_WARNING(
+          "Could not acquire DXGI surface lock - plugin forgot to release?");
+      return IPC_OK();
+    }
+
+    context->CopyResource(textures->mDisplayTextureData->GetD3D11Texture(),
+                          textures->mPluginTextureData->GetD3D11Texture());
+  }
+#endif  // defined(OS_WIN)
+  return IPC_OK();
+}
+
+mozilla::ipc::IPCResult ImageBridgeParent::RecvReadbackAsyncPluginSurface(
+    const SurfaceDescriptorPlugin& aSD, SurfaceDescriptor* aResult) {
+#if defined(OS_WIN)
+  *aResult = null_t();
+
+  auto itTextures = mPluginTextureDatas.lookup(aSD.id());
+  if (!itTextures) {
+    return IPC_OK();
+  }
+
+  auto& textures = itTextures->value();
+  D3D11TextureData* displayTexData = textures->mDisplayTextureData.get();
+  MOZ_RELEASE_ASSERT(displayTexData);
+  if ((!displayTexData) || (!displayTexData->GetD3D11Texture())) {
+    NS_WARNING("Error in plugin display texture");
+    return IPC_OK();
+  }
+  MOZ_ASSERT(displayTexData->GetSurfaceFormat() == SurfaceFormat::B8G8R8A8 ||
+             displayTexData->GetSurfaceFormat() == SurfaceFormat::B8G8R8X8);
+
+  RefPtr<ID3D11Device> device;
+  displayTexData->GetD3D11Texture()->GetDevice(getter_AddRefs(device));
+  if (!device) {
+    NS_WARNING("Failed to get D3D11 device for plugin display");
+    return IPC_OK();
+  }
+
+  UniquePtr<BufferTextureData> shmemTexData(BufferTextureData::Create(
+      displayTexData->GetSize(), displayTexData->GetSurfaceFormat(),
+      gfx::BackendType::SKIA, LayersBackend::LAYERS_NONE,
+      displayTexData->GetTextureFlags(), TextureAllocationFlags::ALLOC_DEFAULT,
+      this));
+  if (!shmemTexData) {
+    NS_WARNING("Could not create BufferTextureData");
+    return IPC_OK();
+  }
+
+  if (!gfx::Factory::ReadbackTexture(shmemTexData.get(),
+                                     displayTexData->GetD3D11Texture())) {
+    NS_WARNING("Failed to read plugin texture into Shmem");
+    return IPC_OK();
+  }
+
+  // Take the Shmem from the TextureData.
+  shmemTexData->Serialize(*aResult);
+#endif  // defined(OS_WIN)
+  return IPC_OK();
+}
+
+mozilla::ipc::IPCResult ImageBridgeParent::RecvRemoveAsyncPluginSurface(
+    const SurfaceDescriptorPlugin& aSD, bool aIsFrontSurface) {
+#if defined(OS_WIN)
+  auto itTextures = mPluginTextureDatas.lookup(aSD.id());
+  if (!itTextures) {
+    return IPC_OK();
+  }
+
+  auto& textures = itTextures->value();
+  if (aIsFrontSurface) {
+    textures->mDisplayTextureData = nullptr;
+  } else {
+    textures->mPluginTextureData = nullptr;
+  }
+  if ((!textures->mDisplayTextureData) && (!textures->mPluginTextureData)) {
+    mPluginTextureDatas.remove(aSD.id());
+  }
+#endif  // defined(OS_WIN)
+  return IPC_OK();
+}
+
+#if defined(OS_WIN)
+RefPtr<TextureHost> GetNullPluginTextureHost() {
+  class NullPluginTextureHost : public TextureHost {
+   public:
+    NullPluginTextureHost() : TextureHost(TextureFlags::NO_FLAGS) {}
+
+    ~NullPluginTextureHost() {}
+
+    gfx::SurfaceFormat GetFormat() const override {
+      return gfx::SurfaceFormat::UNKNOWN;
+    }
+
+    already_AddRefed<gfx::DataSourceSurface> GetAsSurface() override {
+      return nullptr;
+    }
+
+    gfx::IntSize GetSize() const override { return gfx::IntSize(); }
+
+    bool BindTextureSource(CompositableTextureSourceRef& aTexture) override {
+      return false;
+    }
+
+    const char* Name() override { return "NullPluginTextureHost"; }
+
+    virtual bool Lock() { return false; }
+
+    void CreateRenderTexture(
+        const wr::ExternalImageId& aExternalImageId) override {}
+
+    uint32_t NumSubTextures() override { return 0; }
+
+    void PushResourceUpdates(wr::TransactionBuilder& aResources,
+                             ResourceUpdateOp aOp,
+                             const Range<wr::ImageKey>& aImageKeys,
+                             const wr::ExternalImageId& aExtID) override {}
+
+    void PushDisplayItems(wr::DisplayListBuilder& aBuilder,
+                          const wr::LayoutRect& aBounds,
+                          const wr::LayoutRect& aClip,
+                          wr::ImageRendering aFilter,
+                          const Range<wr::ImageKey>& aImageKeys,
+                          const bool aPreferCompositorSurface) override {}
+  };
+
+  static StaticRefPtr<TextureHost> sNullPluginTextureHost;
+  if (!sNullPluginTextureHost) {
+    sNullPluginTextureHost = new NullPluginTextureHost();
+    ClearOnShutdown(&sNullPluginTextureHost);
+  };
+
+  MOZ_ASSERT(sNullPluginTextureHost);
+  return sNullPluginTextureHost.get();
+}
+#endif  // defined(OS_WIN)
+
+RefPtr<TextureHost> ImageBridgeParent::LookupTextureHost(
+    const SurfaceDescriptorPlugin& aDescriptor) {
+#if defined(OS_WIN)
+  auto it = mGPUVideoTextureHosts.lookup(aDescriptor.id());
+  RefPtr<TextureHost> ret = it ? it->value() : nullptr;
+  return ret ? ret : GetNullPluginTextureHost();
+#else
+  MOZ_ASSERT_UNREACHABLE("Unsupported architecture.");
+  return nullptr;
+#endif  // defined(OS_WIN)
 }
 
 }  // namespace layers

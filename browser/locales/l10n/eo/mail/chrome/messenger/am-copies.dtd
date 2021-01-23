@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "Kopioj kaj mesaĝujoj">
+<!ENTITY sendingPrefix.label "Kiam sendi mesaĝojn aŭtomate: ">
+<!ENTITY fccMailFolder.label "enmeti iliajn kopiojn en:">
+<!ENTITY fccMailFolder.accesskey "k">
+<!ENTITY fccReplyFollowsParent.label "enmeti respondon en la sama mesaĝujo kiel respondata mesaĝo">
+<!ENTITY fccReplyFollowsParent.accesskey "r">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Sendi kopion al:">
+<!ENTITY ccAddress.accesskey "e">
+<!ENTITY ccAddressList.placeholder "retpoŝtaj adresoj disigitaj per komoj">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Sendi kaŝkopion al:">
+<!ENTITY bccAddress.accesskey "a">
+<!ENTITY bccAddressList.placeholder "retpoŝtaj adresoj disigitaj per komoj">
+<!ENTITY saveMessageDlg.label "Montri konfirmon antaŭ konservi mesaĝojn">
+<!ENTITY saveMessageDlg.accesskey "M">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "la mesaĝujon “senditujo” de konto:">
+<!ENTITY sentFolderOn.accesskey "j">
+<!ENTITY sentInOtherFolder.label "alian mesaĝujon:">
+<!ENTITY sentInOtherFolder.accesskey "n">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Arĥivo">
+<!ENTITY keepArchives.label "Arĥivi mesaĝojn en:">
+<!ENTITY keepArchives.accesskey "A">
+<!ENTITY archiveHierarchyButton.label "Agordoj de arĥivigo…">
+<!ENTITY archiveHierarchyButton.accesskey "g">
+<!ENTITY archivesFolderOn.label "la mesaĝujon “arĥivo” de konto:">
+<!ENTITY archivesFolderOn.accesskey "t">
+<!ENTITY archiveInOtherFolder.label "alian mesaĝujon:">
+<!ENTITY archiveInOtherFolder.accesskey "u">
+<!ENTITY specialFolders.label "Malnetoj kaj ŝablonoj">
+<!ENTITY keepDrafts2.label "Konservi malnetajn mesaĝojn en:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "la mesaĝujon “malnetujo” de konto:">
+<!ENTITY draftsFolderOn.accesskey "m">
+<!ENTITY draftInOtherFolder.label "alian mesaĝujon:">
+<!ENTITY draftInOtherFolder.accesskey "ĝ">
+<!ENTITY keepTemplates.label "Ŝablonoj de mesaĝoj konservi en:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "la mesaĝujon “ŝablonoj” de konto:">
+<!ENTITY templatesFolderOn.accesskey "b">
+<!ENTITY templateInOtherFolder.label "alian mesaĝujon:">
+<!ENTITY templateInOtherFolder.accesskey "l">

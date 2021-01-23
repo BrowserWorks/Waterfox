@@ -12,6 +12,7 @@
       'type': 'executable',
       'sources': [
         'softoken_gtest.cc',
+        'softoken_nssckbi_testlib_gtest.cc',
       ],
       'dependencies': [
         '<(DEPTH)/exports.gyp:nss_exports',
@@ -30,6 +31,7 @@
             '<(DEPTH)/lib/dev/dev.gyp:nssdev',
             '<(DEPTH)/lib/pki/pki.gyp:nsspki',
             '<(DEPTH)/lib/ssl/ssl.gyp:ssl',
+            '<(DEPTH)/lib/libpkix/libpkix.gyp:libpkix',
           ],
         }, {
           'dependencies': [
@@ -43,6 +45,10 @@
   'target_defaults': {
     'include_dirs': [
       '../../lib/util'
+    ],
+    'defines': [
+      'DLL_PREFIX=\"<(dll_prefix)\"',
+      'DLL_SUFFIX=\"<(dll_suffix)\"'
     ]
   },
   'variables': {

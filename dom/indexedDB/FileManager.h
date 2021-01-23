@@ -7,11 +7,9 @@
 #ifndef mozilla_dom_indexeddb_filemanager_h__
 #define mozilla_dom_indexeddb_filemanager_h__
 
-#include "mozilla/Attributes.h"
 #include "mozilla/dom/quota/PersistenceType.h"
-#include "nsDataHashtable.h"
-#include "nsHashKeys.h"
-#include "nsISupportsImpl.h"
+#include "mozilla/InitializedOnce.h"
+#include "FileManagerBase.h"
 
 class nsIFile;
 class mozIStorageConnection;
@@ -20,44 +18,41 @@ namespace mozilla {
 namespace dom {
 namespace indexedDB {
 
-class FileInfo;
-
 // Implemented in ActorsParent.cpp.
-class FileManager final {
-  friend class FileInfo;
+class FileManager final : public FileManagerBase<FileManager>,
+                          public AtomicSafeRefCounted<FileManager> {
+  using PersistenceType = mozilla::dom::quota::PersistenceType;
+  using FileManagerBase<FileManager>::MutexType;
 
-  typedef mozilla::dom::quota::PersistenceType PersistenceType;
+  const PersistenceType mPersistenceType;
+  const nsCString mGroup;
+  const nsCString mOrigin;
+  const nsString mDatabaseName;
 
-  PersistenceType mPersistenceType;
-  nsCString mGroup;
-  nsCString mOrigin;
-  nsString mDatabaseName;
-
-  nsString mDirectoryPath;
-  nsString mJournalDirectoryPath;
-
-  int64_t mLastFileId;
-
-  // Protected by IndexedDatabaseManager::FileMutex()
-  nsDataHashtable<nsUint64HashKey, FileInfo*> mFileInfos;
+  LazyInitializedOnce<const nsString> mDirectoryPath;
+  LazyInitializedOnce<const nsString> mJournalDirectoryPath;
 
   const bool mEnforcingQuota;
-  bool mInvalidated;
+
+  // Lock protecting FileManager.mFileInfos.
+  // It's s also used to atomically update FileInfo.mRefCnt and
+  // FileInfo.mDBRefCnt
+  static MutexType sMutex;
 
  public:
-  static already_AddRefed<nsIFile> GetFileForId(nsIFile* aDirectory,
-                                                int64_t aId);
+  [[nodiscard]] static nsCOMPtr<nsIFile> GetFileForId(nsIFile* aDirectory,
+                                                      int64_t aId);
 
-  static already_AddRefed<nsIFile> GetCheckedFileForId(nsIFile* aDirectory,
-                                                       int64_t aId);
+  [[nodiscard]] static nsCOMPtr<nsIFile> GetCheckedFileForId(
+      nsIFile* aDirectory, int64_t aId);
 
-  static nsresult InitDirectory(nsIFile* aDirectory, nsIFile* aDatabaseFile,
-                                PersistenceType aPersistenceType,
-                                const nsACString& aGroup,
+  static nsresult InitDirectory(nsIFile& aDirectory, nsIFile& aDatabaseFile,
                                 const nsACString& aOrigin,
                                 uint32_t aTelemetryId);
 
-  static nsresult GetUsage(nsIFile* aDirectory, uint64_t* aUsage);
+  static nsresult GetUsage(nsIFile* aDirectory, Maybe<uint64_t>& aUsage);
+
+  static nsresult GetUsage(nsIFile* aDirectory, uint64_t& aUsage);
 
   FileManager(PersistenceType aPersistenceType, const nsACString& aGroup,
               const nsACString& aOrigin, const nsAString& aDatabaseName,
@@ -73,27 +68,28 @@ class FileManager final {
 
   bool EnforcingQuota() const { return mEnforcingQuota; }
 
-  bool Invalidated() const { return mInvalidated; }
+  nsresult Init(nsIFile* aDirectory, mozIStorageConnection& aConnection);
 
-  nsresult Init(nsIFile* aDirectory, mozIStorageConnection* aConnection);
+  [[nodiscard]] nsCOMPtr<nsIFile> GetDirectory();
 
-  nsresult Invalidate();
+  [[nodiscard]] nsCOMPtr<nsIFile> GetCheckedDirectory();
 
-  already_AddRefed<nsIFile> GetDirectory();
+  [[nodiscard]] nsCOMPtr<nsIFile> GetJournalDirectory();
 
-  already_AddRefed<nsIFile> GetCheckedDirectory();
+  [[nodiscard]] nsCOMPtr<nsIFile> EnsureJournalDirectory();
 
-  already_AddRefed<nsIFile> GetJournalDirectory();
+  [[nodiscard]] nsresult SyncDeleteFile(int64_t aId);
 
-  already_AddRefed<nsIFile> EnsureJournalDirectory();
+  // XXX When getting rid of FileHelper, this method should be removed/made
+  // private.
+  [[nodiscard]] nsresult SyncDeleteFile(nsIFile& aFile, nsIFile& aJournalFile);
 
-  already_AddRefed<FileInfo> GetFileInfo(int64_t aId);
+  [[nodiscard]] nsresult AsyncDeleteFile(int64_t aFileId);
 
-  already_AddRefed<FileInfo> GetNewFileInfo();
+  MOZ_DECLARE_REFCOUNTED_TYPENAME(FileManager)
 
-  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(FileManager)
+  static StaticMutex& Mutex() { return sMutex; }
 
- private:
   ~FileManager() = default;
 };
 

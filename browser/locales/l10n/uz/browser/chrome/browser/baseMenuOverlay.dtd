@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProduct2.label      "&brandShorterName; haqida">
+<!ENTITY aboutProduct2.accesskey  "h">
+
+<!ENTITY preferencesCmdMac.label        "Parametrlar…">
+
+<!ENTITY servicesMenuMac.label          "Xizmatlar">
+
+<!ENTITY hideThisAppCmdMac2.label       "&brandShorterName;ni yashirish">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Boshqalarini yashirish">
+
+<!ENTITY showAllAppsCmdMac.label        "Barchasini ko‘rsatish">
+

@@ -1,3 +1,7 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this file,
+# You can obtain one at http://mozilla.org/MPL/2.0/.
+
 # mozilla/autoload.py: Autoload SpiderMonkey pretty-printers.
 
 print("Loading JavaScript value pretty-printers; see js/src/gdb/README.")
@@ -9,6 +13,7 @@ import mozilla.prettyprinters
 # Import the pretty-printer modules. As a side effect, loading these
 # modules registers their printers with mozilla.prettyprinters.
 import mozilla.GCCellPtr
+import mozilla.ExecutableAllocator
 import mozilla.Interpreter
 import mozilla.IonGraph
 import mozilla.JSObject
@@ -16,6 +21,7 @@ import mozilla.JSString
 import mozilla.JSSymbol
 import mozilla.Root
 import mozilla.jsid
+import mozilla.jsop
 import mozilla.jsval
 import mozilla.unwind
 

@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+<!-- Tools menu -->
+
+
+<!ENTITY lightning.preferencesLabel "Féilire">
+<!-- New menu popup in File menu -->
+
+<!ENTITY lightning.menupopup.new.event.label    "Imeacht…">
+<!ENTITY lightning.menupopup.new.event.accesskey "e">
+<!ENTITY lightning.menupopup.new.task.label     "Tasc…">
+<!ENTITY lightning.menupopup.new.task.accesskey "T">
+<!ENTITY lightning.menupopup.new.calendar.label "Féilire…">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "F">
+<!-- Open menu popup in File menu -->
+
+<!ENTITY lightning.menupopup.open.label               "Oscail">
+<!ENTITY lightning.menupopup.open.accesskey           "O">
+<!ENTITY lightning.menupopup.open.message.label       "Teachtaireacht Sábháilte…">
+<!ENTITY lightning.menupopup.open.message.accesskey   "T">
+<!ENTITY lightning.menupopup.open.calendar.label      "Comhad Féilire…">
+<!ENTITY lightning.menupopup.open.calendar.accesskey  "C">
+<!-- View Menu -->
+
+<!ENTITY lightning.menu.view.calendar.label            "Féilire">
+<!ENTITY lightning.menu.view.calendar.accesskey        "F">
+<!ENTITY lightning.menu.view.tasks.label               "Tascanna">
+<!ENTITY lightning.menu.view.tasks.accesskey           "c">
+<!-- Events and Tasks menu -->
+
+<!ENTITY lightning.menu.eventtask.label                "Imeachtaí agus Tascanna">
+<!ENTITY lightning.menu.eventtask.accesskey            "m">
+<!-- properties dialog, calendar creation wizard -->
+
+<!ENTITY lightning.calendarproperties.email.label               "Ríomhphost:">
+<!-- iMIP Bar (meeting support) -->
+
+<!ENTITY lightning.imipbar.btnAccept.label                                  "Glac Leis">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext                           "Glac leis an gcuireadh">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label                       "Glac le gach ceann">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences2.tooltiptext                "Glac leis an gcuireadh chun na himeachtaí go léir">
+<!ENTITY lightning.imipbar.btnAdd.label                                     "Cuir Leis">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext                               "Cuir an t-imeacht leis an bhféilire">
+<!ENTITY lightning.imipbar.btnDecline.label                                 "Diúltaigh">
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext                          "Diúltaigh an cuireadh">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label                      "Diúltaigh gach ceann">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences2.tooltiptext               "Diúltaigh an cuireadh chun na himeachtaí go léir">
+<!ENTITY lightning.imipbar.btnDeclineCounter.label                          "Diúltaigh">
+<!ENTITY lightning.imipbar.btnDeclineCounter.tooltiptext                    "Diúltaigh an fritogra">
+<!ENTITY lightning.imipbar.btnDelete.label                                  "Scrios">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext                            "Scrios ón bhféilire">
+<!ENTITY lightning.imipbar.btnDetails.label                                 "Mionsonraí…">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext                           "Taispeáin mionsonraí an imeachta">
+<!ENTITY lightning.imipbar.btnMore.label                                    "Tuilleadh">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext                              "Cliceáil chun tuilleadh roghanna a fháil">
+<!ENTITY lightning.imipbar.btnReconfirm2.label                              "Deimhnigh arís">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext                         "Seol deimhniú eile chuig an eagraí">
+<!ENTITY lightning.imipbar.btnReschedule.label                              "Athsceidealaigh">
+<!ENTITY lightning.imipbar.btnReschedule.tooltiptext                        "Athsceidealaigh an t-imeacht">
+<!ENTITY lightning.imipbar.btnSaveCopy.label                                "Sábháil cóip den imeacht">
+<!ENTITY lightning.imipbar.btnSaveCopy.tooltiptext                          "Sábháil cóip den imeacht san fhéilire gan freagra a thabhairt ar an eagraí. Glanfar liosta na rannpháirtithe.">
+<!ENTITY lightning.imipbar.btnTentative.label                               "Sealadach">
+<!ENTITY lightning.imipbar.btnTentative2.tooltiptext                        "Glac leis an gcuireadh go sealadach">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences.label                    "Glac le gach ceann go sealadach">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences2.tooltiptext             "Glac leis an gcuireadh chun na himeachtaí go léir go sealadach">
+<!ENTITY lightning.imipbar.btnUpdate.label                                  "Nuashonrú">
+<!ENTITY lightning.imipbar.btnUpdate.tooltiptext                            "Nuashonraigh an t-imeacht sa bhféilire">
+<!ENTITY lightning.imipbar.description                                      "Tá cuireadh d'imeacht sa teachtaireacht seo.">
+<!-- Lightning specific keybindings -->
+
+<!ENTITY lightning.keys.event.showCalendar.key "C">
+<!ENTITY lightning.keys.event.showTasks.key "D">
+<!ENTITY lightning.keys.event.new "I">
+<!ENTITY lightning.keys.todo.new "D">
+<!-- Account Central page -->
+
+<!ENTITY lightning.acctCentral.newCalendar.label "Cruthaigh féilire nua">
+<!-- today-pane-specific -->
+
+<!ENTITY todaypane.showMinimonth.label "Taispeáin Mion-Mhí">
+<!ENTITY todaypane.showMinimonth.accesskey "M">
+<!ENTITY todaypane.showMiniday.label "Taispeáin Mion-Lá">
+<!ENTITY todaypane.showMiniday.accesskey  "L">
+<!ENTITY todaypane.showNone.label "Ná Taispeáin Faic">
+<!ENTITY todaypane.showNone.accesskey "F">
+<!ENTITY todaypane.showTodayPane.label "Taispeáin Pána Inniu">
+<!ENTITY todaypane.showTodayPane.accesskey "P">
+<!ENTITY todaypane.statusButton.label "Pána Inniu">

@@ -12,13 +12,27 @@ from __future__ import absolute_import
 
 import itertools
 import os
-from abc import ABCMeta, abstractmethod
 from collections import defaultdict, MutableSequence
+
+import six
+from six import string_types
 
 from .expression import (
     parse,
     ParseError,
 )
+from .util import normsep
+
+logger = None
+
+
+def log(msg, level='info'):
+    from mozlog import get_default_logger
+    global logger
+    if not logger:
+        logger = get_default_logger(component='manifestparser')
+    if logger:
+        getattr(logger, level)(msg)
 
 
 # built-in filters
@@ -92,10 +106,12 @@ class InstanceFilter(object):
     """
     unique = True
 
+    __hash__ = super.__hash__
+
     def __init__(self, *args, **kwargs):
         self.fmt_args = ', '.join(itertools.chain(
             [str(a) for a in args],
-            ['{}={}'.format(k, v) for k, v in kwargs.iteritems()]))
+            ['{}={}'.format(k, v) for k, v in six.iteritems(kwargs)]))
 
     def __eq__(self, other):
         if self.unique:
@@ -252,26 +268,24 @@ class chunk_by_dir(InstanceFilter):
         # be yielded for reporting purposes. Put them all in chunk 1 for
         # simplicity.
         if self.this_chunk == 1:
-            disabled_dirs = [v for k, v in tests_by_dir.iteritems()
+            disabled_dirs = [v for k, v in six.iteritems(tests_by_dir)
                              if k not in ordered_dirs]
             for disabled_test in itertools.chain(*disabled_dirs):
                 yield disabled_test
 
 
-class ManifestChunk(InstanceFilter):
+class chunk_by_manifest(InstanceFilter):
     """
-    Base class for chunking tests by manifest using a numerical key.
-    """
-    __metaclass__ = ABCMeta
+    Chunking algorithm that tries to evenly distribute tests while ensuring
+    tests in the same manifest stay together.
 
+    :param this_chunk: the current chunk, 1 <= this_chunk <= total_chunks
+    :param total_chunks: the total number of chunks
+    """
     def __init__(self, this_chunk, total_chunks, *args, **kwargs):
         InstanceFilter.__init__(self, this_chunk, total_chunks, *args, **kwargs)
         self.this_chunk = this_chunk
         self.total_chunks = total_chunks
-
-    @abstractmethod
-    def key(self, tests):
-        pass
 
     def __call__(self, tests, values):
         tests = list(tests)
@@ -280,34 +294,20 @@ class ManifestChunk(InstanceFilter):
         tests_by_manifest = []
         for manifest in manifests:
             mtests = [t for t in tests if t['manifest'] == manifest]
-            tests_by_manifest.append((self.key(mtests), mtests))
-        tests_by_manifest.sort(reverse=True)
+            tests_by_manifest.append(mtests)
+        tests_by_manifest.sort(reverse=True, key=lambda x: (len(x), x))
 
-        tests_by_chunk = [[0, []] for i in range(self.total_chunks)]
-        for key, batch in tests_by_manifest:
-            # sort first by key, then by number of tests in case of a tie.
-            # This guarantees the chunk with the lowest key will always
+        tests_by_chunk = [[] for i in range(self.total_chunks)]
+        for batch in tests_by_manifest:
+            # Sort to guarantee the chunk with the lowest score will always
             # get the next batch of tests.
-            tests_by_chunk.sort(key=lambda x: (x[0], len(x[1])))
-            tests_by_chunk[0][0] += key
-            tests_by_chunk[0][1].extend(batch)
+            tests_by_chunk.sort(key=lambda x: (len(x), x))
+            tests_by_chunk[0].extend(batch)
 
-        return (t for t in tests_by_chunk[self.this_chunk - 1][1])
-
-
-class chunk_by_manifest(ManifestChunk):
-    """
-    Chunking algorithm that tries to evenly distribute tests while ensuring
-    tests in the same manifest stay together.
-
-    :param this_chunk: the current chunk, 1 <= this_chunk <= total_chunks
-    :param total_chunks: the total number of chunks
-    """
-    def key(self, tests):
-        return len(tests)
+        return (t for t in tests_by_chunk[self.this_chunk - 1])
 
 
-class chunk_by_runtime(ManifestChunk):
+class chunk_by_runtime(InstanceFilter):
     """
     Chunking algorithm that attempts to group tests into chunks based on their
     average runtimes. It keeps manifests of tests together and pairs slow
@@ -315,24 +315,64 @@ class chunk_by_runtime(ManifestChunk):
 
     :param this_chunk: the current chunk, 1 <= this_chunk <= total_chunks
     :param total_chunks: the total number of chunks
-    :param runtimes: dictionary of test runtime data, of the form
-                     {<test path>: <average runtime>}
-    :param default_runtime: value in seconds to assign tests that don't exist
-                            in the runtimes file
+    :param runtimes: dictionary of manifest runtime data, of the form
+                     {<manifest path>: <average runtime>}
     """
 
-    def __init__(self, this_chunk, total_chunks, runtimes, default_runtime=0):
-        ManifestChunk.__init__(self, this_chunk, total_chunks, runtimes,
-                               default_runtime=default_runtime)
-        # defaultdict(lambda:<int>) assigns all non-existent keys the value of
-        # <int>. This means all tests we encounter that don't exist in the
-        # runtimes file will be assigned `default_runtime`.
-        self.runtimes = defaultdict(lambda: default_runtime)
-        self.runtimes.update(runtimes)
+    def __init__(self, this_chunk, total_chunks, runtimes):
+        InstanceFilter.__init__(self, this_chunk, total_chunks, runtimes)
+        self.this_chunk = this_chunk
+        self.total_chunks = total_chunks
+        self.runtimes = {normsep(m): r for m, r in runtimes.items()}
 
-    def key(self, tests):
-        return sum(self.runtimes[t['relpath']] for t in tests
-                   if 'disabled' not in t)
+    @classmethod
+    def get_manifest(cls, test):
+        manifest = normsep(test.get('ancestor_manifest', ''))
+
+        # Ignore ancestor_manifests that live at the root (e.g, don't have a
+        # path separator). The only time this should happen is when they are
+        # generated by the build system and we shouldn't count generated
+        # manifests for chunking purposes.
+        if not manifest or '/' not in manifest:
+            manifest = normsep(test['manifest_relpath'])
+        return manifest
+
+    def get_chunked_manifests(self, manifests):
+        # Find runtimes for all relevant manifests.
+        runtimes = [(self.runtimes[m], m) for m in manifests if m in self.runtimes]
+
+        # Compute the average to use as a default for manifests that don't exist.
+        times = [r[0] for r in runtimes]
+        avg = round(sum(times) / len(times), 2) if times else 0
+        missing = sorted([m for m in manifests if m not in self.runtimes])
+        log("Applying average runtime of {}s to the following missing manifests:\n{}".format(
+            avg, '  ' + '\n  '.join(missing)))
+        runtimes.extend([(avg, m) for m in missing])
+
+        # Each chunk is of the form [<runtime>, <manifests>].
+        chunks = [[0, []] for i in range(self.total_chunks)]
+
+        # Sort runtimes from slowest -> fastest.
+        for runtime, manifest in sorted(runtimes, reverse=True):
+            # Sort chunks from fastest -> slowest. This guarantees the fastest
+            # chunk will be assigned the slowest remaining manifest.
+            chunks.sort(key=lambda x: (x[0], len(x[1]), x[1]))
+            chunks[0][0] += runtime
+            chunks[0][1].append(manifest)
+
+        # Sort one last time so we typically get chunks ordered from fastest to
+        # slowest.
+        chunks.sort(key=lambda x: (x[0], len(x[1])))
+        return chunks
+
+    def __call__(self, tests, values):
+        tests = list(tests)
+        manifests = set(self.get_manifest(t) for t in tests)
+        chunks = self.get_chunked_manifests(manifests)
+        runtime, this_manifests = chunks[self.this_chunk - 1]
+        log("Cumulative test runtime is around {} minutes (average is {} minutes)".format(
+            round(runtime / 60), round(sum([c[0] for c in chunks]) / (60 * len(chunks)))))
+        return (t for t in tests if self.get_manifest(t) in this_manifests)
 
 
 class tags(InstanceFilter):
@@ -354,7 +394,7 @@ class tags(InstanceFilter):
 
     def __init__(self, tags):
         InstanceFilter.__init__(self, tags)
-        if isinstance(tags, basestring):
+        if isinstance(tags, string_types):
             tags = [tags]
         self.tags = tags
 
@@ -372,12 +412,12 @@ class pathprefix(InstanceFilter):
     """
     Removes tests that don't start with any of the given test paths.
 
-    :param paths: A list of test paths to filter on
+    :param paths: A list of test paths (or manifests) to filter on
     """
 
     def __init__(self, paths):
         InstanceFilter.__init__(self, paths)
-        if isinstance(paths, basestring):
+        if isinstance(paths, string_types):
             paths = [paths]
         self.paths = paths
 
@@ -386,12 +426,26 @@ class pathprefix(InstanceFilter):
             for tp in self.paths:
                 tp = os.path.normpath(tp)
 
-                path = test['relpath']
-                if os.path.isabs(tp):
-                    path = test['path']
+                if tp.endswith('.ini'):
+                    mpaths = [test['manifest_relpath']]
+                    if 'ancestor_manifest' in test:
+                        mpaths.append(test['ancestor_manifest'])
 
-                if not os.path.normpath(path).startswith(tp):
-                    continue
+                    if os.path.isabs(tp):
+                        root = test['manifest'][:-len(test['manifest_relpath'])-1]
+                        mpaths = [os.path.join(root, m) for m in mpaths]
+
+                    # only return tests that are in this manifest
+                    if not any(os.path.normpath(m) == tp for m in mpaths):
+                        continue
+                else:
+                    # only return tests that start with this path
+                    path = test['relpath']
+                    if os.path.isabs(tp):
+                        path = test['path']
+
+                    if not os.path.normpath(path).startswith(tp):
+                        continue
 
                 # any test path that points to a single file will be run no
                 # matter what, even if it's disabled

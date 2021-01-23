@@ -7,6 +7,7 @@
 #include "mozilla/layers/RenderRootStateManager.h"
 
 #include "mozilla/layers/WebRenderBridgeChild.h"
+#include "mozilla/layers/WebRenderLayerManager.h"
 
 namespace mozilla {
 namespace layers {
@@ -35,10 +36,9 @@ RenderRootStateManager::GetWebRenderUserDataTable() {
 
 wr::IpcResourceUpdateQueue& RenderRootStateManager::AsyncResourceUpdates() {
   MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(XRE_IsParentProcess() || mRenderRoot == wr::RenderRoot::Default);
 
   if (!mAsyncResourceUpdates) {
-    mAsyncResourceUpdates.emplace(WrBridge(), mRenderRoot);
+    mAsyncResourceUpdates.emplace(WrBridge());
 
     RefPtr<Runnable> task = NewRunnableMethod(
         "RenderRootStateManager::FlushAsyncResourceUpdates", this,
@@ -72,7 +72,7 @@ void RenderRootStateManager::FlushAsyncResourceUpdates() {
   }
 
   if (!IsDestroyed() && WrBridge()) {
-    WrBridge()->UpdateResources(mAsyncResourceUpdates.ref(), mRenderRoot);
+    WrBridge()->UpdateResources(mAsyncResourceUpdates.ref());
   }
 
   mAsyncResourceUpdates.reset();
@@ -175,41 +175,38 @@ void RenderRootStateManager::WrReleasedImages(
 
 void RenderRootStateManager::AddWebRenderParentCommand(
     const WebRenderParentCommand& aCmd) {
-  WrBridge()->AddWebRenderParentCommand(aCmd, mRenderRoot);
+  WrBridge()->AddWebRenderParentCommand(aCmd);
 }
 void RenderRootStateManager::UpdateResources(
     wr::IpcResourceUpdateQueue& aResources) {
-  WrBridge()->UpdateResources(aResources, mRenderRoot);
+  WrBridge()->UpdateResources(aResources);
 }
 void RenderRootStateManager::AddPipelineIdForAsyncCompositable(
     const wr::PipelineId& aPipelineId, const CompositableHandle& aHandle) {
-  WrBridge()->AddPipelineIdForAsyncCompositable(aPipelineId, aHandle,
-                                                mRenderRoot);
+  WrBridge()->AddPipelineIdForAsyncCompositable(aPipelineId, aHandle);
 }
 void RenderRootStateManager::AddPipelineIdForCompositable(
     const wr::PipelineId& aPipelineId, const CompositableHandle& aHandle) {
-  WrBridge()->AddPipelineIdForCompositable(aPipelineId, aHandle, mRenderRoot);
+  WrBridge()->AddPipelineIdForCompositable(aPipelineId, aHandle);
 }
 void RenderRootStateManager::RemovePipelineIdForCompositable(
     const wr::PipelineId& aPipelineId) {
-  WrBridge()->RemovePipelineIdForCompositable(aPipelineId, mRenderRoot);
+  WrBridge()->RemovePipelineIdForCompositable(aPipelineId);
 }
 /// Release TextureClient that is bounded to ImageKey.
 /// It is used for recycling TextureClient.
 void RenderRootStateManager::ReleaseTextureOfImage(const wr::ImageKey& aKey) {
-  WrBridge()->ReleaseTextureOfImage(aKey, mRenderRoot);
+  WrBridge()->ReleaseTextureOfImage(aKey);
 }
 
 Maybe<wr::FontInstanceKey> RenderRootStateManager::GetFontKeyForScaledFont(
     gfx::ScaledFont* aScaledFont, wr::IpcResourceUpdateQueue* aResources) {
-  return WrBridge()->GetFontKeyForScaledFont(aScaledFont, mRenderRoot,
-                                             aResources);
+  return WrBridge()->GetFontKeyForScaledFont(aScaledFont, aResources);
 }
 
 Maybe<wr::FontKey> RenderRootStateManager::GetFontKeyForUnscaledFont(
     gfx::UnscaledFont* aUnscaledFont, wr::IpcResourceUpdateQueue* aResources) {
-  return WrBridge()->GetFontKeyForUnscaledFont(aUnscaledFont, mRenderRoot,
-                                               aResources);
+  return WrBridge()->GetFontKeyForUnscaledFont(aUnscaledFont, aResources);
 }
 
 }  // namespace layers

@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY joinChatWindow.title           "චැට් එකට සම්බන්ධ වන්න">
+<!ENTITY name.label                     "කාමරය">
+<!ENTITY optional.label                 "(වරණීය)">
+<!ENTITY account.label                  "ගිණුම">
+<!ENTITY autojoin.label                 "මෙම චැට් කාමරයට ස්වයංක්‍රීයව සම්බන්ධ වන්න">
+<!ENTITY autojoin.accesskey             "A">

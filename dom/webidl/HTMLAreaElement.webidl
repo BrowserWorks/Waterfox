@@ -13,8 +13,10 @@
  */
 
 // http://www.whatwg.org/specs/web-apps/current-work/#the-area-element
-[HTMLConstructor]
+[Exposed=Window]
 interface HTMLAreaElement : HTMLElement {
+  [HTMLConstructor] constructor();
+
            [CEReactions, SetterThrows]
            attribute DOMString alt;
            [CEReactions, SetterThrows]
@@ -35,7 +37,7 @@ interface HTMLAreaElement : HTMLElement {
   readonly attribute DOMTokenList relList;
 };
 
-HTMLAreaElement implements HTMLHyperlinkElementUtils;
+HTMLAreaElement includes HTMLHyperlinkElementUtils;
 
 // http://www.whatwg.org/specs/web-apps/current-work/#other-elements,-attributes-and-apis
 partial interface HTMLAreaElement {

@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- File menu items -->
+
+<!ENTITY openFileCmd.label "បើក​ឯកសារ…">
+<!ENTITY openFileCmd.accesskey "O">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "បើក​ទីតាំង​បណ្ដាញ...">
+<!ENTITY openRemoteCmd.accesskey "L">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "ស្លាក​ថ្មីៗ">
+<!ENTITY fileRecentMenu.accesskey "R">
+<!ENTITY saveCmd.label "Save">
+<!ENTITY saveCmd.accesskey "S">
+<!ENTITY saveAsCmd.label "រក្សាទុក​ជា...">
+<!ENTITY saveAsCmd.accesskey "A">
+<!ENTITY saveAsChangeEncodingCmd2.label "រក្សាទុក ហើយ​​ផ្លាស់ប្ដូរ​អត្ថបទ តួអក្សរ">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "ត">
+<!ENTITY publishCmd.label "បោះពុម្ព​ផ្សាយ">
+<!ENTITY publishCmd.accesskey "b">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "បោះពុម្ព​ផ្សាយ​ជា...">
+<!ENTITY publishAsCmd.accesskey "h">
+<!ENTITY fileRevert.label "ត្រឡប់​ទៅ​ដើម​">
+<!ENTITY fileRevert.accesskey "t">
+<!-- Edit menu items -->
+
+<!ENTITY publishSettings.label "កំពុងបោះពុម្ពផ្សាយ​ការ​កំណត់​តំបន់បណ្ដាញ...">
+<!ENTITY publishSettings.accesskey "b">
+<!-- Toolbar buttons/items -->
+
+<!ENTITY newToolbarCmd.label "ព័ត៌មាន">
+<!ENTITY newToolbarCmd.tooltip "បង្កើត​ទំព័រតែង​ថ្មី">
+<!ENTITY openToolbarCmd.label "Բացել">
+<!ENTITY openToolbarCmd.tooltip "បើក​ឯកសារ​មូលដ្ឋាន">
+<!ENTITY saveToolbarCmd.tooltip "រក្សាទុក​ឯកសារ​ទៅទីតាំង​មូលដ្ឋាន">
+<!ENTITY publishToolbarCmd.tooltip "ផ្ទុក​ឯកសារ​ឡើង​ទៅទីតាំង​ឆ្ងាយ">

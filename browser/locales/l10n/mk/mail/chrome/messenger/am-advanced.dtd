@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!ENTITY smtpServer.label "Поставки за серверот за испраќање (SMTP)">
+<!-- LOCALIZATION NOTE (smtpDesc.label): do not translate "SMTP" in below line -->
+
+<!ENTITY smtpListAdd.label "Додај…">
+<!ENTITY smtpListAdd.accesskey "Д">
+<!ENTITY smtpListEdit.label "Уреди…">
+<!ENTITY smtpListEdit.accesskey "е">
+<!ENTITY smtpListDelete.label "Отстрани">
+<!ENTITY smtpListDelete.accesskey "р">
+<!ENTITY smtpListSetDefault.label "Основен сервер">
+<!ENTITY smtpListSetDefault.accesskey "с">
+
+<!ENTITY serverDescription.label "Опис: ">
+<!ENTITY serverName.label "Име на сервер: ">
+<!ENTITY serverPort.label "Порта: ">
+<!ENTITY userName.label "Корисничко име: ">

@@ -4,22 +4,13 @@
 
 @namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
 
-#commonDialog > image {
-  margin-inline-end: 14px !important;
-}
-
-#commonDialog > .dialog-button-box {
-  margin-inline-start: 80px;
-}
-
-dialog { 
+:host {
   -moz-appearance: dialog;
   padding: 14px;
 }
 
 /* ::::: dialog buttons ::::: */
 
-.dialog-button {
+button {
   font: menu;
 }
-

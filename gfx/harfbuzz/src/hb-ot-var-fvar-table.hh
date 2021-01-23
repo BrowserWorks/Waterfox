@@ -44,7 +44,7 @@ struct InstanceRecord
 {
   friend struct fvar;
 
-  hb_array_t<const Fixed> get_coordinates (unsigned int axis_count) const
+  hb_array_t<const HBFixed> get_coordinates (unsigned int axis_count) const
   { return coordinatesZ.as_array (axis_count); }
 
   bool sanitize (hb_sanitize_context_t *c, unsigned int axis_count) const
@@ -58,7 +58,7 @@ struct InstanceRecord
   NameID	subfamilyNameID;/* The name ID for entries in the 'name' table
 				 * that provide subfamily names for this instance. */
   HBUINT16	flags;		/* Reserved for future use — set to 0. */
-  UnsizedArrayOf<Fixed>
+  UnsizedArrayOf<HBFixed>
 		coordinatesZ;	/* The coordinates array for this instance. */
   //NameID	postScriptNameIDX;/*Optional. The name ID for entries in the 'name'
   //				  * table that provide PostScript names for this
@@ -83,9 +83,9 @@ struct AxisRecord
 
   public:
   Tag		axisTag;	/* Tag identifying the design variation for the axis. */
-  Fixed		minValue;	/* The minimum coordinate value for the axis. */
-  Fixed		defaultValue;	/* The default coordinate value for the axis. */
-  Fixed		maxValue;	/* The maximum coordinate value for the axis. */
+  HBFixed	minValue;	/* The minimum coordinate value for the axis. */
+  HBFixed	defaultValue;	/* The default coordinate value for the axis. */
+  HBFixed	maxValue;	/* The maximum coordinate value for the axis. */
   HBUINT16	flags;		/* Axis flags. */
   NameID	axisNameID;	/* The name ID for entries in the 'name' table that
 				 * provide a display name for this axis. */
@@ -114,17 +114,19 @@ struct fvar
 
   unsigned int get_axis_count () const { return axisCount; }
 
+#ifndef HB_DISABLE_DEPRECATED
   void get_axis_deprecated (unsigned int axis_index,
 				   hb_ot_var_axis_t *info) const
   {
     const AxisRecord &axis = get_axes ()[axis_index];
     info->tag = axis.axisTag;
     info->name_id =  axis.axisNameID;
-    info->default_value = axis.defaultValue / 65536.;
+    info->default_value = axis.defaultValue / 65536.f;
     /* Ensure order, to simplify client math. */
-    info->min_value = MIN<float> (info->default_value, axis.minValue / 65536.);
-    info->max_value = MAX<float> (info->default_value, axis.maxValue / 65536.);
+    info->min_value = hb_min (info->default_value, axis.minValue / 65536.f);
+    info->max_value = hb_max (info->default_value, axis.maxValue / 65536.f);
   }
+#endif
 
   void get_axis_info (unsigned int axis_index,
 		      hb_ot_var_axis_info_t *info) const
@@ -134,34 +136,27 @@ struct fvar
     info->tag = axis.axisTag;
     info->name_id =  axis.axisNameID;
     info->flags = (hb_ot_var_axis_flags_t) (unsigned int) axis.flags;
-    info->default_value = axis.defaultValue / 65536.;
+    info->default_value = axis.defaultValue / 65536.f;
     /* Ensure order, to simplify client math. */
-    info->min_value = MIN<float> (info->default_value, axis.minValue / 65536.);
-    info->max_value = MAX<float> (info->default_value, axis.maxValue / 65536.);
+    info->min_value = hb_min (info->default_value, axis.minValue / 65536.f);
+    info->max_value = hb_max (info->default_value, axis.maxValue / 65536.f);
     info->reserved = 0;
   }
 
+#ifndef HB_DISABLE_DEPRECATED
   unsigned int get_axes_deprecated (unsigned int      start_offset,
 				    unsigned int     *axes_count /* IN/OUT */,
 				    hb_ot_var_axis_t *axes_array /* OUT */) const
   {
     if (axes_count)
     {
-      /* TODO Rewrite as hb_array_t<>::sub-array() */
-      unsigned int count = axisCount;
-      start_offset = MIN (start_offset, count);
-
-      count -= start_offset;
-      axes_array += start_offset;
-
-      count = MIN (count, *axes_count);
-      *axes_count = count;
-
-      for (unsigned int i = 0; i < count; i++)
+      hb_array_t<const AxisRecord> arr = hb_array (&(this+firstAxis), axisCount).sub_array (start_offset, axes_count);
+      for (unsigned i = 0; i < arr.length; ++i)
 	get_axis_deprecated (start_offset + i, axes_array + i);
     }
     return axisCount;
   }
+#endif
 
   unsigned int get_axis_infos (unsigned int           start_offset,
 			       unsigned int          *axes_count /* IN/OUT */,
@@ -169,22 +164,14 @@ struct fvar
   {
     if (axes_count)
     {
-      /* TODO Rewrite as hb_array_t<>::sub-array() */
-      unsigned int count = axisCount;
-      start_offset = MIN (start_offset, count);
-
-      count -= start_offset;
-      axes_array += start_offset;
-
-      count = MIN (count, *axes_count);
-      *axes_count = count;
-
-      for (unsigned int i = 0; i < count; i++)
+      hb_array_t<const AxisRecord> arr = hb_array (&(this+firstAxis), axisCount).sub_array (start_offset, axes_count);
+      for (unsigned i = 0; i < arr.length; ++i)
 	get_axis_info (start_offset + i, axes_array + i);
     }
     return axisCount;
   }
 
+#ifndef HB_DISABLE_DEPRECATED
   bool find_axis_deprecated (hb_tag_t tag,
 			     unsigned int *axis_index,
 			     hb_ot_var_axis_t *info) const
@@ -194,7 +181,7 @@ struct fvar
     for (unsigned int i = 0; i < count; i++)
       if (axes[i].axisTag == tag)
       {
-        if (axis_index)
+	if (axis_index)
 	  *axis_index = i;
 	get_axis_deprecated (i, info);
 	return true;
@@ -203,6 +190,7 @@ struct fvar
       *axis_index = HB_OT_VAR_NO_AXIS_INDEX;
     return false;
   }
+#endif
 
   bool find_axis_info (hb_tag_t tag,
 		       hb_ot_var_axis_info_t *info) const
@@ -223,7 +211,7 @@ struct fvar
     hb_ot_var_axis_info_t axis;
     get_axis_info (axis_index, &axis);
 
-    v = MAX (MIN (v, axis.max_value), axis.min_value); /* Clamp. */
+    v = hb_clamp (v, axis.min_value, axis.max_value);
 
     if (v == axis.default_value)
       return 0;
@@ -231,7 +219,21 @@ struct fvar
       v = (v - axis.default_value) / (axis.default_value - axis.min_value);
     else
       v = (v - axis.default_value) / (axis.max_value - axis.default_value);
-    return (int) (v * 16384.f + (v >= 0.f ? .5f : -.5f));
+    return roundf (v * 16384.f);
+  }
+
+  float unnormalize_axis_value (unsigned int axis_index, float v) const
+  {
+    hb_ot_var_axis_info_t axis;
+    get_axis_info (axis_index, &axis);
+
+    if (v == 0)
+      return axis.default_value;
+    else if (v < 0)
+      v = v * (axis.default_value - axis.min_value) / 16384.f + axis.default_value;
+    else
+      v = v * (axis.max_value - axis.default_value) / 16384.f + axis.default_value;
+    return v;
   }
 
   unsigned int get_instance_count () const { return instanceCount; }
@@ -253,26 +255,47 @@ struct fvar
   }
 
   unsigned int get_instance_coords (unsigned int  instance_index,
-					   unsigned int *coords_length, /* IN/OUT */
-					   float        *coords         /* OUT */) const
+				    unsigned int *coords_length, /* IN/OUT */
+				    float        *coords         /* OUT */) const
   {
     const InstanceRecord *instance = get_instance (instance_index);
     if (unlikely (!instance))
     {
       if (coords_length)
-        *coords_length = 0;
+	*coords_length = 0;
       return 0;
     }
 
     if (coords_length && *coords_length)
     {
-      hb_array_t<const Fixed> instanceCoords = instance->get_coordinates (axisCount)
+      hb_array_t<const HBFixed> instanceCoords = instance->get_coordinates (axisCount)
 							 .sub_array (0, *coords_length);
       for (unsigned int i = 0; i < instanceCoords.length; i++)
-        coords[i] = instanceCoords.arrayZ[i].to_float ();
+	coords[i] = instanceCoords.arrayZ[i].to_float ();
     }
     return axisCount;
   }
+
+  void collect_name_ids (hb_set_t *nameids) const
+  {
+    if (!has_data ()) return;
+
+    + get_axes ()
+    | hb_map (&AxisRecord::axisNameID)
+    | hb_sink (nameids)
+    ;
+
+    + hb_range ((unsigned) instanceCount)
+    | hb_map ([this] (const unsigned _) { return get_instance_subfamily_name_id (_); })
+    | hb_sink (nameids)
+    ;
+
+    + hb_range ((unsigned) instanceCount)
+    | hb_map ([this] (const unsigned _) { return get_instance_postscript_name_id (_); })
+    | hb_sink (nameids)
+    ;
+  }
+
 
   protected:
   hb_array_t<const AxisRecord> get_axes () const
@@ -299,8 +322,8 @@ struct fvar
   HBUINT16	instanceCount;	/* The number of named instances defined in the font
 				 * (the number of records in the instances array). */
   HBUINT16	instanceSize;	/* The size in bytes of each InstanceRecord — set
-				 * to either axisCount * sizeof(Fixed) + 4, or to
-				 * axisCount * sizeof(Fixed) + 6. */
+				 * to either axisCount * sizeof(HBFixed) + 4, or to
+				 * axisCount * sizeof(HBFixed) + 6. */
 
   public:
   DEFINE_SIZE_STATIC (16);

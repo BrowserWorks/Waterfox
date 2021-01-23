@@ -32,7 +32,6 @@ extern "C" {
 #include "nsBaseWidget.h"
 
 #include "nsIObserverService.h"
-#include "nsIServiceManager.h"
 
 #include "mozilla/Preferences.h"
 #include "mozilla/Services.h"
@@ -136,7 +135,7 @@ void nsToolkit::RemoveSleepWakeNotifications() {
 void nsToolkit::MonitorAllProcessMouseEvents() {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK;
 
-    // Don't do this for apps that use native context menus.
+  // Don't do this for apps that use native context menus.
 #ifdef MOZ_USE_NATIVE_POPUP_WINDOWS
   return;
 #endif /* MOZ_USE_NATIVE_POPUP_WINDOWS */

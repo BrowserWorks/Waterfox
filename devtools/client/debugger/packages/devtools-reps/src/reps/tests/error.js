@@ -25,6 +25,7 @@ describe("Error - Simple error", () => {
     const renderedComponent = shallow(
       ErrorRep.rep({
         object: stub,
+        customFormat: true,
       })
     );
 
@@ -41,6 +42,41 @@ describe("Error - Simple error", () => {
     );
 
     expect(renderedComponent.text()).toEqual("Error");
+  });
+
+  it("renders with error type and preview message when in short mode", () => {
+    const renderedComponent = shallow(
+      ErrorRep.rep({
+        object: stubs.get("MultilineStackError"),
+        mode: MODE.SHORT,
+        customFormat: true,
+      })
+    );
+
+    expect(renderedComponent).toMatchSnapshot();
+  });
+
+  it("renders with error type only when customFormat prop isn't set", () => {
+    const renderedComponent = shallow(
+      ErrorRep.rep({
+        object: stubs.get("MultilineStackError"),
+        mode: MODE.SHORT,
+      })
+    );
+
+    expect(renderedComponent).toMatchSnapshot();
+  });
+
+  it("renders with error type only when depth is > 0", () => {
+    const renderedComponent = shallow(
+      ErrorRep.rep({
+        object: stubs.get("MultilineStackError"),
+        customFormat: true,
+        depth: 1,
+      })
+    );
+
+    expect(renderedComponent).toMatchSnapshot();
   });
 });
 
@@ -65,6 +101,7 @@ describe("Error - Multi line stack error", () => {
     const renderedComponent = shallow(
       ErrorRep.rep({
         object: stub,
+        customFormat: true,
       })
     );
 
@@ -94,10 +131,11 @@ describe("Error - Error without stacktrace", () => {
     const renderedComponent = shallow(
       ErrorRep.rep({
         object: stub,
+        customFormat: true,
       })
     );
 
-    expect(renderedComponent.text()).toEqual('Error: "Error message"');
+    expect(renderedComponent.text()).toEqual("Error: Error message");
   });
 
   it("renders expected text for error without stacktrace in tiny mode", () => {
@@ -124,6 +162,7 @@ describe("Error - Eval error", () => {
     const renderedComponent = shallow(
       ErrorRep.rep({
         object: stub,
+        customFormat: true,
       })
     );
 
@@ -154,6 +193,7 @@ describe("Error - Internal error", () => {
     const renderedComponent = shallow(
       ErrorRep.rep({
         object: stub,
+        customFormat: true,
       })
     );
 
@@ -184,6 +224,7 @@ describe("Error - Range error", () => {
     const renderedComponent = shallow(
       ErrorRep.rep({
         object: stub,
+        customFormat: true,
       })
     );
 
@@ -214,6 +255,7 @@ describe("Error - Reference error", () => {
     const renderedComponent = shallow(
       ErrorRep.rep({
         object: stub,
+        customFormat: true,
       })
     );
 
@@ -244,6 +286,7 @@ describe("Error - Syntax error", () => {
     const renderedComponent = shallow(
       ErrorRep.rep({
         object: stub,
+        customFormat: true,
       })
     );
 
@@ -274,6 +317,7 @@ describe("Error - Type error", () => {
     const renderedComponent = shallow(
       ErrorRep.rep({
         object: stub,
+        customFormat: true,
       })
     );
 
@@ -304,6 +348,7 @@ describe("Error - URI error", () => {
     const renderedComponent = shallow(
       ErrorRep.rep({
         object: stub,
+        customFormat: true,
       })
     );
 
@@ -333,11 +378,12 @@ describe("Error - DOMException", () => {
     const renderedComponent = shallow(
       ErrorRep.rep({
         object: stub,
+        customFormat: true,
       })
     );
 
     expect(renderedComponent.text()).toEqual(
-      "DOMException: \"'foo;()bar!' is not a valid selector\""
+      "DOMException: 'foo;()bar!' is not a valid selector"
     );
   });
 
@@ -360,6 +406,7 @@ describe("Error - base-loader.js", () => {
     const renderedComponent = shallow(
       ErrorRep.rep({
         object: stub,
+        customFormat: true,
       })
     );
 
@@ -385,6 +432,7 @@ describe("Error - longString stacktrace", () => {
     const renderedComponent = shallow(
       ErrorRep.rep({
         object: stub,
+        customFormat: true,
       })
     );
 
@@ -399,6 +447,7 @@ describe("Error - longString stacktrace - cut-off location", () => {
     const renderedComponent = shallow(
       ErrorRep.rep({
         object: stub,
+        customFormat: true,
       })
     );
 
@@ -415,6 +464,7 @@ describe("Error - stacktrace location click", () => {
       ErrorRep.rep({
         object,
         onViewSourceInDebugger,
+        customFormat: true,
       })
     );
 
@@ -423,7 +473,7 @@ describe("Error - stacktrace location click", () => {
 
     expect(locations.first().prop("title")).toBe(
       "View source in debugger → " +
-        "resource://devtools/shared/client/debugger-client.js:856:9"
+        "resource://devtools/client/debugger-client.js:856:9"
     );
     locations.first().simulate("click", {
       type: "click",
@@ -433,7 +483,7 @@ describe("Error - stacktrace location click", () => {
     expect(onViewSourceInDebugger.mock.calls).toHaveLength(1);
     let mockCall = onViewSourceInDebugger.mock.calls[0][0];
     expect(mockCall.url).toEqual(
-      "resource://devtools/shared/client/debugger-client.js"
+      "resource://devtools/client/debugger-client.js"
     );
     expect(mockCall.line).toEqual(856);
     expect(mockCall.column).toEqual(9);
@@ -464,6 +514,7 @@ describe("Error - stacktrace location click", () => {
       ErrorRep.rep({
         object,
         onViewSourceInDebugger,
+        customFormat: true,
       })
     );
 
@@ -485,6 +536,7 @@ describe("Error - stacktrace location click", () => {
     const renderedComponent = shallow(
       ErrorRep.rep({
         object,
+        customFormat: true,
       })
     );
 
@@ -510,12 +562,11 @@ describe("Error - renderStacktrace prop", () => {
           return frames.map(frame =>
             dom.li(
               { className: "frame" },
-              `Function ${frame.functionName} called from ${frame.filename}:${
-                frame.lineNumber
-              }:${frame.columnNumber}\n`
+              `Function ${frame.functionName} called from ${frame.filename}:${frame.lineNumber}:${frame.columnNumber}\n`
             )
           );
         },
+        customFormat: true,
       })
     );
     expect(renderedComponent).toMatchSnapshot();
@@ -530,12 +581,11 @@ describe("Error - renderStacktrace prop", () => {
           return frames.map(frame =>
             dom.li(
               { className: "frame" },
-              `Function ${frame.functionName} called from ${frame.filename}:${
-                frame.lineNumber
-              }:${frame.columnNumber}\n`
+              `Function ${frame.functionName} called from ${frame.filename}:${frame.lineNumber}:${frame.columnNumber}\n`
             )
           );
         },
+        customFormat: true,
       })
     );
     expect(renderedComponent).toMatchSnapshot();
@@ -556,6 +606,7 @@ describe("Error - Error with V8-like stack", () => {
     const renderedComponent = shallow(
       ErrorRep.rep({
         object: stub,
+        customFormat: true,
       })
     );
 
@@ -578,10 +629,94 @@ describe("Error - Error with invalid stack", () => {
     const renderedComponent = shallow(
       ErrorRep.rep({
         object: stub,
+        customFormat: true,
       })
     );
 
     expect(renderedComponent).toMatchSnapshot();
     expectActorAttribute(renderedComponent, stub.actor);
+  });
+});
+
+describe("Error - Error with undefined-grip stack", () => {
+  // Test object:
+  // x = new Error("sd");
+  // x.stack = undefined;
+  const stub = stubs.get("Error with undefined-grip stack");
+
+  it("correctly selects Error Rep for Error object", () => {
+    expect(getRep(stub)).toBe(ErrorRep.rep);
+  });
+
+  it("renders with expected text", () => {
+    const renderedComponent = shallow(
+      ErrorRep.rep({
+        object: stub,
+        customFormat: true,
+      })
+    );
+
+    expect(renderedComponent).toMatchSnapshot();
+    expectActorAttribute(renderedComponent, stub.actor);
+  });
+});
+
+describe("Error - Error with undefined-grip name", () => {
+  // Test object:
+  // x = new Error("");
+  // x.name = undefined;
+  const stub = stubs.get("Error with undefined-grip name");
+
+  it("correctly selects Error Rep for Error object", () => {
+    expect(getRep(stub)).toBe(ErrorRep.rep);
+  });
+
+  it("renders with expected text", () => {
+    const renderedComponent = shallow(
+      ErrorRep.rep({
+        object: stub,
+        customFormat: true,
+      })
+    );
+    expect(renderedComponent).toMatchSnapshot();
+
+    const tinyRenderedComponent = shallow(
+      ErrorRep.rep({
+        object: stub,
+        mode: MODE.TINY,
+      })
+    );
+
+    expect(tinyRenderedComponent).toMatchSnapshot();
+  });
+});
+
+describe("Error - Error with undefined-grip message", () => {
+  // Test object:
+  // x = new Error("");
+  // x.message = undefined;
+  const stub = stubs.get("Error with undefined-grip message");
+
+  it("correctly selects Error Rep for Error object", () => {
+    expect(getRep(stub)).toBe(ErrorRep.rep);
+  });
+
+  it("renders with expected text", () => {
+    const renderedComponent = shallow(
+      ErrorRep.rep({
+        object: stub,
+        customFormat: true,
+      })
+    );
+    expect(renderedComponent).toMatchSnapshot();
+
+    const tinyRenderedComponent = shallow(
+      ErrorRep.rep({
+        object: stub,
+        mode: MODE.TINY,
+      })
+    );
+
+    expect(tinyRenderedComponent).toMatchSnapshot();
   });
 });

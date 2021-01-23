@@ -2,6 +2,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from __future__ import absolute_import
+
 import os
 import sys
 import yaml
@@ -87,40 +89,31 @@ class TestMemoryUsage(AwsyTestCase):
         # Indicate that we're using tp6 in the perf data.
         self._extra_opts = ["tp6"]
 
+        if self.marionette.get_pref('fission.autostart'):
+            self._extra_opts.append("fission")
+
         # Now we setup the mitm proxy with our tp6 pageset.
         tp6_pageset_manifest = os.path.join(AWSY_PATH, 'tp6-pageset.manifest')
         config = {
             'playback_tool': 'mitmproxy',
-            'playback_binary_manifest': 'mitmproxy-rel-bin-{platform}.manifest',
+            'playback_version': '4.0.4',
             'playback_pageset_manifest': tp6_pageset_manifest,
             'platform': mozinfo.os,
             'obj_path': self._webroot_dir,
             'binary': self._binary,
             'run_local': self._run_local,
             'app': 'firefox',
-            'host': 'localhost',
+            'host': '127.0.0.1',
             'ignore_mitmdump_exit_failure': True,
         }
 
         self._playback = get_playback(config)
 
-        script = os.path.join(AWSY_PATH, "awsy", "alternate-server-replay.py")
         recording_arg = []
         for recording in recordings:
             recording_arg.append(os.path.join(self._playback.mozproxy_dir, recording))
 
-        script = '""%s %s""' % (script, " ".join(recording_arg))
-
-        if mozinfo.os == "win":
-            script = script.replace("\\", "\\\\\\")
-
-        # --no-upstream-cert prevents mitmproxy from needing network access to
-        # the upstream servers
-        self._playback.config['playback_tool_args'] = [
-                "--no-upstream-cert",
-                "-s", script]
-
-        self.logger.info("Using script %s" % script)
+        self._playback.config['playback_files'] = recording_arg
 
         self._playback.start()
 
@@ -130,7 +123,7 @@ class TestMemoryUsage(AwsyTestCase):
         # Setup WebDriver capabilities that we need
         self.marionette.delete_session()
         caps = {
-                "unhandledPromptBehavior": "dismiss",  # Ignore page navigation warnings
+            "unhandledPromptBehavior": "dismiss",  # Ignore page navigation warnings
         }
         self.marionette.start_session(caps)
         self.marionette.set_context('chrome')
@@ -170,24 +163,18 @@ class TestMemoryUsage(AwsyTestCase):
     def clear_preloaded_browser(self):
         """
         Clears out the preloaded browser.
-
-        Note: Does nothing on older builds that don't have a
-              `gBrowser.removePreloadedBrowser` method.
         """
         self.logger.info("closing preloaded browser")
         script = """
             if (window.NewTabPagePreloading) {
                 return NewTabPagePreloading.removePreloadedBrowser(window);
             }
-            if ("removePreloadedBrowser" in gBrowser) {
-                return gBrowser.removePreloadedBrowser();
-            }
-            return "gBrowser.removePreloadedBrowser not available";
+            return "NewTabPagePreloading.removePreloadedBrowser not available";
             """
         try:
             result = self.marionette.execute_script(script,
                                                     script_timeout=180000)
-        except JavascriptException, e:
+        except JavascriptException as e:
             self.logger.error("removePreloadedBrowser() JavaScript error: %s" % e)
         except ScriptTimeoutException:
             self.logger.error("removePreloadedBrowser() timed out")

@@ -13,15 +13,10 @@
 #include "nsIContent.h"
 #include "nsIImageLoadingContent.h"
 #include "nsIOutputStream.h"
-#include "nsIPrefService.h"
-#include "nsIPrefLocalizedString.h"
-#include "nsIServiceManager.h"
 #include "nsIStringBundle.h"
 #include "nsNetUtil.h"
 #include "nsServiceManagerUtils.h"
 #include "nsShellService.h"
-#include "nsIProcess.h"
-#include "nsICategoryManager.h"
 #include "nsDirectoryServiceUtils.h"
 #include "nsAppDirectoryServiceDefs.h"
 #include "nsDirectoryServiceDefs.h"
@@ -34,6 +29,8 @@
 
 #include "windows.h"
 #include "shellapi.h"
+#include <propvarutil.h>
+#include <propkey.h>
 
 #ifdef _WIN32_WINNT
 #  undef _WIN32_WINNT
@@ -60,13 +57,31 @@
 
 #define REG_FAILED(val) (val != ERROR_SUCCESS)
 
-#define APP_REG_NAME_BASE L"Waterfox-"
+#define APP_REG_NAME_BASE L"Firefox-"
+
+#ifdef DEBUG
+#  define NS_ENSURE_HRESULT(hres, ret)                    \
+    do {                                                  \
+      HRESULT result = hres;                              \
+      if (MOZ_UNLIKELY(FAILED(result))) {                 \
+        mozilla::SmprintfPointer msg = mozilla::Smprintf( \
+            "NS_ENSURE_HRESULT(%s, %s) failed with "      \
+            "result 0x%" PRIX32,                          \
+            #hres, #ret, static_cast<uint32_t>(result));  \
+        NS_WARNING(msg.get());                            \
+        return ret;                                       \
+      }                                                   \
+    } while (false)
+#else
+#  define NS_ENSURE_HRESULT(hres, ret) \
+    if (MOZ_UNLIKELY(FAILED(hres))) return ret
+#endif
 
 using mozilla::IsWin8OrLater;
 using namespace mozilla;
 
 NS_IMPL_ISUPPORTS(nsWindowsShellService, nsIToolkitShellService,
-                  nsIShellService)
+                  nsIShellService, nsIWindowsShellService)
 
 static nsresult OpenKeyForReading(HKEY aKeyRoot, const nsAString& aKeyName,
                                   HKEY* aKey) {
@@ -647,99 +662,6 @@ nsWindowsShellService::SetDesktopBackground(dom::Element* aElement,
 }
 
 NS_IMETHODIMP
-nsWindowsShellService::OpenApplication(int32_t aApplication) {
-  nsAutoString application;
-  switch (aApplication) {
-    case nsIShellService::APPLICATION_MAIL:
-      application.AssignLiteral("Mail");
-      break;
-    case nsIShellService::APPLICATION_NEWS:
-      application.AssignLiteral("News");
-      break;
-  }
-
-  // The Default Client section of the Windows Registry looks like this:
-  //
-  // Clients\aClient\
-  //  e.g. aClient = "Mail"...
-  //        \Mail\(default) = Client Subkey Name
-  //             \Client Subkey Name
-  //             \Client Subkey Name\shell\open\command\
-  //             \Client Subkey Name\shell\open\command\(default) = path to exe
-  //
-
-  // Find the default application for this class.
-  HKEY theKey;
-  nsresult rv = OpenKeyForReading(HKEY_CLASSES_ROOT, application, &theKey);
-  if (NS_FAILED(rv)) return rv;
-
-  wchar_t buf[MAX_BUF];
-  DWORD type, len = sizeof buf;
-  DWORD res = ::RegQueryValueExW(theKey, EmptyString().get(), 0, &type,
-                                 (LPBYTE)&buf, &len);
-
-  if (REG_FAILED(res) || !*buf) return NS_OK;
-
-  // Close the key we opened.
-  ::RegCloseKey(theKey);
-
-  // Find the "open" command
-  application.Append('\\');
-  application.Append(buf);
-  application.AppendLiteral("\\shell\\open\\command");
-
-  rv = OpenKeyForReading(HKEY_CLASSES_ROOT, application, &theKey);
-  if (NS_FAILED(rv)) return rv;
-
-  ::ZeroMemory(buf, sizeof(buf));
-  len = sizeof buf;
-  res = ::RegQueryValueExW(theKey, EmptyString().get(), 0, &type, (LPBYTE)&buf,
-                           &len);
-  if (REG_FAILED(res) || !*buf) return NS_ERROR_FAILURE;
-
-  // Close the key we opened.
-  ::RegCloseKey(theKey);
-
-  // Look for any embedded environment variables and substitute their
-  // values, as |::CreateProcessW| is unable to do this.
-  nsAutoString path(buf);
-  int32_t end = path.Length();
-  int32_t cursor = 0, temp = 0;
-  ::ZeroMemory(buf, sizeof(buf));
-  do {
-    cursor = path.FindChar('%', cursor);
-    if (cursor < 0) break;
-
-    temp = path.FindChar('%', cursor + 1);
-    ++cursor;
-
-    ::ZeroMemory(&buf, sizeof(buf));
-
-    ::GetEnvironmentVariableW(
-        nsAutoString(Substring(path, cursor, temp - cursor)).get(), buf,
-        sizeof(buf));
-
-    // "+ 2" is to subtract the extra characters used to delimit the environment
-    // variable ('%').
-    path.Replace((cursor - 1), temp - cursor + 2, nsDependentString(buf));
-
-    ++cursor;
-  } while (cursor < end);
-
-  STARTUPINFOW si;
-  PROCESS_INFORMATION pi;
-
-  ::ZeroMemory(&si, sizeof(STARTUPINFOW));
-  ::ZeroMemory(&pi, sizeof(PROCESS_INFORMATION));
-
-  BOOL success = ::CreateProcessW(nullptr, (LPWSTR)path.get(), nullptr, nullptr,
-                                  FALSE, 0, nullptr, nullptr, &si, &pi);
-  if (!success) return NS_ERROR_FAILURE;
-
-  return NS_OK;
-}
-
-NS_IMETHODIMP
 nsWindowsShellService::GetDesktopBackgroundColor(uint32_t* aColor) {
   uint32_t color = ::GetSysColor(COLOR_DESKTOP);
   *aColor =
@@ -777,22 +699,71 @@ nsWindowsShellService::SetDesktopBackgroundColor(uint32_t aColor) {
   return regKey->Close();
 }
 
+NS_IMETHODIMP
+nsWindowsShellService::CreateShortcut(nsIFile* aBinary,
+                                      const nsTArray<nsString>& aArguments,
+                                      const nsAString& aDescription,
+                                      nsIFile* aIconFile,
+                                      const nsAString& aAppUserModelId,
+                                      nsIFile* aTarget) {
+  NS_ENSURE_ARG(aBinary);
+  NS_ENSURE_ARG(aTarget);
+
+  RefPtr<IShellLinkW> link;
+  HRESULT hr = CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER,
+                                IID_IShellLinkW, getter_AddRefs(link));
+  NS_ENSURE_HRESULT(hr, NS_ERROR_FAILURE);
+
+  nsString path(aBinary->NativePath());
+  link->SetPath(path.get());
+
+  if (!aDescription.IsEmpty()) {
+    link->SetDescription(PromiseFlatString(aDescription).get());
+  }
+
+  // TODO: Properly escape quotes in the string, see bug 1604287.
+  nsString arguments;
+  for (auto& arg : aArguments) {
+    arguments.AppendPrintf("\"%S\" ", arg.get());
+  }
+
+  link->SetArguments(arguments.get());
+
+  if (aIconFile) {
+    nsString icon(aIconFile->NativePath());
+    link->SetIconLocation(icon.get(), 0);
+  }
+
+  if (!aAppUserModelId.IsEmpty()) {
+    RefPtr<IPropertyStore> propStore;
+    hr = link->QueryInterface(IID_IPropertyStore, getter_AddRefs(propStore));
+    NS_ENSURE_HRESULT(hr, NS_ERROR_FAILURE);
+
+    PROPVARIANT pv;
+    if (FAILED(InitPropVariantFromString(
+            PromiseFlatString(aAppUserModelId).get(), &pv))) {
+      return NS_ERROR_FAILURE;
+    }
+
+    hr = propStore->SetValue(PKEY_AppUserModel_ID, pv);
+    PropVariantClear(&pv);
+    NS_ENSURE_HRESULT(hr, NS_ERROR_FAILURE);
+
+    hr = propStore->Commit();
+    NS_ENSURE_HRESULT(hr, NS_ERROR_FAILURE);
+  }
+
+  RefPtr<IPersistFile> persist;
+  hr = link->QueryInterface(IID_IPersistFile, getter_AddRefs(persist));
+  NS_ENSURE_HRESULT(hr, NS_ERROR_FAILURE);
+
+  nsString target(aTarget->NativePath());
+  hr = persist->Save(target.get(), TRUE);
+  NS_ENSURE_HRESULT(hr, NS_ERROR_FAILURE);
+
+  return NS_OK;
+}
+
 nsWindowsShellService::nsWindowsShellService() {}
 
 nsWindowsShellService::~nsWindowsShellService() {}
-
-NS_IMETHODIMP
-nsWindowsShellService::OpenApplicationWithURI(nsIFile* aApplication,
-                                              const nsACString& aURI) {
-  nsresult rv;
-  nsCOMPtr<nsIProcess> process =
-      do_CreateInstance("@mozilla.org/process/util;1", &rv);
-  if (NS_FAILED(rv)) return rv;
-
-  rv = process->Init(aApplication);
-  if (NS_FAILED(rv)) return rv;
-
-  const nsCString spec(aURI);
-  const char* specStr = spec.get();
-  return process->Run(false, &specStr, 1);
-}

@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-proxies.xul -->
+<!--LOCALIZATION NOTE : FILE The Proxies preferences dialog -->
+
+
+<!ENTITY  pref.proxies.title            "Servidors intermediaris">
+<!ENTITY  pref.proxies.desc             "Un servidor intermediari és un servei de xarxa que pot filtrar i accelerar la vostra connexió d'Internet.">
+<!ENTITY  proxyTitle.label              "Configura els servidors intermediaris per accedir a Internet">
+<!ENTITY  directTypeRadio.label         "Connexió directa a Internet">
+<!ENTITY  directTypeRadio.accesskey     "d">
+<!ENTITY  systemTypeRadio.label         "Utilitza els paràmetres de servidor intermediari del sistema">
+<!ENTITY  systemTypeRadio.accesskey     "U">
+<!ENTITY  manualTypeRadio.label         "Configuració manual del servidor intermediari:">
+<!ENTITY  manualTypeRadio.accesskey     "m">
+<!ENTITY  wpadTypeRadio.label           "Descobreix automàticament la configuració del servidor intermediari">
+<!ENTITY  wpadTypeRadio.accesskey       "a">
+<!ENTITY  autoTypeRadio.label           "URL de configuració automàtica del servidor intermediari:">
+<!ENTITY  autoTypeRadio.accesskey       "U">
+<!ENTITY  reload.label                  "Actualitza">
+<!ENTITY  reload.accesskey              "z">
+<!ENTITY  http.label                    "Servidor intermediari:">
+<!ENTITY  http.accesskey                "S">
+<!ENTITY  port.label                    "Port:">
+<!ENTITY  HTTPPort.accesskey            "o">
+<!ENTITY  advanced.label                "Avançat...">
+<!ENTITY  advanced.accesskey            "v">
+<!ENTITY  noproxy.label                 "Sense servidor intermediari per a:">
+<!ENTITY  noproxy.accesskey             "n">
+<!ENTITY  noproxyExplain.label          "Exemple: .mozilla.org, .net.nz, 192.168.1.0/24">

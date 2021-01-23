@@ -7,18 +7,16 @@
 Library('style-gtest')
 
 UNIFIED_SOURCES = [
-    'StyloParsingBench.cpp'
+    'ImportScannerTest.cpp',
+    'StyloParsingBench.cpp',
 ]
 
 LOCAL_INCLUDES += [
     '/layout/style',
 ]
 
-GENERATED_FILES += [
-    'ExampleStylesheet.h',
-]
-
-GENERATED_FILES['ExampleStylesheet.h'].script = 'generate_example_stylesheet.py'
-GENERATED_FILES['ExampleStylesheet.h'].inputs = ['example.css']
+GeneratedFile('ExampleStylesheet.h',
+              script='generate_example_stylesheet.py',
+              inputs=['example.css'])
 
 FINAL_LIBRARY = 'xul-gtest'

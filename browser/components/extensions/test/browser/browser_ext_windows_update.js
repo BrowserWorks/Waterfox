@@ -15,7 +15,7 @@ add_task(async function() {
   let window1 = window;
   let window2 = await BrowserTestUtils.openNewBrowserWindow();
 
-  Services.focus.activeWindow = window2;
+  window2.focus();
   await promiseWaitForFocus(window2);
 
   let extension = ExtensionTestUtils.loadExtension({
@@ -82,9 +82,7 @@ add_task(async function testWindowUpdate() {
             // "maximized" states.
             browser.test.assertTrue(
               window.state == "normal" || window.state == "maximized",
-              `Expected window.state (currently ${
-                window.state
-              }) to be "normal" but will accept "maximized"`
+              `Expected window.state (currently ${window.state}) to be "normal" but will accept "maximized"`
             );
           } else {
             browser.test.assertEq(

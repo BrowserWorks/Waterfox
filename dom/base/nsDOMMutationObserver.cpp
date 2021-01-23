@@ -68,7 +68,7 @@ NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(nsDOMMutationRecord, mTarget,
 
 bool nsMutationReceiverBase::IsObservable(nsIContent* aContent) {
   return !aContent->ChromeOnlyAccess() &&
-         (Observer()->IsChrome() || !aContent->IsInAnonymousSubtree());
+         (Observer()->IsChrome() || !aContent->IsInNativeAnonymousSubtree());
 }
 
 NS_IMPL_ADDREF(nsMutationReceiver)
@@ -288,7 +288,7 @@ void nsMutationReceiver::ContentRemoved(nsIContent* aChild,
     if (Observer()->GetReceiverFor(aChild, false, false) != orig) {
       bool transientExists = false;
       bool isNewEntry = false;
-      nsCOMArray<nsMutationReceiver>* transientReceivers =
+      const auto& transientReceivers =
           Observer()->mTransientReceivers.LookupForAdd(aChild).OrInsert(
               [&isNewEntry]() {
                 isNewEntry = true;
@@ -353,20 +353,20 @@ void nsAnimationReceiver::RecordAnimationMutation(
     return;
   }
 
-  Maybe<NonOwningAnimationTarget> animationTarget = keyframeEffect->GetTarget();
+  NonOwningAnimationTarget animationTarget =
+      keyframeEffect->GetAnimationTarget();
   if (!animationTarget) {
     return;
   }
 
-  Element* elem = animationTarget->mElement;
+  Element* elem = animationTarget.mElement;
   if (!Animations() || !(Subtree() || elem == Target()) ||
       elem->ChromeOnlyAccess()) {
     return;
   }
 
   // Record animations targeting to a pseudo element only when subtree is true.
-  if (animationTarget->mPseudoType != PseudoStyleType::NotPseudo &&
-      !Subtree()) {
+  if (animationTarget.mPseudoType != PseudoStyleType::NotPseudo && !Subtree()) {
     return;
   }
 
@@ -620,27 +620,29 @@ void nsDOMMutationObserver::Observe(
 
   if (!(childList || attributes || characterData || animations ||
         nativeAnonymousChildList)) {
-    aRv.Throw(NS_ERROR_DOM_TYPE_ERR);
+    aRv.ThrowTypeError(
+        "One of 'childList', 'attributes', 'characterData' must not be false.");
     return;
   }
 
   if (aOptions.mAttributeOldValue.WasPassed() &&
-      aOptions.mAttributeOldValue.Value() && aOptions.mAttributes.WasPassed() &&
-      !aOptions.mAttributes.Value()) {
-    aRv.Throw(NS_ERROR_DOM_TYPE_ERR);
+      aOptions.mAttributeOldValue.Value() && !attributes) {
+    aRv.ThrowTypeError(
+        "If 'attributeOldValue' is true, 'attributes' must not be false.");
     return;
   }
 
-  if (aOptions.mAttributeFilter.WasPassed() &&
-      aOptions.mAttributes.WasPassed() && !aOptions.mAttributes.Value()) {
-    aRv.Throw(NS_ERROR_DOM_TYPE_ERR);
+  if (aOptions.mAttributeFilter.WasPassed() && !attributes) {
+    aRv.ThrowTypeError(
+        "If 'attributesFilter' is present, 'attributes' must not be false.");
     return;
   }
 
   if (aOptions.mCharacterDataOldValue.WasPassed() &&
-      aOptions.mCharacterDataOldValue.Value() &&
-      aOptions.mCharacterData.WasPassed() && !aOptions.mCharacterData.Value()) {
-    aRv.Throw(NS_ERROR_DOM_TYPE_ERR);
+      aOptions.mCharacterDataOldValue.Value() && !characterData) {
+    aRv.ThrowTypeError(
+        "If 'characterDataOldValue' is true, 'characterData' must not be "
+        "false.");
     return;
   }
 
@@ -699,7 +701,7 @@ void nsDOMMutationObserver::TakeRecords(
     current->mNext.swap(next);
     if (!mMergeAttributeRecords ||
         !MergeableAttributeRecord(aRetVal.SafeLastElement(nullptr), current)) {
-      *aRetVal.AppendElement() = current.forget();
+      *aRetVal.AppendElement() = std::move(current);
     }
     current.swap(next);
   }
@@ -752,7 +754,7 @@ already_AddRefed<nsDOMMutationObserver> nsDOMMutationObserver::Constructor(
   }
   bool isChrome = nsContentUtils::IsChromeDoc(window->GetExtantDoc());
   RefPtr<nsDOMMutationObserver> observer =
-      new nsDOMMutationObserver(window.forget(), aCb, isChrome);
+      new nsDOMMutationObserver(std::move(window), aCb, isChrome);
   return observer.forget();
 }
 
@@ -992,7 +994,7 @@ void nsAutoMutationBatch::Done() {
       }
 
       if (allObservers.Length()) {
-        nsCOMArray<nsMutationReceiver>* transientReceivers =
+        const auto& transientReceivers =
             ob->mTransientReceivers.LookupForAdd(removed).OrInsert(
                 []() { return new nsCOMArray<nsMutationReceiver>(); });
         for (uint32_t k = 0; k < allObservers.Length(); ++k) {

@@ -1,10 +1,10 @@
-// |jit-test| skip-if: !wasmDebugSupport()
+// |jit-test| skip-if: !wasmDebuggingIsSupported()
 var g = newGlobal({newCompartment: true});
 g.parent = this;
 g.eval("Debugger(parent).onExceptionUnwind = function () {};");
 lfModule = new WebAssembly.Module(wasmTextToBinary(`
 (module
-  (export "f" $func0)
+  (export "f" (func $func0))
   (func $func0 (result i32)
     i32.const -1
   )

@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Lastnosti gumbov">
+
+<!ENTITY Settings.label "Nastavitve">
+
+<!ENTITY ButtonType.label "Vrsta">
+<!ENTITY ButtonType.accesskey "V">
+<!ENTITY submit.value "Predloži">
+<!ENTITY reset.value "Ponastavi">
+<!ENTITY button.value "Gumb">
+
+<!ENTITY ButtonName.label "Ime:">
+<!ENTITY ButtonName.accesskey "I">
+<!ENTITY ButtonValue.label "Vrednost:">
+<!ENTITY ButtonValue.accesskey "V">
+<!ENTITY tabIndex.label "Kazalo oznake:">
+<!ENTITY tabIndex.accesskey "K">
+<!ENTITY ButtonDisabled.label "Onemogočeno">
+<!ENTITY ButtonDisabled.accesskey "m">
+<!ENTITY AccessKey.label "Ključ za dostop:">
+<!ENTITY AccessKey.accesskey "K">
+
+<!ENTITY RemoveButton.label "Odstrani gumb">
+<!ENTITY RemoveButton.accesskey "O">

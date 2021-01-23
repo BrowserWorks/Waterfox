@@ -13,7 +13,7 @@ def dies_when_logging(_):
     test_file = 'test.txt'
     quote_char = "'"
     if getpreferredencoding().lower() == 'utf-8':
-        quote_char = '\u00B4'.encode('utf-8')
+        quote_char = '\u00B4'
     try:
         with open(test_file, 'w+') as fh:
             fh.write(quote_char)

@@ -1,14 +1,12 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 
-/* exported TestActor, TestActorFront */
+/* exported TestActor, TestFront */
 
 "use strict";
 
 // A helper actor for inspector and markupview tests.
-
-const { Ci, Cu } = require("chrome");
+const { Ci, Cu, Cc } = require("chrome");
 const Services = require("Services");
 const {
   getRect,
@@ -21,8 +19,6 @@ const {
   getCSSStyleRules,
 } = require("devtools/shared/inspector/css-logic");
 const InspectorUtils = require("InspectorUtils");
-const Debugger = require("Debugger");
-const ReplayInspector = require("devtools/server/actors/replay/inspector");
 
 // Set up a dummy environment so that EventUtils works. We need to be careful to
 // pass a window object into each EventUtils method we call rather than having
@@ -63,7 +59,7 @@ function getHighlighterCanvasFrameHelper(conn, actorID) {
 }
 
 var testSpec = protocol.generateActorSpec({
-  typeName: "testActor",
+  typeName: "test",
 
   methods: {
     getNumberOfElementMatches: {
@@ -299,18 +295,14 @@ var testSpec = protocol.generateActorSpec({
   },
 });
 
-var TestActor = (exports.TestActor = protocol.ActorClassWithSpec(testSpec, {
+var TestActor = protocol.ActorClassWithSpec(testSpec, {
   initialize: function(conn, targetActor, options) {
+    protocol.Actor.prototype.initialize.call(this, conn);
     this.conn = conn;
     this.targetActor = targetActor;
   },
 
   get content() {
-    // When replaying, the content window is in the replaying process. We can't
-    // use isReplaying here because this actor is loaded into its own sandbox.
-    if (Debugger.recordReplayProcessKind() == "Middleman") {
-      return ReplayInspector.window;
-    }
     return this.targetActor.window;
   },
 
@@ -484,8 +476,8 @@ var TestActor = (exports.TestActor = protocol.ActorClassWithSpec(testSpec, {
         resolve();
       }
 
-      const docShell = this.content.docShell;
-      docShell.contentViewer.fullZoom = level;
+      const bc = this.content.docShell.browsingContext;
+      bc.fullZoom = level;
     });
   },
 
@@ -509,13 +501,6 @@ var TestActor = (exports.TestActor = protocol.ActorClassWithSpec(testSpec, {
    * Get the window which mouse events on node should be delivered to.
    */
   windowForMouseEvent: function(node) {
-    // When replaying, the node is a proxy for an element in the replaying
-    // process. Use the window which the server is running against, which is
-    // able to receive events. We can't use isReplaying here because this actor
-    // is loaded into its own sandbox.
-    if (Debugger.recordReplayProcessKind() == "Middleman") {
-      return this.targetActor.window;
-    }
     return node.ownerDocument.defaultView;
   },
 
@@ -853,12 +838,22 @@ var TestActor = (exports.TestActor = protocol.ActorClassWithSpec(testSpec, {
   getWindowDimensions: function() {
     return getWindowDimensions(this.content);
   },
-}));
+});
+exports.TestActor = TestActor;
 
-class TestActorFront extends protocol.FrontClassWithSpec(testSpec) {
-  constructor(client, toolbox) {
-    super(client);
-    this.toolbox = toolbox;
+class TestFront extends protocol.FrontClassWithSpec(testSpec) {
+  constructor(client, targetFront, parentFront) {
+    super(client, targetFront, parentFront);
+    this.formAttributeName = "testActor";
+  }
+
+  async initialize() {
+    const inspectorFront = await this.targetFront.getFront("inspector");
+    this.highlighter = inspectorFront.highlighter;
+  }
+
+  setHighlighter(highlighter) {
+    this.highlighter = highlighter;
   }
 
   /**
@@ -868,7 +863,7 @@ class TestActorFront extends protocol.FrontClassWithSpec(testSpec) {
    * @return {Promise} The returned promise will only resolve when the
    * highlighter has updated to the new zoom level.
    */
-  zoomPageTo(level, actorID = this.toolbox.highlighter.actorID) {
+  zoomPageTo(level, actorID = this.highlighter.actorID) {
     return this.changeZoomLevel(level, actorID);
   }
 
@@ -878,7 +873,7 @@ class TestActorFront extends protocol.FrontClassWithSpec(testSpec) {
     return super.changeHighlightedNodeWaitForUpdate(
       name,
       value,
-      (highlighter || this.toolbox.highlighter).actorID
+      (highlighter || this.highlighter).actorID
     );
   }
 
@@ -893,14 +888,14 @@ class TestActorFront extends protocol.FrontClassWithSpec(testSpec) {
     return this.getHighlighterAttribute(
       nodeID,
       name,
-      (highlighter || this.toolbox.highlighter).actorID
+      (highlighter || this.highlighter).actorID
     );
   }
 
   getHighlighterNodeTextContent(nodeID, highlighter) {
     return super.getHighlighterNodeTextContent(
       nodeID,
-      (highlighter || this.toolbox.highlighter).actorID
+      (highlighter || this.highlighter).actorID
     );
   }
 
@@ -948,8 +943,8 @@ class TestActorFront extends protocol.FrontClassWithSpec(testSpec) {
   /**
    * Get the current rect of the border region of the box-model highlighter
    */
-  async getSimpleBorderRect(toolbox) {
-    const { border } = await this._getBoxModelStatus(toolbox);
+  async getSimpleBorderRect() {
+    const { border } = await this._getBoxModelStatus();
     const { p1, p2, p4 } = border.points;
 
     return {
@@ -1144,10 +1139,7 @@ class TestActorFront extends protocol.FrontClassWithSpec(testSpec) {
   }
 
   waitForHighlighterEvent(event) {
-    return super.waitForHighlighterEvent(
-      event,
-      this.toolbox.highlighter.actorID
-    );
+    return super.waitForHighlighterEvent(event, this.highlighter.actorID);
   }
 
   /**
@@ -1190,8 +1182,7 @@ class TestActorFront extends protocol.FrontClassWithSpec(testSpec) {
     return { d, points };
   }
 }
-exports.TestActorFront = TestActorFront;
-
+protocol.registerFront(TestFront);
 /**
  * Check whether a point is included in a polygon.
  * Taken and tweaked from:

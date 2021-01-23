@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<!-- Calendar Invitations Dialog -->
+
+<!ENTITY calendar.invitations.dialog.invitations.text                   "Pedadennoù">
+<!ENTITY calendar.invitations.dialog.statusmessage.updating.text        "Oc'h hizivaat listenn ar pedadennoù.">
+<!ENTITY calendar.invitations.dialog.statusmessage.noinvitations.text   "N'eo bet kavet pedadenn digadarnet ebet.">
+<!-- Calendar Invitations List -->
+
+<!ENTITY calendar.invitations.list.accept.button.label                  "Asañtiñ">
+<!ENTITY calendar.invitations.list.decline.button.label                 "Nac'hañ">
+<!ENTITY calendar.invitations.list.recurrentevent.text                  "Darvoud oc'h adkregiñ">
+<!ENTITY calendar.invitations.list.alldayevent.text                     "Darvoud war an devezh a-bezh">
+<!ENTITY calendar.invitations.list.location.text                        "Lec'hiadur :  ">
+<!ENTITY calendar.invitations.list.organizer.text                       "Aozer :  ">
+<!ENTITY calendar.invitations.list.attendee.text                        "Perzhiad :  ">
+<!ENTITY calendar.invitations.list.none.text                            "Netra">

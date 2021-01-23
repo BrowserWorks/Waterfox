@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "Rregullime Faqeje të Re">
+
+<!ENTITY  authorName.label          "Autor:">
+<!ENTITY  authorName.accesskey      "A">
+<!ENTITY  pageColorHeader           "Dukje Parazgjedhje e Faqes">
+
+<!ENTITY defaultColors.label        "Ngjyrat parazgjedhje të lexuesit (Mos cakto ngjyra për faqen)">
+<!ENTITY defaultColors.accesskey    "N">
+<!ENTITY customColors.label         "Përdor ngjyra vetjake:">
+<!ENTITY customColors.accesskey     "P">
+
+<!ENTITY normalText.label           "Tekst normal">
+<!ENTITY normalText.accesskey       "n">
+<!ENTITY linkText.label             "Tekst lidhjeje">
+<!ENTITY linkText.accesskey         "l">
+<!ENTITY activeLinkText.label       "Tekst lidhjeje vepruese">
+<!ENTITY activeLinkText.accesskey   "v">
+<!ENTITY visitedLinkText.label      "Tekst lidhjeje të vizituar">
+<!ENTITY visitedLinkText.accesskey  "z">
+<!ENTITY background.label           "Sfond:">
+<!ENTITY background.accesskey       "S">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "Figurë sfondi:">
+<!ENTITY backgroundImage.accesskey  "F">
+<!ENTITY chooseFile.label           "Zgjidhni Kartelë…">
+<!ENTITY chooseFile.accesskey       "Z">
+

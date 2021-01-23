@@ -1,6 +1,7 @@
 
 from __future__ import absolute_import, unicode_literals, print_function
 
+import io
 import os
 import manifestparser
 
@@ -18,7 +19,7 @@ class Creator(object):
         return True
 
     def __iter__(self):
-        """Iterate over a list of (path, data) tuples coresponding to the files
+        """Iterate over a list of (path, data) tuples corresponding to the files
         to be created"""
         yield (self.test, self._get_template_contents())
 
@@ -70,12 +71,15 @@ class MochitestCreator(Creator):
         template_file_name = self.templates.get(self.suite)
 
         if template_file_name is None:
+            print("Sorry, `addtest` doesn't currently know how to add {}".format(self.suite))
             return None
 
         template_file_name = template_file_name % {"doc": self.doc}
 
         template_file = os.path.join(mochitest_templates, template_file_name)
         if not os.path.isfile(template_file):
+            print("Sorry, `addtest` doesn't currently know how to add {} with document type {}"
+                  .format(self.suite, self.doc))
             return None
 
         with open(template_file) as f:
@@ -118,6 +122,9 @@ class WebPlatformTestsCreator(Creator):
 
     template_body_reftest_wait = """<script src="/common/reftest-wait.js"></script>
 """
+
+    template_js = ""
+    template_js_long_timeout = "//META: timeout=long\n"
 
     upstream_path = os.path.join("testing", "web-platform", "tests")
     local_path = os.path.join("testing", "web-platform", "mozilla", "tests")
@@ -174,21 +181,27 @@ testing/web-platform/mozilla/tests for Gecko-only tests""" % self.test)
         args = {"documentElement": "<html class=reftest-wait>\n"
                 if self.kwargs["wait"] else ""}
 
-        template = self.template_prefix % args
-        if self.kwargs["long_timeout"]:
-            template += self.template_long_timeout
-
-        if self.reftest:
-            if not reference:
-                args = {"match": "match" if not self.kwargs["mismatch"] else "mismatch",
-                        "ref": self.ref_url(self.kwargs["ref"]) if self.kwargs["ref"] else '""'}
-                template += self.template_body_reftest % args
-                if self.kwargs["wait"]:
-                    template += self.template_body_reftest_wait
-            else:
-                template += "<title></title>"
+        if self.test.rsplit(".", 1)[1] == "js":
+            template = self.template_js
+            if self.kwargs["long_timeout"]:
+                template += self.template_js_long_timeout
         else:
-            template += self.template_body_th
+            template = self.template_prefix % args
+            if self.kwargs["long_timeout"]:
+                template += self.template_long_timeout
+
+            if self.reftest:
+                if not reference:
+                    args = {"match": "match" if not self.kwargs["mismatch"] else "mismatch",
+                            "ref": (self.ref_url(self.kwargs["ref"])
+                                    if self.kwargs["ref"] else '""')}
+                    template += self.template_body_reftest % args
+                    if self.kwargs["wait"]:
+                        template += self.template_body_reftest_wait
+                else:
+                    template += "<title></title>"
+            else:
+                template += self.template_body_th
 
         return template
 
@@ -298,7 +311,7 @@ def write_to_ini_file(manifest_file, filename):
                 contents.insert(i, filename)
                 break
 
-    with open(manifest_file, "w") as f:
+    with io.open(manifest_file, "w", newline='\n') as f:
         f.write("".join(contents))
 
 

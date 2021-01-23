@@ -1,0 +1,61 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from tasksOverlay.xul -->
+<!ENTITY navigatorCmd.label "Pelayar">
+<!ENTITY navigatorCmd.accesskey "P">
+<!ENTITY navigatorCmd.commandkey "1">
+
+<!-- LOCALIZATION NOTE (editorCmd.label): DONT_TRANSLATE -->
+<!ENTITY editorCmd.label "Composer">
+<!ENTITY editorCmd.accesskey "c">
+<!ENTITY editorCmd.commandkey "4">
+
+<!ENTITY errorConsoleCmd.label "Konsol Ralat">
+<!ENTITY errorConsoleCmd.accesskey "K">
+<!ENTITY errorConsoleCmd.commandkey2 "j">
+
+<!ENTITY taskNavigator.tooltip "Pelayar">
+<!ENTITY taskComposer.tooltip "Composer">
+
+<!ENTITY webDevelopment.label "Pembangunan Web">
+<!ENTITY webDevelopment.accesskey "W">
+
+<!ENTITY windowMenu.label "Tetingkap">
+<!ENTITY windowMenu.accesskey "T">
+
+<!ENTITY tasksMenu.label "Alatan">
+<!ENTITY tasksMenu.accesskey "A">
+
+<!ENTITY datamanCmd.label "Pengurus Data">
+<!ENTITY datamanCmd.accesskey "D">
+
+<!ENTITY passwordManagerCmd.label "Pengurus Kata Laluan">
+<!ENTITY passwordManagerCmd.accesskey "K">
+
+<!ENTITY passwordDisplayCmd.label "Urus Kata laluan Disimpan">
+<!ENTITY passwordDisplayCmd.accesskey "U">
+
+<!ENTITY passwordExpireCmd.label "Log Keluar">
+<!ENTITY passwordExpireCmd.accesskey "l">
+
+<!ENTITY downloadManagerCmd.label "Pengurus Muat Turun">
+<!ENTITY downloadManagerCmd.accesskey "n">
+<!ENTITY downloadManagerCmd.commandkey "j">
+
+<!ENTITY addOnsManagerCmd.label "Pengurus Add-ons">
+<!ENTITY addOnsManagerCmd.accesskey "A">
+<!ENTITY addOnsManagerCmd.commandkey "a">
+
+<!ENTITY switchProfileCmd.label "Tukar Profil…">
+<!ENTITY switchProfileCmd.accesskey "r">
+
+<!ENTITY syncBrand.shortName.label "Sync">
+<!-- LOCALIZATION NOTE (syncSetup.accesskey, syncSyncNowItem.accesskey):
+     Only one of these will show at a time (based on setup state),
+     so reusing accesskey is ok. -->
+<!ENTITY syncSetup.label "Penetapan Sync…">
+<!ENTITY syncSetup.accesskey "S">
+<!ENTITY syncSyncNowItem.label "Sync Sekarang">
+<!ENTITY syncSyncNowItem.accesskey "S">

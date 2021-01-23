@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.http.title                     "HTTP-Verbindungen">
+
+<!-- Network-->
+<!ENTITY prefDirect.label                    "Optionen für direkte Verbindungen">
+<!ENTITY prefProxy.label                     "Optionen für Proxy-Verbindungen">
+<!ENTITY prefEnableHTTP10.label              "HTTP 1.0 verwenden">
+<!ENTITY prefEnableHTTP10.accesskey          "v">
+<!ENTITY prefEnableHTTP10Proxy.accesskey     "w">
+<!ENTITY prefEnableHTTP11.label              "HTTP 1.1 verwenden">
+<!ENTITY prefEnableHTTP11.accesskey          "H">
+<!ENTITY prefEnableHTTP11Proxy.accesskey     "T">
+<!ENTITY prefPara                            "HTTP-Verbindungen können mit diesen Optionen feineingestelt werden, um Geschwindigkeit oder Kompatibilität zu verbessern. Manche Proxy-Server zum Beispiel benötigen bekannterweise HTTP/1.0 (siehe Release Notes für Details).">
+<!ENTITY prefUseragent.label                 "User-Agent-String">
+<!ENTITY prefFirefoxCompat.label             "Firefox-Kompatibilität ausweisen">
+<!ENTITY prefFirefoxCompat.accesskey         "F">
+<!ENTITY prefLightningShow.label             "Lightning-Installation ausweisen">
+<!ENTITY prefLightningShow.accesskey         "L">
+<!ENTITY prefCompatWarning                   "WARNUNG: Das Deaktivieren dieser Einstellungen kann dazu führen das Websites oder Funktionen nicht mehr richtig funktionieren.">

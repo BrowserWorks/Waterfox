@@ -21,7 +21,11 @@ const EXPECTED_REFLOWS = [
  * cause the existing tabs to grow bigger.
  */
 add_task(async function() {
+  // Force-enable tab animations
+  gReduceMotionOverride = false;
+
   await ensureNoPreloadedBrowser();
+  await disableFxaBadge();
 
   // At the time of writing, there are no reflows on tab closing with
   // tab growth. Mochitest will fail if we have no assertions, so we
@@ -58,19 +62,21 @@ add_task(async function() {
         filter: rects =>
           rects.filter(
             r =>
-              !// We expect plenty of changed rects within the tab strip.
-              (
-                r.y1 >= tabStripRect.top &&
-                r.y2 <= tabStripRect.bottom &&
-                r.x1 >= tabStripRect.left &&
-                r.x2 <= tabStripRect.right &&
-                // It would make sense for each rect to have a width smaller than
-                // a tab (ie. tabstrip.width / tabcount), but tabs are small enough
-                // that they sometimes get reported in the same rect.
-                // So we accept up to the width of n-1 tabs.
-                r.w <=
-                  (gBrowser.tabs.length - 1) *
-                    Math.ceil(tabStripRect.width / gBrowser.tabs.length)
+              !(
+                // We expect plenty of changed rects within the tab strip.
+                (
+                  r.y1 >= tabStripRect.top &&
+                  r.y2 <= tabStripRect.bottom &&
+                  r.x1 >= tabStripRect.left &&
+                  r.x2 <= tabStripRect.right &&
+                  // It would make sense for each rect to have a width smaller than
+                  // a tab (ie. tabstrip.width / tabcount), but tabs are small enough
+                  // that they sometimes get reported in the same rect.
+                  // So we accept up to the width of n-1 tabs.
+                  r.w <=
+                    (gBrowser.tabs.length - 1) *
+                      Math.ceil(tabStripRect.width / gBrowser.tabs.length)
+                )
               )
           ),
       },

@@ -32,38 +32,53 @@
   background-image: url("chrome://devtools/content/netmonitor/src/assets/icons/play.svg");
 }
 
-/* HAR button */
+/* Search button */
+.devtools-button.devtools-search-icon::before {
+  background-image: url("chrome://devtools/skin/images/search.svg");
+  background-size: 13px;
+}
 
-#devtools-har-button {
-  margin-inline-end: 10px;
-  padding-left: 2px;
-  padding-right: 10px;
-  background-position: right center;
+/* Request blocking button */
+.devtools-button.requests-list-blocking-button::before {
+  background-image: url("chrome://devtools/content/netmonitor/src/assets/icons/blocked.svg");
+}
+
+.devtools-button.netmonitor-settings-menu-button::before {
+  background-image: url("chrome://devtools/skin/images/settings.svg");
+}
+
+.devtools-button.requests-list-blocking-button:empty::before {
+  fill: var(--theme-body-color);
+}
+
+.devtools-button.requests-list-blocking-button.checked:empty::before {
+  fill: var(--theme-icon-checked-color);
+}
+
+.devtools-button.requests-list-blocking-button.requests-list-blocking-button-enabled:empty::before {
+  fill: var(--timing-blocked-color);
 }
 
 /* Throttling Button */
 
 #network-throttling-menu {
   margin-inline-start: 10px;
+  margin-inline-end: 10px;
 }
 
-.devtools-checkbox {
+.devtools-toolbar .devtools-checkbox {
   position: relative;
   vertical-align: middle;
   bottom: 1px;
 }
 
-.devtools-checkbox-label {
+.devtools-toolbar .devtools-checkbox-label {
   margin-inline-start: 2px;
   margin-inline-end: 2px;
   white-space: nowrap;
 }
 
-.devtools-checkbox-label.devtools-persistlog-checkbox {
-  margin-inline-start: 4px;
-}
-
-.devtools-checkbox-label.devtools-cache-checkbox {
+.devtools-toolbar .devtools-checkbox-label.devtools-cache-checkbox {
   margin-inline-end: 7px;
 }
 

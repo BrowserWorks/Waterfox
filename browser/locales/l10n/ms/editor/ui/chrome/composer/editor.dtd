@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!-- LOCALIZATION NOTE  (editorWindow.titlemodifier): DONT_TRANSLATE -->
+<!ENTITY editorWindow.titlemodifier "Composer"> 
+<!ENTITY editorWindow.titlemodifiermenuseparator " - ">
+
+<!-- Menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- Toolbar-only items -->
+<!ENTITY compositionToolbar.tooltip "Bar alatan Karangan">
+<!ENTITY previewToolbarCmd.label "Cari">
+<!ENTITY previewToolbarCmd.tooltip "Muatkan halaman ini dalam pelayar">
+
+<!-- File menu items -->
+<!ENTITY exportToTextCmd.label "Eksport ke Teks…">
+<!ENTITY exportToTextCmd.accesskey "k">
+<!ENTITY previewCmd.label "Layari Halaman">
+<!ENTITY previewCmd.accesskey "y">
+<!ENTITY sendPageCmd.label "Hantar Halaman…">
+<!ENTITY sendPageCmd.accesskey "r">
+
+<!-- View menu items -->
+<!ENTITY compositionToolbarCmd.label "Bar alatan Karangan">
+<!ENTITY compositionToolbarCmd.accesskey "K">
+<!ENTITY formattingToolbarCmd.label "Bar alatan Format">
+<!ENTITY formattingToolbarCmd.accesskey "F">
+<!ENTITY editmodeToolbarCmd.label "Bar alatan Mod Edit">
+<!ENTITY editmodeToolbarCmd.accesskey "E">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "Format">
+<!ENTITY formatMenu.accesskey "o">
+<!ENTITY grid.label "Grid posisi">
+<!ENTITY grid.accesskey "d">
+<!ENTITY pageProperties.label "Tajuk dan Sifat Halaman…">
+<!ENTITY pageProperties.accesskey "m">
+
+<!-- Tools menu items -->
+<!ENTITY validateCmd.label "HTML Pengesahan">
+<!ENTITY validateCmd.accesskey "P">
+
+<!-- Display Mode toolbar and View menu items -->
+<!ENTITY NormalModeTab.label "Normal">
+<!ENTITY NormalMode.label "Mod Edit Normal">
+<!ENTITY NormalMode.accesskey "N">
+<!ENTITY NormalMode.tooltip "Papar sempadan jadual dan nama labuh">
+<!ENTITY AllTagsModeTab.label "Tag HTML">
+<!ENTITY AllTagsMode.label "Tag HTML">
+<!ENTITY AllTagsMode.accesskey "a">
+<!ENTITY AllTagsMode.tooltip "Papar semua ikon tag HTML">
+<!-- LOCALIZATION NOTE: (HTMLSourceModeTab.dir, HTMLSourceModeTab.label)
+     Do NOT translate text for 'HTMLSourceModeTab.dir', use latin "ltr" if
+     you want the <html> image to left of the 'HTMLSourceModeTab.label' text,
+     or use latin "rtl" if you want this image to the right of text. You do
+     not need to include HTML in the label 'HTMLSourceModeTab.label' -->
+<!ENTITY HTMLSourceModeTab.dir "ltr">
+<!ENTITY HTMLSourceModeTab.label "Sumber">
+<!ENTITY HTMLSourceMode.label "Sumber HTML">
+<!ENTITY HTMLSourceMode.accesskey "H">
+<!ENTITY HTMLSourceMode.tooltip "Edit sumber HTML">
+<!ENTITY PreviewModeTab.label "Previu">
+<!ENTITY PreviewMode.label "Previu">
+<!ENTITY PreviewMode.accesskey "P">
+<!ENTITY PreviewMode.tooltip "Papar sebagai WYSIWYG (seperti dalam pelayar)">

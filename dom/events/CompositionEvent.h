@@ -28,7 +28,7 @@ class CompositionEvent : public UIEvent {
 
   static already_AddRefed<CompositionEvent> Constructor(
       const GlobalObject& aGlobal, const nsAString& aType,
-      const CompositionEventInit& aParam, ErrorResult& aRv);
+      const CompositionEventInit& aParam);
 
   virtual JSObject* WrapObjectInternal(
       JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override {
@@ -43,7 +43,7 @@ class CompositionEvent : public UIEvent {
   void GetRanges(TextClauseArray& aRanges);
 
  protected:
-  ~CompositionEvent() {}
+  ~CompositionEvent() = default;
 
   nsString mData;
   nsString mLocale;

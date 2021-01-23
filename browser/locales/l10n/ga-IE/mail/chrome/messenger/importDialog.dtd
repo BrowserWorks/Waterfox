@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of 
+Netscape Communicator, Please translate using the brandname in respective 
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word 
+"&brandShortName;" below.
+-->
+
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Iompórtáil">
+<!ENTITY importAll.label          "Iompórtáil Uile">
+<!ENTITY importAll.accesskey      "U">
+<!ENTITY importMail.label         "Ríomhphost">
+<!ENTITY importMail.accesskey     "m">
+<!ENTITY importFeeds.label        "Liostálacha">
+<!ENTITY importFeeds.accesskey    "s">
+<!ENTITY importAddressbook.label  "Leabhair Sheoltaí">
+<!ENTITY importAddressbook.accesskey "a">
+<!ENTITY importSettings.label     "Socruithe">
+<!ENTITY importSettings.accesskey "r">
+<!ENTITY importFilters.label      "Scagairí">
+<!ENTITY importFilters.accesskey  "S">
+
+<!ENTITY  window.width            "44em">
+<!ENTITY  window.macWidth         "54em">
+
+<!ENTITY importTitle.label        "Treoraí Iompórtála &brandShortName;">
+<!ENTITY importShortDesc.label    "Iompórtáil Teachtaireachtaí, Leabhair Seoltaí, Socruithe agus Scagairí ó ríomhchláir eile">
+
+<!ENTITY importDescription1.label "Iompórtálfaidh an treoraí seo do chuid ríomhphoist, leabhar seoltaí, fothaí, sainroghanna, agus/nó scagairí ó fheidhmchláir ríomhphoist eile agus ó fhormáidí coitianta leabhar seoltaí isteach i &brandShortName;.">
+<!ENTITY importDescription2.label "Tar éis iad a bheith iompórtáilte, beidh tú in ann iad a rochtain ó &brandShortName;.">
+
+<!ENTITY selectDescription.label  "Roghnaigh cineál an chomhaid is mian leat iompórtáil:">
+<!ENTITY selectDescriptionB.label "Roghnaigh cuntas atá ann, nó cruthaigh cuntas nua:">
+<!ENTITY selectDescription.accesskey "R">
+<!ENTITY acctName.label           "Ainm:">
+<!ENTITY acctName.accesskey       "n">
+<!ENTITY noModulesFound.label     "Níor aimsíodh feidhmchlár nó comhad arbh fhéidir sonraí a iompórtáil uaidh.">
+
+<!ENTITY back.label               "&lt; Siar">
+<!ENTITY forward.label            "Ar Aghaidh &gt;">
+<!ENTITY finish.label             "Críochnaigh">
+<!ENTITY cancel.label             "Cealaigh">
+
+<!ENTITY select.label             "nó roghnaigh cineál an ábhair atá le hiompórtáil:">
+
+<!ENTITY title.label              "Teideal">
+<!ENTITY processing.label         "Á nIompórtáil…">

@@ -74,10 +74,10 @@ function snapshotHistograms() {
       "FX_URLBAR_SELECTED_RESULT_INDEX"
     ),
     resultTypeHist: TelemetryTestUtils.getAndClearHistogram(
-      "FX_URLBAR_SELECTED_RESULT_TYPE"
+      "FX_URLBAR_SELECTED_RESULT_TYPE_2"
     ),
     resultIndexByTypeHist: TelemetryTestUtils.getAndClearKeyedHistogram(
-      "FX_URLBAR_SELECTED_RESULT_INDEX_BY_TYPE"
+      "FX_URLBAR_SELECTED_RESULT_INDEX_BY_TYPE_2"
     ),
     resultMethodHist: TelemetryTestUtils.getAndClearHistogram(
       "FX_URLBAR_SELECTED_RESULT_METHOD"
@@ -265,42 +265,6 @@ add_task(async function test_switchtab() {
 
   BrowserTestUtils.removeTab(tab);
   BrowserTestUtils.removeTab(homeTab);
-});
-
-add_task(async function test_tag() {
-  if (UrlbarPrefs.get("quantumbar")) {
-    return;
-  }
-  const histograms = snapshotHistograms();
-
-  let tab = await BrowserTestUtils.openNewForegroundTab(
-    gBrowser,
-    "about:blank"
-  );
-
-  Services.prefs.setBoolPref("browser.urlbar.suggest.bookmark", false);
-
-  PlacesUtils.tagging.tagURI(Services.io.newURI("http://example.com"), ["tag"]);
-
-  let p = BrowserTestUtils.browserLoaded(tab.linkedBrowser);
-  await searchInAwesomebar("tag");
-  EventUtils.synthesizeKey("KEY_ArrowDown");
-  EventUtils.synthesizeKey("KEY_Enter");
-  await p;
-
-  assertSearchTelemetryEmpty(histograms.search_hist);
-  assertHistogramResults(
-    histograms,
-    "tag",
-    1,
-    URLBAR_SELECTED_RESULT_METHODS.arrowEnterSelection
-  );
-
-  PlacesUtils.tagging.untagURI(Services.io.newURI("http://example.com"), [
-    "tag",
-  ]);
-  Services.prefs.clearUserPref("browser.urlbar.suggest.bookmark");
-  BrowserTestUtils.removeTab(tab);
 });
 
 add_task(async function test_visitURL() {

@@ -4,7 +4,6 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
-const PREF_POSTUPDATE = "app.update.postupdate";
 const PREF_MSTONE = "browser.startup.homepage_override.mstone";
 const PREF_OVERRIDE_URL = "startup.homepage_override_url";
 
@@ -35,12 +34,10 @@ const XML_SUFFIX =
 const BCH_TESTS = [
   {
     description: "no mstone change and no update",
-    noPostUpdatePref: true,
     noMstoneChange: true,
   },
   {
     description: "mstone changed and no update",
-    noPostUpdatePref: true,
     prefURL: DEFAULT_PREF_URL,
   },
   {
@@ -63,178 +60,53 @@ const BCH_TESTS = [
     openURL: DEFAULT_UPDATE_URL,
   },
   {
-    description: "update with 'showURL showAlert' for actions",
-    actions: "showAlert showURL",
+    description: "update with 'extra showURL' for actions",
+    actions: "extra showURL",
     prefURL: DEFAULT_PREF_URL,
   },
   {
-    description: "update with 'showAlert showURL' for actions and openURL",
-    actions: "showAlert showURL",
+    description: "update with 'extra showURL' for actions and openURL",
+    actions: "extra showURL",
     openURL: DEFAULT_UPDATE_URL,
-  },
-  {
-    description: "update with 'showURL showNotification' for actions",
-    actions: "showURL showNotification",
-    prefURL: DEFAULT_PREF_URL,
-  },
-  {
-    description:
-      "update with 'showNotification showURL' for actions and openURL",
-    actions: "showNotification showURL",
-    openURL: DEFAULT_UPDATE_URL,
-  },
-  {
-    description: "update with 'showAlert showURL showNotification' for actions",
-    actions: "showAlert showURL showNotification",
-    prefURL: DEFAULT_PREF_URL,
-  },
-  {
-    description:
-      "update with 'showNotification showURL showAlert' for " +
-      "actions and openURL",
-    actions: "showNotification showURL showAlert",
-    openURL: DEFAULT_UPDATE_URL,
-  },
-  {
-    description: "update with 'showAlert' for actions",
-    actions: "showAlert",
-  },
-  {
-    description: "update with 'showAlert showNotification' for actions",
-    actions: "showAlert showNotification",
-  },
-  {
-    description: "update with 'showNotification' for actions",
-    actions: "showNotification",
-  },
-  {
-    description: "update with 'showNotification showAlert' for actions",
-    actions: "showNotification showAlert",
   },
   {
     description: "update with 'silent' for actions",
     actions: "silent",
   },
   {
-    description:
-      "update with 'silent showURL showAlert showNotification' " +
-      "for actions and openURL",
-    actions: "silent showURL showAlert showNotification",
+    description: "update with 'silent showURL extra' for actions and openURL",
+    actions: "silent showURL extra",
   },
 ];
 
-var gOriginalMStone;
-var gOriginalOverrideURL;
-
-this.__defineGetter__("gBG", function() {
-  delete this.gBG;
-  return (this.gBG = Cc["@mozilla.org/browser/browserglue;1"].getService(
-    Ci.nsIObserver
-  ));
-});
-
-function test() {
-  waitForExplicitFinish();
-
+add_task(async function test_bug538331() {
   // Reset the startup page pref since it may have been set by other tests
-  // and we will assume it is default.
-  Services.prefs.clearUserPref("browser.startup.page");
+  // and we will assume it is (non-test) default.
+  await SpecialPowers.pushPrefEnv({
+    clear: [["browser.startup.page"]],
+  });
 
-  if (Services.prefs.prefHasUserValue(PREF_MSTONE)) {
-    gOriginalMStone = Services.prefs.getCharPref(PREF_MSTONE);
-  }
+  let originalMstone = Services.prefs.getCharPref(PREF_MSTONE);
 
-  if (Services.prefs.prefHasUserValue(PREF_OVERRIDE_URL)) {
-    gOriginalOverrideURL = Services.prefs.getCharPref(PREF_OVERRIDE_URL);
-  }
+  // Set the preferences needed for the test: they will be cleared up
+  // after it runs.
+  await SpecialPowers.pushPrefEnv({
+    set: [
+      [PREF_MSTONE, originalMstone],
+      [PREF_OVERRIDE_URL, DEFAULT_PREF_URL],
+    ],
+  });
 
-  testDefaultArgs();
-}
+  registerCleanupFunction(async () => {
+    let activeUpdateFile = getActiveUpdateFile();
+    activeUpdateFile.remove(false);
+    reloadUpdateManagerData(true);
+  });
 
-var gWindowCatcher = {
-  windowsOpen: 0,
-  finishCalled: false,
-  start() {
-    Services.ww.registerNotification(this);
-  },
-
-  finish(aFunc) {
-    Services.ww.unregisterNotification(this);
-    this.finishFunc = aFunc;
-    if (this.windowsOpen > 0) {
-      return;
-    }
-
-    this.finishFunc();
-  },
-
-  closeWindow(win) {
-    info("window catcher closing window: " + win.document.documentURI);
-    win.close();
-    this.windowsOpen--;
-    if (this.finishFunc) {
-      this.finish(this.finishFunc);
-    }
-  },
-
-  windowLoad(win) {
-    executeSoon(this.closeWindow.bind(this, win));
-  },
-
-  observe(subject, topic, data) {
-    if (topic != "domwindowopened") {
-      return;
-    }
-
-    this.windowsOpen++;
-    let win = subject.QueryInterface(Ci.nsIDOMWindow);
-    info("window catcher caught window opening: " + win.document.documentURI);
-    win.addEventListener(
-      "load",
-      function() {
-        gWindowCatcher.windowLoad(win);
-      },
-      { once: true }
-    );
-  },
-};
-
-function finish_test() {
-  // Reset browser.startup.homepage_override.mstone to the original value or
-  // clear it if it didn't exist.
-  if (gOriginalMStone) {
-    Services.prefs.setCharPref(PREF_MSTONE, gOriginalMStone);
-  } else if (Services.prefs.prefHasUserValue(PREF_MSTONE)) {
-    Services.prefs.clearUserPref(PREF_MSTONE);
-  }
-
-  // Reset startup.homepage_override_url to the original value or clear it if
-  // it didn't exist.
-  if (gOriginalOverrideURL) {
-    Services.prefs.setCharPref(PREF_OVERRIDE_URL, gOriginalOverrideURL);
-  } else if (Services.prefs.prefHasUserValue(PREF_OVERRIDE_URL)) {
-    Services.prefs.clearUserPref(PREF_OVERRIDE_URL);
-  }
-
-  writeUpdatesToXMLFile(XML_EMPTY);
-  reloadUpdateManagerData();
-
-  finish();
-}
-
-// Test the defaultArgs returned by nsBrowserContentHandler after an update
-function testDefaultArgs() {
   // Clear any pre-existing override in defaultArgs that are hanging around.
   // This will also set the browser.startup.homepage_override.mstone preference
   // if it isn't already set.
   Cc["@mozilla.org/browser/clh;1"].getService(Ci.nsIBrowserHandler).defaultArgs;
-
-  let originalMstone = Services.prefs.getCharPref(PREF_MSTONE);
-
-  Services.prefs.setCharPref(PREF_OVERRIDE_URL, DEFAULT_PREF_URL);
-
-  writeUpdatesToXMLFile(XML_EMPTY);
-  reloadUpdateManagerData();
 
   for (let i = 0; i < BCH_TESTS.length; i++) {
     let testCase = BCH_TESTS[i];
@@ -253,7 +125,7 @@ function testDefaultArgs() {
       writeUpdatesToXMLFile(XML_EMPTY);
     }
 
-    reloadUpdateManagerData();
+    reloadUpdateManagerData(false);
 
     let noOverrideArgs = Cc["@mozilla.org/browser/clh;1"].getService(
       Ci.nsIBrowserHandler
@@ -276,10 +148,6 @@ function testDefaultArgs() {
       Services.prefs.setCharPref(PREF_MSTONE, "PreviousMilestone");
     }
 
-    if (testCase.noPostUpdatePref == undefined) {
-      Services.prefs.setBoolPref(PREF_POSTUPDATE, true);
-    }
-
     let defaultArgs = Cc["@mozilla.org/browser/clh;1"].getService(
       Ci.nsIBrowserHandler
     ).defaultArgs;
@@ -293,179 +161,52 @@ function testDefaultArgs() {
         "preference " + PREF_MSTONE + " should have been updated"
       );
     }
-
-    if (Services.prefs.prefHasUserValue(PREF_POSTUPDATE)) {
-      Services.prefs.clearUserPref(PREF_POSTUPDATE);
-    }
   }
+});
 
-  testShowNotification();
-}
-
-// BrowserGlue.jsm _showUpdateNotification notification tests
-const BG_NOTIFY_TESTS = [
-  {
-    description:
-      "'silent showNotification' actions should not display a notification",
-    actions: "silent showNotification",
-  },
-  {
-    description: "'showNotification' for actions should display a notification",
-    actions: "showNotification",
-  },
-  {
-    description: "no actions and empty updates.xml",
-  },
-  {
-    description: "'showAlert' for actions should not display a notification",
-    actions: "showAlert",
-  },
-  {
-    // This test MUST be the last test in the array to test opening the url
-    // provided by the updates.xml.
-    description:
-      "'showNotification' for actions with custom notification " +
-      "attributes should display a notification",
-    actions: "showNotification",
-    notificationText: "notification text",
-    notificationURL: DEFAULT_UPDATE_URL,
-    notificationButtonLabel: "button label",
-    notificationButtonAccessKey: "b",
-  },
-];
-
-// Test showing a notification after an update
-// _showUpdateNotification in BrowserGlue.jsm
-function testShowNotification() {
-  // Catches any windows opened by these tests (e.g. alert windows) and closes
-  // them
-  gWindowCatcher.start();
-
-  for (let i = 0; i < BG_NOTIFY_TESTS.length; i++) {
-    let testCase = BG_NOTIFY_TESTS[i];
-    ok(true, "Test showNotification " + (i + 1) + ": " + testCase.description);
-
-    if (testCase.actions) {
-      let actionsXML = ' actions="' + testCase.actions + '"';
-      if (testCase.notificationText) {
-        actionsXML += ' notificationText="' + testCase.notificationText + '"';
-      }
-      if (testCase.notificationURL) {
-        actionsXML += ' notificationURL="' + testCase.notificationURL + '"';
-      }
-      if (testCase.notificationButtonLabel) {
-        actionsXML +=
-          ' notificationButtonLabel="' + testCase.notificationButtonLabel + '"';
-      }
-      if (testCase.notificationButtonAccessKey) {
-        actionsXML +=
-          ' notificationButtonAccessKey="' +
-          testCase.notificationButtonAccessKey +
-          '"';
-      }
-      writeUpdatesToXMLFile(XML_PREFIX + actionsXML + XML_SUFFIX);
-    } else {
-      writeUpdatesToXMLFile(XML_EMPTY);
-    }
-
-    reloadUpdateManagerData();
-    Services.prefs.setBoolPref(PREF_POSTUPDATE, true);
-
-    gBG.observe(null, "browser-glue-test", "post-update-notification");
-
-    let updateBox = gHighPriorityNotificationBox.getNotificationWithValue(
-      "post-update-notification"
-    );
-    if (
-      testCase.actions &&
-      testCase.actions.includes("showNotification") &&
-      !testCase.actions.includes("silent")
-    ) {
-      ok(updateBox, "Update notification box should have been displayed");
-      if (updateBox) {
-        if (testCase.notificationText) {
-          is(
-            updateBox.messageText.textContent,
-            testCase.notificationText,
-            "Update notification box " +
-              "should have the label provided by the update"
-          );
-        }
-        if (testCase.notificationButtonLabel) {
-          var button = updateBox.getElementsByTagName("button").item(0);
-          is(
-            button.label,
-            testCase.notificationButtonLabel,
-            "Update notification " +
-              "box button should have the label provided by the update"
-          );
-          if (testCase.notificationButtonAccessKey) {
-            let accessKey = button.getAttribute("accesskey");
-            is(
-              accessKey,
-              testCase.notificationButtonAccessKey,
-              "Update " +
-                "notification box button should have the accesskey " +
-                "provided by the update"
-            );
-          }
-        }
-        // The last test opens an url and verifies the url from the updates.xml
-        // is correct.
-        if (i == BG_NOTIFY_TESTS.length - 1) {
-          // Wait for any windows caught by the windowcatcher to close
-          gWindowCatcher.finish(function() {
-            BrowserTestUtils.waitForNewTab(gBrowser).then(testNotificationURL);
-            button.click();
-          });
-        } else {
-          gHighPriorityNotificationBox.removeAllNotifications(true);
-        }
-      } else if (i == BG_NOTIFY_TESTS.length - 1) {
-        // If updateBox is null the test has already reported errors so bail
-        finish_test();
-      }
-    } else {
-      ok(!updateBox, "Update notification box should not have been displayed");
-    }
-
-    let prefHasUserValue = Services.prefs.prefHasUserValue(PREF_POSTUPDATE);
-    is(
-      prefHasUserValue,
-      false,
-      "preference " + PREF_POSTUPDATE + " shouldn't have a user value"
-    );
+/**
+ * Removes the updates.xml file and returns the nsIFile for the
+ * active-update.xml file.
+ *
+ * @return  The nsIFile for the active-update.xml file.
+ */
+function getActiveUpdateFile() {
+  let updateRootDir = Services.dirsvc.get("UpdRootD", Ci.nsIFile);
+  let updatesFile = updateRootDir.clone();
+  updatesFile.append("updates.xml");
+  if (updatesFile.exists()) {
+    // The following is non-fatal.
+    try {
+      updatesFile.remove(false);
+    } catch (e) {}
   }
+  let activeUpdateFile = updateRootDir.clone();
+  activeUpdateFile.append("active-update.xml");
+  return activeUpdateFile;
 }
 
-// Test opening the url provided by the updates.xml in the last test
-function testNotificationURL() {
-  ok(
-    true,
-    "Test testNotificationURL: clicking the notification button " +
-      "opened the url specified by the update"
-  );
-  let href = gBrowser.currentURI.spec;
-  let expectedURL = BG_NOTIFY_TESTS[BG_NOTIFY_TESTS.length - 1].notificationURL;
-  is(
-    href,
-    expectedURL,
-    "The url opened from the notification should be the " +
-      "url provided by the update"
-  );
-  gBrowser.removeCurrentTab();
-  window.focus();
-  finish_test();
-}
-
-/* Reloads the update metadata from disk */
-function reloadUpdateManagerData() {
+/**
+ * Reloads the update xml files.
+ *
+ * @param  skipFiles (optional)
+ *         If true, the update xml files will not be read and the metadata will
+ *         be reset. If false (the default), the update xml files will be read
+ *         to populate the update metadata.
+ */
+function reloadUpdateManagerData(skipFiles = false) {
   Cc["@mozilla.org/updates/update-manager;1"]
     .getService(Ci.nsIUpdateManager)
     .QueryInterface(Ci.nsIObserver)
-    .observe(null, "um-reload-update-data", "");
+    .observe(null, "um-reload-update-data", skipFiles ? "skip-files" : "");
 }
 
+/**
+ * Writes the updates specified to the active-update.xml file.
+ *
+ * @param  aText
+ *         The updates represented as a string to write to the active-update.xml
+ *         file.
+ */
 function writeUpdatesToXMLFile(aText) {
   const PERMS_FILE = 0o644;
 
@@ -473,15 +214,15 @@ function writeUpdatesToXMLFile(aText) {
   const MODE_CREATE = 0x08;
   const MODE_TRUNCATE = 0x20;
 
-  let file = Services.dirsvc.get("UpdRootD", Ci.nsIFile);
-  file.append("updates.xml");
+  let activeUpdateFile = getActiveUpdateFile();
+  if (!activeUpdateFile.exists()) {
+    activeUpdateFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, PERMS_FILE);
+  }
   let fos = Cc["@mozilla.org/network/file-output-stream;1"].createInstance(
     Ci.nsIFileOutputStream
   );
-  if (!file.exists()) {
-    file.create(Ci.nsIFile.NORMAL_FILE_TYPE, PERMS_FILE);
-  }
-  fos.init(file, MODE_WRONLY | MODE_CREATE | MODE_TRUNCATE, PERMS_FILE, 0);
+  let flags = MODE_WRONLY | MODE_CREATE | MODE_TRUNCATE;
+  fos.init(activeUpdateFile, flags, PERMS_FILE, 0);
   fos.write(aText, aText.length);
   fos.close();
 }

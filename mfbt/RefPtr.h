@@ -12,6 +12,8 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/DbgMacro.h"
 
+#include <type_traits>
+
 /*****************************************************************************/
 
 // template <class T> class RefPtrGetterAddRefs;
@@ -23,6 +25,8 @@ class nsISupports;
 namespace mozilla {
 template <class T>
 class OwningNonNull;
+template <class T>
+class StaticLocalRefPtr;
 template <class T>
 class StaticRefPtr;
 #if defined(XP_WIN)
@@ -108,19 +112,22 @@ class MOZ_IS_REFPTR RefPtr {
 
   MOZ_IMPLICIT RefPtr(decltype(nullptr)) : mRawPtr(nullptr) {}
 
-  template <typename I>
+  template <typename I,
+            typename = std::enable_if_t<std::is_convertible_v<I*, T*>>>
   MOZ_IMPLICIT RefPtr(already_AddRefed<I>& aSmartPtr)
       : mRawPtr(aSmartPtr.take())
   // construct from |already_AddRefed|
   {}
 
-  template <typename I>
+  template <typename I,
+            typename = std::enable_if_t<std::is_convertible_v<I*, T*>>>
   MOZ_IMPLICIT RefPtr(already_AddRefed<I>&& aSmartPtr)
       : mRawPtr(aSmartPtr.take())
   // construct from |otherRefPtr.forget()|
   {}
 
-  template <typename I>
+  template <typename I,
+            typename = std::enable_if_t<std::is_convertible_v<I*, T*>>>
   MOZ_IMPLICIT RefPtr(const RefPtr<I>& aSmartPtr)
       : mRawPtr(aSmartPtr.get())
   // copy-construct from a smart pointer with a related pointer type
@@ -130,7 +137,8 @@ class MOZ_IS_REFPTR RefPtr {
     }
   }
 
-  template <typename I>
+  template <typename I,
+            typename = std::enable_if_t<std::is_convertible_v<I*, T*>>>
   MOZ_IMPLICIT RefPtr(RefPtr<I>&& aSmartPtr)
       : mRawPtr(aSmartPtr.forget().take())
   // construct from |Move(RefPtr<SomeSubclassOfT>)|.
@@ -145,6 +153,10 @@ class MOZ_IS_REFPTR RefPtr {
   // Defined in OwningNonNull.h
   template <class U>
   MOZ_IMPLICIT RefPtr(const mozilla::OwningNonNull<U>& aOther);
+
+  // Defined in StaticLocalPtr.h
+  template <class U>
+  MOZ_IMPLICIT RefPtr(const mozilla::StaticLocalRefPtr<U>& aOther);
 
   // Defined in StaticPtr.h
   template <class U>
@@ -201,7 +213,9 @@ class MOZ_IS_REFPTR RefPtr {
   RefPtr<T>& operator=(const mozilla::mscom::AgileReference& aAgileRef);
 #endif  // defined(XP_WIN)
 
-  RefPtr<T>& operator=(RefPtr<T>&& aRefPtr) {
+  template <typename I,
+            typename = std::enable_if_t<std::is_convertible_v<I*, T*>>>
+  RefPtr<T>& operator=(RefPtr<I>&& aRefPtr) {
     assign_assuming_AddRef(aRefPtr.forget().take());
     return *this;
   }
@@ -209,6 +223,10 @@ class MOZ_IS_REFPTR RefPtr {
   // Defined in OwningNonNull.h
   template <class U>
   RefPtr<T>& operator=(const mozilla::OwningNonNull<U>& aOther);
+
+  // Defined in StaticLocalPtr.h
+  template <class U>
+  RefPtr<T>& operator=(const mozilla::StaticLocalRefPtr<U>& aOther);
 
   // Defined in StaticPtr.h
   template <class U>

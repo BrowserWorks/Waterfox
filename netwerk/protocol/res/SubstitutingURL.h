@@ -19,7 +19,7 @@ namespace net {
 class SubstitutingURL : public nsStandardURL {
  public:
   virtual nsStandardURL* StartClone() override;
-  virtual MOZ_MUST_USE nsresult EnsureFile() override;
+  [[nodiscard]] virtual nsresult EnsureFile() override;
   NS_IMETHOD GetClassIDNoAlloc(nsCID* aCID) override;
 
  private:
@@ -52,6 +52,8 @@ class SubstitutingURL : public nsStandardURL {
     mutator.forget(aMutator);
     return NS_OK;
   }
+
+  NS_IMETHOD_(void) Serialize(ipc::URIParams& aParams) override;
 
   friend BaseURIMutator<SubstitutingURL>;
   friend TemplatedMutator<SubstitutingURL>;

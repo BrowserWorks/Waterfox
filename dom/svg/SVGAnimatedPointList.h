@@ -10,7 +10,6 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/SMILAttr.h"
 #include "mozilla/UniquePtr.h"
-#include "nsAutoPtr.h"
 #include "SVGPointList.h"
 
 namespace mozilla {
@@ -18,6 +17,8 @@ namespace mozilla {
 class SMILValue;
 
 namespace dom {
+class DOMSVGPoint;
+class DOMSVGPointList;
 class SVGAnimationElement;
 class SVGElement;
 }  // namespace dom
@@ -39,8 +40,8 @@ class SVGElement;
  */
 class SVGAnimatedPointList {
   // friends so that they can get write access to mBaseVal and mAnimVal
-  friend class DOMSVGPoint;
-  friend class DOMSVGPointList;
+  friend class dom::DOMSVGPoint;
+  friend class dom::DOMSVGPointList;
 
  public:
   SVGAnimatedPointList() = default;
@@ -87,7 +88,7 @@ class SVGAnimatedPointList {
   // the empty string (<set to="">).
 
   SVGPointList mBaseVal;
-  nsAutoPtr<SVGPointList> mAnimVal;
+  UniquePtr<SVGPointList> mAnimVal;
 
   struct SMILAnimatedPointList : public SMILAttr {
    public:

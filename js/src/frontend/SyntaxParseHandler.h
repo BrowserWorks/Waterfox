@@ -12,6 +12,7 @@
 
 #include <string.h>
 
+#include "frontend/FunctionSyntaxKind.h"  // FunctionSyntaxKind
 #include "frontend/ParseNode.h"
 #include "frontend/TokenStream.h"
 #include "js/GCAnnotations.h"
@@ -42,11 +43,10 @@ class SyntaxParseHandler {
   //          this class.  The |lastAtom| field above is safe because
   //          SyntaxParseHandler only appears as a field in
   //          PerHandlerParser<SyntaxParseHandler>, and that class inherits
-  //          from ParserBase which contains an AutoKeepAtoms field that
-  //          prevents atoms from being moved around while the AutoKeepAtoms
-  //          lives -- which is as long as ParserBase lives, which is longer
-  //          than the PerHandlerParser<SyntaxParseHandler> that inherits
-  //          from it will live.
+  //          from ParserBase which contains a reference to a CompilationInfo,
+  //          which has an AutoKeepAtoms field that prevents atoms from being
+  //          moved around while the AutoKeepAtoms lives -- which is longer
+  //          than the lifetime of any of the parser classes.
 
  public:
   enum Node {
@@ -76,6 +76,8 @@ class SyntaxParseHandler {
     // noticed).
     NodeFunctionCall,
 
+    NodeOptionalFunctionCall,
+
     // Node representing normal names which don't require any special
     // casing.
     NodeName,
@@ -89,7 +91,9 @@ class SyntaxParseHandler {
     NodePotentialAsyncKeyword,
 
     NodeDottedProperty,
+    NodeOptionalDottedProperty,
     NodeElement,
+    NodeOptionalElement,
 
     // Destructuring target patterns can't be parenthesized: |([a]) = [3];|
     // must be a syntax error.  (We can't use NodeGeneric instead of these
@@ -115,15 +119,9 @@ class SyntaxParseHandler {
     // |("use strict");| as a useless statement.
     NodeUnparenthesizedString,
 
-    // Assignment expressions in condition contexts could be typos for
-    // equality checks.  (Think |if (x = y)| versus |if (x == y)|.)  Thus
-    // we need this to treat |if (x = y)| as a possible typo and
-    // |if ((x = y))| as a deliberate assignment within a condition.
-    //
-    // (Technically this isn't needed, as these are *only* extraWarnings
-    // warnings, and parsing with that option disables syntax parsing.  But
-    // it seems best to be consistent, and perhaps the syntax parser will
-    // eventually enforce extraWarnings and will require this then.)
+    // For destructuring patterns an assignment element with
+    // an initializer expression is not allowed be parenthesized.
+    // i.e. |{x = 1} = obj|
     NodeUnparenthesizedAssignment,
 
     // This node is necessary to determine if the base operand in an
@@ -151,6 +149,10 @@ class SyntaxParseHandler {
     return node == NodeDottedProperty || node == NodeElement;
   }
 
+  bool isOptionalPropertyAccess(Node node) {
+    return node == NodeOptionalDottedProperty || node == NodeOptionalElement;
+  }
+
   bool isFunctionCall(Node node) {
     // Note: super() is a special form, *not* a function call.
     return node == NodeFunctionCall;
@@ -171,7 +173,7 @@ class SyntaxParseHandler {
 
  public:
   SyntaxParseHandler(JSContext* cx, LifoAlloc& alloc,
-                     LazyScript* lazyOuterFunction)
+                     BaseScript* lazyOuterFunction)
       : lastAtom(nullptr) {}
 
   static NullNode null() { return NodeFailure; }
@@ -237,8 +239,7 @@ class SyntaxParseHandler {
     return NodeGeneric;
   }
 
-  template <class Boxer>
-  RegExpLiteralType newRegExp(Node reobj, const TokenPos& pos, Boxer& boxer) {
+  RegExpLiteralType newRegExp(Node reobj, const TokenPos& pos) {
     return NodeGeneric;
   }
 
@@ -289,6 +290,10 @@ class SyntaxParseHandler {
   ListNodeType newArguments(const TokenPos& pos) { return NodeGeneric; }
   CallNodeType newCall(Node callee, Node args, JSOp callOp) {
     return NodeFunctionCall;
+  }
+
+  CallNodeType newOptionalCall(Node callee, Node args, JSOp callOp) {
+    return NodeOptionalFunctionCall;
   }
 
   CallNodeType newSuperCall(Node callee, Node args, bool isSpread) {
@@ -348,14 +353,18 @@ class SyntaxParseHandler {
                                               AccessorType atype) {
     return true;
   }
-  MOZ_MUST_USE bool addClassMethodDefinition(ListNodeType memberList, Node key,
-                                             FunctionNodeType funNode,
+  MOZ_MUST_USE Node newClassMethodDefinition(Node key, FunctionNodeType funNode,
                                              AccessorType atype,
                                              bool isStatic) {
-    return true;
+    return NodeGeneric;
   }
-  MOZ_MUST_USE bool addClassFieldDefinition(ListNodeType memberList, Node name,
-                                            FunctionNodeType initializer) {
+  MOZ_MUST_USE Node newClassFieldDefinition(Node name,
+                                            FunctionNodeType initializer,
+                                            bool isStatic) {
+    return NodeGeneric;
+  }
+  MOZ_MUST_USE bool addClassMemberDefinition(ListNodeType memberList,
+                                             Node member) {
     return true;
   }
   UnaryNodeType newYieldExpression(uint32_t begin, Node value) {
@@ -365,6 +374,9 @@ class SyntaxParseHandler {
     return NodeGeneric;
   }
   UnaryNodeType newAwaitExpression(uint32_t begin, Node value) {
+    return NodeGeneric;
+  }
+  UnaryNodeType newOptionalChain(uint32_t begin, Node value) {
     return NodeGeneric;
   }
 
@@ -474,8 +486,17 @@ class SyntaxParseHandler {
     return NodeDottedProperty;
   }
 
+  PropertyAccessType newOptionalPropertyAccess(Node expr, NameNodeType key) {
+    return NodeOptionalDottedProperty;
+  }
+
   PropertyByValueType newPropertyByValue(Node lhs, Node index, uint32_t end) {
     return NodeElement;
+  }
+
+  PropertyByValueType newOptionalPropertyByValue(Node lhs, Node index,
+                                                 uint32_t end) {
+    return NodeOptionalElement;
   }
 
   MOZ_MUST_USE bool setupCatchScope(LexicalScopeNodeType lexicalScope,
@@ -487,6 +508,8 @@ class SyntaxParseHandler {
       FunctionNodeType funNode, Node defaultValue) {
     return true;
   }
+
+  void checkAndSetIsDirectRHSAnonFunction(Node pn) {}
 
   FunctionNodeType newFunction(FunctionSyntaxKind syntaxKind,
                                const TokenPos& pos) {
@@ -641,7 +664,6 @@ class SyntaxParseHandler {
   MOZ_MUST_USE NodeType setLikelyIIFE(NodeType node) {
     return node;  // Remain in syntax-parse mode.
   }
-  void setInDirectivePrologue(UnaryNodeType exprStmt) {}
 
   bool isName(Node node) {
     return node == NodeName || node == NodeArgumentsName ||
@@ -664,7 +686,7 @@ class SyntaxParseHandler {
     // |this|.  It's not really eligible for the funapply/funcall
     // optimizations as they're currently implemented (assuming a single
     // value is used for both retrieval and |this|).
-    if (node != NodeDottedProperty) {
+    if (node != NodeDottedProperty && node != NodeOptionalDottedProperty) {
       return nullptr;
     }
     return lastAtom->asPropertyName();

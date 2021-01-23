@@ -1,0 +1,4 @@
+<!ENTITY options.title "Optiones de utensiles de disveloppamento">
+<!ENTITY options.status.label "Stato:">
+<!ENTITY options.port.label "Porta:">
+<!ENTITY options.forcelocal.label "Permitter connexiones ab altere computatores">

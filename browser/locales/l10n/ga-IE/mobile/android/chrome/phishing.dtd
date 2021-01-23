@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Amach as seo liom!">
+<!ENTITY safeb.palm.decline.label "Ná bac leis an rabhadh seo">
+<!ENTITY safeb.palm.reportPage.label "Cén fáth ar cuireadh cosc ar an leathanach seo?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Tháinig an tuairisc seo ó <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "Tuairiscíodh gur Leathanach Ionsaithe é seo!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Tuairiscíodh gur leathanach ionsaithe é an leathanach Gréasáin <span id='malware_sitename'/> agus tá cosc curtha air de bharr do roghanna slándála.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Déanann leathanaigh ionsaithe iarracht ríomhchláir a shuiteáil a ghoideann faisnéis phríobháideach nó a dhéanann dochar do do ríomhaire.</p><p>Scaipeann leathanaigh ionsaithe áirithe bogearraí dochracha d'aonturas, ach is minic suímh a bheith contúirteach i nganfhios dá n-úinéirí agus gan a gcead.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "Suíomh cealgach!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "Tuairiscíodh gur leathanach cealgach an leathanach Gréasáin <span id='phishing_sitename'/> agus cuireadh bac air de bharr do roghanna slándála.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>Deartar suíomhanna cealgacha chun tú a mhealladh le rud éigin dainséarach a dhéanamh. Mar shampla: cuirtear ar dhaoine bogearra a shuiteáil nó sonraí pearsanta a nochtadh; cosúil le d'fhocal faire, d'uimhir ghutháin nó do chárta creidmheasa. </p><p>Tá baol ann go ndéanfar bradaíl aitheantais nó calaois eile ort má iontrálann sonra ar bith ar an suíomh seo.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Déan gearán faoi shuíomh ar a bhfuil bogearraí gan iarraidh!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Tuairiscíodh gur leathanach ar a bhfuil bogearraí gan iarraidh é an leathanach Gréasáin <span id='unwanted_sitename'/> agus tá cosc curtha air de bharr do roghanna slándála.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "Nuair a osclaíonn tú leathanach ar a bhfuil bogearraí gan iarraidh, déantar iarracht bogearraí a shuiteáil ar do ríomhaire a d'fhéadfadh dochar a dhéanamh do do chóras.">
+

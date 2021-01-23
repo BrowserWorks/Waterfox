@@ -6,6 +6,7 @@
 
 #include "DocumentTimeline.h"
 #include "mozilla/ScopeExit.h"
+#include "mozilla/dom/DocumentInlines.h"
 #include "mozilla/dom/DocumentTimelineBinding.h"
 #include "AnimationUtils.h"
 #include "nsContentUtils.h"
@@ -60,8 +61,7 @@ already_AddRefed<DocumentTimeline> DocumentTimeline::Constructor(
 
   if (originTime == TimeDuration::Forever() ||
       originTime == -TimeDuration::Forever()) {
-    aRv.ThrowTypeError<dom::MSG_TIME_VALUE_OUT_OF_RANGE>(
-        NS_LITERAL_STRING("Origin time"));
+    aRv.ThrowTypeError<dom::MSG_TIME_VALUE_OUT_OF_RANGE>("Origin time");
     return nullptr;
   }
   RefPtr<DocumentTimeline> timeline = new DocumentTimeline(doc, originTime);
@@ -188,13 +188,6 @@ void DocumentTimeline::MostRecentRefreshTimeUpdated() {
 }
 
 void DocumentTimeline::WillRefresh(mozilla::TimeStamp aTime) {
-  // https://drafts.csswg.org/web-animations-1/#update-animations-and-send-events,
-  // step2.
-  // Note that this should be done before nsAutoAnimationMutationBatch which is
-  // inside MostRecentRefreshTimeUpdated().  If PerformMicroTaskCheckpoint was
-  // called before nsAutoAnimationMutationBatch is destroyed, some mutation
-  // records might not be delivered in this checkpoint.
-  nsAutoMicroTask mt;
   MostRecentRefreshTimeUpdated();
 }
 

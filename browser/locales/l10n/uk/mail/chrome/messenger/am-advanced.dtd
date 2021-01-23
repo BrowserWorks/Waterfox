@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpServer.label "Параметри сервера вихідних повідомлень (SMTP)">
+
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpDescription.label "При керуванні своїми обліковими даними ви можете використати сервер з цього списку, вибравши його сервером вихідної пошти (SMTP), або можете використати типовий сервер з цього списку, обравши &quot;Використовувати типовий сервер&quot;.">
+
+<!ENTITY smtpListAdd.label  "Додати…">
+<!ENTITY smtpListAdd.accesskey  "д">
+<!ENTITY smtpListEdit.label "Змінити…">
+<!ENTITY smtpListEdit.accesskey "З">
+<!ENTITY smtpListDelete.label "Вилучити">
+<!ENTITY smtpListDelete.accesskey "В">
+<!ENTITY smtpListSetDefault.label "Типово">
+<!ENTITY smtpListSetDefault.accesskey "Т">
+
+<!ENTITY serverDetails.label "Подробиці про обраний сервер:">
+<!ENTITY serverDescription.label "Опис: ">
+<!ENTITY serverName.label "Ім’я сервера: ">
+<!ENTITY serverPort.label "Порт: ">
+<!ENTITY userName.label   "Ім’я користувача: ">
+<!ENTITY connectionSecurity.label "Безпека з’єднання: ">
+<!ENTITY authMethod.label   "Метод автентифікації: ">

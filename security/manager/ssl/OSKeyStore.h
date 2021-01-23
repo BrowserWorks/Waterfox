@@ -10,10 +10,13 @@
 #ifndef OSKeyStore_h
 #define OSKeyStore_h
 
+#include "nsCOMPtr.h"
 #include "nsIOSKeyStore.h"
 #include "nsString.h"
+#include "ScopedNSSTypes.h"
 
 #include <memory>
+#include <vector>
 
 class AbstractOSKeyStore {
  public:
@@ -29,7 +32,7 @@ class AbstractOSKeyStore {
   virtual nsresult Lock() = 0;
   // Unlock the key store.
   virtual nsresult Unlock() = 0;
-  virtual ~AbstractOSKeyStore() {}
+  virtual ~AbstractOSKeyStore() = default;
 
   // Returns true if the secret with the given label is available in the key
   // store, false otherwise.
@@ -47,11 +50,11 @@ class AbstractOSKeyStore {
   /* These helper functions are implemented in OSKeyStore.cpp and implement
    * common functionality of the abstract key store to encrypt and decrypt.
    */
-  nsresult DoCipher(const UniquePK11SymKey& aSymKey,
+  nsresult DoCipher(const mozilla::UniquePK11SymKey& aSymKey,
                     const std::vector<uint8_t>& inBytes,
                     std::vector<uint8_t>& outBytes, bool aEncrypt);
   nsresult BuildAesGcmKey(std::vector<uint8_t> keyBytes,
-                          /* out */ UniquePK11SymKey& aKey);
+                          /* out */ mozilla::UniquePK11SymKey& aKey);
 
  private:
   const size_t mKeyByteLength = 16;
@@ -69,10 +72,9 @@ class AbstractOSKeyStore {
 nsresult GetPromise(JSContext* aCx,
                     /* out */ RefPtr<mozilla::dom::Promise>& aPromise);
 
-class OSKeyStore final : public nsIOSKeyStore, public nsIObserver {
+class OSKeyStore final : public nsIOSKeyStore {
  public:
   NS_DECL_THREADSAFE_ISUPPORTS
-  NS_DECL_NSIOBSERVER
   NS_DECL_NSIOSKEYSTORE
 
   OSKeyStore();
@@ -83,8 +85,8 @@ class OSKeyStore final : public nsIOSKeyStore, public nsIObserver {
   nsresult RecoverSecret(const nsACString& aLabel,
                          const nsACString& aRecoveryPhrase);
   nsresult DeleteSecret(const nsACString& aLabel);
-  nsresult EncryptBytes(const nsACString& aLabel, uint32_t inLen,
-                        uint8_t* inBytes,
+  nsresult EncryptBytes(const nsACString& aLabel,
+                        const std::vector<uint8_t>& aInBytes,
                         /*out*/ nsACString& aEncryptedBase64Text);
   nsresult DecryptBytes(const nsACString& aLabel,
                         const nsACString& aEncryptedBase64Text,
@@ -96,20 +98,7 @@ class OSKeyStore final : public nsIOSKeyStore, public nsIObserver {
  private:
   ~OSKeyStore() = default;
 
-  // Thread safety for OSKeyStore:
-  // * mKsThread is only accessed on the main thread
-  // * mKsThread is shut down on the main thread when OSKeyStore receives the
-  //   "xpcom-shutdown" notification
-  // * mKs is created and destroyed on the main thread, but is only accessed on
-  //   mKsThread
-  // * XPCOM notifies "xpcom-shutdown" before shutting down the component
-  //   manager, so mKsThread is shut down before mKs is destroyed
-  // Essentially, the lifetime of mKsThread is contained by the lifetime of mKs.
-  // Since the value of mKs never changes while mKsThread is alive and any uses
-  // of it are serial, there shouldn't be any memory safety issues.
   std::unique_ptr<AbstractOSKeyStore> mKs;
-  nsCOMPtr<nsIThread> mKsThread;
-
   bool mKsIsNSSKeyStore;
   const nsCString mLabelPrefix =
       NS_LITERAL_CSTRING("org.mozilla.nss.keystore.");

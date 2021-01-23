@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name "Orodna vrstica za Koledar">
+<!ENTITY lightning.toolbar.calendar.name.accesskey "K">
+<!ENTITY lightning.toolbar.task.name "Orodna vrstica za opravila">
+<!ENTITY lightning.toolbar.task.name.accesskey "O">
+
+<!ENTITY lightning.toolbar.sync.label "Sinhroniziraj">
+<!ENTITY lightning.toolbar.sync.tooltip "Ponovno naloži koledarje in sinhroniziraj spremembe">
+<!ENTITY lightning.toolbar.delete.label "Izbriši">
+<!ENTITY lightning.toolbar.delete.tooltip "Izbriši izbrane dogodke in opravila">
+<!ENTITY lightning.toolbar.edit.label "Uredi">
+<!ENTITY lightning.toolbar.edit.tooltip "Uredi izbrani dogodek ali opravilo">
+<!ENTITY lightning.toolbar.gototoday.label "Pojdi na današnji dan">
+<!ENTITY lightning.toolbar.gototoday.tooltip "Pojdi na današnji dan">
+<!ENTITY lightning.toolbar.print.label "Natisni">
+<!ENTITY lightning.toolbar.print.tooltip "Natisni dogodke ali opravila">
+
+<!-- Mode Toolbar -->
+<!ENTITY lightning.toolbar.calendar.label     "Koledar">
+<!ENTITY lightning.toolbar.calendar.tooltip   "Preklopi na zavihek s koledarji">
+<!ENTITY lightning.toolbar.calendar.accesskey "K">
+<!ENTITY lightning.toolbar.task.label         "Opravila">
+<!ENTITY lightning.toolbar.task.tooltip       "Preklopi na zavihek z opravili">
+<!ENTITY lightning.toolbar.task.accesskey     "O">
+
+<!-- Toolbar write button -->
+<!ENTITY lightning.toolbar.newevent.label     "Dogodek">
+<!ENTITY lightning.toolbar.newevent.tooltip   "Ustvari nov dogodek">
+<!ENTITY lightning.toolbar.newtask.label      "Opravilo">
+<!ENTITY lightning.toolbar.newtask.tooltip    "Ustvari novo opravilo">
+
+<!-- Calendar and Task Mode Toolbar -->
+<!ENTITY lightning.toolbar.day.label                 "Dan">
+<!ENTITY lightning.toolbar.day.accesskey             "D">
+<!ENTITY lightning.toolbar.week.label                "Teden">
+<!ENTITY lightning.toolbar.week.accesskey            "T">
+<!ENTITY lightning.toolbar.multiweek.label           "Več tednov">
+<!ENTITY lightning.toolbar.multiweek.accesskey       "V">
+<!ENTITY lightning.toolbar.month.label               "Mesec">
+<!ENTITY lightning.toolbar.month.accesskey           "M">
+<!-- LOCALIZATION NOTE: the same as appmenuButton.label and appmenuButton1.tooltip
+     from messenger.dtd -->
+<!ENTITY lightning.toolbar.appmenuButton.label       "Meni programa">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip    "Prikaži &brandShortName;ov meni">
+<!ENTITY lightning.toolbar.calendarmenu.label        "Podokno koledarja">
+<!ENTITY lightning.toolbar.calendarmenu.accesskey    "P">
+<!ENTITY lightning.toolbar.calendarpane.label        "Prikaži podokno koledarja">
+<!ENTITY lightning.toolbar.calendarpane.accesskey    "P">

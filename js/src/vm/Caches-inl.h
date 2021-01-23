@@ -10,7 +10,7 @@
 #include "vm/Caches.h"
 
 #include "gc/Allocator.h"
-#include "gc/GCTrace.h"
+#include "gc/GCProbes.h"
 #include "vm/Probes.h"
 #include "vm/Realm.h"
 
@@ -18,21 +18,21 @@
 
 namespace js {
 
-inline bool NewObjectCache::lookupProto(const Class* clasp, JSObject* proto,
+inline bool NewObjectCache::lookupProto(const JSClass* clasp, JSObject* proto,
                                         gc::AllocKind kind,
                                         EntryIndex* pentry) {
   MOZ_ASSERT(!proto->is<GlobalObject>());
   return lookup(clasp, proto, kind, pentry);
 }
 
-inline bool NewObjectCache::lookupGlobal(const Class* clasp,
+inline bool NewObjectCache::lookupGlobal(const JSClass* clasp,
                                          GlobalObject* global,
                                          gc::AllocKind kind,
                                          EntryIndex* pentry) {
   return lookup(clasp, global, kind, pentry);
 }
 
-inline void NewObjectCache::fillGlobal(EntryIndex entry, const Class* clasp,
+inline void NewObjectCache::fillGlobal(EntryIndex entry, const JSClass* clasp,
                                        GlobalObject* global, gc::AllocKind kind,
                                        NativeObject* obj) {
   // MOZ_ASSERT(global == obj->getGlobal());
@@ -51,7 +51,7 @@ inline NativeObject* NewObjectCache::newObjectFromHit(JSContext* cx,
   // Do an end run around JSObject::group() to avoid doing AutoUnprotectCell
   // on the templateObj, which is not a GC thing and can't use
   // runtimeFromAnyThread.
-  ObjectGroup* group = templateObj->group_;
+  ObjectGroup* group = templateObj->groupRaw();
 
   // If we did the lookup based on the proto we might have a group/object from a
   // different (same-compartment) realm, so we have to do a realm check.
@@ -87,7 +87,7 @@ inline NativeObject* NewObjectCache::newObjectFromHit(JSContext* cx,
   }
 
   probes::CreateObject(cx, obj);
-  gc::gcTracer.traceCreateObject(obj);
+  gc::gcprobes::CreateObject(obj);
   return obj;
 }
 

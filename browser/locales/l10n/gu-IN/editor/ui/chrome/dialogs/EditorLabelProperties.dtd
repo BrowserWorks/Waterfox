@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "લેબલના ગુણધર્મો">
+
+<!ENTITY Settings.label "સેટીંગ">
+<!ENTITY Settings.accesskey "S">
+
+<!ENTITY EditLabelText.label "ફેરફાર લખાણ:">
+<!ENTITY EditLabelText.accesskey "T">
+<!ENTITY LabelFor.label "નિયંત્રણ માટે:">
+<!ENTITY LabelFor.accesskey "F">
+<!ENTITY AccessKey.label "વપરાશ કી:">
+<!ENTITY AccessKey.accesskey "K">
+
+<!ENTITY RemoveLabel.label "લેબલ દૂર કરો">
+<!ENTITY RemoveLabel.accesskey "R">

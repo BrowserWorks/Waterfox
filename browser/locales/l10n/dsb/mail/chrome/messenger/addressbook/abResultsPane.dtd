@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "Adresnik">
+<!ENTITY Addrbook.accesskey                    "A">
+<!ENTITY GeneratedName.label                   "Mě">
+<!ENTITY GeneratedName.accesskey               "M">
+<!ENTITY PrimaryEmail.label                    "E-mail">
+<!ENTITY PrimaryEmail.accesskey                "E">
+<!ENTITY Company.label                         "Organizacija">
+<!ENTITY Company.accesskey                     "z">
+<!ENTITY _PhoneticName.label                   "Fonetiske mě">
+<!ENTITY _PhoneticName.accesskey               "o">
+<!ENTITY NickName.label                        "Pśimě">
+<!ENTITY NickName.accesskey                    "i">
+<!ENTITY SecondEmail.label                     "Pśidatna e-mail">
+<!ENTITY SecondEmail.accesskey                 "d">
+<!ENTITY Department.label                      "Wótźělenje">
+<!ENTITY Department.accesskey                  "l">
+<!ENTITY JobTitle.label                        "Titel">
+<!ENTITY JobTitle.accesskey                    "T">
+<!ENTITY CellularNumber.label                  "Mobilny telefon">
+<!ENTITY CellularNumber.accesskey              "M">
+<!ENTITY PagerNumber.label                     "Pager">
+<!ENTITY PagerNumber.accesskey                 "P">
+<!ENTITY FaxNumber.label                       "Faks">
+<!ENTITY FaxNumber.accesskey                   "F">
+<!ENTITY HomePhone.label                       "Priwatny telefon">
+<!ENTITY HomePhone.accesskey                   "w">
+<!ENTITY WorkPhone.label                       "Słužbny telefon">
+<!ENTITY WorkPhone.accesskey                   "S">
+<!ENTITY ChatName.label                        "Chattowe mě">
+<!ENTITY ChatName.accesskey                    "C">
+<!ENTITY sortAscending.label                   "Stupujucy">
+<!ENTITY sortAscending.accesskey               "S">
+<!ENTITY sortDescending.label                  "Wóstupujucy">
+<!ENTITY sortDescending.accesskey              "W">

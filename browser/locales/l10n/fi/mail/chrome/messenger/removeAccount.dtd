@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "Poista tili ja tiedot">
+<!ENTITY removeButton.label           "Poista">
+<!ENTITY removeButton.accesskey       "P">
+<!ENTITY removeAccount.label          "Poista tilin tiedot">
+<!ENTITY removeAccount.accesskey      "t">
+<!ENTITY removeAccount.desc           "Poistaa vain &brandShortName;in tiedot tästä tilistä. Tämä ei vaikuta itse tiliin palvelimella.">
+<!ENTITY removeData.label             "Poista viestidata">
+<!ENTITY removeData.accesskey         "v">
+<!ENTITY removeDataChat.label         "Poista keskusteludata">
+<!ENTITY removeDataChat.accesskey     "d">
+<!ENTITY removeDataLocalAccount.desc  "Poistaa kaikki viestit, kansiot ja tähän tiliin liitetyt suodattimet paikallisella levyllä. Tämä ei vaikuta viesteihin, jotka säilytetään edelleen palvelimella. Älä valitse tätä vaihtoehtoa, jos olet ajatellut arkistoida paikallisen datan tai käyttää sitä &brandShortName;issa myöhemmin.">
+<!ENTITY removeDataServerAccount.desc "Poistaa paikalliselta levyltä kaikki tämän tilin viestit, kansiot ja suodattimet. Palvelimella olevat viestit ja kansiot säilytetään.">
+<!ENTITY removeDataChatAccount.desc   "Poistaa kaikki paikalliselle levylle tallennetut tämän tilin keskustelulokit.">
+<!ENTITY showData.label               "Näytä datan sijainti">
+<!ENTITY showData.accesskey           "d">
+<!ENTITY progressPending              "Poistetaan valitut tiedot…">
+<!ENTITY progressSuccess              "Poistaminen onnistui.">
+<!ENTITY progressFailure              "Poistaminen epäonnistui.">

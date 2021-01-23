@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Selamat Datang ke &brandShortName;">
+<!ENTITY header2.label "Adakah anda mahu alamat e-mel baru?">
+<!ENTITY other.languages "Kami hanya memaparkan penyedia yang menawarkan alamat bagi kawasan anda.  Klik sini untuk memaparkan semua penyedia.">
+<!ENTITY error.line1 "Maaf, kami tidak dapat menemui alamat e-mel yang dicadangkan.">
+<!ENTITY error.line2 "Anda boleh cuba nama gelaran atau istilah lain untuk mencari lebih banyak e-mel.">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before "Anda juga boleh cuba salah satu ">
+<!ENTITY error.suggest.middle "akaun e-mel percuma alternatif">
+<!ENTITY error.suggest.after ".">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before "Helo ">
+<!ENTITY success.title.after ", alamat e-mel berikut disediakan untuk anda:">
+<!ENTITY success.tip "(Anda boleh cuba nama gelaran atau istilah lain untuk mencari lebih banyak e-mel)">
+<!ENTITY partnership.description "Dengan kerjasama beberapa rakan kongsi, &brandShortName; boleh menawarkan anda alamat e-mel baru. Hanya isikan nama pertama dan nama keluarga, atau apa-apa perkataan yang anda mahu, di dalam ruang di atas.">
+<!ENTITY existing.header "Sudah dapat alamat yang anda mahu gunakan?">
+<!ENTITY tinyheader.title "Sudah ada alamat e-mel?">
+<!ENTITY tinyheader.existing "Langkau langkah ini dan gunakan e-mel sedia ada">
+<!ENTITY content.close "Saya akan buat tetapan akaun ini nanti.">
+<!ENTITY successful.title "Tahniah!">
+<!ENTITY successful.successMessage "Anda telah berjaya menetapkan akaun.">
+<!ENTITY successful.write "Mulakan menulis beberapa e-mel">
+<!ENTITY successful.write.desc "Maklumkan rakan dan ahli keluarga perihal alamat e-mel baru ini.<br/> Inilah sebabnya anda mahu alamat e-mel baru ini, bukan?">
+<!ENTITY successful.customize "Sesuaikan &brandShortName; dengan beberapa ciri add-ons yang menarik">
+<!ENTITY successful.customize.desc "Terdapat beribu-ribu add-ons yang anda boleh sesuaikan dengan &brandShortName; supaya sesuai dengan keperluan khusus anda.">
+<!ENTITY successful.attach "Lampirkan tandatangan peribadi dalam e-mel saya">
+<!ENTITY successful.attach.desc "Anda boleh lampirkan petikan atau beberapa maklumat berkaitan diri anda dalam setiap mesej yang dihantar.">
+<!ENTITY successful.close "Tutup tetingkap ini.">
+<!ENTITY input.namePlaceholder "Nama sebenar atau gelaran">
+<!ENTITY input.search "Cari">
+<!ENTITY search_engine.title "Sesuaikan enjin carian anda">
+<!ENTITY search_engine.message "Penyedia e-mel ini juga ada keupayaan melaksanakan carian web.">
+<!ENTITY search_engine.button "Selesai">

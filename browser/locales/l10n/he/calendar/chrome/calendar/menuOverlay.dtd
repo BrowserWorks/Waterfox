@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Event Menu -->
+<!ENTITY event.new.event                        "אירוע חדש…">
+<!ENTITY event.new.event.accesskey              "א">
+
+<!ENTITY event.new.task                         "משימה חדשה…">
+<!ENTITY event.new.task.accesskey               "מ">
+
+<!ENTITY calendar.import.label                  "יבא מקובץ…">
+<!ENTITY calendar.import.accesskey              "י">
+
+<!ENTITY calendar.export.label                  "ייצוא…">
+<!ENTITY calendar.export.accesskey              "E">
+
+<!ENTITY calendar.publish.label                 "פרסם את האירועים שנבחרו…">
+<!ENTITY calendar.publish.accesskey             "פ">
+
+<!ENTITY calendar.deletecalendar.label          "מחק את לוח השנה הנבחר…">
+<!ENTITY calendar.deletecalendar.accesskey      "ח">
+<!ENTITY calendar.unsubscribecalendar.label     "ביטול המינוי מלוח השנה הנבחר…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "ב">
+
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+<!ENTITY calendar.removecalendar.label          "הסרת היומן הנבחר…">
+<!ENTITY calendar.removecalendar.accesskey      "ס">
+
+
+<!ENTITY calendar.menu.customize.label          "התאמה אישית…">
+<!ENTITY calendar.menu.customize.accesskey      "ה">
+
+<!ENTITY showUnifinderCmd.label                 "מצא אירועים">
+<!ENTITY showUnifinderCmd.accesskey             "מ">
+<!ENTITY showUnifinderCmd.tooltip               "החלפת מצב חלונית חיפוש אירועים">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "הצג מטלות בלוח השנה">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "מ">
+
+<!ENTITY goTodayCmd.label                       "עבור להיום">
+<!ENTITY goTodayCmd.accesskey                   "ה">
+
+<!ENTITY showCurrentView.label                  "תצוגה נוכחית">
+<!ENTITY showCurrentView.accesskey              "ת">
+
+<!ENTITY calendar.properties.label              "מאפייני לוח שנה…">
+<!ENTITY calendar.properties.accesskey          "מ">

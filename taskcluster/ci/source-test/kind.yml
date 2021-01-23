@@ -7,16 +7,17 @@ loader: taskgraph.loader.transform:loader
 transforms:
     - taskgraph.transforms.try_job:transforms
     - taskgraph.transforms.source_test:transforms
-    - taskgraph.transforms.use_toolchains:transforms
     - taskgraph.transforms.job:transforms
     - taskgraph.transforms.task:transforms
 
 kind-dependencies:
     - fetch
     - toolchain
+    - build
 
 jobs-from:
     - clang.yml
+    - codeql.yml
     - coverity.yml
     - cram.yml
     - doc.yml
@@ -24,19 +25,15 @@ jobs-from:
     - infer.yml
     - jsshell.yml
     - mozlint.yml
+    - mozlint-android.yml
     - node.yml
     - python.yml
+    - remote.yml
+    - shadow-scheduler.yml
     - webidl.yml
-    - wpt-metadata.yml
     - wpt-manifest.yml
+    - wpt-metadata.yml
 
 job-defaults:
     attributes:
         retrigger: true
-
-# This is used by run-task based tasks to lookup which build task it
-# should depend on based on its own platform.
-dependent-build-platforms:
-    linux64-asan/opt: build-linux64-asan/opt
-    linux64/debug: build-linux64/debug
-    linux64.*: build-linux64-shippable/opt

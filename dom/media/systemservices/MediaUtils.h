@@ -102,7 +102,7 @@ class RefcountableBase {
  public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(RefcountableBase)
  protected:
-  virtual ~RefcountableBase() {}
+  virtual ~RefcountableBase() = default;
 };
 
 template <typename T>
@@ -116,8 +116,18 @@ class Refcountable : public T, public RefcountableBase {
     return RefcountableBase::Release();
   }
 
+  Refcountable<T>& operator=(T&& aOther) {
+    T::operator=(std::move(aOther));
+    return *this;
+  }
+
+  Refcountable<T>& operator=(T& aOther) {
+    T::operator=(aOther);
+    return *this;
+  }
+
  private:
-  ~Refcountable<T>() {}
+  ~Refcountable<T>() = default;
 };
 
 template <typename T>
@@ -126,7 +136,7 @@ class Refcountable<UniquePtr<T>> : public UniquePtr<T> {
   explicit Refcountable<UniquePtr<T>>(T* aPtr) : UniquePtr<T>(aPtr) {}
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(Refcountable<T>)
  private:
-  ~Refcountable<UniquePtr<T>>() {}
+  ~Refcountable<UniquePtr<T>>() = default;
 };
 
 /* Async shutdown helpers
@@ -150,7 +160,7 @@ class ShutdownBlocker : public nsIAsyncShutdownBlocker {
 
   NS_DECL_ISUPPORTS
  protected:
-  virtual ~ShutdownBlocker() {}
+  virtual ~ShutdownBlocker() = default;
 
  private:
   const nsString mName;

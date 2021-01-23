@@ -1,11 +1,10 @@
-/* vim:set ts=2 sw=2 sts=2 et: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 "use strict";
 
-this.EXPORTED_SYMBOLS = ["StyleSheetEditor"];
+const EXPORTED_SYMBOLS = ["StyleSheetEditor"];
 
 const { require } = ChromeUtils.import("resource://devtools/shared/Loader.jsm");
 const Editor = require("devtools/client/shared/sourceeditor/editor");
@@ -74,8 +73,19 @@ const EMIT_MEDIA_RULES_THROTTLING = 500;
  * @param {CustomHighlighterFront} highlighter
  *        Optional highlighter front for the SelectorHighligher used to
  *        highlight selectors
+ * @param {Number} styleSheetFriendlyIndex
+ *        Optional Integer representing the index of the current stylesheet
+ *        among all stylesheets of its type (inline or user-created)
  */
-function StyleSheetEditor(styleSheet, win, file, isNew, walker, highlighter) {
+function StyleSheetEditor(
+  styleSheet,
+  win,
+  file,
+  isNew,
+  walker,
+  highlighter,
+  styleSheetFriendlyIndex
+) {
   EventEmitter.decorate(this);
 
   this.styleSheet = styleSheet;
@@ -85,6 +95,7 @@ function StyleSheetEditor(styleSheet, win, file, isNew, walker, highlighter) {
   this._isNew = isNew;
   this.walker = walker;
   this.highlighter = highlighter;
+  this.styleSheetFriendlyIndex = styleSheetFriendlyIndex;
 
   // True when we've called update() on the style sheet.
   this._isUpdating = false;
@@ -140,7 +151,6 @@ function StyleSheetEditor(styleSheet, win, file, isNew, walker, highlighter) {
   this.savedFile = file;
   this.linkCSSFile();
 }
-this.StyleSheetEditor = StyleSheetEditor;
 
 StyleSheetEditor.prototype = {
   /**
@@ -190,12 +200,12 @@ StyleSheetEditor.prototype = {
     }
 
     if (this._isNew) {
-      const index = this.styleSheet.styleSheetIndex + 1;
+      const index = this.styleSheetFriendlyIndex + 1 || 0;
       return getString("newStyleSheet", index);
     }
 
     if (!this.styleSheet.href) {
-      const index = this.styleSheet.styleSheetIndex + 1;
+      const index = this.styleSheetFriendlyIndex + 1 || 0;
       return getString("inlineStyleSheet", index);
     }
 
@@ -281,8 +291,14 @@ StyleSheetEditor.prototype = {
       .then(source => {
         const ruleCount = this.styleSheet.ruleCount;
         if (!this.styleSheet.isOriginalSource) {
-          source = prettifyCSS(source, ruleCount);
+          const { result, mappings } = prettifyCSS(source, ruleCount);
+          source = result;
+          // Store the list of objects with mappings between CSS token positions from the
+          // original source to the prettified source. These will be used when requested to
+          // jump to a specific position within the editor.
+          this._mappings = mappings;
         }
+
         this._state.text = source;
         return source;
       });
@@ -319,6 +335,45 @@ StyleSheetEditor.prototype = {
           throw e;
         }
       });
+  },
+
+  /**
+   * Set the cursor at the given line and column location within the code editor.
+   *
+   * @param {Number} line
+   * @param {Number} column
+   */
+  setCursor(line, column) {
+    const position = this.translateCursorPosition(line, column);
+    this.sourceEditor.setCursor({ line: position.line, ch: position.column });
+  },
+
+  /**
+   * If the stylesheet was automatically prettified, there should be a list of line
+   * and column mappings from the original to the generated source that can be used
+   * to translate the cursor position to the correct location in the prettified source.
+   * If no mappings exist, return the original cursor position unchanged.
+   *
+   * @param  {Number} line
+   * @param  {Numer} column
+   *
+   * @return {Object}
+   */
+  translateCursorPosition(line, column) {
+    if (Array.isArray(this._mappings)) {
+      for (const mapping of this._mappings) {
+        if (
+          mapping.original.line === line &&
+          mapping.original.column === column
+        ) {
+          line = mapping.generated.line;
+          column = mapping.generated.column;
+          continue;
+        }
+      }
+    }
+
+    return { line, column };
   },
 
   /**
@@ -449,8 +504,16 @@ StyleSheetEditor.prototype = {
         this._state.selection.end
       );
 
-      if (this.highlighter && this.walker) {
-        sourceEditor.container.addEventListener("mousemove", this._onMouseMove);
+      if (
+        this.highlighter &&
+        this.walker &&
+        sourceEditor.container &&
+        sourceEditor.container.contentWindow
+      ) {
+        sourceEditor.container.contentWindow.addEventListener(
+          "mousemove",
+          this._onMouseMove
+        );
       }
 
       // Add the commands controller for the source-editor.
@@ -552,6 +615,11 @@ StyleSheetEditor.prototype = {
     this._isUpdating = true;
     this.styleSheet
       .update(this._state.text, this.transitionsEnabled)
+      .then(() => {
+        // Clear any existing mappings from automatic CSS prettification
+        // because they were likely invalided by manually editing the stylesheet.
+        this._mappings = null;
+      })
       .catch(console.error);
   },
 
@@ -787,8 +855,13 @@ StyleSheetEditor.prototype = {
       this._sourceEditor.off("dirty-change", this._onPropertyChange);
       this._sourceEditor.off("saveRequested", this.saveToFile);
       this._sourceEditor.off("change", this.updateStyleSheet);
-      if (this.highlighter && this.walker && this._sourceEditor.container) {
-        this._sourceEditor.container.removeEventListener(
+      if (
+        this.highlighter &&
+        this.walker &&
+        this._sourceEditor.container &&
+        this._sourceEditor.container.contentWindow
+      ) {
+        this._sourceEditor.container.contentWindow.removeEventListener(
           "mousemove",
           this._onMouseMove
         );

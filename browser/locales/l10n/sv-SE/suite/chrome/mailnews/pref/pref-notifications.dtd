@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.notifications.title         "Varskoendesignaler">
+<!ENTITY notifications.caption            "Varskoendesignaler">
+<!ENTITY newMessagesArrive.label          "När nya meddelanden kommer:">
+
+<!-- LOCALIZATION NOTE: (showAlertFor.label, showAlertTimeEnd.label)
+     showAlertFor.label is associated with the checkbox to show the alert,
+     leading into a numerical field to enter a time in seconds, followed by
+     showAlertTimeEnd.label which in en-US is the unit of the value -->
+
+<!ENTITY showAlertFor.label               "Visa en notifiering i">
+<!ENTITY showAlertFor.accesskey           "V">
+<!ENTITY showAlertTimeEnd.label           "sekunder">
+
+<!ENTITY showAlertPreviewText.label       "Visa ett utdrag av meddelandetexten">
+<!ENTITY showAlertPreviewText.accesskey   "u">
+<!ENTITY showAlertSubject.label           "Visa ärendemeningen">
+<!ENTITY showAlertSubject.accesskey       "i">
+<!ENTITY showAlertSender.label            "Visa avsändaren">
+<!ENTITY showAlertSender.accesskey        "n">
+<!ENTITY useSystemAlert.label             "Använd operativsystemets inbyggda aviseringar">
+<!ENTITY useSystemAlert.accesskey         "s">
+<!ENTITY useBuiltInAlert.label            "Använd &brandShortName;:s egna aviseringsfönster">
+<!ENTITY useBuiltInAlert.accesskey        "n">
+
+
+<!ENTITY showTrayIcon.label               "Visa en fältikon">
+<!ENTITY showTrayIcon.accesskey           "i">
+<!ENTITY showBalloon.label                "Visa en ballongnotifiering">
+<!ENTITY showBalloon.accesskey            "o">
+<!ENTITY bounceSystemDockIcon.label       "Animera dockikonen">
+<!ENTITY bounceSystemDockIcon.accesskey   "A">
+
+<!ENTITY playSound.label                  "Ge en ljudsignal">
+<!ENTITY playSound.accesskey              "l">
+<!ENTITY playButton.label                 "Spela">
+<!ENTITY playButton.accesskey             "l">
+<!ENTITY systemsound.label                "Systemljudsignal för ny e-post">
+<!ENTITY systemsound.accesskey            "m">
+<!ENTITY customsound.label                "Egen ljudfil">
+<!ENTITY customsound.accesskey            "E">
+<!ENTITY browse.label                     "Välj…">
+<!ENTITY browse.accesskey                 "ä">
+<!ENTITY browse.title                     "Välj fil">

@@ -38,7 +38,8 @@
  */
 
 #include "mozilla/HashFunctions.h"
-#include "mozilla/Move.h"
+
+#include <utility>
 
 #include "js/HashTable.h"
 
@@ -54,8 +55,8 @@ namespace detail {
 template <class T, class Ops, class AllocPolicy>
 class OrderedHashTable {
  public:
-  typedef typename Ops::KeyType Key;
-  typedef typename Ops::Lookup Lookup;
+  using Key = typename Ops::KeyType;
+  using Lookup = typename Ops::Lookup;
 
   struct Data {
     T element;
@@ -99,7 +100,7 @@ class OrderedHashTable {
   }
 
  public:
-  OrderedHashTable(AllocPolicy& ap, mozilla::HashCodeScrambler hcs)
+  OrderedHashTable(AllocPolicy ap, mozilla::HashCodeScrambler hcs)
       : hashTable(nullptr),
         data(nullptr),
         dataLength(0),
@@ -108,7 +109,7 @@ class OrderedHashTable {
         hashShift(0),
         ranges(nullptr),
         nurseryRanges(nullptr),
-        alloc(ap),
+        alloc(std::move(ap)),
         hcs(hcs) {}
 
   MOZ_MUST_USE bool init() {
@@ -144,7 +145,10 @@ class OrderedHashTable {
 
   ~OrderedHashTable() {
     forEachRange<Range::onTableDestroyed>();
-    alloc.free_(hashTable, hashBuckets());
+    if (hashTable) {
+      // |hashBuckets()| isn't valid when |hashTable| hasn't been created.
+      alloc.free_(hashTable, hashBuckets());
+    }
     freeData(data, dataLength, dataCapacity);
   }
 
@@ -777,7 +781,7 @@ class OrderedHashMap {
 
  private:
   struct MapOps : OrderedHashPolicy {
-    typedef Key KeyType;
+    using KeyType = Key;
     static void makeEmpty(Entry* e) {
       OrderedHashPolicy::makeEmpty(const_cast<Key*>(&e->key));
 
@@ -793,10 +797,10 @@ class OrderedHashMap {
   Impl impl;
 
  public:
-  typedef typename Impl::Range Range;
+  using Range = typename Impl::Range;
 
   OrderedHashMap(AllocPolicy ap, mozilla::HashCodeScrambler hcs)
-      : impl(ap, hcs) {}
+      : impl(std::move(ap), hcs) {}
   MOZ_MUST_USE bool init() { return impl.init(); }
   uint32_t count() const { return impl.count(); }
   bool has(const Key& key) const { return impl.has(key); }
@@ -840,7 +844,7 @@ template <class T, class OrderedHashPolicy, class AllocPolicy>
 class OrderedHashSet {
  private:
   struct SetOps : OrderedHashPolicy {
-    typedef const T KeyType;
+    using KeyType = const T;
     static const T& getKey(const T& v) { return v; }
     static void setKey(const T& e, const T& v) { const_cast<T&>(e) = v; }
   };
@@ -849,10 +853,10 @@ class OrderedHashSet {
   Impl impl;
 
  public:
-  typedef typename Impl::Range Range;
+  using Range = typename Impl::Range;
 
   explicit OrderedHashSet(AllocPolicy ap, mozilla::HashCodeScrambler hcs)
-      : impl(ap, hcs) {}
+      : impl(std::move(ap), hcs) {}
   MOZ_MUST_USE bool init() { return impl.init(); }
   uint32_t count() const { return impl.count(); }
   bool has(const T& value) const { return impl.has(value); }

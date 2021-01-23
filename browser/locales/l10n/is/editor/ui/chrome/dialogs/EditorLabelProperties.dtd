@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Eiginleikar merkis">
+<!ENTITY Settings.label "Stillingar">
+<!ENTITY Settings.accesskey "S">
+<!ENTITY EditLabelText.label "Breyta texta:">
+<!ENTITY EditLabelText.accesskey "t">
+<!ENTITY LabelFor.label "Fyrir hlut:">
+<!ENTITY LabelFor.accesskey "F">
+<!ENTITY AccessKey.label "Aðgangslykill:">
+<!ENTITY AccessKey.accesskey "k">
+<!ENTITY RemoveLabel.label "Fjarlægja Merki">
+<!ENTITY RemoveLabel.accesskey "r">

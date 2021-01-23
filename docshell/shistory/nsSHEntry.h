@@ -19,21 +19,23 @@ class nsIInputStream;
 class nsIURI;
 class nsIReferrerInfo;
 
-class nsSHEntry final : public nsISHEntry {
+class nsSHEntry : public nsISHEntry {
  public:
-  nsSHEntry();
-  nsSHEntry(const nsSHEntry& aOther);
+  explicit nsSHEntry(nsISHistory* aSHistory);
 
   NS_DECL_ISUPPORTS
   NS_DECL_NSISHENTRY
 
-  void DropPresentationState();
+  virtual void EvictContentViewer();
 
   static nsresult Startup();
   static void Shutdown();
 
- private:
-  ~nsSHEntry();
+ protected:
+  explicit nsSHEntry(const nsSHEntry& aOther);
+  virtual ~nsSHEntry();
+
+  nsSHEntryShared* GetState() { return mShared; }
 
   // We share the state in here with other SHEntries which correspond to the
   // same document.

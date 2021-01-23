@@ -11,14 +11,13 @@ namespace mozilla {
 namespace gfx {
 
 struct OpenVRWMRBinding {
-  // OpenVRWMRBinding();
   const char* binding =
       // clang-format off
   "{\n"
   "  \"version\" : \"0.1\", \n"
   "  \"controller_type\" : \"holographic_controller\", \n"
   "  \"description\" : \"Bindings for Firefox OpenVR for the Windows Mixed Reality controller\", \n"
-  "  \"name\" : \"Firefox bindings for Mixed Reality Controller\", \n"
+  "  \"name\" : \"Firefox bindings for Windows Mixed Reality Controller\", \n"
   "  \"bindings\" : { \n"
   "     \"/actions/firefox\" : { \n"
   "         \"poses\" : [        \n"

@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Inserează caracter">
+<!ENTITY category.label "Categorie">
+<!ENTITY letter.label "Literă:">
+<!ENTITY letter.accessKey "L">
+<!ENTITY character.label "Caracter:">
+<!ENTITY character.accessKey "C">
+<!ENTITY accentUpper.label "Majuscule cu diacritice">
+<!ENTITY accentLower.label "Minuscule cu diacritice">
+<!ENTITY otherUpper.label "Majuscule, altele">
+<!ENTITY otherLower.label "Minuscule, altele">
+<!ENTITY commonSymbols.label "Simboluri uzuale">
+<!ENTITY insertButton.label "Inserează">
+<!ENTITY closeButton.label "Închide">

@@ -1,7 +1,7 @@
 // Copyright (C) 2015 the V8 project authors. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 /*---
-es6id: 9.5.13
+esid: sec-proxy-object-internal-methods-and-internal-slots-call-thisargument-argumentslist
 description: >
     Return the result from the trap method.
 info: |
@@ -11,16 +11,14 @@ info: |
 features: [Proxy]
 ---*/
 
-var target = function(a, b) {
-  return a + b;
-};
 var result = {};
-var handler = {
+var p = new Proxy(function() {
+  throw new Test262Error('target should not be called');
+}, {
   apply: function(t, c, args) {
     return result;
-  }
-};
-var p = new Proxy(target, handler);
+  },
+});
 
 assert.sameValue(p.call(), result);
 

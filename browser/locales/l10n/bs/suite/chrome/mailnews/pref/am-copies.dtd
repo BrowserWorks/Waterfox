@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!ENTITY copyAndFolderTitle.label "Kopije i direktoriji">
+<!ENTITY sendingPrefix.label "Pri slanju poruka:">
+<!ENTITY fccMailFolder.label "Automatski ostavi kopiju u:">
+<!ENTITY fccReplyFollowsParent.label "Smjesti odgovore u direktorij poruke na koju se odgovara">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Dodaj ove email adrese u Cc:">
+<!ENTITY ccAddressList.placeholder "Odvojite adrese zarezom">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Dodaj ove email adrese u Bcc:">
+<!ENTITY bccAddressList.placeholder "Odvojite adrese zarezom">
+<!ENTITY saveMessageDlg.label "Prikaži dijalog za potvrdu prilikom spremanja poruke">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "Direktorij &quot;Poslano&quot; na:">
+<!ENTITY sentInOtherFolder.label "Drugi direktorij:">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Arhive poruka">
+<!ENTITY keepArchives.label "Čuvaj arhive poruka u:">
+<!ENTITY archiveHierarchyButton.label "Opcije arhive…">
+<!ENTITY archivesFolderOn.label "Direktoriju &quot;Arhiva&quot; u:">
+<!ENTITY archiveInOtherFolder.label "Drugi direktorij:">
+<!ENTITY specialFolders.label "Nacrti i šabloni">
+<!ENTITY keepDrafts2.label "Čuvaj nacrte poruka u:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "Direktorij &quot;Nacrti&quot; na:">
+<!ENTITY draftInOtherFolder.label "Drugi direktorij:">
+<!ENTITY keepTemplates.label "Čuvaj šablone poruka u:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "Direktorij &quot;Šabloni&quot; na:">
+<!ENTITY templateInOtherFolder.label "Drugi direktorij:">

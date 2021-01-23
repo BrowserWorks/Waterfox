@@ -22,14 +22,7 @@ const { debug, warn } = GeckoViewUtils.initLogging("LoadURIDelegate"); // eslint
 const LoadURIDelegate = {
   // Delegate URI loading to the app.
   // Return whether the loading has been handled.
-  load: function(
-    aWindow,
-    aEventDispatcher,
-    aUri,
-    aWhere,
-    aFlags,
-    aTriggeringPrincipal
-  ) {
+  load(aWindow, aEventDispatcher, aUri, aWhere, aFlags, aTriggeringPrincipal) {
     if (!aWindow) {
       return false;
     }
@@ -44,6 +37,7 @@ const LoadURIDelegate = {
       where: aWhere,
       flags: aFlags,
       triggerUri: triggerUri && triggerUri.displaySpec,
+      hasUserGesture: aWindow.document.hasValidTransientUserGestureActivation,
     };
 
     let handled = undefined;
@@ -64,13 +58,7 @@ const LoadURIDelegate = {
     return handled || false;
   },
 
-  handleLoadError: function(
-    aWindow,
-    aEventDispatcher,
-    aUri,
-    aError,
-    aErrorModule
-  ) {
+  handleLoadError(aWindow, aEventDispatcher, aUri, aError, aErrorModule) {
     let errorClass = 0;
     try {
       const nssErrorsService = Cc[

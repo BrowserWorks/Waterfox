@@ -7,6 +7,7 @@
 #include "RemoteObjectProxy.h"
 #include "AccessCheck.h"
 #include "jsfriendapi.h"
+#include "xpcprivate.h"
 
 namespace mozilla {
 namespace dom {
@@ -62,37 +63,6 @@ bool RemoteObjectProxyBase::delete_(JSContext* aCx,
   return ReportCrossOriginDenial(aCx, aId, NS_LITERAL_CSTRING("delete"));
 }
 
-bool RemoteObjectProxyBase::getPrototype(
-    JSContext* aCx, JS::Handle<JSObject*> aProxy,
-    JS::MutableHandle<JSObject*> aProtop) const {
-  // https://html.spec.whatwg.org/multipage/browsers.html#windowproxy-getprototypeof
-  // step 3 and
-  // https://html.spec.whatwg.org/multipage/browsers.html#location-getprototypeof
-  // step 2
-  aProtop.set(nullptr);
-  return true;
-}
-
-bool RemoteObjectProxyBase::setPrototype(JSContext* aCx,
-                                         JS::Handle<JSObject*> aProxy,
-                                         JS::Handle<JSObject*> aProto,
-                                         JS::ObjectOpResult& aResult) const {
-  // https://html.spec.whatwg.org/multipage/browsers.html#windowproxy-setprototypeof
-  // and
-  // https://html.spec.whatwg.org/multipage/browsers.html#location-setprototypeof
-  // say to call SetImmutablePrototype, which does nothing and just returns
-  // whether the passed-in value equals the current prototype. Our current
-  // prototype is always null, so this just comes down to returning whether null
-  // was passed in.
-  //
-  // In terms of ObjectOpResult that means calling one of the fail*() things on
-  // it if non-null was passed, and it's got one that does just what we want.
-  if (!aProto) {
-    return aResult.succeed();
-  }
-  return aResult.failCantSetProto();
-}
-
 bool RemoteObjectProxyBase::getPrototypeIfOrdinary(
     JSContext* aCx, JS::Handle<JSObject*> aProxy, bool* aIsOrdinary,
     JS::MutableHandle<JSObject*> aProtop) const {
@@ -142,21 +112,6 @@ bool RemoteObjectProxyBase::set(JSContext* aCx, JS::Handle<JSObject*> aProxy,
   return CrossOriginSet(aCx, aProxy, aId, aValue, aReceiver, aResult);
 }
 
-bool RemoteObjectProxyBase::hasOwn(JSContext* aCx, JS::Handle<JSObject*> aProxy,
-                                   JS::Handle<jsid> aId, bool* aBp) const {
-  JS::Rooted<JSObject*> holder(aCx);
-  if (!EnsureHolder(aCx, aProxy, &holder) ||
-      !JS_AlreadyHasOwnPropertyById(aCx, holder, aId, aBp)) {
-    return false;
-  }
-
-  if (!*aBp) {
-    *aBp = xpc::IsCrossOriginWhitelistedProp(aCx, aId);
-  }
-
-  return true;
-}
-
 bool RemoteObjectProxyBase::getOwnEnumerablePropertyKeys(
     JSContext* aCx, JS::Handle<JSObject*> aProxy,
     JS::MutableHandleVector<jsid> aProps) const {
@@ -171,14 +126,24 @@ const char* RemoteObjectProxyBase::className(
 }
 
 void RemoteObjectProxyBase::GetOrCreateProxyObject(
-    JSContext* aCx, void* aNative, const js::Class* aClasp,
-    JS::MutableHandle<JSObject*> aProxy, bool& aNewObjectCreated) const {
+    JSContext* aCx, void* aNative, const JSClass* aClasp,
+    JS::Handle<JSObject*> aTransplantTo, JS::MutableHandle<JSObject*> aProxy,
+    bool& aNewObjectCreated) const {
   xpc::CompartmentPrivate* priv =
       xpc::CompartmentPrivate::Get(JS::CurrentGlobalOrNull(aCx));
   xpc::CompartmentPrivate::RemoteProxyMap& map = priv->GetRemoteProxyMap();
   auto result = map.lookupForAdd(aNative);
   if (result) {
+    MOZ_ASSERT(!aTransplantTo,
+               "No existing value allowed if we're doing a transplant");
+
     aProxy.set(result->value());
+
+    // During a transplant, we put an object that is temporarily not a
+    // proxy object into the map. Make sure that we don't return one of
+    // these objects in the middle of a transplant.
+    MOZ_RELEASE_ASSERT(js::GetObjectClass(aProxy) == aClasp);
+
     return;
   }
 
@@ -191,9 +156,21 @@ void RemoteObjectProxyBase::GetOrCreateProxyObject(
     return;
   }
 
+  bool success;
+  if (!JS_SetImmutablePrototype(aCx, obj, &success)) {
+    return;
+  }
+  MOZ_ASSERT(success);
+
   aNewObjectCreated = true;
 
-  if (!map.add(result, aNative, obj)) {
+  // If we're transplanting onto an object, we want to make sure that it does
+  // not have the same class as aClasp to ensure that the release assert earlier
+  // in this function will actually fire if we try to return a proxy object in
+  // the middle of a transplant.
+  MOZ_ASSERT_IF(aTransplantTo, js::GetObjectClass(aTransplantTo) != aClasp);
+
+  if (!map.add(result, aNative, aTransplantTo ? aTransplantTo : obj)) {
     return;
   }
 

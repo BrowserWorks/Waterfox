@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Yazımı Denetle">
+
+<!ENTITY misspelledWord.label "Hatalı sözcük:">
+<!ENTITY wordEditField.label "Bununla değiştir:">
+<!ENTITY wordEditField.accessKey "d">
+<!ENTITY checkwordButton.label "Sözcüğü denetle">
+<!ENTITY checkwordButton.accessKey "z">
+<!ENTITY suggestions.label "Öneriler:">
+<!ENTITY suggestions.accessKey "n">
+<!ENTITY ignoreButton.label "Görmezden gel">
+<!ENTITY ignoreButton.accessKey "G">
+<!ENTITY ignoreAllButton.label "Tümünü görmezden gel">
+<!ENTITY ignoreAllButton.accessKey "n">
+<!ENTITY replaceButton.label "Değiştir">
+<!ENTITY replaceButton.accessKey "e">
+<!ENTITY replaceAllButton.label "Tümünü değiştir">
+<!ENTITY replaceAllButton.accessKey "T">
+<!ENTITY stopButton.label "Dur">
+<!ENTITY stopButton.accessKey "u">
+<!ENTITY userDictionary.label "Kişisel sözlük:">
+<!ENTITY moreDictionaries.label "Daha fazla sözlük indir…">
+<!ENTITY addToUserDictionaryButton.label "Sözcük ekle">
+<!ENTITY addToUserDictionaryButton.accessKey "S">
+<!ENTITY editUserDictionaryButton.label "Düzenle…">
+<!ENTITY editUserDictionaryButton.accessKey "D">
+<!ENTITY recheckButton2.label "Metni yeniden denetle">
+<!ENTITY recheckButton2.accessKey "M">
+<!ENTITY closeButton.label "Kapat">
+<!ENTITY closeButton.accessKey "K">
+<!ENTITY sendButton.label "Gönder">
+<!ENTITY sendButton.accessKey "G">
+<!ENTITY languagePopup.label "Dil:">
+<!ENTITY languagePopup.accessKey "D">

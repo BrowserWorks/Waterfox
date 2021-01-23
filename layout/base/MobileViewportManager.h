@@ -54,6 +54,11 @@ class MobileViewportManager final : public nsIDOMEventListener,
    */
   float ComputeIntrinsicResolution() const;
 
+  /* The only direct calls to this should be in test code.
+   * Normally, it gets called by HandleEvent().
+   */
+  void HandleDOMMetaAdded();
+
  private:
   void SetRestoreResolution(float aResolution);
 
@@ -64,7 +69,7 @@ class MobileViewportManager final : public nsIDOMEventListener,
 
   /* Notify the MobileViewportManager that the resolution on the presShell was
    * updated, and the visual viewport size needs to be updated. */
-  void ResolutionUpdated();
+  void ResolutionUpdated(mozilla::ResolutionChangeOrigin aOrigin);
 
   /* Called to compute the initial viewport on page load or before-first-paint,
    * whichever happens first. Also called directly if we are created after the
@@ -81,6 +86,20 @@ class MobileViewportManager final : public nsIDOMEventListener,
    */
   void ShrinkToDisplaySizeIfNeeded(nsViewportInfo& aViewportInfo,
                                    const mozilla::ScreenIntSize& aDisplaySize);
+
+  /*
+   * Similar to UpdateVisualViewportSize but this should be called only when we
+   * need to update visual viewport size in response to dynamic toolbar
+   * transitions.
+   * This function doesn't cause any reflows, just fires a visual viewport
+   * resize event.
+   */
+  void UpdateVisualViewportSizeByDynamicToolbar(
+      mozilla::ScreenIntCoord aToolbarHeight);
+
+  nsSize GetVisualViewportSizeUpdatedByDynamicToolbar() const {
+    return mVisualViewportSizeUpdatedByDynamicToolbar;
+  }
 
  private:
   ~MobileViewportManager();
@@ -140,6 +159,8 @@ class MobileViewportManager final : public nsIDOMEventListener,
   mozilla::ScreenIntSize GetCompositionSize(
       const mozilla::ScreenIntSize& aDisplaySize) const;
 
+  mozilla::CSSToScreenScale GetZoom() const;
+
   RefPtr<mozilla::MVMContext> mContext;
   bool mIsFirstPaint;
   bool mPainted;
@@ -147,6 +168,14 @@ class MobileViewportManager final : public nsIDOMEventListener,
   mozilla::CSSSize mMobileViewportSize;
   mozilla::Maybe<float> mRestoreResolution;
   mozilla::Maybe<mozilla::ScreenIntSize> mRestoreDisplaySize;
+  /*
+   * The visual viewport size updated by the dynamic toolbar transitions. This
+   * is typically used for the VisualViewport width/height APIs.
+   * NOTE: If you want to use this value, you should make sure to flush
+   * position:fixed elements layout and update
+   * FrameMetrics.mFixedLayerMargins to conform with this value.
+   */
+  nsSize mVisualViewportSizeUpdatedByDynamicToolbar;
 };
 
 #endif

@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -30,7 +29,7 @@ async function testModifyPropertyValueFilter(inspector, view) {
   await setSearchFilter(view, SEARCH);
 
   const rule = getRuleViewRuleEditor(view, 1).rule;
-  const propEditor = rule.textProps[0].editor;
+  const propEditor = getTextProperty(view, 1, { margin: "4px" }).editor;
   const computed = propEditor.computed;
   const editor = await focusEditableField(view, propEditor.valueSpan);
 

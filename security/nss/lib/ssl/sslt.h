@@ -9,9 +9,10 @@
 #ifndef __sslt_h_
 #define __sslt_h_
 
+#include "certt.h"
+#include "keyhi.h"
 #include "prtypes.h"
 #include "secitem.h"
-#include "certt.h"
 
 typedef enum {
     ssl_hs_hello_request = 0,
@@ -267,6 +268,26 @@ typedef struct SSLExtraServerCertDataStr {
     /* A serialized sign_certificate_timestamp extension, used to answer
      * requests from clients for this data. */
     const SECItem* signedCertTimestamps;
+
+    /* Delegated credentials.
+     *
+     * A serialized delegated credential (DC) to use for authentication to peers
+     * who indicate support for this extension (ietf-drafts-tls-subcerts). DCs
+     * are used opportunistically if (1) the client indicates support, (2) TLS
+     * 1.3 or higher is negotiated, and (3) the selected certificate is
+     * configured with a DC.
+     *
+     * Note that it's the caller's responsibility to ensure that the DC is
+     * well-formed.
+     */
+    const SECItem* delegCred;
+
+    /* The secret key corresponding to the |delegCred|.
+     *
+     * Note that it's the caller's responsibility to ensure that this matches
+     * the DC public key.
+     */
+    const SECKEYPrivateKey* delegCredPrivKey;
 } SSLExtraServerCertData;
 
 typedef struct SSLChannelInfoStr {
@@ -278,7 +299,13 @@ typedef struct SSLChannelInfoStr {
     PRUint16 protocolVersion;
     PRUint16 cipherSuite;
 
-    /* server authentication info */
+    /* The strength of the key used to authenticate the peer.  Before
+     * interpreting this value, check authType, signatureScheme, and
+     * peerDelegCred, to determine the type of the key and how it was used.
+     *
+     * Typically, this is the length of the key from the peer's end-entity
+     * certificate.  If delegated credentials are used (i.e., peerDelegCred is
+     * PR_TRUE), then this is the strength of the delegated credential key. */
     PRUint32 authKeyBits;
 
     /* key exchange algorithm info */
@@ -326,6 +353,11 @@ typedef struct SSLChannelInfoStr {
      * otherwise. */
     PRBool resumed;
 
+    /* Indicates whether the peer used a delegated credential (DC) for
+     * authentication.
+     */
+    PRBool peerDelegCred;
+
     /* When adding new fields to this structure, please document the
      * NSS version in which they were added. */
 } SSLChannelInfo;
@@ -334,6 +366,9 @@ typedef struct SSLChannelInfoStr {
 #define ssl_preinfo_version (1U << 0)
 #define ssl_preinfo_cipher_suite (1U << 1)
 #define ssl_preinfo_0rtt_cipher_suite (1U << 2)
+/* ssl_preinfo_peer_auth covers peerDelegCred, authKeyBits, and scheme. Not
+ * included in ssl_preinfo_all as it is client-only. */
+#define ssl_preinfo_peer_auth (1U << 3)
 /* ssl_preinfo_all doesn't contain ssl_preinfo_0rtt_cipher_suite because that
  * field is only set if 0-RTT is sent (client) or accepted (server). */
 #define ssl_preinfo_all (ssl_preinfo_version | ssl_preinfo_cipher_suite)
@@ -367,12 +402,22 @@ typedef struct SSLPreliminaryChannelInfoStr {
      * resume this session. */
     PRUint32 maxEarlyDataSize;
 
-    /* The following fields were added in NSS 3.39. */
+    /* The following fields were added in NSS 3.43. */
     /* This reports the cipher suite used for 0-RTT if it sent or accepted.  For
      * a client, this is set earlier than |cipherSuite|, and will match that
      * value if 0-RTT is accepted by the server.  The server only sets this
      * after accepting 0-RTT, so this will contain the same value. */
     PRUint16 zeroRttCipherSuite;
+
+    /* The following fields were added in NSS 3.48. */
+    /* These fields contain information about the key that will be used in
+     * the CertificateVerify message. If Delegated Credentials are being used,
+     * this is the DC-contained SPKI, else the EE-cert SPKI. These fields are
+     * valid only after the Certificate message is handled. This can be determined
+     * by checking the valuesSet field against |ssl_preinfo_peer_auth|. */
+    PRBool peerDelegCred;
+    PRUint32 authKeyBits;
+    SSLSignatureScheme signatureScheme;
 
     /* When adding new fields to this structure, please document the
      * NSS version in which they were added. */
@@ -422,7 +467,7 @@ typedef struct SSLCipherSuiteInfoStr {
      * this instead of |authAlgorithm|. */
     SSLAuthType authType;
 
-    /* The following fields were added in NSS 3.39. */
+    /* The following fields were added in NSS 3.43. */
     /* This reports the hash function used in the TLS KDF, or HKDF for TLS 1.3.
      * For suites defined for versions of TLS earlier than TLS 1.2, this reports
      * ssl_hash_none. */
@@ -462,6 +507,7 @@ typedef enum {
     ssl_padding_xtn = 21,
     ssl_extended_master_secret_xtn = 23,
     ssl_record_size_limit_xtn = 28,
+    ssl_delegated_credentials_xtn = 34,
     ssl_session_ticket_xtn = 35,
     /* 40 was used in draft versions of TLS 1.3; it is now reserved. */
     ssl_tls13_pre_shared_key_xtn = 41,

@@ -80,6 +80,11 @@ nsFtpChannel::GetProxyInfo(nsIProxyInfo** aProxyInfo) {
   return NS_OK;
 }
 
+NS_IMETHODIMP nsFtpChannel::GetHttpProxyConnectResponseCode(
+    int32_t* aResponseCode) {
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
 //-----------------------------------------------------------------------------
 
 nsresult nsFtpChannel::OpenContentStream(bool async, nsIInputStream** result,
@@ -247,6 +252,8 @@ nsFtpChannel::MessageDiversionStop() {
 NS_IMETHODIMP
 nsFtpChannel::SuspendInternal() {
   LOG(("nsFtpChannel::SuspendInternal [this=%p]\n", this));
+  NS_ENSURE_TRUE(Pending(), NS_ERROR_NOT_AVAILABLE);
+
   ++mSuspendCount;
   return nsBaseChannel::Suspend();
 }

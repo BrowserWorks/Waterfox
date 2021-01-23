@@ -16,7 +16,7 @@
 #include "nsCOMPtr.h"
 #include "nsCOMArray.h"
 
-#include "GeneratedJNIWrappers.h"
+#include "mozilla/jni/Refs.h"
 
 #include "nsIMutableArray.h"
 #include "nsIMIMEInfo.h"
@@ -105,19 +105,19 @@ class AndroidBridge final {
                               nsIHandlerApp** aDefaultApp = nullptr,
                               const nsAString& aAction = EmptyString());
 
-  bool GetHWEncoderCapability();
-  bool GetHWDecoderCapability();
+  bool HasHWVP8Encoder();
+  bool HasHWVP8Decoder();
+  bool HasHWH264();
 
   void GetMimeTypeFromExtensions(const nsACString& aFileExt,
                                  nsCString& aMimeType);
   void GetExtensionFromMimeType(const nsACString& aMimeType,
                                 nsACString& aFileExt);
 
+  gfx::Rect getScreenSize();
   int GetScreenDepth();
 
   void Vibrate(const nsTArray<uint32_t>& aPattern);
-
-  void GetSystemColors(AndroidSystemColors* aColors);
 
   void GetIconForExtension(const nsACString& aFileExt, uint32_t aIconSize,
                            uint8_t* const aBuf);
@@ -357,9 +357,6 @@ class nsAndroidBridge final : public nsIAndroidBridge, public nsIObserver {
   void AddObservers();
   void RemoveObservers();
 
-  void UpdateAudioPlayingWindows(bool aPlaying);
-
-  int32_t mAudibleWindowsNum;
   nsCOMPtr<nsIAndroidEventDispatcher> mEventDispatcher;
 
  protected:

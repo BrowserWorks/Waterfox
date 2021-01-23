@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY biffStart.label "Comprova si hi ha articles nous cada ">
+<!ENTITY biffStart.accesskey "a">
+<!ENTITY biffEnd.label "minuts">
+
+<!ENTITY loginAtStartup.label "En iniciar, comprova si hi ha articles nous"> 
+<!ENTITY loginAtStartup.accesskey "i">
+
+<!ENTITY useQuickMode.label "Per defecte, mostra el resum de l'article en comptes de carregar la pàgina web"> 
+<!ENTITY useQuickMode.accesskey "f">
+
+<!ENTITY manageSubscriptions.label "Gestiona les subscripcions…"> 
+<!ENTITY manageSubscriptions.accesskey "G">
+<!-- entities from rss.rdf -->
+
+<!ENTITY feeds.accountName "Blogs i canals de notícies">
+<!ENTITY feeds.wizardShortName "Canals">
+<!ENTITY feeds.wizardLongName "Blogs i canals de notícies">
+<!ENTITY feeds.wizardLongName.accesskey "B">

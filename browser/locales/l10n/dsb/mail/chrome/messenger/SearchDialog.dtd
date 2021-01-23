@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- for SearchDialog.xul -->
+
+<!ENTITY searchHeading.label         "Powěsći pytaś w:">
+<!ENTITY searchHeading.accesskey     "P">
+<!ENTITY searchSubfolders.label      "Pódzarědniki pśepytaś">
+<!ENTITY searchSubfolders.accesskey  "z">
+<!ENTITY searchOnServer.label        "Na serwerje pytaś">
+<!ENTITY searchOnServer.accesskey    "s">
+<!ENTITY resetButton.label           "Wuprozniś">
+<!ENTITY resetButton.accesskey       "u">
+<!ENTITY openButton.label            "Wócyniś">
+<!ENTITY openButton.accesskey        "c">
+<!ENTITY deleteButton.label          "Wulašowaś">
+<!ENTITY deleteButton.accesskey      "l">
+<!ENTITY searchDialogTitle.label     "Powěsći pytaś">
+<!ENTITY results.label               "Wuslědki">
+<!ENTITY moveButton.label            "Pśesunuś do">
+<!ENTITY moveButton.accesskey        "P">
+<!ENTITY closeCmd.key                "W"> 
+<!ENTITY openInFolder.label          "W zarědniku wócyniś">
+<!ENTITY openInFolder.accesskey      "z">
+<!ENTITY saveAsVFButton.label        "Ako pytański zarědnik składowaś">
+<!ENTITY saveAsVFButton.accesskey    "A">
+<!-- for ABSearchDialog.xul -->
+
+<!ENTITY abSearchHeading.label       "Pytaś w:">
+<!ENTITY abSearchHeading.accesskey   "t">
+<!ENTITY propertiesButton.label      "Kakosći">
+<!ENTITY propertiesButton.accesskey  "K">
+<!ENTITY composeButton.label         "Spisaś">
+<!ENTITY composeButton.accesskey     "i">
+<!ENTITY deleteCardButton.label      "Wulašowaś">
+<!ENTITY deleteCardButton.accesskey  "l">
+<!ENTITY abSearchDialogTitle.label   "Rozšyrjone adresnikowe pytanje">
+<!-- Thread Pane -->
+
+<!-- Thread Pane Tooltips -->
+

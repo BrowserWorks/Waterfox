@@ -16,7 +16,6 @@
 #include "XPCMaps.h"
 #include "mozilla/dom/BindingUtils.h"
 #include "jsfriendapi.h"
-#include "mozilla/jsipc/CrossProcessObjectWrappers.h"
 #include "mozilla/Likely.h"
 #include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/dom/MaybeCrossOriginObject.h"
@@ -43,6 +42,11 @@ const Wrapper XrayWaiver(WrapperFactory::WAIVE_XRAY_WRAPPER_FLAG);
 // that transitively extends the waiver to all properties we get
 // off it.
 const WaiveXrayWrapper WaiveXrayWrapper::singleton(0);
+
+bool WrapperFactory::IsOpaqueWrapper(JSObject* obj) {
+  return IsWrapper(obj) &&
+         Wrapper::wrapperHandler(obj) == &PermissiveXrayOpaque::singleton;
+}
 
 bool WrapperFactory::IsCOW(JSObject* obj) {
   return IsWrapper(obj) &&
@@ -80,8 +84,7 @@ JSObject* WrapperFactory::CreateXrayWaiver(JSContext* cx, HandleObject obj,
   // Add the new waiver to the map. It's important that we only ever have
   // one waiver for the lifetime of the target object.
   if (!scope->mWaiverWrapperMap) {
-    scope->mWaiverWrapperMap =
-        JSObject2JSObjectMap::newMap(XPC_WRAPPER_MAP_LENGTH);
+    scope->mWaiverWrapperMap = mozilla::MakeUnique<JSObject2JSObjectMap>();
   }
   if (!scope->mWaiverWrapperMap->Add(cx, obj, waiver)) {
     return nullptr;
@@ -152,7 +155,53 @@ inline bool ShouldWaiveXray(JSContext* cx, JSObject* originalObj) {
   return sameOrigin;
 }
 
+// Special handling is needed when wrapping local and remote window proxies.
+// This function returns true if it found a window proxy and dealt with it.
+static bool MaybeWrapWindowProxy(JSContext* cx, HandleObject origObj,
+                                 HandleObject obj, MutableHandleObject retObj) {
+  bool isWindowProxy = js::IsWindowProxy(obj);
+
+  if (!isWindowProxy &&
+      !dom::IsRemoteObjectProxy(obj, dom::prototypes::id::Window)) {
+    return false;
+  }
+
+  dom::BrowsingContext* bc = nullptr;
+  if (isWindowProxy) {
+    nsGlobalWindowInner* win =
+        WindowOrNull(js::UncheckedUnwrap(obj, /* stopAtWindowProxy = */ false));
+    if (win && win->GetOuterWindow()) {
+      bc = win->GetOuterWindow()->GetBrowsingContext();
+    }
+    if (!bc) {
+      retObj.set(obj);
+      return true;
+    }
+  } else {
+    bc = dom::GetBrowsingContext(obj);
+    MOZ_ASSERT(bc);
+  }
+
+  // We should only have a remote window proxy if bc is in a state where we
+  // expect remote window proxies. Otherwise, they should have been cleaned up
+  // by a call to CleanUpDanglingRemoteOuterWindowProxies().
+  MOZ_RELEASE_ASSERT(isWindowProxy || bc->CanHaveRemoteOuterProxies());
+
+  if (bc->IsInProcess()) {
+    retObj.set(obj);
+  } else {
+    // If bc is not in process, then use a remote window proxy, whether or not
+    // obj is one already.
+    if (!dom::GetRemoteOuterWindowProxy(cx, bc, origObj, retObj)) {
+      MOZ_CRASH("GetRemoteOuterWindowProxy failed");
+    }
+  }
+
+  return true;
+}
+
 void WrapperFactory::PrepareForWrapping(JSContext* cx, HandleObject scope,
+                                        HandleObject origObj,
                                         HandleObject objArg,
                                         HandleObject objectPassedToWrap,
                                         MutableHandleObject retObj) {
@@ -164,11 +213,14 @@ void WrapperFactory::PrepareForWrapping(JSContext* cx, HandleObject scope,
   RootedObject obj(cx, objArg);
   retObj.set(nullptr);
 
-  // If we've got a WindowProxy, there's nothing special that needs to be
-  // done here, and we can move on to the next phase of wrapping. We handle
-  // this case first to allow us to assert against wrappers below.
-  if (js::IsWindowProxy(obj)) {
-    retObj.set(waive ? WaiveXray(cx, obj) : obj);
+  // There are a few cases related to window proxies that are handled first to
+  // allow us to assert against wrappers below.
+  if (MaybeWrapWindowProxy(cx, origObj, obj, retObj)) {
+    if (waive) {
+      // We don't put remote window proxies in a waiving wrapper.
+      MOZ_ASSERT(js::IsWindowProxy(obj));
+      retObj.set(WaiveXray(cx, retObj));
+    }
     return;
   }
 
@@ -338,17 +390,10 @@ static void DEBUG_CheckUnwrapSafety(HandleObject obj,
     // The JS engine should have returned a dead wrapper in this case and we
     // shouldn't even get here.
     MOZ_ASSERT_UNREACHABLE("CheckUnwrapSafety called for a dead wrapper");
-  } else if (AccessCheck::isChrome(targetCompartment) ||
-             xpc::IsUniversalXPConnectEnabled(targetCompartment)) {
+  } else if (AccessCheck::isChrome(targetCompartment)) {
     // If the caller is chrome (or effectively so), unwrap should always be
     // allowed, but we might have a CrossOriginObjectWrapper here which allows
     // it dynamically.
-    MOZ_ASSERT(!handler->hasSecurityPolicy() ||
-               handler == &CrossOriginObjectWrapper::singleton);
-  } else if (RealmPrivate::Get(origin)->forcePermissiveCOWs) {
-    // Similarly, if this is a privileged scope that has opted to make itself
-    // accessible to the world (allowed only during automation), unwrap should
-    // be allowed.  Again, it might be allowed dynamically.
     MOZ_ASSERT(!handler->hasSecurityPolicy() ||
                handler == &CrossOriginObjectWrapper::singleton);
   } else {
@@ -438,16 +483,6 @@ static const Wrapper* SelectWrapper(bool securityWrapper, XrayType xrayType,
 
   // There's never any reason to expose other objects to non-subsuming actors.
   // Just use an opaque wrapper in these cases.
-  //
-  // In general, we don't want opaque function wrappers to be callable.
-  // But in the case of XBL, we rely on content being able to invoke
-  // functions exposed from the XBL scope. We could remove this exception,
-  // if needed, by using ExportFunction to generate the content-side
-  // representations of XBL methods.
-  if (xrayType == XrayForJSObject && IsInContentXBLScope(obj)) {
-    return &FilteringWrapper<CrossCompartmentSecurityWrapper,
-                             OpaqueWithCall>::singleton;
-  }
   return &FilteringWrapper<CrossCompartmentSecurityWrapper, Opaque>::singleton;
 }
 
@@ -482,8 +517,6 @@ JSObject* WrapperFactory::Rewrap(JSContext* cx, HandleObject existing,
   CompartmentPrivate* targetCompartmentPrivate =
       CompartmentPrivate::Get(target);
 
-  RealmPrivate* originRealmPrivate = RealmPrivate::Get(origin);
-
   // Track whether we decided to use a transparent wrapper because of
   // document.domain usage, so we don't override that decision.
   bool isTransparentWrapperDueToDocumentDomain = false;
@@ -492,27 +525,11 @@ JSObject* WrapperFactory::Rewrap(JSContext* cx, HandleObject existing,
   // First, handle the special cases.
   //
 
-  // If UniversalXPConnect is enabled, this is just some dumb mochitest. Use
-  // a vanilla CCW.
-  if (targetCompartmentPrivate->universalXPConnectEnabled) {
-    CrashIfNotInAutomation();
-    wrapper = &CrossCompartmentWrapper::singleton;
-  }
-
-  // Let the SpecialPowers scope make its stuff easily accessible to content.
-  else if (originRealmPrivate->forcePermissiveCOWs) {
-    CrashIfNotInAutomation();
-    wrapper = &CrossCompartmentWrapper::singleton;
-  }
-
   // Special handling for chrome objects being exposed to content.
-  else if (originIsChrome && !targetIsChrome) {
+  if (originIsChrome && !targetIsChrome) {
     // If this is a chrome function being exposed to content, we need to allow
-    // call (but nothing else). We allow CPOWs that purport to be function's
-    // here, but only in the content process.
-    if ((IdentifyStandardInstance(obj) == JSProto_Function ||
-         (jsipc::IsCPOW(obj) && JS::IsCallable(obj) &&
-          XRE_IsContentProcess()))) {
+    // call (but nothing else).
+    if ((IdentifyStandardInstance(obj) == JSProto_Function)) {
       wrapper = &FilteringWrapper<CrossCompartmentSecurityWrapper,
                                   OpaqueWithCall>::singleton;
     }
@@ -588,11 +605,9 @@ JSObject* WrapperFactory::Rewrap(JSContext* cx, HandleObject existing,
     wrapper = SelectWrapper(securityWrapper, xrayType, waiveXrays, obj);
   }
 
-  if (!targetSubsumesOrigin && !originRealmPrivate->forcePermissiveCOWs &&
-      !isTransparentWrapperDueToDocumentDomain) {
+  if (!targetSubsumesOrigin && !isTransparentWrapperDueToDocumentDomain) {
     // Do a belt-and-suspenders check against exposing eval()/Function() to
-    // non-subsuming content.  But don't worry about doing it in the
-    // SpecialPowers case.
+    // non-subsuming content.
     if (JSFunction* fun = JS_GetObjectFunction(obj)) {
       if (JS_IsBuiltinEvalFunction(fun) ||
           JS_IsBuiltinFunctionConstructor(fun)) {
@@ -702,8 +717,9 @@ static bool FixWaiverAfterTransplant(JSContext* cx, HandleObject oldWaiver,
   // cross-compartment wrapper (which should have no waiver). On the other hand,
   // in the !crossCompartmentTransplant case we know one already exists.
   // CreateXrayWaiver asserts all this.
-  JSObject* newWaiver = WrapperFactory::CreateXrayWaiver(
-      cx, newobj, /* allowExisting = */ !crossCompartmentTransplant);
+  RootedObject newWaiver(
+      cx, WrapperFactory::CreateXrayWaiver(
+              cx, newobj, /* allowExisting = */ !crossCompartmentTransplant));
   if (!newWaiver) {
     return false;
   }
@@ -781,6 +797,32 @@ JSObject* TransplantObjectRetainingXrayExpandos(JSContext* cx,
   }
 
   return newIdentity;
+}
+
+static void NukeXrayWaiver(JSContext* cx, JS::HandleObject obj) {
+  RootedObject waiver(cx, WrapperFactory::GetXrayWaiver(obj));
+  if (!waiver) {
+    return;
+  }
+
+  XPCWrappedNativeScope* scope = ObjectScope(waiver);
+  JSObject* key = Wrapper::wrappedObject(waiver);
+  MOZ_ASSERT(scope->mWaiverWrapperMap->Find(key));
+  scope->mWaiverWrapperMap->Remove(key);
+
+  js::NukeNonCCWProxy(cx, waiver);
+
+  // Get rid of any CCWs the waiver may have had.
+  if (!JS_RefreshCrossCompartmentWrappers(cx, waiver)) {
+    MOZ_CRASH();
+  }
+}
+
+JSObject* TransplantObjectNukingXrayWaiver(JSContext* cx,
+                                           JS::HandleObject origObj,
+                                           JS::HandleObject target) {
+  NukeXrayWaiver(cx, origObj);
+  return JS_TransplantObject(cx, origObj, target);
 }
 
 nsIGlobalObject* NativeGlobal(JSObject* obj) {

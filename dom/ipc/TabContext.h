@@ -18,7 +18,7 @@ namespace dom {
 class IPCTabContext;
 
 /**
- * TabContext encapsulates information about an iframe that may be a mozbrowser.
+ * TabContext encapsulates information about an iframe.
  *
  * BrowserParent and BrowserChild both inherit from TabContext, and you can also
  * have standalone TabContext objects.
@@ -39,40 +39,10 @@ class TabContext {
    */
   IPCTabContext AsIPCTabContext() const;
 
-  /**
-   * Does this TabContext correspond to a mozbrowser?
-   *
-   * <iframe mozbrowser> is a mozbrowser element, but <xul:browser> is not.
-   */
-  bool IsMozBrowserElement() const;
-
-  /**
-   * Does this TabContext correspond to an isolated mozbrowser?
-   *
-   * <iframe mozbrowser> is a mozbrowser element, but <xul:browser> is not.
-   * <iframe mozbrowser noisolation> does not count as isolated since isolation
-   * is disabled.  Isolation can only be disabled by chrome pages.
-   */
-  bool IsIsolatedMozBrowserElement() const;
-
-  /**
-   * Does this TabContext correspond to a mozbrowser?  This is equivalent to
-   * IsMozBrowserElement().  Returns false for <xul:browser>, which isn't a
-   * mozbrowser.
-   */
-  bool IsMozBrowser() const;
-
   bool IsJSPlugin() const;
   int32_t JSPluginId() const;
 
   uint64_t ChromeOuterWindowID() const;
-
-  /**
-   * OriginAttributesRef() returns the OriginAttributes of this frame to
-   * the caller. This is used to store any attribute associated with the frame's
-   * docshell.
-   */
-  const OriginAttributes& OriginAttributesRef() const;
 
   /**
    * Returns the presentation URL associated with the tab if this tab is
@@ -80,8 +50,9 @@ class TabContext {
    */
   const nsAString& PresentationURL() const;
 
-  UIStateChangeType ShowAccelerators() const;
   UIStateChangeType ShowFocusRings() const;
+
+  uint32_t MaxTouchPoints() const { return mMaxTouchPoints; }
 
  protected:
   friend class MaybeInvalidTabContext;
@@ -100,23 +71,17 @@ class TabContext {
    */
   bool SetTabContext(const TabContext& aContext);
 
-  /**
-   * Set the tab context's origin attributes to a private browsing value.
-   */
-  void SetPrivateBrowsingAttributes(bool aIsPrivateBrowsing);
-
-  bool SetTabContext(bool aIsMozBrowserElement, uint64_t aChromeOuterWindowID,
-                     UIStateChangeType aShowAccelerators,
+  bool SetTabContext(uint64_t aChromeOuterWindowID,
                      UIStateChangeType aShowFocusRings,
-                     const OriginAttributes& aOriginAttributes,
-                     const nsAString& aPresentationURL);
+                     const nsAString& aPresentationURL,
+                     uint32_t aMaxTouchPoints);
 
   /**
    * Modify this TabContext to match the given TabContext.  This is a special
    * case triggered by nsFrameLoader::SwapWithOtherRemoteLoader which may have
    * caused the owner content to change.
    *
-   * This special case only allows the field `mIsMozBrowserElement` to be
+   * This special case only allows the field `mChromeOuterWindowID` to be
    * changed.  If any other fields have changed, the update is ignored and
    * returns false.
    */
@@ -132,19 +97,15 @@ class TabContext {
    */
   bool SetTabContextForJSPluginFrame(int32_t aJSPluginID);
 
+  void SetMaxTouchPoints(uint32_t aMaxTouchPoints) {
+    mMaxTouchPoints = aMaxTouchPoints;
+  }
+
  private:
   /**
    * Has this TabContext been initialized?  If so, mutator methods will fail.
    */
   bool mInitialized;
-
-  /**
-   * Whether this TabContext corresponds to a mozbrowser.
-   *
-   * <iframe mozbrowser> and <xul:browser> are not considered to be
-   * mozbrowser elements.
-   */
-  bool mIsMozBrowserElement;
 
   /**
    * The outerWindowID of the window hosting the remote frameloader.
@@ -154,20 +115,19 @@ class TabContext {
   int32_t mJSPluginID;
 
   /**
-   * OriginAttributes of the top level tab docShell
-   */
-  OriginAttributes mOriginAttributes;
-
-  /**
    * The requested presentation URL.
    */
   nsString mPresentationURL;
 
   /**
-   * Keyboard indicator state (focus rings, accelerators).
+   * Keyboard indicator state (focus rings).
    */
-  UIStateChangeType mShowAccelerators;
   UIStateChangeType mShowFocusRings;
+
+  /**
+   * Maximum number of touch points.
+   */
+  uint32_t mMaxTouchPoints;
 };
 
 /**
@@ -181,14 +141,12 @@ class MutableTabContext : public TabContext {
     return TabContext::SetTabContext(aContext);
   }
 
-  bool SetTabContext(bool aIsMozBrowserElement, uint64_t aChromeOuterWindowID,
-                     UIStateChangeType aShowAccelerators,
+  bool SetTabContext(uint64_t aChromeOuterWindowID,
                      UIStateChangeType aShowFocusRings,
-                     const OriginAttributes& aOriginAttributes,
-                     const nsAString& aPresentationURL = EmptyString()) {
-    return TabContext::SetTabContext(aIsMozBrowserElement, aChromeOuterWindowID,
-                                     aShowAccelerators, aShowFocusRings,
-                                     aOriginAttributes, aPresentationURL);
+                     const nsAString& aPresentationURL,
+                     uint32_t aMaxTouchPoints) {
+    return TabContext::SetTabContext(aChromeOuterWindowID, aShowFocusRings,
+                                     aPresentationURL, aMaxTouchPoints);
   }
 
   bool SetTabContextForJSPluginFrame(uint32_t aJSPluginID) {

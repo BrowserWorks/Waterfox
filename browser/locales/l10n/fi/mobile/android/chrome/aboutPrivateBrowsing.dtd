@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title "Yksityinen selaus">
+
+<!-- Localisation note: the plus sign here is a shorthand way of expressing the word "and". Contextually the privatebrowsingpage.title.private string
+                        is used as a title, with the privatebrowsingpage.title string preceding it but on a separate line.
+                        So the final line will say "Private Browsing + Tracking Protection". -->
+<!ENTITY privatebrowsingpage.title.private "+ seurannan suojaus">
+<!-- Localization note (privatebrowsingpage.title.normal1): "Private Browsing"
+     is capitalized in English to be consistent with our existing uses of the
+     term. -->
+<!ENTITY privatebrowsingpage.title.normal1 "Et ole yksityinen selaus -tilassa">
+
+<!ENTITY privatebrowsingpage.description.trackingProtection "&brandShortName; estää sivulta osat, jotka voivat seurata selainkäyttäytymistäsi.">
+<!ENTITY privatebrowsingpage.description.privateDetails "Emme tallenna mitään historiatietoja, mutta ladatut tiedostot ja kirjanmerkit sivustoille tallennetaan laitteelle.">
+
+<!-- Localization note (privatebrowsingpage.description.normal2): "Private
+     Browsing is capitalized in English to be consistent with our existing uses
+     of the term. -->
+<!ENTITY privatebrowsingpage.description.normal2 "Yksityinen selaus -tilassa ei tallenneta selaushistoriaa tai evästeitä. Ladatut tiedostot ja kirjanmerkit sivustoille säilyvät laitteella normaalilla tavalla.">
+
+<!ENTITY privatebrowsingpage.link.private "Haluatko lukea lisää?">
+<!ENTITY privatebrowsingpage.link.normal "Avaa uusi yksityinen välilehti">

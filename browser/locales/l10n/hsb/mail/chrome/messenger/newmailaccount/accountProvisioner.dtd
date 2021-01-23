@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Witajće k &brandShortName;">
+<!ENTITY header2.label "Chceće nowu e-mejlowu adresu?">
+<!ENTITY other.languages "Pokazujemy jenož poskićowarjow, kotřiž adresy we wašich kónčinach poskićuja. Klikńće tu, zo byšće wšěch poskićowarjow pokazał.">
+<!ENTITY error.line1 "Bohužel njemóžachmy namjetowane e-mejlowe adresy namakać.">
+<!ENTITY error.line2 "Móžeće tež za přimjenami abo hinašim wurazom pytać, zo byšće dalše e-mejlowe adresy namakał.">
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+
+<!ENTITY error.suggest.before "Móžeće tež jednu z ">
+<!ENTITY error.suggest.middle "darmotnych alternatiwow e-mejlowych kontow wužiwać">
+<!ENTITY error.suggest.after ".">
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+
+<!ENTITY success.title.before "Witajće ">
+<!ENTITY success.title.after ", slědowace e-mejlowe adresy steja wam k dispoziciji:">
+<!ENTITY success.tip "(Móžeće tež za přimjenami abo hinašim wurazom pytać, zo byšće dalše e-mejlowe adresy namakał)">
+<!ENTITY partnership.description "W partnerstwje z wjacorymi poskićowarjemi móže &brandShortName; nowe e-mejlowe konto poskićić. Zapisajće jenož swoje předmjeno a swójbne mjeno abo někajke druhe słowa po swojej wólbje do polow horjeka, zo byšće započał.">
+<!ENTITY existing.header "Maće hižo adresu, kotruž chceće wužiwać?">
+<!ENTITY tinyheader.title "Maće adresu?">
+<!ENTITY tinyheader.existing "To přeskočić a eksistowacu e-mejlowu adresu wužiwać">
+<!ENTITY content.close "Konto pozdźišo konfigurować.">
+<!ENTITY successful.title "Zbožopřeće!">
+<!ENTITY successful.successMessage "Sće swoje konto wuspešnje konfigurował.">
+<!ENTITY successful.write "E-mejl pisać">
+<!ENTITY successful.write.desc "Zdźělće swojim přećelam a swojej swójbje swoju nowu adresu.<br/> Tohodla sće tute nowe konto załožił, něwěrno?">
+<!ENTITY successful.customize "Přiměrće &brandShortName; z někotrymi wulkotnymi přidatkami">
+<!ENTITY successful.customize.desc "Su tysacy přidatkow, kotrež wam zmóžnjeja &brandShortName; přiměrić, zo by wašim wosobinskim přećam wotpowědował.">
+<!ENTITY successful.attach "Wosobinsku signaturu k e-mejlej připowěsnyć">
+<!ENTITY successful.attach.desc "Móžeće citat abo hinaše informacije wo sebi ke kóncej kóždeje powěsće, kotruž sćeleće, připowěsnyć.">
+<!ENTITY successful.close "Tute wokno začinić.">
+<!ENTITY input.namePlaceholder "Waše mjeno abo přimjeno">
+<!ENTITY input.search "Pytać">
+<!ENTITY search_engine.title "Swoju pytawu přiměrić">
+<!ENTITY search_engine.message "Waš e-mejlowy poskićowar móže was z móžnosćemi webpytanja wuhotować.">
+<!ENTITY search_engine.button "Dokónčić">

@@ -6,10 +6,6 @@
 
 JAR_MANIFESTS += ['jar.mn']
 
-DIRS += [
-    'preferences',
-]
-
 # Register the startup components only for 'all' builds.
 if CONFIG['MOZ_DEVTOOLS'] == 'all':
     EXTRA_JS_MODULES += [
@@ -23,16 +19,11 @@ if CONFIG['MOZ_DEVTOOLS'] == 'all':
       'locales',
     ]
 
-if CONFIG['NIGHTLY_BUILD']:
-    EXTRA_JS_MODULES += [
-        'AboutDebuggingNewRegistration.jsm',
-    ]
-
 XPCOM_MANIFESTS += [
     'components.conf',
 ]
 
-XPCSHELL_TESTS_MANIFESTS += ['tests/unit/xpcshell.ini']
+XPCSHELL_TESTS_MANIFESTS += ['tests/xpcshell/xpcshell.ini']
 
 if CONFIG['MOZ_BUILD_APP'] != 'mobile/android':
     BROWSER_CHROME_MANIFESTS += ['tests/browser/browser.ini']

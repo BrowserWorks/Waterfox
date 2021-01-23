@@ -7,12 +7,10 @@
 #include "gtest/gtest.h"
 #include "nsDeque.h"
 #include "nsCRT.h"
-#include "mozilla/TypeTraits.h"
 #include <stdio.h>
 #include <functional>
-
-using mozilla::DeclVal;
-using mozilla::IsSame;
+#include <type_traits>
+#include <utility>
 
 /**************************************************************
   Now define the token deallocator class...
@@ -345,11 +343,12 @@ TEST(NsDeque, TestConstRangeFor)
     d.Push(new int(i + 1));
   }
 
-  static_assert(IsSame<nsDeque::ConstDequeIterator,
-                       decltype(DeclVal<const nsDeque&>().begin())>::value,
-                "(const nsDeque).begin() should return ConstDequeIterator");
-  static_assert(IsSame<nsDeque::ConstDequeIterator,
-                       decltype(DeclVal<const nsDeque&>().end())>::value,
+  static_assert(
+      std::is_same_v<nsDeque::ConstDequeIterator,
+                     decltype(std::declval<const nsDeque&>().begin())>,
+      "(const nsDeque).begin() should return ConstDequeIterator");
+  static_assert(std::is_same_v<nsDeque::ConstDequeIterator,
+                               decltype(std::declval<const nsDeque&>().end())>,
                 "(const nsDeque).end() should return ConstDequeIterator");
 
   int sum = 0;
@@ -445,9 +444,9 @@ TEST(NsDeque, TestRangeFor)
       d.Push(new int(i + 1));
     }
 
-    static_assert(IsSame<nsDeque::ConstIterator, decltype(d.begin())>::value,
+    static_assert(std::is_same_v<nsDeque::ConstIterator, decltype(d.begin())>,
                   "(non-const nsDeque).begin() should return ConstIterator");
-    static_assert(IsSame<nsDeque::ConstIterator, decltype(d.end())>::value,
+    static_assert(std::is_same_v<nsDeque::ConstIterator, decltype(d.end())>,
                   "(non-const nsDeque).end() should return ConstIterator");
 
     int sum = 0;

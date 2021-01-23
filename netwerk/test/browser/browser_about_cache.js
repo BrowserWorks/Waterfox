@@ -4,6 +4,10 @@
  * Open a dummy page, then open about:cache and verify the opened page shows up in the cache.
  */
 add_task(async function() {
+  await SpecialPowers.pushPrefEnv({
+    set: [["privacy.partition.network_state", false]],
+  });
+
   const kRoot = getRootDirectory(gTestPath).replace(
     "chrome://mochitests/content/",
     "https://example.com/"
@@ -32,7 +36,7 @@ add_task(async function() {
     false,
     expectedPageCheck
   );
-  await ContentTask.spawn(tab.linkedBrowser, null, function() {
+  await SpecialPowers.spawn(tab.linkedBrowser, [], function() {
     ok(
       !content.document.nodePrincipal.isSystemPrincipal,
       "about:cache should not have system principal"
@@ -62,7 +66,9 @@ add_task(async function() {
     false,
     expectedPageCheck
   );
-  await ContentTask.spawn(tab.linkedBrowser, kTestPage, function(kTestPage) {
+  await SpecialPowers.spawn(tab.linkedBrowser, [kTestPage], function(
+    kTestPage
+  ) {
     ok(
       !content.document.nodePrincipal.isSystemPrincipal,
       "about:cache with query params should still not have system principal"
@@ -90,7 +96,7 @@ add_task(async function() {
   await entryLoaded;
   info("about:cache entry loaded");
 
-  await ContentTask.spawn(tab.linkedBrowser, triggeringURISpec, function(
+  await SpecialPowers.spawn(tab.linkedBrowser, [triggeringURISpec], function(
     triggeringURISpec
   ) {
     ok(

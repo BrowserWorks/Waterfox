@@ -1,0 +1,83 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "तालिका गुण">
+<!ENTITY applyButton.label                "लागू करें">
+<!ENTITY applyButton.accesskey            "A">
+<!ENTITY closeButton.label                "बंद">
+<!ENTITY tableTab.label                   "तालिका">
+<!ENTITY cellTab.label                    "सेल">
+<!ENTITY tableRows.label                  "पंक्ति:">
+<!ENTITY tableRows.accessKey              "R">
+<!ENTITY tableColumns.label               "कॉलम:">
+<!ENTITY tableColumns.accessKey           "C">
+<!ENTITY tableHeight.label                "ऊंचाई:">
+<!ENTITY tableHeight.accessKey            "G">
+<!ENTITY tableWidth.label                 "चौड़ाई:">
+<!ENTITY tableWidth.accessKey             "W">
+<!ENTITY tableBorderSpacing.label         "किनारा व हाशिया">
+<!ENTITY tableBorderWidth.label           "किनारा:">
+<!ENTITY tableBorderWidth.accessKey       "B">
+<!ENTITY tableSpacing.label               "स्थान:">
+<!ENTITY tableSpacing.accessKey           "S">
+<!ENTITY tablePadding.label               "पैडिंग:">
+<!ENTITY tablePadding.accessKey           "P">
+<!ENTITY tablePxBetwCells.label           "सेल के बीच पिक्सेल">
+<!ENTITY tablePxBetwBrdrCellContent.label "सेल किनारा व सामग्री के बीच पिक्सेल">
+<!ENTITY tableAlignment.label             "तालिका समायोजन:">
+<!ENTITY tableAlignment.accessKey         "T">
+<!ENTITY tableCaption.label               "चित्र टिप्पणी:">
+<!ENTITY tableCaption.accessKey           "N">
+<!ENTITY tableCaptionAbove.label          "तालिका के ऊपर">
+<!ENTITY tableCaptionBelow.label          "तालिका के नीचें">
+<!ENTITY tableCaptionLeft.label           "तालिका के बांयें">
+<!ENTITY tableCaptionRight.label          "तालिका के दायें">
+<!ENTITY tableCaptionNone.label           "कोई नहीं">
+<!ENTITY tableInheritColor.label           "(पृष्ठ रंग को दिखाने दें)">
+
+<!ENTITY cellPercent.label                "तालिका प्रतिशत">
+<!ENTITY cellSelection.label              "चयन">
+<!ENTITY cellSelectCell.label             "सेल">
+<!ENTITY cellSelectRow.label              "पंक्ति">
+<!ENTITY cellSelectColumn.label           "कॉलम">
+<!ENTITY cellSelectNext.label             "आगे">
+<!ENTITY cellSelectNext.accessKey         "N">
+<!ENTITY cellSelectPrevious.label         "पिछला">
+<!ENTITY cellSelectPrevious.accessKey     "P">
+<!ENTITY cellApplyBeforeMove.label        "चयन बदलने के पहले बदलाव लागू करें">
+<!ENTITY cellKeepCurrentData.label        "मौजूदा जमावट रखें">
+<!-- LOCALIZATION NOTE Next 2 form 1 sentence (we don't want to use HTML tag to wrap) -->
+<!ENTITY applyBeforeChange1.label         "मौजूदा बदलाव लागू होगा">
+<!ENTITY applyBeforeChange2.label         "चयन के बदलने के पहले.">
+<!ENTITY cellRowSpan.label                "पंक्ति स्पैन:">
+<!ENTITY cellColSpan.label                "कॉलम स्पैन:">
+<!ENTITY cellContentAlignment.label       "सामग्री समायोजन">
+<!ENTITY cellHorizontal.label             "क्षैतिज:">
+<!ENTITY cellHorizontal.accessKey         "Z">
+<!ENTITY cellVertical.label               "लंबवत:">
+<!ENTITY cellVertical.accessKey           "V">
+<!ENTITY cellStyle.label                  "सेल शैली:">
+<!ENTITY cellStyle.accessKey              "C">
+<!ENTITY cellNormal.label                 "सामान्य">
+<!ENTITY cellHeader.label                 "शीर्ष">
+<!ENTITY cellTextWrap.label               "पाठ रैप:">
+<!ENTITY cellTextWrap.accessKey           "T">
+<!ENTITY cellWrap.label                   "रैप करें">
+<!ENTITY cellNoWrap.label                 "रैप मत करें">
+<!ENTITY cellAlignTop.label               "शीर्ष">
+<!ENTITY cellAlignMiddle.label            "मध्यवर्ती">
+<!ENTITY cellAlignBottom.label            "तल">
+<!ENTITY cellAlignJustify.label           "समायोजित करें">
+<!ENTITY cellAlignAtChar.label            "संप्रतीक पर:">
+<!ENTITY cellInheritColor.label           "(तालिका रंग का दिखाने दें)">
+<!ENTITY cellUseCheckboxHelp.label        "जांचपेटी का प्रयोग निश्चित करने के लिये करें कि कौन सा गुण तयनित सेल पर लागू होता है">
+
+<!-- Used in both Table and Cell panels  -->
+<!ENTITY size.label                       "आकार">
+<!ENTITY pixels.label                     "पिक्सेल">
+<!ENTITY backgroundColor.label            "पृष्ठभूमि रंग:">
+<!ENTITY backgroundColor.accessKey        "B">
+<!ENTITY AlignLeft.label                  "बांयें">
+<!ENTITY AlignCenter.label                "केंद्र">
+<!ENTITY AlignRight.label                 "दायें">

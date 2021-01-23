@@ -9,6 +9,7 @@ with Files('**'):
 
 DIRS += [
     'mdns',
+    'tests'
 ]
 
 XPIDL_SOURCES += [
@@ -18,10 +19,17 @@ XPIDL_SOURCES += [
     'nsIDNSService.idl',
     'nsIEffectiveTLDService.idl',
     'nsIIDNService.idl',
+    'nsINativeDNSResolverOverride.idl',
     'nsPIDNSService.idl',
 ]
 
 XPIDL_MODULE = 'necko_dns'
+
+EXTRA_JS_MODULES['netwerk-dns'] += [
+    'PublicSuffixList.jsm',
+]
+
+XPCSHELL_TESTS_MANIFESTS += ['tests/unit/xpcshell.ini']
 
 EXPORTS += [
     'nsEffectiveTLDService.h',
@@ -30,15 +38,21 @@ EXPORTS += [
 EXPORTS.mozilla.net += [
     'ChildDNSService.h',
     'DNS.h',
+    'DNSByTypeRecord.h',
     'DNSListenerProxy.h',
+    'DNSRequestBase.h',
     'DNSRequestChild.h',
     'DNSRequestParent.h',
+    'HTTPSSVC.h',
     'IDNBlocklistUtils.h',
-    'PDNSParams.h',
     'TRRService.h',
+    'TRRServiceBase.h',
+    'TRRServiceChild.h',
+    'TRRServiceParent.h',
 ]
 
 SOURCES += [
+    "GetAddrInfo.cpp", # Undefines UNICODE
     'nsEffectiveTLDService.cpp', # Excluded from UNIFIED_SOURCES due to special build flags.
     'nsHostResolver.cpp', # Redefines LOG
 ]
@@ -49,34 +63,35 @@ UNIFIED_SOURCES += [
     'DNSListenerProxy.cpp',
     'DNSRequestChild.cpp',
     'DNSRequestParent.cpp',
-    'GetAddrInfo.cpp',
+    'HTTPSSVC.cpp',
     'IDNBlocklistUtils.cpp',
     'nsDNSService2.cpp',
     'nsIDNService.cpp',
     'punycode.c',
     'TRR.cpp',
     'TRRService.cpp',
+    'TRRServiceBase.cpp',
+    'TRRServiceChild.cpp',
+    'TRRServiceParent.cpp',
 ]
 
 IPDL_SOURCES = [
     'PDNSRequest.ipdl',
     'PDNSRequestParams.ipdlh',
+    'PTRRService.ipdl',
 ]
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
 
-GENERATED_FILES = [
-    'etld_data.inc',
-]
-etld_data = GENERATED_FILES['etld_data.inc']
-etld_data.script = 'prepare_tlds.py'
-etld_data.inputs = ['effective_tld_names.dat']
+GeneratedFile('etld_data.inc', script='prepare_tlds.py',
+              inputs=['effective_tld_names.dat'])
 
 # need to include etld_data.inc
 LOCAL_INCLUDES += [
     '/netwerk/base',
+    '/netwerk/protocol/http',
 ]
 
 USE_LIBS += ['icu']

@@ -7,12 +7,15 @@
 
 <!ENTITY importFrom.label               "Import Options, Bookmarks, History, Passwords and other data from:">
 <!ENTITY importFromUnix.label           "Import Preferences, Bookmarks, History, Passwords and other data from:">
-<!ENTITY importFromBookmarks.label      "Import Bookmarks from:">
 
 <!ENTITY importFromIE.label             "Microsoft Internet Explorer">
 <!ENTITY importFromIE.accesskey         "M">
 <!ENTITY importFromEdge.label           "Microsoft Edge">
 <!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromEdgeLegacy.label     "Microsoft Edge Legacy">
+<!ENTITY importFromEdgeLegacy.accesskey "L">
+<!ENTITY importFromEdgeBeta.label       "Microsoft Edge Beta">
+<!ENTITY importFromEdgeBeta.accesskey   "d">
 <!ENTITY importFromNothing.label        "Don’t import anything">
 <!ENTITY importFromNothing.accesskey    "D">
 <!ENTITY importFromSafari.label         "Safari">
@@ -27,12 +30,12 @@
 <!ENTITY importFromChromeDev.accesskey  "D">
 <!ENTITY importFromChromium.label       "Chromium">
 <!ENTITY importFromChromium.accesskey   "u">
-<!ENTITY importFromFirefox.label        "Firefox">
-<!ENTITY importFromFirefox.accesskey    "X">
+<!ENTITY importFromWaterfox.label       "Waterfox">
+<!ENTITY importFromWaterfox.accesskey   "X">
 <!ENTITY importFrom360se.label          "360 Secure Browser">
 <!ENTITY importFrom360se.accesskey      "3">
-<!ENTITY importFromLfirefox.label       "Mozilla Firefox">
-<!ENTITY importFromLfirefox.accesskey   "L">
+<!ENTITY importFromFirefox.label        "Firefox">
+<!ENTITY importFromFirefox.accesskey    "L">
 <!ENTITY importFromWaterfoxClassic.label "Waterfox Classic">
 <!ENTITY importFromWaterfoxClassic.accesskey   "W">
 

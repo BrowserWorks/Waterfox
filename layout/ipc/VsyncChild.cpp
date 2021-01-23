@@ -10,8 +10,7 @@
 #include "mozilla/VsyncDispatcher.h"
 #include "nsThreadUtils.h"
 
-namespace mozilla {
-namespace layout {
+namespace mozilla::layout {
 
 VsyncChild::VsyncChild()
     : mObservingVsync(false),
@@ -45,10 +44,6 @@ void VsyncChild::ActorDestroy(ActorDestroyReason aActorDestroyReason) {
   MOZ_ASSERT(!mIsShutdown);
   mIsShutdown = true;
   mObserver = nullptr;
-
-  if (recordreplay::IsRecordingOrReplaying()) {
-    recordreplay::child::SetVsyncObserver(nullptr);
-  }
 }
 
 mozilla::ipc::IPCResult VsyncChild::RecvNotify(const VsyncEvent& aVsync) {
@@ -57,11 +52,6 @@ mozilla::ipc::IPCResult VsyncChild::RecvNotify(const VsyncEvent& aVsync) {
 
   SchedulerGroup::MarkVsyncRan();
   if (mObservingVsync && mObserver) {
-    if (recordreplay::IsRecordingOrReplaying() &&
-        !recordreplay::child::OnVsync()) {
-      return IPC_OK();
-    }
-
     mObserver->NotifyVsync(aVsync);
   }
   return IPC_OK();
@@ -70,10 +60,6 @@ mozilla::ipc::IPCResult VsyncChild::RecvNotify(const VsyncEvent& aVsync) {
 void VsyncChild::SetVsyncObserver(VsyncObserver* aVsyncObserver) {
   MOZ_ASSERT(NS_IsMainThread());
   mObserver = aVsyncObserver;
-
-  if (recordreplay::IsRecordingOrReplaying()) {
-    recordreplay::child::SetVsyncObserver(mObserver);
-  }
 }
 
 TimeDuration VsyncChild::GetVsyncRate() {
@@ -91,5 +77,4 @@ mozilla::ipc::IPCResult VsyncChild::RecvVsyncRate(const float& aVsyncRate) {
   return IPC_OK();
 }
 
-}  // namespace layout
-}  // namespace mozilla
+}  // namespace mozilla::layout

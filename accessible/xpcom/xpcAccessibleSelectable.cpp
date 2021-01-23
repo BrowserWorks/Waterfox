@@ -5,9 +5,11 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "Accessible-inl.h"
-#include "xpcAccessibleDocument.h"
 
+#include "nsIAccessible.h"
 #include "nsIMutableArray.h"
+#include "xpcAccessibleDocument.h"
+#include "xpcAccessibleSelectable.h"
 
 using namespace mozilla::a11y;
 

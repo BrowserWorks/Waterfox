@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.navigator.title           "ბრაუზერი">
+
+<!ENTITY navRadio.label                 "ჩვენება">
+<!ENTITY navRadio.accesskey             "n">
+<!ENTITY navStartPageMenu.label         "ნავიგატორის სეანსის დაწყება">
+<!ENTITY newWinPageMenu.label           "ახალ სარკმელში">
+<!ENTITY newTabPageMenu.label           "ახალ ჩანართიზე">
+
+<!ENTITY blankPageRadio.label           "სუფთა გვერდით">
+<!ENTITY blankPageRadio.accesskey       "B">
+<!ENTITY homePageRadio.label            "თავფურცლით">
+<!ENTITY homePageRadio.accesskey        "m">
+<!ENTITY lastPageRadio.label            "წინა სეანსის ბოლო გვერდით">
+<!ENTITY lastPageRadio.accesskey        "L">
+<!ENTITY restoreSessionRadio.label      "წინა სეანსის აღდგენა">
+<!ENTITY restoreSessionRadio.accesskey  "P">
+
+<!ENTITY restoreSessionIntro.label      "სეანსებისა და სარკმლების აღდგენისას">
+<!ENTITY restoreImmediately.label       "ყველა ჩანართის დაუყოვნებლივ აღდგენა">
+<!ENTITY restoreImmediately.accesskey   "e">
+<!-- LOCALIZATION NOTE (restoreTabs.label): This will concatenate to
+     "Restore [___] tab(s) at a time",
+     using (restoreTabs.label) and a number (restoreTabsAtATime.label). -->
+<!ENTITY restoreTabs.label              "აღდგენა">
+<!ENTITY restoreTabs.accesskey          "ღ">
+<!ENTITY restoreTabsAtATime.label       "ჩანართი ერთ ჯერზე">
+<!ENTITY restoreDeferred.label          "ჩანართების აღდგენა მხოლოდ მოთხოვნისას">
+<!ENTITY restoreDeferred.accesskey      "O">
+
+<!ENTITY homePageIntro.label            "თავფურცლის ღილაკზე დაჭერა ამ გვერდზე ან გვერდთა ჯგუფზე გადაგიყვანთ:">
+<!ENTITY useCurrent.label               "გამოიყენე მიმდინარე გვერდი">
+<!ENTITY useCurrent.accesskey           "U">
+<!ENTITY useCurrentGroup.label          "გამოიყენე მიმდინარე ჯგუფი">
+<!ENTITY useCurrentGroup.accesskey      "G">
+<!ENTITY browseFile.label               "ფაილის არჩევა…">
+<!ENTITY browseFile.accesskey           "C">
+<!ENTITY useDefault.label               "საწყისის აღდგენა">
+<!ENTITY useDefault.accesskey           "R">
+
+<!ENTITY defaultBrowserGroup.label      "ნაგულისხმები ბრაუზერი">
+<!ENTITY defaultBrowserButton.label     "ნაგულისხმები ბრაუზერის მითითება">
+<!ENTITY defaultBrowserButton.accesskey "D">
+<!ENTITY alreadyDefaultText             "&brandShortName; უკვე თქვენი ნაგულისხმები ბრაუზერია.">
+<!ENTITY defaultPendingText             "&brandShortName; მიეთითება როგორც ნაგულისხმევი ბრაუზერი, როცა დაწკაპავთ ღილაკს – დიახ.">
+<!ENTITY wasMadeDefaultText             "&brandShortName; მითითებულია როგორც ნაგულისხმები ბარუზერი.">
+<!ENTITY makeDefaultText                "&brandShortName; პროგრამის ნაგულისხმებ ბრაუზერად მითითება.">

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+<!ENTITY windowTitle.label "HTML posta sorusu">
+
+<!ENTITY recipient.label "Alıcıların bazıları listeye göre HTML iletileri kabul edemiyorlar.">
+
+<!ENTITY question.label "İletiyi düz metne çevirmek mi, yoksa ne olursa olsun HTML olarak göndermek istersiniz?">
+
+<!ENTITY plainTextAndHtml.label "Düz metin ve HTML olarak gönder">
+<!ENTITY plainTextAndHtml.accesskey "a">
+<!ENTITY plainTextOnly.label "Sadece düz metin olarak gönder">
+<!ENTITY plainTextOnly.accesskey "d">
+<!ENTITY htmlOnly.label "Sadece HTML olarak gönder">
+<!ENTITY htmlOnly.accesskey "H">
+
+<!ENTITY send.label "Gönder">
+<!ENTITY send.accesskey "G">

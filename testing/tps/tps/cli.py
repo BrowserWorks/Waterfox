@@ -2,6 +2,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from __future__ import absolute_import, print_function
+
 import json
 import optparse
 import os
@@ -93,7 +95,7 @@ def main():
 
     rlock = RLock()
 
-    print 'using result file', options.resultfile
+    print('using result file', options.resultfile)
 
     extensionDir = config.get('extensiondir')
     if not extensionDir or extensionDir == '__EXTENSIONDIR__':

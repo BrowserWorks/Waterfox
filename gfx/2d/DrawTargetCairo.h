@@ -80,7 +80,8 @@ class DrawTargetCairo final : public DrawTarget {
                           const Point& aDestPoint,
                           const DrawOptions& aOptions = DrawOptions()) override;
   virtual void DrawSurfaceWithShadow(SourceSurface* aSurface,
-                                     const Point& aDest, const Color& aColor,
+                                     const Point& aDest,
+                                     const DeviceColor& aColor,
                                      const Point& aOffset, Float aSigma,
                                      CompositionOp aOperator) override;
 
@@ -143,16 +144,14 @@ class DrawTargetCairo final : public DrawTarget {
       const IntSize& aSize, SurfaceFormat aFormat) const override;
   virtual already_AddRefed<DrawTarget> CreateShadowDrawTarget(
       const IntSize& aSize, SurfaceFormat aFormat, float aSigma) const override;
+  virtual RefPtr<DrawTarget> CreateClippedDrawTarget(
+      const Rect& aBounds, SurfaceFormat aFormat) override;
 
   virtual already_AddRefed<GradientStops> CreateGradientStops(
       GradientStop* aStops, uint32_t aNumStops,
       ExtendMode aExtendMode = ExtendMode::CLAMP) const override;
 
   virtual already_AddRefed<FilterNode> CreateFilter(FilterType aType) override;
-
-  virtual void GetGlyphRasterizationMetrics(
-      ScaledFont* aScaledFont, const uint16_t* aGlyphIndices,
-      uint32_t aNumGlyphs, GlyphMetrics* aGlyphMetrics) override;
 
   virtual void* GetNativeSurface(NativeSurfaceType aType) override;
 
@@ -188,7 +187,7 @@ class DrawTargetCairo final : public DrawTarget {
   void CopySurfaceInternal(cairo_surface_t* aSurface, const IntRect& aSource,
                            const IntPoint& aDest);
 
-  Rect GetUserSpaceClip();
+  Rect GetUserSpaceClip() const;
 
   // Call before you make any changes to the backing surface with which this
   // context is associated. Pass the path you're going to be using if you have
@@ -205,7 +204,7 @@ class DrawTargetCairo final : public DrawTarget {
 
   // Set the Cairo context font options according to the current draw target
   // font state.
-  void SetFontOptions();
+  void SetFontOptions(cairo_antialias_t aAAMode = CAIRO_ANTIALIAS_DEFAULT);
 
  private:  // data
   cairo_t* mContext;

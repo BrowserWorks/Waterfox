@@ -15,7 +15,10 @@ using namespace mozilla::dom;
 nsresult NS_NewXMLElement(
     Element** aInstancePtrResult,
     already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo) {
-  RefPtr<nsXMLElement> it = new nsXMLElement(std::move(aNodeInfo));
+  RefPtr<mozilla::dom::NodeInfo> nodeInfo(std::move(aNodeInfo));
+  auto* nim = nodeInfo->NodeInfoManager();
+  RefPtr<nsXMLElement> it = new (nim) nsXMLElement(nodeInfo.forget());
+
   it.forget(aInstancePtrResult);
   return NS_OK;
 }
@@ -25,7 +28,7 @@ JSObject* nsXMLElement::WrapNode(JSContext* aCx,
   return Element_Binding::Wrap(aCx, this, aGivenProto);
 }
 
-void nsXMLElement::UnbindFromTree(bool aDeep, bool aNullParent) {
+void nsXMLElement::UnbindFromTree(bool aNullParent) {
   nsAtom* property;
   switch (GetPseudoElementType()) {
     case PseudoStyleType::marker:
@@ -43,9 +46,9 @@ void nsXMLElement::UnbindFromTree(bool aDeep, bool aNullParent) {
   if (property) {
     MOZ_ASSERT(GetParent());
     MOZ_ASSERT(GetParent()->IsElement());
-    GetParent()->DeleteProperty(property);
+    GetParent()->RemoveProperty(property);
   }
-  Element::UnbindFromTree(aDeep, aNullParent);
+  Element::UnbindFromTree(aNullParent);
 }
 
 NS_IMPL_ELEMENT_CLONE(nsXMLElement)

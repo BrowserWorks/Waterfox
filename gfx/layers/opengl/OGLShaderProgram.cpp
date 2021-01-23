@@ -7,7 +7,7 @@
 #include "OGLShaderProgram.h"
 
 #include <stdint.h>  // for uint32_t
-#include <sstream>   // for ostringstream
+#include <sstream>   // for std::ostringstream
 #include "gfxEnv.h"
 #include "gfxRect.h"  // for gfxRect
 #include "gfxUtils.h"
@@ -21,7 +21,7 @@
 namespace mozilla {
 namespace layers {
 
-using namespace std;
+using std::endl;
 
 #define GAUSSIAN_KERNEL_HALF_WIDTH 11
 #define GAUSSIAN_KERNEL_STEP 0.2
@@ -120,6 +120,9 @@ void ShaderConfigOGL::SetColorMultiplier(uint32_t aMultiplier) {
 void ShaderConfigOGL::SetNV12(bool aEnabled) {
   SetFeature(ENABLE_TEXTURE_NV12, aEnabled);
   MOZ_ASSERT(!(mFeatures & ENABLE_TEXTURE_YCBCR));
+#ifdef MOZ_WAYLAND
+  SetFeature(ENABLE_TEXTURE_NV12_GA_SWITCH, aEnabled);
+#endif
 }
 
 void ShaderConfigOGL::SetComponentAlpha(bool aEnabled) {
@@ -157,7 +160,7 @@ void ShaderConfigOGL::SetDynamicGeometry(bool aEnabled) {
 /* static */
 ProgramProfileOGL ProgramProfileOGL::GetProfileFor(ShaderConfigOGL aConfig) {
   ProgramProfileOGL result;
-  ostringstream fs, vs;
+  std::ostringstream fs, vs;
 
   AddUniforms(result);
 
@@ -185,7 +188,7 @@ ProgramProfileOGL ProgramProfileOGL::GetProfileFor(ShaderConfigOGL aConfig) {
     vs << "attribute vec2 aCoord;" << endl;
   }
 
-  result.mAttributes.AppendElement(Pair<nsCString, GLuint>{"aCoord", 0});
+  result.mAttributes.AppendElement(std::pair<nsCString, GLuint>{"aCoord", 0});
 
   if (!(aConfig.mFeatures & ENABLE_RENDER_COLOR)) {
     vs << "uniform mat4 uTextureTransform;" << endl;
@@ -194,7 +197,8 @@ ProgramProfileOGL ProgramProfileOGL::GetProfileFor(ShaderConfigOGL aConfig) {
 
     if (aConfig.mFeatures & ENABLE_DYNAMIC_GEOMETRY) {
       vs << "attribute vec2 aTexCoord;" << endl;
-      result.mAttributes.AppendElement(Pair<nsCString, GLuint>{"aTexCoord", 1});
+      result.mAttributes.AppendElement(
+          std::pair<nsCString, GLuint>{"aTexCoord", 1});
     }
   }
 
@@ -458,15 +462,25 @@ ProgramProfileOGL ProgramProfileOGL::GetProfileFor(ShaderConfigOGL aConfig) {
              << "(uYTexture, coord * uTexCoordMultiplier).r;" << endl;
           fs << "  COLOR_PRECISION float cb = " << texture2D
              << "(uCbTexture, coord * uCbCrTexCoordMultiplier).r;" << endl;
-          fs << "  COLOR_PRECISION float cr = " << texture2D
-             << "(uCbTexture, coord * uCbCrTexCoordMultiplier).a;" << endl;
+          if (aConfig.mFeatures & ENABLE_TEXTURE_NV12_GA_SWITCH) {
+            fs << "  COLOR_PRECISION float cr = " << texture2D
+               << "(uCbTexture, coord * uCbCrTexCoordMultiplier).g;" << endl;
+          } else {
+            fs << "  COLOR_PRECISION float cr = " << texture2D
+               << "(uCbTexture, coord * uCbCrTexCoordMultiplier).a;" << endl;
+          }
         } else {
           fs << "  COLOR_PRECISION float y = " << texture2D
              << "(uYTexture, coord).r;" << endl;
           fs << "  COLOR_PRECISION float cb = " << texture2D
              << "(uCbTexture, coord).r;" << endl;
-          fs << "  COLOR_PRECISION float cr = " << texture2D
-             << "(uCbTexture, coord).a;" << endl;
+          if (aConfig.mFeatures & ENABLE_TEXTURE_NV12_GA_SWITCH) {
+            fs << "  COLOR_PRECISION float cr = " << texture2D
+               << "(uCbTexture, coord).g;" << endl;
+          } else {
+            fs << "  COLOR_PRECISION float cr = " << texture2D
+               << "(uCbTexture, coord).a;" << endl;
+          }
         }
       }
       fs << "  vec3 yuv = vec3(y, cb, cr);" << endl;
@@ -854,7 +868,7 @@ bool ShaderProgramOGL::Initialize() {
   NS_ASSERTION(mProgramState == STATE_NEW,
                "Shader program has already been initialised");
 
-  ostringstream vs, fs;
+  std::ostringstream vs, fs;
   for (uint32_t i = 0; i < mProfile.mDefines.Length(); ++i) {
     vs << mProfile.mDefines[i] << endl;
     fs << mProfile.mDefines[i] << endl;
@@ -932,9 +946,8 @@ bool ShaderProgramOGL::CreateProgram(const char* aVertexShaderString,
   mGL->fAttachShader(result, vertexShader);
   mGL->fAttachShader(result, fragmentShader);
 
-  for (Pair<nsCString, GLuint>& attribute : mProfile.mAttributes) {
-    mGL->fBindAttribLocation(result, attribute.second(),
-                             attribute.first().get());
+  for (std::pair<nsCString, GLuint>& attribute : mProfile.mAttributes) {
+    mGL->fBindAttribLocation(result, attribute.second, attribute.first.get());
   }
 
   mGL->fLinkProgram(result);

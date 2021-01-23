@@ -16,8 +16,11 @@ class GMPChild;
 
 class GMPContentChild : public PGMPContentChild, public GMPSharedMem {
  public:
-  explicit GMPContentChild(GMPChild* aChild);
-  virtual ~GMPContentChild();
+  // Mark AddRef and Release as `final`, as they overload pure virtual
+  // implementations in PGMPContentChild.
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(GMPContentChild, final)
+
+  explicit GMPContentChild(GMPChild* aChild) : mGMPChild(aChild) {}
 
   MessageLoop* GMPMessageLoop();
 
@@ -28,15 +31,12 @@ class GMPContentChild : public PGMPContentChild, public GMPSharedMem {
   mozilla::ipc::IPCResult RecvPChromiumCDMConstructor(
       PChromiumCDMChild* aActor) override;
 
-  PGMPVideoDecoderChild* AllocPGMPVideoDecoderChild(
+  already_AddRefed<PGMPVideoDecoderChild> AllocPGMPVideoDecoderChild(
       const uint32_t& aDecryptorId);
-  bool DeallocPGMPVideoDecoderChild(PGMPVideoDecoderChild* aActor);
 
-  PGMPVideoEncoderChild* AllocPGMPVideoEncoderChild();
-  bool DeallocPGMPVideoEncoderChild(PGMPVideoEncoderChild* aActor);
+  already_AddRefed<PGMPVideoEncoderChild> AllocPGMPVideoEncoderChild();
 
-  PChromiumCDMChild* AllocPChromiumCDMChild();
-  bool DeallocPChromiumCDMChild(PChromiumCDMChild* aActor);
+  already_AddRefed<PChromiumCDMChild> AllocPChromiumCDMChild();
 
   void ActorDestroy(ActorDestroyReason aWhy) override;
   void ProcessingError(Result aCode, const char* aReason) override;
@@ -48,6 +48,9 @@ class GMPContentChild : public PGMPContentChild, public GMPSharedMem {
   bool IsUsed();
 
   GMPChild* mGMPChild;
+
+ private:
+  ~GMPContentChild() = default;
 };
 
 }  // namespace gmp

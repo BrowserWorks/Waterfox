@@ -3,7 +3,7 @@
 #
 
 
-# Copyright 1996-2018 by
+# Copyright (C) 1996-2020 by
 # David Turner, Robert Wilhelm, and Werner Lemberg.
 #
 # This file is part of the FreeType project, and may only be used, modified,
@@ -191,13 +191,13 @@ work := $(word 2,$(work))
 patch := $(subst |,$(space),$(work))
 patch := $(firstword $(patch))
 
-ifneq ($(findstring x0x,x$(patch)x),)
-  version := $(major).$(minor)
-  winversion := $(major)$(minor)
-else
+# ifneq ($(findstring x0x,x$(patch)x),)
+#   version := $(major).$(minor)
+#   winversion := $(major)$(minor)
+# else
   version := $(major).$(minor).$(patch)
   winversion := $(major)$(minor)$(patch)
-endif
+# endif
 
 
 # This target builds the tarballs.
@@ -208,7 +208,7 @@ endif
 dist:
 	-rm -rf tmp
 	rm -f freetype-$(version).tar.gz
-	rm -f freetype-$(version).tar.bz2
+	rm -f freetype-$(version).tar.xz
 	rm -f ft$(winversion).zip
 
 	for d in `find . -wholename '*/.git' -prune \
@@ -226,23 +226,16 @@ dist:
 	  ln -s $$currdir/$$f tmp/$$f ; \
 	done
 
-	@# Prevent generation of .pyc files.  Python follows (soft) links if
-	@# the link's directory is write protected, so we have temporarily
-	@# disable write access here too.
-	chmod -w src/tools/docmaker
-
 	cd tmp ; \
 	$(MAKE) devel ; \
 	$(MAKE) do-dist
-
-	chmod +w src/tools/docmaker
 
 	mv tmp freetype-$(version)
 
 	tar -H ustar -chf - freetype-$(version) \
 	| gzip -9 -c > freetype-$(version).tar.gz
 	tar -H ustar -chf - freetype-$(version) \
-	| bzip2 -c > freetype-$(version).tar.bz2
+	| xz -c > freetype-$(version).tar.xz
 
 	@# Use CR/LF for zip files.
 	zip -lr9 ft$(winversion).zip freetype-$(version)
@@ -273,5 +266,9 @@ do-dist: distclean refdoc
 
 	cp $(CONFIG_GUESS) builds/unix
 	cp $(CONFIG_SUB) builds/unix
+
+	@# Remove intermediate files created by the `refdoc' target.
+	rm -rf docs/markdown
+	rm -f docs/mkdocs.yml
 
 # EOF

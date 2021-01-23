@@ -24,6 +24,13 @@ NS_IMPL_ISUPPORTS_INHERITED(nsPrintSettingsX, nsPrintSettings, nsPrintSettingsX)
 nsPrintSettingsX::nsPrintSettingsX() : mAdjustedPaperWidth{0.0}, mAdjustedPaperHeight{0.0} {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK;
 
+  // Note that the app shared `sharedPrintInfo` object is special!  The system
+  // print dialog and print settings dialog update it with the values chosen
+  // by the user.  Using that object here to initialize new nsPrintSettingsX
+  // objects could mask bugs in our code where we fail to save and/or restore
+  // print settings ourselves (e.g., bug 1636725).  On other platforms we only
+  // initialize new nsPrintSettings objects from the settings that we save to
+  // prefs.  Perhaps we should stop using sharedPrintInfo here for consistency?
   mPrintInfo = [[NSPrintInfo sharedPrintInfo] copy];
   mWidthScale = COCOA_PAPER_UNITS_PER_INCH;
   mHeightScale = COCOA_PAPER_UNITS_PER_INCH;
@@ -259,6 +266,91 @@ void nsPrintSettingsX::GetAdjustedPaperSize(double* aWidth, double* aHeight) {
   *aHeight = mAdjustedPaperHeight;
 }
 
+NS_IMETHODIMP nsPrintSettingsX::SetPrintRange(int16_t aPrintRange) {
+  NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NSRESULT;
+
+  // In this case (PrintRange) we store the state in the base class in both the
+  // parent and content process since the platform specific NSPrintInfo isn't
+  // capable of representing the kRangeSelection state:
+  nsPrintSettings::SetPrintRange(aPrintRange);
+
+  // However, we do need to keep NSPrintAllPages on mPrintInfo in sync in the
+  // parent process so that the object returned by GetCocoaPrintInfo is valid:
+  if (XRE_IsParentProcess()) {
+    BOOL allPages = aPrintRange == nsIPrintSettings::kRangeSpecifiedPageRange ? NO : YES;
+    NSMutableDictionary* dict = [mPrintInfo dictionary];
+    [dict setObject:[NSNumber numberWithBool:allPages] forKey:NSPrintAllPages];
+  }
+
+  return NS_OK;
+
+  NS_OBJC_END_TRY_ABORT_BLOCK_NSRESULT;
+}
+
+NS_IMETHODIMP nsPrintSettingsX::GetStartPageRange(int32_t* aStartPageRange) {
+  NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NSRESULT;
+  MOZ_ASSERT(aStartPageRange);
+
+  // Only use NSPrintInfo data in the parent process.
+  if (XRE_IsParentProcess()) {
+    NSDictionary* dict = [mPrintInfo dictionary];
+    *aStartPageRange = [[dict objectForKey:NSPrintFirstPage] intValue];
+  } else {
+    nsPrintSettings::GetStartPageRange(aStartPageRange);
+  }
+  return NS_OK;
+
+  NS_OBJC_END_TRY_ABORT_BLOCK_NSRESULT;
+}
+
+NS_IMETHODIMP nsPrintSettingsX::SetStartPageRange(int32_t aStartPageRange) {
+  NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NSRESULT;
+
+  // Only use NSPrintInfo data in the parent process.
+  if (XRE_IsParentProcess()) {
+    NSMutableDictionary* dict = [mPrintInfo dictionary];
+    [dict setObject:[NSNumber numberWithInt:aStartPageRange] forKey:NSPrintFirstPage];
+  } else {
+    nsPrintSettings::SetStartPageRange(aStartPageRange);
+  }
+
+  return NS_OK;
+
+  NS_OBJC_END_TRY_ABORT_BLOCK_NSRESULT;
+}
+
+NS_IMETHODIMP nsPrintSettingsX::GetEndPageRange(int32_t* aEndPageRange) {
+  NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NSRESULT;
+  MOZ_ASSERT(aEndPageRange);
+
+  // Only use NSPrintInfo data in the parent process.
+  if (XRE_IsParentProcess()) {
+    NSDictionary* dict = [mPrintInfo dictionary];
+    *aEndPageRange = [[dict objectForKey:NSPrintLastPage] intValue];
+  } else {
+    nsPrintSettings::GetEndPageRange(aEndPageRange);
+  }
+  return NS_OK;
+
+  NS_OBJC_END_TRY_ABORT_BLOCK_NSRESULT;
+}
+
+NS_IMETHODIMP nsPrintSettingsX::SetEndPageRange(int32_t aEndPageRange) {
+  NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NSRESULT;
+
+  // Only use NSPrintInfo data in the parent process.
+  if (XRE_IsParentProcess()) {
+    NSMutableDictionary* dict = [mPrintInfo dictionary];
+    [dict setObject:[NSNumber numberWithInt:aEndPageRange] forKey:NSPrintLastPage];
+  } else {
+    nsPrintSettings::SetEndPageRange(aEndPageRange);
+  }
+
+  return NS_OK;
+
+  NS_OBJC_END_TRY_ABORT_BLOCK_NSRESULT;
+}
+
 NS_IMETHODIMP
 nsPrintSettingsX::SetScaling(double aScaling) {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NSRESULT;
@@ -266,8 +358,7 @@ nsPrintSettingsX::SetScaling(double aScaling) {
   // Only use NSPrintInfo data in the parent process. The
   // child process' instance is not needed or used.
   if (XRE_IsParentProcess()) {
-    NSMutableDictionary* printInfoDict = [mPrintInfo dictionary];
-    [printInfoDict setObject:[NSNumber numberWithFloat:aScaling] forKey:NSPrintScalingFactor];
+    [mPrintInfo setScalingFactor:CGFloat(aScaling)];
   } else {
     nsPrintSettings::SetScaling(aScaling);
   }
@@ -284,12 +375,8 @@ nsPrintSettingsX::GetScaling(double* aScaling) {
   // Only use NSPrintInfo data in the parent process. The
   // child process' instance is not needed or used.
   if (XRE_IsParentProcess()) {
-    NSDictionary* printInfoDict = [mPrintInfo dictionary];
-
-    *aScaling = [[printInfoDict objectForKey:NSPrintScalingFactor] doubleValue];
-
     // Limit scaling precision to whole number percent values
-    *aScaling = round(*aScaling * 100.0) / 100.0;
+    *aScaling = round(double([mPrintInfo scalingFactor]) * 100.0) / 100.0;
   } else {
     nsPrintSettings::GetScaling(aScaling);
   }
@@ -309,12 +396,20 @@ nsPrintSettingsX::SetToFileName(const nsAString& aToFileName) {
     return nsPrintSettings::SetToFileName(aToFileName);
   }
 
-  NSMutableDictionary* printInfoDict = [mPrintInfo dictionary];
-
   if (!aToFileName.IsEmpty()) {
     NSURL* jobSavingURL = [NSURL fileURLWithPath:nsCocoaUtils::ToNSString(aToFileName)];
     if (jobSavingURL) {
-      [printInfoDict setObject:NSPrintSaveJob forKey:NSPrintJobDisposition];
+      // Note: the PMPrintSettingsSetJobName call in nsPrintDialogServiceX::Show
+      // seems to mean that we get a sensible file name pre-populated in the
+      // dialog there, although our aToFileName is expected to be a full path,
+      // and it's less clear where the rest of the path (the directory to save
+      // to) in nsPrintDialogServiceX::Show comes from (perhaps from the use
+      // of `sharedPrintInfo` to initialize new nsPrintSettingsX objects).
+      // Note: we do not set NSPrintJobDisposition on the dict, as that would
+      // cause "silent" print jobs to invisibly go to a file instead of the
+      // printer. It's up to the print UI to determine if it should be saved
+      // to a file instead.
+      NSMutableDictionary* printInfoDict = [mPrintInfo dictionary];
       [printInfoDict setObject:jobSavingURL forKey:NSPrintJobSavingURL];
     }
     mToFileName = aToFileName;
@@ -326,12 +421,20 @@ nsPrintSettingsX::SetToFileName(const nsAString& aToFileName) {
   NS_OBJC_END_TRY_ABORT_BLOCK_NSRESULT;
 }
 
+void nsPrintSettingsX::SetDispositionSaveToFile() {
+  NS_OBJC_BEGIN_TRY_ABORT_BLOCK;
+
+  [mPrintInfo setJobDisposition:NSPrintSaveJob];
+
+  NS_OBJC_END_TRY_ABORT_BLOCK;
+}
+
 NS_IMETHODIMP
 nsPrintSettingsX::GetOrientation(int32_t* aOrientation) {
   // Only use NSPrintInfo data in the parent process. The
   // child process' instance is not needed or used.
   if (XRE_IsParentProcess()) {
-    if ([mPrintInfo orientation] == NS_PAPER_ORIENTATION_PORTRAIT) {
+    if ([mPrintInfo orientation] == NSPaperOrientationPortrait) {
       *aOrientation = nsIPrintSettings::kPortraitOrientation;
     } else {
       *aOrientation = nsIPrintSettings::kLandscapeOrientation;
@@ -349,13 +452,10 @@ nsPrintSettingsX::SetOrientation(int32_t aOrientation) {
   // Only use NSPrintInfo data in the parent process. The
   // child process' instance is not needed or used.
   if (XRE_IsParentProcess()) {
-    NSMutableDictionary* printInfoDict = [mPrintInfo dictionary];
     if (aOrientation == nsIPrintSettings::kPortraitOrientation) {
-      [printInfoDict setObject:[NSNumber numberWithInt:NS_PAPER_ORIENTATION_PORTRAIT]
-                        forKey:NSPrintOrientation];
+      [mPrintInfo setOrientation:NSPaperOrientationPortrait];
     } else {
-      [printInfoDict setObject:[NSNumber numberWithInt:NS_PAPER_ORIENTATION_LANDSCAPE]
-                        forKey:NSPrintOrientation];
+      [mPrintInfo setOrientation:NSPaperOrientationLandscape];
     }
   } else {
     nsPrintSettings::SetOrientation(aOrientation);
@@ -375,9 +475,7 @@ nsPrintSettingsX::SetUnwriteableMarginTop(double aUnwriteableMarginTop) {
   // Only use NSPrintInfo data in the parent process. The
   // child process' instance is not needed or used.
   if (XRE_IsParentProcess()) {
-    NSMutableDictionary* printInfoDict = [mPrintInfo dictionary];
-    [printInfoDict setObject:[NSNumber numberWithDouble:aUnwriteableMarginTop]
-                      forKey:NSPrintTopMargin];
+    [mPrintInfo setTopMargin:aUnwriteableMarginTop];
   }
 
   return NS_OK;
@@ -394,9 +492,7 @@ nsPrintSettingsX::SetUnwriteableMarginLeft(double aUnwriteableMarginLeft) {
   // Only use NSPrintInfo data in the parent process. The
   // child process' instance is not needed or used.
   if (XRE_IsParentProcess()) {
-    NSMutableDictionary* printInfoDict = [mPrintInfo dictionary];
-    [printInfoDict setObject:[NSNumber numberWithDouble:aUnwriteableMarginLeft]
-                      forKey:NSPrintLeftMargin];
+    [mPrintInfo setLeftMargin:aUnwriteableMarginLeft];
   }
 
   return NS_OK;
@@ -413,9 +509,7 @@ nsPrintSettingsX::SetUnwriteableMarginBottom(double aUnwriteableMarginBottom) {
   // Only use NSPrintInfo data in the parent process. The
   // child process' instance is not needed or used.
   if (XRE_IsParentProcess()) {
-    NSMutableDictionary* printInfoDict = [mPrintInfo dictionary];
-    [printInfoDict setObject:[NSNumber numberWithDouble:aUnwriteableMarginBottom]
-                      forKey:NSPrintBottomMargin];
+    [mPrintInfo setBottomMargin:aUnwriteableMarginBottom];
   }
 
   return NS_OK;
@@ -432,9 +526,7 @@ nsPrintSettingsX::SetUnwriteableMarginRight(double aUnwriteableMarginRight) {
   // Only use NSPrintInfo data in the parent process. The
   // child process' instance is not needed or used.
   if (XRE_IsParentProcess()) {
-    NSMutableDictionary* printInfoDict = [mPrintInfo dictionary];
-    [printInfoDict setObject:[NSNumber numberWithDouble:aUnwriteableMarginRight]
-                      forKey:NSPrintRightMargin];
+    [mPrintInfo setRightMargin:aUnwriteableMarginRight];
   }
 
   return NS_OK;
@@ -452,15 +544,10 @@ int nsPrintSettingsX::GetCocoaUnit(int16_t aGeckoUnit) {
 nsresult nsPrintSettingsX::SetCocoaPaperSize(double aWidth, double aHeight) {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NSRESULT;
 
-  NSSize paperSize;
-  NSMutableDictionary* printInfoDict = [mPrintInfo dictionary];
-  if ([mPrintInfo orientation] == NS_PAPER_ORIENTATION_PORTRAIT) {
-    // switch widths and heights
-    paperSize = NSMakeSize(aWidth, aHeight);
-    [printInfoDict setObject:[NSValue valueWithSize:paperSize] forKey:NSPrintPaperSize];
+  if ([mPrintInfo orientation] == NSPaperOrientationPortrait) {
+    [mPrintInfo setPaperSize:NSMakeSize(aWidth, aHeight)];
   } else {
-    paperSize = NSMakeSize(aHeight, aWidth);
-    [printInfoDict setObject:[NSValue valueWithSize:paperSize] forKey:NSPrintPaperSize];
+    [mPrintInfo setPaperSize:NSMakeSize(aHeight, aWidth)];
   }
   return NS_OK;
 
@@ -476,8 +563,7 @@ void nsPrintSettingsX::SetPrinterNameFromPrintInfo() {
   MOZ_ASSERT(XRE_IsParentProcess());
   MOZ_ASSERT(mPrintInfo);
 
-  NSMutableDictionary* printInfoDict = [mPrintInfo dictionary];
-  NSString* nsPrinterNameValue = [printInfoDict objectForKey:@"NSPrinterName"];
+  NSString* nsPrinterNameValue = [[mPrintInfo printer] name];
   if (nsPrinterNameValue) {
     nsAutoString printerName;
     nsCocoaUtils::GetStringForNSString(nsPrinterNameValue, printerName);

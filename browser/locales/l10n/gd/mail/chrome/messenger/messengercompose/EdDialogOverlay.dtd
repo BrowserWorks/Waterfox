@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "Deasachadh adhartach…">
+<!ENTITY AdvancedEditButton.accessKey "e">
+<!ENTITY AdvancedEditButton.tooltip "Cuir ris, no atharraich, feartan HTML, feartan stoidhle is JavaScript">
+<!ENTITY chooseFileButton.label "Tagh faidhle…">
+<!ENTITY chooseFileButton.accessKey "f">
+<!ENTITY chooseFileLinkButton.label "Tagh faidhle…">
+<!ENTITY chooseFileLinkButton.accessKey "a">
+<!ENTITY makeUrlRelative.label "Tha an t-URL dàimheach a thaobh àite na duilleige">
+<!ENTITY makeUrlRelative.accessKey "R">
+<!ENTITY makeUrlRelative.tooltip "Atharrachadh eadar URL dàimheach is absaloideach. Feumaidh tu an duilleag a shàbhalachadh an toiseach mus urrainn dhut seo atharrachadh.">
+
+<!ENTITY LinkURLEditField2.label "Cuir a-steach ionad duilleige-lìn, faile ionadail no tagh acair ainmichte no ceann-sgrìobhaidh o chlàr-taice co-theacsail an raoin:">
+<!ENTITY LinkURLEditField2.accessKey "d">

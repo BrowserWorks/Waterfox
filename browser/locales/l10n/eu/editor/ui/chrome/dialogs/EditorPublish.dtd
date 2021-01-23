@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label            "Argitaratu orria">
+<!ENTITY windowTitleSettings.label    "Argitaratze ezarpenak">
+<!ENTITY publishTab.label             "Argitaratu">
+<!ENTITY settingsTab.label            "Ezarpenak">
+<!ENTITY publishButton.label          "Argitaratu">
+<!-- Publish Tab Panel -->
+
+<!ENTITY siteList.label               "Gunearen izena:">
+<!ENTITY siteList.accesskey           "e">
+<!ENTITY siteList.tooltip             "Argitaratu nahi duzun gunea aukeratu">
+<!ENTITY newSiteButton.label          "Gune berria">
+<!ENTITY newSiteButton.accesskey      "n">
+<!ENTITY docDirList.label             "Orri honen gune azpidirektorioa:">
+<!ENTITY docDirList.accesskey         "g">
+<!ENTITY docDirList.tooltip           "Hautatu edo sartu orri honen urruneko azpidirektorioaren izena">
+<!ENTITY publishImgCheckbox.label     "Irudiak eta beste fitxategiak sartu">
+<!ENTITY publishImgCheckbox.accesskey "b">
+<!ENTITY publishImgCheckbox.tooltip   "Argitaratu orri honek erabilitako irudi eta beste fitxategiak">
+<!ENTITY sameLocationRadio.label      "Erabili orriaren kokapen berdina">
+<!ENTITY sameLocationRadio.accesskey  "b">
+<!ENTITY sameLocationRadio.tooltip    "Argitaratu fitxategiak orriaren kokaleku berdinean">
+<!ENTITY useSubdirRadio.label         "Gune azpidirektorio hau erabili:">
+<!ENTITY useSubdirRadio.accesskey     "d">
+<!ENTITY useSubdirRadio.tooltip       "Argitaratu fitxategiak hautaturiko urruneko direktorioan">
+<!ENTITY otherDirList.tooltip         "Hautatu edo sartu fitxategiak argitaratzeko urruneko azpidirektorioaren izena">
+<!ENTITY pageTitle.label              "Orrialdearen izenburua:">
+<!ENTITY pageTitle.accesskey          "i">
+<!ENTITY pageTitle.tooltip            "Sartu izenburu bat leihoan eta laster-marketan orria desberdintzeko">
+<!ENTITY pageTitleExample.label       "adib.: &quot;Nire webgunea&quot;">
+<!ENTITY filename.label               "Fitxategi-izena:">
+<!ENTITY filename.accesskey           "F">
+<!ENTITY filename.tooltip             "Sartu fitxategiaren izena, web orri batentzako '.html' ere">
+<!ENTITY filenameExample.label        "adib,: &quot;nireorria.html&quot;">
+<!ENTITY setDefaultButton.label       "Ezarri lehenetsi gisa">
+<!ENTITY setDefaultButton.accesskey   "l">
+<!ENTITY removeButton.label           "Ezabatu gunea">
+<!ENTITY removeButton.accesskey       "E">
+<!-- Settings Tab Panel -->
+
+<!ENTITY publishSites.label           "Guneak argitaratzen">
+<!ENTITY serverInfo.label             "Zerbitzariaren informazioa">
+<!ENTITY loginInfo.label              "Saio argibideak">
+<!ENTITY siteName.label               "Gunearen izena:">
+<!ENTITY siteName.accesskey           "e">
+<!ENTITY siteName.tooltip             "Argitaratze gunea identifikatzeko ezizena (adib.: 'NireGunea')">
+<!ENTITY siteUrl.label                "Argitaratze gunea (adib.: 'ftp://ftp.nireisp.com/erabiltzailea'):">
+<!ENTITY siteUrl.accesskey            "A">
+<!ENTITY siteUrl.tooltip              "Zure hornitzaile edo hosting-ak emandako FTP:// edo HTTP:// helbidea">
+<!ENTITY browseUrl.label              "Zure hasiera-orriaren HTTP helbidea (adib.: 'http://www.nireisp.com/erabiltzailea'):">
+<!ENTITY browseUrl.accesskey          "T">
+<!ENTITY browseUrl.tooltip            "Zure etxe direktorioaren HTTP:// helbidea (ez jarri fitxategi-izena)">
+<!ENTITY username.label               "Erabiltzaile-izena:">
+<!ENTITY username.accesskey           "E">
+<!ENTITY username.tooltip             "Zure hornitzaile edo hosting-ean saioa hasteko erabili behar den erabiltzaile-izena">
+<!ENTITY password.label               "Pasahitza:">
+<!ENTITY password.accesskey           "h">
+<!ENTITY password.tooltip             "Erabiltzaile-izenarekin erabili behar den pasahitza">
+<!ENTITY savePassword.label           "Gorde pasahitza">
+<!ENTITY savePassword.accesskey       "s">
+<!ENTITY savePassword.tooltip         "Hautatu hau zure pasahitza Pasahitz Kudeatzailean gordetzeko">

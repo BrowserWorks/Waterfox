@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "Gosodiadau Tudalen Newydd">
+
+<!ENTITY  authorName.label          "Awdur:">
+<!ENTITY  authorName.accesskey      "A">
+<!ENTITY  pageColorHeader           "Gwedd Tudalen Rhagosodedig">
+
+<!ENTITY defaultColors.label        "Lliwiau Rhagosodedig y Darllenydd (Peidio gosod lliwiau ar y dudalen)">
+<!ENTITY defaultColors.accesskey    "D">
+<!ENTITY customColors.label         "Defnyddio lliwiau cyfaddasu:">
+<!ENTITY customColors.accesskey     "c">
+
+<!ENTITY normalText.label           "Testun arferol">
+<!ENTITY normalText.accesskey       "a">
+<!ENTITY linkText.label             "Testun dolen">
+<!ENTITY linkText.accesskey         "d">
+<!ENTITY activeLinkText.label       "Cyswllt testun gweithredol">
+<!ENTITY activeLinkText.accesskey   "g">
+<!ENTITY visitedLinkText.label      "Testun dolen wedi ymweld">
+<!ENTITY visitedLinkText.accesskey  "y">
+<!ENTITY background.label           "Cefndir:">
+<!ENTITY background.accesskey       "C">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "Delwedd cefndir:">
+<!ENTITY backgroundImage.accesskey  "D">
+<!ENTITY chooseFile.label           "Dewis Ffeil…">
+<!ENTITY chooseFile.accesskey       "F">
+

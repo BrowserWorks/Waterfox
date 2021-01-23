@@ -5,8 +5,8 @@
 /* global jest */
 
 const { mountObjectInspector } = require("../test-utils");
-const ObjectClient = require("../__mocks__/object-client");
-const LongStringClient = require("../__mocks__/long-string-client");
+const ObjectFront = require("../__mocks__/object-front");
+const { LongStringFront } = require("../__mocks__/string-front");
 
 const repsPath = "../../../reps";
 const longStringStubs = require(`${repsPath}/stubs/long-string`);
@@ -22,8 +22,8 @@ function mount(stub) {
 
   const { wrapper } = mountObjectInspector({
     client: {
-      createObjectClient: grip => ObjectClient(grip),
-      createLongStringClient: grip => LongStringClient(grip),
+      createObjectFront: grip => ObjectFront(grip),
+      createLongStringFront: grip => LongStringFront(grip),
     },
     props: {
       roots: [root],

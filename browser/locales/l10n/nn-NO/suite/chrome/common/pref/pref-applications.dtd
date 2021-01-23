@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Applications prefs dialog -->
+<!ENTITY pref.applications.title "Hjelpeprogram">
+
+<!ENTITY typeColumn.label        "Innhaldstype">
+<!ENTITY typeColumn.accesskey    "T">
+
+<!ENTITY actionColumn2.label     "Handling">
+<!ENTITY actionColumn2.accesskey "H">
+
+<!ENTITY search.placeholder      "Søk i typar og handlingar">

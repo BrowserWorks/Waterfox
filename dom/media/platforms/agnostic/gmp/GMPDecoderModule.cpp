@@ -14,7 +14,6 @@
 #include "VPXDecoder.h"
 #include "VideoUtils.h"
 #include "gmp-video-decode.h"
-#include "mozIGeckoMediaPluginService.h"
 #include "mozilla/StaticMutex.h"
 #include "nsServiceManagerUtils.h"
 #ifdef XP_WIN
@@ -23,9 +22,9 @@
 
 namespace mozilla {
 
-GMPDecoderModule::GMPDecoderModule() {}
+GMPDecoderModule::GMPDecoderModule() = default;
 
-GMPDecoderModule::~GMPDecoderModule() {}
+GMPDecoderModule::~GMPDecoderModule() = default;
 
 static already_AddRefed<MediaDataDecoderProxy> CreateDecoderWrapper() {
   RefPtr<gmp::GeckoMediaPluginService> s(

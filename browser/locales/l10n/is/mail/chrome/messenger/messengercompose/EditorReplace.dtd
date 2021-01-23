@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from EdReplace.xul -->
+
+<!-- extracted from EdReplace.xhtml -->
+
+<!ENTITY replaceDialog.title "Leita og breyta">
+<!ENTITY findField.label "Leita að texta:">
+<!ENTITY findField.accesskey "x">
+<!ENTITY replaceField.label "Breyta í:">
+<!ENTITY replaceField.accesskey "e">
+<!ENTITY caseSensitiveCheckbox.label "Passa við hástafi/lágstafi">
+<!ENTITY caseSensitiveCheckbox.accesskey "P">
+<!ENTITY wrapCheckbox.label "Fara hring">
+<!ENTITY wrapCheckbox.accesskey "h">
+<!ENTITY backwardsCheckbox.label "Leita aftur á bak">
+<!ENTITY backwardsCheckbox.accesskey "b">
+<!ENTITY findNextButton.label "Leita að næsta">
+<!ENTITY findNextButton.accesskey "L">
+<!ENTITY replaceButton.label "Breyta">
+<!ENTITY replaceButton.accesskey "r">
+<!ENTITY replaceAndFindButton.label "Breyta og leita">
+<!ENTITY replaceAndFindButton.accesskey "y">
+<!ENTITY replaceAllButton.label "Breyta öllu">
+<!ENTITY replaceAllButton.accesskey "a">
+<!ENTITY closeButton.label "Loka">
+<!ENTITY closeButton.accesskey "">

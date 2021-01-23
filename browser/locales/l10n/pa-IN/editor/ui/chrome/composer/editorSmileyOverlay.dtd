@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Smiley Menu items -->
+<!ENTITY insertSmiley.label "ਖੁਸ਼">
+<!ENTITY insertSmiley.accesskey "S">
+
+<!ENTITY smiley1Cmd.label "ਮੁਸਕਰਾਉਦਾ">
+<!ENTITY smiley1Cmd.accesskey "S">
+<!ENTITY smiley1Cmd.tooltip "ਮੁਸਕਰਾਉਦਾ ਚਿਹਰਾ ਸ਼ਾਮਿਲ">
+<!ENTITY smiley2Cmd.label "ਤਿਉੜੀ">
+<!ENTITY smiley2Cmd.accesskey "F">
+<!ENTITY smiley2Cmd.tooltip "ਮੱਥੇ ਉੱਤੇ ਵੱਟ ਵਾਲਾ ਚਿਹਰਾ ਸ਼ਾਮਿਲ">
+<!ENTITY smiley3Cmd.label "ਸੈਨਤ">
+<!ENTITY smiley3Cmd.accesskey "W">
+<!ENTITY smiley3Cmd.tooltip "ਸੈਨਤ ਕਰਦਾ ਚਿਹਰਾ ਸ਼ਾਮਿਲ">
+<!ENTITY smiley4Cmd.label "ਜੀਭ ਕੱਢਦਾ">
+<!ENTITY smiley4Cmd.tooltip "ਜੀਭ ਕੱਢਦਾ ਚਿਹਰਾ ਸ਼ਾਮਿਲ">
+<!ENTITY smiley4Cmd.accesskey "T">
+<!ENTITY smiley5Cmd.label "ਹੱਸ ਰਿਹਾ">
+<!ENTITY smiley5Cmd.accesskey "L">
+<!ENTITY smiley5Cmd.tooltip "ਹੱਸਦਾ ਚਿਹਰਾ ਸ਼ਾਮਿਲ">
+<!ENTITY smiley6Cmd.label "ਪਰੇਸ਼ਾਨ">
+<!ENTITY smiley6Cmd.accesskey "E">
+<!ENTITY smiley6Cmd.tooltip "ਪਰੇਸ਼ਾਨ ਚਿਹਰਾ ਸ਼ਾਮਿਲ">
+<!ENTITY smiley7Cmd.label "ਉਲਝਿਆ">
+<!ENTITY smiley7Cmd.accesskey "U">
+<!ENTITY smiley7Cmd.tooltip "ਉਲਝਿਆ ਚਿਹਰਾ ਸ਼ਾਮਿਲ">
+<!ENTITY smiley8Cmd.label "ਹੈਰਾਨ">
+<!ENTITY smiley8Cmd.accesskey "p">
+<!ENTITY smiley8Cmd.tooltip "ਹੈਰਾਨ ਚਿਹਰਾ ਸ਼ਾਮਿਲ">
+<!ENTITY smiley9Cmd.label "ਚੁੰਮਣ">
+<!ENTITY smiley9Cmd.accesskey "K">
+<!ENTITY smiley9Cmd.tooltip "ਚੁੰਮਦਾ ਚਿਹਰਾ ਸ਼ਾਮਿਲ">
+<!ENTITY smiley10Cmd.label "ਚਾਂਗਰ ਮਾਰਦਾ">
+<!ENTITY smiley10Cmd.accesskey "Y">
+<!ENTITY smiley10Cmd.tooltip "ਚਾਂਗਰ ਮਾਰਦਾ ਚਿਹਰਾ ਸ਼ਾਮਿਲ">
+<!ENTITY smiley11Cmd.label "ਸ਼ਾਂਤ">
+<!ENTITY smiley11Cmd.accesskey "C">
+<!ENTITY smiley11Cmd.tooltip "ਸ਼ਾਂਤ ਚਿਹਰਾ ਸ਼ਾਮਿਲ">
+<!ENTITY smiley12Cmd.label "ਮੂੰਹ 'ਚ ਪੈਸਾ">
+<!ENTITY smiley12Cmd.accesskey "M">
+<!ENTITY smiley12Cmd.tooltip "ਮੂੰਹ ਵਿੱਚ ਪੈਸਾ ਵਾਲਾ ਚਿਹਰਾ ਸ਼ਾਮਿਲ">
+<!ENTITY smiley13Cmd.label "ਮੂੰਹ 'ਚ ਪੈਰ">
+<!ENTITY smiley13Cmd.accesskey "o">
+<!ENTITY smiley13Cmd.tooltip "ਪੈਰ ਮੂੰਹ ਵਿੱਚ ਵਾਲਾ ਚਿਹਰਾ ਸ਼ਾਮਿਲ">
+<!ENTITY smiley14Cmd.label "ਬੇਕਸੂਰ">
+<!ENTITY smiley14Cmd.accesskey "I">
+<!ENTITY smiley14Cmd.tooltip "ਬੇਕਸੂਰ ਚਿਹਰਾ ਸ਼ਾਮਿਲ">
+<!ENTITY smiley15Cmd.label "ਰੋਂਦਾ">
+<!ENTITY smiley15Cmd.accesskey "r">
+<!ENTITY smiley15Cmd.tooltip "ਰੋਂਦਾ ਚਿਹਰਾ ਸ਼ਾਮਿਲ">
+<!ENTITY smiley16Cmd.label "ਚੁੱਪ">
+<!ENTITY smiley16Cmd.accesskey "a">
+<!ENTITY smiley16Cmd.tooltip "ਬੁੱਲ ਬੰਦ ਵਾਲਾ ਚਿਹਰਾ ਸ਼ਾਮਿਲ">
+<!ENTITY SmileButton.tooltip "ਇੱਕ ਬੰਦਾ-ਖੁਸ਼ ਚਿਹਰਾ ਸ਼ਾਮਿਲ ਕਰੋ">

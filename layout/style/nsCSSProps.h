@@ -19,12 +19,12 @@
 #include "nsString.h"
 #include "nsCSSPropertyID.h"
 #include "nsStyleStructFwd.h"
-#include "nsCSSKeywords.h"
+#include "mozilla/UseCounter.h"
 #include "mozilla/CSSEnabledState.h"
 #include "mozilla/CSSPropFlags.h"
-#include "mozilla/UseCounter.h"
 #include "mozilla/EnumTypeTraits.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/gfx/gfxVarReceiver.h"
 #include "nsXULAppAPI.h"
 
 // Length of the "--" prefix on custom names (such as custom property names,
@@ -42,34 +42,10 @@ nsCSSPropertyID Servo_Property_LookupEnabledForAllContent(const nsACString*);
 const uint8_t* Servo_Property_GetName(nsCSSPropertyID, uint32_t* aLength);
 }
 
-struct nsCSSKTableEntry {
-  // nsCSSKTableEntry objects can be initialized either with an int16_t value
-  // or a value of an enumeration type that can fit within an int16_t.
-
-  constexpr nsCSSKTableEntry(nsCSSKeyword aKeyword, int16_t aValue)
-      : mKeyword(aKeyword), mValue(aValue) {}
-
-  template <typename T,
-            typename = typename std::enable_if<std::is_enum<T>::value>::type>
-  constexpr nsCSSKTableEntry(nsCSSKeyword aKeyword, T aValue)
-      : mKeyword(aKeyword), mValue(static_cast<int16_t>(aValue)) {
-    static_assert(mozilla::EnumTypeFitsWithin<T, int16_t>::value,
-                  "aValue must be an enum that fits within mValue");
-  }
-
-  bool IsSentinel() const {
-    return mKeyword == eCSSKeyword_UNKNOWN && mValue == -1;
-  }
-
-  nsCSSKeyword mKeyword;
-  int16_t mValue;
-};
-
 class nsCSSProps {
  public:
   typedef mozilla::CSSEnabledState EnabledState;
   typedef mozilla::CSSPropFlags Flags;
-  typedef nsCSSKTableEntry KTableEntry;
 
   static void AddRefTable(void);
   static void ReleaseTable(void);
@@ -84,21 +60,14 @@ class nsCSSProps {
     return Servo_Property_LookupEnabledForAllContent(&aProperty);
   }
 
-  static nsCSSPropertyID LookupProperty(const nsAString& aProperty) {
-    NS_ConvertUTF16toUTF8 utf8(aProperty);
-    return LookupProperty(utf8);
-  }
-
   // As above, but looked up using a property's IDL name.
-  // eCSSPropertyExtra_variable won't be returned from these methods.
-  static nsCSSPropertyID LookupPropertyByIDLName(
-      const nsAString& aPropertyIDLName, EnabledState aEnabled);
+  // eCSSPropertyExtra_variable won't be returned from this method.
   static nsCSSPropertyID LookupPropertyByIDLName(
       const nsACString& aPropertyIDLName, EnabledState aEnabled);
 
   // Returns whether aProperty is a custom property name, i.e. begins with
   // "--".  This assumes that the CSS Variables pref has been enabled.
-  static bool IsCustomPropertyName(const nsAString& aProperty);
+  static bool IsCustomPropertyName(const nsACString& aProperty);
 
   static bool IsShorthand(nsCSSPropertyID aProperty) {
     MOZ_ASSERT(0 <= aProperty && aProperty < eCSSProperty_COUNT,
@@ -107,7 +76,15 @@ class nsCSSProps {
   }
 
   // Same but for @font-face descriptors
-  static nsCSSFontDesc LookupFontDesc(const nsAString& aProperty);
+  static nsCSSFontDesc LookupFontDesc(const nsACString& aProperty);
+
+  // The relevant invariants are asserted in Document.cpp
+  static mozilla::UseCounter UseCounterFor(nsCSSPropertyID aProperty) {
+    MOZ_ASSERT(0 <= aProperty && aProperty < eCSSProperty_COUNT_with_aliases,
+               "out of range");
+    return mozilla::UseCounter(size_t(mozilla::eUseCounter_FirstCSSProperty) +
+                               size_t(aProperty));
+  }
 
   // Given a property enum, get the string value
   //
@@ -120,40 +97,6 @@ class nsCSSProps {
 
   static const nsCString& GetStringValue(nsCSSFontDesc aFontDesc);
   static const nsCString& GetStringValue(nsCSSCounterDesc aCounterDesc);
-
-  // Returns the index of |aKeyword| in |aTable|, if it exists there;
-  // otherwise, returns -1.
-  // NOTE: Generally, clients should call FindKeyword() instead of this method.
-  static int32_t FindIndexOfKeyword(nsCSSKeyword aKeyword,
-                                    const KTableEntry aTable[]);
-
-  // Find |aKeyword| in |aTable|, if found set |aValue| to its corresponding
-  // value. If not found, return false and do not set |aValue|.
-  static bool FindKeyword(nsCSSKeyword aKeyword, const KTableEntry aTable[],
-                          int32_t& aValue);
-  // Return the first keyword in |aTable| that has the corresponding value
-  // |aValue|. Return |eCSSKeyword_UNKNOWN| if not found.
-  static nsCSSKeyword ValueToKeywordEnum(int32_t aValue,
-                                         const KTableEntry aTable[]);
-  template <typename T,
-            typename = typename std::enable_if<std::is_enum<T>::value>::type>
-  static nsCSSKeyword ValueToKeywordEnum(T aValue, const KTableEntry aTable[]) {
-    static_assert(
-        mozilla::EnumTypeFitsWithin<T, int16_t>::value,
-        "aValue must be an enum that fits within KTableEntry::mValue");
-    return ValueToKeywordEnum(static_cast<int16_t>(aValue), aTable);
-  }
-  // Ditto but as a string, return "" when not found.
-  static const nsCString& ValueToKeyword(int32_t aValue,
-                                         const KTableEntry aTable[]);
-  template <typename T,
-            typename = typename std::enable_if<std::is_enum<T>::value>::type>
-  static const nsCString& ValueToKeyword(T aValue, const KTableEntry aTable[]) {
-    static_assert(
-        mozilla::EnumTypeFitsWithin<T, int16_t>::value,
-        "aValue must be an enum that fits within KTableEntry::mValue");
-    return ValueToKeyword(static_cast<int16_t>(aValue), aTable);
-  }
 
  private:
   static const Flags kFlagsTable[eCSSProperty_COUNT];
@@ -181,6 +124,26 @@ class nsCSSProps {
       kSubpropertyTable[eCSSProperty_COUNT - eCSSProperty_COUNT_no_shorthands];
 
  public:
+  /**
+   * Returns true if the backdrop-filter pref and WebRender are enabled.
+   */
+  static bool IsBackdropFilterAvailable(JSContext*, JSObject*) {
+    return IsEnabled(eCSSProperty_backdrop_filter);
+  }
+
+  /**
+   * Recoumputes the enabled state of a pref. If aPrefName is nullptr,
+   * recomputes the state of all prefs in gPropertyEnabled.
+   * aClosure is the pref callback closure data, which is not used.
+   */
+  static void RecomputeEnabledState(const char* aPrefName,
+                                    void* aClosure = nullptr);
+
+  /**
+   * Retrieve a singleton receiver to register with gfxVars
+   */
+  static mozilla::gfx::gfxVarReceiver& GfxVarReceiver();
+
   static const nsCSSPropertyID* SubpropertyEntryFor(nsCSSPropertyID aProperty) {
     MOZ_ASSERT(eCSSProperty_COUNT_no_shorthands <= aProperty &&
                    aProperty < eCSSProperty_COUNT,
@@ -237,19 +200,7 @@ class nsCSSProps {
     return gPropertyEnabled[aProperty];
   }
 
-  // A table for the use counter associated with each CSS property.  If a
-  // property does not have a use counter defined in UseCounters.conf, then
-  // its associated entry is |eUseCounter_UNKNOWN|.
-  static const mozilla::UseCounter
-      gPropertyUseCounter[eCSSProperty_COUNT_no_shorthands];
-
  public:
-  static mozilla::UseCounter UseCounterFor(nsCSSPropertyID aProperty) {
-    MOZ_ASSERT(0 <= aProperty && aProperty < eCSSProperty_COUNT_no_shorthands,
-               "out of range");
-    return gPropertyUseCounter[aProperty];
-  }
-
   static bool IsEnabled(nsCSSPropertyID aProperty, EnabledState aEnabled) {
     if (IsEnabled(aProperty)) {
       return true;
@@ -285,32 +236,6 @@ class nsCSSProps {
           es_ = (nsCSSPropertyID)((enabledstate_) | CSSEnabledState(0)); \
        *it_ != eCSSProperty_UNKNOWN; ++it_)                              \
     if (nsCSSProps::IsEnabled(*it_, (mozilla::CSSEnabledState)es_))
-
-  // Keyword/Enum value tables
-  // Not const because we modify its entries when the pref
-  // "layout.css.background-clip.text" changes:
-  static const KTableEntry kShapeRadiusKTable[];
-  static const KTableEntry kFilterFunctionKTable[];
-  static const KTableEntry kBoxShadowTypeKTable[];
-  static const KTableEntry kCursorKTable[];
-  // Not const because we modify its entries when various
-  // "layout.css.*.enabled" prefs changes:
-  static KTableEntry kDisplayKTable[];
-  // clang-format off
-  // -- tables for auto-completion of the {align,justify}-{content,items,self} properties --
-  static const KTableEntry kAutoCompletionAlignJustifySelf[];
-  static const KTableEntry kAutoCompletionAlignItems[];
-  static const KTableEntry kAutoCompletionAlignJustifyContent[];
-  // ------------------------------------------------------------------
-  // clang-format on
-  static const KTableEntry kFontSmoothingKTable[];
-  static const KTableEntry kGridAutoFlowKTable[];
-  static const KTableEntry kGridTrackBreadthKTable[];
-  static const KTableEntry kLineHeightKTable[];
-  static const KTableEntry kTextAlignKTable[];
-  static const KTableEntry kTextDecorationStyleKTable[];
-  static const KTableEntry kTextEmphasisStyleShapeKTable[];
-  static const KTableEntry kTextOverflowKTable[];
 };
 
 // MOZ_DBG support for nsCSSPropertyID

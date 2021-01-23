@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migrationWizard.title           "Auxiliar d'importació">
+
+<!ENTITY importAllFrom.label             "Importa-ho tot de:">
+<!ENTITY importBookmarksFrom.label       "Importa les adreces d'interès de:">
+
+<!ENTITY importFromThunderbird.label     "Thunderbird">
+<!ENTITY importFromThunderbird.accesskey "T">
+<!ENTITY importFromFile.label            "Fitxer">
+<!ENTITY importFromFile.accesskey        "F">
+<!ENTITY importFromNothing.label         "No importis res">
+<!ENTITY importFromNothing.accesskey     "r">
+
+<!ENTITY importSource.title              "Importació dels paràmetres i de les dades">
+<!ENTITY importItems.title               "Elements per importar">
+<!ENTITY importItems.label               "Seleccioneu quins elements voleu importar:">
+
+<!ENTITY selectProfile.title             "Seleccioneu un perfil">
+<!ENTITY selectProfile.label             "Els següents perfils estan disponibles per importar-se des de:">
+
+<!ENTITY migrating.title                 "S'està important...">
+<!ENTITY migrating.label                 "Els següents elements s'estan important en aquests moments...">
+
+<!ENTITY done.title                      "Fi de la importació">
+<!ENTITY done.label                      "Els següents elements s'han importat amb èxit:">

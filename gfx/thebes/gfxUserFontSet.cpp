@@ -7,20 +7,17 @@
 
 #include "gfxUserFontSet.h"
 #include "gfxPlatform.h"
-#include "gfxPrefs.h"
-#include "nsIProtocolHandler.h"
 #include "gfxFontConstants.h"
 #include "mozilla/FontPropertyTypes.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Services.h"
+#include "mozilla/StaticPrefs_gfx.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/gfx/2D.h"
 #include "gfxPlatformFontList.h"
 #include "mozilla/ServoStyleSet.h"
 #include "mozilla/PostTraversalTask.h"
-
-#include "opentype-sanitiser.h"
-#include "ots-memory-stream.h"
+#include "gfxOTSUtils.h"
 
 using namespace mozilla;
 
@@ -35,69 +32,6 @@ mozilla::LogModule* gfxUserFontSet::GetUserFontsLog() {
   MOZ_LOG_TEST(gfxUserFontSet::GetUserFontsLog(), mozilla::LogLevel::Debug)
 
 static uint64_t sFontSetGeneration = 0;
-
-// Based on ots::ExpandingMemoryStream from ots-memory-stream.h,
-// adapted to use Mozilla allocators and to allow the final
-// memory buffer to be adopted by the client.
-class ExpandingMemoryStream : public ots::OTSStream {
- public:
-  ExpandingMemoryStream(size_t initial, size_t limit)
-      : mLength(initial), mLimit(limit), mOff(0) {
-    mPtr = moz_xmalloc(mLength);
-  }
-
-  ~ExpandingMemoryStream() { free(mPtr); }
-
-  // Return the buffer, resized to fit its contents (as it may have been
-  // over-allocated during growth), and give up ownership of it so the
-  // caller becomes responsible to call free() when finished with it.
-  void* forget() {
-    void* p = moz_xrealloc(mPtr, mOff);
-    mPtr = nullptr;
-    return p;
-  }
-
-  bool WriteRaw(const void* data, size_t length) override {
-    if ((mOff + length > mLength) ||
-        (mLength > std::numeric_limits<size_t>::max() - mOff)) {
-      if (mLength == mLimit) {
-        return false;
-      }
-      size_t newLength = (mLength + 1) * 2;
-      if (newLength < mLength) {
-        return false;
-      }
-      if (newLength > mLimit) {
-        newLength = mLimit;
-      }
-      mPtr = moz_xrealloc(mPtr, newLength);
-      mLength = newLength;
-      return WriteRaw(data, length);
-    }
-    std::memcpy(static_cast<char*>(mPtr) + mOff, data, length);
-    mOff += length;
-    return true;
-  }
-
-  bool Seek(off_t position) override {
-    if (position < 0) {
-      return false;
-    }
-    if (static_cast<size_t>(position) > mLength) {
-      return false;
-    }
-    mOff = position;
-    return true;
-  }
-
-  off_t Tell() const override { return mOff; }
-
- private:
-  void* mPtr;
-  size_t mLength;
-  const size_t mLimit;
-  off_t mOff;
-};
 
 gfxUserFontEntry::gfxUserFontEntry(
     gfxUserFontSet* aFontSet, const nsTArray<gfxFontFaceSrc>& aFontFaceSrcList,
@@ -114,7 +48,7 @@ gfxUserFontEntry::gfxUserFontEntry(
       mLoader(nullptr),
       mFontSet(aFontSet) {
   mIsUserFontContainer = true;
-  mSrcList = aFontFaceSrcList;
+  mSrcList = aFontFaceSrcList.Clone();
   mSrcIndex = 0;
   mWeightRange = aWeight;
   mStretchRange = aStretch;
@@ -140,8 +74,8 @@ void gfxUserFontEntry::UpdateAttributes(
   mWeightRange = aWeight;
   mStretchRange = aStretch;
   mStyleRange = aStyle;
-  mFeatureSettings = aFeatureSettings;
-  mVariationSettings = aVariationSettings;
+  mFeatureSettings = aFeatureSettings.Clone();
+  mVariationSettings = aVariationSettings.Clone();
   mLanguageOverride = aLanguageOverride;
   mCharacterMap = aUnicodeRanges;
   mRangeFlags = aRangeFlags;
@@ -181,42 +115,10 @@ gfxFont* gfxUserFontEntry::CreateFontInstance(const gfxFontStyle* aFontStyle) {
   return nullptr;
 }
 
-class MOZ_STACK_CLASS gfxOTSContext : public ots::OTSContext {
+class MOZ_STACK_CLASS gfxOTSMessageContext : public gfxOTSContext {
  public:
-  explicit gfxOTSContext(gfxUserFontEntry* aUserFontEntry)
-      : mUserFontEntry(aUserFontEntry) {
-    // Whether to apply OTS validation to OpenType Layout tables
-    mCheckOTLTables = gfxPrefs::ValidateOTLTables();
-    // Whether to preserve Variation tables in downloaded fonts
-    mCheckVariationTables = gfxPrefs::ValidateVariationTables();
-    // Whether to preserve color bitmap glyphs
-    mKeepColorBitmaps = gfxPrefs::KeepColorBitmaps();
-  }
-
-  virtual ots::TableAction GetTableAction(uint32_t aTag) override {
-    // Preserve Graphite, color glyph and SVG tables,
-    // and possibly OTL and Variation tables (depending on prefs)
-    if ((!mCheckOTLTables && (aTag == TRUETYPE_TAG('G', 'D', 'E', 'F') ||
-                              aTag == TRUETYPE_TAG('G', 'P', 'O', 'S') ||
-                              aTag == TRUETYPE_TAG('G', 'S', 'U', 'B'))) ||
-        (!mCheckVariationTables &&
-         (aTag == TRUETYPE_TAG('a', 'v', 'a', 'r') ||
-          aTag == TRUETYPE_TAG('c', 'v', 'a', 'r') ||
-          aTag == TRUETYPE_TAG('f', 'v', 'a', 'r') ||
-          aTag == TRUETYPE_TAG('g', 'v', 'a', 'r') ||
-          aTag == TRUETYPE_TAG('H', 'V', 'A', 'R') ||
-          aTag == TRUETYPE_TAG('M', 'V', 'A', 'R') ||
-          aTag == TRUETYPE_TAG('S', 'T', 'A', 'T') ||
-          aTag == TRUETYPE_TAG('V', 'V', 'A', 'R'))) ||
-        aTag == TRUETYPE_TAG('S', 'V', 'G', ' ') ||
-        aTag == TRUETYPE_TAG('C', 'O', 'L', 'R') ||
-        aTag == TRUETYPE_TAG('C', 'P', 'A', 'L') ||
-        (mKeepColorBitmaps && (aTag == TRUETYPE_TAG('C', 'B', 'D', 'T') ||
-                               aTag == TRUETYPE_TAG('C', 'B', 'L', 'C'))) ||
-        false) {
-      return ots::TABLE_ACTION_PASSTHRU;
-    }
-    return ots::TABLE_ACTION_DEFAULT;
+  virtual ~gfxOTSMessageContext() {
+    MOZ_ASSERT(mMessages.IsEmpty(), "should have called TakeMessages");
   }
 
   virtual void Message(int level, const char* format,
@@ -238,39 +140,43 @@ class MOZ_STACK_CLASS gfxOTSContext : public ots::OTSContext {
       mWarningsIssued.PutEntry(msg);
     }
 
-    mUserFontEntry->mFontSet->LogMessage(mUserFontEntry, msg.get());
+    mMessages.AppendElement(gfxUserFontEntry::OTSMessage{msg, level});
+  }
+
+  bool Process(ots::OTSStream* aOutput, const uint8_t* aInput, size_t aLength,
+               nsTArray<gfxUserFontEntry::OTSMessage>& aMessages) {
+    bool ok = ots::OTSContext::Process(aOutput, aInput, aLength);
+    aMessages = TakeMessages();
+    return ok;
+  }
+
+  nsTArray<gfxUserFontEntry::OTSMessage>&& TakeMessages() {
+    return std::move(mMessages);
   }
 
  private:
-  gfxUserFontEntry* mUserFontEntry;
   nsTHashtable<nsCStringHashKey> mWarningsIssued;
-  bool mCheckOTLTables;
-  bool mCheckVariationTables;
-  bool mKeepColorBitmaps;
+  nsTArray<gfxUserFontEntry::OTSMessage> mMessages;
 };
 
 // Call the OTS library to sanitize an sfnt before attempting to use it.
 // Returns a newly-allocated block, or nullptr in case of fatal errors.
 const uint8_t* gfxUserFontEntry::SanitizeOpenTypeData(
     const uint8_t* aData, uint32_t aLength, uint32_t& aSaneLength,
-    gfxUserFontType aFontType) {
-  if (aFontType == GFX_USERFONT_UNKNOWN) {
+    gfxUserFontType& aFontType, nsTArray<OTSMessage>& aMessages) {
+  aFontType = gfxFontUtils::DetermineFontDataType(aData, aLength);
+  Telemetry::Accumulate(Telemetry::WEBFONT_FONTTYPE, uint32_t(aFontType));
+
+  size_t lengthHint = gfxOTSContext::GuessSanitizedFontSize(aLength, aFontType);
+  if (!lengthHint) {
     aSaneLength = 0;
     return nullptr;
   }
 
-  uint32_t lengthHint = aLength;
-  if (aFontType == GFX_USERFONT_WOFF) {
-    lengthHint *= 2;
-  } else if (aFontType == GFX_USERFONT_WOFF2) {
-    lengthHint *= 3;
-  }
+  gfxOTSExpandingMemoryStream<gfxOTSMozAlloc> output(lengthHint);
 
-  // limit output/expansion to 256MB
-  ExpandingMemoryStream output(lengthHint, 1024 * 1024 * 256);
-
-  gfxOTSContext otsContext(this);
-  if (!otsContext.Process(&output, aData, aLength)) {
+  gfxOTSMessageContext otsContext;
+  if (!otsContext.Process(&output, aData, aLength, aMessages)) {
     // Failed to decode/sanitize the font, so discard it.
     aSaneLength = 0;
     return nullptr;
@@ -585,7 +491,7 @@ void gfxUserFontEntry::DoLoadNextSrc(bool aForceAsync) {
           nsresult rv =
               mFontSet->SyncLoadFontData(this, &currSrc, buffer, bufferLength);
 
-          if (NS_SUCCEEDED(rv) && LoadPlatformFont(buffer, bufferLength)) {
+          if (NS_SUCCEEDED(rv) && LoadPlatformFontSync(buffer, bufferLength)) {
             SetLoadState(STATUS_LOADED);
             Telemetry::Accumulate(Telemetry::WEBFONT_SRCTYPE,
                                   currSrc.mSourceType + 1);
@@ -608,7 +514,7 @@ void gfxUserFontEntry::DoLoadNextSrc(bool aForceAsync) {
             }
             return;
           } else {
-            mFontSet->LogMessage(this, "download failed",
+            mFontSet->LogMessage(this, "failed to start download",
                                  nsIScriptError::errorFlag, rv);
           }
         }
@@ -629,8 +535,8 @@ void gfxUserFontEntry::DoLoadNextSrc(bool aForceAsync) {
 
       // sync load font immediately
       currSrc.mBuffer->TakeBuffer(buffer, bufferLength);
-      if (buffer && LoadPlatformFont(buffer, bufferLength)) {
-        // LoadPlatformFont takes ownership of the buffer, so no need
+      if (buffer && LoadPlatformFontSync(buffer, bufferLength)) {
+        // LoadPlatformFontSync takes ownership of the buffer, so no need
         // to free it here.
         SetLoadState(STATUS_LOADED);
         Telemetry::Accumulate(Telemetry::WEBFONT_SRCTYPE,
@@ -663,54 +569,94 @@ void gfxUserFontEntry::SetLoadState(UserFontLoadState aLoadState) {
 
 MOZ_DEFINE_MALLOC_SIZE_OF_ON_ALLOC(UserFontMallocSizeOfOnAlloc)
 
-bool gfxUserFontEntry::LoadPlatformFont(const uint8_t* aFontData,
-                                        uint32_t& aLength) {
-  AUTO_PROFILER_LABEL("gfxUserFontEntry::LoadPlatformFont", OTHER);
+bool gfxUserFontEntry::LoadPlatformFontSync(const uint8_t* aFontData,
+                                            uint32_t aLength) {
+  AUTO_PROFILER_LABEL("gfxUserFontEntry::LoadPlatformFontSync", OTHER);
   NS_ASSERTION((mUserFontLoadState == STATUS_NOT_LOADED ||
                 mUserFontLoadState == STATUS_LOAD_PENDING ||
                 mUserFontLoadState == STATUS_LOADING) &&
                    mFontDataLoadingState < LOADING_FAILED,
                "attempting to load a font that has either completed or failed");
 
-  gfxFontEntry* fe = nullptr;
-
-  gfxUserFontType fontType =
-      gfxFontUtils::DetermineFontDataType(aFontData, aLength);
-  Telemetry::Accumulate(Telemetry::WEBFONT_FONTTYPE, uint32_t(fontType));
-
   // Unwrap/decompress/sanitize or otherwise munge the downloaded data
   // to make a usable sfnt structure.
+
+  // Call the OTS sanitizer; this will also decode WOFF to sfnt
+  // if necessary. The original data in aFontData is left unchanged.
+  uint32_t saneLen;
+  gfxUserFontType fontType;
+  nsTArray<OTSMessage> messages;
+  const uint8_t* saneData =
+      SanitizeOpenTypeData(aFontData, aLength, saneLen, fontType, messages);
+
+  return LoadPlatformFont(aFontData, aLength, fontType, saneData, saneLen,
+                          std::move(messages));
+}
+
+void gfxUserFontEntry::StartPlatformFontLoadOnBackgroundThread(
+    const uint8_t* aFontData, uint32_t aLength,
+    nsMainThreadPtrHandle<nsIFontLoadCompleteCallback> aCallback) {
+  MOZ_ASSERT(!NS_IsMainThread());
+
+  uint32_t saneLen;
+  gfxUserFontType fontType;
+  nsTArray<OTSMessage> messages;
+  const uint8_t* saneData =
+      SanitizeOpenTypeData(aFontData, aLength, saneLen, fontType, messages);
+
+  nsCOMPtr<nsIRunnable> event =
+      NewRunnableMethod<const uint8_t*, uint32_t, gfxUserFontType,
+                        const uint8_t*, uint32_t, nsTArray<OTSMessage>&&,
+                        nsMainThreadPtrHandle<nsIFontLoadCompleteCallback>>(
+          "gfxUserFontEntry::ContinuePlatformFontLoadOnMainThread", this,
+          &gfxUserFontEntry::ContinuePlatformFontLoadOnMainThread, aFontData,
+          aLength, fontType, saneData, saneLen, std::move(messages), aCallback);
+  NS_DispatchToMainThread(event.forget());
+}
+
+bool gfxUserFontEntry::LoadPlatformFont(const uint8_t* aOriginalFontData,
+                                        uint32_t aOriginalLength,
+                                        gfxUserFontType aFontType,
+                                        const uint8_t* aSanitizedFontData,
+                                        uint32_t aSanitizedLength,
+                                        nsTArray<OTSMessage>&& aMessages) {
+  MOZ_ASSERT(NS_IsMainThread());
+
+  for (const auto& msg : aMessages) {
+    mFontSet->LogMessage(this, msg.mMessage.get(),
+                         msg.mLevel > 0 ? nsIScriptError::warningFlag
+                                        : nsIScriptError::errorFlag);
+  }
+
+  if (!aSanitizedFontData) {
+    mFontSet->LogMessage(this, "rejected by sanitizer");
+  } else {
+    // Check whether aSanitizedFontData is a known OpenType format; it might be
+    // a TrueType Collection, which OTS would accept but we don't yet
+    // know how to handle. If so, discard.
+    if (gfxFontUtils::DetermineFontDataType(
+            aSanitizedFontData, aSanitizedLength) != GFX_USERFONT_OPENTYPE) {
+      mFontSet->LogMessage(this, "not a supported OpenType format");
+      free((void*)aSanitizedFontData);
+      aSanitizedFontData = nullptr;
+    }
+  }
 
   // Because platform font activation code may replace the name table
   // in the font with a synthetic one, we save the original name so that
   // it can be reported via the InspectorUtils API.
   nsAutoCString originalFullName;
 
-  // Call the OTS sanitizer; this will also decode WOFF to sfnt
-  // if necessary. The original data in aFontData is left unchanged.
-  uint32_t saneLen;
+  gfxFontEntry* fe = nullptr;
   uint32_t fontCompressionRatio = 0;
   size_t computedSize = 0;
-  const uint8_t* saneData =
-      SanitizeOpenTypeData(aFontData, aLength, saneLen, fontType);
-  if (!saneData) {
-    mFontSet->LogMessage(this, "rejected by sanitizer");
-  } else {
-    // Check whether saneData is a known OpenType format; it might be
-    // a TrueType Collection, which OTS would accept but we don't yet
-    // know how to handle. If so, discard.
-    if (gfxFontUtils::DetermineFontDataType(saneData, saneLen) !=
-        GFX_USERFONT_OPENTYPE) {
-      mFontSet->LogMessage(this, "not a supported OpenType format");
-      free((void*)saneData);
-      saneData = nullptr;
-    }
-  }
-  if (saneData) {
-    if (saneLen) {
-      fontCompressionRatio = uint32_t(100.0 * aLength / saneLen + 0.5);
-      if (fontType == GFX_USERFONT_WOFF || fontType == GFX_USERFONT_WOFF2) {
-        Telemetry::Accumulate(fontType == GFX_USERFONT_WOFF
+
+  if (aSanitizedFontData) {
+    if (aSanitizedLength) {
+      fontCompressionRatio =
+          uint32_t(100.0 * aOriginalLength / aSanitizedLength + 0.5);
+      if (aFontType == GFX_USERFONT_WOFF || aFontType == GFX_USERFONT_WOFF2) {
+        Telemetry::Accumulate(aFontType == GFX_USERFONT_WOFF
                                   ? Telemetry::WEBFONT_COMPRESSION_WOFF
                                   : Telemetry::WEBFONT_COMPRESSION_WOFF2,
                               fontCompressionRatio);
@@ -721,7 +667,8 @@ bool gfxUserFontEntry::LoadPlatformFont(const uint8_t* aFontData,
     // name table, so this should never fail unless we're out of
     // memory, and GetFullNameFromSFNT is not directly exposed to
     // arbitrary/malicious data from the web.
-    gfxFontUtils::GetFullNameFromSFNT(saneData, saneLen, originalFullName);
+    gfxFontUtils::GetFullNameFromSFNT(aSanitizedFontData, aSanitizedLength,
+                                      originalFullName);
 
     // Record size for memory reporting purposes. We measure this now
     // because by the time we potentially want to collect reports, this
@@ -729,12 +676,13 @@ bool gfxUserFontEntry::LoadPlatformFont(const uint8_t* aFontData,
     // don't allow us to retrieve or measure it directly.
     // The *OnAlloc function will also tell DMD about this block, as the
     // OS font code may hold on to it for an extended period.
-    computedSize = UserFontMallocSizeOfOnAlloc(saneData);
+    computedSize = UserFontMallocSizeOfOnAlloc(aSanitizedFontData);
 
-    // Here ownership of saneData is passed to the platform,
+    // Here ownership of aSanitizedFontData is passed to the platform,
     // which will delete it when no longer required
     fe = gfxPlatform::GetPlatform()->MakePlatformFont(
-        mName, Weight(), Stretch(), SlantStyle(), saneData, saneLen);
+        mName, Weight(), Stretch(), SlantStyle(), aSanitizedFontData,
+        aSanitizedLength);
     if (!fe) {
       mFontSet->LogMessage(this, "not usable by platform");
     }
@@ -749,12 +697,13 @@ bool gfxUserFontEntry::LoadPlatformFont(const uint8_t* aFontData,
     FallibleTArray<uint8_t> metadata;
     uint32_t metaOrigLen = 0;
     uint8_t compression = gfxUserFontData::kUnknownCompression;
-    if (fontType == GFX_USERFONT_WOFF) {
-      CopyWOFFMetadata<WOFFHeader>(aFontData, aLength, &metadata, &metaOrigLen);
+    if (aFontType == GFX_USERFONT_WOFF) {
+      CopyWOFFMetadata<WOFFHeader>(aOriginalFontData, aOriginalLength,
+                                   &metadata, &metaOrigLen);
       compression = gfxUserFontData::kZlibCompression;
-    } else if (fontType == GFX_USERFONT_WOFF2) {
-      CopyWOFFMetadata<WOFF2Header>(aFontData, aLength, &metadata,
-                                    &metaOrigLen);
+    } else if (aFontType == GFX_USERFONT_WOFF2) {
+      CopyWOFFMetadata<WOFF2Header>(aOriginalFontData, aOriginalLength,
+                                    &metadata, &metaOrigLen);
       compression = gfxUserFontData::kBrotliCompression;
     }
 
@@ -791,7 +740,7 @@ bool gfxUserFontEntry::LoadPlatformFont(const uint8_t* aFontData,
 
   // The downloaded data can now be discarded; the font entry is using the
   // sanitized copy
-  free((void*)aFontData);
+  free((void*)aOriginalFontData);
 
   return fe != nullptr;
 }
@@ -813,9 +762,11 @@ void gfxUserFontEntry::IncrementGeneration() {
 // This is called when a font download finishes.
 // Ownership of aFontData passes in here, and the font set must
 // ensure that it is eventually deleted via free().
-bool gfxUserFontEntry::FontDataDownloadComplete(const uint8_t* aFontData,
-                                                uint32_t aLength,
-                                                nsresult aDownloadStatus) {
+void gfxUserFontEntry::FontDataDownloadComplete(
+    const uint8_t* aFontData, uint32_t aLength, nsresult aDownloadStatus,
+    nsIFontLoadCompleteCallback* aCallback) {
+  MOZ_ASSERT(NS_IsMainThread());
+
   // forget about the loader, as we no longer potentially need to cancel it
   // if the entry is obsoleted
   mLoader = nullptr;
@@ -823,26 +774,87 @@ bool gfxUserFontEntry::FontDataDownloadComplete(const uint8_t* aFontData,
   // download successful, make platform font using font data
   if (NS_SUCCEEDED(aDownloadStatus) &&
       mFontDataLoadingState != LOADING_TIMED_OUT) {
-    bool loaded = LoadPlatformFont(aFontData, aLength);
-    aFontData = nullptr;
-
-    if (loaded) {
-      IncrementGeneration();
-      return true;
+    if (StaticPrefs::gfx_downloadable_fonts_sanitize_omt()) {
+      LoadPlatformFontAsync(aFontData, aLength, aCallback);
+    } else {
+      bool loaded = LoadPlatformFontSync(aFontData, aLength);
+      aFontData = nullptr;
+      if (loaded) {
+        IncrementGeneration();
+        aCallback->FontLoadComplete();
+      } else {
+        FontLoadFailed(aCallback);
+      }
     }
+    return;
+  }
 
+  // download failed or font-display timeout passed
+  if (mFontDataLoadingState == LOADING_TIMED_OUT) {
+    mFontSet->LogMessage(this, "font-display timeout, webfont not used",
+                         nsIScriptError::infoFlag, aDownloadStatus);
   } else {
-    // download failed
-    mFontSet->LogMessage(
-        this,
-        (mFontDataLoadingState != LOADING_TIMED_OUT ? "download failed"
-                                                    : "download timed out"),
-        nsIScriptError::errorFlag, aDownloadStatus);
+    mFontSet->LogMessage(this, "download failed", nsIScriptError::errorFlag,
+                         aDownloadStatus);
   }
 
   if (aFontData) {
     free((void*)aFontData);
   }
+
+  FontLoadFailed(aCallback);
+}
+
+void gfxUserFontEntry::LoadPlatformFontAsync(
+    const uint8_t* aFontData, uint32_t aLength,
+    nsIFontLoadCompleteCallback* aCallback) {
+  nsMainThreadPtrHandle<nsIFontLoadCompleteCallback> cb(
+      new nsMainThreadPtrHolder<nsIFontLoadCompleteCallback>("FontLoader",
+                                                             aCallback));
+
+  // Do the OpenType sanitization over on the font loading thread.  Once that is
+  // complete, we'll continue in ContinuePlatformFontLoadOnMainThread.
+  //
+  // We hold a strong reference to the gfxUserFontSet during this work, since
+  // the document might be closed while we are OMT, and release it at the end
+  // of ContinuePlatformFontLoadOnMainThread.
+
+  mFontSet->AddRef();
+
+  nsCOMPtr<nsIRunnable> event =
+      NewRunnableMethod<const uint8_t*, uint32_t,
+                        nsMainThreadPtrHandle<nsIFontLoadCompleteCallback>>(
+          "gfxUserFontEntry::StartPlatformFontLoadOnBackgroundThread", this,
+          &gfxUserFontEntry::StartPlatformFontLoadOnBackgroundThread, aFontData,
+          aLength, cb);
+  MOZ_ALWAYS_SUCCEEDS(NS_DispatchBackgroundTask(event.forget()));
+}
+
+void gfxUserFontEntry::ContinuePlatformFontLoadOnMainThread(
+    const uint8_t* aOriginalFontData, uint32_t aOriginalLength,
+    gfxUserFontType aFontType, const uint8_t* aSanitizedFontData,
+    uint32_t aSanitizedLength, nsTArray<OTSMessage>&& aMessages,
+    nsMainThreadPtrHandle<nsIFontLoadCompleteCallback> aCallback) {
+  MOZ_ASSERT(NS_IsMainThread());
+
+  bool loaded = LoadPlatformFont(aOriginalFontData, aOriginalLength, aFontType,
+                                 aSanitizedFontData, aSanitizedLength,
+                                 std::move(aMessages));
+  aOriginalFontData = nullptr;
+  aSanitizedFontData = nullptr;
+
+  if (loaded) {
+    IncrementGeneration();
+    aCallback->FontLoadComplete();
+  } else {
+    FontLoadFailed(aCallback);
+  }
+
+  mFontSet->Release();  // for the AddRef in LoadPlatformFontAsync
+}
+
+void gfxUserFontEntry::FontLoadFailed(nsIFontLoadCompleteCallback* aCallback) {
+  MOZ_ASSERT(NS_IsMainThread());
 
   // Error occurred.  Make sure the FontFace's promise is rejected if the
   // load timed out, or else load the next src.
@@ -858,7 +870,7 @@ bool gfxUserFontEntry::FontDataDownloadComplete(const uint8_t* aFontData,
   // and return true in order to trigger reflow, so that fallback
   // will be used where the text was "masked" by the pending download
   IncrementGeneration();
-  return true;
+  aCallback->FontLoadComplete();
 }
 
 void gfxUserFontEntry::GetUserFontSets(nsTArray<gfxUserFontSet*>& aResult) {
@@ -1006,9 +1018,27 @@ gfxUserFontFamily* gfxUserFontSet::GetFamily(const nsACString& aFamilyName) {
   gfxUserFontFamily* family = mFontFamilies.GetWeak(key);
   if (!family) {
     family = new gfxUserFontFamily(aFamilyName);
-    mFontFamilies.Put(key, family);
+    mFontFamilies.Put(key, RefPtr{family});
   }
   return family;
+}
+
+void gfxUserFontSet::ForgetLocalFaces() {
+  for (auto iter = mFontFamilies.Iter(); !iter.Done(); iter.Next()) {
+    const auto fam = iter.Data();
+    const auto& fonts = fam->GetFontList();
+    for (const auto& f : fonts) {
+      auto ufe = static_cast<gfxUserFontEntry*>(f.get());
+      // If the user font entry has loaded an entry using src:local(),
+      // discard it as no longer valid, and reset the load state so that
+      // the load will be re-done based on the updated font list.
+      if (ufe->GetPlatformFontEntry() &&
+          ufe->GetPlatformFontEntry()->IsLocalUserFont()) {
+        ufe->mPlatformFontEntry = nullptr;
+        ufe->LoadCanceled();
+      }
+    }
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1222,27 +1252,22 @@ void gfxUserFontSet::UserFontCache::Entry::ReportMemory(
       spec.ReplaceChar('/', '\\');
       // Some fonts are loaded using horrendously-long data: URIs;
       // truncate those before reporting them.
-      bool isData;
-      if (NS_SUCCEEDED(mURI->get()->SchemeIs("data", &isData)) && isData &&
-          spec.Length() > 255) {
+      if (mURI->get()->SchemeIs("data") && spec.Length() > 255) {
         spec.Truncate(252);
         spec.AppendLiteral("...");
       }
       path.AppendPrintf(", url=%s", spec.get());
     }
     if (mPrincipal) {
-      nsCOMPtr<nsIURI> uri;
-      mPrincipal->get()->GetURI(getter_AddRefs(uri));
-      if (uri) {
-        nsCString spec = uri->GetSpecOrDefault();
-        if (!spec.IsEmpty()) {
-          // Include a clue as to who loaded this resource. (Note
-          // that because of font entry sharing, other pages may now
-          // be using this resource, and the original page may not
-          // even be loaded any longer.)
-          spec.ReplaceChar('/', '\\');
-          path.AppendPrintf(", principal=%s", spec.get());
-        }
+      nsAutoCString spec;
+      mPrincipal->get()->GetAsciiSpec(spec);
+      if (!spec.IsEmpty()) {
+        // Include a clue as to who loaded this resource. (Note
+        // that because of font entry sharing, other pages may now
+        // be using this resource, and the original page may not
+        // even be loaded any longer.)
+        spec.ReplaceChar('/', '\\');
+        path.AppendPrintf(", principal=%s", spec.get());
       }
     }
   }

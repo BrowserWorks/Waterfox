@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('BigInt')) -- BigInt is not enabled unconditionally
 // Copyright (C) 2017 Robin Templeton. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 /*---
@@ -54,4 +53,5 @@ assert.sameValue(
   true,
   'The result of (Number.MIN_VALUE >= -10n) is true'
 );
+
 reportCompare(0, 0);

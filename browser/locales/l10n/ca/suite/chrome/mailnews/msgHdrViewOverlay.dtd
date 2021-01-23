@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField.label "A: ">
+<!ENTITY fromField.label "De: ">
+<!ENTITY senderField.label "Remitent: ">
+<!ENTITY organizationField.label "Organització: ">
+<!ENTITY replyToField.label "Respon a: ">
+
+<!ENTITY subjectField.label "Assumpte: ">
+<!--# LOCALIZATION NOTE (ccField.label): DONT_TRANSLATE -->
+<!ENTITY ccField.label "Cc: ">
+<!ENTITY bccField.label "Cco: ">
+<!ENTITY newsgroupsField.label "Grups de discussió: ">
+<!ENTITY followupToField.label "Seguiment a: ">
+
+<!ENTITY tagsHdr.label "Etiquetes: ">
+<!ENTITY dateField.label "Data: ">
+<!ENTITY userAgentField.label "Agent d'usuari: ">
+<!ENTITY referencesField.label "Referències: ">
+<!ENTITY messageIdField.label "Identificador del missatge: ">
+<!ENTITY inReplyToField.label "En resposta a: ">
+<!ENTITY originalWebsite.label "Lloc web: ">
+
+<!ENTITY editMessage.label                 "Edita l'esborrany…">
+<!ENTITY editMessage.accesskey             "E">
+
+<!ENTITY attachmentsTree.label             "Adjuncions:">
+<!ENTITY attachmentsTree.accesskey         "A">
+<!ENTITY openAttachmentCmd.label           "Obre">
+<!ENTITY openAttachmentCmd.accesskey       "O">
+<!ENTITY viewAttachmentCmd.label           "Visualitza el codi font">
+<!ENTITY viewAttachmentCmd.accesskey       "V">
+<!ENTITY saveAsAttachmentCmd.label         "Anomena i desa…">
+<!ENTITY saveAsAttachmentCmd.accesskey     "A">
+<!ENTITY detachAttachmentCmd.label         "Separa…">
+<!ENTITY detachAttachmentCmd.accesskey     "S">
+<!ENTITY deleteAttachmentCmd.label         "Suprimeix">
+<!ENTITY deleteAttachmentCmd.accesskey     "x">
+<!ENTITY saveAllAttachmentsCmd.label       "Desa-ho tot…">
+<!ENTITY saveAllAttachmentsCmd.accesskey   "D">
+<!ENTITY detachAllAttachmentsCmd.label     "Separa-ho tot…">
+<!ENTITY detachAllAttachmentsCmd.accesskey "h">
+<!ENTITY deleteAllAttachmentsCmd.label     "Suprimeix-ho tot…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey "u">

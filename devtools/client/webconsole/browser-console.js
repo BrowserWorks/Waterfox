@@ -4,10 +4,21 @@
 
 "use strict";
 
-var Services = require("Services");
-var WebConsole = require("devtools/client/webconsole/webconsole");
+const Services = require("Services");
+const WebConsole = require("devtools/client/webconsole/webconsole");
+const { TargetList } = require("devtools/shared/resources/target-list");
+const {
+  ResourceWatcher,
+} = require("devtools/shared/resources/resource-watcher");
+const { Utils } = require("devtools/client/webconsole/utils");
 
 loader.lazyRequireGetter(this, "Telemetry", "devtools/client/shared/telemetry");
+loader.lazyRequireGetter(
+  this,
+  "BrowserConsoleManager",
+  "devtools/client/webconsole/browser-console-manager",
+  true
+);
 
 /**
  * A BrowserConsole instance is an interactive console initialized *per target*
@@ -29,15 +40,28 @@ class BrowserConsole extends WebConsole {
    *        The window where the browser console UI is already loaded.
    * @param nsIDOMWindow chromeWindow
    *        The window of the browser console owner.
-   * @param object hudService
-   *        The parent HUD Service
    */
-  constructor(target, iframeWindow, chromeWindow, hudService) {
-    super(target, iframeWindow, chromeWindow, hudService, true);
+  constructor(target, iframeWindow, chromeWindow) {
+    super(null, iframeWindow, chromeWindow, true);
 
+    this._browserConsoleTarget = target;
+    this._targetList = new TargetList(target.client.mainRoot, target);
+    this._resourceWatcher = new ResourceWatcher(this._targetList);
     this._telemetry = new Telemetry();
     this._bcInitializer = null;
     this._bcDestroyer = null;
+  }
+
+  get currentTarget() {
+    return this._browserConsoleTarget;
+  }
+
+  get targetList() {
+    return this._targetList;
+  }
+
+  get resourceWatcher() {
+    return this._resourceWatcher;
   }
 
   /**
@@ -51,26 +75,25 @@ class BrowserConsole extends WebConsole {
       return this._bcInitializer;
     }
 
-    // Only add the shutdown observer if we've opened a Browser Console window.
-    ShutdownObserver.init(this.hudService);
+    this._bcInitializer = (async () => {
+      // Only add the shutdown observer if we've opened a Browser Console window.
+      ShutdownObserver.init();
 
-    const window = this.iframeWindow;
+      // browserconsole is not connected with a toolbox so we pass -1 as the
+      // toolbox session id.
+      this._telemetry.toolOpened("browserconsole", -1, this);
 
-    // Make sure that the closing of the Browser Console window destroys this
-    // instance.
-    window.addEventListener(
-      "unload",
-      () => {
-        this.destroy();
-      },
-      { once: true }
-    );
+      // Bug 1605763: Call super.init before fetching targets in order to build the
+      // console UI first; have it listen for targets and be able to display first
+      // targets as soon as they get available.
+      await super.init(false);
+      await this.targetList.startListening();
 
-    // browserconsole is not connected with a toolbox so we pass -1 as the
-    // toolbox session id.
-    this._telemetry.toolOpened("browserconsole", -1, this);
-
-    this._bcInitializer = super.init();
+      // Reports the console as created only after everything is done,
+      // including TargetList.startListening.
+      const id = Utils.supportsString(this.hudId);
+      Services.obs.notifyObservers(id, "web-console-created");
+    })();
     return this._bcInitializer;
   }
 
@@ -90,9 +113,14 @@ class BrowserConsole extends WebConsole {
       // toolbox session id.
       this._telemetry.toolClosed("browserconsole", -1, this);
 
+      // Wait for any pending connection initialization.
+      await Promise.all(
+        this.ui.getAllProxies().map(proxy => proxy.getConnectionPromise())
+      );
+
+      await this.targetList.stopListening();
       await super.destroy();
-      await this.target.destroy();
-      this.hudService._browserConsoleID = null;
+      await this.currentTarget.destroy();
       this.chromeWindow.close();
     })();
 
@@ -107,7 +135,7 @@ class BrowserConsole extends WebConsole {
 var ShutdownObserver = {
   _initialized: false,
 
-  init(hudService) {
+  init() {
     if (this._initialized) {
       return;
     }
@@ -115,12 +143,11 @@ var ShutdownObserver = {
     Services.obs.addObserver(this, "quit-application-granted");
 
     this._initialized = true;
-    this.hudService = hudService;
   },
 
   observe(message, topic) {
     if (topic == "quit-application-granted") {
-      this.hudService.storeBrowserConsoleSessionState();
+      BrowserConsoleManager.storeBrowserConsoleSessionState();
       this.uninit();
     }
   },

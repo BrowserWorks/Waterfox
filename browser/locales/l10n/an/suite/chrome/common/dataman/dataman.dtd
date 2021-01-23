@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dataman.windowTitle "Administrador de datos">
+
+<!ENTITY selectAll.key "a">
+
+<!ENTITY select.all.label "Totz os tipos de datos">
+<!ENTITY select.cookies.label "Solament cookies">
+<!ENTITY select.permissions.label "Solament permisos">
+<!ENTITY select.preferences.label "Solament preferencias">
+<!ENTITY select.passwords.label "Nomás as claus">
+<!ENTITY select.storage.label "Storage only">
+
+<!ENTITY domain.search.placeholder "Buscar dominios">
+<!ENTITY domain.search.key "f">
+
+<!ENTITY domain.tree.domain.label "Dominio">
+
+<!ENTITY domain.ctx.forgetdomain.label "Ixuplidar d'iste dominio">
+<!ENTITY domain.ctx.forgetdomain.accesskey "I">
+<!ENTITY domain.ctx.forgetglobal.label "Ixuplidar datos globals">
+<!ENTITY domain.ctx.forgetglobal.accesskey "I">
+
+<!ENTITY data.search.key "k">
+
+<!ENTITY tab.cookies.label "Cookies">
+<!ENTITY tab.permissions.label "Permisos">
+<!ENTITY tab.preferences.label "Preferencias">
+<!ENTITY tab.passwords.label "Claus d'acceso">
+<!ENTITY tab.storage.label "Storage">
+<!ENTITY tab.formdata.label "Datos de formularios">
+<!ENTITY tab.forget.label "Ixuplidar">
+<!-- cookies -->
+
+<!ENTITY cookies.description "Iste dominio ha alzau as siguients cookies en a suya equipo:">
+
+<!ENTITY cookies.tree.host.label "Puesto web">
+<!ENTITY cookies.tree.name.label "Nombre d'a cookie">
+<!ENTITY cookies.tree.expires.label "Caduca">
+
+<!ENTITY cookies.infobox.label "Información sobre a cookie trigada">
+
+<!ENTITY cookies.info.name.label "Nombre:">
+<!ENTITY cookies.info.value.label "Conteniu:">
+<!ENTITY cookies.info.host.label "Servidor:">
+<!ENTITY cookies.info.domain.label "Dominio:">
+<!ENTITY cookies.info.path.label "Ruta:">
+<!ENTITY cookies.info.sendtype.label "Ninviar para:">
+<!ENTITY cookies.info.expires.label "Caduca:">
+
+<!ENTITY cookies.ctx.remove.label "Remove">
+<!ENTITY cookies.ctx.remove.accesskey "R">
+<!ENTITY cookies.ctx.selectAll.label "Trigar tot">
+<!ENTITY cookies.ctx.selectAll.accesskey "T">
+
+<!ENTITY cookies.button.remove.label "Eliminar">
+<!ENTITY cookies.button.remove.accesskey "E">
+
+<!ENTITY cookies.blockOnRemove.label "Al eliminar, impedir a os puestos web listaus ninviar cookies en o futuro">
+<!ENTITY cookies.blockOnRemove.accesskey "A">
+<!-- permissions -->
+
+<!ENTITY perm.UseDefault "Usar valors preterminados">
+<!ENTITY perm.AskAlways "Preguntar siempre">
+<!ENTITY perm.NeverSave "No alzar nunca">
+<!ENTITY perm.Allow "Permitir">
+<!ENTITY perm.AllowSameDomain "Allow for Same Domain">
+<!ENTITY perm.AllowSession "Permitir entre a sesión">
+<!ENTITY perm.Block "Bloquiar">
+
+<!ENTITY perm.host.placeholder "Introduzca un nombre de servidor">
+<!ENTITY perm.button.add.label "Adhibir">
+<!ENTITY perm.button.add.accesskey "A">
+<!-- preferences -->
+
+<!ENTITY prefs.description "As preferencias de conteniu son una traza que &brandShortName; alce a suya configuración, como a grandaria de visualización, especificament ta un puesto web.">
+
+<!ENTITY prefs.tree.host.label "Puesto web">
+<!ENTITY prefs.tree.name.label "Nombre d'a preferencia">
+<!ENTITY prefs.tree.value.label "Valor">
+
+<!ENTITY prefs.ctx.remove.label "Eliminar">
+<!ENTITY prefs.ctx.remove.accesskey "E">
+<!ENTITY prefs.ctx.selectAll.label "Trigar tot">
+<!ENTITY prefs.ctx.selectAll.accesskey "T">
+
+<!ENTITY prefs.button.remove.label "Eliminar">
+<!ENTITY prefs.button.remove.accesskey "E">
+<!-- passwords -->
+
+<!ENTITY pwd.description "Tiene as siguients claus alzadas d'iste dominio:">
+
+<!ENTITY pwd.tree.host.label "Puesto web">
+<!ENTITY pwd.tree.username.label "Nombre d'usuario">
+<!ENTITY pwd.tree.password.label "Clau d'acceso">
+
+<!ENTITY pwd.ctx.remove.label "Eliminar">
+<!ENTITY pwd.ctx.remove.accesskey "E">
+<!ENTITY pwd.ctx.copyPasswordCmd.label "Copiar a clau">
+<!ENTITY pwd.ctx.copyPasswordCmd.accesskey "C">
+<!ENTITY pwd.ctx.selectAll.label "Trigar tot">
+<!ENTITY pwd.ctx.selectAll.accesskey "T">
+
+<!ENTITY pwd.button.remove.label "Eliminar">
+<!ENTITY pwd.button.remove.accesskey "E">
+<!-- storage -->
+
+<!ENTITY storage.description "This domain uses the following web storages on your computer:">
+
+<!ENTITY storage.tree.host.label "Website">
+<!ENTITY storage.tree.type.label "Type">
+<!ENTITY storage.tree.size.label "Size">
+
+<!ENTITY storage.ctx.remove.label "Remove">
+<!ENTITY storage.ctx.remove.accesskey "R">
+<!ENTITY storage.ctx.selectAll.label "Select All">
+<!ENTITY storage.ctx.selectAll.accesskey "A">
+
+<!ENTITY storage.button.remove.label "Remove">
+<!ENTITY storage.button.remove.accesskey "R">
+<!-- form data -->
+
+<!ENTITY fdata.search.placeholder "Buscar datos de campos">
+
+<!ENTITY fdata.tree.fieldname.label "Nombre d'o campo">
+<!ENTITY fdata.tree.value.label "Valor introducida">
+<!ENTITY fdata.tree.usecount.label "Contador d'uso">
+<!ENTITY fdata.tree.firstused.label "Usau por primera vez">
+<!ENTITY fdata.tree.lastused.label "Usau por zaguera vez">
+
+<!ENTITY fdata.ctx.remove.label "Eliminar">
+<!ENTITY fdata.ctx.remove.accesskey "E">
+<!ENTITY fdata.ctx.selectAll.label "Trigar tot">
+<!ENTITY fdata.ctx.selectAll.accesskey "T">
+
+<!ENTITY fdata.button.remove.label "Eliminar">
+<!ENTITY fdata.button.remove.accesskey "E">
+<!-- forget -->
+
+<!ENTITY forget.cookies.label "Cookies">
+<!ENTITY forget.cookies.accesskey "C">
+<!ENTITY forget.permissions.label "Permisos">
+<!ENTITY forget.permissions.accesskey "P">
+<!ENTITY forget.preferences.label "Preferencias de conteniu">
+<!ENTITY forget.preferences.accesskey "e">
+<!ENTITY forget.passwords.label "Contraseñas">
+<!ENTITY forget.passwords.accesskey "a">
+<!ENTITY forget.storage.label "Storage">
+<!ENTITY forget.storage.accesskey "S">
+<!ENTITY forget.formdata.label "Datos de formularios">
+<!ENTITY forget.formdata.accesskey "D">
+
+<!ENTITY forget.button.label "Ixuplidar istes datos">
+<!ENTITY forget.button.accesskey "I">

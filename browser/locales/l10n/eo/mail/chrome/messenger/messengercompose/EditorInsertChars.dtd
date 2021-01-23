@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Enmeti signon">
+<!ENTITY category.label "Kategorio">
+<!ENTITY letter.label "Litero:">
+<!ENTITY letter.accessKey "L">
+<!ENTITY character.label "Signo:">
+<!ENTITY character.accessKey "S">
+<!ENTITY accentUpper.label "Diakritita litero majuskla">
+<!ENTITY accentLower.label "Diakritita litero minuskla">
+<!ENTITY otherUpper.label "Aliaj literoj majusklaj">
+<!ENTITY otherLower.label "Aliaj literoj minusklaj">
+<!ENTITY commonSymbols.label "Popularaj simboloj">
+<!ENTITY insertButton.label "Enmeti">
+<!ENTITY closeButton.label "Fermi">

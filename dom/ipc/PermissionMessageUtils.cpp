@@ -7,12 +7,15 @@
 #include "mozilla/dom/PermissionMessageUtils.h"
 #include "mozilla/ipc/BackgroundUtils.h"
 #include "mozilla/ipc/PBackgroundSharedTypes.h"
+#include "nsCOMPtr.h"
+#include "nsIPrincipal.h"
 
 namespace mozilla {
 namespace ipc {
 
-void IPDLParamTraits<nsIPrincipal>::Write(IPC::Message* aMsg, IProtocol* aActor,
-                                          nsIPrincipal* aParam) {
+void IPDLParamTraits<nsIPrincipal*>::Write(IPC::Message* aMsg,
+                                           IProtocol* aActor,
+                                           nsIPrincipal* aParam) {
   MOZ_DIAGNOSTIC_ASSERT(NS_IsMainThread());
 
   Maybe<PrincipalInfo> info;
@@ -25,18 +28,28 @@ void IPDLParamTraits<nsIPrincipal>::Write(IPC::Message* aMsg, IProtocol* aActor,
   WriteIPDLParam(aMsg, aActor, info);
 }
 
-bool IPDLParamTraits<nsIPrincipal>::Read(const IPC::Message* aMsg,
-                                         PickleIterator* aIter,
-                                         IProtocol* aActor,
-                                         RefPtr<nsIPrincipal>* aResult) {
+bool IPDLParamTraits<nsIPrincipal*>::Read(const IPC::Message* aMsg,
+                                          PickleIterator* aIter,
+                                          IProtocol* aActor,
+                                          RefPtr<nsIPrincipal>* aResult) {
   Maybe<PrincipalInfo> info;
   if (!ReadIPDLParam(aMsg, aIter, aActor, &info)) {
     return false;
   }
 
-  nsresult rv = NS_OK;
-  *aResult = info ? PrincipalInfoToPrincipal(info.ref(), &rv) : nullptr;
-  return NS_SUCCEEDED(rv);
+  if (info.isNothing()) {
+    return true;
+  }
+
+  auto principalOrErr = PrincipalInfoToPrincipal(info.ref());
+
+  if (NS_WARN_IF(principalOrErr.isErr())) {
+    return false;
+  }
+
+  nsCOMPtr<nsIPrincipal> principal = principalOrErr.unwrap();
+  *aResult = principal;
+  return true;
 }
 
 }  // namespace ipc

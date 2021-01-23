@@ -16,8 +16,8 @@ const trace = {
  * HTTP requests executed by the page (including inner iframes).
  */
 function HarCollector(options) {
-  this.webConsoleClient = options.webConsoleClient;
-  this.debuggerClient = options.debuggerClient;
+  this.webConsoleFront = options.webConsoleFront;
+  this.devToolsClient = options.devToolsClient;
 
   this.onNetworkEvent = this.onNetworkEvent.bind(this);
   this.onNetworkEventUpdate = this.onNetworkEventUpdate.bind(this);
@@ -36,22 +36,13 @@ HarCollector.prototype = {
   // Connection
 
   start: function() {
-    this.debuggerClient.addListener("serverNetworkEvent", this.onNetworkEvent);
-    this.debuggerClient.addListener(
-      "networkEventUpdate",
-      this.onNetworkEventUpdate
-    );
+    this.webConsoleFront.on("networkEvent", this.onNetworkEvent);
+    this.devToolsClient.on("networkEventUpdate", this.onNetworkEventUpdate);
   },
 
   stop: function() {
-    this.debuggerClient.removeListener(
-      "serverNetworkEvent",
-      this.onNetworkEvent
-    );
-    this.debuggerClient.removeListener(
-      "networkEventUpdate",
-      this.onNetworkEventUpdate
-    );
+    this.webConsoleFront.off("networkEvent", this.onNetworkEvent);
+    this.devToolsClient.off("networkEventUpdate", this.onNetworkEventUpdate);
   },
 
   clear: function() {
@@ -165,15 +156,15 @@ HarCollector.prototype = {
 
   // Event Handlers
 
-  onNetworkEvent: function(type, packet) {
-    // Skip events from different console actors.
-    if (packet.from != this.webConsoleClient.actor) {
-      return;
-    }
+  onNetworkEvent: function(packet) {
+    trace.log("HarCollector.onNetworkEvent; ", packet);
 
-    trace.log("HarCollector.onNetworkEvent; " + type, packet);
-
-    const { actor, startedDateTime, method, url, isXHR } = packet.eventActor;
+    const {
+      actor,
+      startedDateTime,
+      request: { method, url },
+      isXHR,
+    } = packet;
     const startTime = Date.parse(startedDateTime);
 
     if (this.firstRequestStart == -1) {
@@ -193,8 +184,9 @@ HarCollector.prototype = {
     }
 
     file = {
-      startedDeltaMillis: startTime - this.firstRequestStart,
-      startedMillis: startTime,
+      id: actor,
+      startedDeltaMs: startTime - this.firstRequestStart,
+      startedMs: startTime,
       method: method,
       url: url,
       isXHR: isXHR,
@@ -206,13 +198,13 @@ HarCollector.prototype = {
     this.items.push(file);
   },
 
-  onNetworkEventUpdate: function(type, packet) {
+  onNetworkEventUpdate: function(packet) {
     const actor = packet.from;
 
     // Skip events from unknown actors (not in the list).
     // It can happen when there are zombie requests received after
     // the target is closed or multiple tabs are attached through
-    // one connection (one DebuggerClient object).
+    // one connection (one DevToolsClient object).
     const file = this.getFile(packet.from);
     if (!file) {
       return;
@@ -296,7 +288,7 @@ HarCollector.prototype = {
 
   getData: function(actor, method, callback) {
     return new Promise(resolve => {
-      if (!this.webConsoleClient[method]) {
+      if (!this.webConsoleFront[method]) {
         console.error("HarCollector.getData: ERROR Unknown method!");
         resolve();
       }
@@ -308,7 +300,7 @@ HarCollector.prototype = {
         file
       );
 
-      this.webConsoleClient[method](actor, response => {
+      this.webConsoleFront[method](actor, response => {
         trace.log(
           "HarCollector.getData; RESPONSE " + method + ", " + file.url,
           response
@@ -358,7 +350,7 @@ HarCollector.prototype = {
     file.requestPostData = response;
 
     // Resolve long string
-    const text = response.postData.text;
+    const { text } = response.postData;
     if (typeof text == "object") {
       this.getString(text).then(value => {
         response.postData.text = value;
@@ -403,7 +395,7 @@ HarCollector.prototype = {
     file.responseContent = response;
 
     // Resolve long string
-    const text = response.content.text;
+    const { text } = response.content;
     if (typeof text == "object") {
       this.getString(text).then(value => {
         response.content.text = value;
@@ -451,7 +443,7 @@ HarCollector.prototype = {
    *         are available, or rejected if something goes wrong.
    */
   getString: function(stringGrip) {
-    const promise = this.webConsoleClient.getString(stringGrip);
+    const promise = this.webConsoleFront.getString(stringGrip);
     this.requests.push(promise);
     return promise;
   },

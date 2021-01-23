@@ -1,0 +1,95 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY downloadManager.title           "ჩამოტვირთვის მმართველი">
+
+<!ENTITY menuBar.tooltip                 "მენიუს პანელი">
+<!ENTITY searchBar.tooltip               "ძიების პანელი">
+
+<!ENTITY search.placeholder              "ძიება ჩამოტვირთვებში">
+<!ENTITY search.label                    "ძიება ჩამოტვირთვებში">
+<!ENTITY search.accesskey                "S">
+<!ENTITY search.key                      "f">
+
+<!ENTITY cmd.clearList.label             "სიის გასუფთავება">
+<!ENTITY cmd.clearList.tooltip           "მოაცილებს დასრულებულ, გაუქმებულ და შეწყვეტილ ჩამოტვირთვებს სიიდან">
+<!ENTITY cmd.clearList.accesskey         "C">
+
+<!ENTITY col.name.label                  "სახელი">
+<!ENTITY col.name.accesskey              "N">
+<!ENTITY col.name.tooltip                "ფაილის სახელი">
+<!ENTITY col.status.label                "სტატუსი">
+<!ENTITY col.status.accesskey            "S">
+<!ENTITY col.status.tooltip              "სტატუსი">
+<!ENTITY col.actionPlay.label            "შეჩერება/დასრულება/ხელახლა">
+<!ENTITY col.actionPlay.accesskey        "u">
+<!ENTITY col.actionPlay.tooltip          "შეჩერება/დასრულება/ხელახლა">
+<!ENTITY col.actionStop.label            "გაუქმება/მოცილება">
+<!ENTITY col.actionStop.accesskey        "C">
+<!ENTITY col.actionStop.tooltip          "გაუქმება/მოცილება">
+<!ENTITY col.progress.label              "მიმდინარეობა">
+<!ENTITY col.progress.accesskey          "P">
+<!ENTITY col.progress.tooltip            "მიმდინარეობა">
+<!ENTITY col.timeremaining.label         "დარჩენილი დრო">
+<!ENTITY col.timeremaining.accesskey     "L">
+<!ENTITY col.timeremaining.tooltip       "დარჩენილი დრო">
+<!ENTITY col.transferred.label           "გადმოტანილია">
+<!ENTITY col.transferred.accesskey       "T">
+<!ENTITY col.transferred.tooltip         "გადმოტანილია">
+<!ENTITY col.transferrate.label          "სიჩქარე">
+<!ENTITY col.transferrate.accesskey      "d">
+<!ENTITY col.transferrate.tooltip        "სიჩქარე">
+<!ENTITY col.timeelapsed.label           "გასული დრო">
+<!ENTITY col.timeelapsed.accesskey       "E">
+<!ENTITY col.timeelapsed.tooltip         "გასული დრო">
+<!ENTITY col.starttime.label             "დაწყება">
+<!ENTITY col.starttime.accesskey         "a">
+<!ENTITY col.starttime.tooltip           "დაწყება">
+<!ENTITY col.endtime.label               "დასრულება">
+<!ENTITY col.endtime.accesskey           "i">
+<!ENTITY col.endtime.tooltip             "დასრულება">
+<!ENTITY col.progresstext.label          "&#37;">
+<!ENTITY col.progresstext.accesskey      "&#37;">
+<!ENTITY col.progresstext.tooltip        "მიმდინარეობა (&#37;)">
+<!ENTITY col.source.label                "წყარო">
+<!ENTITY col.source.accesskey            "o">
+<!ENTITY col.source.tooltip              "წყარო">
+
+<!ENTITY view.columns.label              "სვეტების ჩვენება">
+<!ENTITY view.columns.accesskey          "C">
+<!ENTITY view.sortBy.label               "დახარისხება">
+<!ENTITY view.sortBy.accesskey           "S">
+
+<!ENTITY view.unsorted.label             "არეული">
+<!ENTITY view.unsorted.accesskey         "U">
+<!ENTITY view.sortAscending.label        "ანაბანურად">
+<!ENTITY view.sortAscending.accesskey    "A">
+<!ENTITY view.sortDescending.label       "უკუანბანურად">
+<!ENTITY view.sortDescending.accesskey   "Z">
+
+<!ENTITY cmd.pause.label                 "შეჩერება">
+<!ENTITY cmd.pause.accesskey             "P">
+<!ENTITY cmd.resume.label                "დასრულება">
+<!ENTITY cmd.resume.accesskey            "R">
+<!ENTITY cmd.retry.label                 "ხელახლა">
+<!ENTITY cmd.retry.accesskey             "t">
+<!ENTITY cmd.cancel.label                "გაუქმება">
+<!ENTITY cmd.cancel.accesskey            "C">
+<!ENTITY cmd.remove.label                "სიიდან მოცილება">
+<!ENTITY cmd.remove.accesskey            "e">
+<!ENTITY cmd.open.label                  "გახსნა">
+<!ENTITY cmd.open.accesskey              "O">
+<!ENTITY cmd.show.label                  "შემცველი საქაღალდის გახსნა">
+<!ENTITY cmd.show.accesskey              "F">
+<!ENTITY cmd.goToDownloadPage.label      "გადასვლა ჩამოტვირთვის გვერდზე">
+<!ENTITY cmd.goToDownloadPage.accesskey  "G">
+<!ENTITY cmd.copyDownloadLink.label      "ჩამოტვირთვის ბმულის ასლი">
+<!ENTITY cmd.copyDownloadLink.accesskey  "ბ">
+<!ENTITY cmd.properties.label            "პარამეტრები…">
+<!ENTITY cmd.properties.accesskey        "s">
+<!-- LOCALIZATION NOTE (cmd.unblock2.label):
+     This command is shown in the context menu when downloads are blocked.
+     -->
+<!ENTITY cmd.unblock2.label               "ჩამოტვირთვის დაშვება">
+<!ENTITY cmd.unblock2.accesskey           "დ">

@@ -17,11 +17,11 @@ add_task(async function test() {
 
   for (var button = 0; button < 3; button++) {
     // Set focus to a chrome element before synthesizing a mouse down event.
-    document.getElementById("urlbar").focus();
+    gURLBar.focus();
 
     is(
       fm.focusedElement,
-      document.getElementById("urlbar").inputField,
+      gURLBar.inputField,
       "Failed to move focus to search bar: button=" + button
     );
 
@@ -31,11 +31,13 @@ add_task(async function test() {
 
     isnot(
       fm.focusedElement,
-      document.getElementById("urlbar").inputField,
+      gURLBar.inputField,
       "Failed to move focus away from search bar: button=" + button
     );
 
-    await ContentTask.spawn(tab.linkedBrowser, button, async function(button) {
+    await SpecialPowers.spawn(tab.linkedBrowser, [button], async function(
+      button
+    ) {
       let fm = Services.focus;
 
       let attempts = 10;

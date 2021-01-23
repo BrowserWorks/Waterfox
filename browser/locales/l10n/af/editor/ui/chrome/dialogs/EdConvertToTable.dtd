@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Omskep na tabel">
+<!ENTITY instructions1.label   "Composer skep 'n nuwe tabelry vir elke paragraaf in die gemerkte deel.">
+<!ENTITY instructions2.label   "Kies die karakter wat die gemerkte deel in kolomme moet deel:">
+<!ENTITY commaRadio.label      "Komma">
+<!ENTITY spaceRadio.label      "Spasie">
+<!ENTITY otherRadio.label      "Ander karakter:">
+<!ENTITY deleteCharCheck.label "Skrap skeierkarakter">
+<!ENTITY collapseSpaces.label  "Ignoreer ekstra spasies">
+<!ENTITY collapseSpaces.tooltip "Omskep aanliggende spasies in een skeier">

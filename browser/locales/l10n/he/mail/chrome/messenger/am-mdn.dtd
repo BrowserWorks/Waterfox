@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "קבלות חוזרות">
+<!ENTITY useGlobalPrefs.label         "השתמש בהעדפות קבלות חוזרות הכלליות שלי עבור חשבון זה">
+<!ENTITY useGlobalPrefs.accesskey     "ע">
+<!ENTITY globalReceipts.label         "העדפות כלליות…">
+<!ENTITY globalReceipts.accesskey     "כ">
+<!ENTITY useCustomPrefs.label         "התאם אישית קבלות חוזרות עבור חשבון זה">
+<!ENTITY useCustomPrefs.accesskey     "ש">
+<!ENTITY requestReceipt.label         "בעת שליחת הודעות, בקש תמיד קבלה חוזרת">
+<!ENTITY requestReceipt.accesskey     "ק">
+<!ENTITY receiptArrive.label          "כאשר מגיעה קבלה:">
+<!ENTITY leaveIt.label                "השאר אותה בתיבת הדואר הנכנס שלי">
+<!ENTITY leaveIt.accesskey            "ש">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "העבר אותה לתיקיית &quot;נשלח&quot; שלי">
+<!ENTITY moveToSent.accesskey         "ת">
+<!ENTITY requestMDN.label             "כאשר אני מקבל בקשה לקבלה חוזרת:">
+<!ENTITY returnSome.label             "הרשה קבלות חוזרות עבור הודעות מסוימות">
+<!ENTITY returnSome.accesskey         "מ">
+<!ENTITY never.label                  "לעולם אל תשלח קבלה חוזרת">
+<!ENTITY never.accesskey              "ל">
+<!ENTITY notInToCc.label              "אם אינני נמען או מכותב של ההודעה:">
+<!ENTITY notInToCc.accesskey          "א">
+<!ENTITY outsideDomain.label          "אם השולח מחוץ למתחם שלי:">
+<!ENTITY outsideDomain.accesskey      "מ">
+<!ENTITY otherCases.label             "בכל המקרים האחרים:">
+<!ENTITY otherCases.accesskey         "כ">
+<!ENTITY askMe.label                  "שאל אותי">
+<!ENTITY alwaysSend.label             "שלח תמיד">
+<!ENTITY neverSend.label              "אל תשלח לעולם">

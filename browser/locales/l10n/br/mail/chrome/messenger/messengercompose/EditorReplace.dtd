@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from EdReplace.xul -->
+
+<!-- extracted from EdReplace.xhtml -->
+
+<!ENTITY replaceDialog.title "Kavout hag amsaviñ">
+<!ENTITY findField.label "Kavout an destenn :">
+<!ENTITY findField.accesskey "n">
+<!ENTITY replaceField.label "Amsaviñ gant :">
+<!ENTITY replaceField.accesskey "s">
+<!ENTITY caseSensitiveCheckbox.label "Doujañ ouzh ar pennlizherennoù">
+<!ENTITY caseSensitiveCheckbox.accesskey "j">
+<!ENTITY wrapCheckbox.label "Ambakañ tro dro dezhi">
+<!ENTITY wrapCheckbox.accesskey "d">
+<!ENTITY backwardsCheckbox.label "Klask a-gil">
+<!ENTITY backwardsCheckbox.accesskey "K">
+<!ENTITY findNextButton.label "Klask war-lerc'h">
+<!ENTITY findNextButton.accesskey "K">
+<!ENTITY replaceButton.label "Amsaviñ">
+<!ENTITY replaceButton.accesskey "s">
+<!ENTITY replaceAndFindButton.label "Amsaviñ ha kavout">
+<!ENTITY replaceAndFindButton.accesskey "s">
+<!ENTITY replaceAllButton.label "Amsaviñ pep tra">
+<!ENTITY replaceAllButton.accesskey "A">
+<!ENTITY closeButton.label "Serriñ">
+<!ENTITY closeButton.accesskey "S">

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- for SearchDialog.xul -->
+<!ENTITY searchHeading.label         "संदेश के लिये इसमें ढूंढें:">
+<!ENTITY searchHeading.accesskey     "h">
+<!ENTITY searchSubfolders.label      "उपफोल्डर खोजें">
+<!ENTITY searchSubfolders.accesskey  "e">
+<!ENTITY resetButton.label           "साफ करें">
+<!ENTITY resetButton.accesskey       "C">
+<!ENTITY openButton.label            "खुला">
+<!ENTITY openButton.accesskey        "n">
+<!ENTITY deleteButton.label          "मिटायें">
+<!ENTITY deleteButton.accesskey      "D">
+<!ENTITY searchDialogTitle.label     "संदेश ढूंढें">
+<!ENTITY results.label               "परिणाम">
+<!ENTITY closeCmd.key                "W"> 
+<!ENTITY saveAsVFButton.label        "खोज फोल्डर के रूप में सहेजें">
+<!ENTITY saveAsVFButton.accesskey    "v">
+
+<!-- for ABSearchDialog.xul -->
+<!ENTITY abSearchHeading.label       "इसमें खोजें:">
+<!ENTITY abSearchHeading.accesskey   "h">
+<!ENTITY propertiesButton.label      "गुण">
+<!ENTITY propertiesButton.accesskey  "P">
+<!ENTITY composeButton.label         "लिखें">
+<!ENTITY composeButton.accesskey     "W">
+<!ENTITY abSearchDialogTitle.label   "उन्नत पता पुस्तिका खोज">
+

@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -31,7 +30,7 @@ async function testFilterOverriddenProperty(inspector, ruleView) {
   is(ruleView.element.children.length, 3, "Should have 3 rules.");
 
   let rule = getRuleViewRuleEditor(ruleView, 1).rule;
-  let textPropEditor = rule.textProps[0].editor;
+  let textPropEditor = getTextProperty(ruleView, 1, { width: "100%" }).editor;
   is(rule.selectorText, "#testid", "Second rule is #testid.");
   ok(
     !textPropEditor.element.classList.contains("ruleview-overridden"),
@@ -43,7 +42,7 @@ async function testFilterOverriddenProperty(inspector, ruleView) {
   );
 
   rule = getRuleViewRuleEditor(ruleView, 2).rule;
-  textPropEditor = rule.textProps[0].editor;
+  textPropEditor = getTextProperty(ruleView, 2, { width: "50%" }).editor;
   is(rule.selectorText, "h1", "Third rule is h1.");
   ok(
     textPropEditor.element.classList.contains("ruleview-overridden"),
@@ -65,7 +64,7 @@ async function testFilterOverriddenProperty(inspector, ruleView) {
   is(searchField.value, "`width`", "The search field value is width.");
 
   rule = getRuleViewRuleEditor(ruleView, 1).rule;
-  textPropEditor = rule.textProps[0].editor;
+  textPropEditor = getTextProperty(ruleView, 1, { width: "100%" }).editor;
   is(rule.selectorText, "#testid", "Second rule is #testid.");
   ok(
     textPropEditor.container.classList.contains("ruleview-highlight"),
@@ -73,7 +72,7 @@ async function testFilterOverriddenProperty(inspector, ruleView) {
   );
 
   rule = getRuleViewRuleEditor(ruleView, 2).rule;
-  textPropEditor = rule.textProps[0].editor;
+  textPropEditor = getTextProperty(ruleView, 2, { width: "50%" }).editor;
   is(rule.selectorText, "h1", "Third rule is h1.");
   ok(
     textPropEditor.container.classList.contains("ruleview-highlight"),

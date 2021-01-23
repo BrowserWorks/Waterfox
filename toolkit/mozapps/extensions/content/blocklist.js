@@ -30,7 +30,9 @@ function init() {
   let bundle = Services.strings.createBundle(
     "chrome://mozapps/locale/update/updates.properties"
   );
-  let cancelButton = document.documentElement.getButton("cancel");
+  let cancelButton = document
+    .getElementById("BlocklistDialog")
+    .getButton("cancel");
   cancelButton.setAttribute(
     "label",
     bundle.GetStringFromName("restartLaterButton")
@@ -65,13 +67,13 @@ function init() {
     nameVersion.append(name, version);
 
     const fragment = document.createXULElement("hbox");
-    fragment.pack = "end";
+    fragment.setAttribute("pack", "end");
 
     if (listItem.blocked) {
       fragment.appendChild(
         MozXULElement.parseXULToFragment(
           `
-        <label class="blockedLabel" value="&blocklist.blocked.label;"/>
+        <label class="blockedLabel" data-l10n-id="blocklist-blocked"/>
       `,
           ["chrome://mozapps/locale/extensions/blocklist.dtd"]
         )
@@ -81,7 +83,7 @@ function init() {
       fragment.appendChild(
         MozXULElement.parseXULToFragment(
           `
-        <checkbox class="disableCheckbox" checked="true" label="&blocklist.checkbox.label;"/>
+        <checkbox class="disableCheckbox" checked="true" data-l10n-id="blocklist-checkbox"/>
       `,
           ["chrome://mozapps/locale/extensions/blocklist.dtd"]
         )

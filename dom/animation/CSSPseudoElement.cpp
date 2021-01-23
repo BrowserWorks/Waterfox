@@ -31,7 +31,7 @@ CSSPseudoElement::CSSPseudoElement(dom::Element* aElement,
 CSSPseudoElement::~CSSPseudoElement() {
   // Element might have been unlinked already, so we have to do null check.
   if (mOriginatingElement) {
-    mOriginatingElement->DeleteProperty(
+    mOriginatingElement->RemoveProperty(
         GetCSSPseudoElementPropertyAtom(mPseudoType));
   }
 }
@@ -43,31 +43,6 @@ ParentObject CSSPseudoElement::GetParentObject() const {
 JSObject* CSSPseudoElement::WrapObject(JSContext* aCx,
                                        JS::Handle<JSObject*> aGivenProto) {
   return CSSPseudoElement_Binding::Wrap(aCx, this, aGivenProto);
-}
-
-void CSSPseudoElement::GetAnimations(const AnimationFilter& filter,
-                                     nsTArray<RefPtr<Animation>>& aRetVal) {
-  Document* doc = mOriginatingElement->GetComposedDoc();
-  if (doc) {
-    // We don't need to explicitly flush throttled animations here, since
-    // updating the animation style of (pseudo-)elements will never affect the
-    // set of running animations and it's only the set of running animations
-    // that is important here.
-    doc->FlushPendingNotifications(
-        ChangesToFlush(FlushType::Style, false /* flush animations */));
-  }
-
-  Element::GetAnimationsUnsorted(mOriginatingElement, mPseudoType, aRetVal);
-  aRetVal.Sort(AnimationPtrComparator<RefPtr<Animation>>());
-}
-
-already_AddRefed<Animation> CSSPseudoElement::Animate(
-    JSContext* aContext, JS::Handle<JSObject*> aKeyframes,
-    const UnrestrictedDoubleOrKeyframeAnimationOptions& aOptions,
-    ErrorResult& aError) {
-  Nullable<ElementOrCSSPseudoElement> target;
-  target.SetValue().SetAsCSSPseudoElement() = this;
-  return Element::Animate(target, aContext, aKeyframes, aOptions, aError);
 }
 
 /* static */

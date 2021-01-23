@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -6,7 +5,7 @@
 
 // Test that the network actor uses the LongStringActor
 
-const { DebuggerServer } = require("devtools/server/main");
+const { DevToolsServer } = require("devtools/server/devtools-server");
 const LONG_STRING_LENGTH = 400;
 const LONG_STRING_INITIAL_LENGTH = 400;
 let ORIGINAL_LONG_STRING_LENGTH, ORIGINAL_LONG_STRING_INITIAL_LENGTH;
@@ -16,28 +15,28 @@ add_task(async function() {
 
   const target = await getTargetForTab(tab);
   const { client } = target;
-  const consoleClient = target.activeConsole;
+  const webConsoleFront = await target.getFront("console");
 
-  await consoleClient.startListeners(["NetworkActivity"]);
+  await webConsoleFront.startListeners(["NetworkActivity"]);
 
   // Override the default long string settings to lower values.
-  // This is done from the parent process's DebuggerServer as the LongString
+  // This is done from the parent process's DevToolsServer as the LongString
   // actor is being created from the parent process as network requests are
   // watched from the parent process.
-  ORIGINAL_LONG_STRING_LENGTH = DebuggerServer.LONG_STRING_LENGTH;
+  ORIGINAL_LONG_STRING_LENGTH = DevToolsServer.LONG_STRING_LENGTH;
   ORIGINAL_LONG_STRING_INITIAL_LENGTH =
-    DebuggerServer.LONG_STRING_INITIAL_LENGTH;
+    DevToolsServer.LONG_STRING_INITIAL_LENGTH;
 
-  DebuggerServer.LONG_STRING_LENGTH = LONG_STRING_LENGTH;
-  DebuggerServer.LONG_STRING_INITIAL_LENGTH = LONG_STRING_INITIAL_LENGTH;
+  DevToolsServer.LONG_STRING_LENGTH = LONG_STRING_LENGTH;
+  DevToolsServer.LONG_STRING_INITIAL_LENGTH = LONG_STRING_INITIAL_LENGTH;
 
   info("test network POST request");
 
-  const onNetworkEvent = consoleClient.once("serverNetworkEvent");
+  const onNetworkEvent = webConsoleFront.once("serverNetworkEvent");
   const updates = [];
   let netActor = null;
   const onAllNetworkEventUpdateReceived = new Promise(resolve => {
-    const onNetworkEventUpdate = (type, packet) => {
+    const onNetworkEventUpdate = packet => {
       updates.push(packet.updateType);
       assertNetworkEventUpdate(netActor, packet);
 
@@ -45,45 +44,45 @@ add_task(async function() {
         updates.includes("responseContent") &&
         updates.includes("eventTimings")
       ) {
-        client.removeListener("networkEventUpdate", onNetworkEventUpdate);
+        client.off("networkEventUpdate", onNetworkEventUpdate);
         resolve();
       }
     };
-    client.addListener("networkEventUpdate", onNetworkEventUpdate);
+    client.on("networkEventUpdate", onNetworkEventUpdate);
   });
 
-  await ContentTask.spawn(gBrowser.selectedBrowser, null, async function() {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], async function() {
     content.wrappedJSObject.testXhrPost();
   });
 
   info("Waiting for networkEvent");
   const netEvent = await onNetworkEvent;
-  netActor = assertNetworkEvent(client, consoleClient, netEvent);
+  netActor = assertNetworkEvent(client, webConsoleFront, netEvent);
 
   info("Waiting for all networkEventUpdate");
   await onAllNetworkEventUpdateReceived;
-  const requestHeaders = await consoleClient.getRequestHeaders(netActor);
+  const requestHeaders = await webConsoleFront.getRequestHeaders(netActor);
   assertRequestHeaders(requestHeaders);
-  const requestCookies = await consoleClient.getRequestCookies(netActor);
+  const requestCookies = await webConsoleFront.getRequestCookies(netActor);
   assertRequestCookies(requestCookies);
-  const requestPostData = await consoleClient.getRequestPostData(netActor);
+  const requestPostData = await webConsoleFront.getRequestPostData(netActor);
   assertRequestPostData(requestPostData);
-  const responseHeaders = await consoleClient.getResponseHeaders(netActor);
+  const responseHeaders = await webConsoleFront.getResponseHeaders(netActor);
   assertResponseHeaders(responseHeaders);
-  const responseCookies = await consoleClient.getResponseCookies(netActor);
+  const responseCookies = await webConsoleFront.getResponseCookies(netActor);
   assertResponseCookies(responseCookies);
-  const responseContent = await consoleClient.getResponseContent(netActor);
+  const responseContent = await webConsoleFront.getResponseContent(netActor);
   assertResponseContent(responseContent);
-  const eventTimings = await consoleClient.getEventTimings(netActor);
+  const eventTimings = await webConsoleFront.getEventTimings(netActor);
   assertEventTimings(eventTimings);
 
   await target.destroy();
 
-  DebuggerServer.LONG_STRING_LENGTH = ORIGINAL_LONG_STRING_LENGTH;
-  DebuggerServer.LONG_STRING_INITIAL_LENGTH = ORIGINAL_LONG_STRING_INITIAL_LENGTH;
+  DevToolsServer.LONG_STRING_LENGTH = ORIGINAL_LONG_STRING_LENGTH;
+  DevToolsServer.LONG_STRING_INITIAL_LENGTH = ORIGINAL_LONG_STRING_INITIAL_LENGTH;
 });
 
-function assertNetworkEvent(client, consoleClient, packet) {
+function assertNetworkEvent(client, webConsoleFront, packet) {
   info("checking the network event packet");
 
   const netActor = packet.eventActor;

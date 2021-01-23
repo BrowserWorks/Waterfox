@@ -1,6 +1,7 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+from __future__ import absolute_import
 import argparse
 import codecs
 import locale
@@ -82,7 +83,7 @@ def run_fxc(shader_model,
         fxc_location,
         '-nologo',
         '-T{0}'.format(shader_model),
-        shader_file,
+        os.path.relpath(shader_file),
         '-E{0}'.format(shader_name),
         '-Vn{0}'.format(shader_name),
         '-Vi',
@@ -96,9 +97,10 @@ def run_fxc(shader_model,
 
     deps = None
     with ScopedTempFilename() as temp_filename:
-        argv += ['-Fh{0}'.format(temp_filename)]
+        argv += ['-Fh{0}'.format(os.path.relpath(temp_filename))]
 
         sys.stdout.write('{0}\n'.format(' '.join(argv)))
+        sys.stdout.flush()
         proc_stdout = subprocess.check_output(argv)
         proc_stdout = decode_console_text(sys.stdout, proc_stdout)
         deps = find_dependencies(proc_stdout)
@@ -126,6 +128,10 @@ def find_dependencies(fxc_output):
             continue
         dep_path = m.group(1)
         dep_path = os.path.normpath(dep_path)
+        # When run via Wine, FXC's output contains Windows paths on the Z drive.
+        # We want to normalize them back to unix paths for the build system.
+        if 'Linux' in buildconfig.substs['HOST_OS_ARCH'] and dep_path.lower().startswith('z:'):
+            dep_path = dep_path[2:].replace('\\', '/')
         if os.path.isfile(dep_path):
             deps.add(dep_path)
     return deps
@@ -154,7 +160,7 @@ class ScopedTempFilename(object):
         self.name = None
 
     def __enter__(self):
-        with tempfile.NamedTemporaryFile(delete=False) as tmp:
+        with tempfile.NamedTemporaryFile(dir=os.getcwd(), delete=False) as tmp:
             self.name = tmp.name
             return self.name
 

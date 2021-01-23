@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Cofnod Hidl">
+<!ENTITY viewLogInfo.text "Mae'r Cofnod Hidl yn cofnodi'r hidlau sydd wedi'u rhedeg ar y cyfrif. Defnyddiwch y blwch ticio isod i alluogi cofnodi.">
+<!ENTITY clearLog.label "Clirio'r Cofnod">
+<!ENTITY clearLog.accesskey "C">
+<!ENTITY enableLog.label "Galluogi Cofnod Hidl">
+<!ENTITY enableLog.accesskey "G">
+<!ENTITY closeLog.label "Cau">
+<!ENTITY closeLog.accesskey "u">

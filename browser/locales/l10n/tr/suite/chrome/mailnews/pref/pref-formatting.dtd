@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.formatting.title "İleti biçemi">
+<!ENTITY sendMaildesc.label "When sending formatted (HTML) messages and one or more recipients are not listed as being able to receive HTML:">
+<!ENTITY askMe.label "Ask me what to do (Mail prompts you to choose a format)">
+<!ENTITY askMe.accesskey "k">
+<!ENTITY convertPlain.label "Convert the message to plain text (some formatting may be lost)">
+<!ENTITY convertPlain.accesskey "C">
+<!ENTITY sendHTML.label "Send the message as formatted text (HTML) anyway (some mail programs may not be able to display it)">
+<!ENTITY sendHTML.accesskey "S">
+<!ENTITY sendBoth.label "Send the message in both plain text and HTML (larger message size)">
+<!ENTITY sendBoth.accesskey "n">
+<!ENTITY override.label "You can override these settings for individual messages by using the Options menu while composing a message.">
+<!-- Html and Plain Text Domains  -->
+
+<!ENTITY domain.title "HTML and Plain Text Domains">
+<!ENTITY domaindesc.label "When you send a message to an address with one of the domain names listed below, Mail automatically sends the message in the preferred format (formatted text or plain text).">
+<!ENTITY HTMLdomaintitle.label "HTML alan adları">
+<!ENTITY HTMLdomaintitle.accesskey "H">
+<!ENTITY PlainTexttitle.label "Düz metin alan adları">
+<!ENTITY PlainTexttitle.accesskey "z">
+<!ENTITY AddButton.label "Ekle…">
+<!ENTITY AddHtmlDomain.accesskey "E">
+<!ENTITY AddPlainText.accesskey "k">
+<!ENTITY DeleteButton.label "Sil">
+<!ENTITY DeleteHtmlDomain.accesskey "S">
+<!ENTITY DeletePlainText.accesskey "i">
+<!-- Add Domain Name -->
+
+<!ENTITY add.htmltitle "HTML alan adı ekle">
+<!ENTITY add.htmldomain "HTML alan adı:">
+<!ENTITY add.plaintexttitle "Düz metin alan adı ekle">
+<!ENTITY add.plaintextdomain "Düz metin alan adı:">
+
+<!ENTITY domainnameError.title "Alan adı hatası">
+<!-- LOCALIZATION NOTE: do not translate @string@ -->
+<!ENTITY invalidEntryError.label "The domain name @string@ is invalid and will be ignored. Valid domain names must include at least one '.' and characters on either side of it.">

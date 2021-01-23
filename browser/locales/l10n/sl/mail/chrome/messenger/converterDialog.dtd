@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY converterDialog.title "Pretvornik vrste shrambe sporočil">
+<!ENTITY converterDialog.continueButton "Nadaljuj">
+<!ENTITY converterDialog.cancelButton "Prekliči">
+<!ENTITY converterDialog.finishButton "Končaj">
+<!ENTITY converterDialog.complete "Pretvorba je dokončana. &brandShortName; se bo sedaj znova zagnal.">
+<!ENTITY converterDialog.error "Pretvorba ni uspela.">
+

@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Уласцівасці кнопкі">
+<!ENTITY Settings.label "Наладжванні">
+<!ENTITY ButtonType.label "Тып">
+<!ENTITY ButtonType.accesskey "Т">
+<!ENTITY submit.value "Падача">
+<!ENTITY reset.value "Узнавіць">
+<!ENTITY button.value "Кнопка">
+<!ENTITY ButtonName.label "Назва:">
+<!ENTITY ButtonName.accesskey "Н">
+<!ENTITY ButtonValue.label "Значэнне:">
+<!ENTITY ButtonValue.accesskey "З">
+<!ENTITY tabIndex.label "Паказальнік зруху:">
+<!ENTITY tabIndex.accesskey "р">
+<!ENTITY ButtonDisabled.label "Забаронены">
+<!ENTITY ButtonDisabled.accesskey "З">
+<!ENTITY AccessKey.label "Клавіша доступу:">
+<!ENTITY AccessKey.accesskey "К">
+<!ENTITY RemoveButton.label "Выдаліць кнопку">
+<!ENTITY RemoveButton.accesskey "д">

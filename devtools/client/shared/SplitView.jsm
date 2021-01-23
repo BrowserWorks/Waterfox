@@ -1,4 +1,3 @@
-/* vim:set ts=2 sw=2 sts=2 et: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -8,7 +7,7 @@
 const { require } = ChromeUtils.import("resource://devtools/shared/Loader.jsm");
 const { KeyCodes } = require("devtools/client/shared/keycodes");
 
-this.EXPORTED_SYMBOLS = ["SplitView"];
+const EXPORTED_SYMBOLS = ["SplitView"];
 
 /* this must be kept in sync with CSS (ie. splitview.css) */
 const LANDSCAPE_MEDIA_QUERY = "(min-width: 701px)";
@@ -28,7 +27,7 @@ var bindings = new WeakMap();
  * @param DOMElement aRoot
  * @see appendItem
  */
-this.SplitView = function SplitView(aRoot) {
+function SplitView(aRoot) {
   this._root = aRoot;
   this._controller = aRoot.querySelector(".splitview-controller");
   this._nav = aRoot.querySelector(".splitview-nav");
@@ -51,7 +50,6 @@ this.SplitView = function SplitView(aRoot) {
     if (
       aEvent.target.ownerDocument != this._nav.ownerDocument ||
       aEvent.target.tagName == "input" ||
-      aEvent.target.tagName == "textbox" ||
       aEvent.target.tagName == "textarea" ||
       aEvent.target.classList.contains("textbox")
     ) {
@@ -90,7 +88,7 @@ this.SplitView = function SplitView(aRoot) {
       return false;
     }
   });
-};
+}
 
 SplitView.prototype = {
   /**

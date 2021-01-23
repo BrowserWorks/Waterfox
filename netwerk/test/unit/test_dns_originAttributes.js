@@ -1,3 +1,5 @@
+"use strict";
+
 var dns = Cc["@mozilla.org/network/dns-service;1"].getService(Ci.nsIDNSService);
 var threadManager = Cc["@mozilla.org/thread-manager;1"].getService(
   Ci.nsIThreadManager
@@ -5,7 +7,7 @@ var threadManager = Cc["@mozilla.org/thread-manager;1"].getService(
 var mainThread = threadManager.currentThread;
 
 var listener1 = {
-  onLookupComplete: function(inRequest, inRecord, inStatus) {
+  onLookupComplete(inRequest, inRecord, inStatus) {
     Assert.equal(inStatus, Cr.NS_OK);
     var answer = inRecord.getNextAddrAsString();
     Assert.ok(answer == "127.0.0.1" || answer == "::1");
@@ -15,7 +17,7 @@ var listener1 = {
 };
 
 var listener2 = {
-  onLookupComplete: function(inRequest, inRecord, inStatus) {
+  onLookupComplete(inRequest, inRecord, inStatus) {
     Assert.equal(inStatus, Cr.NS_OK);
     var answer = inRecord.getNextAddrAsString();
     Assert.ok(answer == "127.0.0.1" || answer == "::1");
@@ -25,7 +27,7 @@ var listener2 = {
 };
 
 var listener3 = {
-  onLookupComplete: function(inRequest, inRecord, inStatus) {
+  onLookupComplete(inRequest, inRecord, inStatus) {
     Assert.equal(inStatus, Cr.NS_ERROR_OFFLINE);
     do_test_finished();
   },

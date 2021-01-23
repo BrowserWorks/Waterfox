@@ -1,46 +1,26 @@
-// |jit-test| skip-if: wasmReftypesEnabled()
+// |jit-test| skip-if: wasmReftypesEnabled() || wasmGcEnabled()
 
 const { CompileError, validate } = WebAssembly;
 
-const UNRECOGNIZED_OPCODE_OR_BAD_TYPE = /unrecognized opcode|(Structure|reference) types not enabled|invalid inline block type|bad type/;
+const UNRECOGNIZED_OPCODE_OR_BAD_TYPE = /unrecognized opcode|(Structure|reference) types not enabled|invalid inline block type|bad type|Cranelift error in clifFunc/;
 
 let simpleTests = [
-    "(module (func (drop (ref.null))))",
+    "(module (func (drop (ref.null extern))))",
     "(module (func $test (local anyref)))",
     "(module (func $test (param anyref)))",
-    "(module (func $test (result anyref) (ref.null)))",
-    "(module (func $test (block anyref (unreachable)) unreachable))",
-    "(module (func $test (local anyref) (result i32) (ref.is_null (local.get 0))))",
-    `(module (import "a" "b" (param anyref)))`,
-    `(module (import "a" "b" (result anyref)))`,
+    "(module (func $test (result anyref) (ref.null extern)))",
+    "(module (func $test (block (result anyref) (unreachable)) unreachable))",
+    "(module (func $test (result i32) (local anyref) (ref.is_null extern (local.get 0))))",
+    `(module (import "a" "b" (func (param anyref))))`,
+    `(module (import "a" "b" (func (result anyref))))`,
     `(module (type $s (struct)))`,
 ];
 
-// Two distinct failure modes:
-//
-// - if we have no compiled-in support for wasm-gc we'll get a syntax error when
-//   parsing the test programs that use ref types and structures.
-//
-// - if we have compiled-in support for wasm-gc, then there are several cases
-//   encapsulated in wasmCompilationShouldFail().
-//
-// But it should always be all of one type of failure or or all of the other.
+// Test that use of reference-types or structs fails when
+// reference-types is disabled.
 
-var fail_syntax = 0;
-var fail_compile = 0;
 for (let src of simpleTests) {
-    let bin = null;
-    try {
-        bin = wasmTextToBinary(src);
-    } catch (e) {
-        assertEq(e instanceof SyntaxError, true);
-        fail_syntax++;
-        continue;
-    }
-
+    let bin = wasmTextToBinary(src);
     assertEq(validate(bin), false);
     wasmCompilationShouldFail(bin, UNRECOGNIZED_OPCODE_OR_BAD_TYPE);
-
-    fail_compile++;
 }
-assertEq((fail_syntax == 0) != (fail_compile == 0), true);

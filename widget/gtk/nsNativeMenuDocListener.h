@@ -11,7 +11,7 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/GuardObjects.h"
 #include "mozilla/RefPtr.h"
-#include "nsAutoPtr.h"
+#include "mozilla/UniquePtr.h"
 #include "nsDataHashtable.h"
 #include "nsStubMutationObserver.h"
 #include "nsTArray.h"
@@ -122,7 +122,7 @@ private:
     mozilla::dom::Document *mDocument;
     nsIContent *mLastSource;
     nsNativeMenuChangeObserver *mLastTarget;
-    nsTArray<nsAutoPtr<MutationRecord> > mPendingMutations;
+    nsTArray<mozilla::UniquePtr<MutationRecord> > mPendingMutations;
     nsDataHashtable<nsPtrHashKey<nsIContent>, nsNativeMenuChangeObserver *> mContentToObserverTable;
 
     static uint32_t sUpdateBlockersCount;

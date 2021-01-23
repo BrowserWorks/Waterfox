@@ -54,6 +54,11 @@ static const int NCPUS_START = sizeof(unsigned long) * CHAR_BIT;
     #include <sys/resource.h>
 #endif
 
+// Should exist starting from CentOS 6 (year 2011).
+#ifdef CPU_ALLOC
+    #define PSUTIL_HAVE_CPU_AFFINITY
+#endif
+
 #include "_psutil_common.h"
 #include "_psutil_posix.h"
 
@@ -92,9 +97,9 @@ ioprio_set(int which, int who, int ioprio) {
  */
 static PyObject *
 psutil_proc_ioprio_get(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     int ioprio, ioclass, iodata;
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     ioprio = ioprio_get(IOPRIO_WHO_PROCESS, pid);
     if (ioprio == -1)
@@ -112,12 +117,14 @@ psutil_proc_ioprio_get(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_ioprio_set(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     int ioprio, ioclass, iodata;
     int retval;
 
-    if (! PyArg_ParseTuple(args, "lii", &pid, &ioclass, &iodata))
+    if (! PyArg_ParseTuple(
+            args, _Py_PARSE_PID "ii", &pid, &ioclass, &iodata)) {
         return NULL;
+    }
     ioprio = IOPRIO_PRIO_VALUE(ioclass, iodata);
     retval = ioprio_set(IOPRIO_WHO_PROCESS, pid, ioprio);
     if (retval == -1)
@@ -135,15 +142,17 @@ psutil_proc_ioprio_set(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_linux_prlimit(PyObject *self, PyObject *args) {
-    long pid;
+    pid_t pid;
     int ret, resource;
     struct rlimit old, new;
     struct rlimit *newp = NULL;
     PyObject *py_soft = NULL;
     PyObject *py_hard = NULL;
 
-    if (! PyArg_ParseTuple(args, "li|OO", &pid, &resource, &py_soft, &py_hard))
+    if (! PyArg_ParseTuple(args, _Py_PARSE_PID "i|OO", &pid, &resource,
+                           &py_soft, &py_hard)) {
         return NULL;
+    }
 
     // get
     if (py_soft == NULL && py_hard == NULL) {
@@ -195,6 +204,7 @@ static PyObject *
 psutil_disk_partitions(PyObject *self, PyObject *args) {
     FILE *file = NULL;
     struct mntent *entry;
+    char *mtab_path;
     PyObject *py_dev = NULL;
     PyObject *py_mountp = NULL;
     PyObject *py_tuple = NULL;
@@ -203,12 +213,15 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
-    // MOUNTED constant comes from mntent.h and it's == '/etc/mtab'
+    if (!PyArg_ParseTuple(args, "s", &mtab_path))
+        return NULL;
+
     Py_BEGIN_ALLOW_THREADS
-    file = setmntent(MOUNTED, "r");
+    file = setmntent(mtab_path, "r");
     Py_END_ALLOW_THREADS
     if ((file == 0) || (file == NULL)) {
-        PyErr_SetFromErrnoWithFilename(PyExc_OSError, MOUNTED);
+        psutil_debug("setmntent() failed");
+        PyErr_SetFromErrnoWithFilename(PyExc_OSError, mtab_path);
         goto error;
     }
 
@@ -232,9 +245,9 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
-        Py_DECREF(py_dev);
-        Py_DECREF(py_mountp);
-        Py_DECREF(py_tuple);
+        Py_CLEAR(py_dev);
+        Py_CLEAR(py_mountp);
+        Py_CLEAR(py_tuple);
     }
     endmntent(file);
     return py_retlist;
@@ -275,28 +288,27 @@ psutil_linux_sysinfo(PyObject *self, PyObject *args) {
 
 /*
  * Return process CPU affinity as a Python list
- * The dual implementation exists because of:
- * https://github.com/giampaolo/psutil/issues/536
  */
-
-#ifdef CPU_ALLOC
+#ifdef PSUTIL_HAVE_CPU_AFFINITY
 
 static PyObject *
 psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
     int cpu, ncpus, count, cpucount_s;
-    long pid;
+    pid_t pid;
     size_t setsize;
     cpu_set_t *mask = NULL;
     PyObject *py_list = NULL;
 
-    if (!PyArg_ParseTuple(args, "l", &pid))
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID, &pid))
         return NULL;
     ncpus = NCPUS_START;
     while (1) {
         setsize = CPU_ALLOC_SIZE(ncpus);
         mask = CPU_ALLOC(ncpus);
-        if (mask == NULL)
+        if (mask == NULL) {
+            psutil_debug("CPU_ALLOC() failed");
             return PyErr_NoMemory();
+        }
         if (sched_getaffinity(pid, setsize, mask) == 0)
             break;
         CPU_FREE(mask);
@@ -341,49 +353,7 @@ error:
     Py_XDECREF(py_list);
     return NULL;
 }
-#else
 
-
-/*
- * Alternative implementation in case CPU_ALLOC is not defined.
- */
-static PyObject *
-psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
-    cpu_set_t cpuset;
-    unsigned int len = sizeof(cpu_set_t);
-    long pid;
-    int i;
-    PyObject* py_retlist = NULL;
-    PyObject *py_cpu_num = NULL;
-
-    if (!PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-	CPU_ZERO(&cpuset);
-    if (sched_getaffinity(pid, len, &cpuset) < 0)
-        return PyErr_SetFromErrno(PyExc_OSError);
-
-    py_retlist = PyList_New(0);
-    if (py_retlist == NULL)
-        goto error;
-    for (i = 0; i < CPU_SETSIZE; ++i) {
-        if (CPU_ISSET(i, &cpuset)) {
-            py_cpu_num = Py_BuildValue("i", i);
-            if (py_cpu_num == NULL)
-                goto error;
-            if (PyList_Append(py_retlist, py_cpu_num))
-                goto error;
-            Py_DECREF(py_cpu_num);
-        }
-    }
-
-    return py_retlist;
-
-error:
-    Py_XDECREF(py_cpu_num);
-    Py_XDECREF(py_retlist);
-    return NULL;
-}
-#endif
 
 /*
  * Set process CPU affinity; expects a bitmask
@@ -392,12 +362,12 @@ static PyObject *
 psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
     cpu_set_t cpu_set;
     size_t len;
-    long pid;
+    pid_t pid;
     int i, seq_len;
     PyObject *py_cpu_set;
     PyObject *py_cpu_seq = NULL;
 
-    if (!PyArg_ParseTuple(args, "lO", &pid, &py_cpu_set))
+    if (!PyArg_ParseTuple(args, _Py_PARSE_PID "O", &pid, &py_cpu_set))
         return NULL;
 
     if (!PySequence_Check(py_cpu_set)) {
@@ -426,7 +396,6 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
         CPU_SET(value, &cpu_set);
     }
 
-
     len = sizeof(cpu_set);
     if (sched_setaffinity(pid, len, &cpu_set)) {
         PyErr_SetFromErrno(PyExc_OSError);
@@ -441,6 +410,7 @@ error:
         Py_DECREF(py_cpu_seq);
     return NULL;
 }
+#endif  /* PSUTIL_HAVE_CPU_AFFINITY */
 
 
 /*
@@ -475,8 +445,9 @@ psutil_users(PyObject *self, PyObject *args) {
         py_hostname = PyUnicode_DecodeFSDefault(ut->ut_host);
         if (! py_hostname)
             goto error;
+
         py_tuple = Py_BuildValue(
-            "(OOOfOi)",
+            "OOOfO" _Py_PARSE_PID,
             py_username,              // username
             py_tty,                   // tty
             py_hostname,              // hostname
@@ -488,10 +459,10 @@ psutil_users(PyObject *self, PyObject *args) {
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
-        Py_DECREF(py_username);
-        Py_DECREF(py_tty);
-        Py_DECREF(py_hostname);
-        Py_DECREF(py_tuple);
+        Py_CLEAR(py_username);
+        Py_CLEAR(py_tty);
+        Py_CLEAR(py_hostname);
+        Py_CLEAR(py_tuple);
     }
     endutent();
     return py_retlist;
@@ -529,7 +500,7 @@ psutil_net_if_duplex_speed(PyObject* self, PyObject* args) {
 
     sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock == -1)
-        goto error;
+        return PyErr_SetFromOSErrnoWithSyscall("socket()");
     strncpy(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
 
     // duplex and speed
@@ -552,28 +523,29 @@ psutil_net_if_duplex_speed(PyObject* self, PyObject* args) {
             speed = 0;
         }
         else {
+            PyErr_SetFromOSErrnoWithSyscall("ioctl(SIOCETHTOOL)");
             goto error;
         }
     }
 
-    close(sock);
     py_retlist = Py_BuildValue("[ii]", duplex, speed);
     if (!py_retlist)
         goto error;
+    close(sock);
     return py_retlist;
 
 error:
     if (sock != -1)
         close(sock);
-    return PyErr_SetFromErrno(PyExc_OSError);
+    return NULL;
 }
 
 
 /*
- * Define the psutil C module methods and initialize the module.
+ * Module init.
  */
-static PyMethodDef
-PsutilMethods[] = {
+
+static PyMethodDef mod_methods[] = {
     // --- per-process functions
 
 #if PSUTIL_HAVE_IOPRIO
@@ -582,10 +554,12 @@ PsutilMethods[] = {
     {"proc_ioprio_set", psutil_proc_ioprio_set, METH_VARARGS,
      "Set process I/O priority"},
 #endif
+#ifdef PSUTIL_HAVE_CPU_AFFINITY
     {"proc_cpu_affinity_get", psutil_proc_cpu_affinity_get, METH_VARARGS,
      "Return process CPU affinity as a Python long (the bitmask)."},
     {"proc_cpu_affinity_set", psutil_proc_cpu_affinity_set, METH_VARARGS,
      "Set process CPU affinity; expects a bitmask."},
+#endif
 
     // --- system related functions
 
@@ -605,7 +579,6 @@ PsutilMethods[] = {
     {"linux_prlimit", psutil_linux_prlimit, METH_VARARGS,
      "Get or set process resource limits."},
 #endif
-
     // --- others
     {"set_testing", psutil_set_testing, METH_NOARGS,
      "Set psutil in testing mode"},
@@ -613,73 +586,51 @@ PsutilMethods[] = {
     {NULL, NULL, 0, NULL}
 };
 
-struct module_state {
-    PyObject *error;
-};
 
 #if PY_MAJOR_VERSION >= 3
-#define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
-#else
-#define GETSTATE(m) (&_state)
-#endif
+    #define INITERR return NULL
 
-#if PY_MAJOR_VERSION >= 3
+    static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "_psutil_linux",
+        NULL,
+        -1,
+        mod_methods,
+        NULL,
+        NULL,
+        NULL,
+        NULL
+    };
 
-static int
-psutil_linux_traverse(PyObject *m, visitproc visit, void *arg) {
-    Py_VISIT(GETSTATE(m)->error);
-    return 0;
-}
+    PyObject *PyInit__psutil_linux(void)
+#else  /* PY_MAJOR_VERSION */
+    #define INITERR return
 
-static int
-psutil_linux_clear(PyObject *m) {
-    Py_CLEAR(GETSTATE(m)->error);
-    return 0;
-}
-
-static struct PyModuleDef
-        moduledef = {
-    PyModuleDef_HEAD_INIT,
-    "psutil_linux",
-    NULL,
-    sizeof(struct module_state),
-    PsutilMethods,
-    NULL,
-    psutil_linux_traverse,
-    psutil_linux_clear,
-    NULL
-};
-
-#define INITERROR return NULL
-
-PyMODINIT_FUNC PyInit__psutil_linux(void)
-
-#else
-#define INITERROR return
-
-void init_psutil_linux(void)
-#endif
+    void init_psutil_linux(void)
+#endif  /* PY_MAJOR_VERSION */
 {
     PyObject *v;
 #if PY_MAJOR_VERSION >= 3
-    PyObject *module = PyModule_Create(&moduledef);
+    PyObject *mod = PyModule_Create(&moduledef);
 #else
-    PyObject *module = Py_InitModule("_psutil_linux", PsutilMethods);
+    PyObject *mod = Py_InitModule("_psutil_linux", mod_methods);
 #endif
+    if (mod == NULL)
+        INITERR;
 
-    PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
+    if (PyModule_AddIntConstant(mod, "version", PSUTIL_VERSION)) INITERR;
 #if PSUTIL_HAVE_PRLIMIT
-    PyModule_AddIntConstant(module, "RLIMIT_AS", RLIMIT_AS);
-    PyModule_AddIntConstant(module, "RLIMIT_CORE", RLIMIT_CORE);
-    PyModule_AddIntConstant(module, "RLIMIT_CPU", RLIMIT_CPU);
-    PyModule_AddIntConstant(module, "RLIMIT_DATA", RLIMIT_DATA);
-    PyModule_AddIntConstant(module, "RLIMIT_FSIZE", RLIMIT_FSIZE);
-    PyModule_AddIntConstant(module, "RLIMIT_LOCKS", RLIMIT_LOCKS);
-    PyModule_AddIntConstant(module, "RLIMIT_MEMLOCK", RLIMIT_MEMLOCK);
-    PyModule_AddIntConstant(module, "RLIMIT_NOFILE", RLIMIT_NOFILE);
-    PyModule_AddIntConstant(module, "RLIMIT_NPROC", RLIMIT_NPROC);
-    PyModule_AddIntConstant(module, "RLIMIT_RSS", RLIMIT_RSS);
-    PyModule_AddIntConstant(module, "RLIMIT_STACK", RLIMIT_STACK);
+    if (PyModule_AddIntConstant(mod, "RLIMIT_AS", RLIMIT_AS)) INITERR;
+    if (PyModule_AddIntConstant(mod, "RLIMIT_CORE", RLIMIT_CORE)) INITERR;
+    if (PyModule_AddIntConstant(mod, "RLIMIT_CPU", RLIMIT_CPU)) INITERR;
+    if (PyModule_AddIntConstant(mod, "RLIMIT_DATA", RLIMIT_DATA)) INITERR;
+    if (PyModule_AddIntConstant(mod, "RLIMIT_FSIZE", RLIMIT_FSIZE)) INITERR;
+    if (PyModule_AddIntConstant(mod, "RLIMIT_LOCKS", RLIMIT_LOCKS)) INITERR;
+    if (PyModule_AddIntConstant(mod, "RLIMIT_MEMLOCK", RLIMIT_MEMLOCK)) INITERR;
+    if (PyModule_AddIntConstant(mod, "RLIMIT_NOFILE", RLIMIT_NOFILE)) INITERR;
+    if (PyModule_AddIntConstant(mod, "RLIMIT_NPROC", RLIMIT_NPROC)) INITERR;
+    if (PyModule_AddIntConstant(mod, "RLIMIT_RSS", RLIMIT_RSS)) INITERR;
+    if (PyModule_AddIntConstant(mod, "RLIMIT_STACK", RLIMIT_STACK)) INITERR;
 
 #if defined(HAVE_LONG_LONG)
     if (sizeof(RLIM_INFINITY) > sizeof(long)) {
@@ -690,34 +641,33 @@ void init_psutil_linux(void)
         v = PyLong_FromLong((long) RLIM_INFINITY);
     }
     if (v) {
-        PyModule_AddObject(module, "RLIM_INFINITY", v);
+        PyModule_AddObject(mod, "RLIM_INFINITY", v);
     }
 
 #ifdef RLIMIT_MSGQUEUE
-    PyModule_AddIntConstant(module, "RLIMIT_MSGQUEUE", RLIMIT_MSGQUEUE);
+    if (PyModule_AddIntConstant(mod, "RLIMIT_MSGQUEUE", RLIMIT_MSGQUEUE)) INITERR;
 #endif
 #ifdef RLIMIT_NICE
-    PyModule_AddIntConstant(module, "RLIMIT_NICE", RLIMIT_NICE);
+    if (PyModule_AddIntConstant(mod, "RLIMIT_NICE", RLIMIT_NICE)) INITERR;
 #endif
 #ifdef RLIMIT_RTPRIO
-    PyModule_AddIntConstant(module, "RLIMIT_RTPRIO", RLIMIT_RTPRIO);
+    if (PyModule_AddIntConstant(mod, "RLIMIT_RTPRIO", RLIMIT_RTPRIO)) INITERR;
 #endif
 #ifdef RLIMIT_RTTIME
-    PyModule_AddIntConstant(module, "RLIMIT_RTTIME", RLIMIT_RTTIME);
+    if (PyModule_AddIntConstant(mod, "RLIMIT_RTTIME", RLIMIT_RTTIME)) INITERR;
 #endif
 #ifdef RLIMIT_SIGPENDING
-    PyModule_AddIntConstant(module, "RLIMIT_SIGPENDING", RLIMIT_SIGPENDING);
+    if (PyModule_AddIntConstant(mod, "RLIMIT_SIGPENDING", RLIMIT_SIGPENDING))
+        INITERR;
 #endif
 #endif
-    PyModule_AddIntConstant(module, "DUPLEX_HALF", DUPLEX_HALF);
-    PyModule_AddIntConstant(module, "DUPLEX_FULL", DUPLEX_FULL);
-    PyModule_AddIntConstant(module, "DUPLEX_UNKNOWN", DUPLEX_UNKNOWN);
+    if (PyModule_AddIntConstant(mod, "DUPLEX_HALF", DUPLEX_HALF)) INITERR;
+    if (PyModule_AddIntConstant(mod, "DUPLEX_FULL", DUPLEX_FULL)) INITERR;
+    if (PyModule_AddIntConstant(mod, "DUPLEX_UNKNOWN", DUPLEX_UNKNOWN)) INITERR;
 
-    psutil_setup();
-
-    if (module == NULL)
-        INITERROR;
+    if (mod == NULL)
+        INITERR;
 #if PY_MAJOR_VERSION >= 3
-    return module;
+    return mod;
 #endif
 }

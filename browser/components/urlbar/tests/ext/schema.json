@@ -1,0 +1,22 @@
+[
+  {
+    "namespace": "experiments.urlbar",
+    "description": "APIs supporting urlbar experiments",
+    "types": [],
+    "properties": {
+      "engagementTelemetry": {
+        "$ref": "types.Setting",
+        "description": "Enables or disables the engagement telemetry for the current browser session."
+      }
+    },
+    "functions": [
+      {
+        "name": "clearInput",
+        "type": "function",
+        "async": true,
+        "description": "Sets urlbar.value to the empty string and the pageproxystate to invalid.",
+        "parameters": []
+      }
+    ]
+  }
+]

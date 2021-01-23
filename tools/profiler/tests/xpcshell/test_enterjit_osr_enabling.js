@@ -7,7 +7,7 @@ function run_test() {
 
   // The function is entered with the profiler disabled.
   (function() {
-    Services.profiler.StartProfiler(100, 10, ["js"], 1);
+    Services.profiler.StartProfiler(100, 10, ["js"]);
     let n = 10000;
     // eslint-disable-next-line no-empty
     while (--n) {} // OSR happens here with the profiler enabled.

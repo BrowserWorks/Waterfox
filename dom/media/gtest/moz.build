@@ -6,6 +6,7 @@
 
 include('/media/webrtc/webrtc.mozbuild')
 
+DEFINES['ENABLE_SET_CUBEB_BACKEND'] = True
 
 LOCAL_INCLUDES += [
     '/media/webrtc/signaling/src/common',
@@ -14,6 +15,7 @@ LOCAL_INCLUDES += [
 ]
 
 UNIFIED_SOURCES += [
+    'AudioGenerator.cpp',
     'MockMediaResource.cpp',
     'TestAudioBuffers.cpp',
     'TestAudioCallbackDriver.cpp',
@@ -22,20 +24,26 @@ UNIFIED_SOURCES += [
     'TestAudioPacketizer.cpp',
     'TestAudioSegment.cpp',
     'TestAudioTrackEncoder.cpp',
+    'TestAudioTrackGraph.cpp',
+    'TestBenchmarkStorage.cpp',
     'TestBitWriter.cpp',
     'TestBlankVideoDataCreator.cpp',
     'TestBufferReader.cpp',
     'TestDataMutex.cpp',
+    'TestDecoderBenchmark.cpp',
     'TestDriftCompensation.cpp',
     'TestGMPUtils.cpp',
     'TestGroupId.cpp',
     'TestIntervalSet.cpp',
+    'TestKeyValueStorage.cpp',
     'TestMediaDataDecoder.cpp',
     'TestMediaDataEncoder.cpp',
     'TestMediaEventSource.cpp',
     'TestMediaMIMETypes.cpp',
+    'TestMediaSpan.cpp',
     'TestMP3Demuxer.cpp',
     'TestMP4Demuxer.cpp',
+    'TestMuxer.cpp',
     'TestOpusParser.cpp',
     'TestRust.cpp',
     'TestTimeUnit.cpp',
@@ -110,8 +118,8 @@ FINAL_LIBRARY = 'xul-gtest'
 if CONFIG['CC_TYPE'] in ('clang', 'gcc'):
     CXXFLAGS += ['-Wno-error=shadow']
 
-if CONFIG['CC_TYPE'] == 'clang':
-    CXXFLAGS += ['-Wno-unused-private-field']
-
-if CONFIG['CC_TYPE'] == 'clang-cl':
-    AllowCompilerWarnings()  # workaround for bug 1090497
+if CONFIG['CC_TYPE'] in ('clang', 'clang-cl'):
+    CXXFLAGS += [
+        '-Wno-inconsistent-missing-override',
+        '-Wno-unused-private-field',
+    ]

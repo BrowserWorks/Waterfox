@@ -21,23 +21,7 @@ class Image;
 
 class AppleVTEncoder final : public MediaDataEncoder {
  public:
-  using Config = VideoConfig<H264Specific>;
-
-  struct FrameParams {
-    using TimeUnit = media::TimeUnit;
-
-    const gfx::IntSize mSize;
-    const TimeUnit mDecodeTime;
-    const TimeUnit mTimestamp;
-    const bool mIsKey;
-
-    FrameParams(gfx::IntSize aSize, TimeUnit aDecodeTime, TimeUnit aTimestamp,
-                bool aIsKey)
-        : mSize(aSize),
-          mDecodeTime(aDecodeTime),
-          mTimestamp(aTimestamp),
-          mIsKey(aIsKey) {}
-  };
+  using Config = H264Config;
 
   AppleVTEncoder(const Config& aConfig, RefPtr<TaskQueue> aTaskQueue)
       : mConfig(aConfig),

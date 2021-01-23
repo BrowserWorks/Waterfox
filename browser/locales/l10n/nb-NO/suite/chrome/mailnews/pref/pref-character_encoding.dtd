@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.character.encoding2.title  "Tekstkoding">
+<!ENTITY messageDisplay.caption          "Meldingsvisning">
+<!ENTITY viewFallbackCharset2.label      "Reserve-tekstkoding:">
+<!ENTITY viewFallbackCharset2.accesskey  "e">
+<!ENTITY viewFallbackCharset.desc        "(Brukt for legacy-innhold som ikke oppgir noen tegnkoding.)">
+
+<!ENTITY composingMessages.caption       "Meldingsskriving">
+<!ENTITY useMIME.label                   "Bruk «quoted printable» MIME-koding for meldinger som bruker 8-bit tegn. La være tom for å sende meldingen som den er.">
+<!ENTITY useMIME.accesskey               "B">
+<!ENTITY sendDefaultCharset2.label       "Standard tekstkoding:">
+<!ENTITY sendDefaultCharset2.accesskey   "t">
+<!ENTITY replyInDefaultCharset3.label    "Når det er mulig, bruk denne standardtekstkodingen i svar. (Når ikke valgt, bruker bare nye meldinger denne standarden.)">
+<!ENTITY replyInDefaultCharset3.accesskey "m">

@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Преузимања">
+<!ENTITY aboutDownloads.header                     "Ваша преузимања">
+<!ENTITY aboutDownloads.empty                      "Ништа није преузето">
+
+<!ENTITY aboutDownloads.open                       "Отвори">
+<!ENTITY aboutDownloads.remove                     "Избриши ставку">
+<!ENTITY aboutDownloads.removeAll                  "Избриши све">
+<!ENTITY aboutDownloads.pause                      "Пауза">
+<!ENTITY aboutDownloads.resume                     "Настави">
+<!ENTITY aboutDownloads.cancel                     "Откажи">
+<!ENTITY aboutDownloads.retry                      "Покушај поново">

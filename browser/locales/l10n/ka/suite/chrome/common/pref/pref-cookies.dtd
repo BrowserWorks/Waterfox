@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.cookies.title             "ფუნთუშები">
+
+<!-- cookies -->
+
+<!ENTITY cookiePolicy.label             "ფუნთუშების მიღების წესები">
+
+<!ENTITY disableCookies.label           "ფუნთუშების შეზღუდვა">
+<!ENTITY disableCookies.accesskey       "შ">
+
+<!ENTITY accNo3rdPartyCookies.label     "ფუნთუშების მიღება, მხოლოდ მონახულებული საიტიდან (გარდა მესამე მხარის ფუნთუშების)">
+<!ENTITY accNo3rdPartyCookies.accesskey "მ">
+
+<!ENTITY acc3rdPartyVisited.label       "მესამე მხარის ფუნთუშების მიღება, მხოლოდ უკვე მონახულებული ვებსაიტებიდან">
+<!ENTITY acc3rdPartyVisited.accesskey   "v">
+
+<!ENTITY accAllCookies.label            "ყველა ფუნთუშის დაშვება">
+<!ENTITY accAllCookies.accesskey        "ყ">
+
+<!ENTITY cookieRetentionPolicy.label    "ფუნთუშების შენახვის ვადა">
+
+<!ENTITY acceptNormally.label           "მიღება ჩვეულებრივად">
+<!ENTITY acceptNormally.accesskey       "ჩ">
+
+<!ENTITY acceptForSession.label         "მიღება მხოლოდ მიმდინარე სეანსზე">
+<!ENTITY acceptForSession.accesskey     "ს">
+
+<!ENTITY acceptforNDays.label           "ფუნთუშების მიღების ვადა">
+<!ENTITY acceptforNDays.accesskey       "მ">
+<!ENTITY days.label                     "დღე">
+
+<!ENTITY manageCookies.label            "ფუნთუშების და საიტების მართვა">
+<!ENTITY manageCookiesDescription.label "საშუალებას გაძლევთ ნახოთ და მიუთითოთ ფუნთუშების მიღებისა და აკრძალვის პარამეტრები სხვადასხვა საიტისთვის. ეს პარამეტრები გადაფარავს არსებულებს.">
+
+<!ENTITY viewCookies.label              "ფუნთუშების მმართველი">
+<!ENTITY viewCookies.accesskey          "მ">
+

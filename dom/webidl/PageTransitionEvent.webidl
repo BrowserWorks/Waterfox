@@ -10,9 +10,12 @@
  * load/unload and saving/restoring a document from session history.
  */
 
-[Constructor(DOMString type, optional PageTransitionEventInit eventInitDict)]
+[Exposed=Window]
 interface PageTransitionEvent : Event
 {
+  constructor(DOMString type,
+              optional PageTransitionEventInit eventInitDict = {});
+
   /**
    * Set to true if the document has been or will be persisted across
    * firing of the event.  For example, if a document is being cached in

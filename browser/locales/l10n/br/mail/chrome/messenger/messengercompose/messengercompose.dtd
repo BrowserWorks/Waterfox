@@ -1,0 +1,336 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "Skridaozañ: (danvez ebet)">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label "Restr">
+<!ENTITY fileMenu.accesskey "R">
+<!ENTITY newMenu.label "Nevez">
+<!ENTITY newMenu.accesskey "N">
+<!ENTITY newMessage.label "Kemennadenn">
+<!ENTITY newMessage.key "M">
+<!ENTITY newMessageCmd2.key "N">
+<!ENTITY newMessage.accesskey "K">
+<!ENTITY newContact.label "Darempred ar c'harned chomlec'hioù…">
+<!ENTITY newContact.accesskey "c">
+<!ENTITY attachMenu.label "Kenstagañ">
+<!ENTITY attachMenu.accesskey "s">
+<!ENTITY attachFileCmd.label "Restr(où)…">
+<!ENTITY attachFileCmd.accesskey "R">
+<!ENTITY attachFileCmd.key "A">
+<!ENTITY attachCloudCmd.label "Filelink">
+<!ENTITY attachCloudCmd.accesskey "i">
+<!ENTITY attachPageCmd.label "Pajenn Internet …">
+<!ENTITY attachPageCmd.accesskey "n">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "Fichenn bersonel (vCard)">
+<!ENTITY attachVCardCmd.accesskey "b">
+<!ENTITY remindLater.label "Degas soñj din diwezhatoc'h">
+<!ENTITY remindLater.accesskey "d">
+<!ENTITY closeCmd.label "Serriñ">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "S">
+<!ENTITY saveCmd.label "Enrollañ">
+<!ENTITY saveCmd.key "S">
+<!ENTITY saveCmd.accesskey "n">
+<!ENTITY saveAsCmd.label "Enrollañ evel">
+<!ENTITY saveAsCmd.accesskey "E">
+<!ENTITY saveAsFileCmd.label "Restr…">
+<!ENTITY saveAsFileCmd.accesskey "R">
+<!ENTITY saveAsDraftCmd.label "Brouilhed">
+<!ENTITY saveAsDraftCmd.accesskey "d">
+<!ENTITY saveAsTemplateCmd.label "Patrom">
+<!ENTITY saveAsTemplateCmd.accesskey "P">
+<!ENTITY sendNowCmd.label "Kas diouzhtu">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "d">
+<!ENTITY sendLaterCmd.label "Kas diwezhatoc'h">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "a">
+<!ENTITY printSetupCmd.label "Pajennaozañ…">
+<!ENTITY printSetupCmd.accesskey "P">
+<!ENTITY printPreviewCmd.label "Alberz ar moullañ">
+<!ENTITY printPreviewCmd.accesskey "A">
+<!ENTITY printCmd.label "Moullañ…">
+<!ENTITY printCmd.key "P">
+<!ENTITY printCmd.accesskey "M">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label "Embann">
+<!ENTITY editMenu.accesskey "E">
+<!ENTITY undoCmd.label "Dizober">
+<!ENTITY undoCmd.key "Z">
+<!ENTITY undoCmd.accesskey "z">
+<!ENTITY redoCmd.label "Adober">
+<!ENTITY redoCmd.key "Y">
+<!ENTITY redoCmd.accesskey "r">
+<!ENTITY cutCmd.key "X">
+<!ENTITY copyCmd.key "C">
+<!ENTITY pasteCmd.key "V">
+<!ENTITY pasteNoFormattingCmd.key "V">
+<!ENTITY pasteAsQuotationCmd.key "o">
+<!ENTITY editRewrapCmd.accesskey "t">
+<!ENTITY deleteCmd.label "Dilemel">
+<!ENTITY deleteCmd.accesskey "D">
+<!ENTITY editRewrapCmd.label "Adtroc'hañ">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY renameAttachmentCmd.label "Adenvel ar c'henstagadur…">
+<!ENTITY renameAttachmentCmd.accesskey "e">
+<!ENTITY reorderAttachmentsCmd.label "Adurzhiañ ar c'henstagadurioù…">
+<!ENTITY reorderAttachmentsCmd.accesskey "s">
+<!ENTITY reorderAttachmentsCmd.key "x">
+<!ENTITY toggleAttachmentPaneCmd.label "Penel ar c'henstagadurioù">
+<!-- LOCALIZATION NOTE (toggleAttachmentPaneCmd.accesskey):
+     For better mnemonics, toggleAttachmentPaneCmd.accesskey should be the same
+     as attachments.accesskey. -->
+<!ENTITY toggleAttachmentPaneCmd.accesskey "m">
+<!ENTITY selectAllCmd.accesskey "a">
+<!ENTITY findBarCmd.label "Klask…">
+<!ENTITY findBarCmd.accesskey "K">
+<!ENTITY findBarCmd.key "F">
+<!ENTITY findReplaceCmd.label "Kavout hag amsaviñ…">
+<!ENTITY findReplaceCmd.accesskey "a">
+<!ENTITY findReplaceCmd.key "H">
+<!ENTITY findAgainCmd.label "Kavout c'hoazh">
+<!ENTITY findAgainCmd.accesskey "K">
+<!ENTITY findAgainCmd.key "G">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "Kavout an hini kent">
+<!ENTITY findPrevCmd.accesskey "v">
+<!ENTITY findPrevCmd.key "G">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+
+<!-- Reorder Attachment Panel -->
+<!ENTITY reorderAttachmentsPanel.label "Adurzhiañ ar c'henstagadurioù">
+<!ENTITY moveAttachmentTopPanelBtn.label "Dilec'hiañ d'ar c'hrec'h">
+<!ENTITY moveAttachmentUpPanelBtn.label "Davet ar c'hrec'h">
+<!ENTITY moveAttachmentBundleUpPanelBtn.label "Dilerc'hiañ pep-tra">
+<!ENTITY moveAttachmentDownPanelBtn.label "Kas en traoñ">
+<!ENTITY moveAttachmentBottomPanelBtn.label "Dilec'hiañ d'an traoñ">
+
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.Sort.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.Sort.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.Sort.AZ.label "Rummañ: A - Z">
+<!ENTITY sortAttachmentsPanelBtn.Sort.ZA.label "Rummañ: Z - A">
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.SortSelection.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.SortSelection.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.AZ.label "Rummañ an diuzad: A - Z">
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.ZA.label "Rummañ an diuzad: Z - A">
+<!ENTITY sortAttachmentsPanelBtn.key "y">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label "Gwelout">
+<!ENTITY viewMenu.accesskey "w">
+<!ENTITY viewToolbarsMenuNew.label "Barrennoù ostilhoù">
+<!ENTITY viewToolbarsMenuNew.accesskey "B">
+<!ENTITY menubarCmd.label "Barrenn lañser">
+<!ENTITY menubarCmd.accesskey "B">
+<!ENTITY showCompositionToolbarCmd.label "Barrenn ostilhoù ar posteloù">
+<!ENTITY showCompositionToolbarCmd.accesskey "B">
+<!ENTITY showFormattingBarCmd.label "Barrenn ostilhoù mentrezhañ">
+<!ENTITY showFormattingBarCmd.accesskey "r">
+<!ENTITY showTaskbarCmd.label "Barrenn stad">
+<!ENTITY showTaskbarCmd.accesskey "B">
+<!ENTITY customizeToolbar.label "Personelaat…">
+<!ENTITY customizeToolbar.accesskey "P">
+
+<!ENTITY addressSidebar.label "Barrenn-gostez an darempredoù">
+<!ENTITY addressSidebar.accesskey "o">
+
+<!-- Format Menu -->
+<!ENTITY formatMenu.label "Mentrezh">
+<!ENTITY formatMenu.accesskey "M">
+
+<!-- Options Menu -->
+<!ENTITY optionsMenu.label "Dibarzhioù">
+<!ENTITY optionsMenu.accesskey "D">
+<!ENTITY checkSpellingCmd2.label "Gwiriañ ar reizhskrivañ…">
+<!ENTITY checkSpellingCmd2.key "p">
+<!ENTITY checkSpellingCmd2.key2 "VK_F7">
+<!ENTITY checkSpellingCmd2.accesskey "s">
+<!ENTITY enableInlineSpellChecker.label "Reizhskrivañ en ur vizskrivañ">
+<!ENTITY enableInlineSpellChecker.accesskey "s">
+<!ENTITY quoteCmd.label "Menegiñ ar gemennadenn">
+<!ENTITY quoteCmd.accesskey "M">
+
+<!--LOCALIZATION NOTE attachVCard.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCard.label "Kenstagañ ar fichenn bersonel (vCard)">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY returnReceiptMenu.label "Testeni-degemer">
+<!ENTITY returnReceiptMenu.accesskey "e">
+<!ENTITY dsnMenu.label "Kemenn evit stad ar c'has kemennadennoù">
+<!ENTITY dsnMenu.accesskey "K">
+<!ENTITY deliveryFormatMenu.label "Mentrezh treuzkas">
+<!ENTITY deliveryFormatMenu.accesskey "M">
+<!ENTITY autoFormatCmd.label "EmZiuzañ">
+<!ENTITY autoFormatCmd.accesskey "Z">
+<!ENTITY plainTextFormatCmd.label "Kas gant un destenn eeun hepken">
+<!ENTITY plainTextFormatCmd.accesskey "a">
+<!ENTITY htmlFormatCmd.label "An destenn pinvidikaet nemetken (HTML)">
+<!ENTITY htmlFormatCmd.accesskey "d">
+<!ENTITY bothFormatCmd.label "Testenn eeun ha pinvidikaet (HTML)">
+<!ENTITY bothFormatCmd.accesskey "H">
+<!ENTITY priorityMenu.label "Tevet">
+<!ENTITY priorityMenu.accesskey "T">
+<!ENTITY priorityButton.title "Tevet">
+<!ENTITY priorityButton.tooltiptext "Kemmañ tevet ar gemennadenn">
+<!ENTITY priorityButton.label "Tevet :">
+<!ENTITY lowestPriorityCmd.label "Izelañ">
+<!ENTITY lowestPriorityCmd.accesskey "l">
+<!ENTITY lowPriorityCmd.label "Izel">
+<!ENTITY lowPriorityCmd.accesskey "I">
+<!ENTITY normalPriorityCmd.label "Reizh">
+<!ENTITY normalPriorityCmd.accesskey "z">
+<!ENTITY highPriorityCmd.label "Uhel">
+<!ENTITY highPriorityCmd.accesskey "U">
+<!ENTITY highestPriorityCmd.label "Uhelañ">
+<!ENTITY highestPriorityCmd.accesskey "e">
+<!ENTITY fileCarbonCopyCmd.label "Kas un eilad da">
+<!ENTITY fileCarbonCopyCmd.accesskey "d">
+<!ENTITY fileHereMenu.label "Leuniañ amañ">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label "Ostilhoù">
+<!ENTITY tasksMenu.accesskey "O">
+<!ENTITY messengerCmd.label "Posteloù ha strolladoù-keleier">
+<!ENTITY messengerCmd.accesskey "P">
+<!ENTITY messengerCmd.commandkey "1">
+<!ENTITY addressBookCmd.label "Karned chomlec'hioù">
+<!ENTITY addressBookCmd.accesskey "K">
+<!ENTITY addressBookCmd.key "B">
+<!ENTITY accountManagerCmd2.label "Arventennoù ar c'hontoù">
+<!ENTITY accountManagerCmd2.accesskey "c">
+<!ENTITY accountManagerCmdUnix2.accesskey "c">
+<!ENTITY preferencesCmd2.label "Dibarzhioù…">
+<!ENTITY preferencesCmd2.accesskey "D">
+<!ENTITY preferencesCmdUnix.label "Gwellvezioù">
+<!ENTITY preferencesCmdUnix.accesskey "w">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY minimizeWindow.key "m">
+<!ENTITY minimizeWindow.label "Bihanaat">
+<!ENTITY bringAllToFront.label "Dilec'hiañ pep tra war ar rakleur">
+<!ENTITY zoomWindow.label "Zoum">
+<!ENTITY windowMenu.label "Prenestr">
+
+<!-- Mail Toolbar -->
+<!ENTITY sendButton.label "Kas">
+<!ENTITY quoteButton.label "Menegiñ">
+<!ENTITY addressButton.label "Darempredoù">
+<!ENTITY attachButton.label "Kenstagañ">
+<!ENTITY spellingButton.label "Reizhskrivañ">
+<!ENTITY saveButton.label "Enrollañ">
+<!ENTITY printButton.label "Moullañ">
+
+<!-- Mail Toolbar Tooltips -->
+<!ENTITY sendButton.tooltip "Kas ar gemennadenn-mañ diouzhtu">
+<!ENTITY sendlaterButton.tooltip "Kas ar gemennadenn-mañ diwezhatoc'h">
+<!ENTITY quoteButton.tooltip "Menegiñ ar gemennadenn gent">
+<!ENTITY addressButton.tooltip "Diuzañ un degemerer diwar ar c'harned chomlec'hioù">
+<!ENTITY attachButton.tooltip2 "Ouzhpennañ ur stagadenn">
+<!ENTITY spellingButton.tooltip "Gwiriañ reizhskrivañ an diuzad pe ar gemennadenn a-bezh">
+<!ENTITY saveButton.tooltip "Enrollañ ar gemennadenn-mañ">
+<!ENTITY cutButton.tooltip              "Troc'hañ">
+<!ENTITY copyButton.tooltip             "Eilañ">
+<!ENTITY pasteButton.tooltip            "Pegañ">
+<!ENTITY printButton.tooltip "Moullañ ar gemennadenn-mañ">
+
+<!-- Headers -->
+<!ENTITY fromAddr.accesskey "b">
+<!ENTITY subject.accesskey "D">
+<!ENTITY attachmentBucketCloseButton.tooltip "Kuzhat penel ar c'henstagadurioù">
+
+<!-- Format Toolbar, imported from editorAppShell.xul -->
+<!ENTITY SmileButton.tooltip "Enlakaat ur fromarlun">
+<!ENTITY smiley1Cmd.label "Mousc'hoarzhiñ">
+<!ENTITY smiley2Cmd.label "Krizañ e dal">
+<!ENTITY smiley3Cmd.label "Gwilc'hadenn">
+<!ENTITY smiley4Cmd.label "Tennañ teod">
+<!ENTITY smiley5Cmd.label "C'hoarzhin">
+<!ENTITY smiley6Cmd.label "Lakaet diaes">
+<!ENTITY smiley7Cmd.label "N'eo ket lakaet e soñj">
+<!ENTITY smiley8Cmd.label "Souezhadenn">
+<!ENTITY smiley9Cmd.label "Pokañ">
+<!ENTITY smiley10Cmd.label "Yudal">
+<!ENTITY smiley11Cmd.label "Koul">
+<!ENTITY smiley12Cmd.label "Beg-arc'hant">
+<!ENTITY smiley13Cmd.label "Beg-troad">
+<!ENTITY smiley14Cmd.label "Divlam">
+<!ENTITY smiley15Cmd.label "Gouelañ">
+<!ENTITY smiley16Cmd.label "Diweuz serret">
+
+<!-- Message Pane Context Menu -->
+<!ENTITY spellCheckNoSuggestions.label "Kinnig kavet ebet">
+<!ENTITY spellCheckIgnoreWord.label "Leuskel ar ger a-gostez">
+<!ENTITY spellCheckIgnoreWord.accesskey "g">
+<!ENTITY spellCheckAddToDictionary.label "Ouzhpennañ d'ar geriadur">
+<!ENTITY spellCheckAddToDictionary.accesskey "n">
+<!ENTITY undo.label "Dizober">
+<!ENTITY undo.accesskey "z">
+<!ENTITY cut.label "Troc'hañ">
+<!ENTITY cut.accesskey "T">
+<!ENTITY copy.label "Eilañ">
+<!ENTITY copy.accesskey "l">
+<!ENTITY paste.label "Pegañ">
+<!ENTITY paste.accesskey "P">
+<!ENTITY pasteQuote.label "Pegañ evel ur venegadenn">
+<!ENTITY pasteQuote.accesskey "g">
+
+<!-- Attachment Item and List Context Menus -->
+<!ENTITY openAttachment.label "Digeriñ">
+<!ENTITY openAttachment.accesskey "D">
+<!ENTITY delete.label "Dilemel">
+<!ENTITY delete.accesskey "D">
+<!ENTITY removeAttachment.label "Lemel ar c'henstagadur">
+<!ENTITY removeAttachment.accesskey "L">
+<!ENTITY renameAttachment.label "Adenvel…">
+<!ENTITY renameAttachment.accesskey "e">
+<!ENTITY reorderAttachments.label "Adurzhiañ ar stagadennoù…">
+<!ENTITY reorderAttachments.accesskey "s">
+<!ENTITY removeAllAttachments.label "Dilemel an holl stagadurioù">
+<!ENTITY removeAllAttachments.accesskey "v">
+<!ENTITY selectAll.label "Diuz pep tra">
+<!ENTITY selectAll.accesskey "a">
+<!ENTITY attachFile.label "Kenstagañ restr(où)…">
+<!ENTITY attachFile.accesskey "r">
+<!ENTITY attachCloud.label "Filelink…">
+<!ENTITY attachCloud.accesskey "i">
+<!ENTITY convertCloud.label "Amdreiñ…">
+<!ENTITY convertCloud.accesskey "A">
+<!ENTITY cancelUpload.label "Nullañ ar c'hargañ">
+<!ENTITY cancelUpload.accesskey "N">
+<!ENTITY convertRegularAttachment.label "Kenstagadur reizh">
+<!ENTITY convertRegularAttachment.accesskey "a">
+<!ENTITY attachPage.label "Kenstagañ ar bajennad…">
+<!ENTITY attachPage.accesskey "s">
+
+<!-- Attachment Pane Header Bar Context Menu -->
+<!-- LOCALIZATION NOTE (initiallyShowAttachmentPane.label):
+     Should use the same wording as startExpandedCmd.label
+     in msgHdrViewOverlay.dtd. -->
+<!ENTITY initiallyShowAttachmentPane.label "Diskouez penel ar c'henstagadurioù dre ziouer">
+<!ENTITY initiallyShowAttachmentPane.accesskey "S">
+
+<!-- Spell checker context menu items -->
+<!ENTITY spellAddDictionaries.label "Ouzhpennañ geriadurioù…">
+<!ENTITY spellAddDictionaries.accesskey "O">
+
+<!-- Title for the address picker panel -->
+<!ENTITY addressesSidebarTitle.label "Darempredoù">
+
+<!-- Identity popup customize menuitem -->
+<!ENTITY customizeFromAddress.label "Personelaat ar chomlec'h 'A-berzh'...">
+<!ENTITY customizeFromAddress.accesskey "P">
+
+<!-- Accessibility name for the document -->
+<!ENTITY aria.message.bodyName "Korf ar gemennadenn">
+
+<!-- Status Bar -->
+<!ENTITY languageStatusButton.tooltip "Yezh an difazier">
+<!ENTITY encodingStatusPanel.tooltip "Bonegadur an arouezioù">

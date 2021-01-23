@@ -3,14 +3,15 @@
  * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
 
 // ReactJS
-const PropTypes = require("prop-types");
+const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
+const {
+  button,
+  span,
+} = require("devtools/client/shared/vendor/react-dom-factories");
 
 // Reps
 const { getGripType, isGrip, cropString, wrapRender } = require("./rep-utils");
 const { MODE } = require("./constants");
-
-const dom = require("react-dom-factories");
-const { span } = dom;
 
 const IGNORED_SOURCE_URLS = ["debugger eval code"];
 
@@ -19,12 +20,17 @@ const IGNORED_SOURCE_URLS = ["debugger eval code"];
  */
 FunctionRep.propTypes = {
   object: PropTypes.object.isRequired,
-  parameterNames: PropTypes.array,
   onViewSourceInDebugger: PropTypes.func,
+  sourceMapService: PropTypes.object,
 };
 
 function FunctionRep(props) {
-  const { object: grip, onViewSourceInDebugger, recordTelemetryEvent } = props;
+  const {
+    object: grip,
+    onViewSourceInDebugger,
+    recordTelemetryEvent,
+    sourceMapService,
+  } = props;
 
   let jumpToDefinitionButton;
   if (
@@ -33,40 +39,68 @@ function FunctionRep(props) {
     grip.location.url &&
     !IGNORED_SOURCE_URLS.includes(grip.location.url)
   ) {
-    jumpToDefinitionButton = dom.button({
+    jumpToDefinitionButton = button({
       className: "jump-definition",
       draggable: false,
       title: "Jump to definition",
-      onClick: e => {
+      onClick: async e => {
         // Stop the event propagation so we don't trigger ObjectInspector
         // expand/collapse.
         e.stopPropagation();
         if (recordTelemetryEvent) {
           recordTelemetryEvent("jump_to_definition");
         }
-        onViewSourceInDebugger(grip.location);
+
+        const sourceLocation = await getSourceLocation(
+          grip.location,
+          sourceMapService
+        );
+        onViewSourceInDebugger(sourceLocation);
       },
     });
   }
 
+  const elProps = {
+    "data-link-actor-id": grip.actor,
+    className: "objectBox objectBox-function",
+    // Set dir="ltr" to prevent parentheses from
+    // appearing in the wrong direction
+    dir: "ltr",
+  };
+
+  const parameterNames = (grip.parameterNames || []).filter(Boolean);
+
+  if (grip.isClassConstructor) {
+    return span(
+      elProps,
+      getClassTitle(grip, props),
+      getFunctionName(grip, props),
+      ...getClassBody(parameterNames, props),
+      jumpToDefinitionButton
+    );
+  }
+
   return span(
-    {
-      "data-link-actor-id": grip.actor,
-      className: "objectBox objectBox-function",
-      // Set dir="ltr" to prevent function parentheses from
-      // appearing in the wrong direction
-      dir: "ltr",
-    },
-    getTitle(grip, props),
+    elProps,
+    getFunctionTitle(grip, props),
     getFunctionName(grip, props),
     "(",
-    ...renderParams(props),
+    ...getParams(parameterNames),
     ")",
     jumpToDefinitionButton
   );
 }
 
-function getTitle(grip, props) {
+function getClassTitle(grip) {
+  return span(
+    {
+      className: "objectTitle",
+    },
+    "class "
+  );
+}
+
+function getFunctionTitle(grip, props) {
   const { mode } = props;
 
   if (mode === MODE.TINY && !grip.isGenerator && !grip.isAsync) {
@@ -157,18 +191,31 @@ function cleanFunctionName(name) {
   return name;
 }
 
-function renderParams(props) {
-  const { parameterNames = [] } = props;
+function getClassBody(constructorParams, props) {
+  const { mode } = props;
 
-  return parameterNames
-    .filter(param => param)
-    .reduce((res, param, index, arr) => {
-      res.push(span({ className: "param" }, param));
-      if (index < arr.length - 1) {
-        res.push(span({ className: "delimiter" }, ", "));
-      }
-      return res;
-    }, []);
+  if (mode === MODE.TINY) {
+    return [];
+  }
+
+  return [" {", ...getClassConstructor(constructorParams), "}"];
+}
+
+function getClassConstructor(parameterNames) {
+  if (parameterNames.length === 0) {
+    return [];
+  }
+
+  return [" constructor(", ...getParams(parameterNames), ") "];
+}
+
+function getParams(parameterNames) {
+  return parameterNames.flatMap((param, index, arr) => {
+    return [
+      span({ className: "param" }, param),
+      index === arr.length - 1 ? "" : span({ className: "delimiter" }, ", "),
+    ];
+  });
 }
 
 // Registration
@@ -179,6 +226,24 @@ function supportsObject(grip, noGrip = false) {
   }
 
   return type == "Function";
+}
+
+async function getSourceLocation(location, sourceMapService) {
+  if (!sourceMapService) {
+    return location;
+  }
+  try {
+    const originalLocation = await sourceMapService.originalPositionFor(
+      location.url,
+      location.line,
+      location.column
+    );
+    if (originalLocation) {
+      const { sourceUrl, line, column } = originalLocation;
+      return { url: sourceUrl, line, column };
+    }
+  } catch (e) {}
+  return location;
 }
 
 // Exports from this module

@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "To save disk space, do not download:">
+
+
+<!ENTITY offlineNotDownload.label "Messages larger than">
+<!ENTITY offlineNotDownload.accesskey "M">
+
+
+<!ENTITY kb.label "کیلوبایت">
+<!ENTITY daysOld.label "days old">
+<!ENTITY message.label "messages">
+<!ENTITY nntpNotDownloadRead.label "Read messages">
+<!ENTITY nntpNotDownloadRead.accesskey "d">
+<!ENTITY nntpDownloadMsg.label "Messages more than">
+<!ENTITY nntpDownloadMsg.accesskey "e">
+<!ENTITY retentionCleanup.label "برای آزاد کردن فضای دیسک، پیغام‌های قدیمی را می‌توان برای همیشه حذف نمود.">
+<!ENTITY retentionCleanupImap.label "To recover disk space, old messages can be permanently deleted, both local copies and originals on the remote server.">
+<!ENTITY retentionCleanupPop.label "To recover disk space, old messages can be permanently deleted, including originals on the remote server.">
+<!ENTITY retentionKeepMsg.label "Delete messages more than">
+<!ENTITY retentionKeepMsg.accesskey "t">
+<!ENTITY retentionKeepAll.label "Don't delete any messages">
+<!ENTITY retentionKeepAll.accesskey "n">
+
+
+<!ENTITY retentionApplyToFlagged.label "Always keep starred messages">
+<!ENTITY retentionApplyToFlagged.accesskey "e">
+
+
+<!ENTITY offlineSelectNntp.label "Select newsgroups for offline use…">
+<!ENTITY offlineSelectNntp.accesskey "S">
+<!ENTITY offlineImapAdvancedOffline.label "پیشرفته…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "پ">
+<!ENTITY syncGroupTitle.label "Message Synchronizing">
+<!ENTITY diskspaceGroupTitle.label "Disk Space">
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+
+
+
+<!ENTITY ageAutosyncMiddle.label         "">
+
+
+
+
+<!ENTITY ageAutosyncAfter.label          "">

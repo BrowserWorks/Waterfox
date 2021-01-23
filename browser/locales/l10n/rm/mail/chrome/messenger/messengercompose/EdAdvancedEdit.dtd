@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "Caracteristicas avanzadas">
+<!ENTITY AttName.label                  "Attribut: ">
+<!ENTITY AttValue.label                 "Valur: ">
+<!ENTITY PropertyName.label             "Caracteristica: ">
+<!ENTITY currentattributesfor.label     "Caracteristicas actualas per: ">
+<!ENTITY tree.attributeHeader.label     "Attribut">
+<!ENTITY tree.propertyHeader.label      "Caracteristica">
+<!ENTITY tree.valueHeader.label         "Valur">
+<!ENTITY tabHTML.label                  "Attributs HTML">
+<!ENTITY tabCSS.label                   "Inline style (CSS)">
+<!ENTITY tabJSE.label                   "Eveniments JavaScript">
+
+<!ENTITY editAttribute.label    "Clicca sin in element survart per midar sia valur">
+<!ENTITY removeAttribute.label  "Allontanar">

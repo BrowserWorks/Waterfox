@@ -16,7 +16,6 @@
 #include "nsICacheEntryOpenCallback.h"
 #include "nsICacheStorage.h"
 #include "nsISerializable.h"
-#include "nsIStreamTransportService.h"
 #include "nsISizeOf.h"
 
 #include "nsComponentManagerUtils.h"
@@ -1088,13 +1087,6 @@ nsresult CacheEntry::SetContentType(uint8_t aContentType) {
 
   if (NS_SUCCEEDED(mFileStatus)) {
     return mFile->SetContentType(aContentType);
-  }
-  return NS_ERROR_NOT_AVAILABLE;
-}
-
-nsresult CacheEntry::AddBaseDomainAccess(uint32_t aSiteID) {
-  if (NS_SUCCEEDED(mFileStatus)) {
-    return mFile->AddBaseDomainAccess(aSiteID);
   }
   return NS_ERROR_NOT_AVAILABLE;
 }

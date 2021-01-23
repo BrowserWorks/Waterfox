@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: where ".private" and ".normal" variants exist,
+   - the former is shown in a private browsing window and the latter in
+   - a regular (non-private) browsing window. -->
+
+<!ENTITY privatebrowsingpage.title.private       "Sie sind in einem privaten Fenster.">
+<!ENTITY privatebrowsingpage.title.normal        "Soll der private Modus gestartet werden?">
+
+<!ENTITY privatebrowsingpage.status.private      "&brandShortName; wird keine Chronik für dieses Fenster speichern.">
+<!ENTITY privatebrowsingpage.status.normal       "Sie sind derzeit in keinem privaten Fenster.">
+
+<!ENTITY privatebrowsingpage.common.description  "In einem privaten Fenster behält &brandShortName; keine Browser-, Such-, Download-, oder Webformular-Chronik, Cookies oder temporäre Internetdateien. Erstelle Lesezeichen und heruntergeladene Dateien werden aber behalten.">
+<!ENTITY privatebrowsingpage.track.warn          "Während dieser Computer keine Aufzeichnungen Ihrer Browser-Chronik behält, kann Ihr Arbeitgeber oder Internetanbieter möglicherweise noch immer mitverfolgen, welche Seiten Sie besuchen.">
+<!ENTITY privatebrowsingpage.learnmore.label     "Weitere Informationen">
+<!ENTITY privatebrowsingpage.learnmore.accesskey "W">
+
+<!ENTITY privatebrowsingpage.close.info          "Wenn Sie fertig sind, schließen Sie das Fenster, um den privaten Modus zu beenden.">
+<!ENTITY privatebrowsingpage.close.label         "Dieses Fenster jetzt schließen">
+<!ENTITY privatebrowsingpage.close.accesskey     "D">
+
+<!ENTITY privatebrowsingpage.start.info          "Um den privaten Modus zu starten, klicken Sie auf die Schaltfläche unten oder wählen Sie Datei ▶ Neu ▶ Privates Fenster von Menü.">
+<!ENTITY privatebrowsingpage.private.label       "Ein neues privates Fenster öffnen">
+<!ENTITY privatebrowsingpage.private.accesskey   "p">

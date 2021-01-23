@@ -7,10 +7,8 @@
 #ifndef SharedSSLState_h
 #define SharedSSLState_h
 
-#include "mozilla/RefPtr.h"
 #include "nsNSSIOLayer.h"
 
-class nsClientAuthRememberService;
 class nsIObserver;
 
 namespace mozilla {
@@ -23,10 +21,6 @@ class SharedSSLState {
 
   static void GlobalInit();
   static void GlobalCleanup();
-
-  nsClientAuthRememberService* GetClientAuthRememberService() {
-    return mClientAuthRemember;
-  }
 
   nsSSLIOLayerHelpers& IOLayerHelpers() { return mIOLayerHelpers; }
 
@@ -42,6 +36,12 @@ class SharedSSLState {
   void SetSignedCertTimestampsEnabled(bool signedCertTimestampsEnabled) {
     mSignedCertTimestampsEnabled = signedCertTimestampsEnabled;
   }
+  void SetPinningMode(CertVerifier::PinningMode aPinningMode) {
+    mPinningMode = aPinningMode;
+  }
+  void SetNameMatchingMode(BRNameMatchingPolicy::Mode aMode) {
+    mNameMatchingMode = aMode;
+  }
 
   // The following methods may be called from any thread
   bool SocketCreated();
@@ -52,6 +52,8 @@ class SharedSSLState {
   bool IsSignedCertTimestampsEnabled() const {
     return mSignedCertTimestampsEnabled;
   }
+  CertVerifier::PinningMode PinningMode() { return mPinningMode; }
+  BRNameMatchingPolicy::Mode NameMatchingMode() { return mNameMatchingMode; }
 
  private:
   ~SharedSSLState();
@@ -59,7 +61,6 @@ class SharedSSLState {
   void Cleanup();
 
   nsCOMPtr<nsIObserver> mObserver;
-  RefPtr<nsClientAuthRememberService> mClientAuthRemember;
   nsSSLIOLayerHelpers mIOLayerHelpers;
 
   // True if any sockets have been created that use this shared data.
@@ -70,6 +71,8 @@ class SharedSSLState {
   bool mOCSPStaplingEnabled;
   bool mOCSPMustStapleEnabled;
   bool mSignedCertTimestampsEnabled;
+  CertVerifier::PinningMode mPinningMode;
+  BRNameMatchingPolicy::Mode mNameMatchingMode;
 };
 
 SharedSSLState* PublicSSLState();

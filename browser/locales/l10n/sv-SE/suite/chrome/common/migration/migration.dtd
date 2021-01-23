@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migrationWizard.title           "Importera">
+
+<!ENTITY importAllFrom.label             "Importera alla poster från:">
+<!ENTITY importBookmarksFrom.label       "Importera bokmärken från:">
+
+<!ENTITY importFromThunderbird.label     "Thunderbird">
+<!ENTITY importFromThunderbird.accesskey "T">
+<!ENTITY importFromFile.label            "Fil">
+<!ENTITY importFromFile.accesskey        "F">
+<!ENTITY importFromNothing.label         "Importera ingenting">
+<!ENTITY importFromNothing.accesskey     "i">
+
+<!ENTITY importSource.title              "Importera inställningar och data">
+<!ENTITY importItems.title               "Poster att importera">
+<!ENTITY importItems.label               "Välj poster att importera:">
+
+<!ENTITY selectProfile.title             "Välj profil">
+<!ENTITY selectProfile.label             "Från följande profiler kan import göras:">
+
+<!ENTITY migrating.title                 "Importerar…">
+<!ENTITY migrating.label                 "Följande poster importeras för närvarande…">
+
+<!ENTITY done.title                      "Import slutförd">
+<!ENTITY done.label                      "Följande poster har importerats:">

@@ -11,6 +11,7 @@
 #define _H_MPLOGIC_
 
 #include "mpi.h"
+SEC_BEGIN_PROTOS
 
 /*
   The logical operations treat an mp_int as if it were a bit vector,
@@ -38,9 +39,9 @@ mp_err mpl_lsh(const mp_int *a, mp_int *b, mp_digit d); /* left shift     */
 
 /* Bit count and parity              */
 
-mp_err mpl_num_set(mp_int *a, int *num);   /* count set bits    */
-mp_err mpl_num_clear(mp_int *a, int *num); /* count clear bits  */
-mp_err mpl_parity(mp_int *a);              /* determine parity  */
+mp_err mpl_num_set(mp_int *a, unsigned int *num);   /* count set bits    */
+mp_err mpl_num_clear(mp_int *a, unsigned int *num); /* count clear bits  */
+mp_err mpl_parity(mp_int *a);                       /* determine parity  */
 
 /* Get & Set the value of a bit */
 
@@ -48,5 +49,7 @@ mp_err mpl_set_bit(mp_int *a, mp_size bitNum, mp_size value);
 mp_err mpl_get_bit(const mp_int *a, mp_size bitNum);
 mp_err mpl_get_bits(const mp_int *a, mp_size lsbNum, mp_size numBits);
 mp_size mpl_significant_bits(const mp_int *a);
+
+SEC_END_PROTOS
 
 #endif /* end _H_MPLOGIC_ */

@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Правила за филтриране">
+<!ENTITY filterEditorDialog.dimensions "width: 100ch;">
+<!ENTITY filterName.label "Име на филтър:">
+<!ENTITY filterName.accesskey "И">
+
+<!ENTITY junk.label "Нежелана поща">
+<!ENTITY notJunk.label "Желана поща">
+
+<!ENTITY lowestPriorityCmd.label "По-нисък">
+<!ENTITY lowPriorityCmd.label "Нисък">
+<!ENTITY normalPriorityCmd.label "Нормален">
+<!ENTITY highPriorityCmd.label "Висок">
+<!ENTITY highestPriorityCmd.label "По-висок">
+
+<!ENTITY contextDesc.label "Прилагане на филтъра когато:">
+<!ENTITY contextIncomingMail.label "Получаване на нова поща:">
+<!ENTITY contextIncomingMail.accesskey "П">
+<!ENTITY contextManual.label "се стартира ръчно">
+<!ENTITY contextManual.accesskey "р">
+<!ENTITY contextBeforeCls.label "Филтриране преди класификацията за нежелана поща">
+<!ENTITY contextAfterCls.label "Филтриране след класификацията за нежелана поща">
+<!ENTITY contextOutgoing.label "След Изпращане">
+<!ENTITY contextOutgoing.accesskey "И">
+<!ENTITY contextArchive.label "Архивиране">
+<!ENTITY contextArchive.accesskey "А">
+<!ENTITY contextPeriodic.accesskey "е">
+
+<!ENTITY filterActionDesc.label "Изпълняват се следните действия:">
+<!ENTITY filterActionDesc.accesskey "л">
+
+<!ENTITY filterActionOrderWarning.label "Бележка: Филтрите ще бъдат приложени в различна последователност.">
+<!ENTITY filterActionOrder.label "Преглед на заявките за изпълнение">
+
+<!-- New Style Filter Rule Actions -->
+<!ENTITY moveMessage.label "Преместване на писмото в">
+<!ENTITY copyMessage.label "Копиране на писмото в">
+<!ENTITY forwardTo.label "Препращане до">
+<!ENTITY replyWithTemplate.label "Отговор с шаблон">
+<!ENTITY markMessageRead.label "Отбелязване като прочетено">
+<!ENTITY markMessageUnread.label "Отбелязване като непрочетено">
+<!ENTITY markMessageStarred.label "Добавяне на звезда">
+<!ENTITY setPriority.label "Задаване приоритета на">
+<!ENTITY addTag.label "Отбелязване на писмо">
+<!ENTITY setJunkScore.label "Задаване статус нежелана поща на">
+<!ENTITY deleteMessage.label "Изтриване на писмо">
+<!ENTITY deleteFromPOP.label "Изтриване от POP сървъра">
+<!ENTITY fetchFromPOP.label "Извличане от POP сървъра">
+<!ENTITY ignoreThread.label "Пренебрегване на дискусия">
+<!ENTITY ignoreSubthread.label "Пренебрегване на поддискусия">
+<!ENTITY watchThread.label "Наблюдаване на дискусия">
+<!ENTITY stopExecution.label "Спиране изпълнението на филтър">
+
+<!ENTITY addAction.tooltip "Добавяне на ново действие">
+<!ENTITY removeAction.tooltip "Премахване на това действие">
+
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- Flex Attribute: https://developer.mozilla.org/docs/XUL/Attribute/flex -->
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">

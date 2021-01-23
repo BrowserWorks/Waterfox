@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!ENTITY accountTitle.label "Nastavenie účtu">
+<!ENTITY accountName.label "Názov účtu:">
+<!ENTITY accountName.accesskey "z">
+<!ENTITY identityTitle.label "Predvolená identita">
+<!ENTITY identityDesc.label "Každý účet má vlastnú identitu, čo sú vlastne informácie o vás, ktoré uvidia príjemcovia vašich správ.">
+<!ENTITY name.label "Vaše meno:">
+<!ENTITY name.accesskey "V">
+<!ENTITY email.label "E-mailová adresa:">
+<!ENTITY email.accesskey "E">
+<!ENTITY catchAll.label "Odpovedať z tejto identity ak sa hlavička zhoduje:">
+<!ENTITY catchAll.accesskey "d">
+<!ENTITY replyTo.label "Kam odpovedať:">
+<!ENTITY replyTo.accesskey "K">
+<!ENTITY replyTo.placeholder "Príjemcovia budú odpovedať na túto adresu">
+<!ENTITY organization.label "Organizácia:">
+<!ENTITY organization.accesskey "c">
+<!ENTITY signatureText.label "Podpis:">
+<!ENTITY signatureText.accesskey "d">
+<!ENTITY signatureHtml.label "Použiť HTML (napr. &lt;b&gt;tučný text&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "H">
+<!ENTITY signatureFile.label "Pripájať podpis zo súboru (text, HTML alebo obrázok):">
+<!ENTITY signatureFile.accesskey "L">
+<!ENTITY choose.label "Vybrať…">
+<!ENTITY choose.accesskey "b">
+<!ENTITY editVCard.label "Upraviť vizitku…">
+<!ENTITY editVCard.accesskey "U">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Pripájať k správam moju vizitku (vCard)">
+<!ENTITY attachVCard.accesskey "m">
+
+<!ENTITY manageIdentities.label "Správa identity…">
+<!ENTITY manageIdentities.accesskey "S">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Server pre odosielanie pošty (SMTP):">
+<!ENTITY smtpName.accesskey "T">
+<!ENTITY smtpDefaultServer.label "Použiť predvolený server">
+
+<!ENTITY smtpServerEdit.label "Upraviť SMTP server…">
+<!ENTITY smtpServerEdit.accesskey "P">

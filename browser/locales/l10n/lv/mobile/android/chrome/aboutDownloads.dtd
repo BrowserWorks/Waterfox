@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Lejupielādes">
+<!ENTITY aboutDownloads.header                     "Jūsu lejupielādes">
+<!ENTITY aboutDownloads.empty                      "Nav lejupielāžu">
+
+<!ENTITY aboutDownloads.open                       "Atvērt">
+<!ENTITY aboutDownloads.remove                     "Dzēst">
+<!ENTITY aboutDownloads.removeAll                  "Dzēst visas">
+<!ENTITY aboutDownloads.pause                      "Apturēt">
+<!ENTITY aboutDownloads.resume                     "Turpināt">
+<!ENTITY aboutDownloads.cancel                     "Atcelt">
+<!ENTITY aboutDownloads.retry                      "Atkārtot">

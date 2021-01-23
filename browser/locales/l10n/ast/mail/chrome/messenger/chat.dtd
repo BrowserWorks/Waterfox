@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label "Contautos coneutaos">
+<!ENTITY offlineContactsHeader.label "Contautos desconeutaos">
+<!ENTITY conversationsHeader.label "Conversaciones">
+<!ENTITY searchResultConversation.label "Resultaos de la gueta">
+<!ENTITY chat.noConv.title "Les conversaciones van amosase equí.">
+<!ENTITY chat.noConv.description "Usa la llista de contautos nel panel izquierdu p'aniciar una conversación.">
+<!ENTITY chat.noPreviousConv.description "&brandShortName; nun tien denguna conversación previa guardada d'esti contautu.">
+<!ENTITY chat.noAccount.title "Entá nun configuraste una cuenta de chat.">
+<!ENTITY chat.noAccount.description "Dexa que &brandShortName; te guíe a traviés del procesu de configuración de la cuenta de chat.">
+<!ENTITY chat.accountWizard.button "Entamar">
+<!ENTITY chat.noConnectedAccount.title "Les cuentes de chat nun tán coneutaes.">
+<!ENTITY chat.noConnectedAccount.description "Pues coneutate a elles dende'l diálogu 'Estáu de chat':">
+<!ENTITY chat.showAccountManager.button "Amosar estáu del chat">
+
+<!ENTITY chat.participants "Participantes:">
+<!ENTITY chat.previousConversations "Conversaciones previes:">
+<!ENTITY chat.ongoingConversation "Conversación en cursu">
+
+<!ENTITY openConversationCmd.label "Aniciar una conversación">
+<!ENTITY openConversationCmd.accesskey "A">
+<!ENTITY closeConversationCmd.label "Zarrar conversación">
+<!ENTITY closeConversationCmd.accesskey "Z">
+<!ENTITY aliasCmd.label "Renomar">
+<!ENTITY aliasCmd.accesskey "R">
+<!ENTITY deleteCmd.label "Desaniciar contautu">
+<!ENTITY deleteCmd.accesskey "D">
+
+<!ENTITY openConversationButton.tooltip "Aniciar una conversación">
+<!ENTITY closeConversationButton.tooltip "Zarrar conversación">
+
+<!ENTITY addBuddyButton.label "Amestar contautu">
+<!ENTITY joinChatButton.label "Xunise al chat">
+<!ENTITY chatAccountsButton.label "Amosar cuentes">
+
+<!ENTITY status.available "Disponible">
+<!ENTITY status.unavailable "Non disponible">
+<!ENTITY status.offline "Ensin conexón">
+
+<!ENTITY openLinkCmd.label "Abrir enllaz…">
+<!ENTITY openLinkCmd.accesskey "A">

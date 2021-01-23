@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "E-mel"> 
+<!ENTITY readMsgsLink.label           "Mesej yang dibaca"> 
+<!ENTITY composeMsgLink.label         "Tulis mesej baru"> 
+
+<!ENTITY newsSectionHdr.label         "Kumpulan berita"> 
+<!ENTITY subscribeNewsLink.label      "Urus langganan kumpulan berita"> 
+
+<!ENTITY accountsSectionHdr.label     "Akaun"> 
+<!ENTITY subscribeImapFolders.label   "Urus langganan folder"> 
+<!ENTITY settingsLink.label           "Papar tetapan untuk akaun ini"> 
+<!ENTITY newAcctLink.label            "Cipta akaun baru"> 
+
+<!ENTITY advFeaturesSectionHdr.label  "Ciri Lanjutan"> 
+<!ENTITY searchMsgsLink.label         "Cari mesej"> 
+<!ENTITY filtersLink.label            "Urus tapisan mesej">
+<!ENTITY junkSettings.label           "Tetapan mel remeh">
+<!ENTITY offlineLink.label            "Tetapan luar talian">
+
+<!ENTITY feedsSectionHdr.label        "Suapan">
+<!ENTITY subscribeFeeds.label         "Urus langganan">
+

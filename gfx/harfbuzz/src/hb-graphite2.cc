@@ -26,6 +26,10 @@
  * Google Author(s): Behdad Esfahbod
  */
 
+#include "hb.hh"
+
+#ifdef HAVE_GRAPHITE2
+
 #include "hb-shaper-impl.hh"
 
 #include "hb-graphite2.h"
@@ -41,7 +45,11 @@
  * @short_description: Graphite2 integration
  * @include: hb-graphite2.h
  *
- * Functions for using HarfBuzz with the Graphite2 fonts.
+ * Functions for using HarfBuzz with fonts that include Graphite features.
+ * 
+ * For Graphite features to work, you must be sure that HarfBuzz was compiled
+ * with the `graphite2` shaping engine enabled. Currently, the default is to
+ * not enable `graphite2` shaping.
  **/
 
 
@@ -102,32 +110,6 @@ retry:
   return d;
 }
 
-static void hb_graphite2_release_table(const void *data, const void *table_buffer)
-{
-  hb_graphite2_face_data_t *face_data = (hb_graphite2_face_data_t *) data;
-  hb_graphite2_tablelist_t *tlist = face_data->tlist;
-
-  hb_graphite2_tablelist_t *prev = nullptr;
-  hb_graphite2_tablelist_t *curr = tlist;
-  while (curr)
-  {
-    if (hb_blob_get_data(curr->blob, nullptr) == table_buffer)
-    {
-      if (prev == nullptr)
-        face_data->tlist.cmpexch(tlist, curr->next);
-      else
-        prev->next = curr->next;
-      hb_blob_destroy(curr->blob);
-      free(curr);
-      break;
-    }
-    prev = curr;
-    curr = curr->next;
-  }
-}
-
-static gr_face_ops hb_graphite2_face_ops = { sizeof(gr_face_ops), hb_graphite2_get_table, hb_graphite2_release_table };
-
 hb_graphite2_face_data_t *
 _hb_graphite2_shaper_face_data_create (hb_face_t *face)
 {
@@ -146,7 +128,7 @@ _hb_graphite2_shaper_face_data_create (hb_face_t *face)
     return nullptr;
 
   data->face = face;
-  data->grface = gr_make_face_with_ops (data, &hb_graphite2_face_ops, gr_face_preloadAll);
+  data->grface = gr_make_face (data, &hb_graphite2_get_table, gr_face_preloadAll);
 
   if (unlikely (!data->grface)) {
     free (data);
@@ -174,7 +156,15 @@ _hb_graphite2_shaper_face_data_destroy (hb_graphite2_face_data_t *data)
   free (data);
 }
 
-/*
+/**
+ * hb_graphite2_face_get_gr_face:
+ * @face: @hb_face_t to query
+ *
+ * Fetches the Graphite2 gr_face corresponding to the specified
+ * #hb_face_t face object.
+ *
+ * Return value: the gr_face found
+ *
  * Since: 0.9.10
  */
 gr_face *
@@ -202,6 +192,7 @@ _hb_graphite2_shaper_font_data_destroy (hb_graphite2_font_data_t *data HB_UNUSED
 {
 }
 
+#ifndef HB_DISABLE_DEPRECATED
 /**
  * hb_graphite2_font_get_gr_font:
  *
@@ -213,6 +204,7 @@ hb_graphite2_font_get_gr_font (hb_font_t *font HB_UNUSED)
 {
   return nullptr;
 }
+#endif
 
 
 /*
@@ -308,12 +300,12 @@ _hb_graphite2_shape (hb_shape_plan_t    *shape_plan HB_UNUSED,
 
 #define ALLOCATE_ARRAY(Type, name, len) \
   Type *name = (Type *) scratch; \
-  { \
+  do { \
     unsigned int _consumed = DIV_CEIL ((len) * sizeof (Type), sizeof (*scratch)); \
     assert (_consumed <= scratch_size); \
     scratch += _consumed; \
     scratch_size -= _consumed; \
-  }
+  } while (0)
 
   ALLOCATE_ARRAY (hb_graphite2_cluster_t, clusters, buffer->len);
   ALLOCATE_ARRAY (hb_codepoint_t, gids, glyph_count);
@@ -360,14 +352,14 @@ _hb_graphite2_shape (hb_shape_plan_t    *shape_plan HB_UNUSED,
       c->num_glyphs = 0;
       if (HB_DIRECTION_IS_BACKWARD(buffer->props.direction))
       {
-        c->advance = curradv - gr_slot_origin_X(is) * xscale;
-        curradv -= c->advance;
+	c->advance = curradv - gr_slot_origin_X(is) * xscale;
+	curradv -= c->advance;
       }
       else
       {
-        c->advance = 0;
-        clusters[ci].advance += gr_slot_origin_X(is) * xscale - curradv;
-        curradv += clusters[ci].advance;
+	c->advance = 0;
+	clusters[ci].advance += gr_slot_origin_X(is) * xscale - curradv;
+	curradv += clusters[ci].advance;
       }
       ci++;
     }
@@ -396,7 +388,7 @@ _hb_graphite2_shape (hb_shape_plan_t    *shape_plan HB_UNUSED,
   buffer->len = glyph_count;
 
   /* Positioning. */
-  unsigned int currclus = (unsigned int) -1;
+  unsigned int currclus = UINT_MAX;
   const hb_glyph_info_t *info = buffer->info;
   hb_glyph_position_t *pPos = hb_buffer_get_glyph_positions (buffer, nullptr);
   if (!HB_DIRECTION_IS_BACKWARD(buffer->props.direction))
@@ -445,3 +437,6 @@ _hb_graphite2_shape (hb_shape_plan_t    *shape_plan HB_UNUSED,
 
   return true;
 }
+
+
+#endif

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "Scrios">
+<!ENTITY editContactPanelDeleteContact.accesskey "c">
+
+<!ENTITY editContactName.label "Ainm:">
+<!ENTITY editContactName.accesskey "n">
+
+<!ENTITY editContactEmail.label "Ríomhphost:">
+<!ENTITY editContactEmail.accesskey "R">
+
+<!ENTITY editContactAddressBook.label "Leabhar Seoltaí:">
+<!ENTITY editContactAddressBook.accesskey "L">
+
+<!ENTITY editContactPanelDone.label "Críochnaithe">
+<!ENTITY editContactPanelDone.accesskey "C">
+
+<!ENTITY contactMoveDisabledWarning.description "Ní féidir leat an leabhar seoltaí a athrú toisc go bhfuil an teagmhálaí seo i liosta ríomhphoist.">

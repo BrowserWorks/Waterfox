@@ -45,10 +45,10 @@ extern const char16_t* kUpgradeNeededEventType;
 extern const char16_t* kVersionChangeEventType;
 extern const char16_t* kCloseEventType;
 
-already_AddRefed<Event> CreateGenericEvent(EventTarget* aOwner,
-                                           const nsDependentString& aType,
-                                           Bubbles aBubbles,
-                                           Cancelable aCancelable);
+[[nodiscard]] RefPtr<Event> CreateGenericEvent(EventTarget* aOwner,
+                                               const nsDependentString& aType,
+                                               Bubbles aBubbles,
+                                               Cancelable aCancelable);
 
 }  // namespace indexedDB
 
@@ -57,24 +57,17 @@ class IDBVersionChangeEvent final : public Event {
   Nullable<uint64_t> mNewVersion;
 
  public:
-  static already_AddRefed<IDBVersionChangeEvent> Create(
+  [[nodiscard]] static RefPtr<IDBVersionChangeEvent> Create(
       EventTarget* aOwner, const nsDependentString& aName, uint64_t aOldVersion,
-      uint64_t aNewVersion) {
-    Nullable<uint64_t> newVersion(aNewVersion);
-    return CreateInternal(aOwner, aName, aOldVersion, newVersion);
-  }
+      uint64_t aNewVersion);
 
-  static already_AddRefed<IDBVersionChangeEvent> Create(
+  [[nodiscard]] static RefPtr<IDBVersionChangeEvent> Create(
       EventTarget* aOwner, const nsDependentString& aName,
-      uint64_t aOldVersion) {
-    Nullable<uint64_t> newVersion(0);
-    newVersion.SetNull();
-    return CreateInternal(aOwner, aName, aOldVersion, newVersion);
-  }
+      uint64_t aOldVersion);
 
-  static already_AddRefed<IDBVersionChangeEvent> Constructor(
+  [[nodiscard]] static RefPtr<IDBVersionChangeEvent> Constructor(
       const GlobalObject& aGlobal, const nsAString& aType,
-      const IDBVersionChangeEventInit& aOptions, ErrorResult& aRv);
+      const IDBVersionChangeEventInit& aOptions);
 
   uint64_t OldVersion() const { return mOldVersion; }
 
@@ -91,10 +84,10 @@ class IDBVersionChangeEvent final : public Event {
   IDBVersionChangeEvent(EventTarget* aOwner, uint64_t aOldVersion)
       : Event(aOwner, nullptr, nullptr), mOldVersion(aOldVersion) {}
 
-  ~IDBVersionChangeEvent() {}
+  ~IDBVersionChangeEvent() = default;
 
-  static already_AddRefed<IDBVersionChangeEvent> CreateInternal(
-      EventTarget* aOwner, const nsAString& aName, uint64_t aOldVersion,
+  [[nodiscard]] static RefPtr<IDBVersionChangeEvent> CreateInternal(
+      EventTarget* aOwner, const nsAString& aType, uint64_t aOldVersion,
       const Nullable<uint64_t>& aNewVersion);
 };
 

@@ -223,12 +223,12 @@ var operationTests = [
  *                                 operation tests
  */
 function runStateTransitionTests(testStream) {
-  for (operationTest of operationTests) {
+  for (const operationTest of operationTests) {
     var mediaRecorder = new MediaRecorder(testStream);
     var operationsString = operationTest.operations.toString();
 
     try {
-      for (operation of operationTest.operations) {
+      for (const operation of operationTest.operations) {
         if (operationTest.timeSlice && operation === 'start') {
           operationsString += ' with timeslice ' + operationTest.timeSlice;
           mediaRecorder[operation](operationTest.timeSlice);
@@ -237,16 +237,13 @@ function runStateTransitionTests(testStream) {
         }
       }
 
-      if (operationTest.isValid) {
-        ok(true, 'Successful transitions for ' + operationsString);
-      } else {
-        ok(false, 'Failed transitions for ' + operationsString);
-      }
+      ok(operationTest.isValid, `${operationsString} should succeed`);
     } catch (err) {
-      if (!operationTest.isValid && err.name === 'InvalidStateError') {
-        ok(true, 'InvalidStateError fired for ' + operationsString);
+      if (operationTest.isValid) {
+        ok(false, `${operationsString} failed unexpectedly with ${err.name}`);
       } else {
-        ok(false, 'No InvalidStateError for ' + operationsString);
+        is(err.name, "InvalidStateError",
+          `${operationsString} expected to fail with InvalidStateError`);
       }
     }
   }
@@ -259,7 +256,6 @@ function runStateTransitionTests(testStream) {
  */
 function startTest(test, token) {
   var element = document.createElement('audio');
-  var expectedMimeType = test.type.substring(0, test.type.indexOf(';'));
 
   element.token = token;
   manager.started(token);

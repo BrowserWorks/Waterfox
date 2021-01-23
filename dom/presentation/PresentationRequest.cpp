@@ -6,30 +6,30 @@
 
 #include "PresentationRequest.h"
 
+#include <utility>
+
 #include "AvailabilityCollection.h"
 #include "ControllerConnectionCollection.h"
+#include "Presentation.h"
+#include "PresentationAvailability.h"
+#include "PresentationCallbacks.h"
+#include "PresentationLog.h"
+#include "PresentationTransportBuilderConstructor.h"
 #include "mozilla/BasePrincipal.h"
+#include "mozilla/dom/Document.h"
 #include "mozilla/dom/Navigator.h"
-#include "mozilla/dom/PresentationRequestBinding.h"
 #include "mozilla/dom/PresentationConnectionAvailableEvent.h"
+#include "mozilla/dom/PresentationRequestBinding.h"
 #include "mozilla/dom/Promise.h"
-#include "mozilla/Move.h"
-#include "mozIThirdPartyUtil.h"
 #include "nsContentSecurityManager.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsGlobalWindow.h"
-#include "mozilla/dom/Document.h"
 #include "nsIPresentationService.h"
 #include "nsIURI.h"
 #include "nsIUUIDGenerator.h"
 #include "nsNetUtil.h"
 #include "nsSandboxFlags.h"
 #include "nsServiceManagerUtils.h"
-#include "Presentation.h"
-#include "PresentationAvailability.h"
-#include "PresentationCallbacks.h"
-#include "PresentationLog.h"
-#include "PresentationTransportBuilderConstructor.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -67,7 +67,10 @@ static nsresult GetAbsoluteURL(const nsAString& aUrl, nsIURI* aBaseUri,
 already_AddRefed<PresentationRequest> PresentationRequest::Constructor(
     const GlobalObject& aGlobal, const nsAString& aUrl, ErrorResult& aRv) {
   Sequence<nsString> urls;
-  urls.AppendElement(aUrl, fallible);
+  if (!urls.AppendElement(aUrl, fallible)) {
+    aRv.Throw(NS_ERROR_OUT_OF_MEMORY);
+    return nullptr;
+  }
   return Constructor(aGlobal, urls, aRv);
 }
 
@@ -111,7 +114,7 @@ PresentationRequest::PresentationRequest(nsPIDOMWindowInner* aWindow,
                                          nsTArray<nsString>&& aUrls)
     : DOMEventTargetHelper(aWindow), mUrls(std::move(aUrls)) {}
 
-PresentationRequest::~PresentationRequest() {}
+PresentationRequest::~PresentationRequest() = default;
 
 bool PresentationRequest::Init() { return true; }
 
@@ -469,7 +472,7 @@ bool PresentationRequest::IsProhibitMixedSecurityContexts(Document* aDocument) {
       return true;
     }
 
-    doc = doc->GetParentDocument();
+    doc = doc->GetInProcessParentDocument();
   }
 
   return false;
@@ -504,20 +507,12 @@ bool PresentationRequest::IsPrioriAuthenticatedURL(const nsAString& aUrl) {
 
   OriginAttributes attrs;
   nsCOMPtr<nsIPrincipal> principal =
-      BasePrincipal::CreateCodebasePrincipal(uri, attrs);
+      BasePrincipal::CreateContentPrincipal(uri, attrs);
   if (NS_WARN_IF(!principal)) {
     return false;
   }
 
-  nsCOMPtr<nsIContentSecurityManager> csm =
-      do_GetService(NS_CONTENTSECURITYMANAGER_CONTRACTID);
-  if (NS_WARN_IF(!csm)) {
-    return false;
-  }
-
-  bool isTrustworthyOrigin = false;
-  csm->IsOriginPotentiallyTrustworthy(principal, &isTrustworthyOrigin);
-  return isTrustworthyOrigin;
+  return principal->GetIsOriginPotentiallyTrustworthy();
 }
 
 bool PresentationRequest::IsAllURLAuthenticated() {

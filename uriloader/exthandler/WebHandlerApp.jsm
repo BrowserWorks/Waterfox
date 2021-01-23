@@ -2,7 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const { NetUtil } = ChromeUtils.import("resource://gre/modules/NetUtil.jsm");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 ChromeUtils.defineModuleGetter(
@@ -46,7 +45,7 @@ nsWebHandlerApp.prototype = {
 
   equals(aHandlerApp) {
     if (!aHandlerApp) {
-      throw Cr.NS_ERROR_NULL_POINTER;
+      throw Components.Exception("", Cr.NS_ERROR_NULL_POINTER);
     }
 
     if (
@@ -60,7 +59,7 @@ nsWebHandlerApp.prototype = {
     return false;
   },
 
-  launchWithURI(aURI, aWindowContext) {
+  launchWithURI(aURI, aBrowsingContext) {
     // XXX need to strip passwd & username from URI to handle, as per the
     // WhatWG HTML5 draft.  nsSimpleURL, which is what we're going to get,
     // can't do this directly.  Ideally, we'd fix nsStandardURL to make it
@@ -76,67 +75,30 @@ nsWebHandlerApp.prototype = {
     let policy = WebExtensionPolicy.getByURI(uriToSend);
     let privateAllowed = !policy || policy.privateBrowsingAllowed;
 
-    // if we have a window context, use the URI loader to load there
-    if (aWindowContext) {
-      try {
-        let remoteWindow = aWindowContext.getInterface(
-          Ci.nsIRemoteWindowContext
+    // If we're in a frame, check if we're a built-in scheme, in which case,
+    // override the target browsingcontext. It's not a good idea to try to
+    // load mail clients or other apps with potential for logged in data into
+    // iframes, and in any case it's unlikely to work due to framing
+    // restrictions employed by the target site.
+    if (aBrowsingContext && aBrowsingContext != aBrowsingContext.top) {
+      let { scheme } = aURI;
+      if (!scheme.startsWith("web+") && !scheme.startsWith("ext+")) {
+        aBrowsingContext = null;
+      }
+    }
+
+    // if we have a context, use the URI loader to load there
+    if (aBrowsingContext) {
+      if (aBrowsingContext.usePrivateBrowsing && !privateAllowed) {
+        throw Components.Exception(
+          "Extension not allowed in private windows.",
+          Cr.NS_ERROR_FILE_NOT_FOUND
         );
-        if (remoteWindow.usePrivateBrowsing && !privateAllowed) {
-          throw Components.Exception(
-            "Extension not allowed in private windows.",
-            Cr.NS_ERROR_FILE_NOT_FOUND
-          );
-        }
-        // getInterface throws if the object doesn't implement the given
-        // interface, so this try/catch statement is more of an if.
-        // If aWindowContext refers to a remote docshell, send the load
-        // request to the correct process.
-        remoteWindow.openURI(uriToSend);
-        return;
-      } catch (e) {
-        if (e.result != Cr.NS_NOINTERFACE) {
-          throw e;
-        }
       }
 
-      try {
-        let isPrivate = aWindowContext
-          .getInterface(Ci.nsIDocShell)
-          .QueryInterface(Ci.nsILoadContext).usePrivateBrowsing;
-        if (isPrivate && !privateAllowed) {
-          throw Components.Exception(
-            "Extension not allowed in private windows.",
-            Cr.NS_ERROR_FILE_NOT_FOUND
-          );
-        }
-      } catch (e) {
-        if (e.result != Cr.NS_NOINTERFACE) {
-          throw e;
-        }
-      }
-
-      // create a channel from this URI
-      var channel = NetUtil.newChannel({
-        uri: uriToSend,
-        loadUsingSystemPrincipal: true,
-      });
-      channel.loadFlags = Ci.nsIChannel.LOAD_DOCUMENT_URI;
-
-      // load the channel
-      var uriLoader = Cc["@mozilla.org/uriloader;1"].getService(
-        Ci.nsIURILoader
-      );
-
-      // XXX ideally, whether to pass the IS_CONTENT_PREFERRED flag should be
-      // passed in from above.  Practically, the flag is probably a reasonable
-      // default since browsers don't care much, and link click is likely to be
-      // the more interesting case for non-browser apps.  See
-      // <https://bugzilla.mozilla.org/show_bug.cgi?id=392957#c9> for details.
-      uriLoader.openURI(
-        channel,
-        Ci.nsIURILoader.IS_CONTENT_PREFERRED,
-        aWindowContext
+      let triggeringPrincipal = Services.scriptSecurityManager.getSystemPrincipal();
+      Services.tm.dispatchToMainThread(() =>
+        aBrowsingContext.loadURI(uriSpecToSend, { triggeringPrincipal })
       );
       return;
     }
@@ -144,7 +106,7 @@ nsWebHandlerApp.prototype = {
     let win = Services.wm.getMostRecentWindow("navigator:browser");
 
     // If this is an extension handler, check private browsing access.
-    if (!privateAllowed && PrivateBrowsingUtils.isContentWindowPrivate(win)) {
+    if (!privateAllowed && PrivateBrowsingUtils.isWindowPrivate(win)) {
       throw Components.Exception(
         "Extension not allowed in private windows.",
         Cr.NS_ERROR_FILE_NOT_FOUND

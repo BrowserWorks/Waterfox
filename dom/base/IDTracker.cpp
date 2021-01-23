@@ -7,21 +7,39 @@
 #include "IDTracker.h"
 
 #include "mozilla/Encoding.h"
+#include "mozilla/dom/DocumentOrShadowRoot.h"
+#include "nsAtom.h"
 #include "nsContentUtils.h"
 #include "nsIURI.h"
-#include "nsBindingManager.h"
+#include "nsIReferrerInfo.h"
 #include "nsEscape.h"
-#include "nsXBLPrototypeBinding.h"
 #include "nsCycleCollectionParticipant.h"
+#include "nsStringFwd.h"
 
 namespace mozilla {
 namespace dom {
 
-static DocumentOrShadowRoot* DocOrShadowFromContent(nsIContent& aContent) {
+static Element* LookupElement(DocumentOrShadowRoot& aDocOrShadow,
+                              const nsAString& aRef, bool aReferenceImage) {
+  if (aReferenceImage) {
+    return aDocOrShadow.LookupImageElement(aRef);
+  }
+  return aDocOrShadow.GetElementById(aRef);
+}
+
+static DocumentOrShadowRoot* FindTreeToWatch(nsIContent& aContent,
+                                             const nsAString& aID,
+                                             bool aReferenceImage) {
   ShadowRoot* shadow = aContent.GetContainingShadow();
 
-  // We never look in <svg:use> shadow trees, for backwards compat.
+  // We allow looking outside an <svg:use> shadow tree for backwards compat.
   while (shadow && shadow->Host()->IsSVGElement(nsGkAtoms::use)) {
+    // <svg:use> shadow trees are immutable, so we can just early-out if we find
+    // our relevant element instead of having to support watching multiple
+    // trees.
+    if (LookupElement(*shadow, aID, aReferenceImage)) {
+      return shadow;
+    }
     shadow = shadow->Host()->GetContainingShadow();
   }
 
@@ -33,9 +51,8 @@ static DocumentOrShadowRoot* DocOrShadowFromContent(nsIContent& aContent) {
 }
 
 void IDTracker::ResetToURIFragmentID(nsIContent* aFromContent, nsIURI* aURI,
-                                     nsIURI* aReferrer,
-                                     uint32_t aReferrerPolicy, bool aWatch,
-                                     bool aReferenceImage) {
+                                     nsIReferrerInfo* aReferrerInfo,
+                                     bool aWatch, bool aReferenceImage) {
   MOZ_ASSERT(aFromContent,
              "ResetToURIFragmentID() expects non-null content pointer");
 
@@ -51,7 +68,6 @@ void IDTracker::ResetToURIFragmentID(nsIContent* aFromContent, nsIURI* aURI,
 
   // Get the thing to observe changes to.
   Document* doc = aFromContent->OwnerDoc();
-  DocumentOrShadowRoot* docOrShadow = DocOrShadowFromContent(*aFromContent);
   auto encoding = doc->GetDocumentCharacterSet();
 
   nsAutoString ref;
@@ -59,61 +75,29 @@ void IDTracker::ResetToURIFragmentID(nsIContent* aFromContent, nsIURI* aURI,
   if (NS_FAILED(rv) || ref.IsEmpty()) {
     return;
   }
-  rv = NS_OK;
 
-  nsIContent* bindingParent = aFromContent->GetBindingParent();
-  if (bindingParent && !aFromContent->IsInShadowTree()) {
-    nsXBLBinding* binding = bindingParent->GetXBLBinding();
-    if (!binding) {
-      // This happens, for example, if aFromContent is part of the content
-      // inserted by a call to Document::InsertAnonymousContent, which we
-      // also want to handle.  (It also happens for <use>'s anonymous
-      // content etc.)
-      Element* anonRoot =
-          doc->GetAnonRootIfInAnonymousContentContainer(aFromContent);
-      if (anonRoot) {
-        mElement = nsContentUtils::MatchElementId(anonRoot, ref);
-        // We don't have watching working yet for anonymous content, so bail out
-        // here.
-        return;
-      }
-    } else {
-      bool isEqualExceptRef;
-      rv = aURI->EqualsExceptRef(binding->PrototypeBinding()->DocURI(),
-                                 &isEqualExceptRef);
-      if (NS_SUCCEEDED(rv) && isEqualExceptRef) {
-        // XXX sXBL/XBL2 issue
-        // Our content is an anonymous XBL element from a binding inside the
-        // same document that the referenced URI points to. In order to avoid
-        // the risk of ID collisions we restrict ourselves to anonymous
-        // elements from this binding; specifically, URIs that are relative to
-        // the binding document should resolve to the copy of the target
-        // element that has been inserted into the bound document.
-        // If the URI points to a different document we don't need this
-        // restriction.
-        nsINodeList* anonymousChildren =
-            doc->BindingManager()->GetAnonymousNodesFor(bindingParent);
-
-        if (anonymousChildren) {
-          uint32_t length = anonymousChildren->Length();
-          for (uint32_t i = 0; i < length && !mElement; ++i) {
-            mElement =
-                nsContentUtils::MatchElementId(anonymousChildren->Item(i), ref);
-          }
-        }
-
-        // We don't have watching working yet for XBL, so bail out here.
-        return;
-      }
+  if (aFromContent->IsInNativeAnonymousSubtree()) {
+    // This happens, for example, if aFromContent is part of the content
+    // inserted by a call to Document::InsertAnonymousContent, which we
+    // also want to handle.  (It also happens for other native anonymous content
+    // etc.)
+    Element* anonRoot =
+        doc->GetAnonRootIfInAnonymousContentContainer(aFromContent);
+    if (anonRoot) {
+      mElement = nsContentUtils::MatchElementId(anonRoot, ref);
+      // We don't have watching working yet for anonymous content, so bail out
+      // here.
+      return;
     }
   }
 
   bool isEqualExceptRef;
   rv = aURI->EqualsExceptRef(doc->GetDocumentURI(), &isEqualExceptRef);
+  DocumentOrShadowRoot* docOrShadow;
   if (NS_FAILED(rv) || !isEqualExceptRef) {
     RefPtr<Document::ExternalResourceLoad> load;
-    doc = doc->RequestExternalResource(aURI, aReferrer, aReferrerPolicy,
-                                       aFromContent, getter_AddRefs(load));
+    doc = doc->RequestExternalResource(aURI, aReferrerInfo, aFromContent,
+                                       getter_AddRefs(load));
     docOrShadow = doc;
     if (!doc) {
       if (!load || !aWatch) {
@@ -127,6 +111,8 @@ void IDTracker::ResetToURIFragmentID(nsIContent* aFromContent, nsIURI* aURI,
       load->AddObserver(observer);
       // Keep going so we set up our watching stuff a bit
     }
+  } else {
+    docOrShadow = FindTreeToWatch(*aFromContent, ref, aReferenceImage);
   }
 
   if (aWatch) {
@@ -146,8 +132,10 @@ void IDTracker::ResetWithID(Element& aFrom, nsAtom* aID, bool aWatch) {
 
   mReferencingImage = false;
 
-  DocumentOrShadowRoot* docOrShadow = DocOrShadowFromContent(aFrom);
-  HaveNewDocumentOrShadowRoot(docOrShadow, aWatch, nsDependentAtomString(aID));
+  nsDependentAtomString str(aID);
+  DocumentOrShadowRoot* docOrShadow =
+      FindTreeToWatch(aFrom, str, /* aReferenceImage = */ false);
+  HaveNewDocumentOrShadowRoot(docOrShadow, aWatch, str);
 }
 
 void IDTracker::HaveNewDocumentOrShadowRoot(DocumentOrShadowRoot* aDocOrShadow,
@@ -166,9 +154,7 @@ void IDTracker::HaveNewDocumentOrShadowRoot(DocumentOrShadowRoot* aDocOrShadow,
     return;
   }
 
-  Element* e = mReferencingImage ? aDocOrShadow->LookupImageElement(aRef)
-                                 : aDocOrShadow->GetElementById(aRef);
-  if (e) {
+  if (Element* e = LookupElement(*aDocOrShadow, aRef, mReferencingImage)) {
     mElement = e;
   }
 }
@@ -224,7 +210,7 @@ NS_IMETHODIMP
 IDTracker::DocumentLoadNotification::Observe(nsISupports* aSubject,
                                              const char* aTopic,
                                              const char16_t* aData) {
-  NS_ASSERTION(PL_strcmp(aTopic, "external-resource-document-created") == 0,
+  NS_ASSERTION(!strcmp(aTopic, "external-resource-document-created"),
                "Unexpected topic");
   if (mTarget) {
     nsCOMPtr<Document> doc = do_QueryInterface(aSubject);

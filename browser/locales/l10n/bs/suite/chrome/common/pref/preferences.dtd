@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  preferencesDefaultTitleMac.title "Postavke">
+<!ENTITY  preferencesDefaultTitleWin.title "Opcije">
+<!ENTITY  preferencesCloseButton.label "Zatvori">
+
+<!--LOCALIZATION NOTE (.label): Preferences categories that appear on the left of the preferences dialog -->
+<!ENTITY prefWindow.title "Postavke">
+<!ENTITY categoryHeader "Kategorija">
+
+<!ENTITY appear.label "Izgled">
+<!ENTITY content.label "Sadržaj">
+<!ENTITY fonts.label "Fontovi">
+<!ENTITY colors.label "Boje">
+<!ENTITY media.label "Mediji">
+<!ENTITY spellingPane.label "Pravopis">
+
+<!ENTITY navigator.label "Browser">
+<!ENTITY history.label "Historija">
+<!ENTITY languages.label "Jezici">
+<!ENTITY applications.label "Pomoćne aplikacije">
+<!ENTITY locationBar.label "Adresna traka">
+<!ENTITY search.label "Pretraživanje interneta">
+<!ENTITY tabWindows.label "Pretraživanje po tabovima">
+<!ENTITY links.label "Ponašanje linka">
+<!ENTITY download.label "Preuzimanja">
+
+<!ENTITY security.label "Privatnost i sigurnost">
+<!ENTITY privatedata.label "Privatni podaci">
+<!ENTITY cookies.label "Kolačići">
+<!ENTITY images.label "Slike">
+<!ENTITY popups.label "Iskočni prozori">
+<!ENTITY passwords.label "Lozinke">
+<!ENTITY masterpass.label "Glavna lozinka">
+<!ENTITY ssltls.label "SSL/TLS">
+<!ENTITY certs.label "Certifikati">
+
+<!ENTITY sync.label "Sync">
+
+<!ENTITY advance.label "Napredno">
+<!ENTITY scriptsAndWindows.label "Skripte i priključci">
+<!ENTITY keynav.label "Navigacija pomoću tastature">
+<!ENTITY findAsYouType.label "Nađi tokom kucanja">
+<!ENTITY cache.label "Predmemorija">
+<!ENTITY offlineApps.label "Van mrežne aplikacije">
+<!ENTITY proxies.label "Proxy serveri">
+<!ENTITY httpnetworking.label "HTTP umrežavanje">
+<!ENTITY smart.label "Instalacija softvera">
+

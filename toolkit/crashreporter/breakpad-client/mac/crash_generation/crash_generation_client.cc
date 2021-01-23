@@ -32,21 +32,20 @@
 #include "mac/crash_generation/crash_generation_server.h"
 #include "common/mac/MachIPC.h"
 
-#include "mozilla/recordreplay/ChildIPC.h"
-
 namespace google_breakpad {
 
 bool CrashGenerationClient::RequestDumpForException(
     int exception_type,
     int exception_code,
     int exception_subcode,
-    mach_port_t crashing_thread) {
+    mach_port_t crashing_thread,
+    mach_port_t crashing_task) {
   // The server will send a message to this port indicating that it
   // has finished its work.
   ReceivePort acknowledge_port;
 
   MachSendMessage message(kDumpRequestMessage);
-  message.AddDescriptor(mach_task_self());            // this task
+  message.AddDescriptor(crashing_task);               // crashing task
   message.AddDescriptor(crashing_thread);             // crashing thread
   message.AddDescriptor(MACH_PORT_NULL);              // handler thread
   message.AddDescriptor(acknowledge_port.GetPort());  // message receive port
@@ -56,12 +55,6 @@ bool CrashGenerationClient::RequestDumpForException(
   info.exception_code = exception_code;
   info.exception_subcode = exception_subcode;
   info.child_pid = getpid();
-
-  // When recording/replaying, associate minidumps with the middleman process
-  // so that the UI process can find them.
-  if (mozilla::recordreplay::IsRecordingOrReplaying()) {
-    info.child_pid = mozilla::recordreplay::child::MiddlemanProcessId();
-  }
 
   message.SetData(&info, sizeof(info));
 

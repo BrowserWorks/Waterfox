@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.findAsYouType.title "Atopar mentres escribe">
+<!ENTITY findAsYouTypeBehavior.label "Atopar mentres escribe">
+<!ENTITY findAsYouTypeTip.label "Consello: para iniciar manualmente Atopar mentres escribe, escriba / para atopar texto ou ' para atopar ligazóns, seguido do texto que quere atopar.">
+<!ENTITY findAsYouTypeTimeout.label "Limpar a busca actual despois duns poucos segundos de inactividade">
+<!ENTITY findAsYouTypeTimeout.accesskey "c">
+<!ENTITY findAsYouTypeSound.label "Reproducir un son cando non se atope o texto escrito">
+<!ENTITY findAsYouTypeSound.accesskey "p">
+<!ENTITY findAsYouTypeEnableAuto.label "Atopar automaticamente ao escribir dentro dunha páxina web:">
+<!ENTITY findAsYouTypeEnableAuto.accesskey "A">
+<!ENTITY findAsYouTypeAutoText.label "Calquera texto na páxina">
+<!ENTITY findAsYouTypeAutoText.accesskey "a">
+<!ENTITY findAsYouTypeAutoLinks.label "Só ligazóns">
+<!ENTITY findAsYouTypeAutoLinks.accesskey "l">
+
+<!ENTITY findAsYouTypeFindbarEnable.label "Mostra a barra de buscas ao atopar mentres escribe">
+<!ENTITY findAsYouTypeFindbarEnable.accesskey "s">
+<!ENTITY findAsYouTypeFindbarEnableTip.label "Nota: Atopar mentres escribe sen mostrar a barra de buscas non permite introducir caracteres internacionais.">

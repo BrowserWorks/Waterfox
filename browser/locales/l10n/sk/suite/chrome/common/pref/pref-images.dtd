@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.images.title              "Obrázky">
+
+<!ENTITY imageBlocking.label            "Zásady akceptovania obrázkov">
+
+<!--LOCALIZATION NOTE (onStartLegend.label): Don't translate "&brandShortName;".
+    Place "&brandShortName;" in the phrase where the name of the application should
+	 appear
+-->
+<!ENTITY imageDetails                   "Nastavenie spôsobu, ktorým &brandShortName; spracováva obrázky.">
+
+<!ENTITY loadAllImagesRadio.label       "Načítavať všetky obrázky">
+<!ENTITY loadAllImagesRadio.accesskey   "a">
+<!ENTITY loadOrgImagesRadio.label       "Povoliť len obrázky, ktoré pochádzajú z rovnakého servera ako stránka">
+<!ENTITY loadOrgImagesRadio.accesskey   "o">
+<!ENTITY loadNoImagesRadio.label        "Nenačítavať obrázky">
+<!ENTITY loadNoImagesRadio.accesskey    "N">
+<!ENTITY viewPermissions.label          "Spravovať povolenia">
+<!ENTITY viewPermissions.accesskey      "S">
+<!ENTITY animLoopingTitle.label         "Počet animácií animovaných obrázkov">
+<!ENTITY animLoopAsSpecified.label      "Podľa nastavenia v obrázku">
+<!ENTITY animLoopAsSpecified.accesskey  "d">
+<!ENTITY animLoopOnce.label             "Raz">
+<!ENTITY animLoopOnce.accesskey         "R">
+<!ENTITY animLoopNever.label            "Nikdy">
+<!ENTITY animLoopNever.accesskey        "k">

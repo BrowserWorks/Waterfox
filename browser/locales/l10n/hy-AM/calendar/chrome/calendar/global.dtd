@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY time.midnight "Կեսգիշեր" >
+<!ENTITY time.noon "Կեսօր" >
+
+<!-- Day Names -->
+<!-- LOCALIZATION NOTE : Accesskeys for day.1.Ddd to day.7.Ddd are currently
+     only used in Preferences > Views > Workweek groupbox -->
+<!ENTITY day.1.Ddd "Կիր" >
+<!ENTITY day.1.Ddd.accesskey "Կ">
+<!ENTITY day.2.Ddd "Երկ" >
+<!ENTITY day.2.Ddd.accesskey "Ե">
+<!ENTITY day.3.Ddd "Երք" >
+<!ENTITY day.3.Ddd.accesskey "Ե">
+<!ENTITY day.4.Ddd "Չրք" >
+<!ENTITY day.4.Ddd.accesskey "Չ">
+<!ENTITY day.5.Ddd "Հնգ" >
+<!ENTITY day.5.Ddd.accesskey "հ">
+<!ENTITY day.6.Ddd "Ուրբ" >
+<!ENTITY day.6.Ddd.accesskey "Ու">
+<!ENTITY day.7.Ddd "Շաբ" >
+<!ENTITY day.7.Ddd.accesskey "շ">
+
+<!ENTITY day.1.name "Կիրակի" >
+<!ENTITY day.2.name "Երկուշաբթի" >
+<!ENTITY day.3.name "Երեքշաբթի" >
+<!ENTITY day.4.name "Չորեքշաբթի" >
+<!ENTITY day.5.name "Հինգշաբթի" >
+<!ENTITY day.6.name "Ուրբաթ" >
+<!ENTITY day.7.name "Շաբաթ" >
+
+<!ENTITY month.1.name "Հունվար" >
+<!ENTITY month.2.name "Փետրվար" >
+<!ENTITY month.3.name "Մարտ" >
+<!ENTITY month.4.name "Ապրիլ" >
+<!ENTITY month.5.name "Մայիս" >
+<!ENTITY month.6.name "Հունիս" >
+<!ENTITY month.7.name "Հուլիս" >
+<!ENTITY month.8.name "Օգոստոս" >
+<!ENTITY month.9.name "Սեպտեմբեր" >
+<!ENTITY month.10.name "Հոկտեմբեր" >
+<!ENTITY month.11.name "Նոյեմբեր" >
+<!ENTITY month.12.name "Դեկտեմբեր" >
+
+<!ENTITY onemonthbackward.tooltip "Մեկ ամիս առաջ" >
+<!ENTITY onemonthforward.tooltip "Մեկ ամիս հետո" >
+<!ENTITY oneyearbackward.tooltip "Մեկ տարի առաջ" >
+<!ENTITY oneyearforward.tooltip "Մեկ տարի հետո" >
+<!ENTITY showToday.tooltip "Գնալ այսօրվան">
+<!ENTITY onedayforward.tooltip "Մեկ օր հետո">
+<!ENTITY onedaybackward.tooltip "Մեկ օր առաջ">
+<!ENTITY showselectedday.tooltip "Ցույց տալ ընտրված օրվա համար իրադարձություններ">

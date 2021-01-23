@@ -12,10 +12,13 @@ add_task(async function() {
     async function(browser) {
       // Add a test engine that provides suggestions and switch to it.
       let currEngine = await Services.search.getDefault();
-      let engine = await promiseNewEngine("searchSuggestionEngine.xml");
-      let p = promiseContentSearchChange(browser, engine.name);
-      await Services.search.setDefault(engine);
-      await p;
+
+      let engine;
+      await promiseContentSearchChange(browser, async () => {
+        engine = await promiseNewEngine("searchSuggestionEngine.xml");
+        await Services.search.setDefault(engine);
+        return engine.name;
+      });
 
       // Clear any search history results
       await new Promise((resolve, reject) => {
@@ -36,7 +39,7 @@ add_task(async function() {
         );
       });
 
-      await ContentTask.spawn(browser, null, async function() {
+      await SpecialPowers.spawn(browser, [], async function() {
         // Start composition and type "x"
         let input = content.document.querySelector([
           "#searchText",
@@ -46,7 +49,7 @@ add_task(async function() {
       });
 
       info("Setting up the mutation observer before synthesizing composition");
-      let mutationPromise = ContentTask.spawn(browser, null, async function() {
+      let mutationPromise = SpecialPowers.spawn(browser, [], async function() {
         let searchController = content.wrappedJSObject.gContentSearchController;
 
         // Wait for the search suggestions to become visible.

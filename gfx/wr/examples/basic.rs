@@ -183,7 +183,7 @@ impl Example for App {
 
     fn render(
         &mut self,
-        api: &RenderApi,
+        api: &mut RenderApi,
         builder: &mut DisplayListBuilder,
         txn: &mut Transaction,
         _: DeviceIntSize,
@@ -197,13 +197,13 @@ impl Example for App {
         builder.push_simple_stacking_context(
             content_bounds.origin,
             spatial_id,
-            true,
+            PrimitiveFlags::IS_BACKFACE_VISIBLE,
         );
 
         let image_mask_key = api.generate_image_key();
         txn.add_image(
             image_mask_key,
-            ImageDescriptor::new(2, 2, ImageFormat::R8, true, false),
+            ImageDescriptor::new(2, 2, ImageFormat::R8, ImageDescriptorFlags::IS_OPAQUE),
             ImageData::new(vec![0, 80, 180, 255]),
             None,
         );
@@ -217,11 +217,16 @@ impl Example for App {
             BorderRadius::uniform(20.0),
             ClipMode::Clip
         );
-        let clip_id = builder.define_clip(
+        let mask_clip_id = builder.define_clip_image_mask(
             &root_space_and_clip,
-            content_bounds,
-            vec![complex],
-            Some(mask)
+            mask,
+        );
+        let clip_id = builder.define_clip_rounded_rect(
+            &SpaceAndClipInfo {
+                spatial_id: root_space_and_clip.spatial_id,
+                clip_id: mask_clip_id,
+            },
+            complex,
         );
 
         builder.push_rect(
@@ -229,6 +234,7 @@ impl Example for App {
                 (100, 100).to(200, 200),
                 SpaceAndClipInfo { spatial_id, clip_id },
             ),
+            (100, 100).to(200, 200),
             ColorF::new(0.0, 1.0, 0.0, 1.0),
         );
 
@@ -237,6 +243,7 @@ impl Example for App {
                 (250, 100).to(350, 200),
                 SpaceAndClipInfo { spatial_id, clip_id },
             ),
+            (250, 100).to(350, 200),
             ColorF::new(0.0, 1.0, 0.0, 1.0),
         );
         let border_side = BorderSide {
@@ -289,7 +296,7 @@ impl Example for App {
         builder.pop_stacking_context();
     }
 
-    fn on_event(&mut self, event: winit::WindowEvent, api: &RenderApi, document_id: DocumentId) -> bool {
+    fn on_event(&mut self, event: winit::WindowEvent, api: &mut RenderApi, document_id: DocumentId) -> bool {
         let mut txn = Transaction::new();
         match event {
             winit::WindowEvent::Touch(touch) => match self.touch_state.handle_event(touch) {

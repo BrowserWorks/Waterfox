@@ -11,6 +11,9 @@ const { RotaryEngine } = ChromeUtils.import(
   "resource://testing-common/services/sync/rotaryengine.js"
 );
 const { OS } = ChromeUtils.import("resource://gre/modules/osfile.jsm");
+const { fxAccounts } = ChromeUtils.import(
+  "resource://gre/modules/FxAccounts.jsm"
+);
 
 function SteamStore(engine) {
   Store.call(this, "Steam", engine);
@@ -21,12 +24,11 @@ SteamStore.prototype = {
 };
 
 function SteamTracker(name, engine) {
-  Tracker.call(this, name || "Steam", engine);
+  LegacyTracker.call(this, name || "Steam", engine);
 }
 
 SteamTracker.prototype = {
-  __proto__: Tracker.prototype,
-  persistChangedIDs: false,
+  __proto__: LegacyTracker.prototype,
 };
 
 function SteamEngine(service) {
@@ -91,6 +93,7 @@ async function cleanAndGo(engine, server) {
 add_task(async function setup() {
   // Avoid addon manager complaining about not being initialized
   await Service.engineManager.unregister("addons");
+  await Service.engineManager.unregister("extension-storage");
 });
 
 add_task(async function test_basic() {
@@ -131,7 +134,7 @@ add_task(async function test_basic() {
   let server = httpd_setup(handlers);
   await configureIdentity({ username: "johndoe" }, server);
 
-  let ping = await sync_and_validate_telem(true, true);
+  let ping = await wait_for_ping(() => Service.sync(), true, true);
 
   // Check the "os" block - we can't really check specific values, but can
   // check it smells sane.
@@ -425,11 +428,12 @@ add_task(async function test_generic_engine_fail() {
         changes
       )}`
     );
-    let ping = await sync_and_validate_telem(true);
-    equal(ping.status.service, SYNC_FAILED_PARTIAL);
-    deepEqual(ping.engines.find(err => err.name === "steam").failureReason, {
-      name: "unexpectederror",
-      error: String(e),
+    await sync_and_validate_telem(ping => {
+      equal(ping.status.service, SYNC_FAILED_PARTIAL);
+      deepEqual(ping.engines.find(err => err.name === "steam").failureReason, {
+        name: "unexpectederror",
+        error: String(e),
+      });
     });
   } finally {
     await cleanAndGo(engine, server);
@@ -447,18 +451,20 @@ add_task(async function test_engine_fail_weird_errors() {
   try {
     let msg = "Bad things happened!";
     engine._errToThrow = { message: msg };
-    let ping = await sync_and_validate_telem(true);
-    equal(ping.status.service, SYNC_FAILED_PARTIAL);
-    deepEqual(ping.engines.find(err => err.name === "steam").failureReason, {
-      name: "unexpectederror",
-      error: "Bad things happened!",
+    await sync_and_validate_telem(ping => {
+      equal(ping.status.service, SYNC_FAILED_PARTIAL);
+      deepEqual(ping.engines.find(err => err.name === "steam").failureReason, {
+        name: "unexpectederror",
+        error: "Bad things happened!",
+      });
     });
     let e = { msg };
     engine._errToThrow = e;
-    ping = await sync_and_validate_telem(true);
-    deepEqual(ping.engines.find(err => err.name === "steam").failureReason, {
-      name: "unexpectederror",
-      error: JSON.stringify(e),
+    await sync_and_validate_telem(ping => {
+      deepEqual(ping.engines.find(err => err.name === "steam").failureReason, {
+        name: "unexpectederror",
+        error: JSON.stringify(e),
+      });
     });
   } finally {
     await cleanAndGo(engine, server);
@@ -484,31 +490,32 @@ add_task(async function test_overrideTelemetryName() {
   try {
     info("Sync with validation problems");
     engine.problemsToReport = problemsToReport;
-    let ping = await sync_and_validate_telem(true);
-    let enginePing = ping.engines.find(e => e.name === "steam-but-better");
-    ok(enginePing);
-    ok(!ping.engines.find(e => e.name === "steam"));
-
-    deepEqual(
-      enginePing.validation,
-      {
-        version: 1,
-        checked: 0,
-        problems: problemsToReport,
-      },
-      "Should include validation report with overridden name"
-    );
+    await sync_and_validate_telem(ping => {
+      let enginePing = ping.engines.find(e => e.name === "steam-but-better");
+      ok(enginePing);
+      ok(!ping.engines.find(e => e.name === "steam"));
+      deepEqual(
+        enginePing.validation,
+        {
+          version: 1,
+          checked: 0,
+          problems: problemsToReport,
+        },
+        "Should include validation report with overridden name"
+      );
+    });
 
     info("Sync without validation problems");
     engine.problemsToReport = null;
-    ping = await sync_and_validate_telem(true);
-    enginePing = ping.engines.find(e => e.name === "steam-but-better");
-    ok(enginePing);
-    ok(!ping.engines.find(e => e.name === "steam"));
-    ok(
-      !enginePing.validation,
-      "Should not include validation report when there are no problems"
-    );
+    await sync_and_validate_telem(ping => {
+      let enginePing = ping.engines.find(e => e.name === "steam-but-better");
+      ok(enginePing);
+      ok(!ping.engines.find(e => e.name === "steam"));
+      ok(
+        !enginePing.validation,
+        "Should not include validation report when there are no problems"
+      );
+    });
   } finally {
     await cleanAndGo(engine, server);
     await Service.engineManager.unregister(engine);
@@ -541,17 +548,18 @@ add_task(async function test_engine_fail_ioerror() {
         changes
       )}`
     );
-    let ping = await sync_and_validate_telem(true);
-    equal(ping.status.service, SYNC_FAILED_PARTIAL);
-    let failureReason = ping.engines.find(e => e.name === "steam")
-      .failureReason;
-    equal(failureReason.name, "unexpectederror");
-    // ensure the profile dir in the exception message has been stripped.
-    ok(
-      !failureReason.error.includes(OS.Constants.Path.profileDir),
-      failureReason.error
-    );
-    ok(failureReason.error.includes("[profileDir]"), failureReason.error);
+    await sync_and_validate_telem(ping => {
+      equal(ping.status.service, SYNC_FAILED_PARTIAL);
+      let failureReason = ping.engines.find(e => e.name === "steam")
+        .failureReason;
+      equal(failureReason.name, "unexpectederror");
+      // ensure the profile dir in the exception message has been stripped.
+      ok(
+        !failureReason.error.includes(OS.Constants.Path.profileDir),
+        failureReason.error
+      );
+      ok(failureReason.error.includes("[profileDir]"), failureReason.error);
+    });
   } finally {
     await cleanAndGo(engine, server);
     await Service.engineManager.unregister(engine);
@@ -573,23 +581,26 @@ add_task(async function test_clean_urls() {
   try {
     const changes = await engine._tracker.getChangedIDs();
     _(`test_clean_urls: Steam tracker contents: ${JSON.stringify(changes)}`);
-    let ping = await sync_and_validate_telem(true);
-    equal(ping.status.service, SYNC_FAILED_PARTIAL);
-    let failureReason = ping.engines.find(e => e.name === "steam")
-      .failureReason;
-    equal(failureReason.name, "unexpectederror");
-    equal(failureReason.error, "<URL> is not a valid URL.");
+    await sync_and_validate_telem(ping => {
+      equal(ping.status.service, SYNC_FAILED_PARTIAL);
+      let failureReason = ping.engines.find(e => e.name === "steam")
+        .failureReason;
+      equal(failureReason.name, "unexpectederror");
+      equal(failureReason.error, "<URL> is not a valid URL.");
+    });
     // Handle other errors that include urls.
     engine._errToThrow =
       "Other error message that includes some:url/foo/bar/ in it.";
-    ping = await sync_and_validate_telem(true);
-    equal(ping.status.service, SYNC_FAILED_PARTIAL);
-    failureReason = ping.engines.find(e => e.name === "steam").failureReason;
-    equal(failureReason.name, "unexpectederror");
-    equal(
-      failureReason.error,
-      "Other error message that includes <URL> in it."
-    );
+    await sync_and_validate_telem(ping => {
+      equal(ping.status.service, SYNC_FAILED_PARTIAL);
+      let failureReason = ping.engines.find(e => e.name === "steam")
+        .failureReason;
+      equal(failureReason.name, "unexpectederror");
+      equal(
+        failureReason.error,
+        "Other error message that includes <URL> in it."
+      );
+    });
   } finally {
     await cleanAndGo(engine, server);
     await Service.engineManager.unregister(engine);
@@ -658,15 +669,16 @@ add_task(async function test_nserror() {
   try {
     const changes = await engine._tracker.getChangedIDs();
     _(`test_nserror: Steam tracker contents: ${JSON.stringify(changes)}`);
-    let ping = await sync_and_validate_telem(true);
-    deepEqual(ping.status, {
-      service: SYNC_FAILED_PARTIAL,
-      sync: LOGIN_FAILED_NETWORK_ERROR,
-    });
-    let enginePing = ping.engines.find(e => e.name === "steam");
-    deepEqual(enginePing.failureReason, {
-      name: "nserror",
-      code: Cr.NS_ERROR_UNKNOWN_HOST,
+    await sync_and_validate_telem(ping => {
+      deepEqual(ping.status, {
+        service: SYNC_FAILED_PARTIAL,
+        sync: LOGIN_FAILED_NETWORK_ERROR,
+      });
+      let enginePing = ping.engines.find(e => e.name === "steam");
+      deepEqual(enginePing.failureReason, {
+        name: "nserror",
+        code: Cr.NS_ERROR_UNKNOWN_HOST,
+      });
     });
   } finally {
     await cleanAndGo(engine, server);
@@ -748,15 +760,18 @@ add_task(async function test_discarding() {
 
     server = httpd_setup(handlers);
     await configureIdentity({ username: "johndoe" }, server);
-    telem.submit = () =>
-      ok(false, "Submitted telemetry ping when we should not have");
+    telem.submit = p =>
+      ok(
+        false,
+        "Submitted telemetry ping when we should not have" + JSON.stringify(p)
+      );
 
     for (let i = 0; i < 5; ++i) {
       await Service.sync();
     }
     telem.submit = oldSubmit;
     telem.submissionInterval = -1;
-    let ping = await sync_and_validate_telem(true, true); // with this we've synced 6 times
+    let ping = await wait_for_ping(() => Service.sync(), true, true); // with this we've synced 6 times
     equal(ping.syncs.length, 2);
     equal(ping.discarded, 4);
   } finally {
@@ -766,6 +781,39 @@ add_task(async function test_discarding() {
     if (server) {
       await promiseStopServer(server);
     }
+  }
+});
+
+add_task(async function test_submit_interval() {
+  let telem = get_sync_test_telemetry();
+  let oldSubmit = telem.submit;
+  let numSubmissions = 0;
+  telem.submit = function() {
+    numSubmissions += 1;
+  };
+
+  function notify(what, data = null) {
+    Svc.Obs.notify(what, JSON.stringify(data));
+  }
+
+  try {
+    // submissionInterval is set such that each sync should submit
+    notify("weave:service:sync:start", { why: "testing" });
+    notify("weave:service:sync:finish");
+    Assert.equal(numSubmissions, 1, "should submit this ping due to interval");
+
+    // As should each event outside of a sync.
+    Service.recordTelemetryEvent("object", "method");
+    Assert.equal(numSubmissions, 2);
+
+    // But events while we are syncing should not.
+    notify("weave:service:sync:start", { why: "testing" });
+    Service.recordTelemetryEvent("object", "method");
+    Assert.equal(numSubmissions, 2, "no submission for this event");
+    notify("weave:service:sync:finish");
+    Assert.equal(numSubmissions, 3, "was submitted after sync finish");
+  } finally {
+    telem.submit = oldSubmit;
   }
 });
 
@@ -779,9 +827,10 @@ add_task(async function test_no_foreign_engines_in_error_ping() {
   engine._errToThrow = new Error("Oh no!");
   await SyncTestingInfrastructure(server);
   try {
-    let ping = await sync_and_validate_telem(true);
-    equal(ping.status.service, SYNC_FAILED_PARTIAL);
-    ok(ping.engines.every(e => e.name !== "bogus"));
+    await sync_and_validate_telem(ping => {
+      equal(ping.status.service, SYNC_FAILED_PARTIAL);
+      ok(ping.engines.every(e => e.name !== "bogus"));
+    });
   } finally {
     await cleanAndGo(engine, server);
     await Service.engineManager.unregister(engine);
@@ -798,8 +847,9 @@ add_task(async function test_no_foreign_engines_in_success_ping() {
 
   await SyncTestingInfrastructure(server);
   try {
-    let ping = await sync_and_validate_telem();
-    ok(ping.engines.every(e => e.name !== "bogus"));
+    await sync_and_validate_telem(ping => {
+      ok(ping.engines.every(e => e.name !== "bogus"));
+    });
   } finally {
     await cleanAndGo(engine, server);
     await Service.engineManager.unregister(engine);
@@ -815,6 +865,10 @@ add_task(async function test_events() {
   let server = await serverForFoo(engine);
 
   await SyncTestingInfrastructure(server);
+
+  let telem = get_sync_test_telemetry();
+  telem.submissionInterval = Infinity;
+
   try {
     let serverTime = Resource.serverTime;
     Service.recordTelemetryEvent("object", "method", "value", { foo: "bar" });
@@ -827,28 +881,53 @@ add_task(async function test_events() {
     equal(object, "object");
     equal(value, "value");
     deepEqual(extra, { foo: "bar", serverTime: String(serverTime) });
-    // Test with optional values.
-    Service.recordTelemetryEvent("object", "method");
-    ping = await wait_for_ping(() => Service.sync(), false, true);
+    ping = await wait_for_ping(
+      () => {
+        // Test with optional values.
+        Service.recordTelemetryEvent("object", "method");
+      },
+      false,
+      true
+    );
     equal(ping.events.length, 1);
     equal(ping.events[0].length, 4);
 
-    Service.recordTelemetryEvent("object", "method", "extra");
-    ping = await wait_for_ping(() => Service.sync(), false, true);
+    ping = await wait_for_ping(
+      () => {
+        Service.recordTelemetryEvent("object", "method", "extra");
+      },
+      false,
+      true
+    );
     equal(ping.events.length, 1);
     equal(ping.events[0].length, 5);
 
-    Service.recordTelemetryEvent("object", "method", undefined, { foo: "bar" });
-    ping = await wait_for_ping(() => Service.sync(), false, true);
+    ping = await wait_for_ping(
+      () => {
+        Service.recordTelemetryEvent("object", "method", undefined, {
+          foo: "bar",
+        });
+      },
+      false,
+      true
+    );
     equal(ping.events.length, 1);
     equal(ping.events[0].length, 6);
     [timestamp, category, method, object, value, extra] = ping.events[0];
     equal(value, null);
 
-    Service.recordTelemetryEvent("object", "method", undefined, { foo: "bar" });
-    let telem = get_sync_test_telemetry();
     // Fake a submission due to shutdown.
-    ping = await wait_for_ping(() => telem.finish("shutdown"), false, true);
+    ping = await wait_for_ping(
+      () => {
+        telem.submissionInterval = Infinity;
+        Service.recordTelemetryEvent("object", "method", undefined, {
+          foo: "bar",
+        });
+        telem.finish("shutdown");
+      },
+      false,
+      true
+    );
     equal(ping.syncs.length, 0);
     equal(ping.events.length, 1);
     equal(ping.events[0].length, 6);
@@ -951,5 +1030,335 @@ add_task(async function test_no_ping_for_self_hosters() {
     telem.submit = oldSubmit;
     await cleanAndGo(engine, server);
     await Service.engineManager.unregister(engine);
+  }
+});
+
+add_task(async function test_fxa_device_telem() {
+  let t = get_sync_test_telemetry();
+  let syncEnabled = true;
+  let oldGetClientsEngineRecords = t.getClientsEngineRecords;
+  let oldGetFxaDevices = t.getFxaDevices;
+  let oldSyncIsEnabled = t.syncIsEnabled;
+  let oldSanitizeFxaDeviceId = t.sanitizeFxaDeviceId;
+  t.syncIsEnabled = () => syncEnabled;
+  t.sanitizeFxaDeviceId = id => `So clean: ${id}`;
+  try {
+    let keep0 = Utils.makeGUID();
+    let keep1 = Utils.makeGUID();
+    let keep2 = Utils.makeGUID();
+    let curdev = Utils.makeGUID();
+
+    let keep1Sync = Utils.makeGUID();
+    let keep2Sync = Utils.makeGUID();
+    let curdevSync = Utils.makeGUID();
+    let fxaDevices = [
+      // current device. First for easy access later
+      {
+        id: curdev,
+        isCurrentDevice: true,
+        lastAccessTime: Date.now() - 1000 * 60 * 60 * 24 * 1,
+        pushEndpointExpired: false,
+        type: "desktop",
+        name: "current device",
+      },
+      // Valid but push expired
+      {
+        id: Utils.makeGUID(),
+        isCurrentDevice: false,
+        lastAccessTime: Date.now() - 1000 * 60 * 60 * 24 * 15,
+        pushEndpointExpired: true,
+        type: "desktop",
+        name: "push expired",
+      },
+      // three with same name, should ignore older.
+      {
+        id: Utils.makeGUID(),
+        isCurrentDevice: false,
+        lastAccessTime: Date.now() - 1000 * 60 * 60 * 24 * 15,
+        pushEndpointExpired: false,
+        type: "mobile",
+        name: "dupe",
+      },
+      {
+        // should keep
+        id: keep0,
+        isCurrentDevice: false,
+        lastAccessTime: Date.now() - 1000 * 60 * 60 * 24 * 10,
+        pushEndpointExpired: false,
+        type: "mobile",
+        name: "dupe",
+      },
+      {
+        id: Utils.makeGUID(),
+        isCurrentDevice: false,
+        lastAccessTime: Date.now() - 1000 * 60 * 60 * 24 * 12,
+        pushEndpointExpired: false,
+        type: "mobile",
+        name: "dupe",
+      },
+      // Valid but too old.
+      {
+        id: Utils.makeGUID(),
+        isCurrentDevice: false,
+        lastAccessTime: Date.now() - 1000 * 60 * 60 * 24 * 90,
+        pushEndpointExpired: false,
+        type: "desktop",
+        name: "too old",
+      },
+      // Valid but null date (saw locally).
+      {
+        id: Utils.makeGUID(),
+        isCurrentDevice: false,
+        lastAccessTime: null,
+        pushEndpointExpired: false,
+        type: "desktop",
+        name: "null date",
+      },
+      // Valid 2
+      {
+        id: keep1,
+        isCurrentDevice: false,
+        lastAccessTime: Date.now() - 1000 * 60 * 60 * 24 * 1,
+        pushEndpointExpired: false,
+        type: "desktop",
+        name: "valid2",
+      },
+      // Valid 3
+      {
+        id: keep2,
+        isCurrentDevice: false,
+        lastAccessTime: Date.now() - 1000 * 60 * 60 * 24 * 5,
+        pushEndpointExpired: false,
+        type: "desktop",
+        name: "valid3",
+      },
+    ];
+    let clientInfo = [
+      {
+        id: keep1Sync,
+        fxaDeviceId: keep1,
+        os: "Windows 30",
+        version: "Firefox 1 million",
+      },
+      {
+        id: keep2Sync,
+        fxaDeviceId: keep2,
+        os: "firefox, but an os",
+        verison: "twelve",
+      },
+      {
+        id: Utils.makeGUID(),
+        fxaDeviceId: null,
+        os: "apparently ios used to keep write these IDs as null.",
+        version: "Doesn't seem to anymore",
+      },
+      {
+        id: curdevSync,
+        fxaDeviceId: curdev,
+        os: "emacs",
+        version: "22",
+      },
+      {
+        id: Utils.makeGUID(),
+        fxaDeviceId: Utils.makeGUID(),
+        os: "not part of the fxa device set at all",
+        version: "foo bar baz",
+      },
+      // keep0 intententionally omitted.
+    ];
+    t.getClientsEngineRecords = () => clientInfo;
+    let devInfo = t.updateFxaDevices(fxaDevices);
+    equal(devInfo.deviceID, t.sanitizeFxaDeviceId(curdev));
+    for (let d of devInfo.devices) {
+      ok(d.id.startsWith("So clean:"));
+      if (d.syncID) {
+        ok(d.syncID.startsWith("So clean:"));
+      }
+    }
+    equal(devInfo.devices.length, 4);
+    let k0 = devInfo.devices.find(d => d.id == t.sanitizeFxaDeviceId(keep0));
+    let k1 = devInfo.devices.find(d => d.id == t.sanitizeFxaDeviceId(keep1));
+    let k2 = devInfo.devices.find(d => d.id == t.sanitizeFxaDeviceId(keep2));
+
+    deepEqual(k0, {
+      id: t.sanitizeFxaDeviceId(keep0),
+      type: "mobile",
+      os: undefined,
+      version: undefined,
+      syncID: undefined,
+    });
+    deepEqual(k1, {
+      id: t.sanitizeFxaDeviceId(keep1),
+      type: "desktop",
+      os: clientInfo[0].os,
+      version: clientInfo[0].version,
+      syncID: t.sanitizeFxaDeviceId(keep1Sync),
+    });
+    deepEqual(k2, {
+      id: t.sanitizeFxaDeviceId(keep2),
+      type: "desktop",
+      os: clientInfo[1].os,
+      version: clientInfo[1].version,
+      syncID: t.sanitizeFxaDeviceId(keep2Sync),
+    });
+    let newCurId = Utils.makeGUID();
+    // Update the ID
+    fxaDevices[0].id = newCurId;
+
+    let keep3 = Utils.makeGUID();
+    fxaDevices.push({
+      id: keep3,
+      isCurrentDevice: false,
+      lastAccessTime: Date.now() - 1000 * 60 * 60 * 24 * 1,
+      pushEndpointExpired: false,
+      type: "desktop",
+      name: "valid 4",
+    });
+    devInfo = t.updateFxaDevices(fxaDevices);
+
+    let afterSubmit = [keep0, keep1, keep2, keep3, newCurId]
+      .map(id => t.sanitizeFxaDeviceId(id))
+      .sort();
+    deepEqual(devInfo.devices.map(d => d.id).sort(), afterSubmit);
+
+    // Reset this, as our override doesn't check for sync being enabled.
+    t.sanitizeFxaDeviceId = oldSanitizeFxaDeviceId;
+    syncEnabled = false;
+    fxAccounts.telemetry._setHashedUID(false);
+    devInfo = t.updateFxaDevices(fxaDevices);
+    equal(devInfo.deviceID, undefined);
+    equal(devInfo.devices.length, 5);
+    for (let d of devInfo.devices) {
+      equal(d.os, undefined);
+      equal(d.version, undefined);
+      equal(d.syncID, undefined);
+      // Type should still be present.
+      notEqual(d.type, undefined);
+    }
+  } finally {
+    t.getClientsEngineRecords = oldGetClientsEngineRecords;
+    t.getFxaDevices = oldGetFxaDevices;
+    t.syncIsEnabled = oldSyncIsEnabled;
+    t.sanitizeFxaDeviceId = oldSanitizeFxaDeviceId;
+  }
+});
+
+add_task(async function test_sanitize_fxa_device_id() {
+  let t = get_sync_test_telemetry();
+  fxAccounts.telemetry._setHashedUID(false);
+  sinon.stub(t, "syncIsEnabled").callsFake(() => true);
+  const rawDeviceId = "raw one two three";
+  try {
+    equal(t.sanitizeFxaDeviceId(rawDeviceId), null);
+    fxAccounts.telemetry._setHashedUID("mock uid");
+    const sanitizedDeviceId = t.sanitizeFxaDeviceId(rawDeviceId);
+    ok(sanitizedDeviceId);
+    notEqual(sanitizedDeviceId, rawDeviceId);
+  } finally {
+    t.syncIsEnabled.restore();
+    fxAccounts.telemetry._setHashedUID(false);
+  }
+});
+
+add_task(async function test_no_node_type() {
+  let server = sync_httpd_setup({});
+  await configureIdentity(null, server);
+
+  await sync_and_validate_telem(ping => {
+    ok(ping.syncNodeType === undefined);
+  }, true);
+  await promiseStopServer(server);
+});
+
+add_task(async function test_node_type() {
+  Service.identity.logout();
+  let server = sync_httpd_setup({});
+  await configureIdentity({ node_type: "the-node-type" }, server);
+
+  await sync_and_validate_telem(ping => {
+    equal(ping.syncNodeType, "the-node-type");
+  }, true);
+  await promiseStopServer(server);
+});
+
+add_task(async function test_node_type_change() {
+  let pingPromise = wait_for_pings(2);
+
+  Service.identity.logout();
+  let server = sync_httpd_setup({});
+  await configureIdentity({ node_type: "first-node-type" }, server);
+  // Default to submitting each hour - we should still submit on node change.
+  let telem = get_sync_test_telemetry();
+  telem.submissionInterval = 60 * 60 * 1000;
+  // do 2 syncs with the same node type.
+  await Service.sync();
+  await Service.sync();
+  // then another with a different node type.
+  Service.identity.logout();
+  await configureIdentity({ node_type: "second-node-type" }, server);
+  await Service.sync();
+  telem.finish();
+
+  let pings = await pingPromise;
+  equal(pings.length, 2);
+  equal(pings[0].syncs.length, 2, "2 syncs in first ping");
+  equal(pings[0].syncNodeType, "first-node-type");
+  equal(pings[1].syncs.length, 1, "1 sync in second ping");
+  equal(pings[1].syncNodeType, "second-node-type");
+  await promiseStopServer(server);
+});
+
+add_task(async function test_deletion_request_ping() {
+  async function assertRecordedSyncDeviceID(expected) {
+    // The scalar gets updated asynchronously, so wait a tick before checking.
+    await Promise.resolve();
+    const scalars =
+      Services.telemetry.getSnapshotForScalars("deletion-request").parent || {};
+    equal(scalars["deletion.request.sync_device_id"], expected);
+  }
+
+  const MOCK_HASHED_UID = "00112233445566778899aabbccddeeff";
+  const MOCK_DEVICE_ID1 = "ffeeddccbbaa99887766554433221100";
+  const MOCK_DEVICE_ID2 = "aabbccddeeff99887766554433221100";
+
+  // Calculated by hand using SHA256(DEVICE_ID + HASHED_UID)[:32]
+  const SANITIZED_DEVICE_ID1 = "dd7c845006df9baa1c6d756926519c8c";
+  const SANITIZED_DEVICE_ID2 = "0d06919a736fc029007e1786a091882c";
+
+  let currentDeviceID = null;
+  sinon.stub(fxAccounts.device, "getLocalId").callsFake(() => {
+    return Promise.resolve(currentDeviceID);
+  });
+  let telem = get_sync_test_telemetry();
+  sinon.stub(telem, "isProductionSyncUser").callsFake(() => true);
+  fxAccounts.telemetry._setHashedUID(false);
+  try {
+    // The scalar should start out undefined, since no user is actually logged in.
+    await assertRecordedSyncDeviceID(undefined);
+
+    // If we start up without knowing the hashed UID, it should stay undefined.
+    telem.observe(null, "weave:service:ready");
+    await assertRecordedSyncDeviceID(undefined);
+
+    // But now let's say we've discovered the hashed UID from the server.
+    fxAccounts.telemetry._setHashedUID(MOCK_HASHED_UID);
+    currentDeviceID = MOCK_DEVICE_ID1;
+
+    // Now when we load up, we'll record the sync device id.
+    telem.observe(null, "weave:service:ready");
+    await assertRecordedSyncDeviceID(SANITIZED_DEVICE_ID1);
+
+    // When the device-id changes we'll update it.
+    currentDeviceID = MOCK_DEVICE_ID2;
+    telem.observe(null, "fxaccounts:new_device_id");
+    await assertRecordedSyncDeviceID(SANITIZED_DEVICE_ID2);
+
+    // When the user signs out we'll clear it.
+    telem.observe(null, "fxaccounts:onlogout");
+    await assertRecordedSyncDeviceID("");
+  } finally {
+    fxAccounts.telemetry._setHashedUID(false);
+    telem.isProductionSyncUser.restore();
+    fxAccounts.device.getLocalId.restore();
   }
 });

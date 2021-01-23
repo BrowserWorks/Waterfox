@@ -22,6 +22,7 @@ const STATE_NONE = "null";
 const STATE_DOWNLOADING = "downloading";
 const STATE_PENDING = "pending";
 const STATE_PENDING_SVC = "pending-service";
+const STATE_PENDING_ELEVATE = "pending-elevate";
 const STATE_APPLYING = "applying";
 const STATE_APPLIED = "applied";
 const STATE_APPLIED_SVC = "applied-service";
@@ -109,8 +110,7 @@ const DEFAULT_UPDATE_VERSION = "999999.0";
  * @return The string representing a remote update xml file.
  */
 function getRemoteUpdatesXMLString(aUpdates) {
-  // eslint-disable-next-line no-useless-concat
-  return '<?xml version="1.0"?>' + "<updates>" + aUpdates + "</updates>";
+  return '<?xml version="1.0"?><updates>' + aUpdates + "</updates>";
 }
 
 /**
@@ -332,6 +332,9 @@ function getUpdateString(aUpdateProps) {
   let promptWaitTime = aUpdateProps.promptWaitTime
     ? 'promptWaitTime="' + aUpdateProps.promptWaitTime + '" '
     : "";
+  let disableBITS = aUpdateProps.disableBITS
+    ? 'disableBITS="' + aUpdateProps.disableBITS + '" '
+    : "";
   let custom1 = aUpdateProps.custom1 ? aUpdateProps.custom1 + " " : "";
   let custom2 = aUpdateProps.custom2 ? aUpdateProps.custom2 + " " : "";
   let buildID = 'buildID="' + aUpdateProps.buildID + '"';
@@ -344,6 +347,7 @@ function getUpdateString(aUpdateProps) {
     appVersion +
     detailsURL +
     promptWaitTime +
+    disableBITS +
     custom1 +
     custom2 +
     buildID
@@ -391,7 +395,7 @@ function readFileBytes(aFile) {
     let bytes = bis.readByteArray(Math.min(65535, count));
     data.push(String.fromCharCode.apply(null, bytes));
     count -= bytes.length;
-    if (bytes.length == 0) {
+    if (!bytes.length) {
       throw new Error("Nothing read from input stream!");
     }
   }

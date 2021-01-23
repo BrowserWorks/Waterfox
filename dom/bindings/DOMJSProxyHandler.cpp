@@ -60,7 +60,8 @@ js::DOMProxyShadowsResult DOMProxyShadows(JSContext* cx,
 struct SetDOMProxyInformation {
   SetDOMProxyInformation() {
     js::SetDOMProxyInformation((const void*)&DOMProxyHandler::family,
-                               DOMProxyShadows);
+                               DOMProxyShadows,
+                               &RemoteObjectProxyBase::sCrossOriginProxyFamily);
   }
 };
 
@@ -201,7 +202,7 @@ bool DOMProxyHandler::defineProperty(JSContext* cx, JS::Handle<JSObject*> proxy,
                                      JS::Handle<jsid> id,
                                      Handle<PropertyDescriptor> desc,
                                      JS::ObjectOpResult& result,
-                                     bool* defined) const {
+                                     bool* done) const {
   if (xpc::WrapperFactory::IsXrayWrapper(proxy)) {
     return result.succeed();
   }
@@ -214,7 +215,7 @@ bool DOMProxyHandler::defineProperty(JSContext* cx, JS::Handle<JSObject*> proxy,
   if (!JS_DefinePropertyById(cx, expando, id, desc, result)) {
     return false;
   }
-  *defined = true;
+  *done = true;
   return true;
 }
 

@@ -9,6 +9,10 @@ ChromeUtils.defineModuleGetter(
   "resource:///modules/UITour.jsm"
 );
 
+const { PermissionTestUtils } = ChromeUtils.import(
+  "resource://testing-common/PermissionTestUtils.jsm"
+);
+
 const SINGLE_TRY_TIMEOUT = 100;
 const NUMBER_OF_TRIES = 30;
 
@@ -154,9 +158,9 @@ function waitForPopupAtAnchor(popup, anchorNode, nextTestFn, msg) {
 }
 
 function getConfigurationPromise(configName) {
-  return ContentTask.spawn(
+  return SpecialPowers.spawn(
     gTestTab.linkedBrowser,
-    configName,
+    [configName],
     contentConfigName => {
       return new Promise(resolve => {
         let contentWin = Cu.waiveXrays(content);
@@ -197,7 +201,7 @@ function showInfoPromise(
 ) {
   let popup = document.getElementById("UITourTooltip");
   let shownPromise = promisePanelElementShown(window, popup);
-  return ContentTask.spawn(gTestTab.linkedBrowser, [...arguments], args => {
+  return SpecialPowers.spawn(gTestTab.linkedBrowser, [[...arguments]], args => {
     let contentWin = Cu.waiveXrays(content);
     let [
       contentTarget,
@@ -231,7 +235,7 @@ function showHighlightPromise(...args) {
 }
 
 function showMenuPromise(name) {
-  return ContentTask.spawn(gTestTab.linkedBrowser, name, contentName => {
+  return SpecialPowers.spawn(gTestTab.linkedBrowser, [name], contentName => {
     return new Promise(resolve => {
       let contentWin = Cu.waiveXrays(content);
       contentWin.Mozilla.UITour.showMenu(contentName, resolve);
@@ -240,7 +244,7 @@ function showMenuPromise(name) {
 }
 
 function waitForCallbackResultPromise() {
-  return ContentTask.spawn(gTestTab.linkedBrowser, null, async function() {
+  return SpecialPowers.spawn(gTestTab.linkedBrowser, [], async function() {
     let contentWin = Cu.waiveXrays(content);
     await ContentTaskUtils.waitForCondition(() => {
       return contentWin.callbackResult;
@@ -330,9 +334,9 @@ function loadUITourTestPage(callback, host = "https://example.org/") {
               methodName: prop,
               args,
             };
-            return ContentTask.spawn(
+            return SpecialPowers.spawn(
               gTestTab.linkedBrowser,
-              taskArgs,
+              [taskArgs],
               contentArgs => {
                 let contentWin = Cu.waiveXrays(content);
                 return contentWin[contentArgs.methodName].apply(
@@ -446,10 +450,21 @@ function setup_UITourTest() {
 // Use `add_task(setup_UITourTest);` instead as we will fold this into `setup_UITourTest` once all tests are using `add_UITour_task`.
 function UITourTest(usingAddTask = false) {
   Services.prefs.setBoolPref("browser.uitour.enabled", true);
-  let testHttpsUri = Services.io.newURI("https://example.org");
-  let testHttpUri = Services.io.newURI("http://example.org");
-  Services.perms.add(testHttpsUri, "uitour", Services.perms.ALLOW_ACTION);
-  Services.perms.add(testHttpUri, "uitour", Services.perms.ALLOW_ACTION);
+  let testHttpsOrigin = "https://example.org";
+  let testHttpOrigin = "http://example.org";
+  PermissionTestUtils.add(
+    testHttpsOrigin,
+    "uitour",
+    Services.perms.ALLOW_ACTION
+  );
+  PermissionTestUtils.add(
+    testHttpOrigin,
+    "uitour",
+    Services.perms.ALLOW_ACTION
+  );
+
+  UITour.getHighlightContainerAndMaybeCreate(window.document);
+  UITour.getTooltipAndMaybeCreate(window.document);
 
   // If a test file is using add_task, we don't need to have a test function or
   // call `waitForExplicitFinish`.
@@ -465,8 +480,8 @@ function UITourTest(usingAddTask = false) {
     }
     delete window.gTestTab;
     Services.prefs.clearUserPref("browser.uitour.enabled");
-    Services.perms.remove(testHttpsUri, "uitour");
-    Services.perms.remove(testHttpUri, "uitour");
+    PermissionTestUtils.remove(testHttpsOrigin, "uitour");
+    PermissionTestUtils.remove(testHttpOrigin, "uitour");
   });
 
   // When using tasks, the harness will call the next added task for us.
@@ -522,7 +537,7 @@ function done(usingAddTask = false) {
 }
 
 function nextTest() {
-  if (tests.length == 0) {
+  if (!tests.length) {
     info("finished tests in this file");
     finish();
     return;

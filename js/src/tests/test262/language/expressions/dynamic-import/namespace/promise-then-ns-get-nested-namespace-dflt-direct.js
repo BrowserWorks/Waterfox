@@ -1,4 +1,4 @@
-// |reftest| skip -- export-star-as-namespace-from-module is not supported
+// |reftest| skip async -- export-star-as-namespace-from-module is not supported
 // This file was procedurally generated from the following sources:
 // - src/dynamic-import/ns-get-nested-namespace-dflt-direct.case
 // - src/dynamic-import/namespace/promise.template
@@ -102,7 +102,7 @@ import('./get-nested-namespace-dflt-skip-prod_FIXTURE.js').then(ns => {
     assert.sameValue(desc.writable, true, 'ns.productionNS2: is writable');
     assert.sameValue(desc.configurable, false, 'ns.productionNS2: is non-configurable');
 
-    var keys = Object.keys(ns.productionNS2);
+    var keys = Object.getOwnPropertyNames(ns.productionNS2);
 
     assert.sameValue(keys.length, 2);
     assert.sameValue(keys[0], 'default');

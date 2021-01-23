@@ -6,11 +6,9 @@
 #include "TLSServerSocket.h"
 
 #include "mozilla/net/DNS.h"
-#include "nsAutoPtr.h"
 #include "nsComponentManagerUtils.h"
 #include "nsDependentSubstring.h"
 #include "nsIServerSocket.h"
-#include "nsITimer.h"
 #include "nsIX509Cert.h"
 #include "nsIX509CertDB.h"
 #include "nsNetCID.h"
@@ -191,30 +189,6 @@ TLSServerSocket::SetRequestClientCertificate(uint32_t aMode) {
 }
 
 NS_IMETHODIMP
-TLSServerSocket::SetCipherSuites(uint16_t* aCipherSuites, uint32_t aLength) {
-  // If AsyncListen was already called (and set mListener), it's too late to set
-  // this.
-  if (NS_WARN_IF(mListener)) {
-    return NS_ERROR_IN_PROGRESS;
-  }
-
-  for (uint16_t i = 0; i < SSL_NumImplementedCiphers; ++i) {
-    uint16_t cipher_id = SSL_ImplementedCiphers[i];
-    if (SSL_CipherPrefSet(mFD, cipher_id, false) != SECSuccess) {
-      return mozilla::psm::GetXPCOMFromNSSError(PR_GetError());
-    }
-  }
-
-  for (uint32_t i = 0; i < aLength; ++i) {
-    if (SSL_CipherPrefSet(mFD, aCipherSuites[i], true) != SECSuccess) {
-      return mozilla::psm::GetXPCOMFromNSSError(PR_GetError());
-    }
-  }
-
-  return NS_OK;
-}
-
-NS_IMETHODIMP
 TLSServerSocket::SetVersionRange(uint16_t aMinVersion, uint16_t aMaxVersion) {
   // If AsyncListen was already called (and set mListener), it's too late to set
   // this.
@@ -304,19 +278,15 @@ TLSServerConnectionInfo::TLSServerConnectionInfo()
       mSecurityObserver(nullptr) {}
 
 TLSServerConnectionInfo::~TLSServerConnectionInfo() {
-  if (!mSecurityObserver) {
-    return;
-  }
-
   RefPtr<nsITLSServerSecurityObserver> observer;
   {
     MutexAutoLock lock(mLock);
-    observer = mSecurityObserver.forget();
+    observer = ToRefPtr(std::move(mSecurityObserver));
   }
 
   if (observer) {
-    NS_ReleaseOnMainThreadSystemGroup(
-        "TLSServerConnectionInfo::mSecurityObserver", observer.forget());
+    NS_ReleaseOnMainThread("TLSServerConnectionInfo::mSecurityObserver",
+                           observer.forget());
   }
 }
 
@@ -325,7 +295,19 @@ TLSServerConnectionInfo::SetSecurityObserver(
     nsITLSServerSecurityObserver* aObserver) {
   {
     MutexAutoLock lock(mLock);
+    if (!aObserver) {
+      mSecurityObserver = nullptr;
+      return NS_OK;
+    }
+
     mSecurityObserver = new TLSServerSecurityObserverProxy(aObserver);
+    // Call `OnHandshakeDone` if TLS handshake is already completed.
+    if (mTlsVersionUsed != TLS_VERSION_UNKNOWN) {
+      nsCOMPtr<nsITLSServerSocket> serverSocket;
+      GetServerSocket(getter_AddRefs(serverSocket));
+      mSecurityObserver->OnHandshakeDone(serverSocket, this);
+      mSecurityObserver = nullptr;
+    }
   }
   return NS_OK;
 }
@@ -418,10 +400,10 @@ nsresult TLSServerConnectionInfo::HandshakeCallback(PRFileDesc* aFD) {
     }
 
     nsCOMPtr<nsIX509Cert> clientCertPSM;
-    nsDependentCSubstring certDER(
-        reinterpret_cast<char*>(clientCert->derCert.data),
-        clientCert->derCert.len);
-    rv = certDB->ConstructX509(certDER, getter_AddRefs(clientCertPSM));
+    nsTArray<uint8_t> clientCertBytes;
+    clientCertBytes.AppendElements(clientCert->derCert.data,
+                                   clientCert->derCert.len);
+    rv = certDB->ConstructX509(clientCertBytes, getter_AddRefs(clientCertPSM));
     if (NS_FAILED(rv)) {
       return rv;
     }
@@ -434,7 +416,6 @@ nsresult TLSServerConnectionInfo::HandshakeCallback(PRFileDesc* aFD) {
   if (NS_FAILED(rv)) {
     return rv;
   }
-  mTlsVersionUsed = channelInfo.protocolVersion;
 
   SSLCipherSuiteInfo cipherInfo;
   rv = MapSECStatus(SSL_GetCipherSuiteInfo(channelInfo.cipherSuite, &cipherInfo,
@@ -446,14 +427,14 @@ nsresult TLSServerConnectionInfo::HandshakeCallback(PRFileDesc* aFD) {
   mKeyLength = cipherInfo.effectiveKeyBits;
   mMacLength = cipherInfo.macBits;
 
-  if (!mSecurityObserver) {
-    return NS_OK;
-  }
-
   // Notify consumer code that handshake is complete
   nsCOMPtr<nsITLSServerSecurityObserver> observer;
   {
     MutexAutoLock lock(mLock);
+    mTlsVersionUsed = channelInfo.protocolVersion;
+    if (!mSecurityObserver) {
+      return NS_OK;
+    }
     mSecurityObserver.swap(observer);
   }
   nsCOMPtr<nsITLSServerSocket> serverSocket;

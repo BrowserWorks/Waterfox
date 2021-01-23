@@ -15,12 +15,15 @@
         'libssl_internals.c',
         'selfencrypt_unittest.cc',
         'ssl_0rtt_unittest.cc',
+        'ssl_aead_unittest.cc',
         'ssl_agent_unittest.cc',
         'ssl_auth_unittest.cc',
         'ssl_cert_ext_unittest.cc',
+        'ssl_cipherorder_unittest.cc',
         'ssl_ciphersuite_unittest.cc',
         'ssl_custext_unittest.cc',
         'ssl_damage_unittest.cc',
+        'ssl_debug_env_unittest.cc',
         'ssl_dhe_unittest.cc',
         'ssl_drop_unittest.cc',
         'ssl_ecdh_unittest.cc',
@@ -34,8 +37,8 @@
         'ssl_hrr_unittest.cc',
         'ssl_keyupdate_unittest.cc',
         'ssl_loopback_unittest.cc',
+        'ssl_masking_unittest.cc',
         'ssl_misc_unittest.cc',
-        'ssl_primitive_unittest.cc',
         'ssl_record_unittest.cc',
         'ssl_recordsep_unittest.cc',
         'ssl_recordsize_unittest.cc',
@@ -53,7 +56,8 @@
         'tls_filter.cc',
         'tls_hkdf_unittest.cc',
         'tls_esni_unittest.cc',
-        'tls_protect.cc'
+        'tls_protect.cc',
+        'tls_subcerts_unittest.cc'
       ],
       'dependencies': [
         '<(DEPTH)/exports.gyp:nss_exports',
@@ -98,6 +102,18 @@
           ],
           'defines': [
             'NSS_ALLOW_SSLKEYLOGFILE',
+          ],
+        }],
+        # ssl_gtest fuzz defines should only be determined by the 'fuzz_tls'
+        # flag (so as to match lib/ssl). If gtest.gypi added the define due
+        # to '--fuzz' only, remove it.
+        ['fuzz_tls==1', {
+          'defines': [
+            'UNSAFE_FUZZER_MODE',
+          ],
+        }, {
+          'defines!': [
+            'UNSAFE_FUZZER_MODE',
           ],
         }],
       ],

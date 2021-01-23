@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migration.title "&brandFullName;: ייבוא נתונים">
+<!ENTITY migration.welcome "ברוכים הבאים">
+<!ENTITY migration.importing "מייבא">
+<!ENTITY migration.list.description "&brandShortName; יכול לייבא נתונים מתוכנות פופולריות אחרות. נתונים מהתוכנות הבאות נמצאו במחשב שלך. אנא בחר את אלו שברצונך לייבא מהן מידע.">
+<!ENTITY migration.progress.description "מייבא נתונים נבחרים">
+

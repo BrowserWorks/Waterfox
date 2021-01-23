@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identitiesListManageDesc.label "Ardeiñ ar pivelezhioù evit ar gont-mañ. Ar bivelezh kentañ zo arveret dre ziouer.">
+<!ENTITY identitiesListAdd.label  "Ouzhpennañ …">
+<!ENTITY identitiesListAdd.accesskey  "a">
+<!ENTITY identitiesListEdit.label "Embann…">
+<!ENTITY identitiesListEdit.accesskey "E">
+<!ENTITY identitiesListDefault.label "Lakaat dre ziouer">
+<!ENTITY identitiesListDefault.accesskey "z">
+<!ENTITY identitiesListDelete.label "Dilemel">
+<!ENTITY identitiesListDelete.accesskey "D">
+<!ENTITY identitiesListClose.label "Serriñ">
+<!ENTITY identitiesListClose.accesskey "S">

@@ -1,0 +1,36 @@
+<!--
+# Translator(s):
+#
+# Laudatti <Laudatti@gmail.com>
+# stas <stas@nerd.ro>
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "Subscrie">
+<!ENTITY subscribeButton.label        "Subscrie">
+<!ENTITY subscribeButton.accesskey    "S">
+<!ENTITY unsubscribeButton.label      "Anulează subscrierea">
+<!ENTITY unsubscribeButton.accesskey  "u">
+<!ENTITY newGroupsTab.label           "Grupuri noi">
+<!ENTITY newGroupsTab.accesskey       "n">
+<!ENTITY refreshButton.label          "Actualizare">
+<!ENTITY refreshButton.accesskey      "r">
+<!ENTITY stopButton.label             "Stop">
+<!ENTITY stopButton.accesskey         "t">
+<!ENTITY server.label                 "Cont:">
+<!ENTITY server.accesskey             "C">
+<!ENTITY subscribedHeader.label       "Subscrie">
+<!-- commenting out until bug 38906 is fixed 
+--><!ENTITY messagesHeader.label         "Mesaje"> 
+<!ENTITY namefield.label              "Arată grupurile care conțin:">
+<!ENTITY namefield.accesskey          "A">

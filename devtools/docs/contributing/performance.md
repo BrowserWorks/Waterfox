@@ -41,7 +41,7 @@ It should have a light blue background like this:
 
   <img src="performance/profiler-main-thread.png" alt="Select main process" style="width: 300px" />
 
-Otherwise, the vast majority of DevTools backend (DebuggerServer, actors, ...) lives in content processes.
+Otherwise, the vast majority of DevTools backend (DevToolsServer, actors, ...) lives in content processes.
 So if you are debugging them, you should select one of the `Content` lines.
 
 ### Most of the DevTools codebase is in Javascript
@@ -135,8 +135,8 @@ For example, if the test is 50% faster, maybe you broke the performance test.
 This might happen if the test no longer waits for all the operations to finish executing before completing.
 
 To push your current patch to try, execute:
-```
-./mach try -b o -p linux64 -u none -t damp --rebuild-talos 5 --artifact
+```bash
+./mach try fuzzy --query "'linux64-shippable/ 'damp" --rebuild 5
 ```
 It will print in your Terminal a link to perfherder like this one:
 [https://treeherder.mozilla.org/perf.html#/comparechooser?newProject=try&newRevision=9bef6cb13c43bbce21d40ffaea595e082a4c28db](https://treeherder.mozilla.org/perf.html#/comparechooser?newProject=try&newRevision=9bef6cb13c43bbce21d40ffaea595e082a4c28db)

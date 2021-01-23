@@ -14,6 +14,9 @@
 #include "nsThreadUtils.h"
 #include "Helpers.h"
 
+using mozilla::GetCurrentThreadSerialEventTarget;
+using mozilla::SpinEventLoopUntil;
+
 TEST(MultiplexInputStream, Seek_SET)
 {
   nsCString buf1;
@@ -209,7 +212,7 @@ class ClosedStream final : public nsIInputStream {
  public:
   NS_DECL_THREADSAFE_ISUPPORTS
 
-  ClosedStream() {}
+  ClosedStream() = default;
 
   NS_IMETHOD
   Available(uint64_t* aLength) override { return NS_BASE_STREAM_CLOSED; }

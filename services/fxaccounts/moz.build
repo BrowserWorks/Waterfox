@@ -5,9 +5,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 with Files('**'):
-    BUG_COMPONENT = ('Core', 'fxAccounts')
-
-DIRS += ['interfaces']
+    BUG_COMPONENT = ('Firefox', 'Firefox Accounts')
 
 MOCHITEST_CHROME_MANIFESTS += ['tests/mochitest/chrome.ini']
 
@@ -22,6 +20,8 @@ EXTRA_JS_MODULES += [
   'FxAccountsCommands.js',
   'FxAccountsCommon.js',
   'FxAccountsConfig.jsm',
+  'FxAccountsDevice.jsm',
+  'FxAccountsKeys.jsm',
   'FxAccountsOAuthGrantClient.jsm',
   'FxAccountsPairing.jsm',
   'FxAccountsPairingChannel.js',
@@ -29,8 +29,13 @@ EXTRA_JS_MODULES += [
   'FxAccountsProfileClient.jsm',
   'FxAccountsPush.jsm',
   'FxAccountsStorage.jsm',
+  'FxAccountsTelemetry.jsm',
   'FxAccountsWebChannel.jsm',
+  'RustFxAccount.js',
 ]
+
+if CONFIG['MOZ_RUST_FXA_CLIENT']:
+  DIRS += ['rust-bridge']
 
 XPCOM_MANIFESTS += [
     'components.conf',

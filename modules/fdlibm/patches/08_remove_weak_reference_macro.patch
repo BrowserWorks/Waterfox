@@ -174,6 +174,22 @@ diff --git a/modules/fdlibm/src/e_log2.cpp b/modules/fdlibm/src/e_log2.cpp
 -#if (LDBL_MANT_DIG == 53)
 -__weak_reference(log2, log2l);
 -#endif
+diff --git a/modules/fdlibm/src/e_pow.cpp b/modules/fdlibm/src/e_pow.cpp
+--- a/modules/fdlibm/src/e_pow.cpp
++++ b/modules/fdlibm/src/e_pow.cpp
+@@ -302,12 +302,8 @@ double
+ 	r  = (z*t1)/(t1-two)-(w+z*w);
+ 	z  = one-(r-z);
+ 	GET_HIGH_WORD(j,z);
+ 	j += (n<<20);
+ 	if((j>>20)<=0) z = scalbn(z,n);	/* subnormal output */
+ 	else SET_HIGH_WORD(z,j);
+ 	return s*z;
+ }
+-
+-#if (LDBL_MANT_DIG == 53)
+-__weak_reference(pow, powl);
+-#endif
 diff --git a/modules/fdlibm/src/e_sinh.cpp b/modules/fdlibm/src/e_sinh.cpp
 --- a/modules/fdlibm/src/e_sinh.cpp
 +++ b/modules/fdlibm/src/e_sinh.cpp
@@ -190,30 +206,6 @@ diff --git a/modules/fdlibm/src/e_sinh.cpp b/modules/fdlibm/src/e_sinh.cpp
 -#if (LDBL_MANT_DIG == 53)
 -__weak_reference(sinh, sinhl);
 -#endif
-diff --git a/modules/fdlibm/src/e_sqrt.cpp b/modules/fdlibm/src/e_sqrt.cpp
---- a/modules/fdlibm/src/e_sqrt.cpp
-+++ b/modules/fdlibm/src/e_sqrt.cpp
-@@ -182,20 +182,16 @@ double
- 	ix0 = (q>>1)+0x3fe00000;
- 	ix1 =  q1>>1;
- 	if ((q&1)==1) ix1 |= sign;
- 	ix0 += (m <<20);
- 	INSERT_WORDS(z,ix0,ix1);
- 	return z;
- }
- 
--#if (LDBL_MANT_DIG == 53)
--__weak_reference(sqrt, sqrtl);
--#endif
--
- /*
- Other methods  (use floating-point arithmetic)
- -------------
- (This is a copy of a drafted paper by Prof W. Kahan 
- and K.C. Ng, written in May, 1986)
- 
- 	Two algorithms are given here to implement sqrt(x) 
- 	(IEEE double precision arithmetic) in software.
 diff --git a/modules/fdlibm/src/s_asinh.cpp b/modules/fdlibm/src/s_asinh.cpp
 --- a/modules/fdlibm/src/s_asinh.cpp
 +++ b/modules/fdlibm/src/s_asinh.cpp
@@ -249,7 +241,7 @@ diff --git a/modules/fdlibm/src/s_atan.cpp b/modules/fdlibm/src/s_atan.cpp
 diff --git a/modules/fdlibm/src/s_cbrt.cpp b/modules/fdlibm/src/s_cbrt.cpp
 --- a/modules/fdlibm/src/s_cbrt.cpp
 +++ b/modules/fdlibm/src/s_cbrt.cpp
-@@ -105,12 +105,8 @@ cbrt(double x)
+@@ -106,12 +106,8 @@ cbrt(double x)
  	s=t*t;				/* t*t is exact */
  	r=x/s;				/* error <= 0.5 ulps; |r| < |t| */
  	w=t+t;				/* t+t is exact */

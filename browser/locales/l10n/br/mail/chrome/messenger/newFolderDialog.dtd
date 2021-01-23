@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Labels -->
+   
+<!ENTITY newFolderDialog.title      "Teuliad nevez">
+<!ENTITY name.label                 "Anv :">
+<!ENTITY name.accesskey             "n">
+<!ENTITY description.label          "Sevel evel un isteuliad eus :">
+<!ENTITY description.accesskey      "i">
+<!ENTITY folderRestriction1.label   "Aotren a ra an dafariad-se daou seurt teuliad arbennik nemetken.">
+<!ENTITY folderRestriction2.label   "Aotren ho teuliad d'enderc'hel :">
+<!ENTITY foldersOnly.label          "Teuliadoù nemetken">
+<!ENTITY messagesOnly.label         "Kemennadennoù nemetken">
+<!ENTITY accept.label               "Krouiñ an teuliad">
+<!ENTITY accept.accesskey           "K">

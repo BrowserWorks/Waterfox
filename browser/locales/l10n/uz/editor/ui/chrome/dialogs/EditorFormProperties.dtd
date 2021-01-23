@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Shakl xossalari">
+
+<!ENTITY Settings.label "Sozlamalar">
+
+<!ENTITY FormName.label "Shakl nomi:">
+<!ENTITY FormName.accesskey "n">
+<!ENTITY FormAction.label "Amal URL manzili:">
+<!ENTITY FormAction.accesskey "A">
+<!ENTITY FormMethod.label "Metod:">
+<!ENTITY FormMethod.accesskey "M">
+<!ENTITY FormEncType.label "Shifrlash:">
+<!ENTITY FormEncType.accesskey "S">
+<!ENTITY FormTarget.label "Mo‘ljaldagi freym:">
+<!ENTITY FormTarget.accesskey "T">
+
+<!ENTITY RemoveForm.label "Shaklni olib tashlash">
+<!ENTITY RemoveForm.accesskey "S">

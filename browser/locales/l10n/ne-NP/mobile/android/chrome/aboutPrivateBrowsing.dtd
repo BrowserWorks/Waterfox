@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title "निजी ब्राउजिङ्ग">
+<!-- Localisation note: the plus sign here is a shorthand way of expressing the word "and". Contextually the privatebrowsingpage.title.private string
+                        is used as a title, with the privatebrowsingpage.title string preceding it but on a separate line.
+                        So the final line will say "Private Browsing + Tracking Protection". -->
+
+<!ENTITY privatebrowsingpage.title.private "+ट्रयाकिङ्ग सुरक्षा">
+<!-- Localization note (privatebrowsingpage.title.normal1): "Private Browsing"
+     is capitalized in English to be consistent with our existing uses of the
+     term. -->
+<!ENTITY privatebrowsingpage.title.normal1 "तपाईं निजी ब्राउजिङ्गमा हुनु हुन्न।">
+
+<!ENTITY privatebrowsingpage.description.trackingProtection "तपाईंको ब्राउजिङ्ग गतिविधि ट्रयाक गर्न सक्ने पृष्ठहरूमा &brandShortName; ले बन्देज गर्नेछ।">
+<!ENTITY privatebrowsingpage.description.privateDetails "हामीलाई कुनै पनि इतिहास याद हुनेछैन, तर डाउनलोड फाइल र नयाँ पुस्तकचिनो तपाईँको यन्त्रमा सुरक्षित गरिनेछ।">
+<!-- Localization note (privatebrowsingpage.description.normal2): "Private
+     Browsing is capitalized in English to be consistent with our existing uses
+     of the term. -->
+
+<!ENTITY privatebrowsingpage.description.normal2 "गोप्य ब्राउजिङ्गमा, हामी तपाईँको कुनै पनि ब्राउजिङ्ग इतिहास अथवा कुकिजहरू राख्दैनौँ। तपाईँले थप्नु भएको पुस्तकचिनो र डाउनलोड गर्नुभएको फाइल भने तपाईँको यन्त्रमा राखिने छ।">
+
+<!ENTITY privatebrowsingpage.link.private "अरु जान्न चाहनुहुन्छ?">
+<!ENTITY privatebrowsingpage.link.normal "नयाँ निजी ट्याब खोल्नुहोस्">

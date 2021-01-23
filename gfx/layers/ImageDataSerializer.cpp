@@ -154,7 +154,31 @@ Maybe<gfx::IntSize> CbCrSizeFromBufferDescriptor(
     case BufferDescriptor::TYCbCrDescriptor:
       return Some(aDescriptor.get_YCbCrDescriptor().cbCrSize());
     default:
-      MOZ_CRASH("GFX:  CbCrSizeFromBufferDescriptor");
+      MOZ_CRASH("GFX: CbCrSizeFromBufferDescriptor");
+  }
+}
+
+Maybe<int32_t> YStrideFromBufferDescriptor(
+    const BufferDescriptor& aDescriptor) {
+  switch (aDescriptor.type()) {
+    case BufferDescriptor::TRGBDescriptor:
+      return Nothing();
+    case BufferDescriptor::TYCbCrDescriptor:
+      return Some(aDescriptor.get_YCbCrDescriptor().yStride());
+    default:
+      MOZ_CRASH("GFX: YStrideFromBufferDescriptor");
+  }
+}
+
+Maybe<int32_t> CbCrStrideFromBufferDescriptor(
+    const BufferDescriptor& aDescriptor) {
+  switch (aDescriptor.type()) {
+    case BufferDescriptor::TRGBDescriptor:
+      return Nothing();
+    case BufferDescriptor::TYCbCrDescriptor:
+      return Some(aDescriptor.get_YCbCrDescriptor().cbCrStride());
+    default:
+      MOZ_CRASH("GFX: CbCrStrideFromBufferDescriptor");
   }
 }
 
@@ -179,6 +203,18 @@ Maybe<gfx::ColorDepth> ColorDepthFromBufferDescriptor(
       return Some(aDescriptor.get_YCbCrDescriptor().colorDepth());
     default:
       MOZ_CRASH("GFX:  ColorDepthFromBufferDescriptor");
+  }
+}
+
+Maybe<gfx::ColorRange> ColorRangeFromBufferDescriptor(
+    const BufferDescriptor& aDescriptor) {
+  switch (aDescriptor.type()) {
+    case BufferDescriptor::TRGBDescriptor:
+      return Nothing();
+    case BufferDescriptor::TYCbCrDescriptor:
+      return Some(aDescriptor.get_YCbCrDescriptor().colorRange());
+    default:
+      MOZ_CRASH("GFX: YUVFullRangeFromBufferDescriptor");
   }
 }
 

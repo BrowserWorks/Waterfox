@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "ایڈ اون">
+<!ENTITY aboutAddons.header2                    "آپ کے ایڈ اون">
+
+<!ENTITY addonAction.enable                     "اہل بنائیں">
+<!ENTITY addonAction.disable                    "نا اہل بنائیں">
+<!ENTITY addonAction.uninstall                  "ناتنصیب کریں">
+<!ENTITY addonAction.undo                       "کالعدم کریں">
+<!ENTITY addonAction.update                     "تازہ کاری">
+
+<!ENTITY addonUnsigned.message                  "اس ایڈ-اون کی &brandShortName; کے طور پر تصدیق نہیں کی جا سکی۔">
+<!ENTITY addonUnsigned.learnMore                "اور سیکھیں">

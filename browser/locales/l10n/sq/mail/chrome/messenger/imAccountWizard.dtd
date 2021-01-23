@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Krijues Llogarish Fjalosjeje">
+
+<!ENTITY accountProtocolTitle.label   "Rrjet fjalosjeje">
+<!ENTITY accountProtocolInfo.label    "Ju lutemi, zgjidhni rrjetin e llogarisë suaj për fjalosje.">
+<!ENTITY accountProtocolField.label   "Rrjet:">
+<!ENTITY accountProtocolGetMore.label "Merrni më tepër…">
+
+<!ENTITY accountUsernameTitle.label   "Emër përdoruesi">
+<!ENTITY accountUsernameDuplicate.label "Kjo llogari është e formësuar tashmë!">
+
+<!ENTITY accountPasswordTitle.label   "Fjalëkalim">
+<!ENTITY accountPasswordInfo.label    "Ju lutemi, jepni në fushën më poshtë fjalëkalimin tuaj.">
+<!ENTITY accountPasswordField.label   "Fjalëkalim:">
+<!ENTITY accountPasswordManager.label "Fjalëkalimi i dhënë këtu do të ruhet nga Përgjegjësi i Fjalëkalimeve. Nëse dëshironi që fjalëkalimi t&apos;ju kërkohet sa herë që bëhet lidhja e kësaj llogarie, lëreni zbrazët këtë fushë.">
+
+<!ENTITY accountAdvancedTitle.label   "Mundësi të Mëtejshme">
+<!ENTITY accountAdvancedInfo.label    "Jeni të lirë ta anashkaloni këtë hap, nëse dëshironi.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Njoftomë për Postë të re">
+<!ENTITY accountAliasGroupbox.caption "Aliase Vendorë">
+<!ENTITY accountAliasField.label      "Alias:">
+<!ENTITY accountAliasInfo.label       "Kjo do të shfaqet te bisedat tuaja vetëm kur flisni ju, kontaktet e largëta nuk kanë për ta parë.">
+<!ENTITY accountProxySettings.caption "Rregullime Ndërmjetësi">
+<!ENTITY accountProxySettings.change.label     "Ndryshojini…">
+<!ENTITY accountProxySettings.change.accessKey "N">
+
+<!ENTITY accountSummaryTitle.label   "Përmbledhje">
+<!ENTITY accountSummaryInfo.label    "Më poshtë shfaqet një përmbledhje e të dhënave që dhatë. Ju lutemi, kontrollojini, përpara se të krijohet llogaria.">
+<!ENTITY accountSummary.connectNow.label "Bëje lidhjen e kësaj llogarie tani.">

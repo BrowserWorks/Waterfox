@@ -25,15 +25,17 @@ loader.lazyRequireGetter(
 );
 loader.lazyRequireGetter(
   this,
-  "viewSource",
-  "devtools/client/shared/view-source"
-);
-loader.lazyRequireGetter(
-  this,
   "openDocLink",
   "devtools/client/shared/link",
   true
 );
+loader.lazyRequireGetter(
+  this,
+  "DevToolsUtils",
+  "devtools/shared/DevToolsUtils"
+);
+const EventEmitter = require("devtools/shared/event-emitter");
+const Telemetry = require("devtools/client/shared/telemetry");
 
 var gHudId = 0;
 const isMacOS = Services.appinfo.OS === "Darwin";
@@ -50,48 +52,52 @@ const isMacOS = Services.appinfo.OS === "Darwin";
 class WebConsole {
   /*
    * @constructor
-   * @param object target
-   *        The target that the web console will connect to.
+   * @param object toolbox
+   *        The toolbox where the web console is displayed.
    * @param nsIDOMWindow iframeWindow
    *        The window where the web console UI is already loaded.
    * @param nsIDOMWindow chromeWindow
    *        The window of the web console owner.
-   * @param object hudService
-   *        The parent HUD Service
    * @param bool isBrowserConsole
    */
-  constructor(
-    target,
-    iframeWindow,
-    chromeWindow,
-    hudService,
-    isBrowserConsole = false
-  ) {
+  constructor(toolbox, iframeWindow, chromeWindow, isBrowserConsole = false) {
+    this.toolbox = toolbox;
     this.iframeWindow = iframeWindow;
     this.chromeWindow = chromeWindow;
     this.hudId = "hud_" + ++gHudId;
-    this.target = target;
-    this.browserWindow = this.chromeWindow.top;
-    this.hudService = hudService;
-    this._browserConsole = isBrowserConsole;
+    this.browserWindow = DevToolsUtils.getTopWindow(this.chromeWindow);
+    this.isBrowserConsole = isBrowserConsole;
+    this.telemetry = new Telemetry();
 
     const element = this.browserWindow.document.documentElement;
     if (element.getAttribute("windowtype") != gDevTools.chromeWindowType) {
-      this.browserWindow = this.hudService.currentContext();
+      this.browserWindow = Services.wm.getMostRecentWindow(
+        gDevTools.chromeWindowType
+      );
     }
     this.ui = new WebConsoleUI(this);
     this._destroyer = null;
+
+    EventEmitter.decorate(this);
   }
 
-  /**
-   * Getter for a function to to listen for every request that completes. Used
-   * by unit tests. The callback takes one argument: the HTTP activity object as
-   * received from the remote Web Console.
-   *
-   * @type function
-   */
-  get lastFinishedRequestCallback() {
-    return this.hudService.lastFinishedRequest.callback;
+  recordEvent(event, extra = {}) {
+    this.telemetry.recordEvent(event, "webconsole", null, {
+      session_id: (this.toolbox && this.toolbox.sessionId) || -1,
+      ...extra,
+    });
+  }
+
+  get currentTarget() {
+    return this.toolbox.target;
+  }
+
+  get targetList() {
+    return this.toolbox.targetList;
+  }
+
+  get resourceWatcher() {
+    return this.toolbox.resourceWatcher;
   }
 
   /**
@@ -106,29 +112,34 @@ class WebConsole {
     if (this.browserWindow) {
       return this.browserWindow;
     }
-    return this.chromeWindow.top;
-  }
-
-  /**
-   * Getter for the output element that holds messages we display.
-   * @type Element
-   */
-  get outputNode() {
-    return this.ui ? this.ui.outputNode : null;
+    return DevToolsUtils.getTopWindow(this.chromeWindow);
   }
 
   get gViewSourceUtils() {
     return this.chromeUtilsWindow.gViewSourceUtils;
   }
 
+  getFrontByID(id) {
+    return this.currentTarget.client.getFrontByID(id);
+  }
+
   /**
    * Initialize the Web Console instance.
+   *
+   * @param {Boolean} emitCreatedEvent: Defaults to true. If false is passed,
+   *        We won't be sending the 'web-console-created' event.
    *
    * @return object
    *         A promise for the initialization.
    */
-  init() {
-    return this.ui.init().then(() => this);
+  async init(emitCreatedEvent = true) {
+    await this.ui.init();
+
+    // This event needs to be fired later in the case of the BrowserConsole
+    if (emitCreatedEvent) {
+      const id = Utils.supportsString(this.hudId);
+      Services.obs.notifyObservers(id, "web-console-created");
+    }
   }
 
   /**
@@ -152,6 +163,18 @@ class WebConsole {
     return this.jsterm._getValue();
   }
 
+  inputHasSelection() {
+    const { editor } = this.jsterm || {};
+    return editor && !!editor.getSelection();
+  }
+
+  getInputSelection() {
+    if (!this.jsterm || !this.jsterm.editor) {
+      return null;
+    }
+    return this.jsterm.editor.getSelection();
+  }
+
   /**
    * Sets the value of the input field (command line)
    *
@@ -165,12 +188,8 @@ class WebConsole {
     this.jsterm._setValue(newValue);
   }
 
-  /**
-   * Alias for the WebConsoleUI.setFilterState() method.
-   * @see webconsole.js::WebConsoleUI.setFilterState()
-   */
-  setFilterState() {
-    this.ui && this.ui.setFilterState.apply(this.ui, arguments);
+  focusInput() {
+    return this.jsterm && this.jsterm.focus();
   }
 
   /**
@@ -184,6 +203,9 @@ class WebConsole {
       relatedToCurrent: true,
       inBackground: isMacOS ? e.metaKey : e.ctrlKey,
     });
+    if (e && typeof e.stopPropagation === "function") {
+      e.stopPropagation();
+    }
   }
 
   /**
@@ -214,7 +236,7 @@ class WebConsole {
    *        The line number which you want to place the caret.
    */
   viewSourceInStyleEditor(sourceURL, sourceLine) {
-    const toolbox = gDevTools.getToolbox(this.target);
+    const { toolbox } = this;
     if (!toolbox) {
       this.viewSource(sourceURL, sourceLine);
       return;
@@ -236,28 +258,15 @@ class WebConsole {
    * @param integer sourceColumn
    *        The column number which you want to place the caret.
    */
-  viewSourceInDebugger(sourceURL, sourceLine, sourceColumn) {
-    const toolbox = gDevTools.getToolbox(this.target);
+  async viewSourceInDebugger(sourceURL, sourceLine, sourceColumn) {
+    const { toolbox } = this;
     if (!toolbox) {
       this.viewSource(sourceURL, sourceLine, sourceColumn);
       return;
     }
-    toolbox
-      .viewSourceInDebugger(sourceURL, sourceLine, sourceColumn)
-      .then(() => {
-        this.ui.emit("source-in-debugger-opened");
-      });
-  }
 
-  /**
-   * Tries to open a JavaScript file related to the web page for the web console
-   * instance in the corresponding Scratchpad.
-   *
-   * @param string sourceURL
-   *        The URL of the file which corresponds to a Scratchpad id.
-   */
-  viewSourceInScratchpad(sourceURL, sourceLine) {
-    viewSource.viewSourceInScratchpad(sourceURL, sourceLine);
+    await toolbox.viewSourceInDebugger(sourceURL, sourceLine, sourceColumn);
+    this.ui.emitForTests("source-in-debugger-opened");
   }
 
   /**
@@ -267,14 +276,14 @@ class WebConsole {
    *
    * @return object|null
    *         An object which holds:
-   *         - frames: the active ThreadClient.cachedFrames array.
+   *         - frames: the active ThreadFront.cachedFrames array.
    *         - selected: depth/index of the selected stackframe in the debugger
    *         UI.
    *         If the debugger is not open or if it's not paused, then |null| is
    *         returned.
    */
   getDebuggerFrames() {
-    const toolbox = gDevTools.getToolbox(this.target);
+    const { toolbox } = this;
     if (!toolbox) {
       return null;
     }
@@ -285,18 +294,6 @@ class WebConsole {
     }
 
     return panel.getFrames();
-  }
-
-  /**
-   * Return the console client to use when interacting with a thread.
-   *
-   * @param {String} thread: The ID of the target thread.
-   * @returns {Object} The console client associated with the thread.
-   */
-  lookupConsoleClient(thread) {
-    const toolbox = gDevTools.getToolbox(this.target);
-    const panel = toolbox.getPanel("jsdebugger");
-    return panel.lookupConsoleClient(thread);
   }
 
   /**
@@ -315,7 +312,7 @@ class WebConsole {
    *                               `originalExpression`.
    */
   getMappedExpression(expression) {
-    const toolbox = gDevTools.getToolbox(this.target);
+    const { toolbox } = this;
 
     // We need to check if the debugger is open, since it may perform a variable name
     // substitution for sourcemapped script (i.e. evaluated `myVar.trim()` might need to
@@ -370,7 +367,7 @@ class WebConsole {
    *         then |null| is returned.
    */
   getInspectorSelection() {
-    const toolbox = gDevTools.getToolbox(this.target);
+    const { toolbox } = this;
     if (!toolbox) {
       return null;
     }
@@ -381,6 +378,100 @@ class WebConsole {
     return panel.selection;
   }
 
+  async onViewSourceInDebugger(frame) {
+    if (this.toolbox) {
+      await this.toolbox.viewSourceInDebugger(
+        frame.url,
+        frame.line,
+        frame.column,
+        frame.sourceId
+      );
+
+      this.recordEvent("jump_to_source");
+      this.emitForTests("source-in-debugger-opened");
+    }
+  }
+
+  async onViewSourceInStyleEditor(frame) {
+    if (!this.toolbox) {
+      return;
+    }
+    await this.toolbox.viewSourceInStyleEditor(
+      frame.url,
+      frame.line,
+      frame.column
+    );
+    this.recordEvent("jump_to_source");
+  }
+
+  async openNetworkPanel(requestId) {
+    if (!this.toolbox) {
+      return;
+    }
+    const netmonitor = await this.toolbox.selectTool("netmonitor");
+    await netmonitor.panelWin.Netmonitor.inspectRequest(requestId);
+  }
+
+  getHighlighter() {
+    if (!this.toolbox) {
+      return null;
+    }
+
+    if (this._highlighter) {
+      return this._highlighter;
+    }
+
+    this._highlighter = this.toolbox.getHighlighter();
+    return this._highlighter;
+  }
+
+  async resendNetworkRequest(requestId) {
+    if (!this.toolbox) {
+      return;
+    }
+
+    const api = await this.toolbox.getNetMonitorAPI();
+    await api.resendRequest(requestId);
+  }
+
+  async openNodeInInspector(grip) {
+    if (!this.toolbox) {
+      return;
+    }
+
+    const onSelectInspector = this.toolbox.selectTool(
+      "inspector",
+      "inspect_dom"
+    );
+
+    const onNodeFront = this.toolbox.target
+      .getFront("inspector")
+      .then(inspectorFront => inspectorFront.getNodeFrontFromNodeGrip(grip));
+
+    const [nodeFront, inspectorPanel] = await Promise.all([
+      onNodeFront,
+      onSelectInspector,
+    ]);
+
+    const onInspectorUpdated = inspectorPanel.once("inspector-updated");
+    const onNodeFrontSet = this.toolbox.selection.setNodeFront(nodeFront, {
+      reason: "console",
+    });
+
+    await Promise.all([onNodeFrontSet, onInspectorUpdated]);
+  }
+
+  /**
+   * Evaluate a JavaScript expression asynchronously.
+   *
+   * @param {String} string: The code you want to evaluate.
+   * @param {Object} options: Options for evaluation. See evaluateJSAsync method on
+   *                          devtools/client/fronts/webconsole.js
+   */
+  evaluateJSAsync(expression, options = {}) {
+    return this.ui._commands.evaluateJSAsync(expression, options);
+  }
+
   /**
    * Destroy the object. Call this method to avoid memory leaks when the Web
    * Console is closed.
@@ -388,36 +479,25 @@ class WebConsole {
    * @return object
    *         A promise object that is resolved once the Web Console is closed.
    */
-  async destroy() {
-    if (this._destroyer) {
-      return this._destroyer;
+  destroy() {
+    if (!this.hudId) {
+      return;
     }
 
-    this._destroyer = (async () => {
-      this.hudService.consoles.delete(this.hudId);
+    if (this.ui) {
+      this.ui.destroy();
+    }
 
-      if (this.ui) {
-        await this.ui.destroy();
-      }
+    if (this._parserService) {
+      this._parserService.stop();
+      this._parserService = null;
+    }
 
-      if (!this._browserConsole) {
-        try {
-          await this.target.focus();
-        } catch (ex) {
-          // Tab focus can fail if the tab or target is closed.
-        }
-      }
+    const id = Utils.supportsString(this.hudId);
+    Services.obs.notifyObservers(id, "web-console-destroyed");
+    this.hudId = null;
 
-      if (this._parserService) {
-        this._parserService.stop();
-        this._parserService = null;
-      }
-
-      const id = Utils.supportsString(this.hudId);
-      Services.obs.notifyObservers(id, "web-console-destroyed");
-    })();
-
-    return this._destroyer;
+    this.emit("destroyed");
   }
 }
 

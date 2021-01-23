@@ -12,17 +12,18 @@
 namespace mozilla {
 
 WebGLBuffer::WebGLBuffer(WebGLContext* webgl, GLuint buf)
-    : WebGLRefCountedObject(webgl),
-      mGLName(buf),
-      mContent(Kind::Undefined),
-      mUsage(LOCAL_GL_STATIC_DRAW),
-      mByteLength(0),
-      mTFBindCount(0),
-      mNonTFBindCount(0) {
-  mContext->mBuffers.insertBack(this);
-}
+    : WebGLContextBoundObject(webgl), mGLName(buf) {}
 
-WebGLBuffer::~WebGLBuffer() { DeleteOnce(); }
+WebGLBuffer::~WebGLBuffer() {
+  mByteLength = 0;
+  mFetchInvalidator.InvalidateCaches();
+
+  mIndexCache = nullptr;
+  mIndexRanges.clear();
+
+  if (!mContext) return;
+  mContext->gl->fDeleteBuffers(1, &mGLName);
+}
 
 void WebGLBuffer::SetContentAfterBind(GLenum target) {
   if (mContent != Kind::Undefined) return;
@@ -45,17 +46,6 @@ void WebGLBuffer::SetContentAfterBind(GLenum target) {
     default:
       MOZ_CRASH("GFX: invalid target");
   }
-}
-
-void WebGLBuffer::Delete() {
-  mContext->gl->fDeleteBuffers(1, &mGLName);
-
-  mByteLength = 0;
-  mFetchInvalidator.InvalidateCaches();
-
-  mIndexCache = nullptr;
-  mIndexRanges.clear();
-  LinkedListElement<WebGLBuffer>::remove();  // remove from mContext->mBuffers
 }
 
 ////////////////////////////////////////
@@ -84,24 +74,45 @@ static bool ValidateBufferUsageEnum(WebGLContext* webgl, GLenum usage) {
   return false;
 }
 
-void WebGLBuffer::BufferData(GLenum target, uint64_t size, const void* data,
-                             GLenum usage) {
-  // Careful: data.Length() could conceivably be any uint32_t, but GLsizeiptr
-  // is like intptr_t.
-  if (!CheckedInt<GLsizeiptr>(size).isValid())
-    return mContext->ErrorOutOfMemory("bad size");
+void WebGLBuffer::BufferData(const GLenum target, const uint64_t size,
+                             const void* const maybeData, const GLenum usage) {
+  // The driver knows only GLsizeiptr, which is int32_t on 32bit!
+  bool sizeValid = CheckedInt<GLsizeiptr>(size).isValid();
+
+  if (mContext->gl->WorkAroundDriverBugs()) {
+    // Bug 790879
+#if defined(XP_MACOSX) || defined(MOZ_WIDGET_GTK)
+    sizeValid &= CheckedInt<int32_t>(size).isValid();
+#endif
+
+    // Bug 1610383
+    if (mContext->gl->IsANGLE()) {
+      // While ANGLE seems to support up to `unsigned int`, UINT32_MAX-4 causes
+      // GL_OUT_OF_MEMORY in glFlush??
+      sizeValid &= CheckedInt<int32_t>(size).isValid();
+    }
+  }
+
+  if (!sizeValid) {
+    mContext->ErrorOutOfMemory("Size not valid for platform: %" PRIu64, size);
+    return;
+  }
+
+  // -
 
   if (!ValidateBufferUsageEnum(mContext, usage)) return;
 
-#if defined(XP_MACOSX) || defined(MOZ_WIDGET_GTK)
-  // bug 790879
-  if (mContext->gl->WorkAroundDriverBugs() && size > INT32_MAX) {
-    mContext->ErrorOutOfMemory("Allocation size too large.");
-    return;
+  const void* uploadData = maybeData;
+  UniqueBuffer maybeCalloc;
+  if (!uploadData) {
+    maybeCalloc = calloc(1, AssertedCast<size_t>(size));
+    if (!maybeCalloc) {
+      mContext->ErrorOutOfMemory("Failed to alloc zeros.");
+      return;
+    }
+    uploadData = maybeCalloc.get();
   }
-#endif
-
-  const void* uploadData = data;
+  MOZ_ASSERT(uploadData);
 
   UniqueBuffer newIndexCache;
   if (target == LOCAL_GL_ELEMENT_ARRAY_BUFFER &&
@@ -111,7 +122,13 @@ void WebGLBuffer::BufferData(GLenum target, uint64_t size, const void* data,
       mContext->ErrorOutOfMemory("Failed to alloc index cache.");
       return;
     }
-    memcpy(newIndexCache.get(), data, size);
+    // memcpy out of SharedArrayBuffers can be racey, and should generally use
+    // memcpySafeWhenRacy. But it's safe here:
+    // * We only memcpy in one place.
+    // * We only read out of the single copy, and only after copying.
+    // * If we get data value corruption from racing read-during-write, that's
+    // fine.
+    memcpy(newIndexCache.get(), uploadData, size);
     uploadData = newIndexCache.get();
   }
 
@@ -165,6 +182,8 @@ void WebGLBuffer::BufferSubData(GLenum target, uint64_t dstByteOffset,
     return mContext->ErrorOutOfMemory("offset or size too large for platform.");
 
   ////
+
+  if (!dataLen) return;  // With validation successful, nothing else to do.
 
   const void* uploadData = data;
   if (mIndexCache) {
@@ -385,15 +404,5 @@ bool WebGLBuffer::ValidateCanBindToTarget(GLenum target) {
 void WebGLBuffer::ResetLastUpdateFenceId() const {
   mLastUpdateFenceId = mContext->mNextFenceId;
 }
-
-JSObject* WebGLBuffer::WrapObject(JSContext* cx,
-                                  JS::Handle<JSObject*> givenProto) {
-  return dom::WebGLBuffer_Binding::Wrap(cx, this, givenProto);
-}
-
-NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE_0(WebGLBuffer)
-
-NS_IMPL_CYCLE_COLLECTION_ROOT_NATIVE(WebGLBuffer, AddRef)
-NS_IMPL_CYCLE_COLLECTION_UNROOT_NATIVE(WebGLBuffer, Release)
 
 }  // namespace mozilla

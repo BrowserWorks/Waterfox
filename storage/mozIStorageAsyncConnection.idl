@@ -41,6 +41,64 @@ interface mozIStorageAsyncConnection : nsISupports {
   attribute int32_t defaultTransactionType;
 
   /**
+   * The maximum number of bound parameters for statements executed on this
+   * connection. If your statement has more params than this limit, you'll
+   * need to chunk them into multiple statements. See `PlacesUtils.chunkArray`
+   * and its callers in Places for examples of how to do this, or read on for
+   * an overview.
+   *
+   * Keep in mind that the variable limit is for the _total_ number of
+   * parameters, including ones bound by name (using the `:VVV`, `@VVV`, or
+   * `?VVV` syntax) and index (`?` and `?NNN`).
+   *
+   * This means, when chunking:
+   *
+   * - If you're binding 1 param per 1 value per chunk (for example, if you
+   *   have a list of GUIDs and a clause like `WHERE guid IN (?, ?, ?, ...)`,
+   *   your chunk length is just `variableLimit`.
+   * - If you're binding 1 param per 1 value per chunk, but using that
+   *   param in multiple positions in the query (for example, `WHERE url_hash
+   *   IN (hash(?1), hash(?2), ...) AND url IN (?1, ?2, ...)`), you can use the
+   *   `?NNN` syntax with a chunk length of `variableLimit`.
+   * - If you're binding N params per 1 value per chunk (for example, if you
+   *   have a list of items with GUIDs and parent GUIDs, and you want to bind
+   *   both), your chunk length is `variableLimit / N`, since you're binding
+   *   two params for each element.
+   * - If you're binding K params per L values per chunk, plus M fixed ones
+   *   (for example, `WHERE parentGuid = :parentGuid AND guid IN (?, ?, ...)`),
+   *   your chunk length is `variableLimit - M`, to ensure there's space for the
+   *   fixed variables.
+   *
+   * If you bind more params than this limit, `create{Async}Statement` will
+   * fail with a "too many SQL variables" error.
+   */
+  readonly attribute int32_t variableLimit;
+
+  /**
+   * Returns true if a transaction is active on this connection.
+   *
+   * Note that this is true if a transaction is active on the connection,
+   * regardless of how it was opened. There are several ways to open one:
+   *
+   * 1. Explicitly calling `beginTransaction` on a `mozIStorageConnection`.
+   * 2. Calling `executeSimpleSQL("BEGIN")` or
+   *    `createStatement("BEGIN").execute()` on a `mozIStorageConnection`.
+   * 3. Executing an async statement, like
+   *    `createAsyncStatement("BEGIN").executeAsync(...)`. This is what
+   *    `Sqlite.jsm` does under the hood.
+   *
+   * Because of this, it's important *not* to use this attribute to decide
+   * whether to *commit* the active transaction, because the caller that opened
+   * it may not expect that. This is why both `mozStorageTransaction` and
+   * `Sqlite.jsm` use an internal variable (`mHasTransaction` for the former;
+   * `_hasInProgressTransaction` for the latter) to check if their transaction
+   * is already in progress, instead of just checking this attribute before
+   * committing. Otherwise, mozStorage might accidentally commit (or roll back!)
+   * a transaction started by `Sqlite.jsm`, and vice versa.
+   */
+  readonly attribute boolean transactionInProgress;
+
+  /**
    * Close this database connection, allowing all pending statements
    * to complete first.
    *
@@ -165,8 +223,6 @@ interface mozIStorageAsyncConnection : nsISupports {
    * @param aStatements
    *        The array of statements to execute asynchronously, in the order they
    *        are given in the array.
-   * @param aNumStatements
-   *        The number of statements in aStatements.
    * @param aCallback [optional]
    *        The callback object that will be notified of progress, errors, and
    *        completion.
@@ -176,8 +232,7 @@ interface mozIStorageAsyncConnection : nsISupports {
    *        re-entrant since they can be called on multiple threads.
    */
   mozIStoragePendingStatement executeAsync(
-    [array, size_is(aNumStatements)] in mozIStorageBaseStatement aStatements,
-    in unsigned long aNumStatements,
+    in Array<mozIStorageBaseStatement> aStatements,
     [optional] in mozIStorageStatementCallback aCallback
   );
 

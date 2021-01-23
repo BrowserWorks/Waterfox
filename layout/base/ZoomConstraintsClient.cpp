@@ -7,13 +7,13 @@
 #include "ZoomConstraintsClient.h"
 
 #include <inttypes.h>
-#include "gfxPrefs.h"
 #include "LayersLogging.h"
 #include "mozilla/layers/APZCCallbackHelper.h"
 #include "mozilla/layers/ScrollableLayerGuid.h"
 #include "mozilla/layers/ZoomConstraints.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/PresShell.h"
+#include "mozilla/StaticPrefs_apz.h"
 #include "mozilla/dom/Document.h"
 #include "mozilla/dom/Event.h"
 #include "nsIFrame.h"
@@ -24,8 +24,8 @@
 #include "Units.h"
 #include "UnitTransforms.h"
 
-#define ZCC_LOG(...)
-// #define ZCC_LOG(...) printf_stderr("ZCC: " __VA_ARGS__)
+static mozilla::LazyLogModule sApzZoomLog("apz.zoom");
+#define ZCC_LOG(...) MOZ_LOG(sApzZoomLog, LogLevel::Debug, (__VA_ARGS__))
 
 NS_IMPL_ISUPPORTS(ZoomConstraintsClient, nsIDOMEventListener, nsIObserver)
 
@@ -42,7 +42,7 @@ using namespace mozilla::layers;
 ZoomConstraintsClient::ZoomConstraintsClient()
     : mDocument(nullptr), mPresShell(nullptr) {}
 
-ZoomConstraintsClient::~ZoomConstraintsClient() {}
+ZoomConstraintsClient::~ZoomConstraintsClient() = default;
 
 static nsIWidget* GetWidget(PresShell* aPresShell) {
   if (!aPresShell) {
@@ -151,8 +151,9 @@ ZoomConstraintsClient::Observe(nsISupports* aSubject, const char* aTopic,
   } else if (NS_PREF_CHANGED.EqualsASCII(aTopic)) {
     ZCC_LOG("Got a pref-change event in %p\n", this);
     // We need to run this later because all the pref change listeners need
-    // to execute before we can be guaranteed that gfxPrefs::ForceUserScalable()
-    // returns the updated value.
+    // to execute before we can be guaranteed that
+    // StaticPrefs::browser_ui_zoom_force_user_scalable() returns the updated
+    // value.
 
     RefPtr<nsRunnableMethod<ZoomConstraintsClient>> event =
         NewRunnableMethod("ZoomConstraintsClient::RefreshZoomConstraints", this,
@@ -173,7 +174,7 @@ static mozilla::layers::ZoomConstraints ComputeZoomConstraintsFromViewportInfo(
   constraints.mAllowZoom = aViewportInfo.IsZoomAllowed() &&
                            nsLayoutUtils::AllowZoomingForDocument(aDocument);
   constraints.mAllowDoubleTapZoom =
-      constraints.mAllowZoom && gfxPrefs::APZAllowDoubleTapZooming();
+      constraints.mAllowZoom && StaticPrefs::apz_allow_double_tap_zooming();
   if (constraints.mAllowZoom) {
     constraints.mMinZoom.scale = aViewportInfo.GetMinZoom().scale;
     constraints.mMaxZoom.scale = aViewportInfo.GetMaxZoom().scale;
@@ -229,7 +230,7 @@ void ZoomConstraintsClient::RefreshZoomConstraints() {
 
   // We only ever create a ZoomConstraintsClient for an RCD, so the RSF of
   // the presShell must be the RCD-RSF (if it exists).
-  MOZ_ASSERT(mPresShell->GetPresContext()->IsRootContentDocument());
+  MOZ_ASSERT(mPresShell->GetPresContext()->IsRootContentDocumentCrossProcess());
   if (nsIScrollableFrame* rcdrsf =
           mPresShell->GetRootScrollFrameAsScrollable()) {
     ZCC_LOG("Notifying RCD-RSF that it is zoomable: %d\n",

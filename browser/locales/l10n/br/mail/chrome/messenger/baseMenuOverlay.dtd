@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Help Menu -->
+<!ENTITY helpMenu.label "Skoazell">
+<!ENTITY helpMenu.accesskey "S">
+<!-- LOCALIZATION NOTE some localizations of Windows use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label "Skoazell">
+<!ENTITY helpMenuWin.accesskey "S">
+<!ENTITY aboutProduct2.label "Diwar-benn &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey "D">
+<!ENTITY helpTroubleshootingInfo.label     "Titouroù disac'hañ">
+<!ENTITY helpTroubleshootingInfo.accesskey "T">
+<!ENTITY helpSafeMode.label     "Adloc'hañ gant an askouezhioù diweredekaet…">
+<!ENTITY helpSafeMode.accesskey "r">
+<!ENTITY helpSafeMode.stop.label     "Adloc'hañ gant an Askouezhioù Gweredekaet">
+<!ENTITY helpSafeMode.stop.accesskey "A">
+<!ENTITY productHelp.label "Skoazell &brandShortName;">
+<!ENTITY productHelp.accesskey "S">
+<!ENTITY productHelp.commandkey "VK_F1">
+<!ENTITY productHelpMac.commandkey "?">
+<!ENTITY productHelpMac.modifiers "accel">
+
+<!ENTITY helpKeyboardShortcuts.label "Berradennoù Klavier">
+<!ENTITY helpKeyboardShortcuts.accesskey "B">
+
+<!ENTITY helpFeedbackPage.label "Roit ho meno…">
+<!ENTITY helpFeedbackPage.accesskey "R">
+
+
+<!ENTITY helpGetInvolvedPage.label "Kemer Perzh">
+<!ENTITY helpGetInvolvedPage.accesskey "K">
+

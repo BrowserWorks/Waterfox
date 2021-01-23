@@ -62,6 +62,9 @@ pub trait ElementSnapshot: Sized {
     /// called if `has_attrs()` returns true.
     fn is_part(&self, name: &Atom) -> bool;
 
+    /// See Element::imported_part.
+    fn imported_part(&self, name: &Atom) -> Option<Atom>;
+
     /// A callback that should be called for each class of the snapshot. Should
     /// only be called if `has_attrs()` returns true.
     fn each_class<F>(&self, _: F)
@@ -270,7 +273,10 @@ where
     }
 
     fn is_link(&self) -> bool {
-        self.element.is_link()
+        match self.snapshot().and_then(|s| s.state()) {
+            Some(state) => state.intersects(ElementState::IN_VISITED_OR_UNVISITED_STATE),
+            None => self.element.is_link(),
+        }
     }
 
     fn opaque(&self) -> OpaqueElement {
@@ -312,13 +318,24 @@ where
     }
 
     #[inline]
-    fn local_name(&self) -> &<Self::Impl as ::selectors::SelectorImpl>::BorrowedLocalName {
-        self.element.local_name()
+    fn has_local_name(
+        &self,
+        local_name: &<Self::Impl as ::selectors::SelectorImpl>::BorrowedLocalName,
+    ) -> bool {
+        self.element.has_local_name(local_name)
     }
 
     #[inline]
-    fn namespace(&self) -> &<Self::Impl as ::selectors::SelectorImpl>::BorrowedNamespaceUrl {
-        self.element.namespace()
+    fn has_namespace(
+        &self,
+        ns: &<Self::Impl as ::selectors::SelectorImpl>::BorrowedNamespaceUrl,
+    ) -> bool {
+        self.element.has_namespace(ns)
+    }
+
+    #[inline]
+    fn is_same_type(&self, other: &Self) -> bool {
+        self.element.is_same_type(&other.element)
     }
 
     fn attr_matches(
@@ -351,6 +368,13 @@ where
         }
     }
 
+    fn imported_part(&self, name: &Atom) -> Option<Atom> {
+        match self.snapshot() {
+            Some(snapshot) if snapshot.has_attrs() => snapshot.imported_part(name),
+            _ => self.element.imported_part(name),
+        }
+    }
+
     fn has_class(&self, name: &Atom, case_sensitivity: CaseSensitivity) -> bool {
         match self.snapshot() {
             Some(snapshot) if snapshot.has_attrs() => snapshot.has_class(name, case_sensitivity),
@@ -364,6 +388,10 @@ where
 
     fn is_root(&self) -> bool {
         self.element.is_root()
+    }
+
+    fn is_pseudo_element(&self) -> bool {
+        self.element.is_pseudo_element()
     }
 
     fn pseudo_element_originating_element(&self) -> Option<Self> {

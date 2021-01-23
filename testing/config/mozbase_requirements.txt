@@ -5,12 +5,14 @@
 ../mozbase/mozdebug
 ../mozbase/mozdevice
 ../mozbase/mozfile
+../mozbase/mozgeckoprofiler
 ../mozbase/mozhttpd
 ../mozbase/mozinfo
 ../mozbase/mozinstall
 ../mozbase/mozleak
 ../mozbase/mozlog
 ../mozbase/moznetwork
+../mozbase/mozpower
 ../mozbase/mozprocess
 ../mozbase/mozprofile
 ../mozbase/mozproxy

@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Sahifa xossalari">
+<!ENTITY location.label "Manzili:">
+<!ENTITY lastModified.label "So‘nggi o‘zgartirish:">
+<!ENTITY titleInput.label "Nomi:">
+<!ENTITY titleInput.accessKey "N">
+<!ENTITY authorInput.label "Muallifi:">
+<!ENTITY authorInput.accessKey "M">
+<!ENTITY descriptionInput.label "Ta’rifi:">
+<!ENTITY descriptionInput.accessKey "T">
+<!ENTITY locationNewPage.label "[Yangi sahifa, haligacha saqlanmagan]">
+<!ENTITY EditHEADSource1.label "Qo‘shimcha foydalanuvchilar:">
+<!ENTITY EditHEADSource2.label "&lt;head&gt; hududining boshqa tarkiblarini tahrirlash uchun Ko‘rish menyusi yoki Tahrirlash rejimi asboblar panelidan &quot;HTML manba&quot;dan foydalaning.">

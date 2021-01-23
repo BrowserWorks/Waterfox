@@ -19,7 +19,7 @@ class AudioContext;
 struct OscillatorOptions;
 
 class OscillatorNode final : public AudioScheduledSourceNode,
-                             public MainThreadMediaStreamListener {
+                             public MainThreadMediaTrackListener {
  public:
   static already_AddRefed<OscillatorNode> Create(
       AudioContext& aAudioContext, const OscillatorOptions& aOptions,
@@ -38,7 +38,7 @@ class OscillatorNode final : public AudioScheduledSourceNode,
   JSObject* WrapObject(JSContext* aCx,
                        JS::Handle<JSObject*> aGivenProto) override;
 
-  void DestroyMediaStream() override;
+  void DestroyMediaTrack() override;
 
   uint16_t NumberOfInputs() const final { return 0; }
 
@@ -47,11 +47,11 @@ class OscillatorNode final : public AudioScheduledSourceNode,
     if (aType == OscillatorType::Custom) {
       // ::Custom can only be set by setPeriodicWave().
       // https://github.com/WebAudio/web-audio-api/issues/105 for exception.
-      aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
+      aRv.ThrowInvalidStateError("Can't set type to \"custom\"");
       return;
     }
     mType = aType;
-    SendTypeToStream();
+    SendTypeToTrack();
   }
 
   AudioParam* Frequency() const { return mFrequency; }
@@ -62,12 +62,12 @@ class OscillatorNode final : public AudioScheduledSourceNode,
 
   void SetPeriodicWave(PeriodicWave& aPeriodicWave) {
     mPeriodicWave = &aPeriodicWave;
-    // SendTypeToStream will call SendPeriodicWaveToStream for us.
+    // SendTypeToTrack will call SendPeriodicWaveToTrack for us.
     mType = OscillatorType::Custom;
-    SendTypeToStream();
+    SendTypeToTrack();
   }
 
-  void NotifyMainThreadStreamFinished() override;
+  void NotifyMainThreadTrackEnded() override;
 
   const char* NodeType() const override { return "OscillatorNode"; }
 
@@ -78,8 +78,8 @@ class OscillatorNode final : public AudioScheduledSourceNode,
   explicit OscillatorNode(AudioContext* aContext);
   ~OscillatorNode() = default;
 
-  void SendTypeToStream();
-  void SendPeriodicWaveToStream();
+  void SendTypeToTrack();
+  void SendPeriodicWaveToTrack();
 
   OscillatorType mType;
   RefPtr<PeriodicWave> mPeriodicWave;

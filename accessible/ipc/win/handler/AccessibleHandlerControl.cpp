@@ -10,11 +10,10 @@
 
 #include "AccessibleHandlerControl.h"
 
-#include "AccessibleHandler.h"
+#include <utility>
 
 #include "AccessibleEventId.h"
-
-#include "mozilla/Move.h"
+#include "AccessibleHandler.h"
 #include "mozilla/RefPtr.h"
 
 namespace mozilla {
@@ -119,6 +118,18 @@ IMPL_IUNKNOWN1(AccessibleHandlerControl, IHandlerControl)
 HRESULT
 AccessibleHandlerControl::Invalidate() {
   ++mCacheGen;
+  // We can't just call mAccessibleCache.clear() because doing so would release
+  // remote objects, making remote COM calls. Since this is an STA, an incoming
+  // COM call might be handled which might marshal an AccessibleHandler,
+  // which in turn might add itself to mAccessibleCache. Since we'd be in the
+  // middle of mutating mAccessibleCache, that might cause a crash. Instead,
+  // swap mAccessibleCache into a temporary map first, which will empty
+  // mAccessibleCache without releasing remote objects. Once mAccessibleCache
+  // is empty, it's safe to let the temporary map be destroyed when it goes
+  // out of scope. Remote calls will be made, but nothing will re-enter
+  // the temporary map while it's being destroyed.
+  AccessibleCache oldCache;
+  mAccessibleCache.swap(oldCache);
   return S_OK;
 }
 
@@ -170,6 +181,24 @@ AccessibleHandlerControl::Register(NotNull<IGeckoBackChannel*> aGecko) {
   mIsRegistered = SUCCEEDED(hr);
   MOZ_ASSERT(mIsRegistered);
   return hr;
+}
+
+void AccessibleHandlerControl::CacheAccessible(long aUniqueId,
+                                               AccessibleHandler* aAccessible) {
+  MOZ_ASSERT(aUniqueId && aAccessible);
+  mAccessibleCache[aUniqueId] = aAccessible;
+}
+
+HRESULT AccessibleHandlerControl::GetCachedAccessible(
+    long aUniqueId, AccessibleHandler** aAccessible) {
+  MOZ_ASSERT(aUniqueId && aAccessible);
+  auto it = mAccessibleCache.find(aUniqueId);
+  if (it == mAccessibleCache.end()) {
+    return E_INVALIDARG;
+  }
+  RefPtr<AccessibleHandler> ref = it->second;
+  ref.forget(aAccessible);
+  return S_OK;
 }
 
 }  // namespace a11y

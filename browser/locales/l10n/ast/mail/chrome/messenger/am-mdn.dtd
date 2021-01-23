@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title "Acuses de recibu">
+<!ENTITY useGlobalPrefs.label "Usar les preferencies globales d'acuse de recibu pa esta cuenta">
+<!ENTITY useGlobalPrefs.accesskey "U">
+<!ENTITY globalReceipts.label "Preferencies xenerales…">
+<!ENTITY globalReceipts.accesskey "a">
+<!ENTITY useCustomPrefs.label "Personalizar acuse de recibu pa esta cuenta">
+<!ENTITY useCustomPrefs.accesskey "P">
+<!ENTITY requestReceipt.label "Al unviar mensaxes, solicitar siempre un acuse de recibu">
+<!ENTITY requestReceipt.accesskey "v">
+<!ENTITY receiptArrive.label "Cuando aporte un acuse de recibu:">
+<!ENTITY leaveIt.label "Dexalu na mio bandexa d'entrada">
+<!ENTITY leaveIt.accesskey "D">
+<!ENTITY moveToSent.label "Movelu a la mio carpeta &quot;Unvios fechos&quot;">
+<!ENTITY moveToSent.accesskey "M">
+<!ENTITY requestMDN.label "Cuando reciba una solicitú d'acuse de recibu:">
+<!ENTITY returnSome.label "Permitir acuse de recibu pa dalgunos mensaxes">
+<!ENTITY returnSome.accesskey "e">
+<!ENTITY never.label "Nun unviar enxamás acuse de recibu">
+<!ENTITY never.accesskey "N">
+<!ENTITY notInToCc.label "Si nun toi nel A: ó Cc: del mensaxe:">
+<!ENTITY notInToCc.accesskey "T">
+<!ENTITY outsideDomain.label "Si'l remitente nun ta nel mio dominiu:">
+<!ENTITY outsideDomain.accesskey "s">
+<!ENTITY otherCases.label "Nos demás casos:">
+<!ENTITY otherCases.accesskey "o">
+<!ENTITY askMe.label "Entrugame">
+<!ENTITY alwaysSend.label "Unviar siempre">
+<!ENTITY neverSend.label "Nun unviar enxamás">

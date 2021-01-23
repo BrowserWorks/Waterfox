@@ -17,14 +17,15 @@ static int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
 
   mozilla::OriginAttributes attrs;
   nsCOMPtr<nsIPrincipal> selfURIPrincipal =
-      mozilla::BasePrincipal::CreateCodebasePrincipal(selfURI, attrs);
+      mozilla::BasePrincipal::CreateContentPrincipal(selfURI, attrs);
   if (!selfURIPrincipal) return 0;
 
   nsCOMPtr<nsIContentSecurityPolicy> csp =
       do_CreateInstance(NS_CSPCONTEXT_CONTRACTID, &ret);
   if (ret != NS_OK) return 0;
 
-  ret = csp->SetRequestContext(nullptr, selfURIPrincipal);
+  ret = csp->SetRequestContextWithPrincipal(selfURIPrincipal, selfURI,
+                                            EmptyString(), 0);
   if (ret != NS_OK) return 0;
 
   NS_ConvertASCIItoUTF16 policy(reinterpret_cast<const char*>(data), size);

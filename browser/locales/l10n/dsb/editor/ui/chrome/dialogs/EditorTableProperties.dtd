@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "Tabelowe kakosći">
+<!ENTITY applyButton.label                "Nałožyś">
+<!ENTITY applyButton.accesskey            "N">
+<!ENTITY closeButton.label                "Zacyniś">
+<!ENTITY tableTab.label                   "Tabela">
+<!ENTITY cellTab.label                    "Cele">
+<!ENTITY tableRows.label                  "Rědy:">
+<!ENTITY tableRows.accessKey              "R">
+<!ENTITY tableColumns.label               "Słupy:">
+<!ENTITY tableColumns.accessKey           "S">
+<!ENTITY tableHeight.label                "Wusokosć:">
+<!ENTITY tableHeight.accessKey            "u">
+<!ENTITY tableWidth.label                 "Šyrokosć:">
+<!ENTITY tableWidth.accessKey             "r">
+<!ENTITY tableBorderSpacing.label         "Kšomy a wótstawk">
+<!ENTITY tableBorderWidth.label           "Kšoma:">
+<!ENTITY tableBorderWidth.accessKey       "K">
+<!ENTITY tableSpacing.label               "Wótstawk:">
+<!ENTITY tableSpacing.accessKey           "W">
+<!ENTITY tablePadding.label               "Nutśkowny wótstawk:">
+<!ENTITY tablePadding.accessKey           "t">
+<!ENTITY tablePxBetwCells.label           "pikselow mjazy celami">
+<!ENTITY tablePxBetwBrdrCellContent.label "pikselow mjazy celoweju kšomu a wopśimjeśim">
+<!ENTITY tableAlignment.label             "Tabelowe wusměrjenje:">
+<!ENTITY tableAlignment.accessKey         "T">
+<!ENTITY tableCaption.label               "Titel:">
+<!ENTITY tableCaption.accessKey           "i">
+<!ENTITY tableCaptionAbove.label          "Wušej tabele">
+<!ENTITY tableCaptionBelow.label          "Nižej tabele">
+<!ENTITY tableCaptionLeft.label           "Nalěwo wót tabele">
+<!ENTITY tableCaptionRight.label          "Napšawo wót tabele">
+<!ENTITY tableCaptionNone.label           "Žeden">
+<!ENTITY tableInheritColor.label           "(Bokowu barwu pśeswěśiś daś)">
+
+<!ENTITY cellSelection.label              "Wuběrk">
+<!ENTITY cellSelectCell.label             "Cela">
+<!ENTITY cellSelectRow.label              "Rěd">
+<!ENTITY cellSelectColumn.label           "Słup">
+<!ENTITY cellSelectNext.label             "Pśiducy">
+<!ENTITY cellSelectNext.accessKey         "d">
+<!ENTITY cellSelectPrevious.label         "Pjerwjejšny">
+<!ENTITY cellSelectPrevious.accessKey     "P">
+<!ENTITY applyBeforeChange.label          "Aktualne změny budu se pśed změnjanim wuběrka nałožowaś.">
+<!ENTITY cellContentAlignment.label       "Wusměrjenje wopśimjeśa">
+<!ENTITY cellHorizontal.label             "Horicontalny:">
+<!ENTITY cellHorizontal.accessKey         "H">
+<!ENTITY cellVertical.label               "Wertikalny:">
+<!ENTITY cellVertical.accessKey           "W">
+<!ENTITY cellStyle.label                  "Celowy stil:">
+<!ENTITY cellStyle.accessKey              "C">
+<!ENTITY cellNormal.label                 "Normalny">
+<!ENTITY cellHeader.label                 "Głowa">
+<!ENTITY cellTextWrap.label               "Tekstowe łamanje:">
+<!ENTITY cellTextWrap.accessKey           "T">
+<!ENTITY cellWrap.label                   "Łamaś">
+<!ENTITY cellNoWrap.label                 "Njełamaś">
+<!ENTITY cellAlignTop.label               "Górjejce">
+<!ENTITY cellAlignMiddle.label            "Wesrjejź">
+<!ENTITY cellAlignBottom.label            "Dołojce">
+<!ENTITY cellAlignJustify.label           "Blokowa sajźba">
+<!ENTITY cellInheritColor.label           "(Tabelowu barwu pśeswěśiś daś)">
+<!ENTITY cellUseCheckboxHelp.label        "Kontrolowy kašćik wužywaś, aby se zwěsćiło, kotare kakosći nałožuju se na wšykne wubrane cele">
+
+<!-- Used in both Table and Cell panels  -->
+<!ENTITY size.label                       "Wjelikosć">
+<!ENTITY pixels.label                     "pikselow">
+<!ENTITY backgroundColor.label            "Slězynowa barwa:">
+<!ENTITY backgroundColor.accessKey        "S">
+<!ENTITY AlignLeft.label                  "Nalěwo">
+<!ENTITY AlignCenter.label                "Centrěrowano">
+<!ENTITY AlignRight.label                 "Napšawo">

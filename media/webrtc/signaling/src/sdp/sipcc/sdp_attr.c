@@ -1289,6 +1289,38 @@ sdp_result_e sdp_parse_attr_fmtp (sdp_t *sdp_p, sdp_attr_t *attr_p,
             fmtp_p->maxplaybackrate = (uint32_t) strtoul_result;
             codec_info_found = TRUE;
 
+        } else if (cpr_strncasecmp(tmp, sdp_fmtp_codec_param[51].name,
+                                   sdp_fmtp_codec_param[51].strlen) == 0) {
+          result1 =
+              sdp_get_fmtp_tok_val(sdp_p, &fmtp_ptr, "apt", tmp, sizeof(tmp),
+                                   &tok, &strtoul_result, -1, 0, UINT8_MAX);
+          if (result1 != SDP_SUCCESS) {
+              SDP_FREE(temp_ptr);
+              return result1;
+          }
+
+          fmtp_p->fmtp_format = SDP_FMTP_CODEC_INFO;
+          fmtp_p->apt = (uint8_t)strtoul_result;
+
+          codec_info_found = TRUE;
+
+        } else if (cpr_strncasecmp(tmp, sdp_fmtp_codec_param[52].name,
+                                   sdp_fmtp_codec_param[52].strlen) == 0) {
+
+          result1 =
+              sdp_get_fmtp_tok_val(sdp_p, &fmtp_ptr, "rtx_time", tmp, sizeof(tmp),
+                                   &tok, &strtoul_result, -1, 0, UINT_MAX);
+          if (result1 != SDP_SUCCESS) {
+              SDP_FREE(temp_ptr);
+              return result1;
+          }
+
+          fmtp_p->fmtp_format = SDP_FMTP_CODEC_INFO;
+          fmtp_p->has_rtx_time = TRUE;
+          fmtp_p->rtx_time = (uint32_t)strtoul_result;
+
+          codec_info_found = TRUE;
+
         } else if (fmtp_ptr != NULL && *fmtp_ptr == '\n') {
             temp=PL_strtok_r(tmp, ";", &strtok_state);
             if (temp) {
@@ -1480,7 +1512,7 @@ sdp_result_e sdp_parse_attr_fmtp (sdp_t *sdp_p, sdp_attr_t *attr_p,
 
         for (i = low_val; i <= high_val; i++) {
             mapword = i/SDP_NE_BITS_PER_WORD;
-            bmap = SDP_NE_BIT_0 << (i%32);
+            bmap = ((unsigned)SDP_NE_BIT_0) << (i%32);
             fmtp_p->bmap[mapword] |= bmap;
         }
         if (high_val > fmtp_p->maxval) {
@@ -2824,7 +2856,7 @@ sdp_result_e sdp_parse_attr_cpar (sdp_t *sdp_p, sdp_attr_t *attr_p,
     sdp_mca_t    *cap_p;
     sdp_attr_t   *cap_attr_p = NULL;
     sdp_attr_t   *prev_attr_p;
-    char          tmp[SDP_MAX_STRING_LEN];
+    char          tmp[SDP_MAX_STRING_LEN] = {0};
 
     /* Make sure we've processed a valid X-cap/cdsc attr prior to this and
      * if so, get the cap pointer. */
@@ -2881,8 +2913,8 @@ sdp_result_e sdp_parse_attr_cpar (sdp_t *sdp_p, sdp_attr_t *attr_p,
 
     if ((result != SDP_SUCCESS) || (tmp[0] != 'a') || (tmp[1] != '\0')) {
         sdp_parse_error(sdp_p,
-            "%s Warning: Invalid token type (%s) in %s "
-            "attribute, unable to parse", sdp_p->debug_str, tmp,
+            "%s Warning: Invalid token type in %s "
+            "attribute, unable to parse", sdp_p->debug_str,
             sdp_get_attr_name(attr_p->type));
         sdp_p->conf_p->num_invalid_param++;
         return (SDP_INVALID_PARAMETER);
@@ -4565,6 +4597,9 @@ sdp_result_e sdp_build_attr_rtcp_fb(sdp_t *sdp_p,
         case SDP_RTCP_FB_REMB:
             /* No additional params after REMB */
             break;
+        case SDP_RTCP_FB_TRANSPORT_CC:
+            /* No additional params after Transport-CC */
+            break;
 
         case SDP_RTCP_FB_UNKNOWN:
             /* Contents are in the "extra" field */
@@ -4710,6 +4745,10 @@ sdp_result_e sdp_parse_attr_rtcp_fb (sdp_t *sdp_p,
 
         case SDP_RTCP_FB_REMB:
             /* No additional tokens to parse after goog-remb */
+            break;
+
+        case SDP_RTCP_FB_TRANSPORT_CC:
+            /* No additional tokens to parse after transport-cc */
             break;
 
         case SDP_RTCP_FB_UNKNOWN:
@@ -5116,4 +5155,97 @@ sdp_result_e sdp_build_attr_ssrc(sdp_t *sdp_p,
                         attr_p->attr.ssrc.attribute[0] ? " " : "",
                         attr_p->attr.ssrc.attribute);
     return SDP_SUCCESS;
+}
+
+
+sdp_result_e sdp_parse_attr_ssrc_group(sdp_t *sdp_p, sdp_attr_t *attr_p,
+                                       const char *ptr)
+{
+    sdp_result_e result;
+    char tmp[SDP_MAX_STRING_LEN + 1];
+    int i;
+
+    /* Find the a=ssrc-group:<semantic> <ssrc1> <ssrc2> ... values */
+    ptr = sdp_getnextstrtok(ptr, tmp, sizeof(tmp), " \t", &result);
+    if (result != SDP_SUCCESS) {
+        sdp_parse_error(sdp_p,
+                        "%s Warning: No semantic attribute value specified for "
+                        "a=ssrc-group line",
+                        sdp_p->debug_str);
+        sdp_p->conf_p->num_invalid_param++;
+        return (SDP_INVALID_PARAMETER);
+    }
+
+    attr_p->attr.ssrc_group.semantic = SDP_SSRC_GROUP_ATTR_UNSUPPORTED;
+    for (i = 0; i < SDP_MAX_SSRC_GROUP_ATTR_VAL; i++) {
+        if (cpr_strncasecmp(tmp, sdp_ssrc_group_attr_val[i].name,
+                            sdp_ssrc_group_attr_val[i].strlen) == 0) {
+          attr_p->attr.ssrc_group.semantic = (sdp_ssrc_group_attr_e)i;
+          break;
+        }
+    }
+
+    if (attr_p->attr.ssrc_group.semantic == SDP_SSRC_GROUP_ATTR_UNSUPPORTED) {
+        sdp_parse_error(sdp_p,
+            "%s Warning: Ssrc group attribute type unsupported (%s).",
+            sdp_p->debug_str, tmp);
+    }
+
+    for (i = 0; i < SDP_MAX_SSRC_GROUP_SSRCS; ++i) {
+        attr_p->attr.ssrc_group.ssrcs[i] =
+            (uint32_t)sdp_getnextnumtok(ptr, &ptr, " \t", &result);
+
+        if (result != SDP_SUCCESS) {
+          break;
+        }
+
+        attr_p->attr.ssrc_group.num_ssrcs++;
+    }
+
+    ptr = sdp_getnextstrtok(ptr, tmp, sizeof(tmp), " \t", &result);
+    if (result == SDP_SUCCESS) {
+        sdp_parse_error(sdp_p,
+            "%s Warning: Trailing tokens while parsing ssrc-group (%s).",
+            sdp_p->debug_str, tmp);
+        sdp_p->conf_p->num_invalid_param++;
+        return (SDP_INVALID_PARAMETER);
+    }
+
+    if (attr_p->attr.ssrc_group.num_ssrcs == 0) {
+        sdp_parse_error(sdp_p,
+            "%s Warning: Ssrc group must contain at least one ssrc (%s).",
+            sdp_p->debug_str, tmp);
+        sdp_p->conf_p->num_invalid_param++;
+        return (SDP_INVALID_PARAMETER);
+    }
+
+    if (sdp_p->debug_flag[SDP_DEBUG_TRACE]) {
+        SDP_PRINT("%s Parsed a=ssrc-group, semantic %s", sdp_p->debug_str,
+                  sdp_get_ssrc_group_attr_name(attr_p->attr.ssrc_group.semantic));
+        for (i = 0; i < attr_p->attr.ssrc_group.num_ssrcs; ++i) {
+            SDP_PRINT("%s ... ssrc %u", sdp_p->debug_str,
+                      attr_p->attr.ssrc_group.ssrcs[i]);
+        }
+    }
+
+    return (SDP_SUCCESS);
+}
+
+sdp_result_e sdp_build_attr_ssrc_group(sdp_t *sdp_p, sdp_attr_t *attr_p,
+                                       flex_string *fs)
+{
+    int i;
+    flex_string_sprintf(
+        fs, "a=ssrc-group:%s",
+        sdp_get_ssrc_group_attr_name(attr_p->attr.ssrc_group.semantic));
+
+    if (attr_p->attr.ssrc_group.num_ssrcs) {
+        return (SDP_FAILURE);
+    }
+
+    for (i = 0; i < attr_p->attr.ssrc_group.num_ssrcs; ++i) {
+        flex_string_sprintf(fs, " %u", attr_p->attr.ssrc_group.ssrcs[i]);
+    }
+    flex_string_sprintf(fs, "\r\n");
+    return (SDP_SUCCESS);
 }

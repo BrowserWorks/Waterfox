@@ -1,13 +1,8 @@
-/* Any copyright is dedicated to the Public Domain.
- * http://creativecommons.org/publicdomain/zero/1.0/ */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
 
 // Tests adding and removing tabs
-
-// Debugger operations may still be in progress when we navigate.
-const { PromiseTestUtils } = ChromeUtils.import(
-  "resource://testing-common/PromiseTestUtils.jsm"
-);
-PromiseTestUtils.whitelistRejectionsGlobally(/Page has navigated/);
 
 add_task(async function() {
   const dbg = await initDebugger("doc-scripts.html", "simple1", "simple2");

@@ -5,9 +5,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/ConsoleReportCollector.h"
+#include "mozilla/net/NeckoChannelParams.h"
 
 #include "ConsoleUtils.h"
-#include "nsIConsoleService.h"
 #include "nsIScriptError.h"
 #include "nsNetUtil.h"
 
@@ -29,9 +29,9 @@ void ConsoleReportCollector::AddConsoleReport(
   // any thread
   MutexAutoLock lock(mMutex);
 
-  mPendingReports.AppendElement(
-      PendingReport(aErrorFlags, aCategory, aPropertiesFile, aSourceFileURI,
-                    aLineNumber, aColumnNumber, aMessageName, aStringParams));
+  mPendingReports.EmplaceBack(aErrorFlags, aCategory, aPropertiesFile,
+                              aSourceFileURI, aLineNumber, aColumnNumber,
+                              aMessageName, aStringParams);
 }
 
 void ConsoleReportCollector::FlushReportsToConsole(uint64_t aInnerWindowID,
@@ -43,7 +43,7 @@ void ConsoleReportCollector::FlushReportsToConsole(uint64_t aInnerWindowID,
     if (aAction == ReportAction::Forget) {
       mPendingReports.SwapElements(reports);
     } else {
-      reports = mPendingReports;
+      reports = mPendingReports.Clone();
     }
   }
 
@@ -69,8 +69,10 @@ void ConsoleReportCollector::FlushReportsToConsole(uint64_t aInnerWindowID,
     nsCOMPtr<nsIURI> uri;
     if (!report.mSourceFileURI.IsEmpty()) {
       nsresult rv = NS_NewURI(getter_AddRefs(uri), report.mSourceFileURI);
-      MOZ_ALWAYS_SUCCEEDS(rv);
       if (NS_FAILED(rv)) {
+        NS_WARNING(nsPrintfCString("Failed to transform %s to uri",
+                                   report.mSourceFileURI.get())
+                       .get());
         continue;
       }
     }
@@ -90,7 +92,7 @@ void ConsoleReportCollector::FlushReportsToConsoleForServiceWorkerScope(
     if (aAction == ReportAction::Forget) {
       mPendingReports.SwapElements(reports);
     } else {
-      reports = mPendingReports;
+      reports = mPendingReports.Clone();
     }
   }
 
@@ -114,7 +116,6 @@ void ConsoleReportCollector::FlushReportsToConsoleForServiceWorkerScope(
     ConsoleUtils::Level level = ConsoleUtils::eLog;
     switch (report.mErrorFlags) {
       case nsIScriptError::errorFlag:
-      case nsIScriptError::exceptionFlag:
         level = ConsoleUtils::eError;
         break;
       case nsIScriptError::warningFlag:
@@ -157,10 +158,30 @@ void ConsoleReportCollector::FlushConsoleReports(
 
   for (uint32_t i = 0; i < reports.Length(); ++i) {
     PendingReport& report = reports[i];
-    aCollector->AddConsoleReport(report.mErrorFlags, report.mCategory,
-                                 report.mPropertiesFile, report.mSourceFileURI,
-                                 report.mLineNumber, report.mColumnNumber,
-                                 report.mMessageName, report.mStringParams);
+    aCollector->AddConsoleReport(
+        report.mErrorFlags, report.mCategory, report.mPropertiesFile,
+        report.mSourceFileURI, report.mLineNumber, report.mColumnNumber,
+        report.mMessageName,
+        static_cast<const nsTArray<nsString>&>(report.mStringParams));
+  }
+}
+
+void ConsoleReportCollector::StealConsoleReports(
+    nsTArray<net::ConsoleReportCollected>& aReports) {
+  aReports.Clear();
+
+  nsTArray<PendingReport> reports;
+
+  {
+    MutexAutoLock lock(mMutex);
+    mPendingReports.SwapElements(reports);
+  }
+
+  for (const PendingReport& report : reports) {
+    aReports.AppendElement(net::ConsoleReportCollected(
+        report.mErrorFlags, report.mCategory, report.mPropertiesFile,
+        report.mSourceFileURI, report.mLineNumber, report.mColumnNumber,
+        report.mMessageName, report.mStringParams));
   }
 }
 
@@ -170,6 +191,6 @@ void ConsoleReportCollector::ClearConsoleReports() {
   mPendingReports.Clear();
 }
 
-ConsoleReportCollector::~ConsoleReportCollector() {}
+ConsoleReportCollector::~ConsoleReportCollector() = default;
 
 }  // namespace mozilla

@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label  "Lomakkeen kentän ominaisuudet">
+<!ENTITY windowTitleImage.label  "Lomakkeen kuvan ominaisuudet">
+
+<!ENTITY InputType.label  "Kentän tyyppi">
+<!ENTITY InputType.accesskey  "t">
+<!ENTITY text.value  "Teksti">
+<!ENTITY password.value  "Salasana">
+<!ENTITY checkbox.value  "Valintaruutu">
+<!ENTITY radio.value  "Valintanappi">
+<!ENTITY submit.value  "Lähetyspainike">
+<!ENTITY reset.value  "Tyhjennyspainike">
+<!ENTITY file.value  "Tiedosto">
+<!ENTITY hidden.value  "Piilotettu">
+<!ENTITY image.value  "Kuva">
+<!ENTITY button.value  "Painike">
+
+<!ENTITY InputSettings.label  "Kentän asetukset">
+<!ENTITY InputName.label  "Kentän nimi:">
+<!ENTITY InputName.accesskey "n">
+<!ENTITY GroupName.label  "Ryhmän nimi:">
+<!ENTITY GroupName.accesskey "n">
+<!ENTITY InputValue.label  "Kentän arvo:">
+<!ENTITY InputValue.accesskey "a">
+<!ENTITY InitialValue.label  "Alkuarvo:">
+<!ENTITY InitialValue.accesskey "a">
+<!ENTITY InputChecked.label  "Aluksi valittuna">
+<!ENTITY InputChecked.accesskey  "A">
+<!ENTITY InputSelected.label  "Aluksi valittuna">
+<!ENTITY InputSelected.accesskey  "v">
+<!ENTITY InputReadOnly.label  "Vain luku">
+<!ENTITY InputReadOnly.accesskey  "u">
+<!ENTITY InputDisabled.label  "Pois käytöstä">
+<!ENTITY InputDisabled.accesskey  "s">
+<!ENTITY tabIndex.label  "Sarkainindeksi:">
+<!ENTITY tabIndex.accesskey  "i">
+<!ENTITY TextSize.label  "Kentän koko:">
+<!ENTITY TextSize.accesskey  "K">
+<!ENTITY TextLength.label  "Maksimipituus:">
+<!ENTITY TextLength.accesskey  "M">
+<!ENTITY AccessKey.label  "Valintanäppäin:">
+<!ENTITY AccessKey.accesskey  "p">
+<!ENTITY Accept.label  "Hyväksy tyypit:">
+<!ENTITY Accept.accesskey  "H">
+
+<!ENTITY ImageProperties.label  "Kuvan ominaisuudet…">
+<!ENTITY ImageProperties.accesskey  "d">

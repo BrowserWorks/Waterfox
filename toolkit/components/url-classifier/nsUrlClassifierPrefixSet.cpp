@@ -8,16 +8,16 @@
 #include "nsIUrlClassifierPrefixSet.h"
 #include "nsCOMPtr.h"
 #include "nsDebug.h"
+#include "nsIInputStream.h"
+#include "nsIOutputStream.h"
 #include "nsPrintfCString.h"
 #include "nsTArray.h"
 #include "nsString.h"
 #include "nsTArray.h"
 #include "nsThreadUtils.h"
 #include "nsNetUtil.h"
-#include "nsISeekableStream.h"
-#include "nsIBufferedStreams.h"
 #include "mozilla/MemoryReporting.h"
-#include "mozilla/StaticPrefs.h"
+#include "mozilla/StaticPrefs_browser.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/Logging.h"
 #include "mozilla/Unused.h"
@@ -35,10 +35,8 @@ static LazyLogModule gUrlClassifierPrefixSetLog("UrlClassifierPrefixSet");
 NS_IMPL_ISUPPORTS(nsUrlClassifierPrefixSet, nsIUrlClassifierPrefixSet,
                   nsIMemoryReporter)
 
-
 nsUrlClassifierPrefixSet::nsUrlClassifierPrefixSet()
-    : mLock("nsUrlClassifierPrefixSet.mLock"),
-      mTotalPrefixes(0) {}
+    : mLock("nsUrlClassifierPrefixSet.mLock"), mTotalPrefixes(0) {}
 
 NS_IMETHODIMP
 nsUrlClassifierPrefixSet::Init(const nsACString& aName) {

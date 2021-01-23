@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -15,8 +13,9 @@ const { method } = require("devtools/shared/protocol");
  * used to accumulate and quickly dispose of groups of actors that
  * share a lifetime.
  */
-function ActorPool(connection) {
+function ActorPool(connection, label) {
   this.conn = connection;
+  this.label = label;
   this._actors = {};
 }
 
@@ -40,15 +39,10 @@ ActorPool.prototype = {
   addActor: function APAddActor(actor) {
     actor.conn = this.conn;
     if (!actor.actorID) {
-      // Older style actors use actorPrefix, while protocol.js-based actors use typeName
-      const prefix = actor.actorPrefix || actor.typeName;
-      if (!prefix) {
-        throw new Error(
-          "Actor should precify either `actorPrefix` or `typeName` " +
-            "attribute"
-        );
+      if (!actor.typeName) {
+        throw new Error("Actor should a specify a `typeName` attribute");
       }
-      actor.actorID = this.conn.allocID(prefix || undefined);
+      actor.actorID = this.conn.allocID(actor.typeName);
     }
 
     // If the actor is already in a pool, remove it without destroying it.
@@ -102,21 +96,41 @@ ActorPool.prototype = {
       callback(this._actors[name]);
     }
   },
+
+  // Generator that yields each non-self child of the pool.
+  *poolChildren() {
+    if (!this._actors) {
+      return;
+    }
+    for (const actor of Object.values(this._actors)) {
+      // Self-owned actors are ok, but don't need visiting twice.
+      if (actor === this) {
+        continue;
+      }
+      yield actor;
+    }
+  },
+
+  dumpPool() {
+    for (const actor in this._actors) {
+      console.log(`>> ${actor}`);
+    }
+  },
 };
 
 exports.ActorPool = ActorPool;
 
 /**
- * A GeneratedLocation represents a location in a generated source.
+ * A SourceLocation represents a location in a source.
  *
  * @param SourceActor actor
- *        A SourceActor representing a generated source.
+ *        A SourceActor representing a source.
  * @param Number line
  *        A line within the given source.
  * @param Number column
  *        A column within the given line.
  */
-function GeneratedLocation(actor, line, column, lastColumn) {
+function SourceLocation(actor, line, column, lastColumn) {
   this._connection = actor ? actor.conn : null;
   this._actorID = actor ? actor.actorID : undefined;
   this._line = line;
@@ -124,68 +138,52 @@ function GeneratedLocation(actor, line, column, lastColumn) {
   this._lastColumn = lastColumn !== undefined ? lastColumn : column + 1;
 }
 
-GeneratedLocation.prototype = {
-  get originalSourceActor() {
-    throw new Error();
-  },
-
-  get originalUrl() {
-    throw new Error("Shouldn't access originalUrl from a GeneratedLocation");
-  },
-
-  get originalLine() {
-    throw new Error("Shouldn't access originalLine from a GeneratedLocation");
-  },
-
-  get originalColumn() {
-    throw new Error("Shouldn't access originalColumn from a GeneratedLocation");
-  },
-
-  get originalName() {
-    throw new Error("Shouldn't access originalName from a GeneratedLocation");
-  },
-
-  get generatedSourceActor() {
+SourceLocation.prototype = {
+  get sourceActor() {
     return this._connection ? this._connection.getActor(this._actorID) : null;
   },
 
-  get generatedUrl() {
-    return this.generatedSourceActor.url;
+  get url() {
+    return this.sourceActor.url;
   },
 
-  get generatedLine() {
+  get line() {
     return this._line;
   },
 
-  get generatedColumn() {
+  get column() {
     return this._column;
   },
 
-  get generatedLastColumn() {
+  get lastColumn() {
     return this._lastColumn;
+  },
+
+  get sourceUrl() {
+    return this.sourceActor.url;
   },
 
   equals: function(other) {
     return (
-      this.generatedSourceActor.url == other.generatedSourceActor.url &&
-      this.generatedLine === other.generatedLine &&
-      (this.generatedColumn === undefined ||
-        other.generatedColumn === undefined ||
-        this.generatedColumn === other.generatedColumn)
+      this.sourceActor.url == other.sourceActor.url &&
+      this.line === other.line &&
+      (this.column === undefined ||
+        other.column === undefined ||
+        this.column === other.column)
     );
   },
 
   toJSON: function() {
     return {
-      source: this.generatedSourceActor.form(),
-      line: this.generatedLine,
-      column: this.generatedColumn,
-      lastColumn: this.generatedLastColumn,
+      source: this.sourceActor.form(),
+      line: this.line,
+      column: this.column,
+      lastColumn: this.lastColumn,
     };
   },
 };
 
-exports.GeneratedLocation = GeneratedLocation;
+exports.SourceLocation = SourceLocation;
 
 /**
  * A method decorator that ensures the actor is in the expected state before

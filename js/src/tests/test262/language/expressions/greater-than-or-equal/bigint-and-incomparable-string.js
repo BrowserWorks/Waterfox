@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('BigInt')) -- BigInt is not enabled unconditionally
 // Copyright (C) 2018 Igalia, S.L. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 /*---
@@ -26,4 +25,5 @@ assert.sameValue('++1' >= 0n, false, 'The result of ("++1" >= 0n) is false');
 assert.sameValue('--1' >= 0n, false, 'The result of ("--1" >= 0n) is false');
 assert.sameValue('1e0' >= 0n, false, 'The result of ("1e0" >= 0n) is false');
 assert.sameValue('Infinity' >= 0n, false, 'The result of ("Infinity" >= 0n) is false');
+
 reportCompare(0, 0);

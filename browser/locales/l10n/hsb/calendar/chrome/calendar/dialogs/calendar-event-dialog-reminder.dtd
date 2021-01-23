@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "Dopomnjeća konfigurować">
+<!ENTITY reminder.add.label                                "Přidać">
+<!ENTITY reminder.add.accesskey                            "P">
+<!ENTITY reminder.remove.label                             "Wotstronić">
+<!ENTITY reminder.remove.accesskey                         "W">
+
+<!ENTITY reminder.reminderDetails.label                    "Podrobnosće dopomnjeća">
+<!ENTITY reminder.action.label                             "Wubjerće dopomnjensku akciju">
+
+<!ENTITY reminder.action.alert.label                       "Warnowanje pokazać">
+<!ENTITY reminder.action.email.label                       "E-mejlku pósłać">
+
+<!ENTITY alarm.units.minutes                               "mjeńšiny" >
+<!ENTITY alarm.units.hours                                 "hodźiny" >
+<!ENTITY alarm.units.days                                  "dny" >

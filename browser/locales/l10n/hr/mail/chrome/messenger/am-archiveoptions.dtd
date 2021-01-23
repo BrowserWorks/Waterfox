@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-archiveoptions.xul -->
+
+
+<!-- extracted from am-archiveoptions.xhtml -->
+
+<!ENTITY dialogTitle.label "Mogućnosti arhiviranja">
+<!ENTITY archiveGranularityPrefix.label "Prilikom arhiviranja stavi poruke u:">
+<!ENTITY archiveFlat.label "Jednu mapu">
+<!ENTITY archiveFlat.accesskey "J">
+<!ENTITY archiveYearly.label "Mape arhivirane po godinama">
+<!ENTITY archiveYearly.accesskey "g">
+<!ENTITY archiveMonthly.label "Mape arhivirane po mjesecima">
+<!ENTITY archiveMonthly.accesskey "M">
+<!ENTITY keepFolderStructure.label "Zadrži postojeću strukturu mapa arhiviranih poruka">
+<!ENTITY keepFolderStructure.accesskey "Z">
+<!ENTITY archiveExample.label "Primjer">
+<!-- LOCALIZATION NOTE (archiveFolderName.label): this should match the default
+     name for the "Archives" folder -->
+<!ENTITY archiveFolderName.label "Arhiva">
+<!-- LOCALIZATION NOTE (inboxFolderName.label): this should match the default
+     name for the "Inbox" folder -->
+<!ENTITY inboxFolderName.label "Primljena pošta">

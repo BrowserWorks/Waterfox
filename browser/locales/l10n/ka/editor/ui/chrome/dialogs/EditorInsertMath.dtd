@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Math ჩასმა">
+
+<!ENTITY sourceEditField.label "LaTeX პირველწყარო კოდის შეყვანა:">
+
+<!ENTITY options.label "პარამეტრები">
+<!ENTITY optionInline.label "ხაზოვანი რეჟიმი">
+<!ENTITY optionInline.accesskey "ზ">
+<!ENTITY optionDisplay.label "გამოსაჩენი სახელი">
+<!ENTITY optionDisplay.accesskey "ი">
+<!ENTITY optionLTR.label "მიმართულება მარცხნიდან მარჯვნივ">
+<!ENTITY optionLTR.accesskey "ც">
+<!ENTITY optionRTL.label "მიმართულება მარჯვნიდან მარცხნივ">
+<!ENTITY optionRTL.accesskey "ჯ">
+
+<!ENTITY insertButton.label "ჩამატება">
+<!ENTITY insertButton.accesskey "ჩ">

@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of 
+Netscape Communicator, Please translate using the brandname in respective 
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word 
+"&brandShortName;" below.
+-->
+
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Invoer">
+<!ENTITY importAll.label          "Voer alles in">
+<!ENTITY importAll.accesskey      "a">
+<!ENTITY importMail.label         "Pos">
+<!ENTITY importMail.accesskey     "P">
+
+
+<!ENTITY importAddressbook.label  "Adresboeke">
+<!ENTITY importAddressbook.accesskey "A">
+<!ENTITY importSettings.label     "Instellings">
+<!ENTITY importSettings.accesskey "I">
+<!ENTITY importFilters.label      "Filters">
+<!ENTITY importFilters.accesskey  "F">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "&brandShortName; se invoerslimmerd">
+<!ENTITY importShortDesc.label    "Voer pos, adresboeke, instellings en filters uit ander programme in">
+
+<!ENTITY importDescription2.label "Sodra dit ingevoer is, sal u vanuit &brandShortName; daartoe toegang hê.">
+
+<!ENTITY selectDescription.label  "Kies die soort lêer wat u wil invoer:">
+
+<!ENTITY selectDescription.accesskey "K">
+<!ENTITY acctName.label           "Naam:">
+<!ENTITY acctName.accesskey       "N">
+
+
+<!ENTITY back.label               "&lt; Terug">
+<!ENTITY forward.label            "Volgende &gt;">
+<!ENTITY finish.label             "Klaar">
+<!ENTITY cancel.label             "Kanselleer">
+
+<!ENTITY select.label             "of kies die soort stof wat u wil invoer:">
+
+<!ENTITY title.label              "Titel">
+<!ENTITY processing.label         "Voer tans in…">

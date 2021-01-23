@@ -104,6 +104,7 @@ ia2Accessible::get_relation(long aRelationIndex,
         new ia2AccessibleRelation(relationType, &rel);
     if (ia2Relation->HasTargets()) {
       if (relIdx == aRelationIndex) {
+        acc->AssociateCOMObjectForDisconnection(ia2Relation);
         ia2Relation.forget(aRelation);
         return S_OK;
       }
@@ -137,6 +138,7 @@ ia2Accessible::get_relations(long aMaxRelations,
     RefPtr<ia2AccessibleRelation> ia2Rel =
         new ia2AccessibleRelation(relationType, &rel);
     if (ia2Rel->HasTargets()) {
+      acc->AssociateCOMObjectForDisconnection(ia2Rel);
       ia2Rel.forget(aRelation + (*aNRelations));
       (*aNRelations)++;
     }
@@ -493,8 +495,9 @@ ia2Accessible::get_relationTargetsOfType(BSTR aType, long aMaxTargets,
   MOZ_ASSERT(!acc->IsProxy());
   Relation rel = acc->RelationByType(*relationType);
   Accessible* target = nullptr;
-  while ((target = rel.Next()) &&
-         static_cast<long>(targets.Length()) <= aMaxTargets) {
+  while (
+      (target = rel.Next()) &&
+      (aMaxTargets == 0 || static_cast<long>(targets.Length()) < aMaxTargets)) {
     targets.AppendElement(target);
   }
 

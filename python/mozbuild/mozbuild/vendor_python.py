@@ -11,7 +11,7 @@ import subprocess
 import mozfile
 import mozpack.path as mozpath
 from mozbuild.base import MozbuildObject
-from mozfile import NamedTemporaryFile, TemporaryDirectory
+from mozfile import TemporaryDirectory
 from mozpack.files import FileFinder
 
 
@@ -31,23 +31,31 @@ class VendorPython(MozbuildObject):
         self._activate_virtualenv()
         pip_compile = os.path.join(self.virtualenv_manager.bin_path, 'pip-compile')
         if not os.path.exists(pip_compile):
-            path = os.path.normpath(os.path.join(self.topsrcdir, 'third_party', 'python', 'pip-tools'))
+            path = os.path.normpath(os.path.join(
+                self.topsrcdir, 'third_party', 'python', 'pip-tools'))
             self.virtualenv_manager.install_pip_package(path, vendored=True)
         spec = os.path.join(vendor_dir, 'requirements.in')
         requirements = os.path.join(vendor_dir, 'requirements.txt')
 
-        with NamedTemporaryFile('w') as tmpspec:
-            shutil.copyfile(spec, tmpspec.name)
-            self._update_packages(tmpspec.name, packages)
+        with TemporaryDirectory() as spec_dir:
+            tmpspec = 'requirements-mach-vendor-python.in'
+            tmpspec_absolute = os.path.join(spec_dir, tmpspec)
+            shutil.copyfile(spec, tmpspec_absolute)
+            self._update_packages(tmpspec_absolute, packages)
 
             # resolve the dependencies and update requirements.txt
-            subprocess.check_output([
-                pip_compile,
-                tmpspec.name,
-                '--no-header',
-                '--no-index',
-                '--output-file', requirements,
-                '--generate-hashes'])
+            subprocess.check_output(
+                [
+                    pip_compile,
+                    tmpspec,
+                    '--no-header',
+                    '--no-index',
+                    '--output-file', requirements,
+                    '--generate-hashes'
+                ],
+                # Run pip-compile from within the temporary directory so that the "via"
+                # annotations don't have the non-deterministic temporary path in them.
+                cwd=spec_dir)
 
             with TemporaryDirectory() as tmp:
                 # use requirements.txt to download archived source distributions of all packages
@@ -61,7 +69,7 @@ class VendorPython(MozbuildObject):
                 if with_windows_wheel:
                     # This is hardcoded to CPython 2.7 for win64, which is good
                     # enough for what we need currently. If we need psutil for Python 3
-                    # in the future that coudl be added here as well.
+                    # in the future that could be added here as well.
                     self.virtualenv_manager._run_pip([
                         'download',
                         '--dest', tmp,
@@ -75,7 +83,7 @@ class VendorPython(MozbuildObject):
                         packages[0]])
                 self._extract(tmp, vendor_dir)
 
-            shutil.copyfile(tmpspec.name, spec)
+            shutil.copyfile(tmpspec_absolute, spec)
             self.repository.add_remove_files(vendor_dir)
 
     def _update_packages(self, spec, packages):
@@ -85,15 +93,24 @@ class VendorPython(MozbuildObject):
 
         requirements = {}
         with open(spec, 'r') as f:
+            comments = []
             for line in f.readlines():
-                name, version = line.rstrip().split('==')
-                requirements[name] = version
+                line = line.strip()
+                if not line or line.startswith('#'):
+                    comments.append(line)
+                    continue
+                name, version = line.split('==')
+                requirements[name] = version, comments
+                comments = []
+
         for package in packages:
             name, version = package.split('==')
-            requirements[name] = version
+            requirements[name] = version, []
 
         with open(spec, 'w') as f:
-            for name, version in sorted(requirements.items()):
+            for name, (version, comments) in sorted(requirements.items()):
+                if comments:
+                    f.write('{}\n'.format('\n'.join(comments)))
                 f.write('{}=={}\n'.format(name, version))
 
     def _extract(self, src, dest):

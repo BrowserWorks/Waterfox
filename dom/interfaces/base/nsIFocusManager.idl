@@ -7,8 +7,11 @@
 
 interface mozIDOMWindowProxy;
 
+webidl BrowsingContext;
 webidl Document;
 webidl Element;
+
+native CallerType(mozilla::dom::CallerType);
 
 /**
  * The focus manager deals with all focus related behaviour. Only one element
@@ -43,12 +46,16 @@ interface nsIFocusManager : nsISupports
 {
   /**
    * The most active (frontmost) window, or null if no window that is part of
-   * the application is active. Setting the activeWindow raises it, and
-   * focuses the current child window's current element, if any. Setting this
-   * to null or to a non-top-level window throws an NS_ERROR_INVALID_ARG
-   * exception.
+   * the application is active. Do not use outside the parent process.
    */
-  attribute mozIDOMWindowProxy activeWindow;
+  readonly attribute mozIDOMWindowProxy activeWindow;
+
+  /**
+   * In the parent process: The BrowsingContext corresponding to activeWindow.
+   * In content processes: The top-level Web content browsing context that
+   * focus is in if the application is active and focus is in Web content.
+   */
+  readonly attribute BrowsingContext activeBrowsingContext;
 
   /**
    * The child window within the activeWindow that is focused. This will
@@ -59,8 +66,14 @@ interface nsIFocusManager : nsISupports
    * will actually be set to the child window and the current element within
    * that set as the focused element. This process repeats downwards until a
    * non-frame element is found.
+   * The setter for this attribute defaults to CallerType::System.
    */
   attribute mozIDOMWindowProxy focusedWindow;
+
+  /**
+   * Setter for focusedWindow with CallerType
+   */
+  [noscript] void SetFocusedWindowWithCallerType(in mozIDOMWindowProxy aWindow, in CallerType aCallerType);
 
   /**
    * The element that is currently focused. This will always be an element
@@ -154,8 +167,7 @@ interface nsIFocusManager : nsISupports
   const unsigned long FLAG_RAISE = 1;
 
   /**
-   * Do not scroll the element to focus into view. If FLAG_BYELEMENTFOCUS is
-   * set too, the latter is ignored.
+   * Do not scroll the element to focus into view.
    */
   const unsigned long FLAG_NOSCROLL = 2;
 
@@ -175,6 +187,12 @@ interface nsIFocusManager : nsISupports
    * are navigated as normal.
    */
   const unsigned long FLAG_NOPARENTFRAME = 8;
+
+  /**
+   * This flag is used for window and element focus operations to signal
+   * wether the caller is system or non system.
+   */
+  const unsigned long FLAG_NONSYSTEMCALLER = 16;
 
   /**
    * Focus is changing due to a mouse operation, for instance the mouse was
@@ -209,15 +227,10 @@ interface nsIFocusManager : nsISupports
    */
   const unsigned long FLAG_BYTOUCH = 0x200000;
 
-  /**
-   * Focus is changing due to a Element.focus() call.
-   * This is used to distinguish the Element.focus() call from other focus
-   * functionalities since we need to factor scroll-margin and scroll-padding
-   * values into the position where we scroll to the element by the
-   * Element.focus() call.
-   * NOTE: This flag is ignored if FLAG_NOSCROLL is set too.
+  /*
+   * Focus is changing due to a long press operation by touch or mouse.
    */
-  const unsigned long FLAG_BYELEMENTFOCUS = 0x400000;
+  const unsigned long FLAG_BYLONGPRESS = 0x800000;
 
   // these constants are used with the aType argument to MoveFocus
 

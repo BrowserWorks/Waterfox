@@ -57,6 +57,10 @@
     width: $larger-icon-size;
   }
 
+  &.icon-mail {
+    background-image: url('#{$image-path}glyph-mail-16.svg');
+  }
+
   &.icon-dismiss {
     background-image: url('#{$image-path}glyph-dismiss-16.svg');
   }
@@ -75,7 +79,7 @@
   }
 
   &.icon-settings {
-    background-image: url('chrome://browser/skin/settings.svg');
+    background-image: url('chrome://global/skin/icons/settings.svg');
   }
 
   &.icon-pin {
@@ -195,5 +199,9 @@
 
   &.icon-maximize {
     background-image: url('#{$image-path}glyph-maximize-16.svg');
+  }
+
+  &.icon-arrow {
+    background-image: url('#{$image-path}glyph-arrow.svg');
   }
 }

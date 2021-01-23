@@ -5,11 +5,11 @@
 //! output.
 //!
 //! A virtual register is typically built by merging together SSA values that are "phi-related" -
-//! that is, one value is passed as an EBB argument to a branch and the other is the EBB parameter
+//! that is, one value is passed as a block argument to a branch and the other is the block parameter
 //! value itself.
 //!
 //! If any values in a virtual register are spilled, they will use the same stack slot. This avoids
-//! memory-to-memory copies when a spilled value is passed as an EBB argument.
+//! memory-to-memory copies when a spilled value is passed as a block argument.
 
 use crate::dbg::DisplayList;
 use crate::dominator_tree::DominatorTreePreorder;
@@ -18,10 +18,11 @@ use crate::entity::{EntityList, ListPool};
 use crate::entity::{Keys, PrimaryMap, SecondaryMap};
 use crate::ir::{Function, Value};
 use crate::packed_option::PackedOption;
-use crate::ref_slice::ref_slice;
+use alloc::vec::Vec;
 use core::cmp::Ordering;
 use core::fmt;
-use std::vec::Vec;
+use core::slice;
+use smallvec::SmallVec;
 
 /// A virtual register reference.
 #[derive(Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -103,7 +104,7 @@ impl VirtRegs {
         'a: 'b,
     {
         self.get(*value)
-            .map_or_else(|| ref_slice(value), |vr| self.values(vr))
+            .map_or_else(|| slice::from_ref(value), |vr| self.values(vr))
     }
 
     /// Check if `a` and `b` belong to the same congruence class.
@@ -258,9 +259,9 @@ impl UFEntry {
     /// Decode a table entry.
     fn decode(x: i32) -> Self {
         if x < 0 {
-            UFEntry::Link(Value::from_u32((!x) as u32))
+            Self::Link(Value::from_u32((!x) as u32))
         } else {
-            UFEntry::Rank(x as u32)
+            Self::Rank(x as u32)
         }
     }
 
@@ -292,7 +293,7 @@ impl VirtRegs {
     /// Find the leader value and rank of the set containing `v`.
     /// Compress the path if needed.
     fn find(&mut self, mut val: Value) -> (Value, u32) {
-        let mut val_stack = vec![];
+        let mut val_stack = SmallVec::<[Value; 8]>::new();
         let found = loop {
             match UFEntry::decode(self.union_find[val]) {
                 UFEntry::Rank(rank) => break (val, rank),

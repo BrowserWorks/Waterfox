@@ -7,16 +7,18 @@
 #ifndef vm_AsyncIteration_h
 #define vm_AsyncIteration_h
 
-#include "builtin/Promise.h"
 #include "js/Class.h"
 #include "vm/GeneratorObject.h"
 #include "vm/JSContext.h"
 #include "vm/JSObject.h"
 #include "vm/List.h"
+#include "vm/PromiseObject.h"
 
 namespace js {
 
 class AsyncGeneratorObject;
+
+extern const JSClass AsyncGeneratorFunctionClass;
 
 // Resume the async generator when the `await` operand fulfills to `value`.
 MOZ_MUST_USE bool AsyncGeneratorAwaitedFulfilled(
@@ -79,7 +81,7 @@ class AsyncGeneratorRequest : public NativeObject {
   friend AsyncGeneratorObject;
 
  public:
-  static const Class class_;
+  static const JSClass class_;
 
   static AsyncGeneratorRequest* create(JSContext* cx,
                                        CompletionKind completionKind,
@@ -186,7 +188,8 @@ class AsyncGeneratorObject : public AbstractGeneratorObject {
   }
 
  public:
-  static const Class class_;
+  static const JSClass class_;
+  static const JSClassOps classOps_;
 
   static AsyncGeneratorObject* create(JSContext* cx, HandleFunction asyncGen);
 
@@ -280,7 +283,7 @@ class AsyncFromSyncIteratorObject : public NativeObject {
   }
 
  public:
-  static const Class class_;
+  static const JSClass class_;
 
   static JSObject* create(JSContext* cx, HandleObject iter,
                           HandleValue nextMethod);

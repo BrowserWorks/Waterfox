@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "ChatZilla පරිශීලක අත්දැකීම් දියුණු කිරීමෙ වැඩසටහන">
+<!ENTITY window.size   "width: 42em;">
+
+<!ENTITY intro.label "ChatZilla පරිශීලක අත්දැකීම් දියුණු කිරීමෙ වැඩසටහන, ඔබට කිසිදු බාදාවකින් තොරව ඔබ ChatZilla භාවිත කරන අයුරු පිළිබඳ තොරතුරු රැස් කරයි. මෙය සංවර්ධකයින්ට ChatZilla හි දියුණු කළ යුතු ගුණාංග හදුනා ගැණීමට උදව් වේ. ඔබව හදුනා ගැණීමට හෝ ඔබව ඇමතීව සඳහා කිසිදු තොරතුරක් භාවිත නොකරයි.">
+
+<!ENTITY groupSend.label        "පහත දත්ත යවන්න:">
+<!ENTITY sendClient.label       "ChatZilla විවෘත කරන විට සහ වසන විට">
+<!ENTITY sendClient.accesskey   "o">
+<!ENTITY sendCommand.label      "භාවිතා කරන විධානයන්, මෙනු, සහ දෙබස් කවුළු">
+<!ENTITY sendCommand.accesskey  "C">
+<!ENTITY sendID.label           "ඔබේ අනන්‍ය හදුනා ගැණීම:">
+<!ENTITY sendIDSrc.label        "(අහඹු ලෙස ගොඩනැගේ)">
+
+<!ENTITY groupNotSent.label     "කිසිඳු විටෙක නොයවන දත්ත:">
+<!ENTITY notsentNickname.label  "ඔබේ අපනාමය">
+<!ENTITY notsentMessages.label  "ක්‍රියාවන් සහ දැන්වීම් අඩංගු පණිවිඩ අන්තර්ගත">
+<!ENTITY notsentArguments.label "සියලු විධාන, මෙනු සහ සංවාදකොටු සඳහා දෙන ලද තර්ක සහ දත්ත">
+<!ENTITY notsentURLs.label      "ජාල, සේවාදායක සහ පරිශීලකයන්ගෙ නම් සහ URL">
+<!ENTITY notsentFiles.label     "යවන ලද සහ ලැබුණු ගොනුවල නම් සහ අන්තර්ගත">

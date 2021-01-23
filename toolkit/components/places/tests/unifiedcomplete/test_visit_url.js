@@ -49,18 +49,27 @@ add_task(async function() {
     ],
   });
 
-  info("visit url, no protocol but with 3 dots");
+  info("visit url, no protocol, e-mail like");
   await check_autocomplete({
-    search: "www.mozilla.org.tw",
+    search: "a@b.com",
     searchParam: "enable-actions",
     matches: [
       {
         uri: makeActionURI("visiturl", {
-          url: "http://www.mozilla.org.tw/",
-          input: "www.mozilla.org.tw",
+          url: "http://a@b.com/",
+          input: "a@b.com",
         }),
-        title: "http://www.mozilla.org.tw/",
+        title: "http://a@b.com/",
         style: ["action", "visiturl", "heuristic"],
+      },
+      {
+        uri: makeActionURI("searchengine", {
+          engineName: "MozSearch",
+          input: "a@b.com",
+          searchQuery: "a@b.com",
+        }),
+        title: "MozSearch",
+        style: ["action", "searchengine"],
       },
     ],
   });
@@ -173,14 +182,24 @@ add_task(async function() {
     matches: [makeSearchMatch("firefox", { heuristic: true })],
   });
 
-  info("url with non-whitelisted host");
-  await check_autocomplete({
-    search: "firefox/get",
-    searchParam: "enable-actions",
-    matches: [
-      makeVisitMatch("firefox/get", "http://firefox/get", { heuristic: true }),
-    ],
-  });
+  info("string with non-whitelisted host");
+  if (Services.prefs.getBoolPref("browser.fixup.defaultToSearch", true)) {
+    await check_autocomplete({
+      search: "firefox/get",
+      searchParam: "enable-actions",
+      matches: [makeSearchMatch("firefox/get", { heuristic: true })],
+    });
+  } else {
+    await check_autocomplete({
+      search: "firefox/get",
+      searchParam: "enable-actions",
+      matches: [
+        makeVisitMatch("firefox/get", "http://firefox/get", {
+          heuristic: true,
+        }),
+      ],
+    });
+  }
 
   Services.prefs.setBoolPref("browser.fixup.domainwhitelist.firefox", true);
   registerCleanupFunction(() => {

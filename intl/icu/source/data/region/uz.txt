@@ -287,6 +287,8 @@ uz{
         VU{"Vanuatu"}
         WF{"Uollis va Futuna"}
         WS{"Samoa"}
+        XA{"Qalbaki urg‘u"}
+        XB{"Qalbaki Bidi"}
         XK{"Kosovo"}
         YE{"Yaman"}
         YT{"Mayotta"}
@@ -311,5 +313,5 @@ uz{
         FK{"Folklend (Malvin) orollari"}
         TL{"Sharqiy Timor"}
     }
-    Version{"2.1.49.82"}
+    Version{"37"}
 }

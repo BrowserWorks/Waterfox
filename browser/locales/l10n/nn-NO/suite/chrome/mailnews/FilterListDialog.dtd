@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY filterListDialog.title "Meldingsfilter">
+<!ENTITY nameColumn.label "Filternamn">
+<!ENTITY activeColumn.label "Slått på">
+<!ENTITY newButton.label "Nytt…">
+<!ENTITY newButton.accesskey "N">
+<!ENTITY editButton.label "Rediger…">
+<!ENTITY editButton.accesskey "R">
+<!ENTITY deleteButton.label "Slett">
+<!ENTITY deleteButton.accesskey "S">
+<!ENTITY reorderUpButton.label "Flytt opp">
+<!ENTITY reorderUpButton.accesskey "o">
+<!ENTITY reorderDownButton.label "Flytt ned">
+<!ENTITY reorderDownButton.accesskey "n">
+<!ENTITY filterHeader.label "Filter som er slått på vert køyrde i den rekkjefølgja dei står i nedanfor.">
+<!ENTITY filtersForPrefix.label "Filter for:">
+<!ENTITY filtersForPrefix.accesskey "F">
+<!ENTITY viewLogButton.label "Filterlogg">
+<!ENTITY viewLogButton.accesskey "l">
+<!ENTITY runFilters.label "Køyr nå">
+<!ENTITY runFilters.accesskey "K">
+<!ENTITY stopFilters.label "Stopp">
+<!ENTITY stopFilters.accesskey "S">
+<!ENTITY folderPickerPrefix.label "Køyr merkt meldingsfilter på:">
+<!ENTITY folderPickerPrefix.accesskey "K">
+<!ENTITY choosethis.label "vel denne mappa">
+<!ENTITY choosethisnewsserver.label "vel denne nyheitsgruppetenaren">

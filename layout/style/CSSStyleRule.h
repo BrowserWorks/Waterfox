@@ -71,6 +71,7 @@ class CSSStyleRule final : public BindingStyleRule,
   nsresult SelectorMatchesElement(dom::Element* aElement,
                                   uint32_t aSelectorIndex,
                                   const nsAString& aPseudo,
+                                  bool aRelevantLinkVisited,
                                   bool* aMatches) override;
   NotNull<DeclarationBlock*> GetDeclarationBlock() const override;
 
@@ -90,7 +91,7 @@ class CSSStyleRule final : public BindingStyleRule,
 #endif
 
  private:
-  ~CSSStyleRule() {}
+  ~CSSStyleRule() = default;
 
   // For computing the offset of mDecls.
   friend class CSSStyleRuleDeclaration;

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "නිසරු ලිපි සැකසුම්">
+<!ENTITY trainingDescription.label "If enabled, you must first train &brandShortName; to identify junk mail by using the Junk toolbar button to mark messages as junk or not. You need to identify both junk and non junk messages. After that &brandShortName; will be able to mark junk automatically.">
+<!ENTITY level.label "Enable adaptive junk mail controls for this account">
+<!ENTITY level.accesskey "E">
+
+<!ENTITY move.label "නව නිසරු ලිපි මෙතනට ගෙනයන්න:">
+<!ENTITY move.accesskey "M">
+<!ENTITY junkFolderOn.label "මේ මත ඇති ි&quot;නිසරු ලිපි&quot; ෆෝල්ඩරයට:">
+<!ENTITY junkFolderOn.accesskey "J">
+<!ENTITY otherFolder.label "වෙනත්:">
+<!ENTITY otherFolder.accesskey "O">
+<!ENTITY purge1.label "දින ">
+<!ENTITY purge1.accesskey "u">
+<!ENTITY purge2.label " ට වඩා පැරණි නිසරු ලිපි ස්වයංක්‍රීයවම මකා දසන්න">
+
+
+<!ENTITY whitelistHeader.label "Do not automatically mark mail as junk if the sender is in: ">
+<!ENTITY whitelistHeader.accesskey "D">
+
+<!ENTITY ispHeadersWarning.label "If enabled, &brandShortName; will automatically consider messages marked by this external classifier as junk.">
+<!ENTITY ispHeaders.label "මෙමඟින් සැකසූ නිසරු ලිපි ශීර්ෂයන් විශ්වාස කරන්න: ">
+<!ENTITY ispHeaders.accesskey "T">
+
+<!ENTITY junkClassification.label "Selection">
+<!ENTITY junkActions.label "Destination and Retention">
+
+<!ENTITY globalJunkPrefs.label "Global Junk Preferences…">
+<!ENTITY globalJunkPrefs.accesskey "G">

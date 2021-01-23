@@ -7,7 +7,7 @@
 #ifndef xpc_make_class_h
 #define xpc_make_class_h
 
-// This file should be used to create js::Class instances for nsIXPCScriptable
+// This file should be used to create JSClass instances for nsIXPCScriptable
 // instances. This includes any file that uses xpc_map_end.h.
 
 #include "xpcpublic.h"
@@ -36,8 +36,8 @@ bool XPC_WN_NewEnumerate(JSContext* cx, JS::HandleObject obj,
 bool XPC_WN_Helper_Resolve(JSContext* cx, JS::HandleObject obj, JS::HandleId id,
                            bool* resolvedp);
 
-void XPC_WN_Helper_Finalize(js::FreeOp* fop, JSObject* obj);
-void XPC_WN_NoHelper_Finalize(js::FreeOp* fop, JSObject* obj);
+void XPC_WN_Helper_Finalize(JSFreeOp* fop, JSObject* obj);
+void XPC_WN_NoHelper_Finalize(JSFreeOp* fop, JSObject* obj);
 
 bool XPC_WN_Helper_Call(JSContext* cx, unsigned argc, JS::Value* vp);
 

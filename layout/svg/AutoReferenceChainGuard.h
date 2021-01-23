@@ -118,7 +118,7 @@ class MOZ_RAII AutoReferenceChainGuard {
    * If it returns false then an error message will be reported to the DevTools
    * console (only once).
    */
-  MOZ_MUST_USE bool Reference() {
+  [[nodiscard]] bool Reference() {
     if (MOZ_UNLIKELY(*mFrameInUse)) {
       mBrokeReference = true;
       ReportErrorToConsole();
@@ -149,16 +149,14 @@ class MOZ_RAII AutoReferenceChainGuard {
 
  private:
   void ReportErrorToConsole() {
-    nsAutoString tag, id;
+    AutoTArray<nsString, 2> params;
     dom::Element* element = mFrame->GetContent()->AsElement();
-    element->GetTagName(tag);
-    element->GetId(id);
-    const char16_t* params[] = {tag.get(), id.get()};
+    element->GetTagName(*params.AppendElement());
+    element->GetId(*params.AppendElement());
     auto doc = mFrame->GetContent()->OwnerDoc();
     auto warning = *mFrameInUse ? dom::Document::eSVGRefLoop
                                 : dom::Document::eSVGRefChainLengthExceeded;
-    doc->WarnOnceAbout(warning, /* asError */ true, params,
-                       ArrayLength(params));
+    doc->WarnOnceAbout(warning, /* asError */ true, params);
   }
 
   nsIFrame* mFrame;

@@ -19,7 +19,6 @@
 #include "nsContentUtils.h"
 #include "nsCSSAnonBoxes.h"
 #include "mozilla/css/ErrorReporter.h"
-#include "nsCSSKeywords.h"
 #include "nsCSSProps.h"
 #include "nsCSSPseudoElements.h"
 #include "nsCSSRendering.h"
@@ -31,15 +30,13 @@
 #include "nsGlobalWindow.h"
 #include "nsGkAtoms.h"
 #include "nsImageFrame.h"
-#include "nsLayoutStylesheetCache.h"
-#include "nsRange.h"
+#include "mozilla/GlobalStyleSheetCache.h"
 #include "nsRegion.h"
 #include "nsRepeatService.h"
 #include "nsFloatManager.h"
 #include "nsSprocketLayout.h"
 #include "nsStackLayout.h"
 #include "nsTextControlFrame.h"
-#include "nsXBLService.h"
 #include "txMozillaXSLTProcessor.h"
 #include "nsTreeSanitizer.h"
 #include "nsCellMap.h"
@@ -70,7 +67,7 @@
 
 #include "AudioChannelService.h"
 #include "mozilla/dom/PromiseDebugging.h"
-#include "mozilla/dom/WebCryptoThreadPool.h"
+#include "mozilla/dom/nsMixedContentBlocker.h"
 
 #ifdef MOZ_XUL
 #  include "nsXULPopupManager.h"
@@ -78,7 +75,6 @@
 #  include "nsXULPrototypeCache.h"
 #  include "nsXULTooltipListener.h"
 
-#  include "nsMenuBarListener.h"
 #endif
 
 #include "mozilla/dom/UIDirectionManager.h"
@@ -96,8 +92,7 @@
 #include "nsWindowMemoryReporter.h"
 #include "mozilla/dom/ContentParent.h"
 #include "mozilla/ProcessPriorityManager.h"
-#include "nsPermissionManager.h"
-#include "nsCookieService.h"
+#include "mozilla/PermissionManager.h"
 #include "nsApplicationCacheService.h"
 #include "mozilla/dom/CustomElementRegistry.h"
 #include "mozilla/EventDispatcher.h"
@@ -113,6 +108,8 @@
 #include "mozilla/HTMLEditorController.h"
 #include "mozilla/ServoBindings.h"
 #include "mozilla/StaticPresData.h"
+#include "mozilla/dom/AbstractRange.h"
+#include "mozilla/dom/Document.h"
 #include "mozilla/dom/IPCBlobInputStreamStorage.h"
 #include "mozilla/dom/WebIDLGlobalNameHash.h"
 #include "mozilla/dom/U2FTokenManager.h"
@@ -129,6 +126,7 @@
 #include "mozilla/net/UrlClassifierFeatureFactory.h"
 #include "nsThreadManager.h"
 #include "mozilla/css/ImageLoader.h"
+#include "gfxUserFontSet.h"
 
 using namespace mozilla;
 using namespace mozilla::net;
@@ -149,7 +147,6 @@ nsresult nsLayoutStatics::Initialize() {
 
   ContentParent::StartUp();
 
-  nsCSSKeywords::AddRefTable();
   nsCSSProps::AddRefTable();
   nsColorNames::AddRefTable();
 
@@ -160,12 +157,9 @@ nsresult nsLayoutStatics::Initialize() {
 #endif
 
   StartupJSEnvironment();
-  nsJSContext::EnsureStatics();
 
   nsGlobalWindowInner::Init();
   nsGlobalWindowOuter::Init();
-  Navigator::Init();
-  nsXBLService::Init();
 
   rv = nsContentUtils::Init();
   if (NS_FAILED(rv)) {
@@ -173,11 +167,7 @@ nsresult nsLayoutStatics::Initialize() {
     return rv;
   }
 
-  rv = nsAttrValue::Init();
-  if (NS_FAILED(rv)) {
-    NS_ERROR("Could not initialize nsAttrValue");
-    return rv;
-  }
+  nsAttrValue::Init();
 
   rv = nsTextFragment::Init();
   if (NS_FAILED(rv)) {
@@ -243,33 +233,19 @@ nsresult nsLayoutStatics::Initialize() {
   MediaManager::StartupInit();
   CubebUtils::InitLibrary();
 
-  nsContentSink::InitializeStatics();
   nsHtml5Module::InitializeStatics();
   mozilla::dom::FallbackEncoding::Initialize();
   nsLayoutUtils::Initialize();
   PointerEventHandler::InitializeStatics();
   TouchManager::InitializeStatics();
 
-  nsCORSListenerProxy::Startup();
-
   nsWindowMemoryReporter::Init();
 
   SVGElementFactory::Init();
-  nsSVGUtils::Init();
 
   ProcessPriorityManager::Init();
 
-  nsPermissionManager::Startup();
-
-  nsCookieService::AppClearDataObserverInit();
-  nsApplicationCacheService::AppClearDataObserverInit();
-
-  HTMLVideoElement::InitStatics();
-  nsGenericHTMLFrameElement::InitStatics();
-
-#ifdef MOZ_XUL
-  nsMenuBarListener::InitializeStatics();
-#endif
+  PermissionManager::Startup();
 
   UIDirectionManager::Initialize();
 
@@ -282,8 +258,6 @@ nsresult nsLayoutStatics::Initialize() {
   MediaDecoder::InitStatics();
 
   PromiseDebugging::Init();
-
-  mozilla::dom::WebCryptoThreadPool::Initialize();
 
   if (XRE_IsParentProcess() || XRE_IsContentProcess()) {
     InitializeServo();
@@ -301,7 +275,6 @@ nsresult nsLayoutStatics::Initialize() {
   if (XRE_IsParentProcess()) {
     // On content process we initialize these components when PContentChild is
     // fully initialized.
-    mozilla::dom::DOMPrefs::Initialize();
     mozilla::dom::RemoteWorkerService::Initialize();
     // This one should be initialized on the parent only
     mozilla::dom::BrowserParent::InitializeStatics();
@@ -335,6 +308,8 @@ void nsLayoutStatics::Shutdown() {
     URLExtraData::ReleaseDummy();
   }
 
+  mozilla::dom::AbstractRange::Shutdown();
+  Document::Shutdown();
   nsMessageManagerScriptExecutor::Shutdown();
   nsFocusManager::Shutdown();
 #ifdef MOZ_XUL
@@ -361,10 +336,8 @@ void nsLayoutStatics::Shutdown() {
   // Release all of our atoms
   nsColorNames::ReleaseTable();
   nsCSSProps::ReleaseTable();
-  nsCSSKeywords::ReleaseTable();
   nsRepeatService::Shutdown();
   nsStackLayout::Shutdown();
-  nsBox::Shutdown();
 
 #ifdef MOZ_XUL
   nsXULContentUtils::Finish();
@@ -384,13 +357,13 @@ void nsLayoutStatics::Shutdown() {
 
   nsAttrValue::Shutdown();
   nsContentUtils::Shutdown();
-  nsLayoutStylesheetCache::Shutdown();
+  nsMixedContentBlocker::Shutdown();
+  GlobalStyleSheetCache::Shutdown();
 
   ShutdownJSEnvironment();
   nsGlobalWindowInner::ShutDown();
   nsGlobalWindowOuter::ShutDown();
   nsListControlFrame::Shutdown();
-  nsXBLService::Shutdown();
   FrameLayerBuilder::Shutdown();
 
   CubebUtils::ShutdownLibrary();

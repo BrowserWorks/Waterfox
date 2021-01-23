@@ -2,9 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-%include ../../../toolkit/themes/osx/global/shared.inc
-%define toolbarButtonPressed :hover:active:not([disabled="true"]):not([cui-areatype="menu-panel"])
-
 @namespace html url("http://www.w3.org/1999/xhtml");
 
 %include ../shared/browser.inc.css
@@ -131,7 +128,7 @@
 
 /* Draw the bottom border of the tabs toolbar when it's not using
    -moz-appearance: toolbar. */
-:root:-moz-any([sizemode="fullscreen"],[customize-entered]) #nav-bar:not([tabs-hidden="true"]),
+:root:-moz-any([sizemode="fullscreen"],[customizing]) #nav-bar:not([tabs-hidden="true"]),
 :root:not([tabsintitlebar]) #nav-bar:not([tabs-hidden="true"]),
 #nav-bar:not([tabs-hidden="true"]):-moz-lwtheme {
   box-shadow: 0 calc(-1 * var(--tabs-navbar-shadow-size)) 0 var(--tabs-border-color);
@@ -240,150 +237,75 @@
   display: none;
 }
 
-/* ::::: nav-bar-inner ::::: */
+/* Address bar */
 
 %include ../shared/urlbar-searchbar.inc.css
 
-:root {
-  --toolbar-field-focus-border-color: -moz-mac-focusring;
+#urlbar,
+#searchbar {
+  font-size: 1.25em;
 }
 
-#urlbar,
-.searchbar-textbox {
-  font-size: 1.25em;
+@supports -moz-bool-pref("browser.urlbar.update2.expandTextOnFocus") {
+  #urlbar[breakout-extend] {
+    font-size: 1.36em;
+  }
 }
 
 /* Ensure diacritics and other edge-of-font-box glyphs do not get clipped,
  * even in non-Latin scripts. */
-html|input.urlbar-input {
+#urlbar-input {
   line-height: 1.745em;
 }
 
-#urlbar:not(.hidden-focus)[focused="true"],
-.searchbar-textbox[focused="true"] {
-  box-shadow: 0 0 0 1px var(--toolbar-field-focus-border-color) inset,
-              0 0 0 1px var(--toolbar-field-focus-border-color);
-}
-
 %include ../shared/identity-block/identity-block.inc.css
-
-#identity-box:not(:active):-moz-focusring {
-  border-inline-end-style: none;
-}
-
-/* ::::: URL Bar Zoom Reset Button ::::: */
-@keyframes urlbar-zoom-reset-pulse {
-  0% {
-    transform: scale(0);
-  }
-  75% {
-    transform: scale(1.5);
-  }
-  100% {
-    transform: scale(1.0);
-  }
-}
-
-#urlbar-search-footer {
-  border-top: 1px solid var(--panel-separator-color);
-  background-color: var(--arrowpanel-dimmed);
-}
-
-#urlbar-search-settings {
-  -moz-appearance: none;
-  -moz-user-focus: ignore;
-  color: GrayText;
-  margin: 0;
-  padding: 8px 20px;
-}
-
-#urlbar-search-settings:hover {
-  background-color: var(--arrowpanel-dimmed);
-}
-
-#urlbar-search-settings:hover:active {
-  background-color: var(--arrowpanel-dimmed-further);
-}
-
-#search-container {
-  min-width: calc(54px + 11ch);
-}
-
-#wrapper-urlbar-container[place="palette"] {
-  max-width: 20em;
-}
-
-.urlbar-display {
-  margin-top: 0;
-  margin-bottom: 0;
-  color: GrayText;
-}
+%include ../shared/notification-icons.inc.css
+%include ../shared/addon-notification.inc.css
 
 #pageAction-urlbar-shareURL,
 #pageAction-panel-shareURL {
   list-style-image: url("chrome://browser/skin/share.svg");
 }
 
-%include ../shared/urlbarSearchSuggestionsNotification.inc.css
+/* Address bar results view */
 
-/* ----- AUTOCOMPLETE ----- */
-
-%include ../shared/autocomplete.inc.css
-%include ../shared/urlbar-autocomplete.inc.css
+%include ../shared/urlbarView.inc.css
 
 :root {
   --urlbar-popup-url-color: hsl(210, 77%, 47%);
   --urlbar-popup-action-color: hsl(178, 100%, 28%);
 }
 
-/* Remove our custom border since we already get a native one that we can't
- * seem to override. */
-#urlbar-results {
-  border-style: none;
+.urlbarView:not(:-moz-lwtheme),
+#PopupSearchAutoComplete:not(:-moz-lwtheme) {
+  /* Set custom disabled text color since native graytext is too faint on macOS 10.14+. */
+  --panel-disabled-color: #737373;
 }
 
-/* Give an extra margin top to align the top of the awesomebar with the
- * bottom of the nav bar, OSX calculates the panel position with an missing
- * 1px - https://bugzilla.mozilla.org/show_bug.cgi?id=1406353
- */
-#PopupAutoCompleteRichResult {
-  margin-top: 1px;
-}
+/* ----- AUTOCOMPLETE ----- */
+
+%include ../shared/autocomplete.inc.css
 
 #PopupAutoComplete > richlistbox > richlistitem[originaltype~="datalist-first"] {
   border-top: 1px solid #C7C7C7;
 }
 
-.ac-title,
-#urlbarView-results {
-  font-size: 14px;
-}
-
-.ac-separator,
-.ac-url,
-.ac-action,
-.ac-tags {
-  font-size: 12px;
-}
-
 #BMB_bookmarksPopup[side="top"],
 #BMB_bookmarksPopup[side="bottom"] {
-  margin-left: -26px;
-  margin-right: -26px;
+  margin-inline: -26px;
 }
 
 #BMB_bookmarksPopup[side="left"],
 #BMB_bookmarksPopup[side="right"] {
-  margin-top: -26px;
-  margin-bottom: -26px;
+  margin-block: -26px;
 }
 
 /* Bookmarking panel */
 
 %include ../shared/places/editBookmarkPanel.inc.css
 
-#editBookmarkPanelRows > vbox > textbox,
-#editBookmarkPanelRows > vbox > hbox > textbox {
+#editBookmarkPanelRows > vbox > html|input,
+#editBookmarkPanelRows > vbox > hbox > html|input {
   -moz-appearance: none;
   background-color: var(--arrowpanel-field-background);
   color: inherit;
@@ -393,15 +315,15 @@ html|input.urlbar-input {
   padding: 3px 6px;
 }
 
-#editBookmarkPanelRows > vbox > textbox[focused="true"],
-#editBookmarkPanelRows > vbox > hbox > textbox[focused="true"] {
+#editBookmarkPanelRows > vbox > html|input:focus,
+#editBookmarkPanelRows > vbox > hbox > html|input:focus {
   border-color: -moz-mac-focusring !important;
   box-shadow: var(--focus-ring-box-shadow);
 }
 
-/* The following elements come from editBookmarkPanel.inc.xul. Styling that's
+/* The following elements come from editBookmarkPanel.inc.xhtml. Styling that's
    specific to the editBookmarkPanel should be in browser.css. Styling that
-   should be shared by all editBookmarkPanel.inc.xul consumers should be in
+   should be shared by all editBookmarkPanel.inc.xhtml consumers should be in
    editBookmark.css. */
 
 #editBMPanel_newFolderBox {
@@ -449,17 +371,15 @@ html|input.urlbar-input {
 #editBMPanel_folderMenuList {
   margin: 0;
   min-height: 22px;
-  padding-top: 2px;
-  padding-bottom: 1px;
-  padding-inline-start: 8px;
-  padding-inline-end: 4px;
+  padding-block: 2px 1px;
+  padding-inline: 8px 4px;
 }
 
 #editBMPanel_folderMenuList:-moz-focusring {
   box-shadow: var(--focus-ring-box-shadow);
 }
 
-#editBMPanel_folderMenuList > .menulist-dropmarker {
+#editBMPanel_folderMenuList::part(dropmarker) {
   -moz-appearance: none;
   -moz-context-properties: fill, fill-opacity;
   fill: currentColor;
@@ -564,8 +484,6 @@ html|input.urlbar-input {
 /* ----- CONTENT ----- */
 
 .browserContainer > findbar {
-  background: @scopeBarBackground@;
-  border-top: @scopeBarSeparatorBorder@;
   color: -moz-DialogText;
   text-shadow: none;
 }
@@ -590,8 +508,7 @@ html|input.urlbar-input {
 %include ../shared/tabs.inc.css
 
 .tab-label {
-  margin-top: 1px;
-  margin-bottom: 0;
+  margin-block: 1px 0;
 }
 
 .tabbrowser-tab:not(:hover) > .tab-stack > .tab-content > .tab-icon-image:not([selected="true"]):not([multiselected]) {
@@ -638,7 +555,6 @@ html|input.urlbar-input {
 
 #TabsToolbar:not(:-moz-lwtheme) {
   color: #333;
-  text-shadow: @loweredShadow@;
 }
 
 :root:-moz-any([inFullscreen], [tabsintitlebar]) #TabsToolbar:not(:-moz-lwtheme) {
@@ -656,36 +572,9 @@ html|input.urlbar-input {
 
 #tabbrowser-tabs {
   -moz-box-align: stretch;
-  padding-left: 0;
-  padding-right: 0;
+  padding-inline: 0;
   margin-bottom: 0;
   position: static;
-}
-
-/**
- * Tab Drag and Drop
- */
-
-.tab-drop-indicator-box {
-  -moz-box-align: center;
-}
-
-.tab-drop-indicator {
-  list-style-image: url(chrome://browser/skin/tabbrowser/tabDragIndicator.png);
-  margin-top: -2px;
-  z-index: 3;
-}
-
-@media (min-resolution: 2dppx) {
-  .tab-drop-indicator {
-    list-style-image: url(chrome://browser/skin/tabbrowser/tabDragIndicator@2x.png);
-    width: 12px;
-  }
-}
-
-/* Bookmarks toolbar */
-#PlacesToolbarDropIndicator {
-  list-style-image: url(chrome://browser/skin/places/toolbarDropMarker.png);
 }
 
 /* Bookmark drag and drop styles */
@@ -694,23 +583,6 @@ html|input.urlbar-input {
   background: Highlight !important;
   color: HighlightText !important;
 }
-
-/* rules for menupopup drop indicators */
-.menupopup-drop-indicator-bar {
-  position: relative;
-  /* these two margins must together compensate the indicator's height */
-  margin-top: -1px;
-  margin-bottom: -1px;
-}
-
-.menupopup-drop-indicator {
-  list-style-image: none;
-  height: 2px;
-  margin-inline-end: -4em;
-  background-color: Highlight;
-}
-
-%include ../shared/notification-icons.inc.css
 
 /* Translation */
 
@@ -722,14 +594,12 @@ notification[value="translation"] {
   background-image: none;
   border-top: none;
   border-bottom: 1px solid #c4c4c4;
-  padding-top: 1px;
-  padding-bottom: 1px;
+  padding-block: 1px;
   min-height: 35px;
 }
 
 .translate-infobar-element {
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
+  margin-block: 0 !important;
 }
 
 button.translate-infobar-element {
@@ -743,13 +613,11 @@ button.translate-infobar-element {
   min-height: 22px;
   min-width: 0;
   padding: 0 0.8em;
-  margin-left: 0.25em;
-  margin-right: 0.25em;
+  margin-inline: 0.25em;
 }
 
 button.translate-infobar-element .button-text {
-  margin-left: 0;
-  margin-right: 0;
+  margin-inline: 0;
 }
 
 label.translate-infobar-element {
@@ -780,8 +648,7 @@ button.translate-infobar-element[anonid="translate"]:hover {
 }
 
 button.translate-infobar-element.options-menu-button {
-  padding-inline-start: 0.5em;
-  padding-inline-end: 0;
+  padding-inline: 0.5em 0;
 }
 
 button.translate-infobar-element.options-menu-button > .button-box > .button-menu-dropmarker {
@@ -805,11 +672,10 @@ menulist.translate-infobar-element {
   min-height: 22px !important;
 }
 
-menulist.translate-infobar-element > .menulist-label-box {
+menulist.translate-infobar-element::part(label-box) {
   padding-top: 1px;
   padding-inline-start: 0.3em;
-  margin-top: 0;
-  margin-bottom: 0;
+  margin-block: 0;
 }
 
 menulist.translate-infobar-element:hover {
@@ -822,12 +688,10 @@ menulist.translate-infobar-element[open="true"] {
                                     rgba(255,255,255,0.6));
 }
 
-menulist.translate-infobar-element > .menulist-dropmarker {
+menulist.translate-infobar-element::part(dropmarker) {
   display: -moz-box;
   list-style-image: url("chrome://global/skin/icons/arrow-dropdown-12.svg");
 }
-
-%include ../shared/addon-notification.inc.css
 
 /* Status panel */
 
@@ -839,6 +703,14 @@ menulist.translate-infobar-element > .menulist-dropmarker {
   border-top-style: solid;
   color: #444;
   text-shadow: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  #statuspanel-label {
+    background-color: hsl(240, 1%, 20%);
+    border-color: hsl(240, 1%, 40%);
+    color: rgb(249, 249, 250);
+  }
 }
 
 #statuspanel:not([mirror]) > #statuspanel-inner > #statuspanel-label:-moz-locale-dir(ltr),
@@ -887,13 +759,7 @@ menulist.translate-infobar-element > .menulist-dropmarker {
 %include ../shared/contextmenu.inc.css
 
 #context-navigation > .menuitem-iconic {
-  padding-left: 0;
-  padding-right: 0;
-}
-
-.browser-extension-panel > .panel-arrowcontainer > .panel-arrowcontent {
-  padding: 0;
-  overflow: hidden;
+  padding-inline: 0;
 }
 
 .cui-widget-panelview[id^=PanelUI-webext-] {

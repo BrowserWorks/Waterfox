@@ -36,9 +36,6 @@ pub enum Color {
     /// A system color
     #[cfg(feature = "gecko")]
     System(SystemColor),
-    /// A special color keyword value used in Gecko
-    #[cfg(feature = "gecko")]
-    Special(gecko::SpecialColorKeyword),
     /// Quirksmode-only rule for inheriting color from the body
     #[cfg(feature = "gecko")]
     InheritFromBodyQuirk,
@@ -47,7 +44,7 @@ pub enum Color {
 /// System colors.
 #[allow(missing_docs)]
 #[cfg(feature = "gecko")]
-#[derive(Copy, Clone, Debug, MallocSizeOf, Parse, PartialEq, ToCss, ToShmem)]
+#[derive(Clone, Copy, Debug, MallocSizeOf, Parse, PartialEq, ToCss, ToShmem)]
 #[repr(u8)]
 pub enum SystemColor {
     #[css(skip)]
@@ -119,6 +116,10 @@ pub enum SystemColor {
     Buttonshadow,
     Buttontext,
     Captiontext,
+    #[parse(aliases = "-moz-field")]
+    Field,
+    #[parse(aliases = "-moz-fieldtext")]
+    Fieldtext,
     Graytext,
     Highlight,
     Highlighttext,
@@ -139,8 +140,10 @@ pub enum SystemColor {
     Windowframe,
     Windowtext,
     MozButtondefault,
-    MozField,
-    MozFieldtext,
+    #[parse(aliases = "-moz-default-color")]
+    Canvastext,
+    #[parse(aliases = "-moz-default-background-color")]
+    Canvas,
     MozDialog,
     MozDialogtext,
     /// Used to highlight valid regions to drop something onto.
@@ -229,6 +232,13 @@ pub enum SystemColor {
     /// colors.
     MozNativehyperlinktext,
 
+    #[parse(aliases = "-moz-hyperlinktext")]
+    Linktext,
+    #[parse(aliases = "-moz-activehyperlinktext")]
+    Activetext,
+    #[parse(aliases = "-moz-visitedhyperlinktext")]
+    Visitedtext,
+
     /// Combobox widgets
     MozComboboxtext,
     MozCombobox,
@@ -244,25 +254,20 @@ impl SystemColor {
     #[inline]
     fn compute(&self, cx: &Context) -> ComputedColor {
         use crate::gecko_bindings::bindings;
-        unsafe {
-            convert_nscolor_to_computedcolor(bindings::Gecko_GetLookAndFeelSystemColor(
-                *self as i32,
-                cx.device().document(),
-            ))
-        }
-    }
-}
 
+        let prefs = cx.device().pref_sheet_prefs();
 
-#[cfg(feature = "gecko")]
-mod gecko {
-    #[derive(Clone, Copy, Debug, Eq, Hash, MallocSizeOf, Parse, PartialEq, ToCss, ToShmem)]
-    pub enum SpecialColorKeyword {
-        MozDefaultColor,
-        MozDefaultBackgroundColor,
-        MozHyperlinktext,
-        MozActivehyperlinktext,
-        MozVisitedhyperlinktext,
+        convert_nscolor_to_computedcolor(match *self {
+            SystemColor::Canvastext => prefs.mDefaultColor,
+            SystemColor::Canvas => prefs.mDefaultBackgroundColor,
+            SystemColor::Linktext => prefs.mLinkColor,
+            SystemColor::Activetext => prefs.mActiveLinkColor,
+            SystemColor::Visitedtext => prefs.mVisitedLinkColor,
+
+            _ => unsafe {
+                bindings::Gecko_GetLookAndFeelSystemColor(*self as i32, cx.device().document())
+            },
+        })
     }
 }
 
@@ -298,8 +303,9 @@ impl<'a, 'b: 'a, 'i: 'a> ::cssparser::ColorComponentParser<'i> for ColorComponen
                 Ok(AngleOrNumber::Angle { degrees })
             },
             Token::Number { value, .. } => Ok(AngleOrNumber::Number { value }),
-            Token::Function(ref name) if name.eq_ignore_ascii_case("calc") => {
-                input.parse_nested_block(|i| CalcNode::parse_angle_or_number(self.0, i))
+            Token::Function(ref name) => {
+                let function = CalcNode::math_function(name, location)?;
+                CalcNode::parse_angle_or_number(self.0, input, function)
             },
             t => return Err(location.new_unexpected_token_error(t)),
         }
@@ -323,15 +329,16 @@ impl<'a, 'b: 'a, 'i: 'a> ::cssparser::ColorComponentParser<'i> for ColorComponen
     ) -> Result<NumberOrPercentage, ParseError<'i>> {
         let location = input.current_source_location();
 
-        match input.next()?.clone() {
+        match *input.next()? {
             Token::Number { value, .. } => Ok(NumberOrPercentage::Number { value }),
             Token::Percentage { unit_value, .. } => {
                 Ok(NumberOrPercentage::Percentage { unit_value })
             },
-            Token::Function(ref name) if name.eq_ignore_ascii_case("calc") => {
-                input.parse_nested_block(|i| CalcNode::parse_number_or_percentage(self.0, i))
+            Token::Function(ref name) => {
+                let function = CalcNode::math_function(name, location)?;
+                CalcNode::parse_number_or_percentage(self.0, input, function)
             },
-            t => return Err(location.new_unexpected_token_error(t)),
+            ref t => return Err(location.new_unexpected_token_error(t.clone())),
         }
     }
 }
@@ -362,10 +369,6 @@ impl Parse for Color {
                 {
                     if let Ok(system) = input.try(|i| SystemColor::parse(context, i)) {
                         return Ok(Color::System(system));
-                    }
-
-                    if let Ok(c) = input.try(gecko::SpecialColorKeyword::parse) {
-                        return Ok(Color::Special(c));
                     }
                 }
 
@@ -399,8 +402,6 @@ impl ToCss for Color {
             Color::Complex(_) => Ok(()),
             #[cfg(feature = "gecko")]
             Color::System(system) => system.to_css(dest),
-            #[cfg(feature = "gecko")]
-            Color::Special(special) => special.to_css(dest),
             #[cfg(feature = "gecko")]
             Color::InheritFromBodyQuirk => Ok(()),
         }
@@ -552,18 +553,6 @@ impl Color {
             #[cfg(feature = "gecko")]
             Color::System(system) => system.compute(_context?),
             #[cfg(feature = "gecko")]
-            Color::Special(special) => {
-                use self::gecko::SpecialColorKeyword as Keyword;
-                let prefs = _context?.device().pref_sheet_prefs();
-                convert_nscolor_to_computedcolor(match special {
-                    Keyword::MozDefaultColor => prefs.mDefaultColor,
-                    Keyword::MozDefaultBackgroundColor => prefs.mDefaultBackgroundColor,
-                    Keyword::MozHyperlinktext => prefs.mLinkColor,
-                    Keyword::MozActivehyperlinktext => prefs.mActiveLinkColor,
-                    Keyword::MozVisitedhyperlinktext => prefs.mVisitedLinkColor,
-                })
-            },
-            #[cfg(feature = "gecko")]
             Color::InheritFromBodyQuirk => {
                 ComputedColor::rgba(_context?.device().body_text_color())
             },
@@ -645,7 +634,7 @@ impl ToComputedValue for ColorPropertyValue {
     fn to_computed_value(&self, context: &Context) -> RGBA {
         self.0
             .to_computed_value(context)
-            .to_rgba(context.builder.get_parent_color().clone_color())
+            .to_rgba(context.builder.get_parent_inherited_text().clone_color())
     }
 
     #[inline]

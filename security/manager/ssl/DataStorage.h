@@ -8,6 +8,7 @@
 #define mozilla_DataStorage_h
 
 #include "mozilla/Atomics.h"
+#include "mozilla/ipc/FileDescriptor.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/Monitor.h"
 #include "mozilla/Mutex.h"
@@ -26,9 +27,12 @@ class DataStorageMemoryReporter;
 
 namespace dom {
 class ContentChild;
+}  // namespace dom
+
+namespace psm {
 class DataStorageEntry;
 class DataStorageItem;
-}  // namespace dom
+}  // namespace psm
 
 /**
  * DataStorage is a threadsafe, generic, narrow string-based hash map that
@@ -101,7 +105,7 @@ enum class DataStorageClass {
 };
 
 class DataStorage : public nsIObserver {
-  typedef dom::DataStorageItem DataStorageItem;
+  typedef psm::DataStorageItem DataStorageItem;
 
  public:
   NS_DECL_THREADSAFE_ISUPPORTS
@@ -112,10 +116,22 @@ class DataStorage : public nsIObserver {
   static already_AddRefed<DataStorage> Get(DataStorageClass aFilename);
 
   // Initializes the DataStorage. Must be called before using.
-  // aItems is used in the content process to initialize a cache of the items
-  // received from the parent process over IPC. nullptr must be passed for the
-  // parent process.
-  nsresult Init(const InfallibleTArray<mozilla::dom::DataStorageItem>* aItems);
+  // aItems is used in the content process and the socket process to initialize
+  // a cache of the items received from the parent process over IPC. nullptr
+  // must be passed for the parent process.
+  // aWriteFd is only used in the socket process for now. The FileDesc is opened
+  // in parent process and send to socket process. The data storage instance in
+  // socket process will use this FD to write data to the backing file.
+  nsresult Init(
+      const nsTArray<mozilla::psm::DataStorageItem>* aItems,
+      mozilla::ipc::FileDescriptor aWriteFd = mozilla::ipc::FileDescriptor());
+
+  // This function is used to create the file descriptor asynchronously. The FD
+  // will be sent via the callback. Note that after this call, mBackingFile will
+  // be nulled to prevent parent process to access the file.
+  nsresult AsyncTakeFileDesc(
+      std::function<void(mozilla::ipc::FileDescriptor&&)>&& aResolver);
+
   // Given a key and a type of data, returns a value. Returns an empty string if
   // the key is not present for that type of data. If Get is called before the
   // "data-storage-ready" event is observed, it will block. NB: It is not
@@ -136,16 +152,19 @@ class DataStorage : public nsIObserver {
 
   // Read all child process data that we know about.
   static void GetAllChildProcessData(
-      nsTArray<mozilla::dom::DataStorageEntry>& aEntries);
+      nsTArray<mozilla::psm::DataStorageEntry>& aEntries);
 
   // Read all of the data items.
-  void GetAll(InfallibleTArray<DataStorageItem>* aItems);
+  void GetAll(nsTArray<DataStorageItem>* aItems);
 
   // Set the cached copy of our DataStorage entries in the content process.
   static void SetCachedStorageEntries(
-      const InfallibleTArray<mozilla::dom::DataStorageEntry>& aEntries);
+      const nsTArray<mozilla::psm::DataStorageEntry>& aEntries);
 
   size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
+
+  // Return true if this data storage is ready to be used.
+  bool IsReady();
 
  private:
   explicit DataStorage(const nsString& aFilename);
@@ -160,6 +179,7 @@ class DataStorage : public nsIObserver {
 
   class Writer;
   class Reader;
+  class Opener;
 
   class Entry {
    public:
@@ -194,6 +214,7 @@ class DataStorage : public nsIObserver {
   void ShutdownTimer();
   void NotifyObservers(const char* aTopic);
 
+  static void PrefChanged(const char* aPref, void* aSelf);
   void PrefChanged(const char* aPref);
 
   bool GetInternal(const nsCString& aKey, Entry* aEntry, DataStorageType aType,
@@ -207,7 +228,7 @@ class DataStorage : public nsIObserver {
                                     const MutexAutoLock& aProofOfLock);
 
   void ReadAllFromTable(DataStorageType aType,
-                        InfallibleTArray<DataStorageItem>* aItems,
+                        nsTArray<DataStorageItem>* aItems,
                         const MutexAutoLock& aProofOfLock);
 
   Mutex mMutex;  // This mutex protects access to the following members:
@@ -228,6 +249,8 @@ class DataStorage : public nsIObserver {
   bool mReady;  // Indicates that saved data has been read and Get can proceed.
 
   const nsString mFilename;
+
+  mozilla::ipc::FileDescriptor mWriteFd;
 
   static StaticAutoPtr<DataStorages> sDataStorages;
 };

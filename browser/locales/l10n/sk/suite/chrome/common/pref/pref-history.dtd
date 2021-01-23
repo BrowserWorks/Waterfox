@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.history.title                "História">
+
+<!ENTITY  pref.history.caption              "História prehliadania">
+<!ENTITY  historyPages.label                "História je zoznam v minulosti navštívených stránok.">
+<!ENTITY  enableHistory.label               "Pamätať si navštívené stránky">
+<!ENTITY  enableHistory.accesskey           "a">
+<!ENTITY  clearHistory.label                "Vymazať históriu">
+<!ENTITY  clearHistory.accesskey            "V">
+
+<!ENTITY  locationBarHistory.caption        "História panela s adresou">
+<!ENTITY  urlBarHistoryEnabled.caption      "Povoliť históriu panela s adresou">
+<!ENTITY  urlBarHistoryEnabled.accesskey    "o">
+<!ENTITY  clearLocationBar.label            "Vymazať zoznam stránok uložený v paneli s adresou">
+<!ENTITY  clearLocationBarButton.label      "Vymazať panel s adresou">
+<!ENTITY  clearLocationBarButton.accesskey  "m">
+<!ENTITY  formfillHistory.caption           "História vyhľadávania a formulárov">
+<!ENTITY  enableFormfill.label              "Povoliť históriu vyhľadávania a formulárov">
+<!ENTITY  enableFormfill.accesskey          "h">
+<!ENTITY  formfillExpire.label              "Uchovávať históriu vyhľadávania a formulárov po dobu až do">
+<!ENTITY  formfillExpire.accesskey          "c">
+<!ENTITY  formfillDays.label                "dní">

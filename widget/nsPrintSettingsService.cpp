@@ -16,18 +16,12 @@
 #include "nsServiceManagerUtils.h"
 
 #include "nsArray.h"
-#include "nsIDOMWindow.h"
-#include "nsIDialogParamBlock.h"
 #include "nsXPCOM.h"
-#include "nsISupportsPrimitives.h"
-#include "nsIWindowWatcher.h"
 
 #include "nsIStringEnumerator.h"
-#include "nsISupportsPrimitives.h"
 #include "stdlib.h"
 #include "mozilla/Preferences.h"
 #include "nsPrintfCString.h"
-#include "nsIWebBrowserPrint.h"
 
 using namespace mozilla;
 using namespace mozilla::embedding;
@@ -91,7 +85,6 @@ nsresult nsPrintSettingsService::Init() { return NS_OK; }
 
 NS_IMETHODIMP
 nsPrintSettingsService::SerializeToPrintData(nsIPrintSettings* aSettings,
-                                             nsIWebBrowserPrint* aWBP,
                                              PrintData* data) {
   nsCOMPtr<nsIPrintSession> session;
   nsresult rv = aSettings->GetPrintSession(getter_AddRefs(session));
@@ -133,10 +126,7 @@ nsPrintSettingsService::SerializeToPrintData(nsIPrintSettings* aSettings,
   aSettings->GetFooterStrCenter(data->footerStrCenter());
   aSettings->GetFooterStrRight(data->footerStrRight());
 
-  aSettings->GetHowToEnableFrameUI(&data->howToEnableFrameUI());
   aSettings->GetIsCancelled(&data->isCancelled());
-  aSettings->GetPrintFrameTypeUsage(&data->printFrameTypeUsage());
-  aSettings->GetPrintFrameType(&data->printFrameType());
   aSettings->GetPrintSilent(&data->printSilent());
   aSettings->GetShrinkToFit(&data->shrinkToFit());
   aSettings->GetShowPrintProgress(&data->showPrintProgress());
@@ -176,8 +166,6 @@ nsPrintSettingsService::SerializeToPrintData(nsIPrintSettings* aSettings,
   // data->deviceName() default-initializes
   data->printableWidthInInches() = 0;
   data->printableHeightInInches() = 0;
-  data->isFramesetDocument() = false;
-  data->isFramesetFrameSelected() = false;
   data->isIFrameSelected() = false;
   data->isRangeSelection() = false;
   // data->GTKPrintSettings() default-initializes
@@ -241,10 +229,7 @@ nsPrintSettingsService::DeserializeToPrintSettings(const PrintData& data,
   settings->SetFooterStrCenter(data.footerStrCenter());
   settings->SetFooterStrRight(data.footerStrRight());
 
-  settings->SetHowToEnableFrameUI(data.howToEnableFrameUI());
   settings->SetIsCancelled(data.isCancelled());
-  settings->SetPrintFrameTypeUsage(data.printFrameTypeUsage());
-  settings->SetPrintFrameType(data.printFrameType());
   settings->SetPrintSilent(data.printSilent());
   settings->SetShrinkToFit(data.shrinkToFit());
   settings->SetShowPrintProgress(data.showPrintProgress());
@@ -432,30 +417,9 @@ nsresult nsPrintSettingsService::ReadPrefs(nsIPrintSettings* aPS,
     // Bug 315687: Sanity check paper size to avoid paper size values in
     // mm when the size unit flag is inches. The value 100 is arbitrary
     // and can be changed.
-#if defined(XP_WIN)
-    bool saveSanitizedSizePrefs = false;
-#endif
     if (success) {
       success = (sizeUnit != nsIPrintSettings::kPaperSizeInches) ||
                 (width < 100.0) || (height < 100.0);
-#if defined(XP_WIN)
-      // Work around legacy invalid prefs where the size unit gets set to
-      // millimeters, but the height and width remains as the previous inches
-      // settings. See bug 1276717 and bug 1369386 for details.
-      if (sizeUnit == nsIPrintSettings::kPaperSizeMillimeters && height >= 0L &&
-          height < 25L && width >= 0L && width < 25L) {
-        // As small pages sizes can be valid we only override when the old
-        // (now no longer set) pref print_paper_size_type exists. This will be
-        // removed when we save the prefs below.
-        const char* paperSizeTypePref =
-            GetPrefName("print_paper_size_type", aPrinterName);
-        if (Preferences::HasUserValue(paperSizeTypePref)) {
-          saveSanitizedSizePrefs = true;
-          height = -1L;
-          width = -1L;
-        }
-      }
-#endif
     }
 
     if (success) {
@@ -467,12 +431,6 @@ nsresult nsPrintSettingsService::ReadPrefs(nsIPrintSettings* aPS,
       DUMP_DBL(kReadStr, kPrintPaperHeight, height);
       aPS->SetPaperName(str);
       DUMP_STR(kReadStr, kPrintPaperName, str.get());
-#if defined(XP_WIN)
-      if (saveSanitizedSizePrefs) {
-        SavePrintSettingsToPrefs(aPS, !aPrinterName.IsEmpty(),
-                                 nsIPrintSettings::kInitSavePaperSize);
-      }
-#endif
     }
   }
 
@@ -481,9 +439,6 @@ nsresult nsPrintSettingsService::ReadPrefs(nsIPrintSettings* aPS,
       aPS->SetPrintOptions(nsIPrintSettings::kPrintEvenPages, b);
       DUMP_BOOL(kReadStr, kPrintEvenPages, b);
     }
-  }
-
-  if (aFlags & nsIPrintSettings::kInitSaveOddEvenPages) {
     if (GETBOOLPREF(kPrintOddPages, &b)) {
       aPS->SetPrintOptions(nsIPrintSettings::kPrintOddPages, b);
       DUMP_BOOL(kReadStr, kPrintOddPages, b);
@@ -719,20 +674,6 @@ nsresult nsPrintSettingsService::WritePrefs(nsIPrintSettings* aPS,
       WritePrefDouble(GetPrefName(kPrintPaperHeight, aPrinterName), height);
       DUMP_STR(kWriteStr, kPrintPaperName, name.get());
       Preferences::SetString(GetPrefName(kPrintPaperName, aPrinterName), name);
-#if defined(XP_WIN)
-      // If the height and width are -1 then this might be a save triggered by
-      // print pref sanitizing code. This is done as a one off and is partly
-      // triggered by the existence of an old (now no longer set) pref. We
-      // remove that pref if it exists here, so that we don't try and sanitize
-      // what might be valid prefs. See bug 1276717 and bug 1369386 for details.
-      if (height == -1L && width == -1L) {
-        const char* paperSizeTypePref =
-            GetPrefName("print_paper_size_type", aPrinterName);
-        if (Preferences::HasUserValue(paperSizeTypePref)) {
-          Preferences::ClearUser(paperSizeTypePref);
-        }
-      }
-#endif
     }
   }
 
@@ -748,9 +689,6 @@ nsresult nsPrintSettingsService::WritePrefs(nsIPrintSettings* aPS,
       DUMP_BOOL(kWriteStr, kPrintEvenPages, b);
       Preferences::SetBool(GetPrefName(kPrintEvenPages, aPrinterName), b);
     }
-  }
-
-  if (aFlags & nsIPrintSettings::kInitSaveOddEvenPages) {
     if (NS_SUCCEEDED(
             aPS->GetPrintOptions(nsIPrintSettings::kPrintOddPages, &b))) {
       DUMP_BOOL(kWriteStr, kPrintOddPages, b);
@@ -922,7 +860,7 @@ nsresult nsPrintSettingsService::_CreatePrintSettings(
   NS_ADDREF(*_retval = printSettings);  // ref count
 
   nsString printerName;
-  nsresult rv = GetDefaultPrinterName(printerName);
+  nsresult rv = GetLastUsedPrinterName(printerName);
   NS_ENSURE_SUCCESS(rv, rv);
   (*_retval)->SetPrinterName(printerName);
 
@@ -952,7 +890,8 @@ nsPrintSettingsService::GetNewPrintSettings(
 }
 
 NS_IMETHODIMP
-nsPrintSettingsService::GetDefaultPrinterName(nsAString& aDefaultPrinterName) {
+nsPrintSettingsService::GetLastUsedPrinterName(
+    nsAString& aLastUsedPrinterName) {
   nsresult rv;
   nsCOMPtr<nsIPrinterEnumerator> prtEnum =
       do_GetService(NS_PRINTER_ENUMERATOR_CONTRACTID, &rv);
@@ -977,7 +916,7 @@ nsPrintSettingsService::GetDefaultPrinterName(nsAString& aDefaultPrinterName) {
         }
       }
       if (isValid) {
-        aDefaultPrinterName = lastPrinterName;
+        aLastUsedPrinterName = lastPrinterName;
         return NS_OK;
       }
     }
@@ -985,7 +924,7 @@ nsPrintSettingsService::GetDefaultPrinterName(nsAString& aDefaultPrinterName) {
 
   // There is no last printer preference, or it doesn't name a valid printer.
   // Return the default from the printer enumeration.
-  return prtEnum->GetDefaultPrinterName(aDefaultPrinterName);
+  return prtEnum->GetDefaultPrinterName(aLastUsedPrinterName);
 }
 
 NS_IMETHODIMP
@@ -1234,96 +1173,3 @@ void nsPrintSettingsService::WriteJustification(const char* aPrefId,
       break;
   }  // switch
 }
-
-//----------------------------------------------------------------------
-// Testing of read/write prefs
-// This define turns on the testing module below
-// so at start up it writes and reads the prefs.
-#ifdef DEBUG_rods_X
-class Tester {
- public:
-  Tester();
-};
-Tester::Tester() {
-  nsCOMPtr<nsIPrintSettings> ps;
-  nsresult rv;
-  nsCOMPtr<nsIPrintSettingsService> printService =
-      do_GetService("@mozilla.org/gfx/printsettings-service;1", &rv);
-  if (NS_SUCCEEDED(rv)) {
-    rv = printService->CreatePrintSettings(getter_AddRefs(ps));
-  }
-
-  if (ps) {
-    ps->SetPrintOptions(nsIPrintSettings::kPrintOddPages, true);
-    ps->SetPrintOptions(nsIPrintSettings::kPrintEvenPages, false);
-    ps->SetMarginTop(1.0);
-    ps->SetMarginLeft(1.0);
-    ps->SetMarginBottom(1.0);
-    ps->SetMarginRight(1.0);
-    ps->SetScaling(0.5);
-    ps->SetPrintBGColors(true);
-    ps->SetPrintBGImages(true);
-    ps->SetPrintRange(15);
-    ps->SetHeaderStrLeft(NS_ConvertUTF8toUTF16("Left").get());
-    ps->SetHeaderStrCenter(NS_ConvertUTF8toUTF16("Center").get());
-    ps->SetHeaderStrRight(NS_ConvertUTF8toUTF16("Right").get());
-    ps->SetFooterStrLeft(NS_ConvertUTF8toUTF16("Left").get());
-    ps->SetFooterStrCenter(NS_ConvertUTF8toUTF16("Center").get());
-    ps->SetFooterStrRight(NS_ConvertUTF8toUTF16("Right").get());
-    ps->SetPaperName(NS_ConvertUTF8toUTF16("Paper Name").get());
-    ps->SetPaperData(1);
-    ps->SetPaperWidth(100.0);
-    ps->SetPaperHeight(50.0);
-    ps->SetPaperSizeUnit(nsIPrintSettings::kPaperSizeMillimeters);
-    ps->SetPrintReversed(true);
-    ps->SetPrintInColor(true);
-    ps->SetOrientation(nsIPrintSettings::kLandscapeOrientation);
-    ps->SetNumCopies(2);
-    ps->SetPrinterName(NS_ConvertUTF8toUTF16("Printer Name").get());
-    ps->SetPrintToFile(true);
-    ps->SetToFileName(NS_ConvertUTF8toUTF16("File Name").get());
-    ps->SetPrintPageDelay(1000);
-    ps->SetShrinkToFit(true);
-
-    struct SettingsType {
-      const char* mName;
-      uint32_t mFlag;
-    };
-    SettingsType gSettings[] = {
-        {"OddEven", nsIPrintSettings::kInitSaveOddEvenPages},
-        {kPrintHeaderStrLeft, nsIPrintSettings::kInitSaveHeaderLeft},
-        {kPrintHeaderStrCenter, nsIPrintSettings::kInitSaveHeaderCenter},
-        {kPrintHeaderStrRight, nsIPrintSettings::kInitSaveHeaderRight},
-        {kPrintFooterStrLeft, nsIPrintSettings::kInitSaveFooterLeft},
-        {kPrintFooterStrCenter, nsIPrintSettings::kInitSaveFooterCenter},
-        {kPrintFooterStrRight, nsIPrintSettings::kInitSaveFooterRight},
-        {kPrintBGColors, nsIPrintSettings::kInitSaveBGColors},
-        {kPrintBGImages, nsIPrintSettings::kInitSaveBGImages},
-        {kPrintShrinkToFit, nsIPrintSettings::kInitSaveShrinkToFit},
-        {kPrintPaperSize, nsIPrintSettings::kInitSavePaperSize},
-        {kPrintPaperData, nsIPrintSettings::kInitSavePaperData},
-        {kPrintReversed, nsIPrintSettings::kInitSaveReversed},
-        {kPrintInColor, nsIPrintSettings::kInitSaveInColor},
-        {kPrintOrientation, nsIPrintSettings::kInitSaveOrientation},
-        {kPrinterName, nsIPrintSettings::kInitSavePrinterName},
-        {kPrintToFile, nsIPrintSettings::kInitSavePrintToFile},
-        {kPrintToFileName, nsIPrintSettings::kInitSaveToFileName},
-        {kPrintPageDelay, nsIPrintSettings::kInitSavePageDelay},
-        {"Margins", nsIPrintSettings::kInitSaveMargins},
-        {"All", nsIPrintSettings::kInitSaveAll},
-        {nullptr, 0}};
-
-    nsString prefix;
-    prefix.AssignLiteral("Printer Name");
-    int32_t i = 0;
-    while (gSettings[i].mName != nullptr) {
-      printf("------------------------------------------------\n");
-      printf("%d) %s -> 0x%X\n", i, gSettings[i].mName, gSettings[i].mFlag);
-      printService->SavePrintSettingsToPrefs(ps, true, gSettings[i].mFlag);
-      printService->InitPrintSettingsFromPrefs(ps, true, gSettings[i].mFlag);
-      i++;
-    }
-  }
-}
-Tester gTester;
-#endif

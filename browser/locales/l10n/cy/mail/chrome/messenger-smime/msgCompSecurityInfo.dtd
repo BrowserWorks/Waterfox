@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSecurityInfo.dtd UI for viewing security status when composing a message -->
+
+
+<!ENTITY title.label "Diogelwch Neges">
+<!ENTITY subject.plaintextWarning "Sylw: Nid yw llinellau pwnc neges e-bost byth yn cael eu hamgryptio.">
+<!ENTITY status.heading "Bydd cynnwys eich neges yn cael ei hanfon fel a ganlyn:">
+<!ENTITY status.signed "Llofnod ddigidol:">
+<!ENTITY status.encrypted "Amgryptiad:">
+<!ENTITY status.certificates "Tystysgrifau:">
+<!ENTITY view.label "Golwg">
+<!ENTITY view.accesskey "l">
+<!ENTITY tree.recipient "Derbynnydd">
+<!ENTITY tree.status "Statws">
+<!ENTITY tree.issuedDate "Cyhoeddwyd">
+<!ENTITY tree.expiresDate "Daw i Ben">

@@ -22,7 +22,8 @@ dictionary RTCRtpTransceiverInit {
 };
 
 [Pref="media.peerconnection.enabled",
- JSImplementation="@mozilla.org/dom/rtptransceiver;1"]
+ JSImplementation="@mozilla.org/dom/rtptransceiver;1",
+ Exposed=Window]
 interface RTCRtpTransceiver {
     readonly attribute DOMString?                  mid;
     [SameObject]
@@ -60,10 +61,5 @@ interface RTCRtpTransceiver {
     boolean hasBeenUsedToSend();
     [ChromeOnly]
     void sync();
-
-    [ChromeOnly]
-    void insertDTMF(DOMString tones,
-                    optional unsigned long duration = 100,
-                    optional unsigned long interToneGap = 70);
 };
 

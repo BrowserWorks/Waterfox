@@ -11,6 +11,7 @@
 #include "mozilla/HashFunctions.h"       // for HashGeneric
 #include "mozilla/gfx/Logging.h"         // for Log
 #include "mozilla/layers/LayersTypes.h"  // for LayersId
+#include "nsHashKeys.h"                  // for nsPrintfCString
 #include "nsPrintfCString.h"             // for nsPrintfCString
 
 namespace mozilla {
@@ -27,6 +28,7 @@ namespace layers {
 struct ScrollableLayerGuid {
   // We use IDs to identify frames across processes.
   typedef uint64_t ViewID;
+  typedef nsUint64HashKey ViewIDHashKey;
   static const ViewID NULL_SCROLL_ID;  // This container layer does not scroll.
   static const ViewID START_SCROLL_ID = 2;  // This is the ID that scrolling
                                             // subframes will begin at.
@@ -43,12 +45,9 @@ struct ScrollableLayerGuid {
         mPresShellId(aPresShellId),
         mScrollId(aScrollId) {}
 
-  ScrollableLayerGuid(const ScrollableLayerGuid& other)
-      : mLayersId(other.mLayersId),
-        mPresShellId(other.mPresShellId),
-        mScrollId(other.mScrollId) {}
+  ScrollableLayerGuid(const ScrollableLayerGuid& other) = default;
 
-  ~ScrollableLayerGuid() {}
+  ~ScrollableLayerGuid() = default;
 
   bool operator==(const ScrollableLayerGuid& other) const {
     return mLayersId == other.mLayersId && mPresShellId == other.mPresShellId &&

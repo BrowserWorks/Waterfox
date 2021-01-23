@@ -382,7 +382,7 @@ add_task(async function create_bookmark_frecency() {
   checkBookmarkObject(bm);
 
   await PlacesTestUtils.promiseAsyncUpdates();
-  Assert.ok(frecencyForUrl(bm.url) > 0, "Check frecency has been updated");
+  Assert.greater(frecencyForUrl(bm.url), 0, "Check frecency has been updated");
 });
 
 add_task(async function create_bookmark_without_type() {
@@ -396,4 +396,17 @@ add_task(async function create_bookmark_without_type() {
   Assert.equal(bm.type, PlacesUtils.bookmarks.TYPE_BOOKMARK);
   Assert.equal(bm.url.href, "http://example.com/");
   Assert.equal(bm.title, "a bookmark");
+});
+
+add_task(async function test_url_with_apices() {
+  // Apices may confuse code and cause injection if mishandled.
+  const url = `javascript:alert("%s");alert('%s');`;
+  await PlacesUtils.bookmarks.insert({
+    url,
+    parentGuid: PlacesUtils.bookmarks.unfiledGuid,
+  });
+  // Just a sanity check, this should not throw.
+  await PlacesUtils.history.remove(url);
+  let bm = await PlacesUtils.bookmarks.fetch({ url });
+  await PlacesUtils.bookmarks.remove(bm);
 });

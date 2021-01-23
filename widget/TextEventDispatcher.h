@@ -32,7 +32,7 @@ class PuppetWidget;
  */
 
 class TextEventDispatcher final {
-  ~TextEventDispatcher() {}
+  ~TextEventDispatcher() = default;
 
   NS_INLINE_DECL_REFCOUNTING(TextEventDispatcher)
 
@@ -439,13 +439,6 @@ class TextEventDispatcher final {
   // true while NOTIFY_IME_OF_FOCUS is received but NOTIFY_IME_OF_BLUR has not
   // received yet.  Otherwise, false.
   bool mHasFocus;
-
-  // If this is true, keydown and keyup events are dispatched even when there
-  // is a composition.
-  static bool sDispatchKeyEventsDuringComposition;
-  // If this is true, keypress events for non-printable keys are dispatched only
-  // for event listeners of the system event group in web content.
-  static bool sDispatchKeyPressEventsOnlySystemGroupInContent;
 
   nsresult BeginInputTransactionInternal(TextEventDispatcherListener* aListener,
                                          InputTransactionType aType);

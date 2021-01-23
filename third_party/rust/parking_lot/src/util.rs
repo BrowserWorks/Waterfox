@@ -5,6 +5,8 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 
+use std::time::{Duration, Instant};
+
 // Option::unchecked_unwrap
 pub trait UncheckedOptionExt<T> {
     unsafe fn unchecked_unwrap(self) -> T;
@@ -20,13 +22,17 @@ impl<T> UncheckedOptionExt<T> for Option<T> {
     }
 }
 
-// Equivalent to intrinsics::unreachable() in release mode
+// hint::unreachable_unchecked() in release mode
 #[inline]
 unsafe fn unreachable() -> ! {
     if cfg!(debug_assertions) {
         unreachable!();
     } else {
-        enum Void {}
-        match *(1 as *const Void) {}
+        core::hint::unreachable_unchecked()
     }
+}
+
+#[inline]
+pub fn to_deadline(timeout: Duration) -> Option<Instant> {
+    Instant::now().checked_add(timeout)
 }

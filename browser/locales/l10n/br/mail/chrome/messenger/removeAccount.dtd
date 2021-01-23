@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "Dilemel ar gont hag ar roadennoù">
+<!ENTITY removeButton.label           "Lemel">
+<!ENTITY removeButton.accesskey       "L">
+<!ENTITY removeAccount.label          "Lemel titouroù ar gont">
+<!ENTITY removeAccount.accesskey      "g">
+<!ENTITY removeAccount.desc           "Dilemel ar pezh a oa &brandShortName; diwar-benn ar gont-mañ nemetken. N'eus efed ebet war ar gont he-unan war an dafariad.">
+<!ENTITY removeData.label             "Lemel roadennoù a gont">
+<!ENTITY removeData.accesskey         "g">
+<!ENTITY removeDataChat.label         "Dilemel roadennoù ar gaozeadenn">
+<!ENTITY removeDataChat.accesskey     "D">
+<!ENTITY removeDataLocalAccount.desc  "Dilemel an holl gemennadennoù, teuliadoù ha siloù liammet gant ar gont-mañ eus ho kantenn lec'hel. Ne dizh ket kemennadennoù 'zo a c'hell bezañ lec'hiet war un dafariad. Na zibabit ket an dra-se ma fell deoc'h diellaouiñ ar roadennoù lec'hel pe ad-arverañ anezho e &brandShortName; diwezhatoc'h">
+<!ENTITY removeDataServerAccount.desc "Dilemel an holl gemennadennoù, teuliadoù ha siloù liammet gant ar gont-mañ war ho kantenn lec'hel. Ho kemennadennoù hag ho teuliadoù a zo miret war an dafariad.">
+<!ENTITY removeDataChatAccount.desc   "Dilemel an holl renabloù kaozeadennoù stoket evit ar gont-mañ war an disk lec'hel.">
+<!ENTITY showData.label               "Skrammañ lec'hiadur ar roadennoù">
+<!ENTITY showData.accesskey           "S">
+<!ENTITY progressPending              "O tilemel ar roadennoù diuzet...">
+<!ENTITY progressSuccess              "Dilamet gant berzh.">
+<!ENTITY progressFailure              "Fazi en ur zilemel.">

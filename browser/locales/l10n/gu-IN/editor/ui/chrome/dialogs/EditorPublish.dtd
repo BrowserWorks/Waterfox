@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label         "પ્રકાશન પાનું">
+<!ENTITY windowTitleSettings.label "પ્રકાશન સેટીંગ">
+
+<!ENTITY publishTab.label         "પ્રકાશન કરો">
+<!ENTITY settingsTab.label        "સેટીંગ">
+
+<!ENTITY publishButton.label      "પ્રકાશન કરો">
+
+<!-- Publish Tab Panel -->
+<!ENTITY siteList.label           "સાઈટ નામ:">
+<!ENTITY siteList.tooltip         "તમે જે સાઈટનું પ્રકાશન કરવા માંગો તે પસંદ કરો">
+<!ENTITY newSiteButton.label      "નવી સાઈટ">
+<!ENTITY siteDirList.label        "તમારી પ્રકાશન સાઈટમાં ડિરેક્ટરી નામ પસંદ કરો અથવા લખો:">
+<!ENTITY siteDirList.tooltip      "દૂરસ્થ ડિરેક્ટરીનું નામ તેને પ્રકાશિત કરવા માટે પસંદ કરો અથવા દાખલ કરો">
+<!ENTITY docDirList.label         "આ પાનાં માટે સાઈટ ઉપડિરેક્ટરી:">
+<!ENTITY publishImgCheckbox.label "ઈમેજો અને અન્ય ફાઈલો સમાવો">
+<!ENTITY publishImgCheckbox.tooltip "આ પાનાં દ્વારા સંદર્ભ લેવાયેલ ઈમેજો અને અન્ય ફાઈલો પ્રકાશિત કરો">
+<!ENTITY sameLocationRadio.label  "પાનાં તરીકે આ જ સ્થાન વાપરો">
+<!ENTITY sameLocationRadio.tooltip "પાનાં તરીકે આ જ સ્થાન માટે ફાઈલો પ્રકાશિત કરો">
+<!ENTITY useSubdirRadio.label     "આ સાઈટ ઉપડિરેક્ટરી વાપરો:">
+<!ENTITY useSubdir.tooltip        "દૂરસ્થ ઉપડિરેક્ટરીનું નામ પસંદ કરો અથવા દાખલ કરો કે જ્યાં ફાઈલો પ્રકાશિત થશે">
+<!ENTITY chooseDirButton.label    "પસંદ કરો...">
+<!ENTITY pageTitle.label          "પાનાં શીર્ષક:">
+<!ENTITY pageTitle.tooltip        "વિન્ડો અને બુકમાર્કોમાં પાનાંને ઓળખાવવા માટે શીર્ષક દાખલ કરો">
+<!ENTITY pageTitleExample.label   "દા.ત.: &quot;મારું વેબ પાનું&quot;">
+<!ENTITY filename.label           "ફાઈલ નામ:">
+<!ENTITY filename.tooltip         "આ ફાઈલ માટે નામ દાખલ કરો, વેબ પાનાં માટે '.html' ને સમાવીને">
+<!ENTITY filenameExample.label    "દા.ત,: &quot;mypage.html&quot;">
+<!ENTITY relatedDocs.label        "પ્રકાશન કરવા માટે અન્ય ફાીઈલો">
+<!ENTITY setDefaultButton.label   "મૂળભુત તરીકે સુયોજિત કરો">
+<!ENTITY setDefSiteAndDir.label   "મૂળભુત સાઈટ અને ડિરેક્ટરી તરીકે સુયોજિત કરો">
+<!ENTITY removeButton.label       "સાઈટ દૂર કરો">
+
+<!-- Settings Tab Panel -->
+<!ENTITY publishSites.label   "સાઈટો પ્રકાશિત કરી રહ્યા છીએ">
+<!ENTITY serverInfo.label     "સર્વર જાણકારી">
+<!ENTITY loginInfo.label      "પ્રવેશ જાણકારી">
+<!ENTITY siteName.label       "સાઈટ નામ:">
+<!ENTITY siteName.tooltip     "ખોટું નામ કે જે આ પ્રકાશન સાઈટને ઓળખાવે (દા.ત.: 'મારીસાઈટ')">
+<!ENTITY siteUrl.label        "પ્રકાશન સરનામું (દા.ત.: 'ftp://ftp.myisp.com/myusername'):">
+<!ENTITY siteUrl.tooltip      "તમારા ISP દ્વારા પૂરું પાડવામાં આવેલ FTP:// અથવા HTTP:// સરનામું અથવા વેબ હોસ્ટીંગ સેવા">
+<!ENTITY browseUrl.label      "તમારા ઘર પાનાંનુ HTTP સરનામું (દા.ત.: 'http://www.myisp.com/myusername'):">
+<!ENTITY browseUrl.tooltip    "તમારી ઘર ડિરેક્ટરીનું HTTP:// સરનામું (ફાીઈલ નામનો સમાવેશ કરશો નહિં)">
+<!ENTITY username.label       "વપરાશકર્તા નામ:">
+<!ENTITY username.tooltip     "તમારા ISP અથવા વેબ હોસ્ટીંગ સેવામાં પ્રવેશ કરવા માટે તમે જે વપરાશકર્તા નામ વાપરો તે">
+<!ENTITY password.label       "પાસવર્ડ:">
+<!ENTITY password.tooltip     "તમારા વપરાશકર્તા નામ સાથે સંકળાયેલ પાસવર્ડ">
+<!ENTITY savePassword.label   "પાસવર્ડ સંગ્રહો">
+<!ENTITY savePassword.tooltip "પાસવર્ડ વ્યવસ્થાપકની મદદથી તમારો પાસવર્ડ સુરક્ષિત રીતે સંગ્રહવા માટે આ પસંદ કરો">

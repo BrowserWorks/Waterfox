@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "પાનાંના રંગો અને પાશ્વ ભાગ">
+<!ENTITY pageColors.label "પાનાંના રંગો">
+<!ENTITY defaultColorsRadio.label "વાંચકના મૂળભુત રંગો (પાનાંમાં રંગો સુયોજિત કરશો નહિં)">
+<!ENTITY defaultColorsRadio.accessKey "D">
+<!ENTITY defaultColorsRadio.tooltip "માત્ર દર્શક (વાંચક) બ્રાઉઝરમાંથી જ રંગ સેટીંગ વાપરો">
+<!ENTITY customColorsRadio.label "વૈવિધ્યપૂર્ણ રંગો વાપરો:">
+<!ENTITY customColorsRadio.accessKey "C">
+<!ENTITY customColorsRadio.tooltip "આ રંગ સેટીંગ દર્શકના બ્રાઉઝર સેટીંગ પર ફરીથી લખશે">
+
+<!ENTITY normalText.label "સામાન્ય લખાણ">
+<!ENTITY normalText.accessKey "N">
+<!ENTITY linkText.label "કડીનું લખાણ">
+<!ENTITY linkText.accessKey "L">
+<!ENTITY activeLinkText.label "સક્રિય કડી લખાણ">
+<!ENTITY activeLinkText.accessKey "A">
+<!ENTITY visitedLinkText.label "મુલાકાત લીધેલ કડી લખાણ">
+<!ENTITY visitedLinkText.accessKey "V">
+<!ENTITY background.label "પાશ્વ ભાગ:">
+<!ENTITY background.accessKey "B">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "પાશ્વ ભાગની ઈમેજ:">
+<!ENTITY backgroundImage.accessKey "m">
+<!ENTITY backgroundImage.tooltip "તમારા પાનાં માટે ઈમેજ ફાઈલને પાશ્વ ભાગ તરીકે વાપરો">

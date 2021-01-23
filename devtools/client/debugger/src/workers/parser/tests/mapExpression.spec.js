@@ -22,9 +22,9 @@ function test({
   if (parseExpression) {
     expect(
       format(res.expression, {
-        parser: "babylon",
+        parser: "babel",
       })
-    ).toEqual(format(newExpression, { parser: "babylon" }));
+    ).toEqual(format(newExpression, { parser: "babel" }));
   } else {
     expect(res.expression).toEqual(newExpression);
   }
@@ -518,6 +518,58 @@ describe("mapExpression", () => {
       shouldMapBindings: false,
       expectedMapped: {
         await: true,
+        bindings: false,
+        originalExpression: false,
+      },
+    },
+    {
+      name: "await (nullish coalesce operator)",
+      expression: "await x; true ?? false",
+      newExpression: `(async () => {
+          await x;
+          return true ?? false;
+        })()`,
+      shouldMapBindings: false,
+      expectedMapped: {
+        await: true,
+        bindings: false,
+        originalExpression: false,
+      },
+    },
+    {
+      name: "await (optional chaining operator)",
+      expression: "await x; x?.y?.z",
+      newExpression: `(async () => {
+          await x;
+          return x?.y?.z;
+        })()`,
+      shouldMapBindings: false,
+      expectedMapped: {
+        await: true,
+        bindings: false,
+        originalExpression: false,
+      },
+    },
+    {
+      name: "await (async function declaration with nullish coalesce operator)",
+      expression: "async function coalesce(x) { await x; return x ?? false; }",
+      newExpression:
+        "async function coalesce(x) { await x; return x ?? false; }",
+      shouldMapBindings: false,
+      expectedMapped: {
+        await: false,
+        bindings: false,
+        originalExpression: false,
+      },
+    },
+    {
+      name:
+        "await (async function declaration with optional chaining operator)",
+      expression: "async function chain(x) { await x; return x?.y?.z; }",
+      newExpression: "async function chain(x) { await x; return x?.y?.z; }",
+      shouldMapBindings: false,
+      expectedMapped: {
+        await: false,
         bindings: false,
         originalExpression: false,
       },

@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "Proprietates del tabella">
+<!ENTITY applyButton.label                "Applicar">
+<!ENTITY applyButton.accesskey            "A">
+<!ENTITY closeButton.label                "Clauder">
+<!ENTITY tableTab.label                   "Tabella">
+<!ENTITY cellTab.label                    "Cellas">
+<!ENTITY tableRows.label                  "Rigas:">
+<!ENTITY tableRows.accessKey              "R">
+<!ENTITY tableColumns.label               "Columnas:">
+<!ENTITY tableColumns.accessKey           "C">
+<!ENTITY tableHeight.label                "Altor:">
+<!ENTITY tableHeight.accessKey            "t">
+<!ENTITY tableWidth.label                 "Largessa:">
+<!ENTITY tableWidth.accessKey             "L">
+<!ENTITY tableBorderSpacing.label         "Bordos e spatiamento">
+<!ENTITY tableBorderWidth.label           "Bordo:">
+<!ENTITY tableBorderWidth.accessKey       "B">
+<!ENTITY tableSpacing.label               "Spatiamento:">
+<!ENTITY tableSpacing.accessKey           "S">
+<!ENTITY tablePadding.label               "Margines:">
+<!ENTITY tablePadding.accessKey           "M">
+<!ENTITY tablePxBetwCells.label           "pixels inter cellas">
+<!ENTITY tablePxBetwBrdrCellContent.label "pixels inter bordo del cella e contento">
+<!ENTITY tableAlignment.label             "Alineamento tabella:">
+<!ENTITY tableAlignment.accessKey         "A">
+<!ENTITY tableCaption.label               "Legenda:">
+<!ENTITY tableCaption.accessKey           "L">
+<!ENTITY tableCaptionAbove.label          "Supra del tabella">
+<!ENTITY tableCaptionBelow.label          "Infra del tabella">
+<!ENTITY tableCaptionLeft.label           "A sinistra del tabella">
+<!ENTITY tableCaptionRight.label          "A dextra del tabella">
+<!ENTITY tableCaptionNone.label           "Nulle">
+<!ENTITY tableInheritColor.label           "(Sia le color del pagina transparente)">
+
+<!ENTITY cellSelection.label              "Selection">
+<!ENTITY cellSelectCell.label             "Cella">
+<!ENTITY cellSelectRow.label              "Riga">
+<!ENTITY cellSelectColumn.label           "Columna">
+<!ENTITY cellSelectNext.label             "Sequente">
+<!ENTITY cellSelectNext.accessKey         "S">
+<!ENTITY cellSelectPrevious.label         "Precedente">
+<!ENTITY cellSelectPrevious.accessKey     "P">
+<!ENTITY applyBeforeChange.label          "Le cambios essera applicate ante modificar le selection.">
+<!ENTITY cellContentAlignment.label       "Alineamento del contento">
+<!ENTITY cellHorizontal.label             "Horizontal:">
+<!ENTITY cellHorizontal.accessKey         "Z">
+<!ENTITY cellVertical.label               "Vertical:">
+<!ENTITY cellVertical.accessKey           "V">
+<!ENTITY cellStyle.label                  "Stilo cella:">
+<!ENTITY cellStyle.accessKey              "t">
+<!ENTITY cellNormal.label                 "Normal">
+<!ENTITY cellHeader.label                 "Titulo">
+<!ENTITY cellTextWrap.label               "Incapsular texto:">
+<!ENTITY cellTextWrap.accessKey           "c">
+<!ENTITY cellWrap.label                   "Circuir">
+<!ENTITY cellNoWrap.label                 "Non incapsular">
+<!ENTITY cellAlignTop.label               "Apice">
+<!ENTITY cellAlignMiddle.label            "Medie">
+<!ENTITY cellAlignBottom.label            "Basso">
+<!ENTITY cellAlignJustify.label           "Justificar">
+<!ENTITY cellInheritColor.label           "(Sia le color del tabella transparente)">
+<!ENTITY cellUseCheckboxHelp.label        "Usar le quadratos de selection pro definir qual proprietates applicar a tote le cellas seligite">
+
+<!-- Used in both Table and Cell panels  -->
+<!ENTITY size.label                       "Dimension">
+<!ENTITY pixels.label                     "">
+<!ENTITY backgroundColor.label            "Color de fundo:">
+<!ENTITY backgroundColor.accessKey        "f">
+<!ENTITY AlignLeft.label                  "Sinistra">
+<!ENTITY AlignCenter.label                "Centro">
+<!ENTITY AlignRight.label                 "Dextera">

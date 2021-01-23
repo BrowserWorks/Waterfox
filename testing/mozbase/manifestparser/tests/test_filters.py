@@ -1,189 +1,280 @@
 #!/usr/bin/env python
-# flake8: noqa
 
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
-from copy import deepcopy
 import os
-import unittest
+from copy import deepcopy
+from pprint import pprint
 
+import mozpack.path as mozpath
 import mozunit
+import pytest
 
 from manifestparser.filters import (
+    enabled,
+    fail_if,
+    filterlist,
+    pathprefix,
+    run_if,
+    skip_if,
     subsuite,
     tags,
-    skip_if,
-    run_if,
-    fail_if,
-    enabled,
-    filterlist,
 )
 
 here = os.path.dirname(os.path.abspath(__file__))
 
 
-class FilterList(unittest.TestCase):
-    """Test filterlist datatype"""
+def test_data_model():
+    foo = lambda x, y: x
+    bar = lambda x, y: x
+    baz = lambda x, y: x
+    fl = filterlist()
 
-    def test_data_model(self):
-        foo = lambda x, y: x
-        bar = lambda x, y: x
-        baz = lambda x, y: x
-        fl = filterlist()
+    fl.extend([foo, bar])
+    assert len(fl) == 2
+    assert foo in fl
 
-        fl.extend([foo, bar])
-        self.assertEquals(len(fl), 2)
-        self.assertTrue(foo in fl)
+    fl.append(baz)
+    assert fl[2] == baz
 
-        fl.append(baz)
-        self.assertEquals(fl[2], baz)
+    fl.remove(baz)
+    assert baz not in fl
 
-        fl.remove(baz)
-        self.assertFalse(baz in fl)
+    item = fl.pop()
+    assert item == bar
 
-        item = fl.pop()
-        self.assertEquals(item, bar)
+    assert fl.index(foo) == 0
 
-        self.assertEquals(fl.index(foo), 0)
-
-        del fl[0]
-        self.assertFalse(foo in fl)
-        with self.assertRaises(IndexError):
-            fl[0]
-
-    def test_add_non_callable_to_list(self):
-        fl = filterlist()
-        with self.assertRaises(TypeError):
-            fl.append('foo')
-
-    def test_add_duplicates_to_list(self):
-        foo = lambda x, y: x
-        bar = lambda x, y: x
-        sub = subsuite('foo')
-        fl = filterlist([foo, bar, sub])
-        self.assertEquals(len(fl), 3)
-        self.assertEquals(fl[0], foo)
-
-        with self.assertRaises(ValueError):
-            fl.append(foo)
-
-        with self.assertRaises(ValueError):
-            fl.append(subsuite('bar'))
-
-    def test_add_two_tags_filters(self):
-        tag1 = tags('foo')
-        tag2 = tags('bar')
-        fl = filterlist([tag1])
-
-        with self.assertRaises(ValueError):
-            fl.append(tag1)
-
-        fl.append(tag2)
-        self.assertEquals(len(fl), 2)
-
-    def test_filters_run_in_order(self):
-        a = lambda x, y: x
-        b = lambda x, y: x
-        c = lambda x, y: x
-        d = lambda x, y: x
-        e = lambda x, y: x
-        f = lambda x, y: x
-
-        fl = filterlist([a, b])
-        fl.append(c)
-        fl.extend([d, e])
-        fl += [f]
-        self.assertEquals([i for i in fl], [a, b, c, d, e, f])
+    del fl[0]
+    assert foo not in fl
+    with pytest.raises(IndexError):
+        fl[0]
 
 
-class BuiltinFilters(unittest.TestCase):
-    """Test the built-in filters"""
+def test_add_non_callable_to_list():
+    fl = filterlist()
+    with pytest.raises(TypeError):
+        fl.append('foo')
 
-    tests = (
-        {"name": "test0"},
-        {"name": "test1", "skip-if": "foo == 'bar'"},
-        {"name": "test2", "run-if": "foo == 'bar'"},
-        {"name": "test3", "fail-if": "foo == 'bar'"},
-        {"name": "test4", "disabled": "some reason"},
-        {"name": "test5", "subsuite": "baz"},
-        {"name": "test6", "subsuite": "baz,foo == 'bar'"},
-        {"name": "test7", "tags": "foo bar"},
+
+def test_add_duplicates_to_list():
+    foo = lambda x, y: x
+    bar = lambda x, y: x
+    sub = subsuite('foo')
+    fl = filterlist([foo, bar, sub])
+    assert len(fl) == 3
+    assert fl[0] == foo
+
+    with pytest.raises(ValueError):
+        fl.append(foo)
+
+    with pytest.raises(ValueError):
+        fl.append(subsuite('bar'))
+
+
+def test_add_two_tags_filters():
+    tag1 = tags('foo')
+    tag2 = tags('bar')
+    fl = filterlist([tag1])
+
+    with pytest.raises(ValueError):
+        fl.append(tag1)
+
+    fl.append(tag2)
+    assert len(fl) == 2
+
+
+def test_filters_run_in_order():
+    a = lambda x, y: x
+    b = lambda x, y: x
+    c = lambda x, y: x
+    d = lambda x, y: x
+    e = lambda x, y: x
+    f = lambda x, y: x
+
+    fl = filterlist([a, b])
+    fl.append(c)
+    fl.extend([d, e])
+    fl += [f]
+    assert [i for i in fl] == [a, b, c, d, e, f]
+
+
+@pytest.fixture(scope='module')
+def create_tests():
+
+    def inner(*paths, **defaults):
+        tests = []
+        for path in paths:
+            if isinstance(path, tuple):
+                path, kwargs = path
+            else:
+                kwargs = {}
+
+            path = mozpath.normpath(path)
+            manifest = kwargs.pop('manifest', defaults.pop('manifest',
+                                  mozpath.join(mozpath.dirname(path), 'manifest.ini')))
+            test = {
+                'name': mozpath.basename(path),
+                'path': '/root/' + path,
+                'relpath': path,
+                'manifest': '/root/' + manifest,
+                'manifest_relpath': manifest,
+            }
+            test.update(**defaults)
+            test.update(**kwargs)
+            tests.append(test)
+
+        # dump tests to stdout for easier debugging on failure
+        print("The 'create_tests' fixture returned:")
+        pprint(tests, indent=2)
+        return tests
+
+    return inner
+
+
+@pytest.fixture
+def tests(create_tests):
+    return create_tests(
+        "test0",
+        ("test1", {"skip-if": "foo == 'bar'"}),
+        ("test2", {"run-if": "foo == 'bar'"}),
+        ("test3", {"fail-if": "foo == 'bar'"}),
+        ("test4", {"disabled": "some reason"}),
+        ("test5", {"subsuite": "baz"}),
+        ("test6", {"subsuite": "baz,foo == 'bar'"}),
+        ("test7", {"tags": "foo bar"}),
     )
 
-    def test_skip_if(self):
-        tests = deepcopy(self.tests)
-        tests = list(skip_if(tests, {}))
-        self.assertEquals(len(tests), len(self.tests))
 
-        tests = deepcopy(self.tests)
-        tests = list(skip_if(tests, {'foo': 'bar'}))
-        self.assertNotIn(self.tests[1], tests)
+def test_skip_if(tests):
+    ref = deepcopy(tests)
+    tests = list(skip_if(tests, {}))
+    assert len(tests) == len(ref)
 
-    def test_run_if(self):
-        tests = deepcopy(self.tests)
-        tests = list(run_if(tests, {}))
-        self.assertNotIn(self.tests[2], tests)
+    tests = deepcopy(ref)
+    tests = list(skip_if(tests, {'foo': 'bar'}))
+    assert tests[1] not in ref
 
-        tests = deepcopy(self.tests)
-        tests = list(run_if(tests, {'foo': 'bar'}))
-        self.assertEquals(len(tests), len(self.tests))
 
-    def test_fail_if(self):
-        tests = deepcopy(self.tests)
-        tests = list(fail_if(tests, {}))
-        self.assertNotIn('expected', tests[3])
+def test_run_if(tests):
+    ref = deepcopy(tests)
+    tests = list(run_if(tests, {}))
+    assert ref[2] not in tests
 
-        tests = deepcopy(self.tests)
-        tests = list(fail_if(tests, {'foo': 'bar'}))
-        self.assertEquals(tests[3]['expected'], 'fail')
+    tests = deepcopy(ref)
+    tests = list(run_if(tests, {'foo': 'bar'}))
+    assert len(tests) == len(ref)
 
-    def test_enabled(self):
-        tests = deepcopy(self.tests)
-        tests = list(enabled(tests, {}))
-        self.assertNotIn(self.tests[4], tests)
 
-    def test_subsuite(self):
-        sub1 = subsuite()
-        sub2 = subsuite('baz')
+def test_fail_if(tests):
+    ref = deepcopy(tests)
+    tests = list(fail_if(tests, {}))
+    assert 'expected' not in tests[3]
 
-        tests = deepcopy(self.tests)
-        tests = list(sub1(tests, {}))
-        self.assertNotIn(self.tests[5], tests)
-        self.assertEquals(len(tests), len(self.tests) - 1)
+    tests = deepcopy(ref)
+    tests = list(fail_if(tests, {'foo': 'bar'}))
+    assert tests[3]['expected'] == 'fail'
 
-        tests = deepcopy(self.tests)
-        tests = list(sub2(tests, {}))
-        self.assertEquals(len(tests), 1)
-        self.assertIn(self.tests[5], tests)
 
-    def test_subsuite_condition(self):
-        sub1 = subsuite()
-        sub2 = subsuite('baz')
+def test_enabled(tests):
+    ref = deepcopy(tests)
+    tests = list(enabled(tests, {}))
+    assert ref[4] not in tests
 
-        tests = deepcopy(self.tests)
 
-        tests = list(sub1(tests, {'foo': 'bar'}))
-        self.assertNotIn(self.tests[5], tests)
-        self.assertNotIn(self.tests[6], tests)
+def test_subsuite(tests):
+    sub1 = subsuite()
+    sub2 = subsuite('baz')
 
-        tests = deepcopy(self.tests)
-        tests = list(sub2(tests, {'foo': 'bar'}))
-        self.assertEquals(len(tests), 2)
-        self.assertEquals(tests[0]['name'], 'test5')
-        self.assertEquals(tests[1]['name'], 'test6')
+    ref = deepcopy(tests)
+    tests = list(sub1(tests, {}))
+    assert ref[5] not in tests
+    assert len(tests) == len(ref) - 1
 
-    def test_tags(self):
-        ftags1 = tags([])
-        ftags2 = tags(['bar', 'baz'])
+    tests = deepcopy(ref)
+    tests = list(sub2(tests, {}))
+    assert len(tests) == 1
+    assert ref[5] in tests
 
-        tests = deepcopy(self.tests)
-        tests = list(ftags1(tests, {}))
-        self.assertEquals(len(tests), 0)
 
-        tests = deepcopy(self.tests)
-        tests = list(ftags2(tests, {}))
-        self.assertEquals(len(tests), 1)
-        self.assertIn(self.tests[7], tests)
+def test_subsuite_condition(tests):
+    sub1 = subsuite()
+    sub2 = subsuite('baz')
+
+    ref = deepcopy(tests)
+
+    tests = list(sub1(tests, {'foo': 'bar'}))
+    assert ref[5] not in tests
+    assert ref[6] not in tests
+
+    tests = deepcopy(ref)
+    tests = list(sub2(tests, {'foo': 'bar'}))
+    assert len(tests) == 2
+    assert tests[0]['name'] == 'test5'
+    assert tests[1]['name'] == 'test6'
+
+
+def test_tags(tests):
+    ftags1 = tags([])
+    ftags2 = tags(['bar', 'baz'])
+
+    ref = deepcopy(tests)
+    tests = list(ftags1(tests, {}))
+    assert len(tests) == 0
+
+    tests = deepcopy(ref)
+    tests = list(ftags2(tests, {}))
+    assert len(tests) == 1
+    assert ref[7] in tests
+
+
+def test_pathprefix(create_tests):
+    tests = create_tests(
+        'test0',
+        'subdir/test1',
+        'subdir/test2',
+        ('subdir/test3', {'manifest': 'manifest.ini'}),
+        ('other/test4', {'manifest': 'manifest-common.ini',
+                         'ancestor_manifest': 'other/manifest.ini'}),
+    )
+
+    def names(items):
+        return sorted(i['name'] for i in items)
+
+    # relative directory
+    prefix = pathprefix('subdir')
+    filtered = prefix(tests, {})
+    assert names(filtered) == ['test1', 'test2', 'test3']
+
+    # absolute directory
+    prefix = pathprefix(['/root/subdir'])
+    filtered = prefix(tests, {})
+    assert names(filtered) == ['test1', 'test2', 'test3']
+
+    # relative manifest
+    prefix = pathprefix(['subdir/manifest.ini'])
+    filtered = prefix(tests, {})
+    assert names(filtered) == ['test1', 'test2']
+
+    # absolute manifest
+    prefix = pathprefix(['/root/subdir/manifest.ini'])
+    filtered = prefix(tests, {})
+    assert names(filtered) == ['test1', 'test2']
+
+    # mixed test and manifest
+    prefix = pathprefix(['subdir/test2', 'manifest.ini'])
+    filtered = prefix(tests, {})
+    assert names(filtered) == ['test0', 'test2', 'test3']
+
+    # relative ancestor manifest
+    prefix = pathprefix(['other/manifest.ini'])
+    filtered = prefix(tests, {})
+    assert names(filtered) == ['test4']
+
+    # absolute ancestor manifest
+    prefix = pathprefix(['/root/other/manifest.ini'])
+    filtered = prefix(tests, {})
+    assert names(filtered) == ['test4']
 
 
 if __name__ == '__main__':

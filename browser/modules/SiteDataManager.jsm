@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
 
 const { XPCOMUtils } = ChromeUtils.import(
@@ -20,8 +24,6 @@ XPCOMUtils.defineLazyGetter(this, "gBrandBundle", function() {
 });
 
 var SiteDataManager = {
-  _qms: Services.qms,
-
   _appCache: Cc["@mozilla.org/network/application-cache-service;1"].getService(
     Ci.nsIApplicationCacheService
   ),
@@ -142,7 +144,7 @@ var SiteDataManager = {
               // An non-persistent-storage site with 0 byte quota usage is redundant for us so skip it.
               continue;
             }
-            let principal = Services.scriptSecurityManager.createCodebasePrincipalFromOrigin(
+            let principal = Services.scriptSecurityManager.createContentPrincipalFromOrigin(
               item.origin
             );
             let uri = principal.URI;
@@ -170,13 +172,13 @@ var SiteDataManager = {
       // XXX: The work of integrating localStorage into Quota Manager is in progress.
       //      After the bug 742822 and 1286798 landed, localStorage usage will be included.
       //      So currently only get indexedDB usage.
-      this._quotaUsageRequest = this._qms.getUsage(onUsageResult);
+      this._quotaUsageRequest = Services.qms.getUsage(onUsageResult);
     });
     return this._getQuotaUsagePromise;
   },
 
   _getAllCookies() {
-    for (let cookie of Services.cookies.enumerator) {
+    for (let cookie of Services.cookies.cookies) {
       let site = this._getOrInsertSite(cookie.rawHost);
       site.cookies.push(cookie);
       if (site.lastAccessed < cookie.lastAccessed) {
@@ -212,7 +214,7 @@ var SiteDataManager = {
         // A site with 0 byte appcache usage is redundant for us so skip it.
         continue;
       }
-      let principal = Services.scriptSecurityManager.createCodebasePrincipalFromOrigin(
+      let principal = Services.scriptSecurityManager.createContentPrincipalFromOrigin(
         group
       );
       let uri = principal.URI;
@@ -222,6 +224,94 @@ var SiteDataManager = {
       }
       site.appCacheList.push(cache);
     }
+  },
+
+  /**
+   * Gets the current AppCache usage by host. This is using asciiHost to compare
+   * against the provided host.
+   *
+   * @param {String} the ascii host to check usage for
+   * @returns the usage in bytes
+   */
+  getAppCacheUsageByHost(host) {
+    let usage = 0;
+
+    let groups;
+    try {
+      groups = this._appCache.getGroups();
+    } catch (e) {
+      // NS_ERROR_NOT_AVAILABLE means that appCache is not initialized,
+      // which probably means the user has disabled it. Otherwise, log an
+      // error. Either way, there's nothing we can do here.
+      if (e.result != Cr.NS_ERROR_NOT_AVAILABLE) {
+        Cu.reportError(e);
+      }
+      return usage;
+    }
+
+    for (let group of groups) {
+      let uri = Services.io.newURI(group);
+      if (uri.asciiHost == host) {
+        let cache = this._appCache.getActiveCache(group);
+        usage += cache.usage;
+      }
+    }
+
+    return usage;
+  },
+
+  /**
+   * Checks if the site with the provided ASCII host is using any site data at all.
+   * This will check for:
+   *   - Cookies (incl. subdomains)
+   *   - AppCache
+   *   - Quota Usage
+   * in that order. This function is meant to be fast, and thus will
+   * end searching and return true once the first trace of site data is found.
+   *
+   * @param {String} the ASCII host to check
+   * @returns {Boolean} whether the site has any data associated with it
+   */
+  async hasSiteData(asciiHost) {
+    if (Services.cookies.countCookiesFromHost(asciiHost)) {
+      return true;
+    }
+
+    let appCacheUsage = this.getAppCacheUsageByHost(asciiHost);
+    if (appCacheUsage > 0) {
+      return true;
+    }
+
+    let hasQuota = await new Promise(resolve => {
+      Services.qms.getUsage(request => {
+        if (request.resultCode != Cr.NS_OK) {
+          resolve(false);
+          return;
+        }
+
+        for (let item of request.result) {
+          if (!item.persisted && item.usage <= 0) {
+            continue;
+          }
+
+          let principal = Services.scriptSecurityManager.createContentPrincipalFromOrigin(
+            item.origin
+          );
+          if (principal.asciiHost == asciiHost) {
+            resolve(true);
+            return;
+          }
+        }
+
+        resolve(false);
+      });
+    });
+
+    if (hasQuota) {
+      return true;
+    }
+
+    return false;
   },
 
   getTotalUsage() {
@@ -309,7 +399,7 @@ var SiteDataManager = {
         new Promise(resolve => {
           // We are clearing *All* across OAs so need to ensure a principal without suffix here,
           // or the call of `clearStoragesForPrincipal` would fail.
-          principal = Services.scriptSecurityManager.createCodebasePrincipalFromOrigin(
+          principal = Services.scriptSecurityManager.createContentPrincipalFromOrigin(
             originNoSuffix
           );
           let request = this._qms.clearStoragesForPrincipal(
@@ -337,7 +427,6 @@ var SiteDataManager = {
         cookie.host,
         cookie.name,
         cookie.path,
-        false,
         cookie.originAttributes
       );
     }
@@ -348,10 +437,8 @@ var SiteDataManager = {
   // we consider part of "site data and cookies".
   _getDeletablePermissions() {
     let perms = [];
-    let enumerator = Services.perms.enumerator;
 
-    while (enumerator.hasMoreElements()) {
-      let permission = enumerator.getNext().QueryInterface(Ci.nsIPermission);
+    for (let permission of Services.perms.all) {
       if (
         permission.type == "persistent-storage" ||
         permission.type == "storage-access"
@@ -374,24 +461,31 @@ var SiteDataManager = {
     let perms = this._getDeletablePermissions();
     let promises = [];
     for (let host of hosts) {
+      const kFlags =
+        Ci.nsIClearDataService.CLEAR_COOKIES |
+        Ci.nsIClearDataService.CLEAR_DOM_STORAGES |
+        Ci.nsIClearDataService.CLEAR_SECURITY_SETTINGS |
+        Ci.nsIClearDataService.CLEAR_PLUGIN_DATA |
+        Ci.nsIClearDataService.CLEAR_EME |
+        Ci.nsIClearDataService.CLEAR_ALL_CACHES;
       promises.push(
         new Promise(function(resolve) {
-          Services.clearData.deleteDataFromHost(
-            host,
-            true,
-            Ci.nsIClearDataService.CLEAR_COOKIES |
-              Ci.nsIClearDataService.CLEAR_DOM_STORAGES |
-              Ci.nsIClearDataService.CLEAR_SECURITY_SETTINGS |
-              Ci.nsIClearDataService.CLEAR_PLUGIN_DATA |
-              Ci.nsIClearDataService.CLEAR_EME |
-              Ci.nsIClearDataService.CLEAR_ALL_CACHES,
-            resolve
-          );
+          const { clearData } = Services;
+          if (host) {
+            clearData.deleteDataFromHost(host, true, kFlags, resolve);
+          } else {
+            clearData.deleteDataFromLocalFiles(true, kFlags, resolve);
+          }
         })
       );
 
       for (let perm of perms) {
-        if (Services.eTLD.hasRootDomain(perm.principal.URI.host, host)) {
+        // Specialcase local file permissions.
+        if (!host) {
+          if (perm.principal.schemeIs("file")) {
+            Services.perms.removePermission(perm);
+          }
+        } else if (Services.eTLD.hasRootDomain(perm.principal.URI.host, host)) {
           Services.perms.removePermission(perm);
         }
       }
@@ -418,8 +512,8 @@ var SiteDataManager = {
         allowed: false,
       };
       let features = "centerscreen,chrome,modal,resizable=no";
-      win.openDialog(
-        "chrome://browser/content/preferences/siteDataRemoveSelected.xul",
+      win.docShell.rootTreeItem.domWindow.openDialog(
+        "chrome://browser/content/preferences/dialogs/siteDataRemoveSelected.xhtml",
         "",
         features,
         args
@@ -433,11 +527,9 @@ var SiteDataManager = {
       Services.prompt.BUTTON_TITLE_CANCEL * Services.prompt.BUTTON_POS_1 +
       Services.prompt.BUTTON_POS_0_DEFAULT;
     let title = gStringBundle.GetStringFromName("clearSiteDataPromptTitle");
-    let text = gStringBundle.formatStringFromName(
-      "clearSiteDataPromptText",
-      [brandName],
-      1
-    );
+    let text = gStringBundle.formatStringFromName("clearSiteDataPromptText", [
+      brandName,
+    ]);
     let btn0Label = gStringBundle.GetStringFromName("clearSiteDataNow");
 
     let result = Services.prompt.confirmEx(

@@ -1,4 +1,9 @@
-#!/usr/bin/env python
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+import buildconfig
+
 
 services = []
 
@@ -49,12 +54,27 @@ service('HistoryService', 'mozilla::IHistory',
 service('ThirdPartyUtil', 'mozIThirdPartyUtil',
         "@mozilla.org/thirdpartyutil;1")
 service('URIFixup', 'nsIURIFixup',
-        "@mozilla.org/docshell/urifixup;1")
+        "@mozilla.org/docshell/uri-fixup;1")
 service('Bits', 'nsIBits',
         "@mozilla.org/bits;1")
-# NB: this should also expose nsIXULAppInfo, as does Services.jsm.
+# If you want nsIXULAppInfo, as returned by Services.jsm, you need to call:
+#
+# nsCOMPtr<nsIXULRuntime> runtime = mozilla::services::GetAppInfoService();
+# nsCOMPtr<nsIXULAppInfo> appInfo = do_QueryInterface(runtime);
+#
+# for C++ or:
+#
+# let appInfo =
+#    get_AppInfoService().and_then(|p| p.query_interface::<nsIXULAppInfo>());
+#
+# for Rust.  Note that not all applications (e.g. xpcshell) implement
+# nsIXULAppInfo.
 service('AppInfoService', 'nsIXULRuntime',
         "@mozilla.org/xre/app-info;1")
+
+if buildconfig.substs.get('ENABLE_REMOTE_AGENT'):
+    service('RemoteAgent', 'nsIRemoteAgent',
+            "@mozilla.org/remote/agent;1")
 
 # The definition file needs access to the definitions of the particular
 # interfaces. If you add a new interface here, make sure the necessary includes
@@ -90,6 +110,10 @@ CPP_INCLUDES = """
 #include "nsIBits.h"
 #include "nsIXULRuntime.h"
 """
+
+if buildconfig.substs.get('ENABLE_REMOTE_AGENT'):
+    CPP_INCLUDES += '#include "nsIRemoteAgent.h"'
+
 
 #####
 # Codegen Logic

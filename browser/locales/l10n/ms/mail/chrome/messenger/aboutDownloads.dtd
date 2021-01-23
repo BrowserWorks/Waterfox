@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Fail Disimpan">
+<!ENTITY aboutDownloads.empty                      "Tiada Fail Disimpan">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "Buka Kandungan Folder">
+<!ENTITY cmd.show.accesskey                        "F">
+<!ENTITY cmd.showMac.label                         "Papar Dalam Finder">
+<!ENTITY cmd.showMac.accesskey                     "F">
+<!ENTITY cmd.open.label                            "Buka">
+<!ENTITY cmd.open.accesskey                        "B">
+<!ENTITY cmd.removeFromHistory.label               "Buang Daripada Sejarah">
+<!ENTITY cmd.removeFromHistory.accesskey           "e">
+<!ENTITY cmd.clearList.label                       "Buang Senarai">
+<!ENTITY cmd.clearList.accesskey                   "B">
+<!ENTITY cmd.clearList.tooltip                     "Buang semua entri dalam senarai fail yang disimpan, kecuali yang sedang dimuat turun.">
+<!ENTITY cmd.searchDownloads.label                 "Cari…">
+<!ENTITY cmd.searchDownloads.key                   "F">

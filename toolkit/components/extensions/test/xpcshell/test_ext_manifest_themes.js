@@ -13,7 +13,7 @@ async function test_theme_property(property) {
   );
 
   if (property === "unrecognized_key") {
-    const expectedWarning = `Error processing theme.${property}`;
+    const expectedWarning = `Warning processing theme.${property}`;
     ok(
       normalized.errors[0].includes(expectedWarning),
       `The manifest warning ${JSON.stringify(
@@ -29,5 +29,7 @@ async function test_theme_property(property) {
 add_task(async function test_manifest_themes() {
   await test_theme_property("images");
   await test_theme_property("colors");
+  ExtensionTestUtils.failOnSchemaWarnings(false);
   await test_theme_property("unrecognized_key");
+  ExtensionTestUtils.failOnSchemaWarnings(true);
 });

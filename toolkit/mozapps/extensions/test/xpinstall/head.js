@@ -1,11 +1,15 @@
 /* eslint no-unused-vars: ["error", {vars: "local", args: "none"}] */
 
+const { PermissionTestUtils } = ChromeUtils.import(
+  "resource://testing-common/PermissionTestUtils.jsm"
+);
+
 const RELATIVE_DIR = "toolkit/mozapps/extensions/test/xpinstall/";
 
 const TESTROOT = "http://example.com/browser/" + RELATIVE_DIR;
 const TESTROOT2 = "http://example.org/browser/" + RELATIVE_DIR;
-const PROMPT_URL = "chrome://global/content/commonDialog.xul";
-const ADDONS_URL = "chrome://mozapps/content/extensions/extensions.xul";
+const PROMPT_URL = "chrome://global/content/commonDialog.xhtml";
+const ADDONS_URL = "chrome://mozapps/content/extensions/extensions.xhtml";
 const PREF_LOGGING_ENABLED = "extensions.logging.enabled";
 const PREF_INSTALL_REQUIREBUILTINCERTS =
   "extensions.install.requireBuiltInCerts";
@@ -101,7 +105,7 @@ var Harness = {
       Services.prefs.setBoolPref(PREF_INSTALL_REQUIRESECUREORIGIN, false);
       Services.prefs.setBoolPref(PREF_LOGGING_ENABLED, true);
       Services.prefs.setBoolPref(
-        "network.cookieSettings.unblocked_for_testing",
+        "network.cookieJarSettings.unblocked_for_testing",
         true
       );
 
@@ -116,6 +120,7 @@ var Harness = {
 
       this._boundWin = Cu.getWeakReference(win); // need this so our addon manager listener knows which window to use.
       AddonManager.addInstallListener(this);
+      AddonManager.addAddonListener(this);
 
       Services.wm.addListener(this);
 
@@ -127,7 +132,7 @@ var Harness = {
         Services.prefs.clearUserPref(PREF_LOGGING_ENABLED);
         Services.prefs.clearUserPref(PREF_INSTALL_REQUIRESECUREORIGIN);
         Services.prefs.clearUserPref(
-          "network.cookieSettings.unblocked_for_testing"
+          "network.cookieJarSettings.unblocked_for_testing"
         );
 
         Services.obs.removeObserver(self, "addon-install-started");
@@ -139,6 +144,7 @@ var Harness = {
         Services.obs.removeObserver(self, "addon-install-complete");
 
         AddonManager.removeInstallListener(self);
+        AddonManager.removeAddonListener(self);
 
         Services.wm.removeListener(self);
 
@@ -152,15 +158,21 @@ var Harness = {
           0,
           "Should be no active installs at the end of the test"
         );
-        aInstalls.forEach(function(aInstall) {
-          info(
-            "Install for " +
-              aInstall.sourceURI +
-              " is in state " +
-              aInstall.state
-          );
-          aInstall.cancel();
-        });
+        await Promise.all(
+          aInstalls.map(async function(aInstall) {
+            info(
+              "Install for " +
+                aInstall.sourceURI +
+                " is in state " +
+                aInstall.state
+            );
+            if (aInstall.state == AddonManager.STATE_INSTALLED) {
+              await aInstall.addon.uninstall();
+            } else {
+              aInstall.cancel();
+            }
+          })
+        );
       });
     }
 
@@ -175,6 +187,7 @@ var Harness = {
     // that which fixes the rest of the tests.  Since no test
     // here cares about this panel, we just need it to close.
     win.PanelUI.notificationPanel.hidePopup();
+    win.AppMenuNotifications.removeNotification("addon-installed");
     delete this._boundWin;
     finish();
   },
@@ -214,13 +227,14 @@ var Harness = {
   windowReady(window) {
     if (window.document.location.href == PROMPT_URL) {
       var promptType = window.args.promptType;
+      let dialog = window.document.getElementById("commonDialog");
       switch (promptType) {
         case "alert":
         case "alertCheck":
         case "confirmCheck":
         case "confirm":
         case "confirmEx":
-          window.document.documentElement.acceptDialog();
+          dialog.acceptDialog();
           break;
         case "promptUserAndPass":
           // This is a login dialog, hopefully an authentication prompt
@@ -231,12 +245,12 @@ var Harness = {
               window.document.getElementById("loginTextbox").value = auth[0];
               window.document.getElementById("password1Textbox").value =
                 auth[1];
-              window.document.documentElement.acceptDialog();
+              dialog.acceptDialog();
             } else {
-              window.document.documentElement.cancelDialog();
+              dialog.cancelDialog();
             }
           } else {
-            window.document.documentElement.cancelDialog();
+            dialog.cancelDialog();
           }
           break;
         default:
@@ -363,22 +377,19 @@ var Harness = {
     if (this.finalContentEvent && !this.waitingForEvent) {
       this.waitingForEvent = true;
       info("Waiting for " + this.finalContentEvent);
-      let mm = this._boundWin.get().gBrowser.selectedBrowser.messageManager;
-      mm.loadFrameScript(
-        `data:,content.addEventListener("${
-          this.finalContentEvent
-        }", () => { sendAsyncMessage("Test:GotNewInstallEvent"); });`,
-        false
-      );
-      let listener = () => {
-        info("Saw " + this.finalContentEvent);
-        mm.removeMessageListener("Test:GotNewInstallEvent", listener);
+      BrowserTestUtils.waitForContentEvent(
+        this._boundWin.get().gBrowser.selectedBrowser,
+        this.finalContentEvent,
+        true,
+        null,
+        true
+      ).then(() => {
+        info("Saw " + this.finalContentEvent + "," + this.waitingForEvent);
         this.waitingForEvent = false;
         if (this.pendingCount == 0) {
           this.endTest();
         }
-      };
-      mm.addMessageListener("Test:GotNewInstallEvent", listener);
+      });
     }
   },
 
@@ -428,10 +439,10 @@ var Harness = {
     }
   },
 
-  onInstallEnded(install, addon) {
+  async onInstallEnded(install, addon) {
     this.installCount++;
     if (this.installEndedCallback) {
-      this.installEndedCallback(install, addon);
+      await this.installEndedCallback(install, addon);
     }
     this.checkTestEnded();
   },
@@ -441,6 +452,14 @@ var Harness = {
       this.installFailedCallback(install);
     }
     this.checkTestEnded();
+  },
+
+  onUninstalled(addon) {
+    let idx = this.runningInstalls.findIndex(install => install.addon == addon);
+    if (idx != -1) {
+      this.runningInstalls.splice(idx, 1);
+      this.checkTestEnded();
+    }
   },
 
   onInstallCancelled(install) {

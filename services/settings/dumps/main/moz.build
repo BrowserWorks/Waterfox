@@ -3,11 +3,15 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 FINAL_TARGET_FILES.defaults.settings.main += [
+    'anti-tracking-url-decoration.json',
     'example.json',
     'hijack-blocklists.json',
     'language-dictionaries.json',
     'onboarding.json',
+    'search-config.json',
+    'search-default-override-allowlist.json',
     'sites-classification.json',
+    'url-classifier-skip-urls.json',
 ]
 
 if CONFIG['MOZ_BUILD_APP'] == 'browser':

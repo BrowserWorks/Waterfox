@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Підписки на стрічки">
+<!ENTITY learnMore.label             "Докладніше про інформаційні канали">
+
+<!ENTITY feedTitle.label             "Заголовок:">
+<!ENTITY feedTitle.accesskey         "З">
+
+<!ENTITY feedLocation.label          "URL стрічки:">
+<!ENTITY feedLocation.accesskey      "U">
+<!ENTITY feedLocation2.placeholder   "Введіть дійсну адресу стрічки">
+<!ENTITY locationValidate.label      "Підтвердження">
+<!ENTITY validateText.label          "Перевірте підтвердження і отримайте дійсний URL.">
+
+<!ENTITY feedFolder.label            "Зберігати статті в:">
+<!ENTITY feedFolder.accesskey        "з">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Перевіряти наявність нових статей кожні ">
+<!ENTITY biffStart.accesskey         "т">
+<!ENTITY biffMinutes.label           "хвилин">
+<!ENTITY biffMinutes.accesskey       "х">
+<!ENTITY biffDays.label              "днів">
+<!ENTITY biffDays.accesskey          "н">
+<!ENTITY recommendedUnits.label      "Видавець рекомендує:">
+
+<!ENTITY quickMode.label             "Показувати короткий опис статті замість завантаження вебсторінки">
+<!ENTITY quickMode.accesskey         "к">
+
+<!ENTITY autotagEnable.label         "Автоматично створювати мітки за назвами &lt;категорій&gt; стрічки новин">
+<!ENTITY autotagEnable.accesskey     "в">
+<!ENTITY autotagUsePrefix.label      "Prefix tags with:">
+<!ENTITY autotagUsePrefix.accesskey  "P">
+<!ENTITY autoTagPrefix.placeholder   "Введіть префікс мітки">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Додати">
+<!ENTITY button.addFeed.accesskey    "Д">
+<!ENTITY button.verifyFeed.label     "Перевірити">
+<!ENTITY button.verifyFeed.accesskey "П">
+<!ENTITY button.updateFeed.label     "Оновити">
+<!ENTITY button.updateFeed.accesskey "О">
+<!ENTITY button.removeFeed.label     "Вилучити">
+<!ENTITY button.removeFeed.accesskey "В">
+<!ENTITY button.importOPML.label     "Імпорт">
+<!ENTITY button.importOPML.accesskey "І">
+<!ENTITY button.exportOPML.label     "Експорт">
+<!ENTITY button.exportOPML.accesskey "Е">
+<!ENTITY button.exportOPML.tooltip   "Експортувати стрічки з структурою тек; Ctrl+клаць чи Ctrl+Enter щоб експортувати стрічки як список">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Закрити">

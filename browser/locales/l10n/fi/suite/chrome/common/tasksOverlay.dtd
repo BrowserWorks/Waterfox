@@ -1,0 +1,64 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from tasksOverlay.xul -->
+<!ENTITY minimizeWindowCmd.label "Pienennä">
+<!ENTITY minimizeWindowCmd.key "P">
+<!ENTITY zoomWindowCmd.label "Suurennus">
+<!ENTITY navigatorCmd.label "Selain">
+<!ENTITY navigatorCmd.accesskey "S">
+<!ENTITY navigatorCmd.commandkey "1">
+
+<!-- LOCALIZATION NOTE (editorCmd.label): DONT_TRANSLATE -->
+<!ENTITY editorCmd.label "Composer">
+<!ENTITY editorCmd.accesskey "C">
+<!ENTITY editorCmd.commandkey "4">
+
+<!ENTITY errorConsoleCmd.label "Virhekonsoli">
+<!ENTITY errorConsoleCmd.accesskey "V">
+<!ENTITY errorConsoleCmd.commandkey2 "j">
+
+<!ENTITY taskNavigator.tooltip "Selain">
+<!ENTITY taskComposer.tooltip "Composer">
+
+<!ENTITY webDevelopment.label "Verkkosivustojen kehittäjille">
+<!ENTITY webDevelopment.accesskey "r">
+
+<!ENTITY windowMenu.label "Ikkuna">
+<!ENTITY windowMenu.accesskey "I">
+
+<!ENTITY tasksMenu.label "Työkalut">
+<!ENTITY tasksMenu.accesskey "y">
+
+<!ENTITY datamanCmd.label "Tietojen hallinta">
+<!ENTITY datamanCmd.accesskey "T">
+
+<!ENTITY passwordManagerCmd.label "Salasanat">
+<!ENTITY passwordManagerCmd.accesskey "S">
+
+<!ENTITY passwordDisplayCmd.label "Salasanojen hallinta">
+<!ENTITY passwordDisplayCmd.accesskey "S">
+
+<!ENTITY passwordExpireCmd.label "Kirjaudu ulos">
+<!ENTITY passwordExpireCmd.accesskey "K">
+
+<!ENTITY downloadManagerCmd.label "Lataukset">
+<!ENTITY downloadManagerCmd.accesskey "L">
+<!ENTITY downloadManagerCmd.commandkey "j">
+
+<!ENTITY addOnsManagerCmd.label "Lisäosat">
+<!ENTITY addOnsManagerCmd.accesskey "i">
+<!ENTITY addOnsManagerCmd.commandkey "a">
+
+<!ENTITY switchProfileCmd.label "Vaihda profiilia…">
+<!ENTITY switchProfileCmd.accesskey "a">
+
+<!ENTITY syncBrand.shortName.label "Synkronointi">
+<!-- LOCALIZATION NOTE (syncSetup.accesskey, syncSyncNowItem.accesskey):
+     Only one of these will show at a time (based on setup state),
+     so reusing accesskey is ok. -->
+<!ENTITY syncSetup.label "Määritä synkronointiasetukset…">
+<!ENTITY syncSetup.accesskey "M">
+<!ENTITY syncSyncNowItem.label "Synkronoi heti">
+<!ENTITY syncSyncNowItem.accesskey "S">

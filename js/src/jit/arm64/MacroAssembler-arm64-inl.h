@@ -66,6 +66,10 @@ void MacroAssembler::move32To64SignExtend(Register src, Register64 dest) {
   Sxtw(ARMRegister(dest.reg, 64), ARMRegister(src, 32));
 }
 
+void MacroAssembler::move32ZeroExtendToPtr(Register src, Register dest) {
+  Mov(ARMRegister(dest, 32), ARMRegister(src, 32));
+}
+
 // ===============================================================
 // Load instructions
 
@@ -199,6 +203,27 @@ void MacroAssembler::xorPtr(Register src, Register dest) {
 
 void MacroAssembler::xorPtr(Imm32 imm, Register dest) {
   Eor(ARMRegister(dest, 64), ARMRegister(dest, 64), Operand(imm.value));
+}
+
+// ===============================================================
+// Swap instructions
+
+void MacroAssembler::byteSwap16SignExtend(Register reg) {
+  rev16(ARMRegister(reg, 32), ARMRegister(reg, 32));
+  sxth(ARMRegister(reg, 32), ARMRegister(reg, 32));
+}
+
+void MacroAssembler::byteSwap16ZeroExtend(Register reg) {
+  rev16(ARMRegister(reg, 32), ARMRegister(reg, 32));
+  uxth(ARMRegister(reg, 32), ARMRegister(reg, 32));
+}
+
+void MacroAssembler::byteSwap32(Register reg) {
+  rev(ARMRegister(reg, 32), ARMRegister(reg, 32));
+}
+
+void MacroAssembler::byteSwap64(Register64 reg) {
+  rev(ARMRegister(reg.reg, 64), ARMRegister(reg.reg, 64));
 }
 
 // ===============================================================
@@ -374,18 +399,15 @@ void MacroAssembler::subFloat32(FloatRegister src, FloatRegister dest) {
 }
 
 void MacroAssembler::mul32(Register rhs, Register srcDest) {
-  mul32(srcDest, rhs, srcDest, nullptr, nullptr);
+  mul32(srcDest, rhs, srcDest, nullptr);
 }
 
 void MacroAssembler::mul32(Register src1, Register src2, Register dest,
-                           Label* onOver, Label* onZero) {
+                           Label* onOver) {
   Smull(ARMRegister(dest, 64), ARMRegister(src1, 32), ARMRegister(src2, 32));
   if (onOver) {
     Cmp(ARMRegister(dest, 64), Operand(ARMRegister(dest, 32), vixl::SXTW));
     B(onOver, NotEqual);
-  }
-  if (onZero) {
-    Cbz(ARMRegister(dest, 32), onZero);
   }
 
   // Clear upper 32 bits.
@@ -485,6 +507,8 @@ void MacroAssembler::inc64(AbsoluteAddress dest) {
 void MacroAssembler::neg32(Register reg) {
   Negs(ARMRegister(reg, 32), Operand(ARMRegister(reg, 32)));
 }
+
+void MacroAssembler::neg64(Register64 reg) { negPtr(reg.reg); }
 
 void MacroAssembler::negPtr(Register reg) {
   Negs(ARMRegister(reg, 64), Operand(ARMRegister(reg, 64)));
@@ -800,6 +824,16 @@ void MacroAssembler::branch32(Condition cond, Register lhs, Imm32 imm,
   B(label, cond);
 }
 
+void MacroAssembler::branch32(Condition cond, Register lhs, const Address& rhs,
+                              Label* label) {
+  vixl::UseScratchRegisterScope temps(this);
+  const Register scratch = temps.AcquireX().asUnsized();
+  MOZ_ASSERT(scratch != lhs);
+  MOZ_ASSERT(scratch != rhs.base);
+  load32(rhs, scratch);
+  branch32(cond, lhs, scratch, label);
+}
+
 void MacroAssembler::branch32(Condition cond, const Address& lhs, Register rhs,
                               Label* label) {
   vixl::UseScratchRegisterScope temps(this);
@@ -1005,18 +1039,7 @@ void MacroAssembler::branchPtr(Condition cond, const BaseIndex& lhs,
 
 void MacroAssembler::branchPrivatePtr(Condition cond, const Address& lhs,
                                       Register rhs, Label* label) {
-#if defined(JS_UNALIGNED_PRIVATE_VALUES)
   branchPtr(cond, lhs, rhs, label);
-#else
-  vixl::UseScratchRegisterScope temps(this);
-  const Register scratch = temps.AcquireX().asUnsized();
-  if (rhs != scratch) {
-    movePtr(rhs, scratch);
-  }
-  // Instead of unboxing lhs, box rhs and do direct comparison with lhs.
-  rshiftPtr(Imm32(1), scratch);
-  branchPtr(cond, lhs, scratch, label);
-#endif
 }
 
 void MacroAssembler::branchFloat(DoubleCondition cond, FloatRegister lhs,
@@ -1060,7 +1083,7 @@ void MacroAssembler::branchTruncateFloat32MaybeModUint32(FloatRegister src,
 
 void MacroAssembler::branchTruncateFloat32ToInt32(FloatRegister src,
                                                   Register dest, Label* fail) {
-  convertFloat32ToInt32(src, dest, fail);
+  convertFloat32ToInt32(src, dest, fail, false);
 }
 
 void MacroAssembler::branchDouble(DoubleCondition cond, FloatRegister lhs,
@@ -1105,7 +1128,7 @@ void MacroAssembler::branchTruncateDoubleMaybeModUint32(FloatRegister src,
 
 void MacroAssembler::branchTruncateDoubleToInt32(FloatRegister src,
                                                  Register dest, Label* fail) {
-  convertDoubleToInt32(src, dest, fail);
+  convertDoubleToInt32(src, dest, fail, false);
 }
 
 template <typename T>
@@ -1127,7 +1150,21 @@ void MacroAssembler::branchMul32(Condition cond, T src, Register dest,
                                  Label* label) {
   MOZ_ASSERT(cond == Assembler::Overflow);
   vixl::UseScratchRegisterScope temps(this);
-  mul32(src, dest, dest, label, nullptr);
+  mul32(src, dest, dest, label);
+}
+
+template <typename T>
+void MacroAssembler::branchRshift32(Condition cond, T src, Register dest,
+                                    Label* label) {
+  MOZ_ASSERT(cond == Zero || cond == NonZero);
+  rshift32(src, dest);
+  branch32(cond == Zero ? Equal : NotEqual, dest, Imm32(0), label);
+}
+
+void MacroAssembler::branchNeg32(Condition cond, Register reg, Label* label) {
+  MOZ_ASSERT(cond == Overflow);
+  neg32(reg);
+  B(label, cond);
 }
 
 void MacroAssembler::decBranchPtr(Condition cond, Register lhs, Imm32 rhs,
@@ -1404,6 +1441,11 @@ void MacroAssembler::branchTestSymbol(Condition cond, Register tag,
   branchTestSymbolImpl(cond, tag, label);
 }
 
+void MacroAssembler::branchTestSymbol(Condition cond, const Address& address,
+                                      Label* label) {
+  branchTestSymbolImpl(cond, address, label);
+}
+
 void MacroAssembler::branchTestSymbol(Condition cond, const BaseIndex& address,
                                       Label* label) {
   branchTestSymbolImpl(cond, address, label);
@@ -1424,6 +1466,11 @@ void MacroAssembler::branchTestSymbolImpl(Condition cond, const T& t,
 void MacroAssembler::branchTestBigInt(Condition cond, Register tag,
                                       Label* label) {
   branchTestBigIntImpl(cond, tag, label);
+}
+
+void MacroAssembler::branchTestBigInt(Condition cond, const Address& address,
+                                      Label* label) {
+  branchTestBigIntImpl(cond, address, label);
 }
 
 void MacroAssembler::branchTestBigInt(Condition cond, const BaseIndex& address,
@@ -1512,6 +1559,12 @@ void MacroAssembler::branchTestGCThing(Condition cond, const Address& address,
 void MacroAssembler::branchTestGCThing(Condition cond, const BaseIndex& address,
                                        Label* label) {
   branchTestGCThingImpl(cond, address, label);
+}
+
+void MacroAssembler::branchTestGCThing(Condition cond,
+                                       const ValueOperand& value,
+                                       Label* label) {
+  branchTestGCThingImpl(cond, value, label);
 }
 
 template <typename T>
@@ -1611,6 +1664,19 @@ void MacroAssembler::cmp32MovePtr(Condition cond, Register lhs, Imm32 rhs,
   cmp32(lhs, rhs);
   Csel(ARMRegister(dest, 64), ARMRegister(src, 64), ARMRegister(dest, 64),
        cond);
+}
+
+void MacroAssembler::cmp32LoadPtr(Condition cond, const Address& lhs, Imm32 rhs,
+                                  const Address& src, Register dest) {
+  // ARM64 does not support conditional loads, so we use a branch with a CSel
+  // (to prevent Spectre attacks).
+  vixl::UseScratchRegisterScope temps(this);
+  const ARMRegister scratch64 = temps.AcquireX();
+  Label done;
+  branch32(Assembler::InvertCondition(cond), lhs, rhs, &done);
+  loadPtr(src, scratch64.asUnsized());
+  Csel(ARMRegister(dest, 64), scratch64, ARMRegister(dest, 64), cond);
+  bind(&done);
 }
 
 void MacroAssembler::test32LoadPtr(Condition cond, const Address& addr,
@@ -1728,6 +1794,31 @@ void MacroAssembler::clampIntToUint8(Register reg) {
   Csel(reg32, reg32, vixl::wzr, Assembler::GreaterThanOrEqual);
   Mov(scratch32, Operand(0xff));
   Csel(reg32, reg32, scratch32, Assembler::LessThanOrEqual);
+}
+
+void MacroAssembler::fallibleUnboxPtr(const ValueOperand& src, Register dest,
+                                      JSValueType type, Label* fail) {
+  MOZ_ASSERT(type == JSVAL_TYPE_OBJECT || type == JSVAL_TYPE_STRING ||
+             type == JSVAL_TYPE_SYMBOL || type == JSVAL_TYPE_BIGINT);
+  // dest := src XOR mask
+  // fail if dest >> JSVAL_TAG_SHIFT != 0
+  const ARMRegister src64(src.valueReg(), 64);
+  const ARMRegister dest64(dest, 64);
+  Eor(dest64, src64, Operand(JSVAL_TYPE_TO_SHIFTED_TAG(type)));
+  Cmp(vixl::xzr, Operand(dest64, vixl::LSR, JSVAL_TAG_SHIFT));
+  j(Assembler::NotEqual, fail);
+}
+
+void MacroAssembler::fallibleUnboxPtr(const Address& src, Register dest,
+                                      JSValueType type, Label* fail) {
+  loadValue(src, ValueOperand(dest));
+  fallibleUnboxPtr(ValueOperand(dest), dest, type, fail);
+}
+
+void MacroAssembler::fallibleUnboxPtr(const BaseIndex& src, Register dest,
+                                      JSValueType type, Label* fail) {
+  loadValue(src, ValueOperand(dest));
+  fallibleUnboxPtr(ValueOperand(dest), dest, type, fail);
 }
 
 //}}} check_macroassembler_style

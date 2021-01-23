@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY openAttachmentCmd.label    "ખોલો">  
+<!ENTITY openAttachmentCmd.accesskey		"O">  
+<!ENTITY saveAsAttachmentCmd.label    "આ રીતે સંગ્રહો...">  
+<!ENTITY saveAsAttachmentCmd.accesskey		"A">  
+<!ENTITY detachAttachmentCmd.label    "જોડો ...">  
+<!ENTITY deleteAttachmentCmd.label    "કાઢી નાંખો">  
+<!ENTITY saveAllAttachmentsCmd.label    "બધું સંગ્રહો...">  
+<!ENTITY saveAllAttachmentsCmd.accesskey		"S">  
+<!ENTITY detachAllAttachmentsCmd.label    "બધું જોડો...">  
+<!ENTITY detachAllAttachmentsCmd.accesskey    "D">  
+<!ENTITY deleteAllAttachmentsCmd.label    "બધું કાઢી નાંખો...">  
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "E">  
+
+<!ENTITY copyLinkCmd.label        "કડીના સ્થાનની નકલ કરો">  
+<!ENTITY copyLinkCmd.accesskey		"C">  

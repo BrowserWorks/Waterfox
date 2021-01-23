@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "&brandShortName; өніміне қош келдіңіз">
+<!ENTITY header2.label "Жаңа эл. пошта адресі керек пе?">
+<!ENTITY other.languages "Біз тек сіздің аймағыңызда қызмет көрсететін адрестер ұсынушыларын көрсетеміз. Барлық ұсынушыларды қарау үшін осында шертіңіз.">
+<!ENTITY error.line1 "Кешіріңіз, ұсынылатын эл. пошта адрестерін таба алмадық.">
+<!ENTITY error.line2 "Сіз көбірек эл. поштаны табу үшін ник аттарын немесе басқа терминдер бойынша іздей аласыз.">
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+
+<!ENTITY error.suggest.before "Сонымен қатар сіз ">
+<!ENTITY error.suggest.middle "басқа тегін эл. пошта тіркелгі таңдауын қолдана аласыз">
+<!ENTITY error.suggest.after ".">
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+
+<!ENTITY success.title.before "Сәлеметсіз бе ">
+<!ENTITY success.title.after ", сіз үшін келесі эл. пошта адрестері қолжетерлік болып тұр:">
+<!ENTITY success.tip "(Сіз көбірек эл. поштаны табу үшін ник аттарын немесе басқа терминдер бойынша іздей аласыз)">
+<!ENTITY partnership.description "&brandShortName; бірнеше ұсынушылармен серіктесіп, сізге жаңа эл. пошта тіркелгісін ұсына алады. Бастау үшін, үстіндегі өрістерге атыңыз бен фамилияңызды немесе басқа ұнататын сөздерді енгізіңіз.">
+<!ENTITY existing.header "Қолданғыңыз келетін адресіңіз бар ма?">
+<!ENTITY tinyheader.title "Адресіңіз бар ма?">
+<!ENTITY tinyheader.existing "Осыны аттап кетіп, менің бар болып тұрған эл. поштамды қолдану">
+<!ENTITY content.close "Тіркелгімді кейінірек баптаймын.">
+<!ENTITY successful.title "Құттықтаймыз!">
+<!ENTITY successful.successMessage "Тіркелгіңізді сәтті баптадыңыз.">
+<!ENTITY successful.write "Эл. пошта жазыңыз">
+<!ENTITY successful.write.desc "Достарыңызға және отбасыңызға жаңа адресіңіз туралы айтыңыз.<br/> Жаңа тіркелгіні сол үшін алдыңыз ғой?">
+<!ENTITY successful.customize "&brandShortName; өнімін бірнеше тамаша қосымшамен баптау">
+<!ENTITY successful.customize.desc "&brandShortName; өнімін өзіңізге жақсарту үшін жарайтын мыңдаған қосымшалар бар.">
+<!ENTITY successful.attach "Эл. поштама жеке қолтаңбаны қою">
+<!ENTITY successful.attach.desc "Сіз жіберетін әр хаттың соңына дәйексөз немесе өзіңіз туралы ақпаратты қоса аласыз.">
+<!ENTITY successful.close "Бұл терезені жабу.">
+<!ENTITY input.namePlaceholder "Атыңыз, немесе ник атыңыз">
+<!ENTITY input.search "Іздеу">
+<!ENTITY search_engine.title "Іздеу жүйесін баптау">
+<!ENTITY search_engine.message "Эл. пошта ұсынушыңыз сонымен қатар интернетте іздеу мүмкіндігін ұсына алады.">
+<!ENTITY search_engine.button "Дайын">

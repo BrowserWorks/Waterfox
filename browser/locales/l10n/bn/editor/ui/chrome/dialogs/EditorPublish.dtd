@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "পৃষ্ঠা প্রকাশ">
+<!ENTITY windowTitleSettings.label "প্রকাশের সেটিং">
+<!ENTITY publishTab.label "প্রকাশ">
+<!ENTITY settingsTab.label "সেটিং">
+<!ENTITY publishButton.label "প্রকাশ">
+<!-- Publish Tab Panel -->
+
+<!ENTITY siteList.label "সাইটের নাম (e):">
+<!ENTITY siteList.accesskey "e">
+<!ENTITY siteList.tooltip "আপনি যে সাইটে প্রকাশ করতে চান সেটি নির্বাচন করুন">
+<!ENTITY newSiteButton.label "নতুন সাইট (N)">
+<!ENTITY newSiteButton.accesskey "N">
+<!ENTITY docDirList.label "এই পাতার জন্য সাইট সাবডিরেক্টরি (S):">
+<!ENTITY docDirList.accesskey "S">
+<!ENTITY docDirList.tooltip "এই পাতার জন্য দূরবর্তী সাবডিরেক্টরির নাম দিন বা নির্বাচন করুন">
+<!ENTITY publishImgCheckbox.label "ছবি এবং অন্যান্য ফাইল অন্তর্ভূক্ত করণ (o)">
+<!ENTITY publishImgCheckbox.accesskey "o">
+<!ENTITY publishImgCheckbox.tooltip "এই পৃষ্ঠা দ্বারা রেফারেন্সকৃত ছবি এবং অন্যান্য ফাইল প্রকাশ করা হবে">
+<!ENTITY sameLocationRadio.label "পৃষ্ঠার একই অবস্থান ব্যবহার (U)">
+<!ENTITY sameLocationRadio.accesskey "U">
+<!ENTITY sameLocationRadio.tooltip "পৃষ্ঠার একই অবস্থানে ফাইল প্রকাশ করুন">
+<!ENTITY useSubdirRadio.label "এই সাইট সাবডিরেক্টরিটি ব্যবহার করুন (d):">
+<!ENTITY useSubdirRadio.accesskey "d">
+<!ENTITY useSubdirRadio.tooltip "নির্বাচিত দূরবর্তী সাবডিরেক্টরিতে ফাইল প্রকাশ করুন">
+<!ENTITY otherDirList.tooltip "যে দূরবর্তী সাবডিরেক্টরিতে ফাইল প্রকাশ করা হবে তা নির্বাচন করুন বা তার নাম দিন">
+<!ENTITY pageTitle.label "পৃষ্ঠার শিরোনাম (T):">
+<!ENTITY pageTitle.accesskey "T">
+<!ENTITY pageTitle.tooltip "উইন্ডো এবং বুকমার্কে শনাক্ত করার জন্য পৃষ্ঠার একটি শিরোনাম দিন">
+<!ENTITY pageTitleExample.label "উদাহরণস্বরূপ: &quot;আমার ওয়েব পেজ&quot;">
+<!ENTITY filename.label "ফাইলের নাম (F):">
+<!ENTITY filename.accesskey "F">
+<!ENTITY filename.tooltip "একটি ওয়েবপেজের জন্য '.html' সহ, এই ফাইলের জন্য একটি নাম দিন">
+<!ENTITY filenameExample.label "উদাহরণস্বরূপ: &quot;mypage.html&quot;">
+<!ENTITY setDefaultButton.label "ডিফল্ট হিসেবে নিযুক্ত (D)">
+<!ENTITY setDefaultButton.accesskey "D">
+<!ENTITY removeButton.label "সাইট সরিয়ে ফেলা (R)">
+<!ENTITY removeButton.accesskey "R">
+<!-- Settings Tab Panel -->
+
+<!ENTITY publishSites.label "সাইট প্রকাশ করা হচ্ছে">
+<!ENTITY serverInfo.label "সার্ভারের তথ্য">
+<!ENTITY loginInfo.label "লগইন তথ্য">
+<!ENTITY siteName.label "সাইটের নাম (e):">
+<!ENTITY siteName.accesskey "e">
+<!ENTITY siteName.tooltip "একটি ডাকনাম, যা এই প্রকাশ করার সাইটকে শনাক্ত করে (উদাহরণস্বরূপ: 'MySite')">
+<!ENTITY siteUrl.label "ঠিকানা প্রকাশ (উদাহরণস্বরূপ: 'ftp://ftp.myisp.com/myusername') (a):">
+<!ENTITY siteUrl.accesskey "a">
+<!ENTITY siteUrl.tooltip "আপনার ইন্টারনেট সেবাদাতা বা ওয়েব হোস্টিং সেবা দ্বারা প্রদত্ত FTP:// বা HTTP:// ঠিকানা">
+<!ENTITY browseUrl.label "আপনার হোমপেজের HTTP ঠিকানা (উদাহরণস্বরূপ: 'http://www.myisp.com/myusername'): (T)">
+<!ENTITY browseUrl.accesskey "T">
+<!ENTITY browseUrl.tooltip "আপনার হোম ডিরেক্টরির HTTP:// ঠিকানা (ফাইলের নাম অন্তর্ভূক্ত করা হবে না)">
+<!ENTITY username.label "ব্যবহারকারী নাম (U):">
+<!ENTITY username.accesskey "U">
+<!ENTITY username.tooltip "ইন্টারনেট সেবাদাতা বা ওয়েব হোস্টিং সেবাতে লগইন করতে, আপনার ব্যবহৃত ব্যবহারকারী নাম">
+<!ENTITY password.label "পাসওয়ার্ড (w):">
+<!ENTITY password.accesskey "w">
+<!ENTITY password.tooltip "আপনার ব্যবহারকারী নামের সাথে সংশ্লিষ্ট পাসওয়ার্ড">
+<!ENTITY savePassword.label "পাসওয়ার্ড সংরক্ষণ করুন (S)">
+<!ENTITY savePassword.accesskey "S">
+<!ENTITY savePassword.tooltip "পাসওয়ার্ড ব্যবস্থাপক ব্যবহার করে আপনার পাসওয়ার্ড নিরাপদভাবে সংরক্ষণ করতে এটি নির্বাচন করুন">

@@ -4,8 +4,21 @@
 
 // @flow
 
+import {
+  getSourceActor,
+  getSourceActorBreakableLines,
+  getSourceActorBreakpointColumns,
+  type SourceActorId,
+  type SourceActor,
+} from "../reducers/source-actors";
+import {
+  memoizeableAction,
+  type MemoizedAction,
+} from "../utils/memoizableAction";
+import { PROMISE } from "./utils/middleware/promise";
+
 import type { ThunkArgs } from "./types";
-import type { SourceActor } from "../reducers/source-actors";
+import type { Context } from "../utils/context";
 
 export function insertSourceActor(item: SourceActor) {
   return insertSourceActors([item]);
@@ -24,9 +37,51 @@ export function removeSourceActor(item: SourceActor) {
 }
 export function removeSourceActors(items: Array<SourceActor>) {
   return function({ dispatch }: ThunkArgs) {
-    dispatch({
-      type: "REMOVE_SOURCE_ACTORS",
-      items,
-    });
+    dispatch({ type: "REMOVE_SOURCE_ACTORS", items });
   };
 }
+
+export const loadSourceActorBreakpointColumns: MemoizedAction<
+  {| id: SourceActorId, line: number, cx: Context |},
+  Array<number>
+> = memoizeableAction("loadSourceActorBreakpointColumns", {
+  createKey: ({ id, line }) => `${id}:${line}`,
+  getValue: ({ id, line }, { getState }) =>
+    getSourceActorBreakpointColumns(getState(), id, line),
+  action: async ({ id, line }, { dispatch, getState, client }) => {
+    await dispatch({
+      type: "SET_SOURCE_ACTOR_BREAKPOINT_COLUMNS",
+      sourceId: id,
+      line,
+      [PROMISE]: (async () => {
+        const positions = await client.getSourceActorBreakpointPositions(
+          getSourceActor(getState(), id),
+          {
+            start: { line, column: 0 },
+            end: { line: line + 1, column: 0 },
+          }
+        );
+
+        return positions[line] || [];
+      })(),
+    });
+  },
+});
+
+export const loadSourceActorBreakableLines: MemoizedAction<
+  {| id: SourceActorId, cx: Context |},
+  Array<number>
+> = memoizeableAction("loadSourceActorBreakableLines", {
+  createKey: args => args.id,
+  getValue: ({ id }, { getState }) =>
+    getSourceActorBreakableLines(getState(), id),
+  action: async ({ id }, { dispatch, getState, client }) => {
+    await dispatch({
+      type: "SET_SOURCE_ACTOR_BREAKABLE_LINES",
+      sourceId: id,
+      [PROMISE]: client.getSourceActorBreakableLines(
+        getSourceActor(getState(), id)
+      ),
+    });
+  },
+});

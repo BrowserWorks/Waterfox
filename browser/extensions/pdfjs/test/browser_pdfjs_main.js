@@ -30,7 +30,7 @@ add_task(async function test() {
     async function(newTabBrowser) {
       await waitForPdfJS(newTabBrowser, TESTROOT + "file_pdfjs_test.pdf");
 
-      await ContentTask.spawn(newTabBrowser, null, async function() {
+      await SpecialPowers.spawn(newTabBrowser, [], async function() {
         // Overall sanity tests
         Assert.ok(
           content.document.querySelector("div#viewer"),
@@ -62,7 +62,7 @@ add_task(async function test() {
         var viewBookmark = content.document.querySelector("a#viewBookmark");
         viewBookmark.click();
 
-        Assert.ok(viewBookmark.href.length > 0, "viewBookmark button has href");
+        Assert.ok(!!viewBookmark.href.length, "viewBookmark button has href");
 
         var viewer = content.wrappedJSObject.PDFViewerApplication;
         await viewer.close();

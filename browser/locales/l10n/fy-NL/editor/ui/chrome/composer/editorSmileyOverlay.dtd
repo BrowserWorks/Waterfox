@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Smiley Menu items -->
+<!ENTITY insertSmiley.label "Smiley">
+<!ENTITY insertSmiley.accesskey "S">
+
+<!ENTITY smiley1Cmd.label "Glimke">
+<!ENTITY smiley1Cmd.accesskey "G">
+<!ENTITY smiley1Cmd.tooltip "Foegje in laitsjend gesicht yn">
+<!ENTITY smiley2Cmd.label "Tryst">
+<!ENTITY smiley2Cmd.accesskey "T">
+<!ENTITY smiley2Cmd.tooltip "Foegje in tryst gesicht yn">
+<!ENTITY smiley3Cmd.label "Knypeach">
+<!ENTITY smiley3Cmd.accesskey "n">
+<!ENTITY smiley3Cmd.tooltip "Foegje in knypeagjend gesicht yn">
+<!ENTITY smiley4Cmd.label "Tonge útstekke">
+<!ENTITY smiley4Cmd.accesskey "ú">
+<!ENTITY smiley4Cmd.tooltip "Foegje in gesicht mei útstutsen tonge yn">
+<!ENTITY smiley5Cmd.label "Laits">
+<!ENTITY smiley5Cmd.accesskey "L">
+<!ENTITY smiley5Cmd.tooltip "Foegje in laitsjend gesicht yn">
+<!ENTITY smiley6Cmd.label "Reade holle">
+<!ENTITY smiley6Cmd.accesskey "R">
+<!ENTITY smiley6Cmd.tooltip "Foegje in reade holle yn">
+<!ENTITY smiley7Cmd.label "Twifel">
+<!ENTITY smiley7Cmd.accesskey "T">
+<!ENTITY smiley7Cmd.tooltip "Foegje in twiveljend gesicht yn">
+<!ENTITY smiley8Cmd.label "Ferbaasd">
+<!ENTITY smiley8Cmd.accesskey "b">
+<!ENTITY smiley8Cmd.tooltip "Foegje in ferwûndere gesicht yn">
+<!ENTITY smiley9Cmd.label "Tút">
+<!ENTITY smiley9Cmd.accesskey "t">
+<!ENTITY smiley9Cmd.tooltip "Foegje in tútsjend gesicht yn">
+<!ENTITY smiley10Cmd.label "Skreau">
+<!ENTITY smiley10Cmd.accesskey "S">
+<!ENTITY smiley10Cmd.tooltip "Foegje in skreauwend gesicht yn">
+<!ENTITY smiley11Cmd.label "Cool">
+<!ENTITY smiley11Cmd.accesskey "C">
+<!ENTITY smiley11Cmd.tooltip "Foegje in cool gesicht yn">
+<!ENTITY smiley12Cmd.label "Habsucht">
+<!ENTITY smiley12Cmd.accesskey "H">
+<!ENTITY smiley12Cmd.tooltip "Foegje in habsuchtich gesicht yn">
+<!ENTITY smiley13Cmd.label "Mûle fol tosken">
+<!ENTITY smiley13Cmd.accesskey "M">
+<!ENTITY smiley13Cmd.tooltip "Foegje in gesicht mei de mûle fol tosken yn">
+<!ENTITY smiley14Cmd.label "Unskuld">
+<!ENTITY smiley14Cmd.accesskey "U">
+<!ENTITY smiley14Cmd.tooltip "Foegje in ûnskuldich gesicht yn">
+<!ENTITY smiley15Cmd.label "Triennen">
+<!ENTITY smiley15Cmd.accesskey "r">
+<!ENTITY smiley15Cmd.tooltip "Foegje in gûlend gesicht yn">
+<!ENTITY smiley16Cmd.label "Ik sis neat">
+<!ENTITY smiley16Cmd.accesskey "I">
+<!ENTITY smiley16Cmd.tooltip "Foegje in gesicht dat neat seit yn">
+<!ENTITY SmileButton.label "Smiley ynfoegje">
+<!ENTITY SmileButton.tooltip "Foegje in smiley yn">

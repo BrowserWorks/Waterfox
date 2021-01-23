@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name "Panel Kalendari">
+<!ENTITY lightning.toolbar.calendar.name.accesskey "K">
+<!ENTITY lightning.toolbar.task.name "Panel Punësh">
+<!ENTITY lightning.toolbar.task.name.accesskey "P">
+
+<!ENTITY lightning.toolbar.sync.label "Njëkohësoje">
+<!ENTITY lightning.toolbar.sync.tooltip "Ringarkoni kalendarë dhe njëkohësoni ndryshimet">
+<!ENTITY lightning.toolbar.delete.label "Fshije">
+<!ENTITY lightning.toolbar.delete.tooltip "Fshini veprimtari ose punë të përzgjedhura">
+<!ENTITY lightning.toolbar.edit.label "Përpunojeni">
+<!ENTITY lightning.toolbar.edit.tooltip "Përpunoni veprimtari ose punë të përzgjedhura">
+<!ENTITY lightning.toolbar.gototoday.label "Shko te Sot">
+<!ENTITY lightning.toolbar.gototoday.tooltip "Shko te Sot">
+<!ENTITY lightning.toolbar.print.label "Shtype">
+<!ENTITY lightning.toolbar.print.tooltip "Shtypni veprimtari ose punë">
+
+<!-- Mode Toolbar -->
+<!ENTITY lightning.toolbar.calendar.label     "Kalendar">
+<!ENTITY lightning.toolbar.calendar.tooltip   "Kaloni te skeda e kalendarit">
+<!ENTITY lightning.toolbar.calendar.accesskey "K">
+<!ENTITY lightning.toolbar.task.label         "Punë">
+<!ENTITY lightning.toolbar.task.tooltip       "Kaloni te skeda e punëve">
+<!ENTITY lightning.toolbar.task.accesskey     "P">
+
+<!-- Toolbar write button -->
+<!ENTITY lightning.toolbar.newevent.label     "Veprimtari">
+<!ENTITY lightning.toolbar.newevent.tooltip   "Krijoni veprimtari të re">
+<!ENTITY lightning.toolbar.newtask.label      "Punë">
+<!ENTITY lightning.toolbar.newtask.tooltip    "Krijoni punë të re">
+
+<!-- Calendar and Task Mode Toolbar -->
+<!ENTITY lightning.toolbar.day.label                 "Ditë">
+<!ENTITY lightning.toolbar.day.accesskey             "D">
+<!ENTITY lightning.toolbar.week.label                "Javë">
+<!ENTITY lightning.toolbar.week.accesskey            "J">
+<!ENTITY lightning.toolbar.multiweek.label           "Shumëjavësh">
+<!ENTITY lightning.toolbar.multiweek.accesskey       "S">
+<!ENTITY lightning.toolbar.month.label               "Muaj">
+<!ENTITY lightning.toolbar.month.accesskey           "M">
+<!-- LOCALIZATION NOTE: the same as appmenuButton.label and appmenuButton1.tooltip
+     from messenger.dtd -->
+<!ENTITY lightning.toolbar.appmenuButton.label       "Menu Aplikacionesh">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip    "Shfaq Menunë e &brandShortName;-it">
+<!ENTITY lightning.toolbar.calendarmenu.label        "Kuadrat Kalendari">
+<!ENTITY lightning.toolbar.calendarmenu.accesskey    "K">
+<!ENTITY lightning.toolbar.calendarpane.label        "Shfaqe Kuadratin e Kalendarit">
+<!ENTITY lightning.toolbar.calendarpane.accesskey    "K">

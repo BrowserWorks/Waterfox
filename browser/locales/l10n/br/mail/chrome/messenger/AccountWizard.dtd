@@ -1,0 +1,128 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "Skoazeller kontoù">
+<!ENTITY accountWizard.size "width: 50em; height: 40em;">
+
+<!-- Entities for Account Type page -->
+
+<!ENTITY accountSetupInfo2.label "Ret eo deoc'h krouiñ ur gont evit degemer kemennadennoù.">
+<!ENTITY accountTypeTitle.label "Aozañ kontoù nevez">
+<!ENTITY accountTypeDesc2.label "Dastum a raio ar skoazeller-mañ an titouroù ret evit kefluniañ ur gont. Ma n'anavezit ket an titouroù azgoulennet, kit e darempred gant hoc'h ardead reizhiad pe ho pourchaser Internet.">
+<!ENTITY accountTypeDirections.label "Diuzit peseurt kont a fell deoc'h aozañ :">
+<!ENTITY accountTypeMail.label "Kont ar posteloù">
+<!ENTITY accountTypeMail.accesskey "p">
+<!ENTITY accountTypeNews.label "Kont ar strolladoù-keleier">
+<!ENTITY accountTypeNews.accesskey "s">
+
+<!-- LOCALIZATION NOTE(accountTypeMovemail.label): do not translate 'Movemail' -->
+<!ENTITY accountTypeMovemail.label "Unix Mailspool (Movemail)">
+<!ENTITY accountTypeMovemail.accesskey "U">
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "Titouroù ar gont">
+<!ENTITY identityDesc.label "Pep kont he deus titouroù arbennik a servijo d'ober an diforc'h etrezoc'h-c'hwi hag ar re all pa resevot kemennadennoù.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "Roit pe anv a fell deoc&apos;h gwelout e-barzh ar vaezienn &quot;A-berzh&quot; pa vez kaset kemennadennoù ganeoc&apos;h.">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(da skouer, &quot;Yann Seitek&quot;).">
+<!ENTITY fullnameLabel.label "Hoc'h anv :">
+<!ENTITY fullnameLabel.accesskey "a">
+
+<!ENTITY emailLabel.label "Chomlec'h postel :">
+<!ENTITY emailLabel.accesskey "e">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "Titouroù an dafariad degemer">
+<!ENTITY incomingServerTypeDesc.label "Diuzit rizh an dafariad degemer a vo implijet ganeoc'h.">
+<!-- LOCALIZATION NOTE (imapType.label) : Do not translate "IMAP" in below line -->
+<!ENTITY imapType.label "IMAP">
+<!ENTITY imapType.accesskey "I">
+<!-- LOCALIZATION NOTE (popType.label) : Do not translate "POP" in below line -->
+<!ENTITY popType.label "POP">
+<!ENTITY popType.accesskey "P">
+<!ENTITY leaveMsgsOnSrvr.label "Leuskel ar c'hemennadennoù war an dafariad">
+<!ENTITY leaveMsgsOnSrvr.accesskey "L">
+<!ENTITY portNum.label "Porzh :">
+<!ENTITY portNum.accesskey "o">
+<!ENTITY defaultPortLabel.label "Diouer :">
+<!ENTITY defaultPortValue.label "">
+<!-- LOCALIZATION NOTE (incomingServerNameDesc.label) : Do not translate "&quot;pop.example.net&quot;" in below line -->
+<!ENTITY incomingServer.description "Bizskrivit anv ho tafariad degemer (da skouer, &quot;postel.skouer.net&quot;).">
+<!ENTITY incomingServer.label "Dafariad degemer :">
+<!ENTITY incomingServer.accesskey "D">
+<!-- LOCALIZATION NOTE (incomingUsername.description) : do not translate "&quot;jsmith&quot;" in below line -->
+<!ENTITY incomingUsername.description "Bizskrivit anv an arveriad degemer roet gant ho pourchaser postelerezh (da skouer &quot;ybrezhoneger&quot;).">
+<!ENTITY incomingUsername.label "Anv arveriad :">
+<!ENTITY incomingUsername.accesskey "A">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Roit anv ho tafariad strolladoù-keleier (NNTP) (&quot;news.skouer.net&quot; da skouer).">
+<!ENTITY newsServerLabel.label "Dafariad strolladoù-keleier :">
+<!ENTITY newsServerLabel.accesskey "D">
+
+<!-- Entities for Outgoing Server page -->
+
+<!ENTITY outgoingTitle.label "Titouroù an dafariad kas">
+<!-- LOCALIZATION NOTE (outgoingServer.description) : Do not translate "SMTP" and "&quot;smtp.example.net&quot;" in below line -->
+<!ENTITY outgoingServer.description "Bizskrivit anv ho tafariad kas (SMTP) (da skouer, &quot;smtp.skouer.net&quot;).">
+<!ENTITY outgoingServer.label "Dafariad kas :">
+<!ENTITY outgoingServer.accesskey "k">
+<!ENTITY outgoingUsername.description "Bizskrivit anv an arveriad kas roet gant ho pourchaser postelerezh (ar memes anv hag hoc'h anv degemer eo da gustum).">
+<!ENTITY outgoingUsername.label "Anv an arveriad kas :">
+<!ENTITY outgoingUsername.accesskey "n">
+
+<!-- LOCALIZATION NOTE (modifyOutgoing.suffix) : This string will be appended after each of
+     haveSmtp1.suffix3, haveSmtp2.suffix3, haveSmtp3.suffix3 .
+-->
+<!ENTITY modifyOutgoing.suffix "Daskemmet e vez an dafariadoù kas dre arventennoù kont.">
+<!-- LOCALIZATION NOTE (haveSmtp1.prefix and haveSmtp1.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp1.prefix and haveSmtp1.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp1.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp1.prefix "Ho tafariad kas red (SMTP), &quot;">
+<!ENTITY haveSmtp1.suffix3 "&quot;, a vo arveret.">
+<!-- LOCALIZATION NOTE (haveSmtp2.prefix and haveSmtp2.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp2.prefix and haveSmtp2.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp2.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp2.prefix "Hoc&apos;h anv arveriad-kas bremanel (SMTP), &quot;">
+<!ENTITY haveSmtp2.suffix3 "&quot;, a vo arveret.">
+<!-- LOCALIZATION NOTE (haveSmtp3.prefix and haveSmtp3.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp3.prefix and haveSmtp3.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp3.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp3.prefix "Peurheñvel eo ho tafariad kas (SMTP), &quot;">
+<!ENTITY haveSmtp3.suffix3 "&quot;, ouzh ho tafariad degemer. Arveret e vo anv arveriad ho tafariad da zont tre evit haeziñ eñ.">
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "Anv kont">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Bizskrivit an anv a servijo da zaveiñ ar gont-mañ (da skouer, &quot;Kont Labour&quot;, &quot;Kont Ger&quot; pe &quot;Kont Strollad-Keleier&quot;).">
+<!ENTITY accnameLabel.label "Anv ar gont :">
+<!ENTITY accnameLabel.accesskey "A">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "Gourc'hemennoù !">
+<!ENTITY completionText.label "Gwiriit eo reizh an titouroù a heul.">
+<!ENTITY serverTypePrefix.label "Rizh an dafariad degemer :">
+<!ENTITY serverNamePrefix.label "Anv an dafariad degemer :">
+<!ENTITY smtpServerNamePrefix.label "Anv an dafariad kas (SMTP) :">
+<!ENTITY newsServerNamePrefix.label "Anv dafariad ar strolladoù-keleier (NNTP) :">
+<!ENTITY downloadOnLogin.label "Pellgargañ kemennadennoù diouzhtu">
+<!ENTITY downloadOnLogin.accesskey "P">
+<!ENTITY deferStorageDesc.label "Laoskit goullo al log a heul a-benn enrollañ holl bosteloù ar gont-mañ en he c'havlec'hiad arbennik. Evel-se e vo diskouezet ar gont-mañ a-us d'an holl gontoù. Peotramant e vo diskouezet gant an teuliadoù lec'hel eus ar voestad-lizheroù hollek.">
+<!ENTITY deferStorage.label "Ober gant ur voest-lizheroù hollek (enrollañ posteloù en teuliadoù lec'hel)">
+<!ENTITY deferStorage.accesskey "O">
+<!ENTITY clickFinish.label "Klikit war Echuiñ evit enrollañ an arventennoù-mañ ha kuitaat Skoazeller ar c'hontoù.">
+<!ENTITY clickFinish.labelMac "Klikit war Graet evit enrollañ an arventennoù-mañ ha kuitaat Skoazeller ar c'hontoù.">

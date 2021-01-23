@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Message Header View Popup -->
+<!ENTITY AddToAddressBook.label            "Zu Adressbuch hinzufügen…">
+<!ENTITY AddToAddressBook.accesskey        "Z">
+<!ENTITY EditContact.label                 "Kontakt bearbeiten…">
+<!ENTITY EditContact.accesskey             "K">
+<!ENTITY ViewContact.label                 "Kontakt ansehen">
+<!ENTITY ViewContact.accesskey             "s">
+<!ENTITY SendMailTo.label                  "Mail verfassen an…">
+<!ENTITY SendMailTo.accesskey              "M">
+<!ENTITY CopyEmailAddress.label            "E-Mail-Adresse kopieren">
+<!ENTITY CopyEmailAddress.accesskey        "E">
+<!ENTITY CreateFilterFrom.label            "Filter erstellen aus…">
+<!ENTITY CreateFilterFrom.accesskey        "F">
+<!ENTITY openInBrowser.label               "Im Browser öffnen">
+<!ENTITY openInBrowser.accesskey           "o">
+<!ENTITY bookmarkLinkCmd.label             "Lesezeichen für diesen Link hinzufügen…">
+<!ENTITY bookmarkLinkCmd.accesskey         "d">
+<!ENTITY copyLinkCmd.label                 "Link-Adresse kopieren">
+<!ENTITY copyLinkCmd.accesskey             "L">
+<!ENTITY CopyMessageId.label               "Nachrichten-ID kopieren">
+<!ENTITY CopyMessageId.accesskey           "a">
+<!ENTITY OpenMessageForMsgId.label         "Nachricht für ID öffnen">
+<!ENTITY OpenMessageForMsgId.accesskey     "N">
+<!ENTITY OpenBrowserWithMsgId.label        "Browser mit Nachrichten-ID öffnen">
+<!ENTITY OpenBrowserWithMsgId.accesskey    "B">

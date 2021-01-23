@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "ویرایش پیشرفته…">
+<!ENTITY AdvancedEditButton.accessKey "E">
+<!ENTITY AdvancedEditButton.tooltip "افزودن یا تغییر دادن ویژگیهای HTML، ویژگی‌های style، و جاوا اسکریپت">
+<!ENTITY chooseFileButton.label "انتخاب پرونده...">
+<!ENTITY chooseFileButton.accessKey "F">
+<!ENTITY chooseFileLinkButton.label "Choose File...">
+<!ENTITY chooseFileLinkButton.accessKey "o">
+<!ENTITY makeUrlRelative.label "URL is relative to page location">
+<!ENTITY makeUrlRelative.accessKey "r">
+<!ENTITY makeUrlRelative.tooltip "Change between relative and absolute URL. You must first save the page to change this.">
+
+<!ENTITY LinkURLEditField2.label "مکان یک صفحه وب، یک پرونده محلّی، یا یک لنگر نام گذاری شده یا یک عنوان از منوی زمینهٔ فیلد را وارد کنید:">
+<!ENTITY LinkURLEditField2.accessKey "و">

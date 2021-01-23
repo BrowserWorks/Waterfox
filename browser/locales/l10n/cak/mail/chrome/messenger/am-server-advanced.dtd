@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Q'axinäq Kinuk'ulem Rub'i' Taqoya'l">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "IMAP rucholb'al k'uxasamaj:">
+<!ENTITY serverDirectory.accesskey "c">
+<!ENTITY usingSubscription.label "Kek'ut pe xa xe ri etz'ib'an taq yakwuj">
+<!ENTITY usingSubscription.accesskey "w">
+<!ENTITY dualUseFolders.label "Ri k'uxasamaj yeruk'üt taq yakwuj kik'wan taq achyakwuj chuqa' taq tzijol">
+<!ENTITY dualUseFolders.accesskey "y">
+<!ENTITY maximumConnectionsNumber.label "Nïm rajilab'al rokem ri k'uxasamaj pa jumejyak">
+<!ENTITY maximumConnectionsNumber.accesskey "N">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Re taq ajowab'äl re' nikiya' retal ri taq kikojol b'i'aj pa ri IMAP k'uxasamaj">
+<!ENTITY personalNamespace.label "Ichinan rukojol b'i'aj:">
+<!ENTITY personalNamespace.accesskey "I">
+<!ENTITY publicNamespace.label "Winaqil (komonin):">
+<!ENTITY publicNamespace.accesskey "a">
+<!ENTITY otherUsersNamespace.label "Ch'aqa' chik Winaqi':">
+<!ENTITY otherUsersNamespace.accesskey "C">
+<!ENTITY overrideNamespaces.label "Tiya' q'ij chi ri k'uxasamaj keruk'exa' re taq kikojol b'i'aj re'">
+<!ENTITY overrideNamespaces.accesskey "T">
+<!ENTITY pop3DeferringDesc.label "Toq niqasäx taqoya'l pa re rub'i' rutaqoya'l k'uxasamaj re', tokisäx re yakwuj re' richin yeyak ri k'ak'a' taq rutzijol:">
+<!ENTITY accountInbox.label "Rumolb'al re rub'i' taqoya'l re'">
+<!ENTITY accountInbox.accesskey "r">
+<!ENTITY deferToServer.label "Rumolb'al jalan chi rub'i' taqoya'l">
+<!ENTITY deferToServer.accesskey "j">
+<!ENTITY deferGetNewMail.label "Titz'aqatisäx re k'uxasamaj re' toq nik'ul k'ak'a' taqoya'l">
+<!ENTITY deferGetNewMail.accesskey "T">

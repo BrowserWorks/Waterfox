@@ -22,6 +22,8 @@ const { XPCOMUtils } = ChromeUtils.import(
   "resource://gre/modules/XPCOMUtils.jsm"
 );
 
+const { X509 } = ChromeUtils.import("resource://gre/modules/psm/X509.jsm");
+
 const isDebugBuild = Cc["@mozilla.org/xpcom/debug;1"].getService(Ci.nsIDebug2)
   .isDebugBuild;
 
@@ -75,6 +77,7 @@ const SSL_ERROR_NO_CYPHER_OVERLAP = SSL_ERROR_BASE + 2;
 const SSL_ERROR_BAD_CERT_DOMAIN = SSL_ERROR_BASE + 12;
 const SSL_ERROR_BAD_CERT_ALERT = SSL_ERROR_BASE + 17;
 const SSL_ERROR_WEAK_SERVER_CERT_KEY = SSL_ERROR_BASE + 132;
+const SSL_ERROR_DC_INVALID_KEY_USAGE = SSL_ERROR_BASE + 184;
 
 const MOZILLA_PKIX_ERROR_KEY_PINNING_FAILURE = MOZILLA_PKIX_ERROR_BASE + 0;
 const MOZILLA_PKIX_ERROR_CA_CERT_USED_AS_END_ENTITY =
@@ -115,6 +118,29 @@ const allCertificateUsages = {
 
 const NO_FLAGS = 0;
 
+const CRLiteModeDisabledPrefValue = 0;
+const CRLiteModeTelemetryOnlyPrefValue = 1;
+const CRLiteModeEnforcePrefValue = 2;
+
+// Convert a string to an array of bytes consisting of the char code at each
+// index.
+function stringToArray(s) {
+  let a = [];
+  for (let i = 0; i < s.length; i++) {
+    a.push(s.charCodeAt(i));
+  }
+  return a;
+}
+
+// Converts an array of bytes to a JS string using fromCharCode on each byte.
+function arrayToString(a) {
+  let s = "";
+  for (let b of a) {
+    s += String.fromCharCode(b);
+  }
+  return s;
+}
+
 // Commonly certificates are represented as PEM. The format is roughly as
 // follows:
 //
@@ -134,14 +160,27 @@ function pemToBase64(pem) {
 }
 
 function build_cert_chain(certNames, testDirectory = "bad_certs") {
-  let certList = Cc["@mozilla.org/security/x509certlist;1"].createInstance(
-    Ci.nsIX509CertList
-  );
+  let certList = [];
   certNames.forEach(function(certName) {
     let cert = constructCertFromFile(`${testDirectory}/${certName}.pem`);
-    certList.addCert(cert);
+    certList.push(cert);
   });
   return certList;
+}
+
+function areCertArraysEqual(certArrayA, certArrayB) {
+  if (certArrayA.length != certArrayB.length) {
+    return false;
+  }
+
+  for (let i = 0; i < certArrayA.length; i++) {
+    const certA = certArrayA[i];
+    const certB = certArrayB[i];
+    if (!certA.equals(certB)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 function readFile(file) {
@@ -173,7 +212,7 @@ function constructCertFromFile(filename) {
     Ci.nsIX509CertDB
   );
   try {
-    return certdb.constructX509(certBytes);
+    return certdb.constructX509(stringToArray(certBytes));
   } catch (e) {}
   // It might be PEM instead of DER.
   return certdb.constructX509FromBase64(pemToBase64(certBytes));
@@ -229,7 +268,8 @@ function checkCertErrorGenericAtTime(
   usage,
   time,
   /* optional */ isEVExpected,
-  /* optional */ hostname
+  /* optional */ hostname,
+  /* optional */ flags = NO_FLAGS
 ) {
   return new Promise((resolve, reject) => {
     let result = new CertVerificationExpectedErrorResult(
@@ -238,7 +278,7 @@ function checkCertErrorGenericAtTime(
       isEVExpected,
       resolve
     );
-    certdb.asyncVerifyCertAtTime(cert, usage, NO_FLAGS, hostname, time, result);
+    certdb.asyncVerifyCertAtTime(cert, usage, flags, hostname, time, result);
   });
 }
 
@@ -311,25 +351,8 @@ function clearOCSPCache() {
 }
 
 function clearSessionCache() {
-  let SSL_ClearSessionCache = null;
-  try {
-    SSL_ClearSessionCache = _getLibraryFunctionWithNoArguments(
-      "SSL_ClearSessionCache",
-      "ssl3",
-      ctypes.void_t
-    );
-  } catch (e) {
-    // On Windows, this is actually in the nss3 library.
-    SSL_ClearSessionCache = _getLibraryFunctionWithNoArguments(
-      "SSL_ClearSessionCache",
-      "nss3",
-      ctypes.void_t
-    );
-  }
-  if (!SSL_ClearSessionCache) {
-    throw new Error("couldn't get SSL_ClearSessionCache");
-  }
-  SSL_ClearSessionCache();
+  let nssComponent = Cc["@mozilla.org/psm;1"].getService(Ci.nsINSSComponent);
+  nssComponent.clearSSLExternalAndInternalSessionCache();
 }
 
 function getSSLStatistics() {
@@ -456,6 +479,27 @@ function add_connection_test(
   aAfterStreamOpen,
   /* optional */ aOriginAttributes
 ) {
+  add_test(function() {
+    if (aBeforeConnect) {
+      aBeforeConnect();
+    }
+    asyncConnectTo(
+      aHost,
+      aExpectedResult,
+      aWithSecurityInfo,
+      aAfterStreamOpen,
+      aOriginAttributes
+    ).then(run_next_test);
+  });
+}
+
+async function asyncConnectTo(
+  aHost,
+  aExpectedResult,
+  /* optional */ aWithSecurityInfo = undefined,
+  /* optional */ aAfterStreamOpen = undefined,
+  /* optional */ aOriginAttributes = undefined
+) {
   const REMOTE_PORT = 8443;
 
   function Connection(host) {
@@ -465,7 +509,7 @@ function add_connection_test(
     let sts = Cc["@mozilla.org/network/socket-transport-service;1"].getService(
       Ci.nsISocketTransportService
     );
-    this.transport = sts.createTransport(["ssl"], 1, host, REMOTE_PORT, null);
+    this.transport = sts.createTransport(["ssl"], host, REMOTE_PORT, null);
     // See bug 1129771 - attempting to connect to [::1] when the server is
     // listening on 127.0.0.1 causes frequent failures on OS X 10.10.
     this.transport.connectionFlags |= Ci.nsISocketTransport.DISABLE_IPV6;
@@ -510,10 +554,6 @@ function add_connection_test(
       if (aAfterStreamOpen) {
         aAfterStreamOpen(this.transport);
       }
-      let sslSocketControl = this.transport.securityInfo.QueryInterface(
-        Ci.nsISSLSocketControl
-      );
-      sslSocketControl.proxyStartSSL();
       this.outputStream.write("0", 1);
       let inStream = this.transport
         .openInputStream(0, 0, 0)
@@ -538,41 +578,32 @@ function add_connection_test(
     return connection.go();
   }
 
-  add_test(function() {
-    if (aBeforeConnect) {
-      aBeforeConnect();
-    }
-    connectTo(aHost).then(function(conn) {
-      info("handling " + aHost);
-      let expectedNSResult =
-        aExpectedResult == PRErrorCodeSuccess
-          ? Cr.NS_OK
-          : getXPCOMStatusFromNSS(aExpectedResult);
-      Assert.equal(
-        conn.result,
-        expectedNSResult,
-        "Actual and expected connection result should match"
+  return connectTo(aHost).then(function(conn) {
+    info("handling " + aHost);
+    let expectedNSResult =
+      aExpectedResult == PRErrorCodeSuccess
+        ? Cr.NS_OK
+        : getXPCOMStatusFromNSS(aExpectedResult);
+    Assert.equal(
+      conn.result,
+      expectedNSResult,
+      "Actual and expected connection result should match"
+    );
+    if (aWithSecurityInfo) {
+      aWithSecurityInfo(
+        conn.transport.securityInfo.QueryInterface(Ci.nsITransportSecurityInfo)
       );
-      if (aWithSecurityInfo) {
-        aWithSecurityInfo(
-          conn.transport.securityInfo.QueryInterface(
-            Ci.nsITransportSecurityInfo
-          )
-        );
-      }
-      run_next_test();
-    });
+    }
   });
 }
 
 function _getBinaryUtil(binaryUtilName) {
-  let utilBin = Services.dirsvc.get("CurProcD", Ci.nsIFile);
-  // On macOS, CurProcD is .../Contents/Resources, and most binary utilities
-  // are located there, but certutil is in .../Contents/MacOS, so we have to
-  // change the path accordingly.
-  if (Services.appinfo.OS === "Darwin" && binaryUtilName === "certutil") {
-    utilBin = utilBin.parent;
-    utilBin.append("MacOS");
+  let utilBin = Services.dirsvc.get("GreD", Ci.nsIFile);
+  // On macOS, GreD is .../Contents/Resources, and most binary utilities
+  // are located there, but certutil is in GreBinD (or .../Contents/MacOS),
+  // so we have to change the path accordingly.
+  if (binaryUtilName === "certutil") {
+    utilBin = Services.dirsvc.get("GreBinD", Ci.nsIFile);
   }
   utilBin.append(binaryUtilName + mozinfo.bin_suffix);
   // If we're testing locally, the above works. If not, the server executable
@@ -596,6 +627,16 @@ function _getBinaryUtil(binaryUtilName) {
 
 // Do not call this directly; use add_tls_server_setup
 function _setupTLSServerTest(serverBinName, certsPath, addDefaultRoot) {
+  asyncStartTLSTestServer(serverBinName, certsPath, addDefaultRoot).then(
+    run_next_test
+  );
+}
+
+async function asyncStartTLSTestServer(
+  serverBinName,
+  certsPath,
+  addDefaultRoot
+) {
   let certdb = Cc["@mozilla.org/security/x509certdb;1"].getService(
     Ci.nsIX509CertDB
   );
@@ -618,19 +659,21 @@ function _setupTLSServerTest(serverBinName, certsPath, addDefaultRoot) {
   envSvc.set("MOZ_TLS_SERVER_CALLBACK_PORT", CALLBACK_PORT);
 
   let httpServer = new HttpServer();
-  httpServer.registerPathHandler("/", function handleServerCallback(
-    aRequest,
-    aResponse
-  ) {
-    aResponse.setStatusLine(aRequest.httpVersion, 200, "OK");
-    aResponse.setHeader("Content-Type", "text/plain");
-    let responseBody = "OK!";
-    aResponse.bodyOutputStream.write(responseBody, responseBody.length);
-    executeSoon(function() {
-      httpServer.stop(run_next_test);
+  let serverReady = new Promise(resolve => {
+    httpServer.registerPathHandler("/", function handleServerCallback(
+      aRequest,
+      aResponse
+    ) {
+      aResponse.setStatusLine(aRequest.httpVersion, 200, "OK");
+      aResponse.setHeader("Content-Type", "text/plain");
+      let responseBody = "OK!";
+      aResponse.bodyOutputStream.write(responseBody, responseBody.length);
+      executeSoon(function() {
+        httpServer.stop(resolve);
+      });
     });
+    httpServer.start(CALLBACK_PORT);
   });
-  httpServer.start(CALLBACK_PORT);
 
   let serverBin = _getBinaryUtil(serverBinName);
   let process = Cc["@mozilla.org/process/util;1"].createInstance(Ci.nsIProcess);
@@ -639,11 +682,13 @@ function _setupTLSServerTest(serverBinName, certsPath, addDefaultRoot) {
   certDir.append(`${certsPath}`);
   Assert.ok(certDir.exists(), `certificate folder (${certsPath}) should exist`);
   // Using "sql:" causes the SQL DB to be used so we can run tests on Android.
-  process.run(false, ["sql:" + certDir.path], 1);
+  process.run(false, ["sql:" + certDir.path, Services.appinfo.processID], 2);
 
   registerCleanupFunction(function() {
     process.kill();
   });
+
+  await serverReady;
 }
 
 // Returns an Array of OCSP responses for a given ocspRespArray and a location
@@ -818,25 +863,6 @@ function stopOCSPResponder(responder) {
     responder.stop(resolve);
   });
 }
-
-// A prototype for a fake, error-free secInfo
-var FakeTransportSecurityInfo = function(certificate) {
-  this.serverCert = certificate;
-};
-
-FakeTransportSecurityInfo.prototype = {
-  serverCert: null,
-  cipherName: null,
-  keyLength: 2048,
-  isDomainMismatch: false,
-  isNotValidAtThisTime: false,
-  isUntrusted: false,
-  isExtendedValidation: false,
-  getInterface(aIID) {
-    return this.QueryInterface(aIID);
-  },
-  QueryInterface: ChromeUtils.generateQI(["nsITransportSecurityInfo"]),
-};
 
 // Utility functions for adding tests relating to certificate error overrides
 
@@ -1029,6 +1055,11 @@ function asyncTestCertificateUsages(certdb, cert, expectedUsages) {
  * Loads the pkcs11testmodule.cpp test PKCS #11 module, and registers a cleanup
  * function that unloads it once the calling test completes.
  *
+ * @param {nsIFile} libraryFile
+ *                  The dynamic library file that implements the module to
+ *                  load.
+ * @param {String} moduleName
+ *                 What to call the module.
  * @param {Boolean} expectModuleUnloadToFail
  *                  Should be set to true for tests that manually unload the
  *                  test module, so the attempt to auto unload the test module
@@ -1036,18 +1067,15 @@ function asyncTestCertificateUsages(certdb, cert, expectedUsages) {
  *                  otherwise, so failure to automatically unload the test
  *                  module gets reported.
  */
-function loadPKCS11TestModule(expectModuleUnloadToFail) {
-  let libraryFile = Services.dirsvc.get("CurWorkD", Ci.nsIFile);
-  libraryFile.append("pkcs11testmodule");
-  libraryFile.append(ctypes.libraryName("pkcs11testmodule"));
-  ok(libraryFile.exists(), "The pkcs11testmodule file should exist");
+function loadPKCS11Module(libraryFile, moduleName, expectModuleUnloadToFail) {
+  ok(libraryFile.exists(), "The PKCS11 module file should exist");
 
   let pkcs11ModuleDB = Cc["@mozilla.org/security/pkcs11moduledb;1"].getService(
     Ci.nsIPKCS11ModuleDB
   );
   registerCleanupFunction(() => {
     try {
-      pkcs11ModuleDB.deleteModule("PKCS11 Test Module");
+      pkcs11ModuleDB.deleteModule(moduleName);
     } catch (e) {
       Assert.ok(
         expectModuleUnloadToFail,
@@ -1055,7 +1083,7 @@ function loadPKCS11TestModule(expectModuleUnloadToFail) {
       );
     }
   });
-  pkcs11ModuleDB.addModule("PKCS11 Test Module", libraryFile.path, 0, 0);
+  pkcs11ModuleDB.addModule(moduleName, libraryFile.path, 0, 0);
 }
 
 /**
@@ -1084,4 +1112,103 @@ function writeLinesAndClose(lines, outputStream) {
     outputStream.write(line, line.length);
   }
   outputStream.close();
+}
+
+/**
+ * @param {String} moduleName
+ *        The name of the module that should not be loaded.
+ * @param {String} libraryName
+ *        A unique substring of name of the dynamic library file of the module
+ *        that should not be loaded.
+ */
+function checkPKCS11ModuleNotPresent(moduleName, libraryName) {
+  let moduleDB = Cc["@mozilla.org/security/pkcs11moduledb;1"].getService(
+    Ci.nsIPKCS11ModuleDB
+  );
+  let modules = moduleDB.listModules();
+  ok(
+    modules.hasMoreElements(),
+    "One or more modules should be present with test module not present"
+  );
+  for (let module of modules) {
+    notEqual(
+      module.name,
+      moduleName,
+      `Non-test module name shouldn't equal '${moduleName}'`
+    );
+    ok(
+      !(module.libName && module.libName.includes(libraryName)),
+      `Non-test module lib name should not include '${libraryName}'`
+    );
+  }
+}
+
+/**
+ * Checks that the test module exists in the module list.
+ * Also checks various attributes of the test module for correctness.
+ *
+ * @param {String} moduleName
+ *                 The name of the module that should be present.
+ * @param {String} libraryName
+ *                 A unique substring of the name of the dynamic library file
+ *                 of the module that should be loaded.
+ * @returns {nsIPKCS11Module}
+ *          The test module.
+ */
+function checkPKCS11ModuleExists(moduleName, libraryName) {
+  let moduleDB = Cc["@mozilla.org/security/pkcs11moduledb;1"].getService(
+    Ci.nsIPKCS11ModuleDB
+  );
+  let modules = moduleDB.listModules();
+  ok(
+    modules.hasMoreElements(),
+    "One or more modules should be present with test module present"
+  );
+  let testModule = null;
+  for (let module of modules) {
+    if (module.name == moduleName) {
+      testModule = module;
+      break;
+    }
+  }
+  notEqual(testModule, null, "Test module should have been found");
+  notEqual(testModule.libName, null, "Test module lib name should not be null");
+  ok(
+    testModule.libName.includes(ctypes.libraryName(libraryName)),
+    `Test module lib name should include lib name of '${libraryName}'`
+  );
+
+  return testModule;
+}
+
+// Given an nsIX509Cert, return the bytes of its subject DN (as a JS string) and
+// the sha-256 hash of its subject public key info, base64-encoded.
+function getSubjectAndSPKIHash(nsCert) {
+  let certBytes = nsCert.getRawDER();
+  let cert = new X509.Certificate();
+  cert.parse(certBytes);
+  let subject = cert.tbsCertificate.subject._der._bytes;
+  let subjectString = arrayToString(subject);
+  let spkiHashString = nsCert.sha256SubjectPublicKeyInfoDigest;
+  return { subjectString, spkiHashString };
+}
+
+function run_certutil_on_directory(directory, args, expectSuccess = true) {
+  let envSvc = Cc["@mozilla.org/process/environment;1"].getService(
+    Ci.nsIEnvironment
+  );
+  let greBinDir = Services.dirsvc.get("GreBinD", Ci.nsIFile);
+  envSvc.set("DYLD_LIBRARY_PATH", greBinDir.path);
+  // TODO(bug 1107794): Android libraries are in /data/local/xpcb, but "GreBinD"
+  // does not return this path on Android, so hard code it here.
+  envSvc.set("LD_LIBRARY_PATH", greBinDir.path + ":/data/local/xpcb");
+  let certutilBin = _getBinaryUtil("certutil");
+  let process = Cc["@mozilla.org/process/util;1"].createInstance(Ci.nsIProcess);
+  process.init(certutilBin);
+  args.push("-d");
+  args.push(`sql:${directory}`);
+  process.run(true, args, args.length);
+  if (expectSuccess) {
+    Assert.equal(process.exitValue, 0, "certutil should succeed");
+  }
 }

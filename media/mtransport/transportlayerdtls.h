@@ -12,19 +12,25 @@
 #include <queue>
 #include <set>
 
+#ifdef XP_MACOSX
+// ensure that Apple Security kit enum goes before "sslproto.h"
+#  include <CoreFoundation/CFAvailability.h>
+#  include <Security/CipherSuite.h>
+#endif
+
 #include "sigslot.h"
 
 #include "mozilla/RefPtr.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/TimeStamp.h"
 #include "nsCOMPtr.h"
-#include "nsIEventTarget.h"
 #include "nsITimer.h"
 #include "ScopedNSSTypes.h"
 #include "m_cpp_utils.h"
 #include "dtlsidentity.h"
 #include "transportlayer.h"
 #include "ssl.h"
+#include "sslproto.h"
 
 namespace mozilla {
 
@@ -67,6 +73,13 @@ class TransportLayerDtls final : public TransportLayer {
   // DTLS-specific operations
   void SetRole(Role role) { role_ = role; }
   Role role() { return role_; }
+
+  enum class Version : uint16_t {
+    DTLS_1_0 = SSL_LIBRARY_VERSION_DTLS_1_0,
+    DTLS_1_2 = SSL_LIBRARY_VERSION_DTLS_1_2,
+    DTLS_1_3 = SSL_LIBRARY_VERSION_DTLS_1_3
+  };
+  void SetMinMaxVersion(Version min_version, Version max_version);
 
   void SetIdentity(const RefPtr<DtlsIdentity>& identity) {
     identity_ = identity;
@@ -160,6 +173,9 @@ class TransportLayerDtls final : public TransportLayer {
   Verification verification_mode_ = VERIFY_UNSET;
   std::vector<DtlsDigest> digests_;
 
+  Version minVersion_ = Version::DTLS_1_0;
+  Version maxVersion_ = Version::DTLS_1_2;
+
   // Must delete nspr_io_adapter after ssl_fd_ b/c ssl_fd_ causes an alert
   // (ssl_fd_ contains an un-owning pointer to nspr_io_adapter_)
   UniquePtr<TransportLayerNSPRAdapter> nspr_io_adapter_ = nullptr;
@@ -168,7 +184,6 @@ class TransportLayerDtls final : public TransportLayer {
   nsCOMPtr<nsITimer> timer_ = nullptr;
   bool auth_hook_called_ = false;
   bool cert_ok_ = false;
-  TimeStamp handshake_started_;
 };
 
 }  // namespace mozilla

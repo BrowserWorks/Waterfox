@@ -14,12 +14,13 @@
 
 from __future__ import unicode_literals
 
-from cStringIO import StringIO
+from six import binary_type, text_type, BytesIO, unichr
+from six.moves import range
 
-from node import (AtomNode, BinaryExpressionNode, BinaryOperatorNode,
-                  ConditionalNode, DataNode, IndexNode, KeyValueNode, ListNode,
-                  NumberNode, StringNode, UnaryExpressionNode,
-                  UnaryOperatorNode, ValueNode, VariableNode)
+from .node import (Node, AtomNode, BinaryExpressionNode, BinaryOperatorNode,
+                   ConditionalNode, DataNode, IndexNode, KeyValueNode, ListNode,
+                   NumberNode, StringNode, UnaryExpressionNode,
+                   UnaryOperatorNode, ValueNode, VariableNode)
 
 
 class ParseError(Exception):
@@ -49,7 +50,7 @@ atoms = {"True": True,
          "Reset": object()}
 
 def decode(s):
-    assert isinstance(s, unicode)
+    assert isinstance(s, text_type)
     return s
 
 
@@ -74,12 +75,13 @@ class Tokenizer(object):
         self.state = self.line_start_state
         self.next_state = self.data_line_state
         self.line_number = 0
+        self.filename = ""
 
     def tokenize(self, stream):
         self.reset()
-        assert not isinstance(stream, unicode)
-        if isinstance(stream, str):
-            stream = StringIO(stream)
+        assert not isinstance(stream, text_type)
+        if isinstance(stream, bytes):
+            stream = BytesIO(stream)
         if not hasattr(stream, "name"):
             self.filename = ""
         else:
@@ -87,7 +89,7 @@ class Tokenizer(object):
 
         self.next_line_state = self.line_start_state
         for i, line in enumerate(stream):
-            assert isinstance(line, str)
+            assert isinstance(line, binary_type)
             self.state = self.next_line_state
             assert self.state is not None
             states = []
@@ -95,7 +97,7 @@ class Tokenizer(object):
             self.line_number = i + 1
             self.index = 0
             self.line = line.decode('utf-8').rstrip()
-            assert isinstance(self.line, unicode)
+            assert isinstance(self.line, text_type)
             while self.state != self.eol_state:
                 states.append(self.state)
                 tokens = self.state()
@@ -343,7 +345,14 @@ class Tokenizer(object):
                 spaces = 0
                 rv += c
                 self.consume()
-        yield (token_types.string, decode(rv))
+        rv = decode(rv)
+        if rv.startswith("if "):
+            # Hack to avoid a problem where people write
+            # disabled: if foo
+            # and expect that to disable conditionally
+            raise ParseError(self.filename, self.line_number, "Strings starting 'if ' must be quoted "
+                             "(expressions must start on a newline and be indented)")
+        yield (token_types.string, rv)
 
     def comment_state(self):
         while self.char() is not eol:
@@ -482,7 +491,7 @@ class Tokenizer(object):
         elif c == "U":
             return self.decode_escape(6)
         elif c in ["a", "b", "f", "n", "r", "t", "v"]:
-            return eval("'\%s'" % c)
+            return eval(r"'\%s'" % c)
         elif c is eol:
             raise ParseError(self.filename, self.line_number, "EOL in escape")
         else:
@@ -490,7 +499,7 @@ class Tokenizer(object):
 
     def decode_escape(self, length):
         value = 0
-        for i in xrange(length):
+        for i in range(length):
             c = self.char()
             value *= 16
             value += self.escape_value(c)
@@ -524,14 +533,21 @@ class Parser(object):
         self.expr_builders = []
 
     def parse(self, input):
-        self.reset()
-        self.token_generator = self.tokenizer.tokenize(input)
-        self.consume()
-        self.manifest()
-        return self.tree.node
+        try:
+            self.reset()
+            self.token_generator = self.tokenizer.tokenize(input)
+            self.consume()
+            self.manifest()
+            return self.tree.node
+        except Exception as e:
+            if not isinstance(e, ParseError):
+                raise ParseError(self.tokenizer.filename,
+                                 self.tokenizer.line_number,
+                                 str(e))
+            raise
 
     def consume(self):
-        self.token = self.token_generator.next()
+        self.token = next(self.token_generator)
 
     def expect(self, type, value=None):
         if self.token[0] != type:
@@ -698,13 +714,16 @@ class Treebuilder(object):
         self.node = root
 
     def append(self, node):
+        assert isinstance(node, Node)
         self.node.append(node)
         self.node = node
+        assert self.node is not None
         return node
 
     def pop(self):
         node = self.node
         self.node = self.node.parent
+        assert self.node is not None
         return node
 
 

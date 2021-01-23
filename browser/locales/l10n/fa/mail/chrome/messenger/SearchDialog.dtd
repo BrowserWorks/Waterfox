@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- for SearchDialog.xul -->
+
+<!ENTITY searchHeading.label         "Search for messages in:">
+<!ENTITY searchHeading.accesskey     "h">
+<!ENTITY searchSubfolders.label      "Search subfolders">
+<!ENTITY searchSubfolders.accesskey  "e">
+
+
+<!ENTITY resetButton.label           "پاک کردن">
+<!ENTITY resetButton.accesskey       "پ">
+<!ENTITY openButton.label            "باز کردن">
+<!ENTITY openButton.accesskey        "ب">
+
+
+<!ENTITY searchDialogTitle.label     "Search Messages">
+<!ENTITY results.label               "Results">
+
+
+<!ENTITY closeCmd.key                "W"> 
+
+
+<!ENTITY saveAsVFButton.label        "Save as Search Folder">
+<!ENTITY saveAsVFButton.accesskey    "v">
+<!-- for ABSearchDialog.xul -->
+
+<!ENTITY abSearchHeading.label       "Search in:">
+<!ENTITY abSearchHeading.accesskey   "h">
+<!ENTITY propertiesButton.label      "ویژگی‌ها">
+<!ENTITY propertiesButton.accesskey  "و">
+<!ENTITY composeButton.label         "Write">
+<!ENTITY composeButton.accesskey     "W">
+
+
+<!ENTITY abSearchDialogTitle.label   "Advanced Address Book Search">
+<!-- Thread Pane -->
+
+<!-- Thread Pane Tooltips -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+

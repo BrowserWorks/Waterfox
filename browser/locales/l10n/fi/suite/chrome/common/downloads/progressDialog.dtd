@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY progress.title                  "Lataus käynnissä…">
+<!ENTITY closeWindow.key                 "w">
+<!ENTITY cmd.pause.tooltip               "Pysäytä">
+<!ENTITY cmd.resume.tooltip              "Jatka">
+<!ENTITY cmd.retry.tooltip               "Yritä uudelleen">
+<!ENTITY cmd.cancel.tooltip              "Keskeytä">
+<!ENTITY cmd.open.label                  "Avaa">
+<!ENTITY cmd.open.accesskey              "A">
+<!ENTITY cmd.show.label                  "Avaa tallennuskansio">
+<!ENTITY cmd.show.accesskey              "t">
+<!ENTITY cmd.goToDownloadPage.label      "Avaa lataussivu">
+<!ENTITY cmd.goToDownloadPage.accesskey  "l">
+<!ENTITY cmd.copyDownloadLink.label      "Kopioi latausosoite">
+<!ENTITY cmd.copyDownloadLink.accesskey  "K">
+<!ENTITY closeWhenDone.label             "Sulje ikkuna, kun lataus on valmis">
+<!ENTITY closeWhenDone.accesskey         "S">

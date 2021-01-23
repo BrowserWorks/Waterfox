@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "सदस्यता लें">
+<!ENTITY subscribeButton.label        "सदस्यता लें">
+<!ENTITY subscribeButton.accesskey    "S">
+<!ENTITY unsubscribeButton.label      "सदस्यता वापस लें">
+<!ENTITY unsubscribeButton.accesskey  "U">
+<!ENTITY refreshButton.label          "ताजा करें">
+<!ENTITY refreshButton.accesskey      "R">
+<!ENTITY stopButton.label             "रोकें">
+<!ENTITY stopButton.accesskey         "T">
+<!ENTITY server.label                 "खाता:">
+<!ENTITY server.accesskey             "A">
+<!ENTITY subscribedHeader.label       "सदस्यता लें">
+<!-- commenting out until bug 38906 is fixed 
+<!ENTITY messagesHeader.label         "Messages"> -->
+<!ENTITY namefield.label              "मद दिखायें जिसमें शामिल है:">
+<!ENTITY namefield.accesskey          "O">

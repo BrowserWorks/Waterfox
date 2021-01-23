@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Entruga sobre corréu HTML">
+
+<!ENTITY recipient.label "Dalgunos de los destinatarios nun tán llistaos como capaces de recibir corréu HTML.">
+
+<!ENTITY question.label "¿Quies convertir el mensaxe a testu ensin formatu o unvialu en HTML de toes formes?">
+
+<!ENTITY plainTextAndHtml.label "Unviar en dambos formatos, testu ensin formatu y HTML">
+<!ENTITY plainTextAndHtml.accesskey "a">
+<!ENTITY plainTextOnly.label "Unviar como testu ensin formatu">
+<!ENTITY plainTextOnly.accesskey "f">
+<!ENTITY htmlOnly.label "Unviar namái en HTML">
+<!ENTITY htmlOnly.accesskey "H">
+
+<!ENTITY send.label "Unviar">
+<!ENTITY send.accesskey "U">

@@ -1,0 +1,127 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "Amarag n umiḍan">
+<!ENTITY accountWizard.size "width: 40em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!ENTITY accountSetupInfo2.label "Akken ad d-remseḍ iznan, tesriḍ ad tesbaduḍ amiḍan.">
+<!ENTITY accountTypeTitle.label "Tawila n umiḍan amaynut">
+<!ENTITY accountTypeDesc2.label "Amarag-agi ad yekqeḍ talɣut ilaqen i wesbadu n umiḍan. Ma yella ur tezṛiḍ ara talɣut ilaqen, nermes anedbal-inek n unagraw neɣ aseǧǧaw n umeẓlu Internet.">
+<!ENTITY accountTypeDirections.label "Fren anaw n umiḍan i tebɣiḍ ad tesbaduḍ:">
+<!ENTITY accountTypeMail.label "Amiḍan n yimayl">
+<!ENTITY accountTypeMail.accesskey "m">
+<!ENTITY accountTypeNews.label "Amiḍan n isallen n ugraw">
+<!ENTITY accountTypeNews.accesskey "s">
+<!-- LOCALIZATION NOTE(accountTypeMovemail.label): do not translate 'Movemail' -->
+<!ENTITY accountTypeMovemail.label "Unix Mailspool (Movemail)">
+<!ENTITY accountTypeMovemail.accesskey "U">
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "Tamagit">
+<!ENTITY identityDesc.label "Yal amiḍa ɣur-s tamagit yellan d talɣut ara yessinen gar wiyaḍ ticki tremseḍ-d iznan-inek.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "Sekcem isem i tebɣiḍ ad d-iban ɣef wurti n &quot;From&quot; n yeznan-inek uffiɣen">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(amedya, &quot;John Smith&quot;).">
+<!ENTITY fullnameLabel.label "Isem-ik:">
+<!ENTITY fullnameLabel.accesskey "s">
+
+<!ENTITY emailLabel.label "Tansa Imayl:">
+<!ENTITY emailLabel.accesskey "n">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "Talɣut n uqeddac ukcim">
+<!ENTITY incomingServerTypeDesc.label "Fren anaw n uqeddac ukcim i tesseqdaceḍ.">
+<!-- LOCALIZATION NOTE (imapType.label) : Do not translate "IMAP" in below line -->
+<!ENTITY imapType.label "IMAP">
+<!ENTITY imapType.accesskey "I">
+<!-- LOCALIZATION NOTE (popType.label) : Do not translate "POP" in below line -->
+<!ENTITY popType.label "POP">
+<!ENTITY popType.accesskey "P">
+<!ENTITY leaveMsgsOnSrvr.label "Eǧǧ-d iznan ɣef uqeddac">
+<!ENTITY leaveMsgsOnSrvr.accesskey "E">
+<!ENTITY portNum.label "Tabburt:">
+<!ENTITY portNum.accesskey "b">
+<!ENTITY defaultPortLabel.label "Amezwer:">
+<!ENTITY defaultPortValue.label "">
+<!-- LOCALIZATION NOTE (incomingServerNameDesc.label) : Do not translate "&quot;pop.example.net&quot;" in below line -->
+<!ENTITY incomingServer.description "Sekcem isem n uqeddac ukcim (amedya, &quot;mail.example.net&quot;).">
+<!ENTITY incomingServer.label "Aqeddac ukcim:">
+<!ENTITY incomingServer.accesskey "A">
+<!-- LOCALIZATION NOTE (incomingUsername.description) : do not translate "&quot;jsmith&quot;" in below line -->
+<!ENTITY incomingUsername.description "Sekcem isem n useqdac-inek ik-d-yefka usaǧǧaw-inek n yimayl (amedya, &quot;jsmith&quot;).">
+<!ENTITY incomingUsername.label "Isem n useqdac:">
+<!ENTITY incomingUsername.accesskey "s">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Sekcem isem n uqeddac n isallen (NNTP) (amedya, &quot;news.example.net&quot;).">
+<!ENTITY newsServerLabel.label "Aqeddac n isallen n ugraw:">
+<!ENTITY newsServerLabel.accesskey "w">
+
+<!-- Entities for Outgoing Server page -->
+
+<!ENTITY outgoingTitle.label "Talɣut n uqeddac uffiɣ">
+<!-- LOCALIZATION NOTE (outgoingServer.description) : Do not translate "SMTP" and "&quot;smtp.example.net&quot;" in below line -->
+<!ENTITY outgoingServer.description "Sekcem isem n uqeddac-inek uffiɣ (SMTP) (amedya, &quot;smtp.example.net&quot;).">
+<!ENTITY outgoingServer.label "Aqeddac uffiɣ ">
+<!ENTITY outgoingServer.accesskey "q">
+<!ENTITY outgoingUsername.description "Sekcem isem n useqdac inek uffiɣ ik-d-yefka u saǧǧaw-inek n yimayl (w-agi am yisem n useqdac-inek ukcim).">
+<!ENTITY outgoingUsername.label "Isem n uqeddac uffiɣ:">
+<!ENTITY outgoingUsername.accesskey "I">
+
+<!-- LOCALIZATION NOTE (modifyOutgoing.suffix) : This string will be appended after each of
+     haveSmtp1.suffix3, haveSmtp2.suffix3, haveSmtp3.suffix3 .
+-->
+<!ENTITY modifyOutgoing.suffix "Tzemr€d ad tesnifleḍ iqeddacen-inek uffiɣen deg iɣewwaṛen n umiḍan.">
+<!-- LOCALIZATION NOTE (haveSmtp1.prefix and haveSmtp1.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp1.prefix and haveSmtp1.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp1.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp1.prefix "Aqeddac-inek uffiɣ (SMTP), &quot;">
+<!ENTITY haveSmtp1.suffix3 "&quot;, ad iţuseqdec.">
+<!-- LOCALIZATION NOTE (haveSmtp2.prefix and haveSmtp2.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp2.prefix and haveSmtp2.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp2.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp2.prefix "Aseqdac-inek uffiɣ (SMTP), &quot;">
+<!ENTITY haveSmtp2.suffix3 "&quot;, ad iţuseqdec.">
+<!-- LOCALIZATION NOTE (haveSmtp3.prefix and haveSmtp3.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp3.prefix and haveSmtp3.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp3.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp3.prefix "Aqeddac-inek uffiɣ (SMTP), &quot;">
+<!ENTITY haveSmtp3.suffix3 "&quot;, am uqeddac-inek ukcim, isem n useqdac-inek ukcim ad yettwaseqdec akken ad yeqqen ɣer-s.">
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "Isem n umiḍan">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Sekcem isem n umiḍan-inek (imedyaten, &quot;Work Account&quot;, &quot;Home Account&quot; neɣ &quot;News Account&quot;).">
+<!ENTITY accnameLabel.label "Isem n umiḍan:">
+<!ENTITY accnameLabel.accesskey "s">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "Ayuz!">
+<!ENTITY completionText.label "Ma ulac aɣilif, senqed talɣut daw-agi ma yalla d tameɣtut.">
+<!ENTITY serverTypePrefix.label "Tawsit n uqeddac ukcim:">
+<!ENTITY serverNamePrefix.label "Isem n uqeddac ukcim:">
+<!ENTITY smtpServerNamePrefix.label "Isem n uqeddac uffiɣ (SMTP):">
+<!ENTITY newsServerNamePrefix.label "Isem n uqeddac n isalen (NNTP):">
+<!ENTITY downloadOnLogin.label "Zdem tura iznan">
+<!ENTITY downloadOnLogin.accesskey "Z">
+<!ENTITY deferStorageDesc.label "Tukksa n ṛṛcem n texxamt-agi ad isekles imaylen n umiḍan-agi deg ukaram-ines. Ayagi ad d-yesban amiḍan deg uswir n ufella. Neɣ ma ulac, ad d-iban ɣef umiḍan n tebwwaḍt tamatut n yikaramen idiganen.">
+<!ENTITY deferStorage.label "Seqdec tabwaṭ tamatut (ad yesekles imaylen ɣef ikaramen idiganen)">
+<!ENTITY deferStorage.accesskey "b">
+<!ENTITY clickFinish.label "Sit ɣef Fak akken ad tessekelseḍ iɣewwaṛen-agi sakin ad teffɣeḍ seg umarag n umiḍan.">
+<!ENTITY clickFinish.labelMac "Sit ɣef Yemmed akken ad tessekelseḍ iɣewwaṛen-agi sakin ad teffɣeḍ seg umarag n umiḍan.">

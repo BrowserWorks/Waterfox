@@ -15,18 +15,45 @@
 
 namespace js {
 
-struct Class;
-class GlobalObject;
+using UnaryMathFunctionType = double (*)(double);
 
-typedef double (*UnaryFunType)(double);
+// Used for inlining calls to double => double Math functions from JIT code.
+// Note that this list does not include all unary Math functions: abs and sqrt
+// for example are missing because the JITs optimize them without a C++ call.
+enum class UnaryMathFunction : uint8_t {
+  Log,
+  Sin,
+  Cos,
+  Exp,
+  Tan,
+  ACos,
+  ASin,
+  ATan,
+  Log10,
+  Log2,
+  Log1P,
+  ExpM1,
+  CosH,
+  SinH,
+  TanH,
+  ACosH,
+  ASinH,
+  ATanH,
+  Trunc,
+  Cbrt,
+  Floor,
+  Ceil,
+  Round,
+};
+
+extern UnaryMathFunctionType GetUnaryMathFunctionPtr(UnaryMathFunction fun);
+extern const char* GetUnaryMathFunctionName(UnaryMathFunction fun);
 
 /*
  * JS math functions.
  */
 
-extern const Class MathClass;
-
-extern JSObject* InitMathClass(JSContext* cx, Handle<GlobalObject*> global);
+extern const JSClass MathClass;
 
 extern uint64_t GenerateRandomSeed();
 
@@ -62,8 +89,6 @@ extern bool math_pow(JSContext* cx, unsigned argc, js::Value* vp);
 
 extern bool minmax_impl(JSContext* cx, bool max, js::HandleValue a,
                         js::HandleValue b, js::MutableHandleValue res);
-
-extern void math_sincos_impl(double x, double* sin, double* cos);
 
 extern bool math_imul_handle(JSContext* cx, HandleValue lhs, HandleValue rhs,
                              MutableHandleValue res);

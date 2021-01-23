@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "Buscar">
+
+<!ENTITY newPref.namePlaceholder       "Nome">
+
+<!ENTITY newPref.valueBoolean          "Booleano">
+<!ENTITY newPref.valueString           "Cadea">
+<!ENTITY newPref.valueInteger          "Enteiro">
+
+<!ENTITY newPref.stringPlaceholder     "Escriba unha cadea">
+<!ENTITY newPref.numberPlaceholder     "Escriba un número">
+
+<!ENTITY newPref.toggleButton          "Cambiar">
+<!ENTITY newPref.cancelButton          "Cancelar">
+
+<!ENTITY contextMenu.copyPrefName      "Copiar nome">
+<!ENTITY contextMenu.copyPrefValue     "Copiar valor">

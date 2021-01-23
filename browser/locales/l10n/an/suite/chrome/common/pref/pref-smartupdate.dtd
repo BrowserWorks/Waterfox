@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE : FILE UI for Software Updates prefs -->
+
+<!ENTITY pref.smartUpdate.title               "Instalación de software">
+<!ENTITY addOnsTitle.label                    "Complementos">
+<!ENTITY addOnsAllow.label                    "Permitir a os puestos web instalar complementos y actualizacions">
+<!ENTITY addOnsAllow.accesskey                "P">
+<!ENTITY allowedSitesLink.label               "Puestos web permitius">
+<!ENTITY autoAddOnsUpdates.label              "Buscar actualizacions automaticament">
+<!ENTITY autoAddOnsUpdates.accesskey          "B">
+<!ENTITY daily.label                          "diariament">
+<!ENTITY addOnsDaily.accesskey                "d">
+<!ENTITY weekly.label                         "semanalment">
+<!ENTITY addOnsWeekly.accesskey               "s">
+<!ENTITY addOnsModeAutomatic.label            "Descargar y instalar automaticament as actualizacions">
+<!ENTITY addOnsModeAutomatic.accesskey        "D">
+<!ENTITY enablePersonalized.label             "Personalizar recomendacions de complementos">
+<!ENTITY enablePersonalized.accesskey         "P">
+<!ENTITY addonManagerLink.label               "Administrar complementos">
+
+<!ENTITY appUpdates.caption                   "&brandShortName;">
+<!ENTITY autoAppUpdates.label                 "Buscar actualizacions automaticament">
+<!ENTITY autoAppUpdates.accesskey             "u">
+<!ENTITY appDaily.accesskey                   "i">
+<!ENTITY appWeekly.accesskey                  "y">
+<!ENTITY appModeAutomatic.label               "Descargar y instalar automaticament l'actualización">
+<!ENTITY appModeAutomatic.accesskey           "n">
+<!ENTITY appModeAutoAddonWarn.label           "Gritar-me/Gritar'me si isto desactivará belún d'os míos complementos">
+<!ENTITY appModeAutoAddonWarn.accesskey       "G">
+<!ENTITY updateHistoryButton.label            "Amostrar historial d'actualizacions…">
+<!ENTITY updateHistoryButton.accesskey        "A">

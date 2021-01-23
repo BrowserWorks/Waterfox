@@ -1,0 +1,63 @@
+<!--
+# Translator(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+# Sergiu Bivol <sbivol87@gmail.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY GeneratedName.label                   "Denumire">
+<!ENTITY GeneratedName.accesskey               "n">
+<!ENTITY PrimaryEmail.label                    "Email">
+<!ENTITY PrimaryEmail.accesskey                "E">
+<!ENTITY Company.label                         "Organizația">
+<!ENTITY Company.accesskey                     "z">
+<!ENTITY _PhoneticName.label                   "Nume fonetic">
+<!ENTITY _PhoneticName.accesskey               "o">
+<!ENTITY NickName.label                        "Trimite legătura de resetare a parolei">
+<!ENTITY NickName.accesskey                    "i">
+<!ENTITY SecondEmail.label                     "A doua adresă de email">
+<!ENTITY SecondEmail.accesskey                 "l">
+<!ENTITY Department.label                      "Departamentul">
+<!ENTITY Department.accesskey                  "r">
+<!ENTITY JobTitle.label                        "Titlul">
+<!ENTITY JobTitle.accesskey                    "T">
+<!ENTITY CellularNumber.label                  "Tel. (mobil)">
+<!ENTITY CellularNumber.accesskey              "m">
+<!ENTITY PagerNumber.label                     "Paginator">
+<!ENTITY PagerNumber.accesskey                 "P">
+<!ENTITY FaxNumber.label                       "Fax">
+<!ENTITY FaxNumber.accesskey                   "F">
+<!ENTITY HomePhone.label                       "Telefonul acasă">
+<!ENTITY HomePhone.accesskey                   "T">
+<!ENTITY WorkPhone.label                       "Telefonul serviciu">
+<!ENTITY WorkPhone.accesskey                   "T">
+<!ENTITY ScreenName.label                      "Nume de afișat">
+<!ENTITY ScreenName.accesskey                  "N">
+<!ENTITY sortAscending.label                   "Crescătoare">
+<!ENTITY sortAscending.accesskey               "a">
+<!ENTITY sortDescending.label                  "În ordine descrescătoare">
+<!ENTITY sortDescending.accesskey              "d">
+
+<!-- context menu -->
+<!ENTITY composeEmail.label                    "Scrie-i un mesaj">
+<!ENTITY composeEmail.accesskey                "c">
+<!ENTITY copyAddress.label                     "Copiază adresa de email">
+<!ENTITY copyAddress.accesskey                 "a">
+<!ENTITY deleteAddrBookCard.label              "Șterge elementul">
+<!ENTITY deleteAddrBookCard.accesskey          "t">
+<!ENTITY newAddrBookCard.label                 "New Card...">
+<!ENTITY newAddrBookCard.accesskey             "N">
+<!ENTITY newAddrBookMailingList.label          "New Mailing List...">
+<!ENTITY newAddrBookMailingList.accesskey      "M">
+<!ENTITY addrBookCardProperties.label          "Proprietăți">
+<!ENTITY addrBookCardProperties.accesskey      "P">

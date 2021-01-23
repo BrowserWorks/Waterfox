@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY directoryName.label "নাম (N):">
+<!ENTITY directoryName.accesskey "N">
+<!ENTITY directoryHostname.label "হোস্টনাম (o):">
+<!ENTITY directoryHostname.accesskey "o">
+<!ENTITY directoryBaseDN.label "বেস DN (B):">
+<!ENTITY directoryBaseDN.accesskey "B">
+<!ENTITY findButton.label "অনুসন্ধান (F)">
+<!ENTITY findButton.accesskey "F">
+<!ENTITY directorySecure.label "নিরাপদ সংযোগ (SSL) ব্যবহার করা হবে (U)">
+<!ENTITY directorySecure.accesskey "U">
+<!ENTITY directoryLogin.label "বাইন্ড DN (i):">
+<!ENTITY directoryLogin.accesskey "i">
+<!ENTITY General.tab "সাধারণ">
+<!ENTITY Offline.tab "অফলাইন">
+<!ENTITY Advanced.tab "উচ্চ পর্যায়ের">
+<!ENTITY portNumber.label "পোর্ট নম্বর (P):">
+<!ENTITY portNumber.accesskey "P">
+<!ENTITY searchFilter.label "অনুসন্ধান পরিশোধক (f):">
+<!ENTITY searchFilter.accesskey "f">
+<!ENTITY scope.label "ব্যাপ্তি (c):">
+<!ENTITY scope.accesskey "c">
+<!ENTITY scopeOneLevel.label "এক স্তর (L)">
+<!ENTITY scopeOneLevel.accesskey "L">
+<!ENTITY scopeSubtree.label "সাব-ট্রি (S)">
+<!ENTITY scopeSubtree.accesskey "S">
+<!ENTITY return.label "সর্বোচ্চ গ্রহণ করা হবে (r)">
+<!ENTITY return.accesskey "r">
+<!ENTITY results.label "ফলাফল">
+<!ENTITY offlineText.label "আপনি এই ডিরেক্টরির একটি স্থানীয় কপি ডাউনলোড করতে পারেন, যাতে অফলাইন থাকা অবস্থায়ও এটি ব্যবহার করতে পারেন।">
+<!ENTITY saslMechanism.label "লগইন প্রক্রিয়া (m):">
+<!ENTITY saslMechanism.accesskey "m">
+<!ENTITY saslOff.label "সাধারণ (l)">
+<!ENTITY saslOff.accesskey "l">
+<!ENTITY saslGSSAPI.label "কারবেরস (GSSAPI) (K)">
+<!ENTITY saslGSSAPI.accesskey "K">
+<!-- Localization note: this is here because the width of the dialog 
+     is determined by the width of the base DN box; and that is likely
+     to vary somewhat with the language.
+-->
+
+<!ENTITY newDirectoryWidth "36em">

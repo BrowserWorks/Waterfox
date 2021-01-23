@@ -43,17 +43,39 @@
 }
 
 + (int)captureDeviceCount {
-  return [[AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo] count];
+  int cnt = 0;
+  for (AVCaptureDevice* device in
+       [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo]) {
+    if ([device isSuspended]) {
+      continue;
+    }
+    cnt++;
+  }
+  return cnt;
 }
 
 + (AVCaptureDevice*)captureDeviceForIndex:(int)index {
-  return [[AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo]
-      objectAtIndex:index];
+  int cnt = 0;
+  for (AVCaptureDevice* device in
+       [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo]) {
+    if ([device isSuspended]) {
+      continue;
+    }
+    if (cnt == index) {
+      return device;
+    }
+    cnt++;
+  }
+
+  return nil;
 }
 
 + (AVCaptureDevice*)captureDeviceForUniqueId:(NSString*)uniqueId {
   for (AVCaptureDevice* device in
        [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo]) {
+    if ([device isSuspended]) {
+      continue;
+    }
     if ([uniqueId isEqual:device.uniqueID]) {
       return device;
     }
@@ -113,7 +135,9 @@
       queue:[NSOperationQueue mainQueue]
       usingBlock:^(NSNotification *note) {
           [_lock lock];
-          if(_owner)
+          AVCaptureDevice *device = [note object];
+          BOOL isVideoDevice = [device hasMediaType: AVMediaTypeVideo];
+          if(isVideoDevice && _owner)
               _owner->DeviceChange();
           [_lock unlock];
       }];
@@ -123,7 +147,9 @@
       queue:[NSOperationQueue mainQueue]
       usingBlock:^(NSNotification *note) {
           [_lock lock];
-          if(_owner)
+          AVCaptureDevice *device = [note object];
+          BOOL isVideoDevice = [device hasMediaType: AVMediaTypeVideo];
+          if(isVideoDevice && _owner)
               _owner->DeviceChange();
           [_lock unlock];
       }];

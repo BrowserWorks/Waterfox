@@ -30,8 +30,8 @@ js_option('--disable-optimize',
           help='Disable optimizations via compiler flags')
 
 
-@depends('--enable-optimize')
-def moz_optimize(option):
+@depends('--enable-optimize', '--help')
+def moz_optimize(option, _):
     flags = None
 
     if len(option):
@@ -108,7 +108,7 @@ with only_when(target_is_osx):
     # This needs to happen before any compilation test is done.
 
     option('--enable-macos-target', env='MACOSX_DEPLOYMENT_TARGET', nargs=1,
-           default='10.10', help='Set the minimum MacOS version needed at runtime')
+           default='10.9', help='Set the minimum MacOS version needed at runtime')
 
 
     @depends('--enable-macos-target')
@@ -141,7 +141,7 @@ with only_when(host_is_osx | target_is_osx):
     @imports(_from='biplist', _import='readPlist')
     def macos_sdk(sdk, host):
         sdk_min_version = Version('10.11')
-        sdk_max_version = Version('10.14')
+        sdk_max_version = Version('12')
 
         if sdk:
             sdk = sdk[0]
@@ -204,51 +204,6 @@ with only_when(target_is_osx):
     set_config('MACOS_PRIVATE_FRAMEWORKS_DIR', macos_private_frameworks)
 
 
-with only_when(host_is_osx):
-    # Xcode state
-    # ===========
-    js_option('--disable-xcode-checks',
-	      help='Do not check that Xcode is installed and properly configured')
-
-
-    @depends(host, '--disable-xcode-checks')
-    def xcode_path(host, xcode_checks):
-	if host.kernel != 'Darwin' or not xcode_checks:
-	    return
-
-	# xcode-select -p prints the path to the installed Xcode. It
-	# should exit 0 and return non-empty result if Xcode is installed.
-
-	def bad_xcode_select():
-	    die('Could not find installed Xcode; install Xcode from the App '
-		'Store, run it once to perform initial configuration, and then '
-		'try again; in the rare case you wish to build without Xcode '
-		'installed, add the --disable-xcode-checks configure flag')
-
-	xcode_path = check_cmd_output('xcode-select', '--print-path',
-				      onerror=bad_xcode_select).strip()
-
-	if not xcode_path:
-	    bad_xcode_select()
-
-	# Now look for the Command Line Tools.
-	def no_cltools():
-	    die('Could not find installed Xcode Command Line Tools; '
-		'run `xcode-select --install` and follow the instructions '
-		'to install them then try again; if you wish to build without '
-		'Xcode Command Line Tools installed, '
-		'add the --disable-xcode-checks configure flag')
-
-	check_cmd_output('pkgutil', '--pkg-info',
-			 'com.apple.pkg.CLTools_Executables',
-			 onerror=no_cltools)
-
-	return xcode_path
-
-
-    set_config('XCODE_PATH', xcode_path)
-
-
 # Compiler wrappers
 # ==============================================================
 # Normally, we'd use js_option and automatically have those variables
@@ -297,6 +252,33 @@ def using_ccache(ccache, ccache_is_sccache):
 def using_sccache(ccache, ccache_is_sccache):
     return ccache and ccache_is_sccache
 
+js_option(env='RUSTC_WRAPPER', nargs=1,
+          help='Wrap rust compilation with given tool')
+
+@depends(ccache, ccache_is_sccache, 'RUSTC_WRAPPER')
+@imports(_from='textwrap', _import='dedent')
+@imports('os')
+def check_sccache_version(ccache, ccache_is_sccache, rustc_wrapper):
+    sccache_min_version = Version('0.2.13')
+
+    def check_version(path):
+        out = check_cmd_output(path, '--version')
+        version = Version(out.rstrip().split()[-1])
+        if version < sccache_min_version:
+            die(dedent('''\
+            sccache %s or later is required. sccache in use at %s has
+            version %s.
+
+            Please upgrade or acquire a new version with |./mach bootstrap|.
+            '''), sccache_min_version, path, version)
+
+    if ccache and ccache_is_sccache:
+        check_version(ccache)
+
+    if (rustc_wrapper and
+        (os.path.splitext(os.path.basename(rustc_wrapper[0]))[0].lower() ==
+         'sccache')):
+        check_version(rustc_wrapper[0])
 
 set_config('MOZ_USING_CCACHE', using_ccache)
 set_config('MOZ_USING_SCCACHE', using_sccache)
@@ -388,8 +370,8 @@ add_old_configure_assignment('TOOLCHAIN_PREFIX', first_toolchain_prefix)
 include('compilers-util.configure')
 
 
-def try_preprocess(compiler, language, source):
-    return try_invoke_compiler(compiler, language, source, ['-E'])
+def try_preprocess(compiler, language, source, onerror=None):
+    return try_invoke_compiler(compiler, language, source, ['-E'], onerror)
 
 
 @imports(_from='mozbuild.configure.constants', _import='CompilerType')
@@ -399,6 +381,7 @@ def try_preprocess(compiler, language, source):
          _import='kernel_preprocessor_checks')
 @imports(_from='mozbuild.configure.constants',
          _import='OS_preprocessor_checks')
+@imports(_from='six', _import='iteritems')
 @imports(_from='textwrap', _import='dedent')
 @imports(_from='__builtin__', _import='Exception')
 def get_compiler_info(compiler, language):
@@ -415,19 +398,17 @@ def get_compiler_info(compiler, language):
     # in Xcode have a completely different versioning scheme despite exposing
     # the version with the same defines.
     # So instead, we make things such that the version is missing when the
-    # clang used is below the minimum supported version (currently clang 4.0).
+    # clang used is below the minimum supported version (currently clang 5.0).
     # We then only include the version information when the compiler matches
     # the feature check, so that an unsupported version of clang would have
     # no version number.
     check = dedent('''\
-        #if defined(_MSC_VER)
-        #if defined(__clang__)
+        #if defined(_MSC_VER) && defined(__clang__) && defined(_MT)
         %COMPILER "clang-cl"
         %VERSION __clang_major__.__clang_minor__.__clang_patchlevel__
-        #endif
         #elif defined(__clang__)
         %COMPILER "clang"
-        #  if __has_attribute(diagnose_if)
+        #  if __has_warning("-Wunguarded-availability")
         %VERSION __clang_major__.__clang_minor__.__clang_patchlevel__
         #  endif
         #elif defined(__GNUC__)
@@ -450,7 +431,7 @@ def get_compiler_info(compiler, language):
         ('KERNEL', kernel_preprocessor_checks),
         ('OS', OS_preprocessor_checks),
     ):
-        for n, (value, condition) in enumerate(preprocessor_checks.iteritems()):
+        for n, (value, condition) in enumerate(iteritems(preprocessor_checks)):
             check += dedent('''\
                 #%(if)s %(condition)s
                 %%%(name)s "%(value)s"
@@ -483,7 +464,7 @@ def get_compiler_info(compiler, language):
     # have non-ASCII characters. Treat the output as bytearray.
     data = {}
     for line in result.splitlines():
-        if line.startswith(b'%'):
+        if line.startswith('%'):
             k, _, v = line.partition(' ')
             k = k.lstrip('%')
             data[k] = v.replace(' ', '').lstrip('"').rstrip('"')
@@ -545,18 +526,16 @@ def check_compiler(compiler, language, target):
             flags.append('-Xclang')
         flags.append('-std=gnu99')
 
-    # Note: this is a strict version check because we used to always add
-    # -std=gnu++14.
-    cxx14_version = 201402
+    cxx17_version = 201703
     if info.language == 'C++':
-        if info.language_version != cxx14_version:
-            # MSVC headers include C++14 features, but don't guard them
+        if info.language_version != cxx17_version:
+            # MSVC headers include C++17 features, but don't guard them
             # with appropriate checks.
             if info.type == 'clang-cl':
                 flags.append('-Xclang')
-                flags.append('-std=c++14')
+                flags.append('-std=c++17')
             else:
-                flags.append('-std=gnu++14')
+                flags.append('-std=gnu++17')
 
     # Check compiler target
     # --------------------------------------------------------------------
@@ -582,8 +561,7 @@ def check_compiler(compiler, language, target):
         elif (info.cpu, target.cpu) in same_arch:
             flags.append('-m64')
         elif info.type == 'clang-cl' and target.cpu == 'aarch64':
-            # clang-cl uses a different name for this target
-            flags.append('--target=aarch64-windows-msvc')
+            flags.append('--target=%s' % target.toolchain)
         elif info.type == 'clang':
             flags.append('--target=%s' % target.toolchain)
 
@@ -601,11 +579,8 @@ def check_compiler(compiler, language, target):
 @imports(_from='__builtin__', _import='open')
 @imports('json')
 @imports('os')
-@imports('subprocess')
-@imports('sys')
 def get_vc_paths(topsrcdir):
     def vswhere(args):
-        encoding = 'mbcs' if sys.platform == 'win32' else 'utf-8'
         program_files = (os.environ.get('PROGRAMFILES(X86)') or
                          os.environ.get('PROGRAMFILES'))
         if not program_files:
@@ -614,14 +589,12 @@ def get_vc_paths(topsrcdir):
                                'Installer', 'vswhere.exe')
         if not os.path.exists(vswhere):
             return []
-        return json.loads(
-            subprocess.check_output([vswhere, '-format', 'json'] + args)
-            .decode(encoding, 'replace'))
+        return json.loads(check_cmd_output(vswhere, '-format', 'json', *args))
 
     for install in vswhere(['-products', '*', '-requires', 'Microsoft.VisualStudio.Component.VC.Tools.x86.x64']):
         path = install['installationPath']
         tools_version = open(os.path.join(
-            path, r'VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt'), 'rb').read().strip()
+            path, r'VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt'), 'r').read().strip()
         tools_path = os.path.join(
             path, r'VC\Tools\MSVC', tools_version)
         yield (Version(install['installationVersion']), tools_path)
@@ -720,10 +693,11 @@ def toolchain_search_path_for(host_or_target):
         target: vc_compiler_path,
     }[host_or_target]
 
-    @depends(vc_path, original_path)
+    @depends(vc_path, original_path, developer_options, mozbuild_state_path)
     @imports('os')
     @imports(_from='os', _import='environ')
-    def toolchain_search_path(vc_compiler_path, original_path):
+    def toolchain_search_path(vc_compiler_path, original_path, developer_options,
+                              mozbuild_state_path):
         result = list(original_path)
 
         if vc_compiler_path:
@@ -736,23 +710,23 @@ def toolchain_search_path_for(host_or_target):
             result.append(vc_compiler_path[0])
 
         # Also add in the location to which `mach bootstrap` or
-        # `mach artifact toolchain` installs clang.
-        mozbuild_state_dir = environ.get('MOZBUILD_STATE_PATH',
-                                         os.path.expanduser(os.path.join('~', '.mozbuild')))
-        bootstrap_clang_path = os.path.join(mozbuild_state_dir, 'clang', 'bin')
-        result.append(bootstrap_clang_path)
-
-        bootstrap_cbindgen_path = os.path.join(mozbuild_state_dir, 'cbindgen')
-        result.append(bootstrap_cbindgen_path)
-
-        bootstrap_nasm_path = os.path.join(mozbuild_state_dir, 'nasm')
-        result.append(bootstrap_nasm_path)
+        # `mach artifact toolchain` installs clang, cbindgen, etc.
+        bootstrapped = [
+            os.path.join(mozbuild_state_path, *rest) for rest in (
+                ['clang', 'bin'],
+                ['cbindgen'],
+                ['dump_syms'],
+                ['nasm'],
+                ['lucetc'],
+            )]
 
         # Also add the rustup install directory for cargo/rustc.
         rustup_path = os.path.expanduser(os.path.join('~', '.cargo', 'bin'))
         result.append(rustup_path)
 
-        return result
+        if developer_options:
+            return bootstrapped + result
+        return result + bootstrapped
     return toolchain_search_path
 
 
@@ -792,10 +766,9 @@ def default_c_compilers(host_or_target, other_c_compiler=None):
 
     other_c_compiler = () if other_c_compiler is None else (other_c_compiler,)
 
-    @depends(host_or_target, target, toolchain_prefix, android_clang_compiler,
-             *other_c_compiler)
+    @depends(host_or_target, target, toolchain_prefix, *other_c_compiler)
     def default_c_compilers(host_or_target, target, toolchain_prefix,
-                            android_clang_compiler, *other_c_compiler):
+                            *other_c_compiler):
         if host_or_target.kernel == 'WINNT':
             supported = types = ('clang-cl', 'gcc', 'clang')
         elif host_or_target.kernel == 'Darwin':
@@ -818,10 +791,6 @@ def default_c_compilers(host_or_target, other_c_compiler=None):
                     # -m32/-m64 for the host, it's probably toolchain-prefixed,
                     # so we prioritize a raw 'gcc' instead.
                     prioritized = info.type
-            elif info.type == 'clang' and android_clang_compiler:
-                # Android NDK clangs do not function as host compiler, so
-                # prioritize a raw 'clang' instead.
-                prioritized = info.type
 
             types = [prioritized] + [t for t in types if t != info.type]
 
@@ -831,12 +800,7 @@ def default_c_compilers(host_or_target, other_c_compiler=None):
 
         result = []
         for type in types:
-            # Android sets toolchain_prefix and android_clang_compiler, but
-            # we want the latter to take precedence, because the latter can
-            # point at clang, which is what we want to use.
-            if type == 'clang' and android_clang_compiler and host_or_target is target:
-                result.append(android_clang_compiler)
-            elif type == 'gcc':
+            if type == 'gcc':
                 result.extend(gcc)
             else:
                 result.append(type)
@@ -890,12 +854,12 @@ def default_cxx_compilers(c_compiler, other_c_compiler=None, other_cxx_compiler=
 
 
 @template
-def provided_program(env_var):
+def provided_program(env_var, when=None):
     '''Template handling cases where a program can be specified either as a
     path or as a path with applicable arguments.
     '''
 
-    @depends_if(env_var)
+    @depends_if(env_var, when=when)
     @imports(_from='itertools', _import='takewhile')
     @imports(_from='mozbuild.shellutil', _import='split', _as='shell_split')
     def provided(cmd):
@@ -914,6 +878,16 @@ def provided_program(env_var):
         )
 
     return provided
+
+
+def prepare_flags(host_or_target, macos_sdk):
+    if macos_sdk and host_or_target.os == 'OSX':
+        return ['-isysroot', macos_sdk]
+    return []
+
+
+def minimum_gcc_version():
+    return Version('7.1.0')
 
 
 @template
@@ -982,6 +956,7 @@ def compiler(language, host_or_target, c_compiler=None, other_compiler=None,
     def valid_compiler(compiler, provided_compiler, compiler_wrapper,
                        host_or_target, macos_sdk):
         wrapper = list(compiler_wrapper or ())
+        flags = prepare_flags(host_or_target, macos_sdk)
         if provided_compiler:
             provided_wrapper = list(provided_compiler.wrapper)
             # When doing a subconfigure, the compiler is set by old-configure
@@ -990,12 +965,7 @@ def compiler(language, host_or_target, c_compiler=None, other_compiler=None,
             if provided_wrapper[:len(wrapper)] == wrapper:
                 provided_wrapper = provided_wrapper[len(wrapper):]
             wrapper.extend(provided_wrapper)
-            flags = provided_compiler.flags
-        else:
-            flags = []
-
-        if not flags and macos_sdk and host_or_target.os == 'OSX':
-            flags = ['-isysroot', macos_sdk]
+            flags.extend(provided_compiler.flags)
 
         info = check_compiler(wrapper + [compiler] + flags, language,
                               host_or_target)
@@ -1046,10 +1016,11 @@ def compiler(language, host_or_target, c_compiler=None, other_compiler=None,
             if host_or_target.os == 'Android':
                 raise FatalCheckError('GCC is not supported on Android.\n'
                                       'Please use clang from the Android NDK instead.')
-            if info.version < '6.1.0':
+            gcc_version = minimum_gcc_version()
+            if info.version < gcc_version:
                 raise FatalCheckError(
-                    'Only GCC 6.1 or newer is supported (found version %s).'
-                    % info.version)
+                    'Only GCC %d.%d or newer is supported (found version %s).'
+                    % (gcc_version.major, gcc_version.minor, info.version))
 
         if info.type == 'clang-cl':
             if info.version < '8.0.0':
@@ -1061,7 +1032,7 @@ def compiler(language, host_or_target, c_compiler=None, other_compiler=None,
         # diagnose_if above, and see the associated comment.
         if info.type == 'clang' and not info.version:
             raise FatalCheckError(
-                'Only clang/llvm 4.0 or newer is supported.')
+                'Only clang/llvm 5.0 or newer is supported.')
 
         if info.flags:
             raise FatalCheckError(
@@ -1216,13 +1187,21 @@ include('compile-checks.configure')
 include('arm.configure', when=depends(target.cpu)(lambda cpu: cpu == 'arm'))
 
 
-@depends(host,
-         host_os_kernel_major_version,
-         target,
-         cxx_compiler.try_run(header='#include_next <inttypes.h>'))
-def check_have_mac_10_14_sdk(host, version, target, value):
+@depends(host, host_os_kernel_major_version, target)
+def needs_macos_sdk_headers_check(host, version, target):
     # Only an issue on Mac OS X 10.14 (and probably above).
-    if host.kernel != 'Darwin' or target.kernel !='Darwin' or version < '18' or value:
+    if host.kernel != 'Darwin' or target.kernel !='Darwin' or version < '18':
+        return
+
+    return True
+
+
+@depends(cxx_compiler.try_run(header='#include_next <inttypes.h>',
+                              check_msg='for macOS SDK headers',
+                              when=needs_macos_sdk_headers_check),
+         when=needs_macos_sdk_headers_check)
+def check_have_mac_10_14_sdk(value):
+    if value:
         return
 
     die('System inttypes.h not found. Please try running '
@@ -1237,6 +1216,45 @@ def check_have_64_bit(have_64_bit, compiler_have_64_bit):
     if have_64_bit != compiler_have_64_bit:
         configure_error('The target compiler does not agree with configure '
                         'about the target bitness.')
+
+
+@depends(cxx_compiler, target)
+def needs_libstdcxx_newness_check(cxx_compiler, target):
+    # We only have to care about this on Linux and MinGW.
+    if cxx_compiler.type == 'clang-cl':
+        return
+
+    if target.kernel not in ('Linux', 'WINNT'):
+        return
+
+    if target.os == 'Android':
+        return
+
+    return True
+
+
+def die_on_old_libstdcxx():
+    die('The libstdc++ in use is not new enough.  Please run '
+        './mach bootstrap to update your compiler, or update your system '
+        'libstdc++ installation.')
+
+try_compile(includes=['cstddef'],
+            body='\n'.join([
+                # _GLIBCXX_RELEASE showed up in libstdc++ 7.
+                '#if defined(__GLIBCXX__) && !defined(_GLIBCXX_RELEASE)',
+                '#  error libstdc++ not new enough',
+                '#endif',
+                '#if defined(_GLIBCXX_RELEASE)',
+                '#  if _GLIBCXX_RELEASE < %d' % minimum_gcc_version().major,
+                '#    error libstdc++ not new enough',
+                '#  else',
+                '     (void) 0',
+                '#  endif',
+                '#endif',
+            ]),
+            check_msg='for new enough STL headers from libstdc++',
+            when=needs_libstdcxx_newness_check,
+            onerror=die_on_old_libstdcxx)
 
 
 @depends(c_compiler, target)
@@ -1339,22 +1357,30 @@ set_config('COLOR_CFLAGS', color_cflags)
 # Note that we don't need to do this with gcc, as libc++ detects gcc and
 # effectively does the same thing we are doing here.
 #
-# _LIBCPP_ALWAYS_INLINE needs similar workarounds, since it too declares
+# _LIBCPP_ALWAYS_INLINE needs a similar workarounds, since it too declares
 # hidden visibility.
+#
+# _LIBCPP_HIDE_FROM_ABI is a macro in libc++ versions in NDKs >=r19.  It too
+# declares hidden visibility, but it also declares functions as excluded from
+# explicit instantiation (roughly: the function can be unused in the current
+# compilation, but does not then trigger an actual definition of the function;
+# it is assumed the real definition comes from elsewhere).  We need to replicate
+# this setup.
 
 
 @depends(c_compiler, target)
 def libcxx_override_visibility(c_compiler, target):
     if c_compiler.type == 'clang' and target.os == 'Android':
-        return ''
+        return namespace(
+            empty='',
+            hide_from_abi='__attribute__((__exclude_from_explicit_instantiation__))',
+        )
 
 
-set_define('_LIBCPP_INLINE_VISIBILITY', libcxx_override_visibility)
-set_define('_LIBCPP_INLINE_VISIBILITY_EXCEPT_GCC49',
-           libcxx_override_visibility)
-set_define('_LIBCPP_ALWAYS_INLINE', libcxx_override_visibility)
-set_define('_LIBCPP_ALWAYS_INLINE_EXCEPT_GCC49', libcxx_override_visibility)
+set_define('_LIBCPP_INLINE_VISIBILITY', libcxx_override_visibility.empty)
+set_define('_LIBCPP_ALWAYS_INLINE', libcxx_override_visibility.empty)
 
+set_define('_LIBCPP_HIDE_FROM_ABI', libcxx_override_visibility.hide_from_abi)
 
 @depends(target, check_build_environment)
 def visibility_flags(target, env):
@@ -1380,72 +1406,31 @@ set_config('WRAP_SYSTEM_INCLUDES', wrap_system_includes)
 set_config('VISIBILITY_FLAGS', visibility_flags)
 
 
-@depends(c_compiler)
-def depend_cflags(info):
-    if info.type != 'clang-cl':
-        return ['-MD', '-MP', '-MF $(MDDEPDIR)/$(@F).pp']
-    else:
-        # clang-cl doesn't accept the normal -MD -MP -MF options that clang
-        # does, but the underlying cc1 binary understands how to generate
-        # dependency files.  These options are based on analyzing what the
-        # normal clang driver sends to cc1 when given the "correct"
-        # dependency options.
-        return [
-            '-Xclang', '-MP',
-            '-Xclang', '-dependency-file',
-            '-Xclang', '$(MDDEPDIR)/$(@F).pp',
-            '-Xclang', '-MT',
-            '-Xclang', '$@'
-        ]
-
-
-set_config('_DEPEND_CFLAGS', depend_cflags)
-
-
-@depends(c_compiler, check_build_environment, target)
-@imports('multiprocessing')
-@imports(_from='__builtin__', _import='min')
-def pgo_flags(compiler, build_env, target):
-    topobjdir = build_env.topobjdir
-    if topobjdir.endswith('/js/src'):
-        topobjdir = topobjdir[:-7]
-
-    if compiler.type == 'gcc':
-        return namespace(
-            gen_cflags=['-fprofile-generate'],
-            gen_ldflags=['-fprofile-generate'],
-            use_cflags=['-fprofile-use', '-fprofile-correction',
-                        '-Wcoverage-mismatch'],
-            use_ldflags=['-fprofile-use'],
-        )
-
-    if compiler.type in ('clang-cl', 'clang'):
-        profdata = os.path.join(topobjdir, 'merged.profdata')
-        if compiler.type == 'clang-cl':
-            if target.cpu == 'x86_64':
-                gen_ldflags = ['clang_rt.profile-x86_64.lib']
-            elif target.cpu == 'x86':
-                gen_ldflags = ['clang_rt.profile-i386.lib']
-            else:
-                gen_ldflags = None
+@template
+def depend_cflags(host_or_target_c_compiler):
+    @depends(host_or_target_c_compiler)
+    def depend_cflags(host_or_target_c_compiler):
+        if host_or_target_c_compiler.type != 'clang-cl':
+            return ['-MD', '-MP', '-MF $(MDDEPDIR)/$(@F).pp']
         else:
-            gen_ldflags = ['-fprofile-instr-generate']
+            # clang-cl doesn't accept the normal -MD -MP -MF options that clang
+            # does, but the underlying cc1 binary understands how to generate
+            # dependency files.  These options are based on analyzing what the
+            # normal clang driver sends to cc1 when given the "correct"
+            # dependency options.
+            return [
+                '-Xclang', '-MP',
+                '-Xclang', '-dependency-file',
+                '-Xclang', '$(MDDEPDIR)/$(@F).pp',
+                '-Xclang', '-MT',
+                '-Xclang', '$@'
+            ]
 
-        if gen_ldflags:
-            return namespace(
-                gen_cflags=['-fprofile-instr-generate'],
-                gen_ldflags=gen_ldflags,
-                use_cflags=['-fprofile-instr-use=%s' % profdata,
-                            '-Wno-error=profile-instr-out-of-date',
-                            '-Wno-error=profile-instr-unprofiled'],
-                use_ldflags=[],
-            )
+    return depend_cflags
 
 
-set_config('PROFILE_GEN_CFLAGS', pgo_flags.gen_cflags)
-set_config('PROFILE_GEN_LDFLAGS', pgo_flags.gen_ldflags)
-set_config('PROFILE_USE_CFLAGS', pgo_flags.use_cflags)
-set_config('PROFILE_USE_LDFLAGS', pgo_flags.use_ldflags)
+set_config('_DEPEND_CFLAGS', depend_cflags(c_compiler))
+set_config('_HOST_DEPEND_CFLAGS', depend_cflags(host_c_compiler))
 
 
 @depends(c_compiler)
@@ -1461,142 +1446,30 @@ set_config('PREPROCESS_OPTION', preprocess_option)
 
 
 # We only want to include windows.configure when we are compiling on
-# Windows, for Windows.
+# Windows, or for Windows.
 
 
 @depends(target, host)
 def is_windows(target, host):
-    return host.kernel == 'WINNT' and target.kernel == 'WINNT'
+    return host.kernel == 'WINNT' or target.kernel == 'WINNT'
 
 
 include('windows.configure', when=is_windows)
 
-# PGO
-# ==============================================================
-llvm_profdata = check_prog('LLVM_PROFDATA', ['llvm-profdata'],
-                           allow_missing=True,
-                           paths=toolchain_search_path)
 
-js_option('--enable-profile-generate',
-          help='Build a PGO instrumented binary')
+# On Power ISA, determine compiler flags for VMX, VSX and VSX-3.
 
-imply_option('MOZ_PGO',
-             depends_if('--enable-profile-generate')(lambda _: True))
+set_config('PPC_VMX_FLAGS',
+           ['-maltivec'],
+           when=depends(target.cpu)(lambda cpu: cpu.startswith('ppc')))
 
-set_config('MOZ_PROFILE_GENERATE',
-           depends_if('--enable-profile-generate')(lambda _: True))
+set_config('PPC_VSX_FLAGS',
+           ['-mvsx'],
+           when=depends(target.cpu)(lambda cpu: cpu.startswith('ppc')))
 
-js_option('--enable-profile-use',
-          help='Use a generated profile during the build')
-
-js_option('--with-pgo-profile-path',
-          help='Path to the directory with unmerged profile data to use during the build',
-          nargs=1)
-
-imply_option('MOZ_PGO',
-             depends_if('--enable-profile-use')(lambda _: True))
-
-set_config('MOZ_PROFILE_USE',
-           depends_if('--enable-profile-use')(lambda _: True))
-
-
-@depends('--with-pgo-profile-path', '--enable-profile-use', 'LLVM_PROFDATA')
-@imports('os')
-def pgo_profile_path(path, pgo_use, profdata):
-    if not path:
-        return
-    if path and not pgo_use:
-        die('Pass --enable-profile-use to use --with-pgo-profile-path.')
-    if path and not profdata:
-        die('LLVM_PROFDATA must be set to process the pgo profile.')
-    if not os.path.isdir(path[0]):
-        die('Argument to --with-pgo-profile-path must be a directory.')
-    if not os.path.isabs(path[0]):
-        die('Argument to --with-pgo-profile-path must be an absolute path.')
-    return path[0]
-
-
-set_config('PGO_PROFILE_PATH', pgo_profile_path)
-
-option('--with-pgo-jarlog',
-       help='Use the provided jarlog file when packaging during a profile-use '
-            'build',
-       nargs=1)
-
-set_config('PGO_JARLOG_PATH', depends_if('--with-pgo-jarlog')(lambda p: p))
-
-# LTO
-# ==============================================================
-
-js_option('--enable-lto',
-          env='MOZ_LTO',
-          nargs='?',
-          choices=('full', 'thin', 'cross'),
-          help='Enable LTO')
-
-
-@depends('--enable-lto', 'MOZ_PGO', c_compiler)
-@imports('multiprocessing')
-def lto(value, pgo, c_compiler):
-    cflags = []
-    ldflags = []
-    enabled = None
-    rust_lto = False
-
-    # MSVC's implementation of PGO implies LTO. Make clang-cl match this.
-    if c_compiler.type == 'clang-cl' and pgo and value.origin == 'default':
-        value = ['thin']
-
-    if value:
-        enabled = True
-        # `cross` implies `thin`, but with Rust code participating in LTO
-        # as well.  Make that a little more explicit.
-        if len(value) and value[0].lower() == 'cross':
-            if c_compiler.type == 'gcc':
-                die('Cross-language LTO is not supported with GCC.')
-
-            rust_lto = True
-            value = ['thin']
-
-        if c_compiler.type == 'clang':
-            if len(value) and value[0].lower() == 'full':
-                cflags.append("-flto")
-                ldflags.append("-flto")
-            else:
-                cflags.append("-flto=thin")
-                ldflags.append("-flto=thin")
-        elif c_compiler.type == 'clang-cl':
-            if len(value) and value[0].lower() == 'full':
-                cflags.append("-flto")
-            else:
-                cflags.append("-flto=thin")
-            # With clang-cl, -flto can only be used with -c or -fuse-ld=lld.
-            # AC_TRY_LINKs during configure don't have -c, so pass -fuse-ld=lld.
-            cflags.append("-fuse-ld=lld");
-        else:
-            num_cores = multiprocessing.cpu_count()
-            cflags.append("-flto")
-            cflags.append("-flifetime-dse=1")
-
-            ldflags.append("-flto=%s" % num_cores)
-            ldflags.append("-flifetime-dse=1")
-
-    return namespace(
-        enabled=enabled,
-        cflags=cflags,
-        ldflags=ldflags,
-        rust_lto=rust_lto,
-    )
-
-
-add_old_configure_assignment('MOZ_LTO', lto.enabled)
-set_config('MOZ_LTO', lto.enabled)
-set_define('MOZ_LTO', lto.enabled)
-set_config('MOZ_LTO_CFLAGS', lto.cflags)
-set_config('MOZ_LTO_LDFLAGS', lto.ldflags)
-set_config('MOZ_LTO_RUST', lto.rust_lto)
-add_old_configure_assignment('MOZ_LTO_CFLAGS', lto.cflags)
-add_old_configure_assignment('MOZ_LTO_LDFLAGS', lto.ldflags)
+set_config('PPC_VSX3_FLAGS',
+           ['-mvsx','-mcpu=power9'],
+           when=depends(target.cpu)(lambda cpu: cpu.startswith('ppc')))
 
 # ASAN
 # ==============================================================
@@ -1611,6 +1484,32 @@ def asan():
 
 add_old_configure_assignment('MOZ_ASAN', asan)
 
+# MSAN
+# ==============================================================
+
+js_option('--enable-memory-sanitizer', help='Enable Memory Sanitizer')
+
+
+@depends(when='--enable-memory-sanitizer')
+def msan():
+    return True
+
+
+add_old_configure_assignment('MOZ_MSAN', msan)
+
+# TSAN
+# ==============================================================
+
+js_option('--enable-thread-sanitizer', help='Enable Thread Sanitizer')
+
+
+@depends(when='--enable-thread-sanitizer')
+def tsan():
+    return True
+
+
+add_old_configure_assignment('MOZ_TSAN', tsan)
+
 # UBSAN
 # ==============================================================
 
@@ -1623,6 +1522,11 @@ def ubsan(options):
     default_checks = [
         'bool',
         'bounds',
+        'enum',
+        'integer-divide-by-zero',
+        'object-size',
+        'pointer-overflow',
+        'return',
         'vla-bound',
     ]
 
@@ -1631,6 +1535,30 @@ def ubsan(options):
     return ','.join(checks)
 
 add_old_configure_assignment('MOZ_UBSAN_CHECKS', ubsan)
+
+
+js_option('--enable-signed-overflow-sanitizer',
+          help='Enable UndefinedBehavior Sanitizer (Signed Integer Overflow Parts)')
+
+
+@depends(when='--enable-signed-overflow-sanitizer')
+def ub_signed_overflow_san():
+    return True
+
+
+add_old_configure_assignment('MOZ_SIGNED_OVERFLOW_SANITIZE', ub_signed_overflow_san)
+
+
+js_option('--enable-unsigned-overflow-sanitizer',
+          help='Enable UndefinedBehavior Sanitizer (Unsigned Integer Overflow Parts)')
+
+
+@depends(when='--enable-unsigned-overflow-sanitizer')
+def ub_unsigned_overflow_san():
+    return True
+
+
+add_old_configure_assignment('MOZ_UNSIGNED_OVERFLOW_SANITIZE', ub_unsigned_overflow_san)
 
 # Security Hardening
 # ==============================================================
@@ -1649,8 +1577,9 @@ option('--enable-hardening', env='MOZ_SECURITY_HARDENING',
 # possible security flags will be omitted by --disable-hardening, as many are
 # compiler-default options we do not explicitly enable.)
 @depends('--enable-hardening', '--enable-address-sanitizer',
-         '--enable-optimize', c_compiler, target)
-def security_hardening_cflags(hardening_flag, asan, optimize, c_compiler, target):
+         '--enable-debug', '--enable-optimize', c_compiler, target)
+def security_hardening_cflags(hardening_flag, asan, debug, optimize, c_compiler,
+                              target):
     compiler_is_gccish = c_compiler.type in ('gcc', 'clang')
     mingw_clang = c_compiler.type == 'clang' and target.os == 'WINNT'
 
@@ -1686,19 +1615,35 @@ def security_hardening_cflags(hardening_flag, asan, optimize, c_compiler, target
             js_flags.append("-fstack-protector-strong")
             js_ldflags.append("-fstack-protector-strong")
 
+        # ftrivial-auto-var-init ------------------------------
+        # Initialize local variables with a 0xAA pattern in clang debug builds.
+        # Linux32 fails some xpcshell tests with -ftrivial-auto-var-init
+        linux32 = target.kernel == 'Linux' and target.cpu == 'x86'
+        if (c_compiler.type == 'clang' or c_compiler.type == 'clang-cl') and \
+            c_compiler.version >= '8' and debug and not linux32:
+            if c_compiler.type == 'clang-cl':
+                flags.append('-Xclang')
+                js_flags.append('-Xclang')
+            flags.append('-ftrivial-auto-var-init=pattern')
+            js_flags.append('-ftrivial-auto-var-init=pattern')
+
         # ASLR ------------------------------------------------
         # ASLR (dynamicbase) is enabled by default in clang-cl; but the
         # mingw-clang build requires it to be explicitly enabled
-        if target.os == 'WINNT' and c_compiler.type == 'clang':
+        if mingw_clang:
             ldflags.append("-Wl,--dynamicbase")
             js_ldflags.append("-Wl,--dynamicbase")
 
         # Control Flow Guard (CFG) ----------------------------
-        # See Bug 1525588 for why this doesn't work on Windows ARM
         if c_compiler.type == 'clang-cl' and c_compiler.version >= '8' and \
-           target.cpu != 'aarch64':
-            flags.append("-guard:cf")
-            js_flags.append("-guard:cf")
+           (target.cpu != 'aarch64' or c_compiler.version >= '8.0.1'):
+            if target.cpu == 'aarch64' and c_compiler.version >= '10.0.0':
+                # The added checks in clang 10 make arm64 builds crash. (Bug 1639318)
+                flags.append("-guard:cf,nochecks")
+                js_flags.append("-guard:cf,nochecks")
+            else:
+                flags.append("-guard:cf")
+                js_flags.append("-guard:cf")
             # nolongjmp is needed because clang doesn't emit the CFG tables of
             # setjmp return addresses https://bugs.llvm.org/show_bug.cgi?id=40057
             ldflags.append("-guard:cf,nolongjmp")
@@ -1726,10 +1671,48 @@ def security_hardening_cflags(hardening_flag, asan, optimize, c_compiler, target
     )
 
 
-add_old_configure_assignment('MOZ_HARDENING_CFLAGS', security_hardening_cflags.flags)
-add_old_configure_assignment('MOZ_HARDENING_LDFLAGS', security_hardening_cflags.ldflags)
-add_old_configure_assignment('MOZ_HARDENING_CFLAGS_JS', security_hardening_cflags.js_flags)
-add_old_configure_assignment('MOZ_HARDENING_LDFLAGS_JS', security_hardening_cflags.js_ldflags)
+set_config('MOZ_HARDENING_CFLAGS', security_hardening_cflags.flags)
+set_config('MOZ_HARDENING_LDFLAGS', security_hardening_cflags.ldflags)
+set_config('MOZ_HARDENING_CFLAGS_JS', security_hardening_cflags.js_flags)
+set_config('MOZ_HARDENING_LDFLAGS_JS', security_hardening_cflags.js_ldflags)
+
+
+# Frame pointers
+# ==============================================================
+@depends(c_compiler)
+def frame_pointer_flags(compiler):
+    if compiler.type == 'clang-cl':
+        return namespace(
+            enable=['-Oy-'],
+            disable=['-Oy'],
+        )
+    return namespace(
+        enable=['-fno-omit-frame-pointer', '-funwind-tables'],
+        disable=['-fomit-frame-pointer', '-funwind-tables'],
+    )
+
+
+@depends(moz_optimize.optimize, moz_debug, target,
+         '--enable-memory-sanitizer', '--enable-address-sanitizer',
+         '--enable-undefined-sanitizer')
+def frame_pointer_default(optimize, debug, target, msan, asan, ubsan):
+    return bool(not optimize or debug or msan or asan or ubsan or \
+        (target.os == 'WINNT' and target.cpu in ('x86', 'aarch64')))
+
+
+js_option('--enable-frame-pointers', default=frame_pointer_default,
+          help='{Enable|Disable} frame pointers')
+
+
+@depends('--enable-frame-pointers', frame_pointer_flags)
+def frame_pointer_flags(enable, flags):
+    if enable:
+        return flags.enable
+    return flags.disable
+
+
+set_config('MOZ_FRAMEPTR_FLAGS', frame_pointer_flags)
+
 
 # nasm detection
 # ==============================================================
@@ -1831,8 +1814,8 @@ set_config('MOZ_CODE_COVERAGE', code_coverage)
 set_define('MOZ_CODE_COVERAGE', code_coverage)
 
 @depends(target, c_compiler, vc_path, check_build_environment, when=code_coverage)
+@imports('os')
 @imports('re')
-@imports('mozpack.path')
 @imports(_from='__builtin__', _import='open')
 def coverage_cflags(target, c_compiler, vc_path, build_env):
     cflags = ['--coverage']
@@ -1848,10 +1831,7 @@ def coverage_cflags(target, c_compiler, vc_path, build_env):
 
         # We need to get the real path of Visual Studio, which can be in a
         # symlinked directory (for example, on automation).
-        vs_path = mozpack.path.readlink(vs_path)
-        # Since the -fprofile-exclude-files option in LLVM is a regex, we need to
-        # have the same path separators.
-        vs_path = vs_path.replace('/', '\\')
+        vs_path = os.path.realpath(vs_path)
 
         cflags += [
             '-fprofile-exclude-files=^{}.*$'.format(re.escape(vs_path)),
@@ -1893,8 +1873,8 @@ def rustc_opt_level(opt_level_option, moz_optimize):
         return '1' if moz_optimize.optimize else '0'
 
 
-@depends(rustc_opt_level, debug_rust, '--enable-debug-symbols')
-def rust_compile_flags(opt_level, debug_rust, debug_symbols):
+@depends(rustc_opt_level, debug_rust, '--enable-debug-symbols', '--enable-frame-pointers')
+def rust_compile_flags(opt_level, debug_rust, debug_symbols, frame_pointers):
     # Cargo currently supports only two interesting profiles for building:
     # development and release. Those map (roughly) to --enable-debug and
     # --disable-debug in Gecko, respectively.
@@ -1927,6 +1907,8 @@ def rust_compile_flags(opt_level, debug_rust, debug_symbols):
                     ('yes' if debug_assertions else 'no'))
     if debug_info is not None:
         opts.append('debuginfo=%s' % debug_info)
+    if frame_pointers:
+        opts.append('force-frame-pointers=yes')
 
     flags = []
     for opt in opts:
@@ -1938,13 +1920,15 @@ def rust_compile_flags(opt_level, debug_rust, debug_symbols):
 # Rust incremental compilation
 # ==============================================================
 
+
 js_option('--disable-cargo-incremental',
           help='Disable incremental rust compilation.')
 
 @depends(rustc_opt_level, debug_rust, 'MOZ_AUTOMATION', code_coverage,
-         '--disable-cargo-incremental')
+         '--disable-cargo-incremental', using_sccache, 'RUSTC_WRAPPER')
+@imports('os')
 def cargo_incremental(opt_level, debug_rust, automation, code_coverage,
-                      enabled):
+                      enabled, using_sccache, rustc_wrapper):
     """Return a value for the CARGO_INCREMENTAL environment variable."""
 
     if not enabled:
@@ -1959,6 +1943,15 @@ def cargo_incremental(opt_level, debug_rust, automation, code_coverage,
     # Coverage instrumentation doesn't play well with incremental compilation
     # https://github.com/rust-lang/rust/issues/50203.
     if code_coverage:
+        return '0'
+
+    # Incremental compilation doesn't work as well as it should, and if we're
+    # using sccache, it's better to use sccache than incremental compilation.
+    if not using_sccache and rustc_wrapper:
+        rustc_wrapper = os.path.basename(rustc_wrapper[0])
+        if os.path.splitext(rustc_wrapper)[0].lower() == 'sccache':
+            using_sccache = True
+    if using_sccache:
         return '0'
 
     # Incremental compilation is automatically turned on for debug builds, so
@@ -1982,8 +1975,22 @@ set_config('CARGO_INCREMENTAL', cargo_incremental)
 
 # Linker detection
 # ==============================================================
-
-
+# The policy is as follows:
+# For Windows:
+# - the linker is picked via the LINKER environment variable per windows.configure,
+#   but ought to be llvm-lld in any case.
+# For macOS:
+# - the linker is ld64, either from XCode on macOS, or from cctools-ports when
+#   cross-compiling. lld can be enabled manually, but as of writing, mach-o support
+#   for lld is incomplete.
+# For other OSes:
+# - on local developer builds: lld is used if present. Otherwise gold is used if present
+#   otherwise, BFD ld is used.
+# - on release/official builds: whatever "ld" resolves to is used, except on Android x86_64
+#   where BFD ld is used. Usually, "ld" resolves to BFD ld, except with the Android NDK,
+#   where it resolves to gold. lld is not used by default on Linux and Android because
+#   it introduces layout changes that prevent elfhack from working. See e.g.
+#   https://bugzilla.mozilla.org/show_bug.cgi?id=1563654#c2.
 @depends(target)
 def is_linker_option_enabled(target):
     if target.kernel not in ('WINNT', 'SunOS'):
@@ -1997,8 +2004,17 @@ option('--enable-gold',
 
 imply_option('--enable-linker', 'gold', when='--enable-gold')
 
+@depends(target, developer_options)
+def enable_linker_default(target, developer_options):
+    # x86-64 gold has bugs in how it lays out .note.* sections. See bug 1573820.
+    # lld is faster, so prefer that for developer builds.
+    if target.os == 'Android' and target.cpu == 'x86_64':
+        return 'lld' if developer_options else 'bfd'
+
+
 js_option('--enable-linker', nargs=1,
-          help='Select the linker {bfd, gold, ld64, lld, lld-*}',
+          help='Select the linker {bfd, gold, ld64, lld, lld-*}{|}',
+          default=enable_linker_default,
           when=is_linker_option_enabled)
 
 
@@ -2054,23 +2070,24 @@ def select_linker(linker, c_compiler, developer_options, enable_gold,
         # specific to it on stderr when it fails to process --version.
         env = dict(os.environ)
         env['LD_PRINT_OPTIONS'] = '1'
+        # Some locales might not print out the strings we are looking for, so
+        # ensure consistent output.
+        env['LC_ALL'] = 'C'
         retcode, stdout, stderr = get_cmd_output(*cmd, env=env)
-        cmd_output = stdout.decode('utf-8')
-        stderr = stderr.decode('utf-8')
         if retcode == 1 and 'Logging ld64 options' in stderr:
             kind = 'ld64'
 
         elif retcode != 0:
             return None
 
-        elif 'GNU ld' in cmd_output:
+        elif 'GNU ld' in stdout:
             # We are using the normal linker
             kind = 'bfd'
 
-        elif 'GNU gold' in cmd_output:
+        elif 'GNU gold' in stdout:
             kind = 'gold'
 
-        elif 'LLD' in cmd_output:
+        elif 'LLD' in stdout:
             kind = 'lld'
 
         else:
@@ -2088,10 +2105,10 @@ def select_linker(linker, c_compiler, developer_options, enable_gold,
         die("Failed to find a linker")
 
     if (linker is None and enable_gold.origin == 'default' and
-            developer_options and result.KIND == 'bfd'):
+            developer_options and result.KIND in ('bfd', 'gold')):
         # try and use lld if available.
         tried = try_linker('lld')
-        if tried is None or tried.KIND != 'lld':
+        if result.KIND != 'gold' and (tried is None or tried.KIND != 'lld'):
             tried = try_linker('gold')
             if tried is None or tried.KIND != 'gold':
                 tried = None
@@ -2147,8 +2164,8 @@ js_option(env='AS', nargs=1, help='Path to the assembler')
 def as_info(target, c_compiler):
     if c_compiler.type == 'clang-cl':
         ml = {
-            'x86': 'ml',
-            'x86_64': 'ml64',
+            'x86': 'ml.exe',
+            'x86_64': 'ml64.exe',
             'aarch64': 'armasm64.exe',
         }.get(target.cpu)
         return namespace(
@@ -2176,7 +2193,7 @@ assembler = check_prog('_AS', input=provided_assembler.program,
 def as_with_flags(as_info, assembler, provided_assembler, c_compiler):
     if provided_assembler:
         return provided_assembler.wrapper + \
-            [provided_assembler.program] + \
+            [assembler] + \
             provided_assembler.flags
 
     if as_info.type == 'masm':
@@ -2209,7 +2226,7 @@ def gnu_as(assembler, c_compiler, toolchain_flags):
         # close the stdin pipe.
         # clang will error if it uses its integrated assembler for this target,
         # so handle failures gracefully.
-        if 'GNU' in check_cmd_output(*cmd, stdin=subprocess.PIPE, onerror=lambda: '').decode('utf-8'):
+        if 'GNU' in check_cmd_output(*cmd, stdin=subprocess.PIPE, onerror=lambda: ''):
             return True
 
 
@@ -2244,10 +2261,23 @@ set_config('ASOUTOPTION', as_outoption)
 # ==============================================================
 
 js_option('--enable-clang-plugin', env='ENABLE_CLANG_PLUGIN',
-          help="Enable building with the mozilla clang plugin")
+          help="Enable building with the Clang plugin (gecko specific static analyzers)")
 
 add_old_configure_assignment('ENABLE_CLANG_PLUGIN',
                              depends_if('--enable-clang-plugin')(lambda _: True))
+
+js_option('--enable-clang-plugin-alpha', env='ENABLE_CLANG_PLUGIN_ALPHA',
+            help='Enable static analysis with clang-plugin alpha checks.')
+
+@depends('--enable-clang-plugin', '--enable-clang-plugin-alpha')
+def check_clang_plugin_alpha(enable_clang_plugin, enable_clang_plugin_alpha):
+    if enable_clang_plugin_alpha:
+        if enable_clang_plugin:
+            return True
+        die("Cannot enable clang-plugin alpha checkers without --enable-clang-plugin.")
+
+add_old_configure_assignment('ENABLE_CLANG_PLUGIN_ALPHA', check_clang_plugin_alpha)
+set_define('MOZ_CLANG_PLUGIN_ALPHA', check_clang_plugin_alpha)
 
 js_option('--enable-mozsearch-plugin', env='ENABLE_MOZSEARCH_PLUGIN',
           help="Enable building with the mozsearch indexer plugin")
@@ -2339,8 +2369,17 @@ add_old_configure_assignment('FUZZING_INTERFACES', enable_fuzzing_interfaces)
 
 @depends(c_compiler.try_compile(flags=['-fsanitize=fuzzer-no-link'],
          when=enable_fuzzing,
-         check_msg='whether the C compiler supports -fsanitize=fuzzer-no-link'))
-def libfuzzer_flags(value):
+         check_msg='whether the C compiler supports -fsanitize=fuzzer-no-link'), tsan)
+def libfuzzer_flags(value, tsan):
+    if tsan:
+        # With ThreadSanitizer, we should not use any libFuzzer instrumentation because
+        # it is incompatible (e.g. there are races on global sanitizer coverage counters).
+        # Instead we use an empty set of flags here but still build the fuzzing targets.
+        # With this setup, we can still run files through these targets in TSan builds,
+        # e.g. those obtained from regular fuzzing.
+        # This code can be removed once libFuzzer has been made compatible with TSan.
+        return namespace(no_link_flag_supported=False, use_flags=[])
+
     if value:
         no_link_flag_supported = True
         # recommended for (and only supported by) clang >= 6
@@ -2417,15 +2456,16 @@ def rc_names(c_compiler, toolchain_prefix):
     if c_compiler.type in ('gcc', 'clang'):
         return tuple('%s%s' % (p, 'windres')
                      for p in ('',) + (toolchain_prefix or ()))
-    return ('rc',)
+    return ('rc.exe',)
 
 
-check_prog('RC', rc_names, paths=sdk_bin_path)
+check_prog('RC', rc_names, paths=sdk_bin_path, when=target_is_windows)
 
 
-@depends(link, toolchain_prefix)
-def ar_config(link, toolchain_prefix):
-    if link:  # if LINKER is set, it's either for lld-link or link
+@depends(link, toolchain_prefix, c_compiler)
+def ar_config(link, toolchain_prefix, c_compiler):
+    if c_compiler.type == 'clang-cl' and link:
+        # if LINKER is set, it's either for lld-link or link
         if 'lld-link' in link:
             return namespace(
                 names=('llvm-lib',),
@@ -2448,3 +2488,8 @@ ar = check_prog('AR', ar_config.names, paths=toolchain_search_path)
 add_old_configure_assignment('AR', ar)
 
 set_config('AR_FLAGS', ar_config.flags)
+
+
+js_option('--enable-cpp-rtti', help='Enable C++ RTTI')
+
+add_old_configure_assignment('_MOZ_USE_RTTI', '1', when='--enable-cpp-rtti')

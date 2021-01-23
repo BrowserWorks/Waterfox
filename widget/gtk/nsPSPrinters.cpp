@@ -6,7 +6,6 @@
 
 #include "nscore.h"
 #include "nsCUPSShim.h"
-#include "nsIServiceManager.h"
 #include "nsPSPrinters.h"
 #include "nsReadableUtils.h"  // StringBeginsWith()
 #include "nsCUPSShim.h"
@@ -101,10 +100,11 @@ void nsPSPrinterList::GetPrinterList(nsTArray<nsCString>& aList) {
 /* Identify the printer type */
 nsPSPrinterList::PrinterType nsPSPrinterList::GetPrinterType(
     const nsACString& aName) {
-  if (StringBeginsWith(aName, NS_LITERAL_CSTRING(NS_POSTSCRIPT_DRIVER_NAME)))
+  if (StringBeginsWith(aName, NS_LITERAL_CSTRING(NS_POSTSCRIPT_DRIVER_NAME))) {
     return kTypePS;
-  else if (StringBeginsWith(aName, NS_LITERAL_CSTRING(NS_CUPS_PRINTER)))
+  }
+  if (StringBeginsWith(aName, NS_LITERAL_CSTRING(NS_CUPS_PRINTER))) {
     return kTypeCUPS;
-  else
-    return kTypeUnknown;
+  }
+  return kTypeUnknown;
 }

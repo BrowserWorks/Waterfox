@@ -8,9 +8,9 @@
 #define mozilla_dom_IPCBlobInputStreamChild_h
 
 #include "mozilla/dom/PIPCBlobInputStreamChild.h"
+#include "mozilla/dom/IPCBlobInputStream.h"
 #include "mozilla/Mutex.h"
 #include "mozilla/UniquePtr.h"
-#include "nsIThread.h"
 #include "nsTArray.h"
 
 namespace mozilla {
@@ -37,7 +37,7 @@ class IPCBlobInputStreamChild final : public PIPCBlobInputStreamChild {
     eInactiveMigrating,
   };
 
-  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(IPCBlobInputStreamChild)
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(IPCBlobInputStreamChild, final)
 
   IPCBlobInputStreamChild(const nsID& aID, uint64_t aSize);
 

@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgReadSecurityInfo.dtd UI for viewing security status when reading a received message -->
+
+
+<!ENTITY status.label "Slándáil na dTeachtaireachtaí">
+<!ENTITY signatureCert.label "Amharc ar Shíniú Teastais">
+<!ENTITY encryptionCert.label "Amharc ar Theastas Criptiúcháin">
+
+<!ENTITY signer.name "Sínithe ag:">
+<!ENTITY recipient.name "Criptithe le haghaidh:">
+<!ENTITY email.address "Seoladh Ríomhphoist:">
+<!ENTITY issuer.name "Teastas eisithe ag:">
+

@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setupButton.label "Configurar &syncBrand.fullName.label;">
+<!ENTITY setupButton.accesskey "o">
+<!ENTITY weaveDesc.label "&syncBrand.fullName.label; le permite acceder a sus marcadores, historial, contraseñas, preferencias y pestañas en varios dispositivos.">
+<!ENTITY accountGroupboxCaption.label "Cuenta de &syncBrand.fullName.label;">
+<!ENTITY accountName.label "Nombre de la cuenta:">
+<!ENTITY updatePass.label "Actualizar">
+<!ENTITY updatePass.accesskey "A">
+<!ENTITY resetPass.label "Restablecer">
+<!ENTITY resetPass.accesskey "R">
+<!ENTITY manageAccount.label "Administrar cuenta">
+<!ENTITY manageAccount.accesskey "M">
+<!ENTITY viewQuota.label "Ver cuota">
+<!ENTITY viewQuota.accesskey "V">
+<!ENTITY changePassword.label "Cambiar contraseña">
+<!ENTITY changePassword.accesskey "C">
+<!ENTITY myRecoveryKey.label "Mi clave de recuperación">
+<!ENTITY myRecoveryKey.accesskey "M">
+<!ENTITY resetSync.label "Restablecer Sync">
+<!ENTITY resetSync.accesskey "S">
+<!ENTITY unlinkDevice.label "Desconectar este dispositivo">
+<!ENTITY unlinkDevice.accesskey "D">
+<!ENTITY addDevice.label "Añadir un dispositivo">
+<!ENTITY addDevice.accesskey "A">
+<!ENTITY syncComputerName.label "Nombre del equipo:">
+<!ENTITY syncComputerName.accesskey "N">
+<!ENTITY syncMy2.label "Sincronizar mis:">
+<!ENTITY engine.addons.label "Complementos">
+<!ENTITY engine.addons.accesskey "C">
+<!ENTITY engine.bookmarks.label "Marcadores">
+<!ENTITY engine.bookmarks.accesskey "e">
+<!ENTITY engine.tabs.label "Pestañas">
+<!ENTITY engine.tabs.accesskey "t">
+<!ENTITY engine.history.label "Historial">
+<!ENTITY engine.history.accesskey "H">
+<!ENTITY engine.passwords.label "Contraseñas">
+<!ENTITY engine.passwords.accesskey "ñ">
+<!ENTITY engine.prefs.label "Preferencias">
+<!ENTITY engine.prefs.accesskey "P">
+<!ENTITY prefs.tosLink.label "Términos del Servicio">
+<!ENTITY prefs.ppLink.label "Política de privacidad">

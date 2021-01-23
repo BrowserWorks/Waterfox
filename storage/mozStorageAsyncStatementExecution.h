@@ -9,11 +9,10 @@
 
 #include "nscore.h"
 #include "nsTArray.h"
-#include "nsAutoPtr.h"
 #include "mozilla/Mutex.h"
 #include "mozilla/TimeStamp.h"
 #include "mozilla/Attributes.h"
-#include "nsIRunnable.h"
+#include "nsThreadUtils.h"
 
 #include "SQLiteMutex.h"
 #include "mozIStoragePendingStatement.h"
@@ -28,11 +27,14 @@ namespace storage {
 class Connection;
 class ResultSet;
 class StatementData;
+}  // namespace storage
+}  // namespace mozilla
 
-class AsyncExecuteStatements final : public nsIRunnable,
+namespace mozilla::storage {
+class AsyncExecuteStatements final : public Runnable,
                                      public mozIStoragePendingStatement {
  public:
-  NS_DECL_THREADSAFE_ISUPPORTS
+  NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_NSIRUNNABLE
   NS_DECL_MOZISTORAGEPENDINGSTATEMENT
 
@@ -244,7 +246,6 @@ class AsyncExecuteStatements final : public nsIRunnable,
   TimeStamp mRequestStartDate;
 };
 
-}  // namespace storage
-}  // namespace mozilla
+}  // namespace mozilla::storage
 
 #endif  // mozStorageAsyncStatementExecution_h

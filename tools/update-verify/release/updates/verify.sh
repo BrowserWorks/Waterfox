@@ -18,7 +18,7 @@ to_build_id=""
 to_app_version=""
 to_display_version=""
 override_certs=""
-diff_summary_log="$PWD/diff-summary.log"
+diff_summary_log=${DIFF_SUMMARY_LOG:-"$PWD/diff-summary.log"}
 if [ -e ${diff_summary_log} ]; then
   rm ${diff_summary_log}
 fi
@@ -174,7 +174,7 @@ do
         case $updater_package_filename in
           *dmg)
             platform_dirname="*.app"
-            updater_bins="Contents/MacOS/updater.app/Contents/MacOS/updater Contents/MacOS/updater.app/Contents/MacOS/org.mozilla.updater"
+            updater_bins="Contents/MacOS/updater.app/Contents/MacOS/updater Contents/MacOS/updater.app/Contents/MacOS/net.waterfox.updater"
             updater_platform="mac"
             ;;
           *exe)

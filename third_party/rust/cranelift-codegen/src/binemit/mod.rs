@@ -6,14 +6,24 @@
 mod memorysink;
 mod relaxation;
 mod shrink;
+mod stackmap;
 
-pub use self::memorysink::{MemoryCodeSink, NullTrapSink, RelocSink, TrapSink};
+pub use self::memorysink::{
+    MemoryCodeSink, NullRelocSink, NullStackmapSink, NullTrapSink, RelocSink, StackmapSink,
+    TrapSink,
+};
 pub use self::relaxation::relax_branches;
 pub use self::shrink::shrink_instructions;
+pub use self::stackmap::Stackmap;
+use crate::ir::entities::Value;
+use crate::ir::{
+    ConstantOffset, ExternalName, Function, Inst, JumpTable, Opcode, SourceLoc, TrapCode,
+};
+use crate::isa::TargetIsa;
 pub use crate::regalloc::RegDiversions;
-
-use crate::ir::{ExternalName, Function, Inst, JumpTable, SourceLoc, TrapCode};
 use core::fmt;
+#[cfg(feature = "enable-serde")]
+use serde::{Deserialize, Serialize};
 
 /// Offset in bytes from the beginning of the function.
 ///
@@ -25,7 +35,8 @@ pub type CodeOffset = u32;
 pub type Addend = i64;
 
 /// Relocation kinds for every ISA
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "enable-serde", derive(Serialize, Deserialize))]
 pub enum Reloc {
     /// absolute 4-byte
     Abs4,
@@ -33,6 +44,8 @@ pub enum Reloc {
     Abs8,
     /// x86 PC-relative 4-byte
     X86PCRel4,
+    /// x86 PC-relative 4-byte offset to trailing rodata
+    X86PCRelRodata4,
     /// x86 call to PC-relative 4-byte
     X86CallPCRel4,
     /// x86 call to PLT-relative 4-byte
@@ -41,10 +54,18 @@ pub enum Reloc {
     X86GOTPCRel4,
     /// Arm32 call target
     Arm32Call,
-    /// Arm64 call target
+    /// Arm64 call target. Encoded as bottom 26 bits of instruction. This
+    /// value is sign-extended, multiplied by 4, and added to the PC of
+    /// the call instruction to form the destination address.
     Arm64Call,
     /// RISC-V call target
     RiscvCall,
+
+    /// Elf x86_64 32 bit signed PC relative offset to two GOT entries for GD symbol.
+    ElfX86_64TlsGd,
+
+    /// Mach-O x86_64 32 bit signed PC relative offset to a `__thread_vars` entry.
+    MachOX86_64Tlv,
 }
 
 impl fmt::Display for Reloc {
@@ -52,14 +73,50 @@ impl fmt::Display for Reloc {
     /// already unambiguous, e.g. clif syntax with isa specified. In other contexts, use Debug.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Reloc::Abs4 => write!(f, "Abs4"),
-            Reloc::Abs8 => write!(f, "Abs8"),
-            Reloc::X86PCRel4 => write!(f, "PCRel4"),
-            Reloc::X86CallPCRel4 => write!(f, "CallPCRel4"),
-            Reloc::X86CallPLTRel4 => write!(f, "CallPLTRel4"),
-            Reloc::X86GOTPCRel4 => write!(f, "GOTPCRel4"),
-            Reloc::Arm32Call | Reloc::Arm64Call | Reloc::RiscvCall => write!(f, "Call"),
+            Self::Abs4 => write!(f, "Abs4"),
+            Self::Abs8 => write!(f, "Abs8"),
+            Self::X86PCRel4 => write!(f, "PCRel4"),
+            Self::X86PCRelRodata4 => write!(f, "PCRelRodata4"),
+            Self::X86CallPCRel4 => write!(f, "CallPCRel4"),
+            Self::X86CallPLTRel4 => write!(f, "CallPLTRel4"),
+            Self::X86GOTPCRel4 => write!(f, "GOTPCRel4"),
+            Self::Arm32Call | Self::Arm64Call | Self::RiscvCall => write!(f, "Call"),
+
+            Self::ElfX86_64TlsGd => write!(f, "ElfX86_64TlsGd"),
+            Self::MachOX86_64Tlv => write!(f, "MachOX86_64Tlv"),
         }
+    }
+}
+
+/// Container for information about a vector of compiled code and its supporting read-only data.
+///
+/// The code starts at offset 0 and is followed optionally by relocatable jump tables and copyable
+/// (raw binary) read-only data.  Any padding between sections is always part of the section that
+/// precedes the boundary between the sections.
+#[derive(PartialEq)]
+pub struct CodeInfo {
+    /// Number of bytes of machine code (the code starts at offset 0).
+    pub code_size: CodeOffset,
+
+    /// Number of bytes of jumptables.
+    pub jumptables_size: CodeOffset,
+
+    /// Number of bytes of rodata.
+    pub rodata_size: CodeOffset,
+
+    /// Number of bytes in total.
+    pub total_size: CodeOffset,
+}
+
+impl CodeInfo {
+    /// Offset of any relocatable jump tables, or equal to rodata if there are no jump tables.
+    pub fn jumptables(&self) -> CodeOffset {
+        self.code_size
+    }
+
+    /// Offset of any copyable read-only data, or equal to total_size if there are no rodata.
+    pub fn rodata(&self) -> CodeOffset {
+        self.code_size + self.jumptables_size
     }
 }
 
@@ -83,11 +140,14 @@ pub trait CodeSink {
     /// Add 8 bytes to the code section.
     fn put8(&mut self, _: u64);
 
-    /// Add a relocation referencing an EBB at the current offset.
-    fn reloc_ebb(&mut self, _: Reloc, _: CodeOffset);
+    /// Add a relocation referencing a block at the current offset.
+    fn reloc_block(&mut self, _: Reloc, _: CodeOffset);
 
     /// Add a relocation referencing an external symbol plus the addend at the current offset.
-    fn reloc_external(&mut self, _: Reloc, _: &ExternalName, _: Addend);
+    fn reloc_external(&mut self, _: SourceLoc, _: Reloc, _: &ExternalName, _: Addend);
+
+    /// Add a relocation referencing a constant.
+    fn reloc_constant(&mut self, _: Reloc, _: ConstantOffset);
 
     /// Add a relocation referencing a jump table.
     fn reloc_jt(&mut self, _: Reloc, _: JumpTable);
@@ -95,8 +155,22 @@ pub trait CodeSink {
     /// Add trap information for the current offset.
     fn trap(&mut self, _: TrapCode, _: SourceLoc);
 
-    /// Code output is complete, read-only data may follow.
+    /// Machine code output is complete, jump table data may follow.
+    fn begin_jumptables(&mut self);
+
+    /// Jump table output is complete, raw read-only data may follow.
     fn begin_rodata(&mut self);
+
+    /// Read-only data output is complete, we're done.
+    fn end_codegen(&mut self);
+
+    /// Add a stackmap at the current code offset.
+    fn add_stackmap(&mut self, _: &[Value], _: &Function, _: &dyn TargetIsa);
+
+    /// Add a call site for a call with the given opcode, returning at the current offset.
+    fn add_call_site(&mut self, _: Opcode, _: SourceLoc) {
+        // Default implementation doesn't need to do anything.
+    }
 }
 
 /// Report a bad encoding error.
@@ -113,28 +187,39 @@ pub fn bad_encoding(func: &Function, inst: Inst) -> ! {
 ///
 /// This function is called from the `TargetIsa::emit_function()` implementations with the
 /// appropriate instruction emitter.
-pub fn emit_function<CS, EI>(func: &Function, emit_inst: EI, sink: &mut CS)
+pub fn emit_function<CS, EI>(func: &Function, emit_inst: EI, sink: &mut CS, isa: &dyn TargetIsa)
 where
     CS: CodeSink,
-    EI: Fn(&Function, Inst, &mut RegDiversions, &mut CS),
+    EI: Fn(&Function, Inst, &mut RegDiversions, &mut CS, &dyn TargetIsa),
 {
     let mut divert = RegDiversions::new();
-    for ebb in func.layout.ebbs() {
-        divert.clear();
-        debug_assert_eq!(func.offsets[ebb], sink.offset());
-        for inst in func.layout.ebb_insts(ebb) {
-            emit_inst(func, inst, &mut divert, sink);
+    for block in func.layout.blocks() {
+        divert.at_block(&func.entry_diversions, block);
+        debug_assert_eq!(func.offsets[block], sink.offset());
+        for inst in func.layout.block_insts(block) {
+            emit_inst(func, inst, &mut divert, sink, isa);
+        }
+    }
+
+    sink.begin_jumptables();
+
+    // Output jump tables.
+    for (jt, jt_data) in func.jump_tables.iter() {
+        let jt_offset = func.jt_offsets[jt];
+        for block in jt_data.iter() {
+            let rel_offset: i32 = func.offsets[*block] as i32 - jt_offset as i32;
+            sink.put4(rel_offset as u32)
         }
     }
 
     sink.begin_rodata();
 
-    // output jump tables
-    for (jt, jt_data) in func.jump_tables.iter() {
-        let jt_offset = func.jt_offsets[jt];
-        for ebb in jt_data.iter() {
-            let rel_offset: i32 = func.offsets[*ebb] as i32 - jt_offset as i32;
-            sink.put4(rel_offset as u32)
+    // Output constants.
+    for (_, constant_data) in func.dfg.constants.iter() {
+        for byte in constant_data.iter() {
+            sink.put1(*byte)
         }
     }
+
+    sink.end_codegen();
 }

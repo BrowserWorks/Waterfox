@@ -5,7 +5,7 @@
 // This tests that the basic auth dialog can not be used for DOS attacks
 // and that the protections are reset on user-initiated navigation/reload.
 
-const PROMPT_URL = "chrome://global/content/commonDialog.xul";
+const PROMPT_URL = "chrome://global/content/commonDialog.xhtml";
 function promiseAuthWindowShown() {
   return new Promise(resolve => {
     let listener = {
@@ -22,7 +22,7 @@ function promiseAuthWindowShown() {
             "promptUserAndPass",
             "Should be an authenticate prompt"
           );
-          domwindow.document.documentElement.cancelDialog();
+          domwindow.document.getElementById("commonDialog").cancelDialog();
           Services.wm.removeListener(listener);
           resolve();
         }, domwindow);
@@ -64,7 +64,7 @@ add_task(async function test() {
         authShown = promiseAuthWindowShown();
       }
       browserLoaded = BrowserTestUtils.browserLoaded(browser);
-      ContentTask.spawn(browser, null, function() {
+      SpecialPowers.spawn(browser, [], function() {
         content.document.location.reload();
       });
       if (i < cancelDialogLimit) {
@@ -100,7 +100,7 @@ add_task(async function test() {
         authShown = promiseAuthWindowShown();
       }
 
-      let iframeLoaded = ContentTask.spawn(browser, null, async function() {
+      let iframeLoaded = SpecialPowers.spawn(browser, [], async function() {
         let doc = content.document;
         let iframe = doc.createElement("iframe");
         doc.body.appendChild(iframe);
@@ -128,7 +128,7 @@ add_task(async function test() {
     }
 
     // Verify that third party subresources can not spawn new auth dialogs.
-    let iframeLoaded = ContentTask.spawn(browser, null, async function() {
+    let iframeLoaded = SpecialPowers.spawn(browser, [], async function() {
       let doc = content.document;
       let iframe = doc.createElement("iframe");
       doc.body.appendChild(iframe);

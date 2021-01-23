@@ -15,7 +15,7 @@ namespace a11y {
  */
 class AccGroupInfo {
  public:
-  ~AccGroupInfo() { MOZ_COUNT_DTOR(AccGroupInfo); }
+  MOZ_COUNTED_DTOR(AccGroupInfo)
 
   /**
    * Return 1-based position in the group.
@@ -55,7 +55,8 @@ class AccGroupInfo {
         role != mozilla::a11y::roles::CHECK_MENU_ITEM &&
         role != mozilla::a11y::roles::RADIO_MENU_ITEM &&
         role != mozilla::a11y::roles::RADIOBUTTON &&
-        role != mozilla::a11y::roles::PAGETAB)
+        role != mozilla::a11y::roles::PAGETAB &&
+        role != mozilla::a11y::roles::COMMENT)
       return nullptr;
 
     AccGroupInfo* info = new AccGroupInfo(aAccessible, BaseRole(role));

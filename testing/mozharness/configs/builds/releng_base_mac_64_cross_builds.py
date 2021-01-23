@@ -8,7 +8,6 @@ config = {
     'default_actions': [
         'build',
     ],
-    'app_ini_path': '%(obj_dir)s/dist/bin/application.ini',
     'secret_files': [
         {'filename': '/builds/gls-gapi.data',
          'secret_name': 'project/releng/gecko/build/level-%(scm-level)s/gls-gapi.data',
@@ -42,10 +41,6 @@ config = {
         'PATH': '/usr/local/bin:/bin:'
                 '/usr/bin:/usr/local/sbin:/usr/sbin:/sbin'
         ##
-    },
-    "check_test_env": {
-        'MINIDUMP_STACKWALK': '%(abs_tools_dir)s/breakpad/linux64/minidump_stackwalk',
-        'MINIDUMP_SAVE_PATH': '%(base_work_dir)s/minidumps',
     },
     'mozconfig_platform': 'macosx64',
     'mozconfig_variant': 'nightly',

@@ -5,6 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/EventStates.h"
+#include "mozilla/dom/BindContext.h"
 #include "mozilla/dom/HTMLEmbedElement.h"
 #include "mozilla/dom/HTMLEmbedElementBinding.h"
 #include "mozilla/dom/ElementInlines.h"
@@ -12,7 +13,6 @@
 #include "mozilla/dom/Document.h"
 #include "nsIPluginDocument.h"
 #include "nsThreadUtils.h"
-#include "nsIScriptError.h"
 #include "nsIWidget.h"
 #include "nsContentUtils.h"
 #ifdef XP_MACOSX
@@ -73,30 +73,30 @@ void HTMLEmbedElement::AsyncEventRunning(AsyncEventDispatcher* aEvent) {
   nsImageLoadingContent::AsyncEventRunning(aEvent);
 }
 
-nsresult HTMLEmbedElement::BindToTree(Document* aDocument, nsIContent* aParent,
-                                      nsIContent* aBindingParent) {
-  nsresult rv =
-      nsGenericHTMLElement::BindToTree(aDocument, aParent, aBindingParent);
+nsresult HTMLEmbedElement::BindToTree(BindContext& aContext, nsINode& aParent) {
+  nsresult rv = nsGenericHTMLElement::BindToTree(aContext, aParent);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  rv = nsObjectLoadingContent::BindToTree(aDocument, aParent, aBindingParent);
+  rv = nsObjectLoadingContent::BindToTree(aContext, aParent);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  // Don't kick off load from being bound to a plugin document - the plugin
-  // document will call nsObjectLoadingContent::InitializeFromChannel() for the
-  // initial load.
-  nsCOMPtr<nsIPluginDocument> pluginDoc = do_QueryInterface(aDocument);
-
-  if (!pluginDoc) {
-    void (HTMLEmbedElement::*start)() = &HTMLEmbedElement::StartObjectLoad;
-    nsContentUtils::AddScriptRunner(
-        NewRunnableMethod("dom::HTMLEmbedElement::BindToTree", this, start));
+  if (IsInComposedDoc()) {
+    // Don't kick off load from being bound to a plugin document - the plugin
+    // document will call nsObjectLoadingContent::InitializeFromChannel() for
+    // the initial load.
+    nsCOMPtr<nsIPluginDocument> pluginDoc =
+        do_QueryInterface(&aContext.OwnerDoc());
+    if (!pluginDoc) {
+      void (HTMLEmbedElement::*start)() = &HTMLEmbedElement::StartObjectLoad;
+      nsContentUtils::AddScriptRunner(
+          NewRunnableMethod("dom::HTMLEmbedElement::BindToTree", this, start));
+    }
   }
 
   return NS_OK;
 }
 
-void HTMLEmbedElement::UnbindFromTree(bool aDeep, bool aNullParent) {
+void HTMLEmbedElement::UnbindFromTree(bool aNullParent) {
 #ifdef XP_MACOSX
   // When a page is reloaded (when an Document's content is removed), the
   // focused element isn't necessarily sent an eBlur event. See
@@ -105,8 +105,8 @@ void HTMLEmbedElement::UnbindFromTree(bool aDeep, bool aNullParent) {
   // disable text input in the browser window. See bug 1137229.
   HTMLObjectElement::OnFocusBlurPlugin(this, false);
 #endif
-  nsObjectLoadingContent::UnbindFromTree(aDeep, aNullParent);
-  nsGenericHTMLElement::UnbindFromTree(aDeep, aNullParent);
+  nsObjectLoadingContent::UnbindFromTree(aNullParent);
+  nsGenericHTMLElement::UnbindFromTree(aNullParent);
 }
 
 nsresult HTMLEmbedElement::AfterSetAttr(int32_t aNamespaceID, nsAtom* aName,
@@ -176,8 +176,6 @@ nsIContent::IMEState HTMLEmbedElement::GetDesiredIMEState() {
   return nsGenericHTMLElement::GetDesiredIMEState();
 }
 
-int32_t HTMLEmbedElement::TabIndexDefault() { return -1; }
-
 bool HTMLEmbedElement::ParseAttribute(int32_t aNamespaceID, nsAtom* aAttribute,
                                       const nsAString& aValue,
                                       nsIPrincipal* aMaybeScriptedPrincipal,
@@ -186,8 +184,9 @@ bool HTMLEmbedElement::ParseAttribute(int32_t aNamespaceID, nsAtom* aAttribute,
     if (aAttribute == nsGkAtoms::align) {
       return ParseAlignValue(aValue, aResult);
     }
-    if (ParseImageAttribute(aAttribute, aValue, aResult)) {
-      return true;
+    if (aAttribute == nsGkAtoms::width || aAttribute == nsGkAtoms::height ||
+        aAttribute == nsGkAtoms::hspace || aAttribute == nsGkAtoms::vspace) {
+      return aResult.ParseHTMLDimension(aValue);
     }
   }
 
@@ -197,7 +196,6 @@ bool HTMLEmbedElement::ParseAttribute(int32_t aNamespaceID, nsAtom* aAttribute,
 
 static void MapAttributesIntoRuleBase(const nsMappedAttributes* aAttributes,
                                       MappedDeclarations& aDecls) {
-  nsGenericHTMLElement::MapImageBorderAttributeInto(aAttributes, aDecls);
   nsGenericHTMLElement::MapImageMarginAttributeInto(aAttributes, aDecls);
   nsGenericHTMLElement::MapImageSizeAttributesInto(aAttributes, aDecls);
   nsGenericHTMLElement::MapImageAlignAttributeInto(aAttributes, aDecls);

@@ -10,7 +10,6 @@ transforms:
     - taskgraph.transforms.task:transforms
 
 kind-dependencies:
-    - push-apk
     - release-balrog-scheduling
     - release-bouncer-aliases
     - release-version-bump
@@ -21,16 +20,9 @@ job-defaults:
     description: Sends email to release-drivers telling release was shipped.
     run-on-projects: []
     shipping-phase: ship
-    worker-type: b-linux
+    worker-type: succeed
     worker:
-        implementation: docker-worker
-        os: linux
-        docker-image: "ubuntu:16.10"
-        max-run-time: 600
-        command:
-            - /bin/bash
-            - -c
-            - echo "Dummy task"
+        implementation: succeed
     notifications:
         emails:
             by-project:
@@ -39,20 +31,6 @@ job-defaults:
                 default: []
 
 jobs:
-    fennec-beta:
-        shipping-product: fennec
-        notifications:
-            subject: "{task[shipping-product]} {release_config[version]} build{release_config[build_number]}/{config[params][project]} has shipped!"
-            message: "{task[shipping-product]} {release_config[version]} build{release_config[build_number]}/{config[params][project]} has shipped!"
-        attributes:
-            release-type: beta
-    fennec-release:
-        shipping-product: fennec
-        notifications:
-            subject: "{task[shipping-product]} {release_config[version]} build{release_config[build_number]}/{config[params][project]} has shipped!"
-            message: "{task[shipping-product]} {release_config[version]} build{release_config[build_number]}/{config[params][project]} has shipped!"
-        attributes:
-            release-type: release
     firefox:
         shipping-product: firefox
         notifications:

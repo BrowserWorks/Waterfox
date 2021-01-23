@@ -8,8 +8,10 @@
 
 interface OutputStream;
 
-[Constructor]
+[Exposed=Window]
 interface XMLSerializer {
+  constructor();
+
   /**
    * The subtree rooted by the specified element is serialized to
    * a string.

@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -25,7 +24,8 @@ add_task(async function() {
   await clickContainer(textFront, inspector);
   is(
     inspector.markup.doc.activeElement,
-    getContainerForNodeFront(textFront, inspector).editor.value,
+    getContainerForNodeFront(textFront, inspector).editor.textNode.valuePreRef
+      .current,
     "The currently focused element is the node's text content"
   );
 

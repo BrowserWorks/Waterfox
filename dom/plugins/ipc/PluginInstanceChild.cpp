@@ -39,19 +39,16 @@ using mozilla::gfx::SharedDIBSurface;
 #include "ImageContainer.h"
 
 using namespace mozilla;
-using mozilla::ipc::ProcessChild;
 using namespace mozilla::plugins;
 using namespace mozilla::layers;
 using namespace mozilla::gfx;
 using namespace mozilla::widget;
-using namespace std;
 
 #ifdef MOZ_WIDGET_GTK
 
 #  include <gtk/gtk.h>
 #  include <gdk/gdkx.h>
 #  include <gdk/gdk.h>
-#  include "gtk2xtbin.h"
 
 #elif defined(OS_WIN)
 
@@ -120,14 +117,14 @@ static RefPtr<DrawTarget> CreateDrawTargetForSurface(gfxASurface* aSurface) {
 
 bool PluginInstanceChild::sIsIMEComposing = false;
 
-PluginInstanceChild::PluginInstanceChild(
-    const NPPluginFuncs* aPluginIface, const nsCString& aMimeType,
-    const InfallibleTArray<nsCString>& aNames,
-    const InfallibleTArray<nsCString>& aValues)
+PluginInstanceChild::PluginInstanceChild(const NPPluginFuncs* aPluginIface,
+                                         const nsCString& aMimeType,
+                                         const nsTArray<nsCString>& aNames,
+                                         const nsTArray<nsCString>& aValues)
     : mPluginIface(aPluginIface),
       mMimeType(aMimeType),
-      mNames(aNames),
-      mValues(aValues)
+      mNames(aNames.Clone()),
+      mValues(aValues.Clone())
 #if defined(XP_DARWIN) || defined(XP_WIN)
       ,
       mContentsScaleFactor(1.0)
@@ -293,7 +290,8 @@ NPError PluginInstanceChild::InternalGetNPObjectForValue(NPNVariable aValue,
       if (!(actor = mCachedElementActor)) {
         result = NPERR_GENERIC_ERROR;
         PPluginScriptableObjectChild* actorProtocol;
-        if (CallNPN_GetValue_NPNVPluginElementNPObject(&actorProtocol, &result) &&
+        if (CallNPN_GetValue_NPNVPluginElementNPObject(&actorProtocol,
+                                                       &result) &&
             (result == NPERR_NO_ERROR)) {
           actor = mCachedElementActor =
               static_cast<PluginScriptableObjectChild*>(actorProtocol);
@@ -811,6 +809,31 @@ NPError PluginInstanceChild::AudioDeviceStateChanged(
   return mPluginIface->setvalue(GetNPP(), NPNVaudioDeviceStateChanged,
                                 (void*)&aDeviceState);
 }
+
+void SetMouseEventWParam(NPEvent* aEvent) {
+  // Fill in potentially missing key state info.  See
+  // nsPluginInstanceOwner::ProcessEvent for circumstances where this happens.
+  const auto kMouseMessages = mozilla::Array<int, 9>(
+      WM_LBUTTONDOWN, WM_MBUTTONDOWN, WM_RBUTTONDOWN, WM_LBUTTONUP,
+      WM_MBUTTONUP, WM_RBUTTONUP, WM_MOUSEMOVE, WM_MOUSEWHEEL, WM_MOUSEHWHEEL);
+
+  bool isInvalidWParam =
+      (aEvent->wParam == NPAPI_INVALID_WPARAM) &&
+      (std::find(kMouseMessages.begin(), kMouseMessages.end(),
+                 static_cast<int>(aEvent->event)) != kMouseMessages.end());
+
+  if (!isInvalidWParam) {
+    return;
+  }
+
+  aEvent->wParam = (::GetKeyState(VK_CONTROL) ? MK_CONTROL : 0) |
+                   (::GetKeyState(VK_SHIFT) ? MK_SHIFT : 0) |
+                   (::GetKeyState(VK_LBUTTON) ? MK_LBUTTON : 0) |
+                   (::GetKeyState(VK_MBUTTON) ? MK_MBUTTON : 0) |
+                   (::GetKeyState(VK_RBUTTON) ? MK_RBUTTON : 0) |
+                   (::GetKeyState(VK_XBUTTON1) ? MK_XBUTTON1 : 0) |
+                   (::GetKeyState(VK_XBUTTON2) ? MK_XBUTTON2 : 0);
+}
 #endif
 
 mozilla::ipc::IPCResult PluginInstanceChild::AnswerNPP_HandleEvent(
@@ -853,6 +876,7 @@ mozilla::ipc::IPCResult PluginInstanceChild::AnswerNPP_HandleEvent(
   // FIXME/bug 567645: temporarily drop the "dummy event" on the floor
   if (WM_NULL == evcopy.event) return IPC_OK();
 
+  SetMouseEventWParam(&evcopy);
   *handled = WinlessHandleEvent(evcopy);
   return IPC_OK();
 #endif
@@ -1862,7 +1886,7 @@ BOOL WINAPI PluginInstanceChild::TrackPopupHookProc(HMENU hMenu, UINT uFlags,
   // displayed by plugins that have working parent-child relationships.
   wchar_t szClass[21];
   bool haveClass = GetClassNameW(hWnd, szClass, ArrayLength(szClass));
-  if (!haveClass || (wcscmp(szClass, L"MozillaWindowClass") &&
+  if (!haveClass || (wcscmp(szClass, L"WaterfoxWindowClass") &&
                      wcscmp(szClass, L"SWFlash_Placeholder"))) {
     // Unrecognized parent
     return sUser32TrackPopupMenuStub(hMenu, uFlags, x, y, nReserved, hWnd,
@@ -2505,7 +2529,7 @@ void PluginInstanceChild::NPN_URLRedirectResponse(void* notifyData,
     return;
   }
 
-  InfallibleTArray<PStreamNotifyChild*> notifyStreams;
+  nsTArray<PStreamNotifyChild*> notifyStreams;
   ManagedPStreamNotifyChild(notifyStreams);
   uint32_t notifyStreamCount = notifyStreams.Length();
   for (uint32_t i = 0; i < notifyStreamCount; i++) {
@@ -2620,7 +2644,7 @@ NPError PluginInstanceChild::NPN_InitAsyncSurface(NPSize* size,
       // Hold the shmem alive until Finalize() is called or this actor dies.
       holder = new DirectBitmap(this, shmem, IntSize(size->width, size->height),
                                 surface->bitmap.stride, mozformat);
-      mDirectBitmaps.Put(surface, holder);
+      mDirectBitmaps.Put(surface, std::move(holder));
       return NPERR_NO_ERROR;
     }
 #if defined(XP_WIN)
@@ -3202,7 +3226,7 @@ void PluginInstanceChild::PaintRectToPlatformSurface(const nsIntRect& aRect,
 
 void PluginInstanceChild::PaintRectToSurface(const nsIntRect& aRect,
                                              gfxASurface* aSurface,
-                                             const Color& aColor) {
+                                             const DeviceColor& aColor) {
   // Render using temporary X surface, with copy to image surface
   nsIntRect plPaintRect(aRect);
   RefPtr<gfxASurface> renderSurface = aSurface;
@@ -3309,7 +3333,7 @@ void PluginInstanceChild::PaintRectWithAlphaExtraction(const nsIntRect& aRect,
 
   // Paint the plugin directly onto the target, with a white
   // background and copy the result
-  PaintRectToSurface(rect, aSurface, Color(1.f, 1.f, 1.f));
+  PaintRectToSurface(rect, aSurface, DeviceColor::MaskOpaqueWhite());
   {
     RefPtr<DrawTarget> dt = CreateDrawTargetForSurface(whiteImage);
     RefPtr<SourceSurface> surface =
@@ -3319,7 +3343,7 @@ void PluginInstanceChild::PaintRectWithAlphaExtraction(const nsIntRect& aRect,
 
   // Paint the plugin directly onto the target, with a black
   // background
-  PaintRectToSurface(rect, aSurface, Color(0.f, 0.f, 0.f));
+  PaintRectToSurface(rect, aSurface, DeviceColor::MaskOpaqueBlack());
 
   // Don't copy the result, just extract a subimage so that we can
   // recover alpha directly into the target
@@ -3330,7 +3354,7 @@ void PluginInstanceChild::PaintRectWithAlphaExtraction(const nsIntRect& aRect,
   gfxPoint deviceOffset = -targetRect.TopLeft();
   // Paint onto white background
   whiteImage->SetDeviceOffset(deviceOffset);
-  PaintRectToSurface(rect, whiteImage, Color(1.f, 1.f, 1.f));
+  PaintRectToSurface(rect, whiteImage, DeviceColor::MaskOpaqueWhite());
 
   if (useSurfaceSubimageForBlack) {
     gfxImageSurface* surface = static_cast<gfxImageSurface*>(aSurface);
@@ -3342,7 +3366,7 @@ void PluginInstanceChild::PaintRectWithAlphaExtraction(const nsIntRect& aRect,
 
   // Paint onto black background
   blackImage->SetDeviceOffset(deviceOffset);
-  PaintRectToSurface(rect, blackImage, Color(0.f, 0.f, 0.f));
+  PaintRectToSurface(rect, blackImage, DeviceColor::MaskOpaqueBlack());
 #endif
 
   MOZ_ASSERT(whiteImage && blackImage, "Didn't paint enough!");
@@ -3502,7 +3526,7 @@ bool PluginInstanceChild::ShowPluginFrame() {
     }
     // ... and hand off to the plugin
     // BEWARE: mBackground may die during this call
-    PaintRectToSurface(rect, mCurrentSurface, Color());
+    PaintRectToSurface(rect, mCurrentSurface, DeviceColor());
   } else if (!temporarilyMakeVisible && mDoAlphaExtraction) {
     // We don't want to pay the expense of alpha extraction for
     // phony paints.
@@ -3519,7 +3543,7 @@ bool PluginInstanceChild::ShowPluginFrame() {
                                      ? mHelperSurface
                                      : mCurrentSurface;
 
-    PaintRectToSurface(rect, target, Color());
+    PaintRectToSurface(rect, target, DeviceColor());
   }
   mHasPainted = true;
 
@@ -3963,7 +3987,7 @@ void PluginInstanceChild::Destroy() {
   SetProp(mPluginWindowHWND, kPluginIgnoreSubclassProperty, (HANDLE)1);
 #endif
 
-  InfallibleTArray<PBrowserStreamChild*> streams;
+  nsTArray<PBrowserStreamChild*> streams;
   ManagedPBrowserStreamChild(streams);
 
   // First make sure none of these streams become deleted
@@ -4003,7 +4027,7 @@ void PluginInstanceChild::Destroy() {
   ClearAllSurfaces();
   mDirectBitmaps.Clear();
 
-  mDeletingHash = new nsTHashtable<DeletingObjectEntry>;
+  mDeletingHash = MakeUnique<nsTHashtable<DeletingObjectEntry>>();
   PluginScriptableObjectChild::NotifyOfInstanceShutdown(this);
 
   InvalidateObjects(*mDeletingHash);

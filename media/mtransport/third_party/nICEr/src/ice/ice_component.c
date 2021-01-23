@@ -235,6 +235,11 @@ static int nr_ice_component_initialize_udp(struct nr_ice_ctx_ *ctx,nr_ice_compon
       if(r=nr_ice_socket_create(ctx,component,sock,NR_ICE_SOCKET_TYPE_DGRAM,&isock))
         ABORT(r);
 
+      /* Make sure we don't leak this. Failures might result in it being
+       * unused, but we hand off references to this in enough places below
+       * that unwinding it all becomes impractical. */
+      STAILQ_INSERT_TAIL(&component->sockets,isock,entry);
+
       if (!(ctx->flags & NR_ICE_CTX_FLAGS_RELAY_ONLY)) {
         /* Create one host candidate */
         if(r=nr_ice_candidate_create(ctx,component,isock,sock,HOST,0,0,
@@ -338,8 +343,6 @@ static int nr_ice_component_initialize_udp(struct nr_ice_ctx_ *ctx,nr_ice_compon
       /* Create a STUN server context for this socket */
       if ((r=nr_ice_component_create_stun_server_ctx(component,isock,sock,&addrs[i].addr,lufrag,pwd)))
         ABORT(r);
-
-      STAILQ_INSERT_TAIL(&component->sockets,isock,entry);
     }
 
     _status = 0;
@@ -588,12 +591,6 @@ static int nr_ice_component_initialize_tcp(struct nr_ice_ctx_ *ctx,nr_ice_compon
 
         r_log(LOG_ICE,LOG_DEBUG,"nr_ice_component_initialize_tcp creating TURN TCP wrappers");
 
-        if (ctx->turn_tcp_socket_wrapper) {
-          /* The HTTP proxy socket */
-          if((r=nr_socket_wrapper_factory_wrap(ctx->turn_tcp_socket_wrapper, local_sock, &local_sock)))
-            ABORT(r);
-        }
-
         /* The TCP buffered socket */
         if((r=nr_socket_buffered_stun_create(local_sock, NR_STUN_MAX_MESSAGE_SIZE, TURN_TCP_FRAMING, &buffered_sock)))
           ABORT(r);
@@ -605,6 +602,11 @@ static int nr_ice_component_initialize_tcp(struct nr_ice_ctx_ *ctx,nr_ice_compon
         /* Create an ICE socket */
         if((r=nr_ice_socket_create(ctx, component, buffered_sock, NR_ICE_SOCKET_TYPE_STREAM_TURN, &turn_isock)))
           ABORT(r);
+
+      /* Make sure we don't leak this. Failures might result in it being
+       * unused, but we hand off references to this in enough places below
+       * that unwinding it all becomes impractical. */
+        STAILQ_INSERT_TAIL(&component->sockets,turn_isock,entry);
 
         /* Attach ourselves to it */
         if(r=nr_ice_candidate_create(ctx,component,
@@ -621,7 +623,6 @@ static int nr_ice_component_initialize_tcp(struct nr_ice_ctx_ *ctx,nr_ice_compon
         if ((r=nr_ice_component_create_stun_server_ctx(component,turn_isock,local_sock,&addr,lufrag,pwd)))
           ABORT(r);
 
-        STAILQ_INSERT_TAIL(&component->sockets,turn_isock,entry);
       }
 #endif /* USE_TURN */
     }
@@ -984,13 +985,18 @@ static int nr_ice_component_process_incoming_check(nr_ice_component *comp, nr_tr
 
 static int nr_ice_component_stun_server_cb(void *cb_arg,nr_stun_server_ctx *stun_ctx,nr_socket *sock, nr_stun_server_request *req, int *dont_free, int *error)
   {
-    nr_ice_component *comp=cb_arg;
+    nr_ice_component *pcomp=cb_arg;
     nr_transport_addr local_addr;
     int r,_status;
 
-    if(comp->state==NR_ICE_COMPONENT_FAILED) {
+    if(pcomp->state==NR_ICE_COMPONENT_FAILED) {
       *error=400;
       ABORT(R_REJECTED);
+    }
+
+    if (pcomp->local_component->stream->obsolete) {
+      /* Don't do any triggered check stuff in thiis case. */
+      return 0;
     }
 
     /* Find the candidate pair that this maps to */
@@ -999,7 +1005,7 @@ static int nr_ice_component_stun_server_cb(void *cb_arg,nr_stun_server_ctx *stun
       ABORT(r);
     }
 
-    if (r=nr_ice_component_process_incoming_check(comp, &local_addr, req, error))
+    if (r=nr_ice_component_process_incoming_check(pcomp, &local_addr, req, error))
       ABORT(r);
 
     _status=0;
@@ -1101,6 +1107,11 @@ int nr_ice_component_pair_candidate(nr_ice_peer_ctx *pctx, nr_ice_component *pco
         continue;
       if(!nr_ice_component_can_candidate_tcptype_pair(lcand->tcp_type, pcand->tcp_type))
         continue;
+
+      /* https://tools.ietf.org/html/draft-ietf-rtcweb-mdns-ice-candidates-03#section-3.3.2 */
+      if(lcand->type == RELAYED && pcand->mdns_addr && strlen(pcand->mdns_addr)) {
+        continue;
+      }
 
       /*
         Two modes, depending on |pair_all_remote|

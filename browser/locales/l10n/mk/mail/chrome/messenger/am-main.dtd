@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Поставки за сметката">
+<!ENTITY accountName.label "Име на сметката:">
+<!ENTITY accountName.accesskey "И">
+<!ENTITY identityTitle.label "Основен идентитет">
+<!ENTITY identityDesc.label "Секоја сметка може да има сопствен идентитет. Во идентитетот се чуваат информациите што ги гледаат луѓето кои ги читаат Вашите пораки.">
+<!ENTITY name.label "Вашето име:">
+<!ENTITY name.accesskey "а">
+<!ENTITY email.label "Адреса за е-пошта:">
+<!ENTITY email.accesskey "е">
+<!ENTITY replyTo.label "Адреса за одговор:">
+<!ENTITY replyTo.accesskey "с">
+<!ENTITY organization.label "Организација:">
+<!ENTITY organization.accesskey "О">
+<!ENTITY edit.label "Уреди…">
+<!ENTITY choose.label "Избери…">
+<!ENTITY choose.accesskey "з">
+<!ENTITY editVCard.label "Измени ја картата…">
+<!ENTITY editVCard.accesskey "т">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Приложи ја мојата vCard во пораките">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "Уреди ги идентитетите…">
+<!ENTITY manageIdentities.accesskey "р">
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+
+<!ENTITY smtpName.label "SMTP сервер:">
+<!ENTITY smtpName.accesskey "е">
+<!ENTITY smtpDefaultServer.label "Основен сервер">
+

@@ -4,11 +4,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-if CONFIG['OS_ARCH'] in ('Darwin', 'Linux'):
-    DIRS += ['dwarf']
-
 UNIFIED_SOURCES += [
-    'convert_UTF.c',
+    'convert_UTF.cc',
     'string_conversion.cc',
 ]
 
@@ -30,11 +27,14 @@ elif CONFIG['OS_ARCH'] == 'Darwin':
             '-I%s/toolkit/crashreporter/google-breakpad/src/third_party/mac_headers/' % TOPSRCDIR,
         ]
 
-if CONFIG['OS_ARCH'] != 'WINNT':
+if CONFIG['HOST_OS_ARCH'] != 'WINNT':
+    if CONFIG['OS_ARCH'] in ('Darwin', 'Linux'):
+        DIRS += ['dwarf']
+
     HOST_SOURCES += [
         'arm_ex_reader.cc',
         'arm_ex_to_module.cc',
-        'convert_UTF.c',
+        'convert_UTF.cc',
         'dwarf_cfi_to_module.cc',
         'dwarf_cu_to_module.cc',
         'dwarf_line_to_module.cc',
@@ -58,15 +58,6 @@ if CONFIG['OS_ARCH'] != 'WINNT':
         '/toolkit/crashreporter/rust',
     ]
     HostLibrary('host_breakpad_common_s')
-
-if CONFIG['OS_TARGET'] == 'Android':
-    # We don't support unifying assembly files.
-    SOURCES += [
-        'android/breakpad_getcontext.S',
-    ]
-    LOCAL_INCLUDES += [
-        '/toolkit/crashreporter/google-breakpad/src/common/android/include',
-    ]
 
 Library('breakpad_common_s')
 

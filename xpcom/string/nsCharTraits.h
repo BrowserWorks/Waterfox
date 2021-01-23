@@ -8,6 +8,7 @@
 #define nsCharTraits_h___
 
 #include <ctype.h>   // for |EOF|, |WEOF|
+#include <stdint.h>  // for |uint32_t|
 #include <string.h>  // for |memcpy|, et al
 #include "mozilla/MemoryChecking.h"
 
@@ -48,6 +49,9 @@
 #define NS_IS_HIGH_SURROGATE(u) ((uint32_t(u) & 0xFFFFFC00) == 0xD800)
 // Low surrogates are in the range 0xDC00 -- 0xDFFF
 #define NS_IS_LOW_SURROGATE(u) ((uint32_t(u) & 0xFFFFFC00) == 0xDC00)
+// Easier to type than NS_IS_HIGH_SURROGATE && NS_IS_LOW_SURROGATE
+#define NS_IS_SURROGATE_PAIR(h, l) \
+  (NS_IS_HIGH_SURROGATE(h) && NS_IS_LOW_SURROGATE(l))
 // Faster than testing NS_IS_HIGH_SURROGATE || NS_IS_LOW_SURROGATE
 #define IS_SURROGATE(u) ((uint32_t(u) & 0xFFFFF800) == 0xD800)
 
@@ -159,6 +163,17 @@ struct nsCharTraits<char16_t> {
     }
 
     return 0;
+  }
+
+  static bool equalsLatin1(const char_type* aStr1, const char* aStr2,
+                           const size_t aN) {
+    for (size_t i = aN; i > 0; --i, ++aStr1, ++aStr2) {
+      if (*aStr1 != static_cast<char_type>(*aStr2)) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   // this version assumes that s2 is null-terminated and s1 has length n.
@@ -323,6 +338,11 @@ struct nsCharTraits<char> {
     }
 #endif
     return compare(aStr1, aStr2, aN);
+  }
+
+  static bool equalsLatin1(const char_type* aStr1, const char* aStr2,
+                           size_t aN) {
+    return memcmp(aStr1, aStr2, aN) == 0;
   }
 
   // this version assumes that s2 is null-terminated and s1 has length n.

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label               "Lisäasetusten muokkaus">
+<!ENTITY AttName.label                   "Määre: ">
+<!ENTITY AttValue.label                  "Arvo: ">
+<!ENTITY PropertyName.label              "Ominaisuus: ">
+<!ENTITY currentattributesfor.label      "Nykyiset määreet kohteelle: ">
+<!ENTITY tree.attributeHeader.label      "Määre">
+<!ENTITY tree.propertyHeader.label       "Ominaisuus">
+<!ENTITY tree.valueHeader.label          "Arvo">
+<!ENTITY tabHTML.label                   "HTML-määreet">
+<!ENTITY tabCSS.label                    "Sisätyyli">
+<!ENTITY tabJSE.label                    "JavaScript-tapahtumat">
+
+<!ENTITY editAttribute.label     "Napsauta yläpuolella olevaa kohdetta muokataksesi sen arvoa">
+<!ENTITY removeAttribute.label   "Poista">

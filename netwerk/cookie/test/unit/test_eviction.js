@@ -1,28 +1,44 @@
+const { NetUtil } = ChromeUtils.import("resource://gre/modules/NetUtil.jsm");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
+var { XPCOMUtils } = ChromeUtils.import(
+  "resource://gre/modules/XPCOMUtils.jsm"
+);
+
+const BASE_HOST = "example.org";
 const BASE_HOSTNAMES = ["example.org", "example.co.uk"];
 const SUBDOMAINS = ["", "pub.", "www.", "other."];
 
-const cs = Cc["@mozilla.org/cookieService;1"].getService(Ci.nsICookieService);
-const cm = cs.QueryInterface(Ci.nsICookieManager);
+const { CookieXPCShellUtils } = ChromeUtils.import(
+  "resource://testing-common/CookieXPCShellUtils.jsm"
+);
 
-function run_test() {
+CookieXPCShellUtils.init(this);
+CookieXPCShellUtils.createServer({ hosts: ["example.org"] });
+
+XPCOMUtils.defineLazyServiceGetter(
+  this,
+  "cm",
+  "@mozilla.org/cookiemanager;1",
+  "nsICookieManager"
+);
+
+add_task(async function test_basic_eviction() {
+  do_get_profile();
+
   Services.prefs.setIntPref("network.cookie.staleThreshold", 0);
-  add_task(async function() {
-    await test_basic_eviction("example.org");
-    cm.removeAll();
-  });
-
-  run_next_test();
-}
-
-async function test_basic_eviction(base_host) {
   Services.prefs.setIntPref("network.cookie.quotaPerHost", 2);
   Services.prefs.setIntPref("network.cookie.maxPerHost", 5);
 
-  const BASE_URI = Services.io.newURI("http://" + base_host);
-  const FOO_PATH = Services.io.newURI("http://" + base_host + "/foo/");
-  const BAR_PATH = Services.io.newURI("http://" + base_host + "/bar/");
+  // We don't want to have CookieJarSettings blocking this test.
+  Services.prefs.setBoolPref(
+    "network.cookieJarSettings.unblocked_for_testing",
+    true
+  );
+
+  const BASE_URI = Services.io.newURI("http://" + BASE_HOST);
+  const FOO_PATH = Services.io.newURI("http://" + BASE_HOST + "/foo/");
+  const BAR_PATH = Services.io.newURI("http://" + BASE_HOST + "/bar/");
 
   await setCookie("session_foo_path_1", null, "/foo", null, FOO_PATH);
   await setCookie("session_foo_path_2", null, "/foo", null, FOO_PATH);
@@ -62,7 +78,8 @@ async function test_basic_eviction(base_host) {
   );
 
   // Check if cookies are evicted by last accessed time.
-  cs.getCookieString(FOO_PATH, null);
+  await CookieXPCShellUtils.getCookieStringFromDocument(FOO_PATH.spec);
+
   await setCookie("session_foo_path_7", null, "/foo", null, FOO_PATH);
   verifyCookies(
     ["session_foo_path_5", "session_foo_path_6", "session_foo_path_7"],
@@ -103,7 +120,9 @@ async function test_basic_eviction(base_host) {
     ["session_foo_path_6", "session_foo_path_7", "session_foo_path_8"],
     BASE_URI
   );
-}
+
+  cm.removeAll();
+});
 
 // Verify that the given cookie names exist, and are ordered from least to most recently accessed
 function verifyCookies(names, uri) {
@@ -174,7 +193,16 @@ function setCookie(name, domain, path, maxAge, url) {
   }
   s += " for " + url.spec;
   info(s);
-  cs.setCookieStringFromHttp(url, null, null, value, null, null);
+
+  let channel = NetUtil.newChannel({
+    uri: url,
+    loadUsingSystemPrincipal: true,
+    contentPolicyType: Ci.nsIContentPolicy.TYPE_DOCUMENT,
+  });
+
+  const cs = Cc["@mozilla.org/cookieService;1"].getService(Ci.nsICookieService);
+  cs.setCookieStringFromHttp(url, value, channel);
+
   return new Promise(function(resolve) {
     // Windows XP has low precision timestamps that cause our cookie eviction
     // algorithm to produce different results from other platforms. We work around

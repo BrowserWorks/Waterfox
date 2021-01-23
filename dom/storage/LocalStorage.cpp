@@ -9,11 +9,7 @@
 #include "LocalStorageManager.h"
 #include "StorageUtils.h"
 
-#include "nsIObserverService.h"
-#include "nsIScriptSecurityManager.h"
-#include "nsIPermissionManager.h"
 #include "nsIPrincipal.h"
-#include "nsICookiePermission.h"
 
 #include "mozilla/dom/PermissionMessageUtils.h"
 #include "mozilla/dom/StorageBinding.h"
@@ -36,6 +32,7 @@ namespace dom {
 NS_IMPL_CYCLE_COLLECTION_CLASS(LocalStorage)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(LocalStorage, Storage)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mManager)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK_WEAK_REFERENCE
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(LocalStorage, Storage)
   CycleCollectionNoteChild(
@@ -64,7 +61,7 @@ LocalStorage::LocalStorage(nsPIDOMWindowInner* aWindow,
   mCache->Preload();
 }
 
-LocalStorage::~LocalStorage() {}
+LocalStorage::~LocalStorage() = default;
 
 int64_t LocalStorage::GetOriginQuotaUsage() const {
   return mCache->GetOriginQuotaUsage(this);

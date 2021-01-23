@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Smiley Menu items -->
+<!ENTITY insertSmiley.label "Yecmumeḥ">
+<!ENTITY insertSmiley.accesskey "Y">
+
+<!ENTITY smiley1Cmd.label "Acmumeḥ">
+<!ENTITY smiley1Cmd.accesskey "c">
+<!ENTITY smiley1Cmd.tooltip "Ger udem n ucmumeḥ">
+<!ENTITY smiley2Cmd.label "Yekres anyir">
+<!ENTITY smiley2Cmd.accesskey "k">
+<!ENTITY smiley2Cmd.tooltip "Ger akras n unyir">
+<!ENTITY smiley3Cmd.label "Aɣemmez">
+<!ENTITY smiley3Cmd.accesskey "A">
+<!ENTITY smiley3Cmd.tooltip "Ger aɣemmez">
+<!ENTITY smiley4Cmd.label "Yessiɣzef iles">
+<!ENTITY smiley4Cmd.accesskey "ɣ">
+<!ENTITY smiley4Cmd.tooltip "Ger asiɣzef n yiles">
+<!ENTITY smiley5Cmd.label "Yettaḍsa">
+<!ENTITY smiley5Cmd.accesskey "Y">
+<!ENTITY smiley5Cmd.tooltip "Ger u&amp;dem yettaḍsan">
+<!ENTITY smiley6Cmd.label "Yettumerret">
+<!ENTITY smiley6Cmd.accesskey "Y">
+<!ENTITY smiley6Cmd.tooltip "Ger udem n umerret">
+<!ENTITY smiley7Cmd.label "Ur yerkid ara">
+<!ENTITY smiley7Cmd.accesskey "U">
+<!ENTITY smiley7Cmd.tooltip "Ger udem ur nerkid ara">
+<!ENTITY smiley8Cmd.label "Yewhem">
+<!ENTITY smiley8Cmd.accesskey "w">
+<!ENTITY smiley8Cmd.tooltip "Ger udem iwehmen">
+<!ENTITY smiley9Cmd.label "Asuden">
+<!ENTITY smiley9Cmd.accesskey "s">
+<!ENTITY smiley9Cmd.tooltip "Ger udem n usuden">
+<!ENTITY smiley10Cmd.label "Yettɛeggiḍ">
+<!ENTITY smiley10Cmd.accesskey "Y">
+<!ENTITY smiley10Cmd.tooltip "Ger udem yettɛeggiḍen">
+<!ENTITY smiley11Cmd.label "Yers">
+<!ENTITY smiley11Cmd.accesskey "Y">
+<!ENTITY smiley11Cmd.tooltip "Ger udem yersen">
+<!ENTITY smiley12Cmd.label "Aqemmuc n yedrimen">
+<!ENTITY smiley12Cmd.accesskey "q">
+<!ENTITY smiley12Cmd.tooltip "Ger udem n uqemmuc n yedrimen">
+<!ENTITY smiley13Cmd.label "Aḍar deg uqemmuc">
+<!ENTITY smiley13Cmd.accesskey "q">
+<!ENTITY smiley13Cmd.tooltip "Ger udem n uḍaṛ  deg uqemmuc">
+<!ENTITY smiley14Cmd.label "Ilemri">
+<!ENTITY smiley14Cmd.accesskey "I">
+<!ENTITY smiley14Cmd.tooltip "Ger udem ilemri">
+<!ENTITY smiley15Cmd.label "Yettru">
+<!ENTITY smiley15Cmd.accesskey "r">
+<!ENTITY smiley15Cmd.tooltip "Ger udem yettrun">
+<!ENTITY smiley16Cmd.label "Ḥmimuc">
+<!ENTITY smiley16Cmd.accesskey "Ḥ">
+<!ENTITY smiley16Cmd.tooltip "Ger udem n ḥmimuc">
+<!ENTITY SmileButton.label "Ger azamul nuḥulfu">
+<!ENTITY SmileButton.tooltip "Ger udem n ucmumeḥ">

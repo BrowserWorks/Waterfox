@@ -10,11 +10,7 @@
 #include "HalLog.h"
 #include "HalSandbox.h"
 #include "HalWakeLockInternal.h"
-#include "nsIDOMWindow.h"
 #include "mozilla/dom/Document.h"
-#include "nsIDocShell.h"
-#include "nsIBrowserChild.h"
-#include "nsIWebNavigation.h"
 #include "nsThreadUtils.h"
 #include "nsXULAppAPI.h"
 #include "nsPIDOMWindow.h"
@@ -55,8 +51,7 @@ using namespace mozilla::dom;
     }                                              \
   } while (0)
 
-namespace mozilla {
-namespace hal {
+namespace mozilla::hal {
 
 static bool sInitialized = false;
 
@@ -81,7 +76,7 @@ StaticAutoPtr<WindowIdentifier::IDArrayType> gLastIDToVibrate;
 
 static void RecordLastIDToVibrate(const WindowIdentifier& aId) {
   if (!InSandbox()) {
-    *gLastIDToVibrate = aId.AsArray();
+    *gLastIDToVibrate = aId.AsArray().Clone();
   }
 }
 
@@ -112,7 +107,7 @@ void Vibrate(const nsTArray<uint32_t>& pattern, nsPIDOMWindowInner* window) {
   Vibrate(pattern, WindowIdentifier(window));
 }
 
-void Vibrate(const nsTArray<uint32_t>& pattern, const WindowIdentifier& id) {
+void Vibrate(const nsTArray<uint32_t>& pattern, WindowIdentifier&& id) {
   AssertMainThread();
 
   // Only active windows may start vibrations.  If |id| hasn't gone
@@ -131,21 +126,23 @@ void Vibrate(const nsTArray<uint32_t>& pattern, const WindowIdentifier& id) {
   // Don't forward our ID if we are not in the sandbox, because hal_impl
   // doesn't need it, and we don't want it to be tempted to read it.  The
   // empty identifier will assert if it's used.
-  PROXY_IF_SANDBOXED(Vibrate(pattern, InSandbox() ? id : WindowIdentifier()));
+  PROXY_IF_SANDBOXED(
+      Vibrate(pattern, InSandbox() ? std::move(id) : WindowIdentifier()));
 }
 
 void CancelVibrate(nsPIDOMWindowInner* window) {
   CancelVibrate(WindowIdentifier(window));
 }
 
-void CancelVibrate(const WindowIdentifier& id) {
+void CancelVibrate(WindowIdentifier&& id) {
   AssertMainThread();
 
   if (MayCancelVibration(id)) {
     // Don't forward our ID if we are not in the sandbox, because hal_impl
     // doesn't need it, and we don't want it to be tempted to read it.  The
     // empty identifier will assert if it's used.
-    PROXY_IF_SANDBOXED(CancelVibrate(InSandbox() ? id : WindowIdentifier()));
+    PROXY_IF_SANDBOXED(
+        CancelVibrate(InSandbox() ? std::move(id) : WindowIdentifier()));
   }
 }
 
@@ -484,5 +481,4 @@ void Shutdown() {
   sInitialized = false;
 }
 
-}  // namespace hal
-}  // namespace mozilla
+}  // namespace mozilla::hal

@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageStorage.label "İleti depolama">
+<!ENTITY securitySettings.label "Güvenlik ayarları">
+<!ENTITY serverSettings.label "Sunucu ayarları">
+<!ENTITY serverType.label "Sunucu türü:">
+<!ENTITY serverName.label "Sunucu adı:">
+<!ENTITY serverName.accesskey "S">
+<!ENTITY userName.label "Kullanıcı adı:">
+<!ENTITY userName.accesskey "l">
+<!ENTITY port.label "Port:">
+<!ENTITY port.accesskey "P">
+<!ENTITY serverPortDefault.label "Varsayılan:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammar dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "Yeni iletileri her ">
+<!ENTITY biffStart.accesskey "h">
+<!ENTITY biffEnd.label "dakikada bir kontrol et">
+<!ENTITY useIdleNotifications.label "Yeni ileti geldiğinde anında sunucu bildirimlerine izin ver">
+<!ENTITY useIdleNotifications.accesskey "Y">
+<!ENTITY connectionSecurity.label "Bağlantı güvenliği: ">
+<!ENTITY connectionSecurity.accesskey "ü">
+<!ENTITY connectionSecurityType-0.label "Hiçbiri">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, mevcutsa">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "Yetkilendirme yöntemi:">
+<!ENTITY authMethod.accesskey "Y">
+<!ENTITY leaveOnServer.label "İletileri sunucuda bırak">
+<!ENTITY leaveOnServer.accesskey "b">
+<!ENTITY headersOnly.label "Sadece başlıkları getir">
+<!ENTITY headersOnly.accesskey "S">
+<!ENTITY deleteByAgeFromServer.label "En fazla">
+<!ENTITY deleteByAgeFromServer.accesskey "E">
+<!ENTITY daysEnd.label "gün">
+<!ENTITY deleteOnServer2.label "Ben silene kadar">
+<!ENTITY deleteOnServer2.accesskey "d">
+<!ENTITY downloadOnBiff.label "Yeni e-postaları otomatik indir">
+<!ENTITY downloadOnBiff.accesskey "p">
+<!ENTITY deleteMessagePrefix.label "Bir iletiyi sildiğimde:">
+<!ENTITY modelMoveToTrash.label "Bu dizine taşı:">
+<!ENTITY modelMoveToTrash.accesskey "e">
+<!ENTITY modelMarkDeleted.label "Yalnızca silinmiş olarak işaretle">
+<!ENTITY modelMarkDeleted.accesskey "o">
+<!ENTITY modelDeleteImmediately.label "Hemen sil">
+<!ENTITY modelDeleteImmediately.accesskey "m">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "Çıkarken gelen kutusunu temizle (&quot;sil&quot;)">
+<!ENTITY expungeOnExit.accesskey "t">
+<!ENTITY emptyTrashOnExit.label "Çıkarken Çöp’ü boşalt">
+<!ENTITY emptyTrashOnExit.accesskey "k">
+<!ENTITY loginAtStartup.label "Başlarken yeni iletileri kontrol et">
+<!ENTITY loginAtStartup.accesskey "B">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+    of messages between them
+-->
+<!ENTITY maxMessagesStart.label "En az">
+<!ENTITY maxMessagesStart.accesskey "z">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "ileti indirilecekse bana sor">
+<!ENTITY alwaysAuthenticate.label "Bu sunucuya bağlanırken her zaman kimlik doğrulaması iste">
+<!ENTITY alwaysAuthenticate.accesskey "u">
+<!ENTITY newsrcFilePath1.label "News.rc dosyası:">
+<!ENTITY newsrcPicker1.label "News.rc dosyasını seçin">
+<!ENTITY abbreviate.label "Haber grubu isimlerini posta dizini bölmesinde göster:">
+<!ENTITY abbreviateOn.label "Tam isimler (örnek: 'netscape.public.mozilla.mail-news')">
+<!ENTITY abbreviateOff.label "Kısa isimler (örnek, 'n.p.m.mail-news')">
+<!ENTITY advancedButton.label "Gelişmiş…">
+<!ENTITY advancedButton.accesskey "G">
+<!ENTITY serverDefaultCharset2.label "Varsayılan metin kodlaması:">
+<!ENTITY localPath1.label "Yerel klasör:">
+<!ENTITY localFolderPicker.label "Yerel dizin seçin">
+<!ENTITY browseFolder.label "Gözat…">
+<!ENTITY browseFolder.accesskey "a">
+<!ENTITY browseNewsrc.label "Gözat…">
+<!ENTITY browseNewsrc.accesskey "t">
+
+<!ENTITY accountTitle.label "Hesap Ayarları">
+<!ENTITY accountSettingsDesc.label "Bu bir özel hesaptır. Bu hesaba ilişkin kimlik bulunmamaktadır.">
+<!ENTITY storeType.label "İleti depolama türü:">
+<!ENTITY storeType.accesskey "d">
+<!ENTITY mboxStore2.label "Klasör başına dosya (mbox)">
+<!ENTITY maildirStore.label "Her ileti için bir dosya (maildir)">

@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "Ítarleg breyting…">
+<!ENTITY AdvancedEditButton.accessKey "e">
+<!ENTITY AdvancedEditButton.tooltip "Bæta við eða breyta HTML eigindum, snið eigindum, og JavaScript">
+<!ENTITY chooseFileButton.label "Veldu skrá...">
+<!ENTITY chooseFileButton.accessKey "V">
+<!ENTITY chooseFileLinkButton.label "Veldu skrá...">
+<!ENTITY chooseFileLinkButton.accessKey "e">
+<!ENTITY makeUrlRelative.label "URL er háð núverandi staðsetningu síðu">
+<!ENTITY makeUrlRelative.accessKey "r">
+<!ENTITY makeUrlRelative.tooltip "Breyta á milli tilvísunar og raunverulegs URL. Til að geta breytt þessu verðurðu að vista síðuna fyrst.">
+<!-- Shared by Link and Image dialogs -->
+<!ENTITY LinkURLEditField.label "Sláðu inn staðsetningu vefsíðu, staðbundinnar skráar, eða veldu markstiklu eða haus frá flettilista:">
+<!ENTITY LinkURLEditField.accessKey "l">

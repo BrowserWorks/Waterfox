@@ -1,0 +1,336 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "Skribi: (sen temo)">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label "Dosiero">
+<!ENTITY fileMenu.accesskey "D">
+<!ENTITY newMenu.label "Krei">
+<!ENTITY newMenu.accesskey "K">
+<!ENTITY newMessage.label "mesaĝon">
+<!ENTITY newMessage.key "m">
+<!ENTITY newMessageCmd2.key "N">
+<!ENTITY newMessage.accesskey "m">
+<!ENTITY newContact.label "kontakton…">
+<!ENTITY newContact.accesskey "k">
+<!ENTITY attachMenu.label "Aldoni">
+<!ENTITY attachMenu.accesskey "A">
+<!ENTITY attachFileCmd.label "dosieron…">
+<!ENTITY attachFileCmd.accesskey "d">
+<!ENTITY attachFileCmd.key "A">
+<!ENTITY attachCloudCmd.label "ligilon al dosiero">
+<!ENTITY attachCloudCmd.accesskey "l">
+<!ENTITY attachPageCmd.label "retpaĝon…">
+<!ENTITY attachPageCmd.accesskey "r">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "personan vizitkarton (vCard)">
+<!ENTITY attachVCardCmd.accesskey "v">
+<!ENTITY remindLater.label "Rememori poste">
+<!ENTITY remindLater.accesskey "R">
+<!ENTITY closeCmd.label "Fermi">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "F">
+<!ENTITY saveCmd.label "Konservi">
+<!ENTITY saveCmd.key "S">
+<!ENTITY saveCmd.accesskey "K">
+<!ENTITY saveAsCmd.label "Konservi kiel">
+<!ENTITY saveAsCmd.accesskey "o">
+<!ENTITY saveAsFileCmd.label "dosieron…">
+<!ENTITY saveAsFileCmd.accesskey "d">
+<!ENTITY saveAsDraftCmd.label "malneton">
+<!ENTITY saveAsDraftCmd.accesskey "m">
+<!ENTITY saveAsTemplateCmd.label "ŝablonon">
+<!ENTITY saveAsTemplateCmd.accesskey "a">
+<!ENTITY sendNowCmd.label "Sendi nun">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "S">
+<!ENTITY sendLaterCmd.label "Sendi poste">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "p">
+<!ENTITY printSetupCmd.label "Agordoj pri paĝo">
+<!ENTITY printSetupCmd.accesskey "A">
+<!ENTITY printPreviewCmd.label "Antaŭvidi presadon">
+<!ENTITY printPreviewCmd.accesskey "v">
+<!ENTITY printCmd.label "Presi…">
+<!ENTITY printCmd.key "P">
+<!ENTITY printCmd.accesskey "P">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label "Redakti">
+<!ENTITY editMenu.accesskey "R">
+<!ENTITY undoCmd.label "Malfari">
+<!ENTITY undoCmd.key "Z">
+<!ENTITY undoCmd.accesskey "M">
+<!ENTITY redoCmd.label "Refari">
+<!ENTITY redoCmd.key "Y">
+<!ENTITY redoCmd.accesskey "R">
+<!ENTITY cutCmd.key "X">
+<!ENTITY copyCmd.key "C">
+<!ENTITY pasteCmd.key "V">
+<!ENTITY pasteNoFormattingCmd.key "V">
+<!ENTITY pasteAsQuotationCmd.key "o">
+<!ENTITY editRewrapCmd.accesskey "l">
+<!ENTITY deleteCmd.label "Forigi">
+<!ENTITY deleteCmd.accesskey "F">
+<!ENTITY editRewrapCmd.label "Faldi liniojn">
+<!ENTITY editRewrapCmd.key "l">
+<!ENTITY renameAttachmentCmd.label "Renomi kunsendaĵon…">
+<!ENTITY renameAttachmentCmd.accesskey "n">
+<!ENTITY reorderAttachmentsCmd.label "Reordigi kunsendaĵojn…">
+<!ENTITY reorderAttachmentsCmd.accesskey "o">
+<!ENTITY reorderAttachmentsCmd.key "x">
+<!ENTITY toggleAttachmentPaneCmd.label "Listo de kunsendaĵoj">
+<!-- LOCALIZATION NOTE (toggleAttachmentPaneCmd.accesskey):
+     For better mnemonics, toggleAttachmentPaneCmd.accesskey should be the same
+     as attachments.accesskey. -->
+<!ENTITY toggleAttachmentPaneCmd.accesskey "a">
+<!ENTITY selectAllCmd.accesskey "E">
+<!ENTITY findBarCmd.label "Serĉi…">
+<!ENTITY findBarCmd.accesskey "S">
+<!ENTITY findBarCmd.key "F">
+<!ENTITY findReplaceCmd.label "Serĉi kaj anstataŭigi…">
+<!ENTITY findReplaceCmd.accesskey "i">
+<!ENTITY findReplaceCmd.key "H">
+<!ENTITY findAgainCmd.label "Serĉi sekvan">
+<!ENTITY findAgainCmd.accesskey "n">
+<!ENTITY findAgainCmd.key "G">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "Serĉi antaŭan">
+<!ENTITY findPrevCmd.accesskey "t">
+<!ENTITY findPrevCmd.key "G">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+
+<!-- Reorder Attachment Panel -->
+<!ENTITY reorderAttachmentsPanel.label "Reordigi kunsendaĵojn">
+<!ENTITY moveAttachmentTopPanelBtn.label "Movi plej supren">
+<!ENTITY moveAttachmentUpPanelBtn.label "Movi supren">
+<!ENTITY moveAttachmentBundleUpPanelBtn.label "Movi kune">
+<!ENTITY moveAttachmentDownPanelBtn.label "Movi malsupren">
+<!ENTITY moveAttachmentBottomPanelBtn.label "Movi plej malsupren">
+
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.Sort.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.Sort.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.Sort.AZ.label "Ordigi: A-Z">
+<!ENTITY sortAttachmentsPanelBtn.Sort.ZA.label "Ordigi: Z-A">
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.SortSelection.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.SortSelection.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.AZ.label "Ordigi elektitajn: A-Z">
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.ZA.label "Ordigi elektitajn: Z-A">
+<!ENTITY sortAttachmentsPanelBtn.key "y">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label "Vido">
+<!ENTITY viewMenu.accesskey "V">
+<!ENTITY viewToolbarsMenuNew.label "Ilarstrioj">
+<!ENTITY viewToolbarsMenuNew.accesskey "I">
+<!ENTITY menubarCmd.label "Strio de menuo">
+<!ENTITY menubarCmd.accesskey "m">
+<!ENTITY showCompositionToolbarCmd.label "Strio de retpoŝtaj iloj">
+<!ENTITY showCompositionToolbarCmd.accesskey "r">
+<!ENTITY showFormattingBarCmd.label "Strio de formatado">
+<!ENTITY showFormattingBarCmd.accesskey "f">
+<!ENTITY showTaskbarCmd.label "Stata strio">
+<!ENTITY showTaskbarCmd.accesskey "S">
+<!ENTITY customizeToolbar.label "Personecigi…">
+<!ENTITY customizeToolbar.accesskey "P">
+
+<!ENTITY addressSidebar.label "Panelo de kontaktoj">
+<!ENTITY addressSidebar.accesskey "k">
+
+<!-- Format Menu -->
+<!ENTITY formatMenu.label "Formato">
+<!ENTITY formatMenu.accesskey "F">
+
+<!-- Options Menu -->
+<!ENTITY optionsMenu.label "Elektebloj">
+<!ENTITY optionsMenu.accesskey "E">
+<!ENTITY checkSpellingCmd2.label "Kontroli literumadon…">
+<!ENTITY checkSpellingCmd2.key "p">
+<!ENTITY checkSpellingCmd2.key2 "VK_F7">
+<!ENTITY checkSpellingCmd2.accesskey "K">
+<!ENTITY enableInlineSpellChecker.label "Kontroli literumadon dum tajpado">
+<!ENTITY enableInlineSpellChecker.accesskey "o">
+<!ENTITY quoteCmd.label "Citi mesaĝon">
+<!ENTITY quoteCmd.accesskey "C">
+
+<!--LOCALIZATION NOTE attachVCard.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCard.label "Kunsendi personan vizitkarton (vCard)">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY returnReceiptMenu.label "Postuli konfirmon pri legi">
+<!ENTITY returnReceiptMenu.accesskey "P">
+<!ENTITY dsnMenu.label "Informi pri stato de livero">
+<!ENTITY dsnMenu.accesskey "I">
+<!ENTITY deliveryFormatMenu.label "Formo de mesaĝo">
+<!ENTITY deliveryFormatMenu.accesskey "F">
+<!ENTITY autoFormatCmd.label "Elekti aŭtomate">
+<!ENTITY autoFormatCmd.accesskey "a">
+<!ENTITY plainTextFormatCmd.label "Nur platteksto">
+<!ENTITY plainTextFormatCmd.accesskey "p">
+<!ENTITY htmlFormatCmd.label "Nur HTML">
+<!ENTITY htmlFormatCmd.accesskey "H">
+<!ENTITY bothFormatCmd.label "Platteksto kaj HTML">
+<!ENTITY bothFormatCmd.accesskey "k">
+<!ENTITY priorityMenu.label "Prioritato">
+<!ENTITY priorityMenu.accesskey "r">
+<!ENTITY priorityButton.title "Prioritato">
+<!ENTITY priorityButton.tooltiptext "Difini prioritaton de mesaĝo">
+<!ENTITY priorityButton.label "Prioritato:">
+<!ENTITY lowestPriorityCmd.label "Plej malalta">
+<!ENTITY lowestPriorityCmd.accesskey "P">
+<!ENTITY lowPriorityCmd.label "Malalta">
+<!ENTITY lowPriorityCmd.accesskey "a">
+<!ENTITY normalPriorityCmd.label "Meza">
+<!ENTITY normalPriorityCmd.accesskey "e">
+<!ENTITY highPriorityCmd.label "Alta">
+<!ENTITY highPriorityCmd.accesskey "l">
+<!ENTITY highestPriorityCmd.label "Plej alta">
+<!ENTITY highestPriorityCmd.accesskey "j">
+<!ENTITY fileCarbonCopyCmd.label "Konservi kopion en">
+<!ENTITY fileCarbonCopyCmd.accesskey "n">
+<!ENTITY fileHereMenu.label "Tie ĉi">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label "Iloj">
+<!ENTITY tasksMenu.accesskey "I">
+<!ENTITY messengerCmd.label "Retpoŝto kaj novaĵgrupoj">
+<!ENTITY messengerCmd.accesskey "R">
+<!ENTITY messengerCmd.commandkey "1">
+<!ENTITY addressBookCmd.label "Adresaro">
+<!ENTITY addressBookCmd.accesskey "A">
+<!ENTITY addressBookCmd.key "B">
+<!ENTITY accountManagerCmd2.label "Agordoj pri kontoj">
+<!ENTITY accountManagerCmd2.accesskey "k">
+<!ENTITY accountManagerCmdUnix2.accesskey "k">
+<!ENTITY preferencesCmd2.label "Elektebloj">
+<!ENTITY preferencesCmd2.accesskey "E">
+<!ENTITY preferencesCmdUnix.label "Preferoj">
+<!ENTITY preferencesCmdUnix.accesskey "P">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY minimizeWindow.key "m">
+<!ENTITY minimizeWindow.label "Plejetigi">
+<!ENTITY bringAllToFront.label "Malfonigi ĉiujn">
+<!ENTITY zoomWindow.label "Pligrandigo">
+<!ENTITY windowMenu.label "Fenestro">
+
+<!-- Mail Toolbar -->
+<!ENTITY sendButton.label "Sendi">
+<!ENTITY quoteButton.label "Citi">
+<!ENTITY addressButton.label "Kontaktoj">
+<!ENTITY attachButton.label "Kunsendi">
+<!ENTITY spellingButton.label "Literumado">
+<!ENTITY saveButton.label "Konservi">
+<!ENTITY printButton.label "Presi">
+
+<!-- Mail Toolbar Tooltips -->
+<!ENTITY sendButton.tooltip "Sendi mesaĝon nun">
+<!ENTITY sendlaterButton.tooltip "Sendi mesaĝon poste">
+<!ENTITY quoteButton.tooltip "Citi la antaŭan mesaĝon">
+<!ENTITY addressButton.tooltip "Elekti ricevonton el adresaro">
+<!ENTITY attachButton.tooltip2 "Aldoni dosieron al mesaĝo">
+<!ENTITY spellingButton.tooltip "Kontroli pri ortografiaj eraroj en la elekto aŭ en la tuta mesaĝo">
+<!ENTITY saveButton.tooltip "Konservi tiun ĉi mesaĝon">
+<!ENTITY cutButton.tooltip              "Eltondi">
+<!ENTITY copyButton.tooltip             "Kopii">
+<!ENTITY pasteButton.tooltip            "Alglui">
+<!ENTITY printButton.tooltip "Presi tiun ĉi mesaĝon">
+
+<!-- Headers -->
+<!ENTITY fromAddr.accesskey "E">
+<!ENTITY subject.accesskey "T">
+<!ENTITY attachmentBucketCloseButton.tooltip "Kaŝi liston de kunsendaĵoj">
+
+<!-- Format Toolbar, imported from editorAppShell.xul -->
+<!ENTITY SmileButton.tooltip "Enmeti mien-simbolon (emoĝion)">
+<!ENTITY smiley1Cmd.label "Mien-simbolo">
+<!ENTITY smiley2Cmd.label "Malkontento">
+<!ENTITY smiley3Cmd.label "Palpebrumo">
+<!ENTITY smiley4Cmd.label "Elŝovi langon">
+<!ENTITY smiley5Cmd.label "Rido">
+<!ENTITY smiley6Cmd.label "Embaraso">
+<!ENTITY smiley7Cmd.label "Hezito">
+<!ENTITY smiley8Cmd.label "Surprizo">
+<!ENTITY smiley9Cmd.label "Kiso">
+<!ENTITY smiley10Cmd.label "Krio">
+<!ENTITY smiley11Cmd.label "Kontento">
+<!ENTITY smiley12Cmd.label "Mondeziro">
+<!ENTITY smiley13Cmd.label "Grimaco">
+<!ENTITY smiley14Cmd.label "Senkulpa">
+<!ENTITY smiley15Cmd.label "Ploro">
+<!ENTITY smiley16Cmd.label "Silento">
+
+<!-- Message Pane Context Menu -->
+<!ENTITY spellCheckNoSuggestions.label "Ne trovis sugestojn por vorto">
+<!ENTITY spellCheckIgnoreWord.label "Ignori vorton">
+<!ENTITY spellCheckIgnoreWord.accesskey "I">
+<!ENTITY spellCheckAddToDictionary.label "Aldoni al vortaro">
+<!ENTITY spellCheckAddToDictionary.accesskey "v">
+<!ENTITY undo.label "Malfari">
+<!ENTITY undo.accesskey "M">
+<!ENTITY cut.label "Eltondi">
+<!ENTITY cut.accesskey "t">
+<!ENTITY copy.label "Kopii">
+<!ENTITY copy.accesskey "K">
+<!ENTITY paste.label "Alglui">
+<!ENTITY paste.accesskey "g">
+<!ENTITY pasteQuote.label "Alglui kiel citaĵon">
+<!ENTITY pasteQuote.accesskey "c">
+
+<!-- Attachment Item and List Context Menus -->
+<!ENTITY openAttachment.label "Malfermi">
+<!ENTITY openAttachment.accesskey "M">
+<!ENTITY delete.label "Forigi">
+<!ENTITY delete.accesskey "F">
+<!ENTITY removeAttachment.label "Forigi kunsendaĵon">
+<!ENTITY removeAttachment.accesskey "F">
+<!ENTITY renameAttachment.label "Renomi…">
+<!ENTITY renameAttachment.accesskey "n">
+<!ENTITY reorderAttachments.label "Reordigi kunsendaĵojn…">
+<!ENTITY reorderAttachments.accesskey "u">
+<!ENTITY removeAllAttachments.label "Forigi ĉiujn kunsendaĵojn">
+<!ENTITY removeAllAttachments.accesskey "j">
+<!ENTITY selectAll.label "Elekti ĉiujn">
+<!ENTITY selectAll.accesskey "E">
+<!ENTITY attachFile.label "Kunsendi dosiero(j)n…">
+<!ENTITY attachFile.accesskey "d">
+<!ENTITY attachCloud.label "Ligilo al dosiero…">
+<!ENTITY attachCloud.accesskey "L">
+<!ENTITY convertCloud.label "Konverti al…">
+<!ENTITY convertCloud.accesskey "K">
+<!ENTITY cancelUpload.label "Nuligi alŝuton">
+<!ENTITY cancelUpload.accesskey "N">
+<!ENTITY convertRegularAttachment.label "Norma kunsendaĵo">
+<!ENTITY convertRegularAttachment.accesskey "N">
+<!ENTITY attachPage.label "Kunsendi retpaĝon…">
+<!ENTITY attachPage.accesskey "r">
+
+<!-- Attachment Pane Header Bar Context Menu -->
+<!-- LOCALIZATION NOTE (initiallyShowAttachmentPane.label):
+     Should use the same wording as startExpandedCmd.label
+     in msgHdrViewOverlay.dtd. -->
+<!ENTITY initiallyShowAttachmentPane.label "Montri liston de kunsendaĵoj">
+<!ENTITY initiallyShowAttachmentPane.accesskey "M">
+
+<!-- Spell checker context menu items -->
+<!ENTITY spellAddDictionaries.label "Aldoni vortarojn…">
+<!ENTITY spellAddDictionaries.accesskey "A">
+
+<!-- Title for the address picker panel -->
+<!ENTITY addressesSidebarTitle.label "Kontaktoj">
+
+<!-- Identity popup customize menuitem -->
+<!ENTITY customizeFromAddress.label "Alĝustigi adreson de sendanto…">
+<!ENTITY customizeFromAddress.accesskey "l">
+
+<!-- Accessibility name for the document -->
+<!ENTITY aria.message.bodyName "Enhavo de mesaĝo">
+
+<!-- Status Bar -->
+<!ENTITY languageStatusButton.tooltip "Lingvo por ortografia korekto">
+<!ENTITY encodingStatusPanel.tooltip "Teksta kodprezento">

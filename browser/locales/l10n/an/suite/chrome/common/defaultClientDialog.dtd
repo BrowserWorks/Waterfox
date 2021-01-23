@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultClient.title  "Client por omisión">
+<!ENTITY defaultClient.intro  "Usar &brandShortName; como client por omisión para:">
+
+<!ENTITY browser.label "Navegador">
+<!ENTITY email.label "Correu-y">
+<!ENTITY newsgroups.label "Grupos de noticias">
+<!ENTITY feeds.label "Canales">
+
+<!ENTITY checkOnStartup.label "Fer siempre ista comprobación en encetar &brandShortName;">
+<!ENTITY checkOnStartup.accesskey "F">

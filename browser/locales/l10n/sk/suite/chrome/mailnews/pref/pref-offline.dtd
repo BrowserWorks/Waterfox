@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-offline.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Offline' preferences dialog -->
+<!ENTITY pref.network.title               "Sieť a úložisko">
+<!ENTITY pref.offline.caption             "Režim offline">
+<!ENTITY textStartUp                      "Pri štarte:">
+<!ENTITY textStartUp.accesskey            "r">
+<!ENTITY menuitemRememberPrevState        "Pamätať si predchádzajúci stav online/offline">
+<!ENTITY menuitemAskMe                    "Opýtať sa na stav online/offline">
+<!ENTITY menuitemAlwaysOnline             "Vždy štartovať do režimu online">
+<!ENTITY menuitemAlwaysOffline            "Vždy štartovať do režimu offline">
+<!ENTITY menuitemAutomatic                "Zistiť automaticky (ak dostupné)">
+<!ENTITY textGoingOnline                  "Odoslať neodoslanú poštu pri prechode do režimu online?">
+<!ENTITY radioAutoSend                    "Áno, odoslať">
+<!ENTITY radioAutoSend.accesskey          "d">
+<!ENTITY radioNotSend                     "Nie, neodoslať">
+<!ENTITY radioNotSend.accesskey           "N">
+<!ENTITY radioAskUnsent                   "Vždy sa opýtať">
+<!ENTITY radioAskUnsent.accesskey         "a">
+<!ENTITY textGoingOffline                 "Pri prechode do režimu offline prevziať správy na použitie v tomto režime?">
+<!ENTITY radioAutoDownload                "Áno, prevziať">
+<!ENTITY radioAutoDownload.accesskey      "z">
+<!ENTITY radioNotDownload                 "Nie, nepreberať">
+<!ENTITY radioNotDownload.accesskey       "b">
+<!ENTITY radioAskDownload                 "Vždy sa opýtať">
+<!ENTITY radioAskDownload.accesskey       "t">
+<!ENTITY mailConnections.caption          "Pripojenie k poštovému serveru">
+<!ENTITY mailnewsTimeout.label            "Časový limit pripojenia:">
+<!ENTITY mailnewsTimeout.accesskey        "m">
+<!ENTITY mailnewsTimeoutSeconds.label     "sekúnd">
+<!ENTITY Diskspace                        "Miesto na disku">
+<!ENTITY offlineCompactFolders.label      "Vykonať údržbu všetkých priečinkov, ak sa celkovo ušetrí aspoň">
+<!ENTITY offlineCompactFolders.accesskey  "V">
+<!ENTITY offlineCompactFoldersMB.label    "MB">

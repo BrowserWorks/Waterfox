@@ -6,8 +6,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/Assertions.h"
-#include "mozilla/Move.h"
-#include "nsAutoPtr.h"
 #include "nsCRT.h"
 #include "nsGkAtoms.h"
 

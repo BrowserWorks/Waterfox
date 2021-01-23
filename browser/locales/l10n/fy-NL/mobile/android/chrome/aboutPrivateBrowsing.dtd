@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title "Priveenavigaasje">
+
+<!-- Localisation note: the plus sign here is a shorthand way of expressing the word "and". Contextually the privatebrowsingpage.title.private string
+                        is used as a title, with the privatebrowsingpage.title string preceding it but on a separate line.
+                        So the final line will say "Private Browsing + Tracking Protection". -->
+<!ENTITY privatebrowsingpage.title.private "+ Beskerming tsjin folgjen">
+<!-- Localization note (privatebrowsingpage.title.normal1): "Private Browsing"
+     is capitalized in English to be consistent with our existing uses of the
+     term. -->
+<!ENTITY privatebrowsingpage.title.normal1 "Jo brûke gjin Priveenavigaasje">
+
+<!ENTITY privatebrowsingpage.description.trackingProtection "&brandShortName; blokkearret ûnderdielen fan de siden dy't jo sneupaktiviteit folgje kinne.">
+<!ENTITY privatebrowsingpage.description.privateDetails "Der wurdt gjin skiednis ûnthâlden, mar downloaden bestannen en nije blêdwizers wurde wol op jo apparaat bewarre.">
+
+<!-- Localization note (privatebrowsingpage.description.normal2): "Private
+     Browsing is capitalized in English to be consistent with our existing uses
+     of the term. -->
+<!ENTITY privatebrowsingpage.description.normal2 "Yn Priveenavigaasje wurde gjin navigaajeskiednis of cookies bewarre. Blêdwizers dy't jo tafoegje en bestannen dy't jo downloade wurde wol op jo apparaat bewarre.">
+
+<!ENTITY privatebrowsingpage.link.private "Wolle jo mear witte?">
+<!ENTITY privatebrowsingpage.link.normal "In nij priveeljepblêd iepenje">

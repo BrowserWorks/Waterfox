@@ -6,11 +6,15 @@
 #include "xpctest_interfaces.h"
 #include "js/Value.h"
 
+#include "nsCOMPtr.h"
+#include "nsComponentManagerUtils.h"
+#include "nsIURI.h"
+
 NS_IMPL_ISUPPORTS(nsXPCTestParams, nsIXPCTestParams)
 
-nsXPCTestParams::nsXPCTestParams() {}
+nsXPCTestParams::nsXPCTestParams() = default;
 
-nsXPCTestParams::~nsXPCTestParams() {}
+nsXPCTestParams::~nsXPCTestParams() = default;
 
 #define GENERIC_METHOD_IMPL \
   {                         \
@@ -29,7 +33,7 @@ nsXPCTestParams::~nsXPCTestParams() {}
 #define SEQUENCE_METHOD_IMPL(TAKE_OWNERSHIP)                        \
   {                                                                 \
     _retval.SwapElements(b);                                        \
-    b = a;                                                          \
+    b = a.Clone();                                                  \
     for (uint32_t i = 0; i < b.Length(); ++i) TAKE_OWNERSHIP(b[i]); \
     return NS_OK;                                                   \
   }
@@ -345,7 +349,11 @@ NS_IMETHODIMP
 nsXPCTestParams::TestSequenceSequence(const nsTArray<nsTArray<short>>& a,
                                       nsTArray<nsTArray<short>>& b,
                                       nsTArray<nsTArray<short>>& _retval) {
-  SEQUENCE_METHOD_IMPL(TAKE_OWNERSHIP_NOOP);
+  _retval = std::move(b);
+  for (const auto& element : a) {
+    b.AppendElement(element.Clone());
+  }
+  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -364,6 +372,31 @@ nsXPCTestParams::TestInterfaceIsSequence(const nsIID* aIID,
 NS_IMETHODIMP
 nsXPCTestParams::TestOptionalSequence(const nsTArray<uint8_t>& aInArr,
                                       nsTArray<uint8_t>& aReturnArr) {
-  aReturnArr = aInArr;
+  aReturnArr = aInArr.Clone();
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsXPCTestParams::TestOmittedOptionalOut(nsIURI** aOut) {
+  MOZ_ASSERT(!(*aOut), "Unexpected value received");
+  // Call the js component, to check XPConnect won't crash when passing nullptr
+  // as the optional out parameter, and that the out object is built regardless.
+  nsresult rv;
+  nsCOMPtr<nsIXPCTestParams> jsComponent =
+      do_CreateInstance("@mozilla.org/js/xpc/test/js/Params;1", &rv);
+  NS_ENSURE_SUCCESS(rv, rv);
+  // Invoke it directly passing nullptr.
+  rv = jsComponent->TestOmittedOptionalOut(nullptr);
+  NS_ENSURE_SUCCESS(rv, rv);
+  // Also invoke it with a ref pointer.
+  nsCOMPtr<nsIURI> someURI;
+  rv = jsComponent->TestOmittedOptionalOut(getter_AddRefs(someURI));
+  NS_ENSURE_SUCCESS(rv, rv);
+  nsAutoCString spec;
+  rv = someURI->GetSpec(spec);
+  if (!spec.EqualsLiteral("http://example.com/")) {
+    return NS_ERROR_UNEXPECTED;
+  }
+  someURI.forget(aOut);
   return NS_OK;
 }

@@ -12,14 +12,25 @@
 
 enum AnimationPlayState { "idle", "running", "paused", "finished" };
 
-[Constructor (optional AnimationEffect? effect = null,
-              optional AnimationTimeline? timeline)]
+enum AnimationReplaceState { "active", "removed", "persisted" };
+
+[Exposed=Window]
 interface Animation : EventTarget {
+  [Throws]
+  constructor(optional AnimationEffect? effect = null,
+              optional AnimationTimeline? timeline);
+
   attribute DOMString id;
   [Func="Document::IsWebAnimationsEnabled", Pure]
   attribute AnimationEffect? effect;
   [Func="Document::AreWebAnimationsTimelinesEnabled"]
+#ifdef NIGHTLY_BUILD
+  // Animation.timeline setter is supported only on Nightly.
   attribute AnimationTimeline? timeline;
+#else
+  readonly attribute AnimationTimeline? timeline;
+#endif
+
   [BinaryName="startTimeAsDouble"]
   attribute double? startTime;
   [SetterThrows, BinaryName="currentTimeAsDouble"]
@@ -30,22 +41,30 @@ interface Animation : EventTarget {
   readonly attribute AnimationPlayState playState;
   [BinaryName="pendingFromJS"]
   readonly attribute boolean            pending;
+  [Pref="dom.animations-api.autoremove.enabled"]
+  readonly attribute AnimationReplaceState replaceState;
   [Func="Document::IsWebAnimationsEnabled", Throws]
   readonly attribute Promise<Animation> ready;
   [Func="Document::IsWebAnimationsEnabled", Throws]
   readonly attribute Promise<Animation> finished;
            attribute EventHandler       onfinish;
            attribute EventHandler       oncancel;
-  void cancel ();
+  [Pref="dom.animations-api.autoremove.enabled"]
+           attribute EventHandler       onremove;
+  void cancel();
   [Throws]
-  void finish ();
+  void finish();
   [Throws, BinaryName="playFromJS"]
-  void play ();
+  void play();
   [Throws, BinaryName="pauseFromJS"]
-  void pause ();
+  void pause();
   void updatePlaybackRate (double playbackRate);
   [Throws]
-  void reverse ();
+  void reverse();
+  [Pref="dom.animations-api.autoremove.enabled"]
+  void persist();
+  [Pref="dom.animations-api.autoremove.enabled", Throws]
+  void commitStyles();
 };
 
 // Non-standard extensions

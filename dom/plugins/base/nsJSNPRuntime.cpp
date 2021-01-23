@@ -8,7 +8,7 @@
 
 #include "jsfriendapi.h"
 
-#include "nsAutoPtr.h"
+#include "mozilla/UniquePtr.h"
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsJSNPRuntime.h"
 #include "nsNPAPIPlugin.h"
@@ -19,7 +19,6 @@
 #include "nsDOMJSUtils.h"
 #include "nsJSUtils.h"
 #include "mozilla/dom/Document.h"
-#include "nsIXPConnect.h"
 #include "xpcpublic.h"
 #include "nsIContent.h"
 #include "nsPluginInstanceOwner.h"
@@ -66,9 +65,7 @@ struct GCPolicy<nsJSObjWrapper*> {
     (*wrapper)->trace(trc);
   }
 
-  static bool isValid(const nsJSObjWrapper *&wrapper) {
-    return true;
-  }
+  static bool isValid(const nsJSObjWrapper*& wrapper) { return true; }
 };
 }  // namespace JS
 
@@ -235,7 +232,7 @@ static bool CreateNPObjectMember(NPP npp, JSContext* cx,
                                  NPVariant* getPropertyResult,
                                  JS::MutableHandle<JS::Value> vp);
 
-const js::Class sNPObjWrapperProxyClass =
+const JSClass sNPObjWrapperProxyClass =
     PROXY_CLASS_DEF(NPRUNTIME_JSCLASS_NAME, JSCLASS_HAS_RESERVED_SLOTS(1));
 
 typedef struct NPObjectMemberPrivate {
@@ -283,7 +280,7 @@ static void DelayedReleaseGCCallback(JSGCStatus status) {
   if (JSGC_END == status) {
     // Take ownership of sDelayedReleases and null it out now. The
     // _releaseobject call below can reenter GC and double-free these objects.
-    nsAutoPtr<nsTArray<NPObject*>> delayedReleases(sDelayedReleases);
+    UniquePtr<nsTArray<NPObject*>> delayedReleases(sDelayedReleases);
     sDelayedReleases = nullptr;
 
     if (delayedReleases) {
@@ -1246,9 +1243,8 @@ bool NPObjWrapperProxyHandler::get(JSContext* cx, JS::Handle<JSObject*> proxy,
     return false;
   }
 
-  if (JSID_IS_SYMBOL(id)) {
-    JS::RootedSymbol sym(cx, JSID_TO_SYMBOL(id));
-    if (JS::GetSymbolCode(sym) == JS::SymbolCode::toPrimitive) {
+  if (id.isSymbol()) {
+    if (id.isWellKnownSymbol(JS::SymbolCode::toPrimitive)) {
       JS::RootedObject obj(
           cx, JS_GetFunctionObject(JS_NewFunction(cx, NPObjWrapper_toPrimitive,
                                                   1, 0, "Symbol.toPrimitive")));
@@ -1257,7 +1253,7 @@ bool NPObjWrapperProxyHandler::get(JSContext* cx, JS::Handle<JSObject*> proxy,
       return true;
     }
 
-    if (JS::GetSymbolCode(sym) == JS::SymbolCode::toStringTag) {
+    if (id.isWellKnownSymbol(JS::SymbolCode::toStringTag)) {
       JS::RootedString tag(cx, JS_NewStringCopyZ(cx, NPRUNTIME_JSCLASS_NAME));
       if (!tag) {
         return false;

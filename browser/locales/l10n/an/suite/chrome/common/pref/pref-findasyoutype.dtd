@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.findAsYouType.title "Trobar a medida que escribe">
+<!ENTITY findAsYouTypeBehavior.label "Trobar a medida que escribe">
+<!ENTITY findAsYouTypeTip.label "Truco: ta encetar manualment Trobar a medida que escribe, teclee / ta trobar texto u ' ta trobar vinclos, seguiu d'o texto que quiere trobar.">
+<!ENTITY findAsYouTypeTimeout.label "Reiniciar a busca en curso dimpués d'uns segundos d'inactividat">
+<!ENTITY findAsYouTypeTimeout.accesskey "R">
+<!ENTITY findAsYouTypeSound.label "Reproducir un son cucamino o texto escrito no se troba">
+<!ENTITY findAsYouTypeSound.accesskey "c">
+<!ENTITY findAsYouTypeEnableAuto.label "Trobar automaticament en escribir dentro d'una pachina web:">
+<!ENTITY findAsYouTypeEnableAuto.accesskey "T">
+<!ENTITY findAsYouTypeAutoText.label "Qualsiquier texto en a pachina">
+<!ENTITY findAsYouTypeAutoText.accesskey "Q">
+<!ENTITY findAsYouTypeAutoLinks.label "Solament vinclos">
+<!ENTITY findAsYouTypeAutoLinks.accesskey "S">
+
+<!ENTITY findAsYouTypeFindbarEnable.label "Amostrar a barra de busca en trobar a medida que escribe">
+<!ENTITY findAsYouTypeFindbarEnable.accesskey "A">
+<!ENTITY findAsYouTypeFindbarEnableTip.label "Nota: Trobar a medida que escribe sin amostrar a barra de busca no permite introducir caracters internacionals.">

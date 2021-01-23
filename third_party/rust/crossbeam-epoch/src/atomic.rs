@@ -1,16 +1,15 @@
+use alloc::boxed::Box;
 use core::borrow::{Borrow, BorrowMut};
 use core::cmp;
 use core::fmt;
 use core::marker::PhantomData;
 use core::mem;
-use core::ptr;
 use core::ops::{Deref, DerefMut};
-use core::sync::atomic::{AtomicUsize, ATOMIC_USIZE_INIT};
-use core::sync::atomic::Ordering;
-use alloc::boxed::Box;
+use core::ptr;
+use core::sync::atomic::{AtomicUsize, Ordering};
 
+use crossbeam_utils::atomic::AtomicConsume;
 use guard::Guard;
-use crossbeam_utils::consume::AtomicConsume;
 
 /// Given ordering for the success case in a compare-exchange operation, returns the strongest
 /// appropriate ordering for the failure case.
@@ -151,10 +150,10 @@ impl<T> Atomic<T> {
     ///
     /// let a = Atomic::<i32>::null();
     /// ```
-    #[cfg(not(feature = "nightly"))]
+    #[cfg(not(has_min_const_fn))]
     pub fn null() -> Atomic<T> {
         Self {
-            data: ATOMIC_USIZE_INIT,
+            data: AtomicUsize::new(0),
             _marker: PhantomData,
         }
     }
@@ -168,10 +167,10 @@ impl<T> Atomic<T> {
     ///
     /// let a = Atomic::<i32>::null();
     /// ```
-    #[cfg(feature = "nightly")]
+    #[cfg(has_min_const_fn)]
     pub const fn null() -> Atomic<T> {
         Self {
-            data: ATOMIC_USIZE_INIT,
+            data: AtomicUsize::new(0),
             _marker: PhantomData,
         }
     }
@@ -470,6 +469,44 @@ impl<T> Atomic<T> {
     /// ```
     pub fn fetch_xor<'g>(&self, val: usize, ord: Ordering, _: &'g Guard) -> Shared<'g, T> {
         unsafe { Shared::from_usize(self.data.fetch_xor(val & low_bits::<T>(), ord)) }
+    }
+
+    /// Takes ownership of the pointee.
+    ///
+    /// This consumes the atomic and converts it into [`Owned`]. As [`Atomic`] doesn't have a
+    /// destructor and doesn't drop the pointee while [`Owned`] does, this is suitable for
+    /// destructors of data structures.
+    ///
+    /// # Panics
+    ///
+    /// Panics if this pointer is null, but only in debug mode.
+    ///
+    /// # Safety
+    ///
+    /// This method may be called only if the pointer is valid and nobody else is holding a
+    /// reference to the same object.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use std::mem;
+    /// # use crossbeam_epoch::Atomic;
+    /// struct DataStructure {
+    ///     ptr: Atomic<usize>,
+    /// }
+    ///
+    /// impl Drop for DataStructure {
+    ///     fn drop(&mut self) {
+    ///         // By now the DataStructure lives only in our thread and we are sure we don't hold
+    ///         // any Shared or & to it ourselves.
+    ///         unsafe {
+    ///             drop(mem::replace(&mut self.ptr, Atomic::null()).into_owned());
+    ///         }
+    ///     }
+    /// }
+    /// ```
+    pub unsafe fn into_owned(self) -> Owned<T> {
+        Owned::from_usize(self.data.into_inner())
     }
 }
 
@@ -934,6 +971,46 @@ impl<'g, T> Shared<'g, T> {
     /// ```
     pub unsafe fn deref(&self) -> &'g T {
         &*self.as_raw()
+    }
+
+    /// Dereferences the pointer.
+    ///
+    /// Returns a mutable reference to the pointee that is valid during the lifetime `'g`.
+    ///
+    /// # Safety
+    ///
+    /// * There is no guarantee that there are no more threads attempting to read/write from/to the
+    ///   actual object at the same time.
+    ///
+    ///   The user must know that there are no concurrent accesses towards the object itself.
+    ///
+    /// * Other than the above, all safety concerns of `deref()` applies here.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crossbeam_epoch::{self as epoch, Atomic};
+    /// use std::sync::atomic::Ordering::SeqCst;
+    ///
+    /// let a = Atomic::new(vec![1, 2, 3, 4]);
+    /// let guard = &epoch::pin();
+    ///
+    /// let mut p = a.load(SeqCst, guard);
+    /// unsafe {
+    ///     assert!(!p.is_null());
+    ///     let b = p.deref_mut();
+    ///     assert_eq!(b, &vec![1, 2, 3, 4]);
+    ///     b.push(5);
+    ///     assert_eq!(b, &vec![1, 2, 3, 4, 5]);
+    /// }
+    ///
+    /// let p = a.load(SeqCst, guard);
+    /// unsafe {
+    ///     assert_eq!(p.deref(), &vec![1, 2, 3, 4, 5]);
+    /// }
+    /// ```
+    pub unsafe fn deref_mut(&mut self) -> &'g mut T {
+        &mut *(self.as_raw() as *mut T)
     }
 
     /// Converts the pointer to a reference.

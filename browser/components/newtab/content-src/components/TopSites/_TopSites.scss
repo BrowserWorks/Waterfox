@@ -1,5 +1,5 @@
 $top-sites-size: $grid-unit;
-$top-sites-border-radius: 6px;
+$top-sites-border-radius: 4px;
 $top-sites-title-height: 30px;
 $top-sites-vertical-space: 8px;
 $screenshot-size: cover;
@@ -23,11 +23,11 @@ $hover-transition-duration: 150ms;
 
   // Two columns
   @media (max-width: $break-point-medium) {
-    :nth-child(2n+1) {
+    > :nth-child(2n+1) {
       @include context-menu-open-middle;
     }
 
-    :nth-child(2n) {
+    > :nth-child(2n) {
       @include context-menu-open-left;
     }
   }
@@ -307,8 +307,6 @@ $hover-transition-duration: 150ms;
     left: 0;
     margin: 0 auto;
     max-height: calc(100% - 40px);
-    overflow-y: auto;
-    overflow-x: hidden;
     position: fixed;
     right: 0;
     top: 40px;

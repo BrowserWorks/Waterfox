@@ -19,6 +19,8 @@ const TEST_BENCHMARK = "benchmark";
 const TEST_PAGE_LOAD = "pageload";
 const TEST_SCENARIO = "scenario";
 
+const ANDROID_BROWSERS = ["fennec", "fenix", "geckoview", "refbrow"];
+
 // when the browser starts this webext runner will start automatically; we
 // want to give the browser some time (ms) to settle before starting tests
 var postStartupDelay;
@@ -26,10 +28,13 @@ var postStartupDelay;
 // delay (ms) between pageload cycles
 var pageCycleDelay = 1000;
 
-var newTabDelay = 1000;
-var reuseTab = false;
+var newTabPerCycle = false;
 
-var browserName;
+// delay (ms) for foregrounding app
+var foregroundDelay = 5000;
+
+var isGecko = false;
+var isGeckoAndroid = false;
 var ext;
 var testName = null;
 var settingsURL = null;
@@ -41,7 +46,7 @@ var browserCycle = 0;
 var pageCycles = 0;
 var pageCycle = 0;
 var testURL;
-var testTabID = 0;
+var testTabId;
 var scenarioTestTime = 60000;
 var getHero = false;
 var getFNBPaint = false;
@@ -59,6 +64,7 @@ var isTTFIPending = false;
 var isLoadTimePending = false;
 var isScenarioPending = false;
 var isBenchmarkPending = false;
+var isBackgroundTest = false;
 var pageTimeout = 10000; // default pageload timeout
 var geckoProfiling = false;
 var geckoInterval = 1;
@@ -80,224 +86,259 @@ var results = {
   measurements: {},
 };
 
-function getTestSettings() {
-  console.log("getting test settings from control server");
-  return new Promise(resolve => {
-    fetch(settingsURL).then(function(response) {
-      response.text().then(function(text) {
-        console.log(text);
-        settings = JSON.parse(text)["raptor-options"];
+async function getTestSettings() {
+  raptorLog("getting test settings from control server");
+  const response = await fetch(settingsURL);
+  const data = await response.text();
+  raptorLog(`test settings received: ${data}`);
 
-        // parse the test settings
-        testType = settings.type;
-        pageCycles = settings.page_cycles;
-        testURL = settings.test_url;
-        scenarioTestTime = settings.scenario_time;
+  // parse the test settings
+  settings = JSON.parse(data)["raptor-options"];
+  testType = settings.type;
+  pageCycles = settings.page_cycles;
+  testURL = settings.test_url;
+  scenarioTestTime = settings.scenario_time;
+  isBackgroundTest = settings.background_test;
 
-        // for pageload type tests, the testURL is fine as is - we don't have
-        // to add a port as it's accessed via proxy and the playback tool
-        // however for benchmark tests, their source is served out on a local
-        // webserver, so we need to swap in the webserver port into the testURL
-        if (testType == TEST_BENCHMARK) {
-          // just replace the '<port>' keyword in the URL with actual benchmarkPort
-          testURL = testURL.replace("<port>", benchmarkPort);
+  // for pageload type tests, the testURL is fine as is - we don't have
+  // to add a port as it's accessed via proxy and the playback tool
+  // however for benchmark tests, their source is served out on a local
+  // webserver, so we need to swap in the webserver port into the testURL
+  if (testType == TEST_BENCHMARK) {
+    // just replace the '<port>' keyword in the URL with actual benchmarkPort
+    testURL = testURL.replace("<port>", benchmarkPort);
+  }
+
+  if (host) {
+    // just replace the '<host>' keyword in the URL with actual host
+    testURL = testURL.replace("<host>", host);
+  }
+
+  raptorLog(`test URL: ${testURL}`);
+
+  results.alert_change_type = settings.alert_change_type;
+  results.alert_threshold = settings.alert_threshold;
+  results.browser_cycle = browserCycle;
+  results.cold = settings.cold;
+  results.expected_browser_cycles = settings.expected_browser_cycles;
+  results.lower_is_better = settings.lower_is_better === true;
+  results.name = testName;
+  results.page = testURL;
+  results.type = testType;
+  results.unit = settings.unit;
+  results.subtest_unit = settings.subtest_unit;
+  results.subtest_lower_is_better = settings.subtest_lower_is_better === true;
+
+  if (settings.gecko_profile === true) {
+    results.extra_options = ["gecko_profile"];
+
+    geckoProfiling = true;
+    geckoEntries = settings.gecko_profile_entries;
+    geckoInterval = settings.gecko_profile_interval;
+    geckoThreads = settings.gecko_profile_threads;
+  }
+
+  if (settings.screen_capture !== undefined) {
+    screenCapture = settings.screen_capture;
+  }
+
+  if (settings.newtab_per_cycle !== undefined) {
+    newTabPerCycle = settings.newtab_per_cycle;
+  }
+
+  if (settings.page_timeout !== undefined) {
+    pageTimeout = settings.page_timeout;
+  }
+  raptorLog(`using page timeout: ${pageTimeout}ms`);
+
+  switch (testType) {
+    case TEST_PAGE_LOAD:
+      if (settings.measure !== undefined) {
+        if (settings.measure.fnbpaint !== undefined) {
+          getFNBPaint = settings.measure.fnbpaint;
         }
-
-        if (host) {
-          // just replace the '<host>' keyword in the URL with actual host
-          testURL = testURL.replace("<host>", host);
+        if (settings.measure.dcf !== undefined) {
+          getDCF = settings.measure.dcf;
         }
-
-        console.log(`testURL: ${testURL}`);
-
-        results.alert_change_type = settings.alert_change_type;
-        results.alert_threshold = settings.alert_threshold;
-        results.browser_cycle = browserCycle;
-        results.cold = settings.cold;
-        results.expected_browser_cycles = settings.expected_browser_cycles;
-        results.lower_is_better = settings.lower_is_better === true;
-        results.name = testName;
-        results.page = testURL;
-        results.type = testType;
-        results.unit = settings.unit;
-        results.subtest_unit = settings.subtest_unit;
-        results.subtest_lower_is_better =
-          settings.subtest_lower_is_better === true;
-
-        if (settings.gecko_profile === true) {
-          results.extra_options = ["gecko_profile"];
-
-          geckoProfiling = true;
-          geckoEntries = settings.gecko_profile_entries;
-          geckoInterval = settings.gecko_profile_interval;
-          geckoThreads = settings.gecko_profile_threads;
+        if (settings.measure.fcp !== undefined) {
+          getFCP = settings.measure.fcp;
         }
-
-        if (settings.screen_capture !== undefined) {
-          screenCapture = settings.screen_capture;
+        if (settings.measure.hero !== undefined) {
+          if (settings.measure.hero.length !== 0) {
+            getHero = true;
+          }
         }
-
-        if (settings.newtab_per_cycle !== undefined) {
-          reuseTab = settings.newtab_per_cycle;
+        if (settings.measure.ttfi !== undefined) {
+          getTTFI = settings.measure.ttfi;
         }
-
-        if (settings.page_timeout !== undefined) {
-          pageTimeout = settings.page_timeout;
+        if (settings.measure.loadtime !== undefined) {
+          getLoadTime = settings.measure.loadtime;
         }
-        console.log(`using page timeout: ${pageTimeout}ms`);
+      } else {
+        raptorLog("abort: 'measure' key not found in test settings");
+        await cleanUp();
+      }
+      break;
+  }
 
-        switch (testType) {
-          case TEST_PAGE_LOAD:
-            if (settings.measure !== undefined) {
-              if (settings.measure.fnbpaint !== undefined) {
-                getFNBPaint = settings.measure.fnbpaint;
-              }
-              if (settings.measure.dcf !== undefined) {
-                getDCF = settings.measure.dcf;
-              }
-              if (settings.measure.fcp !== undefined) {
-                getFCP = settings.measure.fcp;
-              }
-              if (settings.measure.hero !== undefined) {
-                if (settings.measure.hero.length !== 0) {
-                  getHero = true;
-                }
-              }
-              if (settings.measure.ttfi !== undefined) {
-                getTTFI = settings.measure.ttfi;
-              }
-              if (settings.measure.loadtime !== undefined) {
-                getLoadTime = settings.measure.loadtime;
-              }
-            } else {
-              console.log("abort: 'measure' key not found in test settings");
-              cleanUp();
-            }
-            break;
-        }
-
-        // write options to storage that our content script needs to know
-        if (
-          ["firefox", "geckoview", "refbrow", "fenix"].includes(browserName)
-        ) {
-          ext.storage.local.clear().then(function() {
-            ext.storage.local.set({ settings }).then(function() {
-              console.log("wrote settings to ext local storage");
-              resolve();
-            });
-          });
-        } else {
-          ext.storage.local.clear(function() {
-            ext.storage.local.set({ settings }, function() {
-              console.log("wrote settings to ext local storage");
-              resolve();
-            });
-          });
-        }
+  // write options to storage that our content script needs to know
+  if (isGecko) {
+    await ext.storage.local.clear();
+    await ext.storage.local.set({ settings });
+  } else {
+    await new Promise(resolve => {
+      ext.storage.local.clear(() => {
+        ext.storage.local.set({ settings }, resolve);
       });
     });
-  });
+  }
+  raptorLog("wrote settings to ext local storage");
 }
 
-function getBrowserInfo() {
-  return new Promise(resolve => {
-    if (["firefox", "geckoview", "refbrow", "fenix"].includes(browserName)) {
-      ext = browser;
-      var gettingInfo = browser.runtime.getBrowserInfo();
-      gettingInfo.then(function(bi) {
-        results.browser = bi.name + " " + bi.version + " " + bi.buildID;
-        console.log(`testing on ${results.browser}`);
-        resolve();
-      });
-    } else {
-      ext = chrome;
-      var browserInfo = window.navigator.userAgent.split(" ");
-      for (let x in browserInfo) {
-        if (browserInfo[x].indexOf("Chrome") > -1) {
-          results.browser = browserInfo[x];
-          break;
-        }
-      }
-      console.log(`testing on ${results.browser}`);
-      resolve();
-    }
-  });
+async function sleep(delay) {
+  return new Promise(resolve => setTimeout(resolve, delay));
 }
 
-function scenarioTimer() {
-  postToControlServer("status", `started scenario test timer`);
+async function startScenarioTimer() {
   setTimeout(function() {
     isScenarioPending = false;
     results.measurements.scenario = [1];
   }, scenarioTestTime);
+
+  await postToControlServer("status", `started scenario test timer`);
 }
 
-function testTabCreated(tab) {
-  testTabID = tab.id;
-  postToControlServer("status", `opened new empty tab: ${testTabID}`);
-  // update raptor browser toolbar icon text, for a visual indicator when debugging
-  ext.browserAction.setTitle({ title: "Raptor RUNNING" });
+async function closeTab(tabId) {
+  // Don't close the last tab which would close the window or application
+  const tabs = await queryForTabs({ currentWindow: true });
+  if (tabs.length == 1) {
+    await postToControlServer("status", `Not closing last Tab: ${tabs[0].id}`);
+    return;
+  }
+
+  await postToControlServer("status", `closing Tab: ${tabId}`);
+
+  if (isGecko) {
+    await ext.tabs.remove(tabId);
+  } else {
+    await new Promise(resolve => {
+      ext.tabs.remove(tabId, resolve);
+    });
+  }
+
+  await postToControlServer("status", `closed tab: ${tabId}`);
 }
 
-function testTabRemoved(tab) {
-  postToControlServer("status", `Removed tab: ${testTabID}`);
-  testTabID = 0;
+async function getCurrentTabId() {
+  const tabs = await queryForTabs({ currentWindow: true, active: true });
+  if (tabs.length == 0) {
+    throw new Error("No active tab has been found.");
+  }
+
+  await postToControlServer("status", "found active tab with id " + tabs[0].id);
+  return tabs[0].id;
 }
 
-async function testTabUpdated(tab) {
-  postToControlServer("status", `test tab updated: ${testTabID}`);
+async function openTab() {
+  await postToControlServer("status", "opening new tab");
+
+  let tab;
+  if (isGecko) {
+    tab = await ext.tabs.create({ url: "about:blank" });
+  } else {
+    tab = await new Promise(resolve => {
+      ext.tabs.create({ url: "about:blank" }, resolve);
+    });
+  }
+
+  await postToControlServer("status", `opened new empty tab: ${tab.id}`);
+
+  return tab.id;
+}
+
+async function queryForTabs(options = {}) {
+  let tabs;
+
+  if (isGecko) {
+    tabs = await ext.tabs.query(options);
+  } else {
+    tabs = await new Promise(resolve => {
+      ext.tabs.query(options, resolve);
+    });
+  }
+
+  return tabs;
+}
+
+/**
+ * Update the given tab by navigating to the test URL
+ */
+async function updateTab(tabId, url) {
+  await postToControlServer("status", `update tab ${tabId} for ${url}`);
+
+  // "null" = active tab
+  if (isGecko) {
+    await ext.tabs.update(tabId, { url });
+  } else {
+    await new Promise(resolve => {
+      ext.tabs.update(tabId, { url }, resolve);
+    });
+  }
+
+  await postToControlServer("status", `tab ${tabId} updated`);
+}
+
+async function collectResults() {
+  // now we can set the page timeout timer and wait for pageload test result from content
+  raptorLog("ready to poll for results; turning on page-timeout timer");
+  setTimeoutAlarm("raptor-page-timeout", pageTimeout);
+
   // wait for pageload test result from content
-  await waitForResult();
+  await waitForResults();
+
   // move on to next cycle (or test complete)
-  nextCycle();
+  await nextCycle();
 }
 
-async function waitForResult() {
-  let results = await new Promise(resolve => {
-    function checkForResult() {
-      console.log("checking results...");
-      switch (testType) {
-        case TEST_BENCHMARK:
-          if (!isBenchmarkPending) {
-            resolve();
-          } else {
-            setTimeout(checkForResult, 250);
-          }
-          break;
+function checkForTestFinished() {
+  let finished = false;
 
-        case TEST_PAGE_LOAD:
-          if (
-            !isHeroPending &&
-            !isFNBPaintPending &&
-            !isFCPPending &&
-            !isDCFPending &&
-            !isTTFIPending &&
-            !isLoadTimePending
-          ) {
-            resolve();
-          } else {
-            setTimeout(checkForResult, 250);
-          }
-          break;
-
-        case TEST_SCENARIO:
-          if (!isScenarioPending) {
-            cancelTimeoutAlarm("raptor-page-timeout");
-            postToControlServer("status", `scenario test ended`);
-            resolve();
-          } else {
-            setTimeout(checkForResult, 5);
-          }
-          break;
+  switch (testType) {
+    case TEST_BENCHMARK:
+      finished = !isBenchmarkPending;
+      break;
+    case TEST_PAGE_LOAD:
+      if (
+        !isHeroPending &&
+        !isFNBPaintPending &&
+        !isFCPPending &&
+        !isDCFPending &&
+        !isTTFIPending &&
+        !isLoadTimePending
+      ) {
+        finished = true;
       }
-    }
+      break;
 
-    checkForResult();
-  });
+    case TEST_SCENARIO:
+      finished = !isScenarioPending;
+      break;
+  }
 
-  cancelTimeoutAlarm("raptor-page-timeout");
+  return finished;
+}
 
-  postToControlServer("status", "results received");
+async function waitForResults() {
+  raptorLog("waiting for results...");
+
+  while (!checkForTestFinished()) {
+    raptorLog("results pending...");
+    await sleep(250);
+  }
+
+  await cancelTimeoutAlarm("raptor-page-timeout");
+
+  await postToControlServer("status", "results received");
 
   if (geckoProfiling) {
     await getGeckoProfile();
@@ -306,35 +347,38 @@ async function waitForResult() {
   if (screenCapture) {
     await getScreenCapture();
   }
-
-  return results;
 }
 
 async function getScreenCapture() {
-  console.log("capturing screenshot");
+  raptorLog("capturing screenshot");
 
   try {
     let screenshotUri;
 
-    if (["firefox", "geckoview", "refbrow", "fenix"].includes(browserName)) {
+    if (isGecko) {
       screenshotUri = await ext.tabs.captureVisibleTab();
     } else {
       screenshotUri = await new Promise(resolve =>
         ext.tabs.captureVisibleTab(resolve)
       );
     }
-    postToControlServer("screenshot", [screenshotUri, testName, pageCycle]);
+
+    await postToControlServer("screenshot", [
+      screenshotUri,
+      testName,
+      pageCycle,
+    ]);
   } catch (e) {
-    console.log(`failed to capture screenshot: ${e}`);
+    raptorLog(`failed to capture screenshot: ${e}`);
   }
 }
 
 async function startGeckoProfiling() {
-  postToControlServer(
+  await postToControlServer(
     "status",
     `starting Gecko profiling for threads: ${geckoThreads}`
   );
-  await browser.geckoProfiler.start({
+  await ext.geckoProfiler.start({
     bufferSize: geckoEntries,
     interval: geckoInterval,
     features: ["js", "leaf", "stackwalk", "threads", "responsiveness"],
@@ -343,20 +387,21 @@ async function startGeckoProfiling() {
 }
 
 async function stopGeckoProfiling() {
-  postToControlServer("status", "stopping gecko profiling");
-  await browser.geckoProfiler.stop();
+  await postToControlServer("status", "stopping gecko profiling");
+  await ext.geckoProfiler.stop();
 }
 
 async function getGeckoProfile() {
-  // get the profile and send to control server
-  postToControlServer("status", "retrieving gecko profile");
-  let arrayBuffer = await browser.geckoProfiler.getProfileAsArrayBuffer();
-  let textDecoder = new TextDecoder();
-  let profile = JSON.parse(textDecoder.decode(arrayBuffer));
-  console.log(profile);
-  postToControlServer("gecko_profile", [testName, pageCycle, profile]);
-  // stop the profiler; must stop so it clears before next cycle
+  // trigger saving the gecko profile, and send the file name to the control server
+  const fileName = `${testName}_pagecycle_${pageCycle}.profile`;
+
+  await postToControlServer("status", `saving gecko profile ${fileName}`);
+  await ext.geckoProfiler.dumpProfileToFile(fileName);
+  await postToControlServer("gecko_profile", fileName);
+
+  // must stop the profiler so it clears the buffer before next cycle
   await stopGeckoProfiling();
+
   // resume if we have more pagecycles left
   if (pageCycle + 1 <= pageCycles) {
     await startGeckoProfiling();
@@ -365,81 +410,99 @@ async function getGeckoProfile() {
 
 async function nextCycle() {
   pageCycle++;
+  if (isBackgroundTest) {
+    await postToControlServer(
+      "end_background",
+      `bringing app to foreground, pausing for ${foregroundDelay /
+        1000} seconds`
+    );
+    // wait a bit to be sure the app is in foreground before starting
+    // new test, or finishing test
+    await sleep(foregroundDelay);
+  }
   if (pageCycle == 1) {
-    let text = `running ${pageCycles} pagecycles of ${testURL}`;
-    postToControlServer("status", text);
+    const text = `running ${pageCycles} pagecycles of ${testURL}`;
+    await postToControlServer("status", text);
     // start the profiler if enabled
     if (geckoProfiling) {
       await startGeckoProfiling();
     }
   }
   if (pageCycle <= pageCycles) {
-    setTimeout(function() {
-      let text = "begin pagecycle " + pageCycle;
-      postToControlServer("status", text);
+    if (isBackgroundTest) {
+      await postToControlServer(
+        "start_background",
+        `bringing app to background`
+      );
+    }
 
-      // set page timeout alarm
-      setTimeoutAlarm("raptor-page-timeout", pageTimeout);
+    await sleep(pageCycleDelay);
 
-      switch (testType) {
-        case TEST_BENCHMARK:
-          isBenchmarkPending = true;
-          break;
+    await postToControlServer("status", `begin page cycle ${pageCycle}`);
 
-        case TEST_PAGE_LOAD:
-          if (getHero) {
-            isHeroPending = true;
-            pendingHeroes = Array.from(settings.measure.hero);
-          }
-          if (getFNBPaint) {
-            isFNBPaintPending = true;
-          }
-          if (getFCP) {
-            isFCPPending = true;
-          }
-          if (getDCF) {
-            isDCFPending = true;
-          }
-          if (getTTFI) {
-            isTTFIPending = true;
-          }
-          if (getLoadTime) {
-            isLoadTimePending = true;
-          }
-          break;
+    switch (testType) {
+      case TEST_BENCHMARK:
+        isBenchmarkPending = true;
+        break;
 
-        case TEST_SCENARIO:
-          isScenarioPending = true;
-          break;
-      }
-
-      if (reuseTab && testTabID != 0) {
-        // close previous test tab
-        ext.tabs.remove(testTabID);
-        postToControlServer("status", `closing Tab: ${testTabID}`);
-
-        // open new tab
-        ext.tabs.create({ url: "about:blank" });
-        postToControlServer("status", "Open new tab");
-      }
-      setTimeout(function() {
-        postToControlServer("status", `update tab: ${testTabID}`);
-        // update the test page - browse to our test URL
-        ext.tabs.update(testTabID, { url: testURL }, testTabUpdated);
-        if (testType == TEST_SCENARIO) {
-          scenarioTimer();
+      case TEST_PAGE_LOAD:
+        if (getHero) {
+          isHeroPending = true;
+          pendingHeroes = Array.from(settings.measure.hero);
         }
-      }, newTabDelay);
-    }, pageCycleDelay);
+        if (getFNBPaint) {
+          isFNBPaintPending = true;
+        }
+        if (getFCP) {
+          isFCPPending = true;
+        }
+        if (getDCF) {
+          isDCFPending = true;
+        }
+        if (getTTFI) {
+          isTTFIPending = true;
+        }
+        if (getLoadTime) {
+          isLoadTimePending = true;
+        }
+        break;
+
+      case TEST_SCENARIO:
+        isScenarioPending = true;
+        break;
+    }
+
+    if (newTabPerCycle) {
+      // close previous test tab and open a new one
+      await closeTab(testTabId);
+      testTabId = await openTab();
+    }
+
+    await updateTab(testTabId, testURL);
+
+    if (testType == TEST_SCENARIO) {
+      await startScenarioTimer();
+    }
+
+    // For benchmark or scenario type tests we can proceed directly to
+    // waitForResult. However for page-load tests we must first wait until
+    // we hear back from pageloaderjs that it has been successfully loaded
+    // in the test page and has been invoked; and only then start looking
+    // for measurements.
+    if (testType != TEST_PAGE_LOAD) {
+      await collectResults();
+    }
+
+    await postToControlServer("status", `ended page cycle ${pageCycle}`);
   } else {
-    verifyResults();
+    await verifyResults();
   }
 }
 
 async function timeoutAlarmListener() {
-  console.error(`raptor-page-timeout on ${testURL}`);
+  raptorLog(`raptor-page-timeout on ${testURL}`, "error");
 
-  var pendingMetrics = {
+  const pendingMetrics = {
     hero: isHeroPending,
     "fnb paint": isFNBPaintPending,
     fcp: isFCPPending,
@@ -448,59 +511,62 @@ async function timeoutAlarmListener() {
     "load time": isLoadTimePending,
   };
 
-  var msgData = [testName, testURL];
+  let msgData = [testName, testURL, pageCycle];
   if (testType == TEST_PAGE_LOAD) {
     msgData.push(pendingMetrics);
   }
-  postToControlServer("raptor-page-timeout", msgData);
 
+  await postToControlServer("raptor-page-timeout", msgData);
   await getScreenCapture();
 
   // call clean-up to shutdown gracefully
-  cleanUp();
+  await cleanUp();
 }
 
 function setTimeoutAlarm(timeoutName, timeoutMS) {
   // webext alarms require date.now NOT performance.now
-  var now = Date.now(); // eslint-disable-line mozilla/avoid-Date-timing
-  var timeout_when = now + timeoutMS;
+  const now = Date.now(); // eslint-disable-line mozilla/avoid-Date-timing
+  const timeout_when = now + timeoutMS;
   ext.alarms.create(timeoutName, { when: timeout_when });
-  console.log(
+
+  raptorLog(
     `now is ${now}, set raptor alarm ${timeoutName} to expire ` +
       `at ${timeout_when}`
   );
 }
 
-function cancelTimeoutAlarm(timeoutName) {
-  if (
-    browserName === "firefox" ||
-    browserName === "geckoview" ||
-    browserName === "refbrow" ||
-    browserName === "fenix"
-  ) {
-    var clearAlarm = ext.alarms.clear(timeoutName);
-    clearAlarm.then(function(onCleared) {
-      if (onCleared) {
-        console.log(`cancelled raptor alarm ${timeoutName}`);
-      } else {
-        console.error(`failed to clear raptor alarm ${timeoutName}`);
-      }
-    });
+async function cancelTimeoutAlarm(timeoutName) {
+  let cleared = false;
+
+  if (isGecko) {
+    cleared = await ext.alarms.clear(timeoutName);
   } else {
-    chrome.alarms.clear(timeoutName, function(wasCleared) {
-      if (wasCleared) {
-        console.log(`cancelled raptor alarm ${timeoutName}`);
-      } else {
-        console.error(`failed to clear raptor alarm ${timeoutName}`);
-      }
+    cleared = await new Promise(resolve => {
+      chrome.alarms.clear(timeoutName, resolve);
     });
+  }
+
+  if (cleared) {
+    raptorLog(`cancelled raptor alarm ${timeoutName}`);
+  } else {
+    raptorLog(`failed to clear raptor alarm ${timeoutName}`, "error");
   }
 }
 
 function resultListener(request, sender, sendResponse) {
-  console.log(`received message from ${sender.tab.url}`);
+  raptorLog(`received message from ${sender.tab.url}`);
+
+  // check if this is a message from pageloaderjs indicating it is ready to start
+  if (request.type == "pageloadjs-ready") {
+    raptorLog("received pageloadjs-ready!");
+
+    sendResponse({ text: "pageloadjs-ready-response" });
+    collectResults();
+    return;
+  }
+
   if (request.type && request.value) {
-    console.log(`result: ${request.type} ${request.value}`);
+    raptorLog(`result: ${request.type} ${request.value}`);
     sendResponse({ text: `confirmed ${request.type}` });
 
     if (!(request.type in results.measurements)) {
@@ -510,7 +576,7 @@ function resultListener(request, sender, sendResponse) {
     switch (testType) {
       case TEST_BENCHMARK:
         // benchmark results received (all results for that complete benchmark run)
-        console.log("received results from benchmark");
+        raptorLog("received results from benchmark");
         results.measurements[request.type].push(request.value);
         isBenchmarkPending = false;
         break;
@@ -519,12 +585,12 @@ function resultListener(request, sender, sendResponse) {
         // a single pageload measurement was received
         if (request.type.indexOf("hero") > -1) {
           results.measurements[request.type].push(request.value);
-          var _found = request.type.split("hero:")[1];
-          var index = pendingHeroes.indexOf(_found);
+          const _found = request.type.split("hero:")[1];
+          const index = pendingHeroes.indexOf(_found);
           if (index > -1) {
             pendingHeroes.splice(index, 1);
             if (pendingHeroes.length == 0) {
-              console.log("measured all expected hero elements");
+              raptorLog("measured all expected hero elements");
               isHeroPending = false;
             }
           }
@@ -547,144 +613,180 @@ function resultListener(request, sender, sendResponse) {
         break;
     }
   } else {
-    console.log(`unknown message received from content: ${request}`);
+    raptorLog(`unknown message received from content: ${request}`);
   }
 }
 
-function verifyResults() {
-  console.log("\nVerifying results:");
-  console.log(results);
+async function verifyResults() {
+  raptorLog("Verifying results:");
+  raptorLog(results);
+
   for (var x in results.measurements) {
-    let count = results.measurements[x].length;
+    const count = results.measurements[x].length;
     if (count == pageCycles) {
-      console.log(`have ${count} results for ${x}, as expected`);
+      raptorLog(`have ${count} results for ${x}, as expected`);
     } else {
-      console.log(
-        `ERROR: expected ${pageCycles} results for ${x} ` +
-          `but only have ${count}`
+      raptorLog(
+        `expected ${pageCycles} results for ${x} but only have ${count}`,
+        "error"
       );
     }
   }
-  postToControlServer("results", results);
+
+  await postToControlServer("results", results);
+
+  // we're finished, move to cleanup
+  await cleanUp();
 }
 
-function postToControlServer(msgType, msgData) {
-  // if posting a status message, log it to console also
-  if (msgType == "status") {
-    console.log(`\n${msgData}`);
-  }
-  // requires 'control server' running at port 8000 to receive results
-  var url = `http://${host}:${csPort}/`;
-  var client = new XMLHttpRequest();
-  client.onreadystatechange = function() {
-    if (client.readyState == XMLHttpRequest.DONE && client.status == 200) {
-      console.log("post success");
-    }
-  };
+async function postToControlServer(msgType, msgData = "") {
+  await new Promise(resolve => {
+    // requires 'control server' running at port 8000 to receive results
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `http://${host}:${csPort}/`, true);
+    xhr.setRequestHeader("Content-Type", "application/json");
 
-  client.open("POST", url, true);
+    xhr.onreadystatechange = () => {
+      if (xhr.readyState == XMLHttpRequest.DONE) {
+        if (xhr.status != 200) {
+          // Failed to send the message. At least add a console error.
+          let msg = msgType;
+          if (msgType != "screenshot") {
+            msg += ` with '${msgData}'`;
+          }
+          raptorLog(`failed to post ${msg} to control server`, "error");
+        }
 
-  client.setRequestHeader("Content-Type", "application/json");
-  if (client.readyState == 1) {
-    console.log("posting to control server");
-    console.log(msgData);
-    var data = { type: `webext_${msgType}`, data: msgData };
-    client.send(JSON.stringify(data));
-  }
-  if (msgType == "results") {
-    // we're finished, move to cleanup
-    cleanUp();
-  }
+        resolve();
+      }
+    };
+
+    xhr.send(
+      JSON.stringify({
+        type: `webext_${msgType}`,
+        data: msgData,
+      })
+    );
+  });
 }
 
-function cleanUp() {
+async function cleanUp() {
   // close tab unless raptor debug-mode is enabled
-  if (debugMode != 1) {
-    ext.tabs.remove(testTabID);
-    console.log(`closed tab ${testTabID}`);
+  if (debugMode == 1) {
+    raptorLog("debug-mode enabled, leaving tab open");
   } else {
-    console.log("raptor debug-mode enabled, leaving tab open");
+    await closeTab(testTabId);
   }
 
   if (testType == TEST_PAGE_LOAD) {
     // remove listeners
     ext.alarms.onAlarm.removeListener(timeoutAlarmListener);
     ext.runtime.onMessage.removeListener(resultListener);
-    ext.tabs.onCreated.removeListener(testTabCreated);
   }
-  console.log(`${testType} test finished`);
+  raptorLog(`${testType} test finished`);
 
   // if profiling was enabled, stop the profiler - may have already
   // been stopped but stop again here in cleanup in case of timeout
   if (geckoProfiling) {
-    stopGeckoProfiling();
+    await stopGeckoProfiling();
   }
 
   // tell the control server we are done and the browser can be shutdown
-  postToControlServer("status", "__raptor_shutdownBrowser");
+  await postToControlServer("shutdownBrowser");
 }
 
-function raptorRunner() {
-  let config = getTestConfig();
-  console.log(`test name is: ${config.test_name}`);
-  console.log(`test settings url is: ${config.test_settings_url}`);
+async function raptorRunner() {
+  await postToControlServer("status", "starting raptorRunner");
+
+  if (isBackgroundTest) {
+    await postToControlServer(
+      "status",
+      "raptor test will be backgrounding the app"
+    );
+  }
+
+  await getTestSettings();
+
+  raptorLog(`${testType} test start`);
+
+  ext.alarms.onAlarm.addListener(timeoutAlarmListener);
+  ext.runtime.onMessage.addListener(resultListener);
+
+  // create new empty tab, which starts the test; we want to
+  // wait some time for the browser to settle before beginning
+  const text = `* pausing ${postStartupDelay /
+    1000} seconds to let browser settle... *`;
+  await postToControlServer("status", text);
+  await sleep(postStartupDelay);
+
+  if (!isGeckoAndroid) {
+    await openTab();
+  }
+
+  testTabId = await getCurrentTabId();
+
+  await nextCycle();
+}
+
+function raptorLog(text, level = "info") {
+  let prefix = "";
+
+  if (level == "error") {
+    prefix = "ERROR: ";
+  }
+
+  console[level](`${prefix}[raptor-runnerjs] ${text}`);
+}
+
+async function init() {
+  const config = getTestConfig();
   testName = config.test_name;
   settingsURL = config.test_settings_url;
   csPort = config.cs_port;
-  browserName = config.browser;
   benchmarkPort = config.benchmark_port;
   postStartupDelay = config.post_startup_delay;
   host = config.host;
   debugMode = config.debug_mode;
   browserCycle = config.browser_cycle;
 
-  postToControlServer("status", "raptor runner.js is loaded!");
+  try {
+    // Chromium based browsers do not support the "browser" namespace and
+    // raise an exception when accessing it.
+    const info = await browser.runtime.getBrowserInfo();
+    results.browser = `${info.name} ${info.version} ${info.buildID}`;
 
-  getBrowserInfo().then(function() {
-    getTestSettings().then(function() {
-      console.log(`${testType} test start`);
+    ext = browser;
+    isGecko = true;
+    isGeckoAndroid = ANDROID_BROWSERS.includes(info.name.toLowerCase);
+  } catch (e) {
+    const regex = /(Chrome)\/([\w\.]+)/;
+    const userAgent = window.navigator.userAgent;
+    results.browser = regex
+      .exec(userAgent)
+      .splice(1, 2)
+      .join(" ");
 
-      // timeout alarm listener
-      ext.alarms.onAlarm.addListener(timeoutAlarmListener);
+    ext = chrome;
+  }
 
-      // results listener
-      ext.runtime.onMessage.addListener(resultListener);
+  await postToControlServer("loaded");
+  await postToControlServer("status", `testing on ${results.browser}`);
+  await postToControlServer("status", `test name is: ${testName}`);
+  await postToControlServer("status", `test settings url is: ${settingsURL}`);
 
-      // tab creation listener
-      ext.tabs.onCreated.addListener(testTabCreated);
+  try {
+    if (window.document.readyState != "complete") {
+      await new Promise(resolve => {
+        window.addEventListener("load", resolve);
+        raptorLog("Waiting for load event...");
+      });
+    }
 
-      // tab remove listener
-      ext.tabs.onRemoved.addListener(testTabRemoved);
-
-      // create new empty tab, which starts the test; we want to
-      // wait some time for the browser to settle before beginning
-      let text = `* pausing ${postStartupDelay /
-        1000} seconds to let browser settle... *`;
-      postToControlServer("status", text);
-
-      // setTimeout(function() { nextCycle(); }, postStartupDelay);
-      // on geckoview you can't create a new tab; only using existing tab - set it blank first
-      if (
-        config.browser == "geckoview" ||
-        config.browser == "refbrow" ||
-        config.browser == "fenix"
-      ) {
-        setTimeout(function() {
-          nextCycle();
-        }, postStartupDelay);
-      } else {
-        setTimeout(function() {
-          ext.tabs.create({ url: "about:blank" });
-          nextCycle();
-        }, postStartupDelay);
-      }
-    });
-  });
+    await raptorRunner();
+  } catch (e) {
+    await postToControlServer("error", [e.message, e.stack]);
+    await postToControlServer("shutdownBrowser");
+  }
 }
 
-if (window.addEventListener) {
-  window.addEventListener("load", raptorRunner);
-  postToControlServer("status", "Attaching event listener successful!");
-} else {
-  postToControlServer("status", "Attaching event listener failed!");
-}
+init();

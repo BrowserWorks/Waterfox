@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "સંદેશા ગાળકો">
+<!ENTITY nameColumn.label "ગાળક નામ">
+<!ENTITY activeColumn.label "સક્રિયકૃત">
+<!ENTITY newButton.label "નવું...">
+<!ENTITY newButton.accesskey "N">
+<!ENTITY editButton.label "ફેરફાર...">
+<!ENTITY editButton.accesskey "E">
+<!ENTITY deleteButton.label "કાઢી નાંખો">
+<!ENTITY deleteButton.accesskey "t">
+<!ENTITY reorderUpButton.label "ઉપર ખસો">
+<!ENTITY reorderUpButton.accesskey "U">
+<!ENTITY reorderDownButton.label "નીચે ખસો">
+<!ENTITY reorderDownButton.accesskey "D">
+<!ENTITY filterHeader.label "નીચે દર્શાવેલ ક્રમાનુસાર સક્રિયકૃત ગાળકો આપોઆપ ચાલે છે.">
+<!ENTITY filtersForPrefix.label "માટેના ગાળકો:">
+<!ENTITY filtersForPrefix.accesskey "F">
+<!ENTITY viewLogButton.label "ગાળક લોગ">
+<!ENTITY viewLogButton.accesskey "L">
+<!ENTITY runFilters.label "હમણાં ચલાવો">
+<!ENTITY runFilters.accesskey "R">
+<!ENTITY stopFilters.label "અટકાવો">
+<!ENTITY stopFilters.accesskey "S">
+<!ENTITY folderPickerPrefix.label "ના પર પસંદિત ગાળકો ચલાવો:">
+<!ENTITY folderPickerPrefix.accesskey "c">
+<!ENTITY helpButton.label "મદદ">
+<!ENTITY helpButton.accesskey "H">
+<!ENTITY closeCmd.key "W"> 

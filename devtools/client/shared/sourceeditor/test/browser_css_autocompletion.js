@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -93,7 +92,7 @@ add_task(async function test() {
 async function runTests() {
   const target = await TargetFactory.forTab(gBrowser.selectedTab);
   await target.attach();
-  inspector = await target.getInspector();
+  inspector = await target.getFront("inspector");
   const walker = inspector.walker;
   completer = new CSSCompleter({
     walker: walker,
@@ -115,7 +114,10 @@ async function checkStateAndMoveOn() {
   const [line, ch] = lineCh;
 
   ++index;
-  await ContentTask.spawn(browser, [index, tests.length], function([idx, len]) {
+  await SpecialPowers.spawn(browser, [[index, tests.length]], function([
+    idx,
+    len,
+  ]) {
     const progress = content.document.getElementById("progress");
     const progressDiv = content.document.querySelector("#progress > div");
     progress.dataset.progress = idx;
@@ -141,7 +143,7 @@ async function checkState(expected, actual) {
         ", Actual: " +
         actual.length
     );
-    await ContentTask.spawn(browser, null, function() {
+    await SpecialPowers.spawn(browser, [], function() {
       const progress = content.document.getElementById("progress");
       progress.classList.add("failed");
     });

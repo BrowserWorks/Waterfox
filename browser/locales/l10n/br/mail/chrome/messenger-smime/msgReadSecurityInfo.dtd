@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgReadSecurityInfo.dtd UI for viewing security status when reading a received message -->
+
+
+<!ENTITY status.label "Diogelroez ar gemennadenn">
+<!ENTITY signatureCert.label "Gwelout an testeni ar sinadur">
+<!ENTITY encryptionCert.label "Gwelout an testeni enrinegañ">
+
+<!ENTITY signer.name "Sinet gant :">
+<!ENTITY recipient.name "Enrineget evit :">
+<!ENTITY email.address "Postel :">
+<!ENTITY issuer.name "Testeni skignet gant :">
+

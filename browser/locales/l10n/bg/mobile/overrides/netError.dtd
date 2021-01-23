@@ -1,0 +1,170 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Проблем при зареждане на страница">
+<!ENTITY retry.label "Повторен опит">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Не може да бъде установена връзка">
+<!ENTITY connectionFailure.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY deniedPortAccess.title "Този адрес е ограничен">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Сървърът не е намерен">
+<!-- LOCALIZATION NOTE (dnsNotFound.longDesc4) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside tags should be localized.  Do not change the ids. -->
+<!ENTITY dnsNotFound.longDesc4 "<ul>
+  <li>Проверете адреса за правописни грешки, като например
+    <strong>ww</strong>.example.com вместо
+    <strong>www</strong>.example.com
+    <div id='searchbox'>
+      <input id='searchtext' type='search'></input>
+      <button id='searchbutton'>Търсене</button>
+    </div>
+  </li>
+  <li>Ако не може да отворите друга страница, проверете връзката за мобилни данни или Wi-Fi.
+    <button id='wifi'>Включване на Wi-Fi</button>
+  </li>
+</ul>">
+
+<!ENTITY fileNotFound.title "Файлът не е намерен">
+<!ENTITY fileNotFound.longDesc "<ul>
+  <li>Проверете името на файла за регистъра на буквите или други технически грешки.</li>
+  <li>Проверете дали файлът не е преместен, преименуван или изтрит.</li>
+</ul>">
+
+<!ENTITY fileAccessDenied.title "Достъпът до файла е отказан">
+<!ENTITY fileAccessDenied.longDesc "<ul>
+  <li>Може да е премахнат, преместен или правата му да ограничават достъпа.</li>
+</ul>">
+
+<!ENTITY generic.title "Олеле.">
+<!ENTITY generic.longDesc "<p>По някаква причина &brandShortName; не може да отвори страницата.</p>">
+
+<!ENTITY malformedURI.title "Адресът е невалиден">
+<!-- LOCALIZATION NOTE (malformedURI.longDesc2) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY malformedURI.longDesc2 "<ul>
+  <li>Адресите обикновено изглеждат така
+    <strong>http://www.example.com/</strong></li>
+    <div id='searchbox'>
+      <input id='searchtext' type='search'></input>
+      <button id='searchbutton'>Търсене</button>
+    </div>
+  <li>Уверете се, че използвате наклонени черти (т.е.
+    <strong>/</strong>).</li>
+</ul>">
+
+<!ENTITY netInterrupt.title "Връзката беше прекъсната">
+<!ENTITY netInterrupt.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY notCached.title "Документът е с изтекъл срок на валидност">
+<!ENTITY notCached.longDesc "<p>Търсеният документ не е наличен в буфера на &brandShortName;.</p>
+<ul>
+  <li>Като предпазна мярка &brandShortName; не прави повторна заявка на документи с поверително съдържание.</li>
+  <li>Натиснете „Повторен опит“ за нова заявка на документа от страницата.</li>
+</ul>">
+
+<!ENTITY netOffline.title "Работа извън мрежата">
+
+<!ENTITY contentEncodingError.title "Грешка в кодировката на съдържанието">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Моля, уведомете собствениците на страницата за проблема.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Опасен вид файл">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Моля, уведомете собствениците на страницата за проблема.</li> </ul>">
+
+<!ENTITY netReset.title "Връзката е прекъсната">
+<!ENTITY netReset.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY netTimeout.title "Времето за изчакване на връзка изтече">
+<!ENTITY netTimeout.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY unknownProtocolFound.title "Адресът не е разпознат">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Вероятно ще трябва да инсталирате друг софтуер, за да отворите този адрес.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "Мрежовият посредник отказва връзката">
+<!ENTITY proxyConnectFailure.longDesc "<ul>
+  <li>Уверете се, че настройките на мрежовия посредник са правилни.</li>
+  <li>Свържете се с мрежовия администратор и проверете дали мрежовият посредник работи.</li>
+</ul>">
+
+<!ENTITY proxyResolveFailure.title "Мрежовия посредник не може да бъде открит">
+<!-- LOCALIZATION NOTE (proxyResolveFailure.longDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY proxyResolveFailure.longDesc3 "<ul>
+  <li>Уверете се, че настройките на прокси сървъра са правилни.</li>
+  <li>Уверете се, че устройството ви има работеща връзка за данни или Wi-Fi.
+    <button id='wifi'>Включване на Wi-Fi</button>
+  </li>
+</ul>">
+
+<!ENTITY redirectLoop.title "Страницата не пренасочва правилно">
+<!ENTITY redirectLoop.longDesc "<ul><li>Такъв проблем може да е причинен от изключване или забраняване на бисквитките.</li></ul>">
+
+<!ENTITY unknownSocketType.title "Неочакван отговор от сървъра">
+<!ENTITY unknownSocketType.longDesc "<ul><li>Проверете дали системата има инсталиран Personal Security Manager.</li><li>Настройките на сървъра може да са нестандартни.</li></ul>">
+
+<!ENTITY nssFailure2.title "Неуспешно установяване на шифрована връзка">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Страницата не може да бъде показана, защото достоверността на получените данни не може да бъде проверена.</li> <li>Моля, уведомете собствениците на страницата за проблема.</li> </ul>">
+
+<!ENTITY nssBadCert.title "Неуспешно установяване на шифрована връзка">
+<!ENTITY nssBadCert.longDesc2 "<ul>
+  <li>Това е или проблем с настройките на сървъра, или някой се опитва се представи за него.</li>
+  <li>Ако преди успешно сте се свързвали с него, има вероятност грешката да е временна и може да опитате по-късно.</li>
+</ul>">
+
+<!-- LOCALIZATION NOTE (sharedLongDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY sharedLongDesc3 "<ul>
+  <li>Сайтът може да е временно недостъпен или натоварен. Опитайте отново след малко.</li>
+  <li>Ако не може да отворите друга страница, проверете връзката за мобилни данни или Wi-Fi.
+    <button id='wifi'>Включване на Wi-Fi</button>
+  </li>
+</ul>">
+
+<!ENTITY cspBlocked.title "Блокирано от Content Security Policy">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; предотврати зареждането на страницата по този начин, защото тя има политика за сигурност, която го забранява.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Грешка поради развалено съдържание">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Страницата не може да бъде показана поради грешка при прехвърляне на данните.</p><ul><li>Моля, уведомете собствениците на страницата за проблема.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Или може да добавите изключение…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Махнете ме от тук!">
+<!ENTITY securityOverride.exceptionButtonLabel "Добавяне на изключение…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <xul:button> tags.  The only language content is the label= field,
+which uses strings already defined above. The button is included here (instead of
+netError.xhtml) because it exposes functionality specific to firefox. -->
+
+<!ENTITY securityOverride.warningContent "<p>Не трябва да добавяте изключение, ако използвате интернет връзка на която не се доверявате напълно или ако не сте виждали предупреждение от този сървър.</p>
+
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button>
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "Отдалечен XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Моля, уведомете собствениците на страницата за проблема.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Невъзможно създаване на защитена връзка">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc "Допълнителна информация: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY weakCryptoUsed.title "Връзката е незащитена">
+<!-- LOCALIZATION NOTE (weakCryptoUsed.longDesc) - Do not translate
+     "SSL_ERROR_NO_CYPHER_OVERLAP". -->
+<!ENTITY weakCryptoUsed.longDesc "Допълнителна информация: SSL_ERROR_NO_CYPHER_OVERLAP">
+
+<!ENTITY inadequateSecurityError.title "Връзката е незащитена">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> използва остаряла технология за сигурност, уязвима към атаки. Такива атаки могат лесно да разкрият информация, която мислите, че е защитена. Администраторът на сайта трябва да поправи сървъра преди да може да използвате сайта.</p><p>Код на грешка: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY networkProtocolError.title "Нарушение на мрежовия протокол">
+<!ENTITY networkProtocolError.longDesc "<p>Страницата не може да бъде показана поради грешка в мрежовия протокол.</p><ul><li>Моля, уведомете собствениците на страницата за проблема.</li></ul>">

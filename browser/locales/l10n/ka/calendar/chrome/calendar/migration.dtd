@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migration.title "&brandFullName;: მონაცემთა გადმოტანა">
+<!ENTITY migration.welcome "მოგესალმებით">
+<!ENTITY migration.importing "გადმოდის">
+<!ENTITY migration.list.description "&brandShortName; პროგრამას შეუძლია მონაცემთა იმპორტი მრავალი პროგრამიდან. თქვენს კომპიუტერში შემდეგი პროგრამების მონაცემები მოიძებნა. გთხოვთ მიუთითოთ, რომელი მონაცემების იმპორტი გსურთ.">
+<!ENTITY migration.progress.description "მონიშნულ მონაცემთა იმპორტი">

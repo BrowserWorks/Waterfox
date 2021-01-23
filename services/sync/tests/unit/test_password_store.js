@@ -292,7 +292,7 @@ async function test_apply_same_record_with_different_times() {
     true,
     true
   );
-  /* eslint-enable no-unsed-vars */
+  /* eslint-enable no-unused-vars */
 }
 
 async function test_LoginRec_toString(store, recordData) {
@@ -307,7 +307,7 @@ add_task(async function run_test() {
   let recordA = {
     id: BOGUS_GUID_A,
     hostname: "http://foo.bar.com",
-    formSubmitURL: "http://foo.bar.com/baz",
+    formSubmitURL: "http://foo.bar.com",
     httpRealm: "secure",
     username: "john",
     password: "smith",
@@ -317,7 +317,7 @@ add_task(async function run_test() {
   let recordB = {
     id: BOGUS_GUID_B,
     hostname: "http://foo.baz.com",
-    formSubmitURL: "http://foo.baz.com/baz",
+    formSubmitURL: "http://foo.baz.com",
     username: "john",
     password: "smith",
     usernameField: "username",

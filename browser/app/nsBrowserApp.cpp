@@ -21,10 +21,10 @@
 #include <time.h>
 
 #include "nsCOMPtr.h"
-#include "nsIFile.h"
 
 #ifdef XP_WIN
 #  include "LauncherProcessWin.h"
+#  include "mozilla/WindowsDllBlocklist.h"
 
 #  define XRE_WANT_ENVIRON
 #  define strcasecmp _stricmp
@@ -38,7 +38,7 @@
 
 #include "mozilla/Sprintf.h"
 #include "mozilla/StartupTimeline.h"
-#include "mozilla/WindowsDllBlocklist.h"
+#include "BaseProfiler.h"
 
 #ifdef LIBFUZZER
 #  include "FuzzerDefs.h"
@@ -206,7 +206,7 @@ static int do_main(int argc, char* argv[], char* envp[]) {
 #endif
 
 #ifdef LIBFUZZER
-  if (getenv("LIBFUZZER"))
+  if (getenv("FUZZER"))
     gBootstrap->XRE_LibFuzzerSetDriver(fuzzer::FuzzerDriver);
 #endif
 
@@ -218,6 +218,10 @@ static int do_main(int argc, char* argv[], char* envp[]) {
 }
 
 static nsresult InitXPCOMGlue(LibLoadingStrategy aLibLoadingStrategy) {
+  if (gBootstrap) {
+    return NS_OK;
+  }
+
   UniqueFreePtr<char> exePath = BinaryPath::Get();
   if (!exePath) {
     Output("Couldn't find the application directory.\n");
@@ -242,14 +246,45 @@ uint32_t gBlocklistInitFlags = eDllBlocklistInitFlagDefault;
 #endif
 
 int main(int argc, char* argv[], char* envp[]) {
+#if defined(MOZ_ENABLE_FORKSERVER)
+  if (strcmp(argv[argc - 1], "forkserver") == 0) {
+    nsresult rv = InitXPCOMGlue(LibLoadingStrategy::NoReadAhead);
+    if (NS_FAILED(rv)) {
+      return 255;
+    }
+
+    // Run a fork server in this process, single thread.  When it
+    // returns, it means the fork server have been stopped or a new
+    // content process is created.
+    //
+    // For the later case, XRE_ForkServer() will return false, running
+    // in a content process just forked from the fork server process.
+    // argc & argv will be updated with the values passing from the
+    // chrome process.  With the new values, this function
+    // continues the reset of the code acting as a content process.
+    if (gBootstrap->XRE_ForkServer(&argc, &argv)) {
+      // Return from the fork server in the fork server process.
+      // Stop the fork server.
+      gBootstrap->NS_LogTerm();
+      return 0;
+    }
+    // In a content process forked from the fork server.
+    // Start acting as a content process.
+  }
+#endif
+
   mozilla::TimeStamp start = mozilla::TimeStamp::Now();
+
+  AUTO_BASE_PROFILER_INIT;
+  AUTO_BASE_PROFILER_LABEL("nsBrowserApp main", OTHER);
 
 #ifdef MOZ_BROWSER_CAN_BE_CONTENTPROC
   // We are launching as a content process, delegate to the appropriate
   // main
   if (argc > 1 && IsArg(argv[1], "contentproc")) {
 #  ifdef HAS_DLL_BLOCKLIST
-    DllBlocklist_Initialize(eDllBlocklistInitFlagIsChildProcess);
+    DllBlocklist_Initialize(gBlocklistInitFlags |
+                            eDllBlocklistInitFlagIsChildProcess);
 #  endif
 #  if defined(XP_WIN) && defined(MOZ_SANDBOX)
     // We need to initialize the sandbox TargetServices before InitXPCOMGlue

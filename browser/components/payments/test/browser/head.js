@@ -100,7 +100,7 @@ async function waitForWidgetReady(widget = null) {
 }
 
 function spawnPaymentDialogTask(paymentDialogFrame, taskFn, args = null) {
-  return ContentTask.spawn(paymentDialogFrame.frameLoader, args, taskFn);
+  return SpecialPowers.spawn(paymentDialogFrame.frameLoader, [args], taskFn);
 }
 
 async function withMerchantTab(
@@ -125,39 +125,6 @@ async function withMerchantTab(
   });
 }
 
-/**
- * Load the privileged payment dialog wrapper document in a new tab and run the
- * task function.
- *
- * @param {string} requestId of the PaymentRequest
- * @param {Function} taskFn to run in the dialog with the frame as an argument.
- * @returns {Promise} which resolves when the dialog document is loaded
- */
-function withNewDialogFrame(requestId, taskFn) {
-  async function dialogTabTask(dialogBrowser) {
-    let paymentRequestFrame = dialogBrowser.contentDocument.getElementById(
-      "paymentRequestFrame"
-    );
-    // Ensure the inner frame is loaded
-    await spawnPaymentDialogTask(
-      paymentRequestFrame,
-      async function ensureLoaded() {
-        await ContentTaskUtils.waitForCondition(
-          () => content.document.readyState == "complete",
-          "Waiting for the unprivileged frame to load"
-        );
-      }
-    );
-    await taskFn(paymentRequestFrame);
-  }
-
-  let args = {
-    gBrowser,
-    url: `chrome://payments/content/paymentDialogWrapper.xul?requestId=${requestId}`,
-  };
-  return BrowserTestUtils.withNewTab(args, dialogTabTask);
-}
-
 async function withNewTabInPrivateWindow(args = {}, taskFn) {
   let privateWin = await BrowserTestUtils.openNewBrowserWindow({
     private: true,
@@ -167,23 +134,6 @@ async function withNewTabInPrivateWindow(args = {}, taskFn) {
   });
   await withMerchantTab(tabArgs, taskFn);
   await BrowserTestUtils.closeWindow(privateWin);
-}
-
-/**
- * Spawn a content task inside the inner unprivileged frame of a privileged Payment Request dialog.
- *
- * @param {string} requestId
- * @param {Function} contentTaskFn
- * @param {object?} [args = null] for the content task
- * @returns {Promise}
- */
-function spawnTaskInNewDialog(requestId, contentTaskFn, args = null) {
-  return withNewDialogFrame(
-    requestId,
-    async function spawnTaskInNewDialog_tabTask(reqFrame) {
-      await spawnPaymentDialogTask(reqFrame, contentTaskFn, args);
-    }
-  );
 }
 
 async function addAddressRecord(address) {
@@ -316,13 +266,15 @@ async function setupPaymentDialog(
   { methodData, details, options, merchantTaskFn }
 ) {
   let dialogReadyPromise = waitForWidgetReady();
-  let { requestId } = await ContentTask.spawn(
+  let { requestId } = await SpecialPowers.spawn(
     browser,
-    {
-      methodData,
-      details,
-      options,
-    },
+    [
+      {
+        methodData,
+        details,
+        options,
+      },
+    ],
     merchantTaskFn
   );
   ok(requestId, "requestId should be defined");
@@ -369,8 +321,6 @@ async function setupPaymentDialog(
       EventUtils.sendString(value, content.window);
     };
   });
-  await injectEventUtilsInContentTask(frame);
-  info("helper functions injected into frame");
 
   return { win, requestId, frame };
 }
@@ -927,43 +877,4 @@ async function fillInCardForm(frame, aCard, aOptions = {}) {
     },
     { card: aCard, options: aOptions }
   );
-}
-
-// The JSDoc validator does not support @returns tags in abstract functions or
-// star functions without return statements.
-/* eslint-disable valid-jsdoc */
-/**
- * Inject `EventUtils` helpers into ContentTask scope.
- *
- * This helper is automatically exposed to mochitest browser tests,
- * but is missing from content task scope.
- * You should call this method only once per <browser> tag
- *
- * @param {xul:browser} browser
- *        Reference to the browser in which we load content task
- */
-/* eslint-enable valid-jsdoc */
-async function injectEventUtilsInContentTask(browser) {
-  await spawnPaymentDialogTask(browser, async function injectEventUtils() {
-    if ("EventUtils" in this) {
-      return;
-    }
-
-    const EventUtils = (this.EventUtils = {});
-
-    EventUtils.window = {};
-    EventUtils.parent = EventUtils.window;
-    /* eslint-disable camelcase */
-    EventUtils._EU_Ci = Ci;
-    EventUtils._EU_Cc = Cc;
-    /* eslint-enable camelcase */
-    // EventUtils' `sendChar` function relies on the navigator to synthetize events.
-    EventUtils.navigator = content.navigator;
-    EventUtils.KeyboardEvent = content.KeyboardEvent;
-
-    Services.scriptloader.loadSubScript(
-      "chrome://mochikit/content/tests/SimpleTest/EventUtils.js",
-      EventUtils
-    );
-  });
 }

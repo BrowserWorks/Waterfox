@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgViewPickerOverlay.dtd UI for showing various views on a folder -->
+
+
+<!ENTITY mailViewSetupTitle.label "Připrawjenje powěsćoweho napohlada">
+<!ENTITY mailViewHeading.label "Mjeno powěsćoweho napohlada:">
+<!ENTITY mailViewHeading.accesskey "e">
+<!ENTITY searchTermCaption.label "Hdyž je tutón napohlad wubrany, jenož powěsće pokazać, kotrež hodźa so na:">
+

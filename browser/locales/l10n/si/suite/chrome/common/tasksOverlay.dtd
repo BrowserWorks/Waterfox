@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from tasksOverlay.xul -->
+<!ENTITY navigatorCmd.label "Browser">
+<!ENTITY navigatorCmd.accesskey "B">
+<!ENTITY navigatorCmd.commandkey "1">
+<!-- LOCALIZATION NOTE (editorCmd.label): DONT_TRANSLATE -->
+<!ENTITY editorCmd.label					"Composer">
+<!ENTITY editorCmd.accesskey				"c">
+<!ENTITY editorCmd.commandkey				"4">
+
+<!ENTITY errorConsoleCmd.label                                  "Error Console">
+<!ENTITY errorConsoleCmd.accesskey				"C">
+<!ENTITY errorConsoleCmd.commandkey				"j">
+
+<!ENTITY taskNavigator.tooltip  "Browser">
+<!ENTITY taskComposer.tooltip  "Composer">
+
+<!ENTITY webDevelopment.label "Web Development">
+<!ENTITY webDevelopment.accesskey "W">
+
+<!ENTITY windowMenu.label "Window">
+<!ENTITY windowMenu.accesskey "W">
+
+<!ENTITY tasksMenu.label "Tools">
+<!ENTITY tasksMenu.accesskey "T"> 
+
+<!ENTITY datamanCmd.label "Data Manager">
+<!ENTITY datamanCmd.accesskey "M">
+
+<!ENTITY passwordManagerCmd.label "Password Manager">
+<!ENTITY passwordManagerCmd.accesskey "P">
+
+<!ENTITY passwordDisplayCmd.label "Manage Stored Passwords">
+<!ENTITY passwordDisplayCmd.accesskey "M">
+
+<!ENTITY passwordExpireCmd.label "Log Out">
+<!ENTITY passwordExpireCmd.accesskey "l">
+
+<!ENTITY downloadManagerCmd.label "Download Manager">
+<!ENTITY downloadManagerCmd.accesskey "D">
+<!ENTITY downloadManagerCmd.commandkey "j">
+
+<!ENTITY addonsManagerCmd.label "Add-on Manager">
+<!ENTITY addonsManagerCmd.accesskey "A">
+<!ENTITY addonsManagerCmd.commandkey "a">
+
+<!ENTITY switchProfileCmd.label "Switch Profile…">
+<!ENTITY switchProfileCmd.accesskey "h">

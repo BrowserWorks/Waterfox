@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultClient.title  "Klien Piawai">
+<!ENTITY defaultClient.intro  "Guna &brandShortName; sebagai klien piawai untuk:">
+
+<!ENTITY browser.label "Pelayar">
+<!ENTITY email.label "E-mel">
+<!ENTITY newsgroups.label "Kumpulan berita">
+<!ENTITY feeds.label "Suapan">
+
+<!ENTITY checkOnStartup.label "Sentiasa semak apabila memulakan &brandShortName;">
+<!ENTITY checkOnStartup.accesskey "S">

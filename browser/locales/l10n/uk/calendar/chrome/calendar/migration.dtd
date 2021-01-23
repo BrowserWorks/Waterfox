@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migration.title "&brandFullName;: імпорт даних">
+<!ENTITY migration.welcome "Вітаємо">
+<!ENTITY migration.importing "Завантажується">
+<!ENTITY migration.list.description "&brandShortName; може імпортувати дані календаря з багатьох популярних програм. На вашому комп’ютері знайдено дані з таких програм. Будь ласка, оберіть ті, з яких потрібно завантажити дані.">
+<!ENTITY migration.progress.description "Завантажуються обрані дані">

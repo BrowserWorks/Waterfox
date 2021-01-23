@@ -7,17 +7,13 @@
 #include "ImageContainer.h"
 #include "ImageTypes.h"
 #include "Layers.h"
-#include "MediaStreamGraph.h"
-#include "MediaStreamListener.h"
+#include "MediaTrackGraph.h"
+#include "MediaTrackListener.h"
 #include "MediaTrackConstraints.h"
 #include "mozilla/dom/File.h"
 #include "mozilla/UniquePtr.h"
 #include "nsCOMPtr.h"
 #include "nsContentUtils.h"
-#include "nsIFile.h"
-#include "nsIFilePicker.h"
-#include "nsIPrefBranch.h"
-#include "nsIPrefService.h"
 #include "SineWaveGenerator.h"
 #include "Tracing.h"
 
@@ -29,10 +25,18 @@
 #  include "YuvStamper.h"
 #endif
 
+#define VIDEO_WIDTH_MIN 160
+#define VIDEO_WIDTH_MAX 4096
+#define VIDEO_HEIGHT_MIN 90
+#define VIDEO_HEIGHT_MAX 2160
 #define DEFAULT_AUDIO_TIMER_MS 10
 namespace mozilla {
 
 using namespace mozilla::gfx;
+using dom::MediaSourceEnum;
+using dom::MediaTrackConstraints;
+using dom::MediaTrackSettings;
+using dom::VideoFacingModeEnum;
 
 static nsString DefaultVideoName() {
   // For the purpose of testing we allow to change the name of the fake device
@@ -43,14 +47,12 @@ static nsString DefaultVideoName() {
   // InvokeAsync, instead of "soft" block, provided by sync dispatch which
   // allows the waiting thread to spin its event loop. The latter would allow
   // miltiple enumeration requests being processed out-of-order.
-  media::Await(
-      do_AddRef(SystemGroup::EventTargetFor(TaskCategory::Other)),
-      InvokeAsync(
-          SystemGroup::EventTargetFor(TaskCategory::Other), __func__, [&]() {
-            rv = Preferences::GetString("media.getusermedia.fake-camera-name",
-                                        cameraNameFromPref);
-            return GenericPromise::CreateAndResolve(true, __func__);
-          }));
+  media::Await(do_AddRef(GetMainThreadSerialEventTarget()),
+               InvokeAsync(GetMainThreadSerialEventTarget(), __func__, [&]() {
+                 rv = Preferences::GetString(
+                     "media.getusermedia.fake-camera-name", cameraNameFromPref);
+                 return GenericPromise::CreateAndResolve(true, __func__);
+               }));
 
   if (NS_SUCCEEDED(rv)) {
     return std::move(cameraNameFromPref);
@@ -63,7 +65,19 @@ static nsString DefaultVideoName() {
  */
 
 MediaEngineDefaultVideoSource::MediaEngineDefaultVideoSource()
-    : mTimer(nullptr), mName(DefaultVideoName()) {}
+    : mTimer(nullptr),
+      mSettings(MakeAndAddRef<media::Refcountable<MediaTrackSettings>>()),
+      mName(DefaultVideoName()) {
+  mSettings->mWidth.Construct(
+      int32_t(MediaEnginePrefs::DEFAULT_43_VIDEO_WIDTH));
+  mSettings->mHeight.Construct(
+      int32_t(MediaEnginePrefs::DEFAULT_43_VIDEO_HEIGHT));
+  mSettings->mFrameRate.Construct(double(MediaEnginePrefs::DEFAULT_VIDEO_FPS));
+  mSettings->mFacingMode.Construct(
+      NS_ConvertASCIItoUTF16(dom::VideoFacingModeEnumValues::strings
+                                 [uint8_t(VideoFacingModeEnum::Environment)]
+                                     .value));
+}
 
 MediaEngineDefaultVideoSource::~MediaEngineDefaultVideoSource() = default;
 
@@ -78,37 +92,46 @@ nsString MediaEngineDefaultVideoSource::GetGroupId() const {
 }
 
 uint32_t MediaEngineDefaultVideoSource::GetBestFitnessDistance(
-    const nsTArray<const NormalizedConstraintSet*>& aConstraintSets,
-    const nsString& aDeviceId) const {
+    const nsTArray<const NormalizedConstraintSet*>& aConstraintSets) const {
   AssertIsOnOwningThread();
 
-  uint32_t distance = 0;
+  uint64_t distance = 0;
 #ifdef MOZ_WEBRTC
   for (const auto* cs : aConstraintSets) {
-    distance =
-        MediaConstraintsHelper::GetMinimumFitnessDistance(*cs, aDeviceId);
+    Maybe<nsString> facingMode = Nothing();
+    distance +=
+        MediaConstraintsHelper::FitnessDistance(facingMode, cs->mFacingMode);
+
+    if (cs->mWidth.mMax < VIDEO_WIDTH_MIN ||
+        cs->mWidth.mMin > VIDEO_WIDTH_MAX) {
+      distance += UINT32_MAX;
+    }
+
+    if (cs->mHeight.mMax < VIDEO_HEIGHT_MIN ||
+        cs->mHeight.mMin > VIDEO_HEIGHT_MAX) {
+      distance += UINT32_MAX;
+    }
+
     break;  // distance is read from first entry only
   }
 #endif
-  return distance;
+  return uint32_t(std::min(distance, uint64_t(UINT32_MAX)));
+}
+
+void MediaEngineDefaultVideoSource::GetSettings(
+    MediaTrackSettings& aOutSettings) const {
+  MOZ_ASSERT(NS_IsMainThread());
+  aOutSettings = *mSettings;
 }
 
 nsresult MediaEngineDefaultVideoSource::Allocate(
-    const dom::MediaTrackConstraints& aConstraints,
-    const MediaEnginePrefs& aPrefs, const nsString& aDeviceId,
-    const mozilla::ipc::PrincipalInfo& aPrincipalInfo,
-    const char** aOutBadConstraint) {
+    const MediaTrackConstraints& aConstraints, const MediaEnginePrefs& aPrefs,
+    uint64_t aWindowID, const char** aOutBadConstraint) {
   AssertIsOnOwningThread();
 
   MOZ_ASSERT(mState == kReleased);
 
   FlattenedConstraints c(aConstraints);
-
-  // Mock failure for automated tests.
-  if (c.mDeviceId.mIdeal.find(NS_LITERAL_STRING("bad device")) !=
-      c.mDeviceId.mIdeal.end()) {
-    return NS_ERROR_FAILURE;
-  }
 
   // emulator debug is very, very slow; reduce load on it with smaller/slower
   // fake video
@@ -129,8 +152,19 @@ nsresult MediaEngineDefaultVideoSource::Allocate(
                                    MediaEnginePrefs::DEFAULT_43_VIDEO_HEIGHT
 #endif
       );
-  mOpts.mWidth = std::max(160, std::min(mOpts.mWidth, 4096)) & ~1;
-  mOpts.mHeight = std::max(90, std::min(mOpts.mHeight, 2160)) & ~1;
+  mOpts.mWidth =
+      std::max(VIDEO_WIDTH_MIN, std::min(mOpts.mWidth, VIDEO_WIDTH_MAX)) & ~1;
+  mOpts.mHeight =
+      std::max(VIDEO_HEIGHT_MIN, std::min(mOpts.mHeight, VIDEO_HEIGHT_MAX)) &
+      ~1;
+
+  NS_DispatchToMainThread(NS_NewRunnableFunction(
+      __func__, [settings = mSettings, frameRate = mOpts.mFPS,
+                 width = mOpts.mWidth, height = mOpts.mHeight]() {
+        settings->mFrameRate.Value() = frameRate;
+        settings->mWidth.Value() = width;
+        settings->mHeight.Value() = height;
+      }));
 
   mState = kAllocated;
   return NS_OK;
@@ -142,10 +176,9 @@ nsresult MediaEngineDefaultVideoSource::Deallocate() {
   MOZ_ASSERT(!mImage);
   MOZ_ASSERT(mState == kStopped || mState == kAllocated);
 
-  if (mStream && IsTrackIDExplicit(mTrackID)) {
-    mStream->EndTrack(mTrackID);
-    mStream = nullptr;
-    mTrackID = TRACK_NONE;
+  if (mTrack) {
+    mTrack->End();
+    mTrack = nullptr;
     mPrincipalHandle = PRINCIPAL_HANDLE_NONE;
   }
   mState = kReleased;
@@ -178,6 +211,7 @@ static void AllocateSolidColorFrame(layers::PlanarYCbCrData& aData, int aWidth,
   aData.mPicY = 0;
   aData.mPicSize = IntSize(aWidth, aHeight);
   aData.mStereoMode = StereoMode::MONO;
+  aData.mYUVColorSpace = gfx::YUVColorSpace::BT601;
 }
 
 static void ReleaseFrame(layers::PlanarYCbCrData& aData) {
@@ -185,28 +219,21 @@ static void ReleaseFrame(layers::PlanarYCbCrData& aData) {
 }
 
 void MediaEngineDefaultVideoSource::SetTrack(
-    const RefPtr<SourceMediaStream>& aStream, TrackID aTrackID,
-    const PrincipalHandle& aPrincipal) {
+    const RefPtr<SourceMediaTrack>& aTrack, const PrincipalHandle& aPrincipal) {
   AssertIsOnOwningThread();
 
   MOZ_ASSERT(mState == kAllocated);
-  MOZ_ASSERT(!mStream);
-  MOZ_ASSERT(mTrackID == TRACK_NONE);
+  MOZ_ASSERT(!mTrack);
 
-  mStream = aStream;
-  mTrackID = aTrackID;
+  mTrack = aTrack;
   mPrincipalHandle = aPrincipal;
-  aStream->AddTrack(aTrackID, new VideoSegment(),
-                    SourceMediaStream::ADDTRACK_QUEUED);
 }
 
 nsresult MediaEngineDefaultVideoSource::Start() {
   AssertIsOnOwningThread();
 
   MOZ_ASSERT(mState == kAllocated || mState == kStopped);
-  MOZ_ASSERT(mStream, "SetTrack() must happen before Start()");
-  MOZ_ASSERT(IsTrackIDExplicit(mTrackID),
-             "SetTrack() must happen before Start()");
+  MOZ_ASSERT(mTrack, "SetTrack() must happen before Start()");
 
   mTimer = NS_NewTimer();
   if (!mTimer) {
@@ -249,8 +276,7 @@ nsresult MediaEngineDefaultVideoSource::Stop() {
 
   MOZ_ASSERT(mState == kStarted);
   MOZ_ASSERT(mTimer);
-  MOZ_ASSERT(mStream);
-  MOZ_ASSERT(IsTrackIDExplicit(mTrackID));
+  MOZ_ASSERT(mTrack);
 
   mTimer->Cancel();
   mTimer = nullptr;
@@ -261,8 +287,7 @@ nsresult MediaEngineDefaultVideoSource::Stop() {
 }
 
 nsresult MediaEngineDefaultVideoSource::Reconfigure(
-    const dom::MediaTrackConstraints& aConstraints,
-    const MediaEnginePrefs& aPrefs, const nsString& aDeviceId,
+    const MediaTrackConstraints& aConstraints, const MediaEnginePrefs& aPrefs,
     const char** aOutBadConstraint) {
   return NS_OK;
 }
@@ -320,31 +345,29 @@ void MediaEngineDefaultVideoSource::GenerateFrame() {
   segment.AppendFrame(ycbcr_image.forget(),
                       gfx::IntSize(mOpts.mWidth, mOpts.mHeight),
                       mPrincipalHandle);
-  mStream->AppendToTrack(mTrackID, &segment);
+  mTrack->AppendData(&segment);
 }
 
 // This class is created on the media thread, as part of Start(), then entirely
 // self-sustained until destruction, just forwarding calls to Pull().
-class AudioSourcePullListener : public MediaStreamTrackListener {
+class AudioSourcePullListener : public MediaTrackListener {
  public:
-  AudioSourcePullListener(RefPtr<SourceMediaStream> aStream, TrackID aTrackID,
+  AudioSourcePullListener(RefPtr<SourceMediaTrack> aTrack,
                           const PrincipalHandle& aPrincipalHandle,
                           uint32_t aFrequency)
-      : mStream(std::move(aStream)),
-        mTrackID(aTrackID),
+      : mTrack(std::move(aTrack)),
         mPrincipalHandle(aPrincipalHandle),
         mSineGenerator(
-            MakeUnique<SineWaveGenerator>(mStream->GraphRate(), aFrequency)) {
+            MakeUnique<SineWaveGenerator>(mTrack->mSampleRate, aFrequency)) {
     MOZ_COUNT_CTOR(AudioSourcePullListener);
   }
 
-  ~AudioSourcePullListener() { MOZ_COUNT_DTOR(AudioSourcePullListener); }
+  MOZ_COUNTED_DTOR(AudioSourcePullListener)
 
-  void NotifyPull(MediaStreamGraph* aGraph, StreamTime aEndOfAppendedData,
-                  StreamTime aDesiredTime) override;
+  void NotifyPull(MediaTrackGraph* aGraph, TrackTime aEndOfAppendedData,
+                  TrackTime aDesiredTime) override;
 
-  const RefPtr<SourceMediaStream> mStream;
-  const TrackID mTrackID;
+  const RefPtr<SourceMediaTrack> mTrack;
   const PrincipalHandle mPrincipalHandle;
   const UniquePtr<SineWaveGenerator> mSineGenerator;
 };
@@ -369,35 +392,21 @@ nsString MediaEngineDefaultAudioSource::GetGroupId() const {
   return NS_LITERAL_STRING(u"Default Audio Group");
 }
 
-uint32_t MediaEngineDefaultAudioSource::GetBestFitnessDistance(
-    const nsTArray<const NormalizedConstraintSet*>& aConstraintSets,
-    const nsString& aDeviceId) const {
-  uint32_t distance = 0;
-#ifdef MOZ_WEBRTC
-  for (const auto* cs : aConstraintSets) {
-    distance =
-        MediaConstraintsHelper::GetMinimumFitnessDistance(*cs, aDeviceId);
-    break;  // distance is read from first entry only
-  }
-#endif
-  return distance;
+void MediaEngineDefaultAudioSource::GetSettings(
+    MediaTrackSettings& aOutSettings) const {
+  MOZ_ASSERT(NS_IsMainThread());
+  aOutSettings.mAutoGainControl.Construct(false);
+  aOutSettings.mEchoCancellation.Construct(false);
+  aOutSettings.mNoiseSuppression.Construct(false);
+  aOutSettings.mChannelCount.Construct(1);
 }
 
 nsresult MediaEngineDefaultAudioSource::Allocate(
-    const dom::MediaTrackConstraints& aConstraints,
-    const MediaEnginePrefs& aPrefs, const nsString& aDeviceId,
-    const mozilla::ipc::PrincipalInfo& aPrincipalInfo,
-    const char** aOutBadConstraint) {
+    const MediaTrackConstraints& aConstraints, const MediaEnginePrefs& aPrefs,
+    uint64_t aWindowID, const char** aOutBadConstraint) {
   AssertIsOnOwningThread();
 
   MOZ_ASSERT(mState == kReleased);
-
-  // Mock failure for automated tests.
-  if (aConstraints.mDeviceId.WasPassed() &&
-      aConstraints.mDeviceId.Value().IsString() &&
-      aConstraints.mDeviceId.Value().GetAsString().EqualsASCII("bad device")) {
-    return NS_ERROR_FAILURE;
-  }
 
   mFrequency = aPrefs.mFreq ? aPrefs.mFreq : 1000;
 
@@ -410,10 +419,9 @@ nsresult MediaEngineDefaultAudioSource::Deallocate() {
 
   MOZ_ASSERT(mState == kStopped || mState == kAllocated);
 
-  if (mStream && IsTrackIDExplicit(mTrackID)) {
-    mStream->EndTrack(mTrackID);
-    mStream = nullptr;
-    mTrackID = TRACK_NONE;
+  if (mTrack) {
+    mTrack->End();
+    mTrack = nullptr;
     mPrincipalHandle = PRINCIPAL_HANDLE_NONE;
   }
   mState = kReleased;
@@ -421,45 +429,36 @@ nsresult MediaEngineDefaultAudioSource::Deallocate() {
 }
 
 void MediaEngineDefaultAudioSource::SetTrack(
-    const RefPtr<SourceMediaStream>& aStream, TrackID aTrackID,
-    const PrincipalHandle& aPrincipal) {
+    const RefPtr<SourceMediaTrack>& aTrack, const PrincipalHandle& aPrincipal) {
   AssertIsOnOwningThread();
 
   MOZ_ASSERT(mState == kAllocated);
-  MOZ_ASSERT(!mStream);
-  MOZ_ASSERT(mTrackID == TRACK_NONE);
+  MOZ_ASSERT(!mTrack);
 
-  // AddAudioTrack will take ownership of segment
-  mStream = aStream;
-  mTrackID = aTrackID;
+  mTrack = aTrack;
   mPrincipalHandle = aPrincipal;
-  aStream->AddAudioTrack(aTrackID, aStream->GraphRate(), new AudioSegment(),
-                         SourceMediaStream::ADDTRACK_QUEUED);
 }
 
 nsresult MediaEngineDefaultAudioSource::Start() {
   AssertIsOnOwningThread();
 
   MOZ_ASSERT(mState == kAllocated || mState == kStopped);
-  MOZ_ASSERT(mStream, "SetTrack() must happen before Start()");
-  MOZ_ASSERT(IsTrackIDExplicit(mTrackID),
-             "SetTrack() must happen before Start()");
+  MOZ_ASSERT(mTrack, "SetTrack() must happen before Start()");
 
   if (!mPullListener) {
     mPullListener = MakeAndAddRef<AudioSourcePullListener>(
-        mStream, mTrackID, mPrincipalHandle, mFrequency);
+        mTrack, mPrincipalHandle, mFrequency);
   }
 
   mState = kStarted;
 
   NS_DispatchToMainThread(NS_NewRunnableFunction(
-      __func__,
-      [stream = mStream, track = mTrackID, listener = mPullListener]() {
-        if (stream->IsDestroyed()) {
+      __func__, [track = mTrack, listener = mPullListener]() {
+        if (track->IsDestroyed()) {
           return;
         }
-        stream->AddTrackListener(listener, track);
-        stream->SetPullingEnabled(track, true);
+        track->AddListener(listener);
+        track->SetPullingEnabled(true);
       }));
 
   return NS_OK;
@@ -474,48 +473,47 @@ nsresult MediaEngineDefaultAudioSource::Stop() {
   MOZ_ASSERT(mState == kStarted);
   mState = kStopped;
 
-  NS_DispatchToMainThread(
-      NS_NewRunnableFunction(__func__, [stream = mStream, track = mTrackID,
-                                        listener = std::move(mPullListener)]() {
-        if (stream->IsDestroyed()) {
+  NS_DispatchToMainThread(NS_NewRunnableFunction(
+      __func__, [track = mTrack, listener = std::move(mPullListener)]() {
+        if (track->IsDestroyed()) {
           return;
         }
-        stream->RemoveTrackListener(listener, track);
-        stream->SetPullingEnabled(track, false);
+        track->RemoveListener(listener);
+        track->SetPullingEnabled(false);
       }));
   return NS_OK;
 }
 
 nsresult MediaEngineDefaultAudioSource::Reconfigure(
-    const dom::MediaTrackConstraints& aConstraints,
-    const MediaEnginePrefs& aPrefs, const nsString& aDeviceId,
+    const MediaTrackConstraints& aConstraints, const MediaEnginePrefs& aPrefs,
     const char** aOutBadConstraint) {
   return NS_OK;
 }
 
-void AudioSourcePullListener::NotifyPull(MediaStreamGraph* aGraph,
-                                         StreamTime aEndOfAppendedData,
-                                         StreamTime aDesiredTime) {
-  TRACE_AUDIO_CALLBACK_COMMENT("SourceMediaStream %p track %i", mStream.get(),
-                               mTrackID);
+void AudioSourcePullListener::NotifyPull(MediaTrackGraph* aGraph,
+                                         TrackTime aEndOfAppendedData,
+                                         TrackTime aDesiredTime) {
+  TRACE_COMMENT("SourceMediaTrack %p", mTrack.get());
   AudioSegment segment;
   TrackTicks delta = aDesiredTime - aEndOfAppendedData;
-  RefPtr<SharedBuffer> buffer = SharedBuffer::Create(delta * sizeof(int16_t));
+  CheckedInt<size_t> bufferSize(sizeof(int16_t));
+  bufferSize *= delta;
+  RefPtr<SharedBuffer> buffer = SharedBuffer::Create(bufferSize);
   int16_t* dest = static_cast<int16_t*>(buffer->Data());
   mSineGenerator->generate(dest, delta);
   AutoTArray<const int16_t*, 1> channels;
   channels.AppendElement(dest);
   segment.AppendFrames(buffer.forget(), channels, delta, mPrincipalHandle);
-  mStream->AppendToTrack(mTrackID, &segment);
+  mTrack->AppendData(&segment);
 }
 
 void MediaEngineDefault::EnumerateDevices(
-    uint64_t aWindowId, dom::MediaSourceEnum aMediaSource,
-    MediaSinkEnum aMediaSink, nsTArray<RefPtr<MediaDevice>>* aDevices) {
+    uint64_t aWindowId, MediaSourceEnum aMediaSource, MediaSinkEnum aMediaSink,
+    nsTArray<RefPtr<MediaDevice>>* aDevices) {
   AssertIsOnOwningThread();
 
   switch (aMediaSource) {
-    case dom::MediaSourceEnum::Camera: {
+    case MediaSourceEnum::Camera: {
       // Only supports camera video sources. See Bug 1038241.
       auto newSource = MakeRefPtr<MediaEngineDefaultVideoSource>();
       aDevices->AppendElement(MakeRefPtr<MediaDevice>(
@@ -524,7 +522,7 @@ void MediaEngineDefault::EnumerateDevices(
           NS_LITERAL_STRING("")));
       return;
     }
-    case dom::MediaSourceEnum::Microphone: {
+    case MediaSourceEnum::Microphone: {
       auto newSource = MakeRefPtr<MediaEngineDefaultAudioSource>();
       aDevices->AppendElement(MakeRefPtr<MediaDevice>(
           newSource, newSource->GetName(),

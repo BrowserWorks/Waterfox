@@ -177,6 +177,7 @@ RegexMatcher::~RegexMatcher() {
 
     #if UCONFIG_NO_BREAK_ITERATION==0
     delete fWordBreakItr;
+    delete fGCBreakItr;
     #endif
 }
 
@@ -222,6 +223,7 @@ void RegexMatcher::init(UErrorCode &status) {
     fDeferredStatus    = status;
     fData              = fSmallData;
     fWordBreakItr      = NULL;
+    fGCBreakItr        = NULL;
 
     fStack             = NULL;
     fInputText         = NULL;
@@ -429,7 +431,7 @@ RegexMatcher &RegexMatcher::appendReplacement(UText *dest,
                                (nextChar >= 0x31 && nextChar <= 0x39)) {       // 0..9
                         groupName.append(nextChar);
                     } else if (nextChar == RIGHTBRACKET) {
-                        groupNum = uhash_geti(fPattern->fNamedCaptureMap, &groupName);
+                        groupNum = fPattern->fNamedCaptureMap ? uhash_geti(fPattern->fNamedCaptureMap, &groupName) : 0;
                         if (groupNum == 0) {
                             status = U_REGEX_INVALID_CAPTURE_GROUP_NAME;
                         }
@@ -1854,12 +1856,15 @@ RegexMatcher &RegexMatcher::reset(const UnicodeString &input) {
     //  This is for compatibility for those clients who modify the input string "live" during regex operations.
     fInputUniStrMaybeMutable = TRUE;
 
-    if (fWordBreakItr != NULL) {
 #if UCONFIG_NO_BREAK_ITERATION==0
-        UErrorCode status = U_ZERO_ERROR;
-        fWordBreakItr->setText(fInputText, status);
-#endif
+    if (fWordBreakItr) {
+        fWordBreakItr->setText(fInputText, fDeferredStatus);
     }
+    if (fGCBreakItr) {
+        fGCBreakItr->setText(fInputText, fDeferredStatus);
+    }
+#endif
+
     return *this;
 }
 
@@ -1876,12 +1881,14 @@ RegexMatcher &RegexMatcher::reset(UText *input) {
         delete fInput;
         fInput = NULL;
 
-        if (fWordBreakItr != NULL) {
 #if UCONFIG_NO_BREAK_ITERATION==0
-            UErrorCode status = U_ZERO_ERROR;
-            fWordBreakItr->setText(input, status);
-#endif
+        if (fWordBreakItr) {
+            fWordBreakItr->setText(input, fDeferredStatus);
         }
+        if (fGCBreakItr) {
+            fGCBreakItr->setText(fInputText, fDeferredStatus);
+        }
+#endif
     }
     reset();
     fInputUniStrMaybeMutable = FALSE;
@@ -2069,7 +2076,7 @@ int32_t  RegexMatcher::split(UText *input,
     //
     if (U_FAILURE(status)) {
         return 0;
-    };
+    }
 
     if (destCapacity < 1) {
         status = U_ILLEGAL_ARGUMENT_ERROR;
@@ -2542,7 +2549,7 @@ UBool RegexMatcher::isWordBoundary(int64_t pos) {
             // Current char is a combining one.  Not a boundary.
             return FALSE;
         }
-        cIsWord = fPattern->fStaticSets[URX_ISWORD_SET]->contains(c);
+        cIsWord = RegexStaticSets::gStaticSets->fPropSets[URX_ISWORD_SET].contains(c);
     }
 
     // Back up until we come to a non-combining char, determine whether
@@ -2555,7 +2562,7 @@ UBool RegexMatcher::isWordBoundary(int64_t pos) {
         UChar32 prevChar = UTEXT_PREVIOUS32(fInputText);
         if (!(u_hasBinaryProperty(prevChar, UCHAR_GRAPHEME_EXTEND)
               || u_charType(prevChar) == U_FORMAT_CHAR)) {
-            prevCIsWord = fPattern->fStaticSets[URX_ISWORD_SET]->contains(prevChar);
+            prevCIsWord = RegexStaticSets::gStaticSets->fPropSets[URX_ISWORD_SET].contains(prevChar);
             break;
         }
     }
@@ -2580,7 +2587,7 @@ UBool RegexMatcher::isChunkWordBoundary(int32_t pos) {
             // Current char is a combining one.  Not a boundary.
             return FALSE;
         }
-        cIsWord = fPattern->fStaticSets[URX_ISWORD_SET]->contains(c);
+        cIsWord = RegexStaticSets::gStaticSets->fPropSets[URX_ISWORD_SET].contains(c);
     }
 
     // Back up until we come to a non-combining char, determine whether
@@ -2594,7 +2601,7 @@ UBool RegexMatcher::isChunkWordBoundary(int32_t pos) {
         U16_PREV(inputBuf, fLookStart, pos, prevChar);
         if (!(u_hasBinaryProperty(prevChar, UCHAR_GRAPHEME_EXTEND)
               || u_charType(prevChar) == U_FORMAT_CHAR)) {
-            prevCIsWord = fPattern->fStaticSets[URX_ISWORD_SET]->contains(prevChar);
+            prevCIsWord = RegexStaticSets::gStaticSets->fPropSets[URX_ISWORD_SET].contains(prevChar);
             break;
         }
     }
@@ -2611,35 +2618,58 @@ UBool RegexMatcher::isChunkWordBoundary(int32_t pos) {
 //          parameters:   pos   - the current position in the input buffer
 //
 //--------------------------------------------------------------------------------
-UBool RegexMatcher::isUWordBoundary(int64_t pos) {
+UBool RegexMatcher::isUWordBoundary(int64_t pos, UErrorCode &status) {
     UBool       returnVal = FALSE;
+
 #if UCONFIG_NO_BREAK_ITERATION==0
+    // Note: this point will never be reached if break iteration is configured out.
+    //       Regex patterns that would require this function will fail to compile.
 
     // If we haven't yet created a break iterator for this matcher, do it now.
-    if (fWordBreakItr == NULL) {
-        fWordBreakItr =
-            (RuleBasedBreakIterator *)BreakIterator::createWordInstance(Locale::getEnglish(), fDeferredStatus);
-        if (U_FAILURE(fDeferredStatus)) {
+    if (fWordBreakItr == nullptr) {
+        fWordBreakItr = BreakIterator::createWordInstance(Locale::getEnglish(), status);
+        if (U_FAILURE(status)) {
             return FALSE;
         }
-        fWordBreakItr->setText(fInputText, fDeferredStatus);
+        fWordBreakItr->setText(fInputText, status);
     }
 
+    // Note: zero width boundary tests like \b see through transparent region bounds,
+    //       which is why fLookLimit is used here, rather than fActiveLimit.
     if (pos >= fLookLimit) {
         fHitEnd = TRUE;
         returnVal = TRUE;   // With Unicode word rules, only positions within the interior of "real"
                             //    words are not boundaries.  All non-word chars stand by themselves,
                             //    with word boundaries on both sides.
     } else {
-        if (!UTEXT_USES_U16(fInputText)) {
-            // !!!: Would like a better way to do this!
-            UErrorCode status = U_ZERO_ERROR;
-            pos = utext_extract(fInputText, 0, pos, NULL, 0, &status);
-        }
         returnVal = fWordBreakItr->isBoundary((int32_t)pos);
     }
 #endif
     return   returnVal;
+}
+
+
+int64_t RegexMatcher::followingGCBoundary(int64_t pos, UErrorCode &status) {
+    int64_t result = pos;
+
+#if UCONFIG_NO_BREAK_ITERATION==0
+    // Note: this point will never be reached if break iteration is configured out.
+    //       Regex patterns that would require this function will fail to compile.
+
+    // If we haven't yet created a break iterator for this matcher, do it now.
+    if (fGCBreakItr == nullptr) {
+        fGCBreakItr = BreakIterator::createCharacterInstance(Locale::getEnglish(), status);
+        if (U_FAILURE(status)) {
+            return pos;
+        }
+        fGCBreakItr->setText(fInputText, status);
+    }
+    result = fGCBreakItr->following(pos);
+    if (result == BreakIterator::DONE) {
+        result = pos;
+    }
+#endif
+    return result;
 }
 
 //--------------------------------------------------------------------------------
@@ -3082,7 +3112,7 @@ void RegexMatcher::MatchAt(int64_t startIdx, UBool toEnd, UErrorCode &status) {
 
         case URX_BACKSLASH_BU:          // Test for word boundaries, Unicode-style
             {
-                UBool success = isUWordBoundary(fp->fInputIdx);
+                UBool success = isUWordBoundary(fp->fInputIdx, status);
                 success ^= (UBool)(opValue != 0);     // flip sense for \B
                 if (!success) {
                     fp = (REStackFrame *)fStack->popFrame(fFrameSize);
@@ -3184,99 +3214,21 @@ void RegexMatcher::MatchAt(int64_t startIdx, UBool toEnd, UErrorCode &status) {
 
 
         case URX_BACKSLASH_X:
-            //  Match a Grapheme, as defined by Unicode TR 29.
-            //  Differs slightly from Perl, which consumes combining marks independently
-            //    of context.
-            {
+            //  Match a Grapheme, as defined by Unicode UAX 29.
 
-                // Fail if at end of input
-                if (fp->fInputIdx >= fActiveLimit) {
-                    fHitEnd = TRUE;
-                    fp = (REStackFrame *)fStack->popFrame(fFrameSize);
-                    break;
-                }
-
-                UTEXT_SETNATIVEINDEX(fInputText, fp->fInputIdx);
-
-                // Examine (and consume) the current char.
-                //   Dispatch into a little state machine, based on the char.
-                UChar32  c;
-                c = UTEXT_NEXT32(fInputText);
-                fp->fInputIdx = UTEXT_GETNATIVEINDEX(fInputText);
-                UnicodeSet **sets = fPattern->fStaticSets;
-                if (sets[URX_GC_NORMAL]->contains(c))  goto GC_Extend;
-                if (sets[URX_GC_CONTROL]->contains(c)) goto GC_Control;
-                if (sets[URX_GC_L]->contains(c))       goto GC_L;
-                if (sets[URX_GC_LV]->contains(c))      goto GC_V;
-                if (sets[URX_GC_LVT]->contains(c))     goto GC_T;
-                if (sets[URX_GC_V]->contains(c))       goto GC_V;
-                if (sets[URX_GC_T]->contains(c))       goto GC_T;
-                goto GC_Extend;
-
-
-
-GC_L:
-                if (fp->fInputIdx >= fActiveLimit)         goto GC_Done;
-                c = UTEXT_NEXT32(fInputText);
-                fp->fInputIdx = UTEXT_GETNATIVEINDEX(fInputText);
-                if (sets[URX_GC_L]->contains(c))       goto GC_L;
-                if (sets[URX_GC_LV]->contains(c))      goto GC_V;
-                if (sets[URX_GC_LVT]->contains(c))     goto GC_T;
-                if (sets[URX_GC_V]->contains(c))       goto GC_V;
-                (void)UTEXT_PREVIOUS32(fInputText);
-                fp->fInputIdx = UTEXT_GETNATIVEINDEX(fInputText);
-                goto GC_Extend;
-
-GC_V:
-                if (fp->fInputIdx >= fActiveLimit)         goto GC_Done;
-                c = UTEXT_NEXT32(fInputText);
-                fp->fInputIdx = UTEXT_GETNATIVEINDEX(fInputText);
-                if (sets[URX_GC_V]->contains(c))       goto GC_V;
-                if (sets[URX_GC_T]->contains(c))       goto GC_T;
-                (void)UTEXT_PREVIOUS32(fInputText);
-                fp->fInputIdx = UTEXT_GETNATIVEINDEX(fInputText);
-                goto GC_Extend;
-
-GC_T:
-                if (fp->fInputIdx >= fActiveLimit)         goto GC_Done;
-                c = UTEXT_NEXT32(fInputText);
-                fp->fInputIdx = UTEXT_GETNATIVEINDEX(fInputText);
-                if (sets[URX_GC_T]->contains(c))       goto GC_T;
-                (void)UTEXT_PREVIOUS32(fInputText);
-                fp->fInputIdx = UTEXT_GETNATIVEINDEX(fInputText);
-                goto GC_Extend;
-
-GC_Extend:
-                // Combining characters are consumed here
-                for (;;) {
-                    if (fp->fInputIdx >= fActiveLimit) {
-                        break;
-                    }
-                    c = UTEXT_CURRENT32(fInputText);
-                    if (sets[URX_GC_EXTEND]->contains(c) == FALSE) {
-                        break;
-                    }
-                    (void)UTEXT_NEXT32(fInputText);
-                    fp->fInputIdx = UTEXT_GETNATIVEINDEX(fInputText);
-                }
-                goto GC_Done;
-
-GC_Control:
-                // Most control chars stand alone (don't combine with combining chars),
-                //   except for that CR/LF sequence is a single grapheme cluster.
-                if (c == 0x0d && fp->fInputIdx < fActiveLimit && UTEXT_CURRENT32(fInputText) == 0x0a) {
-                    c = UTEXT_NEXT32(fInputText);
-                    fp->fInputIdx = UTEXT_GETNATIVEINDEX(fInputText);
-                }
-
-GC_Done:
-                if (fp->fInputIdx >= fActiveLimit) {
-                    fHitEnd = TRUE;
-                }
+            // Fail if at end of input
+            if (fp->fInputIdx >= fActiveLimit) {
+                fHitEnd = TRUE;
+                fp = (REStackFrame *)fStack->popFrame(fFrameSize);
                 break;
             }
 
-
+            fp->fInputIdx = followingGCBoundary(fp->fInputIdx, status);
+            if (fp->fInputIdx >= fActiveLimit) {
+                fHitEnd = TRUE;
+                fp->fInputIdx = fActiveLimit;
+            }
+            break;
 
 
         case URX_BACKSLASH_Z:          // Test for end of Input
@@ -3310,13 +3262,13 @@ GC_Done:
                 UTEXT_SETNATIVEINDEX(fInputText, fp->fInputIdx);
                 UChar32 c = UTEXT_NEXT32(fInputText);
                 if (c < 256) {
-                    Regex8BitSet *s8 = &fPattern->fStaticSets8[opValue];
-                    if (s8->contains(c)) {
+                    Regex8BitSet &s8 = RegexStaticSets::gStaticSets->fPropSets8[opValue];
+                    if (s8.contains(c)) {
                         success = !success;
                     }
                 } else {
-                    const UnicodeSet *s = fPattern->fStaticSets[opValue];
-                    if (s->contains(c)) {
+                    const UnicodeSet &s = RegexStaticSets::gStaticSets->fPropSets[opValue];
+                    if (s.contains(c)) {
                         success = !success;
                     }
                 }
@@ -3346,14 +3298,14 @@ GC_Done:
 
                 UChar32 c = UTEXT_NEXT32(fInputText);
                 if (c < 256) {
-                    Regex8BitSet *s8 = &fPattern->fStaticSets8[opValue];
-                    if (s8->contains(c) == FALSE) {
+                    Regex8BitSet &s8 = RegexStaticSets::gStaticSets->fPropSets8[opValue];
+                    if (s8.contains(c) == FALSE) {
                         fp->fInputIdx = UTEXT_GETNATIVEINDEX(fInputText);
                         break;
                     }
                 } else {
-                    const UnicodeSet *s = fPattern->fStaticSets[opValue];
-                    if (s->contains(c) == FALSE) {
+                    const UnicodeSet &s = RegexStaticSets::gStaticSets->fPropSets[opValue];
+                    if (s.contains(c) == FALSE) {
                         fp->fInputIdx = UTEXT_GETNATIVEINDEX(fInputText);
                         break;
                     }
@@ -3805,11 +3757,13 @@ GC_Done:
 
         case URX_LA_START:
             {
-                // Entering a lookahead block.
+                // Entering a look around block.
                 // Save Stack Ptr, Input Pos.
-                U_ASSERT(opValue>=0 && opValue+1<fPattern->fDataSize);
+                U_ASSERT(opValue>=0 && opValue+3<fPattern->fDataSize);
                 fData[opValue]   = fStack->size();
                 fData[opValue+1] = fp->fInputIdx;
+                fData[opValue+2] = fActiveStart;
+                fData[opValue+3] = fActiveLimit;
                 fActiveStart     = fLookStart;          // Set the match region change for
                 fActiveLimit     = fLookLimit;          //   transparent bounds.
             }
@@ -3819,7 +3773,7 @@ GC_Done:
             {
                 // Leaving a look-ahead block.
                 //  restore Stack Ptr, Input Pos to positions they had on entry to block.
-                U_ASSERT(opValue>=0 && opValue+1<fPattern->fDataSize);
+                U_ASSERT(opValue>=0 && opValue+3<fPattern->fDataSize);
                 int32_t stackSize = fStack->size();
                 int32_t newStackSize =(int32_t)fData[opValue];
                 U_ASSERT(stackSize >= newStackSize);
@@ -3839,8 +3793,10 @@ GC_Done:
 
                 // Restore the active region bounds in the input string; they may have
                 //    been changed because of transparent bounds on a Region.
-                fActiveStart = fRegionStart;
-                fActiveLimit = fRegionLimit;
+                fActiveStart = fData[opValue+2];
+                fActiveLimit = fData[opValue+3];
+                U_ASSERT(fActiveStart >= 0);
+                U_ASSERT(fActiveLimit <= fInputLength);
             }
             break;
 
@@ -3916,17 +3872,19 @@ GC_Done:
         case URX_LB_START:
             {
                 // Entering a look-behind block.
-                // Save Stack Ptr, Input Pos.
+                // Save Stack Ptr, Input Pos and active input region.
                 //   TODO:  implement transparent bounds.  Ticket #6067
-                U_ASSERT(opValue>=0 && opValue+1<fPattern->fDataSize);
+                U_ASSERT(opValue>=0 && opValue+4<fPattern->fDataSize);
                 fData[opValue]   = fStack->size();
                 fData[opValue+1] = fp->fInputIdx;
-                // Init the variable containing the start index for attempted matches.
-                fData[opValue+2] = -1;
                 // Save input string length, then reset to pin any matches to end at
                 //   the current position.
+                fData[opValue+2] = fActiveStart;
                 fData[opValue+3] = fActiveLimit;
+                fActiveStart     = fRegionStart;
                 fActiveLimit     = fp->fInputIdx;
+                // Init the variable containing the start index for attempted matches.
+                fData[opValue+4] = -1;
             }
             break;
 
@@ -3949,8 +3907,8 @@ GC_Done:
                 U_ASSERT(minML >= 0);
 
                 // Fetch (from data) the last input index where a match was attempted.
-                U_ASSERT(opValue>=0 && opValue+1<fPattern->fDataSize);
-                int64_t  &lbStartIdx = fData[opValue+2];
+                U_ASSERT(opValue>=0 && opValue+4<fPattern->fDataSize);
+                int64_t  &lbStartIdx = fData[opValue+4];
                 if (lbStartIdx < 0) {
                     // First time through loop.
                     lbStartIdx = fp->fInputIdx - minML;
@@ -3976,10 +3934,10 @@ GC_Done:
                     //  getting a match.  Backtrack out, and out of the
                     //   Look Behind altogether.
                     fp = (REStackFrame *)fStack->popFrame(fFrameSize);
-                    int64_t restoreInputLen = fData[opValue+3];
-                    U_ASSERT(restoreInputLen >= fActiveLimit);
-                    U_ASSERT(restoreInputLen <= fInputLength);
-                    fActiveLimit = restoreInputLen;
+                    fActiveStart = fData[opValue+2];
+                    fActiveLimit = fData[opValue+3];
+                    U_ASSERT(fActiveStart >= 0);
+                    U_ASSERT(fActiveLimit <= fInputLength);
                     break;
                 }
 
@@ -3993,7 +3951,7 @@ GC_Done:
         case URX_LB_END:
             // End of a look-behind block, after a successful match.
             {
-                U_ASSERT(opValue>=0 && opValue+1<fPattern->fDataSize);
+                U_ASSERT(opValue>=0 && opValue+4<fPattern->fDataSize);
                 if (fp->fInputIdx != fActiveLimit) {
                     //  The look-behind expression matched, but the match did not
                     //    extend all the way to the point that we are looking behind from.
@@ -4004,13 +3962,13 @@ GC_Done:
                     break;
                 }
 
-                // Look-behind match is good.  Restore the orignal input string length,
+                // Look-behind match is good.  Restore the orignal input string region,
                 //   which had been truncated to pin the end of the lookbehind match to the
                 //   position being looked-behind.
-                int64_t originalInputLen = fData[opValue+3];
-                U_ASSERT(originalInputLen >= fActiveLimit);
-                U_ASSERT(originalInputLen <= fInputLength);
-                fActiveLimit = originalInputLen;
+                fActiveStart = fData[opValue+2];
+                fActiveLimit = fData[opValue+3];
+                U_ASSERT(fActiveStart >= 0);
+                U_ASSERT(fActiveLimit <= fInputLength);
             }
             break;
 
@@ -4035,8 +3993,8 @@ GC_Done:
                 U_ASSERT(continueLoc > fp->fPatIdx);
 
                 // Fetch (from data) the last input index where a match was attempted.
-                U_ASSERT(opValue>=0 && opValue+1<fPattern->fDataSize);
-                int64_t  &lbStartIdx = fData[opValue+2];
+                U_ASSERT(opValue>=0 && opValue+4<fPattern->fDataSize);
+                int64_t  &lbStartIdx = fData[opValue+4];
                 if (lbStartIdx < 0) {
                     // First time through loop.
                     lbStartIdx = fp->fInputIdx - minML;
@@ -4061,10 +4019,10 @@ GC_Done:
                     // We have tried all potential match starting points without
                     //  getting a match, which means that the negative lookbehind as
                     //  a whole has succeeded.  Jump forward to the continue location
-                    int64_t restoreInputLen = fData[opValue+3];
-                    U_ASSERT(restoreInputLen >= fActiveLimit);
-                    U_ASSERT(restoreInputLen <= fInputLength);
-                    fActiveLimit = restoreInputLen;
+                    fActiveStart = fData[opValue+2];
+                    fActiveLimit = fData[opValue+3];
+                    U_ASSERT(fActiveStart >= 0);
+                    U_ASSERT(fActiveLimit <= fInputLength);
                     fp->fPatIdx = continueLoc;
                     break;
                 }
@@ -4079,7 +4037,7 @@ GC_Done:
         case URX_LBN_END:
             // End of a negative look-behind block, after a successful match.
             {
-                U_ASSERT(opValue>=0 && opValue+1<fPattern->fDataSize);
+                U_ASSERT(opValue>=0 && opValue+4<fPattern->fDataSize);
                 if (fp->fInputIdx != fActiveLimit) {
                     //  The look-behind expression matched, but the match did not
                     //    extend all the way to the point that we are looking behind from.
@@ -4096,10 +4054,10 @@ GC_Done:
                 //   Restore the orignal input string length, which had been truncated
                 //   inorder to pin the end of the lookbehind match
                 //   to the position being looked-behind.
-                int64_t originalInputLen = fData[opValue+3];
-                U_ASSERT(originalInputLen >= fActiveLimit);
-                U_ASSERT(originalInputLen <= fInputLength);
-                fActiveLimit = originalInputLen;
+                fActiveStart = fData[opValue+2];
+                fActiveLimit = fData[opValue+3];
+                U_ASSERT(fActiveStart >= 0);
+                U_ASSERT(fActiveLimit <= fInputLength);
 
                 // Restore original stack position, discarding any state saved
                 //   by the successful pattern match.
@@ -4656,7 +4614,7 @@ void RegexMatcher::MatchChunkAt(int32_t startIdx, UBool toEnd, UErrorCode &statu
 
         case URX_BACKSLASH_BU:          // Test for word boundaries, Unicode-style
             {
-                UBool success = isUWordBoundary(fp->fInputIdx);
+                UBool success = isUWordBoundary(fp->fInputIdx, status);
                 success ^= (UBool)(opValue != 0);     // flip sense for \B
                 if (!success) {
                     fp = (REStackFrame *)fStack->popFrame(fFrameSize);
@@ -4754,12 +4712,8 @@ void RegexMatcher::MatchChunkAt(int32_t startIdx, UBool toEnd, UErrorCode &statu
             break;
 
 
-
         case URX_BACKSLASH_X:
-        //  Match a Grapheme, as defined by Unicode TR 29.
-        //  Differs slightly from Perl, which consumes combining marks independently
-        //    of context.
-        {
+            //  Match a Grapheme, as defined by Unicode UAX 29.
 
             // Fail if at end of input
             if (fp->fInputIdx >= fActiveLimit) {
@@ -4768,76 +4722,12 @@ void RegexMatcher::MatchChunkAt(int32_t startIdx, UBool toEnd, UErrorCode &statu
                 break;
             }
 
-            // Examine (and consume) the current char.
-            //   Dispatch into a little state machine, based on the char.
-            UChar32  c;
-            U16_NEXT(inputBuf, fp->fInputIdx, fActiveLimit, c);
-            UnicodeSet **sets = fPattern->fStaticSets;
-            if (sets[URX_GC_NORMAL]->contains(c))  goto GC_Extend;
-            if (sets[URX_GC_CONTROL]->contains(c)) goto GC_Control;
-            if (sets[URX_GC_L]->contains(c))       goto GC_L;
-            if (sets[URX_GC_LV]->contains(c))      goto GC_V;
-            if (sets[URX_GC_LVT]->contains(c))     goto GC_T;
-            if (sets[URX_GC_V]->contains(c))       goto GC_V;
-            if (sets[URX_GC_T]->contains(c))       goto GC_T;
-            goto GC_Extend;
-
-
-
-GC_L:
-            if (fp->fInputIdx >= fActiveLimit)         goto GC_Done;
-            U16_NEXT(inputBuf, fp->fInputIdx, fActiveLimit, c);
-            if (sets[URX_GC_L]->contains(c))       goto GC_L;
-            if (sets[URX_GC_LV]->contains(c))      goto GC_V;
-            if (sets[URX_GC_LVT]->contains(c))     goto GC_T;
-            if (sets[URX_GC_V]->contains(c))       goto GC_V;
-            U16_PREV(inputBuf, 0, fp->fInputIdx, c);
-            goto GC_Extend;
-
-GC_V:
-            if (fp->fInputIdx >= fActiveLimit)         goto GC_Done;
-            U16_NEXT(inputBuf, fp->fInputIdx, fActiveLimit, c);
-            if (sets[URX_GC_V]->contains(c))       goto GC_V;
-            if (sets[URX_GC_T]->contains(c))       goto GC_T;
-            U16_PREV(inputBuf, 0, fp->fInputIdx, c);
-            goto GC_Extend;
-
-GC_T:
-            if (fp->fInputIdx >= fActiveLimit)         goto GC_Done;
-            U16_NEXT(inputBuf, fp->fInputIdx, fActiveLimit, c);
-            if (sets[URX_GC_T]->contains(c))       goto GC_T;
-            U16_PREV(inputBuf, 0, fp->fInputIdx, c);
-            goto GC_Extend;
-
-GC_Extend:
-            // Combining characters are consumed here
-            for (;;) {
-                if (fp->fInputIdx >= fActiveLimit) {
-                    break;
-                }
-                U16_NEXT(inputBuf, fp->fInputIdx, fActiveLimit, c);
-                if (sets[URX_GC_EXTEND]->contains(c) == FALSE) {
-                    U16_BACK_1(inputBuf, 0, fp->fInputIdx);
-                    break;
-                }
-            }
-            goto GC_Done;
-
-GC_Control:
-            // Most control chars stand alone (don't combine with combining chars),
-            //   except for that CR/LF sequence is a single grapheme cluster.
-            if (c == 0x0d && fp->fInputIdx < fActiveLimit && inputBuf[fp->fInputIdx] == 0x0a) {
-                fp->fInputIdx++;
-            }
-
-GC_Done:
+            fp->fInputIdx = followingGCBoundary(fp->fInputIdx, status);
             if (fp->fInputIdx >= fActiveLimit) {
                 fHitEnd = TRUE;
+                fp->fInputIdx = fActiveLimit;
             }
             break;
-        }
-
-
 
 
         case URX_BACKSLASH_Z:          // Test for end of Input
@@ -4871,13 +4761,13 @@ GC_Done:
                 UChar32 c;
                 U16_NEXT(inputBuf, fp->fInputIdx, fActiveLimit, c);
                 if (c < 256) {
-                    Regex8BitSet *s8 = &fPattern->fStaticSets8[opValue];
-                    if (s8->contains(c)) {
+                    Regex8BitSet &s8 = RegexStaticSets::gStaticSets->fPropSets8[opValue];
+                    if (s8.contains(c)) {
                         success = !success;
                     }
                 } else {
-                    const UnicodeSet *s = fPattern->fStaticSets[opValue];
-                    if (s->contains(c)) {
+                    const UnicodeSet &s = RegexStaticSets::gStaticSets->fPropSets[opValue];
+                    if (s.contains(c)) {
                         success = !success;
                     }
                 }
@@ -4903,13 +4793,13 @@ GC_Done:
                 UChar32  c;
                 U16_NEXT(inputBuf, fp->fInputIdx, fActiveLimit, c);
                 if (c < 256) {
-                    Regex8BitSet *s8 = &fPattern->fStaticSets8[opValue];
-                    if (s8->contains(c) == FALSE) {
+                    Regex8BitSet &s8 = RegexStaticSets::gStaticSets->fPropSets8[opValue];
+                    if (s8.contains(c) == FALSE) {
                         break;
                     }
                 } else {
-                    const UnicodeSet *s = fPattern->fStaticSets[opValue];
-                    if (s->contains(c) == FALSE) {
+                    const UnicodeSet &s = RegexStaticSets::gStaticSets->fPropSets[opValue];
+                    if (s.contains(c) == FALSE) {
                         break;
                     }
                 }
@@ -5336,11 +5226,13 @@ GC_Done:
 
         case URX_LA_START:
             {
-                // Entering a lookahead block.
+                // Entering a look around block.
                 // Save Stack Ptr, Input Pos.
-                U_ASSERT(opValue>=0 && opValue+1<fPattern->fDataSize);
+                U_ASSERT(opValue>=0 && opValue+3<fPattern->fDataSize);
                 fData[opValue]   = fStack->size();
                 fData[opValue+1] = fp->fInputIdx;
+                fData[opValue+2] = fActiveStart;
+                fData[opValue+3] = fActiveLimit;
                 fActiveStart     = fLookStart;          // Set the match region change for
                 fActiveLimit     = fLookLimit;          //   transparent bounds.
             }
@@ -5348,9 +5240,9 @@ GC_Done:
 
         case URX_LA_END:
             {
-                // Leaving a look-ahead block.
+                // Leaving a look around block.
                 //  restore Stack Ptr, Input Pos to positions they had on entry to block.
-                U_ASSERT(opValue>=0 && opValue+1<fPattern->fDataSize);
+                U_ASSERT(opValue>=0 && opValue+3<fPattern->fDataSize);
                 int32_t stackSize = fStack->size();
                 int32_t newStackSize = (int32_t)fData[opValue];
                 U_ASSERT(stackSize >= newStackSize);
@@ -5370,8 +5262,10 @@ GC_Done:
 
                 // Restore the active region bounds in the input string; they may have
                 //    been changed because of transparent bounds on a Region.
-                fActiveStart = fRegionStart;
-                fActiveLimit = fRegionLimit;
+                fActiveStart = fData[opValue+2];
+                fActiveLimit = fData[opValue+3];
+                U_ASSERT(fActiveStart >= 0);
+                U_ASSERT(fActiveLimit <= fInputLength);
             }
             break;
 
@@ -5434,17 +5328,19 @@ GC_Done:
         case URX_LB_START:
             {
                 // Entering a look-behind block.
-                // Save Stack Ptr, Input Pos.
+                // Save Stack Ptr, Input Pos and active input region.
                 //   TODO:  implement transparent bounds.  Ticket #6067
-                U_ASSERT(opValue>=0 && opValue+1<fPattern->fDataSize);
+                U_ASSERT(opValue>=0 && opValue+4<fPattern->fDataSize);
                 fData[opValue]   = fStack->size();
                 fData[opValue+1] = fp->fInputIdx;
-                // Init the variable containing the start index for attempted matches.
-                fData[opValue+2] = -1;
                 // Save input string length, then reset to pin any matches to end at
                 //   the current position.
+                fData[opValue+2] = fActiveStart;
                 fData[opValue+3] = fActiveLimit;
+                fActiveStart     = fRegionStart;
                 fActiveLimit     = fp->fInputIdx;
+                // Init the variable containing the start index for attempted matches.
+                fData[opValue+4] = -1;
             }
             break;
 
@@ -5462,8 +5358,8 @@ GC_Done:
                 U_ASSERT(minML >= 0);
 
                 // Fetch (from data) the last input index where a match was attempted.
-                U_ASSERT(opValue>=0 && opValue+1<fPattern->fDataSize);
-                int64_t  &lbStartIdx = fData[opValue+2];
+                U_ASSERT(opValue>=0 && opValue+4<fPattern->fDataSize);
+                int64_t  &lbStartIdx = fData[opValue+4];
                 if (lbStartIdx < 0) {
                     // First time through loop.
                     lbStartIdx = fp->fInputIdx - minML;
@@ -5485,10 +5381,10 @@ GC_Done:
                     //  getting a match.  Backtrack out, and out of the
                     //   Look Behind altogether.
                     fp = (REStackFrame *)fStack->popFrame(fFrameSize);
-                    int64_t restoreInputLen = fData[opValue+3];
-                    U_ASSERT(restoreInputLen >= fActiveLimit);
-                    U_ASSERT(restoreInputLen <= fInputLength);
-                    fActiveLimit = restoreInputLen;
+                    fActiveStart = fData[opValue+2];
+                    fActiveLimit = fData[opValue+3];
+                    U_ASSERT(fActiveStart >= 0);
+                    U_ASSERT(fActiveLimit <= fInputLength);
                     break;
                 }
 
@@ -5502,7 +5398,7 @@ GC_Done:
         case URX_LB_END:
             // End of a look-behind block, after a successful match.
             {
-                U_ASSERT(opValue>=0 && opValue+1<fPattern->fDataSize);
+                U_ASSERT(opValue>=0 && opValue+4<fPattern->fDataSize);
                 if (fp->fInputIdx != fActiveLimit) {
                     //  The look-behind expression matched, but the match did not
                     //    extend all the way to the point that we are looking behind from.
@@ -5513,13 +5409,13 @@ GC_Done:
                     break;
                 }
 
-                // Look-behind match is good.  Restore the orignal input string length,
+                // Look-behind match is good.  Restore the orignal input string region,
                 //   which had been truncated to pin the end of the lookbehind match to the
                 //   position being looked-behind.
-                int64_t originalInputLen = fData[opValue+3];
-                U_ASSERT(originalInputLen >= fActiveLimit);
-                U_ASSERT(originalInputLen <= fInputLength);
-                fActiveLimit = originalInputLen;
+                fActiveStart = fData[opValue+2];
+                fActiveLimit = fData[opValue+3];
+                U_ASSERT(fActiveStart >= 0);
+                U_ASSERT(fActiveLimit <= fInputLength);
             }
             break;
 
@@ -5539,8 +5435,8 @@ GC_Done:
                 U_ASSERT(continueLoc > fp->fPatIdx);
 
                 // Fetch (from data) the last input index where a match was attempted.
-                U_ASSERT(opValue>=0 && opValue+1<fPattern->fDataSize);
-                int64_t  &lbStartIdx = fData[opValue+2];
+                U_ASSERT(opValue>=0 && opValue+4<fPattern->fDataSize);
+                int64_t  &lbStartIdx = fData[opValue+4];
                 if (lbStartIdx < 0) {
                     // First time through loop.
                     lbStartIdx = fp->fInputIdx - minML;
@@ -5561,10 +5457,10 @@ GC_Done:
                     // We have tried all potential match starting points without
                     //  getting a match, which means that the negative lookbehind as
                     //  a whole has succeeded.  Jump forward to the continue location
-                    int64_t restoreInputLen = fData[opValue+3];
-                    U_ASSERT(restoreInputLen >= fActiveLimit);
-                    U_ASSERT(restoreInputLen <= fInputLength);
-                    fActiveLimit = restoreInputLen;
+                    fActiveStart = fData[opValue+2];
+                    fActiveLimit = fData[opValue+3];
+                    U_ASSERT(fActiveStart >= 0);
+                    U_ASSERT(fActiveLimit <= fInputLength);
                     fp->fPatIdx = continueLoc;
                     break;
                 }
@@ -5579,7 +5475,7 @@ GC_Done:
         case URX_LBN_END:
             // End of a negative look-behind block, after a successful match.
             {
-                U_ASSERT(opValue>=0 && opValue+1<fPattern->fDataSize);
+                U_ASSERT(opValue>=0 && opValue+4<fPattern->fDataSize);
                 if (fp->fInputIdx != fActiveLimit) {
                     //  The look-behind expression matched, but the match did not
                     //    extend all the way to the point that we are looking behind from.
@@ -5596,10 +5492,10 @@ GC_Done:
                 //   Restore the orignal input string length, which had been truncated
                 //   inorder to pin the end of the lookbehind match
                 //   to the position being looked-behind.
-                int64_t originalInputLen = fData[opValue+3];
-                U_ASSERT(originalInputLen >= fActiveLimit);
-                U_ASSERT(originalInputLen <= fInputLength);
-                fActiveLimit = originalInputLen;
+                fActiveStart = fData[opValue+2];
+                fActiveLimit = fData[opValue+3];
+                U_ASSERT(fActiveStart >= 0);
+                U_ASSERT(fActiveLimit <= fInputLength);
 
                 // Restore original stack position, discarding any state saved
                 //   by the successful pattern match.

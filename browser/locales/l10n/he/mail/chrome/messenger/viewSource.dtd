@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/viewSource.xul -->
+
+<!-- extracted from content/viewSource.xhtml -->
+
+<!-- LOCALIZATION NOTE (mainWindow.title) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifierseparator) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifierseparator " - ">
+<!ENTITY mainWindow.preface "המקור של: ">
+
+<!ENTITY fileMenu.label "קובץ">
+<!ENTITY fileMenu.accesskey "ק">
+<!ENTITY savePageCmd.label "שמירת העמוד בשם…">
+<!ENTITY savePageCmd.accesskey "ב">
+<!ENTITY savePageCmd.commandkey "ש">
+<!ENTITY pageSetupCmd.label "הגדרת עמוד…">
+<!ENTITY pageSetupCmd.accesskey "ג">
+<!ENTITY printPreviewCmd.label "תצוגה לפני הדפסה">
+<!ENTITY printPreviewCmd.accesskey "פ">
+<!ENTITY printCmd.label "הדפסה…">
+<!ENTITY printCmd.accesskey "ד">
+<!ENTITY printCmd.commandkey "ד">
+<!ENTITY closeCmd.label "סגירה">
+<!ENTITY closeCmd.accesskey "ס">
+
+<!-- LOCALIZATION NOTE :
+textEnlarge.commandkey3, textReduce.commandkey2 and
+textReset.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY textReset.commandkey "0">
+
+<!ENTITY goToLineCmd.label "מעבר לשורה…">
+
+<!ENTITY menu_highlightSyntax.label "הדגשת תחביר">
+<!ENTITY menu_highlightSyntax.accesskey "ח">
+<!ENTITY menu_textSize.label "גודל הטקסט">
+<!ENTITY menu_textSize.accesskey "ק">
+<!ENTITY menu_textEnlarge.label "הגדלה">
+<!ENTITY menu_textEnlarge.accesskey "ל">
+<!ENTITY menu_textReduce.label "הקטנה">
+<!ENTITY menu_textReduce.accesskey "ט">
+<!ENTITY menu_textReset.label "רגיל">
+<!ENTITY menu_textReset.accesskey "ג">
+
+<!ENTITY findOnCmd.label     "חיפוש בעמוד הזה…">
+<!ENTITY findOnCmd.accesskey "ע">
+<!ENTITY findOnCmd.commandkey "ע">
+
+
+

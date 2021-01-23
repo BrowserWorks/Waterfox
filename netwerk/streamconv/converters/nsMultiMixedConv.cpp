@@ -13,7 +13,6 @@
 #include "nsIHttpChannelInternal.h"
 #include "nsURLHelper.h"
 #include "nsIStreamConverterService.h"
-#include "nsICacheInfoChannel.h"
 #include <algorithm>
 #include "nsContentSecurityManager.h"
 #include "nsHttp.h"
@@ -72,7 +71,7 @@ void nsPartChannel::SetContentDisposition(
   nsCOMPtr<nsIURI> uri;
   GetURI(getter_AddRefs(uri));
   NS_GetFilenameFromDisposition(mContentDispositionFilename,
-                                mContentDispositionHeader, uri);
+                                mContentDispositionHeader);
   mContentDisposition =
       NS_GetContentDispositionFromHeader(mContentDispositionHeader, this);
 }
@@ -128,6 +127,12 @@ nsPartChannel::Cancel(nsresult aStatus) {
   // multipart channel...
   // XXX but we should stop sending data for _this_ part channel!
   mStatus = aStatus;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsPartChannel::GetCanceled(bool* aCanceled) {
+  *aCanceled = NS_FAILED(mStatus);
   return NS_OK;
 }
 
@@ -196,6 +201,16 @@ NS_IMETHODIMP
 nsPartChannel::SetLoadFlags(nsLoadFlags aLoadFlags) {
   mLoadFlags = aLoadFlags;
   return NS_OK;
+}
+
+NS_IMETHODIMP
+nsPartChannel::GetTRRMode(nsIRequest::TRRMode* aTRRMode) {
+  return GetTRRModeImpl(aTRRMode);
+}
+
+NS_IMETHODIMP
+nsPartChannel::SetTRRMode(nsIRequest::TRRMode aTRRMode) {
+  return SetTRRModeImpl(aTRRMode);
 }
 
 NS_IMETHODIMP
@@ -407,6 +422,12 @@ nsMultiMixedConv::AsyncConvertData(const char* aFromType, const char* aToType,
   return NS_OK;
 }
 
+NS_IMETHODIMP
+nsMultiMixedConv::GetConvertedType(const nsACString& aFromType,
+                                   nsIChannel* aChannel, nsACString& aToType) {
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
 // nsIRequestObserver implementation
 NS_IMETHODIMP
 nsMultiMixedConv::OnStartRequest(nsIRequest* request) {
@@ -555,6 +576,12 @@ nsMultiMixedConv::OnStopRequest(nsIRequest* request, nsresult aStatus) {
     (void)mFinalListener->OnStopRequest(request, aStatus);
   }
 
+  nsCOMPtr<nsIMultiPartChannelListener> multiListener =
+      do_QueryInterface(mFinalListener);
+  if (multiListener) {
+    multiListener->OnAfterLastPart(aStatus);
+  }
+
   return NS_OK;
 }
 
@@ -647,7 +674,7 @@ nsresult nsMultiMixedConv::ConsumeToken(Token const& token) {
         return rv;
       }
       mParserState = BODY;
-      MOZ_FALLTHROUGH;
+      [[fallthrough]];
 
     case BODY: {
       if (!token.Equals(mLFToken) && !token.Equals(mCRLFToken)) {
@@ -953,8 +980,7 @@ nsresult nsMultiMixedConv::ProcessHeader() {
           do_QueryInterface(mChannel);
       mResponseHeaderValue.CompressWhitespace();
       if (httpInternal) {
-        DebugOnly<nsresult> rv =
-            httpInternal->SetCookie(mResponseHeaderValue.get());
+        DebugOnly<nsresult> rv = httpInternal->SetCookie(mResponseHeaderValue);
         MOZ_ASSERT(NS_SUCCEEDED(rv));
       }
       break;
@@ -1011,10 +1037,8 @@ nsresult nsMultiMixedConv::ProcessHeader() {
 
 nsresult NS_NewMultiMixedConv(nsMultiMixedConv** aMultiMixedConv) {
   MOZ_ASSERT(aMultiMixedConv != nullptr, "null ptr");
-  if (!aMultiMixedConv) return NS_ERROR_NULL_POINTER;
 
-  *aMultiMixedConv = new nsMultiMixedConv();
-
-  NS_ADDREF(*aMultiMixedConv);
+  RefPtr<nsMultiMixedConv> conv = new nsMultiMixedConv();
+  conv.forget(aMultiMixedConv);
   return NS_OK;
 }

@@ -1,6 +1,6 @@
-use std::io;
 use error::Result;
 use serde;
+use std::{io, slice};
 
 /// An optional Read trait for advanced Bincode usage.
 ///
@@ -78,9 +78,10 @@ impl<R: io::Read> io::Read for IoReader<R> {
 impl<'storage> SliceReader<'storage> {
     #[inline(always)]
     fn unexpected_eof() -> Box<::ErrorKind> {
-        return Box::new(::ErrorKind::Io(
-            io::Error::new(io::ErrorKind::UnexpectedEof, ""),
-        ));
+        return Box::new(::ErrorKind::Io(io::Error::new(
+            io::ErrorKind::UnexpectedEof,
+            "",
+        )));
     }
 }
 
@@ -135,27 +136,43 @@ where
     R: io::Read,
 {
     fn fill_buffer(&mut self, length: usize) -> Result<()> {
+        // We first reserve the space needed in our buffer.
         let current_length = self.temp_buffer.len();
         if length > current_length {
             self.temp_buffer.reserve_exact(length - current_length);
         }
 
+        // Then create a slice with the length as our desired length. This is
+        // safe as long as we only write (no reads) to this buffer, because
+        // `reserve_exact` above has allocated this space.
+        let buf = unsafe {
+            slice::from_raw_parts_mut(self.temp_buffer.as_mut_ptr(), length)
+        };
+
+        // This method is assumed to properly handle slices which include
+        // uninitialized bytes (as ours does). See discussion at the link below.
+        // https://github.com/servo/bincode/issues/260
+        self.reader.read_exact(buf)?;
+
+        // Only after `read_exact` successfully returns do we set the buffer
+        // length. By doing this after the call to `read_exact`, we can avoid
+        // exposing uninitialized memory in the case of `read_exact` returning
+        // an error.
         unsafe {
             self.temp_buffer.set_len(length);
         }
 
-        self.reader.read_exact(&mut self.temp_buffer)?;
         Ok(())
     }
 }
 
-impl<R> BincodeRead<'static> for IoReader<R>
+impl<'a, R> BincodeRead<'a> for IoReader<R>
 where
     R: io::Read,
 {
     fn forward_read_str<V>(&mut self, length: usize, visitor: V) -> Result<V::Value>
     where
-        V: serde::de::Visitor<'static>,
+        V: serde::de::Visitor<'a>,
     {
         self.fill_buffer(length)?;
 
@@ -175,7 +192,7 @@ where
 
     fn forward_read_bytes<V>(&mut self, length: usize, visitor: V) -> Result<V::Value>
     where
-        V: serde::de::Visitor<'static>,
+        V: serde::de::Visitor<'a>,
     {
         self.fill_buffer(length)?;
         let r = visitor.visit_bytes(&self.temp_buffer[..]);

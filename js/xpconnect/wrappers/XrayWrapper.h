@@ -50,7 +50,7 @@ enum XrayType {
 
 class XrayTraits {
  public:
-  constexpr XrayTraits() {}
+  constexpr XrayTraits() = default;
 
   static JSObject* getTargetObject(JSObject* wrapper) {
     JSObject* target =
@@ -161,7 +161,7 @@ class DOMXrayTraits : public XrayTraits {
   bool defineProperty(JSContext* cx, JS::HandleObject wrapper, JS::HandleId id,
                       JS::Handle<JS::PropertyDescriptor> desc,
                       JS::Handle<JS::PropertyDescriptor> existingDesc,
-                      JS::ObjectOpResult& result, bool* defined);
+                      JS::ObjectOpResult& result, bool* done);
   virtual bool enumerateNames(JSContext* cx, JS::HandleObject wrapper,
                               unsigned flags, JS::MutableHandleIdVector props);
   static bool call(JSContext* cx, JS::HandleObject wrapper,
@@ -369,7 +369,7 @@ XrayTraits* GetXrayTraits(JSObject* obj);
 
 template <typename Base, typename Traits>
 class XrayWrapper : public Base {
-  static_assert(mozilla::IsBaseOf<js::BaseProxyHandler, Base>::value,
+  static_assert(std::is_base_of_v<js::BaseProxyHandler, Base>,
                 "Base *must* derive from js::BaseProxyHandler");
 
  public:

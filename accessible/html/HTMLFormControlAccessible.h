@@ -8,6 +8,8 @@
 
 #include "FormControlAccessible.h"
 #include "HyperTextAccessibleWrap.h"
+#include "nsAccUtils.h"
+#include "Relation.h"
 
 namespace mozilla {
 class TextEditor;
@@ -29,6 +31,10 @@ class HTMLRadioButtonAccessible : public RadioButtonAccessible {
   virtual uint64_t NativeState() const override;
   virtual void GetPositionAndSizeInternal(int32_t* aPosInSet,
                                           int32_t* aSetSize) override;
+  virtual Relation RelationByType(RelationType aType) const override;
+
+ private:
+  Relation ComputeGroupAttributes(int32_t* aPosInSet, int32_t* aSetSize) const;
 };
 
 /**
@@ -63,7 +69,7 @@ class HTMLButtonAccessible : public HyperTextAccessibleWrap {
  * Accessible for HTML input@type="text", input@type="password", textarea and
  * other HTML text controls.
  */
-class HTMLTextFieldAccessible final : public HyperTextAccessibleWrap {
+class HTMLTextFieldAccessible : public HyperTextAccessibleWrap {
  public:
   enum { eAction_Click = 0 };
 
@@ -73,7 +79,8 @@ class HTMLTextFieldAccessible final : public HyperTextAccessibleWrap {
                                        HyperTextAccessibleWrap)
 
   // HyperTextAccessible
-  virtual already_AddRefed<TextEditor> GetEditor() const override;
+  MOZ_CAN_RUN_SCRIPT_BOUNDARY virtual already_AddRefed<TextEditor> GetEditor()
+      const override;
 
   // Accessible
   virtual void Value(nsString& aValue) const override;
@@ -98,17 +105,16 @@ class HTMLTextFieldAccessible final : public HyperTextAccessibleWrap {
   virtual ENameValueFlag NativeName(nsString& aName) const override;
 
   /**
-   * Return a widget element this input is part of, for example, XUL:textbox or
-   * HTML:input@type="number".
+   * Return a widget element this input is part of, for example, search-textbox.
+   *
+   * FIXME: This should probably be renamed.
    */
   nsIContent* BindingOrWidgetParent() const {
-    nsIContent * el = mContent->GetBindingParent();
-    if (el) {
+    if (auto* el = mContent->GetClosestNativeAnonymousSubtreeRootParent()) {
       return el;
     }
-    // XUL textboxes custom elements implementation.
-    ErrorResult rv;
-    return Elm()->Closest(NS_LITERAL_STRING("textbox"), rv);
+    // XUL search-textbox custom element
+    return Elm()->Closest(NS_LITERAL_STRING("search-textbox"), IgnoreErrors());
   }
 };
 
@@ -128,10 +134,10 @@ class HTMLFileInputAccessible : public HyperTextAccessibleWrap {
 /**
  * Used for HTML input@type="number".
  */
-class HTMLSpinnerAccessible : public AccessibleWrap {
+class HTMLSpinnerAccessible final : public HTMLTextFieldAccessible {
  public:
   HTMLSpinnerAccessible(nsIContent* aContent, DocAccessible* aDoc)
-      : AccessibleWrap(aContent, aDoc) {
+      : HTMLTextFieldAccessible(aContent, aDoc) {
     mStateFlags |= eHasNumericValue;
   }
 
@@ -280,6 +286,40 @@ class HTMLProgressAccessible : public LeafAccessible {
 
  protected:
   virtual ~HTMLProgressAccessible() {}
+};
+
+/**
+ * Accessible for HTML date/time inputs.
+ */
+template <a11y::role R>
+class HTMLDateTimeAccessible : public AccessibleWrap {
+ public:
+  HTMLDateTimeAccessible(nsIContent* aContent, DocAccessible* aDoc)
+      : AccessibleWrap(aContent, aDoc) {}
+
+  NS_INLINE_DECL_REFCOUNTING_INHERITED(HTMLDateTimeAccessible, AccessibleWrap)
+
+  // Accessible
+  virtual mozilla::a11y::role NativeRole() const override { return R; }
+  virtual already_AddRefed<nsIPersistentProperties> NativeAttributes()
+      override {
+    nsCOMPtr<nsIPersistentProperties> attributes =
+        AccessibleWrap::NativeAttributes();
+    // Unfortunately, an nsStaticAtom can't be passed as a
+    // template argument, so fetch the type from the DOM.
+    nsAutoString type;
+    if (mContent->AsElement()->GetAttr(kNameSpaceID_None, nsGkAtoms::type,
+                                       type)) {
+      nsAccUtils::SetAccAttr(attributes, nsGkAtoms::textInputType, type);
+    }
+    return attributes.forget();
+  }
+
+  // Widgets
+  virtual bool IsWidget() const override { return true; }
+
+ protected:
+  virtual ~HTMLDateTimeAccessible() {}
 };
 
 }  // namespace a11y

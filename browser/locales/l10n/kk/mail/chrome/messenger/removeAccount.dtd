@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "Тіркелгі және деректерді өшіру">
+<!ENTITY removeButton.label           "Өшіру">
+<!ENTITY removeButton.accesskey       "ш">
+<!ENTITY removeAccount.label          "Тіркелгі ақпаратын өшіру">
+<!ENTITY removeAccount.accesskey      "Т">
+<!ENTITY removeAccount.desc           "Бұл тіркелгіні тек &brandShortName; ішінде өшіреді. Сервердегі тіркелгіге әсері жоқ.">
+<!ENTITY removeData.label             "Хабарламалар деректерін өшіру">
+<!ENTITY removeData.accesskey         "д">
+<!ENTITY removeDataChat.label         "Сөйлесу деректерін өшіру">
+<!ENTITY removeDataChat.accesskey     "д">
+<!ENTITY removeDataLocalAccount.desc  "Бұл тіркелгімен байланысқан барлық хабарламалар, бумалар және сүзгілерді жергілікті дискіден өшіреді. Бұл әрекет серверде сақталып тұрған хабарламаларға тиіспейді. Егер сіз жергілікті деректерді архивтеуді немесе оларды &brandShortName; ішінде кейінірек қолдануды қаласыңыз, бұл әрекетті таңдамаңыз.">
+<!ENTITY removeDataServerAccount.desc "Бұл тіркелгімен байланысқан барлық хабарламалар, бумалар және сүзгілерді жергілікті дискіден өшіреді. Серверде сақталып тұрған хабарламалар және бумаларға әсері жоқ.">
+<!ENTITY removeDataChatAccount.desc   "Бұл тіркелгі үшін дискіңізде сақталған барлық сөйлесулер журналдарын өшіреді.">
+<!ENTITY showData.label               "Деректер орналасуын көрсету">
+<!ENTITY showData.accesskey           "с">
+<!ENTITY progressPending              "Таңдалған деректерді өшіру…">
+<!ENTITY progressSuccess              "Өшіру сәтті аяқталды.">
+<!ENTITY progressFailure              "Өшіру сәтсіз аяқталды.">

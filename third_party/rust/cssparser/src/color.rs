@@ -101,9 +101,6 @@ impl<'de> Deserialize<'de> for RGBA {
     }
 }
 
-#[cfg(feature = "heapsize")]
-known_heap_size!(0, RGBA);
-
 impl ToCss for RGBA {
     fn to_css<W>(&self, dest: &mut W) -> fmt::Result
     where
@@ -140,9 +137,6 @@ pub enum Color {
     /// Everything else gets converted to RGBA during parsing
     RGBA(RGBA),
 }
-
-#[cfg(feature = "heapsize")]
-known_heap_size!(0, Color);
 
 impl ToCss for Color {
     fn to_css<W>(&self, dest: &mut W) -> fmt::Result
@@ -286,22 +280,22 @@ impl Color {
     where
         ComponentParser: ColorComponentParser<'i>,
     {
-        // FIXME: remove clone() when lifetimes are non-lexical
         let location = input.current_source_location();
-        let token = input.next()?.clone();
-        match token {
+        let token = input.next()?;
+        match *token {
             Token::Hash(ref value) | Token::IDHash(ref value) => {
                 Color::parse_hash(value.as_bytes())
             }
             Token::Ident(ref value) => parse_color_keyword(&*value),
             Token::Function(ref name) => {
+                let name = name.clone();
                 return input.parse_nested_block(|arguments| {
                     parse_color_function(component_parser, &*name, arguments)
-                })
+                });
             }
             _ => Err(()),
         }
-        .map_err(|()| location.new_unexpected_token_error(token))
+        .map_err(|()| location.new_unexpected_token_error(token.clone()))
     }
 
     /// Parse a <color> value, per CSS Color Module Level 3.
@@ -530,9 +524,9 @@ pub fn parse_color_keyword(ident: &str) -> Result<Color, ()> {
 #[inline]
 fn from_hex(c: u8) -> Result<u8, ()> {
     match c {
-        b'0'...b'9' => Ok(c - b'0'),
-        b'a'...b'f' => Ok(c - b'a' + 10),
-        b'A'...b'F' => Ok(c - b'A' + 10),
+        b'0'..=b'9' => Ok(c - b'0'),
+        b'a'..=b'f' => Ok(c - b'a' + 10),
+        b'A'..=b'F' => Ok(c - b'A' + 10),
         _ => Err(()),
     }
 }

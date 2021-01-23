@@ -1,11 +1,11 @@
 == 723669.html 723669-ref.html
 
-== basic.xul basic-ref.xul
-random-if(Android) == basic-negcoord.xul basic-negcoord-ref.xul
-!= blur.xul blur-notref.xul
-== color-inherit.xul color-inherit-ref.xul
-== multiple-noblur.xul multiple-noblur-ref.xul
-fuzzy-if(webrender&&gtkWidget,128-128,160-160) == blur-opacity.html blur-opacity-ref.html
+== chrome://reftest/content/text-shadow/basic.xhtml chrome://reftest/content/text-shadow/basic-ref.xhtml
+random-if(Android) == chrome://reftest/content/text-shadow/basic-negcoord.xhtml chrome://reftest/content/text-shadow/basic-negcoord-ref.xhtml
+!= chrome://reftest/content/text-shadow/blur.xhtml chrome://reftest/content/text-shadow/blur-notref.xhtml
+== chrome://reftest/content/text-shadow/color-inherit.xhtml chrome://reftest/content/text-shadow/color-inherit-ref.xhtml
+== chrome://reftest/content/text-shadow/multiple-noblur.xhtml chrome://reftest/content/text-shadow/multiple-noblur-ref.xhtml
+== blur-opacity.html blur-opacity-ref.html
 
 == basic.html basic-ref.html
 == basic-negcoord.html basic-negcoord-ref.html

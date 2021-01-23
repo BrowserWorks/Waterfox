@@ -10,7 +10,7 @@
  */
 
 const HTML_NS = "http://www.w3.org/1999/xhtml";
-const TEST_URI = CHROME_URL_ROOT + "doc_html_tooltip_rtl.xul";
+const TEST_URI = CHROME_URL_ROOT + "doc_html_tooltip_rtl.xhtml";
 
 const {
   HTMLTooltip,
@@ -24,7 +24,7 @@ const TOOLTIP_HEIGHT = 30;
 add_task(async function() {
   await pushPref("devtools.toolbox.sidebar.width", TOOLBOX_WIDTH);
 
-  const [, , doc] = await createHost("right", TEST_URI);
+  const { doc } = await createHost("right", TEST_URI);
 
   info("Test the positioning of tooltips in RTL and LTR directions");
 
@@ -91,8 +91,8 @@ async function testRtlAnchors(doc, tooltip) {
 
   // box2 uses RTL direction, so the tooltip is aligned with the right edge of the anchor
   is(
-    panelRect.right,
-    anchorRect.right,
+    Math.round(panelRect.right),
+    Math.round(anchorRect.right),
     "Tooltip is aligned with right edge of anchor"
   );
   is(
@@ -134,8 +134,8 @@ async function testLtrAnchors(doc, tooltip) {
 
   // box3 uses LTR direction, so the tooltip is aligned with the left edge of the anchor.
   is(
-    panelRect.left,
-    anchorRect.left,
+    Math.round(panelRect.left),
+    Math.round(anchorRect.left),
     "Tooltip is aligned with left edge of anchor"
   );
   is(

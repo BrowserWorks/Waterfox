@@ -9,16 +9,20 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/dom/Link.h"
+#include "mozilla/dom/LinkStyle.h"
+#include "mozilla/WeakPtr.h"
 #include "nsGenericHTMLElement.h"
-#include "nsStyleLinkElement.h"
+#include "nsDOMTokenList.h"
 
 namespace mozilla {
 class EventChainPostVisitor;
 class EventChainPreVisitor;
 namespace dom {
 
+// NOTE(emilio): If we stop inheriting from Link, we need to remove the
+// IsHTMLElement(nsGkAtoms::link) checks in Link.cpp.
 class HTMLLinkElement final : public nsGenericHTMLElement,
-                              public nsStyleLinkElement,
+                              public LinkStyle,
                               public Link {
  public:
   explicit HTMLLinkElement(
@@ -48,10 +52,8 @@ class HTMLLinkElement final : public nsGenericHTMLElement,
                              JS::Handle<JSObject*> aGivenProto) override;
 
   // nsIContent
-  virtual nsresult BindToTree(Document* aDocument, nsIContent* aParent,
-                              nsIContent* aBindingParent) override;
-  virtual void UnbindFromTree(bool aDeep = true,
-                              bool aNullParent = true) override;
+  virtual nsresult BindToTree(BindContext&, nsINode& aParent) override;
+  virtual void UnbindFromTree(bool aNullParent = true) override;
   virtual nsresult BeforeSetAttr(int32_t aNameSpaceID, nsAtom* aName,
                                  const nsAttrValueOrString* aValue,
                                  bool aNotify) override;
@@ -120,7 +122,16 @@ class HTMLLinkElement final : public nsGenericHTMLElement,
   void SetAs(const nsAString& aAs, ErrorResult& aRv) {
     SetAttr(nsGkAtoms::as, aAs, aRv);
   }
-  nsDOMTokenList* Sizes() { return GetTokenList(nsGkAtoms::sizes); }
+
+  static void ParseAsValue(const nsAString& aValue, nsAttrValue& aResult);
+  static nsContentPolicyType AsValueToContentPolicy(const nsAttrValue& aValue);
+
+  nsDOMTokenList* Sizes() {
+    if (!mSizes) {
+      mSizes = new nsDOMTokenList(this, nsGkAtoms::sizes);
+    }
+    return mSizes;
+  }
   void GetType(DOMString& aValue) { GetHTMLAttr(nsGkAtoms::type, aValue); }
   void SetType(const nsAString& aType, ErrorResult& aRv) {
     SetHTMLAttr(nsGkAtoms::type, aType, aRv);
@@ -151,6 +162,18 @@ class HTMLLinkElement final : public nsGenericHTMLElement,
   void GetReferrerPolicy(nsAString& aReferrer) {
     GetEnumAttr(nsGkAtoms::referrerpolicy, EmptyCString().get(), aReferrer);
   }
+  void GetImageSrcset(nsAString& aImageSrcset) {
+    GetHTMLAttr(nsGkAtoms::imagesrcset, aImageSrcset);
+  }
+  void SetImageSrcset(const nsAString& aImageSrcset, ErrorResult& aError) {
+    SetHTMLAttr(nsGkAtoms::imagesrcset, aImageSrcset, aError);
+  }
+  void GetImageSizes(nsAString& aImageSizes) {
+    GetHTMLAttr(nsGkAtoms::imagesizes, aImageSizes);
+  }
+  void SetImageSizes(const nsAString& aImageSizes, ErrorResult& aError) {
+    SetHTMLAttr(nsGkAtoms::imagesizes, aImageSizes, aError);
+  }
 
   CORSMode GetCORSMode() const {
     return AttrValueToCORSMode(GetParsedAttr(nsGkAtoms::crossorigin));
@@ -167,10 +190,34 @@ class HTMLLinkElement final : public nsGenericHTMLElement,
  protected:
   virtual ~HTMLLinkElement();
 
-  // nsStyleLinkElement
+  void GetContentPolicyMimeTypeMedia(nsAttrValue& aAsAttr,
+                                     nsContentPolicyType& aPolicyType,
+                                     nsString& aMimeType, nsAString& aMedia);
+  void TryDNSPrefetchOrPreconnectOrPrefetchOrPreloadOrPrerender();
+  void UpdatePreload(nsAtom* aName, const nsAttrValue* aValue,
+                     const nsAttrValue* aOldValue);
+  void CancelPrefetchOrPreload();
+
+  void StartPreload(nsContentPolicyType policyType);
+  void CancelPreload();
+
+  // Returns whether the type attribute specifies the text/css mime type for
+  // link elements.
+  static bool IsCSSMimeTypeAttributeForLinkElement(
+      const mozilla::dom::Element&);
+
+  // LinkStyle
+  nsIContent& AsContent() final { return *this; }
+  const LinkStyle* AsLinkStyle() const final { return this; }
   Maybe<SheetInfo> GetStyleSheetInfo() final;
 
   RefPtr<nsDOMTokenList> mRelList;
+  RefPtr<nsDOMTokenList> mSizes;
+
+  // A weak reference to our preload is held only to cancel the preload when
+  // this node updates or unbounds from the tree.  We want to prevent cycles,
+  // the preload is held alive by other means.
+  WeakPtr<PreloaderBase> mPreload;
 
   // The "explicitly enabled" flag. This flag is set whenever the `disabled`
   // attribute is explicitly unset, and makes alternate stylesheets not be

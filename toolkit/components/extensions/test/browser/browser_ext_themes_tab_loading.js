@@ -34,11 +34,7 @@ add_task(async function test_support_tab_loading_filling() {
   selectedTab.setAttribute("busy", "true");
   selectedTab.setAttribute("progress", "true");
 
-  let throbber = document.getAnonymousElementByAttribute(
-    selectedTab,
-    "class",
-    "tab-throbber"
-  );
+  let throbber = selectedTab.throbber;
   Assert.equal(
     window.getComputedStyle(throbber, "::before").fill,
     `rgb(${hexToRGB(TAB_LOADING_COLOR).join(", ")})`,

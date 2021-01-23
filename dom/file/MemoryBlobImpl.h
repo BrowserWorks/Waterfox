@@ -14,7 +14,6 @@
 #include "nsICloneableInputStream.h"
 #include "nsIInputStream.h"
 #include "nsIIPCSerializableInputStream.h"
-#include "nsIMemoryReporter.h"
 #include "nsISeekableStream.h"
 
 namespace mozilla {
@@ -24,37 +23,42 @@ class MemoryBlobImpl final : public BaseBlobImpl {
  public:
   NS_INLINE_DECL_REFCOUNTING_INHERITED(MemoryBlobImpl, BaseBlobImpl)
 
-  MemoryBlobImpl(void* aMemoryBuffer, uint64_t aLength, const nsAString& aName,
-                 const nsAString& aContentType, int64_t aLastModifiedDate)
-      : BaseBlobImpl(NS_LITERAL_STRING("MemoryBlobImpl"), aName, aContentType,
-                     aLength, aLastModifiedDate),
-        mDataOwner(new DataOwner(aMemoryBuffer, aLength)) {
-    MOZ_ASSERT(mDataOwner && mDataOwner->mData, "must have data");
-  }
+  // File constructor.
+  static already_AddRefed<MemoryBlobImpl> CreateWithLastModifiedNow(
+      void* aMemoryBuffer, uint64_t aLength, const nsAString& aName,
+      const nsAString& aContentType, bool aCrossOriginIsolated);
 
+  // File constructor with custom lastModified attribue value. You should
+  // probably use CreateWithLastModifiedNow() instead of this one.
+  static already_AddRefed<MemoryBlobImpl> CreateWithCustomLastModified(
+      void* aMemoryBuffer, uint64_t aLength, const nsAString& aName,
+      const nsAString& aContentType, int64_t aLastModifiedDate);
+
+  // Blob constructor.
   MemoryBlobImpl(void* aMemoryBuffer, uint64_t aLength,
                  const nsAString& aContentType)
-      : BaseBlobImpl(NS_LITERAL_STRING("MemoryBlobImpl"), aContentType,
-                     aLength),
+      : BaseBlobImpl(aContentType, aLength),
         mDataOwner(new DataOwner(aMemoryBuffer, aLength)) {
     MOZ_ASSERT(mDataOwner && mDataOwner->mData, "must have data");
   }
 
-  virtual void CreateInputStream(nsIInputStream** aStream,
-                                 ErrorResult& aRv) override;
+  void CreateInputStream(nsIInputStream** aStream, ErrorResult& aRv) override;
 
-  virtual already_AddRefed<BlobImpl> CreateSlice(uint64_t aStart,
-                                                 uint64_t aLength,
-                                                 const nsAString& aContentType,
-                                                 ErrorResult& aRv) override;
+  already_AddRefed<BlobImpl> CreateSlice(uint64_t aStart, uint64_t aLength,
+                                         const nsAString& aContentType,
+                                         ErrorResult& aRv) override;
 
-  virtual bool IsMemoryFile() const override { return true; }
+  bool IsMemoryFile() const override { return true; }
 
   size_t GetAllocationSize() const override { return mLength; }
 
   size_t GetAllocationSize(
       FallibleTArray<BlobImpl*>& aVisitedBlobImpls) const override {
     return GetAllocationSize();
+  }
+
+  void GetBlobImplType(nsAString& aBlobImplType) const override {
+    aBlobImplType = NS_LITERAL_STRING("MemoryBlobImpl");
   }
 
   class DataOwner final : public mozilla::LinkedListElement<DataOwner> {
@@ -122,7 +126,7 @@ class MemoryBlobImpl final : public BaseBlobImpl {
     NS_FORWARD_NSIIPCSERIALIZABLEINPUTSTREAM(mSerializableInputStream->)
 
    private:
-    ~DataOwnerAdapter() {}
+    ~DataOwnerAdapter() = default;
 
     DataOwnerAdapter(DataOwner* aDataOwner, nsIInputStream* aStream)
         : mDataOwner(aDataOwner),
@@ -141,17 +145,23 @@ class MemoryBlobImpl final : public BaseBlobImpl {
   };
 
  private:
+  // File constructor.
+  MemoryBlobImpl(void* aMemoryBuffer, uint64_t aLength, const nsAString& aName,
+                 const nsAString& aContentType, int64_t aLastModifiedDate)
+      : BaseBlobImpl(aName, aContentType, aLength, aLastModifiedDate),
+        mDataOwner(new DataOwner(aMemoryBuffer, aLength)) {
+    MOZ_ASSERT(mDataOwner && mDataOwner->mData, "must have data");
+  }
+
   // Create slice
   MemoryBlobImpl(const MemoryBlobImpl* aOther, uint64_t aStart,
                  uint64_t aLength, const nsAString& aContentType)
-      : BaseBlobImpl(NS_LITERAL_STRING("MemoryBlobImpl"), aContentType,
-                     aOther->mStart + aStart, aLength),
+      : BaseBlobImpl(aContentType, aOther->mStart + aStart, aLength),
         mDataOwner(aOther->mDataOwner) {
     MOZ_ASSERT(mDataOwner && mDataOwner->mData, "must have data");
-    mImmutable = aOther->mImmutable;
   }
 
-  ~MemoryBlobImpl() {}
+  ~MemoryBlobImpl() = default;
 
   // Used when backed by a memory store
   RefPtr<DataOwner> mDataOwner;

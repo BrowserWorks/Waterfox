@@ -16,13 +16,14 @@ from collections import namedtuple
 from datetime import datetime
 
 if sys.platform.startswith('linux') or sys.platform.startswith('darwin'):
-    from tasks_unix import run_all_tests
+    from .tasks_unix import run_all_tests
 else:
-    from tasks_win import run_all_tests
+    from .tasks_win import run_all_tests
 
-from progressbar import ProgressBar, NullProgressBar
-from results import TestOutput, escape_cmdline
-from structuredlog import TestLogger
+from .progressbar import ProgressBar, NullProgressBar
+from .remote import init_remote_dir, init_device
+from .results import TestOutput, escape_cmdline
+from .structuredlog import TestLogger
 
 TESTS_LIB_DIR = os.path.dirname(os.path.abspath(__file__))
 JS_DIR = os.path.dirname(os.path.dirname(TESTS_LIB_DIR))
@@ -86,6 +87,13 @@ def js_quote(quote, s):
 os.path.relpath = _relpath
 
 
+def extend_condition(condition, value):
+    if condition:
+        condition += " || "
+    condition += "({})".format(value)
+    return condition
+
+
 class JitTest:
 
     VALGRIND_CMD = []
@@ -128,7 +136,8 @@ class JitTest:
         # True means force Pacific time for the test
         self.tz_pacific = False
         # Additional files to include, in addition to prologue.js
-        self.other_includes = []
+        self.other_lib_includes = []
+        self.other_script_includes = []
         # List of other configurations to test with.
         self.test_also = []
         # List of other configurations to test with all existing variants.
@@ -147,6 +156,7 @@ class JitTest:
         # Skip-if condition. We don't have a xulrunner, but we can ask the shell
         # directly.
         self.skip_if_cond = ''
+        self.skip_variant_if_cond = {}
 
         # Expected by the test runner. Always true for jit-tests.
         self.enable = True
@@ -160,7 +170,8 @@ class JitTest:
         t.allow_overrecursed = self.allow_overrecursed
         t.valgrind = self.valgrind
         t.tz_pacific = self.tz_pacific
-        t.other_includes = self.other_includes[:]
+        t.other_lib_includes = self.other_lib_includes[:]
+        t.other_script_includes = self.other_script_includes[:]
         t.test_also = self.test_also
         t.test_join = self.test_join
         t.expect_error = self.expect_error
@@ -171,11 +182,15 @@ class JitTest:
         t.is_module = self.is_module
         t.is_binast = self.is_binast
         t.skip_if_cond = self.skip_if_cond
+        t.skip_variant_if_cond = self.skip_variant_if_cond
         return t
 
     def copy_and_extend_jitflags(self, variant):
         t = self.copy()
         t.jitflags.extend(variant)
+        for flags in variant:
+            if flags in self.skip_variant_if_cond:
+                t.skip_if_cond = extend_condition(t.skip_if_cond, self.skip_variant_if_cond[flags])
         return t
 
     def copy_variants(self, variants):
@@ -191,7 +206,7 @@ class JitTest:
         # For each list of jit flags, make a copy of the test.
         return [self.copy_and_extend_jitflags(v) for v in variants]
 
-    COOKIE = '|jit-test|'
+    COOKIE = b'|jit-test|'
 
     # We would use 500019 (5k19), but quit() only accepts values up to 127, due to fuzzers
     SKIPPED_EXIT_STATUS = 59
@@ -200,10 +215,10 @@ class JitTest:
     @classmethod
     def find_directives(cls, file_name):
         meta = ''
-        line = open(file_name).readline()
+        line = open(file_name, "rb").readline()
         i = line.find(cls.COOKIE)
         if i != -1:
-            meta = ';' + line[i + len(cls.COOKIE):].strip('\n')
+            meta = ';' + line[i + len(cls.COOKIE):].decode(errors='strict').strip('\n')
         return meta
 
     @classmethod
@@ -271,12 +286,19 @@ class JitTest:
                             print("warning: couldn't parse thread-count"
                                   " {}".format(value))
                     elif name == 'include':
-                        test.other_includes.append(value)
+                        test.other_lib_includes.append(value)
+                    elif name == 'local-include':
+                        test.other_script_includes.append(value)
                     elif name == 'skip-if':
-                        # Ensure that skip-ifs are composable
-                        if test.skip_if_cond:
-                            test.skip_if_cond += " || "
-                        test.skip_if_cond += "({})".format(value)
+                        test.skip_if_cond = extend_condition(test.skip_if_cond, value)
+                    elif name == 'skip-variant-if':
+                        try:
+                            [variant, condition] = value.split(',')
+                            test.skip_variant_if_cond[variant] = extend_condition(
+                                test.skip_if_cond,
+                                condition)
+                        except ValueError:
+                            print("warning: couldn't parse skip-variant-if")
                     else:
                         print('{}: warning: unrecognized |jit-test| attribute'
                               ' {}'.format(path, part))
@@ -347,8 +369,10 @@ class JitTest:
         cmd += list(set(self.jitflags))
         for expr in exprs:
             cmd += ['-e', expr]
-        for inc in self.other_includes:
+        for inc in self.other_lib_includes:
             cmd += ['-f', libdir + inc]
+        for inc in self.other_script_includes:
+            cmd += ['-f', scriptdir_var + inc]
         if self.skip_if_cond:
             cmd += ['-e', "if ({}) quit({})".format(self.skip_if_cond, self.SKIPPED_EXIT_STATUS)]
         cmd += ['--module-load-path', moduledir]
@@ -419,11 +443,12 @@ def run_test_remote(test, device, prefix, options):
     if options.show_cmd:
         print(escape_cmdline(cmd))
 
-    env = {}
+    env = {
+        'LD_LIBRARY_PATH': os.path.dirname(prefix[0])
+    }
+
     if test.tz_pacific:
         env['TZ'] = 'PST8PDT'
-
-    env['LD_LIBRARY_PATH'] = options.remote_test_root
 
     cmd = ADBDevice._escape_command_line(cmd)
     start = datetime.now()
@@ -496,7 +521,10 @@ def check_output(out, err, rc, timed_out, test, options):
             return False
 
     if test.expect_crash:
-        if sys.platform == 'win32' and rc == 3 - 2 ** 31:
+        # Python 3 on Windows interprets process exit codes as unsigned
+        # integers, where Python 2 used to allow signed integers. Account for
+        # each possibility here.
+        if sys.platform == 'win32' and rc in (3 - 2 ** 31, 3 + 2 ** 31):
             return True
 
         if sys.platform != 'win32' and rc == -11:
@@ -528,8 +556,7 @@ def check_output(out, err, rc, timed_out, test, options):
 
         # Allow a non-zero exit code if we want to allow unhandlable OOM, but
         # only if we actually got unhandlable OOM.
-        if test.allow_unhandlable_oom \
-           and 'Assertion failure: [unhandlable oom]' in err:
+        if test.allow_unhandlable_oom and 'MOZ_CRASH([unhandlable oom]' in err:
             return True
 
         # Allow a non-zero exit code if we want to all too-much-recursion and
@@ -761,7 +788,7 @@ def run_tests_local(tests, num_tests, prefix, options, slog):
 
 def get_remote_results(tests, device, prefix, options):
     try:
-        for i in xrange(0, options.repeat):
+        for i in range(0, options.repeat):
             for test in tests:
                 yield run_test_remote(test, device, prefix, options)
     except Exception as e:
@@ -771,61 +798,25 @@ def get_remote_results(tests, device, prefix, options):
         sys.stderr.write("Error running remote tests: {}".format(e.message))
 
 
-def push_libs(options, device):
-    # This saves considerable time in pushing unnecessary libraries
-    # to the device but needs to be updated if the dependencies change.
-    required_libs = ['libnss3.so', 'libmozglue.so', 'libnspr4.so',
-                     'libplc4.so', 'libplds4.so']
-
-    for file in os.listdir(options.local_lib):
-        if file in required_libs:
-            remote_file = posixpath.join(options.remote_test_root, file)
-            device.push(os.path.join(options.local_lib, file), remote_file)
-            device.chmod(remote_file, root=True)
-
-
-def push_progs(options, device, progs):
-    for local_file in progs:
-        remote_file = posixpath.join(options.remote_test_root,
-                                     os.path.basename(local_file))
-        device.push(local_file, remote_file)
-        device.chmod(remote_file, root=True)
-
-
-def init_remote_dir(device, path, root=True):
-    device.rm(path, recursive=True, force=True, root=root)
-    device.mkdir(path, parents=True, root=root)
-    device.chmod(path, recursive=True, root=root)
-
-
 def run_tests_remote(tests, num_tests, prefix, options, slog):
     # Setup device with everything needed to run our tests.
-    from mozdevice import ADBDevice, ADBError, ADBTimeoutError
+    from mozdevice import ADBError, ADBTimeoutError
     try:
-        device = ADBDevice(device=options.device_serial,
-                           test_root=options.remote_test_root)
+        device = init_device(options)
 
-        init_remote_dir(device, options.remote_test_root)
-
+        prefix[0] = posixpath.join(options.remote_test_root, 'bin', 'js')
         # Update the test root to point to our test directory.
-        jit_tests_dir = posixpath.join(options.remote_test_root, 'jit-tests')
-        options.remote_test_root = posixpath.join(jit_tests_dir, 'jit-tests')
+        jit_tests_dir = posixpath.join(options.remote_test_root, 'tests')
+        options.remote_test_root = posixpath.join(jit_tests_dir, 'tests')
+        jtd_tests = posixpath.join(options.remote_test_root)
 
-        # Push js shell and libraries.
         init_remote_dir(device, jit_tests_dir)
-        push_libs(options, device)
-        push_progs(options, device, [prefix[0]])
-        device.chmod(options.remote_test_root, recursive=True, root=True)
-
-        jtd_tests = posixpath.join(jit_tests_dir, 'tests')
-        init_remote_dir(device, jtd_tests)
         device.push(JS_TESTS_DIR, jtd_tests, timeout=600)
         device.chmod(jtd_tests, recursive=True, root=True)
 
         device.push(os.path.dirname(TEST_DIR), options.remote_test_root,
                     timeout=600)
         device.chmod(options.remote_test_root, recursive=True, root=True)
-        prefix[0] = os.path.join(options.remote_test_root, 'js')
     except (ADBError, ADBTimeoutError):
         print("TEST-UNEXPECTED-FAIL | jit_test.py" +
               " : Device initialization failed")

@@ -41,7 +41,7 @@ add_task(async function testCustomize() {
 
   // Make sure we got some data.
   ok(
-    snapshot.parent && snapshot.parent.length > 0,
+    snapshot.parent && !!snapshot.parent.length,
     "Got parent telemetry events in the snapshot"
   );
 
@@ -56,7 +56,10 @@ add_task(async function testCustomize() {
   // Events are now [method, object, value, extra] as expected.
   Assert.deepEqual(
     relatedEvents,
-    [["link", "customize", "manageThemes"], ["link", "customize", "getThemes"]],
+    [
+      ["link", "customize", "manageThemes"],
+      ["link", "customize", "getThemes"],
+    ],
     "The events are recorded correctly"
   );
 

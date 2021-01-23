@@ -4,13 +4,11 @@
 
 from __future__ import absolute_import, print_function, unicode_literals
 
-import ConfigParser
 import os
+import shlex
 import subprocess
-from collections import defaultdict
 
 import yaml
-from mozboot.util import get_state_dir
 
 
 class PresetHandler(object):
@@ -52,7 +50,7 @@ class PresetHandler(object):
             print("error: must set the $EDITOR environment variable to use --edit-presets")
             return
 
-        subprocess.call([os.environ['EDITOR'], self.path])
+        subprocess.call(shlex.split(os.environ['EDITOR']) + [self.path])
 
     def save(self, name, **data):
         self.presets[name] = data
@@ -97,49 +95,3 @@ class MergedHandler(object):
                 val = '\n  '.join([''] + val.splitlines() + [''])  # indent all lines by 2 spaces
                 print("Presets from {}:".format(handler.path))
                 print(val)
-
-
-def migrate_old_presets(presets):
-    """Move presets from the old `autotry.ini` format to the new
-    `try_presets.yml` one.
-
-    Args:
-        presets (PresetHandler): Handler to migrate old presets into.
-    """
-    from .selectors.syntax import AutoTry, SyntaxParser
-    old_preset_path = os.path.join(get_state_dir(), 'autotry.ini')
-    if os.path.isfile(presets.path) or not os.path.isfile(old_preset_path):
-        return
-
-    print("migrating saved presets from '{}' to '{}'".format(old_preset_path, presets.path))
-    config = ConfigParser.ConfigParser()
-    config.read(old_preset_path)
-
-    unknown = defaultdict(list)
-    for section in config.sections():
-        for name, value in config.items(section):
-            kwargs = {}
-            if section == 'fuzzy':  # try fuzzy
-                kwargs['query'] = [value]
-                kwargs['selector'] = 'fuzzy'
-
-            elif section == 'try':  # try syntax
-                parser = SyntaxParser()
-                kwargs = vars(parser.parse_args(AutoTry.split_try_string(value)))
-                kwargs = {k: v for k, v in kwargs.items() if v != parser.get_default(k)}
-                kwargs['selector'] = 'syntax'
-
-            else:
-                unknown[section].append("{} = {}".format(name, value))
-                continue
-
-            presets.save(name, **kwargs)
-
-    os.remove(old_preset_path)
-
-    if unknown:
-        for section, values in unknown.items():
-            print("""
-warning: unknown section '{}', the following presets were not migrated:
-  {}
-""".format(section, '\n  '.join(values)).lstrip())

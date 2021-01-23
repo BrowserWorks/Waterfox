@@ -9,7 +9,6 @@
 #include "HTMLFormControlAccessible.h"
 #include "nsAccUtils.h"
 #include "DocAccessible.h"
-#include "nsIAccessibleRelation.h"
 #include "Relation.h"
 #include "Role.h"
 #include "States.h"
@@ -20,7 +19,6 @@
 #include "nsIDOMXULMenuListElement.h"
 #include "nsIDOMXULRadioGroupElement.h"
 #include "nsIDOMXULSelectCntrlItemEl.h"
-#include "nsIEditor.h"
 #include "nsIFrame.h"
 #include "nsITextControlFrame.h"
 #include "nsMenuPopupFrame.h"
@@ -312,7 +310,7 @@ Accessible* XULRadioGroupAccessible::CurrentItem() const {
     return nullptr;
   }
 
-  RefPtr<Element> currentItemElm;
+  RefPtr<dom::Element> currentItemElm;
   nsCOMPtr<nsIDOMXULRadioGroupElement> group =
       mSelectControl->AsXULRadioGroup();
   if (group) {
@@ -334,7 +332,7 @@ void XULRadioGroupAccessible::SetCurrentItem(const Accessible* aItem) {
     return;
   }
 
-  nsCOMPtr<Element> itemElm = aItem->Elm();
+  nsCOMPtr<dom::Element> itemElm = aItem->Elm();
   nsCOMPtr<nsIDOMXULRadioGroupElement> group =
       mSelectControl->AsXULRadioGroup();
   if (group) {

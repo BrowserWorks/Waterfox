@@ -1,0 +1,314 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY appmenu.tooltip                     "Uddit cuɓirgol">
+<!ENTITY navbarOverflow.label                "Kuutorɗe goɗɗe…">
+
+<!-- Tab context menu -->
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "Ñippu Tabbere">
+<!ENTITY  unpinTab.label                     "Yowtu Tabbere">
+
+<!ENTITY  listAllTabs.label      "Waɗ doggol tabbe kala">
+<!-- LOCALIZATION NOTE (allTabsMenu.searchTabs.label): "Search" is a verb, as
+in "Search through tabs". -->
+
+<!ENTITY tabCmd.label "Tabbere Hesere">
+<!ENTITY openFileCmd.label "Uddit Fiilde…">
+<!ENTITY printCmd.label "Winndito…">
+
+<!ENTITY taskManagerCmd.label "Yiilorde golle">
+
+<!ENTITY menubarCmd.label "Palal Dosi">
+<!ENTITY menubarCmd.accesskey "P">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY personalbarCmd.label "Palal Maantore">
+<!ENTITY personalbarCmd.accesskey "M">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY bookmarksToolbarItem.label "Maantorto Teme Palal Kuutorɗe">
+
+<!ENTITY fullScreenCmd.label "Njaajeendi Yaynirde">
+
+
+<!-- LOCALIZATION NOTE (fxa.signin) Used to define the different labels
+     for the Waterfox Account toolbar signin menu screen. -->
+
+<!-- LOCALIZATION NOTE (fxa.unverified) Used to define the different labels
+     for the Waterfox Account toolbar unverified menu screen. -->
+
+<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
+     for the Waterfox Account toolbart menu screen. The `Signed in as` text is
+     followed by the user's email. -->
+
+
+<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
+     for the Waterfox Account toolbar menu screen. The `Signed in as` text is
+     followed by the user's email. -->
+
+
+<!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
+     for the Waterfox Account toolbar menu screen.  -->
+
+ <!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "jooni ko e jaajeende yaynirde">
+<!ENTITY fullscreenWarning.generic.label "Ndee fiilannde jonni ko e njaajeendi yaynirde">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "Yaltu njaajeendi yaynirde (Ech)">
+<!ENTITY exitDOMFullscreenMac.button "Yaltu njaajeendi yaynirde (Ech)">
+
+<!-- LOCALIZATION NOTE (pictureInPicture.label, pictureInPicture.accesskey):
+     these two strings are used when right-clicking on a video in the
+     content area when the Picture-in-Picture feature is enabled. -->
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "Tamde">
+<!ENTITY pointerlockWarning.afterDomain.label "nana ɗowa doborde maa. Ñoƴƴu Ech ngam ɓamtude ɗowgol.">
+<!ENTITY pointerlockWarning.generic.label "Ndee fiilannde nana ɗowa doborde maa. Ñoƴƴu Ech ngam ɓamtude ɗowgol.">
+
+<!ENTITY showAllBookmarks2.label "Hollu Maantore Fof">
+<!ENTITY recentBookmarks.label "Maantoraaɗe ko Ɓooyaani">
+<!ENTITY bookmarksToolbarChevron.tooltip "Hollu maantore goɗɗe">
+
+<!ENTITY printButton.label            "Waanjito">
+<!ENTITY printButton.tooltip          "Waanjito ngoo hello">
+
+
+
+<!ENTITY searchItem.title             "Yiylo">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "Jaɓɓorgo">
+<!ENTITY homeButton.defaultPage.tooltip "&brandShortName; Jaɓɓorgo">
+
+<!ENTITY bookmarksButton.label          "Maantore">
+
+<!ENTITY bookmarksSubview.label             "Maantore">
+<!ENTITY bookmarksMenuButton2.label         "Dosol Maantore">
+<!ENTITY bookmarksMenuButton.other.label    "Maantore Goɗɗe">
+<!ENTITY bookmarksMenuButton.mobile.label   "Maantore Cinndel">
+<!ENTITY viewBookmarksSidebar2.label        "Hollu Palal Maantore">
+<!ENTITY hideBookmarksSidebar.label         "Suuɗ Palal Sawndo Maantore">
+<!ENTITY viewBookmarksToolbar.label         "Hollu Palal Maantore">
+<!ENTITY hideBookmarksToolbar.label         "Suuɗ Palal Maantore">
+<!ENTITY searchBookmarks.label              "Yiylo Maantore">
+<!ENTITY bookmarkingTools.label             "Kuutorɗe Maantorgol">
+<!ENTITY addBookmarksMenu.label             "Ɓeydu Dosol Maantore to Palal Kuutorɗe">
+<!ENTITY removeBookmarksMenu.label          "Ittu Dosol Maantore e Palal Kuutorɗe">
+
+<!ENTITY historyButton.label            "Aslol">
+
+<!ENTITY downloads.label              "Gaawte">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "Gaawte">
+<!ENTITY addons.label                 "Ɓeyditte">
+
+<!ENTITY webDeveloperMenu.label       "Topagol Geese">
+
+<!ENTITY newNavigatorCmd.label        "Henorde Hesere">
+<!ENTITY newPrivateWindow.label     "Henorde Suturo Hesere">
+
+<!ENTITY editMenu.label         "Taƴto">
+<!ENTITY preferencesCmd2.label       "Cuɓe">
+<!ENTITY preferencesCmdUnix.label       "Cuɓoraaɗe">
+
+<!ENTITY overflowCustomizeToolbar.label       "Heertin Palal Kuutorɗe…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "H">
+
+<!ENTITY historyMenu.label "Aslol">
+<!ENTITY historyUndoMenu.label "Tabbe Uddaaɗe Sakket">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "Kenorɗe Uddaaɗe Sakket">
+
+<!ENTITY appMenuHistory.showAll.label "Hollu Asli ɗii Fof">
+<!ENTITY appMenuHistory.clearRecent.label "Momtu Aslol Sakketol…">
+<!ENTITY appMenuHistory.restoreSession.label "Artir Yillannde Ɓennunde">
+<!ENTITY appMenuHistory.viewSidebar.label "Hollu Aslol Palal Sawndo">
+<!ENTITY appMenuHistory.recentHistory.label "Aslol Cakkitiingol">
+<!ENTITY appMenuHelp.label "&amp;Ballal">
+
+<!ENTITY appMenuRemoteTabs.label "Tabbe synckaaɗe">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Alaa tabbe udditiiɗe">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "Hollu Goɗɗe">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Hollu tabbe goɗɗe e ngol kaɓirgol">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Hollu Fof">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Hollu tabbe fof iwɗe e ngol kaɓirgol">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Hurmin cynkugol tabbe ngam yiyde tabbe iwɗe e kaɓirɗi maa goɗɗi.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Waterfox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Aɗa yiyde tabbe maa iwɗe e kaɓirɗi goɗɗi?">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "Uddit Cuɓoraaɗe Jahdingol">
+<!ENTITY appMenuRemoteTabs.unverified.label "Konte maa ina cokli ƴeewteede.">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Toppito Kaɓirɗi…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "Yiy Tabbe Cynkaaɗe">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "Seŋ Masiŋ Goɗɗo">
+
+<!ENTITY appMenuRecentHighlights.label "Maantinooje Cakkitiiɗe">
+
+<!ENTITY customizeMenu.addToToolbar.label "Ɓeydu e palal kuutorɗe">
+<!ENTITY customizeMenu.addToToolbar.accesskey "Ɓ">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "Ɓeydu e Overflow Cuɓirgol">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "C">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Pintu ummoraade Overflow Cuɓirgol">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "P">
+<!ENTITY customizeMenu.removeFromToolbar.label "Ittu e  palal kuutorɗe">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "I">
+<!ENTITY customizeMenu.addMoreItems.label "Ɓeeydu ngeɗon ngoɗkon…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "Ɓ">
+<!-- LOCALIZATION NOTE (reportExtension.label) This label is used in the extensions
+     toolbar buttons context menus, a user can use this command to submit to Mozilla
+     an abuse report related to that extension. "Report" is a verb. -->
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "Goɗɗum">
+
+<!ENTITY contentSearchSubmit.tooltip  "Naatnu njiilaw">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "Yiylo">
+<!ENTITY searchIcon.tooltip           "Yiylo">
+
+<!ENTITY openLinkCmdInTab.accesskey   "T">
+
+<!ENTITY pageAction.copyLink.label    "Natto Jokkol">
+
+<!-- LOCALIZATION NOTE(pocket-button.tooltiptext, saveToPocketCmd.label, saveLinkToPocketCmd.label, pocketMenuitem.label):
+  "Pocket" is a brand name. -->
+
+<!ENTITY emailPageCmd.label           "Jokkol Iimeel…">
+
+<!-- Media (video/audio) controls -->
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoom.label                 "Lonngo">
+
+<!ENTITY sidebarCloseButton.tooltip     "Uddu palal sawndo">
+
+<!ENTITY quitApplicationCmdWin2.label       "Yaltu">
+<!ENTITY quitApplicationCmdWin2.accesskey   "Y">
+<!ENTITY quitApplicationCmdWin2.tooltip     "Yaltu &brandShorterName;">
+<!ENTITY quitApplicationCmd.label       "Yaltu">
+<!ENTITY quitApplicationCmd.accesskey   "Y">
+<!ENTITY quitApplicationCmdMac2.label   "Yaltu &brandShorterName;">
+
+<!ENTITY allowPopups.accesskey "p">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Taƴto Cuɓoraaɗe Falorde Cuppitte…">
+<!ENTITY editPopupSettings.label "Taƴto Cuɓe Falorde Cuppitte…">
+<!ENTITY editPopupSettings.accesskey "T">
+<!ENTITY dontShowMessage.accesskey "D">
+
+<!ENTITY findOnCmd.label     "Yiylo e Ngoo Hello…">
+
+<!ENTITY spellAddDictionaries.label "Ɓeydu Caggitorɗe…">
+<!ENTITY spellAddDictionaries.accesskey "Ɓ">
+
+
+<!-- LOCALIZATION NOTE:
+     protections.etpMoreInfo.label: The text a screen reader speaks when focused on the info button. -->
+<!-- LOCALIZATION NOTE:
+     protections.siteNotWorking.label: The link to be clicked to open the sub-panel view
+     protections.siteNotWorkingView.title: The heading/title of the sub-panel view -->
+<!-- LOCALIZATION NOTE:
+     In the Site Not Working? view, we suggest turning off protections if
+     the user is experiencing issues with any of a variety of functionality.
+     protections.siteNotWorkingView.header: The header of the list
+     protections.siteNotWorkingView.issueList.*: The list items, shown in a <ul> -->
+
+<!-- LOCALIZATION NOTE (protections.blocking2.label, protections.notBlocking2.label, protections.notFound.label):
+     In the protections panel, Content Blocking category items are in three sections:
+     "Blocked" for categories being blocked in the current page,
+     "Allowed" for categories detected but not blocked in the current page, and
+     "None Detected" for categories not detected in the current page.
+     These strings are used in the header labels of each of these sections. -->
+<!-- LOCALIZATION NOTE (protections.notBlocking.why.label, protections.notBlocking.why.etp*.tooltip):
+     The "Allowed" header also includes a "Why?" link that, when hovered, shows
+     a tooltip explaining why these items were not blocked in the page. -->
+
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "Tabbe wanngorde">
+
+<!ENTITY syncBrand.shortName.label    "Sanngoɗin">
+
+<!ENTITY customizeMode.autoHideDownloadsButton.label "Suuɗ e jaajol">
+
+
+
+
+
+
+
+
+
+<!ENTITY uiTour.infoPanel.close "Uddu">
+
+<!ENTITY panicButton.thankyou.msg1                "Aslol maa cakkitiingol momtaama.">
+<!ENTITY panicButton.thankyou.msg2                "Wanngo e suturo!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Jaaraama!">
+
+<!ENTITY updateAvailable.panelUI.label "Aawto kesɗitinal &brandShorterName;">
+<!ENTITY updateManual.panelUI.label "Aawto tumbitere &brandShorterName; hesere">
+<!ENTITY updateRestart.panelUI.label2 "Huɓɓit ngam hesɗitinde &brandShorterName;.">
+
+<!ENTITY sendToDevice.syncNotReady.label "Jahdingol kaɓirɗi...">
+
+<!ENTITY pageAction.shareUrl.label "Lollin">
+<!ENTITY pageAction.shareMore.label "Goɗɗum…">
+
+<!ENTITY libraryButton.tooltip "Yiy aslol, maantore danndaaɗe, e goɗɗe">
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+<!ENTITY accessibilityIndicator.tooltip "Fannuuji Weeɓitaare Kurminama">

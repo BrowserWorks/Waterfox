@@ -27,9 +27,11 @@
 //   X - tab drag
 //   X - tab remove from the middle
 //   X - Without add-tab button -> can be hidden while testing manually. in talos always with the button
-let aboutNewTabService = Cc[
-  "@mozilla.org/browser/aboutnewtab-service;1"
-].getService(Ci.nsIAboutNewTabService);
+ChromeUtils.defineModuleGetter(
+  this,
+  "AboutNewTab",
+  "resource:///modules/AboutNewTab.jsm"
+);
 
 /* globals res:true, sequenceArray:true */
 
@@ -78,9 +80,9 @@ Tart.prototype = {
       }, "newtab-url-changed");
     });
     if (url === "about:newtab") {
-      aboutNewTabService.resetNewTabURL();
+      AboutNewTab.resetNewTabURL();
     } else {
-      aboutNewTabService.newTabURL = url;
+      AboutNewTab.newTabURL = url;
     }
     return promise;
   },
@@ -128,10 +130,10 @@ Tart.prototype = {
     this._endDetection = this.tabDetector;
     this._win.BrowserOpenTab();
     // Modifying the style for each tab right after opening seems like it could regress performance,
-    // However, overlaying a global style over browser.xul actually ends up having greater ovrehead,
+    // However, overlaying a global style over browser.xhtml actually ends up having greater ovrehead,
     // especially while closing the last of many tabs (a noticeable ~250ms delay before expanding the rest).
     // To overlay the style globally, add at tart/chrome.manifest:
-    // style chrome://browser/content/browser.xul chrome://tart/content/tab-min-width-1px.css
+    // style chrome://browser/content/browser.xhtml chrome://tart/content/tab-min-width-1px.css
     // where the file tab-min-width-1px.css is:
     // .tabbrowser-tab[fadein]:not([pinned]) { min-width: 1px !important; }
     // Additionally, the global style overlay apparently messes with intervals recording when layout.frame_rate=10000:
@@ -480,17 +482,6 @@ Tart.prototype = {
       }
     }
 
-    function getReferenceCustomizationDuration() {
-      // Code by jaws.
-      try {
-        let deck = document.getElementById("content-deck");
-        let cstyle = window.getComputedStyle(deck);
-        return 1000 * parseFloat(cstyle.transitionDuration, 10);
-      } catch (e) {
-        return 150; // Value at the time of writing
-      }
-    }
-
     this.unpinTart();
     var tabRefDuration = getMaxTabTransitionTimeMs(this._tartTab);
     if (tabRefDuration < 20 || tabRefDuration > 2000) {
@@ -498,7 +489,7 @@ Tart.prototype = {
       tabRefDuration = 250;
     }
 
-    var custRefDuration = getReferenceCustomizationDuration();
+    var custRefDuration = 0;
 
     var subtests = {
       init: [

@@ -39,6 +39,7 @@
 #include "nsIDOMEventListener.h"
 #include "SurfaceCache.h"
 #include "mozilla/dom/Document.h"
+#include "mozilla/dom/DocumentInlines.h"
 
 namespace mozilla {
 
@@ -68,7 +69,7 @@ class SVGRootRenderingObserver final : public SVGRenderingObserver {
     MOZ_ASSERT(elem, "no root SVG node for us to observe");
 
     SVGObserverUtils::AddRenderingObserver(elem, this);
-    mInObserverList = true;
+    mInObserverSet = true;
   }
 
   void ResumeHonoringInvalidations() { mHonoringInvalidations = true; }
@@ -103,9 +104,9 @@ class SVGRootRenderingObserver final : public SVGRenderingObserver {
 
     // Our caller might've removed us from rendering-observer list.
     // Add ourselves back!
-    if (!mInObserverList) {
+    if (!mInObserverSet) {
       SVGObserverUtils::AddRenderingObserver(elem, this);
-      mInObserverList = true;
+      mInObserverSet = true;
     }
   }
 
@@ -564,7 +565,6 @@ void VectorImage::SendInvalidationNotifications() {
   // we would miss the subsequent invalidations if we didn't send out the
   // notifications indirectly in |InvalidateObservers...|.
 
-  MOZ_ASSERT(mHasPendingInvalidation);
   mHasPendingInvalidation = false;
   SurfaceCache::RemoveImage(ImageKey(this));
 
@@ -650,6 +650,9 @@ Maybe<AspectRatio> VectorImage::GetIntrinsicRatio() {
 
 NS_IMETHODIMP_(Orientation)
 VectorImage::GetOrientation() { return Orientation(); }
+
+NS_IMETHODIMP_(bool)
+VectorImage::HandledOrientation() { return false; }
 
 //******************************************************************************
 NS_IMETHODIMP
@@ -890,7 +893,7 @@ bool VectorImage::MaybeRestrictSVGContext(
 
     if (overridePAR) {
       // The SVGImageContext must take account of the preserveAspectRatio
-      // overide:
+      // override:
       MOZ_ASSERT(!aSVGContext->GetPreserveAspectRatio(),
                  "FLAG_FORCE_PRESERVEASPECTRATIO_NONE is not expected if a "
                  "preserveAspectRatio override is supplied");
@@ -1101,8 +1104,8 @@ already_AddRefed<SourceSurface> VectorImage::CreateSurface(
   // our gfxDrawable into it. (We use FILTER_NEAREST since we never scale here.)
   auto frame = MakeNotNull<RefPtr<imgFrame>>();
   nsresult rv = frame->InitWithDrawable(
-      aSVGDrawable, aParams.size, SurfaceFormat::B8G8R8A8,
-      SamplingFilter::POINT, aParams.flags, backend);
+      aSVGDrawable, aParams.size, SurfaceFormat::OS_RGBA, SamplingFilter::POINT,
+      aParams.flags, backend);
 
   // If we couldn't create the frame, it was probably because it would end
   // up way too big. Generally it also wouldn't fit in the cache, but the prefs
@@ -1131,12 +1134,15 @@ already_AddRefed<SourceSurface> VectorImage::CreateSurface(
   NotNull<RefPtr<ISurfaceProvider>> provider =
       MakeNotNull<SimpleSurfaceProvider*>(ImageKey(this), surfaceKey, frame);
 
-  if (SurfaceCache::Insert(provider) == InsertOutcome::SUCCESS &&
-      aParams.size != aParams.drawSize) {
-    // We created a new surface that wasn't the size we requested, which means
-    // we entered factor-of-2 mode. We should purge any surfaces we no longer
-    // need rather than waiting for the cache to expire them.
-    SurfaceCache::PruneImage(ImageKey(this));
+  if (SurfaceCache::Insert(provider) == InsertOutcome::SUCCESS) {
+    if (aParams.size != aParams.drawSize) {
+      // We created a new surface that wasn't the size we requested, which means
+      // we entered factor-of-2 mode. We should purge any surfaces we no longer
+      // need rather than waiting for the cache to expire them.
+      SurfaceCache::PruneImage(ImageKey(this));
+    }
+  } else {
+    aWillCache = false;
   }
 
   return surface.forget();
@@ -1182,7 +1188,7 @@ void VectorImage::Show(gfxDrawable* aDrawable,
   MOZ_ASSERT(aDrawable, "Should have a gfxDrawable by now");
   gfxUtils::DrawPixelSnapped(aParams.context, aDrawable,
                              SizeDouble(aParams.size), region,
-                             SurfaceFormat::B8G8R8A8, aParams.samplingFilter,
+                             SurfaceFormat::OS_RGBA, aParams.samplingFilter,
                              aParams.flags, aParams.opacity, false);
 
 #ifdef DEBUG
@@ -1212,10 +1218,19 @@ bool VectorImage::StartDecodingWithResult(uint32_t aFlags,
   return mIsFullyLoaded;
 }
 
-bool VectorImage::RequestDecodeWithResult(uint32_t aFlags,
-                                          uint32_t aWhichFrame) {
-  // SVG images are ready to draw when they are loaded
-  return mIsFullyLoaded;
+imgIContainer::DecodeResult VectorImage::RequestDecodeWithResult(
+    uint32_t aFlags, uint32_t aWhichFrame) {
+  // SVG images are ready to draw when they are loaded and don't have an error.
+
+  if (mError) {
+    return imgIContainer::DECODE_REQUEST_FAILED;
+  }
+
+  if (!mIsFullyLoaded) {
+    return imgIContainer::DECODE_REQUESTED;
+  }
+
+  return imgIContainer::DECODE_SURFACE_AVAILABLE;
 }
 
 NS_IMETHODIMP
@@ -1281,6 +1296,11 @@ VectorImage::RequestDiscard() {
   if (mDiscardable && mLockCount == 0) {
     SurfaceCache::RemoveImage(ImageKey(this));
     mProgressTracker->OnDiscard();
+  }
+
+  if (Document* doc =
+          mSVGDocumentWrapper ? mSVGDocumentWrapper->GetDocument() : nullptr) {
+    doc->ReportUseCounters();
   }
 
   return NS_OK;
@@ -1505,12 +1525,6 @@ void VectorImage::PropagateUseCounters(Document* aParentDocument) {
   }
 }
 
-void VectorImage::ReportUseCounters() {
-  if (Document* doc = mSVGDocumentWrapper->GetDocument()) {
-    doc->ReportUseCounters();
-  }
-}
-
 nsIntSize VectorImage::OptimalImageSizeForDest(const gfxSize& aDest,
                                                uint32_t aWhichFrame,
                                                SamplingFilter aSamplingFilter,
@@ -1526,6 +1540,44 @@ nsIntSize VectorImage::OptimalImageSizeForDest(const gfxSize& aDest,
 already_AddRefed<imgIContainer> VectorImage::Unwrap() {
   nsCOMPtr<imgIContainer> self(this);
   return self.forget();
+}
+
+void VectorImage::MediaFeatureValuesChangedAllDocuments(
+    const MediaFeatureChange& aChange) {
+  if (!mSVGDocumentWrapper) {
+    return;
+  }
+
+  // Don't bother if the document hasn't loaded yet.
+  if (!mIsFullyLoaded) {
+    return;
+  }
+
+  if (Document* doc = mSVGDocumentWrapper->GetDocument()) {
+    if (nsPresContext* presContext = doc->GetPresContext()) {
+      presContext->MediaFeatureValuesChangedAllDocuments(aChange);
+      // Media feature value changes don't happen in the middle of layout,
+      // so we don't need to call InvalidateObserversOnNextRefreshDriverTick
+      // to invalidate asynchronously.
+      //
+      // Ideally we would not invalidate images if the media feature value
+      // change did not cause any updates to the document, but since non-
+      // animated SVG images do not have their refresh driver ticked, it
+      // is the invalidation (and then the painting) which is what causes
+      // the document to be flushed. Theme and system metrics changes are
+      // rare, though, so it's not a big deal to invalidate even if it
+      // doesn't cause any change.
+      SendInvalidationNotifications();
+    }
+  }
+}
+
+nsresult VectorImage::GetHotspotX(int32_t* aX) {
+  return Image::GetHotspotX(aX);
+}
+
+nsresult VectorImage::GetHotspotY(int32_t* aY) {
+  return Image::GetHotspotY(aY);
 }
 
 }  // namespace image

@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 /* Created from build/server/static/css/inline-selection.css */
 window.inlineSelectionCss = `
 .button, .highlight-button-cancel, .highlight-button-download, .highlight-button-copy {
@@ -412,18 +416,44 @@ window.inlineSelectionCss = `
   margin: 5px;
   width: auto;
   font-size: 18px; }
-  .highlight-button-download img {
+
+.highlight-button-download img {
     height: 16px;
     width: 16px;
-    padding-inline-end: 8px; }
+}
+
+.highlight-button-download:-moz-locale-dir(rtl) {
+  flex-direction: reverse;
+}
+
+.highlight-button-download img:-moz-locale-dir(ltr) {
+  padding-inline-end: 8px;
+}
+
+.highlight-button-download img:-moz-locale-dir(rtl) {
+  padding-inline-start: 8px;
+}
 
 .highlight-button-copy {
   margin: 5px;
   width: auto; }
-  .highlight-button-copy img {
+
+.highlight-button-copy img {
     height: 16px;
     width: 16px;
-    padding-inline-end: 8px; }
+}
+
+.highlight-button-copy:-moz-locale-dir(rtl) {
+  flex-direction: reverse;
+}
+
+.highlight-button-copy img:-moz-locale-dir(ltr) {
+  padding-inline-end: 8px;
+}
+
+.highlight-button-copy img:-moz-locale-dir(rtl) {
+  padding-inline-start: 8px;
+}
 
 .pixel-dimensions {
   position: absolute;

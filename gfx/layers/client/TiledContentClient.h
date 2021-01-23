@@ -62,7 +62,7 @@ struct AcquiredBackBuffer {
         mCapture(aCapture),
         mBackBuffer(aBackBuffer),
         mUpdatedRect(aUpdatedRect),
-        mTextureClients(aTextureClients) {}
+        mTextureClients(std::move(aTextureClients)) {}
 
   AcquiredBackBuffer(const AcquiredBackBuffer&) = delete;
   AcquiredBackBuffer& operator=(const AcquiredBackBuffer&) = delete;
@@ -315,7 +315,7 @@ class SharedFrameMetricsHelper {
  * This buffer provides an implementation of ValidateTile using a
  * thebes callback and can support painting using a single paint buffer.
  * Whether a single paint buffer is used is controlled by
- * gfxPrefs::PerTileDrawing().
+ * StaticPrefs::PerTileDrawing().
  */
 class ClientTiledLayerBuffer {
  public:

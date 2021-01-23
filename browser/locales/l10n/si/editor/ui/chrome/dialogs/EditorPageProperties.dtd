@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "පිටු ලක්ෂණ">
+<!ENTITY location.label "ස්ථානය:">
+<!ENTITY lastModified.label "අවසන් වරට වෙනස් කළේ:">
+<!ENTITY titleInput.label "සිරස්තලය:">
+<!ENTITY titleInput.accessKey "T">
+<!ENTITY authorInput.label "කතුවරයා:">
+<!ENTITY authorInput.accessKey "A">
+<!ENTITY descriptionInput.label "විස්තරය:">
+<!ENTITY descriptionInput.accessKey "D">
+<!ENTITY locationNewPage.label "[නව පිටුවකි, තවම සුරැකී නැත]">
+<!ENTITY EditHEADSource1.label "Advanced users:">
+<!ENTITY EditHEADSource2.label "To edit other contents of the &lt;head&gt; region, use &quot;HTML Source&quot; in the View Menu or Edit Mode Toolbar.">

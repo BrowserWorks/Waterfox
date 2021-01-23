@@ -1,3 +1,5 @@
+"use strict";
+
 const { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
 
 var httpServer = null;
@@ -70,7 +72,7 @@ function run_test() {
     Ci.nsIScriptSecurityManager
   );
   var uri = make_uri("http://localhost:" + httpServer.identity.primaryPort);
-  var principal = ssm.createCodebasePrincipal(uri, {});
+  var principal = ssm.createContentPrincipal(uri, {});
 
   if (pm.testPermissionFromPrincipal(principal, "offline-app") != 0) {
     dump(
@@ -88,6 +90,7 @@ function run_test() {
   );
   dump(ps.getBoolPref("browser.cache.offline.enable"));
   ps.setBoolPref("browser.cache.offline.enable", true);
+  ps.setBoolPref("browser.cache.offline.storage.enable", true);
   ps.setComplexValue(
     "browser.cache.offline.parent_directory",
     Ci.nsIFile,
@@ -95,7 +98,7 @@ function run_test() {
   );
 
   cacheUpdateObserver = {
-    observe: function() {
+    observe() {
       dump("got offline-cache-update-completed\n");
       // offline cache update completed.
 

@@ -1,17 +1,13 @@
 # flate2
 
-[![Build Status](https://travis-ci.org/alexcrichton/flate2-rs.svg?branch=master)](https://travis-ci.org/alexcrichton/flate2-rs)
-[![Build status](https://ci.appveyor.com/api/projects/status/9tatexq47i3ee13k?svg=true)](https://ci.appveyor.com/project/alexcrichton/flate2-rs)
 [![Crates.io](https://img.shields.io/crates/v/flate2.svg?maxAge=2592000)](https://crates.io/crates/flate2)
 [![Documentation](https://docs.rs/flate2/badge.svg)](https://docs.rs/flate2)
 
-A streaming compression/decompression library for Rust. The underlying
-implementation by default uses [`miniz`](https://github.com/richgel999/miniz) but
-can optionally be configured to use the system zlib, if available.
+A streaming compression/decompression library DEFALTE-based streams in Rust.
 
-There is also an experimental rust backend that uses the
-[`miniz_oxide`](https://crates.io/crates/miniz_oxide) crate. This avoids the need
-to build C code, but hasn't gone through as much testing as the other backends.
+This crate by default implemented as a wrapper around the `miniz_oxide` crate, a
+port of `miniz.c` to Rust. This crate can also optionally use the zlib library
+or `miniz.c` itself.
 
 Supported formats:
 
@@ -22,36 +18,34 @@ Supported formats:
 ```toml
 # Cargo.toml
 [dependencies]
-flate2 = "0.2"
+flate2 = "1.0"
 ```
 
-Using zlib instead of miniz:
+Using zlib instead of the Rust backend:
 
 ```toml
 [dependencies]
-flate2 = { version = "0.2", features = ["zlib"], default-features = false }
+flate2 = { version = "1.0", features = ["zlib"], default-features = false }
 ```
 
-Using the rust back-end:
+Using `miniz.c`:
 
 ```toml
 [dependencies]
-flate2 = { version = "0.2", features = ["rust_backend"], default-features = false }
+flate2 = { version = "1.0", features = ["miniz-sys"], default-features = false }
 ```
 
 ## Compression
 
 ```rust
-extern crate flate2;
-
 use std::io::prelude::*;
 use flate2::Compression;
 use flate2::write::ZlibEncoder;
 
 fn main() {
     let mut e = ZlibEncoder::new(Vec::new(), Compression::default());
-    e.write(b"foo");
-    e.write(b"bar");
+    e.write_all(b"foo");
+    e.write_all(b"bar");
     let compressed_bytes = e.finish();
 }
 ```
@@ -59,8 +53,6 @@ fn main() {
 ## Decompression
 
 ```rust,no_run
-extern crate flate2;
-
 use std::io::prelude::*;
 use flate2::read::GzDecoder;
 

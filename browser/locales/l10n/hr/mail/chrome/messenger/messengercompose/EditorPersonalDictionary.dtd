@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Osobni rječnik">
+
+<!ENTITY wordEditField.label "Nova riječ:">
+<!ENTITY wordEditField.accessKey "N">
+<!ENTITY AddButton.label "Dodaj">
+<!ENTITY AddButton.accessKey "a">
+<!ENTITY DictionaryList.label "Riječi u rječniku:">
+<!ENTITY DictionaryList.accessKey "R">
+<!ENTITY RemoveButton.label "Ukloni">
+<!ENTITY RemoveButton.accessKey "U">
+
+<!ENTITY CloseButton.label "Zatvori">
+<!ENTITY CloseButton.accessKey "t">

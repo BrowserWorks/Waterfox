@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.junk.title "Gereksiz ve şüpheli posta">
+<!ENTITY junkSettings.caption "Global gereksiz posta ayarları">
+<!ENTITY junkMail.intro "Hesaba özgün gereksiz posta ayarları için hesap ayarlarını ziyaret edin.">
+<!-- Junk Mail Controls -->
+
+<!ENTITY manualMark.label "İletileri gereksiz olarak işaretlediğimde:">
+<!ENTITY manualMark.accesskey "l">
+<!ENTITY manualMarkModeMove.label "Hesaba ait &quot;Gereksiz&quot; dizinine taşı">
+<!ENTITY manualMarkModeMove.accesskey "t">
+<!ENTITY manualMarkModeDelete.label "İletileri sil">
+<!ENTITY manualMarkModeDelete.accesskey "s">
+
+<!ENTITY markAsRead.intro "Okunmuş olarak işaretle:">
+<!ENTITY autoMarkAsRead.label "&brandShortName; iletileri gereksiz tespit zamanı">
+<!ENTITY autoMarkAsRead.accesskey "g">
+<!ENTITY manualMarkAsRead.label "Elle gereksiz işaretlendiğinde">
+<!ENTITY manualMarkAsRead.accesskey "r">
+
+<!ENTITY enableJunkLogging.label "Gereksiz posta süzgeç günlüğü tut">
+<!ENTITY enableJunkLogging.accesskey "e">
+<!ENTITY openJunkLog.label "Günlüğü göster">
+<!ENTITY openJunkLog.accesskey "G">
+<!ENTITY resetTrainingData.label "Ögrenilmiş verileri sil">
+<!ENTITY resetTrainingData.accesskey "r">
+
+<!ENTITY pref.suspectMail.caption "Şüpheli posta">
+<!-- Phishing Detector -->
+
+<!ENTITY pref.phishing.caption "E-posta sahtekârlığı">
+<!ENTITY enablePhishingDetector.label "Okuduğum iletinin sahtekârlık girişimi olup olmadığını bana göster">
+<!ENTITY enablePhishingDetector.accesskey "O">
+<!-- Anti Virus -->
+
+<!ENTITY pref.antivirus.caption "Anti-virüs">
+<!ENTITY antiVirus.label "Anti-virüs istemcilerin gelen iletilerin daha kolay taranmasına izin ver">
+<!ENTITY antiVirus.accesskey "A">

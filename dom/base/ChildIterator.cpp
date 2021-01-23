@@ -8,7 +8,6 @@
 #include "nsContentUtils.h"
 #include "mozilla/dom/Document.h"
 #include "mozilla/dom/HTMLSlotElement.h"
-#include "mozilla/dom/XBLChildrenElement.h"
 #include "mozilla/dom/ShadowRoot.h"
 #include "nsIAnonymousContentCreator.h"
 #include "nsIFrame.h"
@@ -46,17 +45,10 @@ nsIContent* ExplicitChildIterator::GetNextChild() {
       return mChild;
     }
 
-    MOZ_ASSERT(mChild->IsActiveChildrenElement());
-    auto* childrenElement = static_cast<XBLChildrenElement*>(mChild);
-    if (mIndexInInserted < childrenElement->InsertedChildrenLength()) {
-      return childrenElement->InsertedChild(mIndexInInserted++);
-    }
-    mIndexInInserted = 0;
-    mChild = mChild->GetNextSibling();
+    MOZ_ASSERT_UNREACHABLE("This needs to be revisited");
   } else if (mDefaultChild) {
     // If we're already in default content, check if there are more nodes there
     MOZ_ASSERT(mChild);
-    MOZ_ASSERT(mChild->IsActiveChildrenElement());
 
     mDefaultChild = mDefaultChild->GetNextSibling();
     if (mDefaultChild) {
@@ -84,43 +76,11 @@ nsIContent* ExplicitChildIterator::GetNextChild() {
     mChild = mChild->GetNextSibling();
   }
 
-  // Iterate until we find a non-insertion point, or an insertion point with
-  // content.
-  while (mChild) {
-    if (mChild->IsActiveChildrenElement()) {
-      // If the current child being iterated is a content insertion point
-      // then the iterator needs to return the nodes distributed into
-      // the content insertion point.
-      auto* childrenElement = static_cast<XBLChildrenElement*>(mChild);
-      if (childrenElement->HasInsertedChildren()) {
-        // Iterate through elements projected on insertion point.
-        mIndexInInserted = 1;
-        return childrenElement->InsertedChild(0);
-      }
-
-      // Insertion points inside fallback/default content
-      // are considered inactive and do not get assigned nodes.
-      mDefaultChild = mChild->GetFirstChild();
-      if (mDefaultChild) {
-        return mDefaultChild;
-      }
-
-      // If we have an insertion point with no assigned nodes and
-      // no default content, move on to the next node.
-      mChild = mChild->GetNextSibling();
-    } else {
-      // mChild is not an insertion point, thus it is the next node to
-      // return from this iterator.
-      break;
-    }
-  }
-
   return mChild;
 }
 
 void FlattenedChildIterator::Init(bool aIgnoreXBL) {
   if (aIgnoreXBL) {
-    mXBLInvolved = Some(false);
     return;
   }
 
@@ -129,56 +89,25 @@ void FlattenedChildIterator::Init(bool aIgnoreXBL) {
   if (mParent->IsElement()) {
     if (ShadowRoot* shadow = mParent->AsElement()->GetShadowRoot()) {
       mParent = shadow;
-      mXBLInvolved = Some(true);
+      mShadowDOMInvolved = true;
+      return;
+    }
+    if (mParentAsSlot) {
+      mShadowDOMInvolved = true;
       return;
     }
   }
-
-  nsXBLBinding* binding =
-      mParent->OwnerDoc()->BindingManager()->GetBindingWithContent(mParent);
-
-  if (binding) {
-    MOZ_ASSERT(binding->GetAnonymousContent());
-    mParent = binding->GetAnonymousContent();
-    mXBLInvolved = Some(true);
-  }
-}
-
-bool FlattenedChildIterator::ComputeWhetherXBLIsInvolved() const {
-  MOZ_ASSERT(mXBLInvolved.isNothing());
-  // We set mXBLInvolved to true if either the node we're iterating has a
-  // binding with content attached to it (in which case it is handled in Init),
-  // the node is generated XBL content and has an <xbl:children> child, or the
-  // node is a <slot> element.
-  if (!mParent->GetBindingParent()) {
-    return false;
-  }
-
-  if (mParentAsSlot) {
-    return true;
-  }
-
-  for (nsIContent* child = mParent->GetFirstChild(); child;
-       child = child->GetNextSibling()) {
-    if (child->NodeInfo()->Equals(nsGkAtoms::children, kNameSpaceID_XBL)) {
-      MOZ_ASSERT(child->GetBindingParent());
-      return true;
-    }
-  }
-
-  return false;
 }
 
 bool ExplicitChildIterator::Seek(const nsIContent* aChildToFind) {
   if (aChildToFind->GetParent() == mParent &&
-      !aChildToFind->IsRootOfAnonymousSubtree()) {
+      !aChildToFind->IsRootOfNativeAnonymousSubtree()) {
     // Fast path: just point ourselves to aChildToFind, which is a
     // normal DOM child of ours.
     mChild = const_cast<nsIContent*>(aChildToFind);
     mIndexInInserted = 0;
     mDefaultChild = nullptr;
     mIsFirst = false;
-    MOZ_ASSERT(!mChild->IsActiveChildrenElement());
     return true;
   }
 
@@ -199,9 +128,7 @@ nsIContent* ExplicitChildIterator::Get() const {
   }
 
   if (mIndexInInserted) {
-    MOZ_ASSERT(mChild->IsActiveChildrenElement());
-    auto* childrenElement = static_cast<XBLChildrenElement*>(mChild);
-    return childrenElement->InsertedChild(mIndexInInserted - 1);
+    MOZ_ASSERT_UNREACHABLE("This needs to be revisited");
   }
 
   return mDefaultChild ? mDefaultChild : mChild;
@@ -224,14 +151,7 @@ nsIContent* ExplicitChildIterator::GetPreviousChild() {
       return mChild;
     }
 
-    // NB: mIndexInInserted points one past the last returned child so we need
-    // to look *two* indices back in order to return the previous child.
-    MOZ_ASSERT(mChild->IsActiveChildrenElement());
-    auto* childrenElement = static_cast<XBLChildrenElement*>(mChild);
-    if (--mIndexInInserted) {
-      return childrenElement->InsertedChild(mIndexInInserted - 1);
-    }
-    mChild = mChild->GetPreviousSibling();
+    MOZ_ASSERT_UNREACHABLE("This needs to be revisited");
   } else if (mDefaultChild) {
     // If we're already in default content, check if there are more nodes there
     mDefaultChild = mDefaultChild->GetPreviousSibling();
@@ -258,32 +178,6 @@ nsIContent* ExplicitChildIterator::GetPreviousChild() {
     }
 
     mChild = mParent->GetLastChild();
-  }
-
-  // Iterate until we find a non-insertion point, or an insertion point with
-  // content.
-  while (mChild) {
-    if (mChild->IsActiveChildrenElement()) {
-      // If the current child being iterated is a content insertion point
-      // then the iterator needs to return the nodes distributed into
-      // the content insertion point.
-      auto* childrenElement = static_cast<XBLChildrenElement*>(mChild);
-      if (childrenElement->HasInsertedChildren()) {
-        mIndexInInserted = childrenElement->InsertedChildrenLength();
-        return childrenElement->InsertedChild(mIndexInInserted - 1);
-      }
-
-      mDefaultChild = mChild->GetLastChild();
-      if (mDefaultChild) {
-        return mDefaultChild;
-      }
-
-      mChild = mChild->GetPreviousSibling();
-    } else {
-      // mChild is not an insertion point, thus it is the next node to
-      // return from this iterator.
-      break;
-    }
   }
 
   if (!mChild) {

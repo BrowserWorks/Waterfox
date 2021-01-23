@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.mailnews.title              "Mail &amp; Newsgroups">
+<!ENTITY generalSettings.caption          "Configuración cheneral">
+<!ENTITY confirmMove.label                "Confirmar quan se muevan carpetas a la papelera">
+<!ENTITY confirmMove.accesskey            "C">
+<!ENTITY preserveThreading.label          "Preservar as conversacions en ordinar mensaches">
+<!ENTITY preserveThreading.accesskey      "v">
+<!ENTITY mailBiffOnNewWindow.label        "Only check for new mail after opening Mail &amp; Newsgroups">
+<!ENTITY mailBiffOnNewWindow.accesskey    "O">
+
+<!ENTITY defaultMailSettings.description  "Fer que &brandShortName; sía l'aplicación por defecto para:">
+<!ENTITY setDefaultMail.label             "Correu">
+<!ENTITY setDefaultMail.accesskey         "C">
+<!ENTITY setDefaultNews.label             "Noticias">
+<!ENTITY setDefaultNews.accesskey         "N">
+<!ENTITY setDefaultFeed.label             "Canalye">
+<!ENTITY setDefaultFeed.accesskey         "y">
+
+<!ENTITY useInternalSettings.description  "Use &brandShortName; Mail &amp; News when opening browser links for:">
+<!ENTITY useInternalMail.label            "Mail (mailto:)">
+<!ENTITY useInternalMail.accesskey        "a">
+<!ENTITY useInternalNews.label            "News (news:, snews:, nntp:)">
+<!ENTITY useInternalNews.accesskey        "s">
+
+<!ENTITY messengerStartPage.caption       "Pachina d'encieto d'o correu">
+<!ENTITY enableStartPage.label            "Al encetar Correu, amostrar ista pachina en l'aria de mensaje">
+<!ENTITY enableStartPage.accesskey        "j">
+<!ENTITY location.label                   "Adreza:">
+<!ENTITY location.accesskey               "A">
+<!ENTITY useDefault.label                 "Restablir valor por defecto">
+<!ENTITY useDefault.accesskey             "d">
+<!ENTITY rememberLastMsg.label            "Recordar o zaguer mensache trigau">
+<!ENTITY rememberLastMsg.accesskey        "R">

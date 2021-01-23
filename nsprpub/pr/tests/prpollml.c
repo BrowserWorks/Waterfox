@@ -15,14 +15,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef SYMBIAN
-#define POLL_DESC_COUNT 128
-#else
 #define POLL_DESC_COUNT 256  /* This should be greater than the
                               * STACK_POLL_DESC_COUNT macro in
                               * ptio.c to cause syspoll_list to
                               * be created. */
-#endif
 
 static PRPollDesc pd[POLL_DESC_COUNT];
 
@@ -38,8 +34,8 @@ static void Test(void)
         rv = PR_Poll(pd, i, timeout);
         if (rv != 0) {
             fprintf(stderr,
-                "PR_Poll should time out but returns %d (%d, %d)\n",
-                (int) rv, (int) PR_GetError(), (int) PR_GetOSError());
+                    "PR_Poll should time out but returns %d (%d, %d)\n",
+                    (int) rv, (int) PR_GetError(), (int) PR_GetOSError());
             exit(1);
         }
     }
@@ -47,8 +43,8 @@ static void Test(void)
     for (i = POLL_DESC_COUNT; i >= 1; i--) {
         rv = PR_Poll(pd, i, timeout);
         if (rv != 0) {
-            fprintf(stderr, "PR_Poll should time out but returns %d\n", 
-                             (int) rv);
+            fprintf(stderr, "PR_Poll should time out but returns %d\n",
+                    (int) rv);
             exit(1);
         }
     }
@@ -74,22 +70,22 @@ int main(int argc, char **argv)
         sock = PR_NewTCPSocket();
         if (sock == NULL) {
             fprintf(stderr, "PR_NewTCPSocket failed (%d, %d)\n",
-                            (int) PR_GetError(), (int) PR_GetOSError());
+                    (int) PR_GetError(), (int) PR_GetOSError());
             fprintf(stderr, "Ensure the per process file descriptor limit "
-                            "is greater than %d.", POLL_DESC_COUNT);
+                    "is greater than %d.", POLL_DESC_COUNT);
             exit(1);
         }
         if (PR_Bind(sock, &addr) == PR_FAILURE) {
             fprintf(stderr, "PR_Bind failed (%d, %d)\n",
-                            (int) PR_GetError(), (int) PR_GetOSError());
+                    (int) PR_GetError(), (int) PR_GetOSError());
             exit(1);
         }
         if (PR_Listen(sock, 5) == PR_FAILURE) {
             fprintf(stderr, "PR_Listen failed (%d, %d)\n",
-                            (int) PR_GetError(), (int) PR_GetOSError());
+                    (int) PR_GetError(), (int) PR_GetOSError());
             exit(1);
         }
-    
+
         pd[i].fd = sock;
         pd[i].in_flags = PR_POLL_READ;
     }
@@ -99,7 +95,7 @@ int main(int argc, char **argv)
 
     /* then run the test on all three kinds of threads */
     thread = PR_CreateThread(PR_USER_THREAD, ThreadFunc, NULL,
-            PR_PRIORITY_NORMAL, PR_LOCAL_THREAD, PR_JOINABLE_THREAD, 0);
+                             PR_PRIORITY_NORMAL, PR_LOCAL_THREAD, PR_JOINABLE_THREAD, 0);
     if (NULL == thread) {
         fprintf(stderr, "PR_CreateThread failed\n");
         exit(1);
@@ -109,7 +105,7 @@ int main(int argc, char **argv)
         exit(1);
     }
     thread = PR_CreateThread(PR_USER_THREAD, ThreadFunc, NULL,
-            PR_PRIORITY_NORMAL, PR_GLOBAL_THREAD, PR_JOINABLE_THREAD, 0);
+                             PR_PRIORITY_NORMAL, PR_GLOBAL_THREAD, PR_JOINABLE_THREAD, 0);
     if (NULL == thread) {
         fprintf(stderr, "PR_CreateThread failed\n");
         exit(1);
@@ -119,7 +115,7 @@ int main(int argc, char **argv)
         exit(1);
     }
     thread = PR_CreateThread(PR_USER_THREAD, ThreadFunc, NULL,
-            PR_PRIORITY_NORMAL, PR_GLOBAL_BOUND_THREAD, PR_JOINABLE_THREAD, 0);
+                             PR_PRIORITY_NORMAL, PR_GLOBAL_BOUND_THREAD, PR_JOINABLE_THREAD, 0);
     if (NULL == thread) {
         fprintf(stderr, "PR_CreateThread failed\n");
         exit(1);

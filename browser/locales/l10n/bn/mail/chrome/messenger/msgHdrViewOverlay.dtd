@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY hdrViewToolbarShowFull.label "আইকন এবং টেক্সট প্রদর্শন (a)">
+<!ENTITY hdrViewToolbarShowFull.accesskey "a">
+<!ENTITY hdrViewToolbarShowIcons.label "শুধু আইকন প্রদর্শন (I)">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "I">
+<!ENTITY hdrViewToolbarShowText.label "শুধু টেক্সট প্রদর্শন (T)">
+<!ENTITY hdrViewToolbarShowText.accesskey "T">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "প্রেরককে সবসময় উত্তর দেখানো হবে (R)">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "R">
+
+<!ENTITY openAttachmentCmd.label "খুলুন (O)">
+<!ENTITY openAttachmentCmd.accesskey "O">
+<!ENTITY saveAsAttachmentCmd.label "নতুনভাবে সংরক্ষণ... (A)">
+<!ENTITY saveAsAttachmentCmd.accesskey "A">
+<!ENTITY detachAttachmentCmd.label "আলাদা করা…">
+<!ENTITY deleteAttachmentCmd.label "মুছে ফেলা">
+<!ENTITY openAllAttachmentsCmd.label "সব খুলুন...(O)">
+<!ENTITY openAllAttachmentsCmd.accesskey "O">
+<!ENTITY saveAllAttachmentsCmd.label "সব সংরক্ষণ... (S)">
+<!ENTITY saveAllAttachmentsCmd.accesskey "S">
+<!ENTITY detachAllAttachmentsCmd.label "সব আলাদা করা... (D)">
+<!ENTITY detachAllAttachmentsCmd.accesskey "D">
+<!ENTITY deleteAllAttachmentsCmd.label "সব মুছে ফেলা... (e)">
+<!ENTITY deleteAllAttachmentsCmd.accesskey "e">
+
+<!ENTITY copyLinkCmd.label "লিংকের অবস্থান অনুলিপি করা (C)">
+<!ENTITY copyLinkCmd.accesskey "C">
+
+<!ENTITY CopyMessageId.label "বার্তার ID অনুলিপি করা হবে">
+<!ENTITY OpenMessageForMsgId.label "ID এর জন্য বার্তা খোলা হবে">
+<!ENTITY OpenBrowserWithMsgId.label "বার্তা-ID সহ ব্রাউজার খোলা হবে">

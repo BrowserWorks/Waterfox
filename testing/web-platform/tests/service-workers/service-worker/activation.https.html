@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
+<meta name="timeout" content="long">
 <title>service worker: activation</title>
 <script src="/resources/testharness.js"></script>
 <script src="/resources/testharnessreport.js"></script>
@@ -113,10 +114,12 @@ promise_test(t => {
     var scope = 'resources/skip-waiting';
     var worker_url = 'resources/mint-new-worker.py?skip-waiting';
     var registration;
+    var iframe;
     var new_worker;
     return setup_activation_test(t, scope, worker_url)
       .then(result => {
           registration = result.registration;
+          iframe = result.iframe;
           // Finish the request. The iframe does not need to be removed because
           // skipWaiting() was called.
           new_worker = registration.waiting;
@@ -126,6 +129,8 @@ promise_test(t => {
         })
       .then(() => {
           assert_equals(registration.active, new_worker);
+          // Remove the iframe.
+          iframe.remove();
         });
   }, 'skipWaiting bypasses no controllee requirement');
 

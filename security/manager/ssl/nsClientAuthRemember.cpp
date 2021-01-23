@@ -6,14 +6,12 @@
 
 #include "nsClientAuthRemember.h"
 
-#include "nsIX509Cert.h"
 #include "mozilla/BasePrincipal.h"
 #include "mozilla/RefPtr.h"
 #include "nsCRT.h"
 #include "nsNSSCertHelper.h"
 #include "nsIObserverService.h"
 #include "nsNetUtil.h"
-#include "nsISupportsPrimitives.h"
 #include "nsPromiseFlatString.h"
 #include "nsThreadUtils.h"
 #include "nsStringBuffer.h"
@@ -27,8 +25,33 @@
 using namespace mozilla;
 using namespace mozilla::psm;
 
-NS_IMPL_ISUPPORTS(nsClientAuthRememberService, nsIObserver,
-                  nsISupportsWeakReference)
+NS_IMPL_ISUPPORTS(nsClientAuthRememberService, nsIClientAuthRememberService,
+                  nsIObserver)
+NS_IMPL_ISUPPORTS(nsClientAuthRemember, nsIClientAuthRememberRecord)
+
+NS_IMETHODIMP
+nsClientAuthRemember::GetAsciiHost(/*out*/ nsACString& aAsciiHost) {
+  aAsciiHost = mAsciiHost;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsClientAuthRemember::GetFingerprint(/*out*/ nsACString& aFingerprint) {
+  aFingerprint = mFingerprint;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsClientAuthRemember::GetDbKey(/*out*/ nsACString& aDBKey) {
+  aDBKey = mDBKey;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsClientAuthRemember::GetEntryKey(/*out*/ nsACString& aEntryKey) {
+  aEntryKey = mEntryKey;
+  return NS_OK;
+}
 
 nsClientAuthRememberService::nsClientAuthRememberService()
     : monitor("nsClientAuthRememberService.monitor") {}
@@ -46,7 +69,33 @@ nsresult nsClientAuthRememberService::Init() {
   nsCOMPtr<nsIObserverService> observerService =
       mozilla::services::GetObserverService();
   if (observerService) {
-    observerService->AddObserver(this, "profile-before-change", true);
+    observerService->AddObserver(this, "profile-before-change", false);
+    observerService->AddObserver(this, "last-pb-context-exited", false);
+  }
+
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsClientAuthRememberService::ForgetRememberedDecision(const nsACString& key) {
+  {
+    ReentrantMonitorAutoEnter lock(monitor);
+    mSettingsTable.RemoveEntry(PromiseFlatCString(key).get());
+  }
+
+  nsNSSComponent::ClearSSLExternalAndInternalSessionCacheNative();
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsClientAuthRememberService::GetDecisions(
+    nsTArray<RefPtr<nsIClientAuthRememberRecord>>& results) {
+  ReentrantMonitorAutoEnter lock(monitor);
+  for (auto iter = mSettingsTable.Iter(); !iter.Done(); iter.Next()) {
+    if (!nsClientAuthRememberService::IsPrivateBrowsingKey(
+            iter.Get()->mEntryKey)) {
+      results.AppendElement(iter.Get()->mSettings);
+    }
   }
 
   return NS_OK;
@@ -62,36 +111,38 @@ nsClientAuthRememberService::Observe(nsISupports* aSubject, const char* aTopic,
 
     ReentrantMonitorAutoEnter lock(monitor);
     RemoveAllFromMemory();
+  } else if (!nsCRT::strcmp(aTopic, "last-pb-context-exited")) {
+    ReentrantMonitorAutoEnter lock(monitor);
+    ClearPrivateDecisions();
   }
 
   return NS_OK;
 }
 
-void nsClientAuthRememberService::ClearRememberedDecisions() {
+NS_IMETHODIMP
+nsClientAuthRememberService::ClearRememberedDecisions() {
   ReentrantMonitorAutoEnter lock(monitor);
   RemoveAllFromMemory();
+  return NS_OK;
 }
 
-void nsClientAuthRememberService::ClearAllRememberedDecisions() {
-  RefPtr<nsClientAuthRememberService> svc =
-      PublicSSLState()->GetClientAuthRememberService();
-  MOZ_ASSERT(svc);
-  if (svc) {
-    svc->ClearRememberedDecisions();
+nsresult nsClientAuthRememberService::ClearPrivateDecisions() {
+  ReentrantMonitorAutoEnter lock(monitor);
+  for (auto iter = mSettingsTable.Iter(); !iter.Done(); iter.Next()) {
+    if (nsClientAuthRememberService::IsPrivateBrowsingKey(
+            iter.Get()->mEntryKey)) {
+      iter.Remove();
+    }
   }
-
-  svc = PrivateSSLState()->GetClientAuthRememberService();
-  MOZ_ASSERT(svc);
-  if (svc) {
-    svc->ClearRememberedDecisions();
-  }
+  return NS_OK;
 }
 
 void nsClientAuthRememberService::RemoveAllFromMemory() {
   mSettingsTable.Clear();
 }
 
-nsresult nsClientAuthRememberService::RememberDecision(
+NS_IMETHODIMP
+nsClientAuthRememberService::RememberDecision(
     const nsACString& aHostName, const OriginAttributes& aOriginAttributes,
     CERTCertificate* aServerCert, CERTCertificate* aClientCert) {
   // aClientCert == nullptr means: remember that user does not want to use a
@@ -125,7 +176,8 @@ nsresult nsClientAuthRememberService::RememberDecision(
   return NS_OK;
 }
 
-nsresult nsClientAuthRememberService::HasRememberedDecision(
+NS_IMETHODIMP
+nsClientAuthRememberService::HasRememberedDecision(
     const nsACString& aHostName, const OriginAttributes& aOriginAttributes,
     CERTCertificate* aCert, nsACString& aCertDBKey, bool* aRetVal) {
   if (aHostName.IsEmpty()) return NS_ERROR_INVALID_ARG;
@@ -141,17 +193,13 @@ nsresult nsClientAuthRememberService::HasRememberedDecision(
 
   nsAutoCString entryKey;
   GetEntryKey(aHostName, aOriginAttributes, fpStr, entryKey);
-  nsClientAuthRemember settings;
-
   {
     ReentrantMonitorAutoEnter lock(monitor);
     nsClientAuthRememberEntry* entry = mSettingsTable.GetEntry(entryKey.get());
     if (!entry) return NS_OK;
-    settings = entry->mSettings;  // copy
+    entry->mSettings->GetDbKey(aCertDBKey);
+    *aRetVal = true;
   }
-
-  aCertDBKey = settings.mDBKey;
-  *aRetVal = true;
   return NS_OK;
 }
 
@@ -172,10 +220,8 @@ nsresult nsClientAuthRememberService::AddEntryToList(
 
     entry->mEntryKey = entryKey;
 
-    nsClientAuthRemember& settings = entry->mSettings;
-    settings.mAsciiHost = aHostName;
-    settings.mFingerprint = aFingerprint;
-    settings.mDBKey = aDBKey;
+    entry->mSettings =
+        new nsClientAuthRemember(aHostName, aFingerprint, aDBKey, entryKey);
   }
 
   return NS_OK;
@@ -192,4 +238,16 @@ void nsClientAuthRememberService::GetEntryKey(
   hostCert.Append(aFingerprint);
 
   aEntryKey.Assign(hostCert);
+}
+
+bool nsClientAuthRememberService::IsPrivateBrowsingKey(
+    const nsCString& entryKey) {
+  const int32_t separator = entryKey.Find(":", false, 0, -1);
+  nsCString suffix;
+  if (separator >= 0) {
+    entryKey.Left(suffix, separator);
+  } else {
+    suffix = entryKey;
+  }
+  return OriginAttributes::IsPrivateBrowsing(suffix);
 }

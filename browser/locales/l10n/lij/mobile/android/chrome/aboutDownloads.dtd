@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Descaregamenti">
+<!ENTITY aboutDownloads.header                     "I teu descaregamenti">
+<!ENTITY aboutDownloads.empty                      "Nisciun descaregamento">
+
+<!ENTITY aboutDownloads.open                       "Arvi">
+<!ENTITY aboutDownloads.remove                     "Scancella">
+<!ENTITY aboutDownloads.removeAll                  "Scancella tutto">
+<!ENTITY aboutDownloads.pause                      "Pösa">
+<!ENTITY aboutDownloads.resume                     "Repiggia">
+<!ENTITY aboutDownloads.cancel                     "Anulla">
+<!ENTITY aboutDownloads.retry                      "Preuva torna">

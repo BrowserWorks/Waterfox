@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY directoryName.label "Nombre: ">
+<!ENTITY directoryName.accesskey "n">
+<!ENTITY directoryHostname.label "Servidor: ">
+<!ENTITY directoryHostname.accesskey "o">
+<!ENTITY directoryBaseDN.label "DN base: ">
+<!ENTITY directoryBaseDN.accesskey "b">
+<!ENTITY findButton.label "Buscar">
+<!ENTITY findButton.accesskey "B">
+<!ENTITY directorySecure.label "Usar conexión segura (SSL)">
+<!ENTITY directorySecure.accesskey "U">
+<!ENTITY directoryLogin.label "DN para inicio de sesión: ">
+<!ENTITY directoryLogin.accesskey "i">
+<!ENTITY General.tab "General">
+<!ENTITY Offline.tab "Desconectado">
+<!ENTITY Advanced.tab "Avanzadas">
+<!ENTITY portNumber.label "Número de puerto: ">
+<!ENTITY portNumber.accesskey "p">
+<!ENTITY searchFilter.label "Filtro de búsqueda: ">
+<!ENTITY searchFilter.accesskey "f">
+<!ENTITY scope.label "Alcance: ">
+<!ENTITY scope.accesskey "c">
+<!ENTITY scopeOneLevel.label "Un nivel">
+<!ENTITY scopeOneLevel.accesskey "L">
+<!ENTITY scopeSubtree.label "Subárbol">
+<!ENTITY scopeSubtree.accesskey "S">
+<!ENTITY return.label "No devolver más que esto">
+<!ENTITY return.accesskey "r">
+<!ENTITY results.label "resultados">
+<!ENTITY offlineText.label "Puede descargar una copia en local de este directorio para poder trabajar con ella en modo 'Sin conexión'.">
+<!ENTITY saslMechanism.label "Método de inicio de sesión: ">
+<!ENTITY saslMechanism.accesskey "m">
+<!ENTITY saslOff.label "Simple">
+<!ENTITY saslOff.accesskey "l">
+<!ENTITY saslGSSAPI.label "Kerberos (GSSAPI)">
+<!ENTITY saslGSSAPI.accesskey "K">
+<!ENTITY newDirectoryWidth "36em">

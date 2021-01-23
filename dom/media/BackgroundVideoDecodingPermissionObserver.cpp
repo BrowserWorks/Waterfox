@@ -6,7 +6,7 @@
 #include "BackgroundVideoDecodingPermissionObserver.h"
 
 #include "mozilla/AsyncEventDispatcher.h"
-#include "mozilla/StaticPrefs.h"
+#include "mozilla/StaticPrefs_media.h"
 #include "MediaDecoder.h"
 #include "nsContentUtils.h"
 #include "mozilla/dom/Document.h"
@@ -23,7 +23,7 @@ NS_IMETHODIMP
 BackgroundVideoDecodingPermissionObserver::Observe(nsISupports* aSubject,
                                                    const char* aTopic,
                                                    const char16_t* aData) {
-  if (!StaticPrefs::MediaResumeBkgndVideoOnTabhover()) {
+  if (!StaticPrefs::media_resume_bkgnd_video_on_tabhover()) {
     return NS_OK;
   }
 
@@ -142,7 +142,7 @@ BackgroundVideoDecodingPermissionObserver::GetOwnerWindow() const {
     return nullptr;
   }
 
-  nsCOMPtr<nsPIDOMWindowOuter> topWin = outerWin->GetTop();
+  nsCOMPtr<nsPIDOMWindowOuter> topWin = outerWin->GetInProcessTop();
   return topWin.forget();
 }
 
@@ -166,7 +166,7 @@ bool BackgroundVideoDecodingPermissionObserver::IsValidEventSender(
     return false;
   }
 
-  nsCOMPtr<nsPIDOMWindowOuter> senderTop = senderOuter->GetTop();
+  nsCOMPtr<nsPIDOMWindowOuter> senderTop = senderOuter->GetInProcessTop();
   if (!senderTop) {
     return false;
   }

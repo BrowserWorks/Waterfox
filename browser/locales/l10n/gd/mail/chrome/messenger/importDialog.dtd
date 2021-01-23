@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of 
+Netscape Communicator, Please translate using the brandname in respective 
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word 
+"&brandShortName;" below.
+-->
+
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Ion-phortaich">
+<!ENTITY importAll.label          "Ion-phortaich a h-uile rud">
+<!ENTITY importAll.accesskey      "e">
+<!ENTITY importMail.label         "Post">
+<!ENTITY importMail.accesskey     "P">
+<!ENTITY importFeeds.label        "Fo-sgrìobhaidhean inbhirean">
+<!ENTITY importFeeds.accesskey    "d">
+<!ENTITY importAddressbook.label  "Leabhraichean nan seòladh">
+<!ENTITY importAddressbook.accesskey "a">
+<!ENTITY importSettings.label     "Roghainnean">
+<!ENTITY importSettings.accesskey "R">
+<!ENTITY importFilters.label      "Criathragan">
+<!ENTITY importFilters.accesskey  "C">
+
+<!ENTITY  window.width            "45em">
+<!ENTITY  window.macWidth         "50em">
+
+<!ENTITY importTitle.label        "An draoidh ion-phortaidh aig &brandShortName;">
+<!ENTITY importShortDesc.label    "Ion-phortaich post, leabhraichean nan seòladh, roghainnean is criathragan o phrògraman eile">
+
+<!ENTITY importDescription1.label "Ion-phortaichidh an draoidh seo teachdaireachdan puist, clàir ann an leabhraichean nan seòladh, roghainnean agus/no criathragan o phrògraman puist is leabhraichean nan seòladh ann am fòrmatan eile a-steach do &brandShortName;.">
+<!ENTITY importDescription2.label "Nuair a bhios iar air an ion-phortadh, gheibh thu iad am broinn &brandShortName; fhèin.">
+
+<!ENTITY selectDescription.label  "Tagh an seòrsa de dh'fhaidhle a tha thu airson ion-phortadh:">
+<!ENTITY selectDescriptionB.label "Tagh cunntas a tha ann no cruthaich fear ùr:">
+<!ENTITY selectDescription.accesskey "p">
+<!ENTITY acctName.label           "Ainm:">
+<!ENTITY acctName.accesskey       "A">
+<!ENTITY noModulesFound.label     "Cha deach aplacaid no faidhle a lorg as urrainn dhuinn dàta ion-phortadh uaithe.">
+
+<!ENTITY back.label               "&lt; Air ais">
+<!ENTITY forward.label            "Air adhart &gt;">
+<!ENTITY finish.label             "Crìochnaich">
+<!ENTITY cancel.label             "Sguir dheth">
+
+<!ENTITY select.label             "no tagh an seòrsa de ghoireas a tha ri ion-phortadh:">
+
+<!ENTITY title.label              "Tiotal">
+<!ENTITY processing.label         "Ag ion-phortadh…">

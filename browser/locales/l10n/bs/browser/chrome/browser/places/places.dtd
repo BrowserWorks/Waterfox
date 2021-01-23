@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "Biblioteka">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "Organizuj">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "Organizujte vaše zabilješke">
+
+<!ENTITY file.close.label               "Zatvori">
+<!ENTITY file.close.accesskey           "Z">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "Prikaz">
+<!ENTITY views.accesskey                "P">
+<!ENTITY views.tooltip                  "Promijenite vaš prikaz">
+<!ENTITY view.columns.label             "Prikaži kolone">
+<!ENTITY view.columns.accesskey         "P">
+<!ENTITY view.sort.label                "Sortiraj">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "Nesortirano">
+<!ENTITY view.unsorted.accesskey        "N">
+<!ENTITY view.sortAscending.label       "A > Z Redoslijed">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Z > A Redoslijed">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "Uvoz zabilješki iz HTML-a…">
+<!ENTITY importBookmarksFromHTML.accesskey "U">
+<!ENTITY exportBookmarksToHTML.label       "Izvoz zabilješki u HTML…">
+<!ENTITY exportBookmarksToHTML.accesskey   "I">
+<!ENTITY importOtherBrowser.label          "Uvoz podataka iz drugog browsera…">
+<!ENTITY importOtherBrowser.accesskey      "d">
+
+<!ENTITY cmd.backup.label               "Backup…">
+<!ENTITY cmd.backup.accesskey           "B">
+<!ENTITY cmd.restore2.label             "Vrati">
+<!ENTITY cmd.restore2.accesskey         "r">
+<!ENTITY cmd.restoreFromFile.label      "Izaberi fajl…">
+<!ENTITY cmd.restoreFromFile.accesskey  "I">
+
+<!ENTITY col.name.label          "Ime">
+<!ENTITY col.tags.label          "Oznake">
+<!ENTITY col.url.label           "Lokacija">
+<!ENTITY col.mostrecentvisit.label "Posljednja posjeta">
+<!ENTITY col.visitcount.label    "Broj posjeta">
+<!ENTITY col.dateadded.label     "Dodato">
+<!ENTITY col.lastmodified.label  "Zadnja izmjena">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "Uvoz i backup">
+<!ENTITY maintenance.accesskey  "i">
+<!ENTITY maintenance.tooltip    "Uvoz i backup vaših zabilješki">
+
+<!ENTITY backButton.tooltip  "Idi nazad">
+
+<!ENTITY forwardButton.tooltip  "Idi naprijed">
+
+<!ENTITY detailsPane.selectAnItemText.description "Odaberite stavku za pregled i podešavanje">
+

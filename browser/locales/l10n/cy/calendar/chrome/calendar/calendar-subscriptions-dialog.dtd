@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<!-- Calendar Subscriptions Dialog -->
+
+<!ENTITY calendar.subscriptions.dialog.title                            "Tanysgrifio i Galendrau">
+<!ENTITY calendar.subscriptions.dialog.search.label.value               "Dangos calendrau sy'n cynnwys:">
+<!ENTITY calendar.subscriptions.dialog.search.button.label              "Chwilio">
+<!ENTITY calendar.subscriptions.dialog.select.label.value               "Dewis calendrau i danysgrifio iddynt:">
+<!ENTITY calendar.subscriptions.dialog.subscribe.button.label           "Tanysgrifio">
+<!ENTITY calendar.subscriptions.dialog.unsubscribe.button.label         "Dad-danysgrifio">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.busy.label         "Chwilio…">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.nomatches.label    "Heb ganfod cydweddiad.">

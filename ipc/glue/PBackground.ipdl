@@ -2,6 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+include protocol PBackgroundDataBridge;
 include protocol PBackgroundIDBFactory;
 include protocol PBackgroundIndexedDBUtils;
 include protocol PBackgroundSDBConnection;
@@ -23,9 +24,11 @@ include protocol PFileSystemRequest;
 include protocol PGamepadEventChannel;
 include protocol PGamepadTestChannel;
 include protocol PHttpBackgroundChannel;
+include protocol PIdleScheduler;
 include protocol PIPCBlobInputStream;
-include protocol PPendingIPCBlob;
+include protocol PMediaTransport;
 include protocol PRemoteWorker;
+include protocol PRemoteWorkerController;
 include protocol PRemoteWorkerService;
 include protocol PSharedWorker;
 include protocol PTemporaryIPCBlob;
@@ -43,6 +46,7 @@ include protocol PServiceWorkerManager;
 include protocol PServiceWorkerRegistration;
 include protocol PWebAuthnTransaction;
 include protocol PUDPSocket;
+include protocol PVerifySSLServerCert;
 include protocol PVsync;
 
 include DOMTypes;
@@ -54,6 +58,7 @@ include PBackgroundSharedTypes;
 include PBackgroundIDBSharedTypes;
 include PFileSystemParams;
 include ProtocolTypes;
+include PSMIPCTypes;
 include RemoteWorkerTypes;
 include MIDITypes;
 
@@ -68,6 +73,7 @@ namespace ipc {
 
 sync protocol PBackground
 {
+  manages PBackgroundDataBridge;
   manages PBackgroundIDBFactory;
   manages PBackgroundIndexedDBUtils;
   manages PBackgroundSDBConnection;
@@ -89,9 +95,11 @@ sync protocol PBackground
   manages PGamepadEventChannel;
   manages PGamepadTestChannel;
   manages PHttpBackgroundChannel;
+  manages PIdleScheduler;
   manages PIPCBlobInputStream;
-  manages PPendingIPCBlob;
+  manages PMediaTransport;
   manages PRemoteWorker;
+  manages PRemoteWorkerController;
   manages PRemoteWorkerService;
   manages PSharedWorker;
   manages PTemporaryIPCBlob;
@@ -109,11 +117,14 @@ sync protocol PBackground
   manages PServiceWorkerRegistration;
   manages PWebAuthnTransaction;
   manages PUDPSocket;
+  manages PVerifySSLServerCert;
   manages PVsync;
 
 parent:
   // Only called at startup during mochitests to check the basic infrastructure.
   async PBackgroundTest(nsCString testArg);
+
+  async PBackgroundDataBridge(uint64_t channelID);
 
   async PBackgroundIDBFactory(LoggingInfo loggingInfo);
 
@@ -122,7 +133,8 @@ parent:
   // Use only for testing!
   async FlushPendingFileDeletions();
 
-  async PBackgroundSDBConnection(PrincipalInfo principalInfo);
+  async PBackgroundSDBConnection(PersistenceType persistenceType,
+                                 PrincipalInfo principalInfo);
 
   async PBackgroundLSDatabase(PrincipalInfo principalInfo,
                               uint32_t privateBrowsingId,
@@ -214,6 +226,8 @@ parent:
 
   async PServiceWorker(IPCServiceWorkerDescriptor aDescriptor);
 
+  async PRemoteWorkerController(RemoteWorkerData aData);
+
   async PRemoteWorkerService();
 
   async PServiceWorkerContainer();
@@ -225,13 +239,26 @@ parent:
   async RemoveEndpoint(nsString aGroupName, nsCString aEndpointURL,
                        PrincipalInfo aPrincipalInfo);
 
+  async PIdleScheduler();
+
+  async PMediaTransport();
+
+  async PVerifySSLServerCert(ByteArray aServerCert,
+                             ByteArray[] aPeerCertChain,
+                             nsCString aHostName,
+                             int32_t aPort,
+                             OriginAttributes aOriginAttributes,
+                             ByteArray? aStapledOCSPResponse,
+                             ByteArray? aSctsFromTLSExtension,
+                             DelegatedCredentialInfoArg? aDcInfo,
+                             uint32_t aProviderFlags,
+                             uint32_t aCertVerifierFlags);
+
 child:
   async PCache();
   async PCacheStreamControl();
 
   async PParentToChildStream();
-
-  async PPendingIPCBlob(IPCBlob blob);
 
   async PRemoteWorker(RemoteWorkerData data);
 

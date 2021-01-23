@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountTitle.label "Наладжванні рахунку">
+<!ENTITY accountName.label "Назва рахунку:">
+<!ENTITY accountName.accesskey "Н">
+<!ENTITY identityTitle.label "Змоўчная адмета">
+<!ENTITY identityDesc.label "Кожны рахунак мае адмету, або звесткі, якія іншыя людзі бачаць, калі чытаюць вашы лісты.">
+<!ENTITY name.label "Ваша імя:">
+<!ENTITY name.accesskey "І">
+<!ENTITY email.label "Адрас э-пошты:">
+<!ENTITY email.accesskey "Э">
+<!ENTITY replyTo.label "Зваротны адрас:">
+<!ENTITY replyTo.accesskey "З">
+<!ENTITY replyTo.placeholder "Атрымальнікі будуць адказваць на гэты адрас">
+<!ENTITY organization.label "Установа:">
+<!ENTITY organization.accesskey "У">
+<!ENTITY signatureText.label "Тэкст подпісу:">
+<!ENTITY signatureText.accesskey "п">
+<!ENTITY signatureHtml.label "Ужываць HTML">
+<!ENTITY signatureHtml.accesskey "ж">
+<!ENTITY signatureFile.label "Ужываць замест подпіс з файла (тэкст, HTML або выява):">
+<!ENTITY signatureFile.accesskey "ф">
+<!ENTITY choose.label "Выбраць…">
+<!ENTITY choose.accesskey "В">
+<!ENTITY editVCard.label "Рэдагаваць картку…">
+<!ENTITY editVCard.accesskey "К">
+<!ENTITY attachVCard.label "Далучаць маю vCard да лістоў">
+<!ENTITY attachVCard.accesskey "v">
+<!ENTITY manageIdentities.label "Кіраваць адметамі…">
+<!ENTITY manageIdentities.accesskey "а">
+<!ENTITY smtpName.label "Выходны паслугач (SMTP):">
+<!ENTITY smtpName.accesskey "В">
+<!ENTITY smtpDefaultServer.label "Ужываць змоўчны паслугач:">

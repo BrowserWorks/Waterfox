@@ -1,0 +1,28 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-scripts.xul -->
+<!--LOCALIZATION NOTE : FILE The 'Scripts & Plugins' preferences dialog -->
+
+<!ENTITY pref.scripts.title "Betikler ve yan uygulamalar">
+
+<!ENTITY navigator.label "Browser">
+<!ENTITY navigator.accesskey "B">
+<!--LOCALIZATION NOTE (enableJavaScript.label): 'JavaScript' should never be translated -->
+
+<!ENTITY enableJavaScript.label "Enable JavaScript for">
+<!ENTITY allowScripts.label "Allow scripts to:">
+<!ENTITY allowScripts.accesskey "s">
+<!ENTITY allowWindowMoveResize.label "Move or resize existing windows">
+<!ENTITY allowWindowFlip.label "Raise or lower windows">
+<!ENTITY allowWindowStatusChange.label "Change status bar text">
+<!ENTITY allowWindowImageSrcChange.label "Change images">
+<!ENTITY allowContextmenuDisable.label "Disable or replace context menus">
+<!ENTITY allowHideStatusBar.label "Hide the status bar">
+
+<!ENTITY enablePlugin.label "Enable Plugins for">
+
+<!ENTITY whenPluginsRequired.label "When additional plugins are required">
+<!ENTITY displayNotification.label "Display a notification bar at the top of the content area">
+<!ENTITY displayNotification.accesskey "n">

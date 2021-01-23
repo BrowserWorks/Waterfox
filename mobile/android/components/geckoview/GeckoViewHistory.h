@@ -5,7 +5,7 @@
 #ifndef GECKOVIEWHISTORY_H
 #define GECKOVIEWHISTORY_H
 
-#include "IHistory.h"
+#include "mozilla/BaseHistory.h"
 #include "nsDataHashtable.h"
 #include "nsTObserverArray.h"
 #include "nsURIHashKey.h"
@@ -28,47 +28,32 @@ struct VisitedURI {
   bool mVisited = false;
 };
 
-struct TrackedURI {
-  // Per `IHistory`, these are not owning references.
-  nsTObserverArray<mozilla::dom::Link*> mLinks;
-  bool mVisited = false;
-};
-
-class GeckoViewHistory final : public mozilla::IHistory,
-                               public nsITimerCallback,
-                               public nsINamed {
+class GeckoViewHistory final : public mozilla::BaseHistory {
  public:
   NS_DECL_ISUPPORTS
-  NS_DECL_IHISTORY
-  NS_DECL_NSITIMERCALLBACK
-  NS_DECL_NSINAMED
+
+  // IHistory
+  NS_IMETHOD VisitURI(nsIWidget*, nsIURI*, nsIURI* aLastVisitedURI,
+                      uint32_t aFlags) final;
+  NS_IMETHOD SetURITitle(nsIURI*, const nsAString&) final;
 
   static already_AddRefed<GeckoViewHistory> GetSingleton();
+
+  void StartPendingVisitedQueries(const PendingVisitedQueries&) final;
 
   GeckoViewHistory();
 
   void QueryVisitedState(nsIWidget* aWidget,
-                         const nsTArray<nsCOMPtr<nsIURI>>& aURIs);
+                         const nsTArray<RefPtr<nsIURI>>&& aURIs);
   void HandleVisitedState(const nsTArray<VisitedURI>& aVisitedURIs);
 
  private:
   virtual ~GeckoViewHistory();
 
-  void QueryVisitedStateInContentProcess();
-  void QueryVisitedStateInParentProcess();
-  void DispatchNotifyVisited(nsIURI* aURI, mozilla::dom::Document* aDocument);
+  void QueryVisitedStateInContentProcess(const PendingVisitedQueries&);
+  void QueryVisitedStateInParentProcess(const PendingVisitedQueries&);
 
   static mozilla::StaticRefPtr<GeckoViewHistory> sHistory;
-
-  // A map of unvisited links for URIs. If the history delegate reports that
-  // the URI is visited, we'll asynchronously notify and remove the links.
-  nsDataHashtable<nsURIHashKey, TrackedURI> mTrackedURIs;
-
-  // A set of URIs for which we don't know the visited status, and need to
-  // query the history delegate.
-  nsTHashtable<nsURIHashKey> mNewURIs;
-
-  nsCOMPtr<nsITimer> mQueryVisitedStateTimer;
 };
 
 #endif

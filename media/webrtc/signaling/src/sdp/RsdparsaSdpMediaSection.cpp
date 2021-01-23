@@ -11,7 +11,7 @@
 #include "signaling/src/sdp/RsdparsaSdpInc.h"
 
 #include <ostream>
-#include "signaling/src/sdp/SdpErrorHolder.h"
+#include "signaling/src/sdp/SdpParser.h"
 
 #ifdef CRLF
 #  undef CRLF
@@ -67,8 +67,6 @@ SdpMediaSection::Protocol RsdparsaSdpMediaSection::GetProtocol() const {
       return kTcpDtlsRtpSavp;
     case RustSdpProtocolValue::kRustUdpTlsRtpSavpf:
       return kUdpTlsRtpSavpf;
-    case RustSdpProtocolValue::kRustTcpTlsRtpSavpf:
-      return kTcpTlsRtpSavpf;
     case RustSdpProtocolValue::kRustTcpDtlsRtpSavpf:
       return kTcpDtlsRtpSavpf;
     case RustSdpProtocolValue::kRustDtlsSctp:
@@ -77,8 +75,13 @@ SdpMediaSection::Protocol RsdparsaSdpMediaSection::GetProtocol() const {
       return kUdpDtlsSctp;
     case RustSdpProtocolValue::kRustTcpDtlsSctp:
       return kTcpDtlsSctp;
+    case RustSdpProtocolValue::kRustRtpAvp:
+      return kRtpAvp;
+    case RustSdpProtocolValue::kRustRtpAvpf:
+      return kRtpAvpf;
+    case RustSdpProtocolValue::kRustRtpSavp:
+      return kRtpSavp;
   }
-
   MOZ_CRASH("invalid media protocol");
 }
 
@@ -227,9 +230,9 @@ void RsdparsaSdpMediaSection::LoadFormats() {
 }
 
 UniquePtr<SdpConnection> convertRustConnection(RustSdpConnection conn) {
-  std::string addr(conn.addr.unicastAddr);
-  sdp::AddrType type = convertAddressType(conn.addr.addrType);
-  return MakeUnique<SdpConnection>(type, addr, conn.ttl, conn.amount);
+  auto address = convertExplicitlyTypedAddress(&conn.addr);
+  return MakeUnique<SdpConnection>(address.first, address.second, conn.ttl,
+                                   conn.amount);
 }
 
 void RsdparsaSdpMediaSection::LoadConnection() {

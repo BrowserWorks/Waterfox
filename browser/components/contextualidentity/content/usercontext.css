@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 .identity-color-blue {
   --identity-tab-color: #37adff;
   --identity-icon-color: #37adff;
@@ -113,10 +117,15 @@
 .tabbrowser-tab[usercontextid] > .tab-stack > .tab-background > .tab-bottom-line {
   background: linear-gradient(to right, transparent 10%, var(--identity-tab-color) 10%, var(--identity-tab-color) 90%, transparent 90%);
   height: 2px;
+  margin-bottom: 2px;
 }
 
 .tabbrowser-tab[pinned][usercontextid] > .tab-stack > .tab-background > .tab-bottom-line {
   background: linear-gradient(to right, transparent 30%, var(--identity-tab-color) 30%, var(--identity-tab-color) 70%, transparent 70%);
+}
+
+.userContext-icon-inprefs {
+  margin-inline: 4px 10px;
 }
 
 .userContext-icon,

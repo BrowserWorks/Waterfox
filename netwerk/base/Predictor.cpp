@@ -9,7 +9,6 @@
 
 #include "nsAppDirectoryServiceDefs.h"
 #include "nsICacheStorage.h"
-#include "nsICacheStorageService.h"
 #include "nsICachingChannel.h"
 #include "nsICancelable.h"
 #include "nsIChannel.h"
@@ -19,14 +18,11 @@
 #include "nsIFile.h"
 #include "nsIHttpChannel.h"
 #include "nsIInputStream.h"
-#include "nsIIOService.h"
 #include "nsILoadContext.h"
 #include "nsILoadContextInfo.h"
 #include "nsILoadGroup.h"
 #include "nsINetworkPredictorVerifier.h"
 #include "nsIObserverService.h"
-#include "nsIPrefBranch.h"
-#include "nsIPrefService.h"
 #include "nsISpeculativeConnect.h"
 #include "nsITimer.h"
 #include "nsIURI.h"
@@ -37,8 +33,10 @@
 #include "nsThreadUtils.h"
 #include "mozilla/Logging.h"
 
+#include "mozilla/OriginAttributes.h"
 #include "mozilla/Preferences.h"
-#include "mozilla/StaticPrefs.h"
+#include "mozilla/SchedulerGroup.h"
+#include "mozilla/StaticPrefs_network.h"
 #include "mozilla/Telemetry.h"
 
 #include "mozilla/net/NeckoCommon.h"
@@ -67,16 +65,7 @@ static LazyLogModule gPredictorLog("NetworkPredictor");
 #define PREDICTOR_LOG(args) \
   MOZ_LOG(gPredictorLog, mozilla::LogLevel::Debug, args)
 
-#define RETURN_IF_FAILED(_rv) \
-  do {                        \
-    if (NS_FAILED(_rv)) {     \
-      return;                 \
-    }                         \
-  } while (0)
-
 #define NOW_IN_SECONDS() static_cast<uint32_t>(PR_Now() / PR_USEC_PER_SEC)
-
-static const char PREDICTOR_CLEANED_UP_PREF[] = "network.predictor.cleaned-up";
 
 // All these time values are in sec
 static const uint32_t ONE_DAY = 86400U;
@@ -101,21 +90,17 @@ static const uint8_t kRollingLoadOffset = 12;
 static const int32_t kMaxPrefetchRollingLoadCount = 20;
 static const uint32_t kFlagsMask = ((1 << kRollingLoadOffset) - 1);
 
-static bool sEsniEnabled = false;
-
 // ID Extensions for cache entries
 #define PREDICTOR_ORIGIN_EXTENSION "predictor-origin"
 
 // Get the full origin (scheme, host, port) out of a URI (maybe should be part
 // of nsIURI instead?)
-static nsresult ExtractOrigin(nsIURI* uri, nsIURI** originUri,
-                              nsIIOService* ioService) {
+static nsresult ExtractOrigin(nsIURI* uri, nsIURI** originUri) {
   nsAutoCString s;
-  s.Truncate();
   nsresult rv = nsContentUtils::GetASCIIOrigin(uri, s);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  return NS_NewURI(originUri, s, nullptr, nullptr, ioService);
+  return NS_NewURI(originUri, s);
 }
 
 // All URIs we get passed *must* be http or https if they're not null. This
@@ -125,13 +110,7 @@ static bool IsNullOrHttp(nsIURI* uri) {
     return true;
   }
 
-  bool isHTTP = false;
-  uri->SchemeIs("http", &isHTTP);
-  if (!isHTTP) {
-    uri->SchemeIs("https", &isHTTP);
-  }
-
-  return isHTTP;
+  return uri->SchemeIs("http") || uri->SchemeIs("https");
 }
 
 // Listener for the speculative DNS requests we'll fire off, which just ignores
@@ -144,13 +123,6 @@ NS_IMPL_ISUPPORTS(Predictor::DNSListener, nsIDNSListener);
 NS_IMETHODIMP
 Predictor::DNSListener::OnLookupComplete(nsICancelable* request,
                                          nsIDNSRecord* rec, nsresult status) {
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-Predictor::DNSListener::OnLookupByTypeComplete(nsICancelable* request,
-                                               nsIDNSByTypeRecord* res,
-                                               nsresult status) {
   return NS_OK;
 }
 
@@ -261,7 +233,6 @@ NS_IMPL_ISUPPORTS(Predictor, nsINetworkPredictor, nsIObserver,
 
 Predictor::Predictor()
     : mInitialized(false),
-      mCleanedUp(false),
       mStartupTime(0),
       mLastStartupTime(0),
       mStartupCount(1) {
@@ -289,13 +260,6 @@ nsresult Predictor::InstallObserver() {
   rv = obs->AddObserver(this, NS_XPCOM_SHUTDOWN_OBSERVER_ID, false);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  mCleanedUp = Preferences::GetBool(PREDICTOR_CLEANED_UP_PREF, false);
-
-  if (!mCleanedUp) {
-    NS_NewTimerWithObserver(getter_AddRefs(mCleanupTimer), this, 60 * 1000,
-                            nsITimer::TYPE_ONE_SHOT);
-  }
-
   return rv;
 }
 
@@ -305,11 +269,6 @@ void Predictor::RemoveObserver() {
   nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
   if (obs) {
     obs->RemoveObserver(this, NS_XPCOM_SHUTDOWN_OBSERVER_ID);
-  }
-
-  if (mCleanupTimer) {
-    mCleanupTimer->Cancel();
-    mCleanupTimer = nullptr;
   }
 }
 
@@ -322,9 +281,6 @@ Predictor::Observe(nsISupports* subject, const char* topic,
 
   if (!strcmp(NS_XPCOM_SHUTDOWN_OBSERVER_ID, topic)) {
     Shutdown();
-  } else if (!strcmp("timer-callback", topic)) {
-    MaybeCleanupOldDBFiles();
-    mCleanupTimer = nullptr;
   }
 
   return rv;
@@ -420,20 +376,14 @@ nsresult Predictor::Init() {
       do_GetService("@mozilla.org/netwerk/cache-storage-service;1", &rv);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  mIOService = do_GetService("@mozilla.org/network/io-service;1", &rv);
+  mSpeculativeService = do_GetService("@mozilla.org/network/io-service;1", &rv);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  rv = NS_NewURI(getter_AddRefs(mStartupURI), "predictor://startup", nullptr,
-                 mIOService);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  mSpeculativeService = do_QueryInterface(mIOService, &rv);
+  rv = NS_NewURI(getter_AddRefs(mStartupURI), "predictor://startup");
   NS_ENSURE_SUCCESS(rv, rv);
 
   mDnsService = do_GetService("@mozilla.org/network/dns-service;1", &rv);
   NS_ENSURE_SUCCESS(rv, rv);
-
-  Preferences::AddBoolVarCache(&sEsniEnabled, "network.security.esni.enabled");
 
   mInitialized = true;
 
@@ -441,80 +391,6 @@ nsresult Predictor::Init() {
 }
 
 namespace {
-class PredictorThreadShutdownRunner : public Runnable {
- public:
-  PredictorThreadShutdownRunner(nsIThread* ioThread, bool success)
-      : Runnable("net::PredictorThreadShutdownRunner"),
-        mIOThread(ioThread),
-        mSuccess(success) {}
-  ~PredictorThreadShutdownRunner() = default;
-
-  NS_IMETHOD Run() override {
-    MOZ_ASSERT(NS_IsMainThread(), "Shutting down io thread off main thread!");
-    if (mSuccess) {
-      // This means the cleanup happened. Mark so we don't try in the
-      // future.
-      Preferences::SetBool(PREDICTOR_CLEANED_UP_PREF, true);
-    }
-    return mIOThread->AsyncShutdown();
-  }
-
- private:
-  nsCOMPtr<nsIThread> mIOThread;
-  bool mSuccess;
-};
-
-class PredictorOldCleanupRunner : public Runnable {
- public:
-  PredictorOldCleanupRunner(nsIThread* ioThread, nsIFile* dbFile)
-      : Runnable("net::PredictorOldCleanupRunner"),
-        mIOThread(ioThread),
-        mDBFile(dbFile) {}
-
-  ~PredictorOldCleanupRunner() = default;
-
-  NS_IMETHOD Run() override {
-    MOZ_ASSERT(!NS_IsMainThread(), "Cleaning up old files on main thread!");
-    nsresult rv = CheckForAndDeleteOldDBFiles();
-    RefPtr<PredictorThreadShutdownRunner> runner =
-        new PredictorThreadShutdownRunner(mIOThread, NS_SUCCEEDED(rv));
-    NS_DispatchToMainThread(runner);
-    return NS_OK;
-  }
-
- private:
-  nsresult CheckForAndDeleteOldDBFiles() {
-    nsCOMPtr<nsIFile> oldDBFile;
-    nsresult rv = mDBFile->GetParent(getter_AddRefs(oldDBFile));
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    rv = oldDBFile->AppendNative(NS_LITERAL_CSTRING("seer.sqlite"));
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    bool fileExists = false;
-    rv = oldDBFile->Exists(&fileExists);
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    if (fileExists) {
-      rv = oldDBFile->Remove(false);
-      NS_ENSURE_SUCCESS(rv, rv);
-    }
-
-    fileExists = false;
-    rv = mDBFile->Exists(&fileExists);
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    if (fileExists) {
-      rv = mDBFile->Remove(false);
-    }
-
-    return rv;
-  }
-
-  nsCOMPtr<nsIThread> mIOThread;
-  nsCOMPtr<nsIFile> mDBFile;
-};
-
 class PredictorLearnRunnable final : public Runnable {
  public:
   PredictorLearnRunnable(nsIURI* targetURI, nsIURI* sourceURI,
@@ -524,7 +400,9 @@ class PredictorLearnRunnable final : public Runnable {
         mTargetURI(targetURI),
         mSourceURI(sourceURI),
         mReason(reason),
-        mOA(oa) {}
+        mOA(oa) {
+    MOZ_DIAGNOSTIC_ASSERT(targetURI, "Must have a target URI");
+  }
 
   ~PredictorLearnRunnable() = default;
 
@@ -537,14 +415,8 @@ class PredictorLearnRunnable final : public Runnable {
       return NS_OK;
     }
 
-    ipc::URIParams serTargetURI;
-    SerializeURI(mTargetURI, serTargetURI);
-
-    Maybe<ipc::URIParams> serSourceURI;
-    SerializeURI(mSourceURI, serSourceURI);
-
     PREDICTOR_LOG(("predictor::learn (async) forwarding to parent"));
-    gNeckoChild->SendPredLearn(serTargetURI, serSourceURI, mReason, mOA);
+    gNeckoChild->SendPredLearn(mTargetURI, mSourceURI, mReason, mOA);
 
     return NS_OK;
   }
@@ -557,33 +429,6 @@ class PredictorLearnRunnable final : public Runnable {
 };
 
 }  // namespace
-
-void Predictor::MaybeCleanupOldDBFiles() {
-  MOZ_ASSERT(NS_IsMainThread());
-
-  if (!StaticPrefs::network_predictor_enabled() || mCleanedUp) {
-    return;
-  }
-
-  mCleanedUp = true;
-
-  // This is used for cleaning up junk left over from the old backend
-  // built on top of sqlite, if necessary.
-  nsCOMPtr<nsIFile> dbFile;
-  nsresult rv = NS_GetSpecialDirectory(NS_APP_USER_PROFILE_50_DIR,
-                                       getter_AddRefs(dbFile));
-  RETURN_IF_FAILED(rv);
-  rv = dbFile->AppendNative(NS_LITERAL_CSTRING("netpredictions.sqlite"));
-  RETURN_IF_FAILED(rv);
-
-  nsCOMPtr<nsIThread> ioThread;
-  rv = NS_NewNamedThread("NetPredictClean", getter_AddRefs(ioThread));
-  RETURN_IF_FAILED(rv);
-
-  RefPtr<PredictorOldCleanupRunner> runner =
-      new PredictorOldCleanupRunner(ioThread, dbFile);
-  ioThread->Dispatch(runner, NS_DISPATCH_NORMAL);
-}
 
 void Predictor::Shutdown() {
   if (!NS_IsMainThread()) {
@@ -657,11 +502,6 @@ Predictor::PredictNative(nsIURI* targetURI, nsIURI* sourceURI,
     MOZ_DIAGNOSTIC_ASSERT(gNeckoChild);
 
     PREDICTOR_LOG(("    called on child process"));
-
-    Maybe<ipc::URIParams> serTargetURI, serSourceURI;
-    SerializeURI(targetURI, serTargetURI);
-    SerializeURI(sourceURI, serSourceURI);
-
     // If two different threads are predicting concurently, this will be
     // overwritten. Thankfully, we only use this in tests, which will
     // overwrite mVerifier perhaps multiple times for each individual test;
@@ -672,8 +512,8 @@ Predictor::PredictNative(nsIURI* targetURI, nsIURI* sourceURI,
       mChildVerifier = verifier;
     }
     PREDICTOR_LOG(("    forwarding to parent process"));
-    gNeckoChild->SendPredPredict(serTargetURI, serSourceURI, reason,
-                                 originAttributes, verifier);
+    gNeckoChild->SendPredPredict(targetURI, sourceURI, reason, originAttributes,
+                                 verifier);
     return NS_OK;
   }
 
@@ -762,7 +602,7 @@ Predictor::PredictNative(nsIURI* targetURI, nsIURI* sourceURI,
 
   // Now we do the origin-only (and therefore predictor-only) entry
   nsCOMPtr<nsIURI> targetOrigin;
-  rv = ExtractOrigin(uriKey, getter_AddRefs(targetOrigin), mIOService);
+  rv = ExtractOrigin(uriKey, getter_AddRefs(targetOrigin));
   NS_ENSURE_SUCCESS(rv, rv);
   if (!originKey) {
     originKey = targetOrigin;
@@ -839,9 +679,7 @@ void Predictor::PredictForLink(nsIURI* targetURI, nsIURI* sourceURI,
   }
 
   if (!StaticPrefs::network_predictor_enable_hover_on_ssl()) {
-    bool isSSL = false;
-    sourceURI->SchemeIs("https", &isSSL);
-    if (isSSL) {
+    if (sourceURI->SchemeIs("https")) {
       // We don't want to predict from an HTTPS page, to avoid info leakage
       PREDICTOR_LOG(("    Not predicting for link hover - on an SSL page"));
       return;
@@ -849,7 +687,7 @@ void Predictor::PredictForLink(nsIURI* targetURI, nsIURI* sourceURI,
   }
 
   nsCOMPtr<nsIPrincipal> principal =
-      BasePrincipal::CreateCodebasePrincipal(targetURI, originAttributes);
+      BasePrincipal::CreateContentPrincipal(targetURI, originAttributes);
 
   mSpeculativeService->SpeculativeConnect(targetURI, principal, nullptr);
   if (verifier) {
@@ -1206,24 +1044,21 @@ void Predictor::SetupPrediction(int32_t confidence, uint32_t flags,
 
   if (prefetchOk) {
     nsCOMPtr<nsIURI> prefetchURI;
-    rv = NS_NewURI(getter_AddRefs(prefetchURI), uri, nullptr, nullptr,
-                   mIOService);
+    rv = NS_NewURI(getter_AddRefs(prefetchURI), uri);
     if (NS_SUCCEEDED(rv)) {
       mPrefetches.AppendElement(prefetchURI);
     }
   } else if (confidence >=
              StaticPrefs::network_predictor_preconnect_min_confidence()) {
     nsCOMPtr<nsIURI> preconnectURI;
-    rv = NS_NewURI(getter_AddRefs(preconnectURI), uri, nullptr, nullptr,
-                   mIOService);
+    rv = NS_NewURI(getter_AddRefs(preconnectURI), uri);
     if (NS_SUCCEEDED(rv)) {
       mPreconnects.AppendElement(preconnectURI);
     }
   } else if (confidence >=
              StaticPrefs::network_predictor_preresolve_min_confidence()) {
     nsCOMPtr<nsIURI> preresolveURI;
-    rv = NS_NewURI(getter_AddRefs(preresolveURI), uri, nullptr, nullptr,
-                   mIOService);
+    rv = NS_NewURI(getter_AddRefs(preresolveURI), uri);
     if (NS_SUCCEEDED(rv)) {
       mPreresolves.AppendElement(preresolveURI);
     }
@@ -1247,7 +1082,7 @@ nsresult Predictor::Prefetch(nsIURI* uri, nsIURI* referrer,
   nsresult rv = NS_NewChannel(
       getter_AddRefs(channel), uri, nsContentUtils::GetSystemPrincipal(),
       nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
-      nsIContentPolicy::TYPE_OTHER, nullptr, /* nsICookieSettings */
+      nsIContentPolicy::TYPE_OTHER, nullptr, /* nsICookieJarSettings */
       nullptr,                               /* aPerformanceStorage */
       nullptr,                               /* aLoadGroup */
       nullptr,                               /* aCallbacks */
@@ -1276,7 +1111,7 @@ nsresult Predictor::Prefetch(nsIURI* uri, nsIURI* referrer,
     return NS_ERROR_UNEXPECTED;
   }
 
-  nsCOMPtr<nsIReferrerInfo> referrerInfo = new ReferrerInfo(referrer);
+  nsCOMPtr<nsIReferrerInfo> referrerInfo = new dom::ReferrerInfo(referrer);
   rv = httpChannel->SetReferrerInfoWithoutClone(referrerInfo);
   NS_ENSURE_SUCCESS(rv, rv);
   // XXX - set a header here to indicate this is a prefetch?
@@ -1336,7 +1171,7 @@ bool Predictor::RunPredictions(nsIURI* referrer,
     ++totalPredictions;
     ++totalPreconnects;
     nsCOMPtr<nsIPrincipal> principal =
-        BasePrincipal::CreateCodebasePrincipal(uri, originAttributes);
+        BasePrincipal::CreateContentPrincipal(uri, originAttributes);
     mSpeculativeService->SpeculativeConnect(uri, principal, this);
     predicted = true;
     if (verifier) {
@@ -1360,10 +1195,9 @@ bool Predictor::RunPredictions(nsIURI* referrer,
                                     mDNSListener, nullptr, originAttributes,
                                     getter_AddRefs(tmpCancelable));
 
-    bool isHttps;
-    uri->SchemeIs("https", &isHttps);
     // Fetch esni keys if needed.
-    if (sEsniEnabled && isHttps) {
+    if (StaticPrefs::network_security_esni_enabled() &&
+        uri->SchemeIs("https")) {
       nsAutoCString esniHost;
       esniHost.Append("_esni.");
       esniHost.Append(hostname);
@@ -1425,7 +1259,7 @@ Predictor::LearnNative(nsIURI* targetURI, nsIURI* sourceURI,
 
     RefPtr<PredictorLearnRunnable> runnable = new PredictorLearnRunnable(
         targetURI, sourceURI, reason, originAttributes);
-    SystemGroup::Dispatch(TaskCategory::Other, runnable.forget());
+    SchedulerGroup::Dispatch(TaskCategory::Other, runnable.forget());
 
     return NS_OK;
   }
@@ -1465,7 +1299,7 @@ Predictor::LearnNative(nsIURI* targetURI, nsIURI* sourceURI,
         PREDICTOR_LOG(("    load toplevel invalid URI state"));
         return NS_ERROR_INVALID_ARG;
       }
-      rv = ExtractOrigin(targetURI, getter_AddRefs(targetOrigin), mIOService);
+      rv = ExtractOrigin(targetURI, getter_AddRefs(targetOrigin));
       NS_ENSURE_SUCCESS(rv, rv);
       uriKey = targetURI;
       originKey = targetOrigin;
@@ -1475,7 +1309,7 @@ Predictor::LearnNative(nsIURI* targetURI, nsIURI* sourceURI,
         PREDICTOR_LOG(("    startup invalid URI state"));
         return NS_ERROR_INVALID_ARG;
       }
-      rv = ExtractOrigin(targetURI, getter_AddRefs(targetOrigin), mIOService);
+      rv = ExtractOrigin(targetURI, getter_AddRefs(targetOrigin));
       NS_ENSURE_SUCCESS(rv, rv);
       uriKey = mStartupURI;
       originKey = mStartupURI;
@@ -1486,9 +1320,9 @@ Predictor::LearnNative(nsIURI* targetURI, nsIURI* sourceURI,
         PREDICTOR_LOG(("    redirect/subresource invalid URI state"));
         return NS_ERROR_INVALID_ARG;
       }
-      rv = ExtractOrigin(targetURI, getter_AddRefs(targetOrigin), mIOService);
+      rv = ExtractOrigin(targetURI, getter_AddRefs(targetOrigin));
       NS_ENSURE_SUCCESS(rv, rv);
-      rv = ExtractOrigin(sourceURI, getter_AddRefs(sourceOrigin), mIOService);
+      rv = ExtractOrigin(sourceURI, getter_AddRefs(sourceOrigin));
       NS_ENSURE_SUCCESS(rv, rv);
       uriKey = sourceURI;
       originKey = sourceOrigin;
@@ -1722,11 +1556,11 @@ void Predictor::LearnForSubresource(nsICacheEntry* entry, nsIURI* targetURI) {
 
   uint32_t lastLoad;
   nsresult rv = entry->GetLastFetched(&lastLoad);
-  RETURN_IF_FAILED(rv);
+  NS_ENSURE_SUCCESS_VOID(rv);
 
   int32_t loadCount;
   rv = entry->GetFetchCount(&loadCount);
-  RETURN_IF_FAILED(rv);
+  NS_ENSURE_SUCCESS_VOID(rv);
 
   nsCString key;
   key.AssignLiteral(META_DATA_PREFIX);
@@ -2246,15 +2080,14 @@ Predictor::OnPredictPrefetch(nsIURI* aURI, uint32_t httpStatus) {
     return NS_OK;
   }
 
-  ipc::URIParams serURI;
-  SerializeURI(aURI, serURI);
+  MOZ_DIAGNOSTIC_ASSERT(aURI, "aURI must not be null");
 
-  for (auto* cp : ContentParent::AllProcesses(ContentParent::eLive)) {
+  for (auto* cp : dom::ContentParent::AllProcesses(dom::ContentParent::eLive)) {
     PNeckoParent* neckoParent = SingleManagedOrNull(cp->ManagedPNeckoParent());
     if (!neckoParent) {
       continue;
     }
-    if (!neckoParent->SendPredOnPredictPrefetch(serURI, httpStatus)) {
+    if (!neckoParent->SendPredOnPredictPrefetch(aURI, httpStatus)) {
       return NS_ERROR_NOT_AVAILABLE;
     }
   }
@@ -2274,15 +2107,14 @@ Predictor::OnPredictPreconnect(nsIURI* aURI) {
     return NS_OK;
   }
 
-  ipc::URIParams serURI;
-  SerializeURI(aURI, serURI);
+  MOZ_DIAGNOSTIC_ASSERT(aURI, "aURI must not be null");
 
-  for (auto* cp : ContentParent::AllProcesses(ContentParent::eLive)) {
+  for (auto* cp : dom::ContentParent::AllProcesses(dom::ContentParent::eLive)) {
     PNeckoParent* neckoParent = SingleManagedOrNull(cp->ManagedPNeckoParent());
     if (!neckoParent) {
       continue;
     }
-    if (!neckoParent->SendPredOnPredictPreconnect(serURI)) {
+    if (!neckoParent->SendPredOnPredictPreconnect(aURI)) {
       return NS_ERROR_NOT_AVAILABLE;
     }
   }
@@ -2302,15 +2134,14 @@ Predictor::OnPredictDNS(nsIURI* aURI) {
     return NS_OK;
   }
 
-  ipc::URIParams serURI;
-  SerializeURI(aURI, serURI);
+  MOZ_DIAGNOSTIC_ASSERT(aURI, "aURI must not be null");
 
-  for (auto* cp : ContentParent::AllProcesses(ContentParent::eLive)) {
+  for (auto* cp : dom::ContentParent::AllProcesses(dom::ContentParent::eLive)) {
     PNeckoParent* neckoParent = SingleManagedOrNull(cp->ManagedPNeckoParent());
     if (!neckoParent) {
       continue;
     }
-    if (!neckoParent->SendPredOnPredictDNS(serURI)) {
+    if (!neckoParent->SendPredOnPredictDNS(aURI)) {
       return NS_ERROR_NOT_AVAILABLE;
     }
   }

@@ -14,6 +14,7 @@ from ipdl.ast import ASYNC, SYNC, INTR
 from ipdl.ast import IN, OUT, INOUT
 from ipdl.ast import NOT_NESTED, INSIDE_SYNC_NESTED, INSIDE_CPOW_NESTED
 import ipdl.builtin as builtin
+from ipdl.util import hash_str
 
 _DELETE_MSG = '__delete__'
 
@@ -101,7 +102,7 @@ class Type:
                 and self.fullname() == o.fullname())
 
     def __hash__(self):
-        return hash(self.fullname())
+        return hash_str(self.fullname())
 
     # Is this a C++ type?
     def isCxx(self):
@@ -115,6 +116,9 @@ class Type:
     def isAtom(self):
         return False
 
+    def isRefcounted(self):
+        return False
+
     def isUniquePtr(self):
         return False
 
@@ -122,10 +126,10 @@ class Type:
         return self.__class__.__name__
 
     def name(self):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def fullname(self):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def accept(self, visitor, *args):
         visit = getattr(visitor, 'visit' + self.__class__.__name__, None)
@@ -143,9 +147,6 @@ class VoidType(Type):
 
     def isAtom(self):
         return True
-
-    def isRefcounted(self):
-        return False
 
     def name(self): return 'void'
 
@@ -229,8 +230,18 @@ class IPDLType(Type):
 
     @classmethod
     def convertsTo(cls, lesser, greater):
-        if (lesser.nestedRange[0] < greater.nestedRange[0] or
-                lesser.nestedRange[1] > greater.nestedRange[1]):
+        def _unwrap(nr):
+            if isinstance(nr, dict):
+                return _unwrap(nr['nested'])
+            elif isinstance(nr, int):
+                return nr
+            else:
+                raise ValueError('Got unexpected nestedRange value: %s' % nr)
+
+        lnr0, gnr0, lnr1, gnr1 = (
+            _unwrap(lesser.nestedRange[0]), _unwrap(greater.nestedRange[0]),
+            _unwrap(lesser.nestedRange[1]), _unwrap(greater.nestedRange[1]))
+        if (lnr0 < gnr0 or lnr1 > gnr1):
             return False
 
         # Protocols that use intr semantics are not allowed to use
@@ -255,7 +266,7 @@ class IPDLType(Type):
 class MessageType(IPDLType):
     def __init__(self, nested, prio, sendSemantics, direction,
                  ctor=False, dtor=False, cdtype=None, compress=False,
-                 verify=False):
+                 tainted=False, verify=False):
         assert not (ctor and dtor)
         assert not (ctor or dtor) or cdtype is not None
 
@@ -270,6 +281,7 @@ class MessageType(IPDLType):
         self.dtor = dtor
         self.cdtype = cdtype
         self.compress = compress
+        self.tainted = tainted
         self.verify = verify
 
     def isMessage(self): return True
@@ -293,16 +305,20 @@ class MessageType(IPDLType):
 
 
 class ProtocolType(IPDLType):
-    def __init__(self, qname, nested, sendSemantics):
+    def __init__(self, qname, nested, sendSemantics, refcounted):
         self.qname = qname
         self.nestedRange = (NOT_NESTED, nested)
         self.sendSemantics = sendSemantics
         self.managers = []           # ProtocolType
         self.manages = []
         self.hasDelete = False
-        self.hasReentrantDelete = False
+        self.refcounted = refcounted
 
-    def isProtocol(self): return True
+    def isProtocol(self):
+        return True
+
+    def isRefcounted(self):
+        return self.refcounted
 
     def name(self):
         return self.qname.baseid
@@ -362,7 +378,11 @@ class ActorType(IPDLType):
         self.protocol = protocol
         self.nullable = nullable
 
-    def isActor(self): return True
+    def isActor(self):
+        return True
+
+    def isRefcounted(self):
+        return self.protocol.isRefcounted()
 
     def name(self):
         return self.protocol.name()
@@ -518,8 +538,9 @@ class FDType(IPDLType):
 
 
 class EndpointType(IPDLType):
-    def __init__(self, qname):
+    def __init__(self, qname, actor):
         self.qname = qname
+        self.actor = actor
 
     def isEndpoint(self): return True
 
@@ -531,8 +552,9 @@ class EndpointType(IPDLType):
 
 
 class ManagedEndpointType(IPDLType):
-    def __init__(self, qname):
+    def __init__(self, qname, actor):
         self.qname = qname
+        self.actor = actor
 
     def isManagedEndpoint(self): return True
 
@@ -582,7 +604,7 @@ def iteractortypes(t, visited=None):
 
 def hasshmem(type):
     """Return true iff |type| is shmem or has it buried within."""
-    class found:
+    class found(BaseException):
         pass
 
     class findShmem(TypeVisitor):
@@ -778,32 +800,36 @@ class GatherDecls(TcheckVisitor):
             fullname = str(qname)
             p.decl = self.declare(
                 loc=p.loc,
-                type=ProtocolType(qname, p.nested, p.sendSemantics),
+                type=ProtocolType(qname, p.nested, p.sendSemantics, p.refcounted),
                 shortname=p.name,
                 fullname=None if 0 == len(qname.quals) else fullname)
 
             p.parentEndpointDecl = self.declare(
                 loc=p.loc,
                 type=EndpointType(QualifiedId(p.loc, 'Endpoint<' +
-                                              fullname + 'Parent>', ['mozilla', 'ipc'])),
+                                              fullname + 'Parent>', ['mozilla', 'ipc']),
+                                  ActorType(p.decl.type)),
                 shortname='Endpoint<' + p.name + 'Parent>')
             p.childEndpointDecl = self.declare(
                 loc=p.loc,
                 type=EndpointType(QualifiedId(p.loc, 'Endpoint<' +
-                                              fullname + 'Child>', ['mozilla', 'ipc'])),
+                                              fullname + 'Child>', ['mozilla', 'ipc']),
+                                  ActorType(p.decl.type)),
                 shortname='Endpoint<' + p.name + 'Child>')
 
             p.parentManagedEndpointDecl = self.declare(
                 loc=p.loc,
                 type=ManagedEndpointType(QualifiedId(p.loc, 'ManagedEndpoint<' +
                                                      fullname + 'Parent>',
-                                                     ['mozilla', 'ipc'])),
+                                                     ['mozilla', 'ipc']),
+                                         ActorType(p.decl.type)),
                 shortname='ManagedEndpoint<' + p.name + 'Parent>')
             p.childManagedEndpointDecl = self.declare(
                 loc=p.loc,
                 type=ManagedEndpointType(QualifiedId(p.loc, 'ManagedEndpoint<' +
                                                      fullname + 'Child>',
-                                                     ['mozilla', 'ipc'])),
+                                                     ['mozilla', 'ipc']),
+                                         ActorType(p.decl.type)),
                 shortname='ManagedEndpoint<' + p.name + 'Child>')
 
             # XXX ugh, this sucks.  but we need this information to compute
@@ -975,7 +1001,7 @@ class GatherDecls(TcheckVisitor):
             managed.manager = p
             managed.accept(self)
 
-        if 0 == len(p.managers) and 0 == len(p.messageDecls):
+        if not (p.managers or p.messageDecls or p.managesStmts):
             self.error(p.loc,
                        "top-level protocol `%s' cannot be empty",
                        p.name)
@@ -991,9 +1017,6 @@ class GatherDecls(TcheckVisitor):
                 p.loc,
                 "destructor declaration `%s(...)' required for managed protocol `%s'",
                 _DELETE_MSG, p.name)
-
-        p.decl.type.hasReentrantDelete = p.decl.type.hasDelete and self.symtab.lookup(
-            _DELETE_MSG).type.isInterrupt()
 
         # FIXME/cjones declare all the little C++ thingies that will
         # be generated.  they're not relevant to IPDL itself, but
@@ -1074,7 +1097,7 @@ class GatherDecls(TcheckVisitor):
 
         msgtype = MessageType(md.nested, md.prio, md.sendSemantics, md.direction,
                               ctor=isctor, dtor=isdtor, cdtype=cdtype,
-                              compress=md.compress, verify=md.verify)
+                              compress=md.compress, tainted=md.tainted, verify=md.verify)
 
         # replace inparam Param nodes with proper Decls
         def paramToDecl(param):

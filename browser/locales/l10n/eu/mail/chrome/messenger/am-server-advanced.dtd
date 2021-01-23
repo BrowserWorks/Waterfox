@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Kontu-ezarpen aurreratuak">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "IMAP zerbitzariaren direktorioa:">
+<!ENTITY serverDirectory.accesskey "d">
+<!ENTITY usingSubscription.label "Erakutsi harpidetutako karpetak bakarrik">
+<!ENTITY usingSubscription.accesskey "r">
+<!ENTITY dualUseFolders.label "Zerbitzariak azpikarpetak eta mezuak dituzten karpetak onartzen ditu">
+<!ENTITY dualUseFolders.accesskey "k">
+<!ENTITY maximumConnectionsNumber.label "Cachean gordeko diren zerbitzari-konexio kopuru maximoa">
+<!ENTITY maximumConnectionsNumber.accesskey "m">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Hobespen hauek zure IMAP zerbitzariko izen-eremuak zehazten dituzte">
+<!ENTITY personalNamespace.label "Izen-eremu pertsonala:">
+<!ENTITY personalNamespace.accesskey "p">
+<!ENTITY publicNamespace.label "Publikoa (partekatua):">
+<!ENTITY publicNamespace.accesskey "u">
+<!ENTITY otherUsersNamespace.label "Beste erabiltzaileak:">
+<!ENTITY otherUsersNamespace.accesskey "B">
+<!ENTITY overrideNamespaces.label "Onartu zerbitzariak izen-eremu hauek gainidaztea">
+<!ENTITY overrideNamespaces.accesskey "a">
+<!ENTITY pop3DeferringDesc.label "Kontu honetako zerbitzaritik mezuak jaistean, erabili ondorengo karpeta mezu berriak gordetzeko:" >
+<!ENTITY accountInbox.label "Sarrera-ontzia kontu honetarako">
+<!ENTITY accountInbox.accesskey "s">
+<!ENTITY deferToServer.label "Beste kontu baten sarrera-ontzia">
+<!ENTITY deferToServer.accesskey "B">
+<!ENTITY deferGetNewMail.label "Kontuan hartu zerbitzari hau posta berria jasotzerakoan">
+<!ENTITY deferGetNewMail.accesskey "K">

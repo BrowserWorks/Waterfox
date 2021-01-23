@@ -22,11 +22,6 @@ class AboutRedirector : public nsIAboutModule {
 
  protected:
   virtual ~AboutRedirector() {}
-
- private:
-  static bool sAboutLoginsEnabled;
-  static bool sNewTabPageEnabled;
-  static bool sUseAllNewPreferences;
 };
 
 }  // namespace browser

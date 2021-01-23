@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgViewPickerOverlay.dtd UI for showing various views on a folder -->
+
+<!ENTITY viewPicker.label "Werjefte:">
+<!ENTITY viewPicker.accesskey "j">
+<!ENTITY viewAll.label "Alle">
+<!ENTITY viewAll.accesskey "A">
+<!ENTITY viewUnread.label "Net-lêzen">
+<!ENTITY viewUnread.accesskey "N">
+<!ENTITY viewNotDeleted.label "Net-fuortsmiten">
+<!ENTITY viewNotDeleted.accesskey "f">
+<!ENTITY viewTags.label "Labels">
+<!ENTITY viewTags.accesskey "L">
+<!ENTITY viewCustomViews.label "Oanpaste werjeften">
+<!ENTITY viewCustomViews.accesskey "w">
+<!ENTITY viewVirtualFolder.label "Werjefte bewarje as in map…">
+<!ENTITY viewVirtualFolder.accesskey "s">
+<!ENTITY viewCustomizeView.label "Oanpasse…">
+<!ENTITY viewCustomizeView.accesskey "n">

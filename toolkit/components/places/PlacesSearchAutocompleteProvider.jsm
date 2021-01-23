@@ -12,12 +12,6 @@ var EXPORTED_SYMBOLS = ["PlacesSearchAutocompleteProvider"];
 
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
-ChromeUtils.defineModuleGetter(
-  this,
-  "SearchSuggestionController",
-  "resource://gre/modules/SearchSuggestionController.jsm"
-);
-
 const SEARCH_ENGINE_TOPIC = "browser-search-engine-modified";
 
 const SearchAutocompleteProviderInternal = {
@@ -49,7 +43,8 @@ const SearchAutocompleteProviderInternal = {
     }
 
     // The initial loading of the search engines must succeed.
-    await this._refresh();
+    this._refreshedPromise = this._refresh();
+    await this._refreshedPromise;
 
     Services.obs.addObserver(this, SEARCH_ENGINE_TOPIC, true);
 
@@ -64,7 +59,7 @@ const SearchAutocompleteProviderInternal = {
       case "engine-changed":
       case "engine-removed":
       case "engine-default":
-        this._refresh();
+        this._refreshedPromise = this._refresh();
     }
   },
 
@@ -79,8 +74,12 @@ const SearchAutocompleteProviderInternal = {
   },
 
   _addEngine(engine) {
+    if (engine.hidden) {
+      return;
+    }
+
     let domain = engine.getResultDomain();
-    if (domain && !engine.hidden) {
+    if (domain) {
       this.enginesByDomain.set(domain, engine);
     }
 
@@ -105,114 +104,22 @@ const SearchAutocompleteProviderInternal = {
   ]),
 };
 
-class SuggestionsFetch {
-  /**
-   * Create a new instance of this class for each new suggestions fetch.
-   *
-   * @param {nsISearchEngine} engine
-   *        The engine from which suggestions will be fetched.
-   * @param {string} searchString
-   *        The search query string.
-   * @param {bool} inPrivateContext
-   *        Pass true if the fetch is being done in a private window.
-   * @param {int} maxLocalResults
-   *        The maximum number of results to fetch from the user's local
-   *        history.
-   * @param {int} maxRemoteResults
-   *        The maximum number of results to fetch from the search engine.
-   * @param {int} userContextId
-   *        The user context ID in which the fetch is being performed.
-   */
-  constructor(
-    engine,
-    searchString,
-    inPrivateContext,
-    maxLocalResults,
-    maxRemoteResults,
-    userContextId
-  ) {
-    this._controller = new SearchSuggestionController();
-    this._controller.maxLocalResults = maxLocalResults;
-    this._controller.maxRemoteResults = maxRemoteResults;
-    this._engine = engine;
-    this._suggestions = [];
-    this._success = false;
-    this._promise = this._controller
-      .fetch(searchString, inPrivateContext, engine, userContextId)
-      .then(results => {
-        this._success = true;
-        if (results) {
-          this._suggestions.push(
-            ...results.local.map(r => ({ suggestion: r, historical: true })),
-            ...results.remote.map(r => ({ suggestion: r, historical: false }))
-          );
-        }
-      })
-      .catch(err => {
-        // fetch() rejects its promise if there's a pending request.
-      });
-  }
-
-  /**
-   * {nsISearchEngine} The engine from which suggestions are being fetched.
-   */
-  get engine() {
-    return this._engine;
-  }
-
-  /**
-   * {promise} Resolved when all suggestions have been fetched.
-   */
-  get fetchCompletePromise() {
-    return this._promise;
-  }
-
-  /**
-   * Returns one suggestion, if any are available, otherwise returns null.
-   * Note that may be multiple reasons why suggestions are not available:
-   *  - all suggestions have already been consumed
-   *  - the fetch failed
-   *  - the fetch didn't complete yet (should have awaited the promise)
-   *
-   * @returns {object} An object { suggestion, historical } or null if no
-   *          suggestions are available.
-   *          - suggestion {string} The suggestion.
-   *          - historical {bool} True if the suggestion comes from the user's
-   *            local history (instead of the search engine).
-   */
-  consume() {
-    return this._suggestions.shift() || null;
-  }
-
-  /**
-   * Returns the number of fetched suggestions, or -1 if the fetching was
-   * incomplete or failed.
-   */
-  get resultsCount() {
-    return this._success ? this._suggestions.length : -1;
-  }
-
-  /**
-   * Stops the fetch.
-   */
-  stop() {
-    this._controller.stop();
-  }
-}
-
 var gInitializationPromise = null;
 
 var PlacesSearchAutocompleteProvider = Object.freeze({
   /**
    * Starts initializing the component and returns a promise that is resolved or
-   * rejected when initialization finished.  The same promise is returned if
-   * this function is called multiple times.
+   * rejected when initialization and updates are finished.
    */
-  ensureInitialized() {
+  ensureReady() {
     if (!gInitializationPromise) {
       gInitializationPromise = SearchAutocompleteProviderInternal.initialize();
     }
-    return gInitializationPromise;
+
+    return Promise.all([
+      gInitializationPromise,
+      SearchAutocompleteProviderInternal._refreshedPromise,
+    ]);
   },
 
   /**
@@ -223,7 +130,7 @@ var PlacesSearchAutocompleteProvider = Object.freeze({
    * @returns {nsISearchEngine} The matching engine or null if there isn't one.
    */
   async engineForDomainPrefix(prefix) {
-    await this.ensureInitialized();
+    await this.ensureReady();
 
     // Match at the beginning for now.  In the future, an "options" argument may
     // allow the matching behavior to be tuned.
@@ -244,7 +151,7 @@ var PlacesSearchAutocompleteProvider = Object.freeze({
    * @returns {nsISearchEngine} The matching engine or null if there isn't one.
    */
   async engineForAlias(alias) {
-    await this.ensureInitialized();
+    await this.ensureReady();
 
     return (
       SearchAutocompleteProviderInternal.enginesByAlias.get(
@@ -260,7 +167,7 @@ var PlacesSearchAutocompleteProvider = Object.freeze({
    *          Array of objects { engine, tokenAliases } for token alias engines.
    */
   async tokenAliasEngines() {
-    await this.ensureInitialized();
+    await this.ensureReady();
 
     return SearchAutocompleteProviderInternal.tokenAliasEngines.slice();
   },
@@ -269,12 +176,16 @@ var PlacesSearchAutocompleteProvider = Object.freeze({
    * Use this to get the current engine rather than Services.search.defaultEngine
    * directly.  This method makes sure that the service is first initialized.
    *
+   * @param {boolean} inPrivateWindow
+   *   Set to true if this search is being run in a private window.
    * @returns {nsISearchEngine} The current search engine.
    */
-  async currentEngine() {
-    await this.ensureInitialized();
+  async currentEngine(inPrivateWindow) {
+    await this.ensureReady();
 
-    return Services.search.defaultEngine;
+    return inPrivateWindow
+      ? Services.search.defaultPrivateEngine
+      : Services.search.defaultEngine;
   },
 
   /**
@@ -287,8 +198,9 @@ var PlacesSearchAutocompleteProvider = Object.freeze({
    * @return An object with the following properties, or null if the URL does
    *         not represent a search result:
    *         {
-   *           engineName: The display name of the search engine.
+   *           engine: The search engine, as an nsISearchEngine.
    *           terms: The originally sought terms extracted from the URI.
+   *           termsParameterName: The engine's search-string parameter.
    *         }
    *
    * @remarks The asynchronous ensureInitialized function must be called before
@@ -305,52 +217,10 @@ var PlacesSearchAutocompleteProvider = Object.freeze({
     let parseUrlResult = Services.search.parseSubmissionURL(url);
     return (
       parseUrlResult.engine && {
-        engineName: parseUrlResult.engine.name,
+        engine: parseUrlResult.engine,
         terms: parseUrlResult.terms,
+        termsParameterName: parseUrlResult.termsParameterName,
       }
-    );
-  },
-
-  /**
-   * Starts a new suggestions fetch.
-   *
-   * @param   {nsISearchEngine} engine
-   *          The engine from which suggestions will be fetched.
-   * @param   {string} searchString
-   *          The search query string.
-   * @param   {bool} inPrivateContext
-   *          Pass true if the fetch is being done in a private window.
-   * @param   {int} maxLocalResults
-   *          The maximum number of results to fetch from the user's local
-   *          history.
-   * @param   {int} maxRemoteResults
-   *          The maximum number of results to fetch from the search engine.
-   * @param   {int} userContextId
-   *          The user context ID in which the fetch is being performed.
-   * @returns {SuggestionsFetch} A new suggestions fetch object you should use
-   *          to track the fetch.
-   */
-  newSuggestionsFetch(
-    engine,
-    searchString,
-    inPrivateContext,
-    maxLocalResults,
-    maxRemoteResults,
-    userContextId
-  ) {
-    if (!SearchAutocompleteProviderInternal.initialized) {
-      throw new Error("The component has not been initialized.");
-    }
-    if (!engine) {
-      throw new Error("`engine` is null");
-    }
-    return new SuggestionsFetch(
-      engine,
-      searchString,
-      inPrivateContext,
-      maxLocalResults,
-      maxRemoteResults,
-      userContextId
     );
   },
 });

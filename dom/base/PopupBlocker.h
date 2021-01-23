@@ -7,6 +7,7 @@
 #ifndef mozilla_dom_PopupBlocker_h
 #define mozilla_dom_PopupBlocker_h
 
+#include "Element.h"
 #include "mozilla/BasicEvents.h"
 
 class nsIPrincipal;
@@ -64,6 +65,11 @@ class PopupBlocker final {
   // Reset the last external protocol iframe timestamp.
   static void ResetLastExternalProtocolIframeAllowed();
 
+  // These method track the number of popup which is considered as a spam popup.
+  static void RegisterOpenPopupSpam();
+  static void UnregisterOpenPopupSpam();
+  static uint32_t GetOpenPopupSpamCount();
+
   static void Initialize();
   static void Shutdown();
 };
@@ -72,9 +78,9 @@ class PopupBlocker final {
 }  // namespace mozilla
 
 #ifdef MOZILLA_INTERNAL_API
-#  define NS_AUTO_POPUP_STATE_PUSHER nsAutoPopupStatePusherInternal
+#  define AUTO_POPUP_STATE_PUSHER AutoPopupStatePusherInternal
 #else
-#  define NS_AUTO_POPUP_STATE_PUSHER nsAutoPopupStatePusherExternal
+#  define AUTO_POPUP_STATE_PUSHER AutoPopupStatePusherExternal
 #endif
 
 // Helper class that helps with pushing and popping popup control
@@ -82,25 +88,24 @@ class PopupBlocker final {
 // part of the layout library than it does in code outside the layout
 // library.  We give the two object layouts different names so the symbols
 // don't conflict, but code should always use the name
-// |nsAutoPopupStatePusher|.
-class NS_AUTO_POPUP_STATE_PUSHER {
+// |AutoPopupStatePusher|.
+class MOZ_RAII AUTO_POPUP_STATE_PUSHER final {
  public:
 #ifdef MOZILLA_INTERNAL_API
-  explicit NS_AUTO_POPUP_STATE_PUSHER(
+  explicit AUTO_POPUP_STATE_PUSHER(
       mozilla::dom::PopupBlocker::PopupControlState aState,
       bool aForce = false);
-  ~NS_AUTO_POPUP_STATE_PUSHER();
+  ~AUTO_POPUP_STATE_PUSHER();
 #else
-  NS_AUTO_POPUP_STATE_PUSHER(
-      nsPIDOMWindowOuter* aWindow,
-      mozilla::dom::PopupBlocker::PopupControlState aState)
+  AUTO_POPUP_STATE_PUSHER(nsPIDOMWindowOuter* aWindow,
+                          mozilla::dom::PopupBlocker::PopupControlState aState)
       : mWindow(aWindow), mOldState(openAbused) {
     if (aWindow) {
       mOldState = PopupBlocker::PushPopupControlState(aState, false);
     }
   }
 
-  ~NS_AUTO_POPUP_STATE_PUSHER() {
+  ~AUTO_POPUP_STATE_PUSHER() {
     if (mWindow) {
       PopupBlocker::PopPopupControlState(mOldState);
     }
@@ -112,13 +117,8 @@ class NS_AUTO_POPUP_STATE_PUSHER {
   nsCOMPtr<nsPIDOMWindowOuter> mWindow;
 #endif
   mozilla::dom::PopupBlocker::PopupControlState mOldState;
-
- private:
-  // Hide so that this class can only be stack-allocated
-  static void* operator new(size_t /*size*/) CPP_THROW_NEW { return nullptr; }
-  static void operator delete(void* /*memory*/) {}
 };
 
-#define nsAutoPopupStatePusher NS_AUTO_POPUP_STATE_PUSHER
+#define AutoPopupStatePusher AUTO_POPUP_STATE_PUSHER
 
 #endif  // mozilla_PopupBlocker_h

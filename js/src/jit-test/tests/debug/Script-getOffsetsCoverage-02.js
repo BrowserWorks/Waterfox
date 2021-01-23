@@ -1,4 +1,4 @@
-// |jit-test| --ion-pgo=off;
+// |jit-test| --ion-pgo=off; skip-if: isLcovEnabled()
 
 // This script check that when we enable / disable the code coverage collection,
 // then we have different results for the getOffsetsCoverage methods.
@@ -12,7 +12,7 @@ function loop(i) {
   for (n = 0; n < i; n++)
     debugger;
 }
-g.eval(loop.toSource());
+g.eval(loop.toString());
 
 dbg.onDebuggerStatement = function (f) {
   // Collect coverage info each time we hit a debugger statement.

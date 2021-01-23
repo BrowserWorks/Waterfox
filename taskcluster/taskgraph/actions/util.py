@@ -11,8 +11,9 @@ import copy
 import logging
 import os
 import re
+from functools import reduce
 
-from six import text_type
+from six import text_type, string_types
 
 from requests.exceptions import HTTPError
 
@@ -32,6 +33,10 @@ from taskgraph.util.taskgraph import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def get_parameters(decision_task_id):
+    return get_artifact(decision_task_id, "public/parameters.yml")
 
 
 def fetch_graph_and_labels(parameters, graph_config):
@@ -59,10 +64,12 @@ def fetch_graph_and_labels(parameters, graph_config):
                     raise
                 logger.debug('No label-to-taskid.json found for {}: {}'.format(task_id, e))
 
-        namespace = '{}.v2.{}.pushlog-id.{}.actions'.format(
+        head_rev_param = '{}head_rev'.format(graph_config['project-repo-param-prefix'])
+
+        namespace = '{}.v2.{}.revision.{}.taskgraph.actions'.format(
             graph_config['trust-domain'],
             parameters['project'],
-            parameters['pushlog_id'])
+            parameters[head_rev_param])
         for task_id in list_tasks(namespace):
             fetches.append(e.submit(fetch_action, task_id))
 
@@ -80,7 +87,7 @@ def fetch_graph_and_labels(parameters, graph_config):
         namespace = '{}.v2.{}.revision.{}.cron'.format(
             graph_config['trust-domain'],
             parameters['project'],
-            parameters['head_rev'])
+            parameters[head_rev_param])
         for task_id in list_tasks(namespace):
             fetches.append(e.submit(fetch_cron, task_id))
 
@@ -234,3 +241,45 @@ def relativize_datestamps(task_def):
             return {k: recurse(v) for k, v in value.items()}
         return value
     return recurse(task_def)
+
+
+def add_args_to_command(cmd_parts, extra_args=[]):
+    """
+        Add custom command line args to a given command.
+        args:
+          cmd_parts: the raw command as seen by taskcluster
+          extra_args: array of args we want to add
+    """
+    # Prevent modification of the caller's copy of cmd_parts
+    cmd_parts = copy.deepcopy(cmd_parts)
+    cmd_type = 'default'
+    if len(cmd_parts) == 1 and isinstance(cmd_parts[0], dict):
+        # windows has single cmd part as dict: 'task-reference', with long string
+        cmd_parts = cmd_parts[0]['task-reference'].split(' ')
+        cmd_type = 'dict'
+    elif len(cmd_parts) == 1 and isinstance(cmd_parts[0], string_types):
+        # windows has single cmd part as a long string
+        cmd_parts = cmd_parts[0].split(' ')
+        cmd_type = 'unicode'
+    elif len(cmd_parts) == 1 and isinstance(cmd_parts[0], list):
+        # osx has an single value array with an array inside
+        cmd_parts = cmd_parts[0]
+        cmd_type = 'subarray'
+    elif len(cmd_parts) == 2 and isinstance(cmd_parts[1], list):
+        # osx has an double value array with an array inside each element.
+        # The first element is a pre-requisite command while the second
+        # is the actual test command.
+        cmd_type = 'subarray2'
+
+    if cmd_type == 'subarray2':
+        cmd_parts[1].extend(extra_args)
+    else:
+        cmd_parts.extend(extra_args)
+
+    if cmd_type == 'dict':
+        cmd_parts = [{'task-reference': ' '.join(cmd_parts)}]
+    elif cmd_type == 'unicode':
+        cmd_parts = [' '.join(cmd_parts)]
+    elif cmd_type == 'subarray':
+        cmd_parts = [cmd_parts]
+    return cmd_parts

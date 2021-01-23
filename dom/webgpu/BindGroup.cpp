@@ -3,17 +3,31 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "mozilla/dom/WebGPUBinding.h"
 #include "BindGroup.h"
 
 #include "Device.h"
-#include "mozilla/dom/WebGPUBinding.h"
 
 namespace mozilla {
 namespace webgpu {
 
-BindGroup::~BindGroup() = default;
+GPU_IMPL_CYCLE_COLLECTION(BindGroup, mParent)
+GPU_IMPL_JS_WRAP(BindGroup)
 
-WEBGPU_IMPL_GOOP_0(BindGroup)
+BindGroup::BindGroup(Device* const aParent, RawId aId)
+    : ChildOf(aParent), mId(aId) {}
+
+BindGroup::~BindGroup() { Cleanup(); }
+
+void BindGroup::Cleanup() {
+  if (mValid && mParent) {
+    mValid = false;
+    auto bridge = mParent->GetBridge();
+    if (bridge && bridge->IsOpen()) {
+      bridge->SendBindGroupDestroy(mId);
+    }
+  }
+}
 
 }  // namespace webgpu
 }  // namespace mozilla

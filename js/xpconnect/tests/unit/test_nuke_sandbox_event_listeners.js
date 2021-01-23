@@ -14,13 +14,13 @@ function promiseEvent(target, event) {
 
 add_task(async function() {
   let principal = Services.scriptSecurityManager
-    .createCodebasePrincipalFromOrigin("http://example.com/");
+    .createContentPrincipalFromOrigin("http://example.com/");
 
   let webnav = Services.appShell.createWindowlessBrowser(false);
 
   let docShell = webnav.docShell;
 
-  docShell.createAboutBlankContentViewer(principal);
+  docShell.createAboutBlankContentViewer(principal, principal);
 
   let window = webnav.document.defaultView;
   let sandbox = Cu.Sandbox(window, {sandboxPrototype: window});

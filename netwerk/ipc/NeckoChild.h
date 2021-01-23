@@ -25,16 +25,11 @@ class NeckoChild : public PNeckoChild {
   static void InitNeckoChild();
 
  protected:
-  PHttpChannelChild* AllocPHttpChannelChild(
-      const PBrowserOrId&, const SerializedLoadContext&,
-      const HttpChannelCreationArgs& aOpenArgs);
-  bool DeallocPHttpChannelChild(PHttpChannelChild*);
-
   PStunAddrsRequestChild* AllocPStunAddrsRequestChild();
   bool DeallocPStunAddrsRequestChild(PStunAddrsRequestChild* aActor);
 
-  PWebrtcProxyChannelChild* AllocPWebrtcProxyChannelChild(const TabId& tabId);
-  bool DeallocPWebrtcProxyChannelChild(PWebrtcProxyChannelChild* aActor);
+  PWebrtcTCPSocketChild* AllocPWebrtcTCPSocketChild(const Maybe<TabId>& tabId);
+  bool DeallocPWebrtcTCPSocketChild(PWebrtcTCPSocketChild* aActor);
 
   PAltDataOutputStreamChild* AllocPAltDataOutputStreamChild(
       const nsCString& type, const int64_t& predictedSize,
@@ -44,10 +39,10 @@ class NeckoChild : public PNeckoChild {
   PCookieServiceChild* AllocPCookieServiceChild();
   bool DeallocPCookieServiceChild(PCookieServiceChild*);
   PFTPChannelChild* AllocPFTPChannelChild(
-      const PBrowserOrId& aBrowser, const SerializedLoadContext& aSerialized,
+      PBrowserChild* aBrowser, const SerializedLoadContext& aSerialized,
       const FTPChannelCreationArgs& aOpenArgs);
   bool DeallocPFTPChannelChild(PFTPChannelChild*);
-  PWebSocketChild* AllocPWebSocketChild(const PBrowserOrId&,
+  PWebSocketChild* AllocPWebSocketChild(PBrowserChild*,
                                         const SerializedLoadContext&,
                                         const uint32_t&);
   bool DeallocPWebSocketChild(PWebSocketChild*);
@@ -61,14 +56,6 @@ class NeckoChild : public PNeckoChild {
   PUDPSocketChild* AllocPUDPSocketChild(nsIPrincipal* aPrincipal,
                                         const nsCString& aFilter);
   bool DeallocPUDPSocketChild(PUDPSocketChild*);
-  PDNSRequestChild* AllocPDNSRequestChild(
-      const nsCString& aHost, const OriginAttributes& aOriginAttributes,
-      const uint32_t& aFlags);
-  bool DeallocPDNSRequestChild(PDNSRequestChild*);
-  PDataChannelChild* AllocPDataChannelChild(const uint32_t& channelId);
-  bool DeallocPDataChannelChild(PDataChannelChild* child);
-  PFileChannelChild* AllocPFileChannelChild(const uint32_t& channelId);
-  bool DeallocPFileChannelChild(PFileChannelChild* child);
   PSimpleChannelChild* AllocPSimpleChannelChild(const uint32_t& channelId);
   bool DeallocPSimpleChannelChild(PSimpleChannelChild* child);
   PChannelDiverterChild* AllocPChannelDiverterChild(
@@ -85,9 +72,9 @@ class NeckoChild : public PNeckoChild {
 
   /* Predictor Messsages */
   mozilla::ipc::IPCResult RecvPredOnPredictPrefetch(
-      const URIParams& aURI, const uint32_t& aHttpStatus);
-  mozilla::ipc::IPCResult RecvPredOnPredictPreconnect(const URIParams& aURI);
-  mozilla::ipc::IPCResult RecvPredOnPredictDNS(const URIParams& aURI);
+      nsIURI* aURI, const uint32_t& aHttpStatus);
+  mozilla::ipc::IPCResult RecvPredOnPredictPreconnect(nsIURI* aURI);
+  mozilla::ipc::IPCResult RecvPredOnPredictDNS(nsIURI* aURI);
 
   mozilla::ipc::IPCResult RecvSpeculativeConnectRequest();
   mozilla::ipc::IPCResult RecvNetworkChangeNotification(nsCString const& type);

@@ -102,6 +102,10 @@ class nsBlockFrame : public nsContainerFrame {
     return mLines.rbegin(aList);
   }
 
+  // Methods declared to be used in 'range-based-for-loop'
+  nsLineList& Lines() { return mLines; }
+  const nsLineList& Lines() const { return mLines; }
+
   friend nsBlockFrame* NS_NewBlockFrame(mozilla::PresShell* aPresShell,
                                         ComputedStyle* aStyle);
 
@@ -115,8 +119,11 @@ class nsBlockFrame : public nsContainerFrame {
                            nsFrameList& aChildList) override;
   void AppendFrames(ChildListID aListID, nsFrameList& aFrameList) override;
   void InsertFrames(ChildListID aListID, nsIFrame* aPrevFrame,
+                    const nsLineList::iterator* aPrevFrameLine,
                     nsFrameList& aFrameList) override;
   void RemoveFrame(ChildListID aListID, nsIFrame* aOldFrame) override;
+  nsContainerFrame* GetContentInsertionFrame() override;
+  void AppendDirectlyOwnedAnonBoxes(nsTArray<OwnedAnonBox>& aResult) override;
   const nsFrameList& GetChildList(ChildListID aListID) const override;
   void GetChildLists(nsTArray<ChildList>* aLists) const override;
   nscoord GetLogicalBaseline(mozilla::WritingMode aWritingMode) const override;
@@ -155,7 +162,7 @@ class nsBlockFrame : public nsContainerFrame {
 
 #ifdef DEBUG_FRAME_DUMP
   void List(FILE* out = stderr, const char* aPrefix = "",
-            uint32_t aFlags = 0) const override;
+            ListFlags aFlags = ListFlags()) const override;
   nsresult GetFrameName(nsAString& aResult) const override;
 #endif
 
@@ -235,13 +242,6 @@ class nsBlockFrame : public nsContainerFrame {
   // not 'none', and no 'content'?
   bool MarkerIsEmpty() const;
 
-#ifdef ACCESSIBILITY
-  /**
-   * Return the ::marker text equivalent, without flushing.
-   */
-  void GetSpokenMarkerText(nsAString& aText) const;
-#endif
-
   /**
    * Return true if this frame has a ::marker frame.
    */
@@ -297,23 +297,26 @@ class nsBlockFrame : public nsContainerFrame {
    * Compute the final block size of this frame.
    *
    * @param aReflowInput Data structure passed from parent during reflow.
-   * @param aReflowStatus A pointer to the reflow status for when we're finished
-   *        doing reflow. this will get set appropriately if the block-size
-   *        causes us to exceed the current available (page) block-size.
-   * @param aContentBSize The block-size of content, precomputed outside of this
-   *        function. The final block-size that is used in aMetrics will be set
-   *        to either this or the available block-size, whichever is larger, in
-   *        the case where our available block-size is constrained, and we
-   *        overflow that available block-size.
+   * @param aStatus [in/out] The reflow status for this reflow operation. When
+   *        this function is called, aStatus should represent what our status
+   *        would be as if we were shrinkwrapping our children's block-size.
+   *        This function will then adjust aStatus before returning, if our
+   *        status is different in light of our actual final block-size and
+   *        current page/column's available block-size.
+   * @param aBEndEdgeOfChildren The distance between this frame's block-start
+   *        border-edge and the block-end edge of our last child's border-box.
+   *        This is effectively our block-start border-padding plus the
+   *        block-size of our children, precomputed outside of this function.
    * @param aBorderPadding The margins representing the border padding for block
    *        frames. Can be 0.
-   * @param aFinalSize Out parameter for final block-size.
    * @param aConsumed The block-size already consumed by our previous-in-flows.
+   * @return our final block-size with respect to aReflowInput's writing-mode.
    */
-  void ComputeFinalBSize(const ReflowInput& aReflowInput,
-                         nsReflowStatus* aStatus, nscoord aContentBSize,
-                         const mozilla::LogicalMargin& aBorderPadding,
-                         mozilla::LogicalSize& aFinalSize, nscoord aConsumed);
+  nscoord ComputeFinalBSize(const ReflowInput& aReflowInput,
+                            nsReflowStatus& aStatus,
+                            nscoord aBEndEdgeOfChildren,
+                            const mozilla::LogicalMargin& aBorderPadding,
+                            nscoord aConsumed);
 
   void Reflow(nsPresContext* aPresContext, ReflowOutput& aDesiredSize,
               const ReflowInput& aReflowInput,
@@ -467,11 +470,11 @@ class nsBlockFrame : public nsContainerFrame {
 
   void ComputeFinalSize(const ReflowInput& aReflowInput,
                         BlockReflowInput& aState, ReflowOutput& aMetrics,
-                        nscoord* aBottomEdgeOfChildren);
+                        nscoord* aBEndEdgeOfChildren);
 
   void ComputeOverflowAreas(const nsRect& aBounds,
                             const nsStyleDisplay* aDisplay,
-                            nscoord aBottomEdgeOfChildren,
+                            nscoord aBEndEdgeOfChildren,
                             nsOverflowAreas& aOverflowAreas);
 
   /**
@@ -481,8 +484,16 @@ class nsBlockFrame : public nsContainerFrame {
    * contains aPrevSibling and add aFrameList after aPrevSibling on that line.
    * New lines are created as necessary to handle block data in aFrameList.
    * This function will clear aFrameList.
+   *
+   * aPrevSiblingLine, if present, must be the line containing aPrevSibling.
+   * Providing it will make this function faster.
    */
-  void AddFrames(nsFrameList& aFrameList, nsIFrame* aPrevSibling);
+  void AddFrames(nsFrameList& aFrameList, nsIFrame* aPrevSibling,
+                 const nsLineList::iterator* aPrevSiblingLine);
+
+  // Return the :-moz-block-ruby-content child frame, if any.
+  // (It's non-null only if this block frame is for 'display:block ruby'.)
+  nsContainerFrame* GetRubyContentPseudoFrame();
 
   /**
    * Perform Bidi resolution on this frame
@@ -522,7 +533,7 @@ class nsBlockFrame : public nsContainerFrame {
   }
 
   void ReparentFloats(nsIFrame* aFirstFrame, nsBlockFrame* aOldParent,
-                      bool aReparentSiblings, ReparentingDirection aDirection);
+                      bool aReparentSiblings);
 
   virtual bool ComputeCustomOverflow(nsOverflowAreas& aOverflowAreas) override;
 
@@ -723,8 +734,7 @@ class nsBlockFrame : public nsContainerFrame {
   //----------------------------------------
   // Methods for individual frame reflow
 
-  bool ShouldApplyBStartMargin(BlockReflowInput& aState, nsLineBox* aLine,
-                               nsIFrame* aChildFrame);
+  bool ShouldApplyBStartMargin(BlockReflowInput& aState, nsLineBox* aLine);
 
   void ReflowBlockFrame(BlockReflowInput& aState, LineIterator aLine,
                         bool* aKeepGoing);
@@ -990,6 +1000,9 @@ class nsBlockInFlowLineIterator {
   nsBlockInFlowLineIterator(nsBlockFrame* aFrame, nsIFrame* aFindFrame,
                             bool* aFoundValidLine);
 
+  // Allow to be uninitialized (and then assigned from another object).
+  nsBlockInFlowLineIterator() : mFrame(nullptr) {}
+
   LineIterator GetLine() { return mLine; }
   bool IsLastLineInList();
   nsBlockFrame* GetContainer() { return mFrame; }
@@ -1017,14 +1030,12 @@ class nsBlockInFlowLineIterator {
    */
   bool Prev();
 
- private:
-  friend class nsBlockFrame;
-  friend class nsBidiPresUtils;
   // XXX nsBlockFrame uses this internally in one place.  Try to remove it.
   // XXX uhm, and nsBidiPresUtils::Resolve too.
   nsBlockInFlowLineIterator(nsBlockFrame* aFrame, LineIterator aLine,
                             bool aInOverflow);
 
+ private:
   nsBlockFrame* mFrame;
   LineIterator mLine;
   nsLineList* mLineList;  // the line list mLine is in

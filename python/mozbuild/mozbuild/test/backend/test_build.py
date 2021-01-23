@@ -2,11 +2,12 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import unicode_literals, print_function
+from __future__ import absolute_import, unicode_literals, print_function
 
 import buildconfig
 import os
 import shutil
+import six
 import sys
 import unittest
 import mozpack.path as mozpath
@@ -26,6 +27,7 @@ from tempfile import mkdtemp
 
 BASE_SUBSTS = [
     ('PYTHON', mozpath.normsep(sys.executable)),
+    ('PYTHON3', mozpath.normsep(sys.executable)),
     ('MOZ_UI_LOCALE', 'en-US'),
 ]
 
@@ -58,7 +60,7 @@ class TestBuild(unittest.TestCase):
                 backend(config).consume(definitions)
 
             yield config
-        except:
+        except Exception:
             raise
         finally:
             if not os.environ.get('MOZ_NO_CLEANUP'):
@@ -73,7 +75,7 @@ class TestBuild(unittest.TestCase):
 
         try:
             yield handle_make_line
-        except:
+        except Exception:
             print('\n'.join(lines))
             raise
 
@@ -148,14 +150,11 @@ class TestBuild(unittest.TestCase):
 
     def validate(self, config):
         self.maxDiff = None
-        test_path = os.sep.join(('$SRCDIR', 'python', 'mozbuild', 'mozbuild',
-                                 'test', 'backend', 'data', 'build')) + os.sep
+        test_path = mozpath.join('$SRCDIR', 'python', 'mozbuild', 'mozbuild',
+                                 'test', 'backend', 'data', 'build')
 
-        # We want unicode instances out of the files, because having plain str
-        # makes assertEqual diff output in case of error extra verbose because
-        # of the difference in type.
         result = {
-            p: f.open().read().decode('utf-8')
+            p: six.ensure_text(f.open().read())
             for p, f in FileFinder(mozpath.join(config.topobjdir, 'dist'))
         }
         self.assertTrue(len(result))
@@ -174,24 +173,24 @@ class TestBuild(unittest.TestCase):
                 'chrome://bar/bar.svg#hello\n',
             'bin/chrome/foo/bar.js': 'bar.js\n',
             'bin/chrome/foo/child/baz.jsm':
-                '//@line 2 "%sbaz.jsm"\nbaz.jsm: FOO is foo\n' % (test_path),
+                '//@line 2 "%s/baz.jsm"\nbaz.jsm: FOO is foo\n' % (test_path),
             'bin/chrome/foo/child/hoge.js':
-                '//@line 2 "%sbar.js"\nbar.js: FOO is foo\n' % (test_path),
+                '//@line 2 "%s/bar.js"\nbar.js: FOO is foo\n' % (test_path),
             'bin/chrome/foo/foo.css': 'foo.css: FOO is foo\n',
             'bin/chrome/foo/foo.js': 'foo.js\n',
             'bin/chrome/foo/qux.js': 'bar.js\n',
             'bin/components/bar.js':
-                '//@line 2 "%sbar.js"\nbar.js: FOO is foo\n' % (test_path),
+                '//@line 2 "%s/bar.js"\nbar.js: FOO is foo\n' % (test_path),
             'bin/components/components.manifest':
                 'component {foo} foo.js\ncomponent {bar} bar.js\n',
             'bin/components/foo.js': 'foo.js\n',
             'bin/defaults/pref/prefs.js': 'prefs.js\n',
             'bin/foo.ini': 'foo.ini\n',
             'bin/modules/baz.jsm':
-                '//@line 2 "%sbaz.jsm"\nbaz.jsm: FOO is foo\n' % (test_path),
+                '//@line 2 "%s/baz.jsm"\nbaz.jsm: FOO is foo\n' % (test_path),
             'bin/modules/child/bar.jsm': 'bar.jsm\n',
             'bin/modules/child2/qux.jsm':
-                '//@line 4 "%squx.jsm"\nqux.jsm: BAR is not defined\n'
+                '//@line 4 "%s/qux.jsm"\nqux.jsm: BAR is not defined\n'
                 % (test_path),
             'bin/modules/foo.jsm': 'foo.jsm\n',
             'bin/res/resource': 'resource\n',
@@ -210,14 +209,14 @@ class TestBuild(unittest.TestCase):
                 'chrome://bar/bar.svg#hello\n',
             'bin/app/chrome/foo/bar.js': 'bar.js\n',
             'bin/app/chrome/foo/child/baz.jsm':
-                '//@line 2 "%sbaz.jsm"\nbaz.jsm: FOO is bar\n' % (test_path),
+                '//@line 2 "%s/baz.jsm"\nbaz.jsm: FOO is bar\n' % (test_path),
             'bin/app/chrome/foo/child/hoge.js':
-                '//@line 2 "%sbar.js"\nbar.js: FOO is bar\n' % (test_path),
+                '//@line 2 "%s/bar.js"\nbar.js: FOO is bar\n' % (test_path),
             'bin/app/chrome/foo/foo.css': 'foo.css: FOO is bar\n',
             'bin/app/chrome/foo/foo.js': 'foo.js\n',
             'bin/app/chrome/foo/qux.js': 'bar.js\n',
             'bin/app/components/bar.js':
-                '//@line 2 "%sbar.js"\nbar.js: FOO is bar\n' % (test_path),
+                '//@line 2 "%s/bar.js"\nbar.js: FOO is bar\n' % (test_path),
             'bin/app/components/components.manifest':
                 'component {foo} foo.js\ncomponent {bar} bar.js\n',
             'bin/app/components/foo.js': 'foo.js\n',
@@ -225,13 +224,14 @@ class TestBuild(unittest.TestCase):
             'bin/app/foo.css': 'foo.css: FOO is bar\n',
             'bin/app/foo.ini': 'foo.ini\n',
             'bin/app/modules/baz.jsm':
-                '//@line 2 "%sbaz.jsm"\nbaz.jsm: FOO is bar\n' % (test_path),
+                '//@line 2 "%s/baz.jsm"\nbaz.jsm: FOO is bar\n' % (test_path),
             'bin/app/modules/child/bar.jsm': 'bar.jsm\n',
             'bin/app/modules/child2/qux.jsm':
-                '//@line 2 "%squx.jsm"\nqux.jsm: BAR is defined\n'
+                '//@line 2 "%s/qux.jsm"\nqux.jsm: BAR is defined\n'
                 % (test_path),
             'bin/app/modules/foo.jsm': 'foo.jsm\n',
         })
+
 
 if __name__ == '__main__':
     main()

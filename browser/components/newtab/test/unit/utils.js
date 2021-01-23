@@ -1,13 +1,3 @@
-import {IntlProvider, intlShape} from "react-intl";
-import {mount, shallow} from "enzyme";
-import React from "react";
-
-const messages = require("data/locales.json")["en-US"]; // eslint-disable-line import/no-commonjs
-
-const intlProvider = new IntlProvider({locale: "en-US", messages});
-
-const {intl} = intlProvider.getChildContext();
-
 /**
  * GlobalOverrider - Utility that allows you to override properties on the global object.
  *                   See unit-entry.js for example usage.
@@ -106,9 +96,15 @@ export class FakensIPrefBranch {
   ignoreBranch(listener) {}
   setStringPref(prefName) {}
 
-  getStringPref(prefName) { return this.get(prefName); }
-  getBoolPref(prefName) { return this.get(prefName); }
-  get(prefName) { return this.prefs[prefName]; }
+  getStringPref(prefName) {
+    return this.get(prefName);
+  }
+  getBoolPref(prefName) {
+    return this.get(prefName);
+  }
+  get(prefName) {
+    return this.prefs[prefName];
+  }
   setBoolPref(prefName, value) {
     this.prefs[prefName] = value;
 
@@ -166,9 +162,12 @@ EventEmitter.prototype = {
     }
     let listeners = this._eventEmitterListeners.get(event);
     if (listeners) {
-      this._eventEmitterListeners.set(event, listeners.filter(
-        l => l !== listener && l._originalListener !== listener
-      ));
+      this._eventEmitterListeners.set(
+        event,
+        listeners.filter(
+          l => l !== listener && l._originalListener !== listener
+        )
+      );
     }
   },
   once(event, listener) {
@@ -187,7 +186,10 @@ EventEmitter.prototype = {
   },
   // All arguments to this method will be sent to listeners
   emit(event, ...args) {
-    if (!this._eventEmitterListeners || !this._eventEmitterListeners.has(event)) {
+    if (
+      !this._eventEmitterListeners ||
+      !this._eventEmitterListeners.has(event)
+    ) {
       return;
     }
     let originalListeners = this._eventEmitterListeners.get(event);
@@ -199,8 +201,10 @@ EventEmitter.prototype = {
       }
       // If listeners were removed during emission, make sure the
       // event handler we're going to fire wasn't removed.
-      if (originalListeners === this._eventEmitterListeners.get(event) ||
-        this._eventEmitterListeners.get(event).some(l => l === listener)) {
+      if (
+        originalListeners === this._eventEmitterListeners.get(event) ||
+        this._eventEmitterListeners.get(event).some(l => l === listener)
+      ) {
         try {
           listener(event, ...args);
         } catch (ex) {
@@ -217,7 +221,7 @@ FakePerformance.prototype = {
   now() {
     return window.performance.now();
   },
-  timing: {navigationStart: 222222.123},
+  timing: { navigationStart: 222222.123 },
   get timeOrigin() {
     return 10000.234;
   },
@@ -237,9 +241,9 @@ FakePerformance.prototype = {
   mark(name) {
     let markObj = {
       name,
-      "entryType": "mark",
-      "startTime": ++this.callsToMark,
-      "duration": 0,
+      entryType: "mark",
+      startTime: ++this.callsToMark,
+      duration: 0,
     };
 
     if (this.marks.has(name)) {
@@ -256,22 +260,4 @@ FakePerformance.prototype = {
  */
 export function addNumberReducer(prevState = 0, action) {
   return action.type === "ADD" ? prevState + action.data : prevState;
-}
-
-/**
- * Helper functions to test components that need IntlProvider as an ancestor
- */
-function nodeWithIntlProp(node) {
-  return React.cloneElement(node, {intl});
-}
-
-export function shallowWithIntl(node, options = {}) {
-  return shallow(nodeWithIntlProp(node), Object.assign({}, options, {context: {intl}}));
-}
-
-export function mountWithIntl(node, options = {}) {
-  return mount(nodeWithIntlProp(node), Object.assign({}, options, {
-    context: {intl},
-    childContextTypes: {intl: intlShape},
-  }));
 }

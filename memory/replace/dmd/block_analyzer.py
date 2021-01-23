@@ -9,6 +9,8 @@
 # contain pointers to it. This can be useful when investigating leaks
 # caused by unknown references to refcounted objects.
 
+from __future__ import absolute_import, print_function
+
 import json
 import gzip
 import sys
@@ -249,7 +251,7 @@ def analyzeLogs():
     block = int(options.block, 16)
 
     if block not in blocks:
-        print('Object ' + block + ' not found in traces.')
+        print('Object ' + options.block + ' not found in traces.')
         print('It could still be the target of some nodes.')
         return
 

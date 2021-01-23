@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Obre un fitxer…">
+<!ENTITY openFileCmd.accesskey "O">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Obre un lloc web…">
+<!ENTITY openRemoteCmd.accesskey "l">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Pàgines recents">
+<!ENTITY fileRecentMenu.accesskey "r">
+<!ENTITY saveCmd.label "Desa">
+<!ENTITY saveCmd.accesskey "D">
+<!ENTITY saveAsCmd.label "Anomena i desa…">
+<!ENTITY saveAsCmd.accesskey "A">
+<!ENTITY saveAsChangeEncodingCmd2.label "Desa i canvia la codificació del text">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "e">
+<!ENTITY publishCmd.label "Publica">
+<!ENTITY publishCmd.accesskey "b">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Publica com…">
+<!ENTITY publishAsCmd.accesskey "m">
+<!ENTITY fileRevert.label "Reverteix">
+<!ENTITY fileRevert.accesskey "t">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Paràmetres del lloc de publicació…">
+<!ENTITY publishSettings.accesskey "b">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "Nova">
+<!ENTITY newToolbarCmd.tooltip "Crea una pàgina nova amb el Composer">
+<!ENTITY openToolbarCmd.label "Obre">
+<!ENTITY openToolbarCmd.tooltip "Obre un fitxer local">
+<!ENTITY saveToolbarCmd.tooltip "Desa el fitxer en una ubicació local">
+<!ENTITY publishToolbarCmd.tooltip "Puja el fitxer a una ubicació remota">
+<!ENTITY printToolbarCmd.label "Imprimeix">
+<!ENTITY printToolbarCmd.tooltip "Imprimeix aquesta pàgina">

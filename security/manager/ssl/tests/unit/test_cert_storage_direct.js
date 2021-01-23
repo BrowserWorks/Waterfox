@@ -29,22 +29,6 @@ async function removeCertsByHashes(hashesBase64) {
   Assert.equal(result, Cr.NS_OK, "removeCertsByHashes should succeed");
 }
 
-function stringToArray(s) {
-  let a = [];
-  for (let i = 0; i < s.length; i++) {
-    a.push(s.charCodeAt(i));
-  }
-  return a;
-}
-
-function arrayToString(a) {
-  let s = "";
-  for (let b of a) {
-    s += String.fromCharCode(b);
-  }
-  return s;
-}
-
 function getLongString(uniquePart, length) {
   return String(uniquePart).padStart(length, "0");
 }
@@ -279,5 +263,310 @@ add_task(
       stringToArray("batch subject to remove")
     );
     Assert.equal(storedCerts.length, 0, "shouldn't have any certificates now");
+  }
+);
+
+class CRLiteState {
+  constructor(subject, spkiHash, state) {
+    this.subject = btoa(subject);
+    this.spkiHash = spkiHash;
+    this.state = state;
+  }
+}
+if (AppConstants.MOZ_NEW_CERT_STORAGE) {
+  CRLiteState.prototype.QueryInterface = ChromeUtils.generateQI([
+    Ci.nsICRLiteState,
+  ]);
+}
+
+async function addCRLiteState(state) {
+  let result = await new Promise(resolve => {
+    certStorage.setCRLiteState(state, resolve);
+  });
+  Assert.equal(result, Cr.NS_OK, "setCRLiteState should succeed");
+}
+
+add_task(
+  {
+    skip_if: () => !AppConstants.MOZ_NEW_CERT_STORAGE,
+  },
+  async function test_crlite_state() {
+    // echo -n "some spki 1" | sha256sum | xxd -r -p | base64
+    let crliteState1 = new CRLiteState(
+      "some subject 1",
+      "bDlKlhR5ptlvuxclnZ3RQHznG8/3pgIybrRJ/Zvn9L8=",
+      Ci.nsICertStorage.STATE_ENFORCE
+    );
+    // echo -n "some spki 2" | sha256sum | xxd -r -p | base64
+    let crliteState2 = new CRLiteState(
+      "some subject 2",
+      "ZlXvlHhtdx4yKwkhZqg7Opv5T1ofwzorlsCoLf0wnlY=",
+      Ci.nsICertStorage.STATE_UNSET
+    );
+    // echo -n "some spki 3" | sha256sum | xxd -r -p | base64
+    let crliteState3 = new CRLiteState(
+      "some subject 3",
+      "pp1SRn6njaHX/c+b2uf82JPeBkWhPfTBp/Mxb3xkjRM=",
+      Ci.nsICertStorage.STATE_ENFORCE
+    );
+    await addCRLiteState([crliteState1, crliteState2, crliteState3]);
+
+    let state1 = certStorage.getCRLiteState(
+      stringToArray("some subject 1"),
+      stringToArray("some spki 1")
+    );
+    Assert.equal(state1, Ci.nsICertStorage.STATE_ENFORCE);
+    let state2 = certStorage.getCRLiteState(
+      stringToArray("some subject 2"),
+      stringToArray("some spki 2")
+    );
+    Assert.equal(state2, Ci.nsICertStorage.STATE_UNSET);
+    let state3 = certStorage.getCRLiteState(
+      stringToArray("some subject 3"),
+      stringToArray("some spki 3")
+    );
+    Assert.equal(state3, Ci.nsICertStorage.STATE_ENFORCE);
+
+    // Check that if we never set the state of a particular subject/spki pair, we get "unset" when we
+    // look it up.
+    let stateNeverSet = certStorage.getCRLiteState(
+      stringToArray("some unknown subject"),
+      stringToArray("some unknown spki")
+    );
+    Assert.equal(stateNeverSet, Ci.nsICertStorage.STATE_UNSET);
+
+    // "some subject 1"/"some spki 1" and "some subject 3"/"some spki 3" both have their CRLite state
+    // set. However, the combination of "some subject 3"/"some spki1" should not.
+    let stateDifferentSubjectSPKI = certStorage.getCRLiteState(
+      stringToArray("some subject 3"),
+      stringToArray("some spki 1")
+    );
+    Assert.equal(stateDifferentSubjectSPKI, Ci.nsICertStorage.STATE_UNSET);
+
+    let anotherStateDifferentSubjectSPKI = certStorage.getCRLiteState(
+      stringToArray("some subject 1"),
+      stringToArray("some spki 2")
+    );
+    Assert.equal(
+      anotherStateDifferentSubjectSPKI,
+      Ci.nsICertStorage.STATE_UNSET
+    );
+    let yetAnotherStateDifferentSubjectSPKI = certStorage.getCRLiteState(
+      stringToArray("some subject 2"),
+      stringToArray("some spki 1")
+    );
+    Assert.equal(
+      yetAnotherStateDifferentSubjectSPKI,
+      Ci.nsICertStorage.STATE_UNSET
+    );
+
+    crliteState3 = new CRLiteState(
+      "some subject 3",
+      "pp1SRn6njaHX/c+b2uf82JPeBkWhPfTBp/Mxb3xkjRM=",
+      Ci.nsICertStorage.STATE_UNSET
+    );
+    await addCRLiteState([crliteState3]);
+    state3 = certStorage.getCRLiteState(
+      stringToArray("some subject 3"),
+      stringToArray("some spki 3")
+    );
+    Assert.equal(state3, Ci.nsICertStorage.STATE_UNSET);
+
+    crliteState2 = new CRLiteState(
+      "some subject 2",
+      "ZlXvlHhtdx4yKwkhZqg7Opv5T1ofwzorlsCoLf0wnlY=",
+      Ci.nsICertStorage.STATE_ENFORCE
+    );
+    await addCRLiteState([crliteState2]);
+    state2 = certStorage.getCRLiteState(
+      stringToArray("some subject 2"),
+      stringToArray("some spki 2")
+    );
+    Assert.equal(state2, Ci.nsICertStorage.STATE_ENFORCE);
+
+    // Inserting a subject/spki pair with a state value outside of our expected
+    // values will succeed. However, since our data type is a signed 16-bit value,
+    // values outside that range will be truncated. The least significant 16 bits
+    // of 2013003773 are FFFD, which when interpreted as a signed 16-bit integer
+    // comes out to -3.
+    // echo -n "some spki 4" | sha256sum | xxd -r -p | base64
+    let bogusValueState = new CRLiteState(
+      "some subject 4",
+      "1eA0++hCqzt8vpzREYSqHAqpEOLchZca1Gx8viCVYzc=",
+      2013003773
+    );
+    await addCRLiteState([bogusValueState]);
+    let bogusValueStateValue = certStorage.getCRLiteState(
+      stringToArray("some subject 4"),
+      stringToArray("some spki 4")
+    );
+    Assert.equal(bogusValueStateValue, -3);
+  }
+);
+
+async function enrollCertForCRLite(nsCert) {
+  let { subjectString, spkiHashString } = getSubjectAndSPKIHash(nsCert);
+  let crliteState = new CRLiteState(
+    subjectString,
+    spkiHashString,
+    Ci.nsICertStorage.STATE_ENFORCE
+  );
+  await addCRLiteState([crliteState]);
+}
+
+add_task(
+  {
+    skip_if: () => !AppConstants.MOZ_NEW_CERT_STORAGE,
+  },
+  async function test_crlite_filter() {
+    let certdb = Cc["@mozilla.org/security/x509certdb;1"].getService(
+      Ci.nsIX509CertDB
+    );
+    let validCertIssuer = constructCertFromFile(
+      "test_cert_storage_direct/valid-cert-issuer.pem"
+    );
+    await enrollCertForCRLite(validCertIssuer);
+    let validCert = constructCertFromFile(
+      "test_cert_storage_direct/valid-cert.pem"
+    );
+    let revokedCertIssuer = constructCertFromFile(
+      "test_cert_storage_direct/revoked-cert-issuer.pem"
+    );
+    await enrollCertForCRLite(revokedCertIssuer);
+    let revokedCert = constructCertFromFile(
+      "test_cert_storage_direct/revoked-cert.pem"
+    );
+
+    let filterFile = do_get_file(
+      "test_cert_storage_direct/test-filter.crlite",
+      false
+    );
+    ok(filterFile.exists(), "test filter file should exist");
+    let filterBytes = stringToArray(readFile(filterFile));
+    // First simulate the filter being from before the certificates being tested are valid. With
+    // CRLite enabled, none of the certificates should appear to be revoked.
+    let setFullCRLiteFilterResult = await new Promise(resolve => {
+      certStorage.setFullCRLiteFilter(
+        filterBytes,
+        new Date("2017-10-28T00:00:00Z").getTime() / 1000,
+        resolve
+      );
+    });
+    Assert.equal(
+      setFullCRLiteFilterResult,
+      Cr.NS_OK,
+      "setFullCRLiteFilter should succeed"
+    );
+
+    Services.prefs.setIntPref(
+      "security.pki.crlite_mode",
+      CRLiteModeEnforcePrefValue
+    );
+    await checkCertErrorGenericAtTime(
+      certdb,
+      validCert,
+      PRErrorCodeSuccess,
+      certificateUsageSSLServer,
+      new Date("2019-11-04T00:00:00Z").getTime() / 1000,
+      false,
+      "skynew.jp",
+      Ci.nsIX509CertDB.FLAG_LOCAL_ONLY
+    );
+    await checkCertErrorGenericAtTime(
+      certdb,
+      revokedCert,
+      PRErrorCodeSuccess,
+      certificateUsageSSLServer,
+      new Date("2019-11-04T00:00:00Z").getTime() / 1000,
+      false,
+      "schunk-group.com",
+      Ci.nsIX509CertDB.FLAG_LOCAL_ONLY
+    );
+
+    // Now "replace" the filter with a more recent one. The revoked certificate should be revoked.
+    setFullCRLiteFilterResult = await new Promise(resolve => {
+      certStorage.setFullCRLiteFilter(
+        filterBytes,
+        new Date("2019-10-28T00:00:00Z").getTime() / 1000,
+        resolve
+      );
+    });
+    Assert.equal(
+      setFullCRLiteFilterResult,
+      Cr.NS_OK,
+      "setFullCRLiteFilter should succeed"
+    );
+    await checkCertErrorGenericAtTime(
+      certdb,
+      validCert,
+      PRErrorCodeSuccess,
+      certificateUsageSSLServer,
+      new Date("2019-11-04T00:00:00Z").getTime() / 1000,
+      false,
+      "skynew.jp",
+      Ci.nsIX509CertDB.FLAG_LOCAL_ONLY
+    );
+    await checkCertErrorGenericAtTime(
+      certdb,
+      revokedCert,
+      SEC_ERROR_REVOKED_CERTIFICATE,
+      certificateUsageSSLServer,
+      new Date("2019-11-04T00:00:00Z").getTime() / 1000,
+      false,
+      "schunk-group.com",
+      Ci.nsIX509CertDB.FLAG_LOCAL_ONLY
+    );
+
+    // If we're only collecting telemetry, none of the certificates should appear to be revoked.
+    Services.prefs.setIntPref(
+      "security.pki.crlite_mode",
+      CRLiteModeTelemetryOnlyPrefValue
+    );
+    await checkCertErrorGenericAtTime(
+      certdb,
+      validCert,
+      PRErrorCodeSuccess,
+      certificateUsageSSLServer,
+      new Date("2019-11-04T00:00:00Z").getTime() / 1000,
+      false,
+      "skynew.jp",
+      Ci.nsIX509CertDB.FLAG_LOCAL_ONLY
+    );
+    await checkCertErrorGenericAtTime(
+      certdb,
+      revokedCert,
+      PRErrorCodeSuccess,
+      certificateUsageSSLServer,
+      new Date("2019-11-04T00:00:00Z").getTime() / 1000,
+      false,
+      "schunk-group.com",
+      Ci.nsIX509CertDB.FLAG_LOCAL_ONLY
+    );
+
+    // If CRLite is disabled, none of the certificates should appear to be revoked.
+    Services.prefs.setIntPref(
+      "security.pki.crlite_mode",
+      CRLiteModeDisabledPrefValue
+    );
+    await checkCertErrorGenericAtTime(
+      certdb,
+      validCert,
+      PRErrorCodeSuccess,
+      certificateUsageSSLServer,
+      new Date("2019-11-04T00:00:00Z").getTime() / 1000,
+      false,
+      "skynew.jp",
+      Ci.nsIX509CertDB.FLAG_LOCAL_ONLY
+    );
+    await checkCertErrorGenericAtTime(
+      certdb,
+      revokedCert,
+      PRErrorCodeSuccess,
+      certificateUsageSSLServer,
+      new Date("2019-11-04T00:00:00Z").getTime() / 1000,
+      false,
+      "schunk-group.com",
+      Ci.nsIX509CertDB.FLAG_LOCAL_ONLY
+    );
   }
 );

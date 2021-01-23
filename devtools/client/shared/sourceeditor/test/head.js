@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 /* import-globals-from ../../../shared/test/shared-head.js */
@@ -16,7 +15,7 @@ Services.scriptloader.loadSubScript(
 const Editor = require("devtools/client/shared/sourceeditor/editor");
 const {
   getClientCssProperties,
-} = require("devtools/shared/fronts/css-properties");
+} = require("devtools/client/fronts/css-properties");
 
 function promiseWaitForFocus(el) {
   return new Promise(resolve => waitForFocus(resolve, el));
@@ -27,7 +26,7 @@ async function setup(additionalOpts = {}) {
     const opt = "chrome,titlebar,toolbar,centerscreen,resizable,dialog=no";
     const win = Services.ww.openWindow(
       null,
-      CHROME_URL_ROOT + "head.xul",
+      CHROME_URL_ROOT + "head.xhtml",
       "_blank",
       opt,
       null

@@ -9,11 +9,10 @@
 #include "gfxConfig.h"
 
 #include "mozilla/gfx/gfxVars.h"
-#include "mozilla/SystemGroup.h"
+#include "mozilla/ClearOnShutdown.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/VsyncDispatcher.h"
 #include "mozilla/dom/MemoryReportRequest.h"
-#include "mozilla/ipc/CrashReporterHost.h"
 
 namespace mozilla {
 namespace gfx {
@@ -27,7 +26,7 @@ class OpenVRControllerManifestManager {
     mAction = aPath;
   }
 
-  void SetOpenVRControllerManifestPath(OpenVRControllerType aType,
+  void SetOpenVRControllerManifestPath(VRControllerType aType,
                                        const nsCString& aPath) {
     mManifest.Put(static_cast<uint32_t>(aType), aPath);
   }
@@ -40,7 +39,7 @@ class OpenVRControllerManifestManager {
     return false;
   }
 
-  bool GetManifestPath(OpenVRControllerType aType, nsCString* aPath) {
+  bool GetManifestPath(VRControllerType aType, nsCString* aPath) {
     return mManifest.Get(static_cast<uint32_t>(aType), aPath);
   }
 
@@ -90,16 +89,11 @@ mozilla::ipc::IPCResult VRChild::RecvFinishMemoryReport(
 
 void VRChild::ActorDestroy(ActorDestroyReason aWhy) {
   if (aWhy == AbnormalShutdown) {
-    if (mCrashReporter) {
-      mCrashReporter->GenerateCrashReport(OtherPid());
-      mCrashReporter = nullptr;
-    } else {
-      CrashReporter::FinalizeOrphanedMinidump(OtherPid(), GeckoProcessType_VR);
-    }
+    GenerateCrashReport(OtherPid());
 
     Telemetry::Accumulate(
         Telemetry::SUBPROCESS_ABNORMAL_ABORT,
-        nsDependentCString(XRE_ChildProcessTypeToString(GeckoProcessType_VR)),
+        nsDependentCString(XRE_GeckoProcessTypeToString(GeckoProcessType_VR)),
         1);
   }
   gfxVars::RemoveReceiver(this);
@@ -107,23 +101,6 @@ void VRChild::ActorDestroy(ActorDestroyReason aWhy) {
 }
 
 void VRChild::Init() {
-  // Build a list of prefs the VR process will need. Note that because we
-  // limit the VR process to prefs contained in gfxPrefs, we can simplify
-  // the message in two ways: one, we only need to send its index in gfxPrefs
-  // rather than its name, and two, we only need to send prefs that don't
-  // have their default value.
-  // Todo: Consider to make our own vrPrefs that we are interested in VR
-  // process.
-  nsTArray<GfxPrefSetting> prefs;
-  for (auto pref : gfxPrefs::all()) {
-    if (pref->HasDefaultValue()) {
-      continue;
-    }
-
-    GfxPrefValue value;
-    pref->GetCachedValue(&value);
-    prefs.AppendElement(GfxPrefSetting(pref->Index(), value));
-  }
   nsTArray<GfxVarUpdate> updates = gfxVars::FetchNonDefaultVars();
 
   DevicePrefs devicePrefs;
@@ -135,7 +112,7 @@ void VRChild::Init() {
   devicePrefs.advancedLayers() = gfxConfig::GetValue(Feature::ADVANCED_LAYERS);
   devicePrefs.useD2D1() = gfxConfig::GetValue(Feature::DIRECT2D);
 
-  SendInit(prefs, updates, devicePrefs);
+  SendInit(updates, devicePrefs);
 
   if (!sOpenVRControllerManifestManager) {
     sOpenVRControllerManifestManager = new OpenVRControllerManifestManager();
@@ -149,17 +126,16 @@ void VRChild::Init() {
     SendOpenVRControllerActionPathToVR(output);
   }
   if (sOpenVRControllerManifestManager->GetManifestPath(
-          OpenVRControllerType::Vive, &output)) {
-    SendOpenVRControllerManifestPathToVR(OpenVRControllerType::Vive, output);
+          VRControllerType::HTCVive, &output)) {
+    SendOpenVRControllerManifestPathToVR(VRControllerType::HTCVive, output);
+  }
+  if (sOpenVRControllerManifestManager->GetManifestPath(VRControllerType::MSMR,
+                                                        &output)) {
+    SendOpenVRControllerManifestPathToVR(VRControllerType::MSMR, output);
   }
   if (sOpenVRControllerManifestManager->GetManifestPath(
-          OpenVRControllerType::WMR, &output)) {
-    SendOpenVRControllerManifestPathToVR(OpenVRControllerType::WMR, output);
-  }
-  if (sOpenVRControllerManifestManager->GetManifestPath(
-          OpenVRControllerType::Knuckles, &output)) {
-    SendOpenVRControllerManifestPathToVR(OpenVRControllerType::Knuckles,
-                                         output);
+          VRControllerType::ValveIndex, &output)) {
+    SendOpenVRControllerManifestPathToVR(VRControllerType::ValveIndex, output);
   }
   gfxVars::AddReceiver(this);
 }
@@ -179,7 +155,7 @@ mozilla::ipc::IPCResult VRChild::RecvOpenVRControllerActionPathToParent(
 }
 
 mozilla::ipc::IPCResult VRChild::RecvOpenVRControllerManifestPathToParent(
-    const OpenVRControllerType& aType, const nsCString& aPath) {
+    const VRControllerType& aType, const nsCString& aPath) {
   sOpenVRControllerManifestManager->SetOpenVRControllerManifestPath(aType,
                                                                     aPath);
   return IPC_OK();
@@ -188,14 +164,6 @@ mozilla::ipc::IPCResult VRChild::RecvOpenVRControllerManifestPathToParent(
 mozilla::ipc::IPCResult VRChild::RecvInitComplete() {
   // We synchronously requested VR parameters before this arrived.
   mVRReady = true;
-  return IPC_OK();
-}
-
-mozilla::ipc::IPCResult VRChild::RecvInitCrashReporter(
-    Shmem&& aShmem, const NativeThreadId& aThreadId) {
-  mCrashReporter = MakeUnique<ipc::CrashReporterHost>(GeckoProcessType_VR,
-                                                      aShmem, aThreadId);
-
   return IPC_OK();
 }
 

@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageStorage.label "Mezuen biltegiratzea">
+<!ENTITY securitySettings.label "Segurtasun-ezarpenak">
+<!ENTITY serverSettings.label "Zerbitzariaren ezarpenak">
+<!ENTITY serverType.label "Zerbitzari mota:">
+<!ENTITY serverName.label "Zerbitzari-izena:">
+<!ENTITY serverName.accesskey "Z">
+<!ENTITY userName.label "Erabiltzaile-izena:">
+<!ENTITY userName.accesskey "n">
+<!ENTITY port.label "Ataka:">
+<!ENTITY port.accesskey "A">
+<!ENTITY serverPortDefault.label "Lehenetsia:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammar dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "Begiratu mezurik dagoen ">
+<!ENTITY biffStart.accesskey "g">
+<!ENTITY biffEnd.label "minutuan behin">
+<!ENTITY useIdleNotifications.label "Baimendu berehalako zerbitzariaren jakinarazpenak mezu berriak iriztean">
+<!ENTITY useIdleNotifications.accesskey "B">
+<!ENTITY connectionSecurity.label "Konexioaren segurtasuna:">
+<!ENTITY connectionSecurity.accesskey "u">
+<!ENTITY connectionSecurityType-0.label "Bat ere ez">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, erabilgarri badago">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "Autentifikazio metodoa:">
+<!ENTITY authMethod.accesskey "i">
+<!ENTITY leaveOnServer.label "Utzi mezuak zerbitzarian">
+<!ENTITY leaveOnServer.accesskey "z">
+<!ENTITY headersOnly.label "Deskargatu goiburuak bakarrik">
+<!ENTITY headersOnly.accesskey "D">
+<!ENTITY deleteByAgeFromServer.label "Gehienez">
+<!ENTITY deleteByAgeFromServer.accesskey "h">
+<!ENTITY daysEnd.label "egunez">
+<!ENTITY deleteOnServer2.label "Nik ezabatu arte">
+<!ENTITY deleteOnServer2.accesskey "e">
+<!ENTITY downloadOnBiff.label "Deskargatu automatikoki mezu berriak">
+<!ENTITY downloadOnBiff.accesskey "m">
+<!ENTITY deleteMessagePrefix.label "Mezu bat ezabatzean:">
+<!ENTITY modelMoveToTrash.label "Mugitu karpeta honetara:">
+<!ENTITY modelMoveToTrash.accesskey "u">
+<!ENTITY modelMarkDeleted.label "Markatu ezabatuta bezala">
+<!ENTITY modelMarkDeleted.accesskey "k">
+<!ENTITY modelDeleteImmediately.label "Ezabatu berehala">
+<!ENTITY modelDeleteImmediately.accesskey "h">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "Garbitu (&quot;Hustu&quot;) sarrera-ontzia irtetean">
+<!ENTITY expungeOnExit.accesskey "e">
+<!ENTITY emptyTrashOnExit.label "Hustu zakarrontzia irtetean">
+<!ENTITY emptyTrashOnExit.accesskey "r">
+<!ENTITY loginAtStartup.label "Egiaztatu mezu berririk dagoen abiaraztean">
+<!ENTITY loginAtStartup.accesskey "E">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+    of messages between them
+-->
+<!ENTITY maxMessagesStart.label "Galdetu niri">
+<!ENTITY maxMessagesStart.accesskey "e">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "mezu baino gehiago deskargatzean">
+<!ENTITY alwaysAuthenticate.label "Eskatu beti autentifikazioa zerbitzari honetara konektatzean">
+<!ENTITY alwaysAuthenticate.accesskey "b">
+<!ENTITY newsrcFilePath1.label "News.rc fitxategia:">
+<!ENTITY newsrcPicker1.label "Aukeratu News.rc fitxategia">
+<!ENTITY abbreviate.label "Erakutsi honela berri-taldeen izenak posta-karpetaren panelean:">
+<!ENTITY abbreviateOn.label "Izen osoak (adibidez, 'netscape.public.mozilla.mail-news')">
+<!ENTITY abbreviateOff.label "Izen laburtuak (adibidez, 'n.p.m.mail-news')">
+<!ENTITY advancedButton.label "Aurreratua…">
+<!ENTITY advancedButton.accesskey "u">
+<!ENTITY serverDefaultCharset2.label "Testu kodeketa lehenetsia:">
+<!ENTITY localPath1.label "Direktorio lokala:">
+<!ENTITY localFolderPicker.label "Hautatu direktorio lokala">
+<!ENTITY browseFolder.label "Arakatu…">
+<!ENTITY browseFolder.accesskey "A">
+<!ENTITY browseNewsrc.label "Arakatu…">
+<!ENTITY browseNewsrc.accesskey "u">
+
+<!ENTITY accountTitle.label "Kontu-ezarpenak">
+<!ENTITY accountSettingsDesc.label "Ondorengoa kontu berezia da. Ez dago identitaterik honi lotuta.">
+<!ENTITY storeType.label "Mezu biltegi mota:">
+<!ENTITY storeType.accesskey "m">
+<!ENTITY mboxStore2.label "Karpeta bakoitzeko fitxategi bat (mbox)">
+<!ENTITY maildirStore.label "Mezu bakoitzeko fitxategi bat (maildir)">

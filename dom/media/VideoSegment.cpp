@@ -8,6 +8,7 @@
 #include "gfx2DGlue.h"
 #include "ImageContainer.h"
 #include "Layers.h"
+#include "VideoUtils.h"
 #include "mozilla/UniquePtr.h"
 
 namespace mozilla {
@@ -26,7 +27,7 @@ VideoFrame::VideoFrame()
       mForceBlack(false),
       mPrincipalHandle(PRINCIPAL_HANDLE_NONE) {}
 
-VideoFrame::~VideoFrame() {}
+VideoFrame::~VideoFrame() = default;
 
 void VideoFrame::SetNull() {
   mImage = nullptr;
@@ -35,7 +36,7 @@ void VideoFrame::SetNull() {
 }
 
 void VideoFrame::TakeFrom(VideoFrame* aFrame) {
-  mImage = aFrame->mImage.forget();
+  mImage = std::move(aFrame->mImage);
   mIntrinsicSize = aFrame->mIntrinsicSize;
   mForceBlack = aFrame->GetForceBlack();
   mPrincipalHandle = aFrame->mPrincipalHandle;
@@ -76,6 +77,10 @@ already_AddRefed<Image> VideoFrame::CreateBlackImage(
   data.mPicY = 0;
   data.mPicSize = gfx::IntSize(aSize.width, aSize.height);
   data.mStereoMode = StereoMode::MONO;
+  data.mYUVColorSpace = gfx::YUVColorSpace::BT601;
+  // This could be made FULL once bug 1568745 is complete. A black pixel being
+  // 0x00, 0x80, 0x80
+  data.mColorRange = gfx::ColorRange::LIMITED;
 
   // Copies data, so we can free data.
   if (!image->CopyData(data)) {
@@ -104,6 +109,6 @@ VideoSegment::VideoSegment()
 VideoSegment::VideoSegment(VideoSegment&& aSegment)
     : MediaSegmentBase<VideoSegment, VideoChunk>(std::move(aSegment)) {}
 
-VideoSegment::~VideoSegment() {}
+VideoSegment::~VideoSegment() = default;
 
 }  // namespace mozilla

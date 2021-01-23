@@ -1,24 +1,32 @@
-#include "safebrowsing.pb.h"
-#include "gtest/gtest.h"
-#include "nsUrlClassifierUtils.h"
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 #include "mozilla/Base64.h"
+#include "nsUrlClassifierUtils.h"
+#include "safebrowsing.pb.h"
 
-using namespace mozilla;
-using namespace mozilla::safebrowsing;
+#include "Common.h"
 
-namespace {
 template <size_t N>
-void ToBase64EncodedStringArray(nsCString (&aInput)[N],
-                                nsTArray<nsCString>& aEncodedArray);
-}  // end of unnamed namespace.
+static void ToBase64EncodedStringArray(nsCString (&aInput)[N],
+                                       nsTArray<nsCString>& aEncodedArray) {
+  for (size_t i = 0; i < N; i++) {
+    nsCString encoded;
+    nsresult rv = mozilla::Base64Encode(aInput[i], encoded);
+    NS_ENSURE_SUCCESS_VOID(rv);
+    aEncodedArray.AppendElement(encoded);
+  }
+}
 
 TEST(UrlClassifierFindFullHash, Request)
 {
   nsUrlClassifierUtils* urlUtil = nsUrlClassifierUtils::GetInstance();
 
   nsTArray<nsCString> listNames;
-  listNames.AppendElement("test-phish-proto");
-  listNames.AppendElement("test-unwanted-proto");
+  listNames.AppendElement("moztest-phish-proto");
+  listNames.AppendElement("moztest-unwanted-proto");
 
   nsCString listStates[] = {nsCString("sta\x00te1", 7),
                             nsCString("sta\x00te2", 7)};
@@ -65,7 +73,7 @@ TEST(UrlClassifierFindFullHash, Request)
     rv =
         urlUtil->ConvertListNameToThreatType(listNames[i], &expectedThreatType);
     ASSERT_TRUE(NS_SUCCEEDED(rv));
-    ASSERT_EQ(threatInfo.threat_types(i), expectedThreatType);
+    ASSERT_EQ(threatInfo.threat_types(i), (int)expectedThreatType);
   }
 
   // Compare prefixes.
@@ -160,7 +168,7 @@ class MyParseCallback final : public nsIUrlClassifierParseFindFullHashCallback {
     ASSERT_TRUE(aToVerify == aExpected.mSecs);
   }
 
-  ~MyParseCallback() {}
+  ~MyParseCallback() = default;
 
   uint32_t& mCallbackCount;
 };
@@ -204,19 +212,3 @@ TEST(UrlClassifierFindFullHash, ParseRequest)
 
   ASSERT_EQ(callbackCount, ArrayLength(EXPECTED_MATCH));
 }
-
-/////////////////////////////////////////////////////////////
-namespace {
-
-template <size_t N>
-void ToBase64EncodedStringArray(nsCString (&aArray)[N],
-                                nsTArray<nsCString>& aEncodedArray) {
-  for (size_t i = 0; i < N; i++) {
-    nsCString encoded;
-    nsresult rv = Base64Encode(aArray[i], encoded);
-    NS_ENSURE_SUCCESS_VOID(rv);
-    aEncodedArray.AppendElement(encoded);
-  }
-}
-
-}  // namespace

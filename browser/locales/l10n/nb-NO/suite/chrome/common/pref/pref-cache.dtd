@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-cache.xul -->
+
+<!--LOCALIZATION NOTE : FILE Cache prefs dialog -->
+<!ENTITY pref.cache.title                "Hurtiglager">
+<!ENTITY pref.cache.caption              "Sett hurtiglagerinnstillinger">
+<!ENTITY cachePara                       "Hurtiglageret inneholder kopier av nettsteder du besøker ofte (dersom du trykker «Oppdater», vil du alltid få den nyeste utgaven av nettsiden).">
+<!ENTITY cacheCheck.label                "La &brandShortName; styre størrelsen av hurtiglageret.">
+<!ENTITY cacheCheck.accesskey            "L">
+<!ENTITY diskCacheUpTo.label             "Bruk opptil">
+<!ENTITY diskCacheUpTo.accesskey         "B">
+<!ENTITY spaceMbytes                     " MB med diskplass for hurtiglager.">
+<!ENTITY diskCacheFolder.label           "Mappe:">
+<!ENTITY clearDiskCache.label            "Tøm">
+<!ENTITY clearDiskCache.accesskey        "T">
+<!ENTITY chooseDiskCacheFolder.label     "Velg …">
+<!ENTITY chooseDiskCacheFolder.accesskey "V">
+<!ENTITY diskCacheFolderExplanation      "Filer i hurtiglageret vil lagres i en undermappe med navn «Cache». Start &brandShortName; på nytt for at endringene skal bli gjeldende.">
+<!ENTITY docCache.label                  "Sammenlign siden i hurtiglageret med siden på nettet:">
+<!ENTITY docCache.accesskey              "m">
+<!ENTITY checkOncePerSession.label       "En gang for hver programøkt">
+<!ENTITY checkEveryTime.label            "Hver gang jeg viser den">
+<!ENTITY checkNever.label                "Aldri">
+<!ENTITY checkAutomatically.label        "Når siden er utdatert">
+
+<!ENTITY prefetchTitle.label             "Forhåndslasting av lenker">
+<!ENTITY enablePrefetch.label            "Forhåndsnedlast nettsider når ingenting annet lastes">
+<!ENTITY enablePrefetch.accesskey        "d">

@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -18,10 +16,17 @@ define(function(require, exports, module) {
   const { tr } = dom;
 
   // Tree
-  const TreeCell = createFactory(require("./TreeCell"));
-  const LabelCell = createFactory(require("./LabelCell"));
+  const TreeCell = createFactory(
+    require("devtools/client/shared/components/tree/TreeCell")
+  );
+  const LabelCell = createFactory(
+    require("devtools/client/shared/components/tree/LabelCell")
+  );
 
-  const { focusableSelector } = require("devtools/client/shared/focus");
+  const {
+    wrapMoveFocus,
+    getFocusableElements,
+  } = require("devtools/client/shared/focus");
 
   const UPDATE_ON_PROPS = [
     "name",
@@ -44,8 +49,8 @@ define(function(require, exports, module) {
     static get propTypes() {
       return {
         member: PropTypes.shape({
-          object: PropTypes.obSject,
-          name: PropTypes.sring,
+          object: PropTypes.object,
+          name: PropTypes.string,
           type: PropTypes.string.isRequired,
           rowClass: PropTypes.string.isRequired,
           level: PropTypes.number.isRequired,
@@ -56,10 +61,11 @@ define(function(require, exports, module) {
           hidden: PropTypes.bool,
           selected: PropTypes.bool,
           active: PropTypes.bool,
+          loading: PropTypes.bool,
         }),
         decorator: PropTypes.object,
-        renderCell: PropTypes.object,
-        renderLabelCell: PropTypes.object,
+        renderCell: PropTypes.func,
+        renderLabelCell: PropTypes.func,
         columns: PropTypes.array.isRequired,
         id: PropTypes.string.isRequired,
         provider: PropTypes.object.isRequired,
@@ -133,7 +139,7 @@ define(function(require, exports, module) {
      * is outside its container, focus on the first focusable element inside.
      */
     _setTabbableState() {
-      const elms = this.getFocusableElements();
+      const elms = getFocusableElements(this.treeRowRef.current);
       if (elms.length === 0) {
         return;
       }
@@ -149,46 +155,6 @@ define(function(require, exports, module) {
       }
     }
 
-    /**
-     * Get a list of all elements that are focusable with a keyboard inside the
-     * tree node.
-     */
-    getFocusableElements() {
-      return Array.from(
-        this.treeRowRef.current.querySelectorAll(focusableSelector)
-      );
-    }
-
-    /**
-     * Wrap and move keyboard focus to first/last focusable element inside the
-     * tree node to prevent the focus from escaping the tree node boundaries.
-     * element).
-     *
-     * @param  {DOMNode} current  currently focused element
-     * @param  {Boolean} back     direction
-     * @return {Boolean}          true there is a newly focused element.
-     */
-    _wrapMoveFocus(current, back) {
-      const elms = this.getFocusableElements();
-      let next;
-
-      if (elms.length === 0) {
-        return false;
-      }
-
-      if (back) {
-        if (elms.indexOf(current) === 0) {
-          next = elms[elms.length - 1];
-          next.focus();
-        }
-      } else if (elms.indexOf(current) === elms.length - 1) {
-        next = elms[0];
-        next.focus();
-      }
-
-      return !!next;
-    }
-
     _onKeyDown(e) {
       const { target, key, shiftKey } = e;
 
@@ -196,7 +162,11 @@ define(function(require, exports, module) {
         return;
       }
 
-      const focusMoved = this._wrapMoveFocus(target, shiftKey);
+      const focusMoved = !!wrapMoveFocus(
+        getFocusableElements(this.treeRowRef.current),
+        target,
+        shiftKey
+      );
       if (focusMoved) {
         // Focus was moved to the begining/end of the list, so we need to
         // prevent the default focus change that would happen here.
@@ -249,12 +219,17 @@ define(function(require, exports, module) {
 
       if (member.hasChildren) {
         classNames.push("hasChildren");
-        props["aria-expanded"] = false;
+
+        // There are 2 situations where hasChildren is true:
+        // 1. it is an object with children. Only set aria-expanded in this situation
+        // 2. It is a long string (> 50 chars) that can be expanded to fully display it
+        if (member.type !== "string") {
+          props["aria-expanded"] = member.open;
+        }
       }
 
       if (member.open) {
         classNames.push("opened");
-        props["aria-expanded"] = true;
       }
 
       if (member.loading) {
@@ -280,7 +255,7 @@ define(function(require, exports, module) {
       // Get components for rendering cells.
       let renderCell = this.props.renderCell || RenderCell;
       let renderLabelCell = this.props.renderLabelCell || RenderLabelCell;
-      if (decorator && decorator.renderLabelCell) {
+      if (decorator?.renderLabelCell) {
         renderLabelCell =
           decorator.renderLabelCell(member.object) || renderLabelCell;
       }
@@ -293,7 +268,7 @@ define(function(require, exports, module) {
           value: this.props.provider.getValue(member.object, col.id),
         });
 
-        if (decorator && decorator.renderCell) {
+        if (decorator?.renderCell) {
           renderCell = decorator.renderCell(member.object, col.id);
         }
 

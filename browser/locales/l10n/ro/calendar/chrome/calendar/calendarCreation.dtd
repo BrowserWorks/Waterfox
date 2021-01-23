@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "Creare calendar nou" >
+<!ENTITY wizard.label             "Creează un calendar nou" >
+<!ENTITY wizard.description       "Localizează calendarul" >
+
+<!ENTITY initialpage.description    "Calendarul poate fi stocat pe calculator sau pe un server pentru acces de la distanță sau partajare cu prietenii sau colegii." >
+<!ENTITY initialpage.computer.label  "Pe calculatorul meu">
+<!ENTITY initialpage.network.label  "În rețea">
+
+<!ENTITY locationpage.description         "Furnizează informațiile necesare pentru a accesa calendarul de la distanță" >
+<!ENTITY locationpage.login.description   "Opțional: introdu un nume de utilizator și parola" >
+<!ENTITY locationpage.username.label      "Utilizator:" >
+<!ENTITY locationpage.password.label      "Parolă:" >
+
+<!ENTITY custompage.shortdescription  "Personalizează calendarul" >
+<!ENTITY custompage.longdescription   "Poți da un pseudonim calendarului și să colorezi evenimentele din el." >
+
+<!ENTITY finishpage.shortdescription  "Calendar creat" >
+<!ENTITY finishpage.longdescription   "Calendarul a fost creat." >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "Altele">
+
+<!ENTITY buttons.create.label "Creează calendar">
+<!ENTITY buttons.create.accesskey "r">
+
+<!ENTITY buttons.find.label "Caută calendare">
+<!ENTITY buttons.find.accesskey "G">
+
+<!ENTITY buttons.back.label "Înapoi">
+<!ENTITY buttons.back.accesskey "n">
+
+<!ENTITY buttons.subscribe.label "Abonează-te">
+<!ENTITY buttons.subscribe.accesskey "A">
+
+<!ENTITY calendartype.label "Tipul calendarului:">
+<!ENTITY location.label "Locație:">
+<!ENTITY location.placeholder "URL sau denumirea serverului-gazdă pe care se află calendarul">
+
+<!ENTITY network.nocredentials.label "Această locație nu necesită date de autentificare">
+<!ENTITY network.loading.description "Te rugăm să aștepți cât timp sunt detectate calendarele.">
+<!ENTITY network.notfound.description "Nu s-au găsit calendare la această adresă. Te rugăm să îți verifici setările.">
+<!ENTITY network.authfail.description "Datele de autentificare introduse nu au fost acceptate. Te rugăm să îți verifici setările.">
+
+<!ENTITY network.subscribe.single.description "Alege calendarele la care vrei să te abonezi.">
+<!ENTITY network.subscribe.multiple.description "Pentru această adresă sunt disponibile mai multe calendare. Alege tipul calendarului, apoi marchează calendarele la care vrei să te abonezi.">

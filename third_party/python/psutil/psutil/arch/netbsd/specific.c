@@ -22,7 +22,6 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
-#include <sys/user.h>
 #include <sys/proc.h>
 #include <sys/swap.h>  // for swap_mem
 #include <signal.h>
@@ -32,15 +31,16 @@
 #include <sys/socket.h>
 #include <sys/sched.h>  // for CPUSTATES & CP_*
 #define _KERNEL  // for DTYPE_*
-#include <sys/file.h>
+    #include <sys/file.h>
 #undef _KERNEL
 #include <sys/disk.h>  // struct diskstats
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include "specific.h"
 #include "../../_psutil_common.h"
 #include "../../_psutil_posix.h"
+#include "specific.h"
+
 
 #define PSUTIL_KPT2DOUBLE(t) (t ## _sec + t ## _usec / 1000000.0)
 #define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
@@ -72,7 +72,7 @@ psutil_kinfo_proc(pid_t pid, kinfo_proc *proc) {
     }
     // sysctl stores 0 in the size if we can't find the process information.
     if (size == 0) {
-        NoSuchProcess("");
+        NoSuchProcess("sysctl (size = 0)");
         return -1;
     }
     return 0;
@@ -110,6 +110,47 @@ kinfo_getfile(pid_t pid, int* cnt) {
 
     *cnt = (int)(len / sizeof(struct kinfo_file));
     return kf;
+}
+
+PyObject *
+psutil_proc_cwd(PyObject *self, PyObject *args) {
+    long pid;
+
+    char path[MAXPATHLEN];
+    size_t pathlen = sizeof path;
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+
+#ifdef KERN_PROC_CWD
+    int name[] = { CTL_KERN, KERN_PROC_ARGS, pid, KERN_PROC_CWD};
+    if (sysctl(name, 4, path, &pathlen, NULL, 0) != 0) {
+        if (errno == ENOENT)
+            NoSuchProcess("");
+        else
+            PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+#else
+    char *buf;
+    if (asprintf(&buf, "/proc/%d/cwd", (int)pid) < 0) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    ssize_t len = readlink(buf, path, sizeof(path) - 1);
+    free(buf);
+    if (len == -1) {
+        if (errno == ENOENT)
+            NoSuchProcess("readlink (ENOENT)");
+        else
+            PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+    path[len] = '\0';
+#endif
+
+    return PyUnicode_DecodeFSDefault(path);
 }
 
 
@@ -157,7 +198,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         if (ret == -1)
             return NULL;
         else if (ret == 0)
-            return NoSuchProcess("");
+            return NoSuchProcess("psutil_pid_exists");
         else
             strcpy(pathname, "");
     }
@@ -209,7 +250,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         goto error;
     }
     if (size == 0) {
-        NoSuchProcess("");
+        NoSuchProcess("sysctl (size = 0)");
         goto error;
     }
 
@@ -226,7 +267,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         goto error;
     }
     if (size == 0) {
-        NoSuchProcess("");
+        NoSuchProcess("sysctl (size = 0)");
         goto error;
     }
 
@@ -282,14 +323,14 @@ psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
     if (kd == NULL) {
         PyErr_Format(
             PyExc_RuntimeError, "kvm_openfiles() syscall failed: %s", errbuf);
-        return errno;
+        return 1;
     }
 
     result = kvm_getproc2(kd, KERN_PROC_ALL, 0, sizeof(kinfo_proc), &cnt);
     if (result == NULL) {
         PyErr_Format(PyExc_RuntimeError, "kvm_getproc2() syscall failed");
         kvm_close(kd);
-        return errno;
+        return 1;
     }
 
     *procCount = (size_t)cnt;
@@ -299,7 +340,7 @@ psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
     if ((*procList = malloc(mlen)) == NULL) {
         PyErr_NoMemory();
         kvm_close(kd);
-        return errno;
+        return 1;
     }
 
     memcpy(*procList, result, mlen);
@@ -313,40 +354,35 @@ psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
 char *
 psutil_get_cmd_args(pid_t pid, size_t *argsize) {
     int mib[4];
-    ssize_t st;
-    size_t argmax;
-    size_t size;
-    char *procargs = NULL;
-
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_ARGMAX;
-
-    size = sizeof(argmax);
-    st = sysctl(mib, 2, &argmax, &size, NULL, 0);
-    if (st == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
-
-    procargs = (char *)malloc(argmax);
-    if (procargs == NULL) {
-        PyErr_NoMemory();
-        return NULL;
-    }
+    int st;
+    size_t len;
+    char *procargs;
 
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC_ARGS;
     mib[2] = pid;
     mib[3] = KERN_PROC_ARGV;
+    len = 0;
 
-    st = sysctl(mib, 4, procargs, &argmax, NULL, 0);
+    st = sysctl(mib, __arraycount(mib), NULL, &len, NULL, 0);
+    if (st == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+
+    procargs = (char *)malloc(len);
+    if (procargs == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+    st = sysctl(mib, __arraycount(mib), procargs, &len, NULL, 0);
     if (st == -1) {
         free(procargs);
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
 
-    *argsize = argmax;
+    *argsize = len;
     return procargs;
 }
 

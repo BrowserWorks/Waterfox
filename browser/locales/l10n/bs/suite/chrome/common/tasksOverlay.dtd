@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from tasksOverlay.xul -->
+<!ENTITY navigatorCmd.label "Browser">
+<!ENTITY navigatorCmd.commandkey "1">
+
+<!-- LOCALIZATION NOTE (editorCmd.label): DONT_TRANSLATE -->
+<!ENTITY editorCmd.label "Composer">
+<!ENTITY editorCmd.commandkey "4">
+
+<!ENTITY errorConsoleCmd.label "Konzola za greške">
+
+<!ENTITY taskNavigator.tooltip "Browser">
+<!ENTITY taskComposer.tooltip "Composer">
+
+<!ENTITY webDevelopment.label "Web programiranje">
+
+<!ENTITY windowMenu.label "Prozor">
+
+<!ENTITY tasksMenu.label "Alati">
+
+<!ENTITY datamanCmd.label "Menadžer podataka">
+
+<!ENTITY passwordManagerCmd.label "Menadžer lozinki">
+
+<!ENTITY passwordDisplayCmd.label "Upravljajte pohranjenim lozinkama">
+
+<!ENTITY passwordExpireCmd.label "Odjavite se">
+
+<!ENTITY downloadManagerCmd.label "Menadžer preuzimanja">
+
+<!ENTITY addOnsManagerCmd.label "Menadžer dodataka">
+
+<!ENTITY switchProfileCmd.label "Promijenite profil…">
+
+<!ENTITY syncBrand.shortName.label "Sync">
+<!-- LOCALIZATION NOTE (syncSetup.accesskey, syncSyncNowItem.accesskey):
+     Only one of these will show at a time (based on setup state),
+     so reusing accesskey is ok. -->
+<!ENTITY syncSetup.label "Postavite Sync…">
+<!ENTITY syncSyncNowItem.label "Sinhronizujte sada">

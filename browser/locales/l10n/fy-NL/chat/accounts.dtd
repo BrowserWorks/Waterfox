@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Account manager window for Instantbird -->
+<!ENTITY accounts.title                      "Accounts - &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "Instant-messagingsteat">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "Nij account">
+<!ENTITY accountManager.newAccount.accesskey "N">
+<!ENTITY accountManager.close.label          "Slute">
+<!ENTITY accountManager.close.accesskey      "l">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "Noch gjin account konfigurearre">
+<!ENTITY accountManager.noAccount.description "Klik op de knop &accountManager.newAccount.label; om &brandShortName; jo troch it accountkonfiguraasjeproses liede te litten.">
+<!ENTITY account.autoSignOn.label     "Oanmelde by opstarten">
+<!ENTITY account.autoSignOn.accesskey "O">
+<!ENTITY account.connect.label        "Ferbine">
+<!ENTITY account.connect.accesskey    "F">
+<!ENTITY account.disconnect.label     "Ferbining ferbrekke">
+<!ENTITY account.disconnect.accesskey "F">
+<!ENTITY account.delete.label         "Fuortsmite">
+<!ENTITY account.delete.accesskey     "s">
+<!ENTITY account.edit.label           "Eigenskippen">
+<!ENTITY account.edit.accesskey       "E">
+<!ENTITY account.moveup.label         "Omheech ferpleatse">
+<!ENTITY account.movedown.label       "Omleech ferpleatse">
+<!ENTITY account.cancelReconnection.label         "Opnij ferbinen annulearje">
+<!ENTITY account.cancelReconnection.accesskey     "a">
+<!ENTITY account.copyDebugLog.label     "Debuglochboek kopiearje">
+<!ENTITY account.copyDebugLog.accesskey "D">
+<!ENTITY account.showDebugLog.label     "Debuglochboek toane">
+<!ENTITY account.showDebugLog.accesskey "t">
+<!ENTITY account.connecting           "Ferbine…">
+<!ENTITY account.disconnecting        "Ferbining ferbrekke…">
+<!ENTITY account.disconnected         "Net ferbûn">

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "ઉમેદવારી નોંધાવો">
+<!ENTITY subscribeButton.label        "ઉમેદવારી નોંધાવો">
+<!ENTITY subscribeButton.accesskey    "S">
+<!ENTITY unsubscribeButton.label      "ઉમેદવારી દૂર કરો">
+<!ENTITY unsubscribeButton.accesskey  "U">
+<!ENTITY refreshButton.label          "ફરી તાજું કરો">
+<!ENTITY refreshButton.accesskey      "R">
+<!ENTITY stopButton.label             "અટકાવો">
+<!ENTITY stopButton.accesskey         "T">
+<!ENTITY server.label                 "ખાતું:">
+<!ENTITY server.accesskey             "A">
+<!ENTITY subscribedHeader.label       "ઉમેદવારી નોંધાવો">
+<!-- commenting out until bug 38906 is fixed 
+<!ENTITY messagesHeader.label         "સંદેશાઓ"> -->
+<!ENTITY namefield.label              "વસ્તુઓ બતાવો કે જે આ સમાવે છે:">
+<!ENTITY namefield.accesskey          "O">

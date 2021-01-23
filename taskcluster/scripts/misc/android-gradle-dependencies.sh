@@ -4,14 +4,9 @@ set -x -e
 
 echo "running as" $(id)
 
-: WORKSPACE ${WORKSPACE:=/builds/worker/workspace}
-
 set -v
 
-cd $WORKSPACE/build/src
-
-# Download toolchain artifacts.
-. taskcluster/scripts/misc/tooltool-download.sh
+cd $GECKO_PATH
 
 . taskcluster/scripts/misc/android-gradle-dependencies/before.sh
 

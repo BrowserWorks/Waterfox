@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "Eyða">
+<!ENTITY editContactPanelDeleteContact.accesskey "E">
+
+<!ENTITY editContactName.label "Nafn:">
+<!ENTITY editContactName.accesskey "N">
+
+<!ENTITY editContactEmail.label "Tölvupóstfang:">
+<!ENTITY editContactEmail.accesskey "T">
+
+<!ENTITY editContactAddressBook.label "Nafnaskrá:">
+<!ENTITY editContactAddressBook.accesskey "a">
+
+<!ENTITY editContactPanelDone.label "Ljúka">
+<!ENTITY editContactPanelDone.accesskey "L">
+
+<!ENTITY contactMoveDisabledWarning.description "Þú getur ekki breytt nafnaskránni vegna þess að tengiliðurinn er á póstlista.">

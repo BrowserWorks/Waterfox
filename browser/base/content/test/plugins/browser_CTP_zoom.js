@@ -16,7 +16,6 @@ add_task(async function() {
       Ci.nsIPluginTag.STATE_ENABLED,
       "Second Test Plug-in"
     );
-    Services.prefs.clearUserPref("plugins.click_to_play");
     Services.prefs.clearUserPref("extensions.blocklist.suppressUI");
     FullZoom.reset(); // must be called before closing the tab we zoomed!
     gBrowser.removeCurrentTab();
@@ -26,7 +25,6 @@ add_task(async function() {
 });
 
 add_task(async function() {
-  Services.prefs.setBoolPref("plugins.click_to_play", true);
   Services.prefs.setBoolPref("extensions.blocklist.suppressUI", true);
 
   gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
@@ -66,7 +64,7 @@ add_task(async function() {
       gTestRoot + "plugin_zoom.html"
     );
     await promiseUpdatePluginBindings(gTestBrowser);
-    await ContentTask.spawn(gTestBrowser, { count }, async function(args) {
+    await SpecialPowers.spawn(gTestBrowser, [{ count }], async function(args) {
       let doc = content.document;
       let plugin = doc.getElementById("test");
       let overlay = plugin.openOrClosedShadowRoot.getElementById("main");

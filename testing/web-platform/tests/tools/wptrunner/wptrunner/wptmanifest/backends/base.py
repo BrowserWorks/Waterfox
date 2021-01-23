@@ -1,4 +1,5 @@
 import abc
+from six import iteritems, iterkeys, itervalues
 
 from ..node import NodeVisitor
 from ..parser import parse
@@ -130,7 +131,7 @@ class ManifestItem(object):
         self._data = {}
 
     def __repr__(self):
-        return "<ManifestItem %s>" % (self.node.data)
+        return "<%s %s>" % (self.__class__, self.node.data)
 
     def __str__(self):
         rv = [repr(self)]
@@ -169,7 +170,7 @@ class ManifestItem(object):
 
     def remove(self):
         if self.parent:
-            self.parent.children.remove(child)
+            self.parent.children.remove(self)
             self.parent = None
 
     def iterchildren(self, name=None):
@@ -186,21 +187,21 @@ class ManifestItem(object):
     def _flatten(self):
         rv = {}
         for node in [self, self.root]:
-            for name, value in node._data.iteritems():
+            for name, value in iteritems(node._data):
                 if name not in rv:
                     rv[name] = value
         return rv
 
     def iteritems(self):
-        for item in self._flatten().iteritems():
+        for item in iteritems(self._flatten()):
             yield item
 
     def iterkeys(self):
-        for item in self._flatten().iterkeys():
+        for item in iterkeys(self._flatten()):
             yield item
 
     def itervalues(self):
-        for item in self._flatten().itervalues():
+        for item in itervalues(self._flatten()):
             yield item
 
     def append(self, child):

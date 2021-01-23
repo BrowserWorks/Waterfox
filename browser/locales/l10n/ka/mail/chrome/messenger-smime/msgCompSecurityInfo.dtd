@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSecurityInfo.dtd UI for viewing security status when composing a message -->
+
+<!ENTITY title.label "წერილის უსაფრთხოება">
+<!ENTITY subject.plaintextWarning "გაითვალისწინეთ: წერილის თემის სტრიქონები არასოდეს იშიფრება.">
+<!ENTITY status.heading "თქვენი წერილის შინაარსი გადაიგზავნება შემდეგი სახით:">
+<!ENTITY status.signed "ციფრული ხელმოწერით:">
+<!ENTITY status.encrypted "დაშიფრული:">
+<!ENTITY status.certificates "სერტიფიკატები:">
+<!ENTITY view.label "ჩვენება">
+<!ENTITY view.accesskey "ვ">
+<!ENTITY tree.recipient "მიმღები">
+<!ENTITY tree.status "მდგომარეობა:">
+<!ENTITY tree.issuedDate "გამოცემული:">
+<!ENTITY tree.expiresDate "ვადა:">

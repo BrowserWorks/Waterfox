@@ -9,6 +9,7 @@
 #include <knownfolders.h>
 #include <winioctl.h>
 
+#include "GeckoProfiler.h"
 #include "gfxPlatform.h"
 #include "gfxUtils.h"
 #include "nsWindow.h"
@@ -23,6 +24,7 @@
 #include "mozilla/gfx/DataSurfaceHelpers.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/RefPtr.h"
+#include "mozilla/SchedulerGroup.h"
 #include "mozilla/WindowsVersion.h"
 #include "mozilla/Unused.h"
 #include "nsIContentPolicy.h"
@@ -42,12 +44,8 @@
 #ifdef MOZ_PLACES
 #  include "nsIFaviconService.h"
 #endif
-#include "nsIIconURI.h"
 #include "nsIDownloader.h"
-#include "nsINetUtil.h"
 #include "nsIChannel.h"
-#include "nsIObserver.h"
-#include "imgIEncoder.h"
 #include "nsIThread.h"
 #include "MainThreadUtils.h"
 #include "nsLookAndFeel.h"
@@ -739,8 +737,12 @@ void WinUtils::WaitForMessage(DWORD aTimeoutMs) {
     if (elapsed >= aTimeoutMs) {
       break;
     }
-    DWORD result = ::MsgWaitForMultipleObjectsEx(0, NULL, aTimeoutMs - elapsed,
-                                                 MOZ_QS_ALLEVENT, waitFlags);
+    DWORD result;
+    {
+      AUTO_PROFILER_THREAD_SLEEP;
+      result = ::MsgWaitForMultipleObjectsEx(0, NULL, aTimeoutMs - elapsed,
+                                             MOZ_QS_ALLEVENT, waitFlags);
+    }
     NS_WARNING_ASSERTION(result != WAIT_FAILED, "Wait failed");
     if (result == WAIT_TIMEOUT) {
       break;
@@ -1110,12 +1112,17 @@ void WinUtils::InvalidatePluginAsWorkaround(nsIWidget* aWidget,
  * @param aIOThread : the thread which performs the action
  * @param aURLShortcut : Differentiates between (false)Jumplistcache and
  *                       (true)Shortcutcache
+ * @param aRunnable : Executed in the aIOThread when the favicon cache is
+ *                    avaiable
  ************************************************************************/
 
-AsyncFaviconDataReady::AsyncFaviconDataReady(nsIURI* aNewURI,
-                                             nsCOMPtr<nsIThread>& aIOThread,
-                                             const bool aURLShortcut)
-    : mNewURI(aNewURI), mIOThread(aIOThread), mURLShortcut(aURLShortcut) {}
+AsyncFaviconDataReady::AsyncFaviconDataReady(
+    nsIURI* aNewURI, nsCOMPtr<nsIThread>& aIOThread, const bool aURLShortcut,
+    already_AddRefed<nsIRunnable> aRunnable)
+    : mNewURI(aNewURI),
+      mIOThread(aIOThread),
+      mRunnable(aRunnable),
+      mURLShortcut(aURLShortcut) {}
 
 NS_IMETHODIMP
 myDownloadObserver::OnDownloadComplete(nsIDownloader* downloader,
@@ -1217,7 +1224,7 @@ AsyncFaviconDataReady::OnComplete(nsIURI* aFaviconURI, uint32_t aDataLen,
       return NS_ERROR_OUT_OF_MEMORY;
     }
     dt->FillRect(Rect(0, 0, size.width, size.height),
-                 ColorPattern(Color(1.0f, 1.0f, 1.0f, 1.0f)));
+                 ColorPattern(ToDeviceColor(sRGBColor::OpaqueWhite())));
     IntPoint point;
     point.x = (size.width - surface->GetSize().width) / 2;
     point.y = (size.height - surface->GetSize().height) / 2;
@@ -1251,8 +1258,9 @@ AsyncFaviconDataReady::OnComplete(nsIURI* aFaviconURI, uint32_t aDataLen,
   int32_t stride = 4 * size.width;
 
   // AsyncEncodeAndWriteIcon takes ownership of the heap allocated buffer
-  nsCOMPtr<nsIRunnable> event = new AsyncEncodeAndWriteIcon(
-      path, std::move(data), stride, size.width, size.height, mURLShortcut);
+  nsCOMPtr<nsIRunnable> event =
+      new AsyncEncodeAndWriteIcon(path, std::move(data), stride, size.width,
+                                  size.height, mRunnable.forget());
   mIOThread->Dispatch(event, NS_DISPATCH_NORMAL);
 
   return NS_OK;
@@ -1263,10 +1271,10 @@ AsyncFaviconDataReady::OnComplete(nsIURI* aFaviconURI, uint32_t aDataLen,
 // in
 AsyncEncodeAndWriteIcon::AsyncEncodeAndWriteIcon(
     const nsAString& aIconPath, UniquePtr<uint8_t[]> aBuffer, uint32_t aStride,
-    uint32_t aWidth, uint32_t aHeight, const bool aURLShortcut)
-    : mURLShortcut(aURLShortcut),
-      mIconPath(aIconPath),
+    uint32_t aWidth, uint32_t aHeight, already_AddRefed<nsIRunnable> aRunnable)
+    : mIconPath(aIconPath),
       mBuffer(std::move(aBuffer)),
+      mRunnable(aRunnable),
       mStride(aStride),
       mWidth(aWidth),
       mHeight(aHeight) {}
@@ -1310,9 +1318,8 @@ NS_IMETHODIMP AsyncEncodeAndWriteIcon::Run() {
   fclose(file);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  if (mURLShortcut) {
-    SendNotifyMessage(HWND_BROADCAST, WM_SETTINGCHANGE, SPI_SETNONCLIENTMETRICS,
-                      0);
+  if (mRunnable) {
+    mRunnable->Run();
   }
   return rv;
 }
@@ -1393,12 +1400,15 @@ AsyncDeleteAllFaviconsFromDisk::~AsyncDeleteAllFaviconsFromDisk() {}
  * @param aICOFilePath The path of the icon file
  * @param aIOThread The thread to perform the Fetch on
  * @param aURLShortcut to distinguish between jumplistcache(false) and
- *        shortcutcache(true)
+ *                     shortcutcache(true)
+ * @param aRunnable Executed in the aIOThread when the favicon cache is
+ *                  avaiable
  */
-nsresult FaviconHelper::ObtainCachedIconFile(nsCOMPtr<nsIURI> aFaviconPageURI,
-                                             nsString& aICOFilePath,
-                                             nsCOMPtr<nsIThread>& aIOThread,
-                                             bool aURLShortcut) {
+nsresult FaviconHelper::ObtainCachedIconFile(
+    nsCOMPtr<nsIURI> aFaviconPageURI, nsString& aICOFilePath,
+    nsCOMPtr<nsIThread>& aIOThread, bool aURLShortcut,
+    already_AddRefed<nsIRunnable> aRunnable) {
+  nsCOMPtr<nsIRunnable> runnable = aRunnable;
   // Obtain the ICO file path
   nsCOMPtr<nsIFile> icoFile;
   nsresult rv = GetOutputIconPath(aFaviconPageURI, icoFile, aURLShortcut);
@@ -1422,14 +1432,14 @@ nsresult FaviconHelper::ObtainCachedIconFile(nsCOMPtr<nsIURI> aFaviconPageURI,
     // the next time we try to build the jump list, the data will be available.
     if (NS_FAILED(rv) || (nowTime - fileModTime) > icoReCacheSecondsTimeout) {
       CacheIconFileFromFaviconURIAsync(aFaviconPageURI, icoFile, aIOThread,
-                                       aURLShortcut);
+                                       aURLShortcut, runnable.forget());
       return NS_ERROR_NOT_AVAILABLE;
     }
   } else {
     // The file does not exist yet, obtain it async from the favicon service so
     // that the next time we try to build the jump list it'll be available.
     CacheIconFileFromFaviconURIAsync(aFaviconPageURI, icoFile, aIOThread,
-                                     aURLShortcut);
+                                     aURLShortcut, runnable.forget());
     return NS_ERROR_NOT_AVAILABLE;
   }
 
@@ -1501,7 +1511,9 @@ nsresult FaviconHelper::GetOutputIconPath(nsCOMPtr<nsIURI> aFaviconPageURI,
 // page aFaviconPageURI and stores it to disk at the path of aICOFile.
 nsresult FaviconHelper::CacheIconFileFromFaviconURIAsync(
     nsCOMPtr<nsIURI> aFaviconPageURI, nsCOMPtr<nsIFile> aICOFile,
-    nsCOMPtr<nsIThread>& aIOThread, bool aURLShortcut) {
+    nsCOMPtr<nsIThread>& aIOThread, bool aURLShortcut,
+    already_AddRefed<nsIRunnable> aRunnable) {
+  nsCOMPtr<nsIRunnable> runnable = aRunnable;
 #ifdef MOZ_PLACES
   // Obtain the favicon service and get the favicon for the specified page
   nsCOMPtr<nsIFaviconService> favIconSvc(
@@ -1509,8 +1521,8 @@ nsresult FaviconHelper::CacheIconFileFromFaviconURIAsync(
   NS_ENSURE_TRUE(favIconSvc, NS_ERROR_FAILURE);
 
   nsCOMPtr<nsIFaviconDataCallback> callback =
-      new mozilla::widget::AsyncFaviconDataReady(aFaviconPageURI, aIOThread,
-                                                 aURLShortcut);
+      new mozilla::widget::AsyncFaviconDataReady(
+          aFaviconPageURI, aIOThread, aURLShortcut, runnable.forget());
 
   favIconSvc->GetFaviconDataForPage(aFaviconPageURI, callback, 0);
 #endif
@@ -1637,7 +1649,8 @@ void WinUtils::SetupKeyModifiersSequence(nsTArray<KeyPair>* aArray,
 /* static */
 nsresult WinUtils::WriteBitmap(nsIFile* aFile, imgIContainer* aImage) {
   RefPtr<SourceSurface> surface = aImage->GetFrame(
-      imgIContainer::FRAME_FIRST, imgIContainer::FLAG_SYNC_DECODE);
+      imgIContainer::FRAME_FIRST,
+      imgIContainer::FLAG_SYNC_DECODE | imgIContainer::FLAG_ASYNC_NOTIFY);
   NS_ENSURE_TRUE(surface, NS_ERROR_FAILURE);
 
   return WriteBitmap(aFile, surface);
@@ -2039,6 +2052,43 @@ bool WinUtils::UnexpandEnvVars(nsAString& aPath) {
   return true;
 }
 
+/* static */
+WinUtils::WhitelistVec WinUtils::BuildWhitelist() {
+  WhitelistVec result;
+
+  Unused << result.emplaceBack(std::make_pair(
+      nsString(NS_LITERAL_STRING("%ProgramFiles%")), nsDependentString()));
+
+  // When no substitution is required, set the void flag
+  result.back().second.SetIsVoid(true);
+
+  Unused << result.emplaceBack(std::make_pair(
+      nsString(NS_LITERAL_STRING("%SystemRoot%")), nsDependentString()));
+  result.back().second.SetIsVoid(true);
+
+  wchar_t tmpPath[MAX_PATH + 1] = {};
+  if (GetTempPath(MAX_PATH, tmpPath)) {
+    // GetTempPath's result always ends with a backslash, which we don't want
+    uint32_t tmpPathLen = wcslen(tmpPath);
+    if (tmpPathLen) {
+      tmpPath[tmpPathLen - 1] = 0;
+    }
+
+    nsAutoString cleanTmpPath(tmpPath);
+    if (UnexpandEnvVars(cleanTmpPath)) {
+      NS_NAMED_LITERAL_STRING(tempVar, "%TEMP%");
+      Unused << result.emplaceBack(std::make_pair(
+          nsString(cleanTmpPath), nsDependentString(tempVar, 0)));
+    }
+  }
+
+  // If we add more items to the whitelist, ensure we still don't invoke an
+  // unnecessary heap allocation.
+  MOZ_ASSERT(result.length() <= kMaxWhitelistedItems);
+
+  return result;
+}
+
 /**
  * This function provides an array of (system path, substitution) pairs that are
  * considered to be acceptable with respect to privacy, for the purposes of
@@ -2051,42 +2101,25 @@ bool WinUtils::UnexpandEnvVars(nsAString& aPath) {
  * @see PreparePathForTelemetry for an example of its usage.
  */
 /* static */
-const nsTArray<mozilla::Pair<nsString, nsDependentString>>&
-WinUtils::GetWhitelistedPaths() {
-  // We know the maximum number of items this array will hold, so avoid a heap
-  // allocation by using AutoTArray<T,N>
-  static const size_t kMaxWhitelistedItems = 2;
-  static StaticAutoPtr<
-      AutoTArray<Pair<nsString, nsDependentString>, kMaxWhitelistedItems>>
-      sWhitelist;
-  if (sWhitelist) {
-    return *sWhitelist;
-  }
-  sWhitelist =
-      new AutoTArray<Pair<nsString, nsDependentString>, kMaxWhitelistedItems>();
-  sWhitelist->AppendElement(mozilla::MakePair(
-      nsString(NS_LITERAL_STRING("%ProgramFiles%")), nsDependentString()));
-  // When no substitution is required, set the void flag
-  sWhitelist->LastElement().second().SetIsVoid(true);
-  wchar_t tmpPath[MAX_PATH + 1] = {0};
-  if (GetTempPath(MAX_PATH, tmpPath)) {
-    // GetTempPath's result always ends with a backslash, which we don't want
-    uint32_t tmpPathLen = wcslen(tmpPath);
-    if (tmpPathLen) {
-      tmpPath[tmpPathLen - 1] = 0;
-    }
-    nsAutoString cleanTmpPath(tmpPath);
-    if (UnexpandEnvVars(cleanTmpPath)) {
-      sWhitelist->AppendElement(mozilla::MakePair(
-          nsString(cleanTmpPath), nsDependentString(L"%TEMP%")));
-    }
-  }
-  ClearOnShutdown(&sWhitelist);
+const WinUtils::WhitelistVec& WinUtils::GetWhitelistedPaths() {
+  static WhitelistVec sWhitelist([]() -> WhitelistVec {
+    auto setClearFn = [ptr = &sWhitelist]() -> void {
+      RunOnShutdown([ptr]() -> void { ptr->clear(); },
+                    ShutdownPhase::ShutdownFinal);
+    };
 
-  // If we add more items to the whitelist, ensure we still don't invoke an
-  // unnecessary heap allocation.
-  MOZ_ASSERT(sWhitelist->Length() <= kMaxWhitelistedItems);
-  return *sWhitelist;
+    if (NS_IsMainThread()) {
+      setClearFn();
+    } else {
+      SchedulerGroup::Dispatch(
+          TaskCategory::Other,
+          NS_NewRunnableFunction("WinUtils::GetWhitelistedPaths",
+                                 std::move(setClearFn)));
+    }
+
+    return BuildWhitelist();
+  }());
+  return sWhitelist;
 }
 
 /**
@@ -2174,14 +2207,12 @@ bool WinUtils::PreparePathForTelemetry(nsAString& aPath,
     }
   }
 
-  const nsTArray<Pair<nsString, nsDependentString>>& whitelistedPaths =
-      GetWhitelistedPaths();
+  const WhitelistVec& whitelistedPaths = GetWhitelistedPaths();
 
-  for (uint32_t i = 0; i < whitelistedPaths.Length(); ++i) {
-    const nsString& testPath = whitelistedPaths[i].first();
-    const nsDependentString& substitution = whitelistedPaths[i].second();
-    if (StringBeginsWith(aPath, testPath,
-                         nsCaseInsensitiveStringComparator())) {
+  for (uint32_t i = 0; i < whitelistedPaths.length(); ++i) {
+    const nsString& testPath = whitelistedPaths[i].first;
+    const nsDependentString& substitution = whitelistedPaths[i].second;
+    if (StringBeginsWith(aPath, testPath, nsCaseInsensitiveStringComparator)) {
       if (!substitution.IsVoid()) {
         aPath.Replace(0, testPath.Length(), substitution);
       }
@@ -2193,13 +2224,15 @@ bool WinUtils::PreparePathForTelemetry(nsAString& aPath,
   // the filename. We can't use nsLocalFile to do this because these paths may
   // begin with environment variables, and nsLocalFile doesn't like
   // non-absolute paths.
-  MOZ_ASSERT(aPath.Length() <= MAX_PATH);
-  wchar_t tmpPath[MAX_PATH + 1] = {0};
-  if (wcsncpy_s(tmpPath, ArrayLength(tmpPath),
-                (char16ptr_t)aPath.BeginReading(), aPath.Length())) {
+  const nsString& flatPath = PromiseFlatString(aPath);
+  LPCWSTR leafStart = ::PathFindFileNameW(flatPath.get());
+  ptrdiff_t cutLen = leafStart - flatPath.get();
+  if (cutLen) {
+    aPath.Cut(0, cutLen);
+  } else if (aFlags & PathTransformFlags::RequireFilePath) {
     return false;
   }
-  aPath.Assign((char16ptr_t)::PathFindFileNameW(tmpPath));
+
   return true;
 }
 

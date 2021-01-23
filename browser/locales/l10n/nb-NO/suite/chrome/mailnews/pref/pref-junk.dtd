@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.junk.title "Søppelpost">
+<!ENTITY junkSettings.caption "Globale søppelpostinnstillinger">
+<!ENTITY junkMail.intro "Gå til kontoinnstillinger for å konfigurere kontospesifikke innstillinger for håndtering av søppelpost.">
+
+<!-- Junk Mail Controls -->
+<!ENTITY manualMark.label               "Når jeg markerer en melding som søppelpost:">
+<!ENTITY manualMark.accesskey           "N">
+<!ENTITY manualMarkModeMove.label       "Flytt de til kontoens &quot;Uønsket&quot;-mappe">
+<!ENTITY manualMarkModeMove.accesskey   "F">
+<!ENTITY manualMarkModeDelete.label     "Slett dem">
+<!ENTITY manualMarkModeDelete.accesskey "S">
+
+<!ENTITY markAsRead.intro               "Merk meldinger som leste:">
+<!ENTITY autoMarkAsRead.label           "Når &brandShortName; avgjør at de er søppelpost">
+<!ENTITY autoMarkAsRead.accesskey       "å">
+<!ENTITY manualMarkAsRead.label         "Når jeg manuelt markerer dem som søppelpost">
+<!ENTITY manualMarkAsRead.accesskey     "k">
+
+<!ENTITY enableJunkLogging.label        "Slå på logging for søppelpostfilteret">
+<!ENTITY enableJunkLogging.accesskey    "S">
+<!ENTITY openJunkLog.label              "Vis logg">
+<!ENTITY openJunkLog.accesskey          "V">
+<!ENTITY resetTrainingData.label        "Tilbakestill treningsdata">
+<!ENTITY resetTrainingData.accesskey    "T">
+
+<!ENTITY pref.suspectMail.caption       "Mistenkelig e-post">
+
+<!-- Phishing Detector -->
+<!ENTITY pref.phishing.caption            "E-postsvindler">
+<!ENTITY enablePhishingDetector.label     "Fortell meg dersom meldingen jeg viser er en mistenkt e-postsvindel">
+<!ENTITY enablePhishingDetector.accesskey "F">
+
+<!-- Anti Virus -->
+<!ENTITY pref.antivirus.caption           "Antivirus">
+<!ENTITY antiVirus.label                  "Tillat antivirusprogrammer å skanne innkommende meldinger enklere">
+<!ENTITY antiVirus.accesskey              "T">

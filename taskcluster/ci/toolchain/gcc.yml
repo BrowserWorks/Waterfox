@@ -11,32 +11,47 @@ job-defaults:
             - 'build/unix/build-gcc/build-gcc.sh'
         toolchain-artifact: public/build/gcc.tar.xz
 
-linux64-gcc-6:
-    description: "GCC 6 toolchain build"
-    treeherder:
-        symbol: TL(gcc6)
-    run:
-        script: build-gcc-6-linux.sh
-        toolchain-alias: linux64-gcc
-    fetches:
-        fetch:
-            - binutils-2.31.1
-            - gcc-6.4.0
-            - gmp-5.1.3
-            - isl-0.15
-            - mpc-0.8.2
-            - mpfr-3.1.5
-
 linux64-gcc-7:
     description: "GCC 7 toolchain build"
     treeherder:
         symbol: TL(gcc7)
     run:
-        script: build-gcc-7-linux.sh
+        script: build-gcc-linux.sh
+        toolchain-alias: linux64-gcc
     fetches:
         fetch:
             - binutils-2.31.1
-            - gcc-7.3.0
+            - gcc-7.4.0
+            - gmp-6.1.0
+            - isl-0.16.1
+            - mpc-1.0.3
+            - mpfr-3.1.4
+
+linux64-gcc-8:
+    description: "GCC 8 toolchain build"
+    treeherder:
+        symbol: TL(gcc8)
+    run:
+        script: build-gcc-linux.sh
+    fetches:
+        fetch:
+            - binutils-2.31.1
+            - gcc-8.3.0
+            - gmp-6.1.0
+            - isl-0.16.1
+            - mpc-1.0.3
+            - mpfr-3.1.4
+
+linux64-gcc-9:
+    description: "GCC 9 toolchain build"
+    treeherder:
+        symbol: TL(gcc9)
+    run:
+        script: build-gcc-linux.sh
+    fetches:
+        fetch:
+            - binutils-2.31.1
+            - gcc-9.1.0
             - gmp-6.1.0
             - isl-0.16.1
             - mpc-1.0.3
@@ -51,13 +66,13 @@ linux64-gcc-sixgill:
         resources:
             - 'taskcluster/scripts/misc/build-gcc-sixgill-plugin-linux.sh'
         toolchain-artifact: public/build/sixgill.tar.xz
-    toolchains:
-        - linux64-gcc-6
     fetches:
         fetch:
             - binutils-2.31.1
-            - isl-0.15
-            - gcc-6.4.0
-            - gmp-5.1.3
-            - mpc-0.8.2
-            - mpfr-3.1.5
+            - gcc-9.1.0
+            - gmp-6.1.0
+            - isl-0.16.1
+            - mpc-1.0.3
+            - mpfr-3.1.4
+        toolchain:
+            - linux64-gcc-9

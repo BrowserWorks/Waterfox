@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Smiley Menu items -->
+<!ENTITY insertSmiley.label "Emotikon">
+<!ENTITY insertSmiley.accesskey "E">
+
+<!ENTITY smiley1Cmd.label "Úsmev">
+<!ENTITY smiley1Cmd.accesskey "s">
+<!ENTITY smiley1Cmd.tooltip "Vložiť emotikon s významom: Úsmev">
+<!ENTITY smiley2Cmd.label "Zamračenie">
+<!ENTITY smiley2Cmd.accesskey "i">
+<!ENTITY smiley2Cmd.tooltip "Vložiť emotikon s významom: Zamračenie">
+<!ENTITY smiley3Cmd.label "Žmurknutie">
+<!ENTITY smiley3Cmd.accesskey "m">
+<!ENTITY smiley3Cmd.tooltip "Vložiť emotikon s významom: Žmurknutie">
+<!ENTITY smiley4Cmd.label "Vyplazený jazyk">
+<!ENTITY smiley4Cmd.accesskey "l">
+<!ENTITY smiley4Cmd.tooltip "Vložiť emotikon s významom: Vyplazený jazyk">
+<!ENTITY smiley5Cmd.label "Smiech">
+<!ENTITY smiley5Cmd.accesskey "c">
+<!ENTITY smiley5Cmd.tooltip "Vložiť emotikon s významom: Smiech">
+<!ENTITY smiley6Cmd.label "Rozpaky">
+<!ENTITY smiley6Cmd.accesskey "z">
+<!ENTITY smiley6Cmd.tooltip "Vložiť emotikon s významom: Rozpaky">
+<!ENTITY smiley7Cmd.label "Nerozhodnosť">
+<!ENTITY smiley7Cmd.accesskey "d">
+<!ENTITY smiley7Cmd.tooltip "Vložiť emotikon s významom: Nerozhodnosť">
+<!ENTITY smiley8Cmd.label "Prekvapenie">
+<!ENTITY smiley8Cmd.accesskey "v">
+<!ENTITY smiley8Cmd.tooltip "Vložiť emotikon s významom: Prekvapenie">
+<!ENTITY smiley9Cmd.label "Bozk">
+<!ENTITY smiley9Cmd.accesskey "B">
+<!ENTITY smiley9Cmd.tooltip "Vložiť emotikon s významom: Bozk">
+<!ENTITY smiley10Cmd.label "Krik">
+<!ENTITY smiley10Cmd.accesskey "K">
+<!ENTITY smiley10Cmd.tooltip "Vložiť emotikon s významom: Krik">
+<!ENTITY smiley11Cmd.label "Pohoda">
+<!ENTITY smiley11Cmd.accesskey "h">
+<!ENTITY smiley11Cmd.tooltip "Vložiť emotikon s významom: Pohoda">
+<!ENTITY smiley12Cmd.label "O peniazoch">
+<!ENTITY smiley12Cmd.accesskey "O">
+<!ENTITY smiley12Cmd.tooltip "Vložiť emotikon s významom: O peniazoch">
+<!ENTITY smiley13Cmd.label "Trapas">
+<!ENTITY smiley13Cmd.accesskey "r">
+<!ENTITY smiley13Cmd.tooltip "Vložiť emotikon s významom: Trapas">
+<!ENTITY smiley14Cmd.label "Nevinnosť">
+<!ENTITY smiley14Cmd.accesskey "N">
+<!ENTITY smiley14Cmd.tooltip "Vložiť emotikon s významom: Nevinnosť">
+<!ENTITY smiley15Cmd.label "Plač">
+<!ENTITY smiley15Cmd.accesskey "a">
+<!ENTITY smiley15Cmd.tooltip "Vložiť emotikon s významom: Plač">
+<!ENTITY smiley16Cmd.label "Tajné">
+<!ENTITY smiley16Cmd.accesskey "T">
+<!ENTITY smiley16Cmd.tooltip "Vložiť emotikon s významom: Tajné">
+<!ENTITY SmileButton.label "Vložiť emotikon">
+<!ENTITY SmileButton.tooltip "Vložiť emotikon">

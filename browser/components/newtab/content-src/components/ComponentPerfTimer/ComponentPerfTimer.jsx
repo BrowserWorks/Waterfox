@@ -1,5 +1,9 @@
-import {actionCreators as ac, actionTypes as at} from "common/Actions.jsm";
-import {perfService as perfSvc} from "common/PerfService.jsm";
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+import { actionCreators as ac, actionTypes as at } from "common/Actions.jsm";
+import { perfService as perfSvc } from "content-src/lib/perf-service";
 import React from "react";
 
 // Currently record only a fixed set of sections. This will prevent data
@@ -115,13 +119,18 @@ export class ComponentPerfTimer extends React.Component {
     try {
       const firstRenderKey = `${this.props.id}_first_render_ts`;
       // value has to be Int32.
-      const value = parseInt(this.perfSvc.getMostRecentAbsMarkStartByName(dataReadyKey) -
-                             this.perfSvc.getMostRecentAbsMarkStartByName(firstRenderKey), 10);
-      this.props.dispatch(ac.OnlyToMain({
-        type: at.SAVE_SESSION_PERF_DATA,
-        // highlights_data_late_by_ms, topsites_data_late_by_ms.
-        data: {[`${this.props.id}_data_late_by_ms`]: value},
-      }));
+      const value = parseInt(
+        this.perfSvc.getMostRecentAbsMarkStartByName(dataReadyKey) -
+          this.perfSvc.getMostRecentAbsMarkStartByName(firstRenderKey),
+        10
+      );
+      this.props.dispatch(
+        ac.OnlyToMain({
+          type: at.SAVE_SESSION_PERF_DATA,
+          // highlights_data_late_by_ms, topsites_data_late_by_ms.
+          data: { [`${this.props.id}_data_late_by_ms`]: value },
+        })
+      );
     } catch (ex) {
       // If this failed, it's likely because the `privacy.resistFingerprinting`
       // pref is true.
@@ -142,10 +151,12 @@ export class ComponentPerfTimer extends React.Component {
       const data = {};
       data[key] = this.perfSvc.getMostRecentAbsMarkStartByName(key);
 
-      this.props.dispatch(ac.OnlyToMain({
-        type: at.SAVE_SESSION_PERF_DATA,
-        data,
-      }));
+      this.props.dispatch(
+        ac.OnlyToMain({
+          type: at.SAVE_SESSION_PERF_DATA,
+          data,
+        })
+      );
     } catch (ex) {
       // If this failed, it's likely because the `privacy.resistFingerprinting`
       // pref is true.  We should at least not blow up, and should continue

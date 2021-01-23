@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSecurityInfo.dtd UI for viewing security status when composing a message -->
+
+
+<!ENTITY title.label "سرّية الرّسالة">
+<!ENTITY subject.plaintextWarning "رجاءً لاحظ: سطر موضوع الرّسالة لا يُعمّى مطلقًا.">
+<!ENTITY status.heading "سترسل محتويات رسالتك كما يلي:">
+<!ENTITY status.signed "موقّعة رقميًّا:">
+<!ENTITY status.encrypted "مُعمّاة:">
+<!ENTITY status.certificates "الشّهادات:">
+<!ENTITY view.label "اعرض">
+<!ENTITY view.accesskey "ع">
+<!ENTITY tree.recipient "المستلم">
+<!ENTITY tree.status "الحالة">
+<!ENTITY tree.issuedDate "أُصدِرت في">
+<!ENTITY tree.expiresDate "تنقضي في">

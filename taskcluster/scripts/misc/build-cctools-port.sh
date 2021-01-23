@@ -9,48 +9,78 @@ set -x -e -v
 # This script is for building cctools (Apple's binutils) for Linux using
 # cctools-port (https://github.com/tpoechtrager/cctools-port).
 WORKSPACE=$HOME/workspace
-UPLOAD_DIR=$HOME/artifacts
 
-# Repository info
-: CROSSTOOL_PORT_REPOSITORY    ${CROSSTOOL_PORT_REPOSITORY:=https://github.com/tpoechtrager/cctools-port}
-: CROSSTOOL_PORT_REV           ${CROSSTOOL_PORT_REV:=8e9c3f2506b51cf56725eaa60b6e90e240e249ca}
-
-# Set some crosstools-port directories
-CROSSTOOLS_SOURCE_DIR=$WORKSPACE/crosstools-port
+# Set some crosstools-port and libtapi directories
+CROSSTOOLS_SOURCE_DIR=$MOZ_FETCHES_DIR/cctools-port
 CROSSTOOLS_CCTOOLS_DIR=$CROSSTOOLS_SOURCE_DIR/cctools
 CROSSTOOLS_BUILD_DIR=$WORKSPACE/cctools
-CLANG_DIR=$WORKSPACE/build/src/clang
+LIBTAPI_SOURCE_DIR=$MOZ_FETCHES_DIR/apple-libtapi
+LIBTAPI_BUILD_DIR=$WORKSPACE/libtapi-build
+CLANG_DIR=$MOZ_FETCHES_DIR/clang
 
 # Create our directories
-mkdir -p $CROSSTOOLS_BUILD_DIR
+mkdir -p $CROSSTOOLS_BUILD_DIR $LIBTAPI_BUILD_DIR
 
-git clone --no-checkout $CROSSTOOL_PORT_REPOSITORY $CROSSTOOLS_SOURCE_DIR
-cd $CROSSTOOLS_SOURCE_DIR
-git checkout $CROSSTOOL_PORT_REV
-# Cherry pick two fixes for LTO.
-git cherry-pick -n 82381f5038a340025ae145745ae5b325cd1b749a
-git cherry-pick -n 328c7371008a854af30823adcd4ec1e763054a1d
-echo "Building from commit hash `git rev-parse $CROSSTOOL_PORT_REV`..."
+cd $GECKO_PATH
 
-# Fetch clang from tooltool
-cd $WORKSPACE/build/src
-. taskcluster/scripts/misc/tooltool-download.sh
+export PATH="$MOZ_FETCHES_DIR/binutils/bin:$PATH"
+
+# Common setup for libtapi and cctools
+export CC=$CLANG_DIR/bin/clang
+export CXX=$CLANG_DIR/bin/clang++
+# We also need this LD_LIBRARY_PATH at build time, since tapi builds bits of
+# clang build tools, and then executes those tools.
+export LD_LIBRARY_PATH=$CLANG_DIR/lib
+
+# Build libtapi; the included build.sh is not sufficient for our purposes.
+cd $LIBTAPI_BUILD_DIR
+
+# Values taken from build.sh
+TAPI_REPOSITORY=tapi-1000.10.8
+TAPI_VERSION=10.0.0
+
+INCLUDE_FIX="-I $LIBTAPI_SOURCE_DIR/src/llvm/projects/clang/include -I $PWD/projects/clang/include"
+
+cmake $LIBTAPI_SOURCE_DIR/src/llvm \
+      -GNinja \
+      -DCMAKE_CXX_FLAGS="$INCLUDE_FIX" \
+      -DLLVM_INCLUDE_TESTS=OFF \
+      -DCMAKE_BUILD_TYPE=RELEASE \
+      -DCMAKE_INSTALL_PREFIX=$CROSSTOOLS_BUILD_DIR \
+      -DLLVM_TARGETS_TO_BUILD="X86;ARM;AArch64" \
+      -DTAPI_REPOSITORY_STRING=$TAPI_REPOSITORY \
+      -DTAPI_FULL_VERSION=$TAPI_VERSION
+
+ninja clangBasic
+ninja libtapi install-libtapi install-tapi-headers
+
+# Setup LDFLAGS late so run-at-build-time tools in the basic clang build don't
+# pick up the possibly-incompatible libstdc++ from clang.
+# Also set it up such that loading libtapi doesn't require a LD_LIBRARY_PATH.
+# (this requires two dollars and extra backslashing because it's used verbatim
+# via a Makefile)
+export LDFLAGS="-lpthread -Wl,-rpath-link,$CLANG_DIR/lib -Wl,-rpath,\\\$\$ORIGIN/../lib,-rpath,\\\$\$ORIGIN/../../clang/lib"
 
 # Configure crosstools-port
 cd $CROSSTOOLS_CCTOOLS_DIR
-export CC=$CLANG_DIR/bin/clang
-export CXX=$CLANG_DIR/bin/clang++
-export LDFLAGS="-lpthread -Wl,-rpath-link,$CLANG_DIR/lib"
+# Force re-libtoolization to overwrite files with the new libtool bits.
+perl -pi -e 's/(LIBTOOLIZE -c)/\1 -f/' autogen.sh
 ./autogen.sh
-./configure --prefix=$CROSSTOOLS_BUILD_DIR --target=x86_64-darwin11 --with-llvm-config=$CLANG_DIR/bin/llvm-config
+./configure \
+    --prefix=$CROSSTOOLS_BUILD_DIR \
+    --target=x86_64-apple-darwin \
+    --with-llvm-config=$CLANG_DIR/bin/llvm-config \
+    --enable-lto-support \
+    --enable-tapi-support \
+    --with-libtapi=$CROSSTOOLS_BUILD_DIR
 
 # Build cctools
 make -j `nproc --all` install
 strip $CROSSTOOLS_BUILD_DIR/bin/*
 # cctools-port doesn't include dsymutil but clang will need to find it.
-cp $CLANG_DIR/bin/dsymutil $CROSSTOOLS_BUILD_DIR/bin/x86_64-darwin11-dsymutil
+cp $CLANG_DIR/bin/dsymutil $CROSSTOOLS_BUILD_DIR/bin/x86_64-apple-darwin-dsymutil
 # various build scripts based on cmake want to find `lipo` without a prefix
-cp $CROSSTOOLS_BUILD_DIR/bin/x86_64-darwin11-lipo $CROSSTOOLS_BUILD_DIR/bin/lipo
+cp $CROSSTOOLS_BUILD_DIR/bin/x86_64-apple-darwin-lipo $CROSSTOOLS_BUILD_DIR/bin/lipo
 
 # Put a tarball in the artifacts dir
 mkdir -p $UPLOAD_DIR

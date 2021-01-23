@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label                         "Konto lisamine">
+
+<!ENTITY accountProtocolTitle.label                "Kiirsuhtluse võrgustik">
+<!ENTITY accountProtocolInfo.label                 "Palun vali järgnevast nimekirjast oma kontole sobiv võrgustik.">
+<!ENTITY accountProtocolField.label                "Võrgustik:">
+<!ENTITY accountProtocolGetMore.label              "Hangi veel…">
+
+<!ENTITY accountUsernameTitle.label                "Kasutajanimi">
+<!ENTITY accountUsernameDuplicate.label            "See konto on juba häälestatud!">
+
+<!ENTITY accountPasswordTitle.label                "Parool">
+<!ENTITY accountPasswordInfo.label                 "Palun sisesta oma parool allolevasse lahtrisse.">
+<!ENTITY accountPasswordField.label                "Parool:">
+<!ENTITY accountPasswordManager.label              "Siia sisestatud parool salvestatakse paroolihaldurisse. Jäta see lahter tühjaks, kui soovid, et parooli küsitaks igal kontoga ühendumisel uuesti.">
+
+<!ENTITY accountAdvancedTitle.label                "Täpsemad sätted">
+<!ENTITY accountAdvancedInfo.label                 "Soovi korral võid selle sammu vahele jätta.">
+<!ENTITY accountAdvanced.newMailNotification.label "Teavitatakse uue e-kirja saabumisest">
+<!ENTITY accountAliasGroupbox.caption              "Kohalik alias">
+<!ENTITY accountAliasField.label                   "Alias:">
+<!ENTITY accountAliasInfo.label                    "Kohalikku aliast kasutatakse vestlustes sinu nimena, kontaktid seda ei näe.">
+<!ENTITY accountProxySettings.caption              "Puhverserveri häälestus">
+<!ENTITY accountProxySettings.change.label         "Muuda…">
+<!ENTITY accountProxySettings.change.accessKey     "M">
+
+<!ENTITY accountSummaryTitle.label                 "Kokkuvõte">
+<!ENTITY accountSummaryInfo.label                  "Kokkuvõte sisestatud infost on kuvatud allpool. Palun kontrolli seda enne konto loomist.">
+<!ENTITY accountSummary.connectNow.label           "Konto ühendatakse koheselt.">

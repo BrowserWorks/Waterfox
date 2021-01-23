@@ -20,15 +20,19 @@ class UnscaledFontFontconfig;
 class ScaledFontFontconfig : public ScaledFontBase {
  public:
   MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(ScaledFontFontconfig, override)
-  ScaledFontFontconfig(cairo_scaled_font_t* aScaledFont, FcPattern* aPattern,
+  ScaledFontFontconfig(RefPtr<SharedFTFace>&& aFace, FcPattern* aPattern,
                        const RefPtr<UnscaledFont>& aUnscaledFont, Float aSize);
-  ~ScaledFontFontconfig();
 
   FontType GetType() const override { return FontType::FONTCONFIG; }
 
 #ifdef USE_SKIA
   SkTypeface* CreateSkTypeface() override;
+  void SetupSkFontDrawOptions(SkFont& aFont) override;
 #endif
+
+  AntialiasMode GetDefaultAAMode() override;
+
+  bool UseSubpixelPosition() const;
 
   bool CanSerialize() override { return true; }
 
@@ -41,34 +45,46 @@ class ScaledFontFontconfig : public ScaledFontBase {
 
   bool HasVariationSettings() override;
 
+ protected:
+#ifdef USE_CAIRO_SCALED_FONT
+  cairo_font_face_t* CreateCairoFontFace(
+      cairo_font_options_t* aFontOptions) override;
+#endif
+
  private:
   friend class NativeFontResourceFontconfig;
   friend class UnscaledFontFontconfig;
 
   struct InstanceData {
     enum {
-      ANTIALIAS = 1 << 0,
-      AUTOHINT = 1 << 1,
-      EMBEDDED_BITMAP = 1 << 2,
-      EMBOLDEN = 1 << 3,
-      VERTICAL_LAYOUT = 1 << 4,
-      HINT_METRICS = 1 << 5
+      AUTOHINT = 1 << 0,
+      EMBEDDED_BITMAP = 1 << 1,
+      EMBOLDEN = 1 << 2,
+      HINT_METRICS = 1 << 3,
+      LCD_VERTICAL = 1 << 4,
+      SUBPIXEL_BGR = 1 << 5,
     };
 
-    InstanceData(cairo_scaled_font_t* aScaledFont, FcPattern* aPattern);
+    explicit InstanceData(FcPattern* aPattern);
     InstanceData(const wr::FontInstanceOptions* aOptions,
                  const wr::FontInstancePlatformOptions* aPlatformOptions);
 
-    void SetupPattern(FcPattern* aPattern) const;
-    void SetupFontOptions(cairo_font_options_t* aFontOptions) const;
+    void SetupFontOptions(cairo_font_options_t* aFontOptions,
+                          int* aOutLoadFlags,
+                          unsigned int* aOutSynthFlags) const;
 
     uint8_t mFlags;
-    uint8_t mHintStyle;
-    uint8_t mSubpixelOrder;
+    AntialiasMode mAntialias;
+    FontHinting mHinting;
     uint8_t mLcdFilter;
   };
 
-  FcPattern* mPattern;
+  ScaledFontFontconfig(RefPtr<SharedFTFace>&& aFace,
+                       const InstanceData& aInstanceData,
+                       const RefPtr<UnscaledFont>& aUnscaledFont, Float aSize);
+
+  RefPtr<SharedFTFace> mFace;
+  InstanceData mInstanceData;
 };
 
 }  // namespace gfx

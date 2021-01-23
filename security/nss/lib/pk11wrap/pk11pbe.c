@@ -654,17 +654,17 @@ sec_pkcs5CreateAlgorithmID(SECOidTag algorithm,
         pbeAlgorithm = SEC_OID_PKCS5_PBKDF2;
         /*
          * 'algorithm' is the overall algorithm oid tag used to wrap the
-         * entire algoithm ID block. For PKCS5v1 and PKCS12, this
+         * entire algorithm ID block. For PKCS5v1 and PKCS12, this
          * algorithm OID has encoded in it both the PBE KDF function
          * and the encryption algorithm. For PKCS 5v2, PBE KDF and
          * encryption/macing oids are encoded as parameters in
          * the algorithm ID block.
          *
          * Thus in PKCS5 v1 and PKCS12, this algorithm maps to a pkcs #11
-         * mechanism, where as in PKCS 5v2, this alogithm tag does not map
+         * mechanism, where as in PKCS 5v2, this algorithm tag does not map
          * directly to a PKCS #11 mechanim, instead the 2 oids in the
          * algorithm ID block map the the actual PKCS #11 mechanism.
-         * gorithm is). We use choose this algorithm oid based on the
+         * algorithm is). We use choose this algorithm oid based on the
          * cipherAlgorithm to determine what this should be (MAC1 or PBES2).
          */
         if (algorithm == SEC_OID_PKCS5_PBKDF2) {
@@ -988,10 +988,10 @@ PBE_CreateContext(SECOidTag hashAlgorithm, PBEBitGenID bitGenPurpose,
                     mechanism = CKM_PBA_SHA1_WITH_SHA1_HMAC;
                     break;
                 case SEC_OID_MD2:
-                    mechanism = CKM_NETSCAPE_PBE_MD2_HMAC_KEY_GEN;
+                    mechanism = CKM_NSS_PBE_MD2_HMAC_KEY_GEN;
                     break;
                 case SEC_OID_MD5:
-                    mechanism = CKM_NETSCAPE_PBE_MD5_HMAC_KEY_GEN;
+                    mechanism = CKM_NSS_PBE_MD5_HMAC_KEY_GEN;
                     break;
                 default:
                     break;
@@ -1363,8 +1363,8 @@ PK11SymKey *
 PK11_RawPBEKeyGen(PK11SlotInfo *slot, CK_MECHANISM_TYPE type, SECItem *mech,
                   SECItem *pwitem, PRBool faulty3DES, void *wincx)
 {
-    if (faulty3DES && (type == CKM_NETSCAPE_PBE_SHA1_TRIPLE_DES_CBC)) {
-        type = CKM_NETSCAPE_PBE_SHA1_FAULTY_3DES_CBC;
+    if (faulty3DES && (type == CKM_NSS_PBE_SHA1_TRIPLE_DES_CBC)) {
+        type = CKM_NSS_PBE_SHA1_FAULTY_3DES_CBC;
     }
     return pk11_RawPBEKeyGenWithKeyType(slot, type, mech, -1, 0, pwitem, wincx);
 }
@@ -1421,8 +1421,8 @@ PK11_PBEKeyGen(PK11SlotInfo *slot, SECAlgorithmID *algid, SECItem *pwitem,
         PORT_SetError(SEC_ERROR_INVALID_ALGORITHM);
         goto loser;
     }
-    if (faulty3DES && (type == CKM_NETSCAPE_PBE_SHA1_TRIPLE_DES_CBC)) {
-        type = CKM_NETSCAPE_PBE_SHA1_FAULTY_3DES_CBC;
+    if (faulty3DES && (type == CKM_NSS_PBE_SHA1_TRIPLE_DES_CBC)) {
+        type = CKM_NSS_PBE_SHA1_FAULTY_3DES_CBC;
     }
     symKey = pk11_RawPBEKeyGenWithKeyType(slot, type, param, keyType, keyLen,
                                           pwitem, wincx);

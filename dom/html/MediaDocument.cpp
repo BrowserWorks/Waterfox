@@ -8,11 +8,9 @@
 #include "nsGkAtoms.h"
 #include "nsRect.h"
 #include "nsPresContext.h"
-#include "nsIScrollable.h"
 #include "nsViewManager.h"
 #include "nsITextToSubURI.h"
 #include "nsIURL.h"
-#include "nsIContentViewer.h"
 #include "nsIDocShell.h"
 #include "nsCharsetSource.h"  // kCharsetFrom* macro definition
 #include "nsNodeInfoManager.h"
@@ -115,19 +113,11 @@ const char* const MediaDocument::sFormatNames[4] = {
 
 MediaDocument::MediaDocument()
     : nsHTMLDocument(), mDidInitialDocumentSetup(false) {}
-MediaDocument::~MediaDocument() {}
+MediaDocument::~MediaDocument() = default;
 
 nsresult MediaDocument::Init() {
   nsresult rv = nsHTMLDocument::Init();
   NS_ENSURE_SUCCESS(rv, rv);
-
-  // Create a bundle for the localization
-  nsCOMPtr<nsIStringBundleService> stringService =
-      mozilla::services::GetStringBundleService();
-  if (stringService) {
-    stringService->CreateBundle(NSMEDIADOCUMENT_PROPERTIES_URI,
-                                getter_AddRefs(mStringBundle));
-  }
 
   mIsSyntheticDocument = true;
 
@@ -268,15 +258,12 @@ void MediaDocument::GetFileName(nsAString& aResult, nsIChannel* aChannel) {
   url->GetFileName(fileName);
   if (fileName.IsEmpty()) return;
 
-  nsAutoCString docCharset;
   // Now that the charset is set in |StartDocumentLoad| to the charset of
   // the document viewer instead of a bogus value ("windows-1252" set in
   // |Document|'s ctor), the priority is given to the current charset.
   // This is necessary to deal with a media document being opened in a new
   // window or a new tab.
-  if (mCharacterSetSource != kCharsetUninitialized) {
-    mCharacterSet->Name(docCharset);
-  } else {
+  if (mCharacterSetSource == kCharsetUninitialized) {
     // resort to UTF-8
     SetDocumentCharacterSet(UTF_8_ENCODING);
   }
@@ -286,7 +273,7 @@ void MediaDocument::GetFileName(nsAString& aResult, nsIChannel* aChannel) {
       do_GetService(NS_ITEXTTOSUBURI_CONTRACTID, &rv);
   if (NS_SUCCEEDED(rv)) {
     // UnEscapeURIForUI always succeeds
-    textToSubURI->UnEscapeURIForUI(docCharset, fileName, aResult);
+    textToSubURI->UnEscapeURIForUI(fileName, aResult);
   } else {
     CopyUTF8toUTF16(fileName, aResult);
   }
@@ -327,6 +314,37 @@ nsresult MediaDocument::LinkScript(const nsAString& aScript) {
   return head->AppendChildTo(script, false);
 }
 
+void MediaDocument::FormatStringFromName(const char* aName,
+                                         const nsTArray<nsString>& aParams,
+                                         nsAString& aResult) {
+  bool spoofLocale = nsContentUtils::SpoofLocaleEnglish() && !AllowsL10n();
+  if (!spoofLocale) {
+    if (!mStringBundle) {
+      nsCOMPtr<nsIStringBundleService> stringService =
+          mozilla::services::GetStringBundleService();
+      if (stringService) {
+        stringService->CreateBundle(NSMEDIADOCUMENT_PROPERTIES_URI,
+                                    getter_AddRefs(mStringBundle));
+      }
+    }
+    if (mStringBundle) {
+      mStringBundle->FormatStringFromName(aName, aParams, aResult);
+    }
+  } else {
+    if (!mStringBundleEnglish) {
+      nsCOMPtr<nsIStringBundleService> stringService =
+          mozilla::services::GetStringBundleService();
+      if (stringService) {
+        stringService->CreateBundle(NSMEDIADOCUMENT_PROPERTIES_URI_en_US,
+                                    getter_AddRefs(mStringBundleEnglish));
+      }
+    }
+    if (mStringBundleEnglish) {
+      mStringBundleEnglish->FormatStringFromName(aName, aParams, aResult);
+    }
+  }
+}
+
 void MediaDocument::UpdateTitleAndCharset(const nsACString& aTypeStr,
                                           nsIChannel* aChannel,
                                           const char* const* aFormatNames,
@@ -338,36 +356,29 @@ void MediaDocument::UpdateTitleAndCharset(const nsACString& aTypeStr,
   NS_ConvertASCIItoUTF16 typeStr(aTypeStr);
   nsAutoString title;
 
-  if (mStringBundle) {
-    // if we got a valid size (not all media have a size)
-    if (aWidth != 0 && aHeight != 0) {
-      nsAutoString widthStr;
-      nsAutoString heightStr;
-      widthStr.AppendInt(aWidth);
-      heightStr.AppendInt(aHeight);
-      // If we got a filename, display it
-      if (!fileStr.IsEmpty()) {
-        const char16_t* formatStrings[4] = {fileStr.get(), typeStr.get(),
-                                            widthStr.get(), heightStr.get()};
-        mStringBundle->FormatStringFromName(aFormatNames[eWithDimAndFile],
-                                            formatStrings, 4, title);
-      } else {
-        const char16_t* formatStrings[3] = {typeStr.get(), widthStr.get(),
-                                            heightStr.get()};
-        mStringBundle->FormatStringFromName(aFormatNames[eWithDim],
-                                            formatStrings, 3, title);
-      }
+  // if we got a valid size (not all media have a size)
+  if (aWidth != 0 && aHeight != 0) {
+    nsAutoString widthStr;
+    nsAutoString heightStr;
+    widthStr.AppendInt(aWidth);
+    heightStr.AppendInt(aHeight);
+    // If we got a filename, display it
+    if (!fileStr.IsEmpty()) {
+      AutoTArray<nsString, 4> formatStrings = {fileStr, typeStr, widthStr,
+                                               heightStr};
+      FormatStringFromName(aFormatNames[eWithDimAndFile], formatStrings, title);
     } else {
-      // If we got a filename, display it
-      if (!fileStr.IsEmpty()) {
-        const char16_t* formatStrings[2] = {fileStr.get(), typeStr.get()};
-        mStringBundle->FormatStringFromName(aFormatNames[eWithFile],
-                                            formatStrings, 2, title);
-      } else {
-        const char16_t* formatStrings[1] = {typeStr.get()};
-        mStringBundle->FormatStringFromName(aFormatNames[eWithNoInfo],
-                                            formatStrings, 1, title);
-      }
+      AutoTArray<nsString, 3> formatStrings = {typeStr, widthStr, heightStr};
+      FormatStringFromName(aFormatNames[eWithDim], formatStrings, title);
+    }
+  } else {
+    // If we got a filename, display it
+    if (!fileStr.IsEmpty()) {
+      AutoTArray<nsString, 2> formatStrings = {fileStr, typeStr};
+      FormatStringFromName(aFormatNames[eWithFile], formatStrings, title);
+    } else {
+      AutoTArray<nsString, 1> formatStrings = {typeStr};
+      FormatStringFromName(aFormatNames[eWithNoInfo], formatStrings, title);
     }
   }
 
@@ -377,12 +388,11 @@ void MediaDocument::UpdateTitleAndCharset(const nsACString& aTypeStr,
     SetTitle(title, ignored);
   } else {
     nsAutoString titleWithStatus;
-    const nsPromiseFlatString& status = PromiseFlatString(aStatus);
-    const char16_t* formatStrings[2] = {title.get(), status.get()};
-    mStringBundle->FormatStringFromName("TitleWithStatus", formatStrings, 2,
-                                        titleWithStatus);
-    IgnoredErrorResult ignored;
-    SetTitle(titleWithStatus, ignored);
+    AutoTArray<nsString, 2> formatStrings;
+    formatStrings.AppendElement(title);
+    formatStrings.AppendElement(aStatus);
+    FormatStringFromName("TitleWithStatus", formatStrings, titleWithStatus);
+    SetTitle(titleWithStatus, IgnoreErrors());
   }
 }
 

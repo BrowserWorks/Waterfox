@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY syncKey.page.title "Ваш ключ &syncBrand.fullName.label;">
+<!ENTITY syncKey.page.description "Гэты ключ выкарыстоўваецца для дэкадавання здаткаў рахунку &syncBrand.fullName.label;. Вы мусіце ўвесці ключ кожны раз, калі вы наладжваеце &syncBrand.fullName.label; на новым кампутары або збудове.">
+<!ENTITY syncKey.keepItSecret.heading "Захоўвайце яго ў тайне">
+<!ENTITY syncKey.keepItSecret.description "Ваш рахунак &syncBrand.fullName.label; зашыфраваны, каб засцерагчы ваша адасабленне. Без гэтага ключа кожнаму спатрэбяцца гады, каб дэкадаваць вашы асабістыя звесткі. Вы адзіная асоба, якая валодае гэтым ключом. Таму вы адзіны, хто можа даступіцца да здаткаў &syncBrand.fullName.label;.">
+<!ENTITY syncKey.keepItSafe.heading "Засцерагайце яго">
+<!ENTITY syncKey.keepItSafe1.description "Не губляйце гэтага ключа.">
+<!ENTITY syncKey.keepItSafe2.description " Нам ніколі не спатрэбіцца падвой вашага ключа (гэта не будзе патаемным!), таму">
+<!ENTITY syncKey.keepItSafe3.description "мы не зможам дапамагчы вам аднавіць яго,">
+<!ENTITY syncKey.keepItSafe4.description " калі ён згубіцца. Гэты ключ спатрэбіцца вам кожны раз, калі вы захочаце злучыць новы кампутар або збудову з &syncBrand.fullName.label;.">
+<!ENTITY syncKey.findOutMore1.label "Падрабязней пра &syncBrand.fullName.label; і ваша адасабленне на">
+<!ENTITY syncKey.findOutMore2.label ".">
+<!ENTITY syncKey.footer1.label "Умовы выкарыстання службы &syncBrand.fullName.label; даступныя на  ">
+<!ENTITY syncKey.footer2.label ". Палітыка захавання адасаблення даступная на ">
+<!ENTITY syncKey.footer3.label ".">

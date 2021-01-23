@@ -21,6 +21,10 @@
 #include "mozilla/Types.h"
 #ifdef MOZ_DUMP_ASSERTION_STACK
 #  include "nsTraceRefcnt.h"
+#  ifdef ANDROID
+#    include "mozilla/StackWalk.h"
+#    include <algorithm>
+#  endif
 #endif
 
 /*
@@ -161,6 +165,21 @@ MOZ_ReportAssertionFailure(const char* aStr, const char* aFilename,
   __android_log_print(ANDROID_LOG_FATAL, "MOZ_Assert",
                       "Assertion failure: %s, at %s:%d\n", aStr, aFilename,
                       aLine);
+#  if defined(MOZ_DUMP_ASSERTION_STACK)
+  nsTraceRefcnt::WalkTheStack(
+      [](uint32_t aFrameNumber, void* aPC, void* aSP, void* aClosure) {
+        MozCodeAddressDetails details;
+        static const size_t buflen = 1024;
+        char buf[buflen + 1];  // 1 for trailing '\n'
+
+        MozDescribeCodeAddress(aPC, &details);
+        MozFormatCodeAddressDetails(buf, buflen, aFrameNumber, aPC, &details);
+        size_t len = std::min(strlen(buf), buflen + 1 - 2);
+        buf[len++] = '\n';
+        buf[len] = '\0';
+        __android_log_print(ANDROID_LOG_FATAL, "MOZ_Assert", "%s", buf);
+      });
+#  endif
 #else
   fprintf(stderr, "Assertion failure: %s, at %s:%d\n", aStr, aFilename, aLine);
 #  if defined(MOZ_DUMP_ASSERTION_STACK)
@@ -242,16 +261,16 @@ MOZ_NoReturn(int aLine) {
 #  endif
 
 #  ifdef __cplusplus
-#    define MOZ_REALLY_CRASH(line)                     \
-      do {                                             \
-        *((volatile int*)MOZ_CRASH_WRITE_ADDR) = line; \
-        ::abort();                                     \
+#    define MOZ_REALLY_CRASH(line)                                  \
+      do {                                                          \
+        *((volatile int*)MOZ_CRASH_WRITE_ADDR) = line; /* NOLINT */ \
+        ::abort();                                                  \
       } while (false)
 #  else
-#    define MOZ_REALLY_CRASH(line)                     \
-      do {                                             \
-        *((volatile int*)MOZ_CRASH_WRITE_ADDR) = line; \
-        abort();                                       \
+#    define MOZ_REALLY_CRASH(line)                                  \
+      do {                                                          \
+        *((volatile int*)MOZ_CRASH_WRITE_ADDR) = line; /* NOLINT */ \
+        abort();                                                    \
       } while (false)
 #  endif
 #endif
@@ -396,20 +415,20 @@ MOZ_END_EXTERN_C
  */
 
 #ifdef __cplusplus
-#  include "mozilla/TypeTraits.h"
+#  include <type_traits>
 namespace mozilla {
 namespace detail {
 
 template <typename T>
 struct AssertionConditionType {
-  typedef typename RemoveReference<T>::Type ValueT;
-  static_assert(!IsArray<ValueT>::value,
+  using ValueT = std::remove_reference_t<T>;
+  static_assert(!std::is_array_v<ValueT>,
                 "Expected boolean assertion condition, got an array or a "
                 "string!");
-  static_assert(!IsFunction<ValueT>::value,
+  static_assert(!std::is_function_v<ValueT>,
                 "Expected boolean assertion condition, got a function! Did "
                 "you intend to call that function?");
-  static_assert(!IsFloatingPoint<ValueT>::value,
+  static_assert(!std::is_floating_point_v<ValueT>,
                 "It's often a bad idea to assert that a floating-point number "
                 "is nonzero, because such assertions tend to intermittently "
                 "fail. Shouldn't your code gracefully handle this case instead "
@@ -439,49 +458,54 @@ struct AssertionConditionType {
 #endif
 
 /* First the single-argument form. */
-#define MOZ_ASSERT_HELPER1(expr)                               \
+#define MOZ_ASSERT_HELPER1(kind, expr)                         \
   do {                                                         \
     MOZ_VALIDATE_ASSERT_CONDITION_TYPE(expr);                  \
     if (MOZ_UNLIKELY(!MOZ_CHECK_ASSERT_ASSIGNMENT(expr))) {    \
       MOZ_REPORT_ASSERTION_FAILURE(#expr, __FILE__, __LINE__); \
-      MOZ_CRASH_ANNOTATE("MOZ_RELEASE_ASSERT(" #expr ")");     \
+      MOZ_CRASH_ANNOTATE(kind "(" #expr ")");                  \
       MOZ_REALLY_CRASH(__LINE__);                              \
     }                                                          \
   } while (false)
 /* Now the two-argument form. */
-#define MOZ_ASSERT_HELPER2(expr, explain)                                \
-  do {                                                                   \
-    MOZ_VALIDATE_ASSERT_CONDITION_TYPE(expr);                            \
-    if (MOZ_UNLIKELY(!MOZ_CHECK_ASSERT_ASSIGNMENT(expr))) {              \
-      MOZ_REPORT_ASSERTION_FAILURE(#expr " (" explain ")", __FILE__,     \
-                                   __LINE__);                            \
-      MOZ_CRASH_ANNOTATE("MOZ_RELEASE_ASSERT(" #expr ") (" explain ")"); \
-      MOZ_REALLY_CRASH(__LINE__);                                        \
-    }                                                                    \
+#define MOZ_ASSERT_HELPER2(kind, expr, explain)                      \
+  do {                                                               \
+    MOZ_VALIDATE_ASSERT_CONDITION_TYPE(expr);                        \
+    if (MOZ_UNLIKELY(!MOZ_CHECK_ASSERT_ASSIGNMENT(expr))) {          \
+      MOZ_REPORT_ASSERTION_FAILURE(#expr " (" explain ")", __FILE__, \
+                                   __LINE__);                        \
+      MOZ_CRASH_ANNOTATE(kind "(" #expr ") (" explain ")");          \
+      MOZ_REALLY_CRASH(__LINE__);                                    \
+    }                                                                \
   } while (false)
 
-#define MOZ_RELEASE_ASSERT_GLUE(a, b) a b
+#define MOZ_ASSERT_GLUE(a, b) a b
 #define MOZ_RELEASE_ASSERT(...)                                       \
-  MOZ_RELEASE_ASSERT_GLUE(                                            \
+  MOZ_ASSERT_GLUE(                                                    \
       MOZ_PASTE_PREFIX_AND_ARG_COUNT(MOZ_ASSERT_HELPER, __VA_ARGS__), \
-      (__VA_ARGS__))
+      ("MOZ_RELEASE_ASSERT", __VA_ARGS__))
 
 #ifdef DEBUG
-#  define MOZ_ASSERT(...) MOZ_RELEASE_ASSERT(__VA_ARGS__)
+#  define MOZ_ASSERT(...)                                               \
+    MOZ_ASSERT_GLUE(                                                    \
+        MOZ_PASTE_PREFIX_AND_ARG_COUNT(MOZ_ASSERT_HELPER, __VA_ARGS__), \
+        ("MOZ_ASSERT", __VA_ARGS__))
 #else
 #  define MOZ_ASSERT(...) \
     do {                  \
     } while (false)
 #endif /* DEBUG */
 
-#if defined(NIGHTLY_BUILD) || defined(MOZ_DEV_EDITION)
-#  define MOZ_DIAGNOSTIC_ASSERT MOZ_RELEASE_ASSERT
+#if defined(NIGHTLY_BUILD) || defined(MOZ_DEV_EDITION) || defined(DEBUG)
+#  define MOZ_DIAGNOSTIC_ASSERT(...)                                    \
+    MOZ_ASSERT_GLUE(                                                    \
+        MOZ_PASTE_PREFIX_AND_ARG_COUNT(MOZ_ASSERT_HELPER, __VA_ARGS__), \
+        ("MOZ_DIAGNOSTIC_ASSERT", __VA_ARGS__))
 #  define MOZ_DIAGNOSTIC_ASSERT_ENABLED 1
 #else
-#  define MOZ_DIAGNOSTIC_ASSERT MOZ_ASSERT
-#  ifdef DEBUG
-#    define MOZ_DIAGNOSTIC_ASSERT_ENABLED 1
-#  endif
+#  define MOZ_DIAGNOSTIC_ASSERT(...) \
+    do {                             \
+    } while (false)
 #endif
 
 /*
@@ -605,11 +629,11 @@ struct AssertionConditionType {
  * debug builds, but intentionally fall through in release builds to handle
  * unexpected values.
  *
- * Why do we need MOZ_FALLTHROUGH_ASSERT in addition to MOZ_FALLTHROUGH? In
+ * Why do we need MOZ_FALLTHROUGH_ASSERT in addition to [[fallthrough]]? In
  * release builds, the MOZ_ASSERT(false) will expand to `do { } while (false)`,
- * requiring a MOZ_FALLTHROUGH annotation to suppress a -Wimplicit-fallthrough
+ * requiring a [[fallthrough]] annotation to suppress a -Wimplicit-fallthrough
  * warning. In debug builds, the MOZ_ASSERT(false) will expand to something like
- * `if (true) { MOZ_CRASH(); }` and the MOZ_FALLTHROUGH annotation will cause
+ * `if (true) { MOZ_CRASH(); }` and the [[fallthrough]] annotation will cause
  * a -Wunreachable-code warning. The MOZ_FALLTHROUGH_ASSERT macro breaks this
  * warning stalemate.
  *
@@ -618,7 +642,7 @@ struct AssertionConditionType {
  *   default:
  *     // This case wants to assert in debug builds, fall through in release.
  *     MOZ_ASSERT(false); // -Wimplicit-fallthrough warning in release builds!
- *     MOZ_FALLTHROUGH;   // but -Wunreachable-code warning in debug builds!
+ *     [[fallthrough]];   // but -Wunreachable-code warning in debug builds!
  *   case 5:
  *     return 5;
  * }
@@ -636,85 +660,27 @@ struct AssertionConditionType {
 #  define MOZ_FALLTHROUGH_ASSERT(...) \
     MOZ_CRASH("MOZ_FALLTHROUGH_ASSERT: " __VA_ARGS__)
 #else
-#  define MOZ_FALLTHROUGH_ASSERT(...) MOZ_FALLTHROUGH
+#  define MOZ_FALLTHROUGH_ASSERT(...) [[fallthrough]]
 #endif
 
 /*
- * MOZ_ALWAYS_TRUE(expr) and MOZ_ALWAYS_FALSE(expr) always evaluate the provided
- * expression, in debug builds and in release builds both.  Then, in debug
- * builds only, the value of the expression is asserted either true or false
- * using MOZ_ASSERT.
+ * MOZ_ALWAYS_TRUE(expr) and friends always evaluate the provided expression,
+ * in debug builds and in release builds both.  Then, in debug builds and
+ * Nightly and DevEdition release builds, the value of the expression is
+ * asserted either true or false using MOZ_DIAGNOSTIC_ASSERT.
  */
-#ifdef DEBUG
-#  define MOZ_ALWAYS_TRUE(expr)   \
-    do {                          \
-      if ((expr)) {               \
-        /* Do nothing. */         \
-      } else {                    \
-        MOZ_ASSERT(false, #expr); \
-      }                           \
-    } while (false)
-#  define MOZ_ALWAYS_FALSE(expr)  \
-    do {                          \
-      if ((expr)) {               \
-        MOZ_ASSERT(false, #expr); \
-      } else {                    \
-        /* Do nothing. */         \
-      }                           \
-    } while (false)
-#  define MOZ_ALWAYS_OK(expr) MOZ_ASSERT((expr).isOk())
-#  define MOZ_ALWAYS_ERR(expr) MOZ_ASSERT((expr).isErr())
-#else
-#  define MOZ_ALWAYS_TRUE(expr)     \
-    do {                            \
-      if ((expr)) {                 \
-        /* Silence MOZ_MUST_USE. */ \
-      }                             \
-    } while (false)
-#  define MOZ_ALWAYS_FALSE(expr)    \
-    do {                            \
-      if ((expr)) {                 \
-        /* Silence MOZ_MUST_USE. */ \
-      }                             \
-    } while (false)
-#  define MOZ_ALWAYS_OK(expr)       \
-    do {                            \
-      if ((expr).isOk()) {          \
-        /* Silence MOZ_MUST_USE. */ \
-      }                             \
-    } while (false)
-#  define MOZ_ALWAYS_ERR(expr)      \
-    do {                            \
-      if ((expr).isErr()) {         \
-        /* Silence MOZ_MUST_USE. */ \
-      }                             \
-    } while (false)
-#endif
+#define MOZ_ALWAYS_TRUE(expr)              \
+  do {                                     \
+    if (MOZ_LIKELY(expr)) {                \
+      /* Silence MOZ_MUST_USE. */          \
+    } else {                               \
+      MOZ_DIAGNOSTIC_ASSERT(false, #expr); \
+    }                                      \
+  } while (false)
 
-/*
- * MOZ_DIAGNOSTIC_ALWAYS_TRUE is like MOZ_ALWAYS_TRUE, but using
- * MOZ_DIAGNOSTIC_ASSERT as the underlying assert.
- *
- * See the block comment for MOZ_DIAGNOSTIC_ASSERT above for more details on how
- * diagnostic assertions work and how to use them.
- */
-#ifdef MOZ_DIAGNOSTIC_ASSERT_ENABLED
-#  define MOZ_DIAGNOSTIC_ALWAYS_TRUE(expr)   \
-    do {                                     \
-      if ((expr)) {                          \
-        /* Do nothing. */                    \
-      } else {                               \
-        MOZ_DIAGNOSTIC_ASSERT(false, #expr); \
-      }                                      \
-    } while (false)
-#else
-#  define MOZ_DIAGNOSTIC_ALWAYS_TRUE(expr) \
-    do {                                   \
-      if ((expr)) {                        \
-        /* Silence MOZ_MUST_USE. */        \
-      }                                    \
-    } while (false)
-#endif
+#define MOZ_ALWAYS_FALSE(expr) MOZ_ALWAYS_TRUE(!(expr))
+#define MOZ_ALWAYS_OK(expr) MOZ_ALWAYS_TRUE((expr).isOk())
+#define MOZ_ALWAYS_ERR(expr) MOZ_ALWAYS_TRUE((expr).isErr())
 
 #undef MOZ_DUMP_ASSERTION_STACK
 #undef MOZ_CRASH_CRASHREPORT

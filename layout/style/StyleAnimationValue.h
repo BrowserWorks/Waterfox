@@ -11,23 +11,23 @@
 
 #include "mozilla/gfx/MatrixFwd.h"
 #include "mozilla/gfx/Point.h"
+#include "mozilla/RefPtr.h"
 #include "mozilla/ServoBindingTypes.h"
-#include "mozilla/UniquePtr.h"
+#include "mozilla/ServoStyleConsts.h"  // Servo_AnimationValue_Dump
+#include "mozilla/DbgMacro.h"
 #include "nsStringFwd.h"
 #include "nsStringBuffer.h"
 #include "nsCoord.h"
 #include "nsColor.h"
 #include "nsCSSPropertyID.h"
 #include "nsCSSValue.h"
-#include "nsStyleCoord.h"
+#include "nsStyleConsts.h"
 #include "nsStyleTransformMatrix.h"
 
 class nsIFrame;
 class gfx3DMatrix;
 
 namespace mozilla {
-
-class ComputedStyle;
 
 namespace css {
 class StyleRule;
@@ -49,22 +49,11 @@ struct AnimationValue {
       : mServo(aValue) {}
   AnimationValue() = default;
 
-  AnimationValue(const AnimationValue& aOther) : mServo(aOther.mServo) {}
-  AnimationValue(AnimationValue&& aOther) : mServo(std::move(aOther.mServo)) {}
+  AnimationValue(const AnimationValue& aOther) = default;
+  AnimationValue(AnimationValue&& aOther) = default;
 
-  AnimationValue& operator=(const AnimationValue& aOther) {
-    if (this != &aOther) {
-      mServo = aOther.mServo;
-    }
-    return *this;
-  }
-  AnimationValue& operator=(AnimationValue&& aOther) {
-    MOZ_ASSERT(this != &aOther, "Do not move itself");
-    if (this != &aOther) {
-      mServo = std::move(aOther.mServo);
-    }
-    return *this;
-  }
+  AnimationValue& operator=(const AnimationValue& aOther) = default;
+  AnimationValue& operator=(AnimationValue&& aOther) = default;
 
   bool operator==(const AnimationValue& aOther) const;
   bool operator!=(const AnimationValue& aOther) const;
@@ -77,17 +66,28 @@ struct AnimationValue {
   // Currently only background-color is supported.
   nscolor GetColor(nscolor aForegroundColor) const;
 
+  // Returns true if this AnimationValue is current-color.
+  // Currently only background-color is supported.
+  bool IsCurrentColor() const;
+
   // Return a transform list for the transform property.
   const mozilla::StyleTransform& GetTransformProperty() const;
   const mozilla::StyleScale& GetScaleProperty() const;
   const mozilla::StyleTranslate& GetTranslateProperty() const;
   const mozilla::StyleRotate& GetRotateProperty() const;
 
+  // Motion path properties.
+  const mozilla::StyleOffsetPath& GetOffsetPathProperty() const;
+  const mozilla::LengthPercentage& GetOffsetDistanceProperty() const;
+  const mozilla::StyleOffsetRotate& GetOffsetRotateProperty() const;
+  const mozilla::StylePositionOrAuto& GetOffsetAnchorProperty() const;
+
   // Return the scale for mServo, which is calculated with reference to aFrame.
   mozilla::gfx::Size GetScaleValue(const nsIFrame* aFrame) const;
 
   // Uncompute this AnimationValue and then serialize it.
   void SerializeSpecifiedValue(nsCSSPropertyID aProperty,
+                               const RawServoStyleSet* aRawSet,
                                nsAString& aString) const;
 
   // Check if |*this| and |aToValue| can be interpolated.
@@ -95,11 +95,8 @@ struct AnimationValue {
                           const AnimationValue& aToValue) const;
 
   // Compute the distance between *this and aOther.
-  // If |aComputedStyle| is nullptr, we will return 0.0 if we have mismatched
-  // transform lists.
   double ComputeDistance(nsCSSPropertyID aProperty,
-                         const AnimationValue& aOther,
-                         ComputedStyle* aComputedStyle) const;
+                         const AnimationValue& aOther) const;
 
   // Create an AnimaitonValue from a string. This method flushes style, so we
   // should use this carefully. Now, it is only used by
@@ -118,6 +115,14 @@ struct AnimationValue {
 
   RefPtr<RawServoAnimationValue> mServo;
 };
+
+inline std::ostream& operator<<(std::ostream& aOut,
+                                const AnimationValue& aValue) {
+  MOZ_ASSERT(aValue.mServo);
+  nsString s;
+  Servo_AnimationValue_Dump(aValue.mServo, &s);
+  return aOut << s;
+}
 
 struct PropertyStyleAnimationValuePair {
   nsCSSPropertyID mProperty;

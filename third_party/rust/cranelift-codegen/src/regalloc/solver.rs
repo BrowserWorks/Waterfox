@@ -34,20 +34,20 @@
 //! # Register diversions and global interference
 //!
 //! We can divert register values temporarily to satisfy constraints, but we need to put the
-//! values back into their originally assigned register locations before leaving the EBB.
-//! Otherwise, values won't be in the right register at the entry point of other EBBs.
+//! values back into their originally assigned register locations before leaving the block.
+//! Otherwise, values won't be in the right register at the entry point of other blocks.
 //!
 //! Some values are *local*, and we don't need to worry about putting those values back since they
-//! are not used in any other EBBs.
+//! are not used in any other blocks.
 //!
 //! When we assign register locations to defines, we are assigning both the register used locally
 //! immediately after the instruction and the register used globally when the defined value is used
-//! in a different EBB. We need to avoid interference both locally at the instruction and globally.
+//! in a different block. We need to avoid interference both locally at the instruction and globally.
 //!
 //! We have multiple mappings of values to registers:
 //!
 //! 1. The initial local mapping before the instruction. This includes any diversions from previous
-//!    instructions in the EBB, but not diversions for the current instruction.
+//!    instructions in the block, but not diversions for the current instruction.
 //! 2. The local mapping after applying the additional reassignments required to satisfy the
 //!    constraints of the current instruction.
 //! 3. The local mapping after the instruction. This excludes values killed by the instruction and
@@ -104,12 +104,12 @@ use crate::entity::{SparseMap, SparseMapValue};
 use crate::ir::Value;
 use crate::isa::{RegClass, RegUnit};
 use crate::regalloc::register_set::RegSetIter;
+use alloc::vec::Vec;
 use core::cmp;
 use core::fmt;
 use core::mem;
 use core::u16;
 use log::debug;
-use std::vec::Vec;
 
 /// A variable in the constraint problem.
 ///
@@ -265,6 +265,7 @@ pub enum Move {
         from: RegUnit,
         to: RegUnit,
     },
+    #[allow(dead_code)] // rustc doesn't see it isn't dead.
     Spill {
         value: Value,
         rc: RegClass,
@@ -283,7 +284,7 @@ impl Move {
     /// Create a register move from an assignment, but not for identity assignments.
     fn with_assignment(a: &Assignment) -> Option<Self> {
         if a.from != a.to {
-            Some(Move::Reg {
+            Some(Self::Reg {
                 value: a.value,
                 from: a.from,
                 to: a.to,
@@ -298,16 +299,16 @@ impl Move {
     #[cfg_attr(feature = "cargo-clippy", allow(clippy::wrong_self_convention))]
     fn from_reg(&self) -> Option<(RegClass, RegUnit)> {
         match *self {
-            Move::Reg { rc, from, .. } | Move::Spill { rc, from, .. } => Some((rc, from)),
-            Move::Fill { .. } => None,
+            Self::Reg { rc, from, .. } | Self::Spill { rc, from, .. } => Some((rc, from)),
+            Self::Fill { .. } => None,
         }
     }
 
     /// Get the "to" register and register class, if possible.
     fn to_reg(&self) -> Option<(RegClass, RegUnit)> {
         match *self {
-            Move::Reg { rc, to, .. } | Move::Fill { rc, to, .. } => Some((rc, to)),
-            Move::Spill { .. } => None,
+            Self::Reg { rc, to, .. } | Self::Fill { rc, to, .. } => Some((rc, to)),
+            Self::Spill { .. } => None,
         }
     }
 
@@ -315,8 +316,8 @@ impl Move {
     fn replace_to_reg(&mut self, new: RegUnit) -> RegUnit {
         mem::replace(
             match *self {
-                Move::Reg { ref mut to, .. } | Move::Fill { ref mut to, .. } => to,
-                Move::Spill { .. } => panic!("No to register in a spill {}", self),
+                Self::Reg { ref mut to, .. } | Self::Fill { ref mut to, .. } => to,
+                Self::Spill { .. } => panic!("No to register in a spill {}", self),
             },
             new,
         )
@@ -325,13 +326,13 @@ impl Move {
     /// Convert this `Reg` move to a spill to `slot` and return the old "to" register.
     fn change_to_spill(&mut self, slot: usize) -> RegUnit {
         match self.clone() {
-            Move::Reg {
+            Self::Reg {
                 value,
                 rc,
                 from,
                 to,
             } => {
-                *self = Move::Spill {
+                *self = Self::Spill {
                     value,
                     rc,
                     from,
@@ -346,14 +347,14 @@ impl Move {
     /// Get the value being moved.
     fn value(&self) -> Value {
         match *self {
-            Move::Reg { value, .. } | Move::Fill { value, .. } | Move::Spill { value, .. } => value,
+            Self::Reg { value, .. } | Self::Fill { value, .. } | Self::Spill { value, .. } => value,
         }
     }
 
     /// Get the associated register class.
     fn rc(&self) -> RegClass {
         match *self {
-            Move::Reg { rc, .. } | Move::Fill { rc, .. } | Move::Spill { rc, .. } => rc,
+            Self::Reg { rc, .. } | Self::Fill { rc, .. } | Self::Spill { rc, .. } => rc,
         }
     }
 }
@@ -361,7 +362,7 @@ impl Move {
 impl fmt::Display for Move {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Move::Reg {
+            Self::Reg {
                 value,
                 from,
                 to,
@@ -374,7 +375,7 @@ impl fmt::Display for Move {
                 rc.info.display_regunit(from),
                 rc.info.display_regunit(to)
             ),
-            Move::Spill {
+            Self::Spill {
                 value,
                 from,
                 to_slot,
@@ -387,7 +388,7 @@ impl fmt::Display for Move {
                 rc.info.display_regunit(from),
                 to_slot
             ),
-            Move::Fill {
+            Self::Fill {
                 value,
                 from_slot,
                 to,
@@ -406,7 +407,7 @@ impl fmt::Display for Move {
 
 impl fmt::Debug for Move {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let as_display: &fmt::Display = self;
+        let as_display: &dyn fmt::Display = self;
         as_display.fmt(f)
     }
 }
@@ -593,67 +594,57 @@ impl Solver {
     /// instruction.
     ///
     /// This function should be called after `inputs_done()` only. Use `add_var()` before.
-    pub fn add_killed_var(&mut self, value: Value, constraint: RegClass, from: RegUnit) {
+    pub fn add_killed_var(&mut self, value: Value, rc: RegClass, from: RegUnit) {
         debug!(
             "add_killed_var({}:{}, from={})",
             value,
-            constraint,
-            constraint.info.display_regunit(from)
+            rc,
+            rc.info.display_regunit(from)
         );
         debug_assert!(self.inputs_done);
-        self.add_live_var(value, constraint, from, false);
+        self.add_live_var(value, rc, from, false);
     }
 
     /// Add an extra input-side variable representing a value that is live through the current
     /// instruction.
     ///
     /// This function should be called after `inputs_done()` only. Use `add_var()` before.
-    pub fn add_through_var(&mut self, value: Value, constraint: RegClass, from: RegUnit) {
+    pub fn add_through_var(&mut self, value: Value, rc: RegClass, from: RegUnit) {
         debug!(
             "add_through_var({}:{}, from={})",
             value,
-            constraint,
-            constraint.info.display_regunit(from)
+            rc,
+            rc.info.display_regunit(from)
         );
         debug_assert!(self.inputs_done);
-        self.add_live_var(value, constraint, from, true);
+        self.add_live_var(value, rc, from, true);
     }
 
     /// Shared code for `add_var`, `add_killed_var`, and `add_through_var`.
     ///
     /// Add a variable that is live before the instruction, and possibly live through. Merge
     /// constraints if the value has already been added as a variable or fixed assignment.
-    fn add_live_var(
-        &mut self,
-        value: Value,
-        constraint: RegClass,
-        from: RegUnit,
-        live_through: bool,
-    ) {
+    fn add_live_var(&mut self, value: Value, rc: RegClass, from: RegUnit, live_through: bool) {
         // Check for existing entries for this value.
-        if self.regs_in.is_avail(constraint, from) {
+        if !self.can_add_var(rc, from) {
             // There could be an existing variable entry.
             if let Some(v) = self.vars.iter_mut().find(|v| v.value == value) {
                 // We have an existing variable entry for `value`. Combine the constraints.
-                if let Some(rc) = v.constraint.intersect(constraint) {
+                if let Some(rc) = v.constraint.intersect(rc) {
                     debug!("-> combining constraint with {} yields {}", v, rc);
                     v.constraint = rc;
                     return;
                 } else {
                     // The spiller should have made sure the same value is not used with disjoint
                     // constraints.
-                    panic!("Incompatible constraints: {} + {}", constraint, v)
+                    panic!("Incompatible constraints: {} + {}", rc, v)
                 }
             }
 
             // No variable, then it must be a fixed reassignment.
             if let Some(a) = self.assignments.get(value) {
                 debug!("-> already fixed assignment {}", a);
-                debug_assert!(
-                    constraint.contains(a.to),
-                    "Incompatible constraints for {}",
-                    value
-                );
+                debug_assert!(rc.contains(a.to), "Incompatible constraints for {}", value);
                 return;
             }
 
@@ -661,12 +652,12 @@ impl Solver {
             panic!("Wrong from register for {}", value);
         }
 
-        let new_var = Variable::new_live(value, constraint, from, live_through);
+        let new_var = Variable::new_live(value, rc, from, live_through);
         debug!("-> new var: {}", new_var);
 
-        self.regs_in.free(constraint, from);
+        self.regs_in.free(rc, from);
         if self.inputs_done && live_through {
-            self.regs_out.free(constraint, from);
+            self.regs_out.free(rc, from);
         }
         self.vars.push(new_var);
     }
@@ -852,8 +843,12 @@ impl Solver {
     /// always trivial.
     ///
     /// Returns `Ok(regs)` if a solution was found.
-    pub fn quick_solve(&mut self, global_regs: &RegisterSet) -> Result<RegisterSet, SolverError> {
-        self.find_solution(global_regs)
+    pub fn quick_solve(
+        &mut self,
+        global_regs: &RegisterSet,
+        is_reload: bool,
+    ) -> Result<RegisterSet, SolverError> {
+        self.find_solution(global_regs, is_reload)
     }
 
     /// Try harder to find a solution.
@@ -863,12 +858,17 @@ impl Solver {
     /// This may return an error with a register class that has run out of registers. If registers
     /// can be freed up in the starving class, this method can be called again after adding
     /// variables for the freed registers.
-    pub fn real_solve(&mut self, global_regs: &RegisterSet) -> Result<RegisterSet, SolverError> {
+    pub fn real_solve(
+        &mut self,
+        global_regs: &RegisterSet,
+        is_reload: bool,
+    ) -> Result<RegisterSet, SolverError> {
         // Compute domain sizes for all the variables given the current register sets.
         for v in &mut self.vars {
             let d = v.iter(&self.regs_in, &self.regs_out, global_regs).len();
             v.domain = cmp::min(d, u16::MAX as usize) as u16;
         }
+
         // Solve for vars with small domains first to increase the chance of finding a solution.
         //
         // Also consider this case:
@@ -901,7 +901,7 @@ impl Solver {
         });
 
         debug!("real_solve for {}", self);
-        self.find_solution(global_regs)
+        self.find_solution(global_regs, is_reload)
     }
 
     /// Search for a solution with the current list of variables.
@@ -909,7 +909,11 @@ impl Solver {
     /// If a solution was found, returns `Ok(regs)` with the set of available registers on the
     /// output side after the solution. If no solution could be found, returns `Err(rc)` with the
     /// constraint register class that needs more available registers.
-    fn find_solution(&mut self, global_regs: &RegisterSet) -> Result<RegisterSet, SolverError> {
+    fn find_solution(
+        &mut self,
+        global_regs: &RegisterSet,
+        is_reload: bool,
+    ) -> Result<RegisterSet, SolverError> {
         // Available registers on the input and output sides respectively.
         let mut iregs = self.regs_in.clone();
         let mut oregs = self.regs_out.clone();
@@ -917,16 +921,28 @@ impl Solver {
 
         for v in &mut self.vars {
             let rc = v.constraint;
-            let reg = match v.iter(&iregs, &oregs, &gregs).next() {
+
+            // Decide which register to assign.  In order to try and keep registers holding
+            // reloaded values separate from all other registers to the extent possible, we choose
+            // the first available register in the normal case, but the last available one in the
+            // case of a reload.  See "A side note on register choice heuristics" in
+            // src/redundant_reload_remover.rs for further details.
+            let mut reg_set_iter = v.iter(&iregs, &oregs, &gregs);
+            let maybe_reg = if is_reload {
+                reg_set_iter.rnext()
+            } else {
+                reg_set_iter.next()
+            };
+
+            let reg = match maybe_reg {
                 Some(reg) => reg,
                 None => {
                     // If `v` must avoid global interference, there is not point in requesting
                     // live registers be diverted. We need to make it a non-global value.
                     if v.is_global && gregs.iter(rc).next().is_none() {
                         return Err(SolverError::Global(v.value));
-                    } else {
-                        return Err(SolverError::Divert(rc));
                     }
+                    return Err(SolverError::Divert(rc));
                 }
             };
 
@@ -951,8 +967,9 @@ impl Solver {
     }
 
     /// Check if `value` can be added as a variable to help find a solution.
-    pub fn can_add_var(&mut self, _value: Value, constraint: RegClass, from: RegUnit) -> bool {
+    pub fn can_add_var(&mut self, constraint: RegClass, from: RegUnit) -> bool {
         !self.regs_in.is_avail(constraint, from)
+            && !self.vars.iter().any(|var| var.from == Some(from))
     }
 }
 
@@ -982,7 +999,7 @@ impl Solver {
         self.moves
             .extend(self.assignments.values().filter_map(Move::with_assignment));
 
-        if !(self.moves.is_empty()) {
+        if !self.moves.is_empty() {
             debug!("collect_moves: {}", DisplayList(&self.moves));
         }
     }
@@ -1005,7 +1022,7 @@ impl Solver {
         let mut avail = regs.clone();
         let mut i = 0;
         while i < self.moves.len() + self.fills.len() {
-            // Don't even look at the fills until we've spent all the moves. Deferring these let's
+            // Don't even look at the fills until we've spent all the moves. Deferring these lets
             // us potentially reuse the claimed registers to resolve multiple cycles.
             if i >= self.moves.len() {
                 self.moves.append(&mut self.fills);
@@ -1134,12 +1151,12 @@ mod tests {
     use crate::ir::Value;
     use crate::isa::{RegClass, RegInfo, RegUnit, TargetIsa};
     use crate::regalloc::RegisterSet;
+    use alloc::boxed::Box;
     use core::str::FromStr;
-    use std::boxed::Box;
     use target_lexicon::triple;
 
     // Make an arm32 `TargetIsa`, if possible.
-    fn arm32() -> Option<Box<TargetIsa>> {
+    fn arm32() -> Option<Box<dyn TargetIsa>> {
         use crate::isa;
         use crate::settings;
 
@@ -1207,7 +1224,7 @@ mod tests {
         solver.reset(&regs);
         solver.reassign_in(v10, gpr, r1, r0);
         solver.inputs_done();
-        assert!(solver.quick_solve(&gregs).is_ok());
+        assert!(solver.quick_solve(&gregs, false).is_ok());
         assert_eq!(solver.schedule_moves(&regs), 0);
         assert_eq!(solver.moves(), &[mov(v10, gpr, r1, r0)]);
 
@@ -1217,7 +1234,7 @@ mod tests {
         solver.reassign_in(v10, gpr, r0, r1);
         solver.reassign_in(v11, gpr, r1, r2);
         solver.inputs_done();
-        assert!(solver.quick_solve(&gregs).is_ok());
+        assert!(solver.quick_solve(&gregs, false).is_ok());
         assert_eq!(solver.schedule_moves(&regs), 0);
         assert_eq!(
             solver.moves(),
@@ -1229,7 +1246,7 @@ mod tests {
         solver.reassign_in(v10, gpr, r0, r1);
         solver.reassign_in(v11, gpr, r1, r0);
         solver.inputs_done();
-        assert!(solver.quick_solve(&gregs).is_ok());
+        assert!(solver.quick_solve(&gregs, false).is_ok());
         assert_eq!(solver.schedule_moves(&regs), 0);
         assert_eq!(
             solver.moves(),
@@ -1269,7 +1286,7 @@ mod tests {
         solver.reassign_in(v11, s, s2, s0);
         solver.reassign_in(v12, s, s3, s1);
         solver.inputs_done();
-        assert!(solver.quick_solve(&gregs).is_ok());
+        assert!(solver.quick_solve(&gregs, false).is_ok());
         assert_eq!(solver.schedule_moves(&regs), 0);
         assert_eq!(
             solver.moves(),
@@ -1290,7 +1307,7 @@ mod tests {
         solver.reassign_in(v12, s, s1, s3);
         solver.reassign_in(v10, d, d1, d0);
         solver.inputs_done();
-        assert!(solver.quick_solve(&gregs).is_ok());
+        assert!(solver.quick_solve(&gregs, false).is_ok());
         assert_eq!(solver.schedule_moves(&regs), 0);
         assert_eq!(
             solver.moves(),
@@ -1335,7 +1352,7 @@ mod tests {
         solver.reassign_in(v11, gpr, r1, r2);
         solver.reassign_in(v12, gpr, r2, r0);
         solver.inputs_done();
-        assert!(solver.quick_solve(&gregs).is_ok());
+        assert!(solver.quick_solve(&gregs, false).is_ok());
         assert_eq!(solver.schedule_moves(&regs), 1);
         assert_eq!(
             solver.moves(),
@@ -1359,7 +1376,7 @@ mod tests {
         solver.reassign_in(v15, gpr, r5, r3);
 
         solver.inputs_done();
-        assert!(solver.quick_solve(&gregs).is_ok());
+        assert!(solver.quick_solve(&gregs, false).is_ok());
         // We resolve two cycles with one spill.
         assert_eq!(solver.schedule_moves(&regs), 1);
         assert_eq!(

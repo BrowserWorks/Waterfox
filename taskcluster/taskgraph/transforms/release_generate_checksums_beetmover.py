@@ -6,43 +6,27 @@ Transform the `release-generate-checksums-beetmover` task to also append `build`
 """
 from __future__ import absolute_import, print_function, unicode_literals
 
+from six import text_type
 from taskgraph.loader.single_dep import schema
 from taskgraph.transforms.base import TransformSequence
 from taskgraph.util.attributes import copy_attributes_from_dependent_job
 from taskgraph.util.scriptworker import (generate_beetmover_artifact_map,
                                          generate_beetmover_upstream_artifacts,
                                          get_beetmover_bucket_scope,
-                                         get_beetmover_action_scope,
-                                         get_worker_type_for_scope,
-                                         should_use_artifact_map,
-                                         )
-from taskgraph.util.taskcluster import get_artifact_prefix
+                                         get_beetmover_action_scope)
 from taskgraph.transforms.beetmover import craft_release_properties
 from taskgraph.transforms.task import task_description_schema
 from voluptuous import Required, Optional
 
 transforms = TransformSequence()
 
-CHECKSUMS_BUILD_ARTIFACTS = [
-    "SHA256SUMMARY",
-    "SHA512SUMMARY"
-]
-
-CHECKSUMS_SIGNING_ARTIFACTS = [
-    "KEY",
-    "SHA256SUMS",
-    "SHA256SUMS.asc",
-    "SHA512SUMS",
-    "SHA512SUMS.asc"
-]
-
 
 release_generate_checksums_beetmover_schema = schema.extend({
     # depname is used in taskref's to identify the taskID of the unsigned things
-    Required('depname', default='build'): basestring,
+    Required('depname', default='build'): text_type,
 
     # unique label to describe this beetmover task, defaults to {dep.label}-beetmover
-    Optional('label'): basestring,
+    Optional('label'): text_type,
 
     # treeherder is allowed here to override any defaults we use for beetmover.  See
     # taskcluster/taskgraph/transforms/task.py for the schema details, and the
@@ -89,17 +73,13 @@ def make_task_description(config, jobs):
         # update the dependencies with the dependencies of the signing task
         dependencies.update(dep_job.dependencies)
 
-        bucket_scope = get_beetmover_bucket_scope(
-            config, job_release_type=attributes.get('release-type')
-        )
-        action_scope = get_beetmover_action_scope(
-            config, job_release_type=attributes.get('release-type')
-        )
+        bucket_scope = get_beetmover_bucket_scope(config)
+        action_scope = get_beetmover_action_scope(config)
 
         task = {
             'label': label,
             'description': description,
-            'worker-type': get_worker_type_for_scope(config, bucket_scope),
+            'worker-type': 'beetmover',
             'scopes': [bucket_scope, action_scope],
             'dependencies': dependencies,
             'attributes': attributes,
@@ -111,29 +91,6 @@ def make_task_description(config, jobs):
         yield task
 
 
-def generate_upstream_artifacts(job, signing_task_ref, build_task_ref):
-    build_mapping = CHECKSUMS_BUILD_ARTIFACTS
-    signing_mapping = CHECKSUMS_SIGNING_ARTIFACTS
-
-    artifact_prefix = get_artifact_prefix(job)
-
-    upstream_artifacts = [{
-        "taskId": {"task-reference": build_task_ref},
-        "taskType": "build",
-        "paths": ["{}/{}".format(artifact_prefix, p)
-                  for p in build_mapping],
-        "locale": "en-US",
-    }, {
-        "taskId": {"task-reference": signing_task_ref},
-        "taskType": "signing",
-        "paths": ["{}/{}".format(artifact_prefix, p)
-                  for p in signing_mapping],
-        "locale": "en-US",
-    }]
-
-    return upstream_artifacts
-
-
 @transforms.add
 def make_task_worker(config, jobs):
     for job in jobs:
@@ -142,39 +99,17 @@ def make_task_worker(config, jobs):
         if not valid_beetmover_job:
             raise NotImplementedError("Beetmover must have two dependencies.")
 
-        build_task = None
-        signing_task = None
-        for dependency in job["dependencies"].keys():
-            if 'signing' in dependency:
-                signing_task = dependency
-            else:
-                build_task = dependency
-
-        signing_task_ref = "<{}>".format(str(signing_task))
-        build_task_ref = "<{}>".format(str(build_task))
-
+        platform = job["attributes"]["build_platform"]
         worker = {
             'implementation': 'beetmover',
             'release-properties': craft_release_properties(config, job),
-        }
-
-        platform = job["attributes"]["build_platform"]
-        # Works with Firefox/Devedition. Commented for migration.
-        if should_use_artifact_map(platform):
-            upstream_artifacts = generate_beetmover_upstream_artifacts(
+            'upstream-artifacts': generate_beetmover_upstream_artifacts(
                 config, job, platform=None, locale=None
-            )
-        else:
-            upstream_artifacts = generate_upstream_artifacts(
-                job, signing_task_ref, build_task_ref
-            )
-
-        worker['upstream-artifacts'] = upstream_artifacts
-
-        # Works with Firefox/Devedition. Commented for migration.
-        if should_use_artifact_map(platform):
-            worker['artifact-map'] = generate_beetmover_artifact_map(
-                config, job, platform=platform)
+            ),
+            'artifact-map': generate_beetmover_artifact_map(
+                config, job, platform=platform
+            ),
+        }
 
         job["worker"] = worker
 

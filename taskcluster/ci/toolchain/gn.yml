@@ -9,45 +9,53 @@ job-defaults:
         max-run-time: 1800
     run-on-projects:
         - trunk
-        - try
     run:
-        tooltool-downloads: public
         resources:
-            - 'taskcluster/scripts/misc/tooltool-download.sh'
             - 'taskcluster/scripts/misc/build-gn-common.sh'
         toolchain-artifact: public/build/gn.tar.xz
+    fetches:
+        fetch:
+            - gn
 
 linux64-gn:
     treeherder:
         symbol: TL(gn)
     run:
         script: build-gn-linux.sh
-    toolchains:
-        - linux64-gcc-6
+    fetches:
+        toolchain:
+            - linux64-gcc-7
 
 macosx64-gn:
     treeherder:
         symbol: TM(gn)
     worker:
         env:
-            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/macosx64/cross-clang.manifest"
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/macosx64/cross-releng.manifest"
     run:
         script: build-gn-macosx.sh
+        resources:
+            - 'taskcluster/scripts/misc/tooltool-download.sh'
         tooltool-downloads: internal
-    toolchains:
-        - linux64-cctools-port
-        - linux64-clang-8
-        - linux64-node
+    fetches:
+        toolchain:
+            - linux64-cctools-port
+            - linux64-clang-9
 
 win32-gn:
     treeherder:
-        symbol: TW32(gn)
+        symbol: TW64(gn)
     worker-type: b-win2012
     worker:
         max-run-time: 3600
         env:
-            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/win32/gn-build.manifest"
+            TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/win64/vs2017.manifest"
     run:
         script: build-gn-win32.sh
+        resources:
+            - 'taskcluster/scripts/misc/tooltool-download.sh'
         toolchain-artifact: public/build/gn.tar.bz2
         tooltool-downloads: internal
+    fetches:
+        fetch:
+            - ninja

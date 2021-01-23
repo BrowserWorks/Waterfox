@@ -6,8 +6,10 @@
 
 #include <vector>
 
+#include "Types.h"
 #include "gfxImageSurface.h"
 #include "gfxPlatform.h"
+#include "mozilla/gfx/Point.h"
 #include "mozilla/layers/BufferTexture.h"
 #include "mozilla/layers/LayersTypes.h"
 #include "mozilla/layers/TextureClient.h"
@@ -21,10 +23,12 @@
 #  include "mozilla/layers/TextureDIB.h"
 #endif
 
-using mozilla::gfx::SurfaceFormat;
-
 namespace mozilla {
 namespace layers {
+
+using gfx::BackendType;
+using gfx::IntSize;
+using gfx::SurfaceFormat;
 
 /**
  * Create a YCbCrTextureClient according to the given backend.
@@ -64,7 +68,8 @@ static already_AddRefed<TextureClient> CreateYCbCrTextureClientWithBackend(
     return TextureClient::CreateForYCbCr(
         nullptr, clientData.mYSize, clientData.mYStride, clientData.mCbCrSize,
         clientData.mCbCrStride, StereoMode::MONO, gfx::ColorDepth::COLOR_8,
-        YUVColorSpace::BT601, TextureFlags::DEALLOCATE_CLIENT);
+        gfx::YUVColorSpace::BT601, gfx::ColorRange::LIMITED,
+        TextureFlags::DEALLOCATE_CLIENT);
   }
 
 #ifdef XP_WIN

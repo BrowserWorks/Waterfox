@@ -1,1 +1,2 @@
 HTTP == accept-image-catchall.html accept-image-catchall-ref.html
+skip-if(Android) != moz-icon-1.html about:blank

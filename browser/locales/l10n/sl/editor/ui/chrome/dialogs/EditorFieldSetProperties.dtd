@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Lastnosti niza polj">
+
+<!ENTITY Legend.label "Legenda">
+<!ENTITY Legend.accesskey "L">
+
+<!ENTITY EditLegendText.label "Uredi legendo:">
+<!ENTITY EditLegendText.accesskey "U">
+<!ENTITY LegendAlign.label "Poravnaj legendo:">
+<!ENTITY LegendAlign.accesskey "P">
+<!ENTITY AlignDefault.label "Privzeto">
+<!ENTITY AlignLeft.label "Levo">
+<!ENTITY AlignCenter.label "Sredina">
+<!ENTITY AlignRight.label "Desno">
+
+<!ENTITY RemoveFieldSet.label "Odstrani niz polj">
+<!ENTITY RemoveFieldSet.accesskey "O">

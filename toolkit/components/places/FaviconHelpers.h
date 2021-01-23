@@ -13,8 +13,6 @@
 #include "mozIPlacesPendingOperation.h"
 #include "nsThreadUtils.h"
 #include "nsProxyRelease.h"
-#include "imgITools.h"
-#include "imgIContainer.h"
 #include "imgLoader.h"
 
 class nsIPrincipal;
@@ -86,7 +84,7 @@ struct IconData {
   enum AsyncFaviconFetchMode fetchMode;
   uint16_t status;  // This is a bitset, see ICON_STATUS_* defines above.
   uint8_t rootIcon;
-  nsTArray<IconPayload> payloads;
+  CopyableTArray<IconPayload> payloads;
 };
 
 /**
@@ -156,7 +154,7 @@ class AsyncFetchAndSetIconForPage final : public Runnable,
 
  private:
   nsresult FetchFromNetwork();
-  virtual ~AsyncFetchAndSetIconForPage() {}
+  virtual ~AsyncFetchAndSetIconForPage() = default;
 
   nsMainThreadPtrHandle<nsIFaviconDataCallback> mCallback;
   IconData mIcon;

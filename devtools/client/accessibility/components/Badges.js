@@ -11,19 +11,35 @@ const {
 const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
 const { span } = require("devtools/client/shared/vendor/react-dom-factories");
 
-const { L10N } = require("../utils/l10n");
+const { L10N } = require("devtools/client/accessibility/utils/l10n");
 
 const {
   accessibility: { AUDIT_TYPE },
 } = require("devtools/shared/constants");
 
 loader.lazyGetter(this, "ContrastBadge", () =>
-  createFactory(require("./ContrastBadge"))
+  createFactory(
+    require("devtools/client/accessibility/components/ContrastBadge")
+  )
+);
+
+loader.lazyGetter(this, "KeyboardBadge", () =>
+  createFactory(
+    require("devtools/client/accessibility/components/KeyboardBadge")
+  )
+);
+
+loader.lazyGetter(this, "TextLabelBadge", () =>
+  createFactory(
+    require("devtools/client/accessibility/components/TextLabelBadge")
+  )
 );
 
 function getComponentForAuditType(type) {
   const auditTypeToComponentMap = {
     [AUDIT_TYPE.CONTRAST]: ContrastBadge,
+    [AUDIT_TYPE.KEYBOARD]: KeyboardBadge,
+    [AUDIT_TYPE.TEXT_LABEL]: TextLabelBadge,
   };
 
   return auditTypeToComponentMap[type];

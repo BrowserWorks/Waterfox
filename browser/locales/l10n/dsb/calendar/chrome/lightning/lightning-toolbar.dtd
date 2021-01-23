@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name "Kalender - symbolowa rědka">
+<!ENTITY lightning.toolbar.calendar.name.accesskey "K">
+<!ENTITY lightning.toolbar.task.name "Nadawkowa symbolowa rědka">
+<!ENTITY lightning.toolbar.task.name.accesskey "N">
+
+<!ENTITY lightning.toolbar.sync.label "Synchronizěrowaś">
+<!ENTITY lightning.toolbar.sync.tooltip "Kalendery znowego zacytaś a změny synchronizěrowaś">
+<!ENTITY lightning.toolbar.delete.label "Wulašowaś">
+<!ENTITY lightning.toolbar.delete.tooltip "Wubrane tšojenja abo nadawki wulašowaś">
+<!ENTITY lightning.toolbar.edit.label "Wobźěłaś">
+<!ENTITY lightning.toolbar.edit.tooltip "Wubrane tšojenje abo wubrany nadawk wobźěłaś">
+<!ENTITY lightning.toolbar.gototoday.label "K źinsajšnemu">
+<!ENTITY lightning.toolbar.gototoday.tooltip "K źinsajšnemu">
+<!ENTITY lightning.toolbar.print.label "Śišćaś">
+<!ENTITY lightning.toolbar.print.tooltip "Tšojenja abo nadawki śišćaś">
+
+<!-- Mode Toolbar -->
+<!ENTITY lightning.toolbar.calendar.label     "Kalender">
+<!ENTITY lightning.toolbar.calendar.tooltip   "Ku kalenderowemu rejtarikoju pśešaltowaś">
+<!ENTITY lightning.toolbar.calendar.accesskey "K">
+<!ENTITY lightning.toolbar.task.label         "Nadawki">
+<!ENTITY lightning.toolbar.task.tooltip       "K nadawkowemu rejtarikoju pśešaltowaś">
+<!ENTITY lightning.toolbar.task.accesskey     "N">
+
+<!-- Toolbar write button -->
+<!ENTITY lightning.toolbar.newevent.label     "Tšojenje">
+<!ENTITY lightning.toolbar.newevent.tooltip   "Nowe tšojenje napóraś">
+<!ENTITY lightning.toolbar.newtask.label      "Nadawk">
+<!ENTITY lightning.toolbar.newtask.tooltip    "Nowy nadawk napóraś">
+
+<!-- Calendar and Task Mode Toolbar -->
+<!ENTITY lightning.toolbar.day.label                 "Źeń">
+<!ENTITY lightning.toolbar.day.accesskey             "e">
+<!ENTITY lightning.toolbar.week.label                "Tyźeń">
+<!ENTITY lightning.toolbar.week.accesskey            "T">
+<!ENTITY lightning.toolbar.multiweek.label           "Wěcejtyźeń">
+<!ENTITY lightning.toolbar.multiweek.accesskey       "c">
+<!ENTITY lightning.toolbar.month.label               "Mjasec">
+<!ENTITY lightning.toolbar.month.accesskey           "M">
+<!-- LOCALIZATION NOTE: the same as appmenuButton.label and appmenuButton1.tooltip
+     from messenger.dtd -->
+<!ENTITY lightning.toolbar.appmenuButton.label       "AppMenu">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip    "Meni &brandShortName; zwobrazniś">
+<!ENTITY lightning.toolbar.calendarmenu.label        "Kalenderowy wobcerk">
+<!ENTITY lightning.toolbar.calendarmenu.accesskey    "b">
+<!ENTITY lightning.toolbar.calendarpane.label        "Kalenderowy wobcerk pokazaś">
+<!ENTITY lightning.toolbar.calendarpane.accesskey    "b">

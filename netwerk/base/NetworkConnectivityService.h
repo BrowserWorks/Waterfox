@@ -6,6 +6,9 @@
 #define NetworkConnectivityService_h_
 
 #include "nsINetworkConnectivityService.h"
+#include "nsIObserver.h"
+#include "nsIDNSListener.h"
+#include "nsIStreamListener.h"
 
 namespace mozilla {
 namespace net {
@@ -22,13 +25,13 @@ class NetworkConnectivityService : public nsINetworkConnectivityService,
   NS_DECL_NSISTREAMLISTENER
   NS_DECL_NSIREQUESTOBSERVER
 
-  nsresult Init();
   static already_AddRefed<NetworkConnectivityService> GetSingleton();
 
  private:
   NetworkConnectivityService() = default;
   virtual ~NetworkConnectivityService() = default;
 
+  nsresult Init();
   // Calls all the check methods
   void PerformChecks();
 
@@ -46,6 +49,9 @@ class NetworkConnectivityService : public nsINetworkConnectivityService,
 
   nsCOMPtr<nsIChannel> mIPv4Channel;
   nsCOMPtr<nsIChannel> mIPv6Channel;
+
+  bool mCheckedNetworkId = false;
+  bool mHasNetworkId = false;
 };
 
 }  // namespace net

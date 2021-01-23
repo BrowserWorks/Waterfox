@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label "Propiedades">
+<!ENTITY propertiesMenu.accesskey "d">
+<!ENTITY propertiesCmd.key "i">
+<!ENTITY abPropertiesMenu.label "Propiedades de la libreta de direcciones">
+<!ENTITY abPropertiesMenu.accesskey "d">
+<!ENTITY contactPropertiesMenu.label "Propiedades del contacto">
+<!ENTITY contactPropertiesMenu.accesskey "d">
+<!ENTITY mailingListPropertiesMenu.label "Propiedades de la lista de correo">
+<!ENTITY mailingListPropertiesMenu.accesskey "d">
+
+<!ENTITY abContextMenuButton.tooltip "Mostrar menú contextual de la libreta de direcciones">
+<!ENTITY addressbookPicker.label "Libreta de direcciones:">
+<!ENTITY addressbookPicker.accesskey "L">
+<!ENTITY searchContacts.label "Buscar contactos:">
+<!ENTITY searchContacts.accesskey "n">
+<!ENTITY SearchNameOrEmail.label "Nombre o dirección de correo">
+
+<!ENTITY addtoToFieldMenu.label "Añadir a campo Para">
+<!ENTITY addtoToFieldMenu.accesskey "P">
+<!ENTITY addtoCcFieldMenu.label "Añadir a campo Cc">
+<!ENTITY addtoCcFieldMenu.accesskey "C">
+<!ENTITY addtoBccFieldMenu.label "Añadir a campo Bcc">
+<!ENTITY addtoBccFieldMenu.accesskey "A">
+<!ENTITY deleteAddrBookCard.label "Eliminar">
+<!ENTITY deleteAddrBookCard.accesskey "E">
+<!ENTITY propertiesContext.label "Propiedades">
+<!ENTITY propertiesContext.accesskey "d">
+<!ENTITY abPropertiesContext.label "Propiedades">
+<!ENTITY abPropertiesContext.accesskey "d">
+<!ENTITY editContactContext.label "Editar contacto">
+<!ENTITY editContactContext.accesskey "o">
+<!ENTITY editMailingListContext.label "Editar lista">
+<!ENTITY editMailingListContext.accesskey "s">
+
+<!ENTITY newContactAbContext.label "Nuevo contacto">
+<!ENTITY newContactAbContext.accesskey "C">
+<!ENTITY newListAbContext.label "Nueva lista">
+<!ENTITY newListAbContext.accesskey "L">
+
+<!ENTITY toButton.label "Añadir a Para:">
+<!ENTITY toButton.accesskey "A">
+<!ENTITY ccButton.label "Añadir a Cc:">
+<!ENTITY ccButton.accesskey "C">
+<!ENTITY bccButton.label "Añadir a Bcc:">
+<!ENTITY bccButton.accesskey "B">

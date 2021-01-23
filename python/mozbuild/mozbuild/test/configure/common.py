@@ -7,17 +7,17 @@ from __future__ import absolute_import, print_function, unicode_literals
 import copy
 import errno
 import os
+import six
 import subprocess
 import sys
 import tempfile
 import unittest
+from six import StringIO
 
 from mozbuild.configure import ConfigureSandbox
 from mozbuild.util import ReadOnlyNamespace
 from mozpack import path as mozpath
-
-from StringIO import StringIO
-from which import WhichError
+from six import string_types
 
 from buildconfig import (
     topobjdir,
@@ -30,6 +30,7 @@ def fake_short_path(path):
         return '/'.join(p.split(' ', 1)[0] + '~1' if ' 'in p else p
                         for p in mozpath.split(path))
     return path
+
 
 def ensure_exe_extension(path):
     if sys.platform.startswith('win'):
@@ -73,14 +74,15 @@ class ConfigureTestSandbox(ConfigureSandbox):
     This class is only meant to implement the minimal things to make
     moz.configure testing possible. As such, it takes shortcuts.
     '''
+
     def __init__(self, paths, config, environ, *args, **kwargs):
         self._search_path = environ.get('PATH', '').split(os.pathsep)
 
         self._subprocess_paths = {
-            mozpath.abspath(k): v for k, v in paths.iteritems() if v
+            mozpath.abspath(k): v for k, v in six.iteritems(paths) if v
         }
 
-        paths = paths.keys()
+        paths = list(paths)
 
         environ = copy.copy(environ)
         if 'CONFIG_SHELL' not in environ:
@@ -108,13 +110,12 @@ class ConfigureTestSandbox(ConfigureSandbox):
         if what in self.modules:
             return self.modules[what]
 
-        if what == 'which.which':
+        if what == 'mozfile.which':
             return self.which
 
-        if what == 'which':
+        if what == 'mozfile':
             return ReadOnlyNamespace(
                 which=self.which,
-                WhichError=WhichError,
             )
 
         if what == 'subprocess.Popen':
@@ -153,7 +154,6 @@ class ConfigureTestSandbox(ConfigureSandbox):
                 def __call__(self, *args, **kwargs):
                     return self._func(*args, **kwargs)
 
-
             return ReadOnlyNamespace(
                 create_unicode_buffer=self.create_unicode_buffer,
                 windll=ReadOnlyNamespace(
@@ -185,18 +185,20 @@ class ConfigureTestSandbox(ConfigureSandbox):
         path_out.value = fake_short_path(path_in)
         return length
 
-    def which(self, command, path=None, exts=None):
+    def which(self, command, mode=None, path=None, exts=None):
+        if isinstance(path, string_types):
+            path = path.split(os.pathsep)
+
         for parent in (path or self._search_path):
             c = mozpath.abspath(mozpath.join(parent, command))
             for candidate in (c, ensure_exe_extension(c)):
                 if self.imported_os.path.exists(candidate):
                     return candidate
-        raise WhichError()
+        return None
 
     def Popen(self, args, stdin=None, stdout=None, stderr=None, **kargs):
-        try:
-            program = self.which(args[0])
-        except WhichError:
+        program = self.which(args[0])
+        if not program:
             raise OSError(errno.ENOENT, 'File not found')
 
         func = self._subprocess_paths.get(program)
@@ -271,8 +273,8 @@ class BaseConfigureTest(unittest.TestCase):
             target = []
 
         if mozconfig:
-            fh, mozconfig_path = tempfile.mkstemp()
-            os.write(fh, mozconfig)
+            fh, mozconfig_path = tempfile.mkstemp(text=True)
+            os.write(fh, six.ensure_binary(mozconfig))
             os.close(fh)
         else:
             mozconfig_path = os.path.join(os.path.dirname(__file__), 'data',

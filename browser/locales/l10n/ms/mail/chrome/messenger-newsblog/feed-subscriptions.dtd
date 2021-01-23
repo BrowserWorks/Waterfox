@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Langganan Suapan">
+<!ENTITY learnMore.label             "Ketahui selanjutnya perihal Suapan">
+
+<!ENTITY feedTitle.label             "Tajuk:">
+<!ENTITY feedTitle.accesskey         "T">
+
+<!ENTITY feedLocation.label          "URL Suapan:">
+<!ENTITY feedLocation.accesskey      "S">
+<!ENTITY feedLocation2.placeholder   "Masukkan url suapan yang sah">
+<!ENTITY locationValidate.label      "Sahkan">
+<!ENTITY validateText.label          "Semak pengesahan dan dapatkan url yang sah.">
+
+<!ENTITY feedFolder.label            "Simpan Artikel dalam:">
+<!ENTITY feedFolder.accesskey        "S">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Semak artikel baru setiap ">
+<!ENTITY biffStart.accesskey         "k">
+<!ENTITY biffMinutes.label           "minit">
+<!ENTITY biffMinutes.accesskey       "n">
+<!ENTITY biffDays.label              "hari">
+<!ENTITY biffDays.accesskey          "h">
+<!ENTITY recommendedUnits.label      "Disyorkan penerbit:">
+
+<!ENTITY quickMode.label             "Papar ringkasan artikel, bukan memuatkan halaman web">
+<!ENTITY quickMode.accesskey         "p">
+
+<!ENTITY autotagEnable.label         "Cipta tag secara automatik daripada suapan &lt;kategori&gt;">
+<!ENTITY autotagEnable.accesskey     "o">
+<!ENTITY autotagUsePrefix.label      "Awalan tag dengan:">
+<!ENTITY autotagUsePrefix.accesskey  "A">
+<!ENTITY autoTagPrefix.placeholder   "Masukkan awalan tag">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Tambah">
+<!ENTITY button.addFeed.accesskey    "T">
+<!ENTITY button.verifyFeed.label     "Sahkan">
+<!ENTITY button.verifyFeed.accesskey "S">
+<!ENTITY button.updateFeed.label     "Kemaskini">
+<!ENTITY button.updateFeed.accesskey "K">
+<!ENTITY button.removeFeed.label     "Buang">
+<!ENTITY button.removeFeed.accesskey "B">
+<!ENTITY button.importOPML.label     "Import">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "Eksport">
+<!ENTITY button.exportOPML.accesskey "E">
+<!ENTITY button.exportOPML.tooltip   "Eksport Suapan dalam struktur folder; klik ctrl atau ctrl enter untuk mengeksport Suapan sebagai satu senarai">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Tutup">

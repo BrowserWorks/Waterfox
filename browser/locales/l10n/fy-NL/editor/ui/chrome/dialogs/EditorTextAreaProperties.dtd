@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Tekstgebiedeigenskippen">
+
+<!ENTITY Settings.label "Ynstellings">
+
+<!ENTITY TextAreaName.label "Fjildnamme:">
+<!ENTITY TextAreaName.accessKey "n">
+<!ENTITY TextAreaRows.label "Rigen:">
+<!ENTITY TextAreaRows.accessKey "R">
+<!ENTITY TextAreaCols.label "Kolommen:">
+<!ENTITY TextAreaCols.accessKey "K">
+<!ENTITY TextAreaReadOnly.label "Allinnich lêze">
+<!ENTITY TextAreaReadOnly.accessKey "A">
+<!ENTITY TextAreaDisabled.label "Utskeakele">
+<!ENTITY TextAreaDisabled.accessKey "U">
+<!ENTITY TextAreaTabIndex.label "Ljepblêdyndeks:">
+<!ENTITY TextAreaTabIndex.accessKey "y">
+<!ENTITY TextAreaAccessKey.label "Fluchtoets:">
+<!ENTITY TextAreaAccessKey.accessKey "F">
+<!ENTITY InitialText.label "Orizjinele tekst:">
+<!ENTITY InitialText.accessKey "t">
+
+<!ENTITY TextAreaWrap.label "Tebekrinmodus:">
+<!ENTITY TextAreaWrap.accessKey "m">
+<!ENTITY WrapDefault.value "Standert">
+<!ENTITY WrapOff.value "Ut">
+<!ENTITY WrapHard.value "Hurd">
+<!ENTITY WrapSoft.value "Sêft">
+<!ENTITY WrapPhysical.value "Fysyk">
+<!ENTITY WrapVirtual.value "Firtueel">

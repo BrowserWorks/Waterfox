@@ -1,0 +1,27 @@
+<!-- ***** BEGIN LICENSE BLOCK *****
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "Abonament">
+<!ENTITY subscribeButton.label        "S'abonar">
+<!ENTITY subscribeButton.accesskey    "a">
+<!ENTITY unsubscribeButton.label      "Se desabonar">
+<!ENTITY unsubscribeButton.accesskey  "d">
+<!ENTITY newGroupsTab.label           "Gropes novèls">
+<!ENTITY newGroupsTab.accesskey       "N">
+<!ENTITY refreshButton.label          "Actualizar">
+<!ENTITY refreshButton.accesskey      "r">
+<!ENTITY stopButton.label             "Stop">
+<!ENTITY stopButton.accesskey         "t">
+<!ENTITY server.label                 "Servidor :">
+<!ENTITY server.accesskey             "S">
+<!ENTITY subscribedHeader.label	      "Abonat">
+<!-- commenting out until bug 38906 is fixed
+<!ENTITY messagesHeader.label         "messatges"> -->
+<!ENTITY namefield.label              "Far veire los gropes que contenon :">
+<!ENTITY namefield.accesskey          "M">

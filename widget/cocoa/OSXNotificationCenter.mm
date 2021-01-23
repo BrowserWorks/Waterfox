@@ -190,6 +190,7 @@ OSXNotificationCenter::OSXNotificationCenter() {
 
   mDelegate = [[mozNotificationCenterDelegate alloc] initWithOSXNC:this];
   GetNotificationCenter().delegate = mDelegate;
+  mSuppressForScreenSharing = false;
 
   NS_OBJC_END_TRY_ABORT_BLOCK;
 }
@@ -203,7 +204,7 @@ OSXNotificationCenter::~OSXNotificationCenter() {
   NS_OBJC_END_TRY_ABORT_BLOCK;
 }
 
-NS_IMPL_ISUPPORTS(OSXNotificationCenter, nsIAlertsService, nsIAlertsIconData,
+NS_IMPL_ISUPPORTS(OSXNotificationCenter, nsIAlertsService, nsIAlertsIconData, nsIAlertsDoNotDisturb,
                   nsIAlertNotificationImageListener)
 
 nsresult OSXNotificationCenter::Init() {
@@ -250,6 +251,10 @@ OSXNotificationCenter::ShowAlertWithIconData(nsIAlertNotification* aAlert,
 
   NS_ENSURE_ARG(aAlert);
 
+  if (mSuppressForScreenSharing) {
+    return NS_OK;
+  }
+
   Class unClass = NSClassFromString(@"NSUserNotification");
   id<FakeNSUserNotification> notification = [[unClass alloc] init];
 
@@ -266,10 +271,9 @@ OSXNotificationCenter::ShowAlertWithIconData(nsIAlertNotification* aAlert,
   sbs->CreateBundle("chrome://alerts/locale/alert.properties", getter_AddRefs(bundle));
 
   if (!hostPort.IsEmpty() && bundle) {
-    const char16_t* formatStrings[] = {hostPort.get()};
+    AutoTArray<nsString, 1> formatStrings = {hostPort};
     nsAutoString notificationSource;
-    bundle->FormatStringFromName("source.label", formatStrings, ArrayLength(formatStrings),
-                                 notificationSource);
+    bundle->FormatStringFromName("source.label", formatStrings, notificationSource);
     notification.subtitle = nsCocoaUtils::ToNSString(notificationSource);
   }
 
@@ -289,9 +293,9 @@ OSXNotificationCenter::ShowAlertWithIconData(nsIAlertNotification* aAlert,
     bundle->GetStringFromName("closeButton.title", closeButtonTitle);
     bundle->GetStringFromName("actionButton.label", actionButtonTitle);
     if (!hostPort.IsEmpty()) {
-      const char16_t* formatStrings[] = {hostPort.get()};
+      AutoTArray<nsString, 1> formatStrings = {hostPort};
       bundle->FormatStringFromName("webActions.disableForOrigin.label", formatStrings,
-                                   ArrayLength(formatStrings), disableButtonTitle);
+                                   disableButtonTitle);
     }
     bundle->GetStringFromName("webActions.settings.label", settingsButtonTitle);
 
@@ -524,8 +528,8 @@ OSXNotificationCenter::OnImageReady(nsISupports* aUserData, imgIRequest* aReques
   }
 
   NSImage* cocoaImage = nil;
-  nsCocoaUtils::CreateNSImageFromImageContainer(image, imgIContainer::FRAME_FIRST, &cocoaImage,
-                                                1.0f);
+  nsCocoaUtils::CreateDualRepresentationNSImageFromImageContainer(image, imgIContainer::FRAME_FIRST,
+                                                                  &cocoaImage);
   (osxni->mPendingNotification).contentImage = cocoaImage;
   [cocoaImage release];
   ShowPendingNotification(osxni);
@@ -533,6 +537,36 @@ OSXNotificationCenter::OnImageReady(nsISupports* aUserData, imgIRequest* aReques
   return NS_OK;
 
   NS_OBJC_END_TRY_ABORT_BLOCK_NSRESULT;
+}
+
+// nsIAlertsDoNotDisturb
+NS_IMETHODIMP
+OSXNotificationCenter::GetManualDoNotDisturb(bool* aRetVal) { return NS_ERROR_NOT_IMPLEMENTED; }
+
+NS_IMETHODIMP
+OSXNotificationCenter::SetManualDoNotDisturb(bool aDoNotDisturb) {
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+OSXNotificationCenter::GetSuppressForScreenSharing(bool* aRetVal) {
+  NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NSRESULT
+
+  NS_ENSURE_ARG(aRetVal);
+  *aRetVal = mSuppressForScreenSharing;
+  return NS_OK;
+
+  NS_OBJC_END_TRY_ABORT_BLOCK_NSRESULT
+}
+
+NS_IMETHODIMP
+OSXNotificationCenter::SetSuppressForScreenSharing(bool aSuppress) {
+  NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NSRESULT
+
+  mSuppressForScreenSharing = aSuppress;
+  return NS_OK;
+
+  NS_OBJC_END_TRY_ABORT_BLOCK_NSRESULT
 }
 
 }  // namespace mozilla

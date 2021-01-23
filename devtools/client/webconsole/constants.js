@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -12,18 +10,24 @@ const actionTypes = {
   AUTOCOMPLETE_DATA_RECEIVE: "AUTOCOMPLETE_DATA_RECEIVE",
   AUTOCOMPLETE_PENDING_REQUEST: "AUTOCOMPLETE_PENDING_REQUEST",
   AUTOCOMPLETE_RETRIEVE_FROM_CACHE: "AUTOCOMPLETE_RETRIEVE_FROM_CACHE",
+  AUTOCOMPLETE_TOGGLE: "AUTOCOMPLETE_TOGGLE",
   BATCH_ACTIONS: "BATCH_ACTIONS",
   CLEAR_HISTORY: "CLEAR_HISTORY",
-  DEFAULT_FILTERS_RESET: "DEFAULT_FILTERS_RESET",
+  EDITOR_TOGGLE: "EDITOR_TOGGLE",
+  EDITOR_ONBOARDING_DISMISS: "EDITOR_ONBOARDING_DISMISS",
+  EVALUATE_EXPRESSION: "EVALUATE_EXPRESSION",
+  SET_TERMINAL_INPUT: "SET_TERMINAL_INPUT",
+  SET_TERMINAL_EAGER_RESULT: "SET_TERMINAL_EAGER_RESULT",
   FILTER_TEXT_SET: "FILTER_TEXT_SET",
   FILTER_TOGGLE: "FILTER_TOGGLE",
   FILTERS_CLEAR: "FILTERS_CLEAR",
+  FILTERBAR_DISPLAY_MODE_SET: "FILTERBAR_DISPLAY_MODE_SET",
   HISTORY_LOADED: "HISTORY_LOADED",
   INITIALIZE: "INITIALIZE",
   MESSAGE_CLOSE: "MESSAGE_CLOSE",
   MESSAGE_OPEN: "MESSAGE_OPEN",
-  MESSAGE_TABLE_RECEIVE: "MESSAGE_TABLE_RECEIVE",
   MESSAGE_UPDATE_PAYLOAD: "MESSAGE_UPDATE_PAYLOAD",
+  MESSAGE_REMOVE: "MESSAGE_REMOVE",
   MESSAGES_ADD: "MESSAGES_ADD",
   MESSAGES_CLEAR: "MESSAGES_CLEAR",
   MESSAGES_CLEAR_LOGPOINT: "MESSAGES_CLEAR_LOGPOINT",
@@ -32,7 +36,7 @@ const actionTypes = {
   PERSIST_TOGGLE: "PERSIST_TOGGLE",
   PRIVATE_MESSAGES_CLEAR: "PRIVATE_MESSAGES_CLEAR",
   REMOVE_NOTIFICATION: "REMOVE_NOTIFICATION",
-  REMOVED_ACTORS_CLEAR: "REMOVED_ACTORS_CLEAR",
+  FRONTS_TO_RELEASE_CLEAR: "FRONTS_TO_RELEASE_CLEAR",
   REVERSE_SEARCH_INPUT_TOGGLE: "REVERSE_SEARCH_INPUT_TOGGLE",
   SELECT_NETWORK_MESSAGE_TAB: "SELECT_NETWORK_MESSAGE_TAB",
   SHOW_OBJECT_IN_SIDEBAR: "SHOW_OBJECT_IN_SIDEBAR",
@@ -44,8 +48,11 @@ const actionTypes = {
   REVERSE_SEARCH_INPUT_CHANGE: "REVERSE_SEARCH_INPUT_CHANGE",
   REVERSE_SEARCH_NEXT: "REVERSE_SEARCH_NEXT",
   REVERSE_SEARCH_BACK: "REVERSE_SEARCH_BACK",
-  PAUSED_EXCECUTION_POINT: "PAUSED_EXCECUTION_POINT",
+  EAGER_EVALUATION_TOGGLE: "EAGER_EVALUATION_TOGGLE",
+  WARNING_GROUPS_TOGGLE: "WARNING_GROUPS_TOGGLE",
   WILL_NAVIGATE: "WILL_NAVIGATE",
+  EDITOR_SET_WIDTH: "EDITOR_SET_WIDTH",
+  TARGET_AVAILABLE: "TARGET_AVAILABLE",
 };
 
 const prefs = {
@@ -68,17 +75,28 @@ const prefs = {
       // Max number of entries in history list.
       INPUT_HISTORY_COUNT: "devtools.webconsole.inputHistoryCount",
       // Is editor mode enabled.
-      EDITOR: "devtools.webconsole.input.editor",
-      // Display content messages in the browser console
+      EDITOR: "input.editor",
+      // Display content messages in the browser console.
       CONTENT_MESSAGES: "devtools.browserconsole.contentMessages",
+      // Display timestamp in messages.
+      MESSAGE_TIMESTAMP: "devtools.webconsole.timestampMessages",
+      // Store the editor width.
+      EDITOR_WIDTH: "input.editorWidth",
+      // Show the Editor onboarding UI
+      EDITOR_ONBOARDING: "devtools.webconsole.input.editorOnboarding",
+      // Show the Input Context the selector in the browser toolbox
+      CONTEXT_SELECTOR_BROWSER_TOOLBOX: "devtools.webconsole.input.context",
+      // Show the Input Context the selector in the content toolbox
+      CONTEXT_SELECTOR_CONTENT_TOOLBOX:
+        "devtools.contenttoolbox.webconsole.input.context",
     },
     FEATURES: {
       // We use the same pref to enable the sidebar on webconsole and browser console.
       SIDEBAR_TOGGLE: "devtools.webconsole.sidebarToggle",
-      JSTERM_CODE_MIRROR: "devtools.webconsole.jsterm.codeMirror",
       AUTOCOMPLETE: "devtools.webconsole.input.autocomplete",
+      EAGER_EVALUATION: "devtools.webconsole.input.eagerEvaluation",
       GROUP_WARNINGS: "devtools.webconsole.groupWarningMessages",
-      FILTER_CONTENT_MESSAGES: "devtools.browserconsole.filterContentMessages",
+      BROWSER_TOOLBOX_FISSION: "devtools.browsertoolbox.fission",
     },
   },
 };
@@ -138,6 +156,8 @@ const chromeRDPEnums = {
     START_GROUP_COLLAPSED: "startGroupCollapsed",
     END_GROUP: "endGroup",
     CONTENT_BLOCKING_GROUP: "contentBlockingWarningGroup",
+    TRACKING_PROTECTION_GROUP: "trackingProtectionWarningGroup",
+    COOKIE_SAMESITE_GROUP: "cookieSameSiteGroup",
     CORS_GROUP: "CORSWarningGroup",
     CSP_GROUP: "CSPWarningGroup",
     ASSERT: "assert",
@@ -180,6 +200,10 @@ module.exports = Object.assign(
     FILTERS,
     DEFAULT_FILTERS,
     DEFAULT_FILTERS_VALUES,
+    FILTERBAR_DISPLAY_MODES: {
+      NARROW: "narrow",
+      WIDE: "wide",
+    },
   },
   actionTypes,
   chromeRDPEnums,

@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY e2eTitle.label "Criptografia de ponta a ponta">
+<!ENTITY e2eLearnMore.label "Saber mais">
+
+<!ENTITY e2eEnc.description "Sem encriptação de ponta-a-ponta, os conteúdos das mensagens são facilmente expostos ao seu provedor de e-mail e à vigilância em massa.">
+<!ENTITY e2eeReqWarning.description "Se necessitar de criptografia, para enviar uma mensagem, deve ter a chave pública ou o certificado de cada destinatário.">
+
+<!ENTITY e2eSigning.description "Uma assinatura digital permite que os destinatários verifiquem se a mensagem foi enviada por si e se o conteúdo não foi alterado.">
+<!ENTITY e2eTechPref.description "Tecnologia de encriptação preferida:">
+
+<!ENTITY doNotEncrypt.label "Não ativar a encriptação por predefinição">
+<!ENTITY doNotEncrypt.accesskey "N">
+<!ENTITY requireEncryptMessage.label "Requerer encriptação por predefinição">
+<!ENTITY requireEncryptMessage.accesskey "u">
+<!ENTITY encryptionCert2.message "Certificado pessoal para encriptação:">
+<!ENTITY digitalSign.certificate.button "Selecionar...">
+<!ENTITY digitalSign.certificate.accesskey "S">
+<!ENTITY digitalSign.certificate_clear.button "Limpar">
+<!ENTITY digitalSign.certificate_clear.accesskey "L">
+<!ENTITY encryption.certificate.button "Selecionar…">
+<!ENTITY encryption.certificate.accesskey "c">
+<!ENTITY encryption.certificate_clear.button "Limpar">
+<!ENTITY encryption.certificate_clear.accesskey "i">
+<!ENTITY signingGroupTitle.label "Assinatura digital">
+<!ENTITY signMessage2.label "Adicionar a minha assinatura digital por predefinição">
+<!ENTITY signMessage.accesskey "d">
+
+<!ENTITY signingCert2.message "Certificado pessoal para a assinatura digital:">
+
+<!ENTITY sendingDefaults.label "Definições predefinidas para o envio de mensagens">
+
+<!ENTITY technologyAutomatic.label "Selecionar automaticamente com base nas chaves ou certificados disponíveis">
+
+<!ENTITY certificates2.label "S/MIME">
+<!ENTITY manageCerts3.label "Gerir certificados S/MIME">
+<!ENTITY manageCerts3.accesskey "G">
+<!ENTITY manageDevices2.label "Dispositivos de segurança S/MIME">
+<!ENTITY manageDevices2.accesskey "g">
+
+<!ENTITY technologySMIME.label "Preferir S/MIME">
+<!ENTITY technologyOpenPGP.label "Preferir OpenPGP">
+
+<!ENTITY openpgpKeys.label "OpenPGP">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Selecionar certificado">
+<!ENTITY certPicker.info  "Certificado:">
+<!ENTITY certPicker.detailsLabel "Detalhes do certificado selecionado:">
+
+<!ENTITY openpgpKey.message "Chave pessoal para encriptação e assinatura digital:">
+<!ENTITY openpgpKey.button "Definir chave pessoal…">
+<!ENTITY openpgpKey.accesskey "o">

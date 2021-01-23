@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Cuir matamataig a-steach">
+
+<!ENTITY sourceEditField.label "Cuir a-steach còd tùsail LaTeX:">
+
+<!ENTITY options.label "Roghainnean">
+<!ENTITY optionInline.label "Am modh ion-loidhne">
+<!ENTITY optionInline.accesskey "n">
+<!ENTITY optionDisplay.label "Am modh taisbeanaidh">
+<!ENTITY optionDisplay.accesskey "d">
+<!ENTITY optionLTR.label "Clì gu deas">
+<!ENTITY optionLTR.accesskey "l">
+<!ENTITY optionRTL.label "Deas gu clì">
+<!ENTITY optionRTL.accesskey "D">
+
+<!ENTITY insertButton.label "Cuir a-steach">
+<!ENTITY insertButton.accesskey "i">

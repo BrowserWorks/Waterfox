@@ -1,0 +1,88 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from am-server-top.xul -->
+
+
+<!ENTITY messageStorage.label "Stòras theachdaireachdan">
+<!ENTITY securitySettings.label "Roghainnean tèarainteachd">
+<!ENTITY serverSettings.label "Roghainnean an fhrithealaiche">
+<!ENTITY serverType.label "Seòrsa an fhrithealaiche:">
+<!ENTITY serverName.label "Ainm an fhrithealaiche:">
+<!ENTITY serverName.accesskey "A">
+<!ENTITY userName.label "Ainm a' chleachdaiche:">
+<!ENTITY userName.accesskey "n">
+<!ENTITY port.label "Port:">
+<!ENTITY port.accesskey "P">
+<!ENTITY serverPortDefault.label "Bunaiteach:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammer dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "Thoir sùil airson teachdaireachdan ùra gach ">
+<!ENTITY biffStart.accesskey "T">
+<!ENTITY biffEnd.label "mionaid(ean)">
+<!ENTITY useIdleNotifications.label "Ceadaich brathan an fhrithealaiche sa bhad nuair a ruigeas teachdaireachdan ùra">
+<!ENTITY useIdleNotifications.accesskey "a">
+<!ENTITY connectionSecurity.label "Tèarainteachd a' cheangail:">
+<!ENTITY connectionSecurity.accesskey "T">
+<!ENTITY connectionSecurityType-0.label "Chan eil gin">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, ma bhios e ri fhaighinn">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "An dòigh dearbhachaidh:">
+<!ENTITY authMethod.accesskey "i">
+<!ENTITY leaveOnServer.label "Fàg na teachdaireachdan air an fhrithealaiche">
+<!ENTITY leaveOnServer.accesskey "g">
+<!ENTITY headersOnly.label "Faigh na bannan-cinn a-mhàin">
+<!ENTITY headersOnly.accesskey "F">
+<!ENTITY deleteByAgeFromServer.label "Air a' char as motha fad">
+<!ENTITY deleteByAgeFromServer.accesskey "o">
+<!ENTITY daysEnd.label "là(ithean)">
+<!ENTITY deleteOnServer2.label "Gus an sguab mi às iad">
+<!ENTITY deleteOnServer2.accesskey "d">
+<!ENTITY downloadOnBiff.label "Luchdaich a-nuas teachdaireachdan ùra a ghnàth">
+<!ENTITY downloadOnBiff.accesskey "L">
+<!ENTITY deleteMessagePrefix.label "Nuair a sguabas mi às teachdaireachd:">
+<!ENTITY modelMoveToTrash.label "Gluais e dhan phasgan seo:">
+<!ENTITY modelMoveToTrash.accesskey "o">
+<!ENTITY modelMarkDeleted.label "Cuir comharra air gun deach a leughadh">
+<!ENTITY modelMarkDeleted.accesskey "C">
+<!ENTITY modelDeleteImmediately.label "Thoir air falbh e sa bhad">
+<!ENTITY modelDeleteImmediately.accesskey "d">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "Glan (&quot;lèir-fhalamhaich&quot;) am bogsa a-steach nuair a dhùineas mi am prògram">
+<!ENTITY expungeOnExit.accesskey "e">
+<!ENTITY emptyTrashOnExit.label "Falamhaich an sgudal nuair a dhùineas mi am prògram">
+<!ENTITY emptyTrashOnExit.accesskey "F">
+<!ENTITY loginAtStartup.label "Thoir sùil airson teachdaireachdan ùra nuair a thòisicheas am prògram">
+<!ENTITY loginAtStartup.accesskey "T">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+   of messages between them
+-->
+<!ENTITY maxMessagesStart.label "Faighnich dhìom mus luchdaich mi a-nuas barrachd air">
+<!ENTITY maxMessagesStart.accesskey "m">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "teachdaireachdan">
+<!ENTITY alwaysAuthenticate.label "Iarr dearbhachadh gach turas a thèid ceangal a dhèanamh ris an fhrithealaiche seo">
+<!ENTITY alwaysAuthenticate.accesskey "I">
+<!ENTITY abbreviate.label "Seall ainmean nam buidhnean-naidheachd ann an leòs pasgan a' phuist mar:">
+<!ENTITY abbreviateOn.label "Ainmean slàna (Mar eisimpleir, 'netscape.public.mozilla.mail-news')">
+<!ENTITY abbreviateOff.label "Ainmean goirid (Mar eisimpleir, 'n.p.m.mail-news')">
+<!ENTITY advancedButton.label "Adhartach…">
+<!ENTITY advancedButton.accesskey "A">
+<!ENTITY serverDefaultCharset2.label "An còdachadh teacsa bunaiteach:">
+<!ENTITY localFolderPicker.label "Tagh am pasgan ionadail">
+<!ENTITY browseFolder.label "Brabhsaich…">
+<!ENTITY browseFolder.accesskey "B">
+<!ENTITY browseNewsrc.label "Brabhsaich…">
+<!ENTITY browseNewsrc.accesskey "B">
+
+<!ENTITY accountTitle.label "Roghainnean a' chunntais">
+<!ENTITY accountSettingsDesc.label "'S e cunntas sònraichte a tha seo.  Chan eil dearbh-aithne co-cheangailte ris.">
+<!ENTITY storeType.label "Seòrsa stòras nan teachdaireachdan:">
+<!ENTITY storeType.accesskey "t">
+<!ENTITY mboxStore2.label "Faidhle gach pasgan (mbox)">
+<!ENTITY maildirStore.label "Faidhle gach teachdaireachd (maildir)">

@@ -124,13 +124,38 @@ inline uint32_t GetTitlecaseForAll(
   return u_totitle(aCh);
 }
 
-inline bool IsEastAsianWidthFWH(uint32_t aCh) {
+inline uint32_t GetFoldedcase(uint32_t aCh) {
+  // Handle dotted capital I and dotless small i specially because we want to
+  // use a combination of ordinary case-folding rules and Turkish case-folding
+  // rules.
+  if (aCh == 0x0130 || aCh == 0x0131) {
+    return 'i';
+  }
+  return u_foldCase(aCh, U_FOLD_CASE_DEFAULT);
+}
+
+inline bool IsEastAsianWidthFHWexcludingEmoji(uint32_t aCh) {
   switch (u_getIntPropertyValue(aCh, UCHAR_EAST_ASIAN_WIDTH)) {
     case U_EA_FULLWIDTH:
-    case U_EA_WIDE:
     case U_EA_HALFWIDTH:
       return true;
+    case U_EA_WIDE:
+      return u_hasBinaryProperty(aCh, UCHAR_EMOJI) ? false : true;
     case U_EA_AMBIGUOUS:
+    case U_EA_NARROW:
+    case U_EA_NEUTRAL:
+      return false;
+  }
+  return false;
+}
+
+inline bool IsEastAsianWidthAFW(uint32_t aCh) {
+  switch (u_getIntPropertyValue(aCh, UCHAR_EAST_ASIAN_WIDTH)) {
+    case U_EA_AMBIGUOUS:
+    case U_EA_FULLWIDTH:
+    case U_EA_WIDE:
+      return true;
+    case U_EA_HALFWIDTH:
     case U_EA_NARROW:
     case U_EA_NEUTRAL:
       return false;
@@ -209,6 +234,25 @@ class ClusterIterator {
 
 // Count the number of grapheme clusters in the given string
 uint32_t CountGraphemeClusters(const char16_t* aText, uint32_t aLength);
+
+// Determine whether a character is a "combining diacritic" for the purpose
+// of diacritic-insensitive text search. Examples of such characters include
+// European accents and Hebrew niqqud, but not Hangul components or Thaana
+// vowels, even though Thaana vowels are combining nonspacing marks that could
+// be considered diacritics.
+// As an exception to strictly following Unicode properties, we exclude the
+// Japanese kana voicing marks
+//   3099;COMBINING KATAKANA-HIRAGANA VOICED SOUND MARK;Mn;8;NSM
+//   309A;COMBINING KATAKANA-HIRAGANA SEMI-VOICED SOUND MARK;Mn;8;NSM
+// which users report should not be ignored (bug 1624244).
+inline bool IsCombiningDiacritic(uint32_t aCh) {
+  uint8_t cc = u_getCombiningClass(aCh);
+  return cc != HB_UNICODE_COMBINING_CLASS_NOT_REORDERED &&
+         cc != HB_UNICODE_COMBINING_CLASS_KANA_VOICING;
+}
+
+// Remove diacritics from a character
+uint32_t GetNaked(uint32_t aCh);
 
 // A simple reverse iterator for a string of char16_t codepoints that
 // advances by Unicode grapheme clusters

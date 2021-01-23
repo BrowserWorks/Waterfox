@@ -10,6 +10,9 @@ import { getSelectedSource, getSelectedBreakableLines } from "../../selectors";
 import type { Source } from "../../types";
 import { fromEditorLine } from "../../utils/editor";
 
+type OwnProps = {|
+  editor: Object,
+|};
 type Props = {
   selectedSource: Source,
   editor: Object,
@@ -30,7 +33,11 @@ class EmptyLines extends Component<Props> {
 
     editor.codeMirror.operation(() => {
       editor.codeMirror.eachLine(lineHandle => {
-        editor.codeMirror.removeLineClass(lineHandle, "line", "empty-line");
+        editor.codeMirror.removeLineClass(
+          lineHandle,
+          "wrapClass",
+          "empty-line"
+        );
       });
     });
   }
@@ -46,9 +53,13 @@ class EmptyLines extends Component<Props> {
         );
 
         if (breakableLines.has(line)) {
-          editor.codeMirror.removeLineClass(lineHandle, "line", "empty-line");
+          editor.codeMirror.removeLineClass(
+            lineHandle,
+            "wrapClass",
+            "empty-line"
+          );
         } else {
-          editor.codeMirror.addLineClass(lineHandle, "line", "empty-line");
+          editor.codeMirror.addLineClass(lineHandle, "wrapClass", "empty-line");
         }
       });
     });
@@ -72,4 +83,6 @@ const mapStateToProps = state => {
   };
 };
 
-export default connect(mapStateToProps)(EmptyLines);
+export default connect<Props, OwnProps, _, _, _, _>(mapStateToProps)(
+  EmptyLines
+);

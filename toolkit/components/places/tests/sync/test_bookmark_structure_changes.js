@@ -123,8 +123,13 @@ add_task(async function test_value_structure_conflict() {
   let observer = expectBookmarkChangeNotifications();
   let changesToUpload = await buf.apply({
     remoteTimeSeconds: Date.now() / 1000,
+    notifyInStableOrder: true,
   });
-  deepEqual(await buf.fetchUnmergedGuids(), [], "Should merge all items");
+  deepEqual(
+    await buf.fetchUnmergedGuids(),
+    ["folderDDDDDD"],
+    "Should leave D with new remote structure unmerged"
+  );
 
   let idsToUpload = inspectChangeRecords(changesToUpload);
   deepEqual(
@@ -241,6 +246,9 @@ add_task(async function test_value_structure_conflict() {
     },
     "Should reconcile structure and value changes"
   );
+
+  await storeChangesInMirror(buf, changesToUpload);
+  deepEqual(await buf.fetchUnmergedGuids(), [], "Should merge all items");
 
   await buf.finalize();
   await PlacesUtils.bookmarks.eraseEverything();
@@ -368,7 +376,9 @@ add_task(async function test_move() {
 
   info("Apply remote");
   let observer = expectBookmarkChangeNotifications();
-  let changesToUpload = await buf.apply();
+  let changesToUpload = await buf.apply({
+    notifyInStableOrder: true,
+  });
   deepEqual(await buf.fetchUnmergedGuids(), [], "Should merge all items");
 
   let idsToUpload = inspectChangeRecords(changesToUpload);
@@ -688,7 +698,9 @@ add_task(async function test_move_into_parent_sibling() {
 
   info("Apply remote");
   let observer = expectBookmarkChangeNotifications();
-  let changesToUpload = await buf.apply();
+  let changesToUpload = await buf.apply({
+    notifyInStableOrder: true,
+  });
   deepEqual(await buf.fetchUnmergedGuids(), [], "Should merge all items");
 
   let idsToUpload = inspectChangeRecords(changesToUpload);
@@ -779,12 +791,11 @@ add_task(async function test_move_into_parent_sibling() {
 });
 
 add_task(async function test_complex_move_with_additions() {
-  let mergeTelemetryEvents = [];
+  let mergeTelemetryCounts;
   let buf = await openMirror("complex_move_with_additions", {
-    recordTelemetryEvent(object, method, value, extra) {
-      equal(object, "mirror", "Wrong object for telemetry event");
-      if (method == "merge") {
-        mergeTelemetryEvents.push({ value, extra });
+    recordStepTelemetry(name, took, counts) {
+      if (name == "merge") {
+        mergeTelemetryCounts = counts;
       }
     },
   });
@@ -897,21 +908,17 @@ add_task(async function test_complex_move_with_additions() {
 
   info("Apply remote");
   let observer = expectBookmarkChangeNotifications();
-  let changesToUpload = await buf.apply();
-  deepEqual(await buf.fetchUnmergedGuids(), [], "Should merge all items");
+  let changesToUpload = await buf.apply({
+    notifyInStableOrder: true,
+  });
   deepEqual(
-    mergeTelemetryEvents,
-    [
-      {
-        value: "structure",
-        extra: {
-          remoteRevives: 0,
-          localDeletes: 0,
-          localRevives: 0,
-          remoteDeletes: 0,
-        },
-      },
-    ],
+    await buf.fetchUnmergedGuids(),
+    ["folderAAAAAA"],
+    "Should leave A with new remote structure unmerged"
+  );
+  deepEqual(
+    mergeTelemetryCounts,
+    [{ name: "items", count: 10 }],
     "Should record telemetry with structure change counts"
   );
 
@@ -1059,6 +1066,9 @@ add_task(async function test_complex_move_with_additions() {
     },
     "Should take remote order and preserve local children"
   );
+
+  await storeChangesInMirror(buf, changesToUpload);
+  deepEqual(await buf.fetchUnmergedGuids(), [], "Should merge all items");
 
   await buf.finalize();
   await PlacesUtils.bookmarks.eraseEverything();
@@ -1249,7 +1259,11 @@ add_task(async function test_reorder_and_insert() {
     remoteTimeSeconds: now / 1000,
     localTimeSeconds: now / 1000,
   });
-  deepEqual(await buf.fetchUnmergedGuids(), [], "Should merge all items");
+  deepEqual(
+    await buf.fetchUnmergedGuids(),
+    [PlacesUtils.bookmarks.menuGuid, PlacesUtils.bookmarks.toolbarGuid],
+    "Should leave roots with new remote structure unmerged"
+  );
 
   let idsToUpload = inspectChangeRecords(changesToUpload);
   deepEqual(
@@ -1371,6 +1385,9 @@ add_task(async function test_reorder_and_insert() {
     },
     "Should use timestamps to decide base folder order"
   );
+
+  await storeChangesInMirror(buf, changesToUpload);
+  deepEqual(await buf.fetchUnmergedGuids(), [], "Should merge all items");
 
   await buf.finalize();
   await PlacesUtils.bookmarks.eraseEverything();
@@ -1707,7 +1724,16 @@ add_task(async function test_newer_remote_moves() {
     localTimeSeconds: now / 1000,
     remoteTimeSeconds: now / 1000,
   });
-  deepEqual(await buf.fetchUnmergedGuids(), [], "Should merge all items");
+  deepEqual(
+    await buf.fetchUnmergedGuids(),
+    [
+      PlacesUtils.bookmarks.menuGuid,
+      PlacesUtils.bookmarks.mobileGuid,
+      PlacesUtils.bookmarks.toolbarGuid,
+      PlacesUtils.bookmarks.unfiledGuid,
+    ],
+    "Should leave roots with new remote structure unmerged"
+  );
   let datesAdded = await promiseManyDatesAdded([
     PlacesUtils.bookmarks.menuGuid,
     PlacesUtils.bookmarks.mobileGuid,
@@ -1723,7 +1749,7 @@ add_task(async function test_newer_remote_moves() {
       // in Places (see the comment for F below), we'll reupload them.
       menu: {
         tombstone: false,
-        counter: 1,
+        counter: 2,
         synced: false,
         cleartext: {
           id: "menu",
@@ -1885,6 +1911,9 @@ add_task(async function test_newer_remote_moves() {
     },
     "Should use newer remote parents and order"
   );
+
+  await storeChangesInMirror(buf, changesToUpload);
+  deepEqual(await buf.fetchUnmergedGuids(), [], "Should merge all items");
 
   await buf.finalize();
   await PlacesUtils.bookmarks.eraseEverything();
@@ -2204,7 +2233,23 @@ add_task(async function test_newer_local_moves() {
     localTimeSeconds: now / 1000,
     remoteTimeSeconds: now / 1000,
   });
-  deepEqual(await buf.fetchUnmergedGuids(), [], "Should merge all items");
+  deepEqual(
+    await buf.fetchUnmergedGuids(),
+    [
+      "bookmarkAAAA",
+      "bookmarkCCCC",
+      "bookmarkGGGG",
+      "folderBBBBBB",
+      "folderDDDDDD",
+      "folderFFFFFF",
+      "folderHHHHHH",
+      PlacesUtils.bookmarks.menuGuid,
+      PlacesUtils.bookmarks.mobileGuid,
+      PlacesUtils.bookmarks.toolbarGuid,
+      PlacesUtils.bookmarks.unfiledGuid,
+    ],
+    "Should leave items with new remote structure unmerged"
+  );
   let datesAdded = await promiseManyDatesAdded([
     PlacesUtils.bookmarks.menuGuid,
     PlacesUtils.bookmarks.mobileGuid,
@@ -2217,7 +2262,7 @@ add_task(async function test_newer_local_moves() {
       // Reupload roots with new children.
       menu: {
         tombstone: false,
-        counter: 1,
+        counter: 2,
         synced: false,
         cleartext: {
           id: "menu",
@@ -2373,7 +2418,7 @@ add_task(async function test_newer_local_moves() {
       },
       folderBBBBBB: {
         tombstone: false,
-        counter: 1,
+        counter: 2,
         synced: false,
         cleartext: {
           id: "folderBBBBBB",
@@ -2490,6 +2535,9 @@ add_task(async function test_newer_local_moves() {
     },
     "Should use newer local parents and order"
   );
+
+  await storeChangesInMirror(buf, changesToUpload);
+  deepEqual(await buf.fetchUnmergedGuids(), [], "Should merge all items");
 
   await buf.finalize();
   await PlacesUtils.bookmarks.eraseEverything();
@@ -2673,7 +2721,11 @@ add_task(async function test_unchanged_newer_changed_older() {
     localTimeSeconds: modified.getTime() / 1000 + 10,
     remoteTimeSeconds: modified.getTime() / 1000 + 10,
   });
-  deepEqual(await buf.fetchUnmergedGuids(), [], "Should merge all items");
+  deepEqual(
+    await buf.fetchUnmergedGuids(),
+    ["bookmarkFFFF", "folderCCCCCC", PlacesUtils.bookmarks.menuGuid],
+    "Should leave deleted C; F and menu with new remote structure unmerged"
+  );
 
   deepEqual(
     changesToUpload,
@@ -2820,6 +2872,16 @@ add_task(async function test_unchanged_newer_changed_older() {
     },
     "Should merge children of changed side first, even if they're older"
   );
+
+  let tombstones = await PlacesTestUtils.fetchSyncTombstones();
+  deepEqual(
+    tombstones.map(({ guid }) => guid),
+    ["folderCCCCCC"],
+    "Should store local tombstone for C"
+  );
+
+  await storeChangesInMirror(buf, changesToUpload);
+  deepEqual(await buf.fetchUnmergedGuids(), [], "Should merge all items");
 
   await buf.finalize();
   await PlacesUtils.bookmarks.eraseEverything();

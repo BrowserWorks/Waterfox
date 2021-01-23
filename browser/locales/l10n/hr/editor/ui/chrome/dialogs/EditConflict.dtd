@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Odabir promjena">
+<!ENTITY conflictWarning.label "Ovu stranicu je modificirao drugi program, a također imate nespremljene promjene u Composeru.">
+<!ENTITY conflictResolve.label "Odaberite koju inačicu želite zadržati:">
+<!ENTITY keepCurrentPageButton.label "Zadrži trenutne promjene na stranici">
+<!ENTITY useOtherPageButton.label "Zamijeni trenutne promjene na stranicu s drugim promjenama">

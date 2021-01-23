@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Me tire daqui!">
+<!ENTITY safeb.palm.decline.label "Ignorar este alerta">
+<!ENTITY safeb.palm.reportPage.label "Por que esta página foi bloqueada?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Sugerido por <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "Página avaliada como foco de ataques!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "A página no site <span id='malware_sitename'/> foi considerada um foco de ataques e foi bloqueada de acordo com as suas preferências de segurança.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>As páginas de ataque tentam instalar aplicativos que roubam informações pessoais, usam o seu computador para atacar outros ou danificar o seu sistema.</p><p>Alguns desses sites distribuem intencionalmente software malicioso, mas muitos estão comprometidos sem o conhecimento ou permissão de seus responsáveis.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "Site enganoso!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "A página no site <span id='phishing_sitename'/> foi reportada como sendo enganosa e foi bloqueada de acordo com as suas preferências de segurança.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>Sites enganosos são projetados para induzi-lo a fazer algo nocivo, como instalar software ou revelar suas informações pessoais, como senhas, números de telefone ou cartões de crédito.</p><p>Introduzir qualquer informação nesta página pode resultar em roubo de identidade ou outras fraudes.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Relatando site de software indesejado!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "A página no site <span id='unwanted_sitename'/> foi considerada uma página de software indesejado e foi bloqueada de acordo com as suas preferências de segurança.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "As páginas de software indesejado, tentam instalar software que pode ser enganoso e afetar o seu sistema de formas inesperadas.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "O seguinte site pode conter malware">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; bloqueou esta página porque ela pode tentar instalar aplicativos perigosos que roubam ou excluem suas informações (por exemplo, fotos, senhas, mensagens e números de cartões de crédito).">

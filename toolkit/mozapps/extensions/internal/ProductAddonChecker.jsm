@@ -31,14 +31,11 @@ const { OS } = ChromeUtils.import("resource://gre/modules/osfile.jsm");
 
 XPCOMUtils.defineLazyGlobalGetters(this, ["XMLHttpRequest"]);
 
-/* globals GMPPrefs */
 ChromeUtils.defineModuleGetter(
   this,
   "GMPPrefs",
   "resource://gre/modules/GMPUtils.jsm"
 );
-
-/* globals OS */
 
 ChromeUtils.defineModuleGetter(
   this,
@@ -312,12 +309,16 @@ function downloadLocalConfig() {
  *
  * @param  url
  *         The url to download from.
+ * @param  options (optional)
+ * @param  options.httpsOnlyNoUpgrade
+ *         Prevents upgrade to https:// when HTTPS-Only Mode is enabled.
  * @return a promise that resolves to the path of a temporary file or rejects
  *         with a JS exception in case of error.
  */
-function downloadFile(url) {
+function downloadFile(url, options = { httpsOnlyNoUpgrade: false }) {
   return new Promise((resolve, reject) => {
     let xhr = new XMLHttpRequest();
+
     xhr.onload = function(response) {
       logger.info("downloadXHR File download. status=" + xhr.status);
       if (xhr.status != 200 && xhr.status != 206) {
@@ -355,6 +356,12 @@ function downloadFile(url) {
     xhr.responseType = "arraybuffer";
     try {
       xhr.open("GET", url);
+      if (options.httpsOnlyNoUpgrade) {
+        xhr.channel.loadInfo.httpsOnlyStatus |=
+          Ci.nsILoadInfo.HTTPS_ONLY_EXEMPT;
+      }
+      // Allow deprecated HTTP request from SystemPrincipal
+      xhr.channel.loadInfo.allowDeprecatedSystemRequests = true;
       // Use conservative TLS settings. See bug 1325501.
       // TODO move to ServiceRequest.
       if (xhr.channel instanceof Ci.nsIHttpChannelInternal) {
@@ -483,11 +490,14 @@ const ProductAddonChecker = {
    *
    * @param  addon
    *         The addon to download.
+   * @param  options (optional)
+   * @param  options.httpsOnlyNoUpgrade
+   *         Prevents upgrade to https:// when HTTPS-Only Mode is enabled.
    * @return a promise that resolves to the temporary file downloaded or rejects
    *         with a JS exception in case of error.
    */
-  async downloadAddon(addon) {
-    let path = await downloadFile(addon.URL);
+  async downloadAddon(addon, options = { httpsOnlyNoUpgrade: false }) {
+    let path = await downloadFile(addon.URL, options);
     try {
       await verifyFile(addon, path);
       return path;

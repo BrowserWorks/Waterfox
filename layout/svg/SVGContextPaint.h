@@ -19,6 +19,7 @@
 #include "nsStyleStruct.h"
 #include "nsTArray.h"
 #include "ImgDrawResult.h"
+#include "nsRefPtrHashtable.h"
 
 class gfxContext;
 
@@ -165,27 +166,32 @@ struct SVGContextPaintImpl : public SVGContextPaint {
   float GetStrokeOpacity() const override { return mStrokeOpacity; }
 
   struct Paint {
-    Paint() : mPaintDefinition{}, mPaintType(eStyleSVGPaintType_None) {}
+    enum class Tag : uint8_t {
+      None,
+      Color,
+      PaintServer,
+      ContextFill,
+      ContextStroke,
+    };
+
+    Paint() : mPaintDefinition{}, mPaintType(Tag::None) {}
 
     void SetPaintServer(nsIFrame* aFrame, const gfxMatrix& aContextMatrix,
                         nsSVGPaintServerFrame* aPaintServerFrame) {
-      mPaintType = eStyleSVGPaintType_Server;
+      mPaintType = Tag::PaintServer;
       mPaintDefinition.mPaintServerFrame = aPaintServerFrame;
       mFrame = aFrame;
       mContextMatrix = aContextMatrix;
     }
 
     void SetColor(const nscolor& aColor) {
-      mPaintType = eStyleSVGPaintType_Color;
+      mPaintType = Tag::Color;
       mPaintDefinition.mColor = aColor;
     }
 
-    void SetContextPaint(SVGContextPaint* aContextPaint,
-                         nsStyleSVGPaintType aPaintType) {
-      NS_ASSERTION(aPaintType == eStyleSVGPaintType_ContextFill ||
-                       aPaintType == eStyleSVGPaintType_ContextStroke,
-                   "Invalid context paint type");
-      mPaintType = aPaintType;
+    void SetContextPaint(SVGContextPaint* aContextPaint, Tag aTag) {
+      MOZ_ASSERT(aTag == Tag::ContextFill || aTag == Tag::ContextStroke);
+      mPaintType = aTag;
       mPaintDefinition.mContextPaint = aContextPaint;
     }
 
@@ -199,7 +205,7 @@ struct SVGContextPaintImpl : public SVGContextPaint {
     MOZ_INIT_OUTSIDE_CTOR nsIFrame* mFrame;
     // CTM defining the user space for the pattern we will use.
     gfxMatrix mContextMatrix;
-    nsStyleSVGPaintType mPaintType;
+    Tag mPaintType;
 
     // Device-space-to-pattern-space
     gfxMatrix mPatternMatrix;
@@ -207,7 +213,7 @@ struct SVGContextPaintImpl : public SVGContextPaint {
 
     already_AddRefed<gfxPattern> GetPattern(
         const DrawTarget* aDrawTarget, float aOpacity,
-        nsStyleSVGPaint nsStyleSVG::*aFillOrStroke, const gfxMatrix& aCTM,
+        StyleSVGPaint nsStyleSVG::*aFillOrStroke, const gfxMatrix& aCTM,
         imgDrawingParams& aImgParams);
   };
 
@@ -225,7 +231,7 @@ struct SVGContextPaintImpl : public SVGContextPaint {
  * support context colors and not paint servers.
  */
 class SVGEmbeddingContextPaint : public SVGContextPaint {
-  typedef gfx::Color Color;
+  typedef gfx::DeviceColor DeviceColor;
 
  public:
   SVGEmbeddingContextPaint() : mFillOpacity(1.0f), mStrokeOpacity(1.0f) {}
@@ -242,11 +248,11 @@ class SVGEmbeddingContextPaint : public SVGContextPaint {
   }
 
   void SetFill(nscolor aFill) { mFill.emplace(gfx::ToDeviceColor(aFill)); }
-  const Maybe<Color>& GetFill() const { return mFill; }
+  const Maybe<DeviceColor>& GetFill() const { return mFill; }
   void SetStroke(nscolor aStroke) {
     mStroke.emplace(gfx::ToDeviceColor(aStroke));
   }
-  const Maybe<Color>& GetStroke() const { return mStroke; }
+  const Maybe<DeviceColor>& GetStroke() const { return mStroke; }
 
   /**
    * Returns a pattern of type PatternType::COLOR, or else nullptr.
@@ -271,8 +277,8 @@ class SVGEmbeddingContextPaint : public SVGContextPaint {
   uint32_t Hash() const override;
 
  private:
-  Maybe<Color> mFill;
-  Maybe<Color> mStroke;
+  Maybe<DeviceColor> mFill;
+  Maybe<DeviceColor> mStroke;
   float mFillOpacity;
   float mStrokeOpacity;
 };

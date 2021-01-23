@@ -6,7 +6,6 @@
 #include "StreamFunctions.h"
 #include "nsDeflateConverter.h"
 #include "nsStringStream.h"
-#include "nsIInputStreamPump.h"
 #include "nsComponentManagerUtils.h"
 #include "nsMemory.h"
 #include "plstr.h"
@@ -90,6 +89,13 @@ NS_IMETHODIMP nsDeflateConverter::AsyncConvertData(const char* aFromType,
   mListener = aListener;
   mContext = aCtxt;
   return rv;
+}
+
+NS_IMETHODIMP
+nsDeflateConverter::GetConvertedType(const nsACString& aFromType,
+                                     nsIChannel* aChannel,
+                                     nsACString& aToType) {
+  return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 NS_IMETHODIMP nsDeflateConverter::OnDataAvailable(nsIRequest* aRequest,

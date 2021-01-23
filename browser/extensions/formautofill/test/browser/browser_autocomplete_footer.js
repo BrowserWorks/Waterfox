@@ -3,20 +3,6 @@
 const URL = BASE_URL + "autocomplete_basic.html";
 const PRIVACY_PREF_URL = "about:preferences#privacy";
 
-async function expectWarningText(browser, expectedText) {
-  const {
-    autoCompletePopup: { richlistbox: itemsBox },
-  } = browser;
-  const warningBox = itemsBox.querySelector(
-    ".autocomplete-richlistitem:last-child"
-  )._warningTextBox;
-
-  await BrowserTestUtils.waitForCondition(() => {
-    return warningBox.textContent == expectedText;
-  }, `Waiting for expected warning text: ${expectedText}, Got ${warningBox.textContent}`);
-  ok(true, `Got expected warning text: ${expectedText}`);
-}
-
 add_task(async function setup_storage() {
   await saveAddress(TEST_ADDRESS_2);
   await saveAddress(TEST_ADDRESS_3);
@@ -39,7 +25,8 @@ add_task(async function test_press_enter_on_footer() {
     );
     const prefTabPromise = BrowserTestUtils.waitForNewTab(
       gBrowser,
-      PRIVACY_PREF_URL
+      PRIVACY_PREF_URL,
+      true
     );
     for (let i = 0; i < listItemElems.length; i++) {
       await BrowserTestUtils.synthesizeKey("VK_DOWN", {}, browser);
@@ -73,7 +60,8 @@ add_task(async function test_click_on_footer() {
     )._optionButton;
     const prefTabPromise = BrowserTestUtils.waitForNewTab(
       gBrowser,
-      PRIVACY_PREF_URL
+      PRIVACY_PREF_URL,
+      true
     );
     // Wait for dropdown animation finished to continue mouse synthesizing.
     await sleep(3000);

@@ -7,9 +7,10 @@
 import { has } from "lodash";
 import type { SourceScope, BindingLocation } from "../../../workers/parser";
 import type { Scope, BindingContents } from "../../../types";
-import { createObjectClient } from "../../../client/firefox";
+import { clientCommands } from "../../../client/firefox";
 
 import { locColumn } from "./locColumn";
+import { getOptimizedOutGrip } from "./optimizedOut";
 
 export type GeneratedBindingLocation = {
   name: string,
@@ -94,7 +95,7 @@ export function buildGeneratedBindingList(
             desc: () => Promise.resolve(bindings[name]),
           });
         } else {
-          const globalGrip = globalScope && globalScope.object;
+          const globalGrip = globalScope?.object;
           if (globalGrip) {
             // Should always exist, just checking to keep Flow happy.
 
@@ -102,8 +103,10 @@ export function buildGeneratedBindingList(
               name,
               loc,
               desc: async () => {
-                const objectClient = createObjectClient(globalGrip);
-                return (await objectClient.getProperty(name)).descriptor;
+                const objectFront = clientCommands.createObjectFront(
+                  globalGrip
+                );
+                return (await objectFront.getProperty(name)).descriptor;
               },
             });
           }
@@ -113,6 +116,33 @@ export function buildGeneratedBindingList(
   }
 
   // Sort so we can binary-search.
+  return sortBindings(generatedBindings);
+}
+
+export function buildFakeBindingList(
+  generatedAstScopes: SourceScope[]
+): Array<GeneratedBindingLocation> {
+  // TODO if possible, inject real bindings for the global scope
+  const generatedBindings = generatedAstScopes.reduce((acc, generated) => {
+    for (const name of Object.keys(generated.bindings)) {
+      if (name === "this") {
+        continue;
+      }
+      const { refs } = generated.bindings[name];
+      for (const loc of refs) {
+        acc.push({
+          name,
+          loc,
+          desc: () => Promise.resolve(getOptimizedOutGrip()),
+        });
+      }
+    }
+    return acc;
+  }, []);
+  return sortBindings(generatedBindings);
+}
+
+function sortBindings(generatedBindings: Array<GeneratedBindingLocation>) {
   return generatedBindings.sort((a, b) => {
     const aStart = a.loc.start;
     const bStart = b.loc.start;

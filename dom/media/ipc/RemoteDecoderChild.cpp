@@ -9,91 +9,53 @@
 
 namespace mozilla {
 
-RemoteDecoderChild::RemoteDecoderChild()
-    : mThread(RemoteDecoderManagerChild::GetManagerThread()) {}
+RemoteDecoderChild::RemoteDecoderChild(bool aRecreatedOnCrash)
+    : mThread(RemoteDecoderManagerChild::GetManagerThread()),
+      mRecreatedOnCrash(aRecreatedOnCrash),
+      mRawFramePool(1, ShmemPool::PoolType::DynamicPool) {}
 
-RemoteDecoderChild::~RemoteDecoderChild() {
-  AssertOnManagerThread();
-  mInitPromise.RejectIfExists(NS_ERROR_DOM_MEDIA_CANCELED, __func__);
-}
+void RemoteDecoderChild::HandleRejectionError(
+    const ipc::ResponseRejectReason& aReason,
+    std::function<void(const MediaResult&)>&& aCallback) {
+  // If the channel goes down and CanSend() returns false, the IPDL promise will
+  // be rejected with SendError rather than ActorDestroyed. Both means the same
+  // thing and we can consider that the parent has crashed. The child can no
+  // longer be used.
 
-mozilla::ipc::IPCResult RemoteDecoderChild::RecvInputExhausted() {
-  AssertOnManagerThread();
-  mDecodePromise.ResolveIfExists(std::move(mDecodedData), __func__);
-  mDecodedData = MediaDataDecoder::DecodedData();
-  return IPC_OK();
-}
-
-mozilla::ipc::IPCResult RemoteDecoderChild::RecvDrainComplete() {
-  AssertOnManagerThread();
-  mDrainPromise.ResolveIfExists(std::move(mDecodedData), __func__);
-  mDecodedData = MediaDataDecoder::DecodedData();
-  return IPC_OK();
-}
-
-mozilla::ipc::IPCResult RemoteDecoderChild::RecvError(const nsresult& aError) {
-  AssertOnManagerThread();
-  mDecodedData = MediaDataDecoder::DecodedData();
-  mDecodePromise.RejectIfExists(aError, __func__);
-  mDrainPromise.RejectIfExists(aError, __func__);
-  mFlushPromise.RejectIfExists(aError, __func__);
-  mShutdownPromise.ResolveIfExists(true, __func__);
-  RefPtr<RemoteDecoderChild> kungFuDeathGrip = mShutdownSelfRef.forget();
-  Unused << kungFuDeathGrip;
-  return IPC_OK();
-}
-
-mozilla::ipc::IPCResult RemoteDecoderChild::RecvInitComplete(
-    const TrackInfo::TrackType& trackType, const nsCString& aDecoderDescription,
-    const ConversionRequired& aConversion) {
-  AssertOnManagerThread();
-  mInitPromise.ResolveIfExists(trackType, __func__);
-  mInitialized = true;
-  mDescription = aDecoderDescription;
-  mConversion = aConversion;
-  return IPC_OK();
-}
-
-mozilla::ipc::IPCResult RemoteDecoderChild::RecvInitFailed(
-    const nsresult& aReason) {
-  AssertOnManagerThread();
-  mInitPromise.RejectIfExists(aReason, __func__);
-  return IPC_OK();
-}
-
-mozilla::ipc::IPCResult RemoteDecoderChild::RecvFlushComplete() {
-  AssertOnManagerThread();
-  mFlushPromise.ResolveIfExists(true, __func__);
-  return IPC_OK();
-}
-
-mozilla::ipc::IPCResult RemoteDecoderChild::RecvShutdownComplete() {
-  AssertOnManagerThread();
-  MOZ_ASSERT(mShutdownSelfRef);
-  mShutdownPromise.ResolveIfExists(true, __func__);
-  RefPtr<RemoteDecoderChild> kungFuDeathGrip = mShutdownSelfRef.forget();
-  Unused << kungFuDeathGrip;
-  return IPC_OK();
-}
-
-void RemoteDecoderChild::ActorDestroy(ActorDestroyReason aWhy) {
-  MOZ_ASSERT(mCanSend);
-  // If the IPC channel is gone pending promises need to be resolved/rejected.
-  if (aWhy == AbnormalShutdown) {
-    MediaResult error(NS_ERROR_DOM_MEDIA_DECODE_ERR);
-    mDecodePromise.RejectIfExists(error, __func__);
-    mDrainPromise.RejectIfExists(error, __func__);
-    mFlushPromise.RejectIfExists(error, __func__);
-    mShutdownPromise.ResolveIfExists(true, __func__);
-    RefPtr<RemoteDecoderChild> kungFuDeathGrip = mShutdownSelfRef.forget();
-    Unused << kungFuDeathGrip;
+  // The GPU/RDD process crashed, record the time and send back to MFR for
+  // telemetry.
+  mRemoteProcessCrashTime = TimeStamp::Now();
+  if (mRecreatedOnCrash) {
+    // Defer reporting an error until we've recreated the manager so that
+    // it'll be safe for MediaFormatReader to recreate decoders
+    RefPtr<RemoteDecoderChild> self = this;
+    GetManager()->RunWhenGPUProcessRecreated(NS_NewRunnableFunction(
+        "RemoteDecoderChild::HandleRejectionError",
+        [self, callback = std::move(aCallback)]() {
+          MediaResult error(NS_ERROR_DOM_MEDIA_NEED_NEW_DECODER, __func__);
+          error.SetGPUCrashTimeStamp(self->mRemoteProcessCrashTime);
+          callback(error);
+        }));
+    return;
   }
-  mCanSend = false;
+  aCallback(MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR, __func__));
+}
+
+// ActorDestroy is called if the channel goes down while waiting for a response.
+void RemoteDecoderChild::ActorDestroy(ActorDestroyReason aWhy) {
+  mDecodedData.Clear();
+  mRawFramePool.Cleanup(this);
+  RecordShutdownTelemetry(aWhy == AbnormalShutdown);
 }
 
 void RemoteDecoderChild::DestroyIPDL() {
   AssertOnManagerThread();
-  if (mCanSend) {
+  MOZ_DIAGNOSTIC_ASSERT(mInitPromise.IsEmpty() && mDecodePromise.IsEmpty() &&
+                            mDrainPromise.IsEmpty() &&
+                            mFlushPromise.IsEmpty() &&
+                            mShutdownPromise.IsEmpty(),
+                        "All promises should have been rejected");
+  if (CanSend()) {
     PRemoteDecoderChild::Send__delete__(this);
   }
 }
@@ -105,41 +67,94 @@ void RemoteDecoderChild::IPDLActorDestroyed() { mIPDLSelfRef = nullptr; }
 RefPtr<MediaDataDecoder::InitPromise> RemoteDecoderChild::Init() {
   AssertOnManagerThread();
 
-  if (!mIPDLSelfRef || !mCanSend) {
-    return MediaDataDecoder::InitPromise::CreateAndReject(
-        NS_ERROR_DOM_MEDIA_DECODE_ERR, __func__);
-  }
-
-  SendInit();
+  RefPtr<RemoteDecoderChild> self = this;
+  SendInit()
+      ->Then(
+          mThread, __func__,
+          [self, this](InitResultIPDL&& aResponse) {
+            mInitPromiseRequest.Complete();
+            if (aResponse.type() == InitResultIPDL::TMediaResult) {
+              mInitPromise.Reject(aResponse.get_MediaResult(), __func__);
+              return;
+            }
+            const auto& initResponse = aResponse.get_InitCompletionIPDL();
+            mDescription = initResponse.decoderDescription();
+            mIsHardwareAccelerated = initResponse.hardware();
+            mHardwareAcceleratedReason = initResponse.hardwareReason();
+            mConversion = initResponse.conversion();
+            mInitPromise.Resolve(initResponse.type(), __func__);
+          },
+          [self](const mozilla::ipc::ResponseRejectReason& aReason) {
+            self->mInitPromiseRequest.Complete();
+            self->HandleRejectionError(
+                aReason, [self](const MediaResult& aError) {
+                  self->mInitPromise.Reject(aError, __func__);
+                });
+          })
+      ->Track(mInitPromiseRequest);
 
   return mInitPromise.Ensure(__func__);
 }
 
 RefPtr<MediaDataDecoder::DecodePromise> RemoteDecoderChild::Decode(
-    MediaRawData* aSample) {
+    const nsTArray<RefPtr<MediaRawData>>& aSamples) {
   AssertOnManagerThread();
 
-  if (!mCanSend) {
-    return MediaDataDecoder::DecodePromise::CreateAndReject(
-        NS_ERROR_DOM_MEDIA_DECODE_ERR, __func__);
+  nsTArray<MediaRawDataIPDL> samples;
+  nsTArray<Shmem> mems;
+  for (auto&& sample : aSamples) {
+    // TODO: It would be nice to add an allocator method to
+    // MediaDataDecoder so that the demuxer could write directly
+    // into shmem rather than requiring a copy here.
+    ShmemBuffer buffer = mRawFramePool.Get(this, sample->Size(),
+                                           ShmemPool::AllocationPolicy::Unsafe);
+    if (!buffer.Valid()) {
+      return MediaDataDecoder::DecodePromise::CreateAndReject(
+          NS_ERROR_DOM_MEDIA_DECODE_ERR, __func__);
+    }
+
+    memcpy(buffer.Get().get<uint8_t>(), sample->Data(), sample->Size());
+    // Make a copy of the Shmem to re-use it later as IDPL will move the one
+    // used in the MediaRawDataIPDL.
+    mems.AppendElement(buffer.Get());
+    MediaRawDataIPDL rawSample(
+        MediaDataIPDL(sample->mOffset, sample->mTime, sample->mTimecode,
+                      sample->mDuration, sample->mKeyframe),
+        sample->mEOS, sample->mDiscardPadding, sample->Size(),
+        std::move(buffer.Get()));
+    samples.AppendElement(std::move(rawSample));
   }
 
-  // TODO: It would be nice to add an allocator method to
-  // MediaDataDecoder so that the demuxer could write directly
-  // into shmem rather than requiring a copy here.
-  Shmem buffer;
-  if (!AllocShmem(aSample->Size(), Shmem::SharedMemory::TYPE_BASIC, &buffer)) {
-    return MediaDataDecoder::DecodePromise::CreateAndReject(
-        NS_ERROR_DOM_MEDIA_DECODE_ERR, __func__);
-  }
+  RefPtr<RemoteDecoderChild> self = this;
+  SendDecode(std::move(samples))
+      ->Then(mThread, __func__,
+             [self, this, mems = std::move(mems)](
+                 PRemoteDecoderChild::DecodePromise::ResolveOrRejectValue&&
+                     aValue) {
+               // We no longer need the ShmemBuffer as the data has been
+               // processed by the parent.
+               for (auto&& mem : mems) {
+                 mRawFramePool.Put(ShmemBuffer(std::move(mem)));
+               }
 
-  memcpy(buffer.get<uint8_t>(), aSample->Data(), aSample->Size());
-
-  MediaRawDataIPDL sample(
-      MediaDataIPDL(aSample->mOffset, aSample->mTime, aSample->mTimecode,
-                    aSample->mDuration, aSample->mKeyframe),
-      aSample->mEOS, std::move(buffer));
-  SendInput(sample);
+               if (aValue.IsReject()) {
+                 HandleRejectionError(
+                     aValue.RejectValue(), [self](const MediaResult& aError) {
+                       self->mDecodePromise.RejectIfExists(aError, __func__);
+                     });
+                 return;
+               }
+               const auto& response = aValue.ResolveValue();
+               if (response.type() == DecodeResultIPDL::TMediaResult) {
+                 mDecodePromise.RejectIfExists(response.get_MediaResult(),
+                                               __func__);
+                 return;
+               }
+               ProcessOutput(response.get_DecodedOutputIPDL());
+               mDecodePromise.ResolveIfExists(std::move(mDecodedData),
+                                              __func__);
+               mDecodedData = MediaDataDecoder::DecodedData();
+             });
 
   return mDecodePromise.Ensure(__func__);
 }
@@ -148,34 +163,64 @@ RefPtr<MediaDataDecoder::FlushPromise> RemoteDecoderChild::Flush() {
   AssertOnManagerThread();
   mDecodePromise.RejectIfExists(NS_ERROR_DOM_MEDIA_CANCELED, __func__);
   mDrainPromise.RejectIfExists(NS_ERROR_DOM_MEDIA_CANCELED, __func__);
-  if (!mCanSend) {
-    return MediaDataDecoder::FlushPromise::CreateAndReject(
-        NS_ERROR_DOM_MEDIA_DECODE_ERR, __func__);
-  }
-  SendFlush();
+
+  RefPtr<RemoteDecoderChild> self = this;
+  SendFlush()->Then(
+      mThread, __func__,
+      [self](const MediaResult& aResult) {
+        if (NS_SUCCEEDED(aResult)) {
+          self->mFlushPromise.Resolve(true, __func__);
+        } else {
+          self->mFlushPromise.Reject(aResult, __func__);
+        }
+      },
+      [self](const mozilla::ipc::ResponseRejectReason& aReason) {
+        self->HandleRejectionError(aReason, [self](const MediaResult& aError) {
+          self->mFlushPromise.Reject(aError, __func__);
+        });
+      });
   return mFlushPromise.Ensure(__func__);
 }
 
 RefPtr<MediaDataDecoder::DecodePromise> RemoteDecoderChild::Drain() {
   AssertOnManagerThread();
-  if (!mCanSend) {
-    return MediaDataDecoder::DecodePromise::CreateAndReject(
-        NS_ERROR_DOM_MEDIA_DECODE_ERR, __func__);
-  }
-  SendDrain();
+
+  RefPtr<RemoteDecoderChild> self = this;
+  SendDrain()->Then(
+      mThread, __func__,
+      [self, this](DecodeResultIPDL&& aResponse) {
+        if (aResponse.type() == DecodeResultIPDL::TMediaResult) {
+          mDrainPromise.RejectIfExists(aResponse.get_MediaResult(), __func__);
+          return;
+        }
+        ProcessOutput(aResponse.get_DecodedOutputIPDL());
+        mDrainPromise.ResolveIfExists(std::move(mDecodedData), __func__);
+        mDecodedData = MediaDataDecoder::DecodedData();
+      },
+      [self](const mozilla::ipc::ResponseRejectReason& aReason) {
+        self->HandleRejectionError(aReason, [self](const MediaResult& aError) {
+          self->mDrainPromise.RejectIfExists(aError, __func__);
+        });
+      });
   return mDrainPromise.Ensure(__func__);
 }
 
-RefPtr<ShutdownPromise> RemoteDecoderChild::Shutdown() {
+RefPtr<mozilla::ShutdownPromise> RemoteDecoderChild::Shutdown() {
   AssertOnManagerThread();
+  // Shutdown() can be called while an InitPromise is pending.
+  mInitPromiseRequest.DisconnectIfExists();
   mInitPromise.RejectIfExists(NS_ERROR_DOM_MEDIA_CANCELED, __func__);
-  mInitialized = false;
-  if (!mCanSend) {
-    return ShutdownPromise::CreateAndResolve(true, __func__);
-  }
-  SendShutdown();
-  MOZ_ASSERT(!mShutdownSelfRef);
-  mShutdownSelfRef = this;
+  MOZ_DIAGNOSTIC_ASSERT(mDecodePromise.IsEmpty() && mDrainPromise.IsEmpty() &&
+                            mFlushPromise.IsEmpty(),
+                        "Promises must have been resolved prior to shutdown");
+
+  RefPtr<RemoteDecoderChild> self = this;
+  SendShutdown()->Then(
+      mThread, __func__,
+      [self](
+          PRemoteDecoderChild::ShutdownPromise::ResolveOrRejectValue&& aValue) {
+        self->mShutdownPromise.Resolve(aValue.IsResolve(), __func__);
+      });
   return mShutdownPromise.Ensure(__func__);
 }
 
@@ -193,9 +238,7 @@ nsCString RemoteDecoderChild::GetDescriptionName() const {
 
 void RemoteDecoderChild::SetSeekThreshold(const media::TimeUnit& aTime) {
   AssertOnManagerThread();
-  if (mCanSend) {
-    SendSetSeekThreshold(aTime);
-  }
+  Unused << SendSetSeekThreshold(aTime);
 }
 
 MediaDataDecoder::ConversionRequired RemoteDecoderChild::NeedsConversion()
@@ -209,7 +252,7 @@ void RemoteDecoderChild::AssertOnManagerThread() const {
 }
 
 RemoteDecoderManagerChild* RemoteDecoderChild::GetManager() {
-  if (!mCanSend) {
+  if (!CanSend()) {
     return nullptr;
   }
   return static_cast<RemoteDecoderManagerChild*>(Manager());

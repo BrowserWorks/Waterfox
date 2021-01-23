@@ -13,7 +13,9 @@
  * 4) Number of requests displayed
  */
 add_task(async function() {
-  const { tab, monitor } = await initNetMonitor(SIMPLE_URL);
+  const { tab, monitor } = await initNetMonitor(SIMPLE_URL, {
+    requestCount: 1,
+  });
   info("Starting test... ");
 
   const { document, store, windowRequire } = monitor.panelWin;
@@ -26,12 +28,12 @@ add_task(async function() {
     "An empty notice should be displayed when the frontend is opened."
   );
   is(
-    store.getState().requests.requests.size,
+    store.getState().requests.requests.length,
     0,
     "The requests menu should be empty when the frontend is opened."
   );
   is(
-    !!document.querySelector(".network-details-panel"),
+    !!document.querySelector(".network-details-bar"),
     false,
     "The network details panel should be hidden when the frontend is opened."
   );
@@ -43,12 +45,12 @@ add_task(async function() {
     "The empty notice should be hidden after the first request."
   );
   is(
-    store.getState().requests.requests.size,
+    store.getState().requests.requests.length,
     1,
     "The requests menu should not be empty after the first request."
   );
   is(
-    !!document.querySelector(".network-details-panel"),
+    !!document.querySelector(".network-details-bar"),
     false,
     "The network details panel should still be hidden after the first request."
   );
@@ -60,12 +62,12 @@ add_task(async function() {
     "The empty notice should be still hidden after a reload."
   );
   is(
-    store.getState().requests.requests.size,
+    store.getState().requests.requests.length,
     1,
     "The requests menu should not be empty after a reload."
   );
   is(
-    !!document.querySelector(".network-details-panel"),
+    !!document.querySelector(".network-details-bar"),
     false,
     "The network details panel should still be hidden after a reload."
   );
@@ -77,12 +79,12 @@ add_task(async function() {
     "An empty notice should be displayed again after clear."
   );
   is(
-    store.getState().requests.requests.size,
+    store.getState().requests.requests.length,
     0,
     "The requests menu should be empty after clear."
   );
   is(
-    !!document.querySelector(".network-details-panel"),
+    !!document.querySelector(".network-details-bar"),
     false,
     "The network details panel should still be hidden after clear."
   );

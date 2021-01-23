@@ -7,7 +7,7 @@
 #ifndef MOZILLA_GFX_RENDERANDROIDSURFACETEXTUREHOSTOGL_H
 #define MOZILLA_GFX_RENDERANDROIDSURFACETEXTUREHOSTOGL_H
 
-#include "GeneratedJNIWrappers.h"
+#include "mozilla/java/GeckoSurfaceTextureWrappers.h"
 #include "mozilla/layers/TextureHostOGL.h"
 #include "RenderTextureHostOGL.h"
 
@@ -28,20 +28,19 @@ class RenderAndroidSurfaceTextureHostOGL final : public RenderTextureHostOGL {
   gfx::IntSize GetSize(uint8_t aChannelIndex) const override;
   GLuint GetGLHandle(uint8_t aChannelIndex) const override;
 
-  virtual void PrepareForUse() override;
-  virtual void NofityForUse() override;
-  virtual void NotifyNotUsed() override;
+  void PrepareForUse() override;
+  void NofityForUse() override;
+  void NotifyNotUsed() override;
 
  private:
   virtual ~RenderAndroidSurfaceTextureHostOGL();
   void DeleteTextureHandle();
   bool EnsureAttachedToGLContext();
-  bool CheckIfAttachedToGLContext();
 
   enum PrepareStatus {
     STATUS_NONE,
-    STATUS_MIGHT_BE_USED,
-    STATUS_PREPARE_NEEDED,
+    STATUS_MIGHT_BE_USED_BY_WR,
+    STATUS_UPDATE_TEX_IMAGE_NEEDED,
     STATUS_PREPARED
   };
 

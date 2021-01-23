@@ -6,9 +6,8 @@
 // The purpose of this test is to see that the site security service properly
 // writes its state file.
 
-const EXPECTED_ENTRIES = 6;
+const EXPECTED_ENTRIES = 5;
 const EXPECTED_HSTS_COLUMNS = 4;
-const EXPECTED_HPKP_COLUMNS = 4;
 var gProfileDir = null;
 
 const NON_ISSUED_KEY_HASH = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
@@ -37,9 +36,6 @@ function checkStateWritten(aSubject, aTopic, aData) {
     let host = parts[0];
     let entry = parts[3].split(",");
     let expectedColumns = EXPECTED_HSTS_COLUMNS;
-    if (host.includes("HPKP")) {
-      expectedColumns = EXPECTED_HPKP_COLUMNS;
-    }
     equal(entry.length, expectedColumns);
     sites[host] = entry;
   }
@@ -82,30 +78,16 @@ function checkStateWritten(aSubject, aTopic, aData) {
   if (sites["d.example.com:HSTS"][2] != 0) {
     return;
   }
-  if (sites["dynamic-pin.example.com:HPKP"][1] != 1) {
-    return;
-  }
-  if (sites["dynamic-pin.example.com:HPKP"][2] != 1) {
-    return;
-  }
-  equal(sites["dynamic-pin.example.com:HPKP"][3], NON_ISSUED_KEY_HASH);
 
   do_test_finished();
 }
 
 function run_test() {
+  Services.prefs.setBoolPref("security.cert_pinning.hpkp.enabled", true);
   Services.prefs.setIntPref("test.datastorage.write_timer_ms", 100);
   gProfileDir = do_get_profile();
   let SSService = Cc["@mozilla.org/ssservice;1"].getService(
     Ci.nsISiteSecurityService
-  );
-  // Put an HPKP entry
-  SSService.setKeyPins(
-    "dynamic-pin.example.com",
-    true,
-    new Date().getTime() + 1000000,
-    1,
-    [NON_ISSUED_KEY_HASH]
   );
 
   let uris = [
@@ -122,7 +104,9 @@ function run_test() {
     let maxAge = "max-age=" + i * 1000;
     // alternate setting includeSubdomains
     let includeSubdomains = i % 2 == 0 ? "; includeSubdomains" : "";
-    let secInfo = new FakeTransportSecurityInfo();
+    let secInfo = Cc[
+      "@mozilla.org/security/transportsecurityinfo;1"
+    ].createInstance(Ci.nsITransportSecurityInfo);
     SSService.processHeader(
       Ci.nsISiteSecurityService.HEADER_HSTS,
       uris[uriIndex],

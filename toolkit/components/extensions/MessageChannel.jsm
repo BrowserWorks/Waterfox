@@ -142,8 +142,8 @@ var _makeDeferred = (resolve, reject) => {
   // We use arrow functions here and refer to the outer variables via
   // `this`, to avoid a lexical name lookup. Yes, it makes a difference.
   // No, I don't like it any more than you do.
-  this._deferredResult.resolve = resolve;
-  this._deferredResult.reject = reject;
+  _deferredResult.resolve = resolve;
+  _deferredResult.reject = reject;
 };
 
 /**
@@ -169,7 +169,7 @@ var _makeDeferred = (resolve, reject) => {
 let Deferred = () => {
   let res = {};
   this._deferredResult = res;
-  res.promise = new Promise(this._makeDeferred);
+  res.promise = new Promise(_makeDeferred);
   this._deferredResult = null;
   return res;
 };
@@ -404,7 +404,7 @@ class ResponseManager extends FilteringMessageManager {
    */
   removeHandler(messageName, handler) {
     if (DEBUG && this.handlers.get(messageName) !== handler) {
-      throw new Error(
+      Cu.reportError(
         `Attempting to remove unexpected response handler for ${messageName}`
       );
     }
@@ -892,7 +892,7 @@ this.MessageChannel = {
 
     // At least one handler is required for all response types but
     // RESPONSE_ALL.
-    if (handlers.length == 0 && responseType != this.RESPONSE_ALL) {
+    if (!handlers.length && responseType != this.RESPONSE_ALL) {
       return Promise.reject({
         result: MessageChannel.RESULT_NO_HANDLER,
         message: "No matching message handler",
@@ -927,7 +927,7 @@ this.MessageChannel = {
 
     switch (responseType) {
       case this.RESPONSE_FIRST:
-        if (responses.length == 0) {
+        if (!responses.length) {
           return Promise.reject({
             result: MessageChannel.RESULT_NO_RESPONSE,
             message: "No handler returned a response",

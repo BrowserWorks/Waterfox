@@ -4,8 +4,9 @@
 
 from __future__ import absolute_import, print_function, unicode_literals
 
-from StringIO import StringIO
+from six import StringIO
 import os
+import six
 import sys
 import textwrap
 import unittest
@@ -42,7 +43,7 @@ class TestConfigure(unittest.TestCase):
         sandbox.run(mozpath.join(test_data_path, configure))
 
         if '--help' in options:
-            return out.getvalue(), config
+            return six.ensure_text(out.getvalue()), config
         self.assertEquals('', out.getvalue())
         return config
 
@@ -77,24 +78,30 @@ class TestConfigure(unittest.TestCase):
             'Usage: configure [options]\n'
             '\n'
             'Options: [defaults in brackets after descriptions]\n'
-            '  --help                    print this message\n'
-            '  --enable-simple           Enable simple\n'
-            '  --enable-with-env         Enable with env\n'
-            '  --enable-values           Enable values\n'
-            '  --without-thing           Build without thing\n'
-            '  --with-stuff              Build with stuff\n'
-            '  --option                  Option\n'
-            '  --with-returned-default   Returned default [not-simple]\n'
-            '  --returned-choices        Choices\n'
-            '  --enable-imports-in-template\n'
-            '                            Imports in template\n'
-            '  --enable-include          Include\n'
-            '  --with-imports            Imports\n'
+            '  Help options:\n'
+            '    --help                    print this message\n'
+            '\n'
+            '  Options from python/mozbuild/mozbuild/test/configure/data/included.configure:\n'
+            '    --enable-imports-in-template\n                              Imports in template\n'
+            '\n'
+            '  Options from python/mozbuild/mozbuild/test/configure/data/moz.configure:\n'
+            '    --enable-include          Include\n'
+            '    --enable-simple           Enable simple\n'
+            '    --enable-values           Enable values\n'
+            '    --enable-with-env         Enable with env\n'
+            '    --indirect-option         Indirectly defined option\n'
+            '    --option                  Option\n'
+            '    --returned-choices        Choices\n'
+            '    --with-imports            Imports\n'
+            '    --with-returned-default   Returned default [not-simple]\n'
+            '    --with-stuff              Build with stuff\n'
+            '    --without-thing           Build without thing\n'
+            '\n'
             '\n'
             'Environment variables:\n'
-            '  CC                        C Compiler\n',
-            help
-        )
+            '  Options from python/mozbuild/mozbuild/test/configure/data/moz.configure:\n'
+            '    CC                        C Compiler\n'
+            '\n', help.replace('\\', '/'))
 
     def test_unknown(self):
         with self.assertRaises(InvalidOptionError):
@@ -247,16 +254,16 @@ class TestConfigure(unittest.TestCase):
                 def foo():
                     import sys
                 foo()'''),
-                sandbox
-            )
+                  sandbox
+                  )
 
         exec_(textwrap.dedent('''
             @template
             @imports('sys')
             def foo():
                 return sys'''),
-            sandbox
-        )
+              sandbox
+              )
 
         self.assertIs(sandbox['foo'](), sys)
 
@@ -265,8 +272,8 @@ class TestConfigure(unittest.TestCase):
             @imports(_from='os', _import='path')
             def foo():
                 return path'''),
-            sandbox
-        )
+              sandbox
+              )
 
         self.assertIs(sandbox['foo'](), os.path)
 
@@ -275,8 +282,8 @@ class TestConfigure(unittest.TestCase):
             @imports(_from='os', _import='path', _as='os_path')
             def foo():
                 return os_path'''),
-            sandbox
-        )
+              sandbox
+              )
 
         self.assertIs(sandbox['foo'](), os.path)
 
@@ -285,19 +292,18 @@ class TestConfigure(unittest.TestCase):
             @imports('__builtin__')
             def foo():
                 return __builtin__'''),
-            sandbox
-        )
+              sandbox
+              )
 
-        import __builtin__
-        self.assertIs(sandbox['foo'](), __builtin__)
+        self.assertIs(sandbox['foo'](), six.moves.builtins)
 
         exec_(textwrap.dedent('''
             @template
             @imports(_from='__builtin__', _import='open')
             def foo():
                 return open('%s')''' % os.devnull),
-            sandbox
-        )
+              sandbox
+              )
 
         f = sandbox['foo']()
         self.assertEquals(f.name, os.devnull)
@@ -310,8 +316,8 @@ class TestConfigure(unittest.TestCase):
             def foo():
                 import sys
                 return sys'''),
-            sandbox
-        )
+              sandbox
+              )
 
         self.assertIs(sandbox['foo'](), sys)
 
@@ -320,8 +326,8 @@ class TestConfigure(unittest.TestCase):
             @imports('__sandbox__')
             def foo():
                 return __sandbox__'''),
-            sandbox
-        )
+              sandbox
+              )
 
         self.assertIs(sandbox['foo'](), sandbox)
 
@@ -330,13 +336,13 @@ class TestConfigure(unittest.TestCase):
             @imports(_import='__sandbox__', _as='s')
             def foo():
                 return s'''),
-            sandbox
-        )
+              sandbox
+              )
 
         self.assertIs(sandbox['foo'](), sandbox)
 
         # Nothing leaked from the function being executed
-        self.assertEquals(sandbox.keys(), ['__builtins__', 'foo'])
+        self.assertEquals(list(sandbox), ['__builtins__', 'foo'])
         self.assertEquals(sandbox['__builtins__'], ConfigureSandbox.BUILTINS)
 
         exec_(textwrap.dedent('''
@@ -348,14 +354,13 @@ class TestConfigure(unittest.TestCase):
                     return sys
                 return bar
             bar = foo()'''),
-            sandbox
-        )
+              sandbox
+              )
 
         with self.assertRaises(NameError) as e:
             sandbox._depends[sandbox['bar']].result()
 
-        self.assertEquals(e.exception.message,
-                          "global name 'sys' is not defined")
+        self.assertIn("name 'sys' is not defined", str(e.exception))
 
     def test_apply_imports(self):
         imports = []
@@ -377,8 +382,8 @@ class TestConfigure(unittest.TestCase):
                 return sys
             foo()
             foo()'''),
-            sandbox
-        )
+              sandbox
+              )
 
         self.assertEquals(len(imports), 1)
 
@@ -531,7 +536,7 @@ class TestConfigure(unittest.TestCase):
             get_config(['--enable-foo', '--disable-bar'])
 
         self.assertEquals(
-            e.exception.message,
+            str(e.exception),
             "'--enable-bar' implied by '--enable-foo' conflicts with "
             "'--disable-bar' from the command-line")
 
@@ -554,7 +559,7 @@ class TestConfigure(unittest.TestCase):
             get_config(['--enable-foo', '--enable-bar'])
 
         self.assertEquals(
-            e.exception.message,
+            str(e.exception),
             "'--disable-bar' implied by '--enable-foo' conflicts with "
             "'--enable-bar' from the command-line")
 
@@ -566,7 +571,7 @@ class TestConfigure(unittest.TestCase):
             get_config(['--disable-hoge', '--enable-bar'])
 
         self.assertEquals(
-            e.exception.message,
+            str(e.exception),
             "'--disable-bar' implied by '--disable-hoge' conflicts with "
             "'--enable-bar' from the command-line")
 
@@ -587,13 +592,13 @@ class TestConfigure(unittest.TestCase):
 
         config = get_config(['--enable-foo=a,b'])
         self.assertIn('BAR', config)
-        self.assertEquals(config['BAR'], PositiveOptionValue(('a','b')))
+        self.assertEquals(config['BAR'], PositiveOptionValue(('a', 'b')))
 
         with self.assertRaises(InvalidOptionError) as e:
             get_config(['--enable-foo=a,b', '--disable-bar'])
 
         self.assertEquals(
-            e.exception.message,
+            str(e.exception),
             "'--enable-bar=a,b' implied by '--enable-foo' conflicts with "
             "'--disable-bar' from the command-line")
 
@@ -612,7 +617,7 @@ class TestConfigure(unittest.TestCase):
             get_config(['--enable-foo', '--disable-bar'])
 
         self.assertEquals(
-            e.exception.message,
+            str(e.exception),
             "'--enable-bar' implied by '--enable-foo' conflicts with "
             "'--disable-bar' from the command-line")
 
@@ -620,7 +625,7 @@ class TestConfigure(unittest.TestCase):
             self.get_config([], configure='imply_option/infer_ko.configure')
 
         self.assertEquals(
-            e.exception.message,
+            str(e.exception),
             "Cannot infer what implies '--enable-bar'. Please add a `reason` "
             "to the `imply_option` call.")
 
@@ -639,18 +644,20 @@ class TestConfigure(unittest.TestCase):
             mozpath.join(test_data_path, 'imply_option', 'imm.configure'))
 
         with self.assertRaisesRegexp(InvalidOptionError,
-            "--enable-foo' implied by 'imply_option at %s:7' conflicts with "
-            "'--disable-foo' from the command-line" % config_path):
+                                     "--enable-foo' implied by 'imply_option at %s:7' conflicts "
+                                     "with '--disable-foo' from the command-line" % config_path):
             get_config(['--disable-foo'])
 
         with self.assertRaisesRegexp(InvalidOptionError,
-            "--enable-bar=foo,bar' implied by 'imply_option at %s:16' conflicts"
-            " with '--enable-bar=a,b,c' from the command-line" % config_path):
+                                     "--enable-bar=foo,bar' implied by 'imply_option at %s:16' "
+                                     "conflicts with '--enable-bar=a,b,c' from the command-line"
+                                     % config_path):
             get_config(['--enable-bar=a,b,c'])
 
         with self.assertRaisesRegexp(InvalidOptionError,
-            "--enable-baz=BAZ' implied by 'imply_option at %s:25' conflicts"
-            " with '--enable-baz=QUUX' from the command-line" % config_path):
+                                     "--enable-baz=BAZ' implied by 'imply_option at %s:25' "
+                                     "conflicts with '--enable-baz=QUUX' from the command-line"
+                                     % config_path):
             get_config(['--enable-baz=QUUX'])
 
     def test_imply_option_failures(self):
@@ -660,7 +667,7 @@ class TestConfigure(unittest.TestCase):
             '''):
                 self.get_config()
 
-        self.assertEquals(e.exception.message,
+        self.assertEquals(str(e.exception),
                           "`--with-foo`, emitted from `%s` line 2, is unknown."
                           % mozpath.join(test_data_path, 'moz.configure'))
 
@@ -675,7 +682,7 @@ class TestConfigure(unittest.TestCase):
             '''):
                 self.get_config()
 
-        self.assertEquals(e.exception.message,
+        self.assertEquals(str(e.exception),
                           "Unexpected type: 'int'")
 
     def test_imply_option_when(self):
@@ -731,7 +738,7 @@ class TestConfigure(unittest.TestCase):
             with self.assertRaises(InvalidOptionError) as e:
                 config = self.get_config(['--without-foo', '--with-qux'])
 
-            self.assertEquals(e.exception.message,
+            self.assertEquals(str(e.exception),
                               "'--with-foo' implied by '--with-qux' conflicts "
                               "with '--without-foo' from the command-line")
 
@@ -770,16 +777,66 @@ class TestConfigure(unittest.TestCase):
             with self.assertRaises(InvalidOptionError) as e:
                 config = self.get_config(['--with-qux'])
 
-            self.assertEquals(e.exception.message,
+            self.assertEquals(str(e.exception),
                               "'--with-foo' implied by '--with-qux' conflicts "
                               "with '--without-foo' from the default")
 
             with self.assertRaises(InvalidOptionError) as e:
                 config = self.get_config(['--without-foo', '--with-qux'])
 
-            self.assertEquals(e.exception.message,
+            self.assertEquals(str(e.exception),
                               "'--with-foo' implied by '--with-qux' conflicts "
                               "with '--without-foo' from the command-line")
+
+            config = self.get_config(['--without-qux'])
+            self.assertEquals(config, {
+                'FOO': NegativeOptionValue(),
+                'QUX': NegativeOptionValue(),
+            })
+
+        config_path = mozpath.abspath(
+            mozpath.join(test_data_path, 'moz.configure'))
+
+        # Same test as above, but using `when` in the `imply_option`.
+        with self.moz_configure('''
+            option('--with-foo', help='foo')
+
+            @depends('--with-foo')
+            def qux_default(foo):
+                return bool(foo)
+
+            option('--with-qux', default=qux_default, help='qux')
+
+            imply_option('--with-foo', True, when='--with-qux')
+
+            set_config('FOO', depends('--with-foo')(lambda x: x))
+            set_config('QUX', depends('--with-qux')(lambda x: x))
+        '''):
+            config = self.get_config()
+            self.assertEquals(config, {
+                'FOO': NegativeOptionValue(),
+                'QUX': NegativeOptionValue(),
+            })
+
+            config = self.get_config(['--with-foo'])
+            self.assertEquals(config, {
+                'FOO': PositiveOptionValue(),
+                'QUX': PositiveOptionValue(),
+            })
+
+            with self.assertRaises(InvalidOptionError) as e:
+                config = self.get_config(['--with-qux'])
+
+            self.assertEquals(str(e.exception),
+                              "'--with-foo' implied by 'imply_option at %s:10' conflicts "
+                              "with '--without-foo' from the default" % config_path)
+
+            with self.assertRaises(InvalidOptionError) as e:
+                config = self.get_config(['--without-foo', '--with-qux'])
+
+            self.assertEquals(str(e.exception),
+                              "'--with-foo' implied by 'imply_option at %s:10' conflicts "
+                              "with '--without-foo' from the command-line" % config_path)
 
             config = self.get_config(['--without-qux'])
             self.assertEquals(config, {
@@ -810,19 +867,19 @@ class TestConfigure(unittest.TestCase):
             # imply_options resolve to None, which disables the imply_option.
 
             with self.assertRaises(ConfigureError) as e:
-                config = self.get_config()
+                self.get_config()
 
-            self.assertEquals(e.exception.message, message)
-
-            with self.assertRaises(ConfigureError) as e:
-                config = self.get_config(['--with-qux'])
-
-            self.assertEquals(e.exception.message, message)
+            self.assertEquals(str(e.exception), message)
 
             with self.assertRaises(ConfigureError) as e:
-                config = self.get_config(['--without-foo', '--with-qux'])
+                self.get_config(['--with-qux'])
 
-            self.assertEquals(e.exception.message, message)
+            self.assertEquals(str(e.exception), message)
+
+            with self.assertRaises(ConfigureError) as e:
+                self.get_config(['--without-foo', '--with-qux'])
+
+            self.assertEquals(str(e.exception), message)
 
     def test_option_failures(self):
         with self.assertRaises(ConfigureError) as e:
@@ -830,7 +887,7 @@ class TestConfigure(unittest.TestCase):
                 self.get_config()
 
         self.assertEquals(
-            e.exception.message,
+            str(e.exception),
             'Option `--with-foo` is not handled ; reference it with a @depends'
         )
 
@@ -842,7 +899,7 @@ class TestConfigure(unittest.TestCase):
                 self.get_config()
 
         self.assertEquals(
-            e.exception.message,
+            str(e.exception),
             'Option `--with-foo` already defined'
         )
 
@@ -854,7 +911,7 @@ class TestConfigure(unittest.TestCase):
                 self.get_config()
 
         self.assertEquals(
-            e.exception.message,
+            str(e.exception),
             'Option `MOZ_FOO` already defined'
         )
 
@@ -866,7 +923,7 @@ class TestConfigure(unittest.TestCase):
                 self.get_config()
 
         self.assertEquals(
-            e.exception.message,
+            str(e.exception),
             'Option `MOZ_FOO` already defined'
         )
 
@@ -878,7 +935,7 @@ class TestConfigure(unittest.TestCase):
                 self.get_config()
 
         self.assertEquals(
-            e.exception.message,
+            str(e.exception),
             'Option `MOZ_FOO` already defined'
         )
 
@@ -890,7 +947,7 @@ class TestConfigure(unittest.TestCase):
                 self.get_config()
 
         self.assertEquals(
-            e.exception.message,
+            str(e.exception),
             'Option `--with-foo` already defined'
         )
 
@@ -925,7 +982,7 @@ class TestConfigure(unittest.TestCase):
                 self.get_config(['--with-bar'])
 
             self.assertEquals(
-                e.exception.message,
+                str(e.exception),
                 '--with-bar is not available in this configuration'
             )
 
@@ -933,7 +990,7 @@ class TestConfigure(unittest.TestCase):
                 self.get_config(['--with-qux'])
 
             self.assertEquals(
-                e.exception.message,
+                str(e.exception),
                 '--with-qux is not available in this configuration'
             )
 
@@ -941,7 +998,7 @@ class TestConfigure(unittest.TestCase):
                 self.get_config(['QUX=1'])
 
             self.assertEquals(
-                e.exception.message,
+                str(e.exception),
                 'QUX is not available in this configuration'
             )
 
@@ -951,24 +1008,32 @@ class TestConfigure(unittest.TestCase):
             })
 
             help, config = self.get_config(['--help'])
-            self.assertEquals(help, textwrap.dedent('''\
+            self.assertEquals(help.replace('\\', '/'), textwrap.dedent('''\
                 Usage: configure [options]
 
                 Options: [defaults in brackets after descriptions]
-                  --help                    print this message
-                  --with-foo                foo
+                  Help options:
+                    --help                    print this message
+
+                  Options from python/mozbuild/mozbuild/test/configure/data/moz.configure:
+                    --with-foo                foo
+
 
                 Environment variables:
             '''))
 
             help, config = self.get_config(['--help', '--with-foo'])
-            self.assertEquals(help, textwrap.dedent('''\
+            self.assertEquals(help.replace('\\', '/'), textwrap.dedent('''\
                 Usage: configure [options]
 
                 Options: [defaults in brackets after descriptions]
-                  --help                    print this message
-                  --with-foo                foo
-                  --with-qux                qux
+                  Help options:
+                    --help                    print this message
+
+                  Options from python/mozbuild/mozbuild/test/configure/data/moz.configure:
+                    --with-foo                foo
+                    --with-qux                qux
+
 
                 Environment variables:
             '''))
@@ -980,7 +1045,7 @@ class TestConfigure(unittest.TestCase):
             with self.assertRaises(ConfigureError) as e:
                 self.get_config()
 
-            self.assertEquals(e.exception.message,
+            self.assertEquals(str(e.exception),
                               '@depends function needs the same `when` as '
                               'options it depends on')
 
@@ -997,7 +1062,7 @@ class TestConfigure(unittest.TestCase):
             with self.assertRaises(ConfigureError) as e:
                 self.get_config()
 
-            self.assertEquals(e.exception.message,
+            self.assertEquals(str(e.exception),
                               '@depends function needs the same `when` as '
                               'options it depends on')
 
@@ -1051,7 +1116,7 @@ class TestConfigure(unittest.TestCase):
                 self.get_config()
 
         self.assertEquals(
-            e.exception.message,
+            str(e.exception),
             'Cannot include `%s` because it is not in a subdirectory of `%s`'
             % (mozpath.normpath(mozpath.join(test_data_path, '..',
                                              'foo.configure')),
@@ -1066,7 +1131,7 @@ class TestConfigure(unittest.TestCase):
                 self.get_config()
 
         self.assertEquals(
-            e.exception.message,
+            str(e.exception),
             'Cannot include `%s` because it was included already.'
             % mozpath.normpath(mozpath.join(test_data_path,
                                             'extra.configure'))
@@ -1078,7 +1143,7 @@ class TestConfigure(unittest.TestCase):
             '''):
                 self.get_config()
 
-        self.assertEquals(e.exception.message, "Unexpected type: 'int'")
+        self.assertEquals(str(e.exception), "Unexpected type: 'int'")
 
     def test_include_when(self):
         with MockedOpen({
@@ -1135,7 +1200,7 @@ class TestConfigure(unittest.TestCase):
                 self.get_config(['--with-qux'])
 
             self.assertEquals(
-                e.exception.message,
+                str(e.exception),
                 '--with-qux is not available in this configuration'
             )
 
@@ -1152,7 +1217,7 @@ class TestConfigure(unittest.TestCase):
             '''):
                 self.get_config()
 
-        self.assertEquals(e.exception.message, 'Cannot reassign builtins')
+        self.assertIn('Cannot reassign builtins', str(e.exception))
 
         with self.assertRaises(KeyError) as e:
             with self.moz_configure('''
@@ -1160,9 +1225,9 @@ class TestConfigure(unittest.TestCase):
             '''):
                 self.get_config()
 
-        self.assertEquals(e.exception.message,
-                          'Cannot assign `foo` because it is neither a '
-                          '@depends nor a @template')
+        self.assertIn(
+            'Cannot assign `foo` because it is neither a @depends nor a '
+            '@template', str(e.exception))
 
     def test_depends_failures(self):
         with self.assertRaises(ConfigureError) as e:
@@ -1173,7 +1238,7 @@ class TestConfigure(unittest.TestCase):
             '''):
                 self.get_config()
 
-        self.assertEquals(e.exception.message,
+        self.assertEquals(str(e.exception),
                           "@depends needs at least one argument")
 
         with self.assertRaises(ConfigureError) as e:
@@ -1184,7 +1249,7 @@ class TestConfigure(unittest.TestCase):
             '''):
                 self.get_config()
 
-        self.assertEquals(e.exception.message,
+        self.assertEquals(str(e.exception),
                           "'--with-foo' is not a known option. Maybe it's "
                           "declared too late?")
 
@@ -1196,7 +1261,7 @@ class TestConfigure(unittest.TestCase):
             '''):
                 self.get_config()
 
-        self.assertEquals(e.exception.message,
+        self.assertEquals(str(e.exception),
                           "Option must not contain an '='")
 
         with self.assertRaises(TypeError) as e:
@@ -1207,7 +1272,7 @@ class TestConfigure(unittest.TestCase):
             '''):
                 self.get_config()
 
-        self.assertEquals(e.exception.message,
+        self.assertEquals(str(e.exception),
                           "Cannot use object of type 'int' as argument "
                           "to @depends")
 
@@ -1219,7 +1284,7 @@ class TestConfigure(unittest.TestCase):
             '''):
                 self.get_config()
 
-        self.assertEquals(e.exception.message,
+        self.assertEquals(str(e.exception),
                           "Cannot decorate generator functions with @depends")
 
         with self.assertRaises(TypeError) as e:
@@ -1228,7 +1293,7 @@ class TestConfigure(unittest.TestCase):
             '''):
                 self.get_config()
 
-        self.assertEquals(e.exception.message,
+        self.assertEquals(str(e.exception),
                           "Unexpected type: 'int'")
 
         with self.assertRaises(ConfigureError) as e:
@@ -1242,7 +1307,7 @@ class TestConfigure(unittest.TestCase):
             '''):
                 self.get_config()
 
-        self.assertEquals(e.exception.message,
+        self.assertEquals(str(e.exception),
                           "The `foo` function may not be called")
 
         with self.assertRaises(TypeError) as e:
@@ -1253,7 +1318,7 @@ class TestConfigure(unittest.TestCase):
             '''):
                 self.get_config()
 
-        self.assertEquals(e.exception.message,
+        self.assertEquals(str(e.exception),
                           "depends_impl() got an unexpected keyword argument 'foo'")
 
     def test_depends_when(self):
@@ -1298,7 +1363,7 @@ class TestConfigure(unittest.TestCase):
             '''):
                 self.get_config()
 
-        self.assertEquals(e.exception.message,
+        self.assertEquals(str(e.exception),
                           '@imports must appear after @template')
 
         with self.assertRaises(ConfigureError) as e:
@@ -1311,7 +1376,7 @@ class TestConfigure(unittest.TestCase):
             '''):
                 self.get_config()
 
-        self.assertEquals(e.exception.message,
+        self.assertEquals(str(e.exception),
                           '@imports must appear after @depends')
 
         for import_ in (
@@ -1328,7 +1393,7 @@ class TestConfigure(unittest.TestCase):
                 ''' % import_):
                     self.get_config()
 
-            self.assertEquals(e.exception.message, "Unexpected type: 'int'")
+            self.assertEquals(str(e.exception), "Unexpected type: 'int'")
 
         with self.assertRaises(TypeError) as e:
             with self.moz_configure('''
@@ -1339,7 +1404,7 @@ class TestConfigure(unittest.TestCase):
             '''):
                 self.get_config()
 
-        self.assertEquals(e.exception.message, "Unexpected type: 'int'")
+        self.assertEquals(str(e.exception), "Unexpected type: 'int'")
 
         with self.assertRaises(ValueError) as e:
             with self.moz_configure('''
@@ -1349,7 +1414,7 @@ class TestConfigure(unittest.TestCase):
             '''):
                 self.get_config()
 
-        self.assertEquals(e.exception.message,
+        self.assertEquals(str(e.exception),
                           "Invalid argument to @imports: 'os*'")
 
     def test_only_when(self):
@@ -1404,7 +1469,7 @@ class TestConfigure(unittest.TestCase):
             with self.assertRaises(InvalidOptionError) as e:
                 self.get_config(['--foo'])
 
-            self.assertEquals(e.exception.message,
+            self.assertEquals(str(e.exception),
                               '--foo is not available in this configuration')
 
         # Cannot depend on an option defined in a only_when block, because we
@@ -1415,7 +1480,7 @@ class TestConfigure(unittest.TestCase):
             with self.assertRaises(ConfigureError) as e:
                 self.get_config()
 
-            self.assertEquals(e.exception.message,
+            self.assertEquals(str(e.exception),
                               '@depends function needs the same `when` as '
                               'options it depends on')
 
@@ -1432,7 +1497,7 @@ class TestConfigure(unittest.TestCase):
             with self.assertRaises(InvalidOptionError) as e:
                 self.get_config()
 
-            self.assertEquals(e.exception.message,
+            self.assertEquals(str(e.exception),
                               '--foo is not available in this configuration')
 
         # And similarly doesn't fail when the condition is true.

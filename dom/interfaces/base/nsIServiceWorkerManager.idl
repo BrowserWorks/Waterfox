@@ -49,6 +49,8 @@ interface nsIServiceWorkerInfo : nsISupports
   const unsigned short STATE_REDUNDANT = 5;
   const unsigned short STATE_UNKNOWN = 6;
 
+  readonly attribute AString id;
+
   readonly attribute AString scriptSpec;
   readonly attribute AString cacheName;
 
@@ -56,6 +58,9 @@ interface nsIServiceWorkerInfo : nsISupports
 
   readonly attribute nsIWorkerDebugger debugger;
 
+  // Return whether the ServiceWorker has a "fetch" event listener. Throws if
+  // this is unknown because the worker's main script hasn't finished executing
+  // (when exposed as evaluatingWorker).
   readonly attribute bool handlesFetchEvents;
 
   readonly attribute PRTime installedTime;
@@ -89,6 +94,7 @@ interface nsIServiceWorkerRegistrationInfo : nsISupports
 
   readonly attribute PRTime lastUpdateTime;
 
+  readonly attribute nsIServiceWorkerInfo evaluatingWorker;
   readonly attribute nsIServiceWorkerInfo installingWorker;
   readonly attribute nsIServiceWorkerInfo waitingWorker;
   readonly attribute nsIServiceWorkerInfo activeWorker;
@@ -135,6 +141,9 @@ interface nsIServiceWorkerManager : nsISupports
 
   // It returns an array of nsIServiceWorkerRegistrationInfos.
   nsIArray getAllRegistrations();
+
+  // For clear-origin-attributes-data
+  void removeRegistrationsByOriginAttributes(in AString aOriginAttributes);
 
   // It calls softUpdate() for each child process.
   [implicit_jscontext] void propagateSoftUpdate(in jsval aOriginAttributes,

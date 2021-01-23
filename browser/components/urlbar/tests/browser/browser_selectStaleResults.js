@@ -7,6 +7,20 @@
 
 "use strict";
 
+XPCOMUtils.defineLazyModuleGetters(this, {
+  UrlbarView: "resource:///modules/UrlbarView.jsm",
+});
+
+add_task(async function init() {
+  // Increase the timeout of the remove-stale-rows timer so that it doesn't
+  // interfere with the tests.
+  let originalRemoveStaleRowsTimeout = UrlbarView.removeStaleRowsTimeout;
+  UrlbarView.removeStaleRowsTimeout = 1000;
+  registerCleanupFunction(() => {
+    UrlbarView.removeStaleRowsTimeout = originalRemoveStaleRowsTimeout;
+  });
+});
+
 // This tests the case where queryContext.results.length < the number of rows in
 // the view, i.e., the view contains stale rows.
 add_task(async function viewContainsStaleRows() {
@@ -38,7 +52,12 @@ add_task(async function viewContainsStaleRows() {
   // Search for "x" and wait for the search to finish.  All the "x" results
   // added above should be in the view.  (Actually one fewer will be in the
   // view due to the heuristic result, but that's not important.)
-  await promiseAutocompleteResultPopup("x", window, true);
+  await UrlbarTestUtils.promiseAutocompleteResultPopup({
+    window,
+    waitForFocus: SimpleTest.waitForFocus,
+    value: "x",
+    fireInputEvent: true,
+  });
 
   // Below we'll do a search for "xx".  Get the row that will show the last
   // result in that search.
@@ -62,6 +81,7 @@ add_task(async function viewContainsStaleRows() {
   // Type another "x" so that we search for "xx", but don't wait for the search
   // to finish.  Instead, wait for the row's stale attribute to be removed.
   EventUtils.synthesizeKey("x");
+  info("Waiting for 'stale' attribute to be removed... ");
   await mutationPromise;
 
   // Now arrow down.  The search, which is still ongoing, will now stop and the
@@ -69,6 +89,7 @@ add_task(async function viewContainsStaleRows() {
   EventUtils.synthesizeKey("KEY_ArrowDown");
 
   // Wait for the search to stop.
+  info("Waiting for the search to stop... ");
   await gURLBar.lastQueryContextPromise;
 
   // The query context for the last search ("xx") should contain only
@@ -80,7 +101,7 @@ add_task(async function viewContainsStaleRows() {
 
   // But there should be maxResults visible rows in the view.
   let items = Array.from(gURLBar.view._rows.children).filter(r =>
-    gURLBar.view._isRowVisible(r)
+    gURLBar.view._isElementVisible(r)
   );
   Assert.equal(items.length, maxResults);
 
@@ -88,20 +109,20 @@ add_task(async function viewContainsStaleRows() {
   // result, the stale "x" results should be selected.  We should *not* enter
   // the one-off search buttons at that point.
   for (let i = 1; i < maxResults; i++) {
-    Assert.equal(UrlbarTestUtils.getSelectedIndex(window), i);
+    Assert.equal(UrlbarTestUtils.getSelectedRowIndex(window), i);
     let result = await UrlbarTestUtils.getDetailsOfResultAt(window, i);
-    Assert.equal(result.element.row.result.uiIndex, i);
+    Assert.equal(result.element.row.result.rowIndex, i);
     EventUtils.synthesizeKey("KEY_ArrowDown");
   }
 
   // Now the first one-off should be selected.
-  Assert.equal(UrlbarTestUtils.getSelectedIndex(window), -1);
+  Assert.equal(UrlbarTestUtils.getSelectedRowIndex(window), -1);
   Assert.equal(gURLBar.view.oneOffSearchButtons.selectedButtonIndex, 0);
 
   // Arrow back up through all the results.
   for (let i = maxResults - 1; i >= 0; i--) {
     EventUtils.synthesizeKey("KEY_ArrowUp");
-    Assert.equal(UrlbarTestUtils.getSelectedIndex(window), i);
+    Assert.equal(UrlbarTestUtils.getSelectedRowIndex(window), i);
   }
 
   await UrlbarTestUtils.promisePopupClose(window, () =>
@@ -130,8 +151,8 @@ add_task(async function staleReplacedWithFresh() {
   //
   // NB: If this test ends up failing, it may be because the remove-stale-rows
   // timer fires before the history results are added.  i.e., steps 2 and 3
-  // above happen out of order.  If that happens, we'll need a way to force the
-  // timer not to fire until we want it to.
+  // above happen out of order.  If that happens, try increasing
+  // UrlbarView.removeStaleRowsTimeout above.
 
   await PlacesUtils.history.clear();
   await PlacesUtils.bookmarks.eraseEverything();
@@ -162,7 +183,12 @@ add_task(async function staleReplacedWithFresh() {
   gURLBar.focus();
 
   // Search for "tes" and wait for the search to finish.
-  await promiseAutocompleteResultPopup("tes", window, true);
+  await UrlbarTestUtils.promiseAutocompleteResultPopup({
+    window,
+    waitForFocus: SimpleTest.waitForFocus,
+    value: "tes",
+    fireInputEvent: true,
+  });
 
   // Sanity check the results.  They should be:
   //
@@ -227,6 +253,7 @@ add_task(async function staleReplacedWithFresh() {
   // Now type a "t" so that we search for "test", but only wait for history
   // results to be added, as described above.
   EventUtils.synthesizeKey("t");
+  info("Waiting for the 'test2' row... ");
   await mutationPromise;
 
   // Now arrow down.  The search, which is still ongoing, will now stop and the
@@ -234,6 +261,7 @@ add_task(async function staleReplacedWithFresh() {
   EventUtils.synthesizeKey("KEY_ArrowDown");
 
   // Wait for the search to stop.
+  info("Waiting for the search to stop... ");
   await gURLBar.lastQueryContextPromise;
 
   // Sanity check the results.  They should be as described above.
@@ -241,30 +269,30 @@ add_task(async function staleReplacedWithFresh() {
   Assert.equal(count, maxResults);
   result = await UrlbarTestUtils.getDetailsOfResultAt(window, 0);
   Assert.ok(result.heuristic);
-  Assert.equal(result.element.row.result.uiIndex, 0);
+  Assert.equal(result.element.row.result.rowIndex, 0);
   for (let i = 1; i < maxResults; i++) {
     result = await UrlbarTestUtils.getDetailsOfResultAt(window, i);
     Assert.equal(result.type, UrlbarUtils.RESULT_TYPE.URL);
     Assert.equal(result.title, "test" + (maxResults - i));
-    Assert.equal(result.element.row.result.uiIndex, i);
+    Assert.equal(result.element.row.result.rowIndex, i);
   }
 
   // Arrow down through all the results.  After arrowing down from "test3", we
   // should continue on to "test2".  We should *not* enter the one-off search
   // buttons at that point.
   for (let i = 1; i < maxResults; i++) {
-    Assert.equal(UrlbarTestUtils.getSelectedIndex(window), i);
+    Assert.equal(UrlbarTestUtils.getSelectedRowIndex(window), i);
     EventUtils.synthesizeKey("KEY_ArrowDown");
   }
 
   // Now the first one-off should be selected.
-  Assert.equal(UrlbarTestUtils.getSelectedIndex(window), -1);
+  Assert.equal(UrlbarTestUtils.getSelectedRowIndex(window), -1);
   Assert.equal(gURLBar.view.oneOffSearchButtons.selectedButtonIndex, 0);
 
   // Arrow back up through all the results.
   for (let i = maxResults - 1; i >= 0; i--) {
     EventUtils.synthesizeKey("KEY_ArrowUp");
-    Assert.equal(UrlbarTestUtils.getSelectedIndex(window), i);
+    Assert.equal(UrlbarTestUtils.getSelectedRowIndex(window), i);
   }
 
   await UrlbarTestUtils.promisePopupClose(window, () =>

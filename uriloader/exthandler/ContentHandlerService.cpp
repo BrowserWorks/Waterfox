@@ -1,3 +1,9 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 #include "ContentHandlerService.h"
 #include "HandlerServiceChild.h"
 #include "ContentChild.h"
@@ -22,8 +28,10 @@ nsresult ContentHandlerService::Init() {
   }
   ContentChild* cpc = ContentChild::GetSingleton();
 
-  mHandlerServiceChild =
-      static_cast<HandlerServiceChild*>(cpc->SendPHandlerServiceConstructor());
+  mHandlerServiceChild = new HandlerServiceChild();
+  if (!cpc->SendPHandlerServiceConstructor(mHandlerServiceChild)) {
+    mHandlerServiceChild = nullptr;
+  }
   return NS_OK;
 }
 
@@ -109,7 +117,7 @@ NS_IMETHODIMP RemoteHandlerApp::Equals(nsIHandlerApp* aHandlerApp,
 }
 
 NS_IMETHODIMP RemoteHandlerApp::LaunchWithURI(
-    nsIURI* aURI, nsIInterfaceRequestor* aWindowContext) {
+    nsIURI* aURI, BrowsingContext* aBrowsingContext) {
   return NS_ERROR_NOT_IMPLEMENTED;
 }
 

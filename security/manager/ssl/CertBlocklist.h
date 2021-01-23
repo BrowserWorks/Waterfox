@@ -10,8 +10,6 @@
 #include "nsCOMPtr.h"
 #include "nsClassHashtable.h"
 #include "nsICertBlocklist.h"
-#include "nsIOutputStream.h"
-#include "nsIX509CertDB.h"
 #include "nsString.h"
 #include "nsTHashtable.h"
 #include "mozpkix/Input.h"
@@ -78,7 +76,7 @@ class CertBlocklist : public nsICertBlocklist {
   nsCOMPtr<nsIFile> mBackingFile;
 
  protected:
-  static void PreferenceChanged(const char* aPref, CertBlocklist* aBlocklist);
+  static void PreferenceChanged(const char* aPref, void* aBlocklist);
   static uint32_t sLastBlocklistUpdate;
   static uint32_t sLastKintoUpdate;
   static uint32_t sMaxStaleness;

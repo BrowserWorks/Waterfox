@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY time.midnight "Meadhan-oidhche" >
+<!ENTITY time.noon "Meadhan-latha" >
+
+<!-- Day Names -->
+<!-- LOCALIZATION NOTE : Accesskeys for day.1.Ddd to day.7.Ddd are currently
+     only used in Preferences > Views > Workweek groupbox -->
+<!ENTITY day.1.Ddd "DiD" >
+<!ENTITY day.1.Ddd.accesskey "D">
+<!ENTITY day.2.Ddd "DiL" >
+<!ENTITY day.2.Ddd.accesskey "D">
+<!ENTITY day.3.Ddd "DiM" >
+<!ENTITY day.3.Ddd.accesskey "D">
+<!ENTITY day.4.Ddd "DiC" >
+<!ENTITY day.4.Ddd.accesskey "D">
+<!ENTITY day.5.Ddd "Diar" >
+<!ENTITY day.5.Ddd.accesskey "D">
+<!ENTITY day.6.Ddd "Dih" >
+<!ENTITY day.6.Ddd.accesskey "D">
+<!ENTITY day.7.Ddd "DiS" >
+<!ENTITY day.7.Ddd.accesskey "D">
+
+<!ENTITY day.1.name "DiDòmhnaich" >
+<!ENTITY day.2.name "DiLuain" >
+<!ENTITY day.3.name "DiMàirt" >
+<!ENTITY day.4.name "DiCiadain" >
+<!ENTITY day.5.name "DiarDaoin" >
+<!ENTITY day.6.name "DihAoine" >
+<!ENTITY day.7.name "DiSathairne" >
+
+<!ENTITY month.1.name "Am Faoilleach" >
+<!ENTITY month.2.name "An Gearran" >
+<!ENTITY month.3.name "Am Màrt" >
+<!ENTITY month.4.name "An Giblean" >
+<!ENTITY month.5.name "An Cèitean" >
+<!ENTITY month.6.name "An t-Ògmhios" >
+<!ENTITY month.7.name "An t-Iuchar" >
+<!ENTITY month.8.name "An Lùnastal" >
+<!ENTITY month.9.name "An t-Sultain" >
+<!ENTITY month.10.name "An Dàmhair" >
+<!ENTITY month.11.name "An t-Samhain" >
+<!ENTITY month.12.name "An Dùbhlachd" >
+
+<!ENTITY onemonthbackward.tooltip "Mìos air ais" >
+<!ENTITY onemonthforward.tooltip "Mìos air adhart" >
+<!ENTITY oneyearbackward.tooltip "Bliadhna air ais" >
+<!ENTITY oneyearforward.tooltip "Bliadhna air adhart" >
+<!ENTITY showToday.tooltip "Rach gun latha an-diugh">
+<!ENTITY onedayforward.tooltip "Latha air adhart">
+<!ENTITY onedaybackward.tooltip "Latha air ais">
+<!ENTITY showselectedday.tooltip "Seall tachartasan an latha a thagh thu">

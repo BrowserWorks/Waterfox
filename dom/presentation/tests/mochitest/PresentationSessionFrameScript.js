@@ -62,7 +62,7 @@ function loadPrivilegedScriptTest() {
       const interfaces = [Ci.nsIPresentationChannelDescription];
 
       if (!interfaces.some(v => iid.equals(v))) {
-        throw Cr.NS_ERROR_NO_INTERFACE;
+        throw Components.Exception("", Cr.NS_ERROR_NO_INTERFACE);
       }
       return this;
     },
@@ -102,13 +102,13 @@ function loadPrivilegedScriptTest() {
       ];
 
       if (!interfaces.some(v => iid.equals(v))) {
-        throw Cr.NS_ERROR_NO_INTERFACE;
+        throw Components.Exception("", Cr.NS_ERROR_NO_INTERFACE);
       }
       return this;
     },
     createInstance(aOuter, aIID) {
       if (aOuter) {
-        throw Cr.NS_ERROR_NO_AGGREGATION;
+        throw Components.Exception("", Cr.NS_ERROR_NO_AGGREGATION);
       }
       return this.QueryInterface(aIID);
     },
@@ -274,10 +274,10 @@ if (!SpecialPowers.isMainProcess()) {
   var port;
   try {
     port = SpecialPowers.loadPrivilegedScript(
-      loadPrivilegedScriptTest.toSource()
+      loadPrivilegedScriptTest.toString()
     );
   } catch (e) {
-    ok(false, "loadPrivilegedScript shoulde not throw" + e);
+    ok(false, "loadPrivilegedScript should not throw" + e);
   }
 
   port.onmessage = e => {

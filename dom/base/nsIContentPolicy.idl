@@ -107,11 +107,9 @@ interface nsIContentPolicy : nsISupports
    */
   const nsContentPolicyType TYPE_REFRESH = 8;
 
-  /**
-   * Indicates an XBL binding request, triggered either by -moz-binding CSS
-   * property.
+  /*
+   * XXX: nsContentPolicyType = 9 used to inicate an XBL binding request.
    */
-  const nsContentPolicyType TYPE_XBL = 9;
 
   /**
    * Indicates a ping triggered by a click on <A PING="..."> element.
@@ -364,11 +362,47 @@ interface nsIContentPolicy : nsISupports
    */
   const nsContentPolicyType TYPE_INTERNAL_MODULE_PRELOAD = 46;
 
-  /* When adding new content types, please update nsContentBlocker,
+  /**
+   * Indicates a DTD loaded by an XML document the URI of which could
+   * not be mapped to a known local DTD.
+   */
+  const nsContentPolicyType TYPE_INTERNAL_DTD = 47;
+
+  /**
+   * Indicates a TYPE_INTERNAL_DTD which will not be blocked no matter
+   * what principal is being loaded from.
+   */
+  const nsContentPolicyType TYPE_INTERNAL_FORCE_ALLOWED_DTD = 48;
+
+  /**
+   * Indicates an internal constant for scripts loaded through an
+   * audioWorklet.
+   *
+   * This will be mapped to TYPE_SCRIPT before being passed to content policy
+   * implementations.
+   */
+  const nsContentPolicyType TYPE_INTERNAL_AUDIOWORKLET = 49;
+
+  /**
+   * Indicates an internal constant for scripts loaded through an
+   * paintWorklet.
+   *
+   * This will be mapped to TYPE_SCRIPT before being passed to content policy
+   * implementations.
+   */
+  const nsContentPolicyType TYPE_INTERNAL_PAINTWORKLET = 50;
+
+  /**
+   * Same as TYPE_FONT but indicates this is a <link rel=preload as=font>
+   * preload initiated load.
+   */
+  const nsContentPolicyType TYPE_INTERNAL_FONT_PRELOAD = 51;
+
+  /* When adding new content types, please update
    * NS_CP_ContentTypeName, nsCSPContext, CSP_ContentTypeToDirective,
    * DoContentSecurityChecks, all nsIContentPolicy implementations, the
    * static_assert in dom/cache/DBSchema.cpp, ChannelWrapper.webidl,
-   * ChannelWrapper.cpp, nsPermissionManager.cpp, and other things that are not
+   * ChannelWrapper.cpp, PermissionManager.cpp, and other things that are not
    * listed here that are related to nsIContentPolicy. */
 
   //////////////////////////////////////////////////////////////////////
@@ -408,6 +442,12 @@ interface nsIContentPolicy : nsISupports
    * details.
    */
   const short REJECT_OTHER = -4;
+
+  /**
+   * Returned from shouldLoad or shouldProcess if the load/process is forbiddden
+   * based on enterprise policy.
+   */
+  const short REJECT_POLICY = -5;
 
   /**
    * Returned from shouldLoad or shouldProcess if the load or process request

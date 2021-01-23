@@ -12,42 +12,23 @@
 
 using namespace mozilla;
 
-void VibrancyManager::UpdateVibrantRegion(VibrancyType aType,
+bool VibrancyManager::UpdateVibrantRegion(VibrancyType aType,
                                           const LayoutDeviceIntRegion& aRegion) {
   if (aRegion.IsEmpty()) {
-    mVibrantRegions.Remove(uint32_t(aType));
-    return;
+    return mVibrantRegions.Remove(uint32_t(aType));
   }
   auto& vr = *mVibrantRegions.LookupOrAdd(uint32_t(aType));
-  vr.UpdateRegion(aRegion, mCoordinateConverter, mContainerView, ^() {
+  return vr.UpdateRegion(aRegion, mCoordinateConverter, mContainerView, ^() {
     return this->CreateEffectView(aType);
   });
 }
 
-@interface NSView (CurrentFillColor)
-- (NSColor*)_currentFillColor;
-@end
-
-static NSColor* AdjustedColor(NSColor* aFillColor, VibrancyType aType) {
-  if (aType == VibrancyType::MENU && [aFillColor alphaComponent] == 1.0) {
-    // The opaque fill color that's used for the menu background when "Reduce
-    // vibrancy" is checked in the system accessibility prefs is too dark.
-    // This is probably because we're not using the right material for menus,
-    // see VibrancyManager::CreateEffectView.
-    return [NSColor colorWithDeviceWhite:0.96 alpha:1.0];
+LayoutDeviceIntRegion VibrancyManager::GetUnionOfVibrantRegions() const {
+  LayoutDeviceIntRegion result;
+  for (auto it = mVibrantRegions.ConstIter(); !it.Done(); it.Next()) {
+    result.OrWith(it.UserData()->Region());
   }
-  return aFillColor;
-}
-
-NSColor* VibrancyManager::VibrancyFillColorForType(VibrancyType aType) {
-  NSView* view = mVibrantRegions.LookupOrAdd(uint32_t(aType))->GetAnyView();
-
-  if (view && [view respondsToSelector:@selector(_currentFillColor)]) {
-    // -[NSVisualEffectView _currentFillColor] is the color that the view
-    // draws in its drawRect implementation.
-    return AdjustedColor([view _currentFillColor], aType);
-  }
-  return [NSColor whiteColor];
+  return result;
 }
 
 static NSView* HitTestNil(id self, SEL _cmd, NSPoint aPoint) {

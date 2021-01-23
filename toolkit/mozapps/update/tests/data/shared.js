@@ -14,9 +14,6 @@ const { FileUtils } = ChromeUtils.import(
 const { XPCOMUtils } = ChromeUtils.import(
   "resource://gre/modules/XPCOMUtils.jsm"
 );
-const { TelemetryTestUtils } = ChromeUtils.import(
-  "resource://testing-common/TelemetryTestUtils.jsm"
-);
 
 ChromeUtils.defineModuleGetter(
   this,
@@ -36,24 +33,19 @@ const PREF_APP_UPDATE_BADGEWAITTIME = "app.update.badgeWaitTime";
 const PREF_APP_UPDATE_BITS_ENABLED = "app.update.BITS.enabled";
 const PREF_APP_UPDATE_CANCELATIONS = "app.update.cancelations";
 const PREF_APP_UPDATE_CHANNEL = "app.update.channel";
-const PREF_APP_UPDATE_DOORHANGER = "app.update.doorhanger";
 const PREF_APP_UPDATE_DOWNLOAD_MAXATTEMPTS = "app.update.download.maxAttempts";
 const PREF_APP_UPDATE_DOWNLOAD_ATTEMPTS = "app.update.download.attempts";
 const PREF_APP_UPDATE_DISABLEDFORTESTING = "app.update.disabledForTesting";
-const PREF_APP_UPDATE_IDLETIME = "app.update.idletime";
 const PREF_APP_UPDATE_INTERVAL = "app.update.interval";
 const PREF_APP_UPDATE_LASTUPDATETIME =
   "app.update.lastUpdateTime.background-update-timer";
 const PREF_APP_UPDATE_LOG = "app.update.log";
-const PREF_APP_UPDATE_NOTIFIEDUNSUPPORTED = "app.update.notifiedUnsupported";
 const PREF_APP_UPDATE_PROMPTWAITTIME = "app.update.promptWaitTime";
 const PREF_APP_UPDATE_RETRYTIMEOUT = "app.update.socket.retryTimeout";
 const PREF_APP_UPDATE_SERVICE_ENABLED = "app.update.service.enabled";
-const PREF_APP_UPDATE_SILENT = "app.update.silent";
 const PREF_APP_UPDATE_SOCKET_MAXERRORS = "app.update.socket.maxErrors";
 const PREF_APP_UPDATE_STAGING_ENABLED = "app.update.staging.enabled";
 const PREF_APP_UPDATE_UNSUPPORTED_URL = "app.update.unsupported.url";
-const PREF_APP_UPDATE_URL = "app.update.url";
 const PREF_APP_UPDATE_URL_DETAILS = "app.update.url.details";
 const PREF_APP_UPDATE_URL_MANUAL = "app.update.url.manual";
 
@@ -99,8 +91,7 @@ const FILE_UPDATES_XML = "updates.xml";
 const FILE_UPDATES_XML_TMP = "updates.xml.tmp";
 
 const UPDATE_SETTINGS_CONTENTS =
-  // eslint-disable-next-line no-useless-concat
-  "[Settings]\n" + "ACCEPTED_MAR_CHANNEL_IDS=xpcshell-test\n";
+  "[Settings]\nACCEPTED_MAR_CHANNEL_IDS=xpcshell-test\n";
 const PRECOMPLETE_CONTENTS = 'rmdir "nonexistent_dir/"\n';
 
 const PR_RDWR = 0x04;
@@ -205,7 +196,14 @@ function initUpdateServiceStub() {
   );
 }
 
-/* Reloads the update metadata from disk */
+/**
+ * Reloads the update xml files.
+ *
+ * @param  skipFiles (optional)
+ *         If true, the update xml files will not be read and the metadata will
+ *         be reset. If false (the default), the update xml files will be read
+ *         to populate the update metadata.
+ */
 function reloadUpdateManagerData(skipFiles = false) {
   let observeData = skipFiles ? "skip-files" : "";
   gUpdateManager
@@ -242,7 +240,7 @@ function setUpdateChannel(aChannel) {
 }
 
 /**
- * Sets the app.update.url default preference.
+ * Sets the effective update url.
  *
  * @param  aURL
  *         The update url. If not specified 'URL_HOST + "/update.xml"' will be
@@ -250,8 +248,63 @@ function setUpdateChannel(aChannel) {
  */
 function setUpdateURL(aURL) {
   let url = aURL ? aURL : URL_HOST + "/update.xml";
-  debugDump("setting " + PREF_APP_UPDATE_URL + " to " + url);
-  gDefaultPrefBranch.setCharPref(PREF_APP_UPDATE_URL, url);
+  debugDump("setting update URL to " + url);
+
+  // The Update URL is stored in appinfo. We can replace this process's appinfo
+  // directly, but that will affect only this process. Luckily, the update URL
+  // is only ever read from the update process. This means that replacing
+  // Services.appinfo is sufficient and we don't need to worry about registering
+  // a replacement factory or anything like that.
+  let origAppInfo = Services.appinfo;
+  registerCleanupFunction(() => {
+    Services.appinfo = origAppInfo;
+  });
+
+  let mockAppInfo = {
+    // nsIXULAppInfo
+    vendor: origAppInfo.vendor,
+    name: origAppInfo.name,
+    ID: origAppInfo.ID,
+    version: origAppInfo.version,
+    appBuildID: origAppInfo.appBuildID,
+    updateURL: url,
+
+    // nsIPlatformInfo
+    platformVersion: origAppInfo.platformVersion,
+    platformBuildID: origAppInfo.platformBuildID,
+
+    // nsIXULRuntime
+    inSafeMode: origAppInfo.inSafeMode,
+    logConsoleErrors: origAppInfo.logConsoleErrors,
+    OS: origAppInfo.OS,
+    XPCOMABI: origAppInfo.XPCOMABI,
+    invalidateCachesOnRestart() {},
+    shouldBlockIncompatJaws: origAppInfo.shouldBlockIncompatJaws,
+    processType: origAppInfo.processType,
+    processID: origAppInfo.processID,
+    uniqueProcessID: origAppInfo.uniqueProcessID,
+
+    // nsIWinAppHelper
+    get userCanElevate() {
+      return origAppInfo.userCanElevate;
+    },
+  };
+  let interfaces = [Ci.nsIXULAppInfo, Ci.nsIPlatformInfo, Ci.nsIXULRuntime];
+  if ("nsIWinAppHelper" in Ci) {
+    interfaces.push(Ci.nsIWinAppHelper);
+  }
+  if ("crashReporter" in origAppInfo && origAppInfo.crashReporter) {
+    // nsICrashReporter
+    mockAppInfo.crashReporter = {};
+    mockAppInfo.annotations = {};
+    mockAppInfo.annotateCrashReport = function(key, data) {
+      this.annotations[key] = data;
+    };
+    interfaces.push(Ci.nsICrashReporter);
+  }
+  mockAppInfo.QueryInterface = ChromeUtils.generateQI(interfaces);
+
+  Services.appinfo = mockAppInfo;
 }
 
 /**

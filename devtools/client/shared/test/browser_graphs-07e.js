@@ -56,7 +56,7 @@ add_task(async function() {
 });
 
 async function performTest() {
-  const [host, , doc] = await createHost();
+  const { host, doc } = await createHost();
   const graph = new LineGraphWidget(doc.body, "fps");
   await graph.once("ready");
   graph.setData(TEST_DATA);
@@ -125,8 +125,7 @@ function testGraph(graph) {
 }
 
 function setZoom(frame, zoomValue) {
-  const contViewer = frame.docShell.contentViewer;
-  CURRENT_ZOOM = contViewer.fullZoom = zoomValue;
+  CURRENT_ZOOM = frame.docShell.browsingContext.fullZoom = zoomValue;
 }
 
 // EventUtils just doesn't work!

@@ -8,7 +8,9 @@ defined in kind.yml
 
 from __future__ import absolute_import, print_function, unicode_literals
 
+from six import text_type
 from taskgraph.transforms.base import TransformSequence
+from taskgraph.transforms.task import task_description_schema
 from taskgraph.util.schema import (
     Schema,
 )
@@ -20,19 +22,19 @@ from voluptuous import (
 )
 
 index_or_string = Any(
-    basestring,
-    {Required('index-search'): basestring},
+    text_type,
+    {Required('index-search'): text_type},
 )
 
 diff_description_schema = Schema({
     # Name of the diff task.
-    Required('name'): basestring,
+    Required('name'): text_type,
 
     # Treeherder symbol.
-    Required('symbol'): basestring,
+    Required('symbol'): text_type,
 
     # relative path (from config.path) to the file the task was defined in.
-    Optional('job-from'): basestring,
+    Optional('job-from'): text_type,
 
     # Original and new builds to compare.
     Required('original'): index_or_string,
@@ -40,13 +42,18 @@ diff_description_schema = Schema({
 
     # Arguments to pass to diffoscope, used for job-defaults in
     # taskcluster/ci/diffoscope/kind.yml
-    Optional('args'): basestring,
+    Optional('args'): text_type,
 
     # Extra arguments to pass to diffoscope, that can be set per job.
-    Optional('extra-args'): basestring,
+    Optional('extra-args'): text_type,
 
     # Fail the task when differences are detected.
     Optional('fail-on-diff'): bool,
+
+    # What artifact to check the differences of. Defaults to target.tar.bz2
+    # for Linux, target.dmg for Mac, target.zip for Windows, target.apk for
+    # Android.
+    Optional('artifact'): text_type,
 
     # Whether to unpack first. Diffoscope can normally work without unpacking,
     # but when one needs to --exclude some contents, that doesn't work out well
@@ -54,7 +61,10 @@ diff_description_schema = Schema({
     Optional('unpack'): bool,
 
     # Commands to run before performing the diff.
-    Optional('pre-diff-commands'): [basestring],
+    Optional('pre-diff-commands'): [text_type],
+
+    # Only run the task on a set of projects/branches.
+    Optional('run-on-projects'): task_description_schema['run-on-projects'],
 })
 
 transforms = TransformSequence()
@@ -71,9 +81,10 @@ def fill_template(config, tasks):
         deps = {}
         urls = {}
         previous_artifact = None
+        artifact = task.get('artifact')
         for k in ('original', 'new'):
             value = task[k]
-            if isinstance(value, basestring):
+            if isinstance(value, text_type):
                 deps[k] = value
                 dep_name = k
                 os_hint = value
@@ -95,7 +106,9 @@ def fill_template(config, tasks):
                 deps[index] = 'index-search-' + index
                 dep_name = index
                 os_hint = index.split('.')[-1]
-            if 'linux' in os_hint:
+            if artifact:
+                pass
+            elif 'linux' in os_hint:
                 artifact = 'target.tar.bz2'
             elif 'macosx' in os_hint:
                 artifact = 'target.dmg'
@@ -129,13 +142,12 @@ def fill_template(config, tasks):
                 'docker-image': {'in-tree': 'diffoscope'},
                 'artifacts': [{
                     'type': 'file',
-                    'path': '/builds/worker/diff.html',
-                    'name': 'public/diff.html',
-                }, {
-                    'type': 'file',
-                    'path': '/builds/worker/diff.txt',
-                    'name': 'public/diff.txt',
-                }],
+                    'path': '/builds/worker/{}'.format(f),
+                    'name': 'public/{}'.format(f),
+                } for f in (
+                    'diff.html',
+                    'diff.txt',
+                )],
                 'env': {
                     'ORIG_URL': urls['original'],
                     'NEW_URL': urls['new'],
@@ -155,11 +167,13 @@ def fill_template(config, tasks):
             },
             'dependencies': deps,
         }
+        if 'run-on-projects' in task:
+            taskdesc['run-on-projects'] = task['run-on-projects']
 
         if artifact.endswith('.dmg'):
-            taskdesc['toolchains'] = [
+            taskdesc.setdefault('fetches', {}).setdefault('toolchain', []).extend([
                 'linux64-cctools-port',
                 'linux64-libdmg',
-            ]
+            ])
 
         yield taskdesc

@@ -103,16 +103,22 @@ def print_line(prefix, m):
     now = datetime.datetime.utcnow().isoformat().encode('utf-8')
     # slice microseconds to 3 decimals.
     now = now[:-3] if now[-7:-6] == b'.' else now
-    sys.stdout.buffer.write(b'[%s %sZ] %s' % (prefix, now, m))
+    bytes = b'[%s %sZ] %s' % (prefix, now, m)
+    written = 0
+    while written < len(bytes):
+        written += (sys.stdout.buffer.write(bytes[written:]) or 0)
     sys.stdout.buffer.flush()
 
 
-def run_and_prefix_output(prefix, args, extra_env=None):
+def run_and_prefix_output(prefix, args, *, extra_env=None, cwd=None):
     """Runs a process and prefixes its output with the time.
 
     Returns the process exit code.
     """
-    print_line(prefix, b'executing %r\n' % args)
+    print_line(
+        prefix,
+        b"executing %r%s\n" % (args, b"in %s" % (cwd.encode("utf-8"),) if cwd else b""),
+    )
 
     env = dict(os.environ)
     env.update(extra_env or {})
@@ -136,7 +142,8 @@ def run_and_prefix_output(prefix, args, extra_env=None):
                          stdout=subprocess.PIPE,
                          stderr=subprocess.STDOUT,
                          stdin=sys.stdin.fileno(),
-                         env=env)
+                         env=env,
+                         cwd=cwd)
 
     stdout = io.TextIOWrapper(p.stdout, encoding='latin1')
 
@@ -508,8 +515,10 @@ def fetch_artifacts():
         sys.exit(1)
 
     cmd = [sys.executable, '-u', fetch_content, 'task-artifacts']
-    print_line(b'fetches', b'executing %r\n' % cmd)
-    subprocess.run(cmd, check=True, env=os.environ)
+    res = run_and_prefix_output(b'fetches', cmd)
+    if res:
+        sys.exit(res)
+
     print_line(b'fetches', b'finished fetching artifacts\n')
 
 
@@ -529,14 +538,33 @@ def resolve_checkout_url(base_repo, head_repo):
 
     The config will be of the form:
         {
-            "us-west-2": {  # value of `TASKCLUSTER_WORKER_GROUP`
+            "aws/us-west-2": {  # key built from `TASKCLUSTER_WORKER_LOCATION` variable
                 "rate": 0.5,
                 "domain": "us-west-2.hgmointernal.net"
             },
-            "us-east-1": {...}
+            "google/us-central1": {...}
         }
     """
-    region = os.getenv('TASKCLUSTER_WORKER_GROUP')
+    worker_location = os.getenv('TASKCLUSTER_WORKER_LOCATION')
+    if not worker_location:
+        print_line(b'vcs', b'TASKCLUSTER_WORKER_LOCATION environment variable not set; '
+                           b'using public hg.mozilla.org service\n')
+        return base_repo, head_repo
+
+    try:
+        worker_location = json.loads(worker_location)
+    except json.JSONDecodeError:
+        print_line(b'vcs', b'Could not decode TASKCLUSTER_WORKER_LOCATION environment variable '
+                           b'as JSON. Content: %s\n' % worker_location.encode('utf-8'))
+        print_line(b'vcs', b'using public hg.mozilla.org service\n')
+        return base_repo, head_repo
+
+    if 'cloud' not in worker_location or 'region' not in worker_location:
+        print_line(b'vcs', b'TASKCLUSTER_WORKER_LOCATION missing required keys; '
+                           b'using public hg.mozilla.org service\n')
+        return base_repo, head_repo
+
+    config_key = '%(cloud)s/%(region)s' % worker_location
 
     try:
         print_line(b'vcs', b'fetching hgmointernal config from %s\n' %
@@ -547,17 +575,14 @@ def resolve_checkout_url(base_repo, head_repo):
         hgmointernal_config = json.loads(res.read().decode('utf-8'))['secret']
 
         # Use public hg service if region not yet supported
-        if region not in hgmointernal_config:
-            if region:
-                print_line(b'vcs', b'region %s not yet supported; using public '
-                                   b'hg.mozilla.org service\n' % region.encode('utf-8'))
-            else:
-                print_line(b'vcs', b'unspecified region; using public '
-                                   b'hg.mozilla.org service\n')
+        if config_key not in hgmointernal_config:
+            print_line(b'vcs', b'region %s not yet supported; using public '
+                               b'hg.mozilla.org service\n' % config_key.encode('utf-8'))
+
             return base_repo, head_repo
 
         # Only send a percentage of traffic to the internal mirror
-        rate = float(hgmointernal_config[region]['rate'])
+        rate = float(hgmointernal_config[config_key]['rate'])
 
         if random.random() > rate:
             print_line(b'vcs', b'hgmointernal rate miss; using '
@@ -567,7 +592,7 @@ def resolve_checkout_url(base_repo, head_repo):
         print_line(b'vcs', b'hgmointernal rate hit; cloning from '
                            b'private hgweb mirror\n')
 
-        mirror_domain = hgmointernal_config[region]['domain']
+        mirror_domain = hgmointernal_config[config_key]['domain']
 
         if base_repo and base_repo.startswith('https://hg.mozilla.org'):
             base_repo = base_repo.replace('hg.mozilla.org', mirror_domain, 1)
@@ -656,6 +681,35 @@ def main(args):
     print_line(b'setup', b'run-task started in %s\n' % os.getcwd().encode('utf-8'))
     running_as_root = IS_POSIX and os.getuid() == 0
 
+    # Set a reasonable limit to the number of open files.
+    # Running under docker inherits the system defaults, which are not subject
+    # to the "standard" limits set by pam_limits.so, and while they work well
+    # for servers that may receive a lot of connections, they cause performance
+    # problems for things that close file descriptors before forking (for good
+    # reasons), like python's `subprocess.Popen(..., close_fds=True)` (and while
+    # the default was close_fds=False in python2, that changed in python3).
+    # In some cases, Firefox does the same thing when spawning subprocesses.
+    # Processes spawned by this one will inherit the limit set here.
+    try:
+        import resource
+        # Keep the hard limit the same, though, allowing processes to change their
+        # soft limit if they need to (Firefox does, for instance).
+        (soft, hard) = resource.getrlimit(resource.RLIMIT_NOFILE)
+        limit = os.environ.get('MOZ_LIMIT_NOFILE')
+        if limit:
+            limit = int(limit)
+        else:
+            # If no explicit limit is given, use 1024 if it's less than the current
+            # soft limit. For instance, the default on macOS is 256, so we'd pick
+            # that rather than 1024.
+            limit = min(soft, 1024)
+        # Now apply the limit, if it's different from the original one.
+        if limit != soft:
+            resource.setrlimit(resource.RLIMIT_NOFILE, (limit, hard))
+    except ImportError:
+        # The resource module is UNIX only.
+        pass
+
     # Arguments up to '--' are ours. After are for the main task
     # to be executed.
     try:
@@ -669,6 +723,7 @@ def main(args):
     parser = argparse.ArgumentParser()
     parser.add_argument('--user', default='worker', help='user to run as')
     parser.add_argument('--group', default='worker', help='group to run as')
+    parser.add_argument('--task-cwd', help='directory to run the provided command in')
 
     add_vcs_arguments(parser, 'gecko', 'Firefox')
     add_vcs_arguments(parser, 'comm', 'Comm')
@@ -829,13 +884,19 @@ def main(args):
     vcs_checkout_from_args(args, 'comm')
 
     try:
-        if 'GECKO_PATH' in os.environ:
-            os.environ['GECKO_PATH'] = os.path.abspath(os.environ['GECKO_PATH'])
+        for k in ('GECKO_PATH', 'MOZ_FETCHES_DIR', 'UPLOAD_DIR'):
+            if k in os.environ:
+                # Normalize paths to use forward slashes. Some shell scripts
+                # tolerate that better on Windows.
+                os.environ[k] = os.path.abspath(os.environ[k]).replace(os.sep, '/')
+                print_line(b'setup', b'%s is %s\n' % (
+                    k.encode('utf-8'),
+                    os.environ[k].encode('utf-8')))
 
         if 'MOZ_FETCHES' in os.environ:
             fetch_artifacts()
 
-        return run_and_prefix_output(b'task', task_args)
+        return run_and_prefix_output(b'task', task_args, cwd=args.task_cwd)
     finally:
         fetches_dir = os.environ.get('MOZ_FETCHES_DIR')
         if fetches_dir and os.path.isdir(fetches_dir):

@@ -6,6 +6,8 @@
 
 #include "gc/AtomMarking-inl.h"
 
+#include <type_traits>
+
 #include "gc/PublicIterators.h"
 #include "vm/Realm.h"
 
@@ -170,7 +172,7 @@ void AtomMarkingRuntime::markId(JSContext* cx, jsid id) {
     markAtom(cx, JSID_TO_SYMBOL(id));
     return;
   }
-  MOZ_ASSERT(!JSID_IS_GCTHING(id));
+  MOZ_ASSERT(!id.isGCThing());
 }
 
 void AtomMarkingRuntime::markAtomValue(JSContext* cx, const Value& value) {
@@ -198,8 +200,7 @@ void AtomMarkingRuntime::adoptMarkedAtoms(Zone* target, Zone* source) {
 #ifdef DEBUG
 template <typename T>
 bool AtomMarkingRuntime::atomIsMarked(Zone* zone, T* thing) {
-  static_assert(mozilla::IsSame<T, JSAtom>::value ||
-                    mozilla::IsSame<T, JS::Symbol>::value,
+  static_assert(std::is_same_v<T, JSAtom> || std::is_same_v<T, JS::Symbol>,
                 "Should only be called with JSAtom* or JS::Symbol* argument");
 
   MOZ_ASSERT(thing);
@@ -251,7 +252,7 @@ bool AtomMarkingRuntime::idIsMarked(Zone* zone, jsid id) {
     return atomIsMarked(zone, JSID_TO_SYMBOL(id));
   }
 
-  MOZ_ASSERT(!JSID_IS_GCTHING(id));
+  MOZ_ASSERT(!id.isGCThing());
   return true;
 }
 

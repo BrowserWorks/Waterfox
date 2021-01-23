@@ -27,11 +27,11 @@ CHECK_TEST_ERROR_RERUN = $(call check_test_error_internal,'To rerun your failure
 endif
 
 # Usage: |make [EXTRA_TEST_ARGS=...] *test|.
-RUN_REFTEST = rm -f ./$@.log && $(PYTHON) _tests/reftest/runreftest.py \
+RUN_REFTEST = rm -f ./$@.log && $(PYTHON3) _tests/reftest/runreftest.py \
   --extra-profile-file=$(DIST)/plugins \
   $(SYMBOLS_PATH) $(EXTRA_TEST_ARGS) $(1) | tee ./$@.log
 
-REMOTE_REFTEST = rm -f ./$@.log && $(PYTHON) _tests/reftest/remotereftest.py \
+REMOTE_REFTEST = rm -f ./$@.log && $(PYTHON3) _tests/reftest/remotereftest.py \
   --ignore-window-size \
   --app=$(TEST_PACKAGE_NAME) --deviceIP=${TEST_DEVICE} --xre-path=${MOZ_HOST_BIN} \
   --httpd-path=_tests/modules --suite reftest \
@@ -81,7 +81,7 @@ jstestbrowser:
 GARBAGE += $(addsuffix .log,$(MOCHITESTS) reftest crashtest jstestbrowser)
 
 REMOTE_CPPUNITTESTS = \
-	$(PYTHON) -u $(topsrcdir)/testing/remotecppunittests.py \
+	$(PYTHON3) -u $(topsrcdir)/testing/remotecppunittests.py \
 	  --xre-path=$(DEPTH)/dist/bin \
 	  --localLib=$(DEPTH)/dist/fennec \
 	  --deviceIP=${TEST_DEVICE} \
@@ -104,9 +104,6 @@ stage-all: \
   stage-jstests \
   test-packages-manifest \
   $(NULL)
-ifdef MOZ_WEBRTC
-stage-all: stage-steeplechase
-endif
 
 ifdef COMPILE_ENVIRONMENT
 stage-all: stage-cppunittests
@@ -114,6 +111,7 @@ endif
 
 TEST_PKGS_TARGZ := \
   common \
+  condprof \
   cppunittest \
   mochitest \
   reftest \
@@ -123,6 +121,8 @@ TEST_PKGS_TARGZ := \
   xpcshell \
   web-platform \
   updater-dep \
+  jsreftest \
+  jittest \
   $(NULL)
 
 ifdef LINK_GTEST_DURING_COMPILE
@@ -135,7 +135,7 @@ PKG_ARG = --$(1) '$(PKG_BASENAME).$(1).tests.$(2)'
 test-packages-manifest:
 	@rm -f $(MOZ_TEST_PACKAGES_FILE)
 	$(NSINSTALL) -D $(dir $(MOZ_TEST_PACKAGES_FILE))
-	$(PYTHON) $(topsrcdir)/build/gen_test_packages_manifest.py \
+	$(PYTHON3) $(topsrcdir)/build/gen_test_packages_manifest.py \
       --jsshell $(JSSHELL_NAME) \
       --dest-file '$(MOZ_TEST_PACKAGES_FILE)' \
       $(call PKG_ARG,common,zip) \
@@ -195,7 +195,7 @@ stage-jstests: make-stage-dir
 
 ifdef OBJCOPY
 ifneq ($(OBJCOPY), :) # see build/autoconf/toolchain.m4:102 for why this is necessary
-ifndef PKG_SKIP_STRIP
+ifdef PKG_STRIP
 STRIP_COMPILED_TESTS := 1
 endif
 endif
@@ -216,14 +216,13 @@ endif
 	cp -RL $(DEPTH)/_tests/gtest $(PKG_STAGE)
 	cp $(topsrcdir)/testing/gtest/rungtests.py $(PKG_STAGE)/gtest
 	cp $(topsrcdir)/testing/gtest/remotegtests.py $(PKG_STAGE)/gtest
+	cp $(topsrcdir)/testing/gtest/mach_test_package_commands.py $(PKG_STAGE)/gtest
 	cp $(DIST)/bin/dependentlibs.list.gtest $(PKG_STAGE)/gtest
 	cp $(DEPTH)/mozinfo.json $(PKG_STAGE)/gtest
 
 stage-android: make-stage-dir
 	$(NSINSTALL) $(topsrcdir)/mobile/android/fonts $(DEPTH)/_tests/reftest
 	$(NSINSTALL) $(topsrcdir)/mobile/android/fonts $(DEPTH)/_tests/testing/mochitest
-	$(NSINSTALL) -D $(DEPTH)/_tests/reftest/hyphenation
-	$(NSINSTALL) $(wildcard $(topsrcdir)/intl/locales/*/hyphenation/*.dic) $(DEPTH)/_tests/reftest/hyphenation
 
 ifdef MOZ_COPY_PDBS
 CPP_UNIT_TEST_BINS=$(filter-out $(wildcard $(DIST)/cppunittests/*.pdb), $(wildcard $(DIST)/cppunittests/*))
@@ -250,12 +249,6 @@ ifdef MOZ_COPY_PDBS
 	cp -RL $(DIST)/bin/jsapi-tests.pdb $(PKG_STAGE)/cppunittest
 endif
 
-stage-steeplechase: make-stage-dir
-	$(NSINSTALL) -D $(PKG_STAGE)/steeplechase/
-	cp -RL $(DEPTH)/_tests/steeplechase $(PKG_STAGE)/steeplechase/tests
-	cp -RL $(DIST)/xpi-stage/specialpowers $(PKG_STAGE)/steeplechase
-	cp -RL $(topsrcdir)/testing/profiles/common/user.js $(PKG_STAGE)/steeplechase/prefs_general.js
-
 TEST_EXTENSIONS := \
     specialpowers@mozilla.org.xpi \
 	$(NULL)
@@ -266,10 +259,13 @@ stage-extensions: make-stage-dir
 
 
 check::
-	$(eval cores=$(shell $(PYTHON) -c 'import multiprocessing; print(multiprocessing.cpu_count())'))
+	$(eval cores=$(shell $(PYTHON3) -c 'import multiprocessing; print(multiprocessing.cpu_count())'))
 	@echo "Starting 'mach python-test' with -j$(cores)"
 	@$(topsrcdir)/mach --log-no-times python-test -j$(cores) --subsuite default
 	@echo "Finished 'mach python-test' successfully"
+	@echo "Starting 'mach python-test' with --python $(PYTHON3) -j$(cores)"
+	@$(topsrcdir)/mach --log-no-times python-test --python python3 -j$(cores) --subsuite default
+	@echo "Finished 'mach python-test' with py3 successfully"
 
 
 .PHONY: \
@@ -287,7 +283,6 @@ check::
   stage-mochitest \
   stage-jstests \
   stage-android \
-  stage-steeplechase \
   test-packages-manifest \
   check \
   $(NULL)

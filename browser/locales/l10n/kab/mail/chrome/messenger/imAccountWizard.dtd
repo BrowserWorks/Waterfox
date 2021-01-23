@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Amarag n umiḍan n udiwenni usrid">
+
+<!ENTITY accountProtocolTitle.label   "Aẓeṭṭa n udiwenni usrid">
+<!ENTITY accountProtocolInfo.label    "Ma ulac aɣilif fren aẓeṭṭa n umiḍan-inek">
+<!ENTITY accountProtocolField.label   "Aẓeṭṭa:">
+<!ENTITY accountProtocolGetMore.label "Awi-d ugar...">
+
+<!ENTITY accountUsernameTitle.label   "Isem n useqdac">
+<!ENTITY accountUsernameDuplicate.label "Amiḍan-agi yettuswel yakan!">
+
+<!ENTITY accountPasswordTitle.label   "Awal uffir">
+<!ENTITY accountPasswordInfo.label    "Ma ulac aɣilif sekcem awal uffir di tebwaṭ daw-a.">
+<!ENTITY accountPasswordField.label   "Awal uffir:">
+<!ENTITY accountPasswordManager.label "Awal uffir i tesekcmeḍ dagi ad yettwasekles ɣef umsefrak n wawal uffiren. Eǧǧ tabwaṭ-agi d tilemt ma tebɣiḍ ad sekcmeḍ awal uffir yal tikelt teqqneḍ s umiḍan-agi.">
+
+<!ENTITY accountAdvancedTitle.label   "Iɣewwaṛen leqqayen">
+<!ENTITY accountAdvancedInfo.label    "Tzemreḍ ad tzegleḍ amecwaṛ-agi ma tebɣiḍ.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Lɣu-yi-d ɣef iznan imaynuten">
+<!ENTITY accountAliasGroupbox.caption "Tabzimt tadigant">
+<!ENTITY accountAliasField.label      "Tabzimt:">
+<!ENTITY accountAliasInfo.label       "Ay-agi ad-yettwasken deg usqerdec-inek ticki tettmeslayeḍ, inermisen inmeggagen ur tettwalin ara.">
+<!ENTITY accountProxySettings.caption "Iɣewwwaṛen n upṛuksi">
+<!ENTITY accountProxySettings.change.label     "Snifel...">
+<!ENTITY accountProxySettings.change.accessKey "n">
+
+<!ENTITY accountSummaryTitle.label   "Agzul">
+<!ENTITY accountSummaryInfo.label    "Agzul n telɣut i teskecmeḍ tettwasken-d daw-a. Ma ulac aɣilif, senqed send timerna n umiḍan.">
+<!ENTITY accountSummary.connectNow.label "Qqen amiḍan-agi tura">

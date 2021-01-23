@@ -1,0 +1,128 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "Kontowy asistent">
+<!ENTITY accountWizard.size "width: 47em; height: 40em;">
+
+<!-- Entities for Account Type page -->
+
+<!ENTITY accountSetupInfo2.label "Zo byšće powěsće přijał, dyrbiće najprjedy konto załožić.">
+<!ENTITY accountTypeTitle.label " Nowe konto konfigurować">
+<!ENTITY accountTypeDesc2.label "Tutón asistent informacije hromadźi, kotrež su trěbne, zo by konto wutworiło. Jeli njewěsće trěbne informacije, skontaktujće swojeho systemoweho adminstratora abo internetneho poskićowarja.">
+<!ENTITY accountTypeDirections.label "Wubjerće type konta, kotrež chceće wutworić:">
+<!ENTITY accountTypeMail.label "E-mejlowe konto">
+<!ENTITY accountTypeMail.accesskey "E">
+<!ENTITY accountTypeNews.label "Konto za diskusijnu skupinu">
+<!ENTITY accountTypeNews.accesskey "K">
+
+<!-- LOCALIZATION NOTE(accountTypeMovemail.label): do not translate 'Movemail' -->
+<!ENTITY accountTypeMovemail.label "Unix Mailspool (Movemail)">
+<!ENTITY accountTypeMovemail.accesskey "U">
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "Identita">
+<!ENTITY identityDesc.label "Kóžde konto móže swoju identitu měć, kotraž je informacija, kotraž was napřećo druhim, kotřiž swoje powěsće dóstanu, identifikuje.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "Zapodajće swoje mjeno tak, kaž so ma w polu &quot;Wot&quot; wašich pósłanych powěsćow zjewić">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(Na přikład &quot;Michał Wjelk&quot;).">
+<!ENTITY fullnameLabel.label "Waše mjeno:">
+<!ENTITY fullnameLabel.accesskey "W">
+
+<!ENTITY emailLabel.label "E-mejlowa adresa:">
+<!ENTITY emailLabel.accesskey "m">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "Informacije wo dochadnym serwerje">
+<!ENTITY incomingServerTypeDesc.label "Wubjerće typ serwera za dochadźacu e-mejl, kotryž wužiwaće.">
+<!-- LOCALIZATION NOTE (imapType.label) : Do not translate "IMAP" in below line -->
+<!ENTITY imapType.label "IMAP">
+<!ENTITY imapType.accesskey "I">
+<!-- LOCALIZATION NOTE (popType.label) : Do not translate "POP" in below line -->
+<!ENTITY popType.label "POP">
+<!ENTITY popType.accesskey "P">
+<!ENTITY leaveMsgsOnSrvr.label "Powěsće na serwerje wostajić">
+<!ENTITY leaveMsgsOnSrvr.accesskey "w">
+<!ENTITY portNum.label "Port:">
+<!ENTITY portNum.accesskey "o">
+<!ENTITY defaultPortLabel.label "Standard:">
+<!ENTITY defaultPortValue.label "">
+<!-- LOCALIZATION NOTE (incomingServerNameDesc.label) : Do not translate "&quot;pop.example.net&quot;" in below line -->
+<!ENTITY incomingServer.description "Zapodajće mjeno wašeho dochadneho serwera (na přikład, &quot;email.example.net&quot;).">
+<!ENTITY incomingServer.label "Dochadny serwer:">
+<!ENTITY incomingServer.accesskey "D">
+<!-- LOCALIZATION NOTE (incomingUsername.description) : do not translate "&quot;jsmith&quot;" in below line -->
+<!ENTITY incomingUsername.description "Zapodajće wužiwarske mjeno za dochadny e-mejl, kotrež sće wot swojeho e-mejloweho poskićowarja dóstał (na přikład, &quot;jsmith&quot;).">
+<!ENTITY incomingUsername.label "Wužiwarske mjeno:">
+<!ENTITY incomingUsername.accesskey "W">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Zapodajće mjeno swojeho serwera za diskusijne skupiny (NNTP) (na přikład &quot;news.example.net&quot;).">
+<!ENTITY newsServerLabel.label "Serwer diskusijneho serwera:">
+<!ENTITY newsServerLabel.accesskey "S">
+
+<!-- Entities for Outgoing Server page -->
+
+<!ENTITY outgoingTitle.label "Informacije wo wuchadnym serwerje">
+<!-- LOCALIZATION NOTE (outgoingServer.description) : Do not translate "SMTP" and "&quot;smtp.example.net&quot;" in below line -->
+<!ENTITY outgoingServer.description "Zapodajće mjeno swojeho wuchadneho serwera (SMTP) (na přikład, &quot;smtp.example.net&quot;).">
+<!ENTITY outgoingServer.label "Wuchadny serwer:">
+<!ENTITY outgoingServer.accesskey "W">
+<!ENTITY outgoingUsername.description "Zapodajće mjeno wuchadneho serwera, kotrež sće wot swojeho e-mejloweho poskićowarja dóstał (to je zwjetša jenake mjeno, kaž te za dochadny serwer).">
+<!ENTITY outgoingUsername.label "Wužiwarske mjeno wuchadneho serwera:">
+<!ENTITY outgoingUsername.accesskey "u">
+
+<!-- LOCALIZATION NOTE (modifyOutgoing.suffix) : This string will be appended after each of
+     haveSmtp1.suffix3, haveSmtp2.suffix3, haveSmtp3.suffix3 .
+-->
+<!ENTITY modifyOutgoing.suffix "Móžeće wuchadne serwery w kontowych nastajenjach změnić.">
+<!-- LOCALIZATION NOTE (haveSmtp1.prefix and haveSmtp1.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp1.prefix and haveSmtp1.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp1.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp1.prefix "Waš eksistowacy wuchadny serwer (SMTP), &quot;">
+<!ENTITY haveSmtp1.suffix3 "&quot;, budźe so wužiwać.">
+<!-- LOCALIZATION NOTE (haveSmtp2.prefix and haveSmtp2.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp2.prefix and haveSmtp2.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp2.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp2.prefix "Twój eksistowacy wuchadne (SMTP) wužiwarske mjeno, &quot;">
+<!ENTITY haveSmtp2.suffix3 "&quot;, budźe so wužiwać.">
+<!-- LOCALIZATION NOTE (haveSmtp3.prefix and haveSmtp3.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp3.prefix and haveSmtp3.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp3.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp3.prefix "Waš wuchadny (SMTP) serwer, &quot;">
+<!ENTITY haveSmtp3.suffix3 "&quot;, je identiski z wašim dochadnym serwerom, waše dochadne wužiwarske mjeno budźe so wužiwać, zo by na njón přistup měło.">
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "Kontowe mjeno">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Zapodajće mjeno, z kotrymž chceće na tute konto přistup měć (na přikład &quot;Słužbne konto&quot;, &quot;Priwatne konto&quot; abo &quot;Konto za diskusijne skupiny&quot;).">
+<!ENTITY accnameLabel.label "Kontowe mjeno:">
+<!ENTITY accnameLabel.accesskey "o">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "Zbožopřeće!">
+<!ENTITY completionText.label "Prošu přepruwujće deleka podate informacije.">
+<!ENTITY serverTypePrefix.label "Typ serwera za dochadźacu e-mejl:">
+<!ENTITY serverNamePrefix.label "Mjeno serwera za dochadźacu e-mejl:">
+<!ENTITY smtpServerNamePrefix.label "Serwer za wuchodźace powěsće (SMTP):">
+<!ENTITY newsServerNamePrefix.label "Mjeno powěsćoweho serwera (NNTP):">
+<!ENTITY downloadOnLogin.label "Powěsće nětko sćahnyć">
+<!ENTITY downloadOnLogin.accesskey "h">
+<!ENTITY deferStorageDesc.label "Tutón kašćik znjemóžnić, zo by so e-mejl za tute konto w swojim rjadowaku składowała. To so postara wo to, zo tute konto so jako konto najwyšeje runiny zjewi. W druhim padźe budźe dźěl konta lokalnych rjadowakow.">
+<!ENTITY deferStorage.label "Globalny e-mejlowy kašćik wužiwać (e-mejl w lokalnych rjadowakach składować)">
+<!ENTITY deferStorage.accesskey "G">
+<!ENTITY clickFinish.label "Klikńće na Dokónčić, zo byšće tute nastajenja składował a kontowy asistent wopušćił.">
+<!ENTITY clickFinish.labelMac "Klikńće na Dokónčić, zo byšće tute nastajenja składował a kontowy asistent wopušćił.">

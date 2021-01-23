@@ -93,6 +93,15 @@
 #endif
 
 /*
+ * MOZ_NEVER_INLINE_DEBUG is a macro which expands to MOZ_NEVER_INLINE
+ * in debug builds, and nothing in opt builds.
+ */
+#if defined(DEBUG)
+#  define MOZ_NEVER_INLINE_DEBUG MOZ_NEVER_INLINE
+#else
+#  define MOZ_NEVER_INLINE_DEBUG /* don't inline in opt builds */
+#endif
+/*
  * MOZ_NORETURN, specified at the start of a function declaration, indicates
  * that the given function does not return.  (The function definition does not
  * need to be annotated.)
@@ -344,8 +353,11 @@
  */
 #if defined(__GNUC__) || defined(__clang__)
 #  define MOZ_ALLOCATOR __attribute__((malloc, warn_unused_result))
+#  define MOZ_INFALLIBLE_ALLOCATOR \
+    __attribute__((malloc, warn_unused_result, returns_nonnull))
 #else
 #  define MOZ_ALLOCATOR
+#  define MOZ_INFALLIBLE_ALLOCATOR
 #endif
 
 /**
@@ -407,51 +419,6 @@
 #endif
 
 #ifdef __cplusplus
-
-/**
- * MOZ_FALLTHROUGH is an annotation to suppress compiler warnings about switch
- * cases that fall through without a break or return statement. MOZ_FALLTHROUGH
- * is only needed on cases that have code.
- *
- * MOZ_FALLTHROUGH_ASSERT is an annotation to suppress compiler warnings about
- * switch cases that MOZ_ASSERT(false) (or its alias MOZ_ASSERT_UNREACHABLE) in
- * debug builds, but intentionally fall through in release builds. See comment
- * in Assertions.h for more details.
- *
- * switch (foo) {
- *   case 1: // These cases have no code. No fallthrough annotations are needed.
- *   case 2:
- *   case 3: // This case has code, so a fallthrough annotation is needed!
- *     foo++;
- *     MOZ_FALLTHROUGH;
- *   case 4:
- *     return foo;
- *
- *   default:
- *     // This case asserts in debug builds, falls through in release.
- *     MOZ_FALLTHROUGH_ASSERT("Unexpected foo value?!");
- *   case 5:
- *     return 5;
- * }
- */
-#  ifndef __has_cpp_attribute
-#    define __has_cpp_attribute(x) 0
-#  endif
-
-#  if __has_cpp_attribute(clang::fallthrough)
-#    define MOZ_FALLTHROUGH [[clang::fallthrough]]
-#  elif __has_cpp_attribute(gnu::fallthrough)
-#    define MOZ_FALLTHROUGH [[gnu::fallthrough]]
-#  elif defined(_MSC_VER)
-/*
- * MSVC's __fallthrough annotations are checked by /analyze (Code Analysis):
- * https://msdn.microsoft.com/en-us/library/ms235402%28VS.80%29.aspx
- */
-#    include <sal.h>
-#    define MOZ_FALLTHROUGH __fallthrough
-#  else
-#    define MOZ_FALLTHROUGH /* FALLTHROUGH */
-#  endif
 
 /**
  * C++11 lets unions contain members that have non-trivial special member
@@ -551,8 +518,24 @@
  *   file may not see the annotation.
  * MOZ_CAN_RUN_SCRIPT_BOUNDARY: Applies to functions which need to call
  *   MOZ_CAN_RUN_SCRIPT functions, but should not themselves be considered
- *   MOZ_CAN_RUN_SCRIPT. This is important for some bindings and low level code
- *   which need to opt out of the safety checks performed by MOZ_CAN_RUN_SCRIPT.
+ *   MOZ_CAN_RUN_SCRIPT. This should generally be avoided but can be used in
+ *   two cases:
+ *     1) As a temporary measure to limit the scope of changes when adding
+ *        MOZ_CAN_RUN_SCRIPT.  Such a use must be accompanied by a follow-up bug
+ *        to replace the MOZ_CAN_RUN_SCRIPT_BOUNDARY with MOZ_CAN_RUN_SCRIPT and
+ *        a comment linking to that bug.
+ *     2) If we can reason that the MOZ_CAN_RUN_SCRIPT callees of the function
+ *        do not in fact run script (for example, because their behavior depends
+ *        on arguments and we pass the arguments that don't allow script
+ *        execution).  Such a use must be accompanied by a comment that explains
+ *        why it's OK to have the MOZ_CAN_RUN_SCRIPT_BOUNDARY, as well as
+ *        comments in the callee pointing out that if its behavior changes the
+ *        caller might need adjusting.  And perhaps also a followup bug to
+ *        refactor things so the "script" and "no script" codepaths do not share
+ *        a chokepoint.
+ *   Importantly, any use MUST be accompanied by a comment explaining why it's
+ *   there, and should ideally have an action plan for getting rid of the
+ *   MOZ_CAN_RUN_SCRIPT_BOUNDARY annotation.
  * MOZ_MUST_OVERRIDE: Applies to all C++ member functions. All immediate
  *   subclasses must provide an exact override of this method; if a subclass
  *   does not override this method, the compiler will emit an error. This
@@ -567,6 +550,14 @@
  *   class, or if another class inherits from this class, then it is considered
  *   to be a static class as well, although this attribute need not be provided
  *   in such cases.
+ * MOZ_STATIC_LOCAL_CLASS: Applies to all classes. Any class with this
+ *   annotation is expected to be a static local variable, so it is
+ *   a compile-time error to use it, or an array of such objects, or as a
+ *   temporary object, or as the type of a new expression. If another class
+ *   inherits from this class then it is considered to be a static local
+ *   class as well, although this attribute need not be provided in such cases.
+ *   It is also a compile-time error for any class with this annotation to have
+ *   a non-trivial destructor.
  * MOZ_STACK_CLASS: Applies to all classes. Any class with this annotation is
  *   expected to live on the stack, so it is a compile-time error to use it, or
  *   an array of such objects, as a global or static variable, or as the type of
@@ -719,15 +710,16 @@
  *   Sometimes derived classes override methods that need to be called by their
  *   overridden counterparts. This marker indicates that the marked method must
  *   be called by the method that it overrides.
- * MOZ_MUST_RETURN_FROM_CALLER: Applies to function or method declarations.
- *   Callers of the annotated function/method must return from that function
- *   within the calling block using an explicit `return` statement.
- *   Only calls to Constructors, references to local and member variables,
- *   and calls to functions or methods marked as MOZ_MAY_CALL_AFTER_MUST_RETURN
- *   may be made after the MUST_RETURN_FROM_CALLER call.
+ * MOZ_MUST_RETURN_FROM_CALLER_IF_THIS_IS_ARG: Applies to method declarations.
+ *   Callers of the annotated method must return from that function within the
+ *   calling block using an explicit `return` statement if the "this" value for
+ * the call is a parameter of the caller.  Only calls to Constructors,
+ * references to local and member variables, and calls to functions or methods
+ * marked as MOZ_MAY_CALL_AFTER_MUST_RETURN may be made after the
+ *   MOZ_MUST_RETURN_FROM_CALLER_IF_THIS_IS_ARG call.
  * MOZ_MAY_CALL_AFTER_MUST_RETURN: Applies to function or method declarations.
  *   Calls to these methods may be made in functions after calls a
- *   MOZ_MUST_RETURN_FROM_CALLER function or method.
+ *   MOZ_MUST_RETURN_FROM_CALLER_IF_THIS_IS_ARG method.
  */
 
 // gcc emits a nuisance warning -Wignored-attributes because attributes do not
@@ -757,6 +749,9 @@
       __attribute__((annotate("moz_can_run_script_boundary")))
 #    define MOZ_MUST_OVERRIDE __attribute__((annotate("moz_must_override")))
 #    define MOZ_STATIC_CLASS __attribute__((annotate("moz_global_class")))
+#    define MOZ_STATIC_LOCAL_CLASS                        \
+      __attribute__((annotate("moz_static_local_class"))) \
+          __attribute__((annotate("moz_trivial_dtor")))
 #    define MOZ_STACK_CLASS __attribute__((annotate("moz_stack_class")))
 #    define MOZ_NONHEAP_CLASS __attribute__((annotate("moz_nonheap_class")))
 #    define MOZ_HEAP_CLASS __attribute__((annotate("moz_heap_class")))
@@ -804,8 +799,8 @@
 #    define MOZ_NON_PARAM __attribute__((annotate("moz_non_param")))
 #    define MOZ_REQUIRED_BASE_METHOD \
       __attribute__((annotate("moz_required_base_method")))
-#    define MOZ_MUST_RETURN_FROM_CALLER \
-      __attribute__((annotate("moz_must_return_from_caller")))
+#    define MOZ_MUST_RETURN_FROM_CALLER_IF_THIS_IS_ARG \
+      __attribute__((annotate("moz_must_return_from_caller_if_this_is_arg")))
 #    define MOZ_MAY_CALL_AFTER_MUST_RETURN \
       __attribute__((annotate("moz_may_call_after_must_return")))
 /*
@@ -827,6 +822,7 @@
 #    define MOZ_CAN_RUN_SCRIPT_BOUNDARY                     /* nothing */
 #    define MOZ_MUST_OVERRIDE                               /* nothing */
 #    define MOZ_STATIC_CLASS                                /* nothing */
+#    define MOZ_STATIC_LOCAL_CLASS                          /* nothing */
 #    define MOZ_STACK_CLASS                                 /* nothing */
 #    define MOZ_NONHEAP_CLASS                               /* nothing */
 #    define MOZ_HEAP_CLASS                                  /* nothing */
@@ -856,7 +852,7 @@
 #    define MOZ_NON_PARAM                                   /* nothing */
 #    define MOZ_NON_AUTOABLE                                /* nothing */
 #    define MOZ_REQUIRED_BASE_METHOD                        /* nothing */
-#    define MOZ_MUST_RETURN_FROM_CALLER                     /* nothing */
+#    define MOZ_MUST_RETURN_FROM_CALLER_IF_THIS_IS_ARG      /* nothing */
 #    define MOZ_MAY_CALL_AFTER_MUST_RETURN                  /* nothing */
 #  endif /* defined(MOZ_CLANG_PLUGIN) || defined(XGILL_PLUGIN) */
 

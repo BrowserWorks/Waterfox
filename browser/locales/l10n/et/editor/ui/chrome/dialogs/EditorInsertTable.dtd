@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label             "Tabeli lisamine">
+
+<!ENTITY size.label                    "Suurus">
+<!ENTITY numRowsEditField.label        "Ridu:">
+<!ENTITY numRowsEditField.accessKey    "R">
+<!ENTITY numColumnsEditField.label     "Veerge:">
+<!ENTITY numColumnsEditField.accessKey "e">
+<!ENTITY widthEditField.label          "Laius:">
+<!ENTITY widthEditField.accessKey      "L">
+<!ENTITY borderEditField.label         "Piirjoon:">
+<!ENTITY borderEditField.accessKey     "P">
+<!ENTITY borderEditField.tooltip       "Määra tabeli piirjoonte laius, nulli korral on jooned nähtamatud">
+<!ENTITY pixels.label                  "pikslit">

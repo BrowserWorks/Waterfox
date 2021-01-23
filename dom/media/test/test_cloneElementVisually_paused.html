@@ -21,6 +21,8 @@
 
 <script type="application/javascript">
 
+/* import-globals-from cloneElementVisually_helpers.js */
+
 /**
  * Test that when we start cloning a paused video, the clone displays
  * the first paused frame.
@@ -30,7 +32,7 @@ add_task(async () => {
 
   let originalVideo = document.getElementById("original");
   await withNewClone(originalVideo, async clone => {
-    SpecialPowers.wrap(originalVideo).cloneElementVisually(clone);
+    await SpecialPowers.wrap(originalVideo).cloneElementVisually(clone);
 
     ok(await assertVideosMatch(originalVideo, clone),
        "Initial paused frame should match.");

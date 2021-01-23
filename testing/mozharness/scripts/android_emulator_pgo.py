@@ -8,6 +8,7 @@
 import copy
 import json
 import time
+import glob
 import os
 import sys
 import posixpath
@@ -97,8 +98,9 @@ class AndroidProfileRun(TestingMixin, BaseScript, MozbaseMixin,
         abs_dirs = super(AndroidProfileRun, self).query_abs_dirs()
         dirs = {}
 
+        dirs['abs_src_dir'] = os.environ['GECKO_PATH']
         dirs['abs_test_install_dir'] = os.path.join(
-            abs_dirs['abs_work_dir'], 'src', 'testing')
+            dirs['abs_src_dir'], 'testing')
         dirs['abs_xre_dir'] = os.path.join(
             abs_dirs['abs_work_dir'], 'hostutils')
         dirs['abs_blob_upload_dir'] = '/builds/worker/artifacts/blobber_upload_dir'
@@ -123,7 +125,7 @@ class AndroidProfileRun(TestingMixin, BaseScript, MozbaseMixin,
         dirs = self.query_abs_dirs()
         self.register_virtualenv_module(
             'marionette',
-            os.path.join(dirs['abs_work_dir'], 'src', 'testing', 'marionette', 'client')
+            os.path.join(dirs['abs_test_install_dir'], 'marionette', 'client')
         )
 
     def download(self):
@@ -148,7 +150,7 @@ class AndroidProfileRun(TestingMixin, BaseScript, MozbaseMixin,
         """
         from mozhttpd import MozHttpd
         from mozprofile import Preferences
-        from mozdevice import ADBDevice, ADBProcessError, ADBTimeoutError
+        from mozdevice import ADBDevice, ADBTimeoutError
         from six import string_types
         from marionette_driver.marionette import Marionette
 
@@ -162,7 +164,7 @@ class AndroidProfileRun(TestingMixin, BaseScript, MozbaseMixin,
         }
 
         dirs = self.query_abs_dirs()
-        topsrcdir = os.path.join(dirs['abs_work_dir'], 'src')
+        topsrcdir = dirs['abs_src_dir']
         adb = self.query_exe('adb')
 
         path_mappings = {
@@ -195,9 +197,9 @@ class AndroidProfileRun(TestingMixin, BaseScript, MozbaseMixin,
                 v = v.format(**interpolation)
             prefs[k] = Preferences.cast(v)
 
-        outputdir = self.config.get('output_directory', '/sdcard')
+        outputdir = self.config.get('output_directory', '/sdcard/pgo_profile')
         jarlog = posixpath.join(outputdir, 'en-US.log')
-        profdata = posixpath.join(outputdir, 'default.profraw')
+        profdata = posixpath.join(outputdir, 'default_%p_random_%m.profraw')
 
         env = {}
         env["XPCOM_DEBUG_BREAK"] = "warn"
@@ -205,8 +207,34 @@ class AndroidProfileRun(TestingMixin, BaseScript, MozbaseMixin,
         env["MOZ_JAR_LOG_FILE"] = jarlog
         env["LLVM_PROFILE_FILE"] = profdata
 
+        if self.query_minidump_stackwalk():
+            os.environ['MINIDUMP_STACKWALK'] = self.minidump_stackwalk_path
+        os.environ['MINIDUMP_SAVE_PATH'] = self.query_abs_dirs()['abs_blob_upload_dir']
+        if not self.symbols_path:
+            self.symbols_path = os.environ.get("MOZ_FETCHES_DIR")
+
+        # Force test_root to be on the sdcard for android pgo
+        # builds which fail for Android 4.3 when profiles are located
+        # in /data/local/tmp/tests with
+        # E AndroidRuntime: FATAL EXCEPTION: Gecko
+        # E AndroidRuntime: java.lang.IllegalArgumentException: \
+        #    Profile directory must be writable if specified: /data/local/tmp/tests/profile
+        # This occurs when .can-write-sentinel is written to
+        # the profile in
+        # mobile/android/geckoview/src/main/java/org/mozilla/gecko/GeckoProfile.java.
+        # This is not a problem on later versions of Android. This
+        # over-ride of test_root should be removed when Android 4.3 is no
+        # longer supported.
+        sdcard_test_root = '/sdcard/tests'
         adbdevice = ADBDevice(adb=adb,
-                              device='emulator-5554')
+                              device='emulator-5554',
+                              test_root=sdcard_test_root)
+        if adbdevice.test_root != sdcard_test_root:
+            # If the test_root was previously set and shared
+            # the initializer will not have updated the shared
+            # value. Force it to match the sdcard_test_root.
+            adbdevice.test_root = sdcard_test_root
+        adbdevice.mkdir(outputdir)
 
         try:
             # Run Fennec a first time to initialize its profile
@@ -214,11 +242,12 @@ class AndroidProfileRun(TestingMixin, BaseScript, MozbaseMixin,
                 app='fennec',
                 package_name=app,
                 adb_path=adb,
-                bin="target.apk",
+                bin="geckoview-androidTest.apk",
                 prefs=prefs,
                 connect_to_running_emulator=True,
                 startup_timeout=1000,
                 env=env,
+                symbols_path=self.symbols_path,
             )
             driver.start_session()
 
@@ -250,38 +279,27 @@ class AndroidProfileRun(TestingMixin, BaseScript, MozbaseMixin,
             # There is a delay between execute_script() returning and the profile data
             # actually getting written out, so poll the device until we get a profile.
             for i in range(50):
-                try:
-                    localprof = '/builds/worker/workspace/default.profraw'
-                    adbdevice.pull(profdata, localprof)
-                    stats = os.stat(localprof)
-                    if stats.st_size == 0:
-                        # The file may not have been fully written yet, so retry until we
-                        # get actual data.
-                        time.sleep(2)
-                    else:
-                        break
-                except ADBProcessError:
-                    # The file may not exist at all yet, which would raise an
-                    # ADBProcessError, so retry.
-                    time.sleep(2)
+                if not adbdevice.process_exist(app):
+                    break
+                time.sleep(2)
             else:
-                raise Exception("Unable to pull default.profraw")
-            adbdevice.pull(jarlog, '/builds/worker/workspace/en-US.log')
+                raise Exception("Android App (%s) never quit" % app)
+
+            # Pull all the profraw files and en-US.log
+            adbdevice.pull(outputdir, '/builds/worker/workspace/')
         except ADBTimeoutError:
             self.fatal('INFRA-ERROR: Failed with an ADBTimeoutError',
                        EXIT_STATUS_DICT[TBPL_RETRY])
 
-        # We normally merge as part of a GENERATED_FILES step in the profile-use
-        # build, but Android runs sometimes result in a truncated profile. We do
-        # a merge here to make sure the data isn't corrupt so we can retry the
-        # 'run' task if necessary.
+        profraw_files = glob.glob('/builds/worker/workspace/*.profraw')
+        if not profraw_files:
+            self.fatal('Could not find any profraw files in /builds/worker/workspace')
         merge_cmd = [
-            '/builds/worker/workspace/build/clang/bin/llvm-profdata',
+            os.path.join(os.environ['MOZ_FETCHES_DIR'], 'clang/bin/llvm-profdata'),
             'merge',
-            '/builds/worker/workspace/default.profraw',
             '-o',
-            '/builds/worker/workspace/merged.profraw',
-        ]
+            '/builds/worker/workspace/merged.profdata',
+        ] + profraw_files
         rc = subprocess.call(merge_cmd)
         if rc != 0:
             self.fatal('INFRA-ERROR: Failed to merge profile data. Corrupt profile?',
@@ -293,7 +311,7 @@ class AndroidProfileRun(TestingMixin, BaseScript, MozbaseMixin,
             '-acvf',
             '/builds/worker/artifacts/profdata.tar.xz',
             '-C', '/builds/worker/workspace',
-            'merged.profraw',
+            'merged.profdata',
             'en-US.log',
         ]
         subprocess.check_call(tar_cmd)

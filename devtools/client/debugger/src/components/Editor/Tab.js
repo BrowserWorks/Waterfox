@@ -11,9 +11,10 @@ import { showMenu, buildMenu } from "devtools-contextmenu";
 
 import SourceIcon from "../shared/SourceIcon";
 import { CloseButton } from "../shared/Button";
+import { copyToTheClipboard } from "../../utils/clipboard";
 
-import type { List } from "immutable";
 import type { Source, Context } from "../../types";
+import type { TabsSources } from "../../reducers/types";
 
 import actions from "../../actions";
 
@@ -26,7 +27,6 @@ import {
   isPretty,
   shouldBlackbox,
 } from "../../utils/source";
-import { copyToTheClipboard } from "../../utils/clipboard";
 import { getTabMenuItems } from "../../utils/tabs";
 
 import {
@@ -40,34 +40,46 @@ import type { ActiveSearchType } from "../../selectors";
 
 import classnames from "classnames";
 
-type SourcesList = List<Source>;
-
+type OwnProps = {|
+  source: Source,
+  onDragOver: Function,
+  onDragStart: Function,
+  onDragEnd: Function,
+|};
 type Props = {
   cx: Context,
-  tabSources: SourcesList,
-  selectedSource: Source,
+  tabSources: TabsSources,
+  selectedSource: ?Source,
   source: Source,
-  activeSearch: ActiveSearchType,
+  onDragOver: Function,
+  onDragStart: Function,
+  onDragEnd: Function,
+  activeSearch: ?ActiveSearchType,
   hasSiblingOfSameName: boolean,
   selectSource: typeof actions.selectSource,
   closeTab: typeof actions.closeTab,
   closeTabs: typeof actions.closeTabs,
+  copyToClipboard: typeof actions.copyToClipboard,
   togglePrettyPrint: typeof actions.togglePrettyPrint,
   showSource: typeof actions.showSource,
   toggleBlackBox: typeof actions.toggleBlackBox,
 };
 
 class Tab extends PureComponent<Props> {
-  onTabContextMenu = (event, tab: string) => {
+  onTabContextMenu = (
+    event: SyntheticClipboardEvent<HTMLDivElement>,
+    tab: string
+  ) => {
     event.preventDefault();
     this.showContextMenu(event, tab);
   };
 
-  showContextMenu(e, tab: string) {
+  showContextMenu(e: SyntheticClipboardEvent<HTMLDivElement>, tab: string) {
     const {
       cx,
       closeTab,
       closeTabs,
+      copyToClipboard,
       tabSources,
       showSource,
       toggleBlackBox,
@@ -82,7 +94,7 @@ class Tab extends PureComponent<Props> {
     const tabURLs = tabSources.map(t => t.url);
     const otherTabURLs = otherTabs.map(t => t.url);
 
-    if (!sourceTab) {
+    if (!sourceTab || !selectedSource) {
       return;
     }
 
@@ -106,7 +118,10 @@ class Tab extends PureComponent<Props> {
           ...tabMenuItems.closeTabsToEnd,
           click: () => {
             const tabIndex = tabSources.findIndex(t => t.id == tab);
-            closeTabs(cx, tabURLs.filter((t, i) => i > tabIndex));
+            closeTabs(
+              cx,
+              tabURLs.filter((t, i) => i > tabIndex)
+            );
           },
           disabled:
             tabCount === 1 ||
@@ -124,7 +139,7 @@ class Tab extends PureComponent<Props> {
         item: {
           ...tabMenuItems.copyToClipboard,
           disabled: selectedSource.id !== tab,
-          click: () => copyToTheClipboard(sourceTab.text),
+          click: () => copyToClipboard(sourceTab),
         },
       },
       {
@@ -145,8 +160,8 @@ class Tab extends PureComponent<Props> {
         item: {
           ...tabMenuItems.toggleBlackBox,
           label: source.isBlackBoxed
-            ? L10N.getStr("sourceFooter.unblackbox")
-            : L10N.getStr("sourceFooter.blackbox"),
+            ? L10N.getStr("blackboxContextItem.unblackbox")
+            : L10N.getStr("blackboxContextItem.blackbox"),
           disabled: !shouldBlackbox(source),
           click: () => toggleBlackBox(cx, source),
         },
@@ -180,12 +195,16 @@ class Tab extends PureComponent<Props> {
       source,
       tabSources,
       hasSiblingOfSameName,
+      onDragOver,
+      onDragStart,
+      onDragEnd,
     } = this.props;
     const sourceId = source.id;
     const active =
       selectedSource &&
       sourceId == selectedSource.id &&
-      (!this.isProjectSearchEnabled() && !this.isSourceSearchEnabled());
+      !this.isProjectSearchEnabled() &&
+      !this.isSourceSearchEnabled();
     const isPrettyCode = isPretty(source);
 
     function onClickClose(e) {
@@ -209,6 +228,10 @@ class Tab extends PureComponent<Props> {
 
     return (
       <div
+        draggable
+        onDragOver={onDragOver}
+        onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
         className={className}
         key={sourceId}
         onClick={handleTabClick}
@@ -219,7 +242,9 @@ class Tab extends PureComponent<Props> {
       >
         <SourceIcon
           source={source}
-          shouldHide={icon => ["file", "javascript"].includes(icon)}
+          modifier={icon =>
+            ["file", "javascript"].includes(icon) ? null : icon
+          }
         />
         <div className="filename">
           {getTruncatedFileName(source, query)}
@@ -240,20 +265,25 @@ const mapStateToProps = (state, { source }) => {
   return {
     cx: getContext(state),
     tabSources: getSourcesForTabs(state),
-    selectedSource: selectedSource,
+    selectedSource,
     activeSearch: getActiveSearch(state),
     hasSiblingOfSameName: getHasSiblingOfSameName(state, source),
   };
 };
 
-export default connect(
+export default connect<Props, OwnProps, _, _, _, _>(
   mapStateToProps,
   {
     selectSource: actions.selectSource,
+    copyToClipboard: actions.copyToClipboard,
     closeTab: actions.closeTab,
     closeTabs: actions.closeTabs,
     togglePrettyPrint: actions.togglePrettyPrint,
     showSource: actions.showSource,
     toggleBlackBox: actions.toggleBlackBox,
+  },
+  null,
+  {
+    withRef: true,
   }
 )(Tab);

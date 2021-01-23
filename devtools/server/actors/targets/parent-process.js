@@ -15,7 +15,7 @@
 
 const { Ci } = require("chrome");
 const Services = require("Services");
-const { DebuggerServer } = require("devtools/server/main");
+const { DevToolsServer } = require("devtools/server/devtools-server");
 const {
   getChildDocShells,
   BrowsingContextTargetActor,
@@ -43,7 +43,7 @@ const parentProcessTargetPrototype = extend({}, browsingContextTargetPrototype);
  * RootActor.getProcess request. ParentProcessTargetActor exposes all target-scoped actors
  * via its form() request, like BrowsingContextTargetActor.
  *
- * @param connection DebuggerServerConnection
+ * @param connection DevToolsServerConnection
  *        The connection to the client.
  * @param window Window object (optional)
  *        If the upper class already knows against which window the actor should attach,
@@ -59,15 +59,15 @@ parentProcessTargetPrototype.initialize = function(connection, window) {
   });
 
   // Ensure catching the creation of any new content docshell
-  this.listenForNewDocShells = true;
+  this.watchNewDocShells = true;
 
   // Defines the default docshell selected for the target actor
   if (!window) {
-    window = Services.wm.getMostRecentWindow(DebuggerServer.chromeWindowType);
+    window = Services.wm.getMostRecentWindow(DevToolsServer.chromeWindowType);
   }
 
   // Default to any available top level window if there is no expected window
-  // (for example when we open firefox with -webide argument)
+  // eg when running ./mach run --chrome chrome://browser/content/aboutTabCrashed.xhtml --jsdebugger
   if (!window) {
     window = Services.wm.getMostRecentWindow(null);
   }
@@ -155,30 +155,6 @@ parentProcessTargetPrototype._detach = function() {
   }
 
   return BrowsingContextTargetActor.prototype._detach.call(this);
-};
-
-/* ThreadActor hooks. */
-
-/**
- * Prepare to enter a nested event loop by disabling debuggee events.
- */
-parentProcessTargetPrototype.preNest = function() {
-  // Disable events in all open windows.
-  for (const { windowUtils } of Services.wm.getEnumerator(null)) {
-    windowUtils.suppressEventHandling(true);
-    windowUtils.suspendTimeouts();
-  }
-};
-
-/**
- * Prepare to exit a nested event loop by enabling debuggee events.
- */
-parentProcessTargetPrototype.postNest = function(nestData) {
-  // Enable events in all open windows.
-  for (const { windowUtils } of Services.wm.getEnumerator(null)) {
-    windowUtils.resumeTimeouts();
-    windowUtils.suppressEventHandling(false);
-  }
 };
 
 exports.parentProcessTargetPrototype = parentProcessTargetPrototype;

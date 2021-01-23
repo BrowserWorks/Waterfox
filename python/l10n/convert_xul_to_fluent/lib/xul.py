@@ -1,3 +1,7 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 from __future__ import absolute_import
 import re
 import string
@@ -45,6 +49,17 @@ vector = 0
 is_l10n = False
 
 
+def get_indent(pre_tag):
+    if "\n" not in pre_tag:
+        return " "
+    last_bl = pre_tag.rindex("\n")
+    indent = 0
+    for ch in pre_tag[last_bl:]:
+        if ch == " ":
+            indent += 1
+    return "\n" + " " * indent
+
+
 def tagrepl(m):
     global vector
     global is_l10n
@@ -77,9 +92,11 @@ def tagrepl(m):
             "value": l10n_val,
             "attrs": l10n_attrs
         }
+        indent = get_indent(tag[0:len(m.group(1)) + 1 - vector])
         tag = \
             tag[0:len(m.group(1)) + 1 - vector] + \
-            ' data-l10n-id="' + \
+            indent + \
+            'data-l10n-id="' + \
             l10n_id + \
             '"' + \
             m.group(2) + \

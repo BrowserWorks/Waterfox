@@ -4,8 +4,8 @@ import json
 import pipes
 import re
 
-from progressbar import NullProgressBar, ProgressBar
-from structuredlog import TestLogger
+from .progressbar import NullProgressBar, ProgressBar
+from .structuredlog import TestLogger
 
 # subprocess.list2cmdline does not properly escape for sh-like shells
 
@@ -292,8 +292,20 @@ class ResultsSink:
                     print(escape_cmdline(output.cmd), file=self.fp)
 
                 if show_output:
-                    self.fp.write(output.out)
-                    self.fp.write(output.err)
+                    def write_with_fallback(fp, data):
+                        try:
+                            fp.write(data)
+                        except UnicodeEncodeError as e:
+                            # In case the data contains something not directly
+                            # encodable, use \uXXXX.
+                            fp.write('WARNING: Falling back from exception: {}\n'.format(e))
+                            fp.write('WARNING: The following output is escaped, ')
+                            fp.write('and may be different than original one.\n')
+                            fp.write(data.encode('ascii', 'namereplace')
+                                     .decode('ascii'))
+
+                    write_with_fallback(self.fp, output.out)
+                    write_with_fallback(self.fp, output.err)
 
             self.n += 1
 
@@ -339,7 +351,7 @@ class ResultsSink:
         if self.wptreport is not None:
             self.wptreport.suite_end()
 
-    # Conceptually, this maps (test result x test expection) to text labels.
+    # Conceptually, this maps (test result x test expectation) to text labels.
     #      key   is (result, expect, random)
     #      value is (automation label, dev test category)
     LABELS = {

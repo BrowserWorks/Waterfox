@@ -9,7 +9,6 @@
 #define mozilla_net_ChannelEventQueue_h
 
 #include "nsTArray.h"
-#include "nsAutoPtr.h"
 #include "nsIEventTarget.h"
 #include "nsThreadUtils.h"
 #include "nsXULAppAPI.h"
@@ -26,9 +25,8 @@ namespace net {
 
 class ChannelEvent {
  public:
-  ChannelEvent() { MOZ_COUNT_CTOR(ChannelEvent); }
-  virtual ~ChannelEvent() { MOZ_COUNT_DTOR(ChannelEvent); }
-  virtual void Run() = 0;
+  MOZ_COUNTED_DEFAULT_CTOR(ChannelEvent)
+  MOZ_COUNTED_DTOR_VIRTUAL(ChannelEvent) virtual void Run() = 0;
   virtual already_AddRefed<nsIEventTarget> GetEventTarget() = 0;
 };
 
@@ -36,8 +34,8 @@ class ChannelEvent {
 // GetEventTarget() directly returns an unlabeled event target.
 class MainThreadChannelEvent : public ChannelEvent {
  public:
-  MainThreadChannelEvent() { MOZ_COUNT_CTOR(MainThreadChannelEvent); }
-  virtual ~MainThreadChannelEvent() { MOZ_COUNT_DTOR(MainThreadChannelEvent); }
+  MOZ_COUNTED_DEFAULT_CTOR(MainThreadChannelEvent)
+  MOZ_COUNTED_DTOR_OVERRIDE(MainThreadChannelEvent)
 
   already_AddRefed<nsIEventTarget> GetEventTarget() override {
     MOZ_ASSERT(XRE_IsParentProcess());
@@ -68,6 +66,58 @@ class NeckoTargetChannelEvent : public ChannelEvent {
 
  protected:
   T* mChild;
+};
+
+class ChannelFunctionEvent : public ChannelEvent {
+ public:
+  ChannelFunctionEvent(
+      std::function<already_AddRefed<nsIEventTarget>()>&& aGetEventTarget,
+      std::function<void()>&& aCallback)
+      : mGetEventTarget(std::move(aGetEventTarget)),
+        mCallback(std::move(aCallback)) {}
+
+  void Run() override { mCallback(); }
+  already_AddRefed<nsIEventTarget> GetEventTarget() override {
+    return mGetEventTarget();
+  }
+
+ private:
+  const std::function<already_AddRefed<nsIEventTarget>()> mGetEventTarget;
+  const std::function<void()> mCallback;
+};
+
+// UnsafePtr is a work-around our static analyzer that requires all
+// ref-counted objects to be captured in lambda via a RefPtr
+// The ChannelEventQueue makes it safe to capture "this" by pointer only.
+// This is required as work-around to prevent cycles until bug 1596295
+// is resolved.
+template <typename T>
+class UnsafePtr {
+ public:
+  explicit UnsafePtr(T* aPtr) : mPtr(aPtr) {}
+
+  T& operator*() const { return *mPtr; }
+  T* operator->() const {
+    MOZ_ASSERT(mPtr, "dereferencing a null pointer");
+    return mPtr;
+  }
+  operator T*() const& { return mPtr; }
+  explicit operator bool() const { return mPtr != nullptr; }
+
+ private:
+  T* const mPtr;
+};
+
+class NeckoTargetChannelFunctionEvent : public ChannelFunctionEvent {
+ public:
+  template <typename T>
+  NeckoTargetChannelFunctionEvent(T* aChild, std::function<void()>&& aCallback)
+      : ChannelFunctionEvent(
+            [child = UnsafePtr<T>(aChild)]() {
+              MOZ_ASSERT(child);
+              return child->GetNeckoTarget();
+            },
+            std::move(aCallback)) {}
 };
 
 // Workaround for Necko re-entrancy dangers. We buffer IPDL messages in a
@@ -102,8 +152,8 @@ class ChannelEventQueue final {
                            bool aAssertionWhenNotQueued = false);
 
   // Append ChannelEvent in front of the event queue.
-  inline nsresult PrependEvent(UniquePtr<ChannelEvent>& aEvent);
-  inline nsresult PrependEvents(nsTArray<UniquePtr<ChannelEvent>>& aEvents);
+  inline void PrependEvent(UniquePtr<ChannelEvent>&& aEvent);
+  inline void PrependEvents(nsTArray<UniquePtr<ChannelEvent>>& aEvents);
 
   // After StartForcedQueueing is called, RunOrEnqueue() will start enqueuing
   // events that will be run/flushed when EndForcedQueueing is called.
@@ -123,7 +173,7 @@ class ChannelEventQueue final {
 
  private:
   // Private destructor, to discourage deletion outside of Release():
-  ~ChannelEventQueue() {}
+  ~ChannelEventQueue() = default;
 
   void SuspendInternal();
   void ResumeInternal();
@@ -230,8 +280,7 @@ inline void ChannelEventQueue::EndForcedQueueing() {
   }
 }
 
-inline nsresult ChannelEventQueue::PrependEvent(
-    UniquePtr<ChannelEvent>& aEvent) {
+inline void ChannelEventQueue::PrependEvent(UniquePtr<ChannelEvent>&& aEvent) {
   MutexAutoLock lock(mMutex);
 
   // Prepending event while no queue flush foreseen might cause the following
@@ -240,17 +289,10 @@ inline nsresult ChannelEventQueue::PrependEvent(
   // the added event.
   MOZ_ASSERT(mSuspended || !!mForcedCount);
 
-  UniquePtr<ChannelEvent>* newEvent =
-      mEventQueue.InsertElementAt(0, std::move(aEvent));
-
-  if (!newEvent) {
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
-
-  return NS_OK;
+  mEventQueue.InsertElementAt(0, std::move(aEvent));
 }
 
-inline nsresult ChannelEventQueue::PrependEvents(
+inline void ChannelEventQueue::PrependEvents(
     nsTArray<UniquePtr<ChannelEvent>>& aEvents) {
   MutexAutoLock lock(mMutex);
 
@@ -260,17 +302,11 @@ inline nsresult ChannelEventQueue::PrependEvents(
   // the added events.
   MOZ_ASSERT(mSuspended || !!mForcedCount);
 
-  UniquePtr<ChannelEvent>* newEvents =
-      mEventQueue.InsertElementsAt(0, aEvents.Length());
-  if (!newEvents) {
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
+  mEventQueue.InsertElementsAt(0, aEvents.Length());
 
   for (uint32_t i = 0; i < aEvents.Length(); i++) {
-    newEvents[i] = std::move(aEvents[i]);
+    mEventQueue[i] = std::move(aEvents[i]);
   }
-
-  return NS_OK;
 }
 
 inline void ChannelEventQueue::CompleteResume() {

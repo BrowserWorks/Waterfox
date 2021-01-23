@@ -65,7 +65,7 @@ inline bool GetPrototype(JSContext* cx, JS::Handle<JSObject*> obj,
 inline bool IsExtensible(JSContext* cx, JS::Handle<JSObject*> obj,
                          bool* extensible) {
   if (obj->is<ProxyObject>()) {
-    MOZ_ASSERT(!cx->helperThread());
+    MOZ_ASSERT(!cx->isHelperThreadContext());
     return Proxy::isExtensible(cx, obj, extensible);
   }
 
@@ -186,7 +186,7 @@ inline bool GetElementNoGC(JSContext* cx, JSObject* obj,
 }
 
 static MOZ_ALWAYS_INLINE bool ClassMayResolveId(const JSAtomState& names,
-                                                const Class* clasp, jsid id,
+                                                const JSClass* clasp, jsid id,
                                                 JSObject* maybeObj) {
   MOZ_ASSERT_IF(maybeObj, maybeObj->getClass() == clasp);
 
@@ -331,7 +331,7 @@ inline bool PutProperty(JSContext* cx, JS::Handle<JSObject*> obj,
   JS::Rooted<JS::Value> receiver(cx, JS::ObjectValue(*obj));
   JS::ObjectOpResult result;
   return SetProperty(cx, obj, id, v, receiver, result) &&
-         result.checkStrictErrorOrWarning(cx, obj, id, strict);
+         result.checkStrictModeError(cx, obj, id, strict);
 }
 
 /*

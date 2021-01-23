@@ -15,27 +15,6 @@
       super();
 
       this.addEventListener("popupshowing", event => {
-        // Force the panel to have the width of the searchbar rather than
-        // the width of the textfield.
-        let DOMUtils = window.windowUtils;
-        let textboxRect = DOMUtils.getBoundsWithoutFlushing(this.mInput);
-        let inputRect = DOMUtils.getBoundsWithoutFlushing(
-          this.mInput.inputField
-        );
-
-        // Ensure the panel is wide enough to fit at least 3 engines.
-        let minWidth = Math.max(
-          textboxRect.width,
-          this.oneOffButtons.buttonWidth * 3
-        );
-        this.style.minWidth = Math.round(minWidth) + "px";
-        // Alignment of the panel with the searchbar is obtained with negative
-        // margins.
-        this.style.marginLeft = textboxRect.left - inputRect.left + "px";
-        // This second margin is needed when the direction is reversed,
-        // eg. when using command+shift+X.
-        this.style.marginRight = inputRect.right - textboxRect.right + "px";
-
         // First handle deciding if we are showing the reduced version of the
         // popup containing only the preferences button. We do this if the
         // glass icon has been clicked if the text field is empty.
@@ -57,14 +36,19 @@
         }
 
         // Show the current default engine in the top header of the panel.
-        this.updateHeader();
+        this.updateHeader().catch(Cu.reportError);
+
+        this._oneOffButtons.addEventListener(
+          "SelectedOneOffButtonChanged",
+          this
+        );
       });
 
       this.addEventListener("popuphiding", event => {
-        this._isHiding = true;
-        Services.tm.dispatchToMainThread(() => {
-          this._isHiding = false;
-        });
+        this._oneOffButtons.removeEventListener(
+          "SelectedOneOffButtonChanged",
+          this
+        );
       });
 
       /**
@@ -83,14 +67,6 @@
         }
         this.oneOffButtons.handleSearchCommand(event, engine);
       });
-
-      /**
-       * Popup rollup is triggered by native events before the mousedown event
-       * reaches the DOM. The will be set to true by the popuphiding event and
-       * false after the mousedown event has been triggered to detect what
-       * caused rollup.
-       */
-      this._isHiding = false;
 
       this._bundle = null;
     }
@@ -119,7 +95,7 @@
       return this._oneOffButtons;
     }
 
-    get _markup() {
+    static get markup() {
       return `
       <hbox class="search-panel-header search-panel-current-engine">
         <image class="searchbar-engine-image"></image>
@@ -236,25 +212,29 @@
       }
     }
 
-    updateHeader() {
-      Services.search.getDefault().then(currentEngine => {
-        let uri = currentEngine.iconURI;
-        if (uri) {
-          this.setAttribute("src", uri.spec);
+    async updateHeader(engine) {
+      if (!engine) {
+        if (PrivateBrowsingUtils.isWindowPrivate(window)) {
+          engine = await Services.search.getDefaultPrivate();
         } else {
-          // If the default has just been changed to a provider without icon,
-          // avoid showing the icon of the previous default provider.
-          this.removeAttribute("src");
+          engine = await Services.search.getDefault();
         }
+      }
 
-        let headerText = this.bundle.formatStringFromName(
-          "searchHeader",
-          [currentEngine.name],
-          1
-        );
-        this.searchbarEngineName.setAttribute("value", headerText);
-        this.searchbarEngine.engine = currentEngine;
-      });
+      let uri = engine.iconURI;
+      if (uri) {
+        this.setAttribute("src", uri.spec);
+      } else {
+        // If the default has just been changed to a provider without icon,
+        // avoid showing the icon of the previous default provider.
+        this.removeAttribute("src");
+      }
+
+      let headerText = this.bundle.formatStringFromName("searchHeader", [
+        engine.name,
+      ]);
+      this.searchbarEngineName.setAttribute("value", headerText);
+      this.searchbarEngine.engine = engine;
     }
 
     /**
@@ -265,6 +245,26 @@
     handleOneOffSearch(event, engine, where, params) {
       let searchbar = document.getElementById("searchbar");
       searchbar.handleSearchCommandWhere(event, engine, where, params);
+    }
+
+    /**
+     * Passes DOM events for the popup to the _on_<event type> methods.
+     * @param {Event} event
+     *   DOM event from the <popup>.
+     */
+    handleEvent(event) {
+      let methodName = "_on_" + event.type;
+      if (methodName in this) {
+        this[methodName](event);
+      } else {
+        throw new Error("Unrecognized UrlbarView event: " + event.type);
+      }
+    }
+    _on_SelectedOneOffButtonChanged() {
+      let engine =
+        this.oneOffButtons.selectedButton &&
+        this.oneOffButtons.selectedButton.engine;
+      this.updateHeader(engine).catch(Cu.reportError);
     }
   }
 

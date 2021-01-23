@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tabs.otherComputers.label): Keep this in sync with syncTabsMenu.label from browser.dtd -->
+<!ENTITY tabs.otherComputers.label "Pestañas de otras computadoras">
+
+<!ENTITY tabs.searchText.label "Ingresar para buscar pestañas…">
+
+<!-- LOCALIZATION NOTE (tabs.context.openTab.accesskey, tabs.context.openMultipleTabs.accesskey):
+     Only one of these will show at a time (based on selection), so reusing accesskey is ok. -->
+<!ENTITY tabs.context.openTab.label "Abrir esta pestaña">
+<!ENTITY tabs.context.openTab.accesskey "A">
+<!ENTITY tabs.context.openMultipleTabs.label "Abrir pestañas seleccionadas">
+<!ENTITY tabs.context.openMultipleTabs.accesskey "A">
+<!ENTITY tabs.context.bookmarkSingleTab.label "Marcar esta pestaña…">
+<!ENTITY tabs.context.bookmarkSingleTab.accesskey "M">
+<!ENTITY tabs.context.bookmarkMultipleTabs.label "Marcar pestañas seleccionadas…">
+<!ENTITY tabs.context.bookmarkMultipleTabs.accesskey "M">
+<!ENTITY tabs.context.refreshList.label "Refrescar lista">
+<!ENTITY tabs.context.refreshList.accesskey "R">

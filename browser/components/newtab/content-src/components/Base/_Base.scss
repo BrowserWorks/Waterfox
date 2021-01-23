@@ -5,8 +5,12 @@
   min-height: 100vh;
   padding: ($section-spacing + $section-vertical-padding) $base-gutter $base-gutter;
 
-  &.fixed-to-top {
-    display: block;
+  &.ds-outer-wrapper-breakpoint-override {
+    padding: 30px 0 32px;
+
+    @media(min-width: $break-point-medium) {
+      padding: 30px 32px 32px;
+    }
   }
 
   &.only-search {
@@ -21,10 +25,19 @@
 
 main {
   margin: auto;
+  width: $wrapper-default-width;
   // Offset the snippets container so things at the bottom of the page are still
   // visible when snippets are visible. Adjust for other spacing.
   padding-bottom: $snippets-container-height - $section-spacing - $base-gutter;
-  width: $wrapper-default-width;
+
+  section {
+    margin-bottom: $section-spacing;
+    position: relative;
+  }
+
+  .hide-main & {
+    visibility: hidden;
+  }
 
   @media (min-width: $break-point-medium) {
     width: $wrapper-max-width-medium;
@@ -38,15 +51,11 @@ main {
     width: $wrapper-max-width-widest;
   }
 
-  section {
-    margin-bottom: $section-spacing;
-    position: relative;
-  }
+}
 
-  .hide-main & {
-    visibility: hidden;
-  }
-
+.below-search-snippet.withButton {
+  margin: auto;
+  width: 100%;
 }
 
 .ds-outer-wrapper-search-alignment {
@@ -59,15 +68,19 @@ main {
 
 .ds-outer-wrapper-breakpoint-override {
   main {
-    // Override Activity Stream breakpoints for Discovery Stream.
-    // Right now Discovery Stream doesn't have any breakpoints,
-    // and Activity Stream breakpoints do some wonky things.
-    width: 1042px;
-  }
+    width: 266px;
+    padding-bottom: 68px;
 
-  &:not(.fixed-search) {
-    .search-wrapper .search-inner-wrapper {
-      width: $searchbar-width-large;
+    @media (min-width: $break-point-medium) {
+      width: 510px;
+    }
+
+    @media (min-width: $break-point-large) {
+      width: 746px;
+    }
+
+    @media (min-width: $break-point-widest) {
+      width: 986px;
     }
   }
 }

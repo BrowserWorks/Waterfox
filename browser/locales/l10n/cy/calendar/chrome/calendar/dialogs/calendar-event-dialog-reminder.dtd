@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "Gosod Atgoffwyr">
+<!ENTITY reminder.add.label                                "Ychwanegu">
+<!ENTITY reminder.add.accesskey                            "Y">
+<!ENTITY reminder.remove.label                             "Tynnu">
+<!ENTITY reminder.remove.accesskey                         "T">
+
+<!ENTITY reminder.reminderDetails.label                    "Manylion Atgoffwr">
+<!ENTITY reminder.action.label                             "Dewis Gweithred Atgoffa">
+
+<!ENTITY reminder.action.alert.label                       "Dangos Rhybudd">
+<!ENTITY reminder.action.email.label                       "Anfon E-bost">
+
+<!ENTITY alarm.units.minutes                               "munud" >
+<!ENTITY alarm.units.hours                                 "awr" >
+<!ENTITY alarm.units.days                                  "diwrnod" >

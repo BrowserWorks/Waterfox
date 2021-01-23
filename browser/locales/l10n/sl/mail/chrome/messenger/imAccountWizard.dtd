@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Čarovnik računov za klepet">
+
+<!ENTITY accountProtocolTitle.label   "Omrežje za klepet">
+<!ENTITY accountProtocolInfo.label    "Izberite omrežje svojega računa za klepet.">
+<!ENTITY accountProtocolField.label   "Omrežje:">
+<!ENTITY accountProtocolGetMore.label "Pridobite si še več …">
+
+<!ENTITY accountUsernameTitle.label   "Uporabniško ime">
+<!ENTITY accountUsernameDuplicate.label "Ta račun je že nastavljen!">
+
+<!ENTITY accountPasswordTitle.label   "Geslo">
+<!ENTITY accountPasswordInfo.label    "Vnesite geslo v spodnje polje.">
+<!ENTITY accountPasswordField.label   "Geslo:">
+<!ENTITY accountPasswordManager.label "Tukaj vneseno geslo bo shranjeno v Upravitelju gesel. Pustite to polje prazno, če želite ob prijavi na ta račun geslo vsakič znova vnesti.">
+
+<!ENTITY accountAdvancedTitle.label   "Dodatne možnosti">
+<!ENTITY accountAdvancedInfo.label    "Če želite, ta korak lahko preskočite.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Obveščaj o novi pošti">
+<!ENTITY accountAliasGroupbox.caption "Krajevni vzdevek">
+<!ENTITY accountAliasField.label      "Vzdevek:">
+<!ENTITY accountAliasInfo.label       "Videti bo le med pogovori ob klepetu, oddaljeni stiki ga ne bodo videli.">
+<!ENTITY accountProxySettings.caption "Nastavitve za posrednika:">
+<!ENTITY accountProxySettings.change.label     "Spremeni …">
+<!ENTITY accountProxySettings.change.accessKey "S">
+
+<!ENTITY accountSummaryTitle.label   "Povzetek">
+<!ENTITY accountSummaryInfo.label    "Povzetek vnesenih podatkov je prikazan spodaj. Preverite jih, preden se račun ustvari.">
+<!ENTITY accountSummary.connectNow.label "Poveži ta račun zdaj.">

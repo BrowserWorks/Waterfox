@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSMIMEOverlay.dtd UI for s/mime hooks in message composition -->
+
+<!ENTITY menu_securityEncryptRequire.label "Salaa tämä viesti">
+<!ENTITY menu_securityEncryptRequire.accesskey "S">
+
+<!ENTITY menu_securitySign.label "Allekirjoita tämä viesti digitaalisesti">
+<!ENTITY menu_securitySign.accesskey "A">
+
+<!ENTITY menu_securityStatus.label "Näytä suojaustiedot">
+<!ENTITY menu_securityStatus.accesskey "N">
+
+<!ENTITY securityButton.label "Suojaus">
+<!ENTITY securityButton.tooltip "Tarkastele suojausasetuksia">
+
+<!ENTITY menu_viewSecurityStatus.label "Viestin suojaustiedot">
+<!ENTITY menu_viewSecurityStatus.accesskey "u">

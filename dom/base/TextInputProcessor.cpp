@@ -4,10 +4,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "gfxPrefs.h"
 #include "mozilla/dom/Event.h"
 #include "mozilla/EventForwards.h"
 #include "mozilla/Maybe.h"
+#include "mozilla/StaticPrefs_test.h"
 #include "mozilla/TextEventDispatcher.h"
 #include "mozilla/TextEvents.h"
 #include "mozilla/TextInputProcessor.h"
@@ -390,7 +390,7 @@ nsresult TextInputProcessor::BeginInputTransactionInternal(
 
   nsresult rv = NS_OK;
   if (aForTests) {
-    bool isAPZAware = gfxPrefs::TestEventsAsyncEnabled();
+    bool isAPZAware = StaticPrefs::test_events_async_enabled();
     rv = dispatcher->BeginTestInputTransaction(this, isAPZAware);
   } else {
     rv = dispatcher->BeginInputTransaction(this);
@@ -999,12 +999,18 @@ nsresult TextInputProcessor::PrepareKeyboardEventToDispatch(
       //      since it checks whether it's called in the main process to
       //      avoid performance issues so that we need to initialize each
       //      command manually here.
-      aKeyboardEvent.InitEditCommandsFor(
-          nsIWidget::NativeKeyBindingsForSingleLineEditor);
-      aKeyboardEvent.InitEditCommandsFor(
-          nsIWidget::NativeKeyBindingsForMultiLineEditor);
-      aKeyboardEvent.InitEditCommandsFor(
-          nsIWidget::NativeKeyBindingsForRichTextEditor);
+      if (NS_WARN_IF(!aKeyboardEvent.InitEditCommandsFor(
+              nsIWidget::NativeKeyBindingsForSingleLineEditor))) {
+        return NS_ERROR_NOT_AVAILABLE;
+      }
+      if (NS_WARN_IF(!aKeyboardEvent.InitEditCommandsFor(
+              nsIWidget::NativeKeyBindingsForMultiLineEditor))) {
+        return NS_ERROR_NOT_AVAILABLE;
+      }
+      if (NS_WARN_IF(!aKeyboardEvent.InitEditCommandsFor(
+              nsIWidget::NativeKeyBindingsForRichTextEditor))) {
+        return NS_ERROR_NOT_AVAILABLE;
+      }
     } else {
       aKeyboardEvent.PreventNativeKeyBindings();
     }

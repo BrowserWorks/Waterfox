@@ -4,13 +4,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include <type_traits>
+
 #include "mozilla/NotNull.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/Unused.h"
 
 using mozilla::MakeNotNull;
-using mozilla::MakeUnique;
 using mozilla::NotNull;
 using mozilla::UniquePtr;
 using mozilla::WrapNotNull;
@@ -287,6 +288,14 @@ void TestNotNullWithRefPtr() {
 
   // At this point the refcount is 4.
 
+  NotNull<RefPtr<MyRefType>> r6 = std::move(r2);
+  mozilla::Unused << r6;
+
+  CHECK(r2.get());
+  CHECK(r6.get());
+
+  // At this point the refcount is 5 again, since NotNull is not movable.
+
   // At function's end all RefPtrs are destroyed and the refcount drops to 0
   // and the MyRefType is destroyed.
 }
@@ -294,14 +303,14 @@ void TestNotNullWithRefPtr() {
 void TestMakeNotNull() {
   // Raw pointer.
   auto nni = MakeNotNull<int*>(11);
-  static_assert(mozilla::IsSame<NotNull<int*>, decltype(nni)>::value,
+  static_assert(std::is_same_v<NotNull<int*>, decltype(nni)>,
                 "MakeNotNull<int*> should return NotNull<int*>");
   CHECK(*nni == 11);
   delete nni;
 
   // Raw pointer to const.
   auto nnci = MakeNotNull<const int*>(12);
-  static_assert(mozilla::IsSame<NotNull<const int*>, decltype(nnci)>::value,
+  static_assert(std::is_same_v<NotNull<const int*>, decltype(nnci)>,
                 "MakeNotNull<const int*> should return NotNull<const int*>");
   CHECK(*nnci == 12);
   delete nnci;
@@ -315,12 +324,12 @@ void TestMakeNotNull() {
     bool IsDerived() const override { return true; }
   };
   auto nnd = MakeNotNull<Derived*>();
-  static_assert(mozilla::IsSame<NotNull<Derived*>, decltype(nnd)>::value,
+  static_assert(std::is_same_v<NotNull<Derived*>, decltype(nnd)>,
                 "MakeNotNull<Derived*> should return NotNull<Derived*>");
   CHECK(nnd->IsDerived());
   delete nnd;
   NotNull<Base*> nnb = MakeNotNull<Derived*>();
-  static_assert(mozilla::IsSame<NotNull<Base*>, decltype(nnb)>::value,
+  static_assert(std::is_same_v<NotNull<Base*>, decltype(nnb)>,
                 "MakeNotNull<Derived*> should be assignable to NotNull<Base*>");
   // Check that we have really built a Derived object.
   CHECK(nnb->IsDerived());
@@ -328,30 +337,46 @@ void TestMakeNotNull() {
 
   // Allow smart pointers.
   auto nnmi = MakeNotNull<MyPtr<int>>(23);
-  static_assert(mozilla::IsSame<NotNull<MyPtr<int>>, decltype(nnmi)>::value,
+  static_assert(std::is_same_v<NotNull<MyPtr<int>>, decltype(nnmi)>,
                 "MakeNotNull<MyPtr<int>> should return NotNull<MyPtr<int>>");
   CHECK(*nnmi == 23);
   delete nnmi.get().get();
 
   auto nnui = MakeNotNull<UniquePtr<int>>(24);
   static_assert(
-      mozilla::IsSame<NotNull<UniquePtr<int>>, decltype(nnui)>::value,
+      std::is_same_v<NotNull<UniquePtr<int>>, decltype(nnui)>,
       "MakeNotNull<UniquePtr<int>> should return NotNull<UniquePtr<int>>");
   CHECK(*nnui == 24);
 
   // Expect only 1 RefCnt (from construction).
   auto nnr = MakeNotNull<RefPtr<MyRefType>>(1);
-  static_assert(
-      mozilla::IsSame<NotNull<RefPtr<MyRefType>>, decltype(nnr)>::value,
-      "MakeNotNull<RefPtr<MyRefType>> should return "
-      "NotNull<RefPtr<MyRefType>>");
+  static_assert(std::is_same_v<NotNull<RefPtr<MyRefType>>, decltype(nnr)>,
+                "MakeNotNull<RefPtr<MyRefType>> should return "
+                "NotNull<RefPtr<MyRefType>>");
   mozilla::Unused << nnr;
+}
+
+mozilla::MovingNotNull<UniquePtr<int>> CreateNotNullUniquePtr() {
+  return mozilla::WrapMovingNotNull(mozilla::MakeUnique<int>(42));
+}
+
+void TestMovingNotNull() {
+  UniquePtr<int> x1 = CreateNotNullUniquePtr();
+  CHECK(x1);
+  CHECK(42 == *x1);
+
+  NotNull<UniquePtr<int>> x2 = CreateNotNullUniquePtr();
+  CHECK(42 == *x2);
+
+  // Must not compile:
+  // auto y = CreateNotNullUniquePtr();
 }
 
 int main() {
   TestNotNullWithMyPtr();
   TestNotNullWithRefPtr();
   TestMakeNotNull();
+  TestMovingNotNull();
 
   return 0;
 }

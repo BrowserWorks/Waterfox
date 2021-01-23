@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- LOCALIZATION NOTE (window.title) : do not translate "LDAP" in below line -->
+<!ENTITY pref.ldap.window.title    "Shërbyesa LDAP Drejtorish">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Shërbyes Drejtorish LDAP:">
+<!-- LOCALIZATION NOTE (directoriesText.label) : do not translate "LDAP" in below line -->
+<!ENTITY directoriesText.label     "Përzgjidhni një Shërbyes LDAP Drejtorish:">
+<!ENTITY directoriesText.accesskey "z">
+
+<!ENTITY addDirectory.label        "Shtoni">
+<!ENTITY addDirectory.accesskey    "S">
+<!ENTITY editDirectory.label       "Përpunojeni">
+<!ENTITY editDirectory.accesskey   "P">
+<!ENTITY deleteDirectory.label     "Fshije">
+<!ENTITY deleteDirectory.accesskey "f">

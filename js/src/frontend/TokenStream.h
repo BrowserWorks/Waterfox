@@ -191,7 +191,6 @@
 #include "mozilla/PodOperations.h"
 #include "mozilla/Span.h"
 #include "mozilla/TextUtils.h"
-#include "mozilla/TypeTraits.h"
 #include "mozilla/Unused.h"
 #include "mozilla/Utf8.h"
 
@@ -200,9 +199,11 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <type_traits>
 
 #include "jspubtd.h"
 
+#include "frontend/CompilationInfo.h"
 #include "frontend/ErrorReporter.h"
 #include "frontend/Token.h"
 #include "frontend/TokenKind.h"
@@ -278,7 +279,7 @@ class TokenStreamShared {
   }
 };
 
-static_assert(mozilla::IsEmpty<TokenStreamShared>::value,
+static_assert(std::is_empty_v<TokenStreamShared>,
               "TokenStreamShared shouldn't bloat classes that inherit from it");
 
 template <typename Unit, class AnyCharsAccess>
@@ -322,13 +323,377 @@ class MOZ_STACK_CLASS TokenStreamPosition final {
 template <typename Unit>
 class SourceUnits;
 
-// Column numbers *ought* be in terms of counts of code points, but in the past
-// we counted code units.  Set this to 0 to keep returning counts of code units
-// (even for UTF-8, which is clearly wrong, but we don't ship UTF-8 yet so this
-// is fine until we can fix users that depend on code-unit counting).
-#define JS_COLUMN_DIMENSION_IS_CODE_POINTS() 0
+/**
+ * This class maps:
+ *
+ *   * a sourceUnits offset (a 0-indexed count of code units)
+ *
+ * to
+ *
+ *   * a (1-indexed) line number and
+ *   * a (0-indexed) offset in code *units* (not code points, not bytes) into
+ *     that line,
+ *
+ * for either |Unit = Utf8Unit| or |Unit = char16_t|.
+ *
+ * Note that the latter quantity is *not* the same as a column number, which is
+ * a count of code *points*.  Computing a column number requires the offset
+ * within the line and the source units of that line (including what type |Unit|
+ * is, to know how to decode them).  If you need a column number, functions in
+ * |GeneralTokenStreamChars<Unit>| will consult this and source units to compute
+ * it.
+ */
+class SourceCoords {
+  // For a given buffer holding source code, |lineStartOffsets_| has one
+  // element per line of source code, plus one sentinel element.  Each
+  // non-sentinel element holds the buffer offset for the start of the
+  // corresponding line of source code.  For this example script,
+  // assuming an initialLineOffset of 0:
+  //
+  // 1  // xyz            [line starts at offset 0]
+  // 2  var x;            [line starts at offset 7]
+  // 3                    [line starts at offset 14]
+  // 4  var y;            [line starts at offset 15]
+  //
+  // |lineStartOffsets_| is:
+  //
+  //   [0, 7, 14, 15, MAX_PTR]
+  //
+  // To convert a "line number" to an "index" into |lineStartOffsets_|,
+  // subtract |initialLineNum_|.  E.g. line 3's index is
+  // (3 - initialLineNum_), which is 2.  Therefore lineStartOffsets_[2]
+  // holds the buffer offset for the start of line 3, which is 14.  (Note
+  // that |initialLineNum_| is often 1, but not always.
+  //
+  // The first element is always initialLineOffset, passed to the
+  // constructor, and the last element is always the MAX_PTR sentinel.
+  //
+  // Offset-to-{line,offset-into-line} lookups are O(log n) in the worst
+  // case (binary search), but in practice they're heavily clustered and
+  // we do better than that by using the previous lookup's result
+  // (lastIndex_) as a starting point.
+  //
+  // Checking if an offset lies within a particular line number
+  // (isOnThisLine()) is O(1).
+  //
+  Vector<uint32_t, 128> lineStartOffsets_;
+
+  /** The line number on which the source text begins. */
+  uint32_t initialLineNum_;
+
+  /**
+   * The index corresponding to the last offset lookup -- used so that if
+   * offset lookups proceed in increasing order, and and the offset appears
+   * in the next couple lines from the last offset, we can avoid a full
+   * binary-search.
+   *
+   * This is mutable because it's modified on every search, but that fact
+   * isn't visible outside this class.
+   */
+  mutable uint32_t lastIndex_;
+
+  uint32_t indexFromOffset(uint32_t offset) const;
+
+  static const uint32_t MAX_PTR = UINT32_MAX;
+
+  uint32_t lineNumberFromIndex(uint32_t index) const {
+    return index + initialLineNum_;
+  }
+
+  uint32_t indexFromLineNumber(uint32_t lineNum) const {
+    return lineNum - initialLineNum_;
+  }
+
+ public:
+  SourceCoords(JSContext* cx, uint32_t initialLineNumber,
+               uint32_t initialOffset);
+
+  MOZ_MUST_USE bool add(uint32_t lineNum, uint32_t lineStartOffset);
+  MOZ_MUST_USE bool fill(const SourceCoords& other);
+
+  bool isOnThisLine(uint32_t offset, uint32_t lineNum, bool* onThisLine) const {
+    uint32_t index = indexFromLineNumber(lineNum);
+    if (index + 1 >= lineStartOffsets_.length()) {  // +1 due to sentinel
+      return false;
+    }
+    *onThisLine = lineStartOffsets_[index] <= offset &&
+                  offset < lineStartOffsets_[index + 1];
+    return true;
+  }
+
+  /**
+   * A token, computed for an offset in source text, that can be used to
+   * access line number and line-offset information for that offset.
+   *
+   * LineToken *alone* exposes whether the corresponding offset is in the
+   * the first line of source (which may not be 1, depending on
+   * |initialLineNumber|), and whether it's in the same line as
+   * another LineToken.
+   */
+  class LineToken {
+    uint32_t index;
+#ifdef DEBUG
+    uint32_t offset_;  // stored for consistency-of-use assertions
+#endif
+
+    friend class SourceCoords;
+
+   public:
+    LineToken(uint32_t index, uint32_t offset)
+        : index(index)
+#ifdef DEBUG
+          ,
+          offset_(offset)
+#endif
+    {
+    }
+
+    bool isFirstLine() const { return index == 0; }
+
+    bool isSameLine(LineToken other) const { return index == other.index; }
+
+    void assertConsistentOffset(uint32_t offset) const {
+      MOZ_ASSERT(offset_ == offset);
+    }
+  };
+
+  /**
+   * Compute a token usable to access information about the line at the
+   * given offset.
+   *
+   * The only information directly accessible in a token is whether it
+   * corresponds to the first line of source text (which may not be line
+   * 1, depending on the |initialLineNumber| value used to construct
+   * this).  Use |lineNumber(LineToken)| to compute the actual line
+   * number (incorporating the contribution of |initialLineNumber|).
+   */
+  LineToken lineToken(uint32_t offset) const;
+
+  /** Compute the line number for the given token. */
+  uint32_t lineNumber(LineToken lineToken) const {
+    return lineNumberFromIndex(lineToken.index);
+  }
+
+  /** Return the offset of the start of the line for |lineToken|. */
+  uint32_t lineStart(LineToken lineToken) const {
+    MOZ_ASSERT(lineToken.index + 1 < lineStartOffsets_.length(),
+               "recorded line-start information must be available");
+    return lineStartOffsets_[lineToken.index];
+  }
+};
+
+enum class UnitsType : unsigned char {
+  PossiblyMultiUnit = 0,
+  GuaranteedSingleUnit = 1,
+};
+
+class ChunkInfo {
+ private:
+  // Store everything in |unsigned char|s so everything packs.
+  unsigned char column_[sizeof(uint32_t)];
+  unsigned char unitsType_;
+
+ public:
+  ChunkInfo(uint32_t col, UnitsType type)
+      : unitsType_(static_cast<unsigned char>(type)) {
+    memcpy(column_, &col, sizeof(col));
+  }
+
+  uint32_t column() const {
+    uint32_t col;
+    memcpy(&col, column_, sizeof(uint32_t));
+    return col;
+  }
+
+  UnitsType unitsType() const {
+    MOZ_ASSERT(unitsType_ <= 1, "unitsType_ must be 0 or 1");
+    return static_cast<UnitsType>(unitsType_);
+  }
+
+  void guaranteeSingleUnits() {
+    MOZ_ASSERT(unitsType() == UnitsType::PossiblyMultiUnit,
+               "should only be setting to possibly optimize from the "
+               "pessimistic case");
+    unitsType_ = static_cast<unsigned char>(UnitsType::GuaranteedSingleUnit);
+  }
+};
+
+enum class InvalidEscapeType {
+  // No invalid character escapes.
+  None,
+  // A malformed \x escape.
+  Hexadecimal,
+  // A malformed \u escape.
+  Unicode,
+  // An otherwise well-formed \u escape which represents a
+  // codepoint > 10FFFF.
+  UnicodeOverflow,
+  // An octal escape in a template token.
+  Octal
+};
 
 class TokenStreamAnyChars : public TokenStreamShared {
+ private:
+  // Constant-at-construction fields.
+
+  JSContext* const cx;
+
+  /** Options used for parsing/tokenizing. */
+  const JS::ReadOnlyCompileOptions& options_;
+
+  /**
+   * Pointer used internally to test whether in strict mode.  Use |strictMode()|
+   * instead of this field.
+   */
+  StrictModeGetter* const strictModeGetter_;
+
+  /** Input filename or null. */
+  const char* const filename_;
+
+  // Column number computation fields.
+
+  /**
+   * A map of (line number => sequence of the column numbers at
+   * |ColumnChunkLength|-unit boundaries rewound [if needed] to the nearest code
+   * point boundary).  (|TokenStreamAnyChars::computePartialColumn| is the sole
+   * user of |ColumnChunkLength| and therefore contains its definition.)
+   *
+   * Entries appear in this map only when a column computation of sufficient
+   * distance is performed on a line -- and only when the column is beyond the
+   * first |ColumnChunkLength| units.  Each line's vector is lazily filled as
+   * greater offsets require column computations.
+   */
+  mutable HashMap<uint32_t, Vector<ChunkInfo>> longLineColumnInfo_;
+
+  // Computing accurate column numbers requires at *some* point linearly
+  // iterating through prior source units in the line, to properly account for
+  // multi-unit code points.  This is quadratic if counting happens repeatedly.
+  //
+  // But usually we need columns for advancing offsets through scripts.  By
+  // caching the last ((line number, offset) => relative column) mapping (in
+  // similar manner to how |SourceCoords::lastIndex_| is used to cache
+  // (offset => line number) mappings) we can usually avoid re-iterating through
+  // the common line prefix.
+  //
+  // Additionally, we avoid hash table lookup costs by caching the
+  // |Vector<ChunkInfo>*| for the line of the last lookup.  (|nullptr| means we
+  // must look it up -- or it hasn't been created yet.)  This pointer is nulled
+  // when a lookup on a new line occurs, but as it's not a pointer at literal,
+  // reallocatable element data, it's *not* invalidated when new entries are
+  // added to such a vector.
+
+  /**
+   * The line in which the last column computation occurred, or UINT32_MAX if
+   * no prior computation has yet happened.
+   */
+  mutable uint32_t lineOfLastColumnComputation_ = UINT32_MAX;
+
+  /**
+   * The chunk vector of the line for that last column computation.  This is
+   * null if the chunk vector needs to be recalculated or initially created.
+   */
+  mutable Vector<ChunkInfo>* lastChunkVectorForLine_ = nullptr;
+
+  /**
+   * The offset (in code units) of the last column computation performed,
+   * relative to source start.
+   */
+  mutable uint32_t lastOffsetOfComputedColumn_ = UINT32_MAX;
+
+  /**
+   * The column number for the offset (in code units) of the last column
+   * computation performed, relative to source start.
+   */
+  mutable uint32_t lastComputedColumn_ = 0;
+
+  // Intra-token fields.
+
+  /**
+   * The offset of the first invalid escape in a template literal.  (If there is
+   * one -- if not, the value of this field is meaningless.)
+   *
+   * See also |invalidTemplateEscapeType|.
+   */
+  uint32_t invalidTemplateEscapeOffset = 0;
+
+  /**
+   * The type of the first invalid escape in a template literal.  (If there
+   * isn't one, this will be |None|.)
+   *
+   * See also |invalidTemplateEscapeOffset|.
+   */
+  InvalidEscapeType invalidTemplateEscapeType = InvalidEscapeType::None;
+
+  // Fields with values relevant across tokens (and therefore potentially across
+  // function boundaries, such that lazy function parsing and stream-seeking
+  // must take care in saving and restoring them).
+
+  /** Line number and offset-to-line mapping information. */
+  SourceCoords srcCoords;
+
+  /** Circular token buffer of gotten tokens that have been ungotten. */
+  Token tokens[ntokens] = {};
+
+  /** The index in |tokens| of the last parsed token. */
+  unsigned cursor_ = 0;
+
+  /** The number of tokens in |tokens| available to be gotten. */
+  unsigned lookahead = 0;
+
+  /** The current line number. */
+  unsigned lineno;
+
+  /** Various flag bits (see above). */
+  TokenStreamFlags flags = {};
+
+  /** The offset of the start of the current line. */
+  size_t linebase = 0;
+
+  /** The start of the previous line, or |size_t(-1)| on the first line. */
+  size_t prevLinebase = size_t(-1);
+
+  /** The user's requested source URL.  Null if none has been set. */
+  UniqueTwoByteChars displayURL_ = nullptr;
+
+  /** The URL of the source map for this script.  Null if none has been set. */
+  UniqueTwoByteChars sourceMapURL_ = nullptr;
+
+  // Assorted boolean fields, none of which require maintenance across tokens,
+  // stored at class end to minimize padding.
+
+  /**
+   * Whether syntax errors should or should not contain details about the
+   * precise nature of the error.  (This is intended for use in suppressing
+   * content-revealing details about syntax errors in cross-origin scripts on
+   * the web.)
+   */
+  const bool mutedErrors;
+
+  /**
+   * An array storing whether a TokenKind observed while attempting to extend
+   * a valid AssignmentExpression into an even longer AssignmentExpression
+   * (e.g., extending '3' to '3 + 5') will terminate it without error.
+   *
+   * For example, ';' always ends an AssignmentExpression because it ends a
+   * Statement or declaration.  '}' always ends an AssignmentExpression
+   * because it terminates BlockStatement, FunctionBody, and embedded
+   * expressions in TemplateLiterals.  Therefore both entries are set to true
+   * in TokenStreamAnyChars construction.
+   *
+   * But e.g. '+' *could* extend an AssignmentExpression, so its entry here
+   * is false.  Meanwhile 'this' can't extend an AssignmentExpression, but
+   * it's only valid after a line break, so its entry here must be false.
+   *
+   * NOTE: This array could be static, but without C99's designated
+   *       initializers it's easier zeroing here and setting the true entries
+   *       in the constructor body.  (Having this per-instance might also aid
+   *       locality.)  Don't worry!  Initialization time for each TokenStream
+   *       is trivial.  See bug 639420.
+   */
+  bool isExprEnding[size_t(TokenKind::Limit)] = {};  // all-false initially
+
+  // End of fields.
+
  public:
   TokenStreamAnyChars(JSContext* cx, const JS::ReadOnlyCompileOptions& options,
                       StrictModeGetter* smg);
@@ -403,7 +768,7 @@ class TokenStreamAnyChars : public TokenStreamShared {
   // This is private because it should only be called by the tokenizer while
   // tokenizing not by, for example, BytecodeEmitter.
   bool strictMode() const {
-    return strictModeGetter && strictModeGetter->strictMode();
+    return strictModeGetter_ && strictModeGetter_->strictMode();
   }
 
   void setInvalidTemplateEscape(uint32_t offset, InvalidEscapeType type) {
@@ -414,9 +779,6 @@ class TokenStreamAnyChars : public TokenStreamShared {
     invalidTemplateEscapeOffset = offset;
     invalidTemplateEscapeType = type;
   }
-
-  uint32_t invalidTemplateEscapeOffset = 0;
-  InvalidEscapeType invalidTemplateEscapeType = InvalidEscapeType::None;
 
  public:
   // Call this immediately after parsing an OrExpression to allow scanning the
@@ -464,155 +826,6 @@ class TokenStreamAnyChars : public TokenStreamShared {
 
   char16_t* sourceMapURL() { return sourceMapURL_.get(); }
 
-  // This class maps a sourceUnits offset (which is 0-indexed) to a line
-  // number (which is 1-indexed) and an offset (which is 0-indexed) in
-  // code *units* (not code points, not bytes) into the line.
-  //
-  // If you need a column number (i.e. an offset in code *points*),
-  // GeneralTokenStreamChars<Unit> contains functions that consult this and
-  // use Unit-specific source text to determine the correct column.
-  class SourceCoords {
-    // For a given buffer holding source code, |lineStartOffsets_| has one
-    // element per line of source code, plus one sentinel element.  Each
-    // non-sentinel element holds the buffer offset for the start of the
-    // corresponding line of source code.  For this example script,
-    // assuming an initialLineOffset of 0:
-    //
-    // 1  // xyz            [line starts at offset 0]
-    // 2  var x;            [line starts at offset 7]
-    // 3                    [line starts at offset 14]
-    // 4  var y;            [line starts at offset 15]
-    //
-    // |lineStartOffsets_| is:
-    //
-    //   [0, 7, 14, 15, MAX_PTR]
-    //
-    // To convert a "line number" to an "index" into |lineStartOffsets_|,
-    // subtract |initialLineNum_|.  E.g. line 3's index is
-    // (3 - initialLineNum_), which is 2.  Therefore lineStartOffsets_[2]
-    // holds the buffer offset for the start of line 3, which is 14.  (Note
-    // that |initialLineNum_| is often 1, but not always.
-    //
-    // The first element is always initialLineOffset, passed to the
-    // constructor, and the last element is always the MAX_PTR sentinel.
-    //
-    // Offset-to-{line,offset-into-line} lookups are O(log n) in the worst
-    // case (binary search), but in practice they're heavily clustered and
-    // we do better than that by using the previous lookup's result
-    // (lastIndex_) as a starting point.
-    //
-    // Checking if an offset lies within a particular line number
-    // (isOnThisLine()) is O(1).
-    //
-    Vector<uint32_t, 128> lineStartOffsets_;
-
-    /** The line number on which the source text begins. */
-    uint32_t initialLineNum_;
-
-    /**
-     * The index corresponding to the last offset lookup -- used so that if
-     * offset lookups proceed in increasing order, and and the offset appears
-     * in the next couple lines from the last offset, we can avoid a full
-     * binary-search.
-     *
-     * This is mutable because it's modified on every search, but that fact
-     * isn't visible outside this class.
-     */
-    mutable uint32_t lastIndex_;
-
-    uint32_t indexFromOffset(uint32_t offset) const;
-
-    static const uint32_t MAX_PTR = UINT32_MAX;
-
-    uint32_t lineNumberFromIndex(uint32_t index) const {
-      return index + initialLineNum_;
-    }
-
-    uint32_t indexFromLineNumber(uint32_t lineNum) const {
-      return lineNum - initialLineNum_;
-    }
-
-   public:
-    SourceCoords(JSContext* cx, uint32_t initialLineNumber,
-                 uint32_t initialOffset);
-
-    MOZ_MUST_USE bool add(uint32_t lineNum, uint32_t lineStartOffset);
-    MOZ_MUST_USE bool fill(const SourceCoords& other);
-
-    bool isOnThisLine(uint32_t offset, uint32_t lineNum,
-                      bool* onThisLine) const {
-      uint32_t index = indexFromLineNumber(lineNum);
-      if (index + 1 >= lineStartOffsets_.length()) {  // +1 due to sentinel
-        return false;
-      }
-      *onThisLine = lineStartOffsets_[index] <= offset &&
-                    offset < lineStartOffsets_[index + 1];
-      return true;
-    }
-
-    /**
-     * A token, computed for an offset in source text, that can be used to
-     * access line number and line-offset information for that offset.
-     *
-     * LineToken *alone* exposes whether the corresponding offset is in the
-     * the first line of source (which may not be 1, depending on
-     * |initialLineNumber|), and whether it's in the same line as
-     * another LineToken.
-     */
-    class LineToken {
-      uint32_t index;
-#ifdef DEBUG
-      uint32_t offset_;  // stored for consistency-of-use assertions
-#endif
-
-      friend class SourceCoords;
-
-     public:
-      explicit LineToken(uint32_t index, uint32_t offset)
-          : index(index)
-#ifdef DEBUG
-            ,
-            offset_(offset)
-#endif
-      {
-      }
-
-      bool isFirstLine() const { return index == 0; }
-
-      bool isSameLine(LineToken other) const { return index == other.index; }
-
-      void assertConsistentOffset(uint32_t offset) const {
-        MOZ_ASSERT(offset_ == offset);
-      }
-    };
-
-    /**
-     * Compute a token usable to access information about the line at the
-     * given offset.
-     *
-     * The only information directly accessible in a token is whether it
-     * corresponds to the first line of source text (which may not be line
-     * 1, depending on the |initialLineNumber| value used to construct
-     * this).  Use |lineNumber(LineToken)| to compute the actual line
-     * number (incorporating the contribution of |initialLineNumber|).
-     */
-    LineToken lineToken(uint32_t offset) const;
-
-    /** Compute the line number for the given token. */
-    uint32_t lineNumber(LineToken lineToken) const {
-      return lineNumberFromIndex(lineToken.index);
-    }
-
-    /** Return the offset of the start of the line for |lineToken|. */
-    uint32_t lineStart(LineToken lineToken) const {
-      MOZ_ASSERT(lineToken.index + 1 < lineStartOffsets_.length(),
-                 "recorded line-start information must be available");
-      return lineStartOffsets_[lineToken.index];
-    }
-  };
-
-  SourceCoords srcCoords;
-
   JSContext* context() const { return cx; }
 
   using LineToken = SourceCoords::LineToken;
@@ -645,7 +858,6 @@ class TokenStreamAnyChars : public TokenStreamShared {
   MOZ_ALWAYS_INLINE void updateFlagsForEOL() { flags.isDirtyLine = false; }
 
  private:
-#if JS_COLUMN_DIMENSION_IS_CODE_POINTS()
   /**
    * Compute the "partial" column number in Unicode code points of the absolute
    * |offset| within source text on the line of |lineToken| (which must have
@@ -697,7 +909,6 @@ class TokenStreamAnyChars : public TokenStreamShared {
   uint32_t computePartialColumn(const LineToken lineToken,
                                 const uint32_t offset,
                                 const SourceUnits<Unit>& sourceUnits) const;
-#endif  // JS_COLUMN_DIMENSION_IS_CODE_POINTS()
 
   /**
    * Update line/column information for the start of a new line at
@@ -762,126 +973,6 @@ class TokenStreamAnyChars : public TokenStreamShared {
   const JS::ReadOnlyCompileOptions& options() const { return options_; }
 
   const char* getFilename() const { return filename_; }
-
- private:
-#if JS_COLUMN_DIMENSION_IS_CODE_POINTS()
-  static constexpr uint32_t ColumnChunkLength = 128;
-
-  enum class UnitsType : unsigned char{
-      PossiblyMultiUnit = 0,
-      GuaranteedSingleUnit = 1,
-  };
-
-  class ChunkInfo {
-   public:
-    ChunkInfo(uint32_t col, UnitsType type)
-        : unitsType_(static_cast<unsigned char>(type)) {
-      memcpy(column_, &col, sizeof(col));
-    }
-
-    uint32_t column() const {
-      uint32_t col;
-      memcpy(&col, column_, sizeof(uint32_t));
-      return col;
-    }
-
-    UnitsType unitsType() const {
-      MOZ_ASSERT(unitsType_ <= 1, "unitsType_ must be 0 or 1");
-      return static_cast<UnitsType>(unitsType_);
-    }
-
-    void guaranteeSingleUnits() {
-      MOZ_ASSERT(unitsType() == UnitsType::PossiblyMultiUnit,
-                 "should only be setting to possibly optimize from the "
-                 "pessimistic case");
-      unitsType_ = static_cast<unsigned char>(UnitsType::GuaranteedSingleUnit);
-    }
-
-   private:
-    // Store everything in |unsigned char|s so everything packs.
-    unsigned char column_[sizeof(uint32_t)];
-    unsigned char unitsType_;
-  };
-
-  /**
-   * Line number (of lines at least |ColumnChunkLength| code units long) to
-   * a sequence of the column numbers at |ColumnChunkLength| boundaries rewound
-   * (if needed) to the nearest code point boundary.
-   *
-   * Entries appear in this map only when a column computation of sufficient
-   * distance is performed on a line, and the vectors are lazily filled as
-   * greater offsets within lines require column computations.
-   */
-  mutable HashMap<uint32_t, Vector<ChunkInfo>> longLineColumnInfo_;
-#endif  // JS_COLUMN_DIMENSION_IS_CODE_POINTS()
-
- protected:
-  // Options used for parsing/tokenizing.
-  const JS::ReadOnlyCompileOptions& options_;
-
-  Token tokens[ntokens];  // circular token buffer
- private:
-  unsigned cursor_;  // index of last parsed token
- protected:
-  unsigned lookahead;      // count of lookahead tokens
-  unsigned lineno;         // current line number
-  TokenStreamFlags flags;  // flags -- see above
-  size_t linebase;         // start of current line
-  size_t
-      prevLinebase;  // start of previous line;  size_t(-1) if on the first line
-  const char* filename_;             // input filename or null
-  UniqueTwoByteChars displayURL_;    // the user's requested source URL or null
-  UniqueTwoByteChars sourceMapURL_;  // source map's filename or null
-
-  /**
-   * An array storing whether a TokenKind observed while attempting to extend
-   * a valid AssignmentExpression into an even longer AssignmentExpression
-   * (e.g., extending '3' to '3 + 5') will terminate it without error.
-   *
-   * For example, ';' always ends an AssignmentExpression because it ends a
-   * Statement or declaration.  '}' always ends an AssignmentExpression
-   * because it terminates BlockStatement, FunctionBody, and embedded
-   * expressions in TemplateLiterals.  Therefore both entries are set to true
-   * in TokenStreamAnyChars construction.
-   *
-   * But e.g. '+' *could* extend an AssignmentExpression, so its entry here
-   * is false.  Meanwhile 'this' can't extend an AssignmentExpression, but
-   * it's only valid after a line break, so its entry here must be false.
-   *
-   * NOTE: This array could be static, but without C99's designated
-   *       initializers it's easier zeroing here and setting the true entries
-   *       in the constructor body.  (Having this per-instance might also aid
-   *       locality.)  Don't worry!  Initialization time for each TokenStream
-   *       is trivial.  See bug 639420.
-   */
-  bool isExprEnding[size_t(TokenKind::Limit)] = {};  // all-false initially
-
-  JSContext* const cx;
-  bool mutedErrors;
-  StrictModeGetter* strictModeGetter;  // used to test for strict mode
-
-#if JS_COLUMN_DIMENSION_IS_CODE_POINTS()
-  // Computing accurate column numbers requires at *some* point linearly
-  // iterating through prior source units in the line to properly account for
-  // multi-unit code points.  This is quadratic if counting happens repeatedly.
-  //
-  // But usually we need columns for advancing offsets through scripts.  By
-  // caching the last ((line number, offset) => relative column) mapping (in
-  // similar manner to how |SourceUnits::lastIndex_| is used to cache
-  // (offset => line number) mappings) we can usually avoid re-iterating through
-  // the common line prefix.
-  //
-  // Additionally, we avoid hash table lookup costs by caching the
-  // |Vector<ChunkInfo>*| for the line of the last lookup.  (|nullptr| means we
-  // have to look it up -- or it hasn't been created yet.)  This pointer is
-  // invalidated when a lookup on a new line occurs, but as it's not a pointer
-  // at literal element data, it's *not* invalidated when new entries are added
-  // to such a vector.
-  mutable uint32_t lineOfLastColumnComputation_ = UINT32_MAX;
-  mutable Vector<ChunkInfo>* lastChunkVectorForLine_ = nullptr;
-  mutable uint32_t lastOffsetOfComputedColumn_ = UINT32_MAX;
-  mutable uint32_t lastComputedColumn_ = 0;
-#endif  // JS_COLUMN_DIMENSION_IS_CODE_POINTS()
 };
 
 constexpr char16_t CodeUnitValue(char16_t unit) { return unit; }
@@ -1058,6 +1149,19 @@ inline bool IsSingleUnitLineTerminator(mozilla::Utf8Unit unit) {
 // begins, the offset of |buf[0]|.
 template <typename Unit>
 class SourceUnits {
+ private:
+  /** Base of buffer. */
+  const Unit* base_;
+
+  /** Offset of base_[0]. */
+  uint32_t startOffset_;
+
+  /** Limit for quick bounds check. */
+  const Unit* limit_;
+
+  /** Next char to get. */
+  const Unit* ptr;
+
  public:
   SourceUnits(const Unit* units, size_t length, size_t startOffset)
       : base_(units),
@@ -1363,19 +1467,6 @@ class SourceUnits {
                                            size_t* utf16TokenOffset,
                                            size_t encodingSpecificWindowLength,
                                            size_t* utf16WindowLength);
-
- private:
-  /** Base of buffer. */
-  const Unit* base_;
-
-  /** Offset of base_[0]. */
-  uint32_t startOffset_;
-
-  /** Limit for quick bounds check. */
-  const Unit* limit_;
-
-  /** Next char to get. */
-  const Unit* ptr;
 };
 
 template <>
@@ -1416,8 +1507,13 @@ class TokenStreamCharsShared {
    */
   CharBuffer charBuffer;
 
+  /** Information for parsing with a lifetime longer than the parser itself. */
+  CompilationInfo* compilationInfo;
+
  protected:
-  explicit TokenStreamCharsShared(JSContext* cx) : charBuffer(cx) {}
+  explicit TokenStreamCharsShared(JSContext* cx,
+                                  CompilationInfo* compilationInfo)
+      : charBuffer(cx), compilationInfo(compilationInfo) {}
 
   MOZ_MUST_USE bool appendCodePointToCharBuffer(uint32_t codePoint);
 
@@ -1431,7 +1527,7 @@ class TokenStreamCharsShared {
    */
   static constexpr MOZ_ALWAYS_INLINE MOZ_MUST_USE bool isAsciiCodePoint(
       int32_t unit) {
-    return mozilla::IsAscii(unit);
+    return mozilla::IsAscii(static_cast<char32_t>(unit));
   }
 
   JSAtom* drainCharBufferIntoAtom(JSContext* cx) {
@@ -1474,8 +1570,16 @@ inline mozilla::Span<const char> ToCharSpan(
 template <typename Unit>
 class TokenStreamCharsBase : public TokenStreamCharsShared {
  protected:
-  TokenStreamCharsBase(JSContext* cx, const Unit* units, size_t length,
-                       size_t startOffset);
+  using SourceUnits = frontend::SourceUnits<Unit>;
+
+  /** Code units in the source code being tokenized. */
+  SourceUnits sourceUnits;
+
+  // End of fields.
+
+ protected:
+  TokenStreamCharsBase(JSContext* cx, CompilationInfo* compilationInfo,
+                       const Unit* units, size_t length, size_t startOffset);
 
   /**
    * Convert a non-EOF code unit returned by |getCodeUnit()| or
@@ -1493,8 +1597,6 @@ class TokenStreamCharsBase : public TokenStreamCharsShared {
 
   static MOZ_ALWAYS_INLINE JSAtom* atomizeSourceChars(
       JSContext* cx, mozilla::Span<const Unit> units);
-
-  using SourceUnits = frontend::SourceUnits<Unit>;
 
   /**
    * Try to match a non-LineTerminator ASCII code point.  Return true iff it
@@ -1559,10 +1661,6 @@ class TokenStreamCharsBase : public TokenStreamCharsShared {
    * of its existing callers instead.
    */
   MOZ_MUST_USE bool addLineOfContext(ErrorMetadata* err, uint32_t offset);
-
- protected:
-  /** Code units in the source code being tokenized. */
-  SourceUnits sourceUnits;
 };
 
 template <>
@@ -1831,7 +1929,7 @@ class GeneralTokenStreamChars : public SpecializedTokenStreamCharsBase<Unit> {
 
   TokenStreamSpecific* asSpecific() {
     static_assert(
-        mozilla::IsBaseOf<GeneralTokenStreamChars, TokenStreamSpecific>::value,
+        std::is_base_of_v<GeneralTokenStreamChars, TokenStreamSpecific>,
         "static_cast below presumes an inheritance relationship");
 
     return static_cast<TokenStreamSpecific*>(this);
@@ -2354,7 +2452,8 @@ class MOZ_STACK_CLASS TokenStreamSpecific
   friend class TokenStreamPosition;
 
  public:
-  TokenStreamSpecific(JSContext* cx, const JS::ReadOnlyCompileOptions& options,
+  TokenStreamSpecific(JSContext* cx, CompilationInfo* compilationInfo,
+                      const JS::ReadOnlyCompileOptions& options,
                       const Unit* units, size_t length);
 
   /**
@@ -2456,6 +2555,8 @@ class MOZ_STACK_CLASS TokenStreamSpecific
   using IsIntegerUnit = bool (*)(int32_t);
   MOZ_MUST_USE MOZ_ALWAYS_INLINE bool matchInteger(IsIntegerUnit isIntegerUnit,
                                                    int32_t* nextUnit);
+  MOZ_MUST_USE MOZ_ALWAYS_INLINE bool matchIntegerAfterFirstDigit(
+      IsIntegerUnit isIntegerUnit, int32_t* nextUnit);
 
   /**
    * Tokenize a decimal number that begins at |numStart| into the provided
@@ -2791,17 +2892,24 @@ class TokenStreamAnyCharsAccess {
       const TokenStreamSpecific* tss);
 };
 
-class MOZ_STACK_CLASS TokenStream final
+class MOZ_STACK_CLASS TokenStream
     : public TokenStreamAnyChars,
       public TokenStreamSpecific<char16_t, TokenStreamAnyCharsAccess> {
   using Unit = char16_t;
 
  public:
-  TokenStream(JSContext* cx, const JS::ReadOnlyCompileOptions& options,
-              const Unit* units, size_t length, StrictModeGetter* smg)
+  TokenStream(JSContext* cx, CompilationInfo* compilationInfo,
+              const JS::ReadOnlyCompileOptions& options, const Unit* units,
+              size_t length, StrictModeGetter* smg)
       : TokenStreamAnyChars(cx, options, smg),
-        TokenStreamSpecific<Unit, TokenStreamAnyCharsAccess>(cx, options, units,
-                                                             length) {}
+        TokenStreamSpecific<Unit, TokenStreamAnyCharsAccess>(
+            cx, compilationInfo, options, units, length) {}
+};
+
+class MOZ_STACK_CLASS DummyTokenStream final : public TokenStream {
+ public:
+  DummyTokenStream(JSContext* cx, const JS::ReadOnlyCompileOptions& options)
+      : TokenStream(cx, nullptr, options, nullptr, 0, nullptr) {}
 };
 
 template <class TokenStreamSpecific>

@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY settings.caption "Ynstellingen">
+<!ENTITY security.caption "Befeiliging en autentikaasje">
+<!ENTITY serverName.label "Servernamme:">
+<!ENTITY serverName.accesskey "S">
+<!ENTITY serverDescription.label "Omskriuwing:">
+<!ENTITY serverDescription.accesskey "O">
+<!ENTITY serverPort.label "Poarte:">
+<!ENTITY serverPort.accesskey "P">
+<!ENTITY userName.label "Brûkersnamme:">
+<!ENTITY userName.accesskey "e">
+<!ENTITY connectionSecurity.label "Ferbiningsfeilichheid:">
+<!ENTITY connectionSecurity.accesskey "n">
+<!ENTITY connectionSecurityType-0.label "Gjin">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, as beskikber">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY smtpEditTitle.label "SMTP-server">
+<!ENTITY serverPortDefault.label "Standert:">
+<!ENTITY authMethod.label "Autentikaasjemetoade:">
+<!ENTITY authMethod.accesskey "i">

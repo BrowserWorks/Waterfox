@@ -1,3 +1,5 @@
+/* import-globals-from common.js */
+
 // //////////////////////////////////////////////////////////////////////////////
 // Public
 
@@ -71,47 +73,6 @@ function testText(aIDs, aStartOffset, aEndOffset, aText, aTodoFlag) {
           aEndOffset +
           " for '" +
           prettyName(ids[i]) +
-          "'"
-      );
-    }
-  }
-}
-
-/**
- * Test password text between two given offsets
- *
- * @param aIDs          [in] an array of accessible IDs to test
- * @param aStartOffset  [in] the start offset within the text to test
- * @param aEndOffset    [in] the end offset up to which the text is tested
- * @param aText         [in] the expected result from the test
- *
- * @note  All this function does is test that getText doe snot expose the
- *        password text itself, but something else.
- */
-function testPasswordText(aIDs, aStartOffset, aEndOffset, aText) {
-  for (var i = 0; i < aIDs.length; i++) {
-    var acc = getAccessible(aIDs[i], nsIAccessibleText);
-    try {
-      isnot(
-        acc.getText(aStartOffset, aEndOffset),
-        aText,
-        "getText: plain text between start and end offsets '" +
-          aStartOffset +
-          "', '" +
-          aEndOffset +
-          " for '" +
-          prettyName(aIDs[i]) +
-          "'"
-      );
-    } catch (e) {
-      ok(
-        false,
-        "getText fails between start and end offsets '" +
-          aStartOffset +
-          "', '" +
-          aEndOffset +
-          " for '" +
-          prettyName(aIDs[i]) +
           "'"
       );
     }
@@ -361,7 +322,7 @@ function testWordAt(aElement, aWordIndex, aText, aToDoFlag) {
   var wordIdx = aWordIndex;
   var startOffsetObj = { value: 0 },
     endOffsetObj = { value: 0 };
-  for (offset = 0; offset < textLength; offset = endOffsetObj.value) {
+  for (let offset = 0; offset < textLength; offset = endOffsetObj.value) {
     acc.getTextAtOffset(
       offset,
       BOUNDARY_WORD_START,
@@ -416,7 +377,7 @@ function testWordAt(aElement, aWordIndex, aText, aToDoFlag) {
     return;
   }
 
-  text = acc.getText(startWordOffset, endWordOffset);
+  let text = acc.getText(startWordOffset, endWordOffset);
   isFunc(
     text,
     aText,

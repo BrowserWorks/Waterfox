@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Ketab'al Chayub'äl">
+<!ENTITY filterEditorDialog.dimensions "width: 100ch;">
+<!ENTITY filterName.label "Chayub'äl b'i'aj:">
+<!ENTITY filterName.accesskey "a">
+
+<!ENTITY junk.label "Seq'">
+<!ENTITY notJunk.label "Man Seq' Ta">
+
+<!ENTITY lowestPriorityCmd.label "Ch'utin">
+<!ENTITY lowPriorityCmd.label "Ko'öl">
+<!ENTITY normalPriorityCmd.label "Relik">
+<!ENTITY highPriorityCmd.label "Nïm">
+<!ENTITY highestPriorityCmd.label "Yalan nïm">
+
+<!ENTITY contextDesc.label "Tokisäx chayub'äl toq:">
+<!ENTITY contextIncomingMail.label "Nik'ul K'ak'a' Taqoya'l:">
+<!ENTITY contextIncomingMail.accesskey "N">
+<!ENTITY contextManual.label "Tisamajin chi Q'ab'aj">
+<!ENTITY contextManual.accesskey "T">
+<!ENTITY contextBeforeCls.label "Tichayüx chuwäch ri Rucha'oj Seq'">
+<!ENTITY contextAfterCls.label "Tichayüx chi rij ri Rucha'oj Seq'">
+<!ENTITY contextOutgoing.label "Chi rij toq Nitaq">
+<!ENTITY contextOutgoing.accesskey "N">
+<!ENTITY contextArchive.label "Niyak">
+<!ENTITY contextArchive.accesskey "N">
+<!ENTITY contextPeriodic.accesskey "C">
+
+<!ENTITY filterActionDesc.label "Kesamajib'ëx re taq b'anoj re':">
+<!ENTITY filterActionDesc.accesskey "K">
+
+<!ENTITY filterActionOrderWarning.label "Ch'utitzijol: Ri taq rub'anoj chayuj xkisamajib'ëx rik'in jalajöj rucholajem.">
+<!ENTITY filterActionOrder.label "Titz'et rucholajem taqoj">
+
+<!-- New Style Filter Rule Actions -->
+<!ENTITY moveMessage.label "Tisilöx Rutzijol pa">
+<!ENTITY copyMessage.label "Tiwachib'ëx Rutzijol pa">
+<!ENTITY forwardTo.label "Ketaq chik Rutzijol pa">
+<!ENTITY replyWithTemplate.label "Titzolïx tzij rik'in Kaxawäch">
+<!ENTITY markMessageRead.label "Tiya' Retal Achi'el Sik'in">
+<!ENTITY markMessageUnread.label "Tiya' Retal Achi'el Man Sik'in Ta">
+<!ENTITY markMessageStarred.label "Titz'aqatisäx Ch'umil">
+<!ENTITY setPriority.label "Tiya' Rejqalem chi re">
+<!ENTITY addTag.label "Retal Rutzijol">
+<!ENTITY setJunkScore.label "Tiya' Rub'anikil Seq' chi re">
+<!ENTITY deleteMessage.label "Tiyuj Tzijol">
+<!ENTITY deleteFromPOP.label "Tiyuj Pa Ri POP K'uxasamaj">
+<!ENTITY fetchFromPOP.label "Tik'am Pe Pa Ri POP K'uxasamaj">
+<!ENTITY ignoreThread.label "Tirepüx Ch'ab'enïk">
+<!ENTITY ignoreSubthread.label "Tirepüx Achch'ab'enïk">
+<!ENTITY watchThread.label "Titzu' jun Ch'ab'enïk">
+<!ENTITY stopExecution.label "Tiq'at Rusamajixik Chayub'äl">
+
+<!ENTITY addAction.tooltip "Titz'aqatisäx jun k'ak'a' b'anoj">
+<!ENTITY removeAction.tooltip "Tiyuj re b'anoj re'">
+
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- Flex Attribute: https://developer.mozilla.org/docs/XUL/Attribute/flex -->
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">

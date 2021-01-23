@@ -4,13 +4,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "ipc/IPCMessageUtils.h"
-#include "mozilla/ErrorResult.h"
-#include "mozilla/Assertions.h"
-#include "mozilla/Move.h"
-
 #ifndef IPC_ErrorIPCUtils_h
-#  define IPC_ErrorIPCUtils_h
+#define IPC_ErrorIPCUtils_h
+
+#include <utility>
+
+#include "ipc/IPCMessageUtils.h"
+#include "mozilla/Assertions.h"
+#include "mozilla/ErrorResult.h"
 
 namespace IPC {
 
@@ -32,9 +33,9 @@ struct ParamTraits<mozilla::ErrorResult> {
     MOZ_ASSERT_IF(aParam.IsJSException(),
                   aParam.mMightHaveUnreportedJSException);
     if (aParam.IsJSException()
-#  ifdef DEBUG
+#ifdef DEBUG
         || aParam.mMightHaveUnreportedJSException
-#  endif
+#endif
     ) {
       MOZ_CRASH(
           "Cannot encode an ErrorResult representing a Javascript exception");
@@ -48,6 +49,11 @@ struct ParamTraits<mozilla::ErrorResult> {
     } else if (aParam.IsDOMException()) {
       aParam.SerializeDOMExceptionInfo(aMsg);
     }
+  }
+
+  static void Write(Message* aMsg, paramType&& aParam) {
+    Write(aMsg, static_cast<const paramType&>(aParam));
+    aParam.SuppressException();
   }
 
   static bool Read(const Message* aMsg, PickleIterator* aIter,
@@ -89,8 +95,10 @@ struct ParamTraits<mozilla::CopyableErrorResult> {
 
   static bool Read(const Message* aMsg, PickleIterator* aIter,
                    paramType* aResult) {
-    mozilla::ErrorResult& ref = static_cast<mozilla::ErrorResult&>(*aResult);
-    return ParamTraits<mozilla::ErrorResult>::Read(aMsg, aIter, &ref);
+    // We can't cast *aResult to ErrorResult&, so cheat and just cast
+    // to ErrorResult*.
+    return ParamTraits<mozilla::ErrorResult>::Read(
+        aMsg, aIter, reinterpret_cast<mozilla::ErrorResult*>(aResult));
   }
 };
 

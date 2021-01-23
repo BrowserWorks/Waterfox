@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.tags.title            "Rótulos">
+<!ENTITY pref.tags.caption          "Personalizar rótulos">
+<!ENTITY pref.tags.description      "Rótulos podem ser usados para categorizar e priorizar suas mensagens. Modifique a aparência e importância dos rótulos usando as opções abaixo. Rótulos mais acima são mais importantes que os que estejam abaixo.">
+<!ENTITY tagColumn.label            "Rótulo">
+<!ENTITY colorColumn.label          "Cor">
+<!ENTITY defaultTagName.label       "Rótulo sem nome">
+<!ENTITY addTagButton.label         "Adicionar">
+<!ENTITY addTagButton.accesskey     "d">
+<!ENTITY deleteTagButton.label      "Excluir">
+<!ENTITY deleteTagButton.accesskey  "E">
+<!ENTITY raiseTagButton.label       "Aumentar importância">
+<!ENTITY raiseTagButton.accesskey   "A">
+<!ENTITY lowerTagButton.label       "Diminuir importância">
+<!ENTITY lowerTagButton.accesskey   "D">
+<!ENTITY restoreButton.label        "Restaurar padrões">
+<!ENTITY restoreButton.accesskey    "R">

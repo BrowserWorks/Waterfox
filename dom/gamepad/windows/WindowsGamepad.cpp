@@ -15,7 +15,6 @@
 #include <stdio.h>
 #include <xinput.h>
 
-#include "nsIComponentManager.h"
 #include "nsITimer.h"
 #include "nsTArray.h"
 #include "nsThreadUtils.h"
@@ -318,7 +317,9 @@ class WindowsGamepadService {
   void Shutdown();
   // Parse gamepad input from a WM_INPUT message.
   bool HandleRawInput(HRAWINPUT handle);
-
+  void SetLightIndicatorColor(uint32_t aControllerIdx, uint32_t aLightIndex,
+                              uint8_t aRed, uint8_t aGreen, uint8_t aBlue);
+  size_t WriteOutputReport(const std::vector<uint8_t>& aReport);
   static void XInputMessageLoopOnceCallback(nsITimer* aTimer, void* aClosure);
   static void DevicesChangeCallback(nsITimer* aTimer, void* aService);
 
@@ -342,6 +343,7 @@ class WindowsGamepadService {
   nsTArray<Gamepad> mGamepads;
 
   HIDLoader mHID;
+  nsAutoHandle mHidHandle;
   XInputLoader mXInput;
 
   nsCOMPtr<nsITimer> mDirectInputTimer;
@@ -434,9 +436,9 @@ bool WindowsGamepadService::ScanForXInputDevices() {
     gamepad.state = state;
     gamepad.id = service->AddGamepad(
         "xinput", GamepadMappingType::Standard, GamepadHand::_empty,
-        kStandardGamepadButtons, kStandardGamepadAxes,
+        kStandardGamepadButtons, kStandardGamepadAxes, 0, 0,
         0);  // TODO: Bug 680289, implement gamepad haptics for Windows.
-    mGamepads.AppendElement(gamepad);
+    mGamepads.AppendElement(std::move(gamepad));
   }
 
   return found;
@@ -514,13 +516,13 @@ void WindowsGamepadService::CheckXInputChanges(Gamepad& gamepad,
 
   // Then triggers
   if (state.Gamepad.bLeftTrigger != gamepad.state.Gamepad.bLeftTrigger) {
-    bool pressed =
+    const bool pressed =
         state.Gamepad.bLeftTrigger >= XINPUT_GAMEPAD_TRIGGER_THRESHOLD;
     service->NewButtonEvent(gamepad.id, kButtonLeftTrigger, pressed,
                             state.Gamepad.bLeftTrigger / 255.0);
   }
   if (state.Gamepad.bRightTrigger != gamepad.state.Gamepad.bRightTrigger) {
-    bool pressed =
+    const bool pressed =
         state.Gamepad.bRightTrigger >= XINPUT_GAMEPAD_TRIGGER_THRESHOLD;
     service->NewButtonEvent(gamepad.id, kButtonRightTrigger, pressed,
                             state.Gamepad.bRightTrigger / 255.0);
@@ -529,20 +531,24 @@ void WindowsGamepadService::CheckXInputChanges(Gamepad& gamepad,
   // Finally deal with analog sticks
   // TODO: bug 1001955 - Support deadzones.
   if (state.Gamepad.sThumbLX != gamepad.state.Gamepad.sThumbLX) {
+    const float div = state.Gamepad.sThumbLX > 0 ? 32767.0 : 32768.0;
     service->NewAxisMoveEvent(gamepad.id, kLeftStickXAxis,
-                              state.Gamepad.sThumbLX / 32767.0);
+                              state.Gamepad.sThumbLX / div);
   }
   if (state.Gamepad.sThumbLY != gamepad.state.Gamepad.sThumbLY) {
+    const float div = state.Gamepad.sThumbLY > 0 ? 32767.0 : 32768.0;
     service->NewAxisMoveEvent(gamepad.id, kLeftStickYAxis,
-                              -1.0 * state.Gamepad.sThumbLY / 32767.0);
+                              -1.0 * state.Gamepad.sThumbLY / div);
   }
   if (state.Gamepad.sThumbRX != gamepad.state.Gamepad.sThumbRX) {
+    const float div = state.Gamepad.sThumbRX > 0 ? 32767.0 : 32768.0;
     service->NewAxisMoveEvent(gamepad.id, kRightStickXAxis,
-                              state.Gamepad.sThumbRX / 32767.0);
+                              state.Gamepad.sThumbRX / div);
   }
   if (state.Gamepad.sThumbRY != gamepad.state.Gamepad.sThumbRY) {
+    const float div = state.Gamepad.sThumbRY > 0 ? 32767.0 : 32768.0;
     service->NewAxisMoveEvent(gamepad.id, kRightStickYAxis,
-                              -1.0 * state.Gamepad.sThumbRY / 32767.0);
+                              -1.0 * state.Gamepad.sThumbRY / div);
   }
   gamepad.state = state;
 }
@@ -625,18 +631,19 @@ bool WindowsGamepadService::GetRawGamepad(HANDLE handle) {
   wchar_t name[128] = {0};
   size = sizeof(name);
   nsTArray<char> gamepad_name;
-  const HANDLE hid_handle = CreateFile(
-      devname.Elements(), GENERIC_READ | GENERIC_WRITE,
-      FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
-  if (hid_handle) {
-    if (mHID.mHidD_GetProductString(hid_handle, &name, size)) {
+  // Creating this file with FILE_FLAG_OVERLAPPED to perform
+  // an asynchronous request in WriteOutputReport.
+  mHidHandle.own(CreateFile(devname.Elements(), GENERIC_READ | GENERIC_WRITE,
+                            FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
+                            OPEN_EXISTING, FILE_FLAG_OVERLAPPED, nullptr));
+  if (mHidHandle != INVALID_HANDLE_VALUE) {
+    if (mHID.mHidD_GetProductString(mHidHandle, &name, size)) {
       int bytes = WideCharToMultiByte(CP_UTF8, 0, name, -1, nullptr, 0, nullptr,
                                       nullptr);
       gamepad_name.SetLength(bytes);
       WideCharToMultiByte(CP_UTF8, 0, name, -1, gamepad_name.Elements(), bytes,
                           nullptr, nullptr);
     }
-    CloseHandle(hid_handle);
   }
   if (gamepad_name.Length() == 0 || !gamepad_name[0]) {
     const char kUnknown[] = "Unknown Gamepad";
@@ -691,8 +698,9 @@ bool WindowsGamepadService::GetRawGamepad(HANDLE handle) {
   axes.SetLength(kAxesLengthCap);
 
   // Looking for the exisiting ramapping rule.
-  RefPtr<GamepadRemapper> remapper =
-      GetGamepadRemapper(rdi.hid.dwVendorId, rdi.hid.dwProductId);
+  bool defaultRemapper = false;
+  RefPtr<GamepadRemapper> remapper = GetGamepadRemapper(
+      rdi.hid.dwVendorId, rdi.hid.dwProductId, defaultRemapper);
   MOZ_ASSERT(remapper);
 
   for (size_t i = 0; i < count; i++) {
@@ -717,10 +725,22 @@ bool WindowsGamepadService::GetRawGamepad(HANDLE handle) {
   }
 
   gamepad.remapper = remapper.forget();
+  // TODO: Bug 680289, implement gamepad haptics for Windows.
   gamepad.id = service->AddGamepad(
       gamepad_id, gamepad.remapper->GetMappingType(), GamepadHand::_empty,
-      gamepad.remapper->GetButtonCount(), gamepad.remapper->GetAxisCount(), 0);
-  mGamepads.AppendElement(gamepad);
+      gamepad.remapper->GetButtonCount(), gamepad.remapper->GetAxisCount(), 0,
+      gamepad.remapper->GetLightIndicatorCount(),
+      gamepad.remapper->GetTouchEventCount());
+
+  nsTArray<GamepadLightIndicatorType> lightTypes;
+  gamepad.remapper->GetLightIndicators(lightTypes);
+  for (uint32_t i = 0; i < lightTypes.Length(); ++i) {
+    if (lightTypes[i] != GamepadLightIndicator::DefaultType()) {
+      service->NewLightIndicatorTypeEvent(gamepad.id, i, lightTypes[i]);
+    }
+  }
+
+  mGamepads.AppendElement(std::move(gamepad));
   return true;
 }
 
@@ -833,7 +853,79 @@ bool WindowsGamepadService::HandleRawInput(HRAWINPUT handle) {
     }
   }
 
+  BYTE* rawData = raw->data.hid.bRawData;
+  gamepad->remapper->ProcessTouchData(gamepad->id, rawData);
+
   return true;
+}
+
+void WindowsGamepadService::SetLightIndicatorColor(uint32_t aControllerIdx,
+                                                   uint32_t aLightColorIndex,
+                                                   uint8_t aRed, uint8_t aGreen,
+                                                   uint8_t aBlue) {
+  // We get aControllerIdx from GamepadPlatformService::AddGamepad(),
+  // It begins from 1 and is stored at Gamepad.id.
+  const Gamepad* gamepad = nullptr;
+  for (const auto& pad : mGamepads) {
+    if (pad.id == aControllerIdx) {
+      gamepad = &pad;
+      break;
+    }
+  }
+  if (!gamepad) {
+    MOZ_ASSERT(false);
+    return;
+  }
+
+  RefPtr<GamepadRemapper> remapper = gamepad->remapper;
+  if (!remapper || remapper->GetLightIndicatorCount() <= aLightColorIndex) {
+    MOZ_ASSERT(false);
+    return;
+  }
+
+  std::vector<uint8_t> report;
+  remapper->GetLightColorReport(aRed, aGreen, aBlue, report);
+  WriteOutputReport(report);
+}
+
+size_t WindowsGamepadService::WriteOutputReport(
+    const std::vector<uint8_t>& aReport) {
+  DCHECK(static_cast<const void*>(aReport.data()));
+  DCHECK_GE(aReport.size(), 1U);
+  if (!mHidHandle) return 0;
+
+  nsAutoHandle eventHandle(::CreateEvent(nullptr, FALSE, FALSE, nullptr));
+  OVERLAPPED overlapped = {0};
+  overlapped.hEvent = eventHandle;
+
+  // Doing an asynchronous write to allows us to time out
+  // if the write takes too long.
+  DWORD bytesWritten = 0;
+  BOOL writeSuccess =
+      ::WriteFile(mHidHandle, static_cast<const void*>(aReport.data()),
+                  aReport.size(), &bytesWritten, &overlapped);
+  if (!writeSuccess) {
+    DWORD error = ::GetLastError();
+    if (error == ERROR_IO_PENDING) {
+      // Wait for the write to complete. This causes WriteOutputReport to behave
+      // synchronously but with a timeout.
+      DWORD wait_object = ::WaitForSingleObject(overlapped.hEvent, 100);
+      if (wait_object == WAIT_OBJECT_0) {
+        if (!::GetOverlappedResult(mHidHandle, &overlapped, &bytesWritten,
+                                   TRUE)) {
+          return 0;
+        }
+      } else {
+        // Wait failed, or the timeout was exceeded before the write completed.
+        // Cancel the write request.
+        if (::CancelIo(mHidHandle)) {
+          wait_object = ::WaitForSingleObject(overlapped.hEvent, INFINITE);
+          MOZ_ASSERT(wait_object == WAIT_OBJECT_0);
+        }
+      }
+    }
+  }
+  return writeSuccess ? bytesWritten : 0;
 }
 
 void WindowsGamepadService::Startup() { ScanForDevices(); }
@@ -851,6 +943,7 @@ void WindowsGamepadService::Cleanup() {
   if (mDeviceChangeTimer) {
     mDeviceChangeTimer->Cancel();
   }
+
   mGamepads.Clear();
 }
 
@@ -999,6 +1092,17 @@ void StopGamepadMonitoring() {
                            NS_DISPATCH_NORMAL);
   gMonitorThread->Shutdown();
   gMonitorThread = nullptr;
+}
+
+void SetGamepadLightIndicatorColor(uint32_t aControllerIdx,
+                                   uint32_t aLightColorIndex, uint8_t aRed,
+                                   uint8_t aGreen, uint8_t aBlue) {
+  MOZ_ASSERT(gService);
+  if (!gService) {
+    return;
+  }
+  gService->SetLightIndicatorColor(aControllerIdx, aLightColorIndex, aRed,
+                                   aGreen, aBlue);
 }
 
 }  // namespace dom

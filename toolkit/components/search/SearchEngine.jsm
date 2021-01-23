@@ -26,6 +26,13 @@ const BinaryInputStream = Components.Constructor(
   "setInputStream"
 );
 
+XPCOMUtils.defineLazyPreferenceGetter(
+  this,
+  "gModernConfig",
+  SearchUtils.BROWSER_SEARCH_PREF + "modernConfig",
+  false
+);
+
 const SEARCH_BUNDLE = "chrome://global/locale/search/search.properties";
 const BRAND_BUNDLE = "chrome://branding/locale/brand.properties";
 
@@ -89,10 +96,12 @@ var OS_UNSUPPORTED_PARAMS = [
 
 /**
  * Truncates big blobs of (data-)URIs to console-friendly sizes
- * @param str
- *        String to tone down
- * @param len
- *        Maximum length of the string to return. Defaults to the length of a tweet.
+ * @param {string} str
+ *   String to tone down
+ * @param {number} len
+ *   Maximum length of the string to return. Defaults to the length of a tweet.
+ * @returns {string}
+ *   The shortend string.
  */
 function limitURILength(str, len) {
   len = len || 140;
@@ -105,13 +114,14 @@ function limitURILength(str, len) {
 /**
  * Ensures an assertion is met before continuing. Should be used to indicate
  * fatal errors.
- * @param  assertion
- *         An assertion that must be met
- * @param  message
- *         A message to display if the assertion is not met
- * @param  resultCode
- *         The NS_ERROR_* value to throw if the assertion is not met
+ * @param {*} assertion
+ *   An assertion that must be met
+ * @param {string} message
+ *   A message to display if the assertion is not met
+ * @param {number} resultCode
+ *   The NS_ERROR_* value to throw if the assertion is not met
  * @throws resultCode
+ *   If the assertion fails.
  */
 function ENSURE_WARN(assertion, message, resultCode) {
   if (!assertion) {
@@ -187,8 +197,8 @@ loadListener.prototype = {
   },
 
   // nsIProgressEventSink
-  onProgress(request, context, progress, progressMax) {},
-  onStatus(request, context, status, statusArg) {},
+  onProgress(request, progress, progressMax) {},
+  onStatus(request, status, statusArg) {},
 };
 
 /**
@@ -296,40 +306,127 @@ function sanitizeName(name) {
 }
 
 /**
- * Retrieve a pref from the search param branch. Returns null if the
- * preference is not found.
- *
- * @param prefName
- *        The name of the pref.
- **/
-function getMozParamPref(prefName) {
-  let branch = Services.prefs.getDefaultBranch(
-    SearchUtils.BROWSER_SEARCH_PREF + "param."
-  );
-  let prefValue = branch.getCharPref(prefName, null);
-  return prefValue ? encodeURIComponent(prefValue) : null;
+ * A simple class to handle caching of preferences that may be read from
+ * parameters.
+ */
+const ParamPreferenceCache = {
+  QueryInterface: ChromeUtils.generateQI([
+    Ci.nsIObserver,
+    Ci.nsISupportsWeakReference,
+  ]),
+
+  initCache() {
+    this.branch = Services.prefs.getDefaultBranch(
+      SearchUtils.BROWSER_SEARCH_PREF + "param."
+    );
+    this.cache = new Map();
+    for (let prefName of this.branch.getChildList("")) {
+      this.cache.set(prefName, this.branch.getCharPref(prefName, null));
+    }
+    this.branch.addObserver("", this, true);
+  },
+
+  observe(subject, topic, data) {
+    this.cache.set(data, this.branch.getCharPref(data, null));
+  },
+
+  getPref(prefName) {
+    if (!this.cache) {
+      this.initCache();
+    }
+    return this.cache.get(prefName);
+  },
+};
+
+/**
+ * Represents a name/value pair for a parameter
+ * @see nsISearchEngine::addParam
+ */
+class QueryParameter {
+  /**
+   * @see nsISearchEngine::addParam
+   * @param {string} name
+   * @param {string} value
+   *  The value of the parameter. May be an empty string, must not be null or
+   *  undefined.
+   * @param {string} purpose
+   *   The search purpose for which matches when this parameter should be
+   *   applied, e.g. "searchbar", "contextmenu".
+   */
+  constructor(name, value, purpose) {
+    if (!name || value == null) {
+      SearchUtils.fail("missing name or value for QueryParameter!");
+    }
+
+    this.name = name;
+    this._value = value;
+    this.purpose = purpose;
+  }
+
+  get value() {
+    return this._value;
+  }
+
+  toJSON() {
+    const result = {
+      name: this.name,
+      value: this.value,
+    };
+    if (this.purpose) {
+      result.purpose = this.purpose;
+    }
+    return result;
+  }
 }
 
 /**
- * Simple object representing a name/value pair.
- * @see nsISearchEngine::addParam
- *
- * @param {string} name
- * @param {string} value
- * @param {string} purpose
+ * Represents a special paramater that can be set by preferences. The
+ * value is read from the 'browser.search.param.*' default preference
+ * branch.
  */
-function QueryParameter(name, value, purpose) {
-  if (!name || value == null) {
-    SearchUtils.fail("missing name or value for QueryParameter!");
+class QueryPreferenceParameter extends QueryParameter {
+  /**
+   * @param {string} name
+   *   The name of the parameter as injected into the query string.
+   * @param {string} prefName
+   *   The name of the preference to read from the branch.
+   * @param {string} purpose
+   *   The search purpose for which matches when this parameter should be
+   *   applied, e.g. `searchbar`, `contextmenu`.
+   */
+  constructor(name, prefName, purpose) {
+    super(name, prefName, purpose);
   }
 
-  this.name = name;
-  this.value = value;
-  this.purpose = purpose;
+  get value() {
+    const prefValue = ParamPreferenceCache.getPref(this._value);
+    return prefValue ? encodeURIComponent(prefValue) : null;
+  }
+
+  /**
+   * Converts the object to json. This object is converted with a mozparam flag
+   * as it gets written to the cache and hence we then know what type it is
+   * when reading it back.
+   *
+   * @returns {object}
+   */
+  toJSON() {
+    const result = {
+      condition: "pref",
+      mozparam: true,
+      name: this.name,
+      pref: this._value,
+    };
+    if (this.purpose) {
+      result.purpose = this.purpose;
+    }
+    return result;
+  }
 }
 
 /**
  * Perform OpenSearch parameter substitution on aParamValue.
+ * @see http://opensearch.a9.com/spec/1.1/querysyntax/#core
  *
  * @param {string} paramValue
  *   The OpenSearch search parameters.
@@ -340,8 +437,8 @@ function QueryParameter(name, value, purpose) {
  *   as-is.
  * @param {nsISearchEngine} engine
  *   The engine which owns the string being acted on.
- *
- * @see http://opensearch.a9.com/spec/1.1/querysyntax/#core
+ * @returns {string}
+ *   An updated parameter string.
  */
 function ParamSubstitution(paramValue, searchTerms, engine) {
   const PARAM_REGEXP = /\{((?:\w+:)?\w+)(\??)\}/g;
@@ -357,7 +454,7 @@ function ParamSubstitution(paramValue, searchTerms, engine) {
     }
 
     // moz: parameters are only available for default search engines.
-    if (name.startsWith("moz:") && engine._isDefault) {
+    if (name.startsWith("moz:") && engine.isAppProvided) {
       // {moz:locale} and {moz:distributionID} are common
       if (name == MOZ_PARAM_LOCALE) {
         return Services.locale.requestedLocale;
@@ -411,7 +508,6 @@ const ENGINE_ALIASES = new Map([
   ["google", ["@google"]],
   ["amazondotcom", ["@amazon"]],
   ["amazon", ["@amazon"]],
-  ["twitter", ["@twitter"]],
   ["wikipedia", ["@wikipedia"]],
   ["ebay", ["@ebay"]],
   ["bing", ["@bing"]],
@@ -421,7 +517,7 @@ const ENGINE_ALIASES = new Map([
 ]);
 
 function getInternalAliases(engine) {
-  if (!engine._isDefault) {
+  if (!engine.isAppProvided) {
     return [];
   }
   for (let [name, aliases] of ENGINE_ALIASES) {
@@ -470,8 +566,6 @@ function EngineURL(mimeType, requestMethod, template, resultDomain) {
   this.method = method;
   this.params = [];
   this.rels = [];
-  // Don't serialize expanded mozparams
-  this.mozparams = {};
 
   var templateURI = SearchUtils.makeURI(template);
   if (!templateURI) {
@@ -506,11 +600,36 @@ EngineURL.prototype = {
     this.params.push(new QueryParameter(name, value, purpose));
   },
 
-  // Note: This method requires that aObj has a unique name or the previous MozParams entry with
-  // that name will be overwritten.
-  _addMozParam(obj) {
-    obj.mozparam = true;
-    this.mozparams[obj.name] = obj;
+  /**
+   * Adds a MozParam to the parameters list for this URL. For purpose based params
+   * these are saved as standard parameters, for preference based we save them
+   * as a special type.
+   *
+   * @param {object} param
+   * @param {string} param.name
+   *   The name of the parameter to add to the url.
+   * @param {string} [param.condition]
+   *   The type of parameter this is, e.g. "pref" for a preference parameter,
+   *   or "purpose" for a value-based parameter with a specific purpose. The
+   *   default is "purpose".
+   * @param {string} [param.value]
+   *   The value if it is a "purpose" parameter.
+   * @param {string} [param.purpose]
+   *   The purpose of the parameter for when it is applied, e.g. for `searchbar`
+   *   searches.
+   * @param {string} [param.pref]
+   *   The preference name of the parameter, that gets appended to
+   *   `browser.search.param.`.
+   */
+  _addMozParam(param) {
+    const purpose = param.purpose || undefined;
+    if (param.condition && param.condition == "pref") {
+      this.params.push(
+        new QueryPreferenceParameter(param.name, param.pref, purpose)
+      );
+    } else {
+      this.addParam(param.name, param.value || undefined, purpose);
+    }
   },
 
   getSubmission(searchTerms, engine, purpose) {
@@ -520,9 +639,8 @@ EngineURL.prototype = {
 
     // If a particular purpose isn't defined in the plugin, fallback to 'searchbar'.
     if (
-      !this.params.some(
-        p => p.purpose !== undefined && p.purpose == requestPurpose
-      )
+      requestPurpose != "searchbar" &&
+      !this.params.some(p => p.purpose && p.purpose == requestPurpose)
     ) {
       requestPurpose = "searchbar";
     }
@@ -534,13 +652,17 @@ EngineURL.prototype = {
       var param = this.params[i];
 
       // If this parameter has a purpose, only add it if the purpose matches
-      if (param.purpose !== undefined && param.purpose != requestPurpose) {
+      if (param.purpose && param.purpose != requestPurpose) {
         continue;
       }
 
-      var value = ParamSubstitution(param.value, searchTerms, engine);
+      const paramValue = param.value;
+      // Preference MozParams might not have a preferenced saved, or a valid value.
+      if (paramValue != null) {
+        var value = ParamSubstitution(paramValue, searchTerms, engine);
 
-      dataArray.push(param.name + "=" + value);
+        dataArray.push(param.name + "=" + value);
+      }
     }
     let dataString = dataArray.join("&");
 
@@ -592,12 +714,6 @@ EngineURL.prototype = {
     for (let i = 0; i < json.params.length; ++i) {
       let param = json.params[i];
       if (param.mozparam) {
-        if (param.condition == "pref") {
-          let value = getMozParamPref(param.pref);
-          if (value) {
-            this.addParam(param.name, value);
-          }
-        }
         this._addMozParam(param);
       } else {
         this.addParam(param.name, param.value, param.purpose || undefined);
@@ -607,13 +723,16 @@ EngineURL.prototype = {
 
   /**
    * Creates a JavaScript object that represents this URL.
-   * @returns An object suitable for serialization as JSON.
-   **/
+   *
+   * @returns {object}
+   *   An object suitable for serialization as JSON.
+   */
   toJSON() {
     var json = {
-      template: this.template,
+      params: this.params,
       rels: this.rels,
       resultDomain: this.resultDomain,
+      template: this.template,
     };
 
     if (this.type != SearchUtils.URL_TYPE.SEARCH) {
@@ -622,11 +741,6 @@ EngineURL.prototype = {
     if (this.method != "GET") {
       json.method = this.method;
     }
-
-    function collapseMozParams(param) {
-      return this.mozparams[param.name] || param;
-    }
-    json.params = this.params.map(collapseMozParams, this);
 
     return json;
   },
@@ -639,32 +753,36 @@ EngineURL.prototype = {
  *   The options for this search engine. At least one of options.name,
  *   options.fileURI or options.uri are required.
  * @param {string} [options.name]
- *   The short name to use for the search engine.
+ *   The name to base the short name of the engine on. This is typically the
+ *   display name where a pre-defined/sanitized short name is not available.
+ * @param {string} [options.shortName]
+ *   The short name to use for the engine. This should be known to match
+ *   the basic requirements in sanitizeName for a short name.
  * @param {nsIFile} [options.fileURI]
  *   The file URI that points to the search engine data.
  * @param {nsIURI|string} [options.uri]
  *   Represents the location of the search engine data file.
- * @param {boolean} [options.sanitizeName]
- *   Only applies when options.name is specified, will santize the name so
- *   it can be used as a file name, defaults to false.
- * @param {boolean} options.readOnly
- *   Indicates whether the engine should be treated as read-only.
+ * @param {boolean} options.isBuiltin
+ *   Indicates whether the engine is a app-provided or not. If it is, it will
+ *   be treated as read-only.
  */
 function SearchEngine(options = {}) {
-  if (!("readOnly" in options)) {
-    throw new Error("readOnly missing from options.");
+  if (!("isBuiltin" in options)) {
+    throw new Error("isBuiltin missing from options.");
   }
-  this._readOnly = options.readOnly;
+  this._isBuiltin = options.isBuiltin;
+  // The alias coming from the engine definition (via webextension
+  // keyword field for example) may be overridden in the metaData
+  // with a user defined alias.
+  this._definedAlias = null;
   this._urls = [];
   this._metaData = {};
 
   let file, uri;
   if ("name" in options) {
-    if ("sanitizeName" in options && options.sanitizeName) {
-      this._shortName = sanitizeName(options.name);
-    } else {
-      this._shortName = options.name;
-    }
+    this._shortName = sanitizeName(options.name);
+  } else if ("shortName" in options) {
+    this._shortName = options.shortName;
   } else if ("fileURI" in options && options.fileURI instanceof Ci.nsIFile) {
     file = options.fileURI;
   } else if ("uri" in options) {
@@ -710,7 +828,7 @@ function SearchEngine(options = {}) {
       shortName = file.leafName;
     } else if (uri && uri instanceof Ci.nsIURL) {
       if (
-        this._readOnly ||
+        this._isBuiltin ||
         (gEnvironment.get("XPCSHELL_TEST_PROFILE_DIR") &&
           uri.scheme == "resource")
       ) {
@@ -721,33 +839,6 @@ function SearchEngine(options = {}) {
       this._shortName = shortName.slice(0, -4);
     }
     this._loadPath = this.getAnonymizedLoadPath(file, uri);
-
-    if (!shortName && !this._readOnly) {
-      // We are in the process of downloading and installing the engine.
-      // We'll have the shortName and id once we are done parsing it.
-      return;
-    }
-
-    // Build the id used for the legacy metadata storage, so that we
-    // can do a one-time import of data from old profiles.
-    if (
-      this._isDefault ||
-      (uri && uri.spec.startsWith(SearchUtils.APP_SEARCH_PREFIX))
-    ) {
-      // The second part of the check is to catch engines from language packs.
-      // They aren't default engines (because they aren't app-shipped), but we
-      // still need to give their id an [app] prefix for backward compat.
-      this._id = "[app]/" + this._shortName + ".xml";
-    } else if (!this._readOnly) {
-      this._id = "[profile]/" + this._shortName + ".xml";
-    } else {
-      // If the engine is neither a default one, nor a user-installed one,
-      // it must be extension-shipped, so use the full path as id.
-      SearchUtils.log(
-        "Setting _id to full path for engine from " + this._loadPath
-      );
-      this._id = file ? file.path : uri.spec;
-    }
   }
 }
 
@@ -756,8 +847,6 @@ SearchEngine.prototype = {
   _metaData: null,
   // The data describing the engine, in the form of an XML document element.
   _data: null,
-  // Whether or not the engine is readonly.
-  _readOnly: true,
   // Anonymized path of where we initially loaded the engine from.
   // This will stay null for engines installed in the profile before we moved
   // to a JSON storage.
@@ -804,19 +893,27 @@ SearchEngine.prototype = {
   _updateURL: null,
   // The url to check for a new icon
   _iconUpdateURL: null,
-  /* The extension ID if added by an extension. */
+  // The extension ID if added by an extension.
   _extensionID: null,
-  // Built in search engine extensions.
+  // The locale, or "DEFAULT", if required.
+  _locale: null,
+  // Whether the engine is provided by the application.
   _isBuiltin: false,
+  // The order hint from the configuration (if any).
+  _orderHint: null,
+  // The telemetry id from the configuration (if any).
+  _telemetryId: null,
+  // Set to true once the engine has been added to the store, and the initial
+  // notification sent. This allows to skip sending notifications during
+  // initialization.
+  _engineAddedToStore: false,
 
   /**
    * Retrieves the data from the engine's file asynchronously.
    * The document element is placed in the engine's data field.
    *
-   * @param file The file to load the search plugin from.
-   *
-   * @returns {Promise} A promise, resolved successfully if initializing from
-   * data succeeds, rejected if it fails.
+   * @param {nsIFile} file
+   *   The file to load the search plugin from.
    */
   async _initFromFile(file) {
     if (!file || !(await OS.File.exists(file.path))) {
@@ -868,10 +965,8 @@ SearchEngine.prototype = {
   /**
    * Retrieves the engine data from a URI asynchronously and initializes it.
    *
-   * @param uri The uri to load the search plugin from.
-   *
-   * @returns {Promise} A promise, resolved successfully if retrieveing data
-   * succeeds.
+   * @param {nsIURI} uri
+   *   The uri to load the search plugin from.
    */
   async _initFromURI(uri) {
     SearchUtils.log('_initFromURI: Loading engine from: "' + uri.spec + '".');
@@ -934,8 +1029,7 @@ SearchEngine.prototype = {
     // Display only the hostname portion of the URL.
     var dialogMessage = stringBundle.formatStringFromName(
       "addEngineConfirmation",
-      [this._name, this._uri.host],
-      2
+      [this._name, this._uri.host]
     );
     var checkboxMessage = null;
     if (
@@ -991,6 +1085,9 @@ SearchEngine.prototype = {
     /**
      * Handle an error during the load of an engine by notifying the engine's
      * error callback, if any.
+     *
+     * @param {number} [errorCode]
+     *   The relevant error code.
      */
     function onError(errorCode = Ci.nsISearchService.ERROR_UNKNOWN_FAILURE) {
       // Notify the callback of the failure
@@ -1014,11 +1111,10 @@ SearchEngine.prototype = {
       var msgStringName = strings.error || "error_loading_engine_msg2";
       var titleStringName = strings.title || "error_loading_engine_title";
       var title = searchBundle.GetStringFromName(titleStringName);
-      var text = searchBundle.formatStringFromName(
-        msgStringName,
-        [brandName, engine._location],
-        2
-      );
+      var text = searchBundle.formatStringFromName(msgStringName, [
+        brandName,
+        engine._location,
+      ]);
 
       Services.ww.getNewPrompter(null).alert(title, text);
     }
@@ -1176,7 +1272,7 @@ SearchEngine.prototype = {
    *   A URI string pointing to the engine's icon. Must have a http[s],
    *   ftp, or data scheme. Icons with HTTP[S] or FTP schemes will be
    *   downloaded and converted to data URIs for storage in the engine
-   *   XML files, if the engine is not readonly.
+   *   XML files, if the engine is not built-in.
    * @param {boolean} isPreferred
    *   Whether or not this icon is to be preferred. Preferred icons can
    *   override non-preferred icons.
@@ -1202,18 +1298,14 @@ SearchEngine.prototype = {
     );
     // Only accept remote icons from http[s] or ftp
     switch (uri.scheme) {
-      case "resource":
-      case "chrome":
-        // We only allow chrome and resource icon URLs for built-in search engines
-        if (!this._isDefault) {
-          return;
-        }
       // Fall through to the data case
       case "moz-extension":
       case "data":
         if (!this._hasPreferredIcon || isPreferred) {
           this._iconURI = uri;
-          SearchUtils.notifyAction(this, SearchUtils.MODIFIED_TYPE.CHANGED);
+          if (this._engineAddedToStore) {
+            SearchUtils.notifyAction(this, SearchUtils.MODIFIED_TYPE.CHANGED);
+          }
           this._hasPreferredIcon = isPreferred;
         }
 
@@ -1274,7 +1366,9 @@ SearchEngine.prototype = {
             engine._addIconToMap(width, height, dataURL);
           }
 
-          SearchUtils.notifyAction(engine, SearchUtils.MODIFIED_TYPE.CHANGED);
+          if (engine._engineAddedToStore) {
+            SearchUtils.notifyAction(engine, SearchUtils.MODIFIED_TYPE.CHANGED);
+          }
           engine._hasPreferredIcon = isPreferred;
         };
 
@@ -1344,6 +1438,17 @@ SearchEngine.prototype = {
   _initEngineURLFromMetaData(type, params) {
     let url = new EngineURL(type, params.method || "GET", params.template);
 
+    // Do the MozParams first, so that we are more likely to get the query
+    // on the end of the URL, rather than the MozParams (xref bug 1484232).
+    if (params.mozParams) {
+      for (let p of params.mozParams) {
+        if ((p.condition || p.purpose) && !this.isAppProvided) {
+          continue;
+        }
+        url._addMozParam(p);
+      }
+    }
+
     if (params.postParams) {
       let queries = new URLSearchParams(params.postParams);
       for (let [name, value] of queries) {
@@ -1355,23 +1460,6 @@ SearchEngine.prototype = {
       let queries = new URLSearchParams(params.getParams);
       for (let [name, value] of queries) {
         url.addParam(name, value);
-      }
-    }
-
-    if (params.mozParams) {
-      for (let p of params.mozParams) {
-        if ((p.condition || p.purpose) && !this._isDefault) {
-          continue;
-        }
-        if (p.condition == "pref") {
-          let value = getMozParamPref(p.pref);
-          if (value) {
-            url.addParam(p.name, value);
-          }
-          url._addMozParam(p);
-        } else {
-          url.addParam(p.name, p.value, p.purpose || undefined);
-        }
       }
     }
 
@@ -1398,8 +1486,36 @@ SearchEngine.prototype = {
    */
   _initFromMetadata(engineName, params) {
     this._extensionID = params.extensionID;
-    this._isBuiltin = !!params.isBuiltin;
+    this._locale = params.locale;
+    this._orderHint = params.orderHint;
+    this._telemetryId = params.telemetryId;
+    this._name = engineName;
+    if (params.shortName) {
+      this._shortName = params.shortName;
+    }
+    this._definedAlias = params.alias?.trim() || null;
+    this._description = params.description;
+    if (params.iconURL) {
+      this._setIcon(params.iconURL, true);
+    }
+    // Other sizes
+    if (params.icons) {
+      for (let icon of params.icons) {
+        this._addIconToMap(icon.size, icon.size, icon.url);
+      }
+    }
+    this._setUrls(params);
+  },
 
+  /**
+   * This sets the urls for the search engine based on the supplied parameters.
+   * If you add anything here, please consider if it needs to be handled in the
+   * overrideWithExtension / removeExtensionOverride functions as well.
+   *
+   * @param {object} params
+   *   The parameters to set.
+   */
+  _setUrls(params) {
     this._initEngineURLFromMetaData(SearchUtils.URL_TYPE.SEARCH, {
       method: (params.searchPostParams && "POST") || params.method || "GET",
       template: params.template,
@@ -1417,9 +1533,7 @@ SearchEngine.prototype = {
       });
     }
 
-    if (params.queryCharset) {
-      this._queryCharset = params.queryCharset;
-    }
+    this._queryCharset = params.queryCharset || null;
     if (params.postData) {
       let queries = new URLSearchParams(params.postData);
       for (let [name, value] of queries) {
@@ -1427,21 +1541,56 @@ SearchEngine.prototype = {
       }
     }
 
-    this._name = engineName;
-    if (params.shortName) {
-      this._shortName = params.shortName;
-    }
-    this.alias = params.alias;
-    this._description = params.description;
     this.__searchForm = params.searchForm;
-    if (params.iconURL) {
-      this._setIcon(params.iconURL, true);
-    }
-    // Other sizes
-    if (params.icons) {
-      for (let icon of params.icons) {
-        this._addIconToMap(icon.size, icon.size, icon.url);
-      }
+  },
+
+  /**
+   * Update this engine based on new metadata, used during
+   * webextension upgrades.
+   *
+   * @param {object} params
+   *   The URL parameters.
+   */
+  _updateFromMetadata(params) {
+    this._urls = [];
+    this._iconMapObj = null;
+    this._initFromMetadata(params.name, params);
+    SearchUtils.notifyAction(this, SearchUtils.MODIFIED_TYPE.CHANGED);
+  },
+
+  /**
+   * Overrides the urls/parameters with those of the provided extension.
+   * The parameters are not saved to the search cache - the code handling
+   * the extension should set these on every restart, this avoids potential
+   * third party modifications and means that we can verify the WebExtension is
+   * still in the allow list.
+   *
+   * @param {object} params
+   *   The extension parameters.
+   */
+  overrideWithExtension(params) {
+    this._overriddenData = {
+      urls: this._urls,
+      queryCharset: this._queryCharset,
+      searchForm: this.__searchForm,
+    };
+    this._urls = [];
+    this.setAttr("overriddenBy", params.extensionID);
+    this._setUrls(params);
+    SearchUtils.notifyAction(this, SearchUtils.MODIFIED_TYPE.CHANGED);
+  },
+
+  /**
+   * Resets the overrides for the engine if it has been overridden.
+   */
+  removeExtensionOverride() {
+    if (this.getAttr("overriddenBy")) {
+      this._urls = this._overriddenData.urls;
+      this._queryCharset = this._overriddenData.queryCharset;
+      this.__searchForm = this._overriddenData.searchForm;
+      delete this._overriddenData;
+      this.clearAttr("overriddenBy");
+      SearchUtils.notifyAction(this, SearchUtils.MODIFIED_TYPE.CHANGED);
     }
   },
 
@@ -1502,9 +1651,8 @@ SearchEngine.prototype = {
       } else if (
         param.localName == "MozParam" &&
         // We only support MozParams for default search engines
-        this._isDefault
+        this.isAppProvided
       ) {
-        var value;
         let condition = param.getAttribute("condition");
 
         // MozParams must have a condition to be valid
@@ -1520,6 +1668,10 @@ SearchEngine.prototype = {
           continue;
         }
 
+        // We can't make these both use _addMozParam due to the fallback
+        // handling - WebExtension parameters get treated as MozParams even
+        // if they are not, and hence don't have the condition parameter, so
+        // we can't warn for them.
         switch (condition) {
           case "purpose":
             url.addParam(
@@ -1527,14 +1679,8 @@ SearchEngine.prototype = {
               param.getAttribute("value"),
               param.getAttribute("purpose")
             );
-            // _addMozParam is not needed here since it can be serialized fine without. _addMozParam
-            // also requires a unique "name" which is not normally the case when @purpose is used.
             break;
           case "pref":
-            value = getMozParamPref(param.getAttribute("pref"), value);
-            if (value) {
-              url.addParam(param.getAttribute("name"), value);
-            }
             url._addMozParam({
               pref: param.getAttribute("pref"),
               name: param.getAttribute("name"),
@@ -1640,7 +1786,7 @@ SearchEngine.prototype = {
           break;
       }
     }
-    if (!this.name || this._urls.length == 0) {
+    if (!this.name || !this._urls.length) {
       SearchUtils.fail("_parse: No name, or missing URL!", Cr.NS_ERROR_FAILURE);
     }
     if (!this.supportsResponseType(SearchUtils.URL_TYPE.SEARCH)) {
@@ -1668,16 +1814,19 @@ SearchEngine.prototype = {
     this._updateInterval = json._updateInterval || null;
     this._updateURL = json._updateURL || null;
     this._iconUpdateURL = json._iconUpdateURL || null;
-    this._readOnly = json._readOnly == undefined;
     this._iconURI = SearchUtils.makeURI(json._iconURL);
     this._iconMapObj = json._iconMapObj;
     this._metaData = json._metaData || {};
-    this._isBuiltin = json._isBuiltin;
+    this._orderHint = json._orderHint || null;
+    this._telemetryId = json._telemetryId || null;
     if (json.filePath) {
       this._filePath = json.filePath;
     }
     if (json.extensionID) {
       this._extensionID = json.extensionID;
+    }
+    if (json.extensionLocale) {
+      this._locale = json.extensionLocale;
     }
     for (let i = 0; i < json._urls.length; ++i) {
       let url = json._urls[i];
@@ -1709,6 +1858,8 @@ SearchEngine.prototype = {
       _metaData: this._metaData,
       _urls: this._urls,
       _isBuiltin: this._isBuiltin,
+      _orderHint: this._orderHint,
+      _telemetryId: this._telemetryId,
     };
 
     if (this._updateInterval) {
@@ -1726,9 +1877,6 @@ SearchEngine.prototype = {
     if (this.queryCharset != SearchUtils.DEFAULT_QUERY_CHARSET) {
       json.queryCharset = this.queryCharset;
     }
-    if (!this._readOnly) {
-      json._readOnly = this._readOnly;
-    }
     if (this._filePath) {
       // File path is stored so that we can remove legacy xml files
       // from the profile if the user removes the engine.
@@ -1736,6 +1884,9 @@ SearchEngine.prototype = {
     }
     if (this._extensionID) {
       json.extensionID = this._extensionID;
+    }
+    if (this._locale) {
+      json.extensionLocale = this._locale;
     }
 
     return json;
@@ -1749,9 +1900,13 @@ SearchEngine.prototype = {
     return this._metaData[name] || undefined;
   },
 
+  clearAttr(name) {
+    delete this._metaData[name];
+  },
+
   // nsISearchEngine
   get alias() {
-    return this.getAttr("alias");
+    return this.getAttr("alias") || this._definedAlias;
   },
   set alias(val) {
     var value = val ? val.trim() : null;
@@ -1760,19 +1915,34 @@ SearchEngine.prototype = {
   },
 
   /**
+   * Returns the appropriate identifier to use for telemetry. It is based on
+   * the following order:
+   *
+   * - telemetryId: The telemetry id from the configuration.
+   * - identifier: The built-in identifier of app-provided engines.
+   * - other-<name>: The engine name prefixed by `other-` for non-app-provided
+   *                 engines.
+   *
+   * @returns {string}
+   */
+  get telemetryId() {
+    let telemetryId =
+      this._telemetryId || this.identifier || `other-${this.name}`;
+    if (this.getAttr("overriddenBy")) {
+      return telemetryId + "-addon";
+    }
+    return telemetryId;
+  },
+
+  /**
    * Return the built-in identifier of app-provided engines.
    *
-   * Note that this identifier is substantially similar to _id, with the
-   * following exceptions:
-   *
-   * * There is no trailing file extension.
-   * * There is no [app] prefix.
-   *
-   * @return a string identifier, or null.
+   * @returns {string|null}
+   *   Returns a valid if this is a built-in engine, null otherwise.
    */
   get identifier() {
     // No identifier if If the engine isn't app-provided
-    return this._isDefault ? this._shortName : null;
+    return this.isAppProvided ? this._shortName : null;
   },
 
   get description() {
@@ -1932,7 +2102,13 @@ SearchEngine.prototype = {
     );
   },
 
-  get _isDefault() {
+  get isAppProvided() {
+    // For the modern configuration, distribution engines are app-provided as
+    // well and we don't have xml files as app-provided engines.
+    if (gModernConfig) {
+      return !!(this._extensionID && this._isBuiltin);
+    }
+
     if (this._extensionID) {
       return this._isBuiltin || this._isDistribution;
     }
@@ -1975,14 +2151,14 @@ SearchEngine.prototype = {
     return this.__internalAliases;
   },
 
-  _getSearchFormWithPurpose(aPurpose = "") {
+  _getSearchFormWithPurpose(purpose) {
     // First look for a <Url rel="searchform">
     var searchFormURL = this._getURLOfType(
       SearchUtils.URL_TYPE.SEARCH,
       "searchform"
     );
     if (searchFormURL) {
-      let submission = searchFormURL.getSubmission("", this, aPurpose);
+      let submission = searchFormURL.getSubmission("", this, purpose);
 
       // If the rel=searchform URL is not type="get" (i.e. has postData),
       // ignore it, since we can only return a URL.
@@ -2015,8 +2191,8 @@ SearchEngine.prototype = {
       SearchUtils.fail("missing name or value for nsISearchEngine::addParam!");
     }
     ENSURE_WARN(
-      !this._readOnly,
-      "called nsISearchEngine::addParam on a read-only engine!",
+      !this._isBuiltin,
+      "called nsISearchEngine::addParam on a built-in engine!",
       Cr.NS_ERROR_FAILURE
     );
     if (!responseType) {
@@ -2058,26 +2234,6 @@ SearchEngine.prototype = {
     });
 
     return type;
-  },
-
-  get _isWhiteListed() {
-    let url = this._getURLOfType(SearchUtils.URL_TYPE.SEARCH).template;
-    let hostname = SearchUtils.makeURI(url).host;
-    let whitelist = Services.prefs
-      .getDefaultBranch(SearchUtils.BROWSER_SEARCH_PREF)
-      .getCharPref("reset.whitelist")
-      .split(",");
-    if (whitelist.includes(hostname)) {
-      SearchUtils.log(
-        "The hostname " +
-          hostname +
-          " is white listed, " +
-          "we won't show the search reset prompt"
-      );
-      return true;
-    }
-
-    return false;
   },
 
   // from nsISearchEngine
@@ -2146,7 +2302,8 @@ SearchEngine.prototype = {
   },
 
   /**
-   * Returns URL parsing properties used by _buildParseSubmissionMap.
+   * @returns {object}
+   *   URL parsing properties used by _buildParseSubmissionMap.
    */
   getURLParsingInfo() {
     let responseType =
@@ -2212,6 +2369,9 @@ SearchEngine.prototype = {
    * width, height and url properties. width and height are numeric and
    * represent the icon's dimensions. url is a string with the URL for
    * the icon.
+   *
+   * @returns {Array<object>}
+   *   An array of objects with width/height/url parameters.
    */
   getIcons() {
     let result = [];
@@ -2239,11 +2399,11 @@ SearchEngine.prototype = {
    * Opens a speculative connection to the engine's search URI
    * (and suggest URI, if different) to reduce request latency
    *
-   * @param  options
-   *         An object that must contain the following fields:
-   *         {window} the content window for the window performing the search
-   *         {originAttributes} the originAttributes for performing the search
-   *
+   * @param {object} options
+   * @param {DOMWindow} options.window
+   *   The content window for the window performing the search.
+   * @param {object} options.originAttributes
+   *   The originAttributes for performing the search
    * @throws NS_ERROR_INVALID_ARG if options is omitted or lacks required
    *         elemeents
    */
@@ -2252,7 +2412,7 @@ SearchEngine.prototype = {
       Cu.reportError(
         "invalid options arg passed to nsISearchEngine.speculativeConnect"
       );
-      throw Cr.NS_ERROR_INVALID_ARG;
+      throw Components.Exception("", Cr.NS_ERROR_INVALID_ARG);
     }
     let connector = Services.io.QueryInterface(Ci.nsISpeculativeConnect);
 
@@ -2260,7 +2420,7 @@ SearchEngine.prototype = {
 
     let callbacks = options.window.docShell.QueryInterface(Ci.nsILoadContext);
 
-    // Using the codebase principal which is constructed by the search URI
+    // Using the content principal which is constructed by the search URI
     // and given originAttributes. If originAttributes are not given, we
     // fallback to use the docShell's originAttributes.
     let attrs = options.originAttributes;
@@ -2269,7 +2429,7 @@ SearchEngine.prototype = {
       attrs = options.window.docShell.getOriginAttributes();
     }
 
-    let principal = Services.scriptSecurityManager.createCodebasePrincipal(
+    let principal = Services.scriptSecurityManager.createContentPrincipal(
       searchURI,
       attrs
     );

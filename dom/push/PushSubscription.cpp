@@ -45,7 +45,7 @@ class UnsubscribeResultCallback final : public nsIUnsubscribeResultCallback {
   }
 
  private:
-  ~UnsubscribeResultCallback() {}
+  ~UnsubscribeResultCallback() = default;
 
   RefPtr<Promise> mPromise;
 };
@@ -55,7 +55,7 @@ NS_IMPL_ISUPPORTS(UnsubscribeResultCallback, nsIUnsubscribeResultCallback)
 class UnsubscribeResultRunnable final : public WorkerRunnable {
  public:
   UnsubscribeResultRunnable(WorkerPrivate* aWorkerPrivate,
-                            already_AddRefed<PromiseWorkerProxy>&& aProxy,
+                            RefPtr<PromiseWorkerProxy>&& aProxy,
                             nsresult aStatus, bool aSuccess)
       : WorkerRunnable(aWorkerPrivate),
         mProxy(std::move(aProxy)),
@@ -81,7 +81,7 @@ class UnsubscribeResultRunnable final : public WorkerRunnable {
   }
 
  private:
-  ~UnsubscribeResultRunnable() {}
+  ~UnsubscribeResultRunnable() = default;
 
   RefPtr<PromiseWorkerProxy> mProxy;
   nsresult mStatus;
@@ -110,14 +110,14 @@ class WorkerUnsubscribeResultCallback final
 
     WorkerPrivate* worker = mProxy->GetWorkerPrivate();
     RefPtr<UnsubscribeResultRunnable> r = new UnsubscribeResultRunnable(
-        worker, mProxy.forget(), aStatus, aSuccess);
+        worker, std::move(mProxy), aStatus, aSuccess);
     MOZ_ALWAYS_TRUE(r->Dispatch());
 
     return NS_OK;
   }
 
  private:
-  ~WorkerUnsubscribeResultCallback() {}
+  ~WorkerUnsubscribeResultCallback() = default;
 
   RefPtr<PromiseWorkerProxy> mProxy;
 };
@@ -168,7 +168,7 @@ class UnsubscribeRunnable final : public Runnable {
   }
 
  private:
-  ~UnsubscribeRunnable() {}
+  ~UnsubscribeRunnable() = default;
 
   RefPtr<PromiseWorkerProxy> mProxy;
   nsString mScope;
@@ -200,7 +200,7 @@ PushSubscription::PushSubscription(nsIGlobalObject* aGlobal,
   mOptions = new PushSubscriptionOptions(mGlobal, std::move(aAppServerKey));
 }
 
-PushSubscription::~PushSubscription() {}
+PushSubscription::~PushSubscription() = default;
 
 NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(PushSubscription, mGlobal, mOptions)
 NS_IMPL_CYCLE_COLLECTING_ADDREF(PushSubscription)

@@ -411,7 +411,7 @@ PK11_ImportAndReturnPrivateKey(PK11SlotInfo *slot, SECKEYRawPrivateKey *lpk,
                 goto loser;
             }
             if (PK11_IsInternal(slot)) {
-                PK11_SETATTRS(attrs, CKA_NETSCAPE_DB,
+                PK11_SETATTRS(attrs, CKA_NSS_DB,
                               publicValue->data, publicValue->len);
                 attrs++;
             }
@@ -450,7 +450,7 @@ PK11_ImportAndReturnPrivateKey(PK11SlotInfo *slot, SECKEYRawPrivateKey *lpk,
              * this dh key. We have a netscape only CKA_ value to do this.
              * Only send it to internal slots */
             if (PK11_IsInternal(slot)) {
-                PK11_SETATTRS(attrs, CKA_NETSCAPE_DB,
+                PK11_SETATTRS(attrs, CKA_NSS_DB,
                               publicValue->data, publicValue->len);
                 attrs++;
             }
@@ -483,7 +483,7 @@ PK11_ImportAndReturnPrivateKey(PK11SlotInfo *slot, SECKEYRawPrivateKey *lpk,
                 goto loser;
             }
             if (PK11_IsInternal(slot)) {
-                PK11_SETATTRS(attrs, CKA_NETSCAPE_DB,
+                PK11_SETATTRS(attrs, CKA_NSS_DB,
                               lpk->u.ec.publicValue.data,
                               lpk->u.ec.publicValue.len);
                 attrs++;
@@ -499,6 +499,10 @@ PK11_ImportAndReturnPrivateKey(PK11SlotInfo *slot, SECKEYRawPrivateKey *lpk,
             PK11_SETATTRS(attrs, CKA_DERIVE, (keyUsage & KU_KEY_AGREEMENT) ? &cktrue : &ckfalse,
                           sizeof(CK_BBOOL));
             attrs++;
+            if (nickname) {
+                PK11_SETATTRS(attrs, CKA_LABEL, nickname->data, nickname->len);
+                attrs++;
+            }
             ck_id = PK11_MakeIDFromPubKey(&lpk->u.ec.publicValue);
             if (ck_id == NULL) {
                 goto loser;
@@ -531,7 +535,7 @@ PK11_ImportAndReturnPrivateKey(PK11SlotInfo *slot, SECKEYRawPrivateKey *lpk,
         }
     }
 
-    rv = PK11_CreateNewObject(slot, CK_INVALID_SESSION,
+    rv = PK11_CreateNewObject(slot, CK_INVALID_HANDLE,
                               theTemplate, templateCount, isPerm, &objectID);
 
     /* create and return a SECKEYPrivateKey */

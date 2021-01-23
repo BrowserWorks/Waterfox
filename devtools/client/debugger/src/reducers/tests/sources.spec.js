@@ -8,9 +8,9 @@ declare var it: (desc: string, func: () => void) => void;
 declare var expect: (value: any) => any;
 
 import update, { initialSourcesState, getDisplayedSources } from "../sources";
-import { initialDebuggeeState } from "../debuggee";
+import { initialThreadsState } from "../threads";
 import updateSourceActors from "../source-actors";
-import type { Source, SourceActor } from "../../types";
+import type { SourceActor } from "../../types";
 import { prefs } from "../../utils/prefs";
 import { makeMockSource, mockcx } from "../../utils/test-mockup";
 import { getResourceIds } from "../../utils/resource";
@@ -76,13 +76,13 @@ describe("sources reducer", () => {
 
 describe("sources selectors", () => {
   it("should return all extensions when chrome preference enabled", () => {
-    prefs.chromeAndExtenstionsEnabled = true;
+    prefs.chromeAndExtensionsEnabled = true;
     let state = initialSourcesState();
     state = {
       sources: update(state, {
         type: "ADD_SOURCES",
         cx: mockcx,
-        sources: ((mockedSources: any): Source[]),
+        sources: mockedSources,
       }),
       sourceActors: undefined,
     };
@@ -93,20 +93,20 @@ describe("sources selectors", () => {
     state = {
       sources: update(state.sources, insertAction),
       sourceActors: updateSourceActors(state.sourceActors, insertAction),
-      debuggee: initialDebuggeeState(),
+      threads: initialThreadsState(),
     };
     const threadSources = getDisplayedSources(state);
     expect(Object.values(threadSources.foo)).toHaveLength(3);
   });
 
   it("should omit all extensions when chrome preference enabled", () => {
-    prefs.chromeAndExtenstionsEnabled = false;
+    prefs.chromeAndExtensionsEnabled = false;
     let state = initialSourcesState();
     state = {
       sources: update(state, {
         type: "ADD_SOURCES",
         cx: mockcx,
-        sources: ((mockedSources: any): Source[]),
+        sources: mockedSources,
       }),
       sourceActors: undefined,
     };
@@ -119,7 +119,7 @@ describe("sources selectors", () => {
     state = {
       sources: update(state.sources, insertAction),
       sourceActors: updateSourceActors(state.sourceActors, insertAction),
-      debuggee: initialDebuggeeState(),
+      threads: initialThreadsState(),
     };
     const threadSources = getDisplayedSources(state);
     expect(Object.values(threadSources.foo)).toHaveLength(1);

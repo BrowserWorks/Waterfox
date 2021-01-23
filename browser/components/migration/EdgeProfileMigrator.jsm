@@ -163,7 +163,7 @@ EdgeTypedURLMigrator.prototype = {
       });
     }
 
-    if (pageInfos.length == 0) {
+    if (!pageInfos.length) {
       aCallback(typedURLs.size == 0);
       return;
     }
@@ -344,9 +344,9 @@ EdgeReadingListMigrator.prototype = {
         parentGuid,
         title: folderTitle,
       };
-      this.__readingListFolderGuid = (await MigrationUtils.insertBookmarkWrapper(
-        folderSpec
-      )).guid;
+      this.__readingListFolderGuid = (
+        await MigrationUtils.insertBookmarkWrapper(folderSpec)
+      ).guid;
     }
     return this.__readingListFolderGuid;
   },
@@ -447,9 +447,7 @@ EdgeBookmarksMigrator.prototype = {
           new URL(bookmark.URL);
         } catch (ex) {
           Cu.reportError(
-            `Ignoring ${
-              bookmark.URL
-            } when importing from Edge because of exception: ${ex}`
+            `Ignoring ${bookmark.URL} when importing from Edge because of exception: ${ex}`
           );
           continue;
         }

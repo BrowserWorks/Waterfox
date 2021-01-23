@@ -85,8 +85,6 @@ namespace detail {
  */
 class BlockingIOWatcher {
 #ifdef XP_WIN
-  typedef BOOL(WINAPI* TCancelSynchronousIo)(HANDLE hThread);
-  TCancelSynchronousIo mCancelSynchronousIo;
   // The native handle to the thread
   HANDLE mThread;
   // Event signaling back to the main thread, see NotifyOperationDone.
@@ -115,19 +113,11 @@ class BlockingIOWatcher {
 
 #ifdef XP_WIN
 
-BlockingIOWatcher::BlockingIOWatcher()
-    : mCancelSynchronousIo(NULL), mThread(NULL), mEvent(NULL) {
+BlockingIOWatcher::BlockingIOWatcher() : mThread(NULL), mEvent(NULL) {
   HMODULE kernel32_dll = GetModuleHandle("kernel32.dll");
   if (!kernel32_dll) {
     return;
   }
-
-  FARPROC ptr = GetProcAddress(kernel32_dll, "CancelSynchronousIo");
-  if (!ptr) {
-    return;
-  }
-
-  mCancelSynchronousIo = reinterpret_cast<TCancelSynchronousIo>(ptr);
 
   mEvent = ::CreateEventW(NULL, TRUE, FALSE, NULL);
 }
@@ -179,7 +169,7 @@ void BlockingIOWatcher::WatchAndCancel(Monitor& aMonitor) {
   DWORD result = ::WaitForSingleObject(mEvent, maxLag);
   if (result == WAIT_TIMEOUT) {
     LOG(("CacheIOThread: Attempting to cancel a long blocking IO operation"));
-    BOOL result = mCancelSynchronousIo(thread);
+    BOOL result = ::CancelSynchronousIo(thread);
     if (result) {
       LOG(("  cancelation signal succeeded"));
     } else {
@@ -317,6 +307,8 @@ nsresult CacheIOThread::DispatchInternal(
     (static_cast<tasktracer::TracedRunnable*>(runnable.get()))->DispatchTask();
   }
 #endif
+
+  LogRunnable::LogDispatch(runnable.get());
 
   if (NS_WARN_IF(!runnable)) return NS_ERROR_NULL_POINTER;
 
@@ -495,7 +487,6 @@ void CacheIOThread::ThreadFunc() {
       }
 
       AUTO_PROFILER_LABEL("CacheIOThread::ThreadFunc::Wait", IDLE);
-      AUTO_PROFILER_THREAD_SLEEP;
       lock.Wait();
 
     } while (true);
@@ -542,6 +533,8 @@ void CacheIOThread::LoopOneLevel(uint32_t aLevel) {
       // this flag.
       mRerunCurrentEvent = false;
 
+      LogRunnable::Run log(events[index].get());
+
       events[index]->Run();
 
       MOZ_ASSERT(mBlockingIOWatcher);
@@ -550,6 +543,7 @@ void CacheIOThread::LoopOneLevel(uint32_t aLevel) {
       if (mRerunCurrentEvent) {
         // The event handler yields to higher priority events and wants to
         // rerun.
+        log.WillRunAgain();
         returnEvents = true;
         break;
       }
@@ -572,9 +566,9 @@ void CacheIOThread::LoopOneLevel(uint32_t aLevel) {
     events.RemoveElementsAt(0, index);
     // Move events that might have been scheduled on this queue to the tail to
     // preserve the expected per-queue FIFO order.
-    if (!events.AppendElements(std::move(mEventQueue[aLevel]))) {
-      MOZ_CRASH("Can't allocate memory for cache IO thread queue");
-    }
+    // XXX(Bug 1631371) Check if this should use a fallible operation as it
+    // pretended earlier.
+    events.AppendElements(std::move(mEventQueue[aLevel]));
     // And finally move everything back to the main queue.
     events.SwapElements(mEventQueue[aLevel]);
   }

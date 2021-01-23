@@ -7,15 +7,17 @@ const PAGE =
   "https://example.com/browser/toolkit/content/tests/browser/file_empty.html";
 
 function setupTestPreferences(isAllowedAutoplay, isAllowedMuted) {
-  const autoplayDefault = isAllowedAutoplay
-    ? SpecialPowers.Ci.nsIAutoplay.ALLOWED
-    : SpecialPowers.Ci.nsIAutoplay.BLOCKED;
+  let autoplayDefault = SpecialPowers.Ci.nsIAutoplay.ALLOWED;
+  if (!isAllowedAutoplay) {
+    autoplayDefault = isAllowedMuted
+      ? SpecialPowers.Ci.nsIAutoplay.BLOCKED
+      : SpecialPowers.Ci.nsIAutoplay.BLOCKED_ALL;
+  }
   return SpecialPowers.pushPrefEnv({
     set: [
       ["dom.media.autoplay.autoplay-policy-api", true],
       ["media.autoplay.default", autoplayDefault],
-      ["media.autoplay.enabled.user-gestures-needed", true],
-      ["media.autoplay.allow-muted", isAllowedMuted],
+      ["media.autoplay.blocking_policy", 0],
     ],
   });
 }
@@ -39,7 +41,7 @@ add_task(async function testAutoplayPolicy() {
       let isAllowedAutoplay = true;
       let isAllowedMuted = true;
       await setupTestPreferences(isAllowedAutoplay, isAllowedMuted);
-      await ContentTask.spawn(browser, "allowed", checkAutoplayPolicy);
+      await SpecialPowers.spawn(browser, ["allowed"], checkAutoplayPolicy);
 
       info(
         `- Allow all kinds of media to autoplay even if changing the pref for muted media -`
@@ -47,27 +49,31 @@ add_task(async function testAutoplayPolicy() {
       isAllowedAutoplay = true;
       isAllowedMuted = false;
       await setupTestPreferences(isAllowedAutoplay, isAllowedMuted);
-      await ContentTask.spawn(browser, "allowed", checkAutoplayPolicy);
+      await SpecialPowers.spawn(browser, ["allowed"], checkAutoplayPolicy);
 
       info(`- Disable autoplay for audible media -`);
       isAllowedAutoplay = false;
       isAllowedMuted = true;
       await setupTestPreferences(isAllowedAutoplay, isAllowedMuted);
-      await ContentTask.spawn(browser, "allowed-muted", checkAutoplayPolicy);
+      await SpecialPowers.spawn(
+        browser,
+        ["allowed-muted"],
+        checkAutoplayPolicy
+      );
 
       info(`- Disable autoplay for all kinds of media -`);
       isAllowedAutoplay = false;
       isAllowedMuted = false;
       await setupTestPreferences(isAllowedAutoplay, isAllowedMuted);
-      await ContentTask.spawn(browser, "disallowed", checkAutoplayPolicy);
+      await SpecialPowers.spawn(browser, ["disallowed"], checkAutoplayPolicy);
 
       info(
         `- Simulate user gesture activation which would allow all kinds of media to autoplay -`
       );
-      await ContentTask.spawn(browser, null, async () => {
+      await SpecialPowers.spawn(browser, [], async () => {
         content.document.notifyUserGestureActivation();
       });
-      await ContentTask.spawn(browser, "allowed", checkAutoplayPolicy);
+      await SpecialPowers.spawn(browser, ["allowed"], checkAutoplayPolicy);
     }
   );
 });

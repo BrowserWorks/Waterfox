@@ -14,7 +14,9 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/ServoUtils.h"
 
-struct MiscContainer;
+namespace mozilla {
+class ShadowParts;
+}
 
 struct MiscContainer final {
   typedef nsAttrValue::ValueType ValueType;
@@ -39,11 +41,11 @@ struct MiscContainer final {
         int32_t mInteger;
         nscolor mColor;
         uint32_t mEnumValue;
-        int32_t mPercent;
         mozilla::DeclarationBlock* mCSSDeclaration;
         nsIURI* mURL;
         mozilla::AtomArray* mAtomArray;
         nsIntMargin* mIntMargin;
+        const mozilla::ShadowParts* mShadowParts;
         const mozilla::SVGAnimatedIntegerPair* mSVGAnimatedIntegerPair;
         const mozilla::SVGAnimatedLength* mSVGLength;
         const mozilla::SVGAnimatedNumberPair* mSVGAnimatedNumberPair;
@@ -98,7 +100,8 @@ struct MiscContainer final {
     // Nothing stops us from refcounting (and sharing) other types of
     // MiscContainer (except eDoubleValue types) but there's no compelling
     // reason to.
-    return mType == nsAttrValue::eCSSDeclaration;
+    return mType == nsAttrValue::eCSSDeclaration ||
+           mType == nsAttrValue::eShadowParts;
   }
 
   inline int32_t AddRef() {
@@ -135,11 +138,12 @@ inline int16_t nsAttrValue::GetEnumValue() const {
                               NS_ATTRVALUE_ENUMTABLEINDEX_BITS);
 }
 
-inline float nsAttrValue::GetPercentValue() const {
+inline double nsAttrValue::GetPercentValue() const {
   MOZ_ASSERT(Type() == ePercent, "wrong type");
-  return ((BaseType() == eIntegerBase) ? GetIntInternal()
-                                       : GetMiscContainer()->mValue.mPercent) /
-         100.0f;
+  if (BaseType() == eIntegerBase) {
+    return GetIntInternal() / 100.0f;
+  }
+  return GetMiscContainer()->mDoubleValue / 100.0f;
 }
 
 inline mozilla::AtomArray* nsAttrValue::GetAtomArrayValue() const {
@@ -247,6 +251,11 @@ inline void nsAttrValue::ToString(mozilla::dom::DOMString& aResult) const {
       ToString(aResult.AsAString());
     }
   }
+}
+
+inline const mozilla::ShadowParts& nsAttrValue::GetShadowPartsValue() const {
+  MOZ_ASSERT(Type() == eShadowParts);
+  return *GetMiscContainer()->mValue.mShadowParts;
 }
 
 #endif

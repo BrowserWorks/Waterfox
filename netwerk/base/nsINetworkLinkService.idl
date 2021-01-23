@@ -35,7 +35,7 @@ interface nsINetworkLinkService : nsISupports
    * it is up.
    */
   readonly attribute boolean isLinkUp;
-  
+
   /**
    * This is set to true when we believe that isLinkUp is accurate.
    */
@@ -45,6 +45,28 @@ interface nsINetworkLinkService : nsISupports
    * The type of network connection.
    */
   readonly attribute unsigned long linkType;
+
+  /**
+   * A string uniquely identifying the current active network interfaces.
+   * Empty when there are no active network interfaces.
+   */
+  readonly attribute ACString networkID;
+
+  /**
+   * The list of DNS suffixes for the currently active network interfaces.
+   */
+  readonly attribute Array<ACString> dnsSuffixList;
+
+  const unsigned long NONE_DETECTED = 0;
+  const unsigned long VPN_DETECTED = 1 << 0;
+  const unsigned long PROXY_DETECTED = 1 << 1;
+  const unsigned long NRPT_DETECTED = 1 << 2;
+
+  /**
+   * A bitfield that encodes the platform attributes we detected which
+   * indicate that we should only use DNS, not TRR.
+   */
+  readonly attribute unsigned long platformDNSIndications;
 };
 
 %{C++
@@ -73,6 +95,16 @@ interface nsINetworkLinkService : nsISupports
  * linkStatusKnown is now false.
  */
 #define NS_NETWORK_LINK_DATA_UNKNOWN "unknown"
+
+/**
+ * network ID has changed.
+ */
+#define NS_NETWORK_ID_CHANGED_TOPIC "network:networkid-changed"
+
+/**
+ * DNS suffix list has updated.
+ */
+#define NS_DNS_SUFFIX_LIST_UPDATED_TOPIC "network:dns-suffix-list-updated"
 
 /**
  * We send notifications through nsIObserverService with topic

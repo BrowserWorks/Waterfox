@@ -1,0 +1,10 @@
+This directory contains the rlbox source from the upstream repo:
+https://github.com/PLSysSec/rlbox_sandboxing_api/
+
+Current version: [commit f1e6740d7b1f3ddd7ed2bc8fb173b3ac5973c863]
+
+UPDATING:
+
+This in-tree copy can be updated by running
+  sh update.sh
+from within the third_party/rlbox directory.

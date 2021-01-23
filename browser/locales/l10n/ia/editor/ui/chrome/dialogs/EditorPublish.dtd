@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label            "Publicar pagina">
+<!ENTITY windowTitleSettings.label    "Parametros de publication">
+<!ENTITY publishTab.label             "Publicar">
+<!ENTITY settingsTab.label            "Parametros">
+<!ENTITY publishButton.label          "Publicar">
+
+<!-- Publish Tab Panel -->
+<!ENTITY siteList.label               "Nomine del sito:">
+<!ENTITY siteList.accesskey           "o">
+<!ENTITY siteList.tooltip             "Elige le sito ubi tu desira publicar">
+<!ENTITY newSiteButton.label          "Nove sito">
+<!ENTITY newSiteButton.accesskey      "N">
+<!ENTITY docDirList.label             "Sub-plica del sito pro iste pagina:">
+<!ENTITY docDirList.accesskey         "S">
+<!ENTITY docDirList.tooltip           "Selige o insere le nomine del sub-plica remote pro iste pagina">
+<!ENTITY publishImgCheckbox.label     "Includer imagines e altere files">
+<!ENTITY publishImgCheckbox.accesskey "a">
+<!ENTITY publishImgCheckbox.tooltip   "Publicar imagines e altere files con ligamine in iste pagina">
+<!ENTITY sameLocationRadio.label      "Utilisar le mesme adresse que le pagina">
+<!ENTITY sameLocationRadio.accesskey  "U">
+<!ENTITY sameLocationRadio.tooltip    "Piblucar files con mesme position de iste pagina">
+<!ENTITY useSubdirRadio.label         "Utilisar iste sub-plica:">
+<!ENTITY useSubdirRadio.accesskey     "p">
+<!ENTITY useSubdirRadio.tooltip       "Publicar files in le subdirectorio remote seligite">
+<!ENTITY otherDirList.tooltip         "Elige o scribe le nomine del subdirectorio remote ubi le files essera publicate">
+<!ENTITY pageTitle.label              "Titulo del pagina:">
+<!ENTITY pageTitle.accesskey          "T">
+<!ENTITY pageTitle.tooltip            "Insere un titulo pro identificar le pagina in le fenestra e in marcapaginas">
+<!ENTITY pageTitleExample.label       "p.ex.: &quot;Mi pagina web&quot;">
+<!ENTITY filename.label               "Nomine del file:">
+<!ENTITY filename.accesskey           "F">
+<!ENTITY filename.tooltip             "Insere un nomine pro iste file, incluse '.html' pro un pagina web">
+<!ENTITY filenameExample.label        "p.ex.: &quot;mipagina.html&quot;">
+<!ENTITY setDefaultButton.label       "Stabilir como predeterminate">
+<!ENTITY setDefaultButton.accesskey   "d">
+<!ENTITY removeButton.label           "Remover le sito">
+<!ENTITY removeButton.accesskey       "R">
+
+<!-- Settings Tab Panel -->
+<!ENTITY publishSites.label           "Publication del sitos">
+<!ENTITY serverInfo.label             "Informationes del servitor">
+<!ENTITY loginInfo.label              "Informationes de accesso">
+<!ENTITY siteName.label               "Nomine del sito:">
+<!ENTITY siteName.accesskey           "o">
+<!ENTITY siteName.tooltip             "Un nomine que identifica iste sito a publicar (p.ex.: 'MiSito')">
+<!ENTITY siteUrl.label                "Adresse de publication (p.ex.: 'ftp://ftp.mifornitor.com/minominedeusator'):">
+<!ENTITY siteUrl.accesskey            "a">
+<!ENTITY siteUrl.tooltip              "Le adresse ftp:// o http:// fornite per tu fornitor de accesso a internet o servicio de allogiamento web">
+<!ENTITY browseUrl.label              "Adresse HTTP de tu pagina initial (p.ex.: 'http://www.mifornitor.com/minominedeusator'):">
+<!ENTITY browseUrl.accesskey          "T">
+<!ENTITY browseUrl.tooltip            "Le adresse http:// de tu directorio personal (non includer le nomine del file)">
+<!ENTITY username.label               "Nomine de usator:">
+<!ENTITY username.accesskey           "U">
+<!ENTITY username.tooltip             "Le nomine de usator que tu usa pro aperir session a tu fornitor de accesso a internet o servicio de allogiamento web">
+<!ENTITY password.label               "Contrasigno:">
+<!ENTITY password.accesskey           "s">
+<!ENTITY password.tooltip             "Le contrasigno associate a tu nomine de usator">
+<!ENTITY savePassword.label           "Salvar le contrasigno">
+<!ENTITY savePassword.accesskey       "S">
+<!ENTITY savePassword.tooltip         "Selige isto pro memorisar tu contrasigno de maniera secur usante le gestor de contrasignos">

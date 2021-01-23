@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY SSLTLSProtocolVersions.caption     "Verzie protokolu SSL/TLS">
+<!ENTITY SSLTLSWarnings.caption             "Upozornenia SSL/TLS">
+<!ENTITY SSLMixedContent.caption            "Zmiešaný obsah">
+<!ENTITY SSLClientAuthMethod.caption        "Výber klientskeho certifikátu">
+
+<!ENTITY pref.ssltls.title                  "Transport Layer Security (SSL/TLS)">
+<!ENTITY limit.description                  "Môžete určiť, ktoré šifrovacie protokoly budú používané pre zabezpečené pripojenia. Zvoľte jednu verziu alebo súvislý rozsah verzií.">
+<!ENTITY limit.enable.label                 "Povoliť:">
+<!ENTITY limit.tls10.label                  "TLS 1.0">
+<!ENTITY limit.tls10.accesskey              "T">
+<!ENTITY limit.tls11.label                  "TLS 1.1">
+<!ENTITY limit.tls11.accesskey              "1">
+<!ENTITY limit.tls12.label                  "TLS 1.2">
+<!ENTITY limit.tls12.accesskey              "2">
+<!ENTITY limit.tls13.label                  "TLS 1.3">
+<!ENTITY limit.tls13.accesskey              "3">
+
+<!ENTITY warn.description2                  "&brandShortName; vás môže upozorniť na stav zabezpečenia stránky, ktorú prehliadate. Nastavte si &brandShortName; tak, aby zobrazoval upozornenie predtým, ako:">
+<!ENTITY warn.enteringsecure                "načíta zašifrovanú stránku">
+<!ENTITY warn.enteringsecure.accesskey      "n">
+<!ENTITY warn.insecurepost                  "odošle vyplnený formulár z nezašifrovanej stránky na nezašifrovanú stránku">
+<!ENTITY warn.insecurepost.accesskey        "m">
+<!ENTITY warn.leavingsecure                 "opustí zašifrovanú stránku">
+<!ENTITY warn.leavingsecure.accesskey       "u">
+
+<!ENTITY mixed.description                  "Zašifrované stránky môžu obsahovať nezašifrovaný obsah, ktorý je možné sledovať či odpočúvať. &brandShortName; je schopný ho zachytiť a zablokovať:">
+<!ENTITY warn.mixedactivecontent            "Upozorniť ma, ak zabezpečená stránka obsahuje nezabezpečený obsah">
+<!ENTITY warn.mixedactivecontent.accesskey  "b">
+<!ENTITY block.activecontent                "Nenačítavať nezabezpečený obsah na zabezpečených stránkach">
+<!ENTITY block.activecontent.accesskey      "s">
+<!ENTITY warn.mixeddisplaycontent           "Upozorniť ma, ak zabezpečená stránka obsahuje iné typy zmiešaného obsahu">
+<!ENTITY warn.mixeddisplaycontent.accesskey "h">
+<!ENTITY block.displaycontent               "Nenačítavať iné typy zmiešaného obsahu na zabezpečených stránkach">
+<!ENTITY block.displaycontent.accesskey     "e">
+
+<!ENTITY certselect.description             "Rozhodnite, ako má &brandShortName; vyberať certifikát, ktorý poskytne serverom, ktoré ho vyžadujú:">
+<!ENTITY certselect.auto                    "Vybrať automaticky">
+<!ENTITY certselect.auto.accesskey          "V">
+<!ENTITY certselect.ask                     "Vždy sa opýtať">
+<!ENTITY certselect.ask.accesskey           "o">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.addressing.title                 "Direcciones">
+<!ENTITY emailCollectiontitle.label            "Colección de cuentas de correo">
+<!ENTITY emailCollectionPicker.label           "Agregar dirección de correo a:">
+<!ENTITY emailCollectionPicker.accesskey       "c">
+<!ENTITY emailCollectiontext.label             "Las direcciones de correo de los mensajes que llegan pueden agregarse automáticamente a la libreta de direcciones local.">
+
+<!-- Autocompletion -->
+<!ENTITY addressingTitle.label                 "Autocompletar direcciones">
+<!ENTITY highlightNonMatches.label             "Remarcar direcciones que no se completan automáticamente">
+<!ENTITY highlightNonMatches.accesskey         "a">
+<!ENTITY addressingEnable.label                "Libretas de direcciones locales">
+<!ENTITY addressingEnable.accesskey            "L">
+<!ENTITY autocompleteText.label                "Al escribir una dirección, buscar coincidencias en:">
+<!ENTITY directories.label                     "Servidor de directorios:">
+<!ENTITY directories.accesskey                 "d">
+<!ENTITY directoriesNone.label                 "Ninguno">
+<!ENTITY editDirectories.label                 "Editar directorios…">
+<!ENTITY editDirectories.accesskey             "E">

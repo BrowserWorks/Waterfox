@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.notifications.title         "Obavijesti">
+<!ENTITY notifications.caption            "Obavijesti">
+<!ENTITY newMessagesArrive.label          "Kada stigne nova poruka:">
+
+<!-- LOCALIZATION NOTE: (showAlertFor.label, showAlertTimeEnd.label)
+     showAlertFor.label is associated with the checkbox to show the alert,
+     leading into a numerical field to enter a time in seconds, followed by
+     showAlertTimeEnd.label which in en-US is the unit of the value -->
+
+<!ENTITY showAlertFor.label               "Prikaži upozorenje za">
+<!ENTITY showAlertTimeEnd.label           "sekundi">
+
+<!ENTITY showAlertPreviewText.label       "Prikaži pregled teksta poruke">
+<!ENTITY showAlertSubject.label           "Pokaži predmet">
+<!ENTITY showAlertSender.label            "Pokaži pošiljaoca">
+<!ENTITY useSystemAlert.label             "Koristite sistemska obavještenja na desktopu">
+<!ENTITY useBuiltInAlert.label            "Koristite &brandShortName; vlastiti prozor obavještenja">
+
+<!ENTITY showTrayIcon.label               "Prikaži ikonu u sistemskoj traci">
+<!ENTITY showBalloon.label                "Prikaži balon upozorenja">
+<!ENTITY bounceSystemDockIcon.label       "Animiraj ikonicu u docku">
+
+<!ENTITY playSound.label                  "Reproduciraj zvuk">
+<!ENTITY playButton.label                 "Reproduciraj">
+<!ENTITY systemsound.label                "Novi zvuk pošte sistema">
+<!ENTITY customsound.label                "Prilagođenu zvučnu datoteku">
+<!ENTITY browse.label                     "Odaberi…">
+<!ENTITY browse.title                     "Izaberite datoteku">

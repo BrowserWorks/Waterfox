@@ -7,7 +7,6 @@
 #ifndef FRAMELAYERBUILDER_H_
 #define FRAMELAYERBUILDER_H_
 
-#include "nsAutoPtr.h"
 #include "nsCSSPropertyIDSet.h"
 #include "nsTHashtable.h"
 #include "nsHashKeys.h"
@@ -17,6 +16,7 @@
 #include "DisplayItemClip.h"
 #include "mozilla/gfx/MatrixFwd.h"
 #include "mozilla/layers/LayersTypes.h"
+#include "mozilla/UniquePtr.h"
 #include "LayerState.h"
 #include "Layers.h"
 #include "LayerUserData.h"
@@ -86,7 +86,7 @@ class DisplayItemData final {
   nsDisplayItemGeometry* GetGeometry() const { return mGeometry.get(); }
   const DisplayItemClip& GetClip() const { return mClip; }
   void Invalidate() { mIsInvalid = true; }
-  void ClearAnimationCompositorState();
+  void NotifyRemoved();
   void SetItem(nsPaintedDisplayItem* aItem) { mItem = aItem; }
   nsPaintedDisplayItem* GetItem() const { return mItem; }
   nsIFrame* FirstFrame() const { return mFrameList[0]; }
@@ -185,7 +185,7 @@ class DisplayItemData final {
    * retain until the next transaction.
    *
    */
-  void EndUpdate(nsAutoPtr<nsDisplayItemGeometry> aGeometry);
+  void EndUpdate(mozilla::UniquePtr<nsDisplayItemGeometry>&& aGeometry);
   void EndUpdate();
 
   uint32_t mRefCnt;
@@ -194,7 +194,7 @@ class DisplayItemData final {
   RefPtr<layers::Layer> mOptLayer;
   RefPtr<layers::BasicLayerManager> mInactiveManager;
   AutoTArray<nsIFrame*, 1> mFrameList;
-  nsAutoPtr<nsDisplayItemGeometry> mGeometry;
+  mozilla::UniquePtr<nsDisplayItemGeometry> mGeometry;
   DisplayItemClip mClip;
   uint32_t mDisplayItemKey;
   LayerState mLayerState;
@@ -284,6 +284,7 @@ struct ContainerLayerParameters {
       : mXScale(aXScale),
         mYScale(aYScale),
         mLayerContentsVisibleRect(nullptr),
+        mItemVisibleRect(nullptr),
         mBackgroundColor(NS_RGBA(0, 0, 0, 0)),
         mScrollMetadataASR(nullptr),
         mCompositorASR(nullptr),
@@ -297,6 +298,7 @@ struct ContainerLayerParameters {
       : mXScale(aXScale),
         mYScale(aYScale),
         mLayerContentsVisibleRect(nullptr),
+        mItemVisibleRect(nullptr),
         mOffset(aOffset),
         mBackgroundColor(aParent.mBackgroundColor),
         mScrollMetadataASR(aParent.mScrollMetadataASR),
@@ -318,6 +320,11 @@ struct ContainerLayerParameters {
    * visible rect of the layer, in the coordinate system of the created layer.
    */
   nsIntRect* mLayerContentsVisibleRect;
+
+  /**
+   * If non-null, the rectangle which stores the item's visible rect.
+   */
+  nsRect* mItemVisibleRect;
 
   /**
    * An offset to apply to all child layers created.
@@ -493,7 +500,7 @@ class FrameLayerBuilder : public layers::LayerUserData {
   static Layer* GetDedicatedLayer(nsIFrame* aFrame,
                                   DisplayItemType aDisplayItemType);
 
-  using AnimationGenerationCallback = std::function<bool(
+  using AnimationGenerationCallback = FunctionRef<bool(
       const Maybe<uint64_t>& aGeneration, DisplayItemType aDisplayItemType)>;
   /**
    * Enumerates layers for the all display item types that correspond to
@@ -505,7 +512,7 @@ class FrameLayerBuilder : public layers::LayerUserData {
    * The enumeration stops if |aCallback| returns false.
    */
   static void EnumerateGenerationForDedicatedLayers(
-      const nsIFrame* aFrame, const AnimationGenerationCallback& aCallback);
+      const nsIFrame* aFrame, AnimationGenerationCallback);
 
   /**
    * This callback must be provided to EndTransaction. The callback data
@@ -616,13 +623,6 @@ class FrameLayerBuilder : public layers::LayerUserData {
                                           DisplayItemData* aItem);
 
   /**
-   * Get the translation transform that was in aLayer when we last painted. It's
-   * either the transform saved by SaveLastPaintTransform, or else the transform
-   * that's currently in the layer (which must be an integer translation).
-   */
-  nsIntPoint GetLastPaintOffset(PaintedLayer* aLayer);
-
-  /**
    * Return the resolution at which we expect to render aFrame's contents,
    * assuming they are being painted to retained layers. This takes into account
    * the resolution the contents of the ContainerLayer containing aFrame are
@@ -705,7 +705,7 @@ class FrameLayerBuilder : public layers::LayerUserData {
  public:
   /**
    * Add the PaintedDisplayItemLayerUserData object as being used in this
-   * transaction so that we clean it up afterwards.
+   * transaction so that we do some end-of-paint maintenance on it.
    */
   void AddPaintedLayerItemsEntry(PaintedDisplayItemLayerUserData* aData);
 

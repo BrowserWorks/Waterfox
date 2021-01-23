@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label          "Restr">
+<!ENTITY fileMenu.accesskey        "R">
+<!ENTITY newMenu.label            "Nevez">
+<!ENTITY newMenu.accesskey          "N">
+
+<!ENTITY editMenu.label          "Embann">
+<!ENTITY editMenu.accesskey        "E">
+<!ENTITY undoCmd.label            "Dizober">
+<!ENTITY undoCmd.accesskey          "z">
+<!ENTITY redoCmd.label            "Adober">
+<!ENTITY redoCmd.accesskey          "r">
+<!ENTITY deleteCmd.label          "Dilemel">
+<!ENTITY deleteCmd.accesskey        "D">
+<!ENTITY preferencesCmd2.label "Dibarzhioù…">
+<!ENTITY preferencesCmd2.accesskey "D">
+<!ENTITY preferencesCmdUnix.label       "Gwellvezioù">
+<!ENTITY preferencesCmdUnix.accesskey     "w">
+
+<!ENTITY customizeCmd.label "Personelaat">
+<!ENTITY customizeCmd.accesskey "t">
+
+<!ENTITY viewMenu.label          "Gwelout">
+<!ENTITY viewMenu.accesskey        "G">
+<!ENTITY viewToolbarsMenu.label        "Barrennoù ostilhoù">
+<!ENTITY viewToolbarsMenu.accesskey      "B">
+<!ENTITY showTaskbarCmd.label          "Barrenn stad">
+<!ENTITY showTaskbarCmd.accesskey        "s">
+
+<!ENTITY closeCmd.label      "Serriñ">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "S">
+
+<!ENTITY quitApplicationCmd.label  "Kuitaat">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "K">
+
+<!ENTITY quitApplicationCmdUnix.label  "Kuitaat">
+<!ENTITY quitApplicationCmdUnix.accesskey  "K">
+
+<!ENTITY quitApplicationCmdMac.label  "Kuitaat &brandShortName;">
+<!ENTITY quitApplicationCmdMac.accesskey  "K">

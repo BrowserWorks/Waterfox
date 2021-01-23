@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Ítarlegri reikningsstillingar">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "Mappa IMAP netþjóns:">
+<!ENTITY serverDirectory.accesskey "þ">
+<!ENTITY usingSubscription.label "Sýna aðeins möppur sem eru í áskrift">
+<!ENTITY usingSubscription.accesskey "S">
+<!ENTITY dualUseFolders.label "Póstþjónn styður möppur sem innihalda undirmöppur og póst">
+<!ENTITY dualUseFolders.accesskey "j">
+<!ENTITY maximumConnectionsNumber.label "Hámarksfjöldi tenginga á netþjón sem setja á í flýtiminni">
+<!ENTITY maximumConnectionsNumber.accesskey "m">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Þessar stillingar skilgreina nafnsvið á IMAP þjóni">
+<!ENTITY personalNamespace.label "Eigið nafnsvið:">
+<!ENTITY personalNamespace.accesskey "E">
+<!ENTITY publicNamespace.label "Opinbert (samnýtt):">
+<!ENTITY publicNamespace.accesskey "p">
+<!ENTITY otherUsersNamespace.label "Aðrir notendur:">
+<!ENTITY otherUsersNamespace.accesskey "o">
+<!ENTITY overrideNamespaces.label "Leyfa netþjóni að hunsa þessi nafnsvið">
+<!ENTITY overrideNamespaces.accesskey "a">
+<!ENTITY pop3DeferringDesc.label "Þegar halað er niður pósti frá þessum reikningi, skal nota eftirfarandi möppu til að geyma nýjan póst:">
+<!ENTITY accountInbox.label "Innhólf fyrir þennan reikning">
+<!ENTITY accountInbox.accesskey "þ">
+<!ENTITY deferToServer.label "Innhólf fyrir annan reikning">
+<!ENTITY deferToServer.accesskey "I">
+<!ENTITY deferGetNewMail.label "Nota þennan póstþjón þegar náð er í nýjan póst">
+<!ENTITY deferGetNewMail.accesskey "N">

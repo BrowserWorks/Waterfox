@@ -10,9 +10,7 @@
 #include "nsTArray.h"
 #include "nsIBaseWindow.h"
 #include "nsIWidget.h"
-#include "nsIDOMWindow.h"
 #include "nsIObserverService.h"
-#include "nsIServiceManager.h"
 #include "nsISimpleEnumerator.h"
 #include "nsAppShellWindowEnumerator.h"
 #include "nsWindowMediator.h"
@@ -22,12 +20,12 @@
 #include "nsIDocShell.h"
 #include "nsIInterfaceRequestor.h"
 #include "nsIInterfaceRequestorUtils.h"
-#include "nsIXULWindow.h"
+#include "nsIAppWindow.h"
 
 using namespace mozilla;
 
 nsresult nsWindowMediator::GetDOMWindow(
-    nsIXULWindow* inWindow, nsCOMPtr<nsPIDOMWindowOuter>& outDOMWindow) {
+    nsIAppWindow* inWindow, nsCOMPtr<nsPIDOMWindowOuter>& outDOMWindow) {
   nsCOMPtr<nsIDocShell> docShell;
 
   outDOMWindow = nullptr;
@@ -62,7 +60,7 @@ nsresult nsWindowMediator::Init() {
   return NS_OK;
 }
 
-NS_IMETHODIMP nsWindowMediator::RegisterWindow(nsIXULWindow* inWindow) {
+NS_IMETHODIMP nsWindowMediator::RegisterWindow(nsIAppWindow* inWindow) {
   MOZ_RELEASE_ASSERT(NS_IsMainThread());
   NS_ENSURE_STATE(mReady);
 
@@ -90,7 +88,7 @@ NS_IMETHODIMP nsWindowMediator::RegisterWindow(nsIXULWindow* inWindow) {
 }
 
 NS_IMETHODIMP
-nsWindowMediator::UnregisterWindow(nsIXULWindow* inWindow) {
+nsWindowMediator::UnregisterWindow(nsIAppWindow* inWindow) {
   MOZ_RELEASE_ASSERT(NS_IsMainThread());
   NS_ENSURE_STATE(mReady);
   nsWindowInfo* info = GetInfoFor(inWindow);
@@ -106,7 +104,7 @@ nsresult nsWindowMediator::UnregisterWindow(nsWindowInfo* inInfo) {
     index++;
   }
 
-  nsIXULWindow* window = inInfo->mWindow.get();
+  nsIAppWindow* window = inInfo->mWindow.get();
   ListenerArray::ForwardIterator iter(mListeners);
   while (iter.HasMore()) {
     iter.GetNext()->OnCloseWindow(window);
@@ -123,7 +121,7 @@ nsresult nsWindowMediator::UnregisterWindow(nsWindowInfo* inInfo) {
   return NS_OK;
 }
 
-nsWindowInfo* nsWindowMediator::GetInfoFor(nsIXULWindow* aWindow) {
+nsWindowInfo* nsWindowMediator::GetInfoFor(nsIAppWindow* aWindow) {
   nsWindowInfo *info, *listEnd;
 
   if (!aWindow) return nullptr;
@@ -171,20 +169,20 @@ nsWindowMediator::GetEnumerator(const char16_t* inType,
 }
 
 NS_IMETHODIMP
-nsWindowMediator::GetXULWindowEnumerator(const char16_t* inType,
+nsWindowMediator::GetAppWindowEnumerator(const char16_t* inType,
                                          nsISimpleEnumerator** outEnumerator) {
   MOZ_RELEASE_ASSERT(NS_IsMainThread());
   NS_ENSURE_ARG_POINTER(outEnumerator);
   NS_ENSURE_STATE(mReady);
 
   RefPtr<nsAppShellWindowEnumerator> enumerator =
-      new nsASXULWindowEarlyToLateEnumerator(inType, *this);
+      new nsASAppWindowEarlyToLateEnumerator(inType, *this);
   enumerator.forget(outEnumerator);
   return NS_OK;
 }
 
 NS_IMETHODIMP
-nsWindowMediator::GetZOrderXULWindowEnumerator(const char16_t* aWindowType,
+nsWindowMediator::GetZOrderAppWindowEnumerator(const char16_t* aWindowType,
                                                bool aFrontToBack,
                                                nsISimpleEnumerator** _retval) {
   MOZ_RELEASE_ASSERT(NS_IsMainThread());
@@ -193,17 +191,16 @@ nsWindowMediator::GetZOrderXULWindowEnumerator(const char16_t* aWindowType,
 
   RefPtr<nsAppShellWindowEnumerator> enumerator;
   if (aFrontToBack)
-    enumerator = new nsASXULWindowFrontToBackEnumerator(aWindowType, *this);
+    enumerator = new nsASAppWindowFrontToBackEnumerator(aWindowType, *this);
   else
-    enumerator = new nsASXULWindowBackToFrontEnumerator(aWindowType, *this);
+    enumerator = new nsASAppWindowBackToFrontEnumerator(aWindowType, *this);
 
   enumerator.forget(_retval);
   return NS_OK;
 }
 
-int32_t nsWindowMediator::AddEnumerator(
-    nsAppShellWindowEnumerator* inEnumerator) {
-  return mEnumeratorList.AppendElement(inEnumerator) != nullptr;
+void nsWindowMediator::AddEnumerator(nsAppShellWindowEnumerator* inEnumerator) {
+  mEnumeratorList.AppendElement(inEnumerator);
 }
 
 int32_t nsWindowMediator::RemoveEnumerator(
@@ -244,6 +241,13 @@ nsWindowMediator::GetMostRecentBrowserWindow(mozIDOMWindowProxy** outWindow) {
 #ifdef MOZ_WIDGET_ANDROID
   if (!*outWindow) {
     rv = GetMostRecentWindow(u"navigator:geckoview", outWindow);
+    NS_ENSURE_SUCCESS(rv, rv);
+  }
+#endif
+
+#ifdef MOZ_THUNDERBIRD
+  if (!*outWindow) {
+    rv = GetMostRecentWindow(u"mail:3pane", outWindow);
     NS_ENSURE_SUCCESS(rv, rv);
   }
 #endif
@@ -345,7 +349,7 @@ nsWindowMediator::GetCurrentInnerWindowWithId(uint64_t aWindowID,
 }
 
 NS_IMETHODIMP
-nsWindowMediator::UpdateWindowTimeStamp(nsIXULWindow* inWindow) {
+nsWindowMediator::UpdateWindowTimeStamp(nsIAppWindow* inWindow) {
   MOZ_RELEASE_ASSERT(NS_IsMainThread());
   NS_ENSURE_STATE(mReady);
   nsWindowInfo* info = GetInfoFor(inWindow);
@@ -364,7 +368,7 @@ nsWindowMediator::UpdateWindowTimeStamp(nsIXULWindow* inWindow) {
    calculate a change as seldom as possible.
 */
 NS_IMETHODIMP
-nsWindowMediator::CalculateZPosition(nsIXULWindow* inWindow,
+nsWindowMediator::CalculateZPosition(nsIAppWindow* inWindow,
                                      uint32_t inPosition, nsIWidget* inBelow,
                                      uint32_t* outPosition,
                                      nsIWidget** outBelow, bool* outAltered) {
@@ -382,7 +386,7 @@ nsWindowMediator::CalculateZPosition(nsIXULWindow* inWindow,
     return NS_ERROR_INVALID_ARG;
 
   nsWindowInfo* info = mTopmostWindow;
-  nsIXULWindow* belowWindow = nullptr;
+  nsIAppWindow* belowWindow = nullptr;
   bool found = false;
   nsresult result = NS_OK;
 
@@ -487,8 +491,8 @@ nsWindowMediator::CalculateZPosition(nsIXULWindow* inWindow,
 }
 
 NS_IMETHODIMP
-nsWindowMediator::SetZPosition(nsIXULWindow* inWindow, uint32_t inPosition,
-                               nsIXULWindow* inBelow) {
+nsWindowMediator::SetZPosition(nsIAppWindow* inWindow, uint32_t inPosition,
+                               nsIAppWindow* inBelow) {
   MOZ_RELEASE_ASSERT(NS_IsMainThread());
   nsWindowInfo *inInfo, *belowInfo;
 
@@ -540,9 +544,9 @@ nsWindowMediator::SetZPosition(nsIXULWindow* inWindow, uint32_t inPosition,
 }
 
 NS_IMETHODIMP
-nsWindowMediator::GetZLevel(nsIXULWindow* aWindow, uint32_t* _retval) {
+nsWindowMediator::GetZLevel(nsIAppWindow* aWindow, uint32_t* _retval) {
   NS_ENSURE_ARG_POINTER(_retval);
-  *_retval = nsIXULWindow::normalZ;
+  *_retval = nsIAppWindow::normalZ;
   // This can fail during window destruction.
   nsWindowInfo* info = GetInfoFor(aWindow);
   if (info) {
@@ -552,7 +556,7 @@ nsWindowMediator::GetZLevel(nsIXULWindow* aWindow, uint32_t* _retval) {
 }
 
 NS_IMETHODIMP
-nsWindowMediator::SetZLevel(nsIXULWindow* aWindow, uint32_t aZLevel) {
+nsWindowMediator::SetZLevel(nsIAppWindow* aWindow, uint32_t aZLevel) {
   MOZ_RELEASE_ASSERT(NS_IsMainThread());
   NS_ENSURE_STATE(mReady);
 

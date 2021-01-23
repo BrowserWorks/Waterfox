@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -12,7 +10,7 @@
  */
 
 add_task(async function() {
-  const { tab, monitor } = await initNetMonitor(SIMPLE_URL);
+  const { monitor } = await initNetMonitor(SIMPLE_URL, { requestCount: 1 });
   info("Starting test... ");
 
   const { document, store, windowRequire } = monitor.panelWin;
@@ -21,7 +19,7 @@ add_task(async function() {
 
   // Reload to have one request in the list.
   const waitForEvents = waitForNetworkEvents(monitor, 1);
-  BrowserTestUtils.loadURI(tab.linkedBrowser, SIMPLE_URL);
+  await navigateTo(SIMPLE_URL);
   await waitForEvents;
 
   // Open context menu and execute "Edit & Resend".

@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Tilatut syötteet">
+<!ENTITY learnMore.label             "Lue lisää syötteistä">
+
+<!ENTITY feedTitle.label             "Otsikko:">
+<!ENTITY feedTitle.accesskey         "O">
+
+<!ENTITY feedLocation.label          "Syötteen osoite:">
+<!ENTITY feedLocation.accesskey      "S">
+<!ENTITY feedLocation2.placeholder   "Syötä kelvollinen syötteen osoite">
+<!ENTITY locationValidate.label      "Varmista">
+<!ENTITY validateText.label          "Varmista syöte ja hae kelvollinen osoite.">
+
+<!ENTITY feedFolder.label            "Säilytä artikkeleita:">
+<!ENTITY feedFolder.accesskey        "a">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Etsi uusia artikkeleita aina ">
+<!ENTITY biffStart.accesskey         "u">
+<!ENTITY biffMinutes.label           "minuutin">
+<!ENTITY biffMinutes.accesskey       "m">
+<!ENTITY biffDays.label              "päivän">
+<!ENTITY biffDays.accesskey          "p">
+<!ENTITY recommendedUnits.label      "Julkaisijan suositukset:">
+
+<!ENTITY quickMode.label             "Älä lataa artikkelin verkkosivua vaan näytä artikkelin yhteenveto">
+<!ENTITY quickMode.accesskey         "v">
+
+<!ENTITY autotagEnable.label         "Luo tunnisteet automaattisesti syötteen &lt;kategorioiden&gt; nimistä">
+<!ENTITY autotagEnable.accesskey     "L">
+<!ENTITY autotagUsePrefix.label      "Lisää tunnisteisiin etuliite:">
+<!ENTITY autotagUsePrefix.accesskey  "e">
+<!ENTITY autoTagPrefix.placeholder   "Kirjoita tunnisteen etuliite">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Lisää">
+<!ENTITY button.addFeed.accesskey    "L">
+<!ENTITY button.verifyFeed.label     "Vertaile">
+<!ENTITY button.verifyFeed.accesskey "e">
+<!ENTITY button.updateFeed.label     "Päivitä">
+<!ENTITY button.updateFeed.accesskey "P">
+<!ENTITY button.removeFeed.label     "Poista">
+<!ENTITY button.removeFeed.accesskey "o">
+<!ENTITY button.importOPML.label     "Tuo">
+<!ENTITY button.importOPML.accesskey "T">
+<!ENTITY button.exportOPML.label     "Vie">
+<!ENTITY button.exportOPML.accesskey "V">
+<!ENTITY button.exportOPML.tooltip   "Vie syötteet kansiorakenteella; Napsauta ctrl-näppäin pohjassa tai ctrl+enter jos haluat viedä syötteet listana">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Sulje">

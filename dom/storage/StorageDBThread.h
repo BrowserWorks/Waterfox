@@ -15,7 +15,7 @@
 #include "mozilla/BasePrincipal.h"
 #include "mozilla/storage/StatementCache.h"
 #include "mozilla/TimeStamp.h"
-#include "nsAutoPtr.h"
+#include "mozilla/UniquePtr.h"
 #include "nsString.h"
 #include "nsCOMPtr.h"
 #include "nsClassHashtable.h"
@@ -256,7 +256,7 @@ class StorageDBThread final {
     nsClassHashtable<nsCStringHashKey, DBOperation> mUpdates;
 
     // Collection of all tasks, valid only between Prepare() and Execute()
-    nsTArray<nsAutoPtr<DBOperation> > mExecList;
+    nsTArray<UniquePtr<DBOperation> > mExecList;
 
     // Number of failing flush attempts
     uint32_t mFlushFailureCount;
@@ -280,7 +280,7 @@ class StorageDBThread final {
     Monitor& GetMonitor() { return mMonitor; }
 
    private:
-    virtual ~ThreadObserver() {}
+    virtual ~ThreadObserver() = default;
     bool mHasPendingEvents;
     // The monitor we drive the thread with
     Monitor mMonitor;
@@ -301,14 +301,14 @@ class StorageDBThread final {
     }
 
    private:
-    ~ShutdownRunnable() {}
+    ~ShutdownRunnable() = default;
 
     NS_DECL_NSIRUNNABLE
   };
 
  public:
   StorageDBThread();
-  virtual ~StorageDBThread() {}
+  virtual ~StorageDBThread() = default;
 
   static StorageDBThread* Get();
 
@@ -378,7 +378,7 @@ class StorageDBThread final {
   virtual bool ShouldPreloadOrigin(const nsACString& aOrigin);
 
   // Get the complete list of scopes having data.
-  void GetOriginsHavingData(InfallibleTArray<nsCString>* aOrigins);
+  void GetOriginsHavingData(nsTArray<nsCString>* aOrigins);
 
  private:
   nsCOMPtr<nsIFile> mDatabaseFile;

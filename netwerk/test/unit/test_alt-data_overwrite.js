@@ -12,6 +12,8 @@
  * - readAltContent3 checks that it gets back the newly saved alt-data
  */
 
+"use strict";
+
 const { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
 
 XPCOMUtils.defineLazyGetter(this, "URL", function() {
@@ -90,7 +92,7 @@ function flushAndOpenAltChannel() {
 
 // needs to be rooted
 let cacheFlushObserver = {
-  observe: function() {
+  observe() {
     if (!cacheFlushObserver) {
       info("ignoring cacheFlushObserver\n");
       return;
@@ -137,7 +139,7 @@ function flushAndOpenAltChannel2() {
 
 // needs to be rooted
 let cacheFlushObserver2 = {
-  observe: function() {
+  observe() {
     if (!cacheFlushObserver2) {
       info("ignoring cacheFlushObserver2\n");
       return;
@@ -178,7 +180,7 @@ function flushAndOpenAltChannel3() {
 
 // needs to be rooted
 let cacheFlushObserver3 = {
-  observe: function() {
+  observe() {
     if (!cacheFlushObserver3) {
       info("ignoring cacheFlushObserver3\n");
       return;

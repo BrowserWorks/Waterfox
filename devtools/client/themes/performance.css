@@ -1,4 +1,3 @@
-/* vim:set ts=2 sw=2 sts=2 et: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -28,6 +27,15 @@
   --sidebar-width: 185px;
 }
 
+/* Let the component gain focus when a click hits an empty area */
+.performance-tool {
+  -moz-user-focus: normal;
+}
+
+.performance-tool:focus {
+  outline: 0;
+}
+
 /**
  * A generic class to hide elements, replacing the `element.hidden` attribute
  * that we use to hide elements that can later be active
@@ -45,8 +53,7 @@
 }
 
 #performance-toolbar-controls-detail-views .toolbarbutton-text {
-  padding-inline-start: 4px;
-  padding-inline-end: 8px;
+  margin-inline: 4px;
 }
 
 #filter-button {
@@ -104,11 +111,6 @@
   display: none;
 }
 
-.notice-container .record-button {
-  padding: 5px !important;
-}
-
-.notice-container .record-button.checked,
 .notice-container .record-button.checked {
   color: var(--theme-selection-color) !important;
   background: var(--theme-selection-background) !important;
@@ -133,7 +135,8 @@
  * DE-XUL: The height of the toolbar is not correct without tweaking the line-height.
  */
 #recordings-pane .devtools-toolbar {
-  line-height: 0;
+  display: flex;
+  line-height: 1;
 }
 
 .theme-sidebar {
@@ -356,7 +359,7 @@
 
 .call-tree-item .call-tree-cell,
 .call-tree-item .call-tree-cell[type=function] description {
-  -moz-user-select: text;
+  user-select: text;
   /* so that optimizations view doesn't break the lines in call tree */
   white-space: nowrap;
 }
@@ -439,14 +442,14 @@
  */
 
 #waterfall-tree {
-  /* DE-XUL: convert this to display: flex once index.xul is converted to HTML */
+  /* DE-XUL: convert this to display: flex once index.xhtml is converted to HTML */
   display: -moz-box;
   -moz-box-orient: vertical;
   -moz-box-flex: 1;
 }
 
 .waterfall-markers {
-  /* DE-XUL: convert this to display: flex once index.xul is converted to HTML */
+  /* DE-XUL: convert this to display: flex once index.xhtml is converted to HTML */
   display: -moz-box;
   -moz-box-orient: vertical;
   -moz-box-flex: 1;
@@ -492,7 +495,7 @@
  */
 
 .waterfall-markers .tree {
-  /* DE-XUL: convert this to display: flex once index.xul is converted to HTML */
+  /* DE-XUL: convert this to display: flex once index.xhtml is converted to HTML */
   display: -moz-box;
   -moz-box-orient: vertical;
   -moz-box-flex: 1;
@@ -766,7 +769,7 @@ menuitem.experimental-option::before {
   max-height: 12px;
   margin-top: 2px;
   margin-inline-end: 5px;
-  background-image: url(chrome://devtools/skin/images/alert.svg);
+  background-image: url(chrome://devtools/skin/images/alert-small.svg);
   background-repeat: no-repeat;
   background-size: contain;
   -moz-context-properties: fill;

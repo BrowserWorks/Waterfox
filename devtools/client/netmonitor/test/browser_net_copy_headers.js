@@ -8,7 +8,9 @@
  */
 
 add_task(async function() {
-  const { tab, monitor } = await initNetMonitor(SIMPLE_URL);
+  const { tab, monitor } = await initNetMonitor(SIMPLE_URL, {
+    requestCount: 1,
+  });
   info("Starting test... ");
 
   const { document, store, windowRequire } = monitor.panelWin;
@@ -25,7 +27,7 @@ add_task(async function() {
     document.querySelectorAll(".request-list-item")[0]
   );
 
-  const requestItem = getSortedRequests(store.getState()).get(0);
+  const requestItem = getSortedRequests(store.getState())[0];
   const { method, httpVersion, status, statusText } = requestItem;
 
   EventUtils.sendMouseEvent(

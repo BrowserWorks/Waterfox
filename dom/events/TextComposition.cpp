@@ -18,7 +18,7 @@
 #include "mozilla/Preferences.h"
 #include "mozilla/PresShell.h"
 #include "mozilla/RangeBoundary.h"
-#include "mozilla/StaticPrefs.h"
+#include "mozilla/StaticPrefs_dom.h"
 #include "mozilla/TextComposition.h"
 #include "mozilla/TextEvents.h"
 #include "mozilla/Unused.h"
@@ -680,7 +680,7 @@ RawRangeBoundary TextComposition::GetStartRef() const {
     return RawRangeBoundary();
   }
 
-  nsRange* firstRange = nullptr;
+  const nsRange* firstRange = nullptr;
   static const SelectionType kIMESelectionTypes[] = {
       SelectionType::eIMERawClause, SelectionType::eIMESelectedRawClause,
       SelectionType::eIMEConvertedClause, SelectionType::eIMESelectedClause};
@@ -691,7 +691,7 @@ RawRangeBoundary TextComposition::GetStartRef() const {
       continue;
     }
     for (uint32_t i = 0; i < selection->RangeCount(); i++) {
-      nsRange* range = selection->GetRangeAt(i);
+      const nsRange* range = selection->GetRangeAt(i);
       if (NS_WARN_IF(!range) || NS_WARN_IF(!range->GetStartContainer())) {
         continue;
       }
@@ -715,10 +715,9 @@ RawRangeBoundary TextComposition::GetStartRef() const {
         continue;
       }
       // Unfortunately, really slow path.
-      bool disconnected = false;
-      if (nsContentUtils::ComparePoints(range->StartRef().AsRaw(),
-                                        firstRange->StartRef().AsRaw(),
-                                        &disconnected) == -1) {
+      // The ranges should always have a common ancestor, hence, be comparable.
+      if (*nsContentUtils::ComparePoints(range->StartRef(),
+                                         firstRange->StartRef()) == -1) {
         firstRange = range;
       }
     }
@@ -738,7 +737,7 @@ RawRangeBoundary TextComposition::GetEndRef() const {
     return RawRangeBoundary();
   }
 
-  nsRange* lastRange = nullptr;
+  const nsRange* lastRange = nullptr;
   static const SelectionType kIMESelectionTypes[] = {
       SelectionType::eIMERawClause, SelectionType::eIMESelectedRawClause,
       SelectionType::eIMEConvertedClause, SelectionType::eIMESelectedClause};
@@ -749,7 +748,7 @@ RawRangeBoundary TextComposition::GetEndRef() const {
       continue;
     }
     for (uint32_t i = 0; i < selection->RangeCount(); i++) {
-      nsRange* range = selection->GetRangeAt(i);
+      const nsRange* range = selection->GetRangeAt(i);
       if (NS_WARN_IF(!range) || NS_WARN_IF(!range->GetEndContainer())) {
         continue;
       }
@@ -773,10 +772,9 @@ RawRangeBoundary TextComposition::GetEndRef() const {
         continue;
       }
       // Unfortunately, really slow path.
-      bool disconnected = false;
-      if (nsContentUtils::ComparePoints(lastRange->EndRef().AsRaw(),
-                                        range->EndRef().AsRaw(),
-                                        &disconnected) == -1) {
+      // The ranges should always have a common ancestor, hence, be comparable.
+      if (*nsContentUtils::ComparePoints(lastRange->EndRef(),
+                                         range->EndRef()) == -1) {
         lastRange = range;
       }
     }
@@ -932,7 +930,7 @@ TextComposition* TextCompositionArray::GetCompositionInContent(
   // There should be only one composition per content object.
   for (index_type i = Length(); i > 0; --i) {
     nsINode* node = ElementAt(i - 1)->GetEventTargetNode();
-    if (node && nsContentUtils::ContentIsDescendantOf(node, aContent)) {
+    if (node && node->IsInclusiveDescendantOf(aContent)) {
       return ElementAt(i - 1);
     }
   }

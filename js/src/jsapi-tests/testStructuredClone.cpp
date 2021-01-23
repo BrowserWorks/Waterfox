@@ -137,9 +137,7 @@ BEGIN_TEST(testStructuredClone_externalArrayBuffer) {
 END_TEST(testStructuredClone_externalArrayBuffer)
 
 BEGIN_TEST(testStructuredClone_externalArrayBufferDifferentThreadOrProcess) {
-  // SameProcessSameThread is tested above.
-  CHECK(testStructuredCloneCopy(
-      JS::StructuredCloneScope::SameProcessDifferentThread));
+  CHECK(testStructuredCloneCopy(JS::StructuredCloneScope::SameProcess));
   CHECK(testStructuredCloneCopy(JS::StructuredCloneScope::DifferentProcess));
   return true;
 }
@@ -202,6 +200,8 @@ struct StructuredCloneTestPrincipals final : public JSPrincipals {
   bool write(JSContext* cx, JSStructuredCloneWriter* writer) override {
     return JS_WriteUint32Pair(writer, rank, 0);
   }
+
+  bool isSystemOrAddonPrincipal() override { return true; }
 
   static bool read(JSContext* cx, JSStructuredCloneReader* reader,
                    JSPrincipals** outPrincipals) {

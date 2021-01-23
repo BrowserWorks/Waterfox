@@ -50,38 +50,6 @@ void nsLeafBoxFrame::Init(nsIContent* aContent, nsContainerFrame* aParent,
   if (GetStateBits() & NS_FRAME_FONT_INFLATION_CONTAINER) {
     AddStateBits(NS_FRAME_FONT_INFLATION_FLOW_ROOT);
   }
-
-  UpdateMouseThrough();
-}
-
-nsresult nsLeafBoxFrame::AttributeChanged(int32_t aNameSpaceID,
-                                          nsAtom* aAttribute,
-                                          int32_t aModType) {
-  nsresult rv =
-      nsLeafFrame::AttributeChanged(aNameSpaceID, aAttribute, aModType);
-
-  if (aAttribute == nsGkAtoms::mousethrough) UpdateMouseThrough();
-
-  return rv;
-}
-
-void nsLeafBoxFrame::UpdateMouseThrough() {
-  static Element::AttrValuesArray strings[] = {nsGkAtoms::never,
-                                               nsGkAtoms::always, nullptr};
-  switch (mContent->AsElement()->FindAttrValueIn(
-      kNameSpaceID_None, nsGkAtoms::mousethrough, strings, eCaseMatters)) {
-    case 0:
-      AddStateBits(NS_FRAME_MOUSE_THROUGH_NEVER);
-      break;
-    case 1:
-      AddStateBits(NS_FRAME_MOUSE_THROUGH_ALWAYS);
-      break;
-    case 2: {
-      RemoveStateBits(NS_FRAME_MOUSE_THROUGH_ALWAYS);
-      RemoveStateBits(NS_FRAME_MOUSE_THROUGH_NEVER);
-      break;
-    }
-  }
 }
 
 void nsLeafBoxFrame::BuildDisplayList(nsDisplayListBuilder* aBuilder,
@@ -229,22 +197,22 @@ void nsLeafBoxFrame::Reflow(nsPresContext* aPresContext,
   nsSize prefSize(0, 0);
 
   // if we are told to layout intrinic then get our preferred size.
-  if (computedSize.width == NS_INTRINSICSIZE ||
-      computedSize.height == NS_INTRINSICSIZE) {
+  if (computedSize.width == NS_UNCONSTRAINEDSIZE ||
+      computedSize.height == NS_UNCONSTRAINEDSIZE) {
     prefSize = GetXULPrefSize(state);
     nsSize minSize = GetXULMinSize(state);
     nsSize maxSize = GetXULMaxSize(state);
-    prefSize = BoundsCheck(minSize, prefSize, maxSize);
+    prefSize = XULBoundsCheck(minSize, prefSize, maxSize);
   }
 
   // get our desiredSize
-  if (aReflowInput.ComputedWidth() == NS_INTRINSICSIZE) {
+  if (aReflowInput.ComputedWidth() == NS_UNCONSTRAINEDSIZE) {
     computedSize.width = prefSize.width;
   } else {
     computedSize.width += m.left + m.right;
   }
 
-  if (aReflowInput.ComputedHeight() == NS_INTRINSICSIZE) {
+  if (aReflowInput.ComputedHeight() == NS_UNCONSTRAINEDSIZE) {
     computedSize.height = prefSize.height;
   } else {
     computedSize.height += m.top + m.bottom;
@@ -313,28 +281,33 @@ nsresult nsLeafBoxFrame::CharacterDataChanged(
 
 /* virtual */
 nsSize nsLeafBoxFrame::GetXULPrefSize(nsBoxLayoutState& aState) {
-  return nsBox::GetXULPrefSize(aState);
+  return nsIFrame::GetUncachedXULPrefSize(aState);
 }
 
 /* virtual */
 nsSize nsLeafBoxFrame::GetXULMinSize(nsBoxLayoutState& aState) {
-  return nsBox::GetXULMinSize(aState);
+  return nsIFrame::GetUncachedXULMinSize(aState);
 }
 
 /* virtual */
 nsSize nsLeafBoxFrame::GetXULMaxSize(nsBoxLayoutState& aState) {
-  return nsBox::GetXULMaxSize(aState);
+  return nsIFrame::GetUncachedXULMaxSize(aState);
 }
 
 /* virtual */
-nscoord nsLeafBoxFrame::GetXULFlex() { return nsBox::GetXULFlex(); }
+nscoord nsLeafBoxFrame::GetXULFlex() {
+  nscoord flex = 0;
+  nsIFrame::AddXULFlex(this, flex);
+  return flex;
+}
 
 /* virtual */
 nscoord nsLeafBoxFrame::GetXULBoxAscent(nsBoxLayoutState& aState) {
-  return nsBox::GetXULBoxAscent(aState);
+  if (IsXULCollapsed()) {
+    return 0;
+  }
+  return GetXULPrefSize(aState).height;
 }
 
 NS_IMETHODIMP
-nsLeafBoxFrame::DoXULLayout(nsBoxLayoutState& aState) {
-  return nsBox::DoXULLayout(aState);
-}
+nsLeafBoxFrame::DoXULLayout(nsBoxLayoutState& aState) { return NS_OK; }

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSecurityInfo.dtd UI for viewing security status when composing a message -->
+
+<!ENTITY title.label "Бяспека ліста">
+<!ENTITY subject.plaintextWarning "Заўважце, калі ласка: Радкі тэмы э-паштовых лістоў ніколі не шыфруюцца.">
+<!ENTITY status.heading "Змесціва вашага ліста будзе даслана ў наступным выглядзе:">
+<!ENTITY status.signed "Лічбава падпісаны:">
+<!ENTITY status.encrypted "Зашыфрованы:">
+<!ENTITY status.certificates "Пасведчанні:">
+<!ENTITY view.label "Прагляд">
+<!ENTITY view.accesskey "г">
+<!ENTITY tree.recipient "Атрымальнік">
+<!ENTITY tree.status "Статус">
+<!ENTITY tree.issuedDate "Выдадзена">
+<!ENTITY tree.expiresDate "Высільваецца">

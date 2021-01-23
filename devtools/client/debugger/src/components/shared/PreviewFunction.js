@@ -11,6 +11,8 @@ import { times, zip, flatten } from "lodash";
 
 import { formatDisplayName } from "../../utils/pause/frames";
 
+import type { URL } from "../../types";
+
 import "./PreviewFunction.css";
 
 type FunctionType = {
@@ -18,9 +20,16 @@ type FunctionType = {
   displayName?: string,
   userDisplayName?: string,
   parameterNames?: string[],
+  location?: {
+    url: URL,
+    line: number,
+    column: number,
+  },
 };
 
 type Props = { func: FunctionType };
+
+const IGNORED_SOURCE_URLS = ["debugger eval code"];
 
 export default class PreviewFunction extends Component<Props> {
   renderFunctionName(func: FunctionType) {
@@ -31,13 +40,11 @@ export default class PreviewFunction extends Component<Props> {
 
   renderParams(func: FunctionType) {
     const { parameterNames = [] } = func;
-    const params = parameterNames
-      .filter(i => i)
-      .map(param => (
-        <span className="param" key={param}>
-          {param}
-        </span>
-      ));
+    const params = parameterNames.filter(Boolean).map(param => (
+      <span className="param" key={param}>
+        {param}
+      </span>
+    ));
 
     const commas = times(params.length - 1).map((_, i) => (
       <span className="delimiter" key={i}>
@@ -49,13 +56,35 @@ export default class PreviewFunction extends Component<Props> {
     return flatten(zip(params, commas));
   }
 
+  jumpToDefinitionButton(func: FunctionType) {
+    const { location } = func;
+
+    if (
+      location &&
+      location.url &&
+      !IGNORED_SOURCE_URLS.includes(location.url)
+    ) {
+      const lastIndex = location.url.lastIndexOf("/");
+
+      return (
+        <button
+          className="jump-definition"
+          draggable="false"
+          title={`${location.url.slice(lastIndex + 1)}:${location.line}`}
+        />
+      );
+    }
+  }
+
   render() {
+    const { func } = this.props;
     return (
       <span className="function-signature">
-        {this.renderFunctionName(this.props.func)}
+        {this.renderFunctionName(func)}
         <span className="paren">(</span>
-        {this.renderParams(this.props.func)}
+        {this.renderParams(func)}
         <span className="paren">)</span>
+        {this.jumpToDefinitionButton(func)}
       </span>
     );
   }

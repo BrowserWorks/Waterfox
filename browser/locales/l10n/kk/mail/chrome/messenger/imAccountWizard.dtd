@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Чат тіркелгілер шебері">
+
+<!ENTITY accountProtocolTitle.label   "Чат желісі">
+<!ENTITY accountProtocolInfo.label    "Чат тіркелгіңіздің желісін таңдаңыз.">
+<!ENTITY accountProtocolField.label   "Желі:">
+<!ENTITY accountProtocolGetMore.label "Көбірек алу…">
+
+<!ENTITY accountUsernameTitle.label   "Пайдаланушы аты">
+<!ENTITY accountUsernameDuplicate.label "Бұл тіркелгі бапталған болып тұр!">
+
+<!ENTITY accountPasswordTitle.label   "Пароль">
+<!ENTITY accountPasswordInfo.label    "Төменде пароліңізді енгізіңіз.">
+<!ENTITY accountPasswordField.label   "Пароль:">
+<!ENTITY accountPasswordManager.label "Осында енгізілген пароль парольдер басқарушысында сақталатын болады. Бұл тіркелгі әр рет байланысқан кезде парольді сұрау сұхбатын көргіңіз келсе, бұл өрісті бол қалдырыңыз.">
+
+<!ENTITY accountAdvancedTitle.label   "Қосымша баптаулары">
+<!ENTITY accountAdvancedInfo.label    "Қаласаңыз, бұл қадамды аттап кете аласыз.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Жаңа хат туралы хабарлау">
+<!ENTITY accountAliasGroupbox.caption "Жергілікті алиас">
+<!ENTITY accountAliasField.label      "Бүркеншік:">
+<!ENTITY accountAliasInfo.label       "Бұл тек сіздің сөйлесулерде көрінеді, қашықтағы контакттар оны көрмейді.">
+<!ENTITY accountProxySettings.caption "Прокси баптаулары">
+<!ENTITY accountProxySettings.change.label     "Өзгерту…">
+<!ENTITY accountProxySettings.change.accessKey "з">
+
+<!ENTITY accountSummaryTitle.label   "Қорытынды">
+<!ENTITY accountSummaryInfo.label    "Сіз енгізген жинақы ақпарат төменде көрсетілген. Тіркелгіні жасау алдында оны тексеріңіз.">
+<!ENTITY accountSummary.connectNow.label "Бұл тіркелгіні қазір байланыстыру.">

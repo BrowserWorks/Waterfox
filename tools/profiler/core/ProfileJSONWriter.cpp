@@ -8,31 +8,34 @@
 #include "mozilla/HashFunctions.h"
 
 void ChunkedJSONWriteFunc::Write(const char* aStr) {
+  size_t len = strlen(aStr);
+  Write(aStr, len);
+}
+
+void ChunkedJSONWriteFunc::Write(const char* aStr, size_t aLen) {
   MOZ_ASSERT(mChunkPtr >= mChunkList.back().get() && mChunkPtr <= mChunkEnd);
   MOZ_ASSERT(mChunkEnd >= mChunkList.back().get() + mChunkLengths.back());
   MOZ_ASSERT(*mChunkPtr == '\0');
-
-  size_t len = strlen(aStr);
 
   // Most strings to be written are small, but subprocess profiles (e.g.,
   // from the content process in e10s) may be huge. If the string is larger
   // than a chunk, allocate its own chunk.
   char* newPtr;
-  if (len >= kChunkSize) {
-    AllocChunk(len + 1);
-    newPtr = mChunkPtr + len;
+  if (aLen >= kChunkSize) {
+    AllocChunk(aLen + 1);
+    newPtr = mChunkPtr + aLen;
   } else {
-    newPtr = mChunkPtr + len;
+    newPtr = mChunkPtr + aLen;
     if (newPtr >= mChunkEnd) {
       AllocChunk(kChunkSize);
-      newPtr = mChunkPtr + len;
+      newPtr = mChunkPtr + aLen;
     }
   }
 
-  memcpy(mChunkPtr, aStr, len);
+  memcpy(mChunkPtr, aStr, aLen);
   *newPtr = '\0';
   mChunkPtr = newPtr;
-  mChunkLengths.back() += len;
+  mChunkLengths.back() += aLen;
 }
 
 size_t ChunkedJSONWriteFunc::GetTotalLength() const {
@@ -49,6 +52,12 @@ void ChunkedJSONWriteFunc::CopyDataIntoLazilyAllocatedBuffer(
     const std::function<char*(size_t)>& aAllocator) const {
   size_t totalLen = GetTotalLength();
   char* ptr = aAllocator(totalLen);
+
+  if (!ptr) {
+    // Failed to allocate memory.
+    return;
+  }
+
   for (size_t i = 0; i < mChunkList.length(); i++) {
     size_t len = mChunkLengths[i];
     memcpy(ptr, mChunkList[i].get(), len);

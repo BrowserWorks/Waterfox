@@ -12,6 +12,7 @@
 #include "mozilla/TaggedAnonymousMemory.h"
 
 #include "js/HeapAPI.h"
+#include "util/Memory.h"
 #include "vm/Runtime.h"
 
 #ifdef XP_WIN
@@ -46,6 +47,9 @@ static size_t allocGranularity = 0;
 /* The number of bits used by addresses on this platform. */
 static size_t numAddressBits = 0;
 
+/* An estimate of the number of bytes available for virtual memory. */
+static size_t virtualMemoryLimit = size_t(-1);
+
 /*
  * System allocation functions may hand out regions of memory in increasing or
  * decreasing order. This ordering is used as a hint during chunk alignment to
@@ -58,13 +62,9 @@ static size_t numAddressBits = 0;
  * VirtualAlloc always hands out regions of memory in increasing order.
  */
 #if defined(XP_DARWIN)
-static mozilla::Atomic<int, mozilla::Relaxed,
-                       mozilla::recordreplay::Behavior::DontPreserve>
-    growthDirection(1);
+static mozilla::Atomic<int, mozilla::Relaxed> growthDirection(1);
 #elif defined(XP_UNIX)
-static mozilla::Atomic<int, mozilla::Relaxed,
-                       mozilla::recordreplay::Behavior::DontPreserve>
-    growthDirection(0);
+static mozilla::Atomic<int, mozilla::Relaxed> growthDirection(0);
 #endif
 
 /*
@@ -115,6 +115,8 @@ static size_t hugeSplit = 0;
 size_t SystemPageSize() { return pageSize; }
 
 size_t SystemAddressBits() { return numAddressBits; }
+
+size_t VirtualMemoryLimit() { return virtualMemoryLimit; }
 
 bool UsingScattershotAllocator() {
 #ifdef JS_64BIT
@@ -262,7 +264,6 @@ static inline uint64_t GetNumberInRange(uint64_t minNum, uint64_t maxNum) {
   do {
     mozilla::Maybe<uint64_t> result;
     do {
-      mozilla::recordreplay::AutoPassThroughThreadEvents pt;
       result = mozilla::RandomUint64();
     } while (!result);
     rndNum = result.value() / binSize;
@@ -379,6 +380,13 @@ void InitMemorySubsystem() {
     }
 #else  // !defined(JS_64BIT)
     numAddressBits = 32;
+#endif
+#ifdef RLIMIT_AS
+    rlimit as_limit;
+    if (getrlimit(RLIMIT_AS, &as_limit) == 0 &&
+        as_limit.rlim_max != RLIM_INFINITY) {
+      virtualMemoryLimit = as_limit.rlim_max;
+    }
 #endif
   }
 }
@@ -740,7 +748,7 @@ void UnmapPages(void* region, size_t length) {
   UnmapInternal(region, length);
 }
 
-bool MarkPagesUnused(void* region, size_t length) {
+static void CheckDecommit(void* region, size_t length) {
   MOZ_RELEASE_ASSERT(region);
   MOZ_RELEASE_ASSERT(length > 0);
 
@@ -750,20 +758,27 @@ bool MarkPagesUnused(void* region, size_t length) {
   MOZ_ASSERT(OffsetFromAligned(region, ArenaSize) == 0);
   MOZ_ASSERT(length % ArenaSize == 0);
 
+  if (DecommitEnabled()) {
+    // We can't decommit part of a page.
+    MOZ_RELEASE_ASSERT(OffsetFromAligned(region, pageSize) == 0);
+    MOZ_RELEASE_ASSERT(length % pageSize == 0);
+  }
+}
+
+bool MarkPagesUnusedSoft(void* region, size_t length) {
+  CheckDecommit(region, length);
+
   MOZ_MAKE_MEM_NOACCESS(region, length);
 
   if (!DecommitEnabled()) {
     return true;
   }
-  // We can't decommit part of a page.
-  MOZ_RELEASE_ASSERT(OffsetFromAligned(region, pageSize) == 0);
-  MOZ_RELEASE_ASSERT(length % pageSize == 0);
 
 #if defined(XP_WIN)
   return VirtualAlloc(region, length, MEM_RESET,
                       DWORD(PageAccess::ReadWrite)) == region;
 #elif defined(XP_DARWIN)
-  return madvise(region, length, MADV_FREE) == 0;
+  return madvise(region, length, MADV_FREE_REUSABLE) == 0;
 #elif defined(XP_SOLARIS)
   return posix_madvise(region, length, POSIX_MADV_DONTNEED) == 0;
 #else
@@ -771,30 +786,50 @@ bool MarkPagesUnused(void* region, size_t length) {
 #endif
 }
 
-void MarkPagesInUse(void* region, size_t length) {
-  MOZ_RELEASE_ASSERT(region);
-  MOZ_RELEASE_ASSERT(length > 0);
+bool MarkPagesUnusedHard(void* region, size_t length) {
+  CheckDecommit(region, length);
 
-  // pageSize == ArenaSize doesn't necessarily hold, but this function is
-  // used by the GC to recommit Arenas that were previously decommitted,
-  // so we don't want to assert if pageSize > ArenaSize.
-  MOZ_ASSERT(OffsetFromAligned(region, ArenaSize) == 0);
-  MOZ_ASSERT(length % ArenaSize == 0);
+  MOZ_MAKE_MEM_NOACCESS(region, length);
+
+  if (!DecommitEnabled()) {
+    return true;
+  }
+
+#if defined(XP_WIN)
+  return VirtualFree(region, length, MEM_DECOMMIT);
+#else
+  return MarkPagesUnusedSoft(region, length);
+#endif
+}
+
+void MarkPagesInUseSoft(void* region, size_t length) {
+  CheckDecommit(region, length);
+
+  MOZ_MAKE_MEM_UNDEFINED(region, length);
+}
+
+bool MarkPagesInUseHard(void* region, size_t length) {
+  if (js::oom::ShouldFailWithOOM()) {
+    return false;
+  }
+
+  CheckDecommit(region, length);
 
   MOZ_MAKE_MEM_UNDEFINED(region, length);
 
   if (!DecommitEnabled()) {
-    return;
+    return true;
   }
-  // We can't commit part of a page.
-  MOZ_RELEASE_ASSERT(OffsetFromAligned(region, pageSize) == 0);
-  MOZ_RELEASE_ASSERT(length % pageSize == 0);
+
+#if defined(XP_WIN)
+  return VirtualAlloc(region, length, MEM_COMMIT,
+                      DWORD(PageAccess::ReadWrite)) == region;
+#else
+  return true;
+#endif
 }
 
 size_t GetPageFaultCount() {
-  if (mozilla::recordreplay::IsRecordingOrReplaying()) {
-    return 0;
-  }
 #ifdef XP_WIN
   PROCESS_MEMORY_COUNTERS pmc;
   if (GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc)) == 0) {

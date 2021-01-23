@@ -1,12 +1,14 @@
 //! Determining the sizedness of types (as base classes and otherwise).
 
-use super::{ConstrainResult, MonotoneFramework, HasVtable, generate_dependencies};
+use super::{
+    generate_dependencies, ConstrainResult, HasVtable, MonotoneFramework,
+};
 use ir::context::{BindgenContext, TypeId};
 use ir::item::IsOpaque;
 use ir::traversal::EdgeKind;
 use ir::ty::TypeKind;
 use std::{cmp, ops};
-use {HashMap, Entry};
+use {Entry, HashMap};
 
 /// The result of the `Sizedness` analysis for an individual item.
 ///
@@ -125,7 +127,11 @@ impl<'ctx> SizednessAnalysis<'ctx> {
 
     /// Insert an incremental result, and return whether this updated our
     /// knowledge of types and we should continue the analysis.
-    fn insert(&mut self, id: TypeId, result: SizednessResult) -> ConstrainResult {
+    fn insert(
+        &mut self,
+        id: TypeId,
+        result: SizednessResult,
+    ) -> ConstrainResult {
         trace!("inserting {:?} for {:?}", result, id);
 
         if let SizednessResult::ZeroSized = result {
@@ -165,15 +171,15 @@ impl<'ctx> MonotoneFramework for SizednessAnalysis<'ctx> {
         let dependencies = generate_dependencies(ctx, Self::consider_edge)
             .into_iter()
             .filter_map(|(id, sub_ids)| {
-                id.as_type_id(ctx)
-                    .map(|id| {
-                        (
-                            id,
-                            sub_ids.into_iter()
-                                .filter_map(|s| s.as_type_id(ctx))
-                                .collect::<Vec<_>>()
-                        )
-                    })
+                id.as_type_id(ctx).map(|id| {
+                    (
+                        id,
+                        sub_ids
+                            .into_iter()
+                            .filter_map(|s| s.as_type_id(ctx))
+                            .collect::<Vec<_>>(),
+                    )
+                })
             })
             .collect();
 
@@ -198,7 +204,9 @@ impl<'ctx> MonotoneFramework for SizednessAnalysis<'ctx> {
     fn constrain(&mut self, id: TypeId) -> ConstrainResult {
         trace!("constrain {:?}", id);
 
-        if let Some(SizednessResult::NonZeroSized) = self.sized.get(&id).cloned() {
+        if let Some(SizednessResult::NonZeroSized) =
+            self.sized.get(&id).cloned()
+        {
             trace!("    already know it is not zero-sized");
             return ConstrainResult::Same;
         }
@@ -212,8 +220,8 @@ impl<'ctx> MonotoneFramework for SizednessAnalysis<'ctx> {
 
         if id.is_opaque(self.ctx, &()) {
             trace!("    type is opaque; checking layout...");
-            let result = ty.layout(self.ctx)
-                .map_or(SizednessResult::ZeroSized, |l| {
+            let result =
+                ty.layout(self.ctx).map_or(SizednessResult::ZeroSized, |l| {
                     if l.size == 0 {
                         trace!("    ...layout has size == 0");
                         SizednessResult::ZeroSized
@@ -232,8 +240,10 @@ impl<'ctx> MonotoneFramework for SizednessAnalysis<'ctx> {
             }
 
             TypeKind::TypeParam => {
-                trace!("    type params sizedness depends on what they're \
-                        instantiated as");
+                trace!(
+                    "    type params sizedness depends on what they're \
+                     instantiated as"
+                );
                 self.insert(id, SizednessResult::DependsOnTypeParam)
             }
 
@@ -265,8 +275,10 @@ impl<'ctx> MonotoneFramework for SizednessAnalysis<'ctx> {
             }
 
             TypeKind::TemplateInstantiation(ref inst) => {
-                trace!("    template instantiations are zero-sized if their \
-                        definition is zero-sized");
+                trace!(
+                    "    template instantiations are zero-sized if their \
+                     definition is zero-sized"
+                );
                 self.forward(inst.template_definition(), id)
             }
 
@@ -290,7 +302,8 @@ impl<'ctx> MonotoneFramework for SizednessAnalysis<'ctx> {
                     return self.insert(id, SizednessResult::NonZeroSized);
                 }
 
-                let result = info.base_members()
+                let result = info
+                    .base_members()
                     .iter()
                     .filter_map(|base| self.sized.get(&base.ty))
                     .fold(SizednessResult::ZeroSized, |a, b| a.join(*b));
@@ -324,9 +337,10 @@ impl<'ctx> MonotoneFramework for SizednessAnalysis<'ctx> {
 impl<'ctx> From<SizednessAnalysis<'ctx>> for HashMap<TypeId, SizednessResult> {
     fn from(analysis: SizednessAnalysis<'ctx>) -> Self {
         // We let the lack of an entry mean "ZeroSized" to save space.
-        extra_assert!(analysis.sized.values().all(|v| {
-            *v != SizednessResult::ZeroSized
-        }));
+        extra_assert!(analysis
+            .sized
+            .values()
+            .all(|v| { *v != SizednessResult::ZeroSized }));
 
         analysis.sized
     }

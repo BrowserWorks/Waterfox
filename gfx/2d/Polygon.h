@@ -7,13 +7,13 @@
 #ifndef MOZILLA_GFX_POLYGON_H
 #define MOZILLA_GFX_POLYGON_H
 
+#include <initializer_list>
+#include <utility>
+
 #include "Matrix.h"
-#include "mozilla/Move.h"
-#include "nsTArray.h"
 #include "Point.h"
 #include "Triangle.h"
-
-#include <initializer_list>
+#include "nsTArray.h"
 
 namespace mozilla {
 namespace gfx {
@@ -219,7 +219,7 @@ class PolygonTyped {
       return PolygonTyped<Units>();
     }
 
-    nsTArray<Point4DType> clippedPoints(mPoints);
+    nsTArray<Point4DType> clippedPoints(mPoints.Clone());
 
     size_t pos, neg;
     nsTArray<Point4DType> backPoints(4), frontPoints(4);
@@ -385,7 +385,7 @@ class PolygonTyped {
   }
 
   Point4DType mNormal;
-  nsTArray<Point4DType> mPoints;
+  CopyableTArray<Point4DType> mPoints;
 };
 
 typedef PolygonTyped<UnknownUnits> Polygon;

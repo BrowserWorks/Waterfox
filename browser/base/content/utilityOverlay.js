@@ -13,6 +13,7 @@ var { XPCOMUtils } = ChromeUtils.import(
 );
 
 XPCOMUtils.defineLazyModuleGetters(this, {
+  AboutNewTab: "resource:///modules/AboutNewTab.jsm",
   BrowserWindowTracker: "resource:///modules/BrowserWindowTracker.jsm",
   ContextualIdentityService:
     "resource://gre/modules/ContextualIdentityService.jsm",
@@ -20,13 +21,6 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   PrivateBrowsingUtils: "resource://gre/modules/PrivateBrowsingUtils.jsm",
   ShellService: "resource:///modules/ShellService.jsm",
 });
-
-XPCOMUtils.defineLazyServiceGetter(
-  this,
-  "aboutNewTabService",
-  "@mozilla.org/browser/aboutnewtab-service;1",
-  "nsIAboutNewTabService"
-);
 
 XPCOMUtils.defineLazyGetter(this, "ReferrerInfo", () =>
   Components.Constructor(
@@ -42,7 +36,7 @@ Object.defineProperty(this, "BROWSER_NEW_TAB_URL", {
     if (PrivateBrowsingUtils.isWindowPrivate(window)) {
       if (
         !PrivateBrowsingUtils.permanentPrivateBrowsing &&
-        !aboutNewTabService.overridden
+        !AboutNewTab.newTabURLOverridden
       ) {
         return "about:privatebrowsing";
       }
@@ -61,12 +55,12 @@ Object.defineProperty(this, "BROWSER_NEW_TAB_URL", {
       if (
         !privateAllowed &&
         (extensionControlled ||
-          aboutNewTabService.newTabURL.startsWith("moz-extension://"))
+          AboutNewTab.newTabURL.startsWith("moz-extension://"))
       ) {
         return "about:privatebrowsing";
       }
     }
-    return aboutNewTabService.newTabURL;
+    return AboutNewTab.newTabURL;
   },
 });
 
@@ -117,13 +111,12 @@ function doGetProtocolFlags(aURI) {
 /**
  * openUILink handles clicks on UI elements that cause URLs to load.
  *
- * As the third argument, you may pass an object with the same properties as
- * accepted by openUILinkIn, plus "ignoreButton" and "ignoreAlt".
- *
- * @param url {string}
- * @param event {Event | Object} Event or JSON object representing an Event
+ * @param {string} url
+ * @param {Event | Object} event Event or JSON object representing an Event
  * @param {Boolean | Object} aIgnoreButton
- * @param {Boolean} aIgnoreButton
+ *                           Boolean or object with the same properties as
+ *                           accepted by openUILinkIn, plus "ignoreButton"
+ *                           and "ignoreAlt".
  * @param {Boolean} aIgnoreAlt
  * @param {Boolean} aAllowThirdPartyFixup
  * @param {Object} aPostData
@@ -229,10 +222,14 @@ function whereToOpenLink(e, ignoreButton, ignoreAlt) {
   var alt = e.altKey && !ignoreAlt;
 
   // ignoreButton allows "middle-click paste" to use function without always opening in a new window.
-  var middle = !ignoreButton && e.button == 1;
-  var middleUsesTabs = Services.prefs.getBoolPref(
+  let middle = !ignoreButton && e.button == 1;
+  let middleUsesTabs = Services.prefs.getBoolPref(
     "browser.tabs.opentabfor.middleclick",
     true
+  );
+  let middleUsesNewWindow = Services.prefs.getBoolPref(
+    "middlemouse.openNewWindow",
+    false
   );
 
   // Don't do anything special with right-mouse clicks.  They're probably clicks on context menu items.
@@ -246,7 +243,7 @@ function whereToOpenLink(e, ignoreButton, ignoreAlt) {
     return "save";
   }
 
-  if (shift || (middle && !middleUsesTabs)) {
+  if (shift || (middle && !middleUsesTabs && middleUsesNewWindow)) {
     return "window";
   }
 
@@ -366,7 +363,7 @@ function openLinkIn(url, where, params) {
   var aCharset = params.charset;
   var aReferrerInfo = params.referrerInfo
     ? params.referrerInfo
-    : new ReferrerInfo(Ci.nsIHttpChannel.REFERRER_POLICY_UNSET, true, null);
+    : new ReferrerInfo(Ci.nsIReferrerInfo.EMPTY, true, null);
   var aRelatedToCurrent = params.relatedToCurrent;
   var aAllowInheritPrincipal = !!params.allowInheritPrincipal;
   var aAllowMixedContent = params.allowMixedContent;
@@ -380,6 +377,7 @@ function openLinkIn(url, where, params) {
   var aUserContextId = params.userContextId;
   var aIndicateErrorPageLoad = params.indicateErrorPageLoad;
   var aPrincipal = params.originPrincipal;
+  var aStoragePrincipal = params.originStoragePrincipal;
   var aTriggeringPrincipal = params.triggeringPrincipal;
   var aCsp = params.csp;
   var aForceAboutBlankViewerInCurrent = params.forceAboutBlankViewerInCurrent;
@@ -390,8 +388,6 @@ function openLinkIn(url, where, params) {
   }
 
   if (where == "save") {
-    // TODO(1073187): propagate referrerPolicy.
-    // ContentClick.jsm passes isContentWindowPrivate for saveURL instead of passing a CPOW initiatingDoc
     if ("isContentWindowPrivate" in params) {
       saveURL(
         url,
@@ -399,7 +395,7 @@ function openLinkIn(url, where, params) {
         null,
         true,
         true,
-        aReferrerInfo.sendReferrer ? aReferrerInfo.originalReferrer : null,
+        aReferrerInfo,
         null,
         params.isContentWindowPrivate,
         aPrincipal
@@ -412,15 +408,7 @@ function openLinkIn(url, where, params) {
         );
         return;
       }
-      saveURL(
-        url,
-        null,
-        null,
-        true,
-        true,
-        aReferrerInfo.sendReferrer ? aReferrerInfo.originalReferrer : null,
-        aInitiatingDoc
-      );
+      saveURL(url, null, null, true, true, aReferrerInfo, aInitiatingDoc);
     }
     return;
   }
@@ -445,17 +433,19 @@ function openLinkIn(url, where, params) {
   // can not do it for NullPrincipals since NullPrincipals are only
   // identical if they actually are the same object (See Bug: 1346759)
   function useOAForPrincipal(principal) {
-    if (principal && principal.isCodebasePrincipal) {
+    if (principal && principal.isContentPrincipal) {
       let attrs = {
         userContextId: aUserContextId,
         privateBrowsingId:
           aIsPrivate || (w && PrivateBrowsingUtils.isWindowPrivate(w)),
+        firstPartyDomain: principal.originAttributes.firstPartyDomain,
       };
       return Services.scriptSecurityManager.principalWithOA(principal, attrs);
     }
     return principal;
   }
   aPrincipal = useOAForPrincipal(aPrincipal);
+  aStoragePrincipal = useOAForPrincipal(aStoragePrincipal);
   aTriggeringPrincipal = useOAForPrincipal(aTriggeringPrincipal);
 
   if (!w || where == "window") {
@@ -504,6 +494,7 @@ function openLinkIn(url, where, params) {
     sa.appendElement(allowThirdPartyFixupSupports);
     sa.appendElement(userContextIdSupports);
     sa.appendElement(aPrincipal);
+    sa.appendElement(aStoragePrincipal);
     sa.appendElement(aTriggeringPrincipal);
     sa.appendElement(null); // allowInheritPrincipal
     sa.appendElement(aCsp);
@@ -631,20 +622,10 @@ function openLinkIn(url, where, params) {
       ) {
         // Unless we know for sure we're not inheriting principals,
         // force the about:blank viewer to have the right principal:
-        targetBrowser.createAboutBlankContentViewer(aPrincipal);
-      }
-
-      // When navigating a recording tab, use a new content process in order to
-      // start a new recording.
-      if (
-        targetBrowser.hasAttribute("recordExecution") &&
-        targetBrowser.currentURI.spec != "about:blank"
-      ) {
-        w.gBrowser.updateBrowserRemoteness(targetBrowser, {
-          recordExecution: "*",
-          newFrameloader: true,
-          remoteType: E10SUtils.DEFAULT_REMOTE_TYPE,
-        });
+        targetBrowser.createAboutBlankContentViewer(
+          aPrincipal,
+          aStoragePrincipal
+        );
       }
 
       targetBrowser.loadURI(url, {
@@ -669,7 +650,7 @@ function openLinkIn(url, where, params) {
       focusUrlBar =
         !loadInBackground &&
         w.isBlankPageURL(url) &&
-        !aboutNewTabService.willNotifyUser;
+        !AboutNewTab.willNotifyUser;
 
       let tabUsedForLoad = w.gBrowser.loadOneTab(url, {
         referrerInfo: aReferrerInfo,
@@ -682,10 +663,12 @@ function openLinkIn(url, where, params) {
         allowMixedContent: aAllowMixedContent,
         userContextId: aUserContextId,
         originPrincipal: aPrincipal,
+        originStoragePrincipal: aStoragePrincipal,
         triggeringPrincipal: aTriggeringPrincipal,
         allowInheritPrincipal: aAllowInheritPrincipal,
         csp: aCsp,
         focusUrlBar,
+        openerBrowser: params.openerBrowser,
       });
       targetBrowser = tabUsedForLoad.linkedBrowser;
 
@@ -888,7 +871,7 @@ function eventMatchesKey(aEvent, aKey) {
     aEvent.getModifierState(modifier)
   );
   // Check if aEvent has a modifier and aKey doesn't
-  if (eventModifiers.length > 0 && keyModifiers.length == 0) {
+  if (eventModifiers.length && !keyModifiers.length) {
     return false;
   }
   // Check whether aKey's modifiers match aEvent's modifiers
@@ -991,7 +974,7 @@ function openAboutDialog() {
     features += "centerscreen,dependent,dialog=no";
   }
 
-  window.openDialog("chrome://browser/content/aboutDialog.xul", "", features);
+  window.openDialog("chrome://browser/content/aboutDialog.xhtml", "", features);
 }
 
 function openPreferences(paneID, extraArgs) {
@@ -1110,6 +1093,8 @@ function buildHelpMenu() {
   if (typeof gSafeBrowsing != "undefined") {
     gSafeBrowsing.setReportPhishingMenu();
   }
+
+  updateImportCommandEnabledState();
 }
 
 function isElementVisible(aElement) {
@@ -1126,45 +1111,6 @@ function isElementVisible(aElement) {
 function makeURLAbsolute(aBase, aUrl) {
   // Note:  makeURI() will throw if aUri is not a valid URI
   return makeURI(aUrl, null, makeURI(aBase)).spec;
-}
-
-/**
- * openNewTabWith: opens a new tab with the given URL.
- *
- * @param aURL
- *        The URL to open (as a string).
- * @param aShiftKey
- *        True if shift key is held.  This value is used for the purpose of
- *        determining whether to open in the background.
- * @param aParams
- *        parameters passed to openLinkIn
- */
-function openNewTabWith(aURL, aShiftKey, aParams = {}) {
-  // As in openNewWindowWith(), we want to pass the charset of the
-  // current document over to a new tab.
-  if (
-    document.documentElement.getAttribute("windowtype") == "navigator:browser"
-  ) {
-    aParams.charset = gBrowser.selectedBrowser.characterSet;
-  }
-
-  openLinkIn(aURL, aShiftKey ? "tabshifted" : "tab", aParams);
-}
-
-/**
- * openNewWindowWith: opens a new window with the given URL.
- * See openNewTabWith for parameters.
- */
-function openNewWindowWith(aURL, aParams = {}) {
-  // Extract the current charset menu setting from the current document and
-  // use it to initialize the new browser window...
-  if (
-    document.documentElement.getAttribute("windowtype") == "navigator:browser"
-  ) {
-    aParams.charset = gBrowser.selectedBrowser.characterSet;
-  }
-
-  openLinkIn(aURL, "window", aParams);
 }
 
 function getHelpLinkURL(aHelpTopic) {
@@ -1189,13 +1135,17 @@ function openPrefsHelp(aEvent) {
 }
 
 /**
- * Updates visibility of "Import From Another Browser" command depending on
- * the DisableProfileImport policy.
+ * Updates the enabled state of the "Import From Another Browser" command
+ * depending on the DisableProfileImport policy.
  */
-function updateFileMenuImportUIVisibility(id) {
+function updateImportCommandEnabledState() {
   if (!Services.policies.isAllowed("profileImport")) {
-    let command = document.getElementById(id);
-    command.setAttribute("disabled", "true");
+    document
+      .getElementById("cmd_file_importFromAnotherBrowser")
+      .setAttribute("disabled", "true");
+    document
+      .getElementById("cmd_help_importFromAnotherBrowser")
+      .setAttribute("disabled", "true");
   }
 }
 
@@ -1221,90 +1171,63 @@ function restartBrowser() {
   }
 };
 
-function setZoom() {
-  var zoomrange = document.getElementById("zoom-range-status");
-  FullZoom.setZoom(parseFloat(zoomrange.value));
-  var zoomValue = ZoomManager.getZoomForBrowser(gBrowser) * 100;
-  document.querySelector(".zoom-percent-status").textContent = parseInt(zoomValue) + " %";
+function setZoom(el) {
+  var zoomPercentStatus = document.querySelector("#zoom-percent-status");
 
-  if (parseInt(zoomValue) != 100){
-    document.querySelector('.reset-zoom.button-textonly').disabled = "";
-  }
-  else
-  {
-    document.querySelector('.reset-zoom.button-textonly').disabled = "true";
+  switch (el.tagName + "#"+ el.id) {
+    case "html:input#zoom-range-status":
+      FullZoom.setZoom(parseFloat(document.querySelector("#zoom-range-status").value));
+      break;
+    case "input#zoom-percent-status":
+      FullZoom.setZoom(parseFloat(zoomPercentStatus.value / 100));
+      break;
+    default:
+      FullZoom.setZoom(parseFloat(zoomPercentStatus.textContent.replace(" %", "") / 100));
+      break;
   }
 }
 
 function resetZoomStatus() {
   var zoomrange = document.getElementById("zoom-range-status");
-  var zoompercent = document.querySelector(".zoom-percent-status");
+  var zoompercent = document.querySelector("#zoom-percent-status");
   zoomrange.value = 1;
   zoompercent.textContent = "100 %";
-  document.querySelector('.reset-zoom.button-textonly').disabled = "true";
+  document.querySelector('#zoomresetsb.button-textonly').disabled = "true";
 }
 
-
 function updateZoomStatus() {
-  var zoomValue =  windowRoot.ownerGlobal.ZoomManager.getZoomForBrowser(windowRoot.ownerGlobal.gBrowser);
-  var resetZoomBtn = windowRoot.ownerGlobal.document.querySelector('.reset-zoom.button-textonly');
-  windowRoot.ownerGlobal.document.querySelector('#zoom-range-status').value = zoomValue;
-  var zoomPercentValue = parseInt(zoomValue * 100);
-  windowRoot.ownerGlobal.document.querySelector('.zoom-percent-status').textContent = zoomPercentValue +' %';
-  if (zoomPercentValue != 100){
-    resetZoomBtn.disabled = "";
-  }
-  else
-  {
-    resetZoomBtn.disabled = "true";
+  if (windowRoot.ownerGlobal.document.querySelector("#page-zoom-controls")) {
+    var zoomValue = windowRoot.ownerGlobal.ZoomManager.getZoomForBrowser(windowRoot.ownerGlobal.gBrowser);
+    var zoomPercentValue = parseInt(zoomValue * 100);
+    var zoomPercentStatus = document.querySelector("#zoom-percent-status");
+    var resetZoomBtn = windowRoot.ownerGlobal.document.querySelector('#zoomresetsb.button-textonly');
+
+    windowRoot.ownerGlobal.document.querySelector('#zoom-range-status').value = zoomValue;
+
+    if (zoomPercentStatus.tagName == "input") {
+      zoomPercentStatus.value = zoomPercentValue;
+    }
+    else {
+      zoomPercentStatus.textContent = zoomPercentValue + ' %';
+    }
+
+    if (zoomPercentValue != 100){
+      resetZoomBtn.disabled = "";
+    }
+    else
+    {
+      resetZoomBtn.disabled = "true";
+    }
   }
 }
 
 function toggleStatusBar() {
-  var statuspanel = windowRoot.ownerGlobal.document.getElementById("statuspanel");
-  var statusbar = windowRoot.ownerGlobal.document.querySelector(".toolbar-statusbar");
-  var zoombtn = windowRoot.ownerGlobal.document.querySelector("#urlbar-zoom-button");
-  var pageActionSeparator = windowRoot.ownerGlobal.document.querySelector("#pageActionSeparator");
-
-  if (Services.prefs.getIntPref("browser.statusbar.mode") == 2) {
-    statuspanel.hidden = true;
-    statusbar.style.display = "flex";
-    zoombtn.style.display = "none";
-    pageActionSeparator.style.display = "none";
-  }
-  else if (Services.prefs.getIntPref("browser.statusbar.mode") == 1) {
-    statusbar.style.display = "none";
-    zoombtn.style.display = "";
-    statuspanel.hidden = "";
-    pageActionSeparator.style.display = "";
-    pageActionSeparator.style.visibility = "visible";
-  }
-  else if (Services.prefs.getIntPref("browser.statusbar.mode") == 0) {
-    statusbar.style.display = "none";
-    statuspanel.hidden = true;
-    zoombtn.style.display = "";
-    pageActionSeparator.style.display = "";
-    pageActionSeparator.style.visibility = "visible";
-  }
+  windowRoot.ownerGlobal.document.querySelector(":root").setAttribute("sbMode", Services.prefs.getIntPref("browser.statusbar.mode"));
 }
 
 function showBtnRange() {
-  var zoomoutsb = windowRoot.ownerGlobal.document.querySelector("#zoomoutsb");
-  var zoominsb = windowRoot.ownerGlobal.document.querySelector("#zoominsb");
-  var zoomStatus = windowRoot.ownerGlobal.document.querySelector("#zoom-range-status");
-
   if (Services.prefs.getIntPref("browser.statusbar.mode") == 2) {
-    if(Services.prefs.getBoolPref("browser.statusbar.showbtn", true)) {
-      zoomoutsb.style.display = "initial";
-      zoominsb.style.display = "initial";
-      zoomStatus.style.display = "none";
-    }
-    else
-    {
-      zoomoutsb.style.display = "none";
-      zoominsb.style.display = "none";
-      zoomStatus.style.display = "initial";
-    }
+    windowRoot.ownerGlobal.document.querySelector(":root").setAttribute("sbRangeBtn", Services.prefs.getBoolPref("browser.statusbar.showbtn"));
   }
 }
 
@@ -1340,6 +1263,13 @@ function moveTabBar()
     windowRoot.ownerGlobal.gBrowser.setTabTitle(windowRoot.ownerGlobal.document.querySelector(".tabbrowser-tab[first-visible-tab]"));
     root.setAttribute("tabBarPosition", Services.prefs.getStringPref("browser.tabBar.position"));
  }
+
+ // Set title on top bar when title bar is disabled and tab bar position is different than default
+ const topBar = windowRoot.ownerGlobal.document.querySelector("#toolbar-menubar-pagetitle");
+ const activeTab = document.querySelector('tab[selected="true"]')
+ if (topBar && activeTab) {
+   topBar.textContent = activeTab.getAttribute("label");
+  }
 }
 
 function moveWindowControls() {
@@ -1352,18 +1282,6 @@ function moveWindowControls() {
   else
   {
     root.removeAttribute("leftWindowControls");
-  }
-}
-
-function changeMenuIconStyle() {
-  var menuBtn = windowRoot.ownerGlobal.document.querySelector("#PanelUI-menu-button");
-  if (Services.prefs.getIntPref("browser.menuIcon.style") == 0) {
-    if (menuBtn.classList.contains("browser")) {
-      menuBtn.classList.remove("browser");
-    }
-  }
-  else if (Services.prefs.getIntPref("browser.menuIcon.style") == 1) {
-    menuBtn.classList.add("browser");
   }
 }
 
@@ -1382,5 +1300,63 @@ function moveBookmarksBar() {
     {
       windowRoot.ownerGlobal.document.querySelector("#browser-bottombox").insertAdjacentElement('afterbegin', bookmarksBar);
     }
+  }
+}
+
+function changeMenuIconStyle() {
+  var menuBtn = windowRoot.ownerGlobal.document.querySelector("#PanelUI-menu-button");
+  if (Services.prefs.getIntPref("browser.menuIcon.style") == 0) {
+    if (menuBtn.classList.contains("browser")) {
+      menuBtn.classList.remove("browser");
+    }
+  }
+  else if (Services.prefs.getIntPref("browser.menuIcon.style") == 1) {
+    menuBtn.classList.add("browser");
+  }
+}
+
+function toggleEditZoom(el, edit) {
+  if (edit === true) {
+    const inputEdit = document.createElement("input");
+    inputEdit.value = el.textContent.replace(" %", "");
+    inputEdit.type = "number";
+    inputEdit.step = "1";
+    inputEdit.min = "30"
+    inputEdit.max = "300"
+    inputEdit.id = el.id;
+    inputEdit.classList = "toolbaritem-combined-buttons toolbarbutton-1";
+    inputEdit.onblur = function(){
+      setZoom(this);
+      toggleEditZoom(this, false);
+    };
+    inputEdit.addEventListener("keydown", event => {
+      switch(event.code) {
+        case "Enter":
+          setZoom(inputEdit);
+          break;
+        case "NumpadAdd":
+          if(parseFloat(inputEdit.value) < 300) {
+            inputEdit.value = parseFloat(inputEdit.value) + 10;
+          }
+          event.preventDefault();
+          break;
+        case "NumpadSubtract":
+          if(parseFloat(inputEdit.value) >= 30) {
+            inputEdit.value = parseFloat(inputEdit.value) - 10;
+          }
+          event.preventDefault();
+          break;
+      }
+    });
+    el.replaceWith(inputEdit);
+    inputEdit.focus();
+    inputEdit.select();
+  }
+  else {
+    const spanEdit = document.createElement("span");
+    spanEdit.textContent = el.value + " %";
+    spanEdit.id = el.id;
+    spanEdit.onclick = function(){toggleEditZoom(this, true)};
+    el.replaceWith(spanEdit);
   }
 }

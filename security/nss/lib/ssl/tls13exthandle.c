@@ -14,6 +14,7 @@
 #include "ssl3exthandle.h"
 #include "tls13esni.h"
 #include "tls13exthandle.h"
+#include "tls13subcerts.h"
 
 SECStatus
 tls13_ServerSendStatusRequestXtn(const sslSocket *ss, TLSExtensionData *xtnData,
@@ -448,7 +449,7 @@ tls13_ClientSendPreSharedKeyXtn(const sslSocket *ss, TLSExtensionData *xtnData,
         goto loser;
 
     /* Obfuscated age. */
-    age = ssl_TimeUsec() - session_ticket->received_timestamp;
+    age = ssl_Time(ss) - session_ticket->received_timestamp;
     age /= PR_USEC_PER_MSEC;
     age += session_ticket->ticket_age_add;
     rv = sslBuffer_AppendNumber(buf, age, 4);
@@ -788,11 +789,26 @@ tls13_ClientSendSupportedVersionsXtn(const sslSocket *ss, TLSExtensionData *xtnD
     }
 
     for (version = ss->vrange.max; version >= ss->vrange.min; --version) {
-        PRUint16 wire = tls13_EncodeDraftVersion(version,
-                                                 ss->protocolVariant);
+        PRUint16 wire = tls13_EncodeVersion(version,
+                                            ss->protocolVariant);
         rv = sslBuffer_AppendNumber(buf, wire, 2);
         if (rv != SECSuccess) {
             return SECFailure;
+        }
+
+        if (ss->opt.enableDtls13VersionCompat &&
+            ss->protocolVariant == ssl_variant_datagram) {
+            switch (version) {
+                case SSL_LIBRARY_VERSION_TLS_1_2:
+                case SSL_LIBRARY_VERSION_TLS_1_1:
+                    rv = sslBuffer_AppendNumber(buf, (PRUint16)version, 2);
+                    break;
+                default:
+                    continue;
+            }
+            if (rv != SECSuccess) {
+                return SECFailure;
+            }
         }
     }
 
@@ -818,8 +834,8 @@ tls13_ServerSendSupportedVersionsXtn(const sslSocket *ss, TLSExtensionData *xtnD
     SSL_TRC(3, ("%d: TLS13[%d]: server send supported_versions extension",
                 SSL_GETPID(), ss->fd));
 
-    PRUint16 ver = tls13_EncodeDraftVersion(SSL_LIBRARY_VERSION_TLS_1_3,
-                                            ss->protocolVariant);
+    PRUint16 ver = tls13_EncodeVersion(SSL_LIBRARY_VERSION_TLS_1_3,
+                                       ss->protocolVariant);
     rv = sslBuffer_AppendNumber(buf, ver, 2);
     if (rv != SECSuccess) {
         return SECFailure;
@@ -1138,7 +1154,6 @@ tls13_ClientSendEsniXtn(const sslSocket *ss, TLSExtensionData *xtnData,
     sslBuffer sni = SSL_BUFFER(sniBuf);
     const ssl3CipherSuiteDef *suiteDef;
     ssl3KeyMaterial keyMat;
-    SSLAEADCipher aead;
     PRUint8 outBuf[1024];
     unsigned int outLen;
     unsigned int sniStart;
@@ -1187,10 +1202,6 @@ tls13_ClientSendEsniXtn(const sslSocket *ss, TLSExtensionData *xtnData,
     PORT_Assert(suiteDef);
     if (!suiteDef) {
         PORT_SetError(SEC_ERROR_LIBRARY_FAILURE);
-        return SECFailure;
-    }
-    aead = tls13_GetAead(ssl_GetBulkCipherDef(suiteDef));
-    if (!aead) {
         return SECFailure;
     }
 
@@ -1250,15 +1261,33 @@ tls13_ClientSendEsniXtn(const sslSocket *ss, TLSExtensionData *xtnData,
         ssl_DestroyKeyMaterial(&keyMat);
         return SECFailure;
     }
+
     /* Now encrypt. */
-    rv = aead(&keyMat, PR_FALSE /* Encrypt */,
-              outBuf, &outLen, sizeof(outBuf),
-              SSL_BUFFER_BASE(&sni),
-              SSL_BUFFER_LEN(&sni),
-              SSL_BUFFER_BASE(&aadInput),
-              SSL_BUFFER_LEN(&aadInput));
+    unsigned char *aad = SSL_BUFFER_BASE(&aadInput);
+    int aadLen = SSL_BUFFER_LEN(&aadInput);
+    const ssl3BulkCipherDef *cipher_def = ssl_GetBulkCipherDef(suiteDef);
+    int ivLen = cipher_def->iv_size + cipher_def->explicit_nonce_size;
+    unsigned char zero[sizeof(sslSequenceNumber)] = { 0 };
+    SSLCipherAlgorithm calg = cipher_def->calg;
+    SECItem null_params = { siBuffer, NULL, 0 };
+    PK11Context *ctxt = PK11_CreateContextBySymKey(ssl3_Alg2Mech(calg),
+                                                   CKA_NSS_MESSAGE | CKA_ENCRYPT,
+                                                   keyMat.key, &null_params);
+    if (!ctxt) {
+        ssl_DestroyKeyMaterial(&keyMat);
+        sslBuffer_Clear(&aadInput);
+        return SECFailure;
+    }
+
+    /* This function is a single shot, with fresh/unique keys, no need to
+     * generate the IV internally */
+    rv = tls13_AEAD(ctxt, PR_FALSE /* Encrypt */, CKG_NO_GENERATE, 0,
+                    keyMat.iv, NULL, ivLen, zero, sizeof(zero), aad, aadLen,
+                    outBuf, &outLen, sizeof(outBuf), cipher_def->tag_size,
+                    SSL_BUFFER_BASE(&sni), SSL_BUFFER_LEN(&sni));
     ssl_DestroyKeyMaterial(&keyMat);
     sslBuffer_Clear(&aadInput);
+    PK11_DestroyContext(ctxt, PR_TRUE);
     if (rv != SECSuccess) {
         return SECFailure;
     }
@@ -1399,4 +1428,197 @@ tls13_ClientCheckEsniXtn(sslSocket *ss)
     }
 
     return SECSuccess;
+}
+
+/* Indicates support for the delegated credentials extension. This should be
+ * hooked while processing the ClientHello. */
+SECStatus
+tls13_ClientSendDelegatedCredentialsXtn(const sslSocket *ss,
+                                        TLSExtensionData *xtnData,
+                                        sslBuffer *buf, PRBool *added)
+{
+    /* Only send the extension if support is enabled and the client can
+     * negotiate TLS 1.3. */
+    if (ss->vrange.max < SSL_LIBRARY_VERSION_TLS_1_3 ||
+        !ss->opt.enableDelegatedCredentials) {
+        return SECSuccess;
+    }
+
+    /* Filter the schemes that are enabled and acceptable. Save these in
+     * the "advertised" list, then encode them to be sent. If we receive
+     * a DC in response, validate that it matches one of the advertised
+     * schemes. */
+    SSLSignatureScheme filtered[MAX_SIGNATURE_SCHEMES] = { 0 };
+    unsigned int filteredCount = 0;
+    SECStatus rv = ssl3_FilterSigAlgs(ss, ss->vrange.max,
+                                      PR_TRUE,
+                                      MAX_SIGNATURE_SCHEMES,
+                                      filtered,
+                                      &filteredCount);
+    if (rv != SECSuccess) {
+        return SECFailure;
+    }
+
+    /* If no schemes available for the DC extension, don't send it. */
+    if (!filteredCount) {
+        return SECSuccess;
+    }
+
+    rv = ssl3_EncodeFilteredSigAlgs(ss, filtered, filteredCount, buf);
+    if (rv != SECSuccess) {
+        return SECFailure;
+    }
+
+    SSLSignatureScheme *dcSchemesAdvertised = PORT_ZNewArray(SSLSignatureScheme,
+                                                             filteredCount);
+    if (!dcSchemesAdvertised) {
+        return SECFailure;
+    }
+    for (unsigned int i = 0; i < filteredCount; i++) {
+        dcSchemesAdvertised[i] = filtered[i];
+    }
+
+    if (xtnData->delegCredSigSchemesAdvertised) {
+        PORT_Free(xtnData->delegCredSigSchemesAdvertised);
+    }
+    xtnData->delegCredSigSchemesAdvertised = dcSchemesAdvertised;
+    xtnData->numDelegCredSigSchemesAdvertised = filteredCount;
+    *added = PR_TRUE;
+    return SECSuccess;
+}
+
+/* Parses the delegated credential (DC) offered by the server. This should be
+ * hooked while processing the server's CertificateVerify.
+ *
+ * Only the DC sent with the end-entity certificate is to be parsed. This is
+ * ensured by |tls13_HandleCertificateEntry|, which only processes extensions
+ * for the first certificate in the chain.
+ */
+SECStatus
+tls13_ClientHandleDelegatedCredentialsXtn(const sslSocket *ss,
+                                          TLSExtensionData *xtnData,
+                                          SECItem *data)
+{
+    if (!ss->opt.enableDelegatedCredentials ||
+        ss->version < SSL_LIBRARY_VERSION_TLS_1_3) {
+        ssl3_ExtSendAlert(ss, alert_fatal, illegal_parameter);
+        PORT_SetError(SSL_ERROR_RX_UNEXPECTED_EXTENSION);
+        return SECFailure;
+    }
+
+    sslDelegatedCredential *dc = NULL;
+    SECStatus rv = tls13_ReadDelegatedCredential(data->data, data->len, &dc);
+    if (rv != SECSuccess) {
+        goto loser; /* code already set */
+    }
+
+    /* When using RSA, the public key MUST NOT use the rsaEncryption OID. */
+    if (dc->expectedCertVerifyAlg == ssl_sig_rsa_pss_rsae_sha256 ||
+        dc->expectedCertVerifyAlg == ssl_sig_rsa_pss_rsae_sha384 ||
+        dc->expectedCertVerifyAlg == ssl_sig_rsa_pss_rsae_sha512) {
+        goto alert_loser;
+    }
+
+    /* The algorithm and expected_cert_verify_algorithm fields MUST be of a
+     * type advertised by the client in the SignatureSchemeList and are
+     * considered invalid otherwise.  Clients that receive invalid delegated
+     * credentials MUST terminate the connection with an "illegal_parameter"
+     * alert. */
+    PRBool found = PR_FALSE;
+    for (unsigned int i = 0; i < ss->xtnData.numDelegCredSigSchemesAdvertised; ++i) {
+        if (dc->expectedCertVerifyAlg == ss->xtnData.delegCredSigSchemesAdvertised[i]) {
+            found = PR_TRUE;
+            break;
+        }
+    }
+    if (found == PR_FALSE) {
+        goto alert_loser;
+    }
+
+    // Check the dc->alg, if necessary.
+    if (dc->alg != dc->expectedCertVerifyAlg) {
+        found = PR_FALSE;
+        for (unsigned int i = 0; i < ss->xtnData.numDelegCredSigSchemesAdvertised; ++i) {
+            if (dc->alg == ss->xtnData.delegCredSigSchemesAdvertised[i]) {
+                found = PR_TRUE;
+                break;
+            }
+        }
+        if (found == PR_FALSE) {
+            goto alert_loser;
+        }
+    }
+
+    xtnData->peerDelegCred = dc;
+    xtnData->negotiated[xtnData->numNegotiated++] =
+        ssl_delegated_credentials_xtn;
+    return SECSuccess;
+alert_loser:
+    ssl3_ExtSendAlert(ss, alert_fatal, illegal_parameter);
+    PORT_SetError(SSL_ERROR_UNSUPPORTED_SIGNATURE_ALGORITHM);
+loser:
+    tls13_DestroyDelegatedCredential(dc);
+    return SECFailure;
+}
+
+/* Adds the DC extension if we're committed to authenticating with a DC. */
+static SECStatus
+tls13_ServerSendDelegatedCredentialsXtn(const sslSocket *ss,
+                                        TLSExtensionData *xtnData,
+                                        sslBuffer *buf, PRBool *added)
+{
+    if (tls13_IsSigningWithDelegatedCredential(ss)) {
+        const SECItem *dc = &ss->sec.serverCert->delegCred;
+        SECStatus rv;
+        rv = sslBuffer_Append(buf, dc->data, dc->len);
+        if (rv != SECSuccess) {
+            return SECFailure;
+        }
+        *added = PR_TRUE;
+    }
+    return SECSuccess;
+}
+
+/* The client has indicated support of DCs. We can't act on this information
+ * until we've committed to signing with a DC, so just set a callback for
+ * sending the DC extension later. */
+SECStatus
+tls13_ServerHandleDelegatedCredentialsXtn(const sslSocket *ss,
+                                          TLSExtensionData *xtnData,
+                                          SECItem *data)
+{
+    if (xtnData->delegCredSigSchemes) {
+        PORT_Free(xtnData->delegCredSigSchemes);
+        xtnData->delegCredSigSchemes = NULL;
+        xtnData->numDelegCredSigSchemes = 0;
+    }
+    SECStatus rv = ssl_ParseSignatureSchemes(ss, NULL,
+                                             &xtnData->delegCredSigSchemes,
+                                             &xtnData->numDelegCredSigSchemes,
+                                             &data->data, &data->len);
+    if (rv != SECSuccess) {
+        ssl3_ExtSendAlert(ss, alert_fatal, decode_error);
+        PORT_SetError(SSL_ERROR_RX_MALFORMED_CLIENT_HELLO);
+        return SECFailure;
+    }
+    if (xtnData->numDelegCredSigSchemes == 0) {
+        ssl3_ExtSendAlert(ss, alert_fatal, handshake_failure);
+        PORT_SetError(SSL_ERROR_UNSUPPORTED_SIGNATURE_ALGORITHM);
+        return SECFailure;
+    }
+    /* Check for trailing data. */
+    if (data->len != 0) {
+        ssl3_ExtSendAlert(ss, alert_fatal, decode_error);
+        PORT_SetError(SSL_ERROR_RX_MALFORMED_CLIENT_HELLO);
+        return SECFailure;
+    }
+
+    /* Keep track of negotiated extensions. */
+    xtnData->peerRequestedDelegCred = PR_TRUE;
+    xtnData->negotiated[xtnData->numNegotiated++] =
+        ssl_delegated_credentials_xtn;
+
+    return ssl3_RegisterExtensionSender(
+        ss, xtnData, ssl_delegated_credentials_xtn,
+        tls13_ServerSendDelegatedCredentialsXtn);
 }

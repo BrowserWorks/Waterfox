@@ -74,8 +74,8 @@ void SharedRef::Clear() {
 
 }  // namespace detail
 
-typedef BaseAutoLock<detail::SharedRef&> SharedRefAutoLock;
-typedef BaseAutoUnlock<detail::SharedRef&> SharedRefAutoUnlock;
+typedef mozilla::detail::BaseAutoLock<detail::SharedRef&> SharedRefAutoLock;
+typedef mozilla::detail::BaseAutoUnlock<detail::SharedRef&> SharedRefAutoUnlock;
 
 WeakReferenceSupport::WeakReferenceSupport(Flags aFlags)
     : mRefCnt(0), mFlags(aFlags) {
@@ -153,7 +153,7 @@ WeakReferenceSupport::Release() {
       // main thread right now, so we send a reference to ourselves to the main
       // thread to be re-released there.
       RefPtr<WeakReferenceSupport> self = this;
-      NS_ReleaseOnMainThreadSystemGroup("WeakReferenceSupport", self.forget());
+      NS_ReleaseOnMainThread("WeakReferenceSupport", self.forget());
     }
   }
   return newRefCnt;

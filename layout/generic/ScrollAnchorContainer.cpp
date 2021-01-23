@@ -9,7 +9,7 @@
 #include "GeckoProfiler.h"
 #include "mozilla/dom/Text.h"
 #include "mozilla/PresShell.h"
-#include "mozilla/StaticPrefs.h"
+#include "mozilla/StaticPrefs_layout.h"
 #include "mozilla/ToString.h"
 #include "nsBlockFrame.h"
 #include "nsGfxScrollFrame.h"
@@ -21,7 +21,18 @@
 using namespace mozilla::dom;
 
 #define ANCHOR_LOG(...)
-// #define ANCHOR_LOG(...) printf_stderr("ANCHOR: " __VA_ARGS__)
+
+/*
+#define ANCHOR_LOG(fmt, ...)                            \
+  printf_stderr("ANCHOR(%p, %s, root: %d): " fmt, this, \
+                Frame()                                 \
+                    ->PresContext()                     \
+                    ->Document()                        \
+                    ->GetDocumentURI()                  \
+                    ->GetSpecOrDefault()                \
+                    .get(),                             \
+                mScrollFrame->mIsRoot, ##__VA_ARGS__)
+*/
 
 namespace mozilla {
 namespace layout {
@@ -30,11 +41,12 @@ ScrollAnchorContainer::ScrollAnchorContainer(ScrollFrameHelper* aScrollFrame)
     : mScrollFrame(aScrollFrame),
       mAnchorNode(nullptr),
       mLastAnchorOffset(0),
+      mDisabled(false),
       mAnchorNodeIsDirty(true),
       mApplyingAnchorAdjustment(false),
       mSuppressAnchorAdjustment(false) {}
 
-ScrollAnchorContainer::~ScrollAnchorContainer() {}
+ScrollAnchorContainer::~ScrollAnchorContainer() = default;
 
 ScrollAnchorContainer* ScrollAnchorContainer::FindFor(nsIFrame* aFrame) {
   aFrame = aFrame->GetParent();
@@ -64,15 +76,20 @@ static void SetAnchorFlags(const nsIFrame* aScrolledFrame,
                            nsIFrame* aAnchorNode, bool aInScrollAnchorChain) {
   nsIFrame* frame = aAnchorNode;
   while (frame && frame != aScrolledFrame) {
-    MOZ_ASSERT(
-        frame == aAnchorNode || !frame->IsScrollFrame(),
-        "We shouldn't select an anchor node inside a nested scroll frame.");
-
+    // TODO(emilio, bug 1629280): This commented out assertion below should
+    // hold, but it may not in the case of reparenting-during-reflow (due to
+    // inline fragmentation or such). That looks fishy!
+    //
+    // We should either invalidate the anchor when reparenting any frame on the
+    // chain, or fix up the chain flags.
+    //
+    // MOZ_DIAGNOSTIC_ASSERT(frame->IsInScrollAnchorChain() !=
+    //                       aInScrollAnchorChain);
     frame->SetInScrollAnchorChain(aInScrollAnchorChain);
     frame = frame->GetParent();
   }
   MOZ_ASSERT(frame,
-             "The anchor node should be a descendant of the scroll frame");
+             "The anchor node should be a descendant of the scrolled frame");
   // If needed, invalidate the frame so that we start/stop highlighting the
   // anchor
   if (StaticPrefs::layout_css_scroll_anchoring_highlight()) {
@@ -184,55 +201,63 @@ static nscoord FindScrollAnchoringBoundingOffset(
   return logicalBounding.BStart(writingMode);
 }
 
-void ScrollAnchorContainer::SelectAnchor() {
-  MOZ_ASSERT(mScrollFrame->mScrolledFrame);
-  MOZ_ASSERT(mAnchorNodeIsDirty);
-
+bool ScrollAnchorContainer::CanMaintainAnchor() const {
   if (!StaticPrefs::layout_css_scroll_anchoring_enabled()) {
-    return;
+    return false;
   }
 
-  AUTO_PROFILER_LABEL("ScrollAnchorContainer::SelectAnchor", LAYOUT);
-  ANCHOR_LOG(
-      "Selecting anchor for %p with scroll-port=%s.\n", this,
-      mozilla::ToString(mScrollFrame->GetVisualOptimalViewingRect()).c_str());
+  // If we've been disabled due to heuristics, we don't anchor anymore.
+  if (mDisabled) {
+    return false;
+  }
 
-  const nsStyleDisplay* disp = Frame()->StyleDisplay();
-
+  const nsStyleDisplay& disp = *Frame()->StyleDisplay();
   // Don't select a scroll anchor if the scroll frame has `overflow-anchor:
   // none`.
-  bool overflowAnchor =
-      disp->mOverflowAnchor == mozilla::StyleOverflowAnchor::Auto;
+  if (disp.mOverflowAnchor != mozilla::StyleOverflowAnchor::Auto) {
+    return false;
+  }
 
   // Or if the scroll frame has not been scrolled from the logical origin. This
   // is not in the specification [1], but Blink does this.
   //
   // [1] https://github.com/w3c/csswg-drafts/issues/3319
-  bool isScrolled = mScrollFrame->GetLogicalScrollPosition() != nsPoint();
+  if (mScrollFrame->GetLogicalScrollPosition() == nsPoint()) {
+    return false;
+  }
 
   // Or if there is perspective that could affect the scrollable overflow rect
   // for descendant frames. This is not in the specification as Blink doesn't
   // share this behavior with perspective [1].
   //
   // [1] https://github.com/w3c/csswg-drafts/issues/3322
-  bool hasPerspective = Frame()->ChildrenHavePerspective();
+  if (Frame()->ChildrenHavePerspective()) {
+    return false;
+  }
+
+  return true;
+}
+
+void ScrollAnchorContainer::SelectAnchor() {
+  MOZ_ASSERT(mScrollFrame->mScrolledFrame);
+  MOZ_ASSERT(mAnchorNodeIsDirty);
+
+  AUTO_PROFILER_LABEL("ScrollAnchorContainer::SelectAnchor", LAYOUT);
+  ANCHOR_LOG(
+      "Selecting anchor with scroll-port=%s.\n",
+      mozilla::ToString(mScrollFrame->GetVisualOptimalViewingRect()).c_str());
 
   // Select a new scroll anchor
   nsIFrame* oldAnchor = mAnchorNode;
-  if (overflowAnchor && isScrolled && !hasPerspective) {
-    ANCHOR_LOG("Beginning candidate selection.\n");
+  if (CanMaintainAnchor()) {
+    MOZ_DIAGNOSTIC_ASSERT(
+        !mScrollFrame->mScrolledFrame->IsInScrollAnchorChain(),
+        "Our scrolled frame can't serve as or contain an anchor for an "
+        "ancestor if it can maintain its own anchor");
+    ANCHOR_LOG("Beginning selection.\n");
     mAnchorNode = FindAnchorIn(mScrollFrame->mScrolledFrame);
   } else {
-    if (!overflowAnchor) {
-      ANCHOR_LOG("Skipping candidate selection for `overflow-anchor: none`\n");
-    }
-    if (!isScrolled) {
-      ANCHOR_LOG("Skipping candidate selection for not being scrolled\n");
-    }
-    if (hasPerspective) {
-      ANCHOR_LOG(
-          "Skipping candidate selection for scroll frame with perspective\n");
-    }
+    ANCHOR_LOG("Skipping selection, doesn't maintain a scroll anchor.\n");
     mAnchorNode = nullptr;
   }
 
@@ -248,9 +273,9 @@ void ScrollAnchorContainer::SelectAnchor() {
 
     // Set all flags for the new scroll anchor
     if (mAnchorNode) {
-      // Anchor selection will never select a descendant of a different scroll
-      // frame, so we can set flags without conflicting with other scroll
-      // anchor containers.
+      // Anchor selection will never select a descendant of a nested scroll
+      // frame which maintains an anchor, so we can set flags without
+      // conflicting with other scroll anchor containers.
       SetAnchorFlags(mScrollFrame->mScrolledFrame, mAnchorNode, true);
     }
   } else {
@@ -274,51 +299,137 @@ void ScrollAnchorContainer::UserScrolled() {
     return;
   }
   InvalidateAnchor();
+  mConsecutiveScrollAnchoringAdjustments = SaturateUint32(0);
+  mConsecutiveScrollAnchoringAdjustmentLength = 0;
+}
+
+void ScrollAnchorContainer::AdjustmentMade(nscoord aAdjustment) {
+  // A reasonably large number of times that we want to check for this. If we
+  // haven't hit this limit after these many attempts we assume we'll never hit
+  // it.
+  //
+  // This is to prevent the number getting too large and making the limit round
+  // to zero by mere precision error.
+  //
+  // 100k should be enough for anyone :)
+  static const uint32_t kAnchorCheckCountLimit = 100000;
+
+  // Zero-length adjustments are common & don't have side effects, so we don't
+  // want them to consider them here; they'd bias our average towards 0.
+  MOZ_ASSERT(aAdjustment, "Don't call this API for zero-length adjustments");
+
+  mConsecutiveScrollAnchoringAdjustments++;
+  mConsecutiveScrollAnchoringAdjustmentLength = NSCoordSaturatingAdd(
+      mConsecutiveScrollAnchoringAdjustmentLength, aAdjustment);
+
+  uint32_t maxConsecutiveAdjustments =
+      StaticPrefs::layout_css_scroll_anchoring_max_consecutive_adjustments();
+
+  if (!maxConsecutiveAdjustments) {
+    return;
+  }
+
+  uint32_t consecutiveAdjustments =
+      mConsecutiveScrollAnchoringAdjustments.value();
+  if (consecutiveAdjustments < maxConsecutiveAdjustments ||
+      consecutiveAdjustments > kAnchorCheckCountLimit) {
+    return;
+  }
+
+  auto cssPixels =
+      CSSPixel::FromAppUnits(mConsecutiveScrollAnchoringAdjustmentLength);
+  double average = double(cssPixels) / consecutiveAdjustments;
+  uint32_t minAverage = StaticPrefs::
+      layout_css_scroll_anchoring_min_average_adjustment_threshold();
+  if (MOZ_LIKELY(std::abs(average) >= double(minAverage))) {
+    return;
+  }
+
+  mDisabled = true;
+
+  ANCHOR_LOG(
+      "Disabled scroll anchoring for container: "
+      "%f average, %f total out of %u consecutive adjustments\n",
+      average, float(cssPixels), consecutiveAdjustments);
+
+  AutoTArray<nsString, 3> arguments;
+  arguments.AppendElement()->AppendInt(consecutiveAdjustments);
+  arguments.AppendElement()->AppendFloat(average);
+  arguments.AppendElement()->AppendFloat(cssPixels);
+
+  nsContentUtils::ReportToConsole(
+      nsIScriptError::warningFlag, NS_LITERAL_CSTRING("Layout"),
+      Frame()->PresContext()->Document(), nsContentUtils::eLAYOUT_PROPERTIES,
+      "ScrollAnchoringDisabledInContainer", arguments);
 }
 
 void ScrollAnchorContainer::SuppressAdjustments() {
   ANCHOR_LOG("Received a scroll anchor suppression for %p.\n", this);
   mSuppressAnchorAdjustment = true;
+
+  // Forward to our parent if appropriate, that is, if we don't maintain an
+  // anchor, and we can't maintain one.
+  //
+  // Note that we need to check !CanMaintainAnchor(), instead of just whether
+  // our frame is in the anchor chain of our ancestor as InvalidateAnchor()
+  // does, given some suppression triggers apply even for nodes that are not in
+  // the anchor chain.
+  if (!mAnchorNode && !CanMaintainAnchor()) {
+    if (ScrollAnchorContainer* container = FindFor(Frame())) {
+      ANCHOR_LOG(" > Forwarding to parent anchor\n");
+      container->SuppressAdjustments();
+    }
+  }
 }
 
-void ScrollAnchorContainer::InvalidateAnchor() {
+void ScrollAnchorContainer::InvalidateAnchor(ScheduleSelection aSchedule) {
   ANCHOR_LOG("Invalidating scroll anchor %p for %p.\n", mAnchorNode, this);
 
   if (mAnchorNode) {
     SetAnchorFlags(mScrollFrame->mScrolledFrame, mAnchorNode, false);
+  } else if (mScrollFrame->mScrolledFrame->IsInScrollAnchorChain()) {
+    ANCHOR_LOG(" > Forwarding to parent anchor\n");
+    // We don't maintain an anchor, and our scrolled frame is in the anchor
+    // chain of an ancestor. Invalidate that anchor.
+    //
+    // NOTE: Intentionally not forwarding aSchedule: Scheduling is always safe
+    // and not doing so is just an optimization.
+    FindFor(Frame())->InvalidateAnchor();
   }
   mAnchorNode = nullptr;
   mAnchorNodeIsDirty = true;
   mLastAnchorOffset = 0;
 
-  if (!StaticPrefs::layout_css_scroll_anchoring_enabled()) {
+  if (!CanMaintainAnchor() || aSchedule == ScheduleSelection::No) {
     return;
   }
+
   Frame()->PresShell()->PostPendingScrollAnchorSelection(this);
 }
 
 void ScrollAnchorContainer::Destroy() {
-  if (mAnchorNode) {
-    SetAnchorFlags(mScrollFrame->mScrolledFrame, mAnchorNode, false);
-  }
-  mAnchorNode = nullptr;
-  mAnchorNodeIsDirty = false;
-  mLastAnchorOffset = 0;
+  InvalidateAnchor(ScheduleSelection::No);
 }
 
 void ScrollAnchorContainer::ApplyAdjustments() {
-  if (!mAnchorNode || mAnchorNodeIsDirty ||
+  if (!mAnchorNode || mAnchorNodeIsDirty || mDisabled ||
       mScrollFrame->HasPendingScrollRestoration() ||
+      mScrollFrame->IsProcessingScrollEvent() ||
       mScrollFrame->IsProcessingAsyncScroll() ||
-      mScrollFrame->mApzSmoothScrollDestination.isSome()) {
+      mScrollFrame->mApzSmoothScrollDestination.isSome() ||
+      mScrollFrame->GetScrollPosition() == nsPoint()) {
     ANCHOR_LOG(
-        "Ignoring post-reflow (anchor=%p, dirty=%d, pendingRestoration=%d, "
-        "asyncScroll=%d, apzSmoothDestination=%d, container=%p).\n",
-        mAnchorNode, mAnchorNodeIsDirty,
+        "Ignoring post-reflow (anchor=%p, dirty=%d, disabled=%d, "
+        "pendingRestoration=%d, scrollevent=%d, asyncScroll=%d, "
+        "apzSmoothDestination=%d, zeroScrollPos=%d pendingSuppression=%d, "
+        "container=%p).\n",
+        mAnchorNode, mAnchorNodeIsDirty, mDisabled,
         mScrollFrame->HasPendingScrollRestoration(),
+        mScrollFrame->IsProcessingScrollEvent(),
         mScrollFrame->IsProcessingAsyncScroll(),
         mScrollFrame->mApzSmoothScrollDestination.isSome(),
-        this);
+        mScrollFrame->GetScrollPosition() == nsPoint(),
+        mSuppressAnchorAdjustment, this);
     if (mSuppressAnchorAdjustment) {
       mSuppressAnchorAdjustment = false;
       InvalidateAnchor();
@@ -346,8 +457,10 @@ void ScrollAnchorContainer::ApplyAdjustments() {
     return;
   }
 
-  ANCHOR_LOG("Applying anchor adjustment of %d in %s for %p and anchor %p.\n",
-             logicalAdjustment, ToString(writingMode).c_str(), this, mAnchorNode);
+  ANCHOR_LOG("Applying anchor adjustment of %d in %s with anchor %p.\n",
+             logicalAdjustment, ToString(writingMode).c_str(), mAnchorNode);
+
+  AdjustmentMade(logicalAdjustment);
 
   nsPoint physicalAdjustment;
   switch (writingMode.GetBlockDir()) {
@@ -365,7 +478,7 @@ void ScrollAnchorContainer::ApplyAdjustments() {
     }
   }
 
-  MOZ_ASSERT(!mApplyingAnchorAdjustment);
+  MOZ_RELEASE_ASSERT(!mApplyingAnchorAdjustment);
   // We should use AutoRestore here, but that doesn't work with bitfields
   mApplyingAnchorAdjustment = true;
   mScrollFrame->ScrollTo(mScrollFrame->GetScrollPosition() + physicalAdjustment,
@@ -434,40 +547,50 @@ ScrollAnchorContainer::ExamineAnchorCandidate(nsIFrame* aFrame) const {
     return ExamineResult::Exclude;
   }
 
-  // See if this frame could have its own anchor node. We could check
-  // IsScrollFrame(), but that would miss nsListControlFrame which is not a
-  // scroll frame, but still inherits from nsHTMLScrollFrame.
-  nsIScrollableFrame* scrollable = do_QueryFrame(aFrame);
+  const bool isReplaced = aFrame->IsFrameOfType(nsIFrame::eReplaced);
 
-  // We don't allow scroll anchors to be selected inside of scrollable frames as
-  // it's not clear how an anchor adjustment should apply to multiple scrollable
-  // frames. Blink allows this to happen, but they're not sure why [1].
+  const bool isNonReplacedInline =
+      aFrame->StyleDisplay()->IsInlineInsideStyle() && !isReplaced;
+
+  const bool isAnonBox = aFrame->Style()->IsAnonBox();
+
+  // See if this frame has or could maintain its own anchor node.
+  const bool isScrollableWithAnchor = [&] {
+    nsIScrollableFrame* scrollable = do_QueryFrame(aFrame);
+    if (!scrollable) {
+      return false;
+    }
+    auto* anchor = scrollable->Anchor();
+    return anchor->AnchorNode() || anchor->CanMaintainAnchor();
+  }();
+
+  // We don't allow scroll anchors to be selected inside of nested scrollable
+  // frames which maintain an anchor node as it's not clear how an anchor
+  // adjustment should apply to multiple scrollable frames.
   //
-  // We also don't allow scroll anchors to be selected inside of SVG as it uses
-  // a different layout model than CSS, and the specification doesn't say it
-  // should apply.
+  // It is important to descend into _some_ scrollable frames, specially
+  // overflow: hidden, as those don't generally maintain their own anchors, and
+  // it is a common case in the wild where scroll anchoring ought to work.
+  //
+  // We also don't allow scroll anchors to be selected inside of replaced
+  // elements (like <img>, <video>, <svg>...) as they behave atomically. SVG
+  // uses a different layout model than CSS, and the specification doesn't say
+  // it should apply anyway.
   //
   // [1] https://github.com/w3c/csswg-drafts/issues/3477
-  bool canDescend = !scrollable && !aFrame->IsSVGOuterSVGFrame();
+  const bool canDescend = !isScrollableWithAnchor && !isReplaced;
 
-  // Check what kind of frame this is
-  bool isBlockOutside = aFrame->IsBlockOutside();
-  bool isAnonBox = aFrame->Style()->IsAnonBox() && !isText;
-  bool isInlineOutside = aFrame->IsInlineOutside() && !isText;
-
-  // If the frame is anonymous or inline-outside, search its descendants for a
-  // scroll anchor.
-  if ((isAnonBox || isInlineOutside) && canDescend) {
+  // Non-replaced inline boxes (including ruby frames) and anon boxes are not
+  // acceptable anchors, so we descend if possible, or otherwise exclude them
+  // altogether.
+  if (!isText && (isNonReplacedInline || isAnonBox)) {
     ANCHOR_LOG(
-        "\t\tSearching descendants of anon or inline box (a=%d, i=%d).\n",
-        isAnonBox, isInlineOutside);
-    return ExamineResult::PassThrough;
-  }
-
-  // If the frame is not block-outside or a text node then exclude it.
-  if (!isBlockOutside && !isText) {
-    ANCHOR_LOG("\t\tExcluding non block-outside or text node (b=%d, t=%d).\n",
-               isBlockOutside, isText);
+        "\t\tSearching descendants of anon or non-replaced inline box (a=%d, "
+        "i=%d).\n",
+        isAnonBox, isNonReplacedInline);
+    if (canDescend) {
+      return ExamineResult::PassThrough;
+    }
     return ExamineResult::Exclude;
   }
 
@@ -487,15 +610,14 @@ ScrollAnchorContainer::ExamineAnchorCandidate(nsIFrame* aFrame) const {
     return ExamineResult::Exclude;
   }
 
-  // At this point, if canDescend is true, we should only have visible
-  // non-anonymous frames that are either:
-  //   1. block-outside
-  //   2. text nodes
+  // It's not clear what the scroll anchoring bounding rect is, for elements
+  // fragmented in the block direction (e.g. across column or page breaks).
   //
-  // It's not clear what the scroll anchoring bounding rect of elements that are
-  // block-outside should be when they are fragmented. For text nodes that are
-  // fragmented, it's specified that we need to consider the union of its line
-  // boxes.
+  // Inline-fragmented elements other than text shouldn't get here because of
+  // the isNonReplacedInline check.
+  //
+  // For text nodes that are fragmented, it's specified that we need to consider
+  // the union of its line boxes.
   //
   // So for text nodes we handle them by including the union of line boxes in
   // the bounding rect of the primary frame, and not selecting any
@@ -529,21 +651,20 @@ ScrollAnchorContainer::ExamineAnchorCandidate(nsIFrame* aFrame) const {
 
 nsIFrame* ScrollAnchorContainer::FindAnchorIn(nsIFrame* aFrame) const {
   // Visit the child lists of this frame
-  for (nsIFrame::ChildListIterator lists(aFrame); !lists.IsDone();
-       lists.Next()) {
+  for (const auto& [list, listID] : aFrame->ChildLists()) {
     // Skip child lists that contain out-of-flow frames, we'll visit them by
     // following placeholders in the in-flow lists so that we visit these
     // frames in DOM order.
     // XXX do we actually need to exclude kOverflowOutOfFlowList too?
-    if (lists.CurrentID() == FrameChildListID::kAbsoluteList ||
-        lists.CurrentID() == FrameChildListID::kFixedList ||
-        lists.CurrentID() == FrameChildListID::kFloatList ||
-        lists.CurrentID() == FrameChildListID::kOverflowOutOfFlowList) {
+    if (listID == FrameChildListID::kAbsoluteList ||
+        listID == FrameChildListID::kFixedList ||
+        listID == FrameChildListID::kFloatList ||
+        listID == FrameChildListID::kOverflowOutOfFlowList) {
       continue;
     }
 
     // Search the child list, and return if we selected an anchor
-    if (nsIFrame* anchor = FindAnchorInList(lists.CurrentList())) {
+    if (nsIFrame* anchor = FindAnchorInList(list)) {
       return anchor;
     }
   }

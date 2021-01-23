@@ -3,13 +3,6 @@
  * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
 requestLongerTimeout(2);
 
-async function waitForBreakpointCount(dbg, count) {
-  return waitForState(
-    dbg,
-    state => dbg.selectors.getBreakpointCount() === count
-  );
-}
-
 add_task(async function() {
   // NOTE: the CORS call makes the test run times inconsistent
   const dbg = await initDebugger("doc-sourcemaps.html");
@@ -38,6 +31,7 @@ add_task(async function() {
   await waitForDispatch(dbg, "LOAD_SOURCE_TEXT");
 
   await waitForPaused(dbg);
+  await waitForDispatch(dbg, "ADD_INLINE_PREVIEW");
   assertPausedLocation(dbg);
 
   await waitForBreakpointCount(dbg, 2);
@@ -58,3 +52,10 @@ add_task(async function() {
     "Breakpoint has correct line"
   );
 });
+
+async function waitForBreakpointCount(dbg, count) {
+  return waitForState(
+    dbg,
+    state => dbg.selectors.getBreakpointCount() === count
+  );
+}

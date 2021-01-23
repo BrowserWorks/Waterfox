@@ -25,12 +25,10 @@ DIRS += [
 
 BROWSER_CHROME_MANIFESTS += [
     'test/browser/browser-private.ini',
-    'test/browser/browser-remote.ini',
     'test/browser/browser.ini',
 ]
 
 MOCHITEST_MANIFESTS += ['test/mochitest/mochitest.ini']
 XPCSHELL_TESTS_MANIFESTS += [
-    'test/xpcshell/xpcshell-remote.ini',
     'test/xpcshell/xpcshell.ini',
 ]

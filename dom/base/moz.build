@@ -5,7 +5,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 with Files('*Selection*'):
-    BUG_COMPONENT = ('Core', 'Selection')
+    BUG_COMPONENT = ('Core', 'DOM: Selection')
 
 with Files("**"):
     BUG_COMPONENT = ("Core", "DOM: Core & HTML")
@@ -18,10 +18,10 @@ XPIDL_SOURCES += [
     'nsIDocumentEncoder.idl',
     'nsIDOMRequestService.idl',
     'nsIDroppedLinkHandler.idl',
+    'nsIEventSourceEventService.idl',
     'nsIImageLoadingContent.idl',
     'nsIMessageManager.idl',
     'nsIObjectLoadingContent.idl',
-    'nsIRemoteWindowContext.idl',
     'nsIScriptableContentIterator.idl',
     'nsIScriptChannel.idl',
     'nsISelectionController.idl',
@@ -61,6 +61,7 @@ EXPORTS += [
     'nsDOMAttributeMap.h',
     'nsDOMCID.h',
     'nsDOMJSUtils.h',
+    'nsDOMMutationObserver.h',
     'nsDOMNavigationTiming.h',
     'nsDOMString.h',
     'nsDOMTokenList.h',
@@ -84,16 +85,12 @@ EXPORTS += [
     'nsIScriptContext.h',
     'nsIScriptGlobalObject.h',
     'nsIScriptObjectPrincipal.h',
-    'nsIScriptTimeoutHandler.h',
-    'nsIStyleSheetLinkingElement.h',
-    'nsITimeoutHandler.h',
     'nsJSEnvironment.h',
     'nsJSUtils.h',
     'nsLineBreaker.h',
     'nsMappedAttributeElement.h',
     'nsNameSpaceManager.h',
     'nsNodeInfoManager.h',
-    'nsNodeUtils.h',
     'nsPIDOMWindow.h',
     'nsPIDOMWindowInlines.h',
     'nsPIWindowRoot.h',
@@ -105,7 +102,6 @@ EXPORTS += [
     'nsStubDocumentObserver.h',
     'nsStubMutationObserver.h',
     'nsStyledElement.h',
-    'nsStyleLinkElement.h',
     'nsTextFragment.h',
     'nsTraversal.h',
     'nsTreeSanitizer.h',
@@ -124,12 +120,14 @@ if CONFIG['MOZ_WEBRTC']:
     ]
 
 EXPORTS.mozilla += [
+    'CallState.h',
     'ContentIterator.h',
     'CORSMode.h',
     'FlushType.h',
     'FullscreenChange.h',
     'IdentifierMapEntry.h',
     'RangeBoundary.h',
+    'RangeUtils.h',
     'ScriptableContentIterator.h',
     'SelectionChangeEventDispatcher.h',
     'TextInputProcessor.h',
@@ -138,9 +136,15 @@ EXPORTS.mozilla += [
 
 EXPORTS.mozilla.dom += [
     '!UseCounterList.h',
+    '!UseCounterWorkerList.h',
+    'AbstractRange.h',
+    'AncestorIterator.h',
     'AnonymousContent.h',
     'Attr.h',
     'BarProps.h',
+    'BindContext.h',
+    'BodyConsumer.h',
+    'BodyStream.h',
     'BodyUtil.h',
     'BorrowedAttrInfo.h',
     'CharacterData.h',
@@ -151,7 +155,6 @@ EXPORTS.mozilla.dom += [
     'ChromeNodeList.h',
     'ChromeUtils.h',
     'Comment.h',
-    'ContentBlockingLog.h',
     'ContentFrameMessageManager.h',
     'ContentProcessMessageManager.h',
     'CustomElementRegistry.h',
@@ -163,7 +166,7 @@ EXPORTS.mozilla.dom += [
     'DocumentInlines.h',
     'DocumentOrShadowRoot.h',
     'DocumentType.h',
-    'DOMError.h',
+    'DOMArena.h',
     'DOMException.h',
     'DOMImplementation.h',
     'DOMIntersectionObserver.h',
@@ -171,8 +174,6 @@ EXPORTS.mozilla.dom += [
     'DOMMozPromiseRequestHolder.h',
     'DOMParser.h',
     'DOMPoint.h',
-    'DOMPrefs.h',
-    'DOMPrefsInternal.h',
     'DOMQuad.h',
     'DOMRect.h',
     'DOMRequest.h',
@@ -181,6 +182,8 @@ EXPORTS.mozilla.dom += [
     'Element.h',
     'ElementInlines.h',
     'EventSource.h',
+    'EventSourceEventService.h',
+    'FilteredNodeIterator.h',
     'FormData.h',
     'FragmentOrElement.h',
     'FromParser.h',
@@ -192,7 +195,9 @@ EXPORTS.mozilla.dom += [
     'ImageTracker.h',
     'IntlUtils.h',
     'Link.h',
+    'LinkStyle.h',
     'Location.h',
+    'LocationBase.h',
     'MaybeCrossOriginObject.h',
     'MessageBroadcaster.h',
     'MessageListenerManager.h',
@@ -200,6 +205,7 @@ EXPORTS.mozilla.dom += [
     'MessageSender.h',
     'MimeType.h',
     'MozQueryInterface.h',
+    'MutationObservers.h',
     'NameSpaceConstants.h',
     'Navigator.h',
     'NodeInfo.h',
@@ -208,6 +214,7 @@ EXPORTS.mozilla.dom += [
     'ParentProcessMessageManager.h',
     'PlacesBookmark.h',
     'PlacesBookmarkAddition.h',
+    'PlacesBookmarkRemoved.h',
     'PlacesEvent.h',
     'PlacesObservers.h',
     'PlacesVisit.h',
@@ -226,14 +233,15 @@ EXPORTS.mozilla.dom += [
     'SerializedStackHolder.h',
     'ShadowIncludingTreeIterator.h',
     'ShadowRoot.h',
+    'StaticRange.h',
     'StructuredCloneBlob.h',
     'StructuredCloneHolder.h',
     'StructuredCloneTags.h',
     'StructuredCloneTester.h',
+    'StyledRange.h',
     'StyleSheetList.h',
     'SubtleCrypto.h',
     'SyncMessageSender.h',
-    'TabGroup.h',
     'Text.h',
     'Timeout.h',
     'TimeoutHandler.h',
@@ -243,8 +251,10 @@ EXPORTS.mozilla.dom += [
     'TreeOrderedArrayInlines.h',
     'TreeWalker.h',
     'UIDirectionManager.h',
+    'UserActivation.h',
+    'ViewportMetaData.h',
     'VisualViewport.h',
-    'WebKitCSSMatrix.h',
+    'WindowFeatures.h',
     'WindowOrientationObserver.h',
     'WindowProxyHolder.h',
 ]
@@ -255,10 +265,14 @@ if CONFIG['FUZZING']:
     ]
 
 UNIFIED_SOURCES += [
+    'AbstractRange.cpp',
     'AnonymousContent.cpp',
     'Attr.cpp',
     'AttrArray.cpp',
     'BarProps.cpp',
+    'BindContext.cpp',
+    'BodyConsumer.cpp',
+    'BodyStream.cpp',
     'BodyUtil.cpp',
     'BorrowedAttrInfo.cpp',
     'CharacterData.cpp',
@@ -268,7 +282,6 @@ UNIFIED_SOURCES += [
     'ChromeNodeList.cpp',
     'ChromeUtils.cpp',
     'Comment.cpp',
-    'ContentBlockingLog.cpp',
     'ContentFrameMessageManager.cpp',
     'ContentIterator.cpp',
     'ContentProcessMessageManager.cpp',
@@ -281,19 +294,18 @@ UNIFIED_SOURCES += [
     'DocumentFragment.cpp',
     'DocumentOrShadowRoot.cpp',
     'DocumentType.cpp',
-    'DOMError.cpp',
     'DOMException.cpp',
     'DOMImplementation.cpp',
     'DOMMatrix.cpp',
     'DOMParser.cpp',
     'DOMPoint.cpp',
-    'DOMPrefs.cpp',
     'DOMQuad.cpp',
     'DOMRect.cpp',
     'DOMRequest.cpp',
     'DOMStringList.cpp',
     'Element.cpp',
     'EventSource.cpp',
+    'EventSourceEventService.cpp',
     'FormData.cpp',
     'FragmentOrElement.cpp',
     'GeneratedImageContent.cpp',
@@ -305,7 +317,9 @@ UNIFIED_SOURCES += [
     'InProcessBrowserChildMessageManager.cpp',
     'IntlUtils.cpp',
     'Link.cpp',
+    'LinkStyle.cpp',
     'Location.cpp',
+    'LocationBase.cpp',
     'MaybeCrossOriginObject.cpp',
     'MessageBroadcaster.cpp',
     'MessageListenerManager.cpp',
@@ -313,6 +327,7 @@ UNIFIED_SOURCES += [
     'MessageSender.cpp',
     'MimeType.cpp',
     'MozQueryInterface.cpp',
+    'MutationObservers.cpp',
     'Navigator.cpp',
     'NodeInfo.cpp',
     'NodeIterator.cpp',
@@ -335,7 +350,6 @@ UNIFIED_SOURCES += [
     'nsDOMNavigationTiming.cpp',
     'nsDOMSerializer.cpp',
     'nsDOMTokenList.cpp',
-    'nsDOMWindowList.cpp',
     'nsFocusManager.cpp',
     'nsFrameLoader.cpp',
     'nsFrameLoaderOwner.cpp',
@@ -345,7 +359,6 @@ UNIFIED_SOURCES += [
     'nsIGlobalObject.cpp',
     'nsINode.cpp',
     'nsJSEnvironment.cpp',
-    'nsJSTimeoutHandler.cpp',
     'nsJSUtils.cpp',
     'nsLineBreaker.cpp',
     'nsMappedAttributeElement.cpp',
@@ -354,7 +367,6 @@ UNIFIED_SOURCES += [
     'nsNameSpaceManager.cpp',
     'nsNoDataProtocolContentPolicy.cpp',
     'nsNodeInfoManager.cpp',
-    'nsNodeUtils.cpp',
     'nsOpenURIInFrameParams.cpp',
     'nsPlainTextSerializer.cpp',
     'nsPropertyTable.cpp',
@@ -366,7 +378,6 @@ UNIFIED_SOURCES += [
     'nsStubDocumentObserver.cpp',
     'nsStubMutationObserver.cpp',
     'nsStyledElement.cpp',
-    'nsStyleLinkElement.cpp',
     'nsSyncLoadService.cpp',
     'nsTextFragment.cpp',
     'nsTextNode.cpp',
@@ -383,6 +394,7 @@ UNIFIED_SOURCES += [
     'Pose.cpp',
     'PostMessageEvent.cpp',
     'ProcessMessageManager.cpp',
+    'RangeUtils.cpp',
     'RemoteOuterWindowProxy.cpp',
     'ResizeObserver.cpp',
     'ResizeObserverController.cpp',
@@ -395,13 +407,14 @@ UNIFIED_SOURCES += [
     'SelectionChangeEventDispatcher.cpp',
     'SerializedStackHolder.cpp',
     'ShadowRoot.cpp',
+    'StaticRange.cpp',
     'StorageAccessPermissionRequest.cpp',
     'StructuredCloneBlob.cpp',
     'StructuredCloneHolder.cpp',
     'StructuredCloneTester.cpp',
+    'StyledRange.cpp',
     'StyleSheetList.cpp',
     'SubtleCrypto.cpp',
-    'TabGroup.cpp',
     'Text.cpp',
     'TextInputProcessor.cpp',
     'ThirdPartyUtil.cpp',
@@ -412,9 +425,11 @@ UNIFIED_SOURCES += [
     'TimeoutManager.cpp',
     'TreeWalker.cpp',
     'UIDirectionManager.cpp',
+    'UserActivation.cpp',
+    'ViewportMetaData.cpp',
     'VisualViewport.cpp',
-    'WebKitCSSMatrix.cpp',
     'WindowDestroyedEvent.cpp',
+    'WindowFeatures.cpp',
     'WindowNamedPropertiesHandler.cpp',
     'WindowOrientationObserver.cpp',
     'XPathGenerator.cpp',
@@ -464,10 +479,17 @@ if CONFIG['INTEL_ARCHITECTURE']:
     SOURCES += ['nsTextFragmentSSE2.cpp']
     SOURCES['nsTextFragmentSSE2.cpp'].flags += CONFIG['SSE2_FLAGS']
 
+# Are we targeting PowerPC? If so, we can enable a SIMD version for
+# nsTextFragment.cpp as well.
+if CONFIG['CPU_ARCH'].startswith('ppc'):
+    SOURCES += ['nsTextFragmentVMX.cpp']
+    SOURCES['nsTextFragmentVMX.cpp'].flags += CONFIG['PPC_VMX_FLAGS']
+
 EXTRA_JS_MODULES += [
     'ContentAreaDropListener.jsm',
     'DOMRequestHelper.jsm',
     'IndexedDBHelper.jsm',
+    'LocationHelper.jsm',
     'ProcessSelector.jsm',
     'SlowScriptDebug.jsm',
 ]
@@ -491,7 +513,6 @@ LOCAL_INCLUDES += [
     '/dom/storage',
     '/dom/svg',
     '/dom/u2f',
-    '/dom/xbl',
     '/dom/xml',
     '/dom/xslt/xpath',
     '/dom/xul',
@@ -528,18 +549,11 @@ if CONFIG['MOZ_BUILD_APP'] in ['browser', 'mobile/android', 'xulrunner']:
 if CONFIG['MOZ_X11']:
     CXXFLAGS += CONFIG['TK_CFLAGS']
 
-GENERATED_FILES += [
-    'PropertyUseCounterMap.inc',
-    'UseCounterList.h',
-]
+GeneratedFile('UseCounterList.h', script='gen-usecounters.py',
+              entry_point='use_counter_list', inputs=['UseCounters.conf'])
 
-countermap = GENERATED_FILES['PropertyUseCounterMap.inc']
-countermap.script = 'gen-usecounters.py:property_map'
-countermap.inputs = ['UseCounters.conf']
-
-counterlist = GENERATED_FILES['UseCounterList.h']
-counterlist.script = 'gen-usecounters.py:use_counter_list'
-counterlist.inputs = ['UseCounters.conf']
+GeneratedFile('UseCounterWorkerList.h', script='gen-usecounters.py',
+              entry_point='use_counter_list', inputs=['UseCountersWorker.conf'])
 
 if CONFIG['CC_TYPE'] in ('clang', 'gcc'):
     CXXFLAGS += ['-Wno-error=shadow']

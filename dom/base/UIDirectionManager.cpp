@@ -32,12 +32,10 @@ void OnPrefChange(const char* aPrefName, void*) {
     }
 
     nsCOMPtr<nsIDocShell> rootDocShell = window->GetDocShell();
-    nsCOMPtr<nsISimpleEnumerator> docShellEnumerator;
-    rootDocShell->GetDocShellEnumerator(nsIDocShell::typeAll,
-                                        nsIDocShell::ENUMERATE_FORWARDS,
-                                        getter_AddRefs(docShellEnumerator));
-    NS_ENSURE_TRUE_VOID(docShellEnumerator);
-    for (auto& docShell : SimpleEnumerator<nsIDocShell>(docShellEnumerator)) {
+    nsTArray<RefPtr<nsIDocShell>> docShells;
+    rootDocShell->GetAllDocShellsInSubtree(
+        nsIDocShell::typeAll, nsIDocShell::ENUMERATE_FORWARDS, docShells);
+    for (auto& docShell : docShells) {
       if (nsCOMPtr<nsPIDOMWindowOuter> win = do_GetInterface(docShell)) {
         if (dom::Document* doc = win->GetExtantDoc()) {
           doc->ResetDocumentDirection();
@@ -52,11 +50,14 @@ void UIDirectionManager::Initialize() {
   DebugOnly<nsresult> rv =
       Preferences::RegisterCallback(OnPrefChange, "intl.uidirection");
   MOZ_ASSERT(NS_SUCCEEDED(rv), "Failed to observe \"intl.uidirection\"");
+  rv = Preferences::RegisterCallback(OnPrefChange, "intl.l10n.pseudo");
+  MOZ_ASSERT(NS_SUCCEEDED(rv), "Failed to observe \"intl.l10n.pseudo\"");
 }
 
 /* static */
 void UIDirectionManager::Shutdown() {
   Preferences::UnregisterCallback(OnPrefChange, "intl.uidirection");
+  Preferences::UnregisterCallback(OnPrefChange, "intl.l10n.pseudo");
 }
 
 }  // namespace dom

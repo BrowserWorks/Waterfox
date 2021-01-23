@@ -9,7 +9,7 @@ import pprint
 import collections
 import voluptuous
 
-from six import text_type
+from six import text_type, iteritems
 
 import taskgraph
 
@@ -56,7 +56,7 @@ def optionally_keyed_by(*arguments):
     for _ in arguments:
         options = [schema]
         for field in fields:
-            options.append({'by-' + field: {basestring: schema}})
+            options.append({'by-' + field: {text_type: schema}})
         schema = voluptuous.Any(*options)
     return schema
 
@@ -128,7 +128,10 @@ def resolve_keyed_by(item, field, item_name, **extra_values):
 # they can be whitelisted here.
 WHITELISTED_SCHEMA_IDENTIFIERS = [
     # upstream-artifacts are handed directly to scriptWorker, which expects interCaps
-    lambda path: "[u'upstream-artifacts']" in path,
+    lambda path: "[{!r}]".format(u'upstream-artifacts') in path,
+    lambda path: ("[{!r}]".format(u'test_name') in path or
+                  "[{!r}]".format(u'json_location') in path or
+                  "[{!r}]".format(u'video_location') in path),
 ]
 
 
@@ -140,9 +143,9 @@ def check_schema(schema):
 
     def iter(path, sch):
         def check_identifier(path, k):
-            if k in (basestring, text_type, voluptuous.Extra):
+            if k in (text_type, text_type, voluptuous.Extra):
                 pass
-            elif isinstance(k, basestring):
+            elif isinstance(k, text_type):
                 if not identifier_re.match(k) and not whitelisted(path):
                     raise RuntimeError(
                         'YAML schemas should use dashed lower-case identifiers, '
@@ -158,7 +161,7 @@ def check_schema(schema):
                         type(k).__name__, path))
 
         if isinstance(sch, collections.Mapping):
-            for k, v in sch.iteritems():
+            for k, v in iteritems(sch):
                 child = "{}[{!r}]".format(path, k)
                 check_identifier(child, k)
                 iter(child, v)
@@ -194,22 +197,31 @@ class Schema(voluptuous.Schema):
 OptimizationSchema = voluptuous.Any(
     # always run this task (default)
     None,
+    # always optimize this task
+    {'always': None},
+    # optimize strategy aliases for build kind
+    {'build': list(schedules.ALL_COMPONENTS)},
+    {'build-fuzzing': None},
     # search the index for the given index namespaces, and replace this task if found
     # the search occurs in order, with the first match winning
-    {'index-search': [basestring]},
+    {'index-search': [text_type]},
+    {'push-interval-10': list(schedules.ALL_COMPONENTS)},
+    {'push-interval-25': list(schedules.ALL_COMPONENTS)},
     # consult SETA and skip this task if it is low-value
     {'seta': None},
     # skip this task if none of the given file patterns match
-    {'skip-unless-changed': [basestring]},
+    {'skip-unless-changed': [text_type]},
     # skip this task if unless the change files' SCHEDULES contains any of these components
     {'skip-unless-schedules': list(schedules.ALL_COMPONENTS)},
-    # skip if SETA or skip-unless-schedules says to
-    {'skip-unless-schedules-or-seta': list(schedules.ALL_COMPONENTS)},
+    # optimize strategy aliases for the test kind
+    {'test': (list(schedules.ALL_COMPONENTS), dict)},
+    {'test-inclusive': list(schedules.ALL_COMPONENTS)},
+    {'test-try': list(schedules.ALL_COMPONENTS)},
 )
 
 # shortcut for a string where task references are allowed
 taskref_or_string = voluptuous.Any(
-    basestring,
-    {voluptuous.Required('task-reference'): basestring},
-    {voluptuous.Required('artifact-reference'): basestring},
+    text_type,
+    {voluptuous.Required('task-reference'): text_type},
+    {voluptuous.Required('artifact-reference'): text_type},
 )

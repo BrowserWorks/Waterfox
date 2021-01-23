@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField.label "Para: ">
+<!ENTITY fromField.label "De: ">
+<!ENTITY senderField.label "Remitente: ">
+<!ENTITY organizationField.label "Organización: ">
+<!ENTITY replyToField.label "Responder a: ">
+
+<!ENTITY subjectField.label "Asunto: ">
+<!--# LOCALIZATION NOTE (ccField.label): DONT_TRANSLATE -->
+<!ENTITY ccField.label "Cc: ">
+<!ENTITY bccField.label "CCO: ">
+<!ENTITY newsgroupsField.label "Grupos de novas: ">
+<!ENTITY followupToField.label "Seguimento a: ">
+
+<!ENTITY tagsHdr.label "Etiquetas: ">
+<!ENTITY dateField.label "Data: ">
+<!ENTITY userAgentField.label "Axente de usuario: ">
+<!ENTITY referencesField.label "Referencias: ">
+<!ENTITY messageIdField.label "ID da mensaxe: ">
+<!ENTITY inReplyToField.label "En resposta a: ">
+<!ENTITY originalWebsite.label "Sitio web: ">
+
+<!ENTITY editMessage.label                 "Editar borrador…">
+<!ENTITY editMessage.accesskey             "d">
+
+<!ENTITY attachmentsTree.label             "Anexos:">
+<!ENTITY attachmentsTree.accesskey         "A">
+<!ENTITY openAttachmentCmd.label           "Abrir">
+<!ENTITY openAttachmentCmd.accesskey       "A">
+<!ENTITY viewAttachmentCmd.label           "Ver fonte">
+<!ENTITY viewAttachmentCmd.accesskey       "V">
+<!ENTITY saveAsAttachmentCmd.label         "Gardar como…">
+<!ENTITY saveAsAttachmentCmd.accesskey     "a">
+<!ENTITY detachAttachmentCmd.label         "Desanexar…">
+<!ENTITY detachAttachmentCmd.accesskey     "D">
+<!ENTITY deleteAttachmentCmd.label         "Borrar">
+<!ENTITY deleteAttachmentCmd.accesskey     "B">
+<!ENTITY saveAllAttachmentsCmd.label       "Gardar todo…">
+<!ENTITY saveAllAttachmentsCmd.accesskey   "G">
+<!ENTITY detachAllAttachmentsCmd.label     "Desanexar todo…">
+<!ENTITY detachAllAttachmentsCmd.accesskey "D">
+<!ENTITY deleteAllAttachmentsCmd.label     "Eliminar todo…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey "E">

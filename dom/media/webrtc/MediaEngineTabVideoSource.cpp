@@ -21,10 +21,8 @@
 #include "ImageContainer.h"
 #include "Layers.h"
 #include "nsIInterfaceRequestorUtils.h"
-#include "nsITabSource.h"
 #include "VideoUtils.h"
 #include "nsServiceManagerUtils.h"
-#include "nsIPrefService.h"
 #include "MediaTrackConstraints.h"
 #include "Tracing.h"
 
@@ -32,43 +30,10 @@ namespace mozilla {
 
 using namespace mozilla::gfx;
 
-MediaEngineTabVideoSource::MediaEngineTabVideoSource() = default;
+MediaEngineTabVideoSource::MediaEngineTabVideoSource()
+    : mSettings(MakeAndAddRef<media::Refcountable<MediaTrackSettings>>()) {}
 
 nsresult MediaEngineTabVideoSource::StartRunnable::Run() {
-  MOZ_ASSERT(NS_IsMainThread());
-  mVideoSource->mStreamMain = mStream;
-  mVideoSource->mTrackIDMain = mTrackID;
-  mVideoSource->mPrincipalHandleMain = mPrincipal;
-  mVideoSource->Draw();
-  mVideoSource->mTimer->InitWithNamedFuncCallback(
-      [](nsITimer* aTimer, void* aClosure) mutable {
-        auto source = static_cast<MediaEngineTabVideoSource*>(aClosure);
-        source->Draw();
-      },
-      mVideoSource, mVideoSource->mTimePerFrame, nsITimer::TYPE_REPEATING_SLACK,
-      "MediaEngineTabVideoSource DrawTimer");
-  if (mVideoSource->mTabSource) {
-    mVideoSource->mTabSource->NotifyStreamStart(mVideoSource->mWindow);
-  }
-  return NS_OK;
-}
-
-nsresult MediaEngineTabVideoSource::StopRunnable::Run() {
-  MOZ_ASSERT(NS_IsMainThread());
-  if (mVideoSource->mTimer) {
-    mVideoSource->mTimer->Cancel();
-    mVideoSource->mTimer = nullptr;
-  }
-  if (mVideoSource->mTabSource) {
-    mVideoSource->mTabSource->NotifyStreamStop(mVideoSource->mWindow);
-  }
-  mVideoSource->mPrincipalHandle = PRINCIPAL_HANDLE_NONE;
-  mVideoSource->mTrackIDMain = TRACK_NONE;
-  mVideoSource->mStream = nullptr;
-  return NS_OK;
-}
-
-nsresult MediaEngineTabVideoSource::InitRunnable::Run() {
   MOZ_ASSERT(NS_IsMainThread());
   if (mVideoSource->mWindowId != -1) {
     nsGlobalWindowOuter* globalWindow =
@@ -99,9 +64,31 @@ nsresult MediaEngineTabVideoSource::InitRunnable::Run() {
     MOZ_ASSERT(mVideoSource->mWindow);
   }
   mVideoSource->mTimer = NS_NewTimer();
-  nsCOMPtr<nsIRunnable> start(
-      new StartRunnable(mVideoSource, mStream, mTrackID, mPrincipal));
-  start->Run();
+  mVideoSource->mTrackMain = mTrack;
+  mVideoSource->mPrincipalHandleMain = mPrincipal;
+  mVideoSource->Draw();
+  mVideoSource->mTimer->InitWithNamedFuncCallback(
+      [](nsITimer* aTimer, void* aClosure) mutable {
+        auto source = static_cast<MediaEngineTabVideoSource*>(aClosure);
+        source->Draw();
+      },
+      mVideoSource, mVideoSource->mTimePerFrame, nsITimer::TYPE_REPEATING_SLACK,
+      "MediaEngineTabVideoSource DrawTimer");
+  if (mVideoSource->mTabSource) {
+    mVideoSource->mTabSource->NotifyStreamStart(mVideoSource->mWindow);
+  }
+  return NS_OK;
+}
+
+nsresult MediaEngineTabVideoSource::StopRunnable::Run() {
+  MOZ_ASSERT(NS_IsMainThread());
+  if (mVideoSource->mTimer) {
+    mVideoSource->mTimer->Cancel();
+    mVideoSource->mTimer = nullptr;
+  }
+  if (mVideoSource->mTabSource) {
+    mVideoSource->mTabSource->NotifyStreamStop(mVideoSource->mWindow);
+  }
   return NS_OK;
 }
 
@@ -110,6 +97,12 @@ nsresult MediaEngineTabVideoSource::DestroyRunnable::Run() {
 
   mVideoSource->mWindow = nullptr;
   mVideoSource->mTabSource = nullptr;
+
+  if (mVideoSource->mTrackMain) {
+    mVideoSource->mTrackMain->End();
+  }
+  mVideoSource->mPrincipalHandle = PRINCIPAL_HANDLE_NONE;
+  mVideoSource->mTrackMain = nullptr;
 
   return NS_OK;
 }
@@ -132,26 +125,29 @@ nsString MediaEngineTabVideoSource::GetGroupId() const {
 
 nsresult MediaEngineTabVideoSource::Allocate(
     const dom::MediaTrackConstraints& aConstraints,
-    const MediaEnginePrefs& aPrefs, const nsString& aDeviceId,
-    const mozilla::ipc::PrincipalInfo& aPrincipalInfo,
+    const MediaEnginePrefs& aPrefs, uint64_t aWindowID,
     const char** aOutBadConstraint) {
   AssertIsOnOwningThread();
 
   // windowId is not a proper constraint, so just read it.
   // It has no well-defined behavior in advanced, so ignore it there.
 
-  mWindowId = aConstraints.mBrowserWindow.WasPassed()
-                  ? aConstraints.mBrowserWindow.Value()
-                  : -1;
+  int64_t windowId = aConstraints.mBrowserWindow.WasPassed()
+                         ? aConstraints.mBrowserWindow.Value()
+                         : -1;
+  NS_DispatchToMainThread(NS_NewRunnableFunction(
+      "MediaEngineTabVideoSource::Allocate window id main thread setter",
+      [self = RefPtr<MediaEngineTabVideoSource>(this), this, windowId] {
+        mWindowId = windowId;
+      }));
   mState = kAllocated;
 
-  return Reconfigure(aConstraints, aPrefs, aDeviceId, aOutBadConstraint);
+  return Reconfigure(aConstraints, aPrefs, aOutBadConstraint);
 }
 
 nsresult MediaEngineTabVideoSource::Reconfigure(
     const dom::MediaTrackConstraints& aConstraints,
-    const mozilla::MediaEnginePrefs& aPrefs, const nsString& aDeviceId,
-    const char** aOutBadConstraint) {
+    const mozilla::MediaEnginePrefs& aPrefs, const char** aOutBadConstraint) {
   AssertIsOnOwningThread();
   MOZ_ASSERT(mState != kReleased);
 
@@ -184,23 +180,35 @@ nsresult MediaEngineTabVideoSource::Reconfigure(
   NS_DispatchToMainThread(NS_NewRunnableFunction(
       "MediaEngineTabVideoSource::Reconfigure main thread setter",
       [self = RefPtr<MediaEngineTabVideoSource>(this), this, scrollWithPage,
-       bufWidthMax, bufHeightMax, timePerFrame, viewportOffsetX,
+       bufWidthMax, bufHeightMax, frameRate, timePerFrame, viewportOffsetX,
        viewportOffsetY, viewportWidth, viewportHeight]() {
         mScrollWithPage = scrollWithPage;
         mBufWidthMax = bufWidthMax;
         mBufHeightMax = bufHeightMax;
         mTimePerFrame = timePerFrame;
+        *mSettings = MediaTrackSettings();
+        mSettings->mScrollWithPage.Construct(scrollWithPage);
+        mSettings->mWidth.Construct(bufWidthMax);
+        mSettings->mHeight.Construct(bufHeightMax);
+        mSettings->mFrameRate.Construct(frameRate);
         if (viewportOffsetX.isSome()) {
+          mSettings->mViewportOffsetX.Construct(*viewportOffsetX);
           mViewportOffsetX = *viewportOffsetX;
         }
         if (viewportOffsetY.isSome()) {
+          mSettings->mViewportOffsetY.Construct(*viewportOffsetY);
           mViewportOffsetY = *viewportOffsetY;
         }
         if (viewportWidth.isSome()) {
+          mSettings->mViewportWidth.Construct(*viewportWidth);
           mViewportWidth = *viewportWidth;
         }
         if (viewportHeight.isSome()) {
+          mSettings->mViewportHeight.Construct(*viewportHeight);
           mViewportHeight = *viewportHeight;
+        }
+        if (mWindowId != -1) {
+          mSettings->mBrowserWindow.Construct(mWindowId);
         }
       }));
   return NS_OK;
@@ -210,10 +218,6 @@ nsresult MediaEngineTabVideoSource::Deallocate() {
   AssertIsOnOwningThread();
   MOZ_ASSERT(mState == kAllocated || mState == kStopped);
 
-  if (mStream && IsTrackIDExplicit(mTrackID)) {
-    mStream->EndTrack(mTrackID);
-  }
-
   NS_DispatchToMainThread(do_AddRef(new DestroyRunnable(this)));
   mState = kReleased;
 
@@ -221,32 +225,22 @@ nsresult MediaEngineTabVideoSource::Deallocate() {
 }
 
 void MediaEngineTabVideoSource::SetTrack(
-    const RefPtr<SourceMediaStream>& aStream, TrackID aTrackID,
+    const RefPtr<SourceMediaTrack>& aTrack,
     const mozilla::PrincipalHandle& aPrincipal) {
   AssertIsOnOwningThread();
   MOZ_ASSERT(mState == kAllocated);
 
-  MOZ_ASSERT(!mStream);
-  MOZ_ASSERT(mTrackID == TRACK_NONE);
-  MOZ_ASSERT(aStream);
-  MOZ_ASSERT(IsTrackIDExplicit(aTrackID));
-  mStream = aStream;
-  mTrackID = aTrackID;
+  MOZ_ASSERT(!mTrack);
+  MOZ_ASSERT(aTrack);
+  mTrack = aTrack;
   mPrincipalHandle = aPrincipal;
-  mStream->AddTrack(mTrackID, new VideoSegment());
 }
 
 nsresult MediaEngineTabVideoSource::Start() {
   AssertIsOnOwningThread();
   MOZ_ASSERT(mState == kAllocated);
 
-  nsCOMPtr<nsIRunnable> runnable;
-  if (!mWindow) {
-    runnable = new InitRunnable(this, mStream, mTrackID, mPrincipalHandle);
-  } else {
-    runnable = new StartRunnable(this, mStream, mTrackID, mPrincipalHandle);
-  }
-  NS_DispatchToMainThread(runnable);
+  NS_DispatchToMainThread(new StartRunnable(this, mTrack, mPrincipalHandle));
   mState = kStarted;
 
   return NS_OK;
@@ -256,6 +250,12 @@ void MediaEngineTabVideoSource::Draw() {
   MOZ_ASSERT(NS_IsMainThread());
 
   if (!mWindow && !mBlackedoutWindow) {
+    return;
+  }
+
+  if (!mTrackMain || mTrackMain->IsDestroyed()) {
+    // The track is already gone or destroyed by MediaManager. This can happen
+    // because stopping the draw timer is async.
     return;
   }
 
@@ -324,7 +324,7 @@ void MediaEngineTabVideoSource::Draw() {
   }
 
   RefPtr<layers::TextureClient> texture =
-      rgbImage->GetTextureClient(/* aForwarder */ nullptr);
+      rgbImage->GetTextureClient(/* aKnowsCompositor */ nullptr);
   if (!texture) {
     NS_WARNING("Failed to allocate TextureClient");
     return;
@@ -369,9 +369,7 @@ void MediaEngineTabVideoSource::Draw() {
 
   VideoSegment segment;
   segment.AppendFrame(do_AddRef(rgbImage), size, mPrincipalHandle);
-  // This can fail if either a) we haven't added the track yet, or b)
-  // we've removed or ended the track.
-  mStreamMain->AppendToTrack(mTrackIDMain, &segment);
+  mTrackMain->AppendData(&segment);
 }
 
 nsresult MediaEngineTabVideoSource::FocusOnSelectedSource() {
@@ -396,6 +394,12 @@ nsresult MediaEngineTabVideoSource::Stop() {
   NS_DispatchToMainThread(new StopRunnable(this));
   mState = kStopped;
   return NS_OK;
+}
+
+void MediaEngineTabVideoSource::GetSettings(
+    MediaTrackSettings& aOutSettings) const {
+  MOZ_ASSERT(NS_IsMainThread());
+  aOutSettings = *mSettings;
 }
 
 }  // namespace mozilla

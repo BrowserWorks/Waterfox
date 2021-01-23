@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY windowTitle.label "Inxertar tabla">
+<!ENTITY size.label "Tamañu">
+<!ENTITY numRowsEditField.label "Fileres:">
+<!ENTITY numRowsEditField.accessKey "F">
+<!ENTITY numColumnsEditField.label "Columnes:">
+<!ENTITY numColumnsEditField.accessKey "C">
+<!ENTITY widthEditField.label "Anchor:">
+<!ENTITY widthEditField.accessKey "A">
+<!ENTITY borderEditField.label "Berbesu:">
+<!ENTITY borderEditField.accessKey "B">
+<!ENTITY borderEditField.tooltip "Escribi un númberu pal berbesu de la tabla, o bien cero (0) pa omitir el berbesu">
+<!ENTITY pixels.label "píxeles">

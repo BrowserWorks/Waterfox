@@ -3,6 +3,7 @@
 //
 
 // Note: sets Cc and Ci variables
+"use strict";
 
 const { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
 
@@ -129,7 +130,7 @@ function serverHandler_GZip(metadata, response) {
     Ci.nsIBinaryOutputStream
   );
   bos.setOutputStream(response.bodyOutputStream);
-  bos.writeByteArray(httpbodyGZip, httpbodyGZip.length);
+  bos.writeByteArray(httpbodyGZip);
   if (dbg) {
     print("============== serverHandler GZip: out");
   }
@@ -146,8 +147,4 @@ function checkRequest(request, data, context) {
   if (dbg) {
     print("============== checkRequest: out");
   }
-}
-
-function run_test() {
-  run_next_test();
 }

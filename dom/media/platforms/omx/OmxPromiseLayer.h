@@ -9,7 +9,6 @@
 
 #  include "mozilla/MozPromise.h"
 #  include "mozilla/TaskQueue.h"
-#  include "nsAutoPtr.h"
 
 #  include "OMX_Core.h"
 #  include "OMX_Types.h"
@@ -41,7 +40,7 @@ class TrackInfo;
  */
 class OmxPromiseLayer {
  protected:
-  virtual ~OmxPromiseLayer() {}
+  virtual ~OmxPromiseLayer() = default;
 
  public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(OmxPromiseLayer)
@@ -120,7 +119,7 @@ class OmxPromiseLayer {
   // And a promise because OMX buffer working among different threads.
   class BufferData {
    protected:
-    virtual ~BufferData() {}
+    virtual ~BufferData() = default;
 
    public:
     explicit BufferData(OMX_BUFFERHEADERTYPE* aBuffer)
@@ -222,7 +221,7 @@ class OmxPromiseLayer {
 
   nsTArray<FlushCommand> mFlushCommands;
 
-  nsAutoPtr<OmxPlatformLayer> mPlatformLayer;
+  UniquePtr<OmxPlatformLayer> mPlatformLayer;
 
  private:
   // Elements are added to holders when FillBuffer() or FillBuffer(). And

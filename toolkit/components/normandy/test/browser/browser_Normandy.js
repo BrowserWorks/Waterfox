@@ -1,12 +1,30 @@
 "use strict";
 
-ChromeUtils.import("resource://normandy/Normandy.jsm", this);
-ChromeUtils.import("resource://normandy/lib/AddonStudies.jsm", this);
-ChromeUtils.import("resource://normandy/lib/PreferenceExperiments.jsm", this);
-ChromeUtils.import("resource://normandy/lib/PreferenceRollouts.jsm", this);
-ChromeUtils.import("resource://normandy/lib/RecipeRunner.jsm", this);
-ChromeUtils.import("resource://normandy/lib/TelemetryEvents.jsm", this);
-ChromeUtils.import("resource://normandy-content/AboutPages.jsm", this);
+const { TelemetryUtils } = ChromeUtils.import(
+  "resource://gre/modules/TelemetryUtils.jsm"
+);
+const { Normandy } = ChromeUtils.import("resource://normandy/Normandy.jsm");
+const { AddonRollouts } = ChromeUtils.import(
+  "resource://normandy/lib/AddonRollouts.jsm"
+);
+const { AddonStudies } = ChromeUtils.import(
+  "resource://normandy/lib/AddonStudies.jsm"
+);
+const { PreferenceExperiments } = ChromeUtils.import(
+  "resource://normandy/lib/PreferenceExperiments.jsm"
+);
+const { PreferenceRollouts } = ChromeUtils.import(
+  "resource://normandy/lib/PreferenceRollouts.jsm"
+);
+const { RecipeRunner } = ChromeUtils.import(
+  "resource://normandy/lib/RecipeRunner.jsm"
+);
+const { TelemetryEvents } = ChromeUtils.import(
+  "resource://normandy/lib/TelemetryEvents.jsm"
+);
+const {
+  NormandyTestUtils: { factories },
+} = ChromeUtils.import("resource://testing-common/NormandyTestUtils.jsm");
 
 const experimentPref1 = "test.initExperimentPrefs1";
 const experimentPref2 = "test.initExperimentPrefs2";
@@ -15,7 +33,7 @@ const experimentPref4 = "test.initExperimentPrefs4";
 
 function withStubInits(testFunction) {
   return decorate(
-    withStub(AboutPages, "init"),
+    withStub(AddonRollouts, "init"),
     withStub(AddonStudies, "init"),
     withStub(PreferenceRollouts, "init"),
     withStub(PreferenceExperiments, "init"),
@@ -122,7 +140,7 @@ decorate_task(
 decorate_task(
   withStub(Normandy, "finishInit"),
   async function testStartupDelayed(finishInitStub) {
-    Normandy.init();
+    await Normandy.init();
     ok(
       !finishInitStub.called,
       "When initialized, do not call finishInit immediately."
@@ -196,7 +214,6 @@ decorate_task(
 decorate_task(withStubInits, async function testStartup() {
   const initObserved = TestUtils.topicObserved("shield-init-complete");
   await Normandy.finishInit();
-  ok(AboutPages.init.called, "startup calls AboutPages.init");
   ok(AddonStudies.init.called, "startup calls AddonStudies.init");
   ok(
     PreferenceExperiments.init.called,
@@ -210,23 +227,8 @@ decorate_task(withStubInits, async function testStartupPrefInitFail() {
   PreferenceExperiments.init.rejects();
 
   await Normandy.finishInit();
-  ok(AboutPages.init.called, "startup calls AboutPages.init");
   ok(AddonStudies.init.called, "startup calls AddonStudies.init");
-  ok(
-    PreferenceExperiments.init.called,
-    "startup calls PreferenceExperiments.init"
-  );
-  ok(RecipeRunner.init.called, "startup calls RecipeRunner.init");
-  ok(TelemetryEvents.init.called, "startup calls TelemetryEvents.init");
-  ok(PreferenceRollouts.init.called, "startup calls PreferenceRollouts.init");
-});
-
-decorate_task(withStubInits, async function testStartupAboutPagesInitFail() {
-  AboutPages.init.rejects();
-
-  await Normandy.finishInit();
-  ok(AboutPages.init.called, "startup calls AboutPages.init");
-  ok(AddonStudies.init.called, "startup calls AddonStudies.init");
+  ok(AddonRollouts.init.called, "startup calls AddonRollouts.init");
   ok(
     PreferenceExperiments.init.called,
     "startup calls PreferenceExperiments.init"
@@ -240,8 +242,8 @@ decorate_task(withStubInits, async function testStartupAddonStudiesInitFail() {
   AddonStudies.init.rejects();
 
   await Normandy.finishInit();
-  ok(AboutPages.init.called, "startup calls AboutPages.init");
   ok(AddonStudies.init.called, "startup calls AddonStudies.init");
+  ok(AddonRollouts.init.called, "startup calls AddonRollouts.init");
   ok(
     PreferenceExperiments.init.called,
     "startup calls PreferenceExperiments.init"
@@ -257,8 +259,8 @@ decorate_task(
     TelemetryEvents.init.throws();
 
     await Normandy.finishInit();
-    ok(AboutPages.init.called, "startup calls AboutPages.init");
     ok(AddonStudies.init.called, "startup calls AddonStudies.init");
+    ok(AddonRollouts.init.called, "startup calls AddonRollouts.init");
     ok(
       PreferenceExperiments.init.called,
       "startup calls PreferenceExperiments.init"
@@ -275,8 +277,8 @@ decorate_task(
     PreferenceRollouts.init.throws();
 
     await Normandy.finishInit();
-    ok(AboutPages.init.called, "startup calls AboutPages.init");
     ok(AddonStudies.init.called, "startup calls AddonStudies.init");
+    ok(AddonRollouts.init.called, "startup calls AddonRollouts.init");
     ok(
       PreferenceExperiments.init.called,
       "startup calls PreferenceExperiments.init"
@@ -287,37 +289,82 @@ decorate_task(
   }
 );
 
-decorate_task(withMockPreferences, async function testPrefMigration(
-  mockPreferences
-) {
-  const legacyPref = "extensions.shield-recipe-client.test";
-  const migratedPref = "app.normandy.test";
-  mockPreferences.set(legacyPref, 1);
+// Test that disabling telemetry removes all stored enrollment IDs
+decorate_task(
+  PreferenceExperiments.withMockExperiments([
+    factories.preferenceStudyFactory({
+      enrollmentId: "test-enrollment-id",
+    }),
+  ]),
+  AddonStudies.withStudies([
+    factories.addonStudyFactory({ slug: "test-study" }),
+  ]),
+  PreferenceRollouts.withTestMock,
+  AddonRollouts.withTestMock,
+  async function disablingTelemetryClearsEnrollmentIds(
+    [prefExperiment],
+    [addonStudy]
+  ) {
+    const prefRollout = {
+      slug: "test-rollout",
+      state: PreferenceRollouts.STATE_ACTIVE,
+      preferences: [],
+      enrollmentId: "test-enrollment-id",
+    };
+    await PreferenceRollouts.add(prefRollout);
+    const addonRollout = {
+      slug: "test-rollout",
+      state: AddonRollouts.STATE_ACTIVE,
+      extension: {},
+      enrollmentId: "test-enrollment-id",
+    };
+    await AddonRollouts.add(addonRollout);
 
-  ok(
-    Services.prefs.prefHasUserValue(legacyPref),
-    "Legacy pref should have a user value before running migration"
-  );
-  ok(
-    !Services.prefs.prefHasUserValue(migratedPref),
-    "Migrated pref should not have a user value before running migration"
-  );
+    // pre-check
+    ok(
+      (await PreferenceExperiments.get(prefExperiment.slug)).enrollmentId,
+      "pref experiment should have an enrollment id"
+    );
+    ok(
+      (await AddonStudies.get(addonStudy.recipeId)).enrollmentId,
+      "addon study should have an enrollment id"
+    );
+    ok(
+      (await PreferenceRollouts.get(prefRollout.slug)).enrollmentId,
+      "pref rollout should have an enrollment id"
+    );
+    ok(
+      (await AddonRollouts.get(addonRollout.slug)).enrollmentId,
+      "addon rollout should have an enrollment id"
+    );
 
-  Normandy.migrateShieldPrefs();
+    // trigger telemetry being disabled
+    await Normandy.observe(
+      null,
+      TelemetryUtils.TELEMETRY_UPLOAD_DISABLED_TOPIC,
+      null
+    );
 
-  ok(
-    !Services.prefs.prefHasUserValue(legacyPref),
-    "Legacy pref should not have a user value after running migration"
-  );
-  ok(
-    Services.prefs.prefHasUserValue(migratedPref),
-    "Migrated pref should have a user value after running migration"
-  );
-  is(
-    Services.prefs.getIntPref(migratedPref),
-    1,
-    "Value should have been migrated"
-  );
-
-  Services.prefs.clearUserPref(migratedPref);
-});
+    // no enrollment IDs anymore
+    is(
+      (await PreferenceExperiments.get(prefExperiment.slug)).enrollmentId,
+      TelemetryEvents.NO_ENROLLMENT_ID_MARKER,
+      "pref experiment should not have an enrollment id"
+    );
+    is(
+      (await AddonStudies.get(addonStudy.recipeId)).enrollmentId,
+      TelemetryEvents.NO_ENROLLMENT_ID_MARKER,
+      "addon study should not have an enrollment id"
+    );
+    is(
+      (await PreferenceRollouts.get(prefRollout.slug)).enrollmentId,
+      TelemetryEvents.NO_ENROLLMENT_ID_MARKER,
+      "pref rollout should not have an enrollment id"
+    );
+    is(
+      (await AddonRollouts.get(addonRollout.slug)).enrollmentId,
+      TelemetryEvents.NO_ENROLLMENT_ID_MARKER,
+      "addon rollout should not have an enrollment id"
+    );
+  }
+);

@@ -2,6 +2,7 @@
 Any copyright is dedicated to the Public Domain.
 http://creativecommons.org/publicdomain/zero/1.0/
 */
+"use strict";
 
 function test() {
   waitForExplicitFinish();
@@ -44,11 +45,11 @@ function test_asyncFetchBadCert() {
           Ci.nsIProgressEventSink,
           Ci.nsIInterfaceRequestor,
         ]),
-        getInterface: function(aIID) {
+        getInterface(aIID) {
           return this.QueryInterface(aIID);
         },
-        onProgress: function() {},
-        onStatus: function() {},
+        onProgress() {},
+        onStatus() {},
       };
       NetUtil.asyncFetch(channel, function(
         aInputStream,
@@ -89,7 +90,7 @@ function WindowListener(aURL, aCallback) {
   this.url = aURL;
 }
 WindowListener.prototype = {
-  onOpenWindow: function(aXULWindow) {
+  onOpenWindow(aXULWindow) {
     var domwindow = aXULWindow.docShell.domWindow;
     var self = this;
     domwindow.addEventListener(
@@ -107,5 +108,5 @@ WindowListener.prototype = {
       { once: true }
     );
   },
-  onCloseWindow: function(aXULWindow) {},
+  onCloseWindow(aXULWindow) {},
 };

@@ -9,7 +9,6 @@ var { XPCOMUtils } = ChromeUtils.import(
   "resource://gre/modules/XPCOMUtils.jsm"
 );
 XPCOMUtils.defineLazyModuleGetters(this, {
-  LightweightThemeChild: "resource:///actors/LightweightThemeChild.jsm",
   PlacesUtils: "resource://gre/modules/PlacesUtils.jsm",
   PlacesUIUtils: "resource:///modules/PlacesUIUtils.jsm",
   PlacesTransactions: "resource://gre/modules/PlacesTransactions.jsm",
@@ -38,17 +37,6 @@ function HistorySidebarInit() {
     document.documentElement.setAttribute("uidensity", uidensity);
   }
 
-  /* Listen for sidebar theme changes */
-  let themeListener = new LightweightThemeChild({
-    content: window,
-    chromeOuterWindowID: window.top.windowUtils.outerWindowID,
-    docShell: window.docShell,
-  });
-
-  window.addEventListener("unload", () => {
-    themeListener.cleanup();
-  });
-
   gHistoryTree = document.getElementById("historyTree");
   gSearchBox = document.getElementById("search-box");
 
@@ -69,6 +57,16 @@ function HistorySidebarInit() {
   }
 
   searchHistory("");
+
+  // Needed due to Bug 1596852.
+  // Should be removed once this bug is resolved.
+  window.addEventListener(
+    "pageshow",
+    e => {
+      window.windowGlobalChild.getActor("LightweightTheme").handleEvent(e);
+    },
+    { once: true }
+  );
 }
 
 function GroupBy(groupingType) {
@@ -123,7 +121,7 @@ function searchHistory(aInput) {
   }
 
   // call load() on the tree manually
-  // instead of setting the place attribute in historySidebar.xul
+  // instead of setting the place attribute in historySidebar.xhtml
   // otherwise, we will end up calling load() twice
   gHistoryTree.load(query, options);
 

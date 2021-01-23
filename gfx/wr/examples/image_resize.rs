@@ -23,7 +23,7 @@ struct App {
 impl Example for App {
     fn render(
         &mut self,
-        _api: &RenderApi,
+        _api: &mut RenderApi,
         builder: &mut DisplayListBuilder,
         txn: &mut Transaction,
         _device_size: DeviceIntSize,
@@ -44,7 +44,7 @@ impl Example for App {
         builder.push_simple_stacking_context(
             bounds.origin,
             space_and_clip.spatial_id,
-            true,
+            PrimitiveFlags::IS_BACKFACE_VISIBLE,
         );
 
         let image_size = LayoutSize::new(100.0, 100.0);
@@ -55,8 +55,6 @@ impl Example for App {
                 space_and_clip,
             ),
             bounds,
-            image_size,
-            LayoutSize::zero(),
             ImageRendering::Auto,
             AlphaType::PremultipliedAlpha,
             self.image_key,
@@ -69,8 +67,6 @@ impl Example for App {
                 space_and_clip,
             ),
             bounds,
-            image_size,
-            LayoutSize::zero(),
             ImageRendering::Pixelated,
             AlphaType::PremultipliedAlpha,
             self.image_key,
@@ -80,7 +76,7 @@ impl Example for App {
         builder.pop_stacking_context();
     }
 
-    fn on_event(&mut self, event: winit::WindowEvent, api: &RenderApi, document_id: DocumentId) -> bool {
+    fn on_event(&mut self, event: winit::WindowEvent, api: &mut RenderApi, document_id: DocumentId) -> bool {
         match event {
             winit::WindowEvent::KeyboardInput {
                 input: winit::KeyboardInput {
@@ -102,7 +98,7 @@ impl Example for App {
                 let mut txn = Transaction::new();
                 txn.update_image(
                     self.image_key,
-                    ImageDescriptor::new(64, 64, ImageFormat::BGRA8, true, false),
+                    ImageDescriptor::new(64, 64, ImageFormat::BGRA8, ImageDescriptorFlags::IS_OPAQUE),
                     ImageData::new(image_data),
                     &DirtyRect::All,
                 );

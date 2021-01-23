@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Spam xat haqida">
+<!ENTITY window.width  "450">
+<!ENTITY info1a.label  "&brandShortName; chiqindi xabarlariga (spam deb ham ataladi) o‘xshab ko‘ringan kiruvchi xabrlarni avotmatik tarzda aniqlaydi. &brandShortName; spam deb hisoblaydigan xabarlarda spam belgisi ko‘rinadi">
+<!ENTITY info1b.label  ".">
+<!ENTITY info2.label   "Birinchi navbatda siz &quot;Spam&quot; asboblar panelidagi tugma yordamida xabarlarni spam yoki spam emas deb belgilab, &brandShortName; dasturiga spam xabarlarni aniqlashda yordam berishingiz kerak.">
+<!ENTITY info3.label   "&brandShortName; dasturini bir marta spam xabarlarni aniqlashga o‘rgatsangiz, &quot;Spam xabarlarni boshqarish&quot;dan kiruvchi spam xabarlarni avtomatik tarzda &quot;Spam&quot; jildiga ko‘chirish uchun foydalanishingiz mumkin.">
+<!ENTITY info4.label   "Batafsil ma’lumot olish uchun &quot;Yordam&quot; ustiga bosing.">

@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Pripojiť ku kanálu">
+
+<!ENTITY network.label     "Sieť:">
+<!ENTITY network.accesskey "S">
+
+<!ENTITY channel.label     "Kanál:">
+<!ENTITY channel.accesskey "K">
+
+<!ENTITY topics.label     "Vyhľadať témy a názvy kanálov">
+<!ENTITY topics.accesskey "t">
+
+<!ENTITY join.label     "Pripojiť">
+<!ENTITY join.accesskey "P">
+
+<!ENTITY minusers.label     "Minimálny počet používateľov:">
+<!ENTITY minusers.accesskey "n">
+
+<!ENTITY maxusers.label     "Maximálny počet používateľov:">
+<!ENTITY maxusers.accesskey "x">
+
+<!ENTITY refresh.label     "Obnoviť">
+<!ENTITY refresh.accesskey "">
+
+<!ENTITY network.hint.label "Zadajte názov servera alebo siete (môžete zadať aj port) a kanál, ku ktorému sa chcete pripojiť.">
+
+<!ENTITY col.network "Sieť">
+<!ENTITY col.name  "Názov">
+<!ENTITY col.users "Používatelia">
+<!ENTITY col.topic "Téma">

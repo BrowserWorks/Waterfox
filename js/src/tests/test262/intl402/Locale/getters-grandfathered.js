@@ -1,4 +1,3 @@
-// |reftest| skip -- Intl.Locale is not supported
 // Copyright 2018 André Bargull; Igalia, S.L. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 
@@ -25,6 +24,13 @@ info: |
        production.
 features: [Intl.Locale]
 ---*/
+
+// Regular grandfathered language tag.
+var loc = new Intl.Locale("cel-gaulish");
+assert.sameValue(loc.baseName, "xtg");
+assert.sameValue(loc.language, "xtg");
+assert.sameValue(loc.script, undefined);
+assert.sameValue(loc.region, undefined);
 
 // Regular grandfathered language tag.
 assert.throws(RangeError, () => new Intl.Locale("zh-min"));

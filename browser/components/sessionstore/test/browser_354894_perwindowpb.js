@@ -24,6 +24,7 @@
  * notifications. The latter won't.
  */
 
+ChromeUtils.import("resource:///modules/sessionstore/SessionStartup.jsm", this);
 // The rejection "BrowserWindowTracker.getTopWindow(...) is null" is left
 // unhandled in some cases. This bug should be fixed, but for the moment this
 // file is whitelisted.
@@ -115,6 +116,9 @@ let setupTest = async function(options, testFunction) {
     ["browser.startup.page", 3],
     ["browser.tabs.warnOnClose", false]
   );
+  // SessionStartup caches pref values, but as this test tries to simulate a
+  // startup scenario, we'll reset them here.
+  SessionStartup.resetForTest();
 
   // Observe these, and also use to count the number of hits
   let observing = {
@@ -156,6 +160,8 @@ let setupTest = async function(options, testFunction) {
   }
 
   await popPrefs();
+  // Act like nothing ever happened.
+  SessionStartup.resetForTest();
 };
 
 /**
@@ -275,7 +281,7 @@ add_task(async function test_open_close_private_browsing() {
     is(
       newWin.gBrowser.browsers.length,
       1,
-      "Did not restore in private browing mode"
+      "Did not restore in private browsing mode"
     );
 
     closed = await closeWindowForRestoration(newWin);

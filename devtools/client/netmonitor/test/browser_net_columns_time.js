@@ -8,7 +8,9 @@
  * header is visible only if there are requests in the list.
  */
 add_task(async function() {
-  const { tab, monitor } = await initNetMonitor(SIMPLE_URL);
+  const { tab, monitor } = await initNetMonitor(SIMPLE_URL, {
+    requestCount: 1,
+  });
   info("Starting test... ");
 
   const { document, store, windowRequire } = monitor.panelWin;
@@ -37,12 +39,8 @@ add_task(async function() {
   });
 
   const onNetworkEvents = waitForNetworkEvents(monitor, 1);
-  const onEventTimings = waitFor(
-    monitor.panelWin.api,
-    EVENTS.RECEIVED_EVENT_TIMINGS
-  );
   tab.linkedBrowser.reload();
-  await Promise.all([onNetworkEvents, onEventTimings]);
+  await onNetworkEvents;
 
   // There should be one request in the list.
   const requestItems = document.querySelectorAll(".request-list-item");

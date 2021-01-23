@@ -99,7 +99,6 @@ function promiseSetEngine() {
           searchBar = BrowserSearch.searchBar;
           searchButton = searchBar.querySelector(".search-go-button");
           ok(searchButton, "got search-go-button");
-          searchBar.value = "test";
 
           Services.obs.removeObserver(
             observer,
@@ -166,6 +165,7 @@ add_task(async function testSetup() {
 
 add_task(async function testSetupEngine() {
   await promiseSetEngine();
+  searchBar.value = "test";
 });
 
 add_task(async function testReturn() {
@@ -192,6 +192,20 @@ add_task(async function testAltReturn() {
     gBrowser.currentURI.spec,
     expectedURL(searchBar.value),
     "testAltReturn opened correct search page"
+  );
+});
+
+add_task(async function testAltGrReturn() {
+  await prepareTest();
+  await BrowserTestUtils.openNewForegroundTab(gBrowser, () => {
+    EventUtils.synthesizeKey("KEY_Enter", { altGraphKey: true });
+  });
+
+  is(gBrowser.tabs.length, preTabNo + 1, "AltGr+Return key added new tab");
+  is(
+    gBrowser.currentURI.spec,
+    expectedURL(searchBar.value),
+    "testAltGrReturn opened correct search page"
   );
 });
 
@@ -288,12 +302,18 @@ add_task(async function testAutocomplete() {
   searchBar.textbox.showHistoryPopup();
   await popupShownPromise;
   checkMenuEntries(searchEntries);
+  searchBar.textbox.closePopup();
 });
 
 add_task(async function testClearHistory() {
   // Open the textbox context menu to trigger controller attachment.
   let textbox = searchBar.textbox;
-  let popupShownPromise = BrowserTestUtils.waitForEvent(textbox, "popupshown");
+  let popupShownPromise = BrowserTestUtils.waitForEvent(
+    window,
+    "popupshown",
+    false,
+    event => event.target.classList.contains("textbox-contextmenu")
+  );
   EventUtils.synthesizeMouseAtCenter(textbox, {
     type: "contextmenu",
     button: 2,
@@ -302,16 +322,11 @@ add_task(async function testClearHistory() {
   // Close the context menu.
   EventUtils.synthesizeKey("KEY_Escape");
 
-  let controller = searchBar.textbox.controllers.getControllerForCommand(
-    "cmd_clearhistory"
-  );
-  ok(
-    controller.isCommandEnabled("cmd_clearhistory"),
-    "Clear history command enabled"
-  );
+  let menuitem = searchBar._menupopup.querySelector(".searchbar-clear-history");
+  ok(!menuitem.disabled, "Clear history menuitem enabled");
 
   let historyCleared = promiseObserver("satchel-storage-changed");
-  controller.doCommand("cmd_clearhistory");
+  menuitem.click();
   await historyCleared;
   let count = await countEntries();
   ok(count == 0, "History cleared");

@@ -7,7 +7,7 @@
  * and enumerators) in JS-friendly ways.
  */
 
-this.EXPORTED_SYMBOLS = ["fixIterator", "toXPCOMArray", "toArray"];
+const EXPORTED_SYMBOLS = ["fixIterator", "toXPCOMArray", "toArray"];
 
 var JS_HAS_SYMBOLS = typeof Symbol === "function";
 var ITERATOR_SYMBOL = JS_HAS_SYMBOLS ? Symbol.iterator : "@@iterator";
@@ -18,7 +18,7 @@ var ITERATOR_SYMBOL = JS_HAS_SYMBOLS ? Symbol.iterator : "@@iterator";
  * Currently, we support the following objects:
  *   Anything you can for (let x of aObj) on
  *                (e.g. toArray(fixIterator(enum))[4],
- *                 also a NodeList from element.childNodes)
+ *                 also a NodeList from element.children)
  *
  * @param aObj        The object to convert
  */
@@ -29,14 +29,19 @@ function toArray(aObj) {
   }
 
   // New style generator function
-  if ((typeof aObj == "function") && (typeof aObj.constructor == "function")
-      && (aObj.constructor.name == "GeneratorFunction")) {
+  if (
+    typeof aObj == "function" &&
+    typeof aObj.constructor == "function" &&
+    aObj.constructor.name == "GeneratorFunction"
+  ) {
     return [...aObj()];
   }
 
   // We got something unexpected, notify the caller loudly.
-  throw new Error("An unsupported object sent to toArray: " +
-                  (("toString" in aObj) ? aObj.toString() : aObj));
+  throw new Error(
+    "An unsupported object sent to toArray: " +
+      ("toString" in aObj ? aObj.toString() : aObj)
+  );
 }
 
 /**
@@ -64,17 +69,19 @@ function fixIterator(aEnum, aIface) {
   // then the original input is sufficient to directly return. However, if we want
   // to support the aIface parameter, we need to do a lazy version of
   // Array.prototype.map.
-  if (Array.isArray(aEnum) ||
-      aEnum instanceof Ci.nsISimpleEnumerator ||
-      ITERATOR_SYMBOL in aEnum) {
+  if (
+    Array.isArray(aEnum) ||
+    aEnum instanceof Ci.nsISimpleEnumerator ||
+    ITERATOR_SYMBOL in aEnum
+  ) {
     if (!aIface) {
       return aEnum[ITERATOR_SYMBOL]();
-    } else {
-      return (function*() {
-        for (let o of aEnum)
-          yield o.QueryInterface(aIface);
-      })();
     }
+    return (function*() {
+      for (let o of aEnum) {
+        yield o.QueryInterface(aIface);
+      }
+    })();
   }
 
   let face = aIface || Ci.nsISupports;
@@ -83,14 +90,17 @@ function fixIterator(aEnum, aIface) {
   if (aEnum instanceof Ci.nsIArray) {
     return (function*() {
       let count = aEnum.length;
-      for (let i = 0; i < count; i++)
+      for (let i = 0; i < count; i++) {
         yield aEnum.queryElementAt(i, face);
+      }
     })();
   }
 
   // We got something unexpected, notify the caller loudly.
-  throw new Error("An unsupported object sent to fixIterator: " +
-                  (("toString" in aEnum) ? aEnum.toString() : aEnum));
+  throw new Error(
+    "An unsupported object sent to fixIterator: " +
+      ("toString" in aEnum ? aEnum.toString() : aEnum)
+  );
 }
 
 /**
@@ -106,8 +116,9 @@ function fixIterator(aEnum, aIface) {
  */
 function toXPCOMArray(aArray, aInterface) {
   if (aInterface.equals(Ci.nsIMutableArray)) {
-    let mutableArray = Cc["@mozilla.org/array;1"]
-                         .createInstance(Ci.nsIMutableArray);
+    let mutableArray = Cc["@mozilla.org/array;1"].createInstance(
+      Ci.nsIMutableArray
+    );
     for (let item of fixIterator(aArray)) {
       mutableArray.appendElement(item);
     }
@@ -115,6 +126,7 @@ function toXPCOMArray(aArray, aInterface) {
   }
 
   // We got something unexpected, notify the caller loudly.
-  throw new Error("An unsupported interface requested from toXPCOMArray: " +
-                  aInterface);
+  throw new Error(
+    "An unsupported interface requested from toXPCOMArray: " + aInterface
+  );
 }

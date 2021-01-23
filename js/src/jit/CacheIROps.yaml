@@ -1,0 +1,1626 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# [SMDOC] CacheIR Opcodes
+# =======================
+# This file defines all CacheIR opcodes and their arguments.
+#
+# Each op has the following attributes:
+#
+# name
+# ====
+# Opcode name. Convention is to use a name ending in *Result for ops that store
+# to the IC's output register.
+#
+# shared
+# ======
+# If true, Baseline and Ion use the same CacheIRCompiler code for this op.
+# If false, the op must be implemented in both BaselineCacheIRCompiler and
+# IonCacheIRCompiler.
+#
+# transpile
+# =========
+# Whether this op can be transpiled to MIR by WarpCacheIRTranspiler.
+#
+# custom_writer (optional)
+# ========================
+# If true, the generated CacheIRWriter method will be private and has a trailing
+# '_'. This is useful for ops that need custom CacheIRWriter logic on top of the
+# generated code.
+#
+# args
+# ====
+# List of arguments encoded in the bytecode stream. There are three argument
+# kinds:
+#
+# - Id (ObjId, ValId, ...): refers to either an IC input or a value defined by
+#   a previous CacheIR instruction. This is encoded as integer in the bytecode
+#   stream.
+#
+# - Field (ObjectField, StringField, ...): specific value is stored in the stub
+#   data and the bytecode stream stores the offset of this field. This means the
+#   CacheIR is not specialized for particular values and code can be shared.
+#
+# - Immediate (BoolImm, Int32Imm, JSOpImm, ...): a value baked directly into
+#   the bytecode stream. This is useful for bits of state that need to be
+#   available to all CacheIR compilers/transpilers.
+#
+# If there's an argument named 'result', the generated CacheIRWriter method will
+# return a new OperandId of this type.
+
+- name: GuardToObject
+  shared: true
+  transpile: true
+  custom_writer: true
+  args:
+    input: ValId
+
+- name: GuardIsObjectOrNull
+  shared: true
+  transpile: false
+  args:
+    input: ValId
+
+- name: GuardIsNullOrUndefined
+  shared: true
+  transpile: true
+  args:
+    input: ValId
+
+- name: GuardIsNull
+  shared: true
+  transpile: true
+  args:
+    input: ValId
+
+- name: GuardIsUndefined
+  shared: true
+  transpile: true
+  args:
+    input: ValId
+
+- name: GuardToBoolean
+  shared: true
+  transpile: true
+  args:
+    input: ValId
+    result: Int32Id
+
+- name: GuardToString
+  shared: true
+  transpile: true
+  custom_writer: true
+  args:
+    input: ValId
+
+- name: GuardToSymbol
+  shared: true
+  transpile: false
+  custom_writer: true
+  args:
+    input: ValId
+
+- name: GuardToBigInt
+  shared: true
+  transpile: false
+  custom_writer: true
+  args:
+    input: ValId
+
+- name: GuardIsNumber
+  shared: true
+  transpile: true
+  custom_writer: true
+  args:
+    input: ValId
+
+- name: GuardToInt32
+  shared: true
+  transpile: true
+  args:
+    input: ValId
+    result: Int32Id
+
+- name: GuardToInt32Index
+  shared: true
+  transpile: true
+  args:
+    input: ValId
+    result: Int32Id
+
+- name: GuardToTypedArrayIndex
+  shared: true
+  transpile: true
+  args:
+    input: ValId
+    result: Int32Id
+
+- name: GuardToInt32ModUint32
+  shared: true
+  transpile: true
+  args:
+    input: ValId
+    result: Int32Id
+
+- name: GuardToUint8Clamped
+  shared: true
+  transpile: false
+  args:
+    input: ValId
+    result: Int32Id
+
+# Note: this doesn't accept doubles to avoid ambiguity about whether it includes
+# int32 values. Use GuardIsNumber instead.
+- name: GuardNonDoubleType
+  shared: true
+  transpile: true
+  args:
+    input: ValId
+    type: ValueTypeImm
+
+- name: GuardShape
+  shared: false
+  transpile: true
+  args:
+    obj: ObjId
+    shape: ShapeField
+
+- name: GuardGroup
+  shared: false
+  transpile: false
+  args:
+    obj: ObjId
+    group: GroupField
+
+- name: GuardProto
+  shared: false
+  transpile: false
+  args:
+    obj: ObjId
+    proto: ObjectField
+
+# Guard per GuardClassKind.
+- name: GuardClass
+  shared: true
+  transpile: true
+  args:
+    obj: ObjId
+    kind: GuardClassKindImm
+
+# Guard on an arbitrary JSClass.
+- name: GuardAnyClass
+  shared: false
+  transpile: false
+  args:
+    obj: ObjId
+    clasp: RawPointerField
+
+# Add a reference to a global in the compartment to keep it alive.
+- name: GuardCompartment
+  shared: false
+  transpile: false
+  args:
+    obj: ObjId
+    global: ObjectField
+    compartment: RawPointerField
+
+- name: GuardIsExtensible
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+
+- name: GuardIsNativeObject
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+
+- name: GuardIsProxy
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+
+- name: GuardHasProxyHandler
+  shared: false
+  transpile: false
+  args:
+    obj: ObjId
+    handler: RawPointerField
+
+- name: GuardNotDOMProxy
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+
+- name: GuardSpecificObject
+  shared: false
+  transpile: true
+  args:
+    obj: ObjId
+    expected: ObjectField
+
+- name: GuardSpecificFunction
+  shared: false
+  transpile: true
+  custom_writer: true
+  args:
+    obj: ObjId
+    expected: ObjectField
+    nargsAndFlags: RawWordField
+
+- name: GuardSpecificAtom
+  shared: false
+  transpile: true
+  args:
+    str: StringId
+    expected: AtomField
+
+- name: GuardSpecificSymbol
+  shared: false
+  transpile: false
+  args:
+    sym: SymbolId
+    expected: SymbolField
+
+- name: GuardSpecificNativeFunction
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+    native: JSNativeImm
+
+- name: GuardMagicValue
+  shared: true
+  transpile: false
+  args:
+    val: ValId
+    magic: JSWhyMagicImm
+
+- name: GuardFrameHasNoArgumentsObject
+  shared: false
+  transpile: false
+  args:
+
+- name: GuardNoDenseElements
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+
+- name: GuardAndGetIndexFromString
+  shared: true
+  transpile: false
+  args:
+    str: StringId
+    result: Int32Id
+
+- name: GuardAndGetInt32FromString
+  shared: true
+  transpile: false
+  args:
+    str: StringId
+    result: Int32Id
+
+- name: GuardAndGetNumberFromString
+  shared: true
+  transpile: false
+  args:
+    str: StringId
+    result: NumberId
+
+- name: GuardAndGetNumberFromBoolean
+  shared: true
+  transpile: false
+  args:
+    boolean: Int32Id
+    result: NumberId
+
+- name: GuardAndGetIterator
+  shared: false
+  transpile: false
+  args:
+    obj: ObjId
+    iter: ObjectField
+    enumeratorsAddr: RawPointerField
+    result: ObjId
+
+- name: GuardHasGetterSetter
+  shared: false
+  transpile: false
+  args:
+    obj: ObjId
+    shape: ShapeField
+
+- name: GuardGroupHasUnanalyzedNewScript
+  shared: true
+  transpile: false
+  args:
+    group: GroupField
+
+- name: GuardIndexIsNonNegative
+  shared: true
+  transpile: false
+  args:
+    index: Int32Id
+
+- name: GuardIndexGreaterThanArrayLength
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+    index: Int32Id
+
+- name: GuardIndexIsValidUpdateOrAdd
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+    index: Int32Id
+
+- name: GuardIndexGreaterThanDenseInitLength
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+    index: Int32Id
+
+- name: GuardTagNotEqual
+  shared: true
+  transpile: false
+  args:
+    lhs: ValueTagId
+    rhs: ValueTagId
+
+- name: GuardXrayExpandoShapeAndDefaultProto
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+    hasExpando: BoolImm
+    shapeWrapper: ObjectField
+
+# Guard obj[slot] == proto.
+- name: GuardFunctionPrototype
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+    proto: ObjId
+    slot: RawWordField
+
+- name: GuardNoAllocationMetadataBuilder
+  shared: true
+  transpile: false
+  args:
+
+- name: GuardObjectGroupNotPretenured
+  shared: true
+  transpile: false
+  args:
+    group: GroupField
+
+- name: GuardFunctionHasJitEntry
+  shared: true
+  transpile: false
+  args:
+    fun: ObjId
+    constructing: BoolImm
+
+- name: GuardFunctionIsNative
+  shared: true
+  transpile: false
+  args:
+    fun: ObjId
+
+- name: GuardFunctionIsConstructor
+  shared: true
+  transpile: false
+  args:
+    fun: ObjId
+
+- name: GuardNotClassConstructor
+  shared: true
+  transpile: false
+  args:
+    fun: ObjId
+
+- name: GuardFunApply
+  shared: false
+  transpile: false
+  args:
+    argc: Int32Id
+    flags: CallFlagsImm
+
+- name: LoadObject
+  shared: true
+  transpile: true
+  args:
+    result: ObjId
+    obj: ObjectField
+
+- name: LoadProto
+  shared: true
+  transpile: true
+  args:
+    obj: ObjId
+    result: ObjId
+
+- name: LoadEnclosingEnvironment
+  shared: true
+  transpile: true
+  args:
+    obj: ObjId
+    result: ObjId
+
+- name: LoadWrapperTarget
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+    result: ObjId
+
+- name: LoadValueTag
+  shared: true
+  transpile: false
+  args:
+    val: ValId
+    result: ValueTagId
+
+- name: LoadArgumentFixedSlot
+  shared: false
+  transpile: true
+  custom_writer: true
+  args:
+    result: ValId
+    slotIndex: ByteImm
+
+- name: LoadArgumentDynamicSlot
+  shared: false
+  transpile: true
+  custom_writer: true
+  args:
+    result: ValId
+    argc: Int32Id
+    slotIndex: ByteImm
+
+- name: TruncateDoubleToUInt32
+  shared: true
+  transpile: true
+  args:
+    input: NumberId
+    result: Int32Id
+
+- name: MegamorphicLoadSlotResult
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+    name: PropertyNameField
+    handleMissing: BoolImm
+
+- name: MegamorphicLoadSlotByValueResult
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+    id: ValId
+    handleMissing: BoolImm
+
+- name: MegamorphicStoreSlot
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+    name: PropertyNameField
+    rhs: ValId
+    needsTypeBarrier: BoolImm
+
+- name: MegamorphicSetElement
+  shared: false
+  transpile: false
+  args:
+    obj: ObjId
+    id: ValId
+    rhs: ValId
+    strict: BoolImm
+
+- name: MegamorphicHasPropResult
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+    id: ValId
+    hasOwn: BoolImm
+
+# See CacheIR.cpp 'DOM proxies' comment.
+- name: LoadDOMExpandoValue
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+    result: ValId
+
+- name: LoadDOMExpandoValueGuardGeneration
+  shared: false
+  transpile: false
+  args:
+    obj: ObjId
+    expandoAndGeneration: RawPointerField
+    generation: DOMExpandoGenerationField
+    result: ValId
+
+- name: LoadDOMExpandoValueIgnoreGeneration
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+    result: ValId
+
+- name: GuardDOMExpandoMissingOrGuardShape
+  shared: false
+  transpile: false
+  args:
+    expando: ValId
+    shape: ShapeField
+
+- name: StoreFixedSlot
+  shared: false
+  transpile: true
+  args:
+    obj: ObjId
+    offset: RawWordField
+    rhs: ValId
+
+- name: StoreDynamicSlot
+  shared: false
+  transpile: true
+  args:
+    obj: ObjId
+    offset: RawWordField
+    rhs: ValId
+
+- name: AddAndStoreFixedSlot
+  shared: false
+  transpile: false
+  args:
+    obj: ObjId
+    offset: RawWordField
+    rhs: ValId
+    changeGroup: BoolImm
+    newGroup: GroupField
+    newShape: ShapeField
+
+- name: AddAndStoreDynamicSlot
+  shared: false
+  transpile: false
+  args:
+    obj: ObjId
+    offset: RawWordField
+    rhs: ValId
+    changeGroup: BoolImm
+    newGroup: GroupField
+    newShape: ShapeField
+
+- name: AllocateAndStoreDynamicSlot
+  shared: false
+  transpile: false
+  args:
+    obj: ObjId
+    offset: RawWordField
+    rhs: ValId
+    changeGroup: BoolImm
+    newGroup: GroupField
+    newShape: ShapeField
+    numNewSlots: RawWordField
+
+- name: StoreTypedObjectReferenceProperty
+  shared: false
+  transpile: false
+  args:
+    obj: ObjId
+    offset: RawWordField
+    layout: TypedThingLayoutImm
+    type: ReferenceTypeImm
+    rhs: ValId
+
+- name: StoreTypedObjectScalarProperty
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+    offset: RawWordField
+    layout: TypedThingLayoutImm
+    type: ScalarTypeImm
+    rhs: RawId
+
+- name: StoreDenseElement
+  shared: false
+  transpile: true
+  args:
+    obj: ObjId
+    index: Int32Id
+    rhs: ValId
+
+- name: StoreDenseElementHole
+  shared: false
+  transpile: false
+  args:
+    obj: ObjId
+    index: Int32Id
+    rhs: ValId
+    handleAdd: BoolImm
+
+- name: ArrayPush
+  shared: false
+  transpile: true
+  args:
+    obj: ObjId
+    rhs: ValId
+
+- name: ArrayJoinResult
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+
+- name: IsArrayResult
+  shared: false
+  transpile: true
+  args:
+    input: ValId
+
+- name: IsObjectResult
+  shared: true
+  transpile: true
+  args:
+    input: ValId
+
+- name: IsCallableResult
+  shared: true
+  transpile: true
+  args:
+    input: ValId
+
+- name: IsConstructorResult
+  shared: true
+  transpile: true
+  args:
+    obj: ObjId
+
+- name: MathAbsInt32Result
+  shared: true
+  transpile: true
+  args:
+    input: Int32Id
+
+- name: MathAbsNumberResult
+  shared: true
+  transpile: true
+  args:
+    input: NumberId
+
+- name: MathSqrtNumberResult
+  shared: true
+  transpile: true
+  args:
+    input: NumberId
+
+- name: MathFloorToInt32Result
+  shared: true
+  transpile: true
+  args:
+    input: NumberId
+
+- name: MathCeilToInt32Result
+  shared: true
+  transpile: true
+  args:
+    input: NumberId
+
+- name: MathRoundToInt32Result
+  shared: true
+  transpile: true
+  args:
+    input: NumberId
+
+- name: MathFunctionNumberResult
+  shared: true
+  transpile: true
+  args:
+    input: NumberId
+    fun: UnaryMathFunctionImm
+
+- name: StoreTypedArrayElement
+  shared: true
+  transpile: true
+  args:
+    obj: ObjId
+    elementType: ScalarTypeImm
+    index: Int32Id
+    rhs: RawId
+    handleOOB: BoolImm
+
+- name: StoreTypedObjectElement
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+    layout: TypedThingLayoutImm
+    elementType: ScalarTypeImm
+    index: Int32Id
+    rhs: RawId
+
+- name: CallNativeSetter
+  shared: false
+  transpile: false
+  args:
+    obj: ObjId
+    setter: ObjectField
+    rhs: ValId
+
+- name: CallScriptedSetter
+  shared: false
+  transpile: false
+  args:
+    obj: ObjId
+    setter: ObjectField
+    rhs: ValId
+    sameRealm: BoolImm
+
+- name: CallSetArrayLength
+  shared: false
+  transpile: false
+  args:
+    obj: ObjId
+    strict: BoolImm
+    rhs: ValId
+
+- name: CallProxySet
+  shared: false
+  transpile: false
+  args:
+    obj: ObjId
+    id: IdField
+    rhs: ValId
+    strict: BoolImm
+
+- name: CallProxySetByValue
+  shared: false
+  transpile: false
+  args:
+    obj: ObjId
+    id: ValId
+    rhs: ValId
+    strict: BoolImm
+
+- name: CallAddOrUpdateSparseElementHelper
+  shared: false
+  transpile: false
+  args:
+    obj: ObjId
+    id: Int32Id
+    rhs: ValId
+    strict: BoolImm
+
+- name: CallInt32ToString
+  shared: true
+  transpile: false
+  args:
+    input: Int32Id
+    result: StringId
+
+- name: CallNumberToString
+  shared: true
+  transpile: false
+  args:
+    input: NumberId
+    result: StringId
+
+- name: BooleanToString
+  shared: true
+  transpile: false
+  args:
+    input: Int32Id
+    result: StringId
+
+- name: CallScriptedFunction
+  shared: false
+  transpile: true
+  args:
+    callee: ObjId
+    argc: Int32Id
+    flags: CallFlagsImm
+
+- name: CallNativeFunction
+  shared: false
+  transpile: false
+  transpile: true
+  custom_writer: true
+  args:
+    callee: ObjId
+    argc: Int32Id
+    flags: CallFlagsImm
+#ifdef JS_SIMULATOR
+    target: RawPointerField
+#else
+    ignoresReturnValue: BoolImm
+#endif
+
+- name: CallClassHook
+  shared: false
+  transpile: false
+  custom_writer: true
+  args:
+    callee: ObjId
+    argc: Int32Id
+    flags: CallFlagsImm
+    target: RawPointerField
+
+# Meta ops generate no code, but contain data for BaselineInspector.
+- name: MetaTwoByte
+  shared: true
+  transpile: true
+  custom_writer: true
+  args:
+    kind: MetaTwoByteKindImm
+    functionObject: ObjectField
+    templateObject: ObjectField
+
+- name: LoadFixedSlotResult
+  shared: false
+  transpile: true
+  args:
+    obj: ObjId
+    offset: RawWordField
+
+- name: LoadDynamicSlotResult
+  shared: false
+  transpile: true
+  args:
+    obj: ObjId
+    offset: RawWordField
+
+- name: LoadTypedObjectResult
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+    layout: TypedThingLayoutImm
+    typeDescr: ByteImm
+    offset: RawWordField
+
+- name: LoadDenseElementResult
+  shared: true
+  transpile: true
+  args:
+    obj: ObjId
+    index: Int32Id
+
+- name: LoadDenseElementHoleResult
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+    index: Int32Id
+
+- name: CallGetSparseElementResult
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+    index: Int32Id
+
+- name: LoadDenseElementExistsResult
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+    index: Int32Id
+
+- name: LoadTypedElementExistsResult
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+    index: Int32Id
+    layout: TypedThingLayoutImm
+
+- name: LoadDenseElementHoleExistsResult
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+    index: Int32Id
+
+- name: LoadTypedArrayElementResult
+  shared: true
+  transpile: true
+  args:
+    obj: ObjId
+    index: Int32Id
+    elementType: ScalarTypeImm
+    handleOOB: BoolImm
+
+- name: LoadTypedObjectElementResult
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+    index: Int32Id
+    layout: TypedThingLayoutImm
+    elementType: ScalarTypeImm
+
+- name: LoadInt32ArrayLengthResult
+  shared: true
+  transpile: true
+  args:
+    obj: ObjId
+
+- name: LoadArgumentsObjectArgResult
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+    index: Int32Id
+
+- name: LoadArgumentsObjectLengthResult
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+
+- name: LoadFunctionLengthResult
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+
+- name: LoadTypedArrayLengthResult
+  shared: true
+  transpile: true
+  args:
+    obj: ObjId
+    getter: ObjectField
+
+- name: LoadStringCharResult
+  shared: true
+  transpile: true
+  args:
+    str: StringId
+    index: Int32Id
+
+- name: LoadStringCharCodeResult
+  shared: true
+  transpile: true
+  args:
+    str: StringId
+    index: Int32Id
+
+- name: LoadStringLengthResult
+  shared: true
+  transpile: true
+  args:
+    str: StringId
+
+- name: LoadFrameCalleeResult
+  shared: false
+  transpile: false
+  args:
+
+- name: LoadFrameNumActualArgsResult
+  shared: false
+  transpile: false
+  args:
+
+- name: LoadFrameArgumentResult
+  shared: false
+  transpile: false
+  args:
+    index: Int32Id
+
+- name: LoadEnvironmentFixedSlotResult
+  shared: false
+  transpile: true
+  args:
+    obj: ObjId
+    offset: RawWordField
+
+- name: LoadEnvironmentDynamicSlotResult
+  shared: false
+  transpile: true
+  args:
+    obj: ObjId
+    offset: RawWordField
+
+- name: LoadObjectResult
+  shared: true
+  transpile: true
+  args:
+    obj: ObjId
+
+- name: LoadStringResult
+  shared: true
+  transpile: true
+  args:
+    str: StringId
+
+- name: LoadInt32Result
+  shared: true
+  transpile: true
+  args:
+    val: Int32Id
+
+- name: LoadDoubleResult
+  shared: true
+  transpile: false
+  args:
+    val: NumberId
+
+- name: LoadBigIntResult
+  shared: true
+  transpile: false
+  args:
+    val: BigIntId
+
+- name: CallScriptedGetterResult
+  shared: false
+  transpile: false
+  args:
+    obj: ObjId
+    getter: ObjectField
+    sameRealm: BoolImm
+
+- name: CallScriptedGetterByValueResult
+  shared: false
+  transpile: false
+  args:
+    val: ValId
+    getter: ObjectField
+    sameRealm: BoolImm
+
+- name: CallNativeGetterResult
+  shared: false
+  transpile: false
+  args:
+    obj: ObjId
+    getter: ObjectField
+
+- name: CallNativeGetterByValueResult
+  shared: false
+  transpile: false
+  args:
+    val: ValId
+    getter: ObjectField
+
+- name: CallProxyGetResult
+  shared: false
+  transpile: false
+  args:
+    obj: ObjId
+    id: IdField
+
+- name: CallProxyGetByValueResult
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+    id: ValId
+
+- name: CallProxyHasPropResult
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+    id: ValId
+    hasOwn: BoolImm
+
+- name: CallObjectHasSparseElementResult
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+    index: Int32Id
+
+- name: CallNativeGetElementResult
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+    index: Int32Id
+
+- name: LoadUndefinedResult
+  shared: true
+  transpile: false
+  args:
+
+- name: LoadBooleanResult
+  shared: true
+  transpile: true
+  args:
+    val: BoolImm
+
+- name: LoadConstantStringResult
+  shared: false
+  transpile: false
+  args:
+    str: StringField
+
+- name: LoadInstanceOfObjectResult
+  shared: true
+  transpile: false
+  args:
+    lhs: ValId
+    proto: ObjId
+
+- name: LoadTypeOfObjectResult
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+
+- name: DoubleAddResult
+  shared: true
+  transpile: true
+  args:
+    lhs: NumberId
+    rhs: NumberId
+
+- name: DoubleSubResult
+  shared: true
+  transpile: true
+  args:
+    lhs: NumberId
+    rhs: NumberId
+
+- name: DoubleMulResult
+  shared: true
+  transpile: true
+  args:
+    lhs: NumberId
+    rhs: NumberId
+
+- name: DoubleDivResult
+  shared: true
+  transpile: true
+  args:
+    lhs: NumberId
+    rhs: NumberId
+
+- name: DoubleModResult
+  shared: true
+  transpile: true
+  args:
+    lhs: NumberId
+    rhs: NumberId
+
+- name: DoublePowResult
+  shared: true
+  transpile: true
+  args:
+    lhs: NumberId
+    rhs: NumberId
+
+- name: Int32AddResult
+  shared: true
+  transpile: true
+  args:
+    lhs: Int32Id
+    rhs: Int32Id
+
+- name: Int32SubResult
+  shared: true
+  transpile: true
+  args:
+    lhs: Int32Id
+    rhs: Int32Id
+
+- name: Int32MulResult
+  shared: true
+  transpile: true
+  args:
+    lhs: Int32Id
+    rhs: Int32Id
+
+- name: Int32DivResult
+  shared: true
+  transpile: true
+  args:
+    lhs: Int32Id
+    rhs: Int32Id
+
+- name: Int32ModResult
+  shared: true
+  transpile: true
+  args:
+    lhs: Int32Id
+    rhs: Int32Id
+
+- name: Int32PowResult
+  shared: true
+  transpile: false
+  args:
+    lhs: Int32Id
+    rhs: Int32Id
+
+- name: BigIntAddResult
+  shared: true
+  transpile: false
+  args:
+    lhs: BigIntId
+    rhs: BigIntId
+
+- name: BigIntSubResult
+  shared: true
+  transpile: false
+  args:
+    lhs: BigIntId
+    rhs: BigIntId
+
+- name: BigIntMulResult
+  shared: true
+  transpile: false
+  args:
+    lhs: BigIntId
+    rhs: BigIntId
+
+- name: BigIntDivResult
+  shared: true
+  transpile: false
+  args:
+    lhs: BigIntId
+    rhs: BigIntId
+
+- name: BigIntModResult
+  shared: true
+  transpile: false
+  args:
+    lhs: BigIntId
+    rhs: BigIntId
+
+- name: BigIntPowResult
+  shared: true
+  transpile: false
+  args:
+    lhs: BigIntId
+    rhs: BigIntId
+
+- name: Int32BitOrResult
+  shared: true
+  transpile: true
+  args:
+    lhs: Int32Id
+    rhs: Int32Id
+
+- name: Int32BitXorResult
+  shared: true
+  transpile: true
+  args:
+    lhs: Int32Id
+    rhs: Int32Id
+
+- name: Int32BitAndResult
+  shared: true
+  transpile: true
+  args:
+    lhs: Int32Id
+    rhs: Int32Id
+
+- name: Int32LeftShiftResult
+  shared: true
+  transpile: true
+  args:
+    lhs: Int32Id
+    rhs: Int32Id
+
+- name: Int32RightShiftResult
+  shared: true
+  transpile: true
+  args:
+    lhs: Int32Id
+    rhs: Int32Id
+
+- name: Int32URightShiftResult
+  shared: true
+  transpile: true
+  args:
+    lhs: Int32Id
+    rhs: Int32Id
+    allowDouble: BoolImm
+
+- name: Int32NotResult
+  shared: true
+  transpile: true
+  args:
+    input: Int32Id
+
+- name: BigIntBitOrResult
+  shared: true
+  transpile: false
+  args:
+    lhs: BigIntId
+    rhs: BigIntId
+
+- name: BigIntBitXorResult
+  shared: true
+  transpile: false
+  args:
+    lhs: BigIntId
+    rhs: BigIntId
+
+- name: BigIntBitAndResult
+  shared: true
+  transpile: false
+  args:
+    lhs: BigIntId
+    rhs: BigIntId
+
+- name: BigIntLeftShiftResult
+  shared: true
+  transpile: false
+  args:
+    lhs: BigIntId
+    rhs: BigIntId
+
+- name: BigIntRightShiftResult
+  shared: true
+  transpile: false
+  args:
+    lhs: BigIntId
+    rhs: BigIntId
+
+- name: BigIntNotResult
+  shared: true
+  transpile: false
+  args:
+    input: BigIntId
+
+- name: Int32NegationResult
+  shared: true
+  transpile: true
+  args:
+    input: Int32Id
+
+- name: DoubleNegationResult
+  shared: true
+  transpile: true
+  args:
+    input: NumberId
+
+- name: BigIntNegationResult
+  shared: true
+  transpile: false
+  args:
+    input: BigIntId
+
+- name: Int32IncResult
+  shared: true
+  transpile: true
+  args:
+    input: Int32Id
+
+- name: Int32DecResult
+  shared: true
+  transpile: true
+  args:
+    input: Int32Id
+
+- name: DoubleIncResult
+  shared: true
+  transpile: false
+  args:
+    input: NumberId
+
+- name: DoubleDecResult
+  shared: true
+  transpile: false
+  args:
+    input: NumberId
+
+- name: BigIntIncResult
+  shared: true
+  transpile: false
+  args:
+    input: BigIntId
+
+- name: BigIntDecResult
+  shared: true
+  transpile: false
+  args:
+    input: BigIntId
+
+- name: LoadInt32TruthyResult
+  shared: true
+  transpile: false
+  args:
+    input: ValId
+
+- name: LoadDoubleTruthyResult
+  shared: true
+  transpile: false
+  args:
+    input: NumberId
+
+- name: LoadStringTruthyResult
+  shared: true
+  transpile: false
+  args:
+    str: StringId
+
+- name: LoadObjectTruthyResult
+  shared: true
+  transpile: false
+  args:
+    obj: ObjId
+
+- name: LoadBigIntTruthyResult
+  shared: true
+  transpile: false
+  args:
+    bigInt: BigIntId
+
+- name: LoadValueResult
+  shared: false
+  transpile: false
+  args:
+    val: ValueField
+
+- name: LoadNewObjectFromTemplateResult
+  shared: true
+  transpile: false
+  args:
+    templateObject: ObjectField
+    disambiguationIdHi: UInt32Imm
+    disambiguationIdLo: UInt32Imm
+
+- name: CallStringConcatResult
+  shared: true
+  transpile: true
+  args:
+    lhs: StringId
+    rhs: StringId
+
+- name: CallStringObjectConcatResult
+  shared: false
+  transpile: false
+  args:
+    lhs: ValId
+    rhs: ValId
+
+- name: CallIsSuspendedGeneratorResult
+  shared: true
+  transpile: false
+  args:
+    val: ValId
+
+- name: CompareStringResult
+  shared: false
+  transpile: true
+  args:
+    op: JSOpImm
+    lhs: StringId
+    rhs: StringId
+
+- name: CompareObjectResult
+  shared: true
+  transpile: true
+  args:
+    op: JSOpImm
+    lhs: ObjId
+    rhs: ObjId
+
+- name: CompareSymbolResult
+  shared: true
+  transpile: false
+  args:
+    op: JSOpImm
+    lhs: SymbolId
+    rhs: SymbolId
+
+- name: CompareInt32Result
+  shared: true
+  transpile: true
+  args:
+    op: JSOpImm
+    lhs: Int32Id
+    rhs: Int32Id
+
+- name: CompareDoubleResult
+  shared: true
+  transpile: true
+  args:
+    op: JSOpImm
+    lhs: NumberId
+    rhs: NumberId
+
+- name: CompareBigIntResult
+  shared: true
+  transpile: false
+  args:
+    op: JSOpImm
+    lhs: BigIntId
+    rhs: BigIntId
+
+- name: CompareBigIntInt32Result
+  shared: true
+  transpile: false
+  args:
+    op: JSOpImm
+    lhs: BigIntId
+    rhs: Int32Id
+
+- name: CompareInt32BigIntResult
+  shared: true
+  transpile: false
+  args:
+    op: JSOpImm
+    lhs: Int32Id
+    rhs: BigIntId
+
+- name: CompareBigIntNumberResult
+  shared: true
+  transpile: false
+  args:
+    op: JSOpImm
+    lhs: BigIntId
+    rhs: NumberId
+
+- name: CompareNumberBigIntResult
+  shared: true
+  transpile: false
+  args:
+    op: JSOpImm
+    lhs: NumberId
+    rhs: BigIntId
+
+- name: CompareBigIntStringResult
+  shared: true
+  transpile: false
+  args:
+    op: JSOpImm
+    lhs: BigIntId
+    rhs: StringId
+
+- name: CompareStringBigIntResult
+  shared: true
+  transpile: false
+  args:
+    op: JSOpImm
+    lhs: StringId
+    rhs: BigIntId
+
+- name: CompareObjectUndefinedNullResult
+  shared: true
+  transpile: false
+  args:
+    op: JSOpImm
+    obj: ObjId
+
+- name: CallPrintString
+  shared: true
+  transpile: false
+  args:
+    str: StaticStringImm
+
+- name: Breakpoint
+  shared: true
+  transpile: false
+  args:
+
+- name: TypeMonitorResult
+  shared: false
+  transpile: true
+  args:
+
+- name: ReturnFromIC
+  shared: false
+  transpile: true
+  args:
+
+- name: WrapResult
+  shared: true
+  transpile: false
+  args:

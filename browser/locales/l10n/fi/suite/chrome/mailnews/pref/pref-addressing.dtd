@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.addressing.title                 "Osoitteet">
+<!ENTITY emailCollectiontitle.label            "Sähköpostiosoitteiden kerääminen">
+<!ENTITY emailCollectionPicker.label           "Lisää sähköpostiosoitteet osoitekirjaan:">
+<!ENTITY emailCollectionPicker.accesskey       "L">
+<!ENTITY emailCollectiontext.label             "Lähtevien viestien vastaanottajien osoitteet voidaan lisätä paikalliseen osoitekirjaan.">
+
+<!-- Autocompletion -->
+<!ENTITY addressingTitle.label                 "Osoitteen automaattinen täydennys">
+<!ENTITY highlightNonMatches.label             "Korosta osoitteet, joita ei löydy osoitekirjoista">
+<!ENTITY highlightNonMatches.accesskey         "K">
+<!ENTITY addressingEnable.label                "Paikallisista osoitekirjoista">
+<!ENTITY addressingEnable.accesskey            "P">
+<!ENTITY autocompleteText.label                "Kirjoitettaessa viestille vastaanottajaa, etsi vastaavia merkintöjä:">
+<!ENTITY directories.label                     "Hakemistopalvelimelta:">
+<!ENTITY directories.accesskey                 "a">
+<!ENTITY directoriesNone.label                 "Ei mitään">
+<!ENTITY editDirectories.label                 "Muokkaa hakemistoja…">
+<!ENTITY editDirectories.accesskey             "M">

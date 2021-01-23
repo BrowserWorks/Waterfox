@@ -50,14 +50,10 @@ WebGLExtensionSRGB::WebGLExtensionSRGB(WebGLContext* webgl)
   fua->AllowRBFormat(LOCAL_GL_SRGB8_ALPHA8, usage);
 }
 
-WebGLExtensionSRGB::~WebGLExtensionSRGB() {}
-
 bool WebGLExtensionSRGB::IsSupported(const WebGLContext* const webgl) {
   if (webgl->IsWebGL2()) return false;
 
   return webgl->gl->IsSupported(gl::GLFeature::sRGB);
 }
-
-IMPL_WEBGL_EXTENSION_GOOP(WebGLExtensionSRGB, EXT_sRGB)
 
 }  // namespace mozilla

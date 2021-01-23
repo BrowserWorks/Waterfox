@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from ./customize.xul -->
+
+<!-- LOCALIZATION NOTE  sidebar.customize.title.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.title.label          "Muokkaa &sidebarName;a">
+<!-- LOCALIZATION NOTE  sidebar.customize.current.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.current.label        "&sidebarName;ssa olevat välilehdet:">
+<!ENTITY sidebar.customize.current.accesskey    "t">
+
+<!ENTITY sidebar.customize.title                "Muokkaa Sivupaneelia">
+<!ENTITY sidebar.customize.current2.label       "Sivupaneelissa olevat välilehdet:">
+<!ENTITY sidebar.customize.current2.accesskey   "t">
+<!ENTITY sidebar.customize.customize.label      "Muokkaa välilehteä…">
+<!ENTITY sidebar.customize.customize.accesskey  "M">
+<!ENTITY sidebar.customize.remove.label         "Poista">
+<!ENTITY sidebar.customize.remove.accesskey     "P">
+<!ENTITY sidebar.customize.additional.label     "Saatavilla olevat välilehdet:">
+<!ENTITY sidebar.customize.additional.accesskey "v">
+<!ENTITY sidebar.customize.add.label            "Lisää">
+<!ENTITY sidebar.customize.add.accesskey        "L">
+<!ENTITY sidebar.customize.preview.label        "Esikatsele…">
+<!ENTITY sidebar.customize.preview.accesskey    "E">
+<!ENTITY sidebar.customize.up.label             "Siirrä ylös">
+<!ENTITY sidebar.customize.up.accesskey         "y">
+<!ENTITY sidebar.customize.down.label           "Siirrä alas">
+<!ENTITY sidebar.customize.down.accesskey       "a">
+<!ENTITY sidebar.more.label                     "Hae lisää välilehtiä…">
+<!ENTITY sidebar.more.accesskey                 "H">

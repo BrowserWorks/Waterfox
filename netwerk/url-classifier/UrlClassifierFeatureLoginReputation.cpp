@@ -6,7 +6,7 @@
 
 #include "UrlClassifierFeatureLoginReputation.h"
 
-#include "mozilla/StaticPrefs.h"
+#include "mozilla/StaticPrefs_browser.h"
 
 namespace mozilla {
 namespace net {
@@ -88,13 +88,14 @@ UrlClassifierFeatureLoginReputation::ProcessChannel(
 NS_IMETHODIMP
 UrlClassifierFeatureLoginReputation::GetURIByListType(
     nsIChannel* aChannel, nsIUrlClassifierFeature::listType aListType,
-    nsIURI** aURI) {
+    nsIUrlClassifierFeature::URIType* aURIType, nsIURI** aURI) {
   NS_ENSURE_ARG_POINTER(aChannel);
+  NS_ENSURE_ARG_POINTER(aURIType);
   NS_ENSURE_ARG_POINTER(aURI);
   MOZ_ASSERT(aListType == nsIUrlClassifierFeature::whitelist,
              "UrlClassifierFeatureLoginReputation is meant to be used just to "
              "whitelist URLs");
-
+  *aURIType = nsIUrlClassifierFeature::URIType::whitelistURI;
   return aChannel->GetURI(aURI);
 }
 

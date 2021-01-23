@@ -14,21 +14,36 @@ const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
 const {
   connect,
 } = require("devtools/client/shared/redux/visibility-handler-connect");
-const Actions = require("../actions/index");
-const { FILTER_SEARCH_DELAY, FILTER_TAGS } = require("../constants");
+const Actions = require("devtools/client/netmonitor/src/actions/index");
+const {
+  FILTER_SEARCH_DELAY,
+  FILTER_TAGS,
+  PANELS,
+} = require("devtools/client/netmonitor/src/constants");
 const {
   getDisplayedRequests,
   getRecordingState,
   getTypeFilteredRequests,
-} = require("../selectors/index");
+  getSelectedRequest,
+} = require("devtools/client/netmonitor/src/selectors/index");
 const {
   autocompleteProvider,
-} = require("../utils/filter-autocomplete-provider");
-const { L10N } = require("../utils/l10n");
-const { fetchNetworkUpdatePacket } = require("../utils/request-utils");
+} = require("devtools/client/netmonitor/src/utils/filter-autocomplete-provider");
+const { L10N } = require("devtools/client/netmonitor/src/utils/l10n");
+const {
+  fetchNetworkUpdatePacket,
+} = require("devtools/client/netmonitor/src/utils/request-utils");
+
+loader.lazyRequireGetter(
+  this,
+  "KeyShortcuts",
+  "devtools/client/shared/key-shortcuts"
+);
 
 // MDN
-const { getFilterBoxURL } = require("../utils/mdn-utils");
+const {
+  getFilterBoxURL,
+} = require("devtools/client/netmonitor/src/utils/mdn-utils");
 const LEARN_MORE_URL = getFilterBoxURL();
 
 // Components
@@ -39,20 +54,23 @@ const SearchBox = createFactory(
   require("devtools/client/shared/components/SearchBox")
 );
 
-const { button, div, input, label, span } = dom;
+const { button, div, input, label, span, hr } = dom;
 
 // Localization
-const SEARCH_KEY_SHORTCUT = L10N.getStr(
+const FILTER_KEY_SHORTCUT = L10N.getStr(
   "netmonitor.toolbar.filterFreetext.key"
 );
+const SEARCH_KEY_SHORTCUT = L10N.getStr("netmonitor.toolbar.search.key");
 const SEARCH_PLACE_HOLDER = L10N.getStr(
   "netmonitor.toolbar.filterFreetext.label"
 );
+const COPY_KEY_SHORTCUT = L10N.getStr("netmonitor.toolbar.copy.key");
 const TOOLBAR_CLEAR = L10N.getStr("netmonitor.toolbar.clear");
 const TOOLBAR_TOGGLE_RECORDING = L10N.getStr(
   "netmonitor.toolbar.toggleRecording"
 );
-const TOOLBAR_HAR_BUTTON = L10N.getStr("netmonitor.label.har");
+const TOOLBAR_SEARCH = L10N.getStr("netmonitor.toolbar.search");
+const TOOLBAR_BLOCKING = L10N.getStr("netmonitor.toolbar.requestBlocking");
 const LEARN_MORE_TITLE = L10N.getStr(
   "netmonitor.toolbar.filterFreetext.learnMore"
 );
@@ -67,12 +85,6 @@ const TOOLBAR_FILTER_LABELS = FILTER_TAGS.concat("all").reduce(
     }),
   {}
 );
-const ENABLE_PERSISTENT_LOGS_TOOLTIP = L10N.getStr(
-  "netmonitor.toolbar.enablePersistentLogs.tooltip"
-);
-const ENABLE_PERSISTENT_LOGS_LABEL = L10N.getStr(
-  "netmonitor.toolbar.enablePersistentLogs.label"
-);
 const DISABLE_CACHE_TOOLTIP = L10N.getStr(
   "netmonitor.toolbar.disableCache.tooltip"
 );
@@ -80,17 +92,33 @@ const DISABLE_CACHE_LABEL = L10N.getStr(
   "netmonitor.toolbar.disableCache.label"
 );
 
-// Menu
-loader.lazyRequireGetter(
-  this,
-  "showMenu",
-  "devtools/client/shared/components/menu/utils",
-  true
+const MenuButton = createFactory(
+  require("devtools/client/shared/components/menu/MenuButton")
 );
+
+loader.lazyGetter(this, "MenuItem", function() {
+  return createFactory(
+    require("devtools/client/shared/components/menu/MenuItem")
+  );
+});
+
+loader.lazyGetter(this, "MenuList", function() {
+  return createFactory(
+    require("devtools/client/shared/components/menu/MenuList")
+  );
+});
+
+// Menu
 loader.lazyRequireGetter(
   this,
   "HarMenuUtils",
   "devtools/client/netmonitor/src/har/har-menu-utils",
+  true
+);
+loader.lazyRequireGetter(
+  this,
+  "copyString",
+  "devtools/shared/platform/clipboard",
   true
 );
 
@@ -134,6 +162,13 @@ class Toolbar extends Component {
       networkThrottling: PropTypes.shape(Types.networkThrottling).isRequired,
       // Executed when throttling changes (through toolbar button).
       onChangeNetworkThrottling: PropTypes.func.isRequired,
+      toggleSearchPanel: PropTypes.func.isRequired,
+      networkActionBarOpen: PropTypes.bool,
+      toggleRequestBlockingPanel: PropTypes.func.isRequired,
+      networkActionBarSelectedPanel: PropTypes.string.isRequired,
+      hasBlockedRequests: PropTypes.bool.isRequired,
+      selectedRequest: PropTypes.object,
+      toolboxDoc: PropTypes.object.isRequired,
     };
   }
 
@@ -160,6 +195,21 @@ class Toolbar extends Component {
       DEVTOOLS_DISABLE_CACHE_PREF,
       this.updateBrowserCacheDisabled
     );
+
+    this.shortcuts = new KeyShortcuts({
+      window,
+    });
+
+    this.shortcuts.on(SEARCH_KEY_SHORTCUT, event => {
+      event.preventDefault();
+      this.props.toggleSearchPanel();
+    });
+
+    this.shortcuts.on(COPY_KEY_SHORTCUT, () => {
+      if (this.props.selectedRequest && this.props.selectedRequest.url) {
+        copyString(this.props.selectedRequest.url);
+      }
+    });
   }
 
   shouldComponentUpdate(nextProps) {
@@ -167,11 +217,15 @@ class Toolbar extends Component {
       this.props.persistentLogsEnabled !== nextProps.persistentLogsEnabled ||
       this.props.browserCacheDisabled !== nextProps.browserCacheDisabled ||
       this.props.recording !== nextProps.recording ||
+      this.props.networkActionBarOpen !== nextProps.networkActionBarOpen ||
       this.props.singleRow !== nextProps.singleRow ||
       !Object.is(this.props.requestFilterTypes, nextProps.requestFilterTypes) ||
       this.props.networkThrottling !== nextProps.networkThrottling ||
       // Filtered requests are useful only when searchbox is focused
-      !!(this.refs.searchbox && this.refs.searchbox.focused)
+      !!(this.refs.searchbox && this.refs.searchbox.focused) ||
+      this.props.networkActionBarSelectedPanel !==
+        nextProps.networkActionBarSelectedPanel ||
+      this.props.hasBlockedRequests !== nextProps.hasBlockedRequests
     );
   }
 
@@ -184,6 +238,10 @@ class Toolbar extends Component {
       DEVTOOLS_DISABLE_CACHE_PREF,
       this.updateBrowserCacheDisabled
     );
+
+    if (this.shortcuts) {
+      this.shortcuts.destroy();
+    }
   }
 
   toggleRequestFilterType(evt) {
@@ -265,53 +323,96 @@ class Toolbar extends Component {
   }
 
   /**
+   * Render a blocking button.
+   */
+  renderBlockingButton(toggleSearchPanel) {
+    const {
+      networkActionBarOpen,
+      toggleRequestBlockingPanel,
+      networkActionBarSelectedPanel,
+      hasBlockedRequests,
+    } = this.props;
+
+    // The blocking feature is available behind a pref.
+    if (
+      !Services.prefs.getBoolPref(
+        "devtools.netmonitor.features.requestBlocking"
+      )
+    ) {
+      return null;
+    }
+
+    const className = ["devtools-button", "requests-list-blocking-button"];
+    if (
+      networkActionBarOpen &&
+      networkActionBarSelectedPanel === PANELS.BLOCKING
+    ) {
+      className.push("checked");
+    }
+
+    if (hasBlockedRequests) {
+      className.push("requests-list-blocking-button-enabled");
+    }
+
+    return button({
+      className: className.join(" "),
+      title: TOOLBAR_BLOCKING,
+      "aria-pressed": networkActionBarOpen,
+      onClick: toggleRequestBlockingPanel,
+    });
+  }
+
+  /**
+   * Render a search button.
+   */
+  renderSearchButton(toggleSearchPanel) {
+    const { networkActionBarOpen, networkActionBarSelectedPanel } = this.props;
+
+    // The search feature is available behind a pref.
+    if (!Services.prefs.getBoolPref("devtools.netmonitor.features.search")) {
+      return null;
+    }
+
+    const className = [
+      "devtools-button",
+      "devtools-search-icon",
+      "requests-list-search-button",
+    ];
+
+    if (
+      networkActionBarOpen &&
+      networkActionBarSelectedPanel === PANELS.SEARCH
+    ) {
+      className.push("checked");
+    }
+
+    return button({
+      className: className.join(" "),
+      title: TOOLBAR_SEARCH,
+      "aria-pressed": networkActionBarOpen,
+      onClick: toggleSearchPanel,
+    });
+  }
+
+  /**
    * Render filter buttons.
    */
   renderFilterButtons(requestFilterTypes) {
     // Render list of filter-buttons.
-    const buttons = Object.entries(requestFilterTypes).map(
-      ([type, checked]) => {
-        const classList = [
-          "devtools-button",
-          `requests-list-filter-${type}-button`,
-        ];
-        checked && classList.push("checked");
-
-        return button(
-          {
-            className: classList.join(" "),
-            key: type,
-            onClick: this.toggleRequestFilterType,
-            onKeyDown: this.toggleRequestFilterType,
-            "aria-pressed": checked,
-            "data-key": type,
-          },
-          TOOLBAR_FILTER_LABELS[type]
-        );
-      }
+    const buttons = Object.entries(requestFilterTypes).map(([type, checked]) =>
+      button(
+        {
+          className: `devtools-togglebutton requests-list-filter-${type}-button`,
+          key: type,
+          onClick: this.toggleRequestFilterType,
+          onKeyDown: this.toggleRequestFilterType,
+          "aria-pressed": checked,
+          "data-key": type,
+        },
+        TOOLBAR_FILTER_LABELS[type]
+      )
     );
-
     return div({ className: "requests-list-filter-buttons" }, buttons);
-  }
-
-  /**
-   * Render a Persistlog checkbox.
-   */
-  renderPersistlogCheckbox(persistentLogsEnabled, togglePersistentLogs) {
-    return label(
-      {
-        className: "devtools-checkbox-label devtools-persistlog-checkbox",
-        title: ENABLE_PERSISTENT_LOGS_TOOLTIP,
-      },
-      input({
-        id: "devtools-persistlog-checkbox",
-        className: "devtools-checkbox",
-        type: "checkbox",
-        checked: persistentLogsEnabled,
-        onChange: togglePersistentLogs,
-      }),
-      ENABLE_PERSISTENT_LOGS_LABEL
-    );
   }
 
   /**
@@ -347,67 +448,12 @@ class Toolbar extends Component {
   }
 
   /**
-   * Render drop down button with HAR related actions.
-   */
-  renderHarButton() {
-    return button(
-      {
-        id: "devtools-har-button",
-        title: TOOLBAR_HAR_BUTTON,
-        className: "devtools-button devtools-dropdown-button",
-        onClick: evt => {
-          this.showHarMenu(evt.target);
-        },
-      },
-      dom.span({ className: "title" }, "HAR")
-    );
-  }
-
-  showHarMenu(menuButton) {
-    const {
-      actions,
-      connector,
-      displayedRequests,
-      openSplitConsole,
-    } = this.props;
-
-    const menuItems = [];
-
-    menuItems.push({
-      id: "request-list-context-import-har",
-      label: L10N.getStr("netmonitor.context.importHar"),
-      accesskey: L10N.getStr("netmonitor.context.importHar.accesskey"),
-      click: () => HarMenuUtils.openHarFile(actions, openSplitConsole),
-    });
-
-    menuItems.push("-");
-
-    menuItems.push({
-      id: "request-list-context-save-all-as-har",
-      label: L10N.getStr("netmonitor.context.saveAllAsHar"),
-      accesskey: L10N.getStr("netmonitor.context.saveAllAsHar.accesskey"),
-      disabled: !displayedRequests.length,
-      click: () => HarMenuUtils.saveAllAsHar(displayedRequests, connector),
-    });
-
-    menuItems.push({
-      id: "request-list-context-copy-all-as-har",
-      label: L10N.getStr("netmonitor.context.copyAllAsHar"),
-      accesskey: L10N.getStr("netmonitor.context.copyAllAsHar.accesskey"),
-      disabled: !displayedRequests.length,
-      click: () => HarMenuUtils.copyAllAsHar(displayedRequests, connector),
-    });
-
-    showMenu(menuItems, { button: menuButton });
-  }
-
-  /**
    * Render filter Searchbox.
    */
   renderFilterBox(setRequestFilterText) {
     return SearchBox({
       delay: FILTER_SEARCH_DELAY,
-      keyShortcut: SEARCH_KEY_SHORTCUT,
+      keyShortcut: FILTER_KEY_SHORTCUT,
       placeholder: SEARCH_PLACE_HOLDER,
       type: "filter",
       ref: "searchbox",
@@ -419,18 +465,84 @@ class Toolbar extends Component {
     });
   }
 
+  renderSettingsMenuButton() {
+    const { toolboxDoc } = this.props;
+    return MenuButton(
+      {
+        menuId: "netmonitor-settings-menu-button",
+        toolboxDoc,
+        className: "devtools-button netmonitor-settings-menu-button",
+        title: L10N.getStr("netmonitor.settings.menuTooltip"),
+      },
+      // We pass the children in a function so we don't require the MenuItem and MenuList
+      // components until we need to display them (i.e. when the button is clicked).
+      () => this.renderSettingsMenuItems()
+    );
+  }
+
+  renderSettingsMenuItems() {
+    const {
+      actions,
+      connector,
+      displayedRequests,
+      openSplitConsole,
+      persistentLogsEnabled,
+      togglePersistentLogs,
+    } = this.props;
+
+    const menuItems = [
+      MenuItem({
+        key: "netmonitor-settings-persist-item",
+        className: "menu-item netmonitor-settings-persist-item",
+        type: "checkbox",
+        checked: persistentLogsEnabled,
+        label: L10N.getStr("netmonitor.toolbar.enablePersistentLogs.label"),
+        tooltip: L10N.getStr("netmonitor.toolbar.enablePersistentLogs.tooltip"),
+        onClick: () => togglePersistentLogs(),
+      }),
+      hr({ key: "netmonitor-settings-har-divider" }),
+      MenuItem({
+        key: "request-list-context-import-har",
+        className: "menu-item netmonitor-settings-import-har-item",
+        label: L10N.getStr("netmonitor.har.importHarDialogTitle"),
+        tooltip: L10N.getStr("netmonitor.settings.importHarTooltip"),
+        accesskey: L10N.getStr("netmonitor.context.importHar.accesskey"),
+        onClick: () => HarMenuUtils.openHarFile(actions, openSplitConsole),
+      }),
+      MenuItem({
+        key: "request-list-context-save-all-as-har",
+        className: "menu-item netmonitor-settings-save-har-item",
+        label: L10N.getStr("netmonitor.context.saveAllAsHar"),
+        accesskey: L10N.getStr("netmonitor.context.saveAllAsHar.accesskey"),
+        tooltip: L10N.getStr("netmonitor.settings.saveHarTooltip"),
+        disabled: !displayedRequests.length,
+        onClick: () => HarMenuUtils.saveAllAsHar(displayedRequests, connector),
+      }),
+      MenuItem({
+        key: "request-list-context-copy-all-as-har",
+        className: "menu-item netmonitor-settings-copy-har-item",
+        label: L10N.getStr("netmonitor.context.copyAllAsHar"),
+        accesskey: L10N.getStr("netmonitor.context.copyAllAsHar.accesskey"),
+        tooltip: L10N.getStr("netmonitor.settings.copyHarTooltip"),
+        disabled: !displayedRequests.length,
+        onClick: () => HarMenuUtils.copyAllAsHar(displayedRequests, connector),
+      }),
+    ];
+
+    return MenuList({ id: "netmonitor-settings-menu-list" }, menuItems);
+  }
+
   render() {
     const {
       toggleRecording,
       clearRequests,
       requestFilterTypes,
       setRequestFilterText,
-      togglePersistentLogs,
-      persistentLogsEnabled,
       toggleBrowserCache,
       browserCacheDisabled,
       recording,
       singleRow,
+      toggleSearchPanel,
     } = this.props;
 
     // Render the entire toolbar.
@@ -445,17 +557,16 @@ class Toolbar extends Component {
             this.renderFilterBox(setRequestFilterText),
             this.renderSeparator(),
             this.renderToggleRecordingButton(recording, toggleRecording),
+            this.renderSearchButton(toggleSearchPanel),
+            this.renderBlockingButton(toggleSearchPanel),
             this.renderSeparator(),
             this.renderFilterButtons(requestFilterTypes),
             this.renderSeparator(),
-            this.renderPersistlogCheckbox(
-              persistentLogsEnabled,
-              togglePersistentLogs
-            ),
             this.renderCacheCheckbox(browserCacheDisabled, toggleBrowserCache),
             this.renderSeparator(),
             this.renderThrottlingMenu(),
-            this.renderHarButton()
+            this.renderSeparator(),
+            this.renderSettingsMenuButton()
           )
         )
       : span(
@@ -467,18 +578,17 @@ class Toolbar extends Component {
             this.renderFilterBox(setRequestFilterText),
             this.renderSeparator(),
             this.renderToggleRecordingButton(recording, toggleRecording),
+            this.renderSearchButton(toggleSearchPanel),
+            this.renderBlockingButton(toggleSearchPanel),
             this.renderSeparator(),
-            this.renderPersistlogCheckbox(
-              persistentLogsEnabled,
-              togglePersistentLogs
-            ),
             this.renderCacheCheckbox(browserCacheDisabled, toggleBrowserCache),
             this.renderSeparator(),
             this.renderThrottlingMenu(),
-            this.renderHarButton()
+            this.renderSeparator(),
+            this.renderSettingsMenuButton()
           ),
           span(
-            { className: "devtools-toolbar" },
+            { className: "devtools-toolbar devtools-input-toolbar" },
             this.renderFilterButtons(requestFilterTypes)
           )
         );
@@ -489,11 +599,17 @@ module.exports = connect(
   state => ({
     browserCacheDisabled: state.ui.browserCacheDisabled,
     displayedRequests: getDisplayedRequests(state),
+    hasBlockedRequests:
+      state.requestBlocking.blockingEnabled &&
+      state.requestBlocking.blockedUrls.some(({ enabled }) => enabled),
     filteredRequests: getTypeFilteredRequests(state),
     persistentLogsEnabled: state.ui.persistentLogsEnabled,
     recording: getRecordingState(state),
     requestFilterTypes: state.filters.requestFilterTypes,
     networkThrottling: state.networkThrottling,
+    networkActionBarOpen: state.ui.networkActionOpen,
+    networkActionBarSelectedPanel: state.ui.selectedActionBarTabId || "",
+    selectedRequest: getSelectedRequest(state),
   }),
   dispatch => ({
     clearRequests: () => dispatch(Actions.clearRequests()),
@@ -509,5 +625,8 @@ module.exports = connect(
       dispatch(Actions.toggleRequestFilterType(type)),
     onChangeNetworkThrottling: (enabled, profile) =>
       dispatch(changeNetworkThrottling(enabled, profile)),
+    toggleSearchPanel: () => dispatch(Actions.toggleSearchPanel()),
+    toggleRequestBlockingPanel: () =>
+      dispatch(Actions.toggleRequestBlockingPanel()),
   })
 )(Toolbar);

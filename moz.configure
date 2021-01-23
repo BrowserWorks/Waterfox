@@ -117,6 +117,17 @@ set_define('MOZ_DEBUG', moz_debug)
 add_old_configure_assignment('MOZ_DEBUG',
                              depends('--enable-debug')(lambda x: bool(x)))
 
+js_option('--with-debug-label', nargs='+',
+          help='Debug DEBUG_<value> for each comma-separated value given')
+
+@depends(moz_debug, '--with-debug-label')
+def debug_defines(debug, labels):
+    if debug:
+        return ['DEBUG'] + ['DEBUG_%s' % label for label in labels]
+    return ['NDEBUG', 'TRIMMED']
+
+set_config('MOZ_DEBUG_DEFINES', debug_defines)
+
 js_option('--enable-rust-debug',
           default=depends(when='--enable-debug')(lambda: True),
           help='{Build|Do not build} Rust code with debug assertions turned '
@@ -133,6 +144,13 @@ js_option(env='MOZ_PGO', help='Build with profile guided optimizations')
 
 set_config('MOZ_PGO', depends('MOZ_PGO')(lambda x: bool(x)))
 
+
+wine = check_prog(
+    'WINE', ['wine64', 'wine'], allow_missing=True,
+    when=depends(target, host)(
+        lambda t, h: t.kernel == 'WINNT' and h.kernel == 'Linux'))
+
+
 include('build/moz.configure/toolchain.configure',
         when='--enable-compile-environment')
 
@@ -146,6 +164,8 @@ include('build/moz.configure/memory.configure',
 include('build/moz.configure/headers.configure',
         when='--enable-compile-environment')
 include('build/moz.configure/warnings.configure',
+        when='--enable-compile-environment')
+include('build/moz.configure/lto-pgo.configure',
         when='--enable-compile-environment')
 include('build/moz.configure/flags.configure',
         when='--enable-compile-environment')
@@ -247,6 +267,15 @@ add_old_configure_assignment('OBJ_SUFFIX', library_name_info.obj.suffix)
 set_config('IMPORT_LIB_SUFFIX', library_name_info.import_lib.suffix)
 set_define('MOZ_DLL_PREFIX', depends(library_name_info.dll.prefix)(lambda s: '"%s"' % s))
 set_define('MOZ_DLL_SUFFIX', depends(library_name_info.dll.suffix)(lambda s: '"%s"' % s))
+set_config('WASM_OBJ_SUFFIX', 'wasm')
+
+# Make `profiling` available to this file even when js/moz.configure
+# doesn't end up included.
+profiling = dependable(False)
+# Same for js_standalone
+js_standalone = dependable(False)
+# Same for fold_libs
+fold_libs = dependable(False)
 
 include(include_project_configure)
 
@@ -266,10 +295,16 @@ imply_option('--build-backends', build_backend)
 
 
 @depends('--enable-artifact-builds', '--disable-compile-environment',
-         '--enable-build-backend', '--help')
+         '--enable-build-backend', '--enable-project', '--enable-application',
+         '--help')
 @imports('sys')
 def build_backend_defaults(artifact_builds, compile_environment, requested_backends,
-                           _):
+                           project, application, _):
+    if application:
+        project = application[0]
+    elif project:
+        project = project[0]
+
     if 'Tup' in requested_backends:
         # As a special case, if Tup was requested, do not combine it with any
         # Make based backend by default.
@@ -281,7 +316,7 @@ def build_backend_defaults(artifact_builds, compile_environment, requested_backe
     # Normally, we'd use target.os == 'WINNT', but a dependency on target
     # would require target to depend on --help, as well as host and shell,
     # and this is not a can of worms we can open at the moment.
-    if sys.platform == 'win32' and compile_environment:
+    if sys.platform == 'win32' and compile_environment and project != 'mobile/android':
         all_backends.append('VisualStudio')
     return tuple(all_backends) or None
 
@@ -328,7 +363,7 @@ option('--disable-gtest-in-build',
 def build_gtest(pgo, build_project, target, automation, enabled, enable_tests):
     if not enable_tests or not enabled:
         return None
-    if (automation and build_project in ('browser', 'mobile/android') and
+    if (automation and build_project in ('browser', 'comm/mail', 'mobile/android') and
         not ((pgo and target.os == 'WINNT') or (target.os == 'Android' and target.cpu != 'x86_64'))):
         return True
 
@@ -431,21 +466,6 @@ def possible_makes(make, host):
     return candidates
 
 check_prog('GMAKE', possible_makes)
-
-@depends(build_backends, build_project)
-def tup_include(build_backends, build_project):
-    # We need to check the rustc version when building with tup, but
-    # rustc_info isn't available when configuring js (and build_backends isn't
-    # available from project-specific configure), so as a workaround we only
-    # include the file when we know we'll need it. This can be removed when
-    # we globally require a rustc recent enough to build with tup.
-    if build_project not in ('browser', 'mobile/android'):
-        return None
-    for backend in build_backends:
-        if 'Tup' in backend:
-            return 'build/moz.configure/tup.configure'
-
-include(tup_include)
 
 # watchman detection
 # ==============================================================
@@ -555,13 +575,19 @@ def makensis_progs(target):
 nsis = check_prog('MAKENSISU', makensis_progs, allow_missing=True)
 
 # Make sure the version of makensis is up to date.
-@depends_if(nsis)
+@depends(nsis, wine)
 @checking('for NSIS version')
 @imports('re')
-def nsis_version(nsis):
+def nsis_version(nsis, wine):
+    if not nsis:
+        return None
     nsis_min_version = '3.0b1'
-    out = check_cmd_output(nsis, '-version',
-                           onerror=lambda: die('Failed to get nsis version.'))
+    onerror = lambda: die('Failed to get nsis version.')
+    if wine and nsis.lower().endswith('.exe'):
+        out = check_cmd_output(wine, nsis, '-version', onerror=onerror)
+    else:
+        out = check_cmd_output(nsis, '-version', onerror=onerror)
+
     m = re.search(r'(?<=v)[0-9]+\.[0-9]+((a|b|rc)[0-9]+)?', out)
 
     if not m:
@@ -597,6 +623,7 @@ def nsis_flags(host):
 set_config('MAKENSISU_FLAGS', nsis_flags)
 
 check_prog('7Z', ('7z', '7za'), allow_missing=True, when=target_is_windows)
+check_prog('UPX', ('upx',), allow_missing=True, when=target_is_windows)
 
 
 @depends(host_c_compiler, c_compiler, bindgen_config_paths)
@@ -628,6 +655,89 @@ llvm_objdump = check_prog('LLVM_OBJDUMP', llvm_objdump, what='llvm-objdump',
 add_old_configure_assignment('LLVM_OBJDUMP', llvm_objdump)
 
 
+js_option('--enable-dtrace', help='Build with dtrace support')
+
+dtrace = check_header('sys/sdt.h', when='--enable-dtrace',
+                      onerror=lambda: die('dtrace enabled but sys/sdt.h not found'))
+
+set_config('HAVE_DTRACE', True, when=dtrace)
+set_define('INCLUDE_MOZILLA_DTRACE', True, when=dtrace)
+add_old_configure_assignment('enable_dtrace', 'yes', when=dtrace)
+
+
+js_option('--disable-icf', help='Disable Identical Code Folding')
+
+add_old_configure_assignment(
+    'MOZ_DISABLE_ICF', '1', when=depends('--enable-icf')(lambda x: not x))
+
+
+js_option('--enable-strip', when=compile_environment,
+          help='Enable stripping of libs & executables')
+
+# This should be handled as a `when` once bug 1617793 is fixed.
+@depends('--enable-strip', c_compiler, when=compile_environment)
+def enable_strip(strip, c_compiler):
+    if strip and c_compiler.type != 'clang-cl':
+        return True
+
+set_config('ENABLE_STRIP', enable_strip)
+
+js_option('--disable-install-strip', when=compile_environment,
+          help='Enable stripping of libs & executables when packaging')
+
+# This should be handled as a `when` once bug 1617793 is fixed.
+@depends('--enable-install-strip', c_compiler, when=compile_environment)
+def enable_install_strip(strip, c_compiler):
+    if strip and c_compiler.type != 'clang-cl':
+        return True
+
+set_config('PKG_STRIP', enable_install_strip)
+
+
+@depends('--enable-strip', '--enable-install-strip', when=compile_environment)
+def strip(strip, install_strip):
+    return strip or install_strip
+
+js_option(env='STRIP_FLAGS', nargs=1, when=strip, help='Flags for the strip command')
+
+@depends('STRIP_FLAGS', profiling, target, when=strip)
+def strip_flags(flags, profiling, target):
+    if flags:
+        return flags[0].split()
+    if profiling:
+        # Only strip debug info and symbols when profiling is enabled, keeping
+        # local symbols.
+        if target.kernel == 'Darwin':
+            return ['-S']
+        else:
+            return ['--strip-debug']
+    # Otherwise strip everything we can, which happens without flags on non-Darwin.
+    # On Darwin, it tries to strip things it can't, so we need to limit its scope.
+    elif target.kernel == 'Darwin':
+        return ['-x', '-S']
+
+set_config('STRIP_FLAGS', strip_flags)
+
+
+@depends(js_standalone, target)
+def system_zlib_default(js_standalone, target):
+    return js_standalone and target.kernel != 'WINNT'
+
+js_option('--with-system-zlib', nargs='?', default=system_zlib_default,
+          help='{Use|Do not use} system libz')
+
+@depends('--with-system-zlib')
+def deprecated_system_zlib_path(value):
+    if len(value) == 1:
+        die('--with-system-zlib=PATH is not supported anymore. Please use '
+            '--with-system-zlib and set any necessary pkg-config environment variable.')
+
+pkg_check_modules('MOZ_ZLIB', 'zlib >= 1.2.3', when='--with-system-zlib')
+
+set_config('MOZ_SYSTEM_ZLIB', True, when='--with-system-zlib')
+add_old_configure_assignment('MOZ_SYSTEM_ZLIB', True, when='--with-system-zlib')
+
+
 # Please do not add configure checks from here on.
 
 # Fallthrough to autoconf-based configure
@@ -640,19 +750,21 @@ include('js/sub.configure', when=compile_environment & toolkit)
 @depends(check_build_environment, build_project)
 @imports('__sandbox__')
 @imports('glob')
+@imports(_from='os.path', _import='exists')
 def config_status_deps(build_env, build_project):
 
     topsrcdir = build_env.topsrcdir
     topobjdir = build_env.topobjdir
 
-    if not build_env.topobjdir.endswith('js/src'):
-        extra_deps = [
-            os.path.join(topsrcdir, build_project, 'confvars.sh'),
-            os.path.join(topobjdir, '.mozconfig.json'),
-        ]
+    if not topobjdir.endswith('js/src'):
+        extra_deps = [os.path.join(topobjdir, '.mozconfig.json')]
     else:
         # mozconfig changes may impact js configure.
         extra_deps = [os.path.join(topobjdir[:-7], '.mozconfig.json')]
+
+    confvars = os.path.join(topsrcdir, build_project, 'confvars.sh')
+    if exists(confvars):
+        extra_deps.append(confvars)
 
     return list(__sandbox__._all_paths) + extra_deps + [
         os.path.join(topsrcdir, 'CLOBBER'),

@@ -1,6 +1,8 @@
 "use strict";
 
-const { OSCrypto } = ChromeUtils.import("resource://gre/modules/OSCrypto.jsm");
+const { AppConstants } = ChromeUtils.import(
+  "resource://gre/modules/AppConstants.jsm"
+);
 
 const PROFILE = {
   id: "Default",
@@ -12,8 +14,8 @@ const TEST_LOGINS = [
     id: 1, // id of the row in the chrome login db
     username: "username",
     password: "password",
-    hostname: "https://c9.io",
-    formSubmitURL: "https://c9.io",
+    origin: "https://c9.io",
+    formActionOrigin: "https://c9.io",
     httpRealm: null,
     usernameField: "inputEmail",
     passwordField: "inputPassword",
@@ -25,8 +27,8 @@ const TEST_LOGINS = [
     id: 2,
     username: "username@gmail.com",
     password: "password2",
-    hostname: "https://accounts.google.com",
-    formSubmitURL: "https://accounts.google.com",
+    origin: "https://accounts.google.com",
+    formActionOrigin: "https://accounts.google.com",
     httpRealm: null,
     usernameField: "Email",
     passwordField: "Passwd",
@@ -38,8 +40,8 @@ const TEST_LOGINS = [
     id: 3,
     username: "username",
     password: "password3",
-    hostname: "https://www.facebook.com",
-    formSubmitURL: "https://www.facebook.com",
+    origin: "https://www.facebook.com",
+    formActionOrigin: "https://www.facebook.com",
     httpRealm: null,
     usernameField: "email",
     passwordField: "pass",
@@ -51,8 +53,8 @@ const TEST_LOGINS = [
     id: 4,
     username: "user",
     password: "اقرأPÀßwörd",
-    hostname: "http://httpbin.org",
-    formSubmitURL: null,
+    origin: "http://httpbin.org",
+    formActionOrigin: null,
     httpRealm: "me@kennethreitz.com", // Digest auth.
     usernameField: "",
     passwordField: "",
@@ -64,8 +66,8 @@ const TEST_LOGINS = [
     id: 5,
     username: "buser",
     password: "bpassword",
-    hostname: "http://httpbin.org",
-    formSubmitURL: null,
+    origin: "http://httpbin.org",
+    formActionOrigin: null,
     httpRealm: "Fake Realm", // Basic auth.
     usernameField: "",
     passwordField: "",
@@ -77,8 +79,8 @@ const TEST_LOGINS = [
     id: 6,
     username: "username",
     password: "password6",
-    hostname: "https://www.example.com",
-    formSubmitURL: "", // NULL `action_url`
+    origin: "https://www.example.com",
+    formActionOrigin: "", // NULL `action_url`
     httpRealm: null,
     usernameField: "",
     passwordField: "pass",
@@ -86,14 +88,33 @@ const TEST_LOGINS = [
     timePasswordChanged: 1557291348878,
     timesUsed: 1,
   },
+  {
+    id: 7,
+    version: "v10",
+    username: "username",
+    password: "password",
+    origin: "https://v10.io",
+    formActionOrigin: "https://v10.io",
+    httpRealm: null,
+    usernameField: "inputEmail",
+    passwordField: "inputPassword",
+    timeCreated: 1437418416037,
+    timePasswordChanged: 1437418416037,
+    timesUsed: 1,
+  },
 ];
 
-var crypto = new OSCrypto();
+var loginCrypto;
 var dbConn;
 
-function promiseSetPassword(login) {
+async function promiseSetPassword(login) {
+  let encryptedString = await loginCrypto.encryptData(
+    login.password,
+    login.version
+  );
+  info(`promiseSetPassword: ${encryptedString}`);
   let passwordValue = new Uint8Array(
-    crypto.stringToArray(crypto.encryptData(login.password))
+    loginCrypto.stringToArray(encryptedString)
   );
   return dbConn.execute(
     `UPDATE logins
@@ -118,14 +139,14 @@ function checkLoginsAreEqual(passwordManagerLogin, chromeLogin, id) {
     "The two logins ID " + id + " have the same password"
   );
   Assert.equal(
-    passwordManagerLogin.hostname,
-    chromeLogin.hostname,
-    "The two logins ID " + id + " have the same hostname"
+    passwordManagerLogin.origin,
+    chromeLogin.origin,
+    "The two logins ID " + id + " have the same origin"
   );
   Assert.equal(
-    passwordManagerLogin.formSubmitURL,
-    chromeLogin.formSubmitURL,
-    "The two logins ID " + id + " have the same formSubmitURL"
+    passwordManagerLogin.formActionOrigin,
+    chromeLogin.formActionOrigin,
+    "The two logins ID " + id + " have the same formActionOrigin"
   );
   Assert.equal(
     passwordManagerLogin.httpRealm,
@@ -165,8 +186,8 @@ function generateDifferentLogin(login) {
   );
 
   newLogin.init(
-    login.hostname,
-    login.formSubmitURL,
+    login.origin,
+    login.formActionOrigin,
     null,
     login.username,
     login.password + 1,
@@ -181,15 +202,80 @@ function generateDifferentLogin(login) {
 }
 
 add_task(async function setup() {
-  let loginDataFile = do_get_file(
-    "AppData/Local/Google/Chrome/User Data/Default/Login Data"
-  );
-  dbConn = await Sqlite.openConnection({ path: loginDataFile.path });
-  registerFakePath("LocalAppData", do_get_file("AppData/Local/"));
+  let dirSvcPath;
+  let pathId;
+  let profilePathSegments;
+
+  // Use a mock service and account name to avoid a Keychain auth. prompt that
+  // would block the test from finishing if Chrome has already created a matching
+  // Keychain entry. This allows us to still exercise the keychain lookup code.
+  // The mock encryption passphrase is used when the Keychain item isn't found.
+  let mockMacOSKeychain = {
+    passphrase: "bW96aWxsYWZpcmVmb3g=",
+    serviceName: "TESTING Chrome Safe Storage",
+    accountName: "TESTING Chrome",
+  };
+  if (AppConstants.platform == "macosx") {
+    let { ChromeMacOSLoginCrypto } = ChromeUtils.import(
+      "resource:///modules/ChromeMacOSLoginCrypto.jsm"
+    );
+    loginCrypto = new ChromeMacOSLoginCrypto(
+      mockMacOSKeychain.serviceName,
+      mockMacOSKeychain.accountName,
+      mockMacOSKeychain.passphrase
+    );
+    dirSvcPath = "Library/";
+    pathId = "ULibDir";
+    profilePathSegments = [
+      "Application Support",
+      "Google",
+      "Chrome",
+      "Default",
+      "Login Data",
+    ];
+  } else if (AppConstants.platform == "win") {
+    let { ChromeWindowsLoginCrypto } = ChromeUtils.import(
+      "resource:///modules/ChromeWindowsLoginCrypto.jsm"
+    );
+    loginCrypto = new ChromeWindowsLoginCrypto("Chrome");
+    dirSvcPath = "AppData/Local/";
+    pathId = "LocalAppData";
+    profilePathSegments = [
+      "Google",
+      "Chrome",
+      "User Data",
+      "Default",
+      "Login Data",
+    ];
+  } else {
+    throw new Error("Not implemented");
+  }
+  let dirSvcFile = do_get_file(dirSvcPath);
+  registerFakePath(pathId, dirSvcFile);
+
+  // We don't import osfile.jsm until after registering the fake path, because
+  // importing osfile will sometimes greedily fetch certain path identifiers
+  // from the dir service, which means they get cached, which means we can't
+  // register a fake path for them anymore.
+  const { OS } = ChromeUtils.import("resource://gre/modules/osfile.jsm");
+  info(OS.Path.join(dirSvcFile.path, ...profilePathSegments));
+  let loginDataFilePath = OS.Path.join(dirSvcFile.path, ...profilePathSegments);
+  dbConn = await Sqlite.openConnection({ path: loginDataFilePath });
+
+  if (AppConstants.platform == "macosx") {
+    let migrator = await MigrationUtils.getMigrator("chrome");
+    Object.assign(migrator.wrappedJSObject, {
+      _keychainServiceName: mockMacOSKeychain.serviceName,
+      _keychainAccountName: mockMacOSKeychain.accountName,
+      _keychainMockPassphrase: mockMacOSKeychain.passphrase,
+    });
+  }
 
   registerCleanupFunction(() => {
     Services.logins.removeAllLogins();
-    crypto.finalize();
+    if (loginCrypto.finalize) {
+      loginCrypto.finalize();
+    }
     return dbConn.close();
   });
 });
@@ -212,7 +298,8 @@ add_task(async function test_importIntoEmptyDB() {
   await promiseMigration(
     migrator,
     MigrationUtils.resourceTypes.PASSWORDS,
-    PROFILE
+    PROFILE,
+    true
   );
 
   logins = Services.logins.getAllLogins();
@@ -270,7 +357,8 @@ add_task(async function test_importExistingLogins() {
   await promiseMigration(
     migrator,
     MigrationUtils.resourceTypes.PASSWORDS,
-    PROFILE
+    PROFILE,
+    true
   );
 
   logins = Services.logins.getAllLogins();

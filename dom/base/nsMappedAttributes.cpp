@@ -10,6 +10,7 @@
  */
 
 #include "nsMappedAttributes.h"
+#include "mozilla/Assertions.h"
 #include "nsHTMLStyleSheet.h"
 #include "mozilla/DeclarationBlock.h"
 #include "mozilla/HashFunctions.h"
@@ -79,7 +80,7 @@ nsMappedAttributes* nsMappedAttributes::Clone(bool aWillAddAttr) {
 }
 
 void* nsMappedAttributes::operator new(size_t aSize,
-                                       uint32_t aAttrCount) CPP_THROW_NEW {
+                                       uint32_t aAttrCount) noexcept(true) {
   size_t size = aSize + aAttrCount * sizeof(InternalAttr);
 
   // aSize will include the mAttrs buffer so subtract that.
@@ -87,7 +88,7 @@ void* nsMappedAttributes::operator new(size_t aSize,
   // if we have zero attributes. The zero attribute case only happens
   // for <body>'s mapped attributes
   if (aAttrCount != 0) {
-    size -= sizeof(void * [1]);
+    size -= sizeof(void* [1]);
   }
 
   if (sCachedMappedAttributeAllocations) {
@@ -215,9 +216,9 @@ PLDHashNumber nsMappedAttributes::HashValue() const {
 }
 
 void nsMappedAttributes::SetStyleSheet(nsHTMLStyleSheet* aSheet) {
-  if (mSheet) {
-    mSheet->DropMappedAttributes(this);
-  }
+  MOZ_ASSERT(!mSheet,
+             "Should either drop the sheet reference manually, "
+             "or drop the mapped attributes");
   mSheet = aSheet;  // not ref counted
 }
 

@@ -14,7 +14,6 @@ add_task(async function() {
       Ci.nsIPluginTag.STATE_ENABLED,
       "Second Test Plug-in"
     );
-    Services.prefs.clearUserPref("plugins.click_to_play");
     Services.prefs.clearUserPref("extensions.blocklist.suppressUI");
     gBrowser.removeCurrentTab();
     window.focus();
@@ -23,7 +22,6 @@ add_task(async function() {
 });
 
 add_task(async function() {
-  Services.prefs.setBoolPref("plugins.click_to_play", true);
   Services.prefs.setBoolPref("extensions.blocklist.suppressUI", true);
 
   let newTab = BrowserTestUtils.addTab(gBrowser);
@@ -51,7 +49,7 @@ add_task(async function() {
     gTestRoot + "plugin_outsideScrollArea.html"
   );
 
-  await ContentTask.spawn(gTestBrowser, {}, async function() {
+  await SpecialPowers.spawn(gTestBrowser, [], async function() {
     let doc = content.document;
     let p = doc.createElement("embed");
 
@@ -68,7 +66,7 @@ add_task(async function() {
 
   await promisePopupNotification("click-to-play-plugins");
 
-  await ContentTask.spawn(gTestBrowser, {}, async function() {
+  await SpecialPowers.spawn(gTestBrowser, [], async function() {
     let plugin = content.document.getElementById("test");
     let overlay = plugin.openOrClosedShadowRoot.getElementById("main");
     Assert.ok(
@@ -86,7 +84,7 @@ add_task(async function() {
     gTestRoot + "plugin_outsideScrollArea.html"
   );
 
-  await ContentTask.spawn(gTestBrowser, {}, async function() {
+  await SpecialPowers.spawn(gTestBrowser, [], async function() {
     let doc = content.document;
     let p = doc.createElement("embed");
 
@@ -103,7 +101,7 @@ add_task(async function() {
 
   await promisePopupNotification("click-to-play-plugins");
 
-  await ContentTask.spawn(gTestBrowser, null, async function() {
+  await SpecialPowers.spawn(gTestBrowser, [], async function() {
     let plugin = content.document.getElementById("test");
     let overlay = plugin.openOrClosedShadowRoot.getElementById("main");
     Assert.ok(
@@ -121,7 +119,7 @@ add_task(async function() {
     gTestRoot + "plugin_outsideScrollArea.html"
   );
 
-  await ContentTask.spawn(gTestBrowser, {}, async function() {
+  await SpecialPowers.spawn(gTestBrowser, [], async function() {
     let doc = content.document;
     let p = doc.createElement("embed");
 
@@ -137,7 +135,7 @@ add_task(async function() {
   await promiseUpdatePluginBindings(gTestBrowser);
 
   await promisePopupNotification("click-to-play-plugins");
-  await ContentTask.spawn(gTestBrowser, null, async function() {
+  await SpecialPowers.spawn(gTestBrowser, [], async function() {
     let plugin = content.document.getElementById("test");
     let overlay = plugin.openOrClosedShadowRoot.getElementById("main");
     Assert.ok(

@@ -39,6 +39,8 @@
   --highlighter-marker-color: #000;
 
   --grey-40: #b1b1b3;
+  --red-40: #ff3b6b;
+  --yellow-60: #d7b600;
 }
 
 /**
@@ -121,7 +123,7 @@
 
 /* Highlighter - Infobar */
 
-:-moz-native-anonymous [class$=infobar-container] {
+:-moz-native-anonymous [class$="infobar-container"] {
   position: absolute;
   max-width: 95%;
 
@@ -129,7 +131,7 @@
   font-size: var(--highlighter-font-size);
 }
 
-:-moz-native-anonymous [class$=infobar] {
+:-moz-native-anonymous [class$="infobar"] {
   position: relative;
 
   padding: 5px;
@@ -146,18 +148,21 @@
 
 /* Arrows */
 
-:-moz-native-anonymous [class$=infobar-container] > [class$=infobar]:before {
+:-moz-native-anonymous
+  [class$="infobar-container"]
+  > [class$="infobar"]:before {
   left: calc(50% - var(--highlighter-bubble-arrow-size));
-  border: var(--highlighter-bubble-arrow-size) solid var(--highlighter-bubble-border-color);
+  border: var(--highlighter-bubble-arrow-size) solid
+    var(--highlighter-bubble-border-color);
 }
 
-:-moz-native-anonymous [class$=infobar-container] > [class$=infobar]:after {
+:-moz-native-anonymous [class$="infobar-container"] > [class$="infobar"]:after {
   left: calc(50% - 7px);
   border: 7px solid var(--highlighter-bubble-background-color);
 }
 
-:-moz-native-anonymous [class$=infobar-container] > [class$=infobar]:before,
-:-moz-native-anonymous [class$=infobar-container] > [class$=infobar]:after {
+:-moz-native-anonymous [class$="infobar-container"] > [class$="infobar"]:before,
+:-moz-native-anonymous [class$="infobar-container"] > [class$="infobar"]:after {
   content: "";
   display: none;
   position: absolute;
@@ -167,15 +172,23 @@
   border-right-color: transparent;
 }
 
-:-moz-native-anonymous [class$=infobar-container][position="top"]:not([hide-arrow]) > [class$=infobar]:before,
-:-moz-native-anonymous [class$=infobar-container][position="top"]:not([hide-arrow]) > [class$=infobar]:after {
+:-moz-native-anonymous
+  [class$="infobar-container"][position="top"]:not([hide-arrow])
+  > [class$="infobar"]:before,
+:-moz-native-anonymous
+  [class$="infobar-container"][position="top"]:not([hide-arrow])
+  > [class$="infobar"]:after {
   border-bottom: 0;
   top: 100%;
   display: block;
 }
 
-:-moz-native-anonymous [class$=infobar-container][position="bottom"]:not([hide-arrow]) > [class$=infobar]:before,
-:-moz-native-anonymous [class$=infobar-container][position="bottom"]:not([hide-arrow]) > [class$=infobar]:after {
+:-moz-native-anonymous
+  [class$="infobar-container"][position="bottom"]:not([hide-arrow])
+  > [class$="infobar"]:before,
+:-moz-native-anonymous
+  [class$="infobar-container"][position="bottom"]:not([hide-arrow])
+  > [class$="infobar"]:after {
   border-top: 0;
   bottom: 100%;
   display: block;
@@ -183,7 +196,7 @@
 
 /* Text Container */
 
-:-moz-native-anonymous [class$=infobar-text] {
+:-moz-native-anonymous [class$="infobar-text"] {
   overflow: hidden;
   white-space: nowrap;
   direction: ltr;
@@ -210,11 +223,26 @@
   text-overflow: ellipsis;
 }
 
-:-moz-native-anonymous [class$=infobar-dimensions] {
-  color: var(--highlighter-infobar-color);
+:-moz-native-anonymous [class$="infobar-dimensions"],
+:-moz-native-anonymous [class$="infobar-grid-type"],
+:-moz-native-anonymous [class$="infobar-flex-type"] {
   border-inline-start: 1px solid #5a6169;
   margin-inline-start: 6px;
   padding-inline-start: 6px;
+}
+
+:-moz-native-anonymous [class$="infobar-grid-type"]:empty,
+:-moz-native-anonymous [class$="infobar-flex-type"]:empty {
+  display: none;
+}
+
+:-moz-native-anonymous [class$="infobar-dimensions"] {
+  color: var(--highlighter-infobar-color);
+}
+
+:-moz-native-anonymous [class$="infobar-grid-type"],
+:-moz-native-anonymous [class$="infobar-flex-type"] {
+  color: var(--grey-40);
 }
 
 /* CSS Grid Highlighter */
@@ -276,7 +304,7 @@
   /* The geometry editor can be interacted with, so it needs to react to
      pointer events */
   pointer-events: auto;
-  -moz-user-select: none;
+  user-select: none;
 }
 
 :-moz-native-anonymous .geometry-editor-offset-parent {
@@ -397,7 +425,11 @@
 
 /* Measuring Tool Highlighter */
 
-:-moz-native-anonymous .measuring-tool-highlighter-root {
+:-moz-native-anonymous .measuring-tool-tool {
+  pointer-events: auto;
+}
+
+:-moz-native-anonymous .measuring-tool-root {
   position: absolute;
   top: 0;
   left: 0;
@@ -405,25 +437,69 @@
   cursor: crosshair;
 }
 
-:-moz-native-anonymous .measuring-tool-highlighter-elements {
+:-moz-native-anonymous .measuring-tool-elements {
   position: absolute;
 }
 
-:-moz-native-anonymous .measuring-tool-highlighter-root path {
-  shape-rendering: crispEdges;
-  fill: rgba(135, 206, 235, 0.6);
-  stroke: var(--highlighter-guide-color);
-  pointer-events: none;
+:-moz-native-anonymous .measuring-tool-root path {
+  shape-rendering: geometricPrecision;
+  pointer-events: auto;
 }
 
-:-moz-native-anonymous .dragging path {
+:-moz-native-anonymous .measuring-tool-root .measuring-tool-box-path,
+:-moz-native-anonymous .measuring-tool-root .measuring-tool-diagonal-path {
   fill: rgba(135, 206, 235, 0.6);
   stroke: var(--highlighter-guide-color);
+}
+
+:-moz-native-anonymous .measuring-tool-root circle {
+  stroke: var(--highlighter-guide-color);
+  stroke-width: 2px;
+  fill: #fff;
+  vector-effect: non-scaling-stroke;
+}
+
+:-moz-native-anonymous .measuring-tool-handler-top,
+:-moz-native-anonymous .measuring-tool-handler-bottom {
+  cursor: ns-resize;
+}
+
+:-moz-native-anonymous .measuring-tool-handler-right,
+:-moz-native-anonymous .measuring-tool-handler-left {
+  cursor: ew-resize;
+}
+
+:-moz-native-anonymous .measuring-tool-handler-topleft,
+:-moz-native-anonymous .measuring-tool-handler-bottomright {
+  cursor: nwse-resize;
+}
+
+:-moz-native-anonymous .measuring-tool-handler-topright,
+:-moz-native-anonymous .measuring-tool-handler-bottomleft {
+  cursor: nesw-resize;
+}
+
+:-moz-native-anonymous .mirrored .measuring-tool-handler-topleft,
+:-moz-native-anonymous .mirrored .measuring-tool-handler-bottomright {
+  cursor: nesw-resize;
+}
+
+:-moz-native-anonymous .mirrored .measuring-tool-handler-topright,
+:-moz-native-anonymous .mirrored .measuring-tool-handler-bottomleft {
+  cursor: nwse-resize;
+}
+
+:-moz-native-anonymous [class^=measuring-tool-handler].dragging {
+  fill: var(--highlighter-guide-color);
+}
+
+:-moz-native-anonymous .dragging .measuring-tool-box-path,
+:-moz-native-anonymous .dragging .measuring-tool-diagonal-path {
   opacity: 0.45;
 }
 
-:-moz-native-anonymous .measuring-tool-highlighter-label-size,
-:-moz-native-anonymous .measuring-tool-highlighter-label-position {
+:-moz-native-anonymous .measuring-tool-label-size,
+:-moz-native-anonymous .measuring-tool-label-position {
   position: absolute;
   top: 0;
   left: 0;
@@ -434,26 +510,23 @@
   font: var(--highlighter-font-family);
   font-size: 10px;
   pointer-events: none;
-  -moz-user-select: none;
+  user-select: none;
   box-sizing: border-box;
 }
 
-:-moz-native-anonymous .measuring-tool-highlighter-label-position {
+:-moz-native-anonymous .measuring-tool-label-position {
   color: #fff;
   background: hsla(214, 13%, 24%, 0.8);
 }
 
-:-moz-native-anonymous .measuring-tool-highlighter-label-size {
+:-moz-native-anonymous .measuring-tool-label-size {
   color: var(--highlighter-bubble-text-color);
   background: var(--highlighter-bubble-background-color);
   border: 1px solid var(--highlighter-bubble-border-color);
   line-height: 1.5em;
 }
 
-:-moz-native-anonymous .measuring-tool-highlighter-guide-top,
-:-moz-native-anonymous .measuring-tool-highlighter-guide-right,
-:-moz-native-anonymous .measuring-tool-highlighter-guide-bottom,
-:-moz-native-anonymous .measuring-tool-highlighter-guide-left {
+:-moz-native-anonymous [class^=measuring-tool-guide] {
   stroke: var(--highlighter-guide-color);
   stroke-dasharray: 5 3;
   shape-rendering: crispEdges;
@@ -479,9 +552,11 @@
 
   /* Offset the UI so it is centered around the pointer */
   transform: translate(
-    calc(var(--magnifier-width) / -2), calc(var(--magnifier-height) / -2));
+    calc(var(--magnifier-width) / -2),
+    calc(var(--magnifier-height) / -2)
+  );
 
-  filter: drop-shadow(0 0 1px rgba(0,0,0,.4));
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.4));
 
   /* We don't need the UI to be reversed in RTL locales, otherwise the # would appear
      to the right of the hex code. Force LTR */
@@ -505,19 +580,21 @@
   height: var(--label-height);
   position: relative;
 
-  --label-horizontal-center:
-    translateX(calc((var(--magnifier-width) - var(--label-width)) / 2));
-  --label-horizontal-left:
-    translateX(calc((-1 * var(--label-width) + var(--magnifier-width) / 2)));
-  --label-horizontal-right:
-    translateX(calc(var(--magnifier-width) / 2));
-  --label-vertical-top:
-    translateY(calc((-1 * var(--magnifier-height)) - var(--label-height)));
+  --label-horizontal-center: translateX(
+    calc((var(--magnifier-width) - var(--label-width)) / 2)
+  );
+  --label-horizontal-left: translateX(
+    calc((-1 * var(--label-width) + var(--magnifier-width) / 2))
+  );
+  --label-horizontal-right: translateX(calc(var(--magnifier-width) / 2));
+  --label-vertical-top: translateY(
+    calc((-1 * var(--magnifier-height)) - var(--label-height))
+  );
 
   /* By default the color label container sits below the canvas.
      Here we just center it horizontally */
   transform: var(--label-horizontal-center);
-  transition: transform .1s ease-in-out;
+  transition: transform 0.1s ease-in-out;
 }
 
 /* If there isn't enough space below the canvas, we move the label container to the top */
@@ -530,7 +607,9 @@
 :-moz-native-anonymous .eye-dropper-root[left] .eye-dropper-color-container {
   transform: var(--label-horizontal-left);
 }
-:-moz-native-anonymous .eye-dropper-root[left][top] .eye-dropper-color-container {
+:-moz-native-anonymous
+  .eye-dropper-root[left][top]
+  .eye-dropper-color-container {
   transform: var(--label-horizontal-left) var(--label-vertical-top);
 }
 
@@ -539,7 +618,9 @@
 :-moz-native-anonymous .eye-dropper-root[right] .eye-dropper-color-container {
   transform: var(--label-horizontal-right);
 }
-:-moz-native-anonymous .eye-dropper-root[right][top] .eye-dropper-color-container {
+:-moz-native-anonymous
+  .eye-dropper-root[right][top]
+  .eye-dropper-color-container {
   transform: var(--label-horizontal-right) var(--label-vertical-top);
 }
 
@@ -567,8 +648,12 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  zoom: 1;
+  right: 0;
+  bottom: 0;
+
+  width: 100vw;
+  height: 100vh;
 
   display: flex;
   align-items: center;
@@ -577,9 +662,9 @@
   /* We don't have access to DevTools themes here, but some of these colors come from the
      themes. Theme variable names are given in comments. */
   --text-color: #585959; /* --theme-body-color-alt */
-  --toolbar-background: #fcfcfc; /* --theme-toolbar-background */;
+  --toolbar-background: #fcfcfc; /* --theme-toolbar-background */
   --toolbar-border: #dde1e4; /* --theme-splitter-color */
-  --toolbar-box-shadow: 0 4px 4px 0 rgba(155, 155, 155, 0.26); /* --rdm-box-shadow */
+  --toolbar-box-shadow: 0 2px 2px 0 rgba(155, 155, 155, 0.26); /* --rdm-box-shadow */
   --overlay-background: #dde1e4a8;
 }
 
@@ -590,17 +675,79 @@
 
 :-moz-native-anonymous .paused-dbg-toolbar {
   margin-top: 15px;
-  padding: 4px 5px;
   display: inline-flex;
-  -moz-user-select: none;
-  pointer-events: auto;
+  user-select: none;
 
   color: var(--text-color);
   border-radius: 2px;
   box-shadow: var(--toolbar-box-shadow);
   background-color: var(--toolbar-background);
   border: 1px solid var(--toolbar-border);
+  border-radius: 4px;
 
+  font: var(--highlighter-font-family);
+  font-size: var(--highlighter-font-size);
+}
+
+:-moz-native-anonymous .paused-dbg-toolbar button {
+  margin: 8px 4px 6px 6px;
+  width: 16px;
+  height: 16px;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: 16px 16px;
+  background-color: var(--text-color);
+
+  border: 0px;
+  -moz-appearance: none;
+}
+
+:-moz-native-anonymous .paused-dbg-divider {
+  width: 1px;
+  height: 16px;
+  margin-top: 10px;
+  background-color: var(--toolbar-border);
+}
+
+:-moz-native-anonymous .paused-dbg-reason,
+:-moz-native-anonymous .paused-dbg-step-button-wrapper,
+:-moz-native-anonymous .paused-dbg-resume-button-wrapper {
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
+
+:-moz-native-anonymous .paused-dbg-step-button-wrapper,
+:-moz-native-anonymous .paused-dbg-resume-button-wrapper {
+  margin-left: 2px;
+  margin-right: 2px;
+}
+
+:-moz-native-anonymous button.paused-dbg-step-button {
+  margin-left: 6px;
+  margin-right: 6px;
+  mask-image: url(resource://devtools/client/debugger/images/stepOver.svg);
+  padding: 0;
+}
+
+:-moz-native-anonymous button.paused-dbg-resume-button {
+  margin-right: 6px;
+  margin-right: 6px;
+  mask-image: url(resource://devtools/client/debugger/images/resume.svg);
+  padding: 0;
+}
+
+:-moz-native-anonymous .paused-dbg-step-button-wrapper.hover,
+:-moz-native-anonymous .paused-dbg-resume-button-wrapper.hover {
+  background-color: var(--toolbar-border);
+  border-radius: 2px;
+}
+
+:-moz-native-anonymous .paused-dbg-reason {
+  padding: 3px 16px;
+  margin: 8px 0px;
+  line-height: 20px;
+  font-size: 18px;
   font: var(--highlighter-font-family);
   font-size: var(--highlighter-font-size);
 }
@@ -656,7 +803,7 @@
 
 :-moz-native-anonymous .accessible-infobar-role {
   grid-area: role;
-  color: #9CDCFE;
+  color: #9cdcfe;
 }
 
 :-moz-native-anonymous .accessible-infobar-name {
@@ -679,50 +826,101 @@
   color: var(--highlighter-infobar-color);
 }
 
-:-moz-native-anonymous .accessible-infobar-audit .accessible-contrast-ratio:not(:empty):before {
+:-moz-native-anonymous .accessible-infobar-audit .accessible-contrast-ratio:empty::before,
+:-moz-native-anonymous .accessible-infobar-audit .accessible-contrast-ratio:empty::after,
+:-moz-native-anonymous .accessible-infobar-name:empty {
+  display: none;
+}
+
+:-moz-native-anonymous .accessible-infobar-audit .accessible-contrast-ratio::before {
   content: "";
   height: 8px;
   width: 8px;
   display: inline-flex;
   background-color: var(--accessibility-highlighter-contrast-ratio-color);
-  box-shadow: 0 0 0 1px var(--grey-40), 4px 3px var(--accessibility-highlighter-contrast-ratio-bg), 4px 3px 0 1px var(--grey-40);
+  box-shadow: 0 0 0 1px var(--grey-40),
+    4px 3px var(--accessibility-highlighter-contrast-ratio-bg),
+    4px 3px 0 1px var(--grey-40);
   margin-inline-start: 3px;
   margin-inline-end: 9px;
 }
 
-:-moz-native-anonymous .accessible-infobar-audit .accessible-contrast-ratio:not(:empty):after {
+:-moz-native-anonymous .accessible-infobar-audit .accessible-contrast-ratio::after {
   margin-inline-start: 2px;
 }
 
-:-moz-native-anonymous .accessible-infobar-audit .accessible-contrast-ratio:not(:empty).AA:after,
-:-moz-native-anonymous .accessible-infobar-audit .accessible-contrast-ratio:not(:empty).AAA:after {
+:-moz-native-anonymous .accessible-infobar-audit .accessible-contrast-ratio.AA::after,
+:-moz-native-anonymous .accessible-infobar-audit .accessible-contrast-ratio.AAA::after {
   color: #90E274;
 }
 
-:-moz-native-anonymous .accessible-infobar-audit .accessible-contrast-ratio:not(:empty).fail:after {
-  color: #E57180;
-  content: "⚠️";
+:-moz-native-anonymous .accessible-infobar-audit .accessible-audit::before,
+:-moz-native-anonymous .accessible-infobar-audit .accessible-contrast-ratio.FAIL::after {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  content: "";
+  vertical-align: -2px;
+  background-position: center;
+  background-repeat: no-repeat;
+  -moz-context-properties: fill;
 }
 
-:-moz-native-anonymous .accessible-infobar-audit .accessible-contrast-ratio:not(:empty).AA:after {
+:-moz-native-anonymous .accessible-infobar-audit .accessible-contrast-ratio.FAIL:after {
+  color: #E57180;
+  margin-inline-start: 3px;
+  background-image: url(chrome://devtools/skin/images/error-small.svg);
+  fill: var(--red-40);
+}
+
+:-moz-native-anonymous .accessible-infobar-audit .accessible-contrast-ratio.AA::after {
   content: "AA\2713";
 }
 
-:-moz-native-anonymous .accessible-infobar-audit .accessible-contrast-ratio:not(:empty).AAA:after {
+:-moz-native-anonymous .accessible-infobar-audit .accessible-contrast-ratio.AAA::after {
   content: "AAA\2713";
 }
 
 :-moz-native-anonymous .accessible-infobar-audit .accessible-contrast-ratio-label,
-:-moz-native-anonymous .accessible-infobar-audit .accessible-contrast-ratio-separator:before {
+:-moz-native-anonymous .accessible-infobar-audit .accessible-contrast-ratio-separator::before {
   margin-inline-end: 3px;
 }
 
-:-moz-native-anonymous .accessible-infobar-audit .accessible-contrast-ratio-separator:before {
+:-moz-native-anonymous .accessible-infobar-audit .accessible-contrast-ratio-separator::before {
   content: "-";
   margin-inline-start: 3px;
 }
 
-:-moz-native-anonymous .accessible-infobar-name:not(:empty) {
+:-moz-native-anonymous .accessible-infobar-audit .accessible-audit {
+  display: block;
+  padding-block-end: 5px;
+}
+
+:-moz-native-anonymous .accessible-infobar-audit .accessible-audit:last-child {
+  padding-block-end: 0;
+}
+
+:-moz-native-anonymous .accessible-infobar-audit .accessible-audit::before {
+  margin-inline-end: 4px;
+  background-image: none;
+  fill: currentColor;
+}
+
+:-moz-native-anonymous .accessible-infobar-audit .accessible-audit.FAIL::before {
+  background-image: url(chrome://devtools/skin/images/error-small.svg);
+  fill: var(--red-40);
+}
+
+:-moz-native-anonymous .accessible-infobar-audit .accessible-audit.WARNING::before {
+  background-image: url(chrome://devtools/skin/images/alert-small.svg);
+  fill: var(--yellow-60);
+}
+
+:-moz-native-anonymous .accessible-infobar-audit .accessible-audit.BEST_PRACTICES::before {
+  background-image: url(chrome://devtools/skin/images/info-small.svg);
+}
+
+:-moz-native-anonymous .accessible-infobar-name {
   border-inline-start: 1px solid #5a6169;
   margin-inline-start: 6px;
   padding-inline-start: 6px;

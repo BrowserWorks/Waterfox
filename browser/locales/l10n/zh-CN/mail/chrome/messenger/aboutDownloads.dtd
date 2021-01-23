@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "已保存的文件">
+<!ENTITY aboutDownloads.empty                      "没有已保存的文件">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "打开所在文件夹">
+<!ENTITY cmd.show.accesskey                        "F">
+<!ENTITY cmd.showMac.label                         "在 Finder 中显示">
+<!ENTITY cmd.showMac.accesskey                     "F">
+<!ENTITY cmd.open.label                            "打开">
+<!ENTITY cmd.open.accesskey                        "O">
+<!ENTITY cmd.removeFromHistory.label               "从历史记录中移除">
+<!ENTITY cmd.removeFromHistory.accesskey           "e">
+<!ENTITY cmd.clearList.label                       "清空列表">
+<!ENTITY cmd.clearList.accesskey                   "C">
+<!ENTITY cmd.clearList.tooltip                     "移除已保存文件的列表中的所有项目，除了仍在进行的下载。">
+<!ENTITY cmd.searchDownloads.label                 "搜索…">
+<!ENTITY cmd.searchDownloads.key                   "F">

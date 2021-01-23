@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "गुण">
+
+<!ENTITY generalInfo.label                       "सामान्य सूचना">
+
+<!ENTITY retention.label "रिटेंशन नीति">
+<!ENTITY daysOld.label "दिन पुराना">
+<!ENTITY message.label "संदेश">
+<!ENTITY retentionCleanup.label "डिस्क स्थान वापस पाने के लिये, पुराने संदेश को स्थायी रूप से मिटा दिया जायेगा">
+<!ENTITY retentionKeepAll.label "किसी संदेश को मत मिटायें">
+<!ENTITY retentionKeepAll.accesskey "A">
+
+<!ENTITY offlineFolder.check.label               "ऑफलाइन प्रयोग के लिये इस फोल्डर को चुनें">
+<!ENTITY offlineFolder.check.accesskey           "S">
+<!ENTITY offlineFolder.button.label              "अब डाउनलोड करें">
+<!ENTITY offlineFolder.button.accesskey          "D">
+
+<!ENTITY selectofflineNewsgroup.check.label      "ऑफलाइन प्रयोग के लिये इस समाचार समूह को चुनें">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "o">
+<!ENTITY offlineNewsgroup.button.label           "अब डाउनलोड करें">
+<!ENTITY offlineNewsgroup.button.accesskey       "D">
+
+<!ENTITY folderProps.name.label                  "नाम:">
+<!ENTITY folderProps.name.accesskey              "N">
+
+<!ENTITY folderSharingTab.label                  "साझा">
+<!ENTITY privileges.button.label                 "सुविधायें...">
+<!ENTITY privileges.button.accesskey             "P">
+<!ENTITY permissionsDesc.label                   "आपके पास निम्न अनुमति है:">
+<!ENTITY folderType.label                        "फोल्डर प्रकार:">
+
+<!ENTITY folderQuotaTab.label                    "कोटा">
+<!ENTITY folderQuotaUsage.label                  "प्रयोग:">
+<!ENTITY folderQuotaStatus.label                 "स्थिति:">
+

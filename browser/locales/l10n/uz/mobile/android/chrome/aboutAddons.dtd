@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "Qoʻshimcha dasturlar">
+<!ENTITY aboutAddons.header2                    "Qo‘shimcha dasturlaringiz">
+
+<!ENTITY addonAction.enable                     "Yoqib qo‘yish">
+<!ENTITY addonAction.disable                    "O‘chirib qo‘yish">
+<!ENTITY addonAction.uninstall                  "O‘chirish">
+<!ENTITY addonAction.undo                       "Amalni orqaga qaytarish">
+<!ENTITY addonAction.update                     "Yangilash">
+
+<!ENTITY addonUnsigned.message                  "Ushbu qo‘shimcha dastur &brandShortName; tomonidan tasdiqlanmadi.">
+<!ENTITY addonUnsigned.learnMore                "Koʻproq o‘rganish">

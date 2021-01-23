@@ -1,23 +1,33 @@
-
 #!/bin/bash
 set -x -e -v
 
-WORKSPACE=$HOME/workspace
-UPLOAD_DIR=$HOME/artifacts
 COMPRESS_EXT=bz2
 
-cd $WORKSPACE/build/src
-
-. taskcluster/scripts/misc/tooltool-download.sh
-
-cd $WORKSPACE/build/nasm-*
+cd $MOZ_FETCHES_DIR/nasm-*
 case "$1" in
     win64)
-        export PATH="$WORKSPACE/build/src/clang/bin:$PATH"
+        export PATH="$MOZ_FETCHES_DIR/clang/bin:$PATH"
         ./configure CC=x86_64-w64-mingw32-clang AR=llvm-ar RANLIB=llvm-ranlib --host=x86_64-w64-mingw32
         EXE=.exe
         ;;
     *)
+        # Fix for .debug_loc section containing garbage on elf32
+        # https://bugzilla.nasm.us/show_bug.cgi?id=3392631
+        patch -p1 <<'EOF'
+diff --git a/output/outelf.c b/output/outelf.c
+index de99d076..47031e12 100644
+--- a/output/outelf.c
++++ b/output/outelf.c
+@@ -3275,7 +3275,7 @@ static void dwarf_generate(void)
+     WRITELONG(pbuf,framelen-4); /* initial length */
+ 
+     /* build loc section */
+-    loclen = 16;
++    loclen = is_elf64() ? 16 : 8;
+     locbuf = pbuf = nasm_malloc(loclen);
+     if (is_elf32()) {
+         WRITELONG(pbuf,0);  /* null  beginning offset */
+EOF
         ./configure
         EXE=
         ;;

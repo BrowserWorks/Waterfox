@@ -67,7 +67,6 @@ Structure:
       threadHangStats: [...], // obsolete in firefox 57, use the 'bhr' ping
       capturedStacks: {...},
       log: [...], // obsolete in firefox 61, use Event Telemetry or Scalars
-      webrtc: {...},
       gc: {...},
       fileIOReports: {...},
       lateWrites: {...},
@@ -399,36 +398,6 @@ At present there is one known users of this section: Telemetry Experiments.
 
 Telemetry Experiments uses it to note when experiments are activated and terminated.
 
-webrtc
-------
-Contains special statistics gathered by WebRTC related components.
-
-So far only a bitmask for the ICE candidate type present in a successful or
-failed WebRTC connection is getting reported through C++ code as
-IceCandidatesStats, because the required bitmask is too big to be represented
-in a regular enum histogram.
-
-Note: in most cases the webrtc dictionary inside of
-IceCandidatesStats will simply be empty as the user has not used any WebRTC
-PeerConnection at all during the ping report time.
-
-Structure:
-
-.. code-block:: js
-
-    "webrtc": {
-      "IceCandidatesStats": {
-        "webrtc": {
-          "34526345": {
-            "successCount": 5
-          },
-          "2354353": {
-            "failureCount": 1
-          }
-        },
-      }
-    },
-
 gc
 --
 Contains statistics about selected garbage collections. To avoid
@@ -567,7 +536,7 @@ Structure:
 
 lateWrites
 ----------
-This sections reports writes to the file system that happen during shutdown. The reported data contains the stack and the file names of the loaded libraries at the time the writes happened.
+This sections reports writes to the file system that happen during shutdown. The reported data contains the stack, the file names of the loaded libraries at the time the writes happened, and indicates if the late writes originated from the terminator watchdog.
 
 The file names of the loaded libraries can contain unicode characters.
 
@@ -591,6 +560,7 @@ Structure:
          ],
          ... other stacks ...
       ],
+      "isFromTerminatorWatchdog": <boolean>
     },
 
 addonDetails

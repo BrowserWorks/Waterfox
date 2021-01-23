@@ -7,12 +7,10 @@
 #include <stdio.h>
 
 #include "nsError.h"
-#include "nsIMutableArray.h"
-#include "nsAutoPtr.h"
-#include "nsIMemoryReporter.h"
 #include "nsThreadUtils.h"
 #include "nsIFile.h"
 #include "nsIFileURL.h"
+#include "nsIXPConnect.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/Mutex.h"
 #include "mozilla/CondVar.h"
@@ -71,8 +69,7 @@ mozilla::LazyLogModule gStorageLog("mozStorage");
     } while (0)
 #endif
 
-namespace mozilla {
-namespace storage {
+namespace mozilla::storage {
 
 using mozilla::dom::quota::QuotaObject;
 
@@ -354,10 +351,10 @@ class AsyncCloseConnection final : public Runnable {
   }
 
   ~AsyncCloseConnection() override {
-    NS_ReleaseOnMainThreadSystemGroup("AsyncCloseConnection::mConnection",
-                                      mConnection.forget());
-    NS_ReleaseOnMainThreadSystemGroup("AsyncCloseConnection::mCallbackEvent",
-                                      mCallbackEvent.forget());
+    NS_ReleaseOnMainThread("AsyncCloseConnection::mConnection",
+                           mConnection.forget());
+    NS_ReleaseOnMainThread("AsyncCloseConnection::mCallbackEvent",
+                           mCallbackEvent.forget());
   }
 
  private:
@@ -468,7 +465,6 @@ Connection::Connection(Service* aService, int aFlags,
       mAsyncExecutionThreadShuttingDown(false),
       mConnectionClosed(false),
       mDefaultTransactionType(mozIStorageConnection::TRANSACTION_DEFERRED),
-      mTransactionInProgress(false),
       mDestroying(false),
       mProgressHandler(nullptr),
       mFlags(aFlags),
@@ -590,6 +586,8 @@ nsIEventTarget* Connection::getAsyncExecutionTarget() {
       NS_WARNING("Failed to create async thread.");
       return nullptr;
     }
+    mAsyncExecutionThread->SetNameForWakeupTelemetry(
+        NS_LITERAL_CSTRING("mozStorage (all)"));
   }
 
   return mAsyncExecutionThread;
@@ -765,10 +763,6 @@ nsresult Connection::initializeInternal() {
   if (srv != SQLITE_OK) {
     return convertResultCode(srv);
   }
-
-#if defined(MOZ_MEMORY_TEMP_STORE_PRAGMA)
-  (void)ExecuteSimpleSQL(NS_LITERAL_CSTRING("PRAGMA temp_store = 2;"));
-#endif
 
   // Register our built-in SQL functions.
   srv = registerFunctions(mDBConn);
@@ -1854,14 +1848,15 @@ Connection::ExecuteSimpleSQL(const nsACString& aSQLStatement) {
 }
 
 NS_IMETHODIMP
-Connection::ExecuteAsync(mozIStorageBaseStatement** aStatements,
-                         uint32_t aNumStatements,
-                         mozIStorageStatementCallback* aCallback,
-                         mozIStoragePendingStatement** _handle) {
-  nsTArray<StatementData> stmts(aNumStatements);
-  for (uint32_t i = 0; i < aNumStatements; i++) {
+Connection::ExecuteAsync(
+    const nsTArray<RefPtr<mozIStorageBaseStatement>>& aStatements,
+    mozIStorageStatementCallback* aCallback,
+    mozIStoragePendingStatement** _handle) {
+  nsTArray<StatementData> stmts(aStatements.Length());
+  for (uint32_t i = 0; i < aStatements.Length(); i++) {
     nsCOMPtr<StorageBaseStatementInternal> stmt =
         do_QueryInterface(aStatements[i]);
+    NS_ENSURE_STATE(stmt);
 
     // Obtain our StatementData.
     StatementData data;
@@ -1872,7 +1867,7 @@ Connection::ExecuteAsync(mozIStorageBaseStatement** aStatements,
                  "Statement must be from this database connection!");
 
     // Now append it to our array.
-    NS_ENSURE_TRUE(stmts.AppendElement(data), NS_ERROR_OUT_OF_MEMORY);
+    stmts.AppendElement(data);
   }
 
   // Dispatch to the background
@@ -1917,13 +1912,13 @@ Connection::GetTransactionInProgress(bool* _inProgress) {
   if (!connectionReady()) {
     return NS_ERROR_NOT_INITIALIZED;
   }
-  nsresult rv = ensureOperationSupported(SYNCHRONOUS);
+  nsresult rv = ensureOperationSupported(ASYNCHRONOUS);
   if (NS_FAILED(rv)) {
     return rv;
   }
 
   SQLiteMutexAutoLock lockedScope(sharedDBMutex);
-  *_inProgress = mTransactionInProgress;
+  *_inProgress = transactionInProgress(lockedScope);
   return NS_OK;
 }
 
@@ -1941,6 +1936,19 @@ Connection::SetDefaultTransactionType(int32_t aType) {
 }
 
 NS_IMETHODIMP
+Connection::GetVariableLimit(int32_t* _limit) {
+  if (!connectionReady()) {
+    return NS_ERROR_NOT_INITIALIZED;
+  }
+  int limit = ::sqlite3_limit(mDBConn, SQLITE_LIMIT_VARIABLE_NUMBER, -1);
+  if (limit < 0) {
+    return NS_ERROR_UNEXPECTED;
+  }
+  *_limit = limit;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 Connection::BeginTransaction() {
   if (!connectionReady()) {
     return NS_ERROR_NOT_INITIALIZED;
@@ -1950,13 +1958,17 @@ Connection::BeginTransaction() {
     return rv;
   }
 
-  return beginTransactionInternal(mDBConn, mDefaultTransactionType);
+  SQLiteMutexAutoLock lockedScope(sharedDBMutex);
+  return beginTransactionInternal(lockedScope, mDBConn,
+                                  mDefaultTransactionType);
 }
 
-nsresult Connection::beginTransactionInternal(sqlite3* aNativeConnection,
-                                              int32_t aTransactionType) {
-  SQLiteMutexAutoLock lockedScope(sharedDBMutex);
-  if (mTransactionInProgress) return NS_ERROR_FAILURE;
+nsresult Connection::beginTransactionInternal(
+    const SQLiteMutexAutoLock& aProofOfLock, sqlite3* aNativeConnection,
+    int32_t aTransactionType) {
+  if (transactionInProgress(aProofOfLock)) {
+    return NS_ERROR_FAILURE;
+  }
   nsresult rv;
   switch (aTransactionType) {
     case TRANSACTION_DEFERRED:
@@ -1971,7 +1983,6 @@ nsresult Connection::beginTransactionInternal(sqlite3* aNativeConnection,
     default:
       return NS_ERROR_ILLEGAL_VALUE;
   }
-  if (NS_SUCCEEDED(rv)) mTransactionInProgress = true;
   return rv;
 }
 
@@ -1985,15 +1996,17 @@ Connection::CommitTransaction() {
     return rv;
   }
 
-  return commitTransactionInternal(mDBConn);
+  SQLiteMutexAutoLock lockedScope(sharedDBMutex);
+  return commitTransactionInternal(lockedScope, mDBConn);
 }
 
-nsresult Connection::commitTransactionInternal(sqlite3* aNativeConnection) {
-  SQLiteMutexAutoLock lockedScope(sharedDBMutex);
-  if (!mTransactionInProgress) return NS_ERROR_UNEXPECTED;
+nsresult Connection::commitTransactionInternal(
+    const SQLiteMutexAutoLock& aProofOfLock, sqlite3* aNativeConnection) {
+  if (!transactionInProgress(aProofOfLock)) {
+    return NS_ERROR_UNEXPECTED;
+  }
   nsresult rv =
       convertResultCode(executeSql(aNativeConnection, "COMMIT TRANSACTION"));
-  if (NS_SUCCEEDED(rv)) mTransactionInProgress = false;
   return rv;
 }
 
@@ -2007,16 +2020,18 @@ Connection::RollbackTransaction() {
     return rv;
   }
 
-  return rollbackTransactionInternal(mDBConn);
+  SQLiteMutexAutoLock lockedScope(sharedDBMutex);
+  return rollbackTransactionInternal(lockedScope, mDBConn);
 }
 
-nsresult Connection::rollbackTransactionInternal(sqlite3* aNativeConnection) {
-  SQLiteMutexAutoLock lockedScope(sharedDBMutex);
-  if (!mTransactionInProgress) return NS_ERROR_UNEXPECTED;
+nsresult Connection::rollbackTransactionInternal(
+    const SQLiteMutexAutoLock& aProofOfLock, sqlite3* aNativeConnection) {
+  if (!transactionInProgress(aProofOfLock)) {
+    return NS_ERROR_UNEXPECTED;
+  }
 
   nsresult rv =
       convertResultCode(executeSql(aNativeConnection, "ROLLBACK TRANSACTION"));
-  if (NS_SUCCEEDED(rv)) mTransactionInProgress = false;
   return rv;
 }
 
@@ -2251,6 +2266,9 @@ Connection::GetQuotaObjects(QuotaObject** aDatabaseQuotaObject,
   }
 
   RefPtr<QuotaObject> databaseQuotaObject = GetQuotaObjectForFile(file);
+  if (NS_WARN_IF(!databaseQuotaObject)) {
+    return NS_ERROR_FAILURE;
+  }
 
   srv = ::sqlite3_file_control(mDBConn, nullptr, SQLITE_FCNTL_JOURNAL_POINTER,
                                &file);
@@ -2259,11 +2277,13 @@ Connection::GetQuotaObjects(QuotaObject** aDatabaseQuotaObject,
   }
 
   RefPtr<QuotaObject> journalQuotaObject = GetQuotaObjectForFile(file);
+  if (NS_WARN_IF(!journalQuotaObject)) {
+    return NS_ERROR_FAILURE;
+  }
 
   databaseQuotaObject.forget(aDatabaseQuotaObject);
   journalQuotaObject.forget(aJournalQuotaObject);
   return NS_OK;
 }
 
-}  // namespace storage
-}  // namespace mozilla
+}  // namespace mozilla::storage

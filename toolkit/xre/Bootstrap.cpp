@@ -23,9 +23,9 @@ class BootstrapImpl final : public Bootstrap {
   virtual void Dispose() override { delete this; }
 
  public:
-  BootstrapImpl() {}
+  BootstrapImpl() = default;
 
-  ~BootstrapImpl() {}
+  ~BootstrapImpl() = default;
 
   virtual void NS_LogInit() override { ::NS_LogInit(); }
 
@@ -100,6 +100,12 @@ class BootstrapImpl final : public Bootstrap {
 #ifdef MOZ_IPDL_TESTS
   virtual int XRE_RunIPDLTest(int argc, char** argv) override {
     return ::XRE_RunIPDLTest(argc, argv);
+  }
+#endif
+
+#ifdef MOZ_ENABLE_FORKSERVER
+  virtual int XRE_ForkServer(int* argc, char*** argv) override {
+    return ::XRE_ForkServer(argc, argv);
   }
 #endif
 };

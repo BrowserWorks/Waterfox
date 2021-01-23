@@ -24,9 +24,10 @@ typedef AutoTArray<RefPtr<dom::Element>, 16> ManualNACArray;
  */
 class ManualNACPtr final {
  public:
-  ManualNACPtr() {}
+  ManualNACPtr() = default;
   MOZ_IMPLICIT ManualNACPtr(decltype(nullptr)) {}
-  explicit ManualNACPtr(already_AddRefed<Element> aNewNAC) : mPtr(aNewNAC) {
+  explicit ManualNACPtr(already_AddRefed<dom::Element> aNewNAC)
+      : mPtr(aNewNAC) {
     if (!mPtr) {
       return;
     }
@@ -44,10 +45,10 @@ class ManualNACPtr final {
   }
 
   // We use move semantics, and delete the copy-constructor and operator=.
-  ManualNACPtr(ManualNACPtr&& aOther) : mPtr(aOther.mPtr.forget()) {}
+  ManualNACPtr(ManualNACPtr&& aOther) : mPtr(std::move(aOther.mPtr)) {}
   ManualNACPtr(ManualNACPtr& aOther) = delete;
   ManualNACPtr& operator=(ManualNACPtr&& aOther) {
-    mPtr = aOther.mPtr.forget();
+    mPtr = std::move(aOther.mPtr);
     return *this;
   }
   ManualNACPtr& operator=(ManualNACPtr& aOther) = delete;
@@ -59,34 +60,47 @@ class ManualNACPtr final {
       return;
     }
 
-    RefPtr<Element> ptr = mPtr.forget();
-    nsIContent* parentContent = ptr->GetParent();
+    RefPtr<dom::Element> ptr = std::move(mPtr);
+    RemoveContentFromNACArray(ptr);
+  }
+
+  static bool IsManualNAC(nsIContent* aAnonContent) {
+    MOZ_ASSERT(aAnonContent->IsRootOfNativeAnonymousSubtree());
+    MOZ_ASSERT(aAnonContent->IsInComposedDoc());
+
+    auto* nac = static_cast<ManualNACArray*>(
+        aAnonContent->GetParent()->GetProperty(nsGkAtoms::manualNACProperty));
+    return nac && nac->Contains(aAnonContent);
+  }
+
+  static void RemoveContentFromNACArray(nsIContent* aAnonymousContent) {
+    nsIContent* parentContent = aAnonymousContent->GetParent();
     if (!parentContent) {
       NS_WARNING("Potentially leaking manual NAC");
       return;
     }
 
     // Remove reference from the parent element.
-    auto nac = static_cast<mozilla::ManualNACArray*>(
+    auto* nac = static_cast<ManualNACArray*>(
         parentContent->GetProperty(nsGkAtoms::manualNACProperty));
     // Document::AdoptNode might remove all properties before destroying editor.
     // So we have to consider that NAC could be already removed.
     if (nac) {
-      nac->RemoveElement(ptr);
+      nac->RemoveElement(aAnonymousContent);
       if (nac->IsEmpty()) {
-        parentContent->DeleteProperty(nsGkAtoms::manualNACProperty);
+        parentContent->RemoveProperty(nsGkAtoms::manualNACProperty);
       }
     }
 
-    ptr->UnbindFromTree();
+    aAnonymousContent->UnbindFromTree();
   }
 
-  Element* get() const { return mPtr.get(); }
-  Element* operator->() const { return get(); }
-  operator Element*() const& { return get(); }
+  dom::Element* get() const { return mPtr.get(); }
+  dom::Element* operator->() const { return get(); }
+  operator dom::Element*() const& { return get(); }
 
  private:
-  RefPtr<Element> mPtr;
+  RefPtr<dom::Element> mPtr;
 };
 
 }  // namespace mozilla

@@ -25,14 +25,9 @@ var ReferrerInfo = Components.Constructor(
   "init"
 );
 var observer = {
-  QueryInterface: function eventsink_qi(iid) {
-    if (iid.equals(Ci.nsISupports) || iid.equals(Ci.nsIObserver)) {
-      return this;
-    }
-    throw Cr.NS_ERROR_NO_INTERFACE;
-  },
+  QueryInterface: ChromeUtils.generateQI(["nsIObserver"]),
 
-  observe: function(subject, topic, data) {
+  observe(subject, topic, data) {
     subject = subject.QueryInterface(Ci.nsIRequest);
     subject.cancel(Cr.NS_BINDING_ABORTED);
 
@@ -43,7 +38,7 @@ var observer = {
       Assert.equal(currentReferrer, "http://site1.com/");
       var uri = ios.newURI("http://site2.com");
       subject.referrerInfo = new ReferrerInfo(
-        Ci.nsIHttpChannel.REFERRER_POLICY_UNSET,
+        Ci.nsIReferrerInfo.EMPTY,
         true,
         uri
       );
@@ -72,7 +67,7 @@ let cancelDuringOnStartListener = {
       // we expect setting referrer to fail
       try {
         request.referrerInfo = new ReferrerInfo(
-          Ci.nsIHttpChannel.REFERRER_POLICY_UNSET,
+          Ci.nsIReferrerInfo.EMPTY,
           true,
           uri
         );
@@ -105,8 +100,8 @@ var cancelDuringOnDataListener = {
     Assert.ok(!string.includes("b"));
     this.data += string;
     this.channel.cancel(Cr.NS_BINDING_ABORTED);
-    if (receivedSomeData) {
-      receivedSomeData();
+    if (this.receivedSomeData) {
+      this.receivedSomeData();
     }
   },
 
@@ -125,11 +120,7 @@ function makeChan(url) {
 
   // ENSURE_CALLED_BEFORE_CONNECT: set original value
   var uri = ios.newURI("http://site1.com");
-  chan.referrerInfo = new ReferrerInfo(
-    Ci.nsIHttpChannel.REFERRER_POLICY_UNSET,
-    true,
-    uri
-  );
+  chan.referrerInfo = new ReferrerInfo(Ci.nsIReferrerInfo.EMPTY, true, uri);
   return chan;
 }
 
@@ -257,7 +248,7 @@ function cancel_middle(metadata, response) {
   });
   p.then(() => {
     let str1 = "b".repeat(128 * 1024);
-    response.write(str2, str2.length);
+    response.write(str1, str1.length);
     response.finish();
   });
 }

@@ -18,6 +18,8 @@ XPCOMUtils.defineLazyModuleGetters(this, {
 const SEARCH_COUNTS_HISTOGRAM_KEY = "SEARCH_COUNTS";
 const SEARCH_WITH_ADS_SCALAR = "browser.search.with_ads";
 const SEARCH_AD_CLICKS_SCALAR = "browser.search.ad_clicks";
+const SEARCH_DATA_TRANSFERRED_SCALAR = "browser.search.data_transferred";
+const SEARCH_TELEMETRY_PRIVATE_BROWSING_KEY_SUFFIX = "pb";
 
 /**
  * Used to identify various parameters used with partner search providers. This
@@ -73,7 +75,11 @@ const SEARCH_PROVIDER_INFO = {
     regexp: /^https:\/\/duckduckgo\.com\//,
     queryParam: "q",
     codeParam: "t",
-    codePrefixes: ["ff"],
+    codePrefixes: ["ff", "newext"],
+    extraAdServersRegexps: [
+      /^https:\/\/duckduckgo.com\/y\.js/,
+      /^https:\/\/www\.amazon\.(?:[a-z.]{2,24}).*(?:tag=duckduckgo-)/,
+    ],
   },
   yahoo: {
     regexp: /^https:\/\/(?:.*)search\.yahoo\.com\/search/,
@@ -101,6 +107,10 @@ const SEARCH_PROVIDER_INFO = {
         codePrefixes: ["MOZ", "MZ"],
       },
     ],
+    extraAdServersRegexps: [
+      /^https:\/\/www\.bing\.com\/acli?c?k/,
+      /^https:\/\/www\.bing\.com\/fd\/ls\/GLinkPingPost\.aspx.*acli?c?k/,
+    ],
   },
 };
 
@@ -121,7 +131,7 @@ XPCOMUtils.defineLazyPreferenceGetter(
  */
 class TelemetryHandler {
   constructor() {
-    // _browserInfoByUrl is a map of tracked search urls to objects containing:
+    // _browserInfoByURL is a map of tracked search urls to objects containing:
     // * {object} info
     //   the search provider information associated with the url.
     // * {WeakSet} browsers
@@ -134,12 +144,14 @@ class TelemetryHandler {
     // The manual count is because WeakSet doesn't give us size/length
     // information, but we want to know when we can clean up our associated
     // entry.
-    this._browserInfoByUrl = new Map();
+    this._browserInfoByURL = new Map();
     this._initialized = false;
     this.__searchProviderInfo = null;
     this._contentHandler = new ContentHandler({
-      browserInfoByUrl: this._browserInfoByUrl,
-      getProviderInfoForUrl: this._getProviderInfoForUrl.bind(this),
+      browserInfoByURL: this._browserInfoByURL,
+      findBrowserItemForURL: (...args) => this._findBrowserItemForURL(...args),
+      getProviderInfoForURL: (...args) => this._getProviderInfoForURL(...args),
+      checkURLForSerpMatch: (...args) => this._checkURLForSerpMatch(...args),
     });
   }
 
@@ -215,6 +227,10 @@ class TelemetryHandler {
     );
   }
 
+  reportPageWithAds(info) {
+    this._contentHandler._reportPageWithAds(info);
+  }
+
   /**
    * This may start tracking a tab based on the URL. If the URL matches a search
    * partner, and it has a code, then we'll start tracking it. This will aid
@@ -234,12 +250,12 @@ class TelemetryHandler {
 
     // If we have a code, then we also track this for potential ad clicks.
     if (info.code) {
-      let item = this._browserInfoByUrl.get(url);
+      let item = this._browserInfoByURL.get(url);
       if (item) {
         item.browsers.add(browser);
         item.count++;
       } else {
-        this._browserInfoByUrl.set(url, {
+        this._browserInfoByURL.set(url, {
           browsers: new WeakSet([browser]),
           info,
           count: 1,
@@ -255,16 +271,97 @@ class TelemetryHandler {
    *                         tracked.
    */
   stopTrackingBrowser(browser) {
-    for (let [url, item] of this._browserInfoByUrl) {
+    for (let [url, item] of this._browserInfoByURL) {
       if (item.browsers.has(browser)) {
         item.browsers.delete(browser);
         item.count--;
       }
 
       if (!item.count) {
-        this._browserInfoByUrl.delete(url);
+        this._browserInfoByURL.delete(url);
       }
     }
+  }
+
+  /**
+   * Parts of the URL, like search params and hashes, may be mutated by scripts
+   * on a page we're tracking. Since we don't want to keep track of that
+   * ourselves in order to keep the list of browser objects a weak-referenced
+   * set, we do optional fuzzy matching of URLs to fetch the most relevant item
+   * that contains tracking information.
+   *
+   * @param {string} url URL to fetch the tracking data for.
+   * @returns {object} Map containing the following members:
+   *   - {WeakSet} browsers
+   *     Set of browser elements that belong to `url`.
+   *   - {object} info
+   *     Info dictionary as returned by `_checkURLForSerpMatch`.
+   *   - {number} count
+   *     The number of browser element we can most accurately tell we're
+   *     tracking, since they're inside a WeakSet.
+   */
+  _findBrowserItemForURL(url) {
+    try {
+      url = new URL(url);
+    } catch (ex) {
+      return null;
+    }
+
+    const compareURLs = (url1, url2) => {
+      // In case of an exact match, well, that's an obvious winner.
+      if (url1.href == url2.href) {
+        return Infinity;
+      }
+
+      // Each step we get closer to the two URLs being the same, we increase the
+      // score. The consumer of this method will use these scores to see which
+      // of the URLs is the best match.
+      let score = 0;
+      if (url1.hostname == url2.hostname) {
+        ++score;
+        if (url1.pathname == url2.pathname) {
+          ++score;
+          for (let [key1, value1] of url1.searchParams) {
+            // Let's not fuss about the ordering of search params, since the
+            // score effect will solve that.
+            if (url2.searchParams.has(key1)) {
+              ++score;
+              if (url2.searchParams.get(key1) == value1) {
+                ++score;
+              }
+            }
+          }
+          if (url1.hash == url2.hash) {
+            ++score;
+          }
+        }
+      }
+      return score;
+    };
+
+    let item;
+    let currentBestMatch = 0;
+    for (let [trackingURL, candidateItem] of this._browserInfoByURL) {
+      if (currentBestMatch === Infinity) {
+        break;
+      }
+      try {
+        // Make sure to cache the parsed URL object, since there's no reason to
+        // do it twice.
+        trackingURL =
+          candidateItem._trackingURL ||
+          (candidateItem._trackingURL = new URL(trackingURL));
+      } catch (ex) {
+        continue;
+      }
+      let score = compareURLs(url, trackingURL);
+      if (score > currentBestMatch) {
+        item = candidateItem;
+        currentBestMatch = score;
+      }
+    }
+
+    return item;
   }
 
   // nsIWindowMediatorListener
@@ -273,10 +370,10 @@ class TelemetryHandler {
    * This is called when a new window is opened, and handles registration of
    * that window if it is a browser window.
    *
-   * @param {nsIXULWindow} xulWin The xul window that was opened.
+   * @param {nsIAppWindow} appWin The xul window that was opened.
    */
-  onOpenWindow(xulWin) {
-    let win = xulWin.docShell.domWindow;
+  onOpenWindow(appWin) {
+    let win = appWin.docShell.domWindow;
     win.addEventListener(
       "load",
       () => {
@@ -297,10 +394,10 @@ class TelemetryHandler {
    * Listener that is called when a window is closed, and handles deregistration of
    * that window if it is a browser window.
    *
-   * @param {nsIXULWindow} xulWin The xul window that was closed.
+   * @param {nsIAppWindow} appWin The xul window that was closed.
    */
-  onCloseWindow(xulWin) {
-    let win = xulWin.docShell.domWindow;
+  onCloseWindow(appWin) {
+    let win = appWin.docShell.domWindow;
 
     if (
       win.document.documentElement.getAttribute("windowtype") !=
@@ -318,7 +415,6 @@ class TelemetryHandler {
    * @param {object} win The window to register.
    */
   _registerWindow(win) {
-    this._contentHandler.registerWindow(win);
     win.gBrowser.tabContainer.addEventListener("TabClose", this);
   }
 
@@ -333,7 +429,6 @@ class TelemetryHandler {
       this.stopTrackingBrowser(tab);
     }
 
-    this._contentHandler.unregisterWindow(win);
     win.gBrowser.tabContainer.removeEventListener("TabClose", this);
   }
 
@@ -345,7 +440,7 @@ class TelemetryHandler {
    *   ad server regexp to match instead of the main regexp.
    * @returns {array|null} Returns an array of provider name and the provider information.
    */
-  _getProviderInfoForUrl(url, useOnlyExtraAdServers = false) {
+  _getProviderInfoForURL(url, useOnlyExtraAdServers = false) {
     if (useOnlyExtraAdServers) {
       return Object.entries(this._searchProviderInfo).find(([_, info]) => {
         if (info.extraAdServersRegexps) {
@@ -373,7 +468,7 @@ class TelemetryHandler {
    *   returns an object of strings for provider, code and type.
    */
   _checkURLForSerpMatch(url) {
-    let info = this._getProviderInfoForUrl(url);
+    let info = this._getProviderInfoForURL(url);
     if (!info) {
       return null;
     }
@@ -485,13 +580,15 @@ class ContentHandler {
    * Constructor.
    *
    * @param {object} options
-   * @param {Map} options.browserInfoByUrl The  map of urls from TelemetryHandler.
-   * @param {function} options.getProviderInfoForUrl A function that obtains
+   * @param {Map} options.browserInfoByURL The  map of urls from TelemetryHandler.
+   * @param {function} options.getProviderInfoForURL A function that obtains
    *   the provider information for a url.
    */
   constructor(options) {
-    this._browserInfoByUrl = options.browserInfoByUrl;
-    this._getProviderInfoForUrl = options.getProviderInfoForUrl;
+    this._browserInfoByURL = options.browserInfoByURL;
+    this._findBrowserItemForURL = options.findBrowserItemForURL;
+    this._getProviderInfoForURL = options.getProviderInfoForURL;
+    this._checkURLForSerpMatch = options.checkURLForSerpMatch;
   }
 
   /**
@@ -507,6 +604,8 @@ class ContentHandler {
     Cc["@mozilla.org/network/http-activity-distributor;1"]
       .getService(Ci.nsIHttpActivityDistributor)
       .addObserver(this);
+
+    Services.obs.addObserver(this, "http-on-stop-request");
   }
 
   /**
@@ -516,20 +615,8 @@ class ContentHandler {
     Cc["@mozilla.org/network/http-activity-distributor;1"]
       .getService(Ci.nsIHttpActivityDistributor)
       .removeObserver(this);
-  }
 
-  /**
-   * Receives a message from the SearchTelemetryChild actor.
-   *
-   * @param {object} msg
-   */
-  receiveMessage(msg) {
-    if (msg.name != "SearchTelemetry:PageInfo") {
-      LOG("Received unexpected message: " + msg.name);
-      return;
-    }
-
-    this._reportPageWithAds(msg.data);
+    Services.obs.removeObserver(this, "http-on-stop-request");
   }
 
   /**
@@ -540,6 +627,89 @@ class ContentHandler {
    */
   overrideSearchTelemetryForTests(providerInfo) {
     Services.ppmm.sharedData.set("SearchTelemetry:ProviderInfo", providerInfo);
+  }
+
+  /**
+   * Reports bandwidth used by the given channel if it is used by search requests.
+   *
+   * @param {object} aChannel The channel that generated the activity.
+   */
+  _reportChannelBandwidth(aChannel) {
+    if (!(aChannel instanceof Ci.nsIChannel)) {
+      return;
+    }
+    let wrappedChannel = ChannelWrapper.get(aChannel);
+
+    let getTopURL = channel => {
+      // top-level document
+      if (
+        channel.loadInfo &&
+        channel.loadInfo.externalContentPolicyType ==
+          Ci.nsIContentPolicy.TYPE_DOCUMENT
+      ) {
+        return channel.finalURL;
+      }
+
+      // iframe
+      let frameAncestors;
+      try {
+        frameAncestors = channel.frameAncestors;
+      } catch (e) {
+        frameAncestors = null;
+      }
+      if (frameAncestors) {
+        let ancestor = frameAncestors.find(obj => obj.frameId == 0);
+        if (ancestor) {
+          return ancestor.url;
+        }
+      }
+
+      // top-level resource
+      if (
+        channel.loadInfo &&
+        channel.loadInfo.loadingPrincipal &&
+        channel.loadInfo.loadingPrincipal.URI
+      ) {
+        return channel.loadInfo.loadingPrincipal.URI.spec;
+      }
+
+      return null;
+    };
+
+    let topUrl = getTopURL(wrappedChannel);
+    if (!topUrl) {
+      return;
+    }
+
+    let info = this._checkURLForSerpMatch(topUrl);
+    if (!info) {
+      return;
+    }
+
+    let bytesTransferred =
+      wrappedChannel.requestSize + wrappedChannel.responseSize;
+    let { provider } = info;
+
+    let isPrivate =
+      wrappedChannel.loadInfo &&
+      wrappedChannel.loadInfo.originAttributes.privateBrowsingId > 0;
+    if (isPrivate) {
+      provider += `-${SEARCH_TELEMETRY_PRIVATE_BROWSING_KEY_SUFFIX}`;
+    }
+
+    Services.telemetry.keyedScalarAdd(
+      SEARCH_DATA_TRANSFERRED_SCALAR,
+      provider,
+      bytesTransferred
+    );
+  }
+
+  observe(aSubject, aTopic, aData) {
+    switch (aTopic) {
+      case "http-on-stop-request":
+        this._reportChannelBandwidth(aSubject);
+        break;
+    }
   }
 
   /**
@@ -561,7 +731,7 @@ class ContentHandler {
   ) {
     // NOTE: the channel handling code here is inspired by WebRequest.jsm.
     if (
-      !this._browserInfoByUrl.size ||
+      !this._browserInfoByURL.size ||
       activityType !=
         Ci.nsIHttpActivityObserver.ACTIVITY_TYPE_HTTP_TRANSACTION ||
       activitySubtype !=
@@ -594,12 +764,13 @@ class ContentHandler {
       }
 
       let originURL = channel.originURI && channel.originURI.spec;
-      if (!originURL || !this._browserInfoByUrl.has(originURL)) {
+      let info = this._findBrowserItemForURL(originURL);
+      if (!originURL || !info) {
         return;
       }
 
       let URL = channel.finalURL;
-      let info = this._getProviderInfoForUrl(URL, true);
+      info = this._getProviderInfoForURL(URL, true);
       if (!info) {
         return;
       }
@@ -615,25 +786,6 @@ class ContentHandler {
   }
 
   /**
-   * Adds a message listener for the window being registered to receive messages
-   * from SearchTelemetryChild.
-   *
-   * @param {object} win The window to register.
-   */
-  registerWindow(win) {
-    win.messageManager.addMessageListener("SearchTelemetry:PageInfo", this);
-  }
-
-  /**
-   * Removes the message listener for the window.
-   *
-   * @param {object} win The window to unregister.
-   */
-  unregisterWindow(win) {
-    win.messageManager.removeMessageListener("SearchTelemetry:PageInfo", this);
-  }
-
-  /**
    * Logs telemetry for a page with adverts, if it is one of the partner search
    * provider pages that we're tracking.
    *
@@ -642,9 +794,11 @@ class ContentHandler {
    * @param {string} info.url The url of the page.
    */
   _reportPageWithAds(info) {
-    let item = this._browserInfoByUrl.get(info.url);
+    let item = this._findBrowserItemForURL(info.url);
     if (!item) {
-      LOG("Expected to report URI with ads but couldn't find the information");
+      LOG(
+        `Expected to report URI for ${info.url} with ads but couldn't find the information`
+      );
       return;
     }
 
@@ -664,7 +818,7 @@ class ContentHandler {
  */
 function LOG(msg) {
   if (loggingEnabled) {
-    dump(`*** SearchTelemetry: ${msg}\n"`);
+    dump(`*** SearchTelemetry: ${msg}\n`);
     Services.console.logStringMessage(msg);
   }
 }

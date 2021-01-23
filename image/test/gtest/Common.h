@@ -16,8 +16,9 @@
 #include "mozilla/gfx/2D.h"
 #include "Decoder.h"
 #include "gfxColor.h"
-#include "imgITools.h"
+#include "gfxPlatform.h"
 #include "nsCOMPtr.h"
+#include "SurfaceFlags.h"
 #include "SurfacePipe.h"
 #include "SurfacePipeFactory.h"
 
@@ -34,17 +35,46 @@ struct BGRAColor {
   BGRAColor() : BGRAColor(0, 0, 0, 0) {}
 
   BGRAColor(uint8_t aBlue, uint8_t aGreen, uint8_t aRed, uint8_t aAlpha,
-            bool aPremultiplied = false)
+            bool aPremultiplied = false, bool asRGB = true)
       : mBlue(aBlue),
         mGreen(aGreen),
         mRed(aRed),
         mAlpha(aAlpha),
-        mPremultiplied(aPremultiplied) {}
+        mPremultiplied(aPremultiplied),
+        msRGB(asRGB) {}
 
   static BGRAColor Green() { return BGRAColor(0x00, 0xFF, 0x00, 0xFF); }
   static BGRAColor Red() { return BGRAColor(0x00, 0x00, 0xFF, 0xFF); }
   static BGRAColor Blue() { return BGRAColor(0xFF, 0x00, 0x00, 0xFF); }
   static BGRAColor Transparent() { return BGRAColor(0x00, 0x00, 0x00, 0x00); }
+
+  static BGRAColor FromPixel(uint32_t aPixel) {
+    uint8_t r, g, b, a;
+    r = (aPixel >> gfx::SurfaceFormatBit::OS_R) & 0xFF;
+    g = (aPixel >> gfx::SurfaceFormatBit::OS_G) & 0xFF;
+    b = (aPixel >> gfx::SurfaceFormatBit::OS_B) & 0xFF;
+    a = (aPixel >> gfx::SurfaceFormatBit::OS_A) & 0xFF;
+    return BGRAColor(b, g, r, a, true);
+  }
+
+  BGRAColor DeviceColor() const {
+    MOZ_ASSERT(!mPremultiplied);
+    if (msRGB) {
+      gfx::DeviceColor color = gfx::ToDeviceColor(
+          gfx::sRGBColor(float(mRed) / 255.0f, float(mGreen) / 255.0f,
+                         float(mBlue) / 255.0f, 1.0));
+      return BGRAColor(uint8_t(color.b * 255.0f), uint8_t(color.g * 255.0f),
+                       uint8_t(color.r * 255.0f), mAlpha, mPremultiplied,
+                       /* asRGB */ false);
+    }
+    return *this;
+  }
+
+  BGRAColor sRGBColor() const {
+    MOZ_ASSERT(msRGB);
+    MOZ_ASSERT(!mPremultiplied);
+    return *this;
+  }
 
   BGRAColor Premultiply() const {
     if (!mPremultiplied) {
@@ -67,6 +97,7 @@ struct BGRAColor {
   uint8_t mRed;
   uint8_t mAlpha;
   bool mPremultiplied;
+  bool msRGB;
 };
 
 enum TestCaseFlags {
@@ -76,6 +107,7 @@ enum TestCaseFlags {
   TEST_CASE_IS_TRANSPARENT = 1 << 2,
   TEST_CASE_IS_ANIMATED = 1 << 3,
   TEST_CASE_IGNORE_OUTPUT = 1 << 4,
+  TEST_CASE_ASSUME_SRGB_OUTPUT = 1 << 5,
 };
 
 struct ImageTestCase {
@@ -86,6 +118,7 @@ struct ImageTestCase {
         mSize(aSize),
         mOutputSize(aSize),
         mFlags(aFlags),
+        mSurfaceFlags(DefaultSurfaceFlags()),
         mColor(BGRAColor::Green()) {}
 
   ImageTestCase(const char* aPath, const char* aMimeType, gfx::IntSize aSize,
@@ -96,13 +129,51 @@ struct ImageTestCase {
         mSize(aSize),
         mOutputSize(aOutputSize),
         mFlags(aFlags),
+        mSurfaceFlags(DefaultSurfaceFlags()),
         mColor(BGRAColor::Green()) {}
+
+  ImageTestCase WithSurfaceFlags(SurfaceFlags aSurfaceFlags) const {
+    ImageTestCase self = *this;
+    self.mSurfaceFlags = aSurfaceFlags;
+    return self;
+  }
+
+  ImageTestCase WithFlags(uint32_t aFlags) const {
+    ImageTestCase self = *this;
+    self.mFlags = aFlags;
+    return self;
+  }
+
+  BGRAColor ChooseColor(const BGRAColor& aColor) const {
+    // If we are forcing the output to be sRGB via the surface flag, or the
+    // test case is marked as assuming sRGB (used when the image itself is not
+    // explicitly tagged, and as a result, imagelib won't perform any color
+    // conversion), we should use the sRGB presentation of the color.
+    if ((mSurfaceFlags & SurfaceFlags::TO_SRGB_COLORSPACE) ||
+        (mFlags & TEST_CASE_ASSUME_SRGB_OUTPUT)) {
+      return aColor.sRGBColor();
+    }
+    return aColor.DeviceColor();
+  }
+
+  BGRAColor Color() const { return ChooseColor(mColor); }
+
+  uint8_t Fuzz() const {
+    // If we are using device space, there can easily be off by 1 channel errors
+    // depending on the color profile and how the rounding went.
+    if (mFlags & TEST_CASE_IS_FUZZY ||
+        !(mSurfaceFlags & SurfaceFlags::TO_SRGB_COLORSPACE)) {
+      return 1;
+    }
+    return 0;
+  }
 
   const char* mPath;
   const char* mMimeType;
   gfx::IntSize mSize;
   gfx::IntSize mOutputSize;
   uint32_t mFlags;
+  SurfaceFlags mSurfaceFlags;
   BGRAColor mColor;
 };
 
@@ -122,6 +193,22 @@ class AutoInitializeImageLib {
   AutoInitializeImageLib();
 };
 
+/**
+ * A test fixture class used for benchmark tests. It preloads the image data
+ * from disk to avoid including that in the timing.
+ */
+class ImageBenchmarkBase : public ::testing::Test {
+ protected:
+  ImageBenchmarkBase(const ImageTestCase& aTestCase) : mTestCase(aTestCase) {}
+
+  void SetUp() override;
+  void TearDown() override;
+
+  AutoInitializeImageLib mInit;
+  ImageTestCase mTestCase;
+  RefPtr<SourceBuffer> mSourceBuffer;
+};
+
 /// Spins on the main thread to process any pending events.
 void SpinPendingEvents();
 
@@ -139,12 +226,6 @@ bool IsSolidColor(gfx::SourceSurface* aSurface, BGRAColor aColor,
                   uint8_t aFuzz = 0);
 
 /**
- * @returns true if every pixel of @aDecoder's surface has the palette index
- * specified by @aColor.
- */
-bool IsSolidPalettedColor(Decoder* aDecoder, uint8_t aColor);
-
-/**
  * @returns true if every pixel in the range of rows specified by @aStartRow and
  * @aRowCount of @aSurface is @aColor.
  *
@@ -156,13 +237,6 @@ bool RowsAreSolidColor(gfx::SourceSurface* aSurface, int32_t aStartRow,
                        int32_t aRowCount, BGRAColor aColor, uint8_t aFuzz = 0);
 
 /**
- * @returns true if every pixel in the range of rows specified by @aStartRow and
- * @aRowCount of @aDecoder's surface has the palette index specified by @aColor.
- */
-bool PalettedRowsAreSolidColor(Decoder* aDecoder, int32_t aStartRow,
-                               int32_t aRowCount, uint8_t aColor);
-
-/**
  * @returns true if every pixel in the rect specified by @aRect is @aColor.
  *
  * If @aFuzz is nonzero, a tolerance of @aFuzz is allowed in each color
@@ -171,13 +245,6 @@ bool PalettedRowsAreSolidColor(Decoder* aDecoder, int32_t aStartRow,
  */
 bool RectIsSolidColor(gfx::SourceSurface* aSurface, const gfx::IntRect& aRect,
                       BGRAColor aColor, uint8_t aFuzz = 0);
-
-/**
- * @returns true if every pixel in the rect specified by @aRect has the palette
- * index specified by @aColor.
- */
-bool PalettedRectIsSolidColor(Decoder* aDecoder, const gfx::IntRect& aRect,
-                              uint8_t aColor);
 
 /**
  * @returns true if the pixels in @aRow of @aSurface match the pixels given in
@@ -224,9 +291,9 @@ class CountResumes : public IResumable {
  * that requires a decoder to initialize or to allocate surfaces but doesn't
  * actually need the decoder to do any decoding.
  *
- * XXX(seth): We only need this because SurfaceSink and PalettedSurfaceSink
- * defer to the decoder for surface allocation. Once all decoders use
- * SurfacePipe we won't need to do that anymore and we can remove this function.
+ * XXX(seth): We only need this because SurfaceSink defer to the decoder for
+ * surface allocation. Once all decoders use SurfacePipe we won't need to do
+ * that anymore and we can remove this function.
  */
 already_AddRefed<Decoder> CreateTrivialDecoder();
 
@@ -330,19 +397,6 @@ void CheckGeneratedSurface(gfx::SourceSurface* aSurface,
                            const BGRAColor& aOuterColor, uint8_t aFuzz = 0);
 
 /**
- * Checks a generated paletted image for correctness. Reports any unexpected
- * deviation from the expected image as GTest failures.
- *
- * @param aDecoder The decoder which contains the image. The decoder's current
- *                 frame will be checked.
- * @param aRect The region in the space of the output surface that the filter
- *              pipeline will actually write to. It's expected that pixels in
- *              this region have a palette index of 255, while pixels outside
- *              this region have a palette index of 0.
- */
-void CheckGeneratedPalettedImage(Decoder* aDecoder, const gfx::IntRect& aRect);
-
-/**
  * Tests the result of calling WritePixels() using the provided SurfaceFilter
  * pipeline. The pipeline must be a normal (i.e., non-paletted) pipeline.
  *
@@ -379,11 +433,13 @@ void CheckWritePixels(Decoder* aDecoder, SurfaceFilter* aFilter,
 
 /**
  * Tests the result of calling WritePixels() using the provided SurfaceFilter
- * pipeline. The pipeline must be a paletted pipeline.
+ * pipeline. Allows for control over the input color to write, and the expected
+ * output color.
  * @see CheckWritePixels() for documentation of the arguments.
  */
-void CheckPalettedWritePixels(
-    Decoder* aDecoder, SurfaceFilter* aFilter,
+void CheckTransformedWritePixels(
+    Decoder* aDecoder, SurfaceFilter* aFilter, const BGRAColor& aInputColor,
+    const BGRAColor& aOutputColor,
     const Maybe<gfx::IntRect>& aOutputRect = Nothing(),
     const Maybe<gfx::IntRect>& aInputRect = Nothing(),
     const Maybe<gfx::IntRect>& aInputWriteRect = Nothing(),
@@ -419,6 +475,9 @@ ImageTestCase GreenBMPTestCase();
 ImageTestCase GreenICOTestCase();
 ImageTestCase GreenIconTestCase();
 ImageTestCase GreenWebPTestCase();
+ImageTestCase GreenAVIFTestCase();
+
+ImageTestCase StackCheckAVIFTestCase();
 
 ImageTestCase LargeWebPTestCase();
 ImageTestCase GreenWebPIccSrgbTestCase();
@@ -464,6 +523,19 @@ ImageTestCase TruncatedSmallGIFTestCase();
 ImageTestCase LargeICOWithBMPTestCase();
 ImageTestCase LargeICOWithPNGTestCase();
 ImageTestCase GreenMultipleSizesICOTestCase();
+
+ImageTestCase PerfGrayJPGTestCase();
+ImageTestCase PerfCmykJPGTestCase();
+ImageTestCase PerfYCbCrJPGTestCase();
+ImageTestCase PerfRgbPNGTestCase();
+ImageTestCase PerfRgbAlphaPNGTestCase();
+ImageTestCase PerfGrayPNGTestCase();
+ImageTestCase PerfGrayAlphaPNGTestCase();
+ImageTestCase PerfRgbLosslessWebPTestCase();
+ImageTestCase PerfRgbAlphaLosslessWebPTestCase();
+ImageTestCase PerfRgbLossyWebPTestCase();
+ImageTestCase PerfRgbAlphaLossyWebPTestCase();
+ImageTestCase PerfRgbGIFTestCase();
 
 }  // namespace image
 }  // namespace mozilla

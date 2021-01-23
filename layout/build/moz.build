@@ -42,14 +42,12 @@ LOCAL_INCLUDES += [
     '/dom/offline',
     '/dom/storage',
     '/dom/svg',
-    '/dom/xbl',
     '/dom/xslt/base',
     '/dom/xslt/xml',
     '/dom/xslt/xpath',
     '/dom/xslt/xslt',
     '/dom/xul',
     '/editor/composer',
-    '/extensions/permissions',
     '/js/xpconnect/loader',
     '/js/xpconnect/src',
     '/netwerk/base',
@@ -70,7 +68,7 @@ elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
         '/dom/system',
         '/dom/system/android',
     ]
-elif 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
+elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk':
     LOCAL_INCLUDES += [
         '/widget/gtk',
     ]

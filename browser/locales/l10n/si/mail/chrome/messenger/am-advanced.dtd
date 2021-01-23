@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpServer.label "යැවුම් සේවාදායක (SMTP) සැකසුම්">
+
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpDescription.label "When managing your identities you can use a server from this list by selecting it as the Outgoing Server (SMTP), or you can use the default server from this list by selecting &quot;Use Default Server&quot;.">
+
+<!ENTITY smtpListAdd.label  "එක් කරන්න...">
+<!ENTITY smtpListAdd.accesskey  "d">
+<!ENTITY smtpListEdit.label "සැකසුම්...">
+<!ENTITY smtpListEdit.accesskey "E">
+<!ENTITY smtpListDelete.label "ඉවත් තරන්න">
+<!ENTITY smtpListDelete.accesskey "m">
+<!ENTITY smtpListSetDefault.label "පෙරනිමි සැකසුම">
+<!ENTITY smtpListSetDefault.accesskey "t">
+
+<!ENTITY serverDescription.label "විස්තරය: ">
+<!ENTITY serverName.label "සේවාදායක නම: ">
+<!ENTITY serverPort.label "තොට (Port): ">
+<!ENTITY userName.label   "පරිශීලක නම: ">
+<!ENTITY connectionSecurity.label "සම්බන්ධතා ආරක්ෂාව: ">
+<!ENTITY authMethod.label   "සත්‍යාපන ක්‍රමය: ">

@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Contactes en línia">
+<!ENTITY offlineContactsHeader.label   "Contactes desconnectats">
+<!ENTITY conversationsHeader.label     "Converses">
+<!ENTITY searchResultConversation.label "Resultat de la cerca">
+<!ENTITY chat.noConv.title             "Les converses es mostraran aquí.">
+<!ENTITY chat.noConv.description       "Utilitzeu la llista de contactes de l'esquerra per iniciar una conversa.">
+<!ENTITY chat.noPreviousConv.description       "Actualment el &brandShortName; no té emmagatzemada cap conversa anterior amb aquest contacte.">
+<!ENTITY chat.noAccount.title             "Encara no heu configurat cap compte de xat.">
+<!ENTITY chat.noAccount.description       "Permeteu que el &brandShortName; us guiï durant el procés de configuració del vostre compte de xat.">
+<!ENTITY chat.accountWizard.button       "Inicia">
+<!ENTITY chat.noConnectedAccount.title             "Els comptes de xat no estan connectats.">
+<!ENTITY chat.noConnectedAccount.description       "Podeu connectar-vos-hi des del diàleg «Estat del xat»:">
+<!ENTITY chat.showAccountManager.button       "Mostra l'estat del xat">
+
+<!ENTITY chat.participants             "Participants:">
+<!ENTITY chat.previousConversations    "Converses prèvies:">
+<!ENTITY chat.ongoingConversation      "Conversa en curs">
+
+<!ENTITY openConversationCmd.label     "Inicia una conversa">
+<!ENTITY openConversationCmd.accesskey "c">
+<!ENTITY closeConversationCmd.label    "Tanca la conversa">
+<!ENTITY closeConversationCmd.accesskey "c">
+<!ENTITY aliasCmd.label                "Reanomena">
+<!ENTITY aliasCmd.accesskey            "R">
+<!ENTITY deleteCmd.label               "Suprimeix el contacte">
+<!ENTITY deleteCmd.accesskey           "S">
+
+<!ENTITY openConversationButton.tooltip  "Inicia una conversa">
+<!ENTITY closeConversationButton.tooltip "Tanca la conversa">
+
+<!ENTITY addBuddyButton.label          "Afegeix un contacte">
+<!ENTITY joinChatButton.label          "Uniu-vos al xat">
+<!ENTITY chatAccountsButton.label      "Mostra els comptes">
+
+<!ENTITY status.available          "Disponible">
+<!ENTITY status.unavailable        "No disponible">
+<!ENTITY status.offline            "Sense connexió">
+
+<!ENTITY openLinkCmd.label            "Obre l'enllaç…">
+<!ENTITY openLinkCmd.accesskey        "O">

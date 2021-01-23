@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-var EXPORTED_SYMBOLS = ["PrefsEngine", "PrefRec"];
+var EXPORTED_SYMBOLS = ["PrefsEngine", "PrefRec", "PREFS_GUID"];
 
 const PREF_SYNC_PREFS_PREFIX = "services.sync.prefs.sync.";
 
@@ -127,6 +127,12 @@ PrefsEngine.prototype = {
     }
     return SyncEngine.prototype._reconcile.call(this, item);
   },
+
+  async trackRemainingChanges() {
+    if (this._modified.count() > 0) {
+      this._tracker.modified = true;
+    }
+  },
 };
 
 // We don't use services.sync.engine.tabs.filteredUrls since it includes
@@ -166,7 +172,7 @@ PrefStore.prototype = {
   _getSyncPrefs() {
     let syncPrefs = Services.prefs
       .getBranch(PREF_SYNC_PREFS_PREFIX)
-      .getChildList("", {})
+      .getChildList("")
       .filter(pref => isAllowedPrefName(pref) && !isUnsyncableURLPref(pref));
     // Also sync preferences that determine which prefs get synced.
     let controlPrefs = syncPrefs.map(pref => PREF_SYNC_PREFS_PREFIX + pref);
@@ -363,10 +369,19 @@ PrefStore.prototype = {
 
 function PrefTracker(name, engine) {
   Tracker.call(this, name, engine);
+  this._ignoreAll = false;
   Svc.Obs.add("profile-before-change", this.asyncObserver);
 }
 PrefTracker.prototype = {
   __proto__: Tracker.prototype,
+
+  get ignoreAll() {
+    return this._ignoreAll;
+  },
+
+  set ignoreAll(value) {
+    this._ignoreAll = value;
+  },
 
   get modified() {
     return Svc.Prefs.get("engine.prefs.modified", false);

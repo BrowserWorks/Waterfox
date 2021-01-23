@@ -22,11 +22,11 @@ def one_task_per_product_and_platform(config, jobs):
             del job['primary-dependency']
         product = dep_task.attributes.get("shipping_product")
         platform = dep_task.attributes.get("build_platform")
-        release_type = dep_task.attributes.get("release-type")
-        if (product, platform, release_type) not in unique_products_and_platforms:
-            attributes = copy_attributes_from_dependent_job(dep_task)
+        if (product, platform) not in unique_products_and_platforms:
+            attr_denylist = ('l10n_chunk', 'locale', 'artifact_map', 'artifact_prefix')
+            attributes = copy_attributes_from_dependent_job(dep_task, denylist=attr_denylist)
             attributes.update(job.get('attributes', {}))
             job['attributes'] = attributes
-            job["name"] = "-".join(filter(None, (product, platform, release_type)))
+            job["name"] = "{}-{}".format(product, platform)
             yield job
-            unique_products_and_platforms.add((product, platform, release_type))
+            unique_products_and_platforms.add((product, platform))

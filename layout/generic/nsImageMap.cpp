@@ -22,7 +22,6 @@
 #include "nsCoord.h"
 #include "nsIContentInlines.h"
 #include "nsIScriptError.h"
-#include "nsIStringBundle.h"
 #include "nsContentUtils.h"
 #include "ImageLayers.h"
 
@@ -75,8 +74,8 @@ static void logMessage(nsIContent* aContent, const nsAString& aCoordsSpec,
                        int32_t aFlags, const char* aMessageName) {
   nsContentUtils::ReportToConsole(
       aFlags, NS_LITERAL_CSTRING("Layout: ImageMap"), aContent->OwnerDoc(),
-      nsContentUtils::eLAYOUT_PROPERTIES, aMessageName, nullptr, /* params */
-      0, /* params length */
+      nsContentUtils::eLAYOUT_PROPERTIES, aMessageName,
+      nsTArray<nsString>(), /* params */
       nullptr,
       PromiseFlatString(NS_LITERAL_STRING("coords=\"") + aCoordsSpec +
                         NS_LITERAL_STRING("\""))); /* source line */

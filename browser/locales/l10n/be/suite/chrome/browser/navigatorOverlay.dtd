@@ -1,0 +1,117 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabCmd.label "Устаўку азіральніка">
+<!ENTITY tabCmd.accesskey "т">
+<!ENTITY tabCmd.commandkey "t">
+<!ENTITY openCmd.label "Адчыніць месца ў Сеціве…">
+<!ENTITY openCmd.accesskey "М">
+<!ENTITY openCmd.commandkey "l">
+<!ENTITY openFileCmd.label "Адчыніць файл…">
+<!ENTITY openFileCmd.accesskey "Ф">
+<!ENTITY openFileCmd.commandkey "o">
+<!ENTITY closeOtherTabs.label "Зачыніць іншыя ўстаўкі">
+<!ENTITY closeOtherTabs.accesskey "і">
+<!ENTITY uploadFile.label "Загрузіць файл…">
+<!ENTITY uploadFile.accesskey "Ф">
+<!ENTITY printSetupCmd.label "Уладкаваць старонку…">
+<!ENTITY printSetupCmd.accesskey "л">
+<!ENTITY findOnCmd.label "Знайсці на гэтай старонцы…">
+<!ENTITY toolbarsCmd.label "Паказаць/Схаваць">
+<!ENTITY toolbarsCmd.accesskey "ц">
+<!ENTITY tabbarCmd.label "Паліца з устаўкамі">
+<!ENTITY tabbarCmd.accesskey "У">
+<!ENTITY taskbarCmd.label "Паліца з статусам">
+<!ENTITY taskbarCmd.accesskey "С">
+<!ENTITY componentbarCmd.label "Паліца з часткамі">
+<!ENTITY componentbarCmd.accesskey "Ч">
+<!ENTITY fullScreenCmd.label "Увесь экран">
+<!ENTITY fullScreenCmd.accesskey "У">
+<!ENTITY useStyleSheetMenu.label "Карыстацца стылем">
+<!ENTITY useStyleSheetMenu.accesskey "К">
+<!ENTITY useStyleSheetNone.label "Няма">
+<!ENTITY useStyleSheetNone.accesskey "Н">
+<!ENTITY useStyleSheetPersistentOnly.label "Змоўчны стыль">
+<!ENTITY useStyleSheetPersistentOnly.accesskey "з">
+<!ENTITY bidiSwitchPageDirectionItem.label "Пераключыць кірунак старонкі">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey "к">
+<!ENTITY pageSourceCmd.label "Зыходнік старонкі">
+<!ENTITY pageSourceCmd.accesskey "ы">
+<!ENTITY pageSourceCmd.commandkey "u">
+<!ENTITY pageInfoCmd.label "Звесткі пра старонку">
+<!ENTITY pageInfoCmd.accesskey "З">
+<!ENTITY pageInfoCmd.commandkey "i">
+<!ENTITY goMenu.label "Рух">
+<!ENTITY goMenu.accesskey "р">
+<!ENTITY goHomeCmd.label "Дадому">
+<!ENTITY goHomeCmd.accesskey "Д">
+<!ENTITY historyCmd.label "Гісторыя">
+<!ENTITY historyCmd.accesskey "і">
+<!ENTITY history.commandKey "h">
+<!ENTITY recentTabs.label "Нядаўна зачыненыя ўстаўкі">
+<!ENTITY recentTabs.accesskey "ў">
+<!ENTITY recentTabs.commandkey "t">
+<!ENTITY recentWindows.label "Нядаўна закрытыя вокны">
+<!ENTITY recentWindows.accesskey "Н">
+<!ENTITY recentWindows.commandkey "y">
+<!ENTITY historyRestoreLastSession.label "Аднавіць папярэднюю сэсію">
+<!ENTITY historyRestoreLastSession.accesskey "А">
+<!ENTITY syncTabsMenu.label "Устаўкі з іншых кампутараў">
+<!ENTITY syncTabsMenu.accesskey "і">
+<!ENTITY bookmarksMenu.label "Закладкі">
+<!ENTITY bookmarksMenu.accesskey "З">
+<!ENTITY addCurPageCmd.label "Дадаць закладку да гэтай старонкі">
+<!ENTITY addCurPageCmd.accesskey "З">
+<!ENTITY addCurPageAsCmd.label "Дадаць закладку ў папку…">
+<!ENTITY addCurPageAsCmd.accesskey "П">
+<!ENTITY addCurPageAsCmd.commandkey "d">
+<!ENTITY addCurTabsAsCmd.label "Дадаць закладку да гэтай групы ўставак…">
+<!ENTITY addCurTabsAsCmd.accesskey "Г">
+<!ENTITY manBookmarksCmd.label "Уладкаваць закладкі…">
+<!ENTITY manBookmarksCmd.accesskey "У">
+<!ENTITY manBookmarksCmd.commandkey "b">
+<!ENTITY searchInternetCmd.label "Пошук у Сеціве">
+<!ENTITY searchInternetCmd.accesskey "ш">
+<!ENTITY searchInternet.commandKey "s">
+<!ENTITY translateMenu.label "Перакласці старонку">
+<!ENTITY translateMenu.accesskey "к">
+<!ENTITY cookieMessageTitle.label "Зменены дазволы бірак">
+<!ENTITY cookieDisplayCookiesCmd.label "Уладкаваць захаваныя біркі">
+<!ENTITY cookieDisplayCookiesCmd.accesskey "У">
+<!ENTITY cookieAllowCookiesCmd.label "Дазволіць біркі з гэтай сеціўнай пляцоўкі">
+<!ENTITY cookieAllowCookiesCmd.accesskey "Д">
+<!ENTITY cookieAllowCookiesMsg.label "Біркі з гэтай сеціўнай пляцоўкі заўсёды будуць дазволены.">
+<!ENTITY cookieAllowSessionCookiesCmd.label "Дазволіць сэсійныя біркі з гэтай сеціўнай пляцоўкі">
+<!ENTITY cookieAllowSessionCookiesCmd.accesskey "с">
+<!ENTITY cookieAllowSessionCookiesMsg.label "Гэтая пляцоўка Сеціва будзе здольна прызначаць біркі толькі для гэтачасовай сэсіі.">
+<!ENTITY cookieCookiesDefaultCmd.label "Ужываць змоўчныя дазволы бірак">
+<!ENTITY cookieCookiesDefaultCmd.accesskey "з">
+<!ENTITY cookieCookiesDefaultMsg.label "Біркі з гэтай сеціўнай пляцоўкі будуць набывацца або адхіляцца згодна змоўчным наладжванням.">
+<!ENTITY cookieBlockCookiesCmd.label "Затрымліваць біркі з гэтай сеціўнай пляцоўкі">
+<!ENTITY cookieBlockCookiesCmd.accesskey "т">
+<!ENTITY cookieBlockCookiesMsg.label "Біркі з гэтай сеціўнай пляцоўкі будуць заўсёды адхіляцца.">
+<!ENTITY cookieImageMessageTitle.label "Зменены дазволы выяваў">
+<!ENTITY cookieDisplayImagesCmd.label "Уладкаваць дазволы выяваў">
+<!ENTITY cookieDisplayImagesCmd.accesskey "У">
+<!ENTITY cookieAllowImagesCmd.label "Дазволіць выявы з гэтай сеціўнай пляцоўкі">
+<!ENTITY cookieAllowImagesCmd.accesskey "Д">
+<!ENTITY cookieAllowImagesMsg.label "Выявы з гэтай сеціўнай пляцоўкі будуць заўсёды загружацца.">
+<!ENTITY cookieImagesDefaultCmd.label "Ужываць змоўчныя дазволы выяваў">
+<!ENTITY cookieImagesDefaultCmd.accesskey "з">
+<!ENTITY cookieImagesDefaultMsg.label "Выявы з гэтай сеціўнай пляцоўкі будуць загружацца згодна змоўчным наладжванням.">
+<!ENTITY cookieBlockImagesCmd.label "Затрымліваць выявы з гэтай сеціўнай пляцоўкі">
+<!ENTITY cookieBlockImagesCmd.accesskey "т">
+<!ENTITY cookieBlockImagesMsg.label "Выявы з гэтай сеціўнай пляцоўкі ніколі не будуць загружацца.">
+<!ENTITY cookieAllowPopupsCmd.label "Дазволіць вынырцы з гэтай сеціўнай пляцоўкі">
+<!ENTITY cookieAllowPopupsCmd.accesskey "Д">
+<!ENTITY cookieManagePopups.label "Кіраваць вынырцамі">
+<!ENTITY cookieManagePopups.accesskey "К">
+<!ENTITY cookieCookieManager.label "Кіраўнік бірак">
+<!ENTITY cookieCookieManager.accesskey "б">
+<!ENTITY cookieImageManager.label "Кіраўнік выяваў">
+<!ENTITY cookieImageManager.accesskey "в">
+<!ENTITY cookiePopupManager.label "Кіраўнік вынырцаў">
+<!ENTITY cookiePopupManager.accesskey "н">
+<!ENTITY clearPrivateDataCmd.label "Ачысціць асабістыя здаткі…">
+<!ENTITY clearPrivateDataCmd.accesskey "ч">

@@ -82,7 +82,7 @@ let SyncedTabsInternal = {
 
   _tabMatchesFilter(tab, filter) {
     let reFilter = new RegExp(escapeRegExp(filter), "i");
-    return tab.url.match(reFilter) || tab.title.match(reFilter);
+    return reFilter.test(tab.url) || reFilter.test(tab.title);
   },
 
   async getTabClients(filter) {
@@ -191,14 +191,6 @@ let SyncedTabsInternal = {
     }
   },
 
-  get loginFailed() {
-    if (!weaveXPCService.ready) {
-      log.debug("Sync isn't yet ready; assuming the login didn't fail");
-      return false;
-    }
-    return Weave.Status.login == Weave.LOGIN_FAILED_LOGIN_REJECTED;
-  },
-
   // Returns true if Sync is configured to Sync tabs, false otherwise
   get isConfiguredToSyncTabs() {
     if (!weaveXPCService.ready) {
@@ -241,11 +233,6 @@ var SyncedTabs = {
   // are waiting for that first sync to complete.
   get hasSyncedThisSession() {
     return this._internal.hasSyncedThisSession;
-  },
-
-  // Returns true if Sync is in a "need to reauthenticate" state.
-  get loginFailed() {
-    return this._internal.loginFailed;
   },
 
   // Return a promise that resolves with an array of client records, each with

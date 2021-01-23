@@ -1,0 +1,312 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY appmenu.tooltip                     "பட்டியைத் திற">
+<!ENTITY navbarOverflow.label                "இதர கருவிகள்...">
+
+<!-- Tab context menu -->
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "இட முனையில் சேர்">
+<!ENTITY  unpinTab.label                     "முனையிலிருந்து நீக்கு">
+
+<!ENTITY  listAllTabs.label      "அனைத்து கீற்றுகளையும் பட்டியலிடு">
+<!-- LOCALIZATION NOTE (allTabsMenu.searchTabs.label): "Search" is a verb, as
+in "Search through tabs". -->
+
+<!ENTITY tabCmd.label "புதிய கீற்று">
+<!ENTITY openFileCmd.label "கோப்பினைத் திற">
+<!ENTITY printCmd.label "அச்சிடு…">
+
+
+<!ENTITY menubarCmd.label "பட்டி பட்டை">
+<!ENTITY menubarCmd.accesskey "M">
+<!ENTITY personalbarCmd.label "புத்தகக்குறி கருவிப்பட்டை">
+<!ENTITY personalbarCmd.accesskey "B">
+<!ENTITY bookmarksToolbarItem.label "புத்தகக்குறிகள் கருவிப்பட்டை உருப்படிகள்">
+
+<!ENTITY fullScreenCmd.label "முழுத்திரை">
+
+
+<!-- LOCALIZATION NOTE (fxa.signin) Used to define the different labels
+     for the Waterfox Account toolbar signin menu screen. -->
+
+<!-- LOCALIZATION NOTE (fxa.unverified) Used to define the different labels
+     for the Waterfox Account toolbar unverified menu screen. -->
+
+
+<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
+     for the Waterfox Account toolbar menu screen. The `Signed in as` text is
+     followed by the user's email. -->
+
+
+<!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
+     for the Waterfox Account toolbar menu screen.  -->
+
+ <!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "தற்பொழுது முழுத்திரையில்">
+<!ENTITY fullscreenWarning.generic.label "இவ்வாணம் தற்பொழுது முழுத்திரையில் உள்ளது">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "முழுத்திரையிலிருந்து வெளியேறுக (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "முழுத்திரையிலிருந்து வெளியேறுக (Esc)">
+
+<!-- LOCALIZATION NOTE (pictureInPicture.label, pictureInPicture.accesskey):
+     these two strings are used when right-clicking on a video in the
+     content area when the Picture-in-Picture feature is enabled. -->
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "உங்கள் சுட்டியைக் கட்டுப்படுத்துகிறது. கட்டுப்பாட்டை எடுக்க Esc விசையை அழுத்தவும்.">
+<!ENTITY pointerlockWarning.generic.label "இந்த ஆவணம் உங்கள் சுட்டியைக் கட்டுப்பாட்டில் வைத்திருக்கிறது. கட்டுப்பாட்டைத் திரும்ப எடுக்க Esc விசையை அழுத்தவும்.">
+
+<!ENTITY showAllBookmarks2.label "அனைத்தையும் காண்பி">
+<!ENTITY recentBookmarks.label "சமீபத்திய புத்தகக்குறிகள்">
+<!ENTITY bookmarksToolbarChevron.tooltip "இன்னும் காண்பி">
+
+<!ENTITY printButton.label            "அச்சிடு">
+<!ENTITY printButton.tooltip          "இந்தப் பக்கத்தை அச்சிடு">
+
+
+<!ENTITY searchItem.title             "தேடு">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "இல்லம்">
+<!ENTITY homeButton.defaultPage.tooltip "&brandShortName; அகப்பக்கம்">
+
+<!ENTITY bookmarksButton.label          "புத்தகக்குறிகள்">
+
+<!ENTITY bookmarksSubview.label             "புத்தகக்குறிகள்">
+<!ENTITY bookmarksMenuButton2.label         "புத்தகக்குறிகள் பட்டி">
+<!ENTITY bookmarksMenuButton.other.label    "பிற புத்தகக்குறிகள்">
+<!ENTITY bookmarksMenuButton.mobile.label   "கைகப்பேசி புத்தகக்குறிகள்">
+<!ENTITY viewBookmarksSidebar2.label        "புத்தகக்குறிகள் பக்கப்பட்டையைக் காட்டு">
+<!ENTITY hideBookmarksSidebar.label         "புத்தகக்குறிகள் பக்கப்பட்டையை மறை">
+<!ENTITY viewBookmarksToolbar.label         "புத்தகக்குறிகள் கருவிப்பட்டையைக் காட்டு">
+<!ENTITY hideBookmarksToolbar.label         "புத்தகக்குறிகள் கருவிப்பட்டையை மறை">
+<!ENTITY searchBookmarks.label              "புத்தகக்குறிகளைத் தேடு">
+<!ENTITY bookmarkingTools.label             "புத்தக்குறியிடும் கருவிகள்">
+<!ENTITY addBookmarksMenu.label             "புத்தகக்குறி பட்டியைக் கருவிப்பட்டையில் சேர்க்கவும்">
+<!ENTITY removeBookmarksMenu.label          "கருவிப்பட்டையிலிருந்து புத்தகக்குறிகள் பட்டியை நீக்கவும்">
+
+<!ENTITY historyButton.label            "வரலாறு">
+
+<!ENTITY downloads.label              "பதிவிறக்கங்கள்">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "பதிவிறக்கங்கள்">
+<!ENTITY addons.label                 "துணை நிரல்கள்">
+
+<!ENTITY webDeveloperMenu.label       "உருவாக்குநர் கருவிகள்">
+
+<!ENTITY newNavigatorCmd.label        "புதிய சாளரம்">
+<!ENTITY newPrivateWindow.label     "புதிய கமுக்க சாளரம்">
+
+<!ENTITY editMenu.label         "தொகு">
+<!ENTITY preferencesCmd2.label       "தேர்வுகள்">
+<!ENTITY preferencesCmdUnix.label       "முன்னுரிமைகள்">
+
+<!ENTITY overflowCustomizeToolbar.label       "கருவிப்பட்டையை விருப்பமை...">
+<!ENTITY overflowCustomizeToolbar.accesskey   "C">
+
+<!ENTITY historyMenu.label "வரலாறு">
+<!ENTITY historyUndoMenu.label "சமீபத்தில் மூடப்பட்ட கீற்றுகள்">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "சமீபத்தில் மூடப்பட்ட சாளரங்கள்">
+
+<!ENTITY appMenuHistory.showAll.label "அனைத்தையும் காண்பி">
+<!ENTITY appMenuHistory.clearRecent.label "சமீபத்திய வரலாற்றைத் துடை...">
+<!ENTITY appMenuHistory.restoreSession.label "முந்தைய அமர்வுக்கு மீட்டமை">
+<!ENTITY appMenuHistory.viewSidebar.label "வரலாறுப் பக்கப்பட்டையை பார்க்க">
+<!ENTITY appMenuHistory.recentHistory.label "சமீபத்திய வரலாறு">
+<!ENTITY appMenuHelp.label "உதவி">
+
+<!ENTITY appMenuRemoteTabs.label "ஒத்திசைத்த கீற்றுகள்">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "திறந்த கீற்றுகள் இல்லை">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "மேலும் காட்டு">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "இந்தச் சாதனத்திலிருந்து கீற்றுகளைக் காண்பி">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "அனைத்தையும் காண்பி">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "இந்தச் சாதனத்திலிருந்து அனைத்து கீற்றுகளையும் காண்பி">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "மற்ற கருவிகளிலிருந்து கீற்றுகளின் பட்டியலைக் காண கீற்று ஒத்திசைவை இயக்கு.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Waterfox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "மற்ற கருவிகளிலிருந்து உங்கள் கீற்றுகளை இங்குப் பார்க்க விருப்பமா?">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "ஒத்திசைவு முன்னுரிமைகளைத் திற">
+<!ENTITY appMenuRemoteTabs.unverified.label "உங்கள் கணக்கு சரிபார்க்கப்பட வேண்டும்.">
+<!ENTITY appMenuRemoteTabs.managedevices.label "சாதனங்களை நிர்வகி...">
+<!ENTITY appMenuRemoteTabs.sidebar.label "ஒத்திசைத்த கீற்றுகள் பக்கப்பட்டையைப் பார்">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "மற்றொரு சாதனத்தை இணை">
+
+<!ENTITY appMenuRecentHighlights.label "அண்மைய மிளிர்ப்புகள்">
+
+<!ENTITY customizeMenu.addToToolbar.label "கருவிப்பட்டியில் சேர்க்க">
+<!ENTITY customizeMenu.addToToolbar.accesskey "க">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "மேலோடு பட்டிக்குச் சேர்">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "M">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "மேலோட்ட பட்டியலிருந்து இருந்து நீக்கவும்">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "U">
+<!ENTITY customizeMenu.removeFromToolbar.label "கருவிப்பட்டையிலிருந்து நீக்கு">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "ந">
+<!ENTITY customizeMenu.addMoreItems.label "மேலும் உருப்பிடிகளை சேர்க்க...">
+<!ENTITY customizeMenu.addMoreItems.accesskey "ச">
+<!-- LOCALIZATION NOTE (reportExtension.label) This label is used in the extensions
+     toolbar buttons context menus, a user can use this command to submit to Mozilla
+     an abuse report related to that extension. "Report" is a verb. -->
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "மேலும்">
+
+<!ENTITY contentSearchSubmit.tooltip  "தேடலைச் சமர்ப்பி">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "தேடு">
+<!ENTITY searchIcon.tooltip           "தேடல்">
+
+<!-- LOCALIZATION NOTE (searchWithDesc.label):
+     This string prompts the user to use the list of one-click search engines in
+     the Urlbar and searchbar. -->
+
+<!ENTITY openLinkCmdInTab.accesskey   "T">
+
+<!ENTITY pageAction.copyLink.label    "தொடுப்பை நகலெடுக்கவும்">
+
+<!-- LOCALIZATION NOTE(pocket-button.tooltiptext, saveToPocketCmd.label, saveLinkToPocketCmd.label, pocketMenuitem.label):
+  "Pocket" is a brand name. -->
+
+<!ENTITY emailPageCmd.label           "மின்னஞ்சல் இணைப்பு ...">
+
+<!-- Media (video/audio) controls -->
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoom.label                 "பெரியதாக்கு">
+
+<!ENTITY sidebarCloseButton.tooltip     "பக்கப்பட்டையை மூடு">
+
+<!ENTITY quitApplicationCmdWin2.label       "வெளியேறு">
+<!ENTITY quitApplicationCmdWin2.accesskey   "x">
+<!ENTITY quitApplicationCmdWin2.tooltip     "&brandShorterName; உலாவியை விட்டு வெளியேறு">
+<!ENTITY quitApplicationCmd.label       "வெளியேறு">
+<!ENTITY quitApplicationCmd.accesskey   "Q">
+<!ENTITY quitApplicationCmdMac2.label   "&brandShorterName; விட்டு வெளியேறு">
+
+<!ENTITY allowPopups.accesskey "p">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "பாப்பப் தடுப்பு முன்னுரிமைகளை திருத்து…">
+<!ENTITY editPopupSettings.label "பாப்பப் தடுப்பு தேர்வுகளைத் தொகு…">
+<!ENTITY editPopupSettings.accesskey "E">
+<!ENTITY dontShowMessage.accesskey "D">
+
+<!ENTITY findOnCmd.label     "இப்பக்கத்தில் தேடு…">
+
+<!ENTITY spellAddDictionaries.label "அகராதிகளைச் சேர்…">
+<!ENTITY spellAddDictionaries.accesskey "A">
+
+<!-- LOCALIZATION NOTE (identity.securityView.label2)
+     This is the header of the security subview in the Site Identity panel. -->
+
+
+<!-- LOCALIZATION NOTE:
+     protections.etpMoreInfo.label: The text a screen reader speaks when focused on the info button. -->
+<!-- LOCALIZATION NOTE:
+     protections.siteNotWorking.label: The link to be clicked to open the sub-panel view
+     protections.siteNotWorkingView.title: The heading/title of the sub-panel view -->
+<!-- LOCALIZATION NOTE:
+     In the Site Not Working? view, we suggest turning off protections if
+     the user is experiencing issues with any of a variety of functionality.
+     protections.siteNotWorkingView.header: The header of the list
+     protections.siteNotWorkingView.issueList.*: The list items, shown in a <ul> -->
+
+
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "உலாவி கீற்றுகள்">
+
+<!ENTITY syncBrand.shortName.label    "ஒத்திசை">
+
+<!ENTITY customizeMode.autoHideDownloadsButton.label "தானாக மறை">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- LOCALIZATION NOTE (trackingProtection.unblock5.label, trackingProtection.unblock5.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in NON-private browsing mode. -->
+<!-- LOCALIZATION NOTE (trackingProtection.unblockPrivate6.label, trackingProtection.unblockPrivate6.accesskey):
+     The associated button with this label and accesskey is only shown when opening the control
+     center while looking at a site with trackers in PRIVATE browsing mode. -->
+
+
+<!ENTITY uiTour.infoPanel.close "மூடுக">
+
+<!ENTITY panicButton.thankyou.msg1                "உங்கள் சமீபத்திய வரலாறு துடைக்கப்பட்டது.">
+<!ENTITY panicButton.thankyou.msg2                "பாதுகாப்பான உலவல்!">
+<!ENTITY panicButton.thankyou.buttonlabel         "நன்றி!">
+
+<!ENTITY updateAvailable.panelUI.label "புதிய &brandShorterName; உலாவியை பதிவிறக்கு">
+<!ENTITY updateManual.panelUI.label "&brandShorterName; உலாவியின் புதிய பதிப்பை பதிவிறக்கவும்">
+<!ENTITY updateRestart.panelUI.label2 "&brandShorterName; உலாவியை புதுப்பிக்க மீள்துவக்கு">
+
+<!ENTITY sendToDevice.syncNotReady.label "சாதனங்களை ஒத்திசைக்கிறது...">
+
+<!ENTITY pageAction.shareUrl.label "பகிர்">
+
+<!ENTITY libraryButton.tooltip "வரலாறு, சேமித்த புத்தகக்குறிகள், மற்றும் பலவற்றைப் பார்">
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+<!ENTITY accessibilityIndicator.tooltip "அணுகல்தன்மை வசதி செயற்படுத்தப்பட்டது">

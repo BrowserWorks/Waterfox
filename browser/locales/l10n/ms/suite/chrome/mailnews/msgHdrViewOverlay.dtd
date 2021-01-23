@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField.label "Kepada: ">
+<!ENTITY fromField.label "Daripada: ">
+<!ENTITY senderField.label "Pengirim: ">
+<!ENTITY organizationField.label "Organisasi: ">
+<!ENTITY replyToField.label "Balas-Kepada: ">
+
+<!ENTITY subjectField.label "Subjek: ">
+<!--# LOCALIZATION NOTE (ccField.label): DONT_TRANSLATE -->
+<!ENTITY ccField.label "Cc: ">
+<!ENTITY bccField.label "Bcc: ">
+<!ENTITY newsgroupsField.label "Kumpulan berita: ">
+<!ENTITY followupToField.label "Susulan-Kepada: ">
+
+<!ENTITY tagsHdr.label "Tag: ">
+<!ENTITY dateField.label "Tarikh: ">
+<!ENTITY userAgentField.label "Ejen pengguna: ">
+<!ENTITY referencesField.label "Rujukan: ">
+<!ENTITY messageIdField.label "ID-Mesej: ">
+<!ENTITY inReplyToField.label "Untuk-Membalas-Kepada: ">
+<!ENTITY originalWebsite.label "Laman web: ">
+
+<!ENTITY editMessage.label                 "Edit Draf…">
+<!ENTITY editMessage.accesskey             "D">
+
+<!ENTITY attachmentsTree.label             "Lampiran:">
+<!ENTITY attachmentsTree.accesskey         "p">
+<!ENTITY openAttachmentCmd.label           "Buka">
+<!ENTITY openAttachmentCmd.accesskey       "B">
+<!ENTITY viewAttachmentCmd.label           "Papar Sumber">
+<!ENTITY viewAttachmentCmd.accesskey       "P">
+<!ENTITY saveAsAttachmentCmd.label         "Simpan Sebagai…">
+<!ENTITY saveAsAttachmentCmd.accesskey     "S">
+<!ENTITY detachAttachmentCmd.label         "Buang…">
+<!ENTITY detachAttachmentCmd.accesskey     "g">
+<!ENTITY deleteAttachmentCmd.label         "Buang">
+<!ENTITY deleteAttachmentCmd.accesskey     "u">
+<!ENTITY saveAllAttachmentsCmd.label       "Simpan Semua…">
+<!ENTITY saveAllAttachmentsCmd.accesskey   "S">
+<!ENTITY detachAllAttachmentsCmd.label     "Buang Semua…">
+<!ENTITY detachAllAttachmentsCmd.accesskey "B">
+<!ENTITY deleteAllAttachmentsCmd.label     "Buang Semua…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey "e">

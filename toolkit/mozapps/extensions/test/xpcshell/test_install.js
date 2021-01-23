@@ -102,15 +102,6 @@ const GETADDONS_JSON = {
   ],
 };
 
-const COMPAT_JSON = {
-  page_size: 25,
-  page_count: 1,
-  count: 0,
-  next: null,
-  previous: null,
-  results: [],
-};
-
 function checkInstall(install, expected) {
   for (let [key, value] of Object.entries(expected)) {
     if (value instanceof Ci.nsIURI) {
@@ -768,12 +759,6 @@ add_task(async function test_18_1() {
     "http://example.com/getaddons.json"
   );
 
-  AddonTestUtils.registerJSON(testserver, "/compat.json", COMPAT_JSON);
-  Services.prefs.setCharPref(
-    PREF_COMPAT_OVERRIDES,
-    "http://example.com/compat.json"
-  );
-
   Services.prefs.setBoolPref("extensions.getAddons.cache.enabled", true);
   Services.prefs.setBoolPref(
     "extensions.addon2@tests.mozilla.org.getAddons.cache.enabled",
@@ -967,6 +952,30 @@ add_task(async function test_local_hash() {
   });
 
   install.cancel();
+});
+
+// Test that an install cannot be canceled after the install is completed.
+add_task(async function test_cancel_completed() {
+  let url = "http://example.com/addons/test_install1.xpi";
+  let install = await AddonManager.getInstallForURL(url);
+
+  let cancelPromise = new Promise((resolve, reject) => {
+    install.addListener({
+      onInstallEnded() {
+        try {
+          install.cancel();
+          reject("Cancel should fail.");
+        } catch (e) {
+          resolve();
+        }
+      },
+    });
+  });
+
+  install.install();
+  await cancelPromise;
+
+  equal(install.state, AddonManager.STATE_INSTALLED);
 });
 
 // Test that an install may be canceled after a redirect.

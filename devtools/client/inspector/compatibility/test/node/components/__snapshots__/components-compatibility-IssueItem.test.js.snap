@@ -1,0 +1,140 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`IssueItem component renders a deprecated issue of CSS property 1`] = `
+<li
+  className="compatibility-issue-item"
+  key="test-property"
+>
+  <div
+    className="compatibility-issue-item__description compatibility-issue-item__description--deprecated"
+  >
+    <a
+      className="compatibility-issue-item__mdn-link devtools-monospace"
+      href="test-url"
+      onClick={[Function]}
+      title="test-url"
+    >
+      test-property
+    </a>
+    <span
+      className="compatibility-issue-item__causes"
+    >
+      (deprecated)
+    </span>
+  </div>
+</li>
+`;
+
+exports[`IssueItem component renders an experimental issue of CSS property 1`] = `
+<li
+  className="compatibility-issue-item"
+  key="test-property"
+>
+  <div
+    className="compatibility-issue-item__description compatibility-issue-item__description--experimental"
+  >
+    <a
+      className="compatibility-issue-item__mdn-link devtools-monospace"
+      href="test-url"
+      onClick={[Function]}
+      title="test-url"
+    >
+      test-property
+    </a>
+    <span
+      className="compatibility-issue-item__causes"
+    >
+      (experimental)
+    </span>
+  </div>
+</li>
+`;
+
+exports[`IssueItem component renders an issue which has both deprecated and experimental 1`] = `
+<li
+  className="compatibility-issue-item"
+  key="test-property"
+>
+  <div
+    className="compatibility-issue-item__description compatibility-issue-item__description--deprecated compatibility-issue-item__description--experimental"
+  >
+    <a
+      className="compatibility-issue-item__mdn-link devtools-monospace"
+      href="test-url"
+      onClick={[Function]}
+      title="test-url"
+    >
+      test-property
+    </a>
+    <span
+      className="compatibility-issue-item__causes"
+    >
+      (deprecated,experimental)
+    </span>
+  </div>
+</li>
+`;
+
+exports[`IssueItem component renders an issue which has nodes that caused this issue 1`] = `
+<li
+  className="compatibility-issue-item"
+  key="test-property"
+>
+  <div
+    className="compatibility-issue-item__description"
+  >
+    <a
+      className="compatibility-issue-item__mdn-link devtools-monospace"
+      href="test-url"
+      onClick={[Function]}
+      title="test-url"
+    >
+      test-property
+    </a>
+  </div>
+  <NodePane
+    nodes={
+      Array [
+        Object {
+          "actorID": "test-actor",
+          "attributes": Array [],
+          "nodeName": "test-element",
+          "nodeType": 1,
+        },
+      ]
+    }
+  />
+</li>
+`;
+
+exports[`IssueItem component renders an unsupported issue of CSS property 1`] = `
+<li
+  className="compatibility-issue-item"
+  key="test-property"
+>
+  <div
+    className="compatibility-issue-item__description compatibility-issue-item__description--unsupported"
+  >
+    <a
+      className="compatibility-issue-item__mdn-link devtools-monospace"
+      href="test-url"
+      onClick={[Function]}
+      title="test-url"
+    >
+      test-property
+    </a>
+    <UnsupportedBrowserList
+      browsers={
+        Array [
+          Object {
+            "id": "firefox",
+            "name": "Firefox",
+            "status": "nightly",
+            "version": "70",
+          },
+        ]
+      }
+    />
+  </div>
+</li>
+`;

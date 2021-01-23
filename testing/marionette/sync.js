@@ -132,7 +132,8 @@ function PollPromise(func, { timeout = null, interval = 10 } = {}) {
   }
   if (
     (timeout && (!Number.isInteger(timeout) || timeout < 0)) ||
-    (!Number.isInteger(interval) || interval < 0)
+    !Number.isInteger(interval) ||
+    interval < 0
   ) {
     throw new RangeError();
   }
@@ -227,6 +228,8 @@ function TimedPromise(
   }
 
   return new Promise((resolve, reject) => {
+    let trace;
+
     // Reject only if |throws| is given.  Otherwise it is assumed that
     // the user is OK with the promise timing out.
     let bail = () => {
@@ -234,11 +237,12 @@ function TimedPromise(
         let err = new throws();
         reject(err);
       } else {
-        log.warn(`TimedPromise timed out after ${timeout} ms`, stack());
+        log.warn(`TimedPromise timed out after ${timeout} ms`, trace);
         resolve();
       }
     };
 
+    trace = stack();
     timer.initWithCallback({ notify: bail }, timeout, TYPE_ONE_SHOT);
 
     try {
@@ -329,11 +333,20 @@ function MessageManagerDestroyedPromise(messageManager) {
  * @return Promise
  */
 function IdlePromise(win) {
-  return new Promise(resolve => {
-    Services.tm.idleDispatchToMainThread(() => {
+  const animationFramePromise = new Promise(resolve => {
+    executeSoon(() => {
       win.requestAnimationFrame(resolve);
     });
   });
+
+  // Abort if the underlying window gets closed
+  const windowClosedPromise = new PollPromise(resolve => {
+    if (win.closed) {
+      resolve();
+    }
+  });
+
+  return Promise.race([animationFramePromise, windowClosedPromise]);
 }
 
 /**

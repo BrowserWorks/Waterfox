@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Fillteán Nua Cuardaigh Shábháilte">
+<!ENTITY name.label                 "Ainm:">
+<!ENTITY name.accesskey             "n">
+<!ENTITY description.label          "Cruthaigh mar fofhillteán de:">
+<!ENTITY description.accesskey      "C">
+
+<!ENTITY searchTermCaption.label "Cumraigh na critéir chuardaigh le húsáid don fhillteán cuardaigh shábháilte seo:">
+
+<!ENTITY folderSelectionCaption.label "Roghnaigh na fillteáin atá le cuardach:">
+<!ENTITY chooseFoldersButton.label "Roghnaigh…">
+<!ENTITY chooseFoldersButton.accesskey "R">
+
+<!ENTITY searchOnline.label "Cuardach ar líne (beidh na torthaí cothrom le dáta le haghaidh fillteán IMAP agus Nuachta ach beidh oscailt an fhillteáin níos moille)">
+<!ENTITY searchOnline.accesskey "C">
+<!ENTITY newFolderButton.label       "Cruthaigh">
+<!ENTITY newFolderButton.accesskey   "r">
+<!ENTITY editFolderButton.label      "Nuashonraigh">
+<!ENTITY editFolderButton.accesskey  "u">

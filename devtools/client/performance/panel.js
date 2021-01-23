@@ -1,5 +1,3 @@
-/* -*- Mode: javascript; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -10,6 +8,9 @@ loader.lazyRequireGetter(this, "EventEmitter", "devtools/shared/event-emitter");
 function PerformancePanel(iframeWindow, toolbox) {
   this.panelWin = iframeWindow;
   this.toolbox = toolbox;
+  this._targetAvailablePromise = Promise.resolve();
+
+  this._onTargetAvailable = this._onTargetAvailable.bind(this);
 
   EventEmitter.decorate(this);
 }
@@ -31,25 +32,7 @@ PerformancePanel.prototype = {
 
     this._checkRecordingStatus = this._checkRecordingStatus.bind(this);
 
-    // Actor is already created in the toolbox; reuse
-    // the same front, and the toolbox will also initialize the front,
-    // but redo it here so we can hook into the same event to prevent race conditions
-    // in the case of the front still being in the process of opening.
-    const front = await this.target.getFront("performance");
-
-    // Keep references on window for toolbox, target and front for tests.
-    this.panelWin.gToolbox = this.toolbox;
-    this.panelWin.gTarget = this.target;
-    this.panelWin.gFront = front;
-
-    // This should only happen if this is completely unsupported (when profiler
-    // does not exist), and in that case, the tool shouldn't be available,
-    // so let's ensure this assertion.
-    if (!front) {
-      console.error("No PerformanceFront found in toolbox.");
-    }
-
-    const { PerformanceController, PerformanceView, EVENTS } = this.panelWin;
+    const { PerformanceController, EVENTS } = this.panelWin;
     PerformanceController.on(
       EVENTS.RECORDING_ADDED,
       this._checkRecordingStatus
@@ -59,9 +42,17 @@ PerformancePanel.prototype = {
       this._checkRecordingStatus
     );
 
-    await PerformanceController.initialize(this.toolbox, this.target, front);
-    await PerformanceView.initialize();
-    PerformanceController.enableFrontEventListeners();
+    // In case that the target is switched across process, the corresponding front also
+    // will be changed. In order to detect that, watch the change.
+    // Also, we wait for `watchTargets` to end. Indeed the function `_onTargetAvailable
+    // will be called synchronously with current target as a parameter by
+    // the `watchTargets` function.
+    // So this `await` waits for initialization with current target, happening
+    // in `_onTargetAvailable`.
+    await this.toolbox.targetList.watchTargets(
+      [this.toolbox.targetList.TYPES.FRAME],
+      this._onTargetAvailable
+    );
 
     // Fire this once incase we have an in-progress recording (console profile)
     // that caused this start up, and no state change yet, so we can highlight the
@@ -99,6 +90,10 @@ PerformancePanel.prototype = {
       this._checkRecordingStatus
     );
 
+    await this.toolbox.targetList.unwatchTargets(
+      [this.toolbox.targetList.TYPES.FRAME],
+      this._onTargetAvailable
+    );
     await PerformanceController.destroy();
     await PerformanceView.destroy();
     PerformanceController.disableFrontEventListeners();
@@ -113,5 +108,51 @@ PerformancePanel.prototype = {
     } else {
       this.toolbox.unhighlightTool("performance");
     }
+  },
+
+  /**
+   * This function executes actual logic for the target-switching.
+   *
+   * @param {TargetFront} - targetFront
+   *        As we are watching only FRAME type for this panel,
+   *        the target should be a instance of BrowsingContextTarget.
+   */
+  async _handleTargetAvailable({ targetFront }) {
+    if (targetFront.isTopLevel) {
+      const { PerformanceController, PerformanceView } = this.panelWin;
+      const performanceFront = await targetFront.getFront("performance");
+
+      if (!this._isPanelInitialized) {
+        await PerformanceController.initialize(targetFront, performanceFront);
+        await PerformanceView.initialize();
+        PerformanceController.enableFrontEventListeners();
+        this._isPanelInitialized = true;
+      } else {
+        const isRecording = PerformanceController.isRecording();
+        if (isRecording) {
+          await PerformanceController.stopRecording();
+        }
+
+        PerformanceView.resetBufferStatus();
+        PerformanceController.updateFronts(targetFront, performanceFront);
+
+        if (isRecording) {
+          await PerformanceController.startRecording();
+        }
+      }
+    }
+  },
+
+  /**
+   * This function is called for every target is available.
+   */
+  _onTargetAvailable(parameters) {
+    // As this function is called asynchronous, while previous processing, this might be
+    // called. Thus, we wait until finishing previous one before starting next.
+    this._targetAvailablePromise = this._targetAvailablePromise.then(() =>
+      this._handleTargetAvailable(parameters)
+    );
+
+    return this._targetAvailablePromise;
   },
 };

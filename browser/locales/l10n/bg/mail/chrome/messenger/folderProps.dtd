@@ -1,0 +1,70 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Свойства">
+
+<!ENTITY generalInfo.label                       "Основна информация">
+<!ENTITY folderCharsetFallback2.label            "Резервно кодиране на текст:">
+<!ENTITY folderCharsetFallback2.accesskey        "т">
+<!ENTITY folderCharsetEnforce2.label             "Прилагане на стандартното кодиране на текста за всички писма в папката (индивидуалните настройки и автоматичното разпознаване ще се пренебрегват)">
+<!ENTITY folderCharsetEnforce2.accesskey         "П">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Възстановяване индекса на файла резюме">
+<!ENTITY folderRebuildSummaryFile2.label         "Поправка на папка">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "П">
+<!ENTITY folderRebuildSummaryFile.explanation    "Понякога файлът с индексите на папките (.msf) се поврежда и това предизвиква писма да иглеждат изчезнали или изтрити писма да продължават да се изобразяват. Поправката на папката би коригирала подобни проблеми.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Включване писмата от тази папка в резултатите от общото търсене">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "о">
+
+<!ENTITY retention.label "Правила за запазване">
+<!ENTITY retentionUseAccount.label  "Използване настройките на регистрацията">
+<!ENTITY retentionUseAccount.accesskey "И">
+<!ENTITY daysOld.label "дни">
+<!ENTITY message.label "писма">
+<!ENTITY retentionCleanup.label "За освобождаване на дисково пространство, старите писма може да бъдат изтривани необратимо.">
+<!ENTITY retentionCleanupImap.label "За освобождаване на дисково пространство, старите писма може да бъдат изтривани необратимо, както местните копия, така и оригиналите на отдалечения сървър.">
+<!ENTITY retentionCleanupPop.label "За освобождаване на дисково пространство, старите писма може да бъдат изтривани необратимо, включително оригиналите на отдалечения сървър.">
+<!ENTITY retentionDeleteMsg.label "Изтриване на писма на повече от">
+<!ENTITY retentionDeleteMsg.accesskey "п">
+<!ENTITY retentionKeepAll.label "Никакви писма да не бъдат изтривани">
+<!ENTITY retentionKeepAll.accesskey "Н">
+<!ENTITY retentionKeepRecent.label "Изтриване на всички без най-новите">
+<!ENTITY retentionKeepRecent.accesskey "з">
+<!ENTITY retentionApplyToFlagged.label "Писмата със звезда винаги се запазват">
+<!ENTITY retentionApplyToFlagged.accesskey "е">
+
+<!ENTITY folderSynchronizationTab.label          "Синхронизация">
+<!ENTITY folderCheckForNewMessages2.label         "При получаване на нови съобщения за тази регистрация, винаги проверявай тази папка">
+<!ENTITY folderCheckForNewMessages2.accesskey     "г">
+
+<!ENTITY offlineFolder.check.label               "Избор на папката за употреба без връзка">
+<!ENTITY offlineFolder.check.accesskey           "И">
+<!ENTITY offlineFolder.button.label              "Изтегляне">
+<!ENTITY offlineFolder.button.accesskey          "л">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Избор на дискусионната група за употреба без връзка">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "у">
+<!ENTITY offlineNewsgroup.button.label           "Изтегляне">
+<!ENTITY offlineNewsgroup.button.accesskey       "л">
+
+<!ENTITY folderProps.name.label                  "Име:">
+<!ENTITY folderProps.name.accesskey              "И">
+<!ENTITY folderProps.location.label              "Адрес:">
+<!ENTITY folderProps.location.accesskey          "А">
+
+<!ENTITY folderSharingTab.label                  "Споделяне">
+<!ENTITY privileges.button.label                 "Привилегии…">
+<!ENTITY privileges.button.accesskey             "П">
+<!ENTITY permissionsDesc.label                   "Вие имате следните права:">
+<!ENTITY folderType.label                        "Вид папка:">
+
+<!ENTITY folderQuotaTab.label                    "Дял">
+<!ENTITY folderQuotaUsage.label                  "Употреба:">
+<!ENTITY folderQuotaStatus.label                 "Състояние:">
+
+<!ENTITY numberOfMessages.label                  "Брой съобщения:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "неизвестен">
+<!ENTITY sizeOnDisk.label                        "Размер на диска:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "неизвестен">

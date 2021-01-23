@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "Breiseáin">
+<!ENTITY aboutAddons.header2                    "Do chuid Breiseán">
+
+<!ENTITY addonAction.enable                     "Cumasaigh">
+<!ENTITY addonAction.disable                    "Díchumasaigh">
+<!ENTITY addonAction.uninstall                  "Díshuiteáil">
+<!ENTITY addonAction.undo                       "Cealaigh">
+
+<!ENTITY addonUnsigned.message                  "Níorbh fhéidir le &brandShortName; an breiseán seo a fhíorú.">
+<!ENTITY addonUnsigned.learnMore                "Tuilleadh eolais">

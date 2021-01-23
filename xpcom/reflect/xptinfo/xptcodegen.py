@@ -252,7 +252,11 @@ def link_to_cpp(interfaces, fd):
         idx = type_cache.get(key)
         if idx is None:
             idx = type_cache[key] = len(types)
-            types.append(lower_type(type))
+            # Make sure `types` is the proper length for any recursive calls
+            # to `lower_extra_type` that might happen from within `lower_type`.
+            types.append(None)
+            realtype = lower_type(type)
+            types[idx] = realtype
         return idx
 
     def describe_type(type):  # Create the type's documentation comment.
@@ -350,7 +354,7 @@ def link_to_cpp(interfaces, fd):
             numparams = len(method['params'])
 
             # Check cache for parameters
-            cachekey = json.dumps(method['params'])
+            cachekey = json.dumps(method['params'], sort_keys=True)
             paramidx = param_cache.get(cachekey)
             if paramidx is None:
                 paramidx = param_cache[cachekey] = len(params)
@@ -456,7 +460,6 @@ def link_to_cpp(interfaces, fd):
     fd.write("""
 #include "xptinfo.h"
 #include "mozilla/PerfectHash.h"
-#include "mozilla/TypeTraits.h"
 #include "mozilla/dom/BindingUtils.h"
 
 // These template methods are specialized to be used in the sDOMObjects table.
@@ -498,7 +501,7 @@ namespace detail {
 
     # The strings array. We write out individual characters to avoid MSVC restrictions.
     fd.write("const char sStrings[] = {\n")
-    for s, off in strings.iteritems():
+    for s, off in strings.items():
         fd.write("  // %d = %s\n  '%s','\\0',\n" % (off, s, "','".join(s)))
     fd.write("};\n\n")
 

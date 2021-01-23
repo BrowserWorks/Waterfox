@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Kontu-ezarpenak">
+<!ENTITY accountName.label "Kontuaren izena:">
+<!ENTITY accountName.accesskey "n">
+<!ENTITY identityTitle.label "Identitate lehenetsia">
+<!ENTITY identityDesc.label "Kontu bakoitzak identitate bat du, besteen aurrean identifikatzen zaituen informazioa duena zure mezuak jasotzen dituztenean.">
+<!ENTITY name.label "Zure izena:">
+<!ENTITY name.accesskey "Z">
+<!ENTITY email.label "Helbide elektronikoa:">
+<!ENTITY email.accesskey "e">
+<!ENTITY catchAll.label "Erantzun identitate honetatik banaketa goiburuak bat datozenean:">
+<!ENTITY catchAll.accesskey "b">
+<!ENTITY replyTo.label "Erantzun-honi helbidea:">
+<!ENTITY replyTo.accesskey "h">
+<!ENTITY replyTo.placeholder "Hartzaileek beste helbide honetara erantzungo dute">
+<!ENTITY organization.label "Erakundea:">
+<!ENTITY organization.accesskey "E">
+<!ENTITY signatureText.label "Sinadura-testua:">
+<!ENTITY signatureText.accesskey "S">
+<!ENTITY signatureHtml.label "Erabili HTML (adib., &lt;b&gt;bold&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "M">
+<!ENTITY signatureFile.label "Erantsi sinadura fitxategitik (testua, HTML edo irudia):">
+<!ENTITY signatureFile.accesskey "t">
+<!ENTITY edit.label "Editatu…">
+<!ENTITY choose.label "Aukeratu…">
+<!ENTITY choose.accesskey "A">
+<!ENTITY editVCard.label "Editatu vCard-a…">
+<!ENTITY editVCard.accesskey "d">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Erantsi nire vCard-a mezuei">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "Kudeatu identitateak…">
+<!ENTITY manageIdentities.accesskey "K">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Irteerako SMTP zerbitzaria:">
+<!ENTITY smtpName.accesskey "o">
+<!ENTITY smtpDefaultServer.label "Erabili zerbitzari lehenetsia">
+
+<!ENTITY smtpServerEdit.label "Editatu SMTP zerbitzaria…">
+<!ENTITY smtpServerEdit.accesskey "P">

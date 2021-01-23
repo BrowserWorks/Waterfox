@@ -10,126 +10,14 @@
 #include "mozilla/Maybe.h"
 
 #include "jit/CacheIR.h"
+#include "jit/JitOptions.h"
+#include "jit/SharedICRegisters.h"
 
 namespace js {
 namespace jit {
 
-// The ops below are defined in CacheIRCompiler and codegen is shared between
-// BaselineCacheIRCompiler and IonCacheIRCompiler.
-#define CACHE_IR_SHARED_OPS(_)            \
-  _(GuardIsObject)                        \
-  _(GuardIsNullOrUndefined)               \
-  _(GuardIsNotNullOrUndefined)            \
-  _(GuardIsNull)                          \
-  _(GuardIsUndefined)                     \
-  _(GuardIsObjectOrNull)                  \
-  _(GuardIsBoolean)                       \
-  _(GuardIsString)                        \
-  _(GuardIsSymbol)                        \
-  _(GuardIsBigInt)                        \
-  _(GuardIsNumber)                        \
-  _(GuardIsInt32)                         \
-  _(GuardIsInt32Index)                    \
-  _(GuardType)                            \
-  _(GuardClass)                           \
-  _(GuardGroupHasUnanalyzedNewScript)     \
-  _(GuardIsExtensible)                    \
-  _(GuardFunctionIsNative)                \
-  _(GuardFunctionIsConstructor)           \
-  _(GuardSpecificNativeFunction)          \
-  _(GuardFunctionPrototype)               \
-  _(GuardIsNativeObject)                  \
-  _(GuardIsProxy)                         \
-  _(GuardNotDOMProxy)                     \
-  _(GuardSpecificInt32Immediate)          \
-  _(GuardMagicValue)                      \
-  _(GuardNoDetachedTypedObjects)          \
-  _(GuardNoDenseElements)                 \
-  _(GuardAndGetNumberFromString)          \
-  _(GuardAndGetIndexFromString)           \
-  _(GuardIndexIsNonNegative)              \
-  _(GuardIndexGreaterThanDenseCapacity)   \
-  _(GuardIndexGreaterThanArrayLength)     \
-  _(GuardIndexIsValidUpdateOrAdd)         \
-  _(GuardIndexGreaterThanDenseInitLength) \
-  _(GuardTagNotEqual)                     \
-  _(GuardXrayExpandoShapeAndDefaultProto) \
-  _(GuardNoAllocationMetadataBuilder)     \
-  _(GuardObjectGroupNotPretenured)        \
-  _(GuardFunctionHasJitEntry)             \
-  _(GuardNotClassConstructor)             \
-  _(LoadObject)                           \
-  _(LoadProto)                            \
-  _(LoadEnclosingEnvironment)             \
-  _(LoadWrapperTarget)                    \
-  _(LoadValueTag)                         \
-  _(LoadDOMExpandoValue)                  \
-  _(LoadDOMExpandoValueIgnoreGeneration)  \
-  _(LoadUndefinedResult)                  \
-  _(LoadBooleanResult)                    \
-  _(LoadInt32ArrayLengthResult)           \
-  _(DoubleAddResult)                      \
-  _(DoubleSubResult)                      \
-  _(DoubleMulResult)                      \
-  _(DoubleDivResult)                      \
-  _(DoubleModResult)                      \
-  _(Int32AddResult)                       \
-  _(Int32SubResult)                       \
-  _(Int32MulResult)                       \
-  _(Int32DivResult)                       \
-  _(Int32ModResult)                       \
-  _(Int32BitOrResult)                     \
-  _(Int32BitXorResult)                    \
-  _(Int32BitAndResult)                    \
-  _(Int32LeftShiftResult)                 \
-  _(Int32RightShiftResult)                \
-  _(Int32URightShiftResult)               \
-  _(Int32NegationResult)                  \
-  _(Int32NotResult)                       \
-  _(Int32IncResult)                       \
-  _(Int32DecResult)                       \
-  _(DoubleIncResult)                      \
-  _(DoubleDecResult)                      \
-  _(DoubleNegationResult)                 \
-  _(TruncateDoubleToUInt32)               \
-  _(LoadArgumentsObjectLengthResult)      \
-  _(LoadFunctionLengthResult)             \
-  _(LoadStringLengthResult)               \
-  _(LoadStringCharResult)                 \
-  _(LoadArgumentsObjectArgResult)         \
-  _(LoadInstanceOfObjectResult)           \
-  _(LoadDenseElementResult)               \
-  _(LoadDenseElementHoleResult)           \
-  _(LoadDenseElementExistsResult)         \
-  _(LoadDenseElementHoleExistsResult)     \
-  _(LoadTypedElementExistsResult)         \
-  _(LoadTypedElementResult)               \
-  _(LoadObjectResult)                     \
-  _(LoadTypeOfObjectResult)               \
-  _(LoadInt32TruthyResult)                \
-  _(LoadDoubleTruthyResult)               \
-  _(LoadStringTruthyResult)               \
-  _(LoadObjectTruthyResult)               \
-  _(LoadNewObjectFromTemplateResult)      \
-  _(CompareObjectResult)                  \
-  _(CompareSymbolResult)                  \
-  _(CompareInt32Result)                   \
-  _(CompareDoubleResult)                  \
-  _(CompareObjectUndefinedNullResult)     \
-  _(ArrayJoinResult)                      \
-  _(CallPrintString)                      \
-  _(Breakpoint)                           \
-  _(MegamorphicLoadSlotResult)            \
-  _(MegamorphicLoadSlotByValueResult)     \
-  _(MegamorphicStoreSlot)                 \
-  _(MegamorphicHasPropResult)             \
-  _(CallObjectHasSparseElementResult)     \
-  _(CallInt32ToString)                    \
-  _(CallNumberToString)                   \
-  _(BooleanToString)                      \
-  _(CallIsSuspendedGeneratorResult)       \
-  _(MetaTwoByte)                          \
-  _(WrapResult)
+class BaselineCacheIRCompiler;
+class IonCacheIRCompiler;
 
 // [SMDDOC] CacheIR Value Representation and Tracking
 //
@@ -443,6 +331,9 @@ class MOZ_RAII CacheRegisterAllocator {
   // The index of the CacheIR instruction we're currently emitting.
   uint32_t currentInstruction_;
 
+  // Whether the stack contains a double spilled by AutoScratchFloatRegister.
+  bool hasAutoScratchFloatRegisterSpill_ = false;
+
   const CacheIRWriter& writer_;
 
   CacheRegisterAllocator(const CacheRegisterAllocator&) = delete;
@@ -526,6 +417,14 @@ class MOZ_RAII CacheRegisterAllocator {
     return spilledRegs_.appendAll(regs);
   }
 
+  bool hasAutoScratchFloatRegisterSpill() const {
+    return hasAutoScratchFloatRegisterSpill_;
+  }
+  void setHasAutoScratchFloatRegisterSpill(bool b) {
+    MOZ_ASSERT(hasAutoScratchFloatRegisterSpill_ != b);
+    hasAutoScratchFloatRegisterSpill_ = b;
+  }
+
   void nextOp() {
 #ifdef DEBUG
     assertValidState();
@@ -598,7 +497,8 @@ class MOZ_RAII CacheRegisterAllocator {
   // Loads (potentially coercing) and unboxes a value into a float register
   // This is infallible, as there should have been a previous guard
   // to ensure the ValOperandId is already a number.
-  void ensureDoubleRegister(MacroAssembler&, ValOperandId, FloatRegister);
+  void ensureDoubleRegister(MacroAssembler& masm, NumberOperandId op,
+                            FloatRegister dest);
 
   // Returns |val|'s JSValueType or JSVAL_TYPE_UNKNOWN.
   JSValueType knownType(ValOperandId val) const;
@@ -642,6 +542,31 @@ class MOZ_RAII AutoScratchRegister {
   operator Register() const { return reg_; }
 };
 
+// On x86, spectreBoundsCheck32 can emit better code if it has a scratch
+// register and index masking is enabled.
+class MOZ_RAII AutoSpectreBoundsScratchRegister {
+  mozilla::Maybe<AutoScratchRegister> scratch_;
+  Register reg_ = InvalidReg;
+
+  AutoSpectreBoundsScratchRegister(const AutoSpectreBoundsScratchRegister&) =
+      delete;
+  void operator=(const AutoSpectreBoundsScratchRegister&) = delete;
+
+ public:
+  AutoSpectreBoundsScratchRegister(CacheRegisterAllocator& alloc,
+                                   MacroAssembler& masm) {
+#ifdef JS_CODEGEN_X86
+    if (JitOptions.spectreIndexMasking) {
+      scratch_.emplace(alloc, masm);
+      reg_ = scratch_->get();
+    }
+#endif
+  }
+
+  Register get() const { return reg_; }
+  operator Register() const { return reg_; }
+};
+
 // The FailurePath class stores everything we need to generate a failure path
 // at the end of the IC code. The failure path restores the input registers, if
 // needed, and jumps to the next stub.
@@ -650,6 +575,11 @@ class FailurePath {
   SpilledRegisterVector spilledRegs_;
   NonAssertingLabel label_;
   uint32_t stackPushed_;
+#ifdef DEBUG
+  // Flag to ensure FailurePath::label() isn't taken while there's a scratch
+  // float register which still needs to be restored.
+  bool hasAutoScratchFloatRegister_ = false;
+#endif
 
  public:
   FailurePath() = default;
@@ -660,7 +590,11 @@ class FailurePath {
         label_(other.label_),
         stackPushed_(other.stackPushed_) {}
 
-  Label* label() { return &label_; }
+  Label* labelUnchecked() { return &label_; }
+  Label* label() {
+    MOZ_ASSERT(!hasAutoScratchFloatRegister_);
+    return labelUnchecked();
+  }
 
   void setStackPushed(uint32_t i) { stackPushed_ = i; }
   uint32_t stackPushed() const { return stackPushed_; }
@@ -680,6 +614,20 @@ class FailurePath {
   // If canShareFailurePath(other) returns true, the same machine code will
   // be emitted for two failure paths, so we can share them.
   bool canShareFailurePath(const FailurePath& other) const;
+
+  void setHasAutoScratchFloatRegister() {
+#ifdef DEBUG
+    MOZ_ASSERT(!hasAutoScratchFloatRegister_);
+    hasAutoScratchFloatRegister_ = true;
+#endif
+  }
+
+  void clearHasAutoScratchFloatRegister() {
+#ifdef DEBUG
+    MOZ_ASSERT(hasAutoScratchFloatRegister_);
+    hasAutoScratchFloatRegister_ = false;
+#endif
+  }
 };
 
 /**
@@ -705,11 +653,22 @@ class AutoOutputRegister;
 class MOZ_RAII CacheIRCompiler {
  protected:
   friend class AutoOutputRegister;
+  friend class AutoStubFrame;
+  friend class AutoSaveLiveRegisters;
+  friend class AutoCallVM;
+  friend class AutoScratchFloatRegister;
+  friend class AutoAvailableFloatRegister;
 
   enum class Mode { Baseline, Ion };
 
+  bool preparedForVMCall_;
+
+  bool isBaseline();
+  bool isIon();
+  BaselineCacheIRCompiler* asBaseline();
+  IonCacheIRCompiler* asIon();
+
   JSContext* cx_;
-  CacheIRReader reader;
   const CacheIRWriter& writer_;
   StackMacroAssembler masm;
 
@@ -736,27 +695,10 @@ class MOZ_RAII CacheIRCompiler {
 
   StubFieldPolicy stubFieldPolicy_;
 
-#ifdef DEBUG
-  const uint8_t* currentVerificationPosition_;
-
-  // Verify that the number of bytes consumed by the compiler matches
-  // up with the opcode signature in CACHE_IR_OPS.
-  void assertAllArgumentsConsumed() {
-    CacheOp prevOp = CacheOp(*currentVerificationPosition_);
-    uint32_t expectedLength = 1 + CacheIROpFormat::ArgLengths[uint8_t(prevOp)];
-
-    const uint8_t* newPosition = reader.currentPosition();
-    MOZ_ASSERT(newPosition > currentVerificationPosition_);
-    uint32_t actualLength = newPosition - currentVerificationPosition_;
-    MOZ_ASSERT(actualLength == expectedLength);
-    currentVerificationPosition_ = newPosition;
-  };
-#endif
-
   CacheIRCompiler(JSContext* cx, const CacheIRWriter& writer,
                   uint32_t stubDataOffset, Mode mode, StubFieldPolicy policy)
-      : cx_(cx),
-        reader(writer),
+      : preparedForVMCall_(false),
+        cx_(cx),
         writer_(writer),
         allocator(writer_),
         liveFloatRegs_(FloatRegisterSet::All()),
@@ -764,9 +706,6 @@ class MOZ_RAII CacheIRCompiler {
         stubDataOffset_(stubDataOffset),
         stubFieldPolicy_(policy) {
     MOZ_ASSERT(!writer.failed());
-#ifdef DEBUG
-    currentVerificationPosition_ = reader.currentPosition();
-#endif
   }
 
   MOZ_MUST_USE bool addFailurePath(FailurePath** failure);
@@ -788,9 +727,13 @@ class MOZ_RAII CacheIRCompiler {
            !allocator.isDeadAfterInstruction(objId);
   }
 
-  void emitLoadTypedObjectResultShared(const Address& fieldAddr,
-                                       Register scratch, uint32_t typeDescr,
-                                       const AutoOutputRegister& output);
+  bool emitLoadTypedElementResult(ObjOperandId objId, Int32OperandId indexId,
+                                  TypedThingLayout layout,
+                                  Scalar::Type elementType, bool handleOOB);
+
+  bool emitStoreTypedElement(ObjOperandId objId, TypedThingLayout layout,
+                             Scalar::Type elementType, Int32OperandId indexId,
+                             uint32_t rhsId, bool handleOOB);
 
   void emitStoreTypedObjectReferenceProp(ValueOperand val, ReferenceType type,
                                          const Address& dest, Register scratch);
@@ -820,16 +763,28 @@ class MOZ_RAII CacheIRCompiler {
     emitPostBarrierShared(obj, val, scratch, index);
   }
 
-  bool emitComparePointerResultShared(bool symbol);
+  bool emitComparePointerResultShared(JSOp op, TypedOperandId lhsId,
+                                      TypedOperandId rhsId);
 
-  bool emitDoubleIncDecResult(bool isInc);
+  bool emitCompareBigIntInt32ResultShared(Register bigInt, Register int32,
+                                          Register scratch1, Register scratch2,
+                                          JSOp op,
+                                          const AutoOutputRegister& output);
 
-#define DEFINE_SHARED_OP(op) MOZ_MUST_USE bool emit##op();
-  CACHE_IR_SHARED_OPS(DEFINE_SHARED_OP)
-#undef DEFINE_SHARED_OP
+  template <typename Fn, Fn fn>
+  MOZ_MUST_USE bool emitBigIntBinaryOperationShared(BigIntOperandId lhsId,
+                                                    BigIntOperandId rhsId);
+
+  template <typename Fn, Fn fn>
+  MOZ_MUST_USE bool emitBigIntUnaryOperationShared(BigIntOperandId inputId);
+
+  bool emitDoubleIncDecResult(bool isInc, NumberOperandId inputId);
+
+  CACHE_IR_COMPILER_SHARED_GENERATED
 
   void emitLoadStubField(StubFieldOffset val, Register dest);
   void emitLoadStubFieldConstant(StubFieldOffset val, Register dest);
+  Address emitAddressFromStubField(StubFieldOffset val, Register base);
 
   uintptr_t readStubWord(uint32_t offset, StubField::Type type) {
     MOZ_ASSERT(stubFieldPolicy_ == StubFieldPolicy::Constant);
@@ -842,6 +797,10 @@ class MOZ_RAII CacheIRCompiler {
     return writer_.readStubFieldForIon(offset, type).asInt64();
   }
   int32_t int32StubField(uint32_t offset) {
+    MOZ_ASSERT(stubFieldPolicy_ == StubFieldPolicy::Constant);
+    return readStubWord(offset, StubField::Type::RawWord);
+  }
+  uint32_t uint32StubField(uint32_t offset) {
     MOZ_ASSERT(stubFieldPolicy_ == StubFieldPolicy::Constant);
     return readStubWord(offset, StubField::Type::RawWord);
   }
@@ -877,9 +836,9 @@ class MOZ_RAII CacheIRCompiler {
     MOZ_ASSERT(stubFieldPolicy_ == StubFieldPolicy::Constant);
     return (JS::Compartment*)readStubWord(offset, StubField::Type::RawWord);
   }
-  const Class* classStubField(uintptr_t offset) {
+  const JSClass* classStubField(uintptr_t offset) {
     MOZ_ASSERT(stubFieldPolicy_ == StubFieldPolicy::Constant);
-    return (const Class*)readStubWord(offset, StubField::Type::RawWord);
+    return (const JSClass*)readStubWord(offset, StubField::Type::RawWord);
   }
   const void* proxyHandlerStubField(uintptr_t offset) {
     MOZ_ASSERT(stubFieldPolicy_ == StubFieldPolicy::Constant);
@@ -890,11 +849,19 @@ class MOZ_RAII CacheIRCompiler {
     return jsid::fromRawBits(readStubWord(offset, StubField::Type::Id));
   }
 
+#ifdef DEBUG
+  void assertFloatRegisterAvailable(FloatRegister reg);
+#endif
+
  public:
   // The maximum number of arguments passed to a spread call or
   // fun_apply IC.  Keep this small to avoid controllable stack
   // overflows by attackers passing large arrays.
   static const uint32_t MAX_ARGS_ARRAY_LENGTH = 16;
+
+  void callVMInternal(MacroAssembler& masm, VMFunctionId id);
+  template <typename Fn, Fn fn>
+  void callVM(MacroAssembler& masm);
 };
 
 // Ensures the IC's output register is available for writing.
@@ -931,6 +898,46 @@ class MOZ_RAII AutoOutputRegister {
   operator TypedOrValueRegister() const { return output_; }
 };
 
+enum class CallCanGC { CanGC, CanNotGC };
+
+// Instructions that have to perform a callVM require a stub frame. Call its
+// enter() and leave() methods to enter/leave the stub frame.
+// Hoisted from jit/BaselineCacheIRCompiler.cpp. See there for method
+// definitions.
+class MOZ_RAII AutoStubFrame {
+  BaselineCacheIRCompiler& compiler;
+#ifdef DEBUG
+  uint32_t framePushedAtEnterStubFrame_;
+#endif
+
+  AutoStubFrame(const AutoStubFrame&) = delete;
+  void operator=(const AutoStubFrame&) = delete;
+
+ public:
+  explicit AutoStubFrame(BaselineCacheIRCompiler& compiler);
+
+  void enter(MacroAssembler& masm, Register scratch,
+             CallCanGC canGC = CallCanGC::CanGC);
+  void leave(MacroAssembler& masm, bool calledIntoIon = false);
+
+#ifdef DEBUG
+  ~AutoStubFrame();
+#endif
+};
+// AutoSaveLiveRegisters must be used when we make a call that can GC. The
+// constructor ensures all live registers are stored on the stack (where the GC
+// expects them) and the destructor restores these registers.
+class MOZ_RAII AutoSaveLiveRegisters {
+  IonCacheIRCompiler& compiler_;
+
+  AutoSaveLiveRegisters(const AutoSaveLiveRegisters&) = delete;
+  void operator=(const AutoSaveLiveRegisters&) = delete;
+
+ public:
+  explicit AutoSaveLiveRegisters(IonCacheIRCompiler& compiler);
+
+  ~AutoSaveLiveRegisters();
+};
 // Like AutoScratchRegister, but reuse a register of |output| if possible.
 class MOZ_RAII AutoScratchRegisterMaybeOutput {
   mozilla::Maybe<AutoScratchRegister> scratch_;
@@ -952,6 +959,126 @@ class MOZ_RAII AutoScratchRegisterMaybeOutput {
   }
 
   operator Register() const { return scratchReg_; }
+};
+
+// AutoCallVM is a wrapper class that unifies methods shared by
+// IonCacheIRCompiler and BaselineCacheIRCompiler that perform a callVM, but
+// require stub specific functionality before performing the VM call.
+//
+// Expected Usage:
+//
+//   OPs with implementations that may be unified by this class must:
+//     - Be listed in the CACHEIR_OPS list but not in the CACHE_IR_SHARED_OPS
+//     list
+//     - Differ only in their use of `AutoSaveLiveRegisters`,
+//       `AutoOutputRegister`, and `AutoScratchRegister`. The Ion
+//       implementation will use `AutoSaveLiveRegisters` and
+//       `AutoOutputRegister`, while the Baseline implementation will use
+//       `AutoScratchRegister`.
+//     - Both use the `callVM` method.
+//
+//   Using AutoCallVM:
+//     - The constructor initializes `AutoOutputRegister` for both compiler
+//       types. Additionally it initializes an `AutoSaveLiveRegisters` for
+//       CacheIRCompilers with the mode Ion, and initializes
+//       `AutoScratchRegisterMaybeOutput` and `AutoStubFrame` variables for
+//       compilers with mode Baseline.
+//     - The `prepare()` method calls the IonCacheIRCompiler method
+//       `prepareVMCall` for IonCacheIRCompilers, calls the `enter()` method of
+//       `AutoStubFrame` for BaselineCacheIRCompilers, and calls the
+//       `discardStack` method of the `Register` class for both compiler types.
+//     - The `call()` method invokes `callVM` on the CacheIRCompiler and stores
+//       the call result according to its type. Finally it calls the `leave`
+//       method of `AutoStubFrame` for BaselineCacheIRCompilers.
+//
+//   Expected Usage Example:
+//     See: `CacheIRCompiler::emitCallGetSparseElementResult()`
+//
+// Restrictions:
+//   - OPs that do not meet the criteria listed above can not be unified with
+//     AutoCallVM
+//
+
+class MOZ_RAII AutoCallVM {
+  MacroAssembler& masm_;
+  CacheIRCompiler* compiler_;
+  CacheRegisterAllocator& allocator_;
+  mozilla::Maybe<AutoOutputRegister> output_;
+
+  // Baseline specific stuff
+  mozilla::Maybe<AutoStubFrame> stubFrame_;
+  mozilla::Maybe<AutoScratchRegisterMaybeOutput> scratch_;
+
+  // Ion specific stuff
+  mozilla::Maybe<AutoSaveLiveRegisters> save_;
+
+  void storeResult(JSValueType returnType);
+
+  template <typename Fn>
+  void storeResult();
+
+ public:
+  AutoCallVM(MacroAssembler& masm, CacheIRCompiler* compiler,
+             CacheRegisterAllocator& allocator);
+
+  void prepare();
+
+  template <typename Fn, Fn fn>
+  void call() {
+    compiler_->callVM<Fn, fn>(masm_);
+    storeResult<Fn>();
+  }
+};
+
+// RAII class to allocate FloatReg0 as a scratch register and release it when
+// we're done with it. The previous contents of FloatReg0 may be spilled on the
+// stack and, if necessary, are restored when the destructor runs.
+//
+// When FailurePath is passed to the constructor, FailurePath::label() must not
+// be used during the life time of the AutoScratchFloatRegister. Instead use
+// AutoScratchFloatRegister::failure().
+class MOZ_RAII AutoScratchFloatRegister {
+  Label failurePopReg_{};
+  CacheIRCompiler* compiler_;
+  FailurePath* failure_;
+
+  AutoScratchFloatRegister(const AutoScratchFloatRegister&) = delete;
+  void operator=(const AutoScratchFloatRegister&) = delete;
+
+ public:
+  explicit AutoScratchFloatRegister(CacheIRCompiler* compiler)
+      : AutoScratchFloatRegister(compiler, nullptr) {}
+
+  AutoScratchFloatRegister(CacheIRCompiler* compiler, FailurePath* failure);
+
+  ~AutoScratchFloatRegister();
+
+  Label* failure();
+
+  FloatRegister get() const { return FloatReg0; }
+  operator FloatRegister() const { return FloatReg0; }
+};
+
+// This class can be used to assert a certain FloatRegister is available. In
+// Baseline mode, all float registers are available. In Ion mode, only the
+// registers added as fixed temps in LIRGenerator are available.
+class MOZ_RAII AutoAvailableFloatRegister {
+  FloatRegister reg_;
+
+  AutoAvailableFloatRegister(const AutoAvailableFloatRegister&) = delete;
+  void operator=(const AutoAvailableFloatRegister&) = delete;
+
+ public:
+  explicit AutoAvailableFloatRegister(CacheIRCompiler& compiler,
+                                      FloatRegister reg)
+      : reg_(reg) {
+#ifdef DEBUG
+    compiler.assertFloatRegisterAvailable(reg);
+#endif
+  }
+
+  FloatRegister get() const { return reg_; }
+  operator FloatRegister() const { return reg_; }
 };
 
 // See the 'Sharing Baseline stub code' comment in CacheIR.h for a description
@@ -1007,14 +1134,15 @@ class CacheIRStubInfo {
                               const CacheIRWriter& writer);
 
   template <class Stub, class T>
-  js::GCPtr<T>& getStubField(Stub* stub, uint32_t field) const;
+  js::GCPtr<T>& getStubField(Stub* stub, uint32_t offset) const;
 
   template <class T>
-  js::GCPtr<T>& getStubField(ICStub* stub, uint32_t field) const {
-    return getStubField<ICStub, T>(stub, field);
+  js::GCPtr<T>& getStubField(ICStub* stub, uint32_t offset) const {
+    return getStubField<ICStub, T>(stub, offset);
   }
 
-  uintptr_t getStubRawWord(ICStub* stub, uint32_t field) const;
+  uintptr_t getStubRawWord(const uint8_t* stubData, uint32_t offset) const;
+  uintptr_t getStubRawWord(ICStub* stub, uint32_t offset) const;
 };
 
 template <typename T>

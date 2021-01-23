@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+
+<!ENTITY windowTitle.label "Vraag oor HTML-pos">
+
+<!ENTITY recipient.label "Sommige van die ontvangers is nie gelys as mense wat HTML-pos kan ontvang nie.">
+
+<!ENTITY question.label "Wil u die boodskap in skoonteks omskakel of wil u dit maar as HTML stuur?">
+
+<!ENTITY plainTextAndHtml.label "Stuur in skoonteks en HTML">
+<!ENTITY plainTextAndHtml.accesskey "s">
+<!ENTITY plainTextOnly.label "Stuur net in skoonteks">
+<!ENTITY plainTextOnly.accesskey "s">
+<!ENTITY htmlOnly.label "Stuur net in HTML">
+<!ENTITY htmlOnly.accesskey "H">
+
+<!ENTITY send.label "Stuur">
+<!ENTITY send.accesskey "S">

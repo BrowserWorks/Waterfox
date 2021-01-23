@@ -19,96 +19,15 @@
 #include "mozilla/Sprintf.h"
 #include "mozilla/dom/CryptoBuffer.h"
 #include "mozilla/dom/CryptoKey.h"
+#include "mozilla/psm/PSMIPCCommon.h"
 #include "ipc/IPCMessageUtils.h"
 
 namespace mozilla {
 
-// TODO(bug 1522632): This function should be moved to NSS
-static SECItem* ExportDEREncryptedPrivateKeyInfo(
-    PK11SlotInfo* slot,    /* optional, encrypt key in this slot */
-    SECOidTag algTag,      /* encrypt key with this algorithm */
-    const SECItem* pwitem, /* password for PBE encryption */
-    SECKEYPrivateKey* pk,  /* encrypt this private key */
-    int iteration,         /* interations for PBE alg */
-    void* wincx)           /* context for password callback ? */
-{
-  SECKEYEncryptedPrivateKeyInfo* pki = PK11_ExportEncryptedPrivKeyInfo(
-      slot, algTag, const_cast<SECItem*>(pwitem), pk, iteration, wincx);
-  SECItem* derPKI;
-
-  if (!pki) {
-    return NULL;
-  }
-  derPKI = SEC_ASN1EncodeItem(
-      NULL, NULL, pki,
-      NSS_Get_SECKEY_EncryptedPrivateKeyInfoTemplate(NULL, PR_FALSE));
-  SECKEY_DestroyEncryptedPrivateKeyInfo(pki, PR_TRUE);
-  return derPKI;
-}
-
-// This function should be moved to NSS
-static SECStatus ImportDEREncryptedPrivateKeyInfoAndReturnKey(
-    PK11SlotInfo* slot, SECItem* derPKI, SECItem* pwitem, SECItem* nickname,
-    SECItem* publicValue, PRBool isPerm, PRBool isPrivate, KeyType type,
-    unsigned int keyUsage, SECKEYPrivateKey** privk, void* wincx) {
-  SECKEYEncryptedPrivateKeyInfo* epki = NULL;
-  PLArenaPool* temparena = NULL;
-  SECStatus rv = SECFailure;
-
-  temparena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
-  if (!temparena) return rv;
-  epki = PORT_ArenaZNew(temparena, SECKEYEncryptedPrivateKeyInfo);
-  if (!epki) {
-    PORT_FreeArena(temparena, PR_FALSE);
-    return rv;
-  }
-  epki->arena = temparena;
-
-  rv = SEC_ASN1DecodeItem(
-      epki->arena, epki,
-      NSS_Get_SECKEY_EncryptedPrivateKeyInfoTemplate(NULL, PR_FALSE), derPKI);
-  if (rv != SECSuccess) {
-    /* If SEC_ASN1DecodeItem fails, we cannot assume anything about the
-     * validity of the data in epki. The best we can do is free the arena
-     * and return. */
-    PORT_FreeArena(temparena, PR_TRUE);
-    return rv;
-  }
-  if (epki->encryptedData.data == NULL) {
-    /* If SEC_ASN1DecodeItems succeeds but
-     * SECKEYEncryptedPrivateKeyInfo.encryptedData is a zero-length octet
-     * string, free the arena and return a failure to avoid trying to zero the
-     * corresponding SECItem in SECKEY_DestroyPrivateKeyInfo(). */
-    PORT_FreeArena(temparena, PR_TRUE);
-    PORT_SetError(SEC_ERROR_BAD_KEY);
-    return SECFailure;
-  }
-
-  rv = PK11_ImportEncryptedPrivateKeyInfoAndReturnKey(
-      slot, epki, pwitem, nickname, publicValue, isPerm, isPrivate, type,
-      keyUsage, privk, wincx);
-
-  /* this zeroes the key and frees the arena */
-  SECKEY_DestroyEncryptedPrivateKeyInfo(epki, PR_TRUE /*freeit*/);
-  return rv;
-}
-
 nsresult DtlsIdentity::Serialize(nsTArray<uint8_t>* aKeyDer,
                                  nsTArray<uint8_t>* aCertDer) {
-  UniquePK11SlotInfo slot(PK11_GetInternalSlot());
-  if (!slot) {
-    MOZ_ASSERT(false);
-    return NS_ERROR_FAILURE;
-  }
-
-  // For private keys, NSS cannot export anything other than SHA, but we need EC
-  // also. So, we use the private key encryption function to serialize instead,
-  // using a hard-coded dummy password; this is not intended to provide any
-  // additional security, it just works around a limitation in NSS.
-  SECItem dummyPassword = {siBuffer, nullptr, 0};
-  ScopedSECItem derPki(ExportDEREncryptedPrivateKeyInfo(
-      slot.get(), SEC_OID_AES_128_CBC, &dummyPassword, private_key_.get(), 1,
-      nullptr));
+  ScopedSECItem derPki(
+      psm::WrapPrivateKeyInfoWithEmptyPassword(private_key_.get()));
   if (!derPki) {
     return NS_ERROR_FAILURE;
   }
@@ -122,50 +41,17 @@ nsresult DtlsIdentity::Serialize(nsTArray<uint8_t>* aKeyDer,
 RefPtr<DtlsIdentity> DtlsIdentity::Deserialize(
     const nsTArray<uint8_t>& aKeyDer, const nsTArray<uint8_t>& aCertDer,
     SSLKEAType authType) {
-  UniquePK11SlotInfo slot(PK11_GetInternalSlot());
-  if (!slot) {
-    MOZ_ASSERT(false);
-    return nullptr;
-  }
-
   SECItem certDer = {siBuffer, const_cast<uint8_t*>(aCertDer.Elements()),
                      static_cast<unsigned int>(aCertDer.Length())};
   UniqueCERTCertificate cert(CERT_NewTempCertificate(
       CERT_GetDefaultCertDB(), &certDer, nullptr, true, true));
 
-  // Extract the public value needed for decryption of private key
-  // (why did we not need this for encryption?)
-  ScopedSECKEYPublicKey publicKey(CERT_ExtractPublicKey(cert.get()));
-  // This is a pointer to data inside publicKey
-  SECItem* publicValue = nullptr;
-  switch (publicKey->keyType) {
-    case dsaKey:
-      publicValue = &publicKey->u.dsa.publicValue;
-      break;
-    case dhKey:
-      publicValue = &publicKey->u.dh.publicValue;
-      break;
-    case rsaKey:
-      publicValue = &publicKey->u.rsa.modulus;
-      break;
-    case ecKey:
-      publicValue = &publicKey->u.ec.publicValue;
-      break;
-    default:
-      MOZ_ASSERT(false);
-      return nullptr;
-  }
-
   SECItem derPKI = {siBuffer, const_cast<uint8_t*>(aKeyDer.Elements()),
                     static_cast<unsigned int>(aKeyDer.Length())};
 
-  // See comment in Serialize about this dummy password stuff
-  SECItem dummyPassword = {siBuffer, nullptr, 0};
   SECKEYPrivateKey* privateKey;
-  if (ImportDEREncryptedPrivateKeyInfoAndReturnKey(
-          slot.get(), &derPKI, &dummyPassword, nullptr, publicValue, false,
-          false, publicKey->keyType, KU_ALL, &privateKey,
-          nullptr) != SECSuccess) {
+  if (psm::UnwrapPrivateKeyInfoWithEmptyPassword(&derPKI, cert, &privateKey) !=
+      SECSuccess) {
     MOZ_ASSERT(false);
     return nullptr;
   }
@@ -295,9 +181,8 @@ RefPtr<DtlsIdentity> DtlsIdentity::Generate() {
   }
   certificate->derCert = *signedCert;
 
-  RefPtr<DtlsIdentity> identity = new DtlsIdentity(
-      std::move(private_key), std::move(certificate), ssl_kea_ecdh);
-  return identity.forget();
+  return new DtlsIdentity(std::move(private_key), std::move(certificate),
+                          ssl_kea_ecdh);
 }
 
 const std::string DtlsIdentity::DEFAULT_HASH_ALGORITHM = "sha-256";

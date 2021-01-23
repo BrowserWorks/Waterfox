@@ -1,0 +1,127 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "Ohjattu tilin luonti">
+<!ENTITY accountWizard.size "width: 40em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!ENTITY accountSetupInfo2.label "Jotta voisit vastaanottaa viestejä, sinun tulee asentaa tili.">
+<!ENTITY accountTypeTitle.label "Uuden tilin asennus">
+<!ENTITY accountTypeDesc2.label "Tämä ohjattu toiminto kysyy sinulta tilin asentamiseen tarvittavat tiedot. Jos sinulla ei ole pyydettyjä tietoja, voit tiedustella niitä järjestelmänvalvojalta tai palveluntarjoajalta.">
+<!ENTITY accountTypeDirections.label "Valitse, minkätyyppisen tilin haluat asentaa:">
+<!ENTITY accountTypeMail.label "Sähköpostitili">
+<!ENTITY accountTypeMail.accesskey "S">
+<!ENTITY accountTypeNews.label "Keskusteluryhmätili">
+<!ENTITY accountTypeNews.accesskey "K">
+<!-- LOCALIZATION NOTE(accountTypeMovemail.label): do not translate 'Movemail' -->
+<!ENTITY accountTypeMovemail.label "Unix Mailspool (Movemail)">
+<!ENTITY accountTypeMovemail.accesskey "U">
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "Käyttäjätiedot">
+<!ENTITY identityDesc.label "Jokaiseen tiliin tallennetaan käyttäjätiedot, joista viestiesi vastaanottajat tunnistavat sinut.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "Anna nimi, jonka haluaisit näkyvän lähettämiesi viestien &quot;Kirjoittanut&quot;-osoitekentässä">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(esim. &quot;Erkki Esimerkki&quot;).">
+<!ENTITY fullnameLabel.label "Oma nimesi:">
+<!ENTITY fullnameLabel.accesskey "O">
+
+<!ENTITY emailLabel.label "Sähköpostiosoite:">
+<!ENTITY emailLabel.accesskey "S">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "Saapuvan postin palvelimen tiedot">
+<!ENTITY incomingServerTypeDesc.label "Valitse käyttämäsi saapuvan postin palvelimen tyyppi.">
+<!-- LOCALIZATION NOTE (imapType.label) : Do not translate "IMAP" in below line -->
+<!ENTITY imapType.label "IMAP">
+<!ENTITY imapType.accesskey "I">
+<!-- LOCALIZATION NOTE (popType.label) : Do not translate "POP" in below line -->
+<!ENTITY popType.label "POP">
+<!ENTITY popType.accesskey "P">
+<!ENTITY portNum.label "Portti:">
+<!ENTITY portNum.accesskey "o">
+<!ENTITY defaultPortLabel.label "Oletus:">
+<!ENTITY defaultPortValue.label "">
+<!-- LOCALIZATION NOTE (incomingServerNameDesc.label) : Do not translate "&quot;pop.example.net&quot;" in below line -->
+<!ENTITY incomingServer.description "Anna käyttämäsi saapuvan postin palvelimen osoite (esim. &quot;posti.example.net&quot;).">
+<!ENTITY incomingServer.label "Saapuvan postin palvelin:">
+<!ENTITY incomingServer.accesskey "S">
+<!ENTITY leaveMsgsOnSrvr.label "Jätä viestit palvelimelle">
+<!ENTITY leaveMsgsOnSrvr.accesskey "J">
+<!-- LOCALIZATION NOTE (incomingUsername.description) : do not translate "&quot;jsmith&quot;" in below line -->
+<!ENTITY incomingUsername.description "Anna palveluntarjoajasi sinulle antama saapuvan postin käyttäjätunnus (esim. &quot;erkkiesi&quot;).">
+<!ENTITY incomingUsername.label "Käyttäjätunnus:">
+<!ENTITY incomingUsername.accesskey "K">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Anna käyttämäsi keskusteluryhmäpalvelimen (NNTP) osoite (esim. &quot;news.example.net&quot;).">
+<!ENTITY newsServerLabel.label "Keskusteluryhmäpalvelin:">
+<!ENTITY newsServerLabel.accesskey "K">
+
+<!-- Entities for Outgoing Server page -->
+
+<!ENTITY outgoingTitle.label "Lähtevän postin palvelimen tiedot">
+<!-- LOCALIZATION NOTE (outgoingServer.description) : Do not translate "SMTP" and "&quot;smtp.example.net&quot;" in below line -->
+<!ENTITY outgoingServer.description "Anna käyttämäsi lähtevän postin palvelimen (SMTP) osoite (esim. &quot;smtp.example.net&quot;).">
+<!ENTITY outgoingServer.label "Lähtevän postin palvelin:">
+<!ENTITY outgoingServer.accesskey "L">
+<!ENTITY outgoingUsername.description "Anna palveluntarjoajasi sinulle antama lähtevän postin käyttäjätunnus (tämä on yleensä sama kuin saapuvan postin käyttäjätunnus).">
+<!ENTITY outgoingUsername.label "Lähtevän postin käyttäjätunnus:">
+<!ENTITY outgoingUsername.accesskey "L">
+
+<!-- LOCALIZATION NOTE (modifyOutgoing.suffix) : This string will be appended after each of
+     haveSmtp1.suffix3, haveSmtp2.suffix3, haveSmtp3.suffix3 .
+-->
+<!ENTITY modifyOutgoing.suffix "Voit muuttaa lähtevän postin palvelimen asetuksia tilien asetuksista.">
+<!-- LOCALIZATION NOTE (haveSmtp1.prefix and haveSmtp1.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp1.prefix and haveSmtp1.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp1.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp1.prefix "Aiemmin määrittelemääsi lähtevän postin palvelinta (SMTP), &quot;">
+<!ENTITY haveSmtp1.suffix3 "&quot;, käytetään myös jatkossa.">
+<!-- LOCALIZATION NOTE (haveSmtp2.prefix and haveSmtp2.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp2.prefix and haveSmtp2.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp2.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp2.prefix "Aiemmin määrittelemääsi lähtevän postin (SMTP) käyttäjätunnusta, &quot;">
+<!ENTITY haveSmtp2.suffix3 "&quot;, käytetään myös jatkossa.">
+<!-- LOCALIZATION NOTE (haveSmtp3.prefix and haveSmtp3.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp3.prefix and haveSmtp3.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp3.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp3.prefix "Määrittämäsi lähtevän postin (SMTP) palvelin, &quot;">
+<!ENTITY haveSmtp3.suffix3 "&quot;, on sama kuin saapuvan postin palvelin, jonka käyttäjätunnusta käytetään nyt myös lähtevien viestien lähettämiseen.">
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "Tilin nimi">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Anna nimi, jota haluaisit käyttää tästä tilistä (esim. &quot;Työtili&quot;, &quot;Kotitili&quot; or &quot;Keskusteluryhmätili&quot;).">
+<!ENTITY accnameLabel.label "Tilin nimi:">
+<!ENTITY accnameLabel.accesskey "T">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "Tietojen tarkistus">
+<!ENTITY completionText.label "Varmista, että alla olevat tiedot ovat oikein.">
+<!ENTITY serverTypePrefix.label "Saapuvan postin palvelimen tyyppi:">
+<!ENTITY serverNamePrefix.label "Saapuvan postin palvelimen osoite:">
+<!ENTITY smtpServerNamePrefix.label "Lähtevän postin palvelimen osoite (SMTP):">
+<!ENTITY newsServerNamePrefix.label "Keskusteluryhmäpalvelimen osoite (NNTP):">
+<!ENTITY downloadOnLogin.label "Nouda viestit nyt">
+<!ENTITY downloadOnLogin.accesskey "N">
+<!ENTITY deferStorageDesc.label "Valitse tämä, jos haluat, että tämän tilin viestit tallennetaan Paikallisten kansioiden koko järjestelmän laajuiseen Saapuneet-kansioon. Muutoin tili toimii päätason tilinä ja sen posti tallennetaan sen omaan hakemistoon.">
+<!ENTITY deferStorage.label "Käytä koko järjestelmän laajuista Saapuneet-kansiota (tallenna posti Paikallisiin kansioihin)">
+<!ENTITY deferStorage.accesskey "K">
+<!ENTITY clickFinish.label "Tallenna nämä asetukset ja sulje tilin asennus painamalla Lopeta.">
+<!ENTITY clickFinish.labelMac "Tallenna nämä asetukset ja sulje tilin asennus painamalla Valmis.">

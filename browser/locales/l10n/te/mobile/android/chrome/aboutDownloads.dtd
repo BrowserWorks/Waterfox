@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "దింపుకోళ్ళు">
+<!ENTITY aboutDownloads.header                     "మీ దింపుకోళ్ళు">
+<!ENTITY aboutDownloads.empty                      "దింపుకోళ్ళేమీ లేవు">
+
+<!ENTITY aboutDownloads.open                       "తెరువు">
+<!ENTITY aboutDownloads.remove                     "తొలగించు">
+<!ENTITY aboutDownloads.removeAll                  "అన్నింటినీ తొలగించు">
+<!ENTITY aboutDownloads.pause                      "నిలిపివుంచు">
+<!ENTITY aboutDownloads.resume                     "తిరిగికొనసాగించు">
+<!ENTITY aboutDownloads.cancel                     "రద్దుచేయి">
+<!ENTITY aboutDownloads.retry                      "తిరిగిప్రయత్నించు">

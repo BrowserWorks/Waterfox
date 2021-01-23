@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "नया पृष्ठ जमावट">
+
+<!ENTITY  authorName.label          "लेखक:">
+<!ENTITY  authorName.accesskey      "u">
+<!ENTITY  pageColorHeader           "मूलभूत पृष्ठ प्रकटन">
+
+<!ENTITY defaultColorsRadio.label   "पाठक मूलभूत रंग (पेज में रंग सेट न करें)">
+<!ENTITY defaultColors.accesskey    "d">
+<!ENTITY customColorsRadio.label    "पसंदीदा रंग का प्रयोग करें:">
+<!ENTITY customColors.accesskey     "c">
+
+<!ENTITY normalText.label           "सामान्य पाठ">
+<!ENTITY normalText.accesskey       "N">
+<!ENTITY linkText.label             "लिंक पाठ">
+<!ENTITY linkText.accesskey         "L">
+<!ENTITY activeLinkText.label       "सक्रिय लिंक पाठ">
+<!ENTITY activeLinkText.accesskey   "A">
+<!ENTITY visitedLinkText.label      "देखा गया लिंक पाठ">
+<!ENTITY visitedLinkText.accesskey  "V">
+<!ENTITY background.label           "पृष्ठभूमि:">
+<!ENTITY background.accesskey       "B">
+<!ENTITY colon.character            ":">
+
+<!ENTITY backgroundImage.label      "पृष्ठभूमि चित्र:">
+<!ENTITY backgroundImage.accesskey  "m">
+<!ENTITY chooseFile.label           "फाइल चुनें...">
+<!ENTITY chooseFile.accesskey       "o">
+

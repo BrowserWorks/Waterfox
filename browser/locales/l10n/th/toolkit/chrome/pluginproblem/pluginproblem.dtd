@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY tapToPlayPlugin                                     "แตะที่นี่เพื่อเปิดใช้งานปลั๊กอิน">
+<!ENTITY clickToActivatePlugin                               "เปิดใช้งานปลั๊กอิน">
+<!ENTITY checkForUpdates                                     "ตรวจสอบการอัปเดต…">
+<!ENTITY blockedPlugin.label                                 "ปลั๊กอินนี้ถูกปิดกั้นเพื่อปกป้องคุณ">
+<!ENTITY hidePluginBtn.label                                 "ซ่อนปลั๊กอิน">
+<!ENTITY managePlugins                                       "จัดการปลั๊กอิน…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "โหลดหน้าใหม่">
+<!ENTITY reloadPlugin.post                                   " เพื่อลองอีกครั้ง">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "ส่งรายงานข้อผิดพลาด">
+<!ENTITY report.submitting                                   "กำลังส่งรายงาน…">
+<!ENTITY report.submitted                                    "ส่งรายงานแล้ว">
+<!ENTITY report.disabled                                     "รายงานข้อผิดพลาดถูกปิดใช้งาน">
+<!ENTITY report.failed                                       "การส่งล้มเหลว">
+<!ENTITY report.unavailable                                  "ไม่มีรายงาน">
+<!ENTITY report.comment                                      "เพิ่มความคิดเห็น (ความคิดเห็นจะปรากฏต่อสาธารณะ)">
+<!ENTITY report.pageURL                                      "รวม URL ของหน้า">
+
+<!ENTITY plugin.file                                         "ไฟล์">
+<!ENTITY plugin.mimeTypes                                    "ชนิด MIME">
+<!ENTITY plugin.flashProtectedMode.label                     "เปิดใช้งาน Adobe Flash ในโหมดป้องกัน">
+<!ENTITY plugin.enableBlocklists.label                       "ปิดกั้นเนื้อหา Flash ที่เป็นอันตรายและบุกรุก">

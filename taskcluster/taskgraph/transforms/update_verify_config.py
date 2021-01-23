@@ -7,7 +7,7 @@ Transform the beetmover task into an actual task description.
 
 from __future__ import absolute_import, print_function, unicode_literals
 
-import urlparse
+import six.moves.urllib.parse as urlparse
 
 from taskgraph.transforms.base import TransformSequence
 from taskgraph.util.schema import resolve_keyed_by
@@ -33,8 +33,8 @@ INCLUDE_VERSION_REGEXES = {
     "devedition_hack": r"'^((?!58\.0b1$)\d+\.\d+(b\d+)?)$'",
     # Same as nonbeta, except for the esr suffix
     "esr": r"'^\d+\.\d+(\.\d+)?esr$'",
-    # Previous esr versions, for update testing before we update users to esr68
-    "esr68-next": r"'^(52|60)+\.\d+(\.\d+)?esr$'",
+    # Previous esr versions, for update testing before we update users to esr78
+    "esr78-next": r"'^(52|60|68)+\.\d+(\.\d+)?esr$'",
 }
 
 MAR_CHANNEL_ID_OVERRIDE_REGEXES = {

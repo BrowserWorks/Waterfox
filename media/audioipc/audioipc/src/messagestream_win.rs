@@ -3,56 +3,65 @@
 // This program is made available under an ISC-style license.  See the
 // accompanying file LICENSE for details
 
-extern crate mio_named_pipes;
-use std::os::windows::io::{IntoRawHandle, FromRawHandle, AsRawHandle, RawHandle};
+use super::tokio_named_pipes;
+use mio_named_pipes;
+use std::os::windows::fs::*;
+use std::os::windows::io::{AsRawHandle, FromRawHandle, IntoRawHandle, RawHandle};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use tokio_io::{AsyncRead, AsyncWrite};
-use tokio_named_pipes;
+use winapi::um::winbase::FILE_FLAG_OVERLAPPED;
 
 #[derive(Debug)]
-pub struct MessageStream(mio_named_pipes::NamedPipe);
+pub struct MessageStream(miow::pipe::NamedPipe);
 pub struct AsyncMessageStream(tokio_named_pipes::NamedPipe);
 
 impl MessageStream {
-    fn new(stream: mio_named_pipes::NamedPipe) -> MessageStream {
+    fn new(stream: miow::pipe::NamedPipe) -> MessageStream {
         MessageStream(stream)
     }
 
-
-    pub fn anonymous_ipc_pair() -> std::result::Result<(MessageStream, MessageStream), std::io::Error> {
-        let pipe1 = mio_named_pipes::NamedPipe::new(get_pipe_name())?;
-        let pipe2 = unsafe { mio_named_pipes::NamedPipe::from_raw_handle(pipe1.as_raw_handle()) };
-        Ok((MessageStream::new(pipe1), MessageStream::new(pipe2)))
+    pub fn anonymous_ipc_pair(
+    ) -> std::result::Result<(MessageStream, MessageStream), std::io::Error> {
+        let pipe_name = get_pipe_name();
+        let pipe_server = miow::pipe::NamedPipe::new(&pipe_name)?;
+        let pipe_client = {
+            let mut opts = std::fs::OpenOptions::new();
+            opts.read(true)
+                .write(true)
+                .custom_flags(FILE_FLAG_OVERLAPPED);
+            let file = opts.open(&pipe_name)?;
+            unsafe { miow::pipe::NamedPipe::from_raw_handle(file.into_raw_handle()) }
+        };
+        Ok((
+            MessageStream::new(pipe_server),
+            MessageStream::new(pipe_client),
+        ))
     }
 
     pub unsafe fn from_raw_fd(raw: super::PlatformHandleType) -> MessageStream {
-        MessageStream::new(mio_named_pipes::NamedPipe::from_raw_handle(raw))
+        MessageStream::new(miow::pipe::NamedPipe::from_raw_handle(raw))
     }
 
-    pub fn into_tokio_ipc(self, handle: &tokio_core::reactor::Handle) -> std::result::Result<AsyncMessageStream, std::io::Error> {
-        Ok(AsyncMessageStream::new(tokio_named_pipes::NamedPipe::from_pipe(self.0, handle)?))
+    pub fn into_tokio_ipc(
+        self,
+        handle: &tokio::reactor::Handle,
+    ) -> std::result::Result<AsyncMessageStream, std::io::Error> {
+        let pipe = unsafe { mio_named_pipes::NamedPipe::from_raw_handle(self.into_raw_handle()) };
+        Ok(AsyncMessageStream::new(
+            tokio_named_pipes::NamedPipe::from_pipe(pipe, handle)?,
+        ))
+    }
+}
+
+impl IntoRawHandle for MessageStream {
+    fn into_raw_handle(self) -> RawHandle {
+        self.0.into_raw_handle()
     }
 }
 
 impl AsyncMessageStream {
     fn new(stream: tokio_named_pipes::NamedPipe) -> AsyncMessageStream {
         AsyncMessageStream(stream)
-    }
-
-    pub fn poll_read(&self) -> futures::Async<()> {
-        self.0.poll_read()
-    }
-
-    pub fn poll_write(&self) -> futures::Async<()> {
-        self.0.poll_write()
-    }
-
-    pub fn need_read(&self) {
-        self.0.need_read()
-    }
-
-    pub fn need_write(&self) {
-        self.0.need_write()
     }
 }
 
@@ -89,13 +98,6 @@ impl AsyncWrite for AsyncMessageStream {
 
 impl AsRawHandle for AsyncMessageStream {
     fn as_raw_handle(&self) -> RawHandle {
-        self.0.as_raw_handle()
-    }
-}
-
-impl IntoRawHandle for MessageStream {
-    fn into_raw_handle(self) -> RawHandle {
-        // XXX: Ideally this would call into_raw_handle.
         self.0.as_raw_handle()
     }
 }

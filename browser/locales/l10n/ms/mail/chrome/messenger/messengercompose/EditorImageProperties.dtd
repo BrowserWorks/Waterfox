@@ -1,0 +1,79 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Sifat Imej">
+
+<!ENTITY pixelsPopup.value "piksel">
+
+<!-- These are in the Location tab panel -->
+<!ENTITY locationEditField.label "Lokasi Imej:">
+<!ENTITY locationEditField.accessKey "L">
+<!ENTITY locationEditField.tooltip "Taip nama fail atau lokasi imej">
+<!ENTITY locationEditField.shortenedDataURI "Ringkasan data URI (salinan URI penuh akan diletakkan pada klipbod)">
+<!ENTITY title.label "Panduan alatan:">
+<!ENTITY title.accessKey "P">
+<!ENTITY title.tooltip "Atribut 'tajuk' html yang dipaparkan sebagai panduan alatan">
+<!ENTITY altText.label "Teks alternatif:">
+<!ENTITY altText.accessKey "T">
+<!ENTITY altTextEditField.tooltip "Taip teks untuk dipaparkan bagi menggantikan imej">
+<!ENTITY noAltText.label "Jangan gunakan teks alternatif">
+<!ENTITY noAltText.accessKey "J">
+
+<!ENTITY previewBox.label "Previu Imej">
+
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+<!ENTITY actualSize.label "Saiz Sebenar:">
+<!ENTITY actualSizeRadio.label "Saiz Sebenar">
+<!ENTITY actualSizeRadio.accessKey "S">
+<!ENTITY actualSizeRadio.tooltip "Kembali ke saiz imej sebenar">
+<!ENTITY customSizeRadio.label "Saiz Penyesuaian">
+<!ENTITY customSizeRadio.accessKey "S">
+<!ENTITY customSizeRadio.tooltip "Ubah saiz imej seperti yang dipaparkan dalam halaman">
+<!ENTITY heightEditField.label "Tinggi:">
+<!ENTITY heightEditField.accessKey "T">
+<!ENTITY widthEditField.label "Lebar:">
+<!ENTITY widthEditField.accessKey "L">
+<!ENTITY constrainCheckbox.label "Kekangan">
+<!ENTITY constrainCheckbox.accessKey "K">
+<!ENTITY constrainCheckbox.tooltip "Kekalkan nisbah aspek imej">
+
+<!-- These controls are in the Image Map box of the expanded area -->
+<!ENTITY imagemapBox.label "Peta Imej">
+<!ENTITY removeImageMapButton.label "Buang">
+<!ENTITY removeImageMapButton.accessKey "B">
+
+<!-- These are the options for image alignment -->
+<!ENTITY alignment.label "Jajar Teks ke Imej">
+<!ENTITY bottomPopup.value "Pada bahagian bawah">
+<!ENTITY topPopup.value "Pada bahagian atas">
+<!ENTITY centerPopup.value "Pada bahagian tengah">
+<!ENTITY wrapRightPopup.value "Balut ke kanan">
+<!ENTITY wrapLeftPopup.value "Balut ke kiri">
+
+<!-- These controls are in the Spacing Box -->
+<!ENTITY spacingBox.label "Ruangan">
+<!ENTITY leftRightEditField.label "Kiri dan Kanan:">
+<!ENTITY leftRightEditField.accessKey "K">
+<!ENTITY topBottomEditField.label "Atas dan Bawah:">
+<!ENTITY topBottomEditField.accessKey "A">
+<!ENTITY borderEditField.label "Sempadan Padat:">
+<!ENTITY borderEditField.accessKey "P">
+
+<!-- These controls are in the Link Box -->
+<!ENTITY showImageLinkBorder.label "Papar sempadan di sekeliling imej yang dipautkan">
+<!ENTITY showImageLinkBorder.accessKey "P">
+<!ENTITY LinkAdvancedEditButton.label "Paut Edit Lanjutan…">
+<!ENTITY LinkAdvancedEditButton.accessKey "P">
+<!ENTITY LinkAdvancedEditButton.tooltip "Tambah atau ubah atribut HTML, gaya atribut dan JavaScript">
+
+<!-- These tabs are currently used in the image input dialog -->
+<!ENTITY imageInputTab.label "Borang">
+<!ENTITY imageLocationTab.label "Lokasi">
+<!ENTITY imageDimensionsTab.label "Dimensi">
+<!ENTITY imageAppearanceTab.label "Penampilan">
+<!ENTITY imageLinkTab.label "Pautan">

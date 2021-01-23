@@ -1,0 +1,305 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Attn: Localization - some of the menus in this dialog directly affect mail also. -->
+
+<!-- Edit menu items -->
+<!ENTITY pasteNoFormatting.label "Líma án sniðs">
+<!ENTITY pasteNoFormatting.accesskey "m">
+<!ENTITY pasteNoFormatting.key "V">
+<!ENTITY pasteAsQuotationCmd.label "Líma inn sem tilvitnun">
+<!ENTITY pasteAsQuotationCmd.accesskey "t">
+
+<!-- Insert menu items -->
+<!ENTITY insertMenu.label "Setja inn">
+<!ENTITY insertMenu.accesskey "i">
+<!ENTITY insertLinkCmd2.label "Tengill…">
+<!ENTITY insertLinkCmd2.accesskey "l">
+<!ENTITY insertLinkCmd2.key "K">
+<!ENTITY insertAnchorCmd.label "Nefndur tengill…">
+<!ENTITY insertAnchorCmd.accesskey "N">
+<!ENTITY insertImageCmd.label "Myndir…">
+<!ENTITY insertImageCmd.accesskey "M">
+<!ENTITY insertHLineCmd.label "Lárétt lína">
+<!ENTITY insertHLineCmd.accesskey "r">
+<!ENTITY insertTableCmd.label "Töflu…">
+<!ENTITY insertTableCmd.accesskey "T">
+<!ENTITY insertHTMLCmd.label "HTML…">
+<!ENTITY insertHTMLCmd.accesskey "H">
+<!ENTITY insertMathCmd.label "Stærðfræði…">
+<!ENTITY insertMathCmd.accesskey "æ">
+<!ENTITY insertCharsCmd.label "Stafir og tákn…">
+<!ENTITY insertCharsCmd.accesskey "S">
+<!ENTITY insertBreakAllCmd.label "Lína fyrir neðan mynd(ir)">
+<!ENTITY insertBreakAllCmd.accesskey "y">
+
+<!-- Used just in context popup. -->
+<!ENTITY createLinkCmd.label "Búa til tengil…">
+<!ENTITY createLinkCmd.accesskey "B">
+<!ENTITY editLinkCmd.label "Breyta tengli í nýjum ritli">
+<!ENTITY editLinkCmd.accesskey "i">
+
+<!-- Font Face SubMenu -->
+<!ENTITY FontFaceSelect.tooltip "Veldu leturgerð">
+<!ENTITY fontfaceMenu.label "Leturgerð">
+<!ENTITY fontfaceMenu.accesskey "g">
+<!ENTITY fontVarWidth.label "Breytileg breidd">
+<!ENTITY fontVarWidth.accesskey "B">
+<!ENTITY fontFixedWidth.label "Jafnbreitt">
+<!ENTITY fontFixedWidth.accesskey "J">
+<!ENTITY fontFixedWidth.key "T">
+<!ENTITY fontHelvetica.label "Helvetica, Arial">
+<!ENTITY fontHelvetica.accesskey "l">
+<!ENTITY fontTimes.label "Times">
+<!ENTITY fontTimes.accesskey "T">
+<!ENTITY fontCourier.label "Courier">
+<!ENTITY fontCourier.accesskey "C">
+
+<!-- Font Size SubMenu -->
+<!ENTITY FontSizeSelect.tooltip "Veldu leturstærð">
+<!ENTITY decreaseFontSize.label "Minna">
+<!ENTITY decreaseFontSize.accesskey "n">
+<!ENTITY decrementFontSize.key "&lt;">
+<!ENTITY decrementFontSize.key2 ",">
+ <!-- < is above this key on many keyboards -->
+<!ENTITY increaseFontSize.label "Stærra">
+<!ENTITY increaseFontSize.accesskey "S">
+<!ENTITY incrementFontSize.key "&gt;">
+<!ENTITY incrementFontSize.key2 ".">
+ <!-- > is above this key on many keyboards -->
+
+<!ENTITY fontSizeMenu.label "Stærð">
+<!ENTITY fontSizeMenu.accesskey "æ">
+<!ENTITY size-tinyCmd.label "Pínulítið">
+<!ENTITY size-tinyCmd.accesskey "t">
+<!ENTITY size-smallCmd.label "Lítið">
+<!ENTITY size-smallCmd.accesskey "L">
+<!ENTITY size-mediumCmd.label "Meðal">
+<!ENTITY size-mediumCmd.accesskey "e">
+<!ENTITY size-largeCmd.label "Stór">
+<!ENTITY size-largeCmd.accesskey "t">
+<!ENTITY size-extraLargeCmd.label "Mjög stórt">
+<!ENTITY size-extraLargeCmd.accesskey "ö">
+<!ENTITY size-hugeCmd.label "Risa stórt">
+<!ENTITY size-hugeCmd.accesskey "R">
+
+<!-- Font Style SubMenu -->
+<!ENTITY fontStyleMenu.label "Textasnið">
+<!ENTITY fontStyleMenu.accesskey "s">
+<!ENTITY styleBoldCmd.label "Feitletrað">
+<!ENTITY styleBoldCmd.accesskey "F">
+<!ENTITY styleBoldCmd.key "B">
+<!ENTITY styleItalicCmd.label "Skáletrað">
+<!ENTITY styleItalicCmd.accesskey "S">
+<!ENTITY styleItalicCmd.key "I">
+<!ENTITY styleUnderlineCmd.label "Undirstrikað">
+<!ENTITY styleUnderlineCmd.accesskey "U">
+<!ENTITY styleUnderlineCmd.key "U">
+<!ENTITY styleStrikeThruCmd.label "Yfirstrikun">
+<!ENTITY styleStrikeThruCmd.accesskey "k">
+<!ENTITY styleSuperscriptCmd.label "Háletur">
+<!ENTITY styleSuperscriptCmd.accesskey "H">
+<!ENTITY styleSubscriptCmd.label "Lágletur">
+<!ENTITY styleSubscriptCmd.accesskey "L">
+<!ENTITY styleNonbreakingCmd.label "Engin skipting">
+<!ENTITY styleNonbreakingCmd.accesskey "n">
+<!ENTITY styleEm.label "Áhersla">
+<!ENTITY styleEm.accesskey "e">
+<!ENTITY styleStrong.label "Meiri áhersla">
+<!ENTITY styleStrong.accesskey "M">
+<!ENTITY styleCite.label "Tilvitnun">
+<!ENTITY styleCite.accesskey "T">
+<!ENTITY styleAbbr.label "Stytting">
+<!ENTITY styleAbbr.accesskey "y">
+<!ENTITY styleAcronym.label "Upphafsstafaorð">
+<!ENTITY styleAcronym.accesskey "r">
+<!ENTITY styleCode.label "Kóði">
+<!ENTITY styleCode.accesskey "ð">
+<!ENTITY styleSamp.label "Dæmi um úttak">
+<!ENTITY styleSamp.accesskey "m">
+<!ENTITY styleVar.label "Breyta">
+<!ENTITY styleVar.accesskey "B">
+
+<!ENTITY formatFontColor.label "Textalitur…">
+<!ENTITY formatFontColor.accesskey "r">
+<!ENTITY tableOrCellColor.label "Töflu eða hólf bakgrunnslitur…">
+<!ENTITY tableOrCellColor.accesskey "b">
+
+<!ENTITY formatRemoveStyles.key "Y">
+<!ENTITY formatRemoveLinks.key "K">
+<!ENTITY formatRemoveNamedAnchors.label "Fjarlægja nefnda tengla">
+<!ENTITY formatRemoveNamedAnchors.accesskey "r">
+<!ENTITY formatRemoveNamedAnchors2.key "R">
+
+<!ENTITY paragraphMenu.label "Málsgrein">
+<!ENTITY paragraphMenu.accesskey "M">
+<!ENTITY paragraphParagraphCmd.label "Málsgrein">
+<!ENTITY paragraphParagraphCmd.accesskey "M">
+<!ENTITY heading1Cmd.label "Haus 1">
+<!ENTITY heading1Cmd.accesskey "1">
+<!ENTITY heading2Cmd.label "Haus 2">
+<!ENTITY heading2Cmd.accesskey "2">
+<!ENTITY heading3Cmd.label "Haus 3">
+<!ENTITY heading3Cmd.accesskey "3">
+<!ENTITY heading4Cmd.label "Haus 4">
+<!ENTITY heading4Cmd.accesskey "4">
+<!ENTITY heading5Cmd.label "Haus 5">
+<!ENTITY heading5Cmd.accesskey "5">
+<!ENTITY heading6Cmd.label "Haus 6">
+<!ENTITY heading6Cmd.accesskey "6">
+<!ENTITY paragraphAddressCmd.label "Heimilisfang">
+<!ENTITY paragraphAddressCmd.accesskey "g">
+<!ENTITY paragraphPreformatCmd.label "Forsniðið">
+<!ENTITY paragraphPreformatCmd.accesskey "F">
+
+<!-- List menu items -->
+<!ENTITY formatlistMenu.label "Listi">
+<!ENTITY formatlistMenu.accesskey "L">
+<!ENTITY noneCmd.label "Ekkert">
+<!ENTITY noneCmd.accesskey "k">
+<!ENTITY listBulletCmd.label "Áherslumerki">
+<!ENTITY listBulletCmd.accesskey "h">
+<!ENTITY listNumberedCmd.label "Tölusettur">
+<!ENTITY listNumberedCmd.accesskey "t">
+<!ENTITY listTermCmd.label "Annað">
+<!ENTITY listTermCmd.accesskey "A">
+<!ENTITY listDefinitionCmd.label "Skilgreining">
+<!ENTITY listDefinitionCmd.accesskey "S">
+<!ENTITY listPropsCmd.label "Lista eigindi…">
+<!ENTITY listPropsCmd.accesskey "L">
+
+<!ENTITY ParagraphSelect.tooltip "Veldu snið málsgreinar">
+<!-- Shared in Paragraph, and Toolbar menulist -->
+<!ENTITY bodyTextCmd.label "Meginmál">
+<!ENTITY bodyTextCmd.accesskey "e">
+
+<!-- Align menu items -->
+<!ENTITY alignMenu.label "Raða">
+<!ENTITY alignMenu.accesskey "a">
+<!ENTITY alignLeft.label "Vinstri">
+<!ENTITY alignLeft.accesskey "V">
+<!ENTITY alignLeft.tooltip "Jafna">
+<!ENTITY alignCenter.label "Miðjað">
+<!ENTITY alignCenter.accesskey "M">
+<!ENTITY alignCenter.tooltip "Jafna">
+<!ENTITY alignRight.label "Hægri">
+<!ENTITY alignRight.accesskey "r">
+<!ENTITY alignRight.tooltip "Upplýsa">
+<!ENTITY alignJustify.label "Jafna">
+<!ENTITY alignJustify.accesskey "J">
+<!ENTITY alignJustify.tooltip "Stilla jafnt">
+
+<!ENTITY increaseIndent.label "Auka inndrátt">
+<!ENTITY increaseIndent.accesskey "i">
+<!ENTITY increaseIndent.key "]">
+<!ENTITY decreaseIndent.label "Minnka inndrátt">
+<!ENTITY decreaseIndent.accesskey "d">
+<!ENTITY decreaseIndent.key "[">
+
+<!ENTITY colorsAndBackground.label "Litir síðu og bakgrunnur…">
+<!ENTITY colorsAndBackground.accesskey "u">
+
+<!-- Table Menu -->
+<!ENTITY tableMenu.label "Tafla">
+<!ENTITY tableMenu.accesskey "T">
+
+<!-- Select Submenu -->
+<!ENTITY tableSelectMenu.label "Velja">
+<!ENTITY tableSelectMenu.accesskey "V">
+
+<!ENTITY tableSelectMenu2.label "Velja töflu">
+<!ENTITY tableSelectMenu2.accesskey "V">
+<!ENTITY tableInsertMenu2.label "Setja inn töflu">
+<!ENTITY tableInsertMenu2.accesskey "i">
+<!ENTITY tableDeleteMenu2.label "Eyða töflu">
+<!ENTITY tableDeleteMenu2.accesskey "E">
+
+<!-- Insert SubMenu -->
+<!ENTITY tableInsertMenu.label "Setja inn">
+<!ENTITY tableInsertMenu.accesskey "i">
+<!ENTITY tableTable.label "Tafla">
+<!ENTITY tableTable.accesskey "T">
+<!ENTITY tableRow.label "Röð">
+<!ENTITY tableRows.label "Raðir">
+<!ENTITY tableRow.accesskey "R">
+<!ENTITY tableRowAbove.label "Röð fyrir ofan">
+<!ENTITY tableRowAbove.accesskey "R">
+<!ENTITY tableRowBelow.label "Röð fyrir neðan">
+<!ENTITY tableRowBelow.accesskey "n">
+<!ENTITY tableColumn.label "Dálkur">
+<!ENTITY tableColumns.label "Dálkar">
+<!ENTITY tableColumn.accesskey "D">
+<!ENTITY tableColumnBefore.label "Dálkur fyrir framan">
+<!ENTITY tableColumnBefore.accesskey "D">
+<!ENTITY tableColumnAfter.label "Dálkur fyrir aftan">
+<!ENTITY tableColumnAfter.accesskey "a">
+<!ENTITY tableCell.label "Hólf">
+<!ENTITY tableCells.label "Hólf">
+<!ENTITY tableCell.accesskey "H">
+<!ENTITY tableCellContents.label "Innihald hólfs">
+<!ENTITY tableCellContents.accesskey "n">
+<!ENTITY tableAllCells.label "Öll hólf">
+<!ENTITY tableAllCells.accesskey "l">
+<!ENTITY tableCellBefore.label "Hólf áður">
+<!ENTITY tableCellBefore.accesskey "H">
+<!ENTITY tableCellAfter.label "Hólf á eftir">
+<!ENTITY tableCellAfter.accesskey "f">
+<!-- Delete SubMenu -->
+<!ENTITY tableDeleteMenu.label "Eyða">
+<!ENTITY tableDeleteMenu.accesskey "E">
+
+<!-- text for "Join Cells" is in editor.properties
+     ("JoinSelectedCells" and "JoinCellToRight")
+     the access key must exist in both of those strings
+     But value must be set here for accesskey to draw properly
+-->
+<!ENTITY tableJoinCells.label "j">
+<!ENTITY tableJoinCells.accesskey "j">
+<!ENTITY tableSplitCell.label "Kljúfa hólf">
+<!ENTITY tableSplitCell.accesskey "K">
+<!ENTITY convertToTable.label "Búa til töflu út frá vali">
+<!ENTITY convertToTable.accesskey "r">
+<!ENTITY tableProperties.label "Eiginleikar töflu…">
+<!ENTITY tableProperties.accesskey "g">
+
+<!ENTITY imageToolbarCmd.label "Mynd">
+<!ENTITY imageToolbarCmd.tooltip "Setja inn nýja mynd eða breyta eiginleikum valinnar myndar">
+<!ENTITY hruleToolbarCmd.label "L.Lína">
+<!ENTITY hruleToolbarCmd.tooltip "Setja inn lárétta línu eða breyta eiginleikum valinnar línu">
+<!ENTITY tableToolbarCmd.label "Tafla">
+<!ENTITY tableToolbarCmd.tooltip "Setja inn nýja töflu eða breyta eiginleikum valinnar töflu">
+<!ENTITY linkToolbarCmd.label "Tengill">
+<!ENTITY linkToolbarCmd.tooltip "Setja inn nýjan hlekk eða breyta eiginleikum á völdum hlekk">
+<!ENTITY anchorToolbarCmd.label "Markstikla">
+<!ENTITY anchorToolbarCmd.tooltip "Setja inn nýja markstiklu eða breyta eiginleikum valinnar markstiklu">
+<!ENTITY TextColorButton.tooltip "Velja lit fyrir texta">
+<!ENTITY BackgroundColorButton.tooltip "Velja lit fyrir bakgrunn">
+
+<!-- Editor toolbar -->
+<!ENTITY absoluteFontSizeToolbarCmd.tooltip "Skilgreina leturstærð">
+<!ENTITY decreaseFontSizeToolbarCmd.tooltip "Minni leturstærð">
+<!ENTITY increaseFontSizeToolbarCmd.tooltip "Stærri leturstærð">
+<!ENTITY boldToolbarCmd.tooltip "Feitletrað">
+<!ENTITY italicToolbarCmd.tooltip "Skáletrað">
+<!ENTITY underlineToolbarCmd.tooltip "Undirstrikað">
+<!ENTITY bulletListToolbarCmd.tooltip "Virkja eða fjarlægja áherslumerktan lista">
+<!ENTITY numberListToolbarCmd.tooltip "Virkja eða fjarlægja tölusettan lista">
+<!ENTITY outdentToolbarCmd.tooltip "Minnka inndrátt (hliðra vinstri)">
+<!ENTITY indentToolbarCmd.tooltip "Auka inndrátt (hliðra hægri)">
+<!ENTITY AlignPopupButton.tooltip "Veldu textajöfnun">
+<!ENTITY InsertPopupButton.tooltip "Setja inn tengil, markstiklu, mynd, lárétta línu eða töflu">
+<!ENTITY alignLeftButton.tooltip "Vinstristilla texta">
+<!ENTITY alignCenterButton.tooltip "Miðja texta">
+<!ENTITY alignRightButton.tooltip "Hægristilla texta">
+<!ENTITY alignJustifyButton.tooltip "Jafna texta bæði eftir vinstri og hægri spássíu">
+
+<!-- TOC manipulation -->
+<!ENTITY insertTOC.label "Setja inn">
+<!ENTITY insertTOC.accesskey "i">
+<!ENTITY updateTOC.label "Uppfærslur">
+<!ENTITY updateTOC.accesskey "u">
+<!ENTITY removeTOC.label "Fjarlægja">
+<!ENTITY removeTOC.accesskey "r">
+<!ENTITY tocMenu.label "Efnisyfirlit…">
+<!ENTITY tocMenu.accesskey "E">

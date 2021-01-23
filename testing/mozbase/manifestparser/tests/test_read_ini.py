@@ -12,52 +12,102 @@ http://docs.python.org/2/library/configparser.html
 
 from __future__ import absolute_import
 
-import unittest
-from manifestparser import read_ini
-from StringIO import StringIO
+from textwrap import dedent
 
 import mozunit
+import pytest
+from six import StringIO
+
+from manifestparser import read_ini
 
 
-class IniParserTest(unittest.TestCase):
+@pytest.fixture(scope='module')
+def parse_manifest():
 
-    def parse_manifest(self, string):
+    def inner(string, **kwargs):
         buf = StringIO()
-        buf.write(string)
+        buf.write(dedent(string))
         buf.seek(0)
-        return read_ini(buf)
+        return read_ini(buf, **kwargs)[0]
 
-    def test_inline_comments(self):
-        result = self.parse_manifest("""
-[test_felinicity.py]
-kittens = true # This test requires kittens
-cats = false#but not cats
-""")[0][1]
+    return inner
 
-        # make sure inline comments get stripped out, but comments without a space in front don't
-        self.assertEqual(result['kittens'], 'true')
-        self.assertEqual(result['cats'], "false#but not cats")
 
-    def test_line_continuation(self):
-        result = self.parse_manifest("""
-[test_caninicity.py]
-breeds =
-  sheppard
-  retriever
-  terrier
+def test_inline_comments(parse_manifest):
+    result = parse_manifest("""
+    [test_felinicity.py]
+    kittens = true # This test requires kittens
+    cats = false#but not cats
+    """)[0][1]
 
-[test_cats_and_dogs.py]
-  cats=yep
-  dogs=
-    yep
-      yep
-birds=nope
-  fish=nope
-""")
-        self.assertEqual(result[0][1]['breeds'].split(), ['sheppard', 'retriever', 'terrier'])
-        self.assertEqual(result[1][1]['cats'], 'yep')
-        self.assertEqual(result[1][1]['dogs'].split(), ['yep', 'yep'])
-        self.assertEqual(result[1][1]['birds'].split(), ['nope', 'fish=nope'])
+    # make sure inline comments get stripped out, but comments without a space in front don't
+    assert result['kittens'] == 'true'
+    assert result['cats'] == "false#but not cats"
+
+
+def test_line_continuation(parse_manifest):
+    result = parse_manifest("""
+    [test_caninicity.py]
+    breeds =
+      sheppard
+      retriever
+      terrier
+
+    [test_cats_and_dogs.py]
+      cats=yep
+      dogs=
+        yep
+          yep
+    birds=nope
+      fish=nope
+    """)
+    assert result[0][1]['breeds'].split() == ['sheppard', 'retriever', 'terrier']
+    assert result[1][1]['cats'] == 'yep'
+    assert result[1][1]['dogs'].split() == ['yep', 'yep']
+    assert result[1][1]['birds'].split() == ['nope', 'fish=nope']
+
+
+def test_dupes_error(parse_manifest):
+    dupes = """
+    [test_dupes.py]
+    foo = bar
+    foo = baz
+    """
+    with pytest.raises(AssertionError):
+        parse_manifest(dupes, strict=True)
+
+    with pytest.raises(AssertionError):
+        parse_manifest(dupes, strict=False)
+
+
+def test_defaults_handling(parse_manifest):
+    manifest = """
+    [DEFAULT]
+    flower = rose
+    skip-if = true
+
+    [test_defaults]
+    """
+
+    result = parse_manifest(manifest)[0][1]
+    assert result['flower'] == 'rose'
+    assert result['skip-if'] == 'true'
+
+    result = parse_manifest(
+        manifest,
+        defaults={
+            'flower': 'tulip',
+            'colour': 'pink',
+            'skip-if': 'false',
+        },
+    )[0][1]
+    assert result['flower'] == 'rose'
+    assert result['colour'] == 'pink'
+    assert result['skip-if'] == '(false) || (true)'
+
+    result = parse_manifest(manifest.replace('DEFAULT', 'default'))[0][1]
+    assert result['flower'] == 'rose'
+    assert result['skip-if'] == 'true'
 
 
 if __name__ == '__main__':

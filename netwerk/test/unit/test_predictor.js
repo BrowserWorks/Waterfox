@@ -1,3 +1,5 @@
+"use strict";
+
 const { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
 var { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const ReferrerInfo = Components.Constructor(
@@ -36,21 +38,13 @@ ValidityChecker.prototype = {
   verifier: null,
   httpStatus: 0,
 
-  QueryInterface: function listener_qi(iid) {
-    if (
-      iid.equals(Ci.nsISupports) ||
-      iid.equals(Ci.nsICacheEntryOpenCallback)
-    ) {
-      return this;
-    }
-    throw Cr.NS_ERROR_NO_INTERFACE;
-  },
+  QueryInterface: ChromeUtils.generateQI(["nsICacheEntryOpenCallback"]),
 
-  onCacheEntryCheck: function(entry, appCache) {
+  onCacheEntryCheck(entry, appCache) {
     return Ci.nsICacheEntryOpenCallback.ENTRY_WANTED;
   },
 
-  onCacheEntryAvailable: function(entry, isnew, appCache, status) {
+  onCacheEntryAvailable(entry, isnew, appCache, status) {
     // Check if forced valid
     Assert.equal(entry.isForcedValid, this.httpStatus === 200);
     this.verifier.maybe_run_next_test();
@@ -80,16 +74,7 @@ Verifier.prototype = {
     return this.QueryInterface(iid);
   },
 
-  QueryInterface: function verifier_QueryInterface(iid) {
-    if (
-      iid.equals(Ci.nsINetworkPredictorVerifier) ||
-      iid.equals(Ci.nsISupports)
-    ) {
-      return this;
-    }
-
-    throw Cr.NS_ERROR_NO_INTERFACE;
-  },
+  QueryInterface: ChromeUtils.generateQI(["nsINetworkPredictorVerifier"]),
 
   maybe_run_next_test: function verifier_maybe_run_next_test() {
     if (
@@ -164,24 +149,19 @@ var prepListener = {
   numEntriesOpened: 0,
   continueCallback: null,
 
-  QueryInterface: function(iid) {
-    if (iid.equals(Ci.nsICacheEntryOpenCallback)) {
-      return this;
-    }
-    throw Cr.NS_ERROR_NO_INTERFACE;
-  },
+  QueryInterface: ChromeUtils.generateQI(["nsICacheEntryOpenCallback"]),
 
-  init: function(entriesToOpen, cb) {
+  init(entriesToOpen, cb) {
     this.numEntriesOpened = 0;
     this.numEntriesToOpen = entriesToOpen;
     this.continueCallback = cb;
   },
 
-  onCacheEntryCheck: function(entry, appCache) {
+  onCacheEntryCheck(entry, appCache) {
     return Ci.nsICacheEntryOpenCallback.ENTRY_WANTED;
   },
 
-  onCacheEntryAvailable: function(entry, isNew, appCache, result) {
+  onCacheEntryAvailable(entry, isNew, appCache, result) {
     Assert.equal(result, Cr.NS_OK);
     entry.setMetaDataElement("predictor_test", "1");
     entry.metaDataReady();
@@ -308,7 +288,7 @@ function test_pageload() {
 const redirect_inituri = newURI("http://localhost:4443/redirect");
 const redirect_targeturi = newURI("http://localhost:4444/index.html");
 
-function continue_test_redrect() {
+function continue_test_redirect() {
   var subresources = [
     "http://localhost:4444/style.css",
     "http://localhost:4443/jquery.js",
@@ -335,7 +315,7 @@ function continue_test_redrect() {
         predictor.LEARN_LOAD_REDIRECT,
         origin_attributes
       );
-      do_tiemout(0, () => {
+      do_timeout(0, () => {
         var preconns = [];
         preconns.push(extract_origin(redirect_targeturi));
 
@@ -351,7 +331,7 @@ function continue_test_redrect() {
 
           sruri = newURI(subresources[1]);
           predictor.learn(
-            sruris[1],
+            sruri[1],
             redirect_targeturi,
             predictor.LEARN_LOAD_SUBRESOURCE,
             origin_attributes
@@ -361,7 +341,7 @@ function continue_test_redrect() {
 
             sruri = newURI(subresources[2]);
             predictor.learn(
-              sruris[2],
+              sruri[2],
               redirect_targeturi,
               predictor.LEARN_LOAD_SUBRESOURCE,
               origin_attributes
@@ -568,15 +548,15 @@ function prefetchHandler(metadata, response) {
 }
 
 var prefetchListener = {
-  onStartRequest: function(request) {
+  onStartRequest(request) {
     Assert.equal(request.status, Cr.NS_OK);
   },
 
-  onDataAvailable: function(request, stream, offset, cnt) {
+  onDataAvailable(request, stream, offset, cnt) {
     read_stream(stream, cnt);
   },
 
-  onStopRequest: function(request, status) {
+  onStopRequest(request, status) {
     run_next_test();
   },
 };
@@ -661,7 +641,7 @@ function test_prefetch_prime() {
     }).QueryInterface(Ci.nsIHttpChannel);
     channel.requestMethod = "GET";
     channel.referrerInfo = new ReferrerInfo(
-      Ci.nsIHttpChannel.REFERRER_POLICY_UNSET,
+      Ci.nsIReferrerInfo.EMPTY,
       true,
       prefetch_tluri
     );
@@ -734,15 +714,9 @@ var tests = [
 var observer = {
   cleaningUp: false,
 
-  QueryInterface: function(iid) {
-    if (iid.equals(Ci.nsIObserver) || iid.equals(Ci.nsISupports)) {
-      return this;
-    }
+  QueryInterface: ChromeUtils.generateQI(["nsIObserver"]),
 
-    throw Cr.NS_ERROR_NO_INTERFACE;
-  },
-
-  observe: function(subject, topic, data) {
+  observe(subject, topic, data) {
     if (topic != "predictor-reset-complete") {
       return;
     }
@@ -768,7 +742,6 @@ function run_test_real() {
   do_get_profile();
 
   Services.prefs.setBoolPref("network.predictor.enabled", true);
-  Services.prefs.setBoolPref("network.predictor.cleaned-up", true);
   Services.prefs.setBoolPref("network.predictor.doing-tests", true);
 
   predictor = Cc["@mozilla.org/network/predictor;1"].getService(
@@ -780,7 +753,6 @@ function run_test_real() {
   registerCleanupFunction(() => {
     Services.prefs.clearUserPref("network.predictor.preconnect-min-confidence");
     Services.prefs.clearUserPref("network.predictor.enabled");
-    Services.prefs.clearUserPref("network.predictor.cleaned-up");
     Services.prefs.clearUserPref("network.predictor.preresolve-min-confidence");
     Services.prefs.clearUserPref("network.predictor.enable-prefetch");
     Services.prefs.clearUserPref(

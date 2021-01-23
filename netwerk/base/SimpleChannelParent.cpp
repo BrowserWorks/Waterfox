@@ -23,26 +23,7 @@ bool SimpleChannelParent::Init(const uint32_t& channelId) {
 }
 
 NS_IMETHODIMP
-SimpleChannelParent::SetParentListener(HttpChannelParentListener* aListener) {
-  // Nothing to do.
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-SimpleChannelParent::NotifyChannelClassifierProtectionDisabled(
-    uint32_t aAcceptedReason) {
-  // Nothing to do.
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-SimpleChannelParent::NotifyCookieAllowed() {
-  // Nothing to do.
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-SimpleChannelParent::NotifyCookieBlocked(uint32_t aRejectedReason) {
+SimpleChannelParent::SetParentListener(ParentChannelListener* aListener) {
   // Nothing to do.
   return NS_OK;
 }

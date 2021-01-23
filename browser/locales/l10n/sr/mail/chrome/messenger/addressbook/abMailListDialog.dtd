@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY mailListWindowAdd.title        "Нова дописна листа">
+
+<!-- Labels and Access Keys -->
+<!ENTITY addToAddressBook.label         "Додај на: ">
+<!ENTITY addToAddressBook.accesskey     "а">
+<!ENTITY ListName.label                 "Име листе: ">
+<!ENTITY ListName.accesskey             "л">
+<!ENTITY ListNickName.label             "Надимак листе: ">
+<!ENTITY ListNickName.accesskey         "н">
+<!ENTITY ListDescription.label          "Опис: ">
+<!ENTITY ListDescription.accesskey      "и">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "Унесите мејл адресе да бисте их додали на дописну листу:">
+<!ENTITY AddressTitle.accesskey         "т">
+<!ENTITY UpButton.label                 "Помери горе">
+<!ENTITY DownButton.label               "Помери доле">
+

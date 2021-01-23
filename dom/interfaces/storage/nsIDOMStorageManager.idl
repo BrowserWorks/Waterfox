@@ -10,6 +10,16 @@ interface mozIDOMWindow;
 
 webidl Storage;
 
+%{C++
+namespace mozilla {
+namespace dom {
+class SessionStorageCache;
+}  // namespace dom
+}  // namespace mozilla
+%}
+
+native SessionStorageCacheAddRefed(RefPtr<mozilla::dom::SessionStorageCache>);
+
 /**
  * General purpose interface that has two implementations, for localStorage
  * with "@mozilla.org/dom/localStorage-manager;1".
@@ -19,16 +29,17 @@ interface nsIDOMStorageManager : nsISupports
 {
   /**
    * This starts async preloading of a storage cache for scope
-   * defined by the principal.
+   * defined by the principal and storage principal.
    *
    * Because of how multi-e10s support was implemented in bug 1285898, the
    * StorageCache instance can no longer use a timer to keep itself alive.  So a
-   * Storage instance is returned if precaching believes the principal may have
-   * localStorage data.  (Previously the StorageCache would be brought into
+   * Storage instance is returned if precaching believes the storage principal may
+   * have localStorage data.  (Previously the StorageCache would be brought into
    * existence and kept alive by the timer so that it could be returned if a
    * call to createStorage was made due to a request by the page.)
    */
-  Storage precacheStorage(in nsIPrincipal aPrincipal);
+  Storage precacheStorage(in nsIPrincipal aPrincipal,
+                          in nsIPrincipal aStoragePrincipal);
 
   /**
    * Returns instance of DOM storage object for given principal.
@@ -103,4 +114,19 @@ interface nsIDOMStorageManager : nsISupports
    */
   bool checkStorage(in nsIPrincipal aPrincipal,
                     in Storage aStorage);
+};
+
+[uuid(b3bfbbd0-e738-4cbf-b0f0-b65f25265e82)]
+interface nsIDOMSessionStorageManager : nsIDOMStorageManager {
+  /**
+   * Returns a SessionStorageCache object for the principal scope.
+   *
+   * @param aPrincipal
+   *    Principal to bound storage to.
+   * @param aStoragePrincipal
+   *    StoragePrincipal to bound storage to.
+   */
+   [noscript]
+   SessionStorageCacheAddRefed getSessionStorageCache(in nsIPrincipal aPrincipal,
+                                                      in nsIPrincipal aStoragePrincipal);
 };

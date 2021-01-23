@@ -9,22 +9,26 @@
 #ifndef mozilla_Array_h
 #define mozilla_Array_h
 
-#include "mozilla/Assertions.h"
-#include "mozilla/Attributes.h"
-#include "mozilla/Move.h"
-#include "mozilla/ReverseIterator.h"
+#include <stddef.h>
 
 #include <ostream>
-#include <stddef.h>
+#include <utility>
+
+#include "mozilla/Assertions.h"
+#include "mozilla/Attributes.h"
+#include "mozilla/ReverseIterator.h"
 
 namespace mozilla {
 
-template <typename T, size_t Length>
+template <typename T, size_t _Length>
 class Array {
-  T mArr[Length];
+  T mArr[_Length];
 
  public:
-  Array() {}
+  using ElementType = T;
+  static constexpr size_t Length = _Length;
+
+  Array() = default;
 
   template <typename... Args>
   MOZ_IMPLICIT constexpr Array(Args&&... aArgs)
@@ -60,11 +64,11 @@ class Array {
 
   // Methods for range-based for loops.
   iterator begin() { return mArr; }
-  const_iterator begin() const { return mArr; }
-  const_iterator cbegin() const { return begin(); }
+  constexpr const_iterator begin() const { return mArr; }
+  constexpr const_iterator cbegin() const { return begin(); }
   iterator end() { return mArr + Length; }
-  const_iterator end() const { return mArr + Length; }
-  const_iterator cend() const { return end(); }
+  constexpr const_iterator end() const { return mArr + Length; }
+  constexpr const_iterator cend() const { return end(); }
 
   // Methods for reverse iterating.
   reverse_iterator rbegin() { return reverse_iterator(end()); }

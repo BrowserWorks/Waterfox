@@ -72,6 +72,13 @@ ipc::IPCResult DocAccessibleChild::RecvEmulatedWindow(
   return IPC_OK();
 }
 
+ipc::IPCResult DocAccessibleChild::RecvTopLevelDocCOMProxy(
+    const IAccessibleHolder& aCOMProxy) {
+  MOZ_ASSERT(!aCOMProxy.IsNull());
+  mTopLevelDocProxy.reset(const_cast<IAccessibleHolder&>(aCOMProxy).Release());
+  return IPC_OK();
+}
+
 HWND DocAccessibleChild::GetNativeWindowHandle() const {
   if (mEmulatedWindowHandle) {
     return mEmulatedWindowHandle;
@@ -284,6 +291,20 @@ bool DocAccessibleChild::SendBindChildDoc(DocAccessibleChild* aChildDoc,
 ipc::IPCResult DocAccessibleChild::RecvRestoreFocus() {
   FocusMgr()->ForceFocusEvent();
   return IPC_OK();
+}
+
+void DocAccessibleChild::SetEmbedderOnBridge(dom::BrowserBridgeChild* aBridge,
+                                             uint64_t aID) {
+  if (CanSend()) {
+    aBridge->SendSetEmbedderAccessible(this, aID);
+  } else {
+    // This DocAccessibleChild hasn't sent the constructor to the parent
+    // process yet. This happens if the top level document hasn't received its
+    // parent COM proxy yet, in which case sending constructors for child
+    // documents gets deferred. We must also defer sending this as an embedder.
+    MOZ_ASSERT(!IsConstructedInParentProcess());
+    PushDeferredEvent(MakeUnique<SerializedSetEmbedder>(aBridge, this, aID));
+  }
 }
 
 }  // namespace a11y

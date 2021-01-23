@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY linksHeader.label "Comportamento das ligazóns">
+<!ENTITY newWindow.label "Comportamento ao abrir ligazóns">
+<!ENTITY newWindowDescription.label "Abrir as ligazóns que tenten abrir unha nova xanela en:">
+<!ENTITY newWindowRestriction.label "Cando os scripts queiran abrir unha nova xanela:">
+<!ENTITY external.label "Ligazóns doutros aplicativos">
+<!ENTITY externalDescription.label "Abre as ligazóns pasadas desde outros aplicativos en:">
+
+<!ENTITY openCurrent.label "A xanela/lapela actual">
+<!ENTITY newWindowGroupCurrent.accesskey "c">
+<!ENTITY externalGroupCurrent.accesskey "u">
+
+<!ENTITY openTab.label "Unha nova lapela na xanela actual">
+<!ENTITY newWindowGroupTab.accesskey "t">
+<!ENTITY externalGroupTab.accesskey "a">
+
+<!ENTITY openWindow.label "Unha nova xanela">
+<!ENTITY newWindowGroupWindow.accesskey "w">
+<!ENTITY externalGroupWindow.accesskey "o">
+
+<!ENTITY divertAll.label "Converter sempre as xanelas en lapelas">
+<!ENTITY divertAll.accesskey "C">
+<!ENTITY divertNoFeatures.label "Non converter as xanelas personalizadas en lapelas">
+<!ENTITY divertNoFeatures.accesskey "s">
+<!ENTITY dontDivert.label "Abrir sempre en novas xanelas">
+<!ENTITY dontDivert.accesskey "n">

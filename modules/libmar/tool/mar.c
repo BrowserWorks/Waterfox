@@ -11,23 +11,23 @@
 #include "mar_cmdline.h"
 
 #ifdef XP_WIN
-#include <windows.h>
-#include <direct.h>
-#define chdir _chdir
+#  include <windows.h>
+#  include <direct.h>
+#  define chdir _chdir
 #else
-#include <unistd.h>
+#  include <unistd.h>
 #endif
 
 #if !defined(NO_SIGN_VERIFY) && (!defined(XP_WIN) || defined(MAR_NSS))
-#include "cert.h"
-#include "nss.h"
-#include "pk11pub.h"
-int NSSInitCryptoContext(const char *NSSConfigDir);
+#  include "cert.h"
+#  include "nss.h"
+#  include "pk11pub.h"
+int NSSInitCryptoContext(const char* NSSConfigDir);
 #endif
 
-int mar_repackage_and_sign(const char *NSSConfigDir,
-                           const char *const *certNames, uint32_t certCount,
-                           const char *src, const char *dest);
+int mar_repackage_and_sign(const char* NSSConfigDir,
+                           const char* const* certNames, uint32_t certCount,
+                           const char* src, const char* dest);
 
 static void print_version() {
   printf("Version: %s\n", MOZ_APP_VERSION);
@@ -38,7 +38,7 @@ static void print_usage() {
   printf("usage:\n");
   printf("Create a MAR file:\n");
   printf(
-      "  mar [-H MARChannelID] [-V ProductVersion] [-C workingDir] "
+      "  mar -H MARChannelID -V ProductVersion [-C workingDir] "
       "-c archive.mar [files...]\n");
 
   printf("Extract a MAR file:\n");
@@ -65,14 +65,14 @@ static void print_usage() {
       "signed_input_archive.mar base_64_encoded_signature_file "
       "changed_signed_output.mar\n");
   printf("(i) is the index of the certificate to extract\n");
-#if defined(XP_MACOSX) || (defined(XP_WIN) && !defined(MAR_NSS))
+#  if defined(XP_MACOSX) || (defined(XP_WIN) && !defined(MAR_NSS))
   printf("Verify a MAR file:\n");
   printf("  mar [-C workingDir] -D DERFilePath -v signed_archive.mar\n");
   printf(
       "At most %d signature certificate DER files are specified by "
       "-D0 DERFilePath1 -D1 DERFilePath2, ...\n",
       MAX_SIGNATURES);
-#else
+#  else
   printf("Verify a MAR file:\n");
   printf(
       "  mar [-C workingDir] -d NSSConfigDir -n certname "
@@ -81,7 +81,7 @@ static void print_usage() {
       "At most %d signature certificate names are specified by "
       "-n0 certName -n1 certName2, ...\n",
       MAX_SIGNATURES);
-#endif
+#  endif
   printf(
       "At most %d verification certificate names are specified by "
       "-n0 certName -n1 certName2, ...\n",
@@ -95,7 +95,7 @@ static void print_usage() {
 
   printf("Refresh the product information block of a MAR file:\n");
   printf(
-      "  mar [-H MARChannelID] [-V ProductVersion] [-C workingDir] "
+      "  mar -H MARChannelID -V ProductVersion [-C workingDir] "
       "-i unsigned_archive_to_refresh.mar\n");
 
   printf("Print executable version:\n");
@@ -103,13 +103,13 @@ static void print_usage() {
   printf("This program does not handle unicode file paths properly\n");
 }
 
-static int mar_test_callback(MarFile *mar, const MarItem *item, void *unused) {
+static int mar_test_callback(MarFile* mar, const MarItem* item, void* unused) {
   printf("%u\t0%o\t%s\n", item->length, item->flags, item->name);
   return 0;
 }
 
-static int mar_test(const char *path) {
-  MarFile *mar;
+static int mar_test(const char* path) {
+  MarFile* mar;
 
   mar = mar_open(path);
   if (!mar) {
@@ -123,31 +123,30 @@ static int mar_test(const char *path) {
   return 0;
 }
 
-int main(int argc, char **argv) {
-  char *NSSConfigDir = NULL;
-  const char *certNames[MAX_SIGNATURES];
-  char *MARChannelID = MAR_CHANNEL_ID;
-  char *productVersion = MOZ_APP_VERSION;
-  uint32_t k;
+int main(int argc, char** argv) {
+  const char* certNames[MAX_SIGNATURES];
+  char* MARChannelID = NULL;
+  char* productVersion = NULL;
   int rv = -1;
+#if !defined(NO_SIGN_VERIFY)
+  char* NSSConfigDir = NULL;
+  uint32_t k;
   uint32_t certCount = 0;
   int32_t sigIndex = -1;
-
-#if !defined(NO_SIGN_VERIFY)
   uint32_t fileSizes[MAX_SIGNATURES];
-  const uint8_t *certBuffers[MAX_SIGNATURES];
-#if ((!defined(MAR_NSS) && defined(XP_WIN)) || defined(XP_MACOSX)) || \
-    ((defined(XP_WIN) || defined(XP_MACOSX)) && !defined(MAR_NSS))
-  char *DERFilePaths[MAX_SIGNATURES];
-#endif
-#if (!defined(XP_WIN) && !defined(XP_MACOSX)) || defined(MAR_NSS)
-  CERTCertificate *certs[MAX_SIGNATURES];
-#endif
+  const uint8_t* certBuffers[MAX_SIGNATURES];
+#  if ((!defined(MAR_NSS) && defined(XP_WIN)) || defined(XP_MACOSX)) || \
+      ((defined(XP_WIN) || defined(XP_MACOSX)) && !defined(MAR_NSS))
+  char* DERFilePaths[MAX_SIGNATURES];
+#  endif
+#  if (!defined(XP_WIN) && !defined(XP_MACOSX)) || defined(MAR_NSS)
+  CERTCertificate* certs[MAX_SIGNATURES];
+#  endif
 #endif
 
-  memset((void *)certNames, 0, sizeof(certNames));
+  memset((void*)certNames, 0, sizeof(certNames));
 #if defined(XP_WIN) && !defined(MAR_NSS) && !defined(NO_SIGN_VERIFY)
-  memset((void *)certBuffers, 0, sizeof(certBuffers));
+  memset((void*)certBuffers, 0, sizeof(certBuffers));
 #endif
 #if !defined(NO_SIGN_VERIFY) && \
     ((!defined(MAR_NSS) && defined(XP_WIN)) || defined(XP_MACOSX))
@@ -181,8 +180,8 @@ int main(int argc, char **argv) {
       argv += 2;
       argc -= 2;
     }
-#if !defined(NO_SIGN_VERIFY) && \
-    ((!defined(MAR_NSS) && defined(XP_WIN)) || defined(XP_MACOSX))
+#if !defined(NO_SIGN_VERIFY)
+#  if (!defined(MAR_NSS) && defined(XP_WIN)) || defined(XP_MACOSX)
     /* -D DERFilePath, also matches -D[index] DERFilePath
        We allow an index for verifying to be symmetric
        with the import and export command line arguments. */
@@ -196,7 +195,7 @@ int main(int argc, char **argv) {
       argv += 2;
       argc -= 2;
     }
-#endif
+#  endif
     /* -d NSSConfigdir */
     else if (argv[1][0] == '-' && argv[1][1] == 'd') {
       NSSConfigDir = argv[2];
@@ -223,7 +222,9 @@ int main(int argc, char **argv) {
         argv += 2;
         argc -= 2;
       }
-    } else if (argv[1][0] == '-' && argv[1][1] == 'H') {  // MAR channel ID
+    }
+#endif
+    else if (argv[1][0] == '-' && argv[1][1] == 'H') {  // MAR channel ID
       MARChannelID = argv[2];
       argv += 2;
       argc -= 2;
@@ -245,11 +246,33 @@ int main(int argc, char **argv) {
   switch (argv[1][1]) {
     case 'c': {
       struct ProductInformationBlock infoBlock;
+      if (!productVersion) {
+        fprintf(stderr,
+                "ERROR: Version not specified (pass `-V <version>`).\n");
+        return -1;
+      }
+      if (!MARChannelID) {
+        fprintf(stderr,
+                "ERROR: MAR channel ID not specified (pass `-H "
+                "<mar-channel-id>`).\n");
+        return -1;
+      }
       infoBlock.MARChannelID = MARChannelID;
       infoBlock.productVersion = productVersion;
       return mar_create(argv[2], argc - 3, argv + 3, &infoBlock);
     }
     case 'i': {
+      if (!productVersion) {
+        fprintf(stderr,
+                "ERROR: Version not specified (pass `-V <version>`).\n");
+        return -1;
+      }
+      if (!MARChannelID) {
+        fprintf(stderr,
+                "ERROR: MAR channel ID not specified (pass `-H "
+                "<mar-channel-id>`).\n");
+        return -1;
+      }
       struct ProductInformationBlock infoBlock;
       infoBlock.MARChannelID = MARChannelID;
       infoBlock.productVersion = productVersion;
@@ -277,8 +300,8 @@ int main(int argc, char **argv) {
               "    - MAR channel name: %s\n"
               "    - Product version: %s\n",
               infoBlock.MARChannelID, infoBlock.productVersion);
-          free((void *)infoBlock.MARChannelID);
-          free((void *)infoBlock.productVersion);
+          free((void*)infoBlock.MARChannelID);
+          free((void*)infoBlock.productVersion);
         }
       }
       printf("\n");
@@ -325,7 +348,7 @@ int main(int argc, char **argv) {
         return -1;
       }
 
-#if (!defined(XP_WIN) && !defined(XP_MACOSX)) || defined(MAR_NSS)
+#  if (!defined(XP_WIN) && !defined(XP_MACOSX)) || defined(MAR_NSS)
       if (!NSSConfigDir || certCount == 0) {
         print_usage();
         return -1;
@@ -335,11 +358,11 @@ int main(int argc, char **argv) {
         fprintf(stderr, "ERROR: Could not initialize crypto library.\n");
         return -1;
       }
-#endif
+#  endif
 
       rv = 0;
       for (k = 0; k < certCount; ++k) {
-#if (defined(XP_WIN) || defined(XP_MACOSX)) && !defined(MAR_NSS)
+#  if (defined(XP_WIN) || defined(XP_MACOSX)) && !defined(MAR_NSS)
         rv = mar_read_entire_file(DERFilePaths[k], MAR_MAX_CERT_SIZE,
                                   &certBuffers[k], &fileSizes[k]);
 
@@ -347,7 +370,7 @@ int main(int argc, char **argv) {
           fprintf(stderr, "ERROR: could not read file %s", DERFilePaths[k]);
           break;
         }
-#else
+#  else
         /* It is somewhat circuitous to look up a CERTCertificate and then pass
          * in its DER encoding just so we can later re-create that
          * CERTCertificate to extract the public key out of it. However, by
@@ -366,11 +389,11 @@ int main(int argc, char **argv) {
                   certNames[k]);
           break;
         }
-#endif
+#  endif
       }
 
       if (!rv) {
-        MarFile *mar = mar_open(argv[2]);
+        MarFile* mar = mar_open(argv[2]);
         if (mar) {
           rv = mar_verify_signatures(mar, certBuffers, fileSizes, certCount);
           mar_close(mar);
@@ -380,12 +403,12 @@ int main(int argc, char **argv) {
         }
       }
       for (k = 0; k < certCount; ++k) {
-#if (defined(XP_WIN) || defined(XP_MACOSX)) && !defined(MAR_NSS)
-        free((void *)certBuffers[k]);
-#else
+#  if (defined(XP_WIN) || defined(XP_MACOSX)) && !defined(MAR_NSS)
+        free((void*)certBuffers[k]);
+#  else
         /* certBuffers[k] is owned by certs[k] so don't free it */
         CERT_DestroyCertificate(certs[k]);
-#endif
+#  endif
       }
       if (rv) {
         /* Determine if the source MAR file has the new fields for signing */
@@ -399,9 +422,9 @@ int main(int argc, char **argv) {
                   " no signature to verify.\n");
         }
       }
-#if (!defined(XP_WIN) && !defined(XP_MACOSX)) || defined(MAR_NSS)
+#  if (!defined(XP_WIN) && !defined(XP_MACOSX)) || defined(MAR_NSS)
       (void)NSS_Shutdown();
-#endif
+#  endif
       return rv ? -1 : 0;
 
     case 's':

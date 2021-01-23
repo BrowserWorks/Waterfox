@@ -1,0 +1,112 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailWizard.title               "Konfiguracja istniejącego adresu e-mail">
+<!ENTITY emailWizard.caption             "Użyj obecnego adresu e-mail">
+<!ENTITY name.label                      "Imię i nazwisko:">
+<!ENTITY name.accesskey                  "I">
+<!ENTITY fullname.placeholder            "Twoje imię i nazwisko">
+<!ENTITY name.text                       "Twoje imię i nazwisko lub pseudonim, tak jak będą wyświetlane innym">
+<!ENTITY name.error                      "Proszę podać imię i nazwisko lub pseudonim">
+<!ENTITY email.label                     "Adres e-mail:">
+<!ENTITY email.accesskey                 "s">
+<!ENTITY email3.placeholder              "Twój adres e-mail">
+<!ENTITY email.text                      "Twój istniejący adres e-mail">
+<!ENTITY email.error                     "Nieprawidłowy adres e-mail">
+<!ENTITY password.label                  "Hasło:">
+<!ENTITY password.accesskey              "H">
+<!ENTITY password.placeholder            "Hasło">
+<!ENTITY password.text                   "Opcjonalnie, zostanie użyte wyłącznie do sprawdzenia nazwy użytkownika">
+<!ENTITY password.toggle                 "Widoczne hasło">
+<!ENTITY rememberPassword.label          "Zachowaj hasło">
+<!ENTITY rememberPassword.accesskey      "Z">
+<!ENTITY usernameEx.label                "Nazwa użytkownika:">
+<!ENTITY usernameEx.accesskey            "N">
+<!-- LOCALIZATION NOTE(usernameEx.placeholder): YOURDOMAIN refers to the Windows domain in ActiveDirectory. yourusername refers to the user's account name in Windows. -->
+<!ENTITY usernameEx.placeholder          "NAZWA-DOMENY\nazwa-użytkownika">
+<!-- LOCALIZATION NOTE(usernameEx.text): Domain refers to the Windows domain in ActiveDirectory. We mean the user's login in Windows at the local corporate network. -->
+<!ENTITY usernameEx.text                 "Nazwa użytkownika domeny">
+
+<!ENTITY protocol.label                  "Protokół:">
+<!ENTITY imapLong.label                  "IMAP (zdalne foldery)">
+<!ENTITY pop3Long.label                  "POP3 (poczta lokalnie na komputerze)">
+
+<!ENTITY manualConfigTable.summary       "Konfiguracja serwera">
+<!ENTITY incoming.label                  "Serwer poczty przychodzącej:">
+<!ENTITY incomingColumn.label            "Serwer poczty przychodzącej">
+<!ENTITY outgoing.label                  "Serwer poczty wychodzącej:">
+<!ENTITY outgoingColumn.label            "Serwer poczty wychodzącej">
+<!ENTITY username.label                  "Nazwa użytkownika:">
+<!ENTITY serverRow.label                 "Serwer:">
+<!ENTITY portRow.label                   "Port:">
+<!ENTITY sslRow.label                    "SSL:">
+<!ENTITY auth.label                      "Uwierzytelnianie">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label                      "POP3">
+<!-- LOCALIZATION NOTE(exchange.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange.label                  "Exchange">
+<!ENTITY smtp.label                      "SMTP">
+<!ENTITY autodetect.label                "Wykryj">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "Bez szyfrowania">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!-- LOCALIZATION NOTE(exchange-hostname.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange-hostname.label         "Serwer Exchange:">
+
+<!ENTITY advancedSetup.label             "Utwórz konto i edytuj jego ustawienia…">
+<!ENTITY advancedSetup.accesskey         "e">
+<!ENTITY cancel.label                    "Anuluj">
+<!ENTITY cancel.accesskey                "A">
+<!ENTITY continue.label                  "Kontynuuj">
+<!ENTITY continue.accesskey              "K">
+<!ENTITY stop.label                      "Zatrzymaj">
+<!ENTITY stop.accesskey                  "m">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual config mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "Wykryj ponownie">
+<!ENTITY half-manual-test.accesskey      "W">
+<!ENTITY manual-config.label             "Konfiguruj ręcznie…">
+<!ENTITY manual-config.accesskey         "o">
+<!ENTITY open-provisioner.label          "Nowy adres e-mail…">
+<!ENTITY open-provisioner.accesskey      "N">
+
+
+<!ENTITY get-help.label                  "Uzyskaj pomoc">
+<!ENTITY get-help.accesskey              "U">
+
+
+<!ENTITY warning.label                   "Ostrzeżenie!">
+<!ENTITY incomingSettings.label          "Ustawienia dla poczty przychodzącej:">
+<!ENTITY outgoingSettings.label          "Ustawienia dla poczty wychodzącej:">
+<!ENTITY technicaldetails.label          "Szczegóły">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "Rozumiem ryzyko.">
+<!ENTITY confirmWarning.accesskey        "R">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "Gotowe">
+<!ENTITY doneAccount.accesskey           "G">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "Zmień ustawienia">
+<!ENTITY changeSettings.accesskey        "Z">
+
+<!ENTITY contactYourProvider.description "&brandShortName; użyje dostarczonej konfiguracji dla tego konta, jednakże administrator lub operator usługi pocztowej powinien zostać powiadomiony o tych nieprawidłowych połączeniach. Więcej informacji na ten temat można znaleźć w pomocy programu &brandShortName;.">
+
+<!ENTITY insecureServer.tooltip.title    "Ostrzeżenie! Ten serwer nie zapewnia wysokiego poziomu bezpieczeństwa.">
+<!ENTITY insecureServer.tooltip.details  "Kliknij, aby dowiedzieć się więcej">
+
+<!ENTITY insecureUnencrypted.description "Połączenie nie jest szyfrowane, hasła i wiadomości będą wysyłane czystym tekstem (w żaden sposób niezabezpieczone), co grozi ich przechwyceniem przez osoby trzecie. Konto zostanie skonfigurowane, jednakże operator usługi pocztowej powinien udostępnić możliwość łączenia się z serwerem w bezpieczny sposób.">
+<!ENTITY insecureSelfSigned.description  "Ten serwer używa certyfikatu, któremu nie należy ufać, istnieje możliwość przechwycenia transmisji pomiędzy programem &brandShortName; a serwerem przez osoby trzecie. Konto zostanie skonfigurowane, jednakże operator usługi pocztowej powinien zostać powiadomiony o problemie w celu jego usunięcia.">
+<!ENTITY secureServer.description        "Gratulacje! Ten serwer zapewnia wysoki poziom bezpieczeństwa.">

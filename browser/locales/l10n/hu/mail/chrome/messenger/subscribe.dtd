@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "Feliratkozás">
+<!ENTITY subscribeButton.label        "Feliratkozás">
+<!ENTITY subscribeButton.accesskey    "F">
+<!ENTITY unsubscribeButton.label      "Leiratkozás">
+<!ENTITY unsubscribeButton.accesskey  "L">
+<!ENTITY newGroupsTab.label           "Új csoportok">
+<!ENTITY newGroupsTab.accesskey       "c">
+<!ENTITY refreshButton.label          "Frissítés">
+<!ENTITY refreshButton.accesskey      "F">
+<!ENTITY stopButton.label             "Leállítás">
+<!ENTITY stopButton.accesskey         "s">
+<!ENTITY server.label                 "Kiszolgáló:">
+<!ENTITY server.accesskey             "K">
+<!ENTITY subscribedHeader.label       "Feliratkozás">
+<!-- commenting out until bug 38906 is fixed 
+<!ENTITY messagesHeader.label         "Messages"> -->
+<!ENTITY namefield.label              "Elemek, amelyekben szerepel:">
+<!ENTITY namefield.accesskey          "E">

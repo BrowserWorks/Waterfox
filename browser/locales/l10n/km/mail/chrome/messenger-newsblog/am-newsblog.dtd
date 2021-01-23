@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY manageSubscriptions.label     "គ្រប់គ្រង​ការ​ជាវ...">
+<!ENTITY manageSubscriptions.accesskey "M">
+
+<!ENTITY feedWindowTitle.label         "អ្នក​ជំនួយការ​គណនី​អត្ថបទ​ព័ត៌មាន">
+<!ENTITY feeds.accountName             "មតិ​ព័ត៌មាន &amp; កំណត់​ហេតុ​បណ្ដាញ">

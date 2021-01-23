@@ -7,11 +7,12 @@
 #include "SFNTData.h"
 
 #include <algorithm>
+#include <numeric>
 
 #include "BigEndianInts.h"
 #include "Logging.h"
 #include "mozilla/HashFunctions.h"
-#include "SFNTNameTable.h"
+#include "mozilla/Span.h"
 
 namespace mozilla {
 namespace gfx {
@@ -57,25 +58,19 @@ class SFNTData::Font {
         mEndOfDirEntries(mFirstDirEntry + aOffsetTable->numTables),
         mDataLength(aDataLength) {}
 
-  bool GetU16FullName(mozilla::u16string& aU16FullName) {
+  Span<const uint8_t> GetHeadTableBytes() const {
     const TableDirEntry* dirEntry =
-        GetDirEntry(TRUETYPE_TAG('n', 'a', 'm', 'e'));
+        GetDirEntry(TRUETYPE_TAG('h', 'e', 'a', 'd'));
     if (!dirEntry) {
-      gfxWarning() << "Name table entry not found.";
-      return false;
+      gfxWarning() << "Head table entry not found.";
+      return nullptr;
     }
 
-    UniquePtr<SFNTNameTable> nameTable =
-        SFNTNameTable::Create((mFontData + dirEntry->offset), dirEntry->length);
-    if (!nameTable) {
-      return false;
-    }
-
-    return nameTable->GetU16FullName(aU16FullName);
+    return MakeSpan(mFontData + dirEntry->offset, dirEntry->length);
   }
 
  private:
-  const TableDirEntry* GetDirEntry(const uint32_t aTag) {
+  const TableDirEntry* GetDirEntry(const uint32_t aTag) const {
     const TableDirEntry* foundDirEntry =
         std::lower_bound(mFirstDirEntry, mEndOfDirEntries, aTag);
 
@@ -143,14 +138,13 @@ UniquePtr<SFNTData> SFNTData::Create(const uint8_t* aFontData,
 /* static */
 uint64_t SFNTData::GetUniqueKey(const uint8_t* aFontData, uint32_t aDataLength,
                                 uint32_t aVarDataSize, const void* aVarData) {
-  uint64_t hash;
+  uint64_t hash = 0;
   UniquePtr<SFNTData> sfntData = SFNTData::Create(aFontData, aDataLength);
-  mozilla::u16string firstName;
-  if (sfntData && sfntData->GetU16FullName(0, firstName)) {
-    hash = HashString(firstName.c_str(), firstName.length());
+  if (sfntData) {
+    hash = sfntData->HashHeadTables();
   } else {
-    gfxWarning() << "Failed to get name from font data hashing whole font.";
-    hash = HashString(aFontData, aDataLength);
+    gfxWarning() << "Failed to create SFNTData from data, hashing whole font.";
+    hash = HashBytes(aFontData, aDataLength);
   }
 
   if (aVarDataSize) {
@@ -158,60 +152,12 @@ uint64_t SFNTData::GetUniqueKey(const uint8_t* aFontData, uint32_t aDataLength,
   }
 
   return hash << 32 | aDataLength;
-  ;
 }
 
 SFNTData::~SFNTData() {
   for (size_t i = 0; i < mFonts.length(); ++i) {
     delete mFonts[i];
   }
-}
-
-bool SFNTData::GetU16FullName(uint32_t aIndex,
-                              mozilla::u16string& aU16FullName) {
-  if (aIndex >= mFonts.length()) {
-    gfxWarning() << "aIndex to font data too high.";
-    return false;
-  }
-
-  return mFonts[aIndex]->GetU16FullName(aU16FullName);
-}
-
-bool SFNTData::GetU16FullNames(Vector<mozilla::u16string>& aU16FullNames) {
-  bool fontFound = false;
-  for (size_t i = 0; i < mFonts.length(); ++i) {
-    mozilla::u16string name;
-    if (mFonts[i]->GetU16FullName(name)) {
-      fontFound = true;
-    }
-    if (!aU16FullNames.append(std::move(name))) {
-      return false;
-    }
-  }
-
-  return fontFound;
-}
-
-bool SFNTData::GetIndexForU16Name(const mozilla::u16string& aU16FullName,
-                                  uint32_t* aIndex, size_t aTruncatedLen) {
-  for (size_t i = 0; i < mFonts.length(); ++i) {
-    mozilla::u16string name;
-    if (!mFonts[i]->GetU16FullName(name)) {
-      continue;
-    }
-
-    if (aTruncatedLen) {
-      MOZ_ASSERT(aU16FullName.length() <= aTruncatedLen);
-      name = name.substr(0, aTruncatedLen);
-    }
-
-    if (name == aU16FullName) {
-      *aIndex = i;
-      return true;
-    }
-  }
-
-  return false;
 }
 
 bool SFNTData::AddFont(const uint8_t* aFontData, uint32_t aDataLength,
@@ -231,6 +177,16 @@ bool SFNTData::AddFont(const uint8_t* aFontData, uint32_t aDataLength,
   }
 
   return mFonts.append(new Font(offsetTable, aFontData, aDataLength));
+}
+
+uint32_t SFNTData::HashHeadTables() {
+  uint32_t headTableHash = std::accumulate(
+      mFonts.begin(), mFonts.end(), 0U, [](uint32_t hash, Font* font) {
+        Span<const uint8_t> headBytes = font->GetHeadTableBytes();
+        return AddToHash(hash, HashBytes(headBytes.data(), headBytes.size()));
+      });
+
+  return headTableHash;
 }
 
 }  // namespace gfx

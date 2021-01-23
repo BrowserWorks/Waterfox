@@ -12,7 +12,6 @@
 #include "WebBrowserPersistDocumentParent.h"
 #include "nsCOMPtr.h"
 #include "nsIWebBrowserPersistDocument.h"
-#include "nsIContentPolicy.h"
 
 namespace mozilla {
 
@@ -30,6 +29,9 @@ class WebBrowserPersistResourcesParent final
 
   virtual mozilla::ipc::IPCResult RecvVisitDocument(
       PWebBrowserPersistDocumentParent* aSubDocument) override;
+
+  virtual mozilla::ipc::IPCResult RecvVisitBrowsingContext(
+      const dom::MaybeDiscarded<dom::BrowsingContext>& aContext) override;
 
   virtual mozilla::ipc::IPCResult Recv__delete__(
       const nsresult& aStatus) override;

@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     tab.cookiesonsystem.label      "Tallennetut evästeet">
+<!ENTITY     tab.bannedservers.label        "Poikkeukset">
+<!ENTITY     div.bannedservers.label        "Voit asettaa sivustokohtaisia poikkeuksia evästeiden hyväksymiseen.">
+<!ENTITY     div.cookiesonsystem.label      "Seuraavat evästeet on tallennettu tietokoneellesi:">
+<!ENTITY     treehead.cookiename.label      "Evästeen nimi">
+<!ENTITY     treehead.cookiedomain.label    "Sivusto">
+<!ENTITY     treehead.cookieexpires.label   "Vanhenee">
+<!ENTITY     treehead.infoselected.label    "Valitun evästeen tiedot">
+<!ENTITY     button.removecookie.label      "Poista eväste">
+<!ENTITY     button.removecookie.accesskey  "o">
+<!ENTITY     button.removeallcookies.label  "Poista kaikki evästeet">
+<!ENTITY     button.removeallcookies.accesskey "k">
+
+<!ENTITY     search.placeholder             "Etsi">
+<!ENTITY     focusSearch.key                "f">
+<!ENTITY     selectAll.key                  "a">
+
+<!ENTITY     props.name.label               "Nimi:">
+<!ENTITY     props.value.label              "Sisältö:">
+<!ENTITY     props.domain.label             "Palvelin:">
+<!ENTITY     props.path.label               "Polku:">
+<!ENTITY     props.secure.label             "Lähetä:">
+<!ENTITY     props.expires.label            "Vanhenee:">
+
+<!ENTITY     treehead.sitename.label        "Sivusto">
+<!ENTITY     treehead.scheme.label          "Rakenne">
+<!ENTITY     treehead.status.label          "Tila">
+<!ENTITY     windowtitle.label              "Evästeiden hallinta">
+
+<!ENTITY     blockSite.label                "Estä">
+<!ENTITY     blockSite.accesskey            "E">
+<!ENTITY     allowSite.label                "Salli">
+<!ENTITY     allowSite.accesskey            "S">
+<!ENTITY     allowSiteSession.label         "Salli istunnon ajaksi">
+<!ENTITY     allowSiteSession.accesskey     "a">
+<!ENTITY     removepermission.label         "Poista sivusto">
+<!ENTITY     removepermission.accesskey     "o">
+<!ENTITY     removeallpermissions.label     "Poista kaikki sivustot">
+<!ENTITY     removeallpermissions.accesskey "k">
+
+<!ENTITY     futureCookies.label            "Älä salli poistettuun evästeeseen viittaavan sivun tallentaa evästeitä">
+<!ENTITY     futureCookies.accesskey        "Ä">

@@ -18,13 +18,12 @@ add_task(async function test_resultDomain() {
     { name: "A second test engine", xmlFileName: "engine2.xml" },
     {
       name: "bacon",
-      details: [
-        "",
-        "bacon",
-        "Search Bacon",
-        "GET",
-        "http://www.bacon.moz/?search={searchTerms}",
-      ],
+      details: {
+        alias: "bacon",
+        description: "Search Bacon",
+        method: "GET",
+        template: "http://www.bacon.moz/?search={searchTerms}",
+      },
     },
   ]);
 

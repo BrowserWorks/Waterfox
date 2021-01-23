@@ -17,11 +17,10 @@
 #include "nsIScriptContext.h"
 #include "mozilla/dom/Document.h"
 #include "nsServiceManagerUtils.h"
-#include "nsIPrincipal.h"
-#include "nsIScriptSecurityManager.h"
 #include "nsLayoutUtils.h"
 #include "mozilla/ReflowInput.h"
 #include "nsIObjectLoadingContent.h"
+#include "mozilla/BasePrincipal.h"
 #include "mozilla/EventStateManager.h"
 #include "mozilla/EventStates.h"
 #include "mozilla/Preferences.h"
@@ -134,7 +133,7 @@ nsresult nsXULPopupListener::HandleEvent(Event* aEvent) {
       // The user wants his contextmenus.  Let's make sure that this is a
       // website and not chrome since there could be places in chrome which
       // don't want contextmenus.
-      if (!nsContentUtils::IsSystemPrincipal(targetContent->NodePrincipal())) {
+      if (!targetContent->NodePrincipal()->IsSystemPrincipal()) {
         // This isn't chrome.  Cancel the preventDefault() and
         // let the event go forth.
         preventDefault = false;
@@ -311,20 +310,6 @@ nsresult nsXULPopupListener::LaunchPopup(MouseEvent* aEvent) {
   RefPtr<Element> popup;
   if (identifier.EqualsLiteral("_child")) {
     popup = GetImmediateChild(mElement, nsGkAtoms::menupopup);
-    if (!popup) {
-      nsINodeList* list = document->GetAnonymousNodes(*mElement);
-      if (list) {
-        uint32_t listLength = list->Length();
-        for (uint32_t ctr = 0; ctr < listLength; ctr++) {
-          nsIContent* childContent = list->Item(ctr);
-          if (childContent->NodeInfo()->Equals(nsGkAtoms::menupopup,
-                                               kNameSpaceID_XUL)) {
-            popup = childContent->AsElement();
-            break;
-          }
-        }
-      }
-    }
   } else if (!mElement->IsInUncomposedDoc() ||
              !(popup = document->GetElementById(identifier))) {
     // XXXsmaug Should we try to use ShadowRoot::GetElementById in case

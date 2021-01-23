@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProduct2.label      "&brandShorterName;(r)i buruz">
+<!ENTITY aboutProduct2.accesskey  "b">
+
+<!ENTITY preferencesCmdMac.label        "Hobespenak…">
+
+<!ENTITY servicesMenuMac.label          "Zerbitzuak">
+
+<!ENTITY hideThisAppCmdMac2.label       "Ezkutatu &brandShorterName;">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Ezkutatu besteak">
+
+<!ENTITY showAllAppsCmdMac.label        "Erakutsi denak">
+
+<!ENTITY touchBarCmdMac.label           "Pertsonalizatu Touch Bar-a…">

@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY downloadManager.title           "Gestor de Baixades">
+
+<!ENTITY menuBar.tooltip                 "Barra de menú">
+<!ENTITY searchBar.tooltip               "Barra de cerca">
+
+<!ENTITY search.placeholder              "Cerca les baixades">
+<!ENTITY search.label                    "Cerca les baixades">
+<!ENTITY search.accesskey                "C">
+<!ENTITY search.key                      "f">
+
+<!ENTITY cmd.clearList.label             "Buida la llista">
+<!ENTITY cmd.clearList.tooltip           "Elimina de la llista les baixades acabades, cancel·lades o que han fallat">
+<!ENTITY cmd.clearList.accesskey         "B">
+
+<!ENTITY col.name.label                  "Nom">
+<!ENTITY col.name.accesskey              "N">
+<!ENTITY col.name.tooltip                "Nom de fitxer">
+<!ENTITY col.status.label                "Estat">
+<!ENTITY col.status.accesskey            "s">
+<!ENTITY col.status.tooltip              "Estat">
+<!ENTITY col.actionPlay.label            "Pausa/Reprèn/Reintenta">
+<!ENTITY col.actionPlay.accesskey        "u">
+<!ENTITY col.actionPlay.tooltip          "Pausa/Reprèn/Reintenta">
+<!ENTITY col.actionStop.label            "Cancel·la/Suprimeix">
+<!ENTITY col.actionStop.accesskey        "C">
+<!ENTITY col.actionStop.tooltip          "Cancel·la/Suprimeix">
+<!ENTITY col.progress.label              "Progrés">
+<!ENTITY col.progress.accesskey          "P">
+<!ENTITY col.progress.tooltip            "Progrés">
+<!ENTITY col.timeremaining.label         "Temps restant">
+<!ENTITY col.timeremaining.accesskey     "r">
+<!ENTITY col.timeremaining.tooltip       "Temps restant">
+<!ENTITY col.transferred.label           "Transferit">
+<!ENTITY col.transferred.accesskey       "T">
+<!ENTITY col.transferred.tooltip         "Transferit">
+<!ENTITY col.transferrate.label          "Velocitat">
+<!ENTITY col.transferrate.accesskey      "i">
+<!ENTITY col.transferrate.tooltip        "Velocitat">
+<!ENTITY col.timeelapsed.label           "Temps transcorregut">
+<!ENTITY col.timeelapsed.accesskey       "e">
+<!ENTITY col.timeelapsed.tooltip         "Temps transcorregut">
+<!ENTITY col.starttime.label             "Hora d'inici">
+<!ENTITY col.starttime.accesskey         "a">
+<!ENTITY col.starttime.tooltip           "Hora d'inici">
+<!ENTITY col.endtime.label               "Hora de finalització">
+<!ENTITY col.endtime.accesskey           "i">
+<!ENTITY col.endtime.tooltip             "Hora de finalització">
+<!ENTITY col.progresstext.label          "&#037;">
+<!ENTITY col.progresstext.accesskey      "&#037;">
+<!ENTITY col.progresstext.tooltip        "Progrés (&#037;)">
+<!ENTITY col.source.label                "Font">
+<!ENTITY col.source.accesskey            "o">
+<!ENTITY col.source.tooltip              "Font">
+
+<!ENTITY view.columns.label              "Mostra per columnes">
+<!ENTITY view.columns.accesskey          "c">
+<!ENTITY view.sortBy.label               "Ordena per">
+<!ENTITY view.sortBy.accesskey           "O">
+
+<!ENTITY view.unsorted.label             "Sense ordenar">
+<!ENTITY view.unsorted.accesskey         "n">
+<!ENTITY view.sortAscending.label        "Ordenació A > Z">
+<!ENTITY view.sortAscending.accesskey    "A">
+<!ENTITY view.sortDescending.label       "Ordenació Z > A">
+<!ENTITY view.sortDescending.accesskey   "Z">
+
+<!ENTITY cmd.pause.label                 "Pausa">
+<!ENTITY cmd.pause.accesskey             "P">
+<!ENTITY cmd.resume.label                "Reprèn">
+<!ENTITY cmd.resume.accesskey            "R">
+<!ENTITY cmd.retry.label                 "Reintenta">
+<!ENTITY cmd.retry.accesskey             "R">
+<!ENTITY cmd.cancel.label                "Cancel·la">
+<!ENTITY cmd.cancel.accesskey            "C">
+<!ENTITY cmd.remove.label                "Suprimeix de la llista">
+<!ENTITY cmd.remove.accesskey            "e">
+<!ENTITY cmd.open.label                  "Obre">
+<!ENTITY cmd.open.accesskey              "O">
+<!ENTITY cmd.show.label                  "Obre la carpeta">
+<!ENTITY cmd.show.accesskey              "c">
+<!ENTITY cmd.goToDownloadPage.label      "Vés a la pàgina de la baixada">
+<!ENTITY cmd.goToDownloadPage.accesskey  "V">
+<!ENTITY cmd.copyDownloadLink.label      "Copia l'enllaç de la baixada">
+<!ENTITY cmd.copyDownloadLink.accesskey  "l">
+<!ENTITY cmd.properties.label            "Propietats…">
+<!ENTITY cmd.properties.accesskey        "s">

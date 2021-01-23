@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Smiley Menu items -->
+
+<!ENTITY insertSmiley.label "Straoiseog">
+<!ENTITY insertSmiley.accesskey "S">
+
+<!ENTITY smiley1Cmd.label "Miongháire">
+<!ENTITY smiley1Cmd.accesskey "r">
+<!ENTITY smiley1Cmd.tooltip "Ionsáigh miongháire">
+<!ENTITY smiley2Cmd.label "Púicín">
+<!ENTITY smiley2Cmd.accesskey "n">
+<!ENTITY smiley2Cmd.tooltip "Ionsáigh púicín">
+<!ENTITY smiley3Cmd.label "Caochadh">
+<!ENTITY smiley3Cmd.accesskey "C">
+<!ENTITY smiley3Cmd.tooltip "Ionsáigh caochadh súile">
+<!ENTITY smiley4Cmd.label "Teanga amach">
+<!ENTITY smiley4Cmd.accesskey "m">
+<!ENTITY smiley4Cmd.tooltip "Ionsáigh aghaidh leis an teanga amach">
+<!ENTITY smiley5Cmd.label "Gáire">
+<!ENTITY smiley5Cmd.accesskey "G">
+<!ENTITY smiley5Cmd.tooltip "Ionsáigh gáire">
+<!ENTITY smiley6Cmd.label "Aiféaltas">
+<!ENTITY smiley6Cmd.accesskey "A">
+<!ENTITY smiley6Cmd.tooltip "Ionsáigh aiféaltas">
+<!ENTITY smiley7Cmd.label "Idir dhá chomhairle">
+<!ENTITY smiley7Cmd.accesskey "d">
+<!ENTITY smiley7Cmd.tooltip "Ionsáigh aghaidh idir dhá chomhairle">
+<!ENTITY smiley8Cmd.label "Iontas">
+<!ENTITY smiley8Cmd.accesskey "I">
+<!ENTITY smiley8Cmd.tooltip "Ionsáigh iontas">
+<!ENTITY smiley9Cmd.label "Póg">
+<!ENTITY smiley9Cmd.accesskey "P">
+<!ENTITY smiley9Cmd.tooltip "Ionsáigh póg">
+<!ENTITY smiley10Cmd.label "Béic">
+<!ENTITY smiley10Cmd.accesskey "B">
+<!ENTITY smiley10Cmd.tooltip "Ionsáigh béic">
+<!ENTITY smiley11Cmd.label "Snasta">
+<!ENTITY smiley11Cmd.accesskey "S">
+<!ENTITY smiley11Cmd.tooltip "Ionsáigh aghaidh shnasta">
+<!ENTITY smiley12Cmd.label "Béal airgid">
+<!ENTITY smiley12Cmd.accesskey "l">
+<!ENTITY smiley12Cmd.tooltip "Ionsáigh aghaidh le béal airgid">
+<!ENTITY smiley13Cmd.label "Cos sa bhéal">
+<!ENTITY smiley13Cmd.accesskey "h">
+<!ENTITY smiley13Cmd.tooltip "Ionsaigh aghaidh leis an chos sa bhéal">
+<!ENTITY smiley14Cmd.label "Soineanta">
+<!ENTITY smiley14Cmd.accesskey "t">
+<!ENTITY smiley14Cmd.tooltip "Ionsáigh aghaidh shoineanta">
+<!ENTITY smiley15Cmd.label "Gol">
+<!ENTITY smiley15Cmd.accesskey "o">
+<!ENTITY smiley15Cmd.tooltip "Ionsáigh aghaidh ag gol">
+<!ENTITY smiley16Cmd.label "Glas ar an teanga">
+<!ENTITY smiley16Cmd.accesskey "e">
+<!ENTITY smiley16Cmd.tooltip "Ionsáigh aghaidh le glas ar an teanga">
+<!ENTITY SmileButton.tooltip "Ionsáigh miongháire">
+

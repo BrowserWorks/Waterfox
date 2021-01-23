@@ -3,7 +3,7 @@ onfetch = function(e) {
     // Silently rewrite the referrer so the referrer test passes since the
     // document/worker isn't aware of this service worker.
     var url = e.request.url.substring(0, e.request.url.indexOf("?"));
-    url += "?headers=" + { Referer: self.location.href }.toSource();
+    url += "?headers=" + JSON.stringify({ Referer: self.location.href });
 
     e.respondWith(
       e.request.text().then(function(text) {
@@ -13,8 +13,8 @@ onfetch = function(e) {
         return fetch(url, {
           method: e.request.method,
           headers: e.request.headers,
-          body: body,
-          mode: mode,
+          body,
+          mode,
           credentials: e.request.credentials,
           redirect: e.request.redirect,
           cache: e.request.cache,

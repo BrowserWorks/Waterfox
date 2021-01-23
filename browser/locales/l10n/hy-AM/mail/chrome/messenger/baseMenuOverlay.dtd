@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Help Menu -->
+<!ENTITY helpMenu.label "Օգնություն">
+<!ENTITY helpMenu.accesskey "H">
+<!-- LOCALIZATION NOTE some localizations of Windows use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label "Օգնություն">
+<!ENTITY helpMenuWin.accesskey "H">
+<!ENTITY aboutProduct2.label "&brandShorterName;-ի մասին">
+<!ENTITY aboutProduct2.accesskey "A">
+<!ENTITY helpTroubleshootingInfo.label     "Անսարքության տեղեկություններ">
+<!ENTITY helpTroubleshootingInfo.accesskey "Ա">
+<!ENTITY helpSafeMode.label     "Վերամեկնարկել հավելումներն անջատված…">
+<!ENTITY helpSafeMode.accesskey "Վ">
+<!ENTITY helpSafeMode.stop.label     "Վերագործարկել՝ միացնելով հավելումները">
+<!ENTITY helpSafeMode.stop.accesskey "R">
+<!ENTITY productHelp.label "&brandShortName; Օգնություն">
+<!ENTITY productHelp.accesskey "H">
+<!ENTITY productHelp.commandkey "VK_F1">
+<!ENTITY productHelpMac.commandkey "?">
+<!ENTITY productHelpMac.modifiers "արագացուցիչ">
+
+<!ENTITY helpKeyboardShortcuts.label "Ստեղնաշարի դյուրանցումներ">
+<!ENTITY helpKeyboardShortcuts.accesskey "K">
+
+<!ENTITY helpFeedbackPage.label "Ուղարկել արձագանք…">
+<!ENTITY helpFeedbackPage.accesskey "S">
+
+<!ENTITY helpShowTour2.label "&brandShorterName; շրջայց">
+<!ENTITY helpShowTour2.accesskey "օ">
+
+<!ENTITY helpGetInvolvedPage.label "Միացե՛ք">
+<!ENTITY helpGetInvolvedPage.accesskey "I">
+
+<!ENTITY helpDonationsPage.label "Կատարեք նվիրատվություն">
+<!ENTITY helpDonationsPage.accesskey "M">

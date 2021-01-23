@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These are added to the Advanced - Scripts & Plugins panel -->
+<!ENTITY enbPluginCheckMailNews.label     "Pošta i novinske grupe">
+
+<!-- These are added to the Window menu -->
+<!ENTITY mail.label                       "Pošta i novinske grupe">
+<!ENTITY addressbook.label                "Adresar">
+
+<!-- These are added to Preferences dialog -->
+<!ENTITY viewingMessages.label            "Prikaz poruke">
+<!ENTITY notifications.label              "Obavijesti">
+<!ENTITY composingMessages.label          "Sastavljanje">
+<!ENTITY format.label                     "Format za slanje">
+<!ENTITY address.label                    "Adresiranje">
+<!ENTITY junk.label                       "Neželjena pošta i sumnjva pošta">
+<!ENTITY tags.label                       "Oznake">
+<!ENTITY return.label                     "Potvrde čitanja">
+<!ENTITY characterEncoding2.label         "Kodiranje teksta">
+<!ENTITY networkStorage.label             "Mreža i pohrana">

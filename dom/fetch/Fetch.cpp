@@ -5,12 +5,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "Fetch.h"
-#include "FetchConsumer.h"
-#include "FetchStream.h"
 
 #include "mozilla/dom/Document.h"
 #include "nsIGlobalObject.h"
-#include "nsIStreamLoader.h"
 
 #include "nsCharSeparatedTokenizer.h"
 #include "nsDOMString.h"
@@ -23,14 +20,13 @@
 
 #include "mozilla/ErrorResult.h"
 #include "mozilla/dom/BindingDeclarations.h"
-#include "mozilla/dom/BodyUtil.h"
+#include "mozilla/dom/BodyConsumer.h"
 #include "mozilla/dom/Exceptions.h"
 #include "mozilla/dom/DOMException.h"
 #include "mozilla/dom/FetchDriver.h"
 #include "mozilla/dom/File.h"
 #include "mozilla/dom/FormData.h"
 #include "mozilla/dom/Headers.h"
-#include "mozilla/dom/MutableBlobStreamListener.h"
 #include "mozilla/dom/Promise.h"
 #include "mozilla/dom/PromiseWorkerProxy.h"
 #include "mozilla/dom/RemoteWorkerChild.h"
@@ -38,8 +34,7 @@
 #include "mozilla/dom/Response.h"
 #include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/dom/URLSearchParams.h"
-#include "mozilla/net/CookieSettings.h"
-#include "mozilla/Telemetry.h"
+#include "mozilla/net/CookieJarSettings.h"
 
 #include "BodyExtractor.h"
 #include "EmptyBody.h"
@@ -189,6 +184,7 @@ class WorkerFetchResolver final : public FetchDriverObserver {
   // Touched only on the worker thread.
   RefPtr<FetchObserver> mFetchObserver;
   RefPtr<WeakWorkerRef> mWorkerRef;
+  bool mIsShutdown;
 
  public:
   // Returns null if worker is shutting down.
@@ -251,6 +247,7 @@ class WorkerFetchResolver final : public FetchDriverObserver {
   Promise* WorkerPromise(WorkerPrivate* aWorkerPrivate) const {
     MOZ_ASSERT(aWorkerPrivate);
     aWorkerPrivate->AssertIsOnWorkerThread();
+    MOZ_ASSERT(!mIsShutdown);
 
     return mPromiseProxy->WorkerPromise();
   }
@@ -274,6 +271,7 @@ class WorkerFetchResolver final : public FetchDriverObserver {
     MOZ_ASSERT(aWorkerPrivate);
     aWorkerPrivate->AssertIsOnWorkerThread();
 
+    mIsShutdown = true;
     mPromiseProxy->CleanUp();
 
     mFetchObserver = nullptr;
@@ -285,17 +283,24 @@ class WorkerFetchResolver final : public FetchDriverObserver {
     mWorkerRef = nullptr;
   }
 
+  bool IsShutdown(WorkerPrivate* aWorkerPrivate) const {
+    MOZ_ASSERT(aWorkerPrivate);
+    aWorkerPrivate->AssertIsOnWorkerThread();
+    return mIsShutdown;
+  }
+
  private:
   WorkerFetchResolver(PromiseWorkerProxy* aProxy,
                       AbortSignalProxy* aSignalProxy, FetchObserver* aObserver)
       : mPromiseProxy(aProxy),
         mSignalProxy(aSignalProxy),
-        mFetchObserver(aObserver) {
+        mFetchObserver(aObserver),
+        mIsShutdown(false) {
     MOZ_ASSERT(!NS_IsMainThread());
     MOZ_ASSERT(mPromiseProxy);
   }
 
-  ~WorkerFetchResolver() {}
+  ~WorkerFetchResolver() = default;
 
   virtual void FlushConsoleReport() override;
 };
@@ -349,20 +354,23 @@ class MainThreadFetchRunnable : public Runnable {
   const ClientInfo mClientInfo;
   const Maybe<ServiceWorkerDescriptor> mController;
   nsCOMPtr<nsICSPEventListener> mCSPEventListener;
-  RefPtr<InternalRequest> mRequest;
+  SafeRefPtr<InternalRequest> mRequest;
+  UniquePtr<SerializedStackHolder> mOriginStack;
 
  public:
   MainThreadFetchRunnable(WorkerFetchResolver* aResolver,
                           const ClientInfo& aClientInfo,
                           const Maybe<ServiceWorkerDescriptor>& aController,
                           nsICSPEventListener* aCSPEventListener,
-                          InternalRequest* aRequest)
+                          SafeRefPtr<InternalRequest> aRequest,
+                          UniquePtr<SerializedStackHolder>&& aOriginStack)
       : Runnable("dom::MainThreadFetchRunnable"),
         mResolver(aResolver),
         mClientInfo(aClientInfo),
         mController(aController),
         mCSPEventListener(aCSPEventListener),
-        mRequest(aRequest) {
+        mRequest(std::move(aRequest)),
+        mOriginStack(std::move(aOriginStack)) {
     MOZ_ASSERT(mResolver);
   }
 
@@ -388,9 +396,9 @@ class MainThreadFetchRunnable : public Runnable {
       MOZ_ASSERT(loadGroup);
       // We don't track if a worker is spawned from a tracking script for now,
       // so pass false as the last argument to FetchDriver().
-      fetch = new FetchDriver(mRequest, principal, loadGroup,
+      fetch = new FetchDriver(mRequest.clonePtr(), principal, loadGroup,
                               workerPrivate->MainThreadEventTarget(),
-                              workerPrivate->CookieSettings(),
+                              workerPrivate->CookieJarSettings(),
                               workerPrivate->GetPerformanceStorage(), false);
       nsAutoCString spec;
       if (proxy->GetWorkerPrivate()->GetBaseURI()) {
@@ -402,6 +410,8 @@ class MainThreadFetchRunnable : public Runnable {
       fetch->SetController(mController);
       fetch->SetCSPEventListener(mCSPEventListener);
     }
+
+    fetch->SetOriginStack(std::move(mOriginStack));
 
     RefPtr<AbortSignalImpl> signalImpl =
         mResolver->GetAbortSignalForMainThread();
@@ -440,12 +450,13 @@ already_AddRefed<Promise> FetchRequest(nsIGlobalObject* aGlobal,
   JS::Rooted<JSObject*> jsGlobal(cx, aGlobal->GetGlobalJSObject());
   GlobalObject global(cx, jsGlobal);
 
-  RefPtr<Request> request = Request::Constructor(global, aInput, aInit, aRv);
+  SafeRefPtr<Request> request =
+      Request::Constructor(global, aInput, aInit, aRv);
   if (aRv.Failed()) {
     return nullptr;
   }
 
-  RefPtr<InternalRequest> r = request->GetInternalRequest();
+  SafeRefPtr<InternalRequest> r = request->GetInternalRequest();
   RefPtr<AbortSignalImpl> signalImpl = request->GetSignalImpl();
 
   if (signalImpl && signalImpl->Aborted()) {
@@ -464,7 +475,7 @@ already_AddRefed<Promise> FetchRequest(nsIGlobalObject* aGlobal,
     nsCOMPtr<nsPIDOMWindowInner> window = do_QueryInterface(aGlobal);
     nsCOMPtr<Document> doc;
     nsCOMPtr<nsILoadGroup> loadGroup;
-    nsCOMPtr<nsICookieSettings> cookieSettings;
+    nsCOMPtr<nsICookieJarSettings> cookieJarSettings;
     nsIPrincipal* principal;
     bool isTrackingFetch = false;
     if (window) {
@@ -475,35 +486,34 @@ already_AddRefed<Promise> FetchRequest(nsIGlobalObject* aGlobal,
       }
       principal = doc->NodePrincipal();
       loadGroup = doc->GetDocumentLoadGroup();
-      cookieSettings = doc->CookieSettings();
+      cookieJarSettings = doc->CookieJarSettings();
 
-      nsAutoCString fileNameString;
-      if (nsJSUtils::GetCallingLocation(cx, fileNameString)) {
-        isTrackingFetch = doc->IsScriptTracking(fileNameString);
-      }
+      isTrackingFetch = doc->IsScriptTracking(cx);
     } else {
       principal = aGlobal->PrincipalOrNull();
       if (NS_WARN_IF(!principal)) {
         aRv.Throw(NS_ERROR_FAILURE);
         return nullptr;
       }
+
+      cookieJarSettings = mozilla::net::CookieJarSettings::Create();
+    }
+
+    if (!loadGroup) {
       nsresult rv = NS_NewLoadGroup(getter_AddRefs(loadGroup), principal);
       if (NS_WARN_IF(NS_FAILED(rv))) {
         aRv.Throw(rv);
         return nullptr;
       }
-
-      cookieSettings = mozilla::net::CookieSettings::Create();
     }
-
-    Telemetry::Accumulate(Telemetry::FETCH_IS_MAINTHREAD, 1);
 
     RefPtr<MainThreadFetchResolver> resolver = new MainThreadFetchResolver(
         p, observer, signalImpl, request->MozErrors());
-    RefPtr<FetchDriver> fetch = new FetchDriver(
-        r, principal, loadGroup, aGlobal->EventTargetFor(TaskCategory::Other),
-        cookieSettings, nullptr,  // PerformanceStorage
-        isTrackingFetch);
+    RefPtr<FetchDriver> fetch =
+        new FetchDriver(std::move(r), principal, loadGroup,
+                        aGlobal->EventTargetFor(TaskCategory::Other),
+                        cookieJarSettings, nullptr,  // PerformanceStorage
+                        isTrackingFetch);
     fetch->SetDocument(doc);
     resolver->SetLoadGroup(loadGroup);
     aRv = fetch->Fetch(signalImpl, resolver);
@@ -513,8 +523,6 @@ already_AddRefed<Promise> FetchRequest(nsIGlobalObject* aGlobal,
   } else {
     WorkerPrivate* worker = GetCurrentThreadWorkerPrivate();
     MOZ_ASSERT(worker);
-
-    Telemetry::Accumulate(Telemetry::FETCH_IS_MAINTHREAD, 0);
 
     if (worker->IsServiceWorker()) {
       r->SetSkipServiceWorker();
@@ -528,20 +536,40 @@ already_AddRefed<Promise> FetchRequest(nsIGlobalObject* aGlobal,
       return nullptr;
     }
 
-    Maybe<ClientInfo> clientInfo(worker->GetClientInfo());
+    Maybe<ClientInfo> clientInfo(worker->GlobalScope()->GetClientInfo());
     if (clientInfo.isNothing()) {
       aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
       return nullptr;
     }
 
+    UniquePtr<SerializedStackHolder> stack;
+    if (worker->IsWatchedByDevTools()) {
+      stack = GetCurrentStackForNetMonitor(cx);
+    }
+
     RefPtr<MainThreadFetchRunnable> run = new MainThreadFetchRunnable(
-        resolver, clientInfo.ref(), worker->GetController(),
-        worker->CSPEventListener(), r);
+        resolver, clientInfo.ref(), worker->GlobalScope()->GetController(),
+        worker->CSPEventListener(), std::move(r), std::move(stack));
     worker->DispatchToMainThread(run.forget());
   }
 
   return p.forget();
 }
+
+class ResolveFetchPromise : public Runnable {
+ public:
+  ResolveFetchPromise(Promise* aPromise, Response* aResponse)
+      : Runnable("ResolveFetchPromise"),
+        mPromise(aPromise),
+        mResponse(aResponse) {}
+
+  NS_IMETHOD Run() {
+    mPromise->MaybeResolve(mResponse);
+    return NS_OK;
+  }
+  RefPtr<Promise> mPromise;
+  RefPtr<Response> mResponse;
+};
 
 void MainThreadFetchResolver::OnResponseAvailableInternal(
     InternalResponse* aResponse) {
@@ -555,7 +583,15 @@ void MainThreadFetchResolver::OnResponseAvailableInternal(
 
     nsCOMPtr<nsIGlobalObject> go = mPromise->GetParentObject();
     mResponse = new Response(go, aResponse, mSignalImpl);
-    mPromise->MaybeResolve(mResponse);
+    nsCOMPtr<nsPIDOMWindowInner> inner = do_QueryInterface(go);
+    BrowsingContext* bc = inner ? inner->GetBrowsingContext() : nullptr;
+    bc = bc ? bc->Top() : nullptr;
+    if (bc && bc->IsLoading()) {
+      bc->AddDeprioritizedLoadRunner(
+          new ResolveFetchPromise(mPromise, mResponse));
+    } else {
+      mPromise->MaybeResolve(mResponse);
+    }
   } else {
     if (mFetchObserver) {
       mFetchObserver->SetState(FetchState::Errored);
@@ -566,9 +602,7 @@ void MainThreadFetchResolver::OnResponseAvailableInternal(
       return;
     }
 
-    ErrorResult result;
-    result.ThrowTypeError<MSG_FETCH_FAILED>();
-    mPromise->MaybeReject(result);
+    mPromise->MaybeRejectWithTypeError<MSG_FETCH_FAILED>();
   }
 }
 
@@ -632,9 +666,7 @@ class WorkerFetchResponseRunnable final : public MainThreadWorkerRunnable {
         fetchObserver->SetState(FetchState::Errored);
       }
 
-      ErrorResult result;
-      result.ThrowTypeError<MSG_FETCH_FAILED>();
-      promise->MaybeReject(result);
+      promise->MaybeRejectWithTypeError<MSG_FETCH_FAILED>();
     }
     return true;
   }
@@ -691,6 +723,10 @@ class WorkerFetchResponseEndRunnable final : public MainThreadWorkerRunnable,
         mReason(aReason) {}
 
   bool WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override {
+    if (mResolver->IsShutdown(aWorkerPrivate)) {
+      return true;
+    }
+
     if (mReason == FetchDriverObserver::eAborted) {
       mResolver->WorkerPromise(aWorkerPrivate)
           ->MaybeReject(NS_ERROR_DOM_ABORT_ERR);
@@ -1109,7 +1145,7 @@ template void FetchBody<Response>::SetBodyUsed(JSContext* aCx,
 
 template <class Derived>
 already_AddRefed<Promise> FetchBody<Derived>::ConsumeBody(
-    JSContext* aCx, FetchConsumeType aType, ErrorResult& aRv) {
+    JSContext* aCx, BodyConsumer::ConsumeType aType, ErrorResult& aRv) {
   aRv.MightThrowJSException();
 
   RefPtr<AbortSignalImpl> signalImpl = DerivedClass()->GetSignalImpl();
@@ -1156,8 +1192,25 @@ already_AddRefed<Promise> FetchBody<Derived>::ConsumeBody(
 
   nsCOMPtr<nsIGlobalObject> global = DerivedClass()->GetParentObject();
 
-  RefPtr<Promise> promise = FetchBodyConsumer<Derived>::Create(
-      global, mMainThreadEventTarget, this, bodyStream, signalImpl, aType, aRv);
+  MutableBlobStorage::MutableBlobStorageType blobStorageType =
+      MutableBlobStorage::eOnlyInMemory;
+  const mozilla::UniquePtr<mozilla::ipc::PrincipalInfo>& principalInfo =
+      DerivedClass()->GetPrincipalInfo();
+  // We support temporary file for blobs only if the principal is known and
+  // it's system or content not in private Browsing.
+  if (principalInfo &&
+      (principalInfo->type() ==
+           mozilla::ipc::PrincipalInfo::TSystemPrincipalInfo ||
+       (principalInfo->type() ==
+            mozilla::ipc::PrincipalInfo::TContentPrincipalInfo &&
+        principalInfo->get_ContentPrincipalInfo().attrs().mPrivateBrowsingId ==
+            0))) {
+    blobStorageType = MutableBlobStorage::eCouldBeInTemporaryFile;
+  }
+
+  RefPtr<Promise> promise = BodyConsumer::Create(
+      global, mMainThreadEventTarget, bodyStream, signalImpl, aType,
+      BodyBlobURISpec(), BodyLocalPath(), MimeType(), blobStorageType, aRv);
   if (NS_WARN_IF(aRv.Failed())) {
     return nullptr;
   }
@@ -1166,13 +1219,13 @@ already_AddRefed<Promise> FetchBody<Derived>::ConsumeBody(
 }
 
 template already_AddRefed<Promise> FetchBody<Request>::ConsumeBody(
-    JSContext* aCx, FetchConsumeType aType, ErrorResult& aRv);
+    JSContext* aCx, BodyConsumer::ConsumeType aType, ErrorResult& aRv);
 
 template already_AddRefed<Promise> FetchBody<Response>::ConsumeBody(
-    JSContext* aCx, FetchConsumeType aType, ErrorResult& aRv);
+    JSContext* aCx, BodyConsumer::ConsumeType aType, ErrorResult& aRv);
 
 template already_AddRefed<Promise> FetchBody<EmptyBody>::ConsumeBody(
-    JSContext* aCx, FetchConsumeType aType, ErrorResult& aRv);
+    JSContext* aCx, BodyConsumer::ConsumeType aType, ErrorResult& aRv);
 
 template <class Derived>
 void FetchBody<Derived>::SetMimeType() {
@@ -1272,14 +1325,15 @@ void FetchBody<Derived>::GetBody(JSContext* aCx,
     return;
   }
 
-  JS::Rooted<JSObject*> body(aCx);
-  FetchStream::Create(aCx, this, DerivedClass()->GetParentObject(), inputStream,
-                      &body, aRv);
+  BodyStream::Create(aCx, this, DerivedClass()->GetParentObject(), inputStream,
+                     aRv);
   if (NS_WARN_IF(aRv.Failed())) {
     return;
   }
 
-  MOZ_ASSERT(body);
+  MOZ_ASSERT(mReadableStreamBody);
+
+  JS::Rooted<JSObject*> body(aCx, mReadableStreamBody);
 
   // If the body has been already consumed, we lock the stream.
   bool bodyUsed = GetBodyUsed(aRv);
@@ -1305,7 +1359,6 @@ void FetchBody<Derived>::GetBody(JSContext* aCx,
     }
   }
 
-  mReadableStreamBody = body;
   aBodyOut.set(mReadableStreamBody);
 }
 

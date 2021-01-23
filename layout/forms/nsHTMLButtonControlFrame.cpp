@@ -34,7 +34,7 @@ nsHTMLButtonControlFrame::nsHTMLButtonControlFrame(ComputedStyle* aStyle,
                                                    nsIFrame::ClassID aID)
     : nsContainerFrame(aStyle, aPresContext, aID) {}
 
-nsHTMLButtonControlFrame::~nsHTMLButtonControlFrame() {}
+nsHTMLButtonControlFrame::~nsHTMLButtonControlFrame() = default;
 
 void nsHTMLButtonControlFrame::DestroyFrom(nsIFrame* aDestructRoot,
                                            PostDestroyData& aPostDestroyData) {
@@ -205,7 +205,7 @@ void nsHTMLButtonControlFrame::ReflowButtonContents(
     const ReflowInput& aButtonReflowInput, nsIFrame* aFirstKid) {
   WritingMode wm = GetWritingMode();
   LogicalSize availSize = aButtonReflowInput.ComputedSize(wm);
-  availSize.BSize(wm) = NS_INTRINSICSIZE;
+  availSize.BSize(wm) = NS_UNCONSTRAINEDSIZE;
 
   // shorthand for a value we need to use in a bunch of places
   const LogicalMargin& clbp = aButtonReflowInput.ComputedLogicalBorderPadding();
@@ -236,14 +236,15 @@ void nsHTMLButtonControlFrame::ReflowButtonContents(
   // repositioned later by FinishReflowChild.
   nsSize dummyContainerSize;
   ReflowChild(aFirstKid, aPresContext, contentsDesiredSize, contentsReflowInput,
-              wm, childPos, dummyContainerSize, 0, contentsReflowStatus);
+              wm, childPos, dummyContainerSize, ReflowChildFlags::Default,
+              contentsReflowStatus);
   MOZ_ASSERT(contentsReflowStatus.IsComplete(),
              "We gave button-contents frame unconstrained available height, "
              "so it should be complete");
 
   // Compute the button's content-box size:
   LogicalSize buttonContentBox(wm);
-  if (aButtonReflowInput.ComputedBSize() != NS_INTRINSICSIZE) {
+  if (aButtonReflowInput.ComputedBSize() != NS_UNCONSTRAINEDSIZE) {
     // Button has a fixed block-size -- that's its content-box bSize.
     buttonContentBox.BSize(wm) = aButtonReflowInput.ComputedBSize();
   } else if (aButtonReflowInput.mStyleDisplay->IsContainSize()) {
@@ -265,7 +266,7 @@ void nsHTMLButtonControlFrame::ReflowButtonContents(
         buttonContentBox.BSize(wm), aButtonReflowInput.ComputedMinBSize(),
         aButtonReflowInput.ComputedMaxBSize());
   }
-  if (aButtonReflowInput.ComputedISize() != NS_INTRINSICSIZE) {
+  if (aButtonReflowInput.ComputedISize() != NS_UNCONSTRAINEDSIZE) {
     buttonContentBox.ISize(wm) = aButtonReflowInput.ComputedISize();
   } else if (aButtonReflowInput.mStyleDisplay->IsContainSize()) {
     buttonContentBox.ISize(wm) = aButtonReflowInput.ComputedMinISize();
@@ -290,7 +291,8 @@ void nsHTMLButtonControlFrame::ReflowButtonContents(
 
   // Place the child
   FinishReflowChild(aFirstKid, aPresContext, contentsDesiredSize,
-                    &contentsReflowInput, wm, childPos, containerSize, 0);
+                    &contentsReflowInput, wm, childPos, containerSize,
+                    ReflowChildFlags::Default);
 
   // Make sure we have a useful 'ascent' value for the child
   if (contentsDesiredSize.BlockStartAscent() ==
@@ -311,24 +313,14 @@ void nsHTMLButtonControlFrame::ReflowButtonContents(
   // within our frame... unless it's orthogonal, in which case we'll use the
   // contents inline-size as an approximation for now.
   // XXX is there a better strategy? should we include border-padding?
-  if (aButtonReflowInput.mStyleDisplay->IsContainLayout()) {
-    // If we're layout-contained, then for the purposes of computing the
-    // ascent, we should pretend our button-contents frame had 0 height. In
-    // other words, we use the <button> content-rect's central block-axis
-    // position as our baseline.
-    // NOTE: This should be the same ascent that we'd get from the final 'else'
-    // clause here, if we had no DOM children. In that no-children scenario,
-    // the final 'else' clause's BlockStartAscent() term would be 0, and its
-    // childPos.B(wm) term would be equal to the same central offset that we're
-    // independently calculating here.
-    nscoord containAscent = (buttonContentBox.BSize(wm) / 2) + clbp.BStart(wm);
-    aButtonDesiredSize.SetBlockStartAscent(containAscent);
-  } else if (aButtonDesiredSize.GetWritingMode().IsOrthogonalTo(wm)) {
-    aButtonDesiredSize.SetBlockStartAscent(contentsDesiredSize.ISize(wm));
-  } else {
-    aButtonDesiredSize.SetBlockStartAscent(
-        contentsDesiredSize.BlockStartAscent() + childPos.B(wm));
-  }
+  if (!aButtonReflowInput.mStyleDisplay->IsContainLayout()) {
+    if (aButtonDesiredSize.GetWritingMode().IsOrthogonalTo(wm)) {
+      aButtonDesiredSize.SetBlockStartAscent(contentsDesiredSize.ISize(wm));
+    } else {
+      aButtonDesiredSize.SetBlockStartAscent(
+          contentsDesiredSize.BlockStartAscent() + childPos.B(wm));
+    }
+  }  // else: we're layout-contained, and so we have no baseline.
 
   aButtonDesiredSize.SetOverflowAreasToDesiredBounds();
 }
@@ -403,9 +395,9 @@ void nsHTMLButtonControlFrame::AppendFrames(ChildListID aListID,
   MOZ_CRASH("unsupported operation");
 }
 
-void nsHTMLButtonControlFrame::InsertFrames(ChildListID aListID,
-                                            nsIFrame* aPrevFrame,
-                                            nsFrameList& aFrameList) {
+void nsHTMLButtonControlFrame::InsertFrames(
+    ChildListID aListID, nsIFrame* aPrevFrame,
+    const nsLineList::iterator* aPrevFrameLine, nsFrameList& aFrameList) {
   MOZ_CRASH("unsupported operation");
 }
 

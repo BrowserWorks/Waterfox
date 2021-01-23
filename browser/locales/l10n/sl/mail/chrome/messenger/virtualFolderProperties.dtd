@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Nova mapa za shranjeno iskanje">
+<!ENTITY name.label                 "Ime:">
+<!ENTITY name.accesskey             "m">
+<!ENTITY description.label          "Ustvari kot podmapo v:">
+<!ENTITY description.accesskey      "U">
+
+<!ENTITY searchTermCaption.label "Nastavite merila za iskanje, ki se uporabljajo za to mapo shranjenega iskanja: ">
+
+<!ENTITY folderSelectionCaption.label "Izberite mape za iskanje: ">
+<!ENTITY chooseFoldersButton.label "Izberi …">
+<!ENTITY chooseFoldersButton.accesskey "z">
+
+<!ENTITY searchOnline.label "Išči na spletu (daje najnovejše rezultate za mape IMAP in novic, toda podaljša čas odpiranja mape)">
+<!ENTITY searchOnline.accesskey "š">
+<!ENTITY newFolderButton.label       "Ustvari">
+<!ENTITY newFolderButton.accesskey   "U">
+<!ENTITY editFolderButton.label      "Posodobi">
+<!ENTITY editFolderButton.accesskey  "P">

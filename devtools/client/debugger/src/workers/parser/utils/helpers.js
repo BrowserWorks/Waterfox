@@ -22,7 +22,8 @@ export function isAwaitExpression(path: SimplePath) {
   const { node, parent } = path;
   return (
     t.isAwaitExpression(node) ||
-    (t.isAwaitExpression(parent.init) || t.isAwaitExpression(parent))
+    t.isAwaitExpression(parent.init) ||
+    t.isAwaitExpression(parent)
   );
 }
 
@@ -30,13 +31,24 @@ export function isYieldExpression(path: SimplePath) {
   const { node, parent } = path;
   return (
     t.isYieldExpression(node) ||
-    (t.isYieldExpression(parent.init) || t.isYieldExpression(parent))
+    t.isYieldExpression(parent.init) ||
+    t.isYieldExpression(parent)
   );
 }
 
 export function isObjectShorthand(parent: Node): boolean {
+  if (!t.isObjectProperty(parent)) {
+    return false;
+  }
+
+  if (parent.value && parent.value.left) {
+    return (
+      parent.value.type === "AssignmentPattern" &&
+      parent.value.left.type === "Identifier"
+    );
+  }
+
   return (
-    t.isObjectProperty(parent) &&
     parent.value &&
     parent.key.start == parent.value.start &&
     parent.key.loc.identifierName === parent.value.loc.identifierName
@@ -78,7 +90,7 @@ export function getSpecifiers(specifiers: any) {
     return [];
   }
 
-  return specifiers.map(specifier => specifier.local && specifier.local.name);
+  return specifiers.map(specifier => specifier.local?.name);
 }
 
 export function isComputedExpression(expression: string): boolean {
@@ -121,15 +133,13 @@ export function getVariables(dec: Node) {
     // e.g. const [, a] = arr
     // e.g. const [{a, b }] = 2
     return dec.id.elements
-      .filter(element => element)
-      .map(element => {
-        return {
-          name: t.isAssignmentPattern(element)
-            ? element.left.name
-            : element.name || (element.argument && element.argument.name),
-          location: element.loc,
-        };
-      })
+      .filter(Boolean)
+      .map(element => ({
+        name: t.isAssignmentPattern(element)
+          ? element.left.name
+          : element.name || element.argument?.name,
+        location: element.loc,
+      }))
       .filter(({ name }) => name);
   }
 

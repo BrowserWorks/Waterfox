@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label  "Lomakkeen ominaisuudet">
+
+<!ENTITY Settings.label  "Asetukset">
+
+<!ENTITY FormName.label  "Lomakkeen nimi:">
+<!ENTITY FormName.accesskey  "n">
+<!ENTITY FormAction.label  "Toiminnon URL:">
+<!ENTITY FormAction.accesskey  "T">
+<!ENTITY FormMethod.label  "Metodi:">
+<!ENTITY FormMethod.accesskey  "M">
+<!ENTITY FormEncType.label  "Koodaus:">
+<!ENTITY FormEncType.accesskey  "K">
+<!ENTITY FormTarget.label  "Kohdekehys:">
+<!ENTITY FormTarget.accesskey  "d">
+
+<!ENTITY RemoveForm.label  "Poista lomake">
+<!ENTITY RemoveForm.accesskey  "s">

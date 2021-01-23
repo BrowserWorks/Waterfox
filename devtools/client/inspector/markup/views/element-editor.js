@@ -72,11 +72,13 @@ const HTML_VOID_ELEMENTS = [
 // Contains only valid computed display property types of the node to display in the
 // element markup and their respective title tooltip text.
 const DISPLAY_TYPES = {
-  flex: INSPECTOR_L10N.getStr("markupView.display.flex.tooltiptext"),
-  "inline-flex": INSPECTOR_L10N.getStr("markupView.display.flex.tooltiptext"),
-  grid: INSPECTOR_L10N.getStr("markupView.display.grid.tooltiptext"),
+  flex: INSPECTOR_L10N.getStr("markupView.display.flex.tooltiptext2"),
+  "inline-flex": INSPECTOR_L10N.getStr(
+    "markupView.display.inlineFlex.tooltiptext2"
+  ),
+  grid: INSPECTOR_L10N.getStr("markupView.display.grid.tooltiptext2"),
   "inline-grid": INSPECTOR_L10N.getStr(
-    "markupView.display.inlineGrid.tooltiptext"
+    "markupView.display.inlineGrid.tooltiptext2"
   ),
   subgrid: INSPECTOR_L10N.getStr("markupView.display.subgrid.tooltiptiptext"),
   "flow-root": INSPECTOR_L10N.getStr("markupView.display.flowRoot.tooltiptext"),
@@ -88,8 +90,8 @@ const DISPLAY_TYPES = {
  *
  * @param  {MarkupContainer} container
  *         The container owning this editor.
- * @param  {Element} node
- *         The node being edited.
+ * @param  {NodeFront} node
+ *         The NodeFront being edited.
  */
 function ElementEditor(container, node) {
   this.container = container;
@@ -238,10 +240,14 @@ ElementEditor.prototype = {
       clearTimeout(this.animationTimers[attrName]);
     }
 
-    flashElementOn(this.getAttributeElement(attrName));
+    flashElementOn(this.getAttributeElement(attrName), {
+      backgroundClass: "theme-bg-contrast",
+    });
 
     this.animationTimers[attrName] = setTimeout(() => {
-      flashElementOff(this.getAttributeElement(attrName));
+      flashElementOff(this.getAttributeElement(attrName), {
+        backgroundClass: "theme-bg-contrast",
+      });
     }, this.markup.CONTAINER_FLASHING_DURATION);
   },
 
@@ -396,9 +402,6 @@ ElementEditor.prototype = {
     this._displayBadge.addEventListener("click", this.onDisplayBadgeClick);
     // Badges order is [event][display][custom], insert display badge before custom.
     this.elt.insertBefore(this._displayBadge, this._customBadge);
-
-    this.startTrackingFlexboxHighlighterEvents();
-    this.startTrackingGridHighlighterEvents();
   },
 
   _updateDisplayBadgeContent: function() {
@@ -406,14 +409,10 @@ ElementEditor.prototype = {
     this._displayBadge.textContent = displayType;
     this._displayBadge.dataset.display = displayType;
     this._displayBadge.title = DISPLAY_TYPES[displayType];
-    this._displayBadge.classList.toggle(
-      "active",
-      this.highlighters.flexboxHighlighterShown === this.node ||
-        this.highlighters.gridHighlighters.has(this.node)
-    );
 
     if (displayType === "flex" || displayType === "inline-flex") {
       this._displayBadge.classList.toggle("interactive", true);
+      this.startTrackingFlexboxHighlighterEvents();
     } else if (
       displayType === "grid" ||
       displayType === "inline-grid" ||
@@ -423,6 +422,7 @@ ElementEditor.prototype = {
         "interactive",
         this.highlighters.canGridHighlighterToggle(this.node)
       );
+      this.startTrackingGridHighlighterEvents();
     } else {
       this._displayBadge.classList.remove("interactive");
     }
@@ -462,6 +462,7 @@ ElementEditor.prototype = {
 
     if (this.textEditor && this.textEditor.node != node) {
       this.elt.removeChild(this.textEditor.elt);
+      this.textEditor.destroy();
       this.textEditor = null;
     }
 
@@ -627,15 +628,17 @@ ElementEditor.prototype = {
     // it (make sure to pass a complete list of existing attributes to the
     // parseAttribute function, by concatenating attribute, because this could
     // be a newly added attribute not yet on this.node).
-    const attributes = this.node.attributes.filter(existingAttribute => {
-      return existingAttribute.name !== attribute.name;
-    });
+    const attributes = this.node.attributes.filter(
+      existingAttribute => existingAttribute.name !== attribute.name
+    );
+
     attributes.push(attribute);
     const parsedLinksData = parseAttribute(
       this.node.namespaceURI,
       this.node.tagName,
       attributes,
-      attribute.name
+      attribute.name,
+      attribute.value
     );
 
     // Create links in the attribute value, and collapse long attributes if
@@ -904,8 +907,17 @@ ElementEditor.prototype = {
     }
   },
 
-  onCustomBadgeClick: function() {
-    const { url, line, column } = this.node.customElementLocation;
+  onCustomBadgeClick: async function() {
+    let { url, line, column } = this.node.customElementLocation;
+    const originalLocation = await this.markup.toolbox.sourceMapURLService.originalPositionFor(
+      url,
+      line,
+      column
+    );
+    if (originalLocation) {
+      ({ sourceUrl: url, line, column } = originalLocation);
+    }
+
     this.markup.toolbox.viewSourceInDebugger(
       url,
       line,
@@ -950,7 +962,10 @@ ElementEditor.prototype = {
       this.highlighters.gridHighlighters.has(this.node)
     );
 
-    this._updateDisplayBadgeContent();
+    this._displayBadge.classList.toggle(
+      "interactive",
+      this.highlighters.canGridHighlighterToggle(this.node)
+    );
   },
 
   /**
@@ -968,7 +983,7 @@ ElementEditor.prototype = {
     // Changing the tagName removes the node. Make sure the replacing node gets
     // selected afterwards.
     this.markup.reselectOnRemoved(this.node, "edittagname");
-    this.markup.walker.editTagName(this.node, newTagName).catch(() => {
+    this.node.walkerFront.editTagName(this.node, newTagName).catch(() => {
       // Failed to edit the tag name, cancel the reselection.
       this.markup.cancelReselectOnRemoved();
     });

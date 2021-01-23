@@ -17,6 +17,7 @@
 #include "nsStyleConsts.h"
 
 using namespace mozilla;
+using mozilla::dom::Element;
 using mozilla::dom::HTMLInputElement;
 
 //#define FCF_NOISY
@@ -31,7 +32,7 @@ nsCheckboxRadioFrame::nsCheckboxRadioFrame(ComputedStyle* aStyle,
                                            nsPresContext* aPresContext)
     : nsAtomicContainerFrame(aStyle, aPresContext, kClassID) {}
 
-nsCheckboxRadioFrame::~nsCheckboxRadioFrame() {}
+nsCheckboxRadioFrame::~nsCheckboxRadioFrame() = default;
 
 void nsCheckboxRadioFrame::DestroyFrom(nsIFrame* aDestructRoot,
                                        PostDestroyData& aPostDestroyData) {

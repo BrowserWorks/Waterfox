@@ -10,13 +10,14 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/GuardObjects.h"
 #include "mozilla/OperatorNewExtensions.h"
-#include "mozilla/TypeTraits.h"
 
+#include <algorithm>
+#include <type_traits>
 #include <utility>
 
 #include "ds/LifoAlloc.h"
 #include "jit/InlineList.h"
-#include "jit/Ion.h"
+#include "jit/JitContext.h"
 #include "vm/JSContext.h"
 
 namespace js {
@@ -99,7 +100,7 @@ class JitAllocPolicy {
       return n;
     }
     MOZ_ASSERT(!(oldSize & mozilla::tl::MulOverflowMask<sizeof(T)>::value));
-    memcpy(n, p, Min(oldSize * sizeof(T), newSize * sizeof(T)));
+    memcpy(n, p, std::min(oldSize * sizeof(T), newSize * sizeof(T)));
     return n;
   }
   template <typename T>
@@ -143,7 +144,7 @@ class AutoJitContextAlloc {
 
 struct TempObject {
   inline void* operator new(size_t nbytes,
-                            TempAllocator::Fallible view) throw() {
+                            TempAllocator::Fallible view) noexcept(true) {
     return view.alloc.allocate(nbytes);
   }
   inline void* operator new(size_t nbytes, TempAllocator& alloc) {
@@ -151,13 +152,13 @@ struct TempObject {
   }
   template <class T>
   inline void* operator new(size_t nbytes, T* pos) {
-    static_assert(mozilla::IsConvertible<T*, TempObject*>::value,
+    static_assert(std::is_convertible_v<T*, TempObject*>,
                   "Placement new argument type must inherit from TempObject");
     return pos;
   }
   template <class T>
   inline void* operator new(size_t nbytes, mozilla::NotNullTag, T* pos) {
-    static_assert(mozilla::IsConvertible<T*, TempObject*>::value,
+    static_assert(std::is_convertible_v<T*, TempObject*>,
                   "Placement new argument type must inherit from TempObject");
     MOZ_ASSERT(pos);
     return pos;

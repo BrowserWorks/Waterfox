@@ -7,7 +7,6 @@
 #include "signaling/src/jsep/JsepTrackEncoding.h"
 
 #include <algorithm>
-#include <iostream>
 
 namespace mozilla {
 void JsepTrack::GetNegotiatedPayloadTypes(
@@ -83,13 +82,16 @@ void JsepTrack::EnsureNoDuplicatePayloadTypes(
   }
 }
 
-void JsepTrack::EnsureSsrcs(SsrcGenerator& ssrcGenerator) {
-  if (mSsrcs.empty()) {
-    uint32_t ssrc;
-    if (!ssrcGenerator.GenerateSsrc(&ssrc)) {
+void JsepTrack::EnsureSsrcs(SsrcGenerator& ssrcGenerator, size_t aNumber) {
+  while (mSsrcs.size() < aNumber) {
+    uint32_t ssrc, rtxSsrc;
+    if (!ssrcGenerator.GenerateSsrc(&ssrc) ||
+        !ssrcGenerator.GenerateSsrc(&rtxSsrc)) {
       return;
     }
     mSsrcs.push_back(ssrc);
+    mSsrcToRtxSsrc[ssrc] = rtxSsrc;
+    MOZ_ASSERT(mSsrcs.size() == mSsrcToRtxSsrc.size());
   }
 }
 
@@ -115,7 +117,9 @@ void JsepTrack::AddToOffer(SsrcGenerator& ssrcGenerator,
     if (offer->IsSending()) {
       constraints = mJsEncodeConstraints;
     }
-    AddToMsection(constraints, sdp::kSend, ssrcGenerator, offer);
+
+    AddToMsection(constraints, sdp::kSend, ssrcGenerator,
+                  IsRtxEnabled(mPrototypeCodecs), offer);
   }
 }
 
@@ -136,11 +140,13 @@ void JsepTrack::AddToAnswer(const SdpMediaSection& offer,
     std::vector<JsConstraints> constraints;
     if (answer->IsSending()) {
       constraints = mJsEncodeConstraints;
-      std::vector<SdpRidAttributeList::Rid> rids;
+      std::vector<std::pair<SdpRidAttributeList::Rid, bool>> rids;
       GetRids(offer, sdp::kRecv, &rids);
       NegotiateRids(rids, &constraints);
     }
-    AddToMsection(constraints, sdp::kSend, ssrcGenerator, answer);
+
+    AddToMsection(constraints, sdp::kSend, ssrcGenerator, IsRtxEnabled(codecs),
+                  answer);
   }
 }
 
@@ -192,14 +198,15 @@ void JsepTrack::AddToMsection(
 // Updates the |id| values in |constraintsList| with the rid values in |rids|,
 // where necessary.
 void JsepTrack::NegotiateRids(
-    const std::vector<SdpRidAttributeList::Rid>& rids,
+    const std::vector<std::pair<SdpRidAttributeList::Rid, bool>>& rids,
     std::vector<JsConstraints>* constraintsList) const {
-  for (const SdpRidAttributeList::Rid& rid : rids) {
-    if (!FindConstraints(rid.id, *constraintsList)) {
+  for (const auto& ridAndPaused : rids) {
+    if (!FindConstraints(ridAndPaused.first.id, *constraintsList)) {
       // Pair up the first JsConstraints with an empty id, if it exists.
       JsConstraints* constraints = FindConstraints("", *constraintsList);
       if (constraints) {
-        constraints->rid = rid.id;
+        constraints->rid = ridAndPaused.first.id;
+        constraints->paused = ridAndPaused.second;
       }
     }
   }
@@ -213,22 +220,44 @@ void JsepTrack::UpdateSsrcs(SsrcGenerator& ssrcGenerator, size_t encodings) {
   // Right now, the spec does not permit changing the number of encodings after
   // the initial creation of the sender, so we don't need to worry about things
   // like a new encoding inserted in between two pre-existing encodings.
-  while (mSsrcs.size() < numSsrcs) {
-    uint32_t ssrc;
-    if (!ssrcGenerator.GenerateSsrc(&ssrc)) {
-      return;
+  EnsureSsrcs(ssrcGenerator, numSsrcs);
+  PruneSsrcs(numSsrcs);
+
+  MOZ_ASSERT(!mSsrcs.empty());
+}
+
+void JsepTrack::PruneSsrcs(size_t aNumSsrcs) {
+  mSsrcs.resize(aNumSsrcs);
+
+  // We might have duplicate entries in mSsrcs, so we need to resize first and
+  // then remove ummatched rtx ssrcs.
+  auto itor = mSsrcToRtxSsrc.begin();
+  while (itor != mSsrcToRtxSsrc.end()) {
+    if (std::find(mSsrcs.begin(), mSsrcs.end(), itor->first) == mSsrcs.end()) {
+      itor = mSsrcToRtxSsrc.erase(itor);
+    } else {
+      ++itor;
     }
-    mSsrcs.push_back(ssrc);
+  }
+}
+
+bool JsepTrack::IsRtxEnabled(
+    const std::vector<UniquePtr<JsepCodecDescription>>& codecs) const {
+  for (const auto& codec : codecs) {
+    if (codec->mType == SdpMediaSection::kVideo &&
+        static_cast<const JsepVideoCodecDescription*>(codec.get())
+            ->mRtxEnabled) {
+      return true;
+    }
   }
 
-  mSsrcs.resize(numSsrcs);
-  MOZ_ASSERT(!mSsrcs.empty());
+  return false;
 }
 
 void JsepTrack::AddToMsection(const std::vector<JsConstraints>& constraintsList,
                               sdp::Direction direction,
                               SsrcGenerator& ssrcGenerator,
-                              SdpMediaSection* msection) {
+                              bool requireRtxSsrcs, SdpMediaSection* msection) {
   UniquePtr<SdpSimulcastAttribute> simulcast(new SdpSimulcastAttribute);
   UniquePtr<SdpRidAttributeList> rids(new SdpRidAttributeList);
   for (const JsConstraints& constraints : constraintsList) {
@@ -239,7 +268,8 @@ void JsepTrack::AddToMsection(const std::vector<JsConstraints>& constraintsList,
       rids->mRids.push_back(rid);
 
       SdpSimulcastAttribute::Version version;
-      version.choices.push_back(constraints.rid);
+      version.choices.push_back(
+          SdpSimulcastAttribute::Encoding(constraints.rid, false));
       if (direction == sdp::kSend) {
         simulcast->sendVersions.push_back(version);
       } else {
@@ -255,13 +285,27 @@ void JsepTrack::AddToMsection(const std::vector<JsConstraints>& constraintsList,
 
   if (mType != SdpMediaSection::kApplication && mDirection == sdp::kSend) {
     UpdateSsrcs(ssrcGenerator, constraintsList.size());
-    msection->SetSsrcs(mSsrcs, mCNAME);
+
+    if (requireRtxSsrcs) {
+      MOZ_ASSERT(mSsrcs.size() == mSsrcToRtxSsrc.size());
+      std::vector<uint32_t> allSsrcs;
+      UniquePtr<SdpSsrcGroupAttributeList> group(new SdpSsrcGroupAttributeList);
+      for (const auto& [ssrc, rtxSsrc] : mSsrcToRtxSsrc) {
+        allSsrcs.push_back(ssrc);
+        allSsrcs.push_back(rtxSsrc);
+        group->PushEntry(SdpSsrcGroupAttributeList::kFid, {ssrc, rtxSsrc});
+      }
+      msection->SetSsrcs(allSsrcs, mCNAME);
+      msection->GetAttributeList().SetAttribute(group.release());
+    } else {
+      msection->SetSsrcs(mSsrcs, mCNAME);
+    }
   }
 }
 
-void JsepTrack::GetRids(const SdpMediaSection& msection,
-                        sdp::Direction direction,
-                        std::vector<SdpRidAttributeList::Rid>* rids) const {
+void JsepTrack::GetRids(
+    const SdpMediaSection& msection, sdp::Direction direction,
+    std::vector<std::pair<SdpRidAttributeList::Rid, bool>>* rids) const {
   rids->clear();
   if (!msection.GetAttributeList().HasAttribute(
           SdpAttribute::kSimulcastAttribute)) {
@@ -285,15 +329,11 @@ void JsepTrack::GetRids(const SdpMediaSection& msection,
     return;
   }
 
-  if (versions->type != SdpSimulcastAttribute::Versions::kRid) {
-    // No support for PT-based simulcast, yet.
-    return;
-  }
-
   for (const SdpSimulcastAttribute::Version& version : *versions) {
     if (!version.choices.empty()) {
       // We validate that rids are present (and sane) elsewhere.
-      rids->push_back(*msection.FindRid(version.choices[0]));
+      rids->push_back(std::make_pair(*msection.FindRid(version.choices[0].rid),
+                                     version.choices[0].paused));
     }
   }
 }
@@ -313,15 +353,25 @@ void JsepTrack::CreateEncodings(
     const std::vector<UniquePtr<JsepCodecDescription>>& negotiatedCodecs,
     JsepTrackNegotiatedDetails* negotiatedDetails) {
   negotiatedDetails->mTias = remote.GetBandwidth("TIAS");
+
+  webrtc::RtcpMode rtcpMode = webrtc::RtcpMode::kCompound;
+  // rtcp-rsize (video only)
+  if (remote.GetMediaType() == SdpMediaSection::kVideo &&
+      remote.GetAttributeList().HasAttribute(
+          SdpAttribute::kRtcpRsizeAttribute)) {
+    rtcpMode = webrtc::RtcpMode::kReducedSize;
+  }
+  negotiatedDetails->mRtpRtcpConf = RtpRtcpConfig(rtcpMode);
+
   // TODO add support for b=AS if TIAS is not set (bug 976521)
 
-  std::vector<SdpRidAttributeList::Rid> rids;
+  std::vector<std::pair<SdpRidAttributeList::Rid, bool>> rids;
   GetRids(remote, sdp::kRecv, &rids);  // Get rids we will send
   NegotiateRids(rids, &mJsEncodeConstraints);
   if (rids.empty()) {
     // Add dummy value with an empty id to make sure we get a single unicast
     // stream.
-    rids.push_back(SdpRidAttributeList::Rid());
+    rids.push_back(std::make_pair(SdpRidAttributeList::Rid(), false));
   }
 
   size_t max_streams = 1;
@@ -332,7 +382,7 @@ void JsepTrack::CreateEncodings(
   // Drop SSRCs if less RIDs were offered than we have encoding constraints
   // Just in case.
   if (mSsrcs.size() > max_streams) {
-    mSsrcs.resize(max_streams);
+    PruneSsrcs(max_streams);
   }
 
   // For each stream make sure we have an encoding, and configure
@@ -345,17 +395,18 @@ void JsepTrack::CreateEncodings(
     auto& encoding = negotiatedDetails->mEncodings[i];
 
     for (const auto& codec : negotiatedCodecs) {
-      if (rids[i].HasFormat(codec->mDefaultPt)) {
+      if (rids[i].first.HasFormat(codec->mDefaultPt)) {
         encoding->AddCodec(*codec);
       }
     }
 
-    encoding->mRid = rids[i].id;
+    encoding->mRid = rids[i].first.id;
+    encoding->mPaused = rids[i].second;
     // If we end up supporting params for rid, we would handle that here.
 
     // Incorporate the corresponding JS encoding constraints, if they exist
     for (const JsConstraints& jsConstraints : mJsEncodeConstraints) {
-      if (jsConstraints.rid == rids[i].id) {
+      if (jsConstraints.rid == rids[i].first.id) {
         encoding->mConstraints = jsConstraints.constraints;
       }
     }
@@ -392,6 +443,19 @@ std::vector<UniquePtr<JsepCodecDescription>> JsepTrack::NegotiateCodecs(
       if (clone->Negotiate(fmt, remote, isOffer)) {
         // If negotiation changed the payload type, remember that for later
         codec->mDefaultPt = clone->mDefaultPt;
+
+        // Remember whether we negotiated rtx and the associated pt for later.
+        if (codec->mType == SdpMediaSection::kVideo) {
+          JsepVideoCodecDescription* videoCodec =
+              static_cast<JsepVideoCodecDescription*>(codec.get());
+          JsepVideoCodecDescription* cloneVideoCodec =
+              static_cast<JsepVideoCodecDescription*>(clone.get());
+          bool useRtx =
+              Preferences::GetBool("media.peerconnection.video.use_rtx", false);
+          videoCodec->mRtxEnabled = useRtx && cloneVideoCodec->mRtxEnabled;
+          videoCodec->mRtxPayloadType = cloneVideoCodec->mRtxPayloadType;
+        }
+
         // Moves the codec out of mPrototypeCodecs, leaving an empty
         // UniquePtr, so we don't use it again. Also causes successfully
         // negotiated codecs to be placed up front in the future.
@@ -477,26 +541,16 @@ std::vector<UniquePtr<JsepCodecDescription>> JsepTrack::NegotiateCodecs(
   std::stable_sort(negotiatedCodecs.begin(), negotiatedCodecs.end(),
                    CompareCodec);
 
-  // TODO(bug 814227): Remove this once we're ready to put multiple codecs in an
-  // answer.  For now, remove all but the first codec unless the red codec
-  // exists, in which case we include the others per RFC 5109, section 14.2.
-  if (!negotiatedCodecs.empty() && !red) {
-    std::vector<UniquePtr<JsepCodecDescription>> codecsToKeep;
-
-    bool foundPreferredCodec = false;
-    for (auto& codec : negotiatedCodecs) {
-      if (codec.get() == dtmf) {
-        codecsToKeep.push_back(std::move(codec));
-        // TODO: keep ulpfec when we enable it in Bug 875922
-        // } else if (codec.get() == ulpfec) {
-        //   codecsToKeep.push_back(std::move(codec));
-      } else if (!foundPreferredCodec) {
-        codecsToKeep.insert(codecsToKeep.begin(), std::move(codec));
-        foundPreferredCodec = true;
-      }
-    }
-
-    negotiatedCodecs = std::move(codecsToKeep);
+  if (!red) {
+    // No red, remove ulpfec
+    negotiatedCodecs.erase(
+        std::remove_if(negotiatedCodecs.begin(), negotiatedCodecs.end(),
+                       [ulpfec](const UniquePtr<JsepCodecDescription>& codec) {
+                         return codec.get() == ulpfec;
+                       }),
+        negotiatedCodecs.end());
+    // Make sure there's no dangling ptr here
+    ulpfec = nullptr;
   }
 
   return negotiatedCodecs;

@@ -68,20 +68,29 @@ interface nsIAboutModule : nsISupports
     /**
      * A flag that indicates that this URI should be linkable from content.
      * Ignored unless URI_SAFE_FOR_UNTRUSTED_CONTENT is also specified.
+     *
+     * When adding a new about module with this flag make sure to also update
+     * IsSafeToLinkForUntrustedContent() in nsAboutProtocolHandler.cpp
      */
     const unsigned long MAKE_LINKABLE = (1 << 7);
 
     /**
      * A flag that indicates that this URI can be loaded in the privileged
-     * content process if privileged content process is enabled. Ignored unless
+     * activity stream content process if said process is enabled. Ignored unless
      * URI_MUST_LOAD_IN_CHILD is also specified.
      */
-    const unsigned long URI_CAN_LOAD_IN_PRIVILEGED_CHILD = (1 << 8);
+    const unsigned long URI_CAN_LOAD_IN_PRIVILEGEDABOUT_PROCESS = (1 << 8);
 
     /**
      * A flag that indicates that this URI must be loaded in an extension process (if available).
      */
     const unsigned long URI_MUST_LOAD_IN_EXTENSION_PROCESS = (1 << 9);
+
+    /**
+     * A flag that indicates that this about: URI needs to allow unsanitized content.
+     * Only to be used by about:home and about:newtab.
+     */
+    const unsigned long ALLOW_UNSANITIZED_CONTENT = (1 << 10);
 
     /**
      * A method to get the flags that apply to a given about: URI.  The URI

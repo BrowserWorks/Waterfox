@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "Dodanki">
+<!ENTITY aboutAddons.header2                    "Waše dodanki">
+
+<!ENTITY addonAction.enable                     "Zmóžniś">
+<!ENTITY addonAction.disable                    "Znjemóžniś">
+<!ENTITY addonAction.uninstall                  "Wótinstalěrowaś">
+<!ENTITY addonAction.undo                       "Anulěrowaś">
+<!ENTITY addonAction.update                     "Aktualizěrowaś">
+
+<!ENTITY addonUnsigned.message                  "Toś ten dodank njedajo se pśez &brandShortName; pśeglědowaś.">
+<!ENTITY addonUnsigned.learnMore                "Dalšne informacije">

@@ -1,0 +1,110 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+
+<!-- Tools menu -->
+<!ENTITY lightning.preferencesLabel "Am mìosachan">
+
+<!-- New menu popup in File menu -->
+<!ENTITY lightning.menupopup.new.event.label    "Tachartas…">
+<!ENTITY lightning.menupopup.new.event.accesskey "T">
+<!ENTITY lightning.menupopup.new.task.label     "Saothair…">
+<!ENTITY lightning.menupopup.new.task.accesskey "t">
+<!ENTITY lightning.menupopup.new.calendar.label "Mìosachan…">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "n">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.calendar.label      "Faidhle mìosachain…">
+<!ENTITY lightning.menupopup.open.calendar.accesskey  "c">
+
+<!-- View Menu -->
+<!ENTITY lightning.menu.view.calendar.label            "Mìosachan">
+<!ENTITY lightning.menu.view.calendar.accesskey        "n">
+<!ENTITY lightning.menu.view.tasks.label               "Saothraichean">
+<!ENTITY lightning.menu.view.tasks.accesskey           "S">
+
+<!-- Events and Tasks menu -->
+<!ENTITY lightning.menu.eventtask.label                "Tachartasan is saothraichean">
+<!ENTITY lightning.menu.eventtask.accesskey            "n">
+
+<!-- properties dialog, calendar creation wizard -->
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.email.label,
+     lightning.calendarproperties.forceEmailScheduling.label)
+     These strings are used in the calendar wizard and the calendar properties dialog, but are only
+     displayed when setting/using a caldav calendar -->
+<!ENTITY lightning.calendarproperties.email.label                           "Post-dealain:">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.label            "B’ fhearr leam sgeidealachadh puist-d taobh a’ chliant">
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.forceEmailScheduling.tooltiptext1,
+     lightning.calendarproperties.forceEmailScheduling.tooltiptext2)
+     - tooltiptext1 is used in the calendar wizard when setting a new caldav calendar
+     - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "Chan urrainn dhut, aig an àm seo, seo a chur an comas an dèidh dhut am mìosachan seo a shuidheachadh ann an còmhradh nan roghainnean aige ma dhèiligeas frithealaiche a’ mhìosachain ris an sgeidealachadh.">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "Chan eil an roghainn seo ri làimh ach ma tha frithealaiche a’ mhìosachain a’ dèiligeadh ris an sgeidealachadh. Ma chuireas tu seo an comas, ceadaichidh seo tilleadh gu sgeidealachadh stannardach a tha stèidhichte air puist-d seach fhàgail aig an fhrithealaiche.">
+
+<!-- iMIP Bar (meeting support) -->
+<!ENTITY lightning.imipbar.btnAccept.label                                  "Gabh ris">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext                           "Gabh ri cuireadh an tachartais">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label                       "Gabh ris a h-uile">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences2.tooltiptext                "Gabh ris a’ chuireadh airson gach aon teachd dheth">
+<!ENTITY lightning.imipbar.btnAdd.label                                     "Cuir ris">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext                               "Cuir an tachartas ris a' mhìosachan">
+<!ENTITY lightning.imipbar.btnDecline.label                                 "Diùlt">
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext                          "Diùlt cuireadh an tachartais">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label                      "Diùlt na h-uile">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences2.tooltiptext               "Diùlt gach cuireadh do gach teachd dhen tachartas seo">
+<!ENTITY lightning.imipbar.btnDeclineCounter.label                          "Diùlt">
+<!ENTITY lightning.imipbar.btnDeclineCounter.tooltiptext                    "Diùlt am moladh eile">
+<!ENTITY lightning.imipbar.btnDelete.label                                  "Sguab às">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext                            "Sguab às a' mhìosachan">
+<!ENTITY lightning.imipbar.btnDetails.label                                 "Mion-fhiosrachadh…">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext                           "Seall mion-fhiosrachadh an tachartais">
+<!ENTITY lightning.imipbar.btnDoNotShowImipBar.label                        "Na seall seo na teachaireachdan seo dhomh">
+<!ENTITY lightning.imipbar.btnGoToCalendar.label                            "Am mìosachan">
+<!ENTITY lightning.imipbar.btnGoToCalendar.tooltiptext                      "Tadhail air taba a’ mhìosachain">
+<!ENTITY lightning.imipbar.btnMore.label                                    "Barrachd">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext                              "Dèan briogadh airson barrachd roghainnean">
+<!ENTITY lightning.imipbar.btnReconfirm2.label                              "Ath-dhearbh">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext                         "Cuiridh seo ath-dhearbhadh gun eagraiche">
+<!ENTITY lightning.imipbar.btnReschedule.label                              "Àm eile">
+<!ENTITY lightning.imipbar.btnReschedule.tooltiptext                        "Cuir an tachartas air an sgeideal airson àm">
+<!ENTITY lightning.imipbar.btnSaveCopy.label                                "Sàbhail lethbhreac dheth">
+<!ENTITY lightning.imipbar.btnSaveCopy.tooltiptext                          "Sàbhail lethbhreac dhen tachartas sa mhìosachan, fiù mur am freagair thu an t-eagraiche. Thèid liosta nam freastalaichean fhalamhachadh.">
+<!ENTITY lightning.imipbar.btnTentative.label                               "An dòchas">
+<!ENTITY lightning.imipbar.btnTentative2.tooltiptext                        "Gabh ri cuireadh an tachartais gun chinnt">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences.label                    "Gach aon gun chinnt">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences2.tooltiptext             "Gabh ri gach cuireadh de gach teachd dhen tachartas seo gun chinnt">
+<!ENTITY lightning.imipbar.btnUpdate.label                                  "Ùraich">
+<!ENTITY lightning.imipbar.btnUpdate.tooltiptext                            "Ùraich an tachartas sa mhìosachan">
+<!ENTITY lightning.imipbar.description                                      "Tha cuireadh gu tachartas san teachdaireachd seo.">
+
+<!ENTITY lightning.imipbar.btnSend.label                                    "Cuir freagairt an-dràsta">
+<!ENTITY lightning.imipbar.btnSend.tooltiptext                              "Cuir freagairt gun eagraiche">
+<!ENTITY lightning.imipbar.btnSendSeries.tooltiptext                        "Cuir freagairt mu choinneamh an t-sreatha gu lèir gun eagraiche">
+<!ENTITY lightning.imipbar.btnDontSend.label                                "Na cuir freagairt">
+<!ENTITY lightning.imipbar.btnDontSend.tooltiptext                          "Atharraich staid a’ chom-pàirteachais agad gun fhreagairt a chur gun eagraiche">
+<!ENTITY lightning.imipbar.btnDontSendSeries.tooltiptext                    "Atharraich staid a’ chom-pàirteachais agad mu choinneamh an t-sreatha gun fhreagairt a chur gun eagraiche">
+
+<!-- Lightning specific keybindings -->
+<!ENTITY lightning.keys.event.showCalendar.key "C">
+<!ENTITY lightning.keys.event.showTasks.key "D">
+<!ENTITY lightning.keys.event.new "I">
+<!ENTITY lightning.keys.todo.new "D">
+
+<!-- Account Central page -->
+<!ENTITY lightning.acctCentral.newCalendar.label "Cruthaich mìosachan ùr">
+
+<!-- today-pane-specific -->
+<!ENTITY todaypane.showMinimonth.label "Seall meanbh-mhìos">
+<!ENTITY todaypane.showMinimonth.accesskey "m">
+<!ENTITY todaypane.showMiniday.label "Seall meanbh-latha">
+<!ENTITY todaypane.showMiniday.accesskey  "S">
+<!ENTITY todaypane.showNone.label "Na seall gin">
+<!ENTITY todaypane.showNone.accesskey "N">
+<!ENTITY todaypane.showTodayPane.label "Seall leòsan an latha">
+<!ENTITY todaypane.showTodayPane.accesskey "S">
+<!ENTITY todaypane.statusButton.label "Leòsan an latha">

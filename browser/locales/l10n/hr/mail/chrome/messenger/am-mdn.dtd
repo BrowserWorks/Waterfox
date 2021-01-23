@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Potvrde čitanja">
+<!ENTITY useGlobalPrefs.label         "Koristi opće postavke potvrde čitanja za ovaj račun">
+<!ENTITY useGlobalPrefs.accesskey     "u">
+<!ENTITY globalReceipts.label         "Opće postavke…">
+<!ENTITY globalReceipts.accesskey     "p">
+<!ENTITY useCustomPrefs.label         "Prilagodi potvrde čitanja za ovaj račun">
+<!ENTITY useCustomPrefs.accesskey     "P">
+<!ENTITY requestReceipt.label         "Prilikom slanja poruke, uvijek zahtijevaj potvrdu čitanja">
+<!ENTITY requestReceipt.accesskey     "r">
+<!ENTITY receiptArrive.label          "Kada potvrda stigne:">
+<!ENTITY leaveIt.label                "Ostavi je u Primljenoj pošti">
+<!ENTITY leaveIt.accesskey            "i">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "Premjesti je u mapu &quot;Poslana pošta&quot;">
+<!ENTITY moveToSent.accesskey         "m">
+<!ENTITY requestMDN.label             "Kada primim zahtjev za potvrdom čitanja:">
+<!ENTITY returnSome.label             "Dozvoli potvrde čitanja za neke poruke">
+<!ENTITY returnSome.accesskey         "e">
+<!ENTITY never.label                  "Nikada ne šalji potvrdu čitanja">
+<!ENTITY never.accesskey              "N">
+<!ENTITY notInToCc.label              "Ako nisam u Prima ili Cc poruke:">
+<!ENTITY notInToCc.accesskey          "A">
+<!ENTITY outsideDomain.label          "Ako je pošiljatelj izvan moje domene:">
+<!ENTITY outsideDomain.accesskey      "j">
+<!ENTITY otherCases.label             "U svim ostalim slučajevima:">
+<!ENTITY otherCases.accesskey         "o">
+<!ENTITY askMe.label                  "Pitaj me">
+<!ENTITY alwaysSend.label             "Uvijek šalji">
+<!ENTITY neverSend.label              "Nikada ne šalji">

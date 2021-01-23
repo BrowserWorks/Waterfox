@@ -1,0 +1,4 @@
+<!ENTITY options.title "Opcions de les eines per a desenvolupadors">
+<!ENTITY options.status.label "Estat:">
+<!ENTITY options.port.label "Port:">
+<!ENTITY options.forcelocal.label "Permet connexions des d'altres ordinadors">

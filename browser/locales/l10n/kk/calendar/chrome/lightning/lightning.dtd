@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+
+<!-- Tools menu -->
+<!ENTITY lightning.preferencesLabel "Күнтізбе">
+
+<!-- New menu popup in File menu -->
+<!ENTITY lightning.menupopup.new.event.label    "Оқиға…">
+<!ENTITY lightning.menupopup.new.event.accesskey "О">
+<!ENTITY lightning.menupopup.new.task.label     "Тапсырма…">
+<!ENTITY lightning.menupopup.new.task.accesskey "Т">
+<!ENTITY lightning.menupopup.new.calendar.label "Күнтізбе…">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "н">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.label               "Ашу">
+<!ENTITY lightning.menupopup.open.accesskey           "А">
+<!ENTITY lightning.menupopup.open.message.label       "Сақталған хабарлама…">
+<!ENTITY lightning.menupopup.open.message.accesskey   "л">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.calendar.label      "Күнтізбе файлы…">
+<!ENTITY lightning.menupopup.open.calendar.accesskey  "К">
+
+<!-- View Menu -->
+<!ENTITY lightning.menu.view.calendar.label            "Күнтізбе">
+<!ENTITY lightning.menu.view.calendar.accesskey        "н">
+<!ENTITY lightning.menu.view.tasks.label               "Тапсырмалар">
+<!ENTITY lightning.menu.view.tasks.accesskey           "с">
+
+<!-- Events and Tasks menu -->
+<!ENTITY lightning.menu.eventtask.label                "Оқиғалар және тапсырмалар">
+<!ENTITY lightning.menu.eventtask.accesskey            "и">
+
+<!-- properties dialog, calendar creation wizard -->
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.email.label,
+     lightning.calendarproperties.forceEmailScheduling.label)
+     These strings are used in the calendar wizard and the calendar properties dialog, but are only
+     displayed when setting/using a caldav calendar -->
+<!ENTITY lightning.calendarproperties.email.label                           "Эл. пошта:">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.label            "Клиент жақтағы эл. поштаны жоспарлауды таңдау">
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.forceEmailScheduling.tooltiptext1,
+     lightning.calendarproperties.forceEmailScheduling.tooltiptext2)
+     - tooltiptext1 is used in the calendar wizard when setting a new caldav calendar
+     - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "Әзірше, бұны тек күнтізбе баптауларында күнтізбе сервері жоспарлауды жасайтынын көрсеткеннен кейін іске қоса аласыз.">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "Бұл опция тек күнтізбе сервері жоспарлауды жасаған кезде қолжетерлік. Бұны іске қосу серверге қалдырмай, қалыпты эл. пошта негізінде жоспарлауға оралу мүмкіндігін береді.">
+
+<!-- iMIP Bar (meeting support) -->
+<!ENTITY lightning.imipbar.btnAccept.label                                  "Қабылдау">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext                           "Оқиғаға шақыруды қабылдау">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label                       "Барлығын қабылдау">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences2.tooltiptext                "Оқиғаға шақыруды оқиғаның барлық қайталанулары үшін қабылдау">
+<!ENTITY lightning.imipbar.btnAdd.label                                     "Қосу">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext                               "Оқиғаны күнтізбеге қосу">
+<!ENTITY lightning.imipbar.btnDecline.label                                 "Тайдыру">
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext                          "Оқиғаға шақыруды тайдыру">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label                      "Барлығын тайдыру">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences2.tooltiptext               "Оқиғаға шақыруды оқиғаның барлық қайталанулары үшін тайдыру">
+<!ENTITY lightning.imipbar.btnDeclineCounter.label                          "Тайдыру">
+<!ENTITY lightning.imipbar.btnDeclineCounter.tooltiptext                    "Кері ұсынысты тайдыру">
+<!ENTITY lightning.imipbar.btnDelete.label                                  "Өшіру">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext                            "Күнтізбеден өшіру">
+<!ENTITY lightning.imipbar.btnDetails.label                                 "Көбірек білу…">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext                           "Оқиға ақпаратын көрсету">
+<!ENTITY lightning.imipbar.btnDoNotShowImipBar.label                        "Бұл хабарларламаларды маған көрсетпеу">
+<!ENTITY lightning.imipbar.btnGoToCalendar.label                            "Күнтізбе">
+<!ENTITY lightning.imipbar.btnGoToCalendar.tooltiptext                      "Күнтізбе бетіне ауысу">
+<!ENTITY lightning.imipbar.btnMore.label                                    "Көбірек">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext                              "Көбірек опцияларды көрсету үшін шертіңіз">
+<!ENTITY lightning.imipbar.btnReconfirm2.label                              "Қайта растау">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext                         "Ұйымдастырушыға қайта растауды жіберу">
+<!ENTITY lightning.imipbar.btnReschedule.label                              "Қайта жоспарлау">
+<!ENTITY lightning.imipbar.btnReschedule.tooltiptext                        "Оқиғаны қайта жоспарлау">
+<!ENTITY lightning.imipbar.btnSaveCopy.label                                "Көшірмесін сақтау">
+<!ENTITY lightning.imipbar.btnSaveCopy.tooltiptext                          "Ұйымдастырушыға жауап беруден бөлек, оқиға көшірмесін күнтізбеге сақтау. Қатысушылар тізімі тазартылатын болады.">
+<!ENTITY lightning.imipbar.btnTentative.label                               "Мүмкін деп">
+<!ENTITY lightning.imipbar.btnTentative2.tooltiptext                        "Оқиғаға шақыруды мүмкін деп қабылдау">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences.label                    "Барлығын мүмкін деп қабылдау">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences2.tooltiptext             "Оқиғаға шақыруды оқиғаның барлық қайталанулары үшін мүмкін деп қабылдау">
+<!ENTITY lightning.imipbar.btnUpdate.label                                  "Жаңартулар">
+<!ENTITY lightning.imipbar.btnUpdate.tooltiptext                            "Оқиғаны күнтізбеде жаңарту">
+<!ENTITY lightning.imipbar.description                                      "Бұл хабарламада оқиғаға шақыру бар.">
+
+<!ENTITY lightning.imipbar.btnSend.label                                    "Жауапты қазір жіберу">
+<!ENTITY lightning.imipbar.btnSend.tooltiptext                              "Ұйымдастырушыға жауап жіберу">
+<!ENTITY lightning.imipbar.btnSendSeries.tooltiptext                        "Ұйымдастырушыға бүкіл қатар үшін жауапты жіберу">
+<!ENTITY lightning.imipbar.btnDontSend.label                                "Жауапты жібермеу">
+<!ENTITY lightning.imipbar.btnDontSend.tooltiptext                          "Ұйымдастырушыға жауапты жібермей, қатысу күйіңізді өзгерту">
+<!ENTITY lightning.imipbar.btnDontSendSeries.tooltiptext                    "Ұйымдастырушыға жауапты жібермей, бүкіл қатар үшін қатысу күйіңізді өзгерту">
+
+<!-- Lightning specific keybindings -->
+<!ENTITY lightning.keys.event.showCalendar.key "C">
+<!ENTITY lightning.keys.event.showTasks.key "D">
+<!ENTITY lightning.keys.event.new "I">
+<!ENTITY lightning.keys.todo.new "D">
+
+<!-- Account Central page -->
+<!ENTITY lightning.acctCentral.newCalendar.label "Жаңа күнтізбені жасау">
+
+<!-- today-pane-specific -->
+<!ENTITY todaypane.showMinimonth.label "Кіші айды көрсету">
+<!ENTITY todaypane.showMinimonth.accesskey "К">
+<!ENTITY todaypane.showMiniday.label "Кіші күнді көрсету">
+<!ENTITY todaypane.showMiniday.accesskey  "д">
+<!ENTITY todaypane.showNone.label "Ешнәрсені көрсетпеу">
+<!ENTITY todaypane.showNone.accesskey "н">
+<!ENTITY todaypane.showTodayPane.label "Бүгінгі панельді көрсету">
+<!ENTITY todaypane.showTodayPane.accesskey "е">
+<!ENTITY todaypane.statusButton.label "Бүгінгі панелі">

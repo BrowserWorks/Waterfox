@@ -22,7 +22,7 @@ bootstrap(React, ReactDOM).then(connection => {
       const win = window.open(url, "_blank");
       win.focus();
     },
-    openWorkerToolbox: worker => alert(worker.url),
+    openInspector: () => console.log("opening inspector"),
     openElementInInspector: grip =>
       alert(`Opening node in Inspector: ${grip.class}`),
     openConsoleAndEvaluate: input => alert(`console.log: ${input}`),
@@ -30,5 +30,9 @@ bootstrap(React, ReactDOM).then(connection => {
       console.log("highlighting dom element"),
     unHighlightDomElement: (grip: Object) =>
       console.log("unhighlighting dom element"),
+    getToolboxStore: () => {
+      throw new Error("Cannot connect to Toolbox store when running Launchpad");
+    },
+    panelWin: window,
   });
 });

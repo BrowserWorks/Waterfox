@@ -1,0 +1,177 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Produciuse un problema ao cargar a páxina">
+<!ENTITY retry.label "Tentar de novo">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Non é posíbel conectarse">
+<!ENTITY connectionFailure.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY deniedPortAccess.title "Este enderezo está restrinxido">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Non se atopou o servidor">
+<!-- LOCALIZATION NOTE (dnsNotFound.longDesc4) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside tags should be localized.  Do not change the ids. -->
+<!ENTITY dnsNotFound.longDesc4 "
+<ul>
+  <li>Comprobe que o enderezo non conteña erros de escrita tales
+    como <strong>ww</strong>.example.com no lugar de
+    <strong>www</strong>.example.com</li>
+    <div id='searchbox'>
+      <input id='searchtext' type='search'></input>
+      <button id='searchbutton'>Search</button>
+    </div>
+  <li>Se resulta imposíbel cargar algunhas páxinas, comprobe a conexión de datos ou Wi-Fi do seu dispositivo.
+    <button id='wifi'>Activar Wi-Fi</button>
+  </li>
+</ul>
+">
+
+<!ENTITY fileNotFound.title "Non se atopou o ficheiro">
+<!ENTITY fileNotFound.longDesc "<ul><li>Comprobe o uso de maiúsculas no nome do ficheiro ou outros erros de escrita.</li><li>Comprobe se o ficheiro foi movido, renomeado ou borrado.</li></ul>">
+
+
+
+
+<!ENTITY generic.title "Vaites.">
+<!ENTITY generic.longDesc "<p>Non é posíbel que &brandShortName; cargue esta páxina por algunha razón.</p>
+">
+
+<!ENTITY malformedURI.title "O enderezo é incorrecto">
+<!-- LOCALIZATION NOTE (malformedURI.longDesc2) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY malformedURI.longDesc2 "
+<ul>
+  <li>Normalmente, os enderezos web escríbense como
+    <strong>http://www.example.com/</strong></li>
+    <div id='searchbox'>
+      <input id='searchtext' type='search'></input>
+      <button id='searchbutton'>Search</button>
+    </div>
+  <li>Asegúrese de que está a usar barras inclinadas
+    cara adiante (p. ex. <strong>/</strong>).</li>
+</ul>
+">
+
+<!ENTITY netInterrupt.title "Interrompeuse a conexión">
+<!ENTITY netInterrupt.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY notCached.title "O documento caducou">
+<!ENTITY notCached.longDesc "<p>O documento solicitado non está dispoñíbel na memoria caché do &brandShortName;.</p><ul><li>Por razóns de seguranza, automaticamente o &brandShortName; non volve a solicitar documentos sensíbeis.</li><li>Prema Tentar de novo para volver a solicitar o documento do sitio web.</li></ul>">
+
+<!ENTITY netOffline.title "Modo sen conexión">
+
+<!ENTITY contentEncodingError.title "Erro de codificación do contido">
+<!ENTITY contentEncodingError.longDesc "<ul><li>Contacte cos propietarios do sitio web para informalos deste problema.</li></ul>">
+
+<!ENTITY unsafeContentType.title "Tipo de ficheiro inseguro">
+<!ENTITY unsafeContentType.longDesc "<ul><li>Contacte cos propietarios do sitio web para informalos deste problema.</li></ul>">
+
+<!ENTITY netReset.title "Reiniciouse a conexión">
+<!ENTITY netReset.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY netTimeout.title "A conexión esgotou o tempo">
+<!ENTITY netTimeout.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY unknownProtocolFound.title "Non se entendeu o enderezo">
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>É posíbel que necesite instalar outro software para abrir este enderezo.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.title "O servidor proxy está a rexeitar as conexións">
+<!ENTITY proxyConnectFailure.longDesc "<ul>
+  <li>Comprobe os axustes do proxy para asegurarse de que son correctos.</li>
+  <li>Contacte co seu administrador de rede para asegurarse de que o servidor proxy está a funcionar.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.title "Non é posíbel atopar o servidor proxy">
+<!-- LOCALIZATION NOTE (proxyResolveFailure.longDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY proxyResolveFailure.longDesc3 "
+<ul>
+  <li>Comprobe os axustes do proxy para asegurarse de que son correctos.</li>
+  <li>Asegúrese de que o seu dispositivo ten unha conexión de datos ou Wi-Fi que funcione.
+    <button id='wifi'>Activar Wi-Fi</button>
+  </li>
+</ul>
+">
+
+<!ENTITY redirectLoop.title "A páxina non está a redirixir correctamente">
+<!ENTITY redirectLoop.longDesc "<ul><li>Ás veces, este problema pode estar causado pola desactivación ou rexeitamento de aceptar cookies.</li></ul>">
+
+<!ENTITY unknownSocketType.title "Resposta inesperada do servidor">
+<!ENTITY unknownSocketType.longDesc "<ul><li>Comprobe que o seu sistema ten instalado o Xestor de seguranza persoal.</li><li>Isto podería deberse a unha configuración non estándar no servidor.</li></ul>">
+
+<!ENTITY nssFailure2.title "Fallou a conexión segura">
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>Non é posíbel amosar a páxina que está a tentar visualizar porque non foi posíbel comprobar a autenticidade dos datos recibidos.</li>
+  <li>Contacte cos propietarios do sitio web para informalos deste problema.</li>
+</ul>
+">
+
+<!ENTITY nssBadCert.title "Fallou a conexión segura">
+<!ENTITY nssBadCert.longDesc2 "<ul><li>Isto podería ser un problema coa configuración do servidor ou pode ser alguén que está tentando facerse pasar polo servidor.</li><li>Se xa puido conectarse a este servidor de forma correcta, pode ser que o erro sexa temporal e pode tentalo máis tarde.</li></ul>">
+
+<!-- LOCALIZATION NOTE (sharedLongDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY sharedLongDesc3 "
+<ul>
+  <li>O sitio podería estar non dispoñíbel temporalmente ou estar demasiado saturado. Tente acceder de novo nuns minutos.</li>
+  <li>Se non consegue cargar algunhas páxinas, comprobe a conexión de datos ou Wi-Fi do seu dispositivo móbil.
+    <button id='wifi'>Activar Wi-Fi</button>
+  </li>
+</ul>
+">
+
+<!ENTITY cspBlocked.title "Bloqueado pola política de seguranza de contidos">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; impediu que esta páxina se cargue desta forma porque a páxina ten una política de seguranza de contido que non o permite.</p>">
+
+
+
+
+<!ENTITY securityOverride.linkText "Ou pode engadir unha excepción…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Sáqueme de aquí!">
+<!ENTITY securityOverride.exceptionButtonLabel "Engadir excepción…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <xul:button> tags.  The only language content is the label= field,
+which uses strings already defined above. The button is included here (instead of
+netError.xhtml) because it exposes functionality specific to firefox. -->
+
+<!ENTITY securityOverride.warningContent "<p>Non debería engadir unha excepción se está usando unha conexión á Internet na que non se confía plenamente ou se non está acostumado a ver un aviso neste sitio.</p>
+
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button>
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>
+">
+
+<!ENTITY remoteXUL.title "XUL remoto">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Contacte cos propietarios do sitio web para informalos deste problema.</li></ul></p>">
+
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+
+
+
+<!-- LOCALIZATION NOTE (weakCryptoUsed.longDesc) - Do not translate
+     "SSL_ERROR_NO_CYPHER_OVERLAP". -->
+
+
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+
+
+
+

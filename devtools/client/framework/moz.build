@@ -6,29 +6,35 @@
 
 BROWSER_CHROME_MANIFESTS += [
     'test/allocations/browser_allocations_target.ini',
-    'test/browser-rtl.ini',
+    'test/browser-enable-popup-devtools-user.ini',
+    'test/browser-enable-popup-new-user.ini',
+    'test/browser-telemetry-startup.ini',
     'test/browser.ini',
     'test/metrics/browser_metrics_debugger.ini',
     'test/metrics/browser_metrics_inspector.ini',
     'test/metrics/browser_metrics_netmonitor.ini',
     'test/metrics/browser_metrics_webconsole.ini',
 ]
-XPCSHELL_TESTS_MANIFESTS += ['test/unit/xpcshell.ini']
+XPCSHELL_TESTS_MANIFESTS += ['test/xpcshell/xpcshell.ini']
 
 DIRS += [
+    'actions',
+    'browser-toolbox',
     'components',
+    'reducers',
 ]
 
 DevToolsModules(
     'browser-menus.js',
     'devtools-browser.js',
     'devtools.js',
-    'gDevTools.jsm',
+    'enable-devtools-popup.js',
     'menu-item.js',
     'menu.js',
     'selection.js',
-    'sidebar.js',
     'source-map-url-service.js',
+    'store-provider.js',
+    'store.js',
     'target-from-url.js',
     'target.js',
     'toolbox-context-menu.js',
@@ -37,7 +43,6 @@ DevToolsModules(
     'toolbox-options.js',
     'toolbox-tabs-order-manager.js',
     'toolbox.js',
-    'ToolboxProcess.jsm',
 )
 
 with Files('**'):

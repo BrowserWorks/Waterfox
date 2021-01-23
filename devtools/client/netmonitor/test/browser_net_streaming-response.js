@@ -9,7 +9,9 @@
  */
 
 add_task(async function() {
-  const { tab, monitor } = await initNetMonitor(CUSTOM_GET_URL);
+  const { tab, monitor } = await initNetMonitor(CUSTOM_GET_URL, {
+    requestCount: 1,
+  });
 
   info("Starting test... ");
   const { document, store, windowRequire } = monitor.panelWin;
@@ -20,12 +22,17 @@ add_task(async function() {
 
   store.dispatch(Actions.batchEnable(false));
 
-  const REQUESTS = [["hls-m3u8", /^#EXTM3U/], ["mpeg-dash", /^<\?xml/]];
+  const REQUESTS = [
+    ["hls-m3u8", /^#EXTM3U/],
+    ["mpeg-dash", /^<\?xml/],
+  ];
 
   let wait = waitForNetworkEvents(monitor, REQUESTS.length);
   for (const [fmt] of REQUESTS) {
     const url = CONTENT_TYPE_SJS + "?fmt=" + fmt;
-    await ContentTask.spawn(tab.linkedBrowser, { url }, async function(args) {
+    await SpecialPowers.spawn(tab.linkedBrowser, [{ url }], async function(
+      args
+    ) {
       content.wrappedJSObject.performRequests(1, args.url);
     });
   }
@@ -37,13 +44,14 @@ add_task(async function() {
     const requestsListStatus = requestItem.querySelector(".status-code");
     EventUtils.sendMouseEvent({ type: "mouseover" }, requestsListStatus);
     await waitUntil(() => requestsListStatus.title);
+    await waitForDOMIfNeeded(requestItem, ".requests-list-timings-total");
   }
 
   REQUESTS.forEach(([fmt], i) => {
     verifyRequestItemTarget(
       document,
       getDisplayedRequests(store.getState()),
-      getSortedRequests(store.getState()).get(i),
+      getSortedRequests(store.getState())[i],
       "GET",
       CONTENT_TYPE_SJS + "?fmt=" + fmt,
       {

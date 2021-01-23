@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Konservitaj dosieroj">
+<!ENTITY aboutDownloads.empty                      "Neniuj konservitaj dosieroj">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "Malfermi entenantan dosierujon">
+<!ENTITY cmd.show.accesskey                        "d">
+<!ENTITY cmd.showMac.label                         "Montri en Finder">
+<!ENTITY cmd.showMac.accesskey                     "F">
+<!ENTITY cmd.open.label                            "Malfermi">
+<!ENTITY cmd.open.accesskey                        "M">
+<!ENTITY cmd.removeFromHistory.label               "Forigi el historio">
+<!ENTITY cmd.removeFromHistory.accesskey           "o">
+<!ENTITY cmd.clearList.label                       "Forviŝi liston">
+<!ENTITY cmd.clearList.accesskey                   "v">
+<!ENTITY cmd.clearList.tooltip                     "Forviŝi ĉiujn elementojn el la listo de konservitaj dosieroj, escepte de nunaj elŝutoj.">
+<!ENTITY cmd.searchDownloads.label                 "Serĉi…">
+<!ENTITY cmd.searchDownloads.key                   "S">

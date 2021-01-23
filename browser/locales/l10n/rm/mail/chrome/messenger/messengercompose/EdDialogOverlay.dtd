@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "Avanzà…">
+<!ENTITY AdvancedEditButton.accessKey "A">
+<!ENTITY AdvancedEditButton.tooltip "Agiunta u modifitgescha attributs da HTML, stils ed JavaScript">
+<!ENTITY chooseFileButton.label "Tscherner datoteca…">
+<!ENTITY chooseFileButton.accessKey "T">
+<!ENTITY chooseFileLinkButton.label "Tscherner datoteca…">
+<!ENTITY chooseFileLinkButton.accessKey "T">
+<!ENTITY makeUrlRelative.label "Tractar la URL sco relativa a l'adressa da la pagina">
+<!ENTITY makeUrlRelative.accessKey "r">
+<!ENTITY makeUrlRelative.tooltip "Midar tranter URL relativa ed URL absoluta. Ti stos memorisar la pagina, avant che ti pos midar questa caracteristica.">
+
+<!ENTITY LinkURLEditField2.label "Endatescha ina adressa web, il num dad ina datoteca locala u tscherna ina ancra cun num u in chau-pagina dal menu contextual dal champ:">
+<!ENTITY LinkURLEditField2.accessKey "w">

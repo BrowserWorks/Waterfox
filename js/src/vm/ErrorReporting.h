@@ -7,9 +7,8 @@
 #ifndef vm_ErrorReporting_h
 #define vm_ErrorReporting_h
 
-#include "mozilla/Move.h"
-
 #include <stdarg.h>
+#include <utility>
 
 #include "jsapi.h"        // for JSErrorNotes, JSErrorReport
 #include "jsfriendapi.h"  // for ScriptEnvironmentPreparer
@@ -84,21 +83,24 @@ extern void CallWarningReporter(JSContext* cx, JSErrorReport* report);
  * Report a compile error during script processing prior to execution of the
  * script.
  */
-extern void ReportCompileError(JSContext* cx, ErrorMetadata&& metadata,
-                               UniquePtr<JSErrorNotes> notes, unsigned flags,
-                               unsigned errorNumber, va_list* args);
+extern void ReportCompileErrorLatin1(JSContext* cx, ErrorMetadata&& metadata,
+                                     UniquePtr<JSErrorNotes> notes,
+                                     unsigned errorNumber, va_list* args);
+
+extern void ReportCompileErrorUTF8(JSContext* cx, ErrorMetadata&& metadata,
+                                   UniquePtr<JSErrorNotes> notes,
+                                   unsigned errorNumber, va_list* args);
 
 /**
  * Report a compile warning during script processing prior to execution of the
  * script.  Returns true if the warning was successfully reported, false if an
  * error occurred.
- *
- * This function DOES NOT respect an existing werror option.  If the caller
- * wishes such option to be respected, it must do so itself.
  */
-extern MOZ_MUST_USE bool ReportCompileWarning(
-    JSContext* cx, ErrorMetadata&& metadata, UniquePtr<JSErrorNotes> notes,
-    unsigned flags, unsigned errorNumber, va_list* args);
+extern MOZ_MUST_USE bool ReportCompileWarning(JSContext* cx,
+                                              ErrorMetadata&& metadata,
+                                              UniquePtr<JSErrorNotes> notes,
+                                              unsigned errorNumber,
+                                              va_list* args);
 
 class GlobalObject;
 
@@ -110,6 +112,64 @@ class GlobalObject;
 extern void ReportErrorToGlobal(JSContext* cx,
                                 JS::Handle<js::GlobalObject*> global,
                                 JS::HandleValue error);
+
+enum ErrorArgumentsType {
+  ArgumentsAreUnicode,
+  ArgumentsAreASCII,
+  ArgumentsAreLatin1,
+  ArgumentsAreUTF8
+};
+
+enum class IsWarning { No, Yes };
+
+/**
+ * Report an exception, using printf-style APIs to generate the error
+ * message.
+ */
+extern bool ReportErrorVA(JSContext* cx, IsWarning isWarning,
+                          const char* format, ErrorArgumentsType argumentsType,
+                          va_list ap) MOZ_FORMAT_PRINTF(3, 0);
+
+extern bool ReportErrorNumberVA(JSContext* cx, IsWarning isWarning,
+                                JSErrorCallback callback, void* userRef,
+                                const unsigned errorNumber,
+                                ErrorArgumentsType argumentsType, va_list ap);
+
+extern bool ReportErrorNumberUCArray(JSContext* cx, IsWarning isWarning,
+                                     JSErrorCallback callback, void* userRef,
+                                     const unsigned errorNumber,
+                                     const char16_t** args);
+
+extern bool ReportErrorNumberUTF8Array(JSContext* cx, IsWarning isWarning,
+                                       JSErrorCallback callback, void* userRef,
+                                       const unsigned errorNumber,
+                                       const char** args);
+
+extern bool ExpandErrorArgumentsVA(JSContext* cx, JSErrorCallback callback,
+                                   void* userRef, const unsigned errorNumber,
+                                   const char16_t** messageArgs,
+                                   ErrorArgumentsType argumentsType,
+                                   JSErrorReport* reportp, va_list ap);
+
+extern bool ExpandErrorArgumentsVA(JSContext* cx, JSErrorCallback callback,
+                                   void* userRef, const unsigned errorNumber,
+                                   const char** messageArgs,
+                                   ErrorArgumentsType argumentsType,
+                                   JSErrorReport* reportp, va_list ap);
+
+/*
+ * For cases when we do not have an arguments array.
+ */
+extern bool ExpandErrorArgumentsVA(JSContext* cx, JSErrorCallback callback,
+                                   void* userRef, const unsigned errorNumber,
+                                   ErrorArgumentsType argumentsType,
+                                   JSErrorReport* reportp, va_list ap);
+
+extern bool ExpandErrorArgumentsVA(JSContext* cx, JSErrorCallback callback,
+                                   void* userRef, const unsigned errorNumber,
+                                   const char16_t** messageArgs,
+                                   ErrorArgumentsType argumentsType,
+                                   JSErrorNotes::Note* notep, va_list ap);
 
 }  // namespace js
 

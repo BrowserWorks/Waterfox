@@ -52,6 +52,19 @@ Services.prefs.setBoolPref(
   true
 );
 
+// Add testing tables, we don't use moztest-* here because it doesn't support update
+Services.prefs.setCharPref("urlclassifier.phishTable", "test-phish-simple");
+Services.prefs.setCharPref(
+  "urlclassifier.malwareTable",
+  "test-harmful-simple,test-malware-simple,test-unwanted-simple"
+);
+Services.prefs.setCharPref("urlclassifier.blockedTable", "test-block-simple");
+Services.prefs.setCharPref("urlclassifier.trackingTable", "test-track-simple");
+Services.prefs.setCharPref(
+  "urlclassifier.trackingWhitelistTable",
+  "test-trackwhite-simple"
+);
+
 // Enable all completions for tests
 Services.prefs.setCharPref("urlclassifier.disallow_completions", "");
 
@@ -255,10 +268,10 @@ var gAssertions = {
     // work with a copy of the list.
     urls = urls.slice(0);
     var doLookup = function() {
-      if (urls.length > 0) {
+      if (urls.length) {
         var tables = useMoz ? mozTables : allTables;
         var fragment = urls.shift();
-        var principal = Services.scriptSecurityManager.createCodebasePrincipal(
+        var principal = Services.scriptSecurityManager.createContentPrincipal(
           Services.io.newURI("http://" + fragment),
           {}
         );
@@ -279,7 +292,7 @@ var gAssertions = {
   },
 
   checkTables(url, expected, cb) {
-    var principal = Services.scriptSecurityManager.createCodebasePrincipal(
+    var principal = Services.scriptSecurityManager.createContentPrincipal(
       Services.io.newURI("http://" + url),
       {}
     );
@@ -369,7 +382,7 @@ function doUpdateTest(updates, assertions, successCallback, errorCallback) {
   };
 
   var runUpdate = function() {
-    if (updates.length > 0) {
+    if (updates.length) {
       var update = updates.shift();
       doStreamUpdate(update, runUpdate, errorUpdate, null);
     } else {

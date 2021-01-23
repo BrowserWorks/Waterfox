@@ -25,6 +25,7 @@
 #include "nsPipe.h"
 #include "nsIAsyncInputStream.h"
 #include "nsIAsyncOutputStream.h"
+#include "nsIInputStreamPriority.h"
 
 using namespace mozilla;
 
@@ -61,7 +62,7 @@ enum SegmentChangeResult { SegmentNotChanged, SegmentAdvanceBufferRead };
 // a critical section.
 class nsPipeEvents {
  public:
-  nsPipeEvents() {}
+  nsPipeEvents() = default;
   ~nsPipeEvents();
 
   inline void NotifyInputReady(nsIAsyncInputStream* aStream,
@@ -130,12 +131,10 @@ class nsPipeInputStream final : public nsIAsyncInputStream,
                                 public nsISearchableInputStream,
                                 public nsICloneableInputStream,
                                 public nsIClassInfo,
-                                public nsIBufferedInputStream {
+                                public nsIBufferedInputStream,
+                                public nsIInputStreamPriority {
  public:
-  // Pipe input streams preserve their refcount changes when record/replaying,
-  // as otherwise the thread which destroys the stream may vary between
-  // recording and replaying.
-  NS_DECL_THREADSAFE_ISUPPORTS_WITH_RECORDING(recordreplay::Behavior::Preserve)
+  NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSIINPUTSTREAM
   NS_DECL_NSIASYNCINPUTSTREAM
   NS_DECL_NSITELLABLESTREAM
@@ -143,6 +142,7 @@ class nsPipeInputStream final : public nsIAsyncInputStream,
   NS_DECL_NSICLONEABLEINPUTSTREAM
   NS_DECL_NSICLASSINFO
   NS_DECL_NSIBUFFEREDINPUTSTREAM
+  NS_DECL_NSIINPUTSTREAMPRIORITY
 
   explicit nsPipeInputStream(nsPipe* aPipe)
       : mPipe(aPipe),
@@ -150,16 +150,18 @@ class nsPipeInputStream final : public nsIAsyncInputStream,
         mInputStatus(NS_OK),
         mBlocking(true),
         mBlocked(false),
-        mCallbackFlags(0) {}
+        mCallbackFlags(0),
+        mPriority(nsIRunnablePriority::PRIORITY_NORMAL) {}
 
-  explicit nsPipeInputStream(const nsPipeInputStream& aOther)
+  nsPipeInputStream(const nsPipeInputStream& aOther)
       : mPipe(aOther.mPipe),
         mLogicalOffset(aOther.mLogicalOffset),
         mInputStatus(aOther.mInputStatus),
         mBlocking(aOther.mBlocking),
         mBlocked(false),
         mCallbackFlags(0),
-        mReadState(aOther.mReadState) {}
+        mReadState(aOther.mReadState),
+        mPriority(nsIRunnablePriority::PRIORITY_NORMAL) {}
 
   nsresult Fill();
   void SetNonBlocking(bool aNonBlocking) { mBlocking = !aNonBlocking; }
@@ -205,6 +207,7 @@ class nsPipeInputStream final : public nsIAsyncInputStream,
 
   // requires pipe's monitor; usually treat as an opaque token to pass to nsPipe
   nsPipeReadState mReadState;
+  uint32_t mPriority;
 };
 
 //-----------------------------------------------------------------------------
@@ -245,8 +248,7 @@ class nsPipeOutputStream : public nsIAsyncOutputStream, public nsIClassInfo {
   nsPipe* mPipe;
 
   // separate refcnt so that we know when to close the producer
-  ThreadSafeAutoRefCntWithRecording<recordreplay::Behavior::Preserve>
-      mWriterRefCnt;
+  ThreadSafeAutoRefCnt mWriterRefCnt;
   int64_t mLogicalOffset;
   bool mBlocking;
 
@@ -265,9 +267,7 @@ class nsPipe final : public nsIPipe {
   friend class nsPipeOutputStream;
   friend class AutoReadSegment;
 
-  // As for nsPipeInputStream, preserve refcount changes when recording or
-  // replaying.
-  NS_DECL_THREADSAFE_ISUPPORTS_WITH_RECORDING(recordreplay::Behavior::Preserve)
+  NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSIPIPE
 
   // nsPipe methods:
@@ -488,7 +488,7 @@ nsPipe::nsPipe()
   mInputList.AppendElement(mOriginalInput);
 }
 
-nsPipe::~nsPipe() {}
+nsPipe::~nsPipe() = default;
 
 NS_IMPL_ADDREF(nsPipe)
 NS_IMPL_QUERY_INTERFACE(nsPipe, nsIPipe)
@@ -939,7 +939,7 @@ void nsPipe::OnPipeException(nsresult aReason, bool aOutputOnly) {
 
     // OnInputException() can drain the stream and remove it from
     // mInputList.  So iterate over a temp list instead.
-    nsTArray<nsPipeInputStream*> list(mInputList);
+    nsTArray<nsPipeInputStream*> list = mInputList.Clone();
     for (uint32_t i = 0; i < list.Length(); ++i) {
       // an output-only exception applies to the input end if the pipe has
       // zero bytes available.
@@ -968,8 +968,8 @@ nsresult nsPipe::CloneInputStream(nsPipeInputStream* aOriginal,
   ReentrantMonitorAutoEnter mon(mReentrantMonitor);
   RefPtr<nsPipeInputStream> ref = new nsPipeInputStream(*aOriginal);
   mInputList.AppendElement(ref);
-  nsCOMPtr<nsIAsyncInputStream> downcast = ref.forget();
-  downcast.forget(aCloneOut);
+  nsCOMPtr<nsIAsyncInputStream> upcast = std::move(ref);
+  upcast.forget(aCloneOut);
   return NS_OK;
 }
 
@@ -1154,6 +1154,7 @@ NS_INTERFACE_TABLE_HEAD(nsPipeInputStream)
     NS_INTERFACE_TABLE_ENTRY(nsPipeInputStream, nsICloneableInputStream)
     NS_INTERFACE_TABLE_ENTRY(nsPipeInputStream, nsIBufferedInputStream)
     NS_INTERFACE_TABLE_ENTRY(nsPipeInputStream, nsIClassInfo)
+    NS_INTERFACE_TABLE_ENTRY(nsPipeInputStream, nsIInputStreamPriority)
     NS_INTERFACE_TABLE_ENTRY_AMBIGUOUS(nsPipeInputStream, nsIInputStream,
                                        nsIAsyncInputStream)
     NS_INTERFACE_TABLE_ENTRY_AMBIGUOUS(nsPipeInputStream, nsISupports,
@@ -1273,6 +1274,18 @@ nsPipeInputStream::CloseWithStatus(nsresult aReason) {
 }
 
 NS_IMETHODIMP
+nsPipeInputStream::SetPriority(uint32_t priority) {
+  mPriority = priority;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsPipeInputStream::GetPriority(uint32_t* priority) {
+  *priority = mPriority;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 nsPipeInputStream::Close() { return CloseWithStatus(NS_BASE_STREAM_CLOSED); }
 
 NS_IMETHODIMP
@@ -1384,7 +1397,7 @@ nsPipeInputStream::AsyncWait(nsIInputStreamCallback* aCallback, uint32_t aFlags,
     nsCOMPtr<nsIInputStreamCallback> proxy;
     if (aTarget) {
       proxy = NS_NewInputStreamReadyEvent("nsPipeInputStream::AsyncWait",
-                                          aCallback, aTarget);
+                                          aCallback, aTarget, mPriority);
       aCallback = proxy;
     }
 

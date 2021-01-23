@@ -18,12 +18,14 @@ from concurrent.futures import (
 )
 
 import mozinfo
+from mozfile import which
 from manifestparser import TestManifest
 from manifestparser import filters as mpf
 
 from mozbuild.base import (
     MachCommandBase,
 )
+from mozbuild.virtualenv import VirtualenvManager
 
 from mach.decorators import (
     CommandArgument,
@@ -42,9 +44,13 @@ class MachCommands(MachCommandBase):
                      help='Do not set up a virtualenv')
     @CommandArgument('--exec-file',
                      default=None,
-                     help='Execute this Python file using `execfile`')
+                     help='Execute this Python file using `exec`')
+    @CommandArgument('--ipython',
+                     action='store_true',
+                     default=False,
+                     help='Use ipython instead of the default Python REPL.')
     @CommandArgument('args', nargs=argparse.REMAINDER)
-    def python(self, no_virtualenv, exec_file, args):
+    def python(self, no_virtualenv, exec_file, ipython, args):
         # Avoid logging the command
         self.log_manager.terminal_handler.setLevel(logging.CRITICAL)
 
@@ -61,12 +67,27 @@ class MachCommands(MachCommandBase):
             python_path = self.virtualenv_manager.python_path
 
         if exec_file:
-            execfile(exec_file)
+            exec(open(exec_file).read())
             return 0
+
+        if ipython:
+            bindir = os.path.dirname(python_path)
+            python_path = which('ipython', path=bindir)
+            if not python_path:
+                if not no_virtualenv:
+                    # Use `_run_pip` directly rather than `install_pip_package` to bypass
+                    # `req.check_if_exists()` which may detect a system installed ipython.
+                    self.virtualenv_manager._run_pip(['install', 'ipython'])
+                    python_path = which('ipython', path=bindir)
+
+                if not python_path:
+                    print("error: could not detect or install ipython")
+                    return 1
 
         return self.run_process([python_path] + args,
                                 pass_thru=True,  # Allow user to run Python interactively.
                                 ensure_exit_code=False,  # Don't throw on non-zero exit code.
+                                python_unbuffered=False,  # Leave input buffered.
                                 append_env=append_env)
 
     @Command('python-test', category='testing',
@@ -85,6 +106,10 @@ class MachCommands(MachCommandBase):
                      type=int,
                      help='Number of concurrent jobs to run. Default is the number of CPUs '
                           'in the system.')
+    @CommandArgument('-x', '--exitfirst',
+                     default=False,
+                     action='store_true',
+                     help='Runs all tests sequentially and breaks at the first failure.')
     @CommandArgument('--subsuite',
                      default=None,
                      help=('Python subsuite to run. If not specified, all subsuites are run. '
@@ -93,6 +118,10 @@ class MachCommands(MachCommandBase):
                      metavar='TEST',
                      help=('Tests to run. Each test can be a single file or a directory. '
                            'Default test resolution relies on PYTHON_UNITTEST_MANIFESTS.'))
+    @CommandArgument('extra', nargs=argparse.REMAINDER,
+                     metavar='PYTEST ARGS',
+                     help=('Arguments that aren\'t recognized by mach. These will be '
+                           'passed as it is to pytest'))
     def python_test(self, *args, **kwargs):
         try:
             tempdir = os.environ[b'PYTHON_TEST_TMP'] = str(tempfile.mkdtemp(suffix='-python-test'))
@@ -108,9 +137,10 @@ class MachCommands(MachCommandBase):
                          verbose=False,
                          jobs=None,
                          python=None,
+                         exitfirst=False,
+                         extra=None,
                          **kwargs):
-        python = python or self.virtualenv_manager.python_path
-        self.activate_pipenv(pipfile=None, populate=True, python=python)
+        self._activate_test_virtualenvs(python)
 
         if test_objects is None:
             from moztest.resolve import TestResolver
@@ -147,11 +177,20 @@ class MachCommands(MachCommandBase):
 
         parallel = []
         sequential = []
-        for test in tests:
-            if test.get('sequential'):
-                sequential.append(test)
-            else:
-                parallel.append(test)
+        os.environ.setdefault('PYTEST_ADDOPTS', '')
+
+        if extra:
+            os.environ['PYTEST_ADDOPTS'] += " " + " ".join(extra)
+
+        if exitfirst:
+            sequential = tests
+            os.environ['PYTEST_ADDOPTS'] += " -x"
+        else:
+            for test in tests:
+                if test.get('sequential'):
+                    sequential.append(test)
+                else:
+                    parallel.append(test)
 
         self.jobs = jobs or cpu_count()
         self.terminate = False
@@ -186,10 +225,44 @@ class MachCommands(MachCommandBase):
 
         for test in sequential:
             return_code = on_test_finished(self._run_python_test(test))
+            if return_code and exitfirst:
+                break
 
         self.log(logging.INFO, 'python-test', {'return_code': return_code},
                  'Return code from mach python-test: {return_code}')
         return return_code
+
+    def _activate_test_virtualenvs(self, python):
+        """Make sure the test suite virtualenvs are set up and activated.
+
+        Args:
+            python: Optional python version string we want to run the suite with.
+                See the `--python` argument to the `mach python-test` command.
+        """
+        from mozbuild.pythonutil import find_python3_executable
+
+        default_manager = self.virtualenv_manager
+
+        # Grab the default virtualenv properties before we activate other virtualenvs.
+        python = python or default_manager.python_path
+        py3_root = default_manager.virtualenv_root + '_py3'
+
+        self.activate_pipenv(pipfile=None, populate=True, python=python)
+
+        # The current process might be running under Python 2 and the Python 3
+        # virtualenv will not be set up by mach bootstrap. To avoid problems in tests
+        # that implicitly depend on the Python 3 virtualenv we ensure the Python 3
+        # virtualenv is up to date before the tests start.
+        python3, version = find_python3_executable(min_version='3.5.0')
+
+        py3_manager = VirtualenvManager(
+            default_manager.topsrcdir,
+            default_manager.topobjdir,
+            py3_root,
+            default_manager.log_handle,
+            default_manager.manifest_path,
+        )
+        py3_manager.ensure(python3)
 
     def _run_python_test(self, test):
         from mozprocess import ProcessHandler
@@ -216,15 +289,21 @@ class MachCommands(MachCommandBase):
                     file_displayed_test.append(True)
 
             # Hack to make sure treeherder highlights pytest failures
-            if 'FAILED' in line.rsplit(' ', 1)[-1]:
-                line = line.replace('FAILED', 'TEST-UNEXPECTED-FAIL')
+            if b'FAILED' in line.rsplit(b' ', 1)[-1]:
+                line = line.replace(b'FAILED', b'TEST-UNEXPECTED-FAIL')
 
             _log(line)
 
         _log(test['path'])
-        cmd = [self.virtualenv_manager.python_path, test['path']]
+        python = self.virtualenv_manager.python_path
+        cmd = [python, test['path']]
         env = os.environ.copy()
         env[b'PYTHONDONTWRITEBYTECODE'] = b'1'
+
+        # Homebrew on OS X will change Python's sys.executable to a custom value
+        # which messes with mach's virtualenv handling code. Override Homebrew's
+        # changes with the correct sys.executable value.
+        env[b'PYTHONEXECUTABLE'] = python.encode('utf-8')
 
         proc = ProcessHandler(cmd, env=env, processOutputLine=_line_handler, storeOutput=False)
         proc.run()

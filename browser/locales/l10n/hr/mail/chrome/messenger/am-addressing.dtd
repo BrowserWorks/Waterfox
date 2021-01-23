@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "Sastavljanje i adresiranje">
+<!ENTITY addressingGroupTitle.label "Adresiranje">
+<!ENTITY addressingText.label      "Prilikom pretrage adresa e-pošte:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Koristi moj LDAP poslužitelj za ovaj račun">
+<!ENTITY useGlobal.accesskey       "u">
+<!ENTITY editDirectories.label     "Uredi imenike…">
+<!ENTITY editDirectories.accesskey "e">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Koristi drugi LDAP poslužitelj:">
+<!ENTITY directories.accesskey     "D">
+<!ENTITY directoriesNone.label     "Nepostojeći">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "Sastavljanje">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Sastavi poruke u HTML formatu">
+<!ENTITY useHtml.accesskey                    "H">
+<!ENTITY autoQuote.label                      "Citiraj izvornu poruku prilikom odgovora">
+<!ENTITY autoQuote.accesskey                  "C">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "Prilikom citiranja,">
+<!ENTITY quoting.accesskey                    "c">
+<!ENTITY aboveQuote.label                     "započni moj odgovor iznad citata">
+<!ENTITY belowQuote.label                     "započni moj odgovor ispod citata">
+<!ENTITY selectAndQuote.label                 "odaberi citat">
+<!ENTITY place.label                          "i stavi moj potpis">
+<!ENTITY place.accesskey                      "s">
+<!ENTITY belowText.label                      "ispod citata (preporučeno)">
+<!ENTITY aboveText.label                      "ispod mojeg odgovora (iznad citata)">
+<!ENTITY includeSigOnReply.label              "Uključi potpis za odgovore">
+<!ENTITY includeSigOnReply.accesskey          "i">
+<!ENTITY includeSigOnForward.label            "Uključi potpis za proslijeđivanja">
+<!ENTITY includeSigOnForward.accesskey        "p">
+
+<!ENTITY globalComposingPrefs.label           "Globalne postavke pisanja…">
+<!ENTITY globalComposingPrefs.accesskey       "G">
+
+<!ENTITY globalAddressingPrefs.label          "Globalne postavke adresiranja…">
+<!ENTITY globalAddressingPrefs.accesskey      "a">

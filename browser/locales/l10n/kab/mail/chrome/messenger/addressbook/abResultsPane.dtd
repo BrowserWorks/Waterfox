@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "Imedlis n tensa">
+<!ENTITY Addrbook.accesskey                    "M">
+<!ENTITY GeneratedName.label                   "Isem">
+<!ENTITY GeneratedName.accesskey               "S">
+<!ENTITY PrimaryEmail.label                    "Imayl">
+<!ENTITY PrimaryEmail.accesskey                "I">
+<!ENTITY Company.label                         "Tuddsa">
+<!ENTITY Company.accesskey                     "D">
+<!ENTITY _PhoneticName.label                   "Isem asusru">
+<!ENTITY _PhoneticName.accesskey               "u">
+<!ENTITY NickName.label                        "Meffer isem">
+<!ENTITY NickName.accesskey                    "f">
+<!ENTITY SecondEmail.label                     "Imayl nniḍen">
+<!ENTITY SecondEmail.accesskey                 "y">
+<!ENTITY Department.label                      "Agezdu">
+<!ENTITY Department.accesskey                  "z">
+<!ENTITY JobTitle.label                        "azwel">
+<!ENTITY JobTitle.accesskey                    "l">
+<!ENTITY CellularNumber.label                  "Aziraz">
+<!ENTITY CellularNumber.accesskey              "r">
+<!ENTITY PagerNumber.label                     "Amsebter">
+<!ENTITY PagerNumber.accesskey                 "b">
+<!ENTITY FaxNumber.label                       "Faks">
+<!ENTITY FaxNumber.accesskey                   "x">
+<!ENTITY HomePhone.label                       "Tiliɣri n uxxam">
+<!ENTITY HomePhone.accesskey                   "x">
+<!ENTITY WorkPhone.label                       "Tiliɣri n umahil">
+<!ENTITY WorkPhone.accesskey                   "h">
+<!ENTITY ChatName.label                        "Isem n udiwenni usrid">
+<!ENTITY ChatName.accesskey                    "d">
+<!ENTITY sortAscending.label                   "Igemmen">
+<!ENTITY sortAscending.accesskey               "n">
+<!ENTITY sortDescending.label                  "Amnusruy">
+<!ENTITY sortDescending.accesskey              "r">

@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sidebar.panels.label "Panel lateral">
+<!ENTITY sidebar.reload.label "Recargar">
+<!ENTITY sidebar.reload.accesskey "R">
+<!ENTITY sidebar.picker.label "Pestañas">
+<!ENTITY sidebar.customize.label "Personalizar el panel lateral…">
+<!ENTITY sidebar.customize.accesskey "P">
+<!ENTITY sidebar.hide.label "Esconder pestaña">
+<!ENTITY sidebar.hide.accesskey "E">
+<!ENTITY sidebar.switch.label "Cambiar a la pestaña">
+<!ENTITY sidebar.switch.accesskey "T">
+<!ENTITY sidebarCmd.label "Panel lateral">
+<!ENTITY sidebarCmd.accesskey "l">
+<!ENTITY sidebar.loading.label "Cargando…">
+<!ENTITY sidebar.loadstopped.label "Carga detenida">
+<!ENTITY sidebar.loading.stop.label "Parar">
+<!ENTITY sidebar.loading.stop.accesskey "P">
+<!ENTITY showHideSidebarCmd.key "S">
+<!ENTITY sidebar.no-panels.state "El panel lateral está vacío en este momento.">
+<!ENTITY sidebar.no-panels.add 'Puede añadir pestañas si pulsa en el botón "Pestañas" que está encima.'>
+<!ENTITY sidebar.no-panels.hide 'Si desea ocultar totalmente el panel lateral, pulse en el menú "Ver" de la parte superior y seleccione "Panel lateral" del submenú "Barras de herramientas".'>
+<!ENTITY sidebar.sbDirectory.label "Directorio del panel lateral (Sidebar)…">
+<!ENTITY sidebar.pagenotfound.label "Esta pestaña no está disponible en este momento.">
+<!ENTITY sidebar.close.tooltip "Cerrar panel lateral">
+<!ENTITY sidebar.open.tooltip "Abrir panel lateral">
+<!ENTITY sidebar.search.label "Buscar">
+<!ENTITY sidebar.client-bookmarks.label "Marcadores">
+<!ENTITY sidebar.client-history.label "Historial">
+<!ENTITY sidebar.client-addressbook.label "Libreta de direcciones">

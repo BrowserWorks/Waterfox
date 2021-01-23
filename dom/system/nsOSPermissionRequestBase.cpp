@@ -39,6 +39,13 @@ nsOSPermissionRequestBase::GetVideoCapturePermissionState(uint16_t* aVideo) {
   return NS_OK;
 }
 
+NS_IMETHODIMP
+nsOSPermissionRequestBase::GetScreenCapturePermissionState(uint16_t* aScreen) {
+  MOZ_ASSERT(aScreen);
+  *aScreen = PERMISSION_STATE_AUTHORIZED;
+  return NS_OK;
+}
+
 nsresult nsOSPermissionRequestBase::GetPromise(JSContext* aCx,
                                                RefPtr<Promise>& aPromiseOut) {
   nsIGlobalObject* globalObject = xpc::CurrentNativeGlobal(aCx);
@@ -80,5 +87,10 @@ nsOSPermissionRequestBase::RequestAudioCapturePermission(
 
   promiseHandle->MaybeResolve(true /* access authorized */);
   promiseHandle.forget(aPromiseOut);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsOSPermissionRequestBase::MaybeRequestScreenCapturePermission() {
   return NS_OK;
 }

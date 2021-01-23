@@ -101,23 +101,21 @@ async function openHelperAppDialog(launcher) {
     "@mozilla.org/helperapplauncherdialog;1"
   ].createInstance(Ci.nsIHelperAppLauncherDialog);
 
-  let helperAppDialogShownPromise = BrowserTestUtils.domWindowOpened();
+  let helperAppDialogShownPromise = BrowserTestUtils.domWindowOpenedAndLoaded();
   try {
     helperAppDialog.show(launcher, window, "foopy");
   } catch (ex) {
     ok(
       false,
-      "Trying to show unknownContentType.xul failed with exception: " + ex
+      "Trying to show unknownContentType.xhtml failed with exception: " + ex
     );
     Cu.reportError(ex);
   }
   let dlg = await helperAppDialogShownPromise;
 
-  await BrowserTestUtils.waitForEvent(dlg, "load", false);
-
   is(
     dlg.location.href,
-    "chrome://mozapps/content/downloads/unknownContentType.xul",
+    "chrome://mozapps/content/downloads/unknownContentType.xhtml",
     "Got correct dialog"
   );
 

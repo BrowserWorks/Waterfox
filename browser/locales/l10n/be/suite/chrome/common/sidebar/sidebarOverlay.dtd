@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sidebar.panels.label "Палічка">
+<!ENTITY sidebar.reload.label "Абнавіць">
+<!ENTITY sidebar.reload.accesskey "А">
+<!ENTITY sidebar.picker.label "Устаўкі">
+<!ENTITY sidebar.customize.label "Наладзіць Палічку…">
+<!ENTITY sidebar.customize.accesskey "л">
+<!ENTITY sidebar.hide.label "Схаваць устаўку">
+<!ENTITY sidebar.hide.accesskey "х">
+<!ENTITY sidebar.switch.label "Перайсці да ўстаўкі">
+<!ENTITY sidebar.switch.accesskey "й">
+<!ENTITY sidebarCmd.label "Палічка">
+<!ENTITY sidebarCmd.accesskey "П">
+<!ENTITY sidebar.loading.label "Загрузка…">
+<!ENTITY sidebar.loadstopped.label "Загрузка прыпынена">
+<!ENTITY sidebar.loading.stop.label "Спыніць">
+<!ENTITY sidebar.loading.stop.accesskey "С">
+<!ENTITY sidebar.no-panels.state "Палічка зараз пустая.">
+<!ENTITY sidebar.no-panels.add 'Вы можаце дадаць устаўкі калі пстрыкніце па кнопцы "Устаўкі".'>
+<!ENTITY sidebar.no-panels.hide 'Калі вы хочаце схаваць Палічку зусім, пстрыкніце па "Прагляд" у меню ўгары і выберыце "Палічка" ў падменю "Паказаць/Схаваць".'>
+<!ENTITY sidebar.sbDirectory.label "Дырэкторыя Палічкі…">
+<!ENTITY sidebar.pagenotfound.label "Гэтая ўстаўка зараз недаступна.">
+<!ENTITY sidebar.close.tooltip "Зачыніць Палічку">
+<!ENTITY sidebar.open.tooltip "Адчыніць Палічку">
+<!ENTITY sidebar.search.label "Пошук">
+<!ENTITY sidebar.client-bookmarks.label "Закладкі">
+<!ENTITY sidebar.client-history.label "Гісторыя">
+<!ENTITY sidebar.client-addressbook.label "Адрасная кніга">

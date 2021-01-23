@@ -12,16 +12,22 @@ const dom = require("devtools/client/shared/vendor/react-dom-factories");
 const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
 const { connect } = require("devtools/client/shared/vendor/react-redux");
 
-const ExtensionPage = createFactory(require("./ExtensionPage"));
-const ObjectTreeView = createFactory(require("./ObjectTreeView"));
-const ObjectValueGripView = createFactory(require("./ObjectValueGripView"));
-const Types = require("../types");
+const ExtensionPage = createFactory(
+  require("devtools/client/inspector/extensions/components/ExtensionPage")
+);
+const ObjectTreeView = createFactory(
+  require("devtools/client/inspector/extensions/components/ObjectTreeView")
+);
+const ExpressionResultView = createFactory(
+  require("devtools/client/inspector/extensions/components/ExpressionResultView")
+);
+const Types = require("devtools/client/inspector/extensions/types");
 
 /**
  * The ExtensionSidebar is a React component with 2 supported viewMode:
  * - an ObjectTreeView UI, used to show the JS objects
  *   (used by the sidebar.setObject WebExtensions APIs)
- * - an ObjectValueGripView UI, used to show the objects value grips
+ * - an ExpressionResultView UI, used to show the result for an expression
  *   (used by sidebar.setExpression WebExtensions APIs)
  * - an ExtensionPage UI used to show an extension page
  *   (used by the sidebar.setPage WebExtensions APIs).
@@ -52,7 +58,7 @@ class ExtensionSidebar extends PureComponent {
     const {
       iframeURL,
       object,
-      objectValueGrip,
+      expressionResult,
       rootTitle,
       viewMode = "empty-sidebar",
     } = extensionsSidebar[id] || {};
@@ -64,8 +70,8 @@ class ExtensionSidebar extends PureComponent {
         sidebarContentEl = ObjectTreeView({ object });
         break;
       case "object-value-grip-view":
-        sidebarContentEl = ObjectValueGripView({
-          objectValueGrip,
+        sidebarContentEl = ExpressionResultView({
+          expressionResult,
           rootTitle,
           serviceContainer,
         });
@@ -89,9 +95,6 @@ class ExtensionSidebar extends PureComponent {
       {
         id,
         className,
-        style: {
-          height: "100%",
-        },
       },
       sidebarContentEl
     );

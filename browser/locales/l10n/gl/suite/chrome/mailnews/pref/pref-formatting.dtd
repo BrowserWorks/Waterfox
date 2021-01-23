@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.formatting.title        "Formato de envío">
+<!ENTITY sendMaildesc.label           "Cando se envíen mensaxes con formato (HTML) e un ou máis destinatarios non se atopen na lista dos que poden recibilas:">
+<!ENTITY askMe.label                  "Preguntarme que quero facer (pedíraselle que escolla un formato)">
+<!ENTITY askMe.accesskey              "P">
+<!ENTITY convertPlain.label           "Converter a mensaxe en texto sen formato (pode perderse parte do formato)">
+<!ENTITY convertPlain.accesskey       "C">
+<!ENTITY sendHTML.label               "Aínda así enviar a mensaxe con formato HTML (pode que algúns programas de correo non poidan mostrala)">
+<!ENTITY sendHTML.accesskey           "s">
+<!ENTITY sendBoth.label               "Enviar a mensaxe en ambos formatos, texto sen formato e HTML (tamaño da mensaxe máis grande)">
+<!ENTITY sendBoth.accesskey           "n">
+<!ENTITY override.label               "Pode sobrescribir estas configuracións para as mensaxes individuais usando o menú Opcións ao redactar unha mensaxe.">
+
+<!-- Html and Plain Text Domains  -->
+<!ENTITY domain.title                 "Dominios de texto sen formato e HTML">
+<!ENTITY domaindesc.label             "Se envía mensaxes a enderezos cuxos nomes de domino se atopan na seguinte lista, o cliente de correo farao automaticamente no formato adecuado (texto con ou sen formato).">
+<!ENTITY HTMLdomaintitle.label        "Dominios HTML">
+<!ENTITY HTMLdomaintitle.accesskey    "M">
+<!ENTITY PlainTexttitle.label         "Dominios de texto sen formato">
+<!ENTITY PlainTexttitle.accesskey     "D">
+<!ENTITY AddButton.label              "Engadir…">
+<!ENTITY AddHtmlDomain.accesskey      "A">
+<!ENTITY AddPlainText.accesskey       "d">
+<!ENTITY DeleteButton.label           "Borrar">
+<!ENTITY DeleteHtmlDomain.accesskey   "e">
+<!ENTITY DeletePlainText.accesskey    "t">
+
+<!-- Add Domain Name -->
+<!ENTITY add.htmltitle                "Engadir nome de dominio HTML">
+<!ENTITY add.htmldomain               "Nome de dominio HTML:">
+<!ENTITY add.plaintexttitle           "Engadir nome de dominio de texto sen formato">
+<!ENTITY add.plaintextdomain          "Nome de dominio de texto sen formato:">
+
+<!ENTITY domainnameError.title        "Erro no nome do dominio">
+<!-- LOCALIZATION NOTE: do not translate @string@ -->
+<!ENTITY invalidEntryError.label      "O nome de dominio @string@ é incorrecto e ignorarase. Os nomes de dominio correctos deben incluír polo menos un '.' e caracteres a ambos lados deste.">

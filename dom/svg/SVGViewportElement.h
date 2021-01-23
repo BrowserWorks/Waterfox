@@ -9,7 +9,7 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/dom/FromParser.h"
-#include "nsAutoPtr.h"
+#include "mozilla/UniquePtr.h"
 #include "nsIContentInlines.h"
 #include "SVGAnimatedEnumeration.h"
 #include "SVGAnimatedLength.h"
@@ -124,6 +124,17 @@ class SVGViewportElement : public SVGGraphicsElement {
     mViewportHeight = aSize.height;
   }
 
+  /**
+   * Returns true if either this is an SVG <svg> element that is the child of
+   * another non-foreignObject SVG element, or this is a SVG <symbol> element
+   * this is the root of a use-element shadow tree.
+   */
+  bool IsInner() const {
+    const nsIContent* parent = GetFlattenedTreeParent();
+    return parent && parent->IsSVGElement() &&
+           !parent->IsSVGElement(nsGkAtoms::foreignObject);
+  }
+
   // WebIDL
   already_AddRefed<SVGAnimatedRect> ViewBox();
   already_AddRefed<DOMSVGAnimatedPreserveAspectRatio> PreserveAspectRatio();
@@ -137,17 +148,6 @@ class SVGViewportElement : public SVGGraphicsElement {
                      (OwnerDoc()->GetRootElement() == this),
                  "Can't determine if we're root");
     return IsInUncomposedDoc() && !GetParent();
-  }
-
-  /**
-   * Returns true if either this is an SVG <svg> element that is the child of
-   * another non-foreignObject SVG element, or this is a SVG <symbol> element
-   * this is the root of a use-element shadow tree.
-   */
-  bool IsInner() const {
-    const nsIContent* parent = GetFlattenedTreeParent();
-    return parent && parent->IsSVGElement() &&
-           !parent->IsSVGElement(nsGkAtoms::foreignObject);
   }
 
   /**
@@ -184,7 +184,7 @@ class SVGViewportElement : public SVGGraphicsElement {
     return mViewBox;
   }
   virtual SVGAnimatedTransformList* GetTransformInternal() const {
-    return mTransforms;
+    return mTransforms.get();
   }
   SVGAnimatedViewBox mViewBox;
   SVGAnimatedPreserveAspectRatio mPreserveAspectRatio;

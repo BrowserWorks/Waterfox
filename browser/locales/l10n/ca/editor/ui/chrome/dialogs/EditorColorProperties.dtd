@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Colors i fons de la pàgina">
+<!ENTITY pageColors.label "Colors de la pàgina">
+<!ENTITY defaultColorsRadio.label "Colors per defecte del lector (no defineixis els colors de la pàgina)">
+<!ENTITY defaultColorsRadio.accessKey "d">
+<!ENTITY defaultColorsRadio.tooltip "Utilitza només els paràmetres de color del navegador del lector">
+<!ENTITY customColorsRadio.label "Utilitza els colors personalitzats:">
+<!ENTITY customColorsRadio.accessKey "c">
+<!ENTITY customColorsRadio.tooltip "Aquests paràmetres de color substitueixen els del navegador del lector">
+
+<!ENTITY normalText.label "Text normal">
+<!ENTITY normalText.accessKey "n">
+<!ENTITY linkText.label "Text de l'enllaç">
+<!ENTITY linkText.accessKey "l">
+<!ENTITY activeLinkText.label "Text de l'enllaç actiu">
+<!ENTITY activeLinkText.accessKey "a">
+<!ENTITY visitedLinkText.label "Text de l'enllaç visitat">
+<!ENTITY visitedLinkText.accessKey "v">
+<!ENTITY background.label "Fons:">
+<!ENTITY background.accessKey "o">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Imatge de fons:">
+<!ENTITY backgroundImage.accessKey "f">
+<!ENTITY backgroundImage.tooltip "Utilitzeu un fitxer d'imatge com a fons per a la pàgina">
+<!ENTITY backgroundImage.shortenedDataURI "URI de dades escurçat (si copieu, es copiarà l'URI complet al porta-retalls)">

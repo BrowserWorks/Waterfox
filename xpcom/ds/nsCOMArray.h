@@ -24,7 +24,7 @@ class nsCOMArray_base {
   friend class nsArrayBase;
 
  protected:
-  nsCOMArray_base() {}
+  nsCOMArray_base() = default;
   explicit nsCOMArray_base(int32_t aCount) : mArray(aCount) {}
   nsCOMArray_base(const nsCOMArray_base& aOther);
   ~nsCOMArray_base();
@@ -44,17 +44,17 @@ class nsCOMArray_base {
 
   bool EnumerateBackwards(nsBaseArrayEnumFunc aFunc, void* aData) const;
 
-  typedef int (*nsBaseArrayComparatorFunc)(nsISupports* aElement1,
+  typedef int (*nsISupportsComparatorFunc)(nsISupports* aElement1,
                                            nsISupports* aElement2, void* aData);
 
-  struct nsCOMArrayComparatorContext {
-    nsBaseArrayComparatorFunc mComparatorFunc;
+  struct nsISupportsComparatorContext {
+    nsISupportsComparatorFunc mComparatorFunc;
     void* mData;
   };
 
-  static int nsCOMArrayComparator(const void* aElement1, const void* aElement2,
-                                  void* aData);
-  void Sort(nsBaseArrayComparatorFunc aFunc, void* aData);
+  static int VoidStarComparator(const void* aElement1, const void* aElement2,
+                                void* aData);
+  void Sort(nsISupportsComparatorFunc aFunc, void* aData);
 
   bool InsertObjectAt(nsISupports* aObject, int32_t aIndex);
   void InsertElementAt(uint32_t aIndex, nsISupports* aElement);
@@ -210,11 +210,11 @@ class nsCOMArray : public nsCOMArray_base {
   typedef mozilla::ReverseIterator<iterator> reverse_iterator;
   typedef mozilla::ReverseIterator<const_iterator> const_reverse_iterator;
 
-  nsCOMArray() {}
+  nsCOMArray() = default;
   explicit nsCOMArray(int32_t aCount) : nsCOMArray_base(aCount) {}
   explicit nsCOMArray(const nsCOMArray<T>& aOther) : nsCOMArray_base(aOther) {}
   nsCOMArray(nsCOMArray<T>&& aOther) { SwapElements(aOther); }
-  ~nsCOMArray() {}
+  ~nsCOMArray() = default;
 
   // We have a move assignment operator, but no copy assignment operator.
   nsCOMArray<T>& operator=(nsCOMArray<T>&& aOther) {
@@ -297,11 +297,23 @@ class nsCOMArray : public nsCOMArray_base {
     nsCOMArray_base::ReplaceElementAt(aIndex, aElement);
   }
 
-  typedef int (*nsCOMArrayComparatorFunc)(T* aElement1, T* aElement2,
-                                          void* aData);
+  typedef int (*TComparatorFunc)(T* aElement1, T* aElement2, void* aData);
 
-  void Sort(nsCOMArrayComparatorFunc aFunc, void* aData) {
-    nsCOMArray_base::Sort(nsBaseArrayComparatorFunc(aFunc), aData);
+  struct TComparatorContext {
+    TComparatorFunc mComparatorFunc;
+    void* mData;
+  };
+
+  static int nsISupportsComparator(nsISupports* aElement1,
+                                   nsISupports* aElement2, void* aData) {
+    auto ctx = static_cast<TComparatorContext*>(aData);
+    return (*ctx->mComparatorFunc)(static_cast<T*>(aElement1),
+                                   static_cast<T*>(aElement2), ctx->mData);
+  }
+
+  void Sort(TComparatorFunc aFunc, void* aData) {
+    TComparatorContext ctx = {aFunc, aData};
+    nsCOMArray_base::Sort(nsISupportsComparator, &ctx);
   }
 
   // append an object, growing the array as necessary

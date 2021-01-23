@@ -19,7 +19,7 @@ const defaultAttributes = {
   "text-indent": "0px",
   id: "textbox",
   tag: "input",
-  display: "inline",
+  display: "inline-block",
 };
 
 /**
@@ -129,5 +129,6 @@ addAccessibleTask(
       testAttrs(textbox, expected);
       testAbsentAttrs(textbox, unexpected);
     }
-  }
+  },
+  { iframe: true, remoteIframe: true }
 );

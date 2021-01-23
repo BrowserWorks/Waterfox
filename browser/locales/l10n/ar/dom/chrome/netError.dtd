@@ -1,0 +1,93 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label "مشكلة في تحميل الصفحة">
+<!ENTITY retry.label "حاوِل مجددًا">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "تعذر الاتصال">
+<!ENTITY connectionFailure.longDesc "<p>بالرغم من أن الموقع يبدو صحيحا، لم يستطع المتصفح الاتصال به.</p><ul><li>ربما الموقع غير متوفر مؤقتًا؟ حاول فيما بعد</li><li>هل لا تستطيع تصفح المواقع الأخرى؟  تأكد من وصلة حاسوبك بالشبكة.</li><li>حاسوبك أو شبكتك محمية بجدار ناري أو وسيط؟ الإعدادات الخطأ قد تتعارض مع تصفح الوِب.</li></ul>">
+
+<!ENTITY deniedPortAccess.title "المنفذ ممنوع لأسباب الأمان">
+<!ENTITY deniedPortAccess.longDesc "<p>حدَّد العنوان المطلوب منفذا (مثال <q>mozilla.org:80</q> من أجل المنفذ 80 على mozilla.org) يُستخدم عادة لأسباب <em>غير</em> تصفّح الوِب. ألغى المتصفّح الطّلب لحمايتك وأمنك.</p>">
+
+<!ENTITY dnsNotFound.title "العنوان غير موجود">
+<!ENTITY dnsNotFound.longDesc "<p>لم يعثر المتصفح على الخادوم المستضيف للعنوان المعطى.</p><ul><li>هل قمت بخطأ في كتابة النطاق؟ (مثل <q><strong>ww</strong>.mozilla.org</q> بدلا من <q><strong>www</strong>.mozilla.org</q>)</li><li>أمتأكد من وجود عنوان النطاق هذا؟  ربما قد يكون انتهى تسجيله.</li><li>ألا تستطيع تصفح المواقع الأخرى؟  راجع إعدادات الشبكة وخادوم DNS.</li><li>حاسوبك أو شبكتك محمية بجدار ناري أو وسيط؟  الإعدادات الخطأ قد تتعارض مع تصفح الوِب.</li></ul>">
+
+<!ENTITY fileNotFound.title "الملف غير موجود">
+<!ENTITY fileNotFound.longDesc "<ul><li>ربما حُذِف العنصر، تغير اسمه، أو مكانه؟</li><li>هل هناك خطأ إملائي أو مطبعي في العنوان؟</li><li>هل لديك صلاحيات كافية للنفاذ إلى العنصر المطلوب؟</li></ul>">
+
+<!ENTITY fileAccessDenied.title "مُنِع الوصول للملف">
+<!ENTITY fileAccessDenied.longDesc "<ul><li>قد يكون حُذِف أو نُقِل أو أن صلاحيّات الملف تمنع الوصول إليه.</li></ul>">
+
+<!ENTITY generic.title "تعذّر إكمال الطلب">
+<!ENTITY generic.longDesc "<p>لا يوجد حاليا المزيد من المعلومات حول هذه المشكلة أو الخطأ.</p>">
+
+<!ENTITY malformedURI.title "عنوان غير صحيح">
+<!ENTITY malformedURI.longDesc "<p>تنسيق العنوان المُعطى غير معروف. من فضلك راجع شريط العنوان بحثا عن أخطاء ثم أعد المحاولة.</p>">
+
+<!ENTITY netInterrupt.title "قُوطِع نقل البيانات">
+<!ENTITY netInterrupt.longDesc "<p>اتصل المتصفح بنجاح، لكن قطع الاتصال أثناء نقل البيانات.  من فضلك أعد المحاولة.</p><ul><li>ألا تستطيع تصفح المواقع الأخرى؟ راجع اتصال الحاسوب بالشبكة</li><li>أمازلت تواجه مشاكل؟ راجع مدير الشبكة أو مزود الخدمة للمساعدة</li></ul>">
+
+<!ENTITY notCached.title "انتهت صلاحية المستند">
+<!ENTITY notCached.longDesc "<p>المستند المطلوب لم يعد متوفرًا في ذاكرة المتصفح الخبيئة.</p><ul><li>كإجراء وقائي، المتصفح لا يعيد طلب المستندات الحساسة بشكل آلي.</li><li>اضغط على 'حاول مجددًا' لإعادة طلب المستند من الموقع.</li></ul>">
+
+<!ENTITY netOffline.title "وضع بدون اتصال">
+<!ENTITY netOffline.longDesc2 "<p>المتصفح يعمل في وضع اللا اتصال ولا يستطيع تحميل العنصر المطلوب.</p><ul><li>هل الحاسوب متصل بشبكة نشِطة؟</li><li>اضغط على ”حاول مجددًا“ للتبديل إلى وضع الاتصال وإعادة تحميل الصفحة.</li></ul>">
+
+<!ENTITY contentEncodingError.title "خطأ في ترميز المحتوى">
+<!ENTITY contentEncodingError.longDesc "<p>الصفحة التي تحاول فتحها لا يمكن عرضها لأنها تستخدم صيغة ضغط غير سليمة أو غير مدعومة.</p><ul><li>الرجاء الاتصال أصحاب الموقع لإخبارهم بهذه المشكلة. </li></ul>">
+
+<!ENTITY unsafeContentType.title "نوع ملف غير آمن">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>من فضلك اتصل بمالكي الموقع لإعلامهم بهذه المشكلة.</li> </ul>">
+
+<!ENTITY netReset.title "قُوطِع الاتصال">
+<!ENTITY netReset.longDesc "<p>قُطعت وصلة الشبكة أثناء بدأ الاتصال. أعد المحاولة رجاءً.</p>">
+
+<!ENTITY netTimeout.title "انتهت مهلة الشبكة">
+<!ENTITY netTimeout.longDesc "<p>لم يستجب الموقع المطلوب لطلب الاتصال، وتوقف المتصفح عن انتظار رده.</p><ul><li>ربما يواجه الخادوم طلبا متزايدا أو يعاني من انقطاع مؤقت؟  أعد المحاولة فيما بعد.</li><li>ألا تستطيع تصفح المواقع الأخرى؟ راجع اتصال الحاسوب بالشبكة.</li><li>حاسوبك أو شبكتك محمية بجدار ناري أو وسيط؟  الإعدادات الخطأ قد تتعارض مع تصفح الوِب.</li><li>أمازلت تواجه مشاكل؟ راجع مدير الشبكة أو مزود الخدمة للمساعدة</li></ul>">
+
+<!ENTITY unknownProtocolFound.title "بروتوكول مجهول">
+<!ENTITY unknownProtocolFound.longDesc "<p>يحدد العنوان بروتوكولا (مثلا: <q>wxyz://</q>) لا يتعرفه المتصفح، لذا لا يستطيع المتصفح الاتصال بالموقع بشكل سليم.</p><ul><li>هل تحاول الوصول لمحتوى متعدد الوسائط أو خدمة غير نصية؟ راجع الموقع لمتطلبات إضافية.</li><li>قد تحتاج بعض البروتوكولات لبرامج إضافية أو ملحقات ليستطيع المتصفح التعرف عليها.</li></ul>">
+
+<!ENTITY proxyConnectFailure.title "رفض الخادوم الوسيط الاتصال">
+<!ENTITY proxyConnectFailure.longDesc "<p>ضُبِط المتصفح ليستخدم خادوما وسيطا، لكن الوسيط رفض الاتصال.</p><ul><li>هل إعدادات الوسيط سليمة؟ تأكد من الإعدادات وأعد المحاولة.</li><li>هل يسمح الخادوم الوسيط بالاتصالات من هذه الشبكة؟</li><li>أمازلت تواجه مشاكل؟ راجع مدير الشبكة أو مزود الخدمة للمساعدة</li></ul>">
+
+<!ENTITY proxyResolveFailure.title "لم يُعثر على خادوم وسيط">
+<!ENTITY proxyResolveFailure.longDesc "<p>ضُبِط المتصفح ليستخدم خادوما وسيطا، لكن تعذّر العثور على الوسيط.</p><ul><li>هل إعدادات الوسيط سليمة؟ تأكد من الإعدادات وأعد المحاولة.</li><li>هل يتصل الحاسوب بشبكة تعمل؟</li><li>أمازلت تواجه مشاكل؟ راجع مدير الشبكة أو مزود الخدمة للمساعدة</li></ul>">
+
+<!ENTITY redirectLoop.title "حلقة إعادة توجيه">
+<!ENTITY redirectLoop.longDesc "<p>توقف المتصفح عن محاولة جلب العنصر المطلوب. يعيد الموقع توجيه الطلب بصورة لن تتم أبدا.</p><ul><li>هل عطّلت أو حجبتَ الكعكات من هذا الموقع؟</li><li><em>ملاحظة</em>: إذا كان قبول كعكات هذا الموقع لا يحل مشكلتك، فهذه على الأرجح مشكلة في إعدادات الخادوم وليس حاسوبك.</li></ul>">
+
+<!ENTITY unknownSocketType.title "استجابة غير صحيحة">
+<!ENTITY unknownSocketType.longDesc "<p>استجاب الموقع لطلب الشبكة بطرقة غير متوقعة ولا يستطيع التصفح الاستمرار.</p>">
+
+<!ENTITY nssFailure2.title "الاتصال الآمن فشل">
+<!ENTITY nssFailure2.longDesc2 "<p>الصفحة التي تحاول فتحها لا يمكن عرضها لأن صحة البيانات المستلمة لا يمكن تأكيدها.</p><ul><li>الرجاء الاتصال بأصحاب الموقع لإخبارهم بهذه المشكلة.</li></ul>">
+
+<!ENTITY nssBadCert.title "الاتصال الآمن فشل">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>قد تكون هذه مشكلة في إعدادات الخادوم، أو ربما يحاول شخص ما تقليد الخادوم.</li> <li>إذا كنت قد اتصلت بالموقع بنجاح في الماضي، فقد يكون الخطأ مؤقتا ويمكنك المحاولة فيما بعد.</li> </ul>">
+
+<!ENTITY securityOverride.linkText "أو يمكنك إضافة استثناء…">
+<!ENTITY securityOverride.warningContent "<p>يجب ألا تضيف استثناءً إذا كنت تستخدم اتصال إنترنت لا تثق به تمامًا أو إذا لم تعتد على رؤية تحذير من هذا الخادوم.</p><p>إذا ما زلت تريد إضافة استثناء لهذا الموقع، يمكنك ذلك من إعدادات التعمية المتقدمة.</p>">
+
+<!ENTITY cspBlocked.title "حجبتها سياسة أمن المحتوى">
+<!ENTITY cspBlocked.longDesc "<p>منع المتصفح هذه الصفحة من التحميل بهذه الطريقة لأنها تملك سياسة أمن للمحتوى لا تسمح بذلك.</p>">
+
+<!ENTITY xfoBlocked.title "حجبتها سياسة X-Frame-Options">
+
+<!ENTITY corruptedContentErrorv2.title "خطأ محتوى فاسد">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>تعذر عرض الصفحة التي تريد مشاهدتها بسبب خطأ أثناء نقل البيانات.</p><ul><li>الرجاء التواصل مع مالك الموقع لإبلاغه بهذه المشكلة.</li></ul>">
+
+<!ENTITY remoteXUL.title "XUL بعيد">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>الرجاء التواصل مع مالك الموقع لإبلاغه بهذه المشكلة.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "اتّصالك غير آمن">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p>يستخدم <span class='hostname'></span> تقنية أمنية عتيقة و عرضة للهجوم. يمكن لمهاجم بسهولة الاطلاع على معلومات تظنها بمأمن. على مدير الموقع إصلاح الخادوم قبل أن يمكنك زيارة الموقع.</p><p>رمز العطل: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "الصفحة محجوبة">
+

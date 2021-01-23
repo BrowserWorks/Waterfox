@@ -4,6 +4,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "mozilla/Maybe.h"
+
+#include <algorithm>
+
 #include "gc/Marking.h"
 #include "jit/JitRealm.h"
 #if defined(JS_CODEGEN_X86)
@@ -39,6 +43,8 @@ void AssemblerX86Shared::copyDataRelocationTable(uint8_t* dest) {
 /* static */
 void AssemblerX86Shared::TraceDataRelocations(JSTracer* trc, JitCode* code,
                                               CompactBufferReader& reader) {
+  mozilla::Maybe<AutoWritableJitCode> awjc;
+
   while (reader.more()) {
     size_t offset = reader.readUnsigned();
     MOZ_ASSERT(offset >= sizeof(void*) && offset <= code->instructionsSize());
@@ -47,27 +53,36 @@ void AssemblerX86Shared::TraceDataRelocations(JSTracer* trc, JitCode* code,
     void* data = X86Encoding::GetPointer(src);
 
 #ifdef JS_PUNBOX64
-    // All pointers on x64 will have the top bits cleared. If those bits
-    // are not cleared, this must be a Value.
+    // Data relocations can be for Values or for raw pointers. If a Value is
+    // zero-tagged, we can trace it as if it were a raw pointer. If a Value
+    // is not zero-tagged, we have to interpret it as a Value to ensure that the
+    // tag bits are masked off to recover the actual pointer.
+
     uintptr_t word = reinterpret_cast<uintptr_t>(data);
     if (word >> JSVAL_TAG_SHIFT) {
+      // This relocation is a Value with a non-zero tag.
       Value value = Value::fromRawBits(word);
       MOZ_ASSERT_IF(value.isGCThing(),
                     gc::IsCellPointerValid(value.toGCThing()));
       TraceManuallyBarrieredEdge(trc, &value, "jit-masm-value");
       if (word != value.asRawBits()) {
-        // Only update the code if the Value changed, because the code
-        // is not writable if we're not moving objects.
+        if (awjc.isNothing()) {
+          awjc.emplace(code);
+        }
         X86Encoding::SetPointer(src, value.bitsAsPunboxPointer());
       }
       continue;
     }
 #endif
 
+    // This relocation is a raw pointer or a Value with a zero tag.
     gc::Cell* cell = static_cast<gc::Cell*>(data);
     MOZ_ASSERT(gc::IsCellPointerValid(cell));
     TraceManuallyBarrieredGenericPointerEdge(trc, &cell, "jit-masm-ptr");
     if (cell != data) {
+      if (awjc.isNothing()) {
+        awjc.emplace(code);
+      }
       X86Encoding::SetPointer(src, cell);
     }
   }
@@ -314,7 +329,7 @@ void CPUInfo::SetSSEVersion() {
   }
 
   if (maxEnabledSSEVersion != UnknownSSE) {
-    maxSSEVersion = Min(maxSSEVersion, maxEnabledSSEVersion);
+    maxSSEVersion = std::min(maxSSEVersion, maxEnabledSSEVersion);
   }
 
   static constexpr int AVXBit = 1 << 28;

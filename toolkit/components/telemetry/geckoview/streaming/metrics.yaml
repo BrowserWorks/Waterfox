@@ -1,0 +1,1233 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# This file defines the metrics that are recorded by the Glean SDK. They are
+# automatically converted to platform-specific code at build time using the
+# `glean_parser` PyPI package.
+
+---
+$schema: moz://mozilla.org/schemas/glean/metrics/1-0-0
+
+geckoview:
+  version:
+    description: >
+      The version of the Gecko engine, example: 74.0a1
+    type: string
+    # Temporary misuse of the user lifetime approved by Glean team
+    # due to limitations in Geckoview streaming telemetry.
+    # DO NOT DUPLICATE unless approved by Glean team.
+    lifetime: user
+    gecko_datapoint: gecko.version
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1611240
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1611240#c2
+    notification_emails:
+      - gfx-telemetry-alerts@mozilla.com
+      - ktaeleman@mozilla.com
+    expires: 2021-02-01
+
+  build_id:
+    description: >
+      The Buildid of the Gecko engine, example: 20200205124310
+    type: string
+    # Temporary misuse of the user lifetime approved by Glean team
+    # due to limitations in Geckoview streaming telemetry.
+    # DO NOT DUPLICATE unless approved by Glean team.
+    lifetime: user
+    gecko_datapoint: gecko.build_id
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1611240
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1611240#c2
+    notification_emails:
+      - gfx-telemetry-alerts@mozilla.com
+      - ktaeleman@mozilla.com
+    expires: 2021-02-01
+
+  content_process_lifetime:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: GV_CONTENT_PROCESS_LIFETIME_MS
+    description: >
+      The uptime of content processes in ms
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1625325
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1625325#c2
+    notification_emails:
+      - geckoview-team@mozilla.com
+      - aklotz@mozilla.com
+    expires: never
+
+  page_load_progress_time:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: GV_PAGE_LOAD_PROGRESS_MS
+    description: >
+      Time between page load progress starts (0) and completion (100).
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1499418
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077#c10
+    notification_emails:
+      - geckoview-team@mozilla.com
+      - esawin@mozilla.com
+    expires: never
+
+  page_load_time:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: GV_PAGE_LOAD_MS
+    description: >
+      The time taken to load a page. This includes all static contents, no
+      dynamic content.
+      Loading of about: pages is not counted.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1499418
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1584109
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1584109#c1
+    notification_emails:
+      - geckoview-team@mozilla.com
+      - esawin@mozilla.com
+    expires: never
+
+  page_reload_time:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: GV_PAGE_RELOAD_MS
+    description: >
+      Time taken to reload a page.
+      This includes all static contents, no dynamic content.
+      Loading of about: pages is not counted.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1549519
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077#c10
+    notification_emails:
+      - geckoview-team@mozilla.com
+      - sefeng@mozilla.com
+      - perfteam@mozilla.com
+    expires: never
+
+  startup_runtime:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: GV_STARTUP_RUNTIME_MS
+    description: >
+      The time taken to initialize GeckoRuntime.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1499418
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1584109
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1584109#c1
+    notification_emails:
+      - geckoview-team@mozilla.com
+      - esawin@mozilla.com
+    expires: never
+
+  document_site_origins:
+    type: custom_distribution
+    description: >
+      When a document is loaded, report the
+      number of [site origins](https://searchfox.org/
+      mozilla-central/rev/
+      3300072e993ae05d50d5c63d815260367eaf9179/
+      caps/nsIPrincipal.idl#264) of the entire browser
+      if it has been at least 5 minutes since last
+      time we collect this data.
+    range_min: 0
+    range_max: 100
+    bucket_count: 50
+    histogram_type: exponential
+    unit: number of site_origin
+    gecko_datapoint: FX_NUMBER_OF_UNIQUE_SITE_ORIGINS_ALL_TABS
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1589700
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1589700#c5
+    notification_emails:
+      - sefeng@mozilla.com
+      - perfteam@mozilla.com
+    expires: never
+
+  per_document_site_origins:
+    type: custom_distribution
+    description: >
+      When a document is unloaded, report the highest number of
+      [site origins](https://searchfox.org/
+      mozilla-central/rev/
+      3300072e993ae05d50d5c63d815260367eaf9179/
+      caps/nsIPrincipal.idl#264) loaded simultaneously in that
+      document.
+    range_min: 0
+    range_max: 100
+    bucket_count: 50
+    histogram_type: exponential
+    unit: number of site origins per document
+    gecko_datapoint: FX_NUMBER_OF_UNIQUE_SITE_ORIGINS_PER_DOCUMENT
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1603185
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1603185#c13
+    notification_emails:
+      - barret@mozilla.com
+      - perfteam@mozilla.com
+    expires: never
+
+gfx:
+  composite_time:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: COMPOSITE_TIME
+    description: >
+      The time taken to composite a frame.
+      On non-webrender this is the time taken in
+      `CompositorBridgeParent::CompositeToTarget()`.
+      On webrender, this is the time taken from the start of
+      `WebRenderBridgeParent::CompositeToTarget()`,
+      until the render thread has rendered the frame (in
+      `RenderThread::HandleFrameOneDoc()`).
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1080160
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1529352
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580129
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580129#c7
+    notification_emails:
+      - gfx-telemetry-alerts@mozilla.com
+      - jnicol@mozilla.com
+    expires: never
+
+  scroll_present_latency:
+    type: timing_distribution
+    time_unit: millisecond
+    description: >
+      Time between receiving a scroll
+      event on the event loop and compositing
+      its result onto the screen (ms).
+    gecko_datapoint: SCROLL_PRESENT_LATENCY
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1604818
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1604818#c4
+    notification_emails:
+      - sefeng@mozilla.com
+      - perfteam@mozilla.com
+    expires: never
+
+gfx.checkerboard:
+  duration:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: CHECKERBOARD_DURATION
+    description: >
+      The duration of a checkerboard event.
+      Checkerboarding is when painting has not kept up with asynchronous
+      panning and zooming so the compositor has to display a "checkerboard
+      pattern" (or in practice, the background color) rather than the actual
+      page content.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1238040
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1539309
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1584109
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1584109#c1
+    notification_emails:
+      - gfx-telemetry-alerts@mozilla.com
+      - kgupta@mozilla.com
+    expires: never
+
+  peak_pixel_count:
+    type: custom_distribution
+    range_max: 66355200
+    bucket_count: 50
+    histogram_type: exponential
+    unit: Pixels
+    gecko_datapoint: CHECKERBOARD_PEAK
+    description: >
+      The peak number of CSS pixels that checkerboarded during a checkerboard
+      event. The minimum value of the largest histogram bucket is the size of
+      a 4k display with maximum APZ zooming.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1238040
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1539309
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1584109
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1584109#c1
+    notification_emails:
+      - gfx-telemetry-alerts@mozilla.com
+      - kgupta@mozilla.com
+    expires: never
+
+  potential_duration:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: CHECKERBOARD_POTENTIAL_DURATION
+    description: >
+      The total amount of time that we could reasonably be checkerboarding.
+      This is the union of two possibly-intersecting sets of time periods:
+      The first set is that in which checkerboarding was actually happening,
+      since by definition it could potentially be happening.
+      The second set is that in which the APZC is actively transforming content
+      in the compositor, since it could potentially transform it so as to
+      display checkerboarding to the user. Combined with other information,
+      this allows us to meaningfully say how frequently users actually
+      enncounters checkerboarding.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1238040
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1539309
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1584109
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1584109#c1
+    notification_emails:
+      - gfx-telemetry-alerts@mozilla.com
+      - kgupta@mozilla.com
+    expires: never
+
+  severity:
+    type: custom_distribution
+    range_max: 1073741824
+    bucket_count: 50
+    histogram_type: exponential
+    unit: Opaque unit
+    gecko_datapoint: CHECKERBOARD_SEVERITY
+    description: >
+      An opaque measurement of the severity of a checkerboard event.
+      This doesn't have units, it's just useful for comparing two checkerboard
+      events to see which one is worse, for some implementation-specific
+      definition of "worse". The larger the value, the worse the
+      checkerboarding.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1238040
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1539309
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1584109
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1584109#c1
+    notification_emails:
+      - gfx-telemetry-alerts@mozilla.com
+      - kgupta@mozilla.com
+    expires: never
+
+gfx.content:
+  paint_time:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: CONTENT_PAINT_TIME
+    description: >
+      Time spent in the main-thread paint pipeline for content.
+      For non-webrender, this includes display list building, layer building,
+      and when OMTP is disabled, rasterization.
+      For webrender, this includes display list building, and webrender display
+      list building.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1309442
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1489524
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1584109
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1584109#c1
+    notification_emails:
+      - gfx-telemetry-alerts@mozilla.com
+      - mwoodrow@mozilla.com
+      - dbolter@mozilla.com
+    expires: never
+
+  full_paint_time:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: CONTENT_FULL_PAINT_TIME
+    description: >
+      Time spent in the full paint pipeline for content until it's ready for
+      composition.
+      For non-webrender this includes `paint_time`, plus rasterization if OMTP
+      is enabled.
+      For webrender, this includes `paint_time`, plus scene building time.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1505858
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1584109
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1584109#c1
+    notification_emails:
+      - gfx-telemetry-alerts@mozilla.com
+      - jmuizelaar@mozilla.com
+      - dbolter@mozilla.com
+    expires: never
+
+gfx.content.frame_time:
+  from_paint:
+    type: custom_distribution
+    range_max: 5000
+    bucket_count: 50
+    histogram_type: exponential
+    unit: Percentage of vsync interval
+    gecko_datapoint: CONTENT_FRAME_TIME
+    description: >
+      The time, in percentage of a vsync interval, spent from beginning a paint
+      in the content process until that frame is presented in the compositor.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1470528
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1509536
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1584109
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1584109#c1
+    notification_emails:
+      - gfx-telemetry-alerts@mozilla.com
+      - jnicol@mozilla.com
+    expires: never
+
+  from_vsync:
+    type: custom_distribution
+    range_min: 8
+    range_max: 792
+    bucket_count: 100
+    histogram_type: linear
+    unit: Percentage of vsync interval
+    gecko_datapoint: CONTENT_FRAME_TIME_VSYNC
+    description: >
+      The time, in percentage of a vsync interval, spent from the vsync that
+      started a paint in the content process until that frame is presented in
+      the compositor.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1517355
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1584109
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1584109#c1
+    notification_emails:
+      - gfx-telemetry-alerts@mozilla.com
+      - mwoodrow@mozilla.com
+    expires: never
+
+  with_svg:
+    type: custom_distribution
+    range_max: 5000
+    bucket_count: 50
+    histogram_type: exponential
+    unit: Percentage of vsync interval
+    gecko_datapoint: CONTENT_FRAME_TIME_WITH_SVG
+    description: >
+      The time, in percentage of a vsync interval, spent from beginning a paint
+      in the content process until that frame is presented in the compositor,
+      for frames that contained an SVG to be drawn by webrender.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1483549
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1509536
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1584109
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1584109#c1
+    notification_emails:
+      - gfx-telemetry-alerts@mozilla.com
+      - mwoodrow@mozilla.com
+    expires: never
+
+  without_resource_upload:
+    type: custom_distribution
+    range_max: 5000
+    bucket_count: 50
+    histogram_type: exponential
+    unit: Percentage of vsync interval
+    gecko_datapoint: CONTENT_FRAME_TIME_WITHOUT_RESOURCE_UPLOAD
+    description: >
+      The time, in percentage of a vsync interval, spent from beginning a paint
+      in the content process until that frame is presented in the compositor by
+      webrender, excluding time spent uploading resources.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1503405
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1584109
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1584109#c1
+    notification_emails:
+      - gfx-telemetry-alerts@mozilla.com
+      - mwoodrow@mozilla.com
+    expires: never
+
+  without_upload:
+    type: custom_distribution
+    range_max: 5000
+    bucket_count: 50
+    histogram_type: exponential
+    unit: Percentage of vsync interval
+    gecko_datapoint: CONTENT_FRAME_TIME_WITHOUT_UPLOAD
+    description: >
+      The time, in percentage of a vsync interval, spent from beginning a paint
+      in the content process until that frame is presented in the compositor by
+      webrender, excluding time spent uploading any content.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1503405
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1584109
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1584109#c1
+    notification_emails:
+      - gfx-telemetry-alerts@mozilla.com
+      - mwoodrow@mozilla.com
+    expires: never
+
+  reason:
+    type: labeled_counter
+    labels:
+      - on_time
+      - no_vsync
+      - missed_composite
+      - slow_composite
+      - missed_composite_mid
+      - missed_composite_long
+      - missed_composite_low
+      - no_vsync_no_id
+    gecko_datapoint: CONTENT_FRAME_TIME_REASON
+    description: >
+      The reason that `gfx.content.frame_time.from_paint` recorded a slow
+      (>200ms) result, if any.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1510853
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1584109
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1584109#c1
+    notification_emails:
+      - gfx-telemetry-alerts@mozilla.com
+      - mwoodrow@mozilla.com
+    expires: never
+
+gfx.webrender:
+  scenebuild_time:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: WR_SCENEBUILD_TIME
+    description: >
+      The time taken to build a webrender scene.
+      This occurs each time webrender receives a new display list.
+      This additionally includes blob rasterization time.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1470901
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1584109
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1584109#c1
+    notification_emails:
+      - gfx-telemetry-alerts@mozilla.com
+      - kgupta@mozilla.com
+    expires: never
+
+gfx.display:
+  count:
+    description: >
+      Amount of displays connected to the device
+    type: quantity
+    unit: Display count
+    # Temporary misuse of the user lifetime approved by Glean team
+    # due to limitations in Geckoview streaming telemetry.
+    # DO NOT DUPLICATE unless approved by Glean team.
+    lifetime: user
+    gecko_datapoint: gfx.display.count
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1594145
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1594145#c4
+    notification_emails:
+      - gfx-telemetry-alerts@mozilla.com
+      - ktaeleman@mozilla.com
+    expires: 2021-02-01
+  primary_width:
+    description: >
+      Width of the primary display, takes device rotation into account.
+    type: quantity
+    unit: Pixels
+    # Temporary misuse of the user lifetime approved by Glean team
+    # due to limitations in Geckoview streaming telemetry.
+    # DO NOT DUPLICATE unless approved by Glean team.
+    lifetime: user
+    gecko_datapoint: gfx.display.primary_width
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1594145
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1594145#c4
+    notification_emails:
+      - gfx-telemetry-alerts@mozilla.com
+      - ktaeleman@mozilla.com
+    expires: 2021-02-01
+  primary_height:
+    description: >
+      Height of the primary display, takes device rotation into account.
+    type: quantity
+    unit: Pixels
+    # Temporary misuse of the user lifetime approved by Glean team
+    # due to limitations in Geckoview streaming telemetry.
+    # DO NOT DUPLICATE unless approved by Glean team.
+    lifetime: user
+    gecko_datapoint: gfx.display.primary_height
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1594145
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1594145#c4
+    notification_emails:
+      - gfx-telemetry-alerts@mozilla.com
+      - ktaeleman@mozilla.com
+    expires: 2021-02-01
+gfx.adapter.primary:
+  description:
+    description: >
+      Long form description of the Graphics adapter
+    type: string
+    # Temporary misuse of the user lifetime approved by Glean team
+    # due to limitations in Geckoview streaming telemetry.
+    # DO NOT DUPLICATE unless approved by Glean team.
+    lifetime: user
+    gecko_datapoint: gfx.adapter.description
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1594145
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1594145#c4
+    notification_emails:
+      - gfx-telemetry-alerts@mozilla.com
+      - ktaeleman@mozilla.com
+    expires: 2021-02-01
+  vendor_id:
+    description: >
+      Graphics adapter vendor identification
+    type: string
+    # Temporary misuse of the user lifetime approved by Glean team
+    # due to limitations in Geckoview streaming telemetry.
+    # DO NOT DUPLICATE unless approved by Glean team.
+    lifetime: user
+    gecko_datapoint: gfx.adapter.vendor_id
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1594145
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1594145#c4
+    notification_emails:
+      - gfx-telemetry-alerts@mozilla.com
+      - ktaeleman@mozilla.com
+    expires: 2021-02-01
+  device_id:
+    description: >
+      Graphics adapter device identification
+    type: string
+    # Temporary misuse of the user lifetime approved by Glean team
+    # due to limitations in Geckoview streaming telemetry.
+    # DO NOT DUPLICATE unless approved by Glean team.
+    lifetime: user
+    gecko_datapoint: gfx.adapter.device_id
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1594145
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1594145#c4
+    notification_emails:
+      - gfx-telemetry-alerts@mozilla.com
+      - ktaeleman@mozilla.com
+    expires: 2021-02-01
+  subsystem_id:
+    description: >
+      Graphics adapter subsystem identification
+    type: string
+    # Temporary misuse of the user lifetime approved by Glean team
+    # due to limitations in Geckoview streaming telemetry.
+    # DO NOT DUPLICATE unless approved by Glean team.
+    lifetime: user
+    gecko_datapoint: gfx.adapter.subsystem_id
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1594145
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1594145#c4
+    notification_emails:
+      - gfx-telemetry-alerts@mozilla.com
+      - ktaeleman@mozilla.com
+    expires: 2021-02-01
+  ram:
+    description: >
+      Graphics adapter dedicated memory
+    type: quantity
+    unit: Megabytes
+    # Temporary misuse of the user lifetime approved by Glean team
+    # due to limitations in Geckoview streaming telemetry.
+    # DO NOT DUPLICATE unless approved by Glean team.
+    lifetime: user
+    gecko_datapoint: gfx.adapter.ram
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1594145
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1594145#c4
+    notification_emails:
+      - gfx-telemetry-alerts@mozilla.com
+      - ktaeleman@mozilla.com
+    expires: 2021-02-01
+  driver_files:
+    description: >
+      List of graphics adapter driver files
+    type: string
+    # Temporary misuse of the user lifetime approved by Glean team
+    # due to limitations in Geckoview streaming telemetry.
+    # DO NOT DUPLICATE unless approved by Glean team.
+    lifetime: user
+    gecko_datapoint: gfx.adapter.driver_files
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1594145
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1594145#c4
+    notification_emails:
+      - gfx-telemetry-alerts@mozilla.com
+      - ktaeleman@mozilla.com
+    expires: 2021-02-01
+  driver_vendor:
+    description: >
+      Graphics adapter driver vendor identification
+    type: string
+    # Temporary misuse of the user lifetime approved by Glean team
+    # due to limitations in Geckoview streaming telemetry.
+    # DO NOT DUPLICATE unless approved by Glean team.
+    lifetime: user
+    gecko_datapoint: gfx.adapter.driver_vendor
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1594145
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1594145#c4
+    notification_emails:
+      - gfx-telemetry-alerts@mozilla.com
+      - ktaeleman@mozilla.com
+    expires: 2021-02-01
+  driver_version:
+    description: >
+      Graphics adapter driver version
+    type: string
+    # Temporary misuse of the user lifetime approved by Glean team
+    # due to limitations in Geckoview streaming telemetry.
+    # DO NOT DUPLICATE unless approved by Glean team.
+    lifetime: user
+    gecko_datapoint: gfx.adapter.driver_version
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1594145
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1594145#c4
+    notification_emails:
+      - gfx-telemetry-alerts@mozilla.com
+      - ktaeleman@mozilla.com
+    expires: 2021-02-01
+  driver_date:
+    description: >
+      Graphics adapter driver date
+    type: string
+    # Temporary misuse of the user lifetime approved by Glean team
+    # due to limitations in Geckoview streaming telemetry.
+    # DO NOT DUPLICATE unless approved by Glean team.
+    lifetime: user
+    gecko_datapoint: gfx.adapter.driver_date
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1594145
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1594145#c4
+    notification_emails:
+      - gfx-telemetry-alerts@mozilla.com
+      - ktaeleman@mozilla.com
+    expires: 2021-02-01
+
+gfx.status:
+  compositor:
+    description: >
+      Name of the graphics compositor in use.
+      Possible values are "opengl, d3d11, client, webrender or basic"
+    type: string
+    # Temporary misuse of the user lifetime approved by Glean team
+    # due to limitations in Geckoview streaming telemetry.
+    # DO NOT DUPLICATE unless approved by Glean team.
+    lifetime: user
+    gecko_datapoint: gfx.compositor
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1594145
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1594145#c4
+    notification_emails:
+      - gfx-telemetry-alerts@mozilla.com
+      - ktaeleman@mozilla.com
+    expires: 2021-02-01
+  headless:
+    description: >
+      Boolean indicated whether graphics is running in
+      headless (no display) mode
+    type: boolean
+    # Temporary misuse of the user lifetime approved by Glean team
+    # due to limitations in Geckoview streaming telemetry.
+    # DO NOT DUPLICATE unless approved by Glean team.
+    lifetime: user
+    gecko_datapoint: gfx.headless
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1594145
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1594145#c4
+    notification_emails:
+      - gfx-telemetry-alerts@mozilla.com
+      - ktaeleman@mozilla.com
+    expires: 2021-02-01
+
+  sceneswap_time:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: WR_SCENESWAP_TIME
+    description: >
+      The time taken to do a webrender scene swap. This is book-keeping that
+      APZ must perform once webrender has built a new scene.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1470901
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1584109
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1584109#c1
+    notification_emails:
+      - gfx-telemetry-alerts@mozilla.com
+      - kgupta@mozilla.com
+    expires: never
+
+  framebuild_time:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: WR_FRAMEBUILD_TIME
+    description: >
+      The time taken to build a webrender frame.
+      This involves calculating the visibility of primitives, requesting
+      resources, and building the render passes which will be used to render
+      the frame.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1470901
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1584109
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1584109#c1
+    notification_emails:
+      - gfx-telemetry-alerts@mozilla.com
+      - kgupta@mozilla.com
+    expires: never
+
+network:
+  cache_hit_time:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: NETWORK_CACHE_V2_HIT_TIME_MS
+    description: >
+      Time to open existing cache entry file.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1489524
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077#c10
+    notification_emails:
+      - hbambas@mozilla.com
+      - mnovotny@mozilla.com
+    expires: never
+
+  tls_handshake:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: HTTP_PAGE_TLS_HANDSHAKE
+    description: >
+      In the HTTP page channel, time from after the TCP SYN packet is
+      received to the secure connection is established and ready for HTTP.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=772589
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077#c10
+    notification_emails:
+      - necko@mozilla.com
+      - ddamjanovic@mozilla.com
+    expires: never
+
+  tcp_connection:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: HTTP_PAGE_TCP_CONNECTION_2
+    description: >
+      In the HTTP page channel, time from the TCP SYN packet is received to
+      the connection is established and ready for HTTP.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=772589
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077#c10
+    notification_emails:
+      - necko@mozilla.com
+      - ddamjanovic@mozilla.com
+    expires: never
+
+  dns_start:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: HTTP_PAGE_DNS_ISSUE_TIME
+    description: >
+      In the HTTP page channel, time from connection open to the DNS request
+      being issued.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077#c10
+    notification_emails:
+      - necko@mozilla.com
+      - vogosu@mozilla.com
+    expires: never
+
+  dns_end:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: HTTP_PAGE_DNS_LOOKUP_TIME
+    description: >
+      In the HTTP page channel, time from the DNS request being issued to
+      the response.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077#c10
+    notification_emails:
+      - necko@mozilla.com
+      - vogosu@mozilla.com
+    expires: never
+
+  font_download_end:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: WEBFONT_DOWNLOAD_TIME_AFTER_START
+    description: >
+      Time after navigationStart that all webfont downloads are completed.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077#c10
+    notification_emails:
+      - perf-telemetry-alerts@mozilla.com
+      - necko@mozilla.com
+      - bdekoz@mozilla.com
+    expires: never
+
+  first_from_cache:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: HTTP_PAGE_OPEN_TO_FIRST_FROM_CACHE_V2
+    description: >
+      In the HTTP page channel, time from connection open to cache read start.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077#c10
+    notification_emails:
+      - necko@mozilla.com
+      - mnovotny@mozilla.com
+    expires: never
+
+performance.time:
+  response_start:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: TIME_TO_RESPONSE_START_MS
+    description: >
+      Time from navigationStart to responseStart as per the W3C
+      Performance Timing API.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1344893
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1489524
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077#c10
+    notification_emails:
+      - hkirschner@mozilla.com
+      - vchin@mozilla.com
+      - sphilp@mozilla.com
+    expires: never
+
+  dom_interactive:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: TIME_TO_DOM_INTERACTIVE_MS
+    description: >
+      Time from navigationStart to domInteractive as per the W3C
+      Performance Timing API.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?1344893
+      - https://bugzilla.mozilla.org/show_bug.cgi?1489524
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077#c10
+    notification_emails:
+      - hbambas@mozilla.com
+      - vgosu@mozilla.com
+    expires: never
+
+  dom_content_loaded_start:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: TIME_TO_DOM_CONTENT_LOADED_START_MS
+    description: >
+      Time from navigationStart to domContentLoadedEventStart as per
+      the W3C Performance Timing API.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1344893
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077#c10
+    notification_emails:
+      - perf-telemetry-alerts@mozilla.com
+      - bdekoz@mozilla.com
+    expires: never
+
+  dom_content_loaded_end:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: TIME_TO_DOM_CONTENT_LOADED_END_MS
+    description: >
+      Time from navigationStart to domContentLoadedEventEnd as per
+      the W3C Performance Timing API.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1344893
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1489524
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077#c10
+    notification_emails:
+      - hkirschner@mozilla.com
+      - vchin@mozilla.com
+      - sphilp@mozilla.com
+    expires: never
+
+  dom_complete:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: TIME_TO_DOM_COMPLETE_MS
+    description: >
+      Time from navigationStart to domComplete as per the W3C Performance
+      Timing API.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1344893
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1489524
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077#c10
+    notification_emails:
+      - hbambas@mozilla.com
+      - vgosu@mozilla.com
+    expires: never
+
+  load_event_start:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: TIME_TO_LOAD_EVENT_START_MS
+    description: >
+      Time from navigationStart to loadEventStart as per the W3C Performance
+      Timing API.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1344893
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077#c10
+    notification_emails:
+      - perf-telemetry-alerts@mozilla.com
+      - bdekoz@mozilla.com
+    expires: never
+
+  load_event_end:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: TIME_TO_LOAD_EVENT_END_MS
+    description: >
+      Time from navigationStart to loadEventEnd as per the W3C Performance
+      Timing API.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1344893
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1489524
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077#c10
+    notification_emails:
+      - hkirschner@mozilla.com
+      - vchin@mozilla.com
+      - sphilp@mozilla.com
+    expires: never
+
+performance.page:
+  non_blank_paint:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: TIME_TO_NON_BLANK_PAINT_MS
+    description: >
+      The time between navigationStart and the first non-blank paint of a
+      foreground root content document, in milliseconds. This only records
+      documents that were in an active docshell throughout the whole time
+      between navigation start and non-blank paint. The non-blank paint
+      timestamp is taken during display list building and does not include
+      rasterization or compositing of that paint.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1307242
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1489524
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077#c10
+    notification_emails:
+      - hkirschner@mozilla.com
+      - vchin@mozilla.com
+      - sphilp@mozilla.com
+    expires: never
+
+  total_content_page_load:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: TOTAL_CONTENT_PAGE_LOAD_TIME
+    description: >
+      Time to load all of a page's resources and render.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077#c10
+    notification_emails:
+      - perf-telemetry-alerts@mozilla.com
+      - bdekoz@mozilla.com
+    expires: never
+
+performance.interaction:
+  keypress_present_latency:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: KEYPRESS_PRESENT_LATENCY
+    description: >
+      Time between receiving a keypress event in the event loop and compositing
+      its result onto the screen.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1506537
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077#c10
+    notification_emails:
+      - perf-telemetry-alerts@mozilla.com
+      - vchin@mozilla.com
+    expires: never
+
+  tab_switch_composite:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: FX_TAB_SWITCH_COMPOSITE_E10S_MS
+    description: >
+      Time between tab selection and first composite of the tab content onto the
+      screen.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1481704
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1529352
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1580077#c10
+    notification_emails:
+      - mconley@mozilla.com
+      - dolske@mozilla.com
+    expires: never
+
+javascript.gc:
+  total_time:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: GC_MS
+    description: >
+      The total time taken by a major collection.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1636419
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1636419#c8
+    notification_emails:
+      - dev-telemetry-gc-alerts@mozilla.org
+      - jcoppeard@mozilla.com
+    expires: never
+
+  minor_time:
+    type: timing_distribution
+    time_unit: microsecond
+    gecko_datapoint: GC_MINOR_US
+    description: >
+      The time taked by a minor (nursery) collection.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1636419
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1636419#c17
+    notification_emails:
+      - dev-telemetry-gc-alerts@mozilla.org
+      - jcoppeard@mozilla.com
+    expires: never
+
+  prepare_time:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: GC_PREPARE_MS
+    description: >
+      The time spent in the preparation phase.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1636419
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1636419#c17
+    notification_emails:
+      - dev-telemetry-gc-alerts@mozilla.org
+      - jcoppeard@mozilla.com
+    expires: never
+
+  mark_roots_time:
+    type: timing_distribution
+    time_unit: microsecond
+    gecko_datapoint: GC_MARK_ROOTS_US
+    description: >
+      The time spent marking GC roots.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1636419
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1636419#c17
+    notification_emails:
+      - dev-telemetry-gc-alerts@mozilla.org
+      - jcoppeard@mozilla.com
+    expires: never
+
+  mark_time:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: GC_MARK_MS
+    description: >
+      The time spent in the mark phase.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1636419
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1636419#c17
+    notification_emails:
+      - dev-telemetry-gc-alerts@mozilla.org
+      - jcoppeard@mozilla.com
+    expires: never
+
+  sweep_time:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: GC_SWEEP_MS
+    description: >
+      The time spent in the sweep phase.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1636419
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1636419#c17
+    notification_emails:
+      - dev-telemetry-gc-alerts@mozilla.org
+      - jcoppeard@mozilla.com
+    expires: never
+
+  compact_time:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: GC_COMPACT_MS
+    description: >
+      The time spent in the compact phase.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1636419
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1636419#c17
+    notification_emails:
+      - dev-telemetry-gc-alerts@mozilla.org
+      - jcoppeard@mozilla.com
+    expires: never
+
+  slice_time:
+    type: timing_distribution
+    time_unit: millisecond
+    gecko_datapoint: GC_SLICE_MS
+    description: >
+      The time spent running a GC slice.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1636419
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1636419#c17
+    notification_emails:
+      - dev-telemetry-gc-alerts@mozilla.org
+      - jcoppeard@mozilla.com
+    expires: never

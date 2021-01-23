@@ -9,10 +9,8 @@
 #include "nsIScriptContext.h"
 #include "nsIScriptGlobalObject.h"
 #include "nsCOMPtr.h"
-#include "nsIObserver.h"
 #include "prtime.h"
 #include "nsCycleCollectionParticipant.h"
-#include "nsIXPConnect.h"
 #include "nsIArray.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/TimeStamp.h"
@@ -23,16 +21,14 @@ class nsICycleCollectorListener;
 class nsIDocShell;
 
 namespace mozilla {
+
 template <class>
 class Maybe;
 struct CycleCollectorResults;
+
+static const uint32_t kMajorForgetSkippableCalls = 5;
+
 }  // namespace mozilla
-
-// The amount of time we wait between a request to GC (due to leaving
-// a page) and doing the actual GC.
-#define NS_GC_DELAY 4000  // ms
-
-#define NS_MAJOR_FORGET_SKIPPABLE_CALLS 5
 
 class nsJSContext : public nsIScriptContext {
  public:
@@ -47,9 +43,6 @@ class nsJSContext : public nsIScriptContext {
     return mGlobalObjectRef;
   }
 
-  virtual nsresult InitContext() override;
-  virtual bool IsContextInitialized() override;
-
   virtual nsresult SetProperty(JS::Handle<JSObject*> aTarget,
                                const char* aPropName,
                                nsISupports* aVal) override;
@@ -58,9 +51,6 @@ class nsJSContext : public nsIScriptContext {
   virtual void SetProcessingScriptTag(bool aResult) override;
 
   virtual nsresult InitClasses(JS::Handle<JSObject*> aGlobalObj) override;
-
-  virtual void WillInitializeContext() override;
-  virtual void DidInitializeContext() override;
 
   virtual void SetWindowProxy(JS::Handle<JSObject*> aWindowProxy) override;
   virtual JSObject* GetWindowProxy() override;
@@ -71,6 +61,8 @@ class nsJSContext : public nsIScriptContext {
 
   // Setup all the statics etc - safe to call multiple times after Startup().
   static void EnsureStatics();
+
+  static void SetLowMemoryState(bool aState);
 
   static void GarbageCollectNow(JS::GCReason reason,
                                 IsIncremental aIncremental = NonIncrementalGC,
@@ -106,7 +98,7 @@ class nsJSContext : public nsIScriptContext {
                                          JS::GCReason aReason);
 
   // The GC should probably run soon, in the zone of object aObj (if given).
-  static void PokeGC(JS::GCReason aReason, JSObject* aObj, int aDelay = 0);
+  static void PokeGC(JS::GCReason aReason, JSObject* aObj, uint32_t aDelay = 0);
   static void KillGCTimer();
 
   static void PokeShrinkingGC();
@@ -146,7 +138,6 @@ class nsJSContext : public nsIScriptContext {
 
   JS::Heap<JSObject*> mWindowProxy;
 
-  bool mIsInitialized;
   bool mGCOnDestruction;
   bool mProcessingScriptTag;
 
@@ -160,23 +151,35 @@ class nsJSContext : public nsIScriptContext {
 namespace mozilla {
 namespace dom {
 
+class SerializedStackHolder;
+
 void StartupJSEnvironment();
 void ShutdownJSEnvironment();
 
 // Runnable that's used to do async error reporting
 class AsyncErrorReporter final : public mozilla::Runnable {
  public:
-  // aWindow may be null if this error report is not associated with a window
-  explicit AsyncErrorReporter(xpc::ErrorReport* aReport)
-      : Runnable("dom::AsyncErrorReporter"), mReport(aReport) {}
+  explicit AsyncErrorReporter(xpc::ErrorReport* aReport);
+  // SerializeStack is suitable for main or worklet thread use.
+  // Stacks from worker threads are not supported.
+  // See https://bugzilla.mozilla.org/show_bug.cgi?id=1578968
+  void SerializeStack(JSContext* aCx, JS::Handle<JSObject*> aStack);
 
-  NS_IMETHOD Run() override {
-    mReport->LogToConsole();
-    return NS_OK;
-  }
+  // Set the exception value associated with this error report.
+  // Should only be called from the main thread.
+  void SetException(JSContext* aCx, JS::Handle<JS::Value> aException);
 
  protected:
+  NS_IMETHOD Run() override;
+
+  // This is only used on main thread!
+  JS::PersistentRootedValue mException;
+  bool mHasException = false;
+
   RefPtr<xpc::ErrorReport> mReport;
+  // This may be used to marshal a stack from an arbitrary thread/runtime into
+  // the main thread/runtime where the console service runs.
+  UniquePtr<SerializedStackHolder> mStackHolder;
 };
 
 }  // namespace dom

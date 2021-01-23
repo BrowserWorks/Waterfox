@@ -79,6 +79,10 @@ if test -n "$ENABLE_CLANG_PLUGIN"; then
             LLVM_REPLACE_CXXFLAGS="$LLVM_REPLACE_CXXFLAGS $arg"
         done
         LLVM_CXXFLAGS="$LLVM_REPLACE_CXXFLAGS"
+        dnl We'll also want to replace `-std:` with `-Xclang -std=` so that
+        dnl LLVM_CXXFLAGS can correctly override the `-Xclang -std=` set by
+        dnl toolchain.configure.
+        LLVM_CXXFLAGS=`echo "$LLVM_CXXFLAGS"|sed -e 's/ \(-Xclang \|\)-std[[:=]]/ -Xclang -std=/'`
 
         LLVM_REPLACE_LDFLAGS=''
         for arg in $LLVM_LDFLAGS; do
@@ -97,68 +101,6 @@ if test -n "$ENABLE_CLANG_PLUGIN"; then
             CLANG_REPLACE_LDFLAGS="$CLANG_REPLACE_LDFLAGS $arg"
         done
         CLANG_LDFLAGS="$CLANG_REPLACE_LDFLAGS"
-    fi
-
-    dnl Check for the new ASTMatcher API names.  Since this happened in the
-    dnl middle of the 3.8 cycle, our CLANG_VERSION_FULL is impossible to use
-    dnl correctly, so we have to detect this at configure time.
-    AC_CACHE_CHECK(for new ASTMatcher API,
-                   ac_cv_have_new_ASTMatcher_names,
-        [
-            AC_LANG_SAVE
-            AC_LANG_CPLUSPLUS
-            _SAVE_CXXFLAGS="$CXXFLAGS"
-            _SAVE_CPPFLAGS="$CPPFLAGS"
-            _SAVE_CXX="$CXX"
-            _SAVE_MACOSX_DEPLOYMENT_TARGET="$MACOSX_DEPLOYMENT_TARGET"
-            unset MACOSX_DEPLOYMENT_TARGET
-            CXXFLAGS="${LLVM_CXXFLAGS}"
-            CPPFLAGS=""
-            CXX="${HOST_CXX}"
-            AC_TRY_COMPILE([#include "clang/ASTMatchers/ASTMatchers.h"],
-                           [clang::ast_matchers::cxxConstructExpr();],
-                           ac_cv_have_new_ASTMatcher_names="yes",
-                           ac_cv_have_new_ASTMatcher_names="no")
-            CXX="$_SAVE_CXX"
-            CPPFLAGS="$_SAVE_CPPFLAGS"
-            CXXFLAGS="$_SAVE_CXXFLAGS"
-            export MACOSX_DEPLOYMENT_TARGET="$_SAVE_MACOSX_DEPLOYMENT_TARGET"
-            AC_LANG_RESTORE
-        ])
-    if test "$ac_cv_have_new_ASTMatcher_names" = "yes"; then
-      LLVM_CXXFLAGS="$LLVM_CXXFLAGS -DHAVE_NEW_ASTMATCHER_NAMES"
-    fi
-
-    dnl Check if we can compile has(ignoringParenImpCasts()) because
-    dnl before 3.9 that ignoringParenImpCasts was done internally by "has".
-    dnl See https://www.mail-archive.com/cfe-commits@lists.llvm.org/msg25234.html
-    AC_CACHE_CHECK(for has with ignoringParenImpCasts,
-                   ac_cv_has_accepts_ignoringParenImpCasts,
-        [
-            AC_LANG_SAVE
-            AC_LANG_CPLUSPLUS
-            _SAVE_CXXFLAGS="$CXXFLAGS"
-            _SAVE_CPPFLAGS="$CPPFLAGS"
-            _SAVE_CXX="$CXX"
-            _SAVE_MACOSX_DEPLOYMENT_TARGET="$MACOSX_DEPLOYMENT_TARGET"
-            unset MACOSX_DEPLOYMENT_TARGET
-            CXXFLAGS="${LLVM_CXXFLAGS}"
-            CPPFLAGS=""
-            CXX="${HOST_CXX}"
-            AC_TRY_COMPILE([#include "clang/ASTMatchers/ASTMatchers.h"],
-                           [using namespace clang::ast_matchers;
-                            expr(has(ignoringParenImpCasts(declRefExpr())));
-                           ],
-                           ac_cv_has_accepts_ignoringParenImpCasts="yes",
-                           ac_cv_has_accepts_ignoringParenImpCasts="no")
-            CXX="$_SAVE_CXX"
-            CPPFLAGS="$_SAVE_CPPFLAGS"
-            CXXFLAGS="$_SAVE_CXXFLAGS"
-            export MACOSX_DEPLOYMENT_TARGET="$_SAVE_MACOSX_DEPLOYMENT_TARGET"
-            AC_LANG_RESTORE
-        ])
-    if test "$ac_cv_has_accepts_ignoringParenImpCasts" = "yes"; then
-      LLVM_CXXFLAGS="$LLVM_CXXFLAGS -DHAS_ACCEPTS_IGNORINGPARENIMPCASTS"
     fi
 
     CLANG_PLUGIN_FLAGS="-Xclang -load -Xclang $CLANG_PLUGIN -Xclang -add-plugin -Xclang moz-check"
@@ -191,6 +133,7 @@ AC_SUBST_LIST(LLVM_LDFLAGS)
 AC_SUBST_LIST(CLANG_LDFLAGS)
 
 AC_SUBST(ENABLE_CLANG_PLUGIN)
+AC_SUBST(ENABLE_CLANG_PLUGIN_ALPHA)
 AC_SUBST(ENABLE_MOZSEARCH_PLUGIN)
 
 ])

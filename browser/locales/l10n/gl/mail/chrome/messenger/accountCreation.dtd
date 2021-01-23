@@ -1,0 +1,82 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY name.label                      "O seu nome:">
+<!ENTITY name.accesskey                  "n">
+<!ENTITY name.text                       "O seu nome, como se amosará aos demais">
+<!ENTITY email.label                     "Enderezo de correo:">
+<!ENTITY email.accesskey                 "E">
+<!ENTITY email.text                      "O seu enderezo de correo electrónico">
+<!ENTITY password.label                  "Contrasinal:">
+<!ENTITY password.accesskey              "o">
+<!ENTITY password.placeholder            "Contrasinal">
+<!ENTITY password.text                   "Opcional, só se usará para validar o nome de usuario">
+<!ENTITY rememberPassword.label          "Lembrar contrasinal">
+<!ENTITY rememberPassword.accesskey      "m">
+
+<!ENTITY imapLong.label                  "IMAP (cartafoles remotos)">
+<!ENTITY pop3Long.label                  "POP3 (manter o correo no seu computador)">
+
+<!ENTITY incoming.label                  "Recibindo">
+<!ENTITY outgoing.label                  "Enviando">
+<!ENTITY username.label                  "Nome de usuario:">
+<!ENTITY auth.label                      "Autenticación">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label                       "POP3">
+<!ENTITY smtp.label                      "SMTP">
+<!ENTITY autodetect.label                "Detectar automaticamente">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "Ningunha">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!ENTITY advancedSetup.label             "Configuración avanzada">
+<!ENTITY advancedSetup.accesskey         "g">
+<!ENTITY cancel.label                    "Cancelar">
+<!ENTITY cancel.accesskey                "a">
+<!ENTITY continue.label                  "Continuar">
+<!ENTITY continue.accesskey              "C">
+<!ENTITY stop.label                      "Deter">
+<!ENTITY stop.accesskey                  "t">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual edit mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "Volver a probar">
+<!ENTITY half-manual-test.accesskey      "V">
+<!ENTITY open-provisioner.label          "Obter un novo enderezo de correo electrónico…">
+<!ENTITY open-provisioner.accesskey      "b">
+
+
+<!ENTITY warning.label                   "Aviso!">
+<!ENTITY incomingSettings.label          "Configuración de entrada:">
+<!ENTITY outgoingSettings.label          "Configuración de saída:">
+<!ENTITY technicaldetails.label          "Detalles técnicos">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "Entendo os riscos.">
+<!ENTITY confirmWarning.accesskey        "t">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "Feito">
+<!ENTITY doneAccount.accesskey           "i">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "Cambiar configuracións">
+<!ENTITY changeSettings.accesskey        "f">
+
+<!ENTITY contactYourProvider.description "&brandShortName; permítelle recibir o seu correo usando a configuración fornecida. No entanto, debería contactar co seu administrador ou fornecedor de correo-e en relación a estas conexións incorrectas. Vexa a FAQ de Thunderbird para máis información.">
+
+<!ENTITY insecureServer.tooltip.title    "Aviso! Este é un servidor inseguro.">
+<!ENTITY insecureServer.tooltip.details  "Prema no círculo para máis detalles.">
+
+<!ENTITY insecureUnencrypted.description "O correo envíase sen cifrar, de maneira que as súas mensaxes poderían ser lidas por atacantes, etc. &brandShortName; permitiralle recibir o seu correo, pero debería conseguir que o seu fornecedor de correo configure o servidor cunha conexión segura.">
+<!ENTITY insecureSelfSigned.description  "O servidor usa un certificado no que non se pode confiar, de maneira que non se pode asegurar
+que ninguén estea a interceptar o tráfico entre &brandShortName; e o seu servidor. &brandShortName; permitiralle recibir o seu correo, pero debería conseguir que o seu fornecedor configure o servidor cun certificado confiábel.">
+<!ENTITY secureServer.description        "Parabéns! Este é un servidor seguro.">

@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Teksarea-eienskappe">
+
+<!ENTITY Settings.label "Opstelling">
+
+<!ENTITY TextAreaName.label "Veldnaam:">
+<!ENTITY TextAreaName.accessKey "n">
+<!ENTITY TextAreaRows.label "Rye:">
+<!ENTITY TextAreaRows.accessKey "R">
+<!ENTITY TextAreaCols.label "Kolomme:">
+<!ENTITY TextAreaCols.accessKey "K">
+<!ENTITY TextAreaReadOnly.label "Leesalleen">
+<!ENTITY TextAreaReadOnly.accessKey "a">
+<!ENTITY TextAreaDisabled.label "Gedeaktiveer">
+<!ENTITY TextAreaDisabled.accessKey "G">
+<!ENTITY TextAreaTabIndex.label "Oortjie-indeks:">
+<!ENTITY TextAreaTabIndex.accessKey "i">
+<!ENTITY TextAreaAccessKey.label "Toegangsleutel:">
+<!ENTITY TextAreaAccessKey.accessKey "s">
+<!ENTITY InitialText.label "Aanvanklike teks:">
+<!ENTITY InitialText.accessKey "t">
+
+<!ENTITY TextAreaWrap.label "Omvou-modus:">
+<!ENTITY TextAreaWrap.accessKey "O">
+<!ENTITY WrapDefault.value "Verstek">
+<!ENTITY WrapOff.value "Af">
+<!ENTITY WrapHard.value "Hard">
+<!ENTITY WrapSoft.value "Sag">
+<!ENTITY WrapPhysical.value "Fisies">
+<!ENTITY WrapVirtual.value "Skynreëel">

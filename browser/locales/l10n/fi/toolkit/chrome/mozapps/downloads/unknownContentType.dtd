@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  intro2.label                "Olet avaamassa tiedostoa:">
+<!ENTITY  from.label                  "osoitteesta:">
+<!ENTITY  actionQuestion.label        "Mitä tiedostolle tehdään?">
+
+<!ENTITY  openWith.label              "Avaa ohjelmalla">
+<!ENTITY  openWith.accesskey          "A">
+<!ENTITY  other.label                 "Muu…">
+
+<!ENTITY  saveFile.label              "Tallenna tiedosto">
+<!ENTITY  saveFile.accesskey          "T">
+
+<!ENTITY  rememberChoice.label        "Tee näin oletuksena tämäntyyppisille tiedostoille.">
+<!ENTITY  rememberChoice.accesskey    "n">
+
+<!ENTITY  whichIs.label              "Tiedosto on tyyppiä:">
+
+<!ENTITY  chooseHandlerMac.label      "Valitse…">
+<!ENTITY  chooseHandlerMac.accesskey  "V">
+<!ENTITY  chooseHandler.label         "Selaa…">
+<!ENTITY  chooseHandler.accesskey     "S">
+
+<!ENTITY  unknownPromptText.label     "Tallennetaanko tiedosto?">

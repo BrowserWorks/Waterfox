@@ -1,19 +1,48 @@
-attrs==18.1.0
+# ONLY ADD PACKAGES USED BY PYTHON 3 TO THIS LIST!
+#
+# Python 2-only packages should be vendored manually by running:
+#
+#    $ pip download <package>==<version>
+#
+# Then for the package and each dependency:
+#
+#    $ pip hash <package>.whl  # verify the hash against the one on PyPi (e.g https://pypi.org/project/<package>/<version>/#files)
+#    $ unzip <package>.whl -d <package>
+#    $ echo <version> > <package>/VERSION
+#    $ hg add <package>/VERSION
+#
+# Note `pip download` may return `tar.gz` files if there is no `.whl` (wheel)
+# available. When downloading wheels, make sure that they are cross-platform.
+# If not you may need to specify `--no-binary :<package1>,<package2>:` to get
+# the source distribution instead for those particular packages.
+
+attrs==19.1.0
 biplist==1.0.3
 blessings==1.7
+compare-locales==8.0.0
+cookies==2.2.1
+coverage==5.1
+distro==1.4.0
+ecdsa==0.15
+esprima==4.0.1
+fluent.migrate==0.9
 jsmin==2.1.0
 json-e==2.7.0
-mozilla-version==0.3.4
+mozilla-version==0.3.0
 pathlib2==2.3.2
-pip-tools==3.0.0
+pip-tools==4.5.1
 pipenv==2018.5.18
-psutil==5.4.3
+ply==3.10
+psutil==5.7.0
+pyasn1==0.4.8
+pyflakes==2.2.0
 pytest==3.6.2
 python-hglib==2.4
+pytoml==0.1.10
 redo==2.0.3
 requests==2.9.1
-six==1.10.0
-taskcluster==6.0.0
-taskcluster-urls==11.0.0
-virtualenv==15.2.0
+responses==0.10.6
+sentry-sdk==0.14.3
+six==1.13.0
+virtualenv==16.7.8
 voluptuous==0.11.5

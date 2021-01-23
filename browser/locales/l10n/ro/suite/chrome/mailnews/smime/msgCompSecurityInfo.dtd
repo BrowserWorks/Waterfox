@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!--LOCALIZATION NOTE msgCompSecurityInfo.dtd UI for viewing security status when composing a message -->
+
+<!ENTITY title.label "Securitate mesaj">
+<!ENTITY subject.plaintextWarning "Atenție: Subiectele mesajelor nu sunt niciodată criptate.">
+<!ENTITY status.heading "Conținutul mesajului va fi expediat în următorul mod:">
+<!ENTITY status.signed "Semnat electronic:">
+<!ENTITY status.encrypted "Criptat:">
+<!ENTITY status.certificates "Certificate:">
+<!ENTITY view.label "Vizualizează jurnal">
+<!ENTITY view.accesskey "V">
+<!ENTITY tree.recipient "Destinatar">
+<!ENTITY tree.status "Situația">
+<!ENTITY tree.issuedDate "Emis la:">
+<!ENTITY tree.expiresDate "Expiră la:">

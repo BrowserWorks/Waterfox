@@ -6,7 +6,7 @@
 
 toolkit = CONFIG['MOZ_WIDGET_TOOLKIT']
 
-if 'gtk' in toolkit:
+if toolkit == 'gtk':
     DIRS += ['atk']
 elif toolkit == 'windows':
     DIRS += ['windows']
@@ -23,7 +23,6 @@ DIRS += [ 'aom',
           'html',
           'interfaces',
           'ipc',
-          'jsat',
           'xpcom'
 ]
 
@@ -37,7 +36,10 @@ BROWSER_CHROME_MANIFESTS += [
   'tests/browser/browser.ini',
   'tests/browser/e10s/browser.ini',
   'tests/browser/events/browser.ini',
+  'tests/browser/fission/browser.ini',
   'tests/browser/general/browser.ini',
+  'tests/browser/hittest/browser.ini',
+  'tests/browser/mac/browser.ini',
   'tests/browser/scroll/browser.ini',
   'tests/browser/states/browser.ini',
   'tests/browser/tree/browser.ini'

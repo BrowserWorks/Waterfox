@@ -1,0 +1,63 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (places.library.title): use "Library", "Archive" or "Repository" -->
+<!ENTITY places.library.title  "লাইব্রেরি">
+<!ENTITY places.library.width  "700">
+<!ENTITY places.library.height "500">
+<!ENTITY organize.label        "সংগঠিতকরণ">
+<!ENTITY organize.accesskey    "O">
+<!ENTITY organize.tooltip      "আপনার বুকমার্ক সংগঠিত করুন">
+
+<!ENTITY file.close.label               "বন্ধ">
+<!ENTITY file.close.accesskey           "C">
+<!ENTITY cmd.close.key                  "w">
+<!ENTITY views.label                    "প্রদর্শন">
+<!ENTITY views.accesskey                "V">
+<!ENTITY views.tooltip                  "আপনার দৃশ্যপট পরিবর্তন করুন">
+<!ENTITY view.columns.label             "কলাম প্রদর্শন করা হবে">
+<!ENTITY view.columns.accesskey         "C">
+<!ENTITY view.sort.label                "সাজানো">
+<!ENTITY view.sort.accesskey            "S">
+<!ENTITY view.unsorted.label            "অবিন্যস্ত">
+<!ENTITY view.unsorted.accesskey        "U">
+<!ENTITY view.sortAscending.label       "A থেকে Z ক্রমে">
+<!ENTITY view.sortAscending.accesskey   "A">
+<!ENTITY view.sortDescending.label      "Z থেকে A ক্রমে">
+<!ENTITY view.sortDescending.accesskey  "Z">
+
+<!ENTITY importBookmarksFromHTML.label     "HTML থেকে বুকমার্ক ইম্পোর্ট করুন…">
+<!ENTITY importBookmarksFromHTML.accesskey "I">
+<!ENTITY exportBookmarksToHTML.label       "HTML এ বুকমার্ক এক্সপোর্ট করুন…">
+<!ENTITY exportBookmarksToHTML.accesskey   "E">
+<!ENTITY importOtherBrowser.label          "অন্যান্য ব্রাউজার থেকে ডাটা ইম্পোর্ট করুন…">
+<!ENTITY importOtherBrowser.accesskey      "A">
+
+<!ENTITY cmd.backup.label               "ব্যাকআপ…">
+<!ENTITY cmd.backup.accesskey           "B">
+<!ENTITY cmd.restore2.label             "পুনরুদ্ধার">
+<!ENTITY cmd.restore2.accesskey         "R">
+<!ENTITY cmd.restoreFromFile.label      "ফাইল নির্বাচন…">
+<!ENTITY cmd.restoreFromFile.accesskey  "C">
+
+<!ENTITY col.name.label          "নাম">
+<!ENTITY col.tags.label          "ট্যাগ">
+<!ENTITY col.url.label           "অবস্থান">
+<!ENTITY col.mostrecentvisit.label "সবচেয়ে সাম্প্রতিক পরিদর্শন">
+<!ENTITY col.visitcount.label    "পরিদর্শনের সংখ্যা">
+<!ENTITY col.dateadded.label     "যোগ হয়েছে">
+<!ENTITY col.lastmodified.label  "সর্বশেষ পরিবর্তন">
+
+<!ENTITY cmd.find.key  "f">
+
+<!ENTITY maintenance.label      "ইমপোর্ট ও ব্যাক-আপ">
+<!ENTITY maintenance.accesskey  "I">
+<!ENTITY maintenance.tooltip    "আপনার বুকমার্ক ইম্পোর্ট এবং ব্যাকআপ">
+
+<!ENTITY backButton.tooltip  "পূর্ববর্তী স্থানে ফিরে যাবে">
+
+<!ENTITY forwardButton.tooltip  "পরবর্তী অংশে যাও">
+
+<!ENTITY detailsPane.selectAnItemText.description "একটি আইটেম নির্বাচন করে তার বৈশিষ্ট্য প্রদর্শন ও পরিবর্তন">
+

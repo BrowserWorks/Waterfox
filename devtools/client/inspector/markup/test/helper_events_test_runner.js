@@ -144,9 +144,19 @@ async function checkEventsForNode(test, inspector, testActor) {
     await tooltip.once("event-tooltip-ready");
 
     is(
-      header.classList.contains("content-expanded"),
+      header.classList.contains("content-expanded") &&
+        contentBox.hasAttribute("open"),
       true,
       "We are in expanded state and icon changed"
+    );
+
+    is(
+      tooltip.panel.querySelectorAll(".event-header.content-expanded")
+        .length === 1 &&
+        tooltip.panel.querySelectorAll(".event-tooltip-content-box[open]")
+          .length === 1,
+      true,
+      "Only one event box is expanded at a time"
     );
 
     const editor = tooltip.eventTooltip._eventEditors.get(contentBox).editor;

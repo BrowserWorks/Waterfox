@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountSetupTitle.label    "„&syncBrand.fullName.label;“ konfigūravimas">
+<!-- First page of the wizard -->
+
+
+<!ENTITY setup.pickSetupType.description "Sveiki! Jeigu seniau nesate naudojęsi „&syncBrand.fullName.label;“, turėsite susikurti paskyrą.">
+<!ENTITY button.createNewAccount.label "Kurti naują paskyrą">
+<!ENTITY setup.haveAccount.label "Jau turiu „&syncBrand.fullName.label;“ paskyrą">
+<!ENTITY button.connect.label "Prisijungti">
+
+<!ENTITY setup.choicePage.title.label     "Ar esate naudojęsi „&syncBrand.fullName.label;“ anksčiau?">
+<!ENTITY setup.choicePage.new.label       "Anksčiau „&syncBrand.shortName.label;“ nenaudojau">
+<!ENTITY setup.choicePage.existing.label  "Jau naudoju „&syncBrand.shortName.label;“ kitame kompiuteryje">
+<!-- New Account AND Existing Account -->
+
+<!ENTITY server.label               "Serveris">
+<!ENTITY server.accesskey           "S">
+<!ENTITY serverType.main.label      "„&syncBrand.fullName.label;“ serveris">
+<!ENTITY serverType.custom2.label   "Naudoti kitą serverį…">
+<!ENTITY signIn.account2.label      "Paskyra">
+<!ENTITY signIn.account2.accesskey  "P">
+<!ENTITY signIn.password.label      "Slaptažodis">
+<!ENTITY signIn.password.accesskey  "ž">
+<!ENTITY signIn.recoveryKey.label     "Atkūrimo raktas">
+<!ENTITY signIn.recoveryKey.accesskey "r">
+<!-- New Account Page 1: Basic Account Info -->
+
+<!ENTITY setup.newAccountDetailsPage.title.label "Paskyros savybės">
+<!ENTITY setup.confirmPassword.label             "Patvirtinkite slaptažodį">
+<!ENTITY setup.confirmPassword.accesskey         "P">
+<!ENTITY setup.emailAddress.label                "El. pašto adresas">
+<!ENTITY setup.emailAddress.accesskey            "E">
+<!-- LOCALIZATION NOTE: tosAgree1, tosLink, tosAgree2, ppLink, tosAgree3 are
+     joined with implicit white space, so spaces in the strings aren't necessary -->
+<!ENTITY setup.tosAgree1.label      "Aš sutinku su">
+<!ENTITY setup.tosAgree1.accesskey  "s">
+<!ENTITY setup.tosLink.label        "Paslaugos teikimo nuostatais">
+<!ENTITY setup.tosAgree2.label      "ir">
+<!ENTITY setup.ppLink.label         "Privatumo nuostatais">
+<!ENTITY setup.tosAgree3.label      "">
+<!ENTITY setup.tosAgree2.accesskey  "">
+<!-- New Account Page 2: Recovery Key -->
+
+<!ENTITY setup.newRecoveryKeyPage.title.label "„&brandShortName;“ rūpi jūsų privatumas">
+<!ENTITY setup.newRecoveryKeyPage.description.label "Siekiant užtikrinti privatumą, visi jūsų duomenys prieš siunčiant į serverį yra šifruojami. Jiems iššifruoti reikalingas atkūrimo raktas, kuris į serverį nesiunčiamas.">
+<!ENTITY recoveryKeyEntry.label        "Jūsų atkūrimo raktas">
+<!ENTITY recoveryKeyEntry.accesskey    "r">
+<!ENTITY recoveryGenerateNewKey.label  "Sugeneruoti naują raktą">
+<!ENTITY recoveryKeyBackup.description "Atkūrimo rakto jums prireiks, kai norėsite „&syncBrand.fullName.label;“ pasiekti iš kito kompiuterio. Pasirūpinkite, kad jo nepamestumėte. Pametus atkūrimo raktą, mes negalėsime jums padėti jo atstatyti.">
+
+<!ENTITY button.syncKeyBackup.print.label     "Spausdinti…">
+<!ENTITY button.syncKeyBackup.print.accesskey "S">
+<!ENTITY button.syncKeyBackup.save.label      "Įrašyti…">
+<!ENTITY button.syncKeyBackup.save.accesskey  "r">
+<!-- New Account Page 3: Captcha -->
+
+<!ENTITY setup.captchaPage2.title.label     "Prašom patvirtinti, kad nesate robotas">
+<!-- Existing Account Page 1: Add Device (incl. Add a Device dialog strings) -->
+
+<!ENTITY addDevice.title.label              "Įrenginio pridėjimas">
+<!ENTITY addDevice.showMeHow.label          "Parodyti instrukciją.">
+<!ENTITY addDevice.dontHaveDevice.label     "Įrenginio su savimi neturiu">
+<!ENTITY addDevice.setup.description.label  "Norėdami įjungti sinchronizavimą, atverkite „&syncBrand.shortName.label;“ nuostatas kitame įrenginyje ir pasirinkite punktą „Pridėti įrenginį“.">
+<!ENTITY addDevice.setup.enterCode.label    "O tada įveskite šį kodą:">
+<!ENTITY addDevice.dialog.description.label "Norėdami įjungti sinchronizavimą kitame įrenginyje, atvekite jame „&syncBrand.shortName.label;“ nuostatas ir pasirinkite punktą „Prisijungti“.">
+<!ENTITY addDevice.dialog.enterCode.label   "Įveskite įrenginyje rodomą kodą:">
+<!ENTITY addDevice.dialog.tryAgain.label    "Pabandykite iš naujo.">
+<!ENTITY addDevice.dialog.successful.label  "Įrenginys sėkmingai prijungtas. Pradinis sinchronizavimas gali užtrukti iki kelių minučių, jis vykdomas fonine veiksena.">
+<!ENTITY addDevice.dialog.recoveryKey.label "Norėdami įjungti sinchronizavimą, turėsite įvesti atkūrimo raktą. Atsispausdinkite arba įrašykite raktą į failą ir pasiimkite su savimi.">
+<!ENTITY addDevice.dialog.connected.label   "Įrenginys prijungtas">
+<!-- Existing Account Page 2: Manual Login -->
+
+<!ENTITY setup.signInPage.title.label "Prisijungimas">
+<!ENTITY existingRecoveryKey.description "Savo atkūrimo rakto kopiją galite gauti, atvėrę „&syncBrand.shortName.label;“ nuostatas kitame įrenginyje ir pasirinkę punktą „Mano atkūrimo raktas“ iš „Tvarkyti paskyrą“ sąrašo.">
+<!ENTITY verifying.label              "Tikrinama…">
+<!ENTITY resetPassword.label          "Perkurti slaptažodį">
+<!ENTITY resetSyncKey.label           "Pamestas kitas sinchronizuojamas įrenginys.">
+<!-- Sync Options -->
+
+<!ENTITY setup.optionsPage.title      "Sinchronizavimo nuostatos">
+<!ENTITY syncComputerName.label       "Kompiuterio vardas:">
+<!ENTITY syncComputerName.accesskey   "v">
+
+<!ENTITY syncMy.label               "Sinchronizuoti:">
+<!ENTITY engine.addons.label        "programos priedus">
+<!ENTITY engine.addons.accesskey    "p">
+<!ENTITY engine.bookmarks.label     "adresyną">
+<!ENTITY engine.bookmarks.accesskey "d">
+<!ENTITY engine.tabs.label          "korteles">
+<!ENTITY engine.tabs.accesskey      "k">
+<!ENTITY engine.history.label       "žurnalą">
+<!ENTITY engine.history.accesskey   "ž">
+<!ENTITY engine.passwords.label     "slaptažodžius">
+<!ENTITY engine.passwords.accesskey "s">
+<!ENTITY engine.prefs.label         "nuostatas">
+<!ENTITY engine.prefs.accesskey     "n">
+
+<!ENTITY choice2.merge.main.label      "Sulieti kompiuteryje laikomus duomenis su „&syncBrand.shortName.label;“ duomenimis">
+<!ENTITY choice2.merge.recommended.label "(rekomenduojama)">
+<!ENTITY choice2.client.main.label     "Pakeisti šiame kompiuteryje turimus duomenis „&syncBrand.shortName.label;“ duomenimis">
+<!ENTITY choice2.server.main.label     "Pakeisti kituose įrenginiuose laikomus duomenis esančiais šiame kompiuteryje">
+<!-- Confirm Merge Options -->
+
+<!ENTITY setup.optionsConfirmPage.title "Patvirtinkite savo pasirinkimą">
+<!ENTITY confirm.merge.label    "Dabar šiame kompiuteryje laikomi duomenys bus sulieti su „&syncBrand.fullName.label;“ paskyroje laikomais duomenimis.">
+<!ENTITY confirm.client2.label         "DĖMESIO! Žemiau išvardinti „&brandShortName;“ šiame kompiuteryje turimi duomenys bus pašalinti:">
+<!ENTITY confirm.client.moreinfo.label "Tada „&brandShortName;“ nukopijuos jūsų „&syncBrand.fullName.label;“ paskyroje saugomus duomenis į šį kompiuterį.">
+<!ENTITY confirm.server2.label         "DĖMESIO! Žemiau išvardintuose įrenginiuose „&brandShortName;“ laikomi duomenys bus pakeisti šiame įrenginyje esančiais duomenimis:">
+<!-- New & Existing Account: Setup Complete -->
+
+<!ENTITY setup.successPage.title "Konfigūravimas baigtas!">
+<!ENTITY changeOptions.label "Suliejimo nuostatas galite parinkti, spustelėję apačioje esantį mygtuką „Sinchronizavimo nuostatos“.">
+<!ENTITY continueUsing.label "Dabar darbą su „&brandShortName;“ galite tęsti.">

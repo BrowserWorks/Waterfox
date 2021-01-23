@@ -1,0 +1,24 @@
+<!--
+# Reviewer(s):
+#
+# http://tomercohen.com/ <tomer.mozilla@tomercohen.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (window.title) : do not translate "LDAP" in below line -->
+<!ENTITY pref.ldap.window.title    "שרתי מדריך LDAP">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "שרת מדריך LDAP:">
+<!-- LOCALIZATION NOTE (directoriesText.label) : do not translate "LDAP" in below line -->
+<!ENTITY directoriesText.label     "בחר שרת מדריך LDAP:‏">
+<!ENTITY directoriesText.accesskey "ב">
+<!ENTITY addDirectory.label        "הוספה">
+<!ENTITY addDirectory.accesskey    "ה">
+<!ENTITY editDirectory.label       "ערוך">
+<!ENTITY editDirectory.accesskey   "ע">
+<!ENTITY deleteDirectory.label     "מחק">
+<!ENTITY deleteDirectory.accesskey "ח">
+

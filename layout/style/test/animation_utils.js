@@ -395,11 +395,10 @@ function runOMTATest(aTestFunction, aOnSkip, specialPowersForPrefs) {
       }
       if (next.done) {
         return Promise.resolve(next.value);
-      } else {
-        return Promise.resolve(next.value).then(step, function(err) {
-          throw err;
-        });
       }
+      return Promise.resolve(next.value).then(step, function(err) {
+        throw err;
+      });
     }
 
     // Put refresh driver under test control
@@ -496,6 +495,10 @@ const ExpectComparisonTo = {
       "translate",
       "rotate",
       "scale",
+      "offset-path",
+      "offset-distance",
+      "offset-rotate",
+      "offset-anchor",
       "opacity",
       "background-color",
     ];
@@ -507,10 +510,22 @@ const ExpectComparisonTo = {
     var compare;
     var normalizedToString = JSON.stringify;
     switch (property) {
-      case "transform":
+      case "offset-path":
+      case "offset-distance":
+      case "offset-rotate":
+      case "offset-anchor":
       case "translate":
       case "rotate":
       case "scale":
+        if (runningOn == RunningOn.MainThread) {
+          normalize = value => value;
+          compare = function(a, b, error) {
+            return a == b;
+          };
+          break;
+        }
+      // fall through
+      case "transform":
         normalize = convertTo3dMatrix;
         compare = matricesRoughlyEqual;
         normalizedToString = convert3dMatrixToString;
@@ -581,6 +596,14 @@ const ExpectComparisonTo = {
           desc + ": should NOT be animating on compositor"
         );
         actualStr = compositorStr === "" ? computedStr : compositorStr;
+        break;
+
+      case RunningOn.TodoCompositor:
+        todo(
+          compositorStr !== "",
+          desc + ": should be animating on compositor"
+        );
+        actualStr = compositorStr !== "" ? computedStr : compositorStr;
         break;
 
       default:
@@ -695,9 +718,8 @@ const ExpectComparisonTo = {
       return convertArrayTo3dMatrix(matrixLike);
     } else if (typeof matrixLike == "object") {
       return convertObjectTo3dMatrix(matrixLike);
-    } else {
-      return null;
     }
+    return null;
   };
 
   // In future most of these methods should be able to be replaced
@@ -747,9 +769,8 @@ const ExpectComparisonTo = {
         array.slice(8, 12),
         array.slice(12, 16),
       ];
-    } else {
-      return null;
     }
+    return null;
   }
 
   // Return the first defined value in args.
@@ -797,17 +818,16 @@ const ExpectComparisonTo = {
         ].join(", ") +
         ")"
       );
-    } else {
-      return (
-        "matrix3d(" +
-        matrix
-          .reduce(function(outer, inner) {
-            return outer.concat(inner);
-          })
-          .join(", ") +
-        ")"
-      );
     }
+    return (
+      "matrix3d(" +
+      matrix
+        .reduce(function(outer, inner) {
+          return outer.concat(inner);
+        })
+        .join(", ") +
+      ")"
+    );
   }
 
   function is2d(matrix) {

@@ -31,9 +31,9 @@ PR_BEGIN_EXTERN_C
 ** The format of the version string is
 **     "<major version>.<minor version>[.<patch level>] [<Beta>]"
 */
-#define PR_VERSION  "4.21.1"
+#define PR_VERSION  "4.25.1"
 #define PR_VMAJOR   4
-#define PR_VMINOR   21
+#define PR_VMINOR   25
 #define PR_VPATCH   1
 #define PR_BETA     PR_FALSE
 
@@ -132,25 +132,25 @@ NSPR_API(PRStatus) PR_Cleanup(void);
 
 /*
 ** Disable Interrupts
-**		Disables timer signals used for pre-emptive scheduling.
+**      Disables timer signals used for pre-emptive scheduling.
 */
 NSPR_API(void) PR_DisableClockInterrupts(void);
 
 /*
 ** Enables Interrupts
-**		Enables timer signals used for pre-emptive scheduling.
+**      Enables timer signals used for pre-emptive scheduling.
 */
 NSPR_API(void) PR_EnableClockInterrupts(void);
 
 /*
 ** Block Interrupts
-**		Blocks the timer signal used for pre-emptive scheduling
+**      Blocks the timer signal used for pre-emptive scheduling
 */
 NSPR_API(void) PR_BlockClockInterrupts(void);
 
 /*
 ** Unblock Interrupts
-**		Unblocks the timer signal used for pre-emptive scheduling
+**      Unblocks the timer signal used for pre-emptive scheduling
 */
 NSPR_API(void) PR_UnblockClockInterrupts(void);
 

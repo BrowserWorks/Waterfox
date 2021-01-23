@@ -6,13 +6,32 @@
 
 #include "AudioSink.h"
 #include "AudioConverter.h"
+#include "AudioDeviceInfo.h"
 #include "MediaQueue.h"
 #include "VideoUtils.h"
 #include "mozilla/CheckedInt.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/IntegerPrintfMacros.h"
-#include "mozilla/StaticPrefs.h"
+#include "mozilla/StaticPrefs_media.h"
 #include "nsPrintfCString.h"
+
+#ifdef MOZ_GECKO_PROFILER
+#  include "ProfilerMarkerPayload.h"
+#  define PROFILER_MARKER(tag, sample)                                    \
+    do {                                                                  \
+      uint64_t startTime = (sample)->mTime.ToMicroseconds();              \
+      uint64_t endTime = (sample)->GetEndTime().ToMicroseconds();         \
+      auto profilerTag = (tag);                                           \
+      mOwnerThread->Dispatch(NS_NewRunnableFunction(                      \
+          "AudioSink:AddMarker", [profilerTag, startTime, endTime] {      \
+            PROFILER_ADD_MARKER_WITH_PAYLOAD(profilerTag, MEDIA_PLAYBACK, \
+                                             MediaSampleMarkerPayload,    \
+                                             (startTime, endTime));       \
+          }));                                                            \
+    } while (0)
+#else
+#  define PROFILER_MARKER(tag, sample)
+#endif
 
 namespace mozilla {
 
@@ -34,9 +53,11 @@ using media::TimeUnit;
 
 AudioSink::AudioSink(AbstractThread* aThread,
                      MediaQueue<AudioData>& aAudioQueue,
-                     const TimeUnit& aStartTime, const AudioInfo& aInfo)
+                     const TimeUnit& aStartTime, const AudioInfo& aInfo,
+                     AudioDeviceInfo* aAudioDevice)
     : mStartTime(aStartTime),
       mInfo(aInfo),
+      mAudioDevice(aAudioDevice),
       mPlaying(true),
       mMonitor("AudioSink"),
       mWritten(0),
@@ -47,7 +68,7 @@ AudioSink::AudioSink(AbstractThread* aThread,
       mFramesParsed(0),
       mIsAudioDataAudible(false),
       mAudioQueue(aAudioQueue) {
-  bool resampling = StaticPrefs::MediaResamplingEnabled();
+  bool resampling = StaticPrefs::media_resampling_enabled();
 
   if (resampling) {
     mOutputRate = 48000;
@@ -66,7 +87,7 @@ AudioSink::AudioSink(AbstractThread* aThread,
   mOutputChannels = DecideAudioPlaybackChannels(mInfo);
 }
 
-AudioSink::~AudioSink() {}
+AudioSink::~AudioSink() = default;
 
 nsresult AudioSink::Init(const PlaybackParams& aParams,
                          RefPtr<MediaSink::EndedPromise>& aEndedPromise) {
@@ -181,9 +202,9 @@ nsresult AudioSink::InitializeAudioStream(const PlaybackParams& aParams) {
   // The layout map used here is already processed by mConverter with
   // mOutputChannels into SMPTE format, so there is no need to worry if
   // StaticPrefs::accessibility_monoaudio_enable() or
-  // StaticPrefs::MediaForcestereoEnabled() is applied.
+  // StaticPrefs::media_forcestereo_enabled() is applied.
   nsresult rv = mAudioStream->Init(mOutputChannels, channelMap, mOutputRate,
-                                   aParams.mSink);
+                                   mAudioDevice);
   if (NS_FAILED(rv)) {
     mAudioStream->Shutdown();
     mAudioStream = nullptr;
@@ -264,6 +285,7 @@ UniquePtr<AudioStream::Chunk> AudioSink::PopFrames(uint32_t aFrames) {
   SINK_LOG_V("playing audio at time=%" PRId64 " offset=%u length=%u",
              mCurrentData->mTime.ToMicroseconds(),
              mCurrentData->Frames() - mCursor->Available(), framesToPop);
+  PROFILER_MARKER("PlayAudio", mCurrentData);
 
   UniquePtr<AudioStream::Chunk> chunk =
       MakeUnique<Chunk>(mCurrentData, framesToPop, mCursor->Ptr());
@@ -299,6 +321,12 @@ void AudioSink::Drained() {
   SINK_LOG("Drained");
   mPlaybackComplete = true;
   mEndedPromise.ResolveIfExists(true, __func__);
+}
+
+void AudioSink::Errored() {
+  SINK_LOG("Errored");
+  mPlaybackComplete = true;
+  mEndedPromise.RejectIfExists(NS_ERROR_FAILURE, __func__);
 }
 
 void AudioSink::CheckIsAudible(const AudioData* aData) {
@@ -370,9 +398,15 @@ void AudioSink::NotifyAudioNeeded() {
           mOutputChannels == data->mChannels
               ? inputLayout
               : AudioConfig::ChannelLayout(mOutputChannels);
-      mConverter = MakeUnique<AudioConverter>(
-          AudioConfig(inputLayout, data->mChannels, data->mRate),
-          AudioConfig(outputLayout, mOutputChannels, mOutputRate));
+      AudioConfig inConfig =
+          AudioConfig(inputLayout, data->mChannels, data->mRate);
+      AudioConfig outConfig =
+          AudioConfig(outputLayout, mOutputChannels, mOutputRate);
+      if (!AudioConverter::CanConvert(inConfig, outConfig)) {
+        mErrored = true;
+        return;
+      }
+      mConverter = MakeUnique<AudioConverter>(inConfig, outConfig);
     }
 
     // See if there's a gap in the audio. If there is, push silence into the
@@ -498,14 +532,17 @@ uint32_t AudioSink::DrainConverter(uint32_t aMaxFrames) {
   return data->Frames();
 }
 
-nsCString AudioSink::GetDebugInfo() {
+void AudioSink::GetDebugInfo(dom::MediaSinkDebugInfo& aInfo) {
   MOZ_ASSERT(mOwnerThread->IsCurrentThreadIn());
-  return nsPrintfCString(
-      "AudioSink: StartTime=%" PRId64 " LastGoodPosition=%" PRId64
-      " Playing=%d  OutputRate=%u Written=%" PRId64
-      " Errored=%d PlaybackComplete=%d",
-      mStartTime.ToMicroseconds(), mLastGoodPosition.ToMicroseconds(), mPlaying,
-      mOutputRate, mWritten, bool(mErrored), bool(mPlaybackComplete));
+  aInfo.mAudioSinkWrapper.mAudioSink.mStartTime = mStartTime.ToMicroseconds();
+  aInfo.mAudioSinkWrapper.mAudioSink.mLastGoodPosition =
+      mLastGoodPosition.ToMicroseconds();
+  aInfo.mAudioSinkWrapper.mAudioSink.mIsPlaying = mPlaying;
+  aInfo.mAudioSinkWrapper.mAudioSink.mOutputRate = mOutputRate;
+  aInfo.mAudioSinkWrapper.mAudioSink.mWritten = mWritten;
+  aInfo.mAudioSinkWrapper.mAudioSink.mHasErrored = bool(mErrored);
+  aInfo.mAudioSinkWrapper.mAudioSink.mPlaybackComplete =
+      bool(mPlaybackComplete);
 }
 
 }  // namespace mozilla

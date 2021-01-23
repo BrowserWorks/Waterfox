@@ -1,0 +1,86 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- These strings are for use specifically in the editor's image and form image dialogs. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Својства на сликата">
+
+<!ENTITY pixelsPopup.value "пиксели">
+<!ENTITY percentPopup.value "проценти">
+<!-- These are in the Location tab panel -->
+
+<!ENTITY locationEditField.label "Локација на сликата:">
+<!ENTITY locationEditField.accessKey "Л">
+<!ENTITY locationEditField.tooltip "Внесете го името или локацијата на сликата">
+<!ENTITY title.label "Совет:">
+<!ENTITY title.accessKey "т">
+<!ENTITY title.tooltip "HTML 'title' атрибутот кој се прикажува како совет">
+<!ENTITY altText.label "Постојан текст:">
+<!ENTITY altText.accessKey "а">
+<!ENTITY altTextEditField.tooltip "Внесете текст кој ќе се прикаже место сликата">
+<!ENTITY noAltText.label "Не користи постојан текст">
+<!ENTITY noAltText.accessKey "Н">
+
+<!ENTITY previewBox.label "Преглед на слика">
+<!ENTITY MoreFewerButton.tooltip "Прикажува повеќе или помалку својства за уредување">
+<!-- These controls are in the Dimensions tab panel -->
+<!-- actualSize.label should be same as actualSizeRadio.label + ":" -->
+
+<!ENTITY actualSize.label "Вистинска големина:">
+<!ENTITY actualSizeRadio.label "Вистинска големина">
+<!ENTITY actualSizeRadio.accessKey "а">
+<!ENTITY actualSizeRadio.tooltip "Ја враќа вистинската големина на сликата">
+<!ENTITY customSizeRadio.label "Сопствена големина">
+<!ENTITY customSizeRadio.accessKey "С">
+<!ENTITY customSizeRadio.tooltip "Ја менува големината на сликата како што е прикажана на страницата">
+<!ENTITY heightEditField.label "Висина:">
+<!ENTITY heightEditField.accessKey "с">
+<!ENTITY widthEditField.label "Ширина:">
+<!ENTITY widthEditField.accessKey "р">
+<!ENTITY constrainCheckbox.label "Ограничување">
+<!ENTITY constrainCheckbox.accessKey "н">
+<!ENTITY constrainCheckbox.tooltip "Maintain the image's aspect ratio">
+<!-- These controls are in the Image Map box of the expanded area -->
+
+<!ENTITY imagemapBox.label "Мапа на сликата">
+<!ENTITY removeImageMapButton.label "Отстрани">
+<!ENTITY removeImageMapButton.accessKey "р">
+<!ENTITY editImageMapButton.label "Уреди…">
+<!ENTITY editImageMapButton.tooltip "Креира точки за кликање на оваа слика">
+<!-- These are the options for image alignment -->
+
+<!ENTITY alignment.label "Порамни го текстот до сликата">
+<!ENTITY bottomPopup.value "На дното">
+<!ENTITY topPopup.value "На врвот">
+<!ENTITY centerPopup.value "Во центарот">
+<!ENTITY wrapRightPopup.value "Скрати од десно">
+<!ENTITY wrapLeftPopup.value "Скрати од лево">
+<!-- These controls are in the Spacing Box -->
+
+<!ENTITY spacingBox.label "Растојание">
+<!ENTITY spacingBox.tooltip "Внесете број за количината на простор околу сликата">
+<!ENTITY leftRightEditField.label "Лево и десно:">
+<!ENTITY leftRightEditField.accessKey "Л">
+<!ENTITY topBottomEditField.label "Дно и врв:">
+<!ENTITY topBottomEditField.accessKey "Д">
+<!ENTITY borderEditField.label "Полна граница:">
+<!ENTITY borderEditField.accessKey "л">
+<!-- These controls are in the Link Box -->
+
+<!ENTITY showImageLinkBorder.label "Полна граница околу поврзаната слика">
+<!ENTITY showImageLinkBorder.accessKey "р">
+<!-- These controls may be added some day; currently not used -->
+
+<!ENTITY makePageBackgroundCheckbox.label "Направи ја страната позадина">
+<!ENTITY makePageBackgroundCheckbox.tooltip "Користете слика како позадина на Вашата страница">
+<!ENTITY editImageButton.label "Измени слика">
+<!ENTITY editImageButton.tooltip "Изменете ја сликата во друга програма">
+<!-- These tabs are currently used in the image input dialog -->
+
+<!ENTITY imageInputTab.label "Образец">
+<!ENTITY imageLocationTab.label "Локација">
+<!ENTITY imageDimensionsTab.label "Димензии">
+<!ENTITY imageAppearanceTab.label "Изглед">
+<!ENTITY imageLinkTab.label "Врска">

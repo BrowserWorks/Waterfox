@@ -5,12 +5,6 @@
 // This test can be really slow on debug platforms
 requestLongerTimeout(5);
 
-// Debugger operations may still be in progress when we step.
-const { PromiseTestUtils } = ChromeUtils.import(
-  "resource://testing-common/PromiseTestUtils.jsm"
-);
-PromiseTestUtils.whitelistRejectionsGlobally(/Current thread has paused or resumed/);
-
 add_task(async function test() {
   const dbg = await initDebugger("big-sourcemap.html", "big-sourcemap");
   invokeInTab("hitDebugStatement");
@@ -31,6 +25,6 @@ add_task(async function test() {
   await stepIn(dbg);
   await stepIn(dbg);
 
-  assertDebugLine(dbg, 42271);
+  assertDebugLine(dbg, 7679);
   assertPausedLocation(dbg);
 });

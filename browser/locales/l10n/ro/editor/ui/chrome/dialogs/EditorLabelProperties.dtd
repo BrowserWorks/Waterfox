@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Proprietăți etichetă">
+
+<!ENTITY Settings.label "Setări">
+<!ENTITY Settings.accesskey "S">
+
+<!ENTITY EditLabelText.label "Editează textul:">
+<!ENTITY EditLabelText.accesskey "t">
+<!ENTITY LabelFor.label "Pentru comanda:">
+<!ENTITY LabelFor.accesskey "c">
+<!ENTITY AccessKey.label "Tastă de acces:">
+<!ENTITY AccessKey.accesskey "a">
+
+<!ENTITY RemoveLabel.label "Elimină etichetă">
+<!ENTITY RemoveLabel.accesskey "E">

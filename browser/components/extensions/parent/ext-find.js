@@ -1,5 +1,9 @@
 /* -*- Mode: indent-tabs-mode: nil; js-indent-level: 2 -*- */
 /* vim: set sts=2 sw=2 et tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 /* global tabTracker */
 "use strict";
 
@@ -10,6 +14,151 @@ ChromeUtils.defineModuleGetter(
 );
 
 var { ExtensionError } = ExtensionUtils;
+
+// A mapping of top-level ExtFind actors to arrays of results in each subframe.
+let findResults = new WeakMap();
+
+function getActorForBrowsingContext(browsingContext) {
+  let windowGlobal = browsingContext.currentWindowGlobal;
+  return windowGlobal ? windowGlobal.getActor("ExtFind") : null;
+}
+
+function getTopLevelActor(browser) {
+  return getActorForBrowsingContext(browser.browsingContext);
+}
+
+function gatherActors(browsingContext) {
+  let list = [];
+
+  let actor = getActorForBrowsingContext(browsingContext);
+  if (actor) {
+    list.push({ actor, result: null });
+  }
+
+  let children = browsingContext.children;
+  for (let child of children) {
+    list.push(...gatherActors(child));
+  }
+
+  return list;
+}
+
+function mergeFindResults(params, list) {
+  let finalResult = {
+    count: 0,
+  };
+
+  if (params.includeRangeData) {
+    finalResult.rangeData = [];
+  }
+  if (params.includeRectData) {
+    finalResult.rectData = [];
+  }
+
+  let currentFramePos = -1;
+  for (let item of list) {
+    if (item.result.count == 0) {
+      continue;
+    }
+
+    // The framePos is incremented for each different document that has matches.
+    currentFramePos++;
+
+    finalResult.count += item.result.count;
+    if (params.includeRangeData && item.result.rangeData) {
+      for (let range of item.result.rangeData) {
+        range.framePos = currentFramePos;
+      }
+
+      finalResult.rangeData.push(...item.result.rangeData);
+    }
+
+    if (params.includeRectData && item.result.rectData) {
+      finalResult.rectData.push(...item.result.rectData);
+    }
+  }
+
+  return finalResult;
+}
+
+function sendMessageToAllActors(browser, message, params) {
+  for (let { actor } of gatherActors(browser.browsingContext)) {
+    actor.sendAsyncMessage("ext-Finder:" + message, params);
+  }
+}
+
+async function getFindResultsForActor(findContext, message, params) {
+  findContext.result = await findContext.actor.sendQuery(
+    "ext-Finder:" + message,
+    params
+  );
+  return findContext;
+}
+
+function queryAllActors(browser, message, params) {
+  let promises = [];
+  for (let findContext of gatherActors(browser.browsingContext)) {
+    promises.push(getFindResultsForActor(findContext, message, params));
+  }
+  return Promise.all(promises);
+}
+
+async function collectFindResults(browser, findResults, params) {
+  let results = await queryAllActors(browser, "CollectResults", params);
+  findResults.set(getTopLevelActor(browser), results);
+  return mergeFindResults(params, results);
+}
+
+async function runHighlight(browser, params) {
+  let hasResults = false;
+  let foundResults = false;
+  let list = findResults.get(getTopLevelActor(browser));
+  if (!list) {
+    return Promise.reject({ message: "no search results to highlight" });
+  }
+
+  let highlightPromises = [];
+
+  let index = params.rangeIndex;
+  const highlightAll = typeof index != "number";
+
+  for (let c = 0; c < list.length; c++) {
+    if (list[c].result.count) {
+      hasResults = true;
+    }
+
+    let actor = list[c].actor;
+    if (highlightAll) {
+      // Highlight all ranges.
+      highlightPromises.push(
+        actor.sendQuery("ext-Finder:HighlightResults", params)
+      );
+    } else if (!foundResults && index < list[c].result.count) {
+      foundResults = true;
+      params.rangeIndex = index;
+      highlightPromises.push(
+        actor.sendQuery("ext-Finder:HighlightResults", params)
+      );
+    } else {
+      highlightPromises.push(
+        actor.sendQuery("ext-Finder:ClearHighlighting", params)
+      );
+    }
+
+    index -= list[c].result.count;
+  }
+
+  let responses = await Promise.all(highlightPromises);
+  if (hasResults) {
+    if (responses.includes("OutOfRange") || index >= 0) {
+      return Promise.reject({ message: "index supplied was out of range" });
+    } else if (responses.includes("Success")) {
+      return;
+    }
+  }
+
+  return Promise.reject({ message: "no search results to highlight" });
+}
 
 /**
  * runFindOperation
@@ -26,7 +175,6 @@ function runFindOperation(context, params, message) {
   let { tabId } = params;
   let tab = tabId ? tabTracker.getTab(tabId) : tabTracker.activeTab;
   let browser = tab.linkedBrowser;
-  let mm = browser.messageManager;
   tabId = tabId || tabTracker.getId(tab);
   if (
     !context.privateBrowsingAllowed &&
@@ -45,30 +193,13 @@ function runFindOperation(context, params, message) {
     return Promise.reject({ message: `Unable to search: ${tabId}` });
   }
 
-  return new Promise((resolve, reject) => {
-    mm.addMessageListener(
-      `ext-Finder:${message}Finished`,
-      function messageListener(message) {
-        mm.removeMessageListener(
-          `ext-Finder:${message}Finished`,
-          messageListener
-        );
-        switch (message.data) {
-          case "Success":
-            resolve();
-            break;
-          case "OutOfRange":
-            reject({ message: "index supplied was out of range" });
-            break;
-          case "NoResults":
-            reject({ message: "no search results to highlight" });
-            break;
-        }
-        resolve(message.data);
-      }
-    );
-    mm.sendAsyncMessage(`ext-Finder:${message}`, params);
-  });
+  if (message == "HighlightResults") {
+    return runHighlight(browser, params);
+  } else if (message == "CollectResults") {
+    // Remove prior highlights before starting a new find operation.
+    findResults.delete(getTopLevelActor(browser));
+    return collectFindResults(browser, findResults, params);
+  }
 }
 
 this.find = class extends ExtensionAPI {
@@ -135,9 +266,7 @@ this.find = class extends ExtensionAPI {
           ) {
             throw new ExtensionError(`Invalid tab ID: ${tabId}`);
           }
-          tab.linkedBrowser.messageManager.sendAsyncMessage(
-            "ext-Finder:clearHighlighting"
-          );
+          sendMessageToAllActors(tab.linkedBrowser, "ClearHighlighting", {});
         },
       },
     };

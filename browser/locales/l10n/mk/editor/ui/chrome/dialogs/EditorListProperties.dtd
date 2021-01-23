@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Својства на списокот">
+
+<!ENTITY ListType.label "Тип на список">
+<!ENTITY bulletStyle.label "Стил на ознаки:">
+<!ENTITY startingNumber.label "Почни на:">
+<!ENTITY startingNumber.accessKey "н">
+<!ENTITY none.value "Ништо">
+<!ENTITY bulletList.value "Ненумериран список">
+<!ENTITY numberList.value "Нумериран список">
+<!ENTITY definitionList.value "Список со дефиниции">
+<!ENTITY changeListMsg.label "Кога го менувам типот на списокот:">
+<!ENTITY changeEntireListRadio.label "Промени го целиот список">
+<!ENTITY changeEntireListRadio.accessKey "ц">
+<!ENTITY changeSelectedRadio.label "Промени ги само одбраните ставки">
+<!ENTITY changeSelectedRadio.accessKey "и">

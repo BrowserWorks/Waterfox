@@ -19,12 +19,15 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="Content-Security-Policy" content="default-src chrome:" />
+    <meta http-equiv="Content-Security-Policy" content="default-src chrome:; object-src 'none'" />
     <title>&loadError.label;</title>
     <link rel="stylesheet" href="chrome://browser/skin/aboutNetError.css" type="text/css" media="all" />
     <!-- If the location of the favicon is changed here, the FAVICON_ERRORPAGE_URL symbol in
          toolkit/components/places/src/nsFaviconService.h should be updated. -->
     <link rel="icon" id="favicon" href="chrome://global/skin/icons/warning.svg"/>
+    <link rel="localization" href="browser/aboutCertError.ftl" />
+    <link rel="localization" href="browser/nsserrors.ftl" />
+    <link rel="localization" href="branding/brand.ftl"/>
   </head>
 
   <body dir="&locale.dir;">
@@ -37,40 +40,6 @@
         <span id="ept_dnsNotFound">&dnsNotFound.pageTitle;</span>
         <span id="ept_malformedURI">&malformedURI.pageTitle;</span>
         <span id="ept_blockedByPolicy">&blockedByPolicy.title;</span>
-      </div>
-      <div id="errorTitlesContainer">
-        <h1 id="et_generic">&generic.title;</h1>
-        <h1 id="et_captivePortal">&captivePortal.title;</h1>
-        <h1 id="et_dnsNotFound">&dnsNotFound.title1;</h1>
-        <h1 id="et_fileNotFound">&fileNotFound.title;</h1>
-        <h1 id="et_fileAccessDenied">&fileAccessDenied.title;</h1>
-        <h1 id="et_malformedURI">&malformedURI.title1;</h1>
-        <h1 id="et_unknownProtocolFound">&unknownProtocolFound.title;</h1>
-        <h1 id="et_connectionFailure">&connectionFailure.title;</h1>
-        <h1 id="et_netTimeout">&netTimeout.title;</h1>
-        <h1 id="et_redirectLoop">&redirectLoop.title;</h1>
-        <h1 id="et_unknownSocketType">&unknownSocketType.title;</h1>
-        <h1 id="et_netReset">&netReset.title;</h1>
-        <h1 id="et_notCached">&notCached.title;</h1>
-        <h1 id="et_netOffline">&netOffline.title;</h1>
-        <h1 id="et_netInterrupt">&netInterrupt.title;</h1>
-        <h1 id="et_deniedPortAccess">&deniedPortAccess.title;</h1>
-        <h1 id="et_proxyResolveFailure">&proxyResolveFailure.title;</h1>
-        <h1 id="et_proxyConnectFailure">&proxyConnectFailure.title;</h1>
-        <h1 id="et_contentEncodingError">&contentEncodingError.title;</h1>
-        <h1 id="et_unsafeContentType">&unsafeContentType.title;</h1>
-        <h1 id="et_nssFailure2">&nssFailure2.title;</h1>
-        <h1 id="et_nssBadCert">&certerror.longpagetitle2;</h1>
-        <h1 id="et_nssBadCert_sts">&certerror.sts.longpagetitle;</h1>
-        <h1 id="et_cspBlocked">&cspBlocked.title;</h1>
-        <h1 id="et_remoteXUL">&remoteXUL.title;</h1>
-        <h1 id="et_corruptedContentErrorv2">&corruptedContentErrorv2.title;</h1>
-        <h1 id="et_sslv3Used">&sslv3Used.title;</h1>
-        <h1 id="et_inadequateSecurityError">&inadequateSecurityError.title;</h1>
-        <h1 id="et_blockedByPolicy">&blockedByPolicy.title;</h1>
-        <h1 id="et_mitm">&certerror.mitm.title;</h1>
-        <h1 id="et_clockSkewError">&clockSkewError.title;</h1>
-        <h1 id="et_networkProtocolError">&networkProtocolError.title;</h1>
       </div>
       <div id="errorDescriptionsContainer">
         <div id="ed_generic">&generic.longDesc;</div>
@@ -99,6 +68,7 @@
         <div id="ed_nssBadCert_SEC_ERROR_EXPIRED_CERTIFICATE">&certerror.expiredCert.introPara;</div>
         <div id="ed_mitm">&certerror.mitm.longDesc;</div>
         <div id="ed_cspBlocked">&cspBlocked.longDesc;</div>
+        <div id="ed_xfoBlocked">&xfoBlocked.longDesc;</div>
         <div id="ed_remoteXUL">&remoteXUL.longDesc;</div>
         <div id="ed_corruptedContentErrorv2">&corruptedContentErrorv2.longDesc;</div>
         <div id="ed_sslv3Used">&sslv3Used.longDesc2;</div>
@@ -176,6 +146,19 @@
           <div id="learnMoreContainer">
             <p><a id="learnMoreLink" target="new" data-telemetry-id="learn_more_link">&errorReporting.learnMore;</a></p>
           </div>
+
+          <div id="openInNewWindowContainer" class="button-container">
+            <p><a id="openInNewWindowButton" target="_blank" rel="noopener noreferrer">
+            <button class="primary" data-l10n-id="open-in-new-window-for-csp-or-xfo-error"></button></a></p>
+          </div>
+        </div>
+
+        <!-- UI to temporarily re-enable TLS 1.0 and 1.1.
+             This should be removed after March 2020, see bug 1579285.  -->
+        <div id="enableTls10Container" class="button-container">
+          <p>&enableTls10.longDesc;</p>
+          <p>&enableTls10.note;</p>
+          <button id="enableTls10Button" class="primary">&enableTls10.label;</button>
         </div>
 
         <!-- UI for option to report certificate errors to Mozilla. Removed on
@@ -212,15 +195,15 @@
 
         <div id="certificateErrorReporting">
             <p class="toggle-container-with-text">
-                <input type="checkbox" id="automaticallyReportInFuture" role="checkbox" data-telemetry-id="auto_report_cb"/>
-                <label for="automaticallyReportInFuture">&errorReporting.automatic2;</label>
+                <input type="checkbox" id="automaticallyReportInFuture" role="checkbox"/>
+                <label for="automaticallyReportInFuture" data-telemetry-id="auto_report_cb">&errorReporting.automatic2;</label>
             </p>
         </div>
 
         <div id="certificateErrorDebugInformation">
-          <button id="copyToClipboard" data-telemetry-id="clipboard_button_top">&certerror.copyToClipboard.label;</button>
+          <button id="copyToClipboardTop" data-telemetry-id="clipboard_button_top">&certerror.copyToClipboard.label;</button>
           <div id="certificateErrorText"/>
-          <button id="copyToClipboard" data-telemetry-id="clipboard_button_bot">&certerror.copyToClipboard.label;</button>
+          <button id="copyToClipboardBottom" data-telemetry-id="clipboard_button_bot">&certerror.copyToClipboard.label;</button>
         </div>
       </div>
     </div>

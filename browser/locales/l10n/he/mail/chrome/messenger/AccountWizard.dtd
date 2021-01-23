@@ -1,0 +1,124 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "אשף החשבונות">
+<!ENTITY accountWizard.size "width: 40em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!ENTITY accountSetupInfo2.label "בכדי לקבל הודעות, עליך להגדיר חשבון תחילה.">
+<!ENTITY accountTypeTitle.label "התקנת חשבון חדש">
+<!ENTITY accountTypeDesc2.label "אשף זה יאסוף את המידע הנחוץ להגדרת חשבון. אם אינך יודע את המידע המבוקש, נא פנה למנהל המערכת או לספק האינטרנט שלך.">
+<!ENTITY accountTypeDirections.label "בחר בסוג החשבון שברצונך להגדיר:">
+<!ENTITY accountTypeMail.label "חשבון דוא״ל">
+<!ENTITY accountTypeMail.accesskey "ד">
+<!ENTITY accountTypeNews.label "חשבון קבוצות דיון">
+<!ENTITY accountTypeNews.accesskey "ק">
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "זהות">
+<!ENTITY identityDesc.label "לכל חשבון יש זהות, שהיא המידע שמזהה אותך לאחרים כשהם מקבלים הודעות ממך.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "הכנס את השם שתרצה שיופיע בשדה &quot;מאת&quot; של ההודעות היוצאות שלך">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(לדוגמה, &quot;אלמוני פלמוני&quot;)">
+<!ENTITY fullnameLabel.label "שמך:">
+<!ENTITY fullnameLabel.accesskey "ש">
+
+<!ENTITY emailLabel.label "כתובת דוא״ל:">
+<!ENTITY emailLabel.accesskey "ד">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "פרטי השרת הנכנס">
+<!ENTITY incomingServerTypeDesc.label "בחר את הסוג של שרת נכנס בו אתה משתמש.">
+<!-- LOCALIZATION NOTE (imapType.label) : Do not translate "IMAP" in below line -->
+<!ENTITY imapType.label "IMAP">
+<!ENTITY imapType.accesskey "I">
+<!-- LOCALIZATION NOTE (popType.label) : Do not translate "POP" in below line -->
+<!ENTITY popType.label "POP">
+<!ENTITY popType.accesskey "P">
+<!ENTITY leaveMsgsOnSrvr.label "השארת הודעות על השרת">
+<!ENTITY leaveMsgsOnSrvr.accesskey "ש">
+<!ENTITY portNum.label "שער:">
+<!ENTITY portNum.accesskey "ש">
+<!ENTITY defaultPortLabel.label "ברירת מחדל:">
+<!ENTITY defaultPortValue.label "">
+<!-- LOCALIZATION NOTE (incomingServerNameDesc.label) : Do not translate "&quot;pop.example.net&quot;" in below line -->
+<!ENTITY incomingServer.description "נא להקליד את שם השרת הנכנס שלך (למשל: &quot;mail.example.net&quot;).">
+<!ENTITY incomingServer.label "שרת נכנס:">
+<!ENTITY incomingServer.accesskey "נ">
+<!-- LOCALIZATION NOTE (incomingUsername.description) : do not translate "&quot;jsmith&quot;" in below line -->
+<!ENTITY incomingUsername.description "נא להקליד את שם המשתמש לדואר הנכנס שסופק לך על ידי ספק הדוא״ל (למשל „jsmith”).">
+<!ENTITY incomingUsername.label "שם משתמש:">
+<!ENTITY incomingUsername.accesskey "ש">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "הכנס את שם שרת קבוצות הדיון (NNTP) שלך (לדוגמה, &quot;news.example.net&quot;).">
+<!ENTITY newsServerLabel.label "שרת קבוצות דיון:">
+<!ENTITY newsServerLabel.accesskey "N">
+
+<!-- Entities for Outgoing Server page -->
+
+<!ENTITY outgoingTitle.label "פרטי השרת היוצא">
+<!-- LOCALIZATION NOTE (outgoingServer.description) : Do not translate "SMTP" and "&quot;smtp.example.net&quot;" in below line -->
+<!ENTITY outgoingServer.description "נא להקליד את שם המשתמש של שרת הדואר היוצא שלך (SMTP) (למשל: „smtp.example.net”).">
+<!ENTITY outgoingServer.label "שרת יוצא:">
+<!ENTITY outgoingServer.accesskey "י">
+<!ENTITY outgoingUsername.description "נא להקליד את שם המשתמש לדואר יוצא שסופק לך על ידי ספק הדוא״ל (בדרך כלל מדובר באותו השם כמו שם המשתמש בשרת הנכנס).">
+<!ENTITY outgoingUsername.label "שם משתמש יוצא:">
+<!ENTITY outgoingUsername.accesskey "צ">
+
+<!-- LOCALIZATION NOTE (modifyOutgoing.suffix) : This string will be appended after each of
+     haveSmtp1.suffix3, haveSmtp2.suffix3, haveSmtp3.suffix3 .
+-->
+<!ENTITY modifyOutgoing.suffix "ניתן לשנות את שרתי הדואר היוצא בהגדרות החשבון.">
+<!-- LOCALIZATION NOTE (haveSmtp1.prefix and haveSmtp1.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp1.prefix and haveSmtp1.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp1.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp1.prefix "יעשה שימוש בשרת היוצא (SMTP) הנוכחי שלך, &quot;">
+<!ENTITY haveSmtp1.suffix3 "&quot;.">
+<!-- LOCALIZATION NOTE (haveSmtp2.prefix and haveSmtp2.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp2.prefix and haveSmtp2.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp2.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp2.prefix "יעשה שימוש בשם המשתמש היוצא (SMTP) הנוכחי שלך, &quot;">
+<!ENTITY haveSmtp2.suffix3 "&quot;.">
+<!-- LOCALIZATION NOTE (haveSmtp3.prefix and haveSmtp3.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp3.prefix and haveSmtp3.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp3.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp3.prefix "השרת היוצא (SMTP) שלך, &quot;">
+<!ENTITY haveSmtp3.suffix3 "&quot;, זהה לשרת הנכנס, ולכן שם המשתמש בשרת הנכנס ישמש גם בגישה לשרת היוצא.">
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "שם החשבון">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "הכנס את השם שבעזרתו תרצה להתייחס לחשבון זה (לדוגמה, &quot;חשבון עבודה&quot;, &quot;חשבון בית&quot;, &quot;חשבון קבוצות דיון&quot;)">
+<!ENTITY accnameLabel.label "שם החשבון:">
+<!ENTITY accnameLabel.accesskey "A">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "ברכותינו!">
+<!ENTITY completionText.label "אנא בדוק שהמידע שלהלן נכון.">
+<!ENTITY serverTypePrefix.label "סוג שרת נכנס:">
+<!ENTITY serverNamePrefix.label "שם שרת נכנס:">
+<!ENTITY smtpServerNamePrefix.label "שם שרת יוצא (SMTP):">
+<!ENTITY newsServerNamePrefix.label "שם שרת קבוצות דיון (NNTP):">
+<!ENTITY downloadOnLogin.label "הורד הודעות כעת">
+<!ENTITY downloadOnLogin.accesskey "ה">
+<!ENTITY deferStorageDesc.label "בטל את הסימון מתיבת סימון זאת כדי לאכסן דואר עבור חשבון זה בתיקיה נפרדת. זה יגרום לחשבון זה להופיע כחשבון בחלק העליון. אחרת, זה יהיה חלק מחשבון תיבת הדואר הנכנס הכללית בתיקיות מקומיות.">
+<!ENTITY deferStorage.label "השתמש בתיבת דואר נכנס כללית (אחסן דואר בתיקיות מקומיות)">
+<!ENTITY deferStorage.accesskey "כ">
+<!ENTITY clickFinish.label "לחץ על סיום כדי לשמור הגדרות אלה ולצאת מאשף החשבונות.">
+<!ENTITY clickFinish.labelMac "לחץ על סיום כדי לשמור את ההגדרות הללו ולצאת מאשף החשבונות.">

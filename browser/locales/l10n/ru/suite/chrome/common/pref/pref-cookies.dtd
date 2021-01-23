@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.cookies.title             "Куки">
+
+<!-- cookies -->
+
+<!ENTITY cookiePolicy.label             "Политика принятия кук">
+
+<!ENTITY disableCookies.label           "Не принимать куки">
+<!ENTITY disableCookies.accesskey       "е">
+
+<!ENTITY accNo3rdPartyCookies.label     "Принимать только собственные куки серверов (не принимать куки со сторонних сайтов)">
+<!ENTITY accNo3rdPartyCookies.accesskey "о">
+
+<!ENTITY acc3rdPartyVisited.label       "Принимать сторонние куки только от ранее посещённых веб-сайтов">
+<!ENTITY acc3rdPartyVisited.accesskey   "и">
+
+<!ENTITY accAllCookies.label            "Принимать все куки">
+<!ENTITY accAllCookies.accesskey        "в">
+
+<!ENTITY cookieRetentionPolicy.label    "Политика хранения кук">
+
+<!ENTITY acceptNormally.label           "Принимать как обычно">
+<!ENTITY acceptNormally.accesskey       "н">
+
+<!ENTITY acceptForSession.label         "Принимать только на время текущего сеанса">
+<!ENTITY acceptForSession.accesskey     "а">
+
+<!ENTITY acceptforNDays.label           "Принимать куки на">
+<!ENTITY acceptforNDays.accesskey       "м">
+<!ENTITY days.label                     "дней">
+
+<!ENTITY manageCookies.label            "Управление веб-сайтами и куками">
+<!ENTITY manageCookiesDescription.label "Здесь вы можете просматривать и упорядочивать сохранённые куки и настройки принятия или отклонения кук для отдельных веб-сайтов. Настройки отдельных веб-сайтов перекрывают указанные выше настройки.">
+
+<!ENTITY viewCookies.label              "Управление куками">
+<!ENTITY viewCookies.accesskey          "п">
+

@@ -269,102 +269,6 @@ class ICEntry {
   void trace(JSTracer* trc);
 };
 
-// [SMDOC] ICScript
-//
-// ICScript contains IC data used by Baseline (Ion has its own IC chains, stored
-// in IonScript).
-//
-// For each IC we store an ICEntry, which points to the first ICStub in the
-// chain. Note that multiple stubs in the same zone can share Baseline IC code.
-// This works because the stub data is stored in the ICStub instead of baked in
-// in the stub code.
-//
-// Storing this separate from BaselineScript simplifies debug mode OSR because
-// the ICScript can be reused when we replace the BaselineScript. It also makes
-// it easier to experiment with interpreter ICs in the future because the
-// interpreter and Baseline JIT will be able to use exactly the same IC data.
-//
-// ICScript contains the following:
-//
-// * Fallback stub space: this stores all fallback stubs and the "can GC" stubs.
-//   These stubs are never purged before destroying the ICScript. (Other stubs
-//   are stored in the optimized stub space stored in JitZone and can be
-//   discarded more eagerly. See ICScript::purgeOptimizedStubs.)
-//
-// * List of IC entries, in the following order:
-//
-//   - Type monitor IC for |this|.
-//   - Type monitor IC for each formal argument.
-//   - IC for each JOF_IC bytecode op.
-//
-// ICScript is stored in TypeScript and allocated/destroyed at the same time.
-class ICScript {
-  // Allocated space for fallback stubs.
-  FallbackICStubSpace fallbackStubSpace_ = {};
-
-  uint32_t numICEntries_;
-
-  explicit ICScript(uint32_t numICEntries) : numICEntries_(numICEntries) {}
-
-  ICEntry* icEntryList() {
-    return (ICEntry*)(reinterpret_cast<uint8_t*>(this) + sizeof(ICScript));
-  }
-
- public:
-  static MOZ_MUST_USE js::UniquePtr<ICScript> create(JSContext* cx,
-                                                     JSScript* script);
-
-  ~ICScript() {
-    // The contents of the fallback stub space are removed and freed
-    // separately after the next minor GC. See prepareForDestruction.
-    MOZ_ASSERT(fallbackStubSpace_.isEmpty());
-  }
-  void prepareForDestruction(Zone* zone) {
-    // When the script contains pointers to nursery things, the store buffer can
-    // contain entries that point into the fallback stub space. Since we can
-    // destroy scripts outside the context of a GC, this situation could result
-    // in us trying to mark invalid store buffer entries.
-    //
-    // Defer freeing any allocated blocks until after the next minor GC.
-    fallbackStubSpace_.freeAllAfterMinorGC(zone);
-  }
-
-  FallbackICStubSpace* fallbackStubSpace() { return &fallbackStubSpace_; }
-
-  void addSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf, size_t* data,
-                              size_t* fallbackStubs) const {
-    *data += mallocSizeOf(this);
-
-    // |data| already includes the ICStubSpace itself, so use
-    // sizeOfExcludingThis.
-    *fallbackStubs += fallbackStubSpace_.sizeOfExcludingThis(mallocSizeOf);
-  }
-
-  size_t numICEntries() const { return numICEntries_; }
-
-  ICEntry& icEntry(size_t index) {
-    MOZ_ASSERT(index < numICEntries());
-    return icEntryList()[index];
-  }
-
-  void noteAccessedGetter(uint32_t pcOffset);
-  void noteHasDenseAdd(uint32_t pcOffset);
-
-  void trace(JSTracer* trc);
-  void purgeOptimizedStubs(JSScript* script);
-
-  ICEntry* interpreterICEntryFromPCOffset(uint32_t pcOffset);
-
-  ICEntry* maybeICEntryFromPCOffset(uint32_t pcOffset);
-  ICEntry* maybeICEntryFromPCOffset(uint32_t pcOffset,
-                                    ICEntry* prevLookedUpEntry);
-
-  ICEntry& icEntryFromPCOffset(uint32_t pcOffset);
-  ICEntry& icEntryFromPCOffset(uint32_t pcOffset, ICEntry* prevLookedUpEntry);
-
-  static constexpr size_t offsetOfICEntries() { return sizeof(ICScript); }
-};
-
 class ICMonitoredStub;
 class ICMonitoredFallbackStub;
 
@@ -515,6 +419,8 @@ class ICStub {
 
   void updateCode(JitCode* stubCode);
   void trace(JSTracer* trc);
+
+  bool stubDataHasNurseryPointers(const CacheIRStubInfo* stubInfo);
 
   static const uint16_t EXPECTED_TRACE_MAGIC = 0b1100011;
 
@@ -726,6 +632,10 @@ class ICStub {
   static bool NonCacheIRStubMakesGCCalls(Kind kind);
   bool makesGCCalls() const;
 
+  // Returns the number of times this stub has been entered. Must only be called
+  // on stubs that have an enteredCount_ field (CacheIR or fallback stubs).
+  uint32_t getEnteredCount() const;
+
   // Optimized stubs get purged on GC.  But some stubs can be active on the
   // stack during GC - specifically the ones that can make calls.  To ensure
   // that these do not get purged, all stubs that can make calls are allocated
@@ -743,38 +653,23 @@ class ICFallbackStub : public ICStub {
   // Fallback stubs need these fields to easily add new stubs to
   // the linked list of stubs for an IC.
 
-  // The IC entry for this linked list of stubs.
-  ICEntry* icEntry_;
+  // The IC entry in JitScript for this linked list of stubs.
+  ICEntry* icEntry_ = nullptr;
 
   // The state of this IC
-  ICState state_;
+  ICState state_{};
 
   // Counts the number of times the stub was entered
   //
   // See Bug 1494473 comment 6 for a mechanism to handle overflow if overflow
   // becomes a concern.
-  uint32_t enteredCount_;
-
-  // A pointer to the location stub pointer that needs to be
-  // changed to add a new "last" stub immediately before the fallback
-  // stub.  This'll start out pointing to the icEntry's "firstStub_"
-  // field, and as new stubs are added, it'll point to the current
-  // last stub's "next_" field.
-  ICStub** lastStubPtrAddr_;
+  uint32_t enteredCount_ = 0;
 
   ICFallbackStub(Kind kind, TrampolinePtr stubCode)
-      : ICStub(kind, ICStub::Fallback, stubCode.value),
-        icEntry_(nullptr),
-        state_(),
-        enteredCount_(0),
-        lastStubPtrAddr_(nullptr) {}
+      : ICStub(kind, ICStub::Fallback, stubCode.value) {}
 
   ICFallbackStub(Kind kind, Trait trait, TrampolinePtr stubCode)
-      : ICStub(kind, trait, stubCode.value),
-        icEntry_(nullptr),
-        state_(),
-        enteredCount_(0),
-        lastStubPtrAddr_(nullptr) {
+      : ICStub(kind, trait, stubCode.value) {
     MOZ_ASSERT(trait == ICStub::Fallback || trait == ICStub::MonitoredFallback);
   }
 
@@ -785,24 +680,19 @@ class ICFallbackStub : public ICStub {
 
   ICState& state() { return state_; }
 
-  // The icEntry and lastStubPtrAddr_ fields can't be initialized when the stub
-  // is created since the stub is created at compile time, and we won't know the
-  // IC entry address until after compile when the JitScript is created.  This
-  // method allows these fields to be fixed up at that point.
+  // The icEntry_ field can't be initialized when the stub is created since we
+  // won't know the ICEntry address until we add the stub to JitScript. This
+  // method allows this field to be fixed up at that point.
   void fixupICEntry(ICEntry* icEntry) {
     MOZ_ASSERT(icEntry_ == nullptr);
-    MOZ_ASSERT(lastStubPtrAddr_ == nullptr);
     icEntry_ = icEntry;
-    lastStubPtrAddr_ = icEntry_->addressOfFirstStub();
   }
 
   // Add a new stub to the IC chain terminated by this fallback stub.
   void addNewStub(ICStub* stub) {
-    MOZ_ASSERT(*lastStubPtrAddr_ == this);
     MOZ_ASSERT(stub->next() == nullptr);
-    stub->setNext(this);
-    *lastStubPtrAddr_ = stub;
-    lastStubPtrAddr_ = stub->addressOfNext();
+    stub->setNext(icEntry_->firstStub());
+    icEntry_->setFirstStub(stub);
     state_.trackAttached();
   }
 
@@ -812,29 +702,9 @@ class ICFallbackStub : public ICStub {
 
   ICStubIterator beginChain() { return ICStubIterator(this); }
 
-  bool hasStub(ICStub::Kind kind) const {
-    for (ICStubConstIterator iter = beginChainConst(); !iter.atEnd(); iter++) {
-      if (iter->kind() == kind) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  unsigned numStubsWithKind(ICStub::Kind kind) const {
-    unsigned count = 0;
-    for (ICStubConstIterator iter = beginChainConst(); !iter.atEnd(); iter++) {
-      if (iter->kind() == kind) {
-        count++;
-      }
-    }
-    return count;
-  }
-
   void discardStubs(JSContext* cx);
 
   void unlinkStub(Zone* zone, ICStub* prev, ICStub* stub);
-  void unlinkStubsWithKind(JSContext* cx, ICStub::Kind kind);
 
   // Return the number of times this stub has successfully provided a value to
   // the caller.
@@ -1017,7 +887,7 @@ class ICStubCompilerBase {
 
   void pushCallArguments(MacroAssembler& masm,
                          AllocatableGeneralRegisterSet regs, Register argcReg,
-                         bool isJitCall, bool isConstructing = false);
+                         bool isConstructing);
 
   // Push a payload specialized per compiler needed to execute stubs.
   void PushStubPayload(MacroAssembler& masm, Register scratch);
@@ -1121,16 +991,6 @@ class ICStubCompiler : public ICStubCompilerBase {
   }
 };
 
-// WarmUpCounter_Fallback
-
-// A WarmUpCounter IC chain has only the fallback stub.
-class ICWarmUpCounter_Fallback : public ICFallbackStub {
-  friend class ICStubSpace;
-
-  explicit ICWarmUpCounter_Fallback(TrampolinePtr stubCode)
-      : ICFallbackStub(ICStub::WarmUpCounter_Fallback, stubCode) {}
-};
-
 // Monitored fallback stubs - as the name implies.
 class ICMonitoredFallbackStub : public ICFallbackStub {
  protected:
@@ -1144,9 +1004,6 @@ class ICMonitoredFallbackStub : public ICFallbackStub {
 
  public:
   MOZ_MUST_USE bool initMonitoringChain(JSContext* cx, JSScript* script);
-  MOZ_MUST_USE bool addMonitorStubForValue(JSContext* cx, BaselineFrame* frame,
-                                           StackTypeSet* types,
-                                           HandleValue val);
 
   ICTypeMonitor_Fallback* maybeFallbackMonitorStub() const {
     return fallbackMonitorStub_;
@@ -1620,7 +1477,7 @@ class ICTypeUpdate_AnyValue : public ICStub {
 };
 
 // ToBool
-//      JSOP_IFNE
+//      JSOp::IfNe
 
 class ICToBool_Fallback : public ICFallbackStub {
   friend class ICStubSpace;
@@ -1633,8 +1490,8 @@ class ICToBool_Fallback : public ICFallbackStub {
 };
 
 // GetElem
-//      JSOP_GETELEM
-//      JSOP_GETELEM_SUPER
+//      JSOp::GetElem
+//      JSOp::GetElemSuper
 
 class ICGetElem_Fallback : public ICMonitoredFallbackStub {
   friend class ICStubSpace;
@@ -1654,8 +1511,8 @@ class ICGetElem_Fallback : public ICMonitoredFallbackStub {
 };
 
 // SetElem
-//      JSOP_SETELEM
-//      JSOP_INITELEM
+//      JSOp::SetElem
+//      JSOp::InitElem
 
 class ICSetElem_Fallback : public ICFallbackStub {
   friend class ICStubSpace;
@@ -1675,7 +1532,7 @@ class ICSetElem_Fallback : public ICFallbackStub {
 };
 
 // In
-//      JSOP_IN
+//      JSOp::In
 class ICIn_Fallback : public ICFallbackStub {
   friend class ICStubSpace;
 
@@ -1684,7 +1541,7 @@ class ICIn_Fallback : public ICFallbackStub {
 };
 
 // HasOwn
-//      JSOP_HASOWN
+//      JSOp::HasOwn
 class ICHasOwn_Fallback : public ICFallbackStub {
   friend class ICStubSpace;
 
@@ -1693,8 +1550,8 @@ class ICHasOwn_Fallback : public ICFallbackStub {
 };
 
 // GetName
-//      JSOP_GETNAME
-//      JSOP_GETGNAME
+//      JSOp::GetName
+//      JSOp::GetGName
 class ICGetName_Fallback : public ICMonitoredFallbackStub {
   friend class ICStubSpace;
 
@@ -1703,7 +1560,7 @@ class ICGetName_Fallback : public ICMonitoredFallbackStub {
 };
 
 // BindName
-//      JSOP_BINDNAME
+//      JSOp::BindName
 class ICBindName_Fallback : public ICFallbackStub {
   friend class ICStubSpace;
 
@@ -1712,7 +1569,7 @@ class ICBindName_Fallback : public ICFallbackStub {
 };
 
 // GetIntrinsic
-//      JSOP_GETINTRINSIC
+//      JSOp::GetIntrinsic
 class ICGetIntrinsic_Fallback : public ICMonitoredFallbackStub {
   friend class ICStubSpace;
 
@@ -1721,8 +1578,8 @@ class ICGetIntrinsic_Fallback : public ICMonitoredFallbackStub {
 };
 
 // GetProp
-//     JSOP_GETPROP
-//     JSOP_GETPROP_SUPER
+//     JSOp::GetProp
+//     JSOp::GetPropSuper
 
 class ICGetProp_Fallback : public ICMonitoredFallbackStub {
   friend class ICStubSpace;
@@ -1740,10 +1597,10 @@ class ICGetProp_Fallback : public ICMonitoredFallbackStub {
 };
 
 // SetProp
-//     JSOP_SETPROP
-//     JSOP_SETNAME
-//     JSOP_SETGNAME
-//     JSOP_INITPROP
+//     JSOp::SetProp
+//     JSOp::SetName
+//     JSOp::SetGName
+//     JSOp::InitProp
 
 class ICSetProp_Fallback : public ICFallbackStub {
   friend class ICStubSpace;
@@ -1753,36 +1610,20 @@ class ICSetProp_Fallback : public ICFallbackStub {
 };
 
 // Call
-//      JSOP_CALL
-//      JSOP_CALL_IGNORES_RV
-//      JSOP_FUNAPPLY
-//      JSOP_FUNCALL
-//      JSOP_NEW
-//      JSOP_SPREADCALL
-//      JSOP_SPREADNEW
-//      JSOP_SPREADEVAL
-
-class ICCallStubCompiler : public ICStubCompiler {
- protected:
-  ICCallStubCompiler(JSContext* cx, ICStub::Kind kind)
-      : ICStubCompiler(cx, kind) {}
-
-  enum FunApplyThing { FunApply_MagicArgs, FunApply_Array };
-
-  void pushSpreadCallArguments(MacroAssembler& masm,
-                               AllocatableGeneralRegisterSet regs,
-                               Register argcReg, bool isJitCall,
-                               bool isConstructing);
-  void guardSpreadCall(MacroAssembler& masm, Register argcReg, Label* failure,
-                       bool isConstructing);
-  Register guardFunApply(MacroAssembler& masm,
-                         AllocatableGeneralRegisterSet regs, Register argcReg,
-                         FunApplyThing applyThing, Label* failure);
-  void pushCallerArguments(MacroAssembler& masm,
-                           AllocatableGeneralRegisterSet regs);
-  void pushArrayArguments(MacroAssembler& masm, Address arrayVal,
-                          AllocatableGeneralRegisterSet regs);
-};
+//      JSOp::Call
+//      JSOp::CallIgnoresRv
+//      JSOp::CallIter
+//      JSOp::FunApply
+//      JSOp::FunCall
+//      JSOp::New
+//      JSOp::SuperCall
+//      JSOp::Eval
+//      JSOp::StrictEval
+//      JSOp::SpreadCall
+//      JSOp::SpreadNew
+//      JSOp::SpreadSuperCall
+//      JSOp::SpreadEval
+//      JSOp::SpreadStrictEval
 
 class ICCall_Fallback : public ICMonitoredFallbackStub {
   friend class ICStubSpace;
@@ -1793,361 +1634,6 @@ class ICCall_Fallback : public ICMonitoredFallbackStub {
  private:
   explicit ICCall_Fallback(TrampolinePtr stubCode)
       : ICMonitoredFallbackStub(ICStub::Call_Fallback, stubCode) {}
-
- public:
-  bool scriptedStubsAreGeneralized() const { return hasStub(Call_AnyScripted); }
-  bool nativeStubsAreGeneralized() const {
-    // Return hasStub(Call_AnyNative) after Call_AnyNative stub is added.
-    return false;
-  }
-};
-
-class ICCall_Scripted : public ICMonitoredStub {
-  friend class ICStubSpace;
-
- public:
-  // The maximum number of inlineable spread call arguments. Keep this small
-  // to avoid controllable stack overflows by attackers passing large arrays
-  // to spread call. This value is shared with ICCall_Native.
-  static const uint32_t MAX_ARGS_SPREAD_LENGTH = 16;
-
- protected:
-  GCPtrFunction callee_;
-  GCPtrObject templateObject_;
-  uint32_t pcOffset_;
-
-  ICCall_Scripted(JitCode* stubCode, ICStub* firstMonitorStub,
-                  JSFunction* callee, JSObject* templateObject,
-                  uint32_t pcOffset);
-
- public:
-  GCPtrFunction& callee() { return callee_; }
-  GCPtrObject& templateObject() { return templateObject_; }
-
-  static size_t offsetOfCallee() { return offsetof(ICCall_Scripted, callee_); }
-  static size_t offsetOfPCOffset() {
-    return offsetof(ICCall_Scripted, pcOffset_);
-  }
-};
-
-class ICCall_AnyScripted : public ICMonitoredStub {
-  friend class ICStubSpace;
-
- protected:
-  uint32_t pcOffset_;
-
-  ICCall_AnyScripted(JitCode* stubCode, ICStub* firstMonitorStub,
-                     uint32_t pcOffset)
-      : ICMonitoredStub(ICStub::Call_AnyScripted, stubCode, firstMonitorStub),
-        pcOffset_(pcOffset) {}
-
- public:
-  static size_t offsetOfPCOffset() {
-    return offsetof(ICCall_AnyScripted, pcOffset_);
-  }
-};
-
-// Compiler for Call_Scripted and Call_AnyScripted stubs.
-class ICCallScriptedCompiler : public ICCallStubCompiler {
- protected:
-  ICStub* firstMonitorStub_;
-  bool isConstructing_;
-  bool isSpread_;
-  bool maybeCrossRealm_;
-  RootedFunction callee_;
-  RootedObject templateObject_;
-  uint32_t pcOffset_;
-  MOZ_MUST_USE bool generateStubCode(MacroAssembler& masm) override;
-
-  virtual int32_t getKey() const override {
-    return static_cast<int32_t>(kind) |
-           (static_cast<int32_t>(isConstructing_) << 16) |
-           (static_cast<int32_t>(isSpread_) << 17) |
-           (static_cast<int32_t>(maybeCrossRealm_) << 18);
-  }
-
- public:
-  ICCallScriptedCompiler(JSContext* cx, ICStub* firstMonitorStub,
-                         JSFunction* callee, JSObject* templateObject,
-                         bool isConstructing, bool isSpread,
-                         bool maybeCrossRealm, uint32_t pcOffset)
-      : ICCallStubCompiler(cx, ICStub::Call_Scripted),
-        firstMonitorStub_(firstMonitorStub),
-        isConstructing_(isConstructing),
-        isSpread_(isSpread),
-        maybeCrossRealm_(maybeCrossRealm),
-        callee_(cx, callee),
-        templateObject_(cx, templateObject),
-        pcOffset_(pcOffset) {}
-
-  ICCallScriptedCompiler(JSContext* cx, ICStub* firstMonitorStub,
-                         bool isConstructing, bool isSpread, uint32_t pcOffset)
-      : ICCallStubCompiler(cx, ICStub::Call_AnyScripted),
-        firstMonitorStub_(firstMonitorStub),
-        isConstructing_(isConstructing),
-        isSpread_(isSpread),
-        maybeCrossRealm_(true),
-        callee_(cx, nullptr),
-        templateObject_(cx, nullptr),
-        pcOffset_(pcOffset) {}
-
-  ICStub* getStub(ICStubSpace* space) override {
-    if (callee_) {
-      return newStub<ICCall_Scripted>(space, getStubCode(), firstMonitorStub_,
-                                      callee_, templateObject_, pcOffset_);
-    }
-    return newStub<ICCall_AnyScripted>(space, getStubCode(), firstMonitorStub_,
-                                       pcOffset_);
-  }
-};
-
-class ICCall_Native : public ICMonitoredStub {
-  friend class ICStubSpace;
-
- protected:
-  GCPtrFunction callee_;
-  GCPtrObject templateObject_;
-  uint32_t pcOffset_;
-
-#ifdef JS_SIMULATOR
-  void* native_;
-#endif
-
-  ICCall_Native(JitCode* stubCode, ICStub* firstMonitorStub, JSFunction* callee,
-                JSObject* templateObject, uint32_t pcOffset);
-
- public:
-  GCPtrFunction& callee() { return callee_; }
-  GCPtrObject& templateObject() { return templateObject_; }
-
-  static size_t offsetOfCallee() { return offsetof(ICCall_Native, callee_); }
-  static size_t offsetOfPCOffset() {
-    return offsetof(ICCall_Native, pcOffset_);
-  }
-
-#ifdef JS_SIMULATOR
-  static size_t offsetOfNative() { return offsetof(ICCall_Native, native_); }
-#endif
-
-  // Compiler for this stub kind.
-  class Compiler : public ICCallStubCompiler {
-   protected:
-    ICStub* firstMonitorStub_;
-    bool isConstructing_;
-    bool ignoresReturnValue_;
-    bool isSpread_;
-    bool isCrossRealm_;
-    RootedFunction callee_;
-    RootedObject templateObject_;
-    uint32_t pcOffset_;
-    MOZ_MUST_USE bool generateStubCode(MacroAssembler& masm) override;
-
-    virtual int32_t getKey() const override {
-      return static_cast<int32_t>(kind) |
-             (static_cast<int32_t>(isSpread_) << 16) |
-             (static_cast<int32_t>(isConstructing_) << 17) |
-             (static_cast<int32_t>(ignoresReturnValue_) << 18) |
-             (static_cast<int32_t>(isCrossRealm_) << 19);
-    }
-
-   public:
-    Compiler(JSContext* cx, ICStub* firstMonitorStub, HandleFunction callee,
-             HandleObject templateObject, bool isConstructing,
-             bool ignoresReturnValue, bool isSpread, bool isCrossRealm,
-             uint32_t pcOffset)
-        : ICCallStubCompiler(cx, ICStub::Call_Native),
-          firstMonitorStub_(firstMonitorStub),
-          isConstructing_(isConstructing),
-          ignoresReturnValue_(ignoresReturnValue),
-          isSpread_(isSpread),
-          isCrossRealm_(isCrossRealm),
-          callee_(cx, callee),
-          templateObject_(cx, templateObject),
-          pcOffset_(pcOffset) {}
-
-    ICStub* getStub(ICStubSpace* space) override {
-      return newStub<ICCall_Native>(space, getStubCode(), firstMonitorStub_,
-                                    callee_, templateObject_, pcOffset_);
-    }
-  };
-};
-
-class ICCall_ClassHook : public ICMonitoredStub {
-  friend class ICStubSpace;
-
- protected:
-  const Class* clasp_;
-  void* native_;
-  GCPtrObject templateObject_;
-  uint32_t pcOffset_;
-
-  ICCall_ClassHook(JitCode* stubCode, ICStub* firstMonitorStub,
-                   const Class* clasp, Native native, JSObject* templateObject,
-                   uint32_t pcOffset);
-
- public:
-  const Class* clasp() { return clasp_; }
-  void* native() { return native_; }
-  GCPtrObject& templateObject() { return templateObject_; }
-
-  static size_t offsetOfClass() { return offsetof(ICCall_ClassHook, clasp_); }
-  static size_t offsetOfNative() { return offsetof(ICCall_ClassHook, native_); }
-  static size_t offsetOfPCOffset() {
-    return offsetof(ICCall_ClassHook, pcOffset_);
-  }
-
-  // Compiler for this stub kind.
-  class Compiler : public ICCallStubCompiler {
-   protected:
-    ICStub* firstMonitorStub_;
-    bool isConstructing_;
-    const Class* clasp_;
-    Native native_;
-    RootedObject templateObject_;
-    uint32_t pcOffset_;
-    MOZ_MUST_USE bool generateStubCode(MacroAssembler& masm) override;
-
-    virtual int32_t getKey() const override {
-      return static_cast<int32_t>(kind) |
-             (static_cast<int32_t>(isConstructing_) << 16);
-    }
-
-   public:
-    Compiler(JSContext* cx, ICStub* firstMonitorStub, const Class* clasp,
-             Native native, HandleObject templateObject, uint32_t pcOffset,
-             bool isConstructing)
-        : ICCallStubCompiler(cx, ICStub::Call_ClassHook),
-          firstMonitorStub_(firstMonitorStub),
-          isConstructing_(isConstructing),
-          clasp_(clasp),
-          native_(native),
-          templateObject_(cx, templateObject),
-          pcOffset_(pcOffset) {}
-
-    ICStub* getStub(ICStubSpace* space) override {
-      return newStub<ICCall_ClassHook>(space, getStubCode(), firstMonitorStub_,
-                                       clasp_, native_, templateObject_,
-                                       pcOffset_);
-    }
-  };
-};
-
-class ICCall_ScriptedApplyArray : public ICMonitoredStub {
-  friend class ICStubSpace;
-
- public:
-  // The maximum length of an inlineable funcall array.
-  // Keep this small to avoid controllable stack overflows by attackers passing
-  // large arrays to fun.apply.
-  static const uint32_t MAX_ARGS_ARRAY_LENGTH = 16;
-
- protected:
-  uint32_t pcOffset_;
-
-  ICCall_ScriptedApplyArray(JitCode* stubCode, ICStub* firstMonitorStub,
-                            uint32_t pcOffset)
-      : ICMonitoredStub(ICStub::Call_ScriptedApplyArray, stubCode,
-                        firstMonitorStub),
-        pcOffset_(pcOffset) {}
-
- public:
-  static size_t offsetOfPCOffset() {
-    return offsetof(ICCall_ScriptedApplyArray, pcOffset_);
-  }
-
-  // Compiler for this stub kind.
-  class Compiler : public ICCallStubCompiler {
-   protected:
-    ICStub* firstMonitorStub_;
-    uint32_t pcOffset_;
-    MOZ_MUST_USE bool generateStubCode(MacroAssembler& masm) override;
-
-   public:
-    Compiler(JSContext* cx, ICStub* firstMonitorStub, uint32_t pcOffset)
-        : ICCallStubCompiler(cx, ICStub::Call_ScriptedApplyArray),
-          firstMonitorStub_(firstMonitorStub),
-          pcOffset_(pcOffset) {}
-
-    ICStub* getStub(ICStubSpace* space) override {
-      return newStub<ICCall_ScriptedApplyArray>(space, getStubCode(),
-                                                firstMonitorStub_, pcOffset_);
-    }
-  };
-};
-
-class ICCall_ScriptedApplyArguments : public ICMonitoredStub {
-  friend class ICStubSpace;
-
- protected:
-  uint32_t pcOffset_;
-
-  ICCall_ScriptedApplyArguments(JitCode* stubCode, ICStub* firstMonitorStub,
-                                uint32_t pcOffset)
-      : ICMonitoredStub(ICStub::Call_ScriptedApplyArguments, stubCode,
-                        firstMonitorStub),
-        pcOffset_(pcOffset) {}
-
- public:
-  static size_t offsetOfPCOffset() {
-    return offsetof(ICCall_ScriptedApplyArguments, pcOffset_);
-  }
-
-  // Compiler for this stub kind.
-  class Compiler : public ICCallStubCompiler {
-   protected:
-    ICStub* firstMonitorStub_;
-    uint32_t pcOffset_;
-    MOZ_MUST_USE bool generateStubCode(MacroAssembler& masm) override;
-
-   public:
-    Compiler(JSContext* cx, ICStub* firstMonitorStub, uint32_t pcOffset)
-        : ICCallStubCompiler(cx, ICStub::Call_ScriptedApplyArguments),
-          firstMonitorStub_(firstMonitorStub),
-          pcOffset_(pcOffset) {}
-
-    ICStub* getStub(ICStubSpace* space) override {
-      return newStub<ICCall_ScriptedApplyArguments>(
-          space, getStubCode(), firstMonitorStub_, pcOffset_);
-    }
-  };
-};
-
-// Handles calls of the form |fun.call(...)| where fun is a scripted function.
-class ICCall_ScriptedFunCall : public ICMonitoredStub {
-  friend class ICStubSpace;
-
- protected:
-  uint32_t pcOffset_;
-
-  ICCall_ScriptedFunCall(JitCode* stubCode, ICStub* firstMonitorStub,
-                         uint32_t pcOffset)
-      : ICMonitoredStub(ICStub::Call_ScriptedFunCall, stubCode,
-                        firstMonitorStub),
-        pcOffset_(pcOffset) {}
-
- public:
-  static size_t offsetOfPCOffset() {
-    return offsetof(ICCall_ScriptedFunCall, pcOffset_);
-  }
-
-  // Compiler for this stub kind.
-  class Compiler : public ICCallStubCompiler {
-   protected:
-    ICStub* firstMonitorStub_;
-    uint32_t pcOffset_;
-    MOZ_MUST_USE bool generateStubCode(MacroAssembler& masm) override;
-
-   public:
-    Compiler(JSContext* cx, ICStub* firstMonitorStub, uint32_t pcOffset)
-        : ICCallStubCompiler(cx, ICStub::Call_ScriptedFunCall),
-          firstMonitorStub_(firstMonitorStub),
-          pcOffset_(pcOffset) {}
-
-    ICStub* getStub(ICStubSpace* space) override {
-      return newStub<ICCall_ScriptedFunCall>(space, getStubCode(),
-                                             firstMonitorStub_, pcOffset_);
-    }
-  };
 };
 
 // IC for constructing an iterator from an input value.
@@ -2159,7 +1645,7 @@ class ICGetIterator_Fallback : public ICFallbackStub {
 };
 
 // InstanceOf
-//      JSOP_INSTANCEOF
+//      JSOp::Instanceof
 class ICInstanceOf_Fallback : public ICFallbackStub {
   friend class ICStubSpace;
 
@@ -2168,8 +1654,8 @@ class ICInstanceOf_Fallback : public ICFallbackStub {
 };
 
 // TypeOf
-//      JSOP_TYPEOF
-//      JSOP_TYPEOFEXPR
+//      JSOp::Typeof
+//      JSOp::TypeofExpr
 class ICTypeOf_Fallback : public ICFallbackStub {
   friend class ICStubSpace;
 
@@ -2196,18 +1682,18 @@ class ICRest_Fallback : public ICFallbackStub {
 };
 
 // UnaryArith
-//     JSOP_BITNOT
-//     JSOP_NEG
-//     JSOP_INC
-//     JSOP_DEC
+//     JSOp::BitNot
+//     JSOp::Pos
+//     JSOp::Neg
+//     JSOp::Inc
+//     JSOp::Dec
+//     JSOp::ToNumeric
 
 class ICUnaryArith_Fallback : public ICFallbackStub {
   friend class ICStubSpace;
 
   explicit ICUnaryArith_Fallback(TrampolinePtr stubCode)
-      : ICFallbackStub(UnaryArith_Fallback, stubCode) {
-    extra_ = 0;
-  }
+      : ICFallbackStub(UnaryArith_Fallback, stubCode) {}
 
  public:
   bool sawDoubleResult() { return extra_; }
@@ -2215,14 +1701,14 @@ class ICUnaryArith_Fallback : public ICFallbackStub {
 };
 
 // Compare
-//      JSOP_LT
-//      JSOP_LE
-//      JSOP_GT
-//      JSOP_GE
-//      JSOP_EQ
-//      JSOP_NE
-//      JSOP_STRICTEQ
-//      JSOP_STRICTNE
+//      JSOp::Lt
+//      JSOp::Le
+//      JSOp::Gt
+//      JSOp::Ge
+//      JSOp::Eq
+//      JSOp::Ne
+//      JSOp::StrictEq
+//      JSOp::StrictNe
 
 class ICCompare_Fallback : public ICFallbackStub {
   friend class ICStubSpace;
@@ -2232,17 +1718,15 @@ class ICCompare_Fallback : public ICFallbackStub {
 };
 
 // BinaryArith
-//      JSOP_ADD, JSOP_SUB, JSOP_MUL, JOP_DIV, JSOP_MOD
-//      JSOP_BITAND, JSOP_BITXOR, JSOP_BITOR
-//      JSOP_LSH, JSOP_RSH, JSOP_URSH
+//      JSOp::Add, JSOp::Sub, JSOp::Mul, JSOp::Div, JSOp::Mod, JSOp::Pow,
+//      JSOp::BitAnd, JSOp::BitXor, JSOp::BitOr
+//      JSOp::Lsh, JSOp::Rsh, JSOp::Ursh
 
 class ICBinaryArith_Fallback : public ICFallbackStub {
   friend class ICStubSpace;
 
   explicit ICBinaryArith_Fallback(TrampolinePtr stubCode)
-      : ICFallbackStub(BinaryArith_Fallback, stubCode) {
-    extra_ = 0;
-  }
+      : ICFallbackStub(BinaryArith_Fallback, stubCode) {}
 
   static const uint16_t SAW_DOUBLE_RESULT_BIT = 0x1;
 
@@ -2253,12 +1737,12 @@ class ICBinaryArith_Fallback : public ICFallbackStub {
   void setSawDoubleResult() { extra_ |= SAW_DOUBLE_RESULT_BIT; }
 };
 
-// JSOP_NEWARRAY
+// JSOp::NewArray
 
 class ICNewArray_Fallback : public ICFallbackStub {
   friend class ICStubSpace;
 
-  GCPtrObject templateObject_;
+  GCPtrArrayObject templateObject_;
 
   // The group used for objects created here is always available, even if the
   // template object itself is not.
@@ -2270,9 +1754,9 @@ class ICNewArray_Fallback : public ICFallbackStub {
         templateGroup_(templateGroup) {}
 
  public:
-  GCPtrObject& templateObject() { return templateObject_; }
+  GCPtrArrayObject& templateObject() { return templateObject_; }
 
-  void setTemplateObject(JSObject* obj) {
+  void setTemplateObject(ArrayObject* obj) {
     MOZ_ASSERT(obj->group() == templateGroup());
     templateObject_ = obj;
   }
@@ -2285,7 +1769,7 @@ class ICNewArray_Fallback : public ICFallbackStub {
   }
 };
 
-// JSOP_NEWOBJECT
+// JSOp::NewObject
 
 class ICNewObject_Fallback : public ICFallbackStub {
   friend class ICStubSpace;
@@ -2319,21 +1803,15 @@ inline bool IsCacheableDOMProxy(JSObject* obj) {
 
 struct IonOsrTempData;
 
-// Write an arbitrary value to a typed array or typed object address at dest.
-// If the value could not be converted to the appropriate format, jump to
-// failure.
-template <typename T>
-void StoreToTypedArray(JSContext* cx, MacroAssembler& masm, Scalar::Type type,
-                       const ValueOperand& value, const T& dest,
-                       Register scratch, Label* failure);
+extern MOZ_MUST_USE bool TypeMonitorResult(JSContext* cx,
+                                           ICMonitoredFallbackStub* stub,
+                                           BaselineFrame* frame,
+                                           HandleScript script, jsbytecode* pc,
+                                           HandleValue val);
 
 extern bool DoTypeUpdateFallback(JSContext* cx, BaselineFrame* frame,
                                  ICCacheIR_Updated* stub, HandleValue objval,
                                  HandleValue value);
-
-extern bool DoWarmUpCounterFallbackOSR(JSContext* cx, BaselineFrame* frame,
-                                       ICWarmUpCounter_Fallback* stub,
-                                       IonOsrTempData** infoPtr);
 
 extern bool DoCallFallback(JSContext* cx, BaselineFrame* frame,
                            ICCall_Fallback* stub, uint32_t argc, Value* vp,

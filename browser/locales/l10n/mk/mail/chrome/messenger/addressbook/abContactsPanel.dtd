@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY addressbookPicker.label "Адресар:">
+<!ENTITY SearchNameOrEmail.label "Име или е-пошта">
+
+<!ENTITY addtoToFieldMenu.label "Додај во полето До">
+<!ENTITY addtoCcFieldMenu.label "Додај во полето Cc">
+<!ENTITY addtoBccFieldMenu.label "Додај во полето Bcc">
+
+<!ENTITY toButton.label "Додај во До:">
+<!ENTITY ccButton.label "Додај во Cc:">
+

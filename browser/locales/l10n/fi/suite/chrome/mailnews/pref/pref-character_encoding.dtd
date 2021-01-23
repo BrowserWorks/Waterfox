@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.character.encoding2.title  "Merkistökoodaus">
+<!ENTITY messageDisplay.caption          "Viestien luku">
+<!ENTITY viewFallbackCharset2.label      "Merkistökoodaus virhetilanteessa:">
+<!ENTITY viewFallbackCharset2.accesskey  "v">
+<!ENTITY viewFallbackCharset.desc        "(Käytetään perinteiselle sisällölle, joka ei itse määritä käytettävää merkistökoodausta.)">
+
+<!ENTITY composingMessages.caption       "Viestien kirjoitus">
+<!ENTITY useMIME.label                   "Käytä 'quoted printable' -MIME-koodausta viesteissä, jotka sisältävät 8-bittisiä merkkejä. Viestit lähetetään sellaisenaan, jos tätä ei ole valittu.">
+<!ENTITY useMIME.accesskey               "K">
+<!ENTITY sendDefaultCharset2.label       "Oletusmerkistökoodaus:">
+<!ENTITY sendDefaultCharset2.accesskey   "O">
+<!ENTITY replyInDefaultCharset3.label    "Käytä mahdollisuuksien mukaan tätä oletuskoodausta vastauksissa. (Kun tätä ei ole valittu, vain uudet viestit käyttävät tätä oletusasetusta.)">
+<!ENTITY replyInDefaultCharset3.accesskey "m">

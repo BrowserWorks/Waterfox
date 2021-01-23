@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "Abonować">
+<!ENTITY subscribeButton.label        "Abonować">
+<!ENTITY subscribeButton.accesskey    "A">
+<!ENTITY unsubscribeButton.label      "Wotskazać">
+<!ENTITY unsubscribeButton.accesskey  "W">
+<!ENTITY newGroupsTab.label           "Nowe skupiny">
+<!ENTITY newGroupsTab.accesskey       "N">
+<!ENTITY refreshButton.label          "Aktualizować">
+<!ENTITY refreshButton.accesskey      "k">
+<!ENTITY stopButton.label             "Stój">
+<!ENTITY stopButton.accesskey         "S">
+<!ENTITY server.label                 "Konto:">
+<!ENTITY server.accesskey             "o">
+<!ENTITY subscribedHeader.label       "Abonować">
+<!-- commenting out until bug 38906 is fixed 
+<!ENTITY messagesHeader.label         "Messages"> -->
+<!ENTITY namefield.label              "Zapiski pokazać, kotrež slědowace wobsahuja:">
+<!ENTITY namefield.accesskey          "p">

@@ -1,0 +1,86 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY hdrArchiveButton1.label "සංරක්ෂණය">
+<!ENTITY hdrArchiveButton1.tooltip "මෙම ලිපි සංරක්ෂණය කරන්න">
+<!ENTITY hdrSmartReplyButton1.label "smart reply">
+<!ENTITY hdrReplyButton1.label "පිළිතුරු">
+<!ENTITY hdrReplyButton2.tooltip "එවන්නාට පිළිතුරු යවන්න">
+<!ENTITY hdrReplyAllButton1.label "සැමට පිළිතුරු">
+<!ENTITY hdrReplyAllButton1.tooltip "එවන්නාට සහ සියළු ලබන්නන්ට පිළිතුරු යවන්න">
+<!ENTITY hdrReplyListButton1.label "ලැයිස්තුවට පිළිතුරු">
+<!ENTITY hdrReplyListButton1.tooltip "ලැයිස්තුවට පිළිතුරු යවන්න">
+<!ENTITY hdrFollowupButton1.label "පිළිතුරු යවන්න">
+<!ENTITY hdrFollowupButton1.tooltip "මෙම පුවක්සමූහයට පිළිතුරක් යවන්න">
+<!ENTITY hdrForwardButton1.label "යොමු කරන්න">
+<!ENTITY hdrForwardButton1.tooltip "මෙම ලිපිය යොමු කරන්න">
+<!ENTITY hdrJunkButton1.label "නිසරු (junk)">
+<!ENTITY hdrJunkButton1.tooltip "මෙම ලිපිය නිසරු සේ ලකුණු කරන්න">
+<!ENTITY hdrTrashButton1.label "මකන්න">
+<!ENTITY hdrTrashButton1.tooltip "මෙම ලිපිය මකන්න">
+
+<!ENTITY hdrViewToolbarShowFull.label "අයිකන සහ පාඨ පෙන්වන්න">
+<!ENTITY hdrViewToolbarShowFull.accesskey "a">
+<!ENTITY hdrViewToolbarShowIcons.label "අයිකන පමණක් පෙන්වන්න">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "I">
+<!ENTITY hdrViewToolbarShowText.label "පාඨ පමණක් පෙන්වන්න">
+<!ENTITY hdrViewToolbarShowText.accesskey "T">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "සැමවිටම එවන්නාට පිළිතුර පෙන්වන්න">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "R">
+
+<!ENTITY otherActionsOpenConversation1.label "open in conversation">
+<!ENTITY otherActionsOpenConversation1.accesskey "c">
+<!ENTITY otherActionsOpenInNewWindow1.label "නව කවුළුවක විවෘත කරන්න">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "w">
+<!ENTITY otherActionsOpenInNewTab1.label "නව ටැබයක විවෘත කරන්න">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "t">
+<!ENTITY markAsReadMenuItem1.label "කියවූ සේ ලකුණු කරන්න">
+<!ENTITY markAsReadMenuItem1.accesskey "r">
+<!ENTITY markAsUnreadMenuItem1.label "නොකියවූ සේ ලකුණු කරන්න">
+<!ENTITY markAsUnreadMenuItem1.accesskey "r">
+<!ENTITY saveAsMenuItem1.label "සුරකින අයුර…">
+<!ENTITY saveAsMenuItem1.accesskey "S">
+<!ENTITY viewSourceMenuItem1.label "මූලය පෙන්වන්න…">
+<!ENTITY viewSourceMenuItem1.accesskey "V">
+<!ENTITY otherActionsPrint1.label "මුද්‍රණය…">
+<!ENTITY otherActionsPrint1.accesskey "p">
+
+<!-- Attachment bar context menu items -->
+<!ENTITY startExpandedCmd.label    "Initially Show Attachment Pane">
+<!ENTITY startExpandedCmd.accesskey    "S">
+
+<!ENTITY openAttachmentCmd.label    "විවෘත කරන්න">
+<!ENTITY openAttachmentCmd.accesskey		"O">
+<!ENTITY saveAsAttachmentCmd.label    "සුරකින්නේ මෙලෙස...">
+<!ENTITY saveAsAttachmentCmd.accesskey		"A">
+<!ENTITY detachAttachmentCmd.label    "වෙන් කරන්න ...">
+<!ENTITY detachAttachmentCmd.accesskey "T">
+<!ENTITY deleteAttachmentCmd.label    "මකන්න">
+<!ENTITY deleteAttachmentCmd.accesskey "L">
+<!ENTITY openAllAttachmentsCmd.label "සියල්ල විවෘත කරන්න…">
+<!ENTITY openAllAttachmentsCmd.accesskey "O">
+<!ENTITY saveAllAttachmentsCmd.label    "සියල්ල සුරකින්න...">
+<!ENTITY saveAllAttachmentsCmd.accesskey		"S">
+<!ENTITY detachAllAttachmentsCmd.label    "සියල්ල වෙන් කරන්න...">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "D">
+<!ENTITY deleteAllAttachmentsCmd.label    "සියල්ල මකන්න...">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "E">
+
+<!ENTITY openAttachment.tooltip "ඇමුණුම් ගොනුව විවෘත කරන්න">
+
+<!ENTITY saveAttachmentButton1.label "සුරකින්න">
+<!ENTITY saveAttachmentButton1.tooltip "ඇමුණුම් ගොනුව සුරකින්න">
+<!ENTITY saveAllAttachmentsButton1.label "සියල්ල සුරකින්න">
+<!ENTITY saveAllAttachmentsButton1.tooltip "ඇමුණුම් ගොනු සියල්ල සුරකින්න">
+
+<!ENTITY copyLinkCmd.label        "ඈදුමේ ස්ථානය කොපි කරන්න">
+<!ENTITY copyLinkCmd.accesskey		"C">
+
+<!ENTITY CopyMessageId.label "Copy Message-ID">
+<!ENTITY CopyMessageId.accesskey "C">
+<!ENTITY OpenMessageForMsgId.label "Open Message For ID">
+<!ENTITY OpenMessageForMsgId.accesskey "O">
+<!ENTITY OpenBrowserWithMsgId.label "Open Browser With Message-ID">
+<!ENTITY OpenBrowserWithMsgId.accesskey "B">
+

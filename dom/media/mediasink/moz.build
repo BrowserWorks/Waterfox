@@ -8,13 +8,14 @@ UNIFIED_SOURCES += [
     'AudioSink.cpp',
     'AudioSinkWrapper.cpp',
     'DecodedStream.cpp',
-    'OutputStreamManager.cpp',
     'VideoSink.cpp',
 ]
 
 EXPORTS += [
     'MediaSink.h'
 ]
+
+include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
 

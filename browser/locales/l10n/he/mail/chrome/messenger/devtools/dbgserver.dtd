@@ -1,0 +1,4 @@
+<!ENTITY options.title "אפשרויות כלי מפתחים">
+<!ENTITY options.status.label "מצב:">
+<!ENTITY options.port.label "פתחה:">
+<!ENTITY options.forcelocal.label "לאפשר חיבורים ממחשבים אחרים">

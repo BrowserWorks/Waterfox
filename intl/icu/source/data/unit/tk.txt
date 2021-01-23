@@ -1,7 +1,7 @@
 ﻿// © 2016 and later: Unicode, Inc. and others.
 // License & terms of use: http://www.unicode.org/copyright.html#License
 tk{
-    Version{"2.1.49.82"}
+    Version{"37"}
     durationUnits{
         hm{"h:mm"}
         hms{"hh:mm:ss"}
@@ -14,7 +14,7 @@ tk{
                 one{"{0} G"}
                 other{"{0} G"}
             }
-            meter-per-second-squared{
+            meter-per-square-second{
                 dnam{"inedördül sekuntda metr"}
                 one{"{0} metr/inedördül sekunt"}
                 other{"{0} metr/inedördül sekunt"}
@@ -54,7 +54,6 @@ tk{
                 other{"{0} akr"}
             }
             dunam{
-                dnam{"dunam"}
                 one{"{0} dunam"}
                 other{"{0} dunam"}
             }
@@ -106,6 +105,7 @@ tk{
         }
         compound{
             per{"{1} başyna {0}"}
+            times{"{0}.{1}"}
         }
         concentr{
             karat{
@@ -128,11 +128,6 @@ tk{
                 one{"{0} mol"}
                 other{"{0} mol"}
             }
-            part-per-million{
-                dnam{"bölejik/million"}
-                one{"{0} bölejik/million"}
-                other{"{0} bölejik/million"}
-            }
             percent{
                 dnam{"göterim"}
                 one{"{0} göterim"}
@@ -143,6 +138,11 @@ tk{
                 one{"{0} promille"}
                 other{"{0} promille"}
             }
+            permillion{
+                dnam{"bölejik/million"}
+                one{"{0} bölejik/million"}
+                other{"{0} bölejik/million"}
+            }
             permyriad{
                 dnam{"permiriad"}
                 one{"{0} permiriad"}
@@ -150,7 +150,7 @@ tk{
             }
         }
         consumption{
-            liter-per-100kilometers{
+            liter-per-100-kilometer{
                 dnam{"litr/100 kilometr"}
                 one{"{0} litr/100 kilometr"}
                 other{"{0} litr/100 kilometr"}
@@ -246,6 +246,11 @@ tk{
                 one{"{0} gün"}
                 other{"{0} gün"}
                 per{"{0}/gün"}
+            }
+            decade{
+                dnam{"onýyllyklar"}
+                one{"{0} onýyllyk"}
+                other{"{0} onýyllyk"}
             }
             hour{
                 dnam{"sagat"}
@@ -362,6 +367,11 @@ tk{
                 one{"{0} kilowat-sagat"}
                 other{"{0} kilowat-sagat"}
             }
+            therm-us{
+                dnam{"ABŞ termleri"}
+                one{"{0} ABŞ termi"}
+                other{"{0} ABŞ termi"}
+            }
         }
         force{
             newton{
@@ -395,6 +405,43 @@ tk{
                 dnam{"megagers"}
                 one{"{0} megagers"}
                 other{"{0} megagers"}
+            }
+        }
+        graphics{
+            dot-per-centimeter{
+                dnam{"santimetr başyna nokat"}
+                one{"{0} santimetr başyna nokat"}
+                other{"{0} santimetr başyna nokat"}
+            }
+            dot-per-inch{
+                dnam{"dýuým başyna nokat"}
+                one{"{0} dýuým başyna nokat"}
+                other{"{0} dýuým başyna nokat"}
+            }
+            em{
+                dnam{"tipografik em"}
+                one{"{0} em"}
+                other{"{0} em"}
+            }
+            megapixel{
+                dnam{"megapikseller"}
+                one{"{0} megapiksel"}
+                other{"{0} megapiksel"}
+            }
+            pixel{
+                dnam{"pikseller"}
+                one{"{0} piksel"}
+                other{"{0} piksel"}
+            }
+            pixel-per-centimeter{
+                dnam{"santimetr başyna piksel"}
+                one{"{0} santimetr başyna piksel"}
+                other{"{0} santimetr başyna piksel"}
+            }
+            pixel-per-inch{
+                dnam{"dýuým başyna piksel"}
+                one{"{0} dýuým başyna piksel"}
+                other{"{0} dýuým başyna piksel"}
             }
         }
         length{
@@ -620,12 +667,17 @@ tk{
                 one{"{0} atmosfera"}
                 other{"{0} atmosfera"}
             }
+            bar{
+                dnam{"barlar"}
+                one{"{0} bar"}
+                other{"{0} bar"}
+            }
             hectopascal{
                 dnam{"gektopaskal"}
                 one{"{0} gektopaskal"}
                 other{"{0} gektopaskal"}
             }
-            inch-hg{
+            inch-ofhg{
                 dnam{"dýuým simap sütüni"}
                 one{"{0} dýuým simap sütüni"}
                 other{"{0} dýuým simap sütüni"}
@@ -645,12 +697,17 @@ tk{
                 one{"{0} millibar"}
                 other{"{0} millibar"}
             }
-            millimeter-of-mercury{
+            millimeter-ofhg{
                 dnam{"millimetr simap sütüni"}
                 one{"{0} millimetr simap sütüni"}
                 other{"{0} millimetr simap sütüni"}
             }
-            pound-per-square-inch{
+            pascal{
+                dnam{"paskallar"}
+                one{"{0} paskal"}
+                other{"{0} paskal"}
+            }
+            pound-force-per-square-inch{
                 dnam{"funt/inedördül dýuým"}
                 one{"{0} funt/inedördül dýuým"}
                 other{"{0} funt/inedördül dýuým"}
@@ -706,7 +763,7 @@ tk{
                 one{"{0} nýuton-metr"}
                 other{"{0} nýuton-metr"}
             }
-            pound-foot{
+            pound-force-foot{
                 dnam{"funt-futlar"}
                 one{"{0} funt-fut"}
                 other{"{0} funt-fut"}
@@ -853,6 +910,7 @@ tk{
     unitsNarrow{
         compound{
             per{"{0}/{1}"}
+            times{"{0}.{1}"}
         }
         concentr{
             percent{
@@ -862,7 +920,7 @@ tk{
             }
         }
         consumption{
-            liter-per-100kilometers{
+            liter-per-100-kilometer{
                 dnam{"l/100 km"}
                 one{"{0} l/100 km"}
                 other{"{0} l/100 km"}
@@ -980,7 +1038,7 @@ tk{
                 one{"{0} G"}
                 other{"{0} G"}
             }
-            meter-per-second-squared{
+            meter-per-square-second{
                 dnam{"m/s²"}
                 one{"{0} m/s²"}
                 other{"{0} m/s²"}
@@ -1072,6 +1130,7 @@ tk{
         }
         compound{
             per{"{0}/{1}"}
+            times{"{0}.{1}"}
         }
         concentr{
             karat{
@@ -1094,11 +1153,6 @@ tk{
                 one{"{0} mol"}
                 other{"{0} mol"}
             }
-            part-per-million{
-                dnam{"bölejik/million"}
-                one{"{0} ppm"}
-                other{"{0} ppm"}
-            }
             percent{
                 dnam{"göterim"}
                 one{"{0}%"}
@@ -1109,6 +1163,11 @@ tk{
                 one{"{0}‰"}
                 other{"{0}‰"}
             }
+            permillion{
+                dnam{"bölejik/million"}
+                one{"{0} ppm"}
+                other{"{0} ppm"}
+            }
             permyriad{
                 dnam{"permiriad"}
                 one{"{0}‱"}
@@ -1116,7 +1175,7 @@ tk{
             }
         }
         consumption{
-            liter-per-100kilometers{
+            liter-per-100-kilometer{
                 dnam{"l/100 km"}
                 one{"{0} l/100 km"}
                 other{"{0} l/100 km"}
@@ -1212,6 +1271,11 @@ tk{
                 one{"{0} gün"}
                 other{"{0} gün"}
                 per{"{0}/gün"}
+            }
+            decade{
+                dnam{"oný"}
+                one{"{0} oný"}
+                other{"{0} oný"}
             }
             hour{
                 dnam{"sag"}
@@ -1328,6 +1392,11 @@ tk{
                 one{"{0} kWt. sag"}
                 other{"{0} kWt. sag"}
             }
+            therm-us{
+                dnam{"ABŞ termi"}
+                one{"{0} ABŞ termi"}
+                other{"{0} ABŞ termi"}
+            }
         }
         force{
             newton{
@@ -1361,6 +1430,36 @@ tk{
                 dnam{"MGs"}
                 one{"{0} MGs"}
                 other{"{0} MGs"}
+            }
+        }
+        graphics{
+            dot-per-centimeter{
+                dnam{"smbn"}
+                one{"{0} smbn"}
+                other{"{0} smbn"}
+            }
+            dot-per-inch{
+                dnam{"dbn"}
+                one{"{0} dbn"}
+                other{"{0} dbn"}
+            }
+            megapixel{
+                dnam{"megapiksel"}
+            }
+            pixel{
+                dnam{"pikseller"}
+                one{"{0} pks"}
+                other{"{0} pks"}
+            }
+            pixel-per-centimeter{
+                dnam{"sbp"}
+                one{"{0} sbp"}
+                other{"{0} sbp"}
+            }
+            pixel-per-inch{
+                dnam{"dbp"}
+                one{"{0} dbp"}
+                other{"{0} dbp"}
             }
         }
         length{
@@ -1591,7 +1690,7 @@ tk{
                 one{"{0} gPa"}
                 other{"{0} gPa"}
             }
-            inch-hg{
+            inch-ofhg{
                 dnam{"dý sim.süt."}
                 one{"{0} dý sim.süt."}
                 other{"{0} dý sim.süt."}
@@ -1611,12 +1710,12 @@ tk{
                 one{"{0} mbar"}
                 other{"{0} mbar"}
             }
-            millimeter-of-mercury{
+            millimeter-ofhg{
                 dnam{"mm sim.süt."}
                 one{"{0} mm sim.süt."}
                 other{"{0} mm sim.süt."}
             }
-            pound-per-square-inch{
+            pound-force-per-square-inch{
                 dnam{"psi"}
                 one{"{0} psi"}
                 other{"{0} psi"}
@@ -1672,7 +1771,7 @@ tk{
                 one{"{0} N⋅m"}
                 other{"{0} N⋅m"}
             }
-            pound-foot{
+            pound-force-foot{
                 dnam{"lbf⋅ft"}
                 one{"{0} lbf⋅ft"}
                 other{"{0} lbf⋅ft"}

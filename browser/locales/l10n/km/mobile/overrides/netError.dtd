@@ -1,0 +1,162 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "បង្ហាញ​ក្នុង​ការ​ផ្ទុក​ទំព័រ">
+<!ENTITY retry.label "ព្យាយាម​ម្តងទៀត">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "មិន​អាច​តភ្ជាប់">
+<!ENTITY connectionFailure.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY deniedPortAccess.title "អាសយដ្ឋាន​នេះ​ត្រូវ​បាន​ដាក់កម្រិត">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "រក​មិន​ឃើញ​ម៉ាស៊ីន​បម្រើ">
+<!-- LOCALIZATION NOTE (dnsNotFound.longDesc4) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside tags should be localized.  Do not change the ids. -->
+<!ENTITY dnsNotFound.longDesc4 "
+<ul>
+  <li>ពិនិត្យ​មើល​អាសយដ្ឋាន​ចំពោះ​ការ​វាយ​ខុស​ដូច​ជា
+    <strong>ww</strong>.example.com ជាជាង
+    <strong>www</strong>.example.com</li>
+    <div id='searchbox'>
+      <input id='searchtext' type='search'></input>
+      <button id='searchbutton'>ស្វែងរក</button>
+    </div>
+  <li>ប្រសិន​បើ​អ្នក​មិន​អាច​ផ្ទុក​ទំព័រ​ណា​មួយ​បាន សូម​ពិនិត្យ​ការ​តភ្ជាប់ Wi-Fi ឬ ទិន្នន័យ​ឧបករណ៍​របស់​អ្នក។
+    <button id='wifi'>បើក Wi-Fi</button>
+  </li>
+</ul>
+">
+
+<!ENTITY fileNotFound.title "រក​មិន​ឃើញ​ឯកសារ">
+<!ENTITY fileNotFound.longDesc "<ul> <li>ពិនិត្យ​ឈ្មោះ​ឯកសារ​រក​មើល​អក្សរពុម្ព​ ឬ​កំហុស​ក្នុង​ការ​វាយ​ផ្សេងទៀត​ ។</li> <li>ពិនិត្យមើល​ថា តើ​ឯកសារ​ត្រូវ​បាន​ផ្លាស់ទី ប្ដូរ​ឈ្មោះ ឬ​លុប​ដែរ​ឬ​ទេ ។</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "ការ​ចូល​ទៅ​កាន់​ឯកសារ​ត្រូវ​បាន​បដិសេធ">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>វា​ប្រហែល​ជា​ត្រូវ​បាន​លុបចេញ ប្ដូរ​ទីតាំង ឬមិន​មាន​ការ​អនុញ្ញាត​ចូល​ទៅ​កាន់​ឯកសារ។</li>
+</ul>
+">
+
+<!ENTITY generic.title "អ្ហុះ !">
+<!ENTITY generic.longDesc "
+<p>&brandShortName; មិន​អាច​ផ្ទុក​ទំព័រ​នេះ​ដោយ​មូលហេតុ​ណា​មួយ។</p>
+">
+
+<!ENTITY malformedURI.title "អាសយដ្ឋាន​នេះ​មិន​ត្រឹមត្រូវ">
+<!-- LOCALIZATION NOTE (malformedURI.longDesc2) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY malformedURI.longDesc2 "
+<ul>
+  <li>អាសយដ្ឋាន​វេបសាយ​ភាគ​ច្រើន​គេ​សរសេរ
+    <strong>http://www.example.com/</strong></li>
+    <div id='searchbox'>
+      <input id='searchtext' type='search'></input>
+      <button id='searchbutton'>ស្វែងរក</button>
+    </div>
+  <li>សូម​ប្រាកដ​ថា​អ្នក​ប្រើប្រាស់​សញ្ញា​ទ្រេត​ទៅ​មុខ​ដូច​នេះ (
+    <strong>/</strong>).</li>
+</ul>
+">
+
+<!ENTITY netInterrupt.title "ការ​តភ្ជាប់​ត្រូវ​បាន​កាត់​ផ្តាច់">
+<!ENTITY netInterrupt.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY notCached.title "ឯកសារ​បាន​ផុត​កំណត់">
+<!ENTITY notCached.longDesc "<p>ឯកសារ​ដាក់​ស្នើ​មិន​មាន​នៅ​ក្នុង​ឃ្លាំង​សម្ងាត់​របស់ &brandShortName; ទេ។</p><ul><li>ជាការ​ប្រុងប្រយ័ត្ន​ផ្នែក​សុវត្ថិភាព &brandShortName; មិន​ស្នើសុំ​ឯកសារ​​រសើប​នោះ​ទេ។</li><li>ចុច​ព្យាយាម​ម្ដង​ទៀត​ដើម្បី​ដាក់​ស្នើឯកសារ​ពី​វេបសាយ។</li></ul>">
+
+<!ENTITY netOffline.title "របៀប​ក្រៅ​បណ្ដាញ">
+
+<!ENTITY contentEncodingError.title "កំហុស​ក្នុង​ការ​អ៊ិនកូដ​មាតិកា">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>សូម​ទាក់ទង​ម្ចាស់​វេបសាយ​ដើម្បី​ប្រាប់​ពួកគេ​អំពី​បញ្ហា​នេះ។</li> </ul>">
+
+<!ENTITY unsafeContentType.title "ប្រភេទ​ឯកសារ​គ្មាន​សុវត្ថិភាព">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>សូម​ទាក់ទង​ម្ចាស់​តំបន់​បណ្ដាញ​ដើម្បី​ជូន​ដំណឹង​ពួក​គេ​អំពី​បញ្ហា​នេះ ។</li> </ul>">
+
+<!ENTITY netReset.title "ការ​តភ្ជាប់​ត្រូវ​បាន​កំណត់​ឡើង​វិញ">
+<!ENTITY netReset.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY netTimeout.title "អស់​ពេល​ក្នុង​ការ​តភ្ជាប់">
+<!ENTITY netTimeout.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY unknownProtocolFound.title "មិន​យល់​អាសយដ្ឋាន">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>អ្នក​អាច​នឹង​ត្រូវ​ដំឡើង​កម្មវិធី​ផ្សេងទៀត ដើម្បី​បើក​អាសយដ្ឋាន​នេះ  ។</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "ម៉ាស៊ីន​បម្រើ​ប្រូកស៊ី​កំពុងតែ​បដិសេធ​ការ​តភ្ជាប់">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>ពិនិត្យ​ការ​កំណត់​ប្រូកស៊ី​ដើម្បី​ប្រាកដ​ថា​វា​ត្រឹមត្រូវ។</li> <li>ទាក់ទង​អ្នក​គ្រប់គ្រង​បណ្ដាញ​របស់​អ្នក​ដើម្បី​ប្រាកដ​ថា​ម៉ាស៊ីន​មេ​ប្រូកស៊ី​ ដំណើរការ។</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "មិន​អាច​រក​ឃើញ​ម៉ាស៊ីន​បម្រើ​ប្រូកស៊ី​">
+<!-- LOCALIZATION NOTE (proxyResolveFailure.longDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY proxyResolveFailure.longDesc3 "<ul> <li>ពិនិត្យ​ការ​កំណត់​ប្រូកស៊ី​ដើម្បី​ប្រាកដ​ថា​វា​ត្រឹមត្រូវ។</li> <li>ពិនិត្យ​ដើម្បី​ប្រាកដ​ថា​ឧបករណ៍​របស់​អ្នក​មាន​ទិន្នន័យ ឬ​ការ​តភ្ជាប់​វ៉ាយហ្វាយ​ដំណើរការ។ <button id='wifi'>បើក Wi-Fi</button> </li> </ul>">
+
+<!ENTITY redirectLoop.title "ទំព័រ​មិន​បាន​បញ្ជូន​ព័ត៌មាន​ត្រឹម​ត្រូវ​ទេ">
+<!ENTITY redirectLoop.longDesc "<ul> <li>ពេល​ខ្លះបញ្ហា​នេះ​អាច​កើតឡើង​ដោយសារ​តែ​ការ​បិទ ឬ​បដិសេធ​ក្នុង​ការ​ទទួល​យក ​ខូគី ។</li> </ul>">
+
+<!ENTITY unknownSocketType.title "ចម្លើយតប​ពី​ម៉ាស៊ីន​បម្រើ​ដែល​មិន​បាន​រំពឹងទុក">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>ពិនិត្យ​ដើម្បី​ប្រាកដ​ថា​ប្រព័ន្ធ​របស់​អ្នក​មាន​កម្មវិធី​គ្រប់គ្រង​សុវត្ថិភាព​ផ្ទាល់ខ្លួន បាន​ដំឡើង។</li> <li>នេះ​អាច​បណ្ដាល​មក​ពី​ការ​កំណត់​រចនាសម្ព័ន្ធ​គ្មាន​ស្តង់ដារ​នៅ​លើ​ម៉ាស៊ីន​មេ។</li> </ul>">
+
+<!ENTITY nssFailure2.title "ការ​តភ្ជាប់​សុវត្ថិភាព​បរាជ័យ">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>មិន​អាច​បង្ហាញ​ទំព័រ​ដែល​អ្នក​ចង់​មើល​បាន​ទេ ព្រោះ​តែ​មិន​អាច​បញ្ជាក់​អំពី​ភាព​ត្រូវ​ច្បាប់​នៃ​ទិន្នន័យ​ដែល​បាន​ទទួល។</li> <li>សូម​ទាក់ទង​ម្ចាស់​គេហទំព័រ ដើម្បី​ប្រាប់​ពួកគេ​អំពី​បញ្ហា​នេះ។</li> </ul>">
+
+<!ENTITY nssBadCert.title "ការ​តភ្ជាប់​សុវត្ថិភាព​បរាជ័យ">
+<!ENTITY nssBadCert.longDesc2 "
+<ul>
+  <li>នេះ​អាច​ជា​បញ្ហា​ការ​កំណត់​រចនា​សម្ព័ន្ធ​ម៉ាស៊ីន​មេ ឬ​ក៏​មាន​នរណា​ម្នាក់​កំពុង​ក្លែង​បន្លំ​ធ្វើ​ជា​ម៉ាស៊ីន​មេ។</li>
+  <li>បើ​អ្នក​ធ្លាប់បាន​តភ្ជាប់​ទៅ​ម៉ាស៊ីន​មេ​នេះ​ពី​មុន បញ្ហា​នេះ​ប្រហែល​ជាមាន​ត្រឹម​រយៈ​ពេល​ខ្លី។ សូម​ព្យាយាម​ម្ដង​ទៀត​នៅ​ពេល​បន្តិច​ទៀត។</li>
+</ul>
+">
+
+<!-- LOCALIZATION NOTE (sharedLongDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY sharedLongDesc3 "
+<ul>
+  <li>វេបសាយ​អាច​មិន​ដំណើរ​កា​មួយ​រយៈ ឬ​មាន​ភាព​មមាញឹក​ពេក។ សូម​ព្យាយាម​ម្ដង​ទៀត​នៅ​ពេល​បន្តិច​ទៀត។</li>
+  <li>ប្រសិន​បើ​អ្នក​មិន​អាច​ផ្ទុក​ទំព័រ​ណា​មួយ​បាន សូម​ពិនិត្យ​ការ​តភ្ជាប់​ទិន្នន័យ ឬ Wi-Fi របស់​អ្នក។
+    <button id='wifi'>បើក Wi-Fi</button>
+  </li>
+</ul>
+">
+
+<!ENTITY cspBlocked.title "បាន​ទប់ស្កាត់​ដោយ​គោលការណ៍​អំពី​សុវត្ថិភាព​មាតិកា">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; បាន​រារាំង​ទំព័រ​នេះ​មិន​ឲ្យ​ផ្ទុក​តាម​មធ្យោបាយ​នេះ​ទេ ពីព្រោះ​ទំព័រ​មាន​គោលការណ៍​អំពី​សុវត្ថិភាព​មាតិកា​ដែល​មិន​អនុញ្ញាត​ចំពោះ​វា ។</p>">
+
+<!ENTITY corruptedContentErrorv2.title "កំហុស​មាតិកា​ដែល​ខូច">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>ទំព័រ​ដែល​អ្នក​កំពុងតែ​ព្យាយាម​មើល​ មិន​អាច​បង្ហាញ​បាន​ទេ ពីព្រោះ​បាន​រក​ឃើញ​កំហុស​នៅ​ក្នុង​ការ​ផ្ទេរ​ទិន្នន័យ ។</p><ul><li>សូម​ទាក់ទង​ម្ចាស់​តំបន់បណ្ដាញ​ ដើម្បី​ប្រាប់​ឲ្យ​ពួក​គេ​ដឹង​អំពី​បញ្ហា​នេះ ។</li></ul>">
+
+<!ENTITY securityOverride.linkText "ឬ​អ្នក​អាច​បន្ថែម​ករណី​លើកលែង…">
+<!ENTITY securityOverride.getMeOutOfHereButton "យក​ខ្ញុំ​ចេញ​ពី​ទីនេះ!">
+<!ENTITY securityOverride.exceptionButtonLabel "បន្ថែម​ករណី​លើកលែង…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <xul:button> tags.  The only language content is the label= field,
+which uses strings already defined above. The button is included here (instead of
+netError.xhtml) because it exposes functionality specific to firefox. -->
+
+<!ENTITY securityOverride.warningContent "<p>អ្នក​មិន​គូរ​បន្ថែម​ករណី​លើកលែង​ទេ ប្រសិនបើ​អ្នក​កំពុងតែ​ប្រើ​ការ​តភ្ជាប់​អ៊ីនធឺណិត​ដែល​អ្នក​មិន​ទុកចិត្ត​ទាំងស្រុង ឬ​ប្រសិនបើ​អ្នក មិន​ធ្លាប់​ឃើញ​ការ​ព្រមាន​ណាមួយ​សម្រាប់​ម៉ាស៊ីន​បម្រើ​នេះ ។</p>  <button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> <button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "XUL ពី​ចម្ងាយ">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>សូម​ទាក់ទង​ម្ចាស់​តំបន់បណ្ដាញ​ ដើម្បី​ប្រាប់​ពួក​គេ​ឲ្យ​ដឹង​អំពី​បញ្ហា​នេះ ។</li></ul></p>">
+
+<!ENTITY sslv3Used.title "មិន​អាច​តភ្ជាប់​ដោយ​មាន​សុវត្ថិភាព">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc "ព័ត៌មាន​កម្រិត​ខ្ពស់៖ SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY weakCryptoUsed.title "ការ​តភ្ជាប់​របស់​អ្នក​មិន​មាន​សុវត្ថិភាព​ទេ">
+<!-- LOCALIZATION NOTE (weakCryptoUsed.longDesc) - Do not translate
+     "SSL_ERROR_NO_CYPHER_OVERLAP". -->
+<!ENTITY weakCryptoUsed.longDesc "ព័ត៌មាន​កម្រិត​ខ្ពស់៖ SSL_ERROR_NO_CYPHER_OVERLAP">
+
+<!ENTITY inadequateSecurityError.title "ការ​តភ្ជាប់​របស់​អ្នក​មិន​មាន​សុវត្ថិភាព​ទេ">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> ប្រើប្រាស់​បច្ចេក​វិទ្យា​សុវត្ថិភាព​ដែល​មិន​ទាន់​សម័យ​ហើយ​អាច​ងាយ​នឹង​រង​នូវ​ការ​វាយ​ប្រហារ។ អ្នក​វាយ​ប្រហារ​អាច​លួច​យក​ព័ត៌មាន​ដែល​អ្នក​គិត​ថា​មាន​សុវត្ថិភាព​បាន​យ៉ាង​ងាយ។ អ្នក​គ្រប់គ្រង​វេបសាយ​ចាំបាច់​ត្រូវ​ជួសជុល​ម៉ាស៊ីន​មេ​ជាមុន ទើប​អ្នក​អាច​ចូល​វេបសាយ​នេះ​បាន។</p><p>កូដ​កំហុស៖ NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY networkProtocolError.title "កំហុស​ពិធីការ​បណ្ដាញ">

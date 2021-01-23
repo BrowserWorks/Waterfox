@@ -16,12 +16,20 @@
         assert_equals(reports[0].type, "test");
         assert_true(reports[0].url.endsWith("reporting/generateTestReport.html"));
         assert_equals(reports[0].body.message, "Test message.");
+        // Ensure that the toJSON() call of the report are valid.
+        const reportJSON = reports[0].toJSON();
+        assert_equals(reports[0].type, reportJSON.type);
+        assert_equals(reports[0].url, reportJSON.url);
+        assert_equals(reports[0].body.message, reportJSON.body.message);
+        // Ensure that report can be successfully JSON serialized.
+        assert_equals(JSON.stringify(reports[0]), JSON.stringify(reportJSON));
       });
       test.done();
     });
     observer.observe();
 
     // This should result in a "test" type report being generated and observed.
-    test_driver.generate_test_report("Test message.");
+    test_driver.generate_test_report("Test message.")
+      .catch(test.unreached_func('generate test report failed'));
   }, "Generate Test Report");
 </script>

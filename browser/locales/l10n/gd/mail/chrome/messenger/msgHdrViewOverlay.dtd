@@ -1,0 +1,114 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "Gu">
+<!ENTITY fromField4.label "O">
+<!ENTITY senderField4.label "Seòladair">
+<!ENTITY author.label "Ùghdar">
+<!ENTITY organizationField4.label "Buidheann">
+<!ENTITY replyToField4.label "Freagairt gu">
+
+<!ENTITY subjectField4.label "Cuspair">
+<!ENTITY ccField4.label "Cc">
+<!ENTITY bccField4.label "Bcc">
+<!ENTITY newsgroupsField4.label "Buidhnean-naidheachd">
+<!ENTITY followupToField4.label "Post leanmhainnach gu">
+<!ENTITY tagsHdr4.label "Tagaichean">
+<!ENTITY dateField4.label "Ceann-là">
+<!ENTITY userAgentField4.label "Àidseant-cleachdaiche">
+<!ENTITY referencesField4.label "Iomraidhean">
+<!ENTITY messageIdField4.label "ID na teachdaireachd">
+<!ENTITY inReplyToField4.label "San fhreagairt gu">
+<!ENTITY originalWebsite4.label "Làrach-lìn">
+
+<!ENTITY hdrArchiveButton1.label "Tasg-lann">
+<!ENTITY hdrArchiveButton1.tooltip "Cuir an teachdaireachd seo san tasg-lann">
+<!ENTITY hdrSmartReplyButton1.label "Freagairt ghlic">
+<!ENTITY hdrReplyButton1.label "Freagair">
+<!ENTITY hdrReplyButton2.tooltip "Freagair seòladair na teachdaireachd seo">
+<!ENTITY hdrReplyAllButton1.label "Freagair a h-uile">
+<!ENTITY hdrReplyAllButton1.tooltip "Freagair a h-uile seòladair is faightear">
+<!ENTITY hdrReplyListButton1.label "Freagair an liosta">
+<!ENTITY hdrReplyListButton1.tooltip "Freagair an liosta puist">
+<!ENTITY hdrFollowupButton1.label "Freagair">
+<!ENTITY hdrFollowupButton1.tooltip "Freagair am buidheann-naidheachd seo">
+<!ENTITY hdrForwardButton1.label "Sìn air adhart">
+<!ENTITY hdrForwardButton1.tooltip "Sìn an teachdaireachd air adhart gu">
+<!ENTITY hdrJunkButton1.label "Truilleis">
+<!ENTITY hdrJunkButton1.tooltip "Cuir comharra truilleis ris an teachdaireachd seo">
+<!ENTITY hdrTrashButton1.label "Sguab às">
+<!ENTITY hdrTrashButton1.tooltip "Sguab às an teachdaireachd seo">
+
+<!ENTITY hdrViewToolbarShowFull.label "seall ìomhaigheagan is teacsa">
+<!ENTITY hdrViewToolbarShowFull.accesskey "a">
+<!ENTITY hdrViewToolbarShowIcons.label "Na seall ach ìomhaigheagan">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "i">
+<!ENTITY hdrViewToolbarShowText.label "Seall teacsa a-mhàin">
+<!ENTITY hdrViewToolbarShowText.accesskey "t">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "Seall &quot;Freagair an seòladair&quot; an-còmhnaidh">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "r">
+
+<!ENTITY otherActionsButton2.label "Barrachd">
+<!ENTITY otherActionsButton.tooltip "Barrachd ghnìomhan">
+<!ENTITY otherActionsOpenConversation1.label "Fosgail ann an còmhradh">
+<!ENTITY otherActionsOpenConversation1.accesskey "o">
+<!ENTITY otherActionsOpenInNewWindow1.label "Fosgail ann an uinneag ùr">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "F">
+<!ENTITY otherActionsOpenInNewTab1.label "Fosgail ann an taba ùr">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "t">
+<!ENTITY markAsReadMenuItem1.label "Cuir comharra air gun deach a leughadh">
+<!ENTITY markAsReadMenuItem1.accesskey "r">
+<!ENTITY markAsUnreadMenuItem1.label "Cuir comharra air nach deach a leughadh">
+<!ENTITY markAsUnreadMenuItem1.accesskey "u">
+<!ENTITY saveAsMenuItem1.label "Sàbhail mar…">
+<!ENTITY saveAsMenuItem1.accesskey "S">
+<!ENTITY viewSourceMenuItem1.label "Seall am bun-tùs">
+<!ENTITY viewSourceMenuItem1.accesskey "m">
+<!ENTITY otherActionsPrint1.label "Clò-bhuail…">
+<!ENTITY otherActionsPrint1.accesskey "C">
+
+<!-- Attachment bar context menu items -->
+<!ENTITY startExpandedCmd.label    "Seall leòsan a' cheanglachain an toiseach">
+<!ENTITY startExpandedCmd.accesskey    "S">
+
+<!-- Attachment context menu items -->
+<!ENTITY openAttachmentCmd.label    "Fosgail">
+<!ENTITY openAttachmentCmd.accesskey    "o">
+<!ENTITY saveAsAttachmentCmd.label    "Sàbhail mar…">
+<!ENTITY saveAsAttachmentCmd.accesskey    "a">
+<!ENTITY detachAttachmentCmd.label    "Dealaich…">
+<!ENTITY detachAttachmentCmd.accesskey    "D">
+<!ENTITY deleteAttachmentCmd.label    "Sguab às">
+<!ENTITY deleteAttachmentCmd.accesskey    "S">
+<!ENTITY openAllAttachmentsCmd.label    "Fosgail a h-uile…">
+<!ENTITY openAllAttachmentsCmd.accesskey    "o">
+<!ENTITY saveAllAttachmentsCmd.label    "Sàbhail a h-uile…">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "S">
+<!ENTITY detachAllAttachmentsCmd.label    "Dealaich a h-uile…">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "D">
+<!ENTITY deleteAllAttachmentsCmd.label    "Sguab às a h-uile…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "e">
+
+<!ENTITY openAttachment.tooltip "Fosgail am faidhle a tha ris">
+
+<!ENTITY detachedAttachmentFolder.show.label        "Fosgail am pasgan far a bheil e">
+<!ENTITY detachedAttachmentFolder.show.accesskey    "F">
+<!ENTITY detachedAttachmentFolder.showMac.label     "Seall san lorgair">
+<!ENTITY detachedAttachmentFolder.showMac.accesskey "F">
+
+<!-- Attachment toolbar items -->
+<!ENTITY saveAttachmentButton1.label       "Sàbhail">
+<!ENTITY saveAttachmentButton1.tooltip     "Sàbhail am faidhle a tha ris">
+<!ENTITY saveAllAttachmentsButton1.label   "Sàbhail a h-uile">
+<!ENTITY saveAllAttachmentsButton1.tooltip "Sàbhail gach faidhle a tha ris">
+
+<!ENTITY copyLinkCmd.label        "Dèan lethbhreac de sheòladh a' cheangail">
+<!ENTITY copyLinkCmd.accesskey    "c">
+
+<!ENTITY CopyMessageId.label "Dèan lethbhreac de ID na teachdaireachd">
+<!ENTITY CopyMessageId.accesskey "D">
+<!ENTITY OpenMessageForMsgId.label "Fosgail an teachdaireachd leis an ID seo">
+<!ENTITY OpenMessageForMsgId.accesskey "F">
+<!ENTITY OpenBrowserWithMsgId.label "Fosgail am brabhsair le ID na teachdaireachd">
+<!ENTITY OpenBrowserWithMsgId.accesskey "b">

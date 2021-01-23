@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY windowTitle.label "Propiedaes de la llista de seleición">
+<!ENTITY Select.label "Llista de seleición">
+<!ENTITY SelectName.label "Nome de la llista:">
+<!ENTITY SelectName.accesskey "N">
+<!ENTITY SelectSize.label "Altor:">
+<!ENTITY SelectSize.accesskey "u">
+<!ENTITY SelectMultiple.label "Seleición múltiple">
+<!ENTITY SelectMultiple.accesskey "S">
+<!ENTITY SelectDisabled.label "Desactiváu">
+<!ENTITY SelectDisabled.accesskey "D">
+<!ENTITY SelectTabIndex.label "Índiz de tabulación:">
+<!ENTITY SelectTabIndex.accesskey "c">
+<!ENTITY OptGroup.label "Grupu d'opciones">
+<!ENTITY OptGroupLabel.label "Etiqueta:">
+<!ENTITY OptGroupLabel.accesskey "q">
+<!ENTITY OptGroupDisabled.label "Desactiváu">
+<!ENTITY OptGroupDisabled.accesskey "D">
+<!ENTITY Option.label "Opción">
+<!ENTITY OptionText.label "Testu:">
+<!ENTITY OptionText.accesskey "T">
+<!ENTITY OptionValue.label "Valor:">
+<!ENTITY OptionValue.accesskey "V">
+<!ENTITY OptionSelected.label "Seleicionada inicialmente">
+<!ENTITY OptionSelected.accesskey "S">
+<!ENTITY OptionDisabled.label "Desactivada">
+<!ENTITY OptionDisabled.accesskey "D">
+<!ENTITY TextHeader.label "Testu">
+<!ENTITY ValueHeader.label "Valor">
+<!ENTITY SelectedHeader.label "Seleicionáu">
+<!ENTITY AddOption.label "Amestar opción">
+<!ENTITY AddOption.accesskey "o">
+<!ENTITY AddOptGroup.label "Amestar grupu">
+<!ENTITY AddOptGroup.accesskey "A">
+<!ENTITY RemoveElement.label "Desaniciar">
+<!ENTITY RemoveElement.accesskey "n">
+<!ENTITY MoveElementUp.label "Xubir">
+<!ENTITY MoveElementUp.accesskey "b">
+<!ENTITY MoveElementDown.label "Baxar">
+<!ENTITY MoveElementDown.accesskey "r">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
+<!ENTITY pref.advanced.title              "Napredno">
+
+<!ENTITY systemPref.caption               "Postavke sistema">
+<!ENTITY systemPrefCheck.label            "Koristite postavke iz sistema">
+<!ENTITY systemPref.desc                  "Sa ovom opcijom, &brandShortName; nasljeđuje postavke iz sistema. Ove postavke sistema poništavaju &brandShortName; postavke.">
+
+<!ENTITY prefCheckDefault.caption         "Sistemska integracija">
+<!ENTITY prefCheckDefaultClient.label     "Provjerite izvorne postavke aplikacija pri pokretanju">
+
+<!ENTITY crashReports.caption             "Izvještavač o rušenju">
+<!ENTITY submitCrashes.label              "Pošalji izvještaje o rušenju">
+
+<!ENTITY devTools.caption                 "Razvojni alati">
+<!ENTITY allowDebugger.label              "Dozvolite otklanjaču grešaka da se poveže na &brandShortName;">
+<!ENTITY allowRemoteConnections.label     "Dozvoli veze s drugih računara">
+<!ENTITY connectionPrompt.label           "Upitaj za dolazne veze">
+<!ENTITY remoteDebuggerPort.label         "Broj priključaka za vezu:">

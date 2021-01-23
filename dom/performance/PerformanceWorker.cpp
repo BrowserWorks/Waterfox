@@ -6,7 +6,7 @@
 
 #include "PerformanceWorker.h"
 #include "mozilla/dom/WorkerPrivate.h"
-#include "mozilla/StaticPrefs.h"
+#include "mozilla/StaticPrefs_dom.h"
 
 namespace mozilla {
 namespace dom {
@@ -44,6 +44,10 @@ DOMHighResTimeStamp PerformanceWorker::CreationTime() const {
 
 uint64_t PerformanceWorker::GetRandomTimelineSeed() {
   return mWorkerPrivate->GetRandomTimelineSeed();
+}
+
+bool PerformanceWorker::CrossOriginIsolated() const {
+  return mWorkerPrivate->CrossOriginIsolated();
 }
 
 }  // namespace dom

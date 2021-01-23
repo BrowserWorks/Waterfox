@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Sifat Senarai">
+
+<!ENTITY ListType.label "Jenis Senarai">
+<!ENTITY bulletStyle.label "Gaya Bulet:">
+<!ENTITY startingNumber.label "Mula pada:">
+<!ENTITY startingNumber.accessKey "M">
+<!ENTITY none.value "Tiada">
+<!ENTITY bulletList.value "Senarai (Bukan-nombor) Bulet">
+<!ENTITY numberList.value "Senarai Bernombor">
+<!ENTITY definitionList.value "Senarai Takrif">
+<!ENTITY changeEntireListRadio.label "Tukar keseluruhan senarai">
+<!ENTITY changeEntireListRadio.accessKey "T">
+<!ENTITY changeSelectedRadio.label "Tukar hanya item dipilih">
+<!ENTITY changeSelectedRadio.accessKey "I">

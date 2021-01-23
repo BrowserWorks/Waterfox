@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 "use strict";
@@ -33,6 +32,16 @@ const TELEMETRY_DATA = [
     timestamp: null,
     category: "devtools.main",
     method: "tool_timer",
+    object: "compatibilityview",
+    value: null,
+    extra: {
+      time_open: "",
+    },
+  },
+  {
+    timestamp: null,
+    category: "devtools.main",
+    method: "tool_timer",
     object: "computedview",
     value: null,
     extra: {
@@ -49,6 +58,9 @@ add_task(async function() {
   const snapshot = Services.telemetry.snapshotEvents(ALL_CHANNELS, true);
   ok(!snapshot.parent, "No events have been logged for the main process");
 
+  // Enable the compatibility view explictly as this pref is enabled for only Nightly and DevEdition.
+  await pushPref("devtools.inspector.compatibility.enabled", true);
+
   let { inspector, toolbox } = await openInspectorForURL(TEST_URI);
 
   info("Selecting font inspector.");
@@ -58,6 +70,15 @@ add_task(async function() {
     inspector.sidebar.getCurrentTabID(),
     "fontinspector",
     "Font Inspector is selected"
+  );
+
+  info("Selecting compatibility view.");
+  inspector.sidebar.select("compatibilityview");
+
+  is(
+    inspector.sidebar.getCurrentTabID(),
+    "compatibilityview",
+    "Compatibility View is selected"
   );
 
   info("Selecting computed view.");

@@ -338,11 +338,13 @@ enum UCurrencySpacing {
 
     /* Do not conditionalize the following with #ifndef U_HIDE_DEPRECATED_API,
      * it is needed for layout of DecimalFormatSymbols object. */
+#ifndef U_FORCE_HIDE_DEPRECATED_API
     /**
      * One more than the highest normal UCurrencySpacing value.
      * @deprecated ICU 58 The numeric value may change over time, see ICU ticket #12420.
      */
     UNUM_CURRENCY_SPACING_COUNT
+#endif  // U_FORCE_HIDE_DEPRECATED_API
 };
 typedef enum UCurrencySpacing UCurrencySpacing; /**< @stable ICU 4.8 */
 
@@ -375,12 +377,10 @@ typedef enum UNumberFormatFields {
     UNUM_PERMILL_FIELD,
     /** @stable ICU 49 */
     UNUM_SIGN_FIELD,
-#ifndef U_HIDE_DRAFT_API
-    /** @draft ICU 64 */
+    /** @stable ICU 64 */
     UNUM_MEASURE_UNIT_FIELD,
-    /** @draft ICU 64 */
+    /** @stable ICU 64 */
     UNUM_COMPACT_FIELD,
-#endif  /* U_HIDE_DRAFT_API */
 
 #ifndef U_HIDE_DEPRECATED_API
     /**
@@ -409,7 +409,7 @@ typedef enum UNumberFormatFields {
  * respectively.
  *
  * <p><strong>NOTE::</strong> New users with are strongly encouraged to
- * use unumf_openWithSkeletonAndLocale instead of unum_open.
+ * use unumf_openForSkeletonAndLocale instead of unum_open.
  *
  * @param pattern A pattern specifying the format to use. 
  * This parameter is ignored unless the style is
@@ -1030,17 +1030,15 @@ typedef enum UNumberFormatAttribute {
    * @stable ICU 51 */
   UNUM_SCALE = 21,
 
-#ifndef U_HIDE_DRAFT_API
   /**
    * Minimum grouping digits; most commonly set to 2 to print "1000" instead of "1,000".
    * See DecimalFormat::getMinimumGroupingDigits().
    *
    * For better control over grouping strategies, use UNumberFormatter.
    *
-   * @draft ICU 64
+   * @stable ICU 64
    */
   UNUM_MINIMUM_GROUPING_DIGITS = 22,
-#endif /* U_HIDE_DRAFT_API */
 
   /** 
    * if this attribute is set to 0, it is set to UNUM_CURRENCY_STANDARD purpose,
@@ -1081,12 +1079,10 @@ typedef enum UNumberFormatAttribute {
    */
   UNUM_PARSE_DECIMAL_MARK_REQUIRED = 0x1002,
 
-#ifndef U_HIDE_DRAFT_API
-
   /**
    * Parsing: if set to 1, parsing is sensitive to case (lowercase/uppercase).
    *
-   * @draft ICU 64
+   * @stable ICU 64
    */
   UNUM_PARSE_CASE_SENSITIVE = 0x1003,
 
@@ -1095,11 +1091,9 @@ typedef enum UNumberFormatAttribute {
    *
    * For better control over sign display, use UNumberFormatter.
    *
-   * @draft ICU 64
+   * @stable ICU 64
    */
   UNUM_SIGN_ALWAYS_SHOWN = 0x1004,
-
-#endif /* U_HIDE_DRAFT_API */
 
 #ifndef U_HIDE_INTERNAL_API
   /** Limit of boolean attributes. (value should

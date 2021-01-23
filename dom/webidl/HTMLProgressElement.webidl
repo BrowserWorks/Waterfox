@@ -11,8 +11,10 @@
  * and create derivative works of this document.
  */
 
-[HTMLConstructor]
+[Exposed=Window]
 interface HTMLProgressElement : HTMLElement {
+  [HTMLConstructor] constructor();
+
            [CEReactions, SetterThrows]
            attribute double value;
            [CEReactions, SetterThrows]

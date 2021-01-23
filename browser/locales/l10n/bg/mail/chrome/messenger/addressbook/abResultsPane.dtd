@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Addrbook.label                        "Адресник">
+<!ENTITY Addrbook.accesskey                    "А">
+<!ENTITY GeneratedName.label                   "Име">
+<!ENTITY GeneratedName.accesskey               "и">
+<!ENTITY PrimaryEmail.label                    "Ел. адрес">
+<!ENTITY PrimaryEmail.accesskey                "а">
+<!ENTITY Company.label                         "Организация">
+<!ENTITY Company.accesskey                     "р">
+<!ENTITY _PhoneticName.label                   "Фонетично име">
+<!ENTITY _PhoneticName.accesskey               "ф">
+<!ENTITY NickName.label                        "Псевдоним">
+<!ENTITY NickName.accesskey                    "м">
+<!ENTITY SecondEmail.label                     "Допълнителен ел. адрес">
+<!ENTITY SecondEmail.accesskey                 "р">
+<!ENTITY Department.label                      "Отдел">
+<!ENTITY Department.accesskey                  "о">
+<!ENTITY JobTitle.label                        "Длъжност">
+<!ENTITY JobTitle.accesskey                    "д">
+<!ENTITY CellularNumber.label                  "Мобилен телефон">
+<!ENTITY CellularNumber.accesskey              "м">
+<!ENTITY PagerNumber.label                     "Пейджър">
+<!ENTITY PagerNumber.accesskey                 "ж">
+<!ENTITY FaxNumber.label                       "Факс">
+<!ENTITY FaxNumber.accesskey                   "ф">
+<!ENTITY HomePhone.label                       "Домашен телефон">
+<!ENTITY HomePhone.accesskey                   "д">
+<!ENTITY WorkPhone.label                       "Служебен телефон">
+<!ENTITY WorkPhone.accesskey                   "с">
+<!ENTITY ChatName.label                        "Име за разговор">
+<!ENTITY ChatName.accesskey                    "р">
+<!ENTITY sortAscending.label                   "Възходящ">
+<!ENTITY sortAscending.accesskey               "з">
+<!ENTITY sortDescending.label                  "Низходящ">
+<!ENTITY sortDescending.accesskey              "д">

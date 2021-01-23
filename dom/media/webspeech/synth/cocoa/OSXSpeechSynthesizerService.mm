@@ -13,6 +13,7 @@
 #include "mozilla/dom/nsSynthVoiceRegistry.h"
 #include "mozilla/dom/nsSpeechTask.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/StaticPrefs_media.h"
 #include "mozilla/Assertions.h"
 #include "OSXSpeechSynthesizerService.h"
 
@@ -100,7 +101,7 @@ NS_IMPL_CYCLE_COLLECTING_RELEASE(SpeechTaskCallback)
 
 SpeechTaskCallback::SpeechTaskCallback(nsISpeechTask* aTask, NSSpeechSynthesizer* aSynth,
                                        const nsTArray<size_t>& aOffsets)
-    : mTask(aTask), mSpeechSynthesizer(aSynth), mCurrentIndex(0), mOffsets(aOffsets) {
+    : mTask(aTask), mSpeechSynthesizer(aSynth), mCurrentIndex(0), mOffsets(aOffsets.Clone()) {
   mDelegate = [[SpeechDelegate alloc] initWithCallback:this];
   [mSpeechSynthesizer setDelegate:mDelegate];
   mStartingTime = TimeStamp::Now();
@@ -313,7 +314,7 @@ OSXSpeechSynthesizerService::OSXSpeechSynthesizerService() : mInitialized(false)
 
 bool OSXSpeechSynthesizerService::Init() {
   if (Preferences::GetBool("media.webspeech.synth.test") ||
-      !Preferences::GetBool("media.webspeech.synth.enabled")) {
+      !StaticPrefs::media_webspeech_synth_enabled()) {
     // When test is enabled, we shouldn't add OS backend (Bug 1160844)
     return false;
   }

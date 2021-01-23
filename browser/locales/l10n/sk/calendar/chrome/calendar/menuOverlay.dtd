@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Event Menu -->
+<!ENTITY event.new.event                        "Nová udalosť…">
+<!ENTITY event.new.event.accesskey              "u">
+
+<!ENTITY event.new.task                         "Nová úloha…">
+<!ENTITY event.new.task.accesskey               "N">
+
+<!ENTITY calendar.import.label                  "Importovať…">
+<!ENTITY calendar.import.accesskey              "m">
+
+<!ENTITY calendar.export.label                  "Exportovať…">
+<!ENTITY calendar.export.accesskey              "E">
+
+<!ENTITY calendar.publish.label                 "Publikovať…">
+<!ENTITY calendar.publish.accesskey             "b">
+
+<!ENTITY calendar.deletecalendar.label          "Vymazať označený kalendár…">
+<!ENTITY calendar.deletecalendar.accesskey      "m">
+<!ENTITY calendar.unsubscribecalendar.label     "Odhlásiť odber označeného kalendára…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "h">
+
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+<!ENTITY calendar.removecalendar.label          "Odstrániť označený kalendár…">
+<!ENTITY calendar.removecalendar.accesskey      "d">
+
+<!ENTITY calendar.menu.customize.label          "Prispôsobiť…">
+<!ENTITY calendar.menu.customize.accesskey      "P">
+
+<!ENTITY showUnifinderCmd.label                 "Hľadať udalosti">
+<!ENTITY showUnifinderCmd.accesskey             "a">
+<!ENTITY showUnifinderCmd.tooltip               "Prepnúť panel Hľadať udalosti">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "Zobraziť úlohy v kalendári">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "k">
+
+<!ENTITY goTodayCmd.label                       "Dnešný deň">
+<!ENTITY goTodayCmd.accesskey                   "e">
+
+<!ENTITY showCurrentView.label                  "Aktuálny pohľad">
+<!ENTITY showCurrentView.accesskey              "A">
+
+<!ENTITY calendar.properties.label              "Vlastnosti kalendára…">
+<!ENTITY calendar.properties.accesskey          "a">

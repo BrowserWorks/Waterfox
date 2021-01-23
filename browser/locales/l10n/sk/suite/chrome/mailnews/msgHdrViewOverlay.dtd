@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField.label "Komu: ">
+<!ENTITY fromField.label "Od: ">
+<!ENTITY senderField.label "Odosielateľ: ">
+<!ENTITY organizationField.label "Organizácia: ">
+<!ENTITY replyToField.label "Odpoveď na: ">
+
+<!ENTITY subjectField.label "Predmet: ">
+<!--# LOCALIZATION NOTE (ccField.label): DONT_TRANSLATE -->
+<!ENTITY ccField.label "Kópia: ">
+<!ENTITY bccField.label "Skrytá kópia: ">
+<!ENTITY newsgroupsField.label "Skupiny: ">
+<!ENTITY followupToField.label "Pokračovať na: ">
+
+<!ENTITY tagsHdr.label "Popis: ">
+<!ENTITY dateField.label "Dátum: ">
+<!ENTITY userAgentField.label "Program: ">
+<!ENTITY referencesField.label "Referencie: ">
+<!ENTITY messageIdField.label "ID správy: ">
+<!ENTITY inReplyToField.label "In-Reply-To: ">
+<!ENTITY originalWebsite.label "Webový server:">
+
+<!ENTITY editMessage.label                 "Upraviť konceptu…">
+<!ENTITY editMessage.accesskey             "v">
+
+<!ENTITY attachmentsTree.label             "Prílohy:">
+<!ENTITY attachmentsTree.accesskey         "o">
+<!ENTITY openAttachmentCmd.label           "Otvoriť">
+<!ENTITY openAttachmentCmd.accesskey       "O">
+<!ENTITY viewAttachmentCmd.label           "Zobraziť zdrojový kód prílohy">
+<!ENTITY viewAttachmentCmd.accesskey       "Z">
+<!ENTITY saveAsAttachmentCmd.label         "Uložiť ako…">
+<!ENTITY saveAsAttachmentCmd.accesskey     "a">
+<!ENTITY detachAttachmentCmd.label         "Vyčleniť…">
+<!ENTITY detachAttachmentCmd.accesskey     "l">
+<!ENTITY deleteAttachmentCmd.label         "Odstrániť">
+<!ENTITY deleteAttachmentCmd.accesskey     "t">
+<!ENTITY saveAllAttachmentsCmd.label       "Uložiť všetky prílohy">
+<!ENTITY saveAllAttachmentsCmd.accesskey   "U">
+<!ENTITY detachAllAttachmentsCmd.label     "Vyčleniť všetky prílohy…">
+<!ENTITY detachAllAttachmentsCmd.accesskey "V">
+<!ENTITY deleteAllAttachmentsCmd.label     "Odstrániť všetky prílohy…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey "d">

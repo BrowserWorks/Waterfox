@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Caracteristicas da buttun">
+
+<!ENTITY Settings.label "Parameters">
+
+<!ENTITY ButtonType.label "Tip">
+<!ENTITY ButtonType.accesskey "T">
+<!ENTITY submit.value "Trametter">
+<!ENTITY reset.value "Redefinir">
+<!ENTITY button.value "Buttun">
+
+<!ENTITY ButtonName.label "Num:">
+<!ENTITY ButtonName.accesskey "N">
+<!ENTITY ButtonValue.label "Valur:">
+<!ENTITY ButtonValue.accesskey "V">
+<!ENTITY tabIndex.label "Index da tabulatur:">
+<!ENTITY tabIndex.accesskey "I">
+<!ENTITY ButtonDisabled.label "Deactivà">
+<!ENTITY ButtonDisabled.accesskey "D">
+<!ENTITY AccessKey.label "Tasta d'access:">
+<!ENTITY AccessKey.accesskey "c">
+
+<!ENTITY RemoveButton.label "Allontanar il buttun">
+<!ENTITY RemoveButton.accesskey "R">

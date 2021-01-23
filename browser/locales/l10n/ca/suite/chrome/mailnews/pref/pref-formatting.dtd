@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.formatting.title        "Format d'enviament">
+<!ENTITY sendMaildesc.label           "En enviar missatges en format HTML, si un o més dels destinataris no consten com a capaços de rebre correu HTML:">
+<!ENTITY askMe.label                  "Demana'm què fer (se us demanarà que trieu un format)">
+<!ENTITY askMe.accesskey              "a">
+<!ENTITY convertPlain.label           "Converteix el missatge en text net (se'n poden perdre alguns formats)">
+<!ENTITY convertPlain.accesskey       "C">
+<!ENTITY sendHTML.label               "Envia el missatge en HTML igualment (alguns programes de correu no el podran visualitzar)">
+<!ENTITY sendHTML.accesskey           "s">
+<!ENTITY sendBoth.label               "Envia el missatge en text net i en HTML (el missatge serà més gran)">
+<!ENTITY sendBoth.accesskey           "E">
+<!ENTITY override.label               "Podeu canviar aquests paràmetres per a missatges determinats mitjançant el menú Opcions de la finestra Redacció de correu.">
+<!-- Html and Plain Text Domains  -->
+
+<!ENTITY domain.title                 "Dominis d'HTML i text net">
+<!ENTITY domaindesc.label             "Quan envieu un missatge a una adreça d'un dels dominis indicats més avall, la Missatgeria enviarà automàticament el missatge en el format correcte.">
+<!ENTITY HTMLdomaintitle.label        "Dominis d'HTML">
+<!ENTITY HTMLdomaintitle.accesskey    "H">
+<!ENTITY PlainTexttitle.label         "Dominis de text net">
+<!ENTITY PlainTexttitle.accesskey     "x">
+<!ENTITY AddButton.label              "Afegeix...">
+<!ENTITY AddHtmlDomain.accesskey      "a">
+<!ENTITY AddPlainText.accesskey       "f">
+<!ENTITY DeleteButton.label           "Suprimeix">
+<!ENTITY DeleteHtmlDomain.accesskey   "p">
+<!ENTITY DeletePlainText.accesskey    "x">
+<!-- Add Domain Name -->
+
+<!ENTITY add.htmltitle                "Afegeix un nom de domini d'HTML">
+<!ENTITY add.htmldomain               "Nom de domini d'HTML:">
+<!ENTITY add.plaintexttitle           "Afegeix un nom de domini de text net">
+<!ENTITY add.plaintextdomain          "Nom de domini de text net:">
+
+<!ENTITY domainnameError.title        "Error de nom de domini">
+<!-- LOCALIZATION NOTE: do not translate @string@ -->
+<!ENTITY invalidEntryError.label      "El nom del domini @string@ no és vàlid i s'ignorarà. Els noms de domini vàlids han d'incloure com a mínim un '.' i caràcters a cada costat seu.">

@@ -30,7 +30,8 @@ dictionary APZBucket {
   sequence<ScrollFrameData> scrollFrames;
 };
 
-[Pref="apz.test.logging_enabled"]
+[Pref="apz.test.logging_enabled",
+ Exposed=Window]
 namespace APZHitResultFlags {
   // These constants should be kept in sync with mozilla::gfx::CompositorHitTestInfo
   const unsigned short INVISIBLE = 0;
@@ -52,6 +53,7 @@ dictionary APZHitResult {
   float screenX;
   float screenY;
   unsigned short hitResult; // combination of the APZHitResultFlags.* flags
+  unsigned long long layersId;
   unsigned long long scrollId;
 };
 
@@ -61,6 +63,7 @@ dictionary AdditionalDataEntry {
 };
 
 // All the paints and repaint requests. This is the top-level data structure.
+[GenerateConversionToJS]
 dictionary APZTestData {
   sequence<APZBucket> paints;
   sequence<APZBucket> repaintRequests;
@@ -74,6 +77,7 @@ dictionary FrameUniformity {
   float frameUniformity;
 };
 
+[GenerateConversionToJS]
 dictionary FrameUniformityResults {
   sequence<FrameUniformity> layerUniformities;
 };

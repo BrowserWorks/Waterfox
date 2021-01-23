@@ -34,9 +34,6 @@ EXPORTS.mozilla.gfx += [
     'HelpersCairo.h',
     'InlineTranslator.h',
     'IterableArena.h',
-    'JobScheduler.h',
-    'JobScheduler_posix.h',
-    'JobScheduler_win32.h',
     'Logging.h',
     'LoggingConstants.h',
     'Matrix.h',
@@ -86,7 +83,6 @@ elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
         'DrawTargetD2D1.cpp',
         'ExtendInputEffectD2D1.cpp',
         'FilterNodeD2D1.cpp',
-        'JobScheduler_win32.cpp',
         'NativeFontResourceDWrite.cpp',
         'NativeFontResourceGDI.cpp',
         'PathD2D.cpp',
@@ -97,12 +93,7 @@ elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
     ]
     DEFINES['WIN32'] = True
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] != 'windows':
-    SOURCES += [
-        'JobScheduler_posix.cpp',
-    ]
-
-if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android', 'gtk3'):
+if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android', 'gtk'):
     EXPORTS.mozilla.gfx += [
         'UnscaledFontFreeType.h',
     ]
@@ -111,7 +102,7 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android', 'gtk3'):
         'UnscaledFontFreeType.cpp',
     ]
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk3':
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk':
     SOURCES += [
         'ScaledFontFontconfig.cpp',
     ]
@@ -145,7 +136,9 @@ if CONFIG['INTEL_ARCHITECTURE']:
         'FilterProcessingSSE2.cpp',
         'ImageScalingSSE2.cpp',
         'ssse3-scaler.c',
+        'SwizzleAVX2.cpp',
         'SwizzleSSE2.cpp',
+        'SwizzleSSSE3.cpp',
     ]
     DEFINES['USE_SSE2'] = True
     # The file uses SSE2 intrinsics, so it needs special compile flags on some
@@ -153,7 +146,9 @@ if CONFIG['INTEL_ARCHITECTURE']:
     SOURCES['BlurSSE2.cpp'].flags += CONFIG['SSE2_FLAGS']
     SOURCES['FilterProcessingSSE2.cpp'].flags += CONFIG['SSE2_FLAGS']
     SOURCES['ImageScalingSSE2.cpp'].flags += CONFIG['SSE2_FLAGS']
+    SOURCES['SwizzleAVX2.cpp'].flags += ['-mavx2']
     SOURCES['SwizzleSSE2.cpp'].flags += CONFIG['SSE2_FLAGS']
+    SOURCES['SwizzleSSSE3.cpp'].flags += CONFIG['SSSE3_FLAGS']
     SOURCES['ssse3-scaler.c'].flags += CONFIG['SSSE3_FLAGS']
 elif CONFIG['CPU_ARCH'].startswith('mips'):
     SOURCES += [
@@ -169,7 +164,6 @@ UNIFIED_SOURCES += [
     'DataSourceSurface.cpp',
     'DataSurfaceHelpers.cpp',
     'DrawEventRecorder.cpp',
-    'DrawingJob.cpp',
     'DrawTarget.cpp',
     'DrawTargetCairo.cpp',
     'DrawTargetCapture.cpp',
@@ -183,8 +177,8 @@ UNIFIED_SOURCES += [
     'FilterProcessing.cpp',
     'FilterProcessingScalar.cpp',
     'ImageScaling.cpp',
-    'JobScheduler.cpp',
     'Matrix.cpp',
+    'NativeFontResource.cpp',
     'Path.cpp',
     'PathCairo.cpp',
     'PathCapture.cpp',
@@ -195,7 +189,6 @@ UNIFIED_SOURCES += [
     'Scale.cpp',
     'ScaledFontBase.cpp',
     'SFNTData.cpp',
-    'SFNTNameTable.cpp',
     'SourceSurfaceCairo.cpp',
     'SourceSurfaceCapture.cpp',
     'SourceSurfaceRawData.cpp',
@@ -240,23 +233,12 @@ FINAL_LIBRARY = 'xul'
 for var in ('USE_CAIRO', 'MOZ2D_HAS_MOZ_CAIRO'):
     DEFINES[var] = True
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android', 'gtk3'):
+if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android', 'gtk'):
     DEFINES['MOZ_ENABLE_FREETYPE'] = True
 
 CXXFLAGS += CONFIG['MOZ_CAIRO_CFLAGS']
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android', 'gtk3'):
+if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('android', 'gtk'):
     CXXFLAGS += CONFIG['CAIRO_FT_CFLAGS']
 
 LOCAL_INCLUDES += CONFIG['SKIA_INCLUDES']
-
-if CONFIG['MOZ_ENABLE_SKIA']:
-    LOCAL_INCLUDES += [
-        '/gfx/skia/skia/include/private',
-        '/gfx/skia/skia/src/core',
-        '/gfx/skia/skia/src/image',
-    ]
-if CONFIG['MOZ_ENABLE_SKIA_GPU']:
-    LOCAL_INCLUDES += [
-        '/gfx/skia/skia/src/gpu',
-    ]

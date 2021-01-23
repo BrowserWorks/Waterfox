@@ -4,12 +4,12 @@
 
 #include "nsCommandLine.h"
 
+#include "nsComponentManagerUtils.h"
 #include "nsICategoryManager.h"
 #include "nsICommandLineHandler.h"
 #include "nsICommandLineValidator.h"
 #include "nsIConsoleService.h"
 #include "nsIClassInfoImpl.h"
-#include "nsIDOMWindow.h"
 #include "nsIFile.h"
 #include "nsISimpleEnumerator.h"
 #include "mozilla/SimpleEnumerator.h"
@@ -73,11 +73,8 @@ nsCommandLine::FindFlag(const nsAString& aFlag, bool aCaseSensitive,
                         int32_t* aResult) {
   NS_ENSURE_ARG(!aFlag.IsEmpty());
 
-  nsDefaultStringComparator caseCmp;
-  nsCaseInsensitiveStringComparator caseICmp;
-  nsStringComparator& c = aCaseSensitive
-                              ? static_cast<nsStringComparator&>(caseCmp)
-                              : static_cast<nsStringComparator&>(caseICmp);
+  auto c = aCaseSensitive ? nsTDefaultStringComparator<char16_t>
+                          : nsCaseInsensitiveStringComparator;
 
   for (uint32_t f = 0; f < mArgs.Length(); f++) {
     const nsString& arg = mArgs[f];

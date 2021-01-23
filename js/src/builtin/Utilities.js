@@ -2,26 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/*jshint bitwise: true, camelcase: false, curly: false, eqeqeq: true,
-         es5: true, forin: true, immed: true, indent: 4, latedef: false,
-         newcap: false, noarg: true, noempty: true, nonew: true,
-         plusplus: false, quotmark: false, regexp: true, undef: true,
-         unused: false, strict: false, trailing: true,
-*/
-
-/*global ToObject: false, ToInteger: false, IsCallable: false,
-         ThrowRangeError: false, ThrowTypeError: false,
-         AssertionFailed: false,
-         MakeConstructible: false, DecompileArg: false,
-         RuntimeDefaultLocale: false,
-         NewDenseArray: false,
-         Dump: false,
-         callFunction: false,
-         TO_UINT32: false,
-         JSMSG_NOT_FUNCTION: false, JSMSG_MISSING_FUN_ARG: false,
-         JSMSG_EMPTY_ARRAY_REDUCE: false, JSMSG_CANT_CONVERT_TO: false,
-*/
-
 #include "SelfHostingDefines.h"
 #include "TypedObjectConstants.h"
 
@@ -102,7 +82,6 @@ function ToLength(v) {
 
     // Step 2.
     // Use max(v, 0) here, because it's easier to optimize in Ion.
-    // This is correct even for -0.
     v = std_Math_max(v, 0);
 
     // Step 3.
@@ -172,7 +151,7 @@ function SpeciesConstructor(obj, defaultConstructor) {
 
     // Step 4.
     if (!IsObject(ctor))
-        ThrowTypeError(JSMSG_NOT_NONNULL_OBJECT, "object's 'constructor' property");
+        ThrowTypeError(JSMSG_OBJECT_REQUIRED, "object's 'constructor' property");
 
     // Steps 5.
     var s = ctor[std_species];
@@ -192,6 +171,15 @@ function SpeciesConstructor(obj, defaultConstructor) {
 function GetTypeError(msg) {
     try {
         FUN_APPLY(ThrowTypeError, undefined, arguments);
+    } catch (e) {
+        return e;
+    }
+    assert(false, "the catch block should've returned from this function.");
+}
+
+function GetAggregateError(msg) {
+    try {
+        FUN_APPLY(ThrowAggregateError, undefined, arguments);
     } catch (e) {
         return e;
     }

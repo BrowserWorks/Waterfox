@@ -190,7 +190,7 @@ SSL_IMPORT PRFileDesc *DTLS_ImportFD(PRFileDesc *model, PRFileDesc *fd);
 /* Use draft-ietf-tls-session-hash. Controls whether we offer the
  * extended_master_secret extension which, when accepted, hashes
  * the handshake transcript into the master secret. This option is
- * disabled by default.
+ * enabled by default.
  */
 #define SSL_ENABLE_EXTENDED_MASTER_SECRET 30
 
@@ -309,6 +309,42 @@ SSL_IMPORT PRFileDesc *DTLS_ImportFD(PRFileDesc *model, PRFileDesc *fd);
  * authentication.
  */
 #define SSL_ENABLE_POST_HANDSHAKE_AUTH 39
+
+/* Enables the delegated credentials extension (draft-ietf-tls-subcerts). When
+ * enabled, a client that supports TLS 1.3 will indicate willingness to
+ * negotiate a delegated credential (DC). Note that client-delegated credentials
+ * are not currently supported.
+ *
+ * If support is indicated, the peer may use a DC to authenticate itself. The DC
+ * is sent as an extension to the peer's end-entity certificate; the end-entity
+ * certificate is used to verify the DC, which in turn is used to verify the
+ * handshake. DCs effectively extend the certificate chain by one, but only
+ * within the context of TLS. Once issued, DCs can't be revoked; in order to
+ * mitigate the damage in case the secret key is compromised, the DC is only
+ * valid for a short time (days, hours, or even minutes).
+ *
+ * This library implements draft-07 of the protocol spec.
+ */
+#define SSL_ENABLE_DELEGATED_CREDENTIALS 40
+
+/* Causes TLS (>=1.3) to suppress the EndOfEarlyData message in stream mode.
+ *
+ * This is not advisable in general, but the message only exists to delineate
+ * early data in a streamed connection.  DTLS does not use this message as a
+ * result.  The integration of TLS with QUIC, which uses a record/packet
+ * protection layer that is unreliable, also does not use this message.
+ *
+ * On the server, this requires that SSL_RecordLayerData be used.
+ * EndOfEarlyData is otherwise needed to drive key changes.  Additionally,
+ * servers that use this API must check that handshake messages (Certificate,
+ * CertificateVerify, and Finished in particular) are only received in epoch 2
+ * (Handshake).  SSL_RecordLayerData will accept these handshake messages if
+ * they are passed as epoch 1 (Early Data) in a single call.
+ *
+ * Using this option will cause connections to fail if early data is attempted
+ * and the peer expects this message.
+ */
+#define SSL_SUPPRESS_END_OF_EARLY_DATA 41
 
 #ifdef SSL_DEPRECATED_FUNCTION
 /* Old deprecated function names */

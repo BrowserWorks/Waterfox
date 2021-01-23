@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label	"詳細..."><!-- (^^; 表のプロパティで左の説明文を1行に収めるためにも Edit は訳出せず -->
+<!ENTITY AdvancedEditButton.accessKey	"E">
+<!ENTITY AdvancedEditButton.tooltip	"HTML 属性、スタイル属性、JavaScript を追加または編集します">
+<!ENTITY chooseFileButton.label		"ファイルを選択...">
+<!ENTITY chooseFileButton.accessKey	"F">
+<!ENTITY chooseFileLinkButton.label	"ファイルを選択...">
+<!ENTITY chooseFileLinkButton.accessKey	"o">
+<!ENTITY makeUrlRelative.label		"URL をページの場所に相対的にする">
+<!ENTITY makeUrlRelative.accessKey	"r">
+<!ENTITY makeUrlRelative.tooltip	"相対 URL と 絶対 URL を入れ替えます。この変更を反映するには一度ページを保存する必要があります。">
+
+<!-- Shared by Link and Image dialogs -->
+<!ENTITY LinkURLEditField2.label	"ウェブページやローカルファイルの場所を入力するか、フィールドのコンテキストメニューから名前付きアンカーもしくは見出しを選択してください:">
+<!ENTITY LinkURLEditField2.accessKey	"w">

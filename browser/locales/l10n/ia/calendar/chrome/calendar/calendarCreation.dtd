@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "Crear nove agenda" >
+<!ENTITY wizard.label             "Crea un nove agenda" >
+<!ENTITY wizard.description       "Position de agenda" >
+
+<!ENTITY initialpage.description    "Tu pote salvar le agenda sur le computator o sur un servitor, pro lo acceder ab remote o lo compartir con amicos e collaboratores." >
+<!ENTITY initialpage.computer.label  "Sur mi computator">
+<!ENTITY initialpage.network.label  "Sur le rete">
+
+<!ENTITY locationpage.description         "Fornir le informationes necessari pro acceder a vostre agenda remote" >
+<!ENTITY locationpage.login.description   "Optional: insere un nomine de usator e un contrasigno" >
+<!ENTITY locationpage.username.label      "Nomine de usator:" >
+<!ENTITY locationpage.password.label      "Contrasigno:" >
+
+<!ENTITY custompage.shortdescription  "Personalisa tu agenda" >
+<!ENTITY custompage.longdescription   "Tu pote dar un nomine e colorar le eventos ex iste agenda." >
+
+<!ENTITY finishpage.shortdescription  "Agenda create" >
+<!ENTITY finishpage.longdescription   "Tu agenda ha essite create." >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "Altere">
+
+<!ENTITY buttons.create.label "Crear agenda">
+<!ENTITY buttons.create.accesskey "r">
+
+<!ENTITY buttons.find.label "Trovar agendas">
+<!ENTITY buttons.find.accesskey "T">
+
+<!ENTITY buttons.back.label "Retro">
+<!ENTITY buttons.back.accesskey "R">
+
+<!ENTITY buttons.subscribe.label "Subscriber">
+<!ENTITY buttons.subscribe.accesskey "S">
+
+<!ENTITY calendartype.label "Typo de agenda:">
+<!ENTITY location.label "Adresse:">
+<!ENTITY location.placeholder "URL o nomine de hospite del servitor del agenda">
+
+<!ENTITY network.nocredentials.label "Iste position non require credentiales">
+<!ENTITY network.loading.description "Attende durante que tu agendas es discoperite.">
+<!ENTITY network.notfound.description "Impossibile trovar agendas in iste loco. Controla tu parametros.">
+<!ENTITY network.authfail.description "Le credentiales inserite non ha essite acceptate. Controlar le parametros.">
+
+<!ENTITY network.subscribe.single.description "Selige le agendas al quales tu prefere te abonar.">
+<!ENTITY network.subscribe.multiple.description "A iste adresse es disponibile typos de agendas multiple. Selige antea le typo de agenda, pois illos a subscriber.">

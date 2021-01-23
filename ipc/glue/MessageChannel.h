@@ -11,7 +11,6 @@
 #include "base/basictypes.h"
 #include "base/message_loop.h"
 
-#include "nsIMemoryReporter.h"
 #include "mozilla/Atomics.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/Monitor.h"
@@ -38,6 +37,7 @@ namespace ipc {
 
 class MessageChannel;
 class IToplevelProtocol;
+class ActorLifecycleProxy;
 
 class RefCountedMonitor : public Monitor {
  public:
@@ -46,7 +46,12 @@ class RefCountedMonitor : public Monitor {
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(RefCountedMonitor)
 
  private:
-  ~RefCountedMonitor() {}
+  ~RefCountedMonitor() = default;
+};
+
+enum class MessageDirection {
+  eSending,
+  eReceiving,
 };
 
 enum class SyncSendError {
@@ -108,7 +113,7 @@ class MessageChannel : HasResultCodes, MessageLoop::DestructionObserver {
     UntypedCallbackHolder(ActorIdType aActorId, RejectCallback&& aReject)
         : mActorId(aActorId), mReject(std::move(aReject)) {}
 
-    virtual ~UntypedCallbackHolder() {}
+    virtual ~UntypedCallbackHolder() = default;
 
     void Reject(ResponseRejectReason&& aReason) { mReject(std::move(aReason)); }
 
@@ -149,7 +154,7 @@ class MessageChannel : HasResultCodes, MessageLoop::DestructionObserver {
   //
   // Returns true if the transport layer was successfully connected,
   // i.e., mChannelState == ChannelConnected.
-  bool Open(Transport* aTransport, MessageLoop* aIOLoop = 0,
+  bool Open(UniquePtr<Transport> aTransport, MessageLoop* aIOLoop = 0,
             Side aSide = UnknownSide);
 
   // "Open" a connection to another thread in the same process.
@@ -171,6 +176,12 @@ class MessageChannel : HasResultCodes, MessageLoop::DestructionObserver {
   // Same-thread channels may not perform synchronous or blocking message
   // sends, to avoid deadlocks.
   bool OpenOnSameThread(MessageChannel* aTargetChan, Side aSide);
+
+  /**
+   * This sends a special message that is processed on the IO thread, so that
+   * other actors can know that the process will soon shutdown.
+   */
+  void NotifyImpendingShutdown();
 
   // Close the underlying transport channel.
   void Close();
@@ -393,11 +404,11 @@ class MessageChannel : HasResultCodes, MessageLoop::DestructionObserver {
 
   // DispatchMessage will route to one of these functions depending on the
   // protocol type of the message.
-  void DispatchSyncMessage(const Message& aMsg, Message*& aReply);
-  void DispatchUrgentMessage(const Message& aMsg);
-  void DispatchAsyncMessage(const Message& aMsg);
-  void DispatchRPCMessage(const Message& aMsg);
-  void DispatchInterruptMessage(Message&& aMsg, size_t aStackDepth);
+  void DispatchSyncMessage(ActorLifecycleProxy* aProxy, const Message& aMsg,
+                           Message*& aReply);
+  void DispatchAsyncMessage(ActorLifecycleProxy* aProxy, const Message& aMsg);
+  void DispatchInterruptMessage(ActorLifecycleProxy* aProxy, Message&& aMsg,
+                                size_t aStackDepth);
 
   // Return true if the wait ended because a notification was received.
   //
@@ -457,6 +468,9 @@ class MessageChannel : HasResultCodes, MessageLoop::DestructionObserver {
   // This method is only safe to call on the worker thread, or in a
   // debugger with all threads paused.
   void DumpInterruptStack(const char* const pfx = "") const;
+
+  void AddProfilerMarker(const IPC::Message* aMessage,
+                         MessageDirection aDirection);
 
  private:
   // Called from both threads
@@ -539,7 +553,7 @@ class MessageChannel : HasResultCodes, MessageLoop::DestructionObserver {
   // Can be run on either thread
   void AssertWorkerThread() const {
     MOZ_ASSERT(mWorkerThread, "Channel hasn't been opened yet");
-    MOZ_RELEASE_ASSERT(mWorkerThread == GetCurrentVirtualThread(),
+    MOZ_RELEASE_ASSERT(mWorkerThread == PR_GetCurrentThread(),
                        "not on worker thread!");
   }
 
@@ -557,14 +571,15 @@ class MessageChannel : HasResultCodes, MessageLoop::DestructionObserver {
     // If we aren't a same-thread channel, our "link" thread is _not_ our
     // worker thread!
     MOZ_ASSERT(mWorkerThread, "Channel hasn't been opened yet");
-    MOZ_RELEASE_ASSERT(mWorkerThread != GetCurrentVirtualThread(),
+    MOZ_RELEASE_ASSERT(mWorkerThread != PR_GetCurrentThread(),
                        "on worker thread but should not be!");
   }
 
  private:
   class MessageTask : public CancelableRunnable,
                       public LinkedListElement<RefPtr<MessageTask>>,
-                      public nsIRunnablePriority {
+                      public nsIRunnablePriority,
+                      public nsIRunnableIPCMessageType {
    public:
     explicit MessageTask(MessageChannel* aChannel, Message&& aMessage);
 
@@ -573,6 +588,7 @@ class MessageChannel : HasResultCodes, MessageLoop::DestructionObserver {
     NS_IMETHOD Run() override;
     nsresult Cancel() override;
     NS_IMETHOD GetPriority(uint32_t* aPriority) override;
+    NS_DECL_NSIRUNNABLEIPCMESSAGETYPE
     void Post();
     void Clear();
 
@@ -584,7 +600,7 @@ class MessageChannel : HasResultCodes, MessageLoop::DestructionObserver {
    private:
     MessageTask() = delete;
     MessageTask(const MessageTask&) = delete;
-    ~MessageTask() {}
+    ~MessageTask() = default;
 
     MessageChannel* mChannel;
     Message mMessage;

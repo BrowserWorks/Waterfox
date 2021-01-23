@@ -3,14 +3,31 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 include ClientIPCTypes;
+include IPCServiceWorkerDescriptor;
+include IPCServiceWorkerRegistrationDescriptor;
 include PBackgroundSharedTypes;
 include URIParams;
+include DOMTypes;
+include ProtocolTypes;
 
 using struct mozilla::void_t from "ipc/IPCMessageUtils.h";
-using nsContentUtils::StorageAccess from "mozilla/dom/ClientIPCUtils.h";
+using mozilla::StorageAccess from "mozilla/dom/ClientIPCUtils.h";
 
 namespace mozilla {
 namespace dom {
+
+struct ServiceWorkerData {
+  IPCServiceWorkerDescriptor descriptor;
+  IPCServiceWorkerRegistrationDescriptor registrationDescriptor;
+  nsString cacheName;
+  uint32_t loadFlags;
+  nsString id;
+};
+
+union OptionalServiceWorkerData {
+  void_t;
+  ServiceWorkerData;
+};
 
 struct RemoteWorkerData
 {
@@ -31,16 +48,8 @@ struct RemoteWorkerData
   nsString name;
 
   PrincipalInfo loadingPrincipalInfo;
-  ContentSecurityPolicy[] loadingPrincipalCsp;
-  ContentSecurityPolicy[] loadingPrincipalPreloadCsp;
-
   PrincipalInfo principalInfo;
-  ContentSecurityPolicy[] principalCsp;
-  ContentSecurityPolicy[] principalPreloadCsp;
-
   PrincipalInfo storagePrincipalInfo;
-  ContentSecurityPolicy[] storagePrincipalCsp;
-  ContentSecurityPolicy[] storagePrincipalPreloadCsp;
 
   nsCString domain;
 
@@ -48,9 +57,13 @@ struct RemoteWorkerData
 
   IPCClientInfo? clientInfo;
 
+  nsIReferrerInfo referrerInfo;
+
   StorageAccess storageAccess;
 
-  bool isSharedWorker;
+  OptionalServiceWorkerData serviceWorkerData;
+
+  nsID agentClusterId;
 };
 
 // ErrorData/ErrorDataNote correspond to WorkerErrorReport/WorkerErrorNote
@@ -67,9 +80,9 @@ struct ErrorDataNote {
 };
 
 struct ErrorData {
+  bool isWarning;
   uint32_t lineNumber;
   uint32_t columnNumber;
-  uint32_t flags;
   nsString message;
   nsString filename;
   nsString line;

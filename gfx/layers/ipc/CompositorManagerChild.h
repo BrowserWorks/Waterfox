@@ -76,11 +76,6 @@ class CompositorManagerChild : public PCompositorManagerChild {
 
   void ProcessingError(Result aCode, const char* aReason) override;
 
-  PCompositorBridgeChild* AllocPCompositorBridgeChild(
-      const CompositorBridgeOptions& aOptions);
-
-  bool DeallocPCompositorBridgeChild(PCompositorBridgeChild* aActor);
-
   bool ShouldContinueFromReplyTimeout() override;
 
   mozilla::ipc::IPCResult RecvNotifyWebRenderError(
@@ -97,10 +92,7 @@ class CompositorManagerChild : public PCompositorManagerChild {
 
   virtual ~CompositorManagerChild() = default;
 
-  void DeallocPCompositorManagerChild() override;
-
-  already_AddRefed<nsIEventTarget> GetSpecificMessageEventTarget(
-      const Message& aMsg) override;
+  void ActorDealloc() override;
 
   void SetReplyTimeout();
 

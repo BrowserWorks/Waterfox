@@ -13,9 +13,6 @@
 #include "nsCycleCollectionParticipant.h"
 #include "nsString.h"
 
-template <class>
-struct already_AddRefed;
-
 namespace mozilla {
 
 class EventChainPreVisitor;
@@ -33,10 +30,8 @@ class IDBFileRequest final : public DOMRequest {
   bool mHasEncoding;
 
  public:
-  class ResultCallback;
-
-  static already_AddRefed<IDBFileRequest> Create(IDBFileHandle* aFileHandle,
-                                                 bool aWrapAsDOMRequest);
+  [[nodiscard]] static RefPtr<IDBFileRequest> Create(IDBFileHandle* aFileHandle,
+                                                     bool aWrapAsDOMRequest);
 
   void SetEncoding(const nsAString& aEncoding) {
     mEncoding = aEncoding;
@@ -49,7 +44,26 @@ class IDBFileRequest final : public DOMRequest {
 
   void FireProgressEvent(uint64_t aLoaded, uint64_t aTotal);
 
-  void SetResultCallback(ResultCallback* aCallback);
+  template <typename ResultCallback>
+  void SetResult(const ResultCallback& aCallback) {
+    AssertIsOnOwningThread();
+
+    AutoJSAPI autoJS;
+    if (NS_WARN_IF(!autoJS.Init(GetOwnerGlobal()))) {
+      FireError(NS_ERROR_DOM_FILEHANDLE_UNKNOWN_ERR);
+      return;
+    }
+
+    JSContext* cx = autoJS.cx();
+
+    JS::Rooted<JS::Value> result(cx);
+    nsresult rv = aCallback(cx, &result);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      FireError(rv);
+    } else {
+      FireSuccess(result);
+    }
+  }
 
   // WebIDL
   IDBFileHandle* GetFileHandle() const {
@@ -82,15 +96,6 @@ class IDBFileRequest final : public DOMRequest {
   IDBFileRequest(IDBFileHandle* aFileHandle, bool aWrapAsDOMRequest);
 
   ~IDBFileRequest();
-};
-
-class NS_NO_VTABLE IDBFileRequest::ResultCallback {
- public:
-  virtual nsresult GetResult(JSContext* aCx,
-                             JS::MutableHandle<JS::Value> aResult) = 0;
-
- protected:
-  ResultCallback() {}
 };
 
 }  // namespace dom

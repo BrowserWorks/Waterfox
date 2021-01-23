@@ -1,0 +1,70 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Propiedades">
+
+<!ENTITY generalInfo.label                       "Información xeral">
+<!ENTITY folderCharsetFallback2.label            "Codificación de texto alternativa:">
+<!ENTITY folderCharsetFallback2.accesskey        "e">
+<!ENTITY folderCharsetEnforce2.label             "Aplicar a codificación a todas as mensaxes do cartafol (ignóranse as preferencias de codificación de texto de mensaxes individuais, así como a detección automática)">
+<!ENTITY folderCharsetEnforce2.accesskey         "A">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Reconstruír índice do ficheiro resumo">
+<!ENTITY folderRebuildSummaryFile2.label         "Reparar o cartafol">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "R">
+<!ENTITY folderRebuildSummaryFile.explanation    "A veces o ficheiro de índice de cartafol (.msf) dánase e pode que pareza que faltan mensaxes ou que se seguen amosando mensaxes borradas: reparar o cartafol debería resolver estes problemas.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Incluír as mensaxes deste cartafol nos resultados da Busca global">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "g">
+
+<!ENTITY retention.label "Política de retención">
+<!ENTITY retentionUseAccount.label  "Usar as configuracións da miña conta">
+<!ENTITY retentionUseAccount.accesskey "U">
+<!ENTITY daysOld.label "días de antigüidade">
+<!ENTITY message.label "mensaxes">
+<!ENTITY retentionCleanup.label "Para recuperar espazo no disco, as mensaxes antigas poden eliminarse permanentemente">
+<!ENTITY retentionCleanupImap.label "Para recuperar espazo en disco, as mensaxes antigas poden eliminarse permanentemente, tanto as copias locais como os orixinais no servidor remoto:">
+<!ENTITY retentionCleanupPop.label "Para recuperar espazo en disco, incluíndo os orixinais no servidor remoto:">
+<!ENTITY retentionDeleteMsg.label "Eliminar mensaxes maiores que">
+<!ENTITY retentionDeleteMsg.accesskey "m">
+<!ENTITY retentionKeepAll.label "Non eliminar ningunha mensaxe">
+<!ENTITY retentionKeepAll.accesskey "N">
+<!ENTITY retentionKeepRecent.label "Eliminar todas excepto as máis recentes">
+<!ENTITY retentionKeepRecent.accesskey "l">
+<!ENTITY retentionApplyToFlagged.label "Sempre manter mensaxes marcadas">
+<!ENTITY retentionApplyToFlagged.accesskey "e">
+
+<!ENTITY folderSynchronizationTab.label          "Sincronización">
+<!ENTITY folderCheckForNewMessages2.label         "Cando obteña novas mensaxes parar esta conta, comprobar sempre este cartafol">
+<!ENTITY folderCheckForNewMessages2.accesskey     "c">
+
+<!ENTITY offlineFolder.check.label               "Seleccionar este cartafol para utilizar sen conexión">
+<!ENTITY offlineFolder.check.accesskey           "n">
+<!ENTITY offlineFolder.button.label              "Descargar">
+<!ENTITY offlineFolder.button.accesskey          "g">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Seleccionar este grupo de noticias para utilizar sen conexión">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "z">
+<!ENTITY offlineNewsgroup.button.label           "Descargar">
+<!ENTITY offlineNewsgroup.button.accesskey       "s">
+
+<!ENTITY folderProps.name.label                  "Nome:">
+<!ENTITY folderProps.name.accesskey              "m">
+<!ENTITY folderProps.location.label              "Localización:">
+<!ENTITY folderProps.location.accesskey          "L">
+
+<!ENTITY folderSharingTab.label                  "Compartición">
+<!ENTITY privileges.button.label                 "Privilexios…">
+<!ENTITY privileges.button.accesskey             "P">
+<!ENTITY permissionsDesc.label                   "Ten os seguintes permisos:">
+<!ENTITY folderType.label                        "Tipo de cartafol:">
+
+<!ENTITY folderQuotaTab.label                    "Cota">
+<!ENTITY folderQuotaUsage.label                  "Uso:">
+<!ENTITY folderQuotaStatus.label                 "Estado:">
+
+<!ENTITY numberOfMessages.label                  "Número de mensaxes:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "descoñecido">
+<!ENTITY sizeOnDisk.label                        "Tamaño no disco:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "descoñecido">

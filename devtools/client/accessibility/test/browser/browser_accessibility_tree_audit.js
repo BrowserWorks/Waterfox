@@ -3,7 +3,7 @@
 
 "use strict";
 
-/* global toggleRow, toggleFilter */
+/* global toggleRow, toggleMenuItem, TREE_FILTERS_MENU_ID */
 
 const TEST_URI = `<html>
   <head>
@@ -63,9 +63,9 @@ const tests = [
     },
   },
   {
-    desc: "Click on the contrast filter.",
-    setup: async ({ doc }) => {
-      await toggleFilter(doc, 0);
+    desc: "Click on the all filter.",
+    setup: async ({ doc, toolbox }) => {
+      await toggleMenuItem(doc, toolbox.doc, TREE_FILTERS_MENU_ID, 1);
     },
     expected: {
       tree: [
@@ -86,9 +86,9 @@ const tests = [
     },
   },
   {
-    desc: "Click on the contrast filter again.",
-    setup: async ({ doc }) => {
-      await toggleFilter(doc, 0);
+    desc: "Click on the all filter again.",
+    setup: async ({ doc, toolbox }) => {
+      await toggleMenuItem(doc, toolbox.doc, TREE_FILTERS_MENU_ID, 1);
     },
     expected: {
       tree: [

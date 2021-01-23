@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY time.midnight "Miðnætti">
+<!ENTITY time.noon "Hádegi">
+<!-- Day Names -->
+<!-- LOCALIZATION NOTE : Accesskeys for day.1.Ddd to day.7.Ddd are currently
+     only used in Preferences > Views > Workweek groupbox -->
+<!ENTITY day.1.Ddd "Sun">
+<!ENTITY day.1.Ddd.accesskey "S">
+<!ENTITY day.2.Ddd "Mán">
+<!ENTITY day.2.Ddd.accesskey "M">
+<!ENTITY day.3.Ddd "Þri">
+<!ENTITY day.3.Ddd.accesskey "r">
+<!ENTITY day.4.Ddd "Mið">
+<!ENTITY day.4.Ddd.accesskey "i">
+<!ENTITY day.5.Ddd "Fim">
+<!ENTITY day.5.Ddd.accesskey "F">
+<!ENTITY day.6.Ddd "Fös">
+<!ENTITY day.6.Ddd.accesskey "ö">
+<!ENTITY day.7.Ddd "Lau">
+<!ENTITY day.7.Ddd.accesskey "L">
+<!ENTITY day.1.name "Sunnudagur">
+<!ENTITY day.2.name "Mánudagur">
+<!ENTITY day.3.name "Þriðjudagur">
+<!ENTITY day.4.name "Miðvikudagur">
+<!ENTITY day.5.name "Fimmtudagur">
+<!ENTITY day.6.name "Föstudagur">
+<!ENTITY day.7.name "Laugardagur">
+<!ENTITY month.1.name "Janúar">
+<!ENTITY month.2.name "Febrúar">
+<!ENTITY month.3.name "Mars">
+<!ENTITY month.4.name "Apríl">
+<!ENTITY month.5.name "Maí">
+<!ENTITY month.6.name "Júní">
+<!ENTITY month.7.name "Júlí">
+<!ENTITY month.8.name "Ágúst">
+<!ENTITY month.9.name "September">
+<!ENTITY month.10.name "Október">
+<!ENTITY month.11.name "Nóvember">
+<!ENTITY month.12.name "Desember">
+<!ENTITY onemonthbackward.tooltip "Einn mánuð til baka">
+<!ENTITY onemonthforward.tooltip "Einn mánuð áfram">
+<!ENTITY showToday.tooltip "Hoppa á daginn í dag">
+<!ENTITY onedayforward.tooltip "Einn dag áfram">
+<!ENTITY onedaybackward.tooltip "Einn dag til baka">
+<!ENTITY showselectedday.tooltip "Sýna atburði fyrir valinn dag">

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProduct2.label      "O programie &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "O">
+
+<!ENTITY preferencesCmdMac.label        "Preferencje…">
+
+<!ENTITY servicesMenuMac.label          "Usługi">
+
+<!ENTITY hideThisAppCmdMac2.label       "Ukryj program">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Ukryj pozostałe">
+
+<!ENTITY showAllAppsCmdMac.label        "Pokaż wszystkie">
+
+<!ENTITY touchBarCmdMac.label           "Dostosuj pasek Touch Bar…">

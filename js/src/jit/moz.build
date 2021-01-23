@@ -16,18 +16,7 @@ include('../js-config.mozbuild')
 include('../js-cxxflags.mozbuild')
 
 
-# Generate jit/MOpcodes.h from jit/MIR.h
-GENERATED_FILES += ['MOpcodes.h']
-MOpcodesGenerated = GENERATED_FILES['MOpcodes.h']
-MOpcodesGenerated.script = 'GenerateOpcodeFiles.py:generate_mir_header'
-MOpcodesGenerated.inputs = ['MIR.h']
-
-# Generate jit/LOpcodes.h from jit/LIR.h, jit/shared/LIR-shared.h, and
-# platform-specific LIR files.
-GENERATED_FILES += ['LOpcodes.h']
-LOpcodesGenerated = GENERATED_FILES['LOpcodes.h']
-LOpcodesGenerated.script = 'GenerateOpcodeFiles.py:generate_lir_header'
-LOpcodesGenerated.inputs = ['LIR.h', 'shared/LIR-shared.h']
+lir_inputs = ['LIR.h', 'shared/LIR-shared.h']
 
 
 UNIFIED_SOURCES += [
@@ -37,7 +26,7 @@ UNIFIED_SOURCES += [
     'Bailouts.cpp',
     'BaselineBailouts.cpp',
     'BaselineCacheIRCompiler.cpp',
-    'BaselineCompiler.cpp',
+    'BaselineCodeGen.cpp',
     'BaselineDebugModeOSR.cpp',
     'BaselineFrame.cpp',
     'BaselineFrameInfo.cpp',
@@ -51,6 +40,7 @@ UNIFIED_SOURCES += [
     'CacheIRSpewer.cpp',
     'CodeGenerator.cpp',
     'CompileWrappers.cpp',
+    'Disassemble.cpp',
     'EdgeCaseAnalysis.cpp',
     'EffectiveAddressAnalysis.cpp',
     'ExecutableAllocator.cpp',
@@ -60,13 +50,15 @@ UNIFIED_SOURCES += [
     'IonAnalysis.cpp',
     'IonBuilder.cpp',
     'IonCacheIRCompiler.cpp',
-    'IonControlFlow.cpp',
+    'IonCompileTask.cpp',
     'IonIC.cpp',
     'IonOptimizationLevels.cpp',
     'Jit.cpp',
     'JitcodeMap.cpp',
+    'JitContext.cpp',
     'JitFrames.cpp',
     'JitOptions.cpp',
+    'JitScript.cpp',
     'JitSpewer.cpp',
     'JSJitFrameIter.cpp',
     'JSONSpewer.cpp',
@@ -79,7 +71,6 @@ UNIFIED_SOURCES += [
     'MIR.cpp',
     'MIRGraph.cpp',
     'MoveResolver.cpp',
-    'OptimizationTracking.cpp',
     'PerfSpewer.cpp',
     'ProcessExecutableMemory.cpp',
     'RangeAnalysis.cpp',
@@ -88,27 +79,30 @@ UNIFIED_SOURCES += [
     'RematerializedFrame.cpp',
     'Safepoints.cpp',
     'ScalarReplacement.cpp',
-    'shared/Assembler-shared.cpp',
     'shared/CodeGenerator-shared.cpp',
     'shared/Disassembler-shared.cpp',
     'shared/Lowering-shared.cpp',
     'Sink.cpp',
     'Snapshots.cpp',
-    'StupidAllocator.cpp',
-    'TypedObjectPrediction.cpp',
+    'TIOracle.cpp',
     'TypePolicy.cpp',
     'ValueNumbering.cpp',
     'VMFunctions.cpp',
+    'WarpBuilder.cpp',
+    'WarpBuilderShared.cpp',
+    'WarpCacheIRTranspiler.cpp',
+    'WarpOracle.cpp',
+    'WarpSnapshot.cpp',
     'WasmBCE.cpp',
 ]
 
-if not CONFIG['ENABLE_ION']:
-    LOpcodesGenerated.inputs += ['none/LIR-none.h']
+if CONFIG['JS_CODEGEN_NONE']:
+    lir_inputs += ['none/LIR-none.h']
     UNIFIED_SOURCES += [
         'none/Trampoline-none.cpp'
     ]
 elif CONFIG['JS_CODEGEN_X86'] or CONFIG['JS_CODEGEN_X64']:
-    LOpcodesGenerated.inputs += ['x86-shared/LIR-x86-shared.h']
+    lir_inputs += ['x86-shared/LIR-x86-shared.h']
     UNIFIED_SOURCES += [
         'shared/AtomicOperations-shared-jit.cpp',
         'x86-shared/Architecture-x86-shared.cpp',
@@ -121,7 +115,7 @@ elif CONFIG['JS_CODEGEN_X86'] or CONFIG['JS_CODEGEN_X64']:
         'x86-shared/MoveEmitter-x86-shared.cpp',
     ]
     if CONFIG['JS_CODEGEN_X64']:
-        LOpcodesGenerated.inputs += ['x64/LIR-x64.h']
+        lir_inputs += ['x64/LIR-x64.h']
         UNIFIED_SOURCES += [
             'x64/Assembler-x64.cpp',
             'x64/Bailouts-x64.cpp',
@@ -131,7 +125,7 @@ elif CONFIG['JS_CODEGEN_X86'] or CONFIG['JS_CODEGEN_X64']:
             'x64/Trampoline-x64.cpp',
         ]
     else:
-        LOpcodesGenerated.inputs += ['x86/LIR-x86.h']
+        lir_inputs += ['x86/LIR-x86.h']
         UNIFIED_SOURCES += [
             'x86/Assembler-x86.cpp',
             'x86/Bailouts-x86.cpp',
@@ -141,7 +135,7 @@ elif CONFIG['JS_CODEGEN_X86'] or CONFIG['JS_CODEGEN_X64']:
             'x86/Trampoline-x86.cpp',
         ]
 elif CONFIG['JS_CODEGEN_ARM']:
-    LOpcodesGenerated.inputs += ['arm/LIR-arm.h']
+    lir_inputs += ['arm/LIR-arm.h']
     UNIFIED_SOURCES += [
         'arm/Architecture-arm.cpp',
         'arm/Assembler-arm.cpp',
@@ -165,7 +159,7 @@ elif CONFIG['JS_CODEGEN_ARM']:
             'arm/llvm-compiler-rt/arm/aeabi_uidivmod.S',
         ]
 elif CONFIG['JS_CODEGEN_ARM64']:
-    LOpcodesGenerated.inputs += ['arm64/LIR-arm64.h']
+    lir_inputs += ['arm64/LIR-arm64.h']
     UNIFIED_SOURCES += [
         'arm64/Architecture-arm64.cpp',
         'arm64/Assembler-arm64.cpp',
@@ -176,6 +170,7 @@ elif CONFIG['JS_CODEGEN_ARM64']:
         'arm64/MoveEmitter-arm64.cpp',
         'arm64/Trampoline-arm64.cpp',
         'arm64/vixl/Assembler-vixl.cpp',
+        'arm64/vixl/Cpu-Features-vixl.cpp',
         'arm64/vixl/Cpu-vixl.cpp',
         'arm64/vixl/Decoder-vixl.cpp',
         'arm64/vixl/Instructions-vixl.cpp',
@@ -202,7 +197,7 @@ elif CONFIG['JS_CODEGEN_ARM64']:
             'arm64/vixl/Simulator-vixl.cpp'
         ]
 elif CONFIG['JS_CODEGEN_MIPS32'] or CONFIG['JS_CODEGEN_MIPS64']:
-    LOpcodesGenerated.inputs += ['mips-shared/LIR-mips-shared.h']
+    lir_inputs += ['mips-shared/LIR-mips-shared.h']
     UNIFIED_SOURCES += [
         'mips-shared/Architecture-mips-shared.cpp',
         'mips-shared/Assembler-mips-shared.cpp',
@@ -213,7 +208,7 @@ elif CONFIG['JS_CODEGEN_MIPS32'] or CONFIG['JS_CODEGEN_MIPS64']:
         'mips-shared/MoveEmitter-mips-shared.cpp',
     ]
     if CONFIG['JS_CODEGEN_MIPS32']:
-        LOpcodesGenerated.inputs += ['mips32/LIR-mips32.h']
+        lir_inputs += ['mips32/LIR-mips32.h']
         UNIFIED_SOURCES += [
             'mips32/Architecture-mips32.cpp',
             'mips32/Assembler-mips32.cpp',
@@ -229,7 +224,7 @@ elif CONFIG['JS_CODEGEN_MIPS32'] or CONFIG['JS_CODEGEN_MIPS64']:
                 'mips32/Simulator-mips32.cpp'
             ]
     elif CONFIG['JS_CODEGEN_MIPS64']:
-        LOpcodesGenerated.inputs += ['mips64/LIR-mips64.h']
+        lir_inputs += ['mips64/LIR-mips64.h']
         UNIFIED_SOURCES += [
             'mips64/Architecture-mips64.cpp',
             'mips64/Assembler-mips64.cpp',
@@ -244,3 +239,23 @@ elif CONFIG['JS_CODEGEN_MIPS32'] or CONFIG['JS_CODEGEN_MIPS64']:
             UNIFIED_SOURCES += [
                 'mips64/Simulator-mips64.cpp'
             ]
+
+
+# Generate jit/MOpcodesGenerated.h from jit/MIR.h
+GeneratedFile('MOpcodesGenerated.h',
+              script='GenerateOpcodeFiles.py',
+              entry_point='generate_mir_header',
+              inputs=['MIR.h'])
+
+# Generate jit/LOpcodesGenerated.h from jit/LIR.h, jit/shared/LIR-shared.h, and
+# platform-specific LIR files.
+GeneratedFile('LOpcodesGenerated.h',
+              script='GenerateOpcodeFiles.py',
+              entry_point='generate_lir_header',
+              inputs=lir_inputs)
+
+# Generate jit/CacheIROpsGenerated.h from jit/CacheIROps.yaml
+GeneratedFile('CacheIROpsGenerated.h',
+              script='GenerateCacheIRFiles.py',
+              entry_point='generate_cacheirops_header',
+              inputs=['CacheIROps.yaml'])

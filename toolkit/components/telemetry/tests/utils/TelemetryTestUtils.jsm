@@ -150,7 +150,8 @@ var TelemetryTestUtils = {
     let matches = (expected, actual) => {
       if (expected === undefined) {
         return true;
-      } else if (expected instanceof RegExp) {
+      } else if (expected && expected.test) {
+        // Possibly a RegExp.
         return expected.test(actual);
       } else if (typeof expected === "function") {
         return expected(actual);
@@ -174,8 +175,8 @@ var TelemetryTestUtils = {
 
     // Step 2: Match.
     Assert.equal(
-      expectedEvents.length,
       filtered.length,
+      expectedEvents.length,
       "After filtering we must have the expected number of events."
     );
     if (expectedEvents.length === 0) {
@@ -212,9 +213,7 @@ var TelemetryTestUtils = {
           !matches(expected[j], actual[j]),
           actual[j],
           expected[j],
-          `${FIELD_NAMES[j]} in event ${actual[0]}#${actual[1]}#${
-            actual[2]
-          } must match.`,
+          `${FIELD_NAMES[j]} in event ${actual[0]}#${actual[1]}#${actual[2]} must match.`,
           "matches"
         );
       }
@@ -226,9 +225,7 @@ var TelemetryTestUtils = {
       ) {
         Assert.ok(
           actual.length > EXTRA_INDEX,
-          `Actual event ${actual[0]}#${actual[1]}#${
-            actual[2]
-          } expected to have extra.`
+          `Actual event ${actual[0]}#${actual[1]}#${actual[2]} expected to have extra.`
         );
         let expectedExtra = expected[EXTRA_INDEX];
         let actualExtra = actual[EXTRA_INDEX];
@@ -243,9 +240,7 @@ var TelemetryTestUtils = {
             !matches(value, actualExtra[key]),
             actualExtra[key],
             value,
-            `extra[${key}] must match in event ${actual[0]}#${actual[1]}#${
-              actual[2]
-            }.`,
+            `extra[${key}] must match in event ${actual[0]}#${actual[1]}#${actual[2]}.`,
             "matches"
           );
         }

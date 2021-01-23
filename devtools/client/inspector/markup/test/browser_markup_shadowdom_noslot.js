@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -75,7 +74,7 @@ add_task(async function() {
   );
   const mutated = waitForNMutations(inspector, "childList", 2);
   const pseudoMutated = waitForMutation(inspector, "nativeAnonymousChildList");
-  ContentTask.spawn(gBrowser.selectedBrowser, {}, function() {
+  SpecialPowers.spawn(gBrowser.selectedBrowser, [], function() {
     const root = content.document.querySelector(".root");
     const hasBeforeEl = content.document.querySelector(
       "no-slot-component .has-before"

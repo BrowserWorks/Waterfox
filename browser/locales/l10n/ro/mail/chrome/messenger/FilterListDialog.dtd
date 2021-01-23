@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Filtre de mesaje">
+<!ENTITY nameColumn.label "Denumire filtru">
+<!ENTITY activeColumn.label "Activat">
+<!ENTITY newButton.label "Nou…">
+<!ENTITY newButton.accesskey "N">
+<!ENTITY newButton.popupCopy.label "Copiază…">
+<!ENTITY newButton.popupCopy.accesskey "C">
+<!ENTITY editButton.label "Editează…">
+<!ENTITY editButton.accesskey "E">
+<!ENTITY deleteButton.label "Șterge">
+<!ENTITY deleteButton.accesskey "t">
+<!ENTITY reorderTopButton "Mută în partea de sus">
+<!ENTITY reorderTopButton.accessKey "s">
+<!ENTITY reorderTopButton.toolTip "Reordonează filtrul ca să fie executat înaintea tuturor celorlalte">
+<!ENTITY reorderUpButton.label "Mută sus">
+<!ENTITY reorderUpButton.accesskey "s">
+<!ENTITY reorderDownButton.label "Mută jos">
+<!ENTITY reorderDownButton.accesskey "j">
+<!ENTITY reorderBottomButton "Mută în partea de jos">
+<!ENTITY reorderBottomButton.accessKey "j">
+<!ENTITY reorderBottomButton.toolTip "Reordonează filtrul ca să fie executat după toate celelalte">
+<!ENTITY filterHeader.label "Filtrele active vor fi rulate automat în ordinea de mai jos.">
+<!ENTITY filtersForPrefix.label "Filtre pentru:">
+<!ENTITY filtersForPrefix.accesskey "F">
+<!ENTITY viewLogButton.label "Jurnal pentru filtre">
+<!ENTITY viewLogButton.accesskey "J">
+<!ENTITY runFilters.label "Rulează acum">
+<!ENTITY runFilters.accesskey "R">
+<!ENTITY stopFilters.label "Oprire">
+<!ENTITY stopFilters.accesskey "O">
+<!ENTITY folderPickerPrefix.label "Rulează filtrul(ele) selectate pe:">
+<!ENTITY folderPickerPrefix.accesskey "c">
+<!ENTITY helpButton.label "Ajutor">
+<!ENTITY helpButton.accesskey "A">
+<!ENTITY closeCmd.key "w">
+<!ENTITY searchBox.emptyText "Caută filtre după nume…">

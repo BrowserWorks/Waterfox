@@ -9,7 +9,6 @@
 #include "nsDebug.h"
 #include "nsIWidget.h"
 #include "gfxPlatform.h"
-#include "gfxPrefs.h"
 #include "gfxWindowsSurface.h"
 
 #include "gfxCrashReporterUtils.h"
@@ -215,7 +214,8 @@ bool WGLLibrary::EnsureInitialized() {
   // --
 
   bool hasDXInterop2 = HasExtension(extString, "WGL_NV_DX_interop2");
-  if (gfxVars::DXInterop2Blocked() && !gfxPrefs::IgnoreDXInterop2Blacklist()) {
+  if (gfxVars::DXInterop2Blocked() &&
+      !StaticPrefs::gl_ignore_dx_interop2_blacklist()) {
     hasDXInterop2 = false;
   }
 
@@ -460,13 +460,6 @@ already_AddRefed<GLContext> GLContextProviderWGL::CreateForCompositorWidget(
   }
   return CreateForWidget(aCompositorWidget->AsWindows()->GetHwnd(), aWebRender,
                          aForceAccelerated)
-      .forget();
-}
-
-already_AddRefed<GLContext> GLContextProviderWGL::CreateForWindow(
-    nsIWidget* aWidget, bool aWebRender, bool aForceAccelerated) {
-  return CreateForWidget((HWND)aWidget->GetNativeData(NS_NATIVE_WINDOW),
-                         aWebRender, aForceAccelerated)
       .forget();
 }
 

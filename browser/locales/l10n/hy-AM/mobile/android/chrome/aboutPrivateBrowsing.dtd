@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title "Գաղտնի դիտարկում">
+<!-- Localisation note: the plus sign here is a shorthand way of expressing the word "and". Contextually the privatebrowsingpage.title.private string
+                        is used as a title, with the privatebrowsingpage.title string preceding it but on a separate line.
+                        So the final line will say "Private Browsing + Tracking Protection". -->
+
+<!ENTITY privatebrowsingpage.title.private "+ Հետագծման պաշտպանություն">
+<!-- Localization note (privatebrowsingpage.title.normal1): "Private Browsing"
+     is capitalized in English to be consistent with our existing uses of the
+     term. -->
+<!ENTITY privatebrowsingpage.title.normal1 "Սա Գաղտնի դիտարկում չէ">
+
+<!ENTITY privatebrowsingpage.description.trackingProtection "&brandShortName;-ը արգելափակում է էջերի այն հատվածները, որոնք կարող են հետագծել ձեր ակտիվությունը:">
+<!ENTITY privatebrowsingpage.description.privateDetails "Պատմությունը չի հիշվի, բայց ներբեռնված ֆայլերը և նոր էջանիշերը կպահվեն ձեր սարքում:">
+<!-- Localization note (privatebrowsingpage.description.normal2): "Private
+     Browsing is capitalized in English to be consistent with our existing uses
+     of the term. -->
+
+<!ENTITY privatebrowsingpage.description.normal2 "Գաղտնի դիտարկման ժամանակ չեն պահպանվում դիտարկման պատմությունը կամ cookie-ները: Էջանիշերը և ներբեռնած ֆայլերը կպահպանվեն Ձեր սարքում:">
+
+<!ENTITY privatebrowsingpage.link.private "Ցանկանու՞մ եք իմանալ ավելին">
+<!ENTITY privatebrowsingpage.link.normal "Բացել նոր գաղտնի դիտարկում">

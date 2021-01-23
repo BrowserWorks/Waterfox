@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageMarkByDate.label "तिथि के अनुसार संदेश पठित चिह्नित करें">
+<!ENTITY markByDateLower.label "संदेश बतौर पठित इससे चिह्नित करें:">
+<!ENTITY markByDateLower.accesskey "F">
+<!ENTITY markByDateUpper.label "प्रति:">
+<!ENTITY markByDateUpper.accesskey "T">

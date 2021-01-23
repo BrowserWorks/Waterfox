@@ -28,7 +28,7 @@ StaticRefPtr<MIDIAccessManager> gMIDIAccessManager;
 
 MIDIAccessManager::MIDIAccessManager() : mHasPortList(false), mChild(nullptr) {}
 
-MIDIAccessManager::~MIDIAccessManager() {}
+MIDIAccessManager::~MIDIAccessManager() = default;
 
 // static
 MIDIAccessManager* MIDIAccessManager::Get() {
@@ -94,7 +94,7 @@ bool MIDIAccessManager::AddObserver(Observer<MIDIPortList>* aObserver) {
       return false;
     }
     MOZ_ASSERT(constructedMgr == mgr);
-    mChild = mgr.forget();
+    mChild = std::move(mgr);
     // Add a ref to mChild here, that will be deref'd by
     // BackgroundChildImpl::DeallocPMIDIManagerChild on IPC cleanup.
     mChild->SetActorAlive();

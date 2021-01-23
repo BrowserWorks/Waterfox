@@ -1,41 +1,23 @@
 "use strict";
 
-const TEST_HOSTNAME = "https://example.com";
+const TEST_ORIGIN = "https://example.com";
 const BASIC_FORM_PAGE_PATH = DIRECTORY_PATH + "form_basic.html";
 
 function loginList() {
   return [
     LoginTestUtils.testData.formLogin({
-      hostname: "https://example.com",
-      formSubmitURL: "https://example.com",
+      origin: "https://example.com",
+      formActionOrigin: "https://example.com",
       username: "username",
       password: "password",
     }),
     LoginTestUtils.testData.formLogin({
-      hostname: "https://example.com",
-      formSubmitURL: "https://example.com",
+      origin: "https://example.com",
+      formActionOrigin: "https://example.com",
       username: "username2",
       password: "password2",
     }),
   ];
-}
-
-function openPopup(popup, browser) {
-  return new Promise(async resolve => {
-    let promiseShown = BrowserTestUtils.waitForEvent(popup, "popupshown");
-
-    await SimpleTest.promiseFocus(browser);
-    info("content window focused");
-
-    // Focus the username field to open the popup.
-    await ContentTask.spawn(browser, null, function openAutocomplete() {
-      content.document.getElementById("form-basic-username").focus();
-    });
-
-    let shown = await promiseShown;
-    ok(shown, "autocomplete popup shown");
-    resolve(shown);
-  });
 }
 
 /**
@@ -53,7 +35,7 @@ add_task(async function test_initialize() {
 });
 
 add_task(async function test_autocomplete_footer_onclick() {
-  let url = TEST_HOSTNAME + BASIC_FORM_PAGE_PATH;
+  let url = TEST_ORIGIN + BASIC_FORM_PAGE_PATH;
   await BrowserTestUtils.withNewTab(
     {
       gBrowser,
@@ -63,7 +45,7 @@ add_task(async function test_autocomplete_footer_onclick() {
       let popup = document.getElementById("PopupAutoComplete");
       ok(popup, "Got popup");
 
-      await openPopup(popup, browser);
+      await openACPopup(popup, browser, "#form-basic-username");
 
       let footer = popup.querySelector(`[originaltype="loginsFooter"]`);
       ok(footer, "Got footer richlistitem");
@@ -72,28 +54,34 @@ add_task(async function test_autocomplete_footer_onclick() {
         return !EventUtils.isHidden(footer);
       }, "Waiting for footer to become visible");
 
-      EventUtils.synthesizeMouseAtCenter(footer, {});
-      let window = await waitForPasswordManagerDialog();
-      info("Login dialog was opened");
+      let openingFunc = () => EventUtils.synthesizeMouseAtCenter(footer, {});
+      let passwordManager = await openPasswordManager(openingFunc, false);
 
-      await TestUtils.waitForCondition(() => {
-        return window.document.getElementById("filter").value == "example.com";
-      }, "Waiting for the search string to filter logins");
+      info("Password Manager was opened");
+
+      ok(
+        !passwordManager.filterValue,
+        "Search string should not be set to filter logins"
+      );
+
+      // open_management
+      await LoginTestUtils.telemetry.waitForEventCount(1);
 
       // Check event telemetry recorded when opening management UI
       TelemetryTestUtils.assertEvents(
         [["pwmgr", "open_management", "autocomplete"]],
-        { category: "pwmgr", method: "open_management" }
+        { category: "pwmgr", method: "open_management" },
+        { clear: true, process: "content" }
       );
 
-      window.close();
-      popup.hidePopup();
+      await passwordManager.close();
+      await closePopup(popup);
     }
   );
 });
 
 add_task(async function test_autocomplete_footer_keydown() {
-  let url = TEST_HOSTNAME + BASIC_FORM_PAGE_PATH;
+  let url = TEST_ORIGIN + BASIC_FORM_PAGE_PATH;
   await BrowserTestUtils.withNewTab(
     {
       gBrowser,
@@ -103,7 +91,7 @@ add_task(async function test_autocomplete_footer_keydown() {
       let popup = document.getElementById("PopupAutoComplete");
       ok(popup, "Got popup");
 
-      await openPopup(popup, browser);
+      await openACPopup(popup, browser, "#form-basic-username");
 
       let footer = popup.querySelector(`[originaltype="loginsFooter"]`);
       ok(footer, "Got footer richlistitem");
@@ -115,23 +103,25 @@ add_task(async function test_autocomplete_footer_keydown() {
       await EventUtils.synthesizeKey("KEY_ArrowDown");
       await EventUtils.synthesizeKey("KEY_ArrowDown");
       await EventUtils.synthesizeKey("KEY_ArrowDown");
-      await EventUtils.synthesizeKey("KEY_Enter");
+      let openingFunc = () => EventUtils.synthesizeKey("KEY_Enter");
 
-      let window = await waitForPasswordManagerDialog();
+      let passwordManager = await openPasswordManager(openingFunc, false);
       info("Login dialog was opened");
 
-      await TestUtils.waitForCondition(() => {
-        return window.document.getElementById("filter").value == "example.com";
-      }, "Waiting for the search string to filter logins");
+      ok(
+        !passwordManager.filterValue,
+        "Search string should not be set to filter logins"
+      );
 
       // Check event telemetry recorded when opening management UI
       TelemetryTestUtils.assertEvents(
         [["pwmgr", "open_management", "autocomplete"]],
-        { category: "pwmgr", method: "open_management" }
+        { category: "pwmgr", method: "open_management" },
+        { clear: true, process: "content" }
       );
 
-      window.close();
-      popup.hidePopup();
+      await passwordManager.close();
+      await closePopup(popup);
     }
   );
 });

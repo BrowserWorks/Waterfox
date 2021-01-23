@@ -10,7 +10,7 @@ config = {
     "log_name": "raptor",
     "installer_path": "installer.exe",
     "virtualenv_path": VENV_PATH,
-    "virtualenv_modules": ['pywin32', 'raptor', 'mozinstall'],
+    "virtualenv_modules": ['pypiwin32==219', 'raptor', 'mozinstall'],
     "exes": {
         'python': PYTHON,
         'easy_install': ['%s/scripts/python' % VENV_PATH,
@@ -30,8 +30,6 @@ config = {
         "run-tests",
     ],
     "tooltool_cache": os.path.join('c:\\', 'build', 'tooltool_cache'),
-    "minidump_stackwalk_path": "win32-minidump_stackwalk.exe",
-    "minidump_tooltool_manifest_path": "config/tooltool-manifests/win32/releng.manifest",
     "python3_manifest": {
         "win32": "python3.manifest",
         "win64": "python3_x64.manifest",

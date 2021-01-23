@@ -8,7 +8,6 @@
 #define XULTooltipElement_h__
 
 #include "XULPopupElement.h"
-#include "nsIDOMEventListener.h"
 
 namespace mozilla {
 namespace dom {
@@ -31,7 +30,7 @@ class XULTooltipElement final : public XULPopupElement {
   virtual nsresult PostHandleEvent(EventChainPostVisitor& aVisitor) override;
 
  protected:
-  virtual ~XULTooltipElement() {}
+  virtual ~XULTooltipElement() = default;
 };
 
 }  // namespace dom

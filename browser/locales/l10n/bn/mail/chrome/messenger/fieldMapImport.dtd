@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "ঠিকানা বই ইমপোর্ট">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "রেকর্ডের জন্য ইমপোর্টকৃত ডাটা:">
+<!ENTITY fieldMapImport.next.label "পরর্বর্তী (N)">
+<!ENTITY fieldMapImport.next.accesskey "N">
+<!ENTITY fieldMapImport.previous.label "পূর্ববর্তী (P)">
+<!ENTITY fieldMapImport.previous.accesskey "P">
+<!ENTITY fieldMapImport.text 'ইমপোর্ট করার জন্য বামের ঠিকানা বইয়ের ক্ষেত্রের সাথে ডানের সঠিক ডাটা মেলানোর জন্য "উপরে উঠান" এবং "নিচে নামান" ব্যবহার করুন। আপনি যে আইটেম ইমপোর্ট করতে চান না তার টিক চিহ্ন তুলে দিন।'>
+<!ENTITY fieldMapImport.up.label "উপরে উঠান (U)">
+<!ENTITY fieldMapImport.up.accesskey "U">
+<!ENTITY fieldMapImport.down.label "নিচে নামান (D)">
+<!ENTITY fieldMapImport.down.accesskey "D">
+<!ENTITY fieldMapImport.fieldListTitle "ঠিকানা বইয়ের ক্ষেত্র">
+<!ENTITY fieldMapImport.dataTitle "ইমপোর্ট করার জন্য ডাটা রেকর্ড করুন">
+<!ENTITY fieldMapImport.skipFirstRecord.label "প্রথম রেকর্ডে ক্ষেত্রের নাম রয়েছে (F)">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "F">

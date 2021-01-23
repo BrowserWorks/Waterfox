@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Link Toolbar Title -->
+<!ENTITY linkToolbar.label "Länkfält">
+<!ENTITY linkToolbar.accesskey "ä">
+<!ENTITY linkToolbar.tooltip "Länkfält">
+
+<!-- Link Toolbar visibility options -->
+<!ENTITY linkToolbarAlways.label "Visa alltid">
+<!ENTITY linkToolbarAlways.accesskey "V">
+<!ENTITY linkToolbarAsNeeded.label "Visa bara vid behov">
+<!ENTITY linkToolbarAsNeeded.accesskey "b">
+<!ENTITY linkToolbarNever.label "Dölj alltid">
+<!ENTITY linkToolbarNever.accesskey "a">
+
+<!-- Toolbar buttons, menus, and menuitems -->
+<!ENTITY topButton.label "Start">
+<!ENTITY upButton.label "Upp">
+<!ENTITY firstButton.label "Första">
+<!ENTITY prevButton.label "Föregående">
+<!ENTITY nextButton.label "Nästa">
+<!ENTITY lastButton.label "Sista">
+
+<!ENTITY documentButton.label "Dokument">
+
+<!ENTITY tocButton.label "Innehållsförteckning">
+<!ENTITY chapterButton.label "Kapitel">
+<!ENTITY sectionButton.label "Avdelningar">
+<!ENTITY subSectionButton.label "Underavdelningar">
+<!ENTITY appendixButton.label "Appendix">
+<!ENTITY glossaryButton.label "Ordlista">
+<!ENTITY indexButton.label "Index">
+
+<!ENTITY moreButton.label "Övrigt">
+
+<!ENTITY helpButton.label "Hjälp">
+<!ENTITY searchButton.label "Sök">
+
+<!ENTITY authorButton.label "Författare">
+<!ENTITY copyrightButton.label "Upphovsrätt">
+
+<!ENTITY bookmarkButton.label "Bokmärken">
+
+<!ENTITY alternateButton.label "Andra versioner">
+
+<!ENTITY feedButton.label "Prenumerera">

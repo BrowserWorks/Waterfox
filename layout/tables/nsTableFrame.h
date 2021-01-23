@@ -7,10 +7,8 @@
 
 #include "mozilla/Attributes.h"
 #include "celldata.h"
-#include "imgIContainer.h"
 #include "nscore.h"
 #include "nsContainerFrame.h"
-#include "nsStyleCoord.h"
 #include "nsStyleConsts.h"
 #include "nsCellMap.h"
 #include "nsGkAtoms.h"
@@ -36,11 +34,6 @@ class StackingContextHelper;
 }  // namespace mozilla
 
 struct BCPropertyData;
-
-static inline bool IsTableCell(mozilla::LayoutFrameType frameType) {
-  return frameType == mozilla::LayoutFrameType::TableCell ||
-         frameType == mozilla::LayoutFrameType::BCTableCell;
-}
 
 class nsDisplayTableItem : public nsPaintedDisplayItem {
  public:
@@ -70,33 +63,59 @@ class nsDisplayTableItem : public nsPaintedDisplayItem {
   bool mDrawsBackground;
 };
 
-class nsAutoPushCurrentTableItem {
+class nsDisplayTableBackgroundSet {
  public:
-  nsAutoPushCurrentTableItem() : mBuilder(nullptr), mOldCurrentItem(nullptr) {}
+  nsDisplayList* ColGroupBackgrounds() { return &mColGroupBackgrounds; }
 
-  void Push(nsDisplayListBuilder* aBuilder, nsDisplayTableItem* aPushItem) {
-    mBuilder = aBuilder;
-    mOldCurrentItem = aBuilder->GetCurrentTableItem();
-    aBuilder->SetCurrentTableItem(aPushItem);
-#ifdef DEBUG
-    mPushedItem = aPushItem;
-#endif
+  nsDisplayList* ColBackgrounds() { return &mColBackgrounds; }
+
+  nsDisplayTableBackgroundSet(nsDisplayListBuilder* aBuilder, nsIFrame* aTable)
+      : mBuilder(aBuilder) {
+    mPrevTableBackgroundSet = mBuilder->SetTableBackgroundSet(this);
+    mozilla::DebugOnly<const nsIFrame*> reference =
+        mBuilder->FindReferenceFrameFor(aTable, &mToReferenceFrame);
+    MOZ_ASSERT(nsLayoutUtils::IsAncestorFrameCrossDoc(reference, aTable));
+    mDirtyRect = mBuilder->GetDirtyRect();
   }
-  ~nsAutoPushCurrentTableItem() {
-    if (!mBuilder) return;
-#ifdef DEBUG
-    NS_ASSERTION(mBuilder->GetCurrentTableItem() == mPushedItem,
-                 "Someone messed with the current table item behind our back!");
-#endif
-    mBuilder->SetCurrentTableItem(mOldCurrentItem);
+
+  ~nsDisplayTableBackgroundSet() {
+    mozilla::DebugOnly<nsDisplayTableBackgroundSet*> result =
+        mBuilder->SetTableBackgroundSet(mPrevTableBackgroundSet);
+    MOZ_ASSERT(result == this);
   }
+
+  /**
+   * Move all display items in our lists to top of the corresponding lists in
+   * the destination.
+   */
+  void MoveTo(const nsDisplayListSet& aDestination) {
+    aDestination.BorderBackground()->AppendToTop(ColGroupBackgrounds());
+    aDestination.BorderBackground()->AppendToTop(ColBackgrounds());
+  }
+
+  void AddColumn(nsTableColFrame* aFrame) { mColumns.AppendElement(aFrame); }
+
+  nsTableColFrame* GetColForIndex(int32_t aIndex) { return mColumns[aIndex]; }
+
+  const nsPoint& TableToReferenceFrame() { return mToReferenceFrame; }
+
+  const nsRect& GetDirtyRect() { return mDirtyRect; }
 
  private:
+  // This class is only used on stack, so we don't have to worry about leaking
+  // it.  Don't let us be heap-allocated!
+  void* operator new(size_t sz) noexcept(true);
+
+ protected:
   nsDisplayListBuilder* mBuilder;
-  nsDisplayTableItem* mOldCurrentItem;
-#ifdef DEBUG
-  nsDisplayTableItem* mPushedItem;
-#endif
+  nsDisplayTableBackgroundSet* mPrevTableBackgroundSet;
+
+  nsDisplayList mColGroupBackgrounds;
+  nsDisplayList mColBackgrounds;
+
+  nsTArray<nsTableColFrame*> mColumns;
+  nsPoint mToReferenceFrame;
+  nsRect mDirtyRect;
 };
 
 /* ========================================================================== */
@@ -194,6 +213,7 @@ class nsTableFrame : public nsContainerFrame {
   virtual void AppendFrames(ChildListID aListID,
                             nsFrameList& aFrameList) override;
   virtual void InsertFrames(ChildListID aListID, nsIFrame* aPrevFrame,
+                            const nsLineList::iterator* aPrevFrameLine,
                             nsFrameList& aFrameList) override;
   virtual void RemoveFrame(ChildListID aListID, nsIFrame* aOldFrame) override;
 
@@ -214,28 +234,6 @@ class nsTableFrame : public nsContainerFrame {
   static nsTableFrame* GetTableFramePassingThrough(nsIFrame* aMustPassThrough,
                                                    nsIFrame* aSourceFrame,
                                                    bool* aDidPassThrough);
-
-  typedef void (*DisplayGenericTablePartTraversal)(
-      nsDisplayListBuilder* aBuilder, nsFrame* aFrame,
-      const nsDisplayListSet& aLists);
-  static void GenericTraversal(nsDisplayListBuilder* aBuilder, nsFrame* aFrame,
-                               const nsDisplayListSet& aLists);
-
-  /**
-   * Helper method to handle display common to table frames, rowgroup frames
-   * and row frames. It creates a background display item for handling events
-   * if necessary, an outline display item if necessary, and displays
-   * all the the frame's children.
-   * @param aDisplayItem the display item created for this part, or null
-   * if this part's border/background painting is delegated to an ancestor
-   * @param aTraversal a function that gets called to traverse the table
-   * part's child frames and add their display list items to a
-   * display list set.
-   */
-  static void DisplayGenericTablePart(
-      nsDisplayListBuilder* aBuilder, nsFrame* aFrame,
-      const nsDisplayListSet& aLists,
-      DisplayGenericTablePartTraversal aTraversal = GenericTraversal);
 
   // Return the closest sibling of aPriorChildFrame (including aPriroChildFrame)
   // of type aChildType.
@@ -301,7 +299,7 @@ class nsTableFrame : public nsContainerFrame {
   // border to the results of these functions.
   virtual nscoord GetMinISize(gfxContext* aRenderingContext) override;
   virtual nscoord GetPrefISize(gfxContext* aRenderingContext) override;
-  IntrinsicISizeOffsetData IntrinsicISizeOffsets(
+  IntrinsicSizeOffsetData IntrinsicISizeOffsets(
       nscoord aPercentageBasis = NS_UNCONSTRAINEDSIZE) override;
 
   virtual mozilla::LogicalSize ComputeSize(
@@ -662,7 +660,9 @@ class nsTableFrame : public nsContainerFrame {
   void DistributeBSizeToRows(const ReflowInput& aReflowInput, nscoord aAmount);
 
   void PlaceChild(TableReflowInput& aReflowInput, nsIFrame* aKidFrame,
-                  nsPoint aKidPosition, ReflowOutput& aKidDesiredSize,
+                  const ReflowInput& aKidReflowInput,
+                  const mozilla::LogicalPoint& aKidPosition,
+                  const nsSize& aContainerSize, ReflowOutput& aKidDesiredSize,
                   const nsRect& aOriginalKidRect,
                   const nsRect& aOriginalKidVisualOverflow);
   void PlaceRepeatedFooter(TableReflowInput& aReflowInput,
@@ -690,12 +690,6 @@ class nsTableFrame : public nsContainerFrame {
   void OrderRowGroups(RowGroupArray& aChildren,
                       nsTableRowGroupFrame** aHead = nullptr,
                       nsTableRowGroupFrame** aFoot = nullptr) const;
-
-  // Return the thead, if any
-  nsTableRowGroupFrame* GetTHead() const;
-
-  // Return the tfoot, if any
-  nsTableRowGroupFrame* GetTFoot() const;
 
   // Returns true if there are any cells above the row at
   // aRowIndex and spanning into the row at aRowIndex, the number of
@@ -777,7 +771,7 @@ class nsTableFrame : public nsContainerFrame {
                       nsTArray<nsTableRowFrame*>& aCollection);
 
  public: /* ----- Cell Map public methods ----- */
-  int32_t GetStartRowIndex(nsTableRowGroupFrame* aRowGroupFrame);
+  int32_t GetStartRowIndex(const nsTableRowGroupFrame* aRowGroupFrame) const;
 
   /** returns the number of rows in this table.
    */

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "Qo‘shimcha xossa tahrirlagichi">
+<!ENTITY AttName.label                  "Atributi: ">
+<!ENTITY AttValue.label                 "Qiymati:">
+<!ENTITY PropertyName.label             "Xossasi:">
+<!ENTITY currentattributesfor.label     "Joriy atributlar:">
+<!ENTITY tree.attributeHeader.label     "Atributi">
+<!ENTITY tree.propertyHeader.label      "Xossasi">
+<!ENTITY tree.valueHeader.label         "Qiymat">
+<!ENTITY tabHTML.label                  "HTML atributlari">
+<!ENTITY tabCSS.label                   "Ichki uslubi">
+<!ENTITY tabJSE.label                   "JavaScript hodisalari">
+
+<!ENTITY editAttribute.label    "Elementning qiymatini tahrirlash uchun ustiga bosing">
+<!ENTITY removeAttribute.label  "Olib tashlash">

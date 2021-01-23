@@ -12,9 +12,9 @@
 ##
 ## Reference: https://www.mozilla.org/styleguide/communications/translation/
 
--brand-short-name = Waterfox
--brand-full-name = Waterfox
+-brand-short-name = Fennec
+-brand-full-name = Mozilla Fennec
 # This brand name can be used in messages where the product name needs to
 # remain unchanged across different versions (Nightly, Beta, etc.).
--brand-product-name = Waterfox
--vendor-short-name = Waterfox Ltd.
+-brand-product-name = Firefox
+-vendor-short-name = Mozilla

@@ -1,0 +1,106 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "אל">
+<!ENTITY fromField4.label "מאת">
+<!ENTITY senderField4.label "שולח">
+<!ENTITY organizationField4.label "ארגון">
+<!ENTITY replyToField4.label "להגיב אל">
+
+<!ENTITY subjectField4.label "נושא">
+<!ENTITY ccField4.label "עותק">
+<!ENTITY bccField4.label "עותק מוסתר">
+<!ENTITY newsgroupsField4.label "קבוצות חדשות">
+<!ENTITY tagsHdr4.label "תגיות">
+<!ENTITY dateField4.label "תאריך">
+<!ENTITY userAgentField4.label "סוכן משתמש">
+<!ENTITY referencesField4.label "הפניות">
+<!ENTITY messageIdField4.label "מזהה הודעה">
+<!ENTITY inReplyToField4.label "בתגובה אל">
+<!ENTITY originalWebsite4.label "אתר">
+
+<!ENTITY hdrArchiveButton1.label "ארכיון">
+<!ENTITY hdrArchiveButton1.tooltip "העבר הודעה זו לארכיון">
+<!ENTITY hdrSmartReplyButton1.label "תשובה חכמה">
+<!ENTITY hdrReplyButton1.label "השב">
+<!ENTITY hdrReplyButton2.tooltip "תגובה לשולח של הודעה זו">
+<!ENTITY hdrReplyAllButton1.label "השב לכולם">
+<!ENTITY hdrReplyAllButton1.tooltip "השב לשולח ולכל הנמענים">
+<!ENTITY hdrReplyListButton1.label "תשובה לרשימה">
+<!ENTITY hdrReplyListButton1.tooltip "השב לרשימת תפוצה">
+<!ENTITY hdrForwardButton1.label "העבר">
+<!ENTITY hdrForwardButton1.tooltip "העבר הודעה זו">
+<!ENTITY hdrJunkButton1.label "זבל">
+<!ENTITY hdrJunkButton1.tooltip "סמן הודעה זו כזבל">
+<!ENTITY hdrTrashButton1.label "מחיקה">
+<!ENTITY hdrTrashButton1.tooltip "מחק הודעה זו">
+
+<!ENTITY hdrViewToolbarShowFull.label "הצג צלמיות וטקסט">
+<!ENTITY hdrViewToolbarShowFull.accesskey "ו">
+<!ENTITY hdrViewToolbarShowIcons.label "הצג צלמיות בלבד">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "צ">
+<!ENTITY hdrViewToolbarShowText.label "הצג טקסט בלבד">
+<!ENTITY hdrViewToolbarShowText.accesskey "ט">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "הצג תמיד כפתור תגובה לשולח">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "ש">
+
+<!ENTITY otherActionsButton2.label "עוד">
+<!ENTITY otherActionsButton.tooltip "פעולות נוספות">
+<!ENTITY otherActionsOpenConversation1.label "פתח בדיון">
+<!ENTITY otherActionsOpenConversation1.accesskey "פ">
+<!ENTITY otherActionsOpenInNewWindow1.label "פתיחה בחלון חדש">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "ח">
+<!ENTITY otherActionsOpenInNewTab1.label "פתיחה בלשונית חדשה">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "ל">
+<!ENTITY markAsReadMenuItem1.label "סמן כנקרא">
+<!ENTITY markAsReadMenuItem1.accesskey "ס">
+<!ENTITY markAsUnreadMenuItem1.label "סמן כלא נקרא">
+<!ENTITY markAsUnreadMenuItem1.accesskey "ס">
+<!ENTITY saveAsMenuItem1.label "שמור בשם…">
+<!ENTITY saveAsMenuItem1.accesskey "ב">
+<!ENTITY viewSourceMenuItem1.label "הצג מקור">
+<!ENTITY viewSourceMenuItem1.accesskey "מ">
+<!ENTITY otherActionsPrint1.label "הדפסה…">
+<!ENTITY otherActionsPrint1.accesskey "ד">
+
+<!-- Attachment bar context menu items -->
+<!ENTITY startExpandedCmd.label    "הצגת חלונית הקבצים המצורפים כבר בהתחלה">
+<!ENTITY startExpandedCmd.accesskey    "צ">
+
+<!-- Attachment context menu items -->
+<!ENTITY openAttachmentCmd.label    "פתח">
+<!ENTITY openAttachmentCmd.accesskey    "פ">
+<!ENTITY saveAsAttachmentCmd.label    "שמור בשם…">
+<!ENTITY saveAsAttachmentCmd.accesskey    "ש">
+<!ENTITY detachAttachmentCmd.label    "נתק…">
+<!ENTITY detachAttachmentCmd.accesskey    "נ">
+<!ENTITY deleteAttachmentCmd.label    "מחק">
+<!ENTITY deleteAttachmentCmd.accesskey    "l">
+<!ENTITY openAllAttachmentsCmd.label    "פתיחת הכול…">
+<!ENTITY openAllAttachmentsCmd.accesskey    "O">
+<!ENTITY saveAllAttachmentsCmd.label    "שמור הכול…">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "מ">
+<!ENTITY detachAllAttachmentsCmd.label    "נתק הכול…">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "נ">
+<!ENTITY deleteAllAttachmentsCmd.label    "מחיקת הכל…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "ח">
+
+<!ENTITY openAttachment.tooltip "פתח את הקובץ המצורף">
+
+
+<!-- Attachment toolbar items -->
+<!ENTITY saveAttachmentButton1.label       "שמירה">
+<!ENTITY saveAttachmentButton1.tooltip     "שמור קובץ מצורף">
+<!ENTITY saveAllAttachmentsButton1.label   "שמור הכל">
+<!ENTITY saveAllAttachmentsButton1.tooltip "שמור את כל הקבצים המצורפים">
+
+<!ENTITY copyLinkCmd.label        "העתק מיקום קישור">
+<!ENTITY copyLinkCmd.accesskey    "ק">
+
+<!ENTITY CopyMessageId.label "העתקת מזהה הודעה">
+<!ENTITY CopyMessageId.accesskey "ע">
+<!ENTITY OpenMessageForMsgId.label "פתיחת הודעה לפי מזהה">
+<!ENTITY OpenMessageForMsgId.accesskey "פ">
+<!ENTITY OpenBrowserWithMsgId.label "פתיחת דפדפן עם מזהה ההודעה">
+<!ENTITY OpenBrowserWithMsgId.accesskey "ד">

@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "Xat yozish va manzilga jo‘natish">
+<!ENTITY addressingGroupTitle.label "Manzilga jo‘natish">
+<!ENTITY addressingText.label      "Manzillar qidirilganda:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Bu hisob uchun mening global LDAP server parametrlarimdan foydalanilsin">
+<!ENTITY useGlobal.accesskey       "f">
+<!ENTITY editDirectories.label     "Direktoriyalarni tahrirlash…">
+<!ENTITY editDirectories.accesskey "t">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Boshqa LDAP serverdan foydalanish:">
+<!ENTITY directories.accesskey     "B">
+<!ENTITY directoriesNone.label     "Yoʻq">
+
+<!-- am-addressing.xul -->
+
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "Yozish">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Xabarlarni HTML formatda yozish">
+<!ENTITY useHtml.accesskey                    "y">
+<!ENTITY autoQuote.label                      "Javob yozayotganda avtomatik tarzda asl xabardan iqtibos olinsin">
+<!ENTITY autoQuote.accesskey                  "a">
+<!ENTITY aboveQuote.label                     "tepadagi iqtibosga mening javobim boshlansin">
+<!ENTITY belowQuote.label                     "pastdagi iqtibosga mening javobim boshlansin">
+<!ENTITY selectAndQuote.label                 "iqtibosni tanlansin">
+<!ENTITY place.label                          "va imzom qo‘yilsin">
+<!ENTITY place.accesskey                      "i">
+<!ENTITY belowText.label                      "pastdagi iqtibos (tavsiya qilinadi)">
+<!ENTITY aboveText.label                      "pastdagi javobim (iqtibos ustida)">
+<!ENTITY includeSigOnReply.label              "Javoblarga imzo ham qo‘shilsin">
+<!ENTITY includeSigOnReply.accesskey          "q">
+<!ENTITY includeSigOnForward.label            "Uzatishlarga ham imzo qo‘shilsin">
+<!ENTITY includeSigOnForward.accesskey        "U">
+
+<!ENTITY globalComposingPrefs.label           "Global xat yozish parametrlari…">
+<!ENTITY globalComposingPrefs.accesskey       "G">
+
+<!ENTITY globalAddressingPrefs.label          "Global manzilga qo‘shish parametrlari…">
+<!ENTITY globalAddressingPrefs.accesskey      "p">

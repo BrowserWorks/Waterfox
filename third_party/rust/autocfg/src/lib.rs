@@ -9,7 +9,7 @@
 //!
 //! ```toml
 //! [build-dependencies]
-//! autocfg = "0.1"
+//! autocfg = "1"
 //! ```
 //!
 //! Then use it in your `build.rs` script to detect compiler features.  For
@@ -25,7 +25,7 @@
 //!     ac.emit_has_type("i128");
 //!
 //!     // (optional) We don't need to rerun for anything external.
-//!     autocfg::rerun_path(file!());
+//!     autocfg::rerun_path("build.rs");
 //! }
 //! ```
 //!
@@ -33,16 +33,41 @@
 //! for Cargo, which translates to Rust arguments `--cfg has_i128`.  Then in the
 //! rest of your Rust code, you can add `#[cfg(has_i128)]` conditions on code that
 //! should only be used when the compiler supports it.
+//!
+//! ## Caution
+//!
+//! Many of the probing methods of `AutoCfg` document the particular template they
+//! use, **subject to change**. The inputs are not validated to make sure they are
+//! semantically correct for their expected use, so it's _possible_ to escape and
+//! inject something unintended. However, such abuse is unsupported and will not
+//! be considered when making changes to the templates.
 
 #![deny(missing_debug_implementations)]
 #![deny(missing_docs)]
+// allow future warnings that can't be fixed while keeping 1.0 compatibility
+#![allow(unknown_lints)]
+#![allow(bare_trait_objects)]
+#![allow(ellipsis_inclusive_range_patterns)]
+
+/// Local macro to avoid `std::try!`, deprecated in Rust 1.39.
+macro_rules! try {
+    ($result:expr) => {
+        match $result {
+            Ok(value) => value,
+            Err(error) => return Err(error),
+        }
+    };
+}
 
 use std::env;
 use std::ffi::OsString;
 use std::fs;
-use std::io::Write;
+use std::io::{stderr, Write};
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
+#[allow(deprecated)]
+use std::sync::atomic::ATOMIC_USIZE_INIT;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 mod error;
 pub use error::Error;
@@ -60,6 +85,8 @@ pub struct AutoCfg {
     rustc: PathBuf,
     rustc_version: Version,
     target: Option<OsString>,
+    no_std: bool,
+    rustflags: Option<Vec<String>>,
 }
 
 /// Writes a config flag for rustc on standard out.
@@ -137,12 +164,48 @@ impl AutoCfg {
             return Err(error::from_str("output path is not a writable directory"));
         }
 
-        Ok(AutoCfg {
+        // Cargo only applies RUSTFLAGS for building TARGET artifact in
+        // cross-compilation environment. Sadly, we don't have a way to detect
+        // when we're building HOST artifact in a cross-compilation environment,
+        // so for now we only apply RUSTFLAGS when cross-compiling an artifact.
+        //
+        // See https://github.com/cuviper/autocfg/pull/10#issuecomment-527575030.
+        let rustflags = if env::var_os("TARGET") != env::var_os("HOST") {
+            env::var("RUSTFLAGS").ok().map(|rustflags| {
+                // This is meant to match how cargo handles the RUSTFLAG environment
+                // variable.
+                // See https://github.com/rust-lang/cargo/blob/69aea5b6f69add7c51cca939a79644080c0b0ba0/src/cargo/core/compiler/build_context/target_info.rs#L434-L441
+                rustflags
+                    .split(' ')
+                    .map(str::trim)
+                    .filter(|s| !s.is_empty())
+                    .map(str::to_string)
+                    .collect::<Vec<String>>()
+            })
+        } else {
+            None
+        };
+
+        let mut ac = AutoCfg {
             out_dir: dir,
             rustc: rustc,
             rustc_version: rustc_version,
             target: env::var_os("TARGET"),
-        })
+            no_std: false,
+            rustflags: rustflags,
+        };
+
+        // Sanity check with and without `std`.
+        if !ac.probe("").unwrap_or(false) {
+            ac.no_std = true;
+            if !ac.probe("").unwrap_or(false) {
+                // Neither worked, so assume nothing...
+                ac.no_std = false;
+                let warning = b"warning: autocfg could not probe for `std`\n";
+                stderr().write_all(warning).ok();
+            }
+        }
+        Ok(ac)
     }
 
     /// Test whether the current `rustc` reports a version greater than
@@ -160,18 +223,22 @@ impl AutoCfg {
     }
 
     fn probe<T: AsRef<[u8]>>(&self, code: T) -> Result<bool, Error> {
-        use std::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
-
+        #[allow(deprecated)]
         static ID: AtomicUsize = ATOMIC_USIZE_INIT;
 
         let id = ID.fetch_add(1, Ordering::Relaxed);
         let mut command = Command::new(&self.rustc);
         command
-            .arg(format!("--crate-name=probe{}", id))
+            .arg("--crate-name")
+            .arg(format!("probe{}", id))
             .arg("--crate-type=lib")
             .arg("--out-dir")
             .arg(&self.out_dir)
             .arg("--emit=llvm-ir");
+
+        if let &Some(ref rustflags) = &self.rustflags {
+            command.args(rustflags);
+        }
 
         if let Some(target) = self.target.as_ref() {
             command.arg("--target").arg(target);
@@ -179,17 +246,35 @@ impl AutoCfg {
 
         command.arg("-").stdin(Stdio::piped());
         let mut child = try!(command.spawn().map_err(error::from_io));
-        try!(
-            child
-                .stdin
-                .take()
-                .expect("rustc stdin")
-                .write_all(code.as_ref())
-                .map_err(error::from_io)
-        );
+        let mut stdin = child.stdin.take().expect("rustc stdin");
+
+        if self.no_std {
+            try!(stdin.write_all(b"#![no_std]\n").map_err(error::from_io));
+        }
+        try!(stdin.write_all(code.as_ref()).map_err(error::from_io));
+        drop(stdin);
 
         let status = try!(child.wait().map_err(error::from_io));
         Ok(status.success())
+    }
+
+    /// Tests whether the given sysroot crate can be used.
+    ///
+    /// The test code is subject to change, but currently looks like:
+    ///
+    /// ```ignore
+    /// extern crate CRATE as probe;
+    /// ```
+    pub fn probe_sysroot_crate(&self, name: &str) -> bool {
+        self.probe(format!("extern crate {} as probe;", name)) // `as _` wasn't stabilized until Rust 1.33
+            .unwrap_or(false)
+    }
+
+    /// Emits a config value `has_CRATE` if `probe_sysroot_crate` returns true.
+    pub fn emit_sysroot_crate(&self, name: &str) {
+        if self.probe_sysroot_crate(name) {
+            emit(&format!("has_{}", mangle(name)));
+        }
     }
 
     /// Tests whether the given path can be used.
@@ -277,6 +362,44 @@ impl AutoCfg {
             emit(cfg);
         }
     }
+
+    /// Tests whether the given expression can be used.
+    ///
+    /// The test code is subject to change, but currently looks like:
+    ///
+    /// ```ignore
+    /// pub fn probe() { let _ = EXPR; }
+    /// ```
+    pub fn probe_expression(&self, expr: &str) -> bool {
+        self.probe(format!("pub fn probe() {{ let _ = {}; }}", expr))
+            .unwrap_or(false)
+    }
+
+    /// Emits the given `cfg` value if `probe_expression` returns true.
+    pub fn emit_expression_cfg(&self, expr: &str, cfg: &str) {
+        if self.probe_expression(expr) {
+            emit(cfg);
+        }
+    }
+
+    /// Tests whether the given constant expression can be used.
+    ///
+    /// The test code is subject to change, but currently looks like:
+    ///
+    /// ```ignore
+    /// pub const PROBE: () = ((), EXPR).0;
+    /// ```
+    pub fn probe_constant(&self, expr: &str) -> bool {
+        self.probe(format!("pub const PROBE: () = ((), {}).0;", expr))
+            .unwrap_or(false)
+    }
+
+    /// Emits the given `cfg` value if `probe_constant` returns true.
+    pub fn emit_constant_cfg(&self, expr: &str, cfg: &str) {
+        if self.probe_constant(expr) {
+            emit(cfg);
+        }
+    }
 }
 
 fn mangle(s: &str) -> String {
@@ -284,5 +407,6 @@ fn mangle(s: &str) -> String {
         .map(|c| match c {
             'A'...'Z' | 'a'...'z' | '0'...'9' => c,
             _ => '_',
-        }).collect()
+        })
+        .collect()
 }

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpServer.label "Stillingar póstþjóns út (SMTP)">
+
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpDescription.label "Þegar þú sýslar með auðkenni geturðu notað netþjón úr þessum lista með því að velja hann sem útsendan póst (SMTP), eða þú getur notað sjálfgefin netþjón úr listanum með því að velja &quot;Nota sjálfgefin póstþjón&quot;.">
+
+<!ENTITY smtpListAdd.label "Bæta við…">
+<!ENTITY smtpListAdd.accesskey "B">
+<!ENTITY smtpListEdit.label "Breyta…">
+<!ENTITY smtpListEdit.accesskey "r">
+<!ENTITY smtpListDelete.label "Fjarlægja">
+<!ENTITY smtpListDelete.accesskey "F">
+<!ENTITY smtpListSetDefault.label "Setja sem sjálfgefið">
+<!ENTITY smtpListSetDefault.accesskey "t">
+
+<!ENTITY serverDetails.label "Upplýsingar um valin netþjón:">
+<!ENTITY serverDescription.label "Lýsing: ">
+<!ENTITY serverName.label "Nafn netþjóns: ">
+<!ENTITY serverPort.label "Gátt: ">
+<!ENTITY userName.label "Notandanafn: ">
+<!ENTITY connectionSecurity.label "Öryggi tengingar: ">
+<!ENTITY authMethod.label "Auðkennisaðferð: ">

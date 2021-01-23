@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageStorage.label "Хабарламалар қоймасы">
+<!ENTITY securitySettings.label "Қауіпсіздік баптаулары">
+<!ENTITY serverSettings.label "Сервер баптаулары">
+<!ENTITY serverType.label "Сервер түрі:">
+<!ENTITY serverName.label "Сервердің атауы:">
+<!ENTITY serverName.accesskey "С">
+<!ENTITY userName.label "Пайдаланушы аты:">
+<!ENTITY userName.accesskey "а">
+<!ENTITY port.label "Порт:">
+<!ENTITY port.accesskey "П">
+<!ENTITY serverPortDefault.label "Бастапқы:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammar dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "Жаңа хабарламаларға тексеру уақыт аралығы ">
+<!ENTITY biffStart.accesskey "а">
+<!ENTITY biffEnd.label "минут">
+<!ENTITY useIdleNotifications.label "Жаңа хабарлама келген кезде, лезде сервер ескертулерін рұқсат ету">
+<!ENTITY useIdleNotifications.accesskey "с">
+<!ENTITY connectionSecurity.label "Байланыс қауіпсіздігі:">
+<!ENTITY connectionSecurity.accesskey "с">
+<!ENTITY connectionSecurityType-0.label "Ешнәрсе">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, қолжетерлік болса">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "Аутентификация тәсілі:">
+<!ENTITY authMethod.accesskey "и">
+<!ENTITY leaveOnServer.label "Хабарламаларды серверде қалдыру">
+<!ENTITY leaveOnServer.accesskey "л">
+<!ENTITY headersOnly.label "Тек тақырыптамаларды алу">
+<!ENTITY headersOnly.accesskey "л">
+<!ENTITY deleteByAgeFromServer.label "Көп дегенде">
+<!ENTITY deleteByAgeFromServer.accesskey "п">
+<!ENTITY daysEnd.label "күн">
+<!ENTITY deleteOnServer2.label "Мен оларды өшіргенше дейін">
+<!ENTITY deleteOnServer2.accesskey "ш">
+<!ENTITY downloadOnBiff.label "Жаңа хабарламаларды автожүктеп алу">
+<!ENTITY downloadOnBiff.accesskey "ж">
+<!ENTITY deleteMessagePrefix.label "Мен хабарламаны өшірген кезде:">
+<!ENTITY modelMoveToTrash.label "Оны бұл бумаға жылжыту:">
+<!ENTITY modelMoveToTrash.accesskey "ы">
+<!ENTITY modelMarkDeleted.label "Тек өшірілген ретінде белгілеу">
+<!ENTITY modelMarkDeleted.accesskey "г">
+<!ENTITY modelDeleteImmediately.label "Оны лезде өшіру">
+<!ENTITY modelDeleteImmediately.accesskey "д">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "Шыққанда Кіріс бумасын сығу">
+<!ENTITY expungeOnExit.accesskey "ы">
+<!ENTITY emptyTrashOnExit.label "Шыққанда, &quot;Қоқыс шелегі&quot; бумасын тазарту">
+<!ENTITY emptyTrashOnExit.accesskey "x">
+<!ENTITY loginAtStartup.label "Іске қосылғанда жаңа хабарламаларға тексеру">
+<!ENTITY loginAtStartup.accesskey "с">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+    of messages between them
+-->
+<!ENTITY maxMessagesStart.label "Келесіден көп нәрсені жүктеп алу алдында мені сұрау">
+<!ENTITY maxMessagesStart.accesskey "м">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "хабарлама">
+<!ENTITY alwaysAuthenticate.label "Бұл серверге байланысу кезінде әрқашан да аутентификацияны сұрау">
+<!ENTITY alwaysAuthenticate.accesskey "ш">
+<!ENTITY newsrcFilePath1.label "News.rc файлы:">
+<!ENTITY newsrcPicker1.label "News.rc файлын таңдау">
+<!ENTITY abbreviate.label "Пошта бумасы панелінде жаңалықтар топтары аттарын қалайша көрсету:">
+<!ENTITY abbreviateOn.label "Толық аттар (Мыс., 'netscape.public.mozilla.mail-news')">
+<!ENTITY abbreviateOff.label "Қысқартылған аттар (Мыс., 'n.p.m.mail-news')">
+<!ENTITY advancedButton.label "Қосымша…">
+<!ENTITY advancedButton.accesskey "о">
+<!ENTITY serverDefaultCharset2.label "Мәтіннің бастапқы кодталуы:">
+<!ENTITY localPath1.label "Жергілікті бума:">
+<!ENTITY localFolderPicker.label "Жергілікті буманы таңдау">
+<!ENTITY browseFolder.label "Қарап шығу…">
+<!ENTITY browseFolder.accesskey "ш">
+<!ENTITY browseNewsrc.label "Қарап шығу…">
+<!ENTITY browseNewsrc.accesskey "ш">
+
+<!ENTITY accountTitle.label "Тіркелгі баптаулары">
+<!ENTITY accountSettingsDesc.label "Келесі арнайы тіркелгі болып табылады.  Онымен байланысқан жеке мәліметтер жоқ.">
+<!ENTITY storeType.label "Хабарламаларды сақтау түрі:">
+<!ENTITY storeType.accesskey "т">
+<!ENTITY mboxStore2.label "Бума үшін файл (mbox)">
+<!ENTITY maildirStore.label "Хабарлама үшін файл (maildir)">

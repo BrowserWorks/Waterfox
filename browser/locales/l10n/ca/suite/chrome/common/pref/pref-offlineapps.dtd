@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-offlineapps.xul -->
+<!--LOCALIZATION NOTE : FILE Offline Apps prefs dialog -->
+
+<!ENTITY pref.offlineapps.title             "Aplicacions web fora de línia">
+<!ENTITY pref.offlineCache.caption          "Contingut web i dades de l'usuari fora de línia">
+
+<!ENTITY clearOfflineAppCache.label         "Neteja">
+<!ENTITY clearOfflineAppCache.accesskey     "N">
+
+<!ENTITY offlineAlwaysAllow.label           "Permet a tots els llocs web emmagatzemar dades per utilitzar-les fora de línia">
+<!ENTITY offlineAlwaysAllow.accesskey       "P">
+<!ENTITY offlineExplicit.label              "Permet només als llocs web als quals he donat permís">
+<!ENTITY offlineExplicit.accesskey          "o">
+<!ENTITY offlineNotifyAsk.label             "Avisa'm quan els llocs web vulguin emmagatzemar dades per utilitzar-les fora de línia">
+<!ENTITY offlineNotifyAsk.accesskey         "v">
+<!ENTITY offlineNotifyPermissions.label     "Gestiona els permisos">
+<!ENTITY offlineNotifyPermissions.accesskey "p">
+
+<!ENTITY offlineAppsUsage.label             "Els llocs web següents estan utilitzant emmagatzematge fora de línia:">
+<!ENTITY offlineAppsListRemove.label        "Neteja les dades…">
+<!ENTITY offlineAppsListRemove.accesskey    "N">

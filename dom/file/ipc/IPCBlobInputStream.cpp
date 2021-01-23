@@ -14,11 +14,14 @@
 #include "nsIAsyncInputStream.h"
 #include "nsIAsyncOutputStream.h"
 #include "nsIPipe.h"
+#include "nsNetUtil.h"
 #include "nsStreamUtils.h"
 #include "nsStringStream.h"
 
 namespace mozilla {
 namespace dom {
+
+class IPCBlobInputStream;
 
 namespace {
 
@@ -565,44 +568,22 @@ IPCBlobInputStream::OnInputStreamReady(nsIAsyncInputStream* aStream) {
 
 // nsIIPCSerializableInputStream
 
-void IPCBlobInputStream::Serialize(mozilla::ipc::InputStreamParams& aParams,
-                                   FileDescriptorArray& aFileDescriptors,
-                                   bool aDelayedStart, uint32_t aMaxSize,
-                                   uint32_t* aSizeUsed,
-                                   ContentChild* aManager) {
+void IPCBlobInputStream::Serialize(
+    mozilla::ipc::InputStreamParams& aParams,
+    FileDescriptorArray& aFileDescriptors, bool aDelayedStart,
+    uint32_t aMaxSize, uint32_t* aSizeUsed,
+    mozilla::ipc::ParentToChildStreamActorManager* aManager) {
   MOZ_ASSERT(aSizeUsed);
   *aSizeUsed = 0;
 
   SerializeInternal(aParams);
 }
 
-void IPCBlobInputStream::Serialize(mozilla::ipc::InputStreamParams& aParams,
-                                   FileDescriptorArray& aFileDescriptors,
-                                   bool aDelayedStart, uint32_t aMaxSize,
-                                   uint32_t* aSizeUsed,
-                                   mozilla::ipc::PBackgroundChild* aManager) {
-  MOZ_ASSERT(aSizeUsed);
-  *aSizeUsed = 0;
-
-  SerializeInternal(aParams);
-}
-
-void IPCBlobInputStream::Serialize(mozilla::ipc::InputStreamParams& aParams,
-                                   FileDescriptorArray& aFileDescriptors,
-                                   bool aDelayedStart, uint32_t aMaxSize,
-                                   uint32_t* aSizeUsed,
-                                   ContentParent* aManager) {
-  MOZ_ASSERT(aSizeUsed);
-  *aSizeUsed = 0;
-
-  SerializeInternal(aParams);
-}
-
-void IPCBlobInputStream::Serialize(mozilla::ipc::InputStreamParams& aParams,
-                                   FileDescriptorArray& aFileDescriptors,
-                                   bool aDelayedStart, uint32_t aMaxSize,
-                                   uint32_t* aSizeUsed,
-                                   mozilla::ipc::PBackgroundParent* aManager) {
+void IPCBlobInputStream::Serialize(
+    mozilla::ipc::InputStreamParams& aParams,
+    FileDescriptorArray& aFileDescriptors, bool aDelayedStart,
+    uint32_t aMaxSize, uint32_t* aSizeUsed,
+    mozilla::ipc::ChildToParentStreamActorManager* aManager) {
   MOZ_ASSERT(aSizeUsed);
   *aSizeUsed = 0;
 
@@ -740,18 +721,34 @@ nsresult IPCBlobInputStream::EnsureAsyncRemoteStream(
     return NS_ERROR_FAILURE;
   }
 
+  nsCOMPtr<nsIInputStream> stream = mRemoteStream;
+  // We don't return NS_ERROR_NOT_IMPLEMENTED from ReadSegments,
+  // so it's possible that callers are expecting us to succeed in the future.
+  // We need to make sure the stream we return here supports ReadSegments,
+  // so wrap if in a buffered stream if necessary.
+  if (!NS_InputStreamIsBuffered(stream)) {
+    nsCOMPtr<nsIInputStream> bufferedStream;
+    nsresult rv = NS_NewBufferedInputStream(getter_AddRefs(bufferedStream),
+                                            stream.forget(), 4096);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+
+    stream = bufferedStream;
+  }
+
   // If the stream is blocking, we want to make it unblocking using a pipe.
   bool nonBlocking = false;
-  nsresult rv = mRemoteStream->IsNonBlocking(&nonBlocking);
+  nsresult rv = stream->IsNonBlocking(&nonBlocking);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
 
-  nsCOMPtr<nsIAsyncInputStream> asyncStream = do_QueryInterface(mRemoteStream);
+  nsCOMPtr<nsIAsyncInputStream> asyncStream = do_QueryInterface(stream);
 
   // If non-blocking and non-async, let's use NonBlockingAsyncInputStream.
   if (nonBlocking && !asyncStream) {
-    rv = NonBlockingAsyncInputStream::Create(mRemoteStream.forget(),
+    rv = NonBlockingAsyncInputStream::Create(stream.forget(),
                                              getter_AddRefs(asyncStream));
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
@@ -776,8 +773,7 @@ nsresult IPCBlobInputStream::EnsureAsyncRemoteStream(
       return NS_ERROR_FAILURE;
     }
 
-    rv = NS_AsyncCopy(mRemoteStream, pipeOut, thread,
-                      NS_ASYNCCOPY_VIA_WRITESEGMENTS);
+    rv = NS_AsyncCopy(stream, pipeOut, thread, NS_ASYNCCOPY_VIA_WRITESEGMENTS);
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
     }

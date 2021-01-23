@@ -7,8 +7,6 @@
  * Tests navigation between results using ctrl-n/p.
  */
 
-const ONEOFF_URLBAR_PREF = "browser.urlbar.oneOffSearches";
-
 function repeat(limit, func) {
   for (let i = 0; i < limit; i++) {
     func(i);
@@ -17,7 +15,7 @@ function repeat(limit, func) {
 
 function assertSelected(index) {
   Assert.equal(
-    UrlbarTestUtils.getSelectedIndex(window),
+    UrlbarTestUtils.getSelectedRowIndex(window),
     index,
     "Should have the correct item selected"
   );
@@ -33,14 +31,12 @@ function assertSelected(index) {
 
 add_task(async function() {
   let maxResults = Services.prefs.getIntPref("browser.urlbar.maxRichResults");
-  Services.prefs.setBoolPref(ONEOFF_URLBAR_PREF, true);
   let tab = await BrowserTestUtils.openNewForegroundTab(
     gBrowser,
     "about:mozilla"
   );
   registerCleanupFunction(async function() {
     await PlacesUtils.history.clear();
-    Services.prefs.clearUserPref(ONEOFF_URLBAR_PREF);
     BrowserTestUtils.removeTab(tab);
   });
 
@@ -52,8 +48,12 @@ add_task(async function() {
   });
   await PlacesTestUtils.addVisits(visits);
 
-  await promiseAutocompleteResultPopup("example.com/autocomplete");
-  await waitForAutocompleteResultAt(maxResults - 1);
+  await UrlbarTestUtils.promiseAutocompleteResultPopup({
+    window,
+    waitForFocus: SimpleTest.waitForFocus,
+    value: "example.com/autocomplete",
+  });
+  await UrlbarTestUtils.waitForAutocompleteResultAt(window, maxResults - 1);
 
   Assert.equal(
     UrlbarTestUtils.getResultCount(window),

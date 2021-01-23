@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('BigInt')) -- BigInt is not enabled unconditionally
 // Copyright (C) 2017 Josh Wolfe. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 /*---
@@ -30,4 +29,5 @@ assert.sameValue(2n != false, true, 'The result of (2n != false) is true');
 assert.sameValue(false != 2n, true, 'The result of (false != 2n) is true');
 assert.sameValue(2n != true, true, 'The result of (2n != true) is true');
 assert.sameValue(true != 2n, true, 'The result of (true != 2n) is true');
+
 reportCompare(0, 0);

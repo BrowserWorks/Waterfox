@@ -20,13 +20,9 @@
 #include "nsQueryObject.h"
 
 #include "nsComponentManagerUtils.h"
-#include "nsIAccessibleRelation.h"
-#include "nsIAutoCompleteInput.h"
 #include "nsIAutoCompletePopup.h"
 #include "nsIDOMXULMenuListElement.h"
-#include "nsIDOMXULMultSelectCntrlEl.h"
 #include "nsITreeSelection.h"
-#include "nsIMutableArray.h"
 #include "nsTreeBodyFrame.h"
 #include "nsTreeColumns.h"
 #include "nsTreeUtils.h"
@@ -443,7 +439,7 @@ Accessible* XULTreeAccessible::GetTreeItemAccessible(int32_t aRow) const {
 
   RefPtr<Accessible> treeItem = CreateTreeItemAccessible(aRow);
   if (treeItem) {
-    mAccessibleCache.Put(key, treeItem);
+    mAccessibleCache.Put(key, RefPtr{treeItem});
     Document()->BindToDocument(treeItem, nullptr);
     return treeItem;
   }
@@ -908,7 +904,7 @@ XULTreeItemAccessible::XULTreeItemAccessible(
     : XULTreeItemAccessibleBase(aContent, aDoc, aParent, aTree, aTreeView,
                                 aRow) {
   mStateFlags |= eNoKidsFromDOM;
-  mColumn = nsCoreUtils::GetFirstSensibleColumn(mTree);
+  mColumn = nsCoreUtils::GetFirstSensibleColumn(mTree, FlushType::None);
   GetCellName(mColumn, mCachedName);
 }
 

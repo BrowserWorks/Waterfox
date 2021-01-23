@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from EdReplace.xul -->
+
+<!-- extracted from EdReplace.xhtml -->
+
+<!ENTITY replaceDialog.title "Sykje en ferfange">
+<!ENTITY findField.label "Tekst sykje:">
+<!ENTITY findField.accesskey "T">
+<!ENTITY replaceField.label "Ferfange troch:">
+<!ENTITY replaceField.accesskey "e">
+<!ENTITY caseSensitiveCheckbox.label "Haadlettergefoelich">
+<!ENTITY caseSensitiveCheckbox.accesskey "H">
+<!ENTITY wrapCheckbox.label "Boppe trochgean nei ein">
+<!ENTITY wrapCheckbox.accesskey "o">
+<!ENTITY backwardsCheckbox.label "Tebek sykje">
+<!ENTITY backwardsCheckbox.accesskey "b">
+<!ENTITY findNextButton.label "Folgjende sykje">
+<!ENTITY findNextButton.accesskey "s">
+<!ENTITY replaceButton.label "Ferfange">
+<!ENTITY replaceButton.accesskey "F">
+<!ENTITY replaceAndFindButton.label "Ferfange en sykje">
+<!ENTITY replaceAndFindButton.accesskey "r">
+<!ENTITY replaceAllButton.label "Alles ferfange">
+<!ENTITY replaceAllButton.accesskey "A">
+<!ENTITY closeButton.label "Slute">
+<!ENTITY closeButton.accesskey "S">

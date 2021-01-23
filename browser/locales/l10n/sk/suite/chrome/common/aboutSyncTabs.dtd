@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tabs.otherComputers.label): Keep this in sync with syncTabsMenu.label from browser.dtd -->
+<!ENTITY tabs.otherComputers.label               "Karty z ďalších počítačov">
+
+<!ENTITY tabs.searchText.label                   "Hľadať karty…">
+
+<!-- LOCALIZATION NOTE (tabs.context.openTab.accesskey, tabs.context.openMultipleTabs.accesskey):
+     Only one of these will show at a time (based on selection), so reusing accesskey is ok. -->
+<!ENTITY tabs.context.openTab.label                   "Otvoriť túto kartu">
+<!ENTITY tabs.context.openTab.accesskey               "O">
+<!ENTITY tabs.context.openMultipleTabs.label          "Otvoriť označené karty">
+<!ENTITY tabs.context.openMultipleTabs.accesskey      "O">
+<!ENTITY tabs.context.bookmarkSingleTab.label         "Pridať túto kartu medzi záložky…">
+<!ENTITY tabs.context.bookmarkSingleTab.accesskey     "P">
+<!ENTITY tabs.context.bookmarkMultipleTabs.label      "Pridať označené karty medzi záložky…">
+<!ENTITY tabs.context.bookmarkMultipleTabs.accesskey  "P">
+<!ENTITY tabs.context.refreshList.label               "Obnoviť zoznam">
+<!ENTITY tabs.context.refreshList.accesskey           "b">
+

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "Firefox Hesabları">
+<!ENTITY aboutAccounts.connected.description "Qoşulu hesabınız:">
+<!ENTITY aboutAccounts.syncPreferences.label "Sync tənzimləmələrini yoxlamaq üçün buraya toxunun">
+
+<!ENTITY aboutAccounts.noConnection.title "İnternet bağlantısı yoxdur">
+<!ENTITY aboutAccounts.retry.label "Təkrar yoxla">
+
+<!ENTITY aboutAccounts.restrictedError.title "Məhdudlaşdırılmış">
+<!ENTITY aboutAccounts.restrictedError.description "Firefox Hesablarını bu profildən idarə edə bilməzsiniz.">

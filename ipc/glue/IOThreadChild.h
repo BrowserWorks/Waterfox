@@ -22,15 +22,14 @@ class IOThreadChild : public ChildThread {
                                           0))  // stack size
   {}
 
-  ~IOThreadChild() {}
+  ~IOThreadChild() = default;
 
   static MessageLoop* message_loop() {
     return IOThreadChild::current()->Thread::message_loop();
   }
 
-  // IOThreadChild owns the returned IPC::Channel.
-  static IPC::Channel* channel() {
-    return IOThreadChild::current()->ChildThread::channel();
+  static UniquePtr<IPC::Channel> TakeChannel() {
+    return IOThreadChild::current()->ChildThread::TakeChannel();
   }
 
  protected:

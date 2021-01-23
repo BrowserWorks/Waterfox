@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Избор на промени в редакцията">
+<!ENTITY conflictWarning.label "Страницата е променена от друга програма, но вие имате също незаписани промени в композитора.">
+<!ENTITY conflictResolve.label "Изберете коя версия да запазите:">
+<!ENTITY keepCurrentPageButton.label "Запазване на текущите промени">
+<!ENTITY useOtherPageButton.label "Замяна на текущата страница с други промени">

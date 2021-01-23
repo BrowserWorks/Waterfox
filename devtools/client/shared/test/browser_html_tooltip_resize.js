@@ -8,7 +8,7 @@
  */
 
 const HTML_NS = "http://www.w3.org/1999/xhtml";
-const TEST_URI = CHROME_URL_ROOT + "doc_html_tooltip.xul";
+const TEST_URI = CHROME_URL_ROOT + "doc_html_tooltip.xhtml";
 
 const {
   HTMLTooltip,
@@ -21,7 +21,7 @@ add_task(async function() {
   await pushPref("devtools.toolbox.sidebar.width", TOOLBOX_WIDTH);
 
   // Open the host on the right so that the doorhangers hang right.
-  const [, , doc] = await createHost("right", TEST_URI);
+  const { doc } = await createHost("right", TEST_URI);
 
   info("Test resizing of a tooltip");
 
@@ -48,7 +48,7 @@ add_task(async function() {
 
   // Resize the content
   div.style.cssText = "width: 200px; height: 30px";
-  tooltip.updateContainerBounds(box1, { position: "top" });
+  tooltip.show(box1, { position: "top" });
 
   // The panel should have moved 100px to the left and 10px down
   const updatedPanelBounds = tooltip.panel
@@ -56,14 +56,14 @@ add_task(async function() {
     .getBounds();
 
   const panelXMovement =
-    `panel left: ${originalPanelBounds.left}->` + updatedPanelBounds.left;
+    `panel right: ${originalPanelBounds.right} -> ` + updatedPanelBounds.right;
   ok(
-    Math.round(updatedPanelBounds.left - originalPanelBounds.left) === -100,
-    `Panel should have moved 100px to the left (actual: ${panelXMovement})`
+    Math.round(updatedPanelBounds.right - originalPanelBounds.right) === 100,
+    `Panel should have moved 100px to the right (actual: ${panelXMovement})`
   );
 
   const panelYMovement =
-    `panel top: ${originalPanelBounds.top}->` + updatedPanelBounds.top;
+    `panel top: ${originalPanelBounds.top} -> ` + updatedPanelBounds.top;
   ok(
     Math.round(updatedPanelBounds.top - originalPanelBounds.top) === 10,
     `Panel should have moved 10px down (actual: ${panelYMovement})`
@@ -75,14 +75,14 @@ add_task(async function() {
     .getBounds();
 
   const arrowXMovement =
-    `arrow left: ${originalArrowBounds.left}->` + updatedArrowBounds.left;
+    `arrow left: ${originalArrowBounds.left} -> ` + updatedArrowBounds.left;
   ok(
     Math.round(updatedArrowBounds.left - originalArrowBounds.left) === 0,
     `Arrow should not have moved (actual: ${arrowXMovement})`
   );
 
   const arrowYMovement =
-    `arrow top: ${originalArrowBounds.top}->` + updatedArrowBounds.top;
+    `arrow top: ${originalArrowBounds.top} -> ` + updatedArrowBounds.top;
   ok(
     Math.round(updatedArrowBounds.top - originalArrowBounds.top) === 0,
     `Arrow should not have moved (actual: ${arrowYMovement})`

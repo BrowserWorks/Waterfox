@@ -6,8 +6,8 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 import logging
 import os
-
-from StringIO import StringIO
+import six
+from six import StringIO
 
 from mozunit import main
 
@@ -49,6 +49,18 @@ DEFAULT_CXX_14 = {
     '__cplusplus': '201402L',
 }
 
+DRAFT_CXX17_201500 = {
+    '__cplusplus': '201500L',
+}
+
+DRAFT_CXX17_201406 = {
+    '__cplusplus': '201406L',
+}
+
+DEFAULT_CXX_17 = {
+    '__cplusplus': '201703L',
+}
+
 SUPPORTS_GNU99 = {
     '-std=gnu99': DEFAULT_C99,
 }
@@ -63,6 +75,14 @@ SUPPORTS_GNUXX14 = {
 
 SUPPORTS_CXX14 = {
     '-std=c++14': DEFAULT_CXX_14,
+}
+
+SUPPORTS_GNUXX17 = {
+    '-std=gnu++17': DEFAULT_CXX_17,
+}
+
+SUPPORTS_CXX17 = {
+    '-std=c++17': DEFAULT_CXX_17,
 }
 
 
@@ -91,17 +111,27 @@ SUPPORTS_DRAFT_CXX14_VERSION = {
     '-std=gnu++14': DRAFT_CXX_14,
 }
 
+SUPPORTS_GNUXX1Z = {
+    '-std=gnu++1z': DRAFT_CXX17_201406,
+}
+
+SUPPORTS_DRAFT_CXX17_201500_VERSION = {
+    '-std=gnu++17': DRAFT_CXX17_201500,
+}
+
 GCC_4_9 = GCC('4.9.3')
 GXX_4_9 = GXX('4.9.3') + SUPPORTS_DRAFT_CXX14_VERSION
 GCC_5 = GCC('5.2.1') + DEFAULT_C11
 GXX_5 = GXX('5.2.1') + SUPPORTS_GNUXX14
 GCC_6 = GCC('6.4.0') + DEFAULT_C11
-GXX_6 = GXX('6.4.0') + DEFAULT_CXX_14
+GXX_6 = GXX('6.4.0') + DEFAULT_CXX_14 + SUPPORTS_GNUXX17 + SUPPORTS_DRAFT_CXX17_201500_VERSION
 GCC_7 = GCC('7.3.0') + DEFAULT_C11
-GXX_7 = GXX('7.3.0') + DEFAULT_CXX_14
+GXX_7 = GXX('7.3.0') + DEFAULT_CXX_14 + SUPPORTS_GNUXX17 + SUPPORTS_CXX17
+GCC_8 = GCC('8.3.0') + DEFAULT_C11
+GXX_8 = GXX('8.3.0') + DEFAULT_CXX_14 + SUPPORTS_GNUXX17 + SUPPORTS_CXX17
 
-DEFAULT_GCC = GCC_6
-DEFAULT_GXX = GXX_6
+DEFAULT_GCC = GCC_7
+DEFAULT_GXX = GXX_7
 
 GCC_PLATFORM_LITTLE_ENDIAN = {
     '__ORDER_LITTLE_ENDIAN__': 1234,
@@ -192,21 +222,29 @@ def CLANGXX(version):
 CLANG_3_3 = CLANG('3.3.0') + DEFAULT_C99
 CLANGXX_3_3 = CLANGXX('3.3.0')
 CLANG_4_0 = CLANG('4.0.2') + DEFAULT_C11 + {
-    '__has_attribute(diagnose_if)': '1',
+    '__has_attribute(diagnose_if)': 1,
 }
-CLANGXX_4_0 = CLANGXX('4.0.2') + {
-    '__has_attribute(diagnose_if)': '1',
+CLANGXX_4_0 = CLANGXX('4.0.2') + SUPPORTS_GNUXX1Z + {
+    '__has_attribute(diagnose_if)': 1,
 }
-DEFAULT_CLANG = CLANG_4_0
-DEFAULT_CLANGXX = CLANGXX_4_0
+CLANG_5_0 = CLANG('5.0.1') + DEFAULT_C11 + {
+    '__has_attribute(diagnose_if)': 1,
+    '__has_warning("-Wunguarded-availability")': 1,
+}
+CLANGXX_5_0 = CLANGXX('5.0.1') + SUPPORTS_GNUXX17 + {
+    '__has_attribute(diagnose_if)': 1,
+    '__has_warning("-Wunguarded-availability")': 1,
+}
+DEFAULT_CLANG = CLANG_5_0
+DEFAULT_CLANGXX = CLANGXX_5_0
 
 
 def CLANG_PLATFORM(gcc_platform):
     base = {
         '--target=x86_64-linux-gnu': GCC_PLATFORM_X86_64_LINUX[None],
-        '--target=x86_64-darwin11.2.0': GCC_PLATFORM_X86_64_OSX[None],
+        '--target=x86_64-apple-darwin11.2.0': GCC_PLATFORM_X86_64_OSX[None],
         '--target=i686-linux-gnu': GCC_PLATFORM_X86_LINUX[None],
-        '--target=i686-darwin11.2.0': GCC_PLATFORM_X86_OSX[None],
+        '--target=i686-apple-darwin11.2.0': GCC_PLATFORM_X86_OSX[None],
         '--target=arm-linux-gnu': GCC_PLATFORM_ARM_LINUX[None],
     }
     undo_gcc_platform = {
@@ -232,6 +270,7 @@ def VS(version):
             '_MSC_VER': '%02d%02d' % (version.major, version.minor),
             '_MSC_FULL_VER': '%02d%02d%05d' % (version.major, version.minor,
                                                version.patch),
+            '_MT': '1',
         },
         '*.cpp': DEFAULT_CXX_97,
     })
@@ -260,7 +299,8 @@ CLANG_CL_3_9 = (CLANG_BASE('3.9.0') + VS('18.00.00000') + DEFAULT_C11 +
     },
 }
 CLANG_CL_8_0 = (CLANG_BASE('8.0.0') + VS('18.00.00000') + DEFAULT_C11 +
-                SUPPORTS_GNU99 + SUPPORTS_GNUXX11 + SUPPORTS_CXX14) + {
+                SUPPORTS_GNU99 + SUPPORTS_GNUXX11 + SUPPORTS_CXX14 +
+                SUPPORTS_CXX17) + {
     '*.cpp': {
         '__STDC_VERSION__': False,
         '__cplusplus': '201103L',
@@ -375,6 +415,7 @@ class BaseToolchainTest(BaseConfigureTest):
                 result = {}
             try:
                 self.out.truncate(0)
+                self.out.seek(0)
                 compiler = sandbox._value_for(sandbox[var])
                 # Add var on both ends to make it clear which of the
                 # variables is failing the test when that happens.
@@ -424,7 +465,7 @@ class BaseToolchainTest(BaseConfigureTest):
 
 
 def old_gcc_message(old_ver):
-    return 'Only GCC 6.1 or newer is supported (found version {}).'.format(old_ver)
+    return 'Only GCC 7.1 or newer is supported (found version {}).'.format(old_ver)
 
 
 class LinuxToolchainTest(BaseToolchainTest):
@@ -439,8 +480,12 @@ class LinuxToolchainTest(BaseToolchainTest):
         '/usr/bin/g++-6': GXX_6 + GCC_PLATFORM_X86_64_LINUX,
         '/usr/bin/gcc-7': GCC_7 + GCC_PLATFORM_X86_64_LINUX,
         '/usr/bin/g++-7': GXX_7 + GCC_PLATFORM_X86_64_LINUX,
+        '/usr/bin/gcc-8': GCC_8 + GCC_PLATFORM_X86_64_LINUX,
+        '/usr/bin/g++-8': GXX_8 + GCC_PLATFORM_X86_64_LINUX,
         '/usr/bin/clang': DEFAULT_CLANG + CLANG_PLATFORM_X86_64_LINUX,
         '/usr/bin/clang++': DEFAULT_CLANGXX + CLANG_PLATFORM_X86_64_LINUX,
+        '/usr/bin/clang-5.0': CLANG_5_0 + CLANG_PLATFORM_X86_64_LINUX,
+        '/usr/bin/clang++-5.0': CLANGXX_5_0 + CLANG_PLATFORM_X86_64_LINUX,
         '/usr/bin/clang-4.0': CLANG_4_0 + CLANG_PLATFORM_X86_64_LINUX,
         '/usr/bin/clang++-4.0': CLANGXX_4_0 + CLANG_PLATFORM_X86_64_LINUX,
         '/usr/bin/clang-3.3': CLANG_3_3 + CLANG_PLATFORM_X86_64_LINUX,
@@ -453,20 +498,8 @@ class LinuxToolchainTest(BaseToolchainTest):
     GXX_4_9_RESULT = GCC_4_9_RESULT
     GCC_5_RESULT = old_gcc_message('5.2.1')
     GXX_5_RESULT = GCC_5_RESULT
-    GCC_6_RESULT = CompilerResult(
-        flags=['-std=gnu99'],
-        version='6.4.0',
-        type='gcc',
-        compiler='/usr/bin/gcc-6',
-        language='C',
-    )
-    GXX_6_RESULT = CompilerResult(
-        flags=[],
-        version='6.4.0',
-        type='gcc',
-        compiler='/usr/bin/g++-6',
-        language='C++',
-    )
+    GCC_6_RESULT = old_gcc_message('6.4.0')
+    GXX_6_RESULT = GCC_6_RESULT
     GCC_7_RESULT = CompilerResult(
         flags=['-std=gnu99'],
         version='7.3.0',
@@ -475,33 +508,49 @@ class LinuxToolchainTest(BaseToolchainTest):
         language='C',
     )
     GXX_7_RESULT = CompilerResult(
-        flags=[],
+        flags=['-std=gnu++17'],
         version='7.3.0',
         type='gcc',
         compiler='/usr/bin/g++-7',
         language='C++',
     )
-    DEFAULT_GCC_RESULT = GCC_6_RESULT + {'compiler': '/usr/bin/gcc'}
-    DEFAULT_GXX_RESULT = GXX_6_RESULT + {'compiler': '/usr/bin/g++'}
-
-    CLANG_3_3_RESULT = 'Only clang/llvm 4.0 or newer is supported.'
-    CLANGXX_3_3_RESULT = 'Only clang/llvm 4.0 or newer is supported.'
-    CLANG_4_0_RESULT = CompilerResult(
+    GCC_8_RESULT = CompilerResult(
         flags=['-std=gnu99'],
-        version='4.0.2',
-        type='clang',
-        compiler='/usr/bin/clang-4.0',
+        version='8.3.0',
+        type='gcc',
+        compiler='/usr/bin/gcc-8',
         language='C',
     )
-    CLANGXX_4_0_RESULT = CompilerResult(
-        flags=['-std=gnu++14'],
-        version='4.0.2',
-        type='clang',
-        compiler='/usr/bin/clang++-4.0',
+    GXX_8_RESULT = CompilerResult(
+        flags=['-std=gnu++17'],
+        version='8.3.0',
+        type='gcc',
+        compiler='/usr/bin/g++-8',
         language='C++',
     )
-    DEFAULT_CLANG_RESULT = CLANG_4_0_RESULT + {'compiler': '/usr/bin/clang'}
-    DEFAULT_CLANGXX_RESULT = CLANGXX_4_0_RESULT + {'compiler': '/usr/bin/clang++'}
+    DEFAULT_GCC_RESULT = GCC_7_RESULT + {'compiler': '/usr/bin/gcc'}
+    DEFAULT_GXX_RESULT = GXX_7_RESULT + {'compiler': '/usr/bin/g++'}
+
+    CLANG_3_3_RESULT = 'Only clang/llvm 5.0 or newer is supported.'
+    CLANGXX_3_3_RESULT = 'Only clang/llvm 5.0 or newer is supported.'
+    CLANG_4_0_RESULT = 'Only clang/llvm 5.0 or newer is supported.'
+    CLANGXX_4_0_RESULT = 'Only clang/llvm 5.0 or newer is supported.'
+    CLANG_5_0_RESULT = CompilerResult(
+        flags=['-std=gnu99'],
+        version='5.0.1',
+        type='clang',
+        compiler='/usr/bin/clang-5.0',
+        language='C',
+    )
+    CLANGXX_5_0_RESULT = CompilerResult(
+        flags=['-std=gnu++17'],
+        version='5.0.1',
+        type='clang',
+        compiler='/usr/bin/clang++-5.0',
+        language='C++',
+    )
+    DEFAULT_CLANG_RESULT = CLANG_5_0_RESULT + {'compiler': '/usr/bin/clang'}
+    DEFAULT_CLANGXX_RESULT = CLANGXX_5_0_RESULT + {'compiler': '/usr/bin/clang++'}
 
     def test_default(self):
         # We'll try clang and gcc, and find clang first.
@@ -558,12 +607,12 @@ class LinuxToolchainTest(BaseToolchainTest):
         self.do_toolchain_test(self.PATHS, {
             'c_compiler': self.DEFAULT_GCC_RESULT,
             'cxx_compiler': (
-                'The target C compiler is version 6.4.0, while the target '
-                'C++ compiler is version 7.3.0. Need to use the same compiler '
+                'The target C compiler is version 7.3.0, while the target '
+                'C++ compiler is version 8.3.0. Need to use the same compiler '
                 'version.'),
         }, environ={
             'CC': 'gcc',
-            'CXX': 'g++-7',
+            'CXX': 'g++-8',
         })
 
         self.do_toolchain_test(self.PATHS, {
@@ -571,12 +620,12 @@ class LinuxToolchainTest(BaseToolchainTest):
             'cxx_compiler': self.DEFAULT_GXX_RESULT,
             'host_c_compiler': self.DEFAULT_GCC_RESULT,
             'host_cxx_compiler': (
-                'The host C compiler is version 6.4.0, while the host '
-                'C++ compiler is version 7.3.0. Need to use the same compiler '
+                'The host C compiler is version 7.3.0, while the host '
+                'C++ compiler is version 8.3.0. Need to use the same compiler '
                 'version.'),
         }, environ={
             'CC': 'gcc',
-            'HOST_CXX': 'g++-7',
+            'HOST_CXX': 'g++-8',
         })
 
     def test_mismatched_compiler(self):
@@ -619,7 +668,7 @@ class LinuxToolchainTest(BaseToolchainTest):
         # We'll try gcc and clang, but since there is no gcc (gcc-x.y doesn't
         # count), find clang.
         paths = {
-            k: v for k, v in self.PATHS.iteritems()
+            k: v for k, v in six.iteritems(self.PATHS)
             if os.path.basename(k) not in ('gcc', 'g++')
         }
         self.do_toolchain_test(paths, {
@@ -630,14 +679,13 @@ class LinuxToolchainTest(BaseToolchainTest):
     def test_guess_cxx_clang(self):
         # When CXX is not set, we guess it from CC.
         self.do_toolchain_test(self.PATHS, {
-            'c_compiler': self.CLANG_4_0_RESULT,
-            'cxx_compiler': self.CLANGXX_4_0_RESULT,
+            'c_compiler': self.CLANG_5_0_RESULT,
+            'cxx_compiler': self.CLANGXX_5_0_RESULT,
         }, environ={
-            'CC': 'clang-4.0',
+            'CC': 'clang-5.0',
         })
 
     def test_unsupported_clang(self):
-        # clang 3.3 C compiler is perfectly fine, but we need more for C++.
         self.do_toolchain_test(self.PATHS, {
             'c_compiler': self.CLANG_3_3_RESULT,
             'cxx_compiler': self.CLANGXX_3_3_RESULT,
@@ -645,12 +693,19 @@ class LinuxToolchainTest(BaseToolchainTest):
             'CC': 'clang-3.3',
             'CXX': 'clang++-3.3',
         })
+        self.do_toolchain_test(self.PATHS, {
+            'c_compiler': self.CLANG_4_0_RESULT,
+            'cxx_compiler': self.CLANGXX_4_0_RESULT,
+        }, environ={
+            'CC': 'clang-4.0',
+            'CXX': 'clang++-4.0',
+        })
 
     def test_no_supported_compiler(self):
         # Even if there are gcc-x.y or clang-x.y compilers available, we
         # don't try them. This could be considered something to improve.
         paths = {
-            k: v for k, v in self.PATHS.iteritems()
+            k: v for k, v in six.iteritems(self.PATHS)
             if os.path.basename(k) not in ('gcc', 'g++', 'clang', 'clang++')
         }
         self.do_toolchain_test(paths, {
@@ -811,18 +866,32 @@ class OSXToolchainTest(BaseToolchainTest):
         '/usr/bin/g++-5': GXX_5 + GCC_PLATFORM_X86_64_OSX,
         '/usr/bin/gcc-7': GCC_7 + GCC_PLATFORM_X86_64_OSX,
         '/usr/bin/g++-7': GXX_7 + GCC_PLATFORM_X86_64_OSX,
-        '/usr/bin/clang': DEFAULT_CLANG + CLANG_PLATFORM_X86_64_OSX,
-        '/usr/bin/clang++': DEFAULT_CLANGXX + CLANG_PLATFORM_X86_64_OSX,
+        '/usr/bin/clang': CLANG_5_0 + CLANG_PLATFORM_X86_64_OSX,
+        '/usr/bin/clang++': CLANGXX_5_0 + CLANG_PLATFORM_X86_64_OSX,
         '/usr/bin/clang-4.0': CLANG_4_0 + CLANG_PLATFORM_X86_64_OSX,
         '/usr/bin/clang++-4.0': CLANGXX_4_0 + CLANG_PLATFORM_X86_64_OSX,
         '/usr/bin/clang-3.3': CLANG_3_3 + CLANG_PLATFORM_X86_64_OSX,
         '/usr/bin/clang++-3.3': CLANGXX_3_3 + CLANG_PLATFORM_X86_64_OSX,
         '/usr/bin/xcrun': xcrun,
     }
-    CLANG_3_3_RESULT = LinuxToolchainTest.CLANG_3_3_RESULT
-    CLANGXX_3_3_RESULT = LinuxToolchainTest.CLANGXX_3_3_RESULT
-    DEFAULT_CLANG_RESULT = LinuxToolchainTest.DEFAULT_CLANG_RESULT
-    DEFAULT_CLANGXX_RESULT = LinuxToolchainTest.DEFAULT_CLANGXX_RESULT
+    CLANG_3_3_RESULT = 'Only clang/llvm 5.0 or newer is supported.'
+    CLANGXX_3_3_RESULT = 'Only clang/llvm 5.0 or newer is supported.'
+    CLANG_4_0_RESULT = 'Only clang/llvm 5.0 or newer is supported.'
+    CLANGXX_4_0_RESULT = 'Only clang/llvm 5.0 or newer is supported.'
+    DEFAULT_CLANG_RESULT = CompilerResult(
+        flags=['-std=gnu99'],
+        version='5.0.1',
+        type='clang',
+        compiler='/usr/bin/clang',
+        language='C',
+    )
+    DEFAULT_CLANGXX_RESULT = CompilerResult(
+        flags=['-std=gnu++17'],
+        version='5.0.1',
+        type='clang',
+        compiler='/usr/bin/clang++',
+        language='C++',
+    )
     GCC_5_RESULT = LinuxToolchainTest.GCC_5_RESULT
     GXX_5_RESULT = LinuxToolchainTest.GXX_5_RESULT
     GCC_7_RESULT = LinuxToolchainTest.GCC_7_RESULT
@@ -841,7 +910,7 @@ class OSXToolchainTest(BaseToolchainTest):
     def test_not_gcc(self):
         # We won't pick GCC if it's the only thing available.
         paths = {
-            k: v for k, v in self.PATHS.iteritems()
+            k: v for k, v in six.iteritems(self.PATHS)
             if os.path.basename(k) not in ('clang', 'clang++')
         }
         self.do_toolchain_test(paths, {
@@ -849,13 +918,20 @@ class OSXToolchainTest(BaseToolchainTest):
         })
 
     def test_unsupported_clang(self):
-        # clang 3.3 C compiler is perfectly fine, but we need more for C++.
         self.do_toolchain_test(self.PATHS, {
             'c_compiler': self.CLANG_3_3_RESULT,
             'cxx_compiler': self.CLANGXX_3_3_RESULT,
         }, environ={
             'CC': 'clang-3.3',
             'CXX': 'clang++-3.3',
+        })
+        # When targeting mac, we require at least version 5.
+        self.do_toolchain_test(self.PATHS, {
+            'c_compiler': self.CLANG_4_0_RESULT,
+            'cxx_compiler': self.CLANGXX_4_0_RESULT,
+        }, environ={
+            'CC': 'clang-4.0',
+            'CXX': 'clang++-4.0',
         })
 
     def test_forced_gcc(self):
@@ -894,8 +970,12 @@ class WindowsToolchainTest(BaseToolchainTest):
         '/usr/bin/g++-5': GXX_5 + GCC_PLATFORM_X86_WIN,
         '/usr/bin/gcc-6': GCC_6 + GCC_PLATFORM_X86_WIN,
         '/usr/bin/g++-6': GXX_6 + GCC_PLATFORM_X86_WIN,
+        '/usr/bin/gcc-7': GCC_7 + GCC_PLATFORM_X86_WIN,
+        '/usr/bin/g++-7': GXX_7 + GCC_PLATFORM_X86_WIN,
         '/usr/bin/clang': DEFAULT_CLANG + CLANG_PLATFORM_X86_WIN,
         '/usr/bin/clang++': DEFAULT_CLANGXX + CLANG_PLATFORM_X86_WIN,
+        '/usr/bin/clang-5.0': CLANG_5_0 + CLANG_PLATFORM_X86_WIN,
+        '/usr/bin/clang++-5.0': CLANGXX_5_0 + CLANG_PLATFORM_X86_WIN,
         '/usr/bin/clang-4.0': CLANG_4_0 + CLANG_PLATFORM_X86_WIN,
         '/usr/bin/clang++-4.0': CLANGXX_4_0 + CLANG_PLATFORM_X86_WIN,
         '/usr/bin/clang-3.3': CLANG_3_3 + CLANG_PLATFORM_X86_WIN,
@@ -913,13 +993,15 @@ class WindowsToolchainTest(BaseToolchainTest):
     CLANGXX_CL_3_9_RESULT = 'Only clang-cl 8.0 or newer is supported (found version 3.9.0)'
     CLANGXX_CL_8_0_RESULT = CompilerResult(
         version='8.0.0',
-        flags=['-Xclang', '-std=c++14'],
+        flags=['-Xclang', '-std=c++17'],
         type='clang-cl',
         compiler='/usr/bin/clang-cl',
         language='C++',
     )
     CLANG_3_3_RESULT = LinuxToolchainTest.CLANG_3_3_RESULT
     CLANGXX_3_3_RESULT = LinuxToolchainTest.CLANGXX_3_3_RESULT
+    CLANG_4_0_RESULT = LinuxToolchainTest.CLANG_4_0_RESULT
+    CLANGXX_4_0_RESULT = LinuxToolchainTest.CLANGXX_4_0_RESULT
     DEFAULT_CLANG_RESULT = LinuxToolchainTest.DEFAULT_CLANG_RESULT
     DEFAULT_CLANGXX_RESULT = LinuxToolchainTest.DEFAULT_CLANGXX_RESULT
     GCC_4_9_RESULT = LinuxToolchainTest.GCC_4_9_RESULT
@@ -928,6 +1010,8 @@ class WindowsToolchainTest(BaseToolchainTest):
     GXX_5_RESULT = LinuxToolchainTest.GXX_5_RESULT
     GCC_6_RESULT = LinuxToolchainTest.GCC_6_RESULT
     GXX_6_RESULT = LinuxToolchainTest.GXX_6_RESULT
+    GCC_7_RESULT = LinuxToolchainTest.GCC_7_RESULT
+    GXX_7_RESULT = LinuxToolchainTest.GXX_7_RESULT
     DEFAULT_GCC_RESULT = LinuxToolchainTest.DEFAULT_GCC_RESULT
     DEFAULT_GXX_RESULT = LinuxToolchainTest.DEFAULT_GXX_RESULT
 
@@ -954,7 +1038,7 @@ class WindowsToolchainTest(BaseToolchainTest):
     def test_gcc(self):
         # We'll pick GCC if msvc and clang-cl can't be found.
         paths = {
-            k: v for k, v in self.PATHS.iteritems()
+            k: v for k, v in six.iteritems(self.PATHS)
             if os.path.basename(k) not in ('cl', 'clang-cl')
         }
         self.do_toolchain_test(paths, {
@@ -973,7 +1057,7 @@ class WindowsToolchainTest(BaseToolchainTest):
     def test_clang(self):
         # We'll pick clang if nothing else is found.
         paths = {
-            k: v for k, v in self.PATHS.iteritems()
+            k: v for k, v in six.iteritems(self.PATHS)
             if os.path.basename(k) not in ('cl', 'clang-cl', 'gcc')
         }
         self.do_toolchain_test(paths, {
@@ -1013,6 +1097,8 @@ class Windows64ToolchainTest(WindowsToolchainTest):
         '/usr/bin/g++-7': GXX_7 + GCC_PLATFORM_X86_64_WIN,
         '/usr/bin/clang': DEFAULT_CLANG + CLANG_PLATFORM_X86_64_WIN,
         '/usr/bin/clang++': DEFAULT_CLANGXX + CLANG_PLATFORM_X86_64_WIN,
+        '/usr/bin/clang-5.0': CLANG_5_0 + CLANG_PLATFORM_X86_64_WIN,
+        '/usr/bin/clang++-5.0': CLANGXX_5_0 + CLANG_PLATFORM_X86_64_WIN,
         '/usr/bin/clang-4.0': CLANG_4_0 + CLANG_PLATFORM_X86_64_WIN,
         '/usr/bin/clang++-4.0': CLANGXX_4_0 + CLANG_PLATFORM_X86_64_WIN,
         '/usr/bin/clang-3.3': CLANG_3_3 + CLANG_PLATFORM_X86_64_WIN,
@@ -1328,17 +1414,21 @@ class LinuxCrossCompileToolchainTest(BaseToolchainTest):
 
 class OSXCrossToolchainTest(BaseToolchainTest):
     TARGET = 'i686-apple-darwin11.2.0'
-    PATHS = LinuxToolchainTest.PATHS
-    DEFAULT_CLANG_RESULT = LinuxToolchainTest.DEFAULT_CLANG_RESULT
-    DEFAULT_CLANGXX_RESULT = LinuxToolchainTest.DEFAULT_CLANGXX_RESULT
+    PATHS = dict(LinuxToolchainTest.PATHS)
+    PATHS.update({
+        '/usr/bin/clang': CLANG_5_0 + CLANG_PLATFORM_X86_64_LINUX,
+        '/usr/bin/clang++': CLANGXX_5_0 + CLANG_PLATFORM_X86_64_LINUX,
+    })
+    DEFAULT_CLANG_RESULT = OSXToolchainTest.DEFAULT_CLANG_RESULT
+    DEFAULT_CLANGXX_RESULT = OSXToolchainTest.DEFAULT_CLANGXX_RESULT
 
     def test_osx_cross(self):
         self.do_toolchain_test(self.PATHS, {
             'c_compiler': self.DEFAULT_CLANG_RESULT + OSXToolchainTest.SYSROOT_FLAGS + {
-                'flags': ['--target=i686-darwin11.2.0'],
+                'flags': ['--target=i686-apple-darwin11.2.0'],
             },
             'cxx_compiler': self.DEFAULT_CLANGXX_RESULT + OSXToolchainTest.SYSROOT_FLAGS + {
-                'flags': ['--target=i686-darwin11.2.0'],
+                'flags': ['--target=i686-apple-darwin11.2.0'],
             },
             'host_c_compiler': self.DEFAULT_CLANG_RESULT,
             'host_cxx_compiler': self.DEFAULT_CLANGXX_RESULT,
@@ -1654,10 +1744,6 @@ class RustTest(BaseConfigureTest):
             'i686-unknown-linux-gnu',
             'i686-apple-darwin',
             'x86_64-apple-darwin',
-            'aarch64-apple-ios',
-            'armv7s-apple-ios',
-            'i386-apple-ios',
-            'x86_64-apple-ios',
             'mips-unknown-linux-gnu',
             'mipsel-unknown-linux-gnu',
             'mips64-unknown-linux-gnuabi64',
@@ -1705,13 +1791,6 @@ class RustTest(BaseConfigureTest):
 
         self.assertEqual(
             self.get_rust_target('arm-unknown-linux-androideabi',
-                                 version='1.32.0',
-                                 arm_target=ReadOnlyNamespace(
-                                     arm_arch=7, fpu='neon', thumb2=True, float_abi='softfp')),
-            'armv7-linux-androideabi')
-
-        self.assertEqual(
-            self.get_rust_target('arm-unknown-linux-androideabi',
                                  arm_target=ReadOnlyNamespace(
                                      arm_arch=7, fpu='neon', thumb2=False, float_abi='softfp')),
             'armv7-linux-androideabi')
@@ -1727,13 +1806,6 @@ class RustTest(BaseConfigureTest):
                                  arm_target=ReadOnlyNamespace(
                                      arm_arch=7, fpu='neon', thumb2=True, float_abi='hard')),
             'thumbv7neon-unknown-linux-gnueabihf')
-
-        self.assertEqual(
-            self.get_rust_target('armv7-unknown-linux-gnueabihf',
-                                 version='1.32.0',
-                                 arm_target=ReadOnlyNamespace(
-                                     arm_arch=7, fpu='neon', thumb2=True, float_abi='hard')),
-            'armv7-unknown-linux-gnueabihf')
 
         self.assertEqual(
             self.get_rust_target('armv7-unknown-linux-gnueabihf',

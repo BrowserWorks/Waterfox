@@ -8,7 +8,8 @@
 #define mozilla_layers_AnimationHelper_h
 
 #include "mozilla/dom/Nullable.h"
-#include "mozilla/ComputedTimingFunction.h"    // for ComputedTimingFunction
+#include "mozilla/ComputedTimingFunction.h"  // for ComputedTimingFunction
+#include "mozilla/layers/AnimationStorageData.h"
 #include "mozilla/layers/LayersMessages.h"     // for TransformData, etc
 #include "mozilla/webrender/WebRenderTypes.h"  // for RenderRoot
 #include "mozilla/TimeStamp.h"                 // for TimeStamp
@@ -28,51 +29,6 @@ namespace layers {
 class Animation;
 
 typedef nsTArray<layers::Animation> AnimationArray;
-
-struct PropertyAnimation {
-  struct SegmentData {
-    RefPtr<RawServoAnimationValue> mStartValue;
-    RefPtr<RawServoAnimationValue> mEndValue;
-    Maybe<mozilla::ComputedTimingFunction> mFunction;
-    float mStartPortion;
-    float mEndPortion;
-    dom::CompositeOperation mStartComposite;
-    dom::CompositeOperation mEndComposite;
-  };
-  nsTArray<SegmentData> mSegments;
-  TimingParams mTiming;
-
-  // These two variables correspond to the variables of the same name in
-  // KeyframeEffectReadOnly and are used for the same purpose: to skip composing
-  // animations whose progress has not changed.
-  dom::Nullable<double> mProgressOnLastCompose;
-  uint64_t mCurrentIterationOnLastCompose = 0;
-  // These two variables are used for a similar optimization above but are
-  // applied to the timing function in each keyframe.
-  uint32_t mSegmentIndexOnLastCompose = 0;
-  dom::Nullable<double> mPortionInSegmentOnLastCompose;
-
-  TimeStamp mOriginTime;
-  Maybe<TimeDuration> mStartTime;
-  TimeDuration mHoldTime;
-  float mPlaybackRate;
-  dom::IterationCompositeOperation mIterationComposite;
-  bool mIsNotPlaying;
-};
-
-struct PropertyAnimationGroup {
-  nsCSSPropertyID mProperty;
-  Maybe<TransformData> mAnimationData;
-
-  nsTArray<PropertyAnimation> mAnimations;
-  RefPtr<RawServoAnimationValue> mBaseStyle;
-
-  bool IsEmpty() const { return mAnimations.IsEmpty(); }
-  void Clear() {
-    mAnimations.Clear();
-    mBaseStyle = nullptr;
-  }
-};
 
 struct AnimationTransform {
   /*
@@ -112,6 +68,26 @@ struct AnimatedValue final {
 
   explicit AnimatedValue(nscolor aValue) : mValue(AsVariant(aValue)) {}
 
+  void SetTransform(gfx::Matrix4x4&& aTransformInDevSpace,
+                    gfx::Matrix4x4&& aFrameTransform,
+                    const TransformData& aData) {
+    MOZ_ASSERT(mValue.is<AnimationTransform>());
+    AnimationTransform& previous = mValue.as<AnimationTransform>();
+    previous.mTransformInDevSpace = std::move(aTransformInDevSpace);
+    previous.mFrameTransform = std::move(aFrameTransform);
+    if (previous.mData != aData) {
+      previous.mData = aData;
+    }
+  }
+  void SetOpacity(float aOpacity) {
+    MOZ_ASSERT(mValue.is<float>());
+    mValue.as<float>() = aOpacity;
+  }
+  void SetColor(nscolor aColor) {
+    MOZ_ASSERT(mValue.is<nscolor>());
+    mValue.as<nscolor>() = aColor;
+  }
+
  private:
   AnimatedValueType mValue;
 };
@@ -132,35 +108,34 @@ struct AnimatedValue final {
 // mechanism).
 class CompositorAnimationStorage final {
   typedef nsClassHashtable<nsUint64HashKey, AnimatedValue> AnimatedValueTable;
-  typedef nsClassHashtable<nsUint64HashKey, nsTArray<PropertyAnimationGroup>>
+  typedef nsDataHashtable<nsUint64HashKey, AnimationStorageData>
       AnimationsTable;
-  typedef nsDataHashtable<nsUint64HashKey, wr::RenderRoot>
-      AnimationsRenderRootsTable;
 
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(CompositorAnimationStorage)
  public:
   /**
    * Set the animation transform based on the unique id and also
-   * set up |aFrameTransform| and |aData| for OMTA testing
+   * set up |aFrameTransform| and |aData| for OMTA testing.
+   * If |aPreviousValue| is not null, the animation transform replaces the value
+   * in the |aPreviousValue|.
+   * NOTE: |aPreviousValue| should be the value for the |aId|.
    */
-  void SetAnimatedValue(uint64_t aId, gfx::Matrix4x4&& aTransformInDevSpace,
+  void SetAnimatedValue(uint64_t aId, AnimatedValue* aPreviousValue,
+                        gfx::Matrix4x4&& aTransformInDevSpace,
                         gfx::Matrix4x4&& aFrameTransform,
                         const TransformData& aData);
 
   /**
-   * Set the animation transform in device pixel based on the unique id
+   * Similar to above but for opacity.
    */
-  void SetAnimatedValue(uint64_t aId, gfx::Matrix4x4&& aTransformInDevSpace);
+  void SetAnimatedValue(uint64_t aId, AnimatedValue* aPreviousValue,
+                        float aOpacity);
 
   /**
-   * Set the animation opacity based on the unique id
+   * Similar to above but for color.
    */
-  void SetAnimatedValue(uint64_t aId, const float& aOpacity);
-
-  /**
-   * Set the animation color based on the unique id
-   */
-  void SetAnimatedValue(uint64_t aId, nscolor aColor);
+  void SetAnimatedValue(uint64_t aId, AnimatedValue* aPreviousValue,
+                        nscolor aColor);
 
   /**
    * Return the animated value if a given id can map to its animated value
@@ -181,13 +156,7 @@ class CompositorAnimationStorage final {
   /**
    * Set the animations based on the unique id
    */
-  void SetAnimations(uint64_t aId, const AnimationArray& aAnimations,
-                     wr::RenderRoot aRenderRoot);
-
-  /**
-   * Return the animations if a given id can map to its animations
-   */
-  nsTArray<PropertyAnimationGroup>* GetAnimations(const uint64_t& aId) const;
+  void SetAnimations(uint64_t aId, const AnimationArray& aAnimations);
 
   /**
    * Return the iterator of animations table
@@ -197,10 +166,6 @@ class CompositorAnimationStorage final {
   }
 
   uint32_t AnimationsCount() const { return mAnimations.Count(); }
-
-  wr::RenderRoot AnimationRenderRoot(const uint64_t& aId) const {
-    return mAnimationRenderRoots.Get(aId);
-  }
 
   /**
    * Clear AnimatedValues and Animations data
@@ -214,7 +179,6 @@ class CompositorAnimationStorage final {
  private:
   AnimatedValueTable mAnimatedValues;
   AnimationsTable mAnimations;
-  AnimationsRenderRootsTable mAnimationRenderRoots;
 };
 
 /**
@@ -305,7 +269,7 @@ class AnimationHelper {
    * from the rather compact representation we use for transferring across the
    * IPC boundary into something we can readily use for sampling.
    */
-  static nsTArray<PropertyAnimationGroup> ExtractAnimations(
+  static AnimationStorageData ExtractAnimations(
       const AnimationArray& aAnimations);
 
   /**
@@ -340,7 +304,7 @@ class AnimationHelper {
    */
   static gfx::Matrix4x4 ServoAnimationValueToMatrix4x4(
       const nsTArray<RefPtr<RawServoAnimationValue>>& aValue,
-      const TransformData& aTransformData);
+      const TransformData& aTransformData, gfx::Path* aCachedMotionPath);
 };
 
 }  // namespace layers

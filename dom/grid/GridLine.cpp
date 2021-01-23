@@ -30,9 +30,14 @@ GridLine::GridLine(GridLines* aParent)
   MOZ_ASSERT(aParent, "Should never be instantiated with a null GridLines");
 }
 
-GridLine::~GridLine() {}
+GridLine::~GridLine() = default;
 
-void GridLine::GetNames(nsTArray<nsString>& aNames) const { aNames = mNames; }
+void GridLine::GetNames(nsTArray<nsString>& aNames) const {
+  aNames.SetCapacity(mNames.Length());
+  for (auto& name : mNames) {
+    aNames.AppendElement(nsDependentAtomString(name));
+  }
+}
 
 JSObject* GridLine::WrapObject(JSContext* aCx,
                                JS::Handle<JSObject*> aGivenProto) {
@@ -49,10 +54,10 @@ uint32_t GridLine::Number() const { return mNumber; }
 
 int32_t GridLine::NegativeNumber() const { return mNegativeNumber; }
 
-void GridLine::SetLineValues(const nsTArray<nsString>& aNames, double aStart,
-                             double aBreadth, uint32_t aNumber,
+void GridLine::SetLineValues(const nsTArray<RefPtr<nsAtom>>& aNames,
+                             double aStart, double aBreadth, uint32_t aNumber,
                              int32_t aNegativeNumber, GridDeclaration aType) {
-  mNames = aNames;
+  mNames = aNames.Clone();
   mStart = aStart;
   mBreadth = aBreadth;
   mNumber = aNumber;
@@ -60,8 +65,8 @@ void GridLine::SetLineValues(const nsTArray<nsString>& aNames, double aStart,
   mType = aType;
 }
 
-void GridLine::SetLineNames(const nsTArray<nsString>& aNames) {
-  mNames = aNames;
+void GridLine::SetLineNames(const nsTArray<RefPtr<nsAtom>>& aNames) {
+  mNames = aNames.Clone();
 }
 
 }  // namespace dom

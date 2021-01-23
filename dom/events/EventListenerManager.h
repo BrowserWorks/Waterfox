@@ -18,7 +18,6 @@
 #include "nsTObserverArray.h"
 #include "nsTArray.h"
 
-class nsIDocShell;
 class nsIEventListenerInfo;
 class nsPIDOMWindowInner;
 class JSTracer;
@@ -157,7 +156,9 @@ class EventListenerManagerBase {
   uint16_t mMayHaveSelectionChangeEventListener : 1;
   uint16_t mClearingListeners : 1;
   uint16_t mIsMainThreadELM : 1;
-  // uint16_t mUnused : 4;
+  uint16_t mHasNonPrivilegedClickListeners : 1;
+  uint16_t mUnknownNonPrivilegedClickListeners : 1;
+  // uint16_t mUnused : 2;
 };
 
 /*
@@ -208,7 +209,7 @@ class EventListenerManager final : public EventListenerManagerBase {
 
     Listener(Listener&& aOther)
         : mListener(std::move(aOther.mListener)),
-          mTypeAtom(aOther.mTypeAtom.forget()),
+          mTypeAtom(std::move(aOther.mTypeAtom)),
           mEventMessage(aOther.mEventMessage),
           mListenerType(aOther.mListenerType),
           mListenerIsHandler(aOther.mListenerIsHandler),
@@ -426,6 +427,8 @@ class EventListenerManager final : public EventListenerManagerBase {
     return mMayHaveSelectionChangeEventListener;
   }
 
+  bool HasNonPrivilegedClickListeners();
+
   /**
    * Returns true if there may be a key event listener (keydown, keypress,
    * or keyup) registered, or false if there definitely isn't.
@@ -458,6 +461,8 @@ class EventListenerManager final : public EventListenerManagerBase {
   bool IsApzAwareListener(Listener* aListener);
   bool IsApzAwareEvent(nsAtom* aEvent);
 
+  // Return true if aListener is a non-chrome-privileged click event listner
+  bool IsNonChromeClickListener(Listener* aListener);
   /**
    * Remove all event listeners from the event target this EventListenerManager
    * is for.
@@ -608,6 +613,8 @@ class EventListenerManager final : public EventListenerManagerBase {
 
   already_AddRefed<nsIScriptGlobalObject> GetScriptGlobalAndDocument(
       mozilla::dom::Document** aDoc);
+
+  void MaybeMarkPassive(EventMessage aMessage, EventListenerFlags& aFlags);
 
   nsAutoTObserverArray<Listener, 2> mListeners;
   dom::EventTarget* MOZ_NON_OWNING_REF mTarget;

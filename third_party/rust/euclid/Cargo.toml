@@ -3,7 +3,7 @@
 # When uploading crates to the registry Cargo will automatically
 # "normalize" Cargo.toml files for maximal compatibility
 # with all versions of Cargo and also rewrite `path` dependencies
-# to registry (e.g. crates.io) dependencies
+# to registry (e.g., crates.io) dependencies
 #
 # If you believe there's an error in this file please file an
 # issue against the rust-lang/cargo repository. If you're
@@ -12,7 +12,7 @@
 
 [package]
 name = "euclid"
-version = "0.19.5"
+version = "0.20.8"
 authors = ["The Servo Project Developers"]
 description = "Geometry primitives"
 documentation = "https://docs.rs/euclid/"
@@ -20,25 +20,24 @@ keywords = ["matrix", "vector", "linear-algebra", "geometry"]
 categories = ["science"]
 license = "MIT / Apache-2.0"
 repository = "https://github.com/servo/euclid"
-[dependencies.euclid_macros]
-version = "0.1"
-
 [dependencies.mint]
 version = "0.5.1"
 optional = true
 
 [dependencies.num-traits]
-version = "0.2"
+version = "0.2.10"
+default-features = false
 
 [dependencies.serde]
 version = "1.0"
 features = ["serde_derive"]
 optional = true
-[dev-dependencies.rand]
-version = "0.4"
-
+default-features = false
 [dev-dependencies.serde_test]
 version = "1.0"
 
 [features]
+default = ["std"]
+libm = ["num-traits/libm"]
+std = ["num-traits/std"]
 unstable = []

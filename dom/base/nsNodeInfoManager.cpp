@@ -10,22 +10,22 @@
 
 #include "nsNodeInfoManager.h"
 
+#include "mozilla/BasePrincipal.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/dom/Document.h"
 #include "mozilla/dom/NodeInfo.h"
 #include "mozilla/dom/NodeInfoInlines.h"
+#include "mozilla/dom/DocGroup.h"
 #include "mozilla/NullPrincipal.h"
 #include "nsCOMPtr.h"
 #include "nsString.h"
 #include "nsAtom.h"
 #include "nsIPrincipal.h"
-#include "nsIURI.h"
 #include "nsContentUtils.h"
 #include "nsReadableUtils.h"
 #include "nsGkAtoms.h"
 #include "nsComponentManagerUtils.h"
 #include "nsLayoutStatics.h"
-#include "nsBindingManager.h"
 #include "nsHashKeys.h"
 #include "nsCCUncollectableMarker.h"
 #include "nsNameSpaceManager.h"
@@ -46,7 +46,8 @@ nsNodeInfoManager::nsNodeInfoManager()
       mTextNodeInfo(nullptr),
       mCommentNodeInfo(nullptr),
       mDocumentNodeInfo(nullptr),
-      mRecentlyUsedNodeInfos() {
+      mRecentlyUsedNodeInfos(),
+      mArena(nullptr) {
   nsLayoutStatics::AddRef();
 
   if (gNodeInfoManagerLeakPRLog)
@@ -58,7 +59,7 @@ nsNodeInfoManager::~nsNodeInfoManager() {
   // Note: mPrincipal may be null here if we never got inited correctly
   mPrincipal = nullptr;
 
-  mBindingManager = nullptr;
+  mArena = nullptr;
 
   if (gNodeInfoManagerLeakPRLog)
     MOZ_LOG(gNodeInfoManagerLeakPRLog, LogLevel::Debug,
@@ -74,7 +75,6 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(nsNodeInfoManager)
   if (tmp->mNonDocumentNodeInfos) {
     NS_IMPL_CYCLE_COLLECTION_TRAVERSE_RAWPTR(mDocument)
   }
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mBindingManager)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_ROOT_NATIVE(nsNodeInfoManager, AddRef)
@@ -82,33 +82,29 @@ NS_IMPL_CYCLE_COLLECTION_UNROOT_NATIVE(nsNodeInfoManager, Release)
 
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_BEGIN(nsNodeInfoManager)
   if (tmp->mDocument) {
-    return NS_CYCLE_COLLECTION_PARTICIPANT(Document)->CanSkip(tmp->mDocument,
-                                                              aRemovingAllowed);
+    return NS_CYCLE_COLLECTION_PARTICIPANT(mozilla::dom::Document)
+        ->CanSkip(tmp->mDocument, aRemovingAllowed);
   }
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_END
 
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_IN_CC_BEGIN(nsNodeInfoManager)
   if (tmp->mDocument) {
-    return NS_CYCLE_COLLECTION_PARTICIPANT(Document)->CanSkipInCC(
-        tmp->mDocument);
+    return NS_CYCLE_COLLECTION_PARTICIPANT(mozilla::dom::Document)
+        ->CanSkipInCC(tmp->mDocument);
   }
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_IN_CC_END
 
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_THIS_BEGIN(nsNodeInfoManager)
   if (tmp->mDocument) {
-    return NS_CYCLE_COLLECTION_PARTICIPANT(Document)->CanSkipThis(
-        tmp->mDocument);
+    return NS_CYCLE_COLLECTION_PARTICIPANT(mozilla::dom::Document)
+        ->CanSkipThis(tmp->mDocument);
   }
 NS_IMPL_CYCLE_COLLECTION_CAN_SKIP_THIS_END
 
-nsresult nsNodeInfoManager::Init(Document* aDocument) {
+nsresult nsNodeInfoManager::Init(mozilla::dom::Document* aDocument) {
   MOZ_ASSERT(!mPrincipal, "Being inited when we already have a principal?");
 
   mPrincipal = NullPrincipal::CreateWithoutOriginAttributes();
-
-  if (aDocument) {
-    mBindingManager = new nsBindingManager(aDocument);
-  }
 
   mDefaultPrincipal = mPrincipal;
 
@@ -122,10 +118,6 @@ nsresult nsNodeInfoManager::Init(Document* aDocument) {
 }
 
 void nsNodeInfoManager::DropDocumentReference() {
-  if (mBindingManager) {
-    mBindingManager->DropDocumentReference();
-  }
-
   // This is probably not needed anymore.
   for (auto iter = mNodeInfoHash.Iter(); !iter.Done(); iter.Next()) {
     iter.Data()->mDocument = nullptr;
@@ -276,6 +268,50 @@ already_AddRefed<NodeInfo> nsNodeInfoManager::GetDocumentNodeInfo() {
   return nodeInfo.forget();
 }
 
+void* nsNodeInfoManager::Allocate(size_t aSize) {
+  if (!mHasAllocated) {
+    if (mozilla::StaticPrefs::dom_arena_allocator_enabled_AtStartup()) {
+      if (!mArena) {
+        mozilla::dom::DocGroup* docGroup = GetDocument()->GetDocGroupOrCreate();
+        if (docGroup) {
+          MOZ_ASSERT(!GetDocument()->HasChildren());
+          mArena = docGroup->ArenaAllocator();
+        }
+      }
+#ifdef DEBUG
+      else {
+        mozilla::dom::DocGroup* docGroup = GetDocument()->GetDocGroup();
+        MOZ_ASSERT(docGroup);
+        MOZ_ASSERT(mArena == docGroup->ArenaAllocator());
+      }
+#endif
+    }
+    mHasAllocated = true;
+  }
+
+#ifdef DEBUG
+  if (!mozilla::StaticPrefs::dom_arena_allocator_enabled_AtStartup()) {
+    MOZ_ASSERT(!mArena, "mArena should not set if the pref is not on");
+  };
+#endif
+
+  if (mArena) {
+    return mArena->Allocate(aSize);
+  }
+  return malloc(aSize);
+}
+
+void nsNodeInfoManager::SetArenaAllocator(mozilla::dom::DOMArena* aArena) {
+  MOZ_DIAGNOSTIC_ASSERT_IF(mArena, mArena == aArena);
+  MOZ_DIAGNOSTIC_ASSERT(!mHasAllocated);
+  MOZ_DIAGNOSTIC_ASSERT(
+      mozilla::StaticPrefs::dom_arena_allocator_enabled_AtStartup());
+
+  if (!mArena) {
+    mArena = aArena;
+  }
+}
+
 void nsNodeInfoManager::SetDocumentPrincipal(nsIPrincipal* aPrincipal) {
   mPrincipal = nullptr;
   if (!aPrincipal) {
@@ -317,7 +353,7 @@ void nsNodeInfoManager::RemoveNodeInfo(NodeInfo* aNodeInfo) {
 }
 
 static bool IsSystemOrAddonPrincipal(nsIPrincipal* aPrincipal) {
-  return nsContentUtils::IsSystemPrincipal(aPrincipal) ||
+  return aPrincipal->IsSystemPrincipal() ||
          BasePrincipal::Cast(aPrincipal)->AddonPolicy();
 }
 
@@ -348,7 +384,7 @@ bool nsNodeInfoManager::InternalSVGEnabled() {
              nsIContentPolicy::TYPE_IMAGE ||
          loadInfo->GetExternalContentPolicyType() ==
              nsIContentPolicy::TYPE_OTHER) &&
-        (IsSystemOrAddonPrincipal(loadInfo->LoadingPrincipal()) ||
+        (IsSystemOrAddonPrincipal(loadInfo->GetLoadingPrincipal()) ||
          IsSystemOrAddonPrincipal(loadInfo->TriggeringPrincipal()))));
   mSVGEnabled = Some(conclusion);
   return conclusion;
@@ -358,19 +394,14 @@ bool nsNodeInfoManager::InternalMathMLEnabled() {
   // If the mathml.disabled pref. is true, convert all MathML nodes into
   // disabled MathML nodes by swapping the namespace.
   nsNameSpaceManager* nsmgr = nsNameSpaceManager::GetInstance();
-  bool conclusion = ((nsmgr && !nsmgr->mMathMLDisabled) ||
-                     nsContentUtils::IsSystemPrincipal(mPrincipal));
+  bool conclusion =
+      ((nsmgr && !nsmgr->mMathMLDisabled) || mPrincipal->IsSystemPrincipal());
   mMathMLEnabled = Some(conclusion);
   return conclusion;
 }
 
 void nsNodeInfoManager::AddSizeOfIncludingThis(nsWindowSizes& aSizes) const {
   aSizes.mDOMOtherSize += aSizes.mState.mMallocSizeOf(this);
-
-  if (mBindingManager) {
-    aSizes.mBindingsSize +=
-        mBindingManager->SizeOfIncludingThis(aSizes.mState.mMallocSizeOf);
-  }
 
   // Measurement of the following members may be added later if DMD finds it
   // is worthwhile:

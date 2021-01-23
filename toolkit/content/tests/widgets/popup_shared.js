@@ -57,6 +57,10 @@ function startPopupTests(tests) {
   goNext();
 }
 
+if (!window.opener && window.arguments) {
+  window.opener = window.arguments[0];
+}
+
 function finish() {
   if (window.opener) {
     window.close();
@@ -216,7 +220,7 @@ function eventOccurred(event) {
   }
 }
 
-function checkResult() {
+async function checkResult() {
   var step = null;
   var test = gPopupTests[gTestIndex];
   if ("steps" in test) {
@@ -224,7 +228,7 @@ function checkResult() {
   }
 
   if ("result" in test) {
-    test.result(test.testname, step);
+    await test.result(test.testname, step);
   }
 
   if ("autohide" in test) {

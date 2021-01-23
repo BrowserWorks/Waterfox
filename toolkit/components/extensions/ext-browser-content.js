@@ -100,7 +100,6 @@ const BrowserListener = {
     addEventListener("load", this, true);
     addEventListener("DOMWindowCreated", this, true);
     addEventListener("DOMContentLoaded", this, true);
-    addEventListener("DOMWindowClose", this, true);
     addEventListener("MozScrolledAreaChanged", this, true);
   },
 
@@ -112,7 +111,6 @@ const BrowserListener = {
     removeEventListener("load", this, true);
     removeEventListener("DOMWindowCreated", this, true);
     removeEventListener("DOMContentLoaded", this, true);
-    removeEventListener("DOMWindowClose", this, true);
     removeEventListener("MozScrolledAreaChanged", this, true);
   },
 
@@ -153,14 +151,6 @@ const BrowserListener = {
       case "DOMWindowCreated":
         if (event.target === content.document) {
           this.loadStylesheets();
-        }
-        break;
-
-      case "DOMWindowClose":
-        if (event.target === content) {
-          event.preventDefault();
-
-          sendAsyncMessage("Extension:DOMWindowClose");
         }
         break;
 
@@ -346,7 +336,7 @@ var WebBrowserChrome = {
     );
   },
 
-  shouldLoadURI(docShell, URI, referrer, hasPostData, triggeringPrincipal) {
+  shouldLoadURI(docShell, URI, referrerInfo, hasPostData, triggeringPrincipal) {
     return true;
   },
 
@@ -359,7 +349,7 @@ var WebBrowserChrome = {
   reloadInFreshProcess(
     docShell,
     URI,
-    referrer,
+    referrerInfo,
     triggeringPrincipal,
     loadFlags
   ) {
@@ -373,3 +363,6 @@ if (Services.appinfo.processType == Services.appinfo.PROCESS_TYPE_CONTENT) {
     .getInterface(Ci.nsIBrowserChild);
   tabchild.webBrowserChrome = WebBrowserChrome;
 }
+
+// This is a temporary hack to prevent regressions (bug 1471327).
+void content;

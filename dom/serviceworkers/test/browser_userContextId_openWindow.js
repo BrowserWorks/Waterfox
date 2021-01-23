@@ -10,7 +10,7 @@ const ALERTS_SERVICE_CONTRACT_ID = "@mozilla.org/alerts-service;1";
 const USER_CONTEXT_ID = 3;
 
 let mockAlertsService = {
-  showAlert: function(alert, alertListener) {
+  showAlert(alert, alertListener) {
     ok(true, "Showing alert");
     // eslint-disable-next-line mozilla/no-arbitrary-setTimeout
     setTimeout(function() {
@@ -22,7 +22,7 @@ let mockAlertsService = {
     }, 100);
   },
 
-  showAlertNotification: function(
+  showAlertNotification(
     imageUrl,
     title,
     text,
@@ -37,16 +37,16 @@ let mockAlertsService = {
     this.showAlert();
   },
 
-  QueryInterface: function(aIID) {
+  QueryInterface(aIID) {
     if (aIID.equals(Ci.nsISupports) || aIID.equals(Ci.nsIAlertsService)) {
       return this;
     }
-    throw Cr.NS_ERROR_NO_INTERFACE;
+    throw Components.Exception("", Cr.NS_ERROR_NO_INTERFACE);
   },
 
-  createInstance: function(aOuter, aIID) {
+  createInstance(aOuter, aIID) {
     if (aOuter != null) {
-      throw Cr.NS_ERROR_NO_AGGREGATION;
+      throw Components.Exception("", Cr.NS_ERROR_NO_AGGREGATION);
     }
     return this.QueryInterface(aIID);
   },
@@ -104,7 +104,7 @@ add_task(async function test() {
 
   // here the test.
   /* eslint-disable no-shadow */
-  let uci = await ContentTask.spawn(browser, URI, uri => {
+  let uci = await SpecialPowers.spawn(browser, [URI], uri => {
     let uci = content.document.nodePrincipal.userContextId;
 
     // Registration of the SW
@@ -145,7 +145,7 @@ add_task(async function test() {
 
   // wait for SW unregistration
   /* eslint-disable no-shadow */
-  uci = await ContentTask.spawn(browser, null, () => {
+  uci = await SpecialPowers.spawn(browser, [], () => {
     let uci = content.document.nodePrincipal.userContextId;
 
     return content.navigator.serviceWorker

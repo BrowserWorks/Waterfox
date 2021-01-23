@@ -14,7 +14,7 @@ const {
   getSnapshot,
   createSnapshot,
   dominatorTreeIsComputed,
-} = require("../utils");
+} = require("devtools/client/memory/utils");
 const {
   actions,
   snapshotState: states,
@@ -23,11 +23,11 @@ const {
   treeMapState,
   dominatorTreeState,
   individualsState,
-} = require("../constants");
-const view = require("./view");
-const refresh = require("./refresh");
-const diffing = require("./diffing");
-const TaskCache = require("./task-cache");
+} = require("devtools/client/memory/constants");
+const view = require("devtools/client/memory/actions/view");
+const refresh = require("devtools/client/memory/actions/refresh");
+const diffing = require("devtools/client/memory/actions/diffing");
+const TaskCache = require("devtools/client/memory/actions/task-cache");
 
 /**
  * A series of actions are fired from this task to save, read and generate the
@@ -148,9 +148,7 @@ const readSnapshot = (exports.readSnapshot = TaskCache.declareCacheableTask({
     const snapshot = getSnapshot(getState(), id);
     assert(
       [states.SAVED, states.IMPORTING].includes(snapshot.state),
-      `Should only read a snapshot once. Found snapshot in state ${
-        snapshot.state
-      }`
+      `Should only read a snapshot once. Found snapshot in state ${snapshot.state}`
     );
 
     let creationTime;
@@ -383,7 +381,7 @@ const fetchIndividuals = (exports.fetchIndividuals = function(
 
     const snapshot_ = getSnapshot(getState(), id);
     assert(
-      snapshot_.dominatorTree && snapshot_.dominatorTree.root,
+      snapshot_.dominatorTree?.root,
       "Should have a dominator tree with a root."
     );
 
@@ -398,8 +396,8 @@ const fetchIndividuals = (exports.fetchIndividuals = function(
     do {
       labelDisplay = getState().labelDisplay;
       assert(
-        labelDisplay && labelDisplay.breakdown && labelDisplay.breakdown.by,
-        `Should have a breakdown to label nodes with, got: ${uneval(
+        labelDisplay?.breakdown?.by,
+        `Should have a breakdown to label nodes with, got: ${JSON.stringify(
           labelDisplay
         )}`
       );
@@ -562,7 +560,7 @@ const computeDominatorTree = (exports.computeDominatorTree = TaskCache.declareCa
     task: async function(heapWorker, id, removeFromCache, dispatch, getState) {
       const snapshot = getSnapshot(getState(), id);
       assert(
-        !(snapshot.dominatorTree && snapshot.dominatorTree.dominatorTreeId),
+        !snapshot.dominatorTree?.dominatorTreeId,
         "Should not re-compute dominator trees"
       );
 
@@ -616,8 +614,8 @@ const fetchDominatorTree = (exports.fetchDominatorTree = TaskCache.declareCachea
       do {
         display = getState().labelDisplay;
         assert(
-          display && display.breakdown,
-          `Should have a breakdown to describe nodes with, got: ${uneval(
+          display?.breakdown,
+          `Should have a breakdown to describe nodes with, got: ${JSON.stringify(
             display
           )}`
         );

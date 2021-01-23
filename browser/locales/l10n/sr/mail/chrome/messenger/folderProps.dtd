@@ -1,0 +1,74 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Својства">
+
+<!ENTITY generalInfo.label                       "Општи подаци">
+<!ENTITY folderCharsetFallback2.label            "Одступно кодирање текста:">
+<!ENTITY folderCharsetFallback2.accesskey        "е">
+<!ENTITY folderCharsetEnforce2.label             "Примени кодирање на све поруке у фасцикли (појединачна подешавања текста порука и самопрепознавање ће бити занемарено)">
+<!ENTITY folderCharsetEnforce2.accesskey         "П">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Изгради садржај резиме датотеке">
+<!ENTITY folderRebuildSummaryFile2.label         "Поправи фасциклу">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "р">
+<!ENTITY folderRebuildSummaryFile.explanation    "Понекад се датотека са садржајем фасцикле (.msf) оштети и онда поруке могу изгледати као да су нестале или се обрисане поруке појаве. Поправка фасцикле може оправити ове грешке.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Укључи поруке у овој фасцикли у резултате глобалне претраге">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "г">
+
+<!ENTITY retention.label "Политика задржавања">
+<!ENTITY retentionUseAccount.label  "Користи подешавања мог налога">
+<!ENTITY retentionUseAccount.accesskey "К">
+<!ENTITY daysOld.label "дана старо">
+<!ENTITY message.label "порука">
+<!ENTITY retentionCleanup.label "Да би се ослободио простор на диску, старе поруке се могу трајно обрисати.">
+<!ENTITY retentionCleanupImap.label "Да би се ослободио простор на диску, старе поруке се могу трајно обрисати, као и локалне копије и изворне поруке на удаљеном серверу.">
+<!ENTITY retentionCleanupPop.label "Да би се ослободио простор на диску, старе поруке се могу трајно обрисати, укључујући и изворне поруке на удаљеном серверу.">
+<!ENTITY retentionDeleteMsg.label "Обриши поруке више од">
+<!ENTITY retentionDeleteMsg.accesskey "б">
+<!ENTITY retentionKeepAll.label "Не бриши било шта од порука">
+<!ENTITY retentionKeepAll.accesskey "а">
+<!ENTITY retentionKeepRecent.label "Обриши све осим најновијих">
+<!ENTITY retentionKeepRecent.accesskey "р">
+<!ENTITY retentionApplyToFlagged.label "Увек чувај поруке са звездицом">
+<!ENTITY retentionApplyToFlagged.accesskey "е">
+
+<!ENTITY folderSynchronizationTab.label          "Усклађивање">
+<!ENTITY folderCheckForNewMessages2.label         "Приликов добијања нових порука на овом налогу, увек провери ову фасциклу">
+<!ENTITY folderCheckForNewMessages2.accesskey     "ј">
+
+<!ENTITY offlineFolder.check.label               "Изабери ову фасциклу за употребу ван мреже">
+<!ENTITY offlineFolder.check.accesskey           "з">
+<!ENTITY offlineFolder.button.label              "Преузми сада">
+<!ENTITY offlineFolder.button.accesskey          "П">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Изабери ову новинску групу за употребу ван мреже">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "о">
+<!ENTITY offlineNewsgroup.button.label           "Преузми сада">
+<!ENTITY offlineNewsgroup.button.accesskey       "П">
+
+<!ENTITY folderProps.name.label                  "Име:">
+<!ENTITY folderProps.name.accesskey              "И">
+<!ENTITY folderProps.color.label                 "Боја иконице:">
+<!ENTITY folderProps.color.accesskey             "и">
+<!ENTITY folderProps.reset.tooltip               "Врати подразумевану боју">
+<!ENTITY folderProps.location.label              "Место:">
+<!ENTITY folderProps.location.accesskey          "М">
+
+<!ENTITY folderSharingTab.label                  "Дељење">
+<!ENTITY privileges.button.label                 "Овлашћења…">
+<!ENTITY privileges.button.accesskey             "О">
+<!ENTITY permissionsDesc.label                   "Имате следећа овлашћења:">
+<!ENTITY folderOtherUsers.label                  "Други са приступом овој фасцикли:">
+<!ENTITY folderType.label                        "Врста фасцикле:">
+
+<!ENTITY folderQuotaTab.label                    "Квота">
+<!ENTITY folderQuotaUsage.label                  "Искоришћеност:">
+<!ENTITY folderQuotaStatus.label                 "Стање:">
+
+<!ENTITY numberOfMessages.label                  "Број порука:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "непознато">
+<!ENTITY sizeOnDisk.label                        "Величина на диску:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "непозната">

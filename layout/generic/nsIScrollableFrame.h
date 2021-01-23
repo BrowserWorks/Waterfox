@@ -12,7 +12,6 @@
 #define nsIScrollFrame_h___
 
 #include "nsCoord.h"
-#include "DisplayItemClip.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/ScrollStyles.h"
 #include "mozilla/ScrollTypes.h"
@@ -35,6 +34,7 @@ class nsDisplayListBuilder;
 
 namespace mozilla {
 struct ContainerLayerParameters;
+class DisplayItemClip;
 namespace layers {
 struct ScrollMetadata;
 class Layer;
@@ -67,11 +67,26 @@ class nsIScrollableFrame : public nsIScrollbarMediator {
   virtual nsIFrame* GetScrolledFrame() const = 0;
 
   /**
-   * Get the styles (StyleOverflow::Scroll, StyleOverflow::Hidden,
-   * or StyleOverflow::Auto) governing the horizontal and vertical
-   * scrollbars for this frame.
+   * Get the overflow styles (StyleOverflow::Scroll, StyleOverflow::Hidden, or
+   * StyleOverflow::Auto) governing the horizontal and vertical scrollbars for
+   * this frame.
+   *
+   * This is special because they can be propagated from the <body> element,
+   * unlike other styles.
    */
   virtual mozilla::ScrollStyles GetScrollStyles() const = 0;
+
+  /**
+   * Returns whether this scroll frame is for a text control element with no
+   * scrollbars (for <input>, basically).
+   */
+  virtual bool IsForTextControlWithNoScrollbars() const = 0;
+
+  /**
+   * Get the overscroll-behavior styles.
+   */
+  virtual mozilla::layers::OverscrollBehaviorInfo GetOverscrollBehaviorInfo()
+      const = 0;
 
   enum { HORIZONTAL = 0x01, VERTICAL = 0x02 };
   /**
@@ -81,11 +96,17 @@ class nsIScrollableFrame : public nsIScrollbarMediator {
    */
   virtual uint32_t GetScrollbarVisibility() const = 0;
   /**
-   * Returns the directions in which scrolling is perceived to be allowed.
-   * A direction is perceived to be allowed if there is a visible scrollbar
-   * for that direction or if the scroll range is at least one device pixel.
+   * Returns the directions in which scrolling is allowed (if the scroll range
+   * is at least one device pixel in that direction).
    */
-  uint32_t GetPerceivedScrollingDirections() const;
+  uint32_t GetAvailableScrollingDirections() const;
+  /**
+   * Returns the directions in which scrolling is allowed when taking into
+   * account the visual viewport size and overflow hidden. (An (apz) zoomed in
+   * overflow hidden scrollframe is actually user scrollable.)
+   */
+  virtual uint32_t GetAvailableScrollingDirectionsForUserInputEvents()
+      const = 0;
   /**
    * Return the actual sizes of all possible scrollbars. Returns 0 for scrollbar
    * positions that don't have a scrollbar or where the scrollbar is not
@@ -182,6 +203,14 @@ class nsIScrollableFrame : public nsIScrollbarMediator {
    */
   virtual nsPoint GetVisualViewportOffset() const = 0;
   /**
+   * Get the area that must contain the visual viewport offset.
+   */
+  virtual nsRect GetVisualScrollRange() const = 0;
+  /**
+   * Like GetVisualScrollRange but also takes into account overflow: hidden.
+   */
+  virtual nsRect GetScrollRangeForUserInputEvents() const = 0;
+  /**
    * Return how much we would try to scroll by in each direction if
    * asked to scroll by one "line" vertically and horizontally.
    */
@@ -260,10 +289,6 @@ class nsIScrollableFrame : public nsIScrollbarMediator {
    */
   virtual CSSIntPoint GetScrollPositionCSSPixels() = 0;
   /**
-   * When scrolling by a relative amount, we can choose various units.
-   */
-  enum ScrollUnit { DEVICE_PIXELS, LINES, PAGES, WHOLE };
-  /**
    * @note This method might destroy the frame, pres shell and other objects.
    * Modifies the current scroll position by aDelta units given by aUnit,
    * clamping it to GetScrollRange. If WHOLE is specified as the unit,
@@ -273,8 +298,8 @@ class nsIScrollableFrame : public nsIScrollbarMediator {
    * to bring it back into the legal range). This is never negative. The
    * values are in device pixels.
    */
-  virtual void ScrollBy(nsIntPoint aDelta, ScrollUnit aUnit, ScrollMode aMode,
-                        nsIntPoint* aOverflow = nullptr,
+  virtual void ScrollBy(nsIntPoint aDelta, mozilla::ScrollUnit aUnit,
+                        ScrollMode aMode, nsIntPoint* aOverflow = nullptr,
                         nsAtom* aOrigin = nullptr,
                         ScrollMomentum aMomentum = NOT_MOMENTUM,
                         nsIScrollbarMediator::ScrollSnapMode aSnap =
@@ -472,11 +497,6 @@ class nsIScrollableFrame : public nsIScrollbarMediator {
   virtual void SetHasOutOfFlowContentInsideFilter() = 0;
 
   /**
-   * Whether or not this frame uses containerful scrolling.
-   */
-  virtual bool UsesContainerScrolling() const = 0;
-
-  /**
    * Determine if we should build a scrollable layer for this scroll frame and
    * return the result. It will also record this result on the scroll frame.
    * Pass the visible rect in aVisibleRect. On return it will be set to the
@@ -564,6 +584,13 @@ class nsIScrollableFrame : public nsIScrollbarMediator {
   virtual bool SmoothScrollVisual(
       const nsPoint& aVisualViewportOffset,
       mozilla::layers::FrameMetrics::ScrollOffsetUpdateType aUpdateType) = 0;
+
+  /**
+   * Returns true if this scroll frame should perform smooth scroll with the
+   * given |aBehavior|.
+   */
+  virtual bool IsSmoothScroll(mozilla::dom::ScrollBehavior aBehavior =
+                                  mozilla::dom::ScrollBehavior::Auto) const = 0;
 };
 
 #endif

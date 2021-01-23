@@ -6,6 +6,7 @@
 
 ChromeUtils.import("resource://gre/modules/Services.jsm", this);
 
+ChromeUtils.defineModuleGetter(this, "OS", "resource://gre/modules/osfile.jsm");
 ChromeUtils.defineModuleGetter(
   this,
   "TelemetryController",
@@ -35,6 +36,7 @@ BHRTelemetryService.prototype = Object.freeze({
       modules: [],
       hangs: [],
     };
+    this.clearPermahangFile = false;
   },
 
   recordHang({
@@ -46,6 +48,7 @@ BHRTelemetryService.prototype = Object.freeze({
     remoteType,
     modules,
     annotations,
+    wasPersisted,
   }) {
     if (!Services.telemetry.canRecordExtended) {
       return;
@@ -69,6 +72,22 @@ BHRTelemetryService.prototype = Object.freeze({
     for (let i = 0; i < stack.length; ++i) {
       if (Array.isArray(stack[i]) && stack[i][0] !== -1) {
         stack[i][0] = moduleIdxs[stack[i][0]];
+      } else if (typeof stack[i] == "string") {
+        // This is just a precaution - we don't currently know of sensitive
+        // URLs being included in label frames' dynamic strings which we
+        // include here, but this is just an added guard. Here we strip any
+        // string with a :// in it that isn't a chrome:// or resource://
+        // URL. This is not completely robust, but we are already trying to
+        // protect against this by only including dynamic strings from the
+        // opt-in AUTO_PROFILER_..._NONSENSITIVE macros.
+        let match = /[^\s]+:\/\/.*/.exec(stack[i]);
+        if (
+          match &&
+          !match[0].startsWith("chrome://") &&
+          !match[0].startsWith("resource://")
+        ) {
+          stack[i] = stack[i].replace(match[0], "(excluded)");
+        }
       }
     }
 
@@ -83,6 +102,10 @@ BHRTelemetryService.prototype = Object.freeze({
       stack,
     });
 
+    if (wasPersisted) {
+      this.clearPermahangFile = true;
+    }
+
     // If we have collected enough hangs, we can submit the hangs we have
     // collected to telemetry.
     if (this.payload.hangs.length > this.TRANSMIT_HANG_COUNT) {
@@ -91,6 +114,13 @@ BHRTelemetryService.prototype = Object.freeze({
   },
 
   submit() {
+    if (this.clearPermahangFile) {
+      OS.File.remove(
+        OS.Path.join(OS.Constants.Path.profileDir, "last_permahang.bin"),
+        { ignoreAbsent: true }
+      );
+    }
+
     if (!Services.telemetry.canRecordExtended) {
       return;
     }

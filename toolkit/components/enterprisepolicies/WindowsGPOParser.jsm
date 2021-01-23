@@ -27,7 +27,7 @@ var EXPORTED_SYMBOLS = ["WindowsGPOParser"];
 var WindowsGPOParser = {
   readPolicies(wrk, policies) {
     let childWrk = wrk.openChild(
-      "Mozilla\\" + Services.appinfo.name,
+      "Waterfox\\" + Services.appinfo.name,
       wrk.ACCESS_READ
     );
     if (!policies) {

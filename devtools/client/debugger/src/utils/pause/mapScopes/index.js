@@ -28,33 +28,39 @@ import {
 } from "./findGeneratedBindingFromPosition";
 import {
   buildGeneratedBindingList,
+  buildFakeBindingList,
   type GeneratedBindingLocation,
 } from "./buildGeneratedBindingList";
 import {
   originalRangeStartsInside,
   getApplicableBindingsForOriginalPosition,
 } from "./getApplicableBindingsForOriginalPosition";
+import { getOptimizedOutGrip } from "./optimizedOut";
 
 import { log } from "../../log";
 import type { ThunkArgs } from "../../../actions/types";
 
 import type {
   PartialPosition,
-  Frame,
   Scope,
   Source,
   SourceContent,
+  Frame,
   BindingContents,
   ScopeBindings,
+  MappedLocation,
 } from "../../../types";
 
 export type OriginalScope = RenderableScope;
+export type MappedFrameLocation = MappedLocation & {
+  this?: $ElementType<Frame, "this">,
+};
 
 export async function buildMappedScopes(
   source: Source,
   content: SourceContent,
-  frame: Frame,
-  scopes: Scope,
+  frame: MappedFrameLocation,
+  scopes: ?Scope,
   { client, parser, sourceMaps }: ThunkArgs
 ): Promise<?{
   mappings: {
@@ -70,8 +76,7 @@ export async function buildMappedScopes(
   }
 
   const originalRanges = await loadRangeMetadata(
-    source,
-    frame,
+    frame.location,
     originalAstScopes,
     sourceMaps
   );
@@ -80,11 +85,16 @@ export async function buildMappedScopes(
     return null;
   }
 
-  const generatedAstBindings = buildGeneratedBindingList(
-    scopes,
-    generatedAstScopes,
-    frame.this
-  );
+  let generatedAstBindings;
+  if (scopes) {
+    generatedAstBindings = buildGeneratedBindingList(
+      scopes,
+      generatedAstScopes,
+      frame.this
+    );
+  } else {
+    generatedAstBindings = buildFakeBindingList(generatedAstScopes);
+  }
 
   const {
     mappedOriginalScopes,
@@ -99,8 +109,11 @@ export async function buildMappedScopes(
     sourceMaps
   );
 
+  const globalLexicalScope = scopes
+    ? getGlobalFromScope(scopes)
+    : generateGlobalFromAst(generatedAstScopes);
   const mappedGeneratedScopes = generateClientScope(
-    scopes,
+    globalLexicalScope,
     mappedOriginalScopes
   );
 
@@ -179,7 +192,7 @@ function isReliableScope(scope: OriginalScope): boolean {
   let unknownBindings = 0;
 
   for (let s = scope; s; s = s.parent) {
-    const vars = (s.bindings && s.bindings.variables) || {};
+    const vars = s.bindings?.variables || {};
     for (const key of Object.keys(vars)) {
       const binding = vars[key];
 
@@ -198,7 +211,7 @@ function isReliableScope(scope: OriginalScope): boolean {
   return totalBindings === 0 || unknownBindings / totalBindings < 0.25;
 }
 
-function hasLineMappings(ranges) {
+function hasLineMappings(ranges): boolean {
   return ranges.every(
     range => range.columnStart === 0 && range.columnEnd === Infinity
   );
@@ -225,15 +238,15 @@ function batchScopeMappings(
         for (const loc of locs) {
           precalculatedRanges.set(
             buildLocationKey(loc.start),
-            sourceMaps.getGeneratedRanges(loc.start, source)
+            sourceMaps.getGeneratedRanges(loc.start)
           );
           precalculatedLocations.set(
             buildLocationKey(loc.start),
-            sourceMaps.getGeneratedLocation(loc.start, source)
+            sourceMaps.getGeneratedLocation(loc.start)
           );
           precalculatedLocations.set(
             buildLocationKey(loc.end),
-            sourceMaps.getGeneratedLocation(loc.end, source)
+            sourceMaps.getGeneratedLocation(loc.end)
           );
         }
       }
@@ -241,21 +254,21 @@ function batchScopeMappings(
   }
 
   return {
-    async getGeneratedRanges(pos, s) {
+    async getGeneratedRanges(pos) {
       const key = buildLocationKey(pos);
 
-      if (s !== source || !precalculatedRanges.has(key)) {
+      if (!precalculatedRanges.has(key)) {
         log("Bad precalculated mapping");
-        return sourceMaps.getGeneratedRanges(pos, s);
+        return sourceMaps.getGeneratedRanges(pos);
       }
       return precalculatedRanges.get(key);
     },
-    async getGeneratedLocation(pos, s) {
+    async getGeneratedLocation(pos) {
       const key = buildLocationKey(pos);
 
-      if (s !== source || !precalculatedLocations.has(key)) {
+      if (!precalculatedLocations.has(key)) {
         log("Bad precalculated mapping");
-        return sourceMaps.getGeneratedLocation(pos, s);
+        return sourceMaps.getGeneratedLocation(pos);
       }
       return precalculatedLocations.get(key);
     },
@@ -266,22 +279,9 @@ function buildLocationKey(loc: PartialPosition): string {
 }
 
 function generateClientScope(
-  scopes: Scope,
+  globalLexicalScope: OriginalScope,
   originalScopes: Array<SourceScope & { generatedBindings: ScopeBindings }>
 ): OriginalScope {
-  // Pull the root object scope and root lexical scope to reuse them in
-  // our mapped scopes. This assumes that file file being processed is
-  // a CommonJS or ES6 module, which might not be ideal. Potentially
-  // should add some logic to try to detect those cases?
-  let globalLexicalScope: ?OriginalScope = null;
-  for (let s = scopes; s.parent; s = s.parent) {
-    // $FlowIgnore - Flow doesn't like casting 'parent'.
-    globalLexicalScope = s;
-  }
-  if (!globalLexicalScope) {
-    throw new Error("Assertion failure - there should always be a scope");
-  }
-
   // Build a structure similar to the client's linked scope object using
   // the original AST scopes, but pulling in the generated bindings
   // linked to each scope.
@@ -301,6 +301,7 @@ function generateClientScope(
         parent: acc,
         actor: `originalActor${i}`,
         type: orig.type,
+        scopeKind: orig.scopeKind,
         bindings: {
           arguments: [],
           variables,
@@ -333,7 +334,53 @@ function generateClientScope(
   return result;
 }
 
-function hasValidIdent(range: MappedOriginalRange, pos: BindingLocation) {
+function getGlobalFromScope(scopes: Scope): OriginalScope {
+  // Pull the root object scope and root lexical scope to reuse them in
+  // our mapped scopes. This assumes that file being processed is
+  // a CommonJS or ES6 module, which might not be ideal. Potentially
+  // should add some logic to try to detect those cases?
+  let globalLexicalScope: ?OriginalScope = null;
+  for (let s = scopes; s.parent; s = s.parent) {
+    // $FlowIgnore - Flow doesn't like casting 'parent'.
+    globalLexicalScope = s;
+  }
+  if (!globalLexicalScope) {
+    throw new Error("Assertion failure - there should always be a scope");
+  }
+  return globalLexicalScope;
+}
+
+function generateGlobalFromAst(
+  generatedScopes: Array<SourceScope>
+): OriginalScope {
+  const globalLexicalAst = generatedScopes[generatedScopes.length - 2];
+  if (!globalLexicalAst) {
+    throw new Error("Assertion failure - there should always be a scope");
+  }
+  return {
+    actor: "generatedActor1",
+    type: "block",
+    scopeKind: "",
+    bindings: {
+      arguments: [],
+      variables: Object.fromEntries(
+        Object.keys(globalLexicalAst).map(key => [key, getOptimizedOutGrip()])
+      ),
+    },
+    // $FlowIgnore - Flow doesn't like casting 'parent'.
+    parent: {
+      actor: "generatedActor0",
+      object: getOptimizedOutGrip(),
+      scopeKind: "",
+      type: "object",
+    },
+  };
+}
+
+function hasValidIdent(
+  range: MappedOriginalRange,
+  pos: BindingLocation
+): boolean {
   return (
     range.type === "match" ||
     // For declarations, we allow the range on the identifier to be a
@@ -452,7 +499,7 @@ async function findGeneratedBinding(
       // because it can have multiple bindings, but we do want to make sure
       // that all of the bindings that match the range are part of the same
       // import declaration.
-      if (declRange && declRange.singleDeclaration) {
+      if (declRange?.singleDeclaration) {
         const applicableDeclBindings = await loadApplicableBindings(
           pos.declaration,
           pos.type
@@ -508,15 +555,7 @@ async function findGeneratedBinding(
     // attempt to map the binding, and that most likely means that the
     // code was entirely emitted from the output code.
     return {
-      grip: {
-        configurable: false,
-        enumerable: true,
-        writable: false,
-        value: {
-          type: "null",
-          optimizedOut: true,
-        },
-      },
+      grip: getOptimizedOutGrip(),
       expression: `
         (() => {
           throw new Error('"' + ${JSON.stringify(

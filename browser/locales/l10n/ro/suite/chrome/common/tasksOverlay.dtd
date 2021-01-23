@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# janimo <jani@ubuntu.com>
+# rsandu <razvan.sandu@zando.ro>
+# toffee <daniel@toffee.ro>
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- extracted from tasksOverlay.xul -->
+<!ENTITY navigatorCmd.label "Navigator">
+<!ENTITY navigatorCmd.accesskey "N">
+<!ENTITY navigatorCmd.commandkey "1">
+<!-- LOCALIZATION NOTE (editorCmd.label): DONT_TRANSLATE -->
+<!ENTITY editorCmd.label					"Composer">
+<!ENTITY editorCmd.accesskey				"c">
+<!ENTITY editorCmd.commandkey				"4">
+
+<!ENTITY errorConsoleCmd.label                                  "Consolă de eroare">
+<!ENTITY errorConsoleCmd.accesskey				"C">
+<!ENTITY errorConsoleCmd.commandkey				"r">
+
+<!ENTITY taskNavigator.tooltip  "Navigator">
+<!ENTITY taskComposer.tooltip  "Editor">
+
+<!ENTITY webDevelopment.label "Dezvoltare web">
+<!ENTITY webDevelopment.accesskey "w">
+
+<!ENTITY windowMenu.label "Fereastră">
+<!ENTITY windowMenu.accesskey "F">
+
+<!ENTITY tasksMenu.label "Unelte">
+<!ENTITY tasksMenu.accesskey "t"> 
+
+<!ENTITY datamanCmd.label "Data Manager">
+<!ENTITY datamanCmd.accesskey "M">
+
+<!ENTITY passwordManagerCmd.label "Manager de parole">
+<!ENTITY passwordManagerCmd.accesskey "p">
+
+<!ENTITY passwordDisplayCmd.label "Manage Stored Passwords">
+<!ENTITY passwordDisplayCmd.accesskey "M">
+
+<!ENTITY passwordExpireCmd.label "Deconectează">
+<!ENTITY passwordExpireCmd.accesskey "D">
+
+<!ENTITY downloadManagerCmd.label "Administrator descărcări">
+<!ENTITY downloadManagerCmd.accesskey "d">
+<!ENTITY downloadManagerCmd.commandkey "j">
+
+<!ENTITY addOnsManagerCmd.label "Add-ons Manager">
+<!ENTITY addOnsManagerCmd.accesskey "A">
+<!ENTITY addOnsManagerCmd.commandkey "a">
+
+<!ENTITY switchProfileCmd.label "Switch Profile…">
+<!ENTITY switchProfileCmd.accesskey "h">
+
+<!ENTITY syncBrand.shortName.label "Sync">
+<!-- LOCALIZATION NOTE (syncSetup.accesskey, syncSyncNowItem.accesskey):
+     Only one of these will show at a time (based on setup state),
+     so reusing accesskey is ok. -->
+<!ENTITY syncSetup.label           "Set Up Sync…">
+<!ENTITY syncSetup.accesskey       "S">
+<!ENTITY syncSyncNowItem.label     "Sync Now">
+<!ENTITY syncSyncNowItem.accesskey "S">

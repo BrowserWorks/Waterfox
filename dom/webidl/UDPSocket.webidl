@@ -17,10 +17,13 @@ dictionary UDPOptions {
     boolean        loopback = false;
 };
 
-[Constructor (optional UDPOptions options),
- Pref="dom.udpsocket.enabled",
- ChromeOnly]
+[Pref="dom.udpsocket.enabled",
+ ChromeOnly,
+ Exposed=Window]
 interface UDPSocket : EventTarget {
+    [Throws]
+    constructor(optional UDPOptions options = {});
+
     readonly    attribute DOMString?       localAddress;
     readonly    attribute unsigned short?  localPort;
     readonly    attribute DOMString?       remoteAddress;

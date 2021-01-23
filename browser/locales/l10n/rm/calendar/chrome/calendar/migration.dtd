@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migration.title "&brandFullName;: Import da datas">
+<!ENTITY migration.welcome "Bainvegni">
+<!ENTITY migration.importing "Importar">
+<!ENTITY migration.list.description "&brandShortName; po importar datas da chalender da bleras applicaziuns enconuschentas. Datas da las suandantas applicaziuns èn vegnidas chattadas sin tes computer. Tscherna per plaschair las applicaziuns che cuntegnan las datas che ti vuls importar.">
+<!ENTITY migration.progress.description "Importar las datas tschernidas">

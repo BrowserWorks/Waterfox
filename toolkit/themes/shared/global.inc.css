@@ -2,6 +2,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* all localizable skin settings shall live here */
+@import url("chrome://global/locale/intl.css");
+@import url("chrome://global/content/widgets.css");
+
+@import url("close-icon.css");
+
+@namespace xul url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
+@namespace html url("http://www.w3.org/1999/xhtml");
+
 /* General styles */
 
 *|*.plain {
@@ -11,34 +20,16 @@
   padding: 0;
 }
 
+html|button,
+html|input,
 html|textarea {
   font: inherit;
 }
 
-/* Close icon */
+/* Textbox context menu */
 
-.close-icon {
-  -moz-appearance: none;
-  -moz-context-properties: fill, fill-opacity;
-  list-style-image: url(chrome://global/skin/icons/close.svg);
-  color: inherit !important;
-  fill: currentColor;
-  fill-opacity: 0;
-}
-
-.close-icon:hover {
-  fill-opacity: 0.1;
-}
-
-.close-icon:hover:active {
-  fill-opacity: 0.2;
-}
-
-.close-icon > .button-icon,
-.close-icon > .button-box > .button-icon,
-.close-icon > .toolbarbutton-icon {
-  width: 20px;
-  height: 20px;
+.textbox-contextmenu:-moz-locale-dir(rtl) {
+  direction: rtl;
 }
 
 /* Autoscroll popup */
@@ -52,6 +43,8 @@ html|textarea {
   background-repeat: no-repeat;
   -moz-appearance: none;
   -moz-window-shadow: none;
+  /* Set pointer-events: none; so that mousemove events can be handled by browser-content.js. */
+  pointer-events: none;
 }
 
 .autoscroller[scrolldir="NS"] {
@@ -68,7 +61,7 @@ html|textarea {
   background-color: var(--arrowpanel-dimmed);
 }
 
-.panel-footer > button {
+.panel-footer > xul|button {
   -moz-appearance: none;
   border-top: 1px solid var(--panel-separator-color);
   /* !important overrides :hover and :active colors from button.css: */
@@ -78,38 +71,38 @@ html|textarea {
   padding: .9em 2px;
 }
 
-.panel-footer > button[disabled] {
+.panel-footer > xul|button[disabled] {
   color: var(--panel-disabled-color) !important;
 }
 
-.panel-footer > button:-moz-focusring {
+.panel-footer > xul|button:-moz-focusring {
   outline: 1px dotted;
   outline-offset: -3px;
 }
 
-.panel-footer > button:not([disabled]):hover {
+.panel-footer > xul|button:not([disabled]):hover {
   background-color: var(--arrowpanel-dimmed);
 }
 
-.panel-footer > button:not([disabled]):hover:active,
-.panel-footer > button:not([disabled])[open] {
+.panel-footer > xul|button:not([disabled]):hover:active,
+.panel-footer > xul|button:not([disabled])[open] {
   background-color: var(--arrowpanel-dimmed-further);
   box-shadow: 0 1px 0 hsla(210,4%,10%,.05) inset;
 }
 
-.panel-footer > button:not([disabled])[default] {
+.panel-footer > xul|button:not([disabled])[default] {
   color: white !important;
   background-color: #0060df;
 }
 
-.panel-footer > button:not([disabled])[default]:hover {
+.panel-footer > xul|button:not([disabled])[default]:hover {
   background-color: #003eaa;
 }
 
-.panel-footer > button:not([disabled])[default]:hover:active {
+.panel-footer > xul|button:not([disabled])[default]:hover:active {
   background-color: #002275;
 }
 
-.panel-footer > button > .button-box {
+.panel-footer > xul|button > .button-box {
   padding: 0;
 }

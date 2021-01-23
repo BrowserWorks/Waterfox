@@ -3,10 +3,17 @@
 use crate::iter::{Iter, IterMut};
 use crate::keys::Keys;
 use crate::EntityRef;
+use alloc::vec::Vec;
+use core::cmp::min;
 use core::marker::PhantomData;
 use core::ops::{Index, IndexMut};
 use core::slice;
-use std::vec::Vec;
+#[cfg(feature = "enable-serde")]
+use serde::{
+    de::{Deserializer, SeqAccess, Visitor},
+    ser::{SerializeSeq, Serializer},
+    Deserialize, Serialize,
+};
 
 /// A mapping `K -> V` for densely indexed entity references.
 ///
@@ -45,6 +52,20 @@ where
         }
     }
 
+    /// Create a new, empty map with the specified capacity.
+    ///
+    /// The map will be able to hold exactly `capacity` elements without reallocating.
+    pub fn with_capacity(capacity: usize) -> Self
+    where
+        V: Default,
+    {
+        Self {
+            elems: Vec::with_capacity(capacity),
+            default: Default::default(),
+            unused: PhantomData,
+        }
+    }
+
     /// Create a new empty map with a specified default value.
     ///
     /// This constructor does not require V to implement Default.
@@ -56,17 +77,25 @@ where
         }
     }
 
+    /// Returns the number of elements the map can hold without reallocating.
+    pub fn capacity(&self) -> usize {
+        self.elems.capacity()
+    }
+
     /// Get the element at `k` if it exists.
+    #[inline(always)]
     pub fn get(&self, k: K) -> Option<&V> {
         self.elems.get(k.index())
     }
 
     /// Is this map completely empty?
+    #[inline(always)]
     pub fn is_empty(&self) -> bool {
         self.elems.is_empty()
     }
 
     /// Remove all entries from this map.
+    #[inline(always)]
     pub fn clear(&mut self) {
         self.elems.clear()
     }
@@ -97,7 +126,6 @@ where
     }
 
     /// Resize the map to have `n` entries by adding default entries as needed.
-    #[inline]
     pub fn resize(&mut self, n: usize) {
         self.elems.resize(n, self.default.clone());
     }
@@ -113,8 +141,9 @@ where
 {
     type Output = V;
 
+    #[inline(always)]
     fn index(&self, k: K) -> &V {
-        self.get(k).unwrap_or(&self.default)
+        self.elems.get(k.index()).unwrap_or(&self.default)
     }
 }
 
@@ -126,13 +155,113 @@ where
     K: EntityRef,
     V: Clone,
 {
-    #[inline]
+    #[inline(always)]
     fn index_mut(&mut self, k: K) -> &mut V {
         let i = k.index();
         if i >= self.elems.len() {
-            self.resize(i + 1);
+            self.elems.resize(i + 1, self.default.clone());
         }
         &mut self.elems[i]
+    }
+}
+
+impl<K, V> PartialEq for SecondaryMap<K, V>
+where
+    K: EntityRef,
+    V: Clone + PartialEq,
+{
+    fn eq(&self, other: &Self) -> bool {
+        let min_size = min(self.elems.len(), other.elems.len());
+        self.default == other.default
+            && self.elems[..min_size] == other.elems[..min_size]
+            && self.elems[min_size..].iter().all(|e| *e == self.default)
+            && other.elems[min_size..].iter().all(|e| *e == other.default)
+    }
+}
+
+impl<K, V> Eq for SecondaryMap<K, V>
+where
+    K: EntityRef,
+    V: Clone + PartialEq + Eq,
+{
+}
+
+#[cfg(feature = "enable-serde")]
+impl<K, V> Serialize for SecondaryMap<K, V>
+where
+    K: EntityRef,
+    V: Clone + PartialEq + Serialize,
+{
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        // TODO: bincode encodes option as "byte for Some/None" and then optionally the content
+        // TODO: we can actually optimize it by encoding manually bitmask, then elements
+        let mut elems_cnt = self.elems.len();
+        while elems_cnt > 0 && self.elems[elems_cnt - 1] == self.default {
+            elems_cnt -= 1;
+        }
+        let mut seq = serializer.serialize_seq(Some(1 + elems_cnt))?;
+        seq.serialize_element(&Some(self.default.clone()))?;
+        for e in self.elems.iter().take(elems_cnt) {
+            let some_e = Some(e);
+            seq.serialize_element(if *e == self.default { &None } else { &some_e })?;
+        }
+        seq.end()
+    }
+}
+
+#[cfg(feature = "enable-serde")]
+impl<'de, K, V> Deserialize<'de> for SecondaryMap<K, V>
+where
+    K: EntityRef,
+    V: Clone + Deserialize<'de>,
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        use alloc::fmt;
+        struct SecondaryMapVisitor<K, V> {
+            unused: PhantomData<fn(K) -> V>,
+        }
+
+        impl<'de, K, V> Visitor<'de> for SecondaryMapVisitor<K, V>
+        where
+            K: EntityRef,
+            V: Clone + Deserialize<'de>,
+        {
+            type Value = SecondaryMap<K, V>;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("struct SecondaryMap")
+            }
+
+            fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+            where
+                A: SeqAccess<'de>,
+            {
+                match seq.next_element()? {
+                    Some(Some(default_val)) => {
+                        let default_val: V = default_val; // compiler can't infer the type
+                        let mut m = SecondaryMap::with_default(default_val.clone());
+                        let mut idx = 0;
+                        while let Some(val) = seq.next_element()? {
+                            let val: Option<_> = val; // compiler can't infer the type
+                            m[K::new(idx)] = val.unwrap_or_else(|| default_val.clone());
+                            idx += 1;
+                        }
+                        Ok(m)
+                    }
+                    _ => Err(serde::de::Error::custom("Default value required")),
+                }
+            }
+        }
+
+        deserializer.deserialize_seq(SecondaryMapVisitor {
+            unused: PhantomData {},
+        })
     }
 }
 

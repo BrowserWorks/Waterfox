@@ -8,11 +8,89 @@ const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { XPCOMUtils } = ChromeUtils.import(
   "resource://gre/modules/XPCOMUtils.jsm"
 );
+ChromeUtils.defineModuleGetter(
+  this,
+  "AppConstants",
+  "resource://gre/modules/AppConstants.jsm"
+);
+
+XPCOMUtils.defineLazyServiceGetter(
+  this,
+  "CaptivePortalService",
+  "@mozilla.org/network/captive-portal-service;1",
+  "nsICaptivePortalService"
+);
+XPCOMUtils.defineLazyServiceGetter(
+  this,
+  "gNetworkLinkService",
+  "@mozilla.org/network/network-link-service;1",
+  "nsINetworkLinkService"
+);
 
 XPCOMUtils.defineLazyGlobalGetters(this, ["fetch"]);
 
+// Create a new instance of the ConsoleAPI so we can control the maxLogLevel with a pref.
+// See LOG_LEVELS in Console.jsm. Common examples: "all", "debug", "info", "warn", "error".
+XPCOMUtils.defineLazyGetter(this, "log", () => {
+  const { ConsoleAPI } = ChromeUtils.import(
+    "resource://gre/modules/Console.jsm",
+    {}
+  );
+  return new ConsoleAPI({
+    maxLogLevel: "warn",
+    maxLogLevelPref: "services.settings.loglevel",
+    prefix: "services.settings",
+  });
+});
+
+XPCOMUtils.defineLazyPreferenceGetter(
+  this,
+  "gServerURL",
+  "services.settings.server"
+);
+
+function _isUndefined(value) {
+  return typeof value === "undefined";
+}
+
 var Utils = {
+  get SERVER_URL() {
+    const env = Cc["@mozilla.org/process/environment;1"].getService(
+      Ci.nsIEnvironment
+    );
+    const isXpcshell = env.exists("XPCSHELL_TEST_PROFILE_DIR");
+    return AppConstants.RELEASE_OR_BETA && !Cu.isInAutomation && !isXpcshell
+      ? "https://firefox.settings.services.mozilla.com/v1"
+      : gServerURL;
+  },
+
   CHANGES_PATH: "/buckets/monitor/collections/changes/records",
+
+  /**
+   * Logger instance.
+   */
+  log,
+
+  /**
+   * Check if network is down.
+   *
+   * Note that if this returns false, it does not guarantee
+   * that network is up.
+   *
+   * @return {bool} Whether network is down or not.
+   */
+  get isOffline() {
+    try {
+      return (
+        Services.io.offline ||
+        CaptivePortalService.state == CaptivePortalService.LOCKED_PORTAL ||
+        !gNetworkLinkService.isLinkUp
+      );
+    } catch (ex) {
+      log.warn("Could not determine network status.", ex);
+    }
+    return false;
+  },
 
   /**
    * Check if local data exist for the specified client.
@@ -21,8 +99,8 @@ var Utils = {
    * @return {bool} Whether it exists or not.
    */
   async hasLocalData(client) {
-    const kintoCol = await client.openCollection();
-    const timestamp = await kintoCol.db.getLastModified();
+    const timestamp = await client.db.getLastModified();
+    // Note: timestamp will be 0 if empty JSON dump is loaded.
     return timestamp !== null;
   },
 
@@ -92,8 +170,18 @@ var Utils = {
     let changes = [];
     // If no changes since last time, go on with empty list of changes.
     if (response.status != 304) {
+      if (response.status >= 500) {
+        throw new Error(
+          `Server error ${response.status} ${response.statusText}`
+        );
+      }
+
+      const is404FromCustomServer =
+        response.status == 404 &&
+        Services.prefs.prefHasUserValue("services.settings.server");
+
       const ct = response.headers.get("Content-Type");
-      if (!ct || !ct.includes("application/json")) {
+      if (!is404FromCustomServer && (!ct || !ct.includes("application/json"))) {
         throw new Error(`Unexpected content-type "${ct}"`);
       }
       let payload;
@@ -107,9 +195,6 @@ var Utils = {
         // If the server is failing, the JSON response might not contain the
         // expected data. For example, real server errors (Bug 1259145)
         // or dummy local server for tests (Bug 1481348)
-        const is404FromCustomServer =
-          response.status == 404 &&
-          Services.prefs.prefHasUserValue("services.settings.server");
         if (!is404FromCustomServer) {
           throw new Error(
             `Server error ${response.status} ${
@@ -153,5 +238,51 @@ var Utils = {
       backoffSeconds,
       ageSeconds,
     };
+  },
+
+  /**
+   * Test if a single object matches all given filters.
+   *
+   * @param  {Object} filters  The filters object.
+   * @param  {Object} entry    The object to filter.
+   * @return {Boolean}
+   */
+  filterObject(filters, entry) {
+    return Object.entries(filters).every(([filter, value]) => {
+      if (Array.isArray(value)) {
+        return value.some(candidate => candidate === entry[filter]);
+      } else if (typeof value === "object") {
+        return Utils.filterObject(value, entry[filter]);
+      } else if (!Object.prototype.hasOwnProperty.call(entry, filter)) {
+        console.error(`The property ${filter} does not exist`);
+        return false;
+      }
+      return entry[filter] === value;
+    });
+  },
+
+  /**
+   * Sorts records in a list according to a given ordering.
+   *
+   * @param  {String} order The ordering, eg. `-last_modified`.
+   * @param  {Array}  list  The collection to order.
+   * @return {Array}
+   */
+  sortObjects(order, list) {
+    const hasDash = order[0] === "-";
+    const field = hasDash ? order.slice(1) : order;
+    const direction = hasDash ? -1 : 1;
+    return list.slice().sort((a, b) => {
+      if (a[field] && _isUndefined(b[field])) {
+        return direction;
+      }
+      if (b[field] && _isUndefined(a[field])) {
+        return -direction;
+      }
+      if (_isUndefined(a[field]) && _isUndefined(b[field])) {
+        return 0;
+      }
+      return a[field] > b[field] ? direction : -direction;
+    });
   },
 };

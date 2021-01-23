@@ -30,12 +30,14 @@
 #include "js/Wrapper.h"
 
 #include "mozilla/dom/BlobURLProtocolHandler.h"
-#include "mozilla/dom/nsCSPContext.h"
 #include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/ExtensionPolicyService.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/HashFunctions.h"
+
+#include "nsSerializationHelper.h"
+#include "json/json.h"
 
 using namespace mozilla;
 
@@ -48,19 +50,14 @@ NS_IMPL_CLASSINFO(ContentPrincipal, nullptr, nsIClassInfo::MAIN_THREAD_ONLY,
 NS_IMPL_QUERY_INTERFACE_CI(ContentPrincipal, nsIPrincipal, nsISerializable)
 NS_IMPL_CI_INTERFACE_GETTER(ContentPrincipal, nsIPrincipal, nsISerializable)
 
-ContentPrincipal::ContentPrincipal() : BasePrincipal(eCodebasePrincipal) {}
+ContentPrincipal::ContentPrincipal() : BasePrincipal(eContentPrincipal) {}
 
-ContentPrincipal::~ContentPrincipal() {
-  // let's clear the principal within the csp to avoid a tangling pointer
-  if (mCSP) {
-    static_cast<nsCSPContext*>(mCSP.get())->clearLoadingPrincipal();
-  }
-}
+ContentPrincipal::~ContentPrincipal() {}
 
-nsresult ContentPrincipal::Init(nsIURI* aCodebase,
+nsresult ContentPrincipal::Init(nsIURI* aURI,
                                 const OriginAttributes& aOriginAttributes,
                                 const nsACString& aOriginNoSuffix) {
-  NS_ENSURE_ARG(aCodebase);
+  NS_ENSURE_ARG(aURI);
 
   // Assert that the URI we get here isn't any of the schemes that we know we
   // should not get here.  These schemes always either inherit their principal
@@ -71,11 +68,10 @@ nsresult ContentPrincipal::Init(nsIURI* aCodebase,
   Unused << hasFlag;  // silence possible compiler warnings.
   MOZ_DIAGNOSTIC_ASSERT(
       NS_SUCCEEDED(NS_URIChainHasFlags(
-          aCodebase, nsIProtocolHandler::URI_INHERITS_SECURITY_CONTEXT,
-          &hasFlag)) &&
+          aURI, nsIProtocolHandler::URI_INHERITS_SECURITY_CONTEXT, &hasFlag)) &&
       !hasFlag);
 
-  mCodebase = aCodebase;
+  mURI = aURI;
   FinishInit(aOriginNoSuffix, aOriginAttributes);
 
   return NS_OK;
@@ -85,7 +81,7 @@ nsresult ContentPrincipal::Init(ContentPrincipal* aOther,
                                 const OriginAttributes& aOriginAttributes) {
   NS_ENSURE_ARG(aOther);
 
-  mCodebase = aOther->mCodebase;
+  mURI = aOther->mURI;
   FinishInit(aOther, aOriginAttributes);
 
   mDomain = aOther->mDomain;
@@ -94,7 +90,7 @@ nsresult ContentPrincipal::Init(ContentPrincipal* aOther,
 }
 
 nsresult ContentPrincipal::GetScriptLocation(nsACString& aStr) {
-  return mCodebase->GetSpec(aStr);
+  return mURI->GetSpec(aStr);
 }
 
 /* static */
@@ -144,10 +140,8 @@ nsresult ContentPrincipal::GenerateOriginNoSuffixFromURI(
   // These constraints can generally be achieved by restricting .origin to
   // nsIStandardURL-based URIs, but there are a few other URI schemes that we
   // need to handle.
-  bool isBehaved;
-  if ((NS_SUCCEEDED(origin->SchemeIs("about", &isBehaved)) && isBehaved) ||
-      (NS_SUCCEEDED(origin->SchemeIs("moz-safe-about", &isBehaved)) &&
-       isBehaved &&
+  if (origin->SchemeIs("about") ||
+      (origin->SchemeIs("moz-safe-about") &&
        // We generally consider two about:foo origins to be same-origin, but
        // about:blank is special since it can be generated from different
        // sources. We check for moz-safe-about:blank since origin is an
@@ -199,10 +193,7 @@ nsresult ContentPrincipal::GenerateOriginNoSuffixFromURI(
 
   // See whether we have a useful hostPort. If we do, use that.
   nsAutoCString hostPort;
-  bool isChrome = false;
-  rv = origin->SchemeIs("chrome", &isChrome);
-  NS_ENSURE_SUCCESS(rv, rv);
-  if (!isChrome) {
+  if (!origin->SchemeIs("chrome")) {
     rv = origin->GetAsciiHostPort(hostPort);
     NS_ENSURE_SUCCESS(rv, rv);
   }
@@ -274,17 +265,16 @@ bool ContentPrincipal::SubsumesInternal(
     }
   }
 
-  nsCOMPtr<nsIURI> otherURI;
-  rv = aOther->GetURI(getter_AddRefs(otherURI));
+  // Compare uris.
+  bool isSameOrigin = false;
+  rv = aOther->IsSameOrigin(mURI, false, &isSameOrigin);
   NS_ENSURE_SUCCESS(rv, false);
-
-  // Compare codebases.
-  return nsScriptSecurityManager::SecurityCompareURIs(mCodebase, otherURI);
+  return isSameOrigin;
 }
 
 NS_IMETHODIMP
 ContentPrincipal::GetURI(nsIURI** aURI) {
-  NS_ADDREF(*aURI = mCodebase);
+  NS_ADDREF(*aURI = mURI);
   return NS_OK;
 }
 
@@ -303,7 +293,7 @@ bool ContentPrincipal::MayLoadInternal(nsIURI* aURI) {
     MOZ_ASSERT(origin);
     OriginAttributes attrs;
     RefPtr<BasePrincipal> principal =
-        BasePrincipal::CreateCodebasePrincipal(origin, attrs);
+        BasePrincipal::CreateContentPrincipal(origin, attrs);
     return nsIPrincipal::Subsumes(principal);
   }
 #endif
@@ -321,7 +311,7 @@ bool ContentPrincipal::MayLoadInternal(nsIURI* aURI) {
     return true;
   }
 
-  if (nsScriptSecurityManager::SecurityCompareURIs(mCodebase, aURI)) {
+  if (nsScriptSecurityManager::SecurityCompareURIs(mURI, aURI)) {
     return true;
   }
 
@@ -329,8 +319,7 @@ bool ContentPrincipal::MayLoadInternal(nsIURI* aURI) {
   // SecurityCompareURIs unless they are identical. Explicitly check file origin
   // policy, in that case.
   if (nsScriptSecurityManager::GetStrictFileOriginPolicy() &&
-      NS_URIIsLocalFile(aURI) &&
-      NS_RelaxStrictFileOriginPolicy(aURI, mCodebase)) {
+      NS_URIIsLocalFile(aURI) && NS_RelaxStrictFileOriginPolicy(aURI, mURI)) {
     return true;
   }
 
@@ -338,9 +327,14 @@ bool ContentPrincipal::MayLoadInternal(nsIURI* aURI) {
 }
 
 uint32_t ContentPrincipal::GetHashValue() {
-  MOZ_ASSERT(mCodebase, "Need a codebase");
+  MOZ_ASSERT(mURI, "Need a principal URI");
 
-  return nsScriptSecurityManager::HashPrincipalByOrigin(this);
+  nsCOMPtr<nsIURI> uri;
+  GetDomain(getter_AddRefs(uri));
+  if (!uri) {
+    GetURI(getter_AddRefs(uri));
+  };
+  return NS_SecurityHashURI(uri);
 }
 
 NS_IMETHODIMP
@@ -375,12 +369,12 @@ ContentPrincipal::SetDomain(nsIURI* aDomain) {
   return NS_OK;
 }
 
-static nsresult GetSpecialBaseDomain(const nsCOMPtr<nsIURI>& aCodebase,
+static nsresult GetSpecialBaseDomain(const nsCOMPtr<nsIURI>& aURI,
                                      bool* aHandled, nsACString& aBaseDomain) {
   *aHandled = false;
 
   // Special handling for a file URI.
-  if (NS_URIIsLocalFile(aCodebase)) {
+  if (NS_URIIsLocalFile(aURI)) {
     // If strict file origin policy is not in effect, all local files are
     // considered to be same-origin, so return a known dummy domain here.
     if (!nsScriptSecurityManager::GetStrictFileOriginPolicy()) {
@@ -390,7 +384,7 @@ static nsresult GetSpecialBaseDomain(const nsCOMPtr<nsIURI>& aCodebase,
     }
 
     // Otherwise, we return the file path.
-    nsCOMPtr<nsIURL> url = do_QueryInterface(aCodebase);
+    nsCOMPtr<nsIURL> url = do_QueryInterface(aURI);
 
     if (url) {
       *aHandled = true;
@@ -399,21 +393,23 @@ static nsresult GetSpecialBaseDomain(const nsCOMPtr<nsIURI>& aCodebase,
   }
 
   bool hasNoRelativeFlag;
-  nsresult rv = NS_URIChainHasFlags(
-      aCodebase, nsIProtocolHandler::URI_NORELATIVE, &hasNoRelativeFlag);
+  nsresult rv = NS_URIChainHasFlags(aURI, nsIProtocolHandler::URI_NORELATIVE,
+                                    &hasNoRelativeFlag);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
 
-  if (hasNoRelativeFlag) {
+  // In case of FTP we want to get base domain via TLD service even if FTP
+  // protocol handler is disabled and the scheme is handled by external protocol
+  // handler which returns URI_NORELATIVE flag.
+  if (hasNoRelativeFlag && !aURI->SchemeIs("ftp")) {
     *aHandled = true;
-    return aCodebase->GetSpec(aBaseDomain);
+    return aURI->GetSpec(aBaseDomain);
   }
 
-  bool isBehaved;
-  if (NS_SUCCEEDED(aCodebase->SchemeIs("indexeddb", &isBehaved)) && isBehaved) {
+  if (aURI->SchemeIs("indexeddb")) {
     *aHandled = true;
-    return aCodebase->GetSpec(aBaseDomain);
+    return aURI->GetSpec(aBaseDomain);
   }
 
   return NS_OK;
@@ -423,7 +419,7 @@ NS_IMETHODIMP
 ContentPrincipal::GetBaseDomain(nsACString& aBaseDomain) {
   // Handle some special URIs first.
   bool handled;
-  nsresult rv = GetSpecialBaseDomain(mCodebase, &handled, aBaseDomain);
+  nsresult rv = GetSpecialBaseDomain(mURI, &handled, aBaseDomain);
   NS_ENSURE_SUCCESS(rv, rv);
 
   if (handled) {
@@ -437,7 +433,7 @@ ContentPrincipal::GetBaseDomain(nsACString& aBaseDomain) {
     return NS_ERROR_FAILURE;
   }
 
-  return thirdPartyUtil->GetBaseDomain(mCodebase, aBaseDomain);
+  return thirdPartyUtil->GetBaseDomain(mURI, aBaseDomain);
 }
 
 NS_IMETHODIMP
@@ -445,7 +441,7 @@ ContentPrincipal::GetSiteOrigin(nsACString& aSiteOrigin) {
   // Handle some special URIs first.
   nsAutoCString baseDomain;
   bool handled;
-  nsresult rv = GetSpecialBaseDomain(mCodebase, &handled, baseDomain);
+  nsresult rv = GetSpecialBaseDomain(mURI, &handled, baseDomain);
   NS_ENSURE_SUCCESS(rv, rv);
 
   if (handled) {
@@ -466,7 +462,7 @@ ContentPrincipal::GetSiteOrigin(nsACString& aSiteOrigin) {
   }
 
   bool gotBaseDomain = false;
-  rv = tldService->GetBaseDomain(mCodebase, 0, baseDomain);
+  rv = tldService->GetBaseDomain(mURI, 0, baseDomain);
   if (NS_SUCCEEDED(rv)) {
     gotBaseDomain = true;
   } else {
@@ -481,7 +477,7 @@ ContentPrincipal::GetSiteOrigin(nsACString& aSiteOrigin) {
   // NOTE: Calling `SetHostPort` with a portless domain is insufficient to clear
   // the port, so an extra `SetPort` call has to be made.
   nsCOMPtr<nsIURI> siteUri;
-  NS_MutateURI mutator(mCodebase);
+  NS_MutateURI mutator(mURI);
   mutator.SetUserPass(EmptyCString()).SetPort(-1);
   if (gotBaseDomain) {
     mutator.SetHost(baseDomain);
@@ -508,9 +504,9 @@ nsresult ContentPrincipal::GetSiteIdentifier(SiteIdentifier& aSite) {
   nsresult rv = GetSiteOrigin(siteOrigin);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  RefPtr<BasePrincipal> principal = CreateCodebasePrincipal(siteOrigin);
+  RefPtr<BasePrincipal> principal = CreateContentPrincipal(siteOrigin);
   if (!principal) {
-    NS_WARNING("could not instantiate codebase principal");
+    NS_WARNING("could not instantiate content principal");
     return NS_ERROR_FAILURE;
   }
 
@@ -520,12 +516,10 @@ nsresult ContentPrincipal::GetSiteIdentifier(SiteIdentifier& aSite) {
 
 WebExtensionPolicy* ContentPrincipal::AddonPolicy() {
   if (!mAddon.isSome()) {
-    NS_ENSURE_TRUE(mCodebase, nullptr);
+    NS_ENSURE_TRUE(mURI, nullptr);
 
-    bool isMozExt;
-    if (NS_SUCCEEDED(mCodebase->SchemeIs("moz-extension", &isMozExt)) &&
-        isMozExt) {
-      mAddon.emplace(EPS().GetByURL(mCodebase.get()));
+    if (mURI->SchemeIs("moz-extension")) {
+      mAddon.emplace(EPS().GetByURL(mURI.get()));
     } else {
       mAddon.emplace(nullptr);
     }
@@ -548,20 +542,19 @@ ContentPrincipal::GetAddonId(nsAString& aAddonId) {
 NS_IMETHODIMP
 ContentPrincipal::Read(nsIObjectInputStream* aStream) {
   nsCOMPtr<nsISupports> supports;
-  nsCOMPtr<nsIURI> codebase;
+  nsCOMPtr<nsIURI> principalURI;
   nsresult rv = NS_ReadOptionalObject(aStream, true, getter_AddRefs(supports));
   if (NS_FAILED(rv)) {
     return rv;
   }
 
-  codebase = do_QueryInterface(supports);
+  principalURI = do_QueryInterface(supports);
   // Enforce re-parsing about: URIs so that if they change, we continue to use
   // their new principals correctly.
-  bool isAbout = false;
-  if (NS_SUCCEEDED(codebase->SchemeIs("about", &isAbout)) && isAbout) {
+  if (principalURI->SchemeIs("about")) {
     nsAutoCString spec;
-    codebase->GetSpec(spec);
-    NS_ENSURE_SUCCESS(NS_NewURI(getter_AddRefs(codebase), spec),
+    principalURI->GetSpec(spec);
+    NS_ENSURE_SUCCESS(NS_NewURI(getter_AddRefs(principalURI), spec),
                       NS_ERROR_FAILURE);
   }
 
@@ -581,22 +574,25 @@ ContentPrincipal::Read(nsIObjectInputStream* aStream) {
   bool ok = attrs.PopulateFromSuffix(suffix);
   NS_ENSURE_TRUE(ok, NS_ERROR_FAILURE);
 
-  rv = NS_ReadOptionalObject(aStream, true, getter_AddRefs(supports));
-  NS_ENSURE_SUCCESS(rv, rv);
+  // Since Bug 965637 we do not serialize the CSP within the
+  // Principal anymore. Nevertheless there might still be
+  // serialized Principals that do have a serialized CSP.
+  // For now, we just read the CSP here but do not actually
+  // consume it. Please note that we deliberately ignore
+  // the return value to avoid CSP deserialization problems.
+  // After Bug 1508939 we will have a new serialization for
+  // Principals which allows us to update the code here.
+  // Additionally, the format for serialized CSPs changed
+  // within Bug 965637 which also can cause failures within
+  // the CSP deserialization code.
+  Unused << NS_ReadOptionalObject(aStream, true, getter_AddRefs(supports));
 
   nsAutoCString originNoSuffix;
-  rv = GenerateOriginNoSuffixFromURI(codebase, originNoSuffix);
+  rv = GenerateOriginNoSuffixFromURI(principalURI, originNoSuffix);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  rv = Init(codebase, attrs, originNoSuffix);
+  rv = Init(principalURI, attrs, originNoSuffix);
   NS_ENSURE_SUCCESS(rv, rv);
-
-  mCSP = do_QueryInterface(supports, &rv);
-  // make sure setRequestContext is called after Init(),
-  // to make sure  the principals URI been initalized.
-  if (mCSP) {
-    mCSP->SetRequestContext(nullptr, this);
-  }
 
   // Note: we don't call SetDomain here because we don't need the wrapper
   // recomputation code there (we just created this principal).
@@ -610,30 +606,115 @@ ContentPrincipal::Read(nsIObjectInputStream* aStream) {
 
 NS_IMETHODIMP
 ContentPrincipal::Write(nsIObjectOutputStream* aStream) {
-  NS_ENSURE_STATE(mCodebase);
-  nsresult rv = NS_WriteOptionalCompoundObject(aStream, mCodebase,
-                                               NS_GET_IID(nsIURI), true);
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
+  // Read is used still for legacy principals
+  MOZ_RELEASE_ASSERT(false, "Old style serialization is removed");
+  return NS_OK;
+}
 
-  rv = NS_WriteOptionalCompoundObject(aStream, mDomain, NS_GET_IID(nsIURI),
-                                      true);
-  if (NS_FAILED(rv)) {
-    return rv;
+nsresult ContentPrincipal::PopulateJSONObject(Json::Value& aObject) {
+  nsAutoCString principalURI;
+  nsresult rv = mURI->GetSpec(principalURI);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  // We turn each int enum field into a JSON string key of the object
+  // aObject is the inner JSON object that has stringified enum keys
+  // An example aObject might be:
+  //
+  // eURI                   eSuffix
+  //    |                           |
+  //  {"0": "https://mozilla.com", "2": "^privateBrowsingId=1"}
+  //    |                |          |         |
+  //    -----------------------------         |
+  //         |           |                    |
+  //        Key          ----------------------
+  //                                |
+  //                              Value
+  aObject[std::to_string(eURI)] = principalURI.get();
+
+  if (mDomain) {
+    nsAutoCString domainStr;
+    rv = mDomain->GetSpec(domainStr);
+    NS_ENSURE_SUCCESS(rv, rv);
+    aObject[std::to_string(eDomain)] = domainStr.get();
   }
 
   nsAutoCString suffix;
   OriginAttributesRef().CreateSuffix(suffix);
-
-  rv = aStream->WriteStringZ(suffix.get());
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  rv = NS_WriteOptionalCompoundObject(
-      aStream, mCSP, NS_GET_IID(nsIContentSecurityPolicy), true);
-  if (NS_FAILED(rv)) {
-    return rv;
+  if (suffix.Length() > 0) {
+    aObject[std::to_string(eSuffix)] = suffix.get();
   }
 
   return NS_OK;
+}
+
+already_AddRefed<BasePrincipal> ContentPrincipal::FromProperties(
+    nsTArray<ContentPrincipal::KeyVal>& aFields) {
+  MOZ_ASSERT(aFields.Length() == eMax + 1, "Must have all the keys");
+  nsresult rv;
+  nsCOMPtr<nsIURI> principalURI;
+  nsCOMPtr<nsIURI> domain;
+  nsCOMPtr<nsIContentSecurityPolicy> csp;
+  OriginAttributes attrs;
+
+  // The odd structure here is to make the code to not compile
+  // if all the switch enum cases haven't been codified
+  for (const auto& field : aFields) {
+    switch (field.key) {
+      case ContentPrincipal::eURI:
+        if (!field.valueWasSerialized) {
+          MOZ_ASSERT(
+              false,
+              "Content principals require a principal URI in serialized JSON");
+          return nullptr;
+        }
+        rv = NS_NewURI(getter_AddRefs(principalURI), field.value.get());
+        NS_ENSURE_SUCCESS(rv, nullptr);
+
+        {
+          // Enforce re-parsing about: URIs so that if they change, we
+          // continue to use their new principals correctly.
+          if (principalURI->SchemeIs("about")) {
+            nsAutoCString spec;
+            principalURI->GetSpec(spec);
+            if (NS_FAILED(NS_NewURI(getter_AddRefs(principalURI), spec))) {
+              return nullptr;
+            }
+          }
+        }
+        break;
+      case ContentPrincipal::eDomain:
+        if (field.valueWasSerialized) {
+          rv = NS_NewURI(getter_AddRefs(domain), field.value.get());
+          NS_ENSURE_SUCCESS(rv, nullptr);
+        }
+        break;
+      case ContentPrincipal::eSuffix:
+        if (field.valueWasSerialized) {
+          bool ok = attrs.PopulateFromSuffix(field.value);
+          if (!ok) {
+            return nullptr;
+          }
+        }
+        break;
+    }
+  }
+  nsAutoCString originNoSuffix;
+  rv = ContentPrincipal::GenerateOriginNoSuffixFromURI(principalURI,
+                                                       originNoSuffix);
+  if (NS_FAILED(rv)) {
+    return nullptr;
+  }
+
+  RefPtr<ContentPrincipal> principal = new ContentPrincipal();
+  rv = principal->Init(principalURI, attrs, originNoSuffix);
+  if (NS_FAILED(rv)) {
+    return nullptr;
+  }
+
+  principal->mDomain = domain;
+  if (principal->mDomain) {
+    principal->SetHasExplicitDomain();
+  }
+
+  return principal.forget();
 }

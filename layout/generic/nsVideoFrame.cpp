@@ -76,7 +76,7 @@ nsVideoFrame::nsVideoFrame(ComputedStyle* aStyle, nsPresContext* aPresContext)
   EnableVisibilityTracking();
 }
 
-nsVideoFrame::~nsVideoFrame() {}
+nsVideoFrame::~nsVideoFrame() = default;
 
 NS_QUERYFRAME_HEAD(nsVideoFrame)
   NS_QUERYFRAME_ENTRY(nsVideoFrame)
@@ -113,7 +113,9 @@ nsresult nsVideoFrame::CreateAnonymousContent(
 
     UpdatePosterSource(false);
 
-    if (!aElements.AppendElement(mPosterImage)) return NS_ERROR_OUT_OF_MEMORY;
+    // XXX(Bug 1631371) Check if this should use a fallible operation as it
+    // pretended earlier.
+    aElements.AppendElement(mPosterImage);
 
     // Set up the caption overlay div for showing any TextTrack data
     nodeInfo = nodeInfoManager->GetNodeInfo(
@@ -125,7 +127,9 @@ nsresult nsVideoFrame::CreateAnonymousContent(
         static_cast<nsGenericHTMLElement*>(mCaptionDiv.get());
     div->SetClassName(NS_LITERAL_STRING("caption-box"));
 
-    if (!aElements.AppendElement(mCaptionDiv)) return NS_ERROR_OUT_OF_MEMORY;
+    // XXX(Bug 1631371) Check if this should use a fallible operation as it
+    // pretended earlier.
+    aElements.AppendElement(mCaptionDiv);
     UpdateTextTrack();
   }
 
@@ -234,22 +238,23 @@ already_AddRefed<Layer> nsVideoFrame::BuildLayer(
   uint32_t flags = element->HasAlpha() ? 0 : Layer::CONTENT_OPAQUE;
   layer->SetContentFlags(flags);
 
-  RefPtr<Layer> result = layer.forget();
+  RefPtr<Layer> result = std::move(layer);
   return result.forget();
 }
 
-class DispatchResizeToControls : public Runnable {
+class DispatchResizeEvent : public Runnable {
  public:
-  explicit DispatchResizeToControls(nsIContent* aContent)
-      : mozilla::Runnable("DispatchResizeToControls"), mContent(aContent) {}
+  explicit DispatchResizeEvent(nsIContent* aContent, const nsString& aName)
+      : mozilla::Runnable("DispatchResizeEvent"),
+        mContent(aContent),
+        mName(aName) {}
   NS_IMETHOD Run() override {
-    nsContentUtils::DispatchTrustedEvent(
-        mContent->OwnerDoc(), mContent,
-        NS_LITERAL_STRING("resizevideocontrols"), CanBubble::eNo,
-        Cancelable::eNo);
+    nsContentUtils::DispatchTrustedEvent(mContent->OwnerDoc(), mContent, mName,
+                                         CanBubble::eNo, Cancelable::eNo);
     return NS_OK;
   }
   nsCOMPtr<nsIContent> mContent;
+  nsString mName;
 };
 
 void nsVideoFrame::Reflow(nsPresContext* aPresContext, ReflowOutput& aMetrics,
@@ -271,7 +276,7 @@ void nsVideoFrame::Reflow(nsPresContext* aPresContext, ReflowOutput& aMetrics,
   const nscoord borderBoxISize =
       aReflowInput.ComputedISize() +
       aReflowInput.ComputedLogicalBorderPadding().IStartEnd(myWM);
-  const bool isBSizeShrinkWrapping = (contentBoxBSize == NS_INTRINSICSIZE);
+  const bool isBSizeShrinkWrapping = (contentBoxBSize == NS_UNCONSTRAINEDSIZE);
 
   nscoord borderBoxBSize;
   if (!isBSizeShrinkWrapping) {
@@ -314,14 +319,15 @@ void nsVideoFrame::Reflow(nsPresContext* aPresContext, ReflowOutput& aMetrics,
       kidReflowInput.SetComputedWidth(posterRenderRect.width);
       kidReflowInput.SetComputedHeight(posterRenderRect.height);
       ReflowChild(imageFrame, aPresContext, kidDesiredSize, kidReflowInput,
-                  posterRenderRect.x, posterRenderRect.y, 0, childStatus);
+                  posterRenderRect.x, posterRenderRect.y,
+                  ReflowChildFlags::Default, childStatus);
       MOZ_ASSERT(childStatus.IsFullyComplete(),
                  "We gave our child unconstrained available block-size, "
                  "so it should be complete!");
 
       FinishReflowChild(imageFrame, aPresContext, kidDesiredSize,
                         &kidReflowInput, posterRenderRect.x, posterRenderRect.y,
-                        0);
+                        ReflowChildFlags::Default);
 
     } else if (child->GetContent() == mCaptionDiv ||
                child->GetContent() == videoControlsDiv) {
@@ -334,7 +340,8 @@ void nsVideoFrame::Reflow(nsPresContext* aPresContext, ReflowOutput& aMetrics,
                                  availableSize);
       ReflowOutput kidDesiredSize(kidReflowInput);
       ReflowChild(child, aPresContext, kidDesiredSize, kidReflowInput,
-                  borderPadding.left, borderPadding.top, 0, childStatus);
+                  borderPadding.left, borderPadding.top,
+                  ReflowChildFlags::Default, childStatus);
       MOZ_ASSERT(childStatus.IsFullyComplete(),
                  "We gave our child unconstrained available block-size, "
                  "so it should be complete!");
@@ -352,12 +359,15 @@ void nsVideoFrame::Reflow(nsPresContext* aPresContext, ReflowOutput& aMetrics,
       }
 
       FinishReflowChild(child, aPresContext, kidDesiredSize, &kidReflowInput,
-                        borderPadding.left, borderPadding.top, 0);
+                        borderPadding.left, borderPadding.top,
+                        ReflowChildFlags::Default);
 
-      if (child->GetContent() == videoControlsDiv &&
-          child->GetSize() != oldChildSize) {
+      if (child->GetSize() != oldChildSize) {
+        const nsString name = child->GetContent() == videoControlsDiv
+                                  ? NS_LITERAL_STRING("resizevideocontrols")
+                                  : NS_LITERAL_STRING("resizecaption");
         RefPtr<Runnable> event =
-            new DispatchResizeToControls(child->GetContent());
+            new DispatchResizeEvent(child->GetContent(), name);
         nsContentUtils::AddScriptRunner(event);
       }
     } else {
@@ -366,7 +376,7 @@ void nsVideoFrame::Reflow(nsPresContext* aPresContext, ReflowOutput& aMetrics,
   }
 
   if (isBSizeShrinkWrapping) {
-    if (contentBoxBSize == NS_INTRINSICSIZE) {
+    if (contentBoxBSize == NS_UNCONSTRAINEDSIZE) {
       // We didn't get a BSize from our intrinsic size/ratio, nor did we
       // get one from our controls. Just use BSize of 0.
       contentBoxBSize = 0;
@@ -400,7 +410,7 @@ class nsDisplayVideo : public nsPaintedDisplayItem {
     MOZ_COUNT_CTOR(nsDisplayVideo);
   }
 #ifdef NS_BUILD_REFCNT_LOGGING
-  virtual ~nsDisplayVideo() { MOZ_COUNT_DTOR(nsDisplayVideo); }
+  MOZ_COUNTED_DTOR_OVERRIDE(nsDisplayVideo)
 #endif
 
   NS_DISPLAY_DECL_NAME("Video", TYPE_VIDEO)

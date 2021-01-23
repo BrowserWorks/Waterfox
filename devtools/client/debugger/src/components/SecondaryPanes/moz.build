@@ -10,24 +10,25 @@ DIRS += [
 
 CompiledModules(
     'CommandBar.js',
+    'DOMMutationBreakpoints.js',
     'EventListeners.js',
     'Expressions.js',
     'index.js',
     'Scopes.js',
-    'UtilsBar.js',
+    'Thread.js',
+    'Threads.js',
     'WhyPaused.js',
-    'Worker.js',
-    'Workers.js',
     'XHRBreakpoints.js',
 )
 
 DevToolsModules(
     'CommandBar.css',
+    'DOMMutationBreakpoints.css',
     'EventListeners.css',
     'Expressions.css',
     'Scopes.css',
     'SecondaryPanes.css',
+    'Threads.css',
     'WhyPaused.css',
-    'Workers.css',
     'XHRBreakpoints.css',
 )

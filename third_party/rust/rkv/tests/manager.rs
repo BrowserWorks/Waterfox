@@ -8,27 +8,123 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-use rkv::{
-    Manager,
-    Rkv,
-};
-use std::{
-    fs,
-    sync::Arc,
-};
+use std::fs;
+use std::sync::Arc;
+
 use tempfile::Builder;
 
+use rkv::backend::{
+    Lmdb,
+    LmdbEnvironment,
+    SafeMode,
+    SafeModeEnvironment,
+};
+use rkv::Rkv;
+
+/// Test that a manager can be created with simple type inference.
 #[test]
-// Identical to the same-named unit test, but this one confirms that it works
-// via the public MANAGER singleton.
+fn test_simple() {
+    type Manager = rkv::Manager<LmdbEnvironment>;
+
+    let _ = Manager::singleton().write().unwrap();
+}
+
+/// Test that a manager can be created with simple type inference.
+#[test]
+fn test_simple_safe() {
+    type Manager = rkv::Manager<SafeModeEnvironment>;
+
+    let _ = Manager::singleton().write().unwrap();
+}
+
+/// Test that a shared Rkv instance can be created with simple type inference.
+#[test]
+fn test_simple_2() {
+    type Manager = rkv::Manager<LmdbEnvironment>;
+
+    let root = Builder::new().prefix("test_simple_2").tempdir().expect("tempdir");
+    fs::create_dir_all(root.path()).expect("dir created");
+
+    let mut manager = Manager::singleton().write().unwrap();
+    let _ = manager.get_or_create(root.path(), Rkv::new::<Lmdb>).unwrap();
+}
+
+/// Test that a shared Rkv instance can be created with simple type inference.
+#[test]
+fn test_simple_safe_2() {
+    type Manager = rkv::Manager<SafeModeEnvironment>;
+
+    let root = Builder::new().prefix("test_simple_safe_2").tempdir().expect("tempdir");
+    fs::create_dir_all(root.path()).expect("dir created");
+
+    let mut manager = Manager::singleton().write().unwrap();
+    let _ = manager.get_or_create(root.path(), Rkv::new::<SafeMode>).unwrap();
+}
+
+/// Test that the manager will return the same Rkv instance each time for each path.
+#[test]
 fn test_same() {
-    let root = Builder::new().prefix("test_same_singleton").tempdir().expect("tempdir");
+    type Manager = rkv::Manager<LmdbEnvironment>;
+
+    let root = Builder::new().prefix("test_same").tempdir().expect("tempdir");
     fs::create_dir_all(root.path()).expect("dir created");
 
     let p = root.path();
     assert!(Manager::singleton().read().unwrap().get(p).expect("success").is_none());
 
-    let created_arc = Manager::singleton().write().unwrap().get_or_create(p, Rkv::new).expect("created");
+    let created_arc = Manager::singleton().write().unwrap().get_or_create(p, Rkv::new::<Lmdb>).expect("created");
     let fetched_arc = Manager::singleton().read().unwrap().get(p).expect("success").expect("existed");
+    assert!(Arc::ptr_eq(&created_arc, &fetched_arc));
+}
+
+/// Test that the manager will return the same Rkv instance each time for each path.
+#[test]
+fn test_same_safe() {
+    type Manager = rkv::Manager<SafeModeEnvironment>;
+
+    let root = Builder::new().prefix("test_same_safe").tempdir().expect("tempdir");
+    fs::create_dir_all(root.path()).expect("dir created");
+
+    let p = root.path();
+    assert!(Manager::singleton().read().unwrap().get(p).expect("success").is_none());
+
+    let created_arc = Manager::singleton().write().unwrap().get_or_create(p, Rkv::new::<SafeMode>).expect("created");
+    let fetched_arc = Manager::singleton().read().unwrap().get(p).expect("success").expect("existed");
+    assert!(Arc::ptr_eq(&created_arc, &fetched_arc));
+}
+
+/// Test that the manager will return the same Rkv instance each time for each path.
+#[test]
+fn test_same_with_capacity() {
+    type Manager = rkv::Manager<LmdbEnvironment>;
+
+    let root = Builder::new().prefix("test_same_with_capacity").tempdir().expect("tempdir");
+    fs::create_dir_all(root.path()).expect("dir created");
+
+    let mut manager = Manager::singleton().write().unwrap();
+
+    let p = root.path();
+    assert!(manager.get(p).expect("success").is_none());
+
+    let created_arc = manager.get_or_create_with_capacity(p, 10, Rkv::with_capacity::<Lmdb>).expect("created");
+    let fetched_arc = manager.get(p).expect("success").expect("existed");
+    assert!(Arc::ptr_eq(&created_arc, &fetched_arc));
+}
+
+/// Test that the manager will return the same Rkv instance each time for each path.
+#[test]
+fn test_same_with_capacity_safe() {
+    type Manager = rkv::Manager<SafeModeEnvironment>;
+
+    let root = Builder::new().prefix("test_same_with_capacity_safe").tempdir().expect("tempdir");
+    fs::create_dir_all(root.path()).expect("dir created");
+
+    let mut manager = Manager::singleton().write().unwrap();
+
+    let p = root.path();
+    assert!(manager.get(p).expect("success").is_none());
+
+    let created_arc = manager.get_or_create_with_capacity(p, 10, Rkv::with_capacity::<SafeMode>).expect("created");
+    let fetched_arc = manager.get(p).expect("success").expect("existed");
     assert!(Arc::ptr_eq(&created_arc, &fetched_arc));
 }

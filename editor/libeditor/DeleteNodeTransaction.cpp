@@ -4,8 +4,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "DeleteNodeTransaction.h"
+
+#include "HTMLEditUtils.h"
 #include "mozilla/EditorBase.h"
 #include "mozilla/SelectionState.h"  // RangeUpdater
+#include "mozilla/TextEditor.h"
 #include "nsDebug.h"
 #include "nsError.h"
 #include "nsAString.h"
@@ -14,9 +17,9 @@ namespace mozilla {
 
 // static
 already_AddRefed<DeleteNodeTransaction> DeleteNodeTransaction::MaybeCreate(
-    EditorBase& aEditorBase, nsINode& aNodeToDelete) {
+    EditorBase& aEditorBase, nsIContent& aContentToDelete) {
   RefPtr<DeleteNodeTransaction> transaction =
-      new DeleteNodeTransaction(aEditorBase, aNodeToDelete);
+      new DeleteNodeTransaction(aEditorBase, aContentToDelete);
   if (NS_WARN_IF(!transaction->CanDoIt())) {
     return nullptr;
   }
@@ -24,16 +27,14 @@ already_AddRefed<DeleteNodeTransaction> DeleteNodeTransaction::MaybeCreate(
 }
 
 DeleteNodeTransaction::DeleteNodeTransaction(EditorBase& aEditorBase,
-                                             nsINode& aNodeToDelete)
+                                             nsIContent& aContentToDelete)
     : mEditorBase(&aEditorBase),
-      mNodeToDelete(&aNodeToDelete),
-      mParentNode(aNodeToDelete.GetParentNode()) {}
-
-DeleteNodeTransaction::~DeleteNodeTransaction() {}
+      mContentToDelete(&aContentToDelete),
+      mParentNode(aContentToDelete.GetParentNode()) {}
 
 NS_IMPL_CYCLE_COLLECTION_INHERITED(DeleteNodeTransaction, EditTransactionBase,
-                                   mEditorBase, mNodeToDelete, mParentNode,
-                                   mRefNode)
+                                   mEditorBase, mContentToDelete, mParentNode,
+                                   mRefContent)
 
 NS_IMPL_ADDREF_INHERITED(DeleteNodeTransaction, EditTransactionBase)
 NS_IMPL_RELEASE_INHERITED(DeleteNodeTransaction, EditTransactionBase)
@@ -41,56 +42,95 @@ NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(DeleteNodeTransaction)
 NS_INTERFACE_MAP_END_INHERITING(EditTransactionBase)
 
 bool DeleteNodeTransaction::CanDoIt() const {
-  if (NS_WARN_IF(!mNodeToDelete) || NS_WARN_IF(!mEditorBase) || !mParentNode ||
-      !mEditorBase->IsModifiableNode(*mParentNode)) {
+  if (NS_WARN_IF(!mContentToDelete) || NS_WARN_IF(!mEditorBase) ||
+      !mParentNode) {
     return false;
   }
-  return true;
+  return mEditorBase->IsTextEditor() ||
+         HTMLEditUtils::IsSimplyEditableNode(*mParentNode);
 }
 
-NS_IMETHODIMP
-DeleteNodeTransaction::DoTransaction() {
+NS_IMETHODIMP DeleteNodeTransaction::DoTransaction() {
   if (NS_WARN_IF(!CanDoIt())) {
     return NS_OK;
   }
 
-  // Remember which child mNodeToDelete was (by remembering which child was
-  // next).  Note that mRefNode can be nullptr.
-  mRefNode = mNodeToDelete->GetNextSibling();
+  if (mEditorBase->IsTextEditor() && mContentToDelete->IsText()) {
+    uint32_t length = mContentToDelete->AsText()->TextLength();
+    if (length > 0) {
+      mEditorBase->AsTextEditor()->WillDeleteText(length, 0, length);
+    }
+  }
+
+  // Remember which child mContentToDelete was (by remembering which child was
+  // next).  Note that mRefContent can be nullptr.
+  mRefContent = mContentToDelete->GetNextSibling();
 
   // give range updater a chance.  SelAdjDeleteNode() needs to be called
   // *before* we do the action, unlike some of the other RangeItem update
   // methods.
-  mEditorBase->RangeUpdaterRef().SelAdjDeleteNode(mNodeToDelete);
+  mEditorBase->RangeUpdaterRef().SelAdjDeleteNode(*mContentToDelete);
 
+  OwningNonNull<nsINode> parentNode = *mParentNode;
+  OwningNonNull<nsIContent> contentToDelete = *mContentToDelete;
   ErrorResult error;
-  mParentNode->RemoveChild(*mNodeToDelete, error);
+  parentNode->RemoveChild(contentToDelete, error);
+  NS_WARNING_ASSERTION(!error.Failed(), "nsINode::RemoveChild() failed");
   return error.StealNSResult();
 }
 
-NS_IMETHODIMP
+MOZ_CAN_RUN_SCRIPT_BOUNDARY NS_IMETHODIMP
 DeleteNodeTransaction::UndoTransaction() {
   if (NS_WARN_IF(!CanDoIt())) {
     // This is a legal state, the transaction is a no-op.
     return NS_OK;
   }
   ErrorResult error;
-  nsCOMPtr<nsIContent> refNode = mRefNode;
-  mParentNode->InsertBefore(*mNodeToDelete, refNode, error);
-  return error.StealNSResult();
+  OwningNonNull<EditorBase> editorBase = *mEditorBase;
+  OwningNonNull<nsINode> parentNode = *mParentNode;
+  OwningNonNull<nsIContent> contentToDelete = *mContentToDelete;
+  nsCOMPtr<nsIContent> refContent = mRefContent;
+  // XXX Perhaps, we should check `refContent` is a child of `parentNode`,
+  //     and if it's not, we should stop undoing or something.
+  parentNode->InsertBefore(contentToDelete, refContent, error);
+  if (error.Failed()) {
+    NS_WARNING("nsINode::InsertBefore() failed");
+    return error.StealNSResult();
+  }
+  if (editorBase->IsTextEditor() && contentToDelete->IsText()) {
+    uint32_t length = contentToDelete->AsText()->TextLength();
+    if (length > 0) {
+      nsresult rv = MOZ_KnownLive(editorBase->AsTextEditor())
+                        ->DidInsertText(length, 0, length);
+      if (NS_FAILED(rv)) {
+        NS_WARNING("TextEditor::DidInsertText() failed");
+        return rv;
+      }
+    }
+  }
+  return NS_OK;
 }
 
-NS_IMETHODIMP
-DeleteNodeTransaction::RedoTransaction() {
+NS_IMETHODIMP DeleteNodeTransaction::RedoTransaction() {
   if (NS_WARN_IF(!CanDoIt())) {
     // This is a legal state, the transaction is a no-op.
     return NS_OK;
   }
 
-  mEditorBase->RangeUpdaterRef().SelAdjDeleteNode(mNodeToDelete);
+  if (mEditorBase->IsTextEditor() && mContentToDelete->IsText()) {
+    uint32_t length = mContentToDelete->AsText()->TextLength();
+    if (length > 0) {
+      mEditorBase->AsTextEditor()->WillDeleteText(length, 0, length);
+    }
+  }
 
+  mEditorBase->RangeUpdaterRef().SelAdjDeleteNode(*mContentToDelete);
+
+  OwningNonNull<nsINode> parentNode = *mParentNode;
+  OwningNonNull<nsIContent> contentToDelete = *mContentToDelete;
   ErrorResult error;
-  mParentNode->RemoveChild(*mNodeToDelete, error);
+  parentNode->RemoveChild(contentToDelete, error);
+  NS_WARNING_ASSERTION(!error.Failed(), "nsINode::RemoveChild() failed");
   return error.StealNSResult();
 }
 

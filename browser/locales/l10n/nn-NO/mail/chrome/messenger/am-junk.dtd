@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Innstillingar for uønskt e-post">
+<!ENTITY trainingDescription.label "Viss påslått, må du fyrst trene opp &brandShortName; til å oppdage uønskt e-post ved å bruke Uønskt-knappen for å merke meldinar som uønskt eller ikkje. Du må indikere både meldinger du ønskjer og ikkje ønskjer å motta. Etter dette vil &brandShortName; vere i stand til å merke uønskt post automatisk.">
+<!ENTITY level.label "Tillat adaptivt filter for uønskt e-post på denne kontoen">
+<!ENTITY level.accesskey "T">
+
+<!ENTITY move.label "Flytt meldingar til:">
+<!ENTITY move.accesskey "F">
+<!ENTITY junkFolderOn.label "«Uønskt»-mappa på:">
+<!ENTITY junkFolderOn.accesskey "U">
+<!ENTITY otherFolder.label "Anna:">
+<!ENTITY otherFolder.accesskey "A">
+<!ENTITY purge1.label "Automatisk slett uønskt e-post eldre enn">
+<!ENTITY purge1.accesskey "A">
+<!ENTITY purge2.label "dagar">
+
+<!ENTITY whitelistHeader.label "Ikkje automatisk marker e-post som uønskt dersom avsendar er i: ">
+<!ENTITY whitelistHeader.accesskey "I">
+
+<!ENTITY ispHeadersWarning.label "Viss påslått vil &brandShortName; automatisk vurdere meldingar som er merkte med denne eksterne klassifikasjonen som uønskt.">
+<!ENTITY ispHeaders.label "Stol på uønskt-meldingshovud frå: ">
+<!ENTITY ispHeaders.accesskey "S">
+
+<!ENTITY junkClassification.label "Utval">
+<!ENTITY junkActions.label "Mål og lagring">
+
+<!ENTITY globalJunkPrefs.label "Globale søppelpostinnstillingar…">
+<!ENTITY globalJunkPrefs.accesskey "G">

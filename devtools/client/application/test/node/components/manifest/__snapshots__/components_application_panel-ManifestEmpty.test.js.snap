@@ -1,0 +1,26 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ManifestEmpty renders the expected snapshot 1`] = `
+<article
+  className="manifest-empty js-manifest-empty"
+>
+  <Localized
+    a={
+      <a
+        className="external-link"
+        onClick={[Function]}
+      />
+    }
+    id="manifest-empty-intro"
+  >
+    <h1
+      className="app-page__title"
+    />
+  </Localized>
+  <Localized
+    id="manifest-non-existing"
+  >
+    <p />
+  </Localized>
+</article>
+`;

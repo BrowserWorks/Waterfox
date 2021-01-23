@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY playButton.playLabel "Main">
+<!ENTITY playButton.pauseLabel "Jeda">
+<!ENTITY muteButton.muteLabel "Senyap">
+<!ENTITY muteButton.unmuteLabel "Nyahsenyap">
+<!ENTITY fullscreenButton.enterfullscreenlabel "Skrin Penuh">
+<!ENTITY fullscreenButton.exitfullscreenlabel "Keluar Skrin Penuh">
+<!ENTITY castingButton.castingLabel "Tuang pada Skrin">
+<!ENTITY closedCaption.off "Nyahaktif">
+
+<!-- LOCALIZATION NOTE (volumeScrubber.label): This label is exposed to
+     accessibility software to clarify what the slider is for. -->
+<!ENTITY volumeScrubber.label "Gelangsar suara">
+
+<!ENTITY error.aborted "Video yang dimuatkan berhenti.">
+<!ENTITY error.network "Video ulangan digugurkan kerana kesalahan rangkaian.">
+<!ENTITY error.decode "Video tidak dapat dimainkan disebabkan fail telah korup.">
+<!ENTITY error.srcNotSupported "Format video atau jenis MIME adalah tidak disokong.">
+<!ENTITY error.noSource2 "Tiada video dengan format yang disokong dan jenis MIME yang ditemui.">
+<!ENTITY error.generic "Pemaparan video diberhentikan kerana masalah yang tidak diketahui.">
+
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">
+

@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "સરનામા પુસ્તિકા આયાત કરો">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "રેકોર્ડ કરવા માટે આયાત થયેલ માહિતી: ">
+<!ENTITY fieldMapImport.next.accesskey "N">
+<!ENTITY fieldMapImport.previous.accesskey "P">
+<!ENTITY fieldMapImport.text "ડાબી બાજુના સરનામા પુસ્તિકા ક્ષેત્રોને જમણી બાજુની યોગ્ય માહિતી સાથે આયાત કરવા માટે ઉપર ખસો અને નીચે ખસો વાપરો. તમે જે આયાત કરવા નહિં માંગતા હોય તે વસ્તુઓને અચિહ્નતિ કરો.">
+<!ENTITY fieldMapImport.up.accesskey "M">
+<!ENTITY fieldMapImport.down.accesskey "o">
+<!ENTITY fieldMapImport.fieldListTitle "સરનામા પુસ્તિકા ક્ષેત્રો">
+<!ENTITY fieldMapImport.dataTitle "આયાત કરવા માટે માહિતી આયાત કરો">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "F">

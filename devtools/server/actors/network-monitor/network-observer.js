@@ -1,14 +1,15 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft= javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 "use strict";
 
-const { Cc, Ci, Cr } = require("chrome");
+const { Cc, Ci, Cr, Cu } = require("chrome");
 const Services = require("Services");
 const flags = require("devtools/shared/flags");
+const {
+  wildcardToRegExp,
+} = require("devtools/server/actors/network-monitor/utils/wildcard-to-regexp");
 
 loader.lazyRequireGetter(
   this,
@@ -37,6 +38,11 @@ loader.lazyRequireGetter(
   "NetworkResponseListener",
   "devtools/server/actors/network-monitor/network-response-listener",
   true
+);
+loader.lazyGetter(
+  this,
+  "WebExtensionPolicy",
+  () => Cu.getGlobalForObject(Cu).WebExtensionPolicy
 );
 
 // Network logging
@@ -76,8 +82,14 @@ function matchRequest(channel, filters) {
     !flags.testing &&
     channel.loadInfo &&
     channel.loadInfo.loadingDocument === null &&
-    channel.loadInfo.loadingPrincipal ===
-      Services.scriptSecurityManager.getSystemPrincipal()
+    (channel.loadInfo.loadingPrincipal ===
+      Services.scriptSecurityManager.getSystemPrincipal() ||
+      // StyleEditor loads stylesheets with not the system principal but the content
+      // principal that same as of the document that loaded the stylesheet in order
+      // to take over the context of Private Browsing etc. Thus, in order to restrict
+      // the networking from StyleEditor, we check the loading policy.
+      channel.loadInfo.internalContentPolicyType ===
+        Ci.nsIContentPolicy.TYPE_INTERNAL_STYLESHEET)
   ) {
     return false;
   }
@@ -109,6 +121,13 @@ function matchRequest(channel, filters) {
         // outerWindowID getter from browser.js (non-remote <xul:browser>) may
         // throw when closing a tab while resources are still loading.
       }
+    } else if (
+      channel.loadInfo &&
+      channel.loadInfo.topOuterWindowID == filters.outerWindowID
+    ) {
+      // If we couldn't get the top frame outerWindowID from the loadContext,
+      // look to the channel.loadInfo.topOuterWindowID instead.
+      return true;
     }
   }
 
@@ -143,10 +162,10 @@ function NetworkObserver(filters, owner) {
   this.filters = filters;
   this.owner = owner;
 
-  this.openRequests = new Map();
-  this.openResponses = new Map();
+  this.openRequests = new WeakMap();
+  this.openResponses = new WeakMap();
 
-  this.blockedURLs = new Set();
+  this.blockedURLs = [];
 
   this._httpResponseExaminer = DevToolsUtils.makeInfallible(
     this._httpResponseExaminer
@@ -156,6 +175,9 @@ function NetworkObserver(filters, owner) {
   ).bind(this);
   this._httpFailedOpening = DevToolsUtils.makeInfallible(
     this._httpFailedOpening
+  ).bind(this);
+  this._httpStopRequest = DevToolsUtils.makeInfallible(
+    this._httpStopRequest
   ).bind(this);
   this._serviceWorkerRequest = this._serviceWorkerRequest.bind(this);
 
@@ -223,7 +245,7 @@ NetworkObserver.prototype = {
     this.responsePipeSegmentSize = Services.prefs.getIntPref(
       "network.buffer.cache.size"
     );
-    this.interceptedChannels = new Set();
+    this.interceptedChannels = new WeakSet();
 
     if (Services.appinfo.processType != Ci.nsIXULRuntime.PROCESS_TYPE_CONTENT) {
       gActivityDistributor.addObserver(this);
@@ -239,6 +261,7 @@ NetworkObserver.prototype = {
         this._httpModifyExaminer,
         "http-on-modify-request"
       );
+      Services.obs.addObserver(this._httpStopRequest, "http-on-stop-request");
     } else {
       Services.obs.addObserver(
         this._httpFailedOpening,
@@ -298,12 +321,65 @@ NetworkObserver.prototype = {
     }
 
     const channel = subject.QueryInterface(Ci.nsIHttpChannel);
-
     if (!matchRequest(channel, this.filters)) {
       return;
     }
 
-    ("add your handling code here");
+    const blockedCode = channel.loadInfo.requestBlockingReason;
+    this._httpResponseExaminer(subject, topic, blockedCode);
+  },
+
+  _httpStopRequest: function(subject, topic) {
+    if (
+      !this.owner ||
+      topic != "http-on-stop-request" ||
+      !(subject instanceof Ci.nsIHttpChannel)
+    ) {
+      return;
+    }
+
+    const channel = subject.QueryInterface(Ci.nsIHttpChannel);
+    if (!matchRequest(channel, this.filters)) {
+      return;
+    }
+
+    let id;
+    let reason;
+
+    try {
+      const request = subject.QueryInterface(Ci.nsIHttpChannel);
+      const properties = request.QueryInterface(Ci.nsIPropertyBag);
+      reason = request.loadInfo.requestBlockingReason;
+      id = properties.getProperty("cancelledByExtension");
+
+      // WebExtensionPolicy is not available for workers
+      if (typeof WebExtensionPolicy !== "undefined") {
+        id = WebExtensionPolicy.getByID(id).name;
+      }
+    } catch (err) {
+      // "cancelledByExtension" doesn't have to be available.
+    }
+
+    const httpActivity = this.createOrGetActivityObject(channel);
+    const serverTimings = this._extractServerTimings(channel);
+    if (httpActivity.owner) {
+      // Try extracting server timings. Note that they will be sent to the client
+      // in the `_onTransactionClose` method together with network event timings.
+      httpActivity.owner.addSeverTimings(serverTimings);
+    } else {
+      // If the owner isn't set we need to create the network event and send
+      // it to the client. This happens in case where the request has been
+      // blocked (e.g. CORS) and "http-on-stop-request" is the first notification.
+
+      // Temp fix to land on 79 to uplift to 78, lets remove from 79 after
+      // eslint-disable-next-line no-lonely-if
+      if (id || reason) {
+        this._createNetworkEvent(subject, {
+          blockedReason: reason,
+          blockingExtension: id,
+        });
+      }
+    }
   },
 
   /**
@@ -315,21 +391,25 @@ NetworkObserver.prototype = {
    * @param string topic
    * @returns void
    */
-  _httpResponseExaminer: function(subject, topic) {
+  _httpResponseExaminer: function(subject, topic, blockedReason) {
     // The httpResponseExaminer is used to retrieve the uncached response
     // headers. The data retrieved is stored in openResponses. The
     // NetworkResponseListener is responsible with updating the httpActivity
     // object with the data from the new object in openResponses.
-
     if (
       !this.owner ||
       (topic != "http-on-examine-response" &&
-        topic != "http-on-examine-cached-response") ||
-      !(subject instanceof Ci.nsIHttpChannel)
+        topic != "http-on-examine-cached-response" &&
+        topic != "http-on-failed-opening-request") ||
+      !(subject instanceof Ci.nsIHttpChannel) ||
+      !(subject instanceof Ci.nsIClassifiedChannel)
     ) {
       return;
     }
 
+    const blockedOrFailed = topic === "http-on-failed-opening-request";
+
+    subject.QueryInterface(Ci.nsIClassifiedChannel);
     const channel = subject.QueryInterface(Ci.nsIHttpChannel);
 
     if (!matchRequest(channel, this.filters)) {
@@ -345,26 +425,28 @@ NetworkObserver.prototype = {
 
     const setCookieHeaders = [];
 
-    channel.visitOriginalResponseHeaders({
-      visitHeader: function(name, value) {
-        const lowerName = name.toLowerCase();
-        if (lowerName == "set-cookie") {
-          setCookieHeaders.push(value);
-        }
-        response.headers.push({ name: name, value: value });
-      },
-    });
+    if (!blockedOrFailed) {
+      channel.visitOriginalResponseHeaders({
+        visitHeader: function(name, value) {
+          const lowerName = name.toLowerCase();
+          if (lowerName == "set-cookie") {
+            setCookieHeaders.push(value);
+          }
+          response.headers.push({ name: name, value: value });
+        },
+      });
 
-    if (!response.headers.length) {
-      // No need to continue.
-      return;
-    }
+      if (!response.headers.length) {
+        // No need to continue.
+        return;
+      }
 
-    if (setCookieHeaders.length) {
-      response.cookies = setCookieHeaders.reduce((result, header) => {
-        const cookies = NetworkHelper.parseSetCookieHeader(header);
-        return result.concat(cookies);
-      }, []);
+      if (setCookieHeaders.length) {
+        response.cookies = setCookieHeaders.reduce((result, header) => {
+          const cookies = NetworkHelper.parseSetCookieHeader(header);
+          return result.concat(cookies);
+        }, []);
+      }
     }
 
     // Determine the HTTP version.
@@ -372,14 +454,20 @@ NetworkObserver.prototype = {
     const httpVersionMin = {};
 
     channel.QueryInterface(Ci.nsIHttpChannelInternal);
-    channel.getResponseVersion(httpVersionMaj, httpVersionMin);
+    if (!blockedOrFailed) {
+      channel.getResponseVersion(httpVersionMaj, httpVersionMin);
 
-    response.status = channel.responseStatus;
-    response.statusText = channel.responseStatusText;
-    response.httpVersion =
-      "HTTP/" + httpVersionMaj.value + "." + httpVersionMin.value;
+      response.status = channel.responseStatus;
+      response.statusText = channel.responseStatusText;
+      if (httpVersionMaj.value > 1) {
+        response.httpVersion = "HTTP/" + httpVersionMaj.value;
+      } else {
+        response.httpVersion =
+          "HTTP/" + httpVersionMaj.value + "." + httpVersionMin.value;
+      }
 
-    this.openResponses.set(channel, response);
+      this.openResponses.set(channel, response);
+    }
 
     if (topic === "http-on-examine-cached-response") {
       // Service worker requests emits cached-response notification on non-e10s,
@@ -410,11 +498,16 @@ NetworkObserver.prototype = {
       // There also is never any timing events, so we can fire this
       // event with zeroed out values.
       const timings = this._setupHarTimings(httpActivity, true);
+
+      const serverTimings = this._extractServerTimings(httpActivity.channel);
       httpActivity.owner.addEventTimings(
         timings.total,
         timings.timings,
-        timings.offsets
+        timings.offsets,
+        serverTimings
       );
+    } else if (topic === "http-on-failed-opening-request") {
+      this._createNetworkEvent(channel, { blockedReason });
     }
   },
 
@@ -525,11 +618,15 @@ NetworkObserver.prototype = {
       return;
     }
 
-    if (!(channel instanceof Ci.nsIHttpChannel)) {
+    if (
+      !(channel instanceof Ci.nsIHttpChannel) ||
+      !(channel instanceof Ci.nsIClassifiedChannel)
+    ) {
       return;
     }
 
     channel = channel.QueryInterface(Ci.nsIHttpChannel);
+    channel = channel.QueryInterface(Ci.nsIClassifiedChannel);
 
     if (
       activitySubtype == gActivityDistributor.ACTIVITY_SUBTYPE_REQUEST_HEADER
@@ -581,7 +678,14 @@ NetworkObserver.prototype = {
    */
   _createNetworkEvent: function(
     channel,
-    { timestamp, extraStringData, fromCache, fromServiceWorker }
+    {
+      timestamp,
+      extraStringData,
+      fromCache,
+      fromServiceWorker,
+      blockedReason,
+      blockingExtension,
+    }
   ) {
     const httpActivity = this.createOrGetActivityObject(channel);
 
@@ -595,6 +699,14 @@ NetworkObserver.prototype = {
       };
     }
 
+    const trackingProtectionLevel2Enabled = Services.prefs
+      .getStringPref("urlclassifier.trackingTable")
+      .includes("content-track-digest256");
+    const tpFlagsMask = trackingProtectionLevel2Enabled
+      ? ~Ci.nsIClassifiedChannel.CLASSIFIED_ANY_BASIC_TRACKING &
+        ~Ci.nsIClassifiedChannel.CLASSIFIED_ANY_STRICT_TRACKING
+      : ~Ci.nsIClassifiedChannel.CLASSIFIED_ANY_BASIC_TRACKING &
+        Ci.nsIClassifiedChannel.CLASSIFIED_ANY_STRICT_TRACKING;
     const event = {};
     event.method = channel.requestMethod;
     event.channelId = channel.channelId;
@@ -607,13 +719,19 @@ NetworkObserver.prototype = {
     ).toISOString();
     event.fromCache = fromCache;
     event.fromServiceWorker = fromServiceWorker;
-    event.isThirdPartyTrackingResource = channel.isThirdPartyTrackingResource();
+    // Only consider channels classified as level-1 to be trackers if our preferences
+    // would not cause such channels to be blocked in strict content blocking mode.
+    // Make sure the value produced here is a boolean.
+    if (channel instanceof Ci.nsIClassifiedChannel) {
+      event.isThirdPartyTrackingResource = !!(
+        channel.isThirdPartyTrackingResource() &&
+        (channel.thirdPartyClassificationFlags & tpFlagsMask) == 0
+      );
+    }
     const referrerInfo = channel.referrerInfo;
-    event.referrerPolicy = Services.netUtils.getReferrerPolicyString(
-      referrerInfo
-        ? referrerInfo.referrerPolicy
-        : Ci.nsIHttpChannel.REFERRER_POLICY_UNSET
-    );
+    event.referrerPolicy = referrerInfo
+      ? referrerInfo.getReferrerPolicyString()
+      : "";
     httpActivity.fromServiceWorker = fromServiceWorker;
 
     if (extraStringData) {
@@ -628,13 +746,32 @@ NetworkObserver.prototype = {
     if (channel.loadInfo) {
       causeType = channel.loadInfo.externalContentPolicyType;
       const { loadingPrincipal } = channel.loadInfo;
-      if (loadingPrincipal && loadingPrincipal.URI) {
+      if (loadingPrincipal?.URI) {
         causeUri = loadingPrincipal.URI.spec;
       }
     }
 
+    // Show the right WebSocket URL in case of WS channel.
+    if (channel.notificationCallbacks) {
+      let wsChannel = null;
+      try {
+        wsChannel = channel.notificationCallbacks.QueryInterface(
+          Ci.nsIWebSocketChannel
+        );
+      } catch (e) {
+        // Not all channels implement nsIWebSocketChannel.
+      }
+      if (wsChannel) {
+        event.url = wsChannel.URI.spec;
+      }
+    }
+
     event.cause = {
-      type: causeTypeToString(causeType),
+      type: causeTypeToString(
+        causeType,
+        channel.loadFlags,
+        channel.loadInfo.internalContentPolicyType
+      ),
       loadingDocumentUri: causeUri,
       stacktrace,
     };
@@ -675,9 +812,23 @@ NetworkObserver.prototype = {
 
     // Check the request URL with ones manually blocked by the user in DevTools.
     // If it's meant to be blocked, we cancel the request and annotate the event.
-    if (this.blockedURLs.has(httpActivity.url)) {
-      channel.cancel(Cr.NS_BINDING_ABORTED);
-      event.blockedReason = "DevTools";
+    if (!blockedReason) {
+      if (blockedReason !== undefined) {
+        // We were definitely blocked, but the blocker didn't say why.
+        event.blockedReason = "unknown";
+      } else if (
+        this.blockedURLs.some(url =>
+          wildcardToRegExp(url).test(httpActivity.url)
+        )
+      ) {
+        channel.cancel(Cr.NS_BINDING_ABORTED);
+        event.blockedReason = "devtools";
+      }
+    } else {
+      event.blockedReason = blockedReason;
+      if (blockingExtension) {
+        event.blockingExtension = blockingExtension;
+      }
     }
 
     httpActivity.owner = this.owner.onNetworkEvent(event);
@@ -782,7 +933,7 @@ NetworkObserver.prototype = {
       return;
     }
 
-    this.blockedURLs.add(filter.url);
+    this.blockedURLs.push(filter.url);
   },
 
   /**
@@ -797,7 +948,16 @@ NetworkObserver.prototype = {
       return;
     }
 
-    this.blockedURLs.delete(filter.url);
+    this.blockedURLs = this.blockedURLs.filter(url => url != filter.url);
+  },
+
+  /**
+   * Updates the list of blocked request strings
+   *
+   * This match will be a (String).includes match, not an exact URL match
+   */
+  setBlockedUrls(urls) {
+    this.blockedURLs = urls || [];
   },
 
   /**
@@ -951,13 +1111,161 @@ NetworkObserver.prototype = {
    *        The HTTP activity object we work with.
    */
   _onTransactionClose: function(httpActivity) {
-    const result = this._setupHarTimings(httpActivity);
-    httpActivity.owner.addEventTimings(
-      result.total,
-      result.timings,
-      result.offsets
-    );
-    this.openRequests.delete(httpActivity.channel);
+    if (httpActivity.owner) {
+      const result = this._setupHarTimings(httpActivity);
+      const serverTimings = this._extractServerTimings(httpActivity.channel);
+
+      httpActivity.owner.addEventTimings(
+        result.total,
+        result.timings,
+        result.offsets,
+        serverTimings
+      );
+    }
+  },
+
+  _getBlockedTiming: function(timings) {
+    if (timings.STATUS_RESOLVING && timings.STATUS_CONNECTING_TO) {
+      return timings.STATUS_RESOLVING.first - timings.REQUEST_HEADER.first;
+    } else if (timings.STATUS_SENDING_TO) {
+      return timings.STATUS_SENDING_TO.first - timings.REQUEST_HEADER.first;
+    }
+
+    return -1;
+  },
+
+  _getDnsTiming: function(timings) {
+    if (timings.STATUS_RESOLVING && timings.STATUS_RESOLVED) {
+      return timings.STATUS_RESOLVED.last - timings.STATUS_RESOLVING.first;
+    }
+
+    return -1;
+  },
+
+  _getConnectTiming: function(timings) {
+    if (timings.STATUS_CONNECTING_TO && timings.STATUS_CONNECTED_TO) {
+      return (
+        timings.STATUS_CONNECTED_TO.last - timings.STATUS_CONNECTING_TO.first
+      );
+    }
+
+    return -1;
+  },
+
+  _getReceiveTiming: function(timings) {
+    if (timings.RESPONSE_START && timings.RESPONSE_COMPLETE) {
+      return timings.RESPONSE_COMPLETE.last - timings.RESPONSE_START.first;
+    }
+
+    return -1;
+  },
+
+  _getWaitTiming: function(timings) {
+    if (timings.RESPONSE_START) {
+      return (
+        timings.RESPONSE_START.first -
+        (timings.REQUEST_BODY_SENT || timings.STATUS_SENDING_TO).last
+      );
+    }
+
+    return -1;
+  },
+
+  _getSslTiming: function(timings) {
+    if (timings.STATUS_TLS_STARTING && timings.STATUS_TLS_ENDING) {
+      return timings.STATUS_TLS_ENDING.last - timings.STATUS_TLS_STARTING.first;
+    }
+
+    return -1;
+  },
+
+  _getSendTiming: function(timings) {
+    if (timings.STATUS_SENDING_TO) {
+      return timings.STATUS_SENDING_TO.last - timings.STATUS_SENDING_TO.first;
+    } else if (timings.REQUEST_HEADER && timings.REQUEST_BODY_SENT) {
+      return timings.REQUEST_BODY_SENT.last - timings.REQUEST_HEADER.first;
+    }
+
+    return -1;
+  },
+
+  _getDataFromTimedChannel: function(timedChannel) {
+    const lookUpArr = [
+      "tcpConnectEndTime",
+      "connectStartTime",
+      "connectEndTime",
+      "secureConnectionStartTime",
+      "domainLookupEndTime",
+      "domainLookupStartTime",
+    ];
+
+    return lookUpArr.reduce((prev, prop) => {
+      const propName = prop + "Tc";
+      return {
+        ...prev,
+        [propName]: (() => {
+          if (!timedChannel) {
+            return 0;
+          }
+
+          const value = timedChannel[prop];
+
+          if (
+            value != 0 &&
+            timedChannel.asyncOpenTime &&
+            value < timedChannel.asyncOpenTime
+          ) {
+            return 0;
+          }
+
+          return value;
+        })(),
+      };
+    }, {});
+  },
+
+  _getSecureConnectionStartTimeInfo: function(timings) {
+    let secureConnectionStartTime = 0;
+    let secureConnectionStartTimeRelative = false;
+
+    if (timings.STATUS_TLS_STARTING && timings.STATUS_TLS_ENDING) {
+      if (timings.STATUS_CONNECTING_TO) {
+        secureConnectionStartTime =
+          timings.STATUS_TLS_STARTING.first -
+          timings.STATUS_CONNECTING_TO.first;
+      }
+
+      if (secureConnectionStartTime < 0) {
+        secureConnectionStartTime = 0;
+      }
+      secureConnectionStartTimeRelative = true;
+    }
+
+    return {
+      secureConnectionStartTime,
+      secureConnectionStartTimeRelative,
+    };
+  },
+
+  _getStartSendingTimeInfo: function(timings, connectStartTimeTc) {
+    let startSendingTime = 0;
+    let startSendingTimeRelative = false;
+
+    if (timings.STATUS_SENDING_TO) {
+      if (timings.STATUS_CONNECTING_TO) {
+        startSendingTime =
+          timings.STATUS_SENDING_TO.first - timings.STATUS_CONNECTING_TO.first;
+        startSendingTimeRelative = true;
+      } else if (connectStartTimeTc != 0) {
+        startSendingTime = timings.STATUS_SENDING_TO.first - connectStartTimeTc;
+        startSendingTimeRelative = true;
+      }
+
+      if (startSendingTime < 0) {
+        startSendingTime = 0;
+      }
+    }
+    return { startSendingTime, startSendingTimeRelative };
   },
 
   /**
@@ -976,6 +1284,7 @@ NetworkObserver.prototype = {
    *         - total - the total time for all of the request and response.
    *         - timings - the HAR timings object.
    */
+
   _setupHarTimings: function(httpActivity, fromCache) {
     if (fromCache) {
       // If it came from the browser cache, we have no timing
@@ -1011,50 +1320,18 @@ NetworkObserver.prototype = {
     // relative to CONNECTING_TO.
     // Similary if 0RTT is used, data can be sent as soon as a TLS handshake
     // starts.
-    let secureConnectionStartTime = 0;
-    let secureConnectionStartTimeRelative = false;
-    let startSendingTime = 0;
-    let startSendingTimeRelative = false;
 
-    if (timings.STATUS_RESOLVING && timings.STATUS_CONNECTING_TO) {
-      harTimings.blocked =
-        timings.STATUS_RESOLVING.first - timings.REQUEST_HEADER.first;
-    } else if (timings.STATUS_SENDING_TO) {
-      harTimings.blocked =
-        timings.STATUS_SENDING_TO.first - timings.REQUEST_HEADER.first;
-    } else {
-      harTimings.blocked = -1;
-    }
-
+    harTimings.blocked = this._getBlockedTiming(timings);
     // DNS timing information is available only in when the DNS record is not
     // cached.
-    harTimings.dns =
-      timings.STATUS_RESOLVING && timings.STATUS_RESOLVED
-        ? timings.STATUS_RESOLVED.last - timings.STATUS_RESOLVING.first
-        : -1;
+    harTimings.dns = this._getDnsTiming(timings);
+    harTimings.connect = this._getConnectTiming(timings);
+    harTimings.ssl = this._getSslTiming(timings);
 
-    if (timings.STATUS_CONNECTING_TO && timings.STATUS_CONNECTED_TO) {
-      harTimings.connect =
-        timings.STATUS_CONNECTED_TO.last - timings.STATUS_CONNECTING_TO.first;
-    } else {
-      harTimings.connect = -1;
-    }
-
-    if (timings.STATUS_TLS_STARTING && timings.STATUS_TLS_ENDING) {
-      harTimings.ssl =
-        timings.STATUS_TLS_ENDING.last - timings.STATUS_TLS_STARTING.first;
-      if (timings.STATUS_CONNECTING_TO) {
-        secureConnectionStartTime =
-          timings.STATUS_TLS_STARTING.first -
-          timings.STATUS_CONNECTING_TO.first;
-      }
-      if (secureConnectionStartTime < 0) {
-        secureConnectionStartTime = 0;
-      }
-      secureConnectionStartTimeRelative = true;
-    } else {
-      harTimings.ssl = -1;
-    }
+    let {
+      secureConnectionStartTime,
+      secureConnectionStartTimeRelative,
+    } = this._getSecureConnectionStartTimeInfo(timings);
 
     // sometimes the connection information events are attached to a speculative
     // channel instead of this one, but necko might glue them back together in the
@@ -1063,73 +1340,26 @@ NetworkObserver.prototype = {
       Ci.nsITimedChannel
     );
 
-    let tcTcpConnectEndTime = 0;
-    let tcConnectStartTime = 0;
-    let tcConnectEndTime = 0;
-    let tcSecureConnectionStartTime = 0;
-    let tcDomainLookupEndTime = 0;
-    let tcDomainLookupStartTime = 0;
-
-    if (timedChannel) {
-      tcTcpConnectEndTime = timedChannel.tcpConnectEndTime;
-      tcConnectStartTime = timedChannel.connectStartTime;
-      tcConnectEndTime = timedChannel.connectEndTime;
-      tcSecureConnectionStartTime = timedChannel.secureConnectionStartTime;
-      tcDomainLookupEndTime = timedChannel.domainLookupEndTime;
-      tcDomainLookupStartTime = timedChannel.domainLookupStartTime;
-    }
-
-    // Make sure the above values are at least timedChannel.asyncOpenTime.
-    if (timedChannel && timedChannel.asyncOpenTime) {
-      if (
-        tcTcpConnectEndTime != 0 &&
-        tcTcpConnectEndTime < timedChannel.asyncOpenTime
-      ) {
-        tcTcpConnectEndTime = 0;
-      }
-      if (
-        tcConnectStartTime != 0 &&
-        tcConnectStartTime < timedChannel.asyncOpenTime
-      ) {
-        tcConnectStartTime = 0;
-      }
-      if (
-        tcConnectEndTime != 0 &&
-        tcConnectEndTime < timedChannel.asyncOpenTime
-      ) {
-        tcConnectEndTime = 0;
-      }
-      if (
-        tcSecureConnectionStartTime != 0 &&
-        tcSecureConnectionStartTime < timedChannel.asyncOpenTime
-      ) {
-        tcSecureConnectionStartTime = 0;
-      }
-      if (
-        tcDomainLookupEndTime != 0 &&
-        tcDomainLookupEndTime < timedChannel.asyncOpenTime
-      ) {
-        tcDomainLookupEndTime = 0;
-      }
-      if (
-        tcDomainLookupStartTime != 0 &&
-        tcDomainLookupStartTime < timedChannel.asyncOpenTime
-      ) {
-        tcDomainLookupStartTime = 0;
-      }
-    }
+    const {
+      tcpConnectEndTimeTc,
+      connectStartTimeTc,
+      connectEndTimeTc,
+      secureConnectionStartTimeTc,
+      domainLookupEndTimeTc,
+      domainLookupStartTimeTc,
+    } = this._getDataFromTimedChannel(timedChannel);
 
     if (
       harTimings.connect <= 0 &&
       timedChannel &&
-      tcTcpConnectEndTime != 0 &&
-      tcConnectStartTime != 0
+      tcpConnectEndTimeTc != 0 &&
+      connectStartTimeTc != 0
     ) {
-      harTimings.connect = tcTcpConnectEndTime - tcConnectStartTime;
-      if (tcSecureConnectionStartTime != 0) {
-        harTimings.ssl = tcConnectEndTime - tcSecureConnectionStartTime;
+      harTimings.connect = tcpConnectEndTimeTc - connectStartTimeTc;
+      if (secureConnectionStartTimeTc != 0) {
+        harTimings.ssl = connectEndTimeTc - secureConnectionStartTimeTc;
         secureConnectionStartTime =
-          tcSecureConnectionStartTime - tcConnectStartTime;
+          secureConnectionStartTimeTc - connectStartTimeTc;
         secureConnectionStartTimeRelative = true;
       } else {
         harTimings.ssl = -1;
@@ -1137,14 +1367,14 @@ NetworkObserver.prototype = {
     } else if (
       timedChannel &&
       timings.STATUS_TLS_STARTING &&
-      tcSecureConnectionStartTime != 0
+      secureConnectionStartTimeTc != 0
     ) {
       // It can happen that TCP Fast Open actually have not sent any data and
       // timings.STATUS_TLS_STARTING.first value will be corrected in
       // timedChannel.secureConnectionStartTime
-      if (tcSecureConnectionStartTime > timings.STATUS_TLS_STARTING.first) {
+      if (secureConnectionStartTimeTc > timings.STATUS_TLS_STARTING.first) {
         // TCP Fast Open actually did not sent any data.
-        harTimings.ssl = tcConnectEndTime - tcSecureConnectionStartTime;
+        harTimings.ssl = connectEndTimeTc - secureConnectionStartTimeTc;
         secureConnectionStartTimeRelative = false;
       }
     }
@@ -1152,47 +1382,19 @@ NetworkObserver.prototype = {
     if (
       harTimings.dns <= 0 &&
       timedChannel &&
-      tcDomainLookupEndTime != 0 &&
-      tcDomainLookupStartTime != 0
+      domainLookupEndTimeTc != 0 &&
+      domainLookupStartTimeTc != 0
     ) {
-      harTimings.dns = tcDomainLookupEndTime - tcDomainLookupStartTime;
+      harTimings.dns = domainLookupEndTimeTc - domainLookupStartTimeTc;
     }
 
-    if (timings.STATUS_SENDING_TO) {
-      harTimings.send =
-        timings.STATUS_SENDING_TO.last - timings.STATUS_SENDING_TO.first;
-      if (timings.STATUS_CONNECTING_TO) {
-        startSendingTime =
-          timings.STATUS_SENDING_TO.first - timings.STATUS_CONNECTING_TO.first;
-        startSendingTimeRelative = true;
-      } else if (tcConnectStartTime != 0) {
-        startSendingTime = timings.STATUS_SENDING_TO.first - tcConnectStartTime;
-        startSendingTimeRelative = true;
-      }
-      if (startSendingTime < 0) {
-        startSendingTime = 0;
-      }
-    } else if (timings.REQUEST_HEADER && timings.REQUEST_BODY_SENT) {
-      harTimings.send =
-        timings.REQUEST_BODY_SENT.last - timings.REQUEST_HEADER.first;
-    } else {
-      harTimings.send = -1;
-    }
-
-    if (timings.RESPONSE_START) {
-      harTimings.wait =
-        timings.RESPONSE_START.first -
-        (timings.REQUEST_BODY_SENT || timings.STATUS_SENDING_TO).last;
-    } else {
-      harTimings.wait = -1;
-    }
-
-    if (timings.RESPONSE_START && timings.RESPONSE_COMPLETE) {
-      harTimings.receive =
-        timings.RESPONSE_COMPLETE.last - timings.RESPONSE_START.first;
-    } else {
-      harTimings.receive = -1;
-    }
+    harTimings.send = this._getSendTiming(timings);
+    harTimings.wait = this._getWaitTiming(timings);
+    harTimings.receive = this._getReceiveTiming(timings);
+    let {
+      startSendingTime,
+      startSendingTimeRelative,
+    } = this._getStartSendingTimeInfo(timings, connectStartTimeTc);
 
     if (secureConnectionStartTimeRelative) {
       const time = Math.max(Math.round(secureConnectionStartTime / 1000), -1);
@@ -1215,6 +1417,25 @@ NetworkObserver.prototype = {
       timings: harTimings,
       offsets: ot.offsets,
     };
+  },
+
+  _extractServerTimings: function(channel) {
+    if (!channel || !channel.serverTiming) {
+      return null;
+    }
+
+    const serverTimings = new Array(channel.serverTiming.length);
+
+    for (let i = 0; i < channel.serverTiming.length; ++i) {
+      const {
+        name,
+        duration,
+        description,
+      } = channel.serverTiming.queryElementAt(i, Ci.nsIServerTiming);
+      serverTimings[i] = { name, duration, description };
+    }
+
+    return serverTimings;
   },
 
   _calculateOffsetAndTotalTime: function(
@@ -1286,6 +1507,10 @@ NetworkObserver.prototype = {
         this._httpModifyExaminer,
         "http-on-modify-request"
       );
+      Services.obs.removeObserver(
+        this._httpStopRequest,
+        "http-on-stop-request"
+      );
     } else {
       Services.obs.removeObserver(
         this._httpFailedOpening,
@@ -1298,9 +1523,6 @@ NetworkObserver.prototype = {
       "service-worker-synthesized-response"
     );
 
-    this.interceptedChannels.clear();
-    this.openRequests.clear();
-    this.openResponses.clear();
     this.owner = null;
     this.filters = null;
     this._throttler = null;
@@ -1325,7 +1547,6 @@ const LOAD_CAUSE_STRINGS = {
   [Ci.nsIContentPolicy.TYPE_DOCUMENT]: "document",
   [Ci.nsIContentPolicy.TYPE_SUBDOCUMENT]: "subdocument",
   [Ci.nsIContentPolicy.TYPE_REFRESH]: "refresh",
-  [Ci.nsIContentPolicy.TYPE_XBL]: "xbl",
   [Ci.nsIContentPolicy.TYPE_PING]: "ping",
   [Ci.nsIContentPolicy.TYPE_XMLHTTPREQUEST]: "xhr",
   [Ci.nsIContentPolicy.TYPE_OBJECT_SUBREQUEST]: "objectSubdoc",
@@ -1341,8 +1562,17 @@ const LOAD_CAUSE_STRINGS = {
   [Ci.nsIContentPolicy.TYPE_WEB_MANIFEST]: "webManifest",
 };
 
-function causeTypeToString(causeType) {
-  return LOAD_CAUSE_STRINGS[causeType] || "unknown";
+function causeTypeToString(causeType, loadFlags, internalContentPolicyType) {
+  let prefix = "";
+  if (
+    (causeType == Ci.nsIContentPolicy.TYPE_IMAGESET ||
+      internalContentPolicyType == Ci.nsIContentPolicy.TYPE_INTERNAL_IMAGE) &&
+    loadFlags & Ci.nsIRequest.LOAD_BACKGROUND
+  ) {
+    prefix = "lazy-";
+  }
+
+  return prefix + LOAD_CAUSE_STRINGS[causeType] || "unknown";
 }
 
 function stringToCauseType(value) {

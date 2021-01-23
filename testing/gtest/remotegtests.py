@@ -6,16 +6,17 @@
 
 from __future__ import with_statement
 
-from optparse import OptionParser
-
+import argparse
 import datetime
 import glob
 import os
 import posixpath
 import shutil
+import six
 import sys
 import tempfile
 import time
+import traceback
 
 import mozcrash
 import mozdevice
@@ -33,7 +34,7 @@ class RemoteGTests(object):
     def __init__(self):
         self.device = None
 
-    def build_environment(self, shuffle, test_filter):
+    def build_environment(self, shuffle, test_filter, enable_webrender):
         """
            Create and return a dictionary of all the appropriate env variables
            and values.
@@ -49,15 +50,20 @@ class RemoteGTests(object):
         env["MOZ_GTEST_CWD"] = self.remote_profile
         env["MOZ_GTEST_MINIDUMPS_PATH"] = self.remote_minidumps
         env["MOZ_IN_AUTOMATION"] = "1"
+        env["MOZ_ANDROID_LIBDIR_OVERRIDE"] = posixpath.join(self.remote_libdir, 'libxul.so')
         if shuffle:
             env["GTEST_SHUFFLE"] = "True"
         if test_filter:
             env["GTEST_FILTER"] = test_filter
+        if enable_webrender:
+            env["MOZ_WEBRENDER"] = "1"
+        else:
+            env["MOZ_WEBRENDER"] = "0"
 
         return env
 
     def run_gtest(self, test_dir, shuffle, test_filter, package, adb_path, device_serial,
-                  remote_test_root, libxul_path, symbols_path):
+                  remote_test_root, libxul_path, symbols_path, enable_webrender):
         """
            Launch the test app, run gtest, collect test results and wait for completion.
            Return False if a crash or other failure is detected, else True.
@@ -72,20 +78,24 @@ class RemoteGTests(object):
         self.remote_profile = posixpath.join(root, 'gtest-profile')
         self.remote_minidumps = posixpath.join(root, 'gtest-minidumps')
         self.remote_log = posixpath.join(root, 'gtest.log')
+        self.remote_libdir = posixpath.join('/data', 'local', 'gtest')
+
         self.package = package
         self.cleanup()
         self.device.mkdir(self.remote_profile, parents=True)
         self.device.mkdir(self.remote_minidumps, parents=True)
+        self.device.mkdir(self.remote_libdir, parents=True, root=True)
+        self.device.chmod(self.remote_libdir, recursive=True, root=True)
 
         log.info("Running Android gtest")
         if not self.device.is_app_installed(self.package):
             raise Exception("%s is not installed on this device" % self.package)
-        if not self.device._have_root_shell:
-            raise Exception("a device with a root shell is required to run Android gtest")
 
+        # Push the gtest libxul.so to the device. The harness assumes an architecture-
+        # appropriate library is specified and pushes it to the arch-agnostic remote
+        # directory.
         # TODO -- consider packaging the gtest libxul.so in an apk
-        remote = "/data/app/%s-1/lib/x86_64/" % self.package
-        self.device.push(libxul_path, remote)
+        self.device.push(libxul_path, self.remote_libdir)
 
         # Push support files to device. Avoid sub-directories so that libxul.so
         # is not included.
@@ -93,7 +103,9 @@ class RemoteGTests(object):
             if not os.path.isdir(f):
                 self.device.push(f, self.remote_profile)
 
-        env = self.build_environment(shuffle, test_filter)
+        if test_filter is not None:
+            test_filter = six.ensure_text(test_filter)
+        env = self.build_environment(shuffle, test_filter, enable_webrender)
         args = ["-unittest", "--gtest_death_test_style=threadsafe",
                 "-profile %s" % self.remote_profile]
         if 'geckoview' in self.package:
@@ -177,8 +189,7 @@ class RemoteGTests(object):
             dump_dir = tempfile.mkdtemp()
             remote_dir = self.remote_minidumps
             if not self.device.is_dir(remote_dir):
-                log.warning("No crash directory (%s) found on remote device" % remote_dir)
-                return True
+                return False
             self.device.pull(remote_dir, dump_dir)
             crashed = mozcrash.check_for_crashes(dump_dir, symbols_path, test_name="gtest")
         except Exception as e:
@@ -197,6 +208,7 @@ class RemoteGTests(object):
             self.device.rm(self.remote_log, force=True, root=True)
             self.device.rm(self.remote_profile, recursive=True, force=True, root=True)
             self.device.rm(self.remote_minidumps, recursive=True, force=True, root=True)
+            self.device.rm(self.remote_libdir, recursive=True, force=True, root=True)
 
 
 class AppWaiter(object):
@@ -236,13 +248,13 @@ class AppWaiter(object):
         return top
 
     def wait_for_start(self, package):
-        if self.update_log():
-            # if log content is available, assume the app started; otherwise,
-            # a short run (few tests) might complete without ever being detected
-            # in the foreground
-            return package
         top = None
         while top != package and not self.start_timed_out():
+            if self.update_log():
+                # if log content is available, assume the app started; otherwise,
+                # a short run (few tests) might complete without ever being detected
+                # in the foreground
+                return package
             time.sleep(1)
             top = self.get_top()
         return top
@@ -264,6 +276,7 @@ class AppWaiter(object):
             if not self.update_log():
                 top = self.get_top()
                 if top != package or self.output_timed_out():
+                    time.sleep(self.output_poll_interval)
                     break
             time.sleep(self.output_poll_interval)
         self.update_log()
@@ -291,6 +304,7 @@ class AppWaiter(object):
             return False
         if not new_content:
             return False
+        new_content = six.ensure_text(new_content)
         last_full_line_pos = new_content.rfind('\n')
         if last_full_line_pos <= 0:
             # wait for a full line
@@ -304,50 +318,56 @@ class AppWaiter(object):
         return True
 
 
-class remoteGtestOptions(OptionParser):
+class remoteGtestOptions(argparse.ArgumentParser):
     def __init__(self):
-        OptionParser.__init__(self, usage="usage: %prog [options] test_filter")
-        self.add_option("--package",
-                        dest="package",
-                        default="org.mozilla.geckoview.test",
-                        help="Package name of test app.")
-        self.add_option("--adbpath",
-                        action="store",
-                        type=str,
-                        dest="adb_path",
-                        default="adb",
-                        help="Path to adb binary.")
-        self.add_option("--deviceSerial",
-                        action="store",
-                        type=str,
-                        dest="device_serial",
-                        help="adb serial number of remote device. This is required "
-                             "when more than one device is connected to the host. "
-                             "Use 'adb devices' to see connected devices. ")
-        self.add_option("--remoteTestRoot",
-                        action="store",
-                        type=str,
-                        dest="remote_test_root",
-                        help="Remote directory to use as test root "
-                             "(eg. /mnt/sdcard/tests or /data/local/tests).")
-        self.add_option("--libxul",
-                        action="store",
-                        type=str,
-                        dest="libxul_path",
-                        default=None,
-                        help="Path to gtest libxul.so.")
-        self.add_option("--symbols-path",
-                        dest="symbols_path",
-                        default=None,
-                        help="absolute path to directory containing breakpad "
-                             "symbols, or the URL of a zip file containing symbols")
-        self.add_option("--shuffle",
-                        action="store_true",
-                        default=False,
-                        help="Randomize the execution order of tests.")
-        self.add_option("--tests-path",
-                        default=None,
-                        help="Path to gtest directory containing test support files.")
+        super(remoteGtestOptions, self).__init__(usage="usage: %prog [options] test_filter")
+        self.add_argument("--package",
+                          dest="package",
+                          default="org.mozilla.geckoview.test",
+                          help="Package name of test app.")
+        self.add_argument("--adbpath",
+                          action="store",
+                          type=str,
+                          dest="adb_path",
+                          default="adb",
+                          help="Path to adb binary.")
+        self.add_argument("--deviceSerial",
+                          action="store",
+                          type=str,
+                          dest="device_serial",
+                          help="adb serial number of remote device. This is required "
+                               "when more than one device is connected to the host. "
+                               "Use 'adb devices' to see connected devices. ")
+        self.add_argument("--remoteTestRoot",
+                          action="store",
+                          type=str,
+                          dest="remote_test_root",
+                          help="Remote directory to use as test root "
+                               "(eg. /mnt/sdcard/tests or /data/local/tests).")
+        self.add_argument("--libxul",
+                          action="store",
+                          type=str,
+                          dest="libxul_path",
+                          default=None,
+                          help="Path to gtest libxul.so.")
+        self.add_argument("--symbols-path",
+                          dest="symbols_path",
+                          default=None,
+                          help="absolute path to directory containing breakpad "
+                               "symbols, or the URL of a zip file containing symbols")
+        self.add_argument("--shuffle",
+                          action="store_true",
+                          default=False,
+                          help="Randomize the execution order of tests.")
+        self.add_argument("--tests-path",
+                          default=None,
+                          help="Path to gtest directory containing test support files.")
+        self.add_argument("--enable-webrender",
+                          action="store_true",
+                          dest="enable_webrender",
+                          default=False,
+                          help="Enable the WebRender compositor in Gecko.")
+        self.add_argument("args", nargs=argparse.REMAINDER)
 
 
 def update_mozinfo():
@@ -366,7 +386,8 @@ def update_mozinfo():
 
 def main():
     parser = remoteGtestOptions()
-    options, args = parser.parse_args()
+    options = parser.parse_args()
+    args = options.args
     if not options.libxul_path:
         parser.error("--libxul is required")
         sys.exit(1)
@@ -382,11 +403,12 @@ def main():
                                   options.shuffle, test_filter, options.package,
                                   options.adb_path, options.device_serial,
                                   options.remote_test_root, options.libxul_path,
-                                  options.symbols_path)
+                                  options.symbols_path, options.enable_webrender)
     except KeyboardInterrupt:
         log.info("gtest | Received keyboard interrupt")
     except Exception as e:
         log.error(str(e))
+        traceback.print_exc()
         if isinstance(e, mozdevice.ADBTimeoutError):
             device_exception = True
     finally:

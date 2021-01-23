@@ -32,15 +32,11 @@ class VideoSink : public MediaSink {
             MediaQueue<VideoData>& aVideoQueue, VideoFrameContainer* aContainer,
             FrameStatistics& aFrameStats, uint32_t aVQueueSentToCompositerSize);
 
-  const PlaybackParams& GetPlaybackParams() const override;
-
-  void SetPlaybackParams(const PlaybackParams& aParams) override;
-
   RefPtr<EndedPromise> OnEnded(TrackType aType) override;
 
-  TimeUnit GetEndTime(TrackType aType) const override;
+  media::TimeUnit GetEndTime(TrackType aType) const override;
 
-  TimeUnit GetPosition(TimeStamp* aTimeStamp = nullptr) const override;
+  media::TimeUnit GetPosition(TimeStamp* aTimeStamp = nullptr) const override;
 
   bool HasUnplayedFrames(TrackType aType) const override;
 
@@ -52,9 +48,12 @@ class VideoSink : public MediaSink {
 
   void SetPlaying(bool aPlaying) override;
 
+  double PlaybackRate() const override;
+
   void Redraw(const VideoInfo& aInfo) override;
 
-  nsresult Start(const TimeUnit& aStartTime, const MediaInfo& aInfo) override;
+  nsresult Start(const media::TimeUnit& aStartTime,
+                 const MediaInfo& aInfo) override;
 
   void Stop() override;
 
@@ -65,9 +64,8 @@ class VideoSink : public MediaSink {
   void Shutdown() override;
 
   void SetSecondaryVideoContainer(VideoFrameContainer* aSecondary) override;
-  void ClearSecondaryVideoContainer() override;
 
-  nsCString GetDebugInfo() override;
+  void GetDebugInfo(dom::MediaSinkDebugInfo& aInfo) override;
 
  private:
   virtual ~VideoSink();
@@ -126,7 +124,7 @@ class VideoSink : public MediaSink {
   MozPromiseRequestHolder<EndedPromise> mVideoSinkEndRequest;
 
   // The presentation end time of the last video frame which has been displayed.
-  TimeUnit mVideoFrameEndTime;
+  media::TimeUnit mVideoFrameEndTime;
 
   uint32_t mOldCompositorDroppedCount;
   uint32_t mPendingDroppedCount;

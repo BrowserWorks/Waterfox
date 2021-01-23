@@ -7,7 +7,15 @@
 import type { GripProperties, Node, Props, ReduxAction } from "./types";
 
 const { loadItemProperties } = require("./utils/load-properties");
-const { getLoadedProperties, getActors } = require("./reducer");
+const {
+  getPathExpression,
+  getParentFront,
+  getParentGripValue,
+  getValue,
+  nodeIsBucket,
+  getFront,
+} = require("./utils/node");
+const { getLoadedProperties, getWatchpoints } = require("./reducer");
 
 type Dispatch = ReduxAction => void;
 
@@ -21,7 +29,7 @@ type ThunkArg = {
  * it will call the action responsible to fetch properties.
  */
 function nodeExpand(node: Node, actor) {
-  return async ({ dispatch, getState }: ThunkArg) => {
+  return async ({ dispatch }: ThunkArg) => {
     dispatch({ type: "NODE_EXPAND", data: { node } });
     dispatch(nodeLoadProperties(node, actor));
   };
@@ -36,7 +44,7 @@ function nodeCollapse(node: Node) {
 
 /*
  * This action checks if we need to fetch properties, entries, prototype and
- * symbols for a given node. If we do, it will call the appropriate ObjectClient
+ * symbols for a given node. If we do, it will call the appropriate ObjectFront
  * functions.
  */
 function nodeLoadProperties(node: Node, actor) {
@@ -50,10 +58,15 @@ function nodeLoadProperties(node: Node, actor) {
     try {
       const properties = await loadItemProperties(
         node,
-        client.createObjectClient,
-        client.createLongStringClient,
+        client,
         loadedProperties
       );
+
+      // If the client does not have a releaseActor function, it means the actors are
+      // handled directly by the consumer, so we don't need to track them.
+      if (!client || !client.releaseActor) {
+        actor = null;
+      }
 
       dispatch(nodePropertiesLoaded(node, actor, properties));
     } catch (e) {
@@ -73,9 +86,71 @@ function nodePropertiesLoaded(
   };
 }
 
-function closeObjectInspector() {
-  return async ({ getState, client }: ThunkArg) => {
-    releaseActors(getState(), client);
+/*
+ * This action adds a property watchpoint to an object
+ */
+function addWatchpoint(item, watchpoint: string) {
+  return async function({ dispatch, client }: ThunkArgs) {
+    const { parent, name } = item;
+    let object = getValue(parent);
+
+    if (nodeIsBucket(parent)) {
+      object = getValue(parent.parent);
+    }
+
+    if (!object) {
+      return;
+    }
+
+    const path = parent.path;
+    const property = name;
+    const label = getPathExpression(item);
+    const actor = object.actor;
+
+    await client.addWatchpoint(object, property, label, watchpoint);
+
+    dispatch({
+      type: "SET_WATCHPOINT",
+      data: { path, watchpoint, property, actor },
+    });
+  };
+}
+
+/*
+ * This action removes a property watchpoint from an object
+ */
+function removeWatchpoint(item) {
+  return async function({ dispatch, client }: ThunkArgs) {
+    const { parent, name } = item;
+    let object = getValue(parent);
+
+    if (nodeIsBucket(parent)) {
+      object = getValue(parent.parent);
+    }
+
+    const property = name;
+    const path = parent.path;
+    const actor = object.actor;
+
+    await client.removeWatchpoint(object, property);
+
+    dispatch({
+      type: "REMOVE_WATCHPOINT",
+      data: { path, property, actor },
+    });
+  };
+}
+
+function getActorIDs(roots) {
+  return (roots || []).reduce((ids, root) => {
+    const front = getFront(root);
+    return front ? ids.concat(front.actorID) : ids;
+  }, []);
+}
+
+function closeObjectInspector(roots) {
+  return ({ dispatch, getState, client }: ThunkArg) => {
+    releaseActors(roots, client, dispatch);
   };
 }
 
@@ -87,36 +162,34 @@ function closeObjectInspector() {
  * It takes a props argument which reflects what is passed by the upper-level
  * consumer.
  */
-function rootsChanged(props: Props) {
-  return async ({ dispatch, client, getState }: ThunkArg) => {
-    releaseActors(getState(), client);
+function rootsChanged(roots) {
+  return ({ dispatch, client, getState }: ThunkArg) => {
+    releaseActors(roots, client, dispatch);
     dispatch({
       type: "ROOTS_CHANGED",
-      data: props,
+      data: roots,
     });
   };
 }
 
-function releaseActors(state, client) {
-  const actors = getActors(state);
-  for (const actor of actors) {
-    client.releaseActor(actor);
+async function releaseActors(roots, client, dispatch) {
+  if (!client || !client.releaseActor) {
+    return;
   }
+
+  const actors = getActorIDs(roots);
+  await Promise.all(actors.map(client.releaseActor));
 }
 
-function invokeGetter(
-  node: Node,
-  targetGrip: object,
-  receiverId: string | null,
-  getterName: string
-) {
+function invokeGetter(node: Node, receiverId: string | null) {
   return async ({ dispatch, client, getState }: ThunkArg) => {
     try {
-      const objectClient = client.createObjectClient(targetGrip);
-      const result = await objectClient.getPropertyValue(
-        getterName,
-        receiverId
-      );
+      const objectFront =
+        getParentFront(node) ||
+        client.createObjectFront(getParentGripValue(node));
+      const getterName = node.propertyName || node.name;
+
+      const result = await objectFront.getPropertyValue(getterName, receiverId);
       dispatch({
         type: "GETTER_INVOKED",
         data: {
@@ -138,4 +211,6 @@ module.exports = {
   nodeLoadProperties,
   nodePropertiesLoaded,
   rootsChanged,
+  addWatchpoint,
+  removeWatchpoint,
 };

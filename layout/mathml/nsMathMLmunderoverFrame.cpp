@@ -7,12 +7,13 @@
 #include "nsMathMLmunderoverFrame.h"
 #include "nsPresContext.h"
 #include "nsMathMLmmultiscriptsFrame.h"
-#include "nsMathMLElement.h"
+#include "mozilla/dom/MathMLElement.h"
 #include <algorithm>
 #include "gfxContext.h"
 #include "gfxMathTable.h"
 #include "gfxTextRun.h"
 #include "mozilla/PresShell.h"
+#include "mozilla/StaticPrefs_mathml.h"
 
 using namespace mozilla;
 
@@ -31,7 +32,7 @@ nsIFrame* NS_NewMathMLmunderoverFrame(PresShell* aPresShell,
 
 NS_IMPL_FRAMEARENA_HELPERS(nsMathMLmunderoverFrame)
 
-nsMathMLmunderoverFrame::~nsMathMLmunderoverFrame() {}
+nsMathMLmunderoverFrame::~nsMathMLmunderoverFrame() = default;
 
 nsresult nsMathMLmunderoverFrame::AttributeChanged(int32_t aNameSpaceID,
                                                    nsAtom* aAttribute,
@@ -107,7 +108,7 @@ void nsMathMLmunderoverFrame::SetIncrementScriptLevel(uint32_t aChildIndex,
     return;
   }
 
-  auto element = static_cast<nsMathMLElement*>(child->GetContent());
+  auto element = dom::MathMLElement::FromNode(child->GetContent());
   if (element->GetIncrementScriptLevel() == aIncrement) {
     return;
   }
@@ -142,7 +143,7 @@ void nsMathMLmunderoverFrame::SetPendingPostReflowIncrementScriptLevel() {
       continue;
     }
 
-    auto element = static_cast<nsMathMLElement*>(child->GetContent());
+    auto element = dom::MathMLElement::FromNode(child->GetContent());
     element->SetIncrementScriptLevel(command.mDoIncrement, true);
   }
 }
@@ -578,8 +579,11 @@ nsresult nsMathMLmunderoverFrame::Place(DrawTarget* aDrawTarget,
   nsAutoString valueAlign;
   enum { center, left, right } alignPosition = center;
 
-  if (mContent->AsElement()->GetAttr(kNameSpaceID_None, nsGkAtoms::align,
+  if (!StaticPrefs::mathml_deprecated_alignment_attributes_disabled() &&
+      mContent->AsElement()->GetAttr(kNameSpaceID_None, nsGkAtoms::align,
                                      valueAlign)) {
+    mContent->OwnerDoc()->WarnOnceAbout(
+        dom::Document::eMathML_DeprecatedAlignmentAttributes);
     if (valueAlign.EqualsLiteral("left")) {
       alignPosition = left;
     } else if (valueAlign.EqualsLiteral("right")) {
@@ -704,18 +708,18 @@ nsresult nsMathMLmunderoverFrame::Place(DrawTarget* aDrawTarget,
       dy = aDesiredSize.BlockStartAscent() - mBoundingMetrics.ascent +
            bmOver.ascent - overSize.BlockStartAscent();
       FinishReflowChild(overFrame, PresContext(), overSize, nullptr, dxOver, dy,
-                        0);
+                        ReflowChildFlags::Default);
     }
     // place base
     dy = aDesiredSize.BlockStartAscent() - baseSize.BlockStartAscent();
     FinishReflowChild(baseFrame, PresContext(), baseSize, nullptr, dxBase, dy,
-                      0);
+                      ReflowChildFlags::Default);
     // place underscript
     if (underFrame) {
       dy = aDesiredSize.BlockStartAscent() + mBoundingMetrics.descent -
            bmUnder.descent - underSize.BlockStartAscent();
       FinishReflowChild(underFrame, PresContext(), underSize, nullptr, dxUnder,
-                        dy, 0);
+                        dy, ReflowChildFlags::Default);
     }
   }
   return NS_OK;

@@ -10,9 +10,11 @@ XPCOMUtils.defineLazyModuleGetters(this, {
 /**
  * Fake the installation of an add-on in the profile, by creating the
  * directory and registering it with the directory service.
+ *
+ * @param {string} [name]
+ *   The engine name to install.
  */
 function installAddonEngine(name = "engine-addon") {
-  const XRE_EXTENSIONS_DIR_LIST = "XREExtDL";
   const profD = do_get_profile().QueryInterface(Ci.nsIFile);
 
   let dir = profD.clone();
@@ -25,36 +27,26 @@ function installAddonEngine(name = "engine-addon") {
   dir.create(dir.DIRECTORY_TYPE, FileUtils.PERMS_DIRECTORY);
 
   do_get_file("data/install.rdf").copyTo(dir, "install.rdf");
-  let addonDir = dir.clone();
   dir.append("searchplugins");
   dir.create(dir.DIRECTORY_TYPE, FileUtils.PERMS_DIRECTORY);
   do_get_file("data/" + name + ".xml").copyTo(dir, "bug645970.xml");
-
-  Services.dirsvc.registerProvider({
-    QueryInterface: ChromeUtils.generateQI([
-      Ci.nsIDirectoryServiceProvider,
-      Ci.nsIDirectoryServiceProvider2,
-    ]),
-
-    getFile(prop, persistant) {
-      throw Cr.NS_ERROR_FAILURE;
-    },
-
-    getFiles(prop) {
-      if (prop == XRE_EXTENSIONS_DIR_LIST) {
-        return [addonDir].values();
-      }
-
-      throw Cr.NS_ERROR_FAILURE;
-    },
-  });
 }
 
 /**
  * Copy the engine-distribution.xml engine to a fake distribution
  * created in the profile, and registered with the directory service.
+ *
+ * @param {string} [sourcePath]
+ *   The file to use for the engine source.
+ * @param {string} [targetName]
+ *   The name of the file to use for the engine in the distribution directory.
+ * @returns {nsIFile}
+ *   An object referencing the distribution directory.
  */
-function installDistributionEngine() {
+function installDistributionEngine(
+  sourcePath = "data/engine-override.xml",
+  targetName = "basic.xml"
+) {
   const XRE_APP_DISTRIBUTION_DIR = "XREAppDist";
 
   // Use a temp directory rather than the profile or app directory, as then the
@@ -71,7 +63,7 @@ function installDistributionEngine() {
   dir.append("common");
   dir.create(dir.DIRECTORY_TYPE, FileUtils.PERMS_DIRECTORY);
 
-  do_get_file("data/engine-override.xml").copyTo(dir, "bug645970.xml");
+  do_get_file(sourcePath).copyTo(dir, targetName);
 
   Services.dirsvc.registerProvider({
     getFile(aProp, aPersistent) {
@@ -82,4 +74,5 @@ function installDistributionEngine() {
       return null;
     },
   });
+  return distDir;
 }

@@ -37,8 +37,13 @@ namespace mozilla {
 namespace mscom {
 
 ProcessRuntime::ProcessRuntime(GeckoProcessType aProcessType)
+    : ProcessRuntime(aProcessType == GeckoProcessType_Default
+                         ? ProcessCategory::GeckoBrowserParent
+                         : ProcessCategory::GeckoChild) {}
+
+ProcessRuntime::ProcessRuntime(ProcessRuntime::ProcessCategory aProcessCategory)
     : mInitResult(CO_E_NOTINITIALIZED),
-      mIsParentProcess(aProcessType == GeckoProcessType_Default)
+      mProcessCategory(aProcessCategory)
 #if defined(ACCESSIBILITY) && defined(MOZILLA_INTERNAL_API)
       ,
       mActCtxRgn(a11y::Compatibility::GetActCtxResourceId())
@@ -50,7 +55,7 @@ ProcessRuntime::ProcessRuntime(GeckoProcessType aProcessType)
   // window, which implicitly requires user32 and Win32k, which are blocked.
   // Instead we start a multi-threaded apartment and conduct our process-wide
   // COM initialization on that MTA background thread.
-  if (!mIsParentProcess && IsWin32kLockedDown()) {
+  if (mProcessCategory == ProcessCategory::GeckoChild && IsWin32kLockedDown()) {
     // It is possible that we're running so early that we might need to start
     // the thread manager ourselves.
     nsresult rv = nsThreadManager::get().Init();
@@ -69,7 +74,7 @@ ProcessRuntime::ProcessRuntime(GeckoProcessType aProcessType)
     }
     nsAutoHandle curThreadImpToken(rawCurThreadImpToken);
 
-#if defined(DEBUG)
+#  if defined(DEBUG)
     // Ensure that our current token is still an impersonation token (ie, we
     // have not yet called RevertToSelf() on this thread).
     DWORD len;
@@ -77,7 +82,7 @@ ProcessRuntime::ProcessRuntime(GeckoProcessType aProcessType)
     MOZ_ASSERT(::GetTokenInformation(rawCurThreadImpToken, TokenType,
                                      &tokenType, sizeof(tokenType), &len) &&
                len == sizeof(tokenType) && tokenType == TokenImpersonation);
-#endif  // defined(DEBUG)
+#  endif  // defined(DEBUG)
 
     // Create an impersonation token based on the current thread's token
     HANDLE rawMtaThreadImpToken = nullptr;
@@ -89,30 +94,33 @@ ProcessRuntime::ProcessRuntime(GeckoProcessType aProcessType)
     nsAutoHandle mtaThreadImpToken(rawMtaThreadImpToken);
 
     SandboxTarget::Instance()->RegisterSandboxStartCallback([]() -> void {
-      EnsureMTA([]() -> void {
-        // This is a security risk if it fails, so we release assert
-        MOZ_RELEASE_ASSERT(::RevertToSelf(),
-                           "mscom::ProcessRuntime RevertToSelf failed");
-      }, EnsureMTA::Option::ForceDispatch);
+      EnsureMTA(
+          []() -> void {
+            // This is a security risk if it fails, so we release assert
+            MOZ_RELEASE_ASSERT(::RevertToSelf(),
+                               "mscom::ProcessRuntime RevertToSelf failed");
+          },
+          EnsureMTA::Option::ForceDispatch);
     });
 
     // Impersonate and initialize.
-    EnsureMTA([this, rawMtaThreadImpToken]() -> void {
-      if (!::SetThreadToken(nullptr, rawMtaThreadImpToken)) {
-        mInitResult = HRESULT_FROM_WIN32(::GetLastError());
-        return;
-      }
+    EnsureMTA(
+        [this, rawMtaThreadImpToken]() -> void {
+          if (!::SetThreadToken(nullptr, rawMtaThreadImpToken)) {
+            mInitResult = HRESULT_FROM_WIN32(::GetLastError());
+            return;
+          }
 
-      InitInsideApartment();
-    }, EnsureMTA::Option::ForceDispatch);
+          InitInsideApartment();
+        },
+        EnsureMTA::Option::ForceDispatch);
 
     return;
   }
 
 #endif  // defined(MOZILLA_INTERNAL_API)
 
-  // Otherwise we initialize a single-threaded apartment on the current thread.
-  mAptRegion.Init(COINIT_APARTMENTTHREADED);
+  mAptRegion.Init(GetDesiredApartmentType(mProcessCategory));
 
   // We must be the outermost COM initialization on this thread. The COM runtime
   // cannot be configured once we start manipulating objects
@@ -123,6 +131,21 @@ ProcessRuntime::ProcessRuntime(GeckoProcessType aProcessType)
   }
 
   InitInsideApartment();
+}
+
+/* static */
+COINIT ProcessRuntime::GetDesiredApartmentType(
+    ProcessRuntime::ProcessCategory aProcessCategory) {
+  // Gecko processes get single-threaded apartments, others get multithreaded
+  // apartments. We should revisit the GeckoChild case as soon as we deploy
+  // Win32k lockdown.
+  switch (aProcessCategory) {
+    case ProcessCategory::GeckoBrowserParent:
+    case ProcessCategory::GeckoChild:
+      return COINIT_APARTMENTTHREADED;
+    default:
+      return COINIT_MULTITHREADED;
+  }
 }
 
 void ProcessRuntime::InitInsideApartment() {
@@ -238,7 +261,8 @@ ProcessRuntime::InitializeSecurity() {
 
   BYTE appContainersSid[SECURITY_MAX_SID_SIZE];
   DWORD appContainersSidSize = sizeof(appContainersSid);
-  if (mIsParentProcess && IsWin8OrLater()) {
+  if (mProcessCategory == ProcessCategory::GeckoBrowserParent &&
+      IsWin8OrLater()) {
     if (!::CreateWellKnownSid(WinBuiltinAnyPackageSid, nullptr,
                               appContainersSid, &appContainersSidSize)) {
       return HRESULT_FROM_WIN32(::GetLastError());
@@ -271,7 +295,8 @@ ProcessRuntime::InitializeSecurity() {
       {nullptr, NO_MULTIPLE_TRUSTEE, TRUSTEE_IS_SID, TRUSTEE_IS_USER,
        reinterpret_cast<LPWSTR>(tokenUser.User.Sid)}});
 
-  if (mIsParentProcess && IsWin8OrLater()) {
+  if (mProcessCategory == ProcessCategory::GeckoBrowserParent &&
+      IsWin8OrLater()) {
     Unused << entries.append(
         EXPLICIT_ACCESS_W{COM_RIGHTS_EXECUTE,
                           GRANT_ACCESS,

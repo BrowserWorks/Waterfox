@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+<!-- LOCALIZATION NOTE  (editorWindow.titlemodifier): DONT_TRANSLATE -->
+
+<!ENTITY editorWindow.titlemodifier "Composer">
+<!ENTITY editorWindow.titlemodifiermenuseparator " - ">
+<!ENTITY textEditorWindow.titlemodifier "Текстуален уредувач">
+<!-- Menu items:  the . means that the menu item isn't implemented yet -->
+<!-- View menu items -->
+
+
+<!ENTITY viewMenu.label "Поглед">
+<!ENTITY viewmenu.accesskey "г">
+<!ENTITY compositionToolbarCmd.label "Алатник за пишување">
+<!ENTITY compositiontb.accesskey "с">
+<!ENTITY formattingToolbarCmd.label "Алатник за форматирање">
+<!ENTITY formattingtb.accesskey "ф">
+<!ENTITY editmodeToolbarCmd.label "Алатник за режим на уредување">
+<!ENTITY editmodetb.accesskey "е">
+<!ENTITY taskbarCmd.label "Статусна лента">
+<!ENTITY taskbarCmd.accesskey "С">
+<!-- Format menu items -->
+
+<!ENTITY formatMenu.label "Формат">
+<!ENTITY formatmenu.accesskey "Ф">
+
+<!ENTITY helpMenu.label "Помош">
+<!ENTITY aboutCmd.label ".За">
+<!-- Display Mode Toolbar -->
+
+<!ENTITY editMode.label "Режим на уредување:">
+
+<!ENTITY statusText.label "Вчитувањето на страницата заврши">
+

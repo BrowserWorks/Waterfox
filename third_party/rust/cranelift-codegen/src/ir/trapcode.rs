@@ -2,11 +2,14 @@
 
 use core::fmt::{self, Display, Formatter};
 use core::str::FromStr;
+#[cfg(feature = "enable-serde")]
+use serde::{Deserialize, Serialize};
 
 /// A trap code describing the reason for a trap.
 ///
 /// All trap instructions have an explicit trap code.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
+#[cfg_attr(feature = "enable-serde", derive(Serialize, Deserialize))]
 pub enum TrapCode {
     /// The current stack space was exhausted.
     ///
@@ -100,7 +103,7 @@ impl FromStr for TrapCode {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::string::ToString;
+    use alloc::string::ToString;
 
     // Everything but user-defined codes.
     const CODES: [TrapCode; 11] = [

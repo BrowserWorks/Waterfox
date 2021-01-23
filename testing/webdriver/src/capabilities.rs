@@ -57,7 +57,7 @@ pub trait BrowserCapabilities {
     /// Check that custom properties containing ":" have the correct data types.
     /// Properties that are unrecognised must be ignored i.e. return without
     /// error.
-    fn validate_custom(&self, name: &str, value: &Value) -> WebDriverResult<()>;
+    fn validate_custom(&mut self, name: &str, value: &Value) -> WebDriverResult<()>;
 
     /// Check if custom properties are accepted capabilites
     ///
@@ -112,7 +112,7 @@ impl SpecNewSessionParameters {
     fn validate<T: BrowserCapabilities>(
         &self,
         mut capabilities: Capabilities,
-        browser_capabilities: &T,
+        browser_capabilities: &mut T,
     ) -> WebDriverResult<Capabilities> {
         // Filter out entries with the value `null`
         let null_entries = capabilities
@@ -126,12 +126,16 @@ impl SpecNewSessionParameters {
 
         for (key, value) in &capabilities {
             match &**key {
-                x @ "acceptInsecureCerts" | x @ "setWindowRect" | x @ "strictFileInteractability" => if !value.is_boolean() {
-                    return Err(WebDriverError::new(
-                        ErrorStatus::InvalidArgument,
-                        format!("{} is not boolean: {}", x, value),
-                    ));
-                },
+                x @ "acceptInsecureCerts"
+                | x @ "setWindowRect"
+                | x @ "strictFileInteractability" => {
+                    if !value.is_boolean() {
+                        return Err(WebDriverError::new(
+                            ErrorStatus::InvalidArgument,
+                            format!("{} is not boolean: {}", x, value),
+                        ));
+                    }
+                }
                 x @ "browserName" | x @ "browserVersion" | x @ "platformName" => {
                     if !value.is_string() {
                         return Err(WebDriverError::new(
@@ -233,12 +237,14 @@ impl SpecNewSessionParameters {
                 "noProxy" => SpecNewSessionParameters::validate_no_proxy(value)?,
                 "sslProxy" => SpecNewSessionParameters::validate_host(value, "sslProxy")?,
                 "socksProxy" => SpecNewSessionParameters::validate_host(value, "socksProxy")?,
-                "socksVersion" => if !value.is_number() {
-                    return Err(WebDriverError::new(
-                        ErrorStatus::InvalidArgument,
-                        format!("socksVersion is not a number: {}", value),
-                    ));
-                },
+                "socksVersion" => {
+                    if !value.is_number() {
+                        return Err(WebDriverError::new(
+                            ErrorStatus::InvalidArgument,
+                            format!("socksVersion is not a number: {}", value),
+                        ));
+                    }
+                }
 
                 x => {
                     return Err(WebDriverError::new(
@@ -331,7 +337,7 @@ impl SpecNewSessionParameters {
 
         for (key, value) in obj {
             match &**key {
-                _x @ "script" if value.is_null() => { }
+                _x @ "script" if value.is_null() => {}
 
                 x @ "script" | x @ "pageLoad" | x @ "implicit" => {
                     let timeout = try_opt!(
@@ -427,10 +433,10 @@ impl CapabilitiesMatching for SpecNewSessionParameters {
 
         let selected = merged_capabilities
             .iter()
-            .filter_map(|merged| {
+            .find(|merged| {
                 browser_capabilities.init(merged);
 
-                for (key, value) in merged {
+                for (key, value) in merged.iter() {
                     match &**key {
                         "browserName" => {
                             let browserValue = browser_capabilities
@@ -439,7 +445,7 @@ impl CapabilitiesMatching for SpecNewSessionParameters {
                                 .and_then(|x| x);
 
                             if value.as_str() != browserValue.as_ref().map(|x| &**x) {
-                                return None;
+                                return false;
                             }
                         }
                         "browserVersion" => {
@@ -454,10 +460,10 @@ impl CapabilitiesMatching for SpecNewSessionParameters {
                                     .compare_browser_version(&*version, version_cond)
                                     .unwrap_or(false)
                                 {
-                                    return None;
+                                    return false;
                                 }
                             } else {
-                                return None;
+                                return false;
                             }
                         }
                         "platformName" => {
@@ -466,7 +472,7 @@ impl CapabilitiesMatching for SpecNewSessionParameters {
                                 .ok()
                                 .and_then(|x| x);
                             if value.as_str() != browserValue.as_ref().map(|x| &**x) {
-                                return None;
+                                return false;
                             }
                         }
                         "acceptInsecureCerts" => {
@@ -475,7 +481,7 @@ impl CapabilitiesMatching for SpecNewSessionParameters {
                                     .accept_insecure_certs(merged)
                                     .unwrap_or(false)
                             {
-                                return None;
+                                return false;
                             }
                         }
                         "setWindowRect" => {
@@ -484,7 +490,7 @@ impl CapabilitiesMatching for SpecNewSessionParameters {
                                     .set_window_rect(merged)
                                     .unwrap_or(false)
                             {
-                                return None;
+                                return false;
                             }
                         }
                         "strictFileInteractability" => {
@@ -493,7 +499,7 @@ impl CapabilitiesMatching for SpecNewSessionParameters {
                                     .strict_file_interactability(merged)
                                     .unwrap_or(false)
                             {
-                                return None;
+                                return false;
                             }
                         }
                         "proxy" => {
@@ -503,7 +509,7 @@ impl CapabilitiesMatching for SpecNewSessionParameters {
                                 .accept_proxy(&proxy, merged)
                                 .unwrap_or(false)
                             {
-                                return None;
+                                return false;
                             }
                         }
                         name => {
@@ -512,7 +518,7 @@ impl CapabilitiesMatching for SpecNewSessionParameters {
                                     .accept_custom(name, value, merged)
                                     .unwrap_or(false)
                                 {
-                                    return None;
+                                    return false;
                                 }
                             } else {
                                 // Accept the capability
@@ -521,9 +527,8 @@ impl CapabilitiesMatching for SpecNewSessionParameters {
                     }
                 }
 
-                Some(merged)
+                true
             })
-            .next()
             .cloned();
         Ok(selected)
     }
@@ -563,174 +568,166 @@ impl CapabilitiesMatching for LegacyNewSessionParameters {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test::check_deserialize;
-    use serde_json::{self, Value};
-
-    fn validate_proxy(value: &str) -> WebDriverResult<()> {
-        let data = serde_json::from_str::<Value>(value).unwrap();
-        SpecNewSessionParameters::validate_proxy(&data)
-    }
+    use crate::test::assert_de;
+    use serde_json::{self, json};
 
     #[test]
     fn test_json_spec_new_session_parameters_alwaysMatch_only() {
-        let json = r#"{
-            "alwaysMatch":{}
-        }"#;
-        let data = SpecNewSessionParameters {
+        let caps = SpecNewSessionParameters {
             alwaysMatch: Capabilities::new(),
             firstMatch: vec![Capabilities::new()],
         };
-
-        check_deserialize(&json, &data);
+        assert_de(&caps, json!({"alwaysMatch": {}}));
     }
 
     #[test]
     fn test_json_spec_new_session_parameters_firstMatch_only() {
-        let json = r#"{
-            "firstMatch":[{}]
-        }"#;
-        let data = SpecNewSessionParameters {
+        let caps = SpecNewSessionParameters {
             alwaysMatch: Capabilities::new(),
             firstMatch: vec![Capabilities::new()],
         };
-
-        check_deserialize(&json, &data);
+        assert_de(&caps, json!({"firstMatch": [{}]}));
     }
 
     #[test]
     fn test_json_spec_new_session_parameters_alwaysMatch_null() {
-        let json = r#"{
-            "alwaysMatch":null,
-            "firstMatch":[{}]
-        }"#;
-
-        assert!(serde_json::from_str::<SpecNewSessionParameters>(&json).is_err());
+        let json = json!({
+            "alwaysMatch": null,
+            "firstMatch": [{}],
+        });
+        assert!(serde_json::from_value::<SpecNewSessionParameters>(json).is_err());
     }
 
     #[test]
     fn test_json_spec_new_session_parameters_firstMatch_null() {
-        let json = r#"{
-            "alwaysMatch":{},
-            "firstMatch":null
-        }"#;
-
-        assert!(serde_json::from_str::<SpecNewSessionParameters>(&json).is_err());
+        let json = json!({
+            "alwaysMatch": {},
+            "firstMatch": null,
+        });
+        assert!(serde_json::from_value::<SpecNewSessionParameters>(json).is_err());
     }
 
     #[test]
     fn test_json_spec_new_session_parameters_both_empty() {
-        let json = r#"{
-            "alwaysMatch":{},
-            "firstMatch":[{}]
-        }"#;
-        let data = SpecNewSessionParameters {
+        let json = json!({
+            "alwaysMatch": {},
+            "firstMatch": [{}],
+        });
+        let caps = SpecNewSessionParameters {
             alwaysMatch: Capabilities::new(),
             firstMatch: vec![Capabilities::new()],
         };
 
-        check_deserialize(&json, &data);
+        assert_de(&caps, json);
     }
 
     #[test]
     fn test_json_spec_new_session_parameters_both_with_capability() {
-        let json = r#"{
-            "alwaysMatch":{"foo":"bar"},
-            "firstMatch":[{"foo2":"bar2"}]
-        }"#;
-        let mut data = SpecNewSessionParameters {
+        let json = json!({
+            "alwaysMatch": {"foo": "bar"},
+            "firstMatch": [{"foo2": "bar2"}],
+        });
+        let mut caps = SpecNewSessionParameters {
             alwaysMatch: Capabilities::new(),
             firstMatch: vec![Capabilities::new()],
         };
-        data.alwaysMatch.insert("foo".into(), "bar".into());
-        data.firstMatch[0].insert("foo2".into(), "bar2".into());
+        caps.alwaysMatch.insert("foo".into(), "bar".into());
+        caps.firstMatch[0].insert("foo2".into(), "bar2".into());
 
-        check_deserialize(&json, &data);
+        assert_de(&caps, json);
     }
 
     #[test]
     fn test_json_spec_legacy_new_session_parameters_desired_only() {
-        let json = r#"{"desiredCapabilities":{}}"#;
-        let data = LegacyNewSessionParameters {
+        let caps = LegacyNewSessionParameters {
             desired: Capabilities::new(),
             required: Capabilities::new(),
         };
-
-        check_deserialize(&json, &data);
+        assert_de(&caps, json!({"desiredCapabilities": {}}));
     }
 
     #[test]
     fn test_json_spec_legacy_new_session_parameters_required_only() {
-        let json = r#"{"requiredCapabilities":{}}"#;
-        let data = LegacyNewSessionParameters {
+        let caps = LegacyNewSessionParameters {
             desired: Capabilities::new(),
             required: Capabilities::new(),
         };
-
-        check_deserialize(&json, &data);
+        assert_de(&caps, json!({"requiredCapabilities": {}}));
     }
 
     #[test]
     fn test_json_spec_legacy_new_session_parameters_desired_null() {
-        let json = r#"{"desiredCapabilities":null,"requiredCapabilities":{}}"#;
-
-        assert!(serde_json::from_str::<LegacyNewSessionParameters>(&json).is_err());
+        let json = json!({
+            "desiredCapabilities": null,
+            "requiredCapabilities": {},
+        });
+        assert!(serde_json::from_value::<LegacyNewSessionParameters>(json).is_err());
     }
 
     #[test]
     fn test_json_spec_legacy_new_session_parameters_required_null() {
-        let json = r#"{"desiredCapabilities":{}, "requiredCapabilities":null}"#;
-
-        assert!(serde_json::from_str::<LegacyNewSessionParameters>(&json).is_err());
+        let json = json!({
+            "desiredCapabilities": {},
+            "requiredCapabilities": null,
+        });
+        assert!(serde_json::from_value::<LegacyNewSessionParameters>(json).is_err());
     }
 
     #[test]
     fn test_json_spec_legacy_new_session_parameters_both_empty() {
-        let json = r#"{"desiredCapabilities":{},"requiredCapabilities":{}}"#;
-        let data = LegacyNewSessionParameters {
+        let json = json!({
+            "desiredCapabilities": {},
+            "requiredCapabilities": {},
+        });
+        let caps = LegacyNewSessionParameters {
             desired: Capabilities::new(),
             required: Capabilities::new(),
         };
 
-        check_deserialize(&json, &data);
+        assert_de(&caps, json);
     }
 
     #[test]
     fn test_json_spec_legacy_new_session_parameters_both_with_capabilities() {
-        let json = r#"{
-            "desiredCapabilities":{"foo":"bar"},
-            "requiredCapabilities":{"foo2":"bar2"}
-        }"#;
-        let mut data = LegacyNewSessionParameters {
+        let json = json!({
+            "desiredCapabilities": {"foo": "bar"},
+            "requiredCapabilities": {"foo2": "bar2"},
+        });
+        let mut caps = LegacyNewSessionParameters {
             desired: Capabilities::new(),
             required: Capabilities::new(),
         };
-        data.desired.insert("foo".into(), "bar".into());
-        data.required.insert("foo2".into(), "bar2".into());
+        caps.desired.insert("foo".into(), "bar".into());
+        caps.required.insert("foo2".into(), "bar2".into());
 
-        check_deserialize(&json, &data);
+        assert_de(&caps, json);
     }
 
     #[test]
     fn test_validate_proxy() {
-        // proxy hosts
-        validate_proxy("{\"httpProxy\": \"127.0.0.1\"}").unwrap();
-        validate_proxy("{\"httpProxy\": \"127.0.0.1:\"}").unwrap();
-        validate_proxy("{\"httpProxy\": \"127.0.0.1:3128\"}").unwrap();
-        validate_proxy("{\"httpProxy\": \"localhost\"}").unwrap();
-        validate_proxy("{\"httpProxy\": \"localhost:3128\"}").unwrap();
-        validate_proxy("{\"httpProxy\": \"[2001:db8::1]\"}").unwrap();
-        validate_proxy("{\"httpProxy\": \"[2001:db8::1]:3128\"}").unwrap();
-        validate_proxy("{\"httpProxy\": \"example.org\"}").unwrap();
-        validate_proxy("{\"httpProxy\": \"example.org:3128\"}").unwrap();
+        fn validate_proxy(v: Value) -> WebDriverResult<()> {
+            SpecNewSessionParameters::validate_proxy(&v)
+        }
 
-        assert!(validate_proxy("{\"httpProxy\": \"http://example.org\"}").is_err());
-        assert!(validate_proxy("{\"httpProxy\": \"example.org:-1\"}").is_err());
-        assert!(validate_proxy("{\"httpProxy\": \"2001:db8::1\"}").is_err());
+        // proxy hosts
+        validate_proxy(json!({"httpProxy":  "127.0.0.1"})).unwrap();
+        validate_proxy(json!({"httpProxy": "127.0.0.1:"})).unwrap();
+        validate_proxy(json!({"httpProxy": "127.0.0.1:3128"})).unwrap();
+        validate_proxy(json!({"httpProxy": "localhost"})).unwrap();
+        validate_proxy(json!({"httpProxy": "localhost:3128"})).unwrap();
+        validate_proxy(json!({"httpProxy": "[2001:db8::1]"})).unwrap();
+        validate_proxy(json!({"httpProxy": "[2001:db8::1]:3128"})).unwrap();
+        validate_proxy(json!({"httpProxy": "example.org"})).unwrap();
+        validate_proxy(json!({"httpProxy": "example.org:3128"})).unwrap();
+
+        assert!(validate_proxy(json!({"httpProxy": "http://example.org"})).is_err());
+        assert!(validate_proxy(json!({"httpProxy": "example.org:-1"})).is_err());
+        assert!(validate_proxy(json!({"httpProxy": "2001:db8::1"})).is_err());
 
         // no proxy for manual proxy type
-        validate_proxy("{\"noProxy\": [\"foo\"]}").unwrap();
+        validate_proxy(json!({"noProxy": ["foo"]})).unwrap();
 
-        assert!(validate_proxy("{\"noProxy\": \"foo\"}").is_err());
-        assert!(validate_proxy("{\"noProxy\": [42]}").is_err());
+        assert!(validate_proxy(json!({"noProxy": "foo"})).is_err());
+        assert!(validate_proxy(json!({"noProxy": [42]})).is_err());
     }
 }

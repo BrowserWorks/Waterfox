@@ -13,7 +13,6 @@
 #include "mozilla/dom/WindowBinding.h"
 #include "nsComponentManagerUtils.h"
 #include "nsGlobalWindow.h"
-#include "nsISupportsPrimitives.h"
 #include "nsPIDOMWindow.h"
 
 namespace mozilla {
@@ -24,7 +23,7 @@ IdleRequest::IdleRequest(IdleRequestCallback* aCallback, uint32_t aHandle)
   MOZ_DIAGNOSTIC_ASSERT(mCallback);
 }
 
-IdleRequest::~IdleRequest() {}
+IdleRequest::~IdleRequest() = default;
 
 NS_IMPL_CYCLE_COLLECTION_CLASS(IdleRequest)
 
@@ -58,7 +57,7 @@ void IdleRequest::IdleRun(nsPIDOMWindowInner* aWindow,
 
   RefPtr<IdleDeadline> deadline =
       new IdleDeadline(aWindow, aDidTimeout, aDeadline);
-  RefPtr<IdleRequestCallback> callback(mCallback.forget());
+  RefPtr<IdleRequestCallback> callback(std::move(mCallback));
   MOZ_ASSERT(!mCallback);
   callback->Call(*deadline, "requestIdleCallback handler");
 }

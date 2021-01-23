@@ -1,0 +1,350 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Glossary</title>
+<link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+</head>
+<body>
+
+<div class="boilerPlate">Ten słowniczek został stworzony tylko w&nbsp;celach pomocniczych. Nie powinien być traktowany jako kompletny i&nbsp;autorytarny opis pojęć zdefiniowanych poniżej lub wątków bezpieczeństwa opisanych technologii.</div>
+
+<h1 id="glossary">Słowniczek</h1>
+
+<dl>
+
+<dt id="ip_address">adres IP (ang. Internet protocol address)</dt><dd>Adres komputera w&nbsp;sieci zarządzanej za pomocą protokołu <a href="#tcp_ip">TCP/IP</a>. Każdy komputer w&nbsp;<a href="#internet">Internecie</a> ma adres IP. Komputery &mdash; <a href="#client">klienci</a> &mdash; mają stały adres IP lub zmienny adres IP dynamicznie przypisywany przy każdym podłączeniu do sieci. Adresy IP są zapisywane w&nbsp;postaci czterech numerów rozdzielanych kropkami, tak jak ten: 204.171.64.2.</dd>
+
+<dt id="cryptographic_algorithm">algorytm kryptograficzny</dt><dd>Zbiór zasad lub wskazówek używanych do przeprowadzenia operacji kryptograficznych takich jak <a href="#encryption">szyfrowanie</a> i&nbsp;<a href="#decryption">rozszyfrowywanie</a>. Bywa również nazywany <em>szyfrem</em>.</dd>
+
+<!-- TODO: start localizing -->
+<dt id="web_application">web application</dt><dd>An application that is not
+  running on your computer but remotely on a <a href="#website">website</a>.
+  Examples include web-mail systems or web-based systems where you enter
+  information into a form and receive a response as a <a href="#web_page">web
+  page</a>. An <i>offline</i> web application can work without a current
+  connection to the <a href="#internet">Internet</a> by saving the relevant
+  pages locally before running the application.</dd>
+<!-- TODO: stop localizing -->
+
+<dt id="helper_application">aplikacja pomocnicza</dt><dd>Dowolna aplikacja używana do otwarcia lub wyświetlenia pliku pobranego przez przeglądarkę. <a href="#plugin">Wtyczka</a> jest specjalnym rodzajem aplikacji pomocniczej, która samodzielnie instaluje się w&nbsp;folderze Plugins głównego folderu instalacji przeglądarki i&nbsp;zwykle może być samodzielnie uruchomiona wewnętrznie przez przeglądarkę. Microsoft Word, Adobe Photoshop i&nbsp;inne zewnętrzne aplikacje nazywane są aplikacjami pomocniczymi, ale nie wtyczkami, ponieważ nie instalują się w&nbsp;folderze przeglądarki, ale mogą być uruchamiane z&nbsp;okna dialogowego pobierania plików.</dd>
+
+<dt id="authentication">autoryzacja</dt><dd>Użycie hasła, certyfikatu, osobistego numeru identyfikacyjnego (PIN), lub innej informacji weryfikującej tożsamość w&nbsp;sieci komputerowej. Zobacz również <a href="#password-based_authentication">autoryzacja oparta na hasłach</a>, <a href="#certificate-based_authentication">autoryzacja oparta na certyfikatach</a>, <a href="#client_authentication">autoryzacja klienta</a>, <a href="#server_authentication">autoryzacja serwera</a>.</dd>
+
+<dt id="client_authentication">autoryzacja klienta</dt><dd>Proces identyfikowania <a href="#client">klienta</a> <a href="#server">serwerowi</a>. Przykładowo, za pomocą nazwy i&nbsp;hasła lub <a href="#client_ssl_certificate">certyfikatu SSL klienta</a> i&nbsp;podpisanych cyfrowo danych. Zobacz również <a href="#ssl">SSL (Secure Sockets Layer)</a>, <a href="#server_authentication">autoryzacja serwera</a>.</dd>
+
+<dt id="certificate-based_authentication">autoryzacja oparta na certyfikatach</dt><dd>Weryfikacja tożsamości oparta na certyfikatach i&nbsp;kryptografii z&nbsp;użyciem kluczy publicznych. Zobacz również <a href="#password-based_authentication">autoryzacja oparta na hasłach</a>.</dd>
+
+<dt id="password-based_authentication">autoryzacja oparta na hasłach</dt><dd>Identyfikacja na podstawie nazwy użytkownika i&nbsp;hasła. Zobacz również <a href="#authentication">autoryzacja</a>.</dd>
+
+<dt id="server_authentication">autoryzacja serwera</dt><dd>Proces identyfikowania <a href="#server">serwera</a> <a href="#client">klientowi</a> z&nbsp;użyciem <a href="#server_ssl_certificate">certyfikatu SSL serwera</a>. Zobacz również <a href="#client_authentication">autoryzacja klienta</a> i&nbsp;<a href="#ssl">SSL (Secure Sockets Layer)</a>.</dd>
+
+<dt id="secure_connection">bezpieczne połączenie</dt><dd>Połączenie pomiędzy klientem a serwerem, które używa szyfrowania (zazwyczaj
+ <a href="#ssl">SSL</a>) w celu uniemożliwienia przechwycenia komunikacji przez osoby trzecie. Najczęściej to serwer udostępnia certyfikat w celu umożliwienia jego zidentyfikowania.</dd>
+
+<!-- TODO: start localizing -->
+<dt id="safe_browsing">bezpieczne przeglądanie</dt><dd>Protection against common threats
+  from <a href="#malware">Malware</a> and <a href="#phishing">Phishing</a> by
+  checking each <a href="#web_page">web page</a> against a list of reported
+  websites. If the web page you are about to visit has been reported as
+  containing malicious content, &brandShortName; prevents it from loading
+  and shows a warning instead.</dd>
+<!-- TODO: stop localizing -->
+
+<dt id="secure_authentication">bezpieczne uwierzytelnienie</dt><dd>Sposób <a href="#authentication">autoryzacji</a>, który używa <a href="#secure_connection">bezpiecznego połączenia</a>, przez co komunikacja pomiędzy klientem a serwerem jest zaszyfrowana.</dd>
+
+<dt id="ca">CA</dt><dd>Patrz: <a href="#certificate_authority">organ certyfikacji.</a></dd>
+
+<dt id="certificate">certyfikat</dt><dd>Cyfrowy odpowiednik dowodu tożsamości. Certyfikat określa nazwę osoby, firmy lub innej jednostki i&nbsp;poświadcza, że dołączony klucz publiczny należy do tej jednostki. W&nbsp;trakcie cyfrowego podpisywania wiadomości lub innych danych tworzony jest podpis cyfrowy za pomocą klucza prywatnego odpowiadającego kluczowi publicznemu w&nbsp;certyfikacie użytkownika. Certyfikat jest wydawany i&nbsp;podpisywany cyfrowo przez <a href="#certificate_authority">organ certyfikacji (CA)</a>. Ważność certyfikatu może być zweryfikowana przez sprawdzenie <a href="#digital_signature">podpisu cyfrowego</a> organu certyfikacji. Jest również nazywany dowodem cyfrowym (ang. digital ID), cyfrowym paszportem, certyfikatem klucza publicznego, certyfikatem X.509 lub certyfikatem bezpieczeństwa. Zobacz również <a href="#public-key_cryptography">kryptografia z&nbsp;użyciem kluczy publicznych</a>.</dd>
+
+<dt id="ca_certificate">certyfikat organu certyfikacji (ang. CA&nbsp;certificate)</dt><dd>Certyfikat identyfikujący organ certyfikacji. Zobacz również <a href="#certificate_authority">organ certyfikacji</a>, <a href="#subordinate_ca">pośredniczący organ certyfikacji</a>, <a href="#root_ca">główny organ certyfikacji</a>.</dd>
+
+<dt id="signing_certificate">certyfikat podpisujący</dt><dd>Certyfikat, którego odpowiadający <a href="#private_key">klucz prywatny</a> jest używany do podpisywania transmitowanych danych, dzięki czemu odbiorca tych danych może zweryfikować tożsamość nadawcy. Organy certyfikujące zwykle wydają certyfikat podpisujący, który będzie używany do podpisywania wiadomości e-mail, razem z&nbsp;<a href="#encryption_certificate">certyfikatem szyfrującym</a>, który będzie używany do szyfrowania wiadomości e-mail. Zobacz również <a href="#dual_key_pairs">podwójne pary kluczy</a> i&nbsp;<a href="#digital_signature">podpis cyfrowy</a>.</dd>
+
+<dt id="object-signing_certificate">certyfikat podpisujący obiekt</dt><dd>Certyfikat, którego odpowiadający klucz publiczny jest używany do podpisywania obiektów takich jak pliki kodu źródłowego. Zobacz również <a href="#object_signing">podpisywanie obiektu</a>.</dd>
+
+<dt id="client_ssl_certificate">certyfikat SSL klienta</dt><dd>Certyfikat, który <a href="#client">klient</a> (taki jak oprogramowanie przeglądarki) przekazuje <a href="#server">serwerowi</a>, aby autoryzować swoją tożsamość (lub tożsamość osoby używającej klienta) z&nbsp;użyciem protokołu <a href="#ssl">SSL (Secure Sockets Layer)</a>. Zobacz również <a href="#client_authentication">autoryzacja klienta</a>.</dd>
+
+<dt id="server_ssl_certificate">certyfikat SSL serwera</dt><dd>Certyfikat udostępniany <a href="#client">klientowi</a> przez <a href="#server">serwer</a> w&nbsp;celu autoryzacji tożsamości serwera z&nbsp;użyciem protokołu <a href="#ssl">SSL (Secure Sockets Layer)</a>.</dd>
+
+<dt id="encryption_certificate">certyfikat szyfrowania</dt><dd><a href="#certificate">Certifikat</a>, którego klucz publiczny jest używany tylko do szyfrowania. Certyfikaty szyfrowania nie są używane do podpisywania działań. Zobacz również <a href="#dual_key_pairs">podwójne pary kluczy</a>, <a href="#signing_certificate">certyfikat podpisujący</a>.</dd>
+
+<dt id="security_certificate">certyfikat zabezpieczeń</dt><dd>Patrz: <a href="#certificate">certyfikat</a>.</dd>
+
+<dt id="cookie">ciasteczko</dt><dd>Niewielka porcja informacji zapisana na komputerze użytkownika przez niektóre <a href="#website">witryny internetowe</a>. Podczas wizyty na takiej witrynie, pyta ona przeglądarkę o&nbsp;pozwolenia na zapisanie jednego lub więcej ciasteczek na dysku komputera użytkownika. Przy kolejnych odwiedzinach witryny, przeglądarka odsyła witrynie należące do niej ciasteczko. Ciasteczka pomagają witrynom przechowywać informacje o&nbsp;użytkowniku, takie jak zawartość koszyka w&nbsp;sklepie internetowym. Użytkownik może ustawić preferencje kontroli używania ciasteczek i&nbsp;ilości informacji, jakie użytkownik pozwoli w&nbsp;nich przechowywać. Zobacz również <a href="#third-party_cookie">ciasteczka z innych witryn</a>.</dd>
+
+<dt id="third-party_cookie">ciasteczko z innej witryny</dt><dd><a href="#cookie">Ciasteczko</a> z <a href="#website">witryny</a>, które zostało zapisane na dysku komputera podczas wizyty na innej witrynie. Czasami witryna internetowa wyświetla elementy, które są umieszczone na innej witrynie. Tymi elementami może być cokolwiek &mdash; tekst, obrazki lub reklamy. Ta druga witryna również może zapisywać ciasteczka w&nbsp;przeglądarce, nawet jeżeli nie jest odwiedzana bezpośrednio. Takie ciasteczka są również nazywane <q>obcymi ciasteczkami</q>.</dd>
+
+<dt id="crl">CRL (lista certyfikatów unieważnionych, ang. certificate revocation list)</dt><dd>Lista certyfikatów unieważnionych generowana i&nbsp;podpisywana przez <a href="#certificate_authority">organ certyfikacji (CA)</a>. Użytkownik może pobrać z&nbsp;sieci ostatnią wersję tej listy dla przeglądarki lub serwera, a&nbsp;następnie przeprowadzić kontrolę certyfikatów, aby sprawdzić ich aktualność przed zezwoleniem na używanie do autoryzacji.</dd>
+
+<dt id="digital_id">cyfrowy dowód tożsamości</dt><dd>Patrz: <a href="#certificate">certyfikat</a>.</dd>
+
+<dt id="add-on">dodatek</dt><dd>Kawałek programu, który może zostać dodany do programu &brandShortName; w celu zmiany wyglądu, zachowania bądź w celu dodania nowych funkcji. Dodatek może również zmienić język interfejsu użytkownika. Patrz również: <a href="#extension">rozszerzenie</a>, <a href="#language_pack">paczka językowa</a>, <a href="#plugin">wtyczka</a>, <a href="#theme">motyw</a>.</dd>
+
+<dt id="implicit_consent">domniemana zgoda</dt><dd>Znana również jako ciche przyzwolenie (bez pytania zainteresowanego, ang. <q>opt-out</q>). Używana do opisania ustawień prywatności, które mogą umożliwić witrynom internetowym gromadzenie informacji o&nbsp;użytkowniku (przykładowo poprzez <a href="#cookie">ciasteczka</a> i&nbsp;formularze na stronach internetowych), za wyjątkiem sytuacji, kiedy użytkownik odmówi zgody przez wybór opcji na dostępnej w&nbsp;tym celu odpowiedniej stronie tej witryny. Żądanie zgody może nie być artykułowane, jeżeli informacje są aktualnie gromadzone. Patrz również: <a href="#user_tracking">śledzenie użytkownika</a>.</dd>
+
+<!-- TODO: start localizing -->
+<dt id="do_not_track">Do Not Track</dt><dd>A mechanism that allows users
+  to inform <a href="#website">websites</a> that they do not want to be
+  <a href="#user_tracking">tracked</a> by third-party websites and
+  <a href="#web_application">web applications</a>. A user&apos; tracking
+  preferences is included in the <a href="#http">HTTP</a> header and sent
+  to the website. &brandShortName; supports sending <q>Do Not Track</q>
+  requests, but websites are not obligated to honor those.</dd>
+<!-- TODO: stop localizing -->
+
+<dt id="tooltip">etykietka</dt><dd>Napis na małym, wyróżnionym polu, pojawiający się po najechaniu kursorem myszy na wybrane elementy. Zwykle zawiera informacje o&nbsp;obiekcie znajdującym się pod kursorem.</dd>
+
+<dt id="misrepresentation">fałszywa tożsamość</dt><dd>Przedstawianie się jednostki jako osoby lub organizacji, którą faktycznie nie jest. Przykładowo, witryna pozoruje bycie sklepem meblowym, a&nbsp;w rzeczywistości pobiera tylko płatności kartami kredytowymi i&nbsp;nie wysyła żadnych towarów. Zobacz również <a href="#spoofing">podszywanie się</a>.</dd>
+
+<dt id="fips_pubs_140-1">FIPS PUBS 140-1</dt><dd>Federal Information Processing Standards Publications (FIPS PUBS) 140-1 jest standardem rządu USA&nbsp;dla realizacji modułów kryptograficznych &mdash; sprzętu lub oprogramowania szyfrującego i&nbsp;rozszyfrowującego, lub wykonującego inne operacje kryptograficzne (takie jak weryfikacja podpisów cyfrowych). Wiele produktów sprzedawanych rządowi USA&nbsp;musi być zgodnych z&nbsp;jednym lub większą ilością standardów FIPS.</dd>
+
+<dt id="ftp">FTP (File Transfer Protocol)</dt><dd>Standard umożliwiający użytkownikom przesyłanie plików z&nbsp;jednego komputera w&nbsp;sieci na inny. Przeglądarka umożliwia pobieranie plików za pomocą FTP.</dd>
+
+<dt id="master_password">główne hasło</dt><dd>Hasło używane przez Menedżera Haseł do zabezpieczania klucza głównego i/lub kluczy prywatnych zapisanych w&nbsp;<a href="#security_device">urządzeniu zabezpieczającym</a>. Menedżer certyfikatów wymaga dostępu do kluczy prywatnych użytkownika, przykładowo, gdy użytkownik podpisuje wiadomości e-mail lub używa jednego z&nbsp;własnych certyfikatów, aby zidentyfikować się witrynie internetowej. Dostęp do klucza głównego jest wymagany w&nbsp;czasie odczytu lub zmian prywatnych informacji przez Menedżera haseł lub Menedżera formularzy. Ustawienie lub zmiana hasła głównego jest dostępne w&nbsp;panelu preferencji Główne hasło. Każde urządzenie zabezpieczające wymaga oddzielnego hasła głównego. Zobacz również <a href="#private_key">klucz prywatny</a>, <a href="#master_key">klucz główny</a>.</dd>
+
+<dt id="root_ca">główny organ certyfikacji (ang. root CA)</dt><dd><a href="#certificate_authority">Organ certyfikacji</a> z&nbsp;samodzielnie podpisanym certyfikatem na szczycie <a href="#certificate_chain">łańcucha certyfikatów</a>. Zobacz również <a href="#subordinate_ca">podległy organ certyfikacji</a>.</dd>
+
+<dt id="certificate_backup_password">hasło kopii zapasowej certyfikatu</dt><dd>Hasło zabezpieczające certyfikat, którego kopia zapasowa jest właśnie wykonywana lub została wykonana wcześniej. Menedżer certyfikatów pyta o&nbsp;ustanowienie tego hasła w&nbsp;trakcie wykonywania kopii zapasowej certyfikatu i&nbsp;wymaga go przy próbie przywrócenia certyfikatu z&nbsp;tej kopii zapasowej.</dd>
+
+<dt id="html">HTML (HyperText Markup Language)</dt><dd>Format dokumentów używany na stronach WWW. Standard HTML definiuje znaczniki lub kody używane do określenia stylu, czcionek i&nbsp;położenia tekstu oraz położenia obrazków, i&nbsp;innych elementów tworzących stronę WWW.</dd>
+
+<dt id="http">HTTP (HyperText Transfer Protocol)</dt><dd>Protokół używany do przesyłania <a href="#web_page">stron WWW</a> (dokumentów hipertekstowych) pomiędzy przeglądarkami i&nbsp;<a href="#server">serwerami</a> w&nbsp;sieci <a href="#world_wide_web">World Wide Web</a>.</dd>
+
+<dt id="https">HTTPS (HyperText Transfer Protocol Secure)</dt><dd>Bezpieczna wersja protokołu HTTP używająca <a href="#ssl">SSL</a> do zapewnienia prywatności danych klienta (takich jak dane karty kredytowej) w&nbsp;trakcie przesyłania ich w&nbsp;sieci <a href="#internet">Internet</a>.</dd>
+
+<dt id="imap">IMAP (Internet Message Access Protocol)</dt><dd>Standardowy protokół serwera pocztowego pozwalający na zachowywanie wszystkich wiadomości i&nbsp;zmian w&nbsp;nich na serwerze zamiast na dysku komputera. Użycie IMAP zamiast <a href="#pop">POP</a> oszczędza miejsce na dysku własnego komputera i&nbsp;zapewnia dostęp do całego konta pocztowego, wliczając foldery: poczta wysłana, szkice oraz foldery użytkownika, z&nbsp;dowolnego miejsca. Używanie serwerów IMAP poprzez modem jest szybsze niż używanie serwerów POP, ponieważ początkowo pobierane są tylko nagłówki wiadomości. Nie wszyscy dostawcy usług internetowych (<a href="#isp">ISP</a>) umożliwiają dostęp do kont poprzez IMAP.</dd>
+
+<dt id="internet">Internet</dt><dd>Ogólnoświatowa sieć z&nbsp;milionami komputerów komunikujących się między sobą za pomocą standardowych protokołów, takich jak <a href="#tcp_ip">TCP/IP</a>. Oryginalnie opracowany dla armii USA&nbsp;w&nbsp;roku 1969, Internet rósł przez dołączanie do sieci instytucji badawczych i&nbsp;edukacyjnych, a&nbsp;w późnych latach dziewięćdziesiątych dwudziestego wieku wielu organizacji, firm oraz osób prywatnych. W&nbsp;chwili obecnej Internet jest używany do przesyłania wiadomości e-mail i&nbsp;grup dyskusyjnych, przeglądania <a href="#world_wide_web">World Wide Web (stron WWW)</a>, przesyłania wiadomości za pomocą komunikatorów i&nbsp;wielu innych zastosowań.</dd>
+
+<dt id="irc">IRC (Internet Relay Chat)</dt><dd>Protokół używany do rozmów z&nbsp;innymi osobami w&nbsp;czasie rzeczywistym za pomocą <a href="#client">klienta</a> IRC.</dd>
+
+<dt id="isp">ISP (Internet Service Provider)</dt><dd>Firma lub instytucja dostarczająca połączenia do <a href="#internet">Internetu</a>.</dd>
+
+<dt id="java">Java</dt><dd>Język programowania opracowany przez firmę Sun Microsystems. Pojedynczy program napisany w&nbsp;języku Java można uruchomić na wielu różnego rodzaju komputerach, ochraniając programistów od konieczności tworzenia osobnych wersji każdego programu dla każdego rodzaju komputera. Przeglądarka może automatycznie pobierać i&nbsp;uruchamiać programy napisane w&nbsp;języku Java (nazywane również apletami).</dd>
+
+<dt id="javascript">JavaScript</dt><dd>Język skryptowy powszechnie używany do tworzenia <a href="#web_page">stron WWW</a>. Programiści używają JavaScriptu do uczynienia stron WWW&nbsp;bardziej interaktywnymi, przykładowo do wyświetlenia formularzy i&nbsp;przycisków. JavaScript może być używany z&nbsp;<a href="#java">Javą</a>, ale technicznie jest to osobny język. Java nie jest wymagana do prawidłowej pracy JavaScriptu.</dd>
+
+<dt id="smart_card">karta inteligentna</dt><dd>Niewielkie urządzenie, zwykle wielkości karty kredytowej, zawierające mikroprocesor i&nbsp;zdolne do przechowywania danych kryptograficznych (takich jak klucze i&nbsp;certyfikaty) oraz przeprowadzania operacji kryptograficznych. Karty inteligentne używają standardu <a href="#pkcs_11">PKCS #11</a>. Karta inteligentna jest jednym z&nbsp;rodzajów <a href="#security_device">urządzenia zabezpieczającego</a>.</dd>
+
+<dt id="client">klient</dt><dd>Program (taki jak przeglądarka), który wysyła żądania do <a href="#server">serwera</a> i&nbsp;odbiera od niego informacje. Serwer jest najczęściej uruchomiony na innym komputerze. Komputer, na którym uruchomiony jest program klienta jest również nazywany klientem.</dd>
+
+<dt id="key">klucz</dt><dd>Wielka liczba używana przez <a href="#cryptographic_algorithm">algorytm kryptograficzny</a> do szyfrowania lub rozszyfrowywania danych. Klucz publiczny użytkownika umożliwia innym osobom zaszyfrowanie wiadomości do użytkownika. Zaszyfrowane wiadomości muszą być rozszyfrowane za pomocą odpowiedniego klucza prywatnego. Zobacz również <a href="#public-key_cryptography">kryptografia z&nbsp;użyciem kluczy publicznych</a>.</dd>
+
+<dt id="master_key">klucz główny</dt><dd>Symetryczny klucz używany przez <a href="#certificate_manager">Menedżera certyfikatów</a> do szyfrowania informacji. Przykładowo, <a href="#password_manager">Menedżer haseł</a> używa Menedżera certyfikatów i&nbsp;klucza głównego użytkownika do szyfrowania haseł do kont e-mail, haseł do witryn internetowych i&nbsp;innych zachowanych informacji wrażliwych. Zobacz również <a href="#symmetric_encryption">szyfrowanie symetryczne</a>.</dd>
+
+<dt id="signing_key">klucz podpisujący</dt><dd>klucz prywatny używany tylko do podpisywania wiadomości. Klucz podpisujący i&nbsp;odpowiadający mu klucz publiczny łącznie z&nbsp;<a href="#encryption_key">kluczem szyfrującym </a> oraz odpowiadający mu klucz prywatny stanowią <a href="#dual_key_pairs">podwójne pary kluczy</a>.</dd>
+
+<dt id="private_key">klucz prywatny</dt><dd>Jeden z&nbsp;pary <a href="#key">kluczy</a> używanych w&nbsp;kryptografii z&nbsp;użyciem kluczy publicznych. Klucz prywatny jest utrzymywany w&nbsp;tajemnicy i&nbsp;używany do rozszyfrowywania danych zaszyfrowanych z&nbsp;użyciem odpowiadającego mu klucza publicznego.</dd>
+
+<dt id="public_key">klucz publiczny</dt><dd>Jeden z&nbsp;pary <a href="#key">kluczy</a> używanych w&nbsp;kryptografii z&nbsp;użyciem kluczy publicznych. Klucz publiczny jest swobodnie rozpowszechniany i&nbsp;publikowany jako część <a href="#certificate">certyfikatu</a>. Jest zwykle używany do szyfrowania danych wysyłanych do właściciela klucza publicznego, który rozszyfrowuje te dane przy pomocy odpowiadającego mu klucza prywatnego.</dd>
+
+<dt id="encryption_key">klucz szyfrujący</dt><dd>Klucz prywatny używany tylko do szyfrowania. Klucz szyfrujący i&nbsp;odpowiadający mu klucz prywatny oraz <a href="#signing_key">klucz podpisujący</a> i&nbsp;odpowiadający mu klucz publiczny tworzą <a href="#dual_key_pairs">podwójne pary kluczy</a>.</dd>
+
+<dt id="cryptography">kryptografia</dt><dd>Sztuka i&nbsp;praktyka utajniania (szyfrowania) oraz odtajniania (rozszyfrowywania) informacji. Przykładowo, techniki kryptograficzne są używane do utajniania i&nbsp;odtajniania informacji przepływających pomiędzy witrynami komercyjnymi a&nbsp;przeglądarką. Zobacz również <a href="#public-key_cryptography">kryptografia z&nbsp;użyciem kluczy publicznych</a>.</dd>
+
+<dt id="public-key_cryptography">kryptografia z&nbsp;użyciem kluczy publicznych</dt><dd>Zestaw ustalonych technik i&nbsp;standardów umożliwiających jednostce (takiej jak osoba, organizacja lub urządzenie takie jak router) elektroniczną weryfikację swojej tożsamości lub podpisanie i&nbsp;zaszyfrowanie danych elektronicznych. Dwa klucze są zaangażowane w&nbsp;ten proces: <a href="#public_key">klucz publiczny</a> i&nbsp;<a href="#private_key">klucz prywatny</a>. Klucz publiczny jest publikowany jako część <a href="#certificate">certyfikatu</a>, który wiąże ten klucz z&nbsp;określoną tożsamością. Odpowiadający mu klucz prywatny jest utrzymywany w&nbsp;tajemnicy. Dane zaszyfrowane kluczem publicznym mogą być rozszyfrowane tylko za pomocą klucza prywatnego.</dd>
+
+<dt id="ldap">LDAP (Lightweight Directory Access Protocol)</dt><dd>Standardowy protokół dostępu do usług katalogowych, takich jak korporacyjne książki adresowe, z&nbsp;poziomu różnych platform. Użytkownik może skonfigurować przeglądarkę, aby korzystać z&nbsp;katalogów LDAP za pomocą Książki adresowej. Można również skonfigurować Kuriera Poczty, aby korzystał z&nbsp;katalogu LDAP do automatycznego uzupełniania adresów e-mail.</dd>
+
+<dt id="certificate_chain">łańcuch certyfikatów</dt><dd>Hierarchiczna seria certyfikatów podpisywanych przez kolejne organy certyfikacji. Certyfikat organu certyfikacji (CA) identyfikuje <a href="#certificate_authority">organ certyfikacji (CA)</a> i&nbsp;jest używany do podpisywania certyfikatów wystawianych przez ten organ. Certyfikat organu certyfikacji (CA) może z&nbsp;kolei być podpisany przez certyfikat organu certyfikacji należący do nadrzędnego organu certyfikacji i&nbsp;tak aż do <a href="#root_ca">głównego organu certyfikacji</a>.</dd>
+
+<dt id="cookie_manager">Menedżer ciasteczek</dt><dd>Część przeglądarki umożliwiająca zarządzanie <a href="#cookie">ciasteczkami</a>.</dd>
+
+<dt id="certificate_manager">Menedżer certyfikatów</dt><dd>Część przeglądarki umożliwiająca przeglądanie i&nbsp;zarządzanie certyfikatami. Aby wyświetlić główne okno Menedżera certyfikatów, należy z&nbsp;menu <span class="mac">&brandShortName;</span> <span class="noMac">Edycja</span> wybrać Preferencje, kliknąć na kategorii Prywatność i&nbsp;zabezpieczenia, następnie na panelu podkategorii Certyfikaty nacisnąć przycisk Menedżer certyfikatów.</dd>
+
+<dt id="password_manager">Menedżer haseł</dt><dd>Część przeglądarki umożliwiająca użytkownikowi zapamiętanie wybranych lub wszystkich nazw i&nbsp;haseł przez zapisanie ich na dysku komputera oraz późniejsze wprowadzanie ich automatycznie podczas wizyt na witrynach, dla których zostały zapamiętane.</dd>
+
+<dt id="pkcs_11_module">moduł PKCS #11</dt><dd>Program na komputerze Użytkownika zarządzający usługami kryptograficznymi takimi jak szyfrowanie i&nbsp;rozszyfrowywanie z&nbsp;użyciem standardu PKCS #11. Również nazywane <em>modułami kryptograficznymi</em>, <em>dostawcami usług kryptograficznych</em> lub <em>modułami zabezpieczeń</em>, moduły PKCS #11 zarządzają zarówno urządzeniami sprzętowymi jak i&nbsp;programowymi. Moduł PKCS #11 zawsze zarządza jednym lub więcej złączami, które mogą przyjmować postać fizycznych czytników (przykładowo do odczytu kart inteligentnych) lub oprogramowania. Każde złącze dla modułu PKCS #11 może z&nbsp;kolei zawierać <a href="#security_device">urządzenie zabezpieczające</a> (nazywane również <em>tokenem</em>), które jest sprzętowym lub programowym urządzeniem dostarczającym usług kryptograficznych i&nbsp;przechowującym certyfikaty oraz klucze. <a href="#certificate_manager">Menedżer certyfikatów</a> zawiera dwa wbudowane moduły PKCS #11. Użytkownik może zainstalować w&nbsp;swoim komputerze dodatkowe moduły do zarządzania czytnikami kart inteligentnych lub innymi urządzeniami sprzętowymi.</dd>
+
+<dt id="security_module">moduł zabezpieczający</dt><dd>Zobacz <a href="#pkcs_11_module">moduł PKCS #11</a>.</dd>
+
+<dt id="theme">theme</dt><dd>Typ <a href="#add-on">dodatku</a>, który zmienia wygląd programu &brandShortName;.</dd>
+
+<dt id="subject_name">nazwa przedmiotu certyfikatu</dt><dd><a href="#distinguished_name">Nazwa unikalna (DN)</a>, która jednoznacznie opisuje <a href="#subject">przedmiot</a> <a href="#certificate">certyfikatu</a>.</dd>
+
+<dt id="distinguished_name">nazwa unikalna (DN)</dt><dd>Nazwa w&nbsp;specjalnej, unikalnej postaci, jednoznacznie identyfikującej przedmiot <a href="#certificate">certyfikatu</a>.</dd>
+
+<dt id="nonrepudiation">nieodrzucanie</dt><dd>Niezdolność nadawcy wiadomości do zanegowania wysłania wiadomości. Zwykły podpis odręczny zapewnia dowód nieodrzucania. <a href="#digital_signature">Podpis cyfrowy</a> zapewnia inny dowód nieodrzucania.</dd>
+
+<dt id="foreign_cookie">obce ciasteczko</dt><dd>Patrz: <a href="#third-party_cookie">ciasteczko z innej witryny</a>.</dd>
+
+<dt id="ocsp">OCSP (Protokół Weryfikacji Certyfikatu Online, ang. Online Certificate Status Protocol)</dt><dd>Zestaw zasad, które stosuje <a href="#certificate_manager">Menedżer certyfikatów</a> do przeprowadzenia sprawdzenia ważności certyfikatu przy każdym jego użyciu. Proces ten dotyczy sprawdzania certyfikatu zamiast listy ważnych certyfikatów umieszczonej na określonej witrynie. Komputer musi być podłączony do sieci, aby OCSP działało.</dd>
+
+<dt id="fingerprint">odcisk (certyfikat)</dt><dd>Zobacz <a href="#certificate_fingerprint">odcisk certyfikatu</a>.</dd>
+
+<!-- TODO: start localizing -->
+<dt id="fingerprinting">odcisk (przeglądarka)</dt><dd>A method of
+  <a href="#user_tracking">user tracking</a> by which a user is identified
+  based on browser characteristics like browser and operating system versions,
+  stated language preferences, or <a href="#plugin">plugins</a> installed.</dd>
+<!-- TODO: stop localizing -->
+
+<dt id="certificate_fingerprint">odcisk certyfikatu</dt><dd>Unikalny numer powiązany z&nbsp;certyfikatem. Numer ten nie stanowi części certyfikatu, ale jest tworzony za pomocą formuły matematycznej obliczającej go na podstawie jego zawartości. Zmiana pojedynczego znaku w&nbsp;treści certyfikatu powoduje, że wyliczona liczba będzie inna. Z&nbsp;tego powodu odciski certyfikatów mogą być używane do stwierdzenia, że certyfikaty nie zostały sfałszowane.</dd>
+
+<dt id="certificate_renewal">odnawianie certyfikatu</dt><dd>Proces uzyskiwania nowego <a href="#certificate">certyfikatu</a> zastępującego obecny wygasający.</dd>
+
+<dt id="certificate_authority">organ certyfikacji (ang. certificate authority (CA))</dt><dd>Jednostka wydająca certyfikat po przeprowadzeniu weryfikacji tożsamości osoby lub jednostki, którą ten certyfikat ma identyfikować. Organ certyfikacji również odnawia i&nbsp;unieważnia certyfikaty oraz tworzy listy certyfikatów unieważnionych w&nbsp;regularnych odstępach czasu. Organami certyfikacji mogą być niezależni dostawcy lub osoby albo organizacje używające oprogramowania serwera do wydawania certyfikatów (takiego jak System Zarządzania Certyfikatami &brandShortName;). Zobacz również <a href="#certificate">certyfikat</a>, <a href="#crl">CRL (lista certyfikatów unieważnionych)</a>.</dd>
+
+<dt id="personal_toolbar">osobisty pasek narzędzi</dt><dd>Dostosowywalny pasek narzędzi domyślne widoczny tuż poniżej paska adresu w&nbsp;przeglądarce. Zawiera standardowe przyciski Strona domowa, Zakładki i&nbsp;inne, które użytkownik może dodać lub usunąć. Użytkownik może również dodać przyciski do ulubionych zakładek lub folderów zawierających grupy zakładek.</dd>
+
+<dt id="phishing">oszustwo (ang. phishing)</dt><dd>Oszukiwanie to polega na tworzeniu stron WWW udających strony banków, firm handlowych i&nbsp;operatorów kart kredytowych oraz próbach uzyskania za ich pośrednictwem poufnych danych użytkownika.</dd>
+
+<dt id="language_pack">paczka językowa</dt><dd>Typ <a href="#add-on">dodatku</a>, który dodaje nowy język interfejsu użytkownika do programu &brandShortName;.</dd>
+
+<dt id="cache">pamięć podręczna</dt><dd>Zbiór kopii stron WWW&nbsp;zapisanych na dysku komputera lub w&nbsp;jego pamięci operacyjnej (RAM). Przeglądarka gromadzi te kopie w&nbsp;trakcie przeglądania stron WWW. Po kliknięciu na linku lub po wprowadzeniu <a href="#url">URL-a</a>, w&nbsp;celu pobrania określonej strony WWW, której pamięć podręczna zawiera kopię, przeglądarka porównuje zapisaną kopię z&nbsp;oryginałem w&nbsp;sieci. Jeżeli nie było zmian, to przeglądarka używa kopii z&nbsp;pamięci podręcznej zamiast ponownie pobierać oryginał, oszczędzając czas przetwarzania i&nbsp;pobierania.</dd>
+
+<dt id="location_bar">pasek adresu</dt><dd>Pole (i powiązane z&nbsp;nim przyciski) w&nbsp;pobliżu górnej części okna przeglądarki, w&nbsp;które użytkownik może wprowadzić <a href="#url">URL</a> lub wyrażenie do wyszukania.</dd>
+
+<dt id="component_bar">pasek komponentów</dt><dd>Pasek narzędzi w&nbsp;lewej dolnej części każdego okna &brandShortName;. Pasek komponentów umożliwia przełączanie się pomiędzy komponentami &brandShortName; poprzez klikanie na ikonach dla przeglądarki, Kuriera Poczty i&nbsp;innych.</dd>
+
+<dt id="navigation_toolbar">pasek nawigacyjny</dt><dd>Pasek narzędzi w&nbsp;pobliżu górnej części okna przeglądarki, zawierający przyciski Wstecz i&nbsp;Do przodu.</dd>
+
+<dt id="notification_bar">pasek powiadomień</dt><dd>Pasek narzędzi w&nbsp;pobliżu górnej części okna przeglądarki, który powiadamia o&nbsp;zdarzeniach wymagających zwrócenia uwagi jak: Menedżer haseł oferujący możliwość zachowania hasła, informacja o&nbsp;zablokowaniu wyskakującego okna czy konieczność zainstalowania dodatkowej wtyczki.</dd>
+
+<dt id="status_bar">pasek stanu</dt><dd>Pasek wyświetlany w&nbsp;dolnej części każdego okna &brandShortName;. Zawiera <a href="#component_bar">pasek komponentów</a> z&nbsp;lewej strony i&nbsp;ikonę statusu z&nbsp;prawej strony.</dd>
+
+<dt id="pkcs_11">PKCS #11</dt><dd>Standard kryptografii z&nbsp;użyciem kluczy publicznych do zarządzania urządzeniami zabezpieczającymi takimi jak karty inteligentne. Zobacz również <a href="#security_device">urządzenie zabezpieczające</a>, <a href="#smart_card">karta inteligentna</a>.</dd>
+
+<dt id="pki">PKI&nbsp;(infrastruktura klucza publicznego, ang. public-key infrastructure)</dt><dd>Standardy i&nbsp;usługi ułatwiające używanie kryptografii z&nbsp;użyciem kluczy publicznych oraz certyfikatów w&nbsp;środowisku sieciowym.</dd>
+
+<dt id="digital_signature">podpis cyfrowy</dt><dd>Kod utworzony na podstawie danych podpisywanych i&nbsp;podpisującego klucza prywatnego. Kod ten jest unikalny dla każdej nowej części danych. Nawet pojedynczy przecinek dodany do zdania w&nbsp;wiadomości, zmienia podpis cyfrowy dla tej wiadomości. Pozytywna weryfikacja podpisu cyfrowego przez odpowiednie oprogramowanie oznacza zarówno aprobatę transakcji lub wiadomości przez użytkownika oraz dowód, że dane te nie zmieniły się od momentu, gdy zostały podpisane cyfrowo. Podpis cyfrowy nie ma nic wspólnego z&nbsp;podpisem odręcznym, ale bywa używany do podobnych celów. Zobacz również <a href="#nonrepudiation">nieodrzucanie</a>, <a href="#tamper_detection">wykrywanie fałszerstwa</a>.</dd>
+
+<dt id="object_signing">podpisywanie obiektu</dt><dd>Technologia umożliwiająca twórcom oprogramowania podpisanie kodu napisanego w&nbsp;Javie, skryptów JavaScript, lub dowolnego rodzaju pliku, co umożliwia użytkownikom identyfikację podpisujących i&nbsp;kontrolę dostępu podpisanego kodu do lokalnych zasobów systemowych.</dd>
+
+<dt id="eavesdropping">podsłuchiwanie</dt><dd>Przechwytywanie ukradkiem informacji przesyłanej przez sieć, przez jednostkę, dla której ta informacja nie jest przeznaczona.</dd>
+
+<dt id="spoofing">podszywanie się (ang. spoofing)</dt><dd>Udawanie kogoś innego. Dla przykładu osoba może udawać, że posiada adres e-mail <tt>jdoe@mozilla.com</tt> lub komputer identyfikuje siebie jako witryna <tt>www.mozilla.com</tt>, podczas, gdy nie jest to prawdą. Podszywanie się jest jedną z&nbsp;form <a href="#misrepresentation">fałszywej tożsamości</a>.</dd>
+
+<dt id="dual_key_pairs">podwójne pary kluczy</dt><dd>Dwie pary klucz publiczny-prywatny &mdash; łącznie cztery klucze odpowiadające dwóm oddzielnym certyfikatom. Klucz prywatny z&nbsp;jednej pary jest używany do podpisywania, a&nbsp;klucze prywatny i&nbsp;publiczny z&nbsp;drugiej pary są używane do operacji szyfrowania i&nbsp;rozszyfrowywania. Każda para odpowiada oddzielnemu <a href="#certificate">certyfikatowi</a>. Zobacz również <a href="#public-key_cryptography">kryptografia z&nbsp;użyciem kluczy publicznych</a>.</dd>
+
+<dt id="pop">POP (Post Office Protocol)</dt><dd>Standardowy protokół serwera pocztowego, który wymaga od użytkownika pobierania nowych wiadomości na lokalny komputer, aczkolwiek udostępnia również możliwość pozostawienia kopii wiadomości na serwerze. Za pomocą POP można zachować wszystkie wiadomości, wliczając wiadomości wysłane, szkice oraz foldery użytkownika, tylko na jednym komputerze. W&nbsp;przeciwieństwie do <a href="#imap">IMAP</a>, który umożliwia trwałe przechowywanie wszystkich wiadomości użytkownika i&nbsp;dokonywania w&nbsp;nich zmian na serwerze, do którego można uzyskać dostęp z&nbsp;każdego komputera. Większość dostawców usług internetowych (<a href="#isp">ISP</a>) umożliwia dostęp do kont poprzez POP.</dd>
+
+<dt id="subordinate_ca">pośredniczący organ certyfikacji</dt><dd><a href="#certificate_authority">Organ certyfikacji (CA)</a>, którego certyfikat jest podpisany przez inny pośredniczący organ certyfikacji lub główny organ certyfikacji. Zobacz również <a href="#certificate_chain">łańcuch certyfikatów</a>, <a href="#root_ca">główny organ certyfikacji</a>.</dd>
+
+<dt id="software_security_device">programowe urządzenie zabezpieczające</dt><dd>Domyślne <a href="#security_device">urządzenie zabezpieczające</a> używane przez <a href="#certificate_manager">Menedżera certyfikatów</a> do przechowywania prywatnych kluczy powiązanych z&nbsp;certyfikatami użytkownika. Dodatkowo, programowe urządzenie zabezpieczające przechowuje główne hasło, używane przez <a href="#password_manager">Menedżera haseł</a> do szyfrowania haseł do kont e-mail, haseł witryn internetowych i&nbsp;innych wrażliwych informacji. Zobacz również <a href="#private_key">klucz prywatny</a> i&nbsp;<a href="#master_password">główne hasło</a>.</dd>
+
+<dt id="proxy">proxy</dt><dd>Program pośredniczący, będący zarówno <a href="#server">serwerem</a> i&nbsp;<a href="#client">klientem</a> w&nbsp;tworzeniu żądań w&nbsp;imieniu innych klientów.</dd>
+
+<dt id="subject">przedmiot</dt><dd>Jednostka (taka jak osoba, organizacja lub router) identyfikowana przez <a href="#certificate">certyfikat</a>. W&nbsp;szczególności opis certyfikatu zawiera <a href="#subject_name">nazwę przedmiotu certyfikatu</a> i&nbsp;inne dane charakterystyczne.</dd>
+
+<!-- TODO: start localizing -->
+<dt id="caret_browsing">przeglądanie z użyciem kursora</dt><dd>A &brandShortName; feature that
+  allows you to navigate through text in Web pages and email messages (or this
+  Help window) with a caret. Using your keyboard, you can navigate and select
+  text like you do in a text editor. You can turn caret browsing mode on or off
+  by pressing the <kbd>F7</kbd> key. Caret browsing mode can also be enabled or
+  disabled in Advanced Preferences - Keyboard Navigation.</dd>
+<!-- TODO: stop localizing -->
+
+<dt id="frame">ramka</dt><dd>Ramki są <a href="#web_page">stronami WWW</a> zawartymi wewnątrz otaczającej je <q>metastrony</q>.</dd>
+
+<!-- TODO: start localizing -->
+<dt id="malware">robaki</dt><dd>Short for <q><u>Mal</u>icious
+  Soft<u>ware</u></q> and a general term for a variety of software designed
+  to disrupt computer operation, gather sensitive information, or gain access
+  to your computer. They can be distributed by infected <a href="#web_page">web
+  pages</a> or as attachments to email messages. Examples include viruses,
+  worms, trojans, spyware, or adware. Malware may redistribute itself by
+  sending out email messages to infect other computers.</dd>
+<!-- TODO: stop localizing -->
+
+<dt id="extension">rozszerzenie</dt><dd>Typ <a href="#add-on">dodatku</a>, który zmienia zachowanie programu &brandShortName; i/lub dodaje nowe funkcje.</dd>
+
+<dt id="decryption">rozszyfrowywanie</dt><dd>Proces odtajniania danych poddanych wcześniej szyfrowaniu. Zobacz również <a href="#encryption">szyfrowanie</a>.</dd>
+
+<dt id="server">serwer</dt><dd>Program (taki jak program udostępniający strony WWW), który odbiera żądania od <a href="#client">klienta</a> i&nbsp;wysyła mu w&nbsp;odpowiedzi informacje. Klient jest najczęściej uruchomiony na innym komputerze. Komputer, na którym uruchomiony jest program serwera jest również nazywany serwerem.</dd>
+
+<dt id="smtp">SMTP (Simple Mail Transfer Protocol)</dt><dd>Protokół obsługujący wysyłanie wiadomości e-mail w&nbsp;sieci <a href="#internet">Internet</a>.</dd>
+
+<dt id="socks">SOCKS</dt><dd>Protokół, którego może używać serwer <a href="#proxy">proxy</a> do akceptowania połączeń użytkowników w&nbsp;sieci wewnętrznej i&nbsp;następnie do przesyłania ich poprzez sieć <a href="#internet">Internet</a>.</dd>
+
+<dt id="ssl">SSL (Secure Sockets Layer)</dt><dd>Protokół umożliwiający wzajemną autoryzację pomiędzy <a href="#client">klientem</a> i&nbsp;<a href="#server">serwerem</a> dla potrzeb zestawienia autoryzowanego i&nbsp;szyfrowanego połączenia. SSL działa powyżej <a href="#tcp_ip">TCP/IP</a> i&nbsp;poniżej <a href="#http">HTTP</a>, <a href="#ldap">LDAP</a>, <a href="#imap">IMAP</a>, NNTP i&nbsp;innych protokołów sieciowych wysokiego poziomu. Nowy standard, rozwijany przez stowarzyszenie Internet Engineering Task Force (IETF), nazwany Transport Layer Security (TLS), jest oparty na SSL. Zobacz również <a href="#authentication">autoryzacja</a> i&nbsp;<a href="#encryption">szyfrowanie</a>.</dd>
+
+<dt id="starttls">STARTTLS</dt><dd>Rozszerzenie do grupy standardowych protokołów TCP (jak SMTP, POP czy IMAP) które umożliwia klientowi przekazanie serwerowi wiadomości, aby ten używał szyfrowania <a href="#tls">TLS</a> na tym samym porcie TCP na którym odbywa się również komunikacja nieszyfrowana.</dd>
+
+<dt id="home_page">strona domowa</dt><dd>Strona ustawiona do wyświetlania przez przeglądarkę w&nbsp;trakcie jej uruchamiania lub po kliknięciu na przycisku Strona domowa. Również używana jako odwołanie do strony głównej danej witryny internetowej, z&nbsp;której można przeglądać pozostałe części witryny.</dd>
+
+<dt id="web_page">strona WWW&nbsp;(ang. web page)</dt><dd>Pojedynczy dokument w&nbsp;zasobach WWW&nbsp;określony za pomocą unikalnego adresu lub <a href="#url">URL-a</a>, mogący zawierać tekst, hiperłącza oraz grafikę.</dd>
+
+<dt id="cipher">szyfr</dt><dd>Zobacz <a href="#cryptographic_algorithm">algorytm kryptograficzny</a>.</dd>
+
+<dt id="encryption">szyfrowanie</dt><dd>Proces utajniania informacji w&nbsp;sposób uniemożliwiający odgadnięcie jej znaczenia. Przykładowo, zaszyfrowane połączenia pomiędzy komputerami czynią przesyłane w&nbsp;ten sposób informacje bardzo trudnymi do odtajnienia lub <em>rozszyfrowania</em> przez osoby trzecie. Zaszyfrowana informacja może być odszyfrowana tylko przez osobę posiadającą odpowiedni klucz. Zobacz również <a href="#public-key_cryptography">kryptografia z&nbsp;użyciem kluczy publicznych</a>.</dd>
+
+<dt id="symmetric_encryption">szyfrowanie symetryczne</dt><dd>Metoda szyfrowania, w&nbsp;której używa się pojedynczego klucza szyfrującego do szyfrowania i&nbsp;rozszyfrowywania wiadomości.</dd>
+
+<!-- TODO: start localizing -->
+<dt id="user_tracking">śledzenie użytkownika</dt><dd>Methods that some
+  <a href="#website">websites</a>, including advertisers and analytics services,
+  employ to determine patterns in how you browse the web (e.g., what websites
+  you have visited, which preferences you have voiced using buttons embedded by
+  social networks, and your purchase history). This information is mostly used
+  to show you specifically targeted offers or advertisements for products or
+  services. Mechanisms for user tracking include <a href="#cookie">cookies</a>
+  and <a href="#fingerprinting">browser fingerprinting</a>. See also
+  <a href="#do_not_track">Do Not Track</a>.</dd>
+<!-- TODO: stop localizing -->
+
+<dt id="tcp">TCP</dt><dd>Zobacz <a href="#tcp_ip">TCP/IP</a>.</dd>
+
+<dt id="tcp_ip">TCP/IP (Transmission Control Protocol/Internet Protocol)</dt><dd>Protokół kontroli transmisji / Protokół internetowy. Protokół pochodzący z&nbsp;systemów Unix, używany do łączenia komputerów zarządzanych przez różne systemy operacyjne. TCP/IP jest podstawowym protokołem internetowym i&nbsp;stał się globalnym standardem.</dd>
+
+<dt id="tls">TLS</dt><dd>TLS (Transport Layer Security) jest nowym standardem organizacji IETF bazującym na SSL (Secure Sockets Layer). Patrz również: <a href="#ssl">SSL</a> oraz <a href="#encryption">szyfrowanie</a>.</dd>
+
+<dt id="token">token</dt><dd>Patrz: <a href="#security_device">urządzenie zabezpieczające</a>.</dd>
+
+<!-- TODO: start localizing -->
+<dt id="private_browsing">Tryb prywatny</dt><dd>Browsing in a session in
+  which no private data (like browsing history, <a href="#cookie">cookies</a>,
+  and <a href="#cache">cached</a> content) are retained beyond the duration of
+  the private session. Private browsing should not be confused with anonymous
+  browsing and does not prevent <a href="#user_tracking">user tracking</a> or
+  monitoring of web activity by an internet provider or employer.</dd>
+<!-- TODO: stop localizing -->
+
+<dt id="security_token">token zabezpieczający</dt><dd>Patrz: <a href="#security_device">urządzenie zabezpieczające</a>.</dd>
+
+<dt id="url">URL (Uniform Resource Locator)</dt><dd>Zunifikowany standard odnośników. Ustandaryzowany adres, na podstawie którego przeglądarka stron WWW&nbsp;lokalizuje plik lub inny zasób w&nbsp;sieci Web. Przykładowo: <tt>http://www.mozilla.org</tt>. Adresy URL wpisuje się w&nbsp;<a href="#location_bar">pasku adresu</a> przeglądarki, aby uzyskać dostęp do <a href="#web_page">stron WWW</a>. Adresy URL są również używane w&nbsp;odnośnikach na stronach WWW, po kliknięciu których wyświetlane są inne strony WWW. URL jest znany również jako adres internetowy lub adres WWW.</dd>
+
+<dt id="security_device">urządzenie zabezpieczające</dt><dd>Sprzęt lub oprogramowanie, które dostarcza usług kryptograficznych takich jak szyfrowanie i&nbsp;rozszyfrowywanie, przechowuje certyfikaty oraz klucze (hasła). <a href="#smart_card">Karta inteligentna</a> jest przykładem urządzenia zabezpieczającego w&nbsp;postaci sprzętowej. <a href="#certificate_manager">Menedżer certyfikatów</a> zawiera własne, wbudowane urządzenie zabezpieczające, nazywane <a href="#software_security_device">programowym urządzeniem zabezpieczającym</a>, które jest zawsze dostępne podczas pracy przeglądarki. Każde urządzenie zabezpieczające jest chronione przez odpowiednie <a href="#master_password">główne hasło</a>.</dd>
+
+<dt id="certificate_verification">weryfikacja certyfikatu</dt><dd>Kiedy <a href="#certificate_manager">Menedżer certyfikatów</a> weryfikuje certyfikat, potwierdza, że podpis cyfrowy został utworzony przez organ certyfikacji, którego własny certyfikat Menedżer certyfikatów ma zapisany i&nbsp;oznaczony jako zaufany dla celów wydawania takiego rodzaju certyfikatów. Potwierdza również, że weryfikowany certyfikat nie został oznaczony przez siebie samego jako niezaufany. Oraz ostatecznie, jeżeli <a href="#ocsp">OCSP (Online Certificate Status Protocol)</a> został uaktywniony, Menedżer certyfikatów przeprowadza również sprawdzenie certyfikatu w&nbsp;trybie online. Czyni to przez wyszukiwanie certyfikatu na liście ważnych certyfikatów dostępnej pod adresem <a href="#url">URL</a> określonym w&nbsp;certyfikacie lub w&nbsp;preferencjach weryfikacji przeglądarki. Jeżeli dowolne z&nbsp;tych sprawdzeń da wynik negatywny, Menedżer certyfikatów oznaczy ten certyfikat jako niezweryfikowany i&nbsp;nie będzie rozpoznawał tożsamości przez niego identyfikowanej.</dd>
+
+<dt id="website">witryna internetowa (ang. website)</dt><dd>Grupa powiązanych stron WWW&nbsp;połączonych hiperłączami i&nbsp;zarządzanych przez pojedynczą firmę, organizację lub osobę. Witryna internetowa może zawierać tekst, grafikę, pliki audio i&nbsp;wideo oraz odnośniki do innych witryn.</dd>
+
+<dt id="world_wide_web">World Wide Web (WWW)</dt><dd>Często nazywane również Web (ang.). Część zasobów <a href="#internet">Internetu</a> w&nbsp;postaci stron WWW&nbsp;przechowywanych na  <a href="#server">serwerach</a> stron WWW&nbsp;i&nbsp;wyświetlanych za pomocą <a href="#client">klientów</a> zwanych przeglądarkami stron WWW&nbsp;(takich jak &brandShortName;).</dd>
+
+<dt id="wpad">WPAD (Web Proxy AutoDiscovery)</dt><dd>Propozycja protokołu internetowego umożliwiającego przeglądarce stron WWW&nbsp;automatyczne wyszukanie i&nbsp;połączenie z&nbsp;usługami <a href="#proxy">proxy</a> w&nbsp;sieci.</dd>
+
+<dt id="plugin">wtyczka</dt><dd>Rodzaj <a href="#helper_application">aplikacji pomocniczej</a> dodającej nowe możliwości do przeglądarki, takie jak zdolność odtwarzania plików plików dźwiękowych lub filmów wideo. W&nbsp;przeciwieństwie do innych rodzajów aplikacji pomocniczych, aplikacja wtyczki instaluje się do folderu Plugins w&nbsp;głównym folderze instalacji przeglądarki i&nbsp;zwykle może być samodzielnie uruchomiona wewnętrznie przez przeglądarkę. Przykładowo, wtyczka obsługująca pliki dźwiękowe umożliwia słuchanie ich na <a href="#web_page">stronie WWW</a> lub w&nbsp;wiadomościach e-mail. Adobe Flash Player i&nbsp;Java są przykładami aplikacji w&nbsp;postaci wtyczek.</dd>
+
+<dt id="tamper_detection">wykrywanie fałszerstwa</dt><dd>Mechanizm zapewniający, że dane odebrane w&nbsp;postaci elektronicznej nie zostały sfałszowane, to znaczy, że są dokładnie takie same jak dane oryginalne.</dd>
+
+<dt id="search_engine">wyszukiwarka</dt><dd>Program działający na serwerze WWW&nbsp;umożliwiający użytkownikom wyszukiwanie określonych informacji w&nbsp;sieci <a href="#world_wide_web">World Wide Web (WWW)</a>. Wyszukiwarka może przeszukiwać całość tekstu dokumentów na stronach WWW&nbsp;lub listę słów kluczowych albo korzystać z&nbsp;pomocy bibliotekarzy przeglądających dokumenty na stronach WWW&nbsp;i&nbsp;ręcznie je indeksujących w&nbsp;celu późniejszego użycia. Najczęściej użytkownik wprowadza słowo lub frazę, nazywane również zapytaniem, w&nbsp;polu wyszukiwania, a&nbsp;wyszukiwarka wyświetla odnośniki do odpowiadających zapytaniu stron WWW.</dd>
+
+<dt id="xml">XML (Extensible Markup Language)</dt><dd>Rozszerzalny język znaczników. Otwarty standard opisu danych. W&nbsp;przeciwieństwie do <a href="#html">HTML</a>, XML umożliwia tworzącym strony WWW&nbsp;definiowanie specjalnych znaczników. Więcej informacji w&nbsp;dokumencie <a href="http://www.w3.org/XML/">Extensible Markup Language (XML)</a> (strona w&nbsp;języku angielskim).</dd>
+
+<dt id="xslt">XSLT (Extensible Stylesheet Language Transformation)</dt><dd>Język używany do konwertowania dokumentów XML do innych dokumentów XML lub do innego formatu.</dd>
+
+<dt id="xul">XUL (XML User Interface Language)</dt><dd>Język znaczników XML do tworzenia interfejsu użytkownika w&nbsp;aplikacjach.</dd>
+
+<dt id="bookmark">zakładka</dt><dd>Zapisany adres (<a href="#url">URL</a>) <a href="#web_page">strony WWW</a>, którą dzięki temu można łatwo wyświetlić klikając ikonę zakładki na <a href="#personal_toolbar">osobistym pasku narzędzi</a> lub wybierając nazwę zakładki z&nbsp;menu Zakładki.</dd>
+
+<dt id="trust">zaufanie</dt><dd>Poleganie w&nbsp;pełni na innej osobie lub jednostce. W&nbsp;znaczeniu <a href="#pki">PKI&nbsp;(infrastruktury klucza publicznego)</a>, zaufanie zwykle odnosi się do relacji pomiędzy użytkownikiem certyfikatu i&nbsp;<a href="#certificate_authority">organem certyfikacji</a> wystawiającym certyfikat. Jeżeli Menedżer certyfikatów jest używany do określania zaufania do organu certyfikacji, to Menedżer certyfikatów będzie ufał certyfikatom wystawionym przez ten organ certyfikacji, chyba że dla pojedynczych certyfikatów zostanie to określone inaczej. Karta Organy certyfikacji Menedżera certyfikatów pozwala określić zaufanie lub jego brak do poszczególnych certyfikatów wydanych przez dane organy certyfikacji.</dd>
+
+<dt id="slot">złącze (slot)</dt><dd>Urządzenie lub jego odpowiednik programowy, kontrolowane przez <a href="#pkcs_11_module">moduł PKCS #11</a> i&nbsp;będące pojemnikiem na <a href="#security_device">urządzenie zabezpieczające</a>.</dd>
+
+</dl>
+
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.popups.title              "Xanelas emerxentes">
+
+<!ENTITY pref.popups.caption            "Xanelas emerxentes">
+
+<!ENTITY popupBlock.label               "Bloquear as xanelas emerxentes non solicitadas">
+<!ENTITY popupBlock.accesskey           "B">
+
+<!ENTITY viewPermissions.label          "Xestionar permisos">
+<!ENTITY viewPermissions.accesskey      "m">
+
+<!ENTITY whenBlock.description          "Cando se bloquee unha xanela emerxente:">
+<!ENTITY playSound.label                "Reproducir un son:">
+<!ENTITY playSound.accesskey            "p">
+<!ENTITY systemSound.label              "Ton de aviso do sistema">
+<!ENTITY systemSound.accesskey          "s">
+<!ENTITY customSound.label              "Ficheiro de son personalizado">
+<!ENTITY customSound.accesskey          "c">
+
+<!ENTITY selectSound.label              "Examinar…">
+<!ENTITY selectSound.accesskey          "E">
+<!ENTITY playSoundButton.label          "Reproducir">
+<!ENTITY playSoundButton.accesskey      "R">
+
+<!ENTITY displayIcon.label              "Mostrar unha icona na barra de estado do navegador">
+<!ENTITY displayIcon.accesskey          "d">
+
+<!ENTITY displayNotification.label      "Mostrar unha barra de notificación na parte superior da área de contido">
+<!ENTITY displayNotification.accesskey  "n">
+
+<!ENTITY popupNote.description          "Nota: Bloqueando todas as xanelas emerxentes pode impedir que funcionen características importantes dalgúns sitios web, como xanelas de inicio de sesión para bancos e sitios web de compra en liña. Para máis detalles sobre como permitir que sitios web específicos usen xanelas emerxentes sen deixar de bloquealas para o resto, prema na Axuda. Incluso co bloqueo activado, algúns sitios web poden usar outros métodos para mostrar xanelas emerxentes.">
+

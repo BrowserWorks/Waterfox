@@ -8,6 +8,7 @@
 #define builtin_intl_SharedIntlData_h
 
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/UniquePtr.h"
 
 #include <stddef.h>
 
@@ -19,9 +20,16 @@
 #include "js/Utility.h"
 #include "vm/StringType.h"
 
+using UDateTimePatternGenerator = void*;
+
 namespace js {
 
 namespace intl {
+
+class DateTimePatternGeneratorDeleter {
+ public:
+  void operator()(UDateTimePatternGenerator* ptr);
+};
 
 /**
  * Stores Intl data which can be shared across compartments (but not contexts).
@@ -47,6 +55,11 @@ class SharedIntlData {
       } else {
         twoByteChars = string->twoByteChars(nogc);
       }
+    }
+
+    LinearStringLookup(const char* chars, size_t length)
+        : isLatin1(true), length(length) {
+      latin1Chars = reinterpret_cast<const JS::Latin1Char*>(chars);
     }
   };
 
@@ -157,6 +170,76 @@ class SharedIntlData {
       JS::MutableHandle<JSAtom*> result);
 
  private:
+  using Locale = JSAtom*;
+
+  struct LocaleHasher {
+    struct Lookup : LinearStringLookup {
+      explicit Lookup(JSLinearString* locale);
+      Lookup(const char* chars, size_t length);
+    };
+
+    static js::HashNumber hash(const Lookup& lookup) { return lookup.hash; }
+    static bool match(Locale key, const Lookup& lookup);
+  };
+
+  using LocaleSet = GCHashSet<Locale, LocaleHasher, SystemAllocPolicy>;
+
+  // Set of supported locales for all Intl service constructors except Collator,
+  // which uses its own set.
+  //
+  // UDateFormat:
+  // udat_[count,get]Available() return the same results as their
+  // uloc_[count,get]Available() counterparts.
+  //
+  // UNumberFormatter:
+  // unum_[count,get]Available() return the same results as their
+  // uloc_[count,get]Available() counterparts.
+  //
+  // UListFormatter, UPluralRules, and URelativeDateTimeFormatter:
+  // We're going to use ULocale availableLocales as per ICU recommendation:
+  // https://unicode-org.atlassian.net/browse/ICU-12756
+  LocaleSet supportedLocales;
+
+  // ucol_[count,get]Available() return different results compared to
+  // uloc_[count,get]Available(), we can't use |supportedLocales| here.
+  LocaleSet collatorSupportedLocales;
+
+  bool supportedLocalesInitialized = false;
+
+  // CountAvailable and GetAvailable describe the signatures used for ICU API
+  // to determine available locales for various functionality.
+  using CountAvailable = int32_t (*)();
+  using GetAvailable = const char* (*)(int32_t localeIndex);
+
+  static bool getAvailableLocales(JSContext* cx, LocaleSet& locales,
+                                  CountAvailable countAvailable,
+                                  GetAvailable getAvailable);
+
+  /**
+   * Precomputes the available locales sets.
+   */
+  bool ensureSupportedLocales(JSContext* cx);
+
+ public:
+  enum class SupportedLocaleKind {
+    Collator,
+    DateTimeFormat,
+    DisplayNames,
+    ListFormat,
+    NumberFormat,
+    PluralRules,
+    RelativeTimeFormat
+  };
+
+  /**
+   * Sets |supported| to true if |locale| is supported by the requested Intl
+   * service constructor. Otherwise sets |supported| to false.
+   */
+  MOZ_MUST_USE bool isSupportedLocale(JSContext* cx, SupportedLocaleKind kind,
+                                      JS::Handle<JSString*> locale,
+                                      bool* supported);
+
+ private:
   /**
    * The case first parameter (BCP47 key "kf") allows to switch the order of
    * upper- and lower-case characters. ICU doesn't directly provide an API
@@ -171,21 +254,16 @@ class SharedIntlData {
    * There is almost no difference between lower-case first and when case
    * first is disabled (UCOL_LOWER_FIRST resp. UCOL_OFF), so we only need to
    * track locales which use upper-case first as their default setting.
+   *
+   * Instantiating collator objects for each available locale is slow
+   * (bug 1527879), therefore we're hardcoding the two locales using upper-case
+   * first ("da" (Danish) and "mt" (Maltese)) and only assert in debug-mode
+   * these two locales match the upper-case first locales returned by ICU. A
+   * system-ICU may support a different set of locales, therefore we're always
+   * calling into ICU to find the upper-case first locales in that case.
    */
 
-  using Locale = JSAtom*;
-
-  struct LocaleHasher {
-    struct Lookup : LinearStringLookup {
-      explicit Lookup(JSLinearString* locale);
-    };
-
-    static js::HashNumber hash(const Lookup& lookup) { return lookup.hash; }
-    static bool match(Locale key, const Lookup& lookup);
-  };
-
-  using LocaleSet = GCHashSet<Locale, LocaleHasher, SystemAllocPolicy>;
-
+#if DEBUG || MOZ_SYSTEM_ICU
   LocaleSet upperCaseFirstLocales;
 
   bool upperCaseFirstInitialized = false;
@@ -194,6 +272,7 @@ class SharedIntlData {
    * Precomputes the available locales which use upper-case first sorting.
    */
   bool ensureUpperCaseFirstLocales(JSContext* cx);
+#endif
 
  public:
   /**
@@ -202,6 +281,22 @@ class SharedIntlData {
    */
   bool isUpperCaseFirst(JSContext* cx, JS::Handle<JSString*> locale,
                         bool* isUpperFirst);
+
+ private:
+  using UniqueUDateTimePatternGenerator =
+      mozilla::UniquePtr<UDateTimePatternGenerator,
+                         DateTimePatternGeneratorDeleter>;
+
+  UniqueUDateTimePatternGenerator dateTimePatternGenerator;
+  JS::UniqueChars dateTimePatternGeneratorLocale;
+
+ public:
+  /**
+   * Wrapper around |udatpg_open| to return a possibly cached generator
+   * instance. The returned pointer must not be closed via |udatpg_close|.
+   */
+  UDateTimePatternGenerator* getDateTimePatternGenerator(JSContext* cx,
+                                                         const char* locale);
 
  public:
   void destroyInstance();

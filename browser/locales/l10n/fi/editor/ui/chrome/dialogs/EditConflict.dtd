@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label  "Valitse muokkauksen muutokset">
+<!ENTITY conflictWarning.label  "Jokin muu ohjelma on muokannut sivua, mutta Composerissa tehtyjä muutoksia ei ole tallennettu.">
+<!ENTITY conflictResolve.label  "Valitse säilytettävä versio:">
+<!ENTITY keepCurrentPageButton.label  "Säilytä nykyiset muutokset">
+<!ENTITY useOtherPageButton.label  "Korvaa nykyinen sivu toisen ohjelman muutoksilla">

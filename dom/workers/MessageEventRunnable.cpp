@@ -21,7 +21,7 @@ MessageEventRunnable::MessageEventRunnable(WorkerPrivate* aWorkerPrivate,
                                            TargetAndBusyBehavior aBehavior)
     : WorkerDebuggeeRunnable(aWorkerPrivate, aBehavior),
       StructuredCloneHolder(CloningSupported, TransferringSupported,
-                            StructuredCloneScope::SameProcessDifferentThread) {}
+                            StructuredCloneScope::SameProcess) {}
 
 bool MessageEventRunnable::DispatchDOMEvent(JSContext* aCx,
                                             WorkerPrivate* aWorkerPrivate,
@@ -61,7 +61,19 @@ bool MessageEventRunnable::DispatchDOMEvent(JSContext* aCx,
         MarkerTracingType::START);
   }
 
-  Read(parent, aCx, &messageData, rv);
+  JS::CloneDataPolicy cloneDataPolicy;
+  if (parent->GetClientInfo().isSome() &&
+      parent->GetClientInfo()->AgentClusterId().isSome() &&
+      parent->GetClientInfo()->AgentClusterId()->Equals(
+          aWorkerPrivate->AgentClusterId())) {
+    cloneDataPolicy.allowIntraClusterClonableSharedObjects();
+  }
+
+  if (aWorkerPrivate->IsSharedMemoryAllowed()) {
+    cloneDataPolicy.allowSharedMemoryObjects();
+  }
+
+  Read(parent, aCx, &messageData, cloneDataPolicy, rv);
 
   if (isTimelineRecording) {
     end = MakeUnique<WorkerTimelineMarker>(

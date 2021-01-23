@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -13,11 +11,16 @@ add_task(async function() {
   // generate file:// URI for JSON file and load in new tab
   const dir = getChromeDir(getResolvedURI(gTestPath));
   dir.append(TEST_JSON_FILE);
+  dir.normalize();
   const uri = Services.io.newFileURI(dir);
   const tab = await addJsonViewTab(uri.spec);
 
-  // perform sanity checks for URI and pricnipals in loadInfo
-  await ContentTask.spawn(tab.linkedBrowser, {TEST_JSON_FILE}, async function ({TEST_JSON_FILE}) { // eslint-disable-line
+  // perform sanity checks for URI and principals in loadInfo
+  await SpecialPowers.spawn(
+    tab.linkedBrowser,
+    [{ TEST_JSON_FILE }],
+    // eslint-disable-next-line no-shadow
+    async function({ TEST_JSON_FILE }) {
       const channel = content.docShell.currentDocumentChannel;
       const channelURI = channel.URI.spec;
       ok(
@@ -56,7 +59,12 @@ add_task(async function() {
   await loaded;
 
   // check principals in loadInfo are still correct
-  await ContentTask.spawn(tab.linkedBrowser, {TEST_JSON_FILE}, async function ({TEST_JSON_FILE}) { // eslint-disable-line
+  await SpecialPowers.spawn(
+    tab.linkedBrowser,
+    [{ TEST_JSON_FILE }],
+    // eslint-disable-next-line no-shadow
+    async function({ TEST_JSON_FILE }) {
+      // eslint-disable-line
       const channel = content.docShell.currentDocumentChannel;
       const channelURI = channel.URI.spec;
       ok(

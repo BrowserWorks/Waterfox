@@ -1,0 +1,104 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Title -->
+
+<!ENTITY addressbookWindow.title "Adres defteri">
+<!-- Menus:  the . means that the menu item isn't implemented yet -->
+<!-- File Menu -->
+
+
+<!ENTITY newContact.label "Adres…">
+<!-- LOCALIZATION NOTE (newContact.accesskey) : DONT_TRANSLATE -->
+<!ENTITY newContact.accesskey "C">
+<!ENTITY newListCmd.label "Posta listesi…">
+<!-- LOCALIZATION NOTE (newListCmd.accesskey) : DONT_TRANSLATE -->  
+<!ENTITY newListCmd.accesskey "L">
+<!ENTITY newAddressBookCmd.label "Adres defteri…">
+<!ENTITY newAddressBookCmd.accesskey "r">
+<!ENTITY newLDAPDirectoryCmd.label "LDAP dizini…">
+<!-- LOCALIZATION NOTE (newLDAPDirectoryCmd.accesskey) : DONT_TRANSLATE -->
+<!ENTITY newLDAPDirectoryCmd.accesskey "D">
+<!ENTITY newIM.label "IM">
+<!ENTITY printContactViewCmd.label "Kişi yazdır…">
+<!ENTITY printContactViewCmd.accesskey "y">
+<!ENTITY printPreviewContactViewCmd.label "Kişi yazdırma önizleme">
+<!ENTITY printPreviewContactViewCmd.accesskey "K">
+<!ENTITY printContactViewCmd.key "P">
+<!ENTITY printAddressBook.label "Adres defterini yazdır…">
+<!ENTITY printAddressBook.accesskey "A">
+<!ENTITY printPreviewAddressBook.label "Adres defteri yazdırma önizleme">
+<!ENTITY printPreviewAddressBook.accesskey "r">
+<!-- Edit Menu -->
+
+<!ENTITY deleteAbCmd.label "Adres defteri sil">
+<!ENTITY deleteContactCmd.label "Adresi sil">
+<!ENTITY deleteContactsCmd.label "Seçilmiş adresleri sil">
+<!ENTITY deleteListCmd.label "Listeyi sil">
+<!ENTITY deleteListsCmd.label "Seçilmiş listeleri sil">
+<!ENTITY deleteItemsCmd.label "Seçilmiş öğeleri sil">
+<!ENTITY swapFirstNameLastNameCmd.label "Ad/Soyad isimlerini değiştir">
+<!ENTITY swapFirstNameLastNameCmd.accesskey "i">
+<!ENTITY propertiesCmd.label "Özellikler…">
+<!-- LOCALIZATION NOTE (propertiesCmd.accesskey) : DONT_TRANSLATE -->  
+<!ENTITY propertiesCmd.accesskey "i">
+<!ENTITY propertiesCmd.key "i">
+<!-- View Menu -->
+
+<!ENTITY showAbToolbarCmd.label "Araç çubuğunu göster">
+<!ENTITY showAbToolbarCmd.accesskey "r">
+
+<!ENTITY showCardPane.label "Kartvizit özet paneli">
+<!ENTITY showCardPane.accesskey "K">
+  
+<!ENTITY menu_ShowNameAs.label "İsmi farklı göster:">
+<!ENTITY menu_ShowNameAs.accesskey "ö">
+<!ENTITY firstLastCmd.label "Adı, Soyadı">
+<!ENTITY firstLastCmd.accesskey "ı">
+<!ENTITY lastFirstCmd.label "Soyadı, Adı">
+<!ENTITY lastFirstCmd.accesskey "A">
+<!ENTITY displayNameCmd.label "Görüntülenecek isim">
+<!ENTITY displayNameCmd.accesskey "r">
+<!-- Tasks Menu -->
+
+<!ENTITY importCmd.label "İçe aktar…">
+<!ENTITY importCmd.accesskey "t">
+<!ENTITY exportCmd.label "Dışa aktar…">
+<!ENTITY exportCmd.accesskey "a">
+<!-- Toolbar and Popup items -->  
+
+<!ENTITY newContactButton.label "Yeni adres">
+<!ENTITY newContactButton.accesskey "a">
+<!ENTITY newlistButton.label "Yeni liste">
+<!ENTITY newlistButton.accesskey "l">
+<!ENTITY editItemButton.label "Özellikler…">
+<!ENTITY editItemButton.accesskey "r">
+<!ENTITY newmsgButton.label "Oluştur">
+<!ENTITY newmsgButton.accesskey "O">
+<!ENTITY deleteItemButton.label "Sil">
+<!ENTITY deleteItemButton.accesskey "S">
+<!ENTITY newimButton.label "IM">
+<!ENTITY newimButton.accesskey "M">
+<!ENTITY searchNameAndEmail.placeholder "İsim veya e-postayı ara">
+<!ENTITY searchBox.title "Ara">
+<!-- Tooltips -->
+
+<!ENTITY addressbookToolbar.tooltip "Adres defteri araç çubuğu">
+<!ENTITY newContactButton.tooltip "Yeni adres defteri girdisi oluştur">
+<!ENTITY newlistButton.tooltip "Yeni bir liste oluştur">
+<!ENTITY editItemButton.tooltip "Seçili öğeleri düzenle">
+<!ENTITY newmsgButton.tooltip "İletiyi gönder">
+<!ENTITY newIM.tooltip "Hızlı ileti gönder veya chat yap">
+<!ENTITY deleteItemButton.tooltip "Seçilmiş öğeleri sil">
+<!ENTITY throbber.tooltip "&vendorShortName; anasayfasına git">
+<!ENTITY advancedButton.tooltip "Gelişmiş adres arama">
+<!-- Dir Tree header -->
+
+<!ENTITY dirTreeHeader.label "Address Books">
+<!-- Status Bar -->  
+
+<!ENTITY statusText.label "">
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+<!-- Swap FN/LN UI  Set to "false" to show swap fn/ln UI -->
+
+<!ENTITY hideSwapFnLnUI "true">

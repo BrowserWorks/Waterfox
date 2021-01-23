@@ -6,47 +6,39 @@
 
 var EXPORTED_SYMBOLS = ["SyncTelemetry"];
 
+// Support for Sync-and-FxA-related telemetry, which is submitted in a special-purpose
+// telemetry ping called the "sync ping", documented here:
+//
+//  ../../../toolkit/components/telemetry/docs/data/sync-ping.rst
+//
+// The sync ping contains identifiers that are linked to the user's Firefox Account
+// and are separate from the main telemetry client_id, so this file is also responsible
+// for ensuring that we can delete those pings upon user request, by plumbing its
+// identifiers into the "deletion-request" ping.
+
 const { XPCOMUtils } = ChromeUtils.import(
   "resource://gre/modules/XPCOMUtils.jsm"
 );
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
-const { Log } = ChromeUtils.import("resource://gre/modules/Log.jsm");
-const { AuthenticationError } = ChromeUtils.import(
-  "resource://services-sync/browserid_identity.js"
-);
-const { Weave } = ChromeUtils.import("resource://services-sync/main.js");
-const { Status } = ChromeUtils.import("resource://services-sync/status.js");
-const { Svc } = ChromeUtils.import("resource://services-sync/util.js");
-const { Resource } = ChromeUtils.import("resource://services-sync/resource.js");
-const { Observers } = ChromeUtils.import(
-  "resource://services-common/observers.js"
-);
-const { Async } = ChromeUtils.import("resource://services-common/async.js");
+
+XPCOMUtils.defineLazyModuleGetters(this, {
+  Async: "resource://services-common/async.js",
+  AuthenticationError: "resource://services-sync/browserid_identity.js",
+  Log: "resource://gre/modules/Log.jsm",
+  ObjectUtils: "resource://gre/modules/ObjectUtils.jsm",
+  Observers: "resource://services-common/observers.js",
+  OS: "resource://gre/modules/osfile.jsm",
+  Resource: "resource://services-sync/resource.js",
+  Services: "resource://gre/modules/Services.jsm",
+  Status: "resource://services-sync/status.js",
+  Svc: "resource://services-sync/util.js",
+  TelemetryController: "resource://gre/modules/TelemetryController.jsm",
+  TelemetryEnvironment: "resource://gre/modules/TelemetryEnvironment.jsm",
+  TelemetryUtils: "resource://gre/modules/TelemetryUtils.jsm",
+  Weave: "resource://services-sync/main.js",
+});
 
 let constants = {};
 ChromeUtils.import("resource://services-sync/constants.js", constants);
-
-ChromeUtils.defineModuleGetter(
-  this,
-  "TelemetryController",
-  "resource://gre/modules/TelemetryController.jsm"
-);
-ChromeUtils.defineModuleGetter(
-  this,
-  "TelemetryUtils",
-  "resource://gre/modules/TelemetryUtils.jsm"
-);
-ChromeUtils.defineModuleGetter(
-  this,
-  "TelemetryEnvironment",
-  "resource://gre/modules/TelemetryEnvironment.jsm"
-);
-ChromeUtils.defineModuleGetter(
-  this,
-  "ObjectUtils",
-  "resource://gre/modules/ObjectUtils.jsm"
-);
-ChromeUtils.defineModuleGetter(this, "OS", "resource://gre/modules/osfile.jsm");
 
 XPCOMUtils.defineLazyServiceGetter(
   this,
@@ -54,25 +46,48 @@ XPCOMUtils.defineLazyServiceGetter(
   "@mozilla.org/base/telemetry;1",
   "nsITelemetry"
 );
-
+ChromeUtils.defineModuleGetter(
+  this,
+  "fxAccounts",
+  "resource://gre/modules/FxAccounts.jsm"
+);
+XPCOMUtils.defineLazyGetter(
+  this,
+  "WeaveService",
+  () => Cc["@mozilla.org/weave/service;1"].getService().wrappedJSObject
+);
 const log = Log.repository.getLogger("Sync.Telemetry");
 
 const TOPICS = [
   "profile-before-change",
+
+  // For tracking change to account/device identifiers.
+  "fxaccounts:new_device_id",
+  "fxaccounts:onlogout",
+  "weave:service:ready",
+  "weave:service:login:change",
+
+  // For whole-of-sync metrics.
   "weave:service:sync:start",
   "weave:service:sync:finish",
   "weave:service:sync:error",
 
+  // For individual engine metrics.
   "weave:engine:sync:start",
   "weave:engine:sync:finish",
   "weave:engine:sync:error",
   "weave:engine:sync:applied",
+  "weave:engine:sync:step",
   "weave:engine:sync:uploaded",
   "weave:engine:validate:finish",
   "weave:engine:validate:error",
 
+  // For ad-hoc telemetry events.
   "weave:telemetry:event",
   "weave:telemetry:histogram",
+  "fxa:telemetry:event",
+
+  "weave:telemetry:migration",
 ];
 
 const PING_FORMAT_VERSION = 1;
@@ -218,6 +233,7 @@ class EngineRecord {
       "incoming",
       "outgoing",
       "validation",
+      "steps",
     ];
     for (let property of properties) {
       result[property] = this[property];
@@ -260,20 +276,40 @@ class EngineRecord {
     }
   }
 
+  recordStep(stepResult) {
+    let step = {
+      name: stepResult.name,
+    };
+    if (stepResult.took > 0) {
+      step.took = Math.round(stepResult.took);
+    }
+    if (stepResult.counts) {
+      let counts = stepResult.counts.filter(({ count }) => count > 0);
+      if (counts.length) {
+        step.counts = counts;
+      }
+    }
+    if (this.steps) {
+      this.steps.push(step);
+    } else {
+      this.steps = [step];
+    }
+  }
+
   recordValidation(validationResult) {
     if (this.validation) {
       log.error(`Multiple validations occurred for engine ${this.name}!`);
       return;
     }
-    let { problems, version, duration, recordCount } = validationResult;
+    let { problems, version, took, checked } = validationResult;
     let validation = {
       version: version || 0,
-      checked: recordCount || 0,
+      checked: checked || 0,
     };
-    if (duration > 0) {
-      validation.took = Math.round(duration);
+    if (took > 0) {
+      validation.took = Math.round(took);
     }
-    let summarized = problems.getSummary(true).filter(({ count }) => count > 0);
+    let summarized = problems.filter(({ count }) => count > 0);
     if (summarized.length) {
       validation.problems = summarized;
     }
@@ -311,6 +347,7 @@ class TelemetryRecord {
     // error actually occurred.
     this.failureReason = undefined;
     this.uid = "";
+    this.syncNodeType = null;
     this.when = Date.now();
     this.startTime = tryGetMonotonicTimestamp();
     this.took = 0; // will be set later.
@@ -329,7 +366,6 @@ class TelemetryRecord {
       took: this.took,
       failureReason: this.failureReason,
       status: this.status,
-      devices: this.devices,
     };
     if (this.why) {
       result.why = this.why;
@@ -357,34 +393,8 @@ class TelemetryRecord {
       this.failureReason = SyncTelemetry.transformError(error);
     }
 
-    // We don't bother including the "devices" field if we can't come up with a
-    // UID or device ID for *this* device -- If that's the case, any data we'd
-    // put there would be likely to be full of garbage anyway.
-    // Note that we currently use the "sync device GUID" rather than the "FxA
-    // device ID" as the latter isn't stable enough for our purposes - see bug
-    // 1316535.
-    let includeDeviceInfo = false;
-    try {
-      this.uid = Weave.Service.identity.hashedUID();
-      this.deviceID = Weave.Service.identity.hashedDeviceID(
-        Weave.Service.clientsEngine.localID
-      );
-      includeDeviceInfo = true;
-    } catch (e) {
-      this.uid = EMPTY_UID;
-      this.deviceID = undefined;
-    }
-
-    if (includeDeviceInfo) {
-      let remoteDevices = Weave.Service.clientsEngine.remoteClients;
-      this.devices = remoteDevices.map(device => {
-        return {
-          os: device.os,
-          version: device.version,
-          id: Weave.Service.identity.hashedDeviceID(device.id),
-        };
-      });
-    }
+    this.uid = fxAccounts.telemetry.getSanitizedUID() || EMPTY_UID;
+    this.syncNodeType = Weave.Service.identity.telemetryNodeType;
 
     // Check for engine statuses. -- We do this now, and not in engine.finished
     // to make sure any statuses that get set "late" are recorded
@@ -416,9 +426,7 @@ class TelemetryRecord {
 
     if (this.currentEngine) {
       log.error(
-        `Being told that engine ${engineName} has started, but current engine ${
-          this.currentEngine.name
-        } hasn't stopped`
+        `Being told that engine ${engineName} has started, but current engine ${this.currentEngine.name} hasn't stopped`
       );
       // Just discard the current engine rather than making up data for it.
     }
@@ -451,6 +459,13 @@ class TelemetryRecord {
       return;
     }
     this.currentEngine.recordApplied(counts);
+  }
+
+  onEngineStep(engineName, step) {
+    if (this._shouldIgnoreEngine(engineName)) {
+      return;
+    }
+    this.currentEngine.recordStep(step);
   }
 
   onEngineValidated(engineName, validationData) {
@@ -548,13 +563,14 @@ class SyncTelemetryImpl {
     this.discarded = 0;
     this.events = [];
     this.histograms = {};
+    this.migrations = [];
     this.maxEventsCount = Svc.Prefs.get("telemetry.maxEventsCount", 1000);
     this.maxPayloadCount = Svc.Prefs.get("telemetry.maxPayloadCount");
     this.submissionInterval =
       Svc.Prefs.get("telemetry.submissionInterval") * 1000;
     this.lastSubmissionTime = Telemetry.msSinceProcessStart();
     this.lastUID = EMPTY_UID;
-    this.lastDeviceID = undefined;
+    this.lastSyncNodeType = null;
     // Note that the sessionStartDate is somewhat arbitrary - the telemetry
     // modules themselves just use `new Date()`. This means that our startDate
     // isn't going to be the same as the sessionStartDate in the main pings,
@@ -566,20 +582,134 @@ class SyncTelemetryImpl {
     );
   }
 
+  sanitizeFxaDeviceId(deviceId) {
+    return fxAccounts.telemetry.sanitizeDeviceId(deviceId);
+  }
+
+  prepareFxaDevices(devices) {
+    // The recentDevicesList contains very many duplicates, so we trim out ones
+    // that another service has already deemed expired, onces which are
+    // duplicates (by name), and ones that haven't been used recently enough.
+    let devicesList = devices.filter(
+      d => !d.pushEndpointExpired && d.lastAccessTime != null
+    );
+    // Discard entries with duplicate names, taking the entry which has been
+    // used more recently.
+    devicesList.sort((a, b) => a.lastAccessTime - b.lastAccessTime);
+    let seenNames = new Map();
+    for (let device of devicesList) {
+      seenNames.set(device.name, device);
+    }
+    devicesList = Array.from(seenNames.values());
+    // And now prune based on the threshold, which defaults to 2 months, but can
+    // be configured (or disabled) if it turns out to be a problem. This range
+    // is arbitrary, but has been given a thumbs up by our data scientist.
+    //
+    // Note that without this, my list contained devices well over two years old D:
+    let threshold = Services.prefs.getIntPref(
+      "identity.fxaccounts.telemetry.staleDeviceThreshold",
+      1000 * 60 * 60 * 24 * 30 * 2
+    );
+    if (threshold != -1) {
+      let limit = Date.now() - threshold;
+      devicesList = devicesList.filter(d => d.lastAccessTime >= limit);
+    }
+    // For non-sync users, the data per device is limited -- just an id and a
+    // type (and not even the id yet). For sync users, if we can correctly map
+    // the fxaDevice to a sync device, then we can get os and version info,
+    // which would be quite unfortunate to lose.
+    let extraInfoMap = new Map();
+    if (this.syncIsEnabled()) {
+      for (let client of this.getClientsEngineRecords()) {
+        if (client.fxaDeviceId) {
+          extraInfoMap.set(client.fxaDeviceId, {
+            os: client.os,
+            version: client.version,
+            syncID: this.sanitizeFxaDeviceId(client.id),
+          });
+        }
+      }
+    }
+    // Finally, sanitize and convert to the proper format.
+    return devicesList.map(d => {
+      let { os, version, syncID } = extraInfoMap.get(d.id) || {
+        os: undefined,
+        version: undefined,
+        syncID: undefined,
+      };
+      return {
+        id: this.sanitizeFxaDeviceId(d.id) || EMPTY_UID,
+        type: d.type,
+        os,
+        version,
+        syncID,
+      };
+    });
+  }
+
+  syncIsEnabled() {
+    return WeaveService.enabled && WeaveService.ready;
+  }
+
+  // Separate for testing.
+  getClientsEngineRecords() {
+    if (!this.syncIsEnabled()) {
+      throw new Error("Bug: syncIsEnabled() must be true, check it first");
+    }
+    return Weave.Service.clientsEngine.remoteClients;
+  }
+
+  updateFxaDevices(devices) {
+    if (!devices) {
+      return {};
+    }
+    let me = devices.find(d => d.isCurrentDevice);
+    let id = me ? this.sanitizeFxaDeviceId(me.id) : undefined;
+    let cleanDevices = this.prepareFxaDevices(devices);
+    return { deviceID: id, devices: cleanDevices };
+  }
+
+  getFxaDevices() {
+    return fxAccounts.device.recentDeviceList;
+  }
+
   getPingJSON(reason) {
+    let { devices, deviceID } = this.updateFxaDevices(this.getFxaDevices());
     return {
       os: TelemetryEnvironment.currentEnvironment.system.os,
       why: reason,
+      devices,
       discarded: this.discarded || undefined,
       version: PING_FORMAT_VERSION,
       syncs: this.payloads.slice(),
       uid: this.lastUID,
-      deviceID: this.lastDeviceID,
+      syncNodeType: this.lastSyncNodeType || undefined,
+      deviceID,
       sessionStartDate: this.sessionStartDate,
       events: this.events.length == 0 ? undefined : this.events,
+      migrations: this.migrations.length == 0 ? undefined : this.migrations,
       histograms:
         Object.keys(this.histograms).length == 0 ? undefined : this.histograms,
     };
+  }
+
+  _addMigrationRecord(type, info) {
+    log.debug("Saw telemetry migration info", type, info);
+    // Updates to this need to be documented in `sync-ping.rst`
+    switch (type) {
+      case "webext-storage":
+        this.migrations.push({
+          type: "webext-storage",
+          entries: +info.entries,
+          entriesSuccessful: +info.entries_successful,
+          extensions: +info.extensions,
+          extensionsSuccessful: +info.extensions_successful,
+          openFailure: !!info.open_failure,
+        });
+        break;
+      default:
+        throw new Error("Bug: Unknown migration record type " + type);
+    }
   }
 
   finish(reason) {
@@ -589,6 +719,7 @@ class SyncTelemetryImpl {
     this.payloads = [];
     this.discarded = 0;
     this.events = [];
+    this.migrations = [];
     this.histograms = {};
     this.submit(result);
   }
@@ -607,17 +738,14 @@ class SyncTelemetryImpl {
   }
 
   submit(record) {
-    if (
-      Services.prefs.prefHasUserValue("identity.sync.tokenserver.uri") ||
-      Services.prefs.prefHasUserValue("services.sync.tokenServerURI")
-    ) {
-      log.trace(`Not sending telemetry ping for self-hosted Sync user`);
+    if (!this.isProductionSyncUser()) {
       return false;
     }
     // We still call submit() with possibly illegal payloads so that tests can
     // know that the ping was built. We don't end up submitting them, however.
     let numEvents = record.events ? record.events.length : 0;
-    if (record.syncs.length || numEvents) {
+    let numMigrations = record.migrations ? record.migrations.length : 0;
+    if (record.syncs.length || numEvents || numMigrations) {
       log.trace(
         `submitting ${record.syncs.length} sync record(s) and ` +
           `${numEvents} event(s) to telemetry`
@@ -628,6 +756,17 @@ class SyncTelemetryImpl {
       return true;
     }
     return false;
+  }
+
+  isProductionSyncUser() {
+    if (
+      Services.prefs.prefHasUserValue("identity.sync.tokenserver.uri") ||
+      Services.prefs.prefHasUserValue("services.sync.tokenServerURI")
+    ) {
+      log.trace(`Not sending telemetry ping for self-hosted Sync user`);
+      return false;
+    }
+    return true;
   }
 
   onSyncStarted(data) {
@@ -642,6 +781,49 @@ class SyncTelemetryImpl {
     this.current = new TelemetryRecord(this.allowedEngines, why);
   }
 
+  // We need to ensure that the telemetry `deletion-request` ping always contains the user's
+  // current sync device ID, because if the user opts out of telemetry then the deletion ping
+  // will be immediately triggered for sending, and we won't have a chance to fill it in later.
+  // This keeps the `deletion-ping` up-to-date when the user's account state changes.
+  onAccountInitOrChange() {
+    // We don't submit sync pings for self-hosters, so don't need to collect their device ids either.
+    if (!this.isProductionSyncUser()) {
+      return;
+    }
+    // Awkwardly async, but no need to await. If the user's account state changes while
+    // this promise is in flight, it will reject and we won't record any data in the ping.
+    // (And a new notification will trigger us to try again with the new state).
+    fxAccounts.device
+      .getLocalId()
+      .then(deviceId => {
+        let sanitizedDeviceId = fxAccounts.telemetry.sanitizeDeviceId(deviceId);
+        // In the past we did not persist the FxA metrics identifiers to disk,
+        // so this might be missing until we can fetch it from the server for the
+        // first time. There will be a fresh notification tirggered when it's available.
+        if (sanitizedDeviceId) {
+          // Sanitized device ids are 64 characters long, but telemetry limits scalar strings to 50.
+          // The first 32 chars are sufficient to uniquely identify the device, so just send those.
+          // It's hard to change the sync ping itself to only send 32 chars, to b/w compat reasons.
+          sanitizedDeviceId = sanitizedDeviceId.substr(0, 32);
+          Services.telemetry.scalarSet(
+            "deletion.request.sync_device_id",
+            sanitizedDeviceId
+          );
+        }
+      })
+      .catch(err => {
+        log.warn(
+          `Failed to set sync identifiers in the deletion-request ping: ${err}`
+        );
+      });
+  }
+
+  // This keeps the `deletion-request` ping up-to-date when the user signs out,
+  // clearing the now-nonexistent sync device id.
+  onAccountLogout() {
+    Services.telemetry.scalarSet("deletion.request.sync_device_id", "");
+  }
+
   _checkCurrent(topic) {
     if (!this.current) {
       log.warn(
@@ -652,19 +834,44 @@ class SyncTelemetryImpl {
     return true;
   }
 
-  shouldSubmitForIDChange(newUID, newDeviceID) {
-    if (newUID != EMPTY_UID && this.lastUID != EMPTY_UID) {
+  shouldSubmitForDataChange() {
+    let newID = this.current.uid;
+    let oldID = this.lastUID;
+    if (
+      newID != EMPTY_UID &&
+      oldID != EMPTY_UID &&
       // Both are "real" uids, so we care if they've changed.
-      return newUID != this.lastUID;
-    }
-    if (newDeviceID && this.lastDeviceID) {
-      // Both are "real" device IDs, so we care if they've changed.
-      return newDeviceID != this.lastDeviceID;
+      newID != oldID
+    ) {
+      return true;
     }
     // We've gone from knowing one of the ids to not knowing it (which we
     // ignore) or we've gone from not knowing it to knowing it (which is fine),
-    // so we shouldn't submit.
+    // Now check the node type because a change there also means we should
+    // submit.
+    if (
+      this.current.syncNodeType &&
+      this.lastSyncNodeType &&
+      this.current.syncNodeType != this.lastSyncNodeType
+    ) {
+      return true;
+    }
+    // We don't need to submit.
     return false;
+  }
+
+  maybeSubmitForInterval() {
+    // We want to submit the ping every `this.submissionInterval` but only when
+    // there's no current sync in progress, otherwise we may end up submitting
+    // the sync and the events caused by it in different pings.
+    if (
+      this.current == null &&
+      Telemetry.msSinceProcessStart() - this.lastSubmissionTime >
+        this.submissionInterval
+    ) {
+      this.finish("schedule");
+      this.lastSubmissionTime = Telemetry.msSinceProcessStart();
+    }
   }
 
   onSyncFinished(error) {
@@ -674,20 +881,18 @@ class SyncTelemetryImpl {
     }
     this.current.finished(error);
     if (this.payloads.length) {
-      if (
-        this.shouldSubmitForIDChange(this.current.uid, this.current.deviceID)
-      ) {
+      if (this.shouldSubmitForDataChange()) {
         log.info("Early submission of sync telemetry due to changed IDs");
         this.finish("idchange");
         this.lastSubmissionTime = Telemetry.msSinceProcessStart();
       }
     }
-    // Only update the last UIDs or device IDs if we actually know them.
+    // Only update the last UIDs if we actually know them.
     if (this.current.uid !== EMPTY_UID) {
       this.lastUID = this.current.uid;
     }
-    if (this.current.deviceID) {
-      this.lastDeviceID = this.current.deviceID;
+    if (this.current.syncNodeType) {
+      this.lastSyncNodeType = this.current.syncNodeType;
     }
     if (this.payloads.length < this.maxPayloadCount) {
       this.payloads.push(this.current.toJSON());
@@ -695,13 +900,7 @@ class SyncTelemetryImpl {
       ++this.discarded;
     }
     this.current = null;
-    if (
-      Telemetry.msSinceProcessStart() - this.lastSubmissionTime >
-      this.submissionInterval
-    ) {
-      this.finish("schedule");
-      this.lastSubmissionTime = Telemetry.msSinceProcessStart();
-    }
+    this.maybeSubmitForInterval();
   }
 
   _addHistogram(hist) {
@@ -747,6 +946,7 @@ class SyncTelemetryImpl {
       event.push(extra);
     }
     this.events.push(event);
+    this.maybeSubmitForInterval();
   }
 
   observe(subject, topic, data) {
@@ -755,6 +955,16 @@ class SyncTelemetryImpl {
     switch (topic) {
       case "profile-before-change":
         this.shutdown();
+        break;
+
+      case "weave:service:ready":
+      case "weave:service:login:change":
+      case "fxaccounts:new_device_id":
+        this.onAccountInitOrChange();
+        break;
+
+      case "fxaccounts:onlogout":
+        this.onAccountLogout();
         break;
 
       /* sync itself state changes */
@@ -799,6 +1009,12 @@ class SyncTelemetryImpl {
         }
         break;
 
+      case "weave:engine:sync:step":
+        if (this._checkCurrent(topic)) {
+          this.current.onEngineStep(data, subject);
+        }
+        break;
+
       case "weave:engine:sync:uploaded":
         if (this._checkCurrent(topic)) {
           this.current.onEngineUploaded(data, subject);
@@ -818,11 +1034,16 @@ class SyncTelemetryImpl {
         break;
 
       case "weave:telemetry:event":
+      case "fxa:telemetry:event":
         this._recordEvent(subject);
         break;
 
       case "weave:telemetry:histogram":
         this._addHistogram(data);
+        break;
+
+      case "weave:telemetry:migration":
+        this._addMigrationRecord(data, subject);
         break;
 
       default:
@@ -893,5 +1114,4 @@ class SyncTelemetryImpl {
   }
 }
 
-/* global SyncTelemetry */
 var SyncTelemetry = new SyncTelemetryImpl(ENGINES);

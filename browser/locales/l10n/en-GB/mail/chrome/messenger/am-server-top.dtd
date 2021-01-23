@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageStorage.label "Message Storage">
+<!ENTITY securitySettings.label "Security Settings">
+<!ENTITY serverSettings.label "Server Settings">
+<!ENTITY serverType.label "Server Type:">
+<!ENTITY serverName.label "Server Name:">
+<!ENTITY serverName.accesskey "S">
+<!ENTITY userName.label "User Name:">
+<!ENTITY userName.accesskey "N">
+<!ENTITY port.label "Port:">
+<!ENTITY port.accesskey "P">
+<!ENTITY serverPortDefault.label "Default:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammar dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "Check for new messages every ">
+<!ENTITY biffStart.accesskey "k">
+<!ENTITY biffEnd.label "minutes">
+<!ENTITY useIdleNotifications.label "Allow immediate server notifications when new messages arrive">
+<!ENTITY useIdleNotifications.accesskey "w">
+<!ENTITY connectionSecurity.label "Connection security:">
+<!ENTITY connectionSecurity.accesskey "u">
+<!ENTITY connectionSecurityType-0.label "None">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, if available">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "Authentication method:">
+<!ENTITY authMethod.accesskey "i">
+<!ENTITY leaveOnServer.label "Leave messages on server">
+<!ENTITY leaveOnServer.accesskey "g">
+<!ENTITY headersOnly.label "Fetch headers only">
+<!ENTITY headersOnly.accesskey "f">
+<!ENTITY deleteByAgeFromServer.label "For at most">
+<!ENTITY deleteByAgeFromServer.accesskey "o">
+<!ENTITY daysEnd.label "days">
+<!ENTITY deleteOnServer2.label "Until I delete them">
+<!ENTITY deleteOnServer2.accesskey "d">
+<!ENTITY downloadOnBiff.label "Automatically download new messages">
+<!ENTITY downloadOnBiff.accesskey "m">
+<!ENTITY deleteMessagePrefix.label "When I delete a message:">
+<!ENTITY modelMoveToTrash.label "Move it to this folder:">
+<!ENTITY modelMoveToTrash.accesskey "o">
+<!ENTITY modelMarkDeleted.label "Just mark it as deleted">
+<!ENTITY modelMarkDeleted.accesskey "k">
+<!ENTITY modelDeleteImmediately.label "Remove it immediately">
+<!ENTITY modelDeleteImmediately.accesskey "d">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "Clean up (&quot;Expunge&quot;) Inbox on Exit">
+<!ENTITY expungeOnExit.accesskey "E">
+<!ENTITY emptyTrashOnExit.label "Empty Deleted folder on Exit">
+<!ENTITY emptyTrashOnExit.accesskey "x">
+<!ENTITY loginAtStartup.label "Check for new messages at startup">
+<!ENTITY loginAtStartup.accesskey "C">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+    of messages between them
+-->
+<!ENTITY maxMessagesStart.label "Ask me before downloading more than">
+<!ENTITY maxMessagesStart.accesskey "m">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "messages">
+<!ENTITY alwaysAuthenticate.label "Always request authentication when connecting to this server">
+<!ENTITY alwaysAuthenticate.accesskey "w">
+<!ENTITY newsrcFilePath1.label "News.rc File:">
+<!ENTITY newsrcPicker1.label "Select News.rc File">
+<!ENTITY abbreviate.label "Show newsgroup names in the Mail Folder pane as:">
+<!ENTITY abbreviateOn.label "Full names (For example, 'netscape.public.mozilla.mail-news')">
+<!ENTITY abbreviateOff.label "Abbreviate names (For example, 'n.p.m.mail-news')">
+<!ENTITY advancedButton.label "Advanced…">
+<!ENTITY advancedButton.accesskey "v">
+<!ENTITY serverDefaultCharset2.label "Default Text Encoding:">
+<!ENTITY localPath1.label "Local Directory:">
+<!ENTITY localFolderPicker.label "Select Local Directory">
+<!ENTITY browseFolder.label "Browse…">
+<!ENTITY browseFolder.accesskey "B">
+<!ENTITY browseNewsrc.label "Browse…">
+<!ENTITY browseNewsrc.accesskey "e">
+
+<!ENTITY accountTitle.label "Account Settings">
+<!ENTITY accountSettingsDesc.label "The following is a special account.  There are no identities associated with it.">
+<!ENTITY storeType.label "Message Store Type:">
+<!ENTITY storeType.accesskey "T">
+<!ENTITY mboxStore2.label "File per folder (mbox)">
+<!ENTITY maildirStore.label "File per message (maildir)">

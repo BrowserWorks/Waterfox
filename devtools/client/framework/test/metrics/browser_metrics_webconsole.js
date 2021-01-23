@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -16,11 +14,40 @@ const TEST_URL =
 
 add_task(async function() {
   const toolbox = await openNewTabAndToolbox(TEST_URL, "webconsole");
-  const panel = toolbox.getCurrentPanel();
+  const toolboxBrowserLoader = toolbox.win.getBrowserLoaderForWindow();
 
   // Retrieve the browser loader dedicated to the WebConsole.
+  const panel = toolbox.getCurrentPanel();
   const webconsoleLoader = panel._frameWindow.getBrowserLoaderForWindow();
-  const loaders = [loader.provider.loader, webconsoleLoader.loader];
+
+  const loaders = [
+    loader.loader,
+    toolboxBrowserLoader.loader,
+    webconsoleLoader.loader,
+  ];
+
+  const whitelist = [
+    "@loader/unload.js",
+    "@loader/options.js",
+    "chrome.js",
+    "resource://devtools/client/webconsole/constants.js",
+    "resource://devtools/client/webconsole/utils.js",
+    "resource://devtools/client/webconsole/utils/messages.js",
+    "resource://devtools/client/webconsole/utils/l10n.js",
+    "resource://devtools/client/netmonitor/src/utils/request-utils.js",
+    "resource://devtools/client/webconsole/types.js",
+    "resource://devtools/client/shared/components/menu/MenuButton.js",
+    "resource://devtools/client/shared/components/menu/MenuItem.js",
+    "resource://devtools/client/shared/components/menu/MenuList.js",
+    "resource://devtools/client/shared/vendor/react.js",
+    "resource://devtools/client/shared/vendor/react-dom.js",
+    "resource://devtools/client/shared/vendor/react-prop-types.js",
+    "resource://devtools/client/shared/vendor/react-dom-factories.js",
+    "resource://devtools/client/shared/vendor/react-redux.js",
+    "resource://devtools/client/shared/vendor/redux.js",
+    "resource://devtools/client/shared/redux/middleware/thunk-with-options.js",
+  ];
+  runDuplicatedModulesTest(loaders, whitelist);
 
   runMetricsTest({
     filterString: "devtools/client/webconsole",

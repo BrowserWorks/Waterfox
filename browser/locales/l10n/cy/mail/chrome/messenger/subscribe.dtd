@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "Tanysgrifio">
+<!ENTITY subscribeButton.label        "Tanysgrifio">
+<!ENTITY subscribeButton.accesskey    "s">
+<!ENTITY unsubscribeButton.label      "Dad-danysgrifio">
+<!ENTITY unsubscribeButton.accesskey  "D">
+<!ENTITY newGroupsTab.label           "Grwpiau Newydd">
+<!ENTITY newGroupsTab.accesskey       "G">
+<!ENTITY refreshButton.label          "Adnewyddu">
+<!ENTITY refreshButton.accesskey      "A">
+<!ENTITY stopButton.label             "Atal">
+<!ENTITY stopButton.accesskey         "t">
+<!ENTITY server.label                 "Cyfrif:">
+<!ENTITY server.accesskey             "C">
+<!ENTITY subscribedHeader.label       "Tanysgrifio">
+<!-- commenting out until bug 38906 is fixed 
+<!ENTITY messagesHeader.label         "Messages"> -->
+<!ENTITY namefield.label              "Dangos eitemau sy'n cynnwys:">
+<!ENTITY namefield.accesskey          "D">

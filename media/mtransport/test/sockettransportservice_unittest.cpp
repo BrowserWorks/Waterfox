@@ -13,10 +13,6 @@
 #include "nsNetCID.h"
 #include "nsXPCOM.h"
 
-#include "nsIComponentManager.h"
-#include "nsIComponentRegistrar.h"
-#include "nsIIOService.h"
-#include "nsIServiceManager.h"
 #include "nsISocketTransportService.h"
 
 #include "nsASocketHandler.h"
@@ -120,7 +116,7 @@ class SocketHandler : public nsASocketHandler {
   NS_DECL_ISUPPORTS
 
  protected:
-  virtual ~SocketHandler() {}
+  virtual ~SocketHandler() = default;
 
  private:
   SocketTransportServiceTest* test_;

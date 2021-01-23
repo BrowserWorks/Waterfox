@@ -5,6 +5,10 @@
 
 #include "NonBlockingAsyncInputStream.h"
 #include "mozilla/ipc/InputStreamUtils.h"
+#include "nsIAsyncInputStream.h"
+#include "nsICloneableInputStream.h"
+#include "nsIInputStream.h"
+#include "nsIIPCSerializableInputStream.h"
 #include "nsISeekableStream.h"
 #include "nsStreamUtils.h"
 
@@ -120,7 +124,7 @@ NonBlockingAsyncInputStream::NonBlockingAsyncInputStream(
   }
 }
 
-NonBlockingAsyncInputStream::~NonBlockingAsyncInputStream() {}
+NonBlockingAsyncInputStream::~NonBlockingAsyncInputStream() = default;
 
 NS_IMETHODIMP
 NonBlockingAsyncInputStream::Close() {
@@ -321,7 +325,7 @@ void NonBlockingAsyncInputStream::Serialize(
     mozilla::ipc::InputStreamParams& aParams,
     FileDescriptorArray& aFileDescriptors, bool aDelayedStart,
     uint32_t aMaxSize, uint32_t* aSizeUsed,
-    mozilla::dom::ContentChild* aManager) {
+    mozilla::ipc::ParentToChildStreamActorManager* aManager) {
   SerializeInternal(aParams, aFileDescriptors, aDelayedStart, aMaxSize,
                     aSizeUsed, aManager);
 }
@@ -330,25 +334,7 @@ void NonBlockingAsyncInputStream::Serialize(
     mozilla::ipc::InputStreamParams& aParams,
     FileDescriptorArray& aFileDescriptors, bool aDelayedStart,
     uint32_t aMaxSize, uint32_t* aSizeUsed,
-    mozilla::ipc::PBackgroundChild* aManager) {
-  SerializeInternal(aParams, aFileDescriptors, aDelayedStart, aMaxSize,
-                    aSizeUsed, aManager);
-}
-
-void NonBlockingAsyncInputStream::Serialize(
-    mozilla::ipc::InputStreamParams& aParams,
-    FileDescriptorArray& aFileDescriptors, bool aDelayedStart,
-    uint32_t aMaxSize, uint32_t* aSizeUsed,
-    mozilla::dom::ContentParent* aManager) {
-  SerializeInternal(aParams, aFileDescriptors, aDelayedStart, aMaxSize,
-                    aSizeUsed, aManager);
-}
-
-void NonBlockingAsyncInputStream::Serialize(
-    mozilla::ipc::InputStreamParams& aParams,
-    FileDescriptorArray& aFileDescriptors, bool aDelayedStart,
-    uint32_t aMaxSize, uint32_t* aSizeUsed,
-    mozilla::ipc::PBackgroundParent* aManager) {
+    mozilla::ipc::ChildToParentStreamActorManager* aManager) {
   SerializeInternal(aParams, aFileDescriptors, aDelayedStart, aMaxSize,
                     aSizeUsed, aManager);
 }

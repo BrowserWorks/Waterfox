@@ -85,9 +85,7 @@ add_task(async function() {
           command = commands.find(c => c.name == "with-platform-info");
           let platformKey = platformKeys[additionalScope.platform];
           let shortcut = `Ctrl+Shift+${platformKey}`;
-          errorMessage = `The shortcut should match the one provided in the manifest for OS='${
-            additionalScope.platform
-          }'`;
+          errorMessage = `The shortcut should match the one provided in the manifest for OS='${additionalScope.platform}'`;
           browser.test.assertEq(shortcut, command.shortcut, errorMessage);
 
           command = commands.find(c => c.name == "with-translation");
@@ -106,7 +104,7 @@ add_task(async function() {
           );
 
           browser.test.assertEq(
-            null,
+            "",
             command.shortcut,
             "The shortcut should be empty if not provided"
           );
@@ -122,7 +120,7 @@ add_task(async function() {
           );
 
           browser.test.assertEq(
-            null,
+            "",
             command.shortcut,
             "The shortcut should be empty if not provided"
           );

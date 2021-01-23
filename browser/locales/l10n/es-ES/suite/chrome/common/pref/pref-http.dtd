@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.http.title "Config. de HTTP">
+<!ENTITY prefDirect.label "Opciones de conexión directa">
+<!ENTITY prefProxy.label "Opciones de conexión proxy">
+<!ENTITY prefEnableHTTP10.label "Utilizar HTTP 1.0">
+<!ENTITY prefEnableHTTP10.accesskey "U">
+<!ENTITY prefEnableHTTP10Proxy.accesskey "z">
+<!ENTITY prefEnableHTTP11.label "Utilizar HTTP 1.1">
+<!ENTITY prefEnableHTTP11.accesskey "H">
+<!ENTITY prefEnableHTTP11Proxy.accesskey "T">
+<!ENTITY prefPara "Las conexiones HTTP pueden ser afinadas utilizando estas opciones para mejorar bien el rendimiento, bien la compatibilidad. Algunos servidores proxy, por ejemplo, requieren HTTP/1.0 (vea las notas de la versión para más detalles).">
+<!ENTITY prefUseragent.label "Cadena del agente de usuario">
+<!ENTITY prefFirefoxCompat.label "Anunciar compatibilidad con Waterfox">
+<!ENTITY prefFirefoxCompat.accesskey "F">
+<!ENTITY prefLightningShow.label "Anunciar instalación de Lightning">
+<!ENTITY prefLightningShow.accesskey "L">
+<!ENTITY prefCompatWarning "ADVERTENCIA: desactivar estos ajustes puede provocar que los sitios o servicios web no funcionen correctamente.">
+<!ENTITY prefFirefoxStrict.label "Identificar como Waterfox">
+<!ENTITY prefFirefoxStrict.accesskey "I">
+<!ENTITY prefFirefoxNone.label "Identificar como SeaMonkey">
+<!ENTITY prefFirefoxNone.accesskey "M">
+<!ENTITY prefFirefoxCompat2.label "Identificar como SeaMonkey y anunciar compatibilidad con Waterfox.">
+<!ENTITY prefFirefoxCompat2.accesskey "S">
+<!ENTITY prefCompatWarning2.desc "ADVERTENCIA: cambiar estos ajustes puede provocar que los sitios o servicios web no funcionen correctamente.">

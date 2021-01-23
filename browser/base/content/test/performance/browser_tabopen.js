@@ -23,20 +23,23 @@ const EXPECTED_REFLOWS = [
  * uninterruptible reflows when opening new tabs.
  */
 add_task(async function() {
+  // Force-enable tab animations
+  gReduceMotionOverride = false;
+
   await ensureNoPreloadedBrowser();
+  await disableFxaBadge();
 
   // Prepare the window to avoid flicker and reflow that's unrelated to our
   // tab opening operation.
-  await ensureFocusedUrlbar();
+  gURLBar.focus();
 
   let tabStripRect = gBrowser.tabContainer.arrowScrollbox.getBoundingClientRect();
   let firstTabRect = gBrowser.selectedTab.getBoundingClientRect();
-  let firstTabLabelRect = document
-    .getAnonymousElementByAttribute(gBrowser.selectedTab, "anonid", "tab-label")
+  let firstTabLabelRect = gBrowser.selectedTab.textLabel.getBoundingClientRect();
+  let textBoxRect = gURLBar
+    .querySelector("moz-input-box")
     .getBoundingClientRect();
-  let textBoxRect = document
-    .getAnonymousElementByAttribute(gURLBar.textbox, "anonid", "moz-input-box")
-    .getBoundingClientRect();
+
   let inRange = (val, min, max) => min <= val && val <= max;
 
   // Add a reflow observer and open a new tab.
@@ -56,32 +59,34 @@ add_task(async function() {
         filter: rects =>
           rects.filter(
             r =>
-              !// We expect all changes to be within the tab strip.
-              (
-                r.y1 >= tabStripRect.top &&
-                r.y2 <= tabStripRect.bottom &&
-                r.x1 >= tabStripRect.left &&
-                r.x2 <= tabStripRect.right &&
-                // The first tab should get deselected at the same time as the next
-                // tab starts appearing, so we should have one rect that includes the
-                // first tab but is wider.
-                ((inRange(r.w, firstTabRect.width, firstTabRect.width * 2) &&
-                  r.x1 == firstTabRect.x) ||
-                // The second tab gets painted several times due to tabopen animation.
-                (inRange(
-                  r.x1,
-                  firstTabRect.right - 1, // -1 for the border on Win7
-                  firstTabRect.right + firstTabRect.width
-                ) &&
-                  r.x2 < firstTabRect.right + firstTabRect.width + 25) || // The + 25 is because sometimes the '+' is in the same rect.
-                  // The '+' icon moves with an animation. At the end of the animation
-                  // the former and new positions can touch each other causing the rect
-                  // to have twice the icon's width.
-                  (r.h == 14 && r.w <= 2 * 14 + kMaxEmptyPixels) ||
-                  // We sometimes have a rect for the right most 2px of the '+' button.
-                  (r.h == 2 && r.w == 2) ||
-                  // Same for the 'X' icon.
-                  (r.h == 10 && r.w <= 2 * 10))
+              !(
+                // We expect all changes to be within the tab strip.
+                (
+                  r.y1 >= tabStripRect.top &&
+                  r.y2 <= tabStripRect.bottom &&
+                  r.x1 >= tabStripRect.left &&
+                  r.x2 <= tabStripRect.right &&
+                  // The first tab should get deselected at the same time as the next
+                  // tab starts appearing, so we should have one rect that includes the
+                  // first tab but is wider.
+                  ((inRange(r.w, firstTabRect.width, firstTabRect.width * 2) &&
+                    r.x1 == firstTabRect.x) ||
+                  // The second tab gets painted several times due to tabopen animation.
+                  (inRange(
+                    r.x1,
+                    firstTabRect.right - 1, // -1 for the border on Win7
+                    firstTabRect.right + firstTabRect.width
+                  ) &&
+                    r.x2 < firstTabRect.right + firstTabRect.width + 25) || // The + 25 is because sometimes the '+' is in the same rect.
+                    // The '+' icon moves with an animation. At the end of the animation
+                    // the former and new positions can touch each other causing the rect
+                    // to have twice the icon's width.
+                    (r.h == 14 && r.w <= 2 * 14 + kMaxEmptyPixels) ||
+                    // We sometimes have a rect for the right most 2px of the '+' button.
+                    (r.h == 2 && r.w == 2) ||
+                    // Same for the 'X' icon.
+                    (r.h == 10 && r.w <= 2 * 10))
+                )
               )
           ),
         exceptions: [

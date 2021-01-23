@@ -39,22 +39,23 @@ async function renderPluginMetadata(id) {
   }
   typeLabel.textContent = types.join(",\n");
   let showProtectedModePref = canDisableFlashProtectedMode(plugin);
-  document
-    .getElementById("pluginEnableProtectedMode")
-    .setAttribute("collapsed", showProtectedModePref ? "" : "true");
+  document.getElementById(
+    "pluginEnableProtectedMode"
+  ).hidden = !showProtectedModePref;
+
+  // Disable flash blocking when Fission is enabled (See Bug 1584931).
+  document.getElementById(
+    "pluginFlashBlocking"
+  ).hidden = canDisableFlashBlocking();
 }
 
-function isFlashPlugin(aPlugin) {
-  for (let type of aPlugin.pluginMimeTypes) {
-    if (type.type == "application/x-shockwave-flash") {
-      return true;
-    }
-  }
-  return false;
-}
 // Protected mode is win32-only, not win64
 function canDisableFlashProtectedMode(aPlugin) {
-  return isFlashPlugin(aPlugin) && Services.appinfo.XPCOMABI == "x86-msvc";
+  return aPlugin.isFlashPlugin && Services.appinfo.XPCOMABI == "x86-msvc";
+}
+
+function canDisableFlashBlocking() {
+  return Services.prefs.getBoolPref("fission.autostart");
 }
 
 function init() {
@@ -65,7 +66,7 @@ function init() {
     let checkbox = document.getElementById(id);
     var prefVal = Services.prefs.getBoolPref(PREFS[id].pref);
     checkbox.checked = PREFS[id].invert ? !prefVal : prefVal;
-    checkbox.addEventListener("command", () => {
+    checkbox.addEventListener("change", () => {
       Services.prefs.setBoolPref(
         PREFS[id].pref,
         PREFS[id].invert ? !checkbox.checked : checkbox.checked

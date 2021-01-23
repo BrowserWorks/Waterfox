@@ -18,6 +18,11 @@ struct SimpleURIParams
   nsCString query;
 };
 
+struct DefaultURIParams
+{
+  nsCString spec;
+};
+
 struct StandardURLSegment
 {
   uint32_t position;
@@ -43,6 +48,7 @@ struct StandardURLParams
   StandardURLSegment query;
   StandardURLSegment ref;
   bool supportsFileURL;
+  bool isSubstituting;
 };
 
 struct JARURIParams
@@ -84,6 +90,7 @@ union URIParams
   JSURIParams;
   SimpleNestedURIParams;
   HostObjectURIParams;
+  DefaultURIParams;
 };
 
 struct JSURIParams

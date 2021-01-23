@@ -51,6 +51,11 @@ class nsScriptSecurityManager final : public nsIScriptSecurityManager {
   // Invoked exactly once, by XPConnect.
   static void InitStatics();
 
+  void InitJSCallbacks(JSContext* aCx);
+
+  // This has to be static because it is called after gScriptSecMan is cleared.
+  static void ClearJSCallbacks(JSContext* aCx);
+
   static already_AddRefed<mozilla::SystemPrincipal>
   SystemPrincipalSingletonConstructor();
 
@@ -64,7 +69,13 @@ class nsScriptSecurityManager final : public nsIScriptSecurityManager {
   static uint32_t SecurityHashURI(nsIURI* aURI);
 
   static nsresult ReportError(const char* aMessageTag, nsIURI* aSource,
-                              nsIURI* aTarget, bool aFromPrivateWindow);
+                              nsIURI* aTarget, bool aFromPrivateWindow,
+                              uint64_t aInnerWindowID = 0);
+  static nsresult ReportError(const char* aMessageTag,
+                              const nsACString& sourceSpec,
+                              const nsACString& targetSpec,
+                              bool aFromPrivateWindow,
+                              uint64_t aInnerWindowID = 0);
 
   static uint32_t HashPrincipalByOrigin(nsIPrincipal* aPrincipal);
 
@@ -79,7 +90,7 @@ class nsScriptSecurityManager final : public nsIScriptSecurityManager {
 
   // Decides, based on CSP, whether or not eval() and stuff can be executed.
   static bool ContentSecurityPolicyPermitsJSAction(JSContext* cx,
-                                                   JS::HandleValue aValue);
+                                                   JS::HandleString aCode);
 
   static bool JSPrincipalsSubsume(JSPrincipals* first, JSPrincipals* second);
 
@@ -87,6 +98,7 @@ class nsScriptSecurityManager final : public nsIScriptSecurityManager {
 
   nsresult InitPrefs();
 
+  static void ScriptSecurityPrefChanged(const char* aPref, void* aSelf);
   void ScriptSecurityPrefChanged(const char* aPref = nullptr);
 
   inline void AddSitesToFileURIAllowlist(const nsCString& aSiteList);
@@ -97,7 +109,8 @@ class nsScriptSecurityManager final : public nsIScriptSecurityManager {
 
   nsresult CheckLoadURIFlags(nsIURI* aSourceURI, nsIURI* aTargetURI,
                              nsIURI* aSourceBaseURI, nsIURI* aTargetBaseURI,
-                             uint32_t aFlags, bool aFromPrivateWindow);
+                             uint32_t aFlags, bool aFromPrivateWindow,
+                             uint64_t aInnerWindowID);
 
   // Returns the file URI allowlist, initializing it if it has not been
   // initialized.
@@ -120,7 +133,6 @@ class nsScriptSecurityManager final : public nsIScriptSecurityManager {
 
   static nsIIOService* sIOService;
   static nsIStringBundle* sStrBundle;
-  static JSContext* sContext;
 };
 
 #endif  // nsScriptSecurityManager_h__

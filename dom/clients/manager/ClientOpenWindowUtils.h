@@ -12,7 +12,10 @@
 namespace mozilla {
 namespace dom {
 
-MOZ_MUST_USE RefPtr<ClientOpPromise> ClientOpenWindowInCurrentProcess(
+typedef MozPromise<RefPtr<BrowsingContext>, CopyableErrorResult, false>
+    BrowsingContextCallbackReceivedPromise;
+
+MOZ_MUST_USE RefPtr<ClientOpPromise> ClientOpenWindow(
     const ClientOpenWindowArgs& aArgs);
 
 }  // namespace dom

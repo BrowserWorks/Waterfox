@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Zerrenda propietateak">
+
+<!ENTITY ListType.label "Zerrenda mota">
+<!ENTITY bulletStyle.label "Bulet-estiloa:">
+<!ENTITY startingNumber.label "Hemen hasi:">
+<!ENTITY startingNumber.accessKey "H">
+<!ENTITY none.value "Bat ere ez">
+<!ENTITY bulletList.value "Buletdun zerrenda (zenbaki gabea)">
+<!ENTITY numberList.value "Zenbakidun zerrenda">
+<!ENTITY definitionList.value "Definizio-zerrenda">
+<!ENTITY changeEntireListRadio.label "Aldatu zerrenda osoa">
+<!ENTITY changeEntireListRadio.accessKey "A">
+<!ENTITY changeSelectedRadio.label "Aldatu hautatutako elementuak soilik">
+<!ENTITY changeSelectedRadio.accessKey "i">

@@ -1,0 +1,31 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/*
+ * Ulozte kopiu tohto suboru ako userChrome.css do precinka chrome 
+ * v priecinku s pouzivatelskym profilom a upravte podla vasich predstav.
+ *  
+ * Tento soubor sa pouziva k nastaveniu niektorych vychytavok pouzivatelskeho 
+ * rozhrania tohto balíka. Pravidla s deklaraciou !important prevazia 
+ * nad vychozimi pravidlami definovanymi ve styloch UI.
+ * 
+ * Nasledujici riadok NEODSTRANUJTE 
+ * 
+ */
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
+
+/*
+ * Priklad: Nastavte vsetky pisma na 20 pt:
+ * * { font-size: 20pt !important }
+ *
+ * Priklad: Nastavte pismo v ponuke na 15pt
+ * menupopup > * { font-size: 15pt !important }
+ *
+ * Priklad: Zmente rodinu pisma v riadku s adresou
+ * #urlbar { font-family: monospace !important; }
+ * 
+ * Viac prikladov najdete na http://www.mozilla.org/unix/customizing.html
+ *
+ */
+ 

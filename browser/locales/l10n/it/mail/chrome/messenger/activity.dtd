@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.width2 "485">
+<!ENTITY window.height "300">
+
+<!ENTITY activity.title "Registro attività">
+
+<!ENTITY cmd.pause.label "Pausa">
+<!ENTITY cmd.pause.accesskey "P">
+<!ENTITY cmd.resume.label "Riprendi">
+<!ENTITY cmd.resume.accesskey "R">
+<!ENTITY cmd.cancel.label "Annulla">
+<!ENTITY cmd.cancel.accesskey "A">
+<!ENTITY cmd.undo.label "Annulla">
+<!ENTITY cmd.undo.accesskey "n">
+<!ENTITY cmd.recover.label "Recupera">
+<!ENTITY cmd.recover.accesskey "p">
+<!ENTITY cmd.retry.label "Riprova">
+<!ENTITY cmd.retry.accesskey "R">
+<!ENTITY cmd.removeFromList.label "Elimina dalla lista">
+<!ENTITY cmd.removeFromList.accesskey "E">
+
+<!ENTITY cmd.close.commandkey "w">
+<!ENTITY cmd.close2.commandkey "j">
+<!ENTITY cmd.close2Unix.commandkey "y">
+<!ENTITY cmd.clearList.label "Pulisci il registro">
+<!ENTITY cmd.clearList.tooltip "Elimina gli oggetti completati, annullati o non andati a buon fine dalla lista">
+<!ENTITY cmd.clearList.accesskey "C">
+<!ENTITY cmd.find.commandkey "f">
+<!ENTITY cmd.search.commandkey "k">
+
+<!ENTITY searchBox.label "Cerca…">

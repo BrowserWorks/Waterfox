@@ -23,7 +23,7 @@ import type {
 
 const breakpointSvg = document.createElement("div");
 breakpointSvg.innerHTML =
-  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 15" width="60" height="15"><path d="M53.07.5H1.5c-.54 0-1 .46-1 1v12c0 .54.46 1 1 1h51.57c.58 0 1.15-.26 1.53-.7l4.7-6.3-4.7-6.3c-.38-.44-.95-.7-1.53-.7z"/></svg>';
+  '<svg viewBox="0 0 60 15" width="60" height="15"><path d="M53.07.5H1.5c-.54 0-1 .46-1 1v12c0 .54.46 1 1 1h51.57c.58 0 1.15-.26 1.53-.7l4.7-6.3-4.7-6.3c-.38-.44-.95-.7-1.53-.7z"/></svg>';
 
 type Props = {
   cx: ThreadContext,
@@ -56,10 +56,8 @@ class Breakpoint extends PureComponent<Props> {
       "breakpoint-disabled": breakpoint.disabled,
       "folding-enabled": features.codeFolding,
     });
-
     bp.onmousedown = this.onClick;
-    // NOTE: flow does not know about oncontextmenu
-    (bp: any).oncontextmenu = this.onContextMenu;
+    bp.oncontextmenu = this.onContextMenu;
 
     return bp;
   }
@@ -136,14 +134,19 @@ class Breakpoint extends PureComponent<Props> {
 
     doc.setGutterMarker(line, "breakpoints", this.makeMarker());
 
-    editor.codeMirror.addLineClass(line, "line", "new-breakpoint");
-    editor.codeMirror.removeLineClass(line, "line", "has-condition");
-    editor.codeMirror.removeLineClass(line, "line", "has-log");
+    editor.codeMirror.addLineClass(line, "wrapClass", "new-breakpoint");
+    editor.codeMirror.removeLineClass(line, "wrapClass", "breakpoint-disabled");
+    editor.codeMirror.removeLineClass(line, "wrapClass", "has-condition");
+    editor.codeMirror.removeLineClass(line, "wrapClass", "has-log");
+
+    if (breakpoint.disabled) {
+      editor.codeMirror.addLineClass(line, "wrapClass", "breakpoint-disabled");
+    }
 
     if (breakpoint.options.logValue) {
-      editor.codeMirror.addLineClass(line, "line", "has-log");
+      editor.codeMirror.addLineClass(line, "wrapClass", "has-log");
     } else if (breakpoint.options.condition) {
-      editor.codeMirror.addLineClass(line, "line", "has-condition");
+      editor.codeMirror.addLineClass(line, "wrapClass", "has-condition");
     }
   }
 
@@ -164,9 +167,10 @@ class Breakpoint extends PureComponent<Props> {
     const line = toEditorLine(sourceId, selectedLocation.line);
 
     doc.setGutterMarker(line, "breakpoints", null);
-    doc.removeLineClass(line, "line", "new-breakpoint");
-    doc.removeLineClass(line, "line", "has-condition");
-    doc.removeLineClass(line, "line", "has-log");
+    doc.removeLineClass(line, "wrapClass", "new-breakpoint");
+    doc.removeLineClass(line, "wrapClass", "breakpoint-disabled");
+    doc.removeLineClass(line, "wrapClass", "has-condition");
+    doc.removeLineClass(line, "wrapClass", "has-log");
   }
 
   render() {

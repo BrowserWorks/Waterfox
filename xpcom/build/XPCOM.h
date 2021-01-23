@@ -34,7 +34,6 @@
 #include "nsISupports.h"
 
 #include "nsTArray.h"
-#include "nsTWeakRef.h"
 
 #include "nsCOMPtr.h"
 #include "nsCOMArray.h"
@@ -78,13 +77,11 @@
 #include "nsIInputStream.h"
 #include "nsIInterfaceRequestor.h"
 #include "nsILineInputStream.h"
-#include "nsIMutable.h"
 #include "nsIObserver.h"
 #include "nsIObserverService.h"
 #include "nsIOutputStream.h"
 #include "nsIProcess.h"
 #include "nsIProperties.h"
-#include "nsIPropertyBag2.h"
 #include "nsIRunnable.h"
 #include "nsISeekableStream.h"
 #include "nsISerializable.h"
@@ -161,7 +158,6 @@
 
 // xpcom/base utility headers
 
-#include "nsAgg.h"
 #include "nsAutoRef.h"
 #include "nsInterfaceRequestorAgg.h"
 

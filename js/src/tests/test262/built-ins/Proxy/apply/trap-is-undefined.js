@@ -2,7 +2,6 @@
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
-es6id: 9.5.13
 esid: sec-proxy-object-internal-methods-and-internal-slots-call-thisargument-argumentslist
 description: >
     If the apply trap value is undefined, propagate the call to the target object.
@@ -24,19 +23,25 @@ features: [Proxy]
 ---*/
 
 var calls = 0;
+var _context;
 
-function target(a, b) {
-  assert.sameValue(this, ctx);
-  calls += 1;
-  return a + b;
-}
+var target = new Proxy(function() {}, {
+  apply: function(_target, context, args) {
+    calls++;
+    _context = context;
+    return args[0] + args[1];
+  }
+})
 
-var ctx = {};
 var p = new Proxy(target, {
   apply: undefined
 });
-var res = p.call(ctx, 1, 2);
-assert.sameValue(res, 3, "`apply` trap is `null`");
-assert.sameValue(calls, 1, "target is called once");
+
+var context = {};
+var res = p.call(context, 1, 2);
+
+assert.sameValue(calls, 1, "apply is undefined: [[Call]] is invoked once");
+assert.sameValue(_context, context, "apply is undefined: context is passed to [[Call]]");
+assert.sameValue(res, 3, "apply is undefined: result of [[Call]] is returned");
 
 reportCompare(0, 0);

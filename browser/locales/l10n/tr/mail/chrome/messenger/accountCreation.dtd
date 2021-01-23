@@ -1,0 +1,112 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailWizard.title               "Mevcut E-posta Adresinizi Ayarlayın">
+<!ENTITY emailWizard.caption             "Mevcut e-posta adresimi kullanacağım">
+<!ENTITY name.label                      "Adınız:">
+<!ENTITY name.accesskey                  "A">
+<!ENTITY fullname.placeholder            "Tam adınız">
+<!ENTITY name.text                       "Başkalarına gösterilecek adınız">
+<!ENTITY name.error                      "Lütfen adınızı girin">
+<!ENTITY email.label                     "E-posta adresi:">
+<!ENTITY email.accesskey                 "E">
+<!ENTITY email3.placeholder              "E-posta adresiniz">
+<!ENTITY email.text                      "Mevcut e-posta adresiniz">
+<!ENTITY email.error                     "Geçersiz e-posta adresi">
+<!ENTITY password.label                  "Parola:">
+<!ENTITY password.accesskey              "P">
+<!ENTITY password.placeholder            "Parola">
+<!ENTITY password.text                   "İsteğe bağlı; sadece kullanıcı adını doğrulamada kullanılacak">
+<!ENTITY password.toggle                 "Parolayı göster/gizle">
+<!ENTITY rememberPassword.label          "Parolayı hatırla">
+<!ENTITY rememberPassword.accesskey      "h">
+<!ENTITY usernameEx.label                "Kullanıcı adınız:">
+<!ENTITY usernameEx.accesskey            "l">
+<!-- LOCALIZATION NOTE(usernameEx.placeholder): YOURDOMAIN refers to the Windows domain in ActiveDirectory. yourusername refers to the user's account name in Windows. -->
+<!ENTITY usernameEx.placeholder          "ETKİALANI\kullanıcıadınız">
+<!-- LOCALIZATION NOTE(usernameEx.text): Domain refers to the Windows domain in ActiveDirectory. We mean the user's login in Windows at the local corporate network. -->
+<!ENTITY usernameEx.text                 "Etki alanındaki kullanıcı adı">
+
+<!ENTITY protocol.label                  "Protokol:">
+<!ENTITY imapLong.label                  "IMAP (uzak dizinler)">
+<!ENTITY pop3Long.label                  "POP3 (postalar bilgisayarınızda saklanacak)">
+
+<!ENTITY manualConfigTable.summary       "Sunucu ayarları">
+<!ENTITY incoming.label                  "Gelen:">
+<!ENTITY incomingColumn.label            "Gelen">
+<!ENTITY outgoing.label                  "Giden:">
+<!ENTITY outgoingColumn.label            "Giden">
+<!ENTITY username.label                  "Kullanıcı adı:">
+<!ENTITY serverRow.label                 "Sunucu:">
+<!ENTITY portRow.label                   "Port:">
+<!ENTITY sslRow.label                    "SSL:">
+<!ENTITY auth.label                      "Yetkilendirme">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label                      "POP3">
+<!-- LOCALIZATION NOTE(exchange.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange.label                  "Exchange">
+<!ENTITY smtp.label                      "SMTP">
+<!ENTITY autodetect.label                "Otomatik algıla">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "Hiçbiri">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!-- LOCALIZATION NOTE(exchange-hostname.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange-hostname.label         "Exchange sunucusu:">
+
+<!ENTITY advancedSetup.label             "Gelişmiş yapılandırma">
+<!ENTITY advancedSetup.accesskey         "G">
+<!ENTITY cancel.label                    "Vazgeç">
+<!ENTITY cancel.accesskey                "z">
+<!ENTITY continue.label                  "Devam et">
+<!ENTITY continue.accesskey              "m">
+<!ENTITY stop.label                      "Dur">
+<!ENTITY stop.accesskey                  "D">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual config mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "Tekrar sına">
+<!ENTITY half-manual-test.accesskey      "s">
+<!ENTITY manual-config.label             "Elle yapılandır…">
+<!ENTITY manual-config.accesskey         "E">
+<!ENTITY open-provisioner.label          "Yeni bir e-posta adresi al…">
+<!ENTITY open-provisioner.accesskey      "Y">
+
+
+<!ENTITY get-help.label                  "Yardım alın">
+<!ENTITY get-help.accesskey              "Y">
+
+
+<!ENTITY warning.label                   "Uyarı!">
+<!ENTITY incomingSettings.label          "Gelen posta ayarları:">
+<!ENTITY outgoingSettings.label          "Giden posta ayarları:">
+<!ENTITY technicaldetails.label          "Teknik ayrıntılar">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "Tehlikenin farkındayım.">
+<!ENTITY confirmWarning.accesskey        "T">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "Bitti">
+<!ENTITY doneAccount.accesskey           "B">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "Ayarları değiştir">
+<!ENTITY changeSettings.accesskey        "A">
+
+<!ENTITY contactYourProvider.description "&brandShortName; mevcut yapılandırmayı kullanarak e-postalarınızı almanızı sağlayabilir ama sorunlu bağlantılarla ilgili olarak sistem yöneticinizle veya e-posta sağlayıcınızla iletişime geçmelisiniz. Daha fazla bilgi için Thunderbird SSS'ye bakın.">
+
+<!ENTITY insecureServer.tooltip.title    "Uyarı! Bu sunucu güvensizdir.">
+<!ENTITY insecureServer.tooltip.details  "Daha fazla ayrıntı için çembere tıklayın.">
+
+<!ENTITY insecureUnencrypted.description "E-postanız ve yetkilendirme bilgileriniz şifrelenmeden gönderiliyor, bu yüzden parolanız (ve iletiniz) kolaylıkla başkaları tarafından okunabilir. &brandShortName; e-postalarınıza erişmenizi sağlayacak, ama güvenli bir bağlantı yapılandırması için e-posta sağlayıcınızla iletişime geçmelisiniz.">
+<!ENTITY insecureSelfSigned.description  "Bu sunucu güvenilir olmayan bir sertifika kullanıyor, bu yüzden &brandShortName; ile sunucunuz arasındaki trafiği izlemediğinden emin olamıyoruz. &brandShortName; e-postalarınıza erişmenizi sağlayacak, ama gerçekten sunucunuzun güvenilir bir sertifika ile yapılandırması için e-posta sağlayıcınızla iletişime geçmelisiniz.">
+<!ENTITY secureServer.description        "Tebrikler! Bu güvenli bir sunucu.">

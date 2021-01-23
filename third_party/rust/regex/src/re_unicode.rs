@@ -1,21 +1,11 @@
-// Copyright 2014-2015 The Rust Project Developers. See the COPYRIGHT
-// file at the top-level directory of this distribution and at
-// http://rust-lang.org/COPYRIGHT.
-//
-// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
-// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
-// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
-// option. This file may not be copied, modified, or distributed
-// except according to those terms.
-
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fmt;
-use std::ops::Index;
+use std::ops::{Index, Range};
 use std::str::FromStr;
 use std::sync::Arc;
 
-use memchr::memchr;
+use find_byte::find_byte;
 use syntax;
 
 use error::Error;
@@ -55,26 +45,35 @@ impl<'t> Match<'t> {
         self.end
     }
 
+    /// Returns the range over the starting and ending byte offsets of the
+    /// match in the haystack.
+    #[inline]
+    pub fn range(&self) -> Range<usize> {
+        self.start..self.end
+    }
+
     /// Returns the matched text.
     #[inline]
     pub fn as_str(&self) -> &'t str {
-        &self.text[self.start..self.end]
+        &self.text[self.range()]
     }
 
     /// Creates a new match from the given haystack and byte offsets.
     #[inline]
     fn new(haystack: &'t str, start: usize, end: usize) -> Match<'t> {
-        Match {
-            text: haystack,
-            start: start,
-            end: end,
-        }
+        Match { text: haystack, start: start, end: end }
     }
 }
 
 impl<'t> From<Match<'t>> for &'t str {
     fn from(m: Match<'t>) -> &'t str {
         m.as_str()
+    }
+}
+
+impl<'t> From<Match<'t>> for Range<usize> {
+    fn from(m: Match<'t>) -> Range<usize> {
+        m.range()
     }
 }
 
@@ -368,10 +367,7 @@ impl Regex {
     /// # }
     /// ```
     pub fn split<'r, 't>(&'r self, text: &'t str) -> Split<'r, 't> {
-        Split {
-            finder: self.find_iter(text),
-            last: 0,
-        }
+        Split { finder: self.find_iter(text), last: 0 }
     }
 
     /// Returns an iterator of at most `limit` substrings of `text` delimited
@@ -394,12 +390,12 @@ impl Regex {
     /// assert_eq!(fields, vec!("Hey", "How", "are you?"));
     /// # }
     /// ```
-    pub fn splitn<'r, 't>(&'r self, text: &'t str, limit: usize)
-                         -> SplitN<'r, 't> {
-        SplitN {
-            splits: self.split(text),
-            n: limit,
-        }
+    pub fn splitn<'r, 't>(
+        &'r self,
+        text: &'t str,
+        limit: usize,
+    ) -> SplitN<'r, 't> {
+        SplitN { splits: self.split(text), n: limit }
     }
 
     /// Replaces the leftmost-first match with the replacement provided.
@@ -558,7 +554,7 @@ impl Regex {
             let mut last_match = 0;
             for (i, m) in it {
                 if limit > 0 && i >= limit {
-                    break
+                    break;
                 }
                 new.push_str(&text[last_match..m.start()]);
                 new.push_str(&rep);
@@ -578,7 +574,7 @@ impl Regex {
         let mut last_match = 0;
         for (i, cap) in it {
             if limit > 0 && i >= limit {
-                break
+                break;
             }
             // unwrap on 0 is OK because captures only reports matches
             let m = cap.get(0).unwrap();
@@ -653,9 +649,10 @@ impl Regex {
         text: &'t str,
         start: usize,
     ) -> Option<Match<'t>> {
-        self.0.searcher_str().find_at(text, start).map(|(s, e)| {
-            Match::new(text, s, e)
-        })
+        self.0
+            .searcher_str()
+            .find_at(text, start)
+            .map(|(s, e)| Match::new(text, s, e))
     }
 
     /// This is like `captures`, but uses
@@ -782,11 +779,11 @@ impl<'r, 't> Iterator for Split<'r, 't> {
         let text = self.finder.0.text();
         match self.finder.next() {
             None => {
-                if self.last >= text.len() {
+                if self.last > text.len() {
                     None
                 } else {
                     let s = &text[self.last..];
-                    self.last = text.len();
+                    self.last = text.len() + 1; // Next call will return None
                     Some(s)
                 }
             }
@@ -815,14 +812,21 @@ impl<'r, 't> Iterator for SplitN<'r, 't> {
 
     fn next(&mut self) -> Option<&'t str> {
         if self.n == 0 {
-            return None
+            return None;
         }
+
         self.n -= 1;
-        if self.n == 0 {
-            let text = self.splits.finder.0.text();
-            Some(&text[self.splits.last..])
+        if self.n > 0 {
+            return self.splits.next();
+        }
+
+        let text = self.splits.finder.0.text();
+        if self.splits.last > text.len() {
+            // We've already returned all substrings.
+            None
         } else {
-            self.splits.next()
+            // self.n == 0, so future calls will return None immediately
+            Some(&text[self.splits.last..])
         }
     }
 }
@@ -937,10 +941,7 @@ impl<'t> Captures<'t> {
     ///
     /// The first match always corresponds to the overall match of the regex.
     pub fn iter<'c>(&'c self) -> SubCaptureMatches<'c, 't> {
-        SubCaptureMatches {
-            caps: self,
-            it: self.locs.iter(),
-        }
+        SubCaptureMatches { caps: self, it: self.locs.iter() }
     }
 
     /// Expands all instances of `$name` in `replacement` to the corresponding
@@ -1015,7 +1016,8 @@ impl<'t> Index<usize> for Captures<'t> {
     type Output = str;
 
     fn index(&self, i: usize) -> &str {
-        self.get(i).map(|m| m.as_str())
+        self.get(i)
+            .map(|m| m.as_str())
             .unwrap_or_else(|| panic!("no group at index '{}'", i))
     }
 }
@@ -1036,7 +1038,8 @@ impl<'t, 'i> Index<&'i str> for Captures<'t> {
     type Output = str;
 
     fn index<'a>(&'a self, name: &'i str) -> &'a str {
-        self.name(name).map(|m| m.as_str())
+        self.name(name)
+            .map(|m| m.as_str())
             .unwrap_or_else(|| panic!("no group named '{}'", name))
     }
 }
@@ -1059,7 +1062,8 @@ impl<'c, 't> Iterator for SubCaptureMatches<'c, 't> {
     type Item = Option<Match<'t>>;
 
     fn next(&mut self) -> Option<Option<Match<'t>>> {
-        self.it.next()
+        self.it
+            .next()
             .map(|cap| cap.map(|(s, e)| Match::new(self.caps.text, s, e)))
     }
 }
@@ -1071,7 +1075,9 @@ impl<'c, 't> Iterator for SubCaptureMatches<'c, 't> {
 ///
 /// `'r` is the lifetime of the compiled regular expression and `'t` is the
 /// lifetime of the matched string.
-pub struct CaptureMatches<'r, 't>(re_trait::CaptureMatches<'t, ExecNoSyncStr<'r>>);
+pub struct CaptureMatches<'r, 't>(
+    re_trait::CaptureMatches<'t, ExecNoSyncStr<'r>>,
+);
 
 impl<'r, 't> Iterator for CaptureMatches<'r, 't> {
     type Item = Captures<'t>;
@@ -1107,7 +1113,8 @@ impl<'r, 't> Iterator for Matches<'r, 't> {
 ///
 /// In general, users of this crate shouldn't need to implement this trait,
 /// since implementations are already provided for `&str` and
-/// `FnMut(&Captures) -> String`, which covers most use cases.
+/// `FnMut(&Captures) -> String` (or any `FnMut(&Captures) -> T`
+/// where `T: AsRef<str>`), which covers most use cases.
 pub trait Replacer {
     /// Appends text to `dst` to replace the current match.
     ///
@@ -1176,16 +1183,20 @@ impl<'a> Replacer for &'a str {
     }
 
     fn no_expansion(&mut self) -> Option<Cow<str>> {
-        match memchr(b'$', self.as_bytes()) {
+        match find_byte(b'$', self.as_bytes()) {
             Some(_) => None,
             None => Some(Cow::Borrowed(*self)),
         }
     }
 }
 
-impl<F> Replacer for F where F: FnMut(&Captures) -> String {
+impl<F, T> Replacer for F
+where
+    F: FnMut(&Captures) -> T,
+    T: AsRef<str>,
+{
     fn replace_append(&mut self, caps: &Captures, dst: &mut String) {
-        dst.push_str(&(*self)(caps));
+        dst.push_str((*self)(caps).as_ref());
     }
 }
 

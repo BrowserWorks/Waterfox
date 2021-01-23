@@ -22,7 +22,6 @@ namespace mozilla {
 
 namespace dom {
 class BrowserParent;
-class PBrowserOrId;
 }  // namespace dom
 
 namespace net {
@@ -42,7 +41,7 @@ class FTPChannelParent final : public PFTPChannelParent,
   NS_DECL_NSIINTERFACEREQUESTOR
   NS_DECL_NSICHANNELEVENTSINK
 
-  FTPChannelParent(const dom::PBrowserOrId& aIframeEmbedding,
+  FTPChannelParent(dom::BrowserParent* aIframeEmbedding,
                    nsILoadContext* aLoadContext,
                    PBOverrideStatus aOverrideStatus);
 
@@ -62,7 +61,7 @@ class FTPChannelParent final : public PFTPChannelParent,
 
   // Handles calling OnStart/Stop if there are errors during diversion.
   // Called asynchronously from FailDiversion.
-  void NotifyDiversionFailed(nsresult aErrorCode, bool aSkipResume = true);
+  void NotifyDiversionFailed(nsresult aErrorCode);
 
   NS_IMETHOD SetErrorMsg(const char* aMsg, bool aUseUTF8) override;
 
@@ -73,7 +72,7 @@ class FTPChannelParent final : public PFTPChannelParent,
   nsresult ResumeForDiversion();
 
   // Asynchronously calls NotifyDiversionFailed.
-  void FailDiversion(nsresult aErrorCode, bool aSkipResume = true);
+  void FailDiversion(nsresult aErrorCode);
 
   bool DoAsyncOpen(const URIParams& aURI, const uint64_t& aStartPos,
                    const nsCString& aEntityID,

@@ -2,24 +2,36 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-# An old map warning, see https://en.wikipedia.org/wiki/Here_be_dragons
-about-config-warning-title = Here be dragons!
-about-config-warning-text = Changing these advanced settings can be harmful to the stability, security, and performance of this application. You should only continue if you are sure of what you are doing.
-about-config-warning-checkbox = Annoy me again, please!
-about-config-warning-button = I accept the risk
+## These strings appear on the warning you see when first visiting about:config.
 
-about-config2-title = Advanced Configurations
+about-config-intro-warning-title = Proceed with Caution
+about-config-intro-warning-text = Changing advanced configuration preferences can impact { -brand-short-name } performance or security.
+about-config-intro-warning-checkbox = Warn me when I attempt to access these preferences
+about-config-intro-warning-button = Accept the Risk and Continue
 
-about-config-search-input =
-    .placeholder = Search
+##
+
+# This is shown on the page before searching but after the warning is accepted.
+about-config-caution-text = Changing these preferences can impact { -brand-short-name } performance or security.
+
+about-config-page-title = Advanced Preferences
+
+about-config-search-input1 =
+    .placeholder = Search preference name
 about-config-show-all = Show All
 
-about-config-pref-add = Add
-about-config-pref-toggle = Toggle
-about-config-pref-edit = Edit
-about-config-pref-save = Save
-about-config-pref-reset = Reset
-about-config-pref-delete = Delete
+about-config-pref-add-button =
+    .title = Add
+about-config-pref-toggle-button =
+    .title = Toggle
+about-config-pref-edit-button =
+    .title = Edit
+about-config-pref-save-button =
+    .title = Save
+about-config-pref-reset-button =
+    .title = Reset
+about-config-pref-delete-button =
+    .title = Delete
 
 ## Labels for the type selection radio buttons shown when adding preferences.
 about-config-pref-add-type-boolean = Boolean

@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.cookies.title             "Evästeet">
+
+<!-- cookies -->
+
+<!ENTITY cookiePolicy.label             "Evästeiden hyväksymiskäytäntö">
+
+<!ENTITY disableCookies.label           "Estä kaikki evästeet">
+<!ENTITY disableCookies.accesskey       "E">
+
+<!ENTITY accNo3rdPartyCookies.label     "Salli vain alkuperäiseltä palvelimelta peräisin olevat evästeet (ei kolmannen osapuolen evästeitä)">
+<!ENTITY accNo3rdPartyCookies.accesskey "a">
+
+<!ENTITY acc3rdPartyVisited.label       "Salli kolmannen osapuolen evästeet vain aiemmin avatuille sivustoille">
+<!ENTITY acc3rdPartyVisited.accesskey   "m">
+
+<!ENTITY accAllCookies.label            "Salli kaikki evästeet">
+<!ENTITY accAllCookies.accesskey        "a">
+
+<!ENTITY cookieRetentionPolicy.label    "Evästeiden säilyttämiskäytäntö">
+
+<!ENTITY acceptNormally.label           "Säilytä evästeet normaalisti">
+<!ENTITY acceptNormally.accesskey       "ä">
+
+<!ENTITY acceptForSession.label         "Säilytä evästeitä vain yhden istunnon ajan">
+<!ENTITY acceptForSession.accesskey     "i">
+
+<!ENTITY acceptforNDays.label           "Säilytä evästeitä">
+<!ENTITY acceptforNDays.accesskey       "l">
+<!ENTITY days.label                     "päivää">
+
+<!ENTITY warnAboutCookies.label         "Kysy joka evästeestä erikseen">
+<!ENTITY warnAboutCookies.accesskey     "K">
+<!ENTITY forCurrentSession.label        "paitsi istuntoevästeistä">
+<!ENTITY forCurrentSession.accesskey    "p">
+
+<!ENTITY manageCookies.label            "Evästeiden ja sivustojen hallinta">
+<!ENTITY manageCookiesDescription.label "Voit tarkastella asetettuja evästeitä ja asettaa sivustokohtaiset käytännöt evästeiden sallimiselle ja estämiselle. Sivustokohtaiset asetukset korvaavat yllä olevat.">
+
+<!ENTITY viewCookies.label              "Evästeiden hallinta">
+<!ENTITY viewCookies.accesskey          "v">
+

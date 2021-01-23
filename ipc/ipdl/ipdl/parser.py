@@ -61,12 +61,8 @@ class Parser:
         if filename in Parser.parsed:
             return Parser.parsed[filename].tu
 
-        self.lexer = lex.lex(debug=self.debug,
-                             optimize=not self.debug,
-                             lextab="ipdl_lextab")
-        self.parser = yacc.yacc(debug=self.debug,
-                                optimize=not self.debug,
-                                tabmodule="ipdl_yacctab")
+        self.lexer = lex.lex(debug=self.debug)
+        self.parser = yacc.yacc(debug=self.debug, write_tables=False)
         self.filename = filename
         self.includedirs = includedirs
         self.tu.filename = filename
@@ -136,6 +132,7 @@ reserved = set((
     'returns',
     'struct',
     'sync',
+    'tainted',
     'union',
     'UniquePtr',
     'upto',
@@ -372,12 +369,14 @@ def p_ComponentTypes(p):
 
 
 def p_ProtocolDefn(p):
-    """ProtocolDefn : OptionalProtocolSendSemanticsQual PROTOCOL ID '{' ProtocolBody '}' ';'"""
-    protocol = p[5]
-    protocol.loc = locFromTok(p, 2)
-    protocol.name = p[3]
+    """ProtocolDefn : OptionalProtocolSendSemanticsQual MaybeRefcounted \
+                      PROTOCOL ID '{' ProtocolBody '}' ';'"""
+    protocol = p[6]
+    protocol.loc = locFromTok(p, 3)
+    protocol.name = p[4]
     protocol.nested = p[1][0]
     protocol.sendSemantics = p[1][1]
+    protocol.refcounted = p[2]
     p[0] = protocol
 
     if Parser.current.type == 'header':
@@ -529,7 +528,8 @@ def p_OptionalMessageModifiers(p):
 
 def p_MessageModifier(p):
     """ MessageModifier : MessageVerify
-                        | MessageCompress """
+                        | MessageCompress
+                        | MessageTainted """
     p[0] = p[1]
 
 
@@ -541,6 +541,10 @@ def p_MessageVerify(p):
 def p_MessageCompress(p):
     """MessageCompress : COMPRESS
                        | COMPRESSALL"""
+    p[0] = p[1]
+
+def p_MessageTainted(p):
+    """MessageTainted : TAINTED"""
     p[0] = p[1]
 
 
@@ -561,9 +565,10 @@ def p_Priority(p):
     """Priority : ID"""
     kinds = {'normal': 1,
              'input': 2,
-             'high': 3}
+             'high': 3,
+             'mediumhigh': 4}
     if p[1] not in kinds:
-        _error(locFromTok(p, 1), "Expected normal or high for prio()")
+        _error(locFromTok(p, 1), "Expected normal, input, high or mediumhigh for prio()")
 
     p[0] = {'prio': kinds[p[1]]}
 

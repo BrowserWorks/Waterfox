@@ -4,22 +4,41 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+include "mozilla/dom/DocShellMessageUtils.h";
+include "mozilla/ipc/TransportSecurityInfoUtils.h";
+
 include protocol PBrowser;
 include protocol PInProcess;
 include protocol PBrowserBridge;
 
 include DOMTypes;
+include ClientIPCTypes;
+include NeckoChannelParams;
 
-using JSWindowActorMessageKind from "mozilla/dom/JSWindowActor.h";
+using JSActorMessageKind from "mozilla/dom/JSActor.h";
+using mozilla::gfx::IntRect from "mozilla/gfx/Rect.h";
+using moveonly mozilla::gfx::PaintFragment from "mozilla/gfx/CrossProcessPaint.h";
+using nscolor from "nsColor.h";
+using refcounted class nsDocShellLoadState from "nsDocShellLoadState.h";
+using mozilla::dom::TabId from "mozilla/dom/ipc/IdType.h";
+using mozilla::layers::LayersId from "mozilla/layers/LayersTypes.h";
+using refcounted class nsITransportSecurityInfo from "nsITransportSecurityInfo.h";
 
 namespace mozilla {
 namespace dom {
 
-struct JSWindowActorMessageMeta {
-  nsString actorName;
+struct JSActorMessageMeta {
+  nsCString actorName;
   nsString messageName;
   uint64_t queryId;
-  JSWindowActorMessageKind kind;
+  JSActorMessageKind kind;
+};
+
+struct IPCWebShareData
+{
+  nsCString title;
+  nsCString text;
+  nsIURI url;
 };
 
 /**
@@ -28,31 +47,92 @@ struct JSWindowActorMessageMeta {
  * link either between the chrome/content process, or will be in-process, for
  * documents which are loaded in the chrome process.
  */
-async protocol PWindowGlobal
+async refcounted protocol PWindowGlobal
 {
   manager PBrowser or PInProcess;
 
 child:
   async __delete__();
 
-  async ChangeFrameRemoteness(BrowsingContext aFrameContext,
-                              nsString aRemoteType,
-                              uint64_t aSwitchId)
-      returns (nsresult rv, nullable PBrowserBridge bridge);
+  async MakeFrameLocal(MaybeDiscardedBrowsingContext aFrameContext,
+                       uint64_t aSwitchId);
+  async MakeFrameRemote(MaybeDiscardedBrowsingContext aFrameContext,
+                        ManagedEndpoint<PBrowserBridgeChild> aEndpoint,
+                        TabId aTabId, LayersId aLayersId) returns (bool success);
+
+  async DrawSnapshot(IntRect? aRect, float aScale, nscolor aBackgroundColor,
+                     uint32_t aFlags) returns (PaintFragment retval);
+
+  /**
+   * Returns the serialized security info associated with this window.
+   */
+  async GetSecurityInfo() returns(nsCString? serializedSecInfo);
+
+  async DispatchSecurityPolicyViolation(nsString aViolationEventJSON);
+
+  async SaveStorageAccessGranted();
 
 both:
-  async RawMessage(JSWindowActorMessageMeta aMetadata, ClonedMessageData aData);
+  async RawMessage(JSActorMessageMeta aMetadata, ClonedMessageData aData,
+                   ClonedMessageData aStack);
 
 parent:
+  // Load the given URI load state into the current owner process of the given
+  // BrowsingContext. aTargetBC must be in the same BrowsingContextGroup as this
+  // window global.
+  async LoadURI(MaybeDiscardedBrowsingContext aTargetBC,
+                nsDocShellLoadState aLoadState, bool aSetNavigating);
+
+  async InternalLoad(MaybeDiscardedBrowsingContext aTargetBC,
+                     nsDocShellLoadState aLoadState);
+
   /// Update the URI of the document in this WindowGlobal.
   async UpdateDocumentURI(nsIURI aUri);
 
-  /// Notify the parent that this PWindowGlobal is now the current global.
-  async BecomeCurrentWindowGlobal();
+  // We expose frameAncestors to web-extensions and they extract URIs from the
+  // principals collected. In order to be compatible with that API, we need to
+  // update the document's principal. This is only allowed if the principals are
+  // `equals` to each other.
+  async UpdateDocumentPrincipal(nsIPrincipal aPrincipal);
 
-  /// Notify the parent that this PWindowGlobal has embedded the given
-  /// BrowsingContext.
-  async DidEmbedBrowsingContext(BrowsingContext aContext);
+  // Update document's `documentHasLoaded` bit in this WindowGlobal.
+  async UpdateDocumentHasLoaded(bool aDocumentHasLoaded);
+
+  // Update document's 'documentHasUserInteracted' bit in this WindowGlobal.
+  async UpdateDocumentHasUserInteracted(bool aDocumentHasUserInteracted);
+
+  // Update document's sandbox flags in this WindowGlobal.
+  async UpdateSandboxFlags(uint32_t aSandboxFlags);
+
+  // Update document csp's fields in this WindowGlobal.
+  async UpdateDocumentCspSettings(bool aBlockAllMixedContent, bool aUpgradeInsecureRequests);
+
+  // Update document's cookie settings in this WindowGlobal.
+  async UpdateCookieJarSettings(CookieJarSettingsArgs cookieJarSettings);
+
+  // Update the title of the document in this WindowGlobal.
+  async UpdateDocumentTitle(nsString aTitle);
+
+  async UpdateDocumentSecurityInfo(nsITransportSecurityInfo aSecurityInfo);
+
+  // Update the document's HTTPS-Only Mode flags in this WindowGlobal.
+  async UpdateHttpsOnlyStatus(uint32_t aHttpsOnlyStatus);
+
+  /// Send down initial document bit to the parent.
+  async SetIsInitialDocument(bool aIsInitialDocument);
+
+  /// Tell the parent if this WindowGlobal has any "beforeunload" event
+  /// listeners.
+  async SetHasBeforeUnload(bool aHasBeforeUnload);
+
+  // Attempts to perform a "Web Share".
+  async Share(IPCWebShareData aData) returns (nsresult rv);
+
+  // Get content blocking events from the parent process.
+  async GetContentBlockingEvents() returns (uint32_t events);
+
+  // Send the ClientInfo associated with a top-level document load.
+  async SetClientInfo(IPCClientInfo aClientInfo);
 
   async Destroy();
 };

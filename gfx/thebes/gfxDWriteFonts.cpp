@@ -13,28 +13,9 @@
 
 #include "harfbuzz/hb.h"
 #include "mozilla/FontPropertyTypes.h"
-#include "cairo-win32.h"
 
 using namespace mozilla;
 using namespace mozilla::gfx;
-
-// This is also in gfxGDIFont.cpp. Would be nice to put it somewhere common,
-// but we can't declare it in the gfxFont.h or gfxFontUtils.h headers
-// because those are exported, and the cairo headers aren't.
-static inline cairo_antialias_t GetCairoAntialiasOption(
-    gfxFont::AntialiasOption anAntialiasOption) {
-  switch (anAntialiasOption) {
-    default:
-    case gfxFont::kAntialiasDefault:
-      return CAIRO_ANTIALIAS_DEFAULT;
-    case gfxFont::kAntialiasNone:
-      return CAIRO_ANTIALIAS_NONE;
-    case gfxFont::kAntialiasGrayscale:
-      return CAIRO_ANTIALIAS_GRAY;
-    case gfxFont::kAntialiasSubpixel:
-      return CAIRO_ANTIALIAS_SUBPIXEL;
-  }
-}
 
 // Code to determine whether Windows is set to use ClearType font smoothing;
 // based on private functions in cairo-win32-font.c
@@ -72,6 +53,25 @@ static BYTE GetSystemTextQuality() {
   return DEFAULT_QUALITY;
 }
 
+#ifndef SPI_GETFONTSMOOTHINGCONTRAST
+#  define SPI_GETFONTSMOOTHINGCONTRAST 0x200c
+#endif
+
+// "Retrieves a contrast value that is used in ClearType smoothing. Valid
+// contrast values are from 1000 to 2200. The default value is 1400."
+static FLOAT GetSystemGDIGamma() {
+  static FLOAT sGDIGamma = 0.0f;
+  if (!sGDIGamma) {
+    UINT value = 0;
+    if (!SystemParametersInfo(SPI_GETFONTSMOOTHINGCONTRAST, 0, &value, 0) ||
+        value < 1000 || value > 2200) {
+      value = 1400;
+    }
+    sGDIGamma = value / 1000.0f;
+  }
+  return sGDIGamma;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // gfxDWriteFont
 gfxDWriteFont::gfxDWriteFont(const RefPtr<UnscaledFontDWrite>& aUnscaledFont,
@@ -81,9 +81,7 @@ gfxDWriteFont::gfxDWriteFont(const RefPtr<UnscaledFontDWrite>& aUnscaledFont,
                              AntialiasOption anAAOption)
     : gfxFont(aUnscaledFont, aFontEntry, aFontStyle, anAAOption),
       mFontFace(aFontFace ? aFontFace : aUnscaledFont->GetFontFace()),
-      mCairoFontFace(nullptr),
       mMetrics(nullptr),
-      mSpaceGlyph(0),
       mUseSubpixelPositions(false),
       mAllowManualShowGlyphs(true),
       mAzureScaledFontUsedClearType(false) {
@@ -95,26 +93,7 @@ gfxDWriteFont::gfxDWriteFont(const RefPtr<UnscaledFontDWrite>& aUnscaledFont,
   ComputeMetrics(anAAOption);
 }
 
-gfxDWriteFont::~gfxDWriteFont() {
-  if (mCairoFontFace) {
-    cairo_font_face_destroy(mCairoFontFace);
-  }
-  if (mScaledFont) {
-    cairo_scaled_font_destroy(mScaledFont);
-  }
-  delete mMetrics;
-}
-
-static void ForceFontUpdate() {
-  // update device context font cache
-  // Dirty but easiest way:
-  // Changing nsIPrefBranch entry which triggers callbacks
-  // and flows into calling mDeviceContext->FlushFontCache()
-  // to update the font cache in all the instance of Browsers
-  static const char kPrefName[] = "font.internaluseonly.changed";
-  bool fontInternalChange = Preferences::GetBool(kPrefName, false);
-  Preferences::SetBool(kPrefName, !fontInternalChange);
-}
+gfxDWriteFont::~gfxDWriteFont() { delete mMetrics; }
 
 void gfxDWriteFont::UpdateSystemTextQuality() {
   BYTE newQuality = GetSystemTextQuality();
@@ -125,10 +104,9 @@ void gfxDWriteFont::UpdateSystemTextQuality() {
 
 void gfxDWriteFont::SystemTextQualityChanged() {
   // If ClearType status has changed, update our value,
+  Factory::SetSystemTextQuality(gfxVars::SystemTextQuality());
   // flush cached stuff that depended on the old setting, and force
   // reflow everywhere to ensure we are using correct glyph metrics.
-  ForceFontUpdate();
-  Factory::SetSystemTextQuality(gfxVars::SystemTextQuality());
   gfxPlatform::FlushFontAndWordCaches();
   gfxPlatform::ForceGlobalReflow();
 }
@@ -450,65 +428,9 @@ bool gfxDWriteFont::HasBitmapStrikeForSize(uint32_t aSize) {
   return hasStrike;
 }
 
-uint32_t gfxDWriteFont::GetSpaceGlyph() { return mSpaceGlyph; }
-
-bool gfxDWriteFont::SetupCairoFont(DrawTarget* aDrawTarget) {
-  cairo_scaled_font_t* scaledFont = InitCairoScaledFont();
-  if (cairo_scaled_font_status(scaledFont) != CAIRO_STATUS_SUCCESS) {
-    // Don't cairo_set_scaled_font as that would propagate the error to
-    // the cairo_t, precluding any further drawing.
-    return false;
-  }
-  cairo_set_scaled_font(gfxFont::RefCairo(aDrawTarget), scaledFont);
-  return true;
-}
-
 bool gfxDWriteFont::IsValid() const { return mFontFace != nullptr; }
 
 IDWriteFontFace* gfxDWriteFont::GetFontFace() { return mFontFace.get(); }
-
-cairo_font_face_t* gfxDWriteFont::CairoFontFace() {
-  if (!mCairoFontFace) {
-#ifdef CAIRO_HAS_DWRITE_FONT
-    mCairoFontFace = cairo_dwrite_font_face_create_for_dwrite_fontface(
-        ((gfxDWriteFontEntry*)mFontEntry.get())->mFont, mFontFace);
-#endif
-  }
-  return mCairoFontFace;
-}
-
-cairo_scaled_font_t* gfxDWriteFont::InitCairoScaledFont() {
-  if (!mScaledFont) {
-    cairo_matrix_t sizeMatrix;
-    cairo_matrix_t identityMatrix;
-
-    cairo_matrix_init_scale(&sizeMatrix, mAdjustedSize, mAdjustedSize);
-    cairo_matrix_init_identity(&identityMatrix);
-
-    cairo_font_options_t* fontOptions = cairo_font_options_create();
-
-    if (mAntialiasOption != kAntialiasDefault) {
-      cairo_font_options_set_antialias(
-          fontOptions, GetCairoAntialiasOption(mAntialiasOption));
-    }
-
-    mScaledFont = cairo_scaled_font_create(CairoFontFace(), &sizeMatrix,
-                                           &identityMatrix, fontOptions);
-    cairo_font_options_destroy(fontOptions);
-
-    cairo_dwrite_scaled_font_allow_manual_show_glyphs(mScaledFont,
-                                                      mAllowManualShowGlyphs);
-
-    cairo_dwrite_scaled_font_set_force_GDI_classic(mScaledFont,
-                                                   GetForceGDIClassic());
-  }
-
-  NS_ASSERTION(mAdjustedSize == 0.0 || cairo_scaled_font_status(mScaledFont) ==
-                                           CAIRO_STATUS_SUCCESS,
-               "Failed to make scaled font");
-
-  return mScaledFont;
-}
 
 gfxFont::RunMetrics gfxDWriteFont::Measure(const gfxTextRun* aTextRun,
                                            uint32_t aStart, uint32_t aEnd,
@@ -559,7 +481,7 @@ int32_t gfxDWriteFont::GetGlyphWidth(uint16_t aGID) {
   return width;
 }
 
-bool gfxDWriteFont::GetForceGDIClassic() {
+bool gfxDWriteFont::GetForceGDIClassic() const {
   return static_cast<gfxDWriteFontEntry*>(mFontEntry.get())
              ->GetForceGDIClassic() &&
          cairo_dwrite_get_cleartype_rendering_mode() < 0 &&
@@ -568,48 +490,81 @@ bool gfxDWriteFont::GetForceGDIClassic() {
 }
 
 DWRITE_MEASURING_MODE
-gfxDWriteFont::GetMeasuringMode() {
+gfxDWriteFont::GetMeasuringMode() const {
   return GetForceGDIClassic()
              ? DWRITE_MEASURING_MODE_GDI_CLASSIC
              : gfxWindowsPlatform::GetPlatform()->DWriteMeasuringMode();
 }
 
 gfxFloat gfxDWriteFont::MeasureGlyphWidth(uint16_t aGlyph) {
-  HRESULT hr;
-  if (mFontFace1) {
-    int32_t advance;
-    if (mUseSubpixelPositions) {
-      hr = mFontFace1->GetDesignGlyphAdvances(1, &aGlyph, &advance, FALSE);
-      if (SUCCEEDED(hr)) {
-        return advance * mFUnitsConvFactor;
+  MOZ_SEH_TRY {
+    HRESULT hr;
+    if (mFontFace1) {
+      int32_t advance;
+      if (mUseSubpixelPositions) {
+        hr = mFontFace1->GetDesignGlyphAdvances(1, &aGlyph, &advance, FALSE);
+        if (SUCCEEDED(hr)) {
+          return advance * mFUnitsConvFactor;
+        }
+      } else {
+        hr = mFontFace1->GetGdiCompatibleGlyphAdvances(
+            FLOAT(mAdjustedSize), 1.0f, nullptr,
+            GetMeasuringMode() == DWRITE_MEASURING_MODE_GDI_NATURAL, FALSE, 1,
+            &aGlyph, &advance);
+        if (SUCCEEDED(hr)) {
+          return NS_lround(advance * mFUnitsConvFactor);
+        }
       }
     } else {
-      hr = mFontFace1->GetGdiCompatibleGlyphAdvances(
-          FLOAT(mAdjustedSize), 1.0f, nullptr,
-          GetMeasuringMode() == DWRITE_MEASURING_MODE_GDI_NATURAL, FALSE, 1,
-          &aGlyph, &advance);
-      if (SUCCEEDED(hr)) {
-        return NS_lround(advance * mFUnitsConvFactor);
-      }
-    }
-  } else {
-    DWRITE_GLYPH_METRICS metrics;
-    if (mUseSubpixelPositions) {
-      hr = mFontFace->GetDesignGlyphMetrics(&aGlyph, 1, &metrics, FALSE);
-      if (SUCCEEDED(hr)) {
-        return metrics.advanceWidth * mFUnitsConvFactor;
-      }
-    } else {
-      hr = mFontFace->GetGdiCompatibleGlyphMetrics(
-          FLOAT(mAdjustedSize), 1.0f, nullptr,
-          GetMeasuringMode() == DWRITE_MEASURING_MODE_GDI_NATURAL, &aGlyph, 1,
-          &metrics, FALSE);
-      if (SUCCEEDED(hr)) {
-        return NS_lround(metrics.advanceWidth * mFUnitsConvFactor);
+      DWRITE_GLYPH_METRICS metrics;
+      if (mUseSubpixelPositions) {
+        hr = mFontFace->GetDesignGlyphMetrics(&aGlyph, 1, &metrics, FALSE);
+        if (SUCCEEDED(hr)) {
+          return metrics.advanceWidth * mFUnitsConvFactor;
+        }
+      } else {
+        hr = mFontFace->GetGdiCompatibleGlyphMetrics(
+            FLOAT(mAdjustedSize), 1.0f, nullptr,
+            GetMeasuringMode() == DWRITE_MEASURING_MODE_GDI_NATURAL, &aGlyph, 1,
+            &metrics, FALSE);
+        if (SUCCEEDED(hr)) {
+          return NS_lround(metrics.advanceWidth * mFUnitsConvFactor);
+        }
       }
     }
   }
+  MOZ_SEH_EXCEPT(EXCEPTION_EXECUTE_HANDLER) {
+    // Exception (e.g. disk i/o error) occurred when DirectWrite tried to use
+    // the font resource; possibly a failing drive or similar hardware issue.
+    // Mark the font as invalid, and wipe the fontEntry's charmap so that font
+    // selection will skip it; we'll use a fallback font instead.
+    mIsValid = false;
+    GetFontEntry()->mCharacterMap = new gfxCharacterMap();
+    GetFontEntry()->mShmemCharacterMap = nullptr;
+    gfxCriticalError() << "Exception occurred measuring glyph width for "
+                       << GetFontEntry()->Name().get();
+  }
   return 0.0;
+}
+
+bool gfxDWriteFont::GetGlyphBounds(uint16_t aGID, gfxRect* aBounds,
+                                   bool aTight) {
+  DWRITE_GLYPH_METRICS m;
+  HRESULT hr = mFontFace->GetDesignGlyphMetrics(&aGID, 1, &m, FALSE);
+  if (FAILED(hr)) {
+    return false;
+  }
+  gfxRect bounds(m.leftSideBearing, m.topSideBearing - m.verticalOriginY,
+                 m.advanceWidth - m.leftSideBearing - m.rightSideBearing,
+                 m.advanceHeight - m.topSideBearing - m.bottomSideBearing);
+  bounds.Scale(mFUnitsConvFactor);
+  // GetDesignGlyphMetrics returns 'ideal' glyph metrics, we need to pad to
+  // account for antialiasing.
+  if (!aTight && !aBounds->IsEmpty()) {
+    bounds.Inflate(1.0, 0.0);
+  }
+  *aBounds = bounds;
+  return true;
 }
 
 void gfxDWriteFont::AddSizeOfExcludingThis(MallocSizeOf aMallocSizeOf,
@@ -635,8 +590,6 @@ already_AddRefed<ScaledFont> gfxDWriteFont::GetScaledFont(
   }
   if (!mAzureScaledFont) {
     gfxDWriteFontEntry* fe = static_cast<gfxDWriteFontEntry*>(mFontEntry.get());
-    bool useEmbeddedBitmap =
-        fe->IsCJKFont() && HasBitmapStrikeForSize(NS_lround(mAdjustedSize));
     bool forceGDI = GetForceGDIClassic();
 
     IDWriteRenderingParams* params =
@@ -646,11 +599,26 @@ already_AddRefed<ScaledFont> gfxDWriteFont::GetScaledFont(
                             : gfxWindowsPlatform::TEXT_RENDERING_NORMAL)
                 : gfxWindowsPlatform::TEXT_RENDERING_NO_CLEARTYPE);
 
+    DWRITE_RENDERING_MODE renderingMode = params->GetRenderingMode();
+    FLOAT gamma = params->GetGamma();
+    FLOAT contrast = params->GetEnhancedContrast();
+    FLOAT clearTypeLevel = params->GetClearTypeLevel();
+    if (forceGDI || renderingMode == DWRITE_RENDERING_MODE_GDI_CLASSIC) {
+      renderingMode = DWRITE_RENDERING_MODE_GDI_CLASSIC;
+      gamma = GetSystemGDIGamma();
+      contrast = 0.0f;
+    }
+
+    bool useEmbeddedBitmap =
+        (renderingMode == DWRITE_RENDERING_MODE_DEFAULT ||
+         renderingMode == DWRITE_RENDERING_MODE_GDI_CLASSIC) &&
+        fe->IsCJKFont() && HasBitmapStrikeForSize(NS_lround(mAdjustedSize));
+
     const gfxFontStyle* fontStyle = GetStyle();
     mAzureScaledFont = Factory::CreateScaledFontForDWriteFont(
         mFontFace, fontStyle, GetUnscaledFont(), GetAdjustedSize(),
-        useEmbeddedBitmap, forceGDI, params, params->GetGamma(),
-        params->GetEnhancedContrast());
+        useEmbeddedBitmap, (int)renderingMode, params, gamma, contrast,
+        clearTypeLevel);
     if (!mAzureScaledFont) {
       return nullptr;
     }
@@ -658,16 +626,15 @@ already_AddRefed<ScaledFont> gfxDWriteFont::GetScaledFont(
     mAzureScaledFontUsedClearType = UsingClearType();
   }
 
-  if (aTarget->GetBackendType() == BackendType::CAIRO) {
-    if (!mAzureScaledFont->GetCairoScaledFont()) {
-      cairo_scaled_font_t* cairoScaledFont = InitCairoScaledFont();
-      if (!cairoScaledFont) {
-        return nullptr;
-      }
-      mAzureScaledFont->SetCairoScaledFont(cairoScaledFont);
-    }
-  }
-
   RefPtr<ScaledFont> scaledFont(mAzureScaledFont);
   return scaledFont.forget();
+}
+
+bool gfxDWriteFont::ShouldRoundXOffset(cairo_t* aCairo) const {
+  // show_glyphs is implemented on the font and so is used for all Cairo
+  // surface types; however, it may pixel-snap depending on the dwrite
+  // rendering mode
+  return GetForceGDIClassic() ||
+         gfxWindowsPlatform::GetPlatform()->DWriteMeasuringMode() !=
+             DWRITE_MEASURING_MODE_NATURAL;
 }

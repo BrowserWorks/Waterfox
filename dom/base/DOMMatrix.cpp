@@ -19,6 +19,9 @@
 
 #include <math.h>
 
+#include "js/Conversions.h"  // JS::NumberToString
+#include "js/Equality.h"     // JS::SameValueZero
+
 namespace mozilla {
 namespace dom {
 
@@ -38,29 +41,233 @@ JSObject* DOMMatrixReadOnly::WrapObject(JSContext* aCx,
   return DOMMatrixReadOnly_Binding::Wrap(aCx, this, aGivenProto);
 }
 
+// https://drafts.fxtf.org/geometry/#matrix-validate-and-fixup-2d
+static bool ValidateAndFixupMatrix2DInit(DOMMatrix2DInit& aMatrixInit,
+                                         ErrorResult& aRv) {
+#define ValidateAliases(field, alias, fieldName, aliasName)             \
+  if ((field).WasPassed() && (alias).WasPassed() &&                     \
+      !JS::SameValueZero((field).Value(), (alias).Value())) {           \
+    aRv.ThrowTypeError<MSG_MATRIX_INIT_CONFLICTING_VALUE>((fieldName),  \
+                                                          (aliasName)); \
+    return false;                                                       \
+  }
+#define SetFromAliasOrDefault(field, alias, defaultValue) \
+  if (!(field).WasPassed()) {                             \
+    if ((alias).WasPassed()) {                            \
+      (field).Construct((alias).Value());                 \
+    } else {                                              \
+      (field).Construct(defaultValue);                    \
+    }                                                     \
+  }
+#define ValidateAndSet(field, alias, fieldName, aliasName, defaultValue) \
+  ValidateAliases((field), (alias), fieldName, aliasName);               \
+  SetFromAliasOrDefault((field), (alias), (defaultValue));
+
+  ValidateAndSet(aMatrixInit.mM11, aMatrixInit.mA, "m11", "a", 1);
+  ValidateAndSet(aMatrixInit.mM12, aMatrixInit.mB, "m12", "b", 0);
+  ValidateAndSet(aMatrixInit.mM21, aMatrixInit.mC, "m21", "c", 0);
+  ValidateAndSet(aMatrixInit.mM22, aMatrixInit.mD, "m22", "d", 1);
+  ValidateAndSet(aMatrixInit.mM41, aMatrixInit.mE, "m41", "e", 0);
+  ValidateAndSet(aMatrixInit.mM42, aMatrixInit.mF, "m42", "f", 0);
+
+  return true;
+
+#undef ValidateAliases
+#undef SetFromAliasOrDefault
+#undef ValidateAndSet
+}
+
+// https://drafts.fxtf.org/geometry/#matrix-validate-and-fixup
+static bool ValidateAndFixupMatrixInit(DOMMatrixInit& aMatrixInit,
+                                       ErrorResult& aRv) {
+#define Check3DField(field, fieldName, defaultValue)             \
+  if ((field) != (defaultValue)) {                               \
+    if (!aMatrixInit.mIs2D.WasPassed()) {                        \
+      aMatrixInit.mIs2D.Construct(false);                        \
+      return true;                                               \
+    }                                                            \
+    if (aMatrixInit.mIs2D.Value()) {                             \
+      aRv.ThrowTypeError<MSG_MATRIX_INIT_EXCEEDS_2D>(fieldName); \
+      return false;                                              \
+    }                                                            \
+  }
+
+  if (!ValidateAndFixupMatrix2DInit(aMatrixInit, aRv)) {
+    return false;
+  }
+
+  Check3DField(aMatrixInit.mM13, "m13", 0);
+  Check3DField(aMatrixInit.mM14, "m14", 0);
+  Check3DField(aMatrixInit.mM23, "m23", 0);
+  Check3DField(aMatrixInit.mM24, "m24", 0);
+  Check3DField(aMatrixInit.mM31, "m31", 0);
+  Check3DField(aMatrixInit.mM32, "m32", 0);
+  Check3DField(aMatrixInit.mM34, "m34", 0);
+  Check3DField(aMatrixInit.mM43, "m43", 0);
+  Check3DField(aMatrixInit.mM33, "m33", 1);
+  Check3DField(aMatrixInit.mM44, "m44", 1);
+
+  if (!aMatrixInit.mIs2D.WasPassed()) {
+    aMatrixInit.mIs2D.Construct(true);
+  }
+  return true;
+
+#undef Check3DField
+}
+
+void DOMMatrixReadOnly::SetDataFromMatrix2DInit(
+    const DOMMatrix2DInit& aMatrixInit) {
+  MOZ_ASSERT(Is2D());
+  mMatrix2D->_11 = aMatrixInit.mM11.Value();
+  mMatrix2D->_12 = aMatrixInit.mM12.Value();
+  mMatrix2D->_21 = aMatrixInit.mM21.Value();
+  mMatrix2D->_22 = aMatrixInit.mM22.Value();
+  mMatrix2D->_31 = aMatrixInit.mM41.Value();
+  mMatrix2D->_32 = aMatrixInit.mM42.Value();
+}
+
+void DOMMatrixReadOnly::SetDataFromMatrixInit(
+    const DOMMatrixInit& aMatrixInit) {
+  const bool is2D = aMatrixInit.mIs2D.Value();
+  MOZ_ASSERT(is2D == Is2D());
+  if (is2D) {
+    SetDataFromMatrix2DInit(aMatrixInit);
+  } else {
+    mMatrix3D->_11 = aMatrixInit.mM11.Value();
+    mMatrix3D->_12 = aMatrixInit.mM12.Value();
+    mMatrix3D->_13 = aMatrixInit.mM13;
+    mMatrix3D->_14 = aMatrixInit.mM14;
+    mMatrix3D->_21 = aMatrixInit.mM21.Value();
+    mMatrix3D->_22 = aMatrixInit.mM22.Value();
+    mMatrix3D->_23 = aMatrixInit.mM23;
+    mMatrix3D->_24 = aMatrixInit.mM24;
+    mMatrix3D->_31 = aMatrixInit.mM31;
+    mMatrix3D->_32 = aMatrixInit.mM32;
+    mMatrix3D->_33 = aMatrixInit.mM33;
+    mMatrix3D->_34 = aMatrixInit.mM34;
+    mMatrix3D->_41 = aMatrixInit.mM41.Value();
+    mMatrix3D->_42 = aMatrixInit.mM42.Value();
+    mMatrix3D->_43 = aMatrixInit.mM43;
+    mMatrix3D->_44 = aMatrixInit.mM44;
+  }
+}
+
+already_AddRefed<DOMMatrixReadOnly> DOMMatrixReadOnly::FromMatrix(
+    nsISupports* aParent, const DOMMatrix2DInit& aMatrixInit,
+    ErrorResult& aRv) {
+  DOMMatrix2DInit matrixInit(aMatrixInit);
+  if (!ValidateAndFixupMatrix2DInit(matrixInit, aRv)) {
+    return nullptr;
+  };
+
+  RefPtr<DOMMatrixReadOnly> matrix =
+      new DOMMatrixReadOnly(aParent, /* is2D */ true);
+  matrix->SetDataFromMatrix2DInit(matrixInit);
+  return matrix.forget();
+}
+
+already_AddRefed<DOMMatrixReadOnly> DOMMatrixReadOnly::FromMatrix(
+    nsISupports* aParent, const DOMMatrixInit& aMatrixInit, ErrorResult& aRv) {
+  DOMMatrixInit matrixInit(aMatrixInit);
+  if (!ValidateAndFixupMatrixInit(matrixInit, aRv)) {
+    return nullptr;
+  };
+
+  RefPtr<DOMMatrixReadOnly> rval =
+      new DOMMatrixReadOnly(aParent, matrixInit.mIs2D.Value());
+  rval->SetDataFromMatrixInit(matrixInit);
+  return rval.forget();
+}
+
+already_AddRefed<DOMMatrixReadOnly> DOMMatrixReadOnly::FromMatrix(
+    const GlobalObject& aGlobal, const DOMMatrixInit& aMatrixInit,
+    ErrorResult& aRv) {
+  RefPtr<DOMMatrixReadOnly> matrix =
+      FromMatrix(aGlobal.GetAsSupports(), aMatrixInit, aRv);
+  return matrix.forget();
+}
+
+already_AddRefed<DOMMatrixReadOnly> DOMMatrixReadOnly::FromFloat32Array(
+    const GlobalObject& aGlobal, const Float32Array& aArray32,
+    ErrorResult& aRv) {
+  aArray32.ComputeState();
+
+  const int length = aArray32.Length();
+  const bool is2D = length == 6;
+  RefPtr<DOMMatrixReadOnly> obj =
+      new DOMMatrixReadOnly(aGlobal.GetAsSupports(), is2D);
+  SetDataInMatrix(obj, aArray32.Data(), length, aRv);
+
+  return obj.forget();
+}
+
+already_AddRefed<DOMMatrixReadOnly> DOMMatrixReadOnly::FromFloat64Array(
+    const GlobalObject& aGlobal, const Float64Array& aArray64,
+    ErrorResult& aRv) {
+  aArray64.ComputeState();
+
+  const int length = aArray64.Length();
+  const bool is2D = length == 6;
+  RefPtr<DOMMatrixReadOnly> obj =
+      new DOMMatrixReadOnly(aGlobal.GetAsSupports(), is2D);
+  SetDataInMatrix(obj, aArray64.Data(), length, aRv);
+
+  return obj.forget();
+}
+
 already_AddRefed<DOMMatrixReadOnly> DOMMatrixReadOnly::Constructor(
     const GlobalObject& aGlobal,
-    const Optional<StringOrUnrestrictedDoubleSequence>& aArg,
+    const Optional<UTF8StringOrUnrestrictedDoubleSequenceOrDOMMatrixReadOnly>&
+        aArg,
     ErrorResult& aRv) {
-  RefPtr<DOMMatrixReadOnly> rval =
-      new DOMMatrixReadOnly(aGlobal.GetAsSupports());
   if (!aArg.WasPassed()) {
+    RefPtr<DOMMatrixReadOnly> rval =
+        new DOMMatrixReadOnly(aGlobal.GetAsSupports());
     return rval.forget();
   }
 
   const auto& arg = aArg.Value();
-  if (arg.IsString()) {
+  if (arg.IsUTF8String()) {
     nsCOMPtr<nsPIDOMWindowInner> win =
         do_QueryInterface(aGlobal.GetAsSupports());
     if (!win) {
       aRv.ThrowTypeError<MSG_ILLEGAL_CONSTRUCTOR>();
       return nullptr;
     }
-    rval->SetMatrixValue(arg.GetAsString(), aRv);
-  } else {
-    const auto& sequence = arg.GetAsUnrestrictedDoubleSequence();
-    SetDataInMatrix(rval, sequence.Elements(), sequence.Length(), aRv);
+    RefPtr<DOMMatrixReadOnly> rval =
+        new DOMMatrixReadOnly(aGlobal.GetAsSupports());
+    rval->SetMatrixValue(arg.GetAsUTF8String(), aRv);
+    return rval.forget();
   }
+  if (arg.IsDOMMatrixReadOnly()) {
+    RefPtr<DOMMatrixReadOnly> obj = new DOMMatrixReadOnly(
+        aGlobal.GetAsSupports(), arg.GetAsDOMMatrixReadOnly());
+    return obj.forget();
+  }
+
+  const auto& sequence = arg.GetAsUnrestrictedDoubleSequence();
+  const int length = sequence.Length();
+  const bool is2D = length == 6;
+  RefPtr<DOMMatrixReadOnly> rval =
+      new DOMMatrixReadOnly(aGlobal.GetAsSupports(), is2D);
+  SetDataInMatrix(rval, sequence.Elements(), length, aRv);
+  return rval.forget();
+}
+
+already_AddRefed<DOMMatrixReadOnly> DOMMatrixReadOnly::ReadStructuredClone(
+    JSContext* aCx, nsIGlobalObject* aGlobal,
+    JSStructuredCloneReader* aReader) {
+  uint8_t is2D;
+
+  if (!JS_ReadBytes(aReader, &is2D, 1)) {
+    return nullptr;
+  }
+
+  RefPtr<DOMMatrixReadOnly> rval = new DOMMatrixReadOnly(aGlobal, is2D);
+
+  if (!ReadStructuredCloneElements(aReader, rval)) {
+    return nullptr;
+  };
 
   return rval.forget();
 }
@@ -73,11 +280,11 @@ already_AddRefed<DOMMatrix> DOMMatrixReadOnly::Translate(double aTx, double aTy,
   return retval.forget();
 }
 
-already_AddRefed<DOMMatrix> DOMMatrixReadOnly::Scale(double aScale,
-                                                     double aOriginX,
-                                                     double aOriginY) const {
+already_AddRefed<DOMMatrix> DOMMatrixReadOnly::Scale(
+    double aScaleX, const Optional<double>& aScaleY, double aScaleZ,
+    double aOriginX, double aOriginY, double aOriginZ) const {
   RefPtr<DOMMatrix> retval = new DOMMatrix(mParent, *this);
-  retval->ScaleSelf(aScale, aOriginX, aOriginY);
+  retval->ScaleSelf(aScaleX, aScaleY, aScaleZ, aOriginX, aOriginY, aOriginZ);
 
   return retval.forget();
 }
@@ -93,20 +300,18 @@ already_AddRefed<DOMMatrix> DOMMatrixReadOnly::Scale3d(double aScale,
 }
 
 already_AddRefed<DOMMatrix> DOMMatrixReadOnly::ScaleNonUniform(
-    double aScaleX, double aScaleY, double aScaleZ, double aOriginX,
-    double aOriginY, double aOriginZ) const {
+    double aScaleX, double aScaleY) const {
   RefPtr<DOMMatrix> retval = new DOMMatrix(mParent, *this);
-  retval->ScaleNonUniformSelf(aScaleX, aScaleY, aScaleZ, aOriginX, aOriginY,
-                              aOriginZ);
+  retval->ScaleSelf(aScaleX, Optional<double>(aScaleY), 1, 0, 0, 0);
 
   return retval.forget();
 }
 
-already_AddRefed<DOMMatrix> DOMMatrixReadOnly::Rotate(double aAngle,
-                                                      double aOriginX,
-                                                      double aOriginY) const {
+already_AddRefed<DOMMatrix> DOMMatrixReadOnly::Rotate(
+    double aRotX, const Optional<double>& aRotY,
+    const Optional<double>& aRotZ) const {
   RefPtr<DOMMatrix> retval = new DOMMatrix(mParent, *this);
-  retval->RotateSelf(aAngle, aOriginX, aOriginY);
+  retval->RotateSelf(aRotX, aRotY, aRotZ);
 
   return retval.forget();
 }
@@ -142,9 +347,9 @@ already_AddRefed<DOMMatrix> DOMMatrixReadOnly::SkewY(double aSy) const {
 }
 
 already_AddRefed<DOMMatrix> DOMMatrixReadOnly::Multiply(
-    const DOMMatrix& other) const {
+    const DOMMatrixInit& other, ErrorResult& aRv) const {
   RefPtr<DOMMatrix> retval = new DOMMatrix(mParent, *this);
-  retval->MultiplySelf(other);
+  retval->MultiplySelf(other, aRv);
 
   return retval.forget();
 }
@@ -152,13 +357,14 @@ already_AddRefed<DOMMatrix> DOMMatrixReadOnly::Multiply(
 already_AddRefed<DOMMatrix> DOMMatrixReadOnly::FlipX() const {
   RefPtr<DOMMatrix> retval = new DOMMatrix(mParent, *this);
   if (mMatrix3D) {
-    gfx::Matrix4x4 m;
+    gfx::Matrix4x4Double m;
     m._11 = -1;
-    retval->mMatrix3D = new gfx::Matrix4x4(m * *mMatrix3D);
+    retval->mMatrix3D = MakeUnique<gfx::Matrix4x4Double>(m * *mMatrix3D);
   } else {
-    gfx::Matrix m;
+    gfx::MatrixDouble m;
     m._11 = -1;
-    retval->mMatrix2D = new gfx::Matrix(mMatrix2D ? m * *mMatrix2D : m);
+    retval->mMatrix2D =
+        MakeUnique<gfx::MatrixDouble>(mMatrix2D ? m * *mMatrix2D : m);
   }
 
   return retval.forget();
@@ -167,13 +373,14 @@ already_AddRefed<DOMMatrix> DOMMatrixReadOnly::FlipX() const {
 already_AddRefed<DOMMatrix> DOMMatrixReadOnly::FlipY() const {
   RefPtr<DOMMatrix> retval = new DOMMatrix(mParent, *this);
   if (mMatrix3D) {
-    gfx::Matrix4x4 m;
+    gfx::Matrix4x4Double m;
     m._22 = -1;
-    retval->mMatrix3D = new gfx::Matrix4x4(m * *mMatrix3D);
+    retval->mMatrix3D = MakeUnique<gfx::Matrix4x4Double>(m * *mMatrix3D);
   } else {
-    gfx::Matrix m;
+    gfx::MatrixDouble m;
     m._22 = -1;
-    retval->mMatrix2D = new gfx::Matrix(mMatrix2D ? m * *mMatrix2D : m);
+    retval->mMatrix2D =
+        MakeUnique<gfx::MatrixDouble>(mMatrix2D ? m * *mMatrix2D : m);
   }
 
   return retval.forget();
@@ -214,9 +421,9 @@ already_AddRefed<DOMPoint> DOMMatrixReadOnly::TransformPoint(
     retval->SetZ(transformedPoint.z);
     retval->SetW(transformedPoint.w);
   } else if (point.mZ != 0 || point.mW != 1.0) {
-    gfx::Matrix4x4 tempMatrix(gfx::Matrix4x4::From2D(*mMatrix2D));
+    gfx::Matrix4x4Double tempMatrix(gfx::Matrix4x4Double::From2D(*mMatrix2D));
 
-    gfx::Point4D transformedPoint;
+    gfx::PointDouble4D transformedPoint;
     transformedPoint.x = point.mX;
     transformedPoint.y = point.mY;
     transformedPoint.z = point.mZ;
@@ -229,7 +436,7 @@ already_AddRefed<DOMPoint> DOMMatrixReadOnly::TransformPoint(
     retval->SetZ(transformedPoint.z);
     retval->SetW(transformedPoint.w);
   } else {
-    gfx::Point transformedPoint;
+    gfx::PointDouble transformedPoint;
     transformedPoint.x = point.mX;
     transformedPoint.y = point.mY;
 
@@ -291,90 +498,204 @@ void DOMMatrixReadOnly::ToFloat64Array(JSContext* aCx,
   aResult.set(&value.toObject());
 }
 
-// Convenient way to append things as floats, not doubles.  We use this because
-// we only want to output about 6 digits of precision for our matrix()
-// functions, to preserve the behavior we used to have when we used
-// AppendPrintf.
-static void AppendFloat(nsAString& aStr, float f) { aStr.AppendFloat(f); }
-
-void DOMMatrixReadOnly::Stringify(nsAString& aResult) {
+void DOMMatrixReadOnly::Stringify(nsAString& aResult, ErrorResult& aRv) {
+  char cbuf[JS::MaximumNumberToStringLength];
   nsAutoString matrixStr;
+  auto AppendDouble = [&aRv, &cbuf, &matrixStr](double d,
+                                                bool isLastItem = false) {
+    if (!mozilla::IsFinite(d)) {
+      aRv.ThrowInvalidStateError(
+          "Matrix with a non-finite element cannot be stringified.");
+      return false;
+    }
+    JS::NumberToString(d, cbuf);
+    matrixStr.AppendASCII(cbuf);
+    if (!isLastItem) {
+      matrixStr.AppendLiteral(", ");
+    }
+    return true;
+  };
+
   if (mMatrix3D) {
     // We can't use AppendPrintf here, because it does locale-specific
     // formatting of floating-point values.
     matrixStr.AssignLiteral("matrix3d(");
-    AppendFloat(matrixStr, M11());
-    matrixStr.AppendLiteral(", ");
-    AppendFloat(matrixStr, M12());
-    matrixStr.AppendLiteral(", ");
-    AppendFloat(matrixStr, M13());
-    matrixStr.AppendLiteral(", ");
-    AppendFloat(matrixStr, M14());
-    matrixStr.AppendLiteral(", ");
-    AppendFloat(matrixStr, M21());
-    matrixStr.AppendLiteral(", ");
-    AppendFloat(matrixStr, M22());
-    matrixStr.AppendLiteral(", ");
-    AppendFloat(matrixStr, M23());
-    matrixStr.AppendLiteral(", ");
-    AppendFloat(matrixStr, M24());
-    matrixStr.AppendLiteral(", ");
-    AppendFloat(matrixStr, M31());
-    matrixStr.AppendLiteral(", ");
-    AppendFloat(matrixStr, M32());
-    matrixStr.AppendLiteral(", ");
-    AppendFloat(matrixStr, M33());
-    matrixStr.AppendLiteral(", ");
-    AppendFloat(matrixStr, M34());
-    matrixStr.AppendLiteral(", ");
-    AppendFloat(matrixStr, M41());
-    matrixStr.AppendLiteral(", ");
-    AppendFloat(matrixStr, M42());
-    matrixStr.AppendLiteral(", ");
-    AppendFloat(matrixStr, M43());
-    matrixStr.AppendLiteral(", ");
-    AppendFloat(matrixStr, M44());
+    if (!AppendDouble(M11()) || !AppendDouble(M12()) || !AppendDouble(M13()) ||
+        !AppendDouble(M14()) || !AppendDouble(M21()) || !AppendDouble(M22()) ||
+        !AppendDouble(M23()) || !AppendDouble(M24()) || !AppendDouble(M31()) ||
+        !AppendDouble(M32()) || !AppendDouble(M33()) || !AppendDouble(M34()) ||
+        !AppendDouble(M41()) || !AppendDouble(M42()) || !AppendDouble(M43()) ||
+        !AppendDouble(M44(), true)) {
+      return;
+    }
     matrixStr.AppendLiteral(")");
   } else {
     // We can't use AppendPrintf here, because it does locale-specific
     // formatting of floating-point values.
     matrixStr.AssignLiteral("matrix(");
-    AppendFloat(matrixStr, A());
-    matrixStr.AppendLiteral(", ");
-    AppendFloat(matrixStr, B());
-    matrixStr.AppendLiteral(", ");
-    AppendFloat(matrixStr, C());
-    matrixStr.AppendLiteral(", ");
-    AppendFloat(matrixStr, D());
-    matrixStr.AppendLiteral(", ");
-    AppendFloat(matrixStr, E());
-    matrixStr.AppendLiteral(", ");
-    AppendFloat(matrixStr, F());
+    if (!AppendDouble(A()) || !AppendDouble(B()) || !AppendDouble(C()) ||
+        !AppendDouble(D()) || !AppendDouble(E()) || !AppendDouble(F(), true)) {
+      return;
+    }
     matrixStr.AppendLiteral(")");
   }
 
   aResult = matrixStr;
 }
 
-already_AddRefed<DOMMatrix> DOMMatrix::Constructor(const GlobalObject& aGlobal,
-                                                   ErrorResult& aRv) {
-  RefPtr<DOMMatrix> obj = new DOMMatrix(aGlobal.GetAsSupports());
+// https://drafts.fxtf.org/geometry/#structured-serialization
+bool DOMMatrixReadOnly::WriteStructuredClone(
+    JSContext* aCx, JSStructuredCloneWriter* aWriter) const {
+#define WriteDouble(d)                                                       \
+  JS_WriteUint32Pair(aWriter, (BitwiseCast<uint64_t>(d) >> 32) & 0xffffffff, \
+                     BitwiseCast<uint64_t>(d) & 0xffffffff)
+
+  const uint8_t is2D = Is2D();
+
+  if (!JS_WriteBytes(aWriter, &is2D, 1)) {
+    return false;
+  }
+
+  if (is2D == 1) {
+    return WriteDouble(mMatrix2D->_11) && WriteDouble(mMatrix2D->_12) &&
+           WriteDouble(mMatrix2D->_21) && WriteDouble(mMatrix2D->_22) &&
+           WriteDouble(mMatrix2D->_31) && WriteDouble(mMatrix2D->_32);
+  }
+
+  return WriteDouble(mMatrix3D->_11) && WriteDouble(mMatrix3D->_12) &&
+         WriteDouble(mMatrix3D->_13) && WriteDouble(mMatrix3D->_14) &&
+         WriteDouble(mMatrix3D->_21) && WriteDouble(mMatrix3D->_22) &&
+         WriteDouble(mMatrix3D->_23) && WriteDouble(mMatrix3D->_24) &&
+         WriteDouble(mMatrix3D->_31) && WriteDouble(mMatrix3D->_32) &&
+         WriteDouble(mMatrix3D->_33) && WriteDouble(mMatrix3D->_34) &&
+         WriteDouble(mMatrix3D->_41) && WriteDouble(mMatrix3D->_42) &&
+         WriteDouble(mMatrix3D->_43) && WriteDouble(mMatrix3D->_44);
+
+#undef WriteDouble
+}
+
+bool DOMMatrixReadOnly::ReadStructuredCloneElements(
+    JSStructuredCloneReader* aReader, DOMMatrixReadOnly* matrix) {
+  uint32_t high;
+  uint32_t low;
+
+#define ReadDouble(d)                             \
+  if (!JS_ReadUint32Pair(aReader, &high, &low)) { \
+    return false;                                 \
+  }                                               \
+  (*(d) = BitwiseCast<double>(static_cast<uint64_t>(high) << 32 | low))
+
+  if (matrix->Is2D() == 1) {
+    ReadDouble(&(matrix->mMatrix2D->_11));
+    ReadDouble(&(matrix->mMatrix2D->_12));
+    ReadDouble(&(matrix->mMatrix2D->_21));
+    ReadDouble(&(matrix->mMatrix2D->_22));
+    ReadDouble(&(matrix->mMatrix2D->_31));
+    ReadDouble(&(matrix->mMatrix2D->_32));
+  } else {
+    ReadDouble(&(matrix->mMatrix3D->_11));
+    ReadDouble(&(matrix->mMatrix3D->_12));
+    ReadDouble(&(matrix->mMatrix3D->_13));
+    ReadDouble(&(matrix->mMatrix3D->_14));
+    ReadDouble(&(matrix->mMatrix3D->_21));
+    ReadDouble(&(matrix->mMatrix3D->_22));
+    ReadDouble(&(matrix->mMatrix3D->_23));
+    ReadDouble(&(matrix->mMatrix3D->_24));
+    ReadDouble(&(matrix->mMatrix3D->_31));
+    ReadDouble(&(matrix->mMatrix3D->_32));
+    ReadDouble(&(matrix->mMatrix3D->_33));
+    ReadDouble(&(matrix->mMatrix3D->_34));
+    ReadDouble(&(matrix->mMatrix3D->_41));
+    ReadDouble(&(matrix->mMatrix3D->_42));
+    ReadDouble(&(matrix->mMatrix3D->_43));
+    ReadDouble(&(matrix->mMatrix3D->_44));
+  }
+
+  return true;
+
+#undef ReadDouble
+}
+
+already_AddRefed<DOMMatrix> DOMMatrix::FromMatrix(
+    nsISupports* aParent, const DOMMatrixInit& aMatrixInit, ErrorResult& aRv) {
+  DOMMatrixInit matrixInit(aMatrixInit);
+  if (!ValidateAndFixupMatrixInit(matrixInit, aRv)) {
+    return nullptr;
+  };
+
+  RefPtr<DOMMatrix> matrix = new DOMMatrix(aParent, matrixInit.mIs2D.Value());
+  matrix->SetDataFromMatrixInit(matrixInit);
+  return matrix.forget();
+}
+
+already_AddRefed<DOMMatrix> DOMMatrix::FromMatrix(
+    const GlobalObject& aGlobal, const DOMMatrixInit& aMatrixInit,
+    ErrorResult& aRv) {
+  RefPtr<DOMMatrix> matrix =
+      FromMatrix(aGlobal.GetAsSupports(), aMatrixInit, aRv);
+  return matrix.forget();
+}
+
+already_AddRefed<DOMMatrix> DOMMatrix::FromFloat32Array(
+    const GlobalObject& aGlobal, const Float32Array& aArray32,
+    ErrorResult& aRv) {
+  aArray32.ComputeState();
+
+  const int length = aArray32.Length();
+  const bool is2D = length == 6;
+  RefPtr<DOMMatrix> obj = new DOMMatrix(aGlobal.GetAsSupports(), is2D);
+  SetDataInMatrix(obj, aArray32.Data(), length, aRv);
+
+  return obj.forget();
+}
+
+already_AddRefed<DOMMatrix> DOMMatrix::FromFloat64Array(
+    const GlobalObject& aGlobal, const Float64Array& aArray64,
+    ErrorResult& aRv) {
+  aArray64.ComputeState();
+
+  const int length = aArray64.Length();
+  const bool is2D = length == 6;
+  RefPtr<DOMMatrix> obj = new DOMMatrix(aGlobal.GetAsSupports(), is2D);
+  SetDataInMatrix(obj, aArray64.Data(), length, aRv);
+
   return obj.forget();
 }
 
 already_AddRefed<DOMMatrix> DOMMatrix::Constructor(
-    const GlobalObject& aGlobal, const nsAString& aTransformList,
+    const GlobalObject& aGlobal,
+    const Optional<UTF8StringOrUnrestrictedDoubleSequenceOrDOMMatrixReadOnly>&
+        aArg,
     ErrorResult& aRv) {
-  RefPtr<DOMMatrix> obj = new DOMMatrix(aGlobal.GetAsSupports());
-  obj = obj->SetMatrixValue(aTransformList, aRv);
-  return obj.forget();
-}
+  if (!aArg.WasPassed()) {
+    RefPtr<DOMMatrix> rval = new DOMMatrix(aGlobal.GetAsSupports());
+    return rval.forget();
+  }
 
-already_AddRefed<DOMMatrix> DOMMatrix::Constructor(
-    const GlobalObject& aGlobal, const DOMMatrixReadOnly& aOther,
-    ErrorResult& aRv) {
-  RefPtr<DOMMatrix> obj = new DOMMatrix(aGlobal.GetAsSupports(), aOther);
-  return obj.forget();
+  const auto& arg = aArg.Value();
+  if (arg.IsUTF8String()) {
+    nsCOMPtr<nsPIDOMWindowInner> win =
+        do_QueryInterface(aGlobal.GetAsSupports());
+    if (!win) {
+      aRv.ThrowTypeError<MSG_ILLEGAL_CONSTRUCTOR>();
+      return nullptr;
+    }
+    RefPtr<DOMMatrix> rval = new DOMMatrix(aGlobal.GetAsSupports());
+    rval->SetMatrixValue(arg.GetAsUTF8String(), aRv);
+    return rval.forget();
+  }
+  if (arg.IsDOMMatrixReadOnly()) {
+    RefPtr<DOMMatrix> obj =
+        new DOMMatrix(aGlobal.GetAsSupports(), arg.GetAsDOMMatrixReadOnly());
+    return obj.forget();
+  }
+
+  const auto& sequence = arg.GetAsUnrestrictedDoubleSequence();
+  const int length = sequence.Length();
+  const bool is2D = length == 6;
+  RefPtr<DOMMatrix> rval = new DOMMatrix(aGlobal.GetAsSupports(), is2D);
+  SetDataInMatrix(rval, sequence.Elements(), length, aRv);
+  return rval.forget();
 }
 
 template <typename T>
@@ -405,82 +726,83 @@ static void SetDataInMatrix(DOMMatrixReadOnly* aMatrix, const T* aData,
     aMatrix->SetE(aData[4]);
     aMatrix->SetF(aData[5]);
   } else {
-    nsAutoString lengthStr;
+    nsAutoCString lengthStr;
     lengthStr.AppendInt(aLength);
     aRv.ThrowTypeError<MSG_MATRIX_INIT_LENGTH_WRONG>(lengthStr);
   }
 }
 
-already_AddRefed<DOMMatrix> DOMMatrix::Constructor(const GlobalObject& aGlobal,
-                                                   const Float32Array& aArray32,
-                                                   ErrorResult& aRv) {
-  RefPtr<DOMMatrix> obj = new DOMMatrix(aGlobal.GetAsSupports());
-  aArray32.ComputeLengthAndData();
-  SetDataInMatrix(obj, aArray32.Data(), aArray32.Length(), aRv);
+already_AddRefed<DOMMatrix> DOMMatrix::ReadStructuredClone(
+    JSContext* aCx, nsIGlobalObject* aGlobal,
+    JSStructuredCloneReader* aReader) {
+  uint8_t is2D;
 
-  return obj.forget();
-}
+  if (!JS_ReadBytes(aReader, &is2D, 1)) {
+    return nullptr;
+  }
 
-already_AddRefed<DOMMatrix> DOMMatrix::Constructor(const GlobalObject& aGlobal,
-                                                   const Float64Array& aArray64,
-                                                   ErrorResult& aRv) {
-  RefPtr<DOMMatrix> obj = new DOMMatrix(aGlobal.GetAsSupports());
-  aArray64.ComputeLengthAndData();
-  SetDataInMatrix(obj, aArray64.Data(), aArray64.Length(), aRv);
+  RefPtr<DOMMatrix> rval = new DOMMatrix(aGlobal, is2D);
 
-  return obj.forget();
-}
+  if (!ReadStructuredCloneElements(aReader, rval)) {
+    return nullptr;
+  };
 
-already_AddRefed<DOMMatrix> DOMMatrix::Constructor(
-    const GlobalObject& aGlobal, const Sequence<double>& aNumberSequence,
-    ErrorResult& aRv) {
-  RefPtr<DOMMatrix> obj = new DOMMatrix(aGlobal.GetAsSupports());
-  SetDataInMatrix(obj, aNumberSequence.Elements(), aNumberSequence.Length(),
-                  aRv);
-
-  return obj.forget();
+  return rval.forget();
 }
 
 void DOMMatrixReadOnly::Ensure3DMatrix() {
   if (!mMatrix3D) {
-    mMatrix3D = new gfx::Matrix4x4(gfx::Matrix4x4::From2D(*mMatrix2D));
+    mMatrix3D = MakeUnique<gfx::Matrix4x4Double>(
+        gfx::Matrix4x4Double::From2D(*mMatrix2D));
     mMatrix2D = nullptr;
   }
 }
 
-DOMMatrix* DOMMatrix::MultiplySelf(const DOMMatrix& aOther) {
-  if (aOther.IsIdentity()) {
+DOMMatrix* DOMMatrix::MultiplySelf(const DOMMatrixInit& aOtherInit,
+                                   ErrorResult& aRv) {
+  RefPtr<DOMMatrix> other = FromMatrix(mParent, aOtherInit, aRv);
+  if (aRv.Failed()) {
+    return nullptr;
+  }
+  MOZ_ASSERT(other);
+  if (other->IsIdentity()) {
     return this;
   }
 
-  if (aOther.Is2D()) {
+  if (other->Is2D()) {
     if (mMatrix3D) {
-      *mMatrix3D = gfx::Matrix4x4::From2D(*aOther.mMatrix2D) * *mMatrix3D;
+      *mMatrix3D = gfx::Matrix4x4Double::From2D(*other->mMatrix2D) * *mMatrix3D;
     } else {
-      *mMatrix2D = *aOther.mMatrix2D * *mMatrix2D;
+      *mMatrix2D = *other->mMatrix2D * *mMatrix2D;
     }
   } else {
     Ensure3DMatrix();
-    *mMatrix3D = *aOther.mMatrix3D * *mMatrix3D;
+    *mMatrix3D = *other->mMatrix3D * *mMatrix3D;
   }
 
   return this;
 }
 
-DOMMatrix* DOMMatrix::PreMultiplySelf(const DOMMatrix& aOther) {
-  if (aOther.IsIdentity()) {
+DOMMatrix* DOMMatrix::PreMultiplySelf(const DOMMatrixInit& aOtherInit,
+                                      ErrorResult& aRv) {
+  RefPtr<DOMMatrix> other = FromMatrix(mParent, aOtherInit, aRv);
+  if (aRv.Failed()) {
+    return nullptr;
+  }
+  MOZ_ASSERT(other);
+  if (other->IsIdentity()) {
     return this;
   }
 
-  if (aOther.Is2D()) {
+  if (other->Is2D()) {
     if (mMatrix3D) {
-      *mMatrix3D = *mMatrix3D * gfx::Matrix4x4::From2D(*aOther.mMatrix2D);
+      *mMatrix3D = *mMatrix3D * gfx::Matrix4x4Double::From2D(*other->mMatrix2D);
     } else {
-      *mMatrix2D = *mMatrix2D * *aOther.mMatrix2D;
+      *mMatrix2D = *mMatrix2D * *other->mMatrix2D;
     }
   } else {
     Ensure3DMatrix();
-    *mMatrix3D = *mMatrix3D * *aOther.mMatrix3D;
+    *mMatrix3D = *mMatrix3D * *other->mMatrix3D;
   }
 
   return this;
@@ -501,40 +823,24 @@ DOMMatrix* DOMMatrix::TranslateSelf(double aTx, double aTy, double aTz) {
   return this;
 }
 
-DOMMatrix* DOMMatrix::ScaleSelf(double aScale, double aOriginX,
-                                double aOriginY) {
-  ScaleNonUniformSelf(aScale, aScale, 1.0, aOriginX, aOriginY, 0);
-
-  return this;
-}
-
-DOMMatrix* DOMMatrix::Scale3dSelf(double aScale, double aOriginX,
-                                  double aOriginY, double aOriginZ) {
-  ScaleNonUniformSelf(aScale, aScale, aScale, aOriginX, aOriginY, aOriginZ);
-
-  return this;
-}
-
-DOMMatrix* DOMMatrix::ScaleNonUniformSelf(double aScaleX, double aScaleY,
-                                          double aScaleZ, double aOriginX,
-                                          double aOriginY, double aOriginZ) {
-  if (aScaleX == 1.0 && aScaleY == 1.0 && aScaleZ == 1.0) {
-    return this;
-  }
+DOMMatrix* DOMMatrix::ScaleSelf(double aScaleX, const Optional<double>& aScaleY,
+                                double aScaleZ, double aOriginX,
+                                double aOriginY, double aOriginZ) {
+  const double scaleY = aScaleY.WasPassed() ? aScaleY.Value() : aScaleX;
 
   TranslateSelf(aOriginX, aOriginY, aOriginZ);
 
-  if (mMatrix3D || aScaleZ != 1.0 || aOriginZ != 0) {
+  if (mMatrix3D || aScaleZ != 1.0) {
     Ensure3DMatrix();
-    gfx::Matrix4x4 m;
+    gfx::Matrix4x4Double m;
     m._11 = aScaleX;
-    m._22 = aScaleY;
+    m._22 = scaleY;
     m._33 = aScaleZ;
     *mMatrix3D = m * *mMatrix3D;
   } else {
-    gfx::Matrix m;
+    gfx::MatrixDouble m;
     m._11 = aScaleX;
-    m._22 = aScaleY;
+    m._22 = scaleY;
     *mMatrix2D = m * *mMatrix2D;
   }
 
@@ -543,31 +849,60 @@ DOMMatrix* DOMMatrix::ScaleNonUniformSelf(double aScaleX, double aScaleY,
   return this;
 }
 
-DOMMatrix* DOMMatrix::RotateFromVectorSelf(double aX, double aY) {
-  if (aX == 0.0 || aY == 0.0) {
-    return this;
-  }
-
-  RotateSelf(atan2(aY, aX) / radPerDegree);
+DOMMatrix* DOMMatrix::Scale3dSelf(double aScale, double aOriginX,
+                                  double aOriginY, double aOriginZ) {
+  ScaleSelf(aScale, Optional<double>(aScale), aScale, aOriginX, aOriginY,
+            aOriginZ);
 
   return this;
 }
 
-DOMMatrix* DOMMatrix::RotateSelf(double aAngle, double aOriginX,
-                                 double aOriginY) {
-  if (fmod(aAngle, 360) == 0) {
+DOMMatrix* DOMMatrix::RotateFromVectorSelf(double aX, double aY) {
+  const double angle = (aX == 0.0 && aY == 0.0) ? 0 : atan2(aY, aX);
+
+  if (fmod(angle, 2 * M_PI) == 0) {
     return this;
   }
 
-  TranslateSelf(aOriginX, aOriginY);
-
   if (mMatrix3D) {
-    RotateAxisAngleSelf(0, 0, 1, aAngle);
+    RotateAxisAngleSelf(0, 0, 1, angle / radPerDegree);
   } else {
-    *mMatrix2D = mMatrix2D->PreRotate(aAngle * radPerDegree);
+    *mMatrix2D = mMatrix2D->PreRotate(angle);
   }
 
-  TranslateSelf(-aOriginX, -aOriginY);
+  return this;
+}
+
+DOMMatrix* DOMMatrix::RotateSelf(double aRotX, const Optional<double>& aRotY,
+                                 const Optional<double>& aRotZ) {
+  double rotY;
+  double rotZ;
+  if (!aRotY.WasPassed() && !aRotZ.WasPassed()) {
+    rotZ = aRotX;
+    aRotX = 0;
+    rotY = 0;
+  } else {
+    rotY = aRotY.WasPassed() ? aRotY.Value() : 0;
+    rotZ = aRotZ.WasPassed() ? aRotZ.Value() : 0;
+  }
+
+  if (aRotX != 0 || rotY != 0) {
+    Ensure3DMatrix();
+  }
+
+  if (mMatrix3D) {
+    if (fmod(rotZ, 360) != 0) {
+      mMatrix3D->RotateZ(rotZ * radPerDegree);
+    }
+    if (fmod(rotY, 360) != 0) {
+      mMatrix3D->RotateY(rotY * radPerDegree);
+    }
+    if (fmod(aRotX, 360) != 0) {
+      mMatrix3D->RotateX(aRotX * radPerDegree);
+    }
+  } else if (fmod(rotZ, 360) != 0) {
+    *mMatrix2D = mMatrix2D->PreRotate(rotZ * radPerDegree);
+  }
 
   return this;
 }
@@ -581,7 +916,7 @@ DOMMatrix* DOMMatrix::RotateAxisAngleSelf(double aX, double aY, double aZ,
   aAngle *= radPerDegree;
 
   Ensure3DMatrix();
-  gfx::Matrix4x4 m;
+  gfx::Matrix4x4Double m;
   m.SetRotateAxisAngle(aX, aY, aZ, aAngle);
 
   *mMatrix3D = m * *mMatrix3D;
@@ -595,11 +930,11 @@ DOMMatrix* DOMMatrix::SkewXSelf(double aSx) {
   }
 
   if (mMatrix3D) {
-    gfx::Matrix4x4 m;
+    gfx::Matrix4x4Double m;
     m._21 = tan(aSx * radPerDegree);
     *mMatrix3D = m * *mMatrix3D;
   } else {
-    gfx::Matrix m;
+    gfx::MatrixDouble m;
     m._21 = tan(aSx * radPerDegree);
     *mMatrix2D = m * *mMatrix2D;
   }
@@ -613,11 +948,11 @@ DOMMatrix* DOMMatrix::SkewYSelf(double aSy) {
   }
 
   if (mMatrix3D) {
-    gfx::Matrix4x4 m;
+    gfx::Matrix4x4Double m;
     m._12 = tan(aSy * radPerDegree);
     *mMatrix3D = m * *mMatrix3D;
   } else {
-    gfx::Matrix m;
+    gfx::MatrixDouble m;
     m._12 = tan(aSy * radPerDegree);
     *mMatrix2D = m * *mMatrix2D;
   }
@@ -633,7 +968,7 @@ DOMMatrix* DOMMatrix::InvertSelf() {
   } else if (!mMatrix2D->Invert()) {
     mMatrix2D = nullptr;
 
-    mMatrix3D = new gfx::Matrix4x4();
+    mMatrix3D = MakeUnique<gfx::Matrix4x4Double>();
     mMatrix3D->SetNAN();
   }
 
@@ -641,7 +976,7 @@ DOMMatrix* DOMMatrix::InvertSelf() {
 }
 
 DOMMatrixReadOnly* DOMMatrixReadOnly::SetMatrixValue(
-    const nsAString& aTransformList, ErrorResult& aRv) {
+    const nsACString& aTransformList, ErrorResult& aRv) {
   // An empty string is a no-op.
   if (aTransformList.IsEmpty()) {
     return this;
@@ -657,7 +992,9 @@ DOMMatrixReadOnly* DOMMatrixReadOnly::SetMatrixValue(
 
   if (!contains3dTransform) {
     mMatrix3D = nullptr;
-    mMatrix2D = new gfx::Matrix();
+    if (!mMatrix2D) {
+      mMatrix2D = MakeUnique<gfx::MatrixDouble>();
+    }
 
     SetA(transform._11);
     SetB(transform._12);
@@ -666,14 +1003,14 @@ DOMMatrixReadOnly* DOMMatrixReadOnly::SetMatrixValue(
     SetE(transform._41);
     SetF(transform._42);
   } else {
-    mMatrix3D = new gfx::Matrix4x4(transform);
+    mMatrix3D = MakeUnique<gfx::Matrix4x4Double>(transform);
     mMatrix2D = nullptr;
   }
 
   return this;
 }
 
-DOMMatrix* DOMMatrix::SetMatrixValue(const nsAString& aTransformList,
+DOMMatrix* DOMMatrix::SetMatrixValue(const nsACString& aTransformList,
                                      ErrorResult& aRv) {
   DOMMatrixReadOnly::SetMatrixValue(aTransformList, aRv);
   return this;

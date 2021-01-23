@@ -7,9 +7,6 @@
 #define include_gfx_ipc_UiCompositorControllerParent_h
 
 #include "mozilla/layers/PUiCompositorControllerParent.h"
-#if defined(MOZ_WIDGET_ANDROID)
-#  include "mozilla/layers/AndroidDynamicToolbarAnimator.h"
-#endif  // defined(MOZ_WIDGET_ANDROID)
 #include "mozilla/ipc/Shmem.h"
 #include "mozilla/RefPtr.h"
 
@@ -43,24 +40,14 @@ class UiCompositorControllerParent final
   mozilla::ipc::IPCResult RecvInvalidateAndRender();
   mozilla::ipc::IPCResult RecvMaxToolbarHeight(const int32_t& aHeight);
   mozilla::ipc::IPCResult RecvFixedBottomOffset(const int32_t& aOffset);
-  mozilla::ipc::IPCResult RecvPinned(const bool& aPinned,
-                                     const int32_t& aReason);
-  mozilla::ipc::IPCResult RecvToolbarAnimatorMessageFromUI(
-      const int32_t& aMessage);
   mozilla::ipc::IPCResult RecvDefaultClearColor(const uint32_t& aColor);
   mozilla::ipc::IPCResult RecvRequestScreenPixels();
   mozilla::ipc::IPCResult RecvEnableLayerUpdateNotifications(
       const bool& aEnable);
-  mozilla::ipc::IPCResult RecvToolbarPixelsToCompositor(
-      Shmem&& aMem, const ScreenIntSize& aSize);
   void ActorDestroy(ActorDestroyReason aWhy) override;
-  void DeallocPUiCompositorControllerParent() override;
+  void ActorDealloc() override;
 
   // Class specific functions
-#if defined(MOZ_WIDGET_ANDROID)
-  void RegisterAndroidDynamicToolbarAnimator(
-      AndroidDynamicToolbarAnimator* aAnimator);
-#endif  // MOZ_WIDGET_ANDROID
   void ToolbarAnimatorMessageFromCompositor(int32_t aMessage);
   bool AllocPixelBuffer(const int32_t aSize, Shmem* aMem);
 
@@ -82,7 +69,6 @@ class UiCompositorControllerParent final
   LayersId mRootLayerTreeId;
 
 #if defined(MOZ_WIDGET_ANDROID)
-  RefPtr<AndroidDynamicToolbarAnimator> mAnimator;
   bool mCompositorLayersUpdateEnabled;  // Flag set to true when the UI thread
                                         // is expecting to be notified when a
                                         // layer has been updated

@@ -1,3 +1,7 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this file,
+# You can obtain one at http://mozilla.org/MPL/2.0/.
+
 # Pretty-printers for JSID values.
 
 import gdb
@@ -74,3 +78,8 @@ def HandleJSID(value, cache):
 @pretty_printer('JS::MutableHandle<long>')
 def MutableHandleJSID(value, cache):
     return mozilla.Root.MutableHandle(value, cache, jsid)
+
+
+@pretty_printer('JS::PropertyKey')
+def PropertyKey(value, cache):
+    return mozilla.jsid.jsid(value, cache)

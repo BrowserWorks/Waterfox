@@ -4,7 +4,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsISupports.h"
-#include "nsIComponentManager.h"
 #include "nsIObserverService.h"
 #include "nsIObserver.h"
 #include "nsISimpleEnumerator.h"
@@ -36,7 +35,7 @@ class TestObserver final : public nsIObserver, public nsSupportsWeakReference {
   nsString mExpectedData;
 
  private:
-  ~TestObserver() {}
+  ~TestObserver() = default;
 };
 
 NS_IMPL_ISUPPORTS(TestObserver, nsIObserver, nsISupportsWeakReference)

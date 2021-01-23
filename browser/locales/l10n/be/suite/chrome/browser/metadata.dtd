@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY no-properties.label "Уласцівасці не вызначаны.">
+<!ENTITY caption.label "Уласцівасці адзінкі">
+<!ENTITY image-sec.label "Уласцівасці выявы">
+<!ENTITY image-url.label "Месцазнаходжанне:">
+<!ENTITY image-desc.label "Апісанне:">
+<!ENTITY image-alt.label "Дадатковы тэкст:">
+<!ENTITY image-width.label "Шырыня:">
+<!ENTITY image-height.label "Вышыня:">
+<!ENTITY image-filesize.label "Памер файла:">
+<!ENTITY image-filesize.value "Невядомы">
+<!ENTITY insdel-sec.label "Уласцівасці Ўстаўлення/Выдалення">
+<!ENTITY insdel-cite.label "Звесткі:">
+<!ENTITY insdel-date.label "Дата:">
+<!ENTITY link-sec.label "Уласцівасці спасылкі">
+<!ENTITY link-url.label "Адрас:">
+<!ENTITY link-target.label "Адчыніцца ў:">
+<!ENTITY link-type.label "Тып мэты:">
+<!ENTITY link-lang.label "Мова мэты:">
+<!ENTITY link-rel.label "Дачыненне:">
+<!ENTITY link-rev.label "Адваротнае дачыненне:">
+<!ENTITY misc-sec.label "Разнастайныя ўласцівасці">
+<!ENTITY misc-lang.label "Мова тэксту:">
+<!ENTITY misc-title.label "Загаловак:">
+<!ENTITY misc-tblsummary.label "Зводка табліцы:">
+<!ENTITY quote-sec.label "Уласцівасці вытрымкі">
+<!ENTITY quote-cite.label "Звесткі:">

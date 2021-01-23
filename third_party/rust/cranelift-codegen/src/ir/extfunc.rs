@@ -7,9 +7,9 @@
 
 use crate::ir::{ArgumentLoc, ExternalName, SigRef, Type};
 use crate::isa::{CallConv, RegInfo, RegUnit};
+use alloc::vec::Vec;
 use core::fmt;
 use core::str::FromStr;
-use std::vec::Vec;
 
 /// Function signature.
 ///
@@ -54,6 +54,53 @@ impl Signature {
     /// Find the index of a presumed unique special-purpose parameter.
     pub fn special_param_index(&self, purpose: ArgumentPurpose) -> Option<usize> {
         self.params.iter().rposition(|arg| arg.purpose == purpose)
+    }
+
+    /// Find the index of a presumed unique special-purpose parameter.
+    pub fn special_return_index(&self, purpose: ArgumentPurpose) -> Option<usize> {
+        self.returns.iter().rposition(|arg| arg.purpose == purpose)
+    }
+
+    /// Does this signature have a parameter whose `ArgumentPurpose` is
+    /// `purpose`?
+    pub fn uses_special_param(&self, purpose: ArgumentPurpose) -> bool {
+        self.special_param_index(purpose).is_some()
+    }
+
+    /// Does this signature have a return whose `ArgumentPurpose` is `purpose`?
+    pub fn uses_special_return(&self, purpose: ArgumentPurpose) -> bool {
+        self.special_return_index(purpose).is_some()
+    }
+
+    /// How many special parameters does this function have?
+    pub fn num_special_params(&self) -> usize {
+        self.params
+            .iter()
+            .filter(|p| p.purpose != ArgumentPurpose::Normal)
+            .count()
+    }
+
+    /// How many special returns does this function have?
+    pub fn num_special_returns(&self) -> usize {
+        self.returns
+            .iter()
+            .filter(|r| r.purpose != ArgumentPurpose::Normal)
+            .count()
+    }
+
+    /// Does this signature take an struct return pointer parameter?
+    pub fn uses_struct_return_param(&self) -> bool {
+        self.uses_special_param(ArgumentPurpose::StructReturn)
+    }
+
+    /// Does this return more than one normal value? (Pre-struct return
+    /// legalization)
+    pub fn is_multi_return(&self) -> bool {
+        self.returns
+            .iter()
+            .filter(|r| r.purpose == ArgumentPurpose::Normal)
+            .count()
+            > 1
     }
 }
 
@@ -294,14 +341,14 @@ impl FromStr for ArgumentPurpose {
     type Err = ();
     fn from_str(s: &str) -> Result<Self, ()> {
         match s {
-            "normal" => Ok(ArgumentPurpose::Normal),
-            "sret" => Ok(ArgumentPurpose::StructReturn),
-            "link" => Ok(ArgumentPurpose::Link),
-            "fp" => Ok(ArgumentPurpose::FramePointer),
-            "csr" => Ok(ArgumentPurpose::CalleeSaved),
-            "vmctx" => Ok(ArgumentPurpose::VMContext),
-            "sigid" => Ok(ArgumentPurpose::SignatureId),
-            "stack_limit" => Ok(ArgumentPurpose::StackLimit),
+            "normal" => Ok(Self::Normal),
+            "sret" => Ok(Self::StructReturn),
+            "link" => Ok(Self::Link),
+            "fp" => Ok(Self::FramePointer),
+            "csr" => Ok(Self::CalleeSaved),
+            "vmctx" => Ok(Self::VMContext),
+            "sigid" => Ok(Self::SignatureId),
+            "stack_limit" => Ok(Self::StackLimit),
             _ => Err(()),
         }
     }
@@ -335,7 +382,7 @@ impl fmt::Display for ExtFuncData {
 mod tests {
     use super::*;
     use crate::ir::types::{B8, F32, I32};
-    use std::string::ToString;
+    use alloc::string::ToString;
 
     #[test]
     fn argument_type() {
@@ -373,7 +420,8 @@ mod tests {
             CallConv::Cold,
             CallConv::SystemV,
             CallConv::WindowsFastcall,
-            CallConv::Baldrdash,
+            CallConv::BaldrdashSystemV,
+            CallConv::BaldrdashWindows,
         ] {
             assert_eq!(Ok(cc), cc.to_string().parse())
         }
@@ -381,16 +429,19 @@ mod tests {
 
     #[test]
     fn signatures() {
-        let mut sig = Signature::new(CallConv::Baldrdash);
-        assert_eq!(sig.to_string(), "() baldrdash");
+        let mut sig = Signature::new(CallConv::BaldrdashSystemV);
+        assert_eq!(sig.to_string(), "() baldrdash_system_v");
         sig.params.push(AbiParam::new(I32));
-        assert_eq!(sig.to_string(), "(i32) baldrdash");
+        assert_eq!(sig.to_string(), "(i32) baldrdash_system_v");
         sig.returns.push(AbiParam::new(F32));
-        assert_eq!(sig.to_string(), "(i32) -> f32 baldrdash");
+        assert_eq!(sig.to_string(), "(i32) -> f32 baldrdash_system_v");
         sig.params.push(AbiParam::new(I32.by(4).unwrap()));
-        assert_eq!(sig.to_string(), "(i32, i32x4) -> f32 baldrdash");
+        assert_eq!(sig.to_string(), "(i32, i32x4) -> f32 baldrdash_system_v");
         sig.returns.push(AbiParam::new(B8));
-        assert_eq!(sig.to_string(), "(i32, i32x4) -> f32, b8 baldrdash");
+        assert_eq!(
+            sig.to_string(),
+            "(i32, i32x4) -> f32, b8 baldrdash_system_v"
+        );
 
         // Order does not matter.
         sig.params[0].location = ArgumentLoc::Stack(24);
@@ -399,7 +450,7 @@ mod tests {
         // Writing ABI-annotated signatures.
         assert_eq!(
             sig.to_string(),
-            "(i32 [24], i32x4 [8]) -> f32, b8 baldrdash"
+            "(i32 [24], i32x4 [8]) -> f32, b8 baldrdash_system_v"
         );
     }
 }

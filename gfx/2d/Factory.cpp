@@ -26,6 +26,7 @@
 #ifdef XP_DARWIN
 #  include "ScaledFontMac.h"
 #  include "NativeFontResourceMac.h"
+#  include "UnscaledFontMac.h"
 #endif
 
 #ifdef MOZ_WIDGET_GTK
@@ -37,14 +38,20 @@
 #ifdef MOZ_WIDGET_ANDROID
 #  include "ScaledFontFreeType.h"
 #  include "NativeFontResourceFreeType.h"
+#  include "UnscaledFontFreeType.h"
 #endif
 
 #ifdef WIN32
 #  include "DrawTargetD2D1.h"
 #  include "ScaledFontDWrite.h"
 #  include "NativeFontResourceDWrite.h"
+#  include "UnscaledFontDWrite.h"
 #  include <d3d10_1.h>
+#  include <stdlib.h>
 #  include "HelpersD2D.h"
+#  include "DXVA2Manager.h"
+#  include "mozilla/layers/TextureD3D11.h"
+#  include "nsWindowsHelpers.h"
 #endif
 
 #include "DrawTargetCapture.h"
@@ -62,11 +69,15 @@
 
 #include "mozilla/CheckedInt.h"
 
+#include "mozilla/layers/TextureClient.h"
+
 #ifdef MOZ_ENABLE_FREETYPE
 #  include "ft2build.h"
 #  include FT_FREETYPE_H
 #endif
 #include "MainThreadUtils.h"
+#include "mozilla/Preferences.h"
+#include "mozilla/StaticPrefs_gfx.h"
 
 #if defined(MOZ_LOGGING)
 GFX2D_API mozilla::LogModule* GetGFX2DLog() {
@@ -155,19 +166,30 @@ static inline bool HasCPUIDBit(unsigned int level, CPUIDRegister reg,
 #ifdef MOZ_ENABLE_FREETYPE
 extern "C" {
 
-FT_Face mozilla_NewFTFace(FT_Library aFTLibrary, const char* aFileName,
-                          int aFaceIndex) {
-  return mozilla::gfx::Factory::NewFTFace(aFTLibrary, aFileName, aFaceIndex);
+void mozilla_AddRefSharedFTFace(void* aContext) {
+  if (aContext) {
+    static_cast<mozilla::gfx::SharedFTFace*>(aContext)->AddRef();
+  }
 }
 
-FT_Face mozilla_NewFTFaceFromData(FT_Library aFTLibrary, const uint8_t* aData,
-                                  size_t aDataSize, int aFaceIndex) {
-  return mozilla::gfx::Factory::NewFTFaceFromData(aFTLibrary, aData, aDataSize,
-                                                  aFaceIndex);
+void mozilla_ReleaseSharedFTFace(void* aContext, void* aOwner) {
+  if (aContext) {
+    auto* sharedFace = static_cast<mozilla::gfx::SharedFTFace*>(aContext);
+    sharedFace->ForgetLockOwner(aOwner);
+    sharedFace->Release();
+  }
 }
 
-void mozilla_ReleaseFTFace(FT_Face aFace) {
-  mozilla::gfx::Factory::ReleaseFTFace(aFace);
+void mozilla_ForgetSharedFTFaceLockOwner(void* aContext, void* aOwner) {
+  static_cast<mozilla::gfx::SharedFTFace*>(aContext)->ForgetLockOwner(aOwner);
+}
+
+int mozilla_LockSharedFTFace(void* aContext, void* aOwner) {
+  return int(static_cast<mozilla::gfx::SharedFTFace*>(aContext)->Lock(aOwner));
+}
+
+void mozilla_UnlockSharedFTFace(void* aContext) {
+  static_cast<mozilla::gfx::SharedFTFace*>(aContext)->Unlock();
 }
 
 FT_Error mozilla_LoadFTGlyph(FT_Face aFace, uint32_t aGlyphIndex,
@@ -185,11 +207,7 @@ void mozilla_UnlockFTLibrary(FT_Library aFTLibrary) {
 }
 #endif
 
-namespace mozilla {
-namespace gfx {
-
-// In Gecko, this value is managed by gfx.logging.level in gfxPrefs.
-int32_t LoggingPrefs::sGfxLogLevel = LOG_DEFAULT;
+namespace mozilla::gfx {
 
 #ifdef MOZ_ENABLE_FREETYPE
 FT_Library Factory::mFTLibrary = nullptr;
@@ -219,6 +237,8 @@ mozilla::gfx::Config* Factory::sConfig = nullptr;
 void Factory::Init(const Config& aConfig) {
   MOZ_ASSERT(!sConfig);
   sConfig = new Config(aConfig);
+
+  NativeFontResource::RegisterMemoryReporter();
 }
 
 void Factory::ShutDown() {
@@ -283,7 +303,7 @@ inline int LoggerOptionsBasedOnSize(const IntSize& aSize) {
 }
 
 bool Factory::ReasonableSurfaceSize(const IntSize& aSize) {
-  return Factory::CheckSurfaceSize(aSize, 8192);
+  return Factory::CheckSurfaceSize(aSize, kReasonableSurfaceSize);
 }
 
 bool Factory::AllowedSurfaceSize(const IntSize& aSize) {
@@ -393,14 +413,25 @@ already_AddRefed<DrawTarget> Factory::CreateDrawTarget(BackendType aBackend,
   return retVal.forget();
 }
 
+already_AddRefed<PathBuilder> Factory::CreateSimplePathBuilder() {
+  RefPtr<PathBuilder> pathBuilder;
+#ifdef USE_SKIA
+  pathBuilder = MakeAndAddRef<PathBuilderSkia>(FillRule::FILL_WINDING);
+#endif
+  if (!pathBuilder) {
+    NS_WARNING("Failed to create a path builder because we don't use Skia");
+  }
+  return pathBuilder.forget();
+}
+
 already_AddRefed<DrawTarget> Factory::CreateWrapAndRecordDrawTarget(
     DrawEventRecorder* aRecorder, DrawTarget* aDT) {
   return MakeAndAddRef<DrawTargetWrapAndRecord>(aRecorder, aDT);
 }
 
 already_AddRefed<DrawTarget> Factory::CreateRecordingDrawTarget(
-    DrawEventRecorder* aRecorder, DrawTarget* aDT, IntSize aSize) {
-  return MakeAndAddRef<DrawTargetRecording>(aRecorder, aDT, aSize);
+    DrawEventRecorder* aRecorder, DrawTarget* aDT, IntRect aRect) {
+  return MakeAndAddRef<DrawTargetRecording>(aRecorder, aDT, aRect);
 }
 
 already_AddRefed<DrawTargetCapture> Factory::CreateCaptureDrawTargetForTarget(
@@ -457,7 +488,7 @@ already_AddRefed<DrawTarget> Factory::CreateDrawTargetForData(
       RefPtr<DrawTargetCairo> newTarget;
       newTarget = new DrawTargetCairo();
       if (newTarget->Init(aData, aSize, aStride, aFormat)) {
-        retVal = newTarget.forget();
+        retVal = std::move(newTarget);
       }
       break;
     }
@@ -538,56 +569,17 @@ uint32_t Factory::GetMaxSurfaceSize(BackendType aType) {
   }
 }
 
-already_AddRefed<ScaledFont> Factory::CreateScaledFontForNativeFont(
-    const NativeFont& aNativeFont, const RefPtr<UnscaledFont>& aUnscaledFont,
-    Float aSize, cairo_scaled_font_t* aScaledFont) {
-  switch (aNativeFont.mType) {
-#ifdef WIN32
-    case NativeFontType::GDI_LOGFONT: {
-      RefPtr<ScaledFontWin> font = MakeAndAddRef<ScaledFontWin>(
-          static_cast<LOGFONT*>(aNativeFont.mFont), aUnscaledFont, aSize);
-#  ifdef USE_CAIRO
-      if (aScaledFont) {
-        font->SetCairoScaledFont(aScaledFont);
-      } else {
-        font->PopulateCairoScaledFont();
-      }
-#  endif
-      return font.forget();
-    }
-#elif defined(MOZ_WIDGET_GTK)
-    case NativeFontType::FONTCONFIG_PATTERN:
-      return MakeAndAddRef<ScaledFontFontconfig>(
-          aScaledFont, static_cast<FcPattern*>(aNativeFont.mFont),
-          aUnscaledFont, aSize);
-#elif defined(MOZ_WIDGET_ANDROID)
-    case NativeFontType::FREETYPE_FACE:
-      return MakeAndAddRef<ScaledFontFreeType>(
-          aScaledFont, static_cast<FT_Face>(aNativeFont.mFont), aUnscaledFont,
-          aSize);
-#endif
-    default:
-      gfxWarning() << "Invalid native font type specified.";
-      return nullptr;
-  }
-}
-
 already_AddRefed<NativeFontResource> Factory::CreateNativeFontResource(
-    uint8_t* aData, uint32_t aSize, BackendType aBackendType,
-    FontType aFontType, void* aFontContext) {
+    uint8_t* aData, uint32_t aSize, FontType aFontType, void* aFontContext) {
   switch (aFontType) {
 #ifdef WIN32
-    case FontType::DWRITE: {
-      bool needsCairo = aBackendType == BackendType::CAIRO;
-      return NativeFontResourceDWrite::Create(aData, aSize, needsCairo);
-    }
+    case FontType::DWRITE:
+      return NativeFontResourceDWrite::Create(aData, aSize);
     case FontType::GDI:
       return NativeFontResourceGDI::Create(aData, aSize);
 #elif defined(XP_DARWIN)
-    case FontType::MAC: {
-      bool needsCairo = aBackendType == BackendType::CAIRO;
-      return NativeFontResourceMac::Create(aData, aSize, needsCairo);
-    }
+    case FontType::MAC:
+      return NativeFontResourceMac::Create(aData, aSize);
 #elif defined(MOZ_WIDGET_GTK)
     case FontType::FONTCONFIG:
       return NativeFontResourceFontconfig::Create(
@@ -609,14 +601,24 @@ already_AddRefed<UnscaledFont> Factory::CreateUnscaledFontFromFontDescriptor(
     uint32_t aIndex) {
   switch (aType) {
 #ifdef WIN32
+    case FontType::DWRITE:
+      return UnscaledFontDWrite::CreateFromFontDescriptor(aData, aDataLength,
+                                                          aIndex);
     case FontType::GDI:
       return UnscaledFontGDI::CreateFromFontDescriptor(aData, aDataLength,
                                                        aIndex);
-#endif
-#ifdef MOZ_WIDGET_GTK
+#elif defined(XP_DARWIN)
+    case FontType::MAC:
+      return UnscaledFontMac::CreateFromFontDescriptor(aData, aDataLength,
+                                                       aIndex);
+#elif defined(MOZ_WIDGET_GTK)
     case FontType::FONTCONFIG:
       return UnscaledFontFontconfig::CreateFromFontDescriptor(
           aData, aDataLength, aIndex);
+#elif defined(MOZ_WIDGET_ANDROID)
+    case FontType::FREETYPE:
+      return UnscaledFontFreeType::CreateFromFontDescriptor(aData, aDataLength,
+                                                            aIndex);
 #endif
     default:
       gfxWarning() << "Invalid type specified for UnscaledFont font descriptor";
@@ -627,11 +629,29 @@ already_AddRefed<UnscaledFont> Factory::CreateUnscaledFontFromFontDescriptor(
 #ifdef XP_DARWIN
 already_AddRefed<ScaledFont> Factory::CreateScaledFontForMacFont(
     CGFontRef aCGFont, const RefPtr<UnscaledFont>& aUnscaledFont, Float aSize,
-    const Color& aFontSmoothingBackgroundColor, bool aUseFontSmoothing,
+    const DeviceColor& aFontSmoothingBackgroundColor, bool aUseFontSmoothing,
     bool aApplySyntheticBold) {
   return MakeAndAddRef<ScaledFontMac>(aCGFont, aUnscaledFont, aSize, false,
                                       aFontSmoothingBackgroundColor,
                                       aUseFontSmoothing, aApplySyntheticBold);
+}
+#endif
+
+#ifdef MOZ_WIDGET_GTK
+already_AddRefed<ScaledFont> Factory::CreateScaledFontForFontconfigFont(
+    const RefPtr<UnscaledFont>& aUnscaledFont, Float aSize,
+    RefPtr<SharedFTFace> aFace, FcPattern* aPattern) {
+  return MakeAndAddRef<ScaledFontFontconfig>(std::move(aFace), aPattern,
+                                             aUnscaledFont, aSize);
+}
+#endif
+
+#ifdef MOZ_WIDGET_ANDROID
+already_AddRefed<ScaledFont> Factory::CreateScaledFontForFreeTypeFont(
+    const RefPtr<UnscaledFont>& aUnscaledFont, Float aSize,
+    RefPtr<SharedFTFace> aFace, bool aApplySyntheticBold) {
+  return MakeAndAddRef<ScaledFontFreeType>(std::move(aFace), aUnscaledFont,
+                                           aSize, aApplySyntheticBold);
 }
 #endif
 
@@ -664,6 +684,23 @@ void Factory::SetBGRSubpixelOrder(bool aBGR) { mBGRSubpixelOrder = aBGR; }
 bool Factory::GetBGRSubpixelOrder() { return mBGRSubpixelOrder; }
 
 #ifdef MOZ_ENABLE_FREETYPE
+SharedFTFace::SharedFTFace(FT_Face aFace, SharedFTFaceData* aData)
+    : mFace(aFace),
+      mData(aData),
+      mLock("SharedFTFace::mLock"),
+      mLastLockOwner(nullptr) {
+  if (mData) {
+    mData->BindData();
+  }
+}
+
+SharedFTFace::~SharedFTFace() {
+  Factory::ReleaseFTFace(mFace);
+  if (mData) {
+    mData->ReleaseData();
+  }
+}
+
 void Factory::SetFTLibrary(FT_Library aFTLibrary) { mFTLibrary = aFTLibrary; }
 
 FT_Library Factory::GetFTLibrary() {
@@ -700,6 +737,16 @@ FT_Face Factory::NewFTFace(FT_Library aFTLibrary, const char* aFileName,
   return face;
 }
 
+already_AddRefed<SharedFTFace> Factory::NewSharedFTFace(FT_Library aFTLibrary,
+                                                        const char* aFilename,
+                                                        int aFaceIndex) {
+  if (FT_Face face = NewFTFace(aFTLibrary, aFilename, aFaceIndex)) {
+    return MakeAndAddRef<SharedFTFace>(face);
+  } else {
+    return nullptr;
+  }
+}
+
 FT_Face Factory::NewFTFaceFromData(FT_Library aFTLibrary, const uint8_t* aData,
                                    size_t aDataSize, int aFaceIndex) {
   StaticMutexAutoLock lock(mFTLock);
@@ -714,6 +761,17 @@ FT_Face Factory::NewFTFaceFromData(FT_Library aFTLibrary, const uint8_t* aData,
   return face;
 }
 
+already_AddRefed<SharedFTFace> Factory::NewSharedFTFaceFromData(
+    FT_Library aFTLibrary, const uint8_t* aData, size_t aDataSize,
+    int aFaceIndex, SharedFTFaceData* aSharedData) {
+  if (FT_Face face =
+          NewFTFaceFromData(aFTLibrary, aData, aDataSize, aFaceIndex)) {
+    return MakeAndAddRef<SharedFTFace>(face, aSharedData);
+  } else {
+    return nullptr;
+  }
+}
+
 void Factory::ReleaseFTFace(FT_Face aFace) {
   StaticMutexAutoLock lock(mFTLock);
   FT_Done_Face(aFace);
@@ -725,6 +783,30 @@ FT_Error Factory::LoadFTGlyph(FT_Face aFace, uint32_t aGlyphIndex,
   return FT_Load_Glyph(aFace, aGlyphIndex, aFlags);
 }
 #endif
+
+AutoSerializeWithMoz2D::AutoSerializeWithMoz2D(BackendType aBackendType) {
+#ifdef WIN32
+  // We use a multi-threaded ID2D1Factory1, so that makes the calls through the
+  // Direct2D API thread-safe. However, if the Moz2D objects are using Direct3D
+  // resources we need to make sure that calls through the Direct3D or DXGI API
+  // use the Direct2D synchronization. It's possible that this should be pushed
+  // down into the TextureD3D11 objects, so that we always use this.
+  if (aBackendType == BackendType::DIRECT2D1_1 ||
+      aBackendType == BackendType::DIRECT2D) {
+    D2DFactory()->QueryInterface(
+        static_cast<ID2D1Multithread**>(getter_AddRefs(mMT)));
+    mMT->Enter();
+  }
+#endif
+}
+
+AutoSerializeWithMoz2D::~AutoSerializeWithMoz2D() {
+#ifdef WIN32
+  if (mMT) {
+    mMT->Leave();
+  }
+#endif
+};
 
 #ifdef WIN32
 already_AddRefed<DrawTarget> Factory::CreateDrawTargetForD3D11Texture(
@@ -819,7 +901,7 @@ RefPtr<IDWriteFactory> Factory::EnsureDWriteFactory() {
 
   mDWriteFactoryInitialized = true;
 
-  HMODULE dwriteModule = LoadLibraryW(L"dwrite.dll");
+  HMODULE dwriteModule = LoadLibrarySystem32(L"dwrite.dll");
   decltype(DWriteCreateFactory)* createDWriteFactory =
       (decltype(DWriteCreateFactory)*)GetProcAddress(dwriteModule,
                                                      "DWriteCreateFactory");
@@ -854,8 +936,15 @@ RefPtr<IDWriteFontCollection> Factory::GetDWriteSystemFonts(bool aUpdate) {
   RefPtr<IDWriteFontCollection> systemFonts;
   HRESULT hr =
       mDWriteFactory->GetSystemFontCollection(getter_AddRefs(systemFonts));
-  if (FAILED(hr)) {
-    gfxWarning() << "Failed to create DWrite system font collection";
+  if (FAILED(hr) || !systemFonts) {
+    // only crash some of the time so those experiencing this problem
+    // don't stop using Firefox
+    if ((rand() & 0x3f) == 0) {
+      gfxCriticalError(int(gfx::LogOptions::AssertOnCall))
+          << "Failed to create DWrite system font collection";
+    } else {
+      gfxWarning() << "Failed to create DWrite system font collection";
+    }
     return nullptr;
   }
   mDWriteSystemFonts = systemFonts;
@@ -923,13 +1012,21 @@ void Factory::D2DCleanup() {
 already_AddRefed<ScaledFont> Factory::CreateScaledFontForDWriteFont(
     IDWriteFontFace* aFontFace, const gfxFontStyle* aStyle,
     const RefPtr<UnscaledFont>& aUnscaledFont, float aSize,
-    bool aUseEmbeddedBitmap, bool aForceGDIMode,
-    IDWriteRenderingParams* aParams, Float aGamma, Float aContrast) {
-  return MakeAndAddRef<ScaledFontDWrite>(aFontFace, aUnscaledFont, aSize,
-                                         aUseEmbeddedBitmap, aForceGDIMode,
-                                         aParams, aGamma, aContrast, aStyle);
+    bool aUseEmbeddedBitmap, int aRenderingMode,
+    IDWriteRenderingParams* aParams, Float aGamma, Float aContrast,
+    Float aClearTypeLevel) {
+  return MakeAndAddRef<ScaledFontDWrite>(
+      aFontFace, aUnscaledFont, aSize, aUseEmbeddedBitmap,
+      (DWRITE_RENDERING_MODE)aRenderingMode, aParams, aGamma, aContrast,
+      aClearTypeLevel, aStyle);
 }
 
+already_AddRefed<ScaledFont> Factory::CreateScaledFontForGDIFont(
+    const void* aLogFont, const RefPtr<UnscaledFont>& aUnscaledFont,
+    Float aSize) {
+  return MakeAndAddRef<ScaledFontWin>(static_cast<const LOGFONT*>(aLogFont),
+                                      aUnscaledFont, aSize);
+}
 #endif  // WIN32
 
 #ifdef USE_SKIA
@@ -1091,6 +1188,191 @@ void Factory::SetGlobalEventRecorder(DrawEventRecorder* aRecorder) {
   mRecorder = aRecorder;
 }
 
+#ifdef WIN32
+
+/* static */
+already_AddRefed<DataSourceSurface>
+Factory::CreateBGRA8DataSourceSurfaceForD3D11Texture(
+    ID3D11Texture2D* aSrcTexture) {
+  D3D11_TEXTURE2D_DESC srcDesc = {0};
+  aSrcTexture->GetDesc(&srcDesc);
+
+  RefPtr<gfx::DataSourceSurface> destTexture =
+      gfx::Factory::CreateDataSourceSurface(
+          IntSize(srcDesc.Width, srcDesc.Height), gfx::SurfaceFormat::B8G8R8A8);
+  if (NS_WARN_IF(!destTexture)) {
+    return nullptr;
+  }
+  if (!ReadbackTexture(destTexture, aSrcTexture)) {
+    return nullptr;
+  }
+  return destTexture.forget();
+}
+
+/* static */
+template <typename DestTextureT>
+bool Factory::ConvertSourceAndRetryReadback(DestTextureT* aDestCpuTexture,
+                                            ID3D11Texture2D* aSrcTexture) {
+  RefPtr<ID3D11Device> device;
+  aSrcTexture->GetDevice(getter_AddRefs(device));
+  if (!device) {
+    gfxWarning() << "Failed to get D3D11 device from source texture";
+    return false;
+  }
+
+  nsAutoCString error;
+  std::unique_ptr<DXVA2Manager> manager(
+      DXVA2Manager::CreateD3D11DXVA(nullptr, error, device));
+  if (!manager) {
+    gfxWarning() << "Failed to create DXVA2 manager!";
+    return false;
+  }
+
+  RefPtr<ID3D11Texture2D> newSrcTexture;
+  HRESULT hr =
+      manager->CopyToBGRATexture(aSrcTexture, getter_AddRefs(newSrcTexture));
+  if (FAILED(hr)) {
+    gfxWarning() << "Failed to copy to BGRA texture.";
+    return false;
+  }
+
+  return ReadbackTexture(aDestCpuTexture, newSrcTexture);
+}
+
+/* static */
+bool Factory::ReadbackTexture(layers::TextureData* aDestCpuTexture,
+                              ID3D11Texture2D* aSrcTexture) {
+  layers::MappedTextureData mappedData;
+  if (!aDestCpuTexture->BorrowMappedData(mappedData)) {
+    gfxWarning() << "Could not access in-memory texture";
+    return false;
+  }
+
+  D3D11_TEXTURE2D_DESC srcDesc = {0};
+  aSrcTexture->GetDesc(&srcDesc);
+
+  // Special case: If the source and destination have different formats and the
+  // destination is B8G8R8A8 then convert the source to B8G8R8A8 and readback.
+  if ((srcDesc.Format != DXGIFormat(mappedData.format)) &&
+      (mappedData.format == SurfaceFormat::B8G8R8A8)) {
+    return ConvertSourceAndRetryReadback(aDestCpuTexture, aSrcTexture);
+  }
+
+  if ((IntSize(srcDesc.Width, srcDesc.Height) != mappedData.size) ||
+      (srcDesc.Format != DXGIFormat(mappedData.format))) {
+    gfxWarning() << "Attempted readback between incompatible textures";
+    return false;
+  }
+
+  return ReadbackTexture(mappedData.data, mappedData.stride, aSrcTexture);
+}
+
+/* static */
+bool Factory::ReadbackTexture(DataSourceSurface* aDestCpuTexture,
+                              ID3D11Texture2D* aSrcTexture) {
+  D3D11_TEXTURE2D_DESC srcDesc = {0};
+  aSrcTexture->GetDesc(&srcDesc);
+
+  // Special case: If the source and destination have different formats and the
+  // destination is B8G8R8A8 then convert the source to B8G8R8A8 and readback.
+  if ((srcDesc.Format != DXGIFormat(aDestCpuTexture->GetFormat())) &&
+      (aDestCpuTexture->GetFormat() == SurfaceFormat::B8G8R8A8)) {
+    return ConvertSourceAndRetryReadback(aDestCpuTexture, aSrcTexture);
+  }
+
+  if ((IntSize(srcDesc.Width, srcDesc.Height) != aDestCpuTexture->GetSize()) ||
+      (srcDesc.Format != DXGIFormat(aDestCpuTexture->GetFormat()))) {
+    gfxWarning() << "Attempted readback between incompatible textures";
+    return false;
+  }
+
+  gfx::DataSourceSurface::MappedSurface mappedSurface;
+  if (!aDestCpuTexture->Map(gfx::DataSourceSurface::WRITE, &mappedSurface)) {
+    return false;
+  }
+
+  bool ret =
+      ReadbackTexture(mappedSurface.mData, mappedSurface.mStride, aSrcTexture);
+  aDestCpuTexture->Unmap();
+  return ret;
+}
+
+/* static */
+bool Factory::ReadbackTexture(uint8_t* aDestData, int32_t aDestStride,
+                              ID3D11Texture2D* aSrcTexture) {
+  MOZ_ASSERT(aDestData && aDestStride && aSrcTexture);
+
+  RefPtr<ID3D11Device> device;
+  aSrcTexture->GetDevice(getter_AddRefs(device));
+  if (!device) {
+    gfxWarning() << "Failed to get D3D11 device from source texture";
+    return false;
+  }
+
+  RefPtr<ID3D11DeviceContext> context;
+  device->GetImmediateContext(getter_AddRefs(context));
+  if (!context) {
+    gfxWarning() << "Could not get an immediate D3D11 context";
+    return false;
+  }
+
+  RefPtr<IDXGIKeyedMutex> mutex;
+  HRESULT hr = aSrcTexture->QueryInterface(__uuidof(IDXGIKeyedMutex),
+                                           (void**)getter_AddRefs(mutex));
+  if (SUCCEEDED(hr) && mutex) {
+    hr = mutex->AcquireSync(0, 2000);
+    if (hr != S_OK) {
+      gfxWarning() << "Could not acquire DXGI surface lock in 2 seconds";
+      return false;
+    }
+  }
+
+  D3D11_TEXTURE2D_DESC srcDesc = {0};
+  aSrcTexture->GetDesc(&srcDesc);
+  srcDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+  srcDesc.Usage = D3D11_USAGE_STAGING;
+  srcDesc.BindFlags = 0;
+  srcDesc.MiscFlags = 0;
+  srcDesc.MipLevels = 1;
+  RefPtr<ID3D11Texture2D> srcCpuTexture;
+  hr =
+      device->CreateTexture2D(&srcDesc, nullptr, getter_AddRefs(srcCpuTexture));
+  if (FAILED(hr)) {
+    gfxWarning() << "Could not create source texture for mapping";
+    if (mutex) {
+      mutex->ReleaseSync(0);
+    }
+    return false;
+  }
+
+  context->CopyResource(srcCpuTexture, aSrcTexture);
+
+  if (mutex) {
+    mutex->ReleaseSync(0);
+    mutex = nullptr;
+  }
+
+  D3D11_MAPPED_SUBRESOURCE srcMap;
+  hr = context->Map(srcCpuTexture, 0, D3D11_MAP_READ, 0, &srcMap);
+  if (FAILED(hr)) {
+    gfxWarning() << "Could not map source texture";
+    return false;
+  }
+
+  uint32_t width = srcDesc.Width;
+  uint32_t height = srcDesc.Height;
+  int bpp = BytesPerPixel(gfx::ToPixelFormat(srcDesc.Format));
+  for (int y = 0; y < height; y++) {
+    memcpy(aDestData + aDestStride * y,
+           (unsigned char*)(srcMap.pData) + srcMap.RowPitch * y, width * bpp);
+  }
+
+  context->Unmap(srcCpuTexture, 0);
+  return true;
+}
+
+#endif  // WIN32
+
 // static
 void CriticalLogger::OutputMessage(const std::string& aString, int aLevel,
                                    bool aNoNewline) {
@@ -1119,5 +1401,4 @@ void LogWStr(const wchar_t* aWStr, std::stringstream& aOut) {
 }
 #endif
 
-}  // namespace gfx
-}  // namespace mozilla
+}  // namespace mozilla::gfx

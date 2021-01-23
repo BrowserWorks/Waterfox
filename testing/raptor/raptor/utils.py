@@ -6,31 +6,20 @@
 from __future__ import absolute_import
 
 import os
-import subprocess
-import sys
-import time
+import yaml
 
-from mozlog import get_proxy_logger, get_default_logger
+from distutils.util import strtobool
+from logger.logger import RaptorLogger
+from mozgeckoprofiler import view_gecko_profile
 
-LOG = get_proxy_logger(component="raptor-utils")
+LOG = RaptorLogger(component='raptor-utils')
 here = os.path.dirname(os.path.realpath(__file__))
-
-if os.environ.get('SCRIPTSPATH', None) is not None:
-    # in production it is env SCRIPTS_PATH
-    mozharness_dir = os.environ['SCRIPTSPATH']
-else:
-    # locally it's in source tree
-    mozharness_dir = os.path.join(here, '../../mozharness')
-sys.path.insert(0, mozharness_dir)
 
 external_tools_path = os.environ.get('EXTERNALTOOLSPATH', None)
 
 if external_tools_path is not None:
     # running in production via mozharness
     TOOLTOOL_PATH = os.path.join(external_tools_path, 'tooltool.py')
-else:
-    # running locally via mach
-    TOOLTOOL_PATH = os.path.join(mozharness_dir, 'external_tools', 'tooltool.py')
 
 
 def transform_platform(str_to_transform, config_platform, config_processor=None):
@@ -59,56 +48,39 @@ def transform_platform(str_to_transform, config_platform, config_processor=None)
     return str_to_transform
 
 
-def view_gecko_profile(ffox_bin):
-    # automatically load the latest talos gecko-profile archive in profiler.firefox.com
-    LOG = get_default_logger(component='raptor-view-gecko-profile')
+def transform_subtest(str_to_transform, subtest_name):
+    """Transform subtest name i.e. 'mitm4-linux-firefox-{subtest}.manifest'
+    transforms to 'mitm4-linux-firefox-amazon.manifest'."""
+    if '{subtest}' not in str_to_transform:
+        return str_to_transform
 
-    if sys.platform.startswith('win') and not ffox_bin.endswith(".exe"):
-        ffox_bin = ffox_bin + ".exe"
+    return str_to_transform.replace('{subtest}', subtest_name)
 
-    if not os.path.exists(ffox_bin):
-        LOG.info("unable to find Firefox bin, cannot launch view-gecko-profile")
+
+def view_gecko_profile_from_raptor():
+    # automatically load the latest raptor gecko-profile archive in profiler.firefox.com
+    LOG_GECKO = RaptorLogger(component='raptor-view-gecko-profile')
+
+    profile_zip_path = os.environ.get('RAPTOR_LATEST_GECKO_PROFILE_ARCHIVE', None)
+    if profile_zip_path is None or not os.path.exists(profile_zip_path):
+        LOG_GECKO.info("No local raptor gecko profiles were found so not "
+                       "launching profiler.firefox.com")
         return
 
-    profile_zip = os.environ.get('RAPTOR_LATEST_GECKO_PROFILE_ARCHIVE', None)
-    if profile_zip is None or not os.path.exists(profile_zip):
-        LOG.info("No local talos gecko profiles were found so not launching profiler.firefox.com")
-        return
+    LOG_GECKO.info("Profile saved locally to: %s" % profile_zip_path)
+    view_gecko_profile(profile_zip_path)
 
-    # need the view-gecko-profile tool, it's in repo/testing/tools
-    repo_dir = os.environ.get('MOZ_DEVELOPER_REPO_DIR', None)
-    if repo_dir is None:
-        LOG.info("unable to find MOZ_DEVELOPER_REPO_DIR, can't launch view-gecko-profile")
-        return
 
-    view_gp = os.path.join(repo_dir, 'testing', 'tools',
-                           'view_gecko_profile', 'view_gecko_profile.py')
-    if not os.path.exists(view_gp):
-        LOG.info("unable to find the view-gecko-profile tool, cannot launch it")
-        return
+def write_yml_file(yml_file, yml_data):
+    # write provided data to specified local yaml file
+    LOG.info("writing %s to %s" % (yml_data, yml_file))
 
-    command = ['python',
-               view_gp,
-               '-b', ffox_bin,
-               '-p', profile_zip]
-
-    LOG.info('Auto-loading this profile in perfhtml.io: %s' % profile_zip)
-    LOG.info(command)
-
-    # if the view-gecko-profile tool fails to launch for some reason, we don't
-    # want to crash talos! just dump error and finsh up talos as usual
     try:
-        view_profile = subprocess.Popen(command,
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE)
-        # that will leave it running in own instance and let talos finish up
+        with open(yml_file, 'w') as outfile:
+            yaml.dump(yml_data, outfile, default_flow_style=False)
     except Exception as e:
-        LOG.info("failed to launch view-gecko-profile tool, exeption: %s" % e)
-        return
+        LOG.critical("failed to write yaml file, exeption: %s" % e)
 
-    time.sleep(5)
-    ret = view_profile.poll()
-    if ret is None:
-        LOG.info("view-gecko-profile successfully started as pid %d" % view_profile.pid)
-    else:
-        LOG.error('view-gecko-profile process failed to start, poll returned: %s' % ret)
+
+def bool_from_str(boolean_string):
+    return bool(strtobool(boolean_string))

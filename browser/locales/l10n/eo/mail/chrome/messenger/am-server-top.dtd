@@ -1,0 +1,86 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageStorage.label "Mesaĝa konservejo">
+<!ENTITY securitySettings.label "Sekurecaj agordoj">
+<!ENTITY serverSettings.label "Agordoj de servilo">
+<!ENTITY serverType.label "Tipo de servilo:">
+<!ENTITY serverName.label "Nomo de servilo:">
+<!ENTITY serverName.accesskey "s">
+<!ENTITY userName.label "Salutnomo:">
+<!ENTITY userName.accesskey "n">
+<!ENTITY port.label "Pordo:">
+<!ENTITY port.accesskey "P">
+<!ENTITY serverPortDefault.label "Implicita:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammar dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "Kontroli pri novaj mesaĝoj je ĉiu ">
+<!ENTITY biffStart.accesskey "u">
+<!ENTITY biffEnd.label "minutoj">
+<!ENTITY useIdleNotifications.label "Aktivigi tuj‑sciigojn el la servilo pri novaj mesaĝoj">
+<!ENTITY useIdleNotifications.accesskey "t">
+<!ENTITY connectionSecurity.label "Sekureco de konekto:">
+<!ENTITY connectionSecurity.accesskey "c">
+<!ENTITY connectionSecurityType-0.label "neniu">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, se disponebla">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "Aŭtentiga metodo:">
+<!ENTITY authMethod.accesskey "A">
+<!ENTITY leaveOnServer.label "Restigi mesaĝojn en servilo">
+<!ENTITY leaveOnServer.accesskey "R">
+<!ENTITY headersOnly.label "Nur elŝuti mesaĝkapojn">
+<!ENTITY headersOnly.accesskey "m">
+<!ENTITY deleteByAgeFromServer.label "por">
+<!ENTITY deleteByAgeFromServer.accesskey "o">
+<!ENTITY daysEnd.label "tagoj">
+<!ENTITY deleteOnServer2.label "ĝis mi forigos ilin">
+<!ENTITY deleteOnServer2.accesskey "f">
+<!ENTITY downloadOnBiff.label "Aŭtomate elŝuti novajn mesaĝojn">
+<!ENTITY downloadOnBiff.accesskey "e">
+<!ENTITY deleteMessagePrefix.label "Kiam mi forigas mesaĝon loke:">
+<!ENTITY modelMoveToTrash.label "movi ĝin al mesaĝujo:">
+<!ENTITY modelMoveToTrash.accesskey "m">
+<!ENTITY modelMarkDeleted.label "nur marki ĝin kiel forigitan">
+<!ENTITY modelMarkDeleted.accesskey "f">
+<!ENTITY modelDeleteImmediately.label "senprokraste ĝin forigi">
+<!ENTITY modelDeleteImmediately.accesskey "g">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "Purigi (reorganizi) ricevujon je fermo de programo">
+<!ENTITY expungeOnExit.accesskey "P">
+<!ENTITY emptyTrashOnExit.label "Malplenigi rubujon je fermo de programo">
+<!ENTITY emptyTrashOnExit.accesskey "r">
+<!ENTITY loginAtStartup.label "Kontroli pri novaj mesaĝoj je starto">
+<!ENTITY loginAtStartup.accesskey "K">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+    of messages between them
+-->
+<!ENTITY maxMessagesStart.label "Demandi antaŭ elŝuti pli ol">
+<!ENTITY maxMessagesStart.accesskey "D">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "mesaĝojn">
+<!ENTITY alwaysAuthenticate.label "Ĉiam postuli aŭtentigon kiam konekti al tiu ĉi servilo">
+<!ENTITY alwaysAuthenticate.accesskey "l">
+<!ENTITY abbreviate.label "Montri nomojn de novaĵgrupoj en la panelo de mesaĝujoj kiel:">
+<!ENTITY abbreviateOn.label "plenajn nomojn (ekz. “netscape.public.mozilla.mail-news”)">
+<!ENTITY abbreviateOff.label "mallongigitajn nomojn (ekz. “n.p.m.mail-news”)">
+<!ENTITY advancedButton.label "Spertulaj…">
+<!ENTITY advancedButton.accesskey "j">
+<!ENTITY serverDefaultCharset2.label "Implicita teksta kodprezento:">
+<!ENTITY localFolderPicker.label "Elekti lokan dosierujon">
+<!ENTITY browseFolder.label "Esplori…">
+<!ENTITY browseFolder.accesskey "E">
+<!ENTITY browseNewsrc.label "Esplori…">
+<!ENTITY browseNewsrc.accesskey "i">
+
+<!ENTITY accountTitle.label "Agordoj de konto">
+<!ENTITY accountSettingsDesc.label "Tio ĉi estas speciala konto, ligita al neniuj identigoj.">
+<!ENTITY storeType.label "Maniero de konservi mesaĝojn:">
+<!ENTITY storeType.accesskey "ĝ">
+<!ENTITY mboxStore2.label "dosiero por mesaĝujo (mbox)">
+<!ENTITY maildirStore.label "dosiero por mesaĝo (maildir)">

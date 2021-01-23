@@ -1,0 +1,308 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE -->
+
+
+<!ENTITY appmenu.tooltip                     "Wys kieslys">
+<!ENTITY navbarOverflow.label                "Meer gereedskap…">
+
+<!-- Tab context menu -->
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+
+<!ENTITY  pinTab.label                       "Sluit oortjie vas">
+<!ENTITY  unpinTab.label                     "Trek oortjie los">
+
+<!ENTITY  listAllTabs.label      "Lys alle oortjies">
+
+<!ENTITY tabCmd.label "Nuwe oortjie">
+<!ENTITY openFileCmd.label "Open lêer…">
+<!ENTITY printCmd.label "Druk…">
+
+<!ENTITY menubarCmd.label "Kieslysbalk">
+<!ENTITY menubarCmd.accesskey "K">
+<!ENTITY personalbarCmd.label "Boekmerknutsbalk">
+<!ENTITY personalbarCmd.accesskey "B">
+<!ENTITY bookmarksToolbarItem.label "Boekmerknutsbalk-items">
+
+<!ENTITY fullScreenCmd.label "Volskerm">
+
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+
+ <!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "beslaan nou die volle skerm">
+<!ENTITY fullscreenWarning.generic.label "Dié dokument beslaan nou die volle skerm">
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+
+<!ENTITY exitDOMFullscreen.button "Verlaat volskerm (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "Verlaat volskerm (esc)">
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "beheer tans die wyser. Druk Esc om beheer terug te kry.">
+<!ENTITY pointerlockWarning.generic.label "Dié dokument beheer tans die wyser. Druk Esc om beheer terug te kry.">
+
+<!ENTITY showAllBookmarks2.label "Wys alle boekmerke">
+<!ENTITY recentBookmarks.label "Onlangs geboekmerk">
+
+<!ENTITY bookmarksToolbarChevron.tooltip "Wys meer boekmerke">
+
+<!ENTITY printButton.label            "Druk">
+<!ENTITY printButton.tooltip          "Druk hierdie bladsy">
+
+
+
+<!-- Toolbar items -->
+
+
+<!ENTITY homeButton.label             "Tuis">
+
+<!ENTITY bookmarksButton.label          "Boekmerke">
+
+<!ENTITY bookmarksMenuButton.other.label "Ander boekmerke">
+
+<!ENTITY viewBookmarksSidebar2.label        "Wys boekmerkkantbalk">
+<!ENTITY viewBookmarksToolbar.label         "Vertoon boekmerknutsbalk">
+<!ENTITY searchBookmarks.label              "Deursoek boekmerke">
+
+<!-- LOCALIZATION NOTE (bookmarksSidebarGtkCmd.commandkey): This command
+  -  key should not contain the letters A-F, since these are reserved
+  -  shortcut keys on Linux. -->
+
+<!ENTITY historyButton.label            "Geskiedenis">
+
+<!ENTITY downloads.label              "Afgelaai">
+<!ENTITY addons.label                 "Byvoegings">
+
+<!ENTITY webDeveloperMenu.label       "Webontwikkelaar">
+
+<!ENTITY newNavigatorCmd.label        "Nuwe venster">
+<!ENTITY newPrivateWindow.label     "Nuwe private venster">
+
+
+<!ENTITY editMenu.label         "Redigeer">
+
+<!ENTITY preferencesCmd2.label       "Opsies">
+<!ENTITY preferencesCmdUnix.label       "Voorkeure">
+
+
+
+<!ENTITY historyMenu.label "Geskiedenis">
+<!ENTITY historyUndoMenu.label "Onlangs gesluite oortjies">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "Onlangs gesluite vensters">
+
+<!ENTITY appMenuHistory.showAll.label "Wys hele geskiedenis">
+<!ENTITY appMenuHistory.clearRecent.label "Maak onlangse geskiedenis skoon…">
+<!ENTITY appMenuHistory.restoreSession.label "Laai vorige sessie terug">
+<!ENTITY appMenuHistory.viewSidebar.label "Wys geskiedeniskantbalk">
+
+<!ENTITY appMenuHelp.label "Hulp">
+
+<!ENTITY appMenuRemoteTabs.label "Gesinkroniseerde oortjies">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Geen oop oortjies nie">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "Wys meer">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Wys meer oortjies van dié toestel">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Wys almal">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Wys alle oortjies van dié toestel">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Skakel oortjiesinkronisering aan om 'n lys oortjies op ander toestelle te sien.">
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Lus om oortjies van ander toestelle hier te sien?">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Bestuur toestelle…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "Wys kantbalk met gesinkroniseerde oortjies">
+
+<!ENTITY customizeMenu.addToToolbar.label "Voeg by nutsbalk">
+<!ENTITY customizeMenu.addToToolbar.accesskey "V">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. These labels are only used in Photon, where you can put
+     items into this menu permanently (pinned). -->
+
+
+
+
+<!ENTITY customizeMenu.removeFromToolbar.label "Skrap vanaf nutsbalk">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "r">
+<!ENTITY customizeMenu.addMoreItems.label "Voeg meer items by…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "V">
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+
+<!ENTITY moreMenu.label "Meer">
+
+<!-- LOCALIZATION NOTE (urlbar.searchSuggestionsNotification.hintPrefix): Shown just before the suggestions opt-out hint. -->
+
+<!--
+  Comment duplicated from browser-sets.inc:
+
+  Search Command Key Logic works like this:
+
+  Unix: Ctrl+J (0.8, 0.9 support)
+        Ctrl+K (cross platform binding)
+  Mac:  Cmd+K (cross platform binding)
+        Cmd+Opt+F (platform convention)
+  Win:  Ctrl+K (cross platform binding)
+        Ctrl+E (IE compat)
+
+  We support Ctrl+K on all platforms now and advertise it in the menu since it is
+  our standard - it is a "safe" choice since it is near no harmful keys like "W" as
+  "E" is. People mourning the loss of Ctrl+K for emacs compat can switch their GTK
+  system setting to use emacs emulation, and we should respect it. Focus-Search-Box
+  is a fundamental keybinding and we are maintaining a XP binding so that it is easy
+  for people to switch to Linux.
+
+ -->
+
+<!-- LOCALIZATION NOTE (contentSearchInput.label):
+     This is set as the aria-label attribute for the search input box in the
+     in-content search UI, to be used by screen readers. -->
+
+<!ENTITY contentSearchSubmit.tooltip  "Dien soektog in">
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+
+<!ENTITY searchInput.placeholder      "Soek">
+<!ENTITY searchIcon.tooltip           "Soek">
+<!-- LOCALIZATION NOTE (searchFor.label, searchWith.label):
+     These two strings are used to build the header above the list of one-click
+     search providers:  "Search for <used typed keywords> with:" -->
+
+<!-- LOCALIZATION NOTE (search.label, searchAfter.label):
+     This string is used to build the header above the list of one-click search
+     providers when a one off engine has been selected.  The searchAfter text is
+     intentionally left empty for en-US and can be used by other localizations to
+     display a string after the search engine name.  This string will be displayed
+     as:  "Search <selected engine name><searchAfter.label text>" -->
+
+<!-- LOCALIZATION NOTE (searchWithHeader.label):
+     The wording of this string should be as close as possible to
+     searchFor.label and searchWith.label. This string will be used instead of
+     them when the user has not typed any keyword. -->
+
+<!ENTITY openLinkCmdInTab.accesskey   "o">
+
+<!ENTITY emailPageCmd.label           "E-pos skakel…">
+
+<!-- Media (video/audio) controls -->
+<!-- LOCALIZATION NOTE: The access keys for "Play" and
+"Pause" are the same because the two context-menu
+items are mutually exclusive. -->
+
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+
+<!ENTITY fullZoom.label                 "Zoem">
+
+<!ENTITY sidebarCloseButton.tooltip     "Sluit kantbalk">
+
+<!ENTITY quitApplicationCmdWin2.label       "Afsluit">
+<!ENTITY quitApplicationCmdWin2.accesskey   "s">
+<!ENTITY quitApplicationCmdWin2.tooltip     "Sluit &brandShorterName; af">
+<!ENTITY quitApplicationCmd.label       "Afsluit">
+<!ENTITY quitApplicationCmd.accesskey   "A">
+<!ENTITY quitApplicationCmdMac2.label   "Sluit &brandShorterName; af">
+
+<!ENTITY allowPopups.accesskey "p">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Redigeer voorkeure vir opspringerblokkering…">
+<!ENTITY editPopupSettings.label "Redigeer opsies vir opspringerblokkering…">
+<!ENTITY editPopupSettings.accesskey "e">
+<!ENTITY dontShowMessage.accesskey "D">
+
+<!ENTITY findOnCmd.label     "Vind op hierdie bladsy…">
+
+<!ENTITY spellAddDictionaries.label "Voeg woordeboeke by…">
+<!ENTITY spellAddDictionaries.accesskey "V">
+
+<!-- Strings for connection state warnings. -->
+
+<!-- Strings for connection state warnings in the subview. -->
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+
+
+<!ENTITY tabsToolbar.label "Blaaieroortjies">
+<!-- LOCALIZATION NOTE (syncTabsMenu3.label): This appears in the history menu -->
+
+<!-- LOCALIZATION NOTE (syncedTabs.context.open.accesskey,
+                        syncedTabs.context.openAllInTabs.accesskey):
+     These access keys are identical because their associated menu items are
+     mutually exclusive -->
+
+
+<!ENTITY syncBrand.shortName.label    "Sync">
+
+<!-- LOCALIZATION NOTE (customizeMode.uidensity.menuNormal.*):
+     “Normal” is displayed in the Customize screen, under the Density menu. -->
+
+
+<!-- LOCALIZATION NOTE (pluginActivateNow.label, pluginActivateAlways.label, pluginBlockNow.label): These should be the same as the matching strings in browser.properties -->
+
+<!-- LOCALIZATION NOTE: (pluginNotification.width): This is used to determine the
+     width of the plugin popup notification that can appear if a plugin has been
+     blocked on a page. Should be wide enough to fit the pluginActivateNow.label
+     and pluginActivateAlways.label strings above on a single line. This must be
+     a CSS length value. -->
+
+
+<!ENTITY uiTour.infoPanel.close "Sluit">
+
+<!-- LOCALIZATION NOTE: (panicButton.view.mainTimeframeDesc, panicButton.view.5min, panicButton.view.2hr, panicButton.view.day):
+     The .mainTimeframeDesc string combined with any of the 3 others is meant to form a complete sentence, e.g. "Forget the last: Five minutes".
+     Please ensure that this remains the case in the translation. -->
+
+<!-- LOCALIZATION NOTE: (panicButton.view.mainLabel, panicButton.view.deleteCookies, panicButton.view.deleteHistory, panicButton.view.deleteTabsAndWindows, panicButton.view.openNewWindow):
+     The .mainActionDesc string combined with any of the 4 others is meant to form a complete sentence, e.g. "Proceeding will: Delete Recent Cookies".
+     Note also that the deleteCookies, deleteHistory and deleteTabsAndWindows strings include <html:strong> tags for emphasis on the words "Cookies", "History", "Tabs" and "Windows".
+     The translation should do the same. -->
+
+<!ENTITY panicButton.thankyou.msg1                "Die onlangse geskiedenis is vergeet.">
+<!ENTITY panicButton.thankyou.msg2                "Blaai veilig!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Dankie!">
+
+<!ENTITY updateAvailable.panelUI.label "Laai &brandShorterName;-bywerking af">
+
+<!ENTITY updateManual.panelUI.label "Laai 'n nuwe kopie van &brandShorterName; af">
+
+<!ENTITY updateRestart.panelUI.label2 "Herbegin om &brandShorterName; by te werk">
+
+
+
+
+

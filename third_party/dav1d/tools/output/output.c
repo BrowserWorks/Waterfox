@@ -27,11 +27,12 @@
 
 #include "config.h"
 
-#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "common/attributes.h"
 
 #include "output/output.h"
 #include "output/muxer.h"
@@ -41,22 +42,17 @@ struct MuxerContext {
     const Muxer *impl;
 };
 
-#define MAX_NUM_MUXERS 4
-static const Muxer *muxers[MAX_NUM_MUXERS];
-static unsigned num_muxers = 0;
-
-#define register_muxer(impl) { \
-    extern const Muxer impl; \
-    assert(num_muxers < MAX_NUM_MUXERS); \
-    muxers[num_muxers++] = &impl; \
-}
-
-void init_muxers(void) {
-    register_muxer(null_muxer);
-    register_muxer(md5_muxer);
-    register_muxer(yuv_muxer);
-    register_muxer(y4m2_muxer);
-}
+extern const Muxer null_muxer;
+extern const Muxer md5_muxer;
+extern const Muxer yuv_muxer;
+extern const Muxer y4m2_muxer;
+static const Muxer *muxers[] = {
+    &null_muxer,
+    &md5_muxer,
+    &yuv_muxer,
+    &y4m2_muxer,
+    NULL
+};
 
 static const char *find_extension(const char *const f) {
     const size_t l = strlen(f);
@@ -85,29 +81,31 @@ int output_open(MuxerContext **const c_out,
     int res;
 
     if (name) {
-        for (i = 0; i < num_muxers; i++) {
+        for (i = 0; muxers[i]; i++) {
             if (!strcmp(muxers[i]->name, name)) {
                 impl = muxers[i];
                 break;
             }
         }
-        if (i == num_muxers) {
+        if (!muxers[i]) {
             fprintf(stderr, "Failed to find muxer named \"%s\"\n", name);
             return DAV1D_ERR(ENOPROTOOPT);
         }
+    } else if (!strcmp(filename, "/dev/null")) {
+        impl = muxers[0];
     } else {
-        const char *ext = find_extension(filename);
+        const char *const ext = find_extension(filename);
         if (!ext) {
             fprintf(stderr, "No extension found for file %s\n", filename);
             return -1;
         }
-        for (i = 0; i < num_muxers; i++) {
+        for (i = 0; muxers[i]; i++) {
             if (!strcmp(muxers[i]->extension, ext)) {
                 impl = muxers[i];
                 break;
             }
         }
-        if (i == num_muxers) {
+        if (!muxers[i]) {
             fprintf(stderr, "Failed to find muxer for extension \"%s\"\n", ext);
             return DAV1D_ERR(ENOPROTOOPT);
         }
@@ -129,12 +127,8 @@ int output_open(MuxerContext **const c_out,
 }
 
 int output_write(MuxerContext *const ctx, Dav1dPicture *const p) {
-    int res;
-
-    if ((res = ctx->impl->write_picture(ctx->data, p)) < 0)
-        return res;
-
-    return 0;
+    const int res = ctx->impl->write_picture(ctx->data, p);
+    return res < 0 ? res : 0;
 }
 
 void output_close(MuxerContext *const ctx) {
@@ -143,10 +137,9 @@ void output_close(MuxerContext *const ctx) {
     free(ctx);
 }
 
-int output_verify(MuxerContext *const ctx, const char *const md5_Str) {
-    int res = 0;
-    if (ctx->impl->verify)
-        res = ctx->impl->verify(ctx->data, md5_Str);
+int output_verify(MuxerContext *const ctx, const char *const md5_str) {
+    const int res = ctx->impl->verify ?
+        ctx->impl->verify(ctx->data, md5_str) : 0;
     free(ctx);
     return res;
 }

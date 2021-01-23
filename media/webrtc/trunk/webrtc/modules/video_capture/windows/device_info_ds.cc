@@ -8,20 +8,38 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
-#include "modules/video_capture/windows/device_info_ds.h"
+#define INITGUID
+#include <guiddef.h>
+DEFINE_GUID(KSCATEGORY_VIDEO_CAMERA, 0xe5323777, 0xf976, 0x4f5b, 0x9b, 0x55, 0xb9, 0x46, 0x99, 0xc4, 0x6e, 0x44);
 
-#include <ios>  // std::hex
+#include "modules/video_capture/windows/device_info_ds.h"
 
 #include "modules/video_capture/video_capture_config.h"
 #include "modules/video_capture/windows/help_functions_ds.h"
 #include "rtc_base/logging.h"
+#include "rtc_base/stringutils.h"
 
-#include <Dvdmedia.h>
+#include <dvdmedia.h>
 #include <dbt.h>
 #include <ks.h>
+#include <ksmedia.h>
+
+           
 
 namespace webrtc {
 namespace videocapturemodule {
+
+BOOL isVideoDevice(DEV_BROADCAST_HDR *pHdr)
+{
+  if (pHdr == NULL) {
+    return FALSE;
+  }
+  if (pHdr->dbch_devicetype != DBT_DEVTYP_DEVICEINTERFACE) {
+    return FALSE;
+  }
+  DEV_BROADCAST_DEVICEINTERFACE* pDi = (DEV_BROADCAST_DEVICEINTERFACE*)pHdr;
+  return pDi->dbcc_classguid == KSCATEGORY_VIDEO_CAMERA;
+}
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uiMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -38,28 +56,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uiMsg, WPARAM wParam, LPARAM lParam)
     else if (uiMsg == WM_DEVICECHANGE)
     {
         pParent = (DeviceInfoDS*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
-        if (pParent)
+        if (pParent && isVideoDevice((PDEV_BROADCAST_HDR)lParam))
         {
             pParent->DeviceChange();
         }
     }
     return DefWindowProc(hWnd, uiMsg, wParam, lParam);
-}
-
-void _FreeMediaType(AM_MEDIA_TYPE& mt)
-{
-    if (mt.cbFormat != 0)
-    {
-        CoTaskMemFree((PVOID)mt.pbFormat);
-        mt.cbFormat = 0;
-        mt.pbFormat = NULL;
-    }
-    if (mt.pUnk != NULL)
-    {
-        // pUnk should not be used.
-        mt.pUnk->Release();
-        mt.pUnk = NULL;
-    }
 }
 
 // static
@@ -73,8 +75,10 @@ DeviceInfoDS* DeviceInfoDS::Create() {
 }
 
 DeviceInfoDS::DeviceInfoDS()
-    : DeviceInfoImpl(), _dsDevEnum(NULL),
-      _CoUninitializeIsRequired(true) {
+    : _dsDevEnum(NULL),
+      _dsMonikerDevEnum(NULL),
+      _CoUninitializeIsRequired(true),
+      _hdevnotify(NULL) {
   // 1) Initialize the COM library (make Windows load the DLLs).
   //
   // CoInitializeEx must be called at least once, and is usually called only
@@ -114,7 +118,7 @@ DeviceInfoDS::DeviceInfoDS()
       //
       RTC_LOG(LS_INFO) << __FUNCTION__
                        << ": CoInitializeEx(NULL, COINIT_APARTMENTTHREADED)"
-                       << " => RPC_E_CHANGED_MODE, error 0x" << std::hex << hr;
+                       << " => RPC_E_CHANGED_MODE, error 0x" << rtc::ToHex(hr);
     }
   }
 
@@ -124,21 +128,32 @@ DeviceInfoDS::DeviceInfoDS()
   _wndClass.lpszClassName = TEXT("DeviceInfoDS");
   _wndClass.hInstance = _hInstance;
 
-  if (RegisterClass(&_wndClass))
-  {
+  if (RegisterClass(&_wndClass)) {
     _hwnd = CreateWindow(_wndClass.lpszClassName, NULL, 0, CW_USEDEFAULT,
                          CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL,
                          NULL, _hInstance, this);
+
+    DEV_BROADCAST_DEVICEINTERFACE di = { 0 };
+    di.dbcc_size = sizeof(di);
+    di.dbcc_devicetype  = DBT_DEVTYP_DEVICEINTERFACE;
+    di.dbcc_classguid  = KSCATEGORY_VIDEO_CAMERA;
+
+    _hdevnotify = RegisterDeviceNotification(_hwnd, &di,
+                                             DEVICE_NOTIFY_WINDOW_HANDLE);
   }
 }
 
 DeviceInfoDS::~DeviceInfoDS() {
+  RELEASE_AND_CLEAR(_dsMonikerDevEnum);
   RELEASE_AND_CLEAR(_dsDevEnum);
   if (_CoUninitializeIsRequired) {
     CoUninitialize();
   }
-  if (_hwnd != NULL)
+  if (_hdevnotify)
   {
+    UnregisterDeviceNotification(_hdevnotify);
+  }
+  if (_hwnd != NULL) {
     DestroyWindow(_hwnd);
   }
   UnregisterClass(_wndClass.lpszClassName, _hInstance);
@@ -149,14 +164,14 @@ int32_t DeviceInfoDS::Init() {
                                 IID_ICreateDevEnum, (void**)&_dsDevEnum);
   if (hr != NOERROR) {
     RTC_LOG(LS_INFO) << "Failed to create CLSID_SystemDeviceEnum, error 0x"
-                     << std::hex << hr;
+                     << rtc::ToHex(hr);
     return -1;
   }
   return 0;
 }
 uint32_t DeviceInfoDS::NumberOfDevices() {
   ReadLockScoped cs(_apiLock);
-  return GetDeviceInfo(0, 0, 0, 0, 0, 0, 0, 0);
+  return GetDeviceInfo(0, 0, 0, 0, 0, 0, 0);
 }
 
 int32_t DeviceInfoDS::GetDeviceName(uint32_t deviceNumber,
@@ -166,13 +181,11 @@ int32_t DeviceInfoDS::GetDeviceName(uint32_t deviceNumber,
                                     uint32_t deviceUniqueIdUTF8Size,
                                     char* productUniqueIdUTF8,
                                     uint32_t productUniqueIdUTF8Size,
-                                    pid_t* pid)
-{
+                                    pid_t *pid) {
   ReadLockScoped cs(_apiLock);
   const int32_t result = GetDeviceInfo(
       deviceNumber, deviceNameUTF8, deviceNameSize, deviceUniqueIdUTF8,
-      deviceUniqueIdUTF8Size, productUniqueIdUTF8, productUniqueIdUTF8Size,
-      pid);
+      deviceUniqueIdUTF8Size, productUniqueIdUTF8, productUniqueIdUTF8Size);
   return result > (int32_t)deviceNumber ? 0 : -1;
 }
 
@@ -182,17 +195,16 @@ int32_t DeviceInfoDS::GetDeviceInfo(uint32_t deviceNumber,
                                     char* deviceUniqueIdUTF8,
                                     uint32_t deviceUniqueIdUTF8Size,
                                     char* productUniqueIdUTF8,
-                                    uint32_t productUniqueIdUTF8Size,
-                                    pid_t* pid)
+                                    uint32_t productUniqueIdUTF8Size)
+
 {
   // enumerate all video capture devices
-  IEnumMoniker* _dsMonikerDevEnum = NULL;
+  RELEASE_AND_CLEAR(_dsMonikerDevEnum);
   HRESULT hr = _dsDevEnum->CreateClassEnumerator(CLSID_VideoInputDeviceCategory,
                                                  &_dsMonikerDevEnum, 0);
   if (hr != NOERROR) {
     RTC_LOG(LS_INFO) << "Failed to enumerate CLSID_SystemDeviceEnum, error 0x"
-                     << std::hex << hr << ". No webcam exist?";
-    RELEASE_AND_CLEAR(_dsMonikerDevEnum);
+                     << rtc::ToHex(hr) << ". No webcam exist?";
     return 0;
   }
 
@@ -225,7 +237,6 @@ int32_t DeviceInfoDS::GetDeviceInfo(uint32_t deviceNumber,
               if (convResult == 0) {
                 RTC_LOG(LS_INFO) << "Failed to convert device name to UTF8, "
                                  << "error = " << GetLastError();
-                RELEASE_AND_CLEAR(_dsMonikerDevEnum);
                 return -1;
               }
             }
@@ -245,7 +256,6 @@ int32_t DeviceInfoDS::GetDeviceInfo(uint32_t deviceNumber,
                   RTC_LOG(LS_INFO)
                       << "Failed to convert device "
                       << "name to UTF8, error = " << GetLastError();
-                  RELEASE_AND_CLEAR(_dsMonikerDevEnum);
                   return -1;
                 }
                 if (productUniqueIdUTF8 && productUniqueIdUTF8Size > 0) {
@@ -264,9 +274,8 @@ int32_t DeviceInfoDS::GetDeviceInfo(uint32_t deviceNumber,
     }
   }
   if (deviceNameSize) {
-    RTC_LOG(LS_INFO) << __FUNCTION__ << ": deviceName: " << deviceNameUTF8;
+    RTC_LOG(LS_INFO) << __FUNCTION__ << " " << deviceNameUTF8;
   }
-  RELEASE_AND_CLEAR(_dsMonikerDevEnum);
   return index;
 }
 
@@ -281,13 +290,12 @@ IBaseFilter* DeviceInfoDS::GetDeviceFilter(const char* deviceUniqueIdUTF8,
   }
 
   // enumerate all video capture devices
-  IEnumMoniker* _dsMonikerDevEnum = NULL;
+  RELEASE_AND_CLEAR(_dsMonikerDevEnum);
   HRESULT hr = _dsDevEnum->CreateClassEnumerator(CLSID_VideoInputDeviceCategory,
                                                  &_dsMonikerDevEnum, 0);
   if (hr != NOERROR) {
     RTC_LOG(LS_INFO) << "Failed to enumerate CLSID_SystemDeviceEnum, error 0x"
-                     << std::hex << hr << ". No webcam exist?";
-    RELEASE_AND_CLEAR(_dsMonikerDevEnum);
+                     << rtc::ToHex(hr) << ". No webcam exist?";
     return 0;
   }
   _dsMonikerDevEnum->Reset();
@@ -343,7 +351,6 @@ IBaseFilter* DeviceInfoDS::GetDeviceFilter(const char* deviceUniqueIdUTF8,
       pM->Release();
     }
   }
-  RELEASE_AND_CLEAR(_dsMonikerDevEnum);
   return captureFilter;
 }
 
@@ -362,6 +369,7 @@ int32_t DeviceInfoDS::GetWindowsCapability(
 }
 
 int32_t DeviceInfoDS::CreateCapabilityMap(const char* deviceUniqueIdUTF8)
+
 {
   // Reset old capability list
   _captureCapabilities.clear();
@@ -500,7 +508,7 @@ int32_t DeviceInfoDS::CreateCapabilityMap(const char* deviceUniqueIdUTF8)
       }
 
       if (hrVC == S_OK) {
-        LONGLONG* frameDurationList = NULL;
+        LONGLONG* frameDurationList;
         LONGLONG maxFPS;
         long listSize;
         SIZE size;
@@ -517,9 +525,7 @@ int32_t DeviceInfoDS::CreateCapabilityMap(const char* deviceUniqueIdUTF8)
 
         // On some odd cameras, you may get a 0 for duration.
         // GetMaxOfFrameArray returns the lowest duration (highest FPS)
-        // Initialize and check the returned list for null since
-        // some broken drivers don't modify it.
-        if (hrVC == S_OK && listSize > 0 && frameDurationList &&
+        if (hrVC == S_OK && listSize > 0 &&
             0 != (maxFPS = GetMaxOfFrameArray(frameDurationList, listSize))) {
           capability.maxFPS = static_cast<int>(10000000 / maxFPS);
           capability.supportFrameRateControl = true;
@@ -530,9 +536,6 @@ int32_t DeviceInfoDS::CreateCapabilityMap(const char* deviceUniqueIdUTF8)
             capability.maxFPS = static_cast<int>(10000000 / avgTimePerFrame);
           else
             capability.maxFPS = 0;
-        }
-        if (frameDurationList) {
-          CoTaskMemFree((PVOID)frameDurationList); // NULL not safe
         }
       } else  // use existing method in case IAMVideoControl is not supported
       {
@@ -579,6 +582,7 @@ int32_t DeviceInfoDS::CreateCapabilityMap(const char* deviceUniqueIdUTF8)
         RTC_LOG(LS_WARNING)
             << "Device support unknown media type " << strGuid << ", width "
             << capability.width << ", height " << capability.height;
+        continue;
       }
 
       _captureCapabilities.push_back(capability);
@@ -588,7 +592,7 @@ int32_t DeviceInfoDS::CreateCapabilityMap(const char* deviceUniqueIdUTF8)
                        << " type:" << static_cast<int>(capability.videoType)
                        << " fps:" << capability.maxFPS;
     }
-    _FreeMediaType(*pmt);
+    FreeMediaType(pmt);
     pmt = NULL;
   }
   RELEASE_AND_CLEAR(streamConfig);
@@ -607,13 +611,12 @@ int32_t DeviceInfoDS::CreateCapabilityMap(const char* deviceUniqueIdUTF8)
   return static_cast<int32_t>(_captureCapabilities.size());
 }
 
-/* Constructs a product ID from the Windows DevicePath. on a USB device the
- devicePath contains product id and vendor id. This seems to work for firewire
- as well
- /* Example of device path
- "\\?\usb#vid_0408&pid_2010&mi_00#7&258e7aaf&0&0000#{65e8773d-8f56-11d0-a3b9-00a0c9223196}\global"
- "\\?\avc#sony&dv-vcr&camcorder&dv#65b2d50301460008#{65e8773d-8f56-11d0-a3b9-00a0c9223196}\global"
- */
+// Constructs a product ID from the Windows DevicePath. on a USB device the
+// devicePath contains product id and vendor id. This seems to work for firewire
+// as well.
+// Example of device path:
+// "\\?\usb#vid_0408&pid_2010&mi_00#7&258e7aaf&0&0000#{65e8773d-8f56-11d0-a3b9-00a0c9223196}\global"
+// "\\?\avc#sony&dv-vcr&camcorder&dv#65b2d50301460008#{65e8773d-8f56-11d0-a3b9-00a0c9223196}\global"
 void DeviceInfoDS::GetProductId(const char* devicePath,
                                 char* productUniqueIdUTF8,
                                 uint32_t productUniqueIdUTF8Size) {

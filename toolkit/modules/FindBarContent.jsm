@@ -16,21 +16,19 @@ ChromeUtils.defineModuleGetter(
   "resource://gre/modules/Services.jsm"
 );
 
-/* Please keep in sync with toolkit/content/widgets/findbar.xml */
+/* Please keep in sync with toolkit/content/widgets/findbar.js */
 const FIND_NORMAL = 0;
 const FIND_TYPEAHEAD = 1;
 const FIND_LINKS = 2;
 
 class FindBarContent {
-  constructor(mm) {
-    this.mm = mm;
+  constructor(actor) {
+    this.actor = actor;
 
     this.findMode = 0;
     this.inQuickFind = false;
 
-    this.mm.addMessageListener("Findbar:UpdateState", this);
-
-    Services.els.addSystemEventListener(this.mm, "mouseup", this, false);
+    this.addedEventListener = false;
   }
 
   start(event) {
@@ -38,6 +36,16 @@ class FindBarContent {
   }
 
   startQuickFind(event, autostart = false) {
+    if (!this.addedEventListener) {
+      this.addedEventListener = true;
+      Services.els.addSystemEventListener(
+        this.actor.document.defaultView,
+        "mouseup",
+        this,
+        false
+      );
+    }
+
     let mode = FIND_TYPEAHEAD;
     if (
       event.charCode == "'".charAt(0) ||
@@ -52,15 +60,11 @@ class FindBarContent {
     this.passKeyToParent(event);
   }
 
-  receiveMessage(msg) {
-    switch (msg.name) {
-      case "Findbar:UpdateState":
-        this.findMode = msg.data.findMode;
-        this.inQuickFind = msg.data.hasQuickFindTimeout;
-        if (msg.data.isOpenAndFocused) {
-          this.inPassThrough = false;
-        }
-        break;
+  updateState(data) {
+    this.findMode = data.findMode;
+    this.inQuickFind = data.hasQuickFindTimeout;
+    if (data.isOpenAndFocused) {
+      this.inPassThrough = false;
     }
   }
 
@@ -107,12 +111,12 @@ class FindBarContent {
     for (let prop of kRequiredProps) {
       fakeEvent[prop] = event[prop];
     }
-    this.mm.sendAsyncMessage("Findbar:Keypress", fakeEvent);
+    this.actor.sendAsyncMessage("Findbar:Keypress", fakeEvent);
   }
 
   onMouseup(event) {
     if (this.findMode != FIND_NORMAL) {
-      this.mm.sendAsyncMessage("Findbar:Mouseup");
+      this.actor.sendAsyncMessage("Findbar:Mouseup", {});
     }
   }
 }

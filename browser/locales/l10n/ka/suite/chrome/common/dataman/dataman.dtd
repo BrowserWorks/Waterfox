@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dataman.windowTitle "მონაცემთა მართვა">
+
+<!ENTITY selectAll.key "a">
+
+<!ENTITY select.all.label "ყველა სახის მონაცემები">
+<!ENTITY select.cookies.label "მხოლოდ ფუნთუშები">
+<!ENTITY select.permissions.label "მხოლოდ ნებართვები">
+<!ENTITY select.preferences.label "მხოლოდ პარამეტრები">
+<!ENTITY select.passwords.label "მხოლოდ პაროლები">
+<!ENTITY select.storage.label "მხოლოდ საცავი">
+
+<!ENTITY domain.search.placeholder "დომენების ძიება">
+<!ENTITY domain.search.key "f">
+
+<!ENTITY domain.tree.domain.label "დომენი">
+
+<!ENTITY domain.ctx.forgetdomain.label "ამ დომენის დავიწყება">
+<!ENTITY domain.ctx.forgetdomain.accesskey "წ">
+<!ENTITY domain.ctx.forgetglobal.label "საერთო მონაცემთა დავიწყება">
+<!ENTITY domain.ctx.forgetglobal.accesskey "წ">
+
+<!ENTITY data.search.key "k">
+
+<!ENTITY tab.cookies.label "ფუნთუშები">
+<!ENTITY tab.permissions.label "ნებართვები">
+<!ENTITY tab.preferences.label "პარამეტრები">
+<!ENTITY tab.passwords.label "პაროლები">
+<!ENTITY tab.storage.label "საცავი">
+<!ENTITY tab.formdata.label "ველების მონაცემები">
+<!ENTITY tab.forget.label "დავიწყება">
+
+<!-- cookies -->
+<!ENTITY cookies.description "ეს დომენი თქვენს კომპიუტერში ინახავს შემდეგ ფუნთუშებს:">
+
+<!ENTITY cookies.tree.host.label "ვებსაიტი">
+<!ENTITY cookies.tree.name.label "ფუნთუშის სახელი">
+<!ENTITY cookies.tree.expires.label "ვადა">
+
+<!ENTITY cookies.infobox.label "მითითებული ფუნთუშის მონაცემები">
+
+<!ENTITY cookies.info.name.label "სახელი:">
+<!ENTITY cookies.info.value.label "შიგთავსი:">
+<!ENTITY cookies.info.host.label "ჰოსტი:">
+<!ENTITY cookies.info.domain.label "დომენი:">
+<!ENTITY cookies.info.path.label "მისამართი:">
+<!ENTITY cookies.info.sendtype.label "დანიშნულება:">
+<!ENTITY cookies.info.expires.label "ვადა:">
+
+<!ENTITY cookies.ctx.remove.label "მოცილება">
+<!ENTITY cookies.ctx.remove.accesskey "ო">
+<!ENTITY cookies.ctx.selectAll.label "ყველას მონიშვნა">
+<!ENTITY cookies.ctx.selectAll.accesskey "ყ">
+
+<!ENTITY cookies.button.remove.label "მოცილება">
+<!ENTITY cookies.button.remove.accesskey "ო">
+
+<!ENTITY cookies.blockOnRemove.label "მოცილებისას, მომავალში ფუნთუშების აკრძალვა, შემდეგი ვებსაიტებისთვის">
+<!ENTITY cookies.blockOnRemove.accesskey "ც">
+
+<!-- permissions -->
+<!ENTITY perm.UseDefault "ნაგულისხმევი">
+<!ENTITY perm.AskAlways "შეკითხვა ყოველ ჯერზე">
+<!ENTITY perm.NeverSave "არასოდეს შეინახოს">
+<!ENTITY perm.Allow "ნებართვა">
+<!ENTITY perm.AllowSameDomain "ნებართვა იმავე დომენისთვის">
+<!ENTITY perm.AllowSession "ნებართვა სეანსზე">
+<!ENTITY perm.Block "დაბლოკვა">
+
+<!ENTITY perm.host.placeholder "მიუთითეთ ჰოსტის სახელი">
+<!ENTITY perm.button.add.label "დამატება">
+<!ENTITY perm.button.add.accesskey "A">
+
+<!-- preferences -->
+<!ENTITY prefs.description "შიგთავსის პარამეტრების მიხედვით &brandShortName; ინახავს საკუთარ პარამეტრებს, მაგალითად, მასშტაბი ცალკეული ვებსაიტებისთვის და სხვ.">
+
+<!ENTITY prefs.tree.host.label "ვებსაიტი">
+<!ENTITY prefs.tree.name.label "პარამეტრი">
+<!ENTITY prefs.tree.value.label "მნიშვნელობა">
+
+<!ENTITY prefs.ctx.remove.label "მოცილება">
+<!ENTITY prefs.ctx.remove.accesskey "R">
+<!ENTITY prefs.ctx.selectAll.label "ყველას მონიშვნა">
+<!ENTITY prefs.ctx.selectAll.accesskey "A">
+
+<!ENTITY prefs.button.remove.label "მოცილება">
+<!ENTITY prefs.button.remove.accesskey "R">
+
+<!-- passwords -->
+<!ENTITY pwd.description "ამ დომენისთვის შენახული გაქვთ შემდეგი პაროლები:">
+
+<!ENTITY pwd.tree.host.label "ვებსაიტი">
+<!ENTITY pwd.tree.username.label "სახელი">
+<!ENTITY pwd.tree.password.label "პაროლი">
+
+<!ENTITY pwd.ctx.remove.label "მოცილება">
+<!ENTITY pwd.ctx.remove.accesskey "R">
+<!ENTITY pwd.ctx.copyPasswordCmd.label "პაროლის ასლი">
+<!ENTITY pwd.ctx.copyPasswordCmd.accesskey "ლ">
+<!ENTITY pwd.ctx.selectAll.label "ყველას მონიშვნა">
+<!ENTITY pwd.ctx.selectAll.accesskey "A">
+
+<!ENTITY pwd.button.remove.label "მოცილება">
+<!ENTITY pwd.button.remove.accesskey "R">
+
+<!-- storage -->
+<!ENTITY storage.description "ეს დომენი სარგებლობს შემდეგი საცავით თქვენს კომპიუტერში:">
+
+<!ENTITY storage.tree.host.label "ვებსაიტი">
+<!ENTITY storage.tree.type.label "სახეობა">
+<!ENTITY storage.tree.size.label "ზომა">
+
+<!ENTITY storage.ctx.remove.label "მოცილება">
+<!ENTITY storage.ctx.remove.accesskey "R">
+<!ENTITY storage.ctx.selectAll.label "ყველას მონიშვნა">
+<!ENTITY storage.ctx.selectAll.accesskey "A">
+
+<!ENTITY storage.button.remove.label "მოცილება">
+<!ENTITY storage.button.remove.accesskey "R">
+
+<!-- form data -->
+<!ENTITY fdata.search.placeholder "ძიება ველის მონაცემებში">
+
+<!ENTITY fdata.tree.fieldname.label "ველის სახელი">
+<!ENTITY fdata.tree.value.label "შეტანილი მნიშვნელობა">
+<!ENTITY fdata.tree.usecount.label "მრიცხველი">
+<!ENTITY fdata.tree.firstused.label "პირველი გამოყენება">
+<!ENTITY fdata.tree.lastused.label "ბოლო გამოყენება">
+
+<!ENTITY fdata.ctx.remove.label "მოცილება">
+<!ENTITY fdata.ctx.remove.accesskey "ო">
+<!ENTITY fdata.ctx.selectAll.label "ყველას მონიშვნა">
+<!ENTITY fdata.ctx.selectAll.accesskey "ყ">
+
+<!ENTITY fdata.button.remove.label "მოცილება">
+<!ENTITY fdata.button.remove.accesskey "მ">
+
+<!-- forget -->
+<!ENTITY forget.cookies.label "ფუნთუშები">
+<!ENTITY forget.cookies.accesskey "ფ">
+<!ENTITY forget.permissions.label "ნებართვები">
+<!ENTITY forget.permissions.accesskey "ნ">
+<!ENTITY forget.preferences.label "შიგთავსის პარამეტრები">
+<!ENTITY forget.preferences.accesskey "პ">
+<!ENTITY forget.passwords.label "პაროლები">
+<!ENTITY forget.passwords.accesskey "ა">
+<!ENTITY forget.storage.label "საცავი">
+<!ENTITY forget.storage.accesskey "ს">
+<!ENTITY forget.formdata.label "ველების მონაცემები">
+<!ENTITY forget.formdata.accesskey "ვ">
+
+<!ENTITY forget.button.label "ამ მონაცემთა დავიწყება">
+<!ENTITY forget.button.accesskey "დ">

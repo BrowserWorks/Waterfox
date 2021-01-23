@@ -1,0 +1,2 @@
+excludeInFolderSearch = "{$excludeInFolderSearch,obj*}"
+excludeDirectories = "{obj*,}"

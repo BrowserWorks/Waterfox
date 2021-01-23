@@ -1,3 +1,5 @@
+"use strict";
+
 var { XPCOMUtils } = ChromeUtils.import(
   "resource://gre/modules/XPCOMUtils.jsm"
 );
@@ -70,24 +72,16 @@ function asyncOpenCacheEntry(key, where, flags, lci, callback, appcache) {
   CacheListener.prototype = {
     _appCache: appcache,
 
-    QueryInterface: function(iid) {
-      if (
-        iid.equals(Ci.nsICacheEntryOpenCallback) ||
-        iid.equals(Ci.nsISupports)
-      ) {
-        return this;
-      }
-      throw Cr.NS_ERROR_NO_INTERFACE;
-    },
+    QueryInterface: ChromeUtils.generateQI(["nsICacheEntryOpenCallback"]),
 
-    onCacheEntryCheck: function(entry, appCache) {
+    onCacheEntryCheck(entry, appCache) {
       if (typeof callback === "object") {
         return callback.onCacheEntryCheck(entry, appCache);
       }
       return Ci.nsICacheEntryOpenCallback.ENTRY_WANTED;
     },
 
-    onCacheEntryAvailable: function(entry, isnew, appCache, status) {
+    onCacheEntryAvailable(entry, isnew, appCache, status) {
       if (typeof callback === "object") {
         // Root us at the callback
         callback.__cache_listener_root = this;
@@ -97,7 +91,7 @@ function asyncOpenCacheEntry(key, where, flags, lci, callback, appcache) {
       }
     },
 
-    run: function() {
+    run() {
       var storage = getCacheStorage(where, lci, this._appCache);
       storage.asyncOpenURI(key, "", flags, this);
     },
@@ -131,7 +125,7 @@ function get_device_entry_count(where, lci, continuation) {
   }
 
   var visitor = {
-    onCacheStorageInfo: function(entryCount, consumption) {
+    onCacheStorageInfo(entryCount, consumption) {
       executeSoon(function() {
         continuation(entryCount, consumption);
       });

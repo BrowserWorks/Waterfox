@@ -1,0 +1,115 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountSetupTitle.label "&syncBrand.fullName.label; kurulumu">
+<!-- First page of the wizard -->
+
+
+<!ENTITY setup.pickSetupType.description "Hoş geldiniz, daha önce hiç &syncBrand.fullName.label; kullanmadıysanız yeni bir hesap açmanız gerekecek.">
+<!ENTITY button.createNewAccount.label "Yeni hesap aç">
+<!ENTITY setup.haveAccount.label "I already have a &syncBrand.fullName.label; account.">
+<!ENTITY button.connect.label "Bağlan">
+
+<!ENTITY setup.choicePage.title.label "Daha önce &syncBrand.fullName.label; kullandınız mı?">
+<!ENTITY setup.choicePage.new.label "Daha önce hiç &syncBrand.shortName.label; kullanmadım">
+<!ENTITY setup.choicePage.existing.label "Başka bir bilgisayarda &syncBrand.shortName.label; kullanıyorum">
+<!-- New Account AND Existing Account -->
+
+<!ENTITY server.label "Server">
+<!ENTITY server.accesskey "S">
+<!ENTITY serverType.main.label "&syncBrand.fullName.label; sunucusu">
+<!ENTITY serverType.custom2.label "Use a custom server…">
+<!ENTITY signIn.account2.label "Hesap">
+<!ENTITY signIn.account2.accesskey "a">
+<!ENTITY signIn.password.label "Parola">
+<!ENTITY signIn.password.accesskey "P">
+<!ENTITY signIn.recoveryKey.label "Recovery Key">
+<!ENTITY signIn.recoveryKey.accesskey "K">
+<!-- New Account Page 1: Basic Account Info -->
+
+<!ENTITY setup.newAccountDetailsPage.title.label "Hesap ayrıntıları">
+<!ENTITY setup.confirmPassword.label "Confirm Password">
+<!ENTITY setup.confirmPassword.accesskey "C">
+<!ENTITY setup.emailAddress.label "E-posta adresi">
+<!ENTITY setup.emailAddress.accesskey "E">
+<!-- LOCALIZATION NOTE: tosAgree1, tosLink, tosAgree2, ppLink, tosAgree3 are
+     joined with implicit white space, so spaces in the strings aren't necessary -->
+<!ENTITY setup.tosAgree1.label "Şunları kabul ediyorum:">
+<!ENTITY setup.tosAgree1.accesskey "k">
+<!ENTITY setup.tosLink.label "Kullanım Koşulları">
+<!ENTITY setup.tosAgree2.label "ve">
+<!ENTITY setup.ppLink.label "Gizlilik Anlaşması">
+<!ENTITY setup.tosAgree3.label "">
+<!ENTITY setup.tosAgree2.accesskey "">
+<!-- New Account Page 2: Recovery Key -->
+
+<!ENTITY setup.newRecoveryKeyPage.title.label "&brandShortName; gizliliğinize önem verir">
+<!ENTITY setup.newRecoveryKeyPage.description.label "To ensure your total privacy, all of your data is encrypted prior to being uploaded. The Recovery Key which is necessary to decrypt your data is not uploaded.">
+<!ENTITY recoveryKeyEntry.label "Your Recovery Key">
+<!ENTITY recoveryKeyEntry.accesskey "K">
+<!ENTITY recoveryKeyGenerate.label "Generate">
+<!ENTITY recoveryKeyGenerate.accesskey "G">
+<!ENTITY recoveryKeyBackup.description "Your Recovery Key is required to access &syncBrand.fullName.label; on other machines. Please create a backup copy. We cannot help you recover your Recovery Key.">
+
+<!ENTITY button.syncKeyBackup.print.label "Yazdır...">
+<!ENTITY button.syncKeyBackup.print.accesskey "z">
+<!ENTITY button.syncKeyBackup.save.label "Kaydet...">
+<!ENTITY button.syncKeyBackup.save.accesskey "K">
+<!-- New Account Page 3: Captcha -->
+
+<!ENTITY setup.captchaPage2.title.label "Lütfen robot olmadığınızı kanıtlayın">
+<!-- Existing Account Page 1: Add Device (incl. Add a Device dialog strings) -->
+
+<!ENTITY addDevice.title.label "Aygıt ekle">
+<!ENTITY addDevice.showMeHow.label "Nasıl yapılacağını göster.">
+<!ENTITY addDevice.dontHaveDevice.label "Aygıt yanımda değil">
+<!ENTITY addDevice.setup.description.label "To activate, go to &syncBrand.shortName.label; Preferences/Options on your other device and select &#x0022;Add a Device&#x0022;.">
+<!ENTITY addDevice.setup.enterCode.label "Ardından bu kodu girin:">
+<!ENTITY addDevice.dialog.description.label "To activate your new device, go to &syncBrand.shortName.label; Preferences/Options on the device and select &#x0022;Connect.&#x0022;">
+<!ENTITY addDevice.dialog.enterCode.label "Aygıtın verdiği kodu girin:">
+<!ENTITY addDevice.dialog.tryAgain.label "Lütfen tekrar deneyin.">
+<!ENTITY addDevice.dialog.successful.label "Aygıt başarıyla eklendi. Arkaplanda yapılacak ilk eşitleme birkaç dakika sürebilir.">
+<!ENTITY addDevice.dialog.recoveryKey.label "To activate your device you will need to enter your Recovery Key. Please print or save this key and take it with you.">
+<!ENTITY addDevice.dialog.connected.label "Aygıt bağlandı">
+<!-- Existing Account Page 2: Manual Login -->
+
+<!ENTITY setup.signInPage.title.label "Oturum aç">
+<!ENTITY existingRecoveryKey.description "You can get a copy of your Recovery Key by going to &syncBrand.shortName.label; Preferences/Options on your other device, and selecting &#x0022;My Recovery Key&#x0022; under &#x0022;Manage Account&#x0022;.">
+<!ENTITY verifying.label "Doğrulanıyor...">
+<!ENTITY resetPassword.label "Parolayı sıfırla">
+<!ENTITY resetSyncKey.label "Diğer aygıtımı kaybettim.">
+<!-- Sync Options -->
+
+<!ENTITY setup.optionsPage.title "Sync seçenekleri">
+<!ENTITY syncComputerName.label "Bilgisayar adı:">
+<!ENTITY syncComputerName.accesskey "B">
+
+<!ENTITY syncMy.label "Eşitlenecekler:">
+<!ENTITY engine.bookmarks.label "Bookmarks">
+<!ENTITY engine.bookmarks.accesskey "B">
+<!ENTITY engine.tabs.label "Sekmeler">
+<!ENTITY engine.tabs.accesskey "S">
+<!ENTITY engine.history.label "Geçmiş">
+<!ENTITY engine.history.accesskey "G">
+<!ENTITY engine.passwords.label "Parolalar">
+<!ENTITY engine.passwords.accesskey "P">
+<!ENTITY engine.prefs.label "Preferences">
+<!ENTITY engine.prefs.accesskey "e">
+
+<!ENTITY choice2.merge.main.label "Bu bilgisayarın verileriyle &syncBrand.shortName.label; verilerimi birleştir">
+<!ENTITY choice2.merge.recommended.label "(recommended)">
+<!ENTITY choice2.client.main.label "Bu bilgisayardaki tüm verileri &syncBrand.shortName.label; verilerimle değiştir">
+<!ENTITY choice2.server.main.label "Diğer tüm aygıtlardaki verileri bu bilgisayardaki verilerle değiştir">
+<!-- Confirm Merge Options -->
+
+<!ENTITY setup.optionsConfirmPage.title "Onayla">
+<!ENTITY confirm.merge.label "&syncBrand.fullName.label; bu bilgisayardaki tüm tarayıcı verilerini Sync hesabınızla birleştirecek.">
+<!ENTITY confirm.client2.label "Uyarı: Aşağıda görünen bu bilgisayardaki &brandShortName; verileri silinecek:">
+<!ENTITY confirm.client.moreinfo.label "&brandShortName; daha sonra &syncBrand.fullName.label; verilerinizi bu bilgisayara kopyalacak.">
+<!ENTITY confirm.server2.label "Warning: The following devices will be overwritten with your local data:">
+<!-- New & Existing Account: Setup Complete -->
+
+<!ENTITY setup.successPage.title "Kurulum tamamlandı">
+<!ENTITY changeOptions.label "Bu tercihi aşağıdaki Sync seçeneklerine girerek değiştirebilirsiniz">
+<!ENTITY continueUsing.label "Şimdi &brandShortName; uygulamasını kullanmaya devam edebilirsiniz.">

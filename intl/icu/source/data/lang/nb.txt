@@ -18,7 +18,7 @@ nb{
         ms{"målesystem"}
         numbers{"tall"}
         timezone{"tidssone"}
-        va{"Språkvariant"}
+        va{"språkvariant"}
         x{"privat bruk"}
     }
     Languages{
@@ -109,6 +109,7 @@ nb{
         car{"karibisk"}
         cay{"cayuga"}
         cch{"atsam"}
+        ccp{"chakma"}
         ce{"tsjetsjensk"}
         ceb{"cebuansk"}
         cgg{"kiga"}
@@ -172,6 +173,7 @@ nb{
         ewo{"ewondo"}
         ext{"ekstremaduransk"}
         fa{"persisk"}
+        fa_AF{"dari"}
         fan{"fang"}
         fat{"fanti"}
         ff{"fulfulde"}
@@ -626,6 +628,14 @@ nb{
         zxx{"uten språklig innhold"}
         zza{"zazaisk"}
     }
+    Languages%long{
+        zh_Hans{"forenklet mandarinkinesisk"}
+        zh_Hant{"tradisjonell mandarinkinesisk"}
+    }
+    Languages%menu{
+        ars{"arabisk (najd)"}
+        zh{"kinesisk, mandarin"}
+    }
     Languages%short{
         az{"azeri"}
     }
@@ -637,6 +647,7 @@ nb{
         Aghb{"kaukasus-albansk"}
         Ahom{"ahom"}
         Arab{"arabisk"}
+        Aran{"nastaliq"}
         Armi{"arameisk"}
         Armn{"armensk"}
         Avst{"avestisk"}
@@ -753,6 +764,7 @@ nb{
         Phnx{"fønikisk"}
         Plrd{"pollard-fonetisk"}
         Prti{"inskripsjonsparthisk"}
+        Qaag{"zawgyi"}
         Rjng{"rejang"}
         Roro{"rongorongo"}
         Runr{"runer"}
@@ -1045,7 +1057,7 @@ nb{
         VALLADER{"vallader"}
         WADEGILE{"Wade-Giles-romanisering"}
     }
-    Version{"2.1.48.42"}
+    Version{"37"}
     characterLabelPattern{
         all{"{0} – alt"}
         category-list{"{0}: {1}"}

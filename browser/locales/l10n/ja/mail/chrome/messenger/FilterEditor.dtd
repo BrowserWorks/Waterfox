@@ -1,0 +1,69 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title			"フィルターの設定">
+
+<!ENTITY filterEditorDialog.dimensions	"width: 100ch;"><!-- en-US: "width: 100ch;" -->
+<!ENTITY filterName.label		"フィルター名:">
+<!ENTITY filterName.accesskey		"i">
+
+<!ENTITY junk.label			"迷惑メール">
+<!ENTITY notJunk.label			"非迷惑メール">
+
+<!ENTITY lowestPriorityCmd.label	"最低">
+<!ENTITY lowPriorityCmd.label		"低">
+<!ENTITY normalPriorityCmd.label	"標準">
+<!ENTITY highPriorityCmd.label		"高">
+<!ENTITY highestPriorityCmd.label	"最高">
+
+<!ENTITY contextDesc.label		"フィルターを適用するタイミング:">
+<!ENTITY contextIncomingMail.label	"新着メール受信時:">
+<!ENTITY contextIncomingMail.accesskey	"G">
+<!ENTITY contextManual.label		"手動で実行する">
+<!ENTITY contextManual.accesskey	"R">
+<!ENTITY contextBeforeCls.label		"迷惑メール分類前に実行">
+<!ENTITY contextAfterCls.label		"迷惑メール分類後に実行">
+<!ENTITY contextOutgoing.label		"メール送信後">
+<!ENTITY contextOutgoing.accesskey	"S">
+<!ENTITY contextArchive.label		"アーカイブ時">
+<!ENTITY contextArchive.accesskey	"A">
+<!ENTITY contextPeriodic.accesskey	"e">
+
+<!ENTITY filterActionDesc.label		"以下の動作を実行する:">
+<!ENTITY filterActionDesc.accesskey	"P">
+
+<!ENTITY filterActionOrderWarning.label	"補足: フィルター動作は異なる順で実行されます。">
+<!ENTITY filterActionOrder.label	"実行順を見る">
+
+<!-- New Style Filter Rule Actions -->
+<!ENTITY moveMessage.label		"メッセージを移動する">
+<!ENTITY copyMessage.label		"メッセージをコピーする">
+<!ENTITY forwardTo.label		"メッセージを転送する">
+<!ENTITY replyWithTemplate.label	"テンプレートを使用して返信する">
+<!ENTITY markMessageRead.label		"メッセージを既読にする">
+<!ENTITY markMessageUnread.label	"メッセージを未読にする">
+<!ENTITY markMessageStarred.label	"メッセージにスターを付ける">
+<!ENTITY setPriority.label		"重要度を設定する">
+<!ENTITY addTag.label			"メッセージにタグを付ける">
+<!ENTITY setJunkScore.label		"迷惑メールかどうか設定する">
+<!ENTITY deleteMessage.label		"メッセージを削除する">
+<!ENTITY deleteFromPOP.label		"メッセージを POP サーバーから削除する">
+<!ENTITY fetchFromPOP.label		"POP サーバーから本文を取得する">
+<!ENTITY ignoreThread.label		"スレッドを無視する">
+<!ENTITY ignoreSubthread.label		"サブスレッドを無視する">
+<!ENTITY watchThread.label		"注目スレッドに設定する"><!-- (^^; 要チェック -->
+<!ENTITY stopExecution.label		"フィルターの実行を中止する">
+
+<!ENTITY addAction.tooltip		"新しい動作を追加します">
+<!ENTITY removeAction.tooltip		"この動作を削除します">
+
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- Flex Attribute: https://developer.mozilla.org/docs/XUL/Attribute/flex -->
+<!-- Bug 743974 参照 -->
+<!ENTITY filterActionTypeFlexValue	"1">
+<!ENTITY filterActionTargetFlexValue	"4">

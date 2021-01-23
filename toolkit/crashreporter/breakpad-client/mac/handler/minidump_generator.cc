@@ -556,8 +556,8 @@ MinidumpGenerator::WriteContextARM64(breakpad_thread_state_data_t state,
   MDRawContextARM64_Old *context_ptr = context.get();
   context_ptr->context_flags = MD_CONTEXT_ARM64_FULL_OLD;
 
-#define AddGPR(a) context_ptr->iregs[a] = \
-    REGISTER_FROM_THREADSTATE(machine_state, x[a])
+#define AddGPR(a)                                                              \
+  context_ptr->iregs[a] = ARRAY_REGISTER_FROM_THREADSTATE(machine_state, x, a)
 
   context_ptr->iregs[29] = REGISTER_FROM_THREADSTATE(machine_state, fp);
   context_ptr->iregs[30] = REGISTER_FROM_THREADSTATE(machine_state, lr);
@@ -1332,7 +1332,9 @@ bool MinidumpGenerator::WriteModuleStream(unsigned int index,
       module->version_info.file_version_lo |= (modVersion & 0xff);
     }
 
-    if (!WriteCVRecord(module, image->GetCPUType(), name.c_str(), false)) {
+    if (!WriteCVRecord(module, image->GetCPUType(), image->GetCPUSubtype(),
+        name.c_str(), /* in_memory */ false, /* out_of_process */ true,
+        image->GetInDyldSharedCache())) {
       return false;
     }
   } else {
@@ -1355,6 +1357,8 @@ bool MinidumpGenerator::WriteModuleStream(unsigned int index,
 #endif
 
     int cpu_type = header->cputype;
+    int cpu_subtype = (header->cpusubtype & ~CPU_SUBTYPE_MASK);
+    bool in_dyld_shared_cache = ((header->flags & MH_SHAREDCACHE) != 0);
     unsigned long slide = _dyld_get_image_vmaddr_slide(index);
     const char* name = _dyld_get_image_name(index);
     const struct load_command *cmd =
@@ -1382,8 +1386,10 @@ bool MinidumpGenerator::WriteModuleStream(unsigned int index,
 #if TARGET_OS_IPHONE
           in_memory = true;
 #endif
-          if (!WriteCVRecord(module, cpu_type, name, in_memory))
+          if (!WriteCVRecord(module, cpu_type, cpu_subtype, name, in_memory,
+                             /* out_of_process */ false, in_dyld_shared_cache)) {
             return false;
+          }
 
           return true;
         }
@@ -1419,8 +1425,9 @@ int MinidumpGenerator::FindExecutableModule() {
   return 0;
 }
 
-bool MinidumpGenerator::WriteCVRecord(MDRawModule *module, int cpu_type,
-                                      const char *module_path, bool in_memory) {
+bool MinidumpGenerator::WriteCVRecord(MDRawModule *module, int cpu_type, int cpu_subtype,
+                                      const char *module_path, bool in_memory,
+                                      bool out_of_process, bool in_dyld_shared_cache) {
   TypedMDRVA<MDCVInfoPDB70> cv(&writer_);
 
   // Only return the last path component of the full module path
@@ -1448,19 +1455,56 @@ bool MinidumpGenerator::WriteCVRecord(MDRawModule *module, int cpu_type,
   // Get the module identifier
   unsigned char identifier[16];
   bool result = false;
-  if (in_memory) {
-    MacFileUtilities::MachoID macho(module_path,
-        reinterpret_cast<void *>(module->base_of_image),
-        static_cast<size_t>(module->size_of_image));
-    result = macho.UUIDCommand(cpu_type, CPU_SUBTYPE_MULTIPLE, identifier);
-    if (!result)
-      result = macho.MD5(cpu_type, CPU_SUBTYPE_MULTIPLE, identifier);
-  }
+  bool in_memory_changed = false;
+  // As of macOS 11, most system libraries no longer have separate copies in
+  // the macOS file system. They only exist all lumped together in the "dyld
+  // shared cache", which gets loaded into each process on startup. If one of
+  // our system libraries isn't in the file system, we can only get a UUID
+  // (aka a debug id) for it by looking at a copy of the module loaded into
+  // the crashing process. Setting 'in_memory' to 'true' makes this happen.
+  //
+  // We should be reluctant to change the value of 'in_memory' from 'false' to
+  // 'true'. But we'll sometimes need to do that to work around the problem
+  // discussed above. In any case we only do it if all else has failed. This
+  // resolves https://bugzilla.mozilla.org/show_bug.cgi?id=1662862.
+  //
+  // We're always called in the main process. But the crashing process might
+  // be either the same process or a different one (a child process). If it's
+  // a child process, the modules we'll be looking at are in that process's
+  // memory space, to which we generally don't have access. But because the
+  // dyld shared cache is loaded into all processes, we do have access to
+  // child process modules that are in the dyld shared cache. So it's fine to
+  // look at these modules, but we must prevent ourselves from trying to
+  // child process modules that aren't in the dyld shared cache. This resolves
+  // https://bugzilla.mozilla.org/show_bug.cgi?id=1676102.
+  while (true) {
+    if (in_memory) {
+      if (out_of_process && !in_dyld_shared_cache) {
+        break;
+      }
+      MacFileUtilities::MachoID macho(module_path,
+          reinterpret_cast<void *>(module->base_of_image),
+          static_cast<size_t>(module->size_of_image));
+      result = macho.UUIDCommand(cpu_type, cpu_subtype, identifier);
+      if (!result)
+        result = macho.MD5(cpu_type, cpu_subtype, identifier);
+      if (result || in_memory_changed)
+        break;
+    }
 
-  if (!result) {
-     FileID file_id(module_path);
-     result = file_id.MachoIdentifier(cpu_type, CPU_SUBTYPE_MULTIPLE,
-                                      identifier);
+    if (!result) {
+       FileID file_id(module_path);
+       result = file_id.MachoIdentifier(cpu_type, cpu_subtype,
+                                        identifier);
+    }
+    if (result)
+      break;
+
+    if (!in_memory) {
+      in_memory = true;
+      in_memory_changed = true;
+    } else
+      break;
   }
 
   if (result) {

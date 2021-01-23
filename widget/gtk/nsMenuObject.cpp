@@ -86,16 +86,16 @@ private:
 
 NS_IMPL_ISUPPORTS(nsMenuObjectIconLoader, imgINotificationObserver)
 
-NS_IMETHODIMP
+void
 nsMenuObjectIconLoader::Notify(imgIRequest *aProxy,
                                int32_t aType, const nsIntRect *aRect)
 {
     if (!mOwner) {
-        return NS_OK;
+        return;
     }
 
     if (aProxy != mImageRequest) {
-        return NS_ERROR_FAILURE;
+        return;
     }
 
     if (aType == imgINotificationObserver::LOAD_COMPLETE) {
@@ -104,7 +104,7 @@ nsMenuObjectIconLoader::Notify(imgIRequest *aProxy,
             (status & imgIRequest::STATUS_ERROR)) {
             mImageRequest->Cancel(NS_BINDING_ABORTED);
             mImageRequest = nullptr;
-            return NS_ERROR_FAILURE;
+            return;
         }
 
         nsCOMPtr<imgIContainer> image;
@@ -116,23 +116,23 @@ nsMenuObjectIconLoader::Notify(imgIRequest *aProxy,
         image->GetWidth(&width);
         image->GetHeight(&height);
         image->RequestDecodeForSize(nsIntSize(width, height), imgIContainer::FLAG_NONE);
-        return NS_OK;
+        return;
     }
 
     if (aType == imgINotificationObserver::DECODE_COMPLETE) {
         mImageRequest->Cancel(NS_BINDING_ABORTED);
         mImageRequest = nullptr;
-        return NS_OK;
+        return;
     }
 
     if (aType != imgINotificationObserver::FRAME_COMPLETE) {
-        return NS_OK;
+        return;
     }
 
     nsCOMPtr<imgIContainer> img;
     mImageRequest->GetImage(getter_AddRefs(img));
     if (!img) {
-        return NS_ERROR_FAILURE;
+        return;
     }
 
     if (!mImageRect.IsEmpty()) {
@@ -145,7 +145,7 @@ nsMenuObjectIconLoader::Notify(imgIRequest *aProxy,
 
     if (width <= 0 || height <= 0) {
         mOwner->ClearIcon();
-        return NS_OK;
+        return;
     }
 
     if (width > 100 || height > 100) {
@@ -154,7 +154,7 @@ nsMenuObjectIconLoader::Notify(imgIRequest *aProxy,
         // GDbus helpfully aborts the application. Thank you :)
         NS_WARNING("Icon data too large");
         mOwner->ClearIcon();
-        return NS_OK;
+        return;
     }
 
     GdkPixbuf *pixbuf = nsImageToPixbuf::ImageToPixbuf(img);
@@ -165,7 +165,7 @@ nsMenuObjectIconLoader::Notify(imgIRequest *aProxy,
         g_object_unref(pixbuf);
     }
 
-    return NS_OK;
+    return;
 }
 
 void
@@ -197,7 +197,8 @@ nsMenuObjectIconLoader::LoadIcon(ComputedStyle *aComputedStyle)
         imageRequest = list->GetListStyleImage();
         if (imageRequest) {
             imageRequest->GetURI(getter_AddRefs(uri));
-            imageRect = list->mImageRegion.ToNearestPixels(
+            auto& rect = list->mImageRegion.AsRect();
+            imageRect = rect.ToLayoutRect().ToNearestPixels(
                             pc->AppUnitsPerDevPixel());
         }
     }
@@ -240,11 +241,11 @@ nsMenuObjectIconLoader::LoadIcon(ComputedStyle *aComputedStyle)
             return;
         }
 
-        loader->LoadImage(uri, nullptr, nullptr, mozilla::net::RP_Unset,
+        loader->LoadImage(uri, nullptr, nullptr,
                           nullptr, 0, loadGroup, this, nullptr, nullptr,
                           nsIRequest::LOAD_NORMAL, nullptr,
                           nsIContentPolicy::TYPE_IMAGE, EmptyString(),
-                          false, getter_AddRefs(mImageRequest));
+                          false, false, getter_AddRefs(mImageRequest));
     }
 }
 
@@ -441,7 +442,7 @@ nsMenuObject::UpdateVisibility(ComputedStyle *aComputedStyle)
     if (aComputedStyle &&
         (aComputedStyle->StyleDisplay()->mDisplay == StyleDisplay::None ||
          aComputedStyle->StyleVisibility()->mVisible ==
-            NS_STYLE_VISIBILITY_COLLAPSE)) {
+            StyleVisibility::Collapse)) {
         vis = false;
     }
 

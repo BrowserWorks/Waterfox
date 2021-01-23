@@ -109,7 +109,6 @@ types.addDictType("object.proxySlots", {
 
 const objectSpec = generateActorSpec({
   typeName: "obj",
-
   methods: {
     allocationStack: {
       request: {},
@@ -206,6 +205,24 @@ const objectSpec = generateActorSpec({
     proxySlots: {
       request: {},
       response: RetVal("object.proxySlots"),
+    },
+    addWatchpoint: {
+      request: {
+        property: Arg(0, "string"),
+        label: Arg(1, "string"),
+        watchpointType: Arg(2, "string"),
+      },
+      oneway: true,
+    },
+    removeWatchpoint: {
+      request: {
+        property: Arg(0, "string"),
+      },
+      oneway: true,
+    },
+    removeWatchpoints: {
+      request: {},
+      oneway: true,
     },
     release: { release: true },
     scope: {

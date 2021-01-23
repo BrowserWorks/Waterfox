@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "Om skyfspasie te bespaar, moenie aflaai nie:">
+<!ENTITY doNotDownloadNntp.label "Om skyfspasie te bespaar, moenie vir aflyngebruik aflaai nie:">
+<!ENTITY doNotDownloadImap.label "Om skyfspasie te bespaar kan u stel watter grootte of ouderdom boodskappe van die bediener afgelaai word en as plaaslike kopieë gehou word.">
+<!ENTITY offlineNotDownload.label "Boodskappe groter as">
+<!ENTITY offlineNotDownload.accesskey "B">
+<!ENTITY autosyncNotDownload.label "Moenie boodskappe aflaai groter as">
+<!ENTITY autosyncNotDownload.accesskey "M">
+<!ENTITY kb.label "KG nie">
+<!ENTITY daysOld.label "dae">
+<!ENTITY message.label "boodskappe">
+<!ENTITY nntpNotDownloadRead.label "Lees boodskappe">
+<!ENTITY nntpNotDownloadRead.accesskey "L">
+<!ENTITY nntpDownloadMsg.label "Boodskappe van meer as">
+<!ENTITY nntpDownloadMsg.accesskey "o">
+<!ENTITY retentionCleanup.label "Om skyfspasie te herwin, kan ou boodskappe permanent geskrap word.">
+<!ENTITY retentionCleanupImap.label "Om skyfspasie te herwin, kan ou boodskappe permanent geskrap word (beide die plaaslike kopie en die oorspronklike op die afgeleë bediener).">
+<!ENTITY retentionCleanupPop.label "Om skyfspasie te herwin, kan ou boodskappe permanent geskrap word, insluitend die oorspronklike op die afgeleë bediener.">
+<!ENTITY retentionKeepMsg.label "Skrap boodskappe ouer as">
+<!ENTITY retentionKeepMsg.accesskey "r">
+<!ENTITY retentionKeepAll.label "Moenie enige boodskappe skrap nie">
+<!ENTITY retentionKeepAll.accesskey "M">
+<!ENTITY retentionKeepRecent.label "Skrap alles behalwe die mees onlangse">
+<!ENTITY retentionKeepRecent.accesskey "b">
+<!ENTITY retentionApplyToFlagged.label "Hou altyd gevlagde boodskappe">
+<!ENTITY retentionApplyToFlagged.accesskey "H">
+<!ENTITY nntpRemoveMsgBody.label "Verwyder lyf van boodskappe van meer as">
+<!ENTITY nntpRemoveMsgBody.accesskey "V">
+<!ENTITY offlineSelectNntp.label "Kies nuusgroepe vir aflyngebruik…">
+<!ENTITY offlineSelectNntp.accesskey "K">
+<!ENTITY offlineImapAdvancedOffline.label "Gevorderd…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "G">
+<!ENTITY syncGroupTitle.label "Boodskapsinchronisering">
+<!ENTITY diskspaceGroupTitle.label "Skyfspasie">
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+
+<!ENTITY allAutosync.label               "Sinchroniseer alle boodskappe plaaslik, ongeag ouderdom">
+<!ENTITY allAutosync.accesskey           "c">
+<!ENTITY ageAutosyncBefore.label         "Sinchroniseer die mees onlangse">
+<!ENTITY ageAutosync.accesskey           "S">
+<!ENTITY ageAutosyncMiddle.label         "">
+<!ENTITY dayAgeInterval.label            "Dae">
+<!ENTITY weekAgeInterval.label           "Weke">
+<!ENTITY monthAgeInterval.label          "Maande">
+<!ENTITY yearAgeInterval.label           "Jare">
+<!ENTITY ageAutosyncAfter.label          "">

@@ -10,6 +10,7 @@
  * liability, trademark and document use rules apply.
  */
 
+[Exposed=Window]
 interface SVGFEDropShadowElement : SVGElement {
   [Constant]
   readonly attribute SVGAnimatedString in1;
@@ -25,4 +26,4 @@ interface SVGFEDropShadowElement : SVGElement {
   void setStdDeviation(float stdDeviationX, float stdDeviationY);
 };
 
-SVGFEDropShadowElement implements SVGFilterPrimitiveStandardAttributes;
+SVGFEDropShadowElement includes SVGFilterPrimitiveStandardAttributes;

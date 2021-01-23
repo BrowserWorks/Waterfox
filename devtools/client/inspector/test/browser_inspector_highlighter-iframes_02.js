@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -27,6 +25,11 @@ add_task(async function() {
   ok(!hasOuterNode, "Check testActor has no access to outer element");
   const hasTestNode = await testActor.hasNode("#inner");
   ok(hasTestNode, "Check testActor has access to inner element");
+
+  info("Check the markup view is rendered correctly after switching frames");
+  const innerFront = await getNodeFront("#inner", inspector);
+  const innerContainer = inspector.markup.getContainer(innerFront);
+  ok(innerContainer, "Markup view is rendering the #inner node");
 
   info("Check highlighting is correct after switching iframe context");
   await selectAndHighlightNode("#inner", inspector);

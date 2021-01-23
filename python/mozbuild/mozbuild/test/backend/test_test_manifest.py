@@ -2,9 +2,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import unicode_literals
+from __future__ import absolute_import, print_function, unicode_literals
 
-import cPickle as pickle
+import six.moves.cPickle as pickle
 import os
 
 import mozpack.path as mozpath
@@ -38,7 +38,7 @@ class TestTestManifestBackend(BackendTester):
         self.assertTrue(os.path.exists(all_tests_path))
         test_installs_path = mozpath.join(env.topobjdir, 'test-installs.pkl')
 
-        with open(test_installs_path, 'r') as fh:
+        with open(test_installs_path, 'rb') as fh:
             test_installs = pickle.load(fh)
 
         self.assertEqual(set(test_installs.keys()),

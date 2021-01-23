@@ -12,9 +12,10 @@
  */
 
 // https://dom.spec.whatwg.org/#interface-processinginstruction
+[Exposed=Window]
 interface ProcessingInstruction : CharacterData {
   readonly attribute DOMString target;
 };
 
 // https://drafts.csswg.org/cssom/#requirements-on-user-agents-implementing-the-xml-stylesheet-processing-instruction
-ProcessingInstruction implements LinkStyle;
+ProcessingInstruction includes LinkStyle;

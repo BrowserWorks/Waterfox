@@ -6,7 +6,7 @@
 
 <html>
 <head>
-  <meta http-equiv="Content-Security-Policy" content="connect-src https:; default-src chrome:">
+  <meta http-equiv="Content-Security-Policy" content="connect-src https:; default-src chrome:; object-src 'none'">
   <meta name="referrer" content="no-referrer">
   <link rel="stylesheet" type="text/css" href="chrome://global/skin/in-content/common.css">
   <link rel="stylesheet" type="text/css" href="chrome://browser/skin/newInstallPage.css">
@@ -19,9 +19,9 @@
 </head>
 <body>
   <div id="main">
-   <!-- <div id="header">
+    <div id="header">
       <img role="presentation" src="chrome://branding/content/horizontal-lockup.svg">
-    </div> -->
+    </div>
     <div id="content">
       <div id="info">
         <h1 data-l10n-id="heading"></h1>
@@ -32,12 +32,12 @@
         <h3 data-l10n-id="options-title"></h3>
         <p data-l10n-id="options-do-nothing"></p>
         <p data-l10n-id="options-use-sync"></p>
-      <!--  <p>
+        <p>
           <span data-l10n-id="resources"></span><br>
           <a data-l10n-id="support-link" href="https://support.mozilla.org/kb/profile-manager-create-and-remove-firefox-profiles" target="_blank" rel="noopener"></a>
-        </p> -->
+        </p>
       </div>
-      <!-- <form id="sync">
+      <form id="sync">
         <h1 id="sync-header" data-l10n-id="sync-header"></h1>
         <p id="sync-label"><label data-l10n-id="sync-label" for="sync-input"></label></p>
         <p id="sync-input-container"><input data-l10n-id="sync-input" id="sync-input" type="email" required name="email"></p>
@@ -48,7 +48,7 @@
         <p id="sync-button-container"><button id="sync-button" type="submit" data-l10n-id="sync-button"></button></p>
         <p id="sync-first" data-l10n-id="sync-first"></p>
         <p id="sync-learn"><a href="https://support.mozilla.org/kb/how-do-i-set-sync-my-computer" target="_blank" rel="noopener" data-l10n-id="sync-learn"></a></p>
-      </form> -->
+      </form>
     </div>
   </div>
 </body>

@@ -40,7 +40,7 @@ ChromeUtils.defineModuleGetter(
 ChromeUtils.defineModuleGetter(
   this,
   "OSKeyStore",
-  "resource://formautofill/OSKeyStore.jsm"
+  "resource://gre/modules/OSKeyStore.jsm"
 );
 ChromeUtils.defineModuleGetter(
   this,
@@ -70,8 +70,7 @@ XPCOMUtils.defineLazyGetter(this, "reauthPasswordPromptMessage", () => {
   );
   return FormAutofillUtils.stringBundle.formatStringFromName(
     `useCreditCardPasswordPrompt.${AppConstants.platform}`,
-    [brandShortName],
-    1
+    [brandShortName]
   );
 });
 
@@ -609,9 +608,12 @@ var paymentDialogWrapper = {
       );
       return;
     }
-    let { gDevToolsBrowser } = ChromeUtils.import(
-      "resource://devtools/client/framework/gDevTools.jsm"
+    const { require } = ChromeUtils.import(
+      "resource://devtools/shared/Loader.jsm"
     );
+    const {
+      gDevToolsBrowser,
+    } = require("devtools/client/framework/devtools-browser");
     gDevToolsBrowser.openContentProcessToolbox({
       selectedBrowser: this.frameWeakRef.get(),
     });

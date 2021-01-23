@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (window.width2, window.height): These values should be
+close to the golden ratio (1.618:1) while making sure it's wide enough for long
+file names and tall enough to hint that there are more activities in the list -->
+
+<!ENTITY window.width2                    "500">
+<!ENTITY window.height                    "300">
+
+<!ENTITY activity.title                  "Manaidsear gnìomhachd">
+
+<!ENTITY cmd.pause.label                  "Cuir 'na stad">
+<!ENTITY cmd.pause.accesskey              "C">
+<!ENTITY cmd.resume.label                 "Lean air">
+<!ENTITY cmd.resume.accesskey             "r">
+<!ENTITY cmd.cancel.label                 "Sguir dheth">
+<!ENTITY cmd.cancel.accesskey             "S">
+<!ENTITY cmd.undo.label                   "Neo-dhèan">
+<!ENTITY cmd.undo.accesskey               "N">
+<!ENTITY cmd.recover.label                "Aisig">
+<!ENTITY cmd.recover.accesskey            "A">
+<!ENTITY cmd.retry.label                  "Feuch ris a-rithist">
+<!ENTITY cmd.retry.accesskey              "r">
+<!ENTITY cmd.removeFromList.label         "Thoir air falbh on liosta">
+<!ENTITY cmd.removeFromList.accesskey     "T">
+
+<!ENTITY cmd.close.commandkey             "w">
+<!ENTITY cmd.close2.commandkey            "j">
+<!ENTITY cmd.close2Unix.commandkey        "y">
+<!ENTITY cmd.clearList.label              "Glan an liosta">
+<!ENTITY cmd.clearList.tooltip            "Bheir seo air falbh gach rud a tha deiseil, a chaidh a sgur dheth 's a dh'fhàillig on liosta">
+<!ENTITY cmd.clearList.accesskey          "G">
+<!ENTITY cmd.find.commandkey              "f">
+<!ENTITY cmd.search.commandkey            "k">
+
+<!ENTITY searchBox.label                  "Lorg…">

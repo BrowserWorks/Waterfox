@@ -10,6 +10,9 @@ Test empty selector
   Pushed via `mach try empty`
   Calculated try_task_config.json:
   {
+      "env": {
+          "TRY_SELECTOR": "empty"
+      },
       "tasks": [],
       "version": 1
   }
@@ -21,6 +24,9 @@ Test empty selector
   Pushed via `mach try empty`
   Calculated try_task_config.json:
   {
+      "env": {
+          "TRY_SELECTOR": "empty"
+      },
       "tasks": [],
       "version": 1
   }
@@ -32,6 +38,9 @@ Test empty selector
   Pushed via `mach try empty`
   Calculated try_task_config.json:
   {
+      "env": {
+          "TRY_SELECTOR": "empty"
+      },
       "tasks": [],
       "version": 1
   }

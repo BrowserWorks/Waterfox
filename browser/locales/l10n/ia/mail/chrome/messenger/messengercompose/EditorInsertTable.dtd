@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Inserer tabella">
+
+<!ENTITY size.label "Dimension">
+<!ENTITY numRowsEditField.label "Rigas:">
+<!ENTITY numRowsEditField.accessKey "R">
+<!ENTITY numColumnsEditField.label "Columnas:">
+<!ENTITY numColumnsEditField.accessKey "C">
+<!ENTITY widthEditField.label "Largessa:">
+<!ENTITY widthEditField.accessKey "L">
+<!ENTITY borderEditField.label "Bordo:">
+<!ENTITY borderEditField.accessKey "B">
+<!ENTITY borderEditField.tooltip "Scribe un numero pro le bordo del tabella, o zero (0) pro nulle bordo">
+<!ENTITY pixels.label "pixels">

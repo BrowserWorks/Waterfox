@@ -112,7 +112,7 @@ MOZDEPTH ?= $(DEPTH)
 
 repackage-zip: UNPACKAGE='$(ZIP_IN)'
 repackage-zip:
-	$(PYTHON) $(MOZILLA_DIR)/toolkit/mozapps/installer/l10n-repack.py '$(STAGEDIST)' $(DIST)/xpi-stage/locale-$(AB_CD) \
+	$(PYTHON3) $(MOZILLA_DIR)/toolkit/mozapps/installer/l10n-repack.py '$(STAGEDIST)' $(DIST)/xpi-stage/locale-$(AB_CD) \
 		$(MOZ_PKG_EXTRAL10N) \
 		$(if $(filter omni,$(MOZ_PACKAGER_FORMAT)),$(if $(NON_OMNIJAR_FILES),--non-resource $(NON_OMNIJAR_FILES)))
 
@@ -155,13 +155,18 @@ repackage-zip-%: unpack
 	@$(MAKE) repackage-zip AB_CD=$* ZIP_IN='$(ZIP_IN)'
 
 
+# Finding toolkit's defines.inc is hard for comm-central.
+# It needs to resolve mail's defines.inc relative to comm
+# for en-US, and toolkit's defines.inc relative to topsrcdir.
+# That's MOZILLA_DIR in their case, so fall back to that.
+# This is just needed for en-US, for repacks, all paths resolve
+# relative to the top-level REAL_LOCALE_MERGEDIR.
 LANGPACK_DEFINES = \
-  $(firstword \
-    $(wildcard $(call EXPAND_LOCALE_SRCDIR,toolkit/locales)/defines.inc) \
-    $(MOZILLA_DIR)/toolkit/locales/en-US/defines.inc) \
-  $(firstword \
-    $(wildcard $(LOCALE_SRCDIR)/defines.inc) \
-    $(srcdir)/en-US/defines.inc) \
+	$(firstword \
+	  $(wildcard $(call EXPAND_LOCALE_SRCDIR,toolkit/locales)/defines.inc) \
+	  $(MOZILLA_DIR)/toolkit/locales/en-US/defines.inc \
+	) \
+  $(LOCALE_SRCDIR)/defines.inc \
 $(NULL)
 
 # Dealing with app sub dirs: If DIST_SUBDIRS is defined it contains a
@@ -203,12 +208,22 @@ ifdef NIGHTLY_BUILD
 	fi
 endif
 	$(RM) -rf $(REAL_LOCALE_MERGEDIR)
-	-$(MOZILLA_DIR)/mach compare-locales $(COMPARE_LOCALES_DEFINES) --merge $(BASE_MERGE) $(srcdir)/l10n.toml $(L10NBASEDIR) $*
+	-$(MOZILLA_DIR)/mach compare-locales --merge $(BASE_MERGE) $(srcdir)/l10n.toml $(L10NBASEDIR) $*
+# Hunspell dictionaries are interesting, as we don't ship the en-US
+# dictionary in repacks. Thus we can't use the merge logic from
+# compare-locales above, which would add en-US.dic and en-US.aff to
+# the merge directory.
+# Copy them to the merge dir, if exist. The repackaged app can still decide
+# on whether to package them or not in `libs-%` and `chrome-%`.
+	if  test -d $(L10NBASEDIR)/$(AB_CD)/extensions/spellcheck ; then \
+		$(NSINSTALL) -D $(REAL_LOCALE_MERGEDIR)/extensions/spellcheck/hunspell ; \
+		cp $(L10NBASEDIR)/$(AB_CD)/extensions/spellcheck/hunspell/*.* $(REAL_LOCALE_MERGEDIR)/extensions/spellcheck/hunspell ; \
+	fi
 
 langpack-%: IS_LANGUAGE_REPACK=1
 langpack-%: IS_LANGPACK=1
 langpack-%: AB_CD=$*
-langpack-%:
+langpack-%: clobber-%
 	@echo 'Making langpack $(LANGPACK_FILE)'
 	@$(MAKE) libs-$(AB_CD)
 	@$(MAKE) package-langpack-$(AB_CD)

@@ -129,6 +129,7 @@
   pointer-events: none;
   margin: 0;
   text-align: center;
+  direction: ltr;
 }
 
 .boxmodel-main > p > span,
@@ -145,6 +146,7 @@
 .boxmodel-bottom {
   width: calc(100% - 2px);
   text-align: center;
+  z-index: 1; /* workaround for bug 1559706 */
 }
 
 .boxmodel-padding.boxmodel-top {
@@ -182,6 +184,7 @@
 .boxmodel-padding.boxmodel-right {
   top: 22px;
   line-height: 80px;
+  z-index: 1; /* workaround for bug 1559706 */
 }
 
 .boxmodel-size {
@@ -336,7 +339,7 @@
 .boxmodel-editable {
   position: relative;
   border: 1px dashed transparent;
-  -moz-user-select: none;
+  user-select: none;
   white-space: nowrap;
   cursor: pointer;
 }
@@ -388,6 +391,8 @@
 
 .boxmodel-element-size {
   flex: 1;
+  direction: ltr;
+  text-align: match-parent;
 }
 
 .boxmodel-position-group {

@@ -327,6 +327,15 @@ const SdpSsrcAttributeList& RsdparsaSdpAttributeList::GetSsrc() const {
   return *static_cast<const SdpSsrcAttributeList*>(attr);
 }
 
+const SdpSsrcGroupAttributeList& RsdparsaSdpAttributeList::GetSsrcGroup()
+    const {
+  if (!HasAttribute(SdpAttribute::kSsrcGroupAttribute)) {
+    MOZ_CRASH();
+  }
+  const SdpAttribute* attr = GetAttribute(SdpAttribute::kSsrcGroupAttribute);
+  return *static_cast<const SdpSsrcGroupAttributeList*>(attr);
+}
+
 void RsdparsaSdpAttributeList::LoadAttribute(RustAttributeList* attributeList,
                                              AttributeType type) {
   if (!mAttributes[type]) {
@@ -423,6 +432,8 @@ void RsdparsaSdpAttributeList::LoadAttribute(RustAttributeList* attributeList,
         LoadCandidate(attributeList);
         return;
       case SdpAttribute::kSsrcGroupAttribute:
+        LoadSsrcGroup(attributeList);
+        return;
       case SdpAttribute::kConnectionAttribute:
       case SdpAttribute::kIceMismatchAttribute:
       case SdpAttribute::kLabelAttribute:
@@ -586,34 +597,94 @@ void RsdparsaSdpAttributeList::LoadSsrc(RustAttributeList* attributeList) {
   SetAttribute(ssrcs.release());
 }
 
-SdpRtpmapAttributeList::CodecType strToCodecType(const std::string& name) {
+void RsdparsaSdpAttributeList::LoadSsrcGroup(RustAttributeList* attributeList) {
+  size_t numSsrcGroups = sdp_get_ssrc_group_count(attributeList);
+  if (numSsrcGroups == 0) {
+    return;
+  }
+  auto rustSsrcGroups = MakeUnique<RustSdpAttributeSsrcGroup[]>(numSsrcGroups);
+  sdp_get_ssrc_groups(attributeList, numSsrcGroups, rustSsrcGroups.get());
+  auto ssrcGroups = MakeUnique<SdpSsrcGroupAttributeList>();
+  for (size_t i = 0; i < numSsrcGroups; i++) {
+    RustSdpAttributeSsrcGroup& ssrcGroup = rustSsrcGroups[i];
+    SdpSsrcGroupAttributeList::Semantics semantic;
+    switch (ssrcGroup.semantic) {
+      case RustSdpAttributeSsrcGroupSemantic ::kRustDup:
+        semantic = SdpSsrcGroupAttributeList::kDup;
+        break;
+      case RustSdpAttributeSsrcGroupSemantic ::kRustFec:
+        semantic = SdpSsrcGroupAttributeList::kFec;
+        break;
+      case RustSdpAttributeSsrcGroupSemantic ::kRustFecFr:
+        semantic = SdpSsrcGroupAttributeList::kFecFr;
+        break;
+      case RustSdpAttributeSsrcGroupSemantic ::kRustFid:
+        semantic = SdpSsrcGroupAttributeList::kFid;
+        break;
+      case RustSdpAttributeSsrcGroupSemantic ::kRustSim:
+        semantic = SdpSsrcGroupAttributeList::kSim;
+        break;
+    }
+    std::vector<uint32_t> ssrcs;
+    for (size_t i = 0; i < ssrc_vec_len(ssrcGroup.ssrcs); ++i) {
+      uint32_t ssrc;
+      ssrc_vec_get_id(ssrcGroup.ssrcs, i, &ssrc);
+      ssrcs.push_back(ssrc);
+    }
+    ssrcGroups->PushEntry(semantic, ssrcs);
+  }
+  SetAttribute(ssrcGroups.release());
+}
+
+struct FmtDefaults {
+  uint32_t minimumChannels = 0;
+};
+
+std::tuple<SdpRtpmapAttributeList::CodecType, FmtDefaults> strToCodecType(
+    const std::string& name) {
   auto codec = SdpRtpmapAttributeList::kOtherCodec;
+  FmtDefaults defaults = {0};  // This is tracked to match SIPCC behavior only
   if (!nsCRT::strcasecmp(name.c_str(), "opus")) {
     codec = SdpRtpmapAttributeList::kOpus;
+    defaults = {0};
   } else if (!nsCRT::strcasecmp(name.c_str(), "G722")) {
     codec = SdpRtpmapAttributeList::kG722;
+    defaults = {1};
   } else if (!nsCRT::strcasecmp(name.c_str(), "PCMU")) {
     codec = SdpRtpmapAttributeList::kPCMU;
+    defaults = {1};
   } else if (!nsCRT::strcasecmp(name.c_str(), "PCMA")) {
     codec = SdpRtpmapAttributeList::kPCMA;
+    defaults = {1};
   } else if (!nsCRT::strcasecmp(name.c_str(), "VP8")) {
     codec = SdpRtpmapAttributeList::kVP8;
+    defaults = {0};
   } else if (!nsCRT::strcasecmp(name.c_str(), "VP9")) {
     codec = SdpRtpmapAttributeList::kVP9;
+    defaults = {0};
   } else if (!nsCRT::strcasecmp(name.c_str(), "iLBC")) {
     codec = SdpRtpmapAttributeList::kiLBC;
+    defaults = {1};
   } else if (!nsCRT::strcasecmp(name.c_str(), "iSAC")) {
     codec = SdpRtpmapAttributeList::kiSAC;
+    defaults = {1};
   } else if (!nsCRT::strcasecmp(name.c_str(), "H264")) {
     codec = SdpRtpmapAttributeList::kH264;
+    defaults = {1};
   } else if (!nsCRT::strcasecmp(name.c_str(), "red")) {
     codec = SdpRtpmapAttributeList::kRed;
+    defaults = {0};
   } else if (!nsCRT::strcasecmp(name.c_str(), "ulpfec")) {
     codec = SdpRtpmapAttributeList::kUlpfec;
+    defaults = {0};
   } else if (!nsCRT::strcasecmp(name.c_str(), "telephone-event")) {
     codec = SdpRtpmapAttributeList::kTelephoneEvent;
+    defaults = {1};
+  } else if (!nsCRT::strcasecmp(name.c_str(), "rtx")) {
+    codec = SdpRtpmapAttributeList::kRtx;
+    defaults = {0};
   }
-  return codec;
+  return std::make_tuple(codec, defaults);
 }
 
 void RsdparsaSdpAttributeList::LoadRtpmap(RustAttributeList* attributeList) {
@@ -628,8 +699,11 @@ void RsdparsaSdpAttributeList::LoadRtpmap(RustAttributeList* attributeList) {
     RustSdpAttributeRtpmap& rtpmap = rustRtpmaps[i];
     std::string payloadType = std::to_string(rtpmap.payloadType);
     std::string name = convertStringView(rtpmap.codecName);
-    auto codec = strToCodecType(name);
+    auto [codec, defaults] = strToCodecType(name);
     uint32_t channels = rtpmap.channels;
+    if (channels == 0) {
+      channels = defaults.minimumChannels;
+    }
     rtpmapList->PushEntry(payloadType, codec, name, rtpmap.frequency, channels);
   }
   SetAttribute(rtpmapList.release());
@@ -676,8 +750,14 @@ void RsdparsaSdpAttributeList::LoadFmtp(RustAttributeList* attributeList) {
       SdpFmtpAttributeList::OpusParameters opusParameters;
 
       opusParameters.maxplaybackrate = rustFmtpParameters.maxplaybackrate;
+      opusParameters.maxAverageBitrate = rustFmtpParameters.maxaveragebitrate;
+      opusParameters.useDTX = rustFmtpParameters.usedtx;
       opusParameters.stereo = rustFmtpParameters.stereo;
       opusParameters.useInBandFec = rustFmtpParameters.useinbandfec;
+      opusParameters.frameSizeMs = rustFmtpParameters.ptime;
+      opusParameters.minFrameSizeMs = rustFmtpParameters.minptime;
+      opusParameters.maxFrameSizeMs = rustFmtpParameters.maxptime;
+      opusParameters.useCbr = rustFmtpParameters.cbr;
 
       fmtpParameters.reset(
           new SdpFmtpAttributeList::OpusParameters(std::move(opusParameters)));
@@ -706,11 +786,20 @@ void RsdparsaSdpAttributeList::LoadFmtp(RustAttributeList* attributeList) {
 
       fmtpParameters.reset(
           new SdpFmtpAttributeList::RedParameters(std::move(redParameters)));
+    } else if (codecName == "RTX") {
+      SdpFmtpAttributeList::RtxParameters rtxParameters;
+
+      rtxParameters.apt = rustFmtpParameters.rtx.apt;
+      if (rustFmtpParameters.rtx.has_rtx_time) {
+        rtxParameters.rtx_time = Some(rustFmtpParameters.rtx.rtx_time);
+      }
+
+      fmtpParameters.reset(
+          new SdpFmtpAttributeList::RtxParameters(rtxParameters));
     } else {
       // The parameter set is unknown so skip it
       continue;
     }
-
     fmtpList->PushEntry(std::to_string(payloadType), std::move(fmtpParameters));
   }
   SetAttribute(fmtpList.release());
@@ -840,13 +929,12 @@ void RsdparsaSdpAttributeList::LoadGroup(RustAttributeList* attributeList) {
 void RsdparsaSdpAttributeList::LoadRtcp(RustAttributeList* attributeList) {
   RustSdpAttributeRtcp rtcp;
   if (NS_SUCCEEDED(sdp_get_rtcp(attributeList, &rtcp))) {
-    sdp::AddrType addrType = convertAddressType(rtcp.unicastAddr.addrType);
-    if (sdp::kAddrTypeNone == addrType) {
-      SetAttribute(new SdpRtcpAttribute(rtcp.port));
+    if (rtcp.has_address) {
+      auto address = convertExplicitlyTypedAddress(&rtcp.unicastAddr);
+      SetAttribute(new SdpRtcpAttribute(rtcp.port, sdp::kInternet,
+                                        address.first, address.second));
     } else {
-      std::string addr(rtcp.unicastAddr.unicastAddr);
-      SetAttribute(
-          new SdpRtcpAttribute(rtcp.port, sdp::kInternet, addrType, addr));
+      SetAttribute(new SdpRtcpAttribute(rtcp.port));
     }
   }
 }
@@ -893,7 +981,6 @@ SdpSimulcastAttribute::Versions LoadSimulcastVersions(
                              rustVersionArray.get());
 
   SdpSimulcastAttribute::Versions versions;
-  versions.type = SdpSimulcastAttribute::Versions::kRid;
 
   for (size_t i = 0; i < rustVersionCount; i++) {
     const RustSdpAttributeSimulcastVersion& rustVersion = rustVersionArray[i];
@@ -910,7 +997,8 @@ SdpSimulcastAttribute::Versions LoadSimulcastVersions(
       const RustSdpAttributeSimulcastId& rustId = rustIdArray[j];
       std::string id = convertStringView(rustId.id);
       // TODO: Bug 1225877. Added support for 'paused'-state
-      version.choices.push_back(id);
+      version.choices.push_back(
+          SdpSimulcastAttribute::Encoding(id, rustId.paused));
     }
 
     versions.push_back(version);
@@ -1072,7 +1160,7 @@ void RsdparsaSdpAttributeList::LoadRemoteCandidates(
     SdpRemoteCandidatesAttribute::Candidate candidate;
     candidate.port = rustCandidate.port;
     candidate.id = std::to_string(rustCandidate.component);
-    candidate.address = std::string(rustCandidate.address.unicastAddr);
+    candidate.address = convertAddress(&rustCandidate.address);
     candidates.push_back(candidate);
   }
   SdpRemoteCandidatesAttribute* candidatesList;

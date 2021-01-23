@@ -26,8 +26,13 @@ add_task(async function test_formdata() {
     await promiseBrowserLoaded(browser);
 
     // Modify form data.
-    await setInputValue(browser, { id: "txt", value: OUTER_VALUE });
-    await setInputValue(browser, { id: "txt", value: INNER_VALUE, frame: 0 });
+    await setPropertyOfFormField(browser, "#txt", "value", OUTER_VALUE);
+    await setPropertyOfFormField(
+      browser.browsingContext.children[0],
+      "#txt",
+      "value",
+      INNER_VALUE
+    );
 
     // Remove the tab.
     await promiseRemoveTabAndSessionState(tab);
@@ -84,7 +89,7 @@ add_task(async function test_url_check() {
   await promiseBrowserLoaded(browser);
 
   // Restore a tab state with a given form data url.
-  function restoreStateWithURL(url) {
+  async function restoreStateWithURL(url) {
     let state = {
       entries: [{ url: URL, triggeringPrincipal_base64 }],
       formdata: { id: { input: VALUE } },
@@ -94,9 +99,8 @@ add_task(async function test_url_check() {
       state.formdata.url = url;
     }
 
-    return promiseTabState(tab, state).then(() =>
-      getInputValue(browser, "input")
-    );
+    await promiseTabState(tab, state);
+    return getPropertyOfFormField(browser, "#input", "value");
   }
 
   // Check that the form value is restored with the correct URL.
@@ -117,13 +121,12 @@ add_task(async function test_url_check() {
 add_task(async function test_nested() {
   const URL =
     "data:text/html;charset=utf-8," +
-    "<iframe src='data:text/html;charset=utf-8," +
-    "<input autofocus=true>'/>";
+    "<iframe src='data:text/html;charset=utf-8,<input/>'/>";
 
   const FORM_DATA = {
     children: [
       {
-        url: "data:text/html;charset=utf-8,<input autofocus=true>",
+        url: "data:text/html;charset=utf-8,<input/>",
         xpath: { "/xhtml:html/xhtml:body/xhtml:input": "m" },
       },
     ],
@@ -132,7 +135,19 @@ add_task(async function test_nested() {
   // Create a tab with an iframe containing an input field.
   let tab = (gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser, URL));
   let browser = tab.linkedBrowser;
-  await promiseBrowserLoaded(browser);
+  await promiseBrowserLoaded(browser, false /* don't ignore subframes */);
+
+  const iframe = await SpecialPowers.spawn(browser, [], () => {
+    return content.document.querySelector("iframe").browsingContext;
+  });
+  await SpecialPowers.spawn(iframe, [], async () => {
+    const input = content.document.querySelector("input");
+    const focusPromise = new Promise(resolve => {
+      input.addEventListener("focus", resolve, { once: true });
+    });
+    input.focus();
+    await focusPromise;
+  });
 
   // Modify the input field's value.
   await BrowserTestUtils.synthesizeKey("m", {}, browser);
@@ -192,7 +207,7 @@ add_task(async function test_design_mode() {
   await promiseTabRestored(tab);
 
   // Check that the innerHTML value was restored.
-  let html = await getInnerHTML(browser);
+  let html = await getPropertyOfFormField(browser, "body", "innerHTML");
   let expected = "<h1>mmozilla</h1><script>document.designMode='on'</script>";
   is(html, expected, "editable document has been restored correctly");
 
@@ -203,22 +218,10 @@ add_task(async function test_design_mode() {
   await promiseTabRestored(tab);
 
   // Check that the innerHTML value was restored.
-  html = await getInnerHTML(browser);
+  html = await getPropertyOfFormField(browser, "body", "innerHTML");
   expected = "<h1>mmozilla</h1><script>document.designMode='on'</script>";
   is(html, expected, "editable document has been restored correctly");
 
   // Cleanup.
   gBrowser.removeTab(tab);
 });
-
-function getInputValue(browser, id) {
-  return sendMessage(browser, "ss-test:getInputValue", { id });
-}
-
-function setInputValue(browser, data) {
-  return sendMessage(browser, "ss-test:setInputValue", data);
-}
-
-function getInnerHTML(browser) {
-  return sendMessage(browser, "ss-test:getInnerHTML", { selector: "body" });
-}

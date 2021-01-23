@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -24,13 +23,10 @@ add_task(async function() {
   const { inspector, view } = await openRuleView();
   await selectNode("#testid", inspector);
 
-  const idRule = getRuleViewRuleEditor(view, 1).rule;
-  const idProp = idRule.textProps[0];
+  const idProp = getTextProperty(view, 1, { "background-color": "blue" });
 
   await togglePropStatus(view, idProp);
-
-  const classRule = getRuleViewRuleEditor(view, 2).rule;
-  const classProp = classRule.textProps[0];
+  const classProp = getTextProperty(view, 2, { "background-color": "green" });
   ok(
     !classProp.overridden,
     "Class prop should not be overridden after id prop was disabled."

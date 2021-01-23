@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  untitledTab            "(Geen titel)">
+<!ENTITY  newTab.label           "Nieuw tabblad">
+<!ENTITY  newTab.accesskey       "N">
+<!ENTITY  closeTab.label         "Tabblad sluiten">
+<!ENTITY  closeTab.accesskey         "s">
+<!ENTITY  closeOtherTabs.label   "Overige tabbladen sluiten">
+<!ENTITY  closeOtherTabs.accesskey         "e">
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label "Tabbladen aan de rechterkant sluiten">
+<!ENTITY  closeTabsToTheEnd.accesskey "c">
+<!ENTITY  reloadAllTabs.label    "Alle tabbladen vernieuwen">
+<!ENTITY  reloadAllTabs.accesskey         "r">
+<!ENTITY  reloadTab.label        "Tabblad vernieuwen">
+<!ENTITY  reloadTab.accesskey         "v">
+<!ENTITY  bookmarkGroup.label    "Bladwijzer voor alle tabbladen maken">
+<!ENTITY  bookmarkGroup.accesskey  "B">
+<!ENTITY  closeTabButton.tooltip   "Huidige tabblad sluiten">
+<!ENTITY  newTabButton.tooltip   "Een nieuw tabblad openen">
+<!ENTITY  listAllTabs.tooltip    "Alle tabbladtitels tonen">
+<!ENTITY  undoCloseTab.label    "Tabblad sluiten ongedaan maken">
+<!ENTITY  undoCloseTab.accesskey  "o">

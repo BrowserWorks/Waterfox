@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Account manager window for Instantbird -->
+<!ENTITY accounts.title                      "Tilit - &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "Pikaviestinnän tila">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "Uusi tili">
+<!ENTITY accountManager.newAccount.accesskey "U">
+<!ENTITY accountManager.close.label          "Sulje">
+<!ENTITY accountManager.close.accesskey      "s">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "Yhtään tiliä ei ole vielä määritelty">
+<!ENTITY accountManager.noAccount.description "Napsauttamalla &accountManager.newAccount.label; -painiketta voit määritellä &brandShortName;in avulla uuden tilin.">
+<!ENTITY account.autoSignOn.label     "Kirjaudu käynnistettäessä">
+<!ENTITY account.autoSignOn.accesskey "K">
+<!ENTITY account.connect.label        "Yhdistä">
+<!ENTITY account.connect.accesskey    "Y">
+<!ENTITY account.disconnect.label     "Katkaise yhteys">
+<!ENTITY account.disconnect.accesskey "i">
+<!ENTITY account.delete.label         "Poista">
+<!ENTITY account.delete.accesskey     "P">
+<!ENTITY account.edit.label           "Ominaisuudet">
+<!ENTITY account.edit.accesskey       "O">
+<!ENTITY account.moveup.label         "Siirrä ylös">
+<!ENTITY account.movedown.label       "Siirrä alas">
+<!ENTITY account.cancelReconnection.label         "Keskeytä uudelleenyhdistäminen">
+<!ENTITY account.cancelReconnection.accesskey     "K">
+<!ENTITY account.copyDebugLog.label     "Kopioi virheenpaikannusloki">
+<!ENTITY account.copyDebugLog.accesskey "v">
+<!ENTITY account.showDebugLog.label     "Näytä virheenpaikannusloki">
+<!ENTITY account.showDebugLog.accesskey "N">
+<!ENTITY account.connecting           "Yhdistetään…">
+<!ENTITY account.disconnecting        "Katkaistaan yhteyttä…">
+<!ENTITY account.disconnected         "Ei yhdistetty">

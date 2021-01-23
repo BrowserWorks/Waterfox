@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- for SearchDialog.xul -->
+<!ENTITY searchHeading.label         "මෙතුළ වන ලිපි සඳහා සොයන්න:">
+<!ENTITY searchHeading.accesskey     "h">
+<!ENTITY searchSubfolders.label      "සොයන උප-ෆෝල්ඩරය">
+<!ENTITY searchSubfolders.accesskey  "e">
+<!ENTITY searchOnServer.label        "සේවාදායකය තුළ සෙවුම කරන්න">
+<!ENTITY searchOnServer.accesskey    "u">
+<!ENTITY resetButton.label           "හිස් කරන්න">
+<!ENTITY resetButton.accesskey       "C">
+<!ENTITY openButton.label            "විවෘත කරන්න">
+<!ENTITY openButton.accesskey        "n">
+<!ENTITY deleteButton.label          "මකන්න">
+<!ENTITY deleteButton.accesskey      "D">
+<!ENTITY searchDialogTitle.label     "ලිපි සෙවීම">
+<!ENTITY results.label               "ප්‍රතිඵල">
+<!ENTITY moveButton.label            "Move To">
+<!ENTITY moveButton.accesskey        "T">
+<!ENTITY closeCmd.key                "W"> 
+<!ENTITY openInFolder.label          "ෆෝල්ඩරය තුළ විවෘත කරන්න">
+<!ENTITY openInFolder.accesskey      "r">
+<!ENTITY saveAsVFButton.label        "සෙවුම් ෆෝල්ඩරයක් සේ සුරකින්න">
+<!ENTITY saveAsVFButton.accesskey    "v">
+
+<!-- for ABSearchDialog.xul -->
+<!ENTITY abSearchHeading.label       "සොයන්නේ මෙතුළ:">
+<!ENTITY abSearchHeading.accesskey   "h">
+<!ENTITY propertiesButton.label      "ලක්ෂණ">
+<!ENTITY propertiesButton.accesskey  "P">
+<!ENTITY composeButton.label         "ලිපියක් ලියන්න">
+<!ENTITY composeButton.accesskey     "W">
+<!ENTITY deleteCardButton.label      "මකන්න">
+<!ENTITY deleteCardButton.accesskey  "D">
+<!ENTITY abSearchDialogTitle.label   "ලිපින පොතේ වැඩිමනත් සවීම්">
+

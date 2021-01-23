@@ -575,7 +575,7 @@ function CustomPipe(name) {
       );
 
       if (this._readable < count || self._data.length < count) {
-        throw Cr.NS_BASE_STREAM_WOULD_BLOCK;
+        throw Components.Exception("", Cr.NS_BASE_STREAM_WOULD_BLOCK);
       }
       this._readable -= count;
       return self._data.splice(0, count);
@@ -867,19 +867,9 @@ function CustomPipe(name) {
     //
     // see nsIBinaryOutputStream.writeByteArray
     //
-    writeByteArray: function writeByteArray(bytes, length) {
-      dumpn(
-        "*** [" +
-          this.name +
-          "].writeByteArray" +
-          "([" +
-          bytes +
-          "], " +
-          length +
-          ")"
-      );
+    writeByteArray: function writeByteArray(bytes) {
+      dumpn(`*** [${this.name}].writeByteArray([${bytes}])`);
 
-      Assert.equal(bytes.length, length, "sanity");
       if (!Components.isSuccessCode(self._status)) {
         throw self._status;
       }
@@ -890,12 +880,12 @@ function CustomPipe(name) {
         "writeByteArray can't support specified-length writes"
       );
 
-      if (this._writable < length) {
-        throw Cr.NS_BASE_STREAM_WOULD_BLOCK;
+      if (this._writable < bytes.length) {
+        throw Components.Exception("", Cr.NS_BASE_STREAM_WOULD_BLOCK);
       }
 
       self._data.push.apply(self._data, bytes);
-      this._writable -= length;
+      this._writable -= bytes.length;
 
       if (
         input._readable === Infinity &&
@@ -917,7 +907,7 @@ function CustomPipe(name) {
         throw self._status;
       }
       if (this._writable === 0) {
-        throw Cr.NS_BASE_STREAM_WOULD_BLOCK;
+        throw Components.Exception("", Cr.NS_BASE_STREAM_WOULD_BLOCK);
       }
 
       var actualWritten;
@@ -1011,7 +1001,7 @@ function CustomPipe(name) {
           "])"
       );
 
-      Assert.ok(increments.length > 0, "bad increments");
+      Assert.greater(increments.length, 0, "bad increments");
       Assert.ok(
         increments.every(function(v) {
           return v > 0;
@@ -1164,7 +1154,7 @@ CopyTest.prototype = {
 
       try {
         self._copyableDataStream.makeWritable(bytes.length);
-        self._copyableDataStream.writeByteArray(bytes, bytes.length);
+        self._copyableDataStream.writeByteArray(bytes);
       } finally {
         self._stageNextTask();
       }

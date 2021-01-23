@@ -19,6 +19,8 @@ const { XPCOMUtils } = ChromeUtils.import(
 );
 XPCOMUtils.defineLazyModuleGetters(this, {
   BrowserUtils: "resource://gre/modules/BrowserUtils.jsm",
+  JsonSchemaValidator:
+    "resource://gre/modules/components-utils/JsonSchemaValidator.jsm",
   Services: "resource://gre/modules/Services.jsm",
   UrlbarPrefs: "resource:///modules/UrlbarPrefs.jsm",
   UrlbarUtils: "resource:///modules/UrlbarUtils.jsm",
@@ -57,7 +59,11 @@ class UrlbarResult {
     this.source = resultSource;
 
     // UrlbarView is responsible for updating this.
-    this.uiIndex = -1;
+    this.rowIndex = -1;
+
+    // This is an optional hint to the Muxer that can be set by a provider to
+    // suggest a specific position among the results.
+    this.suggestedIndex = -1;
 
     // May be used to indicate an heuristic result. Heuristic results can bypass
     // source filters in the ProvidersManager, that otherwise may skip them.
@@ -68,7 +74,7 @@ class UrlbarResult {
     if (!payload || typeof payload != "object") {
       throw new Error("Invalid result payload");
     }
-    this.payload = payload;
+    this.payload = this.validatePayload(payload);
 
     if (!payloadHighlights || typeof payloadHighlights != "object") {
       throw new Error("Invalid result payload highlights");
@@ -116,14 +122,18 @@ class UrlbarResult {
           ? [this.payload.title, this.payloadHighlights.title]
           : [this.payload.url || "", this.payloadHighlights.url || []];
       case UrlbarUtils.RESULT_TYPE.SEARCH:
-        if (this.payload.isKeywordOffer) {
-          return this.heuristic
-            ? ["", []]
-            : [this.payload.keyword, this.payloadHighlights.keyword];
+        switch (this.payload.keywordOffer) {
+          case UrlbarUtils.KEYWORD_OFFER.SHOW:
+            return [this.payload.keyword, this.payloadHighlights.keyword];
+          case UrlbarUtils.KEYWORD_OFFER.HIDE:
+            return ["", []];
         }
-        return this.payload.suggestion
-          ? [this.payload.suggestion, this.payloadHighlights.suggestion]
-          : [this.payload.query, this.payloadHighlights.query];
+        if (this.payload.tail && this.payload.tailOffsetIndex >= 0) {
+          return [this.payload.tail, this.payloadHighlights.tail];
+        } else if (this.payload.suggestion) {
+          return [this.payload.suggestion, this.payloadHighlights.suggestion];
+        }
+        return [this.payload.query, this.payloadHighlights.query];
       default:
         return ["", []];
     }
@@ -138,12 +148,36 @@ class UrlbarResult {
   }
 
   /**
-   * A convenience function that takes a payload annotated with should-highlight
-   * bools and returns the payload and the payload's highlights.  Use this
-   * function when the highlighting required by your payload is based on simple
-   * substring matching, as done by UrlbarUtils.getTokenMatches().  Pass the
-   * return values as the `payload` and `payloadHighlights` params of the
-   * UrlbarResult constructor.
+   * Returns the given payload if it's valid or throws an error if it's not.
+   * The schemas in UrlbarUtils.RESULT_PAYLOAD_SCHEMA are used for validation.
+   *
+   * @param {object} payload The payload object.
+   * @returns {object} `payload` if it's valid.
+   */
+  validatePayload(payload) {
+    let schema = UrlbarUtils.getPayloadSchema(this.type);
+    if (!schema) {
+      throw new Error(`Unrecognized result type: ${this.type}`);
+    }
+    let result = JsonSchemaValidator.validate(payload, schema, {
+      allowExplicitUndefinedProperties: true,
+      allowNullAsUndefinedProperties: true,
+    });
+    if (!result.valid) {
+      throw result.error;
+    }
+    return payload;
+  }
+
+  /**
+   * A convenience function that takes a payload annotated with
+   * UrlbarUtils.HIGHLIGHT enums and returns the payload and the payload's
+   * highlights. Use this function when the highlighting required by your
+   * payload is based on simple substring matching, as done by
+   * UrlbarUtils.getTokenMatches(). Pass the return values as the `payload` and
+   * `payloadHighlights` params of the UrlbarResult constructor.
+   * `payloadHighlights` is optional. If omitted, payload will not be
+   * highlighted.
    *
    * If the payload doesn't have a title or has an empty title, and it also has
    * a URL, then this function also sets the title to the URL's domain.
@@ -151,10 +185,12 @@ class UrlbarResult {
    * @param {array} tokens The tokens that should be highlighted in each of the
    *        payload properties.
    * @param {object} payloadInfo An object that looks like this:
-   *        {
-   *          payloadPropertyName: [payloadPropertyValue, shouldHighlight],
-   *          ...
-   *        }
+   *        { payloadPropertyName: payloadPropertyInfo }
+   *
+   *        Each payloadPropertyInfo may be either a string or an array.  If
+   *        it's a string, then the property value will be that string, and no
+   *        highlighting will be applied to it.  If it's an array, then it
+   *        should look like this: [payloadPropertyValue, highlightType].
    *        payloadPropertyValue may be a string or an array of strings.  If
    *        it's a string, then the payloadHighlights in the return value will
    *        be an array of match highlights as described in
@@ -164,14 +200,24 @@ class UrlbarResult {
    * @returns {array} An array [payload, payloadHighlights].
    */
   static payloadAndSimpleHighlights(tokens, payloadInfo) {
+    // Convert scalar values in payloadInfo to [value] arrays.
+    for (let [name, info] of Object.entries(payloadInfo)) {
+      if (!Array.isArray(info)) {
+        payloadInfo[name] = [info];
+      }
+    }
+
     if (
-      (!payloadInfo.title || (payloadInfo.title && !payloadInfo.title[0])) &&
+      (!payloadInfo.title || !payloadInfo.title[0]) &&
       payloadInfo.url &&
       typeof payloadInfo.url[0] == "string"
     ) {
       // If there's no title, show the domain as the title.  Not all valid URLs
       // have a domain.
-      payloadInfo.title = payloadInfo.title || ["", true];
+      payloadInfo.title = payloadInfo.title || [
+        "",
+        UrlbarUtils.HIGHLIGHT.TYPED,
+      ];
       try {
         payloadInfo.title[0] = new URL(payloadInfo.url[0]).host;
       } catch (e) {}
@@ -181,13 +227,16 @@ class UrlbarResult {
       // For display purposes we need to unescape the url.
       payloadInfo.displayUrl = [...payloadInfo.url];
       let url = payloadInfo.displayUrl[0];
-      if (UrlbarPrefs.get("trimURLs")) {
-        url = BrowserUtils.trimURL(url || "");
+      if (url && UrlbarPrefs.get("trimURLs")) {
+        url = BrowserUtils.removeSingleTrailingSlashFromURL(url);
+        if (url.startsWith("https://")) {
+          url = url.substring(8);
+          if (url.startsWith("www.")) {
+            url = url.substring(4);
+          }
+        }
       }
-      payloadInfo.displayUrl[0] = Services.textToSubURI.unEscapeURIForUI(
-        "UTF-8",
-        url
-      );
+      payloadInfo.displayUrl[0] = Services.textToSubURI.unEscapeURIForUI(url);
     }
 
     // For performance reasons limit excessive string lengths, to reduce the
@@ -206,11 +255,13 @@ class UrlbarResult {
         payload[name] = val;
         return payload;
       }, {}),
-      entries.reduce((highlights, [name, [val, shouldHighlight]]) => {
-        if (shouldHighlight) {
+      entries.reduce((highlights, [name, [val, highlightType]]) => {
+        if (highlightType) {
           highlights[name] = !Array.isArray(val)
-            ? UrlbarUtils.getTokenMatches(tokens, val || "")
-            : val.map(subval => UrlbarUtils.getTokenMatches(tokens, subval));
+            ? UrlbarUtils.getTokenMatches(tokens, val || "", highlightType)
+            : val.map(subval =>
+                UrlbarUtils.getTokenMatches(tokens, subval, highlightType)
+              );
         }
         return highlights;
       }, {}),

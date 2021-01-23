@@ -202,6 +202,10 @@ const styleRuleSpec = generateActorSpec({
       line: Arg(0, "number"),
       column: Arg(1, "number"),
     },
+    "rule-updated": {
+      type: "ruleUpdated",
+      rule: Arg(0, "domstylerule"),
+    },
   },
 
   methods: {

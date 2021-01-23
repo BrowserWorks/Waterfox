@@ -3,20 +3,71 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 use api::{
-    ColorU, MixBlendMode,
-    PropertyBinding, PropertyBindingId,
+    ColorU, MixBlendMode, FilterPrimitiveInput, FilterPrimitiveKind, ColorSpace,
+    PropertyBinding, PropertyBindingId, CompositeOperator,
 };
-use api::units::{Au, LayoutSize, LayoutVector2D};
+use api::units::{Au, LayoutVector2D};
+use crate::scene_building::IsVisible;
+use crate::filterdata::SFilterData;
 use crate::intern::ItemUid;
-use crate::display_list_flattener::IsVisible;
 use crate::intern::{Internable, InternDebug, Handle as InternHandle};
 use crate::internal_types::{LayoutPrimitiveInfo, Filter};
 use crate::picture::PictureCompositeMode;
 use crate::prim_store::{
-    PrimKey, PrimKeyCommonData, PrimTemplate, PrimTemplateCommonData,
-    PrimitiveInstanceKind, PrimitiveSceneData, PrimitiveStore, VectorKey,
+    PrimitiveInstanceKind, PrimitiveStore, VectorKey,
     InternablePrimitive,
 };
+
+#[cfg_attr(feature = "capture", derive(Serialize))]
+#[cfg_attr(feature = "replay", derive(Deserialize))]
+#[derive(Debug, Clone, MallocSizeOf, PartialEq, Hash, Eq)]
+pub enum CompositeOperatorKey {
+    Over,
+    In,
+    Out,
+    Atop,
+    Xor,
+    Lighter,
+    Arithmetic([Au; 4]),
+}
+
+impl From<CompositeOperator> for CompositeOperatorKey {
+    fn from(operator: CompositeOperator) -> Self {
+        match operator {
+            CompositeOperator::Over => CompositeOperatorKey::Over,
+            CompositeOperator::In => CompositeOperatorKey::In,
+            CompositeOperator::Out => CompositeOperatorKey::Out,
+            CompositeOperator::Atop => CompositeOperatorKey::Atop,
+            CompositeOperator::Xor => CompositeOperatorKey::Xor,
+            CompositeOperator::Lighter => CompositeOperatorKey::Lighter,
+            CompositeOperator::Arithmetic(k_vals) => {
+                let k_vals = [
+                    Au::from_f32_px(k_vals[0]),
+                    Au::from_f32_px(k_vals[1]),
+                    Au::from_f32_px(k_vals[2]),
+                    Au::from_f32_px(k_vals[3]),
+                ];
+                CompositeOperatorKey::Arithmetic(k_vals)
+            }
+        }
+    }
+}
+
+#[cfg_attr(feature = "capture", derive(Serialize))]
+#[cfg_attr(feature = "replay", derive(Deserialize))]
+#[derive(Debug, Clone, MallocSizeOf, PartialEq, Hash, Eq)]
+pub enum FilterPrimitiveKey {
+    Identity(ColorSpace, FilterPrimitiveInput),
+    Flood(ColorSpace, ColorU),
+    Blend(ColorSpace, MixBlendMode, FilterPrimitiveInput, FilterPrimitiveInput),
+    Blur(ColorSpace, Au, FilterPrimitiveInput),
+    Opacity(ColorSpace, Au, FilterPrimitiveInput),
+    ColorMatrix(ColorSpace, [Au; 20], FilterPrimitiveInput),
+    DropShadow(ColorSpace, (VectorKey, Au, ColorU), FilterPrimitiveInput),
+    ComponentTransfer(ColorSpace, FilterPrimitiveInput, Vec<SFilterData>),
+    Offset(ColorSpace, FilterPrimitiveInput, VectorKey),
+    Composite(ColorSpace, FilterPrimitiveInput, FilterPrimitiveInput, CompositeOperatorKey),
+}
 
 /// Represents a hashable description of how a picture primitive
 /// will be composited into its parent.
@@ -43,6 +94,8 @@ pub enum PictureCompositeKey {
     SrgbToLinear,
     LinearToSrgb,
     ComponentTransfer(ItemUid),
+    Flood(ColorU),
+    SvgFilter(Vec<FilterPrimitiveKey>),
 
     // MixBlendMode
     Multiply,
@@ -123,10 +176,47 @@ impl From<Option<PictureCompositeMode>> for PictureCompositeKey {
                         PictureCompositeKey::ColorMatrix(quantized_values)
                     }
                     Filter::ComponentTransfer => unreachable!(),
+                    Filter::Flood(color) => PictureCompositeKey::Flood(color.into()),
                 }
             }
             Some(PictureCompositeMode::ComponentTransferFilter(handle)) => {
                 PictureCompositeKey::ComponentTransfer(handle.uid())
+            }
+            Some(PictureCompositeMode::SvgFilter(filter_primitives, filter_data)) => {
+                PictureCompositeKey::SvgFilter(filter_primitives.into_iter().map(|primitive| {
+                    match primitive.kind {
+                        FilterPrimitiveKind::Identity(identity) => FilterPrimitiveKey::Identity(primitive.color_space, identity.input),
+                        FilterPrimitiveKind::Blend(blend) => FilterPrimitiveKey::Blend(primitive.color_space, blend.mode, blend.input1, blend.input2),
+                        FilterPrimitiveKind::Flood(flood) => FilterPrimitiveKey::Flood(primitive.color_space, flood.color.into()),
+                        FilterPrimitiveKind::Blur(blur) => FilterPrimitiveKey::Blur(primitive.color_space, Au::from_f32_px(blur.radius), blur.input),
+                        FilterPrimitiveKind::Opacity(opacity) =>
+                            FilterPrimitiveKey::Opacity(primitive.color_space, Au::from_f32_px(opacity.opacity), opacity.input),
+                        FilterPrimitiveKind::ColorMatrix(color_matrix) => {
+                            let mut quantized_values: [Au; 20] = [Au(0); 20];
+                            for (value, result) in color_matrix.matrix.iter().zip(quantized_values.iter_mut()) {
+                                *result = Au::from_f32_px(*value);
+                            }
+                            FilterPrimitiveKey::ColorMatrix(primitive.color_space, quantized_values, color_matrix.input)
+                        }
+                        FilterPrimitiveKind::DropShadow(drop_shadow) => {
+                            FilterPrimitiveKey::DropShadow(
+                                primitive.color_space,
+                                (
+                                    drop_shadow.shadow.offset.into(),
+                                    Au::from_f32_px(drop_shadow.shadow.blur_radius),
+                                    drop_shadow.shadow.color.into(),
+                                ),
+                                drop_shadow.input,
+                            )
+                        }
+                        FilterPrimitiveKind::ComponentTransfer(component_transfer) =>
+                            FilterPrimitiveKey::ComponentTransfer(primitive.color_space, component_transfer.input, filter_data.clone()),
+                        FilterPrimitiveKind::Offset(info) =>
+                            FilterPrimitiveKey::Offset(primitive.color_space, info.input, info.offset.into()),
+                        FilterPrimitiveKind::Composite(info) =>
+                            FilterPrimitiveKey::Composite(primitive.color_space, info.input1, info.input2, info.operator.into()),
+                    }
+                }).collect())
             }
             Some(PictureCompositeMode::Blit(_)) |
             Some(PictureCompositeMode::TileCache { .. }) |
@@ -144,21 +234,19 @@ pub struct Picture {
     pub composite_mode_key: PictureCompositeKey,
 }
 
-pub type PictureKey = PrimKey<Picture>;
+#[cfg_attr(feature = "capture", derive(Serialize))]
+#[cfg_attr(feature = "replay", derive(Deserialize))]
+#[derive(Debug, Clone, Eq, MallocSizeOf, PartialEq, Hash)]
+pub struct PictureKey {
+    pub composite_mode_key: PictureCompositeKey,
+}
 
 impl PictureKey {
     pub fn new(
-        is_backface_visible: bool,
-        prim_size: LayoutSize,
         pic: Picture,
     ) -> Self {
-
         PictureKey {
-            common: PrimKeyCommonData {
-                is_backface_visible,
-                prim_size: prim_size.into(),
-            },
-            kind: pic,
+            composite_mode_key: pic.composite_mode_key,
         }
     }
 }
@@ -170,16 +258,14 @@ impl InternDebug for PictureKey {}
 #[derive(MallocSizeOf)]
 pub struct PictureData;
 
-pub type PictureTemplate = PrimTemplate<PictureData>;
+#[cfg_attr(feature = "capture", derive(Serialize))]
+#[cfg_attr(feature = "replay", derive(Deserialize))]
+#[derive(MallocSizeOf)]
+pub struct PictureTemplate;
 
 impl From<PictureKey> for PictureTemplate {
-    fn from(key: PictureKey) -> Self {
-        let common = PrimTemplateCommonData::with_key_common(key.common);
-
-        PictureTemplate {
-            common,
-            kind: PictureData,
-        }
+    fn from(_: PictureKey) -> Self {
+        PictureTemplate
     }
 }
 
@@ -188,19 +274,15 @@ pub type PictureDataHandle = InternHandle<Picture>;
 impl Internable for Picture {
     type Key = PictureKey;
     type StoreData = PictureTemplate;
-    type InternData = PrimitiveSceneData;
+    type InternData = ();
 }
 
 impl InternablePrimitive for Picture {
     fn into_key(
         self,
-        info: &LayoutPrimitiveInfo,
+        _: &LayoutPrimitiveInfo,
     ) -> PictureKey {
-        PictureKey::new(
-            info.is_backface_visible,
-            info.rect.size,
-            self,
-        )
+        PictureKey::new(self)
     }
 
     fn make_instance_kind(
@@ -232,6 +314,6 @@ fn test_struct_sizes() {
     // (b) You made a structure larger. This is not necessarily a problem, but should only
     //     be done with care, and after checking if talos performance regresses badly.
     assert_eq!(mem::size_of::<Picture>(), 88, "Picture size changed");
-    assert_eq!(mem::size_of::<PictureTemplate>(), 20, "PictureTemplate size changed");
-    assert_eq!(mem::size_of::<PictureKey>(), 104, "PictureKey size changed");
+    assert_eq!(mem::size_of::<PictureTemplate>(), 0, "PictureTemplate size changed");
+    assert_eq!(mem::size_of::<PictureKey>(), 88, "PictureKey size changed");
 }

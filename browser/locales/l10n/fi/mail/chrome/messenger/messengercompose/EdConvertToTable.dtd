@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label  "Muunna taulukoksi">
+<!ENTITY instructions1.label    "Composer luo uuden taulukon rivin jokaiselle valinnan kappaleelle.">
+<!ENTITY instructions2.label    "Valitse merkki, joka erottaa valinnan sarakkeisiin:">
+<!ENTITY commaRadio.label       "Pilkku">
+<!ENTITY spaceRadio.label       "Tyhjä tila">
+<!ENTITY otherRadio.label       "Muu merkki:">
+<!ENTITY deleteCharCheck.label  "Poista erotinmerkki">
+<!ENTITY collapseSpaces.label   "Jätä ylimääräiset välilyönnit huomioimatta">
+<!ENTITY collapseSpaces.tooltip  "Muunna vierekkäiset välilyönnit yhdeksi erottimeksi">

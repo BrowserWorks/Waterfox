@@ -3,7 +3,7 @@
     "namespace": "manifest",
     "types": [
       {
-        "$extend": "Permission",
+        "$extend": "PermissionNoPrompt",
         "choices": [{
           "type": "string",
           "enum": [
@@ -27,16 +27,21 @@
           "js",
           "leaf",
           "mainthreadio",
-          "memory",
-          "privacy",
           "responsiveness",
           "screenshots",
           "seqstyle",
           "stackwalk",
           "tasktracer",
           "threads",
-          "trackopts",
-          "jstracer"
+          "jstracer",
+          "jsallocations",
+          "nostacksampling",
+          "nativeallocations",
+          "preferencereads",
+          "ipcmessages",
+          "fileio",
+          "fileioall",
+          "noiostacks"
         ]
       },
       {
@@ -113,6 +118,19 @@
         "parameters": []
       },
       {
+        "name": "dumpProfileToFile",
+        "type": "function",
+        "description": "Gathers the profile data from the current profiling session, and writes it to disk. The returned promise resolves to a path that locates the created file.",
+        "async": true,
+        "parameters": [
+          {
+            "type": "string",
+            "name": "fileName",
+            "description": "The name of the file inside the profile/profiler directory"
+          }
+        ]
+      },
+      {
         "name": "getProfile",
         "type": "function",
         "description": "Gathers the profile data from the current profiling session.",
@@ -123,6 +141,13 @@
         "name": "getProfileAsArrayBuffer",
         "type": "function",
         "description": "Gathers the profile data from the current profiling session. The returned promise resolves to an array buffer that contains a JSON string.",
+        "async": true,
+        "parameters": []
+      },
+      {
+        "name": "getProfileAsGzippedArrayBuffer",
+        "type": "function",
+        "description": "Gathers the profile data from the current profiling session. The returned promise resolves to an array buffer that contains a gzipped JSON string.",
         "async": true,
         "parameters": []
       },

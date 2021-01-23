@@ -8,9 +8,9 @@
 /* global worker, loadSubScript, global */
 
 /*
- * Worker debugger script that listens for requests to start a `DebuggerServer` for a
- * worker in a process.  Loaded into a specific worker during
- * `DebuggerServer.connectToWorker` which is called from the same process as the worker.
+ * Worker debugger script that listens for requests to start a `DevToolsServer` for a
+ * worker in a process.  Loaded into a specific worker during worker-connector.js'
+ * `connectToWorker` which is called from the same process as the worker.
  */
 
 // This function is used to do remote procedure calls from the worker to the
@@ -37,15 +37,16 @@ this.rpc = function(method, ...params) {
 loadSubScript("resource://devtools/shared/worker/loader.js");
 
 var defer = worker.require("devtools/shared/defer");
-var { ActorPool } = worker.require("devtools/server/actors/common");
+var EventEmitter = worker.require("devtools/shared/event-emitter");
+const { Pool } = worker.require("devtools/shared/protocol/Pool");
 var { ThreadActor } = worker.require("devtools/server/actors/thread");
 var { WebConsoleActor } = worker.require("devtools/server/actors/webconsole");
 var { TabSources } = worker.require("devtools/server/actors/utils/TabSources");
 var makeDebugger = worker.require("devtools/server/actors/utils/make-debugger");
-var { DebuggerServer } = worker.require("devtools/server/main");
+var { DevToolsServer } = worker.require("devtools/server/devtools-server");
 
-DebuggerServer.init();
-DebuggerServer.createRootActor = function() {
+DevToolsServer.init();
+DevToolsServer.createRootActor = function() {
   throw new Error("Should never get here!");
 };
 
@@ -58,30 +59,38 @@ this.addEventListener("message", function(event) {
   switch (packet.type) {
     case "connect":
       // Step 3: Create a connection to the parent.
-      const connection = DebuggerServer.connectToParent(packet.id, this);
+      const connection = DevToolsServer.connectToParent(packet.id, this);
       connections[packet.id] = {
         connection,
         rpcs: [],
       };
 
       // Step 4: Create a thread actor for the connection to the parent.
-      const pool = new ActorPool(connection);
-      connection.addActorPool(pool);
+      const pool = new Pool(connection, "workerStartup");
 
       let sources = null;
 
+      const makeWorkerDebugger = makeDebugger.bind(null, {
+        findDebuggees: () => {
+          return [this.global];
+        },
+
+        shouldAddNewGlobalAsDebuggee: () => {
+          return true;
+        },
+      });
+
       const parent = {
         actorID: packet.id,
+        conn: connection,
 
-        makeDebugger: makeDebugger.bind(null, {
-          findDebuggees: () => {
-            return [this.global];
-          },
-
-          shouldAddNewGlobalAsDebuggee: () => {
-            return true;
-          },
-        }),
+        get dbg() {
+          if (!this._dbg) {
+            this._dbg = makeWorkerDebugger();
+          }
+          return this._dbg;
+        },
+        makeDebugger: makeWorkerDebugger,
 
         get sources() {
           if (sources === null) {
@@ -97,14 +106,20 @@ this.addEventListener("message", function(event) {
         },
       };
 
+      EventEmitter.decorate(parent);
+
       const threadActor = new ThreadActor(parent, global);
-      pool.addActor(threadActor);
+      pool.manage(threadActor);
 
       // parentActor.threadActor is needed from the webconsole for grip previewing
       parent.threadActor = threadActor;
 
       const consoleActor = new WebConsoleActor(connection, parent);
-      pool.addActor(consoleActor);
+      pool.manage(consoleActor);
+
+      // needed so the thread actor can communicate with the console
+      // when evaluating logpoints.
+      parent._consoleActor = consoleActor;
 
       // Step 5: Send a response packet to the parent to notify
       // it that a connection has been established.

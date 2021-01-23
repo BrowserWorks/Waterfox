@@ -10,10 +10,14 @@
  * liability, trademark and document use rules apply.
  */
 
-[Constructor,
- Pref="media.webspeech.recognition.enable",
- Func="SpeechRecognition::IsAuthorized"]
+[Pref="media.webspeech.recognition.enable",
+ NamedConstructor=webkitSpeechRecognition,
+ Func="SpeechRecognition::IsAuthorized",
+ Exposed=Window]
 interface SpeechRecognition : EventTarget {
+    [Throws]
+    constructor();
+
     // recognition parameters
     attribute SpeechGrammarList grammars;
     attribute DOMString lang;

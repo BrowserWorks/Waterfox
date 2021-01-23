@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  windowClose.key "w">
+<!ENTITY  preferencesDefaultTitleMac.title "Keutamaan">
+<!ENTITY  preferencesDefaultTitleWin.title "Pilihan">
+<!ENTITY  preferencesCloseButton.label "Tutup">
+<!ENTITY  preferencesCloseButton.accesskey "T">
+
+<!--LOCALIZATION NOTE (.label): Preferences categories that appear on the left of the preferences dialog -->
+<!ENTITY prefWindow.title "Keutamaan">
+<!ENTITY categoryHeader "Kategori">
+
+<!ENTITY appear.label "Penampilan">
+<!ENTITY content.label "Kandungan">
+<!ENTITY fonts.label "Fon">
+<!ENTITY colors.label "Warna">
+<!ENTITY media.label "Media">
+<!ENTITY spellingPane.label "Ejaan">
+
+<!ENTITY navigator.label "Pelayar">
+<!ENTITY history.label "Sejarah">
+<!ENTITY languages.label "Bahasa">
+<!ENTITY applications.label "Aplikasi Pembantu">
+<!ENTITY locationBar.label "Bar Lokasi">
+<!ENTITY search.label "Carian Internet">
+<!ENTITY tabWindows.label "Pelayaran Bertab">
+<!ENTITY links.label "Tingkah laku Pautan">
+<!ENTITY download.label "Muat turun">
+
+<!ENTITY security.label "Privasi &amp; Keselamatan">
+<!ENTITY privatedata.label "Data Peribadi">
+<!ENTITY cookies.label "Kuki">
+<!ENTITY images.label "Imej">
+<!ENTITY popups.label "Tetingkap Popup">
+<!ENTITY passwords.label "Kata laluan">
+<!ENTITY masterpass.label "Kata laluan Induk">
+<!ENTITY ssltls.label "SSL/TLS">
+<!ENTITY certs.label "Sijil">
+
+<!ENTITY sync.label "Sync">
+
+<!ENTITY advance.label "Lanjutan">
+<!ENTITY scriptsAndWindows.label "Skrip &amp; Plugin">
+<!ENTITY keynav.label "Navigasi Papan kekunci">
+<!ENTITY findAsYouType.label "Cari Semasa Anda Menaip">
+<!ENTITY cache.label "Cache">
+<!ENTITY offlineApps.label "Aplikasi Luar talian">
+<!ENTITY proxies.label "Proksi">
+<!ENTITY httpnetworking.label "Rangkaian HTTP">
+<!ENTITY smart.label "Pemasangan Perisian">
+<!ENTITY mousewheel.label "Roda Tetikus">
+
+<!ENTITY focusSearch.key "f">

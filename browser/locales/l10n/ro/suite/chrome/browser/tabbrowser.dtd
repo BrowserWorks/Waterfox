@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+# secarica <orice@secarica.ro>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!ENTITY  untitledTab            "(fără titlu)">
+<!ENTITY  newTab.label           "Filă nouă">
+<!ENTITY  newTab.accesskey       "n">
+<!ENTITY  closeTab.label         "Închide tabul">
+<!ENTITY  closeTab.accesskey         "c">
+<!ENTITY  closeOtherTabs.label   "Închide celelalte file">
+<!ENTITY  closeOtherTabs.accesskey         "n">
+<!ENTITY  reloadAllTabs.label    "Reîncarcă toate filele">
+<!ENTITY  reloadAllTabs.accesskey         "a">
+<!ENTITY  reloadTab.label        "Reîncarcă fila">
+<!ENTITY  reloadTab.accesskey         "R">
+<!ENTITY  bookmarkGroup.label    "Pune semn de carte la acest grup de file">
+<!ENTITY  bookmarkGroup.accesskey  "P">
+<!ENTITY  closeTabButton.tooltip   "Închide fila curentă">
+<!ENTITY  newTabButton.tooltip   "Deschide o filă nouă">
+<!ENTITY  listAllTabs.tooltip    "List all tabs">
+<!ENTITY  undoCloseTab.label    "Anulează închiderea filei">
+<!ENTITY  undoCloseTab.accesskey  "u">

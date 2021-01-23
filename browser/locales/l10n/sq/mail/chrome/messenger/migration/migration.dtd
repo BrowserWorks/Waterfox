@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Ndihmës Importimesh">
+
+<!ENTITY importFromWin.label            "Importo Mundësi, Rregullime Llogarish, Libër Adresash, Filtra dhe të tjera të dhëna prej:">
+<!ENTITY importFromNonWin.label         "Importo Parapëlqime, Rregullime Llogarish, Libër Adresash, Filtra dhe të tjera të dhëna prej:">
+<!ENTITY importSourceNotFound.label     "S&apos;u gjet aplikacion prej nga të importohen të dhëna.">
+
+<!ENTITY importFromNothing.label        "Mos importo gjë">
+<!ENTITY importFromNothing.accesskey    "M">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey 2 ose më të ri">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "Importo Rregullime dhe Dosje Poste Prej">
+<!ENTITY importItems.title              "Objekte për Importim">
+<!ENTITY importItems.label              "Përzgjidhni cilët objekte të importohen:">
+
+<!ENTITY migrating.title                "Po importohet…">
+<!ENTITY migrating.label                "Po importohen objektet vijuese…">
+
+<!ENTITY selectProfile.title            "Përzgjidhni Profil">
+<!ENTITY selectProfile.label            "Është e mundur të importohen profilet vijues:">
+
+<!ENTITY done.title                     "Importim i Plotë">
+<!ENTITY done.label                     "Objektet vijuese u importuan me sukses:">

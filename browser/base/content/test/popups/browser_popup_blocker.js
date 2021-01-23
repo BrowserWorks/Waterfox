@@ -8,9 +8,7 @@ const baseURL = getRootDirectory(gTestPath).replace(
 );
 
 function clearAllPermissionsByPrefix(aPrefix) {
-  let perms = Services.perms.enumerator;
-  while (perms.hasMoreElements()) {
-    let perm = perms.getNext();
+  for (let perm of Services.perms.all) {
     if (perm.type.startsWith(aPrefix)) {
       Services.perms.removePermission(perm);
     }
@@ -36,7 +34,7 @@ add_task(async function test_maximum_reported_blocks() {
   );
 
   // Wait for the popup-blocked notification.
-  let notification = await BrowserTestUtils.waitForCondition(() =>
+  let notification = await TestUtils.waitForCondition(() =>
     gBrowser.getNotificationBox().getNotificationWithValue("popup-blocked")
   );
 
@@ -64,7 +62,7 @@ add_task(async function test_opening_blocked_popups() {
 
   // Wait for the popup-blocked notification.
   let notification;
-  await BrowserTestUtils.waitForCondition(
+  await TestUtils.waitForCondition(
     () =>
       (notification = gBrowser
         .getNotificationBox()
@@ -73,27 +71,13 @@ add_task(async function test_opening_blocked_popups() {
 
   // Show the menu.
   let popupShown = BrowserTestUtils.waitForEvent(window, "popupshown");
-  let popupFilled = BrowserTestUtils.waitForMessage(
-    gBrowser.selectedBrowser.messageManager,
-    "PopupBlocking:ReplyGetBlockedPopupList"
-  );
+  let popupFilled = waitForBlockedPopups(2);
   notification.querySelector("button").doCommand();
   let popup_event = await popupShown;
   let menu = popup_event.target;
   is(menu.id, "blockedPopupOptions", "Blocked popup menu shown");
 
   await popupFilled;
-  // The menu is filled on the same message that we waited for, so let's ensure that it
-  // had a chance of running before this test code.
-  await new Promise(resolve => executeSoon(resolve));
-
-  // Check the menu contents.
-  let sep = menu.querySelector("menuseparator");
-  let popupCount = 0;
-  for (let i = sep.nextElementSibling; i; i = i.nextElementSibling) {
-    popupCount++;
-  }
-  is(popupCount, 2, "Two popups were blocked");
 
   // Pressing "allow" should open all blocked popups.
   let popupTabs = [];
@@ -105,7 +89,7 @@ add_task(async function test_opening_blocked_popups() {
   // Press the button.
   let allow = document.getElementById("blockedPopupAllowSite");
   allow.doCommand();
-  await BrowserTestUtils.waitForCondition(
+  await TestUtils.waitForCondition(
     () =>
       popupTabs.length == 2 &&
       popupTabs.every(

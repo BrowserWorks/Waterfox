@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Parametros avantiate de contos">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "Directorio del servitor IMAP:">
+<!ENTITY serverDirectory.accesskey "d">
+<!ENTITY usingSubscription.label "Monstrar solmente dossiers subscribite">
+<!ENTITY usingSubscription.accesskey "r">
+<!ENTITY dualUseFolders.label "Le servitor supporta dossiers que contine subdossiers e messages">
+<!ENTITY dualUseFolders.accesskey "d">
+<!ENTITY maximumConnectionsNumber.label "Numero maxime de connexiones al servitor a tener in cache">
+<!ENTITY maximumConnectionsNumber.accesskey "M">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Iste preferentias specifica le spatios de nomines sur le servitor IMAP">
+<!ENTITY personalNamespace.label "Spatio de nomines personal:">
+<!ENTITY personalNamespace.accesskey "p">
+<!ENTITY publicNamespace.label "Public (compartite):">
+<!ENTITY publicNamespace.accesskey "u">
+<!ENTITY otherUsersNamespace.label "Altere usatores:">
+<!ENTITY otherUsersNamespace.accesskey "A">
+<!ENTITY overrideNamespaces.label "Permitter que le servitor supplanta iste spatios de nomines">
+<!ENTITY overrideNamespaces.accesskey "s">
+<!ENTITY pop3DeferringDesc.label "Quando se discarga posta del servitor de iste conto, mitter nove messages in iste dossier:">
+<!ENTITY accountInbox.label "Cassa de entrata pro iste conto">
+<!ENTITY accountInbox.accesskey "e">
+<!ENTITY deferToServer.label "Cassa de entrata de un altere conto">
+<!ENTITY deferToServer.accesskey "d">
+<!ENTITY deferGetNewMail.label "Includer iste servitor durante le reception de nove posta">
+<!ENTITY deferGetNewMail.accesskey "I">

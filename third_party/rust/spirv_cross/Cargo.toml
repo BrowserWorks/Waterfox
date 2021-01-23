@@ -1,0 +1,17 @@
+[package]
+name = "spirv_cross"
+version = "0.20.0"
+license = "MIT/Apache-2.0"
+edition = "2018"
+
+[features]
+glsl = ["spirv-cross-internal/glsl"]
+hlsl = ["spirv-cross-internal/hlsl"]
+msl = ["spirv-cross-internal/msl"]
+
+[lib]
+crate-type = ["rlib"]
+path = "lib.rs"
+
+[dependencies]
+spirv-cross-internal = { path = "../spirv_cross" }

@@ -41,12 +41,19 @@ add_task(async function test() {
       Ci.nsIPluginTag.STATE_ENABLED;
   });
 
+  // This test works under the assumption that private browsing windows
+  // share permissions with regular windows. Setting a pref to revert to this
+  // behavior. The test should be updated and the pref overwrite removed.
+  // See Bug 1588457
+  await SpecialPowers.pushPrefEnv({
+    set: [["permissions.isolateBy.privateBrowsing", false]],
+  });
+
   let newTab = BrowserTestUtils.addTab(gBrowser);
   gBrowser.selectedTab = newTab;
   gTestBrowser = gBrowser.selectedBrowser;
   let promise = BrowserTestUtils.browserLoaded(gTestBrowser);
 
-  Services.prefs.setBoolPref("plugins.click_to_play", true);
   getTestPlugin().enabledState = Ci.nsIPluginTag.STATE_CLICKTOPLAY;
   getTestPlugin("Second Test Plug-in").enabledState =
     Ci.nsIPluginTag.STATE_CLICKTOPLAY;
@@ -64,10 +71,9 @@ add_task(async function test1b() {
   );
   ok(popupNotification, "Test 1b, Should have a click-to-play notification");
 
-  await ContentTask.spawn(gPrivateBrowser, null, function() {
+  await SpecialPowers.spawn(gPrivateBrowser, [], function() {
     let plugin = content.document.getElementById("test");
-    let objLoadingContent = plugin.QueryInterface(Ci.nsIObjectLoadingContent);
-    ok(!objLoadingContent.activated, "Test 1b, Plugin should not be activated");
+    ok(!plugin.activated, "Test 1b, Plugin should not be activated");
   });
 
   // Check the button status
@@ -106,10 +112,9 @@ add_task(async function test2a() {
   );
   ok(popupNotification, "Test 2a, Should have a click-to-play notification");
 
-  await ContentTask.spawn(gTestBrowser, null, function() {
+  await SpecialPowers.spawn(gTestBrowser, [], function() {
     let plugin = content.document.getElementById("test");
-    let objLoadingContent = plugin.QueryInterface(Ci.nsIObjectLoadingContent);
-    ok(!objLoadingContent.activated, "Test 2a, Plugin should not be activated");
+    ok(!plugin.activated, "Test 2a, Plugin should not be activated");
   });
 
   // Simulate clicking the "Allow Now" button.
@@ -122,10 +127,9 @@ add_task(async function test2a() {
 
   PopupNotifications.panel.firstElementChild.button.click();
 
-  await ContentTask.spawn(gTestBrowser, null, async function() {
+  await SpecialPowers.spawn(gTestBrowser, [], async function() {
     let plugin = content.document.getElementById("test");
-    let objLoadingContent = plugin.QueryInterface(Ci.nsIObjectLoadingContent);
-    let condition = () => objLoadingContent.activated;
+    let condition = () => plugin.activated;
     await ContentTaskUtils.waitForCondition(
       condition,
       "Test 2a, Waited too long for plugin to activate"
@@ -148,10 +152,9 @@ add_task(async function test2c() {
   }, "Waiting for click-to-play-plugins notification in the private window");
   ok(popupNotification, "Test 2c, Should have a click-to-play notification");
 
-  await ContentTask.spawn(gPrivateBrowser, null, function() {
+  await SpecialPowers.spawn(gPrivateBrowser, [], function() {
     let plugin = content.document.getElementById("test");
-    let objLoadingContent = plugin.QueryInterface(Ci.nsIObjectLoadingContent);
-    ok(objLoadingContent.activated, "Test 2c, Plugin should be activated");
+    ok(plugin.activated, "Test 2c, Plugin should be activated");
   });
 
   // Check the button status
@@ -164,8 +167,8 @@ add_task(async function test2c() {
   is(
     gPrivateWindow.PopupNotifications.panel.firstElementChild.secondaryButton
       .hidden,
-    true,
-    "Test 2c, Activated plugin in a private window should not have visible 'Block' button."
+    false,
+    "Test 2c, Activated plugin in a private window should have visible 'Block' button."
   );
   is(
     gPrivateWindow.PopupNotifications.panel.firstElementChild.checkbox.hidden,
@@ -197,10 +200,9 @@ add_task(async function test3a() {
   );
   ok(popupNotification, "Test 3a, Should have a click-to-play notification");
 
-  await ContentTask.spawn(gTestBrowser, null, function() {
+  await SpecialPowers.spawn(gTestBrowser, [], function() {
     let plugin = content.document.getElementById("test");
-    let objLoadingContent = plugin.QueryInterface(Ci.nsIObjectLoadingContent);
-    ok(!objLoadingContent.activated, "Test 3a, Plugin should not be activated");
+    ok(!plugin.activated, "Test 3a, Plugin should not be activated");
   });
 
   // Simulate clicking the "Allow" button.
@@ -212,10 +214,9 @@ add_task(async function test3a() {
   await promiseShown;
   PopupNotifications.panel.firstElementChild.button.click();
 
-  await ContentTask.spawn(gTestBrowser, null, async function() {
+  await SpecialPowers.spawn(gTestBrowser, [], async function() {
     let plugin = content.document.getElementById("test");
-    let objLoadingContent = plugin.QueryInterface(Ci.nsIObjectLoadingContent);
-    let condition = () => objLoadingContent.activated;
+    let condition = () => plugin.activated;
     await ContentTaskUtils.waitForCondition(
       condition,
       "Test 3a, Waited too long for plugin to activate"
@@ -248,13 +249,13 @@ add_task(async function test3c() {
   is(
     gPrivateWindow.PopupNotifications.panel.firstElementChild.secondaryButton
       .hidden,
-    true,
-    "Test 2c, Activated plugin in a private window should not have visible 'Block' button."
+    false,
+    "Test 3c, Activated plugin in a private window should have visible 'Block' button."
   );
   is(
     gPrivateWindow.PopupNotifications.panel.firstElementChild.checkbox.hidden,
     true,
-    "Test 2c, Activated plugin in a private window should not have visible 'Remember' checkbox."
+    "Test 3c, Activated plugin in a private window should not have visible 'Remember' checkbox."
   );
 
   BrowserTestUtils.loadURI(

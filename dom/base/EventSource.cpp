@@ -18,8 +18,8 @@
 #include "mozilla/dom/WorkerRef.h"
 #include "mozilla/dom/WorkerRunnable.h"
 #include "mozilla/dom/WorkerScope.h"
+#include "mozilla/dom/EventSourceEventService.h"
 #include "mozilla/UniquePtrExtensions.h"
-#include "nsAutoPtr.h"
 #include "nsIThreadRetargetableStreamListener.h"
 #include "nsNetUtil.h"
 #include "nsIAuthPrompt.h"
@@ -30,6 +30,7 @@
 #include "nsIPromptFactory.h"
 #include "nsIWindowWatcher.h"
 #include "nsPresContext.h"
+#include "nsProxyRelease.h"
 #include "nsContentPolicyUtils.h"
 #include "nsIStringBundle.h"
 #include "nsIConsoleService.h"
@@ -39,7 +40,6 @@
 #include "nsIThreadRetargetableRequest.h"
 #include "nsIAsyncVerifyRedirectCallback.h"
 #include "nsIScriptError.h"
-#include "nsIContentSecurityPolicy.h"
 #include "nsContentUtils.h"
 #include "mozilla/Preferences.h"
 #include "xpcpublic.h"
@@ -84,7 +84,7 @@ class EventSourceImpl final : public nsIObserver,
   NS_DECL_NSITHREADRETARGETABLESTREAMLISTENER
 
   EventSourceImpl(EventSource* aEventSource,
-                  nsICookieSettings* aCookieSettings);
+                  nsICookieJarSettings* aCookieJarSettings);
 
   enum { CONNECTING = 0U, OPEN = 1U, CLOSED = 2U };
 
@@ -114,8 +114,7 @@ class EventSourceImpl final : public nsIObserver,
   static void TimerCallback(nsITimer* aTimer, void* aClosure);
 
   nsresult PrintErrorOnConsole(const char* aBundleURI, const char* aError,
-                               const char16_t** aFormatStrings,
-                               uint32_t aFormatStringsLen);
+                               const nsTArray<nsString>& aFormatStrings);
   nsresult ConsoleError();
 
   static nsresult StreamReaderFunc(nsIInputStream* aInputStream, void* aClosure,
@@ -279,6 +278,34 @@ class EventSourceImpl final : public nsIObserver,
   // Whether the EventSourceImpl is going to be destroyed.
   bool mIsShutDown;
 
+  class EventSourceServiceNotifier final {
+   public:
+    EventSourceServiceNotifier(uint64_t aHttpChannelId, uint64_t aInnerWindowID)
+        : mHttpChannelId(aHttpChannelId), mInnerWindowID(aInnerWindowID) {
+      mService = EventSourceEventService::GetOrCreate();
+      mService->EventSourceConnectionOpened(aHttpChannelId, aInnerWindowID);
+    }
+
+    void EventReceived(const nsAString& aEventName,
+                       const nsAString& aLastEventID, const nsAString& aData,
+                       uint32_t aRetry, DOMHighResTimeStamp aTimeStamp) {
+      mService->EventReceived(mHttpChannelId, mInnerWindowID, aEventName,
+                              aLastEventID, aData, aRetry, aTimeStamp);
+    }
+
+    ~EventSourceServiceNotifier() {
+      mService->EventSourceConnectionClosed(mHttpChannelId, mInnerWindowID);
+      NS_ReleaseOnMainThread("EventSourceServiceNotifier::mService",
+                             mService.forget());
+    }
+
+   private:
+    RefPtr<EventSourceEventService> mService;
+    uint64_t mHttpChannelId;
+    uint64_t mInnerWindowID;
+  };
+
+  UniquePtr<EventSourceServiceNotifier> mServiceNotifier;
   // Event Source owner information:
   // - the script file name
   // - source code line number and column number where the Event Source object
@@ -293,7 +320,7 @@ class EventSourceImpl final : public nsIObserver,
   uint64_t mInnerWindowID;
 
  private:
-  nsCOMPtr<nsICookieSettings> mCookieSettings;
+  nsCOMPtr<nsICookieJarSettings> mCookieJarSettings;
 
   // Pointer to the target thread for checking whether we are
   // on the target thread. This is intentionally a non-owning
@@ -321,7 +348,7 @@ NS_IMPL_ISUPPORTS(EventSourceImpl, nsIObserver, nsIStreamListener,
                   nsIEventTarget, nsIThreadRetargetableStreamListener)
 
 EventSourceImpl::EventSourceImpl(EventSource* aEventSource,
-                                 nsICookieSettings* aCookieSettings)
+                                 nsICookieJarSettings* aCookieJarSettings)
     : mEventSource(aEventSource),
       mReconnectionTime(0),
       mStatus(PARSE_STATE_OFF),
@@ -333,7 +360,7 @@ EventSourceImpl::EventSourceImpl(EventSource* aEventSource,
       mScriptLine(0),
       mScriptColumn(0),
       mInnerWindowID(0),
-      mCookieSettings(aCookieSettings),
+      mCookieJarSettings(aCookieJarSettings),
       mTargetThread(NS_GetCurrentThread()) {
   MOZ_ASSERT(mEventSource);
   if (!mIsMainThread) {
@@ -365,6 +392,8 @@ void EventSourceImpl::Close() {
   if (IsClosed()) {
     return;
   }
+
+  mServiceNotifier = nullptr;
 
   SetReadyState(CLOSED);
   CloseInternal();
@@ -660,6 +689,9 @@ EventSourceImpl::OnStartRequest(nsIRequest* aRequest) {
       }
     }
   }
+
+  mServiceNotifier = MakeUnique<EventSourceServiceNotifier>(
+      mHttpChannel->ChannelId(), mInnerWindowID);
   rv = Dispatch(NewRunnableMethod("dom::EventSourceImpl::AnnounceConnection",
                                   this, &EventSourceImpl::AnnounceConnection),
                 NS_DISPATCH_NORMAL);
@@ -757,6 +789,7 @@ EventSourceImpl::OnStopRequest(nsIRequest* aRequest, nsresult aStatusCode) {
       aStatusCode != NS_ERROR_PROXY_CONNECTION_REFUSED &&
       aStatusCode != NS_ERROR_DNS_LOOKUP_QUEUE_FULL) {
     DispatchFailConnection();
+    mServiceNotifier = nullptr;
     return NS_ERROR_ABORT;
   }
 
@@ -796,11 +829,7 @@ EventSourceImpl::AsyncOnChannelRedirect(
   rv = NS_GetFinalChannelURI(aNewChannel, getter_AddRefs(newURI));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  bool isValidScheme =
-      (NS_SUCCEEDED(newURI->SchemeIs("http", &isValidScheme)) &&
-       isValidScheme) ||
-      (NS_SUCCEEDED(newURI->SchemeIs("https", &isValidScheme)) &&
-       isValidScheme);
+  bool isValidScheme = newURI->SchemeIs("http") || newURI->SchemeIs("https");
 
   rv = mEventSource->CheckCurrentGlobalCorrectness();
   if (NS_FAILED(rv) || !isValidScheme) {
@@ -894,7 +923,8 @@ nsresult EventSourceImpl::GetBaseURI(nsIURI** aBaseURI) {
 
   // otherwise we get from the doc's principal
   if (!baseURI) {
-    nsresult rv = mPrincipal->GetURI(getter_AddRefs(baseURI));
+    auto* basePrin = BasePrincipal::Cast(mPrincipal);
+    nsresult rv = basePrin->GetURI(getter_AddRefs(baseURI));
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
@@ -937,10 +967,9 @@ void EventSourceImpl::SetupHttpChannel() {
 nsresult EventSourceImpl::SetupReferrerInfo() {
   AssertIsOnMainThread();
   MOZ_ASSERT(!IsShutDown());
-  nsCOMPtr<Document> doc = mEventSource->GetDocumentIfCurrent();
-  if (doc) {
-    nsCOMPtr<nsIReferrerInfo> referrerInfo =
-        new ReferrerInfo(doc->GetDocumentURI(), doc->GetReferrerPolicy());
+
+  if (nsCOMPtr<Document> doc = mEventSource->GetDocumentIfCurrent()) {
+    auto referrerInfo = MakeRefPtr<ReferrerInfo>(*doc);
     nsresult rv = mHttpChannel->SetReferrerInfoWithoutClone(referrerInfo);
     NS_ENSURE_SUCCESS(rv, rv);
   }
@@ -954,9 +983,7 @@ nsresult EventSourceImpl::InitChannelAndRequestEventSource() {
     return NS_ERROR_ABORT;
   }
 
-  bool isValidScheme =
-      (NS_SUCCEEDED(mSrc->SchemeIs("http", &isValidScheme)) && isValidScheme) ||
-      (NS_SUCCEEDED(mSrc->SchemeIs("https", &isValidScheme)) && isValidScheme);
+  bool isValidScheme = mSrc->SchemeIs("http") || mSrc->SchemeIs("https");
 
   nsresult rv = mEventSource->CheckCurrentGlobalCorrectness();
   if (NS_FAILED(rv) || !isValidScheme) {
@@ -981,7 +1008,7 @@ nsresult EventSourceImpl::InitChannelAndRequestEventSource() {
   nsCOMPtr<nsIChannel> channel;
   // If we have the document, use it
   if (doc) {
-    MOZ_ASSERT(mCookieSettings == doc->CookieSettings());
+    MOZ_ASSERT(mCookieJarSettings == doc->CookieJarSettings());
 
     nsCOMPtr<nsILoadGroup> loadGroup = doc->GetDocumentLoadGroup();
     rv = NS_NewChannel(getter_AddRefs(channel), mSrc, doc, securityFlags,
@@ -994,7 +1021,7 @@ nsresult EventSourceImpl::InitChannelAndRequestEventSource() {
     // otherwise use the principal
     rv = NS_NewChannel(getter_AddRefs(channel), mSrc, mPrincipal, securityFlags,
                        nsIContentPolicy::TYPE_INTERNAL_EVENTSOURCE,
-                       mCookieSettings,
+                       mCookieJarSettings,
                        nullptr,     // aPerformanceStorage
                        nullptr,     // loadGroup
                        nullptr,     // aCallbacks
@@ -1058,6 +1085,7 @@ void EventSourceImpl::AnnounceConnection() {
 
 nsresult EventSourceImpl::ResetConnection() {
   AssertIsOnMainThread();
+  mServiceNotifier = nullptr;
   if (mHttpChannel) {
     mHttpChannel->Cancel(NS_ERROR_ABORT);
     mHttpChannel = nullptr;
@@ -1099,6 +1127,7 @@ nsresult EventSourceImpl::RestartConnection() {
   if (IsClosed()) {
     return NS_ERROR_ABORT;
   }
+
   nsresult rv = ResetConnection();
   NS_ENSURE_SUCCESS(rv, rv);
   rv = SetReconnectionTimeout();
@@ -1160,10 +1189,9 @@ nsresult EventSourceImpl::SetReconnectionTimeout() {
   return NS_OK;
 }
 
-nsresult EventSourceImpl::PrintErrorOnConsole(const char* aBundleURI,
-                                              const char* aError,
-                                              const char16_t** aFormatStrings,
-                                              uint32_t aFormatStringsLen) {
+nsresult EventSourceImpl::PrintErrorOnConsole(
+    const char* aBundleURI, const char* aError,
+    const nsTArray<nsString>& aFormatStrings) {
   AssertIsOnMainThread();
   MOZ_ASSERT(!IsShutDown());
   nsCOMPtr<nsIStringBundleService> bundleService =
@@ -1185,9 +1213,8 @@ nsresult EventSourceImpl::PrintErrorOnConsole(const char* aBundleURI,
 
   // Localize the error message
   nsAutoString message;
-  if (aFormatStrings) {
-    rv = strBundle->FormatStringFromName(aError, aFormatStrings,
-                                         aFormatStringsLen, message);
+  if (!aFormatStrings.IsEmpty()) {
+    rv = strBundle->FormatStringFromName(aError, aFormatStrings, message);
   } else {
     rv = strBundle->GetStringFromName(aError, message);
   }
@@ -1212,17 +1239,15 @@ nsresult EventSourceImpl::ConsoleError() {
   nsresult rv = mSrc->GetSpec(targetSpec);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  NS_ConvertUTF8toUTF16 specUTF16(targetSpec);
-  const char16_t* formatStrings[] = {specUTF16.get()};
+  AutoTArray<nsString, 1> formatStrings;
+  CopyUTF8toUTF16(targetSpec, *formatStrings.AppendElement());
 
   if (ReadyState() == CONNECTING) {
     rv = PrintErrorOnConsole("chrome://global/locale/appstrings.properties",
-                             "connectionFailure", formatStrings,
-                             ArrayLength(formatStrings));
+                             "connectionFailure", formatStrings);
   } else {
     rv = PrintErrorOnConsole("chrome://global/locale/appstrings.properties",
-                             "netInterrupt", formatStrings,
-                             ArrayLength(formatStrings));
+                             "netInterrupt", formatStrings);
   }
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -1352,6 +1377,8 @@ nsresult EventSourceImpl::DispatchCurrentMessageEvent() {
     message->mLastEventID.Assign(mLastEventID);
   }
 
+  mServiceNotifier->EventReceived(message->mEventName, message->mLastEventID,
+                                  message->mData, mReconnectionTime, PR_Now());
   mMessagesToDispatch.Push(message.release());
 
   if (!mGoingToDispatchAllMessages) {
@@ -1784,18 +1811,18 @@ EventSourceImpl::CheckListenerChain() {
 ////////////////////////////////////////////////////////////////////////////////
 
 EventSource::EventSource(nsIGlobalObject* aGlobal,
-                         nsICookieSettings* aCookieSettings,
+                         nsICookieJarSettings* aCookieJarSettings,
                          bool aWithCredentials)
     : DOMEventTargetHelper(aGlobal),
       mWithCredentials(aWithCredentials),
       mIsMainThread(true),
       mKeepingAlive(false) {
   MOZ_ASSERT(aGlobal);
-  MOZ_ASSERT(aCookieSettings);
-  mImpl = new EventSourceImpl(this, aCookieSettings);
+  MOZ_ASSERT(aCookieJarSettings);
+  mImpl = new EventSourceImpl(this, aCookieJarSettings);
 }
 
-EventSource::~EventSource() {}
+EventSource::~EventSource() = default;
 
 nsresult EventSource::CreateAndDispatchSimpleEvent(const nsAString& aName) {
   RefPtr<Event> event = NS_NewDOMEvent(this, nullptr, nullptr);
@@ -1817,7 +1844,7 @@ already_AddRefed<EventSource> EventSource::Constructor(
     return nullptr;
   }
 
-  nsCOMPtr<nsICookieSettings> cookieSettings;
+  nsCOMPtr<nsICookieJarSettings> cookieJarSettings;
   nsCOMPtr<nsPIDOMWindowInner> ownerWindow = do_QueryInterface(global);
   if (ownerWindow) {
     Document* doc = ownerWindow->GetExtantDoc();
@@ -1826,16 +1853,16 @@ already_AddRefed<EventSource> EventSource::Constructor(
       return nullptr;
     }
 
-    cookieSettings = doc->CookieSettings();
+    cookieJarSettings = doc->CookieJarSettings();
   } else {
     // Worker side.
     WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();
     MOZ_ASSERT(workerPrivate);
-    cookieSettings = workerPrivate->CookieSettings();
+    cookieJarSettings = workerPrivate->CookieJarSettings();
   }
 
   RefPtr<EventSource> eventSource = new EventSource(
-      global, cookieSettings, aEventSourceInitDict.mWithCredentials);
+      global, cookieJarSettings, aEventSourceInitDict.mWithCredentials);
   RefPtr<EventSourceImpl> eventSourceImp = eventSource->mImpl;
 
   if (NS_IsMainThread()) {
@@ -1863,6 +1890,8 @@ already_AddRefed<EventSource> EventSource::Constructor(
   // Worker side.
   WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();
   MOZ_ASSERT(workerPrivate);
+
+  eventSourceImp->mInnerWindowID = workerPrivate->WindowID();
 
   RefPtr<InitRunnable> initRunnable =
       new InitRunnable(workerPrivate, eventSourceImp, aURL);

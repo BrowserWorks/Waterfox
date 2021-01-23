@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "ChatZilla අභිරුචි">
+
+<!ENTITY loading.label  "කරුණාකර රැදි සිටින්න, පූරණය වෙමින්…">
+
+<!ENTITY homepage.url   "http://chatzilla.hacksrus.com/">
+<!ENTITY homepage.label "ChatZilla මුල් පිටුව">
+
+<!ENTITY object.add.label       "එක් කරන්න…">
+<!ENTITY object.add.hint        "අභිරුචි සැකසීම සඳහා නව ජාලයක්, නාලිකාවක් හෝ පරිශීලකයෙක් එක් කරන්න">
+<!ENTITY object.add.accesskey   "A">
+
+<!ENTITY object.del.label       "ඉවත් කරන්න">
+<!ENTITY object.del.hint        "දැනට ඇති වස්තුව ඉවත් කරන්න, එහි සියලු අභිරුචි මකන්න">
+<!ENTITY object.del.accesskey   "R">
+
+<!ENTITY object.reset.label     "යළි සකසන්න">
+<!ENTITY object.reset.hint      "මෙම වස්තුවෙ අභිරුචි පෙරනිමියට සකසන්න">
+<!ENTITY object.reset.accesskey "s">
+
+<!ENTITY dialog.apply   "පිහිටුවන්න">
+
+<!ENTITY network "ජාලය">
+<!ENTITY channel "නාලිකාව">
+<!ENTITY user    "පරිශීලක">
+
+<!ENTITY config.add.title "අභිරුචි වස්තුව එක් කරන්න">
+
+<!ENTITY config.type.label        "වර්ගය:">
+<!ENTITY config.type.hint         "අභිරුචි සඳහා එක් කළ යුතු වස්තුවෙ ආකාරය">
+<!ENTITY config.type.accesskey    "T">
+<!ENTITY config.network.label     "ජාලය:">
+<!ENTITY config.network.hint      "දන්නා ජාල නාමයක් හෝ සේවාදායකයේ නම">
+<!ENTITY config.network.accesskey "N">
+<!ENTITY config.target.label      "ඉලක්කය:">
+<!ENTITY config.target.hint       "ඉලක්කගත නාලිකාව හෝ පරිශීල නාමය">
+<!ENTITY config.target.accesskey  "g">

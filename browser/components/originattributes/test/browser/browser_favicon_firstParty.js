@@ -2,6 +2,10 @@
  * Bug 1277803 - A test case for testing favicon loading across different first party domains.
  */
 
+if (SpecialPowers.useRemoteSubframes) {
+  requestLongerTimeout(2);
+}
+
 const CC = Components.Constructor;
 
 const { PlacesUtils } = ChromeUtils.import(
@@ -68,7 +72,7 @@ function clearAllPlacesFavicons() {
 }
 
 function observeFavicon(aFirstPartyDomain, aExpectedCookie, aPageURI) {
-  let expectedPrincipal = Services.scriptSecurityManager.createCodebasePrincipal(
+  let expectedPrincipal = Services.scriptSecurityManager.createContentPrincipal(
     aPageURI,
     { firstPartyDomain: aFirstPartyDomain }
   );
@@ -202,7 +206,9 @@ async function assignCookiesUnderFirstParty(aURL, aFirstParty, aCookieValue) {
   let tabInfo = await openTabInFirstParty(aURL, aFirstParty);
 
   // Add cookies into the iframe.
-  await ContentTask.spawn(tabInfo.browser, aCookieValue, async function(value) {
+  await SpecialPowers.spawn(tabInfo.browser, [aCookieValue], async function(
+    value
+  ) {
     content.document.cookie = value;
   });
 
@@ -313,6 +319,8 @@ async function doTestForAllTabsFavicon(
   await promiseFaviconLoaded;
 
   assertIconIsData(tabInfo.tab);
+
+  gTabsPanel.init();
 
   // Make the popup of allTabs showing up and trigger the loading of the favicon.
   let allTabsView = document.getElementById("allTabsMenu-allTabsView");

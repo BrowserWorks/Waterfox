@@ -9,24 +9,25 @@
 
  // Because of getComputedStyle, many CSSStyleDeclaration objects can be
  // short-living.
-[ProbablyShortLivingWrapper]
+[ProbablyShortLivingWrapper,
+ Exposed=Window]
 interface CSSStyleDeclaration {
   [CEReactions, SetterNeedsSubjectPrincipal=NonSystem, SetterThrows]
   attribute DOMString cssText;
 
   readonly attribute unsigned long length;
-  getter DOMString item(unsigned long index);
+  getter UTF8String item(unsigned long index);
 
   [Throws, ChromeOnly]
-  sequence<DOMString> getCSSImageURLs(DOMString property);
+  sequence<UTF8String> getCSSImageURLs(UTF8String property);
 
   [Throws]
-  DOMString getPropertyValue(DOMString property);
-  DOMString getPropertyPriority(DOMString property);
+  DOMString getPropertyValue(UTF8String property);
+  DOMString getPropertyPriority(UTF8String property);
   [CEReactions, NeedsSubjectPrincipal=NonSystem, Throws]
-  void setProperty(DOMString property, [TreatNullAs=EmptyString] DOMString value, optional [TreatNullAs=EmptyString] DOMString priority = "");
+  void setProperty(UTF8String property, [TreatNullAs=EmptyString] UTF8String value, optional [TreatNullAs=EmptyString] DOMString priority = "");
   [CEReactions, Throws]
-  DOMString removeProperty(DOMString property);
+  DOMString removeProperty(UTF8String property);
 
   readonly attribute CSSRule? parentRule;
 };

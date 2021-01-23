@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "बटन गुण">
+
+<!ENTITY Settings.label "जमावट">
+
+<!ENTITY ButtonType.label "प्रकार">
+<!ENTITY ButtonType.accesskey "T">
+<!ENTITY submit.value "सौंपें">
+<!ENTITY reset.value "फिर सेट करें">
+<!ENTITY button.value "बटन">
+
+<!ENTITY ButtonName.label "नाम:">
+<!ENTITY ButtonName.accesskey "N">
+<!ENTITY ButtonValue.label "मान:">
+<!ENTITY ButtonValue.accesskey "V">
+<!ENTITY tabIndex.label "टैब सूची:">
+<!ENTITY tabIndex.accesskey "I">
+<!ENTITY ButtonDisabled.label "निष्क्रिय">
+<!ENTITY ButtonDisabled.accesskey "D">
+<!ENTITY AccessKey.label "अभिगम कुंजी:">
+<!ENTITY AccessKey.accesskey "K">
+
+<!ENTITY RemoveButton.label "बटन हटायें">
+<!ENTITY RemoveButton.accesskey "R">

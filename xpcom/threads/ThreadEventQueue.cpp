@@ -50,7 +50,7 @@ ThreadEventQueue<InnerQueueT>::ThreadEventQueue(UniquePtr<InnerQueueT> aQueue)
     : mBaseQueue(std::move(aQueue)),
       mLock("ThreadEventQueue"),
       mEventsAvailable(mLock, "EventsAvail") {
-  static_assert(IsBaseOf<AbstractEventQueue, InnerQueueT>::value,
+  static_assert(std::is_base_of<AbstractEventQueue, InnerQueueT>::value,
                 "InnerQueueT must be an AbstractEventQueue subclass");
 }
 
@@ -85,10 +85,14 @@ bool ThreadEventQueue<InnerQueueT>::PutEventInternal(
         runnablePrio->GetPriority(&prio);
         if (prio == nsIRunnablePriority::PRIORITY_HIGH) {
           aPriority = EventQueuePriority::High;
-        } else if (prio == nsIRunnablePriority::PRIORITY_INPUT) {
+        } else if (prio == nsIRunnablePriority::PRIORITY_INPUT_HIGH) {
           aPriority = EventQueuePriority::Input;
         } else if (prio == nsIRunnablePriority::PRIORITY_MEDIUMHIGH) {
           aPriority = EventQueuePriority::MediumHigh;
+        } else if (prio == nsIRunnablePriority::PRIORITY_DEFERRED_TIMERS) {
+          aPriority = EventQueuePriority::DeferredTimers;
+        } else if (prio == nsIRunnablePriority::PRIORITY_IDLE) {
+          aPriority = EventQueuePriority::Idle;
         }
       }
     }
@@ -127,29 +131,109 @@ bool ThreadEventQueue<InnerQueueT>::PutEventInternal(
 
 template <class InnerQueueT>
 already_AddRefed<nsIRunnable> ThreadEventQueue<InnerQueueT>::GetEvent(
-    bool aMayWait, EventQueuePriority* aPriority) {
-  MutexAutoLock lock(mLock);
-
+    bool aMayWait, EventQueuePriority* aPriority,
+    mozilla::TimeDuration* aLastEventDelay) {
   nsCOMPtr<nsIRunnable> event;
-  for (;;) {
-    if (mNestedQueues.IsEmpty()) {
-      event = mBaseQueue->GetEvent(aPriority, lock);
-    } else {
-      // We always get events from the topmost queue when there are nested
-      // queues.
-      event = mNestedQueues.LastElement().mQueue->GetEvent(aPriority, lock);
-    }
+  bool eventIsIdleRunnable = false;
+  // This will be the IdlePeriodState for the queue the event, if any,
+  // came from.  May be null all along.
+  IdlePeriodState* idleState = nullptr;
 
-    if (event || !aMayWait) {
-      break;
-    }
+  {
+    // Scope for lock.  When we are about to return, we will exit this
+    // scope so we can do some work after releasing the lock but
+    // before returning.
+    MutexAutoLock lock(mLock);
 
-    AUTO_PROFILER_LABEL("ThreadEventQueue::GetEvent::Wait", IDLE);
-    AUTO_PROFILER_THREAD_SLEEP;
-    mEventsAvailable.Wait();
+    for (;;) {
+      const bool noNestedQueue = mNestedQueues.IsEmpty();
+      if (noNestedQueue) {
+        idleState = mBaseQueue->GetIdlePeriodState();
+        event = mBaseQueue->GetEvent(aPriority, lock, aLastEventDelay,
+                                     &eventIsIdleRunnable);
+      } else {
+        // We always get events from the topmost queue when there are nested
+        // queues.
+        MOZ_ASSERT(!mNestedQueues.LastElement().mQueue->GetIdlePeriodState());
+        event = mNestedQueues.LastElement().mQueue->GetEvent(
+            aPriority, lock, aLastEventDelay, &eventIsIdleRunnable);
+        MOZ_ASSERT(!eventIsIdleRunnable);
+      }
+
+      if (event) {
+        break;
+      }
+
+      if (idleState) {
+        MOZ_ASSERT(noNestedQueue);
+        if (mBaseQueue->HasIdleRunnables(lock)) {
+          // We have idle runnables that we may not have gotten above because
+          // our idle state is not up to date.  We need to update the idle state
+          // and try again.  We need to temporarily release the lock while we do
+          // that.
+          MutexAutoUnlock unlock(mLock);
+          idleState->UpdateCachedIdleDeadline(unlock);
+        } else {
+          // We need to notify our idle state that we're out of tasks to run.
+          // This needs to be done while not holding the lock.
+          MutexAutoUnlock unlock(mLock);
+          idleState->RanOutOfTasks(unlock);
+        }
+
+        // When we unlocked, someone may have queued a new runnable on us.  So
+        // we _must_ try to get a runnable again before we start sleeping, since
+        // that might be the runnable we were waiting for.
+        MOZ_ASSERT(
+            noNestedQueue == mNestedQueues.IsEmpty(),
+            "Who is pushing nested queues on us from some other thread?");
+        event = mBaseQueue->GetEvent(aPriority, lock, aLastEventDelay,
+                                     &eventIsIdleRunnable);
+        // Now clear the cached idle deadline, because it was specific to this
+        // GetEvent() call.
+        idleState->ClearCachedIdleDeadline();
+
+        if (event) {
+          break;
+        }
+      }
+
+      // No runnable available.  Sleep waiting for one if if we're supposed to.
+      // Otherwise just go ahead and return null.
+      if (!aMayWait) {
+        break;
+      }
+
+      AUTO_PROFILER_LABEL("ThreadEventQueue::GetEvent::Wait", IDLE);
+      mEventsAvailable.Wait();
+    }
+  }
+
+  if (idleState) {
+    // The pending task guarantee is not needed anymore, since we just tried
+    // doing GetEvent().
+    idleState->ForgetPendingTaskGuarantee();
+    if (event && !eventIsIdleRunnable) {
+      // We don't have a MutexAutoUnlock to pass to the callee here.  We _could_
+      // have one if we wanted to, simply by moving this into the same scope as
+      // our MutexAutoLock and adding a MutexAutoUnlock, but then we'd be doing
+      // an extra lock/unlock pair on mLock, which seems uncalled-for.
+      idleState->FlagNotIdle();
+    }
   }
 
   return event.forget();
+}
+
+template <class InnerQueueT>
+void ThreadEventQueue<InnerQueueT>::DidRunEvent() {
+  MutexAutoLock lock(mLock);
+  if (mNestedQueues.IsEmpty()) {
+    mBaseQueue->DidRunEvent(lock);
+    // Don't do anything else here, because that call might have
+    // temporarily unlocked the lock.
+  } else {
+    mNestedQueues.LastElement().mQueue->DidRunEvent(lock);
+  }
 }
 
 template <class InnerQueueT>
@@ -247,8 +331,10 @@ void ThreadEventQueue<InnerQueueT>::PopEventQueue(nsIEventTarget* aTarget) {
   // Move events from the old queue to the new one.
   nsCOMPtr<nsIRunnable> event;
   EventQueuePriority prio;
-  while ((event = item.mQueue->GetEvent(&prio, lock))) {
-    prevQueue->PutEvent(event.forget(), prio, lock);
+  TimeDuration delay;
+  while ((event = item.mQueue->GetEvent(&prio, lock, &delay))) {
+    // preserve the event delay so far
+    prevQueue->PutEvent(event.forget(), prio, lock, &delay);
   }
 
   mNestedQueues.RemoveLastElement();
@@ -290,5 +376,5 @@ void ThreadEventQueue<InnerQueueT>::SetObserver(nsIThreadObserver* aObserver) {
 
 namespace mozilla {
 template class ThreadEventQueue<EventQueue>;
-template class ThreadEventQueue<PrioritizedEventQueue<EventQueue>>;
+template class ThreadEventQueue<PrioritizedEventQueue>;
 }  // namespace mozilla

@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  untitledTab            "(Nova aba)">
+<!ENTITY  newTab.label           "Nova aba">
+<!ENTITY  newTab.accesskey       "N">
+<!ENTITY  closeTab.label         "Fechar aba">
+<!ENTITY  closeTab.accesskey         "F">
+<!ENTITY  closeOtherTabs.label   "Fechar as outras abas">
+<!ENTITY  closeOtherTabs.accesskey         "o">
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label "Fechar abas à direita">
+<!ENTITY  closeTabsToTheEnd.accesskey "i">
+<!ENTITY  reloadAllTabs.label    "Recarregar todas">
+<!ENTITY  reloadAllTabs.accesskey         "t">
+<!ENTITY  reloadTab.label        "Recarregar">
+<!ENTITY  reloadTab.accesskey         "R">
+<!ENTITY  bookmarkGroup.label    "Criar marcador para o grupo...">
+<!ENTITY  bookmarkGroup.accesskey  "g">
+<!ENTITY  closeTabButton.tooltip   "Fechar aba atual">
+<!ENTITY  newTabButton.tooltip   "Abrir uma nova aba">
+<!ENTITY  listAllTabs.tooltip    "Listar todas as abas">
+<!ENTITY  undoCloseTab.label    "Desfazer fechar aba">
+<!ENTITY  undoCloseTab.accesskey  "D">

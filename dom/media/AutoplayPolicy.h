@@ -39,6 +39,18 @@ class AutoplayPolicy {
   // Returns whether a given AudioContext is allowed to play.
   static bool IsAllowedToPlay(const AudioContext& aContext);
 
+  // Return the value of the autoplay permissin for given principal. The return
+  // value can be 0=unknown, 1=allow, 2=block audio, 5=block audio and video.
+  static uint32_t GetSiteAutoplayPermission(nsIPrincipal* aPrincipal);
+};
+
+/**
+ * This class contains helper funtions which could be used in AutoplayPolicy
+ * for determing Telemetry use-only result. They shouldn't represent the final
+ * result of blocking autoplay.
+ */
+class AutoplayPolicyTelemetryUtils {
+ public:
   // Returns true if a given media element would be allowed to play
   // if block autoplay was enabled. If this returns false, it means we would
   // either block or ask for permission.

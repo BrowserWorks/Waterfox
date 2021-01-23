@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: where ".private" and ".normal" variants exist,
+   - the former is shown in a private browsing window and the latter in
+   - a regular (non-private) browsing window. -->
+
+<!ENTITY privatebrowsingpage.title.private       "Ste v oknu zasebnega brskanja">
+<!ENTITY privatebrowsingpage.title.normal        "Ali želite začeti zasebno brskanje?">
+
+<!ENTITY privatebrowsingpage.status.normal       "Trenutno niste v zasebnem oknu.">
+
+
+<!ENTITY privatebrowsingpage.close.info          "Ko končate, zaprite to okno za konec zasebnega brskanja.">
+<!ENTITY privatebrowsingpage.close.label         "Zapri to okno zdaj">
+<!ENTITY privatebrowsingpage.close.accesskey     "Z">
+
+<!ENTITY privatebrowsingpage.start.info          "Za začetek zasebnega brskanja pritisnite spodnji gumb ali v meniju izberite Datoteka ▶ Novo ▶ Zasebno okno.">
+<!ENTITY privatebrowsingpage.private.label       "Odpri novo zasebno okno">
+<!ENTITY privatebrowsingpage.private.accesskey   "O">

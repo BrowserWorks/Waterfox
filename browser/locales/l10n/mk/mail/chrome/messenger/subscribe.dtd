@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title "Претплатување">
+<!ENTITY subscribeButton.label "Претплати се">
+<!ENTITY subscribeButton.accesskey "П">
+<!ENTITY unsubscribeButton.label "Откажи ја претплатата">
+<!ENTITY unsubscribeButton.accesskey "О">
+<!ENTITY refreshButton.label "Освежи">
+<!ENTITY refreshButton.accesskey "с">
+<!ENTITY stopButton.label "Стоп">
+<!ENTITY stopButton.accesskey "т">
+<!ENTITY server.label "Сметка:">
+<!ENTITY server.accesskey "а">
+<!ENTITY subscribedHeader.label "Претплати се">
+<!-- commenting out until bug 38906 is fixed 
+<!ENTITY messagesHeader.label         "Messages"> -->
+<!ENTITY namefield.label "Покажи ги ставките кои содржат:">
+<!ENTITY namefield.accesskey "к">

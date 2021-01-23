@@ -70,11 +70,15 @@ impl GeckoElementSnapshot {
         self.mClassAttributeChanged()
     }
 
-    /// Returns true if the snapshot recorded an attribute change which isn't a
-    /// class or id change.
+    /// Executes the callback once for each attribute that changed.
     #[inline]
-    pub fn other_attr_changed(&self) -> bool {
-        self.mOtherAttributeChanged()
+    pub fn each_attr_changed<F>(&self, mut callback: F)
+    where
+        F: FnMut(&Atom),
+    {
+        for attr in self.mChangedAttrNames.iter() {
+            unsafe { Atom::with(attr.mRawPtr, &mut callback) }
+        }
     }
 
     /// selectors::Element::attr_matches
@@ -194,6 +198,11 @@ impl ElementSnapshot for GeckoElementSnapshot {
     }
 
     #[inline]
+    fn imported_part(&self, name: &Atom) -> Option<Atom> {
+        snapshot_helpers::imported_part(&*self.mAttrs, name)
+    }
+
+    #[inline]
     fn has_class(&self, name: &Atom, case_sensitivity: CaseSensitivity) -> bool {
         if !self.has_any(Flags::MaybeClass) {
             return false;
@@ -211,7 +220,7 @@ impl ElementSnapshot for GeckoElementSnapshot {
             return;
         }
 
-        snapshot_helpers::each_class(&self.mClass, callback)
+        snapshot_helpers::each_class_or_part(&self.mClass, callback)
     }
 
     #[inline]

@@ -1,0 +1,43 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this file,
+# You can obtain one at http://mozilla.org/MPL/2.0/.
+
+<menupopup id="downloadsContextMenu" class="download-state">
+
+  <linkset>
+    <html:link rel="localization" href="browser/downloads.ftl" />
+  </linkset>
+
+  <menuitem command="downloadsCmd_pauseResume"
+            class="downloadPauseMenuItem"
+            data-l10n-id="downloads-cmd-pause"/>
+  <menuitem command="downloadsCmd_pauseResume"
+            class="downloadResumeMenuItem"
+            data-l10n-id="downloads-cmd-resume"/>
+  <menuitem command="downloadsCmd_unblock"
+            class="downloadUnblockMenuItem"
+            data-l10n-id="downloads-cmd-unblock"/>
+  <menuitem command="downloadsCmd_show"
+            class="downloadShowMenuItem"
+#ifdef XP_MACOSX
+            data-l10n-id="downloads-cmd-show-menuitem-mac"
+#else
+            data-l10n-id="downloads-cmd-show-menuitem"
+#endif
+            />
+
+  <menuseparator class="downloadCommandsSeparator"/>
+
+  <menuitem command="downloadsCmd_openReferrer"
+            data-l10n-id="downloads-cmd-go-to-download-page"/>
+  <menuitem command="cmd_copy"
+            data-l10n-id="downloads-cmd-copy-download-link"/>
+
+  <menuseparator/>
+
+  <menuitem command="cmd_delete"
+            class="downloadRemoveFromHistoryMenuItem"
+            data-l10n-id="downloads-cmd-remove-from-history"/>
+  <menuitem command="downloadsCmd_clearDownloads"
+            data-l10n-id="downloads-cmd-clear-downloads"/>
+</menupopup>

@@ -1,0 +1,116 @@
+<!--
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<!-- Note to localizers, don't localize the strings 'width' or 'height' -->
+
+<!ENTITY pageInfoWindow.dimensions "width: 100ch; height: 30em;">
+
+<!ENTITY copy.key "C">
+<!ENTITY copy.label "Kopyala">
+<!ENTITY copy.accesskey "K">
+<!ENTITY selectall.key "A">
+<!ENTITY selectall.label "Tümünü seç">
+<!ENTITY selectall.accesskey "s">
+<!ENTITY openHelpMac.key "?">
+<!ENTITY closeWindow.key "w">
+
+<!ENTITY generalTab "Genel">
+<!ENTITY generalTab.accesskey "G">
+<!ENTITY generalURL "Adres:">
+<!ENTITY generalType "Tür:">
+<!ENTITY generalMode "Yorum kipi:">
+<!ENTITY generalSize "Boyut:">
+<!ENTITY generalReferrer "Yönlendiren URL:">
+<!ENTITY generalSource "Kaynak: ">
+<!ENTITY generalModified "Değişme tarihi:">
+<!ENTITY generalEncoding "Kodlama:">
+<!ENTITY generalMetaName "Adı:">
+<!ENTITY generalMetaContent "İçerik:">
+<!ENTITY generalSecurityDetails "Ayrıntılar">
+<!ENTITY generalSecurityDetails.accesskey "A">
+
+<!ENTITY formsTab "Formlar">
+<!ENTITY formsTab.accesskey "F">
+<!ENTITY formAction "Form eylemi">
+<!ENTITY formMethod "Yöntem">
+<!ENTITY formName "Adı:">
+<!ENTITY formEncoding "Kodlama:">
+<!ENTITY formTarget "Hedef:">
+<!ENTITY formFields "Alanlar:">
+<!ENTITY formLabel "Etiket">
+<!ENTITY formFName "Alan adı">
+<!ENTITY formType "Türü">
+<!ENTITY formCValue "Şu anki değer">
+
+<!ENTITY linksTab "Bağlantılar">
+<!ENTITY linksTab.accesskey "l">
+<!ENTITY linkNo "No.">
+<!ENTITY linkName "Adı:">
+<!ENTITY linkAddress "Adres">
+<!ENTITY linkType "Türü">
+<!ENTITY linkTarget "Hedef">
+<!ENTITY linkAccessKey "Erişim Tuşu">
+
+<!ENTITY mediaTab "Ortam">
+<!ENTITY mediaTab.accesskey "O">
+<!ENTITY mediaURL "Adres:">
+<!ENTITY mediaAlt "Alternatif metin:">
+<!ENTITY mediaAltHeader "Alternatif metin">
+<!ENTITY mediaAddress "Adres">
+<!ENTITY mediaType "Türü">
+<!ENTITY mediaSize "Boyut">
+<!ENTITY mediaCount "Sayaç">
+<!ENTITY mediaDimensions "Atanan boyutlar:">
+<!ENTITY mediaPhysDimensions "Gerçek boyutlar:">
+<!ENTITY mediaTitle "Başlık:">
+<!ENTITY mediaLongdesc "Ayrıntılı açıklama:">
+<!ENTITY mediaBlockImage.accesskey "O">
+<!ENTITY mediaSaveAs "Farklı kaydet…">
+<!ENTITY mediaSaveAs.accesskey "F">
+<!ENTITY mediaSaveAs2.accesskey "e">
+<!ENTITY mediaPreview "Ortam önizleme:">
+
+<!ENTITY feedTab "Canlı yer imleri">
+<!ENTITY feedTab.accesskey "C">
+<!ENTITY feedSubscribe "Abone ol">
+<!ENTITY feedSubscribe.accesskey "o">
+
+<!ENTITY permTab "İzinler">
+<!ENTITY permTab.accesskey "z">
+<!ENTITY permUseDefault "Öntanımlıyı kullan">
+<!ENTITY permAskAlways "Her zaman sor">
+<!ENTITY permAllow "İzin ver">
+<!ENTITY permAllowSession "Oturum boyunca izin ver">
+<!ENTITY permBlock "Engelle">
+<!ENTITY permissionsFor "İzinler:">
+<!ENTITY permImage "Resimleri yükle">
+<!ENTITY permPopup "İstenmeyen pencereleri aç">
+<!ENTITY permCookie "Çerez bırak">
+<!ENTITY permInstall "Eklenti veya tema kur">
+<!ENTITY permGeo "Konumu paylaş">
+
+<!ENTITY securityTab "Güvenlik">
+<!ENTITY securityTab.accesskey "G">
+<!ENTITY securityHeader "Sayfanın güvenlik bilgileri">
+<!ENTITY securityView.certView "Onay belgelerini göster">
+<!ENTITY securityView.accesskey "g">
+<!ENTITY securityView.unknown "Bilinmiyor">
+
+
+<!ENTITY securityView.identity.header "Sayfa kimliği">
+<!ENTITY securityView.identity.owner "Sahibi: ">
+<!ENTITY securityView.identity.domain "Web sitesi: ">
+<!ENTITY securityView.identity.verifier "Doğrulayan: ">
+
+<!ENTITY securityView.privacy.header "Güvenlik ve geçmiş">
+<!ENTITY securityView.privacy.history "Bu siteyi önceden ziyaret ettim mi?">
+<!ENTITY securityView.privacy.cookies "Bu site bilgisayarıma çerez yerleştirdi mi?">
+<!ENTITY securityView.privacy.viewCookies "Çerezleri göster">
+<!ENTITY securityView.privacy.viewCookies.accessKey "r">
+<!ENTITY securityView.privacy.passwords "Bu sayfaya ait herhangi bir parola kaydettim mi?">
+<!ENTITY securityView.privacy.viewPasswords "Kayıtlı parolaları göster">
+<!ENTITY securityView.privacy.viewPasswords.accessKey "p">
+
+<!ENTITY securityView.technical.header "Teknik ayrıntılar">

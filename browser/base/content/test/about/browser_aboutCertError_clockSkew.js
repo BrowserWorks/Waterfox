@@ -28,7 +28,7 @@ add_task(async function checkWrongSystemTimeWarning() {
     info("Loading and waiting for the cert error");
     await certErrorLoaded;
 
-    return ContentTask.spawn(browser, null, async function() {
+    return SpecialPowers.spawn(browser, [], async function() {
       let doc = content.document;
       let div = doc.getElementById("errorShortDescText");
       let systemDateDiv = doc.getElementById("wrongSystemTime_systemDate1");
@@ -54,9 +54,7 @@ add_task(async function checkWrongSystemTimeWarning() {
     Math.floor(Date.now() / 1000)
   );
 
-  let formatter = new Services.intl.DateTimeFormat(undefined, {
-    dateStyle: "long",
-  });
+  let formatter = new Intl.DateTimeFormat("default");
 
   // For this test, we want to trick Firefox into believing that
   // the local system time (as returned by Date.now()) is wrong.
@@ -97,6 +95,57 @@ add_task(async function checkWrongSystemTimeWarning() {
   ok(
     message.learnMoreLink.includes("time-errors"),
     "time-errors in the Learn More URL"
+  );
+
+  BrowserTestUtils.removeTab(gBrowser.selectedTab);
+
+  Services.prefs.clearUserPref(PREF_SERVICES_SETTINGS_LAST_FETCHED);
+  Services.prefs.clearUserPref(PREF_SERVICES_SETTINGS_CLOCK_SKEW_SECONDS);
+});
+
+add_task(async function checkCertError() {
+  async function setUpPage() {
+    let browser;
+    let certErrorLoaded;
+    gBrowser.selectedTab = BrowserTestUtils.addTab(
+      gBrowser,
+      "https://expired.example.com/"
+    );
+    browser = gBrowser.selectedBrowser;
+    certErrorLoaded = BrowserTestUtils.waitForErrorPage(browser);
+
+    info("Loading and waiting for the cert error");
+    await certErrorLoaded;
+
+    return SpecialPowers.spawn(browser, [], async function() {
+      let doc = content.document;
+      let el = doc.getElementById("errorWhatToDoText");
+      await ContentTaskUtils.waitForCondition(() => el.textContent);
+      return el.textContent;
+    });
+  }
+
+  // The particular error message will be displayed only when clock_skew_seconds is
+  // less or equal to a day and the difference between date.now() and last_fetched is less than
+  // or equal to 5 days. Setting the prefs accordingly.
+
+  Services.prefs.setIntPref(
+    PREF_SERVICES_SETTINGS_LAST_FETCHED,
+    Math.floor(Date.now() / 1000)
+  );
+
+  let skew = 60 * 60 * 24;
+  Services.prefs.setIntPref(PREF_SERVICES_SETTINGS_CLOCK_SKEW_SECONDS, skew);
+
+  info("Loading a bad cert page");
+  let message = await setUpPage();
+
+  ok(
+    message.includes(
+      "The issue is most likely with the website, and there is nothing you can do" +
+        " to resolve it. You can notify the website’s administrator about the problem."
+    ),
+    "Correct error message found"
   );
 
   BrowserTestUtils.removeTab(gBrowser.selectedTab);

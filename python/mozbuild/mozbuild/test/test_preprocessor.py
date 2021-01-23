@@ -2,11 +2,13 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from __future__ import absolute_import, print_function
+
 import unittest
 
-from StringIO import StringIO
 import os
 import shutil
+from six import StringIO
 
 from tempfile import mkdtemp
 
@@ -177,6 +179,16 @@ class TestPreprocessor(unittest.TestCase):
             '#endif',
         ])
 
+    def test_indentation(self):
+        self.do_include_pass([
+            '         #define NULLVAL 0',
+            ' #if !NULLVAL',
+            'PASS',
+            '           #else',
+            'FAIL',
+            '     #endif',
+        ])
+
     def test_expand(self):
         self.do_include_pass([
             '#define ASVAR AS',
@@ -230,10 +242,18 @@ class TestPreprocessor(unittest.TestCase):
         self.do_include_compare([
             '#filter slashslash',
             'PASS//FAIL  // FAIL',
+            '  //FAIL',
+            '//FAIL',
+            'PASS  //',
+            '//',
             '#unfilter slashslash',
             'PASS // PASS',
         ], [
             'PASS',
+            '  ',
+            '',
+            'PASS  ',
+            '',
             'PASS // PASS',
         ])
 
@@ -609,7 +629,7 @@ class TestPreprocessor(unittest.TestCase):
                         '//@line 1 "$OBJDIR/baz.js"\n'
                         'baz\n'
                         '//@line 6 "$SRCDIR/f.js"\n'
-                        'fin\n').replace('DIR/', 'DIR' + os.sep)
+                        'fin\n')
 
         # Try with separate srcdir/objdir
         with MockedOpen(files):

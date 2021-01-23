@@ -2,6 +2,10 @@
  * Bug 1277803 - A test caes for testing favicon loading across different userContextId.
  */
 
+if (SpecialPowers.useRemoteSubframes) {
+  requestLongerTimeout(2);
+}
+
 let EventUtils = {};
 Services.scriptloader.loadSubScript(
   "chrome://mochikit/content/tests/SimpleTest/EventUtils.js",
@@ -139,7 +143,7 @@ FaviconObserver.prototype = {
   reset(aUserContextId, aExpectedCookie, aPageURI, aFaviconURL) {
     this._curUserContextId = aUserContextId;
     this._expectedCookie = aExpectedCookie;
-    this._expectedPrincipal = Services.scriptSecurityManager.createCodebasePrincipal(
+    this._expectedPrincipal = Services.scriptSecurityManager.createContentPrincipal(
       aPageURI,
       { userContextId: aUserContextId }
     );
@@ -172,11 +176,15 @@ async function generateCookies(aHost) {
   let tabInfoA = await openTabInUserContext(aHost, USER_CONTEXT_ID_PERSONAL);
   let tabInfoB = await openTabInUserContext(aHost, USER_CONTEXT_ID_WORK);
 
-  await ContentTask.spawn(tabInfoA.browser, cookies[0], async function(value) {
+  await SpecialPowers.spawn(tabInfoA.browser, [cookies[0]], async function(
+    value
+  ) {
     content.document.cookie = value;
   });
 
-  await ContentTask.spawn(tabInfoB.browser, cookies[1], async function(value) {
+  await SpecialPowers.spawn(tabInfoB.browser, [cookies[1]], async function(
+    value
+  ) {
     content.document.cookie = value;
   });
 
@@ -257,6 +265,8 @@ async function doTestForAllTabsFavicon(aTestPage, aFaviconHost, aFaviconURL) {
   // We need to clear the image cache here for making sure the network request will
   // be made for the favicon of allTabs menuitem.
   clearAllImageCaches();
+
+  gTabsPanel.init();
 
   // Make the popup of allTabs showing up and trigger the loading of the favicon.
   let allTabsView = document.getElementById("allTabsMenu-allTabsView");

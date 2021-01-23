@@ -7,6 +7,7 @@
 #include "WebBrowserPersistDocumentParent.h"
 
 #include "mozilla/dom/Attr.h"
+#include "mozilla/dom/BrowsingContext.h"
 #include "mozilla/dom/Comment.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/HTMLAnchorElement.h"
@@ -29,17 +30,13 @@
 #include "nsDOMAttributeMap.h"
 #include "nsFrameLoader.h"
 #include "nsGlobalWindowOuter.h"
-#include "nsIComponentRegistrar.h"
 #include "nsIContent.h"
 #include "nsIDOMWindowUtils.h"
-#include "nsIDocShell.h"
 #include "mozilla/dom/Document.h"
 #include "nsIDocumentEncoder.h"
 #include "nsILoadContext.h"
 #include "nsIProtocolHandler.h"
 #include "nsISHEntry.h"
-#include "nsISupportsPrimitives.h"
-#include "nsIRemoteTab.h"
 #include "nsIURIMutator.h"
 #include "nsIWebBrowserPersist.h"
 #include "nsIWebNavigation.h"
@@ -127,8 +124,10 @@ WebBrowserPersistLocalDocument::GetTitle(nsAString& aTitle) {
 }
 
 NS_IMETHODIMP
-WebBrowserPersistLocalDocument::GetReferrer(nsAString& aReferrer) {
-  mDocument->GetReferrer(aReferrer);
+WebBrowserPersistLocalDocument::GetReferrerInfo(
+    nsIReferrerInfo** aReferrerInfo) {
+  *aReferrerInfo = mDocument->GetReferrerInfo();
+  NS_IF_ADDREF(*aReferrerInfo);
   return NS_OK;
 }
 
@@ -208,7 +207,7 @@ uint32_t WebBrowserPersistLocalDocument::GetPersistFlags() const {
   return mPersistFlags;
 }
 
-already_AddRefed<nsIURI> WebBrowserPersistLocalDocument::GetBaseURI() const {
+nsIURI* WebBrowserPersistLocalDocument::GetBaseURI() const {
   return mDocument->GetBaseURI();
 }
 
@@ -247,7 +246,7 @@ class ResourceReader final : public nsIWebBrowserPersistDocumentReceiver {
   nsresult OnWalkURI(const nsACString& aURISpec,
                      nsContentPolicyType aContentPolicyType);
   nsresult OnWalkURI(nsIURI* aURI, nsContentPolicyType aContentPolicyType);
-  nsresult OnWalkAttribute(Element* aElement,
+  nsresult OnWalkAttribute(dom::Element* aElement,
                            nsContentPolicyType aContentPolicyType,
                            const char* aAttribute,
                            const char* aNamespaceURI = "");
@@ -289,12 +288,17 @@ nsresult ResourceReader::OnWalkSubframe(nsINode* aNode) {
   RefPtr<nsFrameLoader> loader = loaderOwner->GetFrameLoader();
   NS_ENSURE_STATE(loader);
 
+  RefPtr<dom::BrowsingContext> context = loader->GetBrowsingContext();
+  NS_ENSURE_STATE(context);
+
+  if (loader->IsRemoteFrame()) {
+    mVisitor->VisitBrowsingContext(mParent, context);
+    return NS_OK;
+  }
+
   ++mOutstandingDocuments;
-  // Pass in 0 as the outer window ID so that we start
-  // persisting the root of this subframe, and not some other
-  // subframe child of this subframe.
   ErrorResult err;
-  loader->StartPersistence(0, this, err);
+  loader->StartPersistence(context, this, err);
   nsresult rv = err.StealNSResult();
   if (NS_FAILED(rv)) {
     if (rv == NS_ERROR_NO_CONTENT) {
@@ -352,7 +356,7 @@ nsresult ResourceReader::OnWalkURI(const nsACString& aURISpec,
   return OnWalkURI(uri, aContentPolicyType);
 }
 
-static void ExtractAttribute(Element* aElement, const char* aAttribute,
+static void ExtractAttribute(dom::Element* aElement, const char* aAttribute,
                              const char* aNamespaceURI, nsCString& aValue) {
   // Find the named URI attribute on the (element) node and store
   // a reference to the URI that maps onto a local file name
@@ -371,7 +375,7 @@ static void ExtractAttribute(Element* aElement, const char* aAttribute,
   }
 }
 
-nsresult ResourceReader::OnWalkAttribute(Element* aElement,
+nsresult ResourceReader::OnWalkAttribute(dom::Element* aElement,
                                          nsContentPolicyType aContentPolicyType,
                                          const char* aAttribute,
                                          const char* aNamespaceURI) {
@@ -1220,8 +1224,7 @@ WebBrowserPersistLocalDocument::WriteContent(
     nsAutoCString targetURISpec;
     rv = aMap->GetTargetBaseURI(targetURISpec);
     if (NS_SUCCEEDED(rv) && !targetURISpec.IsEmpty()) {
-      rv = NS_NewURI(getter_AddRefs(targetURI), targetURISpec,
-                     /* charset: */ nullptr, /* base: */ nullptr);
+      rv = NS_NewURI(getter_AddRefs(targetURI), targetURISpec);
       NS_ENSURE_SUCCESS(rv, NS_ERROR_UNEXPECTED);
     } else if (mPersistFlags &
                nsIWebBrowserPersist::PERSIST_FLAGS_FIXUP_LINKS_TO_DESTINATION) {

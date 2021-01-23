@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 "use strict";
@@ -47,18 +46,22 @@ add_task(async function() {
 
   const { testActor, inspector, view, toolbox } = await openRuleView();
 
-  await runTest(testActor, inspector, view);
+  await runTest(testActor, inspector, view, false);
 
   info("Reload the page to restore the initial state");
-  await navigateTo(inspector, url);
+  await navigateTo(url);
 
   info("Change toolbox host to WINDOW");
   await toolbox.switchHost("window");
 
-  await runTest(testActor, inspector, view);
+  // Switching hosts is not correctly waiting when DevTools run in content frame
+  // See Bug 1571421.
+  await wait(1000);
+
+  await runTest(testActor, inspector, view, true);
 });
 
-async function runTest(testActor, inspector, view) {
+async function runTest(testActor, inspector, view, isWindowHost) {
   await selectNode("#div2", inspector);
 
   info("Get the background-color property from the rule-view");
@@ -78,6 +81,20 @@ async function runTest(testActor, inspector, view) {
   info("Test that pressing escape dismisses the eyedropper");
   await testESC(swatch, inspector, testActor);
 
+  if (isWindowHost) {
+    // The following code is only needed on linux otherwise the test seems to
+    // timeout when clicking again on the swatch. Both the focus and the wait
+    // seem needed to make it pass.
+    // To be fixed in Bug 1571421.
+    info("Ensure the swatch window is focused");
+    const onWindowFocus = BrowserTestUtils.waitForEvent(
+      swatch.ownerGlobal,
+      "focus"
+    );
+    swatch.ownerGlobal.focus();
+    await onWindowFocus;
+  }
+
   info("Open the eyedropper again");
   await openEyedropper(view, swatch);
 
@@ -95,7 +112,7 @@ async function runTest(testActor, inspector, view) {
 async function testESC(swatch, inspector, testActor) {
   info("Press escape");
   const onCanceled = new Promise(resolve => {
-    inspector.inspector.once("color-pick-canceled", resolve);
+    inspector.inspectorFront.once("color-pick-canceled", resolve);
   });
   await testActor.synthesizeKey({ key: "VK_ESCAPE", options: {} });
   await onCanceled;
@@ -107,7 +124,7 @@ async function testESC(swatch, inspector, testActor) {
 async function testSelect(view, swatch, inspector, testActor) {
   info("Click at x:10px y:10px");
   const onPicked = new Promise(resolve => {
-    inspector.inspector.once("color-picked", resolve);
+    inspector.inspectorFront.once("color-picked", resolve);
   });
   // The change to the content is done async after rule view change
   const onRuleViewChanged = view.once("ruleview-changed");

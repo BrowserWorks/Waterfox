@@ -19,6 +19,8 @@ This is a complex test checking the internal "deferred doom" functionality in bo
 
 */
 
+"use strict";
+
 const kENTRYCOUNT = 10;
 
 function log_(msg) {
@@ -96,7 +98,7 @@ function run_test() {
   );
   os.addObserver(
     {
-      observe: function(subject, topic, data) {
+      observe(subject, topic, data) {
         // (3)
 
         log_("after purge, second set of opens");

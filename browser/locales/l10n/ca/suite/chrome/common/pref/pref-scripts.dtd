@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-scripts.xul -->
+<!--LOCALIZATION NOTE : FILE The 'Scripts & Plugins' preferences dialog -->
+
+
+<!ENTITY pref.scripts.title              "Scripts i connectors">
+
+<!ENTITY navigator.label                 "Navegador">
+<!ENTITY navigator.accesskey             "r">
+<!--LOCALIZATION NOTE (enableJavaScript.label): 'JavaScript' should never be translated -->
+
+<!ENTITY enableJavaScript.label          "Habilita el JavaScript per a:">
+<!ENTITY allowScripts.label              "Permet als scripts:">
+<!ENTITY allowScripts.accesskey          "s">
+<!ENTITY allowWindowMoveResize.label     "Moure o canviar la mida de finestres ja existents">
+<!ENTITY allowWindowFlip.label           "Posar finestres en primer o segon pla">
+<!ENTITY allowWindowStatusChange.label   "Canviar el text de la barra d'estat">
+<!ENTITY allowWindowImageSrcChange.label "Canviar les imatges">
+<!ENTITY allowContextmenuDisable.label   "Inhabilitar o reemplaçar menús contextuals">
+<!ENTITY allowHideStatusBar.label        "Amagar la barra d'estat">
+
+<!ENTITY enablePlugins.label             "Habilita els connectors per a">
+<!ENTITY enablePluginForSuite.label      "Suite">
+<!ENTITY enablePluginForSuite.accesskey  "u">
+
+<!ENTITY whenPageRequiresPlugins.label   "Quan una pàgina necessiti connectors">
+<!ENTITY activateAllPlugins.label        "Activa tots els connectors per defecte">
+<!ENTITY activateAllPlugins.accesskey    "d">
+<!ENTITY warnPluginsRequired.label       "Avisa'm si cal instal·lar connectors addicionals">
+<!ENTITY warnPluginsRequired.accesskey   "v">

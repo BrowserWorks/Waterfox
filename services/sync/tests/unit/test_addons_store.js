@@ -42,7 +42,7 @@ AddonTestUtils.overrideCertDB();
 
 Services.prefs.setCharPref("extensions.minCompatibleAppVersion", "0");
 Services.prefs.setCharPref("extensions.minCompatiblePlatformVersion", "0");
-Services.prefs.setBoolPref("extensions.legacy.enabled", true);
+Services.prefs.setBoolPref("extensions.experiments.enabled", true);
 
 const SYSTEM_ADDON_ID = "system1@tests.mozilla.org";
 add_task(async function setupSystemAddon() {
@@ -164,7 +164,7 @@ const proxyFilter = {
     null
   ),
 
-  applyFilter(service, channel, defaultProxyInfo, callback) {
+  applyFilter(channel, defaultProxyInfo, callback) {
     if (channel.URI.host === "example.com") {
       callback.onProxyFilterResult(this.proxyInfo);
     } else {
@@ -611,7 +611,7 @@ add_task(async function test_ignore_system() {
     let addon = reconciler.getAddonStateFromSyncGUID(guid);
     Assert.notEqual(addon.id, SYSTEM_ADDON_ID);
   }
-  Assert.ok(num > 1, "should have seen at least one.");
+  Assert.greater(num, 1, "should have seen at least one.");
 });
 
 add_task(async function test_incoming_system() {

@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Contact.tab                     "Kontakt">
+<!ENTITY Contact.accesskey               "K">
+<!ENTITY Name.box                        "Nimi">
+
+<!-- LOCALIZATION NOTE:
+ NameField1, NameField2, PhoneticField1, PhoneticField2
+ those fields are either LN or FN depends on the target country.
+ "FirstName" and "LastName" can be swapped for id to change the order
+ but they should not be translated (same applied to phonetic id).
+ Make sure the translation of label corresponds to the order of id.
+-->
+
+<!-- LOCALIZATION NOTE (NameField1.id) : DONT_TRANSLATE -->
+<!ENTITY NameField1.id                  "FirstName">
+<!-- LOCALIZATION NOTE (NameField2.id) : DONT_TRANSLATE -->
+<!ENTITY NameField2.id                  "LastName">
+<!-- LOCALIZATION NOTE (PhoneticField1.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField1.id              "PhoneticFirstName">
+<!-- LOCALIZATION NOTE (PhoneticField2.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField2.id              "PhoneticLastName">
+
+<!ENTITY NameField1.label               "Eesnimi:">
+<!ENTITY NameField1.accesskey           "E">
+<!ENTITY NameField2.label               "Perekonnanimi:">
+<!ENTITY NameField2.accesskey           "P">
+<!ENTITY PhoneticField1.label           "Hääldus:">
+<!ENTITY PhoneticField2.label           "Hääldus:">
+<!ENTITY DisplayName.label              "Kuvatav nimi:">
+<!ENTITY DisplayName.accesskey          "u">
+<!ENTITY preferDisplayName.label        "Kuvatavat nime eelistatakse kirja päistes olevale">
+<!ENTITY preferDisplayName.accesskey    "v">
+<!ENTITY NickName.label                 "Hüüdnimi:">
+<!ENTITY NickName.accesskey             "ü">
+
+<!ENTITY PrimaryEmail.label             "E-post:">
+<!ENTITY PrimaryEmail.accesskey         "p">
+<!ENTITY SecondEmail.label              "Muud e-posti aadressid:">
+<!ENTITY SecondEmail.accesskey          "M">
+<!ENTITY PreferMailFormat.label         "Kirjade eelistatud vorming:">
+<!ENTITY PreferMailFormat.accesskey     "i">
+<!ENTITY PlainText.label                "lihttekst">
+<!ENTITY HTML.label                     "HTML">
+<!ENTITY Unknown.label                  "määramata">
+<!ENTITY chatName.label                 "Nimi kiirsuhtluses:">
+
+<!ENTITY WorkPhone.label                "Tööl:">
+<!ENTITY WorkPhone.accesskey            "ö">
+<!ENTITY HomePhone.label                "Kodus:">
+<!ENTITY HomePhone.accesskey            "o">
+<!ENTITY FaxNumber.label                "Faks:">
+<!ENTITY FaxNumber.accesskey            "F">
+<!ENTITY PagerNumber.label              "Peiler:">
+<!ENTITY PagerNumber.accesskey          "l">
+<!ENTITY CellularNumber.label           "Mobiil:">
+<!ENTITY CellularNumber.accesskey       "b">
+
+<!ENTITY Home.tab                       "Isiklik">
+<!ENTITY Home.accesskey                 "s">
+<!ENTITY HomeAddress.label              "Aadress:">
+<!ENTITY HomeAddress.accesskey          "a">
+<!ENTITY HomeAddress2.label             "">
+<!ENTITY HomeAddress2.accesskey         "">
+<!ENTITY HomeCity.label                 "Linn:">
+<!ENTITY HomeCity.accesskey             "n">
+<!ENTITY HomeState.label                "Maakond:">
+<!ENTITY HomeState.accesskey            "k">
+<!ENTITY HomeZipCode.label              "Postiindeks:">
+<!ENTITY HomeZipCode.accesskey          "t">
+<!ENTITY HomeCountry.label              "Riik:">
+<!ENTITY HomeCountry.accesskey          "R">
+<!ENTITY HomeWebPage.label              "Veebileht:">
+<!ENTITY HomeWebPage.accesskey          "V">
+<!ENTITY Birthday.label                 "Sünnipäev:">
+<!ENTITY Birthday.accesskey             "ä">
+<!ENTITY Month.placeholder              "Kuu">
+<!ENTITY Day.placeholder                "Päev">
+<!ENTITY Year.placeholder               "aasta">
+<!ENTITY Age.label                      "Vanus:">
+<!ENTITY Age.placeholder                "vanus">
+
+<!ENTITY Work.tab                       "Töö">
+<!ENTITY Work.accesskey                 "T">
+<!ENTITY JobTitle.label                 "Amet:">
+<!ENTITY JobTitle.accesskey             "m">
+<!ENTITY Department.label               "Osakond:">
+<!ENTITY Department.accesskey           "O">
+<!ENTITY Company.label                  "Organisatsioon:">
+<!ENTITY Company.accesskey              "g">
+<!ENTITY WorkAddress.label              "Aadress:">
+<!ENTITY WorkAddress.accesskey          "r">
+<!ENTITY WorkAddress2.label             "">
+<!ENTITY WorkAddress2.accesskey         "">
+<!ENTITY WorkCity.label                 "Linn:">
+<!ENTITY WorkCity.accesskey             "i">
+<!ENTITY WorkState.label                "Maakond:">
+<!ENTITY WorkState.accesskey            "d">
+<!ENTITY WorkZipCode.label              "Postiindeks:">
+<!ENTITY WorkZipCode.accesskey          "k">
+<!ENTITY WorkCountry.label              "Riik:">
+<!ENTITY WorkCountry.accesskey          "R">
+<!ENTITY WorkWebPage.label              "Veebileht:">
+<!ENTITY WorkWebPage.accesskey          "b">
+
+<!ENTITY Other.tab                      "Muu">
+<!ENTITY Other.accesskey                "M">
+<!ENTITY Custom1.label                  "Kohandatud 1:">
+<!ENTITY Custom1.accesskey              "1">
+<!ENTITY Custom2.label                  "Kohandatud 2:">
+<!ENTITY Custom2.accesskey              "2">
+<!ENTITY Custom3.label                  "Kohandatud 3:">
+<!ENTITY Custom3.accesskey              "3">
+<!ENTITY Custom4.label                  "Kohandatud 4:">
+<!ENTITY Custom4.accesskey              "4">
+<!ENTITY Notes.label                    "Märkused">
+<!ENTITY Notes.accesskey                "ä">
+
+<!ENTITY Chat.tab                       "Kiirsuhtlus">
+<!ENTITY Chat.accesskey                 "u">
+<!ENTITY Gtalk.label                    "Google Talk:">
+<!ENTITY Gtalk.accesskey                "G">
+<!ENTITY AIM.label                      "AIM:">
+<!ENTITY AIM2.accesskey                 "M">
+<!ENTITY Yahoo.label                    "Yahoo!:">
+<!ENTITY Yahoo.accesskey                "h">
+<!ENTITY Skype.label                    "Skype:">
+<!ENTITY Skype.accesskey                "y">
+<!ENTITY QQ.label                       "QQ:">
+<!ENTITY QQ.accesskey                   "Q">
+<!ENTITY MSN.label                      "MSN:">
+<!ENTITY MSN2.accesskey                 "N">
+<!ENTITY ICQ.label                      "ICQ:">
+<!ENTITY ICQ.accesskey                  "C">
+<!ENTITY XMPP.label                     "Jabberi ID:">
+<!ENTITY XMPP.accesskey                 "J">
+<!ENTITY IRC.label                      "IRC hüüdnimi:">
+<!ENTITY IRC.accesskey                  "ü">
+
+<!ENTITY Photo.tab                      "Pilt">
+<!ENTITY Photo.accesskey                "i">
+<!ENTITY GenericPhoto.label             "Üldine pilt">
+<!ENTITY GenericPhoto.accesskey         "Ü">
+<!ENTITY DefaultPhoto.label             "vaikimisi">
+<!ENTITY PhotoFile.label                "Sellest arvutist">
+<!ENTITY PhotoFile.accesskey            "S">
+<!ENTITY BrowsePhoto.label              "Sirvi">
+<!ENTITY BrowsePhoto.accesskey          "r">
+<!ENTITY PhotoURL.label                 "Veebist">
+<!ENTITY PhotoURL.accesskey             "b">
+<!ENTITY PhotoURL.placeholder           "Kopeeri või sisesta pildi asukoht veebis">
+<!ENTITY UpdatePhoto.label              "Uuenda">
+<!ENTITY UpdatePhoto.accesskey          "U">
+<!ENTITY PhotoDropTarget.label          "Lohista uus pilt siia">

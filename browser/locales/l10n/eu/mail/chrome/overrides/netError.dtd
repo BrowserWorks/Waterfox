@@ -1,0 +1,109 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Arazoa orria kargatzerakoan">
+<!ENTITY retry.label "Saiatu berriro">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Ezin da konektatu">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Helbide hau murriztuta dago">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Zerbitzaria ez da aurkitu">
+<!ENTITY dnsNotFound.longDesc "<ul> <li>Helbidea ondo begiratu mota honetako erroreak ekiditeko: <strong>ww</strong>.adibidea.eus <strong>www</strong>.adibidea.eus-en ordez</li> <li>Ezin baduzu inolako orririk kargatu, begiratu zure ordenagailuaren sareko konexioa.</li><li>Zure ordenagailua edo sarea firewall edo proxy baten bitartez babestuta badago, ziurtatu &brandShortName;(e)k weba nabigatzeko baimenik daukan.</li> </ul>">
+
+<!ENTITY fileNotFound.title "Fitxategia ez da aurkitu">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Egiaztatu fitxategi-izenaren kapitalizazioa edo bestelako idazketa-erroreak.</li> <li>Egiaztatu ea fitxategia lekuz aldatu, berrizendatu edo ezabatu egin den.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "Fitxategi-atzipena ukatu egin da">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Kendua edo lekuz aldatua egon liteke, edo fitxategi-baimenek sarrera eragotz lezakete.</li> </ul>">
+
+<!ENTITY generic.title "Iepa.">
+<!ENTITY generic.longDesc "<p>&brandShortName;(e)k ezin du orria kargatu.</p>">
+
+<!ENTITY malformedURI.title "Helbidea ez da baliozkoa">
+<!ENTITY malformedURI.longDesc "<ul> <li>Web helbideak normalean <strong>http://www.adibidea.eus/</strong> formatukoak dira</li> <li>Ziurtatu aurrerako barrak erabiltzen dituzula (adib.<strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "Konexioa eten egin da">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Dokumentua iraungita">
+<!ENTITY notCached.longDesc "<p>Eskatutako dokumentua ez dago cache memorian.</p><ul><li>Segurtasun-neurri gisa, &brandShortName;(e)k ez ditu berriro automatikoki eskatzen informazio pertsonala izan dezaketen dokumentuak.</li><li>Egin klik 'Saiatu berriro' botoian webguneko dokumentua berriro eskatzeko.</li></ul>">
+
+<!ENTITY netOffline.title "Lineaz kanpo">
+<!ENTITY netOffline.longDesc2 "<ul> <li>Sakatu &quot;Saiatu berriro&quot; linean jarri eta orria berritzeko.</li> </ul>">
+
+<!ENTITY contentEncodingError.title "Edukien kodeketa-errorea">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Jarri harremanetan webgunearen jabeekin arazo honen berri emateko.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Fitxategi mota EZ-segurua">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Jarri harremanetan webgunearen jabeekin arazo honen berri emateko.</li> </ul>">
+
+<!ENTITY netReset.title "Konexioa berrezarri egin da">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Konexioa denboraz kanpo gelditu da">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Ez da helbidea ulertu">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Agian bestelako softwarea instalatu behar duzu helbide hau irekitzeko.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "Proxy-zerbitzaria konexioak ukatzen ari da">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Egiaztatu proxyaren konexioaren ezarpenak.</li> <li>Sare kudeatzailearekin harremanetan jarri ziurtatzeko proxy-zerbitzaria martxan dagoela.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "Proxy-zerbitzaria ezin da aurkitu">
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Egiaztatu proxyaren konexioaren ezarpenak.</li> <li>Egiaztatu zure ordenagailuak sareko konexioa duela.</li> <li> Ordenagailua edo sarea firewall edo proxy baten bidez babestuta badaude, egiaztatu &brandShortName;(e)k webera irteteko baimena daukala.</li> </ul>">
+
+<!ENTITY redirectLoop.title "Orriak ez du birbideraketa ondo egiten">
+<!ENTITY redirectLoop.longDesc "<ul> <li>Arazo hau baliteke cookieak desgaituta eduki edo ez onartzeagatik izatea.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "Ustekabeko erantzuna zerbitzaritik">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Egiaztatu zure sistemak instalatuta duela Segurtasun-kudeatzaile Pertsonala (PSM).</li> <li>Zerbitzariaren konfigurazio ezohikoak eragina izan lezake.</li> </ul>">
+
+<!ENTITY nssFailure2.title "Konexio seguruak huts egin du">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Ikusten saiatzen ari zaren orria ezin da bistaratu jasotako datuen benetakotasuna ezin delako egiaztatu.</li> <li>Jarri harremanetan webgunearen jabeekin arazoaren berri emateko.</li> </ul>">
+
+<!ENTITY nssBadCert.title "Konexio seguruak huts egin du">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>Hau zerbitzariaren konfigurazioan errore bat dela eta izan daiteke, edo norbait zerbitzariaren nortasuna hartzen ari dela.</li> <li>Aurretik zerbitzari honetara behar bezala konektatu bazara, errorea aldirokoa izan daiteke eta geroago saia zaitezke.</li> </ul>">
+
+<!ENTITY sharedLongDesc "<ul> <li>Gunea une batez desgaituta edo oso lanpetuta egon daiteke. Saiatu berriro minutu batzuen buruan.</li> <li>Beste inolako orririk ezin baduzu kargatu, egiaztatu ordenagailuaren sareko konexioa.</li> <li>Ordenagailua edo sarea firewall edo proxy baten bidez babestuta badaude, egiaztatu &brandShortName;(e)k webera irteteko baimena daukala.</li> </ul>">
+
+<!ENTITY cspBlocked.title "Edukien segurtasun-politikak blokeatuta">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName;(e)k orri hau modu honetan kargatzea eragotzi du onartzen ez den edukien-segurtasun politika duelako.</p>">
+
+<!ENTITY xfoBlocked.title "X-Frame-Options politikak blokeatuta">
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName;(e)k orri hau testuinguru honetan kargatzea eragotzi du daukan X-Frame-Options politikak baimentzen ez duelako.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Hondatutako edukiaren errorea">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Ikusi nahi duzun orria ezin da erakutsi, datuen transmisioan errore bat antzeman delako.</p><ul><li>Mesedez kontaktatu webgune jabeaz eta jakinarazi arazo hau.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Edo salbuespen bat gehi dezakezu…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Eraman hemendik at!">
+<!ENTITY securityOverride.exceptionButtonLabel "Gehitu salbuespena…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <button> tags. It uses strings already defined above. The
+button is included here (instead of netError.xhtml) because it exposes
+functionality specific to thunderbird. -->
+
+<!ENTITY securityOverride.warningContent "<p>Ez zenuke salbuespenik gehitu behar erabat fidatzekoa ez den Internet konexio bat erabiltzen ari bazara edo ez bazaude ohituta zerbitzari honetarako abisuak ikustera.</p>  <button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> <button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "Urruneko XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Jar zaitez webgunearen jabeekin harremanetan arazo honen berri emateko.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "Zure konexioa ez da segurua">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> zaharkitua dagoen eta erasokorra den segurtasun teknologia darabil. Erasotzaile batek erraz lortu dezake zuk salbu dagoela uste duzun informazioa. Webgune administratzaileak zerbitzaria konpondu beharko luke zuk gunea bisitatu aurretik.</p><p>Errore kodea: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Blokeatutako orria">
+
+<!ENTITY networkProtocolError.title "Sare-protokoloaren errorea">
+<!ENTITY networkProtocolError.longDesc "<p>Ikusten saiatzen ari zaren orria ezin da erakutsi sare protokoloan errore bat detektatu delako.</p><ul><li>Jarri harremanetan gunearen arduradunarekin arazo honen berri emateko.</li></ul>">

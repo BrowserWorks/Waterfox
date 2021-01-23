@@ -7,6 +7,7 @@
 from __future__ import absolute_import, unicode_literals, print_function
 
 import errno
+import logging
 import os
 import sys
 
@@ -16,6 +17,7 @@ from mozbuild.base import (
     MachCommandBase,
     MozbuildObject,
     MachCommandConditions as conditions,
+    BinaryNotFoundException,
 )
 
 from mach.decorators import (
@@ -80,7 +82,16 @@ class XPCShellRunner(MozbuildObject):
             kwargs["verbose"] = True
 
         if kwargs["xpcshell"] is None:
-            kwargs["xpcshell"] = self.get_binary_path('xpcshell')
+            try:
+                kwargs["xpcshell"] = self.get_binary_path('xpcshell')
+            except BinaryNotFoundException as e:
+                self.log(logging.ERROR, 'xpcshell-test',
+                         {'error': str(e)},
+                         'ERROR: {error}')
+                self.log(logging.INFO, 'xpcshell-test',
+                         {'help': e.help()},
+                         '{help}')
+                return 1
 
         if kwargs["mozInfo"] is None:
             kwargs["mozInfo"] = os.path.join(self.topobjdir, 'mozinfo.json')
@@ -177,11 +188,17 @@ class AndroidXPCShellRunner(MozbuildObject):
         if not kwargs["symbolsPath"]:
             kwargs["symbolsPath"] = os.path.join(self.distdir, 'crashreporter-symbols')
 
-        if not kwargs["localAPK"]:
-            for file_name in os.listdir(os.path.join(kwargs["objdir"], "dist")):
-                if file_name.endswith(".apk") and file_name.startswith("fennec"):
-                    kwargs["localAPK"] = os.path.join(kwargs["objdir"], "dist", file_name)
-                    print ("using APK: %s" % kwargs["localAPK"])
+        if self.substs.get('MOZ_BUILD_APP') == 'b2g':
+            kwargs["localAPK"] = None
+        elif not kwargs["localAPK"]:
+            for root, _, paths in os.walk(os.path.join(kwargs["objdir"], "gradle")):
+                for file_name in paths:
+                    if (file_name.endswith(".apk") and
+                        file_name.startswith("geckoview-withGeckoBinaries")):
+                        kwargs["localAPK"] = os.path.join(root, file_name)
+                        print("using APK: %s" % kwargs["localAPK"])
+                        break
+                if kwargs["localAPK"]:
                     break
             else:
                 raise Exception("APK not found in objdir. You must specify an APK.")
@@ -201,7 +218,7 @@ class AndroidXPCShellRunner(MozbuildObject):
 
 def get_parser():
     build_obj = MozbuildObject.from_environment(cwd=here)
-    if conditions.is_android(build_obj):
+    if conditions.is_android(build_obj) or build_obj.substs.get('MOZ_BUILD_APP') == 'b2g':
         return parser_remote()
     else:
         return parser_desktop()
@@ -223,7 +240,7 @@ class MachCommands(MachCommandBase):
             params['manifest'] = m
 
         driver = self._spawn(BuildDriver)
-        driver.install_tests(test_objects)
+        driver.install_tests()
 
         # We should probably have a utility function to ensure the tree is
         # ready to run tests. Until then, we just create the state dir (in
@@ -242,7 +259,7 @@ class MachCommands(MachCommandBase):
         if not params['threadCount']:
             params['threadCount'] = int((cpu_count() * 3) / 2)
 
-        if conditions.is_android(self):
+        if conditions.is_android(self) or self.substs.get('MOZ_BUILD_APP') == 'b2g':
             from mozrunner.devices.android_device import verify_android_device, get_adb_path
             device_serial = params.get('deviceSerial')
             verify_android_device(self, network=True, device_serial=device_serial)

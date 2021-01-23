@@ -5,15 +5,13 @@
 job-defaults:
     # Run only on try and code-review tasks
     # to avoid running infer on the whole codebase
-    run-on-projects:
-        - try
-
+    run-on-projects: []
     platform: linux64/opt
     attributes:
         code-review: true
     worker-type:
         by-platform:
-            linux64.*: t-linux-xlarge
+            linux64.*: t-linux-xlarge-source
     worker:
         docker-image: {in-tree: android-build}
         max-run-time: 5400
@@ -23,15 +21,16 @@ job-defaults:
     run:
         using: run-task
         tooltool-downloads: public
-    toolchains:
-        - linux64-infer
-        - linux64-android-sdk-linux-repack
-        - linux64-android-ndk-linux-repack
-        - linux64-rust-android
-        - linux64-clang
-        - linux64-cbindgen
-        - linux64-nasm
-        - linux64-node
+    fetches:
+        toolchain:
+            - linux64-infer
+            - linux64-android-sdk-linux-repack
+            - linux64-android-ndk-linux-repack
+            - linux64-rust-android
+            - linux64-clang
+            - linux64-cbindgen
+            - linux64-nasm
+            - linux64-node
     when:
         files-changed:
             - 'mobile/**/*.java'
@@ -39,11 +38,11 @@ job-defaults:
 infer:
     description: Run static-analysis (infer) on Java patches
     treeherder:
-        symbol: infer
+        symbol: java(infer)
     run:
+        cwd: '{checkout}'
         command: >-
-            source $HOME/checkouts/gecko/taskcluster/scripts/misc/source-test-infer-setup.sh &&
-            cd $HOME/checkouts/gecko &&
+            source taskcluster/scripts/misc/source-test-infer-setup.sh &&
             ./mach --log-no-times configure &&
             ./mach --log-no-times static-analysis check-java --outgoing --output $HOME/infer.json
 

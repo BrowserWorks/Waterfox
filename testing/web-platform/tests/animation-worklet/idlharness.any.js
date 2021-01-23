@@ -1,12 +1,13 @@
 // META: script=/resources/WebIDLParser.js
 // META: script=/resources/idlharness.js
+// META: timeout=long
 
 'use strict';
 
 // https://wicg.github.io/animation-worklet/
 
 idl_test(
-  ['animation-worklet'],
+  ['css-animation-worklet'],
   ['worklets', 'web-animations', 'html', 'cssom', 'dom'],
   idl_array => {
     idl_array.add_objects({

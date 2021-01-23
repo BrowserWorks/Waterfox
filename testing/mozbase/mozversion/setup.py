@@ -6,7 +6,7 @@ from __future__ import absolute_import
 
 from setuptools import setup
 
-PACKAGE_VERSION = '2.1.0'
+PACKAGE_VERSION = '2.3.0'
 
 
 setup(name='mozversion',
@@ -23,7 +23,7 @@ setup(name='mozversion',
       packages=['mozversion'],
       include_package_data=True,
       zip_safe=False,
-      install_requires=['mozlog ~= 4.1',
+      install_requires=['mozlog >= 6.0',
                         'six >= 1.10.0'],
       entry_points="""
       # -*- Entry points: -*-

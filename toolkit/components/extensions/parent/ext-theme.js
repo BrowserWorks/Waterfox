@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
 
 /* global windowTracker, EventManager, EventEmitter */
@@ -18,7 +22,7 @@ const onUpdatedEmitter = new EventEmitter();
 
 // Represents an empty theme for convenience of use
 const emptyTheme = {
-  details: {},
+  details: { colors: null, images: null, properties: null },
 };
 
 let defaultTheme = emptyTheme;
@@ -172,14 +176,12 @@ class Theme {
       }
 
       switch (color) {
-        case "accentcolor":
         case "frame":
           styles.accentcolor = cssColor;
           break;
         case "frame_inactive":
           styles.accentcolorInactive = cssColor;
           break;
-        case "textcolor":
         case "tab_background_text":
           styles.textcolor = cssColor;
           break;
@@ -267,7 +269,6 @@ class Theme {
           styles.additionalBackgrounds = backgroundImages;
           break;
         }
-        case "headerURL":
         case "theme_frame": {
           let resolvedURL = baseURI.resolve(val);
           styles.headerURL = resolvedURL;
@@ -388,7 +389,7 @@ class Theme {
       lwtData.window = getWinUtils(
         windowTracker.getWindow(windowId)
       ).outerWindowID;
-      windowOverrides.set(windowId, emptyTheme);
+      windowOverrides.delete(windowId);
     } else {
       windowOverrides.clear();
       defaultTheme = emptyTheme;
@@ -472,10 +473,12 @@ this.theme = class extends ExtensionAPI {
             if (!browserWindow) {
               return Promise.reject(`Invalid window ID: ${windowId}`);
             }
-          }
 
-          if (!defaultTheme && !windowOverrides.has(windowId)) {
-            // If no theme has been initialized, nothing to do.
+            let theme = windowOverrides.get(windowId) || defaultTheme;
+            if (theme.extension !== extension) {
+              return;
+            }
+          } else if (defaultTheme.extension !== extension) {
             return;
           }
 

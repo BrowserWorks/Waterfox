@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identitiesListManageDesc.label "Bu hesabın kimliklerini yönetin. Varsayılan olarak ilk kimlik kullanılır.">
+<!ENTITY identitiesListAdd.label  "Ekle">
+<!ENTITY identitiesListAdd.accesskey  "E">
+<!ENTITY identitiesListEdit.label "Düzenle…">
+<!ENTITY identitiesListEdit.accesskey "e">
+<!ENTITY identitiesListDefault.label "Varsayılan yap">
+<!ENTITY identitiesListDefault.accesskey "V">
+<!ENTITY identitiesListDelete.label "Sil">
+<!ENTITY identitiesListDelete.accesskey "S">
+<!ENTITY identitiesListClose.label "Kapat">
+<!ENTITY identitiesListClose.accesskey "K">

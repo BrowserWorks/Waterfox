@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+
+<!ENTITY fileMenu.label          "Fayl">
+<!ENTITY fileMenu.accesskey        "F">
+<!ENTITY newMenu.label            "Yangi">
+<!ENTITY newMenu.accesskey          "Y">
+
+<!ENTITY editMenu.label          "Tahrirlash">
+<!ENTITY editMenu.accesskey        "T">
+<!ENTITY undoCmd.label            "Amalni bekor qilish">
+<!ENTITY undoCmd.accesskey          "b">
+<!ENTITY redoCmd.label            "Amalni qaytarish">
+<!ENTITY redoCmd.accesskey          "q">
+<!ENTITY deleteCmd.label          "O‘chirish">
+<!ENTITY deleteCmd.accesskey        "O">
+<!ENTITY preferencesCmd2.label "Tanlamalar">
+<!ENTITY preferencesCmd2.accesskey "T">
+<!ENTITY preferencesCmdUnix.label       "Parametrlar">
+<!ENTITY preferencesCmdUnix.accesskey     "m">
+
+<!ENTITY viewMenu.label          "Ko‘rinishi">
+<!ENTITY viewMenu.accesskey        "K">
+<!ENTITY viewToolbarsMenu.label        "Asboblar paneli">
+<!ENTITY viewToolbarsMenu.accesskey      "A">
+<!ENTITY showTaskbarCmd.label          "Holat paneli">
+<!ENTITY showTaskbarCmd.accesskey        "H">
+
+<!ENTITY closeCmd.label      "Yopish">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "Y">
+
+<!ENTITY quitApplicationCmd.label  "Chiqish">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "q">
+
+<!ENTITY quitApplicationCmdUnix.label  "Chiqish">
+<!ENTITY quitApplicationCmdUnix.accesskey  "q">
+
+<!ENTITY quitApplicationCmdMac.label  "&brandShortName;dan chiqish">
+<!ENTITY quitApplicationCmdMac.accesskey  "c">

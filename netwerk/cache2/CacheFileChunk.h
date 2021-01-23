@@ -9,8 +9,8 @@
 #include "CacheStorageService.h"
 #include "CacheHashUtils.h"
 #include "CacheFileUtils.h"
-#include "nsAutoPtr.h"
 #include "mozilla/Mutex.h"
+#include "mozilla/UniquePtr.h"
 
 namespace mozilla {
 namespace net {
@@ -112,8 +112,8 @@ NS_DEFINE_STATIC_IID_ACCESSOR(CacheFileChunkListener,
 
 class ChunkListenerItem {
  public:
-  ChunkListenerItem() { MOZ_COUNT_CTOR(ChunkListenerItem); }
-  ~ChunkListenerItem() { MOZ_COUNT_DTOR(ChunkListenerItem); }
+  MOZ_COUNTED_DEFAULT_CTOR(ChunkListenerItem)
+  MOZ_COUNTED_DTOR(ChunkListenerItem)
 
   nsCOMPtr<nsIEventTarget> mTarget;
   nsCOMPtr<CacheFileChunkListener> mCallback;
@@ -121,8 +121,8 @@ class ChunkListenerItem {
 
 class ChunkListeners {
  public:
-  ChunkListeners() { MOZ_COUNT_CTOR(ChunkListeners); }
-  ~ChunkListeners() { MOZ_COUNT_DTOR(ChunkListeners); }
+  MOZ_COUNTED_DEFAULT_CTOR(ChunkListeners)
+  MOZ_COUNTED_DTOR(ChunkListeners)
 
   nsTArray<ChunkListenerItem*> mItems;
 };
@@ -140,7 +140,7 @@ class CacheFileChunk final : public CacheFileIOListener,
                 CacheHash::Hash16_t aHash, CacheFileChunkListener* aCallback);
   nsresult Write(CacheFileHandle* aHandle, CacheFileChunkListener* aCallback);
   void WaitForUpdate(CacheFileChunkListener* aCallback);
-  nsresult CancelWait(CacheFileChunkListener* aCallback);
+  void CancelWait(CacheFileChunkListener* aCallback);
   nsresult NotifyUpdateListeners();
 
   uint32_t Index() const;
@@ -182,7 +182,7 @@ class CacheFileChunk final : public CacheFileIOListener,
   void AssertOwnsLock() const;
 
   void UpdateDataSize(uint32_t aOffset, uint32_t aLen);
-  nsresult Truncate(uint32_t aOffset);
+  void Truncate(uint32_t aOffset);
 
   bool CanAllocate(uint32_t aSize) const;
   void BuffersAllocationChanged(uint32_t aFreed, uint32_t aAllocated);
@@ -217,7 +217,7 @@ class CacheFileChunk final : public CacheFileIOListener,
   nsTArray<RefPtr<CacheFileChunkBuffer>> mOldBufs;
 
   // Read handle that is used during writing the chunk to the disk.
-  nsAutoPtr<CacheFileChunkReadHandle> mWritingStateHandle;
+  UniquePtr<CacheFileChunkReadHandle> mWritingStateHandle;
 
   // Buffer that is used to read the chunk from the disk. It is allowed to write
   // a new data to chunk while we wait for the data from the disk. In this case

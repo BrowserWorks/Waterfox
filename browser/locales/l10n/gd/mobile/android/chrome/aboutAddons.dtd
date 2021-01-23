@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "Tuilleadain">
+<!ENTITY aboutAddons.header2                    "Na tuilleadain agad">
+
+<!ENTITY addonAction.enable                     "Cuir an comas">
+<!ENTITY addonAction.disable                    "Cuir à comas">
+<!ENTITY addonAction.uninstall                  "Dì-stàlaich">
+<!ENTITY addonAction.undo                       "Neo-dhèan">
+<!ENTITY addonAction.update                     "Ùraich">
+
+<!ENTITY addonUnsigned.message                  "Cha b’ urrainn dha &brandShortName; an tuilleadan seo a dhearbhadh.">
+<!ENTITY addonUnsigned.learnMore                "Barrachd fiosrachaidh">

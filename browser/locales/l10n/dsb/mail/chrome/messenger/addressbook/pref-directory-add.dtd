@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY directoryName.label               "Mě: ">
+<!ENTITY directoryName.accesskey           "M">
+<!ENTITY directoryHostname.label           "Serwerowe mě: ">
+<!ENTITY directoryHostname.accesskey       "S">
+<!ENTITY directoryBaseDN.label             "Zakładny DN: ">
+<!ENTITY directoryBaseDN.accesskey         "Z">
+<!ENTITY findButton.label                  "Pytaś">
+<!ENTITY findButton.accesskey              "P">
+<!ENTITY directorySecure.label             "Wěsty zwisk wužywaś (SSL)">
+<!ENTITY directorySecure.accesskey         "L">
+<!ENTITY directoryLogin.label              "Bind DN: ">
+<!ENTITY directoryLogin.accesskey          "B">
+<!ENTITY General.tab                       "Powšykne">
+<!ENTITY Offline.tab                       "Offline">
+<!ENTITY Advanced.tab                      "Rozšyrjone">
+<!ENTITY portNumber.label                  "Portowe cysło: ">
+<!ENTITY portNumber.accesskey              "c">
+<!ENTITY searchFilter.label                "Pytański filter: ">
+<!ENTITY searchFilter.accesskey            "f">
+<!ENTITY scope.label                       "Wobwod: ">
+<!ENTITY scope.accesskey                   "w">
+<!ENTITY scopeOneLevel.label               "Jadna rownina">
+<!ENTITY scopeOneLevel.accesskey           "J">
+<!ENTITY scopeSubtree.label                "Pódbom">
+<!ENTITY scopeSubtree.accesskey            "P">
+<!ENTITY return.label                      "Maksimalnje">
+<!ENTITY return.accesskey                  "k">
+<!ENTITY results.label                     "wuslědkow wrośiś">
+<!ENTITY offlineText.label                 "Móžośo lokalnu kopiju toś togo zapisa ześěgnuś, aby k dispoziciji stojał, gaž źěłaśo offline.">
+<!ENTITY saslMechanism.label               "Pśizjawjeńska metoda: ">
+<!ENTITY saslMechanism.accesskey           "m">
+<!ENTITY saslOff.label                     "Jadnora">
+<!ENTITY saslOff.accesskey                 "J">
+<!ENTITY saslGSSAPI.label                  "Kerberos (GSSAPI)">
+<!ENTITY saslGSSAPI.accesskey              "K">
+<!-- Localization note: this is here because the width of the dialog 
+     is determined by the width of the base DN box; and that is likely
+     to vary somewhat with the language.
+-->
+
+<!ENTITY newDirectoryWidth                 "36em">

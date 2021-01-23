@@ -247,6 +247,12 @@ class Transaction {
       transaction.onerror = () => {
         reject(transaction.error);
       };
+      transaction.onabort = () => {
+        const error =
+          transaction.error ||
+          new DOMException("The operation has been aborted", "AbortError");
+        reject(error);
+      };
     });
   }
 
@@ -256,7 +262,7 @@ class Transaction {
 
   /**
    * Returns a Promise which resolves when the transaction completes, or
-   * rejects when a transaction error occurs.
+   * rejects when a transaction error or abort occurs.
    *
    * @returns {Promise}
    */

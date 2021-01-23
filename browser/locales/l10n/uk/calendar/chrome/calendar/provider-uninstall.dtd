@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Вилучити постачальника">
+<!ENTITY providerUninstall.accept.label                    "Відписатись від обраного">
+<!ENTITY providerUninstall.accept.accesskey                "В">
+<!ENTITY providerUninstall.cancel.label                    "Зберегти додаток">
+<!ENTITY providerUninstall.cancel.accesskey                "З">
+<!ENTITY providerUninstall.preName.label                   "Ви бажаєте вилучити або зробити неактивним:">
+<!ENTITY providerUninstall.postName.label                  "Як наслідок цього календарі, що зазначені нижче, стануть неактивними.">
+<!ENTITY providerUninstall.reinstallNote.label             "Якщо ви не плануєте перевстановлювати цього постачальника, ви можете відмовитись від підписки на календарі від цього постачальника.">

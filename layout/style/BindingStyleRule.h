@@ -30,8 +30,8 @@ class BindingStyleRule : public css::Rule {
   BindingStyleRule(StyleSheet* aSheet, css::Rule* aParentRule,
                    uint32_t aLineNumber, uint32_t aColumnNumber)
       : css::Rule(aSheet, aParentRule, aLineNumber, aColumnNumber) {}
-  BindingStyleRule(const BindingStyleRule& aCopy) : css::Rule(aCopy) {}
-  virtual ~BindingStyleRule() {}
+  BindingStyleRule(const BindingStyleRule& aCopy) = default;
+  virtual ~BindingStyleRule() = default;
 
  public:
   // This is pure virtual because we have no members, and are an abstract class
@@ -52,6 +52,7 @@ class BindingStyleRule : public css::Rule {
   virtual nsresult SelectorMatchesElement(dom::Element* aElement,
                                           uint32_t aSelectorIndex,
                                           const nsAString& aPseudo,
+                                          bool aRelevantLinkVisited,
                                           bool* aMatches) = 0;
   virtual NotNull<DeclarationBlock*> GetDeclarationBlock() const = 0;
 

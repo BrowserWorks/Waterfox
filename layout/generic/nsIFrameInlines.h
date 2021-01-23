@@ -14,8 +14,17 @@
 #include "nsCSSAnonBoxes.h"
 #include "nsFrameManager.h"
 
+bool nsIFrame::IsSVGGeometryFrameOrSubclass() const {
+  return IsSVGGeometryFrame() || IsSVGImageFrame();
+}
+
 bool nsIFrame::IsFlexItem() const {
   return GetParent() && GetParent()->IsFlexContainerFrame() &&
+         !(GetStateBits() & NS_FRAME_OUT_OF_FLOW);
+}
+
+bool nsIFrame::IsGridItem() const {
+  return GetParent() && GetParent()->IsGridContainerFrame() &&
          !(GetStateBits() & NS_FRAME_OUT_OF_FLOW);
 }
 
@@ -26,6 +35,13 @@ bool nsIFrame::IsFlexOrGridContainer() const {
 bool nsIFrame::IsFlexOrGridItem() const {
   return !(GetStateBits() & NS_FRAME_OUT_OF_FLOW) && GetParent() &&
          GetParent()->IsFlexOrGridContainer();
+}
+
+bool nsIFrame::IsMasonry(mozilla::LogicalAxis aAxis) const {
+  MOZ_DIAGNOSTIC_ASSERT(IsGridContainerFrame());
+  return HasAnyStateBits(aAxis == mozilla::eLogicalAxisBlock
+                             ? NS_STATE_GRID_IS_ROW_MASONRY
+                             : NS_STATE_GRID_IS_COL_MASONRY);
 }
 
 bool nsIFrame::IsTableCaption() const {
@@ -56,10 +72,6 @@ bool nsIFrame::IsAbsolutelyPositioned(
     const nsStyleDisplay* aStyleDisplay) const {
   const nsStyleDisplay* disp = StyleDisplayWithOptionalParam(aStyleDisplay);
   return disp->IsAbsolutelyPositioned(this);
-}
-
-bool nsIFrame::IsBlockInside() const {
-  return StyleDisplay()->IsBlockInside(this);
 }
 
 bool nsIFrame::IsBlockOutside() const {
@@ -108,7 +120,7 @@ nscoord nsIFrame::SynthesizeBaselineBOffsetFromMarginBox(
     return MOZ_UNLIKELY(aWM.IsLineInverted()) ? BSize(aWM) + margin.BStart(aWM)
                                               : -margin.BEnd(aWM);
   }
-  // Round up for central baseline offset, to be consistent with eFirst.
+  // Round up for central baseline offset, to be consistent with ::First.
   nscoord marginBoxSize = BSize(aWM) + margin.BStartEnd(aWM);
   nscoord marginBoxCenter = (marginBoxSize / 2) + (marginBoxSize % 2);
   return marginBoxCenter - margin.BEnd(aWM);
@@ -123,9 +135,38 @@ nscoord nsIFrame::SynthesizeBaselineBOffsetFromBorderBox(
                                                     : borderBoxSize / 2;
   }
   MOZ_ASSERT(aGroup == BaselineSharingGroup::Last);
-  // Round up for central baseline offset, to be consistent with eFirst.
+  // Round up for central baseline offset, to be consistent with ::First.
   auto borderBoxCenter = (borderBoxSize / 2) + (borderBoxSize % 2);
   return MOZ_LIKELY(aWM.IsAlphabeticalBaseline()) ? 0 : borderBoxCenter;
+}
+
+nscoord nsIFrame::SynthesizeBaselineBOffsetFromContentBox(
+    mozilla::WritingMode aWM, BaselineSharingGroup aGroup) const {
+  mozilla::WritingMode wm = GetWritingMode();
+  MOZ_ASSERT(!aWM.IsOrthogonalTo(wm));
+  const auto bp = GetLogicalUsedBorderAndPadding(wm)
+                      .ApplySkipSides(GetLogicalSkipSides())
+                      .ConvertTo(aWM, wm);
+
+  if (MOZ_UNLIKELY(aWM.IsCentralBaseline())) {
+    nscoord contentBoxBSize = BSize(aWM) - bp.BStartEnd(aWM);
+    if (aGroup == BaselineSharingGroup::First) {
+      return contentBoxBSize / 2 + bp.BStart(aWM);
+    }
+    // Return the same center position as for ::First, but as offset from end:
+    nscoord halfContentBoxBSize = (contentBoxBSize / 2) + (contentBoxBSize % 2);
+    return halfContentBoxBSize + bp.BEnd(aWM);
+  }
+  if (aGroup == BaselineSharingGroup::First) {
+    // First baseline for inverted-line content is the block-start content
+    // edge, as the frame is in effect "flipped" for alignment purposes.
+    return MOZ_UNLIKELY(aWM.IsLineInverted()) ? bp.BStart(aWM)
+                                              : BSize(aWM) - bp.BEnd(aWM);
+  }
+  // Last baseline for inverted-line content is the block-start content edge,
+  // as the frame is in effect "flipped" for alignment purposes.
+  return MOZ_UNLIKELY(aWM.IsLineInverted()) ? BSize(aWM) - bp.BStart(aWM)
+                                            : bp.BEnd(aWM);
 }
 
 nscoord nsIFrame::BaselineBOffset(mozilla::WritingMode aWM,
@@ -139,15 +180,17 @@ nscoord nsIFrame::BaselineBOffset(mozilla::WritingMode aWM,
   if (aAlignmentContext == AlignmentContext::Inline) {
     return SynthesizeBaselineBOffsetFromMarginBox(aWM, aBaselineGroup);
   }
-  // XXX AlignmentContext::Table should use content box?
+  if (aAlignmentContext == AlignmentContext::Table) {
+    return SynthesizeBaselineBOffsetFromContentBox(aWM, aBaselineGroup);
+  }
   return SynthesizeBaselineBOffsetFromBorderBox(aWM, aBaselineGroup);
 }
 
-void nsIFrame::PropagateRootElementWritingMode(
-    mozilla::WritingMode aRootElemWM) {
+void nsIFrame::PropagateWritingModeToSelfAndAncestors(
+    mozilla::WritingMode aWM) {
   MOZ_ASSERT(IsCanvasFrame());
   for (auto f = this; f; f = f->GetParent()) {
-    f->mWritingMode = aRootElemWM;
+    f->mWritingMode = aWM;
   }
 }
 
@@ -182,7 +225,8 @@ nsIFrame* nsIFrame::GetClosestFlattenedTreeAncestorPrimaryFrame() const {
   if (!mContent) {
     return nullptr;
   }
-  Element* parent = mContent->GetFlattenedTreeParentElementForStyle();
+  mozilla::dom::Element* parent =
+      mContent->GetFlattenedTreeParentElementForStyle();
   while (parent) {
     if (nsIFrame* frame = parent->GetPrimaryFrame()) {
       return frame;
@@ -195,6 +239,29 @@ nsIFrame* nsIFrame::GetClosestFlattenedTreeAncestorPrimaryFrame() const {
     parent = parent->GetFlattenedTreeParentElementForStyle();
   }
   return nullptr;
+}
+
+nsPoint nsIFrame::GetNormalPosition(bool* aHasProperty) const {
+  nsPoint* normalPosition = GetProperty(NormalPositionProperty());
+  if (normalPosition) {
+    if (aHasProperty) {
+      *aHasProperty = true;
+    }
+    return *normalPosition;
+  }
+  if (aHasProperty) {
+    *aHasProperty = false;
+  }
+  return GetPosition();
+}
+
+mozilla::LogicalPoint nsIFrame::GetLogicalNormalPosition(
+    mozilla::WritingMode aWritingMode, const nsSize& aContainerSize) const {
+  // Subtract the size of this frame from the container size to get
+  // the correct position in rtl frames where the origin is on the
+  // right instead of the left
+  return mozilla::LogicalPoint(aWritingMode, GetNormalPosition(),
+                               aContainerSize - mRect.Size());
 }
 
 #endif

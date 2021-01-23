@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from ./customize.xul -->
+
+<!-- LOCALIZATION NOTE  sidebar.customize.title.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.title.label          "Přizpůsobit lištu &sidebarName;">
+<!-- LOCALIZATION NOTE  sidebar.customize.current.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.current.label        "Panely v liště &sidebarName;:">
+<!ENTITY sidebar.customize.current.accesskey    "P">
+
+<!ENTITY sidebar.customize.title                "Přizpůsobit postranní lištu">
+<!ENTITY sidebar.customize.current2.label       "Panely v postranní liště:">
+<!ENTITY sidebar.customize.current2.accesskey   "o">
+<!ENTITY sidebar.customize.customize.label      "Přizpůsobit panel…">
+<!ENTITY sidebar.customize.customize.accesskey  "P">
+<!ENTITY sidebar.customize.remove.label         "Odebrat">
+<!ENTITY sidebar.customize.remove.accesskey     "R">
+<!ENTITY sidebar.customize.additional.label     "Dostupné panely:">
+<!ENTITY sidebar.customize.additional.accesskey "d">
+<!ENTITY sidebar.customize.add.label            "Přidat">
+<!ENTITY sidebar.customize.add.accesskey        "A">
+<!ENTITY sidebar.customize.preview.label        "Náhled…">
+<!ENTITY sidebar.customize.preview.accesskey    "N">
+<!ENTITY sidebar.customize.up.label             "Posunout výše">
+<!ENTITY sidebar.customize.up.accesskey         "v">
+<!ENTITY sidebar.customize.down.label           "Posunout níže">
+<!ENTITY sidebar.customize.down.accesskey       "e">
+<!ENTITY sidebar.more.label                     "Získat další…">
+<!ENTITY sidebar.more.accesskey                 "Z">

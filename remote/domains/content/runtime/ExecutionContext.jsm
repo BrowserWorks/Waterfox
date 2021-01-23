@@ -21,6 +21,7 @@ const TYPED_ARRAY_CLASSES = [
   "Float32Array",
   "Float64Array",
 ];
+
 function uuid() {
   return uuidGen
     .generateUUID()
@@ -40,16 +41,19 @@ function uuid() {
  *   object. But it can also be any global object, like a worker global scope object.
  */
 class ExecutionContext {
-  constructor(dbg, debuggee) {
+  constructor(dbg, debuggee, id, isDefault) {
     this._debugger = dbg;
     this._debuggee = this._debugger.addDebuggee(debuggee);
 
     // Here, we assume that debuggee is a window object and we will propably have
     // to adapt that once we cover workers or contexts that aren't a document.
-    const { windowUtils } = debuggee;
-    this.id = windowUtils.currentInnerWindowID;
-    this.frameId = windowUtils.outerWindowID;
+    this.window = debuggee;
+    this.windowId = debuggee.windowUtils.currentInnerWindowID;
+    this.id = id;
+    this.frameId = debuggee.docShell.browsingContext.id.toString();
+    this.isDefault = isDefault;
 
+    // objectId => Debugger.Object
     this._remoteObjects = new Map();
   }
 
@@ -57,12 +61,57 @@ class ExecutionContext {
     this._debugger.removeDebuggee(this._debuggee);
   }
 
-  hasRemoteObject(id) {
-    return this._remoteObjects.has(id);
+  hasRemoteObject(objectId) {
+    return this._remoteObjects.has(objectId);
   }
 
-  releaseObject(id) {
-    return this._remoteObjects.delete(id);
+  getRemoteObject(objectId) {
+    return this._remoteObjects.get(objectId);
+  }
+
+  getRemoteObjectByNodeId(nodeId) {
+    for (const value of this._remoteObjects.values()) {
+      if (value.nodeId == nodeId) {
+        return value;
+      }
+    }
+
+    return null;
+  }
+
+  releaseObject(objectId) {
+    return this._remoteObjects.delete(objectId);
+  }
+
+  /**
+   * Add a new debuggerObj to the object cache.
+   *
+   * Whenever an object is returned as reference, a new entry is added
+   * to the internal object cache. It means the same underlying object or node
+   * can be represented via multiple references.
+   */
+  setRemoteObject(debuggerObj) {
+    const objectId = uuid();
+
+    // TODO: Wrap Symbol into an object,
+    // which would allow us to set the objectId.
+    if (typeof debuggerObj == "object") {
+      debuggerObj.objectId = objectId;
+    }
+
+    // For node objects add an unique identifier.
+    if (
+      debuggerObj instanceof Debugger.Object &&
+      Node.isInstance(debuggerObj.unsafeDereference())
+    ) {
+      debuggerObj.nodeId = uuid();
+      // We do not differentiate between backendNodeId and nodeId (yet)
+      debuggerObj.backendNodeId = debuggerObj.nodeId;
+    }
+
+    this._remoteObjects.set(objectId, debuggerObj);
+
+    return objectId;
   }
 
   /**
@@ -70,13 +119,21 @@ class ExecutionContext {
    *
    * @param {String} expression
    *   The JS expression to evaluate against the JS context.
-   * @return {Object} A multi-form object depending if the execution succeed or failed.
-   *   If the expression failed to evaluate, it will return an object with an
-   *   `exceptionDetails` attribute matching the `ExceptionDetails` CDP type.
-   *   Otherwise it will return an object with `result` attribute whose type is
+   * @param {boolean} options.awaitPromise
+   *     Whether execution should `await` for resulting value
+   *     and return once awaited promise is resolved.
+   * @param {boolean} returnByValue
+   *     Whether the result is expected to be a JSON object
+   *     that should be sent by value.
+   *
+   * @return {Object} A multi-form object depending if the execution
+   *   succeed or failed. If the expression failed to evaluate,
+   *   it will return an object with an `exceptionDetails` attribute
+   *   matching the `ExceptionDetails` CDP type. Otherwise it will
+   *   return an object with `result` attribute whose type is
    *   `RemoteObject` CDP type.
    */
-  evaluate(expression) {
+  async evaluate(expression, awaitPromise, returnByValue) {
     let rv = this._debuggee.executeInGlobal(expression);
     if (!rv) {
       return {
@@ -85,12 +142,36 @@ class ExecutionContext {
         },
       };
     }
+
     if (rv.throw) {
       return this._returnError(rv.throw);
     }
-    return {
-      result: this._toRemoteObject(rv.return),
-    };
+
+    let result = rv.return;
+
+    if (result && result.isPromise && awaitPromise) {
+      if (result.promiseState === "fulfilled") {
+        result = result.promiseValue;
+      } else if (result.promiseState === "rejected") {
+        return this._returnError(result.promiseReason);
+      } else {
+        try {
+          const promiseResult = await result.unsafeDereference();
+          result = this._debuggee.makeDebuggeeValue(promiseResult);
+        } catch (e) {
+          // The promise has been rejected
+          return this._returnError(e);
+        }
+      }
+    }
+
+    if (returnByValue) {
+      result = this._toRemoteObjectByValue(result);
+    } else {
+      result = this._toRemoteObject(result);
+    }
+
+    return { result };
   }
 
   /**
@@ -132,7 +213,7 @@ class ExecutionContext {
     // Map the given objectId to a JS reference.
     let thisArg = null;
     if (objectId) {
-      thisArg = this._remoteObjects.get(objectId);
+      thisArg = this.getRemoteObject(objectId);
       if (!thisArg) {
         throw new Error(`Unable to get target object with id: ${objectId}`);
       }
@@ -180,38 +261,60 @@ class ExecutionContext {
     }
 
     if (returnByValue) {
-      return {
-        result: {
-          value: this._serialize(result),
-        },
-      };
+      result = this._toRemoteObjectByValue(result);
+    } else {
+      result = this._toRemoteObject(result);
+    }
+
+    return { result };
+  }
+
+  getProperties({ objectId, ownProperties }) {
+    let debuggerObj = this.getRemoteObject(objectId);
+    if (!debuggerObj) {
+      throw new Error("Could not find object with given id");
+    }
+
+    const result = [];
+    const serializeObject = (debuggerObj, isOwn) => {
+      for (const propertyName of debuggerObj.getOwnPropertyNames()) {
+        const descriptor = debuggerObj.getOwnPropertyDescriptor(propertyName);
+        result.push({
+          name: propertyName,
+
+          configurable: descriptor.configurable,
+          enumerable: descriptor.enumerable,
+          writable: descriptor.writable,
+          value: this._toRemoteObject(descriptor.value),
+          get: descriptor.get
+            ? this._toRemoteObject(descriptor.get)
+            : undefined,
+          set: descriptor.set
+            ? this._toRemoteObject(descriptor.set)
+            : undefined,
+
+          isOwn,
+        });
+      }
+    };
+
+    // When `ownProperties` is set to true, we only iterate over own properties.
+    // Otherwise, we also iterate over propreties inherited from the prototype chain.
+    serializeObject(debuggerObj, true);
+
+    if (!ownProperties) {
+      while (true) {
+        debuggerObj = debuggerObj.proto;
+        if (!debuggerObj) {
+          break;
+        }
+        serializeObject(debuggerObj, false);
+      }
     }
 
     return {
-      result: this._toRemoteObject(result),
+      result,
     };
-  }
-
-  /**
-   * Convert a given `Debugger.Object` to a JSON string.
-   *
-   * @param {Debugger.Object} obj
-   *  The object to convert
-   * @return {String}
-   *  The JSON string
-   */
-  _serialize(obj) {
-    if (typeof obj == "undefined") {
-      return undefined;
-    }
-    const result = this._debuggee.executeInGlobalWithBindings(
-      "JSON.stringify(e)",
-      { e: obj }
-    );
-    if (result.throw) {
-      throw new Error("Object is not serializable");
-    }
-    return JSON.parse(result.return);
   }
 
   /**
@@ -220,23 +323,31 @@ class ExecutionContext {
    */
   _fromCallArgument(arg) {
     if (arg.objectId) {
-      if (!this._remoteObjects.has(arg.objectId)) {
-        throw new Error(`Cannot find object with ID: ${arg.objectId}`);
+      if (!this.hasRemoteObject(arg.objectId)) {
+        throw new Error("Could not find object with given id");
       }
-      return this._remoteObjects.get(arg.objectId);
+      return this.getRemoteObject(arg.objectId);
     }
+
     if (arg.unserializableValue) {
       switch (arg.unserializableValue) {
+        case "-0":
+          return -0;
         case "Infinity":
           return Infinity;
         case "-Infinity":
           return -Infinity;
-        case "-0":
-          return -0;
         case "NaN":
           return NaN;
+        default:
+          if (/^\d+n$/.test(arg.unserializableValue)) {
+            // eslint-disable-next-line no-undef
+            return BigInt(arg.unserializableValue.slice(0, -1));
+          }
+          throw new Error("Couldn't parse value object in call argument");
       }
     }
+
     return this._deserialize(arg.value);
   }
 
@@ -267,88 +378,157 @@ class ExecutionContext {
    *  The serialized description of the given object
    */
   _toRemoteObject(debuggerObj) {
+    const result = {};
+
     // First handle all non-primitive values which are going to be wrapped by the
     // Debugger API into Debugger.Object instances
     if (debuggerObj instanceof Debugger.Object) {
-      const objectId = uuid();
-      this._remoteObjects.set(objectId, debuggerObj);
       const rawObj = debuggerObj.unsafeDereference();
+
+      result.objectId = this.setRemoteObject(debuggerObj);
+      result.type = typeof rawObj;
 
       // Map the Debugger API `class` attribute to CDP `subtype`
       const cls = debuggerObj.class;
-      let subtype;
       if (debuggerObj.isProxy) {
-        subtype = "proxy";
+        result.subtype = "proxy";
       } else if (cls == "Array") {
-        subtype = "array";
+        result.subtype = "array";
       } else if (cls == "RegExp") {
-        subtype = "regexp";
+        result.subtype = "regexp";
       } else if (cls == "Date") {
-        subtype = "date";
+        result.subtype = "date";
       } else if (cls == "Map") {
-        subtype = "map";
+        result.subtype = "map";
       } else if (cls == "Set") {
-        subtype = "set";
+        result.subtype = "set";
       } else if (cls == "WeakMap") {
-        subtype = "weakmap";
+        result.subtype = "weakmap";
       } else if (cls == "WeakSet") {
-        subtype = "weakset";
+        result.subtype = "weakset";
       } else if (cls == "Error") {
-        subtype = "error";
+        result.subtype = "error";
       } else if (cls == "Promise") {
-        subtype = "promise";
+        result.subtype = "promise";
       } else if (TYPED_ARRAY_CLASSES.includes(cls)) {
-        subtype = "typedarray";
+        result.subtype = "typedarray";
       } else if (Node.isInstance(rawObj)) {
-        subtype = "node";
+        result.subtype = "node";
+        result.className = ChromeUtils.getClassName(rawObj);
+        result.description = rawObj.localName || rawObj.nodeName;
+        if (rawObj.id) {
+          result.description += `#${rawObj.id}`;
+        }
       }
-
-      const type = typeof rawObj;
-      return { objectId, type, subtype };
+      return result;
     }
 
     // Now, handle all values that Debugger API isn't wrapping into Debugger.API.
     // This is all the primitive JS types.
-    const type = typeof debuggerObj;
+    result.type = typeof debuggerObj;
 
     // Symbol and BigInt are primitive values but aren't serializable.
     // CDP expects them to be considered as objects, with an objectId to later inspect
     // them.
-    if (type == "symbol" || type == "bigint") {
-      const objectId = uuid();
-      this._remoteObjects.set(objectId, debuggerObj);
-      return { objectId, type };
+    if (result.type == "symbol") {
+      result.description = debuggerObj.toString();
+      result.objectId = this.setRemoteObject(debuggerObj);
+
+      return result;
     }
 
     // A few primitive type can't be serialized and CDP has special case for them
-    let unserializableValue = undefined;
     if (Object.is(debuggerObj, NaN)) {
-      unserializableValue = "NaN";
+      result.unserializableValue = "NaN";
     } else if (Object.is(debuggerObj, -0)) {
+      result.unserializableValue = "-0";
+    } else if (Object.is(debuggerObj, Infinity)) {
+      result.unserializableValue = "Infinity";
+    } else if (Object.is(debuggerObj, -Infinity)) {
+      result.unserializableValue = "-Infinity";
+    } else if (result.type == "bigint") {
+      result.unserializableValue = `${debuggerObj}n`;
+    }
+
+    if (result.unserializableValue) {
+      result.description = result.unserializableValue;
+      return result;
+    }
+
+    // Otherwise, we serialize the primitive values as-is via `value` attribute
+    result.value = debuggerObj;
+
+    // null is special as it has a dedicated subtype
+    if (debuggerObj === null) {
+      result.subtype = "null";
+    }
+
+    return result;
+  }
+
+  /**
+   * Given a `Debugger.Object` object, return a JSON-serializable description of it
+   * matching `RemoteObject` CDP type.
+   *
+   * @param {Debugger.Object} debuggerObj
+   *  The object to serialize
+   * @return {RemoteObject}
+   *  The serialized description of the given object
+   */
+  _toRemoteObjectByValue(debuggerObj) {
+    const type = typeof debuggerObj;
+
+    if (type == "undefined") {
+      return { type };
+    }
+
+    let unserializableValue = undefined;
+    if (Object.is(debuggerObj, -0)) {
       unserializableValue = "-0";
+    } else if (Object.is(debuggerObj, NaN)) {
+      unserializableValue = "NaN";
     } else if (Object.is(debuggerObj, Infinity)) {
       unserializableValue = "Infinity";
     } else if (Object.is(debuggerObj, -Infinity)) {
       unserializableValue = "-Infinity";
+    } else if (typeof debuggerObj == "bigint") {
+      unserializableValue = `${debuggerObj}n`;
     }
+
     if (unserializableValue) {
       return {
+        type,
         unserializableValue,
+        description: unserializableValue,
       };
     }
 
-    // Otherwise, we serialize the primitive values as-is via `value` attribute
+    const value = this._serialize(debuggerObj);
+    return {
+      type: typeof value,
+      value,
+      description: value != null ? value.toString() : value,
+    };
+  }
 
-    // null is special as it has a dedicated subtype
-    let subtype;
-    if (debuggerObj === null) {
-      subtype = "null";
+  /**
+   * Convert a given `Debugger.Object` to an object.
+   *
+   * @param {Debugger.Object} obj
+   *  The object to convert
+   *
+   * @return {Object}
+   *  The converted object
+   */
+  _serialize(debuggerObj) {
+    const result = this._debuggee.executeInGlobalWithBindings(
+      "JSON.stringify(e)",
+      { e: debuggerObj }
+    );
+    if (result.throw) {
+      throw new Error("Object is not serializable");
     }
 
-    return {
-      type,
-      subtype,
-      value: debuggerObj,
-    };
+    return JSON.parse(result.return);
   }
 }

@@ -1,10 +1,10 @@
-// |reftest| skip -- Intl.ListFormat is not supported
 // Copyright 2018 Igalia, S.L. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
 esid: sec-Intl.ListFormat.prototype.format
-description: Checks the "format" property of the ListFormat prototype object.
+description: >
+    Checks the "format" property of the ListFormat prototype object.
 info: |
     Intl.ListFormat.prototype.format ([ list ])
 

@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     tab.cookiesonsystem.label      "Įrašyti slapukai">
+<!ENTITY     tab.bannedservers.label        "Svetainės">
+<!ENTITY     div.bannedservers.label        "Svetainės ir jų teisės įrašinėti slapukus:">
+<!ENTITY     div.cookiesonsystem.label      "Slapukai, įrašyti šiame kompiuteryje:">
+<!ENTITY     treehead.cookiename.label      "Slapuko vardas">
+<!ENTITY     treehead.cookiedomain.label    "Saityno sritis">
+<!ENTITY     treehead.cookieexpires.label   "Galioja iki">
+<!ENTITY     treehead.infoselected.label    "Informacija apie pažymėtą slapuką">
+<!ENTITY     button.removecookie.label      "Pašalinti slapuką">
+<!ENTITY     button.removecookie.accesskey  "š">
+<!ENTITY     button.removeallcookies.label  "Pašalinti visus slapukus">
+<!ENTITY     button.removeallcookies.accesskey "v">
+
+<!ENTITY     search.placeholder             "Ieškoti slapukų">
+<!ENTITY     focusSearch.key                "f">
+<!ENTITY     selectAll.key                  "a">
+
+<!ENTITY     props.name.label               "Vardas:">
+<!ENTITY     props.value.label              "Kita informacija:">
+<!ENTITY     props.domain.label             "Pagrindinis kompiuteris:">
+<!ENTITY     props.path.label               "Kelias:">
+<!ENTITY     props.secure.label             "Serverio saugumas:">
+<!ENTITY     props.expires.label            "Galioja iki:">
+
+<!ENTITY     treehead.sitename.label        "Svetainė">
+
+<!ENTITY     treehead.status.label          "Leidimas">
+<!ENTITY     windowtitle.label              "Slapukų tvarkytuvė">
+
+<!ENTITY     blockSite.label                "Neleisti">
+<!ENTITY     blockSite.accesskey            "N">
+<!ENTITY     allowSite.label                "Leisti">
+<!ENTITY     allowSite.accesskey            "L">
+<!ENTITY     allowSiteSession.label         "Tik vienam seansui">
+<!ENTITY     allowSiteSession.accesskey     "s">
+<!ENTITY     removepermission.label         "Pašalinti svetainę">
+<!ENTITY     removepermission.accesskey     "š">
+<!ENTITY     removeallpermissions.label     "Pašalinti visas svetaines">
+<!ENTITY     removeallpermissions.accesskey "v">
+
+<!ENTITY     futureCookies.label            "Svetainėms, kurių slapukai jau buvo pašalinti, neleisti jų įrašyti iš naujo">
+<!ENTITY     futureCookies.accesskey        "b">

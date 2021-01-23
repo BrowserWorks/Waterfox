@@ -1,0 +1,75 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tableWindow.title                "Airíonna an Tábla">
+<!ENTITY applyButton.label                "Cuir i bhFeidhm">
+<!ENTITY applyButton.accesskey            "C">
+<!ENTITY closeButton.label                "Dún">
+<!ENTITY tableTab.label                   "Tábla">
+<!ENTITY cellTab.label                    "Cealla">
+<!ENTITY tableRows.label                  "Rónna:">
+<!ENTITY tableRows.accessKey              "R">
+<!ENTITY tableColumns.label               "Colúin:">
+<!ENTITY tableColumns.accessKey           "C">
+<!ENTITY tableHeight.label                "Airde:">
+<!ENTITY tableHeight.accessKey            "d">
+<!ENTITY tableWidth.label                 "Leithead:">
+<!ENTITY tableWidth.accessKey             "L">
+<!ENTITY tableBorderSpacing.label         "Imlínte agus Spásáil">
+<!ENTITY tableBorderWidth.label           "Teorainn:">
+<!ENTITY tableBorderWidth.accessKey       "T">
+<!ENTITY tableSpacing.label               "Spásáil:">
+<!ENTITY tableSpacing.accessKey           "S">
+<!ENTITY tablePadding.label               "Stuáil:">
+<!ENTITY tablePadding.accessKey           "S">
+<!ENTITY tablePxBetwCells.label           "picteilín idir cealla">
+<!ENTITY tablePxBetwBrdrCellContent.label "picteilín idir imlíne chille agus a hinneachar">
+<!ENTITY tableAlignment.label             "Ailíniú Tábla:">
+<!ENTITY tableAlignment.accessKey         "T">
+<!ENTITY tableCaption.label               "Foscríbhinn:">
+<!ENTITY tableCaption.accessKey           "n">
+<!ENTITY tableCaptionAbove.label          "Os cionn an tábla">
+<!ENTITY tableCaptionBelow.label          "Faoin tábla">
+<!ENTITY tableCaptionLeft.label           "Ar chlé an tábla">
+<!ENTITY tableCaptionRight.label          "Ar dheis an tábla">
+<!ENTITY tableCaptionNone.label           "Gan sonrú">
+<!ENTITY tableInheritColor.label           "(Lig le dath an leathanaigh bheith le feiceáil)">
+
+<!ENTITY cellSelection.label              "Rogha">
+<!ENTITY cellSelectCell.label             "Cill">
+<!ENTITY cellSelectRow.label              "Ró">
+<!ENTITY cellSelectColumn.label           "Colún">
+<!ENTITY cellSelectNext.label             "Ar Aghaidh">
+<!ENTITY cellSelectNext.accessKey         "A">
+<!ENTITY cellSelectPrevious.label         "Siar">
+<!ENTITY cellSelectPrevious.accessKey     "S">
+<!ENTITY applyBeforeChange.label          "Cuirfear na hathruithe reatha i bhfeidhm roimh an rogha a athrú.">
+<!ENTITY cellContentAlignment.label       "Ailíniú Inneachair">
+<!ENTITY cellHorizontal.label             "Cothrománach:">
+<!ENTITY cellHorizontal.accessKey         "C">
+<!ENTITY cellVertical.label               "Ingearach:">
+<!ENTITY cellVertical.accessKey           "I">
+<!ENTITY cellStyle.label                  "Stíl Chille:">
+<!ENTITY cellStyle.accessKey              "C">
+<!ENTITY cellNormal.label                 "Gnách">
+<!ENTITY cellHeader.label                 "Ceanntásc">
+<!ENTITY cellTextWrap.label               "Timfhilleadh Téacs:">
+<!ENTITY cellTextWrap.accessKey           "T">
+<!ENTITY cellWrap.label                   "Timfhill">
+<!ENTITY cellNoWrap.label                 "Ná timfhill">
+<!ENTITY cellAlignTop.label               "Ag barr">
+<!ENTITY cellAlignMiddle.label            "Lár">
+<!ENTITY cellAlignBottom.label            "Ag bun">
+<!ENTITY cellAlignJustify.label           "Comhfhadaithe">
+<!ENTITY cellInheritColor.label           "(Lig le dath an tábla bheith le feiceáil)">
+<!ENTITY cellUseCheckboxHelp.label        "Úsáid ticbhoscaí le socrú cad iad na hairíonna a chuirtear i bhfeidhm ar gach cill roghnaithe">
+<!-- Used in both Table and Cell panels  -->
+
+<!ENTITY size.label                       "Méid">
+<!ENTITY pixels.label                     "picteilíní">
+<!ENTITY backgroundColor.label            "Dath an Chúlra:">
+<!ENTITY backgroundColor.accessKey        "l">
+<!ENTITY AlignLeft.label                  "Ar Chlé">
+<!ENTITY AlignCenter.label                "Láraithe">
+<!ENTITY AlignRight.label                 "Ar Dheis">

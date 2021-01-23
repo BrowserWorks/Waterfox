@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Proprietăți buton">
+
+<!ENTITY Settings.label "Setări">
+
+<!ENTITY ButtonType.label "Tip">
+<!ENTITY ButtonType.accesskey "T">
+<!ENTITY submit.value "Trimite">
+<!ENTITY reset.value "Resetează">
+<!ENTITY button.value "Buton">
+
+<!ENTITY ButtonName.label "Denumire:">
+<!ENTITY ButtonName.accesskey "N">
+<!ENTITY ButtonValue.label "Valoare:">
+<!ENTITY ButtonValue.accesskey "V">
+<!ENTITY tabIndex.label "Index file:">
+<!ENTITY tabIndex.accesskey "I">
+<!ENTITY ButtonDisabled.label "Dezactivat">
+<!ENTITY ButtonDisabled.accesskey "D">
+<!ENTITY AccessKey.label "Tastă de acces:">
+<!ENTITY AccessKey.accesskey "a">
+
+<!ENTITY RemoveButton.label "Elimină butonul">
+<!ENTITY RemoveButton.accesskey "R">

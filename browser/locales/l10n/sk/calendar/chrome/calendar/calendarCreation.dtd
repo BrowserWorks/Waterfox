@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "Vytvoriť nový kalendár" >
+<!ENTITY wizard.label             "Vytvoriť nový kalendár" >
+<!ENTITY wizard.description       "Umiestnenie vášho kalendára" >
+
+<!ENTITY initialpage.description    "Váš kalendár môže byť uložený na vašom počítači alebo na vzdialenom serveri, kde k nemu môžete pristupovať vzdialene a je prístupný aj vašim spolupracovníkom alebo priateľom." >
+<!ENTITY initialpage.computer.label  "Na mojom počítači">
+<!ENTITY initialpage.network.label  "Na sieti">
+
+<!ENTITY locationpage.description         "Zadajte údaje potrebné pre prístup k vzdialenému kalendáru" >
+<!ENTITY locationpage.login.description   "Voliteľne: zadajte používateľské meno a heslo" >
+<!ENTITY locationpage.username.label      "Používateľské meno:" >
+<!ENTITY locationpage.password.label      "Heslo:" >
+
+<!ENTITY custompage.shortdescription  "Upraviť svoj kalendár" >
+<!ENTITY custompage.longdescription   "Môžete dať svojmu kalendáru prezývku a nastaviť farby pre udalosti v tomto kalendári." >
+
+<!ENTITY finishpage.shortdescription  "Kalendár bol vytvorený" >
+<!ENTITY finishpage.longdescription   "Váš kalendár bol úspešne vytvorený." >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "Ďalšie">
+
+<!ENTITY buttons.create.label "Vytvoriť kalendár">
+<!ENTITY buttons.create.accesskey "r">
+
+<!ENTITY buttons.find.label "Hľadať kalendáre">
+<!ENTITY buttons.find.accesskey "H">
+
+<!ENTITY buttons.back.label "Naspäť">
+<!ENTITY buttons.back.accesskey "s">
+
+<!ENTITY buttons.subscribe.label "Odoberať">
+<!ENTITY buttons.subscribe.accesskey "O">
+
+<!ENTITY calendartype.label "Typ kalendára:">
+<!ENTITY location.label "Umiestnenie:">
+<!ENTITY location.placeholder "URL alebo doména kalendárového servera">
+
+<!ENTITY network.nocredentials.label "Toto umiestnenie nevyžaduje prihlasovacie údaje">
+<!ENTITY network.loading.description "Počkajte, prosím, kým objavíme vaše kalendáre.">
+<!ENTITY network.notfound.description "V tomto umiestnení sa nepodarilo nájsť žiadne kalendáre. Prosím, skontrolujte svoje nastavenia.">
+<!ENTITY network.authfail.description "Zadané prihlasovacie údaje neboli prijaté. Prosím, skontrolujte svoje nastavenia.">
+
+<!ENTITY network.subscribe.single.description "Vyberte kalendáre, ktoré chcete pridať.">
+<!ENTITY network.subscribe.multiple.description "V tomto umiestnení sa nachádza viacero typov kalendárov. Prosím, vyberte typ kalendára a potom označte tie, ktoré chcete pridať.">

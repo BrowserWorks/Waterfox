@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Vodi me odavdje!">
+<!ENTITY safeb.palm.decline.label "Ignoriši ovo upozorenje">
+<!ENTITY safeb.palm.reportPage.label "Zašto je ova stranica blokirana?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Savjetovanje pruža <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "Prijavljena napadačka stranica!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Web stranica <span id='malware_sitename'/> je prijavljena kao napadačka stranica i blokirana je na osnovu vaših sigurnosnih preferenci.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Napadačke stranice pokušavaju instalirati programe koji kradu privatne informacije, koriste vaš računar da napadnu druge, ili štete vašem sistemu.</p><p>Neke napadačke stranice namjerno distribuiraju štetan softver, ali mnoge su kompromitovane bez znanja njihovih vlasnika.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "Obmanjujuća stranica!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "Web stranica <span id='phishing_sitename'/> je prijavljena kao obmanjujuća i blokirana je na temelju vaših sigurnosnih postavki.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>Obmanjujuće će vas stranice pokušati natjerati da napravite ono što inače ne biste, recimo da instalirate neki program ili otkrijete lične informacije poput lozinki, telefonskih brojeva ili brojeva kreditnih kartica.</p><p>Otkrivanjem bilo koje informacije na ovoj stranici može rezultirati krađom identiteta ili kojom drugom vrstom prevare.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Prijavljena stranica sa neželjenim softverom!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Web stranica <span id='unwanted_sitename'/> je prijavljena da sadrži neželjeni softver i blokirana je na osnovu vaših sigurnosnih postavki.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "Nesigurne stranice pokušavaju instalirati programe koju su zavaravajući i mogu na neočekivane načine uticati na vaš sistem.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "Sljedeća stranica može sadržavati zlonamjerni softver">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; je blokirao ovu stranicu iz razloga što će možda pokušati instalirati zlonamjerne aplikacije koje kradu ili brišu vaše podatke (na primjer slike, lozinke, poruke ili kreditne kartice).">

@@ -9,7 +9,7 @@ const {
   HIGHLIGHT,
   RESET,
   SELECT,
-} = require("../constants");
+} = require("devtools/client/accessibility/constants");
 
 /**
  * Initial state definition
@@ -38,7 +38,7 @@ function accessibles(state = getInitialState(), action) {
 }
 
 function getActorID(accessible) {
-  return accessible.actorID || (accessible._form && accessible._form.actor);
+  return accessible.actorID || accessible._form?.actor;
 }
 
 /**
@@ -123,7 +123,7 @@ function onReceiveChildren(cache, action) {
   }
 
   if (accessible.actorID) {
-    console.warn(`Error fetching children: `, accessible, error);
+    console.warn(`Error fetching children: `, error);
     return cache;
   }
 

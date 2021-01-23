@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY languages.customize.prefLangDescript "Часам старонкі сеціва даступны ў некалькіх мовах. Выберыце мовы для адлюстравання старонак сеціва ў парадку пераваг. ">
+<!ENTITY languages.customize.title "Мовы">
+<!ENTITY langtitle.label "Мовы старонак сеціва">
+<!ENTITY languages.customize.prefAddLangDescript "Выберыце мову(ы), якія вы жадаеце дадаць.">
+<!ENTITY languages.customize.addButton.label "Дадаць…">
+<!ENTITY languages.customize.addButton.accesskey "Д">
+<!ENTITY languages.customize.deleteButton.label "Выдаліць">
+<!ENTITY languages.customize.deleteButton.accesskey "д">
+<!ENTITY languages.customize.add.title.label "Дадаць мовы">
+<!ENTITY languages.customize.available.label "Мовы:">
+<!ENTITY languages.customize.active.label "Мовы ў парадку пераваг:">
+<!ENTITY languages.customize.active.accesskey "М">
+<!ENTITY languages.customize.others.label "Іншыя:">
+<!ENTITY languages.customize.others.accesskey "І">
+<!ENTITY languages.customize.Fallback.grouplabel "Кадоўка знакаў для спадчыннага змесціва">
+<!ENTITY languages.customize.Fallback.label "Запасная кадоўка знакаў:">
+<!ENTITY languages.customize.Fallback.accesskey "З">
+<!ENTITY languages.customize.Fallback.desc "Ужываецца для спадчыннага змесціва, якое не абвяшчае сваю кадоўку.">
+<!ENTITY languages.customize.others.examples "напрыклад: en-bz, ar-jo">
+<!ENTITY languages.customize.moveUp.label "Рухаць угору">
+<!ENTITY languages.customize.moveUp.accesskey "г">
+<!ENTITY languages.customize.moveDown.label "Рухаць уніз">
+<!ENTITY languages.customize.moveDown.accesskey "н">

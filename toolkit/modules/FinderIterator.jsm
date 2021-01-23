@@ -23,20 +23,24 @@ const kIterationSizeMax = 100;
 const kTimeoutPref = "findbar.iteratorTimeout";
 
 /**
- * FinderIterator singleton. See the documentation for the `start()` method to
+ * FinderIterator. See the documentation for the `start()` method to
  * learn more.
  */
-var FinderIterator = {
-  _currentParams: null,
-  _listeners: new Map(),
-  _catchingUp: new Set(),
-  _previousParams: null,
-  _previousRanges: [],
-  _spawnId: 0,
+function FinderIterator() {
+  this._listeners = new Map();
+  this._currentParams = null;
+  this._catchingUp = new Set();
+  this._previousParams = null;
+  this._previousRanges = [];
+  this._spawnId = 0;
+  this._timer = null;
+  this.ranges = [];
+  this.running = false;
+  this.useSubFrames = false;
+}
+
+FinderIterator.prototype = {
   _timeout: Services.prefs.getIntPref(kTimeoutPref),
-  _timer: null,
-  ranges: [],
-  running: false,
 
   // Expose `kIterationSizeMax` to the outside world for unit tests to use.
   get kIterationSizeMax() {
@@ -84,8 +88,12 @@ var FinderIterator = {
    *                                           - onIteratorReset();
    *                                           - onIteratorRestart({Object} iterParams);
    *                                           - onIteratorStart({Object} iterParams);
+   * @param {Boolean} options.matchDiacritics Whether to search in
+   *                                          diacritic-matching mode
    * @param {Boolean} [options.useCache]        Whether to allow results already
    *                                            present in the cache or demand fresh.
+   *                                            Optional, defaults to `false`.
+   * @param {Boolean} [options.useSubFrames]    Whether to iterate over subframes.
    *                                            Optional, defaults to `false`.
    * @param {String}  options.word              Word to search for
    * @return {Promise}
@@ -98,8 +106,10 @@ var FinderIterator = {
     limit,
     linksOnly,
     listener,
+    matchDiacritics,
     useCache,
     word,
+    useSubFrames,
   }) {
     // Take care of default values for non-required options.
     if (typeof allowDistance != "number") {
@@ -114,6 +124,9 @@ var FinderIterator = {
     if (typeof useCache != "boolean") {
       useCache = false;
     }
+    if (typeof useSubFrames != "boolean") {
+      useSubFrames = false;
+    }
 
     // Validate the options.
     if (typeof caseSensitive != "boolean") {
@@ -121,6 +134,9 @@ var FinderIterator = {
     }
     if (typeof entireWord != "boolean") {
       throw new Error("Missing required option 'entireWord'");
+    }
+    if (typeof matchDiacritics != "boolean") {
+      throw new Error("Missing required option 'matchDiacritics'");
     }
     if (!finder) {
       throw new Error("Missing required option 'finder'");
@@ -148,9 +164,11 @@ var FinderIterator = {
       caseSensitive,
       entireWord,
       linksOnly,
+      matchDiacritics,
       useCache,
       window,
       word,
+      useSubFrames,
     };
 
     this._listeners.set(listener, { limit, onEnd: resolver });
@@ -169,9 +187,8 @@ var FinderIterator = {
       ) {
         if (kDebug) {
           Cu.reportError(
-            `We're currently iterating over '${
-              this._currentParams.word
-            }', not '${word}'\n` + new Error().stack
+            `We're currently iterating over '${this._currentParams.word}', not '${word}'\n` +
+              new Error().stack
           );
         }
         this._listeners.delete(listener);
@@ -293,16 +310,28 @@ var FinderIterator = {
    * @param {Boolean}  options.entireWord    Whether to search in entire-word mode
    * @param  {Boolean} options.linksOnly     Whether to search for the word to be
    *                                         present in links only
+   * @param {Boolean}  options.matchDiacritics Whether to search in
+   *                                           diacritic-matching mode
    * @param  {String}  options.word          The word being searched for
+   * @param  (Boolean) options.useSubFrames  Whether to search subframes
    * @return {Boolean}
    */
-  continueRunning({ caseSensitive, entireWord, linksOnly, word }) {
+  continueRunning({
+    caseSensitive,
+    entireWord,
+    linksOnly,
+    matchDiacritics,
+    word,
+    useSubFrames,
+  }) {
     return (
       this.running &&
       this._currentParams.caseSensitive === caseSensitive &&
       this._currentParams.entireWord === entireWord &&
       this._currentParams.linksOnly === linksOnly &&
-      this._currentParams.word == word
+      this._currentParams.matchDiacritics === matchDiacritics &&
+      this._currentParams.word == word &&
+      this._currentParams.useSubFrames == useSubFrames
     );
   },
 
@@ -355,6 +384,8 @@ var FinderIterator = {
    * @param  {Boolean} options.entireWord    Whether to search in entire-word mode
    * @param  {Boolean} options.linksOnly     Whether to search for the word to be
    *                                         present in links only
+   * @param  {Boolean} options.matchDiacritics Whether to search in
+   *                                           diacritic-matching mode
    * @param  {Boolean} options.useCache      Whether the consumer wants to use the
    *                                         cached previous result at all
    * @param  {String}  options.word          The word being searched for
@@ -364,6 +395,7 @@ var FinderIterator = {
     caseSensitive,
     entireWord,
     linksOnly,
+    matchDiacritics,
     useCache,
     word,
   }) {
@@ -373,6 +405,7 @@ var FinderIterator = {
         caseSensitive,
         entireWord,
         linksOnly,
+        matchDiacritics,
         word,
       }) &&
       this._previousRanges.length
@@ -396,7 +429,9 @@ var FinderIterator = {
       paramSet1.caseSensitive === paramSet2.caseSensitive &&
       paramSet1.entireWord === paramSet2.entireWord &&
       paramSet1.linksOnly === paramSet2.linksOnly &&
+      paramSet1.matchDiacritics === paramSet2.matchDiacritics &&
       paramSet1.window === paramSet2.window &&
+      paramSet1.useSubFrames === paramSet2.useSubFrames &&
       NLP.levenshtein(paramSet1.word, paramSet2.word) <= allowDistance
     );
   },
@@ -539,10 +574,13 @@ var FinderIterator = {
 
     this._notifyListeners("start", this.params);
 
-    let { linksOnly, window } = this._currentParams;
+    let { linksOnly, useSubFrames, window } = this._currentParams;
     // First we collect all frames we need to search through, whilst making sure
     // that the parent window gets dibs.
-    let frames = [window].concat(this._collectFrames(window, finder));
+    let frames = [window];
+    if (useSubFrames) {
+      frames.push(...this._collectFrames(window, finder));
+    }
     let iterCount = 0;
     for (let frame of frames) {
       for (let range of this._iterateDocument(this._currentParams, frame)) {
@@ -601,11 +639,16 @@ var FinderIterator = {
    *                                             sensitive mode
    * @param {Boolean}      options.entireWord    Whether to search in entire-word
    *                                             mode
+   * @param {Boolean}      options.matchDiacritics Whether to search in
+   *                                               diacritic-matching mode
    * @param {String}       options.word          The word to search for
    * @param {nsIDOMWindow} window                The window to search in
    * @yield {Range}
    */
-  *_iterateDocument({ caseSensitive, entireWord, word }, window) {
+  *_iterateDocument(
+    { caseSensitive, entireWord, matchDiacritics, word },
+    window
+  ) {
     let doc = window.document;
     let body = doc.body || doc.documentElement;
 
@@ -629,6 +672,7 @@ var FinderIterator = {
       .QueryInterface(Ci.nsIFind);
     nsIFind.caseSensitive = caseSensitive;
     nsIFind.entireWord = entireWord;
+    nsIFind.matchDiacritics = matchDiacritics;
 
     while ((retRange = nsIFind.Find(word, searchRange, startPt, endPt))) {
       yield retRange;

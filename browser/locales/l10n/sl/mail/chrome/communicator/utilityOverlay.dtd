@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label          "Datoteka">
+<!ENTITY fileMenu.accesskey        "D">
+<!ENTITY newMenu.label            "Novo">
+<!ENTITY newMenu.accesskey          "N">
+
+<!ENTITY editMenu.label          "Uredi">
+<!ENTITY editMenu.accesskey        "U">
+<!ENTITY undoCmd.label            "Razveljavi">
+<!ENTITY undoCmd.accesskey          "R">
+<!ENTITY redoCmd.label            "Uveljavi">
+<!ENTITY redoCmd.accesskey          "U">
+<!ENTITY deleteCmd.label          "Izbriši">
+<!ENTITY deleteCmd.accesskey        "b">
+<!ENTITY preferencesCmd2.label "Možnosti">
+<!ENTITY preferencesCmd2.accesskey "M">
+<!ENTITY preferencesCmdUnix.label       "Nastavitve">
+<!ENTITY preferencesCmdUnix.accesskey     "N">
+
+<!ENTITY customizeCmd.label "Prilagodi">
+<!ENTITY customizeCmd.accesskey "l">
+
+<!ENTITY viewMenu.label          "Pogled">
+<!ENTITY viewMenu.accesskey        "P">
+<!ENTITY viewToolbarsMenu.label        "Orodne vrstice">
+<!ENTITY viewToolbarsMenu.accesskey      "r">
+<!ENTITY showTaskbarCmd.label          "Vrstica stanja">
+<!ENTITY showTaskbarCmd.accesskey        "n">
+
+<!ENTITY closeCmd.label      "Zapri">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "Z">
+
+<!ENTITY quitApplicationCmd.label  "Izhod">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "h">
+
+<!ENTITY quitApplicationCmdUnix.label  "Končaj">
+<!ENTITY quitApplicationCmdUnix.accesskey  "K">
+
+<!ENTITY quitApplicationCmdMac.label  "Zapri &brandShortName;">
+<!ENTITY quitApplicationCmdMac.accesskey  "Z">

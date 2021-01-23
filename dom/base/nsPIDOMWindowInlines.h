@@ -48,15 +48,7 @@ bool nsPIDOMWindowInner::IsHandlingResizeEvent() const {
   return mIsHandlingResizeEvent;
 }
 
-bool nsPIDOMWindowInner::IsCurrentInnerWindow() const {
-  return mOuterWindow && mOuterWindow->GetCurrentInnerWindow() == this;
-}
-
-bool nsPIDOMWindowInner::HasActiveDocument() {
-  return IsCurrentInnerWindow() ||
-         (mOuterWindow && mOuterWindow->GetCurrentInnerWindow() &&
-          mOuterWindow->GetCurrentInnerWindow()->GetDoc() == mDoc);
-}
+bool nsPIDOMWindowInner::HasActiveDocument() { return IsCurrentInnerWindow(); }
 
 bool nsPIDOMWindowInner::IsTopInnerWindow() const {
   return mTopInnerWindow == this;
@@ -69,6 +61,10 @@ nsIDocShell* nsPIDOMWindowInner::GetDocShell() const {
 }
 
 mozilla::dom::BrowsingContext* nsPIDOMWindowOuter::GetBrowsingContext() const {
+  return mBrowsingContext;
+}
+
+mozilla::dom::BrowsingContext* nsPIDOMWindowInner::GetBrowsingContext() const {
   return mBrowsingContext;
 }
 

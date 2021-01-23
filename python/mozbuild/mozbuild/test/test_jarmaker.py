@@ -2,14 +2,17 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import print_function
+from __future__ import absolute_import, print_function
 import unittest
 
-import os, sys, os.path, time, inspect
+import os
+import sys
+import os.path
 from filecmp import dircmp
 from tempfile import mkdtemp
 from shutil import rmtree, copy2
-from StringIO import StringIO
+import six
+from six import StringIO
 from zipfile import ZipFile
 import mozunit
 
@@ -66,12 +69,13 @@ if sys.platform == "win32":
                                      DWORD]
     GetVolumeInformation.restype = ctypes.c_int
 
+
 def symlinks_supported(path):
     if sys.platform == "win32":
         # Add 1 for a trailing backslash if necessary, and 1 for the terminating
         # null character.
         volpath = ctypes.create_string_buffer(len(path) + 2)
-        rv = GetVolumePathName(path, volpath, len(volpath))
+        rv = GetVolumePathName(six.ensure_binary(path), volpath, len(volpath))
         if rv == 0:
             raise WinError()
 
@@ -86,9 +90,11 @@ def symlinks_supported(path):
     else:
         return True
 
+
 def _getfileinfo(path):
     """Return information for the given file. This only works on Windows."""
-    fh = CreateFile(path, GENERIC_READ, FILE_SHARE_READ, None, OPEN_EXISTING, 0, None)
+    fh = CreateFile(six.ensure_binary(path), GENERIC_READ, FILE_SHARE_READ,
+                    None, OPEN_EXISTING, 0, None)
     if fh is None:
         raise WinError()
     info = BY_HANDLE_FILE_INFORMATION()
@@ -96,6 +102,7 @@ def _getfileinfo(path):
     if rv == 0:
         raise WinError()
     return info
+
 
 def is_symlink_to(dest, src):
     if sys.platform == "win32":
@@ -113,20 +120,23 @@ def is_symlink_to(dest, src):
         abssrc = os.path.abspath(src)
         return target == abssrc
 
+
 class _TreeDiff(dircmp):
     """Helper to report rich results on difference between two directories.
     """
+
     def _fillDiff(self, dc, rv, basepath="{0}"):
         rv['right_only'] += map(lambda l: basepath.format(l), dc.right_only)
         rv['left_only'] += map(lambda l: basepath.format(l), dc.left_only)
         rv['diff_files'] += map(lambda l: basepath.format(l), dc.diff_files)
         rv['funny'] += map(lambda l: basepath.format(l), dc.common_funny)
         rv['funny'] += map(lambda l: basepath.format(l), dc.funny_files)
-        for subdir, _dc in dc.subdirs.iteritems():
+        for subdir, _dc in six.iteritems(dc.subdirs):
             self._fillDiff(_dc, rv, basepath.format(subdir + "/{0}"))
+
     def allResults(self, left, right):
-        rv = {'right_only':[], 'left_only':[],
-              'diff_files':[], 'funny': []}
+        rv = {'right_only': [], 'left_only': [],
+              'diff_files': [], 'funny': []}
         self._fillDiff(self, rv)
         chunks = []
         if rv['right_only']:
@@ -141,11 +151,13 @@ class _TreeDiff(dircmp):
             chunks.append("{0} don't compare".format(', '.join(rv['funny'])))
         return '; '.join(chunks)
 
+
 class TestJarMaker(unittest.TestCase):
     """
     Unit tests for JarMaker.py
     """
-    debug = False # set to True to debug failing tests on disk
+    debug = False  # set to True to debug failing tests on disk
+
     def setUp(self):
         self.tmpdir = mkdtemp()
         self.srcdir = os.path.join(self.tmpdir, 'src')
@@ -215,18 +227,18 @@ class TestJarMaker(unittest.TestCase):
  dir/foo (bar)
 ''')
         jarf.close()
-        open(os.path.join(self.srcdir,'bar'),'w').write('content\n')
+        open(os.path.join(self.srcdir, 'bar'), 'w').write('content\n')
         # create reference
         refpath = os.path.join(self.refdir, 'chrome', 'test.jar', 'dir')
         os.makedirs(refpath)
-        open(os.path.join(refpath, 'foo'), 'w').write('content\n')        
+        open(os.path.join(refpath, 'foo'), 'w').write('content\n')
 
     def test_a_simple_jar(self):
         '''Test a simple jar.mn'''
         self._create_simple_setup()
         # call JarMaker
-        rv = self._jar_and_compare(os.path.join(self.srcdir,'jar.mn'),
-                                   sourcedirs = [self.srcdir])
+        rv = self._jar_and_compare(os.path.join(self.srcdir, 'jar.mn'),
+                                   sourcedirs=[self.srcdir])
         self.assertTrue(not rv, rv)
 
     def test_a_simple_symlink(self):
@@ -238,7 +250,7 @@ class TestJarMaker(unittest.TestCase):
         jm = JarMaker(outputFormat='symlink')
         jm.sourcedirs = [self.srcdir]
         jm.topsourcedir = self.srcdir
-        jm.makeJar(os.path.join(self.srcdir,'jar.mn'), self.builddir)
+        jm.makeJar(os.path.join(self.srcdir, 'jar.mn'), self.builddir)
         # All we do is check that srcdir/bar points to builddir/chrome/test/dir/foo
         srcbar = os.path.join(self.srcdir, 'bar')
         destfoo = os.path.join(self.builddir, 'chrome', 'test', 'dir', 'foo')
@@ -253,12 +265,12 @@ class TestJarMaker(unittest.TestCase):
  dir/hoge (qux/*)
 ''')
         jarf.close()
-        open(os.path.join(self.srcdir,'foo.js'),'w').write('foo.js\n')
-        open(os.path.join(self.srcdir,'bar.js'),'w').write('bar.js\n')
+        open(os.path.join(self.srcdir, 'foo.js'), 'w').write('foo.js\n')
+        open(os.path.join(self.srcdir, 'bar.js'), 'w').write('bar.js\n')
         os.makedirs(os.path.join(self.srcdir, 'qux', 'foo'))
-        open(os.path.join(self.srcdir,'qux', 'foo', '1'),'w').write('1\n')
-        open(os.path.join(self.srcdir,'qux', 'foo', '2'),'w').write('2\n')
-        open(os.path.join(self.srcdir,'qux', 'baz'),'w').write('baz\n')
+        open(os.path.join(self.srcdir, 'qux', 'foo', '1'), 'w').write('1\n')
+        open(os.path.join(self.srcdir, 'qux', 'foo', '2'), 'w').write('2\n')
+        open(os.path.join(self.srcdir, 'qux', 'baz'), 'w').write('baz\n')
         # create reference
         refpath = os.path.join(self.refdir, 'chrome', 'test.jar', 'dir')
         os.makedirs(os.path.join(refpath, 'bar'))
@@ -273,8 +285,8 @@ class TestJarMaker(unittest.TestCase):
         '''Test a wildcard in jar.mn'''
         self._create_wildcard_setup()
         # call JarMaker
-        rv = self._jar_and_compare(os.path.join(self.srcdir,'jar.mn'),
-                                   sourcedirs = [self.srcdir])
+        rv = self._jar_and_compare(os.path.join(self.srcdir, 'jar.mn'),
+                                   sourcedirs=[self.srcdir])
         self.assertTrue(not rv, rv)
 
     def test_a_wildcard_symlink(self):
@@ -286,7 +298,7 @@ class TestJarMaker(unittest.TestCase):
         jm = JarMaker(outputFormat='symlink')
         jm.sourcedirs = [self.srcdir]
         jm.topsourcedir = self.srcdir
-        jm.makeJar(os.path.join(self.srcdir,'jar.mn'), self.builddir)
+        jm.makeJar(os.path.join(self.srcdir, 'jar.mn'), self.builddir)
 
         expected_symlinks = {
             ('bar', 'foo.js'): ('foo.js',),
@@ -295,7 +307,7 @@ class TestJarMaker(unittest.TestCase):
             ('hoge', 'foo', '2'): ('qux', 'foo', '2'),
             ('hoge', 'baz'): ('qux', 'baz'),
         }
-        for dest, src in expected_symlinks.iteritems():
+        for dest, src in six.iteritems(expected_symlinks):
             srcpath = os.path.join(self.srcdir, *src)
             destpath = os.path.join(self.builddir, 'chrome', 'test', 'dir',
                                     *dest)
@@ -311,9 +323,11 @@ class Test_relativesrcdir(unittest.TestCase):
         self.jm.relativesrcdir = 'browser/locales'
         self.fake_empty_file = StringIO()
         self.fake_empty_file.name = 'fake_empty_file'
+
     def tearDown(self):
         del self.jm
         del self.fake_empty_file
+
     def test_en_US(self):
         jm = self.jm
         jm.makeJar(self.fake_empty_file, '/NO_OUTPUT_REQUIRED')
@@ -322,22 +336,21 @@ class Test_relativesrcdir(unittest.TestCase):
                             os.path.join(os.path.abspath('/TOPSOURCEDIR'),
                                          'browser/locales', 'en-US')
                             ])
+
     def test_l10n_no_merge(self):
         jm = self.jm
         jm.l10nbase = '/L10N_BASE'
         jm.makeJar(self.fake_empty_file, '/NO_OUTPUT_REQUIRED')
         self.assertEquals(jm.localedirs, [os.path.join('/L10N_BASE', 'browser')])
+
     def test_l10n_merge(self):
         jm = self.jm
-        jm.l10nbase = '/L10N_BASE'
-        jm.l10nmerge = '/L10N_MERGE'
+        jm.l10nbase = '/L10N_MERGE'
         jm.makeJar(self.fake_empty_file, '/NO_OUTPUT_REQUIRED')
         self.assertEquals(jm.localedirs,
                           [os.path.join('/L10N_MERGE', 'browser'),
-                           os.path.join('/L10N_BASE', 'browser'),
-                           os.path.join(os.path.abspath('/TOPSOURCEDIR'),
-                                        'browser/locales', 'en-US')
                            ])
+
     def test_override(self):
         jm = self.jm
         jm.outputFormat = 'flat'  # doesn't touch chrome dir without files
@@ -351,6 +364,7 @@ relativesrcdir dom/locales:
                             os.path.join(os.path.abspath('/TOPSOURCEDIR'),
                                          'dom/locales', 'en-US')
                             ])
+
     def test_override_l10n(self):
         jm = self.jm
         jm.l10nbase = '/L10N_BASE'

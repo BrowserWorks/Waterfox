@@ -13,7 +13,6 @@
 #  include "WMFMediaDataDecoder.h"
 #  include "mozilla/Atomics.h"
 #  include "mozilla/RefPtr.h"
-#  include "nsAutoPtr.h"
 #  include "mozilla/gfx/Rect.h"
 
 namespace mozilla {
@@ -72,10 +71,11 @@ class WMFVideoMFTManager : public MFTManager {
   gfx::IntSize mDecodedImageSize;
   uint32_t mVideoStride;
   Maybe<gfx::YUVColorSpace> mColorSpace;
+  gfx::ColorRange mColorRange;
 
   RefPtr<layers::ImageContainer> mImageContainer;
   RefPtr<layers::KnowsCompositor> mKnowsCompositor;
-  nsAutoPtr<DXVA2Manager> mDXVA2Manager;
+  UniquePtr<DXVA2Manager> mDXVA2Manager;
 
   media::TimeUnit mLastDuration;
 

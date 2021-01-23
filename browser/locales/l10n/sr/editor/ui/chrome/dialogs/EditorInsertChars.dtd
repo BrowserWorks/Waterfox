@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Убаци знак">
+<!ENTITY category.label "Категорија">
+<!ENTITY letter.label "Слово:">
+<!ENTITY letter.accessKey "л">
+<!ENTITY character.label "Знак:">
+<!ENTITY character.accessKey "З">
+<!ENTITY accentUpper.label "Нагласи велика слова">
+<!ENTITY accentLower.label "Нагласи мала слова">
+<!ENTITY otherUpper.label "Друга велика слова">
+<!ENTITY otherLower.label "Друга мала слова">
+<!ENTITY commonSymbols.label "Општи симболи">
+<!ENTITY insertButton.label "Убаци">
+<!ENTITY closeButton.label "Затвори">

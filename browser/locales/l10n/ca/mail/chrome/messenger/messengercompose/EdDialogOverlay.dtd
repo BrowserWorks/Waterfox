@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "Edició avançada…">
+<!ENTITY AdvancedEditButton.accessKey "E">
+<!ENTITY AdvancedEditButton.tooltip "Afegeix o modifica els atributs HTML, els atributs d'estil i el JavaScript">
+<!ENTITY chooseFileButton.label "Trieu un fitxer...">
+<!ENTITY chooseFileButton.accessKey "f">
+<!ENTITY chooseFileLinkButton.label "Trieu un fitxer...">
+<!ENTITY chooseFileLinkButton.accessKey "r">
+<!ENTITY makeUrlRelative.label "L'URL és relatiu a la ubicació de la pàgina">
+<!ENTITY makeUrlRelative.accessKey "R">
+<!ENTITY makeUrlRelative.tooltip "Canvia entre URL relatiu i absolut. Per canviar-ho, cal que deseu primer la pàgina.">
+
+<!-- Shared by Link and Image dialogs -->
+<!ENTITY LinkURLEditField2.label "Introduïu la ubicació d'una pàgina web, un fitxer local, o seleccioneu una àncora amb nom o capçalera des del menú contextual del camp:">
+<!ENTITY LinkURLEditField2.accessKey "w">

@@ -9,13 +9,19 @@
 #include "nsDataHashtable.h"
 #include "nsInterfaceHashtable.h"
 #include "nsClassHashtable.h"
+#include "nsRefPtrHashtable.h"
 
 #include "nsCOMPtr.h"
 #include "nsISupports.h"
 #include "nsCOMArray.h"
 #include "mozilla/Attributes.h"
+#include "mozilla/Unused.h"
 
 #include "gtest/gtest.h"
+
+#include <numeric>
+
+using mozilla::UniquePtr;
 
 namespace TestHashtables {
 
@@ -32,9 +38,33 @@ class TestUniChar  // for nsClassHashtable
   uint32_t mWord;
 };
 
+class TestUniCharDerived : public TestUniChar {
+  using TestUniChar::TestUniChar;
+};
+
+class TestUniCharRefCounted  // for nsRefPtrHashtable
+{
+ public:
+  NS_INLINE_DECL_REFCOUNTING(TestUniCharRefCounted);
+
+  explicit TestUniCharRefCounted(uint32_t aWord) { mWord = aWord; }
+
+  uint32_t GetChar() const { return mWord; }
+
+ private:
+  ~TestUniCharRefCounted() = default;
+
+  uint32_t mWord;
+};
+
 struct EntityNode {
   const char* mStr;  // never owns buffer
   uint32_t mUnicode;
+
+  bool operator<(const EntityNode& aOther) const {
+    return mUnicode < aOther.mUnicode ||
+           (mUnicode == aOther.mUnicode && strcmp(mStr, aOther.mStr) < 0);
+  }
 };
 
 static const EntityNode gEntities[] = {
@@ -109,6 +139,19 @@ static void testTHashtable(nsTHashtable<EntityToUnicodeEntry>& hash,
 
   uint32_t count = nsTIterPrint(hash);
   EXPECT_EQ(count, numEntries);
+
+  for (const auto& entry :
+       const_cast<const nsTHashtable<EntityToUnicodeEntry>&>(hash)) {
+    static_assert(std::is_same_v<decltype(entry), const EntityToUnicodeEntry&>);
+  }
+  for (auto& entry : hash) {
+    static_assert(std::is_same_v<decltype(entry), EntityToUnicodeEntry&>);
+  }
+
+  EXPECT_EQ(numEntries == ENTITY_COUNT ? 6 : 0,
+            std::count_if(hash.cbegin(), hash.cend(), [](const auto& entry) {
+              return entry.mNode->mUnicode >= 170;
+            }));
 }
 
 //
@@ -238,6 +281,19 @@ TEST(Hashtable, THashtable)
   ASSERT_EQ(count, uint32_t(0));
 }
 
+TEST(Hashtable, PtrHashtable)
+{
+  nsTHashtable<nsPtrHashKey<int>> hash;
+
+  for (const auto& entry :
+       const_cast<const nsTHashtable<nsPtrHashKey<int>>&>(hash)) {
+    static_assert(std::is_same_v<decltype(entry), const nsPtrHashKey<int>&>);
+  }
+  for (auto& entry : hash) {
+    static_assert(std::is_same_v<decltype(entry), nsPtrHashKey<int>&>);
+  }
+}
+
 TEST(Hashtable, Move)
 {
   const void* kPtr = reinterpret_cast<void*>(static_cast<uintptr_t>(0xbadc0de));
@@ -286,14 +342,94 @@ TEST(Hashtables, DataHashtable)
   ASSERT_EQ(count, uint32_t(0));
 }
 
+TEST(Hashtables, DataHashtable_STLIterators)
+{
+  using mozilla::Unused;
+
+  nsDataHashtable<nsUint32HashKey, const char*> UniToEntity(ENTITY_COUNT);
+
+  for (auto& entity : gEntities) {
+    UniToEntity.Put(entity.mUnicode, entity.mStr);
+  }
+
+  // operators, including conversion from iterator to const_iterator
+  nsDataHashtable<nsUint32HashKey, const char*>::const_iterator ci =
+      UniToEntity.begin();
+  ++ci;
+  ASSERT_EQ(1, std::distance(UniToEntity.cbegin(), ci++));
+  ASSERT_EQ(2, std::distance(UniToEntity.cbegin(), ci));
+  ASSERT_TRUE(ci == ci);
+  auto otherCi = ci;
+  ++otherCi;
+  ++ci;
+  ASSERT_TRUE(&*ci == &*otherCi);
+
+  // STL algorithms (just to check that the iterator sufficiently conforms with
+  // the actual syntactical requirements of those algorithms).
+  std::for_each(UniToEntity.cbegin(), UniToEntity.cend(),
+                [](const auto& entry) {});
+  Unused << std::find_if(
+      UniToEntity.cbegin(), UniToEntity.cend(),
+      [](const auto& entry) { return entry.GetKey() == 42; });
+  Unused << std::accumulate(
+      UniToEntity.cbegin(), UniToEntity.cend(), 0u,
+      [](size_t sum, const auto& entry) { return sum + entry.GetKey(); });
+  Unused << std::any_of(UniToEntity.cbegin(), UniToEntity.cend(),
+                        [](const auto& entry) { return entry.GetKey() == 42; });
+  Unused << std::max_element(UniToEntity.cbegin(), UniToEntity.cend(),
+                             [](const auto& lhs, const auto& rhs) {
+                               return lhs.GetKey() > rhs.GetKey();
+                             });
+
+  // const range-based for
+  {
+    std::set<EntityNode> entities(gEntities, gEntities + ENTITY_COUNT);
+    for (const auto& entity :
+         const_cast<const nsDataHashtable<nsUint32HashKey, const char*>&>(
+             UniToEntity)) {
+      ASSERT_EQ(1u,
+                entities.erase(EntityNode{entity.GetData(), entity.GetKey()}));
+    }
+    ASSERT_TRUE(entities.empty());
+  }
+
+  // non-const range-based for
+  {
+    std::set<EntityNode> entities(gEntities, gEntities + ENTITY_COUNT);
+    for (auto& entity : UniToEntity) {
+      ASSERT_EQ(1u,
+                entities.erase(EntityNode{entity.GetData(), entity.GetKey()}));
+
+      entity.SetData(nullptr);
+      ASSERT_EQ(nullptr, entity.GetData());
+    }
+    ASSERT_TRUE(entities.empty());
+  }
+}
+
+TEST(Hashtables, DataHashtable_RemoveIf)
+{
+  // check a data-hashtable
+  nsDataHashtable<nsUint32HashKey, const char*> UniToEntity(ENTITY_COUNT);
+
+  for (auto& entity : gEntities) {
+    UniToEntity.Put(entity.mUnicode, entity.mStr);
+  }
+
+  UniToEntity.RemoveIf([](const auto& iter) { return iter.Key() >= 170; });
+
+  ASSERT_EQ(10u, UniToEntity.Count());
+}
+
 TEST(Hashtables, ClassHashtable)
 {
   // check a class-hashtable
   nsClassHashtable<nsCStringHashKey, TestUniChar> EntToUniClass(ENTITY_COUNT);
 
   for (auto& entity : gEntities) {
-    auto* temp = new TestUniChar(entity.mUnicode);
-    EntToUniClass.Put(nsDependentCString(entity.mStr), temp);
+    // Insert a sub-class of TestUniChar to test if this is accepted by Put.
+    EntToUniClass.Put(nsDependentCString(entity.mStr),
+                      mozilla::MakeUnique<TestUniCharDerived>(entity.mUnicode));
   }
 
   TestUniChar* myChar;
@@ -317,6 +453,46 @@ TEST(Hashtables, ClassHashtable)
     count++;
   }
   ASSERT_EQ(count, uint32_t(0));
+}
+
+TEST(Hashtables, ClassHashtable_RangeBasedFor)
+{
+  // check a class-hashtable
+  nsClassHashtable<nsCStringHashKey, TestUniChar> EntToUniClass(ENTITY_COUNT);
+
+  for (auto& entity : gEntities) {
+    auto* temp = new TestUniChar(entity.mUnicode);
+    EntToUniClass.Put(nsDependentCString(entity.mStr), temp);
+  }
+
+  // const range-based for
+  {
+    std::set<EntityNode> entities(gEntities, gEntities + ENTITY_COUNT);
+    for (const auto& entity :
+         const_cast<const nsClassHashtable<nsCStringHashKey, TestUniChar>&>(
+             EntToUniClass)) {
+      const char* str;
+      entity.GetKey().GetData(&str);
+      ASSERT_EQ(1u,
+                entities.erase(EntityNode{str, entity.GetData()->GetChar()}));
+    }
+    ASSERT_TRUE(entities.empty());
+  }
+
+  // non-const range-based for
+  {
+    std::set<EntityNode> entities(gEntities, gEntities + ENTITY_COUNT);
+    for (auto& entity : EntToUniClass) {
+      const char* str;
+      entity.GetKey().GetData(&str);
+      ASSERT_EQ(1u,
+                entities.erase(EntityNode{str, entity.GetData()->GetChar()}));
+
+      entity.SetData(UniquePtr<TestUniChar>{});
+      ASSERT_EQ(nullptr, entity.GetData());
+    }
+    ASSERT_TRUE(entities.empty());
+  }
 }
 
 TEST(Hashtables, DataHashtableWithInterfaceKey)
@@ -481,7 +657,7 @@ TEST(Hashtables, ClassHashtable_LookupForAdd)
 
   for (auto& entity : gEntities) {
     auto entry = EntToUniClass.LookupForAdd(nsDependentCString(entity.mStr));
-    const TestUniChar* val = entry.OrInsert([]() { return nullptr; });
+    const TestUniChar* val = entry.OrInsert([]() { return nullptr; }).get();
     ASSERT_FALSE(entry);
     ASSERT_TRUE(val == nullptr);
     ASSERT_TRUE(entry.Data() == nullptr);
@@ -531,7 +707,7 @@ TEST(Hashtables, ClassHashtable_LookupForAdd)
   // Remove existing entries via OrRemove.
   for (auto& entity : gEntities) {
     auto entry = EntToUniClass.LookupForAdd(nsDependentCString(entity.mStr));
-    const TestUniChar* val = entry.OrInsert([]() { return nullptr; });
+    const TestUniChar* val = entry.OrInsert([]() { return nullptr; }).get();
     ASSERT_FALSE(entry);
     ASSERT_TRUE(val == nullptr);
     ASSERT_TRUE(entry.Data() == nullptr);
@@ -541,4 +717,39 @@ TEST(Hashtables, ClassHashtable_LookupForAdd)
     entry2.OrRemove();
   }
   ASSERT_TRUE(0 == EntToUniClass.Count());
+}
+
+TEST(Hashtables, RefPtrHashtable)
+{
+  // check a RefPtr-hashtable
+  nsRefPtrHashtable<nsCStringHashKey, TestUniCharRefCounted> EntToUniClass(
+      ENTITY_COUNT);
+
+  for (auto& entity : gEntities) {
+    EntToUniClass.Put(
+        nsDependentCString(entity.mStr),
+        mozilla::MakeRefPtr<TestUniCharRefCounted>(entity.mUnicode));
+  }
+
+  TestUniCharRefCounted* myChar;
+
+  for (auto& entity : gEntities) {
+    ASSERT_TRUE(EntToUniClass.Get(nsDependentCString(entity.mStr), &myChar));
+  }
+
+  ASSERT_FALSE(EntToUniClass.Get(NS_LITERAL_CSTRING("xxxx"), &myChar));
+
+  uint32_t count = 0;
+  for (auto iter = EntToUniClass.Iter(); !iter.Done(); iter.Next()) {
+    count++;
+  }
+  ASSERT_EQ(count, ENTITY_COUNT);
+
+  EntToUniClass.Clear();
+
+  count = 0;
+  for (auto iter = EntToUniClass.Iter(); !iter.Done(); iter.Next()) {
+    count++;
+  }
+  ASSERT_EQ(count, uint32_t(0));
 }

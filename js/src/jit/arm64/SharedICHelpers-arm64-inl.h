@@ -17,25 +17,26 @@ namespace jit {
 inline void EmitBaselineTailCallVM(TrampolinePtr target, MacroAssembler& masm,
                                    uint32_t argSize) {
   // We assume that R0 has been pushed, and R2 is unused.
-  MOZ_ASSERT(R2 == ValueOperand(r0));
+  static_assert(R2 == ValueOperand(r0));
 
   // Compute frame size into w0. Used below in makeFrameDescriptor().
   masm.Sub(x0, BaselineFrameReg64, masm.GetStackPointer64());
   masm.Add(w0, w0, Operand(BaselineFrame::FramePointerOffset));
 
-  // Store frame size without VMFunction arguments for GC marking.
+#ifdef DEBUG
+  // Store frame size without VMFunction arguments for debug assertions.
   {
     vixl::UseScratchRegisterScope temps(&masm.asVIXL());
     const ARMRegister scratch32 = temps.AcquireW();
-
     masm.Sub(scratch32, w0, Operand(argSize));
-    masm.store32(
-        scratch32.asUnsized(),
-        Address(BaselineFrameReg, BaselineFrame::reverseOffsetOfFrameSize()));
+    Address frameSizeAddr(BaselineFrameReg,
+                          BaselineFrame::reverseOffsetOfDebugFrameSize());
+    masm.store32(scratch32.asUnsized(), frameSizeAddr);
   }
+#endif
 
   // Push frame descriptor (minus the return address) and perform the tail call.
-  MOZ_ASSERT(ICTailCallReg == lr);
+  static_assert(ICTailCallReg == lr);
   masm.makeFrameDescriptor(r0, FrameType::BaselineJS, ExitFrameLayout::Size());
   masm.push(r0);
 
@@ -78,8 +79,11 @@ inline void EmitBaselineEnterStubFrame(MacroAssembler& masm, Register scratch) {
   masm.Sub(ARMRegister(scratch, 64), ARMRegister(scratch, 64),
            masm.GetStackPointer64());
 
-  masm.store32(scratch, Address(BaselineFrameReg,
-                                BaselineFrame::reverseOffsetOfFrameSize()));
+#ifdef DEBUG
+  Address frameSizeAddr(BaselineFrameReg,
+                        BaselineFrame::reverseOffsetOfDebugFrameSize());
+  masm.store32(scratch, frameSizeAddr);
+#endif
 
   // Note: when making changes here, don't forget to update STUB_FRAME_SIZE.
 

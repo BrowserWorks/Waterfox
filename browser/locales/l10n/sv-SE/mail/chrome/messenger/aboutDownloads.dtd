@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Sparade filer">
+<!ENTITY aboutDownloads.empty                      "Inga sparade filer">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "Öppna objektets mapp">
+<!ENTITY cmd.show.accesskey                        "m">
+<!ENTITY cmd.showMac.label                         "Visa i Finder">
+<!ENTITY cmd.showMac.accesskey                     "F">
+<!ENTITY cmd.open.label                            "Öppna">
+<!ENTITY cmd.open.accesskey                        "n">
+<!ENTITY cmd.removeFromHistory.label               "Ta bort från historiken">
+<!ENTITY cmd.removeFromHistory.accesskey           "T">
+<!ENTITY cmd.clearList.label                       "Rensa lista">
+<!ENTITY cmd.clearList.accesskey                   "R">
+<!ENTITY cmd.clearList.tooltip                     "Ta bort alla poster från listan med sparade filer, förutom pågående nedladdningar.">
+<!ENTITY cmd.searchDownloads.label                 "Sök…">
+<!ENTITY cmd.searchDownloads.key                   "F">

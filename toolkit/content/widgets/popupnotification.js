@@ -22,7 +22,7 @@
         ".popup-notification-description > b:last-of-type":
           "text=secondname,popupid",
         ".popup-notification-description > span:last-of-type":
-          "secondendlabel,popupid",
+          "text=secondendlabel,popupid",
         ".popup-notification-closebutton":
           "oncommand=closebuttoncommand,hidden=closebuttonhidden",
         ".popup-notification-learnmore-link":
@@ -57,19 +57,15 @@
         this.checkbox.hidden = false;
       } else {
         this.checkbox.hidden = true;
+        // Reset checked state to avoid wrong using of previous value.
+        this.checkbox.checked = false;
       }
 
       this.hidden = false;
     }
 
-    slotContents() {
-      if (this._hasSlotted) {
-        return;
-      }
-      this._hasSlotted = true;
-      this.appendChild(
-        MozXULElement.parseXULToFragment(
-          `
+    static get markup() {
+      return `
       <hbox class="popup-notification-header-container"></hbox>
       <hbox align="start" class="popup-notification-body-container">
         <image class="popup-notification-icon"/>
@@ -84,7 +80,7 @@
             </vbox>
             <toolbarbutton class="messageCloseButton close-icon popup-notification-closebutton tabbable" tooltiptext="&closeNotification.tooltip;"></toolbarbutton>
           </hbox>
-          <label class="popup-notification-learnmore-link" is="text-link">&learnMore;</label>
+          <label class="popup-notification-learnmore-link" is="text-link">&learnMoreNoEllipsis;</label>
           <checkbox class="popup-notification-checkbox" oncommand="PopupNotifications._onCheckboxCommand(event)"></checkbox>
           <description class="popup-notification-warning"></description>
         </vbox>
@@ -99,10 +95,19 @@
         </button>
         <button class="popup-notification-button popup-notification-primary-button" label="&defaultButton.label;" accesskey="&defaultButton.accesskey;"></button>
       </hbox>
-    `,
-          ["chrome://global/locale/notification.dtd"]
-        )
-      );
+      `;
+    }
+
+    static get entities() {
+      return ["chrome://global/locale/notification.dtd"];
+    }
+
+    slotContents() {
+      if (this._hasSlotted) {
+        return;
+      }
+      this._hasSlotted = true;
+      this.appendChild(this.constructor.fragment);
 
       this.button = this.querySelector(".popup-notification-primary-button");
       this.secondaryButton = this.querySelector(

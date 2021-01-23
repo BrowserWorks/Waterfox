@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY windowTitle.label "Propiedaes de la páxina">
+<!ENTITY location.label "Llocalización:">
+<!ENTITY lastModified.label "Cabera modificación:">
+<!ENTITY titleInput.label "Títulu:">
+<!ENTITY titleInput.accessKey "T">
+<!ENTITY authorInput.label "Autor:">
+<!ENTITY authorInput.accessKey "A">
+<!ENTITY descriptionInput.label "Descripción:">
+<!ENTITY descriptionInput.accessKey "D">
+<!ENTITY locationNewPage.label "[Nueva páxina, entá nun se guardó]">
+<!ENTITY EditHEADSource1.label "Usuarios avanzaos:">
+<!ENTITY EditHEADSource2.label "Pa editar otros conteníos de la rexón &lt;head&gt; usa &quot;Códigu HTML&quot; nel menú Ver o na barra d'edición.">

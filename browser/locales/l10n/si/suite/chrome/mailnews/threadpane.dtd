@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY threadColumn.label "Thread">
+<!ENTITY fromColumn.label "From">
+<!ENTITY recipientColumn.label "Recipient">
+<!ENTITY attachmentColumn.label "Attachments">
+<!ENTITY subjectColumn.label "Subject">
+<!ENTITY dateColumn.label "Date">
+<!ENTITY priorityColumn.label "Priority">
+<!ENTITY tagsColumn.label "Tags">
+<!ENTITY accountColumn.label "Account">
+<!ENTITY statusColumn.label "Status">
+<!ENTITY sizeColumn.label "Size">
+<!ENTITY junkStatusColumn.label "Junk Status">
+<!ENTITY unreadColumn.label "Unread in Thread">
+<!ENTITY totalColumn.label "Total in Thread">
+<!ENTITY readColumn.label "Read">
+<!ENTITY receivedColumn.label "Received">
+<!ENTITY flagColumn.label "Flag">
+<!ENTITY locationColumn.label "Location">
+<!ENTITY idColumn.label "Order Received">
+
+<!--Tooltips-->
+<!ENTITY columnChooser.tooltip "Click to select columns to display">
+<!ENTITY threadColumn.tooltip "Click to display message threads"> 
+<!ENTITY fromColumn.tooltip "Click to sort by from">
+<!ENTITY recipientColumn.tooltip "Click to sort by recipient">
+<!ENTITY attachmentColumn.tooltip "Click to sort by attachments">
+<!ENTITY subjectColumn.tooltip "Click to sort by subject">
+<!ENTITY dateColumn.tooltip "Click to sort by date">
+<!ENTITY priorityColumn.tooltip "Click to sort by priority">
+<!ENTITY tagsColumn.tooltip "Click to sort by tags">
+<!ENTITY accountColumn.tooltip "Click to sort by account">
+<!ENTITY statusColumn.tooltip "Click to sort by status">
+<!ENTITY sizeColumn.tooltip "Click to sort by size">
+<!ENTITY junkStatusColumn.tooltip "Click to sort by junk status">
+<!ENTITY unreadColumn.tooltip "Number of unread messages in thread">
+<!ENTITY totalColumn.tooltip "Total number of messages in thread">
+<!ENTITY readColumn.tooltip "Click to sort by read">
+<!ENTITY receivedColumn.tooltip "Click to sort by date received">
+<!ENTITY flagColumn.tooltip "Click to sort by flag">
+<!ENTITY locationColumn.tooltip "Click to sort by location">
+<!ENTITY idColumn.tooltip "Click to sort by order received">

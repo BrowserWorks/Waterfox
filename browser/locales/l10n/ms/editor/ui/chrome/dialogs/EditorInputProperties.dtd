@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Sifat Medan Borang">
+<!ENTITY windowTitleImage.label "Sifat Imej Borang">
+
+<!ENTITY InputType.label "Jenis Medan">
+<!ENTITY InputType.accesskey "J">
+<!ENTITY text.value "Teks">
+<!ENTITY password.value "Kata laluan">
+<!ENTITY checkbox.value "Kotak Semakan">
+<!ENTITY radio.value "Butang Radio">
+<!ENTITY submit.value "Butang Hantar">
+<!ENTITY reset.value "Butang Set semula">
+<!ENTITY file.value "Fail">
+<!ENTITY hidden.value "Tersorok">
+<!ENTITY image.value "Imej">
+<!ENTITY button.value "Butang">
+
+<!ENTITY InputSettings.label "Tetapan Medan">
+<!ENTITY InputName.label "Nama Medan:">
+<!ENTITY InputName.accesskey "N">
+<!ENTITY GroupName.label "Nama Kumpulan:">
+<!ENTITY GroupName.accesskey "N">
+<!ENTITY InputValue.label "Nilai Medan:">
+<!ENTITY InputValue.accesskey "N">
+<!ENTITY InitialValue.label "Nilai Permulaan:">
+<!ENTITY InitialValue.accesskey "N">
+<!ENTITY InputChecked.label "Semakan Permulaan">
+<!ENTITY InputChecked.accesskey "S">
+<!ENTITY InputSelected.label "Pilihan Permulaan">
+<!ENTITY InputSelected.accesskey "P">
+<!ENTITY InputReadOnly.label "Baca Sahaja">
+<!ENTITY InputReadOnly.accesskey "B">
+<!ENTITY InputDisabled.label "Dinyahdayakan">
+<!ENTITY InputDisabled.accesskey "D">
+<!ENTITY tabIndex.label "Indeks Tab:">
+<!ENTITY tabIndex.accesskey "I">
+<!ENTITY TextSize.label "Saiz Medan:">
+<!ENTITY TextSize.accesskey "M">
+<!ENTITY TextLength.label "Panjang Maksimum:">
+<!ENTITY TextLength.accesskey "P">
+<!ENTITY AccessKey.label "Kekunci Akses:">
+<!ENTITY AccessKey.accesskey "K">
+<!ENTITY Accept.label "Jenis Penerimaan:">
+<!ENTITY Accept.accesskey "P">
+
+<!ENTITY ImageProperties.label "Sifat Imej…">
+<!ENTITY ImageProperties.accesskey "S">

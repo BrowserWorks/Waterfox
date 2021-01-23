@@ -104,7 +104,7 @@ function getFormattedHelpData() {
  * and audio effect.
  *
  * @param object window
- *        The Debugger Client window.
+ *        The DevTools Client window.
  *
  * @param object args
  *        The original args with which the screenshot
@@ -121,6 +121,12 @@ function saveScreenshot(window, args = {}, value) {
     // Wrap message in an array so that the return value is consistant with save
     return [message];
   }
+
+  // Guard against missing image data.
+  if (!value.data) {
+    return [];
+  }
+
   simulateCameraShutter(window);
   return save(args, value);
 }
@@ -129,7 +135,7 @@ function saveScreenshot(window, args = {}, value) {
  * This function is called to simulate camera effects
  *
  * @param object document
- *        The Debugger Client document.
+ *        The DevTools Client document.
  */
 function simulateCameraShutter(window) {
   if (Services.prefs.getBoolPref("devtools.screenshot.audio.enabled")) {
@@ -224,6 +230,11 @@ function saveToClipboard(base64URI) {
  */
 async function saveToFile(image) {
   let filename = image.filename;
+
+  // Guard against missing image data.
+  if (!image.data) {
+    return "";
+  }
 
   // Check there is a .png extension to filename
   if (!filename.match(/.png$/i)) {

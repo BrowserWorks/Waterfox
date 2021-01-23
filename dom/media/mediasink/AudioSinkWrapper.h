@@ -24,10 +24,12 @@ class MediaQueue;
  * A wrapper around AudioSink to provide the interface of MediaSink.
  */
 class AudioSinkWrapper : public MediaSink {
+  using PlaybackParams = AudioSink::PlaybackParams;
+
   // An AudioSink factory.
   class Creator {
    public:
-    virtual ~Creator() {}
+    virtual ~Creator() = default;
     virtual AudioSink* Create() = 0;
   };
 
@@ -46,18 +48,17 @@ class AudioSinkWrapper : public MediaSink {
   template <typename Function>
   AudioSinkWrapper(AbstractThread* aOwnerThread,
                    const MediaQueue<AudioData>& aAudioQueue,
-                   const Function& aFunc)
+                   const Function& aFunc, double aVolume, double aPlaybackRate,
+                   bool aPreservesPitch)
       : mOwnerThread(aOwnerThread),
         mCreator(new CreatorImpl<Function>(aFunc)),
         mIsStarted(false),
+        mParams(aVolume, aPlaybackRate, aPreservesPitch),
         // Give an invalid value to facilitate debug if used before playback
         // starts.
         mPlayDuration(media::TimeUnit::Invalid()),
         mAudioEnded(true),
         mAudioQueue(aAudioQueue) {}
-
-  const PlaybackParams& GetPlaybackParams() const override;
-  void SetPlaybackParams(const PlaybackParams& aParams) override;
 
   RefPtr<EndedPromise> OnEnded(TrackType aType) override;
   media::TimeUnit GetEndTime(TrackType aType) const override;
@@ -69,6 +70,8 @@ class AudioSinkWrapper : public MediaSink {
   void SetPreservesPitch(bool aPreservesPitch) override;
   void SetPlaying(bool aPlaying) override;
 
+  double PlaybackRate() const override;
+
   nsresult Start(const media::TimeUnit& aStartTime,
                  const MediaInfo& aInfo) override;
   void Stop() override;
@@ -77,7 +80,7 @@ class AudioSinkWrapper : public MediaSink {
 
   void Shutdown() override;
 
-  nsCString GetDebugInfo() override;
+  void GetDebugInfo(dom::MediaSinkDebugInfo& aInfo) override;
 
  private:
   virtual ~AudioSinkWrapper();
@@ -86,7 +89,7 @@ class AudioSinkWrapper : public MediaSink {
     MOZ_ASSERT(mOwnerThread->IsCurrentThreadIn());
   }
 
-  TimeUnit GetVideoPosition(TimeStamp aNow) const;
+  media::TimeUnit GetVideoPosition(TimeStamp aNow) const;
 
   void OnAudioEnded();
 
@@ -102,7 +105,7 @@ class AudioSinkWrapper : public MediaSink {
   PlaybackParams mParams;
 
   TimeStamp mPlayStartTime;
-  TimeUnit mPlayDuration;
+  media::TimeUnit mPlayDuration;
 
   bool mAudioEnded;
   MozPromiseRequestHolder<EndedPromise> mAudioSinkEndedPromise;

@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY siteUrl.label         "URL al lec'hienn:">
+<!ENTITY docSubdir.label       "Iskavlec'h ar bajenn:">
+<!ENTITY otherSubdir.label     "Iskavlec'h ar skeudennoù:">
+
+<!ENTITY status.label          "Oc'h embann…">
+<!ENTITY fileList.label        "Stad an embann">
+<!ENTITY succeeded.label       "Echu">
+<!ENTITY failed.label          "C'hwitet">
+
+<!ENTITY keepOpen              "Chom gant ar prenestr-mañ digor ur wech bet echuet an embann.">
+<!ENTITY closeButton.label     "Serriñ">

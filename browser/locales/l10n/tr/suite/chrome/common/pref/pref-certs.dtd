@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY managecerts.caption "Onay belgelerini yönet">
+<!ENTITY managecerts.text "Use the Certificate Manager to manage your personal certificates, as well as those of other people and certificate authorities.">
+<!ENTITY managecerts.button "Onay belgelerini yönet…">
+<!ENTITY managecerts.accesskey "O">
+<!ENTITY managedevices.caption "Güvenlik aygıtlarını yönet…">
+<!ENTITY managedevices.text "Use this button to manage your security devices, such as smart cards.">
+<!ENTITY managedevices.button "Güvenlik aygıtlarını yönet…">
+<!ENTITY managedevices.accesskey "D">
+
+<!ENTITY ssl.label "SSL">
+
+<!ENTITY pref.certs.title "Onay belgeleri">
+<!ENTITY certs.label "Onay belgeleri">

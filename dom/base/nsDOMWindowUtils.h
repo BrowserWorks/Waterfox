@@ -49,7 +49,7 @@ class nsTranslationNodeList final : public nsITranslationNodeList {
   }
 
  private:
-  ~nsTranslationNodeList() {}
+  ~nsTranslationNodeList() = default;
 
   nsTArray<nsCOMPtr<nsINode> > mNodes;
   nsTArray<bool> mNodeIsRoot;
@@ -101,6 +101,10 @@ class nsDOMWindowUtils final : public nsIDOMWindowUtils,
       const nsTArray<float>& aRotationAngles, const nsTArray<float>& aForces,
       int32_t aModifiers, bool aIgnoreRootScrollFrame, bool aToWindow,
       bool* aPreventDefault);
+
+  void ReportErrorMessageForWindow(const nsAString& aErrorMessage,
+                                   const char* aClassification,
+                                   bool aFromChrome);
 };
 
 #endif

@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Բլանկի հատկությունը">
+
+<!ENTITY Settings.label "Կարգավորումներ">
+
+<!ENTITY FormName.label "Բլանկի անունը">
+<!ENTITY FormName.accesskey "N">
+<!ENTITY FormAction.label "Քայլի URL.">
+<!ENTITY FormAction.accesskey "Ք">
+<!ENTITY FormMethod.label "Եղանակ.">
+<!ENTITY FormMethod.accesskey "Ե">
+<!ENTITY FormEncType.label "Կոդավորումը.">
+<!ENTITY FormEncType.accesskey "c">
+<!ENTITY FormTarget.label "Թիրախային շրջանակ.">
+<!ENTITY FormTarget.accesskey "Թ">
+
+<!ENTITY RemoveForm.label "Հեռացնել բլանկը">
+<!ENTITY RemoveForm.accesskey "R">

@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title        "Clár Ábhair">
+<!ENTITY buildToc.label      "Clár ábhair le tógáil ó:">
+<!ENTITY tag.label           "Clib:">
+<!ENTITY class.label         "Aicme:">
+<!ENTITY header1.label       "Leibhéal 1">
+<!ENTITY header2.label       "Leibhéal 2">
+<!ENTITY header3.label       "Leibhéal 3">
+<!ENTITY header4.label       "Leibhéal 4">
+<!ENTITY header5.label       "Leibhéal 5">
+<!ENTITY header6.label       "Leibhéal 6">
+<!ENTITY makeReadOnly.label  "Clár ábhar le cead léite amháin">
+<!ENTITY orderedList.label   "Cuir uimhir le gach iontráil sa chlár ábhar">

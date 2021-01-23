@@ -19,13 +19,14 @@
 #include "nsString.h"
 #include "nsReadableUtils.h"
 #include "nsPrimitiveHelpers.h"
-#include "nsIServiceManager.h"
 #include "nsImageToPixbuf.h"
 #include "nsStringStream.h"
 #include "nsIObserverService.h"
 #include "mozilla/Services.h"
 #include "mozilla/RefPtr.h"
+#include "mozilla/SchedulerGroup.h"
 #include "mozilla/TimeStamp.h"
+#include "gfxPlatformGtk.h"
 
 #include "imgIContainer.h"
 
@@ -65,7 +66,16 @@ GdkAtom GetSelectionAtom(int32_t aWhichClipboard) {
   return GDK_SELECTION_PRIMARY;
 }
 
-nsClipboard::nsClipboard() {}
+int GetGeckoClipboardType(GtkClipboard* aGtkClipboard) {
+  if (aGtkClipboard == gtk_clipboard_get(GDK_SELECTION_PRIMARY))
+    return nsClipboard::kSelectionClipboard;
+  else if (aGtkClipboard == gtk_clipboard_get(GDK_SELECTION_CLIPBOARD))
+    return nsClipboard::kGlobalClipboard;
+  else
+    return -1;  // THAT AIN'T NO CLIPBOARD I EVER HEARD OF
+}
+
+nsClipboard::nsClipboard() = default;
 
 nsClipboard::~nsClipboard() {
   // We have to clear clipboard before gdk_display_close() call.
@@ -81,41 +91,34 @@ nsClipboard::~nsClipboard() {
 NS_IMPL_ISUPPORTS(nsClipboard, nsIClipboard, nsIObserver)
 
 nsresult nsClipboard::Init(void) {
-  GdkDisplay* display = gdk_display_get_default();
-
-  // Create a nsRetrievalContext. If there's no default display
-  // create the X11 one as a fallback.
-  if (!display || GDK_IS_X11_DISPLAY(display)) {
-    mContext = new nsRetrievalContextX11();
+  if (gfxPlatformGtk::GetPlatform()->IsX11Display()) {
+    mContext = MakeUnique<nsRetrievalContextX11>();
 #if defined(MOZ_WAYLAND)
   } else {
-    mContext = new nsRetrievalContextWayland();
+    mContext = MakeUnique<nsRetrievalContextWayland>();
 #endif
   }
   NS_ASSERTION(mContext, "Missing nsRetrievalContext for nsClipboard!");
 
   nsCOMPtr<nsIObserverService> os = mozilla::services::GetObserverService();
   if (os) {
-    os->AddObserver(this, "quit-application", false);
     os->AddObserver(this, "xpcom-shutdown", false);
   }
 
   return NS_OK;
 }
 
-nsresult nsClipboard::Store(void) {
-  if (mGlobalTransferable) {
-    GtkClipboard* clipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
-    gtk_clipboard_store(clipboard);
-  }
-  return NS_OK;
-}
-
 NS_IMETHODIMP
 nsClipboard::Observe(nsISupports* aSubject, const char* aTopic,
                      const char16_t* aData) {
-  Store();
-  return NS_OK;
+  // Save global clipboard content to CLIPBOARD_MANAGER.
+  // gtk_clipboard_store() can run an event loop, so call from a dedicated
+  // runnable.
+  return SchedulerGroup::Dispatch(
+      TaskCategory::Other,
+      NS_NewRunnableFunction("gtk_clipboard_store()", []() {
+        gtk_clipboard_store(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD));
+      }));
 }
 
 NS_IMETHODIMP
@@ -131,8 +134,8 @@ nsClipboard::SetData(nsITransferable* aTransferable, nsIClipboardOwner* aOwner,
     return NS_OK;
   }
 
-  // Clear out the clipboard in order to set the new data
-  EmptyClipboard(aWhichClipboard);
+  LOGCLIP(("nsClipboard::SetData (%s)\n",
+           aWhichClipboard == kSelectionClipboard ? "primary" : "clipboard"));
 
   // List of suported targets
   GtkTargetList* list = gtk_target_list_new(nullptr, 0);
@@ -141,7 +144,8 @@ nsClipboard::SetData(nsITransferable* aTransferable, nsIClipboardOwner* aOwner,
   nsTArray<nsCString> flavors;
   nsresult rv = aTransferable->FlavorsTransferableCanExport(flavors);
   if (NS_FAILED(rv)) {
-    return rv;
+    LOGCLIP(("    FlavorsTransferableCanExport failed!\n"));
+    // Fall through.  |gtkTargets| will be null below.
   }
 
   // Add all the flavors to this widget's supported type.
@@ -151,6 +155,7 @@ nsClipboard::SetData(nsITransferable* aTransferable, nsIClipboardOwner* aOwner,
 
     // Special case text/unicode since we can handle all of the string types.
     if (flavorStr.EqualsLiteral(kUnicodeMime)) {
+      LOGCLIP(("    text targets\n"));
       gtk_target_list_add_text_targets(list, 0);
       continue;
     }
@@ -159,6 +164,7 @@ nsClipboard::SetData(nsITransferable* aTransferable, nsIClipboardOwner* aOwner,
       // Don't bother adding image targets twice
       if (!imagesAdded) {
         // accept any writable image type
+        LOGCLIP(("    image targets\n"));
         gtk_target_list_add_image_targets(list, 0, TRUE);
         imagesAdded = true;
       }
@@ -178,10 +184,13 @@ nsClipboard::SetData(nsITransferable* aTransferable, nsIClipboardOwner* aOwner,
   GtkTargetEntry* gtkTargets =
       gtk_target_table_new_from_list(list, &numTargets);
 
+  LOGCLIP(("    gtk_target_table_new_from_list() = %p\n", (void*)gtkTargets));
+
   // Set getcallback and request to store data after an application exit
   if (gtkTargets &&
       gtk_clipboard_set_with_data(gtkClipboard, gtkTargets, numTargets,
                                   clipboard_get_cb, clipboard_clear_cb, this)) {
+    LOGCLIP(("    gtk_clipboard_set_with_data() is ok\n"));
     // We managed to set-up the clipboard so update internal state
     // We have to set it now because gtk_clipboard_set_with_data() calls
     // clipboard_clear_cb() which reset our internal state
@@ -196,6 +205,10 @@ nsClipboard::SetData(nsITransferable* aTransferable, nsIClipboardOwner* aOwner,
 
     rv = NS_OK;
   } else {
+    LOGCLIP(("    gtk_clipboard_set_with_data() failed!\n"));
+    // Clear references to the any old data and let GTK know that it is no
+    // longer available.
+    EmptyClipboard(aWhichClipboard);
     rv = NS_ERROR_FAILURE;
   }
 
@@ -209,6 +222,8 @@ void nsClipboard::SetTransferableData(nsITransferable* aTransferable,
                                       nsCString& aFlavor,
                                       const char* aClipboardData,
                                       uint32_t aClipboardDataLength) {
+  LOGCLIP(("nsClipboard::SetTransferableData MIME %s\n", aFlavor.get()));
+
   nsCOMPtr<nsISupports> wrapper;
   nsPrimitiveHelpers::CreatePrimitiveForData(
       aFlavor, aClipboardData, aClipboardDataLength, getter_AddRefs(wrapper));
@@ -219,10 +234,14 @@ NS_IMETHODIMP
 nsClipboard::GetData(nsITransferable* aTransferable, int32_t aWhichClipboard) {
   if (!aTransferable) return NS_ERROR_FAILURE;
 
+  LOGCLIP(("nsClipboard::GetData (%s)\n",
+           aWhichClipboard == kSelectionClipboard ? "primary" : "clipboard"));
+
   // Get a list of flavors this transferable can import
   nsTArray<nsCString> flavors;
   nsresult rv = aTransferable->FlavorsTransferableCanImport(flavors);
   if (NS_FAILED(rv)) {
+    LOGCLIP(("    FlavorsTransferableCanImport falied!\n"));
     return rv;
   }
 
@@ -241,13 +260,17 @@ nsClipboard::GetData(nsITransferable* aTransferable, int32_t aWhichClipboard) {
       uint32_t clipboardDataLength;
       const char* clipboardData = mContext->GetClipboardData(
           flavorStr.get(), aWhichClipboard, &clipboardDataLength);
-      if (!clipboardData) continue;
+      if (!clipboardData) {
+        LOGCLIP(("    %s type is missing\n", flavorStr.get()));
+        continue;
+      }
 
       nsCOMPtr<nsIInputStream> byteStream;
       NS_NewByteInputStream(getter_AddRefs(byteStream),
                             MakeSpan(clipboardData, clipboardDataLength),
                             NS_ASSIGNMENT_COPY);
       aTransferable->SetTransferData(flavorStr.get(), byteStream);
+      LOGCLIP(("    got %s MIME data\n", flavorStr.get()));
 
       mContext->ReleaseClipboardData(clipboardData);
       return NS_OK;
@@ -258,6 +281,7 @@ nsClipboard::GetData(nsITransferable* aTransferable, int32_t aWhichClipboard) {
     if (flavorStr.EqualsLiteral(kUnicodeMime)) {
       const char* clipboardData = mContext->GetClipboardText(aWhichClipboard);
       if (!clipboardData) {
+        LOGCLIP(("    failed to get unicode data\n"));
         // If the type was text/unicode and we couldn't get
         // text off the clipboard, run the next loop
         // iteration.
@@ -272,6 +296,8 @@ nsClipboard::GetData(nsITransferable* aTransferable, int32_t aWhichClipboard) {
                           unicodeDataLength);
       free((void*)unicodeData);
 
+      LOGCLIP(("    got unicode data, length %d\n", ucs2string.Length()));
+
       mContext->ReleaseClipboardData(clipboardData);
       return NS_OK;
     }
@@ -280,7 +306,15 @@ nsClipboard::GetData(nsITransferable* aTransferable, int32_t aWhichClipboard) {
     const char* clipboardData = mContext->GetClipboardData(
         flavorStr.get(), aWhichClipboard, &clipboardDataLength);
 
+#ifdef MOZ_LOGGING
+    if (!clipboardData) {
+      LOGCLIP(("    %s type is missing\n", flavorStr.get()));
+    }
+#endif
+
     if (clipboardData) {
+      LOGCLIP(("    got %s mime type data.\n", flavorStr.get()));
+
       // Special case text/html since we can convert into UCS2
       if (flavorStr.EqualsLiteral(kHTMLMime)) {
         char16_t* htmlBody = nullptr;
@@ -308,11 +342,30 @@ nsClipboard::GetData(nsITransferable* aTransferable, int32_t aWhichClipboard) {
     }
   }
 
+  LOGCLIP(("    failed to get clipboard content.\n"));
   return NS_OK;
 }
 
 NS_IMETHODIMP
 nsClipboard::EmptyClipboard(int32_t aWhichClipboard) {
+  LOGCLIP(("nsClipboard::EmptyClipboard (%s)\n",
+           aWhichClipboard == kSelectionClipboard ? "primary" : "clipboard"));
+  if (aWhichClipboard == kSelectionClipboard) {
+    if (mSelectionTransferable) {
+      gtk_clipboard_clear(gtk_clipboard_get(GDK_SELECTION_PRIMARY));
+      MOZ_ASSERT(!mSelectionTransferable);
+    }
+  } else {
+    if (mGlobalTransferable) {
+      gtk_clipboard_clear(gtk_clipboard_get(GDK_SELECTION_CLIPBOARD));
+      MOZ_ASSERT(!mGlobalTransferable);
+    }
+  }
+
+  return NS_OK;
+}
+
+void nsClipboard::ClearTransferable(int32_t aWhichClipboard) {
   if (aWhichClipboard == kSelectionClipboard) {
     if (mSelectionOwner) {
       mSelectionOwner->LosingOwnership(mSelectionTransferable);
@@ -326,28 +379,35 @@ nsClipboard::EmptyClipboard(int32_t aWhichClipboard) {
     }
     mGlobalTransferable = nullptr;
   }
-
-  return NS_OK;
 }
 
 NS_IMETHODIMP
-nsClipboard::HasDataMatchingFlavors(const char** aFlavorList, uint32_t aLength,
+nsClipboard::HasDataMatchingFlavors(const nsTArray<nsCString>& aFlavorList,
                                     int32_t aWhichClipboard, bool* _retval) {
-  if (!aFlavorList || !_retval) return NS_ERROR_NULL_POINTER;
+  if (!_retval) {
+    return NS_ERROR_NULL_POINTER;
+  }
+
+  LOGCLIP(("nsClipboard::HasDataMatchingFlavors (%s)\n",
+           aWhichClipboard == kSelectionClipboard ? "primary" : "clipboard"));
 
   *_retval = false;
 
   int targetNums;
   GdkAtom* targets = mContext->GetTargets(aWhichClipboard, &targetNums);
-  if (!targets) return NS_OK;
+  if (!targets) {
+    LOGCLIP(("    no targes at clipboard (null)\n"));
+    return NS_OK;
+  }
 
   // Walk through the provided types and try to match it to a
   // provided type.
-  for (uint32_t i = 0; i < aLength && !*_retval; i++) {
+  for (auto& flavor : aFlavorList) {
     // We special case text/unicode here.
-    if (!strcmp(aFlavorList[i], kUnicodeMime) &&
+    if (flavor.EqualsLiteral(kUnicodeMime) &&
         gtk_targets_include_text(targets, targetNums)) {
       *_retval = true;
+      LOGCLIP(("    has kUnicodeMime\n"));
       break;
     }
 
@@ -355,13 +415,16 @@ nsClipboard::HasDataMatchingFlavors(const char** aFlavorList, uint32_t aLength,
       gchar* atom_name = gdk_atom_name(targets[j]);
       if (!atom_name) continue;
 
-      if (!strcmp(atom_name, aFlavorList[i])) *_retval = true;
-
+      if (flavor.Equals(atom_name)) {
+        *_retval = true;
+        LOGCLIP(("    has %s\n", atom_name));
+      }
       // X clipboard supports image/jpeg, but we want to emulate support
       // for image/jpg as well
-      if (!strcmp(aFlavorList[i], kJPGImageMime) &&
-          !strcmp(atom_name, kJPEGImageMime)) {
+      else if (flavor.EqualsLiteral(kJPGImageMime) &&
+               !strcmp(atom_name, kJPEGImageMime)) {
         *_retval = true;
+        LOGCLIP(("    has image/jpg\n"));
       }
 
       g_free(atom_name);
@@ -369,6 +432,12 @@ nsClipboard::HasDataMatchingFlavors(const char** aFlavorList, uint32_t aLength,
       if (*_retval) break;
     }
   }
+
+#ifdef MOZ_LOGGING
+  if (!(*_retval)) {
+    LOGCLIP(("    no targes at clipboard (bad match)\n"));
+  }
+#endif
 
   g_free(targets);
   return NS_OK;
@@ -415,13 +484,14 @@ void nsClipboard::SelectionGetEvent(GtkClipboard* aClipboard,
   else
     return;  // THAT AIN'T NO CLIPBOARD I EVER HEARD OF
 
+  LOGCLIP(("nsClipboard::SelectionGetEvent (%s)\n",
+           whichClipboard == kSelectionClipboard ? "primary" : "clipboard"));
+
   nsCOMPtr<nsITransferable> trans = GetTransferable(whichClipboard);
   if (!trans) {
     // We have nothing to serve
-#ifdef DEBUG_CLIPBOARD
-    printf("nsClipboard::SelectionGetEvent() - %s clipboard is empty!\n",
-           whichClipboard == kSelectionClipboard ? "Selection" : "Global");
-#endif
+    LOGCLIP(("nsClipboard::SelectionGetEvent() - %s clipboard is empty!\n",
+             whichClipboard == kSelectionClipboard ? "Primary" : "Clipboard"));
     return;
   }
 
@@ -429,14 +499,17 @@ void nsClipboard::SelectionGetEvent(GtkClipboard* aClipboard,
   nsCOMPtr<nsISupports> item;
 
   GdkAtom selectionTarget = gtk_selection_data_get_target(aSelectionData);
+  LOGCLIP(("  selection target %s\n", gdk_atom_name(selectionTarget)));
 
   // Check to see if the selection data is some text type.
   if (gtk_targets_include_text(&selectionTarget, 1)) {
+    LOGCLIP(("  providing text/unicode data\n"));
     // Try to convert our internal type into a text string.  Get
     // the transferable for this clipboard and try to get the
     // text/unicode type for it.
     rv = trans->GetTransferData("text/unicode", getter_AddRefs(item));
     if (NS_FAILED(rv) || !item) {
+      LOGCLIP(("  GetTransferData() failed to get text/unicode!\n"));
       return;
     }
 
@@ -448,6 +521,7 @@ void nsClipboard::SelectionGetEvent(GtkClipboard* aClipboard,
     wideString->GetData(ucs2string);
     NS_ConvertUTF16toUTF8 utf8string(ucs2string);
 
+    LOGCLIP(("  sent %d bytes of utf-8 data\n", utf8string.Length()));
     gtk_selection_data_set_text(aSelectionData, utf8string.get(),
                                 utf8string.Length());
     return;
@@ -455,6 +529,7 @@ void nsClipboard::SelectionGetEvent(GtkClipboard* aClipboard,
 
   // Check to see if the selection data is an image type
   if (gtk_targets_include_image(&selectionTarget, 1, TRUE)) {
+    LOGCLIP(("  providing image data\n"));
     // Look through our transfer data for the image
     static const char* const imageMimeTypes[] = {kNativeImageMime,
                                                  kPNGImageMime, kJPEGImageMime,
@@ -464,36 +539,49 @@ void nsClipboard::SelectionGetEvent(GtkClipboard* aClipboard,
     for (uint32_t i = 0; i < ArrayLength(imageMimeTypes); i++) {
       rv = trans->GetTransferData(imageMimeTypes[i], getter_AddRefs(imageItem));
       if (NS_FAILED(rv)) {
+        LOGCLIP(
+            ("    %s is missing at GetTransferData()\n", imageMimeTypes[i]));
         continue;
       }
 
       image = do_QueryInterface(imageItem);
       if (image) {
+        LOGCLIP(
+            ("    %s is available at GetTransferData()\n", imageMimeTypes[i]));
         break;
       }
     }
 
     if (!image) {  // Not getting an image for an image mime type!?
+      LOGCLIP(("    Failed to get any image mime from GetTransferData()!\n"));
       return;
     }
 
     GdkPixbuf* pixbuf = nsImageToPixbuf::ImageToPixbuf(image);
-    if (!pixbuf) return;
+    if (!pixbuf) {
+      LOGCLIP(("    nsImageToPixbuf::ImageToPixbuf() failed!\n"));
+      return;
+    }
 
+    LOGCLIP(("    Setting pixbuf image data as %s\n",
+             gdk_atom_name(selectionTarget)));
     gtk_selection_data_set_pixbuf(aSelectionData, pixbuf);
     g_object_unref(pixbuf);
     return;
   }
 
   if (selectionTarget == gdk_atom_intern(kHTMLMime, FALSE)) {
+    LOGCLIP(("  providing %s data\n", kHTMLMime));
     rv = trans->GetTransferData(kHTMLMime, getter_AddRefs(item));
     if (NS_FAILED(rv) || !item) {
+      LOGCLIP(("  failed to get %s data by GetTransferData()!\n", kHTMLMime));
       return;
     }
 
     nsCOMPtr<nsISupportsString> wideString;
     wideString = do_QueryInterface(item);
     if (!wideString) {
+      LOGCLIP(("  failed to get wideString interface!"));
       return;
     }
 
@@ -505,19 +593,28 @@ void nsClipboard::SelectionGetEvent(GtkClipboard* aClipboard,
     html.AppendLiteral(kHTMLMarkupPrefix);
     AppendUTF16toUTF8(ucs2string, html);
 
+    LOGCLIP(("  Setting %d bytest of %s data\n", html.Length(),
+             gdk_atom_name(selectionTarget)));
     gtk_selection_data_set(aSelectionData, selectionTarget, 8,
                            (const guchar*)html.get(), html.Length());
     return;
   }
 
+  LOGCLIP(("  Try if we have anything at GetTransferData() for %s\n",
+           gdk_atom_name(selectionTarget)));
+
   // Try to match up the selection data target to something our
   // transferable provides.
   gchar* target_name = gdk_atom_name(selectionTarget);
-  if (!target_name) return;
+  if (!target_name) {
+    LOGCLIP(("  Failed to get target name!\n"));
+    return;
+  }
 
   rv = trans->GetTransferData(target_name, getter_AddRefs(item));
   // nothing found?
   if (NS_FAILED(rv) || !item) {
+    LOGCLIP(("  Failed to get anything from GetTransferData()!\n"));
     g_free(target_name);
     return;
   }
@@ -528,37 +625,41 @@ void nsClipboard::SelectionGetEvent(GtkClipboard* aClipboard,
                                               item, &primitive_data, &dataLen);
 
   if (primitive_data) {
+    LOGCLIP(("  Setting %s as a primitive data type, %d bytes\n", target_name,
+             dataLen));
     gtk_selection_data_set(aSelectionData, selectionTarget,
                            8, /* 8 bits in a unit */
                            (const guchar*)primitive_data, dataLen);
     free(primitive_data);
+  } else {
+    LOGCLIP(("  Failed to get primitive data!\n"));
   }
 
   g_free(target_name);
 }
 
 void nsClipboard::SelectionClearEvent(GtkClipboard* aGtkClipboard) {
-  int32_t whichClipboard;
+  int32_t whichClipboard = GetGeckoClipboardType(aGtkClipboard);
+  if (whichClipboard < 0) {
+    return;
+  }
 
-  // which clipboard?
-  if (aGtkClipboard == gtk_clipboard_get(GDK_SELECTION_PRIMARY))
-    whichClipboard = kSelectionClipboard;
-  else if (aGtkClipboard == gtk_clipboard_get(GDK_SELECTION_CLIPBOARD))
-    whichClipboard = kGlobalClipboard;
-  else
-    return;  // THAT AIN'T NO CLIPBOARD I EVER HEARD OF
+  LOGCLIP(("nsClipboard::SelectionClearEvent (%s)\n",
+           whichClipboard == kSelectionClipboard ? "primary" : "clipboard"));
 
-  EmptyClipboard(whichClipboard);
+  ClearTransferable(whichClipboard);
 }
 
 void clipboard_get_cb(GtkClipboard* aGtkClipboard,
                       GtkSelectionData* aSelectionData, guint info,
                       gpointer user_data) {
+  LOGCLIP(("clipboard_get_cb() callback\n"));
   nsClipboard* aClipboard = static_cast<nsClipboard*>(user_data);
   aClipboard->SelectionGetEvent(aGtkClipboard, aSelectionData);
 }
 
 void clipboard_clear_cb(GtkClipboard* aGtkClipboard, gpointer user_data) {
+  LOGCLIP(("clipboard_clear_cb() callback\n"));
   nsClipboard* aClipboard = static_cast<nsClipboard*>(user_data);
   aClipboard->SelectionClearEvent(aGtkClipboard);
 }

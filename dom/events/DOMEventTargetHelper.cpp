@@ -48,7 +48,10 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(DOMEventTargetHelper)
   NS_IMPL_CYCLE_COLLECTION_UNLINK_PRESERVED_WRAPPER
-  NS_IMPL_CYCLE_COLLECTION_UNLINK(mListenerManager)
+  if (tmp->mListenerManager) {
+    tmp->mListenerManager->Disconnect();
+    NS_IMPL_CYCLE_COLLECTION_UNLINK(mListenerManager)
+  }
   tmp->MaybeDontKeepAlive();
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
@@ -92,30 +95,6 @@ DOMEventTargetHelper::~DOMEventTargetHelper() {
     mListenerManager->Disconnect();
   }
   ReleaseWrapper(this);
-}
-
-void DOMEventTargetHelper::BindToOwner(nsPIDOMWindowInner* aOwner) {
-  // Make sure to bind via BindToOwner(nsIGlobalObject*) so
-  // subclasses can override the method to perform additional
-  // actions.
-  nsIGlobalObject* global = aOwner ? aOwner->AsGlobal() : nullptr;
-  BindToOwner(global);
-}
-
-void DOMEventTargetHelper::BindToOwner(nsIGlobalObject* aOwner) {
-  BindToOwnerInternal(aOwner);
-}
-
-void DOMEventTargetHelper::BindToOwner(DOMEventTargetHelper* aOther) {
-  // Make sure to bind via BindToOwner(nsIGlobalObject*) so
-  // subclasses can override the method to perform additional
-  // actions.
-  if (!aOther) {
-    BindToOwner(static_cast<nsIGlobalObject*>(nullptr));
-    return;
-  }
-  BindToOwner(aOther->GetParentObject());
-  mHasOrHasHadOwnerWindow = aOther->HasOrHasHadOwner();
 }
 
 void DOMEventTargetHelper::DisconnectFromOwner() {
@@ -292,15 +271,9 @@ void DOMEventTargetHelper::MaybeDontKeepAlive() {
   }
 }
 
-void DOMEventTargetHelper::BindToOwnerInternal(nsIGlobalObject* aOwner) {
-  if (mParentObject) {
-    mParentObject->RemoveEventTargetObject(this);
-    if (mOwnerWindow) {
-      mOwnerWindow = nullptr;
-    }
-    mParentObject = nullptr;
-    mHasOrHasHadOwnerWindow = false;
-  }
+void DOMEventTargetHelper::BindToOwner(nsIGlobalObject* aOwner) {
+  MOZ_ASSERT(!mParentObject);
+
   if (aOwner) {
     mParentObject = aOwner;
     aOwner->AddEventTargetObject(this);

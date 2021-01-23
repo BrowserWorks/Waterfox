@@ -45,7 +45,7 @@ function l10n(key) {
 /**
  * Create a xul:menuitem element
  *
- * @param {XULDocument} doc
+ * @param {HTMLDocument} doc
  *        The document to which menus are to be added.
  * @param {String} id
  *        Element id.
@@ -78,7 +78,7 @@ function createMenuItem({ doc, id, label, accesskey, isCheckbox }) {
  *
  * @param {Object} toolDefinition
  *        Tool definition of the tool to add a menu entry.
- * @param {XULDocument} doc
+ * @param {HTMLDocument} doc
  *        The document to which the tool menu item is to be added.
  */
 function createToolMenuElements(toolDefinition, doc) {
@@ -143,7 +143,7 @@ function sendEntryPointTelemetry(window) {
  * Create xul menuitem, key elements for a given tool.
  * And then insert them into browser DOM.
  *
- * @param {XULDocument} doc
+ * @param {HTMLDocument} doc
  *        The document to which the tool is to be registered.
  * @param {Object} toolDefinition
  *        Tool definition of the tool to register.
@@ -156,7 +156,7 @@ function insertToolMenuElements(doc, toolDefinition, prevDef) {
   let ref;
   if (prevDef) {
     const menuitem = doc.getElementById("menuitem_" + prevDef.id);
-    ref = menuitem && menuitem.nextSibling ? menuitem.nextSibling : null;
+    ref = menuitem?.nextSibling ? menuitem.nextSibling : null;
   } else {
     ref = doc.getElementById("menu_devtools_separator");
   }
@@ -172,7 +172,7 @@ exports.insertToolMenuElements = insertToolMenuElements;
  *
  * @param {string} toolId
  *        Id of the tool to add a menu entry for
- * @param {XULDocument} doc
+ * @param {HTMLDocument} doc
  *        The document to which the tool menu item is to be removed from
  */
 function removeToolFromMenu(toolId, doc) {
@@ -191,7 +191,7 @@ exports.removeToolFromMenu = removeToolFromMenu;
 /**
  * Add all tools to the developer tools menu of a window.
  *
- * @param {XULDocument} doc
+ * @param {HTMLDocument} doc
  *        The document to which the tool items are to be added.
  */
 function addAllToolsToMenu(doc) {
@@ -224,13 +224,13 @@ function addAllToolsToMenu(doc) {
 /**
  * Add global menus that are not panel specific.
  *
- * @param {XULDocument} doc
+ * @param {HTMLDocument} doc
  *        The document to which menus are to be added.
  */
 function addTopLevelItems(doc) {
   const menuItems = doc.createDocumentFragment();
 
-  const { menuitems } = require("../menus");
+  const { menuitems } = require("devtools/client/menus");
   for (const item of menuitems) {
     if (item.separator) {
       const separator = doc.createXULElement("menuseparator");
@@ -266,7 +266,7 @@ function addTopLevelItems(doc) {
   const menu = doc.getElementById("menuWebDeveloperPopup");
   menu.appendChild(menuItems);
 
-  // There is still "Page Source" menuitem hardcoded into browser.xul. Instead
+  // There is still "Page Source" menuitem hardcoded into browser.xhtml. Instead
   // of manually inserting everything around it, move it to the expected
   // position.
   const pageSource = doc.getElementById("menu_pageSource");
@@ -277,7 +277,7 @@ function addTopLevelItems(doc) {
 /**
  * Remove global menus that are not panel specific.
  *
- * @param {XULDocument} doc
+ * @param {HTMLDocument} doc
  *        The document to which menus are to be added.
  */
 function removeTopLevelItems(doc) {
@@ -294,21 +294,19 @@ function removeTopLevelItems(doc) {
 /**
  * Add menus to a browser document
  *
- * @param {XULDocument} doc
+ * @param {HTMLDocument} doc
  *        The document to which menus are to be added.
  */
 exports.addMenus = function(doc) {
   addTopLevelItems(doc);
 
   addAllToolsToMenu(doc);
-
-  require("../webreplay/menu").addWebReplayMenu(doc);
 };
 
 /**
  * Remove menus from a browser document
  *
- * @param {XULDocument} doc
+ * @param {HTMLDocument} doc
  *        The document to which menus are to be removed.
  */
 exports.removeMenus = function(doc) {

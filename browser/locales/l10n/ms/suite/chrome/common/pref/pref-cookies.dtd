@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.cookies.title             "Kuki">
+
+<!-- cookies -->
+
+<!ENTITY cookiePolicy.label             "Polisi Penerimaan Kuki">
+
+<!ENTITY disableCookies.label           "Sekat kuki">
+<!ENTITY disableCookies.accesskey       "S">
+
+<!ENTITY accNo3rdPartyCookies.label     "Izinkan kuki daripada laman web asal sahaja (bukan kuki pihak ketiga)">
+<!ENTITY accNo3rdPartyCookies.accesskey "k">
+
+<!ENTITY acc3rdPartyVisited.label       "Izinkan kuki pihak ketiga daripada laman web yang pernah dilawati sahaja">
+<!ENTITY acc3rdPartyVisited.accesskey   "g">
+
+<!ENTITY accAllCookies.label            "Izinkan semua kuki">
+<!ENTITY accAllCookies.accesskey        "i">
+
+<!ENTITY cookieRetentionPolicy.label    "Polisi Pengekalan Kuki">
+
+<!ENTITY acceptNormally.label           "Terima kuki seperti biasa">
+<!ENTITY acceptNormally.accesskey       "b">
+
+<!ENTITY acceptForSession.label         "Terima kuki sesi semasa sahaja">
+<!ENTITY acceptForSession.accesskey     "s">
+
+<!ENTITY acceptforNDays.label           "Terima kuki selama">
+<!ENTITY acceptforNDays.accesskey       "l">
+<!ENTITY days.label                     "hari">
+
+<!ENTITY manageCookies.label            "Urus Kuki dan Laman">
+<!ENTITY manageCookiesDescription.label "Membolehkan anda melihat dan menguruskan kuki yang disimpan, serta tetapan bagi setiap laman web samada mahu menerima atau menolak kuki. Tetapan bagi setiap laman web akan mengatasi tetapan di atas.">
+
+<!ENTITY viewCookies.label              "Pengurus Kuki">
+<!ENTITY viewCookies.accesskey          "P">
+

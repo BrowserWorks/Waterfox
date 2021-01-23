@@ -159,7 +159,6 @@ var gShouldResetEnv = undefined;
 var gAddedEnvXRENoWindowsCrashDialog = false;
 var gEnvXPCOMDebugBreak;
 var gEnvXPCOMMemLeakLog;
-var gEnvDyldLibraryPath;
 
 const URL_HTTP_UPDATE_SJS = "http://test_details/";
 const DATA_URI_SPEC = Services.io.newFileURI(do_get_file("", false)).spec;
@@ -855,7 +854,7 @@ function setupTestCommon(aAppUpdateAutoEnabled = false, aAllowBits = false) {
     .split(".")[0];
 
   if (gDebugTestLog && !gIsServiceTest) {
-    if (gTestsToLog.length == 0 || gTestsToLog.includes(gTestID)) {
+    if (!gTestsToLog.length || gTestsToLog.includes(gTestID)) {
       let logFile = do_get_file(gTestID + ".log", true);
       if (!logFile.exists()) {
         logFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, PERMS_FILE);
@@ -879,9 +878,6 @@ function setupTestCommon(aAppUpdateAutoEnabled = false, aAllowBits = false) {
   do_test_pending();
 
   setDefaultPrefs();
-
-  // Don't attempt to show a prompt when an update finishes.
-  Services.prefs.setBoolPref(PREF_APP_UPDATE_SILENT, true);
 
   gGREDirOrig = getGREDir();
   gGREBinDirOrig = getGREBinDir();
@@ -1855,59 +1851,25 @@ function removeUpdateInProgressLockFile(aDir) {
 }
 
 /**
- * Gets the test updater from the test data direcory.
- *
- * @return  nsIFIle for the test updater.
- */
-function getTestUpdater() {
-  let updater = getTestDirFile("updater.app", true);
-  if (!updater.exists()) {
-    updater = getTestDirFile(FILE_UPDATER_BIN);
-    if (!updater.exists()) {
-      do_throw("Unable to find the updater binary!");
-    }
-  }
-  Assert.ok(updater.exists(), MSG_SHOULD_EXIST + getMsgPath(updater.path));
-  return updater;
-}
-
-/**
  * Copies the test updater to the GRE binary directory and returns the nsIFile
  * for the copied test updater.
  *
  * @return  nsIFIle for the copied test updater.
  */
 function copyTestUpdaterToBinDir() {
-  let testUpdater = getTestUpdater();
+  let updaterLeafName =
+    AppConstants.platform == "macosx" ? "updater.app" : FILE_UPDATER_BIN;
+  let testUpdater = getTestDirFile(updaterLeafName);
   let updater = getGREBinDir();
-  updater.append(testUpdater.leafName);
+  updater.append(updaterLeafName);
   if (!updater.exists()) {
-    testUpdater.copyToFollowingLinks(updater.parent, updater.leafName);
+    testUpdater.copyToFollowingLinks(updater.parent, updaterLeafName);
   }
-  return updater;
-}
-
-/**
- * Copies the test updater to the location where it will be launched to apply an
- * update and returns the nsIFile for the copied test updater.
- *
- * @return  nsIFIle for the copied test updater.
- */
-function copyTestUpdaterForRunUsingUpdater() {
-  if (AppConstants.platform == "win" || AppConstants.platform == "linux") {
-    return copyTestUpdaterToBinDir();
+  if (AppConstants.platform == "macosx") {
+    updater.append("Contents");
+    updater.append("MacOS");
+    updater.append("net.waterfox.updater");
   }
-
-  let testUpdater = getTestUpdater();
-  let updater = getUpdateDirFile(DIR_PATCH);
-  updater.append(testUpdater.leafName);
-  if (!updater.exists()) {
-    testUpdater.copyToFollowingLinks(updater.parent, updater.leafName);
-  }
-
-  updater.append("Contents");
-  updater.append("MacOS");
-  updater.append("org.mozilla.updater");
   return updater;
 }
 
@@ -2041,8 +2003,7 @@ function runUpdate(
     gEnv.set("MOZ_TEST_SHORTER_WAIT_PID", "1");
   }
 
-  // Copy the updater binary to the directory where it will apply updates.
-  let updateBin = copyTestUpdaterForRunUsingUpdater();
+  let updateBin = copyTestUpdaterToBinDir();
   Assert.ok(updateBin.exists(), MSG_SHOULD_EXIST + getMsgPath(updateBin.path));
 
   let updatesDirPath = aPatchDirPath || getUpdateDirFile(DIR_PATCH).path;
@@ -2399,7 +2360,7 @@ function shouldRunServiceTest() {
   let isBinSigned = isBinarySigned(updaterBinPath);
 
   const REG_PATH =
-    "SOFTWARE\\Mozilla\\MaintenanceService\\" +
+    "SOFTWARE\\Waterfox\\MaintenanceService\\" +
     "3932ecacee736d366d6436db0f55bce4";
   let key = Cc["@mozilla.org/windows-registry-key;1"].createInstance(
     Ci.nsIWindowsRegKey
@@ -3406,8 +3367,8 @@ function checkUpdateLogContents(
     // The FindFile results when enumerating the filesystem on Windows is not
     // determistic so the results matching the following need to be fixed.
     let re = new RegExp(
-      // eslint-disable-next-line no-useless-concat
-      "([^\n]* 7/7text1[^\n]*)\n" + "([^\n]* 7/7text0[^\n]*)\n",
+      // eslint-disable-next-line no-control-regex
+      "([^\n]* 7/7text1[^\n]*)\n([^\n]* 7/7text0[^\n]*)\n",
       "g"
     );
     updateLogContents = updateLogContents.replace(re, "$2\n$1\n");
@@ -4070,54 +4031,6 @@ function checkFilesInDirRecursive(aDir, aCallback) {
 }
 
 /**
- * Helper function to override the update prompt component to verify whether it
- * is called or not.
- *
- * @param   aCallback
- *          The callback to call if the update prompt component is called.
- */
-function overrideUpdatePrompt(aCallback) {
-  MockRegistrar.register("@mozilla.org/updates/update-prompt;1", UpdatePrompt, [
-    aCallback,
-  ]);
-}
-
-function UpdatePrompt(aCallback) {
-  this._callback = aCallback;
-
-  let fns = [
-    "checkForUpdates",
-    "showUpdateAvailable",
-    "showUpdateDownloaded",
-    "showUpdateError",
-    "showUpdateHistory",
-    "showUpdateInstalled",
-  ];
-
-  fns.forEach(function UP_fns(aPromptFn) {
-    UpdatePrompt.prototype[aPromptFn] = function() {
-      if (!this._callback) {
-        return;
-      }
-
-      let callback = this._callback[aPromptFn];
-      if (!callback) {
-        return;
-      }
-
-      callback.apply(this._callback, Array.prototype.slice.call(arguments));
-    };
-  });
-}
-
-UpdatePrompt.prototype = {
-  flags: Ci.nsIClassInfo.SINGLETON,
-  getScriptableHelper: () => null,
-  interfaces: [Ci.nsISupports, Ci.nsIUpdatePrompt],
-  QueryInterface: ChromeUtils.generateQI([Ci.nsIClassInfo, Ci.nsIUpdatePrompt]),
-};
-
-/**
  * Waits for an update check request to complete.
  *
  * @param   aSuccess
@@ -4135,16 +4048,16 @@ function waitForUpdateCheck(aSuccess, aExpectedValues = {}) {
     gUpdateChecker.checkForUpdates(
       {
         onProgress: (aRequest, aPosition, aTotalSize) => {},
-        onCheckComplete: (request, updates, updateCount) => {
+        onCheckComplete: (request, updates) => {
           Assert.ok(aSuccess, "the update check should succeed");
           if (aExpectedValues.updateCount) {
             Assert.equal(
               aExpectedValues.updateCount,
-              updateCount,
+              updates.length,
               "the update count" + MSG_SHOULD_EQUAL
             );
           }
-          resolve({ request, updates, updateCount });
+          resolve({ request, updates });
         },
         onError: (request, update) => {
           Assert.ok(!aSuccess, "the update check should error");
@@ -4176,8 +4089,8 @@ function waitForUpdateCheck(aSuccess, aExpectedValues = {}) {
  * @return  A promise which will resolve the first time the update download
  *          onStopRequest occurs and returns the arguments from onStopRequest.
  */
-function waitForUpdateDownload(aUpdates, aUpdateCount, aExpectedStatus) {
-  let bestUpdate = gAUS.selectUpdate(aUpdates, aUpdateCount);
+function waitForUpdateDownload(aUpdates, aExpectedStatus) {
+  let bestUpdate = gAUS.selectUpdate(aUpdates);
   let state = gAUS.downloadUpdate(bestUpdate, false);
   if (state == STATE_NONE || state == STATE_FAILED) {
     do_throw("nsIApplicationUpdateService:downloadUpdate returned " + state);
@@ -4186,7 +4099,7 @@ function waitForUpdateDownload(aUpdates, aUpdateCount, aExpectedStatus) {
     gAUS.addDownloadListener({
       onStartRequest: aRequest => {},
       onProgress: (aRequest, aContext, aProgress, aMaxProgress) => {},
-      onStatus: (aRequest, aContext, aStatus, aStatusText) => {},
+      onStatus: (aRequest, aStatus, aStatusText) => {},
       onStopRequest: (request, status) => {
         gAUS.removeDownloadListener(this);
         Assert.equal(
@@ -4225,6 +4138,7 @@ function start_httpserver() {
   gTestserver.registerPathHandler("/" + gHTTPHandlerPath, pathHandler);
   gTestserver.start(-1);
   let testserverPort = gTestserver.identity.primaryPort;
+  // eslint-disable-next-line no-global-assign
   gURLData = URL_HOST + ":" + testserverPort + "/";
   debugDump("http server port = " + testserverPort);
 }
@@ -4296,7 +4210,7 @@ function createAppInfo(aID, aName, aVersion, aPlatformVersion) {
       if (aOuter == null) {
         return XULAppInfo.QueryInterface(aIID);
       }
-      throw Cr.NS_ERROR_NO_AGGREGATION;
+      throw Components.Exception("", Cr.NS_ERROR_NO_AGGREGATION);
     },
   };
 
@@ -4677,7 +4591,7 @@ IncrementalDownload.prototype = {
   },
 
   get currentSize() {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+    throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
   },
 
   get destination() {
@@ -4689,18 +4603,18 @@ IncrementalDownload.prototype = {
   },
 
   get totalSize() {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+    throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
   },
 
   /* nsIRequest */
   cancel(aStatus) {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+    throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
   },
   suspend() {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+    throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
   },
   isPending() {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+    throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
   },
   _loadFlags: 0,
   get loadFlags() {
@@ -4760,30 +4674,6 @@ function setEnvironment() {
         "variable to 1... previously it didn't exist"
     );
     gEnv.set("XRE_NO_WINDOWS_CRASH_DIALOG", "1");
-  }
-
-  if (AppConstants.platform == "macosx") {
-    let shouldSetEnv = true;
-    let appGreBinDir = gGREBinDirOrig.clone();
-    let envGreBinDir = Cc["@mozilla.org/file/local;1"].createInstance(
-      Ci.nsIFile
-    );
-    if (gEnv.exists("DYLD_LIBRARY_PATH")) {
-      gEnvDyldLibraryPath = gEnv.get("DYLD_LIBRARY_PATH");
-      envGreBinDir.initWithPath(gEnvDyldLibraryPath);
-      if (envGreBinDir.path == appGreBinDir.path) {
-        gEnvDyldLibraryPath = null;
-        shouldSetEnv = false;
-      }
-    }
-
-    if (shouldSetEnv) {
-      debugDump(
-        "setting DYLD_LIBRARY_PATH environment variable value to " +
-          appGreBinDir.path
-      );
-      gEnv.set("DYLD_LIBRARY_PATH", appGreBinDir.path);
-    }
   }
 
   if (gEnv.exists("XPCOM_MEM_LEAK_LOG")) {
@@ -4847,20 +4737,6 @@ function resetEnvironment() {
   } else if (gEnv.exists("XPCOM_DEBUG_BREAK")) {
     debugDump("clearing the XPCOM_DEBUG_BREAK environment variable");
     gEnv.set("XPCOM_DEBUG_BREAK", "");
-  }
-
-  if (AppConstants.platform == "macosx") {
-    if (gEnvDyldLibraryPath) {
-      debugDump(
-        "setting DYLD_LIBRARY_PATH environment variable value " +
-          "back to " +
-          gEnvDyldLibraryPath
-      );
-      gEnv.set("DYLD_LIBRARY_PATH", gEnvDyldLibraryPath);
-    } else if (gEnvDyldLibraryPath !== null) {
-      debugDump("removing DYLD_LIBRARY_PATH environment variable");
-      gEnv.set("DYLD_LIBRARY_PATH", "");
-    }
   }
 
   if (AppConstants.platform == "win" && gAddedEnvXRENoWindowsCrashDialog) {

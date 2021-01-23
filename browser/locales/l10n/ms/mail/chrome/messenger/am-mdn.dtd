@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Resit Pemberitahu Serahan">
+<!ENTITY useGlobalPrefs.label         "Guna keutamaan resit pemberitahu serahan global untuk akaun ini">
+<!ENTITY useGlobalPrefs.accesskey     "G">
+<!ENTITY globalReceipts.label         "Keutamaan Global…">
+<!ENTITY globalReceipts.accesskey     "G">
+<!ENTITY useCustomPrefs.label         "Sesuaikan resit pemberitahu serahan untuk akaun ini">
+<!ENTITY useCustomPrefs.accesskey     "S">
+<!ENTITY requestReceipt.label         "Apabila menghantar mesej, sentiasa minta resit pemberitahu serahan">
+<!ENTITY requestReceipt.accesskey     "A">
+<!ENTITY receiptArrive.label          "Apabila resit pemberitahuan serahan diterima:">
+<!ENTITY leaveIt.label                "Biarkan dalam Peti Masuk">
+<!ENTITY leaveIt.accesskey            "M">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "Pindahkan ke dalam folder &quot;Dihantar&quot;">
+<!ENTITY moveToSent.accesskey         "P">
+<!ENTITY requestMDN.label             "Apabila saya diminta menyerahkan resit pemberitahu serahan:">
+<!ENTITY returnSome.label             "Izinkan resit pemberitahu serahan dihantar kepada sesetengah mesej">
+<!ENTITY returnSome.accesskey         "e">
+<!ENTITY never.label                  "Jangan sesekali hantar resit pemberitahu serahan">
+<!ENTITY never.accesskey              "J">
+<!ENTITY notInToCc.label              "Jika saya tiada dalam Kepada atau Cc mesej:">
+<!ENTITY notInToCc.accesskey          "K">
+<!ENTITY outsideDomain.label          "Jika pengirim dari luar domain saya:">
+<!ENTITY outsideDomain.accesskey      "r">
+<!ENTITY otherCases.label             "Dalam hal yang lain:">
+<!ENTITY otherCases.accesskey         "y">
+<!ENTITY askMe.label                  "Tanya saya">
+<!ENTITY alwaysSend.label             "Sentiasa hantar">
+<!ENTITY neverSend.label              "Jangan sesekali hantar">

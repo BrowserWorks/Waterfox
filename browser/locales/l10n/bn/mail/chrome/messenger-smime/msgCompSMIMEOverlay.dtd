@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE msgCompSMIMEOverlay.dtd UI for s/mime hooks in message composition -->
+
+<!-- not yet used
+<!ENTITY menu_securityEncryptOptional.label "Allow Encryption">
+<!ENTITY menu_securityEncryptOptional.accesskey "w">
+-->
+
+<!ENTITY menu_securityEncryptRequire.accesskey "E">
+
+<!ENTITY menu_securitySign.label "এই বার্তাটি ডিজিটালভাবে স্বাক্ষর করা হবে (M)">
+<!ENTITY menu_securitySign.accesskey "M">
+
+<!ENTITY menu_securityStatus.label "নিরাপত্তা তথ্য দেখা হবে (I)">
+<!ENTITY menu_securityStatus.accesskey "I">
+
+<!ENTITY securityButton.label "নিরাপত্তা">
+<!ENTITY securityButton.tooltip "নিরাপত্তা সেটিং দেখুন বা পরিবর্তন করুন">
+
+<!ENTITY menu_viewSecurityStatus.label "বার্তার নিরাপত্তা তথ্য (I)">
+<!ENTITY menu_viewSecurityStatus.accesskey "I">

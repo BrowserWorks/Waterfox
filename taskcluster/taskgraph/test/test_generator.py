@@ -4,12 +4,15 @@
 
 from __future__ import absolute_import, print_function, unicode_literals
 
+import sys
+
 import pytest
 import unittest
 from mozunit import main
 
 from taskgraph.generator import TaskGraphGenerator, Kind
 from taskgraph.optimize import OptimizationStrategy
+from taskgraph.config import GraphConfig
 from taskgraph.util.templates import merge
 from taskgraph import (
     generator,
@@ -60,7 +63,9 @@ class WithFakeKind(TaskGraphGenerator):
 
 
 def fake_load_graph_config(root_dir):
-    return {'trust-domain': 'test-domain'}
+    graph_config = GraphConfig({'trust-domain': 'test-domain', "taskgraph": {}}, root_dir)
+    graph_config.__dict__['register'] = lambda: None
+    return graph_config
 
 
 class FakeParameters(dict):
@@ -96,17 +101,17 @@ class TestGenerator(unittest.TestCase):
         def target_tasks_method(full_task_graph, parameters, graph_config):
             return self.target_tasks
 
-        def make_fake_strategies():
-            return {mode: FakeOptimization(mode)
-                    for mode in ('always', 'never', 'even', 'odd')}
+        fake_registry = {mode: FakeOptimization(mode)
+                         for mode in ('always', 'never', 'even', 'odd')}
 
         target_tasks_mod._target_task_methods['test_method'] = target_tasks_method
-        self.patch.setattr(optimize_mod, '_make_default_strategies', make_fake_strategies)
+        self.patch.setattr(optimize_mod, 'registry', fake_registry)
 
         parameters = FakeParameters({
             '_kinds': kinds,
             'target_tasks_method': 'test_method',
             'try_mode': None,
+            'try_task_config': {},
             'tasks_for': 'hg-push',
         })
         parameters.update(params)
@@ -145,6 +150,9 @@ class TestGenerator(unittest.TestCase):
         self.assertEqual(sorted(self.tgg.full_task_graph.tasks.keys()),
                          sorted(['_fake-t-0', '_fake-t-1', '_fake-t-2']))
 
+    @pytest.mark.xfail(
+        sys.version_info >= (3, 0), reason="python3 migration is not complete"
+    )
     def test_target_task_set(self):
         "The target_task_set property has the targeted tasks"
         self.tgg = self.maketgg(['_fake-t-1'])
@@ -162,6 +170,9 @@ class TestGenerator(unittest.TestCase):
         self.assertEqual(sorted(self.tgg.target_task_graph.tasks.keys()),
                          sorted(['_fake-t-0', '_fake-t-1']))
 
+    @pytest.mark.xfail(
+        sys.version_info >= (3, 0), reason="python3 migration is not complete"
+    )
     def test_always_target_tasks(self):
         "The target_task_graph includes tasks with 'always_target'"
         tgg_args = {
@@ -186,6 +197,9 @@ class TestGenerator(unittest.TestCase):
             sorted([t.label for t in self.tgg.optimized_task_graph.tasks.values()]),
             sorted(['_fake-t-0', '_fake-t-1', '_ignore-t-0', '_ignore-t-1']))
 
+    @pytest.mark.xfail(
+        sys.version_info >= (3, 0), reason="python3 migration is not complete"
+    )
     def test_optimized_task_graph(self):
         "The optimized task graph contains task ids"
         self.tgg = self.maketgg(['_fake-t-2'])

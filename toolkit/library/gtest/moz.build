@@ -7,43 +7,18 @@
 FINAL_TARGET = 'dist/bin/gtest'
 
 if CONFIG['ENABLE_TESTS']:
-	USE_LIBS += [
-	    'gkrust-gtest',
-	]
+    USE_LIBS += [
+        'gkrust-gtest',
+    ]
+
+    if CONFIG['OS_ARCH'] == 'WINNT':
+        UNIFIED_SOURCES += [
+            'TestUCRTDepends.cpp',
+        ]
 
 USE_LIBS += [
     'static:xul',
-    # xul-gtest is an intermediate static library. It is used as FINAL_TARGET
-    # for gtest code.
-    # If the FINAL_TARGET were the library in this directory, then the gtest
-    # code would end up before static:xul, and before StaticXULComponentStart,
-    # which needs to stay first.
-    'xul-gtest',
 ]
 
-if CONFIG['OS_ARCH'] == 'Linux' and CONFIG['OS_TARGET'] != 'Android':
-    GENERATED_FILES += ['symverscript']
-    GENERATED_FILES['symverscript'].script = '/build/gen_symverscript.py'
-    GENERATED_FILES['symverscript'].inputs = ['../symverscript.in']
-    GENERATED_FILES['symverscript'].flags = [
-        'xul%s' % CONFIG['MOZILLA_SYMBOLVERSION']
-    ]
-    SYMBOLS_FILE = '!symverscript'
-
-# Generate GDB pretty printer-autoload files only on Linux. OSX's GDB is
-# too old to support Python pretty-printers; if this changes, we could
-# make this 'ifdef GNU_CC'.
-if CONFIG['OS_ARCH'] == 'Linux':
-    # Create a GDB Python auto-load file alongside the libxul shared library
-    # in the build directory.
-    DEFINES['topsrcdir'] = TOPSRCDIR
-    OBJDIR_PP_FILES.toolkit.library.gtest += ['../libxul.so-gdb.py.in']
-
-# This needs to come after static:xul to avoid things like libfallible coming
-# before StaticXULComponentStart.
-Libxul('xul-gtest-real',
+Libxul('xul-gtest',
        output_category=None if CONFIG['LINK_GTEST_DURING_COMPILE'] else 'gtest')
-
-DIRS += [
-    'static',
-]

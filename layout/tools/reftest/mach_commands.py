@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import, unicode_literals, print_function
 
 import os
 import re
@@ -48,15 +48,10 @@ class ReftestRunner(MozbuildObject):
         # reftest imports will happen from the objdir
         sys.path.insert(0, self.reftest_dir)
 
-        if args.suite != 'jstestbrowser' and not args.tests:
-            test_subdir = {
-                "reftest": os.path.join('layout', 'reftests'),
-                "crashtest": os.path.join('layout', 'crashtest'),
-            }[args.suite]
-            args.tests = [test_subdir]
-
         tests = os.path.join(self.reftest_dir, 'tests')
-        if not os.path.isdir(tests):
+        if not os.path.isdir(tests) and not os.path.islink(tests):
+            # This symbolic link is used by the desktop tests to
+            # locate the actual test files when running using file:.
             os.symlink(self.topsrcdir, tests)
 
     def run_desktop_test(self, **kwargs):
@@ -71,11 +66,11 @@ class ReftestRunner(MozbuildObject):
             "reftest": (self.topsrcdir, "layout", "reftests", "reftest.list"),
             "crashtest": (self.topsrcdir, "testing", "crashtest", "crashtests.list"),
             "jstestbrowser": (self.topobjdir, "dist", "test-stage", "jsreftest", "tests",
-                              "jstests.list")
+                              "js", "src", "tests", "jstests.list")
         }
 
         args.extraProfileFiles.append(os.path.join(self.topobjdir, "dist", "plugins"))
-        args.symbolsPath = os.path.join(self.topobjdir, "crashreporter-symbols")
+        args.symbolsPath = os.path.join(self.topobjdir, "dist", "crashreporter-symbols")
         args.sandboxReadWhitelist.extend([self.topsrcdir, self.topobjdir])
 
         if not args.tests:
@@ -84,6 +79,7 @@ class ReftestRunner(MozbuildObject):
         if args.suite == "jstestbrowser":
             args.extraProfileFiles.append(os.path.join(self.topobjdir, "dist",
                                                        "test-stage", "jsreftest",
+                                                       "tests", "js", "src",
                                                        "tests", "user.js"))
 
         self.log_manager.enable_unstructured()
@@ -95,7 +91,7 @@ class ReftestRunner(MozbuildObject):
         return rv
 
     def run_android_test(self, **kwargs):
-        """Runs a reftest, in Firefox for Android."""
+        """Runs a reftest, in an Android application."""
 
         args = Namespace(**kwargs)
         if args.suite not in ('reftest', 'crashtest', 'jstestbrowser'):
@@ -107,7 +103,8 @@ class ReftestRunner(MozbuildObject):
         default_manifest = {
             "reftest": (self.topsrcdir, "layout", "reftests", "reftest.list"),
             "crashtest": (self.topsrcdir, "testing", "crashtest", "crashtests.list"),
-            "jstestbrowser": ("jsreftest", "tests", "jstests.list")
+            "jstestbrowser": (self.topobjdir, "dist", "test-stage", "jsreftest", "tests",
+                              "js", "src", "tests", "jstests.list")
         }
 
         if not args.tests:
@@ -130,14 +127,13 @@ class ReftestRunner(MozbuildObject):
         if not args.xrePath:
             args.xrePath = os.environ.get("MOZ_HOST_BIN")
         if not args.app:
-            args.app = self.substs["ANDROID_PACKAGE_NAME"]
+            args.app = "org.mozilla.geckoview.test"
         if not args.utilityPath:
             args.utilityPath = args.xrePath
         args.ignoreWindowSize = True
         args.printDeviceInfo = False
 
-        from mozrunner.devices.android_device import grant_runtime_permissions, get_adb_path
-        grant_runtime_permissions(self, args.app, device_serial=args.deviceSerial)
+        from mozrunner.devices.android_device import get_adb_path
 
         if not args.adb_path:
             args.adb_path = get_adb_path(self)
@@ -152,12 +148,13 @@ class ReftestRunner(MozbuildObject):
         if args.suite == "jstestbrowser":
             staged_js_dir = os.path.join(self.topobjdir, "dist", "test-stage", "jsreftest")
             tests = os.path.join(self.reftest_dir, 'jsreftest')
-            if not os.path.isdir(tests):
+            if not os.path.isdir(tests) and not os.path.islink(tests):
                 os.symlink(staged_js_dir, tests)
-            args.extraProfileFiles.append(os.path.join(staged_js_dir, "tests", "user.js"))
+            args.extraProfileFiles.append(os.path.join(staged_js_dir, "tests", "js", "src",
+                                                       "tests", "user.js"))
         else:
             tests = os.path.join(self.reftest_dir, "tests")
-            if not os.path.isdir(tests):
+            if not os.path.isdir(tests) and not os.path.islink(tests):
                 os.symlink(self.topsrcdir, tests)
             for i, path in enumerate(args.tests):
                 # Non-absolute paths are relative to the packaged directory, which
@@ -237,8 +234,9 @@ class MachCommands(MachCommandBase):
         # adb which uses an unstructured logger in its constructor.
         reftest.log_manager.enable_unstructured()
         if conditions.is_android(self):
-            from mozrunner.devices.android_device import verify_android_device
-            verify_android_device(self, install=True, xre=True, network=True,
+            from mozrunner.devices.android_device import (verify_android_device, InstallIntent)
+            install = InstallIntent.NO if kwargs.get('no_install') else InstallIntent.YES
+            verify_android_device(self, install=install, xre=True, network=True,
                                   app=kwargs["app"], device_serial=kwargs["deviceSerial"])
             return reftest.run_android_test(**kwargs)
         return reftest.run_desktop_test(**kwargs)

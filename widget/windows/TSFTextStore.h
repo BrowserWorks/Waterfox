@@ -348,7 +348,8 @@ class TSFTextStore final : public ITextStoreACP,
   HRESULT HandleRequestAttrs(DWORD aFlags, ULONG aFilterCount,
                              const TS_ATTRID* aFilterAttrs);
   void SetInputScope(const nsString& aHTMLInputType,
-                     const nsString& aHTMLInputInputmode);
+                     const nsString& aHTMLInputInputmode,
+                     bool aInPrivateBrowsing);
 
   // Creates native caret over our caret.  This method only works on desktop
   // application.  Otherwise, this does nothing.
@@ -678,7 +679,7 @@ class TSFTextStore final : public ITextStoreACP,
     // For eCompositionUpdate
     RefPtr<TextRangeArray> mRanges;
     // For eKeyboardEvent
-    const MSG* mKeyMsg;
+    MSG mKeyMsg;
     // For eSetSelection
     bool mSelectionReversed;
     // For eCompositionUpdate

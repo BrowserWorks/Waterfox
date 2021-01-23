@@ -30,17 +30,21 @@ if CONFIG['MOZ_UBSAN']:
         'UbsanOptions.cpp',
     ]
 
+if CONFIG['MOZ_TSAN']:
+    SOURCES += [
+        'TsanOptions.cpp',
+    ]
+
 if CONFIG['OS_TARGET'] == 'WINNT':
     DEFFILE = '!mozglue.def'
-    # We'll break the DLL blocklist if we immediately load user32.dll
+    # We'll break the DLL blocklist if we immediately load user32.dll.
+    # For the same reason, we delayload winmm.dll which statically links
+    # user32.dll.
     DELAYLOAD_DLLS += [
         'user32.dll',
+        'winmm.dll',
     ]
     RCINCLUDE = 'mozglue.rc'
-
-    if CONFIG['MOZ_PGO'] and CONFIG['CC_TYPE'] == 'clang-cl':
-        SOURCES += ['cygprofile.cpp']
-        SOURCES['cygprofile.cpp'].pgo_generate_only = True
 
 if CONFIG['MOZ_WIDGET_TOOLKIT']:
 
@@ -59,43 +63,11 @@ if CONFIG['MOZ_WIDGET_TOOLKIT']:
             '/memory/build',
         ]
 
-        SOURCES += [
-            'Authenticode.cpp',
-            'UntrustedDllsHandler.cpp',
-            'WindowsDllBlocklist.cpp',
-        ]
-
-        DisableStlWrapping()
-        OS_LIBS += [
-            'crypt32',
-            'version',
-            'wintrust',
-        ]
-        DELAYLOAD_DLLS += [
-            'crypt32.dll',
-            'wintrust.dll',
-        ]
-        EXPORTS.mozilla += [
-            'Authenticode.h',
-            'WindowsDllBlocklistCommon.h',
-            'WindowsDllBlocklistDefs.h',
-        ]
-        EXPORTS.mozilla.glue += [
-            'WindowsDllServices.h',
-        ]
-        USE_LIBS += [
-            'mscom-mozglue',
-        ]
-        if CONFIG['CPU_ARCH'] == 'aarch64':
-            USE_LIBS += [
-                'interceptor',
-            ]
-
     EXPORTS.mozilla += [
         'arm.h',
         'mips.h',
+        'ppc.h',
         'SSE.h',
-        'WindowsDllBlocklist.h',
     ]
 
     if CONFIG['CPU_ARCH'].startswith('x86'):
@@ -113,6 +85,11 @@ if CONFIG['MOZ_WIDGET_TOOLKIT']:
             'mips.cpp',
         ]
 
+    if CONFIG['CPU_ARCH'].startswith('ppc'):
+        SOURCES += [
+            'ppc.cpp',
+        ]
+
     if CONFIG['MOZ_LINKER']:
         USE_LIBS += [
             'zlib',
@@ -122,7 +99,7 @@ USE_LIBS += [
     'mfbt',
 ]
 
-DEFINES['IMPL_MFBT'] = True
+LIBRARY_DEFINES['IMPL_MFBT'] = True
 LIBRARY_DEFINES['MOZ_HAS_MOZGLUE'] = True
 
 if CONFIG['OS_TARGET'] == 'Darwin':

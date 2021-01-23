@@ -80,14 +80,23 @@ public final class GeckoSessionSettings implements Parcelable {
         }
 
         /**
-         * Set whether multi-process support should be enabled.
+         * Set the session context ID for this instance.
+         * Setting a context ID partitions the cookie jars based on the provided
+         * IDs. This isolates the browser storage like cookies and localStorage
+         * between sessions, only sessions that share the same ID share storage
+         * data.
          *
-         * @param flag A flag determining whether multi-process should be enabled.
-         *             Default is false.
+         * Warning: Storage data is collected persistently for each context,
+         * to delete context data, call {@link StorageController#clearDataForSessionContext}
+         * for the given context.
+         *
+         * @param value The custom context ID.
+         *              The default ID is null, which removes isolation for this
+         *              instance.
          * @return This Builder instance.
          */
-        public @NonNull Builder useMultiprocess(final boolean flag) {
-            mSettings.setUseMultiprocess(flag);
+        public @NonNull Builder contextId(final @Nullable String value) {
+            mSettings.setContextId(value);
             return this;
         }
 
@@ -213,6 +222,7 @@ public final class GeckoSessionSettings implements Parcelable {
      * width of 980 CSS px.
      */
     public static final int VIEWPORT_MODE_MOBILE = 0;
+
     /**
      * All pages will be rendered using the special desktop mode viewport, which has a width of
      * 980 CSS px, regardless of whether the page has a &lt;meta&gt; viewport tag specified or not.
@@ -262,13 +272,6 @@ public final class GeckoSessionSettings implements Parcelable {
         new Key<Boolean>("usePrivateMode", /* initOnly */ true, /* values */ null);
 
     /**
-     * Key to enable and disable multiprocess browsing (e10s).
-     * Read-only once session is open.
-     */
-    private static final Key<Boolean> USE_MULTIPROCESS =
-        new Key<Boolean>("useMultiprocess", /* initOnly */ true, /* values */ null);
-
-    /**
      * Key to specify which user agent mode we should use.
      */
     private static final Key<Integer> USER_AGENT_MODE =
@@ -314,6 +317,26 @@ public final class GeckoSessionSettings implements Parcelable {
     private static final Key<Boolean> FULL_ACCESSIBILITY_TREE =
             new Key<Boolean>("fullAccessibilityTree", /* initOnly */ false, /* values */ null);
 
+    /**
+     * Key to specify if this GeckoSession is a Popup or not. Popup sessions can paint over other
+     * sessions and are not exposed to the tabs WebExtension API.
+     */
+    private static final Key<Boolean> IS_POPUP =
+            new Key<Boolean>("isPopup", /* initOnly */ false, /* values */ null);
+
+    /**
+     * Internal Gecko key to specify the session context ID.
+     * Derived from `UNSAFE_CONTEXT_ID`.
+     */
+    private static final Key<String> CONTEXT_ID =
+        new Key<String>("sessionContextId", /* initOnly */ true, /* values */ null);
+
+    /**
+     * User-provided key to specify the session context ID.
+     */
+    private static final Key<String> UNSAFE_CONTEXT_ID =
+        new Key<String>("unsafeSessionContextId", /* initOnly */ true, /* values */ null);
+
     private final GeckoSession mSession;
     private final GeckoBundle mBundle;
 
@@ -339,14 +362,16 @@ public final class GeckoSessionSettings implements Parcelable {
         mBundle.putInt(SCREEN_ID.name, 0);
         mBundle.putBoolean(USE_TRACKING_PROTECTION.name, false);
         mBundle.putBoolean(USE_PRIVATE_MODE.name, false);
-        mBundle.putBoolean(USE_MULTIPROCESS.name, true);
         mBundle.putBoolean(SUSPEND_MEDIA_WHEN_INACTIVE.name, false);
         mBundle.putBoolean(ALLOW_JAVASCRIPT.name, true);
         mBundle.putBoolean(FULL_ACCESSIBILITY_TREE.name, false);
+        mBundle.putBoolean(IS_POPUP.name, false);
         mBundle.putInt(USER_AGENT_MODE.name, USER_AGENT_MODE_MOBILE);
         mBundle.putString(USER_AGENT_OVERRIDE.name, null);
         mBundle.putInt(VIEWPORT_MODE.name, VIEWPORT_MODE_MOBILE);
         mBundle.putInt(DISPLAY_MODE.name, DISPLAY_MODE_BROWSER);
+        mBundle.putString(CONTEXT_ID.name, null);
+        mBundle.putString(UNSAFE_CONTEXT_ID.name, null);
     }
 
     /**
@@ -367,17 +392,6 @@ public final class GeckoSessionSettings implements Parcelable {
      */
     private void setUsePrivateMode(final boolean value) {
         setBoolean(USE_PRIVATE_MODE, value);
-    }
-
-
-    /**
-     * Set whether multi-process support should be enabled.
-     *
-     * @param value A flag determining whether multi-process should be enabled.
-     *             Default is false.
-     */
-    private void setUseMultiprocess(final boolean value) {
-        setBoolean(USE_MULTIPROCESS, value);
     }
 
     /**
@@ -412,6 +426,10 @@ public final class GeckoSessionSettings implements Parcelable {
         setBoolean(FULL_ACCESSIBILITY_TREE, value);
     }
 
+    /* package */ void setIsPopup(final boolean value) {
+        setBoolean(IS_POPUP, value);
+    }
+
     private void setBoolean(final Key<Boolean> key, final boolean value) {
         synchronized (mBundle) {
             if (valueChangedLocked(key, value)) {
@@ -440,12 +458,13 @@ public final class GeckoSessionSettings implements Parcelable {
     }
 
     /**
-     * Whether multiprocess is enabled.
+     * The context ID for this session.
      *
-     * @return true if multiprocess is enabled, false if not.
+     * @return The context ID for this session.
      */
-    public boolean getUseMultiprocess() {
-        return getBoolean(USE_MULTIPROCESS);
+    public @Nullable String getContextId() {
+        // Return the user-provided unsafe string.
+        return getString(UNSAFE_CONTEXT_ID);
     }
 
     /**
@@ -473,6 +492,10 @@ public final class GeckoSessionSettings implements Parcelable {
      */
     public boolean getFullAccessibilityTree() {
         return getBoolean(FULL_ACCESSIBILITY_TREE);
+    }
+
+    /* package */ boolean getIsPopup() {
+        return getBoolean(IS_POPUP);
     }
 
     private boolean getBoolean(final Key<Boolean> key) {
@@ -595,6 +618,11 @@ public final class GeckoSessionSettings implements Parcelable {
      */
     public void setUserAgentOverride(final @Nullable String value) {
         setString(USER_AGENT_OVERRIDE, value);
+    }
+
+    private void setContextId(final @Nullable String value) {
+        setString(UNSAFE_CONTEXT_ID, value);
+        setString(CONTEXT_ID, StorageController.createSafeSessionContextId(value));
     }
 
     private void setString(final Key<String> key, final String value) {

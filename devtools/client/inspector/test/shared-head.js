@@ -5,15 +5,8 @@
 "use strict";
 
 /* eslint no-unused-vars: [2, {"vars": "local"}] */
-/* globals registerTestActor, getTestActor, openToolboxForTab, gBrowser */
+/* globals getTestActor, openToolboxForTab, gBrowser */
 /* import-globals-from ../../shared/test/shared-head.js */
-/* import-globals-from ../../shared/test/test-actor-registry.js */
-
-// Import helpers registering the test-actor in remote targets
-Services.scriptloader.loadSubScript(
-  "chrome://mochitests/content/browser/devtools/client/shared/test/test-actor-registry.js",
-  this
-);
 
 var {
   getInplaceEditorForSpan: inplaceEditor,
@@ -42,7 +35,6 @@ var openInspector = async function(hostType) {
     await inspector.once("inspector-updated");
   }
 
-  await registerTestActor(toolbox.target.client);
   const testActor = await getTestActor(toolbox);
 
   return { toolbox, inspector, testActor };
@@ -163,7 +155,7 @@ function openLayoutView() {
         return promise.resolve();
       };
     }
-    mockHighlighter(data.toolbox);
+    mockHighlighter(data.inspector);
 
     return {
       toolbox: data.toolbox,
@@ -322,24 +314,17 @@ function waitForContentMessage(name) {
  *        in doc_frame_script.js
  * @param {Object} data
  *        Optional data to send along
- * @param {Object} objects
- *        Optional CPOW objects to send along
  * @param {Boolean} expectResponse
  *        If set to false, don't wait for a response with the same name
  *        from the content script. Defaults to true.
  * @return {Promise} Resolves to the response data if a response is expected,
  * immediately resolves otherwise
  */
-function executeInContent(
-  name,
-  data = {},
-  objects = {},
-  expectResponse = true
-) {
+function executeInContent(name, data = {}, expectResponse = true) {
   info("Sending message " + name + " to content");
   const mm = gBrowser.selectedBrowser.messageManager;
 
-  mm.sendAsyncMessage(name, data, objects);
+  mm.sendAsyncMessage(name, data);
   if (expectResponse) {
     return waitForContentMessage(name);
   }
@@ -714,4 +699,40 @@ function openStyleContextMenuAndGetAllItems(view, target) {
 function openContextMenuAndGetAllItems(inspector, options) {
   const menu = inspector.markup.contextMenu._openMenu(options);
   return buildContextMenuItems(menu);
+}
+
+/**
+ * Wait until the elements the given selectors indicate come to have the visited state.
+ *
+ * @param {Tab} tab
+ *        The tab where the elements on.
+ * @param {Array} selectors
+ *        The selectors for the elements.
+ */
+async function waitUntilVisitedState(tab, selectors) {
+  await asyncWaitUntil(async () => {
+    const hasVisitedState = await ContentTask.spawn(
+      tab.linkedBrowser,
+      selectors,
+      args => {
+        const NS_EVENT_STATE_VISITED = 1 << 24;
+
+        for (const selector of args) {
+          const target = content.wrappedJSObject.document.querySelector(
+            selector
+          );
+          if (
+            !(
+              target &&
+              InspectorUtils.getContentState(target) & NS_EVENT_STATE_VISITED
+            )
+          ) {
+            return false;
+          }
+        }
+        return true;
+      }
+    );
+    return hasVisitedState;
+  });
 }

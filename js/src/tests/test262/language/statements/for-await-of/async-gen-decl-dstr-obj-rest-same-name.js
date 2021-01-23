@@ -1,3 +1,4 @@
+// |reftest| async
 // This file was procedurally generated from the following sources:
 // - src/dstr-assignment-for-await/obj-rest-same-name.case
 // - src/dstr-assignment-for-await/default/async-gen-decl.template
@@ -40,7 +41,7 @@ async function * fn() {
     assert.sameValue(z.y, 39);
     assert.sameValue(z.z, 'cheeseburger');
 
-    let keys = Object.keys(z);
+    let keys = Object.getOwnPropertyNames(z);
     assert.sameValue(keys.length, 2);
     assert.sameValue(keys[0], 'y');
     assert.sameValue(keys[1], 'z');

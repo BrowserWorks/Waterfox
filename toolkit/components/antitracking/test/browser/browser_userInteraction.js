@@ -31,7 +31,7 @@ add_task(async function() {
 
   let uri = Services.io.newURI(TEST_DOMAIN);
   is(
-    Services.perms.testPermission(uri, "storageAccessAPI"),
+    PermissionTestUtils.testPermission(uri, "storageAccessAPI"),
     Services.perms.UNKNOWN_ACTION,
     "Before user-interaction we don't have a permission"
   );
@@ -40,12 +40,12 @@ add_task(async function() {
     let permission = aSubject.QueryInterface(Ci.nsIPermission);
     return (
       permission.type == "storageAccessAPI" &&
-      permission.principal.URI.equals(uri)
+      permission.principal.equalsURI(uri)
     );
   });
 
   info("Simulating user-interaction.");
-  await ContentTask.spawn(browser, null, async function() {
+  await SpecialPowers.spawn(browser, [], async function() {
     content.document.userInteractionForTesting();
   });
 
@@ -59,12 +59,12 @@ add_task(async function() {
       let permission = aSubject.QueryInterface(Ci.nsIPermission);
       return (
         permission.type == "storageAccessAPI" &&
-        permission.principal.URI.equals(uri)
+        permission.principal.equalsURI(uri)
       );
     });
 
     info("Simulating another user-interaction.");
-    await ContentTask.spawn(browser, null, async function() {
+    await SpecialPowers.spawn(browser, [], async function() {
       content.document.userInteractionForTesting();
     });
 
@@ -97,7 +97,7 @@ add_task(async function() {
   });
 
   info("Simulating another user-interaction.");
-  await ContentTask.spawn(browser, null, async function() {
+  await SpecialPowers.spawn(browser, [], async function() {
     content.document.userInteractionForTesting();
   });
 
@@ -106,6 +106,8 @@ add_task(async function() {
 
   info("Removing the tab");
   BrowserTestUtils.removeTab(tab);
+
+  UrlClassifierTestUtils.cleanupTestTrackers();
 });
 
 add_task(async function() {

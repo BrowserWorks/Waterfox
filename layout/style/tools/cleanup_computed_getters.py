@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 
 """
 Script to remove unused getters in nsComputedDOMStyle.
 
 It needs to be run from the topsrcdir, and it requires passing in the objdir
-as first argument. It can only be run after nsComputedDOMStyleGenerated.cpp
+as first argument. It can only be run after nsComputedDOMStyleGenerated.inc
 is generated in the objdir.
 """
 
@@ -18,7 +22,7 @@ if len(sys.argv) != 2:
     exit(1)
 
 generated = Path(sys.argv[1]) / "layout" / "style"
-generated = generated / "nsComputedDOMStyleGenerated.cpp"
+generated = generated / "nsComputedDOMStyleGenerated.inc"
 RE_GENERATED = re.compile(r"DoGet\w+")
 keeping = set()
 with generated.open() as f:

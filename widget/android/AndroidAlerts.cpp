@@ -4,7 +4,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "AndroidAlerts.h"
-#include "GeneratedJNIWrappers.h"
+#include "mozilla/java/GeckoRuntimeWrappers.h"
+#include "mozilla/java/WebNotificationWrappers.h"
 #include "nsAlertsUtils.h"
 
 namespace mozilla {
@@ -13,6 +14,8 @@ namespace widget {
 NS_IMPL_ISUPPORTS(AndroidAlerts, nsIAlertsService)
 
 StaticAutoPtr<AndroidAlerts::ListenerMap> AndroidAlerts::sListenerMap;
+nsDataHashtable<nsStringHashKey, java::WebNotification::GlobalRef>
+    AndroidAlerts::mNotificationsMap;
 
 NS_IMETHODIMP
 AndroidAlerts::ShowAlertNotification(
@@ -61,6 +64,18 @@ AndroidAlerts::ShowPersistentNotification(const nsAString& aPersistentData,
   rv = aAlert->GetName(name);
   NS_ENSURE_SUCCESS(rv, NS_OK);
 
+  nsAutoString lang;
+  rv = aAlert->GetLang(lang);
+  NS_ENSURE_SUCCESS(rv, NS_OK);
+
+  nsAutoString dir;
+  rv = aAlert->GetDir(dir);
+  NS_ENSURE_SUCCESS(rv, NS_OK);
+
+  bool requireInteraction;
+  rv = aAlert->GetRequireInteraction(&requireInteraction);
+  NS_ENSURE_SUCCESS(rv, NS_OK);
+
   nsCOMPtr<nsIPrincipal> principal;
   rv = aAlert->GetPrincipal(getter_AddRefs(principal));
   NS_ENSURE_SUCCESS(rv, NS_OK);
@@ -76,19 +91,32 @@ AndroidAlerts::ShowPersistentNotification(const nsAString& aPersistentData,
     sListenerMap->Put(name, aAlertListener);
   }
 
-  java::GeckoAppShell::ShowNotification(
-      name, cookie, title, text, host, imageUrl,
-      !aPersistentData.IsEmpty() ? jni::StringParam(aPersistentData)
-                                 : jni::StringParam(nullptr));
+  java::WebNotification::LocalRef notification = notification->New(
+      title, name, cookie, text, imageUrl, dir, lang, requireInteraction);
+  java::GeckoRuntime::LocalRef runtime = java::GeckoRuntime::GetInstance();
+  if (runtime != NULL) {
+    runtime->NotifyOnShow(notification);
+  }
+  mNotificationsMap.Put(name, notification);
+
   return NS_OK;
 }
 
 NS_IMETHODIMP
 AndroidAlerts::CloseAlert(const nsAString& aAlertName,
                           nsIPrincipal* aPrincipal) {
-  // We delete the entry in sListenerMap later, when CloseNotification calls
-  // NotifyListener.
-  java::GeckoAppShell::CloseNotification(aAlertName);
+  java::WebNotification::LocalRef notification =
+      mNotificationsMap.Get(aAlertName);
+  if (!notification) {
+    return NS_OK;
+  }
+
+  java::GeckoRuntime::LocalRef runtime = java::GeckoRuntime::GetInstance();
+  if (runtime != NULL) {
+    runtime->NotifyOnClose(notification);
+  }
+  mNotificationsMap.Remove(aAlertName);
+
   return NS_OK;
 }
 
@@ -107,6 +135,7 @@ void AndroidAlerts::NotifyListener(const nsAString& aName, const char* aTopic,
 
   if (NS_LITERAL_CSTRING("alertfinished").Equals(aTopic)) {
     sListenerMap->Remove(aName);
+    mNotificationsMap.Remove(aName);
   }
 }
 

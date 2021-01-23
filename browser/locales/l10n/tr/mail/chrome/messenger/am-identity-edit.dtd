@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identityListDesc.label "Bu kimlik için ayarları yapılandır:">
+
+<!ENTITY settingsTab.label       "Ayarlar">
+<!ENTITY copiesFoldersTab.label "Kopyalar ve dizinler">
+<!ENTITY addressingTab.label    "Kompozisyon ve adresler">
+
+<!ENTITY publicData.label        "Kamuya açık veri">
+<!ENTITY privateData.label       "Özel veri">
+<!ENTITY identityAlias.label     "Kimlik etiketi:">
+<!ENTITY identityAlias.accesskey "m">

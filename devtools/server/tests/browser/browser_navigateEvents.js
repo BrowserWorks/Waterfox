@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -96,7 +95,7 @@ function waitForOnBeforeUnloadDialog(browser, callback) {
       const stack = browser.parentNode;
       const dialogs = stack.getElementsByTagName("tabmodalprompt");
       await waitUntil(() => dialogs[0]);
-      const { button0, button1 } = browser.tabModalPromptBox.prompts.get(
+      const { button0, button1 } = browser.tabModalPromptBox.getPrompt(
         dialogs[0]
       ).ui;
       callback(button0, button1);
@@ -149,11 +148,11 @@ add_task(async function() {
     const { require } = ChromeUtils.import(
       "resource://devtools/shared/Loader.jsm"
     );
-    const { DebuggerServer } = require("devtools/server/main");
+    const { DevToolsServer } = require("devtools/server/devtools-server");
     const EventEmitter = require("devtools/shared/event-emitter");
 
     // !Hack! Retrieve a server side object, the FrameTargetActor instance
-    const targetActor = DebuggerServer.searchAllConnectionsForActor(actorId);
+    const targetActor = DevToolsServer.searchAllConnectionsForActor(actorId);
     // In order to listen to internal will-navigate/navigate events
     EventEmitter.on(targetActor, "will-navigate", function(data) {
       sendSyncMessage("devtools-test:event", {
@@ -192,7 +191,13 @@ add_task(async function() {
 
   // Load another document in this doc to dispatch these events
   assertEvent("load-new-document");
-  BrowserTestUtils.loadURI(browser, URL2);
+
+  // Use BrowserTestUtils instead of navigateTo as there is no toolbox opened
+  const onBrowserLoaded = BrowserTestUtils.browserLoaded(
+    gBrowser.selectedBrowser
+  );
+  await BrowserTestUtils.loadURI(gBrowser.selectedBrowser, URL2);
+  await onBrowserLoaded;
 
   // Wait for all events to be received
   await onAllEventsReceived;
@@ -204,5 +209,5 @@ add_task(async function() {
   );
   await target.destroy();
   Services.obs.addObserver(httpObserver, "http-on-modify-request");
-  DebuggerServer.destroy();
+  DevToolsServer.destroy();
 });

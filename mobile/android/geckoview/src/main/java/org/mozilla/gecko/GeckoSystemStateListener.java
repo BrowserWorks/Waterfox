@@ -24,7 +24,7 @@ import org.mozilla.gecko.util.ThreadUtils;
 
 public class GeckoSystemStateListener
         implements InputManager.InputDeviceListener {
-    private static final String LOGTAG = "GeckoSystemStateListener";
+    private static final String LOGTAG = "SystemStateListener";
 
     private static final GeckoSystemStateListener listenerInstance = new GeckoSystemStateListener();
 
@@ -108,13 +108,6 @@ public class GeckoSystemStateListener
     }
 
     @WrapForJNI(calledFrom = "gecko")
-    private static void notifyPrefersReducedMotionChangedForTest() {
-        ContentResolver contentResolver = sApplicationContext.getContentResolver();
-        Uri animationSetting = Settings.System.getUriFor(Settings.Global.ANIMATOR_DURATION_SCALE);
-        contentResolver.notifyChange(animationSetting, null);
-    }
-
-    @WrapForJNI(calledFrom = "gecko")
     /**
      * For prefers-color-scheme media queries feature.
      */
@@ -132,7 +125,7 @@ public class GeckoSystemStateListener
         onDeviceChanged();
     }
 
-    @WrapForJNI(stubName = "OnDeviceChanged", calledFrom = "ui", dispatchTo = "gecko")
+    @WrapForJNI(stubName = "OnDeviceChanged", calledFrom = "any", dispatchTo = "gecko")
     private static native void nativeOnDeviceChanged();
 
     private static void onDeviceChanged() {

@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-offline.xul -->
+<!--LOCALIZATION NOTE : FILE The 'Offline' preferences dialog -->
+
+
+<!ENTITY pref.network.title               "Xarxa i emmagatzematge">
+<!ENTITY pref.offline.caption             "Fora de línia">
+<!ENTITY textStartUp                      "En iniciar-se:">
+<!ENTITY textStartUp.accesskey            "n">
+<!ENTITY menuitemRememberPrevState        "Recorda l'estat en línia anterior">
+<!ENTITY menuitemAskMe                    "Demana'm l'estat en línia a l'inici">
+<!ENTITY menuitemAlwaysOnline             "Inicia sempre en línia">
+<!ENTITY menuitemAlwaysOffline            "Inicia sempre fora de línia">
+<!ENTITY menuitemAutomatic                "Detecta-ho automàticament (si està disponible)">
+<!ENTITY textGoingOnline                  "En connectar-me, amb els missatges per enviar:">
+<!ENTITY radioAutoSend                    "Envia-los automàticament">
+<!ENTITY radioAutoSend.accesskey          "u">
+<!ENTITY radioNotSend                     "No els enviïs">
+<!ENTITY radioNotSend.accesskey           "N">
+<!ENTITY radioAskUnsent                   "Demana'm si els vull enviar">
+<!ENTITY radioAskUnsent.accesskey         "s">
+<!ENTITY textGoingOffline                 "En desconnectar-me, amb els missatges per llegir-los fora de línia:">
+<!ENTITY radioAutoDownload                "Baixa'ls automàticament">
+<!ENTITY radioAutoDownload.accesskey      "B">
+<!ENTITY radioNotDownload                 "No els baixis">
+<!ENTITY radioNotDownload.accesskey       "o">
+<!ENTITY radioAskDownload                 "Demana'm si els vull baixar">
+<!ENTITY radioAskDownload.accesskey       "i">
+<!ENTITY mailConnections.caption          "Connexions del correu">
+<!ENTITY mailnewsTimeout.label            "Temps màxim de connexió:">
+<!ENTITY mailnewsTimeout.accesskey        "m">
+<!ENTITY mailnewsTimeoutSeconds.label     "segons">
+<!ENTITY Diskspace                        "Espai de disc">
+<!ENTITY offlineCompactFolders.label      "Compacta totes les carpetes quan l'estalvi sigui superior a">
+<!ENTITY offlineCompactFolders.accesskey  "C">
+<!ENTITY offlineCompactFoldersMB.label    "MB en total">

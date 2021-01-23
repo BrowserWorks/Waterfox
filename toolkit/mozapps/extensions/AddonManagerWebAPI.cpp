@@ -55,9 +55,7 @@ bool AddonManagerWebAPI::IsValidSite(nsIURI* uri) {
     return false;
   }
 
-  bool isSecure;
-  nsresult rv = uri->SchemeIs("https", &isSecure);
-  if (NS_FAILED(rv) || !isSecure) {
+  if (!uri->SchemeIs("https")) {
     if (!(xpc::IsInAutomation() &&
           Preferences::GetBool("extensions.webapi.testing.http", false))) {
       return false;
@@ -65,7 +63,7 @@ bool AddonManagerWebAPI::IsValidSite(nsIURI* uri) {
   }
 
   nsAutoCString host;
-  rv = uri->GetHost(host);
+  nsresult rv = uri->GetHost(host);
   if (NS_FAILED(rv)) {
     return false;
   }
@@ -73,6 +71,7 @@ bool AddonManagerWebAPI::IsValidSite(nsIURI* uri) {
   return IsValidHost(host);
 }
 
+#ifndef ANDROID
 bool AddonManagerWebAPI::IsAPIEnabled(JSContext* aCx, JSObject* aGlobal) {
   MOZ_DIAGNOSTIC_ASSERT(JS_IsGlobalObject(aGlobal));
   nsCOMPtr<nsPIDOMWindowInner> win = xpc::WindowOrNull(aGlobal);
@@ -110,17 +109,20 @@ bool AddonManagerWebAPI::IsAPIEnabled(JSContext* aCx, JSObject* aGlobal) {
     }
 
     // Checks whether there is a parent frame of the same type. This won't cross
-    // mozbrowser or chrome boundaries.
+    // mozbrowser or chrome or fission/process boundaries.
     nsCOMPtr<nsIDocShellTreeItem> parent;
-    nsresult rv = docShell->GetSameTypeParent(getter_AddRefs(parent));
+    nsresult rv = docShell->GetInProcessSameTypeParent(getter_AddRefs(parent));
     if (NS_FAILED(rv)) {
       return false;
     }
 
+    // No parent means we've hit a mozbrowser or chrome or process boundary.
     if (!parent) {
-      // No parent means we've hit a mozbrowser or chrome boundary so allow
-      // access to the API.
-      return true;
+      // With Fission, a cross-origin iframe has an out-of-process parent, but
+      // DocShell knows nothing about it. We need to ask BrowsingContext here,
+      // and only allow API access if AMO is actually at the top, not framed
+      // by evilleagueofevil.com.
+      return docShell->GetBrowsingContext()->IsTopContent();
     }
 
     Document* doc = win->GetDoc();
@@ -128,7 +130,7 @@ bool AddonManagerWebAPI::IsAPIEnabled(JSContext* aCx, JSObject* aGlobal) {
       return false;
     }
 
-    doc = doc->GetParentDocument();
+    doc = doc->GetInProcessParentDocument();
     if (!doc) {
       // Getting here means something has been torn down so fail safe.
       return false;
@@ -140,6 +142,11 @@ bool AddonManagerWebAPI::IsAPIEnabled(JSContext* aCx, JSObject* aGlobal) {
   // Found a document with no inner window, don't grant access to the API.
   return false;
 }
+#else   // We don't support mozAddonManager on Android
+bool AddonManagerWebAPI::IsAPIEnabled(JSContext* aCx, JSObject* aGlobal) {
+  return false;
+}
+#endif  // ifndef ANDROID
 
 namespace dom {
 

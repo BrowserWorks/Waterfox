@@ -1,0 +1,287 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+
+<!ENTITY msgComposeWindow.title "Skryf: (onderwerploos)">
+<!-- File Menu -->
+
+<!ENTITY fileMenu.label "Lêer">
+<!ENTITY fileMenu.accesskey "L">
+<!ENTITY newMenu.label "Nuwe">
+<!ENTITY newMenu.accesskey "N">
+<!ENTITY newMessage.label "Boodskap">
+<!ENTITY newMessage.key "M">
+<!ENTITY newMessageCmd2.key "N">
+<!ENTITY newMessage.accesskey "o">
+<!ENTITY newContact.label "Adresboek-kennis…">
+<!ENTITY newContact.accesskey "k">
+
+
+<!ENTITY attachFileCmd.label "Lêer(s)…">
+<!ENTITY attachFileCmd.accesskey "L">
+
+
+
+<!ENTITY attachPageCmd.label "Webbladsy…">
+<!ENTITY attachPageCmd.accesskey "W">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "Persoonlike kaart (vCard)">
+<!ENTITY attachVCardCmd.accesskey "P">
+
+
+<!ENTITY closeCmd.label "Sluit">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "S">
+<!ENTITY saveCmd.label "Stoor">
+<!ENTITY saveCmd.key "S">
+<!ENTITY saveCmd.accesskey "S">
+<!ENTITY saveAsCmd.label "Stoor as">
+<!ENTITY saveAsCmd.accesskey "a">
+<!ENTITY saveAsFileCmd.label "Lêer…">
+<!ENTITY saveAsFileCmd.accesskey "L">
+<!ENTITY saveAsDraftCmd.label "Onvoltooid">
+<!ENTITY saveAsDraftCmd.accesskey "O">
+<!ENTITY saveAsTemplateCmd.label "Sjabloon">
+<!ENTITY saveAsTemplateCmd.accesskey "S">
+<!ENTITY sendNowCmd.label "Versend nou">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "s">
+<!ENTITY sendLaterCmd.label "Versend later">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "l">
+<!ENTITY printSetupCmd.label "Bladsyopstelling…">
+<!ENTITY printSetupCmd.accesskey "o">
+<!ENTITY printPreviewCmd.label "Drukvoorskou">
+<!ENTITY printPreviewCmd.accesskey "v">
+<!ENTITY printCmd.label "Druk…">
+<!ENTITY printCmd.key "P">
+<!ENTITY printCmd.accesskey "D">
+<!-- Edit Menu -->
+
+<!ENTITY editMenu.label "Redigeer">
+<!ENTITY editMenu.accesskey "e">
+<!ENTITY undoCmd.label "Ontdoen">
+<!ENTITY undoCmd.key "Z">
+<!ENTITY undoCmd.accesskey "O">
+<!ENTITY redoCmd.label "Herdoen">
+<!ENTITY redoCmd.key "Y">
+<!ENTITY redoCmd.accesskey "H">
+<!ENTITY cutCmd.key "X">
+<!ENTITY copyCmd.key "C">
+<!ENTITY pasteCmd.key "V">
+<!ENTITY pasteNoFormattingCmd.key "V">
+<!ENTITY pasteAsQuotationCmd.key "o">
+<!ENTITY editRewrapCmd.accesskey "o">
+<!ENTITY deleteCmd.label "Skrap">
+<!ENTITY deleteCmd.accesskey "S">
+<!ENTITY editRewrapCmd.label "Heromvou">
+<!ENTITY editRewrapCmd.key "R">
+
+
+<!ENTITY selectAllCmd.accesskey "a">
+
+
+
+
+
+
+<!ENTITY findAgainCmd.label "Vind weer">
+<!ENTITY findAgainCmd.accesskey "e">
+<!ENTITY findAgainCmd.key "G">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "Vind vorige">
+<!ENTITY findPrevCmd.accesskey "n">
+<!ENTITY findPrevCmd.key "G">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+<!-- View Menu -->
+
+<!ENTITY viewMenu.label "Bekyk">
+<!ENTITY viewMenu.accesskey "B">
+<!ENTITY viewToolbarsMenuNew.label "Nutsbalke">
+<!ENTITY viewToolbarsMenuNew.accesskey "N">
+
+
+<!ENTITY showCompositionToolbarCmd.label "Skryf-nutsbalk">
+<!ENTITY showCompositionToolbarCmd.accesskey "S">
+<!ENTITY showFormattingBarCmd.label "Formateringbalk">
+<!ENTITY showFormattingBarCmd.accesskey "F">
+<!ENTITY showTaskbarCmd.label "Statusbalk">
+<!ENTITY showTaskbarCmd.accesskey "S">
+<!ENTITY customizeToolbar.label "Doelmaak…">
+<!ENTITY customizeToolbar.accesskey "D">
+
+<!ENTITY addressSidebar.label "Kennisse-kantbalk">
+<!ENTITY addressSidebar.accesskey "e">
+<!-- Format Menu -->
+
+<!ENTITY formatMenu.label "Formaat">
+<!ENTITY formatMenu.accesskey "o">
+<!-- Options Menu -->
+
+<!ENTITY optionsMenu.label "Opsies">
+<!ENTITY optionsMenu.accesskey "p">
+<!ENTITY checkSpellingCmd2.label "Toets spelling…">
+<!ENTITY checkSpellingCmd2.key "p">
+<!ENTITY checkSpellingCmd2.key2 "VK_F7">
+<!ENTITY checkSpellingCmd2.accesskey "T">
+<!ENTITY enableInlineSpellChecker.label "Gaan spelling na terwyl u tik">
+<!ENTITY enableInlineSpellChecker.accesskey "G">
+<!ENTITY quoteCmd.label "Haal boodskap aan">
+<!ENTITY quoteCmd.accesskey "H">
+<!--LOCALIZATION NOTE attachVCard.label Don't translate the term 'vCard' -->
+
+<!ENTITY attachVCard.label "Heg persoonlike kaart (vCard) aan">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY returnReceiptMenu.label "Ontvangsnota">
+<!ENTITY returnReceiptMenu.accesskey "v">
+<!ENTITY dsnMenu.label "Afleweringstatus-kennisgewing">
+<!ENTITY dsnMenu.accesskey "k">
+
+
+<!ENTITY autoFormatCmd.label "Outospeur">
+<!ENTITY autoFormatCmd.accesskey "O">
+<!ENTITY plainTextFormatCmd.label "Net skoonteks">
+<!ENTITY plainTextFormatCmd.accesskey "N">
+<!ENTITY htmlFormatCmd.label "Net rykteks (HTML)">
+<!ENTITY htmlFormatCmd.accesskey "r">
+
+
+<!ENTITY priorityMenu.label "Prioriteit">
+<!ENTITY priorityMenu.accesskey "P">
+
+
+<!ENTITY priorityButton.label "Prioriteit:">
+<!ENTITY lowestPriorityCmd.label "Laagste">
+<!ENTITY lowestPriorityCmd.accesskey "L">
+<!ENTITY lowPriorityCmd.label "Laag">
+<!ENTITY lowPriorityCmd.accesskey "a">
+<!ENTITY normalPriorityCmd.label "Gewoon">
+<!ENTITY normalPriorityCmd.accesskey "G">
+<!ENTITY highPriorityCmd.label "Hoog">
+<!ENTITY highPriorityCmd.accesskey "o">
+<!ENTITY highestPriorityCmd.label "Hoogste">
+<!ENTITY highestPriorityCmd.accesskey "H">
+<!ENTITY fileCarbonCopyCmd.label "Stuur 'n afskrif aan">
+<!ENTITY fileCarbonCopyCmd.accesskey "r">
+<!ENTITY fileHereMenu.label "Liasseer hier">
+<!-- Tools Menu -->
+
+<!ENTITY tasksMenu.label "Nutsgoed">
+<!ENTITY tasksMenu.accesskey "u">
+
+
+<!ENTITY messengerCmd.commandkey "1">
+<!ENTITY addressBookCmd.label "Adresboek">
+<!ENTITY addressBookCmd.accesskey "A">
+<!ENTITY addressBookCmd.key "B">
+
+
+
+
+
+<!ENTITY preferencesCmdUnix.label "Voorkeure">
+<!ENTITY preferencesCmdUnix.accesskey "k">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY minimizeWindow.label "Minimeer">
+<!ENTITY bringAllToFront.label "Bring alles na vore">
+<!ENTITY zoomWindow.label "Zoem">
+<!ENTITY windowMenu.label "Venster">
+<!-- Mail Toolbar -->
+
+<!ENTITY sendButton.label "Stuur">
+<!ENTITY quoteButton.label "Aanhaal">
+<!ENTITY addressButton.label "Kennisse">
+<!ENTITY attachButton.label "Heg aan">
+<!ENTITY spellingButton.label "Spelling">
+<!ENTITY saveButton.label "Stoor">
+<!ENTITY printButton.label "Druk">
+<!-- Mail Toolbar Tooltips -->
+
+<!ENTITY sendButton.tooltip "Versend hierdie boodskap nou">
+<!ENTITY sendlaterButton.tooltip "Versend hierdie boodskap later">
+<!ENTITY quoteButton.tooltip "Haal die vorige boodskap aan">
+<!ENTITY addressButton.tooltip "Selekteer 'n ontvanger uit 'n adresboek">
+
+
+<!ENTITY saveButton.tooltip "Stoor hierdie boodskap">
+<!ENTITY cutButton.tooltip              "Knip">
+<!ENTITY copyButton.tooltip             "Kopieer">
+<!ENTITY pasteButton.tooltip            "Plak">
+<!ENTITY printButton.tooltip "Druk hierdie boodskap">
+
+<!-- Headers -->
+<!ENTITY fromAddr.accesskey "a">
+<!ENTITY subject.accesskey "O">
+<!-- LOCALIZATION NOTE attachments.accesskey This access key should correspond
+     to the strings in attachmentCount in composeMsgs.properties -->
+<!-- Format Toolbar, imported from editorAppShell.xul -->
+
+<!ENTITY SmileButton.tooltip "Voeg gesiggie in">
+<!ENTITY smiley1Cmd.label "Glimlag">
+<!ENTITY smiley2Cmd.label "Frons">
+<!ENTITY smiley3Cmd.label "Knipoog">
+<!ENTITY smiley4Cmd.label "Tong uitsteek">
+<!ENTITY smiley5Cmd.label "Laggend">
+<!ENTITY smiley6Cmd.label "Verleë">
+<!ENTITY smiley7Cmd.label "Besluiteloos">
+<!ENTITY smiley8Cmd.label "Verrassing">
+<!ENTITY smiley9Cmd.label "Soentjie">
+<!ENTITY smiley10Cmd.label "Gil">
+<!ENTITY smiley11Cmd.label "Koel">
+<!ENTITY smiley12Cmd.label "Geldbek">
+<!ENTITY smiley13Cmd.label "Voet-in-die-mond">
+<!ENTITY smiley14Cmd.label "Onskuldig">
+<!ENTITY smiley15Cmd.label "Huil">
+<!ENTITY smiley16Cmd.label "Mond-is-verseël">
+<!-- Message Pane Context Menu -->
+
+<!ENTITY spellCheckNoSuggestions.label "Geen voorstel gevind nie">
+<!ENTITY spellCheckIgnoreWord.label "Ignoreer woord">
+<!ENTITY spellCheckIgnoreWord.accesskey "I">
+<!ENTITY spellCheckAddToDictionary.label "Voeg by woordeboek">
+<!ENTITY spellCheckAddToDictionary.accesskey "e">
+<!ENTITY undo.label "Ontdoen">
+<!ENTITY undo.accesskey "O">
+<!ENTITY cut.label "Knip">
+<!ENTITY cut.accesskey "p">
+<!ENTITY copy.label "Kopieer">
+<!ENTITY copy.accesskey "K">
+<!ENTITY paste.label "Plak">
+<!ENTITY paste.accesskey "P">
+<!ENTITY pasteQuote.label "Plak as aanhaling">
+<!ENTITY pasteQuote.accesskey "a">
+
+<!ENTITY openAttachment.label "Open">
+<!ENTITY openAttachment.accesskey "O">
+<!ENTITY delete.label "Skrap">
+<!ENTITY delete.accesskey "S">
+<!ENTITY removeAttachment.label "Verwyder aanhegsel">
+<!ENTITY removeAttachment.accesskey "V">
+<!ENTITY renameAttachment.label "Hernoem…">
+<!ENTITY renameAttachment.accesskey "H">
+<!ENTITY selectAll.label "Merk alles">
+<!ENTITY selectAll.accesskey "a">
+<!ENTITY attachFile.label "Heg lêer(s) aan…">
+<!ENTITY attachFile.accesskey "l">
+
+
+
+
+
+
+
+
+<!ENTITY attachPage.label "Heg webbladsy aan…">
+<!ENTITY attachPage.accesskey "w">
+<!-- Spell checker context menu items -->
+
+<!-- Title for the address picker panel -->
+
+<!-- Attachment Pane Header Bar Context Menu -->
+
+<!ENTITY addressesSidebarTitle.label "Kennisse">
+<!-- Identity popup customize menuitem -->
+

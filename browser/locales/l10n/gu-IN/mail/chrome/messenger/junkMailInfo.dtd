@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "બગડેલ મેલ વિશે">
+<!ENTITY window.width  "450">
+<!ENTITY info1a.label  "&brandShortName; આપોઆપ આવતા સંદેશાઓને શોધી કાઢે છે કે જે બગડેલા મેલ તરીકે દેખાય છે (સ્પામ તરીકે પણ ઓળખાય છે). સંદેશાઓ કે જે મેલ વિચારે છે તેઓ બગડેલા તરીકે પ્રદર્શિત થાય છે">
+<!ENTITY info1b.label  ".">
+<!ENTITY info2.label   "પ્રથમ, તમારે સંદેશાઓ બગડેલ કે નહિં બગડેલ ચિહ્નિત કરવા માટે બગડેલ મેલ સાધનપટ્ટી બટનની મદદથી બગડેલા મેલ તરીકે ઓળખવા માટે &brandShortName; ને પ્રશિક્ષિત કરવા જ પડશે.">
+<!ENTITY info3.label   "એકવાર &brandShortName; યોગ્ય રીતે બગડેલા મેલને ઓળખતો થઈ જાય, તો પછી તમે આવતા બગડેલા મેલને બગડેલા ફોલ્ડરમાં ખસેડવા માટે બગડેલ મેલ નિયંત્રકો વાપરી શકો છો.">
+<!ENTITY info4.label   "વધુ જાણકારી માટે, મદદ પર ક્લિક કરો.">

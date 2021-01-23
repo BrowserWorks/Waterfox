@@ -1,0 +1,20 @@
+/* Additional styling for Floe theme for Waterfox Current
+/* Author: Stefano Rosselli
+*/
+
+/* :::::: ABOUT LICENSE :::::: */
+
+@-moz-document  url("about:license") {
+	
+  body {
+    align-items: start !important;
+  }
+  
+  .license-header {
+    background-image: none !important;
+	  min-height: 0 !important;
+    align-items: start !important;
+    padding-inline-end: 0 !important;
+  }
+
+}

@@ -1,4 +1,77 @@
-# 0.1.10 (August, 8 2018)
+# 0.2.0 (December 2, 2019)
+
+* Add `Version::HTTP_3` constant.
+* Add `HeaderValue::from_maybe_shared`, `HeaderValue::from_maybe_shared_unchecked`, `Uri::from_maybe_shared`, `Authority::from_maybe_shared`, and `PathAndQuery::from_maybe_shared`.
+* Change `request::Builder`, `response::Builder`, and `uri::Builder` to use by-value methods instead of by-ref.
+* Change from `HttpTryFrom` trait to `std::convert::TryFrom`.
+* Change `HeaderMap::entry` to no longer return a `Result`.
+* Change `HeaderMap::drain` iterator to match the behavior of `IntoIter`.
+* Change `Authority::port` to return an `Option<Port>` instead of `Option<u16>`.
+* Change `Uri::scheme` to return `Option<&Scheme>` instead of `Option<&str>`.
+* Change `Uri::authority` to return `Option<&Authority>` instead of `Option<&str>`.
+* Remove `InvalidUriBytes`, `InvalidHeaderNameBytes`, and `InvalidHeaderValueBytes` error types.
+* Remove `HeaderValue::from_shared`, `HeaderValue::from_shared_unchecked`, `Uri::from_shared`, `Authority::from_shared`, `Scheme::from_shared`, and `PathAndQuery::from_shared`.
+* Remove `Authority::port_part`.
+* Remove `Uri::scheme_part` and `Uri::authority_part`.
+
+# 0.1.20 (November 26, 2019)
+
+* Fix possible double-free if `header::Drain` iterator is `std::mem::forgot`en (#357).
+* Fix possible data race if multiple `header::ValueDrain`s are iterated on different threads (#362).
+* Fix `HeaderMap::reserve` capacity overflows (#360).
+* Fix parsing long authority-form `Uri`s (#351).
+
+# 0.1.19 (October 15, 2019)
+
+* Allow `%` in IPv6 addresses in `Uri` (#343).
+
+# 0.1.18 (July 26, 2019)
+
+* Fix compilation of `HeaderName` parsing on WASM targets (#324).
+* Implement `HttpTryFrom<HashMap>` for `HeaderMap` (#326).
+* Export `http::header::HeaderValue` as `http::HeaderValue`.
+
+# 0.1.17 (April 5, 2019)
+
+* Add `Error::inner_ref()` to view the kind of error (#303)
+* Add `headers_ref()` and `headers_mut()` methods to `request::Builder` and `response::Builder` (#293)
+
+# 0.1.16 (February 19, 2019)
+
+* Fix `Uri` to permit more characters in the `path` (#296)
+
+# 0.1.15 (January 22, 2019)
+
+* Fix `Uri::host()` to include brackets of IPv6 literals (#292)
+* Add `scheme_str` and `port_u16` methods to `Uri` (#287)
+* Add `method_ref`, `uri_ref`, and `headers_ref` to `request::Builder` (#284)
+
+# 0.1.14 (November 21, 2018)
+
+* Add `Port` struct (#252, #255, #265)
+* Introduce `Uri` builder (#219)
+* Empty `Method` no longer considered valid (#262)
+* Fix `Uri` equality when terminating question mark is present (#270)
+* Allow % character in userinfo (#269)
+* Support additional tokens for header names (#271)
+* Export `http::headers::{IterMut, ValuesMut}` (#278)
+
+# 0.1.13 (September 14, 2018)
+
+* impl `fmt::Display` for `HeaderName` (#249)
+* Fix `uri::Authority` parsing when there is no host after an `@` (#248)
+* Fix `Uri` parsing to allow more characters in query strings (#247)
+
+# 0.1.12 (September 7, 2018)
+
+* Fix `HeaderValue` parsing to allow HTABs (#244)
+
+# 0.1.11 (September 5, 2018)
+
+* Add `From<&Self>` for `HeaderValue`, `Method`, and `StatusCode` (#238)
+* Add `Uri::from_static` (#240)
+
+# 0.1.10 (August 8, 2018)
 
 * impl HttpTryFrom<String> for HeaderValue (#236)
 

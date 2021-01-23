@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle "Аднаўленне сэсіі">
+<!ENTITY restorepage.pagetitle "Вы хочаце аднавіць вашу сэсію?">
+<!ENTITY restorepage.issueDesc "Ваша папярэдняя сэсія працы з &brandShortName; была нечакана спынена. Прабачце за нязручнасць. Вы можаце аднавіць устаўкі і вокны папярэдняй сэсіі ці пачаць новую сэсію, калі яны больш не патрэбныя.">
+<!ENTITY restorepage.remedies "Калі &brandShortName; перарываецца неаднаразова:">
+<!ENTITY restorepage.dueToChrome "Паспрабуйце забараніць усе з нядаўна ўсталяваных пашырэнняў з дапамогаю Кіраўніка Дадаткаў.">
+<!ENTITY restorepage.dueToContent "Паспрабуйце аднавіць вашу сэсію без старонак Сеціва, якія, на вашу думку, маглі выклікаць праблему:">
+<!ENTITY restorepage.restoreButton "Аднавіць папярэднюю сэсію">
+<!ENTITY restorepage.restore.access "А">
+<!ENTITY restorepage.cancelButton "Пачаць новую сэсію">
+<!ENTITY restorepage.cancel.access "П">
+<!ENTITY restorepage.restoreHeader "Аднавіць">
+<!ENTITY restorepage.listHeader "Вокны і ўстаўкі">
+<!ENTITY restorepage.windowLabel "Акно &#037;S">

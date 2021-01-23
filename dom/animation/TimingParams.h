@@ -8,6 +8,7 @@
 #define mozilla_TimingParams_h
 
 #include "nsStringFwd.h"
+#include "nsPrintfCString.h"
 #include "mozilla/dom/Nullable.h"
 #include "mozilla/dom/UnionTypes.h"  // For OwningUnrestrictedDoubleOrString
 #include "mozilla/ComputedTimingFunction.h"
@@ -90,27 +91,33 @@ struct TimingParams {
       if (durationInMs >= 0) {
         result.emplace(StickyTimeDuration::FromMilliseconds(durationInMs));
       } else {
-        aRv.ThrowTypeError<dom::MSG_ENFORCE_RANGE_OUT_OF_RANGE>(
-            NS_LITERAL_STRING("duration"));
+        nsPrintfCString err("Duration (%g) must be nonnegative", durationInMs);
+        aRv.ThrowTypeError(err);
       }
     } else if (!aDuration.GetAsString().EqualsLiteral("auto")) {
       aRv.ThrowTypeError<dom::MSG_INVALID_DURATION_ERROR>(
-          aDuration.GetAsString());
+          NS_ConvertUTF16toUTF8(aDuration.GetAsString()));
     }
     return result;
   }
 
   static void ValidateIterationStart(double aIterationStart, ErrorResult& aRv) {
     if (aIterationStart < 0) {
-      aRv.ThrowTypeError<dom::MSG_ENFORCE_RANGE_OUT_OF_RANGE>(
-          NS_LITERAL_STRING("iterationStart"));
+      nsPrintfCString err("Iteration start (%g) must not be negative",
+                          aIterationStart);
+      aRv.ThrowTypeError(err);
     }
   }
 
   static void ValidateIterations(double aIterations, ErrorResult& aRv) {
-    if (IsNaN(aIterations) || aIterations < 0) {
-      aRv.ThrowTypeError<dom::MSG_ENFORCE_RANGE_OUT_OF_RANGE>(
-          NS_LITERAL_STRING("iterations"));
+    if (IsNaN(aIterations)) {
+      aRv.ThrowTypeError("Iterations must not be NaN");
+      return;
+    }
+
+    if (aIterations < 0) {
+      nsPrintfCString err("Iterations (%g) must not be negative", aIterations);
+      aRv.ThrowTypeError(err);
     }
   }
 
@@ -152,6 +159,10 @@ struct TimingParams {
 
   void SetDuration(Maybe<StickyTimeDuration>&& aDuration) {
     mDuration = std::move(aDuration);
+    Update();
+  }
+  void SetDuration(const Maybe<StickyTimeDuration>& aDuration) {
+    mDuration = aDuration;
     Update();
   }
   const Maybe<StickyTimeDuration>& Duration() const { return mDuration; }

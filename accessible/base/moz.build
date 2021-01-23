@@ -47,6 +47,7 @@ UNIFIED_SOURCES += [
     'nsCoreUtils.cpp',
     'nsEventShell.cpp',
     'nsTextEquivUtils.cpp',
+    'Pivot.cpp',
     'SelectionManager.cpp',
     'StyleInfo.cpp',
     'TextAttrs.cpp',
@@ -81,7 +82,6 @@ LOCAL_INCLUDES += [
     '/accessible/xpcom',
     '/accessible/xul',
     '/dom/base',
-    '/dom/xbl',
     '/ipc/chromium/src',
     '/layout/generic',
     '/layout/style',
@@ -90,7 +90,7 @@ LOCAL_INCLUDES += [
     '/layout/xul/tree/',
 ]
 
-if 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk':
     LOCAL_INCLUDES += [
         '/accessible/atk',
     ]

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY digitalSign.certificate.button "Elekti…">
+<!ENTITY digitalSign.certificate.accesskey "E">
+<!ENTITY digitalSign.certificate_clear.button "Forviŝi">
+<!ENTITY digitalSign.certificate_clear.accesskey "F">
+<!ENTITY encryption.certificate.button "Elekti…">
+<!ENTITY encryption.certificate.accesskey "i">
+<!ENTITY encryption.certificate_clear.button "Forviŝi">
+<!ENTITY encryption.certificate_clear.accesskey "v">
+<!ENTITY signingGroupTitle.label "Cifereca subskribado">
+<!ENTITY signMessage.accesskey "s">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Elekti atestilon">
+<!ENTITY certPicker.info  "Atestilo:">
+<!ENTITY certPicker.detailsLabel "Detaloj pri elektita atestilo:">
+

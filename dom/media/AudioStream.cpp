@@ -18,11 +18,17 @@
 #include "mozilla/Telemetry.h"
 #include "CubebUtils.h"
 #include "nsPrintfCString.h"
-#include "gfxPrefs.h"
 #include "AudioConverter.h"
+#include "UnderrunHandler.h"
 #if defined(XP_WIN)
 #  include "nsXULAppAPI.h"
 #endif
+#include "Tracing.h"
+#include "webaudio/blink/DenormalDisabler.h"
+
+// Use abort() instead of exception in SoundTouch.
+#define ST_NO_EXCEPTION_HANDLING 1
+#include "soundtouch/SoundTouchFactory.h"
 
 namespace mozilla {
 
@@ -129,7 +135,6 @@ AudioStream::AudioStream(DataSource& aSource)
       mChannels(0),
       mOutChannels(0),
       mTimeStretcher(nullptr),
-      mDumpFile(nullptr),
       mState(INITIALIZED),
       mDataSource(aSource),
       mPrefillQuirk(false) {
@@ -144,9 +149,6 @@ AudioStream::~AudioStream() {
   LOG("deleted, state %d", mState);
   MOZ_ASSERT(mState == SHUTDOWN && !mCubebStream,
              "Should've called Shutdown() before deleting an AudioStream");
-  if (mDumpFile) {
-    fclose(mDumpFile);
-  }
   if (mTimeStretcher) {
     soundtouch::destroySoundTouchObj(mTimeStretcher);
   }
@@ -174,11 +176,23 @@ nsresult AudioStream::EnsureTimeStretcherInitializedUnlocked() {
     mTimeStretcher->setSampleRate(mAudioClock.GetInputRate());
     mTimeStretcher->setChannels(mOutChannels);
     mTimeStretcher->setPitch(1.0);
+
+    // SoundTouch v2.1.2 uses automatic time-stretch settings with the following
+    // values:
+    // Tempo 0.5: 90ms sequence, 20ms seekwindow, 8ms overlap
+    // Tempo 2.0: 40ms sequence, 15ms seekwindow, 8ms overlap
+    // We are going to use a smaller 10ms sequence size to improve speech
+    // clarity, giving more resolution at high tempo and less reverb at low
+    // tempo. Maintain 15ms seekwindow and 8ms overlap for smoothness.
+    mTimeStretcher->setSetting(SETTING_SEQUENCE_MS, 10);
+    mTimeStretcher->setSetting(SETTING_SEEKWINDOW_MS, 15);
+    mTimeStretcher->setSetting(SETTING_OVERLAP_MS, 8);
   }
   return NS_OK;
 }
 
 nsresult AudioStream::SetPlaybackRate(double aPlaybackRate) {
+  TRACE();
   // MUST lock since the rate transposer is used from the cubeb callback,
   // and rate changes can cause the buffer to be reallocated
   MonitorAutoLock mon(mMonitor);
@@ -196,6 +210,7 @@ nsresult AudioStream::SetPlaybackRate(double aPlaybackRate) {
     return NS_ERROR_FAILURE;
   }
 
+  PROFILER_ADD_MARKER("AudioStream::SetPlaybackRate", MEDIA_PLAYBACK);
   mAudioClock.SetPlaybackRate(aPlaybackRate);
 
   if (mAudioClock.GetPreservesPitch()) {
@@ -209,6 +224,7 @@ nsresult AudioStream::SetPlaybackRate(double aPlaybackRate) {
 }
 
 nsresult AudioStream::SetPreservesPitch(bool aPreservesPitch) {
+  TRACE();
   // MUST lock since the rate transposer is used from the cubeb callback,
   // and rate changes can cause the buffer to be reallocated
   MonitorAutoLock mon(mMonitor);
@@ -235,79 +251,6 @@ nsresult AudioStream::SetPreservesPitch(bool aPreservesPitch) {
   return NS_OK;
 }
 
-static void SetUint16LE(uint8_t* aDest, uint16_t aValue) {
-  aDest[0] = aValue & 0xFF;
-  aDest[1] = aValue >> 8;
-}
-
-static void SetUint32LE(uint8_t* aDest, uint32_t aValue) {
-  SetUint16LE(aDest, aValue & 0xFFFF);
-  SetUint16LE(aDest + 2, aValue >> 16);
-}
-
-static FILE* OpenDumpFile(uint32_t aChannels, uint32_t aRate) {
-  /**
-   * When MOZ_DUMP_AUDIO is set in the environment (to anything),
-   * we'll drop a series of files in the current working directory named
-   * dumped-audio-<nnn>.wav, one per AudioStream created, containing
-   * the audio for the stream including any skips due to underruns.
-   */
-  static Atomic<int> gDumpedAudioCount(0);
-
-  if (!getenv("MOZ_DUMP_AUDIO")) return nullptr;
-  char buf[100];
-  SprintfLiteral(buf, "dumped-audio-%d.wav", ++gDumpedAudioCount);
-  FILE* f = fopen(buf, "wb");
-  if (!f) return nullptr;
-
-  uint8_t header[] = {
-      // RIFF header
-      0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00, 0x57, 0x41, 0x56, 0x45,
-      // fmt chunk. We always write 16-bit samples.
-      0x66, 0x6d, 0x74, 0x20, 0x10, 0x00, 0x00, 0x00, 0x01, 0x00, 0xFF, 0xFF,
-      0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x10, 0x00,
-      // data chunk
-      0x64, 0x61, 0x74, 0x61, 0xFE, 0xFF, 0xFF, 0x7F};
-  static const int CHANNEL_OFFSET = 22;
-  static const int SAMPLE_RATE_OFFSET = 24;
-  static const int BLOCK_ALIGN_OFFSET = 32;
-  SetUint16LE(header + CHANNEL_OFFSET, aChannels);
-  SetUint32LE(header + SAMPLE_RATE_OFFSET, aRate);
-  SetUint16LE(header + BLOCK_ALIGN_OFFSET, aChannels * 2);
-  Unused << fwrite(header, sizeof(header), 1, f);
-
-  return f;
-}
-
-template <typename T>
-typename EnableIf<IsSame<T, int16_t>::value, void>::Type WriteDumpFileHelper(
-    T* aInput, size_t aSamples, FILE* aFile) {
-  Unused << fwrite(aInput, sizeof(T), aSamples, aFile);
-}
-
-template <typename T>
-typename EnableIf<IsSame<T, float>::value, void>::Type WriteDumpFileHelper(
-    T* aInput, size_t aSamples, FILE* aFile) {
-  AutoTArray<uint8_t, 1024 * 2> buf;
-  buf.SetLength(aSamples * 2);
-  uint8_t* output = buf.Elements();
-  for (uint32_t i = 0; i < aSamples; ++i) {
-    SetUint16LE(output + i * 2, int16_t(aInput[i] * 32767.0f));
-  }
-  Unused << fwrite(output, 2, aSamples, aFile);
-  fflush(aFile);
-}
-
-static void WriteDumpFile(FILE* aDumpFile, AudioStream* aStream,
-                          uint32_t aFrames, void* aBuffer) {
-  if (!aDumpFile) return;
-
-  uint32_t samples = aStream->GetOutChannels() * aFrames;
-
-  using SampleT = AudioSampleTraits<AUDIO_OUTPUT_FORMAT>::Type;
-  WriteDumpFileHelper(reinterpret_cast<SampleT*>(aBuffer), samples, aDumpFile);
-}
-
 template <AudioSampleFormat N>
 struct ToCubebFormat {
   static const cubeb_sample_format value = CUBEB_SAMPLE_FLOAT32NE;
@@ -327,13 +270,14 @@ int AudioStream::InvokeCubeb(Function aFunction, Args&&... aArgs) {
 nsresult AudioStream::Init(uint32_t aNumChannels,
                            AudioConfig::ChannelLayout::ChannelMap aChannelMap,
                            uint32_t aRate, AudioDeviceInfo* aSinkInfo) {
+  StartAudioCallbackTracing();
+
   auto startTime = TimeStamp::Now();
+  TRACE();
 
   LOG("%s channels: %d, rate: %d", __FUNCTION__, aNumChannels, aRate);
   mChannels = aNumChannels;
   mOutChannels = aNumChannels;
-
-  mDumpFile = OpenDumpFile(aNumChannels, aRate);
 
   mSinkInfo = aSinkInfo;
 
@@ -343,6 +287,9 @@ nsresult AudioStream::Init(uint32_t aNumChannels,
   params.layout = static_cast<uint32_t>(aChannelMap);
   params.format = ToCubebFormat<AUDIO_OUTPUT_FORMAT>::value;
   params.prefs = CubebUtils::GetDefaultStreamPrefs();
+
+  // This is noop if MOZ_DUMP_AUDIO is not set.
+  mDumpFile.Open("AudioStream", mOutChannels, aRate);
 
   mAudioClock.Init(aRate);
 
@@ -363,6 +310,8 @@ nsresult AudioStream::Init(uint32_t aNumChannels,
 
 nsresult AudioStream::OpenCubeb(cubeb* aContext, cubeb_stream_params& aParams,
                                 TimeStamp aStartTime, bool aIsFirst) {
+  AUTO_PROFILER_LABEL("AudioStream::OpenCubeb", MEDIA_CUBEB);
+  TRACE();
   MOZ_ASSERT(aContext);
 
   cubeb_stream* stream = nullptr;
@@ -387,14 +336,13 @@ nsresult AudioStream::OpenCubeb(cubeb* aContext, cubeb_stream_params& aParams,
   TimeDuration timeDelta = TimeStamp::Now() - aStartTime;
   LOG("creation time %sfirst: %u ms", aIsFirst ? "" : "not ",
       (uint32_t)timeDelta.ToMilliseconds());
-  Telemetry::Accumulate(aIsFirst ? Telemetry::AUDIOSTREAM_FIRST_OPEN_MS
-                                 : Telemetry::AUDIOSTREAM_LATER_OPEN_MS,
-                        timeDelta.ToMilliseconds());
 
   return NS_OK;
 }
 
 void AudioStream::SetVolume(double aVolume) {
+  AUTO_PROFILER_LABEL("AudioStream::SetVolume", MEDIA_CUBEB);
+  TRACE();
   MOZ_ASSERT(aVolume >= 0.0 && aVolume <= 1.0, "Invalid volume");
 
   {
@@ -413,6 +361,8 @@ void AudioStream::SetVolume(double aVolume) {
 }
 
 nsresult AudioStream::Start() {
+  AUTO_PROFILER_LABEL("AudioStream::Start", MEDIA_CUBEB);
+  TRACE();
   MonitorAutoLock mon(mMonitor);
   MOZ_ASSERT(mState == INITIALIZED);
   mState = STARTED;
@@ -430,6 +380,8 @@ nsresult AudioStream::Start() {
 }
 
 void AudioStream::Pause() {
+  AUTO_PROFILER_LABEL("AudioStream::Pause", MEDIA_CUBEB);
+  TRACE();
   MonitorAutoLock mon(mMonitor);
   MOZ_ASSERT(mState != INITIALIZED, "Must be Start()ed.");
   MOZ_ASSERT(mState != STOPPED, "Already Pause()ed.");
@@ -450,6 +402,8 @@ void AudioStream::Pause() {
 }
 
 void AudioStream::Resume() {
+  AUTO_PROFILER_LABEL("AudioStream::Resume", MEDIA_CUBEB);
+  TRACE();
   MonitorAutoLock mon(mMonitor);
   MOZ_ASSERT(mState != INITIALIZED, "Must be Start()ed.");
   MOZ_ASSERT(mState != STARTED, "Already Start()ed.");
@@ -470,6 +424,8 @@ void AudioStream::Resume() {
 }
 
 void AudioStream::Shutdown() {
+  AUTO_PROFILER_LABEL("AudioStream::Shutdown", MEDIA_CUBEB);
+  TRACE();
   MonitorAutoLock mon(mMonitor);
   LOG("Shutdown, state %d", mState);
 
@@ -480,6 +436,8 @@ void AudioStream::Shutdown() {
     // Must not try to shut down cubeb from within the lock!  wasapi may still
     // call our callback after Pause()/stop()!?! Bug 996162
     mCubebStream.reset();
+
+    StopAudioCallbackTracing();
   }
 
   mState = SHUTDOWN;
@@ -487,6 +445,8 @@ void AudioStream::Shutdown() {
 
 #if defined(XP_WIN)
 void AudioStream::ResetDefaultDevice() {
+  AUTO_PROFILER_LABEL("AudioStream::ResetDefaultDevice", MEDIA_CUBEB);
+  TRACE();
   MonitorAutoLock mon(mMonitor);
   if (mState != STARTED && mState != STOPPED) {
     return;
@@ -501,18 +461,21 @@ void AudioStream::ResetDefaultDevice() {
 #endif
 
 int64_t AudioStream::GetPosition() {
+  TRACE();
   MonitorAutoLock mon(mMonitor);
   int64_t frames = GetPositionInFramesUnlocked();
   return frames >= 0 ? mAudioClock.GetPosition(frames) : -1;
 }
 
 int64_t AudioStream::GetPositionInFrames() {
+  TRACE();
   MonitorAutoLock mon(mMonitor);
   int64_t frames = GetPositionInFramesUnlocked();
   return frames >= 0 ? mAudioClock.GetPositionInFrames(frames) : -1;
 }
 
 int64_t AudioStream::GetPositionInFramesUnlocked() {
+  AUTO_PROFILER_LABEL("AudioStream::GetPositionInFramesUnlocked", MEDIA_CUBEB);
   mMonitor.AssertCurrentThreadOwns();
 
   if (mState == ERRORED) {
@@ -541,6 +504,7 @@ bool AudioStream::IsValidAudioFormat(Chunk* aChunk) {
 }
 
 void AudioStream::GetUnprocessed(AudioBufferWriter& aWriter) {
+  TRACE();
   mMonitor.AssertCurrentThreadOwns();
 
   // Flush the timestretcher pipeline, if we were playing using a playback rate
@@ -576,6 +540,7 @@ void AudioStream::GetUnprocessed(AudioBufferWriter& aWriter) {
 }
 
 void AudioStream::GetTimeStretched(AudioBufferWriter& aWriter) {
+  TRACE();
   mMonitor.AssertCurrentThreadOwns();
 
   // We need to call the non-locking version, because we already have the lock.
@@ -624,8 +589,16 @@ void AudioStream::GetTimeStretched(AudioBufferWriter& aWriter) {
 }
 
 long AudioStream::DataCallback(void* aBuffer, long aFrames) {
+  WebCore::DenormalDisabler disabler;
+
+  TRACE_AUDIO_CALLBACK_BUDGET(aFrames, mAudioClock.GetInputRate());
+  TRACE();
   MonitorAutoLock mon(mMonitor);
   MOZ_ASSERT(mState != SHUTDOWN, "No data callback after shutdown");
+
+  if (SoftRealTimeLimitReached()) {
+    DemoteThreadFromRealTime();
+  }
 
   auto writer = AudioBufferWriter(
       MakeSpan<AudioDataValue>(reinterpret_cast<AudioDataValue*>(aBuffer),
@@ -668,7 +641,8 @@ long AudioStream::DataCallback(void* aBuffer, long aFrames) {
     mAudioClock.UpdateFrameHistory(aFrames - writer.Available(), 0);
   }
 
-  WriteDumpFile(mDumpFile, this, aFrames, aBuffer);
+  mDumpFile.Write(static_cast<const AudioDataValue*>(aBuffer),
+                  aFrames * mOutChannels);
 
   return aFrames - writer.Available();
 }
@@ -683,6 +657,7 @@ void AudioStream::StateCallback(cubeb_state aState) {
   } else if (aState == CUBEB_STATE_ERROR) {
     LOGE("StateCallback() state %d cubeb error", mState);
     mState = ERRORED;
+    mDataSource.Errored();
   }
 }
 

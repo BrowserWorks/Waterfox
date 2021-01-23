@@ -25,6 +25,7 @@ const { ActorClassWithSpec } = require("devtools/shared/protocol");
 const {
   webExtensionTargetSpec,
 } = require("devtools/shared/specs/targets/webextension");
+const DevToolsUtils = require("devtools/shared/DevToolsUtils");
 
 loader.lazyRequireGetter(
   this,
@@ -71,11 +72,11 @@ const webExtensionTargetPrototype = extend({}, parentProcessTargetPrototype);
  * - When the WebExtensions OOP mode has been introduced, this actor has been refactored
  *   and moved from the main process to the new child extension process.
  *
- * @param {DebuggerServerConnection} conn
+ * @param {DevToolsServerConnection} conn
  *        The connection to the client.
  * @param {nsIMessageSender} chromeGlobal.
  *        The chromeGlobal where this actor has been injected by the
- *        DebuggerServer.connectToFrame method.
+ *        frame-connector.js connectToFrame method.
  * @param {string} prefix
  *        the custom RDP prefix to use.
  * @param {string} addonId
@@ -318,11 +319,17 @@ webExtensionTargetPrototype.isExtensionWindowDescendent = function(window) {
 webExtensionTargetPrototype._allowSource = function(source) {
   // Use the source.element to detect the allowed source, if any.
   if (source.element) {
-    const domEl = unwrapDebuggerObjectGlobal(source.element);
-    return (
-      this.isExtensionWindow(domEl.ownerGlobal) ||
-      this.isExtensionWindowDescendent(domEl.ownerGlobal)
-    );
+    try {
+      const domEl = unwrapDebuggerObjectGlobal(source.element);
+      return (
+        this.isExtensionWindow(domEl.ownerGlobal) ||
+        this.isExtensionWindowDescendent(domEl.ownerGlobal)
+      );
+    } catch (e) {
+      // If the source's window is dead then the above will throw.
+      DevToolsUtils.reportException("WebExtensionTarget.allowSource", e);
+      return false;
+    }
   }
 
   // Fallback to check the uri if there is no source.element associated to the source.
@@ -331,7 +338,7 @@ webExtensionTargetPrototype._allowSource = function(source) {
   const url = source.url.split(" -> ").pop();
 
   // Filter out the code introduced by evaluating code in the webconsole.
-  if (url === "debugger eval code") {
+  if (url === "debugger eval code" || url === "debugger eager eval code") {
     return false;
   }
 

@@ -8,10 +8,12 @@ const { Cc, Ci, Cu } = require("chrome");
 
 const Services = require("Services");
 const protocol = require("devtools/shared/protocol");
-const { walkerSpec } = require("devtools/shared/specs/inspector");
+const { walkerSpec } = require("devtools/shared/specs/walker");
 const { LongStringActor } = require("devtools/server/actors/string");
 const InspectorUtils = require("InspectorUtils");
-const ReplayInspector = require("devtools/server/actors/replay/inspector");
+const {
+  EXCLUDED_LISTENER,
+} = require("devtools/server/actors/inspector/constants");
 
 loader.lazyRequireGetter(
   this,
@@ -90,6 +92,12 @@ loader.lazyRequireGetter(
 );
 loader.lazyRequireGetter(
   this,
+  "findGridParentContainerForNode",
+  "devtools/server/actors/inspector/utils",
+  true
+);
+loader.lazyRequireGetter(
+  this,
   "isNodeDead",
   "devtools/server/actors/inspector/utils",
   true
@@ -103,6 +111,13 @@ loader.lazyRequireGetter(
 loader.lazyRequireGetter(
   this,
   "standardTreeWalkerFilter",
+  "devtools/server/actors/inspector/utils",
+  true
+);
+
+loader.lazyRequireGetter(
+  this,
+  "noAnonymousContentTreeWalkerFilter",
   "devtools/server/actors/inspector/utils",
   true
 );
@@ -162,6 +177,16 @@ loader.lazyRequireGetter(
   true
 );
 
+// ContentDOMReference requires ChromeUtils, which isn't available in worker context.
+if (!isWorker) {
+  loader.lazyRequireGetter(
+    this,
+    "ContentDOMReference",
+    "resource://gre/modules/ContentDOMReference.jsm",
+    true
+  );
+}
+
 loader.lazyServiceGetter(
   this,
   "eventListenerService",
@@ -169,16 +194,17 @@ loader.lazyServiceGetter(
   "nsIEventListenerService"
 );
 
-loader.lazyRequireGetter(this, "ChromeUtils");
-
 // Minimum delay between two "new-mutations" events.
 const MUTATIONS_THROTTLING_DELAY = 100;
 // List of mutation types that should -not- be throttled.
 const IMMEDIATE_MUTATIONS = [
   "documentUnload",
   "frameLoad",
-  "newRoot",
   "pseudoClassLock",
+
+  // These should be delivered right away in order to be sure that the
+  // fronts have not been removed due to other non-throttled mutations.
+  "mutationBreakpoints",
 ];
 
 const HIDDEN_CLASS = "__fx-devtools-hide-shortcut__";
@@ -250,28 +276,27 @@ exports.setValueSummaryLength = function(val) {
 var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
   /**
    * Create the WalkerActor
-   * @param {DebuggerServerConnection} conn
+   * @param {DevToolsServerConnection} conn
    *        The server connection.
    * @param {TargetActor} targetActor
    *        The top-level Actor for this tab.
    * @param {Object} options
    *        - {Boolean} showAllAnonymousContent: Show all native anonymous content
-   *        - {Boolean} showUserAgentShadowRoots: Show shadow roots for user-agent widgets
    */
   initialize: function(conn, targetActor, options) {
     protocol.Actor.prototype.initialize.call(this, conn);
     this.targetActor = targetActor;
-    this.rootWin = isReplaying ? ReplayInspector.window : targetActor.window;
+    this.rootWin = targetActor.window;
     this.rootDoc = this.rootWin.document;
     this._refMap = new Map();
     this._pendingMutations = [];
     this._activePseudoClassLocks = new Set();
+    this._mutationBreakpoints = new WeakMap();
     this.customElementWatcher = new CustomElementWatcher(
       targetActor.chromeEventHandler
     );
 
     this.showAllAnonymousContent = options.showAllAnonymousContent;
-    this.showUserAgentShadowRoots = options.showUserAgentShadowRoots;
 
     this.walkerSearch = new WalkerSearch(this);
 
@@ -284,6 +309,13 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
     // even when it is orphaned with the `retainNode` method.  This
     // list contains orphaned nodes that were so retained.
     this._retainedOrphans = new Set();
+
+    this.onNodeInserted = this.onNodeInserted.bind(this);
+    this.onNodeInserted[EXCLUDED_LISTENER] = true;
+    this.onNodeRemoved = this.onNodeRemoved.bind(this);
+    this.onNodeRemoved[EXCLUDED_LISTENER] = true;
+    this.onAttributeModified = this.onAttributeModified.bind(this);
+    this.onAttributeModified[EXCLUDED_LISTENER] = true;
 
     this.onMutations = this.onMutations.bind(this);
     this.onSlotchange = this.onSlotchange.bind(this);
@@ -317,6 +349,16 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
     // managed.
     this.rootNode = this.document();
 
+    // By default the walker will not notify about new root nodes and waits for
+    // a consumer to explicitly ask to be notified about root nodes to start
+    // emitting related events.
+    this._isWatchingRootNode = false;
+    // XXX: Ideally the walker would also use a watch API on the target actor to
+    // know if "window-ready" has already been fired. Without such an API there
+    // is a risk that the walker will fire several new-root-available for the
+    // same node.
+    this._emittedRootNode = null;
+
     this.layoutChangeObserver = getLayoutChangesObserver(this.targetActor);
     this._onReflows = this._onReflows.bind(this);
     this.layoutChangeObserver.on("reflows", this._onReflows);
@@ -325,6 +367,48 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
 
     this._onEventListenerChange = this._onEventListenerChange.bind(this);
     eventListenerService.addListenerChangeListener(this._onEventListenerChange);
+  },
+
+  watchRootNode() {
+    if (this._isWatchingRootNode) {
+      throw new Error("WalkerActor::watchRootNode should only be called once");
+    }
+
+    this._isWatchingRootNode = true;
+    if (this.rootNode && this._isRootDocumentReady()) {
+      this._emitNewRoot();
+    }
+  },
+
+  unwatchRootNode() {
+    this._isWatchingRootNode = false;
+    this._emittedRootNode = null;
+  },
+
+  _emitNewRoot() {
+    if (!this._isWatchingRootNode || this._emittedRootNode === this.rootNode) {
+      return;
+    }
+
+    this._emittedRootNode = this.rootNode;
+    this.emit("root-available", this.rootNode);
+  },
+
+  _isRootDocumentReady() {
+    if (this.rootDoc) {
+      const { readyState } = this.rootDoc;
+      if (readyState == "interactive" || readyState == "complete") {
+        return true;
+      }
+    }
+
+    // A document might stay forever in unitialized state.
+    // If the target actor is not currently loading a document,
+    // assume the document is ready.
+    const webProgress = this.rootDoc.defaultView.docShell.QueryInterface(
+      Ci.nsIWebProgress
+    );
+    return !webProgress.isLoadingDocument;
   },
 
   /**
@@ -353,7 +437,10 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
     return {
       actor: this.actorID,
       root: this.rootNode.form(),
-      traits: {},
+      traits: {
+        // watch/unwatchRootNode are available starting with Fx77
+        watchRootNode: true,
+      },
     };
   },
 
@@ -721,7 +808,7 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
       rawNode.nodeName === "SLOT" &&
       isDirectShadowHostChild(firstChild);
 
-    const isFlexItem = !!(firstChild && firstChild.parentFlexElement);
+    const isFlexItem = !!firstChild?.parentFlexElement;
 
     if (
       !firstChild ||
@@ -887,6 +974,7 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
    *    hasLast: true if the last child of the node is included in the list.
    *    nodes: Array of DOMNodes.
    */
+  // eslint-disable-next-line complexity
   _getChildren: function(node, options = {}) {
     if (isNodeDead(node)) {
       return { hasFirst: true, hasLast: true, nodes: [] };
@@ -909,9 +997,9 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
     // developers.
     const isUAWidget =
       shadowHost && node.rawNode.openOrClosedShadowRoot.isUAWidget();
-    const hideShadowRoot = isUAWidget && !this.showUserAgentShadowRoots;
+    const hideShadowRoot = isUAWidget && !this.showAllAnonymousContent;
     const showNativeAnonymousChildren =
-      isUAWidget && this.showUserAgentShadowRoots;
+      isUAWidget && this.showAllAnonymousContent;
 
     const templateElement = isTemplateElement(node.rawNode);
     if (templateElement) {
@@ -1239,6 +1327,46 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
   },
 
   /**
+   * Get a list of nodes that match the given XPath in all known frames of
+   * the current content page.
+   * @param {String} xPath.
+   * @return {Array}
+   */
+  _multiFrameXPath: function(xPath) {
+    const nodes = [];
+
+    for (const window of this.targetActor.windows) {
+      const document = window.document;
+      try {
+        const result = document.evaluate(
+          xPath,
+          document.documentElement,
+          null,
+          window.XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
+          null
+        );
+
+        for (let i = 0; i < result.snapshotLength; i++) {
+          nodes.push(result.snapshotItem(i));
+        }
+      } catch (e) {
+        // Bad XPath. Do nothing as the XPath can come from a searchbox.
+      }
+    }
+
+    return nodes;
+  },
+
+  /**
+   * Return a NodeListActor with all nodes that match the given XPath in all
+   * frames of the current content page.
+   * @param {String} xPath
+   */
+  multiFrameXPath: function(xPath) {
+    return new NodeListActor(this, this._multiFrameXPath(xPath));
+  },
+
+  /**
    * Search the document for a given string.
    * Results will be searched with the walker-search module (searches through
    * tag names, attribute names and values, and text contents).
@@ -1250,7 +1378,10 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
    */
   search: function(query) {
     const results = this.walkerSearch.search(query);
-    const nodeList = new NodeListActor(this, results.map(r => r.node));
+    const nodeList = new NodeListActor(
+      this,
+      results.map(r => r.node)
+    );
 
     return {
       list: nodeList,
@@ -1268,6 +1399,7 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
    * @param string selectorState
    *        One of "pseudo", "id", "tag", "class", "null"
    */
+  // eslint-disable-next-line complexity
   getSuggestionsForQuery: function(query, completing, selectorState) {
     const sugs = {
       classes: new Map(),
@@ -1591,8 +1723,11 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
     }
 
     const rawNode = node.rawNode;
-    if (rawNode.nodeType !== rawNode.ownerDocument.ELEMENT_NODE) {
-      throw new Error("Can only change innerHTML to element nodes");
+    if (
+      rawNode.nodeType !== rawNode.ownerDocument.ELEMENT_NODE &&
+      rawNode.nodeType !== rawNode.ownerDocument.DOCUMENT_FRAGMENT_NODE
+    ) {
+      throw new Error("Can only change innerHTML to element or fragment nodes");
     }
     // eslint-disable-next-line no-unsanitized/property
     rawNode.innerHTML = value;
@@ -1622,8 +1757,20 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
       return;
     }
 
-    const parsedDOM = new DOMParser().parseFromString(value, "text/html");
     const rawNode = node.rawNode;
+    const doc = nodeDocument(rawNode);
+    const win = doc.defaultView;
+    let parser;
+    if (!win) {
+      throw new Error("The window object shouldn't be null");
+    } else {
+      // We create DOMParser under window object because we want a content
+      // DOMParser, which means all the DOM objects created by this DOMParser
+      // will be in the same DocGroup as rawNode.parentNode. Then the newly
+      // created nodes can be adopted into rawNode.parentNode.
+      parser = new win.DOMParser();
+    }
+    const parsedDOM = parser.parseFromString(value, "text/html");
     const parentNode = rawNode.parentNode;
 
     // Special case for head and body.  Setting document.body.outerHTML
@@ -1865,6 +2012,297 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
 
     oldNode.remove();
     return null;
+  },
+
+  /**
+   * Gets the state of the mutation breakpoint types for this actor.
+   *
+   * @param {NodeActor} node The node to get breakpoint info for.
+   */
+  getMutationBreakpoints(node) {
+    let bps;
+    if (!isNodeDead(node)) {
+      bps = this._breakpointInfoForNode(node.rawNode);
+    }
+
+    return (
+      bps || {
+        subtree: false,
+        removal: false,
+        attribute: false,
+      }
+    );
+  },
+
+  /**
+   * Set the state of some subset of mutation breakpoint types for this actor.
+   *
+   * @param {NodeActor} node The node to set breakpoint info for.
+   * @param {Object} bps A subset of the breakpoints for this actor that
+   *                            should be updated to new states.
+   */
+  setMutationBreakpoints(node, bps) {
+    if (isNodeDead(node)) {
+      return;
+    }
+    const rawNode = node.rawNode;
+
+    if (rawNode.ownerDocument && !rawNode.ownerDocument.contains(rawNode)) {
+      // We only allow watching for mutations on nodes that are attached to
+      // documents. That allows us to clean up our mutation listeners when all
+      // of the watched nodes have been removed from the document.
+      return;
+    }
+
+    // This argument has nullable fields so we want to only update boolean
+    // field values.
+    const bpsForNode = Object.keys(bps).reduce((obj, bp) => {
+      if (typeof bps[bp] === "boolean") {
+        obj[bp] = bps[bp];
+      }
+      return obj;
+    }, {});
+
+    this._updateMutationBreakpointState("api", rawNode, {
+      ...this.getMutationBreakpoints(node),
+      ...bpsForNode,
+    });
+  },
+
+  /**
+   * Update the mutation breakpoint state for the given DOM node.
+   *
+   * @param {Node} rawNode The DOM node.
+   * @param {Object} bpsForNode The state of each mutation bp type we support.
+   */
+  _updateMutationBreakpointState(mutationReason, rawNode, bpsForNode) {
+    const rawDoc = rawNode.ownerDocument || rawNode;
+
+    const docMutationBreakpoints = this._mutationBreakpointsForDoc(
+      rawDoc,
+      true /* createIfNeeded */
+    );
+    let originalBpsForNode = this._breakpointInfoForNode(rawNode);
+
+    if (!bpsForNode && !originalBpsForNode) {
+      return;
+    }
+
+    bpsForNode = bpsForNode || {};
+    originalBpsForNode = originalBpsForNode || {};
+
+    if (Object.values(bpsForNode).some(Boolean)) {
+      docMutationBreakpoints.nodes.set(rawNode, bpsForNode);
+    } else {
+      docMutationBreakpoints.nodes.delete(rawNode);
+    }
+    if (originalBpsForNode.subtree && !bpsForNode.subtree) {
+      docMutationBreakpoints.counts.subtree -= 1;
+    } else if (!originalBpsForNode.subtree && bpsForNode.subtree) {
+      docMutationBreakpoints.counts.subtree += 1;
+    }
+
+    if (originalBpsForNode.removal && !bpsForNode.removal) {
+      docMutationBreakpoints.counts.removal -= 1;
+    } else if (!originalBpsForNode.removal && bpsForNode.removal) {
+      docMutationBreakpoints.counts.removal += 1;
+    }
+
+    if (originalBpsForNode.attribute && !bpsForNode.attribute) {
+      docMutationBreakpoints.counts.attribute -= 1;
+    } else if (!originalBpsForNode.attribute && bpsForNode.attribute) {
+      docMutationBreakpoints.counts.attribute += 1;
+    }
+
+    this._updateDocumentMutationListeners(rawDoc);
+
+    const actor = this.getNode(rawNode);
+    if (actor) {
+      this.queueMutation({
+        target: actor.actorID,
+        type: "mutationBreakpoint",
+        mutationBreakpoints: this.getMutationBreakpoints(actor),
+        mutationReason,
+      });
+    }
+  },
+
+  /**
+   * Controls whether this DOM document has event listeners attached for
+   * handling of DOM mutation breakpoints.
+   *
+   * @param {Document} rawDoc The DOM document.
+   */
+  _updateDocumentMutationListeners(rawDoc) {
+    const docMutationBreakpoints = this._mutationBreakpointsForDoc(rawDoc);
+    if (!docMutationBreakpoints) {
+      return;
+    }
+
+    const origFlag = rawDoc.dontWarnAboutMutationEventsAndAllowSlowDOMMutations;
+    rawDoc.dontWarnAboutMutationEventsAndAllowSlowDOMMutations = true;
+
+    if (docMutationBreakpoints.counts.subtree > 0) {
+      eventListenerService.addSystemEventListener(
+        rawDoc,
+        "DOMNodeInserted",
+        this.onNodeInserted,
+        true /* capture */
+      );
+    } else {
+      eventListenerService.removeSystemEventListener(
+        rawDoc,
+        "DOMNodeInserted",
+        this.onNodeInserted,
+        true /* capture */
+      );
+    }
+
+    if (
+      docMutationBreakpoints.counts.subtree > 0 ||
+      docMutationBreakpoints.counts.removal > 0 ||
+      docMutationBreakpoints.counts.attribute > 0
+    ) {
+      eventListenerService.addSystemEventListener(
+        rawDoc,
+        "DOMNodeRemoved",
+        this.onNodeRemoved,
+        true /* capture */
+      );
+    } else {
+      eventListenerService.removeSystemEventListener(
+        rawDoc,
+        "DOMNodeRemoved",
+        this.onNodeRemoved,
+        true /* capture */
+      );
+    }
+
+    if (docMutationBreakpoints.counts.attribute > 0) {
+      eventListenerService.addSystemEventListener(
+        rawDoc,
+        "DOMAttrModified",
+        this.onAttributeModified,
+        true /* capture */
+      );
+    } else {
+      eventListenerService.removeSystemEventListener(
+        rawDoc,
+        "DOMAttrModified",
+        this.onAttributeModified,
+        true /* capture */
+      );
+    }
+
+    rawDoc.dontWarnAboutMutationEventsAndAllowSlowDOMMutations = origFlag;
+  },
+
+  _breakOnMutation: function(mutationType, targetNode, ancestorNode, action) {
+    this.targetActor.threadActor.pauseForMutationBreakpoint(
+      mutationType,
+      targetNode,
+      ancestorNode,
+      action
+    );
+  },
+
+  _mutationBreakpointsForDoc(rawDoc, createIfNeeded = false) {
+    let docMutationBreakpoints = this._mutationBreakpoints.get(rawDoc);
+    if (!docMutationBreakpoints && createIfNeeded) {
+      docMutationBreakpoints = {
+        counts: {
+          subtree: 0,
+          removal: 0,
+          attribute: 0,
+        },
+        nodes: new Map(),
+      };
+      this._mutationBreakpoints.set(rawDoc, docMutationBreakpoints);
+    }
+    return docMutationBreakpoints;
+  },
+
+  _breakpointInfoForNode: function(target) {
+    const docMutationBreakpoints = this._mutationBreakpointsForDoc(
+      target.ownerDocument || target
+    );
+    return (
+      (docMutationBreakpoints && docMutationBreakpoints.nodes.get(target)) ||
+      null
+    );
+  },
+
+  onNodeInserted: function(evt) {
+    this.onSubtreeModified(evt, "add");
+  },
+
+  onNodeRemoved: function(evt) {
+    const mutationBpInfo = this._breakpointInfoForNode(evt.target);
+    const hasNodeRemovalEvent = mutationBpInfo?.removal;
+
+    this._clearMutationBreakpointsFromSubtree(evt.target);
+
+    if (hasNodeRemovalEvent) {
+      this._breakOnMutation("nodeRemoved", evt.target);
+    } else {
+      this.onSubtreeModified(evt, "remove");
+    }
+  },
+
+  onAttributeModified: function(evt) {
+    const mutationBpInfo = this._breakpointInfoForNode(evt.target);
+    if (mutationBpInfo?.attribute) {
+      this._breakOnMutation("attributeModified", evt.target);
+    }
+  },
+
+  onSubtreeModified: function(evt, action) {
+    let node = evt.target;
+    while ((node = node.parentNode) !== null) {
+      const mutationBpInfo = this._breakpointInfoForNode(node);
+      if (mutationBpInfo?.subtree) {
+        this._breakOnMutation("subtreeModified", evt.target, node, action);
+        break;
+      }
+    }
+  },
+
+  _clearMutationBreakpointsFromSubtree: function(targetNode) {
+    const targetDoc = targetNode.ownerDocument || targetNode;
+    const docMutationBreakpoints = this._mutationBreakpointsForDoc(targetDoc);
+    if (!docMutationBreakpoints || docMutationBreakpoints.nodes.size === 0) {
+      // Bail early for performance. If the doc has no mutation BPs, there is
+      // no reason to iterate through the children looking for things to detach.
+      return;
+    }
+
+    // The walker is not limited to the subtree of the argument node, so we
+    // need to ensure that we stop walking when we leave the subtree.
+    const nextWalkerSibling = this._getNextTraversalSibling(targetNode);
+
+    const walker = new DocumentWalker(targetNode, this.rootWin, {
+      filter: noAnonymousContentTreeWalkerFilter,
+      skipTo: SKIP_TO_SIBLING,
+    });
+
+    do {
+      this._updateMutationBreakpointState("detach", walker.currentNode, null);
+    } while (walker.nextNode() && walker.currentNode !== nextWalkerSibling);
+  },
+
+  _getNextTraversalSibling(targetNode) {
+    const walker = new DocumentWalker(targetNode, this.rootWin, {
+      filter: noAnonymousContentTreeWalkerFilter,
+      skipTo: SKIP_TO_SIBLING,
+    });
+
+    while (!walker.nextSibling()) {
+      if (!walker.parentNode()) {
+        // If we try to step past the walker root, there is no next sibling.
+        return null;
+      }
+    }
+    return walker.currentNode;
   },
 
   /**
@@ -2114,16 +2552,9 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
     const { readyState } = window.document;
     if (readyState != "interactive" && readyState != "complete") {
       // The document is not loaded, so we want to register to fire again when the
-      // DOM has been loaded. To do this, we need to know if this is a XUL document.
-      // We listen for "DOMContentLoaded" on HTML documents, but XUL documents don't
-      // fire this event, so we fallback to the "load" event for XUL. Unfortunately,
-      // since the document isn't loaded yet, we can't check its namespace declaration
-      // to determine if it is XUL. Instead, we use ChromeUtils to see if the document
-      // object class is XULDocument.
-      const isXULDocument =
-        ChromeUtils.getClassName(window.document) == "XULDocument";
+      // DOM has been loaded.
       window.addEventListener(
-        isXULDocument ? "load" : "DOMContentLoaded",
+        "DOMContentLoaded",
         this.onFrameLoad.bind(this, { window, isTopLevel }),
         { once: true }
       );
@@ -2143,10 +2574,7 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
       this.rootWin = window;
       this.rootDoc = window.document;
       this.rootNode = this.document();
-      this.queueMutation({
-        type: "newRoot",
-        target: this.rootNode.form(),
-      });
+      this._emitNewRoot();
       return;
     }
     const frame = getFrameElement(window);
@@ -2212,8 +2640,19 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
       return;
     }
 
+    // Removing a frame also removes any mutation breakpoints set on that
+    // document so that clients can clear their set of active breakpoints.
+    const mutationBps = this._mutationBreakpointsForDoc(doc);
+    const nodes = mutationBps ? Array.from(mutationBps.nodes.keys()) : [];
+    for (const node of nodes) {
+      this._updateMutationBreakpointState("unload", node, null);
+    }
+
     if (this.rootDoc === doc) {
       this.rootDoc = null;
+      if (this._isWatchingRootNode) {
+        this.emit("root-destroyed", this.rootNode);
+      }
       this.rootNode = null;
     }
 
@@ -2335,6 +2774,24 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
   },
 
   /**
+   * Given a contentDomReference return the NodeActor for the corresponding frameElement.
+   */
+  getNodeActorFromContentDomReference: function(contentDomReference) {
+    let rawNode = ContentDOMReference.resolve(contentDomReference);
+    if (!rawNode || !this._isInDOMTree(rawNode)) {
+      return null;
+    }
+
+    // This is a special case for the document object whereby it is considered
+    // as document.documentElement (the <html> node)
+    if (rawNode.defaultView && rawNode === rawNode.defaultView.document) {
+      rawNode = rawNode.documentElement;
+    }
+
+    return this.attachElement(rawNode);
+  },
+
+  /**
    * Given a StyleSheetActor (identified by its ID), commonly used in the
    * style-editor, get its ownerNode and return the corresponding walker's
    * NodeActor.
@@ -2353,10 +2810,9 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
    * first retrieve a reference to the walkerFront:
    *
    * // Make sure the inspector/walker have been initialized first.
-   * toolbox.initInspector().then(() => {
-   *  // Retrieve the walker.
-   *  let walker = toolbox.walker;
-   * });
+   * const inspectorFront = await toolbox.target.getFront("inspector");
+   * // Retrieve the walker.
+   * const walker = inspectorFront.walker;
    *
    * And then call this method:
    *
@@ -2406,6 +2862,19 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
   },
 
   /**
+   * Returns the parent grid DOMNode of the given node if it exists, otherwise, it
+   * returns null.
+   */
+  getParentGridNode: function(node) {
+    if (isNodeDead(node)) {
+      return null;
+    }
+
+    const parentGridNode = findGridParentContainerForNode(node.rawNode);
+    return parentGridNode ? this._ref(parentGridNode) : null;
+  },
+
+  /**
    * Returns the offset parent DOMNode of the given node if it exists, otherwise, it
    * returns null.
    */
@@ -2446,6 +2915,22 @@ var WalkerActor = protocol.ActorClassWithSpec(walkerSpec, {
     }
 
     return acc && acc.indexInParent > -1;
+  },
+
+  getEmbedderElement(browsingContextID) {
+    const browsingContext = BrowsingContext.get(browsingContextID);
+    let rawNode = browsingContext.embedderElement;
+    if (!this._isInDOMTree(rawNode)) {
+      return null;
+    }
+
+    // This is a special case for the document object whereby it is considered
+    // as document.documentElement (the <html> node)
+    if (rawNode.defaultView && rawNode === rawNode.defaultView.document) {
+      rawNode = rawNode.documentElement;
+    }
+
+    return this.attachElement(rawNode);
   },
 });
 

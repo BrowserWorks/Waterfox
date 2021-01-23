@@ -6,8 +6,8 @@
 %include ../../shared/findBar.inc.css
 
 findbar {
-  background: @scopeBarBackground@;
-  border-top: @scopeBarSeparatorBorder@;
+  background-image: linear-gradient(#e8e8e8, #d0d0d0);
+  border-top-color: #888;
 }
 
 .findbar-container {
@@ -15,7 +15,7 @@ findbar {
 }
 
 label.findbar-find-fast {
-  color: @scopeBarTitleColor@;
+  color: #6d6d6d;
   margin: 0;
   margin-inline-start: 12px;
 }
@@ -25,10 +25,8 @@ label.findbar-find-fast:-moz-lwtheme {
 }
 
 .findbar-closebutton {
-  margin-inline-start: 4px;
-  margin-inline-end: 0;
-  padding-inline-start: 0;
-  padding-inline-end: 8px;
+  margin-inline: 4px 0;
+  padding-inline: 0 8px;
   border: none;
   /* make sure the closebutton is displayed as the first element in the bar: */
   -moz-box-ordinal-group: 0;
@@ -65,13 +63,13 @@ label.findbar-find-fast:-moz-lwtheme {
 }
 
 @media (-moz-mac-yosemite-theme: 0) {
-  .findbar-textbox,
+  html|input.findbar-textbox,
   .findbar-find-next {
     border-radius: 10000px;
   }
 }
 
-.findbar-textbox {
+html|input.findbar-textbox {
   border: @roundButtonBorderWidth@ @roundButtonBorderStyle@ var(--lwt-toolbar-field-border-color, @roundButtonBorderColor@);
   -moz-context-properties: fill, fill-opacity;
   fill: currentColor;
@@ -83,11 +81,11 @@ label.findbar-find-fast:-moz-lwtheme {
   padding-inline-start: 19px;
 }
 
-.findbar-textbox[focused="true"] {
+html|input.findbar-textbox:focus {
   box-shadow: 0 0 0 1px var(--toolbar-field-focus-border-color) inset,
               0 0 0 1px var(--toolbar-field-focus-border-color);
 }
 
-.findbar-textbox:-moz-locale-dir(rtl) {
+html|input.findbar-textbox:-moz-locale-dir(rtl) {
   background-position-x: right 5px;
 }

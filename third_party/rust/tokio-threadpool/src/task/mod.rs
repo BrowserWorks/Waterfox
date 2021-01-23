@@ -1,28 +1,22 @@
 mod blocking;
 mod blocking_state;
-mod queue;
 mod state;
 
 pub(crate) use self::blocking::{Blocking, CanBlock};
-pub(crate) use self::queue::{Queue, Poll};
 use self::blocking_state::BlockingState;
 use self::state::State;
 
 use notifier::Notifier;
 use pool::Pool;
-use sender::Sender;
 
-use futures::{self, Future, Async};
 use futures::executor::{self, Spawn};
+use futures::{self, Async, Future};
 
-use std::{fmt, panic, ptr};
-use std::cell::{UnsafeCell};
+use std::cell::{Cell, UnsafeCell};
+use std::sync::atomic::Ordering::{AcqRel, Acquire, Relaxed, Release};
+use std::sync::atomic::{AtomicPtr, AtomicUsize};
 use std::sync::Arc;
-use std::sync::atomic::{AtomicUsize, AtomicPtr};
-use std::sync::atomic::Ordering::{AcqRel, Release, Relaxed};
-
-#[cfg(feature = "unstable-futures")]
-use futures2;
+use std::{fmt, panic, ptr};
 
 /// Harness around a future.
 ///
@@ -35,16 +29,28 @@ pub(crate) struct Task {
     /// Task blocking related state
     blocking: AtomicUsize,
 
-    /// Next pointer in the queue that submits tasks to a worker.
-    next: AtomicPtr<Task>,
-
     /// Next pointer in the queue of tasks pending blocking capacity.
     next_blocking: AtomicPtr<Task>,
+
+    /// ID of the worker that polled this task first.
+    ///
+    /// This field can be a `Cell` because it's only accessed by the worker thread that is
+    /// executing the task.
+    ///
+    /// The worker ID is represented by a `u32` rather than `usize` in order to save some space
+    /// on 64-bit platforms.
+    pub reg_worker: Cell<Option<u32>>,
+
+    /// The key associated with this task in the `Slab` it was registered in.
+    ///
+    /// This field can be a `Cell` because it's only accessed by the worker thread that has
+    /// registered the task.
+    pub reg_index: Cell<usize>,
 
     /// Store the future at the head of the struct
     ///
     /// The future is dropped immediately when it transitions to Complete
-    future: UnsafeCell<Option<TaskFuture>>,
+    future: UnsafeCell<Option<Spawn<BoxFuture>>>,
 }
 
 #[derive(Debug)]
@@ -54,21 +60,7 @@ pub(crate) enum Run {
     Complete,
 }
 
-type BoxFuture = Box<Future<Item = (), Error = ()> + Send + 'static>;
-
-#[cfg(feature = "unstable-futures")]
-type BoxFuture2 = Box<futures2::Future<Item = (), Error = futures2::Never> + Send>;
-
-enum TaskFuture {
-    Futures1(Spawn<BoxFuture>),
-
-    #[cfg(feature = "unstable-futures")]
-    Futures2 {
-        tls: futures2::task::LocalMap,
-        waker: futures2::task::Waker,
-        fut: BoxFuture2,
-    }
-}
+type BoxFuture = Box<dyn Future<Item = (), Error = ()> + Send + 'static>;
 
 // ===== impl Task =====
 
@@ -76,68 +68,55 @@ impl Task {
     /// Create a new `Task` as a harness for `future`.
     pub fn new(future: BoxFuture) -> Task {
         // Wrap the future with an execution context.
-        let task_fut = TaskFuture::Futures1(executor::spawn(future));
+        let task_fut = executor::spawn(future);
 
         Task {
             state: AtomicUsize::new(State::new().into()),
             blocking: AtomicUsize::new(BlockingState::new().into()),
-            next: AtomicPtr::new(ptr::null_mut()),
             next_blocking: AtomicPtr::new(ptr::null_mut()),
+            reg_worker: Cell::new(None),
+            reg_index: Cell::new(0),
             future: UnsafeCell::new(Some(task_fut)),
         }
-    }
-
-    /// Create a new `Task` as a harness for a futures 0.2 `future`.
-    #[cfg(feature = "unstable-futures")]
-    pub fn new2<F>(fut: BoxFuture2, make_waker: F) -> Task
-    where F: FnOnce(usize) -> futures2::task::Waker
-    {
-        let mut inner = Box::new(Task {
-            state: AtomicUsize::new(State::new().into()),
-            blocking: AtomicUsize::new(BlockingState::new().into()),
-            next: AtomicPtr::new(ptr::null_mut()),
-            next_blocking: AtomicPtr::new(ptr::null_mut()),
-            future: None,
-        });
-
-        let waker = make_waker((&*inner) as *const _ as usize);
-        let tls = futures2::task::LocalMap::new();
-        inner.future = Some(TaskFuture::Futures2 { waker, tls, fut });
-
-        Task { ptr: Box::into_raw(inner) }
     }
 
     /// Create a fake `Task` to be used as part of the intrusive mpsc channel
     /// algorithm.
     fn stub() -> Task {
-        let future = Box::new(futures::empty());
-        let task_fut = TaskFuture::Futures1(executor::spawn(future));
+        let future = Box::new(futures::empty()) as BoxFuture;
+        let task_fut = executor::spawn(future);
 
         Task {
             state: AtomicUsize::new(State::stub().into()),
             blocking: AtomicUsize::new(BlockingState::new().into()),
-            next: AtomicPtr::new(ptr::null_mut()),
             next_blocking: AtomicPtr::new(ptr::null_mut()),
+            reg_worker: Cell::new(None),
+            reg_index: Cell::new(0),
             future: UnsafeCell::new(Some(task_fut)),
         }
     }
 
     /// Execute the task returning `Run::Schedule` if the task needs to be
     /// scheduled again.
-    pub fn run(&self, unpark: &Arc<Notifier>, exec: &mut Sender) -> Run {
+    pub fn run(&self, unpark: &Arc<Notifier>) -> Run {
         use self::State::*;
 
         // Transition task to running state. At this point, the task must be
         // scheduled.
-        let actual: State = self.state.compare_and_swap(
-            Scheduled.into(), Running.into(), AcqRel).into();
+        let actual: State = self
+            .state
+            .compare_and_swap(Scheduled.into(), Running.into(), AcqRel)
+            .into();
 
         match actual {
-            Scheduled => {},
+            Scheduled => {}
             _ => panic!("unexpected task state; {:?}", actual),
         }
 
-        trace!("Task::run; state={:?}", State::from(self.state.load(Relaxed)));
+        trace!(
+            "Task::run; state={:?}",
+            State::from(self.state.load(Relaxed))
+        );
 
         // The transition to `Running` done above ensures that a lock on the
         // future has been obtained.
@@ -149,7 +128,7 @@ impl Task {
         // `thread::panicking() -> true`. To do this, the future is dropped from
         // within the catch_unwind block.
         let res = panic::catch_unwind(panic::AssertUnwindSafe(|| {
-            struct Guard<'a>(&'a mut Option<TaskFuture>, bool);
+            struct Guard<'a>(&'a mut Option<Spawn<BoxFuture>>, bool);
 
             impl<'a> Drop for Guard<'a> {
                 fn drop(&mut self) {
@@ -162,9 +141,10 @@ impl Task {
 
             let mut g = Guard(fut, true);
 
-            let ret = g.0.as_mut().unwrap()
-                .poll(unpark, self as *const _ as usize, exec);
-
+            let ret =
+                g.0.as_mut()
+                    .unwrap()
+                    .poll_future_notify(unpark, self as *const _ as usize);
 
             g.1 = false;
 
@@ -185,6 +165,12 @@ impl Task {
                 // Transition to the completed state
                 self.state.store(State::Complete.into(), Release);
 
+                if let Err(panic_err) = res {
+                    if let Some(ref f) = unpark.pool.config.panic_handler {
+                        f(panic_err);
+                    }
+                }
+
                 Run::Complete
             }
             Ok(Ok(Async::NotReady)) => {
@@ -195,8 +181,10 @@ impl Task {
                 // fails, then the task has been unparked concurrent to running,
                 // in which case it transitions immediately back to scheduled
                 // and we return `true`.
-                let prev: State = self.state.compare_and_swap(
-                    Running.into(), Idle.into(), AcqRel).into();
+                let prev: State = self
+                    .state
+                    .compare_and_swap(Running.into(), Idle.into(), AcqRel)
+                    .into();
 
                 match prev {
                     Running => Run::Idle,
@@ -210,9 +198,44 @@ impl Task {
         }
     }
 
+    /// Aborts this task.
+    ///
+    /// This is called when the threadpool shuts down and the task has already beed polled but not
+    /// completed.
+    pub fn abort(&self) {
+        use self::State::*;
+
+        let mut state = self.state.load(Acquire).into();
+
+        loop {
+            match state {
+                Idle | Scheduled => {}
+                Running | Notified | Complete | Aborted => {
+                    // It is assumed that no worker threads are running so the task must be either
+                    // in the idle or scheduled state.
+                    panic!("unexpected state while aborting task: {:?}", state);
+                }
+            }
+
+            let actual = self
+                .state
+                .compare_and_swap(state.into(), Aborted.into(), AcqRel)
+                .into();
+
+            if actual == state {
+                // The future has been aborted. Drop it immediately to free resources and run drop
+                // handlers.
+                self.drop_future();
+                break;
+            }
+
+            state = actual;
+        }
+    }
+
     /// Notify the task
     pub fn notify(me: Arc<Task>, pool: &Arc<Pool>) {
-        if me.schedule(){
+        if me.schedule() {
             let _ = pool.submit(me, pool);
         }
     }
@@ -231,10 +254,10 @@ impl Task {
 
         loop {
             // Scheduling can only be done from the `Idle` state.
-            let actual = self.state.compare_and_swap(
-                Idle.into(),
-                Scheduled.into(),
-                AcqRel).into();
+            let actual = self
+                .state
+                .compare_and_swap(Idle.into(), Scheduled.into(), AcqRel)
+                .into();
 
             match actual {
                 Idle => return true,
@@ -242,15 +265,17 @@ impl Task {
                     // The task is already running on another thread. Transition
                     // the state to `Notified`. If this CAS fails, then restart
                     // the logic again from `Idle`.
-                    let actual = self.state.compare_and_swap(
-                        Running.into(), Notified.into(), AcqRel).into();
+                    let actual = self
+                        .state
+                        .compare_and_swap(Running.into(), Notified.into(), AcqRel)
+                        .into();
 
                     match actual {
                         Idle => continue,
                         _ => return false,
                     }
                 }
-                Complete | Notified | Scheduled => return false,
+                Complete | Aborted | Notified | Scheduled => return false,
             }
         }
     }
@@ -276,29 +301,8 @@ impl Task {
 impl fmt::Debug for Task {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         fmt.debug_struct("Task")
-            .field("next", &self.next)
             .field("state", &self.state)
             .field("future", &"Spawn<BoxFuture>")
             .finish()
-    }
-}
-
-// ===== impl TaskFuture =====
-
-impl TaskFuture {
-    #[allow(unused_variables)]
-    fn poll(&mut self, unpark: &Arc<Notifier>, id: usize, exec: &mut Sender) -> futures::Poll<(), ()> {
-        match *self {
-            TaskFuture::Futures1(ref mut fut) => fut.poll_future_notify(unpark, id),
-
-            #[cfg(feature = "unstable-futures")]
-            TaskFuture::Futures2 { ref mut fut, ref waker, ref mut tls } => {
-                let mut cx = futures2::task::Context::new(tls, waker, exec);
-                match fut.poll(&mut cx).unwrap() {
-                    futures2::Async::Pending => Ok(Async::NotReady),
-                    futures2::Async::Ready(x) => Ok(Async::Ready(x)),
-                }
-            }
-        }
     }
 }

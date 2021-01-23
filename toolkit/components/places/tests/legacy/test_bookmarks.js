@@ -7,32 +7,39 @@
 var bs = PlacesUtils.bookmarks;
 var hs = PlacesUtils.history;
 var os = PlacesUtils.observers;
-var anno = PlacesUtils.annotations;
 
 var bookmarksObserver = {
   handlePlacesEvents(events) {
     Assert.equal(events.length, 1);
     let event = events[0];
-    bookmarksObserver._itemAddedId = event.id;
-    bookmarksObserver._itemAddedParent = event.parentId;
-    bookmarksObserver._itemAddedIndex = event.index;
-    bookmarksObserver._itemAddedURI = event.url
-      ? Services.io.newURI(event.url)
-      : null;
-    bookmarksObserver._itemAddedTitle = event.title;
+    switch (event.type) {
+      case "bookmark-added":
+        bookmarksObserver._itemAddedId = event.id;
+        bookmarksObserver._itemAddedParent = event.parentId;
+        bookmarksObserver._itemAddedIndex = event.index;
+        bookmarksObserver._itemAddedURI = event.url
+          ? Services.io.newURI(event.url)
+          : null;
+        bookmarksObserver._itemAddedTitle = event.title;
 
-    // Ensure that we've created a guid for this item.
-    let stmt = DBConn().createStatement(
-      `SELECT guid
-       FROM moz_bookmarks
-       WHERE id = :item_id`
-    );
-    stmt.params.item_id = event.id;
-    Assert.ok(stmt.executeStep());
-    Assert.ok(!stmt.getIsNull(0));
-    do_check_valid_places_guid(stmt.row.guid);
-    Assert.equal(stmt.row.guid, event.guid);
-    stmt.finalize();
+        // Ensure that we've created a guid for this item.
+        let stmt = DBConn().createStatement(
+          `SELECT guid
+           FROM moz_bookmarks
+           WHERE id = :item_id`
+        );
+        stmt.params.item_id = event.id;
+        Assert.ok(stmt.executeStep());
+        Assert.ok(!stmt.getIsNull(0));
+        do_check_valid_places_guid(stmt.row.guid);
+        Assert.equal(stmt.row.guid, event.guid);
+        stmt.finalize();
+        break;
+      case "bookmark-removed":
+        bookmarksObserver._itemRemovedId = event.id;
+        bookmarksObserver._itemRemovedFolder = event.parentId;
+        bookmarksObserver._itemRemovedIndex = event.index;
+    }
   },
 
   onBeginUpdateBatch() {
@@ -41,11 +48,7 @@ var bookmarksObserver = {
   onEndUpdateBatch() {
     this._endUpdateBatch = true;
   },
-  onItemRemoved(id, folder, index, itemType) {
-    this._itemRemovedId = id;
-    this._itemRemovedFolder = folder;
-    this._itemRemovedIndex = index;
-  },
+
   onItemChanged(
     id,
     property,
@@ -60,7 +63,6 @@ var bookmarksObserver = {
   ) {
     this._itemChangedId = id;
     this._itemChangedProperty = property;
-    this._itemChanged_isAnnotationProperty = isAnnotationProperty;
     this._itemChangedValue = value;
     this._itemChangedOldValue = oldValue;
   },
@@ -86,7 +88,10 @@ var bmStartIndex = 0;
 
 add_task(async function test_bookmarks() {
   bs.addObserver(bookmarksObserver);
-  os.addListener(["bookmark-added"], bookmarksObserver.handlePlacesEvents);
+  os.addListener(
+    ["bookmark-added", "bookmark-removed"],
+    bookmarksObserver.handlePlacesEvents
+  );
 
   // test special folders
   Assert.ok(bs.placesRoot > 0);
@@ -143,9 +148,11 @@ add_task(async function test_bookmarks() {
 
   // after just inserting, modified should not be set
   let lastModified = PlacesUtils.toPRTime(
-    (await PlacesUtils.bookmarks.fetch(
-      await PlacesUtils.promiseItemGuid(newId)
-    )).lastModified
+    (
+      await PlacesUtils.bookmarks.fetch(
+        await PlacesUtils.promiseItemGuid(newId)
+      )
+    ).lastModified
   );
 
   // The time before we set the title, in microseconds.
@@ -165,9 +172,11 @@ add_task(async function test_bookmarks() {
 
   // check lastModified after we set the title
   let lastModified2 = PlacesUtils.toPRTime(
-    (await PlacesUtils.bookmarks.fetch(
-      await PlacesUtils.promiseItemGuid(newId)
-    )).lastModified
+    (
+      await PlacesUtils.bookmarks.fetch(
+        await PlacesUtils.promiseItemGuid(newId)
+      )
+    ).lastModified
   );
   info("test setItemTitle");
   info("beforeSetTitle = " + beforeSetTitle);
@@ -372,20 +381,6 @@ add_task(async function test_bookmarks() {
   Assert.equal(bookmarksObserver._itemChangedProperty, "title");
   Assert.equal(bookmarksObserver._itemChangedValue, "ZZZXXXYYY");
 
-  // check if setting an item annotation triggers onItemChanged
-  bookmarksObserver._itemChangedId = -1;
-  anno.setItemAnnotation(
-    newId3,
-    "test-annotation",
-    "foo",
-    0,
-    anno.EXPIRE_NEVER
-  );
-  Assert.equal(bookmarksObserver._itemChangedId, newId3);
-  Assert.equal(bookmarksObserver._itemChangedProperty, "test-annotation");
-  Assert.ok(bookmarksObserver._itemChanged_isAnnotationProperty);
-  Assert.equal(bookmarksObserver._itemChangedValue, "");
-
   // test search on bookmark title ZZZXXXYYY
   try {
     let options = hs.getNewQueryOptions();
@@ -469,16 +464,13 @@ add_task(async function test_bookmarks() {
   );
   bs.setItemLastModified(newId14, 1234000000000000);
   let fakeLastModified = PlacesUtils.toPRTime(
-    (await PlacesUtils.bookmarks.fetch(
-      await PlacesUtils.promiseItemGuid(newId14)
-    )).lastModified
+    (
+      await PlacesUtils.bookmarks.fetch(
+        await PlacesUtils.promiseItemGuid(newId14)
+      )
+    ).lastModified
   );
   Assert.equal(fakeLastModified, 1234000000000000);
-
-  // ensure that removing an item removes its annotations
-  Assert.ok(anno.itemHasAnnotation(newId3, "test-annotation"));
-  bs.removeItem(newId3);
-  Assert.ok(!anno.itemHasAnnotation(newId3, "test-annotation"));
 
   // bug 378820
   let uri1 = uri("http://foo.tld/a");

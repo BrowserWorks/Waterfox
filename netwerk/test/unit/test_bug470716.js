@@ -1,3 +1,5 @@
+"use strict";
+
 var CC = Components.Constructor;
 
 const StreamCopier = CC(
@@ -24,9 +26,9 @@ var test_sink_closed;
 var test_nr;
 
 var copyObserver = {
-  onStartRequest: function(request) {},
+  onStartRequest(request) {},
 
-  onStopRequest: function(request, statusCode) {
+  onStopRequest(request, statusCode) {
     // check status code
     Assert.equal(statusCode, test_result);
 
@@ -57,13 +59,7 @@ var copyObserver = {
     do_timeout(0, do_test);
   },
 
-  QueryInterface: function(aIID) {
-    if (aIID.equals(Ci.nsIRequestObserver) || aIID.equals(Ci.nsISupports)) {
-      return this;
-    }
-
-    throw Cr.NS_ERROR_NO_INTERFACE;
-  },
+  QueryInterface: ChromeUtils.generateQI(["nsIRequestObserver"]),
 };
 
 function startCopier(closeSource, closeSink) {

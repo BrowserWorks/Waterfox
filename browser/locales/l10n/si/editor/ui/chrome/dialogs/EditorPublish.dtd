@@ -1,0 +1,68 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label            "පිටුව ප්‍රකාශනය">
+<!ENTITY windowTitleSettings.label    "ප්‍රකාශන සැකසුම්">
+
+<!ENTITY publishTab.label             "ප්‍රකාශනය">
+<!ENTITY settingsTab.label            "සැකසුම්">
+
+<!ENTITY publishButton.label          "ප්‍රකාශනය කරන්න">
+
+<!-- Publish Tab Panel -->
+<!ENTITY siteList.label               "අඩවි නම:">
+<!ENTITY siteList.accesskey           "e">
+<!ENTITY siteList.tooltip             "ප්‍රකාශනය කිරීමට අවශ්‍ය අඩවිය තෝරන්න">
+<!ENTITY newSiteButton.label          "නව අඩවියක්">
+<!ENTITY newSiteButton.accesskey      "N">
+<!ENTITY docDirList.label             "මෙම පිටුව සඳහා අඩවියේ උප-ඩාරෙක්ටරිය:">
+<!ENTITY docDirList.accesskey         "S">
+<!ENTITY docDirList.tooltip           "මෙම පිටුව සඳහා දුරස්ථ උප-ඩාරෙක්ටරියේ නම තෝරන්න හෝ ඇතුළු කරන්න">
+<!ENTITY publishImgCheckbox.label     "රූප සහ අනෙකුත් ගොනු ඇතුලත් කරන්න">
+<!ENTITY publishImgCheckbox.accesskey "o">
+<!ENTITY publishImgCheckbox.tooltip   "මෙම පිටුව ආශ්‍රිත රූප සහ අනෙකුත් ගොනු ප්‍රකාශනය කරන්න">
+<!ENTITY sameLocationRadio.label      "පිටුවේ ස්ථානයම භාවිතා කරන්න">
+<!ENTITY sameLocationRadio.accesskey  "U">
+<!ENTITY sameLocationRadio.tooltip    "පිටුවේ ස්ථානයේම ගොනු ප්‍රකාශනය කරන්න">
+<!ENTITY useSubdirRadio.label         "මෙම අඩවියේ උප-ඩාරෙක්ටරිය භාවිතා කරන්න:">
+<!ENTITY useSubdirRadio.accesskey     "d">
+<!ENTITY useSubdirRadio.tooltip       "කේරූ දුරස්ථ උප-ඩාරෙක්ටරියේ ගොනු ප්‍රකාශනය කරන්න">
+<!ENTITY otherDirList.tooltip         "ගොනු ප්‍රකාශනය කරන දුරස්ථ උප-ඩාරෙක්ටරියේ නම තෝරන්න හෝ ඇතුළු කරන්න">
+<!ENTITY pageTitle.label              "පිටු සිරස්තලය:">
+<!ENTITY pageTitle.accesskey          "T">
+<!ENTITY pageTitle.tooltip            "කවුළුවේදී සහ පිටුලකුණුහිදී පිටුව හඳුනිගැනීමට සිරස්තලයක් ඇතුළු කරන්න">
+<!ENTITY pageTitleExample.label       "උදා.: &quot;My Web Page&quot;">
+<!ENTITY filename.label               "ගොනු නම:">
+<!ENTITY filename.accesskey           "F">
+<!ENTITY filename.tooltip             "මෙම ගොනුවට නමක් ඇතුළු කරන්න, වෙබ් පිටුවක් සඳහා '.html' ඇතුලක් කරන්න">
+<!ENTITY filenameExample.label        "උදා.,: &quot;mypage.html&quot;">
+<!ENTITY setDefaultButton.label       "පෙරනිමි සේ සකසන්න">
+<!ENTITY setDefaultButton.accesskey   "D">
+<!ENTITY removeButton.label           "අඩවිය ඉවත්කරන්න">
+<!ENTITY removeButton.accesskey       "R">
+
+<!-- Settings Tab Panel -->
+<!ENTITY publishSites.label           "අඩවි ප්‍රකාශනය කිරීම">
+<!ENTITY serverInfo.label             "සේවාදායක තොරතුරු">
+<!ENTITY loginInfo.label              "ප්‍රවේශ තොරතුරු">
+<!ENTITY siteName.label               "අඩවි නාමය:">
+<!ENTITY siteName.accesskey           "e">
+<!ENTITY siteName.tooltip             "්‍රකිශණය කරන අඩවිය හඳුනාගැනෘමට යොදන විකල්ප නම (nickname) (උදා.: 'MySite')">
+<!ENTITY siteUrl.label                "ප්‍රකිශණය කරන ලිපිනය (උදා.: 'ftp://ftp.myisp.com/myusername'):">
+<!ENTITY siteUrl.accesskey            "a">
+<!ENTITY siteUrl.tooltip              "ඔබගේ ISP හෝ වෙබ් සේවාදායකයා සපයන FTP:// හෝ HTTP:// ලිපිනය">
+<!ENTITY browseUrl.label              "ඔබගේ මුල් පිටුවේ HTTP ලිපිනය (උදා.: 'http://www.myisp.com/myusername'):">
+<!ENTITY browseUrl.accesskey          "T">
+<!ENTITY browseUrl.tooltip            "ඔබගේ මුල් ඩාරෙක්ටරියේ HTTP:// ලිපිනය (ගොනු නම ඇතුලත් නොකරන්න)">
+<!ENTITY username.label               "පරිශීලක නම:">
+<!ENTITY username.accesskey           "U">
+<!ENTITY username.tooltip             "ඔබගේ ISP හෝ වෙබ් සේවාදායකයා වෙත ප්‍රවේශ වීමට ඔබ භාවිතා කරන පරිශීලක නම">
+<!ENTITY password.label               "රහස්පදය:">
+<!ENTITY password.accesskey           "w">
+<!ENTITY password.tooltip             "ඔබගේ පරිශීලක නමට අදාල රහස්පසය">
+<!ENTITY savePassword.label           "රහස්පදය සුරකින්න">
+<!ENTITY savePassword.accesskey       "S">
+<!ENTITY savePassword.tooltip         "රහස්පද කළමණාකරු භාවාතයෙන් ආරක්ෂිතව ඔබගේ රහස්පදය සුරැකීමට මෙය තෝරන්න">

@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Распореди по мрежи">
+
+<!ENTITY enableSnapToGrid.label "укључи распоређивање по мрежи">
+<!ENTITY enableSnapToGrid.accessKey "е">
+
+<!ENTITY sizeEditField.label "Величина:">
+<!ENTITY sizeEditField.accessKey "В">
+
+<!ENTITY pixelsLabel.value "пиксела">

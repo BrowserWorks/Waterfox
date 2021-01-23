@@ -14,33 +14,19 @@ add_task(async function testAutocompleteRichResult() {
   let tab = await openNewTab("data:text/html;charset=utf-8,");
   let accService = await initAccessibilityService();
 
-  info(
-    "Opening the URL bar and entering a key to show the PopupAutoCompleteRichResult panel"
-  );
+  info("Opening the URL bar and entering a key to show the urlbar panel");
   await UrlbarTestUtils.promiseAutocompleteResultPopup({
     window,
     waitForFocus,
     value: "a",
   });
 
-  info("Waiting for accessibility to be created for the richlistbox");
+  info("Waiting for accessibility to be created for the results list");
   let resultsView;
-  if (UrlbarPrefs.get("quantumbar")) {
-    resultsView = gURLBar.view.panel.querySelector("#urlbarView-results");
-    await BrowserTestUtils.waitForCondition(() =>
-      accService.getAccessibleFor(resultsView)
-    );
-  } else {
-    let urlbarPopup = document.getElementById("PopupAutoCompleteRichResult");
-    resultsView = document.getAnonymousElementByAttribute(
-      urlbarPopup,
-      "anonid",
-      "richlistbox"
-    );
-    await BrowserTestUtils.waitForCondition(() =>
-      accService.getAccessibleFor(resultsView)
-    );
-  }
+  resultsView = gURLBar.view.panel.querySelector(".urlbarView-results");
+  await TestUtils.waitForCondition(() =>
+    accService.getAccessibleFor(resultsView)
+  );
 
   info("Confirming that the special case is handled in XULListboxAccessible");
   let accessible = accService.getAccessibleFor(resultsView);

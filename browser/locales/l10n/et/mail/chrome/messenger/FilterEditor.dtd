@@ -1,0 +1,68 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Filtri reeglid">
+<!ENTITY filterEditorDialog.dimensions "width: 100ch;">
+<!ENTITY filterName.label "Filtri nimi:">
+<!ENTITY filterName.accesskey "n">
+
+<!ENTITY junk.label "Rämpspost">
+<!ENTITY notJunk.label "Pole rämpspost">
+
+<!ENTITY lowestPriorityCmd.label "Madalaim">
+<!ENTITY lowPriorityCmd.label "Madal">
+<!ENTITY normalPriorityCmd.label "Tavaline">
+<!ENTITY highPriorityCmd.label "Kõrge">
+<!ENTITY highestPriorityCmd.label "Kõrgeim">
+
+<!ENTITY contextDesc.label "Filtrit rakendatakse:">
+<!ENTITY contextIncomingMail.label "uute kirjade hankimisel:">
+<!ENTITY contextIncomingMail.accesskey "h">
+<!ENTITY contextManual.label "manuaalsel käivitamisel">
+<!ENTITY contextManual.accesskey "m">
+<!ENTITY contextBeforeCls.label "enne rämpsposti filtri rakendumist">
+<!ENTITY contextAfterCls.label "pärast rämpsposti filtri rakendumist">
+<!ENTITY contextOutgoing.label "pärast saatmist">
+<!ENTITY contextOutgoing.accesskey "p">
+<!ENTITY contextArchive.label "arhiveerimisel">
+<!ENTITY contextArchive.accesskey "a">
+
+<!ENTITY contextPeriodic.accesskey "e">
+
+<!ENTITY filterActionDesc.label "Sooritatakse järgnev tegevus:">
+<!ENTITY filterActionDesc.accesskey "R">
+
+<!ENTITY filterActionOrderWarning.label "Märkus: filtri tegevused käivituvad teistsuguses järjekorras.">
+<!ENTITY filterActionOrder.label "Vaata käivitumise järjekorda">
+
+<!-- New Style Filter Rule Actions -->
+<!ENTITY moveMessage.label "kiri tõstetakse kausta">
+<!ENTITY copyMessage.label "kiri kopeeritakse kausta">
+<!ENTITY forwardTo.label "kiri edastatakse aadressile">
+<!ENTITY replyWithTemplate.label "vastatakse malli abil">
+<!ENTITY markMessageRead.label "märgitakse loetuks">
+<!ENTITY markMessageUnread.label "märgitakse mitteloetuks">
+<!ENTITY markMessageStarred.label "lisatakse märgistus">
+<!ENTITY setPriority.label "prioriteediks määratakse">
+<!ENTITY addTag.label "kiri sildistatakse">
+<!ENTITY setJunkScore.label "rämpsposti olekuks määratakse">
+<!ENTITY deleteMessage.label "kiri kustutatakse">
+<!ENTITY deleteFromPOP.label "kustutatakse POP-serverist">
+<!ENTITY fetchFromPOP.label "tõmmatakse POP-serverist">
+<!ENTITY ignoreThread.label "lõime eiratakse">
+<!ENTITY ignoreSubthread.label "alamlõime eiratakse">
+<!ENTITY watchThread.label "lõime jälgitakse">
+<!ENTITY stopExecution.label "filtri rakendamine peatatakse">
+
+<!ENTITY addAction.tooltip "Lisa uus tegevus">
+<!ENTITY removeAction.tooltip "Eemalda see tegevus">
+
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- Flex Attribute: https://developer.mozilla.org/docs/XUL/Attribute/flex -->
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">

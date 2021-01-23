@@ -9,6 +9,7 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/EventStates.h"
+#include "mozilla/dom/BindContext.h"
 #include "mozilla/dom/DocumentInlines.h"
 #include "mozilla/dom/SVGAElementBinding.h"
 #include "nsCOMPtr.h"
@@ -154,27 +155,25 @@ void SVGAElement::SetText(const nsAString& aText, mozilla::ErrorResult& rv) {
 //----------------------------------------------------------------------
 // nsIContent methods
 
-nsresult SVGAElement::BindToTree(Document* aDocument, nsIContent* aParent,
-                                 nsIContent* aBindingParent) {
+nsresult SVGAElement::BindToTree(BindContext& aContext, nsINode& aParent) {
   Link::ResetLinkState(false, Link::ElementHasHref());
 
-  nsresult rv = SVGAElementBase::BindToTree(aDocument, aParent, aBindingParent);
+  nsresult rv = SVGAElementBase::BindToTree(aContext, aParent);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  Document* doc = GetComposedDoc();
-  if (doc) {
+  if (Document* doc = aContext.GetComposedDoc()) {
     doc->RegisterPendingLinkUpdate(this);
   }
 
   return NS_OK;
 }
 
-void SVGAElement::UnbindFromTree(bool aDeep, bool aNullParent) {
+void SVGAElement::UnbindFromTree(bool aNullParent) {
   // Without removing the link state we risk a dangling pointer
   // in the mStyledLinks hashtable
   Link::ResetLinkState(false, Link::ElementHasHref());
 
-  SVGAElementBase::UnbindFromTree(aDeep, aNullParent);
+  SVGAElementBase::UnbindFromTree(aNullParent);
 }
 
 already_AddRefed<nsIURI> SVGAElement::GetHrefURI() const {
@@ -199,16 +198,6 @@ SVGAElement::IsAttributeMapped(const nsAtom* name) const {
 
 int32_t SVGAElement::TabIndexDefault() { return 0; }
 
-static bool IsNodeInEditableRegion(nsINode* aNode) {
-  while (aNode) {
-    if (aNode->IsEditable()) {
-      return true;
-    }
-    aNode = aNode->GetParent();
-  }
-  return false;
-}
-
 bool SVGAElement::IsFocusableInternal(int32_t* aTabIndex, bool aWithMouse) {
   bool isFocusable = false;
   if (IsSVGFocusable(&isFocusable, aTabIndex)) {
@@ -221,14 +210,14 @@ bool SVGAElement::IsFocusableInternal(int32_t* aTabIndex, bool aWithMouse) {
 
   // Links that are in an editable region should never be focusable, even if
   // they are in a contenteditable="false" region.
-  if (IsNodeInEditableRegion(this)) {
+  if (nsContentUtils::IsNodeInEditableRegion(this)) {
     if (aTabIndex) {
       *aTabIndex = -1;
     }
     return false;
   }
 
-  if (!HasAttr(kNameSpaceID_None, nsGkAtoms::tabindex)) {
+  if (GetTabIndexAttrValue().isNothing()) {
     // check whether we're actually a link
     if (!Link::HasURI()) {
       // Not tabbable or focusable without href (bug 17605), unless
@@ -277,12 +266,12 @@ bool SVGAElement::IsLink(nsIURI** aURI) const {
                       eCaseMatters) != Element::ATTR_VALUE_NO_MATCH &&
       FindAttrValueIn(kNameSpaceID_XLink, nsGkAtoms::actuate, sActuateVals,
                       eCaseMatters) != Element::ATTR_VALUE_NO_MATCH) {
-    nsCOMPtr<nsIURI> baseURI = GetBaseURI();
     // Get absolute URI
     nsAutoString str;
     const uint8_t idx = useBareHref ? HREF : XLINK_HREF;
     mStringAttributes[idx].GetAnimValue(str, this);
-    nsContentUtils::NewURIWithDocumentCharset(aURI, str, OwnerDoc(), baseURI);
+    nsContentUtils::NewURIWithDocumentCharset(aURI, str, OwnerDoc(),
+                                              GetBaseURI());
     // must promise out param is non-null if we return true
     return !!*aURI;
   }

@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Eigenschaften der horizontalen Linie">
+
+<!ENTITY dimensionsBox.label "Dimensionen">
+<!ENTITY heightEditField.label "Höhe:">
+<!ENTITY heightEditField.accessKey "H">
+<!ENTITY widthEditField.label "Breite:">
+<!ENTITY widthEditField.accessKey "B">
+<!ENTITY pixelsPopup.value "Pixel">
+<!ENTITY alignmentBox.label "Ausrichtung">
+<!ENTITY leftRadio.label "Links">
+<!ENTITY leftRadio.accessKey "L">
+<!ENTITY centerRadio.label "Zentriert">
+<!ENTITY centerRadio.accessKey "Z">
+<!ENTITY rightRadio.label "Rechts">
+<!ENTITY rightRadio.accessKey "R">
+
+<!ENTITY threeDShading.label "3D-Schattierung">
+<!ENTITY threeDShading.accessKey "S">
+<!ENTITY saveSettings.label "Als Standard verwenden">
+<!ENTITY saveSettings.accessKey "S">
+<!ENTITY saveSettings.tooltip "Diese Einstellungen speichern, um sie beim Einfügen neuer horizontaler Linien zu verwenden">

@@ -5,12 +5,12 @@
 '''Parses a given application.ini file and outputs the corresponding
    StaticXREAppData structure as a C++ header file'''
 
-import ConfigParser
+import configparser
 import sys
 
 
 def main(output, file):
-    config = ConfigParser.RawConfigParser()
+    config = configparser.RawConfigParser()
     config.read(file)
     flags = set()
     try:
@@ -25,15 +25,15 @@ def main(output, file):
         pass
     appdata = dict(("%s:%s" % (s, o), config.get(s, o))
                    for s in config.sections() for o in config.options(s))
-    appdata['flags'] = ' | '.join(flags) if flags else '0'
+    appdata['flags'] = ' | '.join(sorted(flags)) if flags else '0'
     appdata['App:profile'] = ('"%s"' % appdata['App:profile']
                               if 'App:profile' in appdata else 'NULL')
     expected = ('App:vendor', 'App:name', 'App:remotingname', 'App:version', 'App:buildid',
                 'App:id', 'Gecko:minversion', 'Gecko:maxversion')
     missing = [var for var in expected if var not in appdata]
     if missing:
-        print >>sys.stderr, \
-            "Missing values in %s: %s" % (file, ', '.join(missing))
+        print("Missing values in %s: %s" % (file, ', '.join(missing)),
+              file=sys.stderr)
         sys.exit(1)
 
     if 'Crash Reporter:serverurl' not in appdata:
@@ -43,6 +43,9 @@ def main(output, file):
         appdata['App:sourceurl'] = '"%(App:sourcerepository)s/rev/%(App:sourcestamp)s"' % appdata
     else:
         appdata['App:sourceurl'] = 'NULL'
+
+    if 'AppUpdate:url' not in appdata:
+        appdata['AppUpdate:url'] = ''
 
     output.write('''#include "mozilla/XREAppData.h"
              static const mozilla::StaticXREAppData sAppData = {
@@ -59,7 +62,8 @@ def main(output, file):
                  "%(Crash Reporter:serverurl)s",
                  %(App:profile)s,
                  NULL, // UAName
-                 %(App:sourceurl)s
+                 %(App:sourceurl)s,
+                 "%(AppUpdate:url)s"
              };''' % appdata)
 
 
@@ -67,4 +71,5 @@ if __name__ == '__main__':
     if len(sys.argv) != 1:
         main(sys.stdout, sys.argv[1])
     else:
-        print >>sys.stderr, "Usage: %s /path/to/application.ini" % sys.argv[0]
+        print("Usage: %s /path/to/application.ini" % sys.argv[0],
+              file=sys.stderr)

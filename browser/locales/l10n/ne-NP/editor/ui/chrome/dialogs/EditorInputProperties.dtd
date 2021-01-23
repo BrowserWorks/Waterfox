@@ -1,0 +1,80 @@
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is Input Tag Properties Dialog.
+   -
+   - The Initial Developer of the Original Code is
+   - Neil Rashbrook.
+   - Portions created by the Initial Developer are Copyright (C) 2001
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s): Neil Rashbrook <neil@parkwaycc.co.uk>
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->
+
+<!ENTITY windowTitle.label "फारम फिल्ड गुण">
+<!ENTITY windowTitleImage.label "फारम छवि गुण">
+
+<!ENTITY InputType.label "फिल्ड प्रकार">
+<!ENTITY InputType.accesskey "T">
+<!ENTITY text.value "पाठ">
+<!ENTITY password.value "पासवर्ड">
+<!ENTITY checkbox.value "जाँच बाकस">
+<!ENTITY radio.value "रेडियो बटन">
+<!ENTITY submit.value "पेश गर्ने बटन">
+<!ENTITY reset.value "रिसेट बटन">
+<!ENTITY file.value "फाइल">
+<!ENTITY hidden.value "लुकाइएको">
+<!ENTITY image.value "छवि">
+<!ENTITY button.value "बटन">
+
+<!ENTITY InputSettings.label "फिल्ड सेटिङ">
+<!ENTITY InputName.label "फिल्ड नाम:">
+<!ENTITY GroupName.label "समूह नाम:">
+<!ENTITY Name.accesskey "N">
+<!ENTITY InputValue.label "फिल्ड मान:">
+<!ENTITY InitialValue.label "प्रारम्भिक मान:">
+<!ENTITY Value.accesskey "V">
+<!ENTITY InputChecked.label "सुरुमै जाँच गरियो">
+<!ENTITY InputChecked.accesskey "C">
+<!ENTITY InputSelected.label "सुरुमै चयन गरियो">
+<!ENTITY InputSelected.accesskey "S">
+<!ENTITY InputReadOnly.label "पढ्ने मात्र">
+<!ENTITY InputReadOnly.accesskey "R">
+<!ENTITY InputDisabled.label "अक्षम">
+<!ENTITY InputDisabled.accesskey "D">
+<!ENTITY tabIndex.label "ट्याब अनुक्रमणिका:">
+<!ENTITY tabIndex.accesskey "I">
+<!ENTITY TextSize.label "फिल्ड साइज:">
+<!ENTITY TextSize.accesskey "F">
+<!ENTITY TextLength.label "अधिकतम लम्बाइ:">
+<!ENTITY TextLength.accesskey "L">
+<!ENTITY AccessKey.label "पहुँच कुञ्जी:">
+<!ENTITY AccessKey.accesskey "K">
+<!ENTITY Accept.label "प्रकार स्वीकार गर्नुहोस्:">
+<!ENTITY Accept.accesskey "A">
+
+<!ENTITY ImageProperties.label "छवि गुण...">
+<!ENTITY ImageProperties.accesskey "E">

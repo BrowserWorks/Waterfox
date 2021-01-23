@@ -1,5 +1,3 @@
-// |jit-test| --enable-experimental-fields
-
 load(libdir + "asserts.js");
 
 let source = `class C {
@@ -20,6 +18,16 @@ assertErrorMessage(() => Function(source), SyntaxError, /./);
 
 source = `class C {
     #2;
+}`;
+assertErrorMessage(() => Function(source), SyntaxError, /./);
+
+source = `class C {
+    #x;
+}`;
+assertErrorMessage(() => Function(source), SyntaxError, /./);
+
+source = `class C {
+    #y = 2;
 }`;
 assertErrorMessage(() => Function(source), SyntaxError, /./);
 
@@ -45,11 +53,6 @@ assertErrorMessage(() => Function(source), SyntaxError, /./);
 
 source = `class C {
     x = arguments;
-}`;
-assertErrorMessage(() => Function(source), SyntaxError, /./);
-
-source = `class C {
-    x = super.a;
 }`;
 assertErrorMessage(() => Function(source), SyntaxError, /./);
 

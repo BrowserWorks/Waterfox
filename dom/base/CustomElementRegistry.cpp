@@ -167,16 +167,25 @@ CustomElementData::CustomElementData(nsAtom* aType, State aState)
 
 void CustomElementData::SetCustomElementDefinition(
     CustomElementDefinition* aDefinition) {
-  MOZ_ASSERT(mState == State::eCustom);
-  MOZ_ASSERT(!mCustomElementDefinition);
-  MOZ_ASSERT(aDefinition->mType == mType);
+  // Only allow reset definition to nullptr if the custom element state is
+  // "failed".
+  MOZ_ASSERT(aDefinition ? !mCustomElementDefinition
+                         : mState == State::eFailed);
+  MOZ_ASSERT_IF(aDefinition, aDefinition->mType == mType);
 
   mCustomElementDefinition = aDefinition;
 }
 
-CustomElementDefinition* CustomElementData::GetCustomElementDefinition() {
-  MOZ_ASSERT(mCustomElementDefinition ? mState == State::eCustom
-                                      : mState != State::eCustom);
+void CustomElementData::AttachedInternals() {
+  MOZ_ASSERT(!mIsAttachedInternals);
+
+  mIsAttachedInternals = true;
+}
+
+CustomElementDefinition* CustomElementData::GetCustomElementDefinition() const {
+  // Per spec, if there is a definition, the custom element state should be
+  // either "failed" (during upgrade) or "customized".
+  MOZ_ASSERT_IF(mCustomElementDefinition, mState != State::eUndefined);
 
   return mCustomElementDefinition;
 }
@@ -308,7 +317,7 @@ CustomElementRegistry::RunCustomElementCreationCallback::Run() {
   MOZ_ASSERT(!mRegistry->mElementCreationCallbacks.GetWeak(mAtom),
              "Callback should be removed.");
 
-  nsAutoPtr<nsTHashtable<nsRefPtrHashKey<nsIWeakReference>>> elements;
+  mozilla::UniquePtr<nsTHashtable<nsRefPtrHashKey<nsIWeakReference>>> elements;
   mRegistry->mElementCreationCallbacksUpgradeCandidatesMap.Remove(mAtom,
                                                                   &elements);
   MOZ_ASSERT(elements, "There should be a list");
@@ -483,6 +492,7 @@ CustomElementRegistry::CreateCustomElementCallback(
   return callback;
 }
 
+// https://html.spec.whatwg.org/commit-snapshots/65f39c6fc0efa92b0b2b23b93197016af6ac0de6/#enqueue-a-custom-element-callback-reaction
 /* static */
 void CustomElementRegistry::EnqueueLifecycleCallback(
     Document::ElementCallbackType aType, Element* aCustomElement,
@@ -595,7 +605,8 @@ void CustomElementRegistry::UpgradeCandidates(
     return;
   }
 
-  nsAutoPtr<nsTHashtable<nsRefPtrHashKey<nsIWeakReference>>> candidates;
+  mozilla::UniquePtr<nsTHashtable<nsRefPtrHashKey<nsIWeakReference>>>
+      candidates;
   if (mCandidatesMap.Remove(aKey, &candidates)) {
     MOZ_ASSERT(candidates);
     CustomElementReactionsStack* reactionsStack =
@@ -636,7 +647,61 @@ int32_t CustomElementRegistry::InferNamespace(
   return kNameSpaceID_XHTML;
 }
 
-// https://html.spec.whatwg.org/multipage/scripting.html#element-definition
+bool CustomElementRegistry::JSObjectToAtomArray(
+    JSContext* aCx, JS::Handle<JSObject*> aConstructor, const nsString& aName,
+    nsTArray<RefPtr<nsAtom>>& aArray, ErrorResult& aRv) {
+  JS::RootedValue iterable(aCx, JS::UndefinedValue());
+  if (!JS_GetUCProperty(aCx, aConstructor, aName.get(), aName.Length(),
+                        &iterable)) {
+    aRv.NoteJSContextException(aCx);
+    return false;
+  }
+
+  if (!iterable.isUndefined()) {
+    if (!iterable.isObject()) {
+      aRv.ThrowTypeError<MSG_NOT_SEQUENCE>(NS_ConvertUTF16toUTF8(aName));
+      return false;
+    }
+
+    JS::ForOfIterator iter(aCx);
+    if (!iter.init(iterable, JS::ForOfIterator::AllowNonIterable)) {
+      aRv.NoteJSContextException(aCx);
+      return false;
+    }
+
+    if (!iter.valueIsIterable()) {
+      aRv.ThrowTypeError<MSG_NOT_SEQUENCE>(NS_ConvertUTF16toUTF8(aName));
+      return false;
+    }
+
+    JS::Rooted<JS::Value> attribute(aCx);
+    while (true) {
+      bool done;
+      if (!iter.next(&attribute, &done)) {
+        aRv.NoteJSContextException(aCx);
+        return false;
+      }
+      if (done) {
+        break;
+      }
+
+      nsAutoString attrStr;
+      if (!ConvertJSValueToString(aCx, attribute, eStringify, eStringify,
+                                  attrStr)) {
+        aRv.NoteJSContextException(aCx);
+        return false;
+      }
+
+      // XXX(Bug 1631371) Check if this should use a fallible operation as it
+      // pretended earlier.
+      aArray.AppendElement(NS_Atomize(attrStr));
+    }
+  }
+
+  return true;
+}
+
+// https://html.spec.whatwg.org/commit-snapshots/b48bb2238269d90ea4f455a52cdf29505aff3df0/#dom-customelementregistry-define
 void CustomElementRegistry::Define(
     JSContext* aCx, const nsAString& aName,
     CustomElementConstructor& aFunctionConstructor,
@@ -663,8 +728,7 @@ void CustomElementRegistry::Define(
    *    these steps.
    */
   if (!JS::IsConstructor(constructorUnwrapped)) {
-    aRv.ThrowTypeError<MSG_NOT_CONSTRUCTOR>(
-        NS_LITERAL_STRING("Argument 2 of CustomElementRegistry.define"));
+    aRv.ThrowTypeError<MSG_NOT_CONSTRUCTOR>("Argument 2");
     return;
   }
 
@@ -677,7 +741,9 @@ void CustomElementRegistry::Define(
   Document* doc = mWindow->GetExtantDoc();
   RefPtr<nsAtom> nameAtom(NS_Atomize(aName));
   if (!nsContentUtils::IsCustomElementName(nameAtom, nameSpaceID)) {
-    aRv.Throw(NS_ERROR_DOM_SYNTAX_ERR);
+    aRv.ThrowSyntaxError(
+        nsPrintfCString("'%s' is not a valid custom element name",
+                        NS_ConvertUTF16toUTF8(aName).get()));
     return;
   }
 
@@ -686,7 +752,9 @@ void CustomElementRegistry::Define(
    *    throw a "NotSupportedError" DOMException and abort these steps.
    */
   if (mCustomDefinitions.GetWeak(nameAtom)) {
-    aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
+    aRv.ThrowNotSupportedError(
+        nsPrintfCString("'%s' has already been defined as a custom element",
+                        NS_ConvertUTF16toUTF8(aName).get()));
     return;
   }
 
@@ -699,7 +767,11 @@ void CustomElementRegistry::Define(
   if (ptr) {
     MOZ_ASSERT(mCustomDefinitions.GetWeak(ptr->value()),
                "Definition must be found in mCustomDefinitions");
-    aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
+    nsAutoCString name;
+    ptr->value()->ToUTF8String(name);
+    aRv.ThrowNotSupportedError(
+        nsPrintfCString("'%s' and '%s' have the same constructor",
+                        NS_ConvertUTF16toUTF8(aName).get(), name.get()));
     return;
   }
 
@@ -731,7 +803,9 @@ void CustomElementRegistry::Define(
   if (aOptions.mExtends.WasPassed()) {
     RefPtr<nsAtom> extendsAtom(NS_Atomize(aOptions.mExtends.Value()));
     if (nsContentUtils::IsCustomElementName(extendsAtom, kNameSpaceID_XHTML)) {
-      aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
+      aRv.ThrowNotSupportedError(
+          nsPrintfCString("'%s' cannot extend a custom element",
+                          NS_ConvertUTF16toUTF8(aName).get()));
       return;
     }
 
@@ -760,12 +834,16 @@ void CustomElementRegistry::Define(
    * set, then throw a "NotSupportedError" DOMException and abort these steps.
    */
   if (mIsCustomDefinitionRunning) {
-    aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
+    aRv.ThrowNotSupportedError(
+        "Cannot define a custom element while defining another custom element");
     return;
   }
 
   auto callbacksHolder = MakeUnique<LifecycleCallbacks>();
   nsTArray<RefPtr<nsAtom>> observedAttributes;
+  AutoTArray<RefPtr<nsAtom>, 2> disabledFeatures;
+  bool disableInternals = false;
+  bool disableShadow = false;
   {  // Set mIsCustomDefinitionRunning.
     /**
      * 9. Set this CustomElementRegistry's element definition is running flag.
@@ -773,7 +851,7 @@ void CustomElementRegistry::Define(
     AutoSetRunningFlag as(this);
 
     /**
-     * 10.1. Let prototype be Get(constructor, "prototype"). Rethrow any
+     * 14.1. Let prototype be Get(constructor, "prototype"). Rethrow any
      * exceptions.
      */
     // The .prototype on the constructor passed could be an "expando" of a
@@ -786,21 +864,20 @@ void CustomElementRegistry::Define(
     }
 
     /**
-     * 10.2. If Type(prototype) is not Object, then throw a TypeError exception.
+     * 14.2. If Type(prototype) is not Object, then throw a TypeError exception.
      */
     if (!prototype.isObject()) {
-      aRv.ThrowTypeError<MSG_NOT_OBJECT>(
-          NS_LITERAL_STRING("constructor.prototype"));
+      aRv.ThrowTypeError<MSG_NOT_OBJECT>("constructor.prototype");
       return;
     }
 
     /**
-     * 10.3. Let lifecycleCallbacks be a map with the four keys
+     * 14.3. Let lifecycleCallbacks be a map with the four keys
      *       "connectedCallback", "disconnectedCallback", "adoptedCallback", and
      *       "attributeChangedCallback", each of which belongs to an entry whose
      *       value is null. The 'getCustomInterface' callback is also included
      *       for chrome usage.
-     * 10.4. For each of the four keys callbackName in lifecycleCallbacks:
+     * 14.4. For each of the four keys callbackName in lifecycleCallbacks:
      *       1. Let callbackValue be Get(prototype, callbackName). Rethrow any
      *          exceptions.
      *       2. If callbackValue is not undefined, then set the value of the
@@ -814,8 +891,7 @@ void CustomElementRegistry::Define(
     }
 
     /**
-     * 10.5. Let observedAttributes be an empty sequence<DOMString>.
-     * 10.6. If the value of the entry in lifecycleCallbacks with key
+     * 14.5. If the value of the entry in lifecycleCallbacks with key
      *       "attributeChangedCallback" is not null, then:
      *       1. Let observedAttributesIterable be Get(constructor,
      *          "observedAttributes"). Rethrow any exceptions.
@@ -825,63 +901,43 @@ void CustomElementRegistry::Define(
      *          any exceptions from the conversion.
      */
     if (callbacksHolder->mAttributeChangedCallback.WasPassed()) {
-      JS::Rooted<JS::Value> observedAttributesIterable(aCx);
+      if (!JSObjectToAtomArray(aCx, constructor,
+                               NS_LITERAL_STRING("observedAttributes"),
+                               observedAttributes, aRv)) {
+        return;
+      }
+    }
 
-      if (!JS_GetProperty(aCx, constructor, "observedAttributes",
-                          &observedAttributesIterable)) {
-        aRv.NoteJSContextException(aCx);
+    /**
+     * 14.6. Let disabledFeatures be an empty sequence<DOMString>.
+     * 14.7. Let disabledFeaturesIterable be Get(constructor,
+     *       "disabledFeatures"). Rethrow any exceptions.
+     * 14.8. If disabledFeaturesIterable is not undefined, then set
+     *       disabledFeatures to the result of converting
+     *       disabledFeaturesIterable to a sequence<DOMString>.
+     *       Rethrow any exceptions from the conversion.
+     */
+    if (StaticPrefs::dom_webcomponents_elementInternals_enabled()) {
+      if (!JSObjectToAtomArray(aCx, constructor,
+                               NS_LITERAL_STRING("disabledFeatures"),
+                               disabledFeatures, aRv)) {
         return;
       }
 
-      if (!observedAttributesIterable.isUndefined()) {
-        if (!observedAttributesIterable.isObject()) {
-          aRv.ThrowTypeError<MSG_NOT_SEQUENCE>(
-              NS_LITERAL_STRING("observedAttributes"));
-          return;
-        }
+      // 14.9. Set disableInternals to true if disabledFeaturesSequence contains
+      //       "internals".
+      disableInternals = disabledFeatures.Contains(
+          static_cast<nsStaticAtom*>(nsGkAtoms::internals));
 
-        JS::ForOfIterator iter(aCx);
-        if (!iter.init(observedAttributesIterable,
-                       JS::ForOfIterator::AllowNonIterable)) {
-          aRv.NoteJSContextException(aCx);
-          return;
-        }
-
-        if (!iter.valueIsIterable()) {
-          aRv.ThrowTypeError<MSG_NOT_SEQUENCE>(
-              NS_LITERAL_STRING("observedAttributes"));
-          return;
-        }
-
-        JS::Rooted<JS::Value> attribute(aCx);
-        while (true) {
-          bool done;
-          if (!iter.next(&attribute, &done)) {
-            aRv.NoteJSContextException(aCx);
-            return;
-          }
-          if (done) {
-            break;
-          }
-
-          nsAutoString attrStr;
-          if (!ConvertJSValueToString(aCx, attribute, eStringify, eStringify,
-                                      attrStr)) {
-            aRv.NoteJSContextException(aCx);
-            return;
-          }
-
-          if (!observedAttributes.AppendElement(NS_Atomize(attrStr))) {
-            aRv.Throw(NS_ERROR_OUT_OF_MEMORY);
-            return;
-          }
-        }
-      }
+      // 14.10. Set disableShadow to true if disabledFeaturesSequence contains
+      //        "shadow".
+      disableShadow = disabledFeatures.Contains(
+          static_cast<nsStaticAtom*>(nsGkAtoms::shadow));
     }
   }  // Unset mIsCustomDefinitionRunning
 
   /**
-   * 11. Let definition be a new custom element definition with name name,
+   * 15. Let definition be a new custom element definition with name name,
    *     local name localName, constructor constructor, prototype prototype,
    *     observed attributes observedAttributes, and lifecycle callbacks
    *     lifecycleCallbacks.
@@ -890,7 +946,7 @@ void CustomElementRegistry::Define(
   RefPtr<nsAtom> localNameAtom(NS_Atomize(localName));
 
   /**
-   * 12. Add definition to this CustomElementRegistry.
+   * 16. Add definition to this CustomElementRegistry.
    */
   if (!mConstructors.put(constructorUnwrapped, nameAtom)) {
     aRv.Throw(NS_ERROR_FAILURE);
@@ -899,21 +955,22 @@ void CustomElementRegistry::Define(
 
   RefPtr<CustomElementDefinition> definition = new CustomElementDefinition(
       nameAtom, localNameAtom, nameSpaceID, &aFunctionConstructor,
-      std::move(observedAttributes), std::move(callbacksHolder));
+      std::move(observedAttributes), std::move(callbacksHolder),
+      disableInternals, disableShadow);
 
   CustomElementDefinition* def = definition.get();
-  mCustomDefinitions.Put(nameAtom, definition.forget());
+  mCustomDefinitions.Put(nameAtom, std::move(definition));
 
   MOZ_ASSERT(mCustomDefinitions.Count() == mConstructors.count(),
              "Number of entries should be the same");
 
   /**
-   * 13. 14. 15. Upgrade candidates
+   * 17. 18. 19. Upgrade candidates
    */
   UpgradeCandidates(nameAtom, def, aRv);
 
   /**
-   * 16. If this CustomElementRegistry's when-defined promise map contains an
+   * 20. If this CustomElementRegistry's when-defined promise map contains an
    *     entry with key name:
    *     1. Let promise be the value of that entry.
    *     2. Resolve promise with undefined.
@@ -961,8 +1018,7 @@ void CustomElementRegistry::SetElementCreationCallback(
   }
 
   RefPtr<CustomElementCreationCallback> callback = &aCallback;
-  mElementCreationCallbacks.Put(nameAtom, callback.forget());
-  return;
+  mElementCreationCallbacks.Put(nameAtom, std::move(callback));
 }
 
 void CustomElementRegistry::Upgrade(nsINode& aRoot) {
@@ -1036,8 +1092,17 @@ already_AddRefed<Promise> CustomElementRegistry::WhenDefined(
 namespace {
 
 MOZ_CAN_RUN_SCRIPT
-static void DoUpgrade(Element* aElement, CustomElementConstructor* aConstructor,
+static void DoUpgrade(Element* aElement, CustomElementDefinition* aDefinition,
+                      CustomElementConstructor* aConstructor,
                       ErrorResult& aRv) {
+  if (aDefinition->mDisableShadow && aElement->GetShadowRoot()) {
+    aRv.ThrowNotSupportedError(nsPrintfCString(
+        "Custom element upgrade to '%s' is disabled because a shadow root "
+        "already exists",
+        NS_ConvertUTF16toUTF8(aDefinition->mType->GetUTF16String()).get()));
+    return;
+  }
+
   JS::Rooted<JS::Value> constructResult(RootingCx());
   // Rethrow the exception since it might actually throw the exception from the
   // upgrade steps back out to the caller of document.createElement.
@@ -1052,14 +1117,14 @@ static void DoUpgrade(Element* aElement, CustomElementConstructor* aConstructor,
   // always forms the return value from a JSObject.
   if (NS_FAILED(UNWRAP_OBJECT(Element, &constructResult, element)) ||
       element != aElement) {
-    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
+    aRv.ThrowTypeError("Custom element constructor returned a wrong element");
     return;
   }
 }
 
 }  // anonymous namespace
 
-// https://html.spec.whatwg.org/multipage/scripting.html#upgrades
+// https://html.spec.whatwg.org/commit-snapshots/2793ee4a461c6c39896395f1a45c269ea820c47e/#upgrades
 /* static */
 void CustomElementRegistry::Upgrade(Element* aElement,
                                     CustomElementDefinition* aDefinition,
@@ -1067,13 +1132,18 @@ void CustomElementRegistry::Upgrade(Element* aElement,
   RefPtr<CustomElementData> data = aElement->GetCustomElementData();
   MOZ_ASSERT(data, "CustomElementData should exist");
 
-  // Step 1 and step 2.
-  if (data->mState == CustomElementData::State::eCustom ||
-      data->mState == CustomElementData::State::eFailed) {
+  // Step 1.
+  if (data->mState != CustomElementData::State::eUndefined) {
     return;
   }
 
+  // Step 2.
+  aElement->SetCustomElementDefinition(aDefinition);
+
   // Step 3.
+  data->mState = CustomElementData::State::eFailed;
+
+  // Step 4.
   if (!aDefinition->mObservedAttributes.IsEmpty()) {
     uint32_t count = aElement->GetAttrCount();
     for (uint32_t i = 0; i < count; i++) {
@@ -1098,30 +1168,29 @@ void CustomElementRegistry::Upgrade(Element* aElement,
     }
   }
 
-  // Step 4.
+  // Step 5.
   if (aElement->IsInComposedDoc()) {
     nsContentUtils::EnqueueLifecycleCallback(Document::eConnected, aElement,
                                              nullptr, nullptr, aDefinition);
   }
 
-  // Step 5.
+  // Step 6.
   AutoConstructionStackEntry acs(aDefinition->mConstructionStack, aElement);
 
-  // Step 6 and step 7.
-  DoUpgrade(aElement, MOZ_KnownLive(aDefinition->mConstructor), aRv);
+  // Step 7 and step 8.
+  DoUpgrade(aElement, aDefinition, MOZ_KnownLive(aDefinition->mConstructor),
+            aRv);
   if (aRv.Failed()) {
-    data->mState = CustomElementData::State::eFailed;
+    MOZ_ASSERT(data->mState == CustomElementData::State::eFailed);
+    aElement->SetCustomElementDefinition(nullptr);
     // Empty element's custom element reaction queue.
     data->mReactionQueue.Clear();
     return;
   }
 
-  // Step 8.
+  // Step 10.
   data->mState = CustomElementData::State::eCustom;
   aElement->SetDefined(true);
-
-  // Step 9.
-  aElement->SetCustomElementDefinition(aDefinition);
 }
 
 already_AddRefed<nsISupports> CustomElementRegistry::CallGetCustomInterface(
@@ -1173,6 +1242,15 @@ already_AddRefed<nsISupports> CustomElementRegistry::CallGetCustomInterface(
   }
 
   return wrapper.forget();
+}
+
+void CustomElementRegistry::TraceDefinitions(JSTracer* aTrc) {
+  for (auto iter = mCustomDefinitions.Iter(); !iter.Done(); iter.Next()) {
+    RefPtr<CustomElementDefinition>& definition = iter.Data();
+    if (definition && definition->mConstructor) {
+      mozilla::TraceScriptHolder(definition->mConstructor, aTrc);
+    }
+  }
 }
 
 //-----------------------------------------------------
@@ -1389,13 +1467,16 @@ CustomElementDefinition::CustomElementDefinition(
     nsAtom* aType, nsAtom* aLocalName, int32_t aNamespaceID,
     CustomElementConstructor* aConstructor,
     nsTArray<RefPtr<nsAtom>>&& aObservedAttributes,
-    UniquePtr<LifecycleCallbacks>&& aCallbacks)
+    UniquePtr<LifecycleCallbacks>&& aCallbacks, bool aDisableInternals,
+    bool aDisableShadow)
     : mType(aType),
       mLocalName(aLocalName),
       mNamespaceID(aNamespaceID),
       mConstructor(aConstructor),
       mObservedAttributes(std::move(aObservedAttributes)),
-      mCallbacks(std::move(aCallbacks)) {}
+      mCallbacks(std::move(aCallbacks)),
+      mDisableInternals(aDisableInternals),
+      mDisableShadow(aDisableShadow) {}
 
 }  // namespace dom
 }  // namespace mozilla

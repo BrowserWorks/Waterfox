@@ -3,7 +3,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 """
-module to handle Gecko profilling.
+module to handle Gecko profiling.
 """
 from __future__ import absolute_import
 
@@ -11,19 +11,20 @@ import json
 import os
 import tempfile
 import zipfile
+import fnmatch
 
 import mozfile
-from mozlog import get_proxy_logger
 
-from profiler import symbolication, profiling
+from logger.logger import RaptorLogger
+from mozgeckoprofiler import ProfileSymbolicator, save_gecko_profile
 
 here = os.path.dirname(os.path.realpath(__file__))
-LOG = get_proxy_logger()
+LOG = RaptorLogger(component='raptor-gecko-profile')
 
 
 class GeckoProfile(object):
     """
-    Handle Gecko profilling.
+    Handle Gecko profiling.
 
     This allow to collect Gecko profiling data and to zip results in one file.
     """
@@ -91,6 +92,7 @@ class GeckoProfile(object):
 
     def _save_gecko_profile(self, symbolicator, missing_symbols_zip,
                             profile_path):
+        LOG.info("Symbolicating profile at %s" % profile_path)
         try:
             with open(profile_path, 'r') as profile_file:
                 profile = json.load(profile_file)
@@ -98,26 +100,45 @@ class GeckoProfile(object):
                 profile,
                 missing_symbols_zip)
             symbolicator.symbolicate_profile(profile)
-            profiling.save_profile(profile, profile_path)
+            save_gecko_profile(profile, profile_path)
         except MemoryError:
             LOG.critical(
                 "Ran out of memory while trying"
                 " to symbolicate profile {0}"
-                .format(profile_path),
-                exc_info=True
+                .format(profile_path)
             )
         except Exception:
             LOG.critical("Encountered an exception during profile"
                          " symbolication {0}"
-                         .format(profile_path),
-                         exc_info=True)
+                         .format(profile_path))
+
+    def collect_profiles(self):
+        """ Returns all profiles files.
+        """
+        res = []
+        if self.raptor_config.get('browsertime'):
+            topdir = self.raptor_config.get('browsertime_result_dir')
+            for root, dirnames, filenames in os.walk(topdir):
+                for filename in fnmatch.filter(filenames, "geckoProfile*.json"):
+                    res.append(os.path.join(root, filename))
+        else:
+            # Collect all individual profiles that the test
+            # has put into self.gecko_profile_dir.
+            for profile in os.listdir(self.gecko_profile_dir):
+                res.append(os.path.join(self.gecko_profile_dir, profile))
+        return res
 
     def symbolicate(self):
         """
         Symbolicate Gecko profiling data for one pagecycle.
 
         """
-        symbolicator = symbolication.ProfileSymbolicator({
+        profiles = self.collect_profiles()
+        if len(profiles) == 0:
+            LOG.error("No profiles collected")
+            return
+
+        symbolicator = ProfileSymbolicator({
             # Trace-level logging (verbose)
             "enableTracing": 0,
             # Fallback server if symbol is not found locally
@@ -143,7 +164,7 @@ class GeckoProfile(object):
             "symbolPaths": self.symbol_paths
         })
 
-        if self.raptor_config.get('symbols_path', None) is not None:
+        if self.raptor_config.get('symbols_path') is not None:
             if mozfile.is_url(self.raptor_config['symbols_path']):
                 symbolicator.integrate_symbol_zip_from_url(
                     self.raptor_config['symbols_path']
@@ -166,9 +187,7 @@ class GeckoProfile(object):
             mode = zipfile.ZIP_STORED
 
         with zipfile.ZipFile(self.profile_arcname, 'a', mode) as arc:
-            # Collect all individual profiles that the test
-            # has put into self.gecko_profile_dir.
-            for profile_filename in os.listdir(self.gecko_profile_dir):
+            for profile_filename in profiles:
                 testname = profile_filename
                 if testname.endswith(".profile"):
                     testname = testname[0:-8]

@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Riaghailtean a' chriathraidh">
+<!ENTITY filterEditorDialog.dimensions "width: 150ch;">
+<!ENTITY filterName.label "Ainm na criathraige:">
+<!ENTITY filterName.accesskey "i">
+
+<!ENTITY junk.label "Truilleis">
+<!ENTITY notJunk.label "Post còir">
+
+<!ENTITY lowestPriorityCmd.label "As ìsle">
+<!ENTITY lowPriorityCmd.label "Ìseal">
+<!ENTITY normalPriorityCmd.label "Àbhaisteach">
+<!ENTITY highPriorityCmd.label "Àrd">
+<!ENTITY highestPriorityCmd.label "As àirde">
+
+<!ENTITY contextDesc.label "Cleachd a’ chriathrag aig na h-amannan a leanas:">
+<!ENTITY contextIncomingMail.label "Nuair a gheibhear post ùr:">
+<!ENTITY contextIncomingMail.accesskey "g">
+<!ENTITY contextManual.label "Nuair a chuirear gu dol a làimh">
+<!ENTITY contextManual.accesskey "r">
+<!ENTITY contextBeforeCls.label "Criathraich mus comharraichear truilleis">
+<!ENTITY contextAfterCls.label "Criathraich an dèidh comharrachadh na truilleis">
+<!ENTITY contextOutgoing.label "An dèidh a chuir">
+<!ENTITY contextOutgoing.accesskey "d">
+<!ENTITY contextArchive.label "Aig àm tasglannaidh">
+<!ENTITY contextArchive.accesskey "a">
+
+<!ENTITY filterActionDesc.label "Dèan na leanas:">
+<!ENTITY filterActionDesc.accesskey "D">
+
+<!ENTITY filterActionOrderWarning.label "An aire: Thèid gnìomhan criathradh a chur an gnìomh ann an òrdugh eadar-dhealaichte.">
+<!ENTITY filterActionOrder.label "Faic òrdugh a' ghnìomhachaidh">
+<!-- New Style Filter Rule Actions -->
+
+<!ENTITY moveMessage.label "Gluais an teachdaireachd gu">
+<!ENTITY copyMessage.label "Cuir lethbhreac dhen teachdaireachd gu">
+<!ENTITY forwardTo.label "Sìn an teachdaireachd air adhart gu">
+<!ENTITY replyWithTemplate.label "Thoir freagairt le teamplaid">
+<!ENTITY markMessageRead.label "Cuir comharra air gun deach a leughadh">
+<!ENTITY markMessageUnread.label "Cuir comharra nach deach a leughadh">
+<!ENTITY markMessageStarred.label "Cuir rionnag ris">
+<!ENTITY setPriority.label "Atharraich a prìomhachas gu">
+<!ENTITY addTag.label "Cuir taga ris an teachdaireachd">
+<!ENTITY setJunkScore.label "Cuir a h-inbhe truilleis gu">
+<!ENTITY deleteMessage.label "Sguab às an teachdaireachd">
+<!ENTITY deleteFromPOP.label "Sguab às on fhrithealaiche POP">
+<!ENTITY fetchFromPOP.label "Faigh on fhrithealaiche POP">
+<!ENTITY ignoreThread.label "Leig seachad an snàth">
+<!ENTITY ignoreSubthread.label "Leig seachad am fo-shnàth">
+<!ENTITY watchThread.label "Cum sùil air an t-snàth">
+<!ENTITY stopExecution.label "Sguir dhen chriathradh">
+
+<!ENTITY addAction.tooltip "Cuir gnìomh ùr ris">
+<!ENTITY removeAction.tooltip "Thoir air falbh an gnìomh seo">
+
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- Flex Attribute: https://developer.mozilla.org/docs/XUL/Attribute/flex -->
+
+<!ENTITY filterActionTypeFlexValue "3">
+<!ENTITY filterActionTargetFlexValue "6">

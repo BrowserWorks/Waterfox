@@ -28,14 +28,9 @@
 #include "mozilla/Utf8.h"  // mozilla::Utf8Unit
 #include "mozilla/XPCOM.h"
 
-#include "nsIChannel.h"
-#include "nsIClassInfo.h"
-#include "nsIDirectoryService.h"
 #include "nsIPrincipal.h"
 #include "nsIScriptSecurityManager.h"
-#include "nsIURI.h"
 #include "nsIXPConnect.h"
-#include "nsIXPCScriptable.h"
 
 #include "nsJSUtils.h"
 #include "nsJSPrincipals.h"
@@ -50,8 +45,6 @@
 using mozilla::AutoSafeJSContext;
 using mozilla::dom::AutoEntryScript;
 using mozilla::dom::AutoJSAPI;
-using mozilla::ipc::TestShellChild;
-using mozilla::ipc::TestShellParent;
 using mozilla::ipc::XPCShellEnvironment;
 using namespace JS;
 
@@ -294,7 +287,7 @@ void XPCShellEnvironment::ProcessFile(JSContext* cx, const char* filename,
 
     if (srcBuf.init(cx, buffer, strlen(buffer),
                     JS::SourceOwnership::Borrowed) &&
-        (script = JS::CompileDontInflate(cx, options, srcBuf))) {
+        (script = JS::Compile(cx, options, srcBuf))) {
       ok = JS_ExecuteScript(cx, script, &result);
       if (ok && !result.isUndefined()) {
         /* Suppress warnings from JS::ToString(). */
@@ -366,12 +359,7 @@ bool XPCShellEnvironment::Init() {
             "principals");
   }
 
-  RefPtr<BackstagePass> backstagePass;
-  rv = NS_NewBackstagePass(getter_AddRefs(backstagePass));
-  if (NS_FAILED(rv)) {
-    NS_ERROR("Failed to create backstage pass!");
-    return false;
-  }
+  auto backstagePass = MakeRefPtr<BackstagePass>();
 
   JS::RealmOptions options;
   options.creationOptions().setNewCompartmentInSystemZone();
@@ -397,8 +385,7 @@ bool XPCShellEnvironment::Init() {
   JS::Rooted<Value> privateVal(cx, PrivateValue(this));
   if (!JS_DefineProperty(cx, globalObj, "__XPCShellEnvironment", privateVal,
                          JSPROP_READONLY | JSPROP_PERMANENT) ||
-      !JS_DefineFunctions(cx, globalObj, gGlobalFunctions) ||
-      !JS_DefineProfilingFunctions(cx, globalObj)) {
+      !JS_DefineFunctions(cx, globalObj, gGlobalFunctions)) {
     NS_ERROR("JS_DefineFunctions failed!");
     return false;
   }

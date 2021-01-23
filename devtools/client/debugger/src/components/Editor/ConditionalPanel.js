@@ -9,16 +9,17 @@ import { connect } from "../../utils/connect";
 import classNames from "classnames";
 import "./ConditionalPanel.css";
 import { toEditorLine } from "../../utils/editor";
+import { prefs } from "../../utils/prefs";
 import actions from "../../actions";
 
 import {
-  getBreakpointForLocation,
+  getClosestBreakpoint,
   getConditionalPanelLocation,
   getLogPointStatus,
   getContext,
 } from "../../selectors";
 
-import type { SourceLocation, Context } from "../../types";
+import type { SourceLocation, Context, Breakpoint } from "../../types";
 
 function addNewLine(doc: Object) {
   const cursor = doc.getCursor();
@@ -26,6 +27,9 @@ function addNewLine(doc: Object) {
   doc.replaceRange("\n", pos);
 }
 
+type OwnProps = {|
+  editor: Object,
+|};
 type Props = {
   cx: Context,
   breakpoint: ?Object,
@@ -76,7 +80,13 @@ export class ConditionalPanel extends PureComponent<Props> {
   };
 
   setBreakpoint(value: string) {
-    const { cx, location, log, breakpoint } = this.props;
+    const { cx, log, breakpoint } = this.props;
+    // If breakpoint is `pending`, props will not contain a breakpoint.
+    // If source is a URL without location, breakpoint will contain no generatedLocation.
+    const location =
+      breakpoint && breakpoint.generatedLocation
+        ? breakpoint.generatedLocation
+        : this.props.location;
     const options = breakpoint ? breakpoint.options : {};
     const type = log ? "logValue" : "condition";
     return this.props.setBreakpointOptions(cx, location, {
@@ -125,7 +135,6 @@ export class ConditionalPanel extends PureComponent<Props> {
     if (this.cbPanel) {
       this.clearConditionalPanel();
     }
-
     const { location, editor } = props;
 
     const editorLine = toEditorLine(location.sourceId, location.line || 0);
@@ -160,7 +169,6 @@ export class ConditionalPanel extends PureComponent<Props> {
 
   createEditor = (input: ?HTMLTextAreaElement) => {
     const { log, editor, closeConditionalPanel } = this.props;
-
     const codeMirror = editor.CodeMirror.fromTextArea(input, {
       mode: "javascript",
       theme: "mozilla",
@@ -169,6 +177,7 @@ export class ConditionalPanel extends PureComponent<Props> {
           ? "editor.conditionalPanel.logPoint.placeholder2"
           : "editor.conditionalPanel.placeholder2"
       ),
+      cursorBlinkRate: prefs.cursorBlinkRate,
     });
 
     codeMirror.on("keydown", (cm, e) => {
@@ -194,7 +203,7 @@ export class ConditionalPanel extends PureComponent<Props> {
 
   getDefaultValue() {
     const { breakpoint, log } = this.props;
-    const options = (breakpoint && breakpoint.options) || {};
+    const options = breakpoint?.options || {};
     return log ? options.logValue : options.condition;
   }
 
@@ -229,12 +238,18 @@ export class ConditionalPanel extends PureComponent<Props> {
 
 const mapStateToProps = state => {
   const location = getConditionalPanelLocation(state);
-  const log = getLogPointStatus(state);
+
+  if (!location) {
+    throw new Error("Conditional panel location needed.");
+  }
+
+  const breakpoint: ?Breakpoint = getClosestBreakpoint(state, location);
+
   return {
     cx: getContext(state),
-    breakpoint: getBreakpointForLocation(state, location),
+    breakpoint,
     location,
-    log,
+    log: getLogPointStatus(state),
   };
 };
 
@@ -250,7 +265,7 @@ const mapDispatchToProps = {
   closeConditionalPanel,
 };
 
-export default connect(
+export default connect<Props, OwnProps, _, _, _, _>(
   mapStateToProps,
   mapDispatchToProps
 )(ConditionalPanel);

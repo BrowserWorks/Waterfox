@@ -2,31 +2,40 @@
     // See https://go.microsoft.com/fwlink/?LinkId=733558
     // for the documentation about the tasks.json format
     "version": "2.0.0",
-    "command": "${workspaceRoot}/mach",
-    "windows": {
-      "command": "\"\\mozilla-build\\start-shell.bat mach\""
-    },
+    "type": "shell",
+    "command": "${workspaceFolder}/mach",
     "args": ["--log-no-times"],
-    "echoCommand": true,
+    "windows": {
+      "command": "/mozilla-build/start-shell.bat",
+      "args": [
+        "cd",
+        // Use PowerShell to mangle path for mozilla-build environment
+        {"value": "$('${workspaceFolder}' -replace '\\\\','/')", "quoting": "weak"},
+        "';'",
+
+        "mach",
+        "--log-no-times"
+      ]
+    },
     "tasks": [
       {
+        "label": "clobber",
+        "args": ["clobber"],
+        "problemMatcher": []
+      },
+      {
         "label": "clobber-python",
-        "type":"shell",
-        "command": "${workspaceRoot}/mach",
-        "windows": {
-          "command": "\"\\mozilla-build\\start-shell.bat mach\""
-        },
         "args": ["clobber", "python"],
         "problemMatcher": []
       },
       {
         "label": "configure",
-        "type":"shell",
+        "args": ["configure"],
         "problemMatcher": []
       },
       {
         "label": "build",
-        "type":"shell",
+        "args": ["build"],
         "problemMatcher": {
           "owner": "cpp",
           "fileLocation": "absolute",
@@ -42,12 +51,7 @@
       },
       {
         "label": "build-binaries",
-        "type":"shell",
-        "command": "${workspaceRoot}/mach",
-        "windows": {
-          "command": "\"\\mozilla-build\\start-shell.bat mach\""
-        },
-        "args": ["--log-no-times", "build", "binaries"],
+        "args": ["build", "binaries"],
         "problemMatcher": {
           "owner": "cpp",
           "fileLocation": "absolute",
@@ -67,12 +71,7 @@
       },
       {
         "label": "build-faster",
-        "type":"shell",
-        "command": "${workspaceRoot}/mach",
-        "windows": {
-          "command": "\"\\mozilla-build\\start-shell.bat mach\""
-        },
-        "args": ["--log-no-times", "build", "faster"],
+        "args": ["build", "faster"],
         "problemMatcher": {
           "owner": "cpp",
           "fileLocation": "absolute",
@@ -88,39 +87,27 @@
       },
       {
         "label": "run",
-        "type":"shell",
-        "args": ["-purgecaches"],
+        "args": ["run", "-purgecaches"],
         "problemMatcher": []
       },
       {
         "label": "lint-wo",
-        "type":"shell",
-        "command": "${workspaceRoot}/mach",
-        "windows": {
-          "command": "\"\\mozilla-build\\start-shell.bat mach\""
-        },
         "args": ["lint", "-wo"],
         "problemMatcher": ["$eslint-stylish"]
       },
       {
         "label": "eslint",
-        "type": "shell",
+        "args": ["eslint", "${file}"],
         "problemMatcher": ["$eslint-stylish"]
       },
       {
         "label": "eslint-fix",
-        "type":"shell",
-        "command": "${workspaceRoot}/mach",
-        "windows": {
-          "command": "\"\\mozilla-build\\start-shell.bat mach\""
-        },
         "args": ["eslint", "--fix", "${file}"],
         "problemMatcher": ["$eslint-stylish"]
       },
       {
         "label": "test",
-        "type":"shell",
-        "args": ["${relativeFile}"],
+        "args": ["test", "${relativeFile}"],
         "group":"test",
         "presentation": {
             "reveal": "always",
@@ -129,10 +116,9 @@
       },
       {
         "label": "mochitest",
-        "type":"shell",
-        "args": ["${relativeFile}"],
+        "args": ["mochitest", "${relativeFile}"],
         "problemMatcher": {
-          "fileLocation": ["relative", "${workspaceRoot}"],
+          "fileLocation": ["relative", "${workspaceFolder}"],
           "pattern": {
               "regexp": "^.*\\s+(TEST-UNEXPECTED-FAIL|TEST-UNEXPECTED-PASS)\\s+\\|\\s+([^\\s]*)\\s+\\|\\s+(.*)$",
               "severity": 1,
@@ -147,8 +133,7 @@
       },
       {
         "label": "reftest",
-        "type":"shell",
-        "args": ["${relativeFile}"],
+        "args": ["reftest", "${relativeFile}"],
         "problemMatcher": {
           "fileLocation": ["absolute"],
           "pattern": {
@@ -165,10 +150,9 @@
       },
       {
         "label": "xpcshell-test",
-        "type":"shell",
-        "args": ["${relativeFile}", "--sequential"],
+        "args": ["xpcshell-test", "${relativeFile}", "--sequential"],
         "problemMatcher": {
-          "fileLocation": ["relative", "${workspaceRoot}"],
+          "fileLocation": ["relative", "${workspaceFolder}"],
           "pattern": {
               "regexp": "^.*\\s+(FAIL|ERROR)\\s+\\[([^\\s]*)\\s+:\\s+(\\d+)\\]\\s+(.*)$",
               "severity": 1,

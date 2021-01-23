@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Configurações avançadas da conta">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "Servidor de diretórios IMAP:">
+<!ENTITY serverDirectory.accesskey "I">
+<!ENTITY usingSubscription.label "Mostrar apenas pastas subscritas">
+<!ENTITY usingSubscription.accesskey "x">
+<!ENTITY dualUseFolders.label "O servidor suporta pastas que contêm subpastas e mensagens">
+<!ENTITY dualUseFolders.accesskey "s">
+<!ENTITY maximumConnectionsNumber.label "Número máximo de conexões cache para servidores:">
+<!ENTITY maximumConnectionsNumber.accesskey "N">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Estas preferências especificam os namespaces no servidor IMAP">
+<!ENTITY personalNamespace.label "Namespace pessoal:">
+<!ENTITY personalNamespace.accesskey "a">
+<!ENTITY publicNamespace.label "Público (compartilhado):">
+<!ENTITY publicNamespace.accesskey "P">
+<!ENTITY otherUsersNamespace.label "Outros usuários:">
+<!ENTITY otherUsersNamespace.accesskey "O">
+<!ENTITY overrideNamespaces.label "Permitir que o servidor sobrescreva estes namespaces">
+<!ENTITY overrideNamespaces.accesskey "e">
+<!ENTITY pop3DeferringDesc.label "Quando baixar mensagens do servidor desta conta, usar a seguinte pasta para armazenar novas mensagens:">
+<!ENTITY accountInbox.label "Caixa de entrada desta conta">
+<!ENTITY accountInbox.accesskey "c">
+<!ENTITY deferToServer.label "Caixa de entrada de outra conta">
+<!ENTITY deferToServer.accesskey "o">
+<!ENTITY deferGetNewMail.label "Ao receber mensagens, incluir esta conta">
+<!ENTITY deferGetNewMail.accesskey "A">

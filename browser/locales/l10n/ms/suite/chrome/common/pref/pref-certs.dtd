@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  managecerts.caption      "Urus Sijil">
+<!ENTITY  managecerts.text         "Gunakan Pengurus Sijil untuk menguruskan sijil peribadi anda, serta sijil perseorangan dan pihak berkuasa lain.">
+<!ENTITY  managecerts.button       "Urus Sijil…">
+<!ENTITY  managecerts.accesskey    "U">
+<!ENTITY  managedevices.caption    "Urus Peranti Keselamatan">
+<!ENTITY  managedevices.text       "Gunakan butang ini untuk menguruskan peranti keselamatan anda, seperti kad pintar.">
+<!ENTITY  managedevices.button     "Urus Peranti Keselamatan…">
+<!ENTITY  managedevices.accesskey  "K">
+
+<!ENTITY  ssl.label                "SSL">
+
+<!ENTITY  pref.certs.title         "Sijil">
+<!ENTITY  certs.label              "Sijil">
+
+<!ENTITY validation.ocsp.caption                  "OCSP">
+<!ENTITY enableOCSP.label                         "Gunakan Protokol Status Sijil Atas Talian (OCSP) untuk mengesahkan kesahihan sijil semasa">
+<!ENTITY enableOCSP.accesskey                     "G">
+<!ENTITY validation.requireOCSP.description       "Apabila sambungan pelayan OCSP gagal, anggap sijil sebagai tidak sah">
+<!ENTITY validation.requireOCSP.accesskey         "A">

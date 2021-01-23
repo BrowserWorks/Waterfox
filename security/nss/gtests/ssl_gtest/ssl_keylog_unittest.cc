@@ -13,20 +13,59 @@
 
 namespace nss_test {
 
-static const std::string keylog_file_path = "keylog.txt";
-static const std::string keylog_env = "SSLKEYLOGFILE=" + keylog_file_path;
+static const std::string kKeylogFilePath = "keylog.txt";
+static const std::string kKeylogBlankEnv = "SSLKEYLOGFILE=";
+static const std::string kKeylogSetEnv = kKeylogBlankEnv + kKeylogFilePath;
 
-class KeyLogFileTest : public TlsConnectGeneric {
+extern "C" {
+extern FILE* ssl_keylog_iob;
+}
+
+class KeyLogFileTestBase : public TlsConnectGeneric {
+ private:
+  std::string env_to_set_;
+
  public:
+  virtual void CheckKeyLog() = 0;
+
+  KeyLogFileTestBase(std::string env) : env_to_set_(env) {}
+
   void SetUp() override {
     TlsConnectGeneric::SetUp();
     // Remove previous results (if any).
-    (void)remove(keylog_file_path.c_str());
-    PR_SetEnv(keylog_env.c_str());
+    (void)remove(kKeylogFilePath.c_str());
+    PR_SetEnv(env_to_set_.c_str());
   }
 
-  void CheckKeyLog() {
-    std::ifstream f(keylog_file_path);
+  void ConnectAndCheck() {
+    // This is a child process, ensure that error messages immediately
+    // propagate or else it will not be visible.
+    ::testing::GTEST_FLAG(throw_on_failure) = true;
+
+    if (version_ == SSL_LIBRARY_VERSION_TLS_1_3) {
+      SetupForZeroRtt();
+      client_->Set0RttEnabled(true);
+      server_->Set0RttEnabled(true);
+      ExpectResumption(RESUME_TICKET);
+      ZeroRttSendReceive(true, true);
+      Handshake();
+      ExpectEarlyDataAccepted(true);
+      CheckConnected();
+      SendReceive();
+    } else {
+      Connect();
+    }
+    CheckKeyLog();
+    _exit(0);
+  }
+};
+
+class KeyLogFileTest : public KeyLogFileTestBase {
+ public:
+  KeyLogFileTest() : KeyLogFileTestBase(kKeylogSetEnv) {}
+
+  void CheckKeyLog() override {
+    std::ifstream f(kKeylogFilePath);
     std::map<std::string, size_t> labels;
     std::set<std::string> client_randoms;
     for (std::string line; std::getline(f, line);) {
@@ -63,28 +102,6 @@ class KeyLogFileTest : public TlsConnectGeneric {
       ASSERT_EQ(4U, labels["EXPORTER_SECRET"]);
     }
   }
-
-  void ConnectAndCheck() {
-    // This is a child process, ensure that error messages immediately
-    // propagate or else it will not be visible.
-    ::testing::GTEST_FLAG(throw_on_failure) = true;
-
-    if (version_ == SSL_LIBRARY_VERSION_TLS_1_3) {
-      SetupForZeroRtt();
-      client_->Set0RttEnabled(true);
-      server_->Set0RttEnabled(true);
-      ExpectResumption(RESUME_TICKET);
-      ZeroRttSendReceive(true, true);
-      Handshake();
-      ExpectEarlyDataAccepted(true);
-      CheckConnected();
-      SendReceive();
-    } else {
-      Connect();
-    }
-    CheckKeyLog();
-    _exit(0);
-  }
 };
 
 // Tests are run in a separate process to ensure that NSS is not initialized yet
@@ -107,6 +124,39 @@ INSTANTIATE_TEST_CASE_P(
 #ifndef NSS_DISABLE_TLS_1_3
 INSTANTIATE_TEST_CASE_P(
     KeyLogFileTLS13, KeyLogFileTest,
+    ::testing::Combine(TlsConnectTestBase::kTlsVariantsStream,
+                       TlsConnectTestBase::kTlsV13));
+#endif
+
+class KeyLogFileUnsetTest : public KeyLogFileTestBase {
+ public:
+  KeyLogFileUnsetTest() : KeyLogFileTestBase(kKeylogBlankEnv) {}
+
+  void CheckKeyLog() override {
+    std::ifstream f(kKeylogFilePath);
+    EXPECT_FALSE(f.good());
+
+    EXPECT_EQ(nullptr, ssl_keylog_iob);
+  }
+};
+
+TEST_P(KeyLogFileUnsetTest, KeyLogFile) {
+  testing::GTEST_FLAG(death_test_style) = "threadsafe";
+
+  ASSERT_EXIT(ConnectAndCheck(), ::testing::ExitedWithCode(0), "");
+}
+
+INSTANTIATE_TEST_CASE_P(
+    KeyLogFileDTLS12, KeyLogFileUnsetTest,
+    ::testing::Combine(TlsConnectTestBase::kTlsVariantsDatagram,
+                       TlsConnectTestBase::kTlsV11V12));
+INSTANTIATE_TEST_CASE_P(
+    KeyLogFileTLS12, KeyLogFileUnsetTest,
+    ::testing::Combine(TlsConnectTestBase::kTlsVariantsStream,
+                       TlsConnectTestBase::kTlsV10ToV12));
+#ifndef NSS_DISABLE_TLS_1_3
+INSTANTIATE_TEST_CASE_P(
+    KeyLogFileTLS13, KeyLogFileUnsetTest,
     ::testing::Combine(TlsConnectTestBase::kTlsVariantsStream,
                        TlsConnectTestBase::kTlsV13));
 #endif

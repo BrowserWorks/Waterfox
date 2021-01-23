@@ -47,11 +47,19 @@ button:disabled {
   margin-top: 2em;
 }
 
+#enableTls10Container {
+  display: none;
+}
+
 #prefChangeContainer {
   display: none;
 }
 
 #learnMoreContainer {
+  display: none;
+}
+
+#openInNewWindowContainer {
   display: none;
 }
 
@@ -146,13 +154,8 @@ body:not(.neterror) #advancedButton {
   flex-shrink: 0;
 }
 
-#errorCode:not([href]) {
-  color: var(--in-content-page-color);
-  cursor: text;
-  text-decoration: none;
-}
-
-#errorCode[href] {
+#errorCode {
+  cursor: pointer;
   white-space: nowrap;
 }
 
@@ -206,19 +209,19 @@ body:not(.neterror) #advancedButton {
 .netTimeout #errorPageContainer,
 .netReset #errorPageContainer,
 .netOffline #errorPageContainer {
-  background-image: url("chrome://browser/content/illustrations/error-connection-failure.svg");
+  background-image: url("chrome://browser/skin/illustrations/error-connection-failure.svg");
 }
 
 .dnsNotFound #errorPageContainer {
-  background-image: url("chrome://browser/content/illustrations/error-server-not-found.svg");
+  background-image: url("chrome://browser/skin/illustrations/error-server-not-found.svg");
 }
 
 .malformedURI #errorPageContainer {
-  background-image: url("chrome://browser/content/illustrations/error-malformed-url.svg");
+  background-image: url("chrome://browser/skin/illustrations/error-malformed-url.svg");
 }
 
 .clockSkewError #errorPageContainer {
-  background-image: url("chrome://browser/content/illustrations/blue-berror.svg");
+  background-image: url("chrome://browser/skin/illustrations/blue-berror.svg");
   background-size: 18.5em;
 }
 
@@ -247,10 +250,6 @@ body:not(.neterror) #advancedButton {
   display: none;
 }
 
-#wrongSystemTimePanel {
-  display: none;
-}
-
 #wrongSystemTimeWithoutReferencePanel {
   display: none;
 }
@@ -273,7 +272,7 @@ body:not(.neterror) #advancedButton {
     margin: 0 10px;
   }
 
-  #errorCode[href] {
+  #errorCode {
     /* Break the error code to avoid long codes overflowing the screen */
     white-space: normal;
     word-wrap: anywhere;

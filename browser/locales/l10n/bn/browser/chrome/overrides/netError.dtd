@@ -1,0 +1,141 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "পাতা লোড করতে সমস্যা">
+<!ENTITY retry.label "পুনরায় চেষ্টা করুন">
+<!ENTITY returnToPreviousPage.label "পিছনে ফিরে যাও">
+<!ENTITY returnToPreviousPage1.label "পেছনে যান (সুপারিশকৃত)">
+<!ENTITY advanced2.label "উন্নত…">
+<!ENTITY viewCertificate.label "সার্টিফিকেট প্রদর্শন">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "সার্ভার খুঁজে পাওয়া যায় নি">
+<!ENTITY dnsNotFound.longDesc1 "<strong>যদি ঠিকানা সঠিক হয়, এখানে আরও তিনটি জিনিস আছে যা অাপনি চেস্টা করতে পারেন:</strong>
+<ul>
+  <li>আবার চেস্টা করুন।</li>
+  <li>আপনার নেটওয়ার্ক সংযোগ পরীক্ষা করুন।</li>
+  <li>আপনি যদি সংযুক্ত থাকেন কিন্তু ফায়ারওয়ালের পিছনে, তাহলে তা &brandShortName; ওয়েবে প্রবেশ করার অনুমতি পরীক্ষা করুন।</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.longDesc "<ul> <li>ফাইলের নামের বানান ও ছোট/বড় অক্ষর পরীক্ষা করুন।</li> <li>ফাইলের স্থান, নাম পরিবর্তিত হয়েছে কিনা বা সেটি মুছে ফেলা হয়েছে কিনা তা পরীক্ষা করুন।</li> </ul>">
+
+<!ENTITY fileAccessDenied.longDesc "<ul><li>এটা মুছে ফেলা হতে পারে, সরিয়ে নেয়া হতে পারে, অথবা ফাইল প্রবেশাধিকার প্রতিরোধ করা হয়ে থাকতে পারে।</li></ul>">
+
+<!ENTITY generic.longDesc "<p>&brandShortName; এই পাতাটি কোনো কারণে লোড করতে পারছে না।</p>">
+
+<!ENTITY captivePortal.title "নেটওয়ার্কে লগইন করুন">
+<!ENTITY captivePortal.longDesc2 "<p>ইন্টারনেট প্রবেশ করতে হলে, আপনাকে এই নেটওয়ার্কে অবশ্যই লগইন করতে হবে।</p>">
+
+<!ENTITY openPortalLoginPage.label2 "নেটওয়ার্ক লগইন পাতা খুলুন">
+
+<!ENTITY malformedURI.pageTitle "অবৈধ URL">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>&brandShortName;' এর ক্যাশে আপনি যে নথিটি চেয়েছেন তা পাওয়া যাচ্ছে না।</p><ul><li>নিরাপত্তার জন্য, &brandShortName; নাজুক নথির জন্য পুনরায় অনুরোধ পাঠাবে না।</li><li>আবার চেষ্টা করুন বাটনে ক্লিক করে ওয়েবসাইট থেকে নথিটি পুনরায় অনুরোধ করুন।</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "
+<ul>
+  <li>পাতা পুনরায় চালু করতে এবং অনলাইন মোড পরিবর্তন করতে &quot;আবার চেষ্টা করুন&quot; চাপুন।</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.longDesc "<ul> <li>অনুগ্রহ করে এই সমস্যা সম্পর্কে ওয়েবসাইট নির্মাতাদের অবগত করুন।</li> </ul>">
+
+<!ENTITY unsafeContentType.longDesc "<ul> <li>অনুগ্রহ করে এই সমস্যা সম্পর্কে ওয়েবসাইট নির্মাতাদের অবগত করুন।</li> </ul>">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>এই ঠিকানা খোলার জন্য অন্য সফটওয়্যার ইনস্টল করার প্রয়োজন হতে পারে।</li> </ul>">
+
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>প্রক্সির সেটিং সঠিক কিনা তা পরীক্ষা করুন।</li> <li>প্রক্সি সার্ভার ঠিকভাবে চলছে কিনা জানতে নেটওয়ার্ক অ্যাডমিনিস্ট্রেটরের সাথে যোগাযোগ করুন।</li> </ul>">
+
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>প্রক্সি সংক্রান্ত বৈশিষ্ট্য সঠিকরূপে স্থাপিত হয়েছে কিনা তা পরীক্ষা করুন।</li> <li>পরীক্ষা করুন আপনার কম্পিউটারের সাথে সঠিকরূপে নেটওয়ার্কের সংযোগ স্থাপিত রয়েছে কিনা।</li> <li>আপনার কম্পিউটার যদি কোনো ফায়ারওয়াল অথবা প্রক্সির আড়ালে স্থাপিত হয় তাহলে &brandShortName;-কে ওয়েবে সংযোগ করার অনুমতি প্রদান করুন।</li> </ul>">
+
+<!ENTITY redirectLoop.longDesc "<ul> <li>কুকি নিষ্ক্রিয় অথবা প্রত্যাখ্যান করা হলে এই সমস্যা হওয়ার সম্ভাবনা আছে।</li> </ul>">
+
+<!ENTITY unknownSocketType.longDesc "<ul> <li>আপনার সিস্টেমে ব্যক্তিগত নিরাপত্তা ব্যবস্থা উপস্থিত রয়েছে কিনা তা পরীক্ষা করুন।</li> <li>সার্ভারে আদর্শ কনফিগারেশন না থাকার ফলে এই সমস্যাটি হতে পারে।</li> </ul>">
+
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>প্রাপ্ত তথ্যের যথার্থতা পরীক্ষা করা সম্ভব না হওয়ার ফলে প্রদর্শনের জন্য চিহ্নিত পাতা প্রদর্শন করা সম্ভব হয়নি।</li> <li>অনুগ্রহ করে এই সমস্যা সম্পর্কে ওয়েব-সাইট নির্মাতাদের সূচিত করুন।</li> </ul>">
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara2 "&brandShortName; একটি সম্ভাব্য হুমকি শনাক্ত করেছে এবং <span class='hostname'/>এ প্রবেশ করেনি। যদি আপনি এই সাইটটিতে প্রবেশ করেন, তাহলে আক্রমণকারীরা আপনার পাসওয়ার্ড, ইমেইল অথবা ক্রেডিট কার্ডের মত তথ্য চুরি করার চেষ্টা করতে পারে।">
+<!ENTITY certerror.sts.introPara "&brandShortName; একটি সম্ভাব্য হুমকি শনাক্ত করেছে এবং <span class='hostname'/> এ কাজ করেনি কারণ এই ওয়েবসাইটটিতে একটি নিরাপদ সংযোগ প্রয়োজন।">
+
+<!ENTITY certerror.expiredCert.introPara "&brandShortName; একটি সমস্যা শনাক্ত করেছে এবং <span class='hostname'/>এ চালিয়ে যায়নি। ওয়েবসাইটটি হয়তোবা ভুলভাবে কনফিগার করা আছে অথবা আপনার কম্পিউটারের ঘড়িতে ভুল সময় সেট করা আছে।">
+<!ENTITY certerror.expiredCert.secondPara2 "সম্ভবত ওয়েবসাইটটির সার্টিফিকেটের মেয়াদ শেষ হয়ে গিয়েছে, যা &brandShortName; কে নিরাপদে সংযোগ স্থাপন থেকে বাধা দিচ্ছে। আপনি যদি এই সাইটটি দেখতে চান, তবে আক্রমণকারীরা আপনার পাসওয়ার্ড, ইমেইল অথবা ক্রেডিট কার্ডের মত তথ্য চুরি করার চেষ্টা করতে পারে।">
+<!ENTITY certerror.expiredCert.sts.secondPara "সম্ভবত ওয়েবসাইটটির সার্টিফিকেটের মেয়াদ শেষ হয়ে গিয়েছে, যা &brandShortName; কে নিরাপদে সংযোগ স্থাপন করতে বাধা দিচ্ছে।">
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "এ ব্যাপারে আপনি কি করতে পারেন?">
+
+<!ENTITY certerror.unknownIssuer.whatCanYouDoAboutIt "
+<p>সমস্যাটি ওয়েবসাইটের নিজের হওয়ার সম্ভাবনা সবচেয়ে বেশি, আর এটি সমাধান করার জন্য আপনার করার কিছু নেই।</p><p> আপনি যদি কোনও কর্পোরেট নেটওয়ার্কে থাকেন বা এন্টি-ভাইরাস সফটওয়্যার ব্যবহার করেন, তাহলে সহায়তার জন্য আপনি সাপোর্ট টিমের সাথে কথা বলতে পারেন। আপনি সেই ওয়েবসাইট এর প্রশাসককেও সমস্যা সম্পর্কে অবহিত করতে পারেন।</p>">
+
+<!ENTITY certerror.expiredCert.whatCanYouDoAboutIt2 "
+<p>আপনার কম্পিউটারের ঘড়ি <span id='wrongSystemTime_systemDate2'/> এ সেট করা আছে। আপনার কম্পিউটারের সিস্টেম সেটিংসে সঠিক তারিখ, সময়, এবং টাইম জোন সেট করা আছে, তা নিশ্চিত করুন, এবং তারপর <span class='hostname'/> এর রিফ্রেশ করুন।</p>
+<p>আপনার ঘড়িতে যদি সঠিক সময় নির্ধারণ করা থাকে, তার মানে হচ্ছে সম্ভবত ওয়েবসাইটেই ভুল বিন্যাসে রয়েছে, এবং সমস্যাটি সমাধানের জন্য আপনা কিছুই করার নাই। আপনি সমস্যা সম্পর্কে ওয়েবসাইট এর প্রশাসককে অবহিত করতে পারেন</p>">
+
+<!ENTITY certerror.badCertDomain.whatCanYouDoAboutIt "
+<p>এই সমস্যাটি ওয়েবসাইটের হওয়ার সম্ভাবনা সবচেয়ে বেশি এবং এটির সমাধান করার জন্য আপনার করার কিছুই নেই। আপনি সমস্যা সম্পর্কে ওয়েবসাইট এর প্রশাসককে অবহিত করতে পারেন</p>
+">
+
+<!ENTITY sharedLongDesc "<ul> <li>সাইটটি সম্ভবত সাময়িকভাবে অকার্যকর বা অত্যন্ত ব্যস্ত। কিছুক্ষন পর আবার চেষ্টা করুন।</li> <li>কোন পাতাই লোড করা সম্ভব না হলে আপনার কম্পিউটারের নেটওয়ার্ক সংযোগ পরীক্ষা করুন।</li> <li>আপনার কম্পিউটার বা নেটওয়ার্ক যদি কোনো ফায়ারওয়াল অথবা প্রক্সি দিয়ে সুরক্ষিত থাকে, &brandShortName; কে ওয়েবে সংযোগ করার অনুমতি প্রদান করা হয়েছে কিনা তা পরীক্ষা করুন।</li> </ul>">
+
+<!ENTITY cspBlocked.longDesc "<p>এভাবে পাতা লোড করতে &brandShortName; বাধা দেয় কারণ এ পাতার বিষয়বস্তুর নিরাপত্তা নীতিমালা এটা করতে অনুমোদন দেয় না।</p>">
+
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; এই পেজটিকে এই প্রাসিঙ্গকতায় লোড করতে বাধা দিয়েছে, কারণ পেজেটিতে X-Frame-Options পলিসি রয়েছে, যা এটিকে অনুমতি দেয় না।</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>প্রাপ্ত তথ্যের যথার্থতা পরীক্ষা করা সম্ভব না হওয়ার ফলে পাতাটি প্রদর্শন করা সম্ভব হয়নি।</p><ul><li>অনুগ্রহ করে এই সমস্যা সম্পর্কে ওয়েব-সাইট নির্মাতাদের অবগত করুন।</li></ul>">
+
+<!ENTITY securityOverride.exceptionButton1Label "ঝুঁকি নিন এবং চালিয়ে যান">
+
+<!ENTITY errorReporting.automatic2 "মজিলাকে এই ধরনের প্রতিবেদন দিয়ে ক্ষরিকারক সাইট চিহ্নিত এবং অবরুদ্ধ করতে সাহায্য করুন।">
+<!ENTITY errorReporting.learnMore "আরও জানুন…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>এই সমস্যাটি সম্পর্কে অনুগ্রহ করে ওয়েবসাইটের মালিককে জানান।</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "বিস্তারিত তথ্য: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.pagetitle2  "সতর্কতা: সামনে সম্ভাব্য নিরাপত্তা ঝুঁকি রয়েছে">
+<!ENTITY certerror.sts.pagetitle  "সংযুক্ত হয়নি: সম্ভাব্য নিরাপত্তা সমস্যা">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation1 "<span class='hostname'></span> এর HTTP স্ট্রিক্ট ট্রান্সপোর্ট সিকিউরিটি (এইচএসটিএস) নামে একটি নিরাপত্তা নীতি রয়েছে, যার মানে হল যে &brandShortName; শুধুমাত্র নিরাপদভাবে সংযোগ করতে পারবে। আপনি এই সাইট দেখার জন্য কোন ব্যতিক্রম যোগ করতে পারবেন না।">
+<!ENTITY certerror.copyToClipboard.label "লেখা ক্লিপবোর্ডে অনুলিপি করুন।">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> মেয়াদহীন নিরাপত্তা প্রযুক্তি ব্যবহার করছে যা আক্রমণের শিকার হতে পারে। আপনি হয়তো একে নিরাপদ মনে করছেন, কিন্তু একজন আক্রমণকারী খুব সহজেই আপনার তথ্য জেনে নিতে পারবে। ওয়েবসাইটের এডমিন এই সার্ভারের নিরাপত্তা ত্রুটি সারানোর আগ পর্যন্ত আপনি ভিজিট করতে পারবেন না।</p><p>Error code: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "ব্লক করা পাতা">
+
+<!ENTITY certerror.mitm.longDesc "<span class='hostname'></span> সম্ভবত এটি একটি নিরাপদ সাইট, কিন্তু একটি সুরক্ষিত সংযোগ স্থাপন করা যায় নি। এই সমস্যাটি <span class='mitm-name'/>দ্বারা হয়েছে, যা আপনার কম্পিউটারের অথবা আপনার নেটওয়ার্কে অবস্থিত কোন সফটওয়্যার।">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt1 "যদি আপনার অ্যান্টিভাইরাস সফ্টওয়্যারটিতে এমন কোনও বৈশিষ্ট্য অন্তর্ভুক্ত থাকে যা এনক্রিপ্ট হওয়া সংযোগগুলি (প্রায়ই “ওয়েব স্ক্যানিং” বা “https স্ক্যানিং” নামে পরিচিত) স্ক্যান করে, আপনি সেই বৈশিষ্ট্যটি অক্ষম করতে পারেন। যদি এটিতে কাজ না হয় তবে আপনি অ্যান্টিভাইরাস সফটওয়্যারটি সরিয়ে এবং পুনরায় ইনস্টল করতে পারেন।">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt2 "যদি আপনি কোন কর্পোরেট নেটওয়ার্কে থাকেন, তবে আপনার IT বিভাগে যোগাযোগ করতে পারেন।">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt3 "আপনি যদি <span class='mitm-name'/>এর সাথে পরিচিত না হোন, তাহলে এটি একটি আক্রমণ হতে পারে এবং আপনার আর চালিয়ে যাওয়া উচিৎ হবে না।">
+<!ENTITY certerror.mitm.sts.whatCanYouDoAboutIt3 "আপনি যদি <span class='mitm-name'/>এর সাথে পরিচিত না হয়ে থাকেন, তাহলে এটি একটি আক্রমণ হতে পারে, এবং সাইটে অ্যাক্সেস করার জন্য আপনার কিছুই করার নেই।">
+
+<!ENTITY clockSkewError.longDesc "আপনার কম্পিউটার মনে করে এটি <span id='wrongSystemTime_systemDate1'/>, যা &brandShortName; কে নিরাপদভাবে সংযুক্ত হওয়া থেকে বিরত রাখছে। <span class='hostname'></span> এ ভিজিট করতে হলে, আপনার সিস্টেম সেটিংসে গিয়ে আপনার কম্পিউটারের ঘড়ির বর্তমান তারিখ, সময় এবং সময় অঞ্চল আপডেট করুন এবং তারপর <span class='hostname'></span> রিফ্রেশ করুন।">
+
+<!ENTITY prefReset.longDesc "আপনার নেটওয়ার্কের সুরক্ষা সেটিং এই সমস্যা কারণ বলে প্রতীয়মান হচ্ছে। আপনি কি সেটিং পূর্বাবস্থায় ফিরিয়ে নিতে চান?">
+<!ENTITY prefReset.label "ডিফল্ট সেটিং পুনঃস্থাপন করুন">
+
+<!ENTITY enableTls10.longDesc "এই ওয়েবসাইট TLS 1.2 প্রোটোকল সমর্থন নাও করতে পারে, যা সর্বনিম্ন সংস্করণ &brandShortName;দ্বারা সমর্থিত। TLS 1.0 এবং TLS 1.1 সক্রিয় করার মাধ্যমে এই সংযোগটি সফল হতেও পারে।">
+<!ENTITY enableTls10.note "TLS 1.0 ও TLS 1.1 কে ভবিষ্যৎ রিলিজে পুরোপুরি নিষ্ক্রিয় করে দেওয়া হবে।">
+<!ENTITY enableTls10.label "TLS 1.0 ও 1.1 সক্রিয় করুন">
+
+<!ENTITY networkProtocolError.longDesc "<p>আপনি যে পাতাটি দেখতে চাচ্ছেন নেটওয়ার্ক প্রটোকলে একটি ত্রুটি দেখা দেওয়ায় তা দেখানো সম্ভব হচ্ছে না।</p><ul><li>অনুগ্রহ করে এই সমস্যা জানিয়ে ওয়েবসাইটের মালিকের সাথে যোগাযোগ করুন।</li></ul>">

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.addressing.title                 "მისამართები">
+<!ENTITY emailCollectiontitle.label            "ელფოსტის მისამართების კრებული">
+<!ENTITY emailCollectionPicker.label           "ელფოსტის მისამართების დამატება აქ:">
+<!ENTITY emailCollectionPicker.accesskey       "m">
+<!ENTITY emailCollectiontext.label             "გამავალი წერილების ელფოსტის მისამართები ავტომატურად შეიძლება ჩაემატოს ადგილობრივ წიგნაკში.">
+
+<!-- Autocompletion -->
+<!ENTITY addressingTitle.label                 "მისამართების ავტოშევსება">
+<!ENTITY highlightNonMatches.label             "არათვითშევსებადი მისამართების მინიშნება">
+<!ENTITY highlightNonMatches.accesskey         "ა">
+<!ENTITY addressingEnable.label                "ადგილობრივი წიგნაკები">
+<!ENTITY addressingEnable.accesskey            "L">
+<!ENTITY autocompleteText.label                "წერილების დამისამართებისას მსგავსის მოძებნა:">
+<!ENTITY directories.label                     "საქაღალდეების სერვერზე:">
+<!ENTITY directories.accesskey                 "D">
+<!ENTITY directoriesNone.label                 "არა">
+<!ENTITY editDirectories.label                 "საქაღალდეების ჩასწორება…">
+<!ENTITY editDirectories.accesskey             "E">

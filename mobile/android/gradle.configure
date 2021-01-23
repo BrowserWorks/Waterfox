@@ -60,9 +60,6 @@ def gradle_android_build_config():
         )
 
     return namespace(
-        app=namespace(
-            variant=variant(('withoutGeckoBinaries',), 'debug'),
-        ),
         geckoview=namespace(
             variant=variant(('withGeckoBinaries',), 'debug'),
         ),
@@ -73,7 +70,6 @@ def gradle_android_build_config():
 
 
 @depends(gradle_android_build_config)
-@imports(_from='itertools', _import='imap')
 def gradle_android_intermediates_folder(build_config):
     '''Path to intermediates classes folder.'''
     def uncapitalize(s):
@@ -89,12 +85,14 @@ def gradle_android_intermediates_folder(build_config):
         else:
             return s
 
-    productFlavor = uncapitalize(''.join(imap(capitalize, build_config.geckoview.variant.productFlavors)))
+    productFlavor = uncapitalize(''.join(capitalize(f) for f in build_config.geckoview.variant.productFlavors))
     buildType = uncapitalize(build_config.geckoview.variant.buildType)
 
-    return "gradle/build/mobile/android/geckoview/intermediates/classes/{}/{}".format(
+    return "gradle/build/mobile/android/geckoview/intermediates/javac/{}{}/compile{}{}JavaWithJavac/classes".format(
             productFlavor,
-            buildType)
+            capitalize(buildType),
+            capitalize(productFlavor),
+            capitalize(buildType))
 
 set_config('GRADLE_ANDROID_GECKOVIEW_APILINT_FOLDER', gradle_android_intermediates_folder)
 
@@ -108,11 +106,8 @@ def gradle_android_variant_name(build_config):
             return s
 
     return namespace(
-        app=uncapitalize(build_config.app.variant.name),
         geckoview=uncapitalize(build_config.geckoview.variant.name),
     )
-
-set_config('GRADLE_ANDROID_APP_VARIANT_NAME', gradle_android_variant_name.app)
 
 set_config('GRADLE_ANDROID_GECKOVIEW_VARIANT_NAME', gradle_android_variant_name.geckoview)
 
@@ -122,10 +117,7 @@ def gradle_android_app_tasks(build_config):
     '''Gradle tasks run by |mach android assemble-app|.'''
     return [
         'geckoview:generateJNIWrappersForGenerated{geckoview.variant.name}'.format(geckoview=build_config.geckoview),
-        'app:generateJNIWrappersForFennec{app.variant.name}'.format(app=build_config.app),
-        'app:assemble{app.variant.name}'.format(app=build_config.app),
-        'app:assemble{app.variant.name}AndroidTest'.format(app=build_config.app),
-    ]
+    ]                                    
 
 set_config('GRADLE_ANDROID_APP_TASKS', gradle_android_app_tasks)
 
@@ -151,59 +143,9 @@ set_config('GRADLE_ANDROID_GENERATE_GENERATED_JNI_WRAPPERS_TASKS', gradle_androi
 
 
 @depends(gradle_android_build_config)
-def gradle_android_generate_fennec_jni_wrappers_tasks(build_config):
-    '''Gradle tasks run by |mach android generate-fennec-jni-wrappers|.'''
-    return [
-        'app:generateJNIWrappersForFennec{app.variant.name}'.format(app=build_config.app),
-    ]
-
-set_config('GRADLE_ANDROID_GENERATE_FENNEC_JNI_WRAPPERS_TASKS', gradle_android_generate_fennec_jni_wrappers_tasks)
-
-
-@depends(gradle_android_build_config, check_build_environment)
-@imports(_from='itertools', _import='imap')
-def gradle_android_app_apks(build_config, build_env):
-    '''Paths to APK files produced by |mach android assemble-app|.'''
-    def capitalize(s):
-        # str.capitalize lower cases trailing letters.
-        if s:
-            return s[0].upper() + s[1:]
-        else:
-            return s
-
-    def uncapitalize(s):
-        if s:
-            return s[0].lower() + s[1:]
-        else:
-            return s
-
-    # Like 'productFlavor'.
-    productFlavor = uncapitalize(''.join(imap(capitalize, build_config.app.variant.productFlavors)))
-    # Like 'product-flavor'.
-    product_flavor = '-'.join(build_config.app.variant.productFlavors)
-
-    substs = {
-        'topobjdir': build_env.topobjdir,
-        'productFlavor': productFlavor,
-        'product_flavor': product_flavor,
-        'buildType': build_config.app.variant.buildType,
-    }
-
-    f = '{topobjdir}/gradle/build/mobile/android/app/outputs/apk/{productFlavor}/{buildType}/app-{product_flavor}-{buildType}.apk'
-    g = '{topobjdir}/gradle/build/mobile/android/app/outputs/apk/androidTest/{productFlavor}/{buildType}/app-{product_flavor}-{buildType}-androidTest.apk'
-
-    return namespace(app_apk=f.format(**substs),
-                     app_androidTest_apk=g.format(**substs))
-
-set_config('GRADLE_ANDROID_APP_APK', gradle_android_app_apks.app_apk)
-set_config('GRADLE_ANDROID_APP_ANDROIDTEST_APK', gradle_android_app_apks.app_androidTest_apk)
-
-
-@depends(gradle_android_build_config)
 def gradle_android_test_tasks(build_config):
     '''Gradle tasks run by |mach android test|.'''
     return [
-        'app:test{app.variant.name}UnitTest'.format(app=build_config.app),
         'geckoview:test{geckoview.variant.name}UnitTest'.format(
             geckoview=build_config.geckoview),
     ]
@@ -216,7 +158,7 @@ set_config('GRADLE_ANDROID_TEST_TASKS', gradle_android_test_tasks)
 def gradle_android_lint_tasks(build_config):
     '''Gradle tasks run by |mach android lint|.'''
     return [
-        'app:lint{app.variant.name}'.format(app=build_config.app),
+        'geckoview:lint{geckoview.variant.name}'.format(geckoview=build_config.geckoview),
     ]
 
 set_config('GRADLE_ANDROID_LINT_TASKS', gradle_android_lint_tasks)
@@ -235,9 +177,9 @@ set_config('GRADLE_ANDROID_API_LINT_TASKS', gradle_android_api_lint_tasks)
 def gradle_android_checkstyle_tasks(build_config):
     '''Gradle tasks run by |mach android checkstyle|.'''
     return [
-        'app:checkstyle',
         'geckoview:checkstyle{geckoview.variant.name}'.format(geckoview=build_config.geckoview),
     ]
+    
 
 set_config('GRADLE_ANDROID_CHECKSTYLE_TASKS', gradle_android_checkstyle_tasks)
 
@@ -255,21 +197,10 @@ def gradle_android_checkstyle_output_files(build_config):
     '''Output folder for checkstyle'''
     return [
         'gradle/build/mobile/android/geckoview/reports/checkstyle/{}.xml'.format(variant),
-        'gradle/build/mobile/android/app/reports/checkstyle/checkstyle.xml',
     ]
+
 
 set_config('GRADLE_ANDROID_CHECKSTYLE_OUTPUT_FILES', gradle_android_checkstyle_output_files)
-
-
-@depends(gradle_android_build_config)
-def gradle_android_findbugs_tasks(build_config):
-    '''Gradle tasks run by |mach android findbugs|.'''
-    return [
-        'app:findbugsXml{app.variant.name}'.format(app=build_config.app),
-        'app:findbugsHtml{app.variant.name}'.format(app=build_config.app),
-    ]
-
-set_config('GRADLE_ANDROID_FINDBUGS_TASKS', gradle_android_findbugs_tasks)
 
 
 @depends(gradle_android_build_config)
@@ -280,6 +211,8 @@ def gradle_android_archive_geckoview_tasks(build_config):
         'geckoview:assemble{geckoview.variant.name}AndroidTest'.format(geckoview=build_config.geckoview),
         'geckoview_example:assemble{geckoview_example.variant.name}'.format(geckoview_example=build_config.geckoview_example),
         'geckoview_example:assemble{geckoview_example.variant.name}AndroidTest'.format(geckoview_example=build_config.geckoview_example),
+        'messaging_example:assemble{geckoview_example.variant.name}AndroidTest'.format(geckoview_example=build_config.geckoview_example),
+        'port_messaging_example:assemble{geckoview_example.variant.name}AndroidTest'.format(geckoview_example=build_config.geckoview_example),
         'geckoview:publish{geckoview.variant.name}PublicationToMavenRepository'.format(geckoview=build_config.geckoview),
     ]
 
@@ -307,12 +240,30 @@ set_config('GRADLE_ANDROID_GECKOVIEW_DOCS_ARCHIVE_TASKS', gradle_android_geckovi
 
 
 @depends(gradle_android_build_config)
+def gradle_android_geckoview_docs_output_files(build_config):
+    '''Output files for GeckoView javadoc.'''
+
+    def uncapitalize(s):
+        if s:
+            return s[0].lower() + s[1:]
+        else:
+            return s
+
+    variant = uncapitalize(build_config.geckoview.variant.name)
+
+    return [
+        'gradle/build/mobile/android/geckoview/reports/javadoc-results-{}.json'.format(variant),
+    ]
+
+set_config('GRADLE_ANDROID_GECKOVIEW_DOCS_OUTPUT_FILES', gradle_android_geckoview_docs_output_files)
+
+
+@depends(gradle_android_build_config)
 def gradle_android_archive_coverage_artifacts_tasks(build_config):
     '''Gradle tasks run by |mach android archive-coverage-artifacts|.'''
     return [
         'geckoview:archiveClassfiles{geckoview.variant.name}'.format(geckoview=build_config.geckoview),
         'geckoview:copyCoverageDependencies',
-        'app:archiveClassfiles{app.variant.name}'.format(app=build_config.app),
     ]
 
 set_config('GRADLE_ANDROID_ARCHIVE_COVERAGE_ARTIFACTS_TASKS',
@@ -353,12 +304,9 @@ def gradle_android_dependencies():
 @depends(
     gradle_android_api_lint_tasks,
     gradle_android_checkstyle_tasks,
-    gradle_android_findbugs_tasks,
     gradle_android_dependencies,
 )
-@imports(_from='itertools', _import='imap')
 @imports(_from='itertools', _import='chain')
-@imports(_from='itertools', _import='ifilterfalse')
 def gradle_android_dependencies_tasks(*tasks):
     '''Gradle tasks run by |mach android dependencies|.'''
     # The union, plus a bit more, of all of the Gradle tasks
@@ -366,7 +314,7 @@ def gradle_android_dependencies_tasks(*tasks):
     def withoutGeckoBinaries(task):
         return task.replace('withGeckoBinaries', 'withoutGeckoBinaries')
 
-    return list(imap(withoutGeckoBinaries, chain(*tasks)))
+    return list(withoutGeckoBinaries(t) for t in chain(*tasks))
 
 set_config('GRADLE_ANDROID_DEPENDENCIES_TASKS', gradle_android_dependencies_tasks)
 

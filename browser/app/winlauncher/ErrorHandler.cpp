@@ -6,17 +6,19 @@
 
 #include "ErrorHandler.h"
 
+#include <utility>
+
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/CmdLineAndEnvUtils.h"
 #include "mozilla/DebugOnly.h"
-#include "mozilla/glue/WindowsDllServices.h"
 #include "mozilla/JSONWriter.h"
-#include "mozilla/Move.h"
-#include "mozilla/mscom/ProcessRuntime.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/Unused.h"
+#include "mozilla/WinTokenUtils.h"
 #include "mozilla/WindowsVersion.h"
 #include "mozilla/XREAppData.h"
+#include "mozilla/glue/WindowsDllServices.h"
+#include "mozilla/mscom/ProcessRuntime.h"
 #include "nsWindowsHelpers.h"
 
 #if defined(MOZ_LAUNCHER_PROCESS)
@@ -140,14 +142,18 @@ class TempFileWriter final : public mozilla::JSONWriteFunc {
   explicit operator bool() const { return !mFailed; }
 
   void Write(const char* aStr) override {
+    size_t len = strlen(aStr);
+    Write(aStr, len);
+  }
+
+  void Write(const char* aStr, size_t aLen) override {
     if (mFailed) {
       return;
     }
 
-    size_t len = strlen(aStr);
     DWORD bytesWritten = 0;
-    if (!::WriteFile(mTempFile, aStr, len, &bytesWritten, nullptr) ||
-        bytesWritten != len) {
+    if (!::WriteFile(mTempFile, aStr, aLen, &bytesWritten, nullptr) ||
+        bytesWritten != aLen) {
       mFailed = true;
     }
   }
@@ -286,7 +292,8 @@ static bool AddWscInfo(mozilla::JSONWriter& aJson) {
 
   // We need COM for this. Using ProcessRuntime so that process-global COM
   // configuration is done correctly
-  mozilla::mscom::ProcessRuntime mscom(GeckoProcessType_Default);
+  mozilla::mscom::ProcessRuntime mscom(
+      mozilla::mscom::ProcessRuntime::ProcessCategory::Launcher);
   if (!mscom) {
     // We haven't written anything yet, so we can return true here and continue
     // capturing data.
@@ -533,6 +540,12 @@ static bool PrepPing(const PingThreadContext& aContext, const std::wstring& aId,
   ::GetNativeSystemInfo(&sysInfo);
   aJson.IntProperty("cpu_arch", sysInfo.wProcessorArchitecture);
   aJson.IntProperty("num_logical_cpus", sysInfo.dwNumberOfProcessors);
+
+  mozilla::LauncherResult<bool> isAdminWithoutUac =
+      mozilla::IsAdminWithoutUac();
+  if (isAdminWithoutUac.isOk()) {
+    aJson.BoolProperty("is_admin_without_uac", isAdminWithoutUac.unwrap());
+  }
 
   MEMORYSTATUSEX memStatus = {sizeof(memStatus)};
   if (::GlobalMemoryStatusEx(&memStatus)) {

@@ -1,0 +1,15 @@
+[[repos]]
+name = 'threads'
+commit = 'dfdcb81a'
+
+[[repos]]
+name = 'bulk-memory-operations'
+commit = '66d90a7d'
+
+[[repos]]
+name = 'reference-types'
+commit = 'c90e289a'
+
+[[repos]]
+name = 'spec'
+commit = '7c4cbf32'

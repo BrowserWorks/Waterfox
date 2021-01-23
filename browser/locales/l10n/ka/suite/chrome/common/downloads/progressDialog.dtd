@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY progress.title                  "მიმდინარეობს ჩამოტვირთვა…">
+<!ENTITY closeWindow.key                 "w">
+<!ENTITY cmd.pause.tooltip               "შეჩერება">
+<!ENTITY cmd.resume.tooltip              "დასრულება">
+<!ENTITY cmd.retry.tooltip               "ხელახლა">
+<!ENTITY cmd.cancel.tooltip              "გაუქმება">
+<!ENTITY cmd.open.label                  "გახსნა">
+<!ENTITY cmd.open.accesskey              "O">
+<!ENTITY cmd.show.label                  "ფაილის საქაღალდის გახსნა">
+<!ENTITY cmd.show.accesskey              "F">
+<!ENTITY cmd.goToDownloadPage.label      "გადასვლა ჩამოტვირთვის გვერდზე">
+<!ENTITY cmd.goToDownloadPage.accesskey  "G">
+<!ENTITY cmd.copyDownloadLink.label      "ჩამოტვირთვის ბმულის ასლი">
+<!ENTITY cmd.copyDownloadLink.accesskey  "ბ">
+<!ENTITY closeWhenDone.label             "ამ სარკმლის დახურვა ჩამოტვირთვის დასრულების შემდეგ.">
+<!ENTITY closeWhenDone.accesskey         "w">

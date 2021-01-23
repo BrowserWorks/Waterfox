@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Filter-logg">
+<!ENTITY viewLogInfo.text "Filter-loggen dokumenterar filtrens aktivitet för detta konto. Använd nedanstående kryssruta för att aktivera loggning.">
+<!ENTITY clearLog.label "Rensa logg">
+<!ENTITY clearLog.accesskey "R">
+<!ENTITY enableLog.label "Aktivera Filter-loggen">
+<!ENTITY enableLog.accesskey "A">
+<!ENTITY closeLog.label "Stäng">
+<!ENTITY closeLog.accesskey "ä">

@@ -1,0 +1,60 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label "বৈশিষ্ট্যাবলী">
+
+<!ENTITY generalInfo.label "সাধারণ তথ্য">
+<!ENTITY folderRebuildSummaryFileTip2.label "সারসংক্ষেপ ফাইল সূচী পুনর্গঠন">
+<!ENTITY folderRebuildSummaryFile2.label "ফোল্ডার সংশোধন (R)">
+<!ENTITY folderRebuildSummaryFile2.accesskey "R">
+<!ENTITY folderRebuildSummaryFile.explanation "কখনও কখনও ফোল্ডার সূচীর (.msf) ফাইল বিকৃত হয়ে যায় এবং বার্তাসমূহ অনুপস্থিত প্রদর্শিত হয় অথবা মুছে ফেলা বার্তাসমূহ প্রদর্শিত হতে থাকে; ফোল্ডার সংশোধনের মাধ্যমে হয়ত এই সমস্যাগুলো চিহ্নিত করা যায়।">
+<!ENTITY folderIncludeInGlobalSearch.label "সার্বজনীন অনুসন্ধানের ফলাফলে এই ফোল্ডারের বার্তাসমূহ অন্তর্ভূক্ত করা হবে (G)">
+<!ENTITY folderIncludeInGlobalSearch.accesskey "G">
+     
+<!ENTITY retention.label "ধারণ নীতিমালা">
+<!ENTITY retentionUseAccount.label "আমার অ্যাকাউন্ট সেটিংসমূহ ব্যবহার করা হবে (U)">
+<!ENTITY retentionUseAccount.accesskey "U">
+<!ENTITY daysOld.label "যত দিনের পুরনো">
+<!ENTITY message.label "বার্তা">
+<!ENTITY retentionCleanup.label "ডিস্কের জায়গা পুনরুদ্ধার করতে, পুরনো বার্তা স্থায়ীভাবে মুছে ফেলা যেতে পারে।">
+<!ENTITY retentionCleanupImap.label "ডিস্কের জায়গা পুনরুদ্ধার করতে, পুরনো বার্তা স্থায়ীভাবে মুছে ফেলা হতে পারে, দূরবর্তী সার্ভারের স্থানীয় অনুলিপি এবং মূল বার্তা উভয়ই।">
+<!ENTITY retentionCleanupPop.label "ডিস্কের জায়গা পুনরুদ্ধার করতে, দূরবর্তী সার্ভারের মূল বার্তাসহ পুরনো বার্তা স্থায়ীভাবে মুছে ফেলা যেতে পারে।">
+<!ENTITY retentionDeleteMsg.label "এর থেকে বেশী বার্তাসমূহ মুছে ফেলা হবে, (m)">
+<!ENTITY retentionDeleteMsg.accesskey "m">
+<!ENTITY retentionKeepAll.label "কোনো বার্তা মোছা হবে না (a)">
+<!ENTITY retentionKeepAll.accesskey "a">
+<!ENTITY retentionKeepRecent.label "সব মুছে ফেলা হবে, তবে শুধুমাত্র খুবই সাম্প্রতিক বার্তাসমূহ (l)">
+<!ENTITY retentionKeepRecent.accesskey "l">
+<!ENTITY retentionApplyToFlagged.label "সর্বদা তারা চিহ্নিত বার্তা বজায় রাখা হবে (e)">
+<!ENTITY retentionApplyToFlagged.accesskey "e">
+
+<!ENTITY folderSynchronizationTab.label "সমকালীন">
+<!ENTITY folderCheckForNewMessages2.label "এই অ্যাকাউন্টের জন্য নতুন বার্তা গ্রহণ করার সময়, সর্বদা এই ফোল্ডার পরীক্ষা করা হবে">
+<!ENTITY folderCheckForNewMessages2.accesskey "c">
+
+<!ENTITY offlineFolder.check.label "অফলাইনে ব্যবহারের জন্য এই ফোল্ডারটি নির্বাচন করা হবে (S)">
+<!ENTITY offlineFolder.check.accesskey "S">
+<!ENTITY offlineFolder.button.label "এখন ডাউনলোড করা হবে (D)">
+<!ENTITY offlineFolder.button.accesskey "D">
+
+<!ENTITY selectofflineNewsgroup.check.label "অফলাইনে ব্যবহারের জন্য এই নিউজগ্রুপ নির্বাচন করা হবে (o)">
+<!ENTITY selectofflineNewsgroup.check.accesskey "o">
+<!ENTITY offlineNewsgroup.button.label "এখন ডাউনলোড করা হবে (D)">
+<!ENTITY offlineNewsgroup.button.accesskey "D">
+
+<!ENTITY folderProps.name.label "নাম: (N)">
+<!ENTITY folderProps.name.accesskey "N">
+<!ENTITY folderProps.location.label "অবস্থান: (L)">
+<!ENTITY folderProps.location.accesskey "L">
+
+<!ENTITY folderSharingTab.label "শেয়ারকরণ">
+<!ENTITY privileges.button.label "বিশেষাধিকার… (P)">
+<!ENTITY privileges.button.accesskey "P">
+<!ENTITY permissionsDesc.label "আপনার নিম্নোক্ত অনুমতি রয়েছে:">
+<!ENTITY folderType.label "ফোল্ডারের ধরন:">
+
+<!ENTITY folderQuotaTab.label "নির্দিষ্ট">
+<!ENTITY folderQuotaUsage.label "ব্যবহার:">
+<!ENTITY folderQuotaStatus.label "অবস্থা:">
+

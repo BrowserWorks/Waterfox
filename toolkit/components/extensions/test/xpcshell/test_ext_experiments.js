@@ -1,6 +1,9 @@
 "use strict";
 
 /* globals browser */
+const { AddonSettings } = ChromeUtils.import(
+  "resource://gre/modules/addons/AddonSettings.jsm"
+);
 
 AddonTestUtils.init(this);
 
@@ -160,12 +163,12 @@ add_task(async function test_bundled_experiments() {
     {
       isPrivileged: false,
       temporarilyInstalled: true,
-      shouldHaveExperiments: AppConstants.MOZ_ALLOW_LEGACY_EXTENSIONS,
+      shouldHaveExperiments: AddonSettings.EXPERIMENTS_ENABLED,
     },
     {
       isPrivileged: false,
       temporarilyInstalled: false,
-      shouldHaveExperiments: false,
+      shouldHaveExperiments: AppConstants.MOZ_APP_NAME == "thunderbird",
     },
   ];
 

@@ -1,0 +1,123 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Problēma ar lapas ielādi">
+<!ENTITY retry.label "Mēģināt vēlreiz">
+<!ENTITY returnToPreviousPage.label "Iet atpakaļ">
+<!ENTITY returnToPreviousPage1.label "Iet atpakaļ (ieteicams)">
+
+<!ENTITY viewCertificate.label "Aplūkot sertifikātu">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "Serveris nav atrasts">
+<!ENTITY dnsNotFound.longDesc1 "
+<strong>Ja lapas adrese ir pareiza, šīs ir dažas papildu lietas, ko varat izmēģināt:</strong>
+<ul>
+  <li>Pamēģiniet pieslēgties vēlreiz nedaudz vēlāk.</li>
+  <li>Pārbaudiet savu tīkla savienojumu.</li>
+  <li>Ja jūsu savienojumu aizsargā ugunsmūris, pārliecinieties, ka &brandShortName; ir nepieciešamās tiesības piekļūt internetam.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.longDesc "<ul> <li>Pārbaudiet, vai faila vārds ir uzrakstīts pareizi un ar pareizā lieluma burtiem.</li> <li>Pārliecinieties, ka fails nav pārvietots, pārsaukts vai izdzēsts.</li> </ul>">
+
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Tas varētu būt aizvākts, pārvietots vai arī faila piekļuves tiesības liedz piekļuvi tam.</li> </ul>">
+
+<!ENTITY generic.longDesc "<p>Kāda nezināma iemesla dēļ &brandShortName; nevar atvērt šo lapu.</p>">
+
+<!ENTITY captivePortal.title "Pieteikšanās tīklā">
+<!ENTITY captivePortal.longDesc2 "<p>Pieslēdzieties tīklam, lai piekļūtu Internetam.</p>">
+
+<!ENTITY openPortalLoginPage.label2 "Atvērt tīkla pieslēgšanās lapu">
+
+<!ENTITY malformedURI.pageTitle "Nederīga adrese">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>Pieprasītais dokuments vairs nav pieejams  &brandShortName; kešatmiņā.</p><ul><li>Drošības apsvērumu dēļ,  &brandShortName; neveic sensitīvu dokumentu automātisku atkārtotu pieprasīšanu.</li><li>Klikšķiniet uz Mēģināt vēlreiz, lai atkārtoti pieprasītu šo dokumentu no mājas lapas.</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "<ul> <li>Nospiediet &quot;Mēģināt vēlreiz&quot; lai pārslēgtos uz tiešsaistes režīmu un pārlādētu lapu.</li> </ul>">
+
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Lūdzu, informējiet mājas lapas īpašniekus par šo problēmu.</li> </ul>">
+
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Lūdzu, informējiet mājas lapas īpašniekus par šo problēmu.</li> </ul>">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Iespējams, jums jāuzinstalē kāda cita programma, lai apstrādātu šī tipa adreses.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Pārbaudiet starpniekservera (proxy) iestatījumus.</li> <li>Sazinieties ar savu tīkla administratoru, lai pārliecinātos, ka starpniekserveris strādā korekti.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Pārbaudiet starpniekservera (proxy) iestatījumus.</li> <li>Pārliecinieties, ka datoram ir strādājošs tīkla savienojums.</li> <li>Ja jūsu datu aizsardzībai tiek izmantots ugunsmūris, pārliecinieties, ka &brandShortName; ir atļauts piekļūt tīmeklim.</li> </ul>">
+
+<!ENTITY redirectLoop.longDesc "<ul> <li>Šo problēmu reizēm var atrisināt, deaktivējot sīkdatnes vai nepieņemot tās no šīs lapas.</li> </ul>">
+
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Pārliecinieties, ka jums ir instalēts Personiskās drošības pārvaldnieks.</li> <li>Iemesls var būt arī nestandarta servera konfigurācija.</li> </ul>">
+
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Lapu, kuru jūs šobrīd mēģināt aplūkot, nevar parādīt, jo nevar pārbaudīt tās nosūtīto datu autentiskumu.</li> <li>Lūdzu, sazinieties ar lapas īpašniekiem un informējiet viņus par šo problēmu.</li> </ul>">
+
+<!ENTITY certerror.introPara2 "&brandShortName; atklāja potenciālus draudus drošībai un nepārgāja uz <span class='hostname'/>. Ja apmeklējat šo vietni, uzbrucēji varētu mēģināt nozagt informāciju, piemēram, jūsu paroles, e-pastus vai kredītkartes datus.">
+
+<!ENTITY certerror.sts.introPara "&brandShortName; konstatēja potenciālus drošības draudus un nedevās uz <span class='hostname'/>, jo šai vietnei vajadzīgs drošs savienojums.">
+
+<!ENTITY certerror.expiredCert.introPara "&brandShortName; konstatēja problēmu un nedevās uz <span class='hostname'/>. Mājas lapa ir nepareizi konfigurēta vai datora pulkstenis ir iestatīts nepareizā laikā.">
+<!ENTITY certerror.expiredCert.secondPara2 "Iespējams, ka vietnes sertifikāta derīguma termiņš ir beidzies, un tas neļauj &brandShortName; droši savienoties. Ja apmeklēsiet šo vietni, uzbrucēji varētu mēģināt nozagt informāciju, piemēram, jūsu paroles, epastus vai kredītkartes datus.">
+<!ENTITY certerror.expiredCert.sts.secondPara "Iespējams, ka vietnes sertifikāta derīguma termiņš ir beidzies, un tas neļauj &brandShortName; droši savienoties.">
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "Ko jūs varat darīt?">
+
+<!ENTITY certerror.unknownIssuer.whatCanYouDoAboutIt "
+<p>Problēma visdrīzāk ir saistīta ar mājas lapu un jūs neko nevarat darīt, lai to atrisinātu.</p>
+<p>Ja izmantojat uzņēmuma tīklu vai pretvīrusu programmu, varat lūgt palīdzīgu lietotāju atbalsta nodaļai. Tāpat varat ziņot lapas īpašniekiem par šo problēmu.</p>">
+
+<!ENTITY certerror.expiredCert.whatCanYouDoAboutIt2 "<p>Jūsu datora pulkstenis ir iestatīts uz <span id='wrongSystemTime_systemDate2'/>. Pārliecinieties, vai jūsu sistēmas iestatījumos ir iestatīts pareizais datums, laiks un laika josla, un pēc tam atsvaidziniet <span class='hostname'/>.</p>
+<p>Ja jūsu pulkstenis jau ir iestatīts pareizajā laikā, iespējams, ka vietne ir nepareizi konfigurēta, un jūs nevarat neko darīt, lai atrisinātu problēmu. Jūs varat informēt vietnes administratoru par problēmu.</p>">
+
+<!ENTITY certerror.badCertDomain.whatCanYouDoAboutIt "<p>Visdrīzāk šī ir lapas problēma un vienīgais ko jūs varat darīt ir ziņot lapas administratoram par šo problēmu.</p>">
+
+<!ENTITY sharedLongDesc "<ul> <li>Lapa var būt īslaicīgi nepieejama vai pārāk aizņemta. Mēģiniet vēlreiz pēc pāris minūtēm.</li> <li>Ja nevarat atvērt nevienu lapu, pārbaudiet sava datora tīkla savienojumu.</li> <li>Ja jūsu datu aizsardzībai tiek izmantots ugunsmūris, pārliecinieties, ka &brandShortName; ir atļauts piekļūt tīmeklim.</li> </ul>">
+
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; liedza šīs lapas ielādi, jo tās drošības politika to neļauj.</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Lappuse, kuru mēģināt skatīt nevar parādīt, jo tika atrasta kļūda datu pārraidi.</p><ul><li>Lūdzu, sazinieties ar mājas īpašniekiem, lai informētu viņus par šo problēmu.</li></ul>">
+
+
+<!ENTITY securityOverride.exceptionButton1Label "Pieņemt risku un turpināt">
+
+<!ENTITY errorReporting.automatic2 "Ziņojiet par šādām kļūdām Mozilla, lai varētu identificēt un bloķēt kaitnieciskas lapas">
+<!ENTITY errorReporting.learnMore "Uzzināt vairāk…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Lūdzu sazinieties ar mājas lapas īpašniekiem un informējiet viņus par šo problēmu.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Papildus informācija:  ssl_error_unsupported_version">
+
+<!ENTITY certerror.pagetitle2  "Brīdinājums: Potenciāls drošības risks">
+<!ENTITY certerror.sts.pagetitle  "Netika izveidots savienojums: potenciāla drošības problēma">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation1 "<span class='hostname'></span> izmanto drošības politiku, ko sauc HTTP Strict Transport Security (HSTS), kas nozīmē, ka &brandShortName; var lapai pieslēgties lapai tikai drošajā režīmā. Jūs nevarat pievienot izņēmumu, lai apmeklētu šo lapu.">
+<!ENTITY certerror.copyToClipboard.label "Kopēt tekstu atmiņā">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> izmanto novecojušu un nedrošu drošības tehnoloģiju. Uzbrucējs varētu piekļūt informācijai, kuru uzskatījāt par droši aizsargātu. Lapas administratoram vajadzēs salabot serveri, pirms varēsiet apmeklē lapu.</p><p>Kļūdas kods: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Bloķēta lapa">
+
+<!ENTITY clockSkewError.longDesc "Jūsu dators uzskata, ka tas ir <span id='wrongSystemTime_systemDate1'/>, kas neļauj &brandShortName; droši savienoties. Lai apmeklētu <span class='hostname'></span>, atjauniniet sava datora pulksteni jūsu sistēmas iestatījumos uz pašreizējo datumu, laiku un laika joslu un pēc tam atsvaidziniet <span class='hostname'></span>.">
+
+<!ENTITY prefReset.longDesc "Izskatās, ka jūsu tīkla drošības iestatījumi varētu bū pie vainas. Vai vēlaties atjaunot noklusētos iestatījumus?">
+<!ENTITY prefReset.label "Atjaunot noklusētos iestatījumus">
+
+<!ENTITY networkProtocolError.longDesc "<p>Lapu, kuru mēģināt skatīt, nevar tikt parādīta, jo tika konstatēta tīkla protokola kļūda.</p><ul><li>Lūdzu, sazinieties ar vietņu īpašniekiem, lai informētu viņus par šo problēmu.</li></ul>">

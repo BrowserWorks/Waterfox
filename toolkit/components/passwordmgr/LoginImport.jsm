@@ -11,7 +11,7 @@
 
 "use strict";
 
-var EXPORTED_SYMBOLS = ["LoginImport"];
+const EXPORTED_SYMBOLS = ["LoginImport"];
 
 // Globals
 
@@ -38,12 +38,12 @@ ChromeUtils.defineModuleGetter(
  * @param aPath
  *        String containing the file path of the SQLite login database.
  */
-var LoginImport = function(aStore, aPath) {
+this.LoginImport = function(aStore, aPath) {
   this.store = aStore;
   this.path = aPath;
 };
 
-this.LoginImport.prototype = {
+LoginImport.prototype = {
   /**
    * LoginStore object where imported data will be added.
    */
@@ -63,7 +63,7 @@ this.LoginImport.prototype = {
     // Thus, merging with existing data is not a use case we support.  This
     // restriction might be removed to support re-importing passwords set by an
     // old version by flipping the import preference and restarting.
-    if (this.store.data.logins.length > 0) {
+    if (this.store.data.logins.length) {
       throw new Error(
         "Unable to import saved passwords because some data " +
           "has already been imported or saved."

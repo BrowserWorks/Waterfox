@@ -223,7 +223,7 @@ class gfxUtils {
    * number. The colors will cycle after sNumFrameColors.  You can query colors
    * 0 .. sNumFrameColors-1 to get all the colors back.
    */
-  static const mozilla::gfx::Color& GetColorForFrameNumber(
+  static const mozilla::gfx::DeviceColor& GetColorForFrameNumber(
       uint64_t aFrameNumber);
   static const uint32_t sNumFrameColors;
 
@@ -311,17 +311,6 @@ class gfxUtils {
   static bool DumpDisplayList();
 
   static FILE* sDumpPaintFile;
-
-  static mozilla::wr::RenderRoot GetContentRenderRoot();
-
-  static mozilla::Maybe<mozilla::wr::RenderRoot> GetRenderRootForFrame(
-      const nsIFrame* aFrame);
-  static mozilla::Maybe<mozilla::wr::RenderRoot> GetRenderRootForElement(
-      const mozilla::dom::Element* aElement);
-  static mozilla::wr::RenderRoot RecursivelyGetRenderRootForFrame(
-      const nsIFrame* aFrame);
-  static mozilla::wr::RenderRoot RecursivelyGetRenderRootForElement(
-      const mozilla::dom::Element* aElement);
 };
 
 namespace mozilla {
@@ -337,9 +326,9 @@ namespace gfx {
  * returned unchanged (other than a type change to Moz2D Color, if
  * applicable).
  */
-Color ToDeviceColor(Color aColor);
-Color ToDeviceColor(const StyleRGBA& aColor);
-Color ToDeviceColor(nscolor aColor);
+DeviceColor ToDeviceColor(const sRGBColor& aColor);
+DeviceColor ToDeviceColor(const StyleRGBA& aColor);
+DeviceColor ToDeviceColor(nscolor aColor);
 
 /**
  * Performs a checked multiply of the given width, height, and bytes-per-pixel

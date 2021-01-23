@@ -8,7 +8,6 @@
 #include "nscore.h"
 #include "nsRequestObserverProxy.h"
 #include "nsIRequest.h"
-#include "nsAutoPtr.h"
 #include "mozilla/Logging.h"
 #include "mozilla/IntegerPrintfMacros.h"
 
@@ -42,8 +41,6 @@ class nsOnStartRequestEvent : public nsARequestObserverEvent {
     MOZ_ASSERT(mProxy, "null pointer");
   }
 
-  virtual ~nsOnStartRequestEvent() = default;
-
   NS_IMETHOD Run() override {
     LOG(("nsOnStartRequestEvent::HandleEvent [req=%p]\n", mRequest.get()));
 
@@ -65,6 +62,9 @@ class nsOnStartRequestEvent : public nsARequestObserverEvent {
 
     return NS_OK;
   }
+
+ private:
+  virtual ~nsOnStartRequestEvent() = default;
 };
 
 //-----------------------------------------------------------------------------
@@ -79,8 +79,6 @@ class nsOnStopRequestEvent : public nsARequestObserverEvent {
       : nsARequestObserverEvent(request), mProxy(proxy) {
     MOZ_ASSERT(mProxy, "null pointer");
   }
-
-  virtual ~nsOnStopRequestEvent() = default;
 
   NS_IMETHOD Run() override {
     LOG(("nsOnStopRequestEvent::HandleEvent [req=%p]\n", mRequest.get()));
@@ -104,6 +102,9 @@ class nsOnStopRequestEvent : public nsARequestObserverEvent {
 
     return NS_OK;
   }
+
+ private:
+  virtual ~nsOnStopRequestEvent() = default;
 };
 
 //-----------------------------------------------------------------------------
@@ -122,13 +123,10 @@ nsRequestObserverProxy::OnStartRequest(nsIRequest* request) {
   LOG(("nsRequestObserverProxy::OnStartRequest [this=%p req=%p]\n", this,
        request));
 
-  nsOnStartRequestEvent* ev = new nsOnStartRequestEvent(this, request);
-  if (!ev) return NS_ERROR_OUT_OF_MEMORY;
+  RefPtr<nsOnStartRequestEvent> ev = new nsOnStartRequestEvent(this, request);
 
-  LOG(("post startevent=%p\n", ev));
-  nsresult rv = FireEvent(ev);
-  if (NS_FAILED(rv)) delete ev;
-  return rv;
+  LOG(("post startevent=%p\n", ev.get()));
+  return FireEvent(ev);
 }
 
 NS_IMETHODIMP
@@ -142,13 +140,10 @@ nsRequestObserverProxy::OnStopRequest(nsIRequest* request, nsresult status) {
   // To make sure that an accurate status code is always used, GetStatus() is
   // called when the OnStopRequestEvent is actually processed (see above).
 
-  nsOnStopRequestEvent* ev = new nsOnStopRequestEvent(this, request);
-  if (!ev) return NS_ERROR_OUT_OF_MEMORY;
+  RefPtr<nsOnStopRequestEvent> ev = new nsOnStopRequestEvent(this, request);
 
-  LOG(("post stopevent=%p\n", ev));
-  nsresult rv = FireEvent(ev);
-  if (NS_FAILED(rv)) delete ev;
-  return rv;
+  LOG(("post stopevent=%p\n", ev.get()));
+  return FireEvent(ev);
 }
 
 //-----------------------------------------------------------------------------

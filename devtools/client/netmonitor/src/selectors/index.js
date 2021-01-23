@@ -4,8 +4,10 @@
 
 "use strict";
 
-const requests = require("./requests");
-const timingMarkers = require("./timing-markers");
-const ui = require("./ui");
+const requests = require("devtools/client/netmonitor/src/selectors/requests");
+const search = require("devtools/client/netmonitor/src/selectors/search");
+const timingMarkers = require("devtools/client/netmonitor/src/selectors/timing-markers");
+const ui = require("devtools/client/netmonitor/src/selectors/ui");
+const webSockets = require("devtools/client/netmonitor/src/selectors/web-sockets");
 
-Object.assign(exports, requests, timingMarkers, ui);
+Object.assign(exports, search, requests, timingMarkers, ui, webSockets);

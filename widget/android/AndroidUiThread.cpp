@@ -4,9 +4,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "base/message_loop.h"
-#include "GeneratedJNIWrappers.h"
 #include "mozilla/Atomics.h"
 #include "mozilla/EventQueue.h"
+#include "mozilla/java/GeckoThreadWrappers.h"
 #include "mozilla/LinkedList.h"
 #include "mozilla/Monitor.h"
 #include "mozilla/Mutex.h"
@@ -249,7 +249,7 @@ void EnqueueTask(already_AddRefed<nsIRunnable> aTask, int aDelayMs) {
     // if we're inserting it at the head of the queue, notify Java because
     // we need to get a callback at an earlier time than the last scheduled
     // callback
-    GeckoThread::RequestUiThreadCallback(int64_t(aDelayMs));
+    java::GeckoThread::RequestUiThreadCallback(int64_t(aDelayMs));
   }
 }
 

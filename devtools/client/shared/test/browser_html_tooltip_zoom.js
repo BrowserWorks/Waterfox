@@ -9,7 +9,7 @@
  */
 
 const HTML_NS = "http://www.w3.org/1999/xhtml";
-const TEST_URI = CHROME_URL_ROOT + "doc_html_tooltip.xul";
+const TEST_URI = CHROME_URL_ROOT + "doc_html_tooltip.xhtml";
 
 const {
   HTMLTooltip,
@@ -25,13 +25,17 @@ function getTooltipContent(doc) {
 }
 
 add_task(async function() {
-  const [host, , doc] = await createHost("window", TEST_URI);
+  const { host, doc } = await createHost("window", TEST_URI);
+
+  // Creating a window host is not correctly waiting when DevTools run in content frame
+  // See Bug 1571421.
+  await wait(1000);
+
   const zoom = 1.5;
   await pushPref("devtools.toolbox.zoomValue", zoom.toString(10));
 
   // Change this xul zoom to the x1.5 since this test doesn't use the toolbox preferences.
-  const contentViewer = host.frame.docShell.contentViewer;
-  contentViewer.fullZoom = zoom;
+  host.frame.docShell.browsingContext.fullZoom = zoom;
   const tooltip = new HTMLTooltip(doc, { useXulWrapper: true });
 
   info("Set tooltip content");

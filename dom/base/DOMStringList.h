@@ -57,16 +57,18 @@ class DOMStringList : public nsISupports, public nsWrapperCache {
   }
 
   bool Add(const nsAString& aName) {
-    // XXXbz mNames should really be a fallible array; otherwise this
-    // return value is meaningless.
-    return mNames.AppendElement(aName) != nullptr;
+    // XXXbz(Bug 1631374) mNames should really be a fallible array; otherwise
+    // this return value is meaningless. return mNames.AppendElement(aName) !=
+    // nullptr;
+    mNames.AppendElement(aName);
+    return true;
   }
 
   void Clear() { mNames.Clear(); }
 
   nsTArray<nsString>& StringArray() { return mNames; }
 
-  void CopyList(nsTArray<nsString>& aNames) { aNames = mNames; }
+  void CopyList(nsTArray<nsString>& aNames) { aNames = mNames.Clone(); }
 
  protected:
   // A method that subclasses can override to modify mNames as needed

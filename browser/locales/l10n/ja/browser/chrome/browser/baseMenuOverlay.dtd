@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProduct2.label      "&brandShorterName; について">
+<!ENTITY aboutProduct2.accesskey  "A">
+
+<!ENTITY preferencesCmdMac.label        "環境設定...">
+
+<!ENTITY servicesMenuMac.label          "サービス">
+
+<!ENTITY hideThisAppCmdMac2.label       "&brandShorterName; を隠す">
+
+<!ENTITY hideOtherAppsCmdMac.label      "ほかを隠す">
+
+<!ENTITY showAllAppsCmdMac.label        "すべてを表示">
+
+<!ENTITY touchBarCmdMac.label           "タッチバーをカスタマイズ...">

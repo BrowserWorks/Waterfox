@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY syncKey.page.title               "您的 &syncBrand.fullName.label; 金鑰">
+<!ENTITY syncKey.page.description         "這把金鑰是用來解開 &syncBrand.fullName.label; 帳號的加密保護用的。您每次在新電腦或裝置設定 &syncBrand.fullName.label; 時都需要輸入這把金鑰。">
+<!ENTITY syncKey.keepItSecret.heading     "記得保密">
+<!ENTITY syncKey.keepItSecret.description "為了保護您的隱私，您的 &syncBrand.fullName.label; 帳號會被加密。若沒有這把金鑰，可能需要很多年才能解開您的個人資訊。您是唯一擁有這把金鑰的人，這也代表只有您可以存取您的 &syncBrand.fullName.label; 資料。">
+<!ENTITY syncKey.keepItSafe.heading       "保持安全">
+<!ENTITY syncKey.keepItSafe1.description  "別把這把金鑰搞丟了。">
+<!ENTITY syncKey.keepItSafe2.description  "我們將不會多拷貝一份這把鑰匙（這樣就不安全了！），所以 ">
+<!ENTITY syncKey.keepItSafe3.description  "如果您搞丟的話，我們將無法幫您找回。">
+<!ENTITY syncKey.keepItSafe4.description  "您將會在使用 &syncBrand.fullName.label; 連結新電腦或裝置時需要用到這組金鑰。">
+<!ENTITY syncKey.findOutMore1.label       "閱讀更多關於 &syncBrand.fullName.label; 以及您的隱私權的資訊於 ">
+<!ENTITY syncKey.findOutMore2.label       "。">
+<!ENTITY syncKey.footer1.label            "&syncBrand.fullName.label; 的服務條款位於 ">
+<!ENTITY syncKey.footer2.label            "。隱私權保護政策位於 ">
+<!ENTITY syncKey.footer3.label            "。">
+

@@ -9,9 +9,9 @@
 
 #include <cmath>
 #include <ostream>
+#include <type_traits>
 #include "mozilla/Attributes.h"
 #include "mozilla/FloatingPoint.h"
-#include "mozilla/TypeTraits.h"
 
 namespace mozilla {
 namespace gfx {
@@ -95,8 +95,8 @@ struct BasePoint {
 
   // "Finite" means not inf and not NaN
   bool IsFinite() const {
-    typedef typename mozilla::Conditional<mozilla::IsSame<T, float>::value,
-                                          float, double>::Type FloatType;
+    using FloatType =
+        std::conditional_t<std::is_same_v<T, float>, float, double>;
     return (mozilla::IsFinite(FloatType(x)) && mozilla::IsFinite(FloatType(y)));
     return true;
   }

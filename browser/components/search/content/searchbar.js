@@ -21,8 +21,28 @@
       };
     }
 
+    static get markup() {
+      return `
+        <stringbundle src="chrome://browser/locale/search.properties"></stringbundle>
+        <hbox class="searchbar-search-button" tooltiptext="&searchIcon.tooltip;">
+          <image class="searchbar-search-icon"></image>
+          <image class="searchbar-search-icon-overlay"></image>
+        </hbox>
+        <html:input class="searchbar-textbox" is="autocomplete-input" type="search" placeholder="&searchInput.placeholder;" autocompletepopup="PopupSearchAutoComplete" autocompletesearch="search-autocomplete" autocompletesearchparam="searchbar-history" maxrows="10" completeselectedindex="true" minresultsforpopup="0"/>
+        <menupopup class="textbox-contextmenu"></menupopup>
+        <hbox class="search-go-container">
+          <image class="search-go-button urlbar-icon" hidden="true" onclick="handleSearchCommand(event);" tooltiptext="&contentSearchSubmit.tooltip;"></image>
+        </hbox>
+      `;
+    }
+
+    static get entities() {
+      return ["chrome://browser/locale/browser.dtd"];
+    }
+
     constructor() {
       super();
+
       this.destroy = this.destroy.bind(this);
       this._setupEventListeners();
       let searchbar = this;
@@ -42,23 +62,9 @@
         },
         QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver]),
       };
-      this.content = MozXULElement.parseXULToFragment(
-        `
-      <stringbundle src="chrome://browser/locale/search.properties"></stringbundle>
-      <textbox class="searchbar-textbox" type="autocomplete" inputtype="search" placeholder="&searchInput.placeholder;" flex="1" autocompletepopup="PopupSearchAutoComplete" autocompletesearch="search-autocomplete" autocompletesearchparam="searchbar-history" maxrows="10" completeselectedindex="true" minresultsforpopup="0">
-        <box>
-          <hbox class="searchbar-search-button" tooltiptext="&searchIcon.tooltip;">
-            <image class="searchbar-search-icon"></image>
-            <image class="searchbar-search-icon-overlay"></image>
-          </hbox>
-        </box>
-        <hbox class="search-go-container">
-          <image class="search-go-button urlbar-icon" hidden="true" onclick="handleSearchCommand(event);" tooltiptext="&contentSearchSubmit.tooltip;"></image>
-        </hbox>
-      </textbox>
-    `,
-        ["chrome://browser/locale/browser.dtd"]
-      );
+
+      this._ignoreFocus = false;
+      this._engines = null;
     }
 
     connectedCallback() {
@@ -67,29 +73,39 @@
         return;
       }
 
-      this.appendChild(document.importNode(this.content, true));
+      this.appendChild(this.constructor.fragment);
       this.initializeAttributeInheritance();
-      window.addEventListener("unload", this.destroy);
-      this._ignoreFocus = false;
 
-      this._clickClosedPopup = false;
+      // Don't go further if in Customize mode.
+      if (this.parentNode.parentNode.localName == "toolbarpaletteitem") {
+        return;
+      }
+
+      // Ensure we get persisted widths back, if we've been in the palette:
+      let storedWidth = Services.xulStore.getValue(
+        document.documentURI,
+        this.parentNode.id,
+        "width"
+      );
+      if (storedWidth) {
+        this.parentNode.setAttribute("width", storedWidth);
+      }
 
       this._stringBundle = this.querySelector("stringbundle");
-
-      this._textboxInitialized = false;
-
       this._textbox = this.querySelector(".searchbar-textbox");
 
-      this._engines = null;
+      this._menupopup = null;
+      this._pasteAndSearchMenuItem = null;
+
+      this._setupTextboxEventListeners();
+      this._initTextbox();
+
+      window.addEventListener("unload", this.destroy);
 
       this.FormHistory = ChromeUtils.import(
         "resource://gre/modules/FormHistory.jsm",
         {}
       ).FormHistory;
-
-      if (this.parentNode.parentNode.localName == "toolbarpaletteitem") {
-        return;
-      }
 
       Services.obs.addObserver(this.observer, "browser-search-engine-modified");
       Services.obs.addObserver(this.observer, "browser-search-service");
@@ -146,12 +162,21 @@
     }
 
     set currentEngine(val) {
-      Services.search.defaultEngine = val;
+      if (PrivateBrowsingUtils.isWindowPrivate(window)) {
+        Services.search.defaultPrivateEngine = val;
+      } else {
+        Services.search.defaultEngine = val;
+      }
       return val;
     }
 
     get currentEngine() {
-      let currentEngine = Services.search.defaultEngine;
+      let currentEngine;
+      if (PrivateBrowsingUtils.isWindowPrivate(window)) {
+        currentEngine = Services.search.defaultPrivateEngine;
+      } else {
+        currentEngine = Services.search.defaultEngine;
+      }
       // Return a dummy engine if there is no currentEngine
       return currentEngine || { name: "", uri: null };
     }
@@ -188,7 +213,13 @@
       // Also make sure the textbox has ever been constructed, otherwise the
       // _textbox getter will cause the textbox constructor to run, add an
       // observer, and leak the world too.
-      if (this._textboxInitialized && this._textbox.mController.input == this) {
+      if (
+        this._textbox &&
+        this._textbox.mController &&
+        this._textbox.mController.input &&
+        this._textbox.mController.input.wrappedJSObject ==
+          this.nsIAutocompleteInput
+      ) {
         this._textbox.mController.input = null;
       }
     }
@@ -206,13 +237,9 @@
     }
 
     updateDisplay() {
-      let uri = this.currentEngine.iconURI;
-      this.setIcon(this, uri ? uri.spec : "");
-
-      let name = this.currentEngine.name;
-      let text = this._stringBundle.getFormattedString("searchtip", [name]);
-      this._textbox.label = text;
-      this._textbox.tooltipText = text;
+      this._textbox.title = this._stringBundle.getFormattedString("searchtip", [
+        this.currentEngine.name,
+      ]);
     }
 
     updateGoButtonVisibility() {
@@ -285,7 +312,9 @@
       } else {
         let newTabPref = Services.prefs.getBoolPref("browser.search.openintab");
         if (
-          (aEvent instanceof KeyboardEvent && aEvent.altKey) ^ newTabPref &&
+          (aEvent instanceof KeyboardEvent &&
+            (aEvent.altKey || aEvent.getModifierState("AltGraph"))) ^
+            newTabPref &&
           !gBrowser.selectedTab.isEmpty
         ) {
           where = "tab";
@@ -412,7 +441,25 @@
       }
     }
 
+    /**
+     * Determines if we should select all the text in the searchbar based on the
+     * searchbar state, and whether the selection is empty.
+     */
+    _maybeSelectAll() {
+      if (
+        !this._preventClickSelectsAll &&
+        document.activeElement == this._textbox &&
+        this._textbox.selectionStart == this._textbox.selectionEnd
+      ) {
+        this.select();
+      }
+    }
+
     _setupEventListeners() {
+      this.addEventListener("click", event => {
+        this._maybeSelectAll();
+      });
+
       this.addEventListener("command", event => {
         const target = event.originalTarget;
         if (target.engine) {
@@ -457,8 +504,7 @@
         event => {
           // If the input field is still focused then a different window has
           // received focus, ignore the next focus event.
-          this._ignoreFocus =
-            document.activeElement == this._textbox.inputField;
+          this._ignoreFocus = document.activeElement == this._textbox;
         },
         true
       );
@@ -498,19 +544,8 @@
         true
       );
 
-      this.addEventListener(
-        "mousedown",
-        event => {
-          if (
-            event.originalTarget.classList.contains("searchbar-search-button")
-          ) {
-            this._clickClosedPopup = this._textbox.popup._isHiding;
-          }
-        },
-        true
-      );
-
       this.addEventListener("mousedown", event => {
+        this._preventClickSelectsAll = this._textbox.focused;
         // Ignore right clicks
         if (event.button != 0) {
           return;
@@ -530,15 +565,317 @@
           "searchbar-search-button"
         );
 
-        // Ignore clicks on the icon if they were made to close the popup
-        if (isIconClick && this._clickClosedPopup) {
+        // Hide popup when icon is clicked while popup is open
+        if (isIconClick && this.textbox.popup.popupOpen) {
+          this.textbox.popup.closePopup();
+        } else if (isIconClick || this._textbox.value) {
+          // Open the suggestions whenever clicking on the search icon or if there
+          // is text in the textbox.
+          this.openSuggestionsPanel(true);
+        }
+      });
+    }
+
+    _setupTextboxEventListeners() {
+      this.textbox.addEventListener("input", event => {
+        this.textbox.popup.removeAttribute("showonlysettings");
+      });
+
+      this.textbox.addEventListener("dragover", event => {
+        let types = event.dataTransfer.types;
+        if (
+          types.includes("text/plain") ||
+          types.includes("text/x-moz-text-internal")
+        ) {
+          event.preventDefault();
+        }
+      });
+
+      this.textbox.addEventListener("drop", event => {
+        let dataTransfer = event.dataTransfer;
+        let data = dataTransfer.getData("text/plain");
+        if (!data) {
+          data = dataTransfer.getData("text/x-moz-text-internal");
+        }
+        if (data) {
+          event.preventDefault();
+          this.textbox.value = data;
+          this.openSuggestionsPanel();
+        }
+      });
+
+      this.textbox.addEventListener("contextmenu", event => {
+        if (!this._menupopup) {
+          this._buildContextMenu();
+        }
+
+        BrowserSearch.searchBar._textbox.closePopup();
+
+        // Update disabled state of menu items
+        for (let item of this._menupopup.querySelectorAll("menuitem[cmd]")) {
+          let command = item.getAttribute("cmd");
+          let controller = document.commandDispatcher.getControllerForCommand(
+            command
+          );
+          item.disabled = !controller.isCommandEnabled(command);
+        }
+
+        let pasteEnabled = document.commandDispatcher
+          .getControllerForCommand("cmd_paste")
+          .isCommandEnabled("cmd_paste");
+        this._pasteAndSearchMenuItem.disabled = !pasteEnabled;
+
+        this._menupopup.openPopupAtScreen(event.screenX, event.screenY, true);
+
+        // Make sure the context menu isn't opened via keyboard shortcut.
+        if (event.button) {
+          this._maybeSelectAll();
+        }
+        event.preventDefault();
+      });
+    }
+
+    _initTextbox() {
+      if (this.parentNode.parentNode.localName == "toolbarpaletteitem") {
+        return;
+      }
+
+      this.setAttribute("role", "combobox");
+      this.setAttribute("aria-owns", this.textbox.popup.id);
+
+      // This overrides the searchParam property in autocomplete.xml. We're
+      // hijacking this property as a vehicle for delivering the privacy
+      // information about the window into the guts of nsSearchSuggestions.
+      // Note that the setter is the same as the parent. We were not sure whether
+      // we can override just the getter. If that proves to be the case, the setter
+      // can be removed.
+      Object.defineProperty(this.textbox, "searchParam", {
+        get() {
+          return (
+            this.getAttribute("autocompletesearchparam") +
+            (PrivateBrowsingUtils.isWindowPrivate(window) ? "|private" : "")
+          );
+        },
+        set(val) {
+          this.setAttribute("autocompletesearchparam", val);
+          return val;
+        },
+      });
+
+      Object.defineProperty(this.textbox, "selectedButton", {
+        get() {
+          return this.popup.oneOffButtons.selectedButton;
+        },
+        set(val) {
+          return (this.popup.oneOffButtons.selectedButton = val);
+        },
+      });
+
+      // This is implemented so that when textbox.value is set directly (e.g.,
+      // by tests), the one-off query is updated.
+      this.textbox.onBeforeValueSet = aValue => {
+        if (this.textbox.popup._oneOffButtons) {
+          this.textbox.popup.oneOffButtons.query = aValue;
+        }
+        return aValue;
+      };
+
+      // Returns true if the event is handled by us, false otherwise.
+      this.textbox.onBeforeHandleKeyDown = aEvent => {
+        if (aEvent.getModifierState("Accel")) {
+          if (
+            aEvent.keyCode == KeyEvent.DOM_VK_DOWN ||
+            aEvent.keyCode == KeyEvent.DOM_VK_UP
+          ) {
+            this.selectEngine(aEvent, aEvent.keyCode == KeyEvent.DOM_VK_DOWN);
+            return true;
+          }
+          return false;
+        }
+
+        if (
+          (AppConstants.platform == "macosx" &&
+            aEvent.keyCode == KeyEvent.DOM_VK_F4) ||
+          (aEvent.getModifierState("Alt") &&
+            (aEvent.keyCode == KeyEvent.DOM_VK_DOWN ||
+              aEvent.keyCode == KeyEvent.DOM_VK_UP))
+        ) {
+          if (!this.textbox.openSearch()) {
+            aEvent.preventDefault();
+            aEvent.stopPropagation();
+            return true;
+          }
+        }
+
+        let popup = this.textbox.popup;
+        if (!popup.popupOpen) {
+          return false;
+        }
+
+        let suggestionsHidden =
+          popup.richlistbox.getAttribute("collapsed") == "true";
+        let numItems = suggestionsHidden ? 0 : popup.matchCount;
+        return popup.oneOffButtons.handleKeyDown(aEvent, numItems, true);
+      };
+
+      // This method overrides the autocomplete binding's openPopup (essentially
+      // duplicating the logic from the autocomplete popup binding's
+      // openAutocompletePopup method), modifying it so that the popup is aligned with
+      // the inner textbox, but sized to not extend beyond the search bar border.
+      this.textbox.openPopup = () => {
+        // Entering customization mode after the search bar had focus causes
+        // the popup to appear again, due to focus returning after the
+        // hamburger panel closes. Don't open in that spurious event.
+        if (document.documentElement.getAttribute("customizing") == "true") {
           return;
         }
 
-        // Open the suggestions whenever clicking on the search icon or if there
-        // is text in the textbox.
-        if (isIconClick || this._textbox.value) {
-          this.openSuggestionsPanel(true);
+        let popup = this.textbox.popup;
+        if (!popup.mPopupOpen) {
+          // Initially the panel used for the searchbar (PopupSearchAutoComplete
+          // in browser.xhtml) is hidden to avoid impacting startup / new
+          // window performance. The base binding's openPopup would normally
+          // call the overriden openAutocompletePopup in
+          // browser-search-autocomplete-result-popup binding to unhide the popup,
+          // but since we're overriding openPopup we need to unhide the panel
+          // ourselves.
+          popup.hidden = false;
+
+          // Don't roll up on mouse click in the anchor for the search UI.
+          if (popup.id == "PopupSearchAutoComplete") {
+            popup.setAttribute("norolluponanchor", "true");
+          }
+
+          popup.mInput = this.textbox;
+          // clear any previous selection, see bugs 400671 and 488357
+          popup.selectedIndex = -1;
+
+          document.popupNode = null;
+
+          // Ensure the panel has a meaningful initial size and doesn't grow
+          // unconditionally.
+          requestAnimationFrame(() => {
+            let { width } = window.windowUtils.getBoundsWithoutFlushing(this);
+            if (popup.oneOffButtons) {
+              // We have a min-width rule on search-panel-one-offs to show at
+              // least 3 buttons, so take that into account here.
+              width = Math.max(width, popup.oneOffButtons.buttonWidth * 3);
+            }
+            popup.style.width = width + "px";
+          });
+
+          popup._invalidate();
+
+          popup.openPopup(this, "after_start");
+        }
+      };
+
+      this.textbox.openSearch = () => {
+        if (!this.textbox.popupOpen) {
+          this.openSuggestionsPanel();
+          return false;
+        }
+        return true;
+      };
+
+      this.textbox.handleEnter = event => {
+        // Toggle the open state of the add-engine menu button if it's
+        // selected.  We're using handleEnter for this instead of listening
+        // for the command event because a command event isn't fired.
+        if (
+          this.textbox.selectedButton &&
+          this.textbox.selectedButton.getAttribute("anonid") ==
+            "addengine-menu-button"
+        ) {
+          this.textbox.selectedButton.open = !this.textbox.selectedButton.open;
+          return true;
+        }
+        // Otherwise, "call super": do what the autocomplete binding's
+        // handleEnter implementation does.
+        return this.textbox.mController.handleEnter(false, event || null);
+      };
+
+      // override |onTextEntered| in autocomplete.xml
+      this.textbox.onTextEntered = event => {
+        let engine;
+        let oneOff = this.textbox.selectedButton;
+        if (oneOff) {
+          if (!oneOff.engine) {
+            oneOff.doCommand();
+            return;
+          }
+          engine = oneOff.engine;
+        }
+        if (this.textbox._selectionDetails) {
+          BrowserSearch.searchBar.telemetrySearchDetails = this.textbox._selectionDetails;
+          this.textbox._selectionDetails = null;
+        }
+        this.handleSearchCommand(event, engine);
+      };
+    }
+
+    _buildContextMenu() {
+      const raw = `
+        <menuitem data-l10n-id="text-action-undo" cmd="cmd_undo"/>
+        <menuseparator/>
+        <menuitem data-l10n-id="text-action-cut" cmd="cmd_cut"/>
+        <menuitem data-l10n-id="text-action-copy" cmd="cmd_copy"/>
+        <menuitem data-l10n-id="text-action-paste" cmd="cmd_paste"/>
+        <menuitem class="searchbar-paste-and-search"/>
+        <menuitem data-l10n-id="text-action-delete" cmd="cmd_delete"/>
+        <menuseparator/>
+        <menuitem data-l10n-id="text-action-select-all" cmd="cmd_selectAll"/>
+        <menuseparator/>
+        <menuitem class="searchbar-clear-history"/>
+      `;
+
+      this._menupopup = this.querySelector(".textbox-contextmenu");
+
+      let frag = MozXULElement.parseXULToFragment(raw);
+
+      // Insert attributes that come from localized properties
+      this._pasteAndSearchMenuItem = frag.querySelector(
+        ".searchbar-paste-and-search"
+      );
+      this._pasteAndSearchMenuItem.setAttribute(
+        "label",
+        this._stringBundle.getString("cmd_pasteAndSearch")
+      );
+
+      let clearHistoryItem = frag.querySelector(".searchbar-clear-history");
+      clearHistoryItem.setAttribute(
+        "label",
+        this._stringBundle.getString("cmd_clearHistory")
+      );
+      clearHistoryItem.setAttribute(
+        "accesskey",
+        this._stringBundle.getString("cmd_clearHistory_accesskey")
+      );
+
+      this._menupopup.appendChild(frag);
+
+      this._menupopup.addEventListener("command", event => {
+        switch (event.originalTarget) {
+          case this._pasteAndSearchMenuItem:
+            BrowserSearch.pasteAndSearch(event);
+            break;
+          case clearHistoryItem:
+            let param = this.textbox.getAttribute("autocompletesearchparam");
+            BrowserSearch.searchBar.FormHistory.update(
+              { op: "remove", fieldname: param },
+              null
+            );
+            this.textbox.value = "";
+            break;
+          default:
+            let cmd = event.originalTarget.getAttribute("cmd");
+            if (cmd) {
+              let controller = document.commandDispatcher.getControllerForCommand(
+                cmd
+              );
+              controller.doCommand(cmd);
+            }
+            break;
         }
       });
     }

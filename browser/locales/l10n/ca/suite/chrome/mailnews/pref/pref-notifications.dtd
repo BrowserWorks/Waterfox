@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.notifications.title         "Avisos">
+<!ENTITY notifications.caption            "Avisos">
+<!ENTITY newMessagesArrive.label          "En arribar missatges nous:">
+<!-- LOCALIZATION NOTE: (showAlertFor.label, showAlertTimeEnd.label)
+     showAlertFor.label is associated with the checkbox to show the alert,
+     leading into a numerical field to enter a time in seconds, followed by
+     showAlertTimeEnd.label which in en-US is the unit of the value -->
+
+
+<!ENTITY showAlertFor.label               "Mostra una alerta durant">
+<!ENTITY showAlertFor.accesskey           "s">
+<!ENTITY showAlertTimeEnd.label           "segons">
+
+<!ENTITY showAlertPreviewText.label       "Mostra una previsualització del text del missatge">
+<!ENTITY showAlertPreviewText.accesskey   "v">
+<!ENTITY showAlertSubject.label           "Mostra l'assumpte">
+<!ENTITY showAlertSubject.accesskey       "u">
+<!ENTITY showAlertSender.label            "Mostra el remitent">
+<!ENTITY showAlertSender.accesskey        "n">
+
+<!ENTITY showTrayIcon.label               "Mostra una icona de safata">
+<!ENTITY showTrayIcon.accesskey           "t">
+<!ENTITY showBalloon.label                "Mostra una notificació">
+<!ENTITY showBalloon.accesskey            "o">
+<!ENTITY bounceSystemDockIcon.label       "Anima la icona de l'acoblador">
+<!ENTITY bounceSystemDockIcon.accesskey   "A">
+
+<!ENTITY playSound.label                  "Reprodueix un so">
+<!ENTITY playSound.accesskey              "R">
+<!ENTITY playButton.label                 "Reprodueix">
+<!ENTITY playButton.accesskey             "R">
+<!ENTITY systemsound.label                "So «correu nou» del sistema">
+<!ENTITY systemsound.accesskey            "S">
+<!ENTITY customsound.label                "Fitxer .wav personalitzat">
+<!ENTITY customsound.accesskey            "F">
+<!ENTITY browse.label                     "Navega...">
+<!ENTITY browse.accesskey                 "N">
+<!ENTITY browse.title                     "Trieu el fitxer">

@@ -7,7 +7,6 @@
 #define TRANSFRMX_MOZILLA_XML_OUTPUT_H
 
 #include "txXMLEventHandler.h"
-#include "nsAutoPtr.h"
 #include "nsIScriptLoaderObserver.h"
 #include "txOutputFormat.h"
 #include "nsCOMArray.h"
@@ -38,7 +37,7 @@ class txTransformNotifier final : public nsIScriptLoaderObserver,
   NS_DECL_NSISCRIPTLOADEROBSERVER
 
   // nsICSSLoaderObserver
-  NS_IMETHOD StyleSheetLoaded(mozilla::StyleSheet* aSheet, bool aWasAlternate,
+  NS_IMETHOD StyleSheetLoaded(mozilla::StyleSheet* aSheet, bool aWasDeferred,
                               nsresult aStatus) override;
 
   void Init(nsITransformObserver* aObserver);

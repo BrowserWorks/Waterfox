@@ -83,6 +83,17 @@ XPCOMUtils.defineLazyGetter(
   () => FormAutofillUtils.FIELD_STATES
 );
 
+function getActorFromWindow(contentWindow, name = "FormAutofill") {
+  // In unit tests, contentWindow isn't a real window.
+  if (!contentWindow) {
+    return null;
+  }
+
+  return contentWindow.windowGlobalChild
+    ? contentWindow.windowGlobalChild.getActor(name)
+    : null;
+}
+
 // Register/unregister a constructor as a factory.
 function AutocompleteFactory() {}
 AutocompleteFactory.prototype = {
@@ -215,25 +226,27 @@ AutofillProfileAutoCompleteSearch.prototype = {
         searchString,
       };
 
-      pendingSearchResult = this._getRecords(data).then(records => {
-        if (this.forceStop) {
-          return null;
+      pendingSearchResult = this._getRecords(activeInput, data).then(
+        records => {
+          if (this.forceStop) {
+            return null;
+          }
+          // Sort addresses by timeLastUsed for showing the lastest used address at top.
+          records.sort((a, b) => b.timeLastUsed - a.timeLastUsed);
+
+          let adaptedRecords = activeSection.getAdaptedProfiles(records);
+          let handler = FormAutofillContent.activeHandler;
+          let isSecure = InsecurePasswordUtils.isFormSecure(handler.form);
+
+          return new AutocompleteResult(
+            searchString,
+            activeFieldDetail.fieldName,
+            allFieldNames,
+            adaptedRecords,
+            { isSecure, isInputAutofilled }
+          );
         }
-        // Sort addresses by timeLastUsed for showing the lastest used address at top.
-        records.sort((a, b) => b.timeLastUsed - a.timeLastUsed);
-
-        let adaptedRecords = activeSection.getAdaptedProfiles(records);
-        let handler = FormAutofillContent.activeHandler;
-        let isSecure = InsecurePasswordUtils.isFormSecure(handler.form);
-
-        return new AutocompleteResult(
-          searchString,
-          activeFieldDetail.fieldName,
-          allFieldNames,
-          adaptedRecords,
-          { isSecure, isInputAutofilled }
-        );
-      });
+      );
     }
 
     Promise.resolve(pendingSearchResult).then(result => {
@@ -266,6 +279,8 @@ AutofillProfileAutoCompleteSearch.prototype = {
    * Get the records from parent process for AutoComplete result.
    *
    * @private
+   * @param  {Object} input
+   *         Input element for autocomplete.
    * @param  {Object} data
    *         Parameters for querying the corresponding result.
    * @param  {string} data.collectionName
@@ -277,22 +292,14 @@ AutofillProfileAutoCompleteSearch.prototype = {
    * @returns {Promise}
    *          Promise that resolves when addresses returned from parent process.
    */
-  _getRecords(data) {
+  _getRecords(input, data) {
     this.debug("_getRecords with data:", data);
-    return new Promise(resolve => {
-      Services.cpmm.addMessageListener(
-        "FormAutofill:Records",
-        function getResult(result) {
-          Services.cpmm.removeMessageListener(
-            "FormAutofill:Records",
-            getResult
-          );
-          resolve(result.data);
-        }
-      );
+    if (!input) {
+      return [];
+    }
 
-      Services.cpmm.sendAsyncMessage("FormAutofill:GetRecords", data);
-    });
+    let actor = getActorFromWindow(input.ownerGlobal);
+    return actor.sendQuery("FormAutofill:GetRecords", data);
   },
 };
 
@@ -350,24 +357,13 @@ let ProfileAutocomplete = {
     }
   },
 
-  _frameMMFromWindow(contentWindow) {
-    return contentWindow.docShell.messageManager;
-  },
-
   _getSelectedIndex(contentWindow) {
-    let mm = this._frameMMFromWindow(contentWindow);
-    let selectedIndexResult = mm.sendSyncMessage(
-      "FormAutoComplete:GetSelectedIndex",
-      {}
-    );
-    if (
-      selectedIndexResult.length != 1 ||
-      !Number.isInteger(selectedIndexResult[0])
-    ) {
+    let actor = getActorFromWindow(contentWindow, "AutoComplete");
+    if (!actor) {
       throw new Error("Invalid autocomplete selectedIndex");
     }
 
-    return selectedIndexResult[0];
+    return actor.selectedIndex;
   },
 
   _fillFromAutocompleteRow(focusedInput) {
@@ -482,8 +478,8 @@ var FormAutofillContent = {
    * @param {int} timeStartedFillingMS Time of form filling started.
    */
   _onFormSubmit(profile, domWin, timeStartedFillingMS) {
-    let mm = this._messageManagerFromWindow(domWin);
-    mm.sendAsyncMessage("FormAutofill:OnFormSubmit", {
+    let actor = getActorFromWindow(domWin);
+    actor.sendAsyncMessage("FormAutofill:OnFormSubmit", {
       profile,
       timeStartedFillingMS,
     });
@@ -587,14 +583,8 @@ var FormAutofillContent = {
       this._activeItems = {};
       return;
     }
-    let handler = this._getFormHandler(element);
-    if (handler) {
-      handler.focusedInput = element;
-    }
     this._activeItems = {
-      handler,
       elementWeakRef: Cu.getWeakReference(element),
-      section: handler ? handler.activeSection : null,
       fieldDetail: null,
     };
   },
@@ -605,11 +595,25 @@ var FormAutofillContent = {
   },
 
   get activeHandler() {
-    return this._activeItems.handler;
+    const activeInput = this.activeInput;
+    if (!activeInput) {
+      return null;
+    }
+
+    // XXX: We are recomputing the activeHandler every time to avoid keeping a
+    // reference on the active element. This might be called quite frequently
+    // so if _getFormHandler/findRootForField become more costly, we should
+    // look into caching this result (eg by adding a weakmap).
+    let handler = this._getFormHandler(activeInput);
+    if (handler) {
+      handler.focusedInput = activeInput;
+    }
+    return handler;
   },
 
   get activeSection() {
-    return this._activeItems.section;
+    let formHandler = this.activeHandler;
+    return formHandler ? formHandler.activeSection : null;
   },
 
   /**
@@ -645,7 +649,10 @@ var FormAutofillContent = {
 
     if (!this.savedFieldNames) {
       this.debug("identifyAutofillFields: savedFieldNames are not known yet");
-      Services.cpmm.sendAsyncMessage("FormAutofill:InitStorage");
+      let actor = getActorFromWindow(element.ownerGlobal);
+      if (actor) {
+        actor.sendAsyncMessage("FormAutofill:InitStorage");
+      }
     }
 
     let formHandler = this._getFormHandler(element);
@@ -683,7 +690,7 @@ var FormAutofillContent = {
     let lastAutoCompleteResult =
       ProfileAutocomplete.lastProfileAutoCompleteResult;
     let focusedInput = this.activeInput;
-    let mm = this._messageManagerFromWindow(docWin);
+    let actor = getActorFromWindow(docWin);
 
     if (
       selectedIndex === -1 ||
@@ -691,7 +698,7 @@ var FormAutofillContent = {
       !lastAutoCompleteResult ||
       lastAutoCompleteResult.getStyleAt(selectedIndex) != "autofill-profile"
     ) {
-      mm.sendAsyncMessage("FormAutofill:UpdateWarningMessage", {});
+      actor.sendAsyncMessage("FormAutofill:UpdateWarningMessage", {});
 
       ProfileAutocomplete._clearProfilePreview();
     } else {
@@ -710,7 +717,7 @@ var FormAutofillContent = {
       let categories = FormAutofillUtils.getCategoriesFromFieldNames(
         profileFields
       );
-      mm.sendAsyncMessage("FormAutofill:UpdateWarningMessage", {
+      actor.sendAsyncMessage("FormAutofill:UpdateWarningMessage", {
         focusedCategory,
         categories,
       });
@@ -732,7 +739,8 @@ var FormAutofillContent = {
       focusedInput === ProfileAutocomplete.lastProfileAutoCompleteFocusedInput
     ) {
       if (selectedRowStyle == "autofill-footer") {
-        Services.cpmm.sendAsyncMessage("FormAutofill:OpenPreferences");
+        let actor = getActorFromWindow(focusedInput.ownerGlobal);
+        actor.sendAsyncMessage("FormAutofill:OpenPreferences");
       } else if (selectedRowStyle == "autofill-clear-button") {
         FormAutofillContent.clearForm();
       }
@@ -747,10 +755,6 @@ var FormAutofillContent = {
     }
 
     formFillController.markAsAutofillField(field);
-  },
-
-  _messageManagerFromWindow(win) {
-    return win.docShell.messageManager;
   },
 
   _onKeyDown(e) {

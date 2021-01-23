@@ -7,12 +7,13 @@
 #include "HTMLListAccessible.h"
 
 #include "DocAccessible.h"
+#include "EventTree.h"
 #include "nsAccUtils.h"
 #include "Role.h"
 #include "States.h"
 
-#include "nsBlockFrame.h"
 #include "nsBulletFrame.h"
+#include "nsLayoutUtils.h"
 
 using namespace mozilla;
 using namespace mozilla::a11y;
@@ -38,11 +39,14 @@ HTMLLIAccessible::HTMLLIAccessible(nsIContent* aContent, DocAccessible* aDoc)
     : HyperTextAccessibleWrap(aContent, aDoc), mBullet(nullptr) {
   mType = eHTMLLiType;
 
-  nsBlockFrame* blockFrame = do_QueryFrame(GetFrame());
-  if (blockFrame && blockFrame->HasMarker()) {
-    mBullet = new HTMLListBulletAccessible(mContent, mDoc);
-    Document()->BindToDocument(mBullet, nullptr);
-    AppendChild(mBullet);
+  if (nsBulletFrame* bulletFrame =
+          do_QueryFrame(nsLayoutUtils::GetMarkerFrame(aContent))) {
+    const nsStyleList* styleList = bulletFrame->StyleList();
+    if (styleList->GetListStyleImage() || !styleList->mCounterStyle.IsNone()) {
+      mBullet = new HTMLListBulletAccessible(mContent, mDoc);
+      Document()->BindToDocument(mBullet, nullptr);
+      AppendChild(mBullet);
+    }
   }
 }
 
@@ -82,6 +86,13 @@ bool HTMLLIAccessible::InsertChildAt(uint32_t aIndex, Accessible* aChild) {
   return HyperTextAccessible::InsertChildAt(aIndex, aChild);
 }
 
+void HTMLLIAccessible::RelocateChild(uint32_t aNewIndex, Accessible* aChild) {
+  // Don't allow moving a child in front of the bullet.
+  if (mBullet && aChild != mBullet && aNewIndex != 0) {
+    HyperTextAccessible::RelocateChild(aNewIndex, aChild);
+  }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // HTMLLIAccessible: public
 
@@ -119,19 +130,27 @@ HTMLListBulletAccessible::HTMLListBulletAccessible(nsIContent* aContent,
 // HTMLListBulletAccessible: Accessible
 
 nsIFrame* HTMLListBulletAccessible::GetFrame() const {
-  nsBlockFrame* blockFrame = do_QueryFrame(mContent->GetPrimaryFrame());
-  return blockFrame ? blockFrame->GetMarker() : nullptr;
+  return nsLayoutUtils::GetMarkerFrame(mContent);
 }
 
 ENameValueFlag HTMLListBulletAccessible::Name(nsString& aName) const {
   aName.Truncate();
 
   // Native anonymous content, ARIA can't be used. Get list bullet text.
-  nsBlockFrame* blockFrame = do_QueryFrame(mContent->GetPrimaryFrame());
-  if (blockFrame) {
-    blockFrame->GetSpokenMarkerText(aName);
+  nsBulletFrame* frame = do_QueryFrame(GetFrame());
+  if (!frame) {
+    return eNameOK;
   }
 
+  if (frame->StyleList()->GetListStyleImage()) {
+    // Bullet is an image, so use default bullet character.
+    const char16_t kDiscCharacter = 0x2022;
+    aName.Assign(kDiscCharacter);
+    aName.Append(' ');
+    return eNameOK;
+  }
+
+  frame->GetSpokenText(aName);
   return eNameOK;
 }
 
@@ -145,9 +164,7 @@ void HTMLListBulletAccessible::AppendTextTo(nsAString& aText,
                                             uint32_t aStartOffset,
                                             uint32_t aLength) {
   nsAutoString bulletText;
-  nsBlockFrame* blockFrame = do_QueryFrame(mContent->GetPrimaryFrame());
-  if (blockFrame) blockFrame->GetSpokenMarkerText(bulletText);
-
+  Name(bulletText);
   aText.Append(Substring(bulletText, aStartOffset, aLength));
 }
 
@@ -155,6 +172,9 @@ void HTMLListBulletAccessible::AppendTextTo(nsAString& aText,
 // HTMLListBulletAccessible: public
 
 bool HTMLListBulletAccessible::IsInside() const {
-  nsBlockFrame* blockFrame = do_QueryFrame(mContent->GetPrimaryFrame());
-  return blockFrame ? blockFrame->HasInsideMarker() : false;
+  if (nsIFrame* frame = mContent->GetPrimaryFrame()) {
+    return frame->StyleList()->mListStylePosition ==
+           NS_STYLE_LIST_STYLE_POSITION_INSIDE;
+  }
+  return false;
 }

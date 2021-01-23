@@ -12,7 +12,7 @@ transforms:
 
 kind-dependencies:
     - build-signing
-    - nightly-l10n-signing
+    - shippable-l10n-signing
 
 job-defaults:
     name: eme-free-repack
@@ -38,7 +38,7 @@ job-defaults:
         limit-locales:
             by-release-level:
                 staging: true
-                production: true
+                production: false
 
 jobs:
     macosx64-shippable:
@@ -51,7 +51,7 @@ jobs:
             build_platform: macosx64-shippable
             build_type: opt
             artifact_prefix: releng/partner
-            nightly: true
+            shippable: true
 
     win32-shippable:
         treeherder:
@@ -63,7 +63,7 @@ jobs:
             build_platform: win32-shippable
             build_type: opt
             artifact_prefix: releng/partner
-            nightly: true
+            shippable: true
 
     win64-shippable:
         treeherder:
@@ -75,4 +75,4 @@ jobs:
             build_platform: win64-shippable
             build_type: opt
             artifact_prefix: releng/partner
-            nightly: true
+            shippable: true

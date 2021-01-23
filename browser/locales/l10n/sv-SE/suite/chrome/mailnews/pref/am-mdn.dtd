@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Mottagningskvitton">
+<!ENTITY useGlobalPrefs.label         "Använd mina globala inställningar för detta konto">
+<!ENTITY useGlobalPrefs.accesskey     "n">
+<!ENTITY globalReceipts.label         "Globala inställningar…">
+<!ENTITY globalReceipts.accesskey     "G">
+<!ENTITY useCustomPrefs.label         "Anpassa mottagningskvitton för detta konto">
+<!ENTITY useCustomPrefs.accesskey     "p">
+<!ENTITY requestReceipt.label         "Begär alltid mottagningskvitto när meddelanden skickas">
+<!ENTITY requestReceipt.accesskey     "m">
+<!ENTITY receiptArrive.label          "När ett kvitto anländer:">
+<!ENTITY leaveIt.label                "Lämna det i inkorgen">
+<!ENTITY leaveIt.accesskey            "i">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent Mail' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "Flytta det till mappen &quot;Skickat&quot;">
+<!ENTITY moveToSent.accesskey         "S">
+<!ENTITY requestMDN.label             "När mottagningskvitto begärs:">
+<!ENTITY returnSome.label             "Tillåt mottagningskvitto i vissa fall">
+<!ENTITY returnSome.accesskey         "å">
+<!ENTITY never.label                  "Skicka aldrig mottagningskvitto">
+<!ENTITY never.accesskey              "a">
+<!ENTITY notInToCc.label              "Om jag själv inte står med i Till eller Kopia:">
+<!ENTITY notInToCc.accesskey          "v">
+<!ENTITY outsideDomain.label          "Om avsändaren inte är från min domän:">
+<!ENTITY outsideDomain.accesskey      "d">
+<!ENTITY otherCases.label             "I övriga fall:">
+<!ENTITY otherCases.accesskey         "ö">
+<!ENTITY askMe.label                  "Fråga">
+<!ENTITY alwaysSend.label             "Skicka alltid">
+<!ENTITY neverSend.label              "Skicka aldrig">

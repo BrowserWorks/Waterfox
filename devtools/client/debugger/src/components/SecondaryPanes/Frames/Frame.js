@@ -3,7 +3,7 @@
  * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
 
 // @flow
-import React, { Component } from "react";
+import React, { Component, memo } from "react";
 import PropTypes from "prop-types";
 
 import classNames from "classnames";
@@ -30,34 +30,36 @@ function FrameTitle({ frame, options = {}, l10n }: FrameTitleProps) {
 
 type FrameLocationProps = { frame: Frame, displayFullUrl: boolean };
 
-function FrameLocation({ frame, displayFullUrl = false }: FrameLocationProps) {
-  if (!frame.source) {
-    return null;
-  }
+const FrameLocation = memo(
+  ({ frame, displayFullUrl = false }: FrameLocationProps) => {
+    if (!frame.source) {
+      return null;
+    }
 
-  if (frame.library) {
+    if (frame.library) {
+      return (
+        <span className="location">
+          {frame.library}
+          <AccessibleImage
+            className={`annotation-logo ${frame.library.toLowerCase()}`}
+          />
+        </span>
+      );
+    }
+
+    const { location, source } = frame;
+    const filename = displayFullUrl
+      ? getFileURL(source, false)
+      : getFilename(source);
+
     return (
-      <span className="location">
-        {frame.library}
-        <AccessibleImage
-          className={`annotation-logo ${frame.library.toLowerCase()}`}
-        />
+      <span className="location" title={source.url}>
+        <span className="filename">{filename}</span>:
+        <span className="line">{location.line}</span>
       </span>
     );
   }
-
-  const { location, source } = frame;
-  const filename = displayFullUrl
-    ? getFileURL(source, false)
-    : getFilename(source);
-
-  return (
-    <span className="location">
-      <span className="filename">{filename}</span>:
-      <span className="line">{location.line}</span>
-    </span>
-  );
-}
+);
 
 FrameLocation.displayName = "FrameLocation";
 
@@ -68,6 +70,7 @@ type FrameComponentProps = {
   copyStackTrace: Function,
   toggleFrameworkGrouping: Function,
   selectFrame: typeof actions.selectFrame,
+  selectLocation: typeof actions.selectLocation,
   frameworkGroupingOn: boolean,
   hideLocation: boolean,
   shouldMapDisplayName: boolean,
@@ -75,7 +78,7 @@ type FrameComponentProps = {
   displayFullUrl: boolean,
   getFrameTitle?: string => string,
   disableContextMenu: boolean,
-  selectable: boolean,
+  panel: "debugger" | "webconsole",
 };
 
 export default class FrameComponent extends Component<FrameComponentProps> {
@@ -85,6 +88,14 @@ export default class FrameComponent extends Component<FrameComponentProps> {
     disableContextMenu: false,
   };
 
+  get isSelectable() {
+    return this.props.panel == "webconsole";
+  }
+
+  get isDebugger() {
+    return this.props.panel == "debugger";
+  }
+
   onContextMenu(event: SyntheticMouseEvent<HTMLElement>) {
     const {
       frame,
@@ -92,12 +103,14 @@ export default class FrameComponent extends Component<FrameComponentProps> {
       toggleFrameworkGrouping,
       toggleBlackBox,
       frameworkGroupingOn,
+      cx,
     } = this.props;
     FrameMenu(
       frame,
       frameworkGroupingOn,
       { copyStackTrace, toggleFrameworkGrouping, toggleBlackBox },
-      event
+      event,
+      cx
     );
   }
 
@@ -109,6 +122,7 @@ export default class FrameComponent extends Component<FrameComponentProps> {
     if (e.button !== 0) {
       return;
     }
+
     this.props.selectFrame(this.props.cx, frame);
   }
 
@@ -120,6 +134,7 @@ export default class FrameComponent extends Component<FrameComponentProps> {
     if (event.key != "Enter") {
       return;
     }
+
     this.props.selectFrame(this.props.cx, frame);
   }
 
@@ -132,7 +147,6 @@ export default class FrameComponent extends Component<FrameComponentProps> {
       displayFullUrl,
       getFrameTitle,
       disableContextMenu,
-      selectable,
     } = this.props;
     const { l10n } = this.context;
 
@@ -161,7 +175,18 @@ export default class FrameComponent extends Component<FrameComponentProps> {
         tabIndex={0}
         title={title}
       >
-        {selectable && <FrameIndent />}
+        {frame.asyncCause && (
+          <span className="location-async-cause">
+            {this.isSelectable && <FrameIndent />}
+            {this.isDebugger ? (
+              <span className="async-label">{frame.asyncCause}</span>
+            ) : (
+              l10n.getFormatStr("stacktrace.asyncStack", frame.asyncCause)
+            )}
+            {this.isSelectable && <br className="clipboard-only" />}
+          </span>
+        )}
+        {this.isSelectable && <FrameIndent />}
         <FrameTitle
           frame={frame}
           options={{ shouldMapDisplayName }}
@@ -171,7 +196,7 @@ export default class FrameComponent extends Component<FrameComponentProps> {
         {!hideLocation && (
           <FrameLocation frame={frame} displayFullUrl={displayFullUrl} />
         )}
-        {selectable && <br className="clipboard-only" />}
+        {this.isSelectable && <br className="clipboard-only" />}
       </div>
     );
   }

@@ -4,21 +4,40 @@
 
 "use strict";
 
-const { createStore } = require("devtools/client/shared/vendor/redux");
+const { thunk } = require("devtools/client/shared/redux/middleware/thunk.js");
+const {
+  applyMiddleware,
+  createStore,
+} = require("devtools/client/shared/vendor/redux");
 
 // Reducers
-const rootReducer = require("./reducers/index");
-const { WorkersState } = require("./reducers/workers-state");
-const { PageState } = require("./reducers/page-state");
+
+const rootReducer = require("devtools/client/application/src/reducers/index");
+const {
+  ManifestState,
+} = require("devtools/client/application/src/reducers/manifest-state");
+const {
+  WorkersState,
+} = require("devtools/client/application/src/reducers/workers-state");
+const {
+  PageState,
+} = require("devtools/client/application/src/reducers/page-state");
+const {
+  UiState,
+} = require("devtools/client/application/src/reducers/ui-state");
 
 function configureStore() {
   // Prepare initial state.
   const initialState = {
-    workers: new WorkersState(),
+    manifest: new ManifestState(),
     page: new PageState(),
+    ui: new UiState(),
+    workers: new WorkersState(),
   };
 
-  return createStore(rootReducer, initialState);
+  const middleware = applyMiddleware(thunk);
+
+  return createStore(rootReducer, initialState, middleware);
 }
 
 exports.configureStore = configureStore;

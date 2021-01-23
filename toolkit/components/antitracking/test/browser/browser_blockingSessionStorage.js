@@ -1,12 +1,15 @@
 /* import-globals-from antitracking_head.js */
 
-AntiTracking.runTest(
+requestLongerTimeout(4);
+
+AntiTracking.runTestInNormalAndPrivateMode(
   "sessionStorage",
   async _ => {
-    let shouldThrow =
-      SpecialPowers.Services.prefs.getIntPref(
-        "network.cookie.cookieBehavior"
-      ) == SpecialPowers.Ci.nsICookieService.BEHAVIOR_REJECT;
+    let shouldThrow = [
+      SpecialPowers.Ci.nsICookieService.BEHAVIOR_REJECT,
+    ].includes(
+      SpecialPowers.Services.prefs.getIntPref("network.cookie.cookieBehavior")
+    );
 
     let hasThrown;
     try {
@@ -36,20 +39,20 @@ AntiTracking.runTest(
   },
   [],
   true,
-  true,
-  0
+  true
 );
 
-AntiTracking.runTest(
+AntiTracking.runTestInNormalAndPrivateMode(
   "sessionStorage and Storage Access API",
   async _ => {
     /* import-globals-from storageAccessAPIHelpers.js */
     await noStorageAccessInitially();
 
-    let shouldThrow =
-      SpecialPowers.Services.prefs.getIntPref(
-        "network.cookie.cookieBehavior"
-      ) == SpecialPowers.Ci.nsICookieService.BEHAVIOR_REJECT;
+    let shouldThrow = [
+      SpecialPowers.Ci.nsICookieService.BEHAVIOR_REJECT,
+    ].includes(
+      SpecialPowers.Services.prefs.getIntPref("network.cookie.cookieBehavior")
+    );
 
     let hasThrown;
     try {

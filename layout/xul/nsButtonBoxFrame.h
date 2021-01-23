@@ -46,10 +46,6 @@ class nsButtonBoxFrame : public nsBoxFrame {
   }
 #endif
 
-  void UpdateMouseThrough() override {
-    AddStateBits(NS_FRAME_MOUSE_THROUGH_NEVER);
-  }
-
  private:
   class nsButtonBoxListener final : public nsIDOMEventListener {
    public:
@@ -62,7 +58,7 @@ class nsButtonBoxFrame : public nsBoxFrame {
 
    private:
     friend class nsButtonBoxFrame;
-    virtual ~nsButtonBoxListener() {}
+    virtual ~nsButtonBoxListener() = default;
     nsButtonBoxFrame* mButtonBoxFrame;
   };
 

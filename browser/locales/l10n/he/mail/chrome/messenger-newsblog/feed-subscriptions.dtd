@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "מינויי הזנות">
+<!ENTITY learnMore.label             "מידע נוסף אודות הזנות">
+
+<!ENTITY feedTitle.label             "כותרת:">
+<!ENTITY feedTitle.accesskey         "כ">
+
+<!ENTITY feedLocation.label          "כתובת הזנה:">
+<!ENTITY feedLocation.accesskey      "ז">
+<!ENTITY feedLocation2.placeholder   "נא להזין כתובת הזנה תקנית">
+<!ENTITY locationValidate.label      "בדיקה">
+<!ENTITY validateText.label          "בדיקת וקבלת כתובת תקנית.">
+
+<!ENTITY feedFolder.label            "אחסון מאמרים תחת:">
+<!ENTITY feedFolder.accesskey        "א">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "בדיקה לאיתור מאמרים חדשים בכל ">
+<!ENTITY biffStart.accesskey         "ב">
+<!ENTITY biffMinutes.label           "דקות">
+<!ENTITY biffMinutes.accesskey       "ק">
+<!ENTITY biffDays.label              "ימים">
+<!ENTITY biffDays.accesskey          "מ">
+<!ENTITY recommendedUnits.label      "המלצת המפרסם:">
+
+<!ENTITY quickMode.label             "הצגת תקציר של המאמר במקום לטעון את העמוד">
+<!ENTITY quickMode.accesskey         "צ">
+
+<!ENTITY autotagEnable.accesskey     "ג">
+<!ENTITY autotagUsePrefix.label      "קידומת לתגיות:">
+<!ENTITY autotagUsePrefix.accesskey  "ק">
+<!ENTITY autoTagPrefix.placeholder   "נא להקליד קידומת לתגית">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "הוספה">
+<!ENTITY button.addFeed.accesskey    "ה">
+<!ENTITY button.verifyFeed.label     "בדיקה">
+<!ENTITY button.verifyFeed.accesskey "ב">
+<!ENTITY button.updateFeed.label     "עדכון">
+<!ENTITY button.updateFeed.accesskey "ע">
+<!ENTITY button.removeFeed.label     "הסרה">
+<!ENTITY button.removeFeed.accesskey "ה">
+<!ENTITY button.importOPML.label     "יבא">
+<!ENTITY button.importOPML.accesskey "ב">
+<!ENTITY button.exportOPML.label     "יצא">
+<!ENTITY button.exportOPML.accesskey "צ">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "סגירה">

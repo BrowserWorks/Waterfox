@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label "ফিড সাবস্ক্রিপশন">
+
+<!ENTITY feedTitle.label "শিরোনাম:">
+
+<!ENTITY button.addFeed.label "যোগ (A)">
+<!ENTITY button.addFeed.accesskey "A">
+<!ENTITY button.removeFeed.label "সরানো (R)">
+<!ENTITY button.removeFeed.accesskey "R">
+<!ENTITY button.importOPML.label "ইম্পোর্ট (I)">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label "এক্সপোর্ট (x)">
+<!ENTITY button.exportOPML.accesskey "x">
+
+<!ENTITY cmd.close.commandKey "w">

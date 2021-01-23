@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Hisob sozlamalari">
+<!ENTITY accountName.label "Hisobning nomi:">
+<!ENTITY accountName.accesskey "n">
+<!ENTITY identityTitle.label "Joriy shaxs">
+<!ENTITY identityDesc.label "Har bir hisobda boshqalar sizning xabarlaringizni olganga sizni tanishtiradigan ma’lumot – ya’ni shaxsiyatingiz haqida ma’lumotlar bor.">
+<!ENTITY name.label "Ismingiz:">
+<!ENTITY name.accesskey "s">
+<!ENTITY email.label "E-pochta manzili:">
+<!ENTITY email.accesskey "E">
+<!ENTITY replyTo.label "Javob yoziladigan manzil:">
+<!ENTITY replyTo.accesskey "m">
+<!ENTITY replyTo.placeholder "Qabul qiluvchilar boshqa manzillarga javob yozishadi">
+<!ENTITY organization.label "Tashkilot:">
+<!ENTITY organization.accesskey "T">
+<!ENTITY signatureText.label "Imzo matni:">
+<!ENTITY signatureText.accesskey "m">
+<!ENTITY signatureHtml.label "HTML formatdan foydalaning (masalan, &lt;b&gt;bold&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "L">
+<!ENTITY signatureFile.label "Imzoni fayldan (matn, HTML yoki tasvirdan) biriktirish:">
+<!ENTITY signatureFile.accesskey "b">
+<!ENTITY edit.label "Tahrirlash…">
+<!ENTITY choose.label "Tanlash…">
+<!ENTITY choose.accesskey "T">
+<!ENTITY editVCard.label "Kartani tahrirlash…">
+<!ENTITY editVCard.accesskey "t">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Menga tegishli vCard kartasini biriktirish">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "Shaxsiyatlarni boshqarish…">
+<!ENTITY manageIdentities.accesskey "b">
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+
+<!ENTITY smtpName.label "Chiquvchi server (SMTP):">
+<!ENTITY smtpName.accesskey "C">
+<!ENTITY smtpDefaultServer.label "Asosiy serverdan foydalanish">
+
+

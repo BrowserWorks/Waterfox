@@ -17,7 +17,7 @@
 
 use crate::cursor::{Cursor, EncCursor};
 use crate::dominator_tree::DominatorTree;
-use crate::ir::{ArgumentLoc, Ebb, Function, Inst, InstBuilder, SigRef, Value, ValueLoc};
+use crate::ir::{ArgumentLoc, Block, Function, Inst, InstBuilder, SigRef, Value, ValueLoc};
 use crate::isa::registers::{RegClass, RegClassIndex, RegClassMask, RegUnit};
 use crate::isa::{ConstraintKind, EncInfo, RecipeConstraints, RegInfo, TargetIsa};
 use crate::regalloc::affinity::Affinity;
@@ -27,9 +27,9 @@ use crate::regalloc::pressure::Pressure;
 use crate::regalloc::virtregs::VirtRegs;
 use crate::timing;
 use crate::topo_order::TopoOrder;
+use alloc::vec::Vec;
 use core::fmt;
 use log::debug;
-use std::vec::Vec;
 
 /// Return a top-level register class which contains `unit`.
 fn toprc_containing_regunit(unit: RegUnit, reginfo: &RegInfo) -> RegClass {
@@ -91,7 +91,7 @@ impl Spilling {
     /// Run the spilling algorithm over `func`.
     pub fn run(
         &mut self,
-        isa: &TargetIsa,
+        isa: &dyn TargetIsa,
         func: &mut Function,
         domtree: &DominatorTree,
         liveness: &mut Liveness,
@@ -121,22 +121,22 @@ impl Spilling {
 
 impl<'a> Context<'a> {
     fn run(&mut self, tracker: &mut LiveValueTracker) {
-        self.topo.reset(self.cur.func.layout.ebbs());
-        while let Some(ebb) = self.topo.next(&self.cur.func.layout, self.domtree) {
-            self.visit_ebb(ebb, tracker);
+        self.topo.reset(self.cur.func.layout.blocks());
+        while let Some(block) = self.topo.next(&self.cur.func.layout, self.domtree) {
+            self.visit_block(block, tracker);
         }
     }
 
-    fn visit_ebb(&mut self, ebb: Ebb, tracker: &mut LiveValueTracker) {
-        debug!("Spilling {}:", ebb);
-        self.cur.goto_top(ebb);
-        self.visit_ebb_header(ebb, tracker);
+    fn visit_block(&mut self, block: Block, tracker: &mut LiveValueTracker) {
+        debug!("Spilling {}:", block);
+        self.cur.goto_top(block);
+        self.visit_block_header(block, tracker);
         tracker.drop_dead_params();
         self.process_spills(tracker);
 
         while let Some(inst) = self.cur.next_inst() {
             if !self.cur.func.dfg[inst].opcode().is_ghost() {
-                self.visit_inst(inst, ebb, tracker);
+                self.visit_inst(inst, block, tracker);
             } else {
                 let (_throughs, kills) = tracker.process_ghost(inst);
                 self.free_regs(kills);
@@ -185,9 +185,9 @@ impl<'a> Context<'a> {
         }
     }
 
-    fn visit_ebb_header(&mut self, ebb: Ebb, tracker: &mut LiveValueTracker) {
-        let (liveins, params) = tracker.ebb_top(
-            ebb,
+    fn visit_block_header(&mut self, block: Block, tracker: &mut LiveValueTracker) {
+        let (liveins, params) = tracker.block_top(
+            block,
             &self.cur.func.dfg,
             self.liveness,
             &self.cur.func.layout,
@@ -199,26 +199,26 @@ impl<'a> Context<'a> {
         self.pressure.reset();
         self.take_live_regs(liveins);
 
-        // An EBB can have an arbitrary (up to 2^16...) number of parameters, so they are not
+        // A block can have an arbitrary (up to 2^16...) number of parameters, so they are not
         // guaranteed to fit in registers.
         for lv in params {
             if let Affinity::Reg(rci) = lv.affinity {
                 let rc = self.reginfo.rc(rci);
                 'try_take: while let Err(mask) = self.pressure.take_transient(rc) {
-                    debug!("Need {} reg for EBB param {}", rc, lv.value);
+                    debug!("Need {} reg for block param {}", rc, lv.value);
                     match self.spill_candidate(mask, liveins) {
                         Some(cand) => {
                             debug!(
-                                "Spilling live-in {} to make room for {} EBB param {}",
+                                "Spilling live-in {} to make room for {} block param {}",
                                 cand, rc, lv.value
                             );
                             self.spill_reg(cand);
                         }
                         None => {
                             // We can't spill any of the live-in registers, so we have to spill an
-                            // EBB argument. Since the current spill metric would consider all the
-                            // EBB arguments equal, just spill the present register.
-                            debug!("Spilling {} EBB argument {}", rc, lv.value);
+                            // block argument. Since the current spill metric would consider all the
+                            // block arguments equal, just spill the present register.
+                            debug!("Spilling {} block argument {}", rc, lv.value);
 
                             // Since `spill_reg` will free a register, add the current one here.
                             self.pressure.take(rc);
@@ -230,15 +230,15 @@ impl<'a> Context<'a> {
             }
         }
 
-        // The transient pressure counts for the EBB arguments are accurate. Just preserve them.
+        // The transient pressure counts for the block arguments are accurate. Just preserve them.
         self.pressure.preserve_transient();
         self.free_dead_regs(params);
     }
 
-    fn visit_inst(&mut self, inst: Inst, ebb: Ebb, tracker: &mut LiveValueTracker) {
+    fn visit_inst(&mut self, inst: Inst, block: Block, tracker: &mut LiveValueTracker) {
         debug!("Inst {}, {}", self.cur.display_inst(inst), self.pressure);
         debug_assert_eq!(self.cur.current_inst(), Some(inst));
-        debug_assert_eq!(self.cur.current_ebb(), Some(ebb));
+        debug_assert_eq!(self.cur.current_block(), Some(block));
 
         let constraints = self
             .encinfo
@@ -246,7 +246,7 @@ impl<'a> Context<'a> {
 
         // We may need to resolve register constraints if there are any noteworthy uses.
         debug_assert!(self.reg_uses.is_empty());
-        self.collect_reg_uses(inst, ebb, constraints);
+        self.collect_reg_uses(inst, block, constraints);
 
         // Calls usually have fixed register uses.
         let call_sig = self.cur.func.dfg.call_signature(inst);
@@ -267,7 +267,8 @@ impl<'a> Context<'a> {
         // If inst is a call, spill all register values that are live across the call.
         // This means that we don't currently take advantage of callee-saved registers.
         // TODO: Be more sophisticated.
-        if call_sig.is_some() {
+        let opcode = self.cur.func.dfg[inst].opcode();
+        if call_sig.is_some() || opcode.clobbers_all_regs() {
             for lv in throughs {
                 if lv.affinity.is_reg() && !self.spills.contains(&lv.value) {
                     self.spill_reg(lv.value);
@@ -313,23 +314,27 @@ impl<'a> Context<'a> {
     // We are assuming here that if a value is used both by a fixed register operand and a register
     // class operand, they two are compatible. We are also assuming that two register class
     // operands are always compatible.
-    fn collect_reg_uses(&mut self, inst: Inst, ebb: Ebb, constraints: Option<&RecipeConstraints>) {
+    fn collect_reg_uses(
+        &mut self,
+        inst: Inst,
+        block: Block,
+        constraints: Option<&RecipeConstraints>,
+    ) {
         let args = self.cur.func.dfg.inst_args(inst);
         let num_fixed_ins = if let Some(constraints) = constraints {
             for (idx, (op, &arg)) in constraints.ins.iter().zip(args).enumerate() {
                 let mut reguse = RegUse::new(arg, idx, op.regclass.into());
                 let lr = &self.liveness[arg];
-                let ctx = self.liveness.context(&self.cur.func.layout);
                 match op.kind {
                     ConstraintKind::Stack => continue,
                     ConstraintKind::FixedReg(_) => reguse.fixed = true,
                     ConstraintKind::Tied(_) => {
                         // A tied operand must kill the used value.
-                        reguse.tied = !lr.killed_at(inst, ebb, ctx);
+                        reguse.tied = !lr.killed_at(inst, block, &self.cur.func.layout);
                     }
                     ConstraintKind::FixedTied(_) => {
                         reguse.fixed = true;
-                        reguse.tied = !lr.killed_at(inst, ebb, ctx);
+                        reguse.tied = !lr.killed_at(inst, block, &self.cur.func.layout);
                     }
                     ConstraintKind::Reg => {}
                 }
@@ -451,10 +456,10 @@ impl<'a> Context<'a> {
                     // Spill a live register that is *not* used by the current instruction.
                     // Spilling a use wouldn't help.
                     //
-                    // Do allow spilling of EBB arguments on branches. This is safe since we spill
-                    // the whole virtual register which includes the matching EBB parameter value
+                    // Do allow spilling of block arguments on branches. This is safe since we spill
+                    // the whole virtual register which includes the matching block parameter value
                     // at the branch destination. It is also necessary since there can be
-                    // arbitrarily many EBB arguments.
+                    // arbitrarily many block arguments.
                     match {
                         let args = if self.cur.func.dfg[inst].opcode().is_branch() {
                             self.cur.func.dfg.inst_fixed_args(inst)
@@ -573,7 +578,7 @@ impl<'a> Context<'a> {
         self.liveness.create_dead(copy, inst, Affinity::Reg(rci));
         self.liveness.extend_locally(
             copy,
-            self.cur.func.layout.pp_ebb(inst),
+            self.cur.func.layout.pp_block(inst),
             self.cur.current_inst().expect("must be at an instruction"),
             &self.cur.func.layout,
         );

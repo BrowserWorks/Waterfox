@@ -31,7 +31,7 @@ let TestAboutPage = {
 
   createInstance(outer, iid) {
     if (outer != null) {
-      throw Cr.NS_ERROR_NO_AGGREGATION;
+      throw Components.Exception("", Cr.NS_ERROR_NO_AGGREGATION);
     }
     return this.QueryInterface(iid);
   },
@@ -59,7 +59,7 @@ let TestAboutPage = {
  */
 add_task(async function() {
   await SpecialPowers.pushPrefEnv({
-    set: [["csp.skip_about_page_has_csp_assert", true]],
+    set: [["dom.security.skip_about_page_has_csp_assert", true]],
   });
 
   TestAboutPage.register();
@@ -99,8 +99,8 @@ add_task(async function() {
 
   ok(!tab.linkedBrowser.isRemoteBrowser, "Browser should no longer be remote");
 
-  is(gURLBar.textValue, TESTURL, "URL bar visible value should be correct.");
-  is(gURLBar.value, TESTURL, "URL bar value should be correct.");
+  is(gURLBar.value, TESTURL, "URL bar visible value should be correct.");
+  is(gURLBar.untrimmedValue, TESTURL, "URL bar value should be correct.");
   is(
     gURLBar.getAttribute("pageproxystate"),
     "valid",

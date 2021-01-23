@@ -19,16 +19,9 @@ namespace ipc {
  * `mozilla::ipc::InProcess{Parent, Child}::Singleton()` should be used to get
  * an instance of this actor.
  */
-async protocol PInProcess
+async refcounted protocol PInProcess
 {
   manages PWindowGlobal;
-
-parent:
-  /**
-   * Construct a new WindowGlobal actor for a window global in the given
-   * BrowsingContext and with the given principal.
-   */
-  async PWindowGlobal(WindowGlobalInit init);
 };
 
 } // namespace ipc

@@ -7,6 +7,7 @@
 #ifndef mozilla_GraphRunner_h
 #define mozilla_GraphRunner_h
 
+#include "GraphDriver.h"
 #include "MediaSegment.h"
 #include "mozilla/Monitor.h"
 
@@ -16,29 +17,31 @@ struct PRThread;
 
 namespace mozilla {
 
-class GraphDriver;
-class MediaStreamGraphImpl;
+class AudioMixer;
+class MediaTrackGraphImpl;
 
-class GraphRunner {
+class GraphRunner final : public Runnable {
+  using IterationResult = GraphInterface::IterationResult;
+
  public:
-  explicit GraphRunner(MediaStreamGraphImpl* aGraph);
-  ~GraphRunner();
+  static already_AddRefed<GraphRunner> Create(MediaTrackGraphImpl* aGraph);
 
   /**
    * Marks us as shut down and signals mThread, so that it runs until the end.
    */
-  void Shutdown();
+  MOZ_CAN_RUN_SCRIPT void Shutdown();
 
   /**
-   * Signals one iteration of mGraph. Hands aStateEnd over to mThread and runs
+   * Signals one iteration of mGraph. Hands state over to mThread and runs
    * the iteration there.
    */
-  bool OneIteration(GraphTime aStateEnd);
+  IterationResult OneIteration(GraphTime aStateEnd, GraphTime aIterationEnd,
+                               AudioMixer* aMixer);
 
   /**
    * Runs mGraph until it shuts down.
    */
-  void Run();
+  NS_IMETHOD Run();
 
   /**
    * Returns true if called on mThread.
@@ -50,28 +53,47 @@ class GraphRunner {
    * Returns true if called on mThread, and aDriver was the driver that called
    * OneIteration() last.
    */
-  bool RunByGraphDriver(GraphDriver* aDriver);
+  bool InDriverIteration(GraphDriver* aDriver);
 #endif
 
  private:
+  explicit GraphRunner(MediaTrackGraphImpl* aGraph,
+                       already_AddRefed<nsIThread> aThread);
+  ~GraphRunner();
+
+  class IterationState {
+    GraphTime mStateEnd;
+    GraphTime mIterationEnd;
+    AudioMixer* MOZ_NON_OWNING_REF mMixer;
+
+   public:
+    IterationState(GraphTime aStateEnd, GraphTime aIterationEnd,
+                   AudioMixer* aMixer)
+        : mStateEnd(aStateEnd), mIterationEnd(aIterationEnd), mMixer(aMixer) {}
+    IterationState& operator=(const IterationState& aOther) = default;
+    GraphTime StateEnd() const { return mStateEnd; }
+    GraphTime IterationEnd() const { return mIterationEnd; }
+    AudioMixer* Mixer() const { return mMixer; }
+  };
+
   // Monitor used for yielding mThread through Wait(), and scheduling mThread
   // through Signal() from a GraphDriver.
   Monitor mMonitor;
-  // The MediaStreamGraph we're running. Weakptr beecause this graph owns us and
+  // The MediaTrackGraph we're running. Weakptr beecause this graph owns us and
   // guarantees that our lifetime will not go beyond that of itself.
-  MediaStreamGraphImpl* const mGraph;
-  // GraphTime being handed over to the graph through OneIteration. Protected by
+  MediaTrackGraphImpl* const mGraph;
+  // State being handed over to the graph through OneIteration. Protected by
   // mMonitor.
-  GraphTime mStateEnd;
-  // Reply from mGraph's OneIteration. Protected by mMonitor.
-  bool mStillProcessing;
+  Maybe<IterationState> mIterationState;
+  // Result from mGraph's OneIteration. Protected by mMonitor.
+  IterationResult mIterationResult;
 
   enum class ThreadState {
     Wait,      // Waiting for a message.  This is the initial state.
                // A transition from Run back to Wait occurs on the runner
-               // thread after it processes as far as mStateEnd and sets
-               // mStillProcessing.
-    Run,       // Set on driver thread after each mStateEnd update.
+               // thread after it processes as far as mIterationState->mStateEnd
+               // and sets mIterationResult.
+    Run,       // Set on driver thread after each mIterationState update.
     Shutdown,  // Set when Shutdown() is called on main thread.
   };
   // Protected by mMonitor until set to Shutdown, after which this is not
@@ -80,7 +102,7 @@ class GraphRunner {
 
   // The thread running mGraph.  Set on construction, after other members are
   // initialized.  Cleared at the end of Shutdown().
-  PRThread* mThread;
+  const nsCOMPtr<nsIThread> mThread;
 
 #ifdef DEBUG
   // Set to mGraph's audio callback driver's thread id, if run by an

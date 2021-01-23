@@ -20,6 +20,7 @@
 #include "mozilla/Preferences.h"
 #include "mozilla/PresShell.h"
 #include "mozilla/dom/BindingUtils.h"
+#include "mozilla/dom/EventCallbackDebuggerNotification.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/Event.h"
 #include "mozilla/dom/EventTargetBinding.h"
@@ -28,6 +29,7 @@
 #include "mozilla/dom/ScriptLoader.h"
 #include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/dom/TouchEvent.h"
+#include "mozilla/dom/UserActivation.h"
 #include "mozilla/TimelineConsumers.h"
 #include "mozilla/EventTimelineMarker.h"
 #include "mozilla/TimeStamp.h"
@@ -41,11 +43,8 @@
 #include "nsIContent.h"
 #include "nsIContentSecurityPolicy.h"
 #include "mozilla/dom/Document.h"
-#include "nsIDOMEventListener.h"
 #include "nsIScriptGlobalObject.h"
 #include "nsISupports.h"
-#include "nsISupportsPrimitives.h"
-#include "nsIXPConnect.h"
 #include "nsJSUtils.h"
 #include "nsNameSpaceManager.h"
 #include "nsPIDOMWindow.h"
@@ -96,19 +95,6 @@ static uint32_t MutationBitForEventType(EventMessage aEventType) {
 
 uint32_t EventListenerManager::sMainThreadCreatedCount = 0;
 
-static bool IsWebkitPrefixSupportEnabled() {
-  static bool sIsWebkitPrefixSupportEnabled;
-  static bool sIsPrefCached = false;
-
-  if (!sIsPrefCached) {
-    sIsPrefCached = true;
-    Preferences::AddBoolVarCache(&sIsWebkitPrefixSupportEnabled,
-                                 "layout.css.prefixes.webkit");
-  }
-
-  return sIsWebkitPrefixSupportEnabled;
-}
-
 EventListenerManagerBase::EventListenerManagerBase()
     : mNoListenerForEvent(eVoidEvent),
       mMayHavePaintEventListener(false),
@@ -122,7 +108,9 @@ EventListenerManagerBase::EventListenerManagerBase()
       mMayHaveInputOrCompositionEventListener(false),
       mMayHaveSelectionChangeEventListener(false),
       mClearingListeners(false),
-      mIsMainThreadELM(NS_IsMainThread()) {
+      mIsMainThreadELM(NS_IsMainThread()),
+      mHasNonPrivilegedClickListeners(false),
+      mUnknownNonPrivilegedClickListeners(false) {
   static_assert(sizeof(EventListenerManagerBase) == sizeof(uint32_t),
                 "Keep the size of EventListenerManagerBase size compact!");
 }
@@ -285,7 +273,9 @@ void EventListenerManager::AddEventListenerInternal(
     // Go from our target to the nearest enclosing DOM window.
     if (nsPIDOMWindowInner* window = GetInnerWindowForTarget()) {
       nsCOMPtr<Document> doc = window->GetExtantDoc();
-      if (doc) {
+      if (doc &&
+          !(aFlags.mInSystemGroup &&
+            doc->DontWarnAboutMutationEventsAndAllowSlowDOMMutations())) {
         doc->WarnOnceAbout(Document::eMutationEvent);
       }
       // If aEventMessage is eLegacySubtreeModified, we need to listen all
@@ -376,23 +366,20 @@ void EventListenerManager::AddEventListenerInternal(
     }
   } else if (aTypeAtom == nsGkAtoms::onstart) {
     if (nsPIDOMWindowInner* window = GetInnerWindowForTarget()) {
-      nsCOMPtr<Document> doc = window->GetExtantDoc();
-      if (doc) {
-        doc->SetDocumentAndPageUseCounter(eUseCounter_custom_onstart);
+      if (Document* doc = window->GetExtantDoc()) {
+        doc->SetUseCounter(eUseCounter_custom_onstart);
       }
     }
   } else if (aTypeAtom == nsGkAtoms::onbounce) {
     if (nsPIDOMWindowInner* window = GetInnerWindowForTarget()) {
-      nsCOMPtr<Document> doc = window->GetExtantDoc();
-      if (doc) {
-        doc->SetDocumentAndPageUseCounter(eUseCounter_custom_onbounce);
+      if (Document* doc = window->GetExtantDoc()) {
+        doc->SetUseCounter(eUseCounter_custom_onbounce);
       }
     }
   } else if (aTypeAtom == nsGkAtoms::onfinish) {
     if (nsPIDOMWindowInner* window = GetInnerWindowForTarget()) {
-      nsCOMPtr<Document> doc = window->GetExtantDoc();
-      if (doc) {
-        doc->SetDocumentAndPageUseCounter(eUseCounter_custom_onfinish);
+      if (Document* doc = window->GetExtantDoc()) {
+        doc->SetUseCounter(eUseCounter_custom_onfinish);
       }
     }
   } else if (aTypeAtom == nsGkAtoms::ontext) {
@@ -416,6 +403,13 @@ void EventListenerManager::AddEventListenerInternal(
   if (mIsMainThreadELM && mTarget) {
     EventListenerService::NotifyAboutMainThreadListenerChange(mTarget,
                                                               aTypeAtom);
+  }
+
+  if (!mHasNonPrivilegedClickListeners || mUnknownNonPrivilegedClickListeners) {
+    if (IsNonChromeClickListener(listener)) {
+      mHasNonPrivilegedClickListeners = true;
+      mUnknownNonPrivilegedClickListeners = false;
+    }
   }
 }
 
@@ -598,6 +592,9 @@ void EventListenerManager::RemoveEventListenerInternal(
     if (EVENT_TYPE_EQUALS(listener, aEventMessage, aUserType, aAllEvents)) {
       if (listener->mListener == aListenerHolder &&
           listener->mFlags.EqualsForRemoval(aFlags)) {
+        if (IsNonChromeClickListener(listener)) {
+          mUnknownNonPrivilegedClickListeners = true;
+        }
         mListeners.RemoveElementAt(i);
         NotifyEventListenerRemoved(aUserType);
         if (!aAllEvents && deviceType) {
@@ -607,6 +604,23 @@ void EventListenerManager::RemoveEventListenerInternal(
       }
     }
   }
+}
+
+bool EventListenerManager::HasNonPrivilegedClickListeners() {
+  if (mUnknownNonPrivilegedClickListeners) {
+    Listener* listener;
+
+    mUnknownNonPrivilegedClickListeners = false;
+    for (uint32_t i = 0; i < mListeners.Length(); ++i) {
+      listener = &mListeners.ElementAt(i);
+      if (IsNonChromeClickListener(listener)) {
+        mHasNonPrivilegedClickListeners = true;
+        return mHasNonPrivilegedClickListeners;
+      }
+    }
+    mHasNonPrivilegedClickListeners = false;
+  }
+  return mHasNonPrivilegedClickListeners;
 }
 
 bool EventListenerManager::ListenerCanHandle(const Listener* aListener,
@@ -632,32 +646,45 @@ bool EventListenerManager::ListenerCanHandle(const Listener* aListener,
   if (aEvent->mMessage == eUnidentifiedEvent) {
     return aListener->mTypeAtom == aEvent->mSpecifiedEventType;
   }
-  if (MOZ_UNLIKELY(!StaticPrefs::full_screen_api_unprefix_enabled() &&
-                   aEvent->IsTrusted() &&
-                   (aEventMessage == eFullscreenChange ||
-                    aEventMessage == eFullscreenError))) {
-    // If unprefixed Fullscreen API is not enabled, don't dispatch it
-    // to the content.
-    if (!aEvent->mFlags.mInSystemGroup && !aListener->mIsChrome) {
-      return false;
-    }
-  }
   MOZ_ASSERT(mIsMainThreadELM);
   return aListener->mEventMessage == aEventMessage;
 }
 
-static bool DefaultToPassiveTouchListeners() {
-  static bool sDefaultToPassiveTouchListeners = false;
-  static bool sIsPrefCached = false;
-
-  if (!sIsPrefCached) {
-    sIsPrefCached = true;
-    Preferences::AddBoolVarCache(
-        &sDefaultToPassiveTouchListeners,
-        "dom.event.default_to_passive_touch_listeners");
+static bool IsDefaultPassiveWhenOnRoot(EventMessage aMessage) {
+  if (aMessage == eTouchStart || aMessage == eTouchMove) {
+    return StaticPrefs::dom_event_default_to_passive_touch_listeners();
   }
+  if (aMessage == eWheel || aMessage == eLegacyMouseLineOrPageScroll ||
+      aMessage == eLegacyMousePixelScroll) {
+    return StaticPrefs::dom_event_default_to_passive_wheel_listeners();
+  }
+  return false;
+}
 
-  return sDefaultToPassiveTouchListeners;
+static bool IsRootEventTaget(EventTarget* aTarget) {
+  if (nsCOMPtr<nsPIDOMWindowInner> win = do_QueryInterface(aTarget)) {
+    return true;
+  }
+  nsCOMPtr<nsINode> node = do_QueryInterface(aTarget);
+  if (!node) {
+    return false;
+  }
+  Document* doc = node->OwnerDoc();
+  return node == doc || node == doc->GetRootElement() || node == doc->GetBody();
+}
+
+void EventListenerManager::MaybeMarkPassive(EventMessage aMessage,
+                                            EventListenerFlags& aFlags) {
+  if (!mIsMainThreadELM) {
+    return;
+  }
+  if (!IsDefaultPassiveWhenOnRoot(aMessage)) {
+    return;
+  }
+  if (!IsRootEventTaget(mTarget)) {
+    return;
+  }
+  aFlags.mPassive = true;
 }
 
 void EventListenerManager::AddEventListenerByType(
@@ -670,17 +697,8 @@ void EventListenerManager::AddEventListenerByType(
   EventListenerFlags flags = aFlags;
   if (aPassive.WasPassed()) {
     flags.mPassive = aPassive.Value();
-  } else if ((message == eTouchStart || message == eTouchMove) &&
-             mIsMainThreadELM && DefaultToPassiveTouchListeners()) {
-    nsCOMPtr<nsINode> node;
-    nsCOMPtr<nsPIDOMWindowInner> win;
-    if ((win = GetTargetAsInnerWindow()) ||
-        ((node = do_QueryInterface(mTarget)) &&
-         (node == node->OwnerDoc() ||
-          node == node->OwnerDoc()->GetRootElement() ||
-          node == node->OwnerDoc()->GetBody()))) {
-      flags.mPassive = true;
-    }
+  } else {
+    MaybeMarkPassive(message, flags);
   }
 
   AddEventListenerInternal(std::move(aListenerHolder), message, atom, flags);
@@ -725,6 +743,7 @@ EventListenerManager::Listener* EventListenerManager::SetEventHandlerInternal(
     // create and add a new one.
     EventListenerFlags flags;
     flags.mListenerIsJSListener = true;
+    MaybeMarkPassive(eventMessage, flags);
 
     nsCOMPtr<JSEventHandler> jsEventHandler;
     NS_NewJSEventHandler(mTarget, aName, aTypedHandler,
@@ -785,10 +804,7 @@ nsresult EventListenerManager::SetEventHandler(nsAtom* aName,
     }
 
     // Perform CSP check
-    nsCOMPtr<nsIContentSecurityPolicy> csp;
-    rv = doc->NodePrincipal()->GetCsp(getter_AddRefs(csp));
-    NS_ENSURE_SUCCESS(rv, rv);
-
+    nsCOMPtr<nsIContentSecurityPolicy> csp = doc->GetCsp();
     unsigned lineNum = 0;
     unsigned columnNum = 0;
 
@@ -845,12 +861,22 @@ void EventListenerManager::RemoveEventHandler(nsAtom* aName) {
   Listener* listener = FindEventHandler(eventMessage, aName);
 
   if (listener) {
+    if (IsNonChromeClickListener(listener)) {
+      mUnknownNonPrivilegedClickListeners = true;
+    }
     mListeners.RemoveElementAt(uint32_t(listener - &mListeners.ElementAt(0)));
     NotifyEventListenerRemoved(aName);
     if (IsDeviceType(eventMessage)) {
       DisableDevice(eventMessage);
     }
   }
+}
+
+bool EventListenerManager::IsNonChromeClickListener(Listener* aListener) {
+  return !aListener->mFlags.mInSystemGroup && !aListener->mIsChrome &&
+         aListener->mEventMessage == eMouseClick &&
+         (aListener->GetJSEventHandler() ||
+          aListener->mListener.HasWebIDLCallback());
 }
 
 nsresult EventListenerManager::CompileEventHandlerInternal(
@@ -911,6 +937,14 @@ nsresult EventListenerManager::CompileEventHandlerInternal(
       attrName = nsGkAtoms::onrepeat;
     } else if (aListener->mTypeAtom == nsGkAtoms::onendEvent) {
       attrName = nsGkAtoms::onend;
+    } else if (aListener->mTypeAtom == nsGkAtoms::onwebkitAnimationEnd) {
+      attrName = nsGkAtoms::onwebkitanimationend;
+    } else if (aListener->mTypeAtom == nsGkAtoms::onwebkitAnimationIteration) {
+      attrName = nsGkAtoms::onwebkitanimationiteration;
+    } else if (aListener->mTypeAtom == nsGkAtoms::onwebkitAnimationStart) {
+      attrName = nsGkAtoms::onwebkitanimationstart;
+    } else if (aListener->mTypeAtom == nsGkAtoms::onwebkitTransitionEnd) {
+      attrName = nsGkAtoms::onwebkittransitionend;
     }
 
     element->GetAttr(kNameSpaceID_None, attrName, handlerBody);
@@ -975,12 +1009,21 @@ nsresult EventListenerManager::CompileEventHandlerInternal(
   if (NS_WARN_IF(!GetOrCreateDOMReflector(cx, aElement, &v))) {
     return NS_ERROR_FAILURE;
   }
+
+  RefPtr<ScriptFetchOptions> fetchOptions = new ScriptFetchOptions(
+      CORS_NONE, aElement->OwnerDoc()->GetReferrerPolicy(), aElement,
+      aElement->OwnerDoc()->NodePrincipal());
+  NS_ENSURE_TRUE(fetchOptions, NS_ERROR_OUT_OF_MEMORY);
+
+  RefPtr<EventScript> eventScript = new EventScript(fetchOptions, uri);
+  NS_ENSURE_TRUE(eventScript, NS_ERROR_OUT_OF_MEMORY);
+
   JS::CompileOptions options(cx);
   // Use line 0 to make the function body starts from line 1.
   options.setIntroductionType("eventHandler")
       .setFileAndLine(url.get(), 0)
-      .setElement(&v.toObject())
-      .setElementAttributeName(jsStr);
+      .setElementAttributeName(jsStr)
+      .setPrivateValue(JS::PrivateValue(eventScript));
 
   JS::Rooted<JSObject*> handler(cx);
   result = nsJSUtils::CompileFunction(jsapi, scopeChain, options,
@@ -1030,6 +1073,7 @@ nsresult EventListenerManager::HandleEventSubType(Listener* aListener,
   }
 
   if (NS_SUCCEEDED(result)) {
+    EventCallbackDebuggerNotificationGuard dbgGuard(aCurrentTarget, aDOMEvent);
     nsAutoMicroTask mt;
 
     // Event::currentTarget is set in EventDispatcher.
@@ -1050,24 +1094,18 @@ nsresult EventListenerManager::HandleEventSubType(Listener* aListener,
 
 EventMessage EventListenerManager::GetLegacyEventMessage(
     EventMessage aEventMessage) const {
-  // (If we're off-main-thread, we can't check the pref; so we just behave as
-  // if it's disabled.)
-  if (mIsMainThreadELM) {
-    if (IsWebkitPrefixSupportEnabled()) {
-      // webkit-prefixed legacy events:
-      if (aEventMessage == eTransitionEnd) {
-        return eWebkitTransitionEnd;
-      }
-      if (aEventMessage == eAnimationStart) {
-        return eWebkitAnimationStart;
-      }
-      if (aEventMessage == eAnimationEnd) {
-        return eWebkitAnimationEnd;
-      }
-      if (aEventMessage == eAnimationIteration) {
-        return eWebkitAnimationIteration;
-      }
-    }
+  // webkit-prefixed legacy events:
+  if (aEventMessage == eTransitionEnd) {
+    return eWebkitTransitionEnd;
+  }
+  if (aEventMessage == eAnimationStart) {
+    return eWebkitAnimationStart;
+  }
+  if (aEventMessage == eAnimationEnd) {
+    return eWebkitAnimationEnd;
+  }
+  if (aEventMessage == eAnimationIteration) {
+    return eWebkitAnimationIteration;
   }
 
   switch (aEventMessage) {
@@ -1144,8 +1182,11 @@ void EventListenerManager::HandleEventInternal(nsPresContext* aPresContext,
     aEvent->PreventDefault();
   }
 
-  Maybe<nsAutoPopupStatePusher> popupStatePusher;
+  Maybe<AutoHandlingUserInputStatePusher> userInputStatePusher;
+  Maybe<AutoPopupStatePusher> popupStatePusher;
   if (mIsMainThreadELM) {
+    userInputStatePusher.emplace(UserActivation::IsUserInteractionEvent(aEvent),
+                                 aEvent);
     popupStatePusher.emplace(
         PopupBlocker::GetEventPopupControlState(aEvent, *aDOMEvent));
   }
@@ -1686,7 +1727,8 @@ bool EventListenerManager::HasApzAwareListeners() {
 }
 
 bool EventListenerManager::IsApzAwareListener(Listener* aListener) {
-  return !aListener->mFlags.mPassive && IsApzAwareEvent(aListener->mTypeAtom);
+  return !aListener->mFlags.mPassive && mIsMainThreadELM &&
+         IsApzAwareEvent(aListener->mTypeAtom);
 }
 
 bool EventListenerManager::IsApzAwareEvent(nsAtom* aEvent) {
@@ -1725,29 +1767,25 @@ already_AddRefed<nsIScriptGlobalObject>
 EventListenerManager::GetScriptGlobalAndDocument(Document** aDoc) {
   nsCOMPtr<nsINode> node(do_QueryInterface(mTarget));
   nsCOMPtr<Document> doc;
-  nsCOMPtr<nsIScriptGlobalObject> global;
+  nsCOMPtr<nsPIDOMWindowInner> win;
   if (node) {
     // Try to get context from doc
-    // XXX sXBL/XBL2 issue -- do we really want the owner here?  What
-    // if that's the XBL document?
     doc = node->OwnerDoc();
     if (doc->IsLoadedAsData()) {
       return nullptr;
     }
 
-    // We want to allow compiling an event handler even in an unloaded
-    // document, so use GetScopeObject here, not GetScriptHandlingObject.
-    global = do_QueryInterface(doc->GetScopeObject());
-  } else {
-    if (nsCOMPtr<nsPIDOMWindowInner> win = GetTargetAsInnerWindow()) {
-      doc = win->GetExtantDoc();
-      global = do_QueryInterface(win);
-    } else {
-      global = do_QueryInterface(mTarget);
-    }
+    win = do_QueryInterface(doc->GetScopeObject());
+  } else if ((win = GetTargetAsInnerWindow())) {
+    doc = win->GetExtantDoc();
+  }
+
+  if (!win || !win->IsCurrentInnerWindow()) {
+    return nullptr;
   }
 
   doc.forget(aDoc);
+  nsCOMPtr<nsIScriptGlobalObject> global = do_QueryInterface(win);
   return global.forget();
 }
 

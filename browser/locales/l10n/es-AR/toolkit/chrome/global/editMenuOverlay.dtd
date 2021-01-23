@@ -1,0 +1,21 @@
+<!-- -*- Mode: HTML -*-
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# WARNING!!! This file is obsoleted by the dialog.xml widget
+#
+-->
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY findCmd.label "Buscar">
+<!ENTITY findCmd.key "F">
+<!ENTITY findCmd.accesskey "u">
+<!ENTITY findAgainCmd.label "Buscar de nuevo">
+<!ENTITY findAgainCmd.key "G">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findAgainCmd.accesskey "v">
+

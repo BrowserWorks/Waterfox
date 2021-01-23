@@ -16,11 +16,11 @@
 
 namespace mozilla {
 
-template <typename SynchronizedQueueT, typename InnerQueueT>
+template <typename SynchronizedQueueT>
 inline already_AddRefed<nsThread> CreateMainThread(
     nsIIdlePeriod* aIdlePeriod,
     SynchronizedQueueT** aSynchronizedQueue = nullptr) {
-  using MainThreadQueueT = PrioritizedEventQueue<InnerQueueT>;
+  using MainThreadQueueT = PrioritizedEventQueue;
 
   auto queue = MakeUnique<MainThreadQueueT>(do_AddRef(aIdlePeriod));
 
@@ -34,10 +34,6 @@ inline already_AddRefed<nsThread> CreateMainThread(
   // Setup "main" thread
   RefPtr<nsThread> mainThread =
       new nsThread(WrapNotNull(synchronizedQueue), nsThread::MAIN_THREAD, 0);
-
-#ifndef RELEASE_OR_BETA
-  prioritized->SetNextIdleDeadlineRef(mainThread->NextIdleDeadlineRef());
-#endif
 
   if (aSynchronizedQueue) {
     synchronizedQueue.forget(aSynchronizedQueue);

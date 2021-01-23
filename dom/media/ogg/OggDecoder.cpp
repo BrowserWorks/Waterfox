@@ -7,14 +7,14 @@
 #include "OggDecoder.h"
 #include "MediaContainerType.h"
 #include "MediaDecoder.h"
-#include "mozilla/StaticPrefs.h"
+#include "mozilla/StaticPrefs_media.h"
 #include "nsMimeTypes.h"
 
 namespace mozilla {
 
 /* static */
 bool OggDecoder::IsSupportedType(const MediaContainerType& aContainerType) {
-  if (!StaticPrefs::MediaOggEnabled()) {
+  if (!StaticPrefs::media_ogg_enabled()) {
     return false;
   }
 

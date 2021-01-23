@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title       "Sisukord">
+<!ENTITY buildToc.label     "Sisukorra loomine:">
+<!ENTITY tag.label          "Silt:">
+<!ENTITY class.label        "Klass:">
+<!ENTITY header1.label      "Tase 1">
+<!ENTITY header2.label      "Tase 2">
+<!ENTITY header3.label      "Tase 3">
+<!ENTITY header4.label      "Tase 4">
+<!ENTITY header5.label      "Tase 5">
+<!ENTITY header6.label      "Tase 6">
+<!ENTITY makeReadOnly.label "Sisukorra muutmine keelatakse">
+<!ENTITY orderedList.label  "Kõik sisukorra sissekanded nummerdatakse">

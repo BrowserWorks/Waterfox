@@ -1,12 +1,8 @@
-import os
-import sys
 from io import BytesIO
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-
-from wptrunner import manifestexpected
+from .. import manifestexpected
 
 
 @pytest.mark.parametrize("fuzzy, expected", [
@@ -26,7 +22,7 @@ from wptrunner import manifestexpected
       ((u"test.html", u"ref1.html", "=="), ((5,10), (100, 100)))]),
 ])
 def test_fuzzy(fuzzy, expected):
-    data = """
+    data = b"""
 [test.html]
   fuzzy: %s""" % fuzzy
     f = BytesIO(data)

@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title        "વિષયસૂચી કોષ્ટક">
+<!ENTITY buildToc.label      "આમાંથી સમાવિષ્ટોનું કોષ્ટક બનાવો:">
+<!ENTITY style.label         "શૈલી:">
+<!ENTITY tag.label           "ટેગ:">
+<!ENTITY class.label         "વર્ગ:">
+<!ENTITY header1.label       "સ્તર ૧">
+<!ENTITY header2.label       "સ્તર ૨">
+<!ENTITY header3.label       "સ્તર ૩">
+<!ENTITY header4.label       "સ્તર ૪">
+<!ENTITY header5.label       "સ્તર ૫">
+<!ENTITY header6.label       "સ્તર ૬">
+<!ENTITY makeReadOnly.label  "વિષયસૂચી કોષ્ટકને માત્ર વાંચી શકાય તેવું બનાવો">
+<!ENTITY orderedList.label   "વિષયસૂચી કોષ્ટકમાંના બધા પ્રવેશોને નંબર આપો">

@@ -269,6 +269,10 @@ add_task(async function test_disconnect() {
       } else if (what == "disconnect") {
         try {
           port.disconnect();
+          browser.test.assertThrows(
+            () => port.postMessage("void"),
+            "Attempt to postMessage on disconnected port"
+          );
           browser.test.sendMessage("disconnect-result", { success: true });
         } catch (err) {
           browser.test.sendMessage("disconnect-result", {
@@ -630,7 +634,7 @@ add_task(async function test_connect_native_from_content_script() {
         "onDisconnect handler should receive the port as the first argument"
       );
       browser.test.assertEq(
-        "No such native application echo",
+        "An unexpected error occurred",
         port.error && port.error.message
       );
       browser.test.sendMessage("result", "disconnected");
@@ -665,11 +669,14 @@ add_task(async function test_connect_native_from_content_script() {
     true
   );
   Services.prefs.setBoolPref("security.allow_unsafe_parent_loads", true);
-  await ExtensionTestUtils.loadContentPage("http://example.com/dummy");
+  const page = await ExtensionTestUtils.loadContentPage(
+    "http://example.com/dummy"
+  );
 
   let result = await extension.awaitMessage("result");
   equal(result, "disconnected", "connectNative() failed from content script");
 
+  await page.close();
   await extension.unload();
 
   let procCount = await getSubprocessCount();

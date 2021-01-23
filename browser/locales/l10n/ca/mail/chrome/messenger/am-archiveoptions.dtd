@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-archiveoptions.xul -->
+
+
+<!-- extracted from am-archiveoptions.xhtml -->
+
+<!ENTITY dialogTitle.label "Opcions de l'arxiu">
+<!ENTITY archiveGranularityPrefix.label "Quan s'arxivin els missatges, cal ubicar-los a:">
+<!ENTITY archiveFlat.label "Tot en una única carpeta">
+<!ENTITY archiveFlat.accesskey "T">
+<!ENTITY archiveYearly.label "Una carpeta per a cada any">
+<!ENTITY archiveYearly.accesskey "a">
+<!ENTITY archiveMonthly.label "Una carpeta per a cada mes">
+<!ENTITY archiveMonthly.accesskey "m">
+<!ENTITY keepFolderStructure.label "Conserva l'estructura de carpetes existent dels missatges arxivats">
+<!ENTITY keepFolderStructure.accesskey "C">
+<!ENTITY archiveExample.label "Exemple">
+<!-- LOCALIZATION NOTE (archiveFolderName.label): this should match the default
+     name for the "Archives" folder -->
+<!ENTITY archiveFolderName.label "Arxiu">
+<!-- LOCALIZATION NOTE (inboxFolderName.label): this should match the default
+     name for the "Inbox" folder -->
+<!ENTITY inboxFolderName.label "Safata d'entrada">

@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Confirmări de primire">
+<!ENTITY useGlobalPrefs.label         "Folosește pentru acest cont preferințele globale legate de confirmările de primire">
+<!ENTITY useGlobalPrefs.accesskey     "U">
+<!ENTITY globalReceipts.label         "Preferințe globale…">
+<!ENTITY globalReceipts.accesskey     "g">
+<!ENTITY useCustomPrefs.label         "Personalizează pentru acest cont">
+<!ENTITY useCustomPrefs.accesskey     "P">
+<!ENTITY requestReceipt.label         "La trimiterea unui mesaj, solicită întotdeauna confirmare de primire">
+<!ENTITY requestReceipt.accesskey     "L">
+<!ENTITY receiptArrive.label          "Când sosește o confirmare:">
+<!ENTITY leaveIt.label                "Lasă-l în căsuța poștală">
+<!ENTITY leaveIt.accesskey            "c">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "Se mută în dosarul „Mesaje trimise”">
+<!ENTITY moveToSent.accesskey         "m">
+<!ENTITY requestMDN.label             "Când mi se cere confirmare de primire:">
+<!ENTITY returnSome.label             "Trimite confirmare pentru unele mesaje">
+<!ENTITY returnSome.accesskey         "r">
+<!ENTITY never.label                  "Nu trimite niciodată o confirmare de primire">
+<!ENTITY never.accesskey              "N">
+<!ENTITY notInToCc.label              "Dacă nu mă aflu în câmpurile Către sau Cc ale mesajului:">
+<!ENTITY notInToCc.accesskey          "t">
+<!ENTITY outsideDomain.label          "Dacă expeditorul nu este în domeniul meu:">
+<!ENTITY outsideDomain.accesskey      "x">
+<!ENTITY otherCases.label             "În toate celelalte cazuri:">
+<!ENTITY otherCases.accesskey         "a">
+<!ENTITY askMe.label                  "Întreabă-mă">
+<!ENTITY alwaysSend.label             "Trimite mereu">
+<!ENTITY neverSend.label              "Nu trimite niciodată">

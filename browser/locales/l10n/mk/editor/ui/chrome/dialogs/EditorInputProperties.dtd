@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Својства на рубриките">
+<!ENTITY windowTitleImage.label "Својства на рубриките за слика">
+
+<!ENTITY InputType.label "Тип на рубрика">
+<!ENTITY InputType.accesskey "Т">
+<!ENTITY text.value "Текст">
+<!ENTITY password.value "Лозинка">
+<!ENTITY checkbox.value "Кутија за избори">
+<!ENTITY radio.value "Радио копче">
+<!ENTITY submit.value "Копче за испраќање">
+<!ENTITY reset.value "Копче за ресетирање">
+<!ENTITY file.value "Датотека">
+<!ENTITY hidden.value "Скриено">
+<!ENTITY image.value "Слика">
+<!ENTITY button.value "Копче">
+
+<!ENTITY InputSettings.label "Поставки на рубриката">
+<!ENTITY InputName.label "Име на рубриката:">
+<!ENTITY GroupName.label "Име на група:">
+<!ENTITY Name.accesskey "м">
+<!ENTITY InputValue.label "Вредност на рубрика:">
+<!ENTITY InitialValue.label "Основна вредност:">
+<!ENTITY Value.accesskey "в">
+<!ENTITY InputChecked.label "Претходно одбрано">
+<!ENTITY InputChecked.accesskey "д">
+<!ENTITY InputSelected.label "Претходно избрано">
+<!ENTITY InputSelected.accesskey "б">
+<!ENTITY InputReadOnly.label "Само читај">
+<!ENTITY InputReadOnly.accesskey "и">
+<!ENTITY InputDisabled.label "Оневозможено">
+<!ENTITY InputDisabled.accesskey "н">
+<!ENTITY tabIndex.label "Индекс на табот:">
+<!ENTITY tabIndex.accesskey "И">
+<!ENTITY TextSize.label "Големина на рубрика:">
+<!ENTITY TextSize.accesskey "Г">
+<!ENTITY TextLength.label "Максимална должина:">
+<!ENTITY TextLength.accesskey "л">
+<!ENTITY AccessKey.label "Клуч за пристап:">
+<!ENTITY AccessKey.accesskey "К">
+<!ENTITY Accept.label "Типови на пристап:">
+<!ENTITY Accept.accesskey "а">
+
+<!ENTITY ImageProperties.label "Својства на сликата…">
+<!ENTITY ImageProperties.accesskey "о">

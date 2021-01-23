@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowtitle "Yan uygulama kur…">
+
+<!ENTITY name.label "İsim:">
+<!ENTITY name.accesskey "s">
+
+<!ENTITY name.autopick.label "Otomatik isim ata">
+<!ENTITY name.autopick.accesskey "O">
+
+<!ENTITY source.label "Kaynak:">
+<!ENTITY source.accesskey "y">
+
+<!ENTITY browse.label "Gözat…">
+<!ENTITY browse.accesskey "a">

@@ -9,6 +9,7 @@
 
 #include "XMLHttpRequest.h"
 #include "XMLHttpRequestString.h"
+#include "mozilla/dom/BodyExtractor.h"
 #include "mozilla/dom/TypedArray.h"
 
 namespace mozilla {
@@ -22,28 +23,35 @@ class WorkerPrivate;
 
 class XMLHttpRequestWorker final : public XMLHttpRequest {
  public:
-  struct StateData {
+  // This defines the xhr.response value.
+  struct ResponseData {
+    nsresult mResponseResult;
+
+    // responseType is empty or text.
     XMLHttpRequestStringSnapshot mResponseText;
+
+    // responseType is blob
+    RefPtr<BlobImpl> mResponseBlobImpl;
+
+    // responseType is arrayBuffer;
+    RefPtr<ArrayBufferBuilder> mResponseArrayBufferBuilder;
+
+    // responseType is json
+    nsString mResponseJSON;
+
+    ResponseData() : mResponseResult(NS_OK) {}
+  };
+
+  struct StateData {
     nsString mResponseURL;
     uint32_t mStatus;
     nsCString mStatusText;
     uint16_t mReadyState;
     bool mFlagSend;
-    JS::Heap<JS::Value> mResponse;
-    nsresult mResponseTextResult;
     nsresult mStatusResult;
-    nsresult mResponseResult;
 
     StateData()
-        : mStatus(0),
-          mReadyState(0),
-          mFlagSend(false),
-          mResponse(JS::UndefinedValue()),
-          mResponseTextResult(NS_OK),
-          mStatusResult(NS_OK),
-          mResponseResult(NS_OK) {}
-
-    void trace(JSTracer* trc);
+        : mStatus(0), mReadyState(0), mFlagSend(false), mStatusResult(NS_OK) {}
   };
 
  private:
@@ -51,8 +59,15 @@ class XMLHttpRequestWorker final : public XMLHttpRequest {
   WorkerPrivate* mWorkerPrivate;
   RefPtr<StrongWorkerRef> mWorkerRef;
   RefPtr<Proxy> mProxy;
+
   XMLHttpRequestResponseType mResponseType;
-  StateData mStateData;
+
+  UniquePtr<StateData> mStateData;
+
+  UniquePtr<ResponseData> mResponseData;
+  RefPtr<Blob> mResponseBlob;
+  JS::Heap<JSObject*> mResponseArrayBufferValue;
+  JS::Heap<JS::Value> mResponseJSONValue;
 
   uint32_t mTimeout;
 
@@ -77,7 +92,7 @@ class XMLHttpRequestWorker final : public XMLHttpRequest {
   void Unpin();
 
   virtual uint16_t ReadyState() const override {
-    return mStateData.mReadyState;
+    return mStateData->mReadyState;
   }
 
   virtual void Open(const nsACString& aMethod, const nsAString& aUrl,
@@ -127,7 +142,6 @@ class XMLHttpRequestWorker final : public XMLHttpRequest {
   virtual XMLHttpRequestUpload* GetUpload(ErrorResult& aRv) override;
 
   virtual void Send(
-      JSContext* aCx,
       const Nullable<
           DocumentOrBlobOrArrayBufferViewOrArrayBufferOrFormDataOrURLSearchParamsOrUSVString>&
           aData,
@@ -141,17 +155,17 @@ class XMLHttpRequestWorker final : public XMLHttpRequest {
   virtual void Abort(ErrorResult& aRv) override;
 
   virtual void GetResponseURL(nsAString& aUrl) override {
-    aUrl = mStateData.mResponseURL;
+    aUrl = mStateData->mResponseURL;
   }
 
   uint32_t GetStatus(ErrorResult& aRv) override {
-    aRv = mStateData.mStatusResult;
-    return mStateData.mStatus;
+    aRv = mStateData->mStatusResult;
+    return mStateData->mStatus;
   }
 
   virtual void GetStatusText(nsACString& aStatusText,
                              ErrorResult& aRv) override {
-    aStatusText = mStateData.mStatusText;
+    aStatusText = mStateData->mStatusText;
   }
 
   virtual void GetResponseHeader(const nsACString& aHeader,
@@ -195,13 +209,8 @@ class XMLHttpRequestWorker final : public XMLHttpRequest {
 
   XMLHttpRequestUpload* GetUploadObjectNoCreate() const { return mUpload; }
 
-  void UpdateState(const StateData& aStateData,
-                   bool aUseCachedArrayBufferResponse);
-
-  void NullResponseText() {
-    mStateData.mResponseText.SetVoid();
-    mStateData.mResponse.setNull();
-  }
+  void UpdateState(UniquePtr<StateData>&& aStateData,
+                   UniquePtr<ResponseData>&& aResponseData);
 
   virtual uint16_t ErrorCode() const override {
     return 0;  // eOK
@@ -214,7 +223,8 @@ class XMLHttpRequestWorker final : public XMLHttpRequest {
   bool SendInProgress() const { return !!mWorkerRef; }
 
  private:
-  explicit XMLHttpRequestWorker(WorkerPrivate* aWorkerPrivate);
+  XMLHttpRequestWorker(WorkerPrivate* aWorkerPrivate,
+                       nsIGlobalObject* aGlobalObject);
   ~XMLHttpRequestWorker();
 
   enum ReleaseType { Default, XHRIsGoingAway, WorkerIsGoingAway };
@@ -231,7 +241,9 @@ class XMLHttpRequestWorker final : public XMLHttpRequest {
 
   void Send(JSContext* aCx, JS::Handle<JSObject*> aBody, ErrorResult& aRv);
 
-  void SendInternal(SendRunnable* aRunnable, ErrorResult& aRv);
+  void SendInternal(const BodyExtractorBase* aBody, ErrorResult& aRv);
+
+  void ResetResponseData();
 };
 
 }  // namespace dom

@@ -17,7 +17,7 @@ class ServiceWorkerJobQueue::Callback final
     : public ServiceWorkerJob::Callback {
   RefPtr<ServiceWorkerJobQueue> mQueue;
 
-  ~Callback() {}
+  ~Callback() = default;
 
  public:
   explicit Callback(ServiceWorkerJobQueue* aQueue) : mQueue(aQueue) {
@@ -29,6 +29,10 @@ class ServiceWorkerJobQueue::Callback final
                            ErrorResult& aStatus) override {
     MOZ_ASSERT(NS_IsMainThread());
     mQueue->JobFinished(aJob);
+  }
+
+  virtual void JobDiscarded(ErrorResult&) override {
+    // no-op; nothing to do.
   }
 
   NS_INLINE_DECL_REFCOUNTING(ServiceWorkerJobQueue::Callback, override)

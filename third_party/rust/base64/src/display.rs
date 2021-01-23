@@ -11,8 +11,8 @@
 
 use super::chunked_encoder::ChunkedEncoder;
 use super::Config;
-use std::fmt::{Display, Formatter};
-use std::{fmt, str};
+use core::fmt::{Display, Formatter};
+use core::{fmt, str};
 
 /// A convenience wrapper for base64'ing bytes into a format string without heap allocation.
 pub struct Base64Display<'a> {
@@ -54,8 +54,9 @@ impl<'a, 'b: 'a> super::chunked_encoder::Sink for FormatterSink<'a, 'b> {
 
 #[cfg(test)]
 mod tests {
-    use super::super::chunked_encoder::tests::{chunked_encode_matches_normal_encode_random,
-                                               SinkTestHelper};
+    use super::super::chunked_encoder::tests::{
+        chunked_encode_matches_normal_encode_random, SinkTestHelper,
+    };
     use super::super::*;
     use super::*;
 

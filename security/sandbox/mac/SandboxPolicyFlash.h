@@ -16,7 +16,7 @@ static const char SandboxPolicyFlash[] = R"SANDBOX_LITERAL(
   (define shouldLog (param "SHOULD_LOG"))
   (define sandbox-level-1 (param "SANDBOX_LEVEL_1"))
   (define sandbox-level-2 (param "SANDBOX_LEVEL_2"))
-  (define macosMinorVersion (string->number (param "MAC_OS_MINOR")))
+  (define macosVersion (string->number (param "MAC_OS_VERSION")))
   (define homeDir (param "HOME_PATH"))
   (define tempDir (param "DARWIN_USER_TEMP_DIR"))
   (define cacheDir (param "DARWIN_USER_CACHE_DIR"))
@@ -45,8 +45,7 @@ static const char SandboxPolicyFlash[] = R"SANDBOX_LITERAL(
   (allow file-read-metadata
          (literal "/etc")
          (literal "/tmp")
-         (literal "/var")
-         (literal "/private/etc/localtime"))
+         (literal "/var"))
   (allow file-read*
          (literal "/dev/autofs_nowait")
          (literal "/dev/random")
@@ -59,6 +58,13 @@ static const char SandboxPolicyFlash[] = R"SANDBOX_LITERAL(
          file-write-data
          file-ioctl
          (literal "/dev/dtracehelper"))
+
+  ; Timezone
+  (allow file-read*
+    (subpath "/private/var/db/timezone")
+    (subpath "/usr/share/zoneinfo")
+    (subpath "/usr/share/zoneinfo.default")
+    (literal "/private/etc/localtime"))
 
   ; Graphics
   (allow user-preference-read
@@ -114,7 +120,7 @@ static const char SandboxPolicyFlash[] = R"SANDBOX_LITERAL(
   (allow process-info-setcontrol (target self))
 
   ; macOS 10.9 does not support the |sysctl-name| predicate
-  (if (= macosMinorVersion 9)
+  (if (= macosVersion 1009)
       (allow sysctl-read)
       (allow sysctl-read
         (sysctl-name
@@ -265,9 +271,9 @@ static const char SandboxPolicyFlash[] = R"SANDBOX_LITERAL(
       (global-name "com.apple.cmio.AVCAssistant")
       (global-name "com.apple.cmio.VDCAssistant"))
   ; bug 1475707
-  (if (= macosMinorVersion 9)
+  (if (= macosVersion 1009)
      (allow mach-lookup (global-name "com.apple.xpcd")))
-  (if (>= macosMinorVersion 15)
+  (if (>= macosVersion 1015)
      (allow mach-lookup
       (global-name "com.apple.ViewBridgeAuxiliary")
       (global-name "com.apple.appkit.xpc.openAndSavePanelService")
@@ -290,13 +296,13 @@ static const char SandboxPolicyFlash[] = R"SANDBOX_LITERAL(
   (allow mach-lookup
     (global-name "com.apple.fonts")
     (global-name "com.apple.FontObjectsServer"))
-  (if (<= macosMinorVersion 11)
+  (if (<= macosVersion 1011)
     (allow mach-lookup (global-name "com.apple.FontServer")))
 
   ; Fonts
   ; Workaround for sandbox extensions not being automatically
   ; issued for fonts on 10.11 and earlier versions (bug 1460917).
-  (if (<= macosMinorVersion 11)
+  (if (<= macosVersion 1011)
     (allow file-read*
       (regex #"\.[oO][tT][fF]$"          ; otf
              #"\.[tT][tT][fF]$"          ; ttf

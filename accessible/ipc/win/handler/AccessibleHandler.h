@@ -280,6 +280,7 @@ class AccessibleHandler final : public mscom::Handler,
   IAccessibleTableCell* mIATableCellPassThru;   // weak
   IAccessibleHypertext2* mIAHypertextPassThru;  // weak
   IA2Payload mCachedData;
+  bool mCachedDynamicDataMarshaledByCom;
   UniquePtr<mscom::StructToStream> mSerializer;
   uint32_t mCacheGen;
   IAccessibleHyperlink** mCachedHyperlinks;
@@ -288,6 +289,7 @@ class AccessibleHandler final : public mscom::Handler,
   long mCachedNTextAttribRuns;
   IARelationData* mCachedRelations;
   long mCachedNRelations;
+  bool mIsEmulatedWindow;
 };
 
 inline static BSTR CopyBSTR(BSTR aSrc) {

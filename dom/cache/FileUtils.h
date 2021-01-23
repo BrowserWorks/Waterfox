@@ -58,15 +58,28 @@ nsresult BodyDeleteFiles(const QuotaInfo& aQuotaInfo, nsIFile* aBaseDir,
 nsresult BodyDeleteOrphanedFiles(const QuotaInfo& aQuotaInfo, nsIFile* aBaseDir,
                                  nsTArray<nsID>& aKnownBodyIdList);
 
+// If aCanRemoveFiles is true, that means we are safe to touch the files which
+// can be accessed in other threads.
+// If it's not, that means we cannot remove the files which are possible to
+// created by other threads. Note that if the files are not expected, we should
+// be safe to remove them in any case.
+template <typename Func>
+nsresult BodyTraverseFiles(const QuotaInfo& aQuotaInfo, nsIFile* aBodyDir,
+                           const Func& aHandleFileFunc,
+                           const bool aCanRemoveFiles,
+                           const bool aTrackQuota = true);
+
 nsresult CreateMarkerFile(const QuotaInfo& aQuotaInfo);
 
 nsresult DeleteMarkerFile(const QuotaInfo& aQuotaInfo);
 
 bool MarkerFileExists(const QuotaInfo& aQuotaInfo);
 
-nsresult RemoveNsIFileRecursively(const QuotaInfo& aQuotaInfo, nsIFile* aFile);
+nsresult RemoveNsIFileRecursively(const QuotaInfo& aQuotaInfo, nsIFile* aFile,
+                                  const bool aTrackQuota = true);
 
-nsresult RemoveNsIFile(const QuotaInfo& aQuotaInfo, nsIFile* aFile);
+nsresult RemoveNsIFile(const QuotaInfo& aQuotaInfo, nsIFile* aFile,
+                       const bool aTrackQuota = true);
 
 void DecreaseUsageForQuotaInfo(const QuotaInfo& aQuotaInfo,
                                const int64_t& aUpdatingSize);

@@ -8,30 +8,37 @@ const {
   createFactory,
   Component,
 } = require("devtools/client/shared/vendor/react");
-const {
-  div,
-  span,
-} = require("devtools/client/shared/vendor/react-dom-factories");
+const { div } = require("devtools/client/shared/vendor/react-dom-factories");
 const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
-const { L10N } = require("../utils/l10n");
-const Button = createFactory(require("./Button").Button);
-const AccessibilityTreeFilter = createFactory(
-  require("./AccessibilityTreeFilter")
+const { L10N } = require("devtools/client/accessibility/utils/l10n");
+const Button = createFactory(
+  require("devtools/client/accessibility/components/Button").Button
 );
+const AccessibilityTreeFilter = createFactory(
+  require("devtools/client/accessibility/components/AccessibilityTreeFilter")
+);
+const AccessibilityPrefs = createFactory(
+  require("devtools/client/accessibility/components/AccessibilityPrefs")
+);
+loader.lazyGetter(this, "SimulationMenuButton", function() {
+  return createFactory(
+    require("devtools/client/accessibility/components/SimulationMenuButton")
+  );
+});
 
 const { connect } = require("devtools/client/shared/vendor/react-redux");
-const { disable, updateCanBeDisabled } = require("../actions/ui");
-
-const { A11Y_LEARN_MORE_LINK } = require("../constants");
-const { openDocLink } = require("devtools/client/shared/link");
+const { disable } = require("devtools/client/accessibility/actions/ui");
 
 class Toolbar extends Component {
   static get propTypes() {
     return {
-      walker: PropTypes.object.isRequired,
       dispatch: PropTypes.func.isRequired,
-      accessibility: PropTypes.object.isRequired,
+      disableAccessibility: PropTypes.func.isRequired,
       canBeDisabled: PropTypes.bool.isRequired,
+      toolboxDoc: PropTypes.object.isRequired,
+      audit: PropTypes.func.isRequired,
+      simulate: PropTypes.func,
+      autoInit: PropTypes.bool.isRequired,
     };
   }
 
@@ -43,50 +50,23 @@ class Toolbar extends Component {
     };
 
     this.onDisable = this.onDisable.bind(this);
-    this.onCanBeDisabledChange = this.onCanBeDisabledChange.bind(this);
-  }
-
-  componentWillMount() {
-    this.props.accessibility.on(
-      "can-be-disabled-change",
-      this.onCanBeDisabledChange
-    );
-  }
-
-  componentWillUnmount() {
-    this.props.accessibility.off(
-      "can-be-disabled-change",
-      this.onCanBeDisabledChange
-    );
-  }
-
-  onCanBeDisabledChange(canBeDisabled) {
-    this.props.dispatch(updateCanBeDisabled(canBeDisabled));
   }
 
   onDisable() {
-    const { accessibility, dispatch } = this.props;
+    const { disableAccessibility, dispatch } = this.props;
     this.setState({ disabling: true });
 
-    dispatch(disable(accessibility))
+    dispatch(disable(disableAccessibility))
       .then(() => this.setState({ disabling: false }))
       .catch(() => this.setState({ disabling: false }));
   }
 
-  onLearnMoreClick() {
-    openDocLink(
-      A11Y_LEARN_MORE_LINK +
-        "?utm_source=devtools&utm_medium=a11y-panel-toolbar"
-    );
-  }
-
   render() {
-    const { canBeDisabled, walker } = this.props;
+    const { canBeDisabled, simulate, toolboxDoc, audit, autoInit } = this.props;
     const { disabling } = this.state;
     const disableButtonStr = disabling
       ? "accessibility.disabling"
       : "accessibility.disable";
-    const betaID = "beta";
     let title;
     let isDisabled = false;
 
@@ -97,47 +77,54 @@ class Toolbar extends Component {
       title = L10N.getStr("accessibility.disable.disabledTitle");
     }
 
+    const optionalSimulationSection = simulate
+      ? [
+          div({
+            role: "separator",
+            className: "devtools-separator",
+          }),
+          SimulationMenuButton({ simulate, toolboxDoc }),
+        ]
+      : [];
+
     return div(
       {
         className: "devtools-toolbar",
         role: "toolbar",
       },
-      Button(
-        {
-          className: "disable",
-          id: "accessibility-disable-button",
-          onClick: this.onDisable,
-          disabled: disabling || isDisabled,
-          busy: disabling,
-          title,
-        },
-        L10N.getStr(disableButtonStr)
-      ),
-      div({
-        role: "separator",
-        className: "devtools-separator",
-      }),
-      // @remove after release 68 (See Bug 1551574)
-      span(
-        {
-          className: "beta",
-          role: "presentation",
-          id: betaID,
-        },
-        L10N.getStr("accessibility.beta")
-      ),
-      AccessibilityTreeFilter({ walker, describedby: betaID }),
-      Button({
-        className: "help",
-        title: L10N.getStr("accessibility.learnMore"),
-        onClick: this.onLearnMoreClick,
-      })
+      !autoInit &&
+        Button(
+          {
+            className: "disable",
+            id: "accessibility-disable-button",
+            onClick: this.onDisable,
+            disabled: disabling || isDisabled,
+            busy: disabling,
+            title,
+          },
+          L10N.getStr(disableButtonStr)
+        ),
+      !autoInit &&
+        div({
+          role: "separator",
+          className: "devtools-separator",
+        }),
+      AccessibilityTreeFilter({ audit, toolboxDoc }),
+      // Simulation section is shown if webrender is enabled
+      ...optionalSimulationSection,
+      AccessibilityPrefs({ toolboxDoc })
     );
   }
 }
 
-const mapStateToProps = ({ ui }) => ({
-  canBeDisabled: ui.canBeDisabled,
+const mapStateToProps = ({
+  ui: {
+    canBeDisabled,
+    supports: { autoInit },
+  },
+}) => ({
+  canBeDisabled,
+  autoInit,
 });
 
 // Exports from this module

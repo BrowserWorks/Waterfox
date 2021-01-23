@@ -20,6 +20,7 @@ CompiledModules(
     'ResultList.js',
     'SearchInput.js',
     'SourceIcon.js',
+    'SmartGap.js',
 )
 
 DevToolsModules(
@@ -33,7 +34,6 @@ DevToolsModules(
     'Modal.css',
     'Popover.css',
     'PreviewFunction.css',
-    'reps.css',
     'ResultList.css',
     'SearchInput.css',
     'SourceIcon.css',

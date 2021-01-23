@@ -7,20 +7,29 @@
 #ifndef mozilla_mscom_MainThreadHandoff_h
 #define mozilla_mscom_MainThreadHandoff_h
 
+#include <utility>
+
 #include "mozilla/Assertions.h"
-#include "mozilla/Move.h"
+#include "mozilla/Mutex.h"
 #include "mozilla/mscom/Interceptor.h"
 #include "mozilla/mscom/MainThreadInvoker.h"
 #include "mozilla/mscom/Utils.h"
-#include "mozilla/Mutex.h"
 #include "nsTArray.h"
 
 namespace mozilla {
 namespace mscom {
 
+// {9a907000-7829-47f1-80eb-f67a26f47b34}
+DEFINE_GUID(IID_IMainThreadHandoff, 0x9a907000, 0x7829, 0x47f1, 0x80, 0xeb,
+            0xf6, 0x7a, 0x26, 0xf4, 0x7b, 0x34);
+
+struct IMainThreadHandoff : public IInterceptorSink {
+  virtual STDMETHODIMP GetHandlerProvider(IHandlerProvider** aProvider) = 0;
+};
+
 struct ArrayData;
 
-class MainThreadHandoff final : public IInterceptorSink,
+class MainThreadHandoff final : public IMainThreadHandoff,
                                 public ICallFrameWalker {
  public:
   static HRESULT Create(IHandlerProvider* aHandlerProvider,
@@ -65,6 +74,14 @@ class MainThreadHandoff final : public IInterceptorSink,
                                    NotNull<IStream*> aStream) override;
   STDMETHODIMP_(REFIID) MarshalAs(REFIID aIid) override;
   STDMETHODIMP DisconnectHandlerRemotes() override;
+  STDMETHODIMP IsInterfaceMaybeSupported(REFIID aIid) override;
+
+  // IMainThreadHandoff
+  STDMETHODIMP GetHandlerProvider(IHandlerProvider** aProvider) override {
+    RefPtr<IHandlerProvider> provider = mHandlerProvider;
+    provider.forget(aProvider);
+    return mHandlerProvider ? S_OK : S_FALSE;
+  }
 
   // ICallFrameWalker
   STDMETHODIMP OnWalkInterface(REFIID aIid, PVOID* aInterface, BOOL aIsInParam,

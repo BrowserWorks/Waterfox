@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-composer.xul -->
+
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+<!ENTITY  pref.composer.title           "Composer">
+
+<!ENTITY  recentFiles.title             "Hiljutiste lehtede menüü">
+<!ENTITY  documentsInMenu.label         "Maksimaalselt kuvatavaid lehti:">
+<!ENTITY  documentsInMenu.accesskey     "M">
+
+<!ENTITY  savingFiles.title             "Lehtede salvestamisel või avaldamisel">
+<!ENTITY  preserveExisting.label        "säilitatakse algne lähtekoodi vorming">
+<!ENTITY  preserveExisting.accesskey    "s">
+<!ENTITY  preserveExisting.tooltip      "säilitatakse reamurdmised ja lehe algne vorming">
+<!ENTITY  saveAssociatedFiles.label     "Salvestamisel salvestatakse ka pildid ja muud seotud failid">
+<!ENTITY  saveAssociatedFiles.accesskey "S">
+<!ENTITY  showPublishDialog.label       "Lehtede avaldamisel näidatakse alati avaldamise akent">
+<!ENTITY  showPublishDialog.accesskey   "A">
+
+<!ENTITY  composerEditing.label         "Redigeerimine">
+<!ENTITY  maintainStructure.label       "Lahtrite lisamisel või eemaldamisel säilitatakse tabeli mõõtmed">
+<!ENTITY  maintainStructure.tooltip     "Lahtrite lisamisel või eemaldamisel säilitatakse tabeli ristküliku kujuline kuju lisades uusi lahtreid">
+<!ENTITY  maintainStructure.accesskey   "L">
+<!ENTITY  useCSS.label                  "HTML-elementide ja -atribuutide asemel kasutatakse CSS-stiile">
+<!ENTITY  useCSS.accesskey              "H">
+<!ENTITY  crInPCreatesNewP.label        "Reavahetus lõigus loob alati uue lõigu">
+<!ENTITY  crInPCreatesNewP.accesskey    "R">

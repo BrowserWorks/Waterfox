@@ -6,21 +6,16 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/dom/ContentChild.h"
+#include "mozilla/BasePrincipal.h"
 #include "nsIURI.h"
-#include "nsIURL.h"
 #include "nsExternalProtocolHandler.h"
 #include "nsString.h"
 #include "nsReadableUtils.h"
 #include "nsCOMPtr.h"
 #include "nsContentUtils.h"
-#include "nsIServiceManager.h"
 #include "nsServiceManagerUtils.h"
 #include "nsIInterfaceRequestor.h"
 #include "nsIInterfaceRequestorUtils.h"
-#include "nsIStringBundle.h"
-#include "nsIPrefService.h"
-#include "nsIPrompt.h"
-#include "nsIURIMutator.h"
 #include "nsNetUtil.h"
 #include "nsContentSecurityManager.h"
 #include "nsExternalHelperAppService.h"
@@ -63,6 +58,7 @@ class nsExtProtocolChannel : public nsIChannel,
   nsresult mStatus;
   nsLoadFlags mLoadFlags;
   bool mWasOpened;
+  bool mCanceled;
   // Set true (as a result of ConnectParent invoked from child process)
   // when this channel is on the parent process and is being used as
   // a redirect target channel.  It turns AsyncOpen into a no-op since
@@ -94,6 +90,7 @@ nsExtProtocolChannel::nsExtProtocolChannel(nsIURI* aURI, nsILoadInfo* aLoadInfo)
       mStatus(NS_OK),
       mLoadFlags(nsIRequest::LOAD_NORMAL),
       mWasOpened(false),
+      mCanceled(false),
       mConnectedParent(false),
       mLoadInfo(aLoadInfo) {}
 
@@ -161,17 +158,17 @@ nsresult nsExtProtocolChannel::OpenURL() {
                  "the protocol?");
 #endif
 
-    nsCOMPtr<nsIInterfaceRequestor> aggCallbacks;
-    rv = NS_NewNotificationCallbacksAggregation(mCallbacks, mLoadGroup,
-                                                getter_AddRefs(aggCallbacks));
+    RefPtr<mozilla::dom::BrowsingContext> ctx;
+    rv = mLoadInfo->GetTargetBrowsingContext(getter_AddRefs(ctx));
     if (NS_FAILED(rv)) {
       goto finish;
     }
 
-    rv = extProtService->LoadURI(mUrl, aggCallbacks);
+    RefPtr<nsIPrincipal> principal = mLoadInfo->TriggeringPrincipal();
+    rv = extProtService->LoadURI(mUrl, principal, ctx);
 
     if (NS_SUCCEEDED(rv) && mListener) {
-      Cancel(NS_ERROR_NO_CONTENT);
+      mStatus = NS_ERROR_NO_CONTENT;
 
       RefPtr<nsExtProtocolChannel> self = this;
       nsCOMPtr<nsIStreamListener> listener = mListener;
@@ -212,11 +209,12 @@ NS_IMETHODIMP nsExtProtocolChannel::AsyncOpen(nsIStreamListener* aListener) {
   }
 
   MOZ_ASSERT(
-      !mLoadInfo || mLoadInfo->GetSecurityMode() == 0 ||
+      mLoadInfo->GetSecurityMode() == 0 ||
           mLoadInfo->GetInitialSecurityCheckDone() ||
           (mLoadInfo->GetSecurityMode() ==
                nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL &&
-           nsContentUtils::IsSystemPrincipal(mLoadInfo->LoadingPrincipal())),
+           mLoadInfo->GetLoadingPrincipal() &&
+           mLoadInfo->GetLoadingPrincipal()->IsSystemPrincipal()),
       "security flags in loadInfo but doContentSecurityCheck() not called");
 
   NS_ENSURE_ARG_POINTER(listener);
@@ -236,6 +234,14 @@ NS_IMETHODIMP nsExtProtocolChannel::GetLoadFlags(nsLoadFlags* aLoadFlags) {
 NS_IMETHODIMP nsExtProtocolChannel::SetLoadFlags(nsLoadFlags aLoadFlags) {
   mLoadFlags = aLoadFlags;
   return NS_OK;
+}
+
+NS_IMETHODIMP nsExtProtocolChannel::GetTRRMode(nsIRequest::TRRMode* aTRRMode) {
+  return GetTRRModeImpl(aTRRMode);
+}
+
+NS_IMETHODIMP nsExtProtocolChannel::SetTRRMode(nsIRequest::TRRMode aTRRMode) {
+  return SetTRRModeImpl(aTRRMode);
 }
 
 NS_IMETHODIMP nsExtProtocolChannel::GetIsDocument(bool* aIsDocument) {
@@ -335,7 +341,15 @@ NS_IMETHODIMP nsExtProtocolChannel::GetStatus(nsresult* status) {
 }
 
 NS_IMETHODIMP nsExtProtocolChannel::Cancel(nsresult status) {
-  mStatus = status;
+  if (NS_SUCCEEDED(mStatus)) {
+    mStatus = status;
+  }
+  mCanceled = true;
+  return NS_OK;
+}
+
+NS_IMETHODIMP nsExtProtocolChannel::GetCanceled(bool* aCanceled) {
+  *aCanceled = mCanceled;
   return NS_OK;
 }
 
@@ -360,7 +374,7 @@ NS_IMETHODIMP nsExtProtocolChannel::ConnectParent(uint32_t registrarId) {
 }
 
 NS_IMETHODIMP nsExtProtocolChannel::CompleteRedirectSetup(
-    nsIStreamListener* listener, nsISupports* context) {
+    nsIStreamListener* listener) {
   // For redirects to external protocols we AsyncOpen on the child
   // (not the parent) because child channel has the right docshell
   // (which is needed for the select dialog).
@@ -372,30 +386,13 @@ NS_IMETHODIMP nsExtProtocolChannel::CompleteRedirectSetup(
 //////////////////////////////////////////////////////////////////////
 
 NS_IMETHODIMP nsExtProtocolChannel::SetParentListener(
-    mozilla::net::HttpChannelParentListener* aListener) {
+    mozilla::net::ParentChannelListener* aListener) {
   // This is called as part of the connect parent operation from
   // ContentParent::RecvExtProtocolChannelConnectParent.  Setting
   // this flag tells this channel to not proceed and makes AsyncOpen
   // just no-op.  Actual operation will happen from the child process
   // via CompleteRedirectSetup call on the child channel.
   mConnectedParent = true;
-  return NS_OK;
-}
-
-NS_IMETHODIMP nsExtProtocolChannel::NotifyChannelClassifierProtectionDisabled(
-    uint32_t aAcceptedReason) {
-  // nothing to do
-  return NS_OK;
-}
-
-NS_IMETHODIMP nsExtProtocolChannel::NotifyCookieAllowed() {
-  // nothing to do
-  return NS_OK;
-}
-
-NS_IMETHODIMP nsExtProtocolChannel::NotifyCookieBlocked(
-    uint32_t aRejectedReason) {
-  // nothing to do
   return NS_OK;
 }
 
@@ -407,7 +404,7 @@ NS_IMETHODIMP nsExtProtocolChannel::SetClassifierMatchedInfo(
 }
 
 NS_IMETHODIMP nsExtProtocolChannel::SetClassifierMatchedTrackingInfo(
-    const nsACString &aLists, const nsACString &aFullHashes) {
+    const nsACString& aLists, const nsACString& aFullHashes) {
   // nothing to do
   return NS_OK;
 }
@@ -430,15 +427,12 @@ NS_IMETHODIMP nsExtProtocolChannel::Delete() {
 }
 
 NS_IMETHODIMP nsExtProtocolChannel::OnStartRequest(nsIRequest* aRequest) {
-  // no data is expected
-  MOZ_CRASH("No data expected from external protocol channel");
   return NS_ERROR_UNEXPECTED;
 }
 
 NS_IMETHODIMP nsExtProtocolChannel::OnStopRequest(nsIRequest* aRequest,
                                                   nsresult aStatusCode) {
-  // no data is expected
-  MOZ_CRASH("No data expected from external protocol channel");
+  MOZ_ASSERT(NS_FAILED(aStatusCode));
   return NS_ERROR_UNEXPECTED;
 }
 
@@ -509,15 +503,6 @@ NS_IMETHODIMP nsExternalProtocolHandler::GetProtocolFlags(uint32_t* aUritype) {
   *aUritype = URI_NORELATIVE | URI_NOAUTH | URI_LOADABLE_BY_ANYONE |
               URI_NON_PERSISTABLE | URI_DOES_NOT_RETURN_DATA;
   return NS_OK;
-}
-
-NS_IMETHODIMP nsExternalProtocolHandler::NewURI(
-    const nsACString& aSpec,
-    const char* aCharset,  // ignore charset info
-    nsIURI* aBaseURI, nsIURI** _retval) {
-  return NS_MutateURI(NS_SIMPLEURIMUTATOR_CONTRACTID)
-      .SetSpec(aSpec)
-      .Finalize(_retval);
 }
 
 NS_IMETHODIMP

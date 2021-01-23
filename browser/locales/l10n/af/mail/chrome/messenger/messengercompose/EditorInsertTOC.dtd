@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title        "Inhoudsopgawe">
+<!ENTITY buildToc.label      "Bou tabel op uit inhoud van:">
+<!ENTITY tag.label           "Merker:">
+<!ENTITY class.label         "Klas:">
+<!ENTITY header1.label       "Vlak 1">
+<!ENTITY header2.label       "Vlak 2">
+<!ENTITY header3.label       "Vlak 3">
+<!ENTITY header4.label       "Vlak 4">
+<!ENTITY header5.label       "Vlak 5">
+<!ENTITY header6.label       "Vlak 6">
+<!ENTITY makeReadOnly.label  "Maak die inhoudsopgawe leesalleen">
+<!ENTITY orderedList.label   "Nommer alle inskrywings in die inhoudsopgawe">

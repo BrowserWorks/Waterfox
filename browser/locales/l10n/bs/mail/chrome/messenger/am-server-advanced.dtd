@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Napredne postavke računa">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "IMAP server direktorij:">
+<!ENTITY serverDirectory.accesskey "d">
+<!ENTITY usingSubscription.label "Prikaži samo fascikle na koje sam pretplaćen(a)">
+<!ENTITY usingSubscription.accesskey "w">
+<!ENTITY dualUseFolders.label "Server podržava fascikle koje sadrže podfascikle i poruke">
+<!ENTITY dualUseFolders.accesskey "f">
+<!ENTITY maximumConnectionsNumber.label "Maksimalan broj serverskih veza koje treba spremiti u predmemoriju">
+<!ENTITY maximumConnectionsNumber.accesskey "M">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Ove postavke određuju imenski prostor na vašem IMAP serveru">
+<!ENTITY personalNamespace.label "Lični imenski prostor:">
+<!ENTITY personalNamespace.accesskey "L">
+<!ENTITY publicNamespace.label "Javni (podijeljeni):">
+<!ENTITY publicNamespace.accesskey "J">
+<!ENTITY otherUsersNamespace.label "Ostali korisnici:">
+<!ENTITY otherUsersNamespace.accesskey "O">
+<!ENTITY overrideNamespaces.label "Dozvoli serveru da premosti ove imenske prostore">
+<!ENTITY overrideNamespaces.accesskey "D">
+<!ENTITY pop3DeferringDesc.label "Prilikom preuzimanja pošte sa servera ovog računa, koristi sljedeću fasciklu za pohranu novih poruka:" >
+<!ENTITY accountInbox.label "Primljena pošta za ovaj račun">
+<!ENTITY accountInbox.accesskey "s">
+<!ENTITY deferToServer.label "Primljena pošta za drugi račun">
+<!ENTITY deferToServer.accesskey "d">
+<!ENTITY deferGetNewMail.label "Uključi ovaj server prilikom primanja nove pošte">
+<!ENTITY deferGetNewMail.accesskey "U">

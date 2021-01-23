@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -25,7 +23,7 @@ add_task(async function() {
   const { store } = monitor.panelWin;
 
   is(
-    store.getState().requests.requests.size,
+    store.getState().requests.requests.length,
     0,
     "No network requests appear in the network panel"
   );

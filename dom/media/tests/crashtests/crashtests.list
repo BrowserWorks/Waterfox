@@ -1,4 +1,4 @@
-default-preferences  pref(media.peerconnection.enabled,true) pref(media.navigator.permission.disabled,true) pref(dom.disable_open_during_load,false) pref(media.getusermedia.insecure.enabled,true) pref(media.getusermedia.insecure.enabled,true)
+defaults pref(media.peerconnection.enabled,true) pref(media.navigator.permission.disabled,true) pref(dom.disable_open_during_load,false) pref(media.devices.insecure.enabled,true) pref(media.getusermedia.insecure.enabled,true)
 
 load 780790.html
 load 791270.html
@@ -20,9 +20,9 @@ load 1306476.html
 load 1348381.html
 load 1367930_1.html
 load 1367930_2.html
-pref(browser.link.open_newwindow,2) load 1429507_1.html # window.open() in tab doesn't work for crashtest in e10s, this opens a new window instead
-pref(browser.link.open_newwindow,2) load 1429507_2.html # window.open() in tab doesn't work for crashtest in e10s, this opens a new window instead
-load 1453030.html
+asserts-if(Android,0-1) pref(browser.link.open_newwindow,2) load 1429507_1.html # window.open() in tab doesn't work for crashtest in e10s, this opens a new window instead
+asserts-if(Android,0-1) pref(browser.link.open_newwindow,2) load 1429507_2.html # window.open() in tab doesn't work for crashtest in e10s, this opens a new window instead
+asserts-if(Android,0-2) load 1453030.html
 load 1468451.html
 skip-if(Android) load 1490700.html # No screenshare on Android
 load 1505957.html
@@ -30,4 +30,8 @@ load 1509442.html
 load 1511130.html
 load 1510848.html
 load 1516292.html
+skip-if(Android) pref(media.getusermedia.browser.enabled,true) load 1560207.html # No tabshare on Android
+load 1576938.html
+skip-if(Android) pref(media.getusermedia.audiocapture.enabled,true) load 1573536.html
+skip-if(!Android) pref(media.getusermedia.audiocapture.enabled,true) pref(media.navigator.permission.device,false) load 1573536.html # media.navigator.permission.device is mobile-only, so other platforms fail to set it (Bug 1350948)
 load 1594136.html

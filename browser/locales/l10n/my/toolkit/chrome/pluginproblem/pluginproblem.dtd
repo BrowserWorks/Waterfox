@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+<!ENTITY tapToPlayPlugin                                     "ပလက်ဂ်အင်ကို အသုံးပြုရန် ဒီနေရာကို ထိပါ။">
+<!ENTITY clickToActivatePlugin                               "ပလက်ဂ်အင်ကို အသုံးပြုရန်။">
+<!ENTITY checkForUpdates                                     "အဆင့်မြှင့်တင်မှုများကို စစ်ဆေးပါ…">
+<!ENTITY blockedPlugin.label                                 "သင့်ကို ကာကွယ်ရန်အတွက် ယခု ထပ်ပေါင်းဆော့ဝဲလ်အား ပိတ်ထားသှ်">
+<!ENTITY hidePluginBtn.label                                 "ပလက်ဂ်ကို မပြပါနှင့်">
+<!ENTITY managePlugins                                       "ထပ်ပေါင်းဆော့ဝဲလ်အား စီမံခန့်ခွဲပါ…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "စာမျက်နှာအား ပြန်ဖွင့်ပါ">
+<!ENTITY reloadPlugin.post                                   " ထပ်မံကြိုးစားရန်">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "ပျက်ဆီးမှု အစီရင်ခံစာပို့ပါ">
+<!ENTITY report.submitting                                   "အစီရင်ခံစာများပို့နေသည်…">
+<!ENTITY report.submitted                                    "အစီရင်ခံစာပို့ပြီး">
+<!ENTITY report.disabled                                     "အစီရင်ခံစာပေးပို့ခြင်း ပိတ်ထားသှ်">
+<!ENTITY report.failed                                       "ပေးပို့ခြင်းမအောင်မြင်ပါ">
+<!ENTITY report.unavailable                                  "အစီရင်ခံစာမရှိပါ">
+<!ENTITY report.comment                                      "ထင်မြင်ချက်တစ်ခုထည့်ပါ(ထင်မြင်ချက်များကို အများမြင်အောင်ပြထားမည်)">
+<!ENTITY report.pageURL                                      "စာမျက်နှာ၏ URL အားထည့်ပါ">
+
+<!ENTITY plugin.file                                         "ဖိုင်">
+<!ENTITY plugin.mimeTypes                                    "MIME အမျိုးအစားများ">
+<!ENTITY plugin.flashProtectedMode.label                     "Adobe Flash ကာကွယ်ခြင်း ပုံစံအားဖွင့်ပါ">
+<!ENTITY plugin.enableBlocklists.label                       "အန္တရာယ်ရှိပြီး ထောက်လှမ်းသည့် Flash ဖိုင်ကို ပိတ်ပင်ပါ">

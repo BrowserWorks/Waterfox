@@ -6,15 +6,15 @@ use api::{NormalBorder, PremultipliedColorF, Shadow};
 use api::units::*;
 use crate::border::create_border_segments;
 use crate::border::NormalBorderAu;
-use crate::display_list_flattener::{CreateShadow, IsVisible};
+use crate::scene_building::{CreateShadow, IsVisible};
 use crate::frame_builder::{FrameBuildingState};
 use crate::gpu_cache::{GpuCache, GpuDataRequest};
 use crate::intern;
 use crate::internal_types::LayoutPrimitiveInfo;
 use crate::prim_store::{
     BorderSegmentInfo, BrushSegment, NinePatchDescriptor, PrimKey,
-    PrimKeyCommonData, PrimTemplate, PrimTemplateCommonData,
-    PrimitiveInstanceKind, PrimitiveOpacity, PrimitiveSceneData,
+    PrimTemplate, PrimTemplateCommonData,
+    PrimitiveInstanceKind, PrimitiveOpacity,
     PrimitiveStore, InternablePrimitive,
 };
 use crate::resource_cache::{ImageRequest, ResourceCache};
@@ -36,9 +36,7 @@ impl NormalBorderKey {
         normal_border: NormalBorderPrim,
     ) -> Self {
         NormalBorderKey {
-            common: PrimKeyCommonData::with_info(
-                info,
-            ),
+            common: info.into(),
             kind: normal_border,
         }
     }
@@ -67,7 +65,7 @@ impl NormalBorderData {
         frame_state: &mut FrameBuildingState,
     ) {
         if let Some(ref mut request) = frame_state.gpu_cache.request(&mut common.gpu_cache_handle) {
-            self.write_prim_gpu_blocks(request, common.prim_size);
+            self.write_prim_gpu_blocks(request, common.prim_rect.size);
             self.write_segment_gpu_blocks(request);
         }
 
@@ -122,7 +120,7 @@ impl From<NormalBorderKey> for NormalBorderTemplate {
         let mut border_segments = Vec::new();
 
         create_border_segments(
-            common.prim_size,
+            common.prim_rect.size,
             &border,
             &widths,
             &mut border_segments,
@@ -146,7 +144,7 @@ pub type NormalBorderDataHandle = intern::Handle<NormalBorderPrim>;
 impl intern::Internable for NormalBorderPrim {
     type Key = NormalBorderKey;
     type StoreData = NormalBorderTemplate;
-    type InternData = PrimitiveSceneData;
+    type InternData = ();
 }
 
 impl InternablePrimitive for NormalBorderPrim {
@@ -208,9 +206,7 @@ impl ImageBorderKey {
         image_border: ImageBorder,
     ) -> Self {
         ImageBorderKey {
-            common: PrimKeyCommonData::with_info(
-                info,
-            ),
+            common: info.into(),
             kind: image_border,
         }
     }
@@ -239,7 +235,7 @@ impl ImageBorderData {
         frame_state: &mut FrameBuildingState,
     ) {
         if let Some(ref mut request) = frame_state.gpu_cache.request(&mut common.gpu_cache_handle) {
-            self.write_prim_gpu_blocks(request, &common.prim_size);
+            self.write_prim_gpu_blocks(request, &common.prim_rect.size);
             self.write_segment_gpu_blocks(request);
         }
 
@@ -249,7 +245,7 @@ impl ImageBorderData {
 
         common.opacity = if let Some(image_properties) = image_properties {
             PrimitiveOpacity {
-                is_opaque: image_properties.descriptor.is_opaque,
+                is_opaque: image_properties.descriptor.is_opaque(),
             }
         } else {
             PrimitiveOpacity::opaque()
@@ -305,7 +301,7 @@ impl From<ImageBorderKey> for ImageBorderTemplate {
     fn from(key: ImageBorderKey) -> Self {
         let common = PrimTemplateCommonData::with_key_common(key.common);
 
-        let brush_segments = key.kind.nine_patch.create_segments(common.prim_size);
+        let brush_segments = key.kind.nine_patch.create_segments(common.prim_rect.size);
         ImageBorderTemplate {
             common,
             kind: ImageBorderData {
@@ -321,7 +317,7 @@ pub type ImageBorderDataHandle = intern::Handle<ImageBorder>;
 impl intern::Internable for ImageBorder {
     type Key = ImageBorderKey;
     type StoreData = ImageBorderTemplate;
-    type InternData = PrimitiveSceneData;
+    type InternData = ();
 }
 
 impl InternablePrimitive for ImageBorder {
@@ -364,9 +360,9 @@ fn test_struct_sizes() {
     // (b) You made a structure larger. This is not necessarily a problem, but should only
     //     be done with care, and after checking if talos performance regresses badly.
     assert_eq!(mem::size_of::<NormalBorderPrim>(), 84, "NormalBorderPrim size changed");
-    assert_eq!(mem::size_of::<NormalBorderTemplate>(), 208, "NormalBorderTemplate size changed");
-    assert_eq!(mem::size_of::<NormalBorderKey>(), 96, "NormalBorderKey size changed");
+    assert_eq!(mem::size_of::<NormalBorderTemplate>(), 216, "NormalBorderTemplate size changed");
+    assert_eq!(mem::size_of::<NormalBorderKey>(), 104, "NormalBorderKey size changed");
     assert_eq!(mem::size_of::<ImageBorder>(), 84, "ImageBorder size changed");
-    assert_eq!(mem::size_of::<ImageBorderTemplate>(), 72, "ImageBorderTemplate size changed");
-    assert_eq!(mem::size_of::<ImageBorderKey>(), 96, "ImageBorderKey size changed");
+    assert_eq!(mem::size_of::<ImageBorderTemplate>(), 80, "ImageBorderTemplate size changed");
+    assert_eq!(mem::size_of::<ImageBorderKey>(), 104, "ImageBorderKey size changed");
 }

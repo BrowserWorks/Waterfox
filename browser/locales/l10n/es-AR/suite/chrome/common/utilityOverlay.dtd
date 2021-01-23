@@ -1,0 +1,209 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- these things need to move into utilityOverlay.xul -->
+<!ENTITY  offlineGoOfflineCmd.label                 "Trabajar sin conexión">
+<!ENTITY  offlineGoOfflineCmd.accesskey             "T">
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label                   "Archivo">
+<!ENTITY fileMenu.accesskey               "A">
+<!ENTITY newMenu.label                    "Nuevo">
+<!ENTITY newMenu.accesskey                "N">
+<!ENTITY newBlankPageCmd.label            "Página de Composer">
+<!ENTITY newBlankPageCmd.accesskey        "P">
+<!ENTITY newBlankPageCmd.key              "n">
+<!ENTITY newPageFromTemplateCmd.label "Página que usa plantilla">
+<!ENTITY newPageFromTemplateCmd.accesskey "t">
+<!ENTITY newPageFromDraftCmd.label "Página usando borrador">
+<!ENTITY newPageFromDraftCmd.accesskey "b">
+<!ENTITY newNavigatorCmd.label "Ventana del navegador">
+<!ENTITY newNavigatorCmd.key "N">
+<!ENTITY newNavigatorCmd.accesskey "V">
+<!ENTITY newPrivateWindowCmd.label "Ventana privada">
+<!ENTITY newPrivateWindowCmd.key "B">
+<!ENTITY newPrivateWindowCmd.accesskey "e">
+<!ENTITY closeCmd.label "Cerrar">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "C">
+<!ENTITY printSetupCmd.label "Configurar página…">
+<!ENTITY printSetupCmd.accesskey "u">
+<!ENTITY printPreviewCmd.label "Vista previa">
+<!ENTITY printPreviewCmd.accesskey "V">
+<!ENTITY printCmd.label "Imprimir…">
+<!ENTITY printCmd.accesskey "I">
+<!ENTITY printCmd.key "p">
+
+<!-- LOCALIZATION NOTE (.modifiers): The following entites are for the
+     application menu. Never change the modifiers unless you are 100% sure that
+     they are different on your locale (should be very rare). -->
+<!ENTITY preferencesCmdMac.label          "Preferencias…">
+<!ENTITY preferencesCmdMac.key            ",">
+<!ENTITY preferencesCmdMac.modifiers      "accel">
+<!ENTITY servicesMenu.label               "Servicios">
+<!ENTITY hideThisAppCmd.label             "Ocultar &brandShortName;">
+<!ENTITY hideThisAppCmd.key               "H">
+<!ENTITY hideThisAppCmd.modifiers         "accel">
+<!ENTITY hideOtherAppsCmd.label           "Ocultar otros">
+<!ENTITY hideOtherAppsCmd.key             "H">
+<!ENTITY hideOtherAppsCmd.modifiers       "accel,alt">
+<!ENTITY showAllAppsCmd.label             "Mostrar todo">
+<!ENTITY openHelpCmdMac.label             "Ayuda de &brandShortName;">
+<!ENTITY openHelpCmdMac.accesskey         "H">
+<!ENTITY openHelpCmdMac.key               "?">
+<!ENTITY openHelpCmdMac.modifiers         "accel">
+
+<!ENTITY quitApplicationCmd.label         "Salir">
+<!ENTITY quitApplicationCmd.key           "Q">
+<!ENTITY quitApplicationCmd.accesskey     "x">
+<!ENTITY quitApplicationCmdMac.label      "Salir de &brandShortName;">
+<!ENTITY quitApplicationCmdMac.accesskey  "Q">
+<!ENTITY quitApplicationCmdUnix.label     "Salir">
+<!ENTITY quitApplicationCmdUnix.accesskey "Q">
+
+<!ENTITY editMenu.label                   "Editar">
+<!ENTITY editMenu.accesskey               "E">
+<!ENTITY undoCmd.label                    "Deshacer">
+<!ENTITY undoCmd.key                      "Z">
+<!ENTITY undoCmd.accesskey                "D">
+<!ENTITY redoCmd.label                    "Rehacer">
+<!ENTITY redoCmd.key                      "Y">
+<!ENTITY redoCmdMac.key                   "Z">
+<!ENTITY redoCmd.accesskey                "R">
+<!ENTITY cutCmd.label                     "Cortar">
+<!ENTITY cutCmd.key                       "X">
+<!ENTITY cutCmd.accesskey                 "t">
+<!ENTITY copyCmd.label                    "Copiar">
+<!ENTITY copyCmd.key                      "C">
+<!ENTITY copyCmd.accesskey                "C">
+<!ENTITY pasteCmd.label                   "Pegar">
+<!ENTITY pasteCmd.key                     "V">
+<!ENTITY pasteCmd.accesskey               "P">
+<!ENTITY pasteGoCmd.label                 "Pegar e ir">
+<!ENTITY pasteGoCmd.accesskey             "g">
+
+<!-- LOCALIZATION NOTE (pasteSearchCmd): "Search" is a verb, this is the
+     search bar equivalent to the url bar's "Paste & Go"  -->
+<!ENTITY pasteSearchCmd.label             "Pegar y buscar">
+<!ENTITY pasteSearchCmd.accesskey         "e">
+<!ENTITY deleteCmd.label                  "Borrar">
+<!ENTITY deleteCmd.accesskey              "B">
+<!ENTITY selectAllCmd.label               "Seleccionar todo">
+<!ENTITY selectAllCmd.key                 "A">
+<!ENTITY selectAllCmd.accesskey           "S">
+<!ENTITY clearHistoryCmd.label            "Borrar historial de búsquedas">
+<!ENTITY clearHistoryCmd.accesskey        "h">
+<!ENTITY showSuggestionsCmd.label         "Mostrar sugerencias">
+<!ENTITY showSuggestionsCmd.accesskey     "s">
+<!ENTITY preferencesCmd.label             "Preferencias…">
+<!ENTITY preferencesCmd.key               "E">
+<!ENTITY preferencesCmd.accesskey         "e">
+<!ENTITY findBarCmd.key "F">
+<!-- LOCALIZATION NOTE (findBarCmd.accesskey): This accesskey should be within
+     findBarCmd.label found in editorOverlay.dtd, findCmd.label in messenger.dtd
+     and messengercompose.dtd and findOnCmd.label found in navigatorOverlay.dtd -->
+<!ENTITY findBarCmd.accesskey "B">
+<!ENTITY findCmd.key2 "VK_F19">
+<!ENTITY findReplaceCmd.key "H">
+<!ENTITY findReplaceCmdMac.key "F">
+<!ENTITY findReplaceCmd.accesskey "l">
+<!ENTITY findAgainCmd.label "Repetir la búsqueda">
+<!ENTITY findAgainCmd.key "G">
+<!ENTITY findAgainCmd.accesskey "u">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "Buscar anterior">
+<!ENTITY findPrevCmd.key "G">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.accesskey "e">
+<!ENTITY findTypeTextCmd.label "Buscar texto mientras se escribe">
+<!ENTITY findTypeTextCmd.key "/">
+<!ENTITY findTypeTextCmd.accesskey "x">
+<!ENTITY findTypeLinksCmd.label "Buscar enlaces mientras se escribe">
+<!ENTITY findTypeLinksCmd.key "'">
+<!ENTITY findTypeLinksCmd.accesskey "e">
+
+<!ENTITY viewMenu.label                   "Ver">
+<!ENTITY viewMenu.accesskey               "V">
+<!ENTITY viewToolbarsMenu.label           "Mostrar/Ocultar">
+<!ENTITY viewToolbarsMenu.accesskey       "M">
+<!ENTITY showTaskbarCmd.label             "Barra de estado">
+<!ENTITY showTaskbarCmd.accesskey         "s">
+
+<!ENTITY helpMenu.label                   "Ayuda">
+<!ENTITY helpMenu.accesskey               "y">
+
+<!-- LOCALIZATION NOTE some localizations of Windows use "?"
+     for the help button in the menubar. -->
+<!ENTITY helpMenuWin.label                "Ayuda">
+<!ENTITY helpMenuWin.accesskey            "H">
+<!ENTITY openHelpCmd.label                "Contenido de la ayuda">
+<!ENTITY openHelpCmd.accesskey            "H">
+<!ENTITY openHelpCmd.key                  "VK_F1">
+
+<!ENTITY helpForIEUsers.label               "Para usuarios de Internet Explorer">
+<!ENTITY helpForIEUsers.accesskey           "I">
+<!ENTITY helpTroubleshootingInfo.label      "Solución de problemas">
+<!ENTITY helpTroubleshootingInfo.accesskey  "S">
+<!ENTITY releaseCmd.label                   "Notas de la versión">
+<!ENTITY releaseCmd.accesskey               "N">
+<!ENTITY helpSafeMode.label                 "Reiniciar con los complementos deshabilitados">
+<!ENTITY helpSafeMode.accesskey             "R">
+<!ENTITY updateCmd.label                    "Buscar actualizaciones…">
+<!ENTITY updateCmd.accesskey                "c">
+<!ENTITY aboutCmd.label                     "Acerca de &brandShortName;">
+<!ENTITY aboutCmd.accesskey                 "A">
+<!ENTITY aboutCommPluginsCmd.label          "Acerca de plugins">
+<!ENTITY aboutCommPluginsCmd.accesskey      "p">
+
+<!ENTITY direct.label                             "Conectado (Proxy: ninguno)">
+<!ENTITY direct.accesskey                         "n">
+<!ENTITY manual.label                             "Conectado (Proxy: manual)">
+<!ENTITY manual.accesskey                         "M">
+<!ENTITY pac.label                                "Conectado (Proxy: URL automática)">
+<!ENTITY pac.accesskey                            "a">
+<!ENTITY wpad.label                               "Conectado (Proxy: descubierto automáticamente)">
+<!ENTITY wpad.accesskey                           "D">
+<!ENTITY system.label                             "Conectado (Proxy: proxy del sistema)">
+<!ENTITY system.accesskey                         "s">
+
+<!ENTITY proxy.label                              "Configuración de proxy…">
+<!ENTITY proxy.accesskey                          "C">
+
+<!ENTITY bidiSwitchTextDirectionItem.label        "Cambiar dirección del texto">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey    "C">
+<!ENTITY bidiSwitchTextDirectionItem.commandkey   "X">
+
+<!ENTITY menubarCmd.label                         "Barra de menú">
+<!ENTITY menubarCmd.accesskey                     "e">
+
+<!ENTITY customizeToolbarContext.label            "Personalizar…">
+<!ENTITY customizeToolbarContext.accesskey        "P">
+
+<!ENTITY customizeToolbar.toolbarmode.label       "Opciones para esta barra de herramientas">
+<!ENTITY customizeToolbar.toolbarmode.accesskey   "t">
+<!ENTITY customizeToolbar.iconsAndText.label      "Íconos y texto">
+<!ENTITY customizeToolbar.iconsAndText.accesskey  "c">
+<!ENTITY customizeToolbar.icons.label             "Íconos">
+<!ENTITY customizeToolbar.icons.accesskey         "o">
+<!ENTITY customizeToolbar.text.label              "Texto">
+<!ENTITY customizeToolbar.text.accesskey          "T">
+<!ENTITY customizeToolbar.useSmallIcons.label     "Usar íconos pequeños">
+<!ENTITY customizeToolbar.useSmallIcons.accesskey "s">
+<!ENTITY customizeToolbar.labelAlignEnd.label     "Mostrar texto debajo del ícono">
+<!ENTITY customizeToolbar.labelAlignEnd.accesskey "b">
+<!ENTITY customizeToolbar.useDefault.label        "Usar opciones predeterminadas">
+<!ENTITY customizeToolbar.useDefault.accesskey    "U">
+
+<!-- Popup Blocked notification menu -->
+<!ENTITY allowPopups.accesskey        "p">
+<!ENTITY showPopupManager.label       "Administrar ventanas emergentes">
+<!ENTITY showPopupManager.accesskey   "m">
+<!ENTITY dontShowMessage.label        "No mostrar este mensaje cuando las ventanas emergentes están bloqueadas">
+<!ENTITY dontShowMessage.accesskey    "d">
+
+<!ENTITY throbber.title "Throbber">
+<!ENTITY throbber.tooltip2 "Ir a la página de inicio de &brandShortName;">
+
+<!ENTITY syncToolbarButton.label "Sync">

@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 /* import-globals-from helper_inplace_editor.js */
@@ -18,7 +17,7 @@ const LONG_TEXT =
 
 add_task(async function() {
   await addTab("data:text/html;charset=utf-8,inplace editor max width tests");
-  const [host, , doc] = await createHost();
+  const { host, doc } = await createHost();
 
   info("Testing the maxWidth option in pixels, to precisely check the size");
   await new Promise(resolve => {
@@ -114,7 +113,7 @@ const testMaxWidth = async function(editor) {
 function getLines(textarea) {
   const win = textarea.ownerDocument.defaultView;
   const style = win.getComputedStyle(textarea);
-  return Math.floor(textarea.clientHeight / parseFloat(style.lineHeight));
+  return Math.floor(textarea.clientHeight / parseFloat(style.fontSize));
 }
 
 /**

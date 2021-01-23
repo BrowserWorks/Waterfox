@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY joinChatWindow.title           "ចូលរួម​ជជែក">
+<!ENTITY name.label                     "បន្ទប់">
+<!ENTITY optional.label                 "(ជម្រើស)">
+<!ENTITY account.label                  "គណនី">
+<!ENTITY autojoin.label                 "ចូលរួម​បន្ទប់ជជែក​នេះ​ដោយ​ស្វ័យ​ប្រវត្តិ">
+<!ENTITY autojoin.accesskey             "A">

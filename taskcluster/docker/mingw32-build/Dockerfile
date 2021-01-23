@@ -24,7 +24,9 @@ RUN apt-get update && \
       gawk \
       g++-multilib \
       gnupg \
-      libucl-dev \
+      jq \
+      libucl1 \
+      libxml2 \
       patch \
       p7zip-full \
       scons \

@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "फिल्टर नियम">
+<!-- LOCALIZATION NOTE (cc.label): DONT_TRANSLATE -->
+
+<!ENTITY filterName.label "फिल्टर नाम:">
+<!ENTITY filterName.accesskey "i">
+
+<!ENTITY junk.label "जङ्क">
+<!ENTITY notJunk.label "जङ्क होइन">
+
+<!ENTITY lowestPriorityCmd.label "सबैभन्दा कम">
+<!ENTITY lowPriorityCmd.label "कम">
+<!ENTITY normalPriorityCmd.label "सामान्य">
+<!ENTITY highPriorityCmd.label "उच्च">
+<!ENTITY highestPriorityCmd.label "सबैभन्दा उच्च">
+
+<!ENTITY filterActionDesc.label "यी कार्य सम्पादन गर्नुहोस्:">
+<!ENTITY filterActionDesc.accesskey "P">
+
+<!-- New Style Filter Rule Actions -->
+
+<!ENTITY moveMessage.label "यसमा सन्देशलाई सार्नुहोस्">
+<!ENTITY copyMessage.label "यसमा सन्देश प्रतिलिपि गर्नुहोस्">
+<!ENTITY forwardTo.label "यसमा सन्देशलाई पठाउनुहोस्">
+<!ENTITY replyWithTemplate.label "टेम्प्लेटबाट जवाफ दिनुहोस्">
+<!ENTITY markMessageRead.label "पढिएको रूपमा चिनो लगाउनुहोस्">
+<!ENTITY markMessageStarred.label "तारा थप्नुहोस्">
+<!ENTITY setPriority.label "यसमा प्राथमिकता सेट गर्नुहोस्">
+<!ENTITY addTag.label "ट्याग सन्देश">
+<!ENTITY setJunkScore.label "यसमा जङ्क वस्तुस्थिति सेट गर्नुहोस्">
+<!ENTITY deleteMessage.label "सन्देश मेट्नुहोस्">
+<!ENTITY deleteFromPOP.label "POP सर्भरबाट मेट्नुहोस्">
+<!ENTITY fetchFromPOP.label "POP सर्भरबाट तान्नुहोस्">
+<!ENTITY ignoreThread.label "थ्रेड उपेक्षा गर्नुहोस्">
+<!ENTITY watchThread.label "थ्रेड हेर्नुहोस्">
+
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->

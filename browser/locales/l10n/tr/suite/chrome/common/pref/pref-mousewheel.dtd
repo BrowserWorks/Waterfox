@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE Mouse-wheel management prefs, for those lucky OSes that support mouse wheels -->
+
+<!ENTITY pref.mouseWheel.title "Fare tekerleği">
+<!ENTITY mouseWheelPanel.label "Specify mouse wheel behavior when used with this modifier key: ">
+<!ENTITY usingJustTheWheel.label "No modifier key">
+<!ENTITY usingWheelAndAlt.label "&altKey.label;">
+<!ENTITY usingWheelAndCtrl.label "&ctrlKey.label;">
+<!ENTITY usingWheelAndShft.label "&shiftKey.label;">
+<!ENTITY mousewheelGroup.label "Vertical scrolling">
+<!ENTITY mousewheelHorizGroup.label "Horizontal scrolling">
+<!ENTITY scroll.label "Scroll the document by ">
+<!ENTITY scroll.accesskey "S">
+<!ENTITY scrollHoriz.accesskey "c">
+<!ENTITY scrollLines.label "lines">
+<!ENTITY scrollChars.label "characters">
+<!ENTITY useSystemDefault.label "Use system default">
+<!ENTITY useSystemDefault.accesskey "U">
+<!ENTITY useSystemDefaultHoriz.accesskey "d">
+<!ENTITY scrollPgUpPgDn.label "Scroll a page up or a page down">
+<!ENTITY scrollPgUpPgDn.accesskey "p">
+<!ENTITY scrollPgLtPgRt.label "Scroll a page left or a page right">
+<!ENTITY scrollPgLtPgRt.accesskey "r">
+<!ENTITY history.label "Move back and forward in the browsing history">
+<!ENTITY history.accesskey "M">
+<!ENTITY historyHoriz.accesskey "b">
+<!ENTITY zoom.label "Zoom the page in or out">
+<!ENTITY zoom.accesskey "Z">
+<!ENTITY zoomHoriz.accesskey "E">

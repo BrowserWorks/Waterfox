@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label          "Fitxategia">
+<!ENTITY fileMenu.accesskey        "F">
+<!ENTITY newMenu.label            "Berria">
+<!ENTITY newMenu.accesskey          "B">
+
+<!ENTITY editMenu.label          "Editatu">
+<!ENTITY editMenu.accesskey        "E">
+<!ENTITY undoCmd.label            "Desegin">
+<!ENTITY undoCmd.accesskey          "D">
+<!ENTITY redoCmd.label            "Berregin">
+<!ENTITY redoCmd.accesskey          "r">
+<!ENTITY deleteCmd.label          "Ezabatu">
+<!ENTITY deleteCmd.accesskey        "E">
+<!ENTITY preferencesCmd2.label "Aukerak">
+<!ENTITY preferencesCmd2.accesskey "A">
+<!ENTITY preferencesCmdUnix.label       "Hobespenak">
+<!ENTITY preferencesCmdUnix.accesskey     "n">
+
+<!ENTITY customizeCmd.label "Pertsonalizatu">
+<!ENTITY customizeCmd.accesskey "P">
+
+<!ENTITY viewMenu.label          "Ikusi">
+<!ENTITY viewMenu.accesskey        "I">
+<!ENTITY viewToolbarsMenu.label        "Tresna-barrak">
+<!ENTITY viewToolbarsMenu.accesskey      "T">
+<!ENTITY showTaskbarCmd.label          "Egoera-barra">
+<!ENTITY showTaskbarCmd.accesskey        "E">
+
+<!ENTITY closeCmd.label      "Itxi">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "x">
+
+<!ENTITY quitApplicationCmd.label  "Irten">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "r">
+
+<!ENTITY quitApplicationCmdUnix.label  "Irten">
+<!ENTITY quitApplicationCmdUnix.accesskey  "I">
+
+<!ENTITY quitApplicationCmdMac.label  "Itxi &brandShortName;">
+<!ENTITY quitApplicationCmdMac.accesskey  "t">

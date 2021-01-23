@@ -58,6 +58,7 @@ uz{
         bug{"bugi"}
         byn{"blin"}
         ca{"katalan"}
+        ccp{"chakma"}
         ce{"chechen"}
         ceb{"sebuan"}
         cgg{"chiga"}
@@ -108,6 +109,7 @@ uz{
         eu{"bask"}
         ewo{"evondo"}
         fa{"fors"}
+        fa_AF{"dari"}
         ff{"fula"}
         fi{"fincha"}
         fil{"filipincha"}
@@ -135,7 +137,6 @@ uz{
         gv{"men"}
         gwi{"gvichin"}
         ha{"xausa"}
-        hak{"hak"}
         haw{"gavaycha"}
         he{"ivrit"}
         hi{"hind"}
@@ -143,7 +144,6 @@ uz{
         hmn{"xmong"}
         hr{"xorvat"}
         hsb{"yuqori sorb"}
-        hsn{"hsn"}
         ht{"gaityan"}
         hu{"venger"}
         hup{"xupa"}
@@ -257,7 +257,6 @@ uz{
         myv{"erzya"}
         mzn{"mozandaron"}
         na{"nauru"}
-        nan{"nan"}
         nap{"neapolitan"}
         naq{"nama"}
         nb{"norveg-bokmal"}
@@ -396,7 +395,6 @@ uz{
         war{"varay"}
         wbp{"valbiri"}
         wo{"volof"}
-        wuu{"wuu"}
         xal{"qalmoq"}
         xh{"kxosa"}
         xog{"soga"}
@@ -413,6 +411,14 @@ uz{
         zun{"zuni"}
         zxx{"til tarkibi yo‘q"}
         zza{"zaza"}
+    }
+    Languages%long{
+        zh_Hans{"xitoy (soddalashtirilgan mandarin)"}
+        zh_Hant{"xitoy (an’anaviy mandarin)"}
+    }
+    Languages%menu{
+        yue{"xitoy, kanton"}
+        zh{"xitoy, mandarin"}
     }
     Languages%short{
         az{"ozar"}
@@ -464,10 +470,6 @@ uz{
         Zxxx{"yozuvsiz"}
         Zyyy{"umumiy"}
         Zzzz{"noma’lum yozuv"}
-    }
-    Scripts%stand-alone{
-        Hans{"soddalashgan xitoy"}
-        Hant{"an’anaviy xitoy"}
     }
     Types{
         calendar{
@@ -546,7 +548,7 @@ uz{
             tibt{"tibet raqamlari"}
         }
     }
-    Version{"2.1.49.82"}
+    Version{"37"}
     characterLabelPattern{
         all{"{0} — hammasi"}
         category-list{"{0}: {1}"}

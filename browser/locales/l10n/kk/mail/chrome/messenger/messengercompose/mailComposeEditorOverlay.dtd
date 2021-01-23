@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY attachImageSource.label         "Бұл суретті хабарламаға жалғау">
+<!ENTITY attachImageSource.accesskey     "л">
+
+<!ENTITY attachLinkSource.label          "Бұл сілтеменің түпнұсқасын хабарламаға жалғау">
+<!ENTITY attachLinkSource.accesskey      "п">

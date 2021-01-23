@@ -7,9 +7,9 @@
 #ifndef mozilla_dom_cache_CacheStorage_h
 #define mozilla_dom_cache_CacheStorage_h
 
+#include "mozilla/UniquePtr.h"
 #include "mozilla/dom/cache/Types.h"
 #include "mozilla/dom/cache/TypeUtils.h"
-#include "nsAutoPtr.h"
 #include "nsCOMPtr.h"
 #include "nsISupportsImpl.h"
 #include "nsTArray.h"
@@ -34,7 +34,7 @@ class WorkerPrivate;
 namespace cache {
 
 class CacheStorageChild;
-class CacheWorkerHolder;
+class CacheWorkerRef;
 
 class CacheStorage final : public nsISupports,
                            public nsWrapperCache,
@@ -86,12 +86,12 @@ class CacheStorage final : public nsISupports,
  private:
   CacheStorage(Namespace aNamespace, nsIGlobalObject* aGlobal,
                const mozilla::ipc::PrincipalInfo& aPrincipalInfo,
-               CacheWorkerHolder* aWorkerHolder);
+               SafeRefPtr<CacheWorkerRef> aWorkerRef);
   explicit CacheStorage(nsresult aFailureResult);
   ~CacheStorage();
 
   struct Entry;
-  void RunRequest(nsAutoPtr<Entry>&& aEntry);
+  void RunRequest(UniquePtr<Entry> aEntry);
 
   OpenMode GetOpenMode() const;
 

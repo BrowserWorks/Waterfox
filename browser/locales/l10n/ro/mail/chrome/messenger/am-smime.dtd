@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY e2eTitle.label "Criptare end-to-end">
+<!ENTITY e2eLearnMore.label "Află mai multe">
+
+<!ENTITY e2eEnc.description "Fără criptare end-to-end, conținutul mesajelor este ușor expus furnizorului de e-mail și supravegherii în masă.">
+<!ENTITY e2eeReqWarning.description "Dacă ai nevoie de criptare, pentru a trimite un mesaj, trebuie să ai cheia publică sau certificatul fiecărui destinatar.">
+
+<!ENTITY e2eSigning.description "O semnătură digitală permite destinatarilor să verifice că mesajul a fost trimis de tine și că nu i s-a modificat conținutul.">
+<!ENTITY e2eTechPref.description "Tehnologie de criptare preferată:">
+
+<!ENTITY doNotEncrypt.label "Nu activa implicit criptarea">
+<!ENTITY doNotEncrypt.accesskey "N">
+<!ENTITY requireEncryptMessage.label "Impune implicit criptare">
+<!ENTITY requireEncryptMessage.accesskey "u">
+<!ENTITY encryptionCert2.message "Certificat personal de criptare:">
+<!ENTITY digitalSign.certificate.button "Selectează…">
+<!ENTITY digitalSign.certificate.accesskey "S">
+<!ENTITY digitalSign.certificate_clear.button "Curăță">
+<!ENTITY digitalSign.certificate_clear.accesskey "C">
+<!ENTITY encryption.certificate.button "Selectează…">
+<!ENTITY encryption.certificate.accesskey "t">
+<!ENTITY encryption.certificate_clear.button "Curăță">
+<!ENTITY encryption.certificate_clear.accesskey "r">
+<!ENTITY signingGroupTitle.label "Semnătură digitală">
+<!ENTITY signMessage2.label "Adaugă-mi implicit semnătura digitală">
+<!ENTITY signMessage.accesskey "d">
+
+<!ENTITY signingCert2.message "Certificat personal pentru semnătură digitală:">
+
+<!ENTITY sendingDefaults.label "Setări implicite pentru trimiterea de mesaje">
+
+<!ENTITY technologyAutomatic.label "Selectare automată în baza cheilor sau certificatelor disponibile">
+
+<!ENTITY certificates2.label "S/MIME">
+<!ENTITY manageCerts3.label "Gestionează certificatele S/MIME">
+<!ENTITY manageCerts3.accesskey "M">
+<!ENTITY manageDevices2.label "Dispozitive de securitate S/MIME">
+<!ENTITY manageDevices2.accesskey "y">
+
+<!ENTITY technologySMIME.label "Preferă S/MIME">
+<!ENTITY technologyOpenPGP.label "Preferă OpenPGP">
+
+<!ENTITY openpgpKeys.label "OpenPGP">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Selectează certificatul">
+<!ENTITY certPicker.info  "Certificat:">
+<!ENTITY certPicker.detailsLabel "Detalii ale certificatului selectat:">
+
+<!ENTITY openpgpKey.message "Cheie personală pentru criptare și semnătură digitală:">
+<!ENTITY openpgpKey.button "Setează cheia personală…">
+<!ENTITY openpgpKey.accesskey "o">

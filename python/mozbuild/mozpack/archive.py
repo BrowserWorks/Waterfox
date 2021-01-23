@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function, unicode_literals
 
 import bz2
 import gzip
@@ -30,7 +30,10 @@ def create_tar_from_files(fp, files):
 
     FUTURE accept a filename argument (or create APIs to write files)
     """
-    with tarfile.open(name='', mode='w', fileobj=fp, dereference=True) as tf:
+    # The format is explicitly set to tarfile.GNU_FORMAT, because this default format
+    # has been changed in Python 3.8.
+    with tarfile.open(name='', mode='w', fileobj=fp, dereference=True,
+                      format=tarfile.GNU_FORMAT) as tf:
         for archive_path, f in sorted(files.items()):
             if not isinstance(f, BaseFile):
                 f = File(f)
@@ -87,7 +90,7 @@ class _BZ2Proxy(object):
 
     def __init__(self, fp, compresslevel=9):
         self.fp = fp
-        self.compressor = bz2.BZ2Compressor(compresslevel=compresslevel)
+        self.compressor = bz2.BZ2Compressor(compresslevel)
         self.pos = 0
 
     def tell(self):

@@ -1,123 +1,122 @@
-//! A concurrent work-stealing deque.
+//! Concurrent work-stealing deques.
 //!
-//! The data structure can be thought of as a dynamically growable and shrinkable buffer that has
-//! two ends: bottom and top. A [`Deque`] can [`push`] elements into the bottom and [`pop`]
-//! elements from the bottom, but it can only [`steal`][Deque::steal] elements from the top.
+//! These data structures are most commonly used in work-stealing schedulers. The typical setup
+//! involves a number of threads, each having its own FIFO or LIFO queue (*worker*). There is also
+//! one global FIFO queue (*injector*) and a list of references to *worker* queues that are able to
+//! steal tasks (*stealers*).
 //!
-//! A [`Deque`] doesn't implement `Sync` so it cannot be shared among multiple threads. However, it
-//! can create [`Stealer`]s, and those can be easily cloned, shared, and sent to other threads.
-//! [`Stealer`]s can only [`steal`][Stealer::steal] elements from the top.
+//! We spawn a new task onto the scheduler by pushing it into the *injector* queue. Each worker
+//! thread waits in a loop until it finds the next task to run and then runs it. To find a task, it
+//! first looks into its local *worker* queue, and then into the *injector* and *stealers*.
 //!
-//! Here's a visualization of the data structure:
+//! # Queues
 //!
-//! ```text
-//!                    top
-//!                     _
-//!    Deque::steal -> | | <- Stealer::steal
-//!                    | |
-//!                    | |
-//!                    | |
-//! Deque::push/pop -> |_|
+//! [`Injector`] is a FIFO queue, where tasks are pushed and stolen from opposite ends. It is
+//! shared among threads and is usually the entry point for new tasks.
 //!
-//!                  bottom
-//! ```
+//! [`Worker`] has two constructors:
 //!
-//! # Work-stealing schedulers
+//! * [`new_fifo()`] - Creates a FIFO queue, in which tasks are pushed and popped from opposite
+//!   ends.
+//! * [`new_lifo()`] - Creates a LIFO queue, in which tasks are pushed and popped from the same
+//!   end.
 //!
-//! Usually, the data structure is used in work-stealing schedulers as follows.
+//! Each [`Worker`] is owned by a single thread and supports only push and pop operations.
 //!
-//! There is a number of threads. Each thread owns a [`Deque`] and creates a [`Stealer`] that is
-//! shared among all other threads. Alternatively, it creates multiple [`Stealer`]s - one for each
-//! of the other threads.
+//! Method [`stealer()`] creates a [`Stealer`] that may be shared among threads and can only steal
+//! tasks from its [`Worker`]. Tasks are stolen from the end opposite to where they get pushed.
 //!
-//! Then, all threads are executing in a loop. In the loop, each one attempts to [`pop`] some work
-//! from its own [`Deque`]. But if it is empty, it attempts to [`steal`][Stealer::steal] work from
-//! some other thread instead. When executing work (or being idle), a thread may produce more work,
-//! which gets [`push`]ed into its [`Deque`].
+//! # Stealing
 //!
-//! Of course, there are many variations of this strategy. For example, sometimes it may be
-//! beneficial for a thread to always [`steal`][Deque::steal] work from the top of its deque
-//! instead of calling [`pop`] and taking it from the bottom.
+//! Steal operations come in three flavors:
+//!
+//! 1. [`steal()`] - Steals one task.
+//! 2. [`steal_batch()`] - Steals a batch of tasks and moves them into another worker.
+//! 3. [`steal_batch_and_pop()`] - Steals a batch of tasks, moves them into another queue, and pops
+//!    one task from that worker.
+//!
+//! In contrast to push and pop operations, stealing can spuriously fail with [`Steal::Retry`], in
+//! which case the steal operation needs to be retried.
 //!
 //! # Examples
 //!
+//! Suppose a thread in a work-stealing scheduler is idle and looking for the next task to run. To
+//! find an available task, it might do the following:
+//!
+//! 1. Try popping one task from the local worker queue.
+//! 2. Try stealing a batch of tasks from the global injector queue.
+//! 3. Try stealing one task from another thread using the stealer list.
+//!
+//! An implementation of this work-stealing strategy:
+//!
 //! ```
-//! use crossbeam_deque::{Deque, Steal};
-//! use std::thread;
+//! use crossbeam_deque::{Injector, Steal, Stealer, Worker};
+//! use std::iter;
 //!
-//! let d = Deque::new();
-//! let s = d.stealer();
-//!
-//! d.push('a');
-//! d.push('b');
-//! d.push('c');
-//!
-//! assert_eq!(d.pop(), Some('c'));
-//! drop(d);
-//!
-//! thread::spawn(move || {
-//!     assert_eq!(s.steal(), Steal::Data('a'));
-//!     assert_eq!(s.steal(), Steal::Data('b'));
-//! }).join().unwrap();
+//! fn find_task<T>(
+//!     local: &Worker<T>,
+//!     global: &Injector<T>,
+//!     stealers: &[Stealer<T>],
+//! ) -> Option<T> {
+//!     // Pop a task from the local queue, if not empty.
+//!     local.pop().or_else(|| {
+//!         // Otherwise, we need to look for a task elsewhere.
+//!         iter::repeat_with(|| {
+//!             // Try stealing a batch of tasks from the global queue.
+//!             global.steal_batch_and_pop(local)
+//!                 // Or try stealing a task from one of the other threads.
+//!                 .or_else(|| stealers.iter().map(|s| s.steal()).collect())
+//!         })
+//!         // Loop while no task was stolen and any steal operation needs to be retried.
+//!         .find(|s| !s.is_retry())
+//!         // Extract the stolen task, if there is one.
+//!         .and_then(|s| s.success())
+//!     })
+//! }
 //! ```
 //!
-//! # References
-//!
-//! The implementation is based on the following work:
-//!
-//! 1. [Chase and Lev. Dynamic circular work-stealing deque. SPAA 2005.][chase-lev]
-//! 2. [Le, Pop, Cohen, and Nardelli. Correct and efficient work-stealing for weak memory models.
-//!    PPoPP 2013.][weak-mem]
-//! 3. [Norris and Demsky. CDSchecker: checking concurrent data structures written with C/C++
-//!    atomics. OOPSLA 2013.][checker]
-//!
-//! [chase-lev]: https://dl.acm.org/citation.cfm?id=1073974
-//! [weak-mem]: https://dl.acm.org/citation.cfm?id=2442524
-//! [checker]: https://dl.acm.org/citation.cfm?id=2509514
-//!
-//! [`Deque`]: struct.Deque.html
+//! [`Worker`]: struct.Worker.html
 //! [`Stealer`]: struct.Stealer.html
-//! [`push`]: struct.Deque.html#method.push
-//! [`pop`]: struct.Deque.html#method.pop
-//! [Deque::steal]: struct.Deque.html#method.steal
-//! [Stealer::steal]: struct.Stealer.html#method.steal
+//! [`Injector`]: struct.Injector.html
+//! [`Steal::Retry`]: enum.Steal.html#variant.Retry
+//! [`new_fifo()`]: struct.Worker.html#method.new_fifo
+//! [`new_lifo()`]: struct.Worker.html#method.new_lifo
+//! [`stealer()`]: struct.Worker.html#method.stealer
+//! [`steal()`]: struct.Stealer.html#method.steal
+//! [`steal_batch()`]: struct.Stealer.html#method.steal_batch
+//! [`steal_batch_and_pop()`]: struct.Stealer.html#method.steal_batch_and_pop
+
+#![warn(missing_docs)]
+#![warn(missing_debug_implementations)]
 
 extern crate crossbeam_epoch as epoch;
 extern crate crossbeam_utils as utils;
 
+use std::cell::{Cell, UnsafeCell};
 use std::cmp;
 use std::fmt;
+use std::iter::FromIterator;
 use std::marker::PhantomData;
-use std::mem;
+use std::mem::{self, ManuallyDrop};
 use std::ptr;
+use std::sync::atomic::{self, AtomicIsize, AtomicPtr, AtomicUsize, Ordering};
 use std::sync::Arc;
-use std::sync::atomic::{self, AtomicIsize};
-use std::sync::atomic::Ordering::{Acquire, Relaxed, Release, SeqCst};
 
 use epoch::{Atomic, Owned};
-use utils::cache_padded::CachePadded;
+use utils::{Backoff, CachePadded};
 
-/// Minimum buffer capacity for a deque.
-const DEFAULT_MIN_CAP: usize = 16;
-
-/// If a buffer of at least this size is retired, thread-local garbage is flushed so that it gets
-/// deallocated as soon as possible.
+// Minimum buffer capacity.
+const MIN_CAP: usize = 64;
+// Maximum number of tasks that can be stolen in `steal_batch()` and `steal_batch_and_pop()`.
+const MAX_BATCH: usize = 32;
+// If a buffer of at least this size is retired, thread-local garbage is flushed so that it gets
+// deallocated as soon as possible.
 const FLUSH_THRESHOLD_BYTES: usize = 1 << 10;
 
-/// Possible outcomes of a steal operation.
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
-pub enum Steal<T> {
-    /// The deque was empty at the time of stealing.
-    Empty,
-
-    /// Some data has been successfully stolen.
-    Data(T),
-
-    /// Lost the race for stealing data to another concurrent operation. Try again.
-    Retry,
-}
-
-/// A buffer that holds elements in a deque.
+/// A buffer that holds tasks in a worker queue.
+///
+/// This is just a pointer to the buffer and its length - dropping an instance of this struct will
+/// *not* deallocate the buffer.
 struct Buffer<T> {
     /// Pointer to the allocated memory.
     ptr: *mut T,
@@ -129,8 +128,8 @@ struct Buffer<T> {
 unsafe impl<T> Send for Buffer<T> {}
 
 impl<T> Buffer<T> {
-    /// Returns a new buffer with the specified capacity.
-    fn new(cap: usize) -> Self {
+    /// Allocates a new buffer with the specified capacity.
+    fn alloc(cap: usize) -> Buffer<T> {
         debug_assert_eq!(cap, cap.next_power_of_two());
 
         let mut v = Vec::with_capacity(cap);
@@ -140,997 +139,1858 @@ impl<T> Buffer<T> {
         Buffer { ptr, cap }
     }
 
-    /// Returns a pointer to the element at the specified `index`.
+    /// Deallocates the buffer.
+    unsafe fn dealloc(self) {
+        drop(Vec::from_raw_parts(self.ptr, 0, self.cap));
+    }
+
+    /// Returns a pointer to the task at the specified `index`.
     unsafe fn at(&self, index: isize) -> *mut T {
         // `self.cap` is always a power of two.
         self.ptr.offset(index & (self.cap - 1) as isize)
     }
 
-    /// Writes `value` into the specified `index`.
-    unsafe fn write(&self, index: isize, value: T) {
-        ptr::write(self.at(index), value)
+    /// Writes `task` into the specified `index`.
+    ///
+    /// This method might be concurrently called with another `read` at the same index, which is
+    /// technically speaking a data race and therefore UB. We should use an atomic store here, but
+    /// that would be more expensive and difficult to implement generically for all types `T`.
+    /// Hence, as a hack, we use a volatile write instead.
+    unsafe fn write(&self, index: isize, task: T) {
+        ptr::write_volatile(self.at(index), task)
     }
 
-    /// Reads a value from the specified `index`.
+    /// Reads a task from the specified `index`.
+    ///
+    /// This method might be concurrently called with another `write` at the same index, which is
+    /// technically speaking a data race and therefore UB. We should use an atomic load here, but
+    /// that would be more expensive and difficult to implement generically for all types `T`.
+    /// Hence, as a hack, we use a volatile write instead.
     unsafe fn read(&self, index: isize) -> T {
-        ptr::read(self.at(index))
+        ptr::read_volatile(self.at(index))
     }
 }
 
-impl<T> Drop for Buffer<T> {
-    fn drop(&mut self) {
-        unsafe {
-            drop(Vec::from_raw_parts(self.ptr, 0, self.cap));
+impl<T> Clone for Buffer<T> {
+    fn clone(&self) -> Buffer<T> {
+        Buffer {
+            ptr: self.ptr,
+            cap: self.cap,
         }
     }
 }
 
-/// Internal data that is shared between the deque and its stealers.
-struct Inner<T> {
-    /// The bottom index.
-    bottom: AtomicIsize,
+impl<T> Copy for Buffer<T> {}
 
-    /// The top index.
-    top: AtomicIsize,
+/// Internal queue data shared between the worker and stealers.
+///
+/// The implementation is based on the following work:
+///
+/// 1. [Chase and Lev. Dynamic circular work-stealing deque. SPAA 2005.][chase-lev]
+/// 2. [Le, Pop, Cohen, and Nardelli. Correct and efficient work-stealing for weak memory models.
+///    PPoPP 2013.][weak-mem]
+/// 3. [Norris and Demsky. CDSchecker: checking concurrent data structures written with C/C++
+///    atomics. OOPSLA 2013.][checker]
+///
+/// [chase-lev]: https://dl.acm.org/citation.cfm?id=1073974
+/// [weak-mem]: https://dl.acm.org/citation.cfm?id=2442524
+/// [checker]: https://dl.acm.org/citation.cfm?id=2509514
+struct Inner<T> {
+    /// The front index.
+    front: AtomicIsize,
+
+    /// The back index.
+    back: AtomicIsize,
 
     /// The underlying buffer.
-    buffer: Atomic<Buffer<T>>,
-
-    /// Minimum capacity of the buffer. Always a power of two.
-    min_cap: usize,
-}
-
-impl<T> Inner<T> {
-    /// Returns a new `Inner` with default minimum capacity.
-    fn new() -> Self {
-        Self::with_min_capacity(DEFAULT_MIN_CAP)
-    }
-
-    /// Returns a new `Inner` with minimum capacity of `min_cap` rounded to the next power of two.
-    fn with_min_capacity(min_cap: usize) -> Self {
-        let power = min_cap.next_power_of_two();
-        assert!(power >= min_cap, "capacity too large: {}", min_cap);
-        Inner {
-            bottom: AtomicIsize::new(0),
-            top: AtomicIsize::new(0),
-            buffer: Atomic::new(Buffer::new(power)),
-            min_cap: power,
-        }
-    }
-
-    /// Resizes the internal buffer to the new capacity of `new_cap`.
-    #[cold]
-    unsafe fn resize(&self, new_cap: usize) {
-        // Load the bottom, top, and buffer.
-        let b = self.bottom.load(Relaxed);
-        let t = self.top.load(Relaxed);
-
-        let buffer = self.buffer.load(Relaxed, epoch::unprotected());
-
-        // Allocate a new buffer.
-        let new = Buffer::new(new_cap);
-
-        // Copy data from the old buffer to the new one.
-        let mut i = t;
-        while i != b {
-            ptr::copy_nonoverlapping(buffer.deref().at(i), new.at(i), 1);
-            i = i.wrapping_add(1);
-        }
-
-        let guard = &epoch::pin();
-
-        // Replace the old buffer with the new one.
-        let old = self.buffer
-            .swap(Owned::new(new).into_shared(guard), Release, guard);
-
-        // Destroy the old buffer later.
-        guard.defer(move || old.into_owned());
-
-        // If the buffer is very large, then flush the thread-local garbage in order to
-        // deallocate it as soon as possible.
-        if mem::size_of::<T>() * new_cap >= FLUSH_THRESHOLD_BYTES {
-            guard.flush();
-        }
-    }
+    buffer: CachePadded<Atomic<Buffer<T>>>,
 }
 
 impl<T> Drop for Inner<T> {
     fn drop(&mut self) {
-        // Load the bottom, top, and buffer.
-        let b = self.bottom.load(Relaxed);
-        let t = self.top.load(Relaxed);
+        // Load the back index, front index, and buffer.
+        let b = self.back.load(Ordering::Relaxed);
+        let f = self.front.load(Ordering::Relaxed);
 
         unsafe {
-            let buffer = self.buffer.load(Relaxed, epoch::unprotected());
+            let buffer = self.buffer.load(Ordering::Relaxed, epoch::unprotected());
 
-            // Go through the buffer from top to bottom and drop all elements in the deque.
-            let mut i = t;
+            // Go through the buffer from front to back and drop all tasks in the queue.
+            let mut i = f;
             while i != b {
                 ptr::drop_in_place(buffer.deref().at(i));
                 i = i.wrapping_add(1);
             }
 
             // Free the memory allocated by the buffer.
-            drop(buffer.into_owned());
+            buffer.into_owned().into_box().dealloc();
         }
     }
 }
 
-/// A concurrent work-stealing deque.
+/// Worker queue flavor: FIFO or LIFO.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum Flavor {
+    /// The first-in first-out flavor.
+    Fifo,
+
+    /// The last-in first-out flavor.
+    Lifo,
+}
+
+/// A worker queue.
 ///
-/// A deque has two ends: bottom and top. Elements can be [`push`]ed into the bottom and [`pop`]ped
-/// from the bottom. The top end is special in that elements can only be stolen from it using the
-/// [`steal`][Deque::steal] method.
-///
-/// # Stealers
-///
-/// While [`Deque`] doesn't implement `Sync`, it can create [`Stealer`]s using the method
-/// [`stealer`][stealer], and those can be easily shared among multiple threads. [`Stealer`]s can
-/// only [`steal`][Stealer::steal] elements from the top end of the deque.
-///
-/// # Capacity
-///
-/// The data structure is dynamically grows as elements are inserted and removed from it. If the
-/// internal buffer gets full, a new one twice the size of the original is allocated. Similarly,
-/// if it is less than a quarter full, a new buffer half the size of the original is allocated.
-///
-/// In order to prevent frequent resizing (reallocations may be costly), it is possible to specify
-/// a large minimum capacity for the deque by calling [`Deque::with_min_capacity`]. This
-/// constructor will make sure that the internal buffer never shrinks below that size.
+/// This is a FIFO or LIFO queue that is owned by a single thread, but other threads may steal
+/// tasks from it. Task schedulers typically create a single worker queue per thread.
 ///
 /// # Examples
 ///
+/// A FIFO worker:
+///
 /// ```
-/// use crossbeam_deque::{Deque, Steal};
+/// use crossbeam_deque::{Steal, Worker};
 ///
-/// let d = Deque::with_min_capacity(1000);
-/// let s = d.stealer();
+/// let w = Worker::new_fifo();
+/// let s = w.stealer();
 ///
-/// d.push('a');
-/// d.push('b');
-/// d.push('c');
+/// w.push(1);
+/// w.push(2);
+/// w.push(3);
 ///
-/// assert_eq!(d.pop(), Some('c'));
-/// assert_eq!(d.steal(), Steal::Data('a'));
-/// assert_eq!(s.steal(), Steal::Data('b'));
+/// assert_eq!(s.steal(), Steal::Success(1));
+/// assert_eq!(w.pop(), Some(2));
+/// assert_eq!(w.pop(), Some(3));
 /// ```
 ///
-/// [`Deque`]: struct.Deque.html
-/// [`Stealer`]: struct.Stealer.html
-/// [`push`]: struct.Deque.html#method.push
-/// [`pop`]: struct.Deque.html#method.pop
-/// [stealer]: struct.Deque.html#method.stealer
-/// [`Deque::with_min_capacity`]: struct.Deque.html#method.with_min_capacity
-/// [Deque::steal]: struct.Deque.html#method.steal
-/// [Stealer::steal]: struct.Stealer.html#method.steal
-pub struct Deque<T> {
+/// A LIFO worker:
+///
+/// ```
+/// use crossbeam_deque::{Steal, Worker};
+///
+/// let w = Worker::new_lifo();
+/// let s = w.stealer();
+///
+/// w.push(1);
+/// w.push(2);
+/// w.push(3);
+///
+/// assert_eq!(s.steal(), Steal::Success(1));
+/// assert_eq!(w.pop(), Some(3));
+/// assert_eq!(w.pop(), Some(2));
+/// ```
+pub struct Worker<T> {
+    /// A reference to the inner representation of the queue.
     inner: Arc<CachePadded<Inner<T>>>,
+
+    /// A copy of `inner.buffer` for quick access.
+    buffer: Cell<Buffer<T>>,
+
+    /// The flavor of the queue.
+    flavor: Flavor,
+
+    /// Indicates that the worker cannot be shared among threads.
     _marker: PhantomData<*mut ()>, // !Send + !Sync
 }
 
-unsafe impl<T: Send> Send for Deque<T> {}
+unsafe impl<T: Send> Send for Worker<T> {}
 
-impl<T> Deque<T> {
-    /// Returns a new deque.
+impl<T> Worker<T> {
+    /// Creates a FIFO worker queue.
     ///
-    /// The internal buffer is destructed as soon as the deque and all its stealers get dropped.
+    /// Tasks are pushed and popped from opposite ends.
     ///
     /// # Examples
     ///
     /// ```
-    /// use crossbeam_deque::Deque;
+    /// use crossbeam_deque::Worker;
     ///
-    /// let d = Deque::<i32>::new();
+    /// let w = Worker::<i32>::new_fifo();
     /// ```
-    pub fn new() -> Deque<T> {
-        Deque {
-            inner: Arc::new(CachePadded::new(Inner::new())),
+    pub fn new_fifo() -> Worker<T> {
+        let buffer = Buffer::alloc(MIN_CAP);
+
+        let inner = Arc::new(CachePadded::new(Inner {
+            front: AtomicIsize::new(0),
+            back: AtomicIsize::new(0),
+            buffer: CachePadded::new(Atomic::new(buffer)),
+        }));
+
+        Worker {
+            inner,
+            buffer: Cell::new(buffer),
+            flavor: Flavor::Fifo,
             _marker: PhantomData,
         }
     }
 
-    /// Returns a new deque with the specified minimum capacity.
+    /// Creates a LIFO worker queue.
     ///
-    /// If the capacity is not a power of two, it will be rounded up to the next one.
+    /// Tasks are pushed and popped from the same end.
     ///
     /// # Examples
     ///
     /// ```
-    /// use crossbeam_deque::Deque;
+    /// use crossbeam_deque::Worker;
     ///
-    /// // The minimum capacity will be rounded up to 1024.
-    /// let d = Deque::<i32>::with_min_capacity(1000);
-    /// assert_eq!(d.min_capacity(), 1024);
-    /// assert_eq!(d.capacity(), 1024);
+    /// let w = Worker::<i32>::new_lifo();
     /// ```
-    pub fn with_min_capacity(min_cap: usize) -> Deque<T> {
-        Deque {
-            inner: Arc::new(CachePadded::new(Inner::with_min_capacity(min_cap))),
+    pub fn new_lifo() -> Worker<T> {
+        let buffer = Buffer::alloc(MIN_CAP);
+
+        let inner = Arc::new(CachePadded::new(Inner {
+            front: AtomicIsize::new(0),
+            back: AtomicIsize::new(0),
+            buffer: CachePadded::new(Atomic::new(buffer)),
+        }));
+
+        Worker {
+            inner,
+            buffer: Cell::new(buffer),
+            flavor: Flavor::Lifo,
             _marker: PhantomData,
         }
     }
 
-    /// Returns `true` if the deque is empty.
+    /// Creates a stealer for this queue.
+    ///
+    /// The returned stealer can be shared among threads and cloned.
     ///
     /// # Examples
     ///
     /// ```
-    /// use crossbeam_deque::Deque;
+    /// use crossbeam_deque::Worker;
     ///
-    /// let d = Deque::new();
-    /// assert!(d.is_empty());
-    /// d.push("foo");
-    /// assert!(!d.is_empty());
-    /// ```
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
-
-    /// Returns the number of elements in the deque.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use crossbeam_deque::Deque;
-    ///
-    /// let d = Deque::new();
-    /// d.push('a');
-    /// d.push('b');
-    /// d.push('c');
-    /// assert_eq!(d.len(), 3);
-    /// ```
-    pub fn len(&self) -> usize {
-        let b = self.inner.bottom.load(Relaxed);
-        let t = self.inner.top.load(Relaxed);
-        b.wrapping_sub(t) as usize
-    }
-
-    /// Returns the minimum capacity of the deque.
-    ///
-    /// The minimum capacity can be specified in [`Deque::with_min_capacity`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use crossbeam_deque::Deque;
-    ///
-    /// // Gets rounded to the next power of two.
-    /// let d = Deque::<i32>::with_min_capacity(50);
-    /// assert_eq!(d.min_capacity(), 64);
-    /// assert_eq!(d.capacity(), 64);
-    /// ```
-    ///
-    /// [`Deque::with_min_capacity`]: struct.Deque.html#method.with_min_capacity
-    pub fn min_capacity(&self) -> usize {
-        self.inner.min_cap
-    }
-
-    /// Returns the number of elements the deque can hold without reallocating.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use crossbeam_deque::Deque;
-    ///
-    /// let d = Deque::with_min_capacity(50);
-    /// assert_eq!(d.capacity(), 64);
-    ///
-    /// for i in 0..200 {
-    ///     d.push(i);
-    /// }
-    /// assert_eq!(d.capacity(), 256);
-    /// ```
-    pub fn capacity(&self) -> usize {
-        unsafe {
-            let buf = self.inner.buffer.load(Relaxed, epoch::unprotected());
-            buf.deref().cap
-        }
-    }
-
-    /// Shrinks the capacity of the deque as much as possible.
-    ///
-    /// The capacity will drop down as close as possible to the length but there may still be some
-    /// free space left.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use crossbeam_deque::Deque;
-    ///
-    /// // Insert a lot of elements. This makes the buffer grow.
-    /// let d = Deque::new();
-    /// for i in 0..200 {
-    ///     d.push(i);
-    /// }
-    ///
-    /// // Remove all elements.
-    /// let s = d.stealer();
-    /// for i in 0..200 {
-    ///     s.steal();
-    /// }
-    ///
-    /// // Stealers cannot shrink the buffer, so the capacity is still very large.
-    /// assert!(d.capacity() >= 200);
-    ///
-    /// // Shrink the buffer. The capacity drops down, but some free space may still be left.
-    /// d.shrink_to_fit();
-    /// assert!(d.capacity() < 50);
-    /// ```
-    pub fn shrink_to_fit(&self) {
-        let b = self.inner.bottom.load(Relaxed);
-        let t = self.inner.top.load(Acquire);
-        let cap = self.capacity();
-        let len = b.wrapping_sub(t);
-
-        // Shrink the capacity as much as possible without overshooting `min_cap` or `len`.
-        let mut new_cap = cap;
-        while self.inner.min_cap <= new_cap / 2 && len <= new_cap as isize / 2 {
-            new_cap /= 2;
-        }
-
-        if new_cap != cap {
-            unsafe {
-                self.inner.resize(new_cap);
-            }
-        }
-    }
-
-    /// Pushes an element into the bottom of the deque.
-    ///
-    /// If the internal buffer is full, a new one twice the capacity of the current one will be
-    /// allocated.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use crossbeam_deque::Deque;
-    ///
-    /// let d = Deque::new();
-    /// d.push(1);
-    /// d.push(2);
-    /// ```
-    pub fn push(&self, value: T) {
-        unsafe {
-            // Load the bottom, top, and buffer. The buffer doesn't have to be epoch-protected
-            // because the current thread (the worker) is the only one that grows and shrinks it.
-            let b = self.inner.bottom.load(Relaxed);
-            let t = self.inner.top.load(Acquire);
-
-            let mut buffer = self.inner.buffer.load(Relaxed, epoch::unprotected());
-
-            // Calculate the length of the deque.
-            let len = b.wrapping_sub(t);
-
-            let cap = buffer.deref().cap;
-            // Is the deque full?
-            if len >= cap as isize {
-                // Yes. Grow the underlying buffer.
-                self.inner.resize(2 * cap);
-                buffer = self.inner.buffer.load(Relaxed, epoch::unprotected());
-            // Is the new length less than one fourth the capacity?
-            } else if cap > self.inner.min_cap && len + 1 < cap as isize / 4 {
-                // Yes. Shrink the underlying buffer.
-                self.inner.resize(cap / 2);
-                buffer = self.inner.buffer.load(Relaxed, epoch::unprotected());
-            }
-
-            // Write `value` into the right slot and increment `b`.
-            buffer.deref().write(b, value);
-            atomic::fence(Release);
-            self.inner.bottom.store(b.wrapping_add(1), Relaxed);
-        }
-    }
-
-    /// Pops an element from the bottom of the deque.
-    ///
-    /// If the internal buffer is less than a quarter full, a new buffer half the capacity of the
-    /// current one will be allocated.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use crossbeam_deque::Deque;
-    ///
-    /// let d = Deque::new();
-    /// d.push(1);
-    /// d.push(2);
-    ///
-    /// assert_eq!(d.pop(), Some(2));
-    /// assert_eq!(d.pop(), Some(1));
-    /// assert_eq!(d.pop(), None);
-    /// ```
-    pub fn pop(&self) -> Option<T> {
-        // Load the bottom.
-        let b = self.inner.bottom.load(Relaxed);
-
-        // If the deque is empty, return early without incurring the cost of a SeqCst fence.
-        let t = self.inner.top.load(Relaxed);
-        if b.wrapping_sub(t) <= 0 {
-            return None;
-        }
-
-        // Decrement the bottom.
-        let b = b.wrapping_sub(1);
-        self.inner.bottom.store(b, Relaxed);
-
-        // Load the buffer. The buffer doesn't have to be epoch-protected because the current
-        // thread (the worker) is the only one that grows and shrinks it.
-        let buf = unsafe { self.inner.buffer.load(Relaxed, epoch::unprotected()) };
-
-        atomic::fence(SeqCst);
-
-        // Load the top.
-        let t = self.inner.top.load(Relaxed);
-
-        // Compute the length after the bottom was decremented.
-        let len = b.wrapping_sub(t);
-
-        if len < 0 {
-            // The deque is empty. Restore the bottom back to the original value.
-            self.inner.bottom.store(b.wrapping_add(1), Relaxed);
-            None
-        } else {
-            // Read the value to be popped.
-            let mut value = unsafe { Some(buf.deref().read(b)) };
-
-            // Are we popping the last element from the deque?
-            if len == 0 {
-                // Try incrementing the top.
-                if self.inner
-                    .top
-                    .compare_exchange(t, t.wrapping_add(1), SeqCst, Relaxed)
-                    .is_err()
-                {
-                    // Failed. We didn't pop anything.
-                    mem::forget(value.take());
-                }
-
-                // Restore the bottom back to the original value.
-                self.inner.bottom.store(b.wrapping_add(1), Relaxed);
-            } else {
-                // Shrink the buffer if `len` is less than one fourth of `self.inner.min_cap`.
-                unsafe {
-                    let cap = buf.deref().cap;
-                    if cap > self.inner.min_cap && len < cap as isize / 4 {
-                        self.inner.resize(cap / 2);
-                    }
-                }
-            }
-
-            value
-        }
-    }
-
-    /// Steals an element from the top of the deque.
-    ///
-    /// Unlike most methods in concurrent data structures, if another operation gets in the way
-    /// while attempting to steal data, this method will return immediately with [`Steal::Retry`]
-    /// instead of retrying.
-    ///
-    /// If the internal buffer is less than a quarter full, a new buffer half the capacity of the
-    /// current one will be allocated.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use crossbeam_deque::{Deque, Steal};
-    ///
-    /// let d = Deque::new();
-    /// d.push(1);
-    /// d.push(2);
-    ///
-    /// // Attempt to steal an element.
-    /// //
-    /// // No other threads are working with the deque, so this time we know for sure that we
-    /// // won't get `Steal::Retry` as the result.
-    /// assert_eq!(d.steal(), Steal::Data(1));
-    ///
-    /// // Attempt to steal an element, but keep retrying if we get `Retry`.
-    /// let stolen = loop {
-    ///     match d.steal() {
-    ///         Steal::Empty => break None,
-    ///         Steal::Data(data) => break Some(data),
-    ///         Steal::Retry => {}
-    ///     }
-    /// };
-    /// assert_eq!(stolen, Some(2));
-    /// ```
-    ///
-    /// [`Steal::Retry`]: enum.Steal.html#variant.Retry
-    pub fn steal(&self) -> Steal<T> {
-        let b = self.inner.bottom.load(Relaxed);
-        let buf = unsafe { self.inner.buffer.load(Relaxed, epoch::unprotected()) };
-        let t = self.inner.top.load(Relaxed);
-        let len = b.wrapping_sub(t);
-
-        // Is the deque empty?
-        if len <= 0 {
-            return Steal::Empty;
-        }
-
-        // Try incrementing the top to steal the value.
-        if self.inner
-            .top
-            .compare_exchange(t, t.wrapping_add(1), SeqCst, Relaxed)
-            .is_ok()
-        {
-            let data = unsafe { buf.deref().read(t) };
-
-            // Shrink the buffer if `len - 1` is less than one fourth of `self.inner.min_cap`.
-            unsafe {
-                let cap = buf.deref().cap;
-                if cap > self.inner.min_cap && len <= cap as isize / 4 {
-                    self.inner.resize(cap / 2);
-                }
-            }
-
-            return Steal::Data(data);
-        }
-
-        Steal::Retry
-    }
-
-    /// Creates a stealer that can be shared with other threads.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use crossbeam_deque::{Deque, Steal};
-    /// use std::thread;
-    ///
-    /// let d = Deque::new();
-    /// d.push(1);
-    /// d.push(2);
-    ///
-    /// let s = d.stealer();
-    ///
-    /// thread::spawn(move || {
-    ///     assert_eq!(s.steal(), Steal::Data(1));
-    /// }).join().unwrap();
+    /// let w = Worker::<i32>::new_lifo();
+    /// let s = w.stealer();
     /// ```
     pub fn stealer(&self) -> Stealer<T> {
         Stealer {
             inner: self.inner.clone(),
-            _marker: PhantomData,
+            flavor: self.flavor,
+        }
+    }
+
+    /// Resizes the internal buffer to the new capacity of `new_cap`.
+    #[cold]
+    unsafe fn resize(&self, new_cap: usize) {
+        // Load the back index, front index, and buffer.
+        let b = self.inner.back.load(Ordering::Relaxed);
+        let f = self.inner.front.load(Ordering::Relaxed);
+        let buffer = self.buffer.get();
+
+        // Allocate a new buffer and copy data from the old buffer to the new one.
+        let new = Buffer::alloc(new_cap);
+        let mut i = f;
+        while i != b {
+            ptr::copy_nonoverlapping(buffer.at(i), new.at(i), 1);
+            i = i.wrapping_add(1);
+        }
+
+        let guard = &epoch::pin();
+
+        // Replace the old buffer with the new one.
+        self.buffer.replace(new);
+        let old =
+            self.inner
+                .buffer
+                .swap(Owned::new(new).into_shared(guard), Ordering::Release, guard);
+
+        // Destroy the old buffer later.
+        guard.defer_unchecked(move || old.into_owned().into_box().dealloc());
+
+        // If the buffer is very large, then flush the thread-local garbage in order to deallocate
+        // it as soon as possible.
+        if mem::size_of::<T>() * new_cap >= FLUSH_THRESHOLD_BYTES {
+            guard.flush();
+        }
+    }
+
+    /// Reserves enough capacity so that `reserve_cap` tasks can be pushed without growing the
+    /// buffer.
+    fn reserve(&self, reserve_cap: usize) {
+        if reserve_cap > 0 {
+            // Compute the current length.
+            let b = self.inner.back.load(Ordering::Relaxed);
+            let f = self.inner.front.load(Ordering::SeqCst);
+            let len = b.wrapping_sub(f) as usize;
+
+            // The current capacity.
+            let cap = self.buffer.get().cap;
+
+            // Is there enough capacity to push `reserve_cap` tasks?
+            if cap - len < reserve_cap {
+                // Keep doubling the capacity as much as is needed.
+                let mut new_cap = cap * 2;
+                while new_cap - len < reserve_cap {
+                    new_cap *= 2;
+                }
+
+                // Resize the buffer.
+                unsafe {
+                    self.resize(new_cap);
+                }
+            }
+        }
+    }
+
+    /// Returns `true` if the queue is empty.
+    ///
+    /// ```
+    /// use crossbeam_deque::Worker;
+    ///
+    /// let w = Worker::new_lifo();
+    ///
+    /// assert!(w.is_empty());
+    /// w.push(1);
+    /// assert!(!w.is_empty());
+    /// ```
+    pub fn is_empty(&self) -> bool {
+        let b = self.inner.back.load(Ordering::Relaxed);
+        let f = self.inner.front.load(Ordering::SeqCst);
+        b.wrapping_sub(f) <= 0
+    }
+
+    /// Pushes a task into the queue.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crossbeam_deque::Worker;
+    ///
+    /// let w = Worker::new_lifo();
+    /// w.push(1);
+    /// w.push(2);
+    /// ```
+    pub fn push(&self, task: T) {
+        // Load the back index, front index, and buffer.
+        let b = self.inner.back.load(Ordering::Relaxed);
+        let f = self.inner.front.load(Ordering::Acquire);
+        let mut buffer = self.buffer.get();
+
+        // Calculate the length of the queue.
+        let len = b.wrapping_sub(f);
+
+        // Is the queue full?
+        if len >= buffer.cap as isize {
+            // Yes. Grow the underlying buffer.
+            unsafe {
+                self.resize(2 * buffer.cap);
+            }
+            buffer = self.buffer.get();
+        }
+
+        // Write `task` into the slot.
+        unsafe {
+            buffer.write(b, task);
+        }
+
+        atomic::fence(Ordering::Release);
+
+        // Increment the back index.
+        //
+        // This ordering could be `Relaxed`, but then thread sanitizer would falsely report data
+        // races because it doesn't understand fences.
+        self.inner.back.store(b.wrapping_add(1), Ordering::Release);
+    }
+
+    /// Pops a task from the queue.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crossbeam_deque::Worker;
+    ///
+    /// let w = Worker::new_fifo();
+    /// w.push(1);
+    /// w.push(2);
+    ///
+    /// assert_eq!(w.pop(), Some(1));
+    /// assert_eq!(w.pop(), Some(2));
+    /// assert_eq!(w.pop(), None);
+    /// ```
+    pub fn pop(&self) -> Option<T> {
+        // Load the back and front index.
+        let b = self.inner.back.load(Ordering::Relaxed);
+        let f = self.inner.front.load(Ordering::Relaxed);
+
+        // Calculate the length of the queue.
+        let len = b.wrapping_sub(f);
+
+        // Is the queue empty?
+        if len <= 0 {
+            return None;
+        }
+
+        match self.flavor {
+            // Pop from the front of the queue.
+            Flavor::Fifo => {
+                // Try incrementing the front index to pop the task.
+                let f = self.inner.front.fetch_add(1, Ordering::SeqCst);
+                let new_f = f.wrapping_add(1);
+
+                if b.wrapping_sub(new_f) < 0 {
+                    self.inner.front.store(f, Ordering::Relaxed);
+                    return None;
+                }
+
+                unsafe {
+                    // Read the popped task.
+                    let buffer = self.buffer.get();
+                    let task = buffer.read(f);
+
+                    // Shrink the buffer if `len - 1` is less than one fourth of the capacity.
+                    if buffer.cap > MIN_CAP && len <= buffer.cap as isize / 4 {
+                        self.resize(buffer.cap / 2);
+                    }
+
+                    Some(task)
+                }
+            }
+
+            // Pop from the back of the queue.
+            Flavor::Lifo => {
+                // Decrement the back index.
+                let b = b.wrapping_sub(1);
+                self.inner.back.store(b, Ordering::Relaxed);
+
+                atomic::fence(Ordering::SeqCst);
+
+                // Load the front index.
+                let f = self.inner.front.load(Ordering::Relaxed);
+
+                // Compute the length after the back index was decremented.
+                let len = b.wrapping_sub(f);
+
+                if len < 0 {
+                    // The queue is empty. Restore the back index to the original task.
+                    self.inner.back.store(b.wrapping_add(1), Ordering::Relaxed);
+                    None
+                } else {
+                    // Read the task to be popped.
+                    let buffer = self.buffer.get();
+                    let mut task = unsafe { Some(buffer.read(b)) };
+
+                    // Are we popping the last task from the queue?
+                    if len == 0 {
+                        // Try incrementing the front index.
+                        if self
+                            .inner
+                            .front
+                            .compare_exchange(
+                                f,
+                                f.wrapping_add(1),
+                                Ordering::SeqCst,
+                                Ordering::Relaxed,
+                            )
+                            .is_err()
+                        {
+                            // Failed. We didn't pop anything.
+                            mem::forget(task.take());
+                        }
+
+                        // Restore the back index to the original task.
+                        self.inner.back.store(b.wrapping_add(1), Ordering::Relaxed);
+                    } else {
+                        // Shrink the buffer if `len` is less than one fourth of the capacity.
+                        if buffer.cap > MIN_CAP && len < buffer.cap as isize / 4 {
+                            unsafe {
+                                self.resize(buffer.cap / 2);
+                            }
+                        }
+                    }
+
+                    task
+                }
+            }
         }
     }
 }
 
-impl<T> fmt::Debug for Deque<T> {
+impl<T> fmt::Debug for Worker<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Deque {{ ... }}")
+        f.pad("Worker { .. }")
     }
 }
 
-impl<T> Default for Deque<T> {
-    fn default() -> Deque<T> {
-        Deque::new()
-    }
-}
-
-/// A stealer that steals elements from the top of a deque.
+/// A stealer handle of a worker queue.
 ///
-/// The only operation a stealer can do that manipulates the deque is [`steal`].
+/// Stealers can be shared among threads.
 ///
-/// Stealers can be cloned in order to create more of them. They also implement `Send` and `Sync`
-/// so they can be easily shared among multiple threads.
+/// Task schedulers typically have a single worker queue per worker thread.
 ///
-/// [`steal`]: struct.Stealer.html#method.steal
+/// # Examples
+///
+/// ```
+/// use crossbeam_deque::{Steal, Worker};
+///
+/// let w = Worker::new_lifo();
+/// w.push(1);
+/// w.push(2);
+///
+/// let s = w.stealer();
+/// assert_eq!(s.steal(), Steal::Success(1));
+/// assert_eq!(s.steal(), Steal::Success(2));
+/// assert_eq!(s.steal(), Steal::Empty);
+/// ```
 pub struct Stealer<T> {
+    /// A reference to the inner representation of the queue.
     inner: Arc<CachePadded<Inner<T>>>,
-    _marker: PhantomData<*mut ()>, // !Send + !Sync
+
+    /// The flavor of the queue.
+    flavor: Flavor,
 }
 
 unsafe impl<T: Send> Send for Stealer<T> {}
 unsafe impl<T: Send> Sync for Stealer<T> {}
 
 impl<T> Stealer<T> {
-    /// Returns `true` if the deque is empty.
-    ///
-    /// # Examples
+    /// Returns `true` if the queue is empty.
     ///
     /// ```
-    /// use crossbeam_deque::Deque;
+    /// use crossbeam_deque::Worker;
     ///
-    /// let d = Deque::new();
-    /// d.push("foo");
+    /// let w = Worker::new_lifo();
+    /// let s = w.stealer();
     ///
-    /// let s = d.stealer();
-    /// assert!(!d.is_empty());
-    /// s.steal();
-    /// assert!(d.is_empty());
+    /// assert!(s.is_empty());
+    /// w.push(1);
+    /// assert!(!s.is_empty());
     /// ```
     pub fn is_empty(&self) -> bool {
-        self.len() == 0
+        let f = self.inner.front.load(Ordering::Acquire);
+        atomic::fence(Ordering::SeqCst);
+        let b = self.inner.back.load(Ordering::Acquire);
+        b.wrapping_sub(f) <= 0
     }
 
-    /// Returns the number of elements in the deque.
+    /// Steals a task from the queue.
     ///
     /// # Examples
     ///
     /// ```
-    /// use crossbeam_deque::Deque;
+    /// use crossbeam_deque::{Steal, Worker};
     ///
-    /// let d = Deque::new();
-    /// let s = d.stealer();
-    /// d.push('a');
-    /// d.push('b');
-    /// d.push('c');
-    /// assert_eq!(s.len(), 3);
+    /// let w = Worker::new_lifo();
+    /// w.push(1);
+    /// w.push(2);
+    ///
+    /// let s = w.stealer();
+    /// assert_eq!(s.steal(), Steal::Success(1));
+    /// assert_eq!(s.steal(), Steal::Success(2));
     /// ```
-    pub fn len(&self) -> usize {
-        let t = self.inner.top.load(Relaxed);
-        atomic::fence(SeqCst);
-        let b = self.inner.bottom.load(Relaxed);
-        cmp::max(b.wrapping_sub(t), 0) as usize
-    }
-
-    /// Steals an element from the top of the deque.
-    ///
-    /// Unlike most methods in concurrent data structures, if another operation gets in the way
-    /// while attempting to steal data, this method will return immediately with [`Steal::Retry`]
-    /// instead of retrying.
-    ///
-    /// This method will not attempt to resize the internal buffer.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use crossbeam_deque::{Deque, Steal};
-    ///
-    /// let d = Deque::new();
-    /// let s = d.stealer();
-    /// d.push(1);
-    /// d.push(2);
-    ///
-    /// // Attempt to steal an element, but keep retrying if we get `Retry`.
-    /// let stolen = loop {
-    ///     match s.steal() {
-    ///         Steal::Empty => break None,
-    ///         Steal::Data(data) => break Some(data),
-    ///         Steal::Retry => {}
-    ///     }
-    /// };
-    /// assert_eq!(stolen, Some(1));
-    /// ```
-    ///
-    /// [`Steal::Retry`]: enum.Steal.html#variant.Retry
     pub fn steal(&self) -> Steal<T> {
-        // Load the top.
-        let t = self.inner.top.load(Acquire);
+        // Load the front index.
+        let f = self.inner.front.load(Ordering::Acquire);
 
         // A SeqCst fence is needed here.
-        // If the current thread is already pinned (reentrantly), we must manually issue the fence.
-        // Otherwise, the following pinning will issue the fence anyway, so we don't have to.
+        //
+        // If the current thread is already pinned (reentrantly), we must manually issue the
+        // fence. Otherwise, the following pinning will issue the fence anyway, so we don't
+        // have to.
         if epoch::is_pinned() {
-            atomic::fence(SeqCst);
+            atomic::fence(Ordering::SeqCst);
         }
 
         let guard = &epoch::pin();
 
-        // Load the bottom.
-        let b = self.inner.bottom.load(Acquire);
+        // Load the back index.
+        let b = self.inner.back.load(Ordering::Acquire);
 
-        // Is the deque empty?
-        if b.wrapping_sub(t) <= 0 {
+        // Is the queue empty?
+        if b.wrapping_sub(f) <= 0 {
             return Steal::Empty;
         }
 
-        // Load the buffer and read the value at the top.
-        let buf = self.inner.buffer.load(Acquire, guard);
-        let value = unsafe { buf.deref().read(t) };
+        // Load the buffer and read the task at the front.
+        let buffer = self.inner.buffer.load(Ordering::Acquire, guard);
+        let task = unsafe { buffer.deref().read(f) };
 
-        // Try incrementing the top to steal the value.
-        if self.inner
-            .top
-            .compare_exchange(t, t.wrapping_add(1), SeqCst, Relaxed)
-            .is_ok()
+        // Try incrementing the front index to steal the task.
+        if self
+            .inner
+            .front
+            .compare_exchange(f, f.wrapping_add(1), Ordering::SeqCst, Ordering::Relaxed)
+            .is_err()
         {
-            return Steal::Data(value);
+            // We didn't steal this task, forget it.
+            mem::forget(task);
+            return Steal::Retry;
         }
 
-        // We didn't steal this value, forget it.
-        mem::forget(value);
+        // Return the stolen task.
+        Steal::Success(task)
+    }
 
-        Steal::Retry
+    /// Steals a batch of tasks and pushes them into another worker.
+    ///
+    /// How many tasks exactly will be stolen is not specified. That said, this method will try to
+    /// steal around half of the tasks in the queue, but also not more than some constant limit.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crossbeam_deque::Worker;
+    ///
+    /// let w1 = Worker::new_fifo();
+    /// w1.push(1);
+    /// w1.push(2);
+    /// w1.push(3);
+    /// w1.push(4);
+    ///
+    /// let s = w1.stealer();
+    /// let w2 = Worker::new_fifo();
+    ///
+    /// s.steal_batch(&w2);
+    /// assert_eq!(w2.pop(), Some(1));
+    /// assert_eq!(w2.pop(), Some(2));
+    /// ```
+    pub fn steal_batch(&self, dest: &Worker<T>) -> Steal<()> {
+        // Load the front index.
+        let mut f = self.inner.front.load(Ordering::Acquire);
+
+        // A SeqCst fence is needed here.
+        //
+        // If the current thread is already pinned (reentrantly), we must manually issue the
+        // fence. Otherwise, the following pinning will issue the fence anyway, so we don't
+        // have to.
+        if epoch::is_pinned() {
+            atomic::fence(Ordering::SeqCst);
+        }
+
+        let guard = &epoch::pin();
+
+        // Load the back index.
+        let b = self.inner.back.load(Ordering::Acquire);
+
+        // Is the queue empty?
+        let len = b.wrapping_sub(f);
+        if len <= 0 {
+            return Steal::Empty;
+        }
+
+        // Reserve capacity for the stolen batch.
+        let batch_size = cmp::min((len as usize + 1) / 2, MAX_BATCH);
+        dest.reserve(batch_size);
+        let mut batch_size = batch_size as isize;
+
+        // Get the destination buffer and back index.
+        let dest_buffer = dest.buffer.get();
+        let mut dest_b = dest.inner.back.load(Ordering::Relaxed);
+
+        // Load the buffer.
+        let buffer = self.inner.buffer.load(Ordering::Acquire, guard);
+
+        match self.flavor {
+            // Steal a batch of tasks from the front at once.
+            Flavor::Fifo => {
+                // Copy the batch from the source to the destination buffer.
+                match dest.flavor {
+                    Flavor::Fifo => {
+                        for i in 0..batch_size {
+                            unsafe {
+                                let task = buffer.deref().read(f.wrapping_add(i));
+                                dest_buffer.write(dest_b.wrapping_add(i), task);
+                            }
+                        }
+                    }
+                    Flavor::Lifo => {
+                        for i in 0..batch_size {
+                            unsafe {
+                                let task = buffer.deref().read(f.wrapping_add(i));
+                                dest_buffer.write(dest_b.wrapping_add(batch_size - 1 - i), task);
+                            }
+                        }
+                    }
+                }
+
+                // Try incrementing the front index to steal the batch.
+                if self
+                    .inner
+                    .front
+                    .compare_exchange(
+                        f,
+                        f.wrapping_add(batch_size),
+                        Ordering::SeqCst,
+                        Ordering::Relaxed,
+                    )
+                    .is_err()
+                {
+                    return Steal::Retry;
+                }
+
+                dest_b = dest_b.wrapping_add(batch_size);
+            }
+
+            // Steal a batch of tasks from the front one by one.
+            Flavor::Lifo => {
+                for i in 0..batch_size {
+                    // If this is not the first steal, check whether the queue is empty.
+                    if i > 0 {
+                        // We've already got the current front index. Now execute the fence to
+                        // synchronize with other threads.
+                        atomic::fence(Ordering::SeqCst);
+
+                        // Load the back index.
+                        let b = self.inner.back.load(Ordering::Acquire);
+
+                        // Is the queue empty?
+                        if b.wrapping_sub(f) <= 0 {
+                            batch_size = i;
+                            break;
+                        }
+                    }
+
+                    // Read the task at the front.
+                    let task = unsafe { buffer.deref().read(f) };
+
+                    // Try incrementing the front index to steal the task.
+                    if self
+                        .inner
+                        .front
+                        .compare_exchange(f, f.wrapping_add(1), Ordering::SeqCst, Ordering::Relaxed)
+                        .is_err()
+                    {
+                        // We didn't steal this task, forget it and break from the loop.
+                        mem::forget(task);
+                        batch_size = i;
+                        break;
+                    }
+
+                    // Write the stolen task into the destination buffer.
+                    unsafe {
+                        dest_buffer.write(dest_b, task);
+                    }
+
+                    // Move the source front index and the destination back index one step forward.
+                    f = f.wrapping_add(1);
+                    dest_b = dest_b.wrapping_add(1);
+                }
+
+                // If we didn't steal anything, the operation needs to be retried.
+                if batch_size == 0 {
+                    return Steal::Retry;
+                }
+
+                // If stealing into a FIFO queue, stolen tasks need to be reversed.
+                if dest.flavor == Flavor::Fifo {
+                    for i in 0..batch_size / 2 {
+                        unsafe {
+                            let i1 = dest_b.wrapping_sub(batch_size - i);
+                            let i2 = dest_b.wrapping_sub(i + 1);
+                            let t1 = dest_buffer.read(i1);
+                            let t2 = dest_buffer.read(i2);
+                            dest_buffer.write(i1, t2);
+                            dest_buffer.write(i2, t1);
+                        }
+                    }
+                }
+            }
+        }
+
+        atomic::fence(Ordering::Release);
+
+        // Update the back index in the destination queue.
+        //
+        // This ordering could be `Relaxed`, but then thread sanitizer would falsely report data
+        // races because it doesn't understand fences.
+        dest.inner.back.store(dest_b, Ordering::Release);
+
+        // Return with success.
+        Steal::Success(())
+    }
+
+    /// Steals a batch of tasks, pushes them into another worker, and pops a task from that worker.
+    ///
+    /// How many tasks exactly will be stolen is not specified. That said, this method will try to
+    /// steal around half of the tasks in the queue, but also not more than some constant limit.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crossbeam_deque::{Steal, Worker};
+    ///
+    /// let w1 = Worker::new_fifo();
+    /// w1.push(1);
+    /// w1.push(2);
+    /// w1.push(3);
+    /// w1.push(4);
+    ///
+    /// let s = w1.stealer();
+    /// let w2 = Worker::new_fifo();
+    ///
+    /// assert_eq!(s.steal_batch_and_pop(&w2), Steal::Success(1));
+    /// assert_eq!(w2.pop(), Some(2));
+    /// ```
+    pub fn steal_batch_and_pop(&self, dest: &Worker<T>) -> Steal<T> {
+        // Load the front index.
+        let mut f = self.inner.front.load(Ordering::Acquire);
+
+        // A SeqCst fence is needed here.
+        //
+        // If the current thread is already pinned (reentrantly), we must manually issue the
+        // fence. Otherwise, the following pinning will issue the fence anyway, so we don't
+        // have to.
+        if epoch::is_pinned() {
+            atomic::fence(Ordering::SeqCst);
+        }
+
+        let guard = &epoch::pin();
+
+        // Load the back index.
+        let b = self.inner.back.load(Ordering::Acquire);
+
+        // Is the queue empty?
+        let len = b.wrapping_sub(f);
+        if len <= 0 {
+            return Steal::Empty;
+        }
+
+        // Reserve capacity for the stolen batch.
+        let batch_size = cmp::min((len as usize - 1) / 2, MAX_BATCH - 1);
+        dest.reserve(batch_size);
+        let mut batch_size = batch_size as isize;
+
+        // Get the destination buffer and back index.
+        let dest_buffer = dest.buffer.get();
+        let mut dest_b = dest.inner.back.load(Ordering::Relaxed);
+
+        // Load the buffer
+        let buffer = self.inner.buffer.load(Ordering::Acquire, guard);
+
+        // Read the task at the front.
+        let mut task = unsafe { buffer.deref().read(f) };
+
+        match self.flavor {
+            // Steal a batch of tasks from the front at once.
+            Flavor::Fifo => {
+                // Copy the batch from the source to the destination buffer.
+                match dest.flavor {
+                    Flavor::Fifo => {
+                        for i in 0..batch_size {
+                            unsafe {
+                                let task = buffer.deref().read(f.wrapping_add(i + 1));
+                                dest_buffer.write(dest_b.wrapping_add(i), task);
+                            }
+                        }
+                    }
+                    Flavor::Lifo => {
+                        for i in 0..batch_size {
+                            unsafe {
+                                let task = buffer.deref().read(f.wrapping_add(i + 1));
+                                dest_buffer.write(dest_b.wrapping_add(batch_size - 1 - i), task);
+                            }
+                        }
+                    }
+                }
+
+                // Try incrementing the front index to steal the batch.
+                if self
+                    .inner
+                    .front
+                    .compare_exchange(
+                        f,
+                        f.wrapping_add(batch_size + 1),
+                        Ordering::SeqCst,
+                        Ordering::Relaxed,
+                    )
+                    .is_err()
+                {
+                    // We didn't steal this task, forget it.
+                    mem::forget(task);
+                    return Steal::Retry;
+                }
+
+                dest_b = dest_b.wrapping_add(batch_size);
+            }
+
+            // Steal a batch of tasks from the front one by one.
+            Flavor::Lifo => {
+                // Try incrementing the front index to steal the task.
+                if self
+                    .inner
+                    .front
+                    .compare_exchange(f, f.wrapping_add(1), Ordering::SeqCst, Ordering::Relaxed)
+                    .is_err()
+                {
+                    // We didn't steal this task, forget it.
+                    mem::forget(task);
+                    return Steal::Retry;
+                }
+
+                // Move the front index one step forward.
+                f = f.wrapping_add(1);
+
+                // Repeat the same procedure for the batch steals.
+                for i in 0..batch_size {
+                    // We've already got the current front index. Now execute the fence to
+                    // synchronize with other threads.
+                    atomic::fence(Ordering::SeqCst);
+
+                    // Load the back index.
+                    let b = self.inner.back.load(Ordering::Acquire);
+
+                    // Is the queue empty?
+                    if b.wrapping_sub(f) <= 0 {
+                        batch_size = i;
+                        break;
+                    }
+
+                    // Read the task at the front.
+                    let tmp = unsafe { buffer.deref().read(f) };
+
+                    // Try incrementing the front index to steal the task.
+                    if self
+                        .inner
+                        .front
+                        .compare_exchange(f, f.wrapping_add(1), Ordering::SeqCst, Ordering::Relaxed)
+                        .is_err()
+                    {
+                        // We didn't steal this task, forget it and break from the loop.
+                        mem::forget(tmp);
+                        batch_size = i;
+                        break;
+                    }
+
+                    // Write the previously stolen task into the destination buffer.
+                    unsafe {
+                        dest_buffer.write(dest_b, mem::replace(&mut task, tmp));
+                    }
+
+                    // Move the source front index and the destination back index one step forward.
+                    f = f.wrapping_add(1);
+                    dest_b = dest_b.wrapping_add(1);
+                }
+
+                // If stealing into a FIFO queue, stolen tasks need to be reversed.
+                if dest.flavor == Flavor::Fifo {
+                    for i in 0..batch_size / 2 {
+                        unsafe {
+                            let i1 = dest_b.wrapping_sub(batch_size - i);
+                            let i2 = dest_b.wrapping_sub(i + 1);
+                            let t1 = dest_buffer.read(i1);
+                            let t2 = dest_buffer.read(i2);
+                            dest_buffer.write(i1, t2);
+                            dest_buffer.write(i2, t1);
+                        }
+                    }
+                }
+            }
+        }
+
+        atomic::fence(Ordering::Release);
+
+        // Update the back index in the destination queue.
+        //
+        // This ordering could be `Relaxed`, but then thread sanitizer would falsely report data
+        // races because it doesn't understand fences.
+        dest.inner.back.store(dest_b, Ordering::Release);
+
+        // Return with success.
+        Steal::Success(task)
     }
 }
 
 impl<T> Clone for Stealer<T> {
-    /// Creates another stealer.
     fn clone(&self) -> Stealer<T> {
         Stealer {
             inner: self.inner.clone(),
-            _marker: PhantomData,
+            flavor: self.flavor,
         }
     }
 }
 
 impl<T> fmt::Debug for Stealer<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Stealer {{ ... }}")
+        f.pad("Stealer { .. }")
     }
 }
 
-#[cfg(test)]
-mod tests {
-    extern crate rand;
+// Bits indicating the state of a slot:
+// * If a task has been written into the slot, `WRITE` is set.
+// * If a task has been read from the slot, `READ` is set.
+// * If the block is being destroyed, `DESTROY` is set.
+const WRITE: usize = 1;
+const READ: usize = 2;
+const DESTROY: usize = 4;
 
-    use std::sync::{Arc, Mutex};
-    use std::sync::atomic::{AtomicBool, AtomicUsize};
-    use std::sync::atomic::Ordering::SeqCst;
-    use std::thread;
+// Each block covers one "lap" of indices.
+const LAP: usize = 64;
+// The maximum number of values a block can hold.
+const BLOCK_CAP: usize = LAP - 1;
+// How many lower bits are reserved for metadata.
+const SHIFT: usize = 1;
+// Indicates that the block is not the last one.
+const HAS_NEXT: usize = 1;
 
-    use epoch;
-    use self::rand::Rng;
+/// A slot in a block.
+struct Slot<T> {
+    /// The task.
+    task: UnsafeCell<ManuallyDrop<T>>,
 
-    use super::{Deque, Steal};
+    /// The state of the slot.
+    state: AtomicUsize,
+}
 
-    #[test]
-    fn smoke() {
-        let d = Deque::new();
-        let s = d.stealer();
-        assert_eq!(d.pop(), None);
-        assert_eq!(s.steal(), Steal::Empty);
-        assert_eq!(d.len(), 0);
-        assert_eq!(s.len(), 0);
-
-        d.push(1);
-        assert_eq!(d.len(), 1);
-        assert_eq!(s.len(), 1);
-        assert_eq!(d.pop(), Some(1));
-        assert_eq!(d.pop(), None);
-        assert_eq!(s.steal(), Steal::Empty);
-        assert_eq!(d.len(), 0);
-        assert_eq!(s.len(), 0);
-
-        d.push(2);
-        assert_eq!(s.steal(), Steal::Data(2));
-        assert_eq!(s.steal(), Steal::Empty);
-        assert_eq!(d.pop(), None);
-
-        d.push(3);
-        d.push(4);
-        d.push(5);
-        assert_eq!(d.steal(), Steal::Data(3));
-        assert_eq!(s.steal(), Steal::Data(4));
-        assert_eq!(d.steal(), Steal::Data(5));
-        assert_eq!(d.steal(), Steal::Empty);
-    }
-
-    #[test]
-    fn steal_push() {
-        const STEPS: usize = 50_000;
-
-        let d = Deque::new();
-        let s = d.stealer();
-        let t = thread::spawn(move || for i in 0..STEPS {
-            loop {
-                if let Steal::Data(v) = s.steal() {
-                    assert_eq!(i, v);
-                    break;
-                }
-            }
-        });
-
-        for i in 0..STEPS {
-            d.push(i);
-        }
-        t.join().unwrap();
-    }
-
-    #[test]
-    fn stampede() {
-        const COUNT: usize = 50_000;
-
-        let d = Deque::new();
-
-        for i in 0..COUNT {
-            d.push(Box::new(i + 1));
-        }
-        let remaining = Arc::new(AtomicUsize::new(COUNT));
-
-        let threads = (0..8)
-            .map(|_| {
-                let s = d.stealer();
-                let remaining = remaining.clone();
-
-                thread::spawn(move || {
-                    let mut last = 0;
-                    while remaining.load(SeqCst) > 0 {
-                        if let Steal::Data(x) = s.steal() {
-                            assert!(last < *x);
-                            last = *x;
-                            remaining.fetch_sub(1, SeqCst);
-                        }
-                    }
-                })
-            })
-            .collect::<Vec<_>>();
-
-        let mut last = COUNT + 1;
-        while remaining.load(SeqCst) > 0 {
-            if let Some(x) = d.pop() {
-                assert!(last > *x);
-                last = *x;
-                remaining.fetch_sub(1, SeqCst);
-            }
-        }
-
-        for t in threads {
-            t.join().unwrap();
+impl<T> Slot<T> {
+    /// Waits until a task is written into the slot.
+    fn wait_write(&self) {
+        let backoff = Backoff::new();
+        while self.state.load(Ordering::Acquire) & WRITE == 0 {
+            backoff.snooze();
         }
     }
+}
 
-    fn run_stress() {
-        const COUNT: usize = 50_000;
+/// A block in a linked list.
+///
+/// Each block in the list can hold up to `BLOCK_CAP` values.
+struct Block<T> {
+    /// The next block in the linked list.
+    next: AtomicPtr<Block<T>>,
 
-        let d = Deque::new();
-        let done = Arc::new(AtomicBool::new(false));
-        let hits = Arc::new(AtomicUsize::new(0));
+    /// Slots for values.
+    slots: [Slot<T>; BLOCK_CAP],
+}
 
-        let threads = (0..8)
-            .map(|_| {
-                let s = d.stealer();
-                let done = done.clone();
-                let hits = hits.clone();
-
-                thread::spawn(move || while !done.load(SeqCst) {
-                    if let Steal::Data(_) = s.steal() {
-                        hits.fetch_add(1, SeqCst);
-                    }
-                })
-            })
-            .collect::<Vec<_>>();
-
-        let mut rng = rand::thread_rng();
-        let mut expected = 0;
-        while expected < COUNT {
-            if rng.gen_range(0, 3) == 0 {
-                if d.pop().is_some() {
-                    hits.fetch_add(1, SeqCst);
-                }
-            } else {
-                d.push(expected);
-                expected += 1;
-            }
-        }
-
-        while hits.load(SeqCst) < COUNT {
-            if d.pop().is_some() {
-                hits.fetch_add(1, SeqCst);
-            }
-        }
-        done.store(true, SeqCst);
-
-        for t in threads {
-            t.join().unwrap();
-        }
+impl<T> Block<T> {
+    /// Creates an empty block that starts at `start_index`.
+    fn new() -> Block<T> {
+        unsafe { mem::zeroed() }
     }
 
-    #[test]
-    fn stress() {
-        run_stress();
-    }
-
-    #[test]
-    fn stress_pinned() {
-        let _guard = epoch::pin();
-        run_stress();
-    }
-
-    #[test]
-    fn no_starvation() {
-        const COUNT: usize = 50_000;
-
-        let d = Deque::new();
-        let done = Arc::new(AtomicBool::new(false));
-
-        let (threads, hits): (Vec<_>, Vec<_>) = (0..8)
-            .map(|_| {
-                let s = d.stealer();
-                let done = done.clone();
-                let hits = Arc::new(AtomicUsize::new(0));
-
-                let t = {
-                    let hits = hits.clone();
-                    thread::spawn(move || while !done.load(SeqCst) {
-                        if let Steal::Data(_) = s.steal() {
-                            hits.fetch_add(1, SeqCst);
-                        }
-                    })
-                };
-
-                (t, hits)
-            })
-            .unzip();
-
-        let mut rng = rand::thread_rng();
-        let mut my_hits = 0;
+    /// Waits until the next pointer is set.
+    fn wait_next(&self) -> *mut Block<T> {
+        let backoff = Backoff::new();
         loop {
-            for i in 0..rng.gen_range(0, COUNT) {
-                if rng.gen_range(0, 3) == 0 && my_hits == 0 {
-                    if d.pop().is_some() {
-                        my_hits += 1;
-                    }
-                } else {
-                    d.push(i);
-                }
+            let next = self.next.load(Ordering::Acquire);
+            if !next.is_null() {
+                return next;
+            }
+            backoff.snooze();
+        }
+    }
+
+    /// Sets the `DESTROY` bit in slots starting from `start` and destroys the block.
+    unsafe fn destroy(this: *mut Block<T>, count: usize) {
+        // It is not necessary to set the `DESTROY` bit in the last slot because that slot has
+        // begun destruction of the block.
+        for i in (0..count).rev() {
+            let slot = (*this).slots.get_unchecked(i);
+
+            // Mark the `DESTROY` bit if a thread is still using the slot.
+            if slot.state.load(Ordering::Acquire) & READ == 0
+                && slot.state.fetch_or(DESTROY, Ordering::AcqRel) & READ == 0
+            {
+                // If a thread is still using the slot, it will continue destruction of the block.
+                return;
+            }
+        }
+
+        // No thread is using the block, now it is safe to destroy it.
+        drop(Box::from_raw(this));
+    }
+}
+
+/// A position in a queue.
+struct Position<T> {
+    /// The index in the queue.
+    index: AtomicUsize,
+
+    /// The block in the linked list.
+    block: AtomicPtr<Block<T>>,
+}
+
+/// An injector queue.
+///
+/// This is a FIFO queue that can be shared among multiple threads. Task schedulers typically have
+/// a single injector queue, which is the entry point for new tasks.
+///
+/// # Examples
+///
+/// ```
+/// use crossbeam_deque::{Injector, Steal};
+///
+/// let q = Injector::new();
+/// q.push(1);
+/// q.push(2);
+///
+/// assert_eq!(q.steal(), Steal::Success(1));
+/// assert_eq!(q.steal(), Steal::Success(2));
+/// assert_eq!(q.steal(), Steal::Empty);
+/// ```
+pub struct Injector<T> {
+    /// The head of the queue.
+    head: CachePadded<Position<T>>,
+
+    /// The tail of the queue.
+    tail: CachePadded<Position<T>>,
+
+    /// Indicates that dropping a `Injector<T>` may drop values of type `T`.
+    _marker: PhantomData<T>,
+}
+
+unsafe impl<T: Send> Send for Injector<T> {}
+unsafe impl<T: Send> Sync for Injector<T> {}
+
+impl<T> Injector<T> {
+    /// Creates a new injector queue.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crossbeam_deque::Injector;
+    ///
+    /// let q = Injector::<i32>::new();
+    /// ```
+    pub fn new() -> Injector<T> {
+        let block = Box::into_raw(Box::new(Block::<T>::new()));
+        Injector {
+            head: CachePadded::new(Position {
+                block: AtomicPtr::new(block),
+                index: AtomicUsize::new(0),
+            }),
+            tail: CachePadded::new(Position {
+                block: AtomicPtr::new(block),
+                index: AtomicUsize::new(0),
+            }),
+            _marker: PhantomData,
+        }
+    }
+
+    /// Pushes a task into the queue.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crossbeam_deque::Injector;
+    ///
+    /// let w = Injector::new();
+    /// w.push(1);
+    /// w.push(2);
+    /// ```
+    pub fn push(&self, task: T) {
+        let backoff = Backoff::new();
+        let mut tail = self.tail.index.load(Ordering::Acquire);
+        let mut block = self.tail.block.load(Ordering::Acquire);
+        let mut next_block = None;
+
+        loop {
+            // Calculate the offset of the index into the block.
+            let offset = (tail >> SHIFT) % LAP;
+
+            // If we reached the end of the block, wait until the next one is installed.
+            if offset == BLOCK_CAP {
+                backoff.snooze();
+                tail = self.tail.index.load(Ordering::Acquire);
+                block = self.tail.block.load(Ordering::Acquire);
+                continue;
             }
 
-            if my_hits > 0 && hits.iter().all(|h| h.load(SeqCst) > 0) {
+            // If we're going to have to install the next block, allocate it in advance in order to
+            // make the wait for other threads as short as possible.
+            if offset + 1 == BLOCK_CAP && next_block.is_none() {
+                next_block = Some(Box::new(Block::<T>::new()));
+            }
+
+            let new_tail = tail + (1 << SHIFT);
+
+            // Try advancing the tail forward.
+            match self.tail.index.compare_exchange_weak(
+                tail,
+                new_tail,
+                Ordering::SeqCst,
+                Ordering::Acquire,
+            ) {
+                Ok(_) => unsafe {
+                    // If we've reached the end of the block, install the next one.
+                    if offset + 1 == BLOCK_CAP {
+                        let next_block = Box::into_raw(next_block.unwrap());
+                        let next_index = new_tail.wrapping_add(1 << SHIFT);
+
+                        self.tail.block.store(next_block, Ordering::Release);
+                        self.tail.index.store(next_index, Ordering::Release);
+                        (*block).next.store(next_block, Ordering::Release);
+                    }
+
+                    // Write the task into the slot.
+                    let slot = (*block).slots.get_unchecked(offset);
+                    slot.task.get().write(ManuallyDrop::new(task));
+                    slot.state.fetch_or(WRITE, Ordering::Release);
+
+                    return;
+                },
+                Err(t) => {
+                    tail = t;
+                    block = self.tail.block.load(Ordering::Acquire);
+                    backoff.spin();
+                }
+            }
+        }
+    }
+
+    /// Steals a task from the queue.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crossbeam_deque::{Injector, Steal};
+    ///
+    /// let q = Injector::new();
+    /// q.push(1);
+    /// q.push(2);
+    ///
+    /// assert_eq!(q.steal(), Steal::Success(1));
+    /// assert_eq!(q.steal(), Steal::Success(2));
+    /// assert_eq!(q.steal(), Steal::Empty);
+    /// ```
+    pub fn steal(&self) -> Steal<T> {
+        let mut head;
+        let mut block;
+        let mut offset;
+
+        let backoff = Backoff::new();
+        loop {
+            head = self.head.index.load(Ordering::Acquire);
+            block = self.head.block.load(Ordering::Acquire);
+
+            // Calculate the offset of the index into the block.
+            offset = (head >> SHIFT) % LAP;
+
+            // If we reached the end of the block, wait until the next one is installed.
+            if offset == BLOCK_CAP {
+                backoff.snooze();
+            } else {
                 break;
             }
         }
-        done.store(true, SeqCst);
 
-        for t in threads {
-            t.join().unwrap();
+        let mut new_head = head + (1 << SHIFT);
+
+        if new_head & HAS_NEXT == 0 {
+            atomic::fence(Ordering::SeqCst);
+            let tail = self.tail.index.load(Ordering::Relaxed);
+
+            // If the tail equals the head, that means the queue is empty.
+            if head >> SHIFT == tail >> SHIFT {
+                return Steal::Empty;
+            }
+
+            // If head and tail are not in the same block, set `HAS_NEXT` in head.
+            if (head >> SHIFT) / LAP != (tail >> SHIFT) / LAP {
+                new_head |= HAS_NEXT;
+            }
+        }
+
+        // Try moving the head index forward.
+        if self
+            .head
+            .index
+            .compare_exchange_weak(head, new_head, Ordering::SeqCst, Ordering::Acquire)
+            .is_err()
+        {
+            return Steal::Retry;
+        }
+
+        unsafe {
+            // If we've reached the end of the block, move to the next one.
+            if offset + 1 == BLOCK_CAP {
+                let next = (*block).wait_next();
+                let mut next_index = (new_head & !HAS_NEXT).wrapping_add(1 << SHIFT);
+                if !(*next).next.load(Ordering::Relaxed).is_null() {
+                    next_index |= HAS_NEXT;
+                }
+
+                self.head.block.store(next, Ordering::Release);
+                self.head.index.store(next_index, Ordering::Release);
+            }
+
+            // Read the task.
+            let slot = (*block).slots.get_unchecked(offset);
+            slot.wait_write();
+            let m = slot.task.get().read();
+            let task = ManuallyDrop::into_inner(m);
+
+            // Destroy the block if we've reached the end, or if another thread wanted to destroy
+            // but couldn't because we were busy reading from the slot.
+            if offset + 1 == BLOCK_CAP {
+                Block::destroy(block, offset);
+            } else if slot.state.fetch_or(READ, Ordering::AcqRel) & DESTROY != 0 {
+                Block::destroy(block, offset);
+            }
+
+            Steal::Success(task)
         }
     }
 
-    #[test]
-    fn destructors() {
-        const COUNT: usize = 50_000;
+    /// Steals a batch of tasks and pushes them into a worker.
+    ///
+    /// How many tasks exactly will be stolen is not specified. That said, this method will try to
+    /// steal around half of the tasks in the queue, but also not more than some constant limit.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crossbeam_deque::{Injector, Worker};
+    ///
+    /// let q = Injector::new();
+    /// q.push(1);
+    /// q.push(2);
+    /// q.push(3);
+    /// q.push(4);
+    ///
+    /// let w = Worker::new_fifo();
+    /// q.steal_batch(&w);
+    /// assert_eq!(w.pop(), Some(1));
+    /// assert_eq!(w.pop(), Some(2));
+    /// ```
+    pub fn steal_batch(&self, dest: &Worker<T>) -> Steal<()> {
+        let mut head;
+        let mut block;
+        let mut offset;
 
-        struct Elem(usize, Arc<Mutex<Vec<usize>>>);
+        let backoff = Backoff::new();
+        loop {
+            head = self.head.index.load(Ordering::Acquire);
+            block = self.head.block.load(Ordering::Acquire);
 
-        impl Drop for Elem {
-            fn drop(&mut self) {
-                self.1.lock().unwrap().push(self.0);
+            // Calculate the offset of the index into the block.
+            offset = (head >> SHIFT) % LAP;
+
+            // If we reached the end of the block, wait until the next one is installed.
+            if offset == BLOCK_CAP {
+                backoff.snooze();
+            } else {
+                break;
             }
         }
 
-        let d = Deque::new();
+        let mut new_head = head;
+        let advance;
 
-        let dropped = Arc::new(Mutex::new(Vec::new()));
-        let remaining = Arc::new(AtomicUsize::new(COUNT));
-        for i in 0..COUNT {
-            d.push(Elem(i, dropped.clone()));
+        if new_head & HAS_NEXT == 0 {
+            atomic::fence(Ordering::SeqCst);
+            let tail = self.tail.index.load(Ordering::Relaxed);
+
+            // If the tail equals the head, that means the queue is empty.
+            if head >> SHIFT == tail >> SHIFT {
+                return Steal::Empty;
+            }
+
+            // If head and tail are not in the same block, set `HAS_NEXT` in head. Also, calculate
+            // the right batch size to steal.
+            if (head >> SHIFT) / LAP != (tail >> SHIFT) / LAP {
+                new_head |= HAS_NEXT;
+                // We can steal all tasks till the end of the block.
+                advance = (BLOCK_CAP - offset).min(MAX_BATCH);
+            } else {
+                let len = (tail - head) >> SHIFT;
+                // Steal half of the available tasks.
+                advance = ((len + 1) / 2).min(MAX_BATCH);
+            }
+        } else {
+            // We can steal all tasks till the end of the block.
+            advance = (BLOCK_CAP - offset).min(MAX_BATCH);
         }
 
-        let threads = (0..8)
-            .map(|_| {
-                let s = d.stealer();
-                let remaining = remaining.clone();
+        new_head += advance << SHIFT;
+        let new_offset = offset + advance;
 
-                thread::spawn(move || for _ in 0..1000 {
-                    if let Steal::Data(_) = s.steal() {
-                        remaining.fetch_sub(1, SeqCst);
+        // Try moving the head index forward.
+        if self
+            .head
+            .index
+            .compare_exchange_weak(head, new_head, Ordering::SeqCst, Ordering::Acquire)
+            .is_err()
+        {
+            return Steal::Retry;
+        }
+
+        // Reserve capacity for the stolen batch.
+        let batch_size = new_offset - offset;
+        dest.reserve(batch_size);
+
+        // Get the destination buffer and back index.
+        let dest_buffer = dest.buffer.get();
+        let dest_b = dest.inner.back.load(Ordering::Relaxed);
+
+        unsafe {
+            // If we've reached the end of the block, move to the next one.
+            if new_offset == BLOCK_CAP {
+                let next = (*block).wait_next();
+                let mut next_index = (new_head & !HAS_NEXT).wrapping_add(1 << SHIFT);
+                if !(*next).next.load(Ordering::Relaxed).is_null() {
+                    next_index |= HAS_NEXT;
+                }
+
+                self.head.block.store(next, Ordering::Release);
+                self.head.index.store(next_index, Ordering::Release);
+            }
+
+            // Copy values from the injector into the destination queue.
+            match dest.flavor {
+                Flavor::Fifo => {
+                    for i in 0..batch_size {
+                        // Read the task.
+                        let slot = (*block).slots.get_unchecked(offset + i);
+                        slot.wait_write();
+                        let m = slot.task.get().read();
+                        let task = ManuallyDrop::into_inner(m);
+
+                        // Write it into the destination queue.
+                        dest_buffer.write(dest_b.wrapping_add(i as isize), task);
                     }
-                })
-            })
-            .collect::<Vec<_>>();
+                }
 
-        for _ in 0..1000 {
-            if d.pop().is_some() {
-                remaining.fetch_sub(1, SeqCst);
+                Flavor::Lifo => {
+                    for i in 0..batch_size {
+                        // Read the task.
+                        let slot = (*block).slots.get_unchecked(offset + i);
+                        slot.wait_write();
+                        let m = slot.task.get().read();
+                        let task = ManuallyDrop::into_inner(m);
+
+                        // Write it into the destination queue.
+                        dest_buffer.write(dest_b.wrapping_add((batch_size - 1 - i) as isize), task);
+                    }
+                }
+            }
+
+            atomic::fence(Ordering::Release);
+
+            // Update the back index in the destination queue.
+            //
+            // This ordering could be `Relaxed`, but then thread sanitizer would falsely report
+            // data races because it doesn't understand fences.
+            dest.inner
+                .back
+                .store(dest_b.wrapping_add(batch_size as isize), Ordering::Release);
+
+            // Destroy the block if we've reached the end, or if another thread wanted to destroy
+            // but couldn't because we were busy reading from the slot.
+            if new_offset == BLOCK_CAP {
+                Block::destroy(block, offset);
+            } else {
+                for i in offset..new_offset {
+                    let slot = (*block).slots.get_unchecked(i);
+
+                    if slot.state.fetch_or(READ, Ordering::AcqRel) & DESTROY != 0 {
+                        Block::destroy(block, offset);
+                        break;
+                    }
+                }
+            }
+
+            Steal::Success(())
+        }
+    }
+
+    /// Steals a batch of tasks, pushes them into a worker, and pops a task from that worker.
+    ///
+    /// How many tasks exactly will be stolen is not specified. That said, this method will try to
+    /// steal around half of the tasks in the queue, but also not more than some constant limit.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crossbeam_deque::{Injector, Steal, Worker};
+    ///
+    /// let q = Injector::new();
+    /// q.push(1);
+    /// q.push(2);
+    /// q.push(3);
+    /// q.push(4);
+    ///
+    /// let w = Worker::new_fifo();
+    /// assert_eq!(q.steal_batch_and_pop(&w), Steal::Success(1));
+    /// assert_eq!(w.pop(), Some(2));
+    /// ```
+    pub fn steal_batch_and_pop(&self, dest: &Worker<T>) -> Steal<T> {
+        let mut head;
+        let mut block;
+        let mut offset;
+
+        let backoff = Backoff::new();
+        loop {
+            head = self.head.index.load(Ordering::Acquire);
+            block = self.head.block.load(Ordering::Acquire);
+
+            // Calculate the offset of the index into the block.
+            offset = (head >> SHIFT) % LAP;
+
+            // If we reached the end of the block, wait until the next one is installed.
+            if offset == BLOCK_CAP {
+                backoff.snooze();
+            } else {
+                break;
             }
         }
 
-        for t in threads {
-            t.join().unwrap();
-        }
+        let mut new_head = head;
+        let advance;
 
-        let rem = remaining.load(SeqCst);
-        assert!(rem > 0);
-        assert_eq!(d.len(), rem);
+        if new_head & HAS_NEXT == 0 {
+            atomic::fence(Ordering::SeqCst);
+            let tail = self.tail.index.load(Ordering::Relaxed);
 
-        {
-            let mut v = dropped.lock().unwrap();
-            assert_eq!(v.len(), COUNT - rem);
-            v.clear();
-        }
-
-        drop(d);
-
-        {
-            let mut v = dropped.lock().unwrap();
-            assert_eq!(v.len(), rem);
-            v.sort();
-            for pair in v.windows(2) {
-                assert_eq!(pair[0] + 1, pair[1]);
+            // If the tail equals the head, that means the queue is empty.
+            if head >> SHIFT == tail >> SHIFT {
+                return Steal::Empty;
             }
+
+            // If head and tail are not in the same block, set `HAS_NEXT` in head.
+            if (head >> SHIFT) / LAP != (tail >> SHIFT) / LAP {
+                new_head |= HAS_NEXT;
+                // We can steal all tasks till the end of the block.
+                advance = (BLOCK_CAP - offset).min(MAX_BATCH + 1);
+            } else {
+                let len = (tail - head) >> SHIFT;
+                // Steal half of the available tasks.
+                advance = ((len + 1) / 2).min(MAX_BATCH + 1);
+            }
+        } else {
+            // We can steal all tasks till the end of the block.
+            advance = (BLOCK_CAP - offset).min(MAX_BATCH + 1);
+        }
+
+        new_head += advance << SHIFT;
+        let new_offset = offset + advance;
+
+        // Try moving the head index forward.
+        if self
+            .head
+            .index
+            .compare_exchange_weak(head, new_head, Ordering::SeqCst, Ordering::Acquire)
+            .is_err()
+        {
+            return Steal::Retry;
+        }
+
+        // Reserve capacity for the stolen batch.
+        let batch_size = new_offset - offset - 1;
+        dest.reserve(batch_size);
+
+        // Get the destination buffer and back index.
+        let dest_buffer = dest.buffer.get();
+        let dest_b = dest.inner.back.load(Ordering::Relaxed);
+
+        unsafe {
+            // If we've reached the end of the block, move to the next one.
+            if new_offset == BLOCK_CAP {
+                let next = (*block).wait_next();
+                let mut next_index = (new_head & !HAS_NEXT).wrapping_add(1 << SHIFT);
+                if !(*next).next.load(Ordering::Relaxed).is_null() {
+                    next_index |= HAS_NEXT;
+                }
+
+                self.head.block.store(next, Ordering::Release);
+                self.head.index.store(next_index, Ordering::Release);
+            }
+
+            // Read the task.
+            let slot = (*block).slots.get_unchecked(offset);
+            slot.wait_write();
+            let m = slot.task.get().read();
+            let task = ManuallyDrop::into_inner(m);
+
+            match dest.flavor {
+                Flavor::Fifo => {
+                    // Copy values from the injector into the destination queue.
+                    for i in 0..batch_size {
+                        // Read the task.
+                        let slot = (*block).slots.get_unchecked(offset + i + 1);
+                        slot.wait_write();
+                        let m = slot.task.get().read();
+                        let task = ManuallyDrop::into_inner(m);
+
+                        // Write it into the destination queue.
+                        dest_buffer.write(dest_b.wrapping_add(i as isize), task);
+                    }
+                }
+
+                Flavor::Lifo => {
+                    // Copy values from the injector into the destination queue.
+                    for i in 0..batch_size {
+                        // Read the task.
+                        let slot = (*block).slots.get_unchecked(offset + i + 1);
+                        slot.wait_write();
+                        let m = slot.task.get().read();
+                        let task = ManuallyDrop::into_inner(m);
+
+                        // Write it into the destination queue.
+                        dest_buffer.write(dest_b.wrapping_add((batch_size - 1 - i) as isize), task);
+                    }
+                }
+            }
+
+            atomic::fence(Ordering::Release);
+
+            // Update the back index in the destination queue.
+            //
+            // This ordering could be `Relaxed`, but then thread sanitizer would falsely report
+            // data races because it doesn't understand fences.
+            dest.inner
+                .back
+                .store(dest_b.wrapping_add(batch_size as isize), Ordering::Release);
+
+            // Destroy the block if we've reached the end, or if another thread wanted to destroy
+            // but couldn't because we were busy reading from the slot.
+            if new_offset == BLOCK_CAP {
+                Block::destroy(block, offset);
+            } else {
+                for i in offset..new_offset {
+                    let slot = (*block).slots.get_unchecked(i);
+
+                    if slot.state.fetch_or(READ, Ordering::AcqRel) & DESTROY != 0 {
+                        Block::destroy(block, offset);
+                        break;
+                    }
+                }
+            }
+
+            Steal::Success(task)
+        }
+    }
+
+    /// Returns `true` if the queue is empty.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crossbeam_deque::Injector;
+    ///
+    /// let q = Injector::new();
+    ///
+    /// assert!(q.is_empty());
+    /// q.push(1);
+    /// assert!(!q.is_empty());
+    /// ```
+    pub fn is_empty(&self) -> bool {
+        let head = self.head.index.load(Ordering::SeqCst);
+        let tail = self.tail.index.load(Ordering::SeqCst);
+        head >> SHIFT == tail >> SHIFT
+    }
+}
+
+impl<T> Drop for Injector<T> {
+    fn drop(&mut self) {
+        let mut head = self.head.index.load(Ordering::Relaxed);
+        let mut tail = self.tail.index.load(Ordering::Relaxed);
+        let mut block = self.head.block.load(Ordering::Relaxed);
+
+        // Erase the lower bits.
+        head &= !((1 << SHIFT) - 1);
+        tail &= !((1 << SHIFT) - 1);
+
+        unsafe {
+            // Drop all values between `head` and `tail` and deallocate the heap-allocated blocks.
+            while head != tail {
+                let offset = (head >> SHIFT) % LAP;
+
+                if offset < BLOCK_CAP {
+                    // Drop the task in the slot.
+                    let slot = (*block).slots.get_unchecked(offset);
+                    ManuallyDrop::drop(&mut *(*slot).task.get());
+                } else {
+                    // Deallocate the block and move to the next one.
+                    let next = (*block).next.load(Ordering::Relaxed);
+                    drop(Box::from_raw(block));
+                    block = next;
+                }
+
+                head = head.wrapping_add(1 << SHIFT);
+            }
+
+            // Deallocate the last remaining block.
+            drop(Box::from_raw(block));
+        }
+    }
+}
+
+impl<T> fmt::Debug for Injector<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.pad("Worker { .. }")
+    }
+}
+
+/// Possible outcomes of a steal operation.
+///
+/// # Examples
+///
+/// There are lots of ways to chain results of steal operations together:
+///
+/// ```
+/// use crossbeam_deque::Steal::{self, Empty, Retry, Success};
+///
+/// let collect = |v: Vec<Steal<i32>>| v.into_iter().collect::<Steal<i32>>();
+///
+/// assert_eq!(collect(vec![Empty, Empty, Empty]), Empty);
+/// assert_eq!(collect(vec![Empty, Retry, Empty]), Retry);
+/// assert_eq!(collect(vec![Retry, Success(1), Empty]), Success(1));
+///
+/// assert_eq!(collect(vec![Empty, Empty]).or_else(|| Retry), Retry);
+/// assert_eq!(collect(vec![Retry, Empty]).or_else(|| Success(1)), Success(1));
+/// ```
+#[must_use]
+#[derive(PartialEq, Eq, Copy, Clone)]
+pub enum Steal<T> {
+    /// The queue was empty at the time of stealing.
+    Empty,
+
+    /// At least one task was successfully stolen.
+    Success(T),
+
+    /// The steal operation needs to be retried.
+    Retry,
+}
+
+impl<T> Steal<T> {
+    /// Returns `true` if the queue was empty at the time of stealing.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crossbeam_deque::Steal::{Empty, Retry, Success};
+    ///
+    /// assert!(!Success(7).is_empty());
+    /// assert!(!Retry::<i32>.is_empty());
+    ///
+    /// assert!(Empty::<i32>.is_empty());
+    /// ```
+    pub fn is_empty(&self) -> bool {
+        match self {
+            Steal::Empty => true,
+            _ => false,
+        }
+    }
+
+    /// Returns `true` if at least one task was stolen.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crossbeam_deque::Steal::{Empty, Retry, Success};
+    ///
+    /// assert!(!Empty::<i32>.is_success());
+    /// assert!(!Retry::<i32>.is_success());
+    ///
+    /// assert!(Success(7).is_success());
+    /// ```
+    pub fn is_success(&self) -> bool {
+        match self {
+            Steal::Success(_) => true,
+            _ => false,
+        }
+    }
+
+    /// Returns `true` if the steal operation needs to be retried.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crossbeam_deque::Steal::{Empty, Retry, Success};
+    ///
+    /// assert!(!Empty::<i32>.is_retry());
+    /// assert!(!Success(7).is_retry());
+    ///
+    /// assert!(Retry::<i32>.is_retry());
+    /// ```
+    pub fn is_retry(&self) -> bool {
+        match self {
+            Steal::Retry => true,
+            _ => false,
+        }
+    }
+
+    /// Returns the result of the operation, if successful.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crossbeam_deque::Steal::{Empty, Retry, Success};
+    ///
+    /// assert_eq!(Empty::<i32>.success(), None);
+    /// assert_eq!(Retry::<i32>.success(), None);
+    ///
+    /// assert_eq!(Success(7).success(), Some(7));
+    /// ```
+    pub fn success(self) -> Option<T> {
+        match self {
+            Steal::Success(res) => Some(res),
+            _ => None,
+        }
+    }
+
+    /// If no task was stolen, attempts another steal operation.
+    ///
+    /// Returns this steal result if it is `Success`. Otherwise, closure `f` is invoked and then:
+    ///
+    /// * If the second steal resulted in `Success`, it is returned.
+    /// * If both steals were unsuccessful but any resulted in `Retry`, then `Retry` is returned.
+    /// * If both resulted in `None`, then `None` is returned.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crossbeam_deque::Steal::{Empty, Retry, Success};
+    ///
+    /// assert_eq!(Success(1).or_else(|| Success(2)), Success(1));
+    /// assert_eq!(Retry.or_else(|| Success(2)), Success(2));
+    ///
+    /// assert_eq!(Retry.or_else(|| Empty), Retry::<i32>);
+    /// assert_eq!(Empty.or_else(|| Retry), Retry::<i32>);
+    ///
+    /// assert_eq!(Empty.or_else(|| Empty), Empty::<i32>);
+    /// ```
+    pub fn or_else<F>(self, f: F) -> Steal<T>
+    where
+        F: FnOnce() -> Steal<T>,
+    {
+        match self {
+            Steal::Empty => f(),
+            Steal::Success(_) => self,
+            Steal::Retry => {
+                if let Steal::Success(res) = f() {
+                    Steal::Success(res)
+                } else {
+                    Steal::Retry
+                }
+            }
+        }
+    }
+}
+
+impl<T> fmt::Debug for Steal<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Steal::Empty => f.pad("Empty"),
+            Steal::Success(_) => f.pad("Success(..)"),
+            Steal::Retry => f.pad("Retry"),
+        }
+    }
+}
+
+impl<T> FromIterator<Steal<T>> for Steal<T> {
+    /// Consumes items until a `Success` is found and returns it.
+    ///
+    /// If no `Success` was found, but there was at least one `Retry`, then returns `Retry`.
+    /// Otherwise, `Empty` is returned.
+    fn from_iter<I>(iter: I) -> Steal<T>
+    where
+        I: IntoIterator<Item = Steal<T>>,
+    {
+        let mut retry = false;
+        for s in iter {
+            match &s {
+                Steal::Empty => {}
+                Steal::Success(_) => return s,
+                Steal::Retry => retry = true,
+            }
+        }
+
+        if retry {
+            Steal::Retry
+        } else {
+            Steal::Empty
         }
     }
 }

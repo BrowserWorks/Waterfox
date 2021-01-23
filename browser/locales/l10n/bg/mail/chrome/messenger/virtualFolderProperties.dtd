@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Нова папка за запазени търсения">
+<!ENTITY name.label                 "Име:">
+<!ENTITY name.accesskey             "И">
+<!ENTITY description.label          "Създаване като подпапка на:">
+<!ENTITY description.accesskey      "С">
+
+<!ENTITY searchTermCaption.label "Конфигуриране на критерий за търсене:">
+
+<!ENTITY folderSelectionCaption.label "Изберете папки, в които да се търси:">
+<!ENTITY chooseFoldersButton.label "Избиране…">
+<!ENTITY chooseFoldersButton.accesskey "б">
+
+<!ENTITY searchOnline.label "Търсене в мрежата (дава актуални резултати за IMAP и новинарски папки, но увеличава времето за отварянето им)">
+<!ENTITY searchOnline.accesskey "м">
+<!ENTITY newFolderButton.label       "Създаване">
+<!ENTITY newFolderButton.accesskey   "ъ">
+<!ENTITY editFolderButton.label      "Обновяване">
+<!ENTITY editFolderButton.accesskey  "О">

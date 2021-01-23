@@ -9,6 +9,7 @@
     }
   },
   "hidden": true,
+  "default_locale": "default",
   "icons": {
     "16": "favicon.ico"
   },
@@ -18,9 +19,9 @@
   "chrome_settings_overrides": {
     "search_provider": {
       "name": "亚马逊",
-      "search_url": "https://www.amazon.cn/mn/searchApp",
+      "search_url": "__MSG_searchUrl__",
       "search_form": "https://www.amazon.cn/",
-      "search_url_get_params": "keywords={searchTerms}&ix=sunray&pageletid=headsearch&searchType=&Go.x=0&Go.y=0&bestSaleNum=0"
+      "search_url_get_params": "__MSG_searchUrlGetParams__"
     }
   }
 }

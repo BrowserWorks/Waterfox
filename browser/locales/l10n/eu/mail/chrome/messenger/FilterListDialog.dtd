@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Mezuen iragazkiak">
+<!ENTITY nameColumn.label "Iragazkiaren izena">
+<!ENTITY activeColumn.label "Gaituta">
+<!ENTITY newButton.label "Berria…">
+<!ENTITY newButton.accesskey "B">
+<!ENTITY newButton.popupCopy.label "Kopiatu…">
+<!ENTITY newButton.popupCopy.accesskey "K">
+<!ENTITY editButton.label "Editatu…">
+<!ENTITY editButton.accesskey "E">
+<!ENTITY deleteButton.label "Ezabatu">
+<!ENTITY deleteButton.accesskey "t">
+<!ENTITY reorderTopButton "Mugitu gora">
+<!ENTITY reorderTopButton.accessKey "o">
+<!ENTITY reorderTopButton.toolTip "Berrordenatu iragazkia gainontzeko guztien aurretik exekuta dadin">
+<!ENTITY reorderUpButton.label "Eraman gorantz">
+<!ENTITY reorderUpButton.accesskey "g">
+<!ENTITY reorderDownButton.label "Eraman beherantz">
+<!ENTITY reorderDownButton.accesskey "b">
+<!ENTITY reorderBottomButton "Mugitu behera">
+<!ENTITY reorderBottomButton.accessKey "b">
+<!ENTITY reorderBottomButton.toolTip "Berrordenatu iragazkia gainontzekoen ondoren exekuta dadin">
+<!ENTITY filterHeader.label "Gaitutako iragazkiak automatikoki exekutatzen dira, behean erakutsitako ordenan.">
+<!ENTITY filtersForPrefix.label "Honen iragazkiak:">
+<!ENTITY filtersForPrefix.accesskey "H">
+<!ENTITY viewLogButton.label "Iragazkien erregistroa">
+<!ENTITY viewLogButton.accesskey "e">
+<!ENTITY runFilters.label "Abiarazi orain">
+<!ENTITY runFilters.accesskey "r">
+<!ENTITY stopFilters.label "Gelditu">
+<!ENTITY stopFilters.accesskey "G">
+<!ENTITY folderPickerPrefix.label "Exekutatu eskuz aukeratutako iragazkia(k) karpeta honetan:">
+<!ENTITY folderPickerPrefix.accesskey "k">
+<!ENTITY helpButton.label "Laguntza">
+<!ENTITY helpButton.accesskey "L">
+<!ENTITY closeCmd.key "W"> 
+<!ENTITY searchBox.emptyText "Bilatu iragazkiak izenearen arabera…">
+
+
+

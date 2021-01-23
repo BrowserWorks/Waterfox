@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Treoraí Cuntais Chomhrá">
+
+<!ENTITY accountProtocolTitle.label   "Líonra comhrá">
+<!ENTITY accountProtocolInfo.label    "Roghnaigh líonra do chuntais chomhrá.">
+<!ENTITY accountProtocolField.label   "Líonra:">
+<!ENTITY accountProtocolGetMore.label "Tuilleadh…">
+
+<!ENTITY accountUsernameTitle.label   "Ainm an Úsáideora">
+<!ENTITY accountUsernameDuplicate.label "Tá an cuntas seo cumraithe cheana!">
+
+<!ENTITY accountPasswordTitle.label   "Focal Faire">
+<!ENTITY accountPasswordInfo.label    "Cuir d'fhocal faire sa mbosca thíos.">
+<!ENTITY accountPasswordField.label   "Focal Faire:">
+<!ENTITY accountPasswordManager.label "Sábhálfar an focal faire i mBainisteoir na bhFocal Faire. Fág an bosca seo folamh más mian leat d'fhocal faire a chur isteach gach uair a úsáidfidh tú an cuntas seo amach anseo.">
+
+<!ENTITY accountAdvancedTitle.label   "Ardroghanna">
+<!ENTITY accountAdvancedInfo.label    "Tá cead agat dul thar an chéim seo más mian leat.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Abair liom faoi theachtaireachtaí nua">
+<!ENTITY accountAliasGroupbox.caption "Ailias Logánta">
+<!ENTITY accountAliasField.label      "Ailias:">
+<!ENTITY accountAliasInfo.label       "Ní thaispeánfar é seo ach nuair a bheidh comhrá agat; ní fheicfidh teagmhálaithe i gcein é.">
+<!ENTITY accountProxySettings.caption "Socruithe an tSeachfhreastalaí">
+<!ENTITY accountProxySettings.change.label     "Athraigh…">
+<!ENTITY accountProxySettings.change.accessKey "A">
+
+<!ENTITY accountSummaryTitle.label   "Achoimre">
+<!ENTITY accountSummaryInfo.label    "Seo é achoimre ar an bhfaisnéis a chuir tú isteach. Dearbhaigh é sula gcruthóidh tú an cuntas.">
+<!ENTITY accountSummary.connectNow.label "Ceangail an cuntas seo anois.">

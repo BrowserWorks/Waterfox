@@ -6,10 +6,12 @@
 
 #include "MessagePortService.h"
 #include "MessagePortParent.h"
-#include "SharedMessagePortMessage.h"
+#include "mozilla/dom/SharedMessageBody.h"
+#include "mozilla/dom/quota/CheckedUnsafePtr.h"
 #include "mozilla/ipc/BackgroundParent.h"
 #include "mozilla/StaticPtr.h"
 #include "mozilla/Unused.h"
+#include "mozilla/WeakPtr.h"
 #include "nsTArray.h"
 
 using mozilla::ipc::AssertIsOnBackgroundThread;
@@ -27,6 +29,18 @@ void AssertIsInMainProcess() {
 
 }  // namespace
 
+struct MessagePortService::NextParent {
+  uint32_t mSequenceID;
+  // MessagePortParent keeps the service alive, and we don't want a cycle.
+  WeakPtr<MessagePortParent> mParent;
+};
+
+}  // namespace dom
+}  // namespace mozilla
+
+namespace mozilla {
+namespace dom {
+
 class MessagePortService::MessagePortServiceData final {
  public:
   explicit MessagePortServiceData(const nsID& aDestinationUUID)
@@ -43,21 +57,15 @@ class MessagePortService::MessagePortServiceData final {
   MessagePortServiceData(const MessagePortServiceData& aOther) = delete;
   MessagePortServiceData& operator=(const MessagePortServiceData&) = delete;
 
-  ~MessagePortServiceData() { MOZ_COUNT_DTOR(MessagePortServiceData); }
+  MOZ_COUNTED_DTOR(MessagePortServiceData)
 
   nsID mDestinationUUID;
 
   uint32_t mSequenceID;
-  MessagePortParent* mParent;
-
-  struct NextParent {
-    uint32_t mSequenceID;
-    // MessagePortParent keeps the service alive, and we don't want a cycle.
-    MessagePortParent* mParent;
-  };
+  CheckedUnsafePtr<MessagePortParent> mParent;
 
   FallibleTArray<NextParent> mNextParents;
-  FallibleTArray<RefPtr<SharedMessagePortMessage>> mMessages;
+  FallibleTArray<RefPtr<SharedMessageBody>> mMessages;
 
   bool mWaitingForNewParent;
   bool mNextStepCloseAll;
@@ -134,17 +142,17 @@ bool MessagePortService::RequestEntangling(MessagePortParent* aParent,
     // are destroyed because of JSStructuredCloneData borrowing.  So we use
     // Move to initialize things swapped and do it before we declare `array` so
     // that reverse destruction order works for us.
-    FallibleTArray<RefPtr<SharedMessagePortMessage>> messages(
+    FallibleTArray<RefPtr<SharedMessageBody>> messages(
         std::move(data->mMessages));
-    FallibleTArray<ClonedMessageData> array;
-    if (!SharedMessagePortMessage::FromSharedToMessagesParent(aParent, messages,
-                                                              array)) {
+    nsTArray<MessageData> array;
+    if (!SharedMessageBody::FromSharedToMessagesParent(aParent->Manager(),
+                                                       messages, array)) {
       CloseAll(aParent->ID());
       return false;
     }
 
     // We can entangle the port.
-    if (!aParent->Entangled(array)) {
+    if (!aParent->Entangled(std::move(array))) {
       CloseAll(aParent->ID());
       return false;
     }
@@ -160,8 +168,7 @@ bool MessagePortService::RequestEntangling(MessagePortParent* aParent,
 
   // This new parent will be the next one when a Disentangle request is
   // received from the current parent.
-  MessagePortServiceData::NextParent* nextParent =
-      data->mNextParents.AppendElement(mozilla::fallible);
+  auto nextParent = data->mNextParents.AppendElement(mozilla::fallible);
   if (!nextParent) {
     CloseAll(aParent->ID());
     return false;
@@ -175,7 +182,7 @@ bool MessagePortService::RequestEntangling(MessagePortParent* aParent,
 
 bool MessagePortService::DisentanglePort(
     MessagePortParent* aParent,
-    FallibleTArray<RefPtr<SharedMessagePortMessage>>& aMessages) {
+    FallibleTArray<RefPtr<SharedMessageBody>>& aMessages) {
   MessagePortServiceData* data;
   if (!mPorts.Get(aParent->ID(), &data)) {
     MOZ_ASSERT(false, "Unknown MessagePortParent should not happen.");
@@ -220,13 +227,13 @@ bool MessagePortService::DisentanglePort(
   data->mParent = nextParent;
   data->mNextParents.RemoveElementAt(index);
 
-  FallibleTArray<ClonedMessageData> array;
-  if (!SharedMessagePortMessage::FromSharedToMessagesParent(data->mParent,
-                                                            aMessages, array)) {
+  nsTArray<MessageData> array;
+  if (!SharedMessageBody::FromSharedToMessagesParent(data->mParent->Manager(),
+                                                     aMessages, array)) {
     return false;
   }
 
-  Unused << data->mParent->Entangled(array);
+  Unused << data->mParent->Entangled(std::move(array));
   return true;
 }
 
@@ -265,11 +272,16 @@ void MessagePortService::CloseAll(const nsID& aUUID, bool aForced) {
 
   if (data->mParent) {
     data->mParent->Close();
+    data->mParent = nullptr;
   }
 
-  for (const MessagePortServiceData::NextParent& parent : data->mNextParents) {
-    parent.mParent->CloseAndDelete();
+  for (const auto& nextParent : data->mNextParents) {
+    MessagePortParent* const parent = nextParent.mParent;
+    if (parent) {
+      parent->CloseAndDelete();
+    }
   }
+  data->mNextParents.Clear();
 
   nsID destinationUUID = data->mDestinationUUID;
 
@@ -314,7 +326,7 @@ void MessagePortService::MaybeShutdown() {
 
 bool MessagePortService::PostMessages(
     MessagePortParent* aParent,
-    FallibleTArray<RefPtr<SharedMessagePortMessage>>& aMessages) {
+    FallibleTArray<RefPtr<SharedMessageBody>>& aMessages) {
   MessagePortServiceData* data;
   if (!mPorts.Get(aParent->ID(), &data)) {
     MOZ_ASSERT(false, "Unknown MessagePortParent should not happend.");
@@ -336,9 +348,9 @@ bool MessagePortService::PostMessages(
   // If the parent can send data to the child, let's proceed.
   if (data->mParent && data->mParent->CanSendData()) {
     {
-      FallibleTArray<ClonedMessageData> messages;
-      if (!SharedMessagePortMessage::FromSharedToMessagesParent(
-              data->mParent, data->mMessages, messages)) {
+      nsTArray<MessageData> messages;
+      if (!SharedMessageBody::FromSharedToMessagesParent(
+              data->mParent->Manager(), data->mMessages, messages)) {
         return false;
       }
 

@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name "კალენდრის სამართავი ზოლი">
+<!ENTITY lightning.toolbar.calendar.name.accesskey "კ">
+<!ENTITY lightning.toolbar.task.name "დავალებების სამართავი ზოლი">
+<!ENTITY lightning.toolbar.task.name.accesskey "ა">
+
+<!ENTITY lightning.toolbar.sync.label "სინქრონიზაცია">
+<!ENTITY lightning.toolbar.sync.tooltip "კალენდრის ხელახლა ჩატვირთვა და ცვლილებების დასინქრონება">
+<!ENTITY lightning.toolbar.delete.label "წაშლა">
+<!ENTITY lightning.toolbar.delete.tooltip "შერჩეული ღონისძიებების ან დავალებების წაშლა">
+<!ENTITY lightning.toolbar.edit.label "ჩასწორება">
+<!ENTITY lightning.toolbar.edit.tooltip "შერჩეული ღონისძიებების ან დავალებების ჩასწორება">
+<!ENTITY lightning.toolbar.gototoday.label "დღევანდელზე გადასვლა">
+<!ENTITY lightning.toolbar.gototoday.tooltip "დღევანდელზე გადასვლა">
+<!ENTITY lightning.toolbar.print.label "ამობეჭდვა">
+<!ENTITY lightning.toolbar.print.tooltip "ღონისძიებების ან დავალებების ამობეჭდვა">
+
+<!-- Mode Toolbar -->
+<!ENTITY lightning.toolbar.calendar.label     "კალენდარი">
+<!ENTITY lightning.toolbar.calendar.tooltip   "გადასვლა კალენდრის დაფაზე">
+<!ENTITY lightning.toolbar.calendar.accesskey "კ">
+<!ENTITY lightning.toolbar.task.label         "დავალებები">
+<!ENTITY lightning.toolbar.task.tooltip       "გადასვლა დავალებების დაფაზე">
+<!ENTITY lightning.toolbar.task.accesskey     "ბ">
+
+<!-- Toolbar write button -->
+<!ENTITY lightning.toolbar.newevent.label     "ღონისძიება">
+<!ENTITY lightning.toolbar.newevent.tooltip   "ახალი ღონისძიების შექმნა">
+<!ENTITY lightning.toolbar.newtask.label      "დავალება">
+<!ENTITY lightning.toolbar.newtask.tooltip    "ახალი დავალების შექმნა">
+
+<!-- Calendar and Task Mode Toolbar -->
+<!ENTITY lightning.toolbar.day.label                 "დღე">
+<!ENTITY lightning.toolbar.day.accesskey             "დ">
+<!ENTITY lightning.toolbar.week.label                "კვირა">
+<!ENTITY lightning.toolbar.week.accesskey            "კ">
+<!ENTITY lightning.toolbar.multiweek.label           "მრავალი კვირა">
+<!ENTITY lightning.toolbar.multiweek.accesskey       "მ">
+<!ENTITY lightning.toolbar.month.label               "თვე">
+<!ENTITY lightning.toolbar.month.accesskey           "თ">
+<!-- LOCALIZATION NOTE: the same as appmenuButton.label and appmenuButton1.tooltip
+     from messenger.dtd -->
+<!ENTITY lightning.toolbar.appmenuButton.label       "გარე მენიუ">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip    "&brandShortName; მენიუს ჩვენება">
+<!ENTITY lightning.toolbar.calendarmenu.label        "კალენდრის არე">
+<!ENTITY lightning.toolbar.calendarmenu.accesskey    "ე">
+<!ENTITY lightning.toolbar.calendarpane.label        "კალენდრის არის გამოჩენა">
+<!ENTITY lightning.toolbar.calendarpane.accesskey    "გ">

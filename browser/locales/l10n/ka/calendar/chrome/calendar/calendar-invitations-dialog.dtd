@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- Calendar Invitations Dialog -->
+<!ENTITY calendar.invitations.dialog.invitations.text                   "მოსაწვევები">
+<!ENTITY calendar.invitations.dialog.statusmessage.updating.text        "მოსაწვევთა სიის განახლება.">
+<!ENTITY calendar.invitations.dialog.statusmessage.noinvitations.text   "დაუდასტურებელი მოწვევა ვერ მოიძებნა.">
+
+<!-- Calendar Invitations List -->
+<!ENTITY calendar.invitations.list.accept.button.label                  "მიღება">
+<!ENTITY calendar.invitations.list.decline.button.label                 "უარყოფა">
+<!ENTITY calendar.invitations.list.recurrentevent.text                  "განმეორებითი ღონისძიება">
+<!ENTITY calendar.invitations.list.alldayevent.text                     "მთელი დღის ღონისძიება">
+<!ENTITY calendar.invitations.list.location.text                        "ადგილი: ">
+<!ENTITY calendar.invitations.list.organizer.text                       "მოთავე: ">
+<!ENTITY calendar.invitations.list.attendee.text                        "დამსწრეები: ">
+<!ENTITY calendar.invitations.list.none.text                            "არცერთი">

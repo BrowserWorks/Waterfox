@@ -77,7 +77,7 @@ void JSONParser<CharT>::getTextPosition(uint32_t* column, uint32_t* line) {
 
 template <typename CharT>
 void JSONParser<CharT>::error(const char* msg) {
-  if (errorHandling == RaiseError) {
+  if (parseType == ParseType::JSONParse) {
     uint32_t column = 1, line = 1;
     getTextPosition(&column, &line);
 
@@ -93,7 +93,9 @@ void JSONParser<CharT>::error(const char* msg) {
   }
 }
 
-bool JSONParserBase::errorReturn() { return errorHandling == NoError; }
+bool JSONParserBase::errorReturn() {
+  return parseType == ParseType::AttemptForEval;
+}
 
 template <typename CharT>
 template <JSONParserBase::StringType ST>
@@ -120,9 +122,10 @@ JSONParserBase::Token JSONParser<CharT>::readString() {
     if (*current == '"') {
       size_t length = current - start;
       current++;
-      JSFlatString* str = (ST == JSONParser::PropertyName)
-                              ? AtomizeChars(cx, start.get(), length)
-                              : NewStringCopyN<CanGC>(cx, start.get(), length);
+      JSLinearString* str =
+          (ST == JSONParser::PropertyName)
+              ? AtomizeChars(cx, start.get(), length)
+              : NewStringCopyN<CanGC>(cx, start.get(), length);
       if (!str) {
         return token(OOM);
       }
@@ -156,9 +159,9 @@ JSONParserBase::Token JSONParser<CharT>::readString() {
 
     char16_t c = *current++;
     if (c == '"') {
-      JSFlatString* str = (ST == JSONParser::PropertyName)
-                              ? buffer.finishAtom()
-                              : buffer.finishString();
+      JSLinearString* str = (ST == JSONParser::PropertyName)
+                                ? buffer.finishAtom()
+                                : buffer.finishString();
       if (!str) {
         return token(OOM);
       }
@@ -666,8 +669,19 @@ bool JSONParser<CharT>::parse(MutableHandleValue vp) {
       JSONMember:
         if (token == String) {
           jsid id = AtomToId(atomValue());
+          if (parseType == ParseType::AttemptForEval) {
+            // In |JSON.parse|, "__proto__" is a property like any other and may
+            // appear multiple times. In object literal syntax, "__proto__" is
+            // prototype mutation and can appear at most once. |JSONParser| only
+            // supports the former semantics, so if this parse attempt is for
+            // |eval|, return true (without reporting an error) to indicate the
+            // JSON parse attempt was unsuccessful.
+            if (id == NameToId(cx->names().proto)) {
+              return true;
+            }
+          }
           PropertyVector& properties = stack.back().properties();
-          if (!properties.append(IdValuePair(id))) {
+          if (!properties.emplaceBack(id)) {
             return false;
           }
           token = advancePropertyColon();

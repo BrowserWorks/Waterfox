@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Ընտրված ցանկի հատկությունները">
+
+<!ENTITY Select.label "Ընտրված ցանկը">
+<!ENTITY SelectName.label "Ցանկի անունը.">
+<!ENTITY SelectName.accesskey "N">
+<!ENTITY SelectSize.label "Բարձր-ը.">
+<!ENTITY SelectSize.accesskey "H">
+<!ENTITY SelectMultiple.label "Մի քանիսը">
+<!ENTITY SelectMultiple.accesskey "M">
+<!ENTITY SelectDisabled.label "Անջատված է">
+<!ENTITY SelectDisabled.accesskey "D">
+<!ENTITY SelectTabIndex.label "Էջի ցուցիչը.">
+<!ENTITY SelectTabIndex.accesskey "I">
+
+<!ENTITY OptGroup.label "Խմբի ընտրանքը">
+<!ENTITY OptGroupLabel.label "Նիշը.">
+<!ENTITY OptGroupLabel.accesskey "L">
+<!ENTITY OptGroupDisabled.label "Անջատված է">
+<!ENTITY OptGroupDisabled.accesskey "D">
+
+<!ENTITY Option.label "Ընտրանքը">
+<!ENTITY OptionText.label "Տեքստը.">
+<!ENTITY OptionText.accesskey "T">
+<!ENTITY OptionValue.label "Նշանակությունը.">
+<!ENTITY OptionValue.accesskey "V">
+<!ENTITY OptionSelected.label "Մասնակի ընտրված">
+<!ENTITY OptionSelected.accesskey "S">
+<!ENTITY OptionDisabled.label "Անջատված է">
+<!ENTITY OptionDisabled.accesskey "D">
+
+<!ENTITY TextHeader.label "Տեքստը">
+<!ENTITY ValueHeader.label "Նշանակությունը">
+<!ENTITY SelectedHeader.label "Ընտրված">
+
+<!ENTITY AddOption.label "Ավելացնել ընտրանք">
+<!ENTITY AddOption.accesskey "O">
+<!ENTITY AddOptGroup.label "Ավելացնել խումբ">
+<!ENTITY AddOptGroup.accesskey "G">
+<!ENTITY RemoveElement.label "Հեռացնել">
+<!ENTITY RemoveElement.accesskey "R">
+<!ENTITY MoveElementUp.label "Վեր">
+<!ENTITY MoveElementUp.accesskey "U">
+<!ENTITY MoveElementDown.label "Վար">
+<!ENTITY MoveElementDown.accesskey "D">

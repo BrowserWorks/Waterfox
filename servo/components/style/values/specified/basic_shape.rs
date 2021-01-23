@@ -9,8 +9,7 @@
 
 use crate::parser::{Parse, ParserContext};
 use crate::values::generics::basic_shape as generic;
-use crate::values::generics::basic_shape::{GeometryBox, Path, PolygonCoord};
-use crate::values::generics::basic_shape::{ShapeBox, ShapeSource};
+use crate::values::generics::basic_shape::{Path, PolygonCoord};
 use crate::values::generics::rect::Rect;
 use crate::values::specified::border::BorderRadius;
 use crate::values::specified::image::Image;
@@ -20,20 +19,19 @@ use crate::values::specified::SVGPathData;
 use crate::values::specified::{LengthPercentage, NonNegativeLengthPercentage};
 use crate::Zero;
 use cssparser::Parser;
-use std::fmt::{self, Write};
-use style_traits::{CssWriter, ParseError, StyleParseErrorKind, ToCss};
+use style_traits::{ParseError, StyleParseErrorKind};
 
 /// A specified alias for FillRule.
 pub use crate::values::generics::basic_shape::FillRule;
 
-/// A specified clipping shape.
-pub type ClippingShape = generic::ClippingShape<BasicShape, SpecifiedUrl>;
+/// A specified `clip-path` value.
+pub type ClipPath = generic::GenericClipPath<BasicShape, SpecifiedUrl>;
 
-/// A specified float area shape.
-pub type FloatAreaShape = generic::FloatAreaShape<BasicShape, Image>;
+/// A specified `shape-outside` value.
+pub type ShapeOutside = generic::GenericShapeOutside<BasicShape, Image>;
 
 /// A specified basic shape.
-pub type BasicShape = generic::BasicShape<
+pub type BasicShape = generic::GenericBasicShape<
     HorizontalPosition,
     VerticalPosition,
     LengthPercentage,
@@ -59,108 +57,97 @@ pub type Polygon = generic::GenericPolygon<LengthPercentage>;
 
 #[cfg(feature = "gecko")]
 fn is_clip_path_path_enabled(context: &ParserContext) -> bool {
-    use crate::gecko_bindings::structs::mozilla;
-    context.chrome_rules_enabled() ||
-        unsafe { mozilla::StaticPrefs_sVarCache_layout_css_clip_path_path_enabled }
+    context.chrome_rules_enabled() || static_prefs::pref!("layout.css.clip-path-path.enabled")
 }
 #[cfg(feature = "servo")]
 fn is_clip_path_path_enabled(_: &ParserContext) -> bool {
     false
 }
 
-impl Parse for ClippingShape {
-    #[inline]
-    fn parse<'i, 't>(
-        context: &ParserContext,
-        input: &mut Parser<'i, 't>,
-    ) -> Result<Self, ParseError<'i>> {
-        if is_clip_path_path_enabled(context) {
-            if let Ok(p) = input.try(|i| Path::parse(context, i)) {
-                return Ok(ShapeSource::Path(p));
-            }
-        }
-
-        if let Ok(url) = input.try(|i| SpecifiedUrl::parse(context, i)) {
-            return Ok(ShapeSource::ImageOrUrl(url));
-        }
-
-        Self::parse_common(context, input)
-    }
-}
-
-impl Parse for FloatAreaShape {
-    #[inline]
-    fn parse<'i, 't>(
-        context: &ParserContext,
-        input: &mut Parser<'i, 't>,
-    ) -> Result<Self, ParseError<'i>> {
-        if let Ok(image) = input.try(|i| Image::parse_with_cors_anonymous(context, i)) {
-            return Ok(ShapeSource::ImageOrUrl(image));
-        }
-
-        Self::parse_common(context, input)
-    }
-}
-
-impl<ReferenceBox, ImageOrUrl> ShapeSource<BasicShape, ReferenceBox, ImageOrUrl>
+/// A helper for both clip-path and shape-outside parsing of shapes.
+fn parse_shape_or_box<'i, 't, R, ReferenceBox>(
+    context: &ParserContext,
+    input: &mut Parser<'i, 't>,
+    to_shape: impl FnOnce(Box<BasicShape>, ReferenceBox) -> R,
+    to_reference_box: impl FnOnce(ReferenceBox) -> R,
+) -> Result<R, ParseError<'i>>
 where
-    ReferenceBox: Parse,
+    ReferenceBox: Default + Parse,
 {
-    /// The internal parser for ShapeSource.
-    fn parse_common<'i, 't>(
+    fn parse_component<U: Parse>(
+        context: &ParserContext,
+        input: &mut Parser,
+        component: &mut Option<U>,
+    ) -> bool {
+        if component.is_some() {
+            return false; // already parsed this component
+        }
+
+        *component = input.try(|i| U::parse(context, i)).ok();
+        component.is_some()
+    }
+
+    let mut shape = None;
+    let mut ref_box = None;
+
+    while parse_component(context, input, &mut shape) ||
+        parse_component(context, input, &mut ref_box)
+    {
+        //
+    }
+
+    if let Some(shp) = shape {
+        return Ok(to_shape(Box::new(shp), ref_box.unwrap_or_default()));
+    }
+
+    match ref_box {
+        Some(r) => Ok(to_reference_box(r)),
+        None => Err(input.new_custom_error(StyleParseErrorKind::UnspecifiedError)),
+    }
+}
+
+impl Parse for ClipPath {
+    #[inline]
+    fn parse<'i, 't>(
         context: &ParserContext,
         input: &mut Parser<'i, 't>,
     ) -> Result<Self, ParseError<'i>> {
         if input.try(|i| i.expect_ident_matching("none")).is_ok() {
-            return Ok(ShapeSource::None);
+            return Ok(ClipPath::None);
         }
 
-        fn parse_component<U: Parse>(
-            context: &ParserContext,
-            input: &mut Parser,
-            component: &mut Option<U>,
-        ) -> bool {
-            if component.is_some() {
-                return false; // already parsed this component
+        if is_clip_path_path_enabled(context) {
+            if let Ok(p) = input.try(|i| Path::parse(context, i)) {
+                return Ok(ClipPath::Path(p));
             }
-
-            *component = input.try(|i| U::parse(context, i)).ok();
-            component.is_some()
         }
 
-        let mut shape = None;
-        let mut ref_box = None;
-
-        while parse_component(context, input, &mut shape) ||
-            parse_component(context, input, &mut ref_box)
-        {
-            //
+        if let Ok(url) = input.try(|i| SpecifiedUrl::parse(context, i)) {
+            return Ok(ClipPath::Url(url));
         }
 
-        if let Some(shp) = shape {
-            return Ok(ShapeSource::Shape(Box::new(shp), ref_box));
-        }
-
-        ref_box
-            .map(ShapeSource::Box)
-            .ok_or(input.new_custom_error(StyleParseErrorKind::UnspecifiedError))
+        parse_shape_or_box(context, input, ClipPath::Shape, ClipPath::Box)
     }
 }
 
-impl Parse for GeometryBox {
+impl Parse for ShapeOutside {
+    #[inline]
     fn parse<'i, 't>(
-        _context: &ParserContext,
+        context: &ParserContext,
         input: &mut Parser<'i, 't>,
     ) -> Result<Self, ParseError<'i>> {
-        if let Ok(shape_box) = input.try(ShapeBox::parse) {
-            return Ok(GeometryBox::ShapeBox(shape_box));
+        // Need to parse this here so that `Image::parse_with_cors_anonymous`
+        // doesn't parse it.
+        if input.try(|i| i.expect_ident_matching("none")).is_ok() {
+            return Ok(ShapeOutside::None);
         }
 
-        try_match_ident_ignore_ascii_case! { input,
-            "fill-box" => Ok(GeometryBox::FillBox),
-            "stroke-box" => Ok(GeometryBox::StrokeBox),
-            "view-box" => Ok(GeometryBox::ViewBox),
+        if let Ok(image) = input.try(|i| Image::parse_with_cors_anonymous(context, i)) {
+            debug_assert_ne!(image, Image::None);
+            return Ok(ShapeOutside::Image(image));
         }
+
+        parse_shape_or_box(context, input, ShapeOutside::Shape, ShapeOutside::Box)
     }
 }
 
@@ -239,23 +226,6 @@ impl Circle {
     }
 }
 
-impl ToCss for Circle {
-    fn to_css<W>(&self, dest: &mut CssWriter<W>) -> fmt::Result
-    where
-        W: Write,
-    {
-        dest.write_str("circle(")?;
-        if generic::ShapeRadius::ClosestSide != self.radius {
-            self.radius.to_css(dest)?;
-            dest.write_str(" ")?;
-        }
-
-        dest.write_str("at ")?;
-        self.position.to_css(dest)?;
-        dest.write_str(")")
-    }
-}
-
 impl Parse for Ellipse {
     fn parse<'i, 't>(
         context: &ParserContext,
@@ -290,41 +260,6 @@ impl Ellipse {
             semiaxis_y: b,
             position: position,
         })
-    }
-}
-
-impl ToCss for Ellipse {
-    fn to_css<W>(&self, dest: &mut CssWriter<W>) -> fmt::Result
-    where
-        W: Write,
-    {
-        dest.write_str("ellipse(")?;
-        if self.semiaxis_x != ShapeRadius::default() || self.semiaxis_y != ShapeRadius::default() {
-            self.semiaxis_x.to_css(dest)?;
-            dest.write_str(" ")?;
-            self.semiaxis_y.to_css(dest)?;
-            dest.write_str(" ")?;
-        }
-
-        dest.write_str("at ")?;
-        self.position.to_css(dest)?;
-        dest.write_str(")")
-    }
-}
-
-impl Parse for ShapeRadius {
-    fn parse<'i, 't>(
-        context: &ParserContext,
-        input: &mut Parser<'i, 't>,
-    ) -> Result<Self, ParseError<'i>> {
-        if let Ok(lp) = input.try(|i| NonNegativeLengthPercentage::parse(context, i)) {
-            return Ok(generic::ShapeRadius::Length(lp));
-        }
-
-        try_match_ident_ignore_ascii_case! { input,
-            "closest-side" => Ok(generic::ShapeRadius::ClosestSide),
-            "farthest-side" => Ok(generic::ShapeRadius::FarthestSide),
-        }
     }
 }
 

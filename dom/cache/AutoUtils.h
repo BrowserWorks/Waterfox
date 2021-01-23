@@ -8,6 +8,7 @@
 #define mozilla_dom_cache_AutoUtils_h
 
 #include "mozilla/Attributes.h"
+#include "mozilla/dom/SafeRefPtr.h"
 #include "mozilla/dom/cache/CacheTypes.h"
 #include "mozilla/dom/cache/Types.h"
 #include "mozilla/dom/cache/TypeUtils.h"
@@ -53,10 +54,11 @@ class MOZ_STACK_CLASS AutoChildOpArgs final {
                   uint32_t aEntryCount);
   ~AutoChildOpArgs();
 
-  void Add(InternalRequest* aRequest, BodyAction aBodyAction,
+  void Add(const InternalRequest& aRequest, BodyAction aBodyAction,
            SchemeAction aSchemeAction, ErrorResult& aRv);
-  void Add(JSContext* aCx, InternalRequest* aRequest, BodyAction aBodyAction,
-           SchemeAction aSchemeAction, Response& aResponse, ErrorResult& aRv);
+  void Add(JSContext* aCx, const InternalRequest& aRequest,
+           BodyAction aBodyAction, SchemeAction aSchemeAction,
+           Response& aResponse, ErrorResult& aRv);
 
   const CacheOpArgs& SendAsOpArgs();
 
@@ -73,18 +75,18 @@ class MOZ_STACK_CLASS AutoParentOpResult final {
                      const CacheOpResult& aOpResult, uint32_t aEntryCount);
   ~AutoParentOpResult();
 
-  void Add(CacheId aOpenedCacheId, Manager* aManager);
-  void Add(const SavedResponse& aSavedResponse, StreamList* aStreamList);
-  void Add(const SavedRequest& aSavedRequest, StreamList* aStreamList);
+  void Add(CacheId aOpenedCacheId, SafeRefPtr<Manager> aManager);
+  void Add(const SavedResponse& aSavedResponse, StreamList& aStreamList);
+  void Add(const SavedRequest& aSavedRequest, StreamList& aStreamList);
 
   const CacheOpResult& SendAsOpResult();
 
  private:
   void SerializeResponseBody(const SavedResponse& aSavedResponse,
-                             StreamList* aStreamList,
+                             StreamList& aStreamList,
                              CacheResponse* aResponseOut);
 
-  void SerializeReadStream(const nsID& aId, StreamList* aStreamList,
+  void SerializeReadStream(const nsID& aId, StreamList& aStreamList,
                            CacheReadStream* aReadStreamOut);
 
   mozilla::ipc::PBackgroundParent* mManager;

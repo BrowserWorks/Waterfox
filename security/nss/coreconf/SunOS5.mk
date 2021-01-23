@@ -35,13 +35,11 @@ DEFAULT_COMPILER = cc
 ifdef NS_USE_GCC
 	CC         = gcc
 	OS_CFLAGS += -Wall -Wno-format -Werror-implicit-function-declaration -Wno-switch
+	OS_CFLAGS += -D__EXTENSIONS__
 	CCC        = g++
 	CCC       += -Wall -Wno-format
 	ASFLAGS	  += -x assembler-with-cpp
 	OS_CFLAGS += $(NOMD_OS_CFLAGS) $(ARCHFLAG)
-	ifdef USE_MDUPDATE
-		OS_CFLAGS += -MDupdate $(DEPENDENCIES)
-	endif
 	ifdef BUILD_OPT
 	    OPTIMIZER = -O2
 	    # Enable this for accurate dtrace profiling

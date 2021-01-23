@@ -1,0 +1,112 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailWizard.title               "Konfigurer din eksisterende e-postkonto">
+<!ENTITY emailWizard.caption             "Bruk din gjeldende e-postadresse">
+<!ENTITY name.label                      "Navnet ditt:">
+<!ENTITY name.accesskey                  "N">
+<!ENTITY fullname.placeholder            "Ditt fulle navn">
+<!ENTITY name.text                       "Navnet ditt, slik andre skal se det">
+<!ENTITY name.error                      "Skriv inn navnet ditt">
+<!ENTITY email.label                     "E-postadresse:">
+<!ENTITY email.accesskey                 "E">
+<!ENTITY email3.placeholder              "Din e-postadresse">
+<!ENTITY email.text                      "Din eksisterende e-postadresse">
+<!ENTITY email.error                     "Ugyldig e-postadresse">
+<!ENTITY password.label                  "Passord:">
+<!ENTITY password.accesskey              "P">
+<!ENTITY password.placeholder            "Passord">
+<!ENTITY password.text                   "Valgfritt, brukes bare for å kontrollere brukernavnet">
+<!ENTITY password.toggle                 "Vis/skjul passord">
+<!ENTITY rememberPassword.label          "Husk passord">
+<!ENTITY rememberPassword.accesskey      "H">
+<!ENTITY usernameEx.label                "Din innloggning:">
+<!ENTITY usernameEx.accesskey            "l">
+<!-- LOCALIZATION NOTE(usernameEx.placeholder): YOURDOMAIN refers to the Windows domain in ActiveDirectory. yourusername refers to the user's account name in Windows. -->
+<!ENTITY usernameEx.placeholder          "DITTDOMENE\dittbrukernavn">
+<!-- LOCALIZATION NOTE(usernameEx.text): Domain refers to the Windows domain in ActiveDirectory. We mean the user's login in Windows at the local corporate network. -->
+<!ENTITY usernameEx.text                 "Domeneinnlogging">
+
+<!ENTITY protocol.label                  "Protokoll:">
+<!ENTITY imapLong.label                  "IMAP (mapper på serveren)">
+<!ENTITY pop3Long.label                  "POP3 (e-post lagres på datamaskinen din)">
+
+<!ENTITY manualConfigTable.summary       "Serverinnstillinger">
+<!ENTITY incoming.label                  "Innkommende:">
+<!ENTITY incomingColumn.label            "Innkommende">
+<!ENTITY outgoing.label                  "Utgående:">
+<!ENTITY outgoingColumn.label            "Utgående">
+<!ENTITY username.label                  "Brukernavn:">
+<!ENTITY serverRow.label                 "Server:">
+<!ENTITY portRow.label                   "Port:">
+<!ENTITY sslRow.label                    "SSL:">
+<!ENTITY auth.label                      "Autentisering">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label                      "POP3">
+<!-- LOCALIZATION NOTE(exchange.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange.label                  "Exchange">
+<!ENTITY smtp.label                      "SMTP">
+<!ENTITY autodetect.label                "Oppdag automatisk">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "Ingen">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!-- LOCALIZATION NOTE(exchange-hostname.label): Do not translate Exchange, it is a product name. -->
+<!ENTITY exchange-hostname.label         "Exchange-server:">
+
+<!ENTITY advancedSetup.label             "Avanserte innstillinger">
+<!ENTITY advancedSetup.accesskey         "v">
+<!ENTITY cancel.label                    "Avbryt">
+<!ENTITY cancel.accesskey                "A">
+<!ENTITY continue.label                  "Fortsett">
+<!ENTITY continue.accesskey              "F">
+<!ENTITY stop.label                      "Stopp">
+<!ENTITY stop.accesskey                  "S">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual config mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "Test på nytt">
+<!ENTITY half-manual-test.accesskey      "T">
+<!ENTITY manual-config.label             "Konfigurer manuelt…">
+<!ENTITY manual-config.accesskey         "m">
+<!ENTITY open-provisioner.label          "Få en ny e-postadresse …">
+<!ENTITY open-provisioner.accesskey      "a">
+
+
+<!ENTITY get-help.label                  "Få hjelp">
+<!ENTITY get-help.accesskey              "h">
+
+
+<!ENTITY warning.label                   "Advarsel!">
+<!ENTITY incomingSettings.label          "Innkommende innstillinger:">
+<!ENTITY outgoingSettings.label          "Utgående innstillinger:">
+<!ENTITY technicaldetails.label          "Tekniske detaljer">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "Jeg forstår risikoen.">
+<!ENTITY confirmWarning.accesskey        "e">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "Ferdig">
+<!ENTITY doneAccount.accesskey           "F">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "Endre innstillinger">
+<!ENTITY changeSettings.accesskey        "E">
+
+<!ENTITY contactYourProvider.description "&brandShortName; kan la deg laste ned e-post med de gitte konfigurasjonene. Men du bør kontakte systemansvarlig eller e-posttilbyderen om disse feilaktige tilkoblingene. Se Thunderbird FAQ for mer informasjon.">
+
+<!ENTITY insecureServer.tooltip.title    "Advarsel! Dette er en usikker server.">
+<!ENTITY insecureServer.tooltip.details  "Trykk på sirkelen for mer informasjon.">
+
+<!ENTITY insecureUnencrypted.description "E-posten og autentiseringen sendes i klartekst, slik at passordet (og meldingen) kan enkelt leses av andre. &brandShortName; lar deg bruke e-posten, men du bør be e-posttilbyderen om å konfigurere serveren med sikker tilkobling.">
+<!ENTITY insecureSelfSigned.description  "Serveren bruker et sertifikat som vi ikke kan stole på, og vi kan derfor ikke være sikre på at noen fanger opp trafikken mellom &brandShortName; og serveren. &brandShortName; lar deg bruke e-posten likevel, men du bør be e-posttilbyderen om å konfigurere serveren med et tiltrodd sertifikat.">
+<!ENTITY secureServer.description        "Gratulerer! Dette er en sikker server.">

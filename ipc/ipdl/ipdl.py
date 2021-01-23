@@ -3,11 +3,11 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 from __future__ import print_function
 
+from io import StringIO
 import optparse
 import os
 import sys
-from cStringIO import StringIO
-from ConfigParser import RawConfigParser
+from configparser import RawConfigParser
 
 import ipdl
 
@@ -75,6 +75,11 @@ parser = RawConfigParser()
 parser.readfp(open(options.syncMsgList))
 syncMsgList = parser.sections()
 
+for section in syncMsgList:
+    if not parser.get(section, "description"):
+        print('Error: Sync message %s lacks a description' % section, file=sys.stderr)
+        sys.exit(1)
+
 # Read message metadata. Right now we only have 'segment_capacity'
 # for the standard segment size used for serialization.
 log(2, 'Reading message metadata...')
@@ -126,7 +131,7 @@ for f in files:
 
     if ast.protocol:
         allmessages[ast.protocol.name] = ipdl.genmsgenum(ast)
-        allprotocols.append('%sMsgStart' % ast.protocol.name)
+        allprotocols.append(ast.protocol.name)
         # e.g. PContent::RequestMemoryReport (not prefixed or suffixed.)
         for md in ast.protocol.messageDecls:
             allmessageprognames.append('%s::%s' % (md.namespace, md.decl.progname))
@@ -153,7 +158,7 @@ enum IPCMessageStart {
 """, file=ipcmsgstart)
 
 for name in allprotocols:
-    print("  %s," % name, file=ipcmsgstart)
+    print("  %sMsgStart," % name, file=ipcmsgstart)
 
 print("""
   LastMsgIndex
@@ -223,6 +228,26 @@ print("""
 }
 
 } // namespace IPC
+
+namespace mozilla {
+namespace ipc {
+
+const char* ProtocolIdToName(IPCMessageStart aId) {
+  switch (aId) {
+""", file=ipc_msgtype_name)
+
+for name in allprotocols:
+    print("    case %sMsgStart:" % name, file=ipc_msgtype_name)
+    print("      return \"%s\";" % name, file=ipc_msgtype_name)
+
+print("""
+  default:
+    return "<unknown protocol id>";
+  }
+}
+
+} // namespace ipc
+} // namespace mozilla
 """, file=ipc_msgtype_name)
 
 ipdl.writeifmodified(ipcmsgstart.getvalue(), ipcmessagestartpath)

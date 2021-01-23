@@ -1,0 +1,78 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY name.label                      "Ձեր անունը.">
+<!ENTITY name.accesskey                  "n">
+<!ENTITY name.text                       "Ձեր անունը, որը ցուցադրվելու է բոլորին">
+<!ENTITY email.label                     "Էլ. հասցեն.">
+<!ENTITY email.accesskey                 "l">
+<!ENTITY password.label                  "Գաղտնաբառ.">
+<!ENTITY password.accesskey              "P">
+<!ENTITY password.placeholder            "Գաղտնաբառ">
+<!ENTITY password.text                   "Լրացուցիչ, օգտագործվելու է միայն մականունը հաստատելու համար">
+<!ENTITY rememberPassword.label          "Հիշել գաղտնաբառը">
+<!ENTITY rememberPassword.accesskey      "m">
+
+<!ENTITY imapLong.label                  "IMAP (հեռադիր թղթապանակներ)">
+<!ENTITY pop3Long.label                  "POP3 (նամակները կպահվեն համակարգչում)">
+
+<!ENTITY incoming.label                  "Մուտքային.">
+<!ENTITY outgoing.label                  "ចេញ៖">
+<!ENTITY username.label                  "ឈ្មោះ​អ្នកប្រើ៖">
+<!ENTITY auth.label                      "Վավերացում">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label                       "POP3">
+<!ENTITY smtp.label                      "SMTP">
+<!ENTITY autodetect.label                "Ինքնորոշում">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "Չկա">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!ENTITY advancedSetup.label             "Ընդլայնված կարգ.">
+<!ENTITY advancedSetup.accesskey         "A">
+<!ENTITY cancel.label                    "Չեղարկել">
+<!ENTITY cancel.accesskey                "a">
+<!ENTITY continue.label                  "Շարունակել">
+<!ENTITY continue.accesskey              "C">
+<!ENTITY stop.label                      "Կանգնեցնել">
+<!ENTITY stop.accesskey                  "S">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual edit mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "Փորձել">
+<!ENTITY half-manual-test.accesskey      "t">
+
+
+<!ENTITY warning.label                   "Զգուշացում!">
+<!ENTITY incomingSettings.label          "Մուտքային կարգավորումներ.">
+<!ENTITY outgoingSettings.label          "Ելքային կարգավորումներ.">
+<!ENTITY technicaldetails.label          "Տեխնիկական մանրամասներ">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "Ես հասկանում եմ ռիսկերը։">
+<!ENTITY confirmWarning.accesskey        "u">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "Պատրաստ է">
+<!ENTITY doneAccount.accesskey           "D">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "Փոխել կարգավորումը">
+<!ENTITY changeSettings.accesskey        "S">
+
+<!ENTITY contactYourProvider.description "&brandShortName;-ը հնարավորություն է տալիս ստանալ Ձեր նամակները ըստ ներկայացված կարգավորումների։ Մանրամասները Thunderbird-ի ՀՏՀ-ում։">
+
+<!ENTITY insecureServer.tooltip.title    "Զգուշացում. Սա անվտանգ սպասարկիչ է։">
+<!ENTITY insecureServer.tooltip.details  "Սեղմեք շրջանին՝ մանրամասների համար։">
+
+<!ENTITY insecureUnencrypted.description "Ձեր նամակը և վավերացումը ուղարկվել են չկոդավորված, ուստի Ձեր գաղտնաբառը (նաև նամակը) կարող են հասանելի լինել այլ մարդկանց։ &brandShortName;-ը հնարավորություն կտա ստանալ նամակներ, բայց անվտագ միացման կարգավորումների համար պետք է դիմեք էլ. փոստի Ձեր մատակարարին։">
+<!ENTITY insecureSelfSigned.description  "Սպասարկիչը օգտագործում է անվստահելի հավաստագիր և մենք չենք կարող երաշխավորել տվյալների փոխանցման անվտանգությունը &brandShortName;-ի և Ձեր սպասարկիչի միջև։ &brandShortName;-ը հնարավորություն կտա ստանալ նամակներ, բայց անվտագ միացման կարգավորումների համար պետք է դիմեք էլ. փոստի Ձեր մատակարարին։">
+<!ENTITY secureServer.description        "Շնորհավորում ենք! Սա անվտանգ սպասարկիչ է։">

@@ -40,75 +40,6 @@ function validateHistogramEntryCount(aHistogramName, aExpectedCount) {
   );
 }
 
-function promiseMakeCredentialRequest(tab) {
-  return ContentTask.spawn(tab.linkedBrowser, null, () => {
-    const cose_alg_ECDSA_w_SHA256 = -7;
-
-    let publicKey = {
-      rp: { id: content.document.domain, name: "none", icon: "none" },
-      user: {
-        id: new Uint8Array(),
-        name: "none",
-        icon: "none",
-        displayName: "none",
-      },
-      challenge: content.crypto.getRandomValues(new Uint8Array(16)),
-      timeout: 5000, // the minimum timeout is actually 15 seconds
-      pubKeyCredParams: [{ type: "public-key", alg: cose_alg_ECDSA_w_SHA256 }],
-      attestation: "direct",
-    };
-
-    return content.navigator.credentials.create({ publicKey }).then(cred => {
-      return {
-        attObj: cred.response.attestationObject,
-        rawId: cred.rawId,
-      };
-    });
-  });
-}
-
-function promiseGetAssertionRequest(tab, rawId) {
-  /* eslint-disable no-shadow */
-  return ContentTask.spawn(tab.linkedBrowser, [rawId], ([rawId]) => {
-    let newCredential = {
-      type: "public-key",
-      transports: ["usb"],
-      id: rawId,
-    };
-
-    let publicKey = {
-      challenge: content.crypto.getRandomValues(new Uint8Array(16)),
-      timeout: 5000, // the minimum timeout is actually 15 seconds
-      rpId: content.document.domain,
-      allowCredentials: [newCredential],
-    };
-
-    return content.navigator.credentials.get({ publicKey }).then(assertion => {
-      return {
-        clientDataJSON: assertion.response.clientDataJSON,
-        authData: assertion.response.authenticatorData,
-        signature: assertion.response.signature,
-      };
-    });
-  });
-  /* eslint-enable no-shadow */
-}
-
-function checkRpIdHash(rpIdHash) {
-  return crypto.subtle
-    .digest("SHA-256", string2buffer("example.com"))
-    .then(calculatedRpIdHash => {
-      let calcHashStr = bytesToBase64UrlSafe(
-        new Uint8Array(calculatedRpIdHash)
-      );
-      let providedHashStr = bytesToBase64UrlSafe(new Uint8Array(rpIdHash));
-
-      if (calcHashStr != providedHashStr) {
-        throw new Error("Calculated RP ID hash doesn't match.");
-      }
-    });
-}
-
 add_task(async function test_setup() {
   cleanupTelemetry();
 
@@ -131,24 +62,26 @@ add_task(async function test() {
   let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser, TEST_URL);
 
   // Create a new credential.
-  let { attObj, rawId } = await promiseMakeCredentialRequest(tab);
+  let { attObj, rawId } = await promiseWebAuthnMakeCredential(tab);
   let { authDataObj } = await webAuthnDecodeCBORAttestation(attObj);
 
   // Make sure the RP ID hash matches what we calculate.
-  await checkRpIdHash(authDataObj.rpIdHash);
+  await checkRpIdHash(authDataObj.rpIdHash, "example.com");
 
   // Get a new assertion.
   let {
     clientDataJSON,
-    authData,
+    authenticatorData,
     signature,
-  } = await promiseGetAssertionRequest(tab, rawId);
+  } = await promiseWebAuthnGetAssertion(tab, rawId);
 
   // Check the we can parse clientDataJSON.
   JSON.parse(buffer2string(clientDataJSON));
 
   // Check auth data.
-  let attestation = await webAuthnDecodeAuthDataArray(new Uint8Array(authData));
+  let attestation = await webAuthnDecodeAuthDataArray(
+    new Uint8Array(authenticatorData)
+  );
   is(
     attestation.flags,
     flag_TUP,
@@ -181,22 +114,22 @@ add_task(async function test() {
     "Scalar keys are set: " + Object.keys(webauthn_used).join(", ")
   );
   is(
-    webauthn_used["U2FRegisterFinish"],
+    webauthn_used.U2FRegisterFinish,
     1,
     "webauthn_used U2FRegisterFinish scalar should be 1"
   );
   is(
-    webauthn_used["U2FSignFinish"],
+    webauthn_used.U2FSignFinish,
     1,
     "webauthn_used U2FSignFinish scalar should be 1"
   );
   is(
-    webauthn_used["U2FSignAbort"],
+    webauthn_used.U2FSignAbort,
     undefined,
     "webauthn_used U2FSignAbort scalar must be unset"
   );
   is(
-    webauthn_used["U2FRegisterAbort"],
+    webauthn_used.U2FRegisterAbort,
     undefined,
     "webauthn_used U2FRegisterAbort scalar must be unset"
   );

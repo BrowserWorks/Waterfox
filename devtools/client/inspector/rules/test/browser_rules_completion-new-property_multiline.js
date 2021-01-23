@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -34,8 +33,7 @@ add_task(async function() {
   await selectNode("h1", inspector);
 
   info("Focusing the property editable field");
-  const rule = getRuleViewRuleEditor(view, 1).rule;
-  const prop = rule.textProps[0];
+  const prop = getTextProperty(view, 1, { background: LONG_CSS_VALUE });
 
   // Calculate offsets to click in the middle of the first box quad.
   const rect = prop.editor.valueSpan.getBoundingClientRect();

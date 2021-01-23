@@ -139,9 +139,9 @@ nsAutoCompleteSimpleResult::InsertMatchAt(
   AutoCompleteSimpleResultMatch match(aValue, aComment, aImage, aStyle,
                                       aFinalCompleteValue, aLabel);
 
-  if (!mMatches.InsertElementAt(aIndex, match)) {
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
+  // XXX(Bug 1631371) Check if this should use a fallible operation as it
+  // pretended earlier.
+  mMatches.InsertElementAt(aIndex, match);
 
   return NS_OK;
 }
@@ -236,15 +236,14 @@ nsAutoCompleteSimpleResult::GetListener(
 }
 
 NS_IMETHODIMP
-nsAutoCompleteSimpleResult::RemoveValueAt(int32_t aRowIndex,
-                                          bool aRemoveFromDb) {
+nsAutoCompleteSimpleResult::RemoveValueAt(int32_t aRowIndex) {
   CHECK_MATCH_INDEX(aRowIndex, false);
 
   nsString value = mMatches[aRowIndex].mValue;
   mMatches.RemoveElementAt(aRowIndex);
 
   if (mListener) {
-    mListener->OnValueRemoved(this, value, aRemoveFromDb);
+    mListener->OnValueRemoved(this, value);
   }
 
   return NS_OK;

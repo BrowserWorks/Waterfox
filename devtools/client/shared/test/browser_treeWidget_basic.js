@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -16,7 +15,7 @@ add_task(async function() {
     set: [["security.allow_unsafe_parent_loads", true]],
   });
   await addTab("about:blank");
-  const [host, , doc] = await createHost("bottom", TEST_URI);
+  const { host, doc } = await createHost("bottom", TEST_URI);
 
   const tree = new TreeWidget(doc.querySelector("div"), {
     defaultType: "store",

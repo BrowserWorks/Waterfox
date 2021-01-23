@@ -21,7 +21,7 @@ const REQUESTS_WITH_MEDIA = BASIC_REQUESTS.concat([
 ]);
 
 add_task(async function() {
-  const { monitor } = await initNetMonitor(FILTERING_URL);
+  const { monitor } = await initNetMonitor(FILTERING_URL, { requestCount: 1 });
   info("Starting test... ");
 
   // It seems that this test may be slow on Ubuntu builds running on ec2.
@@ -65,7 +65,7 @@ add_task(async function() {
     "The first item should be selected in the requests menu."
   );
   is(
-    !!document.querySelector(".network-details-panel"),
+    !!document.querySelector(".network-details-bar"),
     true,
     "The network details panel should be visible after toggle button was pressed."
   );
@@ -117,7 +117,7 @@ add_task(async function() {
   function resetSorting() {
     EventUtils.sendMouseEvent(
       { type: "click" },
-      document.querySelector("#requests-list-waterfall-button")
+      document.querySelector("#requests-list-initiator-button")
     );
     EventUtils.sendMouseEvent(
       { type: "click" },
@@ -146,7 +146,7 @@ add_task(async function() {
       "The first item should be still selected after filtering."
     );
     is(
-      !!document.querySelector(".network-details-panel"),
+      !!document.querySelector(".network-details-bar"),
       true,
       "The network details panel should still be visible after filtering."
     );

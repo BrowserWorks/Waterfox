@@ -13,20 +13,6 @@
 #include "nsCOMPtr.h"
 #include "nsString.h"
 
-class nsSupportsID final : public nsISupportsID {
- public:
-  NS_DECL_ISUPPORTS
-  NS_DECL_NSISUPPORTSPRIMITIVE
-  NS_DECL_NSISUPPORTSID
-
-  nsSupportsID();
-
- private:
-  ~nsSupportsID() {}
-
-  nsID* mData;
-};
-
 /***************************************************************************/
 
 class nsSupportsCString final : public nsISupportsCString {
@@ -35,10 +21,10 @@ class nsSupportsCString final : public nsISupportsCString {
   NS_DECL_NSISUPPORTSPRIMITIVE
   NS_DECL_NSISUPPORTSCSTRING
 
-  nsSupportsCString() {}
+  nsSupportsCString() = default;
 
  private:
-  ~nsSupportsCString() {}
+  ~nsSupportsCString() = default;
 
   nsCString mData;
 };
@@ -51,10 +37,10 @@ class nsSupportsString final : public nsISupportsString {
   NS_DECL_NSISUPPORTSPRIMITIVE
   NS_DECL_NSISUPPORTSSTRING
 
-  nsSupportsString() {}
+  nsSupportsString() = default;
 
  private:
-  ~nsSupportsString() {}
+  ~nsSupportsString() = default;
 
   nsString mData;
 };
@@ -70,7 +56,7 @@ class nsSupportsPRBool final : public nsISupportsPRBool {
   nsSupportsPRBool();
 
  private:
-  ~nsSupportsPRBool() {}
+  ~nsSupportsPRBool() = default;
 
   bool mData;
 };
@@ -86,7 +72,7 @@ class nsSupportsPRUint8 final : public nsISupportsPRUint8 {
   nsSupportsPRUint8();
 
  private:
-  ~nsSupportsPRUint8() {}
+  ~nsSupportsPRUint8() = default;
 
   uint8_t mData;
 };
@@ -102,7 +88,7 @@ class nsSupportsPRUint16 final : public nsISupportsPRUint16 {
   nsSupportsPRUint16();
 
  private:
-  ~nsSupportsPRUint16() {}
+  ~nsSupportsPRUint16() = default;
 
   uint16_t mData;
 };
@@ -118,7 +104,7 @@ class nsSupportsPRUint32 final : public nsISupportsPRUint32 {
   nsSupportsPRUint32();
 
  private:
-  ~nsSupportsPRUint32() {}
+  ~nsSupportsPRUint32() = default;
 
   uint32_t mData;
 };
@@ -134,7 +120,7 @@ class nsSupportsPRUint64 final : public nsISupportsPRUint64 {
   nsSupportsPRUint64();
 
  private:
-  ~nsSupportsPRUint64() {}
+  ~nsSupportsPRUint64() = default;
 
   uint64_t mData;
 };
@@ -150,7 +136,7 @@ class nsSupportsPRTime final : public nsISupportsPRTime {
   nsSupportsPRTime();
 
  private:
-  ~nsSupportsPRTime() {}
+  ~nsSupportsPRTime() = default;
 
   PRTime mData;
 };
@@ -166,7 +152,7 @@ class nsSupportsChar final : public nsISupportsChar {
   nsSupportsChar();
 
  private:
-  ~nsSupportsChar() {}
+  ~nsSupportsChar() = default;
 
   char mData;
 };
@@ -182,7 +168,7 @@ class nsSupportsPRInt16 final : public nsISupportsPRInt16 {
   nsSupportsPRInt16();
 
  private:
-  ~nsSupportsPRInt16() {}
+  ~nsSupportsPRInt16() = default;
 
   int16_t mData;
 };
@@ -198,7 +184,7 @@ class nsSupportsPRInt32 final : public nsISupportsPRInt32 {
   nsSupportsPRInt32();
 
  private:
-  ~nsSupportsPRInt32() {}
+  ~nsSupportsPRInt32() = default;
 
   int32_t mData;
 };
@@ -214,7 +200,7 @@ class nsSupportsPRInt64 final : public nsISupportsPRInt64 {
   nsSupportsPRInt64();
 
  private:
-  ~nsSupportsPRInt64() {}
+  ~nsSupportsPRInt64() = default;
 
   int64_t mData;
 };
@@ -230,7 +216,7 @@ class nsSupportsFloat final : public nsISupportsFloat {
   nsSupportsFloat();
 
  private:
-  ~nsSupportsFloat() {}
+  ~nsSupportsFloat() = default;
 
   float mData;
 };
@@ -246,7 +232,7 @@ class nsSupportsDouble final : public nsISupportsDouble {
   nsSupportsDouble();
 
  private:
-  ~nsSupportsDouble() {}
+  ~nsSupportsDouble() = default;
 
   double mData;
 };
@@ -285,7 +271,7 @@ class nsSupportsDependentCString final : public nsISupportsCString {
   explicit nsSupportsDependentCString(const char* aStr);
 
  private:
-  ~nsSupportsDependentCString() {}
+  ~nsSupportsDependentCString() = default;
 
   nsDependentCString mData;
 };

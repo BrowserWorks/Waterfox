@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -15,16 +13,51 @@ const TEST_URL =
   "data:text/html;charset=UTF-8,<div>Debugger modules load test</div>";
 
 add_task(async function() {
+  // Disable randomly spawning processes during tests
+  await pushPref("dom.ipc.processPrelaunch.enabled", false);
+
   const toolbox = await openNewTabAndToolbox(TEST_URL, "jsdebugger");
-  const panel = toolbox.getCurrentPanel();
+  const toolboxBrowserLoader = toolbox.win.getBrowserLoaderForWindow();
 
   // Retrieve the browser loader dedicated to the Debugger.
+  const panel = toolbox.getCurrentPanel();
   const debuggerLoader = panel.panelWin.getBrowserLoaderForWindow();
-  const loaders = [loader.provider.loader, debuggerLoader.loader];
+
+  const loaders = [
+    loader.loader,
+    toolboxBrowserLoader.loader,
+    debuggerLoader.loader,
+  ];
+
+  const whitelist = [
+    "@loader/unload.js",
+    "@loader/options.js",
+    "chrome.js",
+    "resource://devtools/client/shared/vendor/react-dom.js",
+    "resource://devtools/client/shared/vendor/react.js",
+    "resource://devtools/client/shared/vendor/lodash.js",
+    "resource://devtools/client/debugger/dist/vendors.js",
+    "resource://devtools/client/shared/vendor/react-prop-types.js",
+    "resource://devtools/client/shared/vendor/react-dom-factories.js",
+    "resource://devtools/client/shared/vendor/react-redux.js",
+    "resource://devtools/client/shared/vendor/redux.js",
+    "resource://devtools/client/debugger/src/workers/parser/index.js",
+    "resource://devtools/client/shared/source-map/index.js",
+    "resource://devtools/client/shared/components/menu/MenuButton.js",
+    "resource://devtools/client/shared/components/menu/MenuItem.js",
+    "resource://devtools/client/shared/components/menu/MenuList.js",
+  ];
+  runDuplicatedModulesTest(loaders, whitelist);
 
   runMetricsTest({
     filterString: "devtools/client/debugger",
     loaders,
     panelName: "debugger",
   });
+
+  // See Bug 1637793 and Bug 1621337.
+  // Ideally the debugger should only resolve when the worker targets have been
+  // retrieved, which should be fixed by Bug 1621337 or a followup.
+  info("Wait for all pending requests to settle on the DevToolsClient");
+  await toolbox.target.client.waitForRequestsToSettle();
 });

@@ -70,14 +70,6 @@ exports.values = function values(object) {
 };
 
 /**
- * This is overridden in DevToolsUtils for the main thread, where we have the
- * Cu object available.
- */
-exports.isCPOW = function() {
-  return false;
-};
-
-/**
  * Report that |who| threw an exception, |exception|.
  */
 exports.reportException = function reportException(who, exception) {
@@ -87,7 +79,7 @@ exports.reportException = function reportException(who, exception) {
   dump(msg + "\n");
 
   if (typeof console !== "undefined" && console && console.error) {
-    console.error(msg);
+    console.error(exception);
   }
 };
 

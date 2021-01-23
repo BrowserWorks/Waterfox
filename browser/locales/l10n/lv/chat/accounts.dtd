@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Account manager window for Instantbird -->
+
+<!ENTITY accounts.title                      "Konti - &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "Tūlītējās ziņojumapmaiņas statuss">
+
+
+<!ENTITY accountManager.newAccount.label     "Jauns konts">
+<!ENTITY accountManager.newAccount.accesskey "n">
+<!ENTITY accountManager.close.label          "Aizvērt">
+<!ENTITY accountManager.close.accesskey      "i">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "Vēl nav konfigurēts neviens konts">
+
+
+
+<!ENTITY account.connect.label        "Savienoties">
+<!ENTITY account.connect.accesskey    "o">
+<!ENTITY account.disconnect.label     "Atvienoties">
+<!ENTITY account.disconnect.accesskey "i">
+<!ENTITY account.delete.label         "Dzēst">
+<!ENTITY account.delete.accesskey     "D">
+<!ENTITY account.edit.label           "Īpašības">
+<!ENTITY account.edit.accesskey       "p">
+<!ENTITY account.moveup.label         "Pārvietot augšup">
+<!ENTITY account.movedown.label       "Pārvietot lejup">
+<!ENTITY account.cancelReconnection.label         "Atcelt atkārtoto savienošanos">
+<!ENTITY account.cancelReconnection.accesskey     "A">
+<!ENTITY account.copyDebugLog.label     "Kopēt atkļūdošanas žurnālu">
+<!ENTITY account.copyDebugLog.accesskey "K">
+<!ENTITY account.showDebugLog.label     "Parādīt atkļūdošanas žurnālu">
+<!ENTITY account.showDebugLog.accesskey "P">
+<!ENTITY account.connecting           "Savienojas...">
+<!ENTITY account.disconnecting        "Atvienojas…">
+<!ENTITY account.disconnected         "Nav savienots">

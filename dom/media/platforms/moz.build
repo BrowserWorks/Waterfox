@@ -11,6 +11,7 @@ EXPORTS += [
     'agnostic/TheoraDecoder.h',
     'agnostic/VorbisDecoder.h',
     'agnostic/VPXDecoder.h',
+    'agnostic/WAVDecoder.h',
     'AllocationPolicy.h',
     'MediaTelemetryConstants.h',
     'PDMFactory.h',
@@ -108,6 +109,13 @@ if CONFIG['MOZ_APPLEMEDIA']:
       '-framework AudioToolbox',
       '-framework CoreMedia',
       '-framework VideoToolbox',
+      # For some unknown reason, the documented method of using weak_import
+      # attribute doesn't work with VideoToolbox's functions.
+      # We want to lazily load _VTRegisterSupplementalVideoDecoderIfAvailable
+      # symbol as it's only available in macOS 11 and later.
+      '-Wl,-U,_VTRegisterSupplementalVideoDecoderIfAvailable',
+      # Same for VTIsHardwareDecodeSupported available from macOS 10.13.
+      '-Wl,-U,_VTIsHardwareDecodeSupported',
   ]
 
 include('/ipc/chromium/chromium-config.mozbuild')
@@ -115,14 +123,23 @@ include('/ipc/chromium/chromium-config.mozbuild')
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
     EXPORTS += [
         'android/AndroidDecoderModule.h',
+        'android/AndroidEncoderModule.h',
         'android/JavaCallbacksSupport.h',
     ]
     UNIFIED_SOURCES += [
+        'android/AndroidDataEncoder.cpp',
         'android/AndroidDecoderModule.cpp',
+        'android/AndroidEncoderModule.cpp',
         'android/RemoteDataDecoder.cpp',
+    ]
+    LOCAL_INCLUDES += [
+        '/media/libyuv/libyuv/include',
     ]
 
 FINAL_LIBRARY = 'xul'
 
 if CONFIG['CC_TYPE'] in ('clang', 'gcc'):
     CXXFLAGS += ['-Wno-error=shadow']
+
+# Add libFuzzer configuration directives
+include('/tools/fuzzing/libfuzzer-config.mozbuild')

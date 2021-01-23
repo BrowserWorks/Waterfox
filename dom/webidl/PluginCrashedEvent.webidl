@@ -4,13 +4,16 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-[Constructor(DOMString type, optional PluginCrashedEventInit eventInitDict), ChromeOnly]
+[ChromeOnly,
+ Exposed=Window]
 interface PluginCrashedEvent : Event
 {
+  constructor(DOMString type,
+              optional PluginCrashedEventInit eventInitDict = {});
+
   readonly attribute unsigned long pluginID;
   readonly attribute DOMString pluginDumpID;
   readonly attribute DOMString pluginName;
-  readonly attribute DOMString? browserDumpID;
   readonly attribute DOMString? pluginFilename;
   readonly attribute boolean submittedCrashReport;
   readonly attribute boolean gmpPlugin;
@@ -21,7 +24,6 @@ dictionary PluginCrashedEventInit : EventInit
   unsigned long pluginID = 0;
   DOMString pluginDumpID = "";
   DOMString pluginName = "";
-  DOMString? browserDumpID = null;
   DOMString? pluginFilename = null;
   boolean submittedCrashReport = false;
   boolean gmpPlugin = false;

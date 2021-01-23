@@ -4,54 +4,49 @@
 
 // @flow
 
-import type { Source } from "../types";
-import type { TabList } from "../reducers/tabs";
+import type { PersistedTab, VisibleTab } from "../reducers/tabs";
+import type { TabList, Tab, TabsSources } from "../reducers/types";
+import type { URL } from "../types";
 
-type SourcesList = Source[];
 /*
  * Finds the hidden tabs by comparing the tabs' top offset.
  * hidden tabs will have a great top offset.
  *
- * @param sourceTabs Immutable.list
+ * @param sourceTabs Array
  * @param sourceTabEls HTMLCollection
  *
- * @returns Immutable.list
+ * @returns Array
  */
 
 export function getHiddenTabs(
-  sourceTabs: SourcesList,
+  sourceTabs: TabsSources,
   sourceTabEls: Array<any>
-): SourcesList {
+): TabsSources {
   sourceTabEls = [].slice.call(sourceTabEls);
-  function getTopOffset() {
+  function getTopOffset(): number {
     const topOffsets = sourceTabEls.map(t => t.getBoundingClientRect().top);
     return Math.min(...topOffsets);
   }
 
-  function hasTopOffset(el) {
+  function hasTopOffset(el): boolean {
     // adding 10px helps account for cases where the tab might be offset by
     // styling such as selected tabs which don't have a border.
     const tabTopOffset = getTopOffset();
     return el.getBoundingClientRect().top > tabTopOffset + 10;
   }
 
-  return sourceTabs.filter((tab, index) => {
+  return sourceTabs.filter((tab, index: number) => {
     const element = sourceTabEls[index];
     return element && hasTopOffset(element);
   });
 }
 
-export function getFramework(tabs: TabList, url: string) {
+export function getFramework(tabs: TabList, url: URL): string {
   const tab = tabs.find(t => t.url === url);
-
-  if (tab) {
-    return tab.framework;
-  }
-
-  return "";
+  return tab?.framework ?? "";
 }
 
-export function getTabMenuItems() {
+export function getTabMenuItems(): Object {
   return {
     closeTab: {
       id: "node-menu-close-tab",
@@ -97,8 +92,8 @@ export function getTabMenuItems() {
     },
     toggleBlackBox: {
       id: "node-menu-blackbox",
-      label: L10N.getStr("sourceFooter.blackbox"),
-      accesskey: L10N.getStr("sourceFooter.blackbox.accesskey"),
+      label: L10N.getStr("blackboxContextItem.blackbox"),
+      accesskey: L10N.getStr("blackboxContextItem.blackbox.accesskey"),
       disabled: false,
     },
     prettyPrint: {
@@ -108,4 +103,14 @@ export function getTabMenuItems() {
       disabled: false,
     },
   };
+}
+
+export function isSimilarTab(tab: Tab, url: URL, isOriginal: boolean): boolean {
+  return tab.url === url && tab.isOriginal === isOriginal;
+}
+
+export function persistTabs(tabs: VisibleTab[]): PersistedTab[] {
+  return [...tabs]
+    .filter(tab => tab.url)
+    .map(tab => ({ ...tab, sourceId: null }));
 }

@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY AdvancedEditButton.label "Кеңейтілген түзету…">
+<!ENTITY AdvancedEditButton.accessKey "е">
+<!ENTITY AdvancedEditButton.tooltip "HTML/стиль атрибуттарын, JavaScript-ты қосу немесе түзету">
+<!ENTITY chooseFileButton.label "Файлды таңдау...">
+<!ENTITY chooseFileButton.accessKey "Ф">
+<!ENTITY chooseFileLinkButton.label "Файлды таңдау...">
+<!ENTITY chooseFileLinkButton.accessKey "т">
+<!ENTITY makeUrlRelative.label "Сілтеме бет орналасуына салыстырмалы орналасады">
+<!ENTITY makeUrlRelative.accessKey "р">
+<!ENTITY makeUrlRelative.tooltip "Салыстырмалы және абсолюттік сілтеме арасында ауысу. Бұны өзгерту үшін, алдымен парақты сақтау керек.">
+
+<!ENTITY LinkURLEditField2.label "Веб-беттің адресін немесе жергілікті файлды енгізіңіз, немесе өрістің контекст мәзірінен атаулы байланысты немесе тақырыптаманы таңдаңыз:">
+<!ENTITY LinkURLEditField2.accessKey "в">

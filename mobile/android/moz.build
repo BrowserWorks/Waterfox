@@ -5,41 +5,8 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 with Files('**'):
-    BUG_COMPONENT = ('Firefox for Android', 'Build Config & IDE Support')
+    BUG_COMPONENT = ('GeckoView', 'General')
     SCHEDULES.exclusive = ['android']
-
-with Files('branding/**'):
-    BUG_COMPONENT = ('Firefox for Android', 'General')
-
-with Files('config/**'):
-    BUG_COMPONENT = ('Firefox for Android', 'Build Config & IDE Support')
-
-with Files('docs/**'):
-    BUG_COMPONENT = ('Firefox for Android', 'General')
-
-with Files('geckoview/**'):
-    BUG_COMPONENT = ('GeckoView', 'General')
-
-with Files('geckoview/src/main/aidl/**'):
-    BUG_COMPONENT = ('Firefox for Android', 'Audio/Video')
-
-with Files('geckoview/src/main/java/org/mozilla/gecko/mozglue/**'):
-    BUG_COMPONENT = ('Firefox for Android', 'Audio/Video')
-
-with Files('geckoview_example/**'):
-    BUG_COMPONENT = ('GeckoView', 'General')
-
-with Files('gradle/**'):
-    BUG_COMPONENT = ('Firefox for Android', 'Build Config & IDE Support')
-
-with Files('services/**'):
-    BUG_COMPONENT = ('Firefox for Android', 'Android Sync')
-
-with Files('themes/**'):
-    BUG_COMPONENT = ('Firefox for Android', 'Theme and Visual Design')
-
-with Files('thirdparty/**'):
-    BUG_COMPONENT = ('Firefox for Android', 'General')
 
 CONFIGURE_SUBST_FILES += ['installer/Makefile']
 
@@ -49,22 +16,25 @@ DIRS += [
 ]
 
 DIRS += [
+    'actors',
     'base',
     'chrome',
     'components',
-    'extensions',
     'modules',
     'themes/core',
     'themes/geckoview',
+    'geckoview/src/androidTest/assets',
     'app',
     'fonts',
 ]
 
-TEST_DIRS += [
-    'tests',
+TEST_HARNESS_FILES.testing.mochitest.tests.junit += [
+    'geckoview/src/androidTest/assets/www/hello.html',
+    'geckoview/src/androidTest/assets/www/simple_redirect.sjs',
+    'geckoview/src/androidTest/assets/www/update_manifest.json',
 ]
 
-SPHINX_TREES['fennec'] = 'docs'
+SPHINX_TREES['/mobile/android'] = 'docs'
 
 with Files('docs/**'):
     SCHEDULES.exclusive = ['docs']

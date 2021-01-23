@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY no-properties.label   "No s'han definit les propietats.">
+
+<!ENTITY caption.label         "Propietats de l'element">
+<!ENTITY image-sec.label       "Propietats de la imatge">
+<!ENTITY image-url.label       "Ubicació:">
+<!ENTITY image-desc.label      "Descripció:">
+<!ENTITY image-alt.label       "Text alternatiu:">
+<!ENTITY image-width.label     "Amplada:">
+<!ENTITY image-height.label    "Alçada:">
+<!ENTITY image-filesize.label  "Mida del fitxer:">
+<!ENTITY image-filesize.value  "Desconegut">
+<!ENTITY insdel-sec.label      "Insereix/Suprimeix les propietats">
+<!ENTITY insdel-cite.label     "Informació:">
+<!ENTITY insdel-date.label     "Data:">
+<!ENTITY link-sec.label        "Propietats de l'enllaç">
+<!ENTITY link-url.label        "Adreça:">
+<!ENTITY link-target.label     "S'obrirà a:">
+<!ENTITY link-type.label       "Tipus de destí:">
+<!ENTITY link-lang.label       "Llengua de destí:">
+<!ENTITY link-rel.label        "Relació:">
+<!ENTITY link-rev.label        "Relació inversa:">
+<!ENTITY misc-sec.label        "Propietats diverses">
+<!ENTITY misc-lang.label       "Llengua del text:">
+<!ENTITY misc-title.label      "Títol:">
+<!ENTITY misc-tblsummary.label "Resum de la taula:">
+<!ENTITY quote-sec.label       "Propietats de la cita">
+<!ENTITY quote-cite.label      "Informació:">

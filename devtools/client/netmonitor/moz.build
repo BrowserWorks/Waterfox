@@ -11,9 +11,11 @@ DevToolsModules(
     'panel.js'
 )
 
-XPCSHELL_TESTS_MANIFESTS += ['test/unit/xpcshell.ini']
+XPCSHELL_TESTS_MANIFESTS += ['test/xpcshell/xpcshell.ini']
 
 BROWSER_CHROME_MANIFESTS += ['test/browser.ini']
 
 with Files('**'):
     BUG_COMPONENT = ('DevTools', 'Netmonitor')
+
+SPHINX_TREES['/devtools/netmonitor'] = 'docs'

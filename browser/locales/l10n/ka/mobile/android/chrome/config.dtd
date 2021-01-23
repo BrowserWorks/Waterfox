@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "ძიება">
+
+<!ENTITY newPref.namePlaceholder       "სახელი">
+
+<!ENTITY newPref.valueBoolean          "ორობითი">
+<!ENTITY newPref.valueString           "ტექსტი">
+<!ENTITY newPref.valueInteger          "მთელი რიცხვი">
+
+<!ENTITY newPref.stringPlaceholder     "შეიყვანეთ ტექსტი">
+<!ENTITY newPref.numberPlaceholder     "შეიყვანეთ რიცხვი">
+
+<!ENTITY newPref.toggleButton          "ჩამრთველი">
+<!ENTITY newPref.cancelButton          "გაუქმება">
+
+<!ENTITY contextMenu.copyPrefName      "სახელის ასლი">
+<!ENTITY contextMenu.copyPrefValue     "მნიშვნელობის ასლი">

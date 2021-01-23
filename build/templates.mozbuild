@@ -62,7 +62,7 @@ def DisableCompilerWarnings():
     COMPILE_FLAGS['WARNINGS_CFLAGS'] = []
 
 @template
-def RustLibrary(name, features=None, output_category=None):
+def RustLibrary(name, features=None, output_category=None, is_gkrust=False):
     '''Template for Rust libraries.'''
     Library(name)
 
@@ -80,6 +80,9 @@ def RustLibrary(name, features=None, output_category=None):
 
     if output_category:
         RUST_LIBRARY_OUTPUT_CATEGORY = output_category
+
+    if is_gkrust:
+        IS_GKRUST = True
 
 
 @template
@@ -166,5 +169,43 @@ def ForceInclude(*headers):
     for header in headers:
         CXXFLAGS += [include_flag, header]
 
+@template
+def GeneratedFile(name, *names, **kwargs):
+    """Add one or more GENERATED_FILES with the given attributes.
+
+    You must pass in at least one generated file (the "name" argument). Other
+    names can be included as positional arguments after "name"."""
+    script = kwargs.pop('script', None)
+    entry_point = kwargs.pop('entry_point', None)
+    inputs = kwargs.pop('inputs', [])
+    flags = kwargs.pop('flags', [])
+    force = kwargs.pop('force', False)
+    if kwargs:
+        error('Unrecognized argument(s) to GeneratedFile: %s' %
+              ', '.join(kwargs))
+    if entry_point and not script:
+       error('entry_point cannot be provided if script is not provided')
+    if script and ':' in script:
+       error('script should not include a `:`. If you want to provide an '
+             'alternative entry point for your script, use the entry_point '
+             'parameter.')
+
+    key = (name,) + names if names else name
+    GENERATED_FILES += [key]
+    generated_file = GENERATED_FILES[key]
+    if script and not entry_point:
+        generated_file.script = script
+    if script and entry_point:
+        generated_file.script = script + ':' + entry_point
+    generated_file.inputs = inputs
+    generated_file.flags = flags
+    generated_file.force = force
+
 include('gecko_templates.mozbuild')
 include('test_templates.mozbuild')
+
+
+@template
+def DefineAndWasmDefine(k, v):
+    DEFINES[k] = v
+    WASM_DEFINES[k] = v

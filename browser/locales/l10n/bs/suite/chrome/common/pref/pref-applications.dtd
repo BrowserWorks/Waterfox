@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Applications prefs dialog -->
+<!ENTITY pref.applications.title "Pomoćne aplikacije">
+
+<!ENTITY typeColumn.label        "Vrsta sadržaja">
+
+<!ENTITY actionColumn2.label     "Akcija">
+
+<!ENTITY search.placeholder      "Vrste pretrage i akcije">

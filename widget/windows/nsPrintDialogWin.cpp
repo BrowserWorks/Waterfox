@@ -8,9 +8,8 @@
 #include "nsArray.h"
 #include "nsCOMPtr.h"
 #include "nsIBaseWindow.h"
+#include "nsIBrowserChild.h"
 #include "nsIDialogParamBlock.h"
-#include "nsIDocShellTreeOwner.h"
-#include "nsIDocShellTreeItem.h"
 #include "nsIDocShell.h"
 #include "nsIEmbeddingSiteWindow.h"
 #include "nsIInterfaceRequestorUtils.h"
@@ -20,10 +19,11 @@
 #include "nsPrintDialogUtil.h"
 #include "nsIPrintSettings.h"
 #include "nsIWebBrowserChrome.h"
+#include "nsPIDOMWindow.h"
 #include "nsQueryObject.h"
 
 static const char* kPageSetupDialogURL =
-    "chrome://global/content/printPageSetup.xul";
+    "chrome://global/content/printPageSetup.xhtml";
 
 using namespace mozilla;
 using namespace mozilla::widget;
@@ -63,13 +63,12 @@ nsPrintDialogServiceWin::Init() {
 
 NS_IMETHODIMP
 nsPrintDialogServiceWin::Show(nsPIDOMWindowOuter* aParent,
-                              nsIPrintSettings* aSettings,
-                              nsIWebBrowserPrint* aWebBrowserPrint) {
+                              nsIPrintSettings* aSettings) {
   NS_ENSURE_ARG(aParent);
   HWND hWnd = GetHWNDForDOMWindow(aParent);
   NS_ASSERTION(hWnd, "Couldn't get native window for PRint Dialog!");
 
-  return NativeShowPrintDialog(hWnd, aWebBrowserPrint, aSettings);
+  return NativeShowPrintDialog(hWnd, aSettings);
 }
 
 NS_IMETHODIMP
@@ -92,6 +91,10 @@ nsPrintDialogServiceWin::ShowPageSetup(nsPIDOMWindowOuter* aParent,
     block->GetInt(0, &status);
     return status == 0 ? NS_ERROR_ABORT : NS_OK;
   }
+
+  // We don't call nsPrintSettingsService::SavePrintSettingsToPrefs here since
+  // it's called for us in printPageSetup.js.  Maybe we should move that call
+  // here for consistency with the other platforms though?
 
   return rv;
 }
@@ -162,14 +165,8 @@ HWND nsPrintDialogServiceWin::GetHWNDForDOMWindow(mozIDOMWindowProxy* aWindow) {
   // Now we might be the Browser so check this path
   nsCOMPtr<nsPIDOMWindowOuter> window = nsPIDOMWindowOuter::From(aWindow);
 
-  nsCOMPtr<nsIDocShellTreeItem> treeItem = window->GetDocShell();
-  if (!treeItem) return nullptr;
-
-  nsCOMPtr<nsIDocShellTreeOwner> treeOwner;
-  treeItem->GetTreeOwner(getter_AddRefs(treeOwner));
-  if (!treeOwner) return nullptr;
-
-  nsCOMPtr<nsIWebBrowserChrome> webBrowserChrome(do_GetInterface(treeOwner));
+  nsCOMPtr<nsIWebBrowserChrome> webBrowserChrome =
+      window->GetWebBrowserChrome();
   if (!webBrowserChrome) return nullptr;
 
   nsCOMPtr<nsIBaseWindow> baseWin(do_QueryInterface(webBrowserChrome));

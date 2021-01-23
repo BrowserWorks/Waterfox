@@ -29,15 +29,15 @@ impl<'a> AutoProfilerLabel<'a> {
     /// stack.
     #[inline]
     pub unsafe fn new(
-        label: &mut structs::AutoProfilerLabel,
+        label: &mut std::mem::MaybeUninit<structs::AutoProfilerLabel>,
         label_type: ProfilerLabel,
     ) -> AutoProfilerLabel {
         let category_pair = match label_type {
             ProfilerLabel::Style => structs::JS::ProfilingCategoryPair_LAYOUT_StyleComputation,
             ProfilerLabel::Parse => structs::JS::ProfilingCategoryPair_LAYOUT_CSSParsing,
         };
-        structs::Gecko_Construct_AutoProfilerLabel(label, category_pair);
-        AutoProfilerLabel(label)
+        structs::Gecko_Construct_AutoProfilerLabel(label.as_mut_ptr(), category_pair);
+        AutoProfilerLabel(&mut *label.as_mut_ptr())
     }
 }
 
@@ -62,9 +62,8 @@ pub fn profiler_is_active() -> bool {
     use std::mem;
     use std::sync::atomic::{AtomicU32, Ordering};
 
-    let active_and_features: &AtomicU32 = unsafe {
-        mem::transmute(&detail::RacyFeatures_sActiveAndFeatures)
-    };
+    let active_and_features: &AtomicU32 =
+        unsafe { mem::transmute(&detail::RacyFeatures_sActiveAndFeatures) };
     (active_and_features.load(Ordering::Relaxed) & detail::RacyFeatures_Active) != 0
 }
 

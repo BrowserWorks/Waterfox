@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Message Header View Popup -->
+<!ENTITY AddToAddressBook.label            "添加到地址簿…">
+<!ENTITY AddToAddressBook.accesskey        "B">
+<!ENTITY EditContact.label                 "编辑联系人…">
+<!ENTITY EditContact.accesskey             "E">
+<!ENTITY ViewContact.label                 "查看联系人">
+<!ENTITY ViewContact.accesskey             "V">
+<!ENTITY SendMailTo.label                  "发送邮件至…">
+<!ENTITY SendMailTo.accesskey              "s">
+<!ENTITY CopyEmailAddress.label            "复制邮件地址">
+<!ENTITY CopyEmailAddress.accesskey        "C">
+<!ENTITY CopyNameAndEmailAddress.label     "复制名字和电子邮件地址">
+<!ENTITY CopyNameAndEmailAddress.accesskey "N">
+<!ENTITY CreateFilterFrom.label            "对此创建过滤器…">
+<!ENTITY CreateFilterFrom.accesskey        "F">
+<!ENTITY openInBrowser.label               "在浏览器中打开">
+<!ENTITY openInBrowser.accesskey           "O">
+<!ENTITY bookmarkLinkCmd.label             "将此链接加入书签…">
+<!ENTITY bookmarkLinkCmd.accesskey         "B">
+<!ENTITY copyLinkCmd.label                 "复制链接地址">
+<!ENTITY copyLinkCmd.accesskey             "C">
+<!ENTITY CopyMessageId.label               "复制 消息-ID">
+<!ENTITY CopyMessageId.accesskey           "C">
+<!ENTITY OpenMessageForMsgId.label         "打开消息 ID 为">
+<!ENTITY OpenMessageForMsgId.accesskey     "O">
+<!ENTITY OpenBrowserWithMsgId.label        "使用浏览器打开消息 ID 为">
+<!ENTITY OpenBrowserWithMsgId.accesskey    "B">

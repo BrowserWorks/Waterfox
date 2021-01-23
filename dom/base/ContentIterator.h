@@ -31,7 +31,13 @@ class ContentIteratorBase {
 
   NS_DECL_CYCLE_COLLECTION_NATIVE_CLASS(ContentIteratorBase)
 
+  /**
+   * Allows to iterate over the inclusive descendants
+   * (https://dom.spec.whatwg.org/#concept-tree-inclusive-descendant) of
+   * aRoot.
+   */
   virtual nsresult Init(nsINode* aRoot);
+
   virtual nsresult Init(nsRange* aRange);
   virtual nsresult Init(nsINode* aStartContainer, uint32_t aStartOffset,
                         nsINode* aEndContainer, uint32_t aEndOffset);
@@ -174,12 +180,16 @@ class ContentSubtreeIterator final : public ContentIteratorBase {
   ContentSubtreeIterator& operator=(const ContentSubtreeIterator&) = delete;
   virtual ~ContentSubtreeIterator() = default;
 
+  /**
+   * Not supported.
+   */
   virtual nsresult Init(nsINode* aRoot) override;
+
   virtual nsresult Init(nsRange* aRange) override;
   virtual nsresult Init(nsINode* aStartContainer, uint32_t aStartOffset,
                         nsINode* aEndContainer, uint32_t aEndOffset) override;
-  virtual nsresult Init(const RawRangeBoundary& aStart,
-                        const RawRangeBoundary& aEnd) override;
+  virtual nsresult Init(const RawRangeBoundary& aStartBoundary,
+                        const RawRangeBoundary& aEndBoundary) override;
 
   virtual void Next() override;
   virtual void Prev() override;

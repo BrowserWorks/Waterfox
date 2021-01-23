@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE : FILE 'Privacy and Security' prefs settings -->
+
+<!ENTITY pref.security.title              "Adatvédelem és biztonság">
+
+<!ENTITY tracking.label                   "Felhasználó követése">
+<!ENTITY trackingIntro.label              "A webhelyek követhetik a tevékenységét, így hatással vannak a személyes szférájára.">
+
+<!ENTITY doNotTrack.label                 "Nem akarom, hogy a webhelyek kövessenek">
+<!ENTITY doNotTrack.accesskey             "N">
+<!ENTITY trackProtect.label               "Ismert webhelyek követési tevékenységének megakadályozása">
+<!ENTITY trackProtect.accesskey           "k">
+<!ENTITY warnTrackContent.label           "Figyelmeztetés ismert követési tevékenységek érzékelésekor">
+<!ENTITY warnTrackContent.accesskey       "F">
+
+<!ENTITY geoLocation.label                "Helyfüggő böngészés">
+<!ENTITY geoIntro.label                   "A webhelyek további információkat kérhetnek az Ön tartózkodási helyéről.">
+
+<!ENTITY geoEnabled.label                 "Engedély kérése további adatok kérésénél">
+<!ENTITY geoEnabled.accesskey             "E">
+<!ENTITY geoDisabled.label                "A funkció kikapcsolása az összes kérés elutasítása">
+<!ENTITY geoDisabled.accesskey            "k">
+<!-- LOCALIZATION NOTE (safeBrowsing.label, blockWebForgeries.label, blockAttackSites.label):
+  The methods by which forged (phished) and attack sites will be detected by
+  phishing providers will vary from human review to machine-based heuristics
+  to a combination of both, so it's important that these strings convey the
+  meaning "reported" (and not something like "known").
+-->
+
+<!ENTITY safeBrowsing.label               "Safe Browsing">
+<!ENTITY safeBrowsingIntro.label          "&brandShortName; képes blokkolni a bejelentett rosszindulatú támadó webhelyeket.">
+
+<!ENTITY blockAttackSites.label           "Bejelentett támadó webhely blokkolása (malware-ek, vírusok)">
+<!ENTITY blockAttackSites.accesskey       "t">
+
+<!ENTITY blockWebForgeries.label          "Bejelentett hamisított webhely blokkolása (adathalászat)">
+<!ENTITY blockWebForgeries.accesskey      "h">

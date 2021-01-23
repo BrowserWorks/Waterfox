@@ -7,6 +7,8 @@
 #define include_dom_media_ipc_RemoteDecoderParent_h
 #include "mozilla/PRemoteDecoderParent.h"
 
+#include "mozilla/ShmemPool.h"
+
 namespace mozilla {
 
 class RemoteDecoderManagerParent;
@@ -27,11 +29,12 @@ class RemoteDecoderParent : public PRemoteDecoderParent {
   void Destroy();
 
   // PRemoteDecoderParent
-  IPCResult RecvInit();
-  IPCResult RecvInput(const MediaRawDataIPDL& aData);
-  IPCResult RecvFlush();
-  IPCResult RecvDrain();
-  IPCResult RecvShutdown();
+  IPCResult RecvInit(InitResolver&& aResolver);
+  IPCResult RecvDecode(nsTArray<MediaRawDataIPDL>&& aData,
+                       DecodeResolver&& aResolver);
+  IPCResult RecvFlush(FlushResolver&& aResolver);
+  IPCResult RecvDrain(DrainResolver&& aResolver);
+  IPCResult RecvShutdown(ShutdownResolver&& aResolver);
   IPCResult RecvSetSeekThreshold(const media::TimeUnit& aTime);
 
   void ActorDestroy(ActorDestroyReason aWhy) override;
@@ -43,16 +46,24 @@ class RemoteDecoderParent : public PRemoteDecoderParent {
   void Error(const MediaResult& aError);
 
   virtual MediaResult ProcessDecodedData(
-      const MediaDataDecoder::DecodedData& aData) = 0;
+      const MediaDataDecoder::DecodedData& aDatam,
+      DecodedOutputIPDL& aDecodedData) = 0;
+  ShmemBuffer AllocateBuffer(size_t aLength);
 
-  RefPtr<RemoteDecoderManagerParent> mParent;
-  RefPtr<RemoteDecoderParent> mIPDLSelfRef;
-  RefPtr<TaskQueue> mManagerTaskQueue;
-  RefPtr<TaskQueue> mDecodeTaskQueue;
+  const RefPtr<RemoteDecoderManagerParent> mParent;
+  const RefPtr<TaskQueue> mDecodeTaskQueue;
   RefPtr<MediaDataDecoder> mDecoder;
 
-  // Can only be accessed from the manager thread
-  bool mDestroyed = false;
+ private:
+  void DecodeNextSample(nsTArray<MediaRawDataIPDL>&& aData,
+                        DecodedOutputIPDL&& aOutput,
+                        DecodeResolver&& aResolver);
+  void ReleaseBuffer(ShmemBuffer&& aBuffer);
+  void ReleaseUsedShmems();
+  RefPtr<RemoteDecoderParent> mIPDLSelfRef;
+  const RefPtr<TaskQueue> mManagerTaskQueue;
+  ShmemPool mDecodedFramePool;
+  AutoTArray<ShmemBuffer, 4> mUsedShmems;
 };
 
 }  // namespace mozilla

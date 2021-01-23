@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accounts.title "Cuentas - &brandShortName;">
+<!ENTITY accountManager.width "450">
+<!ENTITY accountsWindow.title "Estado de la mensajería instantánea">
+<!ENTITY accountsWindow2.style "width: 41em; height: 27em;">
+<!ENTITY accountManager.newAccount.label "Nueva cuenta">
+<!ENTITY accountManager.newAccount.accesskey "N">
+<!ENTITY accountManager.close.label "Cerrar">
+<!ENTITY accountManager.close.accesskey "C">
+<!ENTITY accountManager.close.commandkey "a">
+<!ENTITY accountManager.noAccount.title "No hay ninguna cuenta configurada aún">
+<!ENTITY accountManager.noAccount.description "Pulse en el botón &accountManager.newAccount.label; para permitir a &brandShortName; guiarle a través del proceso de configuración de una.">
+<!ENTITY account.autoSignOn.label "Iniciar sesión al arrancar">
+<!ENTITY account.autoSignOn.accesskey "I">
+<!ENTITY account.connect.label "Conectar">
+<!ENTITY account.connect.accesskey "a">
+<!ENTITY account.disconnect.label "Desconectar">
+<!ENTITY account.disconnect.accesskey "D">
+<!ENTITY account.delete.label "Eliminar">
+<!ENTITY account.delete.accesskey "E">
+<!ENTITY account.edit.label "Propiedades">
+<!ENTITY account.edit.accesskey "P">
+<!ENTITY account.moveup.label "Arriba">
+<!ENTITY account.movedown.label "Abajo">
+<!ENTITY account.cancelReconnection.label "Cancelar reconexión">
+<!ENTITY account.cancelReconnection.accesskey "o">
+<!ENTITY account.copyDebugLog.label "Copiar registro de depuración">
+<!ENTITY account.copyDebugLog.accesskey "s">
+<!ENTITY account.showDebugLog.label "Mostrar registro de depuración">
+<!ENTITY account.showDebugLog.accesskey "M">
+<!ENTITY account.connecting "Conectando…">
+<!ENTITY account.disconnecting "Desconectando…">
+<!ENTITY account.disconnected "No conectado">

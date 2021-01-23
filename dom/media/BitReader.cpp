@@ -22,7 +22,7 @@ BitReader::BitReader(const uint8_t* aBuffer, size_t aBits)
       mReservoir(0),
       mNumBitsLeft(0) {}
 
-BitReader::~BitReader() {}
+BitReader::~BitReader() = default;
 
 uint32_t BitReader::ReadBits(size_t aNum) {
   MOZ_ASSERT(aNum <= 32);
@@ -41,8 +41,13 @@ uint32_t BitReader::ReadBits(size_t aNum) {
       m = mNumBitsLeft;
     }
 
-    result = (result << m) | (mReservoir >> (32 - m));
-    mReservoir <<= m;
+    if (m == 32) {
+      result = mReservoir;
+      mReservoir = 0;
+    } else {
+      result = (result << m) | (mReservoir >> (32 - m));
+      mReservoir <<= m;
+    }
     mNumBitsLeft -= m;
     mTotalBitsLeft -= m;
 

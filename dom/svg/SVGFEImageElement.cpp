@@ -6,10 +6,10 @@
 
 #include "mozilla/dom/SVGFEImageElement.h"
 
-#include "mozilla/EventStateManager.h"
 #include "mozilla/EventStates.h"
 #include "mozilla/dom/SVGFEImageElementBinding.h"
 #include "mozilla/dom/SVGFilterElement.h"
+#include "mozilla/dom/UserActivation.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/RefPtr.h"
 #include "nsContentUtils.h"
@@ -59,7 +59,7 @@ SVGFEImageElement::~SVGFEImageElement() { DestroyImageLoadingContent(); }
 
 nsresult SVGFEImageElement::LoadSVGImage(bool aForce, bool aNotify) {
   // resolve href attribute
-  nsCOMPtr<nsIURI> baseURI = GetBaseURI();
+  nsIURI* baseURI = GetBaseURI();
 
   nsAutoString href;
   if (mStringAttributes[HREF].IsExplicitlySet()) {
@@ -84,7 +84,7 @@ nsresult SVGFEImageElement::LoadSVGImage(bool aForce, bool aNotify) {
 
   // Mark channel as urgent-start before load image if the image load is
   // initaiated by a user interaction.
-  mUseUrgentStartForChannel = EventStateManager::IsHandlingUserInput();
+  mUseUrgentStartForChannel = UserActivation::IsHandlingUserInput();
   return LoadImage(href, aForce, aNotify, eImageLoadType_Normal);
 }
 
@@ -132,13 +132,12 @@ void SVGFEImageElement::MaybeLoadSVGImage() {
   }
 }
 
-nsresult SVGFEImageElement::BindToTree(Document* aDocument, nsIContent* aParent,
-                                       nsIContent* aBindingParent) {
-  nsresult rv =
-      SVGFEImageElementBase::BindToTree(aDocument, aParent, aBindingParent);
+nsresult SVGFEImageElement::BindToTree(BindContext& aContext,
+                                       nsINode& aParent) {
+  nsresult rv = SVGFEImageElementBase::BindToTree(aContext, aParent);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsImageLoadingContent::BindToTree(aDocument, aParent, aBindingParent);
+  nsImageLoadingContent::BindToTree(aContext, aParent);
 
   if (mStringAttributes[HREF].IsExplicitlySet() ||
       mStringAttributes[XLINK_HREF].IsExplicitlySet()) {
@@ -150,9 +149,9 @@ nsresult SVGFEImageElement::BindToTree(Document* aDocument, nsIContent* aParent,
   return rv;
 }
 
-void SVGFEImageElement::UnbindFromTree(bool aDeep, bool aNullParent) {
-  nsImageLoadingContent::UnbindFromTree(aDeep, aNullParent);
-  SVGFEImageElementBase::UnbindFromTree(aDeep, aNullParent);
+void SVGFEImageElement::UnbindFromTree(bool aNullParent) {
+  nsImageLoadingContent::UnbindFromTree(aNullParent);
+  SVGFEImageElementBase::UnbindFromTree(aNullParent);
 }
 
 EventStates SVGFEImageElement::IntrinsicState() const {
@@ -320,10 +319,9 @@ SVGFEImageElement::FrameCreated(nsIFrame* aFrame) {
 //----------------------------------------------------------------------
 // imgINotificationObserver methods
 
-NS_IMETHODIMP
-SVGFEImageElement::Notify(imgIRequest* aRequest, int32_t aType,
-                          const nsIntRect* aData) {
-  nsresult rv = nsImageLoadingContent::Notify(aRequest, aType, aData);
+void SVGFEImageElement::Notify(imgIRequest* aRequest, int32_t aType,
+                               const nsIntRect* aData) {
+  nsImageLoadingContent::Notify(aRequest, aType, aData);
 
   if (aType == imgINotificationObserver::SIZE_AVAILABLE) {
     // Request a decode
@@ -342,8 +340,6 @@ SVGFEImageElement::Notify(imgIRequest* aRequest, int32_t aType,
           static_cast<SVGFilterElement*>(GetParent()));
     }
   }
-
-  return rv;
 }
 
 }  // namespace dom

@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -44,12 +43,13 @@ add_task(async function() {
   is(cmdUndo.getAttribute("disabled"), "true", "cmdUndo is disabled");
   is(cmdDelete.getAttribute("disabled"), "true", "cmdDelete is disabled");
   is(cmdSelectAll.getAttribute("disabled"), "true", "cmdSelectAll is disabled");
+  is(cmdCut.getAttribute("disabled"), "true", "cmdCut is disabled");
+  is(cmdCopy.getAttribute("disabled"), "true", "cmdCopy is disabled");
 
-  // Cut/Copy/Paste items are enabled in context menu even if there is no
-  // selection. See also Bug 1303033, and 1317322
-  is(cmdCut.getAttribute("disabled"), "", "cmdCut is enabled");
-  is(cmdCopy.getAttribute("disabled"), "", "cmdCopy is enabled");
-  is(cmdPaste.getAttribute("disabled"), "", "cmdPaste is enabled");
+  if (isWindows()) {
+    // emptyClipboard only works on Windows (666254), assert paste only for this OS.
+    is(cmdPaste.getAttribute("disabled"), "true", "cmdPaste is disabled");
+  }
 
   info("Closing context menu");
   let onContextMenuClose = toolbox.once("menu-close");

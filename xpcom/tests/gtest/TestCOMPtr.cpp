@@ -133,7 +133,7 @@ NS_DEFINE_STATIC_IID_ACCESSOR(IBar, NS_IBAR_IID)
 int IBar::total_destructions_;
 int IBar::total_queries_;
 
-IBar::IBar() {}
+IBar::IBar() = default;
 
 IBar::~IBar() { total_destructions_++; }
 
@@ -370,7 +370,7 @@ TEST(COMPtr, AssignmentHelpers)
     ASSERT_EQ(IFoo::total_constructions_, 5);
     ASSERT_EQ(IFoo::total_destructions_, 4);
 
-    nsCOMPtr<IFoo> fooP2(fooP.forget());
+    nsCOMPtr<IFoo> fooP2(std::move(fooP));
     ASSERT_TRUE(fooP2);
 
     ASSERT_EQ(IFoo::total_constructions_, 5);

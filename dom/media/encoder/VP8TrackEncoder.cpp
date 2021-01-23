@@ -50,11 +50,11 @@ VP8TrackEncoder::~VP8TrackEncoder() {
 
 void VP8TrackEncoder::Destroy() {
   if (mInitialized) {
-    vpx_codec_destroy(mVPXContext);
+    vpx_codec_destroy(mVPXContext.get());
   }
 
   if (mVPXImageWrapper) {
-    vpx_img_free(mVPXImageWrapper);
+    vpx_img_free(mVPXImageWrapper.get());
   }
   mInitialized = false;
 }
@@ -79,18 +79,19 @@ nsresult VP8TrackEncoder::Init(int32_t aWidth, int32_t aHeight,
   // Creating a wrapper to the image - setting image data to NULL. Actual
   // pointer will be set in encode. Setting align to 1, as it is meaningless
   // (actual memory is not allocated).
-  vpx_img_wrap(mVPXImageWrapper, VPX_IMG_FMT_I420, mFrameWidth, mFrameHeight, 1,
-               nullptr);
+  vpx_img_wrap(mVPXImageWrapper.get(), VPX_IMG_FMT_I420, mFrameWidth,
+               mFrameHeight, 1, nullptr);
 
   vpx_codec_flags_t flags = 0;
   flags |= VPX_CODEC_USE_OUTPUT_PARTITION;
-  if (vpx_codec_enc_init(mVPXContext, vpx_codec_vp8_cx(), &config, flags)) {
+  if (vpx_codec_enc_init(mVPXContext.get(), vpx_codec_vp8_cx(), &config,
+                         flags)) {
     return NS_ERROR_FAILURE;
   }
 
-  vpx_codec_control(mVPXContext, VP8E_SET_STATIC_THRESHOLD, 1);
-  vpx_codec_control(mVPXContext, VP8E_SET_CPUUSED, -6);
-  vpx_codec_control(mVPXContext, VP8E_SET_TOKEN_PARTITIONS,
+  vpx_codec_control(mVPXContext.get(), VP8E_SET_STATIC_THRESHOLD, 1);
+  vpx_codec_control(mVPXContext.get(), VP8E_SET_CPUUSED, -6);
+  vpx_codec_control(mVPXContext.get(), VP8E_SET_TOKEN_PARTITIONS,
                     VP8_ONE_TOKENPARTITION);
 
   SetInitialized();
@@ -113,8 +114,9 @@ nsresult VP8TrackEncoder::Reconfigure(int32_t aWidth, int32_t aHeight,
   }
 
   // Recreate image wrapper
-  vpx_img_free(mVPXImageWrapper);
-  vpx_img_wrap(mVPXImageWrapper, VPX_IMG_FMT_I420, aWidth, aHeight, 1, nullptr);
+  vpx_img_free(mVPXImageWrapper.get());
+  vpx_img_wrap(mVPXImageWrapper.get(), VPX_IMG_FMT_I420, aWidth, aHeight, 1,
+               nullptr);
   // Encoder configuration structure.
   vpx_codec_enc_cfg_t config;
   nsresult rv = SetConfigurationValues(aWidth, aHeight, aDisplayWidth,
@@ -220,12 +222,13 @@ already_AddRefed<TrackMetadataBase> VP8TrackEncoder::GetMetadata() {
   return meta.forget();
 }
 
-nsresult VP8TrackEncoder::GetEncodedPartitions(EncodedFrameContainer& aData) {
+nsresult VP8TrackEncoder::GetEncodedPartitions(
+    nsTArray<RefPtr<EncodedFrame>>& aData) {
   vpx_codec_iter_t iter = nullptr;
   EncodedFrame::FrameType frameType = EncodedFrame::VP8_P_FRAME;
   nsTArray<uint8_t> frameData;
   const vpx_codec_cx_pkt_t* pkt = nullptr;
-  while ((pkt = vpx_codec_get_cx_data(mVPXContext, &iter)) != nullptr) {
+  while ((pkt = vpx_codec_get_cx_data(mVPXContext.get(), &iter)) != nullptr) {
     switch (pkt->kind) {
       case VPX_CODEC_CX_FRAME_PKT: {
         // Copy the encoded data from libvpx to frameData
@@ -249,7 +252,7 @@ nsresult VP8TrackEncoder::GetEncodedPartitions(EncodedFrameContainer& aData) {
   if (!frameData.IsEmpty()) {
     // Copy the encoded data to aData.
     EncodedFrame* videoData = new EncodedFrame();
-    videoData->SetFrameType(frameType);
+    videoData->mFrameType = frameType;
 
     // Convert the timestamp and duration to Usecs.
     CheckedInt64 timestamp = FramesToUsecs(pkt->data.frame.pts, mTrackRate);
@@ -257,7 +260,7 @@ nsresult VP8TrackEncoder::GetEncodedPartitions(EncodedFrameContainer& aData) {
       NS_ERROR("Microsecond timestamp overflow");
       return NS_ERROR_DOM_MEDIA_OVERFLOW_ERR;
     }
-    videoData->SetTimeStamp((uint64_t)timestamp.value());
+    videoData->mTime = (uint64_t)timestamp.value();
 
     mExtractedDuration += pkt->data.frame.duration;
     if (!mExtractedDuration.isValid()) {
@@ -279,14 +282,13 @@ nsresult VP8TrackEncoder::GetEncodedPartitions(EncodedFrameContainer& aData) {
     }
 
     mExtractedDurationUs = totalDuration;
-    videoData->SetDuration((uint64_t)duration.value());
+    videoData->mDuration = (uint64_t)duration.value();
     videoData->SwapInFrameData(frameData);
     VP8LOG(LogLevel::Verbose,
            "GetEncodedPartitions TimeStamp %" PRIu64 ", Duration %" PRIu64
            ", FrameType %d",
-           videoData->GetTimeStamp(), videoData->GetDuration(),
-           videoData->GetFrameType());
-    aData.AppendEncodedFrame(videoData);
+           videoData->mTime, videoData->mDuration, videoData->mFrameType);
+    aData.AppendElement(videoData);
   }
 
   return pkt ? NS_OK : NS_ERROR_NOT_AVAILABLE;
@@ -406,7 +408,7 @@ nsresult VP8TrackEncoder::PrepareRawFrame(VideoChunk& aChunk) {
  * in order to set the nextEncodeOperation for next target frame.
  */
 VP8TrackEncoder::EncodeOperation VP8TrackEncoder::GetNextEncodeOperation(
-    TimeDuration aTimeElapsed, StreamTime aProcessedDuration) {
+    TimeDuration aTimeElapsed, TrackTime aProcessedDuration) {
   if (mFrameDroppingMode == FrameDroppingMode::DISALLOW) {
     return ENCODE_NORMAL_FRAME;
   }
@@ -441,7 +443,8 @@ VP8TrackEncoder::EncodeOperation VP8TrackEncoder::GetNextEncodeOperation(
  *      encode it.
  * 4. Remove the encoded chunks in mSourceSegment after for-loop.
  */
-nsresult VP8TrackEncoder::GetEncodedTrack(EncodedFrameContainer& aData) {
+nsresult VP8TrackEncoder::GetEncodedTrack(
+    nsTArray<RefPtr<EncodedFrame>>& aData) {
   AUTO_PROFILER_LABEL("VP8TrackEncoder::GetEncodedTrack", OTHER);
 
   MOZ_ASSERT(mInitialized || mCanceled);
@@ -456,7 +459,7 @@ nsresult VP8TrackEncoder::GetEncodedTrack(EncodedFrameContainer& aData) {
 
   TakeTrackData(mSourceSegment);
 
-  StreamTime totalProcessedDuration = 0;
+  TrackTime totalProcessedDuration = 0;
   TimeStamp timebase = TimeStamp::Now();
   EncodeOperation nextEncodeOperation = ENCODE_NORMAL_FRAME;
 
@@ -491,22 +494,25 @@ nsresult VP8TrackEncoder::GetEncodedTrack(EncodedFrameContainer& aData) {
         mDurationSinceLastKeyframe += chunk.GetDuration();
       }
 
-      if (vpx_codec_encode(mVPXContext, mVPXImageWrapper, mEncodedTimestamp,
-                           (unsigned long)chunk.GetDuration(), flags,
-                           VPX_DL_REALTIME)) {
+      if (vpx_codec_encode(
+              mVPXContext.get(), mVPXImageWrapper.get(), mEncodedTimestamp,
+              (unsigned long)chunk.GetDuration(), flags, VPX_DL_REALTIME)) {
         VP8LOG(LogLevel::Error, "vpx_codec_encode failed to encode the frame.");
         return NS_ERROR_FAILURE;
       }
       // Get the encoded data from VP8 encoder.
       rv = GetEncodedPartitions(aData);
-      NS_ENSURE_SUCCESS(rv, NS_ERROR_FAILURE);
+      if (rv != NS_OK && rv != NS_ERROR_NOT_AVAILABLE) {
+        VP8LOG(LogLevel::Error, "GetEncodedPartitions failed.");
+        return NS_ERROR_FAILURE;
+      }
     } else {
       // SKIP_FRAME
       // Extend the duration of the last encoded data in aData
       // because this frame will be skipped.
       VP8LOG(LogLevel::Warning,
              "MediaRecorder lagging behind. Skipping a frame.");
-      RefPtr<EncodedFrame> last = aData.GetEncodedFrames().LastElement();
+      RefPtr<EncodedFrame> last = aData.LastElement();
       if (last) {
         mExtractedDuration += chunk.mDuration;
         if (!mExtractedDuration.isValid()) {
@@ -522,8 +528,7 @@ nsresult VP8TrackEncoder::GetEncodedTrack(EncodedFrameContainer& aData) {
           NS_ERROR("skipped duration overflow");
           return NS_ERROR_DOM_MEDIA_OVERFLOW_ERR;
         }
-        last->SetDuration(last->GetDuration() +
-                          (static_cast<uint64_t>(skippedDuration.value())));
+        last->mDuration += static_cast<uint64_t>(skippedDuration.value());
       }
     }
 
@@ -546,15 +551,26 @@ nsresult VP8TrackEncoder::GetEncodedTrack(EncodedFrameContainer& aData) {
     mEncodingComplete = true;
     // Bug 1243611, keep calling vpx_codec_encode and vpx_codec_get_cx_data
     // until vpx_codec_get_cx_data return null.
-    do {
-      if (vpx_codec_encode(mVPXContext, nullptr, mEncodedTimestamp, 0, 0,
+    while (true) {
+      if (vpx_codec_encode(mVPXContext.get(), nullptr, mEncodedTimestamp, 0, 0,
                            VPX_DL_REALTIME)) {
         return NS_ERROR_FAILURE;
       }
-    } while (NS_SUCCEEDED(GetEncodedPartitions(aData)));
+      nsresult rv = GetEncodedPartitions(aData);
+      if (rv == NS_ERROR_NOT_AVAILABLE) {
+        // End-of-stream
+        break;
+      }
+      if (rv != NS_OK) {
+        // Error
+        return NS_ERROR_FAILURE;
+      }
+    }
   }
 
   return NS_OK;
 }
 
 }  // namespace mozilla
+
+#undef VP8LOG

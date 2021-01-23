@@ -8,7 +8,7 @@
 #ifndef MOZILLA_A11Y_ProxyWrappers_h
 #define MOZILLA_A11Y_ProxyWrappers_h
 
-#include "HyperTextAccessible.h"
+#include "HyperTextAccessibleWrap.h"
 
 namespace mozilla {
 namespace a11y {
@@ -64,6 +64,14 @@ class DocProxyAccessibleWrap : public HyperTextProxyAccessibleWrap {
     return mIDToAccessibleMap.Get(aID);
   }
 
+  virtual nsIntRect Bounds() const override {
+    // OuterDocAccessible can return a DocProxyAccessibleWrap as a child.
+    // Accessible::ChildAtPoint on an ancestor might retrieve this proxy and
+    // call Bounds() on it. This will crash on a proxy, so we override it to do
+    // nothing here.
+    return nsIntRect();
+  }
+
  private:
   /*
    * This provides a mapping from 32 bit id to accessible objects.
@@ -73,11 +81,49 @@ class DocProxyAccessibleWrap : public HyperTextProxyAccessibleWrap {
 
 template <typename T>
 inline ProxyAccessible* HyperTextProxyFor(T* aWrapper) {
-  static_assert(mozilla::IsBaseOf<IUnknown, T>::value,
+  static_assert(std::is_base_of<IUnknown, T>::value,
                 "only IAccessible* should be passed in");
   auto wrapper = static_cast<HyperTextProxyAccessibleWrap*>(aWrapper);
   return wrapper->IsProxy() ? wrapper->Proxy() : nullptr;
 }
+
+/**
+ * Stub AccessibleWrap used in a content process for an embedded document
+ * residing in another content process.
+ * There is no ProxyAccessible here, since those only exist in the parent
+ * process. However, like ProxyAccessibleWrap, the only real method that
+ * gets called is GetNativeInterface, which returns a COM proxy for the
+ * document.
+ */
+class RemoteIframeDocProxyAccessibleWrap : public HyperTextAccessibleWrap {
+ public:
+  explicit RemoteIframeDocProxyAccessibleWrap(IDispatch* aCOMProxy)
+      : HyperTextAccessibleWrap(nullptr, nullptr), mCOMProxy(aCOMProxy) {
+    mType = eProxyType;
+    mBits.proxy = nullptr;
+  }
+
+  virtual void Shutdown() override {
+    mStateFlags |= eIsDefunct;
+    mCOMProxy = nullptr;
+  }
+
+  virtual void GetNativeInterface(void** aOutAccessible) override {
+    RefPtr<IDispatch> addRefed = mCOMProxy;
+    addRefed.forget(aOutAccessible);
+  }
+
+  virtual nsIntRect Bounds() const override {
+    // OuterDocAccessible can return a RemoteIframeDocProxyAccessibleWrap as a
+    // child. Accessible::ChildAtPoint on an ancestor might retrieve this proxy
+    // and call Bounds() on it. This will crash on a proxy, so we override it
+    // to do nothing here.
+    return nsIntRect();
+  }
+
+ private:
+  RefPtr<IDispatch> mCOMProxy;
+};
 
 }  // namespace a11y
 }  // namespace mozilla

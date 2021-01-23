@@ -64,7 +64,14 @@ enum indic_category_t {
   OT_Ra = 16,
   OT_CM = 17,  /* Consonant-Medial. */
   OT_Symbol = 18, /* Avagraha, etc that take marks (SM,A,VD). */
-  OT_CS = 19
+  OT_CS = 19,
+
+  /* The following are used by Khmer & Myanmar shapers.  Defined
+   * here for them to share. */
+  OT_VAbv    = 26,
+  OT_VBlw    = 27,
+  OT_VPre    = 28,
+  OT_VPst    = 29,
 };
 
 #define MEDIAL_FLAGS (FLAG (OT_CM))
@@ -278,7 +285,7 @@ matra_position_indic (hb_codepoint_t u, indic_position_t side)
     case POS_POST_C:	return MATRA_POS_RIGHT (u);
     case POS_ABOVE_C:	return MATRA_POS_TOP (u);
     case POS_BELOW_C:	return MATRA_POS_BOTTOM (u);
-  };
+  }
   return side;
 }
 
@@ -359,7 +366,7 @@ set_indic_properties (hb_glyph_info_t &info)
   /* According to ScriptExtensions.txt, these Grantha marks may also be used in Tamil,
    * so the Indic shaper needs to know their categories. */
   else if (unlikely (u == 0x11301u || u == 0x11303u)) cat = OT_SM;
-  else if (unlikely (u == 0x1133cu)) cat = OT_N;
+  else if (unlikely (u == 0x1133Bu || u == 0x1133Cu)) cat = OT_N;
 
   else if (unlikely (u == 0x0AFBu)) cat = OT_N; /* https://github.com/harfbuzz/harfbuzz/issues/552 */
 
@@ -397,6 +404,32 @@ set_indic_properties (hb_glyph_info_t &info)
   info.indic_category() = cat;
   info.indic_position() = pos;
 }
+
+struct hb_indic_would_substitute_feature_t
+{
+  void init (const hb_ot_map_t *map, hb_tag_t feature_tag, bool zero_context_)
+  {
+    zero_context = zero_context_;
+    map->get_stage_lookups (0/*GSUB*/,
+			    map->get_feature_stage (0/*GSUB*/, feature_tag),
+			    &lookups, &count);
+  }
+
+  bool would_substitute (const hb_codepoint_t *glyphs,
+			 unsigned int          glyphs_count,
+			 hb_face_t            *face) const
+  {
+    for (unsigned int i = 0; i < count; i++)
+      if (hb_ot_layout_lookup_would_substitute (face, lookups[i].index, glyphs, glyphs_count, zero_context))
+	return true;
+    return false;
+  }
+
+  private:
+  const hb_ot_map_t::lookup_map_t *lookups;
+  unsigned int count;
+  bool zero_context;
+};
 
 
 #endif /* HB_OT_SHAPE_COMPLEX_INDIC_HH */

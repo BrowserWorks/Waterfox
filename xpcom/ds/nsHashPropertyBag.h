@@ -17,7 +17,11 @@
 class nsHashPropertyBagBase : public nsIWritablePropertyBag,
                               public nsIWritablePropertyBag2 {
  public:
-  nsHashPropertyBagBase() {}
+  nsHashPropertyBagBase() = default;
+
+  void CopyFrom(const nsHashPropertyBagBase* aOther);
+  void CopyFrom(nsIPropertyBag* aOther);
+  static void CopyFrom(nsIWritablePropertyBag* aTo, nsIPropertyBag* aFrom);
 
   NS_DECL_NSIPROPERTYBAG
   NS_DECL_NSIPROPERTYBAG2
@@ -32,12 +36,7 @@ class nsHashPropertyBagBase : public nsIWritablePropertyBag,
 
 class nsHashPropertyBag : public nsHashPropertyBagBase {
  public:
-  nsHashPropertyBag() {
-    // Avoid destroying this object when recording/replaying. See bug 1497299.
-    if (mozilla::recordreplay::IsRecordingOrReplaying()) {
-      AddRef();
-    }
-  }
+  nsHashPropertyBag() = default;
   NS_DECL_THREADSAFE_ISUPPORTS
 
  protected:
@@ -47,12 +46,16 @@ class nsHashPropertyBag : public nsHashPropertyBagBase {
 /* A cycle collected nsHashPropertyBag for main-thread-only use. */
 class nsHashPropertyBagCC final : public nsHashPropertyBagBase {
  public:
-  nsHashPropertyBagCC() {}
+  nsHashPropertyBagCC() = default;
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_CLASS_AMBIGUOUS(nsHashPropertyBagCC,
                                            nsIWritablePropertyBag)
  protected:
-  virtual ~nsHashPropertyBagCC() {}
+  virtual ~nsHashPropertyBagCC() = default;
 };
+
+inline nsISupports* ToSupports(nsHashPropertyBagBase* aPropertyBag) {
+  return static_cast<nsIWritablePropertyBag*>(aPropertyBag);
+}
 
 #endif /* nsHashPropertyBag_h___ */

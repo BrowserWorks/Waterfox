@@ -11,25 +11,26 @@ FORCE_STATIC_LIB = True
 UNIFIED_SOURCES += [
     '/ipc/mscom/ProcessRuntime.cpp',
     '/widget/windows/WindowsConsole.cpp',
+    'DllBlocklistInit.cpp',
     'ErrorHandler.cpp',
     'LauncherProcessWin.cpp',
     'LaunchUnelevated.cpp',
+    'NtLoaderAPI.cpp',
 ]
-
-SOURCES += [
-    'DllBlocklistWin.cpp',
-]
-# Our patched NtMapViewOfSection can be called before the process's import
-# table is populated.  Don't let the compiler insert any instrumentation
-# that might call an import.
-SOURCES['DllBlocklistWin.cpp'].no_pgo = True
 
 OS_LIBS += [
-    'ntdll',
     'oleaut32',
     'ole32',
     'rpcrt4',
     'version',
+]
+
+DIRS += [
+    'freestanding',
+]
+
+USE_LIBS += [
+    'winlauncher-freestanding',
 ]
 
 TEST_DIRS += [
@@ -39,8 +40,12 @@ TEST_DIRS += [
 if CONFIG['MOZ_LAUNCHER_PROCESS']:
     UNIFIED_SOURCES += [
         '/toolkit/xre/LauncherRegistryInfo.cpp',
+        '/toolkit/xre/WinTokenUtils.cpp',
     ]
     for var in ('MOZ_APP_BASENAME', 'MOZ_APP_VENDOR'):
         DEFINES[var] = '"%s"' % CONFIG[var]
 
 DisableStlWrapping()
+
+with Files('**'):
+    BUG_COMPONENT = ('Firefox', 'Launcher Process')

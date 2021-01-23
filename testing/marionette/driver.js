@@ -5,6 +5,7 @@
 "use strict";
 /* global XPCNativeWrapper */
 
+const { OS } = ChromeUtils.import("resource://gre/modules/osfile.jsm");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { XPCOMUtils } = ChromeUtils.import(
   "resource://gre/modules/XPCOMUtils.jsm"
@@ -25,10 +26,9 @@ const { Capabilities, Timeouts, UnhandledPromptBehavior } = ChromeUtils.import(
 const { capture } = ChromeUtils.import(
   "chrome://marionette/content/capture.js"
 );
-const {
-  CertificateOverrideManager,
-  InsecureSweepingOverride,
-} = ChromeUtils.import("chrome://marionette/content/cert.js");
+const { allowAllCerts } = ChromeUtils.import(
+  "chrome://marionette/content/cert.js"
+);
 const { cookie } = ChromeUtils.import("chrome://marionette/content/cookie.js");
 const { WebElementEventTarget } = ChromeUtils.import(
   "chrome://marionette/content/dom.js"
@@ -68,6 +68,7 @@ const { MarionettePrefs } = ChromeUtils.import(
   "chrome://marionette/content/prefs.js",
   null
 );
+const { print } = ChromeUtils.import("chrome://marionette/content/print.js");
 const { proxy } = ChromeUtils.import("chrome://marionette/content/proxy.js");
 const { reftest } = ChromeUtils.import(
   "chrome://marionette/content/reftest.js"
@@ -98,8 +99,6 @@ const SUPPORTED_STRATEGIES = new Set([
   element.Strategy.ID,
   element.Strategy.TagName,
   element.Strategy.XPath,
-  element.Strategy.Anon,
-  element.Strategy.AnonAttribute,
 ]);
 
 // Timeout used to abort fullscreen, maximize, and minimize
@@ -162,9 +161,9 @@ this.GeckoDriver = function(server) {
     () => this.curBrowser
   );
 
-  // points to an alert instance if a modal dialog is present
+  // used for modal dialogs or tab modal alerts
   this.dialog = null;
-  this.dialogHandler = this.globalModalDialogHandler.bind(this);
+  this.dialogObserver = null;
 };
 
 Object.defineProperty(GeckoDriver.prototype, "a11yChecks", {
@@ -319,13 +318,17 @@ GeckoDriver.prototype.uninit = function() {
  * Callback used to observe the creation of new modal or tab modal dialogs
  * during the session's lifetime.
  */
-GeckoDriver.prototype.globalModalDialogHandler = function(subject, topic) {
-  let winr;
-  if (topic === modal.COMMON_DIALOG_LOADED) {
-    // Always keep a weak reference to the current dialog
-    winr = Cu.getWeakReference(subject);
+GeckoDriver.prototype.handleModalDialog = function(action, dialog, win) {
+  // Only care about modals of the currently selected window.
+  if (win !== this.curBrowser.window) {
+    return;
   }
-  this.dialog = new modal.Dialog(() => this.curBrowser, winr);
+
+  if (action === modal.ACTION_OPENED) {
+    this.dialog = new modal.Dialog(() => this.curBrowser, dialog);
+  } else if (action === modal.ACTION_CLOSED) {
+    this.dialog = null;
+  }
 };
 
 /**
@@ -370,6 +373,33 @@ GeckoDriver.prototype.sendAsync = function(name, data, commandID) {
       );
     }
   });
+};
+
+/**
+ * Get the browsing context.
+ *
+ * @param {boolean=} topContext
+ *     If set to true use the window's top-level browsing context,
+ *     otherwise the one from the currently selected frame. Defaults to false.
+ *
+ * @return {BrowsingContext}
+ *     The browsing context.
+ */
+GeckoDriver.prototype.getBrowsingContext = async function(topContext = false) {
+  let browsingContext = null;
+
+  switch (this.context) {
+    case Context.Chrome:
+      browsingContext = this.getCurrentWindow().docShell.browsingContext;
+      break;
+
+    case Context.Content:
+      const id = await this.listener.getBrowsingContextId(topContext);
+      browsingContext = BrowsingContext.get(id);
+      break;
+  }
+
+  return browsingContext;
 };
 
 /**
@@ -729,8 +759,7 @@ GeckoDriver.prototype.newSession = async function(cmd) {
 
     if (!this.secureTLS) {
       logger.warn("TLS certificate errors will be ignored for this session");
-      let acceptAllCerts = new InsecureSweepingOverride();
-      CertificateOverrideManager.install(acceptAllCerts);
+      allowAllCerts.enable();
     }
 
     if (this.proxy.init()) {
@@ -823,9 +852,11 @@ GeckoDriver.prototype.newSession = async function(cmd) {
     this.curBrowser.contentBrowser.focus();
   }
 
-  // Setup global listener for modal dialogs, and check if there is already
-  // one open for the currently selected browser window.
-  modal.addHandler(this.dialogHandler);
+  // Setup observer for modal dialogs
+  this.dialogObserver = new modal.DialogObserver(this);
+  this.dialogObserver.add(this.handleModalDialog.bind(this));
+
+  // Check if there is already an open dialog for the selected browser window.
   this.dialog = modal.findModalDialogs(this.curBrowser);
 
   return {
@@ -1800,37 +1831,6 @@ GeckoDriver.prototype.switchToFrame = async function(cmd) {
         return;
       }
 
-      // Check if the frame is XBL anonymous
-      let parent = curWindow.document.getBindingParent(wantedFrame);
-      // Shadow nodes also show up in getAnonymousNodes, we should
-      // ignore them.
-      if (
-        parent &&
-        !(parent.shadowRoot && parent.shadowRoot.contains(wantedFrame))
-      ) {
-        const doc = curWindow.document;
-        let anonNodes = [...(doc.getAnonymousNodes(parent) || [])];
-        if (anonNodes.length > 0) {
-          let el = wantedFrame;
-          while (el) {
-            if (anonNodes.indexOf(el) > -1) {
-              curWindow = wantedFrame.contentWindow;
-              this.curFrame = curWindow;
-              if (focus) {
-                this.curFrame.focus();
-              }
-              checkTimer.initWithCallback(
-                checkLoad.bind(this),
-                100,
-                Ci.nsITimer.TYPE_ONE_SHOT
-              );
-              return;
-            }
-            el = el.parentNode;
-          }
-        }
-      }
-
       // else, assume iframe
       let frames = curWindow.document.getElementsByTagName("iframe");
       let numFrames = frames.length;
@@ -2656,7 +2656,7 @@ GeckoDriver.prototype.clearElement = async function(cmd) {
     case Context.Chrome:
       // the selenium atom doesn't work here
       let el = this.curBrowser.seenEls.get(webEl);
-      if (el.nodeName == "textbox") {
+      if (el.nodeName == "input" && el.type == "text") {
         el.value = "";
       } else if (el.nodeName == "checkbox") {
         el.checked = false;
@@ -2806,6 +2806,10 @@ GeckoDriver.prototype.deleteCookie = async function(cmd) {
  * @param {boolean=} focus
  *     Optional flag if the new top-level browsing context should be opened
  *     in foreground (focused) or background (not focused). Defaults to false.
+ * @param {boolean=} private
+ *     Optional flag, which gets only evaluated for type `window`. True if the
+ *     new top-level browsing context should be a private window.
+ *     Defaults to false.
  *
  * @return {Object.<string, string>}
  *     Handle and type of the new browsing context.
@@ -2819,6 +2823,14 @@ GeckoDriver.prototype.newWindow = async function(cmd) {
     focus = assert.boolean(
       cmd.parameters.focus,
       pprint`Expected "focus" to be a boolean, got ${cmd.parameters.focus}`
+    );
+  }
+
+  let isPrivate = false;
+  if (typeof cmd.parameters.private != "undefined") {
+    isPrivate = assert.boolean(
+      cmd.parameters.private,
+      pprint`Expected "private" to be a boolean, got ${cmd.parameters.private}`
     );
   }
 
@@ -2839,7 +2851,7 @@ GeckoDriver.prototype.newWindow = async function(cmd) {
 
   switch (type) {
     case "window":
-      let win = await this.curBrowser.openBrowserWindow(focus);
+      let win = await this.curBrowser.openBrowserWindow(focus, isPrivate);
       contentBrowser = browser.getTabBrowser(win).selectedBrowser;
       break;
 
@@ -2971,10 +2983,13 @@ GeckoDriver.prototype.deleteSession = function() {
     this.observing = null;
   }
 
-  modal.removeHandler(this.dialogHandler);
+  if (this.dialogObserver) {
+    this.dialogObserver.cleanup();
+    this.dialogObserver = null;
+  }
 
   this.sandboxes.clear();
-  CertificateOverrideManager.uninstall();
+  allowAllCerts.disable();
 
   this.sessionID = null;
   this.capabilities = new Capabilities();
@@ -2997,64 +3012,78 @@ GeckoDriver.prototype.deleteSession = function() {
  * @param {string=} id
  *     Optional web element reference to take a screenshot of.
  *     If undefined, a screenshot will be taken of the document element.
- * @param {Array.<string>=} highlights
- *     List of web elements to highlight.
- * @param {boolean} full
- *     True to take a screenshot of the entire document element. Is not
+ * @param {boolean=} full
+ *     True to take a screenshot of the entire document element. Is only
  *     considered if <var>id</var> is not defined. Defaults to true.
  * @param {boolean=} hash
- *     True if the user requests a hash of the image data.
+ *     True if the user requests a hash of the image data. Defaults to false.
  * @param {boolean=} scroll
- *     Scroll to element if |id| is provided.  If undefined, it will
- *     scroll to the element.
+ *     Scroll to element if |id| is provided. Defaults to true.
  *
  * @return {string}
  *     If <var>hash</var> is false, PNG image encoded as Base64 encoded
  *     string.  If <var>hash</var> is true, hex digest of the SHA-256
  *     hash of the Base64 encoded string.
  */
-GeckoDriver.prototype.takeScreenshot = function(cmd) {
+GeckoDriver.prototype.takeScreenshot = async function(cmd) {
   let win = assert.open(this.getCurrentWindow());
+  await this._handleUserPrompts();
 
-  let { id, highlights, full, hash } = cmd.parameters;
-  highlights = highlights || [];
+  let { id, full, hash, scroll } = cmd.parameters;
   let format = hash ? capture.Format.Hash : capture.Format.Base64;
 
+  full = typeof full == "undefined" ? true : full;
+  scroll = typeof scroll == "undefined" ? true : scroll;
+
+  let webEl = id ? WebElement.fromUUID(id, this.context) : null;
+
+  // Only consider full screenshot if no element has been specified
+  full = webEl ? false : full;
+
+  let rect;
   switch (this.context) {
     case Context.Chrome:
-      let highlightEls = highlights
-        .map(ref => WebElement.fromUUID(ref, Context.Chrome))
-        .map(webEl => this.curBrowser.seenEls.get(webEl));
-
-      // viewport
-      let canvas;
-      if (!id && !full) {
-        canvas = capture.viewport(win, highlightEls);
-
-        // element or full document element
+      if (id) {
+        let el = this.curBrowser.seenEls.get(webEl, win);
+        rect = el.getBoundingClientRect();
+      } else if (full) {
+        const docEl = win.document.documentElement;
+        rect = new DOMRect(0, 0, docEl.scrollWidth, docEl.scrollHeight);
       } else {
-        let node;
-        if (id) {
-          let webEl = WebElement.fromUUID(id, Context.Chrome);
-          node = this.curBrowser.seenEls.get(webEl);
-        } else {
-          node = win.document.documentElement;
-        }
-
-        canvas = capture.element(node, highlightEls);
-      }
-
-      switch (format) {
-        case capture.Format.Hash:
-          return capture.toHash(canvas);
-
-        case capture.Format.Base64:
-          return capture.toBase64(canvas);
+        // viewport
+        rect = new win.DOMRect(
+          win.pageXOffset,
+          win.pageYOffset,
+          win.innerWidth,
+          win.innerHeight
+        );
       }
       break;
 
     case Context.Content:
-      return this.listener.takeScreenshot(format, cmd.parameters);
+      rect = await this.listener.getScreenshotRect({ el: webEl, full, scroll });
+      break;
+  }
+
+  // If no element has been specified use the top-level browsing context.
+  // Otherwise use the browsing context from the currently selected frame.
+  const browsingContext = await this.getBrowsingContext(!webEl);
+
+  let canvas = await capture.canvas(
+    win,
+    browsingContext,
+    rect.x,
+    rect.y,
+    rect.width,
+    rect.height
+  );
+
+  switch (format) {
+    case capture.Format.Hash:
+      return capture.toHash(canvas);
+
+    case capture.Format.Base64:
+      return capture.toBase64(canvas);
   }
 
   throw new TypeError(`Unknown context: ${this.context}`);
@@ -3275,8 +3304,7 @@ GeckoDriver.prototype.dismissDialog = async function() {
   (button1 ? button1 : button0).click();
 
   await dialogClosed;
-
-  this.dialog = null;
+  await new IdlePromise(win);
 };
 
 /**
@@ -3293,8 +3321,7 @@ GeckoDriver.prototype.acceptDialog = async function() {
   button0.click();
 
   await dialogClosed;
-
-  this.dialog = null;
+  await new IdlePromise(win);
 };
 
 /**
@@ -3343,6 +3370,7 @@ GeckoDriver.prototype.sendKeysToDialog = async function(cmd) {
     case "prompt":
       break;
     default:
+      await this.dismissDialog();
       throw new UnsupportedOperationError(
         `User prompt of type ${promptType} is not supported`
       );
@@ -3688,6 +3716,92 @@ GeckoDriver.prototype.teardownReftest = function() {
   this._reftest = null;
 };
 
+/**
+ * Print page as PDF.
+ *
+ * @param {boolean=} landscape
+ *     Paper orientation. Defaults to false.
+ * @param {number=} margin.bottom
+ *     Bottom margin in cm. Defaults to 1cm (~0.4 inches).
+ * @param {number=} margin.left
+ *     Left margin in cm. Defaults to 1cm (~0.4 inches).
+ * @param {number=} margin.right
+ *     Right margin in cm. Defaults to 1cm (~0.4 inches).
+ * @param {number=} margin.top
+ *     Top margin in cm. Defaults to 1cm (~0.4 inches).
+ * @param {string=} pageRanges (not supported)
+ *     Paper ranges to print, e.g., '1-5, 8, 11-13'.
+ *     Defaults to the empty string, which means print all pages.
+ * @param {number=} page.height
+ *     Paper height in cm. Defaults to US letter height (11 inches / 27.94cm)
+ * @param {number=} page.width
+ *     Paper width in cm. Defaults to US letter width (8.5 inches / 21.59cm)
+ * @param {boolean=} shrinkToFit
+ *     Whether or not to override page size as defined by CSS.
+ *     Defaults to true, in which case the content will be scaled
+ *     to fit the paper size.
+ * @param {boolean=} printBackground
+ *     Print background graphics. Defaults to false.
+ * @param {number=} scale
+ *     Scale of the webpage rendering. Defaults to 1.
+ *
+ * @return {string}
+ *     Base64 encoded PDF representing printed document
+ */
+GeckoDriver.prototype.print = async function(cmd) {
+  assert.content(this.context);
+  assert.open(this.getCurrentWindow());
+  await this._handleUserPrompts();
+
+  const settings = print.addDefaultSettings(cmd.parameters);
+  for (let prop of ["top", "bottom", "left", "right"]) {
+    assert.positiveNumber(
+      settings.margin[prop],
+      pprint`margin.${prop} is not a positive number`
+    );
+  }
+  for (let prop of ["width", "height"]) {
+    assert.positiveNumber(
+      settings.page[prop],
+      pprint`page.${prop} is not a positive number`
+    );
+  }
+  assert.positiveNumber(
+    settings.scale,
+    `scale ${settings.scale} is not a positive number`
+  );
+  assert.that(
+    s => s >= print.minScaleValue && settings.scale <= print.maxScaleValue,
+    `scale ${settings.scale} is outside the range ${print.minScaleValue}-${print.maxScaleValue}`
+  )(settings.scale);
+  assert.boolean(settings.shrinkToFit);
+  assert.boolean(settings.landscape);
+  assert.boolean(settings.printBackground);
+
+  const linkedBrowser = this.curBrowser.tab.linkedBrowser;
+  const filePath = await print.printToFile(
+    linkedBrowser,
+    linkedBrowser.outerWindowID,
+    settings
+  );
+
+  // return all data as a base64 encoded string
+  let bytes;
+  const file = await OS.File.open(filePath);
+  try {
+    bytes = await file.read();
+  } finally {
+    file.close();
+    await OS.File.remove(filePath);
+  }
+
+  // Each UCS2 character has an upper byte of 0 and a lower byte matching
+  // the binary data
+  return {
+    value: btoa(String.fromCharCode.apply(null, bytes)),
+  };
+};
+
 GeckoDriver.prototype.commands = {
   // Marionette service
   "Marionette:AcceptConnections": GeckoDriver.prototype.acceptConnections,
@@ -3768,6 +3882,7 @@ GeckoDriver.prototype.commands = {
   "WebDriver:NewSession": GeckoDriver.prototype.newSession,
   "WebDriver:NewWindow": GeckoDriver.prototype.newWindow,
   "WebDriver:PerformActions": GeckoDriver.prototype.performActions,
+  "WebDriver:Print": GeckoDriver.prototype.print,
   "WebDriver:Refresh": GeckoDriver.prototype.refresh,
   "WebDriver:ReleaseActions": GeckoDriver.prototype.releaseActions,
   "WebDriver:SendAlertText": GeckoDriver.prototype.sendKeysToDialog,

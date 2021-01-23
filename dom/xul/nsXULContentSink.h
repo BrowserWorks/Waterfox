@@ -86,8 +86,6 @@ class XULContentSinkImpl final : public nsIXMLContentSink, public nsIExpatSink {
 
   nsresult NormalizeAttributeString(const char16_t* aExpatName,
                                     nsAttrName& aName);
-  nsresult CreateElement(mozilla::dom::NodeInfo* aNodeInfo,
-                         nsXULPrototypeElement** aResult);
 
  public:
   enum State { eInProlog, eInDocumentElement, eInScript, eInEpilog };
@@ -104,8 +102,11 @@ class XULContentSinkImpl final : public nsIXMLContentSink, public nsIExpatSink {
       nsPrototypeArray mChildren;
       State mState;
       Entry* mNext;
-      Entry(nsXULPrototypeNode* aNode, State aState, Entry* aNext)
-          : mNode(aNode), mChildren(8), mState(aState), mNext(aNext) {}
+      Entry(RefPtr<nsXULPrototypeNode>&& aNode, State aState, Entry* aNext)
+          : mNode(std::move(aNode)),
+            mChildren(8),
+            mState(aState),
+            mNext(aNext) {}
     };
 
     Entry* mTop;
@@ -117,7 +118,7 @@ class XULContentSinkImpl final : public nsIXMLContentSink, public nsIExpatSink {
 
     int32_t Depth() { return mDepth; }
 
-    nsresult Push(nsXULPrototypeNode* aNode, State aState);
+    void Push(RefPtr<nsXULPrototypeNode>&& aNode, State aState);
     nsresult Pop(State* aState);
 
     nsresult GetTopNode(RefPtr<nsXULPrototypeNode>& aNode);

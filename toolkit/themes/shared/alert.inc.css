@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-@import url("chrome://global/skin/");
+@import url("chrome://global/skin/global.css");
 
 @namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
 
@@ -134,7 +134,7 @@
   border-width: 0;
   border-radius: 20px;
   min-width: 0;
-  list-style-image: url("chrome://mozapps/skin/extensions/utilities.svg");
+  list-style-image: url("chrome://global/skin/icons/settings.svg");
   -moz-context-properties: fill;
   fill: currentColor;
   margin-inline-end: 4px;

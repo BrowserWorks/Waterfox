@@ -261,29 +261,23 @@ nsresult nsICOEncoder::ParseOptions(const nsAString& aOptions,
   // From format: format=<png|bmp>;bpp=<bpp_value>
   // to format: [0] = format=<png|bmp>, [1] = bpp=<bpp_value>
   nsTArray<nsCString> nameValuePairs;
-  if (!ParseString(NS_ConvertUTF16toUTF8(aOptions), ';', nameValuePairs)) {
-    return NS_ERROR_INVALID_ARG;
-  }
+  ParseString(NS_ConvertUTF16toUTF8(aOptions), ';', nameValuePairs);
 
   // For each name/value pair in the set
   for (unsigned i = 0; i < nameValuePairs.Length(); ++i) {
     // Split the name value pair [0] = name, [1] = value
     nsTArray<nsCString> nameValuePair;
-    if (!ParseString(nameValuePairs[i], '=', nameValuePair)) {
-      return NS_ERROR_INVALID_ARG;
-    }
+    ParseString(nameValuePairs[i], '=', nameValuePair);
     if (nameValuePair.Length() != 2) {
       return NS_ERROR_INVALID_ARG;
     }
 
     // Parse the format portion of the string format=<png|bmp>;bpp=<bpp_value>
-    if (nameValuePair[0].Equals("format",
-                                nsCaseInsensitiveCStringComparator())) {
-      if (nameValuePair[1].Equals("png",
-                                  nsCaseInsensitiveCStringComparator())) {
+    if (nameValuePair[0].Equals("format", nsCaseInsensitiveCStringComparator)) {
+      if (nameValuePair[1].Equals("png", nsCaseInsensitiveCStringComparator)) {
         aUsePNGOut = true;
-      } else if (nameValuePair[1].Equals(
-                     "bmp", nsCaseInsensitiveCStringComparator())) {
+      } else if (nameValuePair[1].Equals("bmp",
+                                         nsCaseInsensitiveCStringComparator)) {
         aUsePNGOut = false;
       } else {
         return NS_ERROR_INVALID_ARG;
@@ -291,7 +285,7 @@ nsresult nsICOEncoder::ParseOptions(const nsAString& aOptions,
     }
 
     // Parse the bpp portion of the string format=<png|bmp>;bpp=<bpp_value>
-    if (nameValuePair[0].Equals("bpp", nsCaseInsensitiveCStringComparator())) {
+    if (nameValuePair[0].Equals("bpp", nsCaseInsensitiveCStringComparator)) {
       if (nameValuePair[1].EqualsLiteral("24")) {
         aBppOut = 24;
       } else if (nameValuePair[1].EqualsLiteral("32")) {

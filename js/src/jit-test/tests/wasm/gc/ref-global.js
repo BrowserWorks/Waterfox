@@ -1,4 +1,4 @@
-// |jit-test| skip-if: !wasmGcEnabled() || wasmCompileMode() != 'baseline'
+// |jit-test| skip-if: !wasmReftypesEnabled() || !wasmGcEnabled() || wasmCompileMode() != 'baseline'
 
 // Basic private-to-module functionality.  At the moment all we have is null
 // pointers, not very exciting.
@@ -6,15 +6,13 @@
 {
     let bin = wasmTextToBinary(
         `(module
-          (gc_feature_opt_in 3)
-
           (type $point (struct
                         (field $x f64)
                         (field $y f64)))
 
-          (global $g1 (mut (ref $point)) (ref.null))
-          (global $g2 (mut (ref $point)) (ref.null))
-          (global $g3 (ref $point) (ref.null))
+          (global $g1 (mut (ref opt $point)) (ref.null opt $point))
+          (global $g2 (mut (ref opt $point)) (ref.null opt $point))
+          (global $g3 (ref opt $point) (ref.null opt $point))
 
           ;; Restriction: cannot expose Refs outside the module, not even
           ;; as a return value.  See ref-restrict.js.
@@ -27,7 +25,7 @@
 
           (func (export "clear")
            (global.set $g1 (global.get $g3))
-           (global.set $g2 (ref.null))))`);
+           (global.set $g2 (ref.null opt $point))))`);
 
     let mod = new WebAssembly.Module(bin);
     let ins = new WebAssembly.Instance(mod).exports;
@@ -42,13 +40,11 @@
 {
     let bin = wasmTextToBinary(
         `(module
-          (gc_feature_opt_in 3)
-
           (type $point (struct
                         (field $x f64)
                         (field $y f64)))
 
-          (global $glob (mut (ref $point)) (ref.null))
+          (global $glob (mut (ref opt $point)) (ref.null opt $point))
 
           (func (export "init")
            (global.set $glob (struct.new $point (f64.const 0.5) (f64.const 2.75))))
@@ -57,7 +53,7 @@
            (global.set $glob (struct.new $point (f64.const 3.5) (f64.const 37.25))))
 
           (func (export "clear")
-           (global.set $glob (ref.null)))
+           (global.set $glob (ref.null opt $point)))
 
           (func (export "x") (result f64)
            (struct.get $point 0 (global.get $glob)))
@@ -87,15 +83,14 @@
 {
     let bin = wasmTextToBinary(
         `(module
-          (gc_feature_opt_in 3)
-          (import $g "" "g" (global anyref))
+          (import "" "g" (global $g anyref))
           (global $glob anyref (global.get $g))
           (func (export "get") (result anyref)
            (global.get $glob)))`);
 
     let mod = new WebAssembly.Module(bin);
     let obj = {zappa:37};
-    let g = new WebAssembly.Global({value: "anyref"}, obj);
+    let g = new WebAssembly.Global({value: "externref"}, obj);
     let ins = new WebAssembly.Instance(mod, {"":{g}}).exports;
     assertEq(ins.get(), obj);
 }
@@ -105,12 +100,11 @@
 {
     let bin = wasmTextToBinary(
         `(module
-          (gc_feature_opt_in 3)
           (type $box (struct (field $val i32)))
-          (import "m" "g" (global (mut (ref $box)))))`);
+          (import "m" "g" (global (mut (ref opt $box)))))`);
 
     assertErrorMessage(() => new WebAssembly.Module(bin), WebAssembly.CompileError,
-                       /cannot expose reference type/);
+                       /cannot expose indexed reference type/);
 }
 
 // We can't export a global of a reference type because we can't later import
@@ -120,10 +114,9 @@
 {
     let bin = wasmTextToBinary(
         `(module
-          (gc_feature_opt_in 3)
           (type $box (struct (field $val i32)))
-          (global $boxg (export "box") (mut (ref $box)) (ref.null)))`);
+          (global $boxg (export "box") (mut (ref opt $box)) (ref.null opt $box)))`);
 
     assertErrorMessage(() => new WebAssembly.Module(bin), WebAssembly.CompileError,
-                       /cannot expose reference type/);
+                       /cannot expose indexed reference type/);
 }

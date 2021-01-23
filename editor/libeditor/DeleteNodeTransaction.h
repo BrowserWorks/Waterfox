@@ -23,7 +23,7 @@ class EditorBase;
  */
 class DeleteNodeTransaction final : public EditTransactionBase {
  protected:
-  DeleteNodeTransaction(EditorBase& aEditorBase, nsINode& aNodeToDelete);
+  DeleteNodeTransaction(EditorBase& aEditorBase, nsIContent& aContentToDelete);
 
  public:
   /**
@@ -31,10 +31,10 @@ class DeleteNodeTransaction final : public EditTransactionBase {
    * it cannot remove the node from its parent.
    *
    * @param aEditorBase         The editor.
-   * @param aNodeToDelete       The node to be removed from the DOM tree.
+   * @param aContentToDelete    The node to be removed from the DOM tree.
    */
   static already_AddRefed<DeleteNodeTransaction> MaybeCreate(
-      EditorBase& aEditorBase, nsINode& aNodeToDelete);
+      EditorBase& aEditorBase, nsIContent& aContentToDelete);
 
   /**
    * CanDoIt() returns true if there are enough members and can modify the
@@ -47,23 +47,26 @@ class DeleteNodeTransaction final : public EditTransactionBase {
                                            EditTransactionBase)
 
   NS_DECL_EDITTRANSACTIONBASE
+  NS_DECL_EDITTRANSACTIONBASE_GETASMETHODS_OVERRIDE(DeleteNodeTransaction)
 
-  NS_IMETHOD RedoTransaction() override;
+  MOZ_CAN_RUN_SCRIPT NS_IMETHOD RedoTransaction() override;
+
+  nsIContent* GetContent() const { return mContentToDelete; }
 
  protected:
-  virtual ~DeleteNodeTransaction();
+  virtual ~DeleteNodeTransaction() = default;
 
   // The editor for this transaction.
   RefPtr<EditorBase> mEditorBase;
 
   // The element to delete.
-  nsCOMPtr<nsINode> mNodeToDelete;
+  nsCOMPtr<nsIContent> mContentToDelete;
 
   // Parent of node to delete.
   nsCOMPtr<nsINode> mParentNode;
 
   // Next sibling to remember for undo/redo purposes.
-  nsCOMPtr<nsIContent> mRefNode;
+  nsCOMPtr<nsIContent> mRefContent;
 };
 
 }  // namespace mozilla

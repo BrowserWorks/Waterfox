@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Hiqmë prej këtej!">
+<!ENTITY safeb.palm.decline.label "Shpërfille këtë sinjalizim">
+<!ENTITY safeb.palm.reportPage.label "Pse është bllokuar kjo faqe?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Këshillimi u dha nga <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "Faqe e Raportuar për Sulme!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Kjo faqe web te <span id='malware_sitename'/> është raportuar si një faqe sulmesh dhe është bllokuar mbi bazën e parapëlqimeve tuaja për sigurinë.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Faqet e sulmeve përpiqen të instalojnë programe që vjedhin të dhëna vetjake, që përdorin kompjuterin tuaj për të sulmuar të tjerët, ose që dëmtojnë sistemin tuaj.</p><p>Disa faqe sulmesh shpërndajnë qëllimisht &quot;software&quot; të dëmshëm, por mjaft prej tyre janë komprometuar pa dijeninë ose lejen e të zotëve.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "Sajt i Rremë!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "Kjo faqe te <span id='phishing_sitename'/> është raportuar si sajt i rremë dhe është bllokuar në bazë të parapëlqimeve tuaja mbi sigurinë.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>Sajtet e rremë hartohen për t&apos;ju shtyrë të bëni gjëra të rrezikshme, fjala vjen, instalim software-i, ose zbulim të të dhënave tuaja personale të tilla si, fjalëkalime, numra telefonash ose kartash krediti.</p><p>Dhënia e çfarëdo të dhëne në këtë faqe mund të sjellë vjedhje identiteti ose të tjera rrengje.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "I raportuar si Sajt Software-i të Padëshiruar!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Kjo faqe web te <span id='unwanted_sitename'/> është raportuar se përmban software të padëshiruar dhe është bllokuar mbi bazën e parapëlqimeve tuaja për sigurinë.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "Faqet e software-i të padëshiruar përpiqen të instalojnë programe që mund të jenë të rrejshme dhe të ndikojnë në sistemin tuaj në rrugë të papritura.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "Sajti ku po shkoni mund të përmbajë malware">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName;-i e bllokoi këtë faqe, ngaqë mund të përpiqet të instalojë aplikacione të rrezikshme që vjedhin ose fshijnë të dhëna tuajat (për shembull, foto, fjalëkalime, mesazhe dhe karta kreditit).">

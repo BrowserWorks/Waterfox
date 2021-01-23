@@ -185,8 +185,8 @@ TEST_F(TlsConnectStreamTls13, TooLargeRecord) {
 class ShortHeaderChecker : public PacketFilter {
  public:
   PacketFilter::Action Filter(const DataBuffer& input, DataBuffer* output) {
-    // The first octet should be 0b001xxxxx.
-    EXPECT_EQ(1, input.data()[0] >> 5);
+    // The first octet should be 0b001000xx.
+    EXPECT_EQ(kCtDtlsCiphertext, (input.data()[0] & ~0x3));
     return KEEP;
   }
 };
@@ -203,6 +203,71 @@ TEST_F(TlsConnectDatagram13, ShortHeadersServer) {
   server_->SetOption(SSL_ENABLE_DTLS_SHORT_HEADER, PR_TRUE);
   server_->SetFilter(std::make_shared<ShortHeaderChecker>());
   SendReceive();
+}
+
+// Send a DTLSCiphertext header with a 2B sequence number, and no length.
+TEST_F(TlsConnectDatagram13, DtlsAlternateShortHeader) {
+  StartConnect();
+  TlsSendCipherSpecCapturer capturer(client_);
+  Connect();
+  SendReceive(50);
+
+  uint8_t buf[] = {0x32, 0x33, 0x34};
+  auto spec = capturer.spec(1);
+  ASSERT_NE(nullptr, spec.get());
+  ASSERT_EQ(3, spec->epoch());
+
+  uint8_t dtls13_ct = kCtDtlsCiphertext | kCtDtlsCiphertext16bSeqno;
+  TlsRecordHeader header(variant_, SSL_LIBRARY_VERSION_TLS_1_3, dtls13_ct,
+                         0x0003000000000001);
+  TlsRecordHeader out_header(header);
+  DataBuffer msg(buf, sizeof(buf));
+  msg.Write(msg.len(), ssl_ct_application_data, 1);
+  DataBuffer ciphertext;
+  EXPECT_TRUE(spec->Protect(header, msg, &ciphertext, &out_header));
+
+  DataBuffer record;
+  auto rv = out_header.Write(&record, 0, ciphertext);
+  EXPECT_EQ(out_header.header_length() + ciphertext.len(), rv);
+  client_->SendDirect(record);
+
+  server_->ReadBytes(3);
+}
+
+TEST_F(TlsConnectStreamTls13, UnencryptedFinishedMessage) {
+  StartConnect();
+  client_->Handshake();  // Send ClientHello
+  server_->Handshake();  // Send first server flight
+
+  // Record and drop the first record, which is the Finished.
+  auto recorder = std::make_shared<TlsRecordRecorder>(client_);
+  recorder->EnableDecryption();
+  auto dropper = std::make_shared<SelectiveDropFilter>(1);
+  client_->SetFilter(std::make_shared<ChainedPacketFilter>(
+      ChainedPacketFilterInit({recorder, dropper})));
+  client_->Handshake();  // Save and drop CFIN.
+  EXPECT_EQ(TlsAgent::STATE_CONNECTED, client_->state());
+
+  ASSERT_EQ(1U, recorder->count());
+  auto& finished = recorder->record(0);
+
+  DataBuffer d;
+  size_t offset = d.Write(0, ssl_ct_handshake, 1);
+  offset = d.Write(offset, SSL_LIBRARY_VERSION_TLS_1_2, 2);
+  offset = d.Write(offset, finished.buffer.len(), 2);
+  d.Append(finished.buffer);
+  client_->SendDirect(d);
+
+  // Now process the message.
+  ExpectAlert(server_, kTlsAlertUnexpectedMessage);
+  // The server should generate an alert.
+  server_->Handshake();
+  EXPECT_EQ(TlsAgent::STATE_ERROR, server_->state());
+  server_->CheckErrorCode(SSL_ERROR_RX_UNEXPECTED_RECORD_TYPE);
+  // Have the client consume the alert.
+  client_->Handshake();
+  EXPECT_EQ(TlsAgent::STATE_ERROR, client_->state());
+  client_->CheckErrorCode(SSL_ERROR_HANDSHAKE_UNEXPECTED_ALERT);
 }
 
 const static size_t kContentSizesArr[] = {

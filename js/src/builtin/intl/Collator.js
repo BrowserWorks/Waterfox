@@ -28,7 +28,7 @@ function resolveCollatorInternals(lazyCollatorData) {
     var relevantExtensionKeys = Collator.relevantExtensionKeys;
 
     // Step 17.
-    var r = ResolveLocale(callFunction(Collator.availableLocales, Collator),
+    var r = ResolveLocale("Collator",
                           lazyCollatorData.requestedLocales,
                           lazyCollatorData.opt,
                           relevantExtensionKeys,
@@ -196,8 +196,7 @@ function Intl_Collator_supportedLocalesOf(locales /*, options*/) {
     var options = arguments.length > 1 ? arguments[1] : undefined;
 
     // Step 1.
-    var availableLocales = callFunction(collatorInternalProperties.availableLocales,
-                                        collatorInternalProperties);
+    var availableLocales = "Collator";
 
     // Step 2.
     var requestedLocales = CanonicalizeLocaleList(locales);
@@ -214,18 +213,7 @@ function Intl_Collator_supportedLocalesOf(locales /*, options*/) {
 var collatorInternalProperties = {
     sortLocaleData: collatorSortLocaleData,
     searchLocaleData: collatorSearchLocaleData,
-    _availableLocales: null,
-    availableLocales: function() // eslint-disable-line object-shorthand
-    {
-        var locales = this._availableLocales;
-        if (locales)
-            return locales;
-
-        locales = intl_Collator_availableLocales();
-        addSpecialMissingLanguageTags(locales);
-        return (this._availableLocales = locales);
-    },
-    relevantExtensionKeys: ["co", "kn", "kf"],
+    relevantExtensionKeys: ["co", "kf", "kn"],
 };
 
 /**
@@ -236,10 +224,8 @@ function collatorActualLocale(locale) {
 
     // If |locale| is the default locale (e.g. da-DK), but only supported
     // through a fallback (da), we need to get the actual locale before we
-    // can call intl_isUpperCaseFirst. Also see BestAvailableLocaleHelper.
-    var availableLocales = callFunction(collatorInternalProperties.availableLocales,
-                                        collatorInternalProperties);
-    return BestAvailableLocaleIgnoringDefault(availableLocales, locale);
+    // can call intl_isUpperCaseFirst. Also see intl_BestAvailableLocale.
+    return BestAvailableLocaleIgnoringDefault("Collator", locale);
 }
 
 /**
@@ -319,24 +305,27 @@ function collatorSearchLocaleData() {
 }
 
 /**
- * Function to be bound and returned by Intl.Collator.prototype.compare.
+ * Create function to be cached and returned by Intl.Collator.prototype.compare.
  *
  * Spec: ECMAScript Internationalization API Specification, 10.3.3.1.
  */
-function collatorCompareToBind(x, y) {
-    // Step 1.
-    var collator = this;
+function createCollatorCompare(collator) {
+    // This function is not inlined in $Intl_Collator_compare_get to avoid
+    // creating a call-object on each call to $Intl_Collator_compare_get.
+    return function(x, y) {
+        // Step 1 (implicit).
 
-    // Step 2.
-    assert(IsObject(collator), "collatorCompareToBind called with non-object");
-    assert(GuardToCollator(collator) !== null, "collatorCompareToBind called with non-Collator");
+        // Step 2.
+        assert(IsObject(collator), "collatorCompareToBind called with non-object");
+        assert(GuardToCollator(collator) !== null, "collatorCompareToBind called with non-Collator");
 
-    // Steps 3-6
-    var X = ToString(x);
-    var Y = ToString(y);
+        // Steps 3-6
+        var X = ToString(x);
+        var Y = ToString(y);
 
-    // Step 7.
-    return intl_CompareStrings(collator, X, Y);
+        // Step 7.
+        return intl_CompareStrings(collator, X, Y);
+    };
 }
 
 /**
@@ -362,11 +351,8 @@ function $Intl_Collator_compare_get() {
 
     // Step 4.
     if (internals.boundCompare === undefined) {
-        // Steps 4.a-b.
-        var F = callFunction(FunctionBind, collatorCompareToBind, collator);
-
-        // Step 4.c.
-        internals.boundCompare = F;
+        // Steps 4.a-c.
+        internals.boundCompare = createCollatorCompare(collator);
     }
 
     // Step 5.

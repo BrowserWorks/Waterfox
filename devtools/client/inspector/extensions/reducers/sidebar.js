@@ -6,10 +6,10 @@
 
 const {
   EXTENSION_SIDEBAR_OBJECT_TREEVIEW_UPDATE,
-  EXTENSION_SIDEBAR_OBJECT_GRIP_VIEW_UPDATE,
+  EXTENSION_SIDEBAR_EXPRESSION_RESULT_VIEW_UPDATE,
   EXTENSION_SIDEBAR_PAGE_UPDATE,
   EXTENSION_SIDEBAR_REMOVE,
-} = require("../actions/index");
+} = require("devtools/client/inspector/extensions/actions/index");
 
 const INITIAL_SIDEBAR = {};
 
@@ -25,16 +25,16 @@ const reducers = {
     });
   },
 
-  [EXTENSION_SIDEBAR_OBJECT_GRIP_VIEW_UPDATE](
+  [EXTENSION_SIDEBAR_EXPRESSION_RESULT_VIEW_UPDATE](
     sidebar,
-    { sidebarId, objectValueGrip, rootTitle }
+    { sidebarId, expressionResult, rootTitle }
   ) {
     // Update the sidebar to a "object-treeview" which shows
     // the passed object.
     return Object.assign({}, sidebar, {
       [sidebarId]: {
         viewMode: "object-value-grip-view",
-        objectValueGrip,
+        expressionResult,
         rootTitle,
       },
     });

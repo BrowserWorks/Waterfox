@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+<!ENTITY MsgSynchronize.label "Ukládání a synchronizace zpráv">
+<!ENTITY MsgSelect.label "Položky pro použití v režimu offline">
+<!ENTITY MsgSyncDesc.label 'Pokud jste už pro použití v režimu offline označili některé složky s poštou a diskusními příspěvky, můžete je teď uložit a/nebo synchronizovat. V opačném případě použijte tlačítko "Vybrat" a vyberte poštovní složky a diskusní skupiny pro použití v režimu offline.'>
+<!ENTITY MsgSyncDirections.label "Stáhnout a/nebo synchronizovat následující:">
+<!ENTITY syncTypeMail.label "Poštovní zprávy">
+<!ENTITY syncTypeMail.accesskey "P">
+<!ENTITY syncTypeNews.label "Zprávy diskusních skupin">
+<!ENTITY syncTypeNews.accesskey "Z">
+<!ENTITY sendMessage.label "Odeslat neodeslané zprávy">
+<!ENTITY sendMessage.accesskey "d">
+<!ENTITY workOffline.label "Pracovat v režimu offline jakmile bude ukládání a/nebo synchronizace hotova">
+<!ENTITY workOffline.accesskey "F">
+<!ENTITY selectButton.label "Vybrat…">
+<!ENTITY selectButton.accesskey "V">
+<!ENTITY MsgSelectDesc.label "Vyberte složky s poštou a diskusními příspěvky, které chcete mít k dispozici pro použití v režimu offline. Při výběru více položek se může prodloužit doba ukládání.">
+<!ENTITY MsgSelectInd.label "Stáhnout">
+<!ENTITY MsgSelectItems.label "Složky a diskusní skupiny">

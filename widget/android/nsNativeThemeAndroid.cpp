@@ -10,6 +10,8 @@
 #include "nsCSSRendering.h"
 #include "PathHelpers.h"
 #include "mozilla/ClearOnShutdown.h"
+#include "mozilla/StaticPrefs_widget.h"
+#include "nsNativeBasicTheme.h"
 
 NS_IMPL_ISUPPORTS_INHERITED(nsNativeThemeAndroid, nsNativeTheme, nsITheme)
 
@@ -292,11 +294,15 @@ nsITheme::Transparency nsNativeThemeAndroid::GetWidgetTransparency(
   return eUnknownTransparency;
 }
 
-already_AddRefed<nsITheme> do_GetNativeTheme() {
+already_AddRefed<nsITheme> do_GetNativeThemeDoNotUseDirectly() {
   static nsCOMPtr<nsITheme> inst;
 
   if (!inst) {
-    inst = new nsNativeThemeAndroid();
+    if (StaticPrefs::widget_disable_native_theme_for_content()) {
+      inst = new nsNativeBasicTheme();
+    } else {
+      inst = new nsNativeThemeAndroid();
+    }
     ClearOnShutdown(&inst);
   }
 

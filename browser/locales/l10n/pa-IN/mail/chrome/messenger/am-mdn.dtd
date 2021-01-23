@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "ਵਾਪਸੀ ਰਸੀਦ">
+<!ENTITY useGlobalPrefs.label         "ਇਸ ਅਕਾਊਂਟ ਲਈ ਮੇਰੀ ਗਲੋਬਲ ਵਾਪਸੀ ਰਸੀਦ ਪਸੰਦ ਵਰਤੋਂ">
+<!ENTITY useGlobalPrefs.accesskey     "U">
+<!ENTITY globalReceipts.label         "…ਗਲੋਬਲ ਪਸੰਦ">
+<!ENTITY globalReceipts.accesskey     "G">
+<!ENTITY useCustomPrefs.label         "ਇਸ ਅਕਾਊਂਟ ਲਈ ਵਾਪਸੀ ਰਸੀਦ ਪਸੰਦ">
+<!ENTITY useCustomPrefs.accesskey     "C">
+<!ENTITY requestReceipt.label         "ਜਦੋਂ ਸੁਨੇਹੇ ਭੇਜੇ ਜਾਣ ਤਾਂ ਹਮੇਸ਼ਾ ਵਾਪਸੀ ਰਸੀਦ ਲਈ ਬੇਨਤੀ ਕਰੋ">
+<!ENTITY requestReceipt.accesskey     "W">
+<!ENTITY receiptArrive.label          "ਜਦੋਂ ਇੱਕ ਰਸੀਦ ਆਵੇ:">
+<!ENTITY leaveIt.label                "ਇਸ ਨੂੰ ਮੇਰੇ Inbox ਵਿੱਚ ਰੱਖੋ">
+<!ENTITY leaveIt.accesskey            "I">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "ਇਸ ਨੂੰ ਮੇਰੇ &quot;Sent&quot; ਫੋਲਡਰ ਵਿੱਚ ਭੇਜ ਦਿਓ">
+<!ENTITY moveToSent.accesskey         "M">
+<!ENTITY requestMDN.label             "ਜਦੋਂ ਮੈਂ ਵਾਪਿਸੀ ਰਸੀਦ ਲਈ ਬੇਨਤੀ ਪ੍ਰਾਪਤ ਕਰਾਂ:">
+<!ENTITY returnSome.label             "ਕੁਝ ਸੁਨੇਹਿਆਂ ਲਈ ਵਾਪਸੀ ਰਸੀਦ ਸਵੀਕਾਰ ਕਰੋ">
+<!ENTITY returnSome.accesskey         "e">
+<!ENTITY never.label                  "ਕਦੇ ਵੀ ਵਾਪਸੀ ਰਸੀਦ ਨਾ ਭੇਜੋ">
+<!ENTITY never.accesskey              "N">
+<!ENTITY notInToCc.label              "ਜੇਕਰ ਮੈਂ ਸੁਨੇਹੇ ਦੇ ਵੱਲ ਜਾਂ Cc ਖੇਤਰ ਵਿੱਚ ਨਹੀਂ ਹਾਂ:">
+<!ENTITY notInToCc.accesskey          "T">
+<!ENTITY outsideDomain.label          "ਜੇਕਰ ਭੇਜਣ ਵਾਲਾ ਮੇਰੀ ਡੋਮੇਨ ਤੋਂ ਬਾਹਰ ਹੋਵੇ:">
+<!ENTITY outsideDomain.accesskey      "s">
+<!ENTITY otherCases.label             "ਹੋਰ ਸਭ ਹਾਲਾਤਾਂ ਵਿੱਚ:">
+<!ENTITY otherCases.accesskey         "o">
+<!ENTITY askMe.label                  "ਮੈਨੂੰ ਪੁੱਛੋ">
+<!ENTITY alwaysSend.label             "ਹਮੇਸ਼ਾ ਭੇਜੋ">
+<!ENTITY neverSend.label              "ਕਦੇ ਨਾ ਭੇਜੋ">

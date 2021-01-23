@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (window.width2, window.height): These values should be
+close to the golden ratio (1.618:1) while making sure it's wide enough for long
+file names and tall enough to hint that there are more activities in the list -->
+
+<!ENTITY window.width2                    "485">
+<!ENTITY window.height                    "300">
+
+<!ENTITY activity.title                  "Amsefrak n urmud">
+
+<!ENTITY cmd.pause.label                  "Asteɛfu">
+<!ENTITY cmd.pause.accesskey              "A">
+<!ENTITY cmd.resume.label                 "Kemmel">
+<!ENTITY cmd.resume.accesskey             "K">
+<!ENTITY cmd.cancel.label                 "Sefsex">
+<!ENTITY cmd.cancel.accesskey             "S">
+<!ENTITY cmd.undo.label                   "Sefsax">
+<!ENTITY cmd.undo.accesskey               "S">
+<!ENTITY cmd.recover.label                "Err-d">
+<!ENTITY cmd.recover.accesskey            "r">
+<!ENTITY cmd.retry.label                  "Ɛreḍ tikelt nniḍen">
+<!ENTITY cmd.retry.accesskey              "r">
+<!ENTITY cmd.removeFromList.label         "Kkes si tebdart">
+<!ENTITY cmd.removeFromList.accesskey     "K">
+
+<!ENTITY cmd.close.commandkey             "w">
+<!ENTITY cmd.close2.commandkey            "j">
+<!ENTITY cmd.close2Unix.commandkey        "y">
+<!ENTITY cmd.clearList.label              "Sfeḍ tabdart">
+<!ENTITY cmd.clearList.tooltip            "Kkes iferdisen yemden, yettwakksen, d wid ur neddi ara si tebdart">
+<!ENTITY cmd.clearList.accesskey          "a">
+<!ENTITY cmd.find.commandkey              "f">
+<!ENTITY cmd.search.commandkey            "k">
+
+<!ENTITY searchBox.label                  "Nadi…">

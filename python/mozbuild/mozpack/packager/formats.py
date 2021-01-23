@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function, unicode_literals
 
 from mozpack.chrome.manifest import (
     Manifest,
@@ -13,7 +13,7 @@ from mozpack.chrome.manifest import (
     ManifestMultiContent,
 )
 from mozpack.errors import errors
-from urlparse import urlparse
+from six.moves.urllib.parse import urlparse
 import mozpack.path as mozpath
 from mozpack.files import ManifestFile
 from mozpack.copier import (
@@ -283,11 +283,6 @@ class OmniJarFormatter(JarFormatter):
                 return
             JarFormatter._add_base(self, base, addon)
         else:
-            # Initialize a chrome.manifest next to the omnijar file so that
-            # there's always a chrome.manifest file, even an empty one.
-            path = mozpath.normpath(mozpath.join(base, 'chrome.manifest'))
-            if not self.copier.contains(path):
-                self.copier.add(path, ManifestFile(''))
             self._sub_formatter[base] = OmniJarSubFormatter(
                 FileRegistrySubtree(base, self.copier), self._omnijar_name,
                 self._compress, self._non_resources)
@@ -345,11 +340,13 @@ class OmniJarSubFormatter(PiecemealFormatter):
             return len(path) != 3 or \
                 not (path[2] == 'channel-prefs.js' and
                      path[1] in ['pref', 'preferences'])
+        if len(path) <= 2 and path[-1] == 'greprefs.js':
+            # Accommodate `greprefs.js` and `$ANDROID_CPU_ARCH/greprefs.js`.
+            return True
         return path[0] in [
             'modules',
             'actors',
             'dictionaries',
-            'greprefs.js',
             'hyphenation',
             'localization',
             'update.locale',

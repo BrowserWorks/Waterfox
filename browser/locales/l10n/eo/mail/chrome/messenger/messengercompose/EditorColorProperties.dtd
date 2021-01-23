@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Koloroj de paĝo kaj fono">
+<!ENTITY pageColors.label "Koloroj de paĝo">
+<!ENTITY defaultColorsRadio.label "Implicitaj koloroj de legonto (ne difini kolorojn de paĝo)">
+<!ENTITY defaultColorsRadio.accessKey "I">
+<!ENTITY defaultColorsRadio.tooltip "Nur uzi preferojn pri koloroj de la legonto">
+<!ENTITY customColorsRadio.label "Uzi proprajn kolorojn:">
+<!ENTITY customColorsRadio.accessKey "p">
+<!ENTITY customColorsRadio.tooltip "Tiuj ĉi preferoj pri koloroj estos pli gravaj ol preferoj de la legonto">
+
+<!ENTITY normalText.label "kutima teksto">
+<!ENTITY normalText.accessKey "k">
+<!ENTITY linkText.label "ligilo">
+<!ENTITY linkText.accessKey "l">
+<!ENTITY activeLinkText.label "aktiva ligilo">
+<!ENTITY activeLinkText.accessKey "a">
+<!ENTITY visitedLinkText.label "vizitita ligilo">
+<!ENTITY visitedLinkText.accessKey "v">
+<!ENTITY background.label "fono:">
+<!ENTITY background.accessKey "f">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Fona bildo:">
+<!ENTITY backgroundImage.accessKey "b">
+<!ENTITY backgroundImage.tooltip "Uzi tiun ĉi bildon kiel fonon por via paĝo">
+<!ENTITY backgroundImage.shortenedDataURI "Mallongigita ligilo de tipo “data” (kiam kopiita, la plena ligilo aperos en la tondujo)">

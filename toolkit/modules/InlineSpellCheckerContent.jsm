@@ -13,10 +13,11 @@ var EXPORTED_SYMBOLS = ["InlineSpellCheckerContent"];
 
 var InlineSpellCheckerContent = {
   _spellChecker: null,
-  _manager: null,
+  _actor: null,
 
-  initContextMenu(event, editFlags, messageManager) {
-    this._manager = messageManager;
+  initContextMenu(event, editFlags, actor) {
+    this._actor = actor;
+    this._actor.registerDestructionObserver(this);
 
     let spellChecker;
     if (!(editFlags & (SpellCheckHelper.TEXTAREA | SpellCheckHelper.INPUT))) {
@@ -29,13 +30,11 @@ var InlineSpellCheckerContent = {
     } else {
       // Use the element's editor.
       spellChecker = this._spellChecker = new InlineSpellChecker(
-        event.target.editor
+        event.composedTarget.editor
       );
     }
 
     this._spellChecker.initFromEvent(event.rangeParent, event.rangeOffset);
-
-    this._addMessageListeners();
 
     if (!spellChecker.canSpellCheck) {
       return {
@@ -61,9 +60,8 @@ var InlineSpellCheckerContent = {
       };
     }
 
-    let dictionaryList = {};
     let realSpellChecker = spellChecker.mInlineSpellChecker.spellChecker;
-    realSpellChecker.GetDictionaryList(dictionaryList, {});
+    let dictionaryList = realSpellChecker.GetDictionaryList();
 
     return {
       canSpellCheck: spellChecker.canSpellCheck,
@@ -73,17 +71,20 @@ var InlineSpellCheckerContent = {
       misspelling: spellChecker.mMisspelling,
       spellSuggestions: this._generateSpellSuggestions(),
       currentDictionary: spellChecker.mInlineSpellChecker.spellChecker.GetCurrentDictionary(),
-      dictionaryList: dictionaryList.value,
+      dictionaryList,
     };
   },
 
   uninitContextMenu() {
-    for (let i of this._messages) {
-      this._manager.removeMessageListener(i, this);
+    if (this._actor) {
+      this._actor.unregisterDestructionObserver(this);
     }
-
-    this._manager = null;
+    this._actor = null;
     this._spellChecker = null;
+  },
+
+  actorDestroyed() {
+    this.uninitContextMenu();
   },
 
   _generateSpellSuggestions() {
@@ -107,43 +108,19 @@ var InlineSpellCheckerContent = {
     return suggestions;
   },
 
-  _messages: [
-    "InlineSpellChecker:selectDictionary",
-    "InlineSpellChecker:replaceMisspelling",
-    "InlineSpellChecker:toggleEnabled",
-
-    "InlineSpellChecker:recheck",
-
-    "InlineSpellChecker:uninit",
-  ],
-
-  _addMessageListeners() {
-    for (let i of this._messages) {
-      this._manager.addMessageListener(i, this);
-    }
+  selectDictionary(localeCode) {
+    this._spellChecker.selectDictionary(localeCode);
   },
 
-  receiveMessage(msg) {
-    switch (msg.name) {
-      case "InlineSpellChecker:selectDictionary":
-        this._spellChecker.selectDictionary(msg.data.localeCode);
-        break;
+  replaceMisspelling(index) {
+    this._spellChecker.replaceMisspelling(index);
+  },
 
-      case "InlineSpellChecker:replaceMisspelling":
-        this._spellChecker.replaceMisspelling(msg.data.index);
-        break;
+  toggleEnabled() {
+    this._spellChecker.toggleEnabled();
+  },
 
-      case "InlineSpellChecker:toggleEnabled":
-        this._spellChecker.toggleEnabled();
-        break;
-
-      case "InlineSpellChecker:recheck":
-        this._spellChecker.mInlineSpellChecker.enableRealTimeSpell = true;
-        break;
-
-      case "InlineSpellChecker:uninit":
-        this.uninitContextMenu();
-        break;
-    }
+  recheck() {
+    this._spellChecker.mInlineSpellChecker.enableRealTimeSpell = true;
   },
 };

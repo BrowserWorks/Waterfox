@@ -1,0 +1,95 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE This file is very similar to the one in Waterfox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
+<!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.pagetitle       "about:rights">
+<!ENTITY rights.intro-header    "Tietoa oikeuksistasi">
+<!ENTITY rights.intro "&brandFullName; on ilmainen, avoimen lähdekoodin ohjelmisto, jonka tekijäyhteisö koostuu tuhansista ympäri maailmaa asuvista ihmisistä. Seuraavat seikat oikeuksistasi ohjelmaan on syytä tietää:">
+
+<!-- Note on pointa / pointb / pointc form:
+     These points each have an embedded link in the HTML, so each point is
+     split into chunks for text before the link, the link text, and the text
+     after the link. If a localized grammar doesn't need the before or after
+     chunk, it can be left blank.
+
+     Also note the leading/trailing whitespace in strings here, which is
+     deliberate for formatting around the embedded links. -->
+<!ENTITY rights.intro-point1a "&brandShortName; on annettu sinulle ">
+<!ENTITY rights.intro-point1b "Mozillan julkisen lisenssin (Mozilla Public License)">
+<!ENTITY rights.intro-point1c " ehdoilla. Lisenssissä annetaan sinulle oikeus käyttää, kopioida ja levittää &brandShortName;tä. Sinulla on myös halutessasi oikeus muokata ja muuttaa &brandShortName;n lähdekoodia omien tarpeidesi mukaan. Mozillan julkinen lisenssi antaa sinulle myös oikeuden levittää näitä muokkaamiasi versioita.">
+
+<!ENTITY rights.intro-point2a "SeaMonkey e.V ei anna sinulle mitään oikeuksia SeaMonkey-tavaramerkkeihin tai -logoihin. Voit lukea tarkempia lisätietoja tavaramerkeistä">
+
+<!ENTITY rights.intro-point2aa "&vendorShortName; ei anna sinulle mitään oikeuksia &quot;&brandFullName;&quot;-tavaramerkkeihin tai -logoihin. Voit lukea tarkempia lisätietoja tavaramerkeistä">
+<!ENTITY rights.intro-point2b "täältä">
+<!ENTITY rights.intro-point2c ".">
+
+<!-- point 2d is technically point 3. in the list -->
+<!ENTITY rights.intro-point2d "Jotkin &brandShortName;-ominaisuudet, kuten kaatumisten ilmoitustyökalu, antavat mahdollisuuden lähettää palautetta &vendorShortName;lle. Lähettämällä palautetta annat &vendorShortName;lle luvan käyttää lähetettyjä tietoja parantamaan tuotetta, julkaisemaan lähetetyn palautteen verkkosivuilla ja jakelemaan lähetettyjä palautetietoja.">
+
+<!-- point 2da is technically point 3. in the list -->
+<!ENTITY rights.intro-point2da "Jotkin &brandShortName;-ominaisuudet, kuten kaatumisten ilmoitustyökalu, antavat mahdollisuuden lähettää palautetta &vendorShortName;lle. Lähettämällä palautetta annat &vendorShortName;lle luvan käyttää lähetettyjä tietoja parantamaan tuotetta, julkaisemaan lähetetyn palautteen verkkosivuilla ja jakelemaan lähetettyjä palautetietoja.">
+
+<!-- point 3 text for official branded builds -->
+<!ENTITY rights.intro-point3a "&vendorShortName;n tietosuojakäytäntö on luettavissa ">
+<!ENTITY rights.intro-point3b "täällä">
+<!ENTITY rights.intro-point3c ".">
+
+<!-- point 4 text for official branded builds -->
+<!ENTITY rights2.intro-point4a "&brandShortName; tarjoaa valinnaisia verkkopohjaisia tietopalveluita, kuten lisäosa- ja Safe Browsing -palvelut; emme kuitenkaan voi taata niiden olevan 100 &#37; tarkkoja tai virheettömiä. Lisätietoja palveluista mukaan lukien ohjeet, kuinka niiden käyttö lopetetaan, löydät ">
+<!ENTITY rights.intro-point4b "palvelun ehdoista">
+<!ENTITY rights.intro-point4c ".">
+
+<!ENTITY rights.webservices-header "&brandFullName;n verkkosivustopalvelut">
+
+<!-- Note that this paragraph references entities from extensions.dtd,
+     preferences.dtd, pref-smartupdate.dtd, and pref-security.dtd,
+     so that we can refer to text the user sees in the UI, without
+     this page being forgotten every time those strings are updated.  -->
+<!-- intro paragraph for branded builds -->
+<!ENTITY rights3.webservices-a '&brandFullName; tarjoaa valinnaisia verkkopohjaisia palveluita ("Palvelut"), jotka ovat käytettävissäsi tämän &brandShortName;:n binaariversion kanssa, kuten alla on kuvattu. Jotkut näistä palveluista (kuten lisäosien ehdotus ja päivitys, Safe Browsing tai sijaintitietoisen selaamisen ilmoitusominaisuus) ovat oletuksena käytössä.  Jos et halua käyttää mitään näistä palveluista tai alla olevia ehtoja ei voi hyväksyä, ohjeet tietyn ominaisuuden tai palvelun poistamiseksi käytöstä löytyy'>
+<!-- intro paragraph for branded builds -->
+<!ENTITY rights3.webservices-aa '&vendorShortName;  tarjoaa valinnaisia verkkopohjaisia palveluita ("Palvelut"), jotka ovat käytettävissäsi tämän &brandShortName;:n binaariversion kanssa, kuten alla on kuvattu. Jotkut näistä palveluista (kuten lisäosien ehdotus ja päivitys, Safe Browsing tai sijaintitietoisen selaamisen ilmoitusominaisuus) ovat oletuksena käytössä.  Jos et halua käyttää mitään näistä palveluista tai alla olevia ehtoja ei voi hyväksyä, ohjeet tietyn ominaisuuden tai palvelun poistamiseksi käytöstä löytyy'>
+<!ENTITY rights3.webservices-b "täältä">
+<!ENTITY rights3.webservices-c ". Muut ominaisuudet ja palvelut voi ottaa käyttöön tai poistaa käytöstä sovellusasetuksissa.">
+
+<!-- add-on related points for branded builds -->
+<!ENTITY rights.addons-a "Lisäosapalvelut: ">
+<!ENTITY rights.addons-b "Normaalisti &brandShortName; ehdottaa lisäosia &view.discover.label; -sivulla ja tarkistaa päivitykset säännöllisin väliajoin. Jos haluat poistaa käytöstä nämä ominaisuudet välttääksesi välittämästä tietoa asennetuista lisäosista palvelimelle, tee seuraavasti:">
+<!ENTITY rights.addons-term1 "Avaa sovelluksen asetukset">
+<!ENTITY rights.addons-term2 "Valitse &smart.label;-paneeli &advance.label;-luokasta">
+<!ENTITY rights.addons-term3 "Poista valinnat kohdista &quot;&autoAddOnsUpdates.label;&quot; ja &quot;&enablePersonalized.label;&quot;">
+<!ENTITY rights.addons-term4 "Lisäosapalvelut on nyt poistettu käytöstä">
+
+<!-- safe browsing points for branded builds -->
+<!ENTITY rights.safebrowsing-a "Safe Browsing: ">
+<!ENTITY rights.safebrowsing-b "Safe Browsing -toiminnon ottaminen pois päältä ei ole suositeltua, koska se voi johtaa ei-turvallisilla sivuilla käyntiin. Jos haluat ottaa tämän ominaisuuden pois päältä kokonaan, tee seuraavasti:">
+<!ENTITY rights.safebrowsing-term1 "Avaa ohjelman asetukset">
+<!ENTITY rights.safebrowsing-term2 "Valitse &security.label;-paneeli päätasolta">
+<!ENTITY rights.safebrowsing-term3 "Poista valinnat kohdista &quot;&blockAttackSites.label;&quot; ja &quot;&blockWebForgeries.label;&quot;">
+<!ENTITY rights.safebrowsing-term4 "Safe Browsing -toiminto on nyt otettu pois päältä">
+
+<!-- location aware browsing points for branded builds -->
+<!ENTITY rights.locationawarebrowsing-a "Sijaintitietoinen selaus:">
+<!ENTITY rights.locationawarebrowsing-b "on aina valinnainen. Sijaintitietoja ei ikinä lähetetä ilman hyväksyntääsi. Jos haluat poistaa toiminnon kokonaan, tee seuraavasti:">
+<!ENTITY rights.locationawarebrowsing-term1 "Avaa sovelluksen asetukset">
+<!ENTITY rights.locationawarebrowsing-term2 "Valitse &security.label;-paneeli päätasolta">
+<!ENTITY rights.locationawarebrowsing-term3 "Valitse &quot;&geoDisabled.label;&quot;">
+<!ENTITY rights.locationawarebrowsing-term4 "Sijaintitietoinen selaus on nyt poistettu käytöstä">
+
+<!-- points 0-6 text for branded builds -->
+<!ENTITY rights.webservices-term0 "&vendorShortName; ja siihen liittyvät vapaaehtoiset, lisensoijat ja yhteistyökumppanit pyrkivät toimittamaan ja tarjoamaan mahdollisimman tarkat ja ajan tasalla olevat palvelut. Tämän tiedon kattavuudesta tai virheettömyydestä ei kuitenkaan voida antaa takuita. Esimerkiksi joitain vaarallisia sivustoja ei ehkä tunnisteta ja jotkin harmittomat sivut voidaan virheellisesti luokitella vaarallisiksi. Vastaavasti sijaintitiedot ovat vain arvioita, emmekä me tai meidän palveluntarjoajat voi taata sijaintitietojen tarkkuutta.">
+
+<!-- points 0-6 text for branded builds -->
+<!ENTITY rights.webservices-term0a "&vendorShortName; ja siihen liittyvät vapaaehtoiset, lisensoijat ja yhteistyökumppanit pyrkivät toimittamaan ja tarjoamaan mahdollisimman tarkat ja ajan tasalla olevat palvelut. Tämän tiedon kattavuudesta tai virheettömyydestä ei kuitenkaan voida antaa takuita. Esimerkiksi joitain vaarallisia sivustoja ei ehkä tunnisteta ja jotkin harmittomat sivut voidaan virheellisesti luokitella vaarallisiksi. Vastaavasti sijaintitiedot ovat vain arvioita, emmekä me tai meidän palveluntarjoajat voi taata sijaintitietojen tarkkuutta.">
+<!ENTITY rights.webservices-term1 "&vendorShortName; voi lakkauttaa tai muuttaa palveluita oman harkintansa mukaan.">
+<!ENTITY rights.webservices-term2 "Voit käyttää näitä palveluita tämän &brandShortName;n version kanssa ja sinulla on ohjelman myötä kaikki tarvittavat oikeudet niiden käyttämiseen. &vendorShortName; ja sen lisensoijat säilyttävät kaikki muut oikeudet palveluun. Näitä ehtoja ei ole suunniteltu rajoittamaan mitään &brandShortName;n avoimen lähdekoodin lisenssien myöntämiä oikeuksia saati lähdekoodiversiolle myönnettyjä oikeuksia.">
+<!ENTITY rights.webservices-term2a "Voit käyttää näitä palveluita tämän &brandShortName;-version kanssa ja sinulla on ohjelman myötä kaikki tarvittavat oikeudet niiden käyttämiseen. &vendorShortName; ja sen lisensoijat säilyttävät kaikki muut oikeudet palveluun. Näitä ehtoja ei ole suunniteltu rajoittamaan mitään &brandShortName;n avoimen lähdekoodin lisenssien myöntämiä oikeuksia saati lähdekoodiversiolle myönnettyjä oikeuksia.">
+<!ENTITY rights.webservices-term3 "Palvelut toimitetaan siinä tilassa &quot;kuin ne ovat&quot;. &vendorShortName;, siihen liittyvät vapaaehtoiset, lisensoijat ja levittäjät kieltävät kaikki takuut, mukaan lukien lupaukset palvelun kaupallisesta laadusta ja sopivuudesta tarkoituksiisi. Kannat kokonaan vastuun palvelun valinnasta koskien sen laatua ja suorituskykyä. Jotkut lainsäädännöt eivät salli tällaista vastuun rajoitusta, joten edellä mainittu ei välttämättä pidä paikkaansa.">
+<!ENTITY rights.webservices-term4 "Lukuunottamatta mitä laki vaatii, &vendorShortName;, sen myötävaikuttajat, lisensoijat ja levittäjät eivät ole korvausvastuussa mistään epäsuorasta, erikoisesta tai sattumanvaraisesta vahingosta, joka johtuu suoraan tai epäsuoraan &brandShortName;n ja palvelujen käytöstä. Näiden ehtojen alainen kollektiivinen korvausvelvollisuus ei ylitä $500 (viittä sataa Yhdysvaltain dollaria). Jotkut lainsäädännöt eivät salli tällaisten vahinkojen poissulkemista tai rajoittamista, jolloin edellä mainittu ei pidä paikkaansa tapauksessasi.">
+<!ENTITY rights.webservices-term5 "&vendorShortName; voi päivittää ja muuttaa näitä ehtoja tarpeen mukaan aika ajoin. Näitä ehtoja ei voi muuttaa tai poistaa ilman &vendorShortName;n kirjallista suostumusta.">
+<!ENTITY rights.webservices-term6 "Nämä ehdot ovat Amerikan Yhdysvaltojen Kalifornian osavaltion lainsäädännön alaisia. Jos jokin osa ehdoista ei päde tuomiovallan alueella, loput ehdot ovat voimassa kokonaisuudessaan. Jos näiden ehtojen käännetty versio ja alkuperäinen englanninkielinen versio eroavat toisistaan, englanninkielinen versio on sitova.">
+
+<!ENTITY rights.webservices-term6a "Näitä ehtoja säännellään ja tulkitaan Saksan lakien mukaisesti, ja kaikki näihin ehtoihin liittyvät riidat annetaan Saksan toimivaltaisen tuomioistuimen yksinomaiseen toimivaltaan. Jos jotakin osaa näistä ehdoista pidetään kelpaamattomana tai täytäntöönpanokelvottomana, jäljelle jäävät osat pysyvät voimassa. Jos näiden ehtojen käännetyn version ja englanninkielisen version välillä on ristiriita, englanninkielinen versio on sitova.">

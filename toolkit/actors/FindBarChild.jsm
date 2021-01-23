@@ -6,9 +6,6 @@
 
 var EXPORTED_SYMBOLS = ["FindBarChild"];
 
-const { ActorChild } = ChromeUtils.import(
-  "resource://gre/modules/ActorChild.jsm"
-);
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { XPCOMUtils } = ChromeUtils.import(
   "resource://gre/modules/XPCOMUtils.jsm"
@@ -20,9 +17,9 @@ ChromeUtils.defineModuleGetter(
   "resource://gre/modules/BrowserUtils.jsm"
 );
 
-class FindBarChild extends ActorChild {
-  constructor(dispatcher) {
-    super(dispatcher);
+class FindBarChild extends JSWindowActorChild {
+  constructor() {
+    super();
 
     this._findKey = null;
 
@@ -32,10 +29,17 @@ class FindBarChild extends ActorChild {
       () => {
         let tmp = {};
         ChromeUtils.import("resource://gre/modules/FindBarContent.jsm", tmp);
-        return new tmp.FindBarContent(this.mm);
+        return new tmp.FindBarContent(this);
       },
       { inQuickFind: false, inPassThrough: false }
     );
+  }
+
+  receiveMessage(msg) {
+    if (msg.name == "Findbar:UpdateState") {
+      let { FindBarContent } = this;
+      FindBarContent.updateState(msg.data);
+    }
   }
 
   /**
@@ -73,7 +77,7 @@ class FindBarChild extends ActorChild {
     }
 
     // disable FAYT in about:blank to prevent FAYT opening unexpectedly.
-    let location = this.content.location.href;
+    let location = this.document.location.href;
     if (location == "about:blank") {
       return null;
     }
@@ -83,7 +87,7 @@ class FindBarChild extends ActorChild {
       event.altKey ||
       event.metaKey ||
       event.defaultPrevented ||
-      !BrowserUtils.mimeTypeIsTextBased(this.content.document.contentType) ||
+      !BrowserUtils.mimeTypeIsTextBased(this.document.contentType) ||
       !BrowserUtils.canFindInPage(location)
     ) {
       return null;
@@ -93,7 +97,7 @@ class FindBarChild extends ActorChild {
       return FindBarContent.onKeypress(event);
     }
 
-    if (event.charCode && BrowserUtils.shouldFastFind(event.target)) {
+    if (event.charCode && this.shouldFastFind(event.target)) {
       let key = String.fromCharCode(event.charCode);
       if ((key == "/" || key == "'") && FindBarChild.manualFAYT) {
         return FindBarContent.startQuickFind(event);
@@ -103,6 +107,42 @@ class FindBarChild extends ActorChild {
       }
     }
     return null;
+  }
+
+  /**
+   * Return true if we should FAYT for this node:
+   *
+   * @param elt
+   *        The element that is focused
+   */
+  shouldFastFind(elt) {
+    if (elt) {
+      let win = elt.ownerGlobal;
+      if (elt instanceof win.HTMLInputElement && elt.mozIsTextField(false)) {
+        return false;
+      }
+
+      if (elt.isContentEditable || win.document.designMode == "on") {
+        return false;
+      }
+
+      if (
+        elt instanceof win.HTMLTextAreaElement ||
+        elt instanceof win.HTMLSelectElement ||
+        elt instanceof win.HTMLObjectElement ||
+        elt instanceof win.HTMLEmbedElement
+      ) {
+        return false;
+      }
+
+      if (elt instanceof win.HTMLIFrameElement && elt.mozbrowser) {
+        // If we're targeting a mozbrowser iframe, it should be allowed to
+        // handle FastFind itself.
+        return false;
+      }
+    }
+
+    return true;
   }
 }
 

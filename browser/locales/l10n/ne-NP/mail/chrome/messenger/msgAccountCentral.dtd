@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label "इमेल">
+<!ENTITY readMsgsLink.label "सन्देश पढ्नुहोस्">
+<!ENTITY composeMsgLink.label "नयाँ सन्देश लेख्नुहोस्">
+
+<!ENTITY newsSectionHdr.label "समाचारसमूह">
+<!ENTITY subscribeNewsLink.label "समाचारसमूह सदस्यता प्रबन्ध गर्नुहोस्">
+
+<!ENTITY accountsSectionHdr.label "खाता">
+<!ENTITY subscribeImapFolders.label "फोल्डर सदस्यता प्रबन्ध गर्नुहोस्">
+<!ENTITY settingsLink.label "यो खाताका लागि सेटिङ हेर्नुहोस्">
+
+<!ENTITY advFeaturesSectionHdr.label "उन्नत विशेषता">
+<!ENTITY searchMsgsLink.label "सन्देशहरू खोजी गर्नुहोस्">
+<!ENTITY filtersLink.label "सन्देश फिल्टर प्रबन्ध गर्नुहोस्">
+<!ENTITY junkSettings.label "जङ्क मेल सेटिङ">
+<!ENTITY offlineLink.label "अफलाइन सेटिङ">
+
+

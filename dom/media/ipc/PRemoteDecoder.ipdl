@@ -6,10 +6,14 @@
 include "mozilla/dom/MediaIPCUtils.h";
 
 include protocol PRemoteDecoderManager;
-include PMediaDecoderParams;
-include LayersSurfaces;
+
 using mozilla::MediaDataDecoder::ConversionRequired from "PlatformDecoderModule.h";
 using mozilla::TrackInfo::TrackType from "MediaInfo.h";
+using mozilla::layers::LayersBackend from "mozilla/layers/LayersTypes.h";
+using mozilla::MediaResult from "MediaResult.h";
+
+include PMediaDecoderParams;
+include LayersSurfaces;
 
 namespace mozilla {
 
@@ -18,7 +22,7 @@ struct RemoteVideoDataIPDL
   MediaDataIPDL base;
   IntSize display;
   IntSize frameSize;
-  SurfaceDescriptorBuffer sdBuffer;
+  SurfaceDescriptor sd;
   int32_t frameID;
 };
 
@@ -28,49 +32,63 @@ struct RemoteAudioDataIPDL
   uint32_t channels;
   uint32_t rate;
   uint32_t channelMap;
+  // Pass along buffer size since we're using ShmemPool
+  // and we can receive buffers larger than requested size.
+  int64_t audioDataBufferSize;
   Shmem buffer;
 };
 
 union DecodedOutputIPDL
 {
-  RemoteAudioDataIPDL;
-  RemoteVideoDataIPDL;
+  RemoteAudioDataIPDL[];
+  RemoteVideoDataIPDL[];
+};
+
+struct InitCompletionIPDL
+{
+  TrackType type;
+  nsCString decoderDescription;
+  bool hardware;
+  nsCString hardwareReason;
+  ConversionRequired conversion;
+};
+
+union InitResultIPDL
+{
+  MediaResult;
+  InitCompletionIPDL;
+};
+
+union DecodeResultIPDL
+{
+  MediaResult;
+  DecodedOutputIPDL;
 };
 
 // This protocol provides a way to use MediaDataDecoder across processes.
 // The parent side currently is only implemented to work with
-// RemoteDecoderModule.
+// RemoteDecoderModule or WindowsMediaFoundation.
 // The child side runs in the content process, and the parent side runs
-// in the RDD process. We run a separate IPDL thread for both sides.
+// in the RDD process or the GPU process. We run a separate IPDL thread
+// for both sides.
 async protocol PRemoteDecoder
 {
   manager PRemoteDecoderManager;
 parent:
-  async Init();
+  async Init() returns (InitResultIPDL result);
 
-  async Input(MediaRawDataIPDL data);
-
-  async Flush();
-  async Drain();
-  async Shutdown();
+  // Each output may include a SurfaceDescriptorGPUVideo that represents the decoded
+  // frame. This SurfaceDescriptor can be used on the Layers IPDL protocol, but
+  // must be released explicitly using DeallocateSurfaceDescriptorGPUVideo
+  // on the manager protocol.
+  async Decode(MediaRawDataIPDL[] data) returns (DecodeResultIPDL result);
+  async Flush() returns (MediaResult error);
+  async Drain() returns (DecodeResultIPDL result);
+  async Shutdown() returns (bool unused);
   // To clear the threshold, call with INT64_MIN.
   async SetSeekThreshold(TimeUnit time);
 
   async __delete__();
-
-child:
-  async InitComplete(TrackType trackType,
-                     nsCString decoderDescription,
-                     ConversionRequired conversion);
-  async InitFailed(nsresult reason);
-
-  async FlushComplete();
-  async ShutdownComplete();
-
-  async Output(DecodedOutputIPDL data);
-  async InputExhausted();
-  async DrainComplete();
-  async Error(nsresult error);
 };
 
 } // namespace mozilla

@@ -40,6 +40,9 @@ const gIsMac = AppConstants.platform == "macosx";
 const gIsAndroid = AppConstants.platform == "android";
 const gIsLinux = AppConstants.platform == "linux";
 
+// Desktop Firefox, ie. not mobile Firefox or Thunderbird.
+const gIsFirefox = AppConstants.MOZ_APP_NAME == "firefox";
+
 const Telemetry = Services.telemetry;
 
 const MILLISECONDS_PER_MINUTE = 60 * 1000;
@@ -85,9 +88,7 @@ const PingServer = {
     this.registerPingHandler((request, response) => {
       let r = request;
       this._log.trace(
-        `defaultPingHandler() - ${r.method} ${r.scheme}://${r.host}:${r.port}${
-          r.path
-        }`
+        `defaultPingHandler() - ${r.method} ${r.scheme}://${r.host}:${r.port}${r.path}`
       );
       let deferred = this._defers[this._defers.length - 1];
       this._defers.push(PromiseUtils.defer());
@@ -202,12 +203,14 @@ function decodeRequestPayload(request) {
     payload = JSON.parse(new TextDecoder().decode(bytes));
   }
 
-  // Check for canary value
-  Assert.notEqual(
-    TelemetryUtils.knownClientID,
-    payload.clientId,
-    "Known clientId should never appear in a ping on the server"
-  );
+  if (payload && "clientId" in payload) {
+    // Check for canary value
+    Assert.notEqual(
+      TelemetryUtils.knownClientID,
+      payload.clientId,
+      `Known clientId shouldn't appear in a "${payload.type}" ping on the server.`
+    );
+  }
 
   return payload;
 }
@@ -445,7 +448,10 @@ function truncateToDays(aMsec) {
 // Returns a promise that resolves to true when the passed promise rejects,
 // false otherwise.
 function promiseRejects(promise) {
-  return promise.then(() => false, () => true);
+  return promise.then(
+    () => false,
+    () => true
+  );
 }
 
 // Generates a random string of at least a specific length.
@@ -552,13 +558,15 @@ if (runningInParent) {
   );
 
   // This gets imported via fakeNow();
-  /* global TelemetrySend */
   registerCleanupFunction(() => TelemetrySend.shutdown());
 }
 
 TelemetryController.testInitLogging();
 
 // Avoid timers interrupting test behavior.
-fakeSchedulerTimer(() => {}, () => {});
+fakeSchedulerTimer(
+  () => {},
+  () => {}
+);
 // Make pind sending predictable.
 fakeMidnightPingFuzzingDelay(0);

@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -128,9 +127,7 @@ async function runTestData(
     is(
       beforeBadge.textContent,
       before.textContent,
-      `Got the correct before display type for ${selector}: ${
-        beforeBadge.textContent
-      }`
+      `Got the correct before display type for ${selector}: ${beforeBadge.textContent}`
     );
   }
 
@@ -163,9 +160,7 @@ async function runTestData(
     is(
       afterBadge.textContent,
       after.textContent,
-      `Got the correct after display type for ${selector}: ${
-        afterBadge.textContent
-      }`
+      `Got the correct after display type for ${selector}: ${afterBadge.textContent}`
     );
   }
 }

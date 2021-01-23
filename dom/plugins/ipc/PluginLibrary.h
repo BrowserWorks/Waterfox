@@ -40,7 +40,7 @@ class nsIClearSiteDataCallback;
   }
 class nsIGetSitesWithDataCallback : public nsISupports {
  public:
-  NS_IMETHOD SitesWithData(InfallibleTArray<nsCString>& result) = 0;
+  NS_IMETHOD SitesWithData(nsTArray<nsCString>& result) = 0;
   NS_DECLARE_STATIC_IID_ACCESSOR(nsIGetSitesWithDataCallback_CID)
 };
 NS_DEFINE_STATIC_IID_ACCESSOR(nsIGetSitesWithDataCallback,
@@ -52,7 +52,7 @@ class PluginLibrary {
  public:
   typedef mozilla::gfx::DrawTarget DrawTarget;
 
-  virtual ~PluginLibrary() {}
+  virtual ~PluginLibrary() = default;
 
   /**
    * Inform this library about the nsNPAPIPlugin which owns it. This

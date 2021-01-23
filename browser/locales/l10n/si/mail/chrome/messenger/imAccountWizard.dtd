@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "චැට් ගිණුම් විශාරද">
+
+<!ENTITY accountProtocolTitle.label   "චැට් ජාලය">
+<!ENTITY accountProtocolInfo.label    "ඔබගේ චැට් ගිණුමේ ජාලය තෝරන්න.">
+<!ENTITY accountProtocolField.label   "ජාලය:">
+<!ENTITY accountProtocolGetMore.label "තවත් ලබාගන්න…">
+
+<!ENTITY accountUsernameTitle.label   "පරිශීලක නම">
+<!ENTITY accountUsernameDuplicate.label "මෙම ගිණුම දැනටම වින්‍යාස කර ඇත!">
+
+<!ENTITY accountPasswordTitle.label   "රහස්පදය">
+<!ENTITY accountPasswordInfo.label    "ඔබගේ රහස්පදය පහත කොටුවේ ඇතුළු කරන්න.">
+<!ENTITY accountPasswordField.label   "රහස්පදය:">
+<!ENTITY accountPasswordManager.label "මෙහි ඇතුළත් කළ රහස්පදය රහස්පද කළමණාකරු තුළ සුරැකෙනු ඇත. මෙම ගිණුමට සම්බන්ධ වන සෑම විටම රහස්පදය විමසිය යුතු නම් මෙම කොටුව හිස්ව තබායන්න.">
+
+<!ENTITY accountAdvancedTitle.label   "වැඩිමනත් වරණ">
+<!ENTITY accountAdvancedInfo.label    "ඔබට අවශ්‍ය නම් මෙම පියවර මඟහැර යන්න.">
+<!ENTITY accountAdvanced.newMailNotification.label   "නව ලිපි ලැබුණු විට දන්වන්න">
+<!ENTITY accountAliasGroupbox.caption "Local Alias">
+<!ENTITY accountAliasField.label      "Alias:">
+<!ENTITY accountAliasInfo.label       "ඔබගේ සංවාදයන්හි ඔබ කතා තරක විට මෙය පෙන්වනු ඇත අතර දුරස්ථ සබඳතාවයන් එය දකින්නේ නැත.">
+<!ENTITY accountProxySettings.caption "ප්‍රොක්සි සැකසුම්">
+<!ENTITY accountProxySettings.change.label     "වෙනස් කරන්න…">
+<!ENTITY accountProxySettings.change.accessKey "C">
+
+<!ENTITY accountSummaryTitle.label   "සාරාංශය">
+<!ENTITY accountSummaryInfo.label    "ඔබ ඇතුළ කළ තොරතුරු සාරාංශය පහත දැක්වේ. ගිණුම සෑදීමට පෙර එය පරීක්ෂා කරන්න.">
+<!ENTITY accountSummary.connectNow.label "මෙම ගිණුමට දැන් සම්බන්ධවන්න.">

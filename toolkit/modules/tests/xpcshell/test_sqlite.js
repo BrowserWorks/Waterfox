@@ -781,6 +781,22 @@ add_task(async function test_discard_cached() {
   await c.close();
 });
 
+add_task(async function test_array_binding_with_null() {
+  let c = await getDummyDatabase("array_binding_null");
+
+  let bindings = [null, "test"];
+
+  let sql = "INSERT INTO files (dir_id, path) VALUES (?, ?)";
+  let result = await c.execute(sql, bindings);
+  Assert.equal(result.length, 0);
+
+  let rows = await c.executeCached("SELECT * from files");
+  Assert.equal(rows.length, 1);
+  Assert.strictEqual(rows[0].getResultByName("dir_id"), null);
+  Assert.equal(rows[0].getResultByName("path"), "test");
+  await c.close();
+});
+
 add_task(async function test_programmatic_binding() {
   let c = await getDummyDatabase("programmatic_binding");
 
@@ -829,7 +845,10 @@ add_task(
       "programmatic_binding_transaction_partial_rollback"
     );
 
-    let bindings = [{ id: 2, path: "foobar" }, { id: 3, path: "toofoo" }];
+    let bindings = [
+      { id: 2, path: "foobar" },
+      { id: 3, path: "toofoo" },
+    ];
 
     let sql = "INSERT INTO dirs VALUES (:id, :path)";
 
@@ -849,6 +868,7 @@ add_task(
       });
     } catch (ex) {
       print("Caught expected exception: " + ex);
+      Assert.ok(ex.result, "The ex.result value should be forwarded.");
     }
 
     // We did not get to the end of our in-transaction block.
@@ -868,7 +888,10 @@ add_task(
 add_task(async function test_programmatic_binding_implicit_transaction() {
   let c = await getDummyDatabase("programmatic_binding_implicit_transaction");
 
-  let bindings = [{ id: 2, path: "foobar" }, { id: 1, path: "toofoo" }];
+  let bindings = [
+    { id: 2, path: "foobar" },
+    { id: 1, path: "toofoo" },
+  ];
 
   let sql = "INSERT INTO dirs VALUES (:id, :path)";
   let secondSucceeded = false;
@@ -878,6 +901,7 @@ add_task(async function test_programmatic_binding_implicit_transaction() {
     secondSucceeded = true;
   } catch (ex) {
     print("Caught expected exception: " + ex);
+    Assert.ok(ex.result, "The ex.result value should be forwarded.");
   }
 
   Assert.ok(!secondSucceeded);

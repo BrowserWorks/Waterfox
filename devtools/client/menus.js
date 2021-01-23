@@ -20,16 +20,12 @@
  *   Identifier used in devtools/client/devtools-startup.js
  *   Helps figuring out the DOM id for the related <xul:key>
  *   in order to have the key text displayed in menus.
- * - disabled:
- *   If true, the menuitem and key shortcut are going to be hidden and disabled
- *   on startup, until some runtime code eventually enable them.
  * - checkbox:
  *   If true, the menuitem is prefixed by a checkbox and runtime code can
  *   toggle it.
  */
 
 const { Cu } = require("chrome");
-const Services = require("Services");
 
 loader.lazyRequireGetter(
   this,
@@ -46,8 +42,7 @@ loader.lazyRequireGetter(
 loader.lazyRequireGetter(
   this,
   "ResponsiveUIManager",
-  "devtools/client/responsive.html/manager",
-  true
+  "devtools/client/responsive/manager"
 );
 loader.lazyRequireGetter(
   this,
@@ -58,28 +53,19 @@ loader.lazyRequireGetter(
 
 loader.lazyImporter(
   this,
-  "BrowserToolboxProcess",
-  "resource://devtools/client/framework/ToolboxProcess.jsm"
+  "BrowserToolboxLauncher",
+  "resource://devtools/client/framework/browser-toolbox/Launcher.jsm"
 );
-loader.lazyImporter(
+loader.lazyRequireGetter(
   this,
-  "ScratchpadManager",
-  "resource://devtools/client/scratchpad/scratchpad-manager.jsm"
+  "ResponsiveUIManager",
+  "devtools/client/responsive/manager"
 );
-
-const isAboutDebuggingEnabled = Services.prefs.getBoolPref(
-  "devtools.aboutdebugging.new-enabled",
-  false
+loader.lazyRequireGetter(
+  this,
+  "PICKER_TYPES",
+  "devtools/shared/picker-constants"
 );
-const aboutDebuggingItem = {
-  id: "menu_devtools_remotedebugging",
-  l10nKey: "devtoolsRemoteDebugging",
-  disabled: true,
-  oncommand(event) {
-    const window = event.target.ownerDocument.defaultView;
-    gDevToolsBrowser.openAboutDebugging(window.gBrowser);
-  },
-};
 
 exports.menuitems = [
   {
@@ -97,29 +83,25 @@ exports.menuitems = [
     checkbox: true,
   },
   { id: "menu_devtools_separator", separator: true },
-  ...(isAboutDebuggingEnabled ? [aboutDebuggingItem] : []),
   {
-    id: "menu_webide",
-    l10nKey: "webide",
-    disabled: true,
-    oncommand() {
-      gDevToolsBrowser.openWebIDE();
+    id: "menu_devtools_remotedebugging",
+    l10nKey: "devtoolsRemoteDebugging",
+    oncommand(event) {
+      const window = event.target.ownerDocument.defaultView;
+      gDevToolsBrowser.openAboutDebugging(window.gBrowser);
     },
-    keyId: "webide",
   },
   {
     id: "menu_browserToolbox",
     l10nKey: "browserToolboxMenu",
-    disabled: true,
     oncommand() {
-      BrowserToolboxProcess.init();
+      BrowserToolboxLauncher.init();
     },
     keyId: "browserToolbox",
   },
   {
     id: "menu_browserContentToolbox",
     l10nKey: "browserContentToolboxMenu",
-    disabled: true,
     oncommand(event) {
       const window = event.target.ownerDocument.defaultView;
       gDevToolsBrowser.openContentProcessToolbox(window.gBrowser);
@@ -129,8 +111,10 @@ exports.menuitems = [
     id: "menu_browserConsole",
     l10nKey: "browserConsoleCmd",
     oncommand() {
-      const { HUDService } = require("devtools/client/webconsole/hudservice");
-      HUDService.openBrowserConsoleOrFocus();
+      const {
+        BrowserConsoleManager,
+      } = require("devtools/client/webconsole/browser-console-manager");
+      BrowserConsoleManager.openBrowserConsoleOrFocus();
     },
     keyId: "browserConsole",
   },
@@ -153,30 +137,38 @@ exports.menuitems = [
       const window = event.target.ownerDocument.defaultView;
       const target = await TargetFactory.forTab(window.gBrowser.selectedTab);
       await target.attach();
-      // Temporary fix for bug #1493131 - inspector has a different life cycle
-      // than most other fronts because it is closely related to the toolbox.
-      // TODO: replace with getFront once inspector is separated from the toolbox
-      const inspectorFront = await target.getInspector();
+      const inspectorFront = await target.getFront("inspector");
+
+      // If RDM is active, disable touch simulation events if they're enabled.
+      // Similarly, enable them when the color picker is done picking.
+      if (
+        ResponsiveUIManager.isActiveForTab(target.localTab) &&
+        target.actorHasMethod("responsive", "setElementPickerState")
+      ) {
+        const ui = ResponsiveUIManager.getResponsiveUIForTab(target.localTab);
+        await ui.responsiveFront.setElementPickerState(
+          true,
+          PICKER_TYPES.EYEDROPPER
+        );
+
+        inspectorFront.once("color-picked", async () => {
+          await ui.responsiveFront.setElementPickerState(
+            false,
+            PICKER_TYPES.EYEDROPPER
+          );
+        });
+
+        inspectorFront.once("color-pick-canceled", async () => {
+          await ui.responsiveFront.setElementPickerState(
+            false,
+            PICKER_TYPES.EYEDROPPER
+          );
+        });
+      }
+
       inspectorFront.pickColorFromPage({ copyOnSelect: true, fromMenu: true });
     },
     checkbox: true,
-  },
-  {
-    id: "menu_scratchpad",
-    l10nKey: "scratchpad",
-    oncommand() {
-      ScratchpadManager.openScratchpad();
-    },
-    keyId: "scratchpad",
-  },
-  {
-    id: "menu_devtools_connect",
-    l10nKey: "devtoolsConnect",
-    disabled: true,
-    oncommand(event) {
-      const window = event.target.ownerDocument.defaultView;
-      gDevToolsBrowser.openConnectScreen(window.gBrowser);
-    },
   },
   { separator: true, id: "devToolsEndSeparator" },
   {

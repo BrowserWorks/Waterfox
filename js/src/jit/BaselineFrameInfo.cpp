@@ -6,6 +6,8 @@
 
 #include "jit/BaselineFrameInfo.h"
 
+#include <algorithm>
+
 #include "jit/BaselineIC.h"
 #ifdef DEBUG
 #  include "jit/BytecodeAnalysis.h"
@@ -23,7 +25,8 @@ bool CompilerFrameInfo::init(TempAllocator& alloc) {
   // scope.
   size_t extra = script->isGlobalCode() ? 1 : 0;
   size_t nstack =
-      Max(script->nslots() - script->nfixed(), size_t(MinJITStackSize)) + extra;
+      std::max(script->nslots() - script->nfixed(), size_t(MinJITStackSize)) +
+      extra;
   if (!stack.init(alloc, nstack)) {
     return false;
   }
@@ -241,19 +244,3 @@ void CompilerFrameInfo::assertValidState(const BytecodeInfo& info) {
   }
 }
 #endif
-
-PCMappingSlotInfo::SlotLocation CompilerFrameInfo::stackValueSlotLocation(
-    int32_t depth) {
-  const StackValue* stackVal = peek(depth);
-
-  if (stackVal->kind() == StackValue::Register) {
-    if (stackVal->reg() == R0) {
-      return PCMappingSlotInfo::SlotInR0;
-    }
-    MOZ_ASSERT(stackVal->reg() == R1);
-    return PCMappingSlotInfo::SlotInR1;
-  }
-
-  MOZ_ASSERT(stackVal->kind() != StackValue::Stack);
-  return PCMappingSlotInfo::SlotIgnore;
-}

@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Deschide fișierul…">
+<!ENTITY openFileCmd.accesskey "D">
+<!ENTITY openFileCmd.key "D">
+<!ENTITY openRemoteCmd.label "Deschide o adresă web…">
+<!ENTITY openRemoteCmd.accesskey "D">
+<!ENTITY openRemoteCmd.key "D">
+<!ENTITY fileRecentMenu.label "Pagini recente">
+<!ENTITY fileRecentMenu.accesskey "r">
+<!ENTITY saveCmd.label "Salvează">
+<!ENTITY saveCmd.accesskey "S">
+<!ENTITY saveAsCmd.label "Salvează ca…">
+<!ENTITY saveAsCmd.accesskey "a">
+<!ENTITY saveAsChangeEncodingCmd2.label "Salvează și schimbă codarea textului">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "e">
+<!ENTITY publishCmd.label "Publică">
+<!ENTITY publishCmd.accesskey "b">
+<!ENTITY publishCmd.key "P">
+<!ENTITY publishAsCmd.label "Publică ca…">
+<!ENTITY publishAsCmd.accesskey "P">
+<!ENTITY fileRevert.label "Revenire">
+<!ENTITY fileRevert.accesskey "R">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Setări de publicare site-uri…">
+<!ENTITY publishSettings.accesskey "b">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "Nou">
+<!ENTITY newToolbarCmd.tooltip "Creează o pagină nouă în Composer">
+<!ENTITY openToolbarCmd.label "Deschide">
+<!ENTITY openToolbarCmd.tooltip "Deschide un fișier local">
+<!ENTITY saveToolbarCmd.tooltip "Salvează local fișierul">
+<!ENTITY publishToolbarCmd.tooltip "Încarcă fișierul într-o locație la distanță">
+<!ENTITY printToolbarCmd.label "Tipărește">
+<!ENTITY printToolbarCmd.tooltip "Tipărește această pagină">

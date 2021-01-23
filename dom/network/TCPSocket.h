@@ -96,8 +96,8 @@ class TCPSocket final : public DOMEventTargetHelper,
   void Resume(ErrorResult& aRv);
   void Close();
   void CloseImmediately();
-  bool Send(JSContext* aCx, const nsACString& aData, ErrorResult& aRv);
-  bool Send(JSContext* aCx, const ArrayBuffer& aData, uint32_t aByteOffset,
+  bool Send(const nsACString& aData, ErrorResult& aRv);
+  bool Send(const ArrayBuffer& aData, uint32_t aByteOffset,
             const Optional<uint32_t>& aByteLength, ErrorResult& aRv);
   TCPReadyState ReadyState();
   TCPSocketBinaryType BinaryType();
@@ -109,16 +109,6 @@ class TCPSocket final : public DOMEventTargetHelper,
                                                  const SocketOptions& aOptions,
                                                  ErrorResult& aRv);
 
-  // Perform a send operation that's asssociated with a sequence number. Used in
-  // IPC scenarios to track the number of bytes buffered at any given time.
-  void SendWithTrackingNumber(const nsACString& aData,
-                              const uint32_t& aTrackingNumber,
-                              ErrorResult& aRv);
-  void SendWithTrackingNumber(JSContext* aCx, const ArrayBuffer& aData,
-                              uint32_t aByteOffset,
-                              const Optional<uint32_t>& aByteLength,
-                              const uint32_t& aTrackingNumber,
-                              ErrorResult& aRv);
   // Create a TCPSocket object from an existing low-level socket connection.
   // Used by the TCPServerSocket implementation when a new connection is
   // accepted.

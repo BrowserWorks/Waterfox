@@ -376,7 +376,7 @@ nsIFrame* nsCaret::GetFrameAndOffset(Selection* aSelection,
     return nullptr;
   }
 
-  if (!focusNode || !focusNode->IsContent()) {
+  if (!focusNode || !focusNode->IsContent() || !aSelection) {
     return nullptr;
   }
 
@@ -627,7 +627,7 @@ nsresult nsCaret::GetCaretFrameForNodeOffset(
   nsIFrame* theFrame = nullptr;
   int32_t theFrameOffset = 0;
 
-  theFrame = aFrameSelection->GetFrameForNodeOffset(
+  theFrame = nsFrameSelection::GetFrameForNodeOffset(
       aContentNode, aOffset, aFrameHint, &theFrameOffset);
   if (!theFrame) return NS_ERROR_FAILURE;
 
@@ -645,8 +645,6 @@ nsresult nsCaret::GetCaretFrameForNodeOffset(
   //
   // Direction Style from visibility->mDirection
   // ------------------
-  // NS_STYLE_DIRECTION_LTR : LTR or Default
-  // NS_STYLE_DIRECTION_RTL
   if (theFrame->PresContext()->BidiEnabled()) {
     // If there has been a reflow, take the caret Bidi level to be the level of
     // the current frame
@@ -821,7 +819,7 @@ bool nsCaret::IsMenuPopupHidingCaret() {
     nsMenuPopupFrame* popupFrame = static_cast<nsMenuPopupFrame*>(popups[i]);
     nsIContent* popupContent = popupFrame->GetContent();
 
-    if (nsContentUtils::ContentIsDescendantOf(caretContent, popupContent)) {
+    if (caretContent->IsInclusiveDescendantOf(popupContent)) {
       // The caret is in this popup. There were no menu popups before this
       // popup, so don't hide the caret.
       return false;
@@ -853,7 +851,7 @@ void nsCaret::ComputeCaretRects(nsIFrame* aFrame, int32_t aFrameOffset,
 
   // on RTL frames the right edge of mCaretRect must be equal to framePos
   const nsStyleVisibility* vis = aFrame->StyleVisibility();
-  if (NS_STYLE_DIRECTION_RTL == vis->mDirection) {
+  if (StyleDirection::Rtl == vis->mDirection) {
     if (isVertical) {
       aCaretRect->y -= aCaretRect->height;
     } else {
@@ -878,8 +876,7 @@ void nsCaret::ComputeCaretRects(nsIFrame* aFrame, int32_t aFrameOffset,
     // right The height of the hook rectangle is the same as the width of the
     // caret rectangle.
     if (isVertical) {
-      bool isSidewaysLR = wm.IsVerticalLR() && !wm.IsLineInverted();
-      if (isSidewaysLR) {
+      if (wm.IsSidewaysLR()) {
         aHookRect->SetRect(aCaretRect->x + bidiIndicatorSize,
                            aCaretRect->y + (!isCaretRTL ? bidiIndicatorSize * -1
                                                         : aCaretRect->height),

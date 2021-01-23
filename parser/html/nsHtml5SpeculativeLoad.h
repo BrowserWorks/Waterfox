@@ -9,7 +9,7 @@
 #include "nsContentUtils.h"
 #include "nsHtml5DocumentMode.h"
 #include "nsHtml5String.h"
-#include "mozilla/net/ReferrerPolicy.h"
+#include "ReferrerInfo.h"
 
 class nsHtml5TreeOpExecutor;
 
@@ -30,7 +30,9 @@ enum eHtml5SpeculativeLoad {
   eSpeculativeLoadManifest,
   eSpeculativeLoadSetDocumentCharset,
   eSpeculativeLoadSetDocumentMode,
-  eSpeculativeLoadPreconnect
+  eSpeculativeLoadPreconnect,
+  eSpeculativeLoadFont,
+  eSpeculativeLoadFetch
 };
 
 class nsHtml5SpeculativeLoad {
@@ -73,7 +75,7 @@ class nsHtml5SpeculativeLoad {
 
   inline void InitImage(nsHtml5String aUrl, nsHtml5String aCrossOrigin,
                         nsHtml5String aReferrerPolicy, nsHtml5String aSrcset,
-                        nsHtml5String aSizes) {
+                        nsHtml5String aSizes, bool aLinkPreload) {
     MOZ_ASSERT(mOpCode == eSpeculativeLoadUninitialized,
                "Trying to reinitialize a speculative load!");
     mOpCode = eSpeculativeLoadImage;
@@ -88,6 +90,43 @@ class nsHtml5SpeculativeLoad {
     aSrcset.ToString(mCharsetOrSrcset);
     aSizes.ToString(
         mTypeOrCharsetSourceOrDocumentModeOrMetaCSPOrSizesOrIntegrity);
+    mIsLinkPreload = aLinkPreload;
+  }
+
+  inline void InitFont(nsHtml5String aUrl, nsHtml5String aCrossOrigin,
+                       nsHtml5String aReferrerPolicy) {
+    MOZ_ASSERT(mOpCode == eSpeculativeLoadUninitialized,
+               "Trying to reinitialize a speculative load!");
+    mOpCode = eSpeculativeLoadFont;
+    aUrl.ToString(mUrlOrSizes);
+    aCrossOrigin.ToString(mCrossOriginOrMedia);
+    nsString
+        referrerPolicy;  // Not Auto, because using it to hold nsStringBuffer*
+    aReferrerPolicy.ToString(referrerPolicy);
+    mReferrerPolicyOrIntegrity.Assign(
+        nsContentUtils::TrimWhitespace<nsContentUtils::IsHTMLWhitespace>(
+            referrerPolicy));
+    // This can be only triggered by <link rel=preload type=font>
+    mIsLinkPreload = true;
+  }
+
+  inline void InitFetch(nsHtml5String aUrl, nsHtml5String aCrossOrigin,
+                        nsHtml5String aReferrerPolicy) {
+    MOZ_ASSERT(mOpCode == eSpeculativeLoadUninitialized,
+               "Trying to reinitialize a speculative load!");
+    mOpCode = eSpeculativeLoadFetch;
+    aUrl.ToString(mUrlOrSizes);
+    aCrossOrigin.ToString(mCrossOriginOrMedia);
+    nsString
+        referrerPolicy;  // Not Auto, because using it to hold nsStringBuffer*
+    aReferrerPolicy.ToString(referrerPolicy);
+    mReferrerPolicyOrIntegrity.Assign(
+        nsContentUtils::TrimWhitespace<nsContentUtils::IsHTMLWhitespace>(
+            referrerPolicy));
+
+    // This method can be only be triggered by <link rel=preload type=fetch>,
+    // hence this operation is always a preload.
+    mIsLinkPreload = true;
   }
 
   // <picture> elements have multiple <source> nodes followed by an <img>,
@@ -125,7 +164,8 @@ class nsHtml5SpeculativeLoad {
                          nsHtml5String aType, nsHtml5String aCrossOrigin,
                          nsHtml5String aIntegrity,
                          nsHtml5String aReferrerPolicy, bool aParserInHead,
-                         bool aAsync, bool aDefer, bool aNoModule) {
+                         bool aAsync, bool aDefer, bool aNoModule,
+                         bool aLinkPreload) {
     MOZ_ASSERT(mOpCode == eSpeculativeLoadUninitialized,
                "Trying to reinitialize a speculative load!");
     if (aNoModule) {
@@ -147,16 +187,30 @@ class nsHtml5SpeculativeLoad {
         nsContentUtils::TrimWhitespace<nsContentUtils::IsHTMLWhitespace>(
             referrerPolicy);
     mScriptReferrerPolicy =
-        mozilla::net::AttributeReferrerPolicyFromString(referrerPolicy);
+        mozilla::dom::ReferrerInfo::ReferrerPolicyAttributeFromString(
+            referrerPolicy);
 
     mIsAsync = aAsync;
     mIsDefer = aDefer;
+    mIsLinkPreload = aLinkPreload;
+  }
+
+  inline void InitImportStyle(nsString&& aUrl) {
+    MOZ_ASSERT(mOpCode == eSpeculativeLoadUninitialized,
+               "Trying to reinitialize a speculative load!");
+    mOpCode = eSpeculativeLoadStyle;
+    mUrlOrSizes = std::move(aUrl);
+    mCharsetOrSrcset.SetIsVoid(true);
+    mCrossOriginOrMedia.SetIsVoid(true);
+    mReferrerPolicyOrIntegrity.SetIsVoid(true);
+    mTypeOrCharsetSourceOrDocumentModeOrMetaCSPOrSizesOrIntegrity.SetIsVoid(
+        true);
   }
 
   inline void InitStyle(nsHtml5String aUrl, nsHtml5String aCharset,
                         nsHtml5String aCrossOrigin,
-                        nsHtml5String aReferrerPolicy,
-                        nsHtml5String aIntegrity) {
+                        nsHtml5String aReferrerPolicy, nsHtml5String aIntegrity,
+                        bool aLinkPreload) {
     MOZ_ASSERT(mOpCode == eSpeculativeLoadUninitialized,
                "Trying to reinitialize a speculative load!");
     mOpCode = eSpeculativeLoadStyle;
@@ -171,6 +225,7 @@ class nsHtml5SpeculativeLoad {
             referrerPolicy));
     aIntegrity.ToString(
         mTypeOrCharsetSourceOrDocumentModeOrMetaCSPOrSizesOrIntegrity);
+    mIsLinkPreload = aLinkPreload;
   }
 
   /**
@@ -248,6 +303,13 @@ class nsHtml5SpeculativeLoad {
   bool mIsAsync;
   bool mIsDefer;
 
+  /**
+   * True if and only if this is a speculative load initiated by <link
+   * rel="preload"> tag encounter.  Passed to the handling loader as an
+   * indication to raise the priority.
+   */
+  bool mIsLinkPreload;
+
   /* If mOpCode is eSpeculativeLoadPictureSource, this is the value of the
    * "sizes" attribute. If the attribute is not set, this will be a void
    * string. Otherwise it empty or the value of the url.
@@ -301,7 +363,7 @@ class nsHtml5SpeculativeLoad {
    * of the "referrerpolicy" attribute. This field holds one of the values
    * (REFERRER_POLICY_*) defined in nsIHttpChannel.
    */
-  mozilla::net::ReferrerPolicy mScriptReferrerPolicy;
+  mozilla::dom::ReferrerPolicy mScriptReferrerPolicy;
 };
 
 #endif  // nsHtml5SpeculativeLoad_h

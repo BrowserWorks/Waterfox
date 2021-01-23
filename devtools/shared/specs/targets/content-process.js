@@ -5,6 +5,7 @@
 
 const {
   types,
+  Option,
   RetVal,
   generateActorSpec,
 } = require("devtools/shared/protocol");
@@ -22,6 +23,13 @@ const contentProcessTargetSpec = generateActorSpec({
       request: {},
       response: RetVal("contentProcessTarget.workers"),
     },
+
+    pauseMatchingServiceWorkers: {
+      request: {
+        origin: Option(0, "string"),
+      },
+      response: {},
+    },
   },
 
   events: {
@@ -36,6 +44,10 @@ const contentProcessTargetSpec = generateActorSpec({
     // We can remove that once FF66 is no longer supported.
     newSource: {
       type: "newSource",
+    },
+    tabDetached: {
+      type: "tabDetached",
+      from: Option(0, "string"),
     },
   },
 });

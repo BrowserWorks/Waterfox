@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<!-- Calendar Invitations Dialog -->
+
+<!ENTITY calendar.invitations.dialog.invitations.text                   "Přeprošenja">
+<!ENTITY calendar.invitations.dialog.statusmessage.updating.text        "Lisćinu přeprošenjow aktualizować.">
+<!ENTITY calendar.invitations.dialog.statusmessage.noinvitations.text   "Žane njewobkrućene přeprošenja namakane.">
+<!-- Calendar Invitations List -->
+
+<!ENTITY calendar.invitations.list.accept.button.label                  "Akceptować">
+<!ENTITY calendar.invitations.list.decline.button.label                 "Wotpokazać">
+<!ENTITY calendar.invitations.list.recurrentevent.text                  "Wospjetowaćy so podawk">
+<!ENTITY calendar.invitations.list.alldayevent.text                     "Cyłodnjowski podawk">
+<!ENTITY calendar.invitations.list.location.text                        "Městno: ">
+<!ENTITY calendar.invitations.list.organizer.text                       "Organizator: ">
+<!ENTITY calendar.invitations.list.attendee.text                        "Wobdźělnik: ">
+<!ENTITY calendar.invitations.list.none.text                            "Žane">

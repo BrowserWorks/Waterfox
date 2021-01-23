@@ -1,6 +1,7 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+"use strict";
 
 // checking to make sure we don't hang as per 1038304
 // offline so url isn't impt
@@ -9,15 +10,15 @@ var chan;
 var offlineStatus;
 
 var listener = {
-  onAcknowledge: function(aContext, aSize) {},
-  onBinaryMessageAvailable: function(aContext, aMsg) {},
-  onMessageAvailable: function(aContext, aMsg) {},
-  onServerClose: function(aContext, aCode, aReason) {},
-  onStart: function(aContext) {
+  onAcknowledge(aContext, aSize) {},
+  onBinaryMessageAvailable(aContext, aMsg) {},
+  onMessageAvailable(aContext, aMsg) {},
+  onServerClose(aContext, aCode, aReason) {},
+  onStart(aContext) {
     // onStart is not called when a connection fails
     Assert.ok(false);
   },
-  onStop: function(aContext, aStatusCode) {
+  onStop(aContext, aStatusCode) {
     Assert.notEqual(aStatusCode, Cr.NS_OK);
     Services.io.offline = offlineStatus;
     do_test_finished();

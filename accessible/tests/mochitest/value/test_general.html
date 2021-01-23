@@ -39,16 +39,18 @@
       testValue("aria_button_link", "");
       testValue("aria_checkbox_link", "");
       testValue("aria_application_link", "");
+      testValue("aria_main_link", "");
+      testValue("aria_navigation_link", "");
 
       // roles that can live as HTMLLinkAccessibles
       testValue("aria_link_link", href);
-      testValue("aria_main_link", href);
-      testValue("aria_navigation_link", href);
 
       // ////////////////////////////////////////////////////////////////////////
       // ARIA textboxes
 
       testValue("aria_textbox1", "helo");
+      // Textbox containing list.
+      testValue("aria_textbox2", "1. test");
 
       // ////////////////////////////////////////////////////////////////////////
       // ARIA comboboxes
@@ -114,6 +116,9 @@
   <a id="aria_link_link" role="link" href="foo">link</a>
 
   <div id="aria_textbox1" role="textbox">helo</div>
+  <div id="aria_textbox2" contenteditable role="textbox">
+    <ol><li>test</li></ol>
+  </div>
 
   <div id="aria_combobox1" role="combobox"
        aria-owns="aria_combobox1_owned_listbox"

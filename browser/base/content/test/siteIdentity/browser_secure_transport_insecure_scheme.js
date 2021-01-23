@@ -16,7 +16,7 @@ add_task(async function() {
       "https://example.com"
     ) + "dummy_page.html";
   await BrowserTestUtils.withNewTab(uri, async browser => {
-    await ContentTask.spawn(browser, null, async () => {
+    await SpecialPowers.spawn(browser, [], async () => {
       let debug = { hello: "world" };
       let blob = new Blob([JSON.stringify(debug, null, 2)], {
         type: "application/json",
@@ -162,6 +162,6 @@ add_task(async function() {
   // http://example.com won't be secure, so we treat it as not secure.
   await BrowserTestUtils.withNewTab("http://example.com/", async browser => {
     let identityMode = window.document.getElementById("identity-box").className;
-    is(identityMode, "unknownIdentity", "identity should be 'unknown'");
+    is(identityMode, "notSecure", "identity should be 'not secure'");
   });
 });

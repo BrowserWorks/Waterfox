@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.editing.title        "Jaunas lapas iestatījumi">
+
+<!ENTITY  authorName.label          "Autors:">
+<!ENTITY  authorName.accesskey      "u">
+<!ENTITY  pageColorHeader           "Noklusētais lapas izskats">
+
+
+
+
+
+<!ENTITY normalText.label           "Normāls teksts">
+<!ENTITY normalText.accesskey       "N">
+
+
+
+
+
+
+
+
+<!ENTITY colon.character            ":">
+
+
+
+
+

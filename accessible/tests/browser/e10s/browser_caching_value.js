@@ -29,7 +29,13 @@ const valueTests = [
     id: "select",
     async action(browser) {
       await invokeFocus(browser, "select");
-      await BrowserTestUtils.synthesizeKey("3", {}, browser);
+      await invokeContentTask(browser, [], () => {
+        const { ContentTaskUtils } = ChromeUtils.import(
+          "resource://testing-common/ContentTaskUtils.jsm"
+        );
+        const EventUtils = ContentTaskUtils.getEventUtils(content);
+        EventUtils.synthesizeKey("3", {}, content);
+      });
     },
     waitFor: EVENT_TEXT_VALUE_CHANGE,
     expected: "3rd",
@@ -84,7 +90,7 @@ const valueTests = [
         attr: "aria-valuenow",
       },
     ],
-    expected: ["hey!", 0, 0, 7, 0],
+    expected: ["hey!", 3.5, 0, 7, 0],
   },
   {
     desc: "Initially value is not set for combobox",
@@ -130,7 +136,13 @@ const valueTests = [
     id: "range",
     async action(browser) {
       await invokeFocus(browser, "range");
-      await BrowserTestUtils.synthesizeKey("VK_LEFT", {}, browser);
+      await invokeContentTask(browser, [], () => {
+        const { ContentTaskUtils } = ChromeUtils.import(
+          "resource://testing-common/ContentTaskUtils.jsm"
+        );
+        const EventUtils = ContentTaskUtils.getEventUtils(content);
+        EventUtils.synthesizeKey("VK_LEFT", {}, content);
+      });
     },
     waitFor: EVENT_VALUE_CHANGE,
     expected: "5",
@@ -178,5 +190,6 @@ addAccessibleTask(
         is(acc.value, expected, `Correct value for ${prettyName(acc)}`);
       }
     }
-  }
+  },
+  { iframe: true, remoteIframe: true }
 );

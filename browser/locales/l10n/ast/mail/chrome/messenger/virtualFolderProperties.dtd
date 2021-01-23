@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Nueva carpeta de guetes guardaes">
+<!ENTITY name.label "Nome:">
+<!ENTITY name.accesskey "N">
+<!ENTITY description.label "Crear como subcarpeta de:">
+<!ENTITY description.accesskey "C">
+
+<!ENTITY searchTermCaption.label "Configurar el criteriu de gueta usáu pa esta carpeta virtual: ">
+
+<!ENTITY folderSelectionCaption.label "Seleicionar les carpetes nes que guetar: ">
+<!ENTITY chooseFoldersButton.label "Escoyer…">
+<!ENTITY chooseFoldersButton.accesskey "r">
+
+<!ENTITY searchOnline.label "Guetar en llinia (da resultaos anovaos de carpetes IMAP y de noticies, pero aumenta'l tiempu d'apertura de la carpeta)">
+<!ENTITY searchOnline.accesskey "G">
+<!ENTITY newFolderButton.label "Crear">
+<!ENTITY newFolderButton.accesskey "e">
+<!ENTITY editFolderButton.label "Anovar">
+<!ENTITY editFolderButton.accesskey "A">

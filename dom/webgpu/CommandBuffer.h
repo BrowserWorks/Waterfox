@@ -3,27 +3,40 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef WEBGPU_CommandBuffer_H_
-#define WEBGPU_CommandBuffer_H_
+#ifndef GPU_CommandBuffer_H_
+#define GPU_CommandBuffer_H_
 
 #include "nsWrapperCache.h"
 #include "ObjectModel.h"
 
 namespace mozilla {
+namespace dom {
+class HTMLCanvasElement;
+}  // namespace dom
 namespace webgpu {
 
 class Device;
 
-class CommandBuffer final : public ChildOf<Device> {
+class CommandBuffer final : public ObjectBase, public ChildOf<Device> {
  public:
-  WEBGPU_DECL_GOOP(CommandBuffer)
+  GPU_DECL_CYCLE_COLLECTION(CommandBuffer)
+  GPU_DECL_JS_WRAP(CommandBuffer)
+
+  CommandBuffer(Device* const aParent, RawId aId,
+                const WeakPtr<dom::HTMLCanvasElement>& aTargetCanvasElement);
+
+  Maybe<RawId> Commit();
 
  private:
   CommandBuffer() = delete;
-  virtual ~CommandBuffer();
+  ~CommandBuffer();
+  void Cleanup();
+
+  const RawId mId;
+  const WeakPtr<dom::HTMLCanvasElement> mTargetCanvasElement;
 };
 
 }  // namespace webgpu
 }  // namespace mozilla
 
-#endif  // WEBGPU_CommandBuffer_H_
+#endif  // GPU_CommandBuffer_H_

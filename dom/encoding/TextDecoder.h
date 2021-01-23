@@ -10,8 +10,8 @@
 #include "mozilla/dom/NonRefcountedDOMObject.h"
 #include "mozilla/dom/TextDecoderBinding.h"
 #include "mozilla/dom/TypedArray.h"
-#include "nsAutoPtr.h"
 #include "mozilla/Encoding.h"
+#include "mozilla/UniquePtr.h"
 
 namespace mozilla {
 
@@ -28,19 +28,19 @@ class TextDecoder final : public NonRefcountedDOMObject {
                                   const nsAString& aEncoding,
                                   const TextDecoderOptions& aOptions,
                                   ErrorResult& aRv) {
-    nsAutoPtr<TextDecoder> txtDecoder(new TextDecoder());
+    auto txtDecoder = MakeUnique<TextDecoder>();
     txtDecoder->Init(aEncoding, aOptions, aRv);
     if (aRv.Failed()) {
       return nullptr;
     }
-    return txtDecoder.forget();
+    return txtDecoder.release();
   }
 
   TextDecoder() : mFatal(false), mIgnoreBOM(false) {
     MOZ_COUNT_CTOR(TextDecoder);
   }
 
-  ~TextDecoder() { MOZ_COUNT_DTOR(TextDecoder); }
+  MOZ_COUNTED_DTOR(TextDecoder)
 
   bool WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto,
                   JS::MutableHandle<JSObject*> aReflector) {

@@ -9,14 +9,17 @@
 #include "mozilla/dom/XULTooltipElement.h"
 #include "mozilla/dom/NodeInfo.h"
 #include "nsCTooltipTextProvider.h"
+#include "nsITooltipTextProvider.h"
 
 namespace mozilla {
 namespace dom {
 
 nsXULElement* NS_NewXULTooltipElement(
     already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo) {
+  RefPtr<mozilla::dom::NodeInfo> nodeInfo(aNodeInfo);
+  auto* nim = nodeInfo->NodeInfoManager();
   RefPtr<XULTooltipElement> tooltip =
-      new XULTooltipElement(std::move(aNodeInfo));
+      new (nim) XULTooltipElement(nodeInfo.forget());
   NS_ENSURE_SUCCESS(tooltip->Init(), nullptr);
   return tooltip;
 }

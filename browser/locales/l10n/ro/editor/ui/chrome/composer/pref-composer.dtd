@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-composer.xul -->
+
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+<!ENTITY  pref.composer.title           "Composer">
+<!ENTITY  recentFiles.title             "Meniu de pagini recente">
+<!ENTITY  documentsInMenu.label         "Număr maxim de pagini afișate:">
+<!ENTITY  documentsInMenu.accesskey     "p">
+<!ENTITY  savingFiles.title             "La salvarea sau publicarea paginilor">
+<!ENTITY  preserveExisting.label        "Păstrează formatarea inițială a sursei">
+<!ENTITY  preserveExisting.accesskey    "o">
+<!ENTITY  preserveExisting.tooltip      "Păstrează caracterele de rând nou și formatarea inițială a paginii">
+<!ENTITY  saveAssociatedFiles.label     "Salvează imaginile și alte fișiere asociate la salvarea paginilor">
+<!ENTITY  saveAssociatedFiles.accesskey "S">
+<!ENTITY  showPublishDialog.label       "Afișează întotdeauna fereastra de dialog Publicare la publicarea paginilor">
+<!ENTITY  showPublishDialog.accesskey   "A">
+<!ENTITY  composerEditing.label         "Editare">
+<!ENTITY  maintainStructure.label       "Menține formatul tabelului la introducerea sau ștergerea de celule">
+<!ENTITY  maintainStructure.tooltip     "Păstrează forma dreptunghiulară a tabelului prin adăugare automată de celule după inserări sau ștergeri de celule">
+<!ENTITY  maintainStructure.accesskey   "M">
+<!ENTITY  useCSS.label                  "Utilizează stiluri CSS în loc de elemente și atribute HTML">
+<!ENTITY  useCSS.accesskey              "U">
+<!ENTITY  crInPCreatesNewP.label        "Tasta Enter într-un paragraf creează întotdeauna un paragraf nou">
+<!ENTITY  crInPCreatesNewP.accesskey    "r">

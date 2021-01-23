@@ -23,7 +23,8 @@
 #include "mozilla/dom/HTMLObjectElement.h" 
 
 
-NS_IMPL_NS_NEW_HTML_ELEMENT_CHECK_PARSER(Applet)
+//NS_IMPL_NS_NEW_HTML_ELEMENT_CHECK_PARSER(Applet)
+NS_IMPL_NS_NEW_HTML_ELEMENT(Applet)
 
 namespace mozilla {
 namespace dom {
@@ -130,6 +131,7 @@ HTMLAppletElement::AsyncEventRunning(AsyncEventDispatcher* aEvent)
   nsImageLoadingContent::AsyncEventRunning(aEvent);
 }
 
+#if 0
 nsresult
 HTMLAppletElement::BindToTree(Document *aDocument,
                                     nsIContent *aParent,
@@ -174,6 +176,60 @@ HTMLAppletElement::UnbindFromTree(bool aDeep,
   nsObjectLoadingContent::UnbindFromTree(aDeep, aNullParent);
   nsGenericHTMLElement::UnbindFromTree(aDeep, aNullParent);
 }
+#endif
+
+nsresult HTMLAppletElement::BindToTree(BindContext& aContext, nsINode& aParent) {
+  nsresult rv = nsGenericHTMLElement::BindToTree(aContext, aParent);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  rv = nsObjectLoadingContent::BindToTree(aContext, aParent);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  if (IsInComposedDoc()) {
+    // Don't kick off load from being bound to a plugin document - the plugin
+    // document will call nsObjectLoadingContent::InitializeFromChannel() for
+    // the initial load.
+    nsCOMPtr<nsIPluginDocument> pluginDoc =
+        do_QueryInterface(&aContext.OwnerDoc());
+    if (!pluginDoc) {
+      void (HTMLAppletElement::*start)() = &HTMLAppletElement::StartObjectLoad;
+      nsContentUtils::AddScriptRunner(
+          NewRunnableMethod("dom::HTMLAppletElement::BindToTree", this, start));
+    }
+  }
+
+  return NS_OK;
+}
+
+void HTMLAppletElement::UnbindFromTree(bool aNullParent) {
+#ifdef XP_MACOSX
+  // When a page is reloaded (when an Document's content is removed), the
+  // focused element isn't necessarily sent an eBlur event. See
+  // nsFocusManager::ContentRemoved(). This means that a widget may think it
+  // still contains a focused plugin when it doesn't -- which in turn can
+  // disable text input in the browser window. See bug 1137229.
+  HTMLObjectElement::OnFocusBlurPlugin(this, false);
+#endif
+  nsObjectLoadingContent::UnbindFromTree(aNullParent);
+  nsGenericHTMLElement::UnbindFromTree(aNullParent);
+}
+
+#if 0
+nsresult HTMLObjectElement::AfterSetAttr(int32_t aNamespaceID, nsAtom* aName,
+                                         const nsAttrValue* aValue,
+                                         const nsAttrValue* aOldValue,
+                                         nsIPrincipal* aSubjectPrincipal,
+                                         bool aNotify) {
+  if (aValue) {
+    nsresult rv = AfterMaybeChangeAttr(aNamespaceID, aName, aNotify);
+    NS_ENSURE_SUCCESS(rv, rv);
+  }
+
+  return nsGenericHTMLFormElement::AfterSetAttr(
+      aNamespaceID, aName, aValue, aOldValue, aSubjectPrincipal, aNotify);
+
+}
+#endif
 
 nsresult HTMLAppletElement::AfterSetAttr(int32_t aNamespaceID, nsAtom* aName,
                                          const nsAttrValue* aValue,

@@ -12,13 +12,14 @@
 #define gc_ArenaList_h
 
 #include "gc/AllocKind.h"
+#include "js/GCAPI.h"
+#include "js/HeapAPI.h"
 #include "js/SliceBudget.h"
 #include "js/TypeDecls.h"
 #include "threading/ProtectedData.h"
 
 namespace js {
 
-class FreeOp;
 class Nursery;
 class TenuringTracer;
 
@@ -243,17 +244,6 @@ class FreeLists {
 };
 
 class ArenaLists {
-  JS::Zone* zone_;
-
-  ZoneData<FreeLists> freeLists_;
-
-  ArenaListData<AllAllocKindArray<ArenaList>> arenaLists_;
-
-  ArenaList& arenaLists(AllocKind i) { return arenaLists_.ref()[i]; }
-  const ArenaList& arenaLists(AllocKind i) const {
-    return arenaLists_.ref()[i];
-  }
-
   enum class ConcurrentUse : uint32_t {
     None,
     BackgroundFinalize,
@@ -261,25 +251,19 @@ class ArenaLists {
   };
 
   using ConcurrentUseState =
-      mozilla::Atomic<ConcurrentUse, mozilla::SequentiallyConsistent,
-                      mozilla::recordreplay::Behavior::DontPreserve>;
+      mozilla::Atomic<ConcurrentUse, mozilla::SequentiallyConsistent>;
+
+  JS::Zone* zone_;
 
   // Whether this structure can be accessed by other threads.
   UnprotectedData<AllAllocKindArray<ConcurrentUseState>> concurrentUseState_;
 
-  ConcurrentUseState& concurrentUse(AllocKind i) {
-    return concurrentUseState_.ref()[i];
-  }
-  ConcurrentUse concurrentUse(AllocKind i) const {
-    return concurrentUseState_.ref()[i];
-  }
+  ZoneData<FreeLists> freeLists_;
+
+  ArenaListData<AllAllocKindArray<ArenaList>> arenaLists_;
 
   /* For each arena kind, a list of arenas remaining to be swept. */
-  MainThreadOrGCTaskData<AllAllocKindArray<Arena*>> arenaListsToSweep_;
-  Arena*& arenaListsToSweep(AllocKind i) { return arenaListsToSweep_.ref()[i]; }
-  Arena* arenaListsToSweep(AllocKind i) const {
-    return arenaListsToSweep_.ref()[i];
-  }
+  MainThreadOrGCTaskData<AllAllocKindArray<Arena*>> arenasToSweep_;
 
   /* During incremental sweeping, a list of the arenas already swept. */
   ZoneOrGCTaskData<AllocKind> incrementalSweptArenaKind;
@@ -292,7 +276,7 @@ class ArenaLists {
   ZoneData<Arena*> gcScriptArenasToUpdate;
   ZoneData<Arena*> gcObjectGroupArenasToUpdate;
 
-  // The list of empty arenas which are collected during sweep phase and
+  // The list of empty arenas which are collected during the sweep phase and
   // released at the end of sweeping every sweep group.
   ZoneData<Arena*> savedEmptyArenas;
 
@@ -330,36 +314,51 @@ class ArenaLists {
   void adoptArenas(ArenaLists* fromArenaLists, bool targetZoneIsCollecting);
 
   inline void checkEmptyFreeLists();
-  inline bool checkEmptyArenaLists();
+  inline void checkEmptyArenaLists();
   inline void checkEmptyFreeList(AllocKind kind);
 
-  bool checkEmptyArenaList(AllocKind kind);
+  void checkEmptyArenaList(AllocKind kind);
 
   bool relocateArenas(Arena*& relocatedListOut, JS::GCReason reason,
                       js::SliceBudget& sliceBudget, gcstats::Statistics& stats);
 
-  void queueForegroundObjectsForSweep(FreeOp* fop);
+  void queueForegroundObjectsForSweep(JSFreeOp* fop);
   void queueForegroundThingsForSweep();
 
   void releaseForegroundSweptEmptyArenas();
 
-  bool foregroundFinalize(FreeOp* fop, AllocKind thingKind,
+  bool foregroundFinalize(JSFreeOp* fop, AllocKind thingKind,
                           js::SliceBudget& sliceBudget,
                           SortedArenaList& sweepList);
-  static void backgroundFinalize(FreeOp* fop, Arena* listHead, Arena** empty);
+  static void backgroundFinalize(JSFreeOp* fop, Arena* listHead, Arena** empty);
 
   void setParallelAllocEnabled(bool enabled);
 
-  // When finalizing arenas, whether to keep empty arenas on the list or
-  // release them immediately.
-  enum KeepArenasEnum { RELEASE_ARENAS, KEEP_ARENAS };
+  void checkSweepStateNotInUse();
+  void checkNoArenasToUpdate();
+  void checkNoArenasToUpdateForKind(AllocKind kind);
 
  private:
+  ArenaList& arenaList(AllocKind i) { return arenaLists_.ref()[i]; }
+  const ArenaList& arenaList(AllocKind i) const { return arenaLists_.ref()[i]; }
+
+  ConcurrentUseState& concurrentUse(AllocKind i) {
+    return concurrentUseState_.ref()[i];
+  }
+  ConcurrentUse concurrentUse(AllocKind i) const {
+    return concurrentUseState_.ref()[i];
+  }
+
+  Arena*& arenasToSweep(AllocKind i) { return arenasToSweep_.ref()[i]; }
+  Arena* arenasToSweep(AllocKind i) const { return arenasToSweep_.ref()[i]; }
+
   inline JSRuntime* runtime();
   inline JSRuntime* runtimeFromAnyThread();
 
-  inline void queueForForegroundSweep(FreeOp* fop, const FinalizePhase& phase);
-  inline void queueForBackgroundSweep(FreeOp* fop, const FinalizePhase& phase);
+  inline void queueForForegroundSweep(JSFreeOp* fop,
+                                      const FinalizePhase& phase);
+  inline void queueForBackgroundSweep(JSFreeOp* fop,
+                                      const FinalizePhase& phase);
   inline void queueForForegroundSweep(AllocKind thingKind);
   inline void queueForBackgroundSweep(AllocKind thingKind);
 

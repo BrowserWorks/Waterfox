@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label        "Feil ved sidelasting">
+<!ENTITY gopherAddon.title      "Gopher-protokoll">
+<!ENTITY gopherAddon.shortDesc  "gopher er ikke registrert som en protokoll.">
+<!ENTITY gopherAddon.longDesc   "Adressen bruker gopher-protokollen, som ikke lenger støttes, slik at nettleseren ikke kan koble til nettstedet. Du kan finne kompatible utvidelser for å bruke denne serveren fra Mozilla Add-ons.">
+<!ENTITY goToAddOn.label        "Gå til utvidelsesnettstedet">

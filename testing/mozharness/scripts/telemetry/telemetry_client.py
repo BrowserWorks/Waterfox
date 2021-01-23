@@ -38,7 +38,7 @@ telemetry_tests_config_options = [
         "action": "store_true",
         "dest": "enable_webrender",
         "default": False,
-        "help": "Tries to enable the WebRender compositor.",
+        "help": "Enable the WebRender compositor in Gecko.",
     }],
     [['--dry-run'], {
         'dest': 'dry_run',
@@ -50,6 +50,12 @@ telemetry_tests_config_options = [
         'action': 'store_false',
         'default': True,
         'help': 'Disable multi-process (e10s) mode when running tests.',
+    }],
+    [["--setpref"], {
+        'dest': 'extra_prefs',
+        'action': 'append',
+        'default': [],
+        'help': 'Extra user prefs.',
     }],
     [['--symbols-path=SYMBOLS_PATH'], {
         'dest': 'symbols_path',
@@ -161,6 +167,14 @@ class TelemetryTests(TestingMixin, VCSToolsScript, CodeCoverageMixin):
             # Enable tracing output to log transmission protocol
             '-vv',
         ]
+
+        if self.config['enable_webrender']:
+            cmd.extend(['--enable-webrender'])
+
+        cmd.extend(['--setpref={}'.format(p) for p in self.config['extra_prefs']])
+
+        if not self.config["e10s"]:
+            cmd.append("--disable-e10s")
 
         parser = StructuredOutputParser(config=self.config,
                                         log_obj=self.log_obj,

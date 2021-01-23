@@ -7,6 +7,9 @@
 #include "nsStringStream.h"
 #include "Helpers.h"
 
+using mozilla::NonBlockingAsyncInputStream;
+using mozilla::SpinEventLoopUntil;
+
 TEST(TestNonBlockingAsyncInputStream, Simple)
 {
   nsCString data;
@@ -274,15 +277,11 @@ class QIInputStream final : public nsIInputStream,
 
   // nsIIPCSerializableInputStream
   void Serialize(mozilla::ipc::InputStreamParams&, FileDescriptorArray&, bool,
-                 uint32_t, uint32_t*, mozilla::dom::ContentChild*) override {}
+                 uint32_t, uint32_t*,
+                 mozilla::ipc::ParentToChildStreamActorManager*) override {}
   void Serialize(mozilla::ipc::InputStreamParams&, FileDescriptorArray&, bool,
                  uint32_t, uint32_t*,
-                 mozilla::ipc::PBackgroundChild*) override {}
-  void Serialize(mozilla::ipc::InputStreamParams&, FileDescriptorArray&, bool,
-                 uint32_t, uint32_t*, mozilla::dom::ContentParent*) override {}
-  void Serialize(mozilla::ipc::InputStreamParams&, FileDescriptorArray&, bool,
-                 uint32_t, uint32_t*,
-                 mozilla::ipc::PBackgroundParent*) override {}
+                 mozilla::ipc::ChildToParentStreamActorManager*) override {}
   bool Deserialize(const mozilla::ipc::InputStreamParams&,
                    const FileDescriptorArray&) override {
     return false;

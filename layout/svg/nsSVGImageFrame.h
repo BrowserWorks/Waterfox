@@ -13,7 +13,6 @@
 #include "mozilla/gfx/2D.h"
 #include "imgIContainer.h"
 #include "nsContainerFrame.h"
-#include "nsIImageLoadingContent.h"
 #include "nsLayoutUtils.h"
 #include "imgINotificationObserver.h"
 #include "SVGObserverUtils.h"
@@ -51,6 +50,14 @@ class nsSVGImageFrame final : public mozilla::SVGGeometryFrame,
   friend nsIFrame* NS_NewSVGImageFrame(mozilla::PresShell* aPresShell,
                                        ComputedStyle* aStyle);
 
+  virtual bool CreateWebRenderCommands(
+      mozilla::wr::DisplayListBuilder& aBuilder,
+      mozilla::wr::IpcResourceUpdateQueue& aResources,
+      const mozilla::layers::StackingContextHelper& aSc,
+      mozilla::layers::RenderRootStateManager* aManager,
+      nsDisplayListBuilder* aDisplayListBuilder,
+      mozilla::nsDisplaySVGGeometry* aItem, bool aDryRun) override;
+
  protected:
   explicit nsSVGImageFrame(ComputedStyle* aStyle, nsPresContext* aPresContext)
       : SVGGeometryFrame(aStyle, aPresContext, kClassID),
@@ -87,6 +94,10 @@ class nsSVGImageFrame final : public mozilla::SVGGeometryFrame,
                     nsIFrame* aPrevInFlow) override;
   virtual void DestroyFrom(nsIFrame* aDestructRoot,
                            PostDestroyData& aPostDestroyData) override;
+  void DidSetComputedStyle(ComputedStyle* aOldStyle) final;
+
+  bool GetIntrinsicImageDimensions(mozilla::gfx::Size& aSize,
+                                   mozilla::AspectRatio& aAspectRatio) const;
 
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override {

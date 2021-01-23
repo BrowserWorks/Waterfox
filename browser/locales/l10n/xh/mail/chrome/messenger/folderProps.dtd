@@ -1,0 +1,70 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Iinkcazelo ngeempawu">
+
+<!ENTITY generalInfo.label                       "Ulwazi Ngokubanzi">
+<!ENTITY folderCharsetFallback2.label            "Fallback Text Encoding:">
+<!ENTITY folderCharsetFallback2.accesskey        "E">
+<!ENTITY folderCharsetEnforce2.label             "Apply encoding to all messages in the folder (individual message text encoding settings and auto-detection will be ignored)">
+<!ENTITY folderCharsetEnforce2.accesskey         "A">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Rebuild Summary File Index">
+<!ENTITY folderRebuildSummaryFile2.label         "Repair Folder">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "R">
+<!ENTITY folderRebuildSummaryFile.explanation    "Sometimes the folder index (.msf) file becomes damaged and messages may appear missing or deleted messages continue showing; repairing the folder may fix these issues.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Include messages in this folder in Global Search results">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "G">
+
+<!ENTITY retention.label "Umgaqonkqubo Wokubambeka">
+<!ENTITY retentionUseAccount.label  "Use my account settings">
+<!ENTITY retentionUseAccount.accesskey "U">
+<!ENTITY daysOld.label "iintsuku ubudala">
+<!ENTITY message.label "imiyalezo">
+<!ENTITY retentionCleanup.label "Ukubuyiseleka kwesithuba sedisk, imiyalezo emidala isenokucinywa isigxina">
+<!ENTITY retentionCleanupImap.label "To recover disk space, old messages can be permanently deleted, both local copies and originals on the remote server.">
+<!ENTITY retentionCleanupPop.label "To recover disk space, old messages can be permanently deleted, including originals on the remote server.">
+<!ENTITY retentionDeleteMsg.label "Delete messages more than">
+<!ENTITY retentionDeleteMsg.accesskey "m">
+<!ENTITY retentionKeepAll.label "Musa ukucima nayiphi imiyalezo">
+<!ENTITY retentionKeepAll.accesskey "n">
+<!ENTITY retentionKeepRecent.label "Delete all but the most recent">
+<!ENTITY retentionKeepRecent.accesskey "l">
+<!ENTITY retentionApplyToFlagged.label "Always keep starred messages">
+<!ENTITY retentionApplyToFlagged.accesskey "e">
+
+<!ENTITY folderSynchronizationTab.label          "Synchronization">
+<!ENTITY folderCheckForNewMessages2.label         "When getting new messages for this account, always check this folder">
+<!ENTITY folderCheckForNewMessages2.accesskey     "c">
+
+<!ENTITY offlineFolder.check.label               "Khetha esi siqulathi seefayili ukwenzela ukusisebenzisa kwimo engeyo yokusebenza">
+<!ENTITY offlineFolder.check.accesskey           "K">
+<!ENTITY offlineFolder.button.label              "Thoba Umthwalo Ngoku">
+<!ENTITY offlineFolder.button.accesskey          "T">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Khetha eli qela leendaba ukwenzela ukuwusebenzisa kwimo engeyo yokusebenza">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "n">
+<!ENTITY offlineNewsgroup.button.label           "Thoba Umthwalo Ngoku">
+<!ENTITY offlineNewsgroup.button.accesskey       "T">
+
+<!ENTITY folderProps.name.label                  "Igama:">
+<!ENTITY folderProps.name.accesskey              "g">
+<!ENTITY folderProps.location.label              "Location:">
+<!ENTITY folderProps.location.accesskey          "L">
+
+<!ENTITY folderSharingTab.label                  "Ukwabelana">
+<!ENTITY privileges.button.label                 "Amalungelo awodwa...">
+<!ENTITY privileges.button.accesskey             "A">
+<!ENTITY permissionsDesc.label                   "Uneemvume ezilandelayo:">
+<!ENTITY folderType.label                        "Isimbo Sesiqulathi Seefayili:">
+
+<!ENTITY folderQuotaTab.label                    "Umlinganiselo">
+<!ENTITY folderQuotaUsage.label                  "Ukusetyenziswa:">
+<!ENTITY folderQuotaStatus.label                 "Isimo:">
+
+<!ENTITY numberOfMessages.label                  "Number of messages:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "unknown">
+<!ENTITY sizeOnDisk.label                        "Size on disk:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "unknown">

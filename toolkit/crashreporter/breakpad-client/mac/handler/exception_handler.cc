@@ -41,7 +41,9 @@
 #include "common/mac/scoped_task_suspend-inl.h"
 #include "google_breakpad/common/minidump_exception_mac.h"
 
-#include "mozilla/RecordReplay.h"
+#ifdef MOZ_PHC
+#include "replace_malloc_bridge.h"
+#endif
 
 #ifndef __EXCEPTIONS
 // This file uses C++ try/catch (but shouldn't). Duplicate the macros from
@@ -343,10 +345,23 @@ bool ExceptionHandler::WriteMinidumpForChild(mach_port_t child,
 
   if (callback) {
     return callback(dump_path.c_str(), dump_id.c_str(),
-                    callback_context, result);
+                    callback_context, nullptr, result);
   }
   return result;
 }
+
+#ifdef MOZ_PHC
+static void GetPHCAddrInfo(int64_t exception_subcode,
+                           mozilla::phc::AddrInfo* addr_info) {
+  // Is this a crash involving a PHC allocation?
+  if (exception_subcode) {
+    // `exception_subcode` is only non-zero when it's a bad access, in which
+    // case it holds the address of the bad access.
+    char* addr = reinterpret_cast<char*>(exception_subcode);
+    ReplaceMalloc::IsPHCAllocation(addr, addr_info);
+  }
+}
+#endif
 
 bool ExceptionHandler::WriteMinidumpWithException(
     int exception_type,
@@ -354,6 +369,7 @@ bool ExceptionHandler::WriteMinidumpWithException(
     int exception_subcode,
     breakpad_ucontext_t* task_context,
     mach_port_t thread_name,
+    mach_port_t task_name,
     bool exit_after_write,
     bool report_current_thread) {
   bool result = false;
@@ -361,6 +377,11 @@ bool ExceptionHandler::WriteMinidumpWithException(
 #if TARGET_OS_IPHONE
   // _exit() should never be called on iOS.
   exit_after_write = false;
+#endif
+
+    mozilla::phc::AddrInfo addr_info;
+#ifdef MOZ_PHC
+    GetPHCAddrInfo(exception_subcode, &addr_info);
 #endif
 
   if (directCallback_) {
@@ -383,7 +404,14 @@ bool ExceptionHandler::WriteMinidumpWithException(
           exception_type,
           exception_code,
           exception_subcode,
-          thread_name);
+          thread_name,
+          task_name);
+
+      if (callback_) {
+        result = callback_(dump_path_c_, next_minidump_id_c_, callback_context_,
+                           &addr_info, result);
+      }
+
       if (result && exit_after_write) {
         _exit(exception_type);
       }
@@ -418,7 +446,7 @@ bool ExceptionHandler::WriteMinidumpWithException(
       // (rather than just writing out the file), then we should exit without
       // forwarding the exception to the next handler.
       if (callback_(dump_path_c_, next_minidump_id_c_, callback_context_,
-                    result)) {
+                    &addr_info, result)) {
         if (exit_after_write)
           _exit(exception_type);
       }
@@ -543,7 +571,7 @@ void* ExceptionHandler::WaitForMessage(void* exception_handler_class) {
         // Write out the dump and save the result for later retrieval
         self->last_minidump_write_result_ =
           self->WriteMinidumpWithException(exception_type, exception_code,
-                                           0, NULL, thread,
+                                           0, NULL, thread, mach_task_self(),
                                            false, false);
 
 #if USE_PROTECTED_ALLOCATIONS
@@ -579,7 +607,7 @@ void* ExceptionHandler::WaitForMessage(void* exception_handler_class) {
           // Generate the minidump with the exception data.
           self->WriteMinidumpWithException(receive.exception, receive.code[0],
                                            subcode, NULL, receive.thread.name,
-                                           true, false);
+                                           mach_task_self(),  true, false);
 
 #if USE_PROTECTED_ALLOCATIONS
           // This may have become protected again within
@@ -631,6 +659,7 @@ void ExceptionHandler::SignalHandler(int sig, siginfo_t* info, void* uc) {
       0,
       static_cast<breakpad_ucontext_t*>(uc),
       mach_thread_self(),
+      mach_task_self(),
       true,
       true);
 #if USE_PROTECTED_ALLOCATIONS
@@ -643,13 +672,14 @@ void ExceptionHandler::SignalHandler(int sig, siginfo_t* info, void* uc) {
 bool ExceptionHandler::WriteForwardedExceptionMinidump(int exception_type,
 						       int exception_code,
 						       int exception_subcode,
-						       mach_port_t thread)
+						       mach_port_t thread,
+						       mach_port_t task)
 {
   if (!gProtectedData.handler) {
     return false;
   }
   return gProtectedData.handler->WriteMinidumpWithException(exception_type, exception_code,
-							    exception_subcode, NULL, thread,
+							    exception_subcode, NULL, thread, task,
 							    /* exit_after_write = */ false,
 							    /* report_current_thread = */ true);
 }
@@ -688,12 +718,6 @@ bool ExceptionHandler::InstallHandler() {
   }
   catch (std::bad_alloc) {
     return false;
-  }
-
-  // Don't modify exception ports when replaying, to avoid interfering with the
-  // record/replay system's exception handler.
-  if (mozilla::recordreplay::IsReplaying()) {
-    return true;
   }
 
   // Save the current exception ports so that we can forward to them
@@ -785,9 +809,7 @@ bool ExceptionHandler::Setup(bool install_handler) {
     if (!InstallHandler())
       return false;
 
-  // Don't spawn the handler thread when replaying, as we have not set up
-  // exception ports for it to monitor.
-  if (result == KERN_SUCCESS && !mozilla::recordreplay::IsReplaying()) {
+  if (result == KERN_SUCCESS) {
     // Install the handler in its own thread, detached as we won't be joining.
     pthread_attr_t attr;
     pthread_attr_init(&attr);

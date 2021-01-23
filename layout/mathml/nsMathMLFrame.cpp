@@ -13,7 +13,7 @@
 #include "nsNameSpaceManager.h"
 #include "nsMathMLChar.h"
 #include "nsCSSPseudoElements.h"
-#include "nsMathMLElement.h"
+#include "mozilla/dom/MathMLElement.h"
 #include "gfxMathTable.h"
 #include "nsPresContextInlines.h"
 
@@ -98,7 +98,7 @@ void nsMathMLFrame::ResolveMathMLCharStyle(nsPresContext* aPresContext,
   PseudoStyleType pseudoType = PseudoStyleType::mozMathAnonymous;  // savings
   RefPtr<ComputedStyle> newComputedStyle;
   newComputedStyle = aPresContext->StyleSet()->ResolvePseudoElementStyle(
-      aContent->AsElement(), pseudoType, aParentComputedStyle, nullptr);
+      *aContent->AsElement(), pseudoType, aParentComputedStyle);
 
   aMathMLChar->SetComputedStyle(newComputedStyle);
 }
@@ -233,8 +233,8 @@ void nsMathMLFrame::ParseNumericValue(const nsString& aString,
                                       float aFontSizeInflation) {
   nsCSSValue cssValue;
 
-  if (!nsMathMLElement::ParseNumericValue(aString, cssValue, aFlags,
-                                          aPresContext->Document())) {
+  if (!dom::MathMLElement::ParseNumericValue(aString, cssValue, aFlags,
+                                             aPresContext->Document())) {
     // Invalid attribute value. aLengthValue remains unchanged, so the default
     // length value is used.
     return;
@@ -263,11 +263,7 @@ class nsDisplayMathMLBoundingMetrics final : public nsDisplayItem {
       : nsDisplayItem(aBuilder, aFrame), mRect(aRect) {
     MOZ_COUNT_CTOR(nsDisplayMathMLBoundingMetrics);
   }
-#  ifdef NS_BUILD_REFCNT_LOGGING
-  virtual ~nsDisplayMathMLBoundingMetrics() {
-    MOZ_COUNT_DTOR(nsDisplayMathMLBoundingMetrics);
-  }
-#  endif
+  MOZ_COUNTED_DTOR_OVERRIDE(nsDisplayMathMLBoundingMetrics)
 
   virtual void Paint(nsDisplayListBuilder* aBuilder, gfxContext* aCtx) override;
   NS_DISPLAY_DECL_NAME("MathMLBoundingMetrics", TYPE_MATHML_BOUNDING_METRICS)
@@ -303,21 +299,17 @@ void nsMathMLFrame::DisplayBoundingMetrics(nsDisplayListBuilder* aBuilder,
 class nsDisplayMathMLBar final : public nsPaintedDisplayItem {
  public:
   nsDisplayMathMLBar(nsDisplayListBuilder* aBuilder, nsIFrame* aFrame,
-                     const nsRect& aRect, uint16_t aIndex)
-      : nsPaintedDisplayItem(aBuilder, aFrame), mRect(aRect), mIndex(aIndex) {
+                     const nsRect& aRect)
+      : nsPaintedDisplayItem(aBuilder, aFrame), mRect(aRect) {
     MOZ_COUNT_CTOR(nsDisplayMathMLBar);
   }
-#ifdef NS_BUILD_REFCNT_LOGGING
-  virtual ~nsDisplayMathMLBar() { MOZ_COUNT_DTOR(nsDisplayMathMLBar); }
-#endif
-
-  virtual uint16_t CalculatePerFrameKey() const override { return mIndex; }
+  MOZ_COUNTED_DTOR_OVERRIDE(nsDisplayMathMLBar)
 
   virtual void Paint(nsDisplayListBuilder* aBuilder, gfxContext* aCtx) override;
   NS_DISPLAY_DECL_NAME("MathMLBar", TYPE_MATHML_BAR)
+
  private:
   nsRect mRect;
-  uint16_t mIndex;
 };
 
 void nsDisplayMathMLBar::Paint(nsDisplayListBuilder* aBuilder,
@@ -338,8 +330,8 @@ void nsMathMLFrame::DisplayBar(nsDisplayListBuilder* aBuilder, nsIFrame* aFrame,
                                uint32_t aIndex) {
   if (!aFrame->StyleVisibility()->IsVisible() || aRect.IsEmpty()) return;
 
-  aLists.Content()->AppendNewToTop<nsDisplayMathMLBar>(aBuilder, aFrame, aRect,
-                                                       aIndex);
+  aLists.Content()->AppendNewToTopWithIndex<nsDisplayMathMLBar>(
+      aBuilder, aFrame, aIndex, aRect);
 }
 
 void nsMathMLFrame::GetRadicalParameters(nsFontMetrics* aFontMetrics,

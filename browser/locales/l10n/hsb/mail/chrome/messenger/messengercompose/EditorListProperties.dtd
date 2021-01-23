@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Kajkosće lisćiny">
+
+<!ENTITY ListType.label "Typ lisćiny">
+<!ENTITY bulletStyle.label "Naličenske znamješko:">
+<!ENTITY startingNumber.label "Započinać z:">
+<!ENTITY startingNumber.accessKey "Z">
+<!ENTITY none.value "Žane">
+<!ENTITY bulletList.value "Naličenska (nječisłowana) lisćina">
+<!ENTITY numberList.value "Čisłowana lisćina">
+<!ENTITY definitionList.value "Definiciska lisćina">
+<!ENTITY changeEntireListRadio.label "Cyłu lisćinu změnić">
+<!ENTITY changeEntireListRadio.accessKey "C">
+<!ENTITY changeSelectedRadio.label "Jenož wubrane zapiski změnić">
+<!ENTITY changeSelectedRadio.accessKey "J">

@@ -9,7 +9,7 @@ const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 var gImportedPrefBranches = new Set();
 
 function importPrefBranch(aPrefBranch, aPermission, aAction) {
-  let list = Services.prefs.getChildList(aPrefBranch, {});
+  let list = Services.prefs.getChildList(aPrefBranch);
 
   for (let pref of list) {
     let origins = Services.prefs.getCharPref(pref, "");
@@ -24,7 +24,7 @@ function importPrefBranch(aPrefBranch, aPermission, aAction) {
       let principals = [];
       try {
         principals = [
-          Services.scriptSecurityManager.createCodebasePrincipalFromOrigin(
+          Services.scriptSecurityManager.createContentPrincipalFromOrigin(
             origin
           ),
         ];
@@ -37,11 +37,8 @@ function importPrefBranch(aPrefBranch, aPermission, aAction) {
           let httpsURI = Services.io.newURI("https://" + origin);
 
           principals = [
-            Services.scriptSecurityManager.createCodebasePrincipal(httpURI, {}),
-            Services.scriptSecurityManager.createCodebasePrincipal(
-              httpsURI,
-              {}
-            ),
+            Services.scriptSecurityManager.createContentPrincipal(httpURI, {}),
+            Services.scriptSecurityManager.createContentPrincipal(httpsURI, {}),
           ];
         } catch (e2) {}
       }

@@ -15,12 +15,61 @@
 #include "mozilla/Maybe.h"
 
 #include "gc/GC.h"
-#include "gc/RelocationOverlay.h"
-#include "vm/HelperThreads.h"
-#include "vm/Runtime.h"
+#include "vm/JSContext.h"
 
 namespace js {
 namespace gc {
+
+/*
+ * There are a couple of classes here that serve mostly as "tokens" indicating
+ * that a precondition holds. Some functions force the caller to possess such a
+ * token because they require the precondition to hold, and it is better to make
+ * the precondition explicit at the API entry point than to crash in an
+ * assertion later on when it is relied upon.
+ */
+
+struct MOZ_RAII AutoAssertNoNurseryAlloc {
+#ifdef DEBUG
+  AutoAssertNoNurseryAlloc();
+  ~AutoAssertNoNurseryAlloc();
+#else
+  AutoAssertNoNurseryAlloc() {}
+#endif
+};
+
+/*
+ * A class that serves as a token that the nursery in the current thread's zone
+ * group is empty.
+ */
+class MOZ_RAII AutoAssertEmptyNursery {
+ protected:
+  JSContext* cx;
+
+  mozilla::Maybe<AutoAssertNoNurseryAlloc> noAlloc;
+
+  // Check that the nursery is empty.
+  void checkCondition(JSContext* cx);
+
+  // For subclasses that need to empty the nursery in their constructors.
+  AutoAssertEmptyNursery() : cx(nullptr) {}
+
+ public:
+  explicit AutoAssertEmptyNursery(JSContext* cx) : cx(nullptr) {
+    checkCondition(cx);
+  }
+
+  AutoAssertEmptyNursery(const AutoAssertEmptyNursery& other)
+      : AutoAssertEmptyNursery(other.cx) {}
+};
+
+/*
+ * Evict the nursery upon construction. Serves as a token indicating that the
+ * nursery is empty. (See AutoAssertEmptyNursery, above.)
+ */
+class MOZ_RAII AutoEmptyNursery : public AutoAssertEmptyNursery {
+ public:
+  explicit AutoEmptyNursery(JSContext* cx);
+};
 
 class MOZ_RAII AutoCheckCanAccessAtomsDuringGC {
 #ifdef DEBUG
@@ -52,21 +101,21 @@ class MOZ_RAII AutoHeapSession {
   ~AutoHeapSession();
 
  protected:
-  AutoHeapSession(JSRuntime* rt, JS::HeapState state);
+  AutoHeapSession(GCRuntime* gc, JS::HeapState state);
 
  private:
   AutoHeapSession(const AutoHeapSession&) = delete;
   void operator=(const AutoHeapSession&) = delete;
 
-  JSRuntime* runtime;
+  GCRuntime* gc;
   JS::HeapState prevState;
   AutoGeckoProfilerEntry profilingStackFrame;
 };
 
 class MOZ_RAII AutoGCSession : public AutoHeapSession {
  public:
-  explicit AutoGCSession(JSRuntime* rt, JS::HeapState state)
-      : AutoHeapSession(rt, state) {}
+  explicit AutoGCSession(GCRuntime* gc, JS::HeapState state)
+      : AutoHeapSession(gc, state) {}
 
   AutoCheckCanAccessAtomsDuringGC& checkAtomsAccess() {
     return maybeCheckAtomsAccess.ref();
@@ -81,7 +130,8 @@ class MOZ_RAII AutoTraceSession : public AutoLockAllAtoms,
                                   public AutoHeapSession {
  public:
   explicit AutoTraceSession(JSRuntime* rt)
-      : AutoLockAllAtoms(rt), AutoHeapSession(rt, JS::HeapState::Tracing) {}
+      : AutoLockAllAtoms(rt),
+        AutoHeapSession(&rt->gc, JS::HeapState::Tracing) {}
 };
 
 struct MOZ_RAII AutoFinishGC {
@@ -97,6 +147,20 @@ class MOZ_RAII AutoPrepareForTracing : private AutoFinishGC,
  public:
   explicit AutoPrepareForTracing(JSContext* cx)
       : AutoFinishGC(cx, JS::GCReason::PREPARE_FOR_TRACING),
+        AutoTraceSession(cx->runtime()) {}
+};
+
+// This class should be used by any code that needs exclusive access to the heap
+// in order to trace through it.
+//
+// This version also empties the nursery after finishing any ongoing GC.
+class MOZ_RAII AutoEmptyNurseryAndPrepareForTracing : private AutoFinishGC,
+                                                      public AutoEmptyNursery,
+                                                      public AutoTraceSession {
+ public:
+  explicit AutoEmptyNurseryAndPrepareForTracing(JSContext* cx)
+      : AutoFinishGC(cx, JS::GCReason::PREPARE_FOR_TRACING),
+        AutoEmptyNursery(cx),
         AutoTraceSession(cx->runtime()) {}
 };
 
@@ -153,17 +217,17 @@ struct MovingTracer final : public JS::CallbackTracer {
   explicit MovingTracer(JSRuntime* rt)
       : CallbackTracer(rt, TraceWeakMapKeysValues) {}
 
-  void onObjectEdge(JSObject** objp) override;
-  void onShapeEdge(Shape** shapep) override;
-  void onStringEdge(JSString** stringp) override;
-  void onScriptEdge(JSScript** scriptp) override;
-  void onLazyScriptEdge(LazyScript** lazyp) override;
-  void onBaseShapeEdge(BaseShape** basep) override;
-  void onScopeEdge(Scope** basep) override;
-  void onRegExpSharedEdge(RegExpShared** sharedp) override;
-  void onBigIntEdge(BigInt** bip) override;
-  void onChild(const JS::GCCellPtr& thing) override {
+  bool onObjectEdge(JSObject** objp) override;
+  bool onShapeEdge(Shape** shapep) override;
+  bool onStringEdge(JSString** stringp) override;
+  bool onScriptEdge(js::BaseScript** scriptp) override;
+  bool onBaseShapeEdge(BaseShape** basep) override;
+  bool onScopeEdge(Scope** scopep) override;
+  bool onRegExpSharedEdge(RegExpShared** sharedp) override;
+  bool onBigIntEdge(BigInt** bip) override;
+  bool onChild(const JS::GCCellPtr& thing) override {
     MOZ_ASSERT(!thing.asCell()->isForwarded());
+    return true;
   }
 
 #ifdef DEBUG
@@ -172,7 +236,35 @@ struct MovingTracer final : public JS::CallbackTracer {
 
  private:
   template <typename T>
-  void updateEdge(T** thingp);
+  bool updateEdge(T** thingp);
+};
+
+struct SweepingTracer final : public JS::CallbackTracer {
+  explicit SweepingTracer(JSRuntime* rt)
+      : CallbackTracer(rt, TraceWeakMapKeysValues) {}
+
+  bool onObjectEdge(JSObject** objp) override;
+  bool onShapeEdge(Shape** shapep) override;
+  bool onStringEdge(JSString** stringp) override;
+  bool onScriptEdge(js::BaseScript** scriptp) override;
+  bool onBaseShapeEdge(BaseShape** basep) override;
+  bool onJitCodeEdge(jit::JitCode** jitp) override;
+  bool onScopeEdge(Scope** scopep) override;
+  bool onRegExpSharedEdge(RegExpShared** sharedp) override;
+  bool onBigIntEdge(BigInt** bip) override;
+  bool onObjectGroupEdge(js::ObjectGroup** groupp) override;
+  bool onChild(const JS::GCCellPtr& thing) override {
+    MOZ_CRASH("unexpected edge.");
+    return true;
+  }
+
+#ifdef DEBUG
+  TracerKind getTracerKind() const override { return TracerKind::Sweeping; }
+#endif
+
+ private:
+  template <typename T>
+  bool sweepEdge(T** thingp);
 };
 
 // Structure for counting how many times objects in a particular group have
@@ -213,75 +305,6 @@ struct TenureCountCache {
   TenureCount& findEntry(ObjectGroup* group) {
     return entries[hash(group) % EntryCount];
   }
-};
-
-struct MOZ_RAII AutoAssertNoNurseryAlloc {
-#ifdef DEBUG
-  AutoAssertNoNurseryAlloc();
-  ~AutoAssertNoNurseryAlloc();
-#else
-  AutoAssertNoNurseryAlloc() {}
-#endif
-};
-
-// Note that this class does not suppress buffer allocation/reallocation in the
-// nursery, only Cells themselves.
-class MOZ_RAII AutoSuppressNurseryCellAlloc {
-  JSContext* cx_;
-
- public:
-  explicit AutoSuppressNurseryCellAlloc(JSContext* cx) : cx_(cx) {
-    cx_->nurserySuppressions_++;
-  }
-  ~AutoSuppressNurseryCellAlloc() { cx_->nurserySuppressions_--; }
-};
-
-/*
- * There are a couple of classes here that serve mostly as "tokens" indicating
- * that a condition holds. Some functions force the caller to possess such a
- * token because they would misbehave if the condition were false, and it is
- * far more clear to make the condition visible at the point where it can be
- * affected rather than just crashing in an assertion down in the place where
- * it is relied upon.
- */
-
-/*
- * A class that serves as a token that the nursery in the current thread's zone
- * group is empty.
- */
-class MOZ_RAII AutoAssertEmptyNursery {
- protected:
-  JSContext* cx;
-
-  mozilla::Maybe<AutoAssertNoNurseryAlloc> noAlloc;
-
-  // Check that the nursery is empty.
-  void checkCondition(JSContext* cx);
-
-  // For subclasses that need to empty the nursery in their constructors.
-  AutoAssertEmptyNursery() : cx(nullptr) {}
-
- public:
-  explicit AutoAssertEmptyNursery(JSContext* cx) : cx(nullptr) {
-    checkCondition(cx);
-  }
-
-  AutoAssertEmptyNursery(const AutoAssertEmptyNursery& other)
-      : AutoAssertEmptyNursery(other.cx) {}
-};
-
-/*
- * Evict the nursery upon construction. Serves as a token indicating that the
- * nursery is empty. (See AutoAssertEmptyNursery, above.)
- *
- * Note that this is very improper subclass of AutoAssertHeapBusy, in that the
- * heap is *not* busy within the scope of an AutoEmptyNursery. I will most
- * likely fix this by removing AutoAssertHeapBusy, but that is currently
- * waiting on jonco's review.
- */
-class MOZ_RAII AutoEmptyNursery : public AutoAssertEmptyNursery {
- public:
-  explicit AutoEmptyNursery(JSContext* cx);
 };
 
 extern void DelayCrossCompartmentGrayMarking(JSObject* src);

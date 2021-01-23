@@ -25,7 +25,7 @@ interface Client {
   [Throws]
   void postMessage(any message, sequence<object> transfer);
   [Throws]
-  void postMessage(any message, optional PostMessageOptions aOptions);
+  void postMessage(any message, optional PostMessageOptions aOptions = {});
 };
 
 [Exposed=ServiceWorker]
@@ -37,7 +37,7 @@ interface WindowClient : Client {
   // Implement ancestorOrigins in bug 1264180
   // [SameObject] readonly attribute FrozenArray<USVString> ancestorOrigins;
 
-  [Throws, NewObject]
+  [Throws, NewObject, NeedsCallerType]
   Promise<WindowClient> focus();
 
   [Throws, NewObject]

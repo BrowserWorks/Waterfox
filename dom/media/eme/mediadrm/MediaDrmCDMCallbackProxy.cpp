@@ -9,7 +9,6 @@
 #include "nsString.h"
 #include "mozilla/dom/MediaKeys.h"
 #include "mozilla/dom/MediaKeySession.h"
-#include "mozIGeckoMediaPluginService.h"
 #include "nsContentCID.h"
 #include "nsServiceManagerUtils.h"
 #include "MainThreadUtils.h"
@@ -38,10 +37,10 @@ void MediaDrmCDMCallbackProxy::ResolvePromise(uint32_t aPromiseId) {
 }
 
 void MediaDrmCDMCallbackProxy::RejectPromise(uint32_t aPromiseId,
-                                             nsresult aException,
+                                             ErrorResult&& aException,
                                              const nsCString& aMessage) {
   MOZ_ASSERT(NS_IsMainThread());
-  mProxy->OnRejectPromise(aPromiseId, aException, aMessage);
+  mProxy->OnRejectPromise(aPromiseId, std::move(aException), aMessage);
 }
 
 void MediaDrmCDMCallbackProxy::SessionMessage(
@@ -49,7 +48,7 @@ void MediaDrmCDMCallbackProxy::SessionMessage(
     const nsTArray<uint8_t>& aMessage) {
   MOZ_ASSERT(NS_IsMainThread());
   // For removing constness
-  nsTArray<uint8_t> message(aMessage);
+  nsTArray<uint8_t> message(aMessage.Clone());
   mProxy->OnSessionMessage(NS_ConvertUTF8toUTF16(aSessionId), aMessageType,
                            message);
 }

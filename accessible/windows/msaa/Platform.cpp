@@ -9,9 +9,7 @@
 #include "AccEvent.h"
 #include "Compatibility.h"
 #include "HyperTextAccessibleWrap.h"
-#include "ia2AccessibleText.h"
 #include "nsIWindowsRegKey.h"
-#include "nsIXULRuntime.h"
 #include "nsWinUtils.h"
 #include "mozilla/a11y/ProxyAccessible.h"
 #include "mozilla/mscom/ActivationContext.h"
@@ -20,6 +18,7 @@
 #include "mozilla/mscom/Utils.h"
 #include "mozilla/StaticPtr.h"
 #include "mozilla/WindowsVersion.h"
+#include "mozilla/WinHeaderOnlyUtils.h"
 #include "nsDirectoryServiceDefs.h"
 #include "nsDirectoryServiceUtils.h"
 #include "ProxyWrappers.h"
@@ -275,35 +274,13 @@ static bool GetInstantiatorExecutable(const DWORD aPid,
 static void AppendVersionInfo(nsIFile* aClientExe, nsAString& aStrToAppend) {
   MOZ_ASSERT(!NS_IsMainThread());
 
-  nsAutoString fullPath;
-  nsresult rv = aClientExe->GetPath(fullPath);
-  if (NS_FAILED(rv)) {
+  LauncherResult<ModuleVersion> version = GetModuleVersion(aClientExe);
+  if (version.isErr()) {
     return;
   }
 
-  DWORD verInfoSize = ::GetFileVersionInfoSize(fullPath.get(), nullptr);
-  if (!verInfoSize) {
-    return;
-  }
-
-  auto verInfoBuf = MakeUnique<BYTE[]>(verInfoSize);
-
-  if (!::GetFileVersionInfo(fullPath.get(), 0, verInfoSize, verInfoBuf.get())) {
-    return;
-  }
-
-  VS_FIXEDFILEINFO* fixedInfo = nullptr;
-  UINT fixedInfoLen = 0;
-
-  if (!::VerQueryValue(verInfoBuf.get(), L"\\", (LPVOID*)&fixedInfo,
-                       &fixedInfoLen)) {
-    return;
-  }
-
-  uint32_t major = HIWORD(fixedInfo->dwFileVersionMS);
-  uint32_t minor = LOWORD(fixedInfo->dwFileVersionMS);
-  uint32_t patch = HIWORD(fixedInfo->dwFileVersionLS);
-  uint32_t build = LOWORD(fixedInfo->dwFileVersionLS);
+  uint16_t major, minor, patch, build;
+  Tie(major, minor, patch, build) = version.unwrap().AsTuple();
 
   aStrToAppend.AppendLiteral(u"|");
 
@@ -342,13 +319,15 @@ static void GatherInstantiatorTelemetry(nsIFile* aClientExe) {
     AppendVersionInfo(aClientExe, value);
   }
 
-  nsCOMPtr<nsIRunnable> runnable(NS_NewRunnableFunction(
-      "a11y::AccumulateInstantiatorTelemetry",
-      [value]() -> void { AccumulateInstantiatorTelemetry(value); }));
+  nsCOMPtr<nsIRunnable> runnable(
+      NS_NewRunnableFunction("a11y::AccumulateInstantiatorTelemetry",
+                             [value = std::move(value)]() -> void {
+                               AccumulateInstantiatorTelemetry(value);
+                             }));
 
   // Now that we've (possibly) obtained version info, send the resulting
   // string back to the main thread to accumulate in telemetry.
-  NS_DispatchToMainThread(runnable);
+  NS_DispatchToMainThread(runnable.forget());
 }
 
 #endif  // defined(MOZ_TELEMETRY_REPORTING) || defined(MOZ_CRASHREPORTER)
@@ -378,13 +357,15 @@ void a11y::SetInstantiator(const uint32_t aPid) {
   gInstantiator = clientExe;
 
 #if defined(MOZ_TELEMETRY_REPORTING) || defined(MOZ_CRASHREPORTER)
-  nsCOMPtr<nsIRunnable> runnable(NS_NewRunnableFunction(
-      "a11y::GatherInstantiatorTelemetry",
-      [clientExe]() -> void { GatherInstantiatorTelemetry(clientExe); }));
+  nsCOMPtr<nsIRunnable> runnable(
+      NS_NewRunnableFunction("a11y::GatherInstantiatorTelemetry",
+                             [clientExe = std::move(clientExe)]() -> void {
+                               GatherInstantiatorTelemetry(clientExe);
+                             }));
 
-  nsCOMPtr<nsIThread> telemetryThread;
-  NS_NewNamedThread("a11y telemetry", getter_AddRefs(telemetryThread),
-                    runnable);
+  DebugOnly<nsresult> rv =
+      NS_DispatchBackgroundTask(runnable.forget(), NS_DISPATCH_EVENT_MAY_BLOCK);
+  MOZ_ASSERT(NS_SUCCEEDED(rv));
 #endif  // defined(MOZ_TELEMETRY_REPORTING) || defined(MOZ_CRASHREPORTER)
 }
 

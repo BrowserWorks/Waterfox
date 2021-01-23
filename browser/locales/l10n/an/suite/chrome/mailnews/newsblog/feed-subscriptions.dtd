@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Subscription Dialog -->
+
+<!ENTITY feedSubscriptions.label     "Suscripciones a canals">
+<!ENTITY subscriptionDesc.label      "Nota: eliminar u cambiar a carpeta d'una canal no afectará a os articlos descargaus previament.">
+
+<!ENTITY feedTitle.label             "Title:">
+<!ENTITY feedTitle.accesskey         "T">
+
+<!ENTITY feedLocation.label          "Feed URL:">
+<!ENTITY feedLocation.accesskey      "U">
+<!ENTITY feedLocation.placeholder    "Enter a valid feed url to Add">
+
+<!ENTITY feedFolder.label            "Store Articles in:">
+<!ENTITY feedFolder.accesskey        "S">
+
+<!ENTITY quickMode.label             "Show the article summary instead of loading the web page">
+<!ENTITY quickMode.accesskey         "h">
+
+<!ENTITY autotagEnable.label         "Automatically create tags from feed &lt;category&gt; names">
+<!ENTITY autotagEnable.accesskey     "c">
+<!ENTITY autotagUsePrefix.label      "Prefix tags with:">
+<!ENTITY autotagUsePrefix.accesskey  "P">
+<!ENTITY autoTagPrefix.placeholder   "Enter a tag prefix">
+
+<!ENTITY locationValidate.label      "Validate">
+<!ENTITY validateText.label          "Check validation and retrieve a valid url.">
+
+<!ENTITY button.addFeed.label        "Adhibir">
+<!ENTITY button.addFeed.accesskey    "A">
+<!ENTITY button.editFeed.label       "Update">
+<!ENTITY button.editFeed.accesskey   "U">
+<!ENTITY button.removeFeed.label     "Eliminar">
+<!ENTITY button.removeFeed.accesskey "E">
+<!ENTITY button.importOPML.label     "Importar">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "Yxportar">
+<!ENTITY button.exportOPML.accesskey "x">
+<!ENTITY button.exportOPML.tooltip   "Export Feeds with folder structure; ctrl click or ctrl enter to export Feeds as a list">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Close">

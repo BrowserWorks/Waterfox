@@ -2,15 +2,15 @@
 // event.clipboardData.
 
 add_task(async function() {
-  var textbox = document.createElement("textbox");
-  document.documentElement.appendChild(textbox);
+  var input = document.createElement("input");
+  document.documentElement.appendChild(input);
 
-  textbox.focus();
-  textbox.value = "Text";
-  textbox.select();
+  input.focus();
+  input.value = "Text";
+  input.select();
 
   await new Promise((resolve, reject) => {
-    textbox.addEventListener(
+    input.addEventListener(
       "copy",
       function(event) {
         event.clipboardData.setData("text/plain", "Alternate");
@@ -31,21 +31,21 @@ add_task(async function() {
   );
   let browser = tab.linkedBrowser;
 
-  await ContentTask.spawn(browser, {}, async function(arg) {
+  await SpecialPowers.spawn(browser, [], async function(arg) {
     content.document.getElementById("input").focus();
   });
 
   await BrowserTestUtils.synthesizeKey("v", { accelKey: true }, browser);
 
-  let output = await ContentTask.spawn(browser, {}, async function(arg) {
+  let output = await SpecialPowers.spawn(browser, [], async function(arg) {
     return content.document.getElementById("output").textContent;
   });
   is(output, "Passed", "Paste file");
 
-  textbox.focus();
+  input.focus();
 
   await new Promise((resolve, reject) => {
-    textbox.addEventListener(
+    input.addEventListener(
       "paste",
       function(event) {
         let dt = event.clipboardData;
@@ -74,7 +74,7 @@ add_task(async function() {
     EventUtils.synthesizeKey("v", { accelKey: true });
   });
 
-  document.documentElement.removeChild(textbox);
+  input.remove();
 
   BrowserTestUtils.removeTab(tab);
 });

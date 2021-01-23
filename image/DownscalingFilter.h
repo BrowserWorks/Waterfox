@@ -23,7 +23,6 @@
 #include "mozilla/Maybe.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/gfx/2D.h"
-#include "gfxPrefs.h"
 
 #ifdef MOZ_ENABLE_SKIA
 #  include "mozilla/gfx/ConvolutionFilter.h"
@@ -76,6 +75,10 @@ class DownscalingFilter final : public SurfaceFilter {
 
  protected:
   uint8_t* DoResetToFirstRow() override {
+    MOZ_CRASH();
+    return nullptr;
+  }
+  uint8_t* DoAdvanceRowFromBuffer(const uint8_t* aInputRow) override {
     MOZ_CRASH();
     return nullptr;
   }
@@ -133,7 +136,7 @@ class DownscalingFilter final : public SurfaceFilter {
     gfx::IntSize outputSize = mNext.InputSize();
     mScale = gfxSize(double(mInputSize.width) / outputSize.width,
                      double(mInputSize.height) / outputSize.height);
-    mHasAlpha = aConfig.mFormat == gfx::SurfaceFormat::B8G8R8A8;
+    mHasAlpha = aConfig.mFormat == gfx::SurfaceFormat::OS_RGBA;
 
     ReleaseWindow();
 
@@ -207,7 +210,7 @@ class DownscalingFilter final : public SurfaceFilter {
     return GetRowPointer();
   }
 
-  uint8_t* DoAdvanceRow() override {
+  uint8_t* DoAdvanceRowFromBuffer(const uint8_t* aInputRow) override {
     if (mInputRow >= mInputSize.height) {
       NS_WARNING("Advancing DownscalingFilter past the end of the input");
       return nullptr;
@@ -227,7 +230,7 @@ class DownscalingFilter final : public SurfaceFilter {
     if (mInputRow == inputRowToRead) {
       MOZ_RELEASE_ASSERT(mRowsInWindow < mWindowCapacity,
                          "Need more rows than capacity!");
-      mXFilter.ConvolveHorizontally(mRowBuffer.get(), mWindow[mRowsInWindow++],
+      mXFilter.ConvolveHorizontally(aInputRow, mWindow[mRowsInWindow++],
                                     mHasAlpha);
     }
 
@@ -248,6 +251,10 @@ class DownscalingFilter final : public SurfaceFilter {
     mInputRow++;
 
     return mInputRow < mInputSize.height ? GetRowPointer() : nullptr;
+  }
+
+  uint8_t* DoAdvanceRow() override {
+    return DoAdvanceRowFromBuffer(mRowBuffer.get());
   }
 
  private:

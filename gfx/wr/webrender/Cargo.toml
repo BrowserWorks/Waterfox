@@ -1,6 +1,6 @@
 [package]
 name = "webrender"
-version = "0.60.0"
+version = "0.61.0"
 authors = ["Glenn Watson <gw@intuitionlibrary.com>"]
 license = "MPL-2.0"
 repository = "https://github.com/servo/webrender"
@@ -11,73 +11,52 @@ edition = "2018"
 [features]
 default = ["freetype-lib"]
 freetype-lib = ["freetype/servo-freetype-sys"]
-profiler = ["thread_profiler/thread_profiler"]
+profiler = ["tracy-rs/enable_profiler"]
 debugger = ["ws", "serde_json", "serde", "image_loader", "base64"]
 capture = ["api/serialize", "ron", "serde", "smallvec/serde"]
 replay = ["api/deserialize", "ron", "serde", "smallvec/serde"]
 display_list_stats = ["api/display_list_stats"]
-pathfinder = ["pathfinder_font_renderer", "pathfinder_gfx_utils", "pathfinder_partitioner", "pathfinder_path_utils"]
 serialize_program = ["serde", "webrender_build/serialize_program"]
 no_static_freetype = []
+leak_checks = []
 
 [build-dependencies]
+build-parallel = "0.1.1"
+glslopt = "0.1.2"
 webrender_build = { version = "0.0.1", path = "../webrender_build" }
 
 [dependencies]
 base64 = { optional = true, version = "0.10" }
 bincode = "1.0"
-bitflags = "1.0"
+bitflags = "1.2"
 byteorder = "1.0"
 cfg-if = "0.1.2"
 cstr = "0.1.2"
-euclid = { version = "0.19.5", features = ["serde"] }
+euclid = { version = "0.20.0", features = ["serde"] }
 fxhash = "0.2.1"
-gleam = "0.6.17"
-image_loader = { optional = true, version = "0.21", package = "image", default-features = false, features = ["png_codec"] }
+gleam = "0.11.0"
+image_loader = { optional = true, version = "0.23", package = "image", default-features = false, features = ["png"] }
 lazy_static = "1"
 log = "0.4"
 malloc_size_of_derive = "0.1"
 num-traits = "0.2"
-plane-split = "0.13.7"
-png = { optional = true, version = "0.14" }
+plane-split = "0.15"
+png = { optional = true, version = "0.16" }
 rayon = "1"
-ron = { optional = true, version = "0.1.7" }
+ron = { optional = true, version = "0.5" }
 serde = { optional = true, version = "1.0", features = ["serde_derive"] }
 serde_json = { optional = true, version = "1.0" }
-sha2 = "0.8"
-smallvec = "0.6"
-thread_profiler = "0.1.1"
+smallvec = "1"
 time = "0.1"
-api = { version = "0.60.0", path = "../webrender_api", package = "webrender_api" }
+api = { version = "0.61.0", path = "../webrender_api", package = "webrender_api" }
 webrender_build = { version = "0.0.1", path = "../webrender_build" }
 malloc_size_of = { version = "0.0.1", path = "../wr_malloc_size_of", package = "wr_malloc_size_of" }
-ws = { optional = true, version = "0.8" }
+ws = { optional = true, version = "0.9" }
 svg_fmt = "0.4"
-
-[dependencies.pathfinder_font_renderer]
-git = "https://github.com/pcwalton/pathfinder"
-branch = "webrender"
-optional = true
-# Uncomment to test FreeType on macOS:
-# features = ["freetype"]
-
-[dependencies.pathfinder_gfx_utils]
-git = "https://github.com/pcwalton/pathfinder"
-branch = "webrender"
-optional = true
-
-[dependencies.pathfinder_partitioner]
-git = "https://github.com/pcwalton/pathfinder"
-branch = "webrender"
-optional = true
-
-[dependencies.pathfinder_path_utils]
-git = "https://github.com/pcwalton/pathfinder"
-branch = "webrender"
-optional = true
+tracy-rs = { version = "0.1" }
 
 [dev-dependencies]
-mozangle = "0.1"
+mozangle = "0.3.1"
 rand = "0.4"
 
 [target.'cfg(any(target_os = "android", all(unix, not(target_os = "macos"))))'.dependencies]
@@ -85,9 +64,9 @@ freetype = { version = "0.4", default-features = false }
 libc = "0.2"
 
 [target.'cfg(target_os = "windows")'.dependencies]
-dwrote = "0.8"
+dwrote = "0.11"
 
 [target.'cfg(target_os = "macos")'.dependencies]
-core-foundation = "0.6"
-core-graphics = "0.17.1"
-core-text = { version = "13", default-features = false }
+core-foundation = "0.7"
+core-graphics = "0.19"
+core-text = { version = "15", default-features = false }

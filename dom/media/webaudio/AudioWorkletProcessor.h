@@ -10,14 +10,17 @@
 #include "nsCOMPtr.h"
 #include "nsWrapperCache.h"
 
-struct AudioWorkletNodeOptions;
-class ErrorResult;
-class GlobalObject;
-class MessagePort;
 class nsIGlobalObject;
 
 namespace mozilla {
+
+class ErrorResult;
+
 namespace dom {
+
+struct AudioWorkletNodeOptions;
+class GlobalObject;
+class MessagePort;
 
 class AudioWorkletProcessor final : public nsWrapperCache {
  public:
@@ -25,20 +28,20 @@ class AudioWorkletProcessor final : public nsWrapperCache {
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_NATIVE_CLASS(AudioWorkletProcessor)
 
   static already_AddRefed<AudioWorkletProcessor> Constructor(
-      const GlobalObject& aGlobal, const AudioWorkletNodeOptions& aOptions,
-      ErrorResult& aRv);
+      const GlobalObject& aGlobal, ErrorResult& aRv);
 
   nsIGlobalObject* GetParentObject() const { return mParent; }
 
   JSObject* WrapObject(JSContext* aCx,
                        JS::Handle<JSObject*> aGivenProto) override;
 
-  MessagePort* GetPort(ErrorResult& aRv) const;
+  MessagePort* Port() const { return mPort; };
 
  private:
-  explicit AudioWorkletProcessor(nsIGlobalObject* aParent);
-  ~AudioWorkletProcessor() = default;
+  explicit AudioWorkletProcessor(nsIGlobalObject* aParent, MessagePort* aPort);
+  ~AudioWorkletProcessor();
   nsCOMPtr<nsIGlobalObject> mParent;
+  RefPtr<MessagePort> mPort;
 };
 
 }  // namespace dom

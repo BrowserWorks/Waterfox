@@ -6,7 +6,7 @@
 
 #include "StorageAccessPermissionRequest.h"
 #include "nsGlobalWindowInner.h"
-#include "mozilla/StaticPrefs.h"
+#include "mozilla/StaticPrefs_dom.h"
 #include <cstdlib>
 
 namespace mozilla {
@@ -20,29 +20,21 @@ NS_IMPL_ISUPPORTS_CYCLE_COLLECTION_INHERITED_0(StorageAccessPermissionRequest,
 
 StorageAccessPermissionRequest::StorageAccessPermissionRequest(
     nsPIDOMWindowInner* aWindow, nsIPrincipal* aNodePrincipal,
-    AllowCallback&& aAllowCallback,
-    AllowAutoGrantCallback&& aAllowAutoGrantCallback,
-    AllowAnySiteCallback&& aAllowAnySiteCallback,
-    CancelCallback&& aCancelCallback)
+    AllowCallback&& aAllowCallback, CancelCallback&& aCancelCallback)
     : ContentPermissionRequestBase(aNodePrincipal, aWindow,
                                    NS_LITERAL_CSTRING("dom.storage_access"),
                                    NS_LITERAL_CSTRING("storage-access")),
       mAllowCallback(std::move(aAllowCallback)),
-      mAllowAutoGrantCallback(std::move(aAllowAutoGrantCallback)),
-      mAllowAnySiteCallback(std::move(aAllowAnySiteCallback)),
       mCancelCallback(std::move(aCancelCallback)),
       mCallbackCalled(false) {
   mPermissionRequests.AppendElement(
       PermissionRequest(mType, nsTArray<nsString>()));
 }
 
-StorageAccessPermissionRequest::~StorageAccessPermissionRequest() { Cancel(); }
-
 NS_IMETHODIMP
 StorageAccessPermissionRequest::Cancel() {
   if (!mCallbackCalled) {
     mCallbackCalled = true;
-    mTimer = nullptr;
     mCancelCallback();
   }
   return NS_OK;
@@ -56,40 +48,55 @@ StorageAccessPermissionRequest::Allow(JS::HandleValue aChoices) {
     return rv;
   }
 
+  // There is no support to allow grants automatically from the prompting code
+  // path.
+
   if (!mCallbackCalled) {
     mCallbackCalled = true;
-    if (choices.Length() == 1 &&
-        choices[0].choice().EqualsLiteral("allow-on-any-site")) {
-      mAllowAnySiteCallback();
-    } else if (choices.Length() == 1 &&
-               choices[0].choice().EqualsLiteral("allow-auto-grant")) {
-      unsigned simulatedDelay = CalculateSimulatedDelay();
-      if (simulatedDelay) {
-        MOZ_ASSERT(!mTimer);
-        RefPtr<StorageAccessPermissionRequest> self = this;
-        rv = NS_NewTimerWithFuncCallback(
-            getter_AddRefs(mTimer), CallAutoGrantCallback, this, simulatedDelay,
-            nsITimer::TYPE_ONE_SHOT, "DelayedAllowAutoGrantCallback");
-        if (NS_WARN_IF(NS_FAILED(rv))) {
-          return rv;
-        }
-        NS_ADDREF(this);
-      } else {
-        mAllowAutoGrantCallback();
-      }
-    } else {
+    if (choices.Length() == 1 && choices[0].choice().EqualsLiteral("allow")) {
       mAllowCallback();
     }
   }
   return NS_OK;
 }
 
+RefPtr<StorageAccessPermissionRequest::AutoGrantDelayPromise>
+StorageAccessPermissionRequest::MaybeDelayAutomaticGrants() {
+  RefPtr<AutoGrantDelayPromise::Private> p =
+      new AutoGrantDelayPromise::Private(__func__);
+
+  unsigned simulatedDelay = CalculateSimulatedDelay();
+  if (simulatedDelay) {
+    nsCOMPtr<nsITimer> timer;
+    RefPtr<AutoGrantDelayPromise::Private> promise = p;
+    nsresult rv = NS_NewTimerWithFuncCallback(
+        getter_AddRefs(timer),
+        [](nsITimer* aTimer, void* aClosure) -> void {
+          auto* promise =
+              static_cast<AutoGrantDelayPromise::Private*>(aClosure);
+          promise->Resolve(true, __func__);
+          NS_RELEASE(aTimer);
+          NS_RELEASE(promise);
+        },
+        promise, simulatedDelay, nsITimer::TYPE_ONE_SHOT,
+        "DelayedAllowAutoGrantCallback");
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      p->Reject(false, __func__);
+    } else {
+      // Leak the references here! We'll release them inside the callback.
+      Unused << timer.forget();
+      Unused << promise.forget();
+    }
+  } else {
+    p->Resolve(false, __func__);
+  }
+  return p;
+}
+
 already_AddRefed<StorageAccessPermissionRequest>
-StorageAccessPermissionRequest::Create(
-    nsPIDOMWindowInner* aWindow, AllowCallback&& aAllowCallback,
-    AllowAutoGrantCallback&& aAllowAutoGrantCallback,
-    AllowAnySiteCallback&& aAllowAnySiteCallback,
-    CancelCallback&& aCancelCallback) {
+StorageAccessPermissionRequest::Create(nsPIDOMWindowInner* aWindow,
+                                       AllowCallback&& aAllowCallback,
+                                       CancelCallback&& aCancelCallback) {
   if (!aWindow) {
     return nullptr;
   }
@@ -98,10 +105,9 @@ StorageAccessPermissionRequest::Create(
     return nullptr;
   }
   RefPtr<StorageAccessPermissionRequest> request =
-      new StorageAccessPermissionRequest(
-          aWindow, win->GetPrincipal(), std::move(aAllowCallback),
-          std::move(aAllowAutoGrantCallback), std::move(aAllowAnySiteCallback),
-          std::move(aCancelCallback));
+      new StorageAccessPermissionRequest(aWindow, win->GetPrincipal(),
+                                         std::move(aAllowCallback),
+                                         std::move(aCancelCallback));
   return request.forget();
 }
 
@@ -110,23 +116,14 @@ unsigned StorageAccessPermissionRequest::CalculateSimulatedDelay() {
     return 0;
   }
 
-  // Generate a random time value that is at least 5 seconds and at most 15
-  // minutes.
+  // Generate a random time value that is at least 0 and and most 3 seconds.
   std::srand(static_cast<unsigned>(PR_Now()));
 
-  const unsigned kMin = 5000;
-  const unsigned kMax = 6000;
+  const unsigned kMin = 0;
+  const unsigned kMax = 3000;
   const unsigned random = std::abs(std::rand());
 
   return kMin + random % (kMax - kMin);
-}
-
-void StorageAccessPermissionRequest::CallAutoGrantCallback(nsITimer* aTimer,
-                                                           void* aClosure) {
-  auto self = static_cast<StorageAccessPermissionRequest*>(aClosure);
-  self->mAllowAutoGrantCallback();
-  self->mTimer = nullptr;
-  NS_RELEASE(self);
 }
 
 }  // namespace dom

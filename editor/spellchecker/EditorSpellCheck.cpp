@@ -11,6 +11,7 @@
 #include "mozilla/HTMLEditor.h"   // for HTMLEditor
 #include "mozilla/dom/Element.h"  // for Element
 #include "mozilla/dom/Selection.h"
+#include "mozilla/dom/StaticRange.h"
 #include "mozilla/intl/LocaleService.h"    // for retrieving app locale
 #include "mozilla/mozalloc.h"              // for operator delete, etc
 #include "mozilla/mozSpellChecker.h"       // for mozSpellChecker
@@ -40,7 +41,6 @@
 #include "nsStringFwd.h"            // for nsAFlatString
 #include "nsStyleUtil.h"            // for nsStyleUtil
 #include "nsXULAppAPI.h"            // for XRE_GetProcessType
-#include "nsIPlaintextEditor.h"     // for editor flags
 
 namespace mozilla {
 
@@ -363,25 +363,30 @@ EditorSpellCheck::InitSpellChecker(nsIEditor* aEditor,
     }
 
     if (selection->RangeCount()) {
-      RefPtr<nsRange> range = selection->GetRangeAt(0);
+      RefPtr<const nsRange> range = selection->GetRangeAt(0);
       NS_ENSURE_STATE(range);
 
       if (!range->Collapsed()) {
         // We don't want to touch the range in the selection,
         // so create a new copy of it.
-
-        RefPtr<nsRange> rangeBounds = range->CloneRange();
+        RefPtr<StaticRange> staticRange =
+            StaticRange::Create(range, IgnoreErrors());
+        if (NS_WARN_IF(!staticRange)) {
+          return NS_ERROR_FAILURE;
+        }
 
         // Make sure the new range spans complete words.
-
-        rv = textServicesDocument->ExpandRangeToWordBoundaries(rangeBounds);
-        NS_ENSURE_SUCCESS(rv, rv);
+        rv = textServicesDocument->ExpandRangeToWordBoundaries(staticRange);
+        if (NS_WARN_IF(NS_FAILED(rv))) {
+          return rv;
+        }
 
         // Now tell the text services that you only want
         // to iterate over the text in this range.
-
-        rv = textServicesDocument->SetExtent(rangeBounds);
-        NS_ENSURE_SUCCESS(rv, rv);
+        rv = textServicesDocument->SetExtent(staticRange);
+        if (NS_WARN_IF(NS_FAILED(rv))) {
+          return rv;
+        }
       }
     }
   }
@@ -501,46 +506,10 @@ EditorSpellCheck::RemoveWordFromDictionary(const nsAString& aWord) {
 }
 
 NS_IMETHODIMP
-EditorSpellCheck::GetDictionaryList(char16_t*** aDictionaryList,
-                                    uint32_t* aCount) {
+EditorSpellCheck::GetDictionaryList(nsTArray<nsString>& aList) {
   NS_ENSURE_TRUE(mSpellChecker, NS_ERROR_NOT_INITIALIZED);
 
-  NS_ENSURE_TRUE(aDictionaryList && aCount, NS_ERROR_NULL_POINTER);
-
-  *aDictionaryList = 0;
-  *aCount = 0;
-
-  nsTArray<nsString> dictList;
-
-  nsresult rv = mSpellChecker->GetDictionaryList(&dictList);
-
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  char16_t** tmpPtr = 0;
-
-  if (dictList.IsEmpty()) {
-    // If there are no dictionaries, return an array containing
-    // one element and a count of one.
-
-    tmpPtr = (char16_t**)moz_xmalloc(sizeof(char16_t*));
-
-    *tmpPtr = 0;
-    *aDictionaryList = tmpPtr;
-    *aCount = 0;
-
-    return NS_OK;
-  }
-
-  tmpPtr = (char16_t**)moz_xmalloc(sizeof(char16_t*) * dictList.Length());
-
-  *aDictionaryList = tmpPtr;
-  *aCount = dictList.Length();
-
-  for (uint32_t i = 0; i < *aCount; i++) {
-    tmpPtr[i] = ToNewUnicode(dictList[i]);
-  }
-
-  return rv;
+  return mSpellChecker->GetDictionaryList(&aList);
 }
 
 NS_IMETHODIMP
@@ -566,11 +535,11 @@ EditorSpellCheck::SetCurrentDictionary(const nsAString& aDictionary) {
 
     uint32_t flags = 0;
     mEditor->GetFlags(&flags);
-    if (!(flags & nsIPlaintextEditor::eEditorMailMask)) {
+    if (!(flags & nsIEditor::eEditorMailMask)) {
       if (!aDictionary.IsEmpty() &&
           (mPreferredLang.IsEmpty() ||
            !mPreferredLang.Equals(aDictionary,
-                                  nsCaseInsensitiveStringComparator()))) {
+                                  nsCaseInsensitiveStringComparator))) {
         // When user sets dictionary manually, we store this value associated
         // with editor url, if it doesn't match the document language exactly.
         // For example on "en" sites, we need to store "en-GB", otherwise
@@ -646,12 +615,20 @@ EditorSpellCheck::UpdateCurrentDictionary(
   nsresult rv;
 
   RefPtr<EditorSpellCheck> kungFuDeathGrip = this;
+  uint32_t flags = 0;
+  mEditor->GetFlags(&flags);
 
   // Get language with html5 algorithm
   nsCOMPtr<nsIContent> rootContent;
   HTMLEditor* htmlEditor = mEditor->AsHTMLEditor();
   if (htmlEditor) {
-    rootContent = htmlEditor->GetFocusedContent();
+    if (flags & nsIEditor::eEditorMailMask) {
+      // Always determine the root content for a mail editor,
+      // even if not focused, to enable further processing below.
+      rootContent = htmlEditor->GetActiveEditingHost();
+    } else {
+      rootContent = htmlEditor->GetFocusedContent();
+    }
   } else {
     rootContent = mEditor->GetRoot();
   }
@@ -661,11 +638,9 @@ EditorSpellCheck::UpdateCurrentDictionary(
   }
 
   // Try to get topmost document's document element for embedded mail editor.
-  uint32_t flags = 0;
-  mEditor->GetFlags(&flags);
-  if (flags & nsIPlaintextEditor::eEditorMailMask) {
+  if (flags & nsIEditor::eEditorMailMask) {
     RefPtr<Document> ownerDoc = rootContent->OwnerDoc();
-    Document* parentDoc = ownerDoc->GetParentDocument();
+    Document* parentDoc = ownerDoc->GetInProcessParentDocument();
     if (parentDoc) {
       rootContent = parentDoc->GetDocumentElement();
       if (!rootContent) {
@@ -701,11 +676,11 @@ void EditorSpellCheck::BuildDictionaryList(const nsAString& aDictName,
         equals = aDictName.Equals(dictStr);
         break;
       case DICT_COMPARE_CASE_INSENSITIVE:
-        equals = aDictName.Equals(dictStr, nsCaseInsensitiveStringComparator());
+        equals = aDictName.Equals(dictStr, nsCaseInsensitiveStringComparator);
         break;
       case DICT_COMPARE_DASHMATCH:
         equals = nsStyleUtil::DashMatchCompare(
-            dictStr, aDictName, nsCaseInsensitiveStringComparator());
+            dictStr, aDictName, nsCaseInsensitiveStringComparator);
         break;
     }
     if (equals) {
@@ -797,7 +772,7 @@ nsresult EditorSpellCheck::DictionaryFetched(DictionaryFetcher* aFetcher) {
   nsAutoString dictName;
   uint32_t flags;
   mEditor->GetFlags(&flags);
-  if (!(flags & nsIPlaintextEditor::eEditorMailMask)) {
+  if (!(flags & nsIEditor::eEditorMailMask)) {
     dictName.Assign(aFetcher->mDictionary);
     if (!dictName.IsEmpty()) {
       AutoTArray<nsString, 1> tryDictList;
@@ -893,7 +868,7 @@ void EditorSpellCheck::SetFallbackDictionary(DictionaryFetcher* aFetcher) {
     // so we don't just get any random dictionary matching the language.
     if (!preferredDict.IsEmpty() &&
         nsStyleUtil::DashMatchCompare(preferredDict, langCode,
-                                      nsDefaultStringComparator())) {
+                                      nsTDefaultStringComparator)) {
 #ifdef DEBUG_DICT
       printf(
           "***** Trying preference value |%s| since it matches language code\n",
@@ -927,7 +902,7 @@ void EditorSpellCheck::SetFallbackDictionary(DictionaryFetcher* aFetcher) {
   // Priority 4:
   // As next fallback, try the current locale.
   nsAutoCString utf8DictName;
-  LocaleService::GetInstance()->GetAppLocaleAsLangTag(utf8DictName);
+  LocaleService::GetInstance()->GetAppLocaleAsBCP47(utf8DictName);
 
   CopyUTF8toUTF16(utf8DictName, dictName);
 #ifdef DEBUG_DICT

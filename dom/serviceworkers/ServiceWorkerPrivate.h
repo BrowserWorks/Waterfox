@@ -7,8 +7,11 @@
 #ifndef mozilla_dom_serviceworkerprivate_h
 #define mozilla_dom_serviceworkerprivate_h
 
+#include <type_traits>
+
 #include "nsCOMPtr.h"
 #include "mozilla/dom/WorkerPrivate.h"
+#include "mozilla/MozPromise.h"
 
 #define NOTIFICATION_CLICK_EVENT_NAME "notificationclick"
 #define NOTIFICATION_CLOSE_EVENT_NAME "notificationclose"
@@ -23,9 +26,10 @@ class JSObjectHolder;
 namespace dom {
 
 class ClientInfoAndState;
-class KeepAliveToken;
 class ServiceWorkerCloneData;
 class ServiceWorkerInfo;
+class ServiceWorkerPrivate;
+class ServiceWorkerPrivateImpl;
 class ServiceWorkerRegistrationInfo;
 
 namespace ipc {
@@ -38,6 +42,20 @@ class LifeCycleEventCallback : public Runnable {
 
   // Called on the worker thread.
   virtual void SetResult(bool aResult) = 0;
+};
+
+// Used to keep track of pending waitUntil as well as in-flight extendable
+// events. When the last token is released, we attempt to terminate the worker.
+class KeepAliveToken final : public nsISupports {
+ public:
+  NS_DECL_ISUPPORTS
+
+  explicit KeepAliveToken(ServiceWorkerPrivate* aPrivate);
+
+ private:
+  ~KeepAliveToken();
+
+  RefPtr<ServiceWorkerPrivate> mPrivate;
 };
 
 // ServiceWorkerPrivate is a wrapper for managing the on-demand aspect of
@@ -73,19 +91,66 @@ class LifeCycleEventCallback : public Runnable {
 // ExtendableEventWorkerRunnable.
 class ServiceWorkerPrivate final {
   friend class KeepAliveToken;
+  friend class ServiceWorkerPrivateImpl;
 
  public:
   NS_IMETHOD_(MozExternalRefCountType) AddRef();
   NS_IMETHOD_(MozExternalRefCountType) Release();
   NS_DECL_CYCLE_COLLECTION_NATIVE_CLASS(ServiceWorkerPrivate)
 
-  typedef mozilla::FalseType HasThreadSafeRefCnt;
+  using HasThreadSafeRefCnt = std::false_type;
 
  protected:
   nsCycleCollectingAutoRefCnt mRefCnt;
   NS_DECL_OWNINGTHREAD
 
  public:
+  // TODO: remove this class. There's one (and only should be one) concrete
+  // class that derives this abstract base class.
+  class Inner {
+   public:
+    NS_INLINE_DECL_PURE_VIRTUAL_REFCOUNTING
+
+    virtual nsresult SendMessageEvent(
+        RefPtr<ServiceWorkerCloneData>&& aData,
+        const ClientInfoAndState& aClientInfoAndState) = 0;
+
+    virtual nsresult CheckScriptEvaluation(
+        RefPtr<LifeCycleEventCallback> aScriptEvaluationCallback) = 0;
+
+    virtual nsresult SendLifeCycleEvent(
+        const nsAString& aEventName,
+        RefPtr<LifeCycleEventCallback> aCallback) = 0;
+
+    virtual nsresult SendPushEvent(
+        RefPtr<ServiceWorkerRegistrationInfo> aRegistration,
+        const nsAString& aMessageId, const Maybe<nsTArray<uint8_t>>& aData) = 0;
+
+    virtual nsresult SendPushSubscriptionChangeEvent() = 0;
+
+    virtual nsresult SendNotificationEvent(
+        const nsAString& aEventName, const nsAString& aID,
+        const nsAString& aTitle, const nsAString& aDir, const nsAString& aLang,
+        const nsAString& aBody, const nsAString& aTag, const nsAString& aIcon,
+        const nsAString& aData, const nsAString& aBehavior,
+        const nsAString& aScope, uint32_t aDisableOpenClickDelay) = 0;
+
+    virtual nsresult SendFetchEvent(
+        RefPtr<ServiceWorkerRegistrationInfo> aRegistration,
+        nsCOMPtr<nsIInterceptedChannel> aChannel, const nsAString& aClientId,
+        const nsAString& aResultingClientId) = 0;
+
+    virtual nsresult SpawnWorkerIfNeeded() = 0;
+
+    virtual void TerminateWorker() = 0;
+
+    virtual void UpdateState(ServiceWorkerState aState) = 0;
+
+    virtual void NoteDeadOuter() = 0;
+
+    virtual bool WorkerIsDead() const = 0;
+  };
+
   explicit ServiceWorkerPrivate(ServiceWorkerInfo* aInfo);
 
   nsresult SendMessageEvent(RefPtr<ServiceWorkerCloneData>&& aData,
@@ -114,7 +179,7 @@ class ServiceWorkerPrivate final {
 
   nsresult SendFetchEvent(nsIInterceptedChannel* aChannel,
                           nsILoadGroup* aLoadGroup, const nsAString& aClientId,
-                          const nsAString& aResultingClientId, bool aIsReload);
+                          const nsAString& aResultingClientId);
 
   bool MaybeStoreISupports(nsISupports* aSupports);
 
@@ -141,6 +206,18 @@ class ServiceWorkerPrivate final {
 
   bool IsIdle() const;
 
+  // This promise is used schedule clearing of the owning registrations and its
+  // associated Service Workers if that registration becomes "unreachable" by
+  // the ServiceWorkerManager. This occurs under two conditions, which are the
+  // preconditions to calling this method:
+  // - The owning registration must be unregistered.
+  // - The associated Service Worker must *not* be controlling clients.
+  //
+  // Additionally, perhaps stating the obvious, the associated Service Worker
+  // must *not* be idle (whatever must be done "when idle" can just be done
+  // immediately).
+  RefPtr<GenericPromise> GetIdlePromise();
+
   void SetHandlesFetch(bool aValue);
 
  private:
@@ -152,7 +229,8 @@ class ServiceWorkerPrivate final {
     NotificationClickEvent,
     NotificationCloseEvent,
     LifeCycleEvent,
-    AttachEvent
+    AttachEvent,
+    Unknown
   };
 
   // Timer callbacks
@@ -205,6 +283,20 @@ class ServiceWorkerPrivate final {
   // Array of function event worker runnables that are pending due to
   // the worker activating.  Main thread only.
   nsTArray<RefPtr<WorkerRunnable>> mPendingFunctionalEvents;
+
+  RefPtr<Inner> mInner;
+
+  // Used by the owning `ServiceWorkerRegistrationInfo` when it wants to call
+  // `Clear` after being unregistered and isn't controlling any clients but this
+  // worker (i.e. the registration's active worker) isn't idle yet. Note that
+  // such an event should happen at most once in a
+  // `ServiceWorkerRegistrationInfo`s lifetime, so this promise should also only
+  // be obtained at most once.
+  MozPromiseHolder<GenericPromise> mIdlePromiseHolder;
+
+#ifdef DEBUG
+  bool mIdlePromiseObtained = false;
+#endif
 };
 
 }  // namespace dom

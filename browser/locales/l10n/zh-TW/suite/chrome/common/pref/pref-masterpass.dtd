@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.masterpass.title                  "主控密碼">
+
+<!ENTITY  changepassword.caption                 "變更主控密碼">
+<!ENTITY  changepassword.text                    "您的主控密碼可用來保護重要資料，諸如網頁密碼和憑證等。">
+<!ENTITY  changepassword.button                  "變更密碼…">
+<!ENTITY  changepassword.accesskey               "C">
+
+<!ENTITY  resetpassword.caption                  "重設主控密碼">
+<!ENTITY  resetpassword.text                     "若您重設主控密碼，將失去所有網頁與電子郵件密碼、表單資料、個人憑證以及私鑰。">
+<!ENTITY  resetpassword.button                   "重設密碼">
+<!ENTITY  resetpassword.accesskey                "R">

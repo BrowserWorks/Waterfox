@@ -21,16 +21,19 @@ namespace layers {
 
 class ImageClient;
 class TextureClient;
+class TextureClientRecycleAllocator;
 
 class SharedPlanarYCbCrImage : public PlanarYCbCrImage {
  public:
   explicit SharedPlanarYCbCrImage(ImageClient* aCompositable);
+  explicit SharedPlanarYCbCrImage(
+      TextureClientRecycleAllocator* aRecycleAllocator);
 
  protected:
   virtual ~SharedPlanarYCbCrImage();
 
  public:
-  TextureClient* GetTextureClient(KnowsCompositor* aForwarder) override;
+  TextureClient* GetTextureClient(KnowsCompositor* aKnowsCompositor) override;
 
   already_AddRefed<gfx::SourceSurface> GetAsSourceSurface() override;
   bool CopyData(const PlanarYCbCrData& aData) override;
@@ -46,9 +49,12 @@ class SharedPlanarYCbCrImage : public PlanarYCbCrImage {
 
   size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override;
 
+  TextureClientRecycleAllocator* RecycleAllocator();
+
  private:
   RefPtr<TextureClient> mTextureClient;
   RefPtr<ImageClient> mCompositable;
+  RefPtr<TextureClientRecycleAllocator> mRecycleAllocator;
 };
 
 }  // namespace layers

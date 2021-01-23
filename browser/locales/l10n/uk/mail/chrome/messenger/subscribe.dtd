@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "Підписка">
+<!ENTITY subscribeButton.label        "Підписатися">
+<!ENTITY subscribeButton.accesskey    "П">
+<!ENTITY unsubscribeButton.label      "Відписатися">
+<!ENTITY unsubscribeButton.accesskey  "т">
+<!ENTITY newGroupsTab.label           "Нові групи">
+<!ENTITY newGroupsTab.accesskey       "Н">
+<!ENTITY refreshButton.label          "Оновити">
+<!ENTITY refreshButton.accesskey      "в">
+<!ENTITY stopButton.label             "Стоп">
+<!ENTITY stopButton.accesskey         "С">
+<!ENTITY server.label                 "Обліковий запис:">
+<!ENTITY server.accesskey             "О">
+<!ENTITY subscribedHeader.label       "Підписка">
+<!-- commenting out until bug 38906 is fixed 
+<!ENTITY messagesHeader.label         "Messages"> -->
+<!ENTITY namefield.label              "Показати елементи, що містять:">
+<!ENTITY namefield.accesskey          "е">

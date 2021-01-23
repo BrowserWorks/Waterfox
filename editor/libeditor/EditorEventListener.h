@@ -49,8 +49,7 @@ class EditorEventListener : public nsIDOMEventListener {
   NS_DECL_ISUPPORTS
 
   // nsIDOMEventListener
-  MOZ_CAN_RUN_SCRIPT
-  NS_IMETHOD HandleEvent(dom::Event* aEvent) override;
+  MOZ_CAN_RUN_SCRIPT NS_IMETHOD HandleEvent(dom::Event* aEvent) override;
 
   void SpellCheckIfNeeded();
 
@@ -62,30 +61,29 @@ class EditorEventListener : public nsIDOMEventListener {
 
 #ifdef HANDLE_NATIVE_TEXT_DIRECTION_SWITCH
   nsresult KeyDown(const WidgetKeyboardEvent* aKeyboardEvent);
-  MOZ_CAN_RUN_SCRIPT
-  nsresult KeyUp(const WidgetKeyboardEvent* aKeyboardEvent);
+  MOZ_CAN_RUN_SCRIPT nsresult KeyUp(const WidgetKeyboardEvent* aKeyboardEvent);
 #endif
-  MOZ_CAN_RUN_SCRIPT
-  nsresult KeyPress(WidgetKeyboardEvent* aKeyboardEvent);
-  MOZ_CAN_RUN_SCRIPT
-  nsresult HandleChangeComposition(WidgetCompositionEvent* aCompositionEvent);
+  MOZ_CAN_RUN_SCRIPT nsresult KeyPress(WidgetKeyboardEvent* aKeyboardEvent);
+  MOZ_CAN_RUN_SCRIPT nsresult
+  HandleChangeComposition(WidgetCompositionEvent* aCompositionEvent);
   nsresult HandleStartComposition(WidgetCompositionEvent* aCompositionEvent);
-  MOZ_CAN_RUN_SCRIPT
-  void HandleEndComposition(WidgetCompositionEvent* aCompositionEvent);
-  MOZ_CAN_RUN_SCRIPT
-  virtual nsresult MouseDown(dom::MouseEvent* aMouseEvent);
-  MOZ_CAN_RUN_SCRIPT
-  virtual nsresult MouseUp(dom::MouseEvent* aMouseEvent) { return NS_OK; }
-  MOZ_CAN_RUN_SCRIPT
-  virtual nsresult MouseClick(WidgetMouseEvent* aMouseClickEvent);
-  nsresult Focus(InternalFocusEvent* aFocusEvent);
+  MOZ_CAN_RUN_SCRIPT void HandleEndComposition(
+      WidgetCompositionEvent* aCompositionEvent);
+  MOZ_CAN_RUN_SCRIPT virtual nsresult MouseDown(dom::MouseEvent* aMouseEvent);
+  MOZ_CAN_RUN_SCRIPT virtual nsresult MouseUp(dom::MouseEvent* aMouseEvent) {
+    return NS_OK;
+  }
+  MOZ_CAN_RUN_SCRIPT virtual nsresult MouseClick(
+      WidgetMouseEvent* aMouseClickEvent);
+  MOZ_CAN_RUN_SCRIPT nsresult Focus(InternalFocusEvent* aFocusEvent);
   nsresult Blur(InternalFocusEvent* aBlurEvent);
   MOZ_CAN_RUN_SCRIPT nsresult DragEnter(dom::DragEvent* aDragEvent);
-  MOZ_CAN_RUN_SCRIPT nsresult DragOver(dom::DragEvent* aDragEvent);
+  MOZ_CAN_RUN_SCRIPT nsresult DragOverOrDrop(dom::DragEvent* aDragEvent);
   nsresult DragExit(dom::DragEvent* aDragEvent);
-  MOZ_CAN_RUN_SCRIPT nsresult Drop(dom::DragEvent* aDragEvent);
 
-  MOZ_CAN_RUN_SCRIPT bool CanDrop(dom::DragEvent* aEvent);
+  void RefuseToDropAndHideCaret(dom::DragEvent* aDragEvent);
+  bool DragEventHasSupportingData(dom::DragEvent* aDragEvent) const;
+  MOZ_CAN_RUN_SCRIPT bool CanInsertAtDropPosition(dom::DragEvent* aDragEvent);
   void CleanupDragDropCaret();
   PresShell* GetPresShell() const;
   nsPresContext* GetPresContext() const;
@@ -114,7 +112,7 @@ class EditorEventListener : public nsIDOMEventListener {
    * Returns false if the editor is detached from the listener, i.e.,
    * impossible to continue to handle the event.  Otherwise, true.
    */
-  MOZ_MUST_USE bool EnsureCommitComposition();
+  [[nodiscard]] bool EnsureCommitComposition();
 
   EditorBase* mEditorBase;  // weak
   RefPtr<nsCaret> mCaret;

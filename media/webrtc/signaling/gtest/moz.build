@@ -6,7 +6,9 @@
 include('/media/webrtc/webrtc.mozbuild')
 
 # TODO: bug 1172551 - get these tests working on iOS
-if CONFIG['MOZ_WIDGET_TOOLKIT'] != 'uikit' and CONFIG['OS_TARGET'] != 'Android':
+# Also, these lengthy tests are prone to OOM on Windows ASan.
+if CONFIG['MOZ_WIDGET_TOOLKIT'] != 'uikit' and CONFIG['OS_TARGET'] != 'Android' \
+  and not (CONFIG['OS_TARGET'] == 'WINNT' and CONFIG['MOZ_ASAN']):
     LOCAL_INCLUDES += [
       '/dom/media',
       '/ipc/chromium/src',
@@ -28,16 +30,10 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] != 'uikit' and CONFIG['OS_TARGET'] != 'Android':
         'audioconduit_unittests.cpp',
         'jsep_session_unittest.cpp',
         'jsep_track_unittest.cpp',
-        'mediaconduit_unittests.cpp',
+        'mediapipeline_unittest.cpp',
         'rtpsources_unittests.cpp',
         'sdp_unittests.cpp',
         'videoconduit_unittests.cpp',
     ]
-
-    # See Bug 1372950, mediapipeline tests seem to cause crashes on Windows
-    if CONFIG['OS_TARGET'] != 'WINNT':
-        SOURCES += [
-            'mediapipeline_unittest.cpp',
-        ]
 
     FINAL_LIBRARY = 'xul-gtest'

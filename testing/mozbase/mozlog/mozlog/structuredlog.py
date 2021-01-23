@@ -31,18 +31,23 @@ Allowed actions, and subfields:
 
   test_end
       test - ID for the test
-      status [PASS | FAIL | OK | ERROR |
-              TIMEOUT | CRASH | ASSERT | SKIP] - test status
+      status [PASS | FAIL | OK | ERROR | TIMEOUT | CRASH |
+              ASSERT PRECONDITION_FAILED | SKIP] - test status
       expected [As for status] - Status that the test was expected to get,
                                  or absent if the test got the expected status
       extra - Dictionary of harness-specific extra information e.g. debug info
+      known_intermittent - List of known intermittent statuses that should
+                           not fail a test. eg. ['FAIL', 'TIMEOUT']
 
   test_status
       test - ID for the test
       subtest - Name of the subtest
-      status [PASS | FAIL | TIMEOUT | NOTRUN | SKIP] - test status
+      status [PASS | FAIL | TIMEOUT |
+              PRECONDITION_FAILED | NOTRUN | SKIP] - test status
       expected [As for status] - Status that the subtest was expected to get,
                                  or absent if the subtest got the expected status
+      known_intermittent - List of known intermittent statuses that should
+                           not fail a test. eg. ['FAIL', 'TIMEOUT']
 
   process_output
       process - PID of the process
@@ -230,7 +235,8 @@ class StructuredLogger(object):
         action = raw_data["action"]
         converted_data = convertor_registry[action].convert_known(**raw_data)
         for k, v in six.iteritems(raw_data):
-            if k not in converted_data:
+            if (k not in converted_data and
+                    k not in convertor_registry[action].optional_args):
                 converted_data[k] = v
 
         data = self._make_log_data(action, converted_data)
@@ -354,7 +360,9 @@ class StructuredLogger(object):
                 SubStatus("expected", default="PASS"),
                 Unicode("message", default=None, optional=True),
                 Unicode("stack", default=None, optional=True),
-                Dict(Any, "extra", default=None, optional=True))
+                Dict(Any, "extra", default=None, optional=True),
+                List(SubStatus, "known_intermittent", default=None,
+                     optional=True))
     def test_status(self, data):
         """
         Log a test_status message indicating a subtest result. Tests that
@@ -385,7 +393,9 @@ class StructuredLogger(object):
                 Status("expected", default="OK"),
                 Unicode("message", default=None, optional=True),
                 Unicode("stack", default=None, optional=True),
-                Dict(Any, "extra", default=None, optional=True))
+                Dict(Any, "extra", default=None, optional=True),
+                List(Status, "known_intermittent", default=None,
+                     optional=True))
     def test_end(self, data):
         """
         Log a test_end message indicating that a test completed. For tests
@@ -434,6 +444,8 @@ class StructuredLogger(object):
                 Int("stackwalk_retcode", default=None, optional=True),
                 Unicode("stackwalk_stdout", default=None, optional=True),
                 Unicode("stackwalk_stderr", default=None, optional=True),
+                Unicode("reason", default=None, optional=True),
+                Unicode("java_stack", default=None, optional=True),
                 List(Unicode, "stackwalk_errors", default=None))
     def crash(self, data):
         if data["stackwalk_errors"] is None:

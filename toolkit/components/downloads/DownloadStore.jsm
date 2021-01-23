@@ -18,7 +18,7 @@
  *     {
  *       "source": {
  *         "url": "http://www.example.com/download.txt",
- *         "referrer": "http://www.example.com/referrer.html"
+ *         "referrerInfo": serialized string represents referrerInfo object
  *       },
  *       "target": "/home/user/Downloads/download-2.txt"
  *     }
@@ -63,7 +63,7 @@ var DownloadStore = function(aList, aPath) {
   this.path = aPath;
 };
 
-this.DownloadStore.prototype = {
+DownloadStore.prototype = {
   /**
    * DownloadList object to be populated or serialized.
    */

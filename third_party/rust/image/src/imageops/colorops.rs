@@ -1,13 +1,13 @@
 //! Functions for altering and converting the color of pixelbufs
 
-use buffer::{ImageBuffer, Pixel};
-use color::{Luma, Rgba};
-use image::{GenericImage, GenericImageView};
-use math::nq;
-use math::utils::clamp;
+use crate::buffer::{ImageBuffer, Pixel};
+use crate::color::{Luma, Rgba};
+use crate::image::{GenericImage, GenericImageView};
+use crate::math::nq;
+use crate::math::utils::clamp;
 use num_traits::{Num, NumCast};
 use std::f64::consts::PI;
-use traits::Primitive;
+use crate::traits::Primitive;
 
 type Subpixel<I> = <<I as GenericImageView>::Pixel as Pixel>::Subpixel;
 
@@ -196,7 +196,7 @@ impl ColorMap for BiLevel {
 
     #[inline(always)]
     fn index_of(&self, color: &Luma<u8>) -> usize {
-        let luma = color.data;
+        let luma = color.0;
         if luma[0] > 127 {
             1
         } else {
@@ -207,7 +207,7 @@ impl ColorMap for BiLevel {
     #[inline(always)]
     fn map_color(&self, color: &mut Luma<u8>) {
         let new_color = 0xFF * self.index_of(color) as u8;
-        let luma = &mut color.data;
+        let luma = &mut color.0;
         luma[0] = new_color;
     }
 }
@@ -312,7 +312,7 @@ where
 mod test {
 
     use super::*;
-    use ImageBuffer;
+    use crate::ImageBuffer;
 
     #[test]
     fn test_dither() {

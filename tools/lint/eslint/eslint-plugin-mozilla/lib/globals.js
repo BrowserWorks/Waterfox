@@ -11,7 +11,6 @@
 const path = require("path");
 const fs = require("fs");
 const helpers = require("./helpers");
-const eslintScope = require("eslint-scope");
 const htmlparser = require("htmlparser2");
 
 /**
@@ -191,10 +190,12 @@ module.exports = {
     let content = fs.readFileSync(filePath, "utf8");
 
     // Parse the content into an AST
-    let ast = helpers.getAST(content, astOptions);
+    let { ast, scopeManager, visitorKeys } = helpers.parseCode(
+      content,
+      astOptions
+    );
 
     // Discover global declarations
-    let scopeManager = eslintScope.analyze(ast, astOptions);
     let globalScope = scopeManager.acquire(ast);
 
     let globals = Object.keys(globalScope.variables).map(v => ({
@@ -205,7 +206,7 @@ module.exports = {
     // Walk over the AST to find any of our custom globals
     let handler = new GlobalsForNode(filePath);
 
-    helpers.walkAST(ast, (type, node, parents) => {
+    helpers.walkAST(ast, visitorKeys, (type, node, parents) => {
       if (type in handler) {
         let newGlobals = handler[type](node, parents, globalScope);
         globals.push.apply(globals, newGlobals);
@@ -247,16 +248,24 @@ module.exports = {
     let scriptSrcs = [];
 
     // We use htmlparser as this ensures we find the script tags correctly.
-    let parser = new htmlparser.Parser({
-      onopentag(name, attribs) {
-        if (name === "script" && "src" in attribs) {
-          scriptSrcs.push({
-            src: attribs.src,
-            type: "type" in attribs ? attribs.type : "script",
-          });
-        }
+    let parser = new htmlparser.Parser(
+      {
+        onopentag(name, attribs) {
+          if (name === "script" && "src" in attribs) {
+            scriptSrcs.push({
+              src: attribs.src,
+              type:
+                "type" in attribs && attribs.type == "module"
+                  ? "module"
+                  : "script",
+            });
+          }
+        },
       },
-    });
+      {
+        xmlMode: filePath.endsWith("xhtml"),
+      }
+    );
 
     parser.parseComplete(content);
 
@@ -285,6 +294,8 @@ module.exports = {
           "mochitest",
           script.src
         );
+      } else if (script.src.startsWith("/tests/")) {
+        scriptName = path.join(helpers.rootDir, script.src.substring(7));
       } else {
         // Fallback to hoping this is a relative path.
         scriptName = path.join(dir, script.src);

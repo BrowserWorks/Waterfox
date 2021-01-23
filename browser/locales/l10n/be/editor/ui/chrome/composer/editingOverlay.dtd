@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Адчыніць файл…">
+<!ENTITY openFileCmd.accesskey "А">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Адчыніць месца ў Сеціве…">
+<!ENTITY openRemoteCmd.accesskey "м">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Нядаўнія старонкі">
+<!ENTITY fileRecentMenu.accesskey "Н">
+<!ENTITY saveCmd.label "Захаваць">
+<!ENTITY saveCmd.accesskey "З">
+<!ENTITY saveAsCmd.label "Захаваць як…">
+<!ENTITY saveAsCmd.accesskey "я">
+<!ENTITY saveAsChangeEncodingCmd2.label "Захаваць і змяніць кадаванне сімвалаў">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "З">
+<!ENTITY publishCmd.label "Публікаваць">
+<!ENTITY publishCmd.accesskey "П">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Публікаваць як…">
+<!ENTITY publishAsCmd.accesskey "к">
+<!ENTITY fileRevert.label "Вярнуць">
+<!ENTITY fileRevert.accesskey "В">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Наладжванні пляцоўкі публікавання…">
+<!ENTITY publishSettings.accesskey "л">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "Стварыць">
+<!ENTITY newToolbarCmd.tooltip "Стварыць новую старонку ўкладальніка">
+<!ENTITY openToolbarCmd.label "Адчыніць">
+<!ENTITY openToolbarCmd.tooltip "Адчыніць мясцовы файл">
+<!ENTITY saveToolbarCmd.tooltip "Захаваць файл мясцова">
+<!ENTITY publishToolbarCmd.tooltip "Зацягнуць файл у адлеглае месца">

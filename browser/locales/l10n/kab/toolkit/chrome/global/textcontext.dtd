@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY spellAddToDictionary.label "Rnu ɣer umawal">
+<!ENTITY spellAddToDictionary.accesskey "w">
+<!ENTITY spellUndoAddToDictionary.label "Sefsex timerna n umawal">
+<!ENTITY spellUndoAddToDictionary.accesskey "r">
+<!ENTITY spellCheckToggle.label "Senqed tira">
+<!ENTITY spellCheckToggle.accesskey "S">
+<!ENTITY spellNoSuggestions.label "(ulac awalen ittwasumren)">
+<!ENTITY spellDictionaries.label "Tutlayin">
+<!ENTITY spellDictionaries.accesskey "u">
+
+<!ENTITY searchTextBox.clear.label "Sfeḍ">
+
+<!ENTITY fillLoginMenu.label          "Ččaṛ aseqdac">
+<!ENTITY fillLoginMenu.accesskey      "a">
+<!ENTITY fillPasswordMenu.label       "Ččaṛ awal uffir">
+<!ENTITY fillPasswordMenu.accesskey   "w">
+<!ENTITY fillUsernameMenu.label       "Ččaṛ isem n useqdad">
+<!ENTITY fillUsernameMenu.accesskey   "s">
+<!ENTITY noLoginSuggestions.label     "(ulac aseqdac ittusumren)">
+<!ENTITY viewSavedLogins.label        "Sken iseqdacen ittwakelsen">

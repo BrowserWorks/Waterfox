@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "Krouiñ un deiziataer nevez" >
+<!ENTITY wizard.label             "Krouiñ un deiziataer nevez" >
+<!ENTITY wizard.description       "Lec'hiañ ho teiziataer" >
+
+<!ENTITY initialpage.description    "Gallout a ra ho teiziataer bezañ kadavet war hoc'h urzhiataer pe war un dafariad evit e haeziñ a-bell pe rannañ anezhañ gant ho mignoned pe genseurted." >
+<!ENTITY initialpage.computer.label  "War va urzhiataer">
+<!ENTITY initialpage.network.label  "War ar rouedad">
+
+<!ENTITY locationpage.description         "Enlakait ar pezh a zo ezhomm evit haeziñ ho teiziataer a-bell" >
+<!ENTITY locationpage.login.description   "Diret : enlakait un anv implijer hag ur ger-tremen" >
+<!ENTITY locationpage.username.label      "Anv implijer :" >
+<!ENTITY locationpage.password.label      "Anv implijer :" >
+
+<!ENTITY custompage.shortdescription  "Personelait ho teiziataer" >
+<!ENTITY custompage.longdescription   "Gallout a rit reiñ ul lesanv d'ho teiziataer ha livañ an darvoudoù o tont dioutañ. " >
+
+<!ENTITY finishpage.shortdescription  "Krouet an deiziataer" >
+<!ENTITY finishpage.longdescription   "Krouet eo bet ho teiziataer." >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "Re all">
+
+<!ENTITY buttons.create.label "Krouiñ un deiziataer">
+<!ENTITY buttons.create.accesskey "r">
+
+<!ENTITY buttons.find.label "Kavout deiziataerioù">
+<!ENTITY buttons.find.accesskey "F">
+
+<!ENTITY buttons.back.label "Distreiñ">
+<!ENTITY buttons.back.accesskey "B">
+
+<!ENTITY buttons.subscribe.label "Koumanantiñ">
+<!ENTITY buttons.subscribe.accesskey "S">
+
+<!ENTITY calendartype.label "Doare deiziataer:">
+<!ENTITY location.label "Lec'hiadur:">
+<!ENTITY location.placeholder "URL pe anv herbrec'hier servijer an deiziataer">
+
+<!ENTITY network.nocredentials.label "Ar chomlec'h na c'houlenn ket an anaoudadurioù kevreañ">
+<!ENTITY network.loading.description "Gortozit e-keit ha ma vez dizoloet ho teiziataerioù mar plij.">
+<!ENTITY network.notfound.description "Deiziataer ebet er chomlec'h-mañ. Gwirit an arventennoù mar plij.">
+<!ENTITY network.authfail.description "N'eo ket bet degemeret an anaouadadurioù kevreañ seziset. Gwirit hoc'h arventennoù mar plij.">
+
+<!ENTITY network.subscribe.single.description "Diuzit an deiziataerioù ho pefe c'hoant kevreañ outo.">
+<!ENTITY network.subscribe.multiple.description "Meur a zoare deiziataer a zo hegerz evit ar chomlec'h. Diuzit an doare deiziataer mar plij, diuzit da c'houde an deiziataerioù ho peus c'hoant koumanantiñ dezho.">

@@ -68,8 +68,7 @@ class ThrottledEventQueue final : public nsISerialEventTarget {
  public:
   // Create a ThrottledEventQueue for the given target.
   static already_AddRefed<ThrottledEventQueue> Create(
-      nsISerialEventTarget* aBaseTarget,
-      const char* aName,
+      nsISerialEventTarget* aBaseTarget, const char* aName,
       uint32_t aPriority = nsIRunnablePriority::PRIORITY_NORMAL);
 
   // Determine if there are any events pending in the queue.
@@ -77,6 +76,8 @@ class ThrottledEventQueue final : public nsISerialEventTarget {
 
   // Determine how many events are pending in the queue.
   uint32_t Length() const;
+
+  already_AddRefed<nsIRunnable> GetEvent();
 
   // Block the current thread until the queue is empty. This may not be called
   // on the main thread or the base target. The ThrottledEventQueue must not be
@@ -99,7 +100,7 @@ class ThrottledEventQueue final : public nsISerialEventTarget {
   // has been queued on the base target, and even so, no events from the TEQ
   // will run. When the base target gets around to running the executor, the
   // executor will see that the TEQ is paused, and do nothing.
-  MOZ_MUST_USE nsresult SetIsPaused(bool aIsPaused);
+  [[nodiscard]] nsresult SetIsPaused(bool aIsPaused);
 
   // Return true if this ThrottledEventQueue is paused.
   bool IsPaused() const;

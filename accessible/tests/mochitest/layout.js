@@ -1,3 +1,5 @@
+/* import-globals-from common.js */
+
 /**
  * Tests if the given child and grand child accessibles at the given point are
  * expected.
@@ -82,10 +84,7 @@ function testOffsetAtPoint(aHyperTextID, aX, aY, aCoordType, aExpectedOffset) {
  * Zoom the given document.
  */
 function zoomDocument(aDocument, aZoom) {
-  var docShell = aDocument.defaultView.docShell;
-  var docViewer = docShell.contentViewer;
-
-  docViewer.fullZoom = aZoom;
+  SpecialPowers.setFullZoom(aDocument.defaultView, aZoom);
 }
 
 /**

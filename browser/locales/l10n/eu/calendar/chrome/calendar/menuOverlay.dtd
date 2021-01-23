@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Event Menu -->
+<!ENTITY event.new.event                        "Gertaera berria…">
+<!ENTITY event.new.event.accesskey              "B">
+
+<!ENTITY event.new.task                         "Zeregin berria…">
+<!ENTITY event.new.task.accesskey               "k">
+
+<!ENTITY calendar.import.label                  "Inportatu…">
+<!ENTITY calendar.import.accesskey              "I">
+
+<!ENTITY calendar.export.label                  "Esportatu…">
+<!ENTITY calendar.export.accesskey              "E">
+
+<!ENTITY calendar.publish.label                 "Argitaratu…">
+<!ENTITY calendar.publish.accesskey             "g">
+
+<!ENTITY calendar.deletecalendar.label          "Ezabatu hautatutako egutegia…">
+<!ENTITY calendar.deletecalendar.accesskey      "E">
+<!ENTITY calendar.unsubscribecalendar.label     "Kendu hautatutako egutegiaren harpidetza…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "K">
+
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+<!ENTITY calendar.removecalendar.label          "Ezabatu hautatutako egutegia…">
+<!ENTITY calendar.removecalendar.accesskey      "E">
+
+
+<!ENTITY calendar.menu.customize.label          "Pertsonalizatu…">
+<!ENTITY calendar.menu.customize.accesskey      "P">
+
+<!ENTITY showUnifinderCmd.label                 "Bilatu gertaerak">
+<!ENTITY showUnifinderCmd.accesskey             "B">
+<!ENTITY showUnifinderCmd.tooltip               "Gertaera bilaketa panela txandakatu">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "Erakutsi zereginak egutegian">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "t">
+
+<!ENTITY goTodayCmd.label                       "Gaur">
+<!ENTITY goTodayCmd.accesskey                   "G">
+
+<!ENTITY showCurrentView.label                  "Uneko ikuspegia">
+<!ENTITY showCurrentView.accesskey              "U">
+
+<!ENTITY calendar.properties.label              "Egutegi propietateak…">
+<!ENTITY calendar.properties.accesskey          "a">

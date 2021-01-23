@@ -8,13 +8,18 @@ typedef long myLong;
 typedef TestInterface AnotherNameForTestInterface;
 typedef TestInterface? NullableTestInterface;
 typedef CustomEventInit TestDictionaryTypedef;
+typedef ArrayBufferView ArrayBufferViewTypedef;
+typedef [AllowShared] ArrayBufferView AllowSharedArrayBufferViewTypedef;
 
 interface TestExternalInterface;
 
-[Pref="xyz"]
+// We need a pref name that's in StaticPrefList.h here.
+[Pref="dom.webidl.test1",
+ Exposed=Window]
 interface TestRenamedInterface {
 };
 
+[Exposed=Window]
 callback interface TestCallbackInterface {
   readonly attribute long foo;
   attribute DOMString bar;
@@ -58,6 +63,7 @@ callback interface TestCallbackInterface {
   Promise<void> receivePromise();
 };
 
+[Exposed=Window]
 callback interface TestSingleOperationCallbackInterface {
   TestInterface doSomething(short arg, sequence<double> anotherArg);
 };
@@ -65,7 +71,9 @@ callback interface TestSingleOperationCallbackInterface {
 enum TestEnum {
   "1",
   "a",
-  "b"
+  "b",
+  "1-2",
+  "2d-array"
 };
 
 callback TestCallback = void();
@@ -136,22 +144,14 @@ callback constructor TestSequenceConstruction = sequence<boolean>();
 // If you add a new test callback, add it to the forceCallbackGeneration
 // method on TestInterface so it actually gets tested.
 
-TestInterface implements ImplementedInterface;
+TestInterface includes InterfaceMixin;
 
 // This interface is only for use in the constructor below
+[Exposed=Window]
 interface OnlyForUseInConstructor {
 };
 
-[Constructor,
- Constructor(DOMString str),
- Constructor(unsigned long num, boolean? boolArg),
- Constructor(TestInterface? iface),
- Constructor(unsigned long arg1, IndirectlyImplementedInterface iface),
- Constructor(Date arg1),
- Constructor(ArrayBuffer arrayBuf),
- Constructor(Uint8Array typedArr),
- // Constructor(long arg1, long arg2, (TestInterface or OnlyForUseInConstructor) arg3),
- NamedConstructor=Test,
+[NamedConstructor=Test,
  NamedConstructor=Test(DOMString str),
  NamedConstructor=Test2(DictForConstructor dict, any any1, object obj1,
                         object? obj2, sequence<Dict> seq, optional any any2,
@@ -160,8 +160,18 @@ interface OnlyForUseInConstructor {
  NamedConstructor=Test4(record<DOMString, record<DOMString, any>> arg1),
  NamedConstructor=Test5(record<DOMString, sequence<record<DOMString, record<DOMString, sequence<sequence<any>>>>>> arg1),
  NamedConstructor=Test6(sequence<record<ByteString, sequence<sequence<record<ByteString, record<USVString, any>>>>>> arg1),
+ Exposed=Window,
  ]
 interface TestInterface {
+  constructor();
+  constructor(DOMString str);
+  constructor(unsigned long num, boolean? boolArg);
+  constructor(TestInterface? iface);
+  constructor(unsigned long arg1, TestInterface iface);
+  constructor(ArrayBuffer arrayBuf);
+  constructor(Uint8Array typedArr);
+  // constructor(long arg1, long arg2, (TestInterface or OnlyForUseInConstructor) arg3);
+
   // Integer types
   // XXXbz add tests for throwing versions of all the integer stuff
   readonly attribute byte readonlyByte;
@@ -321,20 +331,6 @@ interface TestInterface {
   [NewObject]
   sequence<TestNonWrapperCacheInterface?>? receiveNullableNonWrapperCacheInterfaceNullableSequence();
 
-  // Non-castable interface types
-  IndirectlyImplementedInterface receiveOther();
-  IndirectlyImplementedInterface? receiveNullableOther();
-  IndirectlyImplementedInterface receiveWeakOther();
-  IndirectlyImplementedInterface? receiveWeakNullableOther();
-  void passOther(IndirectlyImplementedInterface arg);
-  void passNullableOther(IndirectlyImplementedInterface? arg);
-  attribute IndirectlyImplementedInterface nonNullOther;
-  attribute IndirectlyImplementedInterface? nullableOther;
-  // Optional arguments
-  void passOptionalOther(optional IndirectlyImplementedInterface? arg);
-  void passOptionalNonNullOther(optional IndirectlyImplementedInterface arg);
-  void passOptionalOtherWithDefault(optional IndirectlyImplementedInterface? arg = null);
-
   // External interface types
   TestExternalInterface receiveExternal();
   TestExternalInterface? receiveNullableExternal();
@@ -362,10 +358,6 @@ interface TestInterface {
   void passOptionalCallbackInterface(optional TestCallbackInterface? arg);
   void passOptionalNonNullCallbackInterface(optional TestCallbackInterface arg);
   void passOptionalCallbackInterfaceWithDefault(optional TestCallbackInterface? arg = null);
-
-  // Miscellaneous interface tests
-  IndirectlyImplementedInterface receiveConsequentialInterface();
-  void passConsequentialInterface(IndirectlyImplementedInterface arg);
 
   // Sequence types
   [Cached, Pure]
@@ -416,6 +408,9 @@ interface TestInterface {
   sequence<ByteString> receiveByteStringSequence();
   void passByteStringSequence(sequence<ByteString> arg);
 
+  sequence<UTF8String> receiveUTF8StringSequence();
+  void passUTF8StringSequence(sequence<UTF8String> arg);
+
   sequence<any> receiveAnySequence();
   sequence<any>? receiveNullableAnySequence();
   sequence<sequence<any>> receiveAnySequenceSequence();
@@ -446,6 +441,7 @@ interface TestInterface {
   void passNullableExternalInterfaceRecord(record<DOMString, TestExternalInterface?> arg);
   void passStringRecord(record<DOMString, DOMString> arg);
   void passByteStringRecord(record<DOMString, ByteString> arg);
+  void passUTF8StringRecord(record<DOMString, UTF8String> arg);
   void passRecordOfRecords(record<DOMString, record<DOMString, long>> arg);
   record<DOMString, long> receiveRecord();
   record<DOMString, long>? receiveNullableRecord();
@@ -500,6 +496,17 @@ interface TestInterface {
   void passOptionalUnionByteString(optional (ByteString or long) arg);
   void passOptionalUnionByteStringWithDefaultValue(optional (ByteString or long) arg = "abc");
 
+  // UTF8String types
+  void passUTF8String(UTF8String arg);
+  void passNullableUTF8String(UTF8String? arg);
+  void passOptionalUTF8String(optional UTF8String arg);
+  void passOptionalUTF8StringWithDefaultValue(optional UTF8String arg = "abc");
+  void passOptionalNullableUTF8String(optional UTF8String? arg);
+  void passOptionalNullableUTF8StringWithDefaultValue(optional UTF8String? arg = null);
+  void passVariadicUTF8String(UTF8String... arg);
+  void passOptionalUnionUTF8String(optional (UTF8String or long) arg);
+  void passOptionalUnionUTF8StringWithDefaultValue(optional (UTF8String or long) arg = "abc");
+
   // USVString types
   void passUSVS(USVString arg);
   void passNullableUSVS(USVString? arg);
@@ -509,6 +516,24 @@ interface TestInterface {
   void passOptionalNullableUSVSWithDefaultValue(optional USVString? arg = null);
   void passVariadicUSVS(USVString... arg);
   USVString receiveUSVS();
+
+  // JSString types
+  void passJSString(JSString arg);
+  // void passNullableJSString(JSString? arg); // NOT SUPPORTED YET
+  // void passOptionalJSString(optional JSString arg); // NOT SUPPORTED YET
+  void passOptionalJSStringWithDefaultValue(optional JSString arg = "abc");
+  // void passOptionalNullableJSString(optional JSString? arg); // NOT SUPPORTED YET
+  // void passOptionalNullableJSStringWithDefaultValue(optional JSString? arg = null); // NOT SUPPORTED YET
+  // void passVariadicJSString(JSString... arg); // NOT SUPPORTED YET
+  // void passRecordOfJSString(record<DOMString, JSString> arg); // NOT SUPPORTED YET
+  // void passSequenceOfJSString(sequence<JSString> arg); // NOT SUPPORTED YET
+  // void passUnionJSString((JSString or long) arg); // NOT SUPPORTED YET
+  JSString receiveJSString();
+  // sequence<JSString> receiveJSStringSequence(); // NOT SUPPORTED YET
+  // (JSString or long) receiveJSStringUnion(); // NOT SUPPORTED YET
+  // record<DOMString, JSString> receiveJSStringRecord(); // NOT SUPPORTED YET
+  readonly attribute JSString readonlyJSStringAttr;
+  attribute JSString jsStringAttr;
 
   // Enumerated types
   void passEnum(TestEnum arg);
@@ -634,8 +659,8 @@ interface TestInterface {
   void passUnion7((object or DOMString or long) arg);
   void passUnion8((object or DOMString or boolean) arg);
   void passUnion9((object or DOMString or long or boolean) arg);
-  void passUnion10(optional (EventInit or long) arg);
-  void passUnion11(optional (CustomEventInit or long) arg);
+  void passUnion10(optional (EventInit or long) arg = {});
+  void passUnion11(optional (CustomEventInit or long) arg = {});
   void passUnion12(optional (EventInit or long) arg = 5);
   void passUnion13(optional (object or long?) arg = null);
   void passUnion14(optional (object or long?) arg = 5);
@@ -651,10 +676,11 @@ interface TestInterface {
   void passUnion24((sequence<ImageData?> or long) arg);
   void passUnion25((sequence<sequence<ImageData>> or long) arg);
   void passUnion26((sequence<sequence<ImageData?>> or long) arg);
-  void passUnion27(optional (sequence<DOMString> or EventInit) arg);
-  void passUnion28(optional (EventInit or sequence<DOMString>) arg);
+  void passUnion27(optional (sequence<DOMString> or EventInit) arg = {});
+  void passUnion28(optional (EventInit or sequence<DOMString>) arg = {});
   void passUnionWithCallback((EventHandler or long) arg);
   void passUnionWithByteString((ByteString or long) arg);
+  void passUnionWithUTF8String((UTF8String or long) arg);
   void passUnionWithRecord((record<DOMString, DOMString> or DOMString) arg);
   void passUnionWithRecordAndSequence((record<DOMString, DOMString> or sequence<DOMString>) arg);
   void passUnionWithSequenceAndRecord((sequence<DOMString> or record<DOMString, DOMString>) arg);
@@ -704,6 +730,9 @@ interface TestInterface {
   void passUnionWithDefaultValue20(optional (double or USVString) arg = "abc");
   void passUnionWithDefaultValue21(optional (double or USVString) arg = 1);
   void passUnionWithDefaultValue22(optional (double or USVString) arg = 1.5);
+  void passUnionWithDefaultValue23(optional (double or UTF8String) arg = "");
+  void passUnionWithDefaultValue24(optional (double or UTF8String) arg = 1);
+  void passUnionWithDefaultValue25(optional (double or UTF8String) arg = 1.5);
 
   void passNullableUnionWithDefaultValue1(optional (double or DOMString)? arg = "");
   void passNullableUnionWithDefaultValue2(optional (double or DOMString)? arg = 1);
@@ -730,6 +759,11 @@ interface TestInterface {
   void passNullableUnionWithDefaultValue23(optional (double or USVString)? arg = 1.5);
   void passNullableUnionWithDefaultValue24(optional (double or USVString)? arg = null);
 
+  void passNullableUnionWithDefaultValue25(optional (double or UTF8String)? arg = "abc");
+  void passNullableUnionWithDefaultValue26(optional (double or UTF8String)? arg = 1);
+  void passNullableUnionWithDefaultValue27(optional (double or UTF8String)? arg = 1.5);
+  void passNullableUnionWithDefaultValue28(optional (double or UTF8String)? arg = null);
+
   void passSequenceOfUnions(sequence<(CanvasPattern or CanvasGradient)> arg);
   void passSequenceOfUnions2(sequence<(object or long)> arg);
   void passVariadicUnion((CanvasPattern or CanvasGradient)... arg);
@@ -750,18 +784,6 @@ interface TestInterface {
   attribute (CanvasPattern? or CanvasGradient) writableUnionContainingNull;
   attribute (CanvasPattern or CanvasGradient)? writableNullableUnion;
 
-  // Date types
-  void passDate(Date arg);
-  void passNullableDate(Date? arg);
-  void passOptionalDate(optional Date arg);
-  void passOptionalNullableDate(optional Date? arg);
-  void passOptionalNullableDateWithDefaultValue(optional Date? arg = null);
-  void passDateSequence(sequence<Date> arg);
-  void passNullableDateSequence(sequence<Date?> arg);
-  void passDateRecord(record<DOMString, Date> arg);
-  Date receiveDate();
-  Date? receiveNullableDate();
-
   // Promise types
   void passPromise(Promise<any> arg);
   void passOptionalPromise(optional Promise<any> arg);
@@ -770,16 +792,16 @@ interface TestInterface {
   Promise<any> receiveAddrefedPromise();
 
   // binaryNames tests
+  [BinaryName="methodRenamedTo"]
   void methodRenamedFrom();
-  [BinaryName="otherMethodRenamedTo"]
-  void otherMethodRenamedFrom();
+  [BinaryName="methodRenamedTo"]
   void methodRenamedFrom(byte argument);
+  [BinaryName="attributeGetterRenamedTo"]
   readonly attribute byte attributeGetterRenamedFrom;
+  [BinaryName="attributeRenamedTo"]
   attribute byte attributeRenamedFrom;
-  [BinaryName="otherAttributeRenamedTo"]
-  attribute byte otherAttributeRenamedFrom;
 
-  void passDictionary(optional Dict x);
+  void passDictionary(optional Dict x = {});
   void passDictionary2(Dict x);
   [Cached, Pure]
   readonly attribute Dict readonlyDictionary;
@@ -795,25 +817,29 @@ interface TestInterface {
   attribute Dict writableFrozenDictionary;
   Dict receiveDictionary();
   Dict? receiveNullableDictionary();
-  void passOtherDictionary(optional GrandparentDict x);
+  void passOtherDictionary(optional GrandparentDict x = {});
   void passSequenceOfDictionaries(sequence<Dict> x);
   void passRecordOfDictionaries(record<DOMString, GrandparentDict> x);
   // No support for nullable dictionaries inside a sequence (nor should there be)
   //  void passSequenceOfNullableDictionaries(sequence<Dict?> x);
-  void passDictionaryOrLong(optional Dict x);
+  void passDictionaryOrLong(optional Dict x = {});
   void passDictionaryOrLong(long x);
 
-  void passDictContainingDict(optional DictContainingDict arg);
-  void passDictContainingSequence(optional DictContainingSequence arg);
+  void passDictContainingDict(optional DictContainingDict arg = {});
+  void passDictContainingSequence(optional DictContainingSequence arg = {});
   DictContainingSequence receiveDictContainingSequence();
   void passVariadicDictionary(Dict... arg);
 
   // EnforceRange/Clamp tests
   void dontEnforceRangeOrClamp(byte arg);
   void doEnforceRange([EnforceRange] byte arg);
+  void doEnforceRangeNullable([EnforceRange] byte? arg);
   void doClamp([Clamp] byte arg);
+  void doClampNullable([Clamp] byte? arg);
   attribute [EnforceRange] byte enforcedByte;
+  attribute [EnforceRange] byte? enforcedNullableByte;
   attribute [Clamp] byte clampedByte;
+  attribute [Clamp] byte? clampedNullableByte;
 
   // Typedefs
   const myLong myLongConstant = 5;
@@ -822,11 +848,11 @@ interface TestInterface {
   void exerciseTypedefInterfaces3(YetAnotherNameForTestInterface arg);
 
   // Deprecated methods and attributes
-  [Deprecated="EnablePrivilege"]
+  [Deprecated="Components"]
   attribute byte deprecatedAttribute;
-  [Deprecated="EnablePrivilege"]
+  [Deprecated="Components"]
   byte deprecatedMethod();
-  [Deprecated="EnablePrivilege"]
+  [Deprecated="Components"]
   byte deprecatedMethodWithContext(any arg);
 
   // Static methods and attributes
@@ -838,11 +864,11 @@ interface TestInterface {
   static void assert(boolean arg);
 
   // Deprecated static methods and attributes
-  [Deprecated="EnablePrivilege"]
+  [Deprecated="Components"]
   static attribute byte staticDeprecatedAttribute;
-  [Deprecated="EnablePrivilege"]
+  [Deprecated="Components"]
   static void staticDeprecatedMethod();
-  [Deprecated="EnablePrivilege"]
+  [Deprecated="Components"]
   static void staticDeprecatedMethodWithContext(any arg);
 
   // Overload resolution tests
@@ -850,10 +876,9 @@ interface TestInterface {
   boolean overload1(TestInterface arg);
   TestInterface overload1(DOMString strs, TestInterface arg);
   void overload2(TestInterface arg);
-  void overload2(optional Dict arg);
+  void overload2(optional Dict arg = {});
   void overload2(boolean arg);
   void overload2(DOMString arg);
-  void overload2(Date arg);
   void overload3(TestInterface arg);
   void overload3(TestCallback arg);
   void overload3(boolean arg);
@@ -890,71 +915,71 @@ interface TestInterface {
   void overload18(record<DOMString, DOMString> arg);
   void overload18(sequence<DOMString> arg);
   void overload19(sequence<long> arg);
-  void overload19(optional Dict arg);
-  void overload20(optional Dict arg);
+  void overload19(optional Dict arg = {});
+  void overload20(optional Dict arg = {});
   void overload20(sequence<long> arg);
 
   // Variadic handling
   void passVariadicThirdArg(DOMString arg1, long arg2, TestInterface... arg3);
 
   // Conditionally exposed methods/attributes
-  [Pref="abc.def"]
+  [Pref="dom.webidl.test1"]
   readonly attribute boolean prefable1;
-  [Pref="abc.def"]
+  [Pref="dom.webidl.test1"]
   readonly attribute boolean prefable2;
-  [Pref="ghi.jkl"]
+  [Pref="dom.webidl.test2"]
   readonly attribute boolean prefable3;
-  [Pref="ghi.jkl"]
+  [Pref="dom.webidl.test2"]
   readonly attribute boolean prefable4;
-  [Pref="abc.def"]
+  [Pref="dom.webidl.test1"]
   readonly attribute boolean prefable5;
-  [Pref="abc.def", Func="nsGenericHTMLElement::LegacyTouchAPIEnabled"]
+  [Pref="dom.webidl.test1", Func="nsGenericHTMLElement::LegacyTouchAPIEnabled"]
   readonly attribute boolean prefable6;
-  [Pref="abc.def", Func="nsGenericHTMLElement::LegacyTouchAPIEnabled"]
+  [Pref="dom.webidl.test1", Func="nsGenericHTMLElement::LegacyTouchAPIEnabled"]
   readonly attribute boolean prefable7;
-  [Pref="ghi.jkl", Func="nsGenericHTMLElement::LegacyTouchAPIEnabled"]
+  [Pref="dom.webidl.test2", Func="nsGenericHTMLElement::LegacyTouchAPIEnabled"]
   readonly attribute boolean prefable8;
-  [Pref="abc.def", Func="nsGenericHTMLElement::LegacyTouchAPIEnabled"]
+  [Pref="dom.webidl.test1", Func="nsGenericHTMLElement::LegacyTouchAPIEnabled"]
   readonly attribute boolean prefable9;
-  [Pref="abc.def"]
+  [Pref="dom.webidl.test1"]
   void prefable10();
-  [Pref="abc.def", Func="nsGenericHTMLElement::LegacyTouchAPIEnabled"]
+  [Pref="dom.webidl.test1", Func="nsGenericHTMLElement::LegacyTouchAPIEnabled"]
   void prefable11();
-  [Pref="abc.def", Func="TestFuncControlledMember"]
+  [Pref="dom.webidl.test1", Func="TestFuncControlledMember"]
   readonly attribute boolean prefable12;
-  [Pref="abc.def", Func="nsGenericHTMLElement::LegacyTouchAPIEnabled"]
+  [Pref="dom.webidl.test1", Func="nsGenericHTMLElement::LegacyTouchAPIEnabled"]
   void prefable13();
-  [Pref="abc.def", Func="TestFuncControlledMember"]
+  [Pref="dom.webidl.test1", Func="TestFuncControlledMember"]
   readonly attribute boolean prefable14;
   [Func="TestFuncControlledMember"]
   readonly attribute boolean prefable15;
   [Func="TestFuncControlledMember"]
   readonly attribute boolean prefable16;
-  [Pref="abc.def", Func="TestFuncControlledMember"]
+  [Pref="dom.webidl.test1", Func="TestFuncControlledMember"]
   void prefable17();
   [Func="TestFuncControlledMember"]
   void prefable18();
   [Func="TestFuncControlledMember"]
   void prefable19();
-  [Pref="abc.def", Func="TestFuncControlledMember", ChromeOnly]
+  [Pref="dom.webidl.test1", Func="TestFuncControlledMember", ChromeOnly]
   void prefable20();
 
   // Conditionally exposed methods/attributes involving [SecureContext]
   [SecureContext]
   readonly attribute boolean conditionalOnSecureContext1;
-  [SecureContext, Pref="abc.def"]
+  [SecureContext, Pref="dom.webidl.test1"]
   readonly attribute boolean conditionalOnSecureContext2;
-  [SecureContext, Pref="abc.def", Func="nsGenericHTMLElement::LegacyTouchAPIEnabled"]
+  [SecureContext, Pref="dom.webidl.test1", Func="nsGenericHTMLElement::LegacyTouchAPIEnabled"]
   readonly attribute boolean conditionalOnSecureContext3;
-  [SecureContext, Pref="abc.def", Func="TestFuncControlledMember"]
+  [SecureContext, Pref="dom.webidl.test1", Func="TestFuncControlledMember"]
   readonly attribute boolean conditionalOnSecureContext4;
   [SecureContext]
   void conditionalOnSecureContext5();
-  [SecureContext, Pref="abc.def"]
+  [SecureContext, Pref="dom.webidl.test1"]
   void conditionalOnSecureContext6();
-  [SecureContext, Pref="abc.def", Func="nsGenericHTMLElement::LegacyTouchAPIEnabled"]
+  [SecureContext, Pref="dom.webidl.test1", Func="nsGenericHTMLElement::LegacyTouchAPIEnabled"]
   void conditionalOnSecureContext7();
-  [SecureContext, Pref="abc.def", Func="TestFuncControlledMember"]
+  [SecureContext, Pref="dom.webidl.test1", Func="TestFuncControlledMember"]
   void conditionalOnSecureContext8();
 
   // Miscellania
@@ -989,7 +1014,7 @@ interface TestInterface {
   legacycaller short(unsigned long arg1, TestInterface arg2);
   void passArgsWithDefaults(optional long arg1,
                             optional TestInterface? arg2 = null,
-                            optional Dict arg3, optional double arg4 = 5.0,
+                            optional Dict arg3 = {}, optional double arg4 = 5.0,
                             optional float arg5);
 
   attribute any toJSONShouldSkipThis;
@@ -1008,70 +1033,42 @@ interface TestInterface {
   [NonEnumerable]
   void nonEnumerableMethod();
 
-  // [NeedsWindowsUndef] test generation
-  [NeedsWindowsUndef]
-  const unsigned long NO_ERROR = 0xffffffff;
+  // [AllowShared] tests
+  attribute [AllowShared] ArrayBufferViewTypedef allowSharedArrayBufferViewTypedef;
+  attribute [AllowShared] ArrayBufferView allowSharedArrayBufferView;
+  attribute [AllowShared] ArrayBufferView? allowSharedNullableArrayBufferView;
+  attribute [AllowShared] ArrayBuffer allowSharedArrayBuffer;
+  attribute [AllowShared] ArrayBuffer? allowSharedNullableArrayBuffer;
+
+  void passAllowSharedArrayBufferViewTypedef(AllowSharedArrayBufferViewTypedef foo);
+  void passAllowSharedArrayBufferView([AllowShared] ArrayBufferView foo);
+  void passAllowSharedNullableArrayBufferView([AllowShared] ArrayBufferView? foo);
+  void passAllowSharedArrayBuffer([AllowShared] ArrayBuffer foo);
+  void passAllowSharedNullableArrayBuffer([AllowShared] ArrayBuffer? foo);
+  void passUnionArrayBuffer((DOMString or ArrayBuffer) foo);
+  void passUnionAllowSharedArrayBuffer((DOMString or [AllowShared] ArrayBuffer) foo);
 
   // If you add things here, add them to TestExampleGen and TestJSImplGen as well
 };
 
+[Exposed=Window]
 interface TestParentInterface {
 };
 
+[Exposed=Window]
 interface TestChildInterface : TestParentInterface {
 };
 
+[Exposed=Window]
 interface TestNonWrapperCacheInterface {
 };
 
-[NoInterfaceObject]
-interface ImplementedInterfaceParent {
-  void implementedParentMethod();
-  attribute boolean implementedParentProperty;
+interface mixin InterfaceMixin {
+  void mixedInMethod();
+  attribute boolean mixedInProperty;
 
-  const long implementedParentConstant = 8;
+  const long mixedInConstant = 5;
 };
-
-ImplementedInterfaceParent implements IndirectlyImplementedInterface;
-
-[NoInterfaceObject]
-interface IndirectlyImplementedInterface {
-  void indirectlyImplementedMethod();
-  attribute boolean indirectlyImplementedProperty;
-
-  const long indirectlyImplementedConstant = 9;
-};
-
-[NoInterfaceObject]
-interface ImplementedInterface : ImplementedInterfaceParent {
-  void implementedMethod();
-  attribute boolean implementedProperty;
-
-  const long implementedConstant = 5;
-};
-
-[NoInterfaceObject]
-interface DiamondImplements {
-  readonly attribute long diamondImplementedProperty;
-};
-[NoInterfaceObject]
-interface DiamondBranch1A {
-};
-[NoInterfaceObject]
-interface DiamondBranch1B {
-};
-[NoInterfaceObject]
-interface DiamondBranch2A : DiamondImplements {
-};
-[NoInterfaceObject]
-interface DiamondBranch2B : DiamondImplements {
-};
-TestInterface implements DiamondBranch1A;
-TestInterface implements DiamondBranch1B;
-TestInterface implements DiamondBranch2A;
-TestInterface implements DiamondBranch2B;
-DiamondBranch1A implements DiamondImplements;
-DiamondBranch1B implements DiamondImplements;
 
 dictionary Dict : ParentDict {
   TestEnum someEnum;
@@ -1090,6 +1087,7 @@ dictionary Dict : ParentDict {
   ByteString byteStr;
   ByteString emptyByteStr = "";
   ByteString otherByteStr = "def";
+  // JSString jsStr; // NOT SUPPORTED YET
   object someObj;
   boolean prototype;
   object? anotherObj = null;
@@ -1123,8 +1121,8 @@ dictionary Dict : ParentDict {
   // CustomEventInit is useful to test because it needs rooting.
   (CustomEventInit or long) eventInitOrLong2;
   (CustomEventInit or long)? nullableEventInitOrLong2;
-  (EventInit or long) eventInitOrLongWithDefaultValue = null;
-  (CustomEventInit or long) eventInitOrLongWithDefaultValue2 = null;
+  (EventInit or long) eventInitOrLongWithDefaultValue = {};
+  (CustomEventInit or long) eventInitOrLongWithDefaultValue2 = {};
   (EventInit or long) eventInitOrLongWithDefaultValue3 = 5;
   (CustomEventInit or long) eventInitOrLongWithDefaultValue4 = 5;
   (EventInit or long)? nullableEventInitOrLongWithDefaultValue = null;
@@ -1168,9 +1166,12 @@ dictionary Dict : ParentDict {
   record<USVString, long>? nullableUSVStringRecordWithDefault = null;
   record<ByteString, long> byteStringRecord;
   record<ByteString, long>? nullableByteStringRecordWithDefault = null;
+  record<UTF8String, long> utf8StringRecord;
+  record<UTF8String, long>? nullableUTF8StringRecordWithDefault = null;
   required record<DOMString, TestInterface> requiredRecord;
   required record<USVString, TestInterface> requiredUSVRecord;
   required record<ByteString, TestInterface> requiredByteRecord;
+  required record<UTF8String, TestInterface> requiredUTF8Record;
 };
 
 dictionary ParentDict : GrandparentDict {
@@ -1219,8 +1220,23 @@ dictionary DictWithConditionalMembers {
   long funcControlledMember;
   [ChromeOnly, Func="nsGenericHTMLElement::LegacyTouchAPIEnabled"]
   long chromeOnlyFuncControlledMember;
+  // We need a pref name that's in StaticPrefList.h here.
+  [Pref="dom.webidl.test1"]
+  long prefControlledMember;
+  [Pref="dom.webidl.test1", ChromeOnly, Func="TestFuncControlledMember"]
+  long chromeOnlyFuncAndPrefControlledMember;
 };
 
+dictionary DictWithAllowSharedMembers {
+  [AllowShared] ArrayBufferView a;
+  [AllowShared] ArrayBufferView? b;
+  [AllowShared] ArrayBuffer c;
+  [AllowShared] ArrayBuffer? d;
+  [AllowShared] ArrayBufferViewTypedef e;
+  AllowSharedArrayBufferViewTypedef f;
+};
+
+[Exposed=Window]
 interface TestIndexedGetterInterface {
   getter long item(unsigned long idx);
   readonly attribute unsigned long length;
@@ -1229,10 +1245,12 @@ interface TestIndexedGetterInterface {
   [StoreInSlot, Pure] readonly attribute long storeInSlotAttr;
 };
 
+[Exposed=Window]
 interface TestNamedGetterInterface {
   getter DOMString (DOMString name);
 };
 
+[Exposed=Window]
 interface TestIndexedGetterAndSetterAndNamedGetterInterface {
   getter DOMString (DOMString myName);
   getter long (unsigned long index);
@@ -1240,23 +1258,27 @@ interface TestIndexedGetterAndSetterAndNamedGetterInterface {
   readonly attribute unsigned long length;
 };
 
+[Exposed=Window]
 interface TestIndexedAndNamedGetterInterface {
   getter long (unsigned long index);
   getter DOMString namedItem(DOMString name);
   readonly attribute unsigned long length;
 };
 
+[Exposed=Window]
 interface TestIndexedSetterInterface {
   setter void setItem(unsigned long idx, DOMString item);
   getter DOMString (unsigned long idx);
   readonly attribute unsigned long length;
 };
 
+[Exposed=Window]
 interface TestNamedSetterInterface {
   setter void (DOMString myName, TestIndexedSetterInterface item);
   getter TestIndexedSetterInterface (DOMString name);
 };
 
+[Exposed=Window]
 interface TestIndexedAndNamedSetterInterface {
   setter void (unsigned long index, TestIndexedSetterInterface item);
   getter TestIndexedSetterInterface (unsigned long index);
@@ -1265,6 +1287,7 @@ interface TestIndexedAndNamedSetterInterface {
   getter TestIndexedSetterInterface (DOMString name);
 };
 
+[Exposed=Window]
 interface TestIndexedAndNamedGetterAndSetterInterface : TestIndexedSetterInterface {
   getter long item(unsigned long index);
   getter DOMString namedItem(DOMString name);
@@ -1274,32 +1297,40 @@ interface TestIndexedAndNamedGetterAndSetterInterface : TestIndexedSetterInterfa
   readonly attribute unsigned long length;
 };
 
+[Exposed=Window]
 interface TestNamedDeleterInterface {
   deleter void (DOMString name);
   getter long (DOMString name);
 };
 
+[Exposed=Window]
 interface TestNamedDeleterWithRetvalInterface {
   deleter boolean delNamedItem(DOMString name);
   getter long (DOMString name);
 };
 
+[Exposed=Window]
 interface TestCppKeywordNamedMethodsInterface {
   boolean continue();
   boolean delete();
   long volatile();
 };
 
-[Deprecated="EnablePrivilege", Constructor()]
+[Deprecated="Components",
+ Exposed=Window]
 interface TestDeprecatedInterface {
+  constructor();
+
   static void alsoDeprecated();
 };
 
 
-[Constructor(Promise<void> promise)]
+[Exposed=Window]
 interface TestInterfaceWithPromiseConstructorArg {
+  constructor(Promise<void> promise);
 };
 
+[Exposed=Window]
 namespace TestNamespace {
   readonly attribute boolean foo;
   long bar();
@@ -1309,15 +1340,18 @@ partial namespace TestNamespace {
   void baz();
 };
 
-[ClassString="RenamedNamespaceClassName"]
+[ClassString="RenamedNamespaceClassName",
+ Exposed=Window]
 namespace TestRenamedNamespace {
 };
 
-[ProtoObjectHack]
+[ProtoObjectHack,
+ Exposed=Window]
 namespace TestProtoObjectHackedNamespace {
 };
 
-[SecureContext]
+[SecureContext,
+ Exposed=Window]
 interface TestSecureContextInterface {
   static void alsoSecureContext();
 };
@@ -1332,10 +1366,31 @@ interface TestWorkerExposedInterface {
   [NeedsSubjectPrincipal=NonSystem] attribute boolean needsNonSystemSubjectPrincipalAttr;
 };
 
-[HTMLConstructor]
+[Exposed=Window]
 interface TestHTMLConstructorInterface {
+  [HTMLConstructor] constructor();
 };
 
+[Exposed=Window]
+interface TestThrowingConstructorInterface {
+  [Throws]
+  constructor();
+  [Throws]
+  constructor(DOMString str);
+  [Throws]
+  constructor(unsigned long num, boolean? boolArg);
+  [Throws]
+  constructor(TestInterface? iface);
+  [Throws]
+  constructor(unsigned long arg1, TestInterface iface);
+  [Throws]
+  constructor(ArrayBuffer arrayBuf);
+  [Throws]
+  constructor(Uint8Array typedArr);
+  // [Throws] constructor(long arg1, long arg2, (TestInterface or OnlyForUseInConstructor) arg3);
+};
+
+[Exposed=Window]
 interface TestCEReactionsInterface {
   [CEReactions] setter void (unsigned long index, long item);
   [CEReactions] setter void (DOMString name, DOMString item);
@@ -1348,6 +1403,7 @@ interface TestCEReactionsInterface {
 typedef [EnforceRange] octet OctetRange;
 typedef [Clamp] octet OctetClamp;
 typedef [TreatNullAs=EmptyString] DOMString NullEmptyString;
+// typedef [TreatNullAs=EmptyString] JSString NullEmptyJSString;
 
 dictionary TestAttributesOnDictionaryMembers {
   [Clamp] octet a;
@@ -1358,12 +1414,80 @@ dictionary TestAttributesOnDictionaryMembers {
   // test [ChromeOnly] required [Clamp] octet e
 };
 
+[Exposed=Window]
 interface TestAttributesOnTypes {
   void foo(OctetClamp thingy);
   void bar(OctetRange thingy);
   void baz(NullEmptyString thingy);
+  // void qux(NullEmptyJSString thingy);
   attribute [Clamp] octet someAttr;
   void argWithAttr([Clamp] octet arg0, optional [Clamp] octet arg1);
   // There aren't any argument-only attributes that we can test here,
   // TreatNonCallableAsNull isn't compatible with Clamp-able types
+};
+
+[Exposed=Window]
+interface TestPrefConstructorForInterface {
+  // Since only the constructor is under a pref,
+  // the generated constructor should check for the pref.
+  [Pref="dom.webidl.test1"] constructor();
+};
+
+[Exposed=Window, Pref="dom.webidl.test1"]
+interface TestConstructorForPrefInterface {
+  // Since the interface itself is under a Pref, there should be no
+  // check for the pref in the generated constructor.
+  constructor();
+};
+
+[Exposed=Window, Pref="dom.webidl.test1"]
+interface TestPrefConstructorForDifferentPrefInterface {
+  // Since the constructor's pref is different than the interface pref
+  // there should still be a check for the pref in the generated constructor.
+  [Pref="dom.webidl.test2"] constructor();
+};
+
+[Exposed=Window, SecureContext]
+interface TestConstructorForSCInterface {
+  // Since the interface itself is SecureContext, there should be no
+  // runtime check for SecureContext in the generated constructor.
+  constructor();
+};
+
+[Exposed=Window]
+interface TestSCConstructorForInterface {
+  // Since the interface context is unspecified but the constructor is
+  // SecureContext, the generated constructor should check for SecureContext.
+  [SecureContext] constructor();
+};
+
+[Exposed=Window, Func="Document::IsWebAnimationsEnabled"]
+interface TestConstructorForFuncInterface {
+  // Since the interface has a Func attribute, but the constructor does not,
+  // the generated constructor should not check for the Func.
+  constructor();
+};
+
+[Exposed=Window]
+interface TestFuncConstructorForInterface {
+  // Since the constructor has a Func attribute, but the interface does not,
+  // the generated constructor should check for the Func.
+  [Func="Document::IsWebAnimationsEnabled"]
+  constructor();
+};
+
+[Exposed=Window, Func="Document::AreWebAnimationsTimelinesEnabled"]
+interface TestFuncConstructorForDifferentFuncInterface {
+  // Since the constructor has a different Func attribute from the interface,
+  // the generated constructor should still check for its conditional func.
+  [Func="Document::IsWebAnimationsEnabled"]
+  constructor();
+};
+
+[Exposed=Window]
+interface TestPrefChromeOnlySCFuncConstructorForInterface {
+  [Pref="dom.webidl.test1", ChromeOnly, SecureContext, Func="Document::IsWebAnimationsEnabled"]
+  // There should be checks for all Pref/ChromeOnly/SecureContext/Func
+  // in the generated constructor.
+  constructor();
 };

@@ -7,11 +7,11 @@ add_task(async function() {
 
   const target = await TargetFactory.forTab(gBrowser.selectedTab);
   await target.attach();
-  is(target.tab, gBrowser.selectedTab, "Target linked to the right tab.");
+  is(target.localTab, gBrowser.selectedTab, "Target linked to the right tab.");
 
   const willNavigate = once(target, "will-navigate");
   const navigate = once(target, "navigate");
-  ContentTask.spawn(gBrowser.selectedBrowser, null, () => {
+  SpecialPowers.spawn(gBrowser.selectedBrowser, [], () => {
     content.location = "data:text/html,<meta charset='utf8'/>test navigation";
   });
   await willNavigate;

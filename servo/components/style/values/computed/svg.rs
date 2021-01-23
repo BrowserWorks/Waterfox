@@ -11,23 +11,13 @@ use crate::values::generics::svg as generic;
 use crate::values::RGBA;
 use crate::Zero;
 
-pub use crate::values::specified::SVGPaintOrder;
-
-pub use crate::values::specified::MozContextProperties;
+pub use crate::values::specified::{MozContextProperties, SVGPaintOrder};
 
 /// Computed SVG Paint value
-pub type SVGPaint = generic::SVGPaint<Color, ComputedUrl>;
-/// Computed SVG Paint Kind value
-pub type SVGPaintKind = generic::SVGPaintKind<Color, ComputedUrl>;
+pub type SVGPaint = generic::GenericSVGPaint<Color, ComputedUrl>;
 
-impl Default for SVGPaint {
-    fn default() -> Self {
-        SVGPaint {
-            kind: generic::SVGPaintKind::None,
-            fallback: None,
-        }
-    }
-}
+/// Computed SVG Paint Kind value
+pub type SVGPaintKind = generic::GenericSVGPaintKind<Color, ComputedUrl>;
 
 impl SVGPaint {
     /// Opaque black color
@@ -35,13 +25,13 @@ impl SVGPaint {
         let rgba = RGBA::from_floats(0., 0., 0., 1.).into();
         SVGPaint {
             kind: generic::SVGPaintKind::Color(rgba),
-            fallback: None,
+            fallback: generic::SVGPaintFallback::Unset,
         }
     }
 }
 
 /// <length> | <percentage> | <number> | context-value
-pub type SVGLength = generic::SVGLength<LengthPercentage>;
+pub type SVGLength = generic::GenericSVGLength<LengthPercentage>;
 
 impl SVGLength {
     /// `0px`
@@ -51,7 +41,7 @@ impl SVGLength {
 }
 
 /// An non-negative wrapper of SVGLength.
-pub type SVGWidth = generic::SVGLength<NonNegativeLengthPercentage>;
+pub type SVGWidth = generic::GenericSVGLength<NonNegativeLengthPercentage>;
 
 impl SVGWidth {
     /// `1px`.
@@ -62,16 +52,16 @@ impl SVGWidth {
 }
 
 /// [ <length> | <percentage> | <number> ]# | context-value
-pub type SVGStrokeDashArray = generic::SVGStrokeDashArray<NonNegativeLengthPercentage>;
+pub type SVGStrokeDashArray = generic::GenericSVGStrokeDashArray<NonNegativeLengthPercentage>;
 
 impl Default for SVGStrokeDashArray {
     fn default() -> Self {
-        generic::SVGStrokeDashArray::Values(vec![])
+        generic::SVGStrokeDashArray::Values(Default::default())
     }
 }
 
 /// <opacity-value> | context-fill-opacity | context-stroke-opacity
-pub type SVGOpacity = generic::SVGOpacity<Opacity>;
+pub type SVGOpacity = generic::GenericSVGOpacity<Opacity>;
 
 impl Default for SVGOpacity {
     fn default() -> Self {

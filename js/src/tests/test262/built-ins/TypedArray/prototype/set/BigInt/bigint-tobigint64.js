@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('BigInt')) -- BigInt is not enabled unconditionally
 // Copyright (C) 2018 Valerie Young. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 /*---
@@ -50,7 +49,6 @@ info: |
     2. Let int64bit be n modulo 2^64.
     3. If int64bit ≥ 2^63, return int64bit - 2^64; otherwise return int64bit.
 
-includes: [testBigIntTypedArray.js]
 features: [BigInt, TypedArray]
 ---*/
 

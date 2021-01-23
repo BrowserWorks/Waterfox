@@ -232,7 +232,7 @@ class TextureSource : public RefCounted<TextureSource> {
 template <typename T>
 class CompositableTextureRef {
  public:
-  CompositableTextureRef() {}
+  CompositableTextureRef() = default;
 
   explicit CompositableTextureRef(const CompositableTextureRef& aOther) {
     *this = aOther;
@@ -448,6 +448,14 @@ class TextureHost : public AtomicRefCountedWithFinalize<TextureHost> {
   }
 
   /**
+   * Return true if using full range values (0-255 if 8 bits YUV). Used with YUV
+   * textures.
+   */
+  virtual gfx::ColorRange GetColorRange() const {
+    return gfx::ColorRange::LIMITED;
+  }
+
+  /**
    * Called during the transaction. The TextureSource may or may not be
    * composited.
    *
@@ -640,9 +648,17 @@ class TextureHost : public AtomicRefCountedWithFinalize<TextureHost> {
         "No CreateRenderTexture() implementation for this TextureHost type.");
   }
 
+  void EnsureRenderTexture(const wr::MaybeExternalImageId& aExternalImageId);
+
+  // Destroy RenderTextureHost when it was created by the TextureHost.
+  // It is called in TextureHost::Finalize().
+  virtual void MaybeDestroyRenderTexture();
+
+  static void DestroyRenderTexture(const wr::ExternalImageId& aExternalImageId);
+
   /// Returns the number of actual textures that will be used to render this.
   /// For example in a lot of YUV cases it will be 3
-  virtual uint32_t NumSubTextures() const { return 1; }
+  virtual uint32_t NumSubTextures() { return 1; }
 
   enum ResourceUpdateOp {
     ADD_IMAGE,
@@ -663,7 +679,8 @@ class TextureHost : public AtomicRefCountedWithFinalize<TextureHost> {
                                 const wr::LayoutRect& aBounds,
                                 const wr::LayoutRect& aClip,
                                 wr::ImageRendering aFilter,
-                                const Range<wr::ImageKey>& aKeys) {
+                                const Range<wr::ImageKey>& aKeys,
+                                const bool aPreferCompositorSurface) {
     MOZ_ASSERT_UNREACHABLE(
         "No PushDisplayItems() implementation for this TextureHost type.");
   }
@@ -674,8 +691,6 @@ class TextureHost : public AtomicRefCountedWithFinalize<TextureHost> {
   virtual MacIOSurface* GetMacIOSurface() { return nullptr; }
 
   virtual bool IsDirectMap() { return false; }
-
-  virtual bool SupportsWrNativeTexture() { return false; }
 
   virtual bool NeedsYFlip() const;
 
@@ -708,11 +723,14 @@ class TextureHost : public AtomicRefCountedWithFinalize<TextureHost> {
   int mCompositableCount;
   uint64_t mFwdTransactionId;
   bool mReadLocked;
+  wr::MaybeExternalImageId mExternalImageId;
 
   friend class Compositor;
   friend class TextureParent;
   friend class TiledLayerBufferComposite;
   friend class TextureSourceProvider;
+  friend class GPUVideoTextureHost;
+  friend class WebRenderTextureHost;
 };
 
 /**
@@ -766,6 +784,8 @@ class BufferTextureHost : public TextureHost {
 
   gfx::ColorDepth GetColorDepth() const override;
 
+  gfx::ColorRange GetColorRange() const override;
+
   gfx::IntSize GetSize() const override { return mSize; }
 
   already_AddRefed<gfx::DataSourceSurface> GetAsSurface() override;
@@ -779,7 +799,7 @@ class BufferTextureHost : public TextureHost {
   void CreateRenderTexture(
       const wr::ExternalImageId& aExternalImageId) override;
 
-  uint32_t NumSubTextures() const override;
+  uint32_t NumSubTextures() override;
 
   void PushResourceUpdates(wr::TransactionBuilder& aResources,
                            ResourceUpdateOp aOp,
@@ -789,7 +809,8 @@ class BufferTextureHost : public TextureHost {
   void PushDisplayItems(wr::DisplayListBuilder& aBuilder,
                         const wr::LayoutRect& aBounds,
                         const wr::LayoutRect& aClip, wr::ImageRendering aFilter,
-                        const Range<wr::ImageKey>& aImageKeys) override;
+                        const Range<wr::ImageKey>& aImageKeys,
+                        const bool aPreferCompositorSurface) override;
 
   void ReadUnlock() override;
   bool IsDirectMap() override {

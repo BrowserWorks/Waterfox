@@ -92,21 +92,18 @@ html, body, #app, #memory-tool {
   margin-inline-end: 5px;
 }
 
-.devtools-toolbar > .toolbar-group > label.display-by > span {
-  margin-inline-end: 5px;
-}
-
-.devtools-toolbar > .toolbar-group > label.label-by > span {
-  margin-inline-end: 5px;
-}
-
 .devtools-toolbar > label {
   margin-inline-end: 5px;
   display: flex;
   align-items: center;
 }
 
-#select-view {
+.devtools-toolbar > .toolbar-text {
+  display: flex;
+  align-items: center;
+}
+
+.devtools-toolbar-select {
   margin-inline-start: 5px;
 }
 
@@ -330,10 +327,6 @@ html, body, #app, #memory-tool {
   font-size: 120%;
 }
 
-#heap-view > .heap-view-panel > .take-snapshot {
-  padding: 5px;
-}
-
 #heap-view > .heap-view-panel[data-state="snapshot-state-error"] pre {
   background-color: var(--theme-body-background);
   margin: 20px;
@@ -405,7 +398,10 @@ html, body, #app, #memory-tool {
 }
 
 .children-pointer {
-  padding-inline-end: 5px;
+  display: inline-block;
+  /* We use transform to reverse the icon in RTL,
+   * so `padding-right` will get reversed as well. */
+  padding-right: 5px;
 }
 
 .children-pointer:dir(rtl) {
@@ -580,7 +576,7 @@ html, body, #app, #memory-tool {
   height: 12px;
   max-height: 12px;
   margin-inline-end: 5px;
-  background-image: url(chrome://devtools/skin/images/alert.svg);
+  background-image: url(chrome://devtools/skin/images/alert-small.svg);
   background-repeat: no-repeat;
   background-size: contain;
   -moz-context-properties: fill;

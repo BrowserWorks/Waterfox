@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Botoi Propietateak">
+
+<!ENTITY Settings.label "Ezarpenak">
+
+<!ENTITY ButtonType.label "Mota">
+<!ENTITY ButtonType.accesskey "t">
+<!ENTITY submit.value "Bidali">
+<!ENTITY reset.value "Berrezarri">
+<!ENTITY button.value "Botoia">
+
+<!ENTITY ButtonName.label "Izena:">
+<!ENTITY ButtonName.accesskey "n">
+<!ENTITY ButtonValue.label "Balioa:">
+<!ENTITY ButtonValue.accesskey "B">
+<!ENTITY tabIndex.label "Tabulazio-indizea:">
+<!ENTITY tabIndex.accesskey "i">
+<!ENTITY ButtonDisabled.label "Ezgaituta">
+<!ENTITY ButtonDisabled.accesskey "E">
+<!ENTITY AccessKey.label "Laster-tekla:">
+<!ENTITY AccessKey.accesskey "k">
+
+<!ENTITY RemoveButton.label "Ezabatu botoia">
+<!ENTITY RemoveButton.accesskey "E">

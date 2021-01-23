@@ -1,0 +1,87 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageStorage.label "Ruyakb'alil Tzijol">
+<!ENTITY securitySettings.label "Kijikomal Nuk'ulem">
+<!ENTITY serverSettings.label "Kinuk'ulem K'uxasamaj">
+<!ENTITY serverType.label "Ruwäch K'uxasamaj:">
+<!ENTITY serverName.label "Rub'i' K'uxasamaj:">
+<!ENTITY serverName.accesskey "K">
+<!ENTITY userName.label "Rub'i' winäq:">
+<!ENTITY userName.accesskey "b">
+<!ENTITY port.label "B'ey:">
+<!ENTITY port.accesskey "B">
+<!ENTITY serverPortDefault.label "K'o wi:">
+<!-- LOCALIZATION NOTE (biffStart.label) : translate below 2 line with grammar dependency
+        For example, in Japanese cases:
+                biffStart.label "every"
+                biffEnd.label   "minutes for new messages Check"
+-->
+<!ENTITY biffStart.label "Kenik'öx k'ak'a' taq rutzijol pa taq ">
+<!ENTITY biffStart.accesskey "p">
+<!ENTITY biffEnd.label "taq ch'utiramaj">
+<!ENTITY useIdleNotifications.label "Tiya' yonil taq rutzijol pa k'uxasamaj toq ye'apon k'ak'a' taq rutzijol">
+<!ENTITY useIdleNotifications.accesskey "y">
+<!ENTITY connectionSecurity.label "Rujikomal okem:">
+<!ENTITY connectionSecurity.accesskey "k">
+<!ENTITY connectionSecurityType-0.label "Majun">
+<!ENTITY connectionSecurityType-1.label "STARTTLS, kan wachel">
+<!ENTITY connectionSecurityType-2.label "STARTTLS">
+<!ENTITY connectionSecurityType-3.label "SSL/TLS">
+<!ENTITY authMethod.label "Rujikib'axik b'eyal:">
+<!ENTITY authMethod.accesskey "i">
+<!ENTITY leaveOnServer.label "Keya' kan taq tzijol pa k'uxasamaj">
+<!ENTITY leaveOnServer.accesskey "z">
+<!ENTITY headersOnly.label "Kek'ul xa xe ri taq jub'i'aj">
+<!ENTITY headersOnly.accesskey "e">
+<!ENTITY deleteByAgeFromServer.label "Chi ke">
+<!ENTITY deleteByAgeFromServer.accesskey "e">
+<!ENTITY daysEnd.label "taq q'ij">
+<!ENTITY deleteOnServer2.label "K'a toq yenyüj el">
+<!ENTITY deleteOnServer2.accesskey "y">
+<!ENTITY downloadOnBiff.label "Kiyon keqasäx k'ak'a' taq rutzijol">
+<!ENTITY downloadOnBiff.accesskey "n">
+<!ENTITY deleteMessagePrefix.label "Toq ninyüj el jun rutzijol:">
+<!ENTITY modelMoveToTrash.label "Tisilöx pa re yakwuj re':">
+<!ENTITY modelMoveToTrash.accesskey "s">
+<!ENTITY modelMarkDeleted.label "Tiya' retal achi'el yujun">
+<!ENTITY modelMarkDeleted.accesskey "r">
+<!ENTITY modelDeleteImmediately.label "Aninäq tiyuj el">
+<!ENTITY modelDeleteImmediately.accesskey "n">
+<!-- LOCALIZATION NOTE (expungeOnExit.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY expungeOnExit.label "Tijosq'ïx (&quot;Tiyuj rupam&quot;) Molb'äl toq Nel">
+<!ENTITY expungeOnExit.accesskey "N">
+<!ENTITY emptyTrashOnExit.label "Tijam ri Molb'äl toq Nel">
+<!ENTITY emptyTrashOnExit.accesskey "l">
+<!ENTITY loginAtStartup.label "Tinik'öx we e k'o k'ak'a' taq rutzijol toq nitikirisäx qa">
+<!ENTITY loginAtStartup.accesskey "T">
+<!-- LOCALIZATION NOTE (maxMessagesStart.label) : translate below 2 lines with grammar dependency
+    maxMessengerStart.label will be followed by maxMessagesEnd.label with the number
+    of messages between them
+-->
+<!ENTITY maxMessagesStart.label "Tik'utüx pe chwe chi rij niqasäx ch'aqa' chik">
+<!ENTITY maxMessagesStart.accesskey "w">
+<!-- LOCALIZATION NOTE (maxMessagesEnd.label) : see note for maxMessagesStart.label -->
+<!ENTITY maxMessagesEnd.label "taq tzijol">
+<!ENTITY alwaysAuthenticate.label "Junelïk tik'utüx jikib'anïk toq nok pa re k'uxasamaj re'">
+<!ENTITY alwaysAuthenticate.accesskey "n">
+<!ENTITY abbreviate.label "Tik'ut pe ri kib'i' ri kimolaj taq tzijol pa ri Taqoya'l Yakwuj achi'el:">
+<!ENTITY abbreviateOn.label "Tz'aqät taq b'i'aj (Achi'el, 'netscape.public.mozilla.mail-news')">
+<!ENTITY abbreviateOff.label "Ch'utin taq b'i'aj (Achi'el, 'n.p.m.mail-news')">
+<!ENTITY advancedButton.label "Taq q'axinäq…">
+<!ENTITY advancedButton.accesskey "x">
+<!ENTITY serverDefaultCharset2.label "Runuk'ik Rucholajem Tzij e K'o wi:">
+<!ENTITY localPath1.label "Aj wawe' Cholb'äl:">
+<!ENTITY localFolderPicker.label "Ticha' Aj Wawe' Cholb'äl">
+<!ENTITY browseFolder.label "Tokik'amayin…">
+<!ENTITY browseFolder.accesskey "o">
+<!ENTITY browseNewsrc.label "Tokik'amayin…">
+<!ENTITY browseNewsrc.accesskey "o">
+
+<!ENTITY accountTitle.label "Kinuk'ulem Rub'i' Taqoya'l">
+<!ENTITY accountSettingsDesc.label "Re rub'i' taqoya'l re' k'o rejqalem.  Majun b'anikil ruximon ri' rik'in.">
+<!ENTITY storeType.label "Ruwäch Ruyakb'alil Tzijol:">
+<!ENTITY storeType.accesskey "T">
+<!ENTITY mboxStore2.label "Yakb'äl chi yakwuj (mbox)">
+<!ENTITY maildirStore.label "Jun yakb'äl chi rutzijol (maildir)">

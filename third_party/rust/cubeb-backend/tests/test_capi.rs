@@ -100,12 +100,11 @@ impl StreamOps for TestStream {
     fn latency(&mut self) -> Result<u32> {
         Ok(0u32)
     }
+    fn input_latency(&mut self) -> Result<u32> {
+        Ok(0u32)
+    }
     fn set_volume(&mut self, volume: f32) -> Result<()> {
         assert_eq!(volume, 0.5);
-        Ok(())
-    }
-    fn set_panning(&mut self, panning: f32) -> Result<()> {
-        assert_eq!(panning, 0.5);
         Ok(())
     }
     fn current_device(&mut self) -> Result<&DeviceRef> {
@@ -219,14 +218,6 @@ fn test_ops_stream_set_volume() {
     let s: *mut ffi::cubeb_stream = ptr::null_mut();
     unsafe {
         OPS.stream_set_volume.unwrap()(s, 0.5);
-    }
-}
-
-#[test]
-fn test_ops_stream_set_panning() {
-    let s: *mut ffi::cubeb_stream = ptr::null_mut();
-    unsafe {
-        OPS.stream_set_panning.unwrap()(s, 0.5);
     }
 }
 

@@ -17,6 +17,7 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/FloatingPoint.h"
+#include "mozilla/Span.h"
 
 namespace mozilla {
 namespace gfx {
@@ -25,6 +26,12 @@ static inline bool FuzzyEqual(Float aV1, Float aV2) {
   // XXX - Check if fabs does the smart thing and just negates the sign bit.
   return fabs(aV2 - aV1) < 1e-6;
 }
+
+template <typename F>
+Span<Point4DTyped<UnknownUnits, F>> IntersectPolygon(
+    Span<Point4DTyped<UnknownUnits, F>> aPoints,
+    const Point4DTyped<UnknownUnits, F>& aPlaneNormal,
+    Span<Point4DTyped<UnknownUnits, F>> aDestBuffer);
 
 template <class T>
 class BaseMatrix {
@@ -47,6 +54,15 @@ class BaseMatrix {
     };
     T components[6];
   };
+
+  template <class T2>
+  explicit BaseMatrix(const BaseMatrix<T2>& aOther)
+      : _11(aOther._11),
+        _12(aOther._12),
+        _21(aOther._21),
+        _22(aOther._22),
+        _31(aOther._31),
+        _32(aOther._32) {}
 
   MOZ_ALWAYS_INLINE BaseMatrix Copy() const { return BaseMatrix<T>(*this); }
 
@@ -538,6 +554,26 @@ class Matrix4x4Typed {
     memcpy(components, aOther.components, sizeof(components));
   }
 
+  template <class T2>
+  explicit Matrix4x4Typed(
+      const Matrix4x4Typed<SourceUnits, TargetUnits, T2>& aOther)
+      : _11(aOther._11),
+        _12(aOther._12),
+        _13(aOther._13),
+        _14(aOther._14),
+        _21(aOther._21),
+        _22(aOther._22),
+        _23(aOther._23),
+        _24(aOther._24),
+        _31(aOther._31),
+        _32(aOther._32),
+        _33(aOther._33),
+        _34(aOther._34),
+        _41(aOther._41),
+        _42(aOther._42),
+        _43(aOther._43),
+        _44(aOther._44) {}
+
   union {
     struct {
       T _11, _12, _13, _14;
@@ -794,95 +830,64 @@ class Matrix4x4Typed {
    * The resulting vertices are populated in aVerts.  aVerts must be
    * pre-allocated to hold at least kTransformAndClipRectMaxVerts Points.
    * The vertex count is returned by TransformAndClipRect.  It is possible to
-   * emit fewer that 3 vertices, indicating that aRect will not be visible
+   * emit fewer than 3 vertices, indicating that aRect will not be visible
    * within aClip.
    */
   template <class F>
   size_t TransformAndClipRect(const RectTyped<SourceUnits, F>& aRect,
                               const RectTyped<TargetUnits, F>& aClip,
                               PointTyped<TargetUnits, F>* aVerts) const {
-    // Initialize a double-buffered array of points in homogenous space with
-    // the input rectangle, aRect.
-    Point4DTyped<UnknownUnits, F> points[2][kTransformAndClipRectMaxVerts];
-    Point4DTyped<UnknownUnits, F>* dstPoint = points[0];
+    typedef Point4DTyped<UnknownUnits, F> P4D;
 
-    *dstPoint++ = TransformPoint(
-        Point4DTyped<UnknownUnits, F>(aRect.X(), aRect.Y(), 0, 1));
-    *dstPoint++ = TransformPoint(
-        Point4DTyped<UnknownUnits, F>(aRect.XMost(), aRect.Y(), 0, 1));
-    *dstPoint++ = TransformPoint(
-        Point4DTyped<UnknownUnits, F>(aRect.XMost(), aRect.YMost(), 0, 1));
-    *dstPoint++ = TransformPoint(
-        Point4DTyped<UnknownUnits, F>(aRect.X(), aRect.YMost(), 0, 1));
+    // The initial polygon is made up by the corners of aRect in homogenous
+    // space, mapped into the destination space of this transform.
+    P4D rectCorners[] = {
+        TransformPoint(P4D(aRect.X(), aRect.Y(), 0, 1)),
+        TransformPoint(P4D(aRect.XMost(), aRect.Y(), 0, 1)),
+        TransformPoint(P4D(aRect.XMost(), aRect.YMost(), 0, 1)),
+        TransformPoint(P4D(aRect.X(), aRect.YMost(), 0, 1)),
+    };
 
+    // Cut off pieces of the polygon that are outside of aClip (the "view
+    // frustrum"), by consecutively intersecting the polygon with the half space
+    // induced by the clipping plane for each side of aClip.
     // View frustum clipping planes are described as normals originating from
     // the 0,0,0,0 origin.
-    Point4DTyped<UnknownUnits, F> planeNormals[4];
-    planeNormals[0] = Point4DTyped<UnknownUnits, F>(1.0, 0.0, 0.0, -aClip.X());
-    planeNormals[1] =
-        Point4DTyped<UnknownUnits, F>(-1.0, 0.0, 0.0, aClip.XMost());
-    planeNormals[2] = Point4DTyped<UnknownUnits, F>(0.0, 1.0, 0.0, -aClip.Y());
-    planeNormals[3] =
-        Point4DTyped<UnknownUnits, F>(0.0, -1.0, 0.0, aClip.YMost());
+    // Each pass can increase or decrease the number of points that make up the
+    // current clipped polygon. We double buffer the set of points, alternating
+    // between polygonBufA and polygonBufB. Duplicated points in the polygons
+    // are kept around until all clipping is done. The loop at the end filters
+    // out any consecutive duplicates.
+    P4D polygonBufA[kTransformAndClipRectMaxVerts];
+    P4D polygonBufB[kTransformAndClipRectMaxVerts];
 
-    // Iterate through each clipping plane and clip the polygon.
-    // In each pass, we double buffer, alternating between points[0] and
-    // points[1].
-    for (int plane = 0; plane < 4; plane++) {
-      planeNormals[plane].Normalize();
-      Point4DTyped<UnknownUnits, F>* srcPoint = points[plane & 1];
-      Point4DTyped<UnknownUnits, F>* srcPointEnd = dstPoint;
+    Span<P4D> polygon(rectCorners);
+    polygon = IntersectPolygon<F>(polygon, P4D(1.0, 0.0, 0.0, -aClip.X()),
+                                  polygonBufA);
+    polygon = IntersectPolygon<F>(polygon, P4D(-1.0, 0.0, 0.0, aClip.XMost()),
+                                  polygonBufB);
+    polygon = IntersectPolygon<F>(polygon, P4D(0.0, 1.0, 0.0, -aClip.Y()),
+                                  polygonBufA);
+    polygon = IntersectPolygon<F>(polygon, P4D(0.0, -1.0, 0.0, aClip.YMost()),
+                                  polygonBufB);
 
-      dstPoint = points[~plane & 1];
-      Point4DTyped<UnknownUnits, F>* dstPointStart = dstPoint;
-
-      Point4DTyped<UnknownUnits, F>* prevPoint = srcPointEnd - 1;
-      F prevDot = planeNormals[plane].DotProduct(*prevPoint);
-      while (srcPoint < srcPointEnd &&
-             ((dstPoint - dstPointStart) < kTransformAndClipRectMaxVerts)) {
-        F nextDot = planeNormals[plane].DotProduct(*srcPoint);
-
-        if ((nextDot >= 0.0) != (prevDot >= 0.0)) {
-          // An intersection with the clipping plane has been detected.
-          // Interpolate to find the intersecting point and emit it.
-          F t = -prevDot / (nextDot - prevDot);
-          *dstPoint++ = *srcPoint * t + *prevPoint * (1.0 - t);
-        }
-
-        if (nextDot >= 0.0) {
-          // Emit any source points that are on the positive side of the
-          // clipping plane.
-          *dstPoint++ = *srcPoint;
-        }
-
-        prevPoint = srcPoint++;
-        prevDot = nextDot;
-      }
-
-      if (dstPoint == dstPointStart) {
-        break;
-      }
-    }
-
-    size_t dstPointCount = 0;
-    size_t srcPointCount = dstPoint - points[0];
-    for (Point4DTyped<UnknownUnits, F>* srcPoint = points[0];
-         srcPoint < points[0] + srcPointCount; srcPoint++) {
+    size_t vertCount = 0;
+    for (const auto& srcPoint : polygon) {
       PointTyped<TargetUnits, F> p;
-      if (srcPoint->w == 0.0) {
+      if (srcPoint.w == 0.0) {
         // If a point lies on the intersection of the clipping planes at
         // (0,0,0,0), we must avoid a division by zero w component.
         p = PointTyped<TargetUnits, F>(0.0, 0.0);
       } else {
-        p = srcPoint->As2DPoint();
+        p = srcPoint.As2DPoint();
       }
       // Emit only unique points
-      if (dstPointCount == 0 || p != aVerts[dstPointCount - 1]) {
-        aVerts[dstPointCount++] = p;
+      if (vertCount == 0 || p != aVerts[vertCount - 1]) {
+        aVerts[vertCount++] = p;
       }
     }
 
-    return dstPointCount;
+    return vertCount;
   }
 
   static const int kTransformAndClipRectMaxVerts = 32;
@@ -1153,10 +1158,15 @@ class Matrix4x4Typed {
 
   bool operator!=(const Matrix4x4Typed& o) const { return !((*this) == o); }
 
+  Matrix4x4Typed& operator=(const Matrix4x4Typed& aOther) {
+    memcpy(components, aOther.components, sizeof(components));
+    return *this;
+  }
+
   template <typename NewTargetUnits>
   Matrix4x4Typed<SourceUnits, NewTargetUnits, T> operator*(
-      const Matrix4x4Typed<TargetUnits, NewTargetUnits>& aMatrix) const {
-    Matrix4x4Typed<SourceUnits, NewTargetUnits> matrix;
+      const Matrix4x4Typed<TargetUnits, NewTargetUnits, T>& aMatrix) const {
+    Matrix4x4Typed<SourceUnits, NewTargetUnits, T> matrix;
 
     matrix._11 = _11 * aMatrix._11 + _12 * aMatrix._21 + _13 * aMatrix._31 +
                  _14 * aMatrix._41;
@@ -1707,10 +1717,23 @@ class Matrix4x4Typed {
         aUnknown._31, aUnknown._32, aUnknown._33, aUnknown._34,
         aUnknown._41, aUnknown._42, aUnknown._43, aUnknown._44};
   }
+  /**
+   * For convenience, overload FromUnknownMatrix() for Maybe<Matrix>.
+   */
+  static Maybe<Matrix4x4Typed> FromUnknownMatrix(
+      const Maybe<Matrix4x4>& aUnknown) {
+    if (aUnknown.isSome()) {
+      return Some(FromUnknownMatrix(*aUnknown));
+    }
+    return Nothing();
+  }
 };
 
 typedef Matrix4x4Typed<UnknownUnits, UnknownUnits> Matrix4x4;
 typedef Matrix4x4Typed<UnknownUnits, UnknownUnits, double> Matrix4x4Double;
+
+// This typedef is for IPDL, which can't reference a template-id directly.
+typedef Maybe<Matrix4x4> MaybeMatrix4x4;
 
 class Matrix5x4 {
  public:
@@ -1921,10 +1944,10 @@ class Matrix4x4TypedFlagged
       F max_y = std::max(std::max(std::max(p1.y, p2.y), p3.y), p4.y);
 
       TargetPoint topLeft(std::max(min_x, aClip.x), std::max(min_y, aClip.y));
-      F xMost = std::min(max_x, aClip.XMost()) - topLeft.x;
-      F yMost = std::min(max_y, aClip.YMost()) - topLeft.y;
+      F width = std::min(max_x, aClip.XMost()) - topLeft.x;
+      F height = std::min(max_y, aClip.YMost()) - topLeft.y;
 
-      return RectTyped<TargetUnits, F>(topLeft.x, topLeft.y, xMost, yMost);
+      return RectTyped<TargetUnits, F>(topLeft.x, topLeft.y, width, height);
     }
     return Parent::TransformAndClipBounds(aRect, aClip);
   }
@@ -2082,19 +2105,19 @@ class Matrix4x4TypedFlagged
       matrix._11 = _11 * aMatrix._11 + _12 * aMatrix._21;
       matrix._21 = _21 * aMatrix._11 + _22 * aMatrix._21;
       matrix._31 = aMatrix._31;
-      matrix._41 = _41 * aMatrix._11 + _42 * aMatrix._21;
+      matrix._41 = _41 * aMatrix._11 + _42 * aMatrix._21 + aMatrix._41;
       matrix._12 = _11 * aMatrix._12 + _12 * aMatrix._22;
       matrix._22 = _21 * aMatrix._12 + _22 * aMatrix._22;
       matrix._32 = aMatrix._32;
-      matrix._42 = _41 * aMatrix._12 + _42 * aMatrix._22;
+      matrix._42 = _41 * aMatrix._12 + _42 * aMatrix._22 + aMatrix._42;
       matrix._13 = _11 * aMatrix._13 + _12 * aMatrix._23;
       matrix._23 = _21 * aMatrix._13 + _22 * aMatrix._23;
       matrix._33 = aMatrix._33;
-      matrix._43 = _41 * aMatrix._13 + _42 * aMatrix._23;
+      matrix._43 = _41 * aMatrix._13 + _42 * aMatrix._23 + aMatrix._43;
       matrix._14 = _11 * aMatrix._14 + _12 * aMatrix._24;
       matrix._24 = _21 * aMatrix._14 + _22 * aMatrix._24;
       matrix._34 = aMatrix._34;
-      matrix._44 = _41 * aMatrix._14 + _42 * aMatrix._24;
+      matrix._44 = _41 * aMatrix._14 + _42 * aMatrix._24 + aMatrix._44;
       matrix.Analyze();
       return matrix;
     }

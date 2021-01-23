@@ -33,8 +33,8 @@
 #include "nsRegionFwd.h"      // for nsIntRegion
 
 #ifdef MOZ_WIDGET_ANDROID
-#  include "GeneratedJNIWrappers.h"
 #  include "AndroidSurfaceTexture.h"
+#  include "mozilla/java/GeckoSurfaceTextureWrappers.h"
 #endif
 
 namespace mozilla {
@@ -430,6 +430,8 @@ class SurfaceTextureHost : public TextureHost {
   void CreateRenderTexture(
       const wr::ExternalImageId& aExternalImageId) override;
 
+  uint32_t NumSubTextures() override;
+
   void PushResourceUpdates(wr::TransactionBuilder& aResources,
                            ResourceUpdateOp aOp,
                            const Range<wr::ImageKey>& aImageKeys,
@@ -438,9 +440,8 @@ class SurfaceTextureHost : public TextureHost {
   void PushDisplayItems(wr::DisplayListBuilder& aBuilder,
                         const wr::LayoutRect& aBounds,
                         const wr::LayoutRect& aClip, wr::ImageRendering aFilter,
-                        const Range<wr::ImageKey>& aImageKeys) override;
-
-  bool SupportsWrNativeTexture() override { return true; }
+                        const Range<wr::ImageKey>& aImageKeys,
+                        const bool aPreferCompositorSurface) override;
 
  protected:
   bool EnsureAttached();
@@ -545,7 +546,8 @@ class EGLImageTextureHost final : public TextureHost {
   void PushDisplayItems(wr::DisplayListBuilder& aBuilder,
                         const wr::LayoutRect& aBounds,
                         const wr::LayoutRect& aClip, wr::ImageRendering aFilter,
-                        const Range<wr::ImageKey>& aImageKeys) override;
+                        const Range<wr::ImageKey>& aImageKeys,
+                        const bool aPreferCompositorSurface) override;
 
  protected:
   const EGLImage mImage;

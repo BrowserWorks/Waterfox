@@ -1,0 +1,79 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+ /*
+ * The current layout of a service worker item is
+ *
+ *  +---+----------+-------------+----------------|
+ *  |     "Source" | script_name debug_link       |
+ *  |--------------+-------------+----------------|
+ *  |     "Status" | status start_button          |
+ *  +---+----------+-------------+----------------|
+ */
+
+.worker {
+  line-height: 1.5;
+  font-size: var(--body-10-font-size);
+}
+
+.worker__source-url {
+  user-select: text;
+}
+
+.worker__meta-name {
+  color: var(--theme-text-color-alt);
+}
+
+.worker__data {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-column-gap: calc(var(--base-unit) * 2);
+  grid-row-gap: calc(var(--base-unit) * 0.5);
+}
+
+.worker__data > * {
+  margin: 0;
+}
+
+/* skip the first <dt> + <dd> pair elements */
+.worker__data > *:nth-child(n + 3) {
+  margin-block-start: calc(var(--base-unit) * 2);
+}
+
+.worker__link-start,
+.worker__link-debug {
+  margin: 0 calc(var(--base-unit) * 2);
+}
+
+.worker__status {
+  text-transform: capitalize;
+  --status-bg-color: transparent;
+  --status-border-color: transparent;
+}
+
+.worker__status::before {
+  content: "";
+  margin-inline-end: var(--base-unit);
+  width: calc(var(--base-unit) * 2);
+  height: calc(var(--base-unit) * 2);
+  display: inline-block;
+  background: var(--status-bg-color);
+  border: 1px solid var(--status-border-color);
+  border-radius: 100%;
+}
+
+.worker__status--active {
+  --status-bg-color: var(--green-60);
+  --status-border-color: var(--green-60);
+}
+
+.worker__status--waiting {
+  --status-bg-color: var(--theme-text-color-alt);
+  --status-border-color: var(--theme-text-color-alt);
+}
+
+.worker__status--installing, .worker__status--default {
+  --status-bg-color: transparent;
+  --status-border-color: var(--theme-text-color-alt);
+}

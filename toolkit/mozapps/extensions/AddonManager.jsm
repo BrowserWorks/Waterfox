@@ -28,6 +28,7 @@ const MOZ_COMPATIBILITY_NIGHTLY = ![
   "esr",
 ].includes(AppConstants.MOZ_UPDATE_CHANNEL);
 
+const PREF_AMO_ABUSEREPORT = "extensions.abuseReport.amWebAPI.enabled";
 const PREF_BLOCKLIST_PINGCOUNTVERSION = "extensions.blocklist.pingCountVersion";
 const PREF_EM_UPDATE_ENABLED = "extensions.update.enabled";
 const PREF_EM_LAST_APP_VERSION = "extensions.lastAppVersion";
@@ -73,6 +74,7 @@ XPCOMUtils.defineLazyGlobalGetters(this, ["Element"]);
 
 XPCOMUtils.defineLazyModuleGetters(this, {
   AddonRepository: "resource://gre/modules/addons/AddonRepository.jsm",
+  AbuseReporter: "resource://gre/modules/AbuseReporter.jsm",
   Extension: "resource://gre/modules/Extension.jsm",
 });
 
@@ -87,7 +89,7 @@ XPCOMUtils.defineLazyPreferenceGetter(
 // since it needs to be able to track things like new frameLoader globals that
 // are created before other framework code has been initialized.
 Services.ppmm.loadProcessScript(
-  "data:,ChromeUtils.import('resource://gre/modules/ExtensionProcessScript.jsm')",
+  "resource://gre/modules/extensionProcessScriptLoader.js",
   true
 );
 
@@ -110,9 +112,6 @@ var formatter = new Log.BasicFormatter();
 // Set parent logger (and its children) to append to
 // the Javascript section of the Browser Console
 parentLogger.addAppender(new Log.ConsoleAppender(formatter));
-// Set parent logger (and its children) to
-// also append to standard out
-parentLogger.addAppender(new Log.DumpAppender(formatter));
 
 // Create a new logger (child of 'addons' logger)
 // for use by the Addons Manager
@@ -284,6 +283,7 @@ function webAPIForAddon(addon) {
  */
 function BrowserListener(aBrowser, aInstallingPrincipal, aInstall) {
   this.browser = aBrowser;
+  this.messageManager = this.browser.messageManager;
   this.principal = aInstallingPrincipal;
   this.install = aInstall;
 
@@ -325,7 +325,7 @@ BrowserListener.prototype = {
   },
 
   observe(subject, topic, data) {
-    if (subject != this.browser.messageManager) {
+    if (subject != this.messageManager) {
       return;
     }
 
@@ -456,71 +456,6 @@ AddonScreenshot.prototype = {
 };
 
 /**
- * This represents a compatibility override for an addon.
- *
- * @param  aType
- *         Override type - "compatible" or "incompatible"
- * @param  aMinVersion
- *         Minimum version of the addon to match
- * @param  aMaxVersion
- *         Maximum version of the addon to match
- * @param  aAppID
- *         Application ID used to match appMinVersion and appMaxVersion
- * @param  aAppMinVersion
- *         Minimum version of the application to match
- * @param  aAppMaxVersion
- *         Maximum version of the application to match
- */
-function AddonCompatibilityOverride(
-  aType,
-  aMinVersion,
-  aMaxVersion,
-  aAppID,
-  aAppMinVersion,
-  aAppMaxVersion
-) {
-  this.type = aType;
-  this.minVersion = aMinVersion;
-  this.maxVersion = aMaxVersion;
-  this.appID = aAppID;
-  this.appMinVersion = aAppMinVersion;
-  this.appMaxVersion = aAppMaxVersion;
-}
-
-AddonCompatibilityOverride.prototype = {
-  /**
-   * Type of override - "incompatible" or "compatible".
-   * Only "incompatible" is supported for now.
-   */
-  type: null,
-
-  /**
-   * Min version of the addon to match.
-   */
-  minVersion: null,
-
-  /**
-   * Max version of the addon to match.
-   */
-  maxVersion: null,
-
-  /**
-   * Application ID to match.
-   */
-  appID: null,
-
-  /**
-   * Min version of the application to match.
-   */
-  appMinVersion: null,
-
-  /**
-   * Max version of the application to match.
-   */
-  appMaxVersion: null,
-};
-
-/**
  * A type of add-on, used by the UI to determine how to display different types
  * of add-ons.
  *
@@ -597,7 +532,6 @@ var gFinalShutdownBarrier = null;
 var gBeforeShutdownBarrier = null;
 var gRepoShutdownState = "";
 var gShutdownInProgress = false;
-var gPluginPageListener = null;
 var gBrowserUpdated = null;
 
 var AMTelemetry;
@@ -885,18 +819,6 @@ var AddonManagerInternal = {
         }
       }
 
-      // Support for remote about:plugins. Note that this module isn't loaded
-      // at the top because Services.appinfo is defined late in tests.
-      let { RemotePages } = ChromeUtils.import(
-        "resource://gre/modules/remotepagemanager/RemotePageManagerParent.jsm"
-      );
-
-      gPluginPageListener = new RemotePages("about:plugins");
-      gPluginPageListener.addMessageListener(
-        "RequestPlugins",
-        this.requestPlugins
-      );
-
       gStartupComplete = true;
       this.recordTimestamp("AMI_startup_end");
     } catch (e) {
@@ -987,7 +909,7 @@ var AddonManagerInternal = {
       this.types[type].providers = this.types[type].providers.filter(
         p => p != aProvider
       );
-      if (this.types[type].providers.length == 0) {
+      if (!this.types[type].providers.length) {
         let oldType = this.types[type].type;
         delete this.types[type];
 
@@ -1126,8 +1048,6 @@ var AddonManagerInternal = {
     Services.prefs.removeObserver(PREF_EM_CHECK_UPDATE_SECURITY, this);
     Services.prefs.removeObserver(PREF_EM_UPDATE_ENABLED, this);
     Services.prefs.removeObserver(PREF_EM_AUTOUPDATE_DEFAULT, this);
-    gPluginPageListener.destroy();
-    gPluginPageListener = null;
 
     let savedError = null;
     // Only shut down providers if they've been started.
@@ -1177,30 +1097,6 @@ var AddonManagerInternal = {
     if (savedError) {
       throw savedError;
     }
-  },
-
-  async requestPlugins({ target: port }) {
-    // Lists all the properties that plugins.html needs
-    const NEEDED_PROPS = [
-      "name",
-      "pluginLibraries",
-      "pluginFullpath",
-      "version",
-      "isActive",
-      "blocklistState",
-      "description",
-      "pluginMimeTypes",
-    ];
-    function filterProperties(plugin) {
-      let filtered = {};
-      for (let prop of NEEDED_PROPS) {
-        filtered[prop] = plugin[prop];
-      }
-      return filtered;
-    }
-
-    let aPlugins = await AddonManager.getAddonsByTypes(["plugin"]);
-    port.sendAsyncMessage("PluginList", aPlugins.map(filterProperties));
   },
 
   /**
@@ -1366,7 +1262,7 @@ var AddonManagerInternal = {
     let difference = Extension.comparePermissions(oldPerms, newPerms);
 
     // If there are no new permissions, just go ahead with the update
-    if (difference.origins.length == 0 && difference.permissions.length == 0) {
+    if (!difference.origins.length && !difference.permissions.length) {
       return Promise.resolve();
     }
 
@@ -1903,9 +1799,11 @@ var AddonManagerInternal = {
    * @param  aTelemetryInfo
    *         An optional object which provides details about the installation source
    *         included in the addon manager telemetry events.
+   * @param  aUseSystemLocation
+   *         If true the addon is installed into the system profile location.
    * @throws if the aFile or aCallback arguments are not specified
    */
-  getInstallForFile(aFile, aMimetype, aTelemetryInfo) {
+  getInstallForFile(aFile, aMimetype, aTelemetryInfo, aUseSystemLocation) {
     if (!gStarted) {
       throw Components.Exception(
         "AddonManager is not initialized",
@@ -1933,7 +1831,8 @@ var AddonManagerInternal = {
           provider,
           "getInstallForFile",
           aFile,
-          aTelemetryInfo
+          aTelemetryInfo,
+          aUseSystemLocation
         );
 
         if (install) {
@@ -1943,6 +1842,25 @@ var AddonManagerInternal = {
 
       return null;
     })();
+  },
+
+  /**
+   * Uninstall an addon from the system profile location.
+   *
+   * @param {string} aID
+   *         The ID of the addon to remove.
+   * @returns A promise that resolves when the addon is uninstalled.
+   */
+  uninstallSystemProfileAddon(aID) {
+    if (!gStarted) {
+      throw Components.Exception(
+        "AddonManager is not initialized",
+        Cr.NS_ERROR_NOT_INITIALIZED
+      );
+    }
+    return AddonManagerInternal._getProviderByName(
+      "XPIProvider"
+    ).uninstallSystemProfileAddon(aID);
   },
 
   /**
@@ -2245,12 +2163,12 @@ var AddonManagerInternal = {
 
   /**
    * Starts installation of an AddonInstall notifying the registered
-   * web install listener of blocked or started installs.
+   * web install listener of a blocked or started install.
    *
    * @param  aMimetype
-   *         The mimetype of add-ons being installed
+   *         The mimetype of the add-on being installed
    * @param  aBrowser
-   *         The optional browser element that started the installs
+   *         The optional browser element that started the install
    * @param  aInstallingPrincipal
    *         The nsIPrincipal that initiated the install
    * @param  aInstall
@@ -2294,20 +2212,28 @@ var AddonManagerInternal = {
     // main tab's browser). Check this by seeing if the browser we've been
     // passed is in a content type docshell and if so get the outer-browser.
     let topBrowser = aBrowser;
-    let docShell = aBrowser.ownerGlobal.docShell;
-    if (docShell.itemType == Ci.nsIDocShellTreeItem.typeContent) {
-      topBrowser = docShell.chromeEventHandler;
+    // GeckoView does not pass a browser.
+    if (aBrowser) {
+      let docShell = aBrowser.ownerGlobal.docShell;
+      if (docShell.itemType == Ci.nsIDocShellTreeItem.typeContent) {
+        topBrowser = docShell.chromeEventHandler;
+      }
     }
 
     try {
-      if (topBrowser.ownerGlobal.fullScreen) {
-        // Addon installation and the resulting notifications should be blocked in fullscreen for security and usability reasons.
-        // Installation prompts in fullscreen can trick the user into installing unwanted addons.
-        // In fullscreen the notification box does not have a clear visual association with its parent anymore.
+      // Use fullscreenElement to check for DOM fullscreen, while still allowing
+      // macOS fullscreen, which still has a browser chrome.
+      if (topBrowser && topBrowser.ownerDocument.fullscreenElement) {
+        // Addon installation and the resulting notifications should be
+        // blocked in DOM fullscreen for security and usability reasons.
+        // Installation prompts in fullscreen can trick the user into
+        // installing unwanted addons.
+        // In fullscreen the notification box does not have a clear
+        // visual association with its parent anymore.
         aInstall.cancel();
 
         this.installNotifyObservers(
-          "addon-install-blocked-silent",
+          "addon-install-fullscreen-blocked",
           topBrowser,
           aInstallingPrincipal.URI,
           aInstall
@@ -2325,8 +2251,20 @@ var AddonManagerInternal = {
         return;
       } else if (
         aInstallingPrincipal.isNullPrincipal ||
-        !aBrowser.contentPrincipal ||
-        !aInstallingPrincipal.subsumes(aBrowser.contentPrincipal) ||
+        (aBrowser &&
+          (!aBrowser.contentPrincipal ||
+            // When we attempt to handle an XPI load immediately after a
+            // process switch, the DocShell it's being loaded into will have
+            // a null principal, since it won't have been initialized yet.
+            // Allowing installs in this case is relatively safe, since
+            // there isn't much to gain by spoofing an install request from
+            // a null principal in any case. This exception can be removed
+            // once content handlers are triggered by DocumentChannel in the
+            // parent process.
+            !(
+              aBrowser.contentPrincipal.isNullPrincipal ||
+              aInstallingPrincipal.subsumes(aBrowser.contentPrincipal)
+            ))) ||
         !this.isInstallAllowedByPolicy(
           aInstallingPrincipal,
           aInstall,
@@ -2344,10 +2282,12 @@ var AddonManagerInternal = {
         return;
       }
 
-      // The install may start now depending on the web install listener,
-      // listen for the browser navigating to a new origin and cancel the
-      // install in that case.
-      new BrowserListener(aBrowser, aInstallingPrincipal, aInstall);
+      if (aBrowser) {
+        // The install may start now depending on the web install listener,
+        // listen for the browser navigating to a new origin and cancel the
+        // install in that case.
+        new BrowserListener(aBrowser, aInstallingPrincipal, aInstall);
+      }
 
       let startInstall = source => {
         AddonManagerInternal.setupPromptHandler(
@@ -3373,7 +3313,13 @@ var AddonManagerInternal = {
         );
         install.addListener(listener);
 
-        this.installs.set(id, { install, target, listener, installPromise });
+        this.installs.set(id, {
+          install,
+          target,
+          listener,
+          installPromise,
+          messageManager: target.messageManager,
+        });
 
         let result = { id };
         this.copyProps(install, result);
@@ -3451,10 +3397,56 @@ var AddonManagerInternal = {
 
     clearInstallsFrom(mm) {
       for (let [id, info] of this.installs) {
-        if (info.target.messageManager == mm) {
+        if (info.messageManager == mm) {
           this.forgetInstall(id);
         }
       }
+    },
+
+    async addonReportAbuse(target, id) {
+      if (!Services.prefs.getBoolPref(PREF_AMO_ABUSEREPORT, false)) {
+        return Promise.reject({
+          message: "amWebAPI reportAbuse not supported",
+        });
+      }
+
+      let existingDialog = AbuseReporter.getOpenDialog();
+      if (existingDialog) {
+        existingDialog.close();
+      }
+
+      const dialog = await AbuseReporter.openDialog(id, "amo", target).catch(
+        err => {
+          Cu.reportError(err);
+          return Promise.reject({
+            message: "Error creating abuse report",
+          });
+        }
+      );
+
+      return dialog.promiseReport.then(
+        async report => {
+          if (!report) {
+            return false;
+          }
+
+          await report.submit().catch(err => {
+            Cu.reportError(err);
+            return Promise.reject({
+              message: "Error submitting abuse report",
+            });
+          });
+
+          return true;
+        },
+        err => {
+          Cu.reportError(err);
+          dialog.close();
+          return Promise.reject({
+            message: "Error creating abuse report",
+          });
+        }
+      );
     },
   },
 };
@@ -3547,8 +3539,6 @@ var AddonManagerPrivate = {
   AddonAuthor,
 
   AddonScreenshot,
-
-  AddonCompatibilityOverride,
 
   AddonType,
 
@@ -3989,12 +3979,22 @@ var AddonManager = {
     return AddonManagerInternal.getInstallForURL(aUrl, aOptions);
   },
 
-  getInstallForFile(aFile, aMimetype, aTelemetryInfo) {
+  getInstallForFile(
+    aFile,
+    aMimetype,
+    aTelemetryInfo,
+    aUseSystemLocation = false
+  ) {
     return AddonManagerInternal.getInstallForFile(
       aFile,
       aMimetype,
-      aTelemetryInfo
+      aTelemetryInfo,
+      aUseSystemLocation
     );
+  },
+
+  uninstallSystemProfileAddon(aID) {
+    return AddonManagerInternal.uninstallSystemProfileAddon(aID);
   },
 
   /**
@@ -4615,7 +4615,7 @@ AMTelemetry = {
 
     extra = { ...extraVars, ...extra };
 
-    let hasExtraVars = Object.keys(extra).length > 0;
+    let hasExtraVars = !!Object.keys(extra).length;
     extra = this.formatExtraVars(extra);
 
     this.recordEvent({
@@ -4749,10 +4749,10 @@ AMTelemetry = {
   },
 };
 
-this.AddonManager.init();
+AddonManager.init();
 
 // Setup the AMTelemetry once the AddonManager has been started.
-this.AddonManager.addManagerListener(AMTelemetry);
+AddonManager.addManagerListener(AMTelemetry);
 
 // load the timestamps module into AddonManagerInternal
 ChromeUtils.import(

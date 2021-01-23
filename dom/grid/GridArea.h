@@ -17,7 +17,7 @@ class Grid;
 
 class GridArea : public nsISupports, public nsWrapperCache {
  public:
-  explicit GridArea(Grid* aParent, const nsString& aName, GridDeclaration aType,
+  explicit GridArea(Grid* aParent, nsAtom* aName, GridDeclaration aType,
                     uint32_t aRowStart, uint32_t aRowEnd, uint32_t aColumnStart,
                     uint32_t aColumnEnd);
 
@@ -41,7 +41,7 @@ class GridArea : public nsISupports, public nsWrapperCache {
 
  protected:
   RefPtr<Grid> mParent;
-  const nsString mName;
+  const RefPtr<nsAtom> mName;
   const GridDeclaration mType;
   const uint32_t mRowStart;
   const uint32_t mRowEnd;

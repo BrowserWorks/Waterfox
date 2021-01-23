@@ -46,32 +46,7 @@ int32_t WebrtcMediaDataDecoder::InitDecode(
   mInfo = VideoInfo(aCodecSettings->width, aCodecSettings->height);
   mInfo.mMimeType = codec;
 
-  RefPtr<layers::KnowsCompositor> knowsCompositor =
-      layers::ImageBridgeChild::GetSingleton();
-
-  if (mDecoder) {
-    Release();
-  }
-
-  mDecoder = mFactory->CreateDecoder(
-      {mInfo, mTaskQueue,
-       CreateDecoderParams::OptionSet(
-           CreateDecoderParams::Option::LowLatency,
-           CreateDecoderParams::Option::FullH264Parsing,
-           CreateDecoderParams::Option::ErrorIfNoInitializationData),
-       mTrackType, mImageContainer, knowsCompositor});
-
-  if (!mDecoder) {
-    return WEBRTC_VIDEO_CODEC_ERROR;
-  }
-
-  media::Await(
-      do_AddRef(mThreadPool), mDecoder->Init(),
-      [&](TrackInfo::TrackType) { mError = NS_OK; },
-      [&](const MediaResult& aError) { mError = aError; });
-
-  return NS_SUCCEEDED(mError) ? WEBRTC_VIDEO_CODEC_OK
-                              : WEBRTC_VIDEO_CODEC_ERROR;
+  return CreateDecoder();
 }
 
 int32_t WebrtcMediaDataDecoder::Decode(
@@ -115,7 +90,7 @@ int32_t WebrtcMediaDataDecoder::Decode(
     media::Await(
         do_AddRef(mThreadPool), mDecoder->Decode(compressedFrame),
         [&](const MediaDataDecoder::DecodedData& aResults) {
-          mResults = aResults;
+          mResults = aResults.Clone();
           mError = NS_OK;
         },
         [&](const MediaResult& aError) { mError = aError; });
@@ -138,6 +113,12 @@ int32_t WebrtcMediaDataDecoder::Decode(
     }
     mResults.Clear();
   }
+
+  if (NS_FAILED(mError) && mError != NS_ERROR_DOM_MEDIA_CANCELED) {
+    CreateDecoder();
+    return WEBRTC_VIDEO_CODEC_ERROR;
+  }
+
   return NS_SUCCEEDED(mError) ? WEBRTC_VIDEO_CODEC_OK
                               : WEBRTC_VIDEO_CODEC_ERROR;
 }
@@ -149,9 +130,11 @@ int32_t WebrtcMediaDataDecoder::RegisterDecodeCompleteCallback(
 }
 
 int32_t WebrtcMediaDataDecoder::Release() {
-  RefPtr<MediaDataDecoder> decoder = mDecoder.forget();
-  decoder->Flush()->Then(mTaskQueue, __func__,
-                         [decoder]() { decoder->Shutdown(); });
+  if (mDecoder) {
+    RefPtr<MediaDataDecoder> decoder = std::move(mDecoder);
+    decoder->Flush()->Then(mTaskQueue, __func__,
+                           [decoder]() { decoder->Shutdown(); });
+  }
 
   mNeedKeyframe = true;
   mError = NS_OK;
@@ -161,6 +144,35 @@ int32_t WebrtcMediaDataDecoder::Release() {
 
 bool WebrtcMediaDataDecoder::OnTaskQueue() const {
   return OwnerThread()->IsCurrentThreadIn();
+}
+
+int32_t WebrtcMediaDataDecoder::CreateDecoder() {
+  RefPtr<layers::KnowsCompositor> knowsCompositor =
+      layers::ImageBridgeChild::GetSingleton();
+
+  if (mDecoder) {
+    Release();
+  }
+
+  mDecoder = mFactory->CreateDecoder(
+      {mInfo, mTaskQueue,
+       CreateDecoderParams::OptionSet(
+           CreateDecoderParams::Option::LowLatency,
+           CreateDecoderParams::Option::FullH264Parsing,
+           CreateDecoderParams::Option::ErrorIfNoInitializationData),
+       mTrackType, mImageContainer, knowsCompositor});
+
+  if (!mDecoder) {
+    return WEBRTC_VIDEO_CODEC_ERROR;
+  }
+
+  media::Await(
+      do_AddRef(mThreadPool), mDecoder->Init(),
+      [&](TrackInfo::TrackType) { mError = NS_OK; },
+      [&](const MediaResult& aError) { mError = aError; });
+
+  return NS_SUCCEEDED(mError) ? WEBRTC_VIDEO_CODEC_OK
+                              : WEBRTC_VIDEO_CODEC_ERROR;
 }
 
 }  // namespace mozilla

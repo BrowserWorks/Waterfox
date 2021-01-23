@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setupButton.label "Уладкаваць &syncBrand.fullName.label;">
+<!ENTITY setupButton.accesskey "У">
+<!ENTITY weaveDesc.label "&syncBrand.fullName.label; дазваляе вам мець доступ да вашых гісторыі, закладак, пароляў і адкрытых уставак на ўсіх вашых збудовах.">
+<!ENTITY accountGroupboxCaption.label "Рахунак &syncBrand.fullName.label;">
+<!ENTITY accountName.label "Назва рахунку:">
+<!ENTITY updatePass.label "Абнавіць">
+<!ENTITY updatePass.accesskey "А">
+<!ENTITY resetPass.label "Скінуць">
+<!ENTITY resetPass.accesskey "С">
+<!ENTITY manageAccount.label "Кіраваць рахункам">
+<!ENTITY manageAccount.accesskey "р">
+<!ENTITY viewQuota.label "Прагледзець абмежаванне">
+<!ENTITY viewQuota.accesskey "м">
+<!ENTITY changePassword.label "Змяніць пароль">
+<!ENTITY changePassword.accesskey "З">
+<!ENTITY myRecoveryKey.label "Мой адноўны ключ">
+<!ENTITY myRecoveryKey.accesskey "М">
+<!ENTITY resetSync.label "Узнавіць сінхранізацыю">
+<!ENTITY resetSync.accesskey "У">
+<!ENTITY unlinkDevice.label "Разлучыцца з гэтай збудовай">
+<!ENTITY unlinkDevice.accesskey "Р">
+<!ENTITY addDevice.label "Дадаць збудову">
+<!ENTITY addDevice.accesskey "Д">
+<!ENTITY syncComputerName.label "Назва кампутара:">
+<!ENTITY syncComputerName.accesskey "к">
+<!ENTITY syncMy2.label "Сінхранізаваць мае:">
+<!ENTITY engine.addons.label "Дадаткі">
+<!ENTITY engine.addons.accesskey "Д">
+<!ENTITY engine.bookmarks.label "Закладкі">
+<!ENTITY engine.bookmarks.accesskey "З">
+<!ENTITY engine.tabs.label "Устаўкі">
+<!ENTITY engine.tabs.accesskey "У">
+<!ENTITY engine.history.label "Гісторыя">
+<!ENTITY engine.history.accesskey "Г">
+<!ENTITY engine.passwords.label "Паролі">
+<!ENTITY engine.passwords.accesskey "П">
+<!ENTITY engine.prefs.label "Перавагі">
+<!ENTITY engine.prefs.accesskey "в">
+<!ENTITY prefs.tosLink.label "Умовы абслугоўвання">
+<!ENTITY prefs.ppLink.label "Палітыка адасаблення">

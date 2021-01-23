@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sidebar.panels.label           "Barra lateral">
+<!ENTITY sidebar.reload.label           "Actualitza">
+<!ENTITY sidebar.reload.accesskey       "z">
+<!ENTITY sidebar.picker.label           "Pestanyes">
+<!ENTITY sidebar.customize.label        "Personalitza la barra lateral…">
+<!ENTITY sidebar.customize.accesskey    "t">
+<!ENTITY sidebar.hide.label             "Amaga la pestanya">
+<!ENTITY sidebar.hide.accesskey         "g">
+<!ENTITY sidebar.switch.label           "Canvia a la pestanya">
+<!ENTITY sidebar.switch.accesskey       "v">
+<!ENTITY sidebarCmd.label               "Barra lateral">
+<!ENTITY sidebarCmd.accesskey           "l">
+<!ENTITY sidebar.loading.label          "S'està carregant...">
+<!ENTITY sidebar.loadstopped.label      "S'ha aturat la càrrega">
+<!ENTITY sidebar.loading.stop.label     "Atura">
+<!ENTITY sidebar.loading.stop.accesskey "u">
+
+<!ENTITY sidebar.no-panels.state     "Ara, la barra lateral és buida.">
+<!ENTITY sidebar.no-panels.add       "Podeu afegir pestanyes si feu clic al botó «Pestanyes» de sobre.">
+<!ENTITY sidebar.no-panels.hide      "Si voleu amagar completament la barra lateral, feu clic al menú «Visualitza» de sobre, i seleccioneu «Barra lateral» del submenú «Mostra/Amaga».">
+<!ENTITY sidebar.sbDirectory.label   "Directori de la barra lateral...">
+
+<!ENTITY sidebar.pagenotfound.label  "Ara mateix, aquesta pestanya no està disponible.">
+<!ENTITY sidebar.close.tooltip       "Tanca la barra lateral">
+<!ENTITY sidebar.open.tooltip        "Obre la Barra lateral">
+
+<!ENTITY sidebar.search.label         "Cerca">
+<!ENTITY sidebar.client-bookmarks.label     "Adreces d'interès">
+<!ENTITY sidebar.client-history.label       "Historial">
+<!ENTITY sidebar.client-addressbook.label   "Llibreta d'adreces">

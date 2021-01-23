@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE : FILE The Appearance prefs dialog.  -->
+
+
+<!ENTITY pref.appearance.title "Išvaizda">
+<!--LOCALIZATION NOTE (onStartLegend.label): Don't translate "&brandShortName;".
+    Place &brandShortName; in the phrase where the name of the application should appear
+-->
+<!ENTITY onStartLegend.label                    "Paleidus „&brandShortName;“, turi būti atverta:">
+<!ENTITY navCheck.label                         "Naršyklė">
+<!ENTITY navCheck.accesskey                     "N">
+<!ENTITY showToolsLegend.label                  "Mygtukų juostose rodyti">
+<!ENTITY picsNtextRadio.label                   "Piktogramas ir tekstą">
+<!ENTITY picsNtextRadio.accesskey               "i">
+<!ENTITY picsOnlyRadio.label                    "Tik piktogramas">
+<!ENTITY picsOnlyRadio.accesskey                "p">
+<!ENTITY textonlyRadio.label                    "Tik tekstą">
+<!ENTITY textonlyRadio.accesskey                "t">
+<!ENTITY showHideTooltips.label                 "Rodyti mygtukus paaiškinančias etiketes">
+<!ENTITY showHideTooltips.accesskey             "R">
+
+<!ENTITY pref.locales.title                     "Sąsajos kalba">
+<!ENTITY selectLocale.label                     "Pasirinkite „&brandShortName;“ sąsajos kalbą:">
+<!--LOCALIZATION NOTE (restartOnLangChange.label): Don't translate "&brandShortName;".
+    Place &brandShortName; in the phrase where the name of the application should appear
+-->
+<!ENTITY restartOnLangChange.label              "Tam, kad atsirastų naujos kalbos užrašai dialogo languose, ant mygtukų ir kitur, reikia paleisti programą iš naujo.">
+

@@ -11,13 +11,15 @@
 #include "mozilla/layers/GeckoContentController.h"
 #include "mozilla/layers/RepaintRequest.h"
 #include "mozilla/layers/ZoomConstraints.h"
+#include "mozilla/Atomics.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/EventForwards.h"
 #include "mozilla/Monitor.h"
 #include "mozilla/RecursiveMutex.h"
 #include "mozilla/RefPtr.h"
+#include "mozilla/ScrollTypes.h"
+#include "mozilla/StaticPrefs_apz.h"
 #include "mozilla/UniquePtr.h"
-#include "mozilla/Atomics.h"
 #include "InputData.h"
 #include "Axis.h"  // for Axis, Side, etc.
 #include "InputQueue.h"
@@ -25,13 +27,11 @@
 #include "Layers.h"  // for Layer::ScrollDirection
 #include "LayersTypes.h"
 #include "mozilla/gfx/Matrix.h"
-#include "nsIScrollableFrame.h"
 #include "nsRegion.h"
 #include "nsTArray.h"
 #include "PotentialCheckerboardDurationTracker.h"
 #include "RecentEventsBuffer.h"  // for RecentEventsBuffer
-
-#include "base/message_loop.h"
+#include "SampledAPZCState.h"
 
 namespace mozilla {
 
@@ -46,7 +46,6 @@ namespace layers {
 class AsyncDragMetrics;
 class APZCTreeManager;
 struct ScrollableLayerGuid;
-struct SLGuidAndRenderRoot;
 class CompositorController;
 class MetricsSharingController;
 class GestureEventListener;
@@ -195,7 +194,6 @@ class AsyncPanZoomController {
   AsyncPanZoomController(LayersId aLayersId, APZCTreeManager* aTreeManager,
                          const RefPtr<InputQueue>& aInputQueue,
                          GeckoContentController* aController,
-                         wr::RenderRoot aRenderRoot,
                          GestureBehavior aGestures = DEFAULT_GESTURES);
 
   // --------------------------------------------------------------------------
@@ -250,7 +248,8 @@ class AsyncPanZoomController {
    */
   bool AdvanceAnimations(const TimeStamp& aSampleTime);
 
-  bool UpdateAnimation(const TimeStamp& aSampleTime,
+  bool UpdateAnimation(const RecursiveMutexAutoLock& aProofOfLock,
+                       const TimeStamp& aSampleTime,
                        nsTArray<RefPtr<Runnable>>* aOutDeferredTasks);
 
   // --------------------------------------------------------------------------
@@ -307,14 +306,20 @@ class AsyncPanZoomController {
 
   /**
    * Returns the number of CSS pixels of checkerboard according to the metrics
-   * in this APZC.
+   * in this APZC. The argument provided by the caller is the composition bounds
+   * of this APZC, additionally clipped by the composition bounds of any
+   * ancestor APZCs, accounting for all the async transforms.
    */
-  uint32_t GetCheckerboardMagnitude() const;
+  uint32_t GetCheckerboardMagnitude(
+      const ParentLayerRect& aClippedCompositionBounds) const;
 
   /**
    * Report the number of CSSPixel-milliseconds of checkerboard to telemetry.
+   * See GetCheckerboardMagnitude for documentation of the
+   * aClippedCompositionBounds argument that needs to be provided by the caller.
    */
-  void ReportCheckerboard(const TimeStamp& aSampleTime);
+  void ReportCheckerboard(const TimeStamp& aSampleTime,
+                          const ParentLayerRect& aClippedCompositionBounds);
 
   /**
    * Flush any active checkerboard report that's in progress. This basically
@@ -324,14 +329,6 @@ class AsyncPanZoomController {
    * on the next composite.
    */
   void FlushActiveCheckerboardReport();
-
-  /**
-   * Returns whether or not the APZC is currently in a state of checkerboarding.
-   * This is a simple computation based on the last-painted content and whether
-   * the async transform has pushed it so far that it doesn't fully contain the
-   * composition bounds.
-   */
-  bool IsCurrentlyCheckerboarding() const;
 
   /**
    * Recalculates the displayport. Ideally, this should paint an area bigger
@@ -361,17 +358,6 @@ class AsyncPanZoomController {
    * ReceiveInputEvent().
    */
   nsEventStatus HandleGestureEvent(const InputData& aEvent);
-
-  /**
-   * Handle movement of the dynamic toolbar by |aDeltaY| over the time
-   * period from |aStartTimestampMs| to |aEndTimestampMs|.
-   * This is used to track velocities accurately in the presence of movement
-   * of the dynamic toolbar, since in such cases the finger can be moving
-   * relative to the screen even though no scrolling is occurring.
-   */
-  void HandleDynamicToolbarMovement(uint32_t aStartTimestampMs,
-                                    uint32_t aEndTimestampMs,
-                                    ParentLayerCoord aDeltaY);
 
   /**
    * Start autoscrolling this APZC, anchored at the provided location.
@@ -413,17 +399,6 @@ class AsyncPanZoomController {
    * See CancelAnimationFlags.
    */
   void CancelAnimation(CancelAnimationFlags aFlags = Default);
-
-  /**
-   * Adjusts the scroll position to compensate for a shift in the surface, such
-   * that the content appears to remain visually in the same position. i.e. if
-   * the surface moves up by 10 screenpixels, the scroll position should also
-   * move up by 10 pixels so that what used to be at the top of the surface is
-   * now 10 pixels down the surface. Will request that content be repainted
-   * if necessary but will not request a composite. It is assumed the dynamic
-   * toolbar animator will request the composite.
-   */
-  void AdjustScrollForSurfaceShift(const ScreenPoint& aShift);
 
   /**
    * Clear any overscroll on this APZC.
@@ -552,6 +527,10 @@ class AsyncPanZoomController {
 
   const FrameMetrics& Metrics() const;
   FrameMetrics& Metrics();
+
+  // Helper function to compare root frame metrics and update them
+  // Returns true when the metrics have changed and were updated.
+  bool UpdateRootFrameMetricsIfChanged(FrameMetrics& metrics);
 
  private:
   // Get whether the horizontal content of the honoured target of auto-dir
@@ -718,21 +697,6 @@ class AsyncPanZoomController {
   void ClampAndSetScrollOffset(const CSSPoint& aOffset);
 
   /**
-   * Re-clamp mCompositedScrollOffset to the scroll range. This only needs to
-   * be called if the composited scroll offset changes outside of
-   * SampleCompositedAsyncTransform().
-   */
-  void ClampCompositedScrollOffset();
-
-  /**
-   * Recalculate mCompositedLayoutViewport so that it continues to enclose
-   * the composited visual viewport. This only needs to be called if the
-   * composited layout viewport changes outside of
-   * SampleCompositedAsyncTransform().
-   */
-  void RecalculateCompositedLayoutViewport();
-
-  /**
    * Scroll the scroll frame by an X,Y offset.
    * The resulting scroll offset is not clamped to the scrollable rect;
    * the caller must ensure it stays within range.
@@ -838,6 +802,17 @@ class AsyncPanZoomController {
   void TrackTouch(const MultiTouchInput& aEvent);
 
   /**
+   * Register the start of a touch or pan gesture at the given position and
+   * time.
+   */
+  void StartTouch(const ParentLayerPoint& aPoint, uint32_t aTimestampMs);
+
+  /**
+   * Register the end of a touch or pan gesture at the given time.
+   */
+  void EndTouch(uint32_t aTimestampMs);
+
+  /**
    * Utility function to send updated FrameMetrics to Gecko so that it can paint
    * the displayport area. Calls into GeckoContentController to do the actual
    * work. This call will use the current metrics. If this function is called
@@ -884,7 +859,7 @@ class AsyncPanZoomController {
    * NOTE: This must be converted to LayoutDevicePoint relative to the child
    * document before sending over IPC to a child process.
    */
-  bool ConvertToGecko(const ScreenIntPoint& aPoint, LayoutDevicePoint* aOut);
+  Maybe<LayoutDevicePoint> ConvertToGecko(const ScreenIntPoint& aPoint);
 
   enum AxisLockMode {
     FREE,     /* No locking at all */
@@ -913,7 +888,6 @@ class AsyncPanZoomController {
   void OnTouchEndOrCancel();
 
   LayersId mLayersId;
-  wr::RenderRoot mRenderRoot;
   RefPtr<CompositorController> mCompositorController;
   RefPtr<MetricsSharingController> mMetricsSharingController;
 
@@ -983,12 +957,12 @@ class AsyncPanZoomController {
   // This allows us to transform events into Gecko's coordinate space.
   FrameMetrics mExpectedGeckoMetrics;
 
-  // These variables cache the layout viewport, scroll offset, and zoom stored
-  // in |Metrics()| the last time SampleCompositedAsyncTransform() was
-  // called.
-  CSSRect mCompositedLayoutViewport;
-  CSSPoint mCompositedScrollOffset;
-  CSSToParentLayerScale2D mCompositedZoom;
+  // This holds important state from the Metrics() at previous times
+  // SampleCompositedAsyncTransform() was called. This will always have at least
+  // one item. mRecursiveMutex must be held when using or modifying this member.
+  // Samples should be inserted to the "back" of the deque and extracted from
+  // the "front".
+  std::deque<SampledAPZCState> mSampledState;
 
   // Groups state variables that are specific to a platform.
   // Initialized on first use.
@@ -1043,9 +1017,14 @@ class AsyncPanZoomController {
   // Position on screen where user first put their finger down.
   ExternalPoint mStartTouch;
 
+  // Accessing mScrollPayload needs to be protected by mRecursiveMutex
+  Maybe<CompositionPayload> mScrollPayload;
+
   friend class Axis;
 
  public:
+  Maybe<CompositionPayload> NotifyScrollSampling();
+
   /**
    * Invoke |callable|, passing |mLastContentPaintMetrics| as argument,
    * while holding the APZC lock required to access |mLastContentPaintMetrics|.
@@ -1125,17 +1104,13 @@ class AsyncPanZoomController {
    * amount.
    * The transform can have both scroll and zoom components; the caller can
    * request just one or the other, or both, via the |aComponents| parameter.
+   * When only the eLayout component is requested, the returned translation
+   * should really be a LayerPoint, rather than a ParentLayerPoint, as it will
+   * not be scaled by the asynchronous zoom.
    */
   AsyncTransform GetCurrentAsyncTransform(
       AsyncTransformConsumer aMode,
       AsyncTransformComponents aComponents = LayoutAndVisual) const;
-
-  /**
-   * Returns the incremental transformation corresponding to the async
-   * panning/zooming of the larger of the visual or layout viewport.
-   */
-  AsyncTransform GetCurrentAsyncTransformForFixedAdjustment(
-      AsyncTransformConsumer aMode) const;
 
   /**
    * Returns the same transform as GetCurrentAsyncTransform(), but includes
@@ -1153,30 +1128,46 @@ class AsyncPanZoomController {
   LayoutDeviceToParentLayerScale GetCurrentPinchZoomScale(
       AsyncTransformConsumer aMode) const;
 
+  ParentLayerRect GetCompositionBounds() const {
+    RecursiveMutexAutoLock lock(mRecursiveMutex);
+    return mScrollMetadata.GetMetrics().GetCompositionBounds();
+  }
+
+  LayoutDeviceToLayerScale2D GetCumulativeResolution() const {
+    RecursiveMutexAutoLock lock(mRecursiveMutex);
+    return mScrollMetadata.GetMetrics().GetCumulativeResolution();
+  }
+
  private:
   /**
-   * Samples the composited async transform, making the result of
+   * Advances to the next sample, if there is one, the list of sampled states
+   * stored in mSampledState. This will make the result of
    * |GetCurrentAsyncTransform(eForCompositing)| and similar functions reflect
-   * the async scroll offset and zoom stored in |Metrics()|.
-   *
-   * Returns true if the newly sampled value is different from the previously
-   * sampled value.
-   *
-   * (This is only relevant when |gfxPrefs::APZFrameDelayEnabled() == true|.
-   * Otherwise, GetCurrentAsyncTransform() always reflects what's stored in
-   * |Metrics()| immediately, without any delay.)
+   * the async scroll offset and zoom of the next sample. See also
+   * SampleCompositedAsyncTransform which creates the samples.
    */
-  bool SampleCompositedAsyncTransform();
+  void AdvanceToNextSample();
 
   /**
-   * Returns the incremental transformation corresponding to the async
-   * panning/zooming of the layout viewport (unlike GetCurrentAsyncTransform,
-   * which deals with async movement of the visual viewport). That is, when
-   * this transform is multiplied with the layer's existing transform, it will
-   * make the layer appear with the desired pan/zoom amount.
+   * Samples the composited async transform, storing the result into
+   * mSampledState. This will make the result of
+   * |GetCurrentAsyncTransform(eForCompositing)| and similar functions reflect
+   * the async scroll offset and zoom stored in |Metrics()| when the sample
+   * is activated via some future call to |AdvanceToNextSample|.
+   *
+   * Returns true if the newly sampled value is different from the last
+   * sampled value.
    */
-  AsyncTransform GetCurrentAsyncViewportTransform(
-      AsyncTransformConsumer aMode) const;
+  bool SampleCompositedAsyncTransform(
+      const RecursiveMutexAutoLock& aProofOfLock);
+
+  /**
+   * Updates the sample at the front of mSampledState with the latest
+   * metrics. This makes the result of
+   * |GetCurrentAsyncTransform(eForCompositing)| reflect the current Metrics().
+   */
+  void ResampleCompositedAsyncTransform(
+      const RecursiveMutexAutoLock& aProofOfLock);
 
   /*
    * Helper functions to query the async layout viewport, scroll offset, and
@@ -1184,9 +1175,21 @@ class AsyncPanZoomController {
    * store the required value from the last time it was sampled by calling
    * SampleCompositedAsyncTransform(), depending on who is asking.
    */
-  CSSRect GetEffectiveLayoutViewport(AsyncTransformConsumer aMode) const;
-  CSSPoint GetEffectiveScrollOffset(AsyncTransformConsumer aMode) const;
-  CSSToParentLayerScale2D GetEffectiveZoom(AsyncTransformConsumer aMode) const;
+  CSSRect GetEffectiveLayoutViewport(
+      AsyncTransformConsumer aMode,
+      const RecursiveMutexAutoLock& aProofOfLock) const;
+  CSSPoint GetEffectiveScrollOffset(
+      AsyncTransformConsumer aMode,
+      const RecursiveMutexAutoLock& aProofOfLock) const;
+  CSSToParentLayerScale2D GetEffectiveZoom(
+      AsyncTransformConsumer aMode,
+      const RecursiveMutexAutoLock& aProofOfLock) const;
+
+  /**
+   * Returns the visible portion of the content scrolled by this APZC, in
+   * CSS pixels. The caller must have acquired the mRecursiveMutex lock.
+   */
+  CSSRect GetVisibleRect(const RecursiveMutexAutoLock& aProofOfLock) const;
 
  private:
   friend class AutoApplyAsyncTestAttributes;
@@ -1197,14 +1200,15 @@ class AsyncPanZoomController {
    * that the GetCurrentAsync* functions consider the test offset and zoom in
    * their computations.
    */
-  void ApplyAsyncTestAttributes();
+  void ApplyAsyncTestAttributes(const RecursiveMutexAutoLock& aProofOfLock);
 
   /**
    * Sets this AsyncPanZoomController's FrameMetrics to |aPrevFrameMetrics| and
    * calls |SampleCompositedAsyncTransform| to unapply any test values applied
    * by |ApplyAsyncTestAttributes|.
    */
-  void UnapplyAsyncTestAttributes(const FrameMetrics& aPrevFrameMetrics);
+  void UnapplyAsyncTestAttributes(const RecursiveMutexAutoLock& aProofOfLock,
+                                  const FrameMetrics& aPrevFrameMetrics);
 
   /* ===================================================================
    * The functions and members in this section are used to manage
@@ -1240,11 +1244,25 @@ class AsyncPanZoomController {
   // held whenever this is updated. In practice though... see bug 897017.
   PanZoomState mState;
 
+  static bool IsPanningState(PanZoomState aState);
+
   /**
    * Returns whether the specified PanZoomState does not need to be reset when
    * a scroll offset update is processed.
    */
   static bool CanHandleScrollOffsetUpdate(PanZoomState aState);
+
+  /**
+   * Determine whether a main-thread scroll offset update should result in
+   * a call to CancelAnimation() (which interrupts in-progress animations and
+   * gestures).
+   *
+   * If the update is a relative update, |aRelativeDelta| contains its amount.
+   * If the update is not a relative update, GetMetrics() should already reflect
+   * the new offset at the time of the call.
+   */
+  bool ShouldCancelAnimationForScrollUpdate(
+      const Maybe<CSSPoint>& aRelativeDelta);
 
  private:
   friend class StateChangeNotificationBlocker;
@@ -1270,6 +1288,7 @@ class AsyncPanZoomController {
   /**
    * Internal helpers for checking general state of this apzc.
    */
+  bool IsInTransformingState() const;
   static bool IsTransformingState(PanZoomState aState);
 
   /* ===================================================================
@@ -1313,6 +1332,7 @@ class AsyncPanZoomController {
   bool HasReadyTouchBlock() const;
 
   PanGestureBlockState* GetCurrentPanGestureBlock() const;
+  PinchGestureBlockState* GetCurrentPinchGestureBlock() const;
 
  private:
   /* ===================================================================
@@ -1495,9 +1515,11 @@ class AsyncPanZoomController {
    * Guards against the case where the APZC is being concurrently destroyed
    * (and thus mTreeManager is being nulled out).
    */
-  void CallDispatchScroll(ParentLayerPoint& aStartPoint,
+  bool CallDispatchScroll(ParentLayerPoint& aStartPoint,
                           ParentLayerPoint& aEndPoint,
                           OverscrollHandoffState& aOverscrollHandoffState);
+
+  void RecordScrollPayload(const TimeStamp& aTimeStamp);
 
   /**
    * A helper function for overscrolling during panning. This is a wrapper
@@ -1608,19 +1630,21 @@ class AsyncPanZoomController {
 
   LayersId GetLayersId() const { return mLayersId; }
 
-  wr::RenderRoot GetRenderRoot() const { return mRenderRoot; }
+  bool IsAsyncZooming() const {
+    return mState == PINCHING || mState == ANIMATING_ZOOM;
+  }
 
  private:
   // Extra offset to add to the async scroll position for testing
   CSSPoint mTestAsyncScrollOffset;
   // Extra zoom to include in the aync zoom for testing
   LayerToParentLayerScale mTestAsyncZoom;
-  int mTestAttributeAppliers : 8;
+  uint8_t mTestAttributeAppliers;
   // Flag to track whether or not the APZ transform is not used. This
   // flag is recomputed for every composition frame.
-  bool mAsyncTransformAppliedToContent : 1;
+  bool mAsyncTransformAppliedToContent;
   // Flag to track whether or not this APZC has ever async key scrolled.
-  bool mTestHasAsyncKeyScrolled : 1;
+  bool mTestHasAsyncKeyScrolled;
 
   /* ===================================================================
    * The functions and members in this section are used for checkerboard
@@ -1654,7 +1678,7 @@ class AsyncPanZoomController {
   // |aUnit| affects the snapping behaviour (see ScrollSnapUtils::
   // GetSnapPointForDestination).
   // Returns true iff. a target snap point was found.
-  bool MaybeAdjustDeltaForScrollSnapping(nsIScrollableFrame::ScrollUnit aUnit,
+  bool MaybeAdjustDeltaForScrollSnapping(ScrollUnit aUnit,
                                          ParentLayerPoint& aDelta,
                                          CSSPoint& aStartPosition);
 
@@ -1683,7 +1707,7 @@ class AsyncPanZoomController {
   // GetSnapPointForDestination). It should generally be determined by the
   // type of event that's triggering the scroll.
   Maybe<CSSPoint> FindSnapPointNear(const CSSPoint& aDestination,
-                                    nsIScrollableFrame::ScrollUnit aUnit);
+                                    ScrollUnit aUnit);
 };
 
 }  // namespace layers

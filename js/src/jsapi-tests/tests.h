@@ -9,12 +9,12 @@
 
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Sprintf.h"
-#include "mozilla/TypeTraits.h"
 
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <type_traits>
 
 #include "gc/GC.h"
 #include "js/AllocPolicy.h"
@@ -121,6 +121,11 @@ class JSAPITest {
     return JSAPITestString("<<error converting value to string>>");
   }
 
+  JSAPITestString toSource(char c) {
+    char buf[2] = {c, '\0'};
+    return JSAPITestString(buf);
+  }
+
   JSAPITestString toSource(long v) {
     char buf[40];
     sprintf(buf, "%ld", v);
@@ -172,6 +177,9 @@ class JSAPITest {
     if (flags.multiline()) {
       str += "m";
     }
+    if (flags.dotAll()) {
+      str += "s";
+    }
     if (flags.unicode()) {
       str += "u";
     }
@@ -192,11 +200,11 @@ class JSAPITest {
   template <typename T, typename U>
   bool checkEqual(const T& actual, const U& expected, const char* actualExpr,
                   const char* expectedExpr, const char* filename, int lineno) {
-    static_assert(mozilla::IsSigned<T>::value == mozilla::IsSigned<U>::value,
+    static_assert(std::is_signed_v<T> == std::is_signed_v<U>,
                   "using CHECK_EQUAL with different-signed inputs triggers "
                   "compiler warnings");
     static_assert(
-        mozilla::IsUnsigned<T>::value == mozilla::IsUnsigned<U>::value,
+        std::is_unsigned_v<T> == std::is_unsigned_v<U>,
         "using CHECK_EQUAL with different-signed inputs triggers compiler "
         "warnings");
     return (actual == expected) ||
@@ -352,8 +360,7 @@ class JSAPITest {
   }
 
   static void reportWarning(JSContext* cx, JSErrorReport* report) {
-    MOZ_RELEASE_ASSERT(report);
-    MOZ_RELEASE_ASSERT(JSREPORT_IS_WARNING(report->flags));
+    MOZ_RELEASE_ASSERT(report->isWarning());
 
     fprintf(stderr, "%s:%u:%s\n",
             report->filename ? report->filename : "<no filename>",
@@ -466,6 +473,8 @@ class TestJSPrincipals : public JSPrincipals {
     MOZ_ASSERT(false, "not implemented");
     return false;
   }
+
+  bool isSystemOrAddonPrincipal() override { return true; }
 };
 
 // A class that simulates externally memory-managed data, for testing with

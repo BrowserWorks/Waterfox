@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.cookies.title             "Galetes">
+<!-- cookies -->
+
+
+<!ENTITY cookiePolicy.label             "Política d'acceptació de galetes">
+
+<!ENTITY disableCookies.label           "Bloca les galetes">
+<!ENTITY disableCookies.accesskey       "B">
+
+<!ENTITY accNo3rdPartyCookies.label     "Permet les galetes només pel lloc web original (no de tercers)">
+<!ENTITY accNo3rdPartyCookies.accesskey "o">
+
+<!ENTITY acc3rdPartyVisited.label       "Permet les galetes de tercers només per llocs web visitats prèviament">
+<!ENTITY acc3rdPartyVisited.accesskey   "v">
+
+<!ENTITY accAllCookies.label            "Permet totes les galetes">
+<!ENTITY accAllCookies.accesskey        "g">
+
+<!ENTITY cookieRetentionPolicy.label    "Política de retenció de galetes">
+
+<!ENTITY acceptNormally.label           "Accepta les galetes normalment">
+<!ENTITY acceptNormally.accesskey       "n">
+
+<!ENTITY acceptForSession.label         "Accepta només per a la sessió actual">
+<!ENTITY acceptForSession.accesskey     "s">
+
+<!ENTITY acceptforNDays.label           "Accepta les galetes per a">
+<!ENTITY acceptforNDays.accesskey       "r">
+<!ENTITY days.label                     "dies">
+
+<!ENTITY warnAboutCookies.label         "Demana-ho per cada galeta">
+<!ENTITY warnAboutCookies.accesskey     "D">
+<!ENTITY forCurrentSession.label        "excepte per a les galetes de sessió">
+<!ENTITY forCurrentSession.accesskey    "e">
+
+<!ENTITY manageCookies.label            "Gestiona les galetes i els llocs">
+<!ENTITY manageCookiesDescription.label "Us permet visualitzar i gestionar les galetes emmagatzemades i els paràmetres d'acceptació i rebuig de galetes per cada lloc. Aquests paràmetres a nivell particular tindran preferència davant de la configuració anterior.">
+
+<!ENTITY viewCookies.label              "Gestor de galetes">
+<!ENTITY viewCookies.accesskey          "G">
+

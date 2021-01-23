@@ -2,7 +2,7 @@ extern crate euclid;
 extern crate plane_split;
 
 use euclid::{point3, rect, vec3};
-use euclid::{Angle, TypedRect, TypedTransform3D};
+use euclid::{Angle, Rect, Transform3D};
 use plane_split::{Clipper, Plane, Polygon};
 
 use std::f32::consts::FRAC_PI_4;
@@ -96,14 +96,14 @@ fn clip_repeat() {
 
 #[test]
 fn clip_transformed() {
-    let t_rot: TypedTransform3D<f32, (), ()> =
-        TypedTransform3D::create_rotation(0.0, 1.0, 0.0, Angle::radians(-FRAC_PI_4));
-    let t_div: TypedTransform3D<f32, (), ()> =
-        TypedTransform3D::create_perspective(5.0);
-    let transform = t_rot.post_mul(&t_div);
+    let t_rot: Transform3D<f32, (), ()> =
+        Transform3D::create_rotation(0.0, 1.0, 0.0, Angle::radians(-FRAC_PI_4));
+    let t_div: Transform3D<f32, (), ()> =
+        Transform3D::create_perspective(5.0);
+    let transform = t_rot.post_transform(&t_div);
 
     let polygon = Polygon::from_rect(rect(-10.0, -10.0, 20.0, 20.0), 0);
-    let bounds: TypedRect<f32, ()> = rect(-1.0, -1.0, 2.0, 2.0);
+    let bounds: Rect<f32, ()> = rect(-1.0, -1.0, 2.0, 2.0);
 
     let mut clipper = Clipper::new();
     let results = clipper.clip_transformed(polygon, &transform, Some(bounds));
@@ -113,7 +113,7 @@ fn clip_transformed() {
 
 #[test]
 fn clip_badly_transformed() {
-    let mut tx = TypedTransform3D::<f32, (), ()>::identity();
+    let mut tx = Transform3D::<f32, (), ()>::identity();
     tx.m14 = -0.0000001;
     tx.m44 = 0.0;
 
@@ -121,4 +121,24 @@ fn clip_badly_transformed() {
     let polygon = Polygon::from_rect(rect(-10.0, -10.0, 20.0, 20.0), 0);
     let results = clipper.clip_transformed(polygon, &tx, None);
     assert!(results.is_err());
+}
+
+#[test]
+fn clip_near_coplanar() {
+    let tx = Transform3D::<f32, (), ()>::row_major(
+        1.0, 0.0, 0.0, 0.0,
+        0.0, 1.0, 0.0, 0.0,
+        -960.0, -625.0, 1.0, -1.0,
+        100.0, -2852.0, 0.0, 1.0,
+    );
+    let mut clipper = Clipper::new();
+    let polygon = Polygon::from_rect(rect(0.0, 0.0, 1703.0, 4020.0), 0);
+
+    let bounds1 = rect(0.0, -430.0, 2048.0, 2048.0);
+    let results1 = clipper.clip_transformed(polygon.clone(), &tx, Some(bounds1));
+    assert_ne!(0, results1.unwrap().count());
+
+    let bounds2 = rect(0.0, 0.0, 816.0, 1039.0);
+    let results2 = clipper.clip_transformed(polygon, &tx, Some(bounds2));
+    assert_ne!(0, results2.unwrap().count());
 }

@@ -1,0 +1,104 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY addressbookWindow.title                        "Adresar">
+
+<!-- Menus:  the . means that the menu item isn't implemented yet -->
+
+<!-- File Menu -->
+<!ENTITY newContact.label                               "Kontakt…">
+<!-- LOCALIZATION NOTE (newContact.accesskey) : DONT_TRANSLATE -->
+<!ENTITY newListCmd.label                               "Mailing lista…">
+<!-- LOCALIZATION NOTE (newListCmd.accesskey) : DONT_TRANSLATE -->  
+  
+<!ENTITY newAddressBookCmd.label                        "Adresar…"> 
+  
+<!ENTITY newLDAPDirectoryCmd.label                      "LDAP adresar…">
+<!-- LOCALIZATION NOTE (newLDAPDirectoryCmd.accesskey) : DONT_TRANSLATE -->
+<!ENTITY newIM.label                                    "Brze poruke">
+<!ENTITY printContactViewCmd.label                      "Štampanje kontakta…">
+<!ENTITY printPreviewContactViewCmd.label               "Pregled štamanja kontakta">
+<!ENTITY printAddressBook.label                         "Štampanje adresara…"> 
+ 
+<!ENTITY printPreviewAddressBook.label                  "Pregled štampanja adresara"> 
+
+<!-- Edit Menu -->
+<!ENTITY deleteAbCmd.label                              "Izbriši adresar">  
+<!ENTITY deleteContactCmd.label                         "Izbriši kontakt">
+<!ENTITY deleteContactsCmd.label                        "Izbriši označene kontakte">
+<!ENTITY deleteListCmd.label                            "Izbriši listu">
+<!ENTITY deleteListsCmd.label                           "Izbriši označene liste">
+<!ENTITY deleteItemsCmd.label                           "Izbriši označene stavke">
+<!ENTITY swapFirstNameLastNameCmd.label                 "Zamijeni ime i prezime">
+  
+<!ENTITY propertiesCmd.label                            "Svojstva…">
+<!-- LOCALIZATION NOTE (propertiesCmd.accesskey) : DONT_TRANSLATE -->  
+  
+  
+
+<!-- View Menu -->
+<!ENTITY showAbToolbarCmd.label                         "Alatna traka adresara"> 
+  
+<!ENTITY layoutMenu.label                               "Raspored">
+<!ENTITY menu_ShowNameAs.label                          "Prikaži ime kao"> 
+ 
+<!ENTITY firstLastCmd.label                             "Ime Prezime">  
+ 
+<!ENTITY lastFirstCmd.label                             "Prezime, Ime">  
+ 
+<!ENTITY displayNameCmd.label                           "Ime za prikaz">  
+ 
+
+<!-- Tasks Menu -->
+<!ENTITY importCmd.label                                "Uvoz…">
+<!ENTITY exportCmd.label                                "Izvoz…">
+
+<!-- Toolbar and Popup items -->  
+<!ENTITY newContactButton.label                         "Novi kontakt">
+<!ENTITY newlistButton.label                            "Nova lista">  
+  
+<!ENTITY editItemButton.label                           "Svojstva">
+<!ENTITY newmsgButton.label                             "Sastavi">  
+  
+<!ENTITY deleteItemButton.label                         "Izbriši">
+<!ENTITY newimButton.label                              "Instant poruka">  
+  
+<!ENTITY searchNameAndEmail.placeholder                 "Traži ime i email">
+<!ENTITY searchBox.title                                "Traži">
+
+<!-- Tooltips -->
+<!ENTITY addressbookToolbar.tooltip                     "Alatna traka adresara">
+<!ENTITY newContactButton.tooltip                       "Kreiraj novi kontakt u adresaru">
+<!ENTITY newlistButton.tooltip                          "Kreiraj novu listu"> 
+<!ENTITY editItemButton.tooltip                         "Uredi izabranu stavku">
+<!ENTITY newmsgButton.tooltip                           "Pošalji email poruku"> 
+<!ENTITY newIM.tooltip                                  "Pošaljite instant poruku ili započnite razgovor"> 
+<!ENTITY deleteItemButton.tooltip                       "Izbriši označenu stavku">
+<!ENTITY throbber.tooltip                               "Idite na &vendorShortName; početnu stranicu">
+<!ENTITY advancedButton.tooltip                         "Napredno pretraživanje adresa">
+
+<!-- Dir Tree header -->
+<!ENTITY dirTreeHeader.label                            "Adresari">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "Kontakt">
+<!ENTITY home.heading                                   "Početna">
+<!ENTITY other.heading                                  "Ostalo">
+<!ENTITY phone.heading                                  "Telefon">
+<!ENTITY work.heading                                   "Posao">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "Opis">
+<!ENTITY addresses.heading                              "Adrese">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "Dobavi kartu">
+<!ENTITY mapIt.tooltip                                  "Prikaži ovu adresu na internet karti">
+
+<!-- Status Bar -->  
+<!ENTITY statusText.label                               "">
+
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+<!-- Swap FN/LN UI  Set to "false" to show swap fn/ln UI -->
+<!ENTITY  hideSwapFnLnUI                                "true">

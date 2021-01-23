@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (window.title) : do not translate "LDAP" in below line -->
+<!ENTITY pref.ldap.window.title    "Servere de directoare LDAP">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Server de directoare LDAP:">
+<!-- LOCALIZATION NOTE (directoriesText.label) : do not translate "LDAP" in below line -->
+<!ENTITY directoriesText.label     "Selectează un server de directoare LDAP:">
+<!ENTITY directoriesText.accesskey "S">
+<!ENTITY addDirectory.label        "Adaugă">
+<!ENTITY addDirectory.accesskey    "A">
+<!ENTITY editDirectory.label       "Editează">
+<!ENTITY editDirectory.accesskey   "E">
+<!ENTITY deleteDirectory.label     "Șterge">
+<!ENTITY deleteDirectory.accesskey "t">

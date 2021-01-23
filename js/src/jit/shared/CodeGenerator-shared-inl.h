@@ -76,6 +76,10 @@ static inline double ToDouble(const LAllocation* a) {
   return a->toConstant()->numberToDouble();
 }
 
+static inline bool ToBoolean(const LAllocation* a) {
+  return a->toConstant()->toBoolean();
+}
+
 static inline Register ToRegister(const LAllocation& a) {
   MOZ_ASSERT(a.isGeneralReg());
   return a.toGeneralReg()->reg();
@@ -107,11 +111,27 @@ static inline Register64 ToRegister64(const LInt64Allocation& a) {
 #endif
 }
 
+static inline Register64 ToRegister64(const LInt64Definition& a) {
+#if JS_BITS_PER_WORD == 32
+  return Register64(ToRegister(a.pointerHigh()), ToRegister(a.pointerLow()));
+#else
+  return Register64(ToRegister(a.pointer()));
+#endif
+}
+
 static inline Register ToTempRegisterOrInvalid(const LDefinition* def) {
   if (def->isBogusTemp()) {
     return InvalidReg;
   }
   return ToRegister(def);
+}
+
+static inline Register64 ToTempRegister64OrInvalid(
+    const LInt64Definition& def) {
+  if (def.isBogusTemp()) {
+    return Register64::Invalid();
+  }
+  return ToRegister64(def);
 }
 
 static inline Register ToTempUnboxRegister(const LDefinition* def) {
@@ -226,20 +246,34 @@ int32_t CodeGeneratorShared::ToStackOffset(LAllocation a) const {
   if (a.isArgument()) {
     return ArgToStackOffset(a.toArgument()->index());
   }
-  return SlotToStackOffset(a.toStackSlot()->slot());
+  return SlotToStackOffset(a.isStackSlot() ? a.toStackSlot()->slot()
+                                           : a.toStackArea()->base());
 }
 
 int32_t CodeGeneratorShared::ToStackOffset(const LAllocation* a) const {
   return ToStackOffset(*a);
 }
 
-Address CodeGeneratorShared::ToAddress(const LAllocation& a) {
-  MOZ_ASSERT(a.isMemory());
+Address CodeGeneratorShared::ToAddress(const LAllocation& a) const {
+  MOZ_ASSERT(a.isMemory() || a.isStackArea());
+  if (useWasmStackArgumentAbi() && a.isArgument()) {
+    return Address(FramePointer, ToFramePointerOffset(a));
+  }
   return Address(masm.getStackPointer(), ToStackOffset(&a));
 }
 
-Address CodeGeneratorShared::ToAddress(const LAllocation* a) {
+Address CodeGeneratorShared::ToAddress(const LAllocation* a) const {
   return ToAddress(*a);
+}
+
+int32_t CodeGeneratorShared::ToFramePointerOffset(LAllocation a) const {
+  MOZ_ASSERT(useWasmStackArgumentAbi());
+  MOZ_ASSERT(a.isArgument());
+  return a.toArgument()->index() + sizeof(wasm::Frame);
+}
+
+int32_t CodeGeneratorShared::ToFramePointerOffset(const LAllocation* a) const {
+  return ToFramePointerOffset(*a);
 }
 
 void CodeGeneratorShared::saveLive(LInstruction* ins) {

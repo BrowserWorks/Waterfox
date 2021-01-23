@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identityListDesc.label "Stilla stillingar fyrir þetta auðkenni:">
+
+<!ENTITY settingsTab.label "Stillingar">
+<!ENTITY copiesFoldersTab.label "Afrit og möppur">
+<!ENTITY addressingTab.label "Samsetning og póstföng">
+
+<!ENTITY publicData.label "Opinber gögn">
+<!ENTITY privateData.label "Persónuleg gögn">
+<!ENTITY identityAlias.label "Auðkennis merking:">
+<!ENTITY identityAlias.accesskey "ð">

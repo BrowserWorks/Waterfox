@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY siteUrl.label         "Sedłowy URL:">
+<!ENTITY docSubdir.label       "Pódzarědnik bokow:">
+<!ENTITY otherSubdir.label     "Pódzarědnik wobrazow:">
+
+<!ENTITY status.label          "Wózjawja se…">
+<!ENTITY fileList.label        "Wózjawjeński status">
+<!ENTITY succeeded.label       "Jo se raźiło">
+<!ENTITY failed.label          "Njeraźony">
+
+<!ENTITY keepOpen              "Toś to wokno wócynjone wóstajiś, za tym až wózjawjenje jo se dokóńcyło.">
+<!ENTITY closeButton.label     "Zacyniś">

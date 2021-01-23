@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- File menu items -->
+
+<!ENTITY openFileCmd.label "Faylni ochish…">
+<!ENTITY openFileCmd.accesskey "o">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Internetdagi manzilni ochish…">
+<!ENTITY openRemoteCmd.accesskey "m">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "So‘nggi sahifalar">
+<!ENTITY fileRecentMenu.accesskey "S">
+<!ENTITY saveCmd.label "Saqlash">
+<!ENTITY saveCmd.accesskey "S">
+<!ENTITY saveAsCmd.label "Boshqa formatda saqlash…">
+<!ENTITY saveAsCmd.accesskey "a">
+<!ENTITY saveAsChangeEncodingCmd2.label "Matnni kodlashni saqlash va o‘zgartirish">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "k">
+<!ENTITY publishCmd.label "E’lon qilish">
+<!ENTITY publishCmd.accesskey "E">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Boshqacha e’lon qilish…">
+<!ENTITY publishAsCmd.accesskey "B">
+<!ENTITY fileRevert.label "Qaytarish">
+<!ENTITY fileRevert.accesskey "t">
+<!-- Edit menu items -->
+
+<!ENTITY publishSettings.label "E’lon qilinadigan sayt sozlamalari…">
+<!ENTITY publishSettings.accesskey "E">
+<!-- Toolbar buttons/items -->
+
+<!ENTITY newToolbarCmd.label "Yangi">
+<!ENTITY newToolbarCmd.tooltip "Yangi Composer sahifasini yaratish">
+<!ENTITY openToolbarCmd.label "Ochish">
+<!ENTITY openToolbarCmd.tooltip "Kompyuterdagi faylni ochish">
+<!ENTITY saveToolbarCmd.tooltip "Faylni kompyuterga saqlash">
+<!ENTITY publishToolbarCmd.tooltip "Masofadagi manzilga faylni yuklash">

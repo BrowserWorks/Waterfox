@@ -26,8 +26,11 @@ const checkAdvancedAndGetTechnicalInfoText = async () => {
   let badCertTechnicalInfo = doc.getElementById("badCertTechnicalInfo");
   ok(badCertTechnicalInfo, "badCertTechnicalInfo found");
 
-  let errorCode = doc.getElementById("errorCode").innerHTML;
-  is(errorCode, "SSL_ERROR_BAD_CERT_DOMAIN");
+  // Wait until fluent sets the errorCode inner text.
+  await ContentTaskUtils.waitForCondition(() => {
+    let errorCode = doc.getElementById("errorCode");
+    return errorCode.textContent == "SSL_ERROR_BAD_CERT_DOMAIN";
+  }, "correct error code has been set inside the advanced button panel");
 
   let viewCertificate = doc.getElementById("viewCertificate");
   ok(viewCertificate, "viewCertificate found");
@@ -54,9 +57,9 @@ add_task(async function checkUntrustedCertError() {
   let tab = await openErrorPage(UNKNOWN_ISSUER);
   let browser = tab.linkedBrowser;
   info("Clicking the exceptionDialogButton in advanced panel");
-  let badCertTechnicalInfoText = await ContentTask.spawn(
+  let badCertTechnicalInfoText = await SpecialPowers.spawn(
     browser,
-    null,
+    [],
     checkAdvancedAndGetTechnicalInfoText
   );
   checkCorrectMessages(badCertTechnicalInfoText, browser);

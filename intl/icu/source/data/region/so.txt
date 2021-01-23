@@ -82,7 +82,7 @@ so{
         CL{"Jili"}
         CM{"Kaameruun"}
         CN{"Shiinaha"}
-        CO{"Kolombiya"}
+        CO{"Koloombiya"}
         CP{"Jasiiradda Kilibarton"}
         CR{"Kosta Riika"}
         CU{"Kuuba"}
@@ -287,8 +287,8 @@ so{
         VU{"Fanuaatu"}
         WF{"Walis & Futuna"}
         WS{"Samoowa"}
-        XA{"XA"}
-        XB{"XB"}
+        XA{"Shigshiga"}
+        XB{"Pseudo-Bidi"}
         XK{"Koosofo"}
         YE{"Yaman"}
         YT{"Mayotte"}
@@ -299,10 +299,7 @@ so{
     }
     Countries%short{
         GB{"UK"}
-        HK{"Hong Kong"}
-        MO{"Makaaw"}
         PS{"Falastiin"}
-        US{"US"}
     }
     Countries%variant{
         CD{"Jamhuuriyadda Dimuqaadiga Kongo"}
@@ -313,5 +310,5 @@ so{
         SZ{"Iswaasilaan"}
         TL{"Timoor Bari"}
     }
-    Version{"2.1.49.82"}
+    Version{"37"}
 }

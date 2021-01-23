@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "&brandShortName; Uygulamasına Hoş Geldiniz">
+<!ENTITY header2.label "Yeni bir e-posta adresi ister misiniz?">
+<!ENTITY other.languages "Yalnızca sizin bölgenize adres sunan sağlayıcıları görüntülüyoruz. Tüm sağlayıcıları görmek için buraya tıklayın.">
+<!ENTITY error.line1 "Üzgünüz, hiçbir e-posta adres önerisi bulamadık.">
+<!ENTITY error.line2 "Daha fazla e-posta bulmak için rumuz veya başka bir terim de arayabilirsiniz.">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before "Ayrıca ">
+<!ENTITY error.suggest.middle "bedava e-posta hesabı seçeneklerinden birini">
+<!ENTITY error.suggest.after "de deneyebilirsiniz.">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before "Merhaba">
+<!ENTITY success.title.after ", aşağıdaki e-posta adresleri sizin için uygun olabilir:">
+<!ENTITY success.tip "(Daha fazla e-posta bulmak için rumuz veya başka bir terim de arayabilirsiniz.)">
+<!ENTITY partnership.description "Çeşitli sağlayıcılarla ortaklık kuran &brandShortName; size yeni bir e-posta hesabı önerebilir. Başlamak için yukarıdaki alana adınızı ve soyadınızı veya istediğiniz diğer kelimeleri yazmanız yeterli.">
+<!ENTITY existing.header "Kullanmak istediğiniz bir adresiniz zaten var mı?">
+<!ENTITY tinyheader.title "Adresiniz var mı?">
+<!ENTITY tinyheader.existing "Bunu geç ve mevcut e-postamı kullan">
+<!ENTITY content.close "Hesabımı daha sonra yapılandıracağım">
+<!ENTITY successful.title "Tebrikler!">
+<!ENTITY successful.successMessage "Hesabınızı başarıyla kurdunuz.">
+<!ENTITY successful.write "Birkaç e-posta yazın">
+<!ENTITY successful.write.desc "Yeni adresinizi arkadaşlarınıza ve akrabalarınıza duyurun.<br/> Zaten bu yeni hesabı bunun için açmadınız mı?">
+<!ENTITY successful.customize "&brandShortName; uygulamasını şahane eklentilerle özelleştirin">
+<!ENTITY successful.customize.desc "İhtiyaçlarınıza daha uygun bir &brandShortName; oluşturmak için kullanabileceğiniz binlerce eklenti var.">
+<!ENTITY successful.attach "E-postama kişisel bir imza ekle">
+<!ENTITY successful.attach.desc "Gönderdiğiniz her iletinin sonuna otomatik bir özdeyiş veya kendiniz hakkında bilgiler ekleyebilirsiniz.">
+<!ENTITY successful.close "Bu pencereyi kapat.">
+<!ENTITY input.namePlaceholder "Adınız veya rumuzunuz">
+<!ENTITY input.search "Arama">
+<!ENTITY search_engine.title "Arama motorunuzu özelleştirin">
+<!ENTITY search_engine.message "E-posta sağlayıcınız size Web'de arama olanağı da sunuyor olabilir.">
+<!ENTITY search_engine.button "Bitir">

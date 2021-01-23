@@ -7,21 +7,20 @@
 
 #include "nsArray.h"
 #include "nsCRT.h"
-#include "nsIComponentManager.h"
 #include "nsCOMPtr.h"
+#include "nsITransferable.h"
+#include "nsLiteralString.h"
 #include "nsXPCOM.h"
 #include "nsISupportsPrimitives.h"
-
-#include "nsITransferable.h"  // for mime defs, this is BAD
 
 // HTML convertor stuff
 #include "nsPrimitiveHelpers.h"
 #include "nsIDocumentEncoder.h"
 #include "nsContentUtils.h"
 
-nsHTMLFormatConverter::nsHTMLFormatConverter() {}
+nsHTMLFormatConverter::nsHTMLFormatConverter() = default;
 
-nsHTMLFormatConverter::~nsHTMLFormatConverter() {}
+nsHTMLFormatConverter::~nsHTMLFormatConverter() = default;
 
 NS_IMPL_ISUPPORTS(nsHTMLFormatConverter, nsIFormatConverter)
 

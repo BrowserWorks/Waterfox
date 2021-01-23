@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- LOCALIZATION NOTE (messengerCmd.label): DONT_TRANSLATE -->
+<!-- We DO translate -->
+<!ENTITY messengerCmd.label					"E-post &amp; Grupper">
+<!ENTITY messengerCmd.accesskey				"E">
+<!ENTITY messengerCmd.commandkey			"2">
+<!ENTITY addressBookCmd.label				"Adressbok">  
+<!ENTITY addressBookCmd.accesskey			"A">
+<!ENTITY addressBookCmd.commandkey			"5">
+
+<!ENTITY taskMessenger.tooltip  "E-post &amp; Grupper">
+<!ENTITY taskAddressBook.tooltip  "Adressbok">
+
+<!-- searchAddressesCmd is also used by addressbook -->
+<!ENTITY searchAddressesCmd.label "Sök efter adresser…">
+<!ENTITY searchAddressesCmd.accesskey "a">
+
+<!ENTITY searchMailCmd.label "Sök efter meddelanden…">
+<!ENTITY searchMailCmd.accesskey "m">
+<!ENTITY searchMailCmd.key "f">

@@ -388,6 +388,7 @@ add_task(async function developerEmpty() {
 });
 
 add_task(async function authorNotString() {
+  ExtensionTestUtils.failOnSchemaWarnings(false);
   for (let author of [{}, [], 42]) {
     let addon = await promiseInstallWebExtension({
       manifest: {
@@ -404,6 +405,7 @@ add_task(async function authorNotString() {
 
     await addon.uninstall();
   }
+  ExtensionTestUtils.failOnSchemaWarnings(true);
 });
 
 add_task(async function testThemeExtension() {
@@ -413,7 +415,7 @@ add_task(async function testThemeExtension() {
       manifest_version: 2,
       name: "Web Extension Name",
       version: "1.0",
-      theme: { images: { headerURL: "example.png" } },
+      theme: { images: { theme_frame: "example.png" } },
     },
   });
 
@@ -434,6 +436,7 @@ add_task(async function testThemeExtension() {
   await addon.uninstall();
 
   // Also test one without a proper 'theme' section.
+  ExtensionTestUtils.failOnSchemaWarnings(false);
   addon = await promiseInstallWebExtension({
     manifest: {
       author: "Some author",
@@ -443,6 +446,7 @@ add_task(async function testThemeExtension() {
       theme: null,
     },
   });
+  ExtensionTestUtils.failOnSchemaWarnings(true);
 
   checkAddon(ID, addon, {
     type: "extension",
@@ -487,7 +491,7 @@ add_task(async function test_theme_upgrade() {
           id: ID,
         },
       },
-      theme: { images: { headerURL: "example.png" } },
+      theme: { images: { theme_frame: "example.png" } },
     },
   });
 

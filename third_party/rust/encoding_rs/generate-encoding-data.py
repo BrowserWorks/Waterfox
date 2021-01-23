@@ -1273,6 +1273,55 @@ write_variant_method("decode_to_utf8_raw", True, [("src", "&[u8]"),
                            ("last", "bool")], "(DecoderResult, usize, usize)", decoder_variants, [], "Decoder")
 
 variant_file.write('''
+
+    pub fn latin1_byte_compatible_up_to(&self, buffer: &[u8]) -> Option<usize> {
+        match *self {
+            VariantDecoder::SingleByte(ref v) => {
+                return Some(v.latin1_byte_compatible_up_to(buffer));
+            }
+            VariantDecoder::Utf8(ref v) => {
+                if !v.in_neutral_state() {
+                    return None;
+                }
+            }
+            VariantDecoder::Gb18030(ref v) => {
+                if !v.in_neutral_state() {
+                    return None;
+                }
+            }
+            VariantDecoder::Big5(ref v) => {
+                if !v.in_neutral_state() {
+                    return None;
+                }
+            }
+            VariantDecoder::EucJp(ref v) => {
+                if !v.in_neutral_state() {
+                    return None;
+                }
+            }
+            VariantDecoder::Iso2022Jp(ref v) => {
+                if v.in_neutral_state() {
+                    return Some(Encoding::iso_2022_jp_ascii_valid_up_to(buffer));
+                }
+                return None;
+            }
+            VariantDecoder::ShiftJis(ref v) => {
+                if !v.in_neutral_state() {
+                    return None;
+                }
+            }
+            VariantDecoder::EucKr(ref v) => {
+                if !v.in_neutral_state() {
+                    return None;
+                }
+            }
+            VariantDecoder::UserDefined(_) => {}
+            VariantDecoder::Replacement(_) | VariantDecoder::Utf16(_) => {
+                return None;
+            }
+        };
+        Some(Encoding::ascii_valid_up_to(buffer))
+    }
 }
 
 pub enum VariantEncoder {

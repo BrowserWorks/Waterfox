@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Labels -->
+<!ENTITY newFolderDialog.title    "Uus kaust">
+<!ENTITY name.label               "Nimi:">
+<!ENTITY name.accesskey           "N">
+<!ENTITY description.label        "Luuakse alamkaustaks kausta:">
+<!ENTITY description.accesskey    "L">
+<!ENTITY folderRestriction1.label "See server lubab kaht tüüpi kaustu.">
+<!ENTITY folderRestriction2.label "Uus kaust võib sisaldada:">
+<!ENTITY foldersOnly.label        "Vaid kaustu">
+<!ENTITY messagesOnly.label       "Vaid kirju">
+<!ENTITY accept.label             "Loo kaust">
+<!ENTITY accept.accesskey         "o">

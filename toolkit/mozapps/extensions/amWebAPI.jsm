@@ -20,6 +20,13 @@ XPCOMUtils.defineLazyPreferenceGetter(
   false
 );
 
+XPCOMUtils.defineLazyPreferenceGetter(
+  this,
+  "AMO_ABUSEREPORT",
+  "extensions.abuseReport.amWebAPI.enabled",
+  false
+);
+
 const MSG_PROMISE_REQUEST = "WebAPIPromiseRequest";
 const MSG_PROMISE_RESULT = "WebAPIPromiseResult";
 const MSG_INSTALL_EVENT = "WebAPIInstallEvent";
@@ -249,8 +256,8 @@ class WebAPI extends APIObject {
       // Provide the host from which the amWebAPI is being called
       // (so that we can detect if the API is being used from the disco pane,
       // AMO, testpilot or another unknown webpage).
-      sourceHost: triggeringPrincipal.URI && triggeringPrincipal.URI.host,
-      sourceURL: triggeringPrincipal.URI && triggeringPrincipal.URI.spec,
+      sourceHost: this.window.location?.host,
+      sourceURL: this.window.location?.href,
     };
     return this._apiTask("createInstall", [installOptions], installInfo => {
       if (!installInfo) {
@@ -262,8 +269,16 @@ class WebAPI extends APIObject {
     });
   }
 
+  reportAbuse(id) {
+    return this._apiTask("addonReportAbuse", [id]);
+  }
+
   get permissionPromptsEnabled() {
     return WEBEXT_PERMISSION_PROMPTS;
+  }
+
+  get abuseReportPanelEnabled() {
+    return AMO_ABUSEREPORT;
   }
 
   eventListenerAdded(type) {

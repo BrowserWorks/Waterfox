@@ -6,12 +6,12 @@
 
 #include "SimpleVelocityTracker.h"
 
-#include "gfxPrefs.h"
 #include "mozilla/ComputedTimingFunction.h"  // for ComputedTimingFunction
-#include "mozilla/StaticPtr.h"               // for StaticAutoPtr
+#include "mozilla/StaticPrefs_apz.h"
+#include "mozilla/StaticPtr.h"  // for StaticAutoPtr
 
-#define SVT_LOG(...)
-// #define SVT_LOG(...) printf_stderr("SimpleVelocityTracker: " __VA_ARGS__)
+static mozilla::LazyLogModule sApzSvtLog("apz.simplevelocitytracker");
+#define SVT_LOG(...) MOZ_LOG(sApzSvtLog, LogLevel::Debug, (__VA_ARGS__))
 
 namespace mozilla {
 namespace layers {
@@ -45,7 +45,7 @@ Maybe<float> SimpleVelocityTracker::AddPosition(ParentLayerCoord aPos,
     // mVelocitySamplePos so that eventually when we do get an event with the
     // required time delta we use the corresponding distance delta as well.
     SVT_LOG("%p|%s skipping velocity computation for small time delta %dms\n",
-            mAxis->mAsyncPanZoomController, mAxis->Name(),
+            mAxis->OpaqueApzcPointer(), mAxis->Name(),
             (aTimestampMs - mVelocitySampleTimeMs));
     return Nothing();
   }
@@ -56,7 +56,7 @@ Maybe<float> SimpleVelocityTracker::AddPosition(ParentLayerCoord aPos,
   newVelocity = ApplyFlingCurveToVelocity(newVelocity);
 
   SVT_LOG("%p|%s updating velocity to %f with touch\n",
-          mAxis->mAsyncPanZoomController, mAxis->Name(), newVelocity);
+          mAxis->OpaqueApzcPointer(), mAxis->Name(), newVelocity);
   mVelocitySampleTimeMs = aTimestampMs;
   mVelocitySamplePos = aPos;
 
@@ -65,28 +65,12 @@ Maybe<float> SimpleVelocityTracker::AddPosition(ParentLayerCoord aPos,
   return Some(newVelocity);
 }
 
-float SimpleVelocityTracker::HandleDynamicToolbarMovement(
-    uint32_t aStartTimestampMs, uint32_t aEndTimestampMs,
-    ParentLayerCoord aDelta) {
-  float timeDelta = aEndTimestampMs - aStartTimestampMs;
-  MOZ_ASSERT(timeDelta != 0);
-  // Negate the delta to convert from spatial coordinates (e.g. toolbar
-  // has moved up --> negative delta) to scroll coordinates (e.g. toolbar
-  // has moved up --> scroll offset is increasing).
-  float velocity = -aDelta / timeDelta;
-  velocity = ApplyFlingCurveToVelocity(velocity);
-  mVelocitySampleTimeMs = aEndTimestampMs;
-
-  AddVelocityToQueue(aEndTimestampMs, velocity);
-  return velocity;
-}
-
 Maybe<float> SimpleVelocityTracker::ComputeVelocity(uint32_t aTimestampMs) {
   float velocity = 0;
   int count = 0;
   for (const auto& e : mVelocityQueue) {
     uint32_t timeDelta = (aTimestampMs - e.first);
-    if (timeDelta < gfxPrefs::APZVelocityRelevanceTime()) {
+    if (timeDelta < StaticPrefs::apz_velocity_relevance_time_ms()) {
       count++;
       velocity += e.second;
     }
@@ -103,24 +87,27 @@ void SimpleVelocityTracker::Clear() { mVelocityQueue.Clear(); }
 void SimpleVelocityTracker::AddVelocityToQueue(uint32_t aTimestampMs,
                                                float aVelocity) {
   mVelocityQueue.AppendElement(std::make_pair(aTimestampMs, aVelocity));
-  if (mVelocityQueue.Length() > gfxPrefs::APZMaxVelocityQueueSize()) {
+  if (mVelocityQueue.Length() >
+      StaticPrefs::apz_max_velocity_queue_size_AtStartup()) {
     mVelocityQueue.RemoveElementAt(0);
   }
 }
 
 float SimpleVelocityTracker::ApplyFlingCurveToVelocity(float aVelocity) const {
   float newVelocity = aVelocity;
-  if (gfxPrefs::APZMaxVelocity() > 0.0f) {
+  if (StaticPrefs::apz_max_velocity_inches_per_ms() > 0.0f) {
     bool velocityIsNegative = (newVelocity < 0);
     newVelocity = fabs(newVelocity);
 
-    float maxVelocity = mAxis->ToLocalVelocity(gfxPrefs::APZMaxVelocity());
+    float maxVelocity =
+        mAxis->ToLocalVelocity(StaticPrefs::apz_max_velocity_inches_per_ms());
     newVelocity = std::min(newVelocity, maxVelocity);
 
-    if (gfxPrefs::APZCurveThreshold() > 0.0f &&
-        gfxPrefs::APZCurveThreshold() < gfxPrefs::APZMaxVelocity()) {
-      float curveThreshold =
-          mAxis->ToLocalVelocity(gfxPrefs::APZCurveThreshold());
+    if (StaticPrefs::apz_fling_curve_threshold_inches_per_ms() > 0.0f &&
+        StaticPrefs::apz_fling_curve_threshold_inches_per_ms() <
+            StaticPrefs::apz_max_velocity_inches_per_ms()) {
+      float curveThreshold = mAxis->ToLocalVelocity(
+          StaticPrefs::apz_fling_curve_threshold_inches_per_ms());
       if (newVelocity > curveThreshold) {
         // here, 0 < curveThreshold < newVelocity <= maxVelocity, so we apply
         // the curve
@@ -130,7 +117,7 @@ float SimpleVelocityTracker::ApplyFlingCurveToVelocity(float aVelocity) const {
             funcInput, ComputedTimingFunction::BeforeFlag::Unset);
         float curvedVelocity = (funcOutput * scale) + curveThreshold;
         SVT_LOG("%p|%s curving up velocity from %f to %f\n",
-                mAxis->mAsyncPanZoomController, mAxis->Name(), newVelocity,
+                mAxis->OpaqueApzcPointer(), mAxis->Name(), newVelocity,
                 curvedVelocity);
         newVelocity = curvedVelocity;
       }

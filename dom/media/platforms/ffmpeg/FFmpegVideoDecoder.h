@@ -10,8 +10,47 @@
 #include "FFmpegLibWrapper.h"
 #include "FFmpegDataDecoder.h"
 #include "SimpleMap.h"
+#ifdef MOZ_WAYLAND_USE_VAAPI
+#  include "mozilla/widget/WaylandDMABufSurface.h"
+#  include <list>
+#endif
 
 namespace mozilla {
+
+#ifdef MOZ_WAYLAND_USE_VAAPI
+// When VA-API decoding is running, ffmpeg allocates AVHWFramesContext - a pool
+// of "hardware" frames. Every "hardware" frame (VASurface) is backed
+// by actual piece of GPU memory which holds the decoded image data.
+//
+// The VASurface is wrapped by WaylandDMABufSurface and transferred to
+// rendering queue by WaylandDMABUFSurfaceImage, where TextureClient is
+// created and VASurface is used as a texture there.
+//
+// As there's a limited number of VASurfaces, ffmpeg reuses them to decode
+// next frames ASAP even if they are still attached to WaylandDMABufSurface
+// and used as a texture in our rendering engine.
+//
+// Unfortunately there isn't any obvious way how to mark particular VASurface
+// as used. The best we can do is to hold a reference to particular AVBuffer
+// from decoded AVFrame and AVHWFramesContext which owns the AVBuffer.
+
+class VAAPIFrameHolder final {
+ public:
+  VAAPIFrameHolder(FFmpegLibWrapper* aLib, WaylandDMABufSurface* aSurface,
+                   AVCodecContext* aAVCodecContext, AVFrame* aAVFrame);
+  ~VAAPIFrameHolder();
+
+  // Check if WaylandDMABufSurface is used by any gecko rendering process
+  // (WebRender or GL compositor) or by WaylandDMABUFSurfaceImage/VideoData.
+  bool IsUsed() const { return mSurface->IsGlobalRefSet(); }
+
+ private:
+  const FFmpegLibWrapper* mLib;
+  const RefPtr<WaylandDMABufSurface> mSurface;
+  AVBufferRef* mAVHWFramesContext;
+  AVBufferRef* mHWAVBuffer;
+};
+#endif
 
 template <int V>
 class FFmpegVideoDecoder : public FFmpegDataDecoder<V> {};
@@ -33,7 +72,8 @@ class FFmpegVideoDecoder<LIBAV_VER>
  public:
   FFmpegVideoDecoder(FFmpegLibWrapper* aLib, TaskQueue* aTaskQueue,
                      const VideoInfo& aConfig, KnowsCompositor* aAllocator,
-                     ImageContainer* aImageContainer, bool aLowLatency);
+                     ImageContainer* aImageContainer, bool aLowLatency,
+                     bool aDisableHardwareDecoding);
 
   RefPtr<InitPromise> Init() override;
   void InitCodecContext() override;
@@ -52,6 +92,7 @@ class FFmpegVideoDecoder<LIBAV_VER>
 
  private:
   RefPtr<FlushPromise> ProcessFlush() override;
+  void ProcessShutdown() override;
   MediaResult DoDecode(MediaRawData* aSample, uint8_t* aData, int aSize,
                        bool* aGotFrame, DecodedData& aResults) override;
   void OutputDelayedFrames();
@@ -66,9 +107,23 @@ class FFmpegVideoDecoder<LIBAV_VER>
         mCodecID == AV_CODEC_ID_VP8;
 #endif
   }
+  gfx::YUVColorSpace GetFrameColorSpace();
 
   MediaResult CreateImage(int64_t aOffset, int64_t aPts, int64_t aDuration,
                           MediaDataDecoder::DecodedData& aResults);
+
+#ifdef MOZ_WAYLAND_USE_VAAPI
+  MediaResult InitVAAPIDecoder();
+  bool CreateVAAPIDeviceContext();
+  void InitVAAPICodecContext();
+  AVCodec* FindVAAPICodec();
+  bool IsHardwareAccelerated(nsACString& aFailureReason) const override;
+
+  MediaResult CreateImageVAAPI(int64_t aOffset, int64_t aPts, int64_t aDuration,
+                               MediaDataDecoder::DecodedData& aResults);
+  void ReleaseUnusedVAAPIFrames();
+  void ReleaseAllVAAPIFrames();
+#endif
 
   /**
    * This method allocates a buffer for FFmpeg's decoder, wrapped in an Image.
@@ -79,6 +134,12 @@ class FFmpegVideoDecoder<LIBAV_VER>
   int AllocateYUV420PVideoBuffer(AVCodecContext* aCodecContext,
                                  AVFrame* aFrame);
 
+#ifdef MOZ_WAYLAND_USE_VAAPI
+  AVBufferRef* mVAAPIDeviceContext;
+  const bool mDisableHardwareDecoding;
+  VADisplay mDisplay;
+  std::list<UniquePtr<VAAPIFrameHolder>> mFrameHolders;
+#endif
   RefPtr<KnowsCompositor> mImageAllocator;
   RefPtr<ImageContainer> mImageContainer;
   VideoInfo mInfo;

@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY biffAll.label                 "فعّال سازی به‌روز رسانی‌ها برای همه خوراک‌ها">
+<!ENTITY biffAll.accesskey             "ف">
+
+
+<!ENTITY manageSubscriptions.label     "Manage Subscriptions…">
+<!ENTITY manageSubscriptions.accesskey "M">
+
+<!ENTITY feedWindowTitle.label         "جادوگر حساب خوراک">
+

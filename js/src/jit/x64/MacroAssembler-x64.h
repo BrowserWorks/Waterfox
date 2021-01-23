@@ -20,8 +20,7 @@ struct ImmShiftedTag : public ImmWord {
   explicit ImmShiftedTag(JSValueShiftedTag shtag) : ImmWord((uintptr_t)shtag) {}
 
   explicit ImmShiftedTag(JSValueType type)
-      : ImmWord(uintptr_t(JSValueShiftedTag(JSVAL_TYPE_TO_SHIFTED_TAG(type)))) {
-  }
+      : ImmWord(uintptr_t(JSVAL_TYPE_TO_SHIFTED_TAG(type))) {}
 };
 
 struct ImmTag : public Imm32 {
@@ -75,7 +74,7 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared {
   using MacroAssemblerX86Shared::store16;
   using MacroAssemblerX86Shared::store32;
 
-  MacroAssemblerX64() {}
+  MacroAssemblerX64() = default;
 
   // The buffer is about to be linked, make sure any constant pools or excess
   // bookkeeping has been flushed to the instruction stream.
@@ -85,6 +84,8 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared {
   // X64 helpers.
   /////////////////////////////////////////////////////////////////
   void writeDataRelocation(const Value& val) {
+    // Raw GC pointer relocations and Value relocations both end up in
+    // Assembler::TraceDataRelocations.
     if (val.isGCThing()) {
       gc::Cell* cell = val.toGCThing();
       if (cell && gc::IsInsideNursery(cell)) {
@@ -118,17 +119,7 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared {
                    address.offset + 4);
   }
 
-  uint32_t Upper32Of(JSValueShiftedTag tag) {
-    union {  // Implemented in this way to appease MSVC++.
-      uint64_t tag;
-      struct {
-        uint32_t lo32;
-        uint32_t hi32;
-      } s;
-    } e;
-    e.tag = tag;
-    return e.s.hi32;
-  }
+  uint32_t Upper32Of(JSValueShiftedTag tag) { return uint32_t(tag >> 32); }
 
   JSValueShiftedTag GetShiftedTag(JSValueType type) {
     return (JSValueShiftedTag)JSVAL_TYPE_TO_SHIFTED_TAG(type);
@@ -276,12 +267,12 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared {
   }
   Condition testNumber(Condition cond, Register tag) {
     MOZ_ASSERT(cond == Equal || cond == NotEqual);
-    cmp32(tag, Imm32(JSVAL_UPPER_INCL_TAG_OF_NUMBER_SET));
+    cmp32(tag, Imm32(JS::detail::ValueUpperInclNumberTag));
     return cond == Equal ? BelowOrEqual : Above;
   }
   Condition testGCThing(Condition cond, Register tag) {
     MOZ_ASSERT(cond == Equal || cond == NotEqual);
-    cmp32(tag, Imm32(JSVAL_LOWER_INCL_TAG_OF_GCTHING_SET));
+    cmp32(tag, Imm32(JS::detail::ValueLowerInclGCThingTag));
     return cond == Equal ? AboveOrEqual : Below;
   }
 
@@ -295,7 +286,7 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared {
   }
   Condition testPrimitive(Condition cond, Register tag) {
     MOZ_ASSERT(cond == Equal || cond == NotEqual);
-    cmp32(tag, ImmTag(JSVAL_UPPER_EXCL_TAG_OF_PRIMITIVE_SET));
+    cmp32(tag, ImmTag(JS::detail::ValueUpperExclPrimitiveTag));
     return cond == Equal ? Below : AboveOrEqual;
   }
 
@@ -545,12 +536,6 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared {
   // Common interface.
   /////////////////////////////////////////////////////////////////
 
-  CodeOffsetJump jumpWithPatch(RepatchLabel* label) {
-    JmpSrc src = jmpSrc(label);
-    return CodeOffsetJump(size(),
-                          addPatchableJump(src, RelocationKind::HARDCODED));
-  }
-
   void movePtr(Register src, Register dest) { movq(src, dest); }
   void movePtr(Register src, const Operand& dest) { movq(src, dest); }
   void movePtr(ImmWord imm, Register dest) { mov(imm, dest); }
@@ -576,12 +561,7 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared {
   void loadPtr(const BaseIndex& src, Register dest) {
     movq(Operand(src), dest);
   }
-  void loadPrivate(const Address& src, Register dest) {
-    loadPtr(src, dest);
-#if !defined(JS_UNALIGNED_PRIVATE_VALUES)
-    shlq(Imm32(1), dest);
-#endif
-  }
+  void loadPrivate(const Address& src, Register dest) { loadPtr(src, dest); }
   void load32(AbsoluteAddress address, Register dest) {
     if (X86Encoding::IsAddressImmediate(address.addr)) {
       movl(Operand(address), dest);
@@ -593,6 +573,13 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared {
   }
   void load64(const Address& address, Register64 dest) {
     movq(Operand(address), dest.reg);
+  }
+  void load64(const BaseIndex& address, Register64 dest) {
+    movq(Operand(address), dest.reg);
+  }
+  template <typename S>
+  void load64Unaligned(const S& src, Register64 dest) {
+    load64(src, dest);
   }
   template <typename T>
   void storePtr(ImmWord imm, T address) {
@@ -652,8 +639,18 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared {
     }
   }
   void store64(Register64 src, Address address) { storePtr(src.reg, address); }
+  void store64(Register64 src, const BaseIndex& address) {
+    storePtr(src.reg, address);
+  }
   void store64(Imm64 imm, Address address) {
     storePtr(ImmWord(imm.value), address);
+  }
+  void store64(Imm64 imm, const BaseIndex& address) {
+    storePtr(ImmWord(imm.value), address);
+  }
+  template <typename S, typename T>
+  void store64Unaligned(const S& src, const T& dest) {
+    store64(src, dest);
   }
 
   void splitTag(Register src, Register dest) {
@@ -728,7 +725,11 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared {
   void unboxInt32(const Address& src, Register dest) {
     unboxInt32(Operand(src), dest);
   }
-  void unboxDouble(const Address& src, FloatRegister dest) {
+  void unboxInt32(const BaseIndex& src, Register dest) {
+    unboxInt32(Operand(src), dest);
+  }
+  template <typename T>
+  void unboxDouble(const T& src, FloatRegister dest) {
     loadDouble(Operand(src), dest);
   }
 
@@ -749,6 +750,9 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared {
   void unboxBoolean(const Address& src, Register dest) {
     unboxBoolean(Operand(src), dest);
   }
+  void unboxBoolean(const BaseIndex& src, Register dest) {
+    unboxBoolean(Operand(src), dest);
+  }
 
   void unboxMagic(const ValueOperand& src, Register dest) {
     movl(src.valueReg(), dest);
@@ -756,12 +760,6 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared {
 
   void unboxDouble(const ValueOperand& src, FloatRegister dest) {
     vmovq(src.valueReg(), dest);
-  }
-  void unboxPrivate(const ValueOperand& src, const Register dest) {
-    movq(src.valueReg(), dest);
-#if !defined(JS_UNALIGNED_PRIVATE_VALUES)
-    shlq(Imm32(1), dest);
-#endif
   }
 
   void notBoolean(const ValueOperand& val) { xorq(Imm32(1), val.valueReg()); }
@@ -834,6 +832,9 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared {
   void unboxBigInt(const Operand& src, Register dest) {
     unboxNonDouble(src, dest, JSVAL_TYPE_BIGINT);
   }
+  void unboxBigInt(const Address& src, Register dest) {
+    unboxNonDouble(src, dest, JSVAL_TYPE_BIGINT);
+  }
 
   void unboxObject(const ValueOperand& src, Register dest) {
     unboxNonDouble(src, dest, JSVAL_TYPE_OBJECT);
@@ -852,18 +853,26 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared {
   void unboxObjectOrNull(const T& src, Register dest) {
     unboxNonDouble(src, dest, JSVAL_TYPE_OBJECT);
     ScratchRegisterScope scratch(asMasm());
-    mov(ImmWord(~JSVAL_OBJECT_OR_NULL_BIT), scratch);
+    mov(ImmWord(~JS::detail::ValueObjectOrNullBit), scratch);
     andq(scratch, dest);
   }
 
-  // This should only be used for the pre-barrier trampoline, to unbox a
-  // string/symbol/object Value. It's fine there because we don't depend on
-  // the actual Value type. In almost all other cases, this would be
+  // This should only be used for GC barrier code, to unbox a GC thing Value.
+  // It's fine there because we don't depend on the actual Value type (all Cells
+  // are treated the same way). In almost all other cases this would be
   // Spectre-unsafe - use unboxNonDouble and friends instead.
-  void unboxGCThingForPreBarrierTrampoline(const Address& src, Register dest) {
-    movq(ImmWord(JSVAL_PAYLOAD_MASK_GCTHING), dest);
+  void unboxGCThingForGCBarrier(const Address& src, Register dest) {
+    movq(ImmWord(JS::detail::ValueGCThingPayloadMask), dest);
     andq(Operand(src), dest);
   }
+  void unboxGCThingForGCBarrier(const ValueOperand& src, Register dest) {
+    MOZ_ASSERT(src.valueReg() != dest);
+    movq(ImmWord(JS::detail::ValueGCThingPayloadMask), dest);
+    andq(src.valueReg(), dest);
+  }
+
+  inline void fallibleUnboxPtrImpl(const Operand& src, Register dest,
+                                   JSValueType type, Label* fail);
 
   // Extended unboxing API. If the payload is already in a register, returns
   // that register. Otherwise, provides a move to the given scratch register,
@@ -934,6 +943,8 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared {
 
   void loadConstantSimd128Int(const SimdConstant& v, FloatRegister dest);
   void loadConstantSimd128Float(const SimdConstant& v, FloatRegister dest);
+  void vpandSimd128(const SimdConstant& v, FloatRegister dest);
+  void rightShiftInt64x2(Imm32 count, FloatRegister src, FloatRegister dest);
 
   void loadWasmGlobalPtr(uint32_t globalDataOffset, Register dest) {
     loadPtr(Address(WasmTlsReg,
@@ -958,8 +969,7 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared {
   Condition testBigIntTruthy(bool truthy, const ValueOperand& value) {
     ScratchRegisterScope scratch(asMasm());
     unboxBigInt(value, scratch);
-    cmpPtr(Operand(scratch, BigInt::offsetOfLengthSignAndReservedBits()),
-           ImmWord(0));
+    cmp32(Operand(scratch, BigInt::offsetOfDigitLength()), Imm32(0));
     return truthy ? Assembler::NotEqual : Assembler::Equal;
   }
 
@@ -989,7 +999,7 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared {
           // Ideally we would call unboxObjectOrNull, but we need an extra
           // scratch register for that. So unbox as object, then clear the
           // object-or-null bit.
-          mov(ImmWord(~JSVAL_OBJECT_OR_NULL_BIT), scratch);
+          mov(ImmWord(~JS::detail::ValueObjectOrNullBit), scratch);
           andq(scratch, Operand(address));
         }
         return;
@@ -1036,7 +1046,7 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared {
   void profilerExitFrame();
 };
 
-typedef MacroAssemblerX64 MacroAssemblerSpecific;
+using MacroAssemblerSpecific = MacroAssemblerX64;
 
 }  // namespace jit
 }  // namespace js

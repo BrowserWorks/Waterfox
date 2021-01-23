@@ -1,0 +1,35 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowTitle.label    "Výber používateľského profilu">
+<!ENTITY            profileManager.title "Správca profilov programu &brandShortName;">
+
+<!ENTITY            manage.label     "Spravovať profily…">
+<!ENTITY            manage.accesskey "r">
+<!ENTITY            select.label     "Použiť profil">
+
+<!ENTITY            availableProfiles.label "Dostupné profily">
+
+<!ENTITY            introStart.label         "Ak chcete pristúpiť k osobnému profilu, ktorý obsahuje uložené správy, nastavenia a ďalšie používateľské položky, vyberte daný profil zo zoznamu a kliknutím na tlačidlo &start.label; spustíte vašu reláciu.">
+<!ENTITY            introSwitch.label        "Ak chcete prepnúť na iný profil, ktorý obsahuje uložené správy, nastavenia a ďalšie používateľské položky, vyberte daný profil zo zoznamu a kliknutím na tlačidlo &select.label; ho začnete používať.">
+<!ENTITY            profileManagerText.label "&brandShortName; ukladá informácie o nastaveniach, predvoľbách, záložkách, uložených správach a iných používateľských položkách v používateľskom profile.">
+
+<!ENTITY            autoSelect.label         "Použiť profil ako predvolený">
+<!ENTITY            autoSelect.accesskey     "P">
+
+<!ENTITY            start.label              "Spustiť &brandShortName;">
+<!ENTITY            exit.label               "Ukončiť">
+
+<!ENTITY            newButton.label          "Vytvoriť profil…">
+<!ENTITY            newButton.accesskey      "V">
+<!ENTITY            renameButton.label       "Premenovať profil…">
+<!ENTITY            renameButton.accesskey   "P">
+<!ENTITY            deleteButton.label       "Odstrániť profil…">
+<!ENTITY            deleteButton.accesskey   "d">
+
+<!ENTITY            offlineState.label       "Pracovať offline">
+<!ENTITY            offlineState.accesskey   "o">

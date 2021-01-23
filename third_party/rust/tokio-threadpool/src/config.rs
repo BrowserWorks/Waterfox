@@ -1,5 +1,6 @@
 use callback::Callback;
 
+use std::any::Any;
 use std::fmt;
 use std::sync::Arc;
 use std::time::Duration;
@@ -12,8 +13,9 @@ pub(crate) struct Config {
     pub name_prefix: Option<String>,
     pub stack_size: Option<usize>,
     pub around_worker: Option<Callback>,
-    pub after_start: Option<Arc<Fn() + Send + Sync>>,
-    pub before_stop: Option<Arc<Fn() + Send + Sync>>,
+    pub after_start: Option<Arc<dyn Fn() + Send + Sync>>,
+    pub before_stop: Option<Arc<dyn Fn() + Send + Sync>>,
+    pub panic_handler: Option<Arc<dyn Fn(Box<dyn Any + Send>) + Send + Sync>>,
 }
 
 /// Max number of workers that can be part of a pool. This is the most that can

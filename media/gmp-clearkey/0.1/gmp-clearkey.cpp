@@ -27,6 +27,7 @@
 #include "stddef.h"
 #include "content_decryption_module.h"
 #include "content_decryption_module_ext.h"
+#include "nss.h"
 
 #ifndef XP_WIN
 #  include <sys/types.h>
@@ -65,6 +66,11 @@ void* CreateCdmInstance(int cdm_interface_version, const char* key_system,
   }
 #endif
 
+  if (NSS_NoDB_Init(nullptr) == SECFailure) {
+    CK_LOGE("Unable to initialize NSS");
+    return nullptr;
+  }
+
 #ifdef MOZILLA_OFFICIAL
   // Test that we're able to read the host files.
   if (!sCanReadHostVerificationFiles) {
@@ -84,7 +90,7 @@ void* CreateCdmInstance(int cdm_interface_version, const char* key_system,
 const size_t TEST_READ_SIZE = 16 * 1024;
 
 bool CanReadSome(cdm::PlatformFile aFile) {
-  vector<uint8_t> data;
+  std::vector<uint8_t> data;
   data.resize(TEST_READ_SIZE);
 #ifdef XP_WIN
   DWORD bytesRead = 0;

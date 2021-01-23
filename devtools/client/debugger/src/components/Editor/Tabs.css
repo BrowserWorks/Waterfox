@@ -11,7 +11,6 @@
 }
 
 .source-header * {
-  -moz-user-select: none;
   user-select: none;
 }
 
@@ -107,6 +106,10 @@
 .source-tab.active .close-btn,
 .source-tab:hover .close-btn {
   visibility: visible;
+}
+
+.source-tab.active .source-icon {
+  background-color: currentColor;
 }
 
 .source-tab .close-btn:hover,

@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (window.title) : do not translate "LDAP" in below line -->
+<!ENTITY pref.ldap.window.title    "Сервери LDAP директоријума">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Сервер LDAP директоријума:">
+<!-- LOCALIZATION NOTE (directoriesText.label) : do not translate "LDAP" in below line -->
+<!ENTITY directoriesText.label     "Изаберите сервер LDAP директоријума:">
+<!ENTITY directoriesText.accesskey "з">
+<!ENTITY addDirectory.label        "Додај">
+<!ENTITY addDirectory.accesskey    "а">
+<!ENTITY editDirectory.label       "Уреди">
+<!ENTITY editDirectory.accesskey   "е">
+<!ENTITY deleteDirectory.label     "Обриши">
+<!ENTITY deleteDirectory.accesskey "б">

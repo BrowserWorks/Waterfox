@@ -11,7 +11,7 @@ load 317502-1.xhtml
 load 321894.html
 load 323499-1.html
 load 343510-1.html
-load 363696-1.xul
+load chrome://reftest/content/crashtests/layout/forms/crashtests/363696-1.xhtml
 load 363696-2.html
 load 363696-3.html
 load 366205-1.html
@@ -20,12 +20,9 @@ load 367587-1.html
 load 370703-1.html
 load 370940-1.html
 load 370967.html
-load 373586-1.xhtml
-load 375299.html
 load 378369.html
 load 378413-1.xhtml
 load 380116-1.xhtml
-load 382212-1.xhtml
 load 382610-1.html
 load 383887-1.html
 load 386554-1.html
@@ -43,7 +40,6 @@ load 451316.html
 load 455451-1.html
 load 457537-1.html
 load 457537-2.html
-load 478219-1.xhtml
 load 498698-1.html
 load 513113-1.html
 load 538062-1.xhtml
@@ -73,7 +69,10 @@ load 1388230-2.html
 load 1405830.html
 load 1418477.html
 load 1432853.html
-asserts(2-4) load 1460787-1.html
+asserts(1-4) load 1460787-1.html
 load 1464165-1.html
 load 1471157.html
 load 1488219.html
+load 1600207.html
+load 1600367.html
+load 1617753.html

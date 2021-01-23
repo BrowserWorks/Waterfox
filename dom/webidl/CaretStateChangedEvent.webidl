@@ -25,9 +25,12 @@ dictionary CaretStateChangedEventInit : EventInit {
   DOMString selectedTextContent = "";
 };
 
-[Constructor(DOMString type, optional CaretStateChangedEventInit eventInit),
- ChromeOnly]
+[ChromeOnly,
+ Exposed=Window]
 interface CaretStateChangedEvent : Event {
+  constructor(DOMString type,
+              optional CaretStateChangedEventInit eventInit = {});
+
   readonly attribute boolean collapsed;
   /* The bounding client rect is relative to the visual viewport. */
   readonly attribute DOMRectReadOnly? boundingClientRect;

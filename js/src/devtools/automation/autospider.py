@@ -1,8 +1,13 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this file,
+# You can obtain one at http://mozilla.org/MPL/2.0/.
+
 
 import argparse
 import json
 import logging
+import multiprocessing
 import re
 import os
 import platform
@@ -17,7 +22,7 @@ from os import environ as env
 from subprocess import Popen
 from threading import Timer
 
-Dirs = namedtuple('Dirs', ['scripts', 'js_src', 'source', 'tooltool'])
+Dirs = namedtuple('Dirs', ['scripts', 'js_src', 'source', 'tooltool', 'fetches'])
 
 
 def directories(pathmodule, cwd, fixup=lambda s: s):
@@ -26,7 +31,9 @@ def directories(pathmodule, cwd, fixup=lambda s: s):
     source = pathmodule.abspath(pathmodule.join(js_src, "..", ".."))
     tooltool = pathmodule.abspath(env.get('TOOLTOOL_CHECKOUT',
                                           pathmodule.join(source, "..", "..")))
-    return Dirs(scripts, js_src, source, tooltool)
+    fetches = pathmodule.abspath(env.get('MOZ_FETCHES_DIR',
+                                         pathmodule.join(source, "..", "..")))
+    return Dirs(scripts, js_src, source, tooltool, fetches)
 
 
 # Some scripts will be called with sh, which cannot use backslashed
@@ -52,7 +59,7 @@ parser.add_argument('--platform', '-p', type=str, metavar='PLATFORM',
                     'by buildbot to override the variant\'s "debug" setting. The platform can be '
                     'used to specify 32 vs 64 bits.')
 parser.add_argument('--timeout', '-t', type=int, metavar='TIMEOUT',
-                    default=10800,
+                    default=12600,
                     help='kill job after TIMEOUT seconds')
 parser.add_argument('--objdir', type=str, metavar='DIR',
                     default=env.get('OBJDIR', os.path.join(DIR.source, 'obj-spider')),
@@ -104,8 +111,9 @@ OUTDIR = os.path.join(OBJDIR, "out")
 POBJDIR = posixpath.join(PDIR.source, args.objdir)
 MAKE = env.get('MAKE', 'make')
 MAKEFLAGS = env.get('MAKEFLAGS', '-j6' + ('' if AUTOMATION else ' -s'))
+PYTHON = sys.executable
 
-for d in ('scripts', 'js_src', 'source', 'tooltool'):
+for d in ('scripts', 'js_src', 'source', 'tooltool', 'fetches'):
     info("DIR.{name} = {dir}".format(name=d, dir=getattr(DIR, d)))
 
 
@@ -123,7 +131,7 @@ def set_vars_from_script(script, vars):
         script_text += '; echo VAR SETTINGS:; '
         script_text += '; '.join('echo $' + var for var in vars)
         parse_state = 'scanning'
-    stdout = subprocess.check_output(['sh', '-x', '-c', script_text])
+    stdout = subprocess.check_output(['sh', '-x', '-c', script_text]).decode()
     tograb = vars[:]
     for line in stdout.splitlines():
         if parse_state == 'scanning':
@@ -183,9 +191,6 @@ if opt is not None:
     CONFIGURE_ARGS += (" --enable-optimize" if opt else " --disable-optimize")
 
 opt = args.debug
-if opt is None and args.platform:
-    # Override variant['debug'].
-    opt = ('-debug' in args.platform)
 if opt is None:
     opt = variant.get('debug')
 if opt is not None:
@@ -220,12 +225,26 @@ elif platform.system() == 'Windows':
 else:
     compiler = 'gcc'
 
+# Need a platform name to use as a key in variant files.
+if args.platform:
+    variant_platform = args.platform.split("-")[0]
+elif platform.system() == 'Windows':
+    variant_platform = 'win64' if word_bits == 64 else 'win32'
+elif platform.system() == 'Linux':
+    variant_platform = 'linux64' if word_bits == 64 else 'linux'
+elif platform.system() == 'Darwin':
+    variant_platform = 'macosx64'
+else:
+    variant_platform = 'other'
+
+
 info("using compiler '{}'".format(compiler))
 
 cxx = {'clang': 'clang++', 'gcc': 'g++', 'cl': 'cl'}.get(compiler)
 
-compiler_dir = env.get('GCCDIR', os.path.join(DIR.tooltool, compiler))
+compiler_dir = env.get('GCCDIR', os.path.join(DIR.fetches, compiler))
 info("looking for compiler under {}/".format(compiler_dir))
+compiler_libdir = None
 if os.path.exists(os.path.join(compiler_dir, 'bin', compiler)):
     env.setdefault('CC', os.path.join(compiler_dir, 'bin', compiler))
     env.setdefault('CXX', os.path.join(compiler_dir, 'bin', cxx))
@@ -233,19 +252,19 @@ if os.path.exists(os.path.join(compiler_dir, 'bin', compiler)):
         platlib = 'lib'
     else:
         platlib = 'lib64' if word_bits == 64 else 'lib'
-    env.setdefault('LD_LIBRARY_PATH', os.path.join(compiler_dir, platlib))
+    compiler_libdir = os.path.join(compiler_dir, platlib)
 else:
     env.setdefault('CC', compiler)
     env.setdefault('CXX', cxx)
 
 bindir = os.path.join(OBJDIR, 'dist', 'bin')
 env['LD_LIBRARY_PATH'] = ':'.join(
-    p for p in (bindir, env.get('LD_LIBRARY_PATH')) if p)
+    p for p in (bindir, compiler_libdir, env.get('LD_LIBRARY_PATH')) if p)
 
 for v in ('CC', 'CXX', 'LD_LIBRARY_PATH'):
     info("default {name} = {value}".format(name=v, value=env[v]))
 
-rust_dir = os.path.join(DIR.tooltool, 'rustc')
+rust_dir = os.path.join(DIR.fetches, 'rustc')
 if os.path.exists(os.path.join(rust_dir, 'bin', 'rustc')):
     env.setdefault('RUSTC', os.path.join(rust_dir, 'bin', 'rustc'))
     env.setdefault('CARGO', os.path.join(rust_dir, 'bin', 'cargo'))
@@ -288,6 +307,12 @@ else:
 
 if platform.system() == 'Linux' and AUTOMATION:
     CONFIGURE_ARGS = '--enable-stdcxx-compat --disable-gold ' + CONFIGURE_ARGS
+
+# Override environment variant settings conditionally.
+CONFIGURE_ARGS = "{} {}".format(
+    variant.get('conditional-configure-args', {}).get(variant_platform, ''),
+    CONFIGURE_ARGS
+)
 
 # Timeouts.
 ACTIVE_PROCESSES = set()
@@ -333,6 +358,7 @@ def run_command(command, check=False, **kwargs):
 REPLACEMENTS = {
     'DIR': DIR.scripts,
     'TOOLTOOL_CHECKOUT': DIR.tooltool,
+    'MOZ_FETCHES_DIR': DIR.fetches,
     'MOZ_UPLOAD_DIR': env['MOZ_UPLOAD_DIR'],
     'OUTDIR': OUTDIR,
 }
@@ -340,7 +366,7 @@ REPLACEMENTS = {
 # Add in environment variable settings for this variant. Normally used to
 # modify the flags passed to the shell or to set the GC zeal mode.
 for k, v in variant.get('env', {}).items():
-    env[k.encode('ascii')] = v.encode('ascii').format(**REPLACEMENTS)
+    env[k] = v.format(**REPLACEMENTS)
 
 if AUTOMATION:
     # Currently only supported on linux64.
@@ -392,7 +418,7 @@ if not args.nobuild:
     configure = os.path.join(DIR.js_src, 'configure')
     if need_updating_configure(configure):
         shutil.copyfile(configure + ".in", configure)
-        os.chmod(configure, 0755)
+        os.chmod(configure, 0o755)
 
     # Run configure
     if not args.noconf:
@@ -429,30 +455,22 @@ def run_test_command(command, **kwargs):
     return status
 
 
-test_suites = set(['jstests', 'jittest', 'jsapitests', 'checks'])
+default_test_suites = frozenset(['jstests', 'jittest', 'jsapitests', 'checks'])
+nondefault_test_suites = frozenset(['gdb'])
+all_test_suites = default_test_suites | nondefault_test_suites
+
+test_suites = set(default_test_suites)
 
 
 def normalize_tests(tests):
     if 'all' in tests:
-        return test_suites
+        return default_test_suites
     return tests
 
 
-# Need a platform name to use as a key in variant files.
-if args.platform:
-    variant_platform = args.platform.split("-")[0]
-elif platform.system() == 'Windows':
-    variant_platform = 'win64' if word_bits == 64 else 'win32'
-elif platform.system() == 'Linux':
-    variant_platform = 'linux64' if word_bits == 64 else 'linux'
-elif platform.system() == 'Darwin':
-    variant_platform = 'macosx64'
-else:
-    variant_platform = 'other'
-
 # Override environment variant settings conditionally.
 for k, v in variant.get('conditional-env', {}).get(variant_platform, {}).items():
-    env[k.encode('ascii')] = v.encode('ascii').format(**REPLACEMENTS)
+    env[k] = v.format(**REPLACEMENTS)
 
 # Skip any tests that are not run on this platform (or the 'all' platform).
 test_suites -= set(normalize_tests(variant.get('skip-tests', {}).get(variant_platform, [])))
@@ -474,6 +492,14 @@ if 'all' in args.skip_tests.split(","):
 if platform.system() == 'Windows':
     env['JITTEST_EXTRA_ARGS'] = "-j1 " + env.get('JITTEST_EXTRA_ARGS', '')
 
+# Bug 1557130 - Atomics tests can create many additional threads which can
+# lead to resource exhaustion, resulting in intermittent failures. This was
+# only seen on beefy machines (> 32 cores), so limit the number of parallel
+# workers for now.
+if platform.system() == 'Windows':
+    worker_count = min(multiprocessing.cpu_count(), 16)
+    env['JSTESTS_EXTRA_ARGS'] = "-j{} ".format(worker_count) + env.get('JSTESTS_EXTRA_ARGS', '')
+
 if use_minidump:
     # Set up later js invocations to run with the breakpad injector loaded.
     # Originally, I intended for this to be used with LD_PRELOAD, but when
@@ -485,31 +511,40 @@ if use_minidump:
 
 # Always run all enabled tests, even if earlier ones failed. But return the
 # first failed status.
-results = []
+results = [('(make-nonempty)', 0)]
 
 if 'checks' in test_suites:
-    results.append(run_test_command([MAKE, 'check']))
+    results.append(('make check', run_test_command([MAKE, 'check'])))
 
 if 'jittest' in test_suites:
-    results.append(run_test_command([MAKE, 'check-jit-test']))
+    results.append(('make check-jit-test', run_test_command([MAKE, 'check-jit-test'])))
 if 'jsapitests' in test_suites:
     jsapi_test_binary = os.path.join(OBJDIR, 'dist', 'bin', 'jsapi-tests')
     test_env = env.copy()
+    test_env['TOPSRCDIR'] = DIR.source
     if use_minidump and platform.system() == 'Linux':
         test_env['LD_PRELOAD'] = injector_lib
     st = run_test_command([jsapi_test_binary], env=test_env)
     if st < 0:
         print("PROCESS-CRASH | jsapi-tests | application crashed")
         print("Return code: {}".format(st))
-    results.append(st)
+    results.append(('jsapi-tests', st))
 if 'jstests' in test_suites:
-    results.append(run_test_command([MAKE, 'check-jstests']))
+    results.append(('jstests', run_test_command([MAKE, 'check-jstests'])))
+if 'gdb' in test_suites:
+    test_script = os.path.join(DIR.js_src, "gdb", "run-tests.py")
+    auto_args = ["-s", "-o", "--no-progress"] if AUTOMATION else []
+    extra_args = env.get('GDBTEST_EXTRA_ARGS', '').split(' ')
+    results.append((
+        'gdb',
+        run_test_command([PYTHON, test_script, *auto_args, *extra_args, OBJDIR])
+    ))
 
 # FIXME bug 1291449: This would be unnecessary if we could run msan with -mllvm
 # -msan-keep-going, but in clang 3.8 it causes a hang during compilation.
 if variant.get('ignore-test-failures'):
     logging.warning("Ignoring test results %s" % (results,))
-    results = [0]
+    results = [('ignored', 0)]
 
 if args.variant == 'msan':
     files = filter(lambda f: f.startswith("sanitize_log."), os.listdir(OUTDIR))
@@ -541,7 +576,7 @@ if args.variant == 'msan':
         max_allowed = variant['max-errors']
         print("Found %d errors out of %d allowed" % (len(sites), max_allowed))
         if len(sites) > max_allowed:
-            results.append(1)
+            results.append(('too many msan errors', 1))
 
     # Gather individual results into a tarball. Note that these are
     # distinguished only by pid of the JS process running within each test, so
@@ -554,7 +589,7 @@ if args.variant == 'msan':
 
 # Generate stacks from minidumps.
 if use_minidump:
-    venv_python = os.path.join(OBJDIR, "_virtualenvs", "init", "bin", "python")
+    venv_python = os.path.join(OBJDIR, "_virtualenvs", "init_py3", "bin", "python3")
     run_command([
         venv_python,
         os.path.join(DIR.source, "testing/mozbase/mozcrash/mozcrash/mozcrash.py"),
@@ -562,6 +597,7 @@ if use_minidump:
         os.path.join(OBJDIR, "dist/crashreporter-symbols"),
     ])
 
-for st in results:
-    if st != 0:
-        sys.exit(st)
+for name, st in results:
+    print("exit status %d for '%s'" % (st, name))
+
+sys.exit(max(st for _, st in results))

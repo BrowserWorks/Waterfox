@@ -6,7 +6,6 @@
 
 #include "nsGlobalWindowCommands.h"
 
-#include "nsIComponentManager.h"
 #include "nsIInterfaceRequestor.h"
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsCommandParams.h"
@@ -127,7 +126,7 @@ class nsSelectionCommandsBase : public nsIControllerCommand {
                              nsISupports* aCommandContext) override;
 
  protected:
-  virtual ~nsSelectionCommandsBase() {}
+  virtual ~nsSelectionCommandsBase() = default;
 
   static nsresult GetPresShellFromWindow(nsPIDOMWindowOuter* aWindow,
                                          PresShell** aPresShell);
@@ -463,7 +462,7 @@ nsresult nsPhysicalSelectCommand::DoCommand(const char* aCommandName,
 #endif
 
 class nsClipboardCommand final : public nsIControllerCommand {
-  ~nsClipboardCommand() {}
+  ~nsClipboardCommand() = default;
 
  public:
   NS_DECL_ISUPPORTS
@@ -488,9 +487,9 @@ nsresult nsClipboardCommand::IsCommandEnabled(const char* aCommandName,
   RefPtr<dom::Document> doc = window->GetExtantDoc();
   NS_ENSURE_TRUE(doc, NS_ERROR_FAILURE);
 
-  if (doc->IsHTMLOrXHTML()) {
+  if (doc->IsHTMLOrXHTML() && !nsContentUtils::IsChromeDoc(doc)) {
     // In HTML and XHTML documents, we always want the cut, copy and paste
-    // commands to be enabled.
+    // commands to be enabled, but if the document is chrome, let it control it.
     *outCmdEnabled = true;
   } else {
     // Cut isn't enabled in xul documents which use nsClipboardCommand
@@ -554,7 +553,7 @@ class nsSelectionCommand : public nsIControllerCommand {
   NS_DECL_NSICONTROLLERCOMMAND
 
  protected:
-  virtual ~nsSelectionCommand() {}
+  virtual ~nsSelectionCommand() = default;
 
   virtual nsresult IsClipboardCommandEnabled(const char* aCommandName,
                                              nsIContentViewerEdit* aEdit,
@@ -874,7 +873,7 @@ class nsLookUpDictionaryCommand final : public nsIControllerCommand {
   NS_DECL_NSICONTROLLERCOMMAND
 
  private:
-  virtual ~nsLookUpDictionaryCommand() {}
+  virtual ~nsLookUpDictionaryCommand() = default;
 };
 
 NS_IMPL_ISUPPORTS(nsLookUpDictionaryCommand, nsIControllerCommand)
@@ -958,42 +957,57 @@ nsLookUpDictionaryCommand::DoCommandParams(const char* aCommandName,
     return NS_ERROR_FAILURE;
   }
 
-  WidgetQueryContentEvent textContent(true, eQueryTextContent, widget);
-  // OSX 10.7 queries 50 characters before/after current point.  So we fetch
-  // same length.
+  WidgetQueryContentEvent selection(true, eQuerySelectedText, widget);
+  handler.OnQuerySelectedText(&selection);
+
+  bool useSelection = false;
   uint32_t offset = charAt.mReply.mOffset;
-  if (offset > 50) {
-    offset -= 50;
-  } else {
-    offset = 0;
-  }
-  textContent.InitForQueryTextContent(offset, 100);
-  handler.OnQueryTextContent(&textContent);
-  if (NS_WARN_IF(!textContent.mSucceeded ||
-                 textContent.mReply.mString.IsEmpty())) {
-    return NS_ERROR_FAILURE;
+  uint32_t begin, length;
+
+  // macOS prioritizes user selected text if the current point falls within the
+  // selection range. So we check the selection first.
+  if (selection.mSucceeded) {
+    begin = selection.mReply.mOffset;
+    length = selection.mReply.mString.Length();
+    useSelection = (offset >= begin && offset < (begin + length));
   }
 
-  // XXX nsIWordBreaker doesn't use contextual breaker.
-  // If OS provides it, widget should use it if contextual breaker is needed.
-  RefPtr<mozilla::intl::WordBreaker> wordBreaker =
-      nsContentUtils::WordBreaker();
-  if (NS_WARN_IF(!wordBreaker)) {
-    return NS_ERROR_FAILURE;
-  }
+  if (!useSelection) {
+    WidgetQueryContentEvent textContent(true, eQueryTextContent, widget);
+    // OSX 10.7 queries 50 characters before/after current point.  So we fetch
+    // same length.
+    if (offset > 50) {
+      offset -= 50;
+    } else {
+      offset = 0;
+    }
+    textContent.InitForQueryTextContent(offset, 100);
+    handler.OnQueryTextContent(&textContent);
+    if (NS_WARN_IF(!textContent.mSucceeded ||
+                   textContent.mReply.mString.IsEmpty())) {
+      return NS_ERROR_FAILURE;
+    }
 
-  mozilla::intl::WordRange range = wordBreaker->FindWord(
-      textContent.mReply.mString.get(), textContent.mReply.mString.Length(),
-      charAt.mReply.mOffset - offset);
-  if (range.mEnd == range.mBegin) {
-    return NS_ERROR_FAILURE;
+    // XXX nsIWordBreaker doesn't use contextual breaker.
+    // If OS provides it, widget should use it if contextual breaker is needed.
+    RefPtr<mozilla::intl::WordBreaker> wordBreaker =
+        nsContentUtils::WordBreaker();
+    if (NS_WARN_IF(!wordBreaker)) {
+      return NS_ERROR_FAILURE;
+    }
+
+    mozilla::intl::WordRange range = wordBreaker->FindWord(
+        textContent.mReply.mString.get(), textContent.mReply.mString.Length(),
+        charAt.mReply.mOffset - offset);
+    if (range.mEnd == range.mBegin) {
+      return NS_ERROR_FAILURE;
+    }
+    begin = range.mBegin + offset;
+    length = range.mEnd - range.mBegin;
   }
-  range.mBegin += offset;
-  range.mEnd += offset;
 
   WidgetQueryContentEvent lookUpContent(true, eQueryTextContent, widget);
-  lookUpContent.InitForQueryTextContent(range.mBegin,
-                                        range.mEnd - range.mBegin);
+  lookUpContent.InitForQueryTextContent(begin, length);
   lookUpContent.RequestFontRanges();
   handler.OnQueryTextContent(&lookUpContent);
   if (NS_WARN_IF(!lookUpContent.mSucceeded ||
@@ -1002,7 +1016,7 @@ nsLookUpDictionaryCommand::DoCommandParams(const char* aCommandName,
   }
 
   WidgetQueryContentEvent charRect(true, eQueryTextRect, widget);
-  charRect.InitForQueryTextRect(range.mBegin, range.mEnd - range.mBegin);
+  charRect.InitForQueryTextRect(begin, length);
   handler.OnQueryTextRect(&charRect);
   if (NS_WARN_IF(!charRect.mSucceeded)) {
     return NS_ERROR_FAILURE;

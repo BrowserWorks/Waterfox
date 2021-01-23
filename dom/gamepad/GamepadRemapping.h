@@ -7,6 +7,8 @@
 #ifndef mozilla_dom_GamepadRemapping_h_
 #define mozilla_dom_GamepadRemapping_h_
 
+#include "mozilla/dom/GamepadLightIndicator.h"
+
 namespace mozilla {
 namespace dom {
 
@@ -48,6 +50,8 @@ enum class GamepadId : uint32_t {
   kPrototypeVendorProduct9401 = 0x66669401,
   // Razer Serval Controller
   kRazer1532Product0900 = 0x15320900,
+  // Playstation 3 Controller
+  kSonyProduct0268 = 0x054c0268,
   // Playstation Dualshock 4
   kSonyProduct05c4 = 0x054c05c4,
   // Dualshock 4 (PS4 Slim)
@@ -70,11 +74,20 @@ class GamepadRemapper {
  public:
   virtual uint32_t GetAxisCount() const = 0;
   virtual uint32_t GetButtonCount() const = 0;
+  virtual uint32_t GetLightIndicatorCount() const { return 0; }
+  virtual void GetLightIndicators(
+      nsTArray<GamepadLightIndicatorType>& aTypes) const {}
+  virtual uint32_t GetTouchEventCount() const { return 0; }
+  virtual void GetLightColorReport(uint8_t aRed, uint8_t aGreen, uint8_t aBlue,
+                                   std::vector<uint8_t>& aReport) const {}
+  virtual uint32_t GetMaxInputReportLength() const { return 0; }
+
   virtual void SetAxisCount(uint32_t aButtonCount) {}
   virtual void SetButtonCount(uint32_t aButtonCount) {}
   virtual GamepadMappingType GetMappingType() const {
     return GamepadMappingType::Standard;
   }
+  virtual void ProcessTouchData(uint32_t aIndex, void* aInput) {}
   virtual void RemapAxisMoveEvent(uint32_t aIndex, uint32_t aAxis,
                                   double aValue) const = 0;
   virtual void RemapButtonEvent(uint32_t aIndex, uint32_t aButton,
@@ -91,7 +104,8 @@ struct GamepadRemappingData {
 };
 
 already_AddRefed<GamepadRemapper> GetGamepadRemapper(const uint16_t aVendorId,
-                                                     const uint16_t aProductId);
+                                                     const uint16_t aProductId,
+                                                     bool& aUsingDefault);
 
 }  // namespace dom
 }  // namespace mozilla

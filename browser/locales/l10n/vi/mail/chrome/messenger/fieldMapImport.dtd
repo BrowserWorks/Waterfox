@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Nhập sổ địa chỉ">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Dữ liệu đã nhập cho Bản ghi: ">
+<!ENTITY fieldMapImport.next.label "Tiếp">
+<!ENTITY fieldMapImport.next.accesskey "i">
+<!ENTITY fieldMapImport.previous.label "Trước">
+<!ENTITY fieldMapImport.previous.accesskey "r">
+<!ENTITY fieldMapImport.text "Sử dụng chuyển lên và chuyển xuống để các trường trong sổ địa chỉ ở bên trái phù hợp với dữ liệu chính xác cho việc nhập ở bên phải. Bỏ chọn các mục mà bạn không muốn nhập.">
+<!ENTITY fieldMapImport.up.label "Di chuyển lên">
+<!ENTITY fieldMapImport.up.accesskey "L">
+<!ENTITY fieldMapImport.down.label "Di chuyển xuống">
+<!ENTITY fieldMapImport.down.accesskey "X">
+<!ENTITY fieldMapImport.fieldListTitle "Các trường của sổ địa chỉ">
+<!ENTITY fieldMapImport.dataTitle "Dữ liệu bản ghi cần nhập">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Bản ghi đầu tiên chứa các tên trường">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "B">

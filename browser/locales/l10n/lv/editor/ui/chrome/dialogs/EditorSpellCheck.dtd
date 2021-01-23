@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+
+
+
+
+
+<!ENTITY ignoreButton.label "Ignorēt">
+<!ENTITY ignoreButton.accessKey "I">
+<!ENTITY ignoreAllButton.label "Ignorēt visus">
+<!ENTITY ignoreAllButton.accessKey "n">
+
+
+
+
+
+
+<!ENTITY userDictionary.label "Personīgā vārdnīca:">
+
+
+
+<!ENTITY editUserDictionaryButton.label "Rediģēt...">
+<!ENTITY editUserDictionaryButton.accessKey "e">
+
+
+<!ENTITY closeButton.label "Aizvērt">
+<!ENTITY closeButton.accessKey "A">
+<!ENTITY sendButton.label "Sūtīt">
+<!ENTITY sendButton.accessKey "S">
+<!ENTITY languagePopup.label "Valoda:">
+<!ENTITY languagePopup.accessKey "l">

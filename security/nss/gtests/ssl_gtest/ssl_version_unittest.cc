@@ -55,6 +55,10 @@ TEST_P(TlsConnectGeneric, ServerNegotiateTls12) {
 // two validate that we can also detect fallback using the
 // SSL_SetDowngradeCheckVersion() API.
 TEST_F(TlsConnectTest, TestDowngradeDetectionToTls11) {
+  client_->SetVersionRange(SSL_LIBRARY_VERSION_TLS_1_0,
+                           SSL_LIBRARY_VERSION_TLS_1_2);
+  server_->SetVersionRange(SSL_LIBRARY_VERSION_TLS_1_0,
+                           SSL_LIBRARY_VERSION_TLS_1_2);
   client_->SetOption(SSL_ENABLE_HELLO_DOWNGRADE_CHECK, PR_TRUE);
   MakeTlsFilter<TlsClientHelloVersionSetter>(client_,
                                              SSL_LIBRARY_VERSION_TLS_1_1);
@@ -98,6 +102,61 @@ TEST_F(TlsConnectTest, TestDisableDowngradeDetection) {
   server_->CheckErrorCode(SSL_ERROR_BAD_HANDSHAKE_HASH_VALUE);
 }
 
+typedef std::tuple<SSLProtocolVariant,
+                   uint16_t,  // client version
+                   uint16_t>  // server version
+    TlsDowngradeProfile;
+
+class TlsDowngradeTest
+    : public TlsConnectTestBase,
+      public ::testing::WithParamInterface<TlsDowngradeProfile> {
+ public:
+  TlsDowngradeTest()
+      : TlsConnectTestBase(std::get<0>(GetParam()), std::get<1>(GetParam())),
+        c_ver(std::get<1>(GetParam())),
+        s_ver(std::get<2>(GetParam())) {}
+
+ protected:
+  const uint16_t c_ver;
+  const uint16_t s_ver;
+};
+
+TEST_P(TlsDowngradeTest, TlsDowngradeSentinelTest) {
+  static const uint8_t tls12_downgrade_random[] = {0x44, 0x4F, 0x57, 0x4E,
+                                                   0x47, 0x52, 0x44, 0x01};
+  static const uint8_t tls1_downgrade_random[] = {0x44, 0x4F, 0x57, 0x4E,
+                                                  0x47, 0x52, 0x44, 0x00};
+  static const size_t kRandomLen = 32;
+
+  if (c_ver > s_ver) {
+    return;
+  }
+
+  client_->SetVersionRange(c_ver, c_ver);
+  server_->SetVersionRange(c_ver, s_ver);
+
+  auto sh = MakeTlsFilter<TlsHandshakeRecorder>(server_, ssl_hs_server_hello);
+  Connect();
+  ASSERT_TRUE(sh->buffer().len() > (kRandomLen + 2));
+
+  const uint8_t* downgrade_sentinel =
+      sh->buffer().data() + 2 + kRandomLen - sizeof(tls1_downgrade_random);
+  if (c_ver < s_ver) {
+    if (c_ver == SSL_LIBRARY_VERSION_TLS_1_2) {
+      EXPECT_EQ(0, memcmp(downgrade_sentinel, tls12_downgrade_random,
+                          sizeof(tls12_downgrade_random)));
+    } else {
+      EXPECT_EQ(0, memcmp(downgrade_sentinel, tls1_downgrade_random,
+                          sizeof(tls1_downgrade_random)));
+    }
+  } else {
+    EXPECT_NE(0, memcmp(downgrade_sentinel, tls12_downgrade_random,
+                        sizeof(tls12_downgrade_random)));
+    EXPECT_NE(0, memcmp(downgrade_sentinel, tls1_downgrade_random,
+                        sizeof(tls1_downgrade_random)));
+  }
+}
+
 // TLS 1.1 clients do not check the random values, so we should
 // instead get a handshake failure alert from the server.
 TEST_F(TlsConnectTest, TestDowngradeDetectionToTls10) {
@@ -116,11 +175,11 @@ TEST_F(TlsConnectTest, TestDowngradeDetectionToTls10) {
 
 TEST_F(TlsConnectTest, TestFallbackFromTls12) {
   client_->SetOption(SSL_ENABLE_HELLO_DOWNGRADE_CHECK, PR_TRUE);
-  client_->SetDowngradeCheckVersion(SSL_LIBRARY_VERSION_TLS_1_2);
   client_->SetVersionRange(SSL_LIBRARY_VERSION_TLS_1_1,
                            SSL_LIBRARY_VERSION_TLS_1_1);
   server_->SetVersionRange(SSL_LIBRARY_VERSION_TLS_1_1,
                            SSL_LIBRARY_VERSION_TLS_1_2);
+  client_->SetDowngradeCheckVersion(SSL_LIBRARY_VERSION_TLS_1_2);
   ConnectExpectAlert(client_, kTlsAlertIllegalParameter);
   client_->CheckErrorCode(SSL_ERROR_RX_MALFORMED_SERVER_HELLO);
   server_->CheckErrorCode(SSL_ERROR_ILLEGAL_PARAMETER_ALERT);
@@ -275,5 +334,83 @@ TEST_F(TlsConnectStreamTls13, Ssl30ClientHelloWithSupportedVersions) {
   MakeTlsFilter<TlsClientHelloVersionSetter>(client_, SSL_LIBRARY_VERSION_3_0);
   ConnectExpectAlert(server_, kTlsAlertProtocolVersion);
 }
+
+// Verify the client sends only DTLS versions in supported_versions
+TEST_F(DtlsConnectTest, DtlsSupportedVersionsEncoding) {
+  client_->SetVersionRange(SSL_LIBRARY_VERSION_TLS_1_1,
+                           SSL_LIBRARY_VERSION_TLS_1_3);
+  server_->SetVersionRange(SSL_LIBRARY_VERSION_TLS_1_1,
+                           SSL_LIBRARY_VERSION_TLS_1_3);
+  auto capture = MakeTlsFilter<TlsExtensionCapture>(
+      client_, ssl_tls13_supported_versions_xtn);
+  Connect();
+
+  ASSERT_EQ(7U, capture->extension().len());
+  uint32_t version = 0;
+  ASSERT_TRUE(capture->extension().Read(1, 2, &version));
+  EXPECT_EQ(0x7f00 | DTLS_1_3_DRAFT_VERSION, static_cast<int>(version));
+  ASSERT_TRUE(capture->extension().Read(3, 2, &version));
+  EXPECT_EQ(SSL_LIBRARY_VERSION_DTLS_1_2_WIRE, static_cast<int>(version));
+  ASSERT_TRUE(capture->extension().Read(5, 2, &version));
+  EXPECT_EQ(SSL_LIBRARY_VERSION_DTLS_1_0_WIRE, static_cast<int>(version));
+}
+
+// Verify the DTLS 1.3 supported_versions interop workaround.
+TEST_F(DtlsConnectTest, Dtls13VersionWorkaround) {
+  static const uint16_t kExpectVersionsWorkaround[] = {
+      0x7f00 | DTLS_1_3_DRAFT_VERSION, SSL_LIBRARY_VERSION_DTLS_1_2_WIRE,
+      SSL_LIBRARY_VERSION_TLS_1_2, SSL_LIBRARY_VERSION_DTLS_1_0_WIRE,
+      SSL_LIBRARY_VERSION_TLS_1_1};
+  const int min_ver = SSL_LIBRARY_VERSION_TLS_1_1,
+            max_ver = SSL_LIBRARY_VERSION_TLS_1_3;
+
+  // Toggle the workaround, then verify both encodings are present.
+  EnsureTlsSetup();
+  SSL_SetDtls13VersionWorkaround(client_->ssl_fd(), PR_TRUE);
+  SSL_SetDtls13VersionWorkaround(client_->ssl_fd(), PR_FALSE);
+  SSL_SetDtls13VersionWorkaround(client_->ssl_fd(), PR_TRUE);
+  client_->SetVersionRange(min_ver, max_ver);
+  server_->SetVersionRange(min_ver, max_ver);
+  auto capture = MakeTlsFilter<TlsExtensionCapture>(
+      client_, ssl_tls13_supported_versions_xtn);
+  Connect();
+
+  uint32_t version = 0;
+  size_t off = 1;
+  ASSERT_EQ(1 + sizeof(kExpectVersionsWorkaround), capture->extension().len());
+  for (unsigned int i = 0; i < PR_ARRAY_SIZE(kExpectVersionsWorkaround); i++) {
+    ASSERT_TRUE(capture->extension().Read(off, 2, &version));
+    EXPECT_EQ(kExpectVersionsWorkaround[i], static_cast<uint16_t>(version));
+    off += 2;
+  }
+}
+
+// Verify the client sends only TLS versions in supported_versions
+TEST_F(TlsConnectTest, TlsSupportedVersionsEncoding) {
+  client_->SetVersionRange(SSL_LIBRARY_VERSION_TLS_1_0,
+                           SSL_LIBRARY_VERSION_TLS_1_3);
+  server_->SetVersionRange(SSL_LIBRARY_VERSION_TLS_1_0,
+                           SSL_LIBRARY_VERSION_TLS_1_3);
+  auto capture = MakeTlsFilter<TlsExtensionCapture>(
+      client_, ssl_tls13_supported_versions_xtn);
+  Connect();
+
+  ASSERT_EQ(9U, capture->extension().len());
+  uint32_t version = 0;
+  ASSERT_TRUE(capture->extension().Read(1, 2, &version));
+  EXPECT_EQ(SSL_LIBRARY_VERSION_TLS_1_3, static_cast<int>(version));
+  ASSERT_TRUE(capture->extension().Read(3, 2, &version));
+  EXPECT_EQ(SSL_LIBRARY_VERSION_TLS_1_2, static_cast<int>(version));
+  ASSERT_TRUE(capture->extension().Read(5, 2, &version));
+  EXPECT_EQ(SSL_LIBRARY_VERSION_TLS_1_1, static_cast<int>(version));
+  ASSERT_TRUE(capture->extension().Read(7, 2, &version));
+  EXPECT_EQ(SSL_LIBRARY_VERSION_TLS_1_0, static_cast<int>(version));
+}
+
+INSTANTIATE_TEST_CASE_P(
+    TlsDowngradeSentinelTest, TlsDowngradeTest,
+    ::testing::Combine(TlsConnectTestBase::kTlsVariantsStream,
+                       TlsConnectTestBase::kTlsVAll,
+                       TlsConnectTestBase::kTlsV12Plus));
 
 }  // namespace nss_test

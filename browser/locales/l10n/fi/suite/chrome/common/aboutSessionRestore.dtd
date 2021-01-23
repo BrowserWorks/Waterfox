@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Istunnon palautus">
+<!ENTITY restorepage.pagetitle      "Oho, kävi nolosti…">
+<!-- LOCALIZATION NOTE: If "closed unexpectedly" sounds too awkward in the translation,
+                        you may translate "crash" instead (even though it's IT-speak) -->
+<!ENTITY restorepage.issueDesc      "&brandShortName; ei onnistunut palauttamaan avattuja ikkunoita ja välilehtiä. Tämä johtuu yleisimmin jostakin äskettäin avatusta sivusta.">
+<!ENTITY restorepage.remedies       "Voit yrittää:">
+<!ENTITY restorepage.dueToChrome    "Poistaa yhden tai useamman välilehden, jonka voisit kuvitella aiheuttavan ongelman">
+<!ENTITY restorepage.dueToContent   "Aloittaa uuden istunnon">
+
+<!ENTITY restorepage.restoreButton  "Palauta edellinen istunto">
+<!ENTITY restorepage.restore.access "P">
+<!ENTITY restorepage.cancelButton   "Aloita uusi istunto">
+<!ENTITY restorepage.cancel.access  "A">
+
+<!ENTITY restorepage.restoreHeader  "Palauta">
+<!ENTITY restorepage.listHeader     "Ikkunat ja välilehdet">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Ikkuna &#37;S">

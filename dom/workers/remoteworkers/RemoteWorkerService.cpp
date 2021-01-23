@@ -11,10 +11,10 @@
 #include "mozilla/ipc/BackgroundParent.h"
 #include "mozilla/ipc/PBackgroundChild.h"
 #include "mozilla/ipc/PBackgroundParent.h"
+#include "mozilla/AbstractThread.h"
 #include "mozilla/Services.h"
 #include "mozilla/StaticMutex.h"
 #include "mozilla/StaticPtr.h"
-#include "mozilla/SystemGroup.h"
 #include "nsIObserverService.h"
 #include "nsIThread.h"
 #include "nsThreadUtils.h"
@@ -114,6 +114,9 @@ void RemoteWorkerService::InitializeOnTargetThread() {
   MOZ_ASSERT(mThread);
   MOZ_ASSERT(mThread->IsOnCurrentThread());
 
+  mAbstractThread = AbstractThread::CreateXPCOMThreadWrapper(
+      mThread, false /* aRequireTailDispatch */);
+
   PBackgroundChild* actorChild = BackgroundChild::GetOrCreateForCurrentThread();
   if (NS_WARN_IF(!actorChild)) {
     return;
@@ -143,12 +146,11 @@ void RemoteWorkerService::ShutdownOnTargetThread() {
   nsCOMPtr<nsIRunnable> r =
       NS_NewRunnableFunction("ShutdownOnMainThread", [self]() {
         self->mThread->Shutdown();
+        self->mAbstractThread = nullptr;
         self->mThread = nullptr;
       });
 
-  nsCOMPtr<nsIEventTarget> target =
-      SystemGroup::EventTargetFor(TaskCategory::Other);
-  target->Dispatch(r.forget(), NS_DISPATCH_NORMAL);
+  SchedulerGroup::Dispatch(TaskCategory::Other, r.forget());
 }
 
 NS_IMETHODIMP

@@ -28,7 +28,6 @@ var gPropList = {
     "feFlood"
   ),
   // SKIP 'color-profile' property: animatable but not supported by Mozilla
-  // SKIP 'color-rendering' property: animatable but not supported by Mozilla
   cursor: new NonAdditiveAttribute("cursor", "CSS", "rect"),
   direction: new NonAnimatableAttribute("direction", "CSS", "text"),
   display: new NonAdditiveAttribute("display", "CSS", "rect"),
@@ -89,7 +88,11 @@ var gPropList = {
   stroke_opacity: new AdditiveAttribute("stroke-opacity", "CSS", "rect"),
   stroke_width: new AdditiveAttribute("stroke-width", "CSS", "rect"),
   text_anchor: new NonAdditiveAttribute("text-anchor", "CSS", "text"),
-  text_decoration: new NonAdditiveAttribute("text-decoration", "CSS", "text"),
+  text_decoration_line: new NonAdditiveAttribute(
+    "text-decoration-line",
+    "CSS",
+    "text"
+  ),
   text_rendering: new NonAdditiveAttribute("text-rendering", "CSS", "text"),
   unicode_bidi: new NonAnimatableAttribute("unicode-bidi", "CSS", "text"),
   vector_effect: new NonAdditiveAttribute("vector-effect", "CSS", "rect"),

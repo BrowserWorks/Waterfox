@@ -45,20 +45,15 @@ class ShadowIncludingTreeIterator {
   // it goes.
   ShadowIncludingTreeIterator& begin() { return *this; }
 
-  ShadowIncludingTreeIterator end() { return ShadowIncludingTreeIterator(); }
+  std::nullptr_t end() const { return nullptr; }
 
-  bool operator!=(const ShadowIncludingTreeIterator& aOther) {
-    return mCurrent != aOther.mCurrent;
-  }
+  bool operator!=(std::nullptr_t) const { return !!mCurrent; }
 
   void operator++() { Next(); }
 
   nsINode* operator*() { return mCurrent; }
 
  private:
-  // Constructor used only for end() to represent a drained iterator.
-  ShadowIncludingTreeIterator() : mCurrent(nullptr) {}
-
   void Next() {
     MOZ_ASSERT(mCurrent, "Don't call Next() after we have no current node");
 
@@ -99,7 +94,7 @@ class ShadowIncludingTreeIterator {
   // shadow DOMs.  But the exact value "4" was just picked because it sounded
   // not too big, not too small.  Feel free to replace it with something else
   // based on actual data.
-  AutoTArray<nsINode*, 4> mRoots;
+  CopyableAutoTArray<nsINode*, 4> mRoots;
 
 #ifdef DEBUG
   // Make sure no one mutates the DOM while we're walking over it.

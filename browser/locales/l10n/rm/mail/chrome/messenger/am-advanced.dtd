@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpServer.label "Parameters dal server da sortida (SMTP)">
+
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpDescription.label "Sche ti administreschas tias identitads pos ti utilisar in server da questa glista cun tscherner el sco server per posta che sorta (SMTP) ni che ti pos utilisar il server da standard da questa glista cun tscherner  &quot;Utilisar il server predefinì&quot;.">
+
+<!ENTITY smtpListAdd.label  "Agiuntar…">
+<!ENTITY smtpListAdd.accesskey  "A">
+<!ENTITY smtpListEdit.label "Modifitgar…">
+<!ENTITY smtpListEdit.accesskey "M">
+<!ENTITY smtpListDelete.label "Allontanar">
+<!ENTITY smtpListDelete.accesskey "l">
+<!ENTITY smtpListSetDefault.label "Definir sco standard">
+<!ENTITY smtpListSetDefault.accesskey "s">
+
+<!ENTITY serverDetails.label "Detagls dal server tschernì:">
+<!ENTITY serverDescription.label "Descripziun: ">
+<!ENTITY serverName.label "Num dal server: ">
+<!ENTITY serverPort.label "Port: ">
+<!ENTITY userName.label   "Num d'utilisader: ">
+<!ENTITY connectionSecurity.label "Segirezza da la connexiun: ">
+<!ENTITY authMethod.label   "Metoda d'autentificaziun: ">

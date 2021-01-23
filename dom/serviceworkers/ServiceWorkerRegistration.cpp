@@ -12,9 +12,9 @@
 #include "mozilla/dom/PushManager.h"
 #include "mozilla/dom/ServiceWorker.h"
 #include "mozilla/dom/ServiceWorkerRegistrationBinding.h"
+#include "mozilla/dom/ServiceWorkerUtils.h"
 #include "mozilla/dom/WorkerPrivate.h"
 #include "nsCycleCollectionParticipant.h"
-#include "nsISupportsPrimitives.h"
 #include "nsPIDOMWindow.h"
 #include "RemoteServiceWorkerRegistrationImpl.h"
 #include "ServiceWorkerRegistrationImpl.h"
@@ -50,7 +50,6 @@ ServiceWorkerRegistration::ServiceWorkerRegistration(
 
   KeepAliveIfHasListenersFor(NS_LITERAL_STRING("updatefound"));
 
-  UpdateState(mDescriptor);
   mInner->SetServiceWorkerRegistration(this);
 }
 
@@ -81,6 +80,10 @@ ServiceWorkerRegistration::CreateForMainThread(
 
   RefPtr<ServiceWorkerRegistration> registration =
       new ServiceWorkerRegistration(aWindow->AsGlobal(), aDescriptor, inner);
+  // This is not called from within the constructor, as it may call content code
+  // which can cause the deletion of the registration, so we need to keep a
+  // strong reference while calling it.
+  registration->UpdateState(aDescriptor);
 
   return registration.forget();
 }
@@ -104,6 +107,10 @@ ServiceWorkerRegistration::CreateForWorker(
 
   RefPtr<ServiceWorkerRegistration> registration =
       new ServiceWorkerRegistration(aGlobal, aDescriptor, inner);
+  // This is not called from within the constructor, as it may call content code
+  // which can cause the deletion of the registration, so we need to keep a
+  // strong reference while calling it.
+  registration->UpdateState(aDescriptor);
 
   return registration.forget();
 }
@@ -112,7 +119,7 @@ void ServiceWorkerRegistration::DisconnectFromOwner() {
   DOMEventTargetHelper::DisconnectFromOwner();
 }
 
-void ServiceWorkerRegistration::RegistrationRemoved() {
+void ServiceWorkerRegistration::RegistrationCleared() {
   // Its possible that the registration will fail to install and be
   // immediately removed.  In that case we may never receive the
   // UpdateState() call if the actor was too slow to connect, etc.
@@ -199,12 +206,59 @@ already_AddRefed<Promise> ServiceWorkerRegistration::Update(ErrorResult& aRv) {
     return nullptr;
   }
 
+  // `ServiceWorker` objects are not exposed on worker threads yet, so calling
+  // `ServiceWorkerRegistration::Get{Installing,Waiting,Active}` won't work.
+  const Maybe<ServiceWorkerDescriptor> newestWorkerDescriptor =
+      mDescriptor.Newest();
+
+  // "If newestWorker is null, return a promise rejected with an
+  // "InvalidStateError" DOMException and abort these steps."
+  if (newestWorkerDescriptor.isNothing()) {
+    outer->MaybeReject(NS_ERROR_DOM_INVALID_STATE_ERR);
+    return outer.forget();
+  }
+
+  // "If the context object’s relevant settings object’s global object
+  // globalObject is a ServiceWorkerGlobalScope object, and globalObject’s
+  // associated service worker's state is "installing", return a promise
+  // rejected with an "InvalidStateError" DOMException and abort these steps."
+  if (!NS_IsMainThread()) {
+    WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();
+    MOZ_ASSERT(workerPrivate);
+
+    if (workerPrivate->IsServiceWorker() &&
+        (workerPrivate->GetServiceWorkerDescriptor().State() ==
+         ServiceWorkerState::Installing)) {
+      outer->MaybeReject(NS_ERROR_DOM_INVALID_STATE_ERR);
+      return outer.forget();
+    }
+  }
+
   RefPtr<ServiceWorkerRegistration> self = this;
 
   mInner->Update(
+      newestWorkerDescriptor.ref().ScriptURL(),
       [outer, self](const ServiceWorkerRegistrationDescriptor& aDesc) {
         nsIGlobalObject* global = self->GetParentObject();
-        MOZ_DIAGNOSTIC_ASSERT(global);
+        // It's possible this binding was detached from the global.  In cases
+        // where we use IPC with Promise callbacks, we use
+        // DOMMozPromiseRequestHolder in order to auto-disconnect the promise
+        // that would hold these callbacks.  However in bug 1466681 we changed
+        // this call to use (synchronous) callbacks because the use of
+        // MozPromise introduced an additional runnable scheduling which made
+        // it very difficult to maintain ordering required by the standard.
+        //
+        // If we were to delete this actor at the time of DETH detaching, we
+        // would not need to do this check because the IPC callback of the
+        // RemoteServiceWorkerRegistrationImpl lambdas would never occur.
+        // However, its actors currently depend on asking the parent to delete
+        // the actor for us.  Given relaxations in the IPC lifecyle, we could
+        // potentially issue a direct termination, but that requires additional
+        // evaluation.
+        if (!global) {
+          outer->MaybeReject(NS_ERROR_DOM_INVALID_STATE_ERR);
+          return;
+        }
         RefPtr<ServiceWorkerRegistration> ref =
             global->GetOrCreateServiceWorkerRegistration(aDesc);
         if (!ref) {
@@ -213,7 +267,7 @@ already_AddRefed<Promise> ServiceWorkerRegistration::Update(ErrorResult& aRv) {
         }
         outer->MaybeResolve(ref);
       },
-      [outer, self](ErrorResult& aRv) { outer->MaybeReject(aRv); });
+      [outer, self](ErrorResult&& aRv) { outer->MaybeReject(std::move(aRv)); });
 
   return outer.forget();
 }
@@ -237,9 +291,10 @@ already_AddRefed<Promise> ServiceWorkerRegistration::Unregister(
   }
 
   mInner->Unregister([outer](bool aSuccess) { outer->MaybeResolve(aSuccess); },
-                     [outer](ErrorResult& aRv) {
+                     [outer](ErrorResult&& aRv) {
                        // register() should be resilient and resolve false
                        // instead of rejecting in most cases.
+                       aRv.SuppressException();
                        outer->MaybeResolve(false);
                      });
 
@@ -277,18 +332,18 @@ already_AddRefed<Promise> ServiceWorkerRegistration::ShowNotification(
     return nullptr;
   }
 
-  NS_ConvertUTF8toUTF16 scope(mDescriptor.Scope());
-
   // Until we ship ServiceWorker objects on worker threads the active
   // worker will always be nullptr.  So limit this check to main
   // thread for now.
   if (mDescriptor.GetActive().isNothing() && NS_IsMainThread()) {
-    aRv.ThrowTypeError<MSG_NO_ACTIVE_WORKER>(scope);
+    aRv.ThrowTypeError<MSG_NO_ACTIVE_WORKER>(mDescriptor.Scope());
     return nullptr;
   }
 
+  NS_ConvertUTF8toUTF16 scope(mDescriptor.Scope());
+
   RefPtr<Promise> p = Notification::ShowPersistentNotification(
-      aCx, global, scope, aTitle, aOptions, aRv);
+      aCx, global, scope, aTitle, aOptions, mDescriptor, aRv);
   if (NS_WARN_IF(aRv.Failed())) {
     return nullptr;
   }
@@ -408,9 +463,9 @@ void ServiceWorkerRegistration::UpdateStateInternal(
   // given descriptor.  Any that are not restored will need
   // to be moved to the redundant state.
   AutoTArray<RefPtr<ServiceWorker>, 3> oldWorkerList({
-      mInstallingWorker.forget(),
-      mWaitingWorker.forget(),
-      mActiveWorker.forget(),
+      std::move(mInstallingWorker),
+      std::move(mWaitingWorker),
+      std::move(mActiveWorker),
   });
 
   // Its important that all state changes are actually applied before

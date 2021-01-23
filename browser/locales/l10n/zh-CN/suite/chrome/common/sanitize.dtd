@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sanitizeDialog.title            "清空隐私数据">
+<!ENTITY sanitizeItems.label             "立即清空下列项目：">
+
+<!ENTITY itemHistory.label               "浏览历史">
+<!ENTITY itemHistory.accesskey           "B">
+<!ENTITY itemUrlBar.label                "地址栏历史">
+<!ENTITY itemUrlBar.accesskey            "L">
+<!ENTITY itemDownloads.label             "下载历史">
+<!ENTITY itemDownloads.accesskey         "D">
+<!ENTITY itemFormSearchHistory.label     "已保存表单和搜索历史">
+<!ENTITY itemFormSearchHistory.accesskey "F">
+<!ENTITY itemCache.label                 "高速缓存">
+<!ENTITY itemCache.accesskey             "a">
+<!ENTITY itemCookies.label               "Cookie">
+<!ENTITY itemCookies.accesskey           "C">
+<!ENTITY itemOfflineApps.label           "脱机网站数据">
+<!ENTITY itemOfflineApps.accesskey       "O">
+<!ENTITY itemPasswords.label             "已保存的密码">
+<!ENTITY itemPasswords.accesskey         "P">
+<!ENTITY itemSessions.label              "已通过验证的会话">
+<!ENTITY itemSessions.accesskey          "S">
+
+<!ENTITY sanitizeButton.label            "立即清除隐私数据">

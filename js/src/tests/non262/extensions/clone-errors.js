@@ -9,7 +9,7 @@ function check(v) {
     } catch (exc) {
         return;
     }
-    throw new Error("serializing " + uneval(v) + " should have failed with an exception");
+    throw new Error("serializing " + JSON.stringify(v) + " should have failed with an exception");
 }
 
 // Unsupported object types.
@@ -23,10 +23,8 @@ check(new Proxy({}, {}));
 check({get x() { throw new Error("fail"); }});
 
 // Mismatched scopes.
-for (let [write_scope, read_scope] of [['SameProcessSameThread', 'SameProcessDifferentThread'],
-                                       ['SameProcessSameThread', 'DifferentProcess'],
-                                       ['SameProcessDifferentThread', 'DifferentProcessForIndexedDB'],
-                                       ['SameProcessDifferentThread', 'DifferentProcess']])
+for (let [write_scope, read_scope] of [['SameProcess', 'DifferentProcessForIndexedDB'],
+                                       ['SameProcess', 'DifferentProcess']])
 {
   var ab = new ArrayBuffer(12);
   var buffer = serialize(ab, [ab], { scope: write_scope });

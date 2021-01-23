@@ -1,0 +1,161 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File Menu -->
+<!ENTITY tabCmd.label "ბრაუზერის ჩანართი">
+<!ENTITY tabCmd.accesskey "თ">
+<!ENTITY tabCmd.commandkey "t">
+<!ENTITY openCmd.label "ვებგვერდის გახსნა…">
+<!ENTITY openCmd.accesskey "L">
+<!ENTITY openCmd.commandkey "l">
+<!ENTITY openFileCmd.label "ფაილის გახსნა…">
+<!ENTITY openFileCmd.accesskey "O">
+<!ENTITY openFileCmd.commandkey "o">
+
+<!ENTITY closeOtherTabs.label "სხვა ჩანართების დახურვა">
+<!ENTITY closeOtherTabs.accesskey "თ">
+
+<!-- LOCALIZATION NOTE (closeTabsToTheEnd.label): This should indicate the
+direction in which tabs are closed, i.e. locales that use RTL mode should say
+left instead of right. -->
+<!ENTITY  closeTabsToTheEnd.label "მარჯვენა ჩანართების დახურვა">
+<!ENTITY  closeTabsToTheEnd.accesskey "ჯ">
+
+<!ENTITY uploadFile.label "ფაილის ატვირთვა…">
+<!ENTITY uploadFile.accesskey "F">
+
+<!ENTITY printSetupCmd.label "გვერდის პარამეტრები…">
+<!ENTITY printSetupCmd.accesskey "u">
+
+<!-- Edit Menu -->
+<!ENTITY findOnCmd.label "პოვნა ამ გვერდზე…">
+
+<!-- View Menu -->
+<!ENTITY toolbarsCmd.label "ჩვენება/დამალვა">
+<!ENTITY toolbarsCmd.accesskey "w">
+<!ENTITY tabbarCmd.label "ჩანართების ზოლი">
+<!ENTITY tabbarCmd.accesskey "თ">
+<!ENTITY taskbarCmd.label "სტატუსის პანელი">
+<!ENTITY taskbarCmd.accesskey "S">
+<!ENTITY componentbarCmd.label "კომპონენტების პანელი">
+<!ENTITY componentbarCmd.accesskey "C">
+
+<!ENTITY fullScreenCmd.label "სრული ეკრანი">
+<!ENTITY fullScreenCmd.accesskey "F">
+
+<!ENTITY useStyleSheetMenu.label "სტილის გამოყენება">
+<!ENTITY useStyleSheetMenu.accesskey "U">
+<!ENTITY useStyleSheetNone.label "არა">
+<!ENTITY useStyleSheetNone.accesskey "N">
+<!ENTITY useStyleSheetPersistentOnly.label "ნაგულისხმები სტილი">
+<!ENTITY useStyleSheetPersistentOnly.accesskey "D">
+<!ENTITY bidiSwitchPageDirectionItem.label "გვერდის მიმართულების გადართვა">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey "g">
+<!ENTITY pageSourceCmd.label "გვერდის წყარო">
+<!ENTITY pageSourceCmd.accesskey "o">
+<!ENTITY pageSourceCmd.commandkey "u">
+<!ENTITY pageInfoCmd.label "გვერდის მონაცემები">
+<!ENTITY pageInfoCmd.accesskey "I">
+<!ENTITY pageInfoCmd.commandkey "i">
+
+<!-- Go Menu -->
+<!ENTITY goMenu.label "გადასვლა">
+<!ENTITY goMenu.accesskey "G">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+<!ENTITY goHomeCmd.label "თავფურცელი">
+<!ENTITY goHomeCmd.accesskey "H">
+<!ENTITY historyCmd.label "ისტორია">
+<!ENTITY historyCmd.accesskey "s">
+<!-- LOCALIZATION NOTE (historyCmd.key): This is used only on the mac. -->
+<!ENTITY historyCmd.key "H">
+<!-- LOCALIZATION NOTE (history.commandKey): This is used on platforms other
+     than the mac instead of historyCmd.key. -->
+<!ENTITY history.commandKey "h">
+<!ENTITY recentTabs.label "ბოლოს დახურული ჩანართები">
+<!ENTITY recentTabs.accesskey "დ">
+<!ENTITY recentTabs.commandkey "t">
+<!ENTITY recentWindows.label "ბოლოს დახურული სარკმლები">
+<!ENTITY recentWindows.accesskey "W">
+<!ENTITY recentWindows.commandkey "y">
+<!ENTITY historyRestoreLastSession.label "წიანა სეანსის აღდგენა">
+<!ENTITY historyRestoreLastSession.accesskey "R">
+<!ENTITY syncTabsMenu.label "ჩანართები სხვა კომპიუტერიდან">
+<!ENTITY syncTabsMenu.accesskey "ო">
+
+<!-- Bookmarks Menu -->
+<!ENTITY bookmarksMenu.label "სანიშნები">
+<!ENTITY bookmarksMenu.accesskey "B">
+<!ENTITY addCurPageCmd.label "ამ გვერდის ჩანიშვნა">
+<!ENTITY addCurPageCmd.accesskey "B">
+<!ENTITY addCurPageAsCmd.label "სანიშნის შექმნა…">
+<!ENTITY addCurPageAsCmd.accesskey "F">
+<!ENTITY addCurPageAsCmd.commandkey "d">
+<!ENTITY addCurTabsAsCmd.label "ამ ჩანართების ჯგუფის ჩანიშვნა…">
+<!ENTITY addCurTabsAsCmd.accesskey "გ">
+<!ENTITY manBookmarksCmd.label "სანიშნების მართვა…">
+<!ENTITY manBookmarksCmd.accesskey "M">
+<!ENTITY manBookmarksCmd.commandkey "b">
+
+<!-- Tools Menu -->
+<!ENTITY searchInternetCmd.label "ძიება ინტერნეტში">
+<!ENTITY searchInternetCmd.accesskey "b">
+<!ENTITY searchInternet.commandKey "s">
+<!ENTITY translateMenu.label "გვერდის თარგმნა">
+<!ENTITY translateMenu.accesskey "T">
+
+<!ENTITY cookieMessageTitle.label "ფუნთუშების ნებართვები შეიცვალა">
+<!ENTITY cookieDisplayCookiesCmd.label "შენახული ფუნთუშების მართვა">
+<!ENTITY cookieDisplayCookiesCmd.accesskey "მ">
+<!ENTITY cookieAllowCookiesCmd.label "ფუნთუშების დაშვება ამ ვებსაიტიდან">
+<!ENTITY cookieAllowCookiesCmd.accesskey "დ">
+<!ENTITY cookieAllowCookiesMsg.label "ფუნთუშები ამ ვებსაიტიდან ყოველთვის ნებადართულია.">
+<!ENTITY cookieAllowSessionCookiesCmd.label "სეანსის ფუნთუშების ნებართვა ამ ვებსაიტიდან">
+<!ENTITY cookieAllowSessionCookiesCmd.accesskey "ს">
+<!ENTITY cookieAllowSessionCookiesMsg.label "ამ ვებსაიტს ფუნთუშების შენახვის უფლება მიეცემა მხოლოდ ამ სეანსზე.">
+<!ENTITY cookieCookiesDefaultCmd.label "ნაგულისხმევი უფლებების გამოყენება ფუნთუშებისთვის">
+<!ENTITY cookieCookiesDefaultCmd.accesskey "ნ">
+<!ENTITY cookieCookiesDefaultMsg.label "ფუნთუშები ამ ვებსაიტიდან მიიღება ნაგულისხმევი უფლებების შესაბამისად.">
+<!ENTITY cookieBlockCookiesCmd.label "ფუნთუშების შეზღუდვა ამ ვებსაიტისთვის">
+<!ENTITY cookieBlockCookiesCmd.accesskey "შ">
+<!ENTITY cookieBlockCookiesMsg.label "ფუნთუშები ამ ვებსაიტიდან ყოველთვის აიკრძალება.">
+
+<!ENTITY cookieImageMessageTitle.label "გამოსახულებათ უფლებები შეიცვალა">
+<!ENTITY cookieDisplayImagesCmd.label "გამოსახულებათა უფლებების მართვა">
+<!ENTITY cookieDisplayImagesCmd.accesskey "გ">
+<!ENTITY cookieAllowImagesCmd.label "გამოსახულებათა დაშვება ამ ვებსაიტიდან">
+<!ENTITY cookieAllowImagesCmd.accesskey "დ">
+<!ENTITY cookieAllowImagesMsg.label "გამოსახულებები ამ ვებსაიტიდან ყოველთვის ჩამოიტვირთება.">
+<!ENTITY cookieImagesDefaultCmd.label "ნაგულისხმევი უფლებების გამოყენება გამოსახულებებისთვის">
+<!ENTITY cookieImagesDefaultCmd.accesskey "ყ">
+<!ENTITY cookieImagesDefaultMsg.label "გამოსახულებები ამ ვებსაიტიდან ჩამოიტვირთება ნაგულისხმები უფლებების შესაბამისად.">
+<!ENTITY cookieBlockImagesCmd.label "გამოსახულებათა შეზღუდვა ამ ვებსაიტისთვის">
+<!ENTITY cookieBlockImagesCmd.accesskey "ზ">
+<!ENTITY cookieBlockImagesMsg.label "გამოსახულებები ამ ვებსაიტიდან არასოდეს ჩამოიტვირთება.">
+
+<!ENTITY popupsMessageChangeTitle.label "ამომხტომი ფანჯრების ნებართვები შეიცვალა">
+<!ENTITY popupAllowCmd.label "ამომხტომი ფანჯრების დაშვება ამ საიტზე">
+<!ENTITY popupAllowCmd.accesskey "დ">
+<!ENTITY popupAllowMsg.label "ამომხტომი ფანჯრები ამ საიტზე ყოველთვის დაშვებულია.">
+<!ENTITY popupDefaultCmd.label "ამომხტომი ფანჯრებისთვის ნაგულისხმევი ნებართვების დაბრუნება">
+<!ENTITY popupDefaultCmd.accesskey "გ">
+<!ENTITY popupDefaultMsg.label "ამომხტომი ფანჯრები ამ საიტზე დაშვებულია, ნაგულისხმევი უფლებების შესაბამისად.">
+<!ENTITY popupBlockCmd.label "ამომხტომი ფანჯრების შეზღუდვა ამ საიტზე">
+<!ENTITY popupBlockCmd.accesskey "ზ">
+<!ENTITY popupBlockMsg.label "ამომხტომი ფანჯრები ამ საიტზე შეზღუდულია.">
+<!ENTITY popupsManage.label "ამომხტომი ფანჯრების მართვა">
+<!ENTITY popupsManage.accesskey "მ">
+
+<!ENTITY cookieCookieManager.label "ფუნთუშების მმართველი">
+<!ENTITY cookieCookieManager.accesskey "ფ">
+<!ENTITY cookieImageManager.label "გამოსახულებათა მმართველი">
+<!ENTITY cookieImageManager.accesskey "გ">
+<!ENTITY popupsManager.label "ამომხტომი ფანჯრების მმართველი">
+<!ENTITY popupsManager.accesskey "თ">
+
+<!ENTITY clearPrivateDataCmd.label "პირად მონაცემთა გასუფთავება…">
+<!ENTITY clearPrivateDataCmd.accesskey "e">
+
+<!ENTITY stopCmd.macCommandKey ".">
+<!ENTITY fullScreenCmd.commandKey "f">

@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY no-properties.label "Özellikler belirtilmedi.">
+
+<!ENTITY caption.label "Element özellikleri">
+<!ENTITY image-sec.label "Resim dosyası özellikleri">
+<!ENTITY image-url.label "Konum:">
+<!ENTITY image-desc.label "Açıklama:">
+<!ENTITY image-alt.label "Alternatif metin:">
+<!ENTITY image-width.label "Genişlik:">
+<!ENTITY image-height.label "Yükseklik:">
+<!ENTITY image-filesize.label "Dosya boyutu:">
+<!ENTITY insdel-sec.label "Ekleme/silme özellikleri">
+<!ENTITY insdel-cite.label "Bilgi:">
+<!ENTITY insdel-date.label "Tarih:">
+<!ENTITY link-sec.label "Bağlantı özellikleri">
+<!ENTITY link-url.label "Adres:">
+<!ENTITY link-target.label "Açılacağı yer:">
+<!ENTITY link-type.label "Hedef tipi:">
+<!ENTITY link-lang.label "Hedef dil:">
+<!ENTITY link-rel.label "İlişki:">
+<!ENTITY link-rev.label "Geri dönen bağlantı:">
+<!ENTITY misc-sec.label "Çeşitli özellikler:">
+<!ENTITY misc-lang.label "Metin dili:">
+<!ENTITY misc-title.label "Başlık:">
+<!ENTITY misc-tblsummary.label "Tablo özeti">
+<!ENTITY quote-sec.label "Alıntı özellikleri">
+<!ENTITY quote-cite.label "Bilgi:">

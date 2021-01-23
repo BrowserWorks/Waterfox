@@ -25,7 +25,7 @@ class DOMSVGAngle;
 class DOMSVGLength;
 class DOMSVGNumber;
 class SVGMatrix;
-class SVGIRect;
+class SVGRect;
 class SVGSVGElement;
 
 // Stores svgView arguments of SVG fragment identifiers.
@@ -36,7 +36,7 @@ class SVGView {
   SVGAnimatedEnumeration mZoomAndPan;
   SVGAnimatedViewBox mViewBox;
   SVGAnimatedPreserveAspectRatio mPreserveAspectRatio;
-  nsAutoPtr<SVGAnimatedTransformList> mTransforms;
+  UniquePtr<SVGAnimatedTransformList> mTransforms;
 };
 
 class DOMSVGTranslatePoint final : public nsISVGPoint {
@@ -137,7 +137,7 @@ class SVGSVGElement final : public SVGSVGElementBase {
   already_AddRefed<DOMSVGAngle> CreateSVGAngle();
   already_AddRefed<nsISVGPoint> CreateSVGPoint();
   already_AddRefed<SVGMatrix> CreateSVGMatrix();
-  already_AddRefed<SVGIRect> CreateSVGRect();
+  already_AddRefed<SVGRect> CreateSVGRect();
   already_AddRefed<DOMSVGTransform> CreateSVGTransform();
   already_AddRefed<DOMSVGTransform> CreateSVGTransformFromMatrix(
       SVGMatrix& matrix);
@@ -147,9 +147,8 @@ class SVGSVGElement final : public SVGSVGElementBase {
 
   // SVGElement overrides
 
-  virtual nsresult BindToTree(Document* aDocument, nsIContent* aParent,
-                              nsIContent* aBindingParent) override;
-  virtual void UnbindFromTree(bool aDeep, bool aNullParent) override;
+  virtual nsresult BindToTree(BindContext&, nsINode& aParent) override;
+  virtual void UnbindFromTree(bool aNullParent) override;
   virtual SVGAnimatedTransformList* GetAnimatedTransformList(
       uint32_t aFlags = 0) override;
 
@@ -196,9 +195,11 @@ class SVGSVGElement final : public SVGSVGElementBase {
    * can't use GetOwnerSVGElement() as it relies on GetParent(). This code is
    * basically a simplified version of GetOwnerSVGElement that uses the parent
    * parameters passed in instead.
+   *
+   * FIXME(bug 1596690): GetOwnerSVGElement() uses the flattened tree parent
+   * rather than the DOM tree parent nowadays.
    */
-  bool WillBeOutermostSVG(nsIContent* aParent,
-                          nsIContent* aBindingParent) const;
+  bool WillBeOutermostSVG(nsINode& aParent) const;
 
   // invalidate viewbox -> viewport xform & inform frames
   void InvalidateTransformNotifyFrame();
@@ -232,7 +233,7 @@ class SVGSVGElement final : public SVGSVGElementBase {
 
   // The time container for animations within this SVG document fragment. Set
   // for all outermost <svg> elements (not nested <svg> elements).
-  nsAutoPtr<SMILTimeContainer> mTimedDocumentRoot;
+  UniquePtr<SMILTimeContainer> mTimedDocumentRoot;
 
   // zoom and pan
   // IMPORTANT: see the comment in RecordCurrentScaleTranslate before writing
@@ -252,8 +253,8 @@ class SVGSVGElement final : public SVGSVGElementBase {
 
   // mCurrentViewID and mSVGView are mutually exclusive; we can have
   // at most one non-null.
-  nsAutoPtr<nsString> mCurrentViewID;
-  nsAutoPtr<SVGView> mSVGView;
+  UniquePtr<nsString> mCurrentViewID;
+  UniquePtr<SVGView> mSVGView;
 };
 
 }  // namespace dom

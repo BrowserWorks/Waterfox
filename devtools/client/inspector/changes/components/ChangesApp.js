@@ -12,10 +12,16 @@ const dom = require("devtools/client/shared/vendor/react-dom-factories");
 const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
 const { connect } = require("devtools/client/shared/vendor/react-redux");
 
-const CSSDeclaration = createFactory(require("./CSSDeclaration"));
-const { getChangesTree } = require("../selectors/changes");
-const { getSourceForDisplay } = require("../utils/changes-utils");
-const { getStr } = require("../utils/l10n");
+const CSSDeclaration = createFactory(
+  require("devtools/client/inspector/changes/components/CSSDeclaration")
+);
+const {
+  getChangesTree,
+} = require("devtools/client/inspector/changes/selectors/changes");
+const {
+  getSourceForDisplay,
+} = require("devtools/client/inspector/changes/utils/changes-utils");
+const { getStr } = require("devtools/client/inspector/changes/utils/l10n");
 
 class ChangesApp extends PureComponent {
   static get propTypes() {
@@ -24,8 +30,6 @@ class ChangesApp extends PureComponent {
       changesTree: PropTypes.object.isRequired,
       // Event handler for "contextmenu" event
       onContextMenu: PropTypes.func.isRequired,
-      // Event handler for "copy" event
-      onCopy: PropTypes.func.isRequired,
       // Event handler for click on "Copy All Changes" button
       onCopyAllChanges: PropTypes.func.isRequired,
       // Event handler for click on "Copy Rule" button
@@ -75,7 +79,6 @@ class ChangesApp extends PureComponent {
         return CSSDeclaration({
           key: "remove-" + property + index,
           className: "level diff-remove",
-          marker: getDiffMarker("diff-remove"),
           property,
           value,
         });
@@ -88,7 +91,6 @@ class ChangesApp extends PureComponent {
         return CSSDeclaration({
           key: "add-" + property + index,
           className: "level diff-add",
-          marker: getDiffMarker("diff-add"),
           property,
           value,
         });
@@ -117,11 +119,7 @@ class ChangesApp extends PureComponent {
       // Render any changed CSS declarations.
       this.renderDeclarations(rule.remove, rule.add),
       // Render the closing bracket with a diff marker if necessary.
-      dom.div(
-        { className: `level ${diffClass}` },
-        getDiffMarker(diffClass),
-        "}"
-      )
+      dom.div({ className: `level ${diffClass}` }, "}")
     );
   }
 
@@ -158,7 +156,6 @@ class ChangesApp extends PureComponent {
             className: `level changes__selector ${diffClass}`,
             title: selector,
           },
-          getDiffMarker(diffClass),
           selector,
           dom.span({}, " {")
         )
@@ -221,37 +218,12 @@ class ChangesApp extends PureComponent {
         className: "theme-sidebar inspector-tabpanel",
         id: "sidebar-panel-changes",
         onContextMenu: this.props.onContextMenu,
-        onCopy: this.props.onCopy,
       },
       !hasChanges && this.renderEmptyState(),
       hasChanges && this.renderCopyAllChangesButton(),
       hasChanges && this.renderDiff(this.props.changesTree)
     );
   }
-}
-
-/**
- * Get a React element with text content of either a plus or minus sign according to
- * the given CSS class name used to mark added or removed lines in the changes diff view.
- * This is used as a diff line maker that can be copied over as text with the rest of the
- * content. CSS pseudo-elements are not part of the document flow and cannot be copied.
- *
- * @param  {String} className
- *         One of "diff-add" or "diff-remove"
- * @return {Component|null}
- *         Returns null if the given className isn't recognized. React handles it.
- */
-function getDiffMarker(className) {
-  let marker = null;
-  switch (className) {
-    case "diff-add":
-      marker = dom.span({ className: "diff-marker" }, "+ ");
-      break;
-    case "diff-remove":
-      marker = dom.span({ className: "diff-marker" }, "- ");
-      break;
-  }
-  return marker;
 }
 
 const mapStateToProps = state => {

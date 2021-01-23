@@ -25,8 +25,6 @@ ChromeUtils.defineModuleGetter(
 
 const MIN_STATUS_ANIMATION_DURATION = 1600;
 
-const FXA_NO_AVATAR_ZEROS = "00000000000000000000000000000000";
-
 var gSync = {
   _initialized: false,
   // The last sync start time. Used to calculate the leftover animation time
@@ -52,17 +50,12 @@ var gSync = {
     ));
   },
 
-  get syncReady() {
-    return Cc["@mozilla.org/weave/service;1"].getService().wrappedJSObject
-      .ready;
-  },
-
-  // Returns true if sync is configured but hasn't loaded or the send tab
-  // targets list isn't ready yet.
+  // Returns true if FxA is configured, but the send tab targets list isn't
+  // ready yet.
   get sendTabConfiguredAndLoading() {
     return (
       UIState.get().status == UIState.STATUS_SIGNED_IN &&
-      (!this.syncReady || !Weave.Service.clientsEngine.hasSyncedThisSession)
+      !fxAccounts.device.recentDeviceList
     );
   },
 
@@ -70,22 +63,41 @@ var gSync = {
     return UIState.get().status == UIState.STATUS_SIGNED_IN;
   },
 
-  get sendTabTargets() {
-    return Weave.Service.clientsEngine.fxaDevices
-      .sort((a, b) => a.name.localeCompare(b.name))
-      .filter(
-        d =>
-          !d.isCurrentDevice &&
-          (fxAccounts.commands.sendTab.isDeviceCompatible(d) || d.clientRecord)
-      );
-  },
+  getSendTabTargets() {
+    // If sync is not enabled, then there's no point looking for sync clients.
+    // If sync is simply not ready or hasn't yet synced the clients engine, we
+    // just assume the fxa device doesn't have a sync record - in practice,
+    // that just means we don't attempt to fall back to the "old" sendtab should
+    // "new" sendtab fail.
+    // We should just kill "old" sendtab now all our mobile browsers support
+    // "new".
+    let getClientRecord = () => undefined;
+    if (UIState.get().syncEnabled && Weave.Service.clientsEngine) {
+      getClientRecord = id =>
+        Weave.Service.clientsEngine.getClientByFxaDeviceId(id);
+    }
+    let targets = [];
+    if (!fxAccounts.device.recentDeviceList) {
+      return targets;
+    }
+    for (let d of fxAccounts.device.recentDeviceList) {
+      if (d.isCurrentDevice) {
+        continue;
+      }
 
-  get offline() {
-    return Weave.Service.scheduler.offline;
+      let clientRecord = getClientRecord(d.id);
+      if (clientRecord || fxAccounts.commands.sendTab.isDeviceCompatible(d)) {
+        targets.push({
+          clientRecord,
+          ...d,
+        });
+      }
+    }
+    return targets.sort((a, b) => a.name.localeCompare(b.name));
   },
 
   _generateNodeGetters() {
-    for (let k of ["Status", "Avatar", "Label", "Container"]) {
+    for (let k of ["Status", "Avatar", "Label"]) {
       let prop = "appMenu" + k;
       let suffix = k.toLowerCase();
       delete this[prop];
@@ -116,12 +128,7 @@ var gSync = {
     );
     XPCOMUtils.defineLazyPreferenceGetter(
       this,
-      "PRODUCT_INFO_BASE_URL",
-      "app.productInfo.baseURL"
-    );
-    XPCOMUtils.defineLazyPreferenceGetter(
-      this,
-      "SYNC_ENABLED",
+      "FXA_ENABLED",
       "identity.fxaccounts.enabled"
     );
   },
@@ -145,10 +152,12 @@ var gSync = {
 
     this._definePrefGetters();
 
-    if (!this.SYNC_ENABLED) {
-      this.onSyncDisabled();
+    if (!this.FXA_ENABLED) {
+      this.onFxaDisabled();
       return;
     }
+
+    MozXULElement.insertFTLIfNeeded("browser/sync.ftl");
 
     this._generateNodeGetters();
 
@@ -158,11 +167,8 @@ var gSync = {
       // setting this._initialized, so we don't attempt to remove observers.
       return;
     }
-    let syncNow = document.getElementById("PanelUI-remotetabs-syncnow");
-    let label = this.syncStrings.GetStringFromName("syncnow.label");
-    syncNow.setAttribute("label", label);
     // We start with every menuitem hidden (except for the "setup sync" state),
-    // so that we don't need to init the sync UI on windows like pageInfo.xul
+    // so that we don't need to init the sync UI on windows like pageInfo.xhtml
     // (see bug 1384856).
     // maybeUpdateUIState() also optimizes for this - if we should be in the
     // "setup sync" state, that function assumes we are already in it and
@@ -213,6 +219,7 @@ var gSync = {
           return;
         }
         this.onClientsSynced();
+        this.updateFxAPanel(UIState.get());
         break;
     }
   },
@@ -223,6 +230,51 @@ var gSync = {
     this.updateSyncButtonsTooltip(state);
     this.updateSyncStatus(state);
     this.updateFxAPanel(state);
+    // Ensure we have something in the device list in the background.
+    this.ensureFxaDevices();
+  },
+
+  // Ensure we have *something* in `fxAccounts.device.recentDeviceList` as some
+  // of our UI logic depends on it not being null. When FxA is notified of a
+  // device change it will auto refresh `recentDeviceList`, and all UI which
+  // shows the device list will start with `recentDeviceList`, but should also
+  // force a refresh, both of which should mean in the worst-case, the UI is up
+  // to date after a very short delay.
+  async ensureFxaDevices(options) {
+    if (UIState.get().status != UIState.STATUS_SIGNED_IN) {
+      console.info("Skipping device list refresh; not signed in");
+      return;
+    }
+    if (!fxAccounts.device.recentDeviceList) {
+      if (await this.refreshFxaDevices()) {
+        // Assuming we made the call successfully it should be impossible to end
+        // up with a falsey recentDeviceList, so make noise if that's false.
+        if (!fxAccounts.device.recentDeviceList) {
+          console.warn("Refreshing device list didn't find any devices.");
+        }
+      }
+    }
+  },
+
+  // Force a refresh of the fxa device list.  Note that while it's theoretically
+  // OK to call `fxAccounts.device.refreshDeviceList` multiple times concurrently
+  // and regularly, this call tells it to avoid those protections, so will always
+  // hit the FxA servers - therefore, you should be very careful how often you
+  // call this.
+  // Returns Promise<bool> to indicate whether a refresh was actually done.
+  async refreshFxaDevices() {
+    if (UIState.get().status != UIState.STATUS_SIGNED_IN) {
+      console.info("Skipping device list refresh; not signed in");
+      return false;
+    }
+    try {
+      // Do the actual refresh telling it to avoid the "flooding" protections.
+      await fxAccounts.device.refreshDeviceList({ ignoreCached: true });
+      return true;
+    } catch (e) {
+      console.error("Refreshing device list failed.", e);
+      return false;
+    }
   },
 
   updateSendToDeviceTitle() {
@@ -241,13 +293,24 @@ var gSync = {
   showSendToDeviceView(anchor) {
     PanelUI.showSubView("PanelUI-sendTabToDevice", anchor);
     let panelViewNode = document.getElementById("PanelUI-sendTabToDevice");
-    this.populateSendTabToDevicesView(
-      panelViewNode,
-      this.populateSendTabToDevicesView.bind(this)
-    );
+    this.populateSendTabToDevicesView(panelViewNode);
   },
 
   showSendToDeviceViewFromFxaMenu(anchor) {
+    const { status } = UIState.get();
+    if (status === UIState.STATUS_NOT_CONFIGURED) {
+      PanelUI.showSubView("PanelUI-fxa-menu-sendtab-not-configured", anchor);
+      return;
+    }
+
+    const targets = this.sendTabConfiguredAndLoading
+      ? []
+      : this.getSendTabTargets();
+    if (!targets.length) {
+      PanelUI.showSubView("PanelUI-fxa-menu-sendtab-no-devices", anchor);
+      return;
+    }
+
     this.showSendToDeviceView(anchor);
     this.emitFxaToolbarTelemetry("send_tab", anchor);
   },
@@ -262,7 +325,7 @@ var gSync = {
     this.emitFxaToolbarTelemetry("sync_tabs_sidebar", panel);
   },
 
-  populateSendTabToDevicesView(panelViewNode, reloadFunc) {
+  populateSendTabToDevicesView(panelViewNode, reloadDevices = true) {
     let bodyNode = panelViewNode.querySelector(".panel-subview-body");
     let panelNode = panelViewNode.closest("panel");
     let browser = gBrowser.selectedBrowser;
@@ -297,36 +360,44 @@ var gSync = {
           if (panelNode) {
             PanelMultiView.hidePopup(panelNode);
           }
-          // There are items in the subview that don't represent devices: "Sign
-          // in", "Learn about Sync", etc.  Device items will be .sendtab-target.
-          if (event.target.classList.contains("sendtab-target")) {
-            let action = PageActions.actionForID("sendToDevice");
-            let messageId = gSync.offline && "sendToDeviceOffline";
-            showBrowserPageActionFeedback(action, event, messageId);
-          }
         });
         return item;
       }
     );
 
     bodyNode.removeAttribute("state");
-    // In the first ~10 sec after startup, Sync may not be loaded and the list
-    // of devices will be empty.
+    // If the app just started, we won't have fetched the device list yet. Sync
+    // does this automatically ~10 sec after startup, but there's no trigger for
+    // this if we're signed in to FxA, but not Sync.
     if (gSync.sendTabConfiguredAndLoading) {
       bodyNode.setAttribute("state", "notready");
-      // Force a background Sync
-      Services.tm.dispatchToMainThread(async () => {
-        await Weave.Service.sync({ why: "pageactions", engines: [] }); // [] = clients engine only
-        // There's no way Sync is still syncing at this point, but we check
-        // anyway to avoid infinite looping.
-        if (!window.closed && !gSync.sendTabConfiguredAndLoading) {
-          reloadFunc(panelViewNode);
+    }
+    if (reloadDevices) {
+      // We will only pick up new Fennec clients if we sync the clients engine,
+      // but all other send-tab targets can be identified purely from the fxa
+      // device list. Syncing the clients engine doesn't force a refresh of the
+      // fxa list, and it seems overkill to force *both* a clients engine sync
+      // and an fxa device list refresh, especially given (a) the clients engine
+      // will sync by itself every 10 minutes and (b) Fennec is (at time of
+      // writing) about to be replaced by Fenix.
+      // So we suck up the fact that new Fennec clients may not appear for 10
+      // minutes and don't bother syncing the clients engine.
+
+      // Force a refresh of the fxa device list in case the user connected a new
+      // device, and is waiting for it to show up.
+      this.refreshFxaDevices().then(_ => {
+        if (!window.closed) {
+          this.populateSendTabToDevicesView(panelViewNode, false);
         }
       });
     }
   },
 
-  toggleAccountPanel(viewId, aEvent) {
+  toggleAccountPanel(
+    viewId,
+    anchor = document.getElementById("fxa-toolbar-menu-button"),
+    aEvent
+  ) {
     // Don't show the panel if the window is in customization mode.
     if (document.documentElement.hasAttribute("customizing")) {
       return;
@@ -343,12 +414,10 @@ var gSync = {
 
     if (!gFxaToolbarAccessed) {
       Services.prefs.setBoolPref("identity.fxaccounts.toolbar.accessed", true);
-      document.documentElement.removeAttribute("fxa_avatar_badged");
     }
 
     this.enableSendTabIfValidTab();
 
-    const anchor = document.getElementById("fxa-toolbar-menu-button");
     if (anchor.getAttribute("open") == "true") {
       PanelUI.hide();
     } else {
@@ -361,23 +430,71 @@ var gSync = {
     const mainWindowEl = document.documentElement;
 
     // The Firefox Account toolbar currently handles 3 different states for
-    // users. The default `not_configured state shows an empty avatar, `unverified`
-    // state shows an avatar with an email icon and the `verified` state will show
-    // the users custom profile image or a filled avatar.
+    // users. The default `not_configured` state shows an empty avatar, `unverified`
+    // state shows an avatar with an email icon, `login-failed` state shows an avatar
+    // with a danger icon and the `verified` state will show the users
+    // custom profile image or a filled avatar.
     let stateValue = "not_configured";
-    document.getElementById("PanelUI-fxa").removeAttribute("title");
-    if (
-      state.status === UIState.STATUS_LOGIN_FAILED ||
-      state.status === UIState.STATUS_NOT_VERIFIED
-    ) {
+
+    const menuHeaderTitleEl = document.getElementById("fxa-menu-header-title");
+    const menuHeaderDescriptionEl = document.getElementById(
+      "fxa-menu-header-description"
+    );
+
+    const cadButtonEl = document.getElementById(
+      "PanelUI-fxa-menu-connect-device-button"
+    );
+
+    const syncPrefsButtonEl = document.getElementById(
+      "PanelUI-fxa-menu-sync-prefs-button"
+    );
+
+    const syncSetupButtonEl = document.getElementById(
+      "PanelUI-fxa-menu-setup-sync-button"
+    );
+
+    const syncNowButtonEl = document.getElementById(
+      "PanelUI-fxa-menu-syncnow-button"
+    );
+    const fxaMenuPanel = document.getElementById("PanelUI-fxa");
+
+    const fxaMenuAccountButtonEl = document.getElementById(
+      "fxa-manage-account-button"
+    );
+
+    let headerTitle = menuHeaderTitleEl.getAttribute("defaultLabel");
+    let headerDescription = menuHeaderDescriptionEl.getAttribute(
+      "defaultLabel"
+    );
+
+    const appMenuFxAButtonEl = document.getElementById("appMenu-fxa-label");
+
+    let panelTitle = this.fxaStrings.GetStringFromName("account.title");
+
+    fxaMenuPanel.removeAttribute("title");
+    cadButtonEl.setAttribute("disabled", true);
+    syncNowButtonEl.setAttribute("hidden", true);
+    fxaMenuAccountButtonEl.classList.remove("subviewbutton-nav");
+    fxaMenuAccountButtonEl.removeAttribute("closemenu");
+    syncPrefsButtonEl.setAttribute("hidden", true);
+    syncSetupButtonEl.removeAttribute("hidden");
+
+    if (state.status === UIState.STATUS_NOT_CONFIGURED) {
+      mainWindowEl.style.removeProperty("--avatar-image-url");
+    } else if (state.status === UIState.STATUS_LOGIN_FAILED) {
+      stateValue = "login-failed";
+      headerTitle = this.fxaStrings.GetStringFromName("account.reconnectToFxA");
+      headerDescription = state.email;
+      mainWindowEl.style.removeProperty("--avatar-image-url");
+    } else if (state.status === UIState.STATUS_NOT_VERIFIED) {
       stateValue = "unverified";
+      headerTitle = this.fxaStrings.GetStringFromName(
+        "account.finishAccountSetup"
+      );
+      headerDescription = state.email;
     } else if (state.status === UIState.STATUS_SIGNED_IN) {
       stateValue = "signedin";
-      // Firefox Account specifies a `default` avatar image that uses the convention
-      // of all 0s in url. The default used in the design of the toolbar menu is
-      // different from the one provided by Firefox Account. Perform a check and only
-      // change avatar *if* this is not a default avatar.
-      if (state.avatarURL && !state.avatarURL.includes(FXA_NO_AVATAR_ZEROS)) {
+      if (state.avatarURL && !state.avatarIsDefault) {
         // The user has specified a custom avatar, attempt to load the image on all the menu buttons.
         const bgImage = `url("${state.avatarURL}")`;
         let img = new Image();
@@ -396,19 +513,31 @@ var gSync = {
         mainWindowEl.style.removeProperty("--avatar-image-url");
       }
 
-      document.getElementById("fxa-menu-email").value = state.email;
+      cadButtonEl.removeAttribute("disabled");
 
-      let defaultPanelTitle = this.fxaStrings.GetStringFromName(
-        "account.title"
+      if (state.syncEnabled) {
+        syncNowButtonEl.removeAttribute("hidden");
+        syncPrefsButtonEl.removeAttribute("hidden");
+        syncSetupButtonEl.setAttribute("hidden", true);
+      }
+
+      fxaMenuAccountButtonEl.classList.add("subviewbutton-nav");
+      fxaMenuAccountButtonEl.setAttribute("closemenu", "none");
+
+      headerTitle = state.email;
+      headerDescription = this.fxaStrings.GetStringFromName(
+        "account.accountSettings"
       );
-      document
-        .getElementById("PanelUI-fxa")
-        .setAttribute(
-          "title",
-          state.displayName ? state.displayName : defaultPanelTitle
-        );
+
+      panelTitle = state.displayName ? state.displayName : panelTitle;
     }
     mainWindowEl.setAttribute("fxastatus", stateValue);
+
+    menuHeaderTitleEl.value = headerTitle;
+    menuHeaderDescriptionEl.value = headerDescription;
+    appMenuFxAButtonEl.setAttribute("label", headerTitle);
+
+    fxaMenuPanel.setAttribute("title", panelTitle);
   },
 
   enableSendTabIfValidTab() {
@@ -432,8 +561,7 @@ var gSync = {
   emitFxaToolbarTelemetry(type, panel) {
     if (UIState.isReady() && panel) {
       const state = UIState.get();
-      const hasAvatar =
-        state.avatarURL && !state.avatarURL.includes(FXA_NO_AVATAR_ZEROS);
+      const hasAvatar = state.avatarURL && !state.avatarIsDefault;
       let extraOptions = {
         fxa_status: state.status,
         fxa_avatar: hasAvatar ? "true" : "false",
@@ -469,7 +597,7 @@ var gSync = {
     const status = state.status;
     // Reset the status bar to its original state.
     this.appMenuLabel.setAttribute("label", defaultLabel);
-    this.appMenuContainer.removeAttribute("fxastatus");
+    this.appMenuStatus.removeAttribute("fxastatus");
     this.appMenuAvatar.style.removeProperty("list-style-image");
     this.appMenuLabel.classList.remove("subviewbutton-nav");
 
@@ -481,102 +609,72 @@ var gSync = {
     if (status == UIState.STATUS_LOGIN_FAILED) {
       let tooltipDescription = this.fxaStrings.formatStringFromName(
         "reconnectDescription",
-        [state.email],
-        1
+        [state.email]
       );
       let errorLabel = this.appMenuStatus.getAttribute("errorlabel");
-      this.appMenuContainer.setAttribute("fxastatus", "login-failed");
+      this.appMenuStatus.setAttribute("fxastatus", "login-failed");
       this.appMenuLabel.setAttribute("label", errorLabel);
       this.appMenuStatus.setAttribute("tooltiptext", tooltipDescription);
       return;
     } else if (status == UIState.STATUS_NOT_VERIFIED) {
       let tooltipDescription = this.fxaStrings.formatStringFromName(
         "verifyDescription",
-        [state.email],
-        1
+        [state.email]
       );
       let unverifiedLabel = this.appMenuStatus.getAttribute("unverifiedlabel");
-      this.appMenuContainer.setAttribute("fxastatus", "unverified");
+      this.appMenuStatus.setAttribute("fxastatus", "unverified");
       this.appMenuLabel.setAttribute("label", unverifiedLabel);
       this.appMenuStatus.setAttribute("tooltiptext", tooltipDescription);
       return;
     }
 
     // At this point we consider sync to be logged-in.
-    this.appMenuContainer.setAttribute("fxastatus", "signedin");
+    this.appMenuStatus.setAttribute("fxastatus", "signedin");
     this.appMenuLabel.setAttribute("label", state.displayName || state.email);
     this.appMenuLabel.classList.add("subviewbutton-nav");
     this.appMenuStatus.removeAttribute("tooltiptext");
-
-    if (state.avatarURL) {
-      let bgImage = 'url("' + state.avatarURL + '")';
-      this.appMenuAvatar.style.listStyleImage = bgImage;
-
-      let img = new Image();
-      img.onerror = () => {
-        // Clear the image if it has trouble loading. Since this callback is asynchronous
-        // we check to make sure the image is still the same before we clear it.
-        if (this.appMenuAvatar.style.listStyleImage === bgImage) {
-          this.appMenuAvatar.style.removeProperty("list-style-image");
-        }
-      };
-      img.src = state.avatarURL;
-    }
   },
 
   updateState(state) {
-    for (let [status, menuId, boxId] of [
+    for (let [shown, menuId, boxId] of [
       [
-        UIState.STATUS_NOT_CONFIGURED,
+        state.status == UIState.STATUS_NOT_CONFIGURED,
         "sync-setup",
         "PanelUI-remotetabs-setupsync",
       ],
       [
-        UIState.STATUS_LOGIN_FAILED,
+        state.status == UIState.STATUS_SIGNED_IN && !state.syncEnabled,
+        "sync-enable",
+        "PanelUI-remotetabs-syncdisabled",
+      ],
+      [
+        state.status == UIState.STATUS_LOGIN_FAILED,
         "sync-reauthitem",
         "PanelUI-remotetabs-reauthsync",
       ],
       [
-        UIState.STATUS_NOT_VERIFIED,
+        state.status == UIState.STATUS_NOT_VERIFIED,
         "sync-unverifieditem",
         "PanelUI-remotetabs-unverified",
       ],
-      [UIState.STATUS_SIGNED_IN, "sync-syncnowitem", "PanelUI-remotetabs-main"],
+      [
+        state.status == UIState.STATUS_SIGNED_IN && state.syncEnabled,
+        "sync-syncnowitem",
+        "PanelUI-remotetabs-main",
+      ],
     ]) {
       document.getElementById(menuId).hidden = document.getElementById(
         boxId
-      ).hidden = status != state.status;
+      ).hidden = !shown;
     }
   },
 
   updateSyncStatus(state) {
-    let syncNow = document.getElementById("PanelUI-remotetabs-syncnow");
+    let syncNow = document.querySelector(".syncNowBtn");
     const syncingUI = syncNow.getAttribute("syncstatus") == "active";
     if (state.syncing != syncingUI) {
       // Do we need to update the UI?
       state.syncing ? this.onActivityStart() : this.onActivityStop();
-    }
-  },
-
-  onMenuPanelCommand() {
-    switch (this.appMenuContainer.getAttribute("fxastatus")) {
-      case "signedin":
-        const panel = document.getElementById("appMenu-fxa-status");
-        this.emitFxaToolbarTelemetry("toolbar_icon", panel);
-        PanelUI.showSubView("PanelUI-fxa", panel);
-        break;
-      case "error":
-        if (this.appMenuContainer.getAttribute("fxastatus") == "unverified") {
-          this.openPrefs("menupanel", "fxaError");
-        } else {
-          this.openSignInAgainPage("menupanel");
-        }
-        PanelUI.hide();
-        break;
-      default:
-        this.openPrefs("menupanel", "fxa");
-        PanelUI.hide();
-        break;
     }
   },
 
@@ -611,13 +709,33 @@ var gSync = {
   },
 
   openSendToDevicePromo() {
-    let url = this.PRODUCT_INFO_BASE_URL;
-    url += "send-tabs/?utm_source=" + Services.appinfo.name.toLowerCase();
+    const url = Services.urlFormatter.formatURLPref(
+      "identity.sendtabpromo.url"
+    );
     switchToTabHavingURI(url, true, { replaceQueryString: true });
   },
 
+  async clickFxAMenuHeaderButton(panel = undefined) {
+    // Depending on the current logged in state of a user,
+    // clicking the FxA header will either open
+    // a sign-in page, account management page, or sync
+    // preferences page.
+    const { status } = UIState.get();
+    switch (status) {
+      case UIState.STATUS_NOT_CONFIGURED:
+        this.openFxAEmailFirstPageFromFxaMenu(panel);
+        break;
+      case UIState.STATUS_LOGIN_FAILED:
+      case UIState.STATUS_NOT_VERIFIED:
+        this.openPrefsFromFxaMenu("sync_settings", panel);
+        break;
+      case UIState.STATUS_SIGNED_IN:
+        PanelUI.showSubView("PanelUI-fxa-menu-account-panel", panel);
+    }
+  },
+
   async openFxAEmailFirstPage(entryPoint) {
-    const url = await FxAccounts.config.promiseEmailFirstURI(entryPoint);
+    const url = await FxAccounts.config.promiseConnectAccountURI(entryPoint);
     switchToTabHavingURI(url, true, { replaceQueryString: true });
   },
 
@@ -644,6 +762,36 @@ var gSync = {
     this.openFxAManagePage(entryPoint);
   },
 
+  async openSendFromFxaMenu(panel) {
+    this.emitFxaToolbarTelemetry("open_send", panel);
+    this.launchFxaService(gFxaSendLoginUrl);
+  },
+
+  async openMonitorFromFxaMenu(panel) {
+    this.emitFxaToolbarTelemetry("open_monitor", panel);
+    this.launchFxaService(gFxaMonitorLoginUrl);
+  },
+
+  launchFxaService(serviceUrl, panel) {
+    let entryPoint = "fxa_discoverability_native";
+    if (this.isPanelInsideAppMenu(panel)) {
+      entryPoint = "fxa_app_menu";
+    }
+
+    const url = new URL(serviceUrl);
+    url.searchParams.set("utm_source", "fxa-toolbar");
+    url.searchParams.set("utm_medium", "referral");
+    url.searchParams.set("entrypoint", entryPoint);
+
+    const state = UIState.get();
+    if (state.status == UIState.STATUS_SIGNED_IN) {
+      url.searchParams.set("email", state.email);
+    }
+
+    switchToTabHavingURI(url, true, { replaceQueryString: true });
+  },
+
+  // Returns true if we managed to send the tab to any targets, false otherwise.
   async sendTabToDevice(url, targets, title) {
     const fxaCommandsDevices = [];
     const oldSendTabClients = [];
@@ -656,6 +804,26 @@ var gSync = {
         console.error(`Target ${target.id} unsuitable for send tab.`);
       }
     }
+    // If a master-password is enabled then it must be unlocked so FxA can get
+    // the encryption keys from the login manager. (If we end up using the "sync"
+    // fallback that would end up prompting by itself, but the FxA command route
+    // will not) - so force that here.
+    let cryptoSDR = Cc["@mozilla.org/login-manager/crypto/SDR;1"].getService(
+      Ci.nsILoginManagerCrypto
+    );
+    if (!cryptoSDR.isLoggedIn) {
+      if (cryptoSDR.uiBusy) {
+        console.log("Master password UI is busy - not sending the tabs");
+        return false;
+      }
+      try {
+        cryptoSDR.encrypt("bacon"); // forces the mp prompt.
+      } catch (e) {
+        console.log("Master password remains unlocked - not sending the tabs");
+        return false;
+      }
+    }
+    let numFailed = 0;
     if (fxaCommandsDevices.length) {
       console.log(
         `Sending a tab to ${fxaCommandsDevices
@@ -676,6 +844,7 @@ var gSync = {
           console.error(
             `Could not find associated Sync device for ${device.name}`
           );
+          numFailed++;
           continue;
         }
         oldSendTabClients.push(device.clientRecord);
@@ -690,9 +859,11 @@ var gSync = {
           title
         );
       } catch (e) {
+        numFailed++;
         console.error("Could not send tab to device.", e);
       }
     }
+    return numFailed < targets.length; // Good enough.
   },
 
   populateSendTabToDevicesMenu(
@@ -725,19 +896,20 @@ var gSync = {
     const fragment = document.createDocumentFragment();
 
     const state = UIState.get();
-    if (
-      state.status == UIState.STATUS_SIGNED_IN &&
-      this.sendTabTargets.length > 0
-    ) {
-      this._appendSendTabDeviceList(
-        fragment,
-        createDeviceNodeFn,
-        url,
-        title,
-        multiselected
-      );
-    } else if (state.status == UIState.STATUS_SIGNED_IN) {
-      this._appendSendTabSingleDevice(fragment, createDeviceNodeFn);
+    if (state.status == UIState.STATUS_SIGNED_IN) {
+      const targets = this.getSendTabTargets();
+      if (targets.length) {
+        this._appendSendTabDeviceList(
+          targets,
+          fragment,
+          createDeviceNodeFn,
+          url,
+          title,
+          multiselected
+        );
+      } else {
+        this._appendSendTabSingleDevice(fragment, createDeviceNodeFn);
+      }
     } else if (
       state.status == UIState.STATUS_NOT_VERIFIED ||
       state.status == UIState.STATUS_LOGIN_FAILED
@@ -750,18 +922,14 @@ var gSync = {
     devicesPopup.appendChild(fragment);
   },
 
-  // TODO: once our transition from the old-send tab world is complete,
-  // this list should be built using the FxA device list instead of the client
-  // collection.
   _appendSendTabDeviceList(
+    targets,
     fragment,
     createDeviceNodeFn,
     url,
     title,
     multiselected
   ) {
-    const targets = this.sendTabTargets;
-
     let tabsToSend = multiselected
       ? gBrowser.selectedTabs.map(t => {
           return {
@@ -771,17 +939,26 @@ var gSync = {
         })
       : [{ url, title }];
 
+    const send = to => {
+      Promise.all(
+        tabsToSend.map(t =>
+          // sendTabToDevice does not reject.
+          this.sendTabToDevice(t.url, to, t.title)
+        )
+      ).then(results => {
+        if (results.includes(true)) {
+          let action = PageActions.actionForID("sendToDevice");
+          showBrowserPageActionFeedback(action);
+        }
+      });
+    };
     const onSendAllCommand = event => {
-      for (let t of tabsToSend) {
-        this.sendTabToDevice(t.url, targets, t.title);
-      }
+      send(targets);
     };
     const onTargetDeviceCommand = event => {
       const targetId = event.target.getAttribute("clientId");
       const target = targets.find(t => t.id == targetId);
-      for (let t of tabsToSend) {
-        this.sendTabToDevice(t.url, [target], t.title);
-      }
+      send([target]);
     };
 
     function addTargetDevice(targetId, name, targetType, lastModified) {
@@ -811,8 +988,11 @@ var gSync = {
         );
         lastModified = new Date(target.clientRecord.serverLastModified * 1000);
       } else {
-        type = target.type === "desktop" ? "desktop" : "phone"; // Normalizing the FxA types just in case.
-        lastModified = null;
+        // For phones, FxA uses "mobile" and Sync clients uses "phone".
+        type = target.type == "mobile" ? "phone" : target.type;
+        lastModified = target.lastAccessTime
+          ? new Date(target.lastAccessTime)
+          : null;
       }
       addTargetDevice(target.id, target.name, type, lastModified);
     }
@@ -873,8 +1053,9 @@ var gSync = {
   },
 
   _appendSendTabUnconfigured(fragment, createDeviceNodeFn) {
+    const brandProductName = gBrandBundle.GetStringFromName("brandProductName");
     const notConnected = this.fxaStrings.GetStringFromName(
-      "sendTabToDevice.unconfigured.status"
+      "sendTabToDevice.unconfigured.label2"
     );
     const learnMore = this.fxaStrings.GetStringFromName(
       "sendTabToDevice.unconfigured"
@@ -889,13 +1070,14 @@ var gSync = {
       actions
     );
 
-    // Now add a 'sign in to sync' item above the 'learn more' item.
-    const signInToSync = this.fxaStrings.GetStringFromName(
-      "sendTabToDevice.signintosync"
+    // Now add a 'sign in to Firefox' item above the 'learn more' item.
+    const signInToFxA = this.fxaStrings.formatStringFromName(
+      "sendTabToDevice.signintofxa",
+      [brandProductName]
     );
-    let signInItem = createDeviceNodeFn(null, signInToSync, null);
+    let signInItem = createDeviceNodeFn(null, signInToFxA, null);
     signInItem.classList.add("sync-menuitem");
-    signInItem.setAttribute("label", signInToSync);
+    signInItem.setAttribute("label", signInToFxA);
     // Show an icon if opened in the page action panel:
     if (signInItem.classList.contains("subviewbutton")) {
       signInItem.classList.add("subviewbutton-iconic", "signintosync");
@@ -950,8 +1132,8 @@ var gSync = {
     // can lead to a empty label for 'Send To Device' Menu.
     this.init();
 
-    if (!this.SYNC_ENABLED) {
-      // These items are hidden in onSyncDisabled(). No need to do anything.
+    if (!this.FXA_ENABLED) {
+      // These items are hidden in onFxaDisabled(). No need to do anything.
       return;
     }
     let hasASendableURI = false;
@@ -982,7 +1164,7 @@ var gSync = {
 
   // "Send Page to Device" and "Send Link to Device" menu items
   updateContentContextMenu(contextMenu) {
-    if (!this.SYNC_ENABLED) {
+    if (!this.FXA_ENABLED) {
       // These items are hidden by default. No need to do anything.
       return;
     }
@@ -1035,26 +1217,11 @@ var gSync = {
   onActivityStart() {
     clearTimeout(this._syncAnimationTimer);
     this._syncStartTime = Date.now();
-
-    let label = this.syncStrings.GetStringFromName("syncingtabs.label");
-    let remotetabsSyncNowEl = document.getElementById(
-      "PanelUI-remotetabs-syncnow"
-    );
-    let fxaMenuSyncNowEl = document.getElementById(
-      "PanelUI-fxa-menu-syncnow-button"
-    );
-    let syncElements = [remotetabsSyncNowEl, fxaMenuSyncNowEl];
-
-    syncElements.forEach(el => {
+    document.querySelectorAll(".syncNowBtn").forEach(el => {
       el.setAttribute("syncstatus", "active");
       el.setAttribute("disabled", "true");
+      document.l10n.setAttributes(el, el.getAttribute("syncinglabel"));
     });
-
-    remotetabsSyncNowEl.setAttribute("label", label);
-    fxaMenuSyncNowEl.setAttribute(
-      "label",
-      fxaMenuSyncNowEl.getAttribute("syncinglabel")
-    );
   },
 
   _onActivityStop() {
@@ -1062,16 +1229,10 @@ var gSync = {
       return;
     }
 
-    let label = this.syncStrings.GetStringFromName("syncnow.label");
-    let syncElements = [
-      document.getElementById("PanelUI-remotetabs-syncnow"),
-      document.getElementById("PanelUI-fxa-menu-syncnow-button"),
-    ];
-
-    syncElements.forEach(el => {
+    document.querySelectorAll(".syncNowBtn").forEach(el => {
       el.removeAttribute("syncstatus");
       el.removeAttribute("disabled");
-      el.setAttribute("label", label);
+      document.l10n.setAttributes(el, "fxa-toolbar-sync-now");
     });
 
     Services.obs.notifyObservers(null, "test:browser-sync:activity-stop");
@@ -1093,12 +1254,68 @@ var gSync = {
     }
   },
 
+  // Disconnect from sync, and optionally disconnect from the FxA account.
+  // Returns true if the disconnection happened (ie, if the user didn't decline
+  // when asked to confirm)
+  async disconnect({ confirm = true, disconnectAccount = true } = {}) {
+    if (confirm && !(await this._confirmDisconnect(disconnectAccount))) {
+      return false;
+    }
+    // Record telemetry.
+    await fxAccounts.telemetry.recordDisconnection(
+      disconnectAccount ? null : "sync",
+      "ui"
+    );
+
+    await Weave.Service.promiseInitialized;
+    await Weave.Service.startOver();
+    if (disconnectAccount) {
+      await fxAccounts.signOut();
+    }
+    return true;
+  },
+
+  /**
+   * Prompts the user whether or not they want to proceed with
+   * disconnecting from their Firefox Account or Sync.
+   * @param {Boolean} disconnectAccount True if we are disconnecting both Sync and FxA.
+   * @returns {Boolean} True if the user confirmed.
+   */
+  async _confirmDisconnect(disconnectAccount) {
+    const l10nPrefix = `${
+      disconnectAccount ? "fxa" : "sync"
+    }-disconnect-dialog`;
+    const [title, body, button] = await document.l10n.formatValues([
+      { id: `${l10nPrefix}-title` },
+      { id: `${l10nPrefix}-body` },
+      { id: "sync-disconnect-dialog-button" },
+    ]);
+    // buttonPressed will be 0 for disconnect, 1 for cancel.
+    const flags =
+      Services.prompt.BUTTON_TITLE_IS_STRING * Services.prompt.BUTTON_POS_0 +
+      Services.prompt.BUTTON_TITLE_CANCEL * Services.prompt.BUTTON_POS_1;
+    const buttonPressed = Services.prompt.confirmEx(
+      window,
+      title,
+      body,
+      flags,
+      button,
+      null,
+      null,
+      null,
+      {}
+    );
+    return buttonPressed == 0;
+  },
+
   // doSync forces a sync - it *does not* return a promise as it is called
   // via the various UI components.
   doSync() {
     if (!UIState.isReady()) {
       return;
     }
+    // Note we don't bother checking if sync is actually enabled - none of the
+    // UI which calls this function should be visible in that case.
     const state = UIState.get();
     if (state.status == UIState.STATUS_SIGNED_IN) {
       this.updateSyncStatus({ syncing: true });
@@ -1173,11 +1390,9 @@ var gSync = {
     let tooltiptext;
     if (status == UIState.STATUS_NOT_VERIFIED) {
       // "needs verification"
-      tooltiptext = this.fxaStrings.formatStringFromName(
-        "verifyDescription",
-        [state.email],
-        1
-      );
+      tooltiptext = this.fxaStrings.formatStringFromName("verifyDescription", [
+        state.email,
+      ]);
     } else if (status == UIState.STATUS_NOT_CONFIGURED) {
       // "needs setup".
       tooltiptext = this.syncStrings.GetStringFromName(
@@ -1187,22 +1402,20 @@ var gSync = {
       // "need to reconnect/re-enter your password"
       tooltiptext = this.fxaStrings.formatStringFromName(
         "reconnectDescription",
-        [state.email],
-        1
+        [state.email]
       );
     } else {
       // Sync appears configured - format the "last synced at" time.
       tooltiptext = this.formatLastSyncDate(state.lastSync);
     }
 
-    if (this.appMenuLabel) {
-      let syncNow = document.getElementById("PanelUI-remotetabs-syncnow");
+    document.querySelectorAll(".syncNowBtn").forEach(el => {
       if (tooltiptext) {
-        syncNow.setAttribute("tooltiptext", tooltiptext);
+        el.setAttribute("tooltiptext", tooltiptext);
       } else {
-        syncNow.removeAttribute("tooltiptext");
+        el.removeAttribute("tooltiptext");
       }
-    }
+    });
   },
 
   get relativeTimeFormat() {
@@ -1218,15 +1431,21 @@ var gSync = {
       // Date can be null before the first sync!
       return null;
     }
-    const relativeDateStr = this.relativeTimeFormat.formatBestUnit(date);
-    return this.syncStrings.formatStringFromName(
-      "lastSync2.label",
-      [relativeDateStr],
-      1
-    );
+    try {
+      const relativeDateStr = this.relativeTimeFormat.formatBestUnit(date);
+      return this.syncStrings.formatStringFromName("lastSync2.label", [
+        relativeDateStr,
+      ]);
+    } catch (ex) {
+      // shouldn't happen, but one client having an invalid date shouldn't
+      // break the entire feature.
+      console.log("failed to format lastSync time", date, ex);
+      return null;
+    }
   },
 
   onClientsSynced() {
+    // Note that this element is only shown if Sync is enabled.
     let element = document.getElementById("PanelUI-remotetabs-main");
     if (element) {
       if (Weave.Service.clientsEngine.stats.numClients > 1) {
@@ -1237,7 +1456,7 @@ var gSync = {
     }
   },
 
-  onSyncDisabled() {
+  onFxaDisabled() {
     const toHide = [...document.querySelectorAll(".sync-ui-item")];
     for (const item of toHide) {
       item.hidden = true;

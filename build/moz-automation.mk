@@ -8,6 +8,26 @@ ifndef ENABLE_TESTS
 MOZ_AUTOMATION_PACKAGE_TESTS = 0
 endif
 
+ifdef CROSS_COMPILE
+# Narrow the definition of cross compilation to not include win32 builds
+# on win64 and linux32 builds on linux64.
+ifeq ($(HOST_OS_ARCH),$(OS_TARGET))
+ifneq (,$(filter x86%,$(CPU_ARCH)))
+FUZZY_CROSS_COMPILE =
+else
+FUZZY_CROSS_COMPILE = 1
+endif
+else
+FUZZY_CROSS_COMPILE = 1
+endif
+endif
+
+# Don't run make check when cross compiling, when doing artifact builds
+# or when building instrumented builds for PGO.
+ifneq (,$(USE_ARTIFACT)$(FUZZY_CROSS_COMPILE)$(MOZ_PROFILE_GENERATE))
+MOZ_AUTOMATION_CHECK := 0
+endif
+
 ifneq (,$(filter automation/%,$(MAKECMDGOALS)))
 ifeq (4.0,$(firstword $(sort 4.0 $(MAKE_VERSION))))
 MAKEFLAGS += --output-sync=target
@@ -27,12 +47,12 @@ endif
 # Helper variables to convert from MOZ_AUTOMATION_* variables to the
 # corresponding the make target
 tier_MOZ_AUTOMATION_BUILD_SYMBOLS = buildsymbols
-tier_MOZ_AUTOMATION_L10N_CHECK = l10n-check
 tier_MOZ_AUTOMATION_PACKAGE = package
 tier_MOZ_AUTOMATION_PACKAGE_TESTS = package-tests
 tier_MOZ_AUTOMATION_PACKAGE_GENERATED_SOURCES = package-generated-sources
 tier_MOZ_AUTOMATION_UPLOAD_SYMBOLS = uploadsymbols
 tier_MOZ_AUTOMATION_UPLOAD = upload
+tier_MOZ_AUTOMATION_CHECK = check
 
 # Automation build steps. Everything in MOZ_AUTOMATION_TIERS also gets used in
 # TIERS for mach display. As such, the MOZ_AUTOMATION_TIERS are roughly sorted
@@ -44,26 +64,27 @@ moz_automation_symbols = \
   MOZ_AUTOMATION_UPLOAD_SYMBOLS \
   MOZ_AUTOMATION_PACKAGE \
   MOZ_AUTOMATION_PACKAGE_GENERATED_SOURCES \
-  MOZ_AUTOMATION_L10N_CHECK \
   MOZ_AUTOMATION_UPLOAD \
+  MOZ_AUTOMATION_CHECK \
   $(NULL)
 MOZ_AUTOMATION_TIERS := $(foreach sym,$(moz_automation_symbols),$(if $(filter 1,$($(sym))),$(tier_$(sym))))
 
 # Dependencies between automation build steps
-automation/uploadsymbols: automation/buildsymbols
+automation-start/uploadsymbols: automation/buildsymbols
 
-automation/l10n-check: automation/package
+automation-start/upload: automation/package
+automation-start/upload: automation/package-tests
+automation-start/upload: automation/buildsymbols
+automation-start/upload: automation/package-generated-sources
 
-automation/upload: automation/package
-automation/upload: automation/package-tests
-automation/upload: automation/buildsymbols
-automation/upload: automation/package-generated-sources
+# Run the check tier after everything else.
+automation-start/check: $(addprefix automation/,$(filter-out check,$(MOZ_AUTOMATION_TIERS)))
 
 automation/build: $(addprefix automation/,$(MOZ_AUTOMATION_TIERS))
 	@echo Automation steps completed.
 
-# Note: We have to force -j1 here, at least until bug 1036563 is fixed.
-AUTOMATION_EXTRA_CMDLINE-l10n-check = -j1
+# Run as many tests as possible, even in case of one of them failing.
+AUTOMATION_EXTRA_CMDLINE-check = --keep-going
 
 # The commands only run if the corresponding MOZ_AUTOMATION_* variable is
 # enabled. This means, for example, if we enable MOZ_AUTOMATION_UPLOAD, then
@@ -71,7 +92,7 @@ AUTOMATION_EXTRA_CMDLINE-l10n-check = -j1
 # However, the target automation/buildsymbols will still be executed in this
 # case because it is a prerequisite of automation/upload.
 define automation_commands
-@+$(PYTHON) $(topsrcdir)/config/run-and-prefix.py $1 $(MAKE) $1 $(AUTOMATION_EXTRA_CMDLINE-$1)
+@+$(PYTHON3) $(topsrcdir)/config/run-and-prefix.py $1 $(MAKE) $1 $(AUTOMATION_EXTRA_CMDLINE-$1)
 $(call BUILDSTATUS,TIER_FINISH $1)
 endef
 

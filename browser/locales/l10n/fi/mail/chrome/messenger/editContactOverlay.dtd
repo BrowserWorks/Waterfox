@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "Poista">
+<!ENTITY editContactPanelDeleteContact.accesskey "o">
+
+<!ENTITY editContactName.label "Nimi:">
+<!ENTITY editContactName.accesskey "N">
+
+<!ENTITY editContactEmail.label "Sähköposti:">
+<!ENTITY editContactEmail.accesskey "S">
+
+<!ENTITY editContactAddressBook.label "Osoitekirja:">
+<!ENTITY editContactAddressBook.accesskey "O">
+
+<!ENTITY editContactPanelDone.label "Valmis">
+<!ENTITY editContactPanelDone.accesskey "V">
+
+<!ENTITY contactMoveDisabledWarning.description "Osoitekirjaa ei voi vaihtaa, koska yhteystieto on postituslistalla.">

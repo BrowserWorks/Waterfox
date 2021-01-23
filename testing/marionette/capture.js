@@ -20,7 +20,8 @@ this.EXPORTED_SYMBOLS = ["capture"];
 
 const CONTEXT_2D = "2d";
 const BG_COLOUR = "rgb(255,255,255)";
-const MAX_SKIA_DIMENSIONS = 32767;
+const MAX_CANVAS_DIMENSION = 32767;
+const MAX_CANVAS_AREA = 472907776;
 const PNG_MIME = "image/png";
 const XHTML_NS = "http://www.w3.org/1999/xhtml";
 
@@ -37,53 +38,7 @@ capture.Format = {
 };
 
 /**
- * Take a screenshot of a single element.
- *
- * @param {Node} node
- *     The node to take a screenshot of.
- * @param {Array.<Node>=} highlights
- *     Optional array of nodes, around which a border will be marked to
- *     highlight them in the screenshot.
- *
- * @return {HTMLCanvasElement}
- *     The canvas element where the element has been painted on.
- */
-capture.element = function(node, highlights = []) {
-  let win = node.ownerGlobal;
-  let rect = node.getBoundingClientRect();
-
-  return capture.canvas(win, rect.left, rect.top, rect.width, rect.height, {
-    highlights,
-  });
-};
-
-/**
- * Take a screenshot of the window's viewport by taking into account
- * the current offsets.
- *
- * @param {DOMWindow} win
- *     The DOM window providing the document element to capture,
- *     and the offsets for the viewport.
- * @param {Array.<Node>=} highlights
- *     Optional array of nodes, around which a border will be marked to
- *     highlight them in the screenshot.
- *
- * @return {HTMLCanvasElement}
- *     The canvas element where the viewport has been painted on.
- */
-capture.viewport = function(win, highlights = []) {
-  return capture.canvas(
-    win,
-    win.pageXOffset,
-    win.pageYOffset,
-    win.innerWidth,
-    win.innerHeight,
-    { highlights }
-  );
-};
-
-/**
- * Low-level interface to draw a rectangle off the framebuffer.
+ * Draw a rectangle off the framebuffer.
  *
  * @param {DOMWindow} win
  *     The DOM window used for the framebuffer, and providing the interfaces
@@ -96,100 +51,107 @@ capture.viewport = function(win, highlights = []) {
  *     The width dimension of the rectangle to paint.
  * @param {number} height
  *     The height dimension of the rectangle to paint.
- * @param {Array.<Node>=} highlights
- *     Optional array of nodes, around which a border will be marked to
- *     highlight them in the screenshot.
  * @param {HTMLCanvasElement=} canvas
  *     Optional canvas to reuse for the screenshot.
  * @param {number=} flags
  *     Optional integer representing flags to pass to drawWindow; these
  *     are defined on CanvasRenderingContext2D.
+ * @param {number=} dX
+ *     Horizontal offset between the browser window and content area. Defaults to 0.
+ * @param {number=} dY
+ *     Vertical offset between the browser window and content area. Defaults to 0.
+ * @param {boolean=} readback
+ *     If true, read back a snapshot of the pixel data currently in the
+ *     compositor/window. Defaults to false.
  *
  * @return {HTMLCanvasElement}
  *     The canvas on which the selection from the window's framebuffer
  *     has been painted on.
  */
-capture.canvas = function(
+capture.canvas = async function(
   win,
+  browsingContext,
   left,
   top,
   width,
   height,
-  { highlights = [], canvas = null, flags = null } = {}
+  { canvas = null, flags = null, dX = 0, dY = 0, readback = false } = {}
 ) {
   const scale = win.devicePixelRatio;
 
+  let canvasHeight = height * scale;
+  let canvasWidth = width * scale;
+
+  // Cap the screenshot size for width and height at 2^16 pixels,
+  // which is the maximum allowed canvas size. Higher dimensions will
+  // trigger exceptions in Gecko.
+  if (canvasWidth > MAX_CANVAS_DIMENSION) {
+    logger.warn(
+      "Limiting screen capture width to maximum allowed " +
+        MAX_CANVAS_DIMENSION +
+        " pixels"
+    );
+    width = Math.floor(MAX_CANVAS_DIMENSION / scale);
+    canvasWidth = width * scale;
+  }
+
+  if (canvasHeight > MAX_CANVAS_DIMENSION) {
+    logger.warn(
+      "Limiting screen capture height to maximum allowed " +
+        MAX_CANVAS_DIMENSION +
+        " pixels"
+    );
+    height = Math.floor(MAX_CANVAS_DIMENSION / scale);
+    canvasHeight = height * scale;
+  }
+
+  // If the area is larger, reduce the height to keep the full width.
+  if (canvasWidth * canvasHeight > MAX_CANVAS_AREA) {
+    logger.warn(
+      "Limiting screen capture area to maximum allowed " +
+        MAX_CANVAS_AREA +
+        " pixels"
+    );
+    height = Math.floor(MAX_CANVAS_AREA / (canvasWidth * scale));
+    canvasHeight = height * scale;
+  }
+
   if (canvas === null) {
-    let canvasWidth = width * scale;
-    let canvasHeight = height * scale;
-
-    if (canvasWidth > MAX_SKIA_DIMENSIONS) {
-      logger.warn(
-        "Reducing screenshot width because it exceeds " +
-          MAX_SKIA_DIMENSIONS +
-          " pixels"
-      );
-      canvasWidth = MAX_SKIA_DIMENSIONS;
-    }
-
-    if (canvasHeight > MAX_SKIA_DIMENSIONS) {
-      logger.warn(
-        "Reducing screenshot height because it exceeds " +
-          MAX_SKIA_DIMENSIONS +
-          " pixels"
-      );
-      canvasHeight = MAX_SKIA_DIMENSIONS;
-    }
-
     canvas = win.document.createElementNS(XHTML_NS, "canvas");
     canvas.width = canvasWidth;
     canvas.height = canvasHeight;
   }
 
-  let ctx = canvas.getContext(CONTEXT_2D);
-  if (flags === null) {
-    flags = ctx.DRAWWINDOW_DRAW_CARET;
-    // TODO(ato): https://bugzil.la/1377335
-    //
-    // Disabled in bug 1243415 for webplatform-test
-    // failures due to out of view elements.  Needs
-    // https://github.com/w3c/web-platform-tests/issues/4383 fixed.
-    /*
-    ctx.DRAWWINDOW_DRAW_VIEW;
-    */
-    // Bug 1009762 - Crash in [@ mozilla::gl::ReadPixelsIntoDataSurface]
-    /*
-    ctx.DRAWWINDOW_USE_WIDGET_LAYERS;
-    */
-  }
+  const ctx = canvas.getContext(CONTEXT_2D);
 
-  ctx.scale(scale, scale);
-  ctx.drawWindow(win, left, top, width, height, BG_COLOUR, flags);
-  if (highlights.length) {
-    ctx = capture.highlight_(ctx, highlights, top, left);
+  if (readback) {
+    if (flags === null) {
+      flags =
+        ctx.DRAWWINDOW_DRAW_CARET |
+        ctx.DRAWWINDOW_DRAW_VIEW |
+        ctx.DRAWWINDOW_USE_WIDGET_LAYERS;
+    }
+
+    // drawWindow doesn't take scaling into account.
+    ctx.scale(scale, scale);
+    ctx.drawWindow(win, left + dX, top + dY, width, height, BG_COLOUR, flags);
+  } else {
+    let rect = new DOMRect(left, top, width, height);
+    let snapshot = await browsingContext.currentWindowGlobal.drawSnapshot(
+      rect,
+      scale,
+      BG_COLOUR
+    );
+
+    ctx.drawImage(snapshot, 0, 0);
+
+    // Bug 1574935 - Huge dimensions can trigger an OOM because multiple copies
+    // of the bitmap will exist in memory. Force the removal of the snapshot
+    // because it is no longer needed.
+    snapshot.close();
   }
 
   return canvas;
-};
-
-capture.highlight_ = function(context, highlights, top = 0, left = 0) {
-  if (typeof highlights == "undefined") {
-    throw new InvalidArgumentError("Missing highlights");
-  }
-
-  context.lineWidth = "2";
-  context.strokeStyle = "red";
-  context.save();
-
-  for (let el of highlights) {
-    let rect = el.getBoundingClientRect();
-    let oy = -top;
-    let ox = -left;
-
-    context.strokeRect(rect.left + ox, rect.top + oy, rect.width, rect.height);
-  }
-
-  return context;
 };
 
 /**

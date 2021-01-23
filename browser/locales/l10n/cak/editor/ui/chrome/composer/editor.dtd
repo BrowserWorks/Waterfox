@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!-- LOCALIZATION NOTE  (editorWindow.titlemodifier): DONT_TRANSLATE -->
+<!ENTITY editorWindow.titlemodifier "Nuk'unel">
+<!ENTITY editorWindow.titlemodifiermenuseparator " - ">
+
+<!-- Menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- Toolbar-only items -->
+<!ENTITY compositionToolbar.tooltip "Rucholsamajib'al Nuk'unem">
+<!ENTITY previewToolbarCmd.label "Tokik'amayin">
+<!ENTITY previewToolbarCmd.tooltip "Tisamajib'ëx re ruxaq re' pa ri okik'amaya'l">
+
+<!-- File menu items -->
+<!ENTITY exportToTextCmd.label "Tik'wäx el pa Rucholajem Tzij…">
+<!ENTITY exportToTextCmd.accesskey "x">
+<!ENTITY previewCmd.label "Tokik'amayïx Ruxaq">
+<!ENTITY previewCmd.accesskey "k">
+<!ENTITY sendPageCmd.label "Titaq Ruxaq…">
+<!ENTITY sendPageCmd.accesskey "q">
+
+<!-- View menu items -->
+<!ENTITY compositionToolbarCmd.label "Rucholsamajib'al Nuk'unem">
+<!ENTITY compositionToolbarCmd.accesskey "C">
+<!ENTITY formattingToolbarCmd.label "Rub'anikil Molsamajib'äl">
+<!ENTITY formattingToolbarCmd.accesskey "b">
+<!ENTITY editmodeToolbarCmd.label "Tinuk' Rub'anikil Molsamajib'äl">
+<!ENTITY editmodeToolbarCmd.accesskey "n">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "B'anikil">
+<!ENTITY formatMenu.accesskey "a">
+<!ENTITY grid.label "K'ojlib'äl k'ïy kajtz'ik">
+<!ENTITY grid.accesskey "j">
+<!ENTITY pageProperties.label "Rub'i' Ruxaq chuqa' taq Ichinil…">
+<!ENTITY pageProperties.accesskey "x">
+
+<!-- Tools menu items -->
+<!ENTITY validateCmd.label "Jikib'anem HTML">
+<!ENTITY validateCmd.accesskey "J">
+
+<!-- Display Mode toolbar and View menu items -->
+<!ENTITY NormalModeTab.label "Relik">
+<!ENTITY NormalMode.label "Rub'anikil Relik Nuk'uj">
+<!ENTITY NormalMode.accesskey "e">
+<!ENTITY NormalMode.tooltip "Tik'ut ri taq ruchi' kemon kajtz'ik chuqa' taq xukuxüb' k'o kib'i'">
+<!ENTITY AllTagsModeTab.label "HTML taq Etal">
+<!ENTITY AllTagsMode.label "HTML taq Etal">
+<!ENTITY AllTagsMode.accesskey "E">
+<!ENTITY AllTagsMode.tooltip "Kek'ut kiwachaj konojel ri HTML taq etal">
+<!-- LOCALIZATION NOTE: (HTMLSourceModeTab.dir, HTMLSourceModeTab.label)
+     Do NOT translate text for 'HTMLSourceModeTab.dir', use latin "ltr" if
+     you want the <html> image to left of the 'HTMLSourceModeTab.label' text,
+     or use latin "rtl" if you want this image to the right of text. You do
+     not need to include HTML in the label 'HTMLSourceModeTab.label' -->
+<!ENTITY HTMLSourceModeTab.dir "ltr">
+<!ENTITY HTMLSourceModeTab.label "Taq xe'el">
+<!ENTITY HTMLSourceMode.label "HTML Xe'el">
+<!ENTITY HTMLSourceMode.accesskey "H">
+<!ENTITY HTMLSourceMode.tooltip "Tinuk' HTML xe'el">
+<!ENTITY PreviewModeTab.label "Nab'ey tzub'al">
+<!ENTITY PreviewMode.label "Nab'ey tzub'al">
+<!ENTITY PreviewMode.accesskey "N">
+<!ENTITY PreviewMode.tooltip "Tik'ut achi'el WYSIWYG (achi'el pa ri okik'amaya'l)">

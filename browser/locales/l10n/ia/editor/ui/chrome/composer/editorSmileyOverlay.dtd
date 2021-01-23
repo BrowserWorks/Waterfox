@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Smiley Menu items -->
+<!ENTITY insertSmiley.label "Emoticone">
+<!ENTITY insertSmiley.accesskey "E">
+
+<!ENTITY smiley1Cmd.label "Surriso">
+<!ENTITY smiley1Cmd.accesskey "S">
+<!ENTITY smiley1Cmd.tooltip "Inserer un emoticone surridente">
+<!ENTITY smiley2Cmd.label "Corrugation del fronte">
+<!ENTITY smiley2Cmd.accesskey "C">
+<!ENTITY smiley2Cmd.tooltip "Inserer un emoticone contrariate">
+<!ENTITY smiley3Cmd.label "Palpebration">
+<!ENTITY smiley3Cmd.accesskey "A">
+<!ENTITY smiley3Cmd.tooltip "Inserer un emoticone que batte le palpebra">
+<!ENTITY smiley4Cmd.label "Lingua tirate foras">
+<!ENTITY smiley4Cmd.accesskey "L">
+<!ENTITY smiley4Cmd.tooltip "Inserer un emoticone con lingua tirate foras">
+<!ENTITY smiley5Cmd.label "Ridente">
+<!ENTITY smiley5Cmd.accesskey "R">
+<!ENTITY smiley5Cmd.tooltip "Inserer un emoticone ridente">
+<!ENTITY smiley6Cmd.label "Embarassate">
+<!ENTITY smiley6Cmd.accesskey "E">
+<!ENTITY smiley6Cmd.tooltip "Inserer un emoticone embarassate">
+<!ENTITY smiley7Cmd.label "Indecise">
+<!ENTITY smiley7Cmd.accesskey "I">
+<!ENTITY smiley7Cmd.tooltip "Inserer un emoticone indecise">
+<!ENTITY smiley8Cmd.label "Surprisa">
+<!ENTITY smiley8Cmd.accesskey "p">
+<!ENTITY smiley8Cmd.tooltip "Inserer un emoticone surprendite">
+<!ENTITY smiley9Cmd.label "Basio">
+<!ENTITY smiley9Cmd.accesskey "B">
+<!ENTITY smiley9Cmd.tooltip "Inserer un emoticone que basia">
+<!ENTITY smiley10Cmd.label "Crito">
+<!ENTITY smiley10Cmd.accesskey "C">
+<!ENTITY smiley10Cmd.tooltip "Inserer un emoticone que crita">
+<!ENTITY smiley11Cmd.label "Sympathic">
+<!ENTITY smiley11Cmd.accesskey "S">
+<!ENTITY smiley11Cmd.tooltip "Inserer un emoticone sympathic">
+<!ENTITY smiley12Cmd.label "Moneta in bucca">
+<!ENTITY smiley12Cmd.accesskey "M">
+<!ENTITY smiley12Cmd.tooltip "Inserer un emoticone con moneta in bucca">
+<!ENTITY smiley13Cmd.label "Scarpa in bucca">
+<!ENTITY smiley13Cmd.accesskey "S">
+<!ENTITY smiley13Cmd.tooltip "Inserer un emoticone con scarpa in bucca">
+<!ENTITY smiley14Cmd.label "Innocente">
+<!ENTITY smiley14Cmd.accesskey "I">
+<!ENTITY smiley14Cmd.tooltip "Inserer un emoticone innocente">
+<!ENTITY smiley15Cmd.label "Plancto">
+<!ENTITY smiley15Cmd.accesskey "P">
+<!ENTITY smiley15Cmd.tooltip "Inserer un emoticone que batte le palpebra">
+<!ENTITY smiley16Cmd.label "Bucca sigillate">
+<!ENTITY smiley16Cmd.accesskey "t">
+<!ENTITY smiley16Cmd.tooltip "Inserer un emoticone con bucca clause">
+<!ENTITY SmileButton.label "Inserer emoticone">
+<!ENTITY SmileButton.tooltip "Inserer un emoticone surridente">

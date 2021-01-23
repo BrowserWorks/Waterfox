@@ -6,13 +6,13 @@
 
 import typeof SourceMaps from "devtools-source-map";
 
-import type { Breakpoint } from "../../types";
+import type { Breakpoint, SourceId } from "../../types";
 
 export default function remapLocations(
   breakpoints: Breakpoint[],
-  sourceId: string,
+  sourceId: SourceId,
   sourceMaps: SourceMaps
-) {
+): Promise<Breakpoint[]> {
   const sourceBreakpoints: Promise<Breakpoint>[] = breakpoints.map(
     async breakpoint => {
       if (breakpoint.location.sourceId !== sourceId) {

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Sifat Tetapan Medan">
+
+<!ENTITY Legend.label "Petunjuk">
+<!ENTITY Legend.accesskey "P">
+
+<!ENTITY EditLegendText.label "Edit Petunjuk:">
+<!ENTITY EditLegendText.accesskey "P">
+<!ENTITY LegendAlign.label "Jajar Petunjuk:">
+<!ENTITY LegendAlign.accesskey "J">
+<!ENTITY AlignDefault.label "Piawai">
+<!ENTITY AlignLeft.label "Kiri">
+<!ENTITY AlignCenter.label "Tengah">
+<!ENTITY AlignRight.label "Kanan">
+
+<!ENTITY RemoveFieldSet.label "Buang Tetapan Medan">
+<!ENTITY RemoveFieldSet.accesskey "B">

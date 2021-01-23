@@ -59,6 +59,7 @@ class ChannelMediaDecoder
   };
 
  protected:
+  void ShutdownInternal() override;
   void OnPlaybackEvent(MediaPlaybackEvent&& aEvent) override;
   void DurationChanged() override;
   void MetadataLoaded(UniquePtr<MediaInfo> aInfo, UniquePtr<MetadataTags> aTags,
@@ -70,7 +71,7 @@ class ChannelMediaDecoder
 
   explicit ChannelMediaDecoder(MediaDecoderInit& aInit);
 
-  nsCString GetDebugInfo() override;
+  void GetDebugInfo(dom::MediaDecoderDebugInfo& aInfo);
 
  public:
   // Create a decoder for the given aType. Returns null if we were unable
@@ -91,6 +92,7 @@ class ChannelMediaDecoder
 
   void AddSizeOfResources(ResourceSizes* aSizes) override;
   already_AddRefed<nsIPrincipal> GetCurrentPrincipal() override;
+  bool HadCrossOriginRedirects() override;
   bool IsTransportSeekable() override;
   void SetLoadInBackground(bool aLoadInBackground) override;
   void Suspend() override;
@@ -155,6 +157,10 @@ class ChannelMediaDecoder
   // True if we've been notified that the ChannelMediaResource has
   // a principal.
   bool mInitialChannelPrincipalKnown = false;
+
+  // Set in Shutdown() when we start closing mResource, if mResource is set.
+  // Must resolve before we unregister the shutdown blocker.
+  RefPtr<GenericPromise> mResourceClosePromise;
 };
 
 }  // namespace mozilla

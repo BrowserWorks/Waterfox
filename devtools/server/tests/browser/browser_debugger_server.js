@@ -1,46 +1,45 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
 "use strict";
 
-// Test basic features of DebuggerServer
+// Test basic features of DevToolsServer
 
 add_task(async function() {
   // When running some other tests before, they may not destroy the main server.
   // Do it manually before running our tests.
-  if (DebuggerServer.initialized) {
-    DebuggerServer.destroy();
+  if (DevToolsServer.initialized) {
+    DevToolsServer.destroy();
   }
 
-  await testDebuggerServerInitialized();
-  await testDebuggerServerKeepAlive();
+  await testDevToolsServerInitialized();
+  await testDevToolsServerKeepAlive();
 });
 
-async function testDebuggerServerInitialized() {
+async function testDevToolsServerInitialized() {
   const browser = await addTab("data:text/html;charset=utf-8,foo");
   const tab = gBrowser.getTabForBrowser(browser);
 
   ok(
-    !DebuggerServer.initialized,
-    "By default, the DebuggerServer isn't initialized in parent process"
+    !DevToolsServer.initialized,
+    "By default, the DevToolsServer isn't initialized in parent process"
   );
   await assertServerInitialized(
     browser,
     false,
-    "By default, the DebuggerServer isn't initialized not in content process"
+    "By default, the DevToolsServer isn't initialized not in content process"
   );
 
   const target = await TargetFactory.forTab(tab);
 
   ok(
-    DebuggerServer.initialized,
-    "TargetFactory.forTab will initialize the DebuggerServer in parent process"
+    DevToolsServer.initialized,
+    "TargetFactory.forTab will initialize the DevToolsServer in parent process"
   );
   await assertServerInitialized(
     browser,
     true,
-    "TargetFactory.forTab will initialize the DebuggerServer in content process"
+    "TargetFactory.forTab will initialize the DevToolsServer in content process"
   );
 
   await target.destroy();
@@ -49,21 +48,21 @@ async function testDebuggerServerInitialized() {
   // in parent and content process. But only the one in the content process will be
   // destroyed.
   ok(
-    DebuggerServer.initialized,
-    "Destroying the target doesn't destroy the DebuggerServer in the parent process"
+    DevToolsServer.initialized,
+    "Destroying the target doesn't destroy the DevToolsServer in the parent process"
   );
   await assertServerInitialized(
     browser,
     false,
-    "But destroying the target ends up destroying the DebuggerServer in the content" +
+    "But destroying the target ends up destroying the DevToolsServer in the content" +
       " process"
   );
 
   gBrowser.removeCurrentTab();
-  DebuggerServer.destroy();
+  DevToolsServer.destroy();
 }
 
-async function testDebuggerServerKeepAlive() {
+async function testDevToolsServerKeepAlive() {
   const browser = await addTab("data:text/html;charset=utf-8,foo");
   const tab = gBrowser.getTabForBrowser(browser);
 
@@ -80,7 +79,7 @@ async function testDebuggerServerKeepAlive() {
     "Server started in content process"
   );
 
-  info("Set DebuggerServer.keepAlive to true in the content process");
+  info("Set DevToolsServer.keepAlive to true in the content process");
   await setContentServerKeepAlive(browser, true);
 
   info("Destroy the target, the content server should be kept alive");
@@ -92,7 +91,7 @@ async function testDebuggerServerKeepAlive() {
     "Server still running in content process"
   );
 
-  info("Set DebuggerServer.keepAlive back to false");
+  info("Set DevToolsServer.keepAlive back to false");
   await setContentServerKeepAlive(browser, false);
 
   info("Create and destroy a target again");
@@ -106,26 +105,26 @@ async function testDebuggerServerKeepAlive() {
   );
 
   gBrowser.removeCurrentTab();
-  DebuggerServer.destroy();
+  DevToolsServer.destroy();
 }
 
 async function assertServerInitialized(browser, expected, message) {
-  const isInitialized = await ContentTask.spawn(browser, null, function() {
+  const isInitialized = await SpecialPowers.spawn(browser, [], function() {
     const { require } = ChromeUtils.import(
       "resource://devtools/shared/Loader.jsm"
     );
-    const { DebuggerServer } = require("devtools/server/main");
-    return DebuggerServer.initialized;
+    const { DevToolsServer } = require("devtools/server/devtools-server");
+    return DevToolsServer.initialized;
   });
   is(isInitialized, expected, message);
 }
 
 async function setContentServerKeepAlive(browser, keepAlive, message) {
-  await ContentTask.spawn(browser, keepAlive, function(_keepAlive) {
+  await SpecialPowers.spawn(browser, [keepAlive], function(_keepAlive) {
     const { require } = ChromeUtils.import(
       "resource://devtools/shared/Loader.jsm"
     );
-    const { DebuggerServer } = require("devtools/server/main");
-    DebuggerServer.keepAlive = _keepAlive;
+    const { DevToolsServer } = require("devtools/server/devtools-server");
+    DevToolsServer.keepAlive = _keepAlive;
   });
 }

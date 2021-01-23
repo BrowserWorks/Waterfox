@@ -53,9 +53,9 @@ PlacesInsertionPoint.prototype = {
     if (this.dropNearNode) {
       // If dropNearNode is set up we must calculate the index of the item near
       // which we will drop.
-      let index = (await PlacesUtils.bookmarks.fetch(
-        this.dropNearNode.bookmarkGuid
-      )).index;
+      let index = (
+        await PlacesUtils.bookmarks.fetch(this.dropNearNode.bookmarkGuid)
+      ).index;
       return this.orientation == Ci.nsITreeView.DROP_BEFORE ? index : index + 1;
     }
     return this._index;
@@ -128,6 +128,10 @@ PlacesController.prototype = {
   },
 
   isCommandEnabled: function PC_isCommandEnabled(aCommand) {
+    // Determine whether or not nodes can be inserted.
+    let ip = this._view.insertionPoint;
+    let canInsert = ip && (aCommand.endsWith("_paste") || !ip.isTag);
+
     switch (aCommand) {
       case "cmd_undo":
         return PlacesTransactions.topUndoEntry != null;
@@ -155,7 +159,22 @@ PlacesController.prototype = {
         return this._view.hasSelection;
       case "cmd_paste":
       case "placesCmd_paste":
-        return this._canInsert(true) && this._isClipboardDataPasteable();
+        // If the clipboard contains a Places flavor it is definitely pasteable,
+        // otherwise we also allow pasting "text/unicode" and "text/x-moz-url" data.
+        // We don't check if the data is valid here, because the clipboard may
+        // contain very large blobs that would largely slowdown commands updating.
+        // Of course later paste() should ignore any invalid data.
+        return (
+          canInsert &&
+          this.clipboard.hasDataMatchingFlavors(
+            [
+              ...PlacesUIUtils.PLACES_FLAVORS,
+              PlacesUtils.TYPE_X_MOZ_URL,
+              PlacesUtils.TYPE_UNICODE,
+            ],
+            Ci.nsIClipboard.kGlobalClipboard
+          )
+        );
       case "cmd_selectAll":
         if (this._view.selType != "single") {
           let rootNode = this._view.result.root;
@@ -172,12 +191,12 @@ PlacesController.prototype = {
         return selectedNode && PlacesUtils.nodeIsURI(selectedNode);
       }
       case "placesCmd_new:folder":
-        return this._canInsert();
+        return canInsert;
       case "placesCmd_new:bookmark":
-        return this._canInsert();
+        return canInsert;
       case "placesCmd_new:separator":
         return (
-          this._canInsert() &&
+          canInsert &&
           !PlacesUtils.asQuery(this._view.result.root).queryOptions
             .excludeItems &&
           this._view.result.sortingMode ==
@@ -203,9 +222,11 @@ PlacesController.prototype = {
             Ci.nsINavHistoryQueryOptions.SORT_BY_NONE
         );
       }
-      case "placesCmd_createBookmark":
-        var node = this._view.selectedNode;
-        return node && PlacesUtils.nodeIsURI(node) && node.itemId == -1;
+      case "placesCmd_createBookmark": {
+        return !this._view.selectedNodes.some(
+          node => !PlacesUtils.nodeIsURI(node) || node.itemId != -1
+        );
+      }
       default:
         return false;
     }
@@ -286,19 +307,20 @@ PlacesController.prototype = {
       case "placesCmd_sortBy:name":
         this.sortFolderByName().catch(Cu.reportError);
         break;
-      case "placesCmd_createBookmark":
-        let node = this._view.selectedNode;
-        PlacesUIUtils.showBookmarkDialog(
-          {
-            action: "add",
-            type: "bookmark",
-            hiddenRows: ["keyword", "location"],
+      case "placesCmd_createBookmark": {
+        const nodes = this._view.selectedNodes.map(node => {
+          return {
             uri: Services.io.newURI(node.uri),
             title: node.title,
-          },
+          };
+        });
+        PlacesUIUtils.showBookmarkPagesDialog(
+          nodes,
+          ["keyword", "location"],
           window.top
         );
         break;
+      }
     }
   },
 
@@ -337,70 +359,6 @@ PlacesController.prototype = {
     }
 
     return true;
-  },
-
-  /**
-   * Determines whether or not nodes can be inserted relative to the selection.
-   */
-  _canInsert: function PC__canInsert(isPaste) {
-    var ip = this._view.insertionPoint;
-    return ip != null && (isPaste || !ip.isTag);
-  },
-
-  /**
-   * Looks at the data on the clipboard to see if it is paste-able.
-   * Paste-able data is:
-   *   - in a format that the view can receive
-   * @return true if: - clipboard data is of a TYPE_X_MOZ_PLACE_* flavor,
-   *                  - clipboard data is of type TEXT_UNICODE and
-   *                    is a valid URI.
-   */
-  _isClipboardDataPasteable: function PC__isClipboardDataPasteable() {
-    // if the clipboard contains TYPE_X_MOZ_PLACE_* data, it is definitely
-    // pasteable, with no need to unwrap all the nodes.
-
-    var flavors = PlacesUIUtils.PLACES_FLAVORS;
-    var clipboard = this.clipboard;
-    var hasPlacesData = clipboard.hasDataMatchingFlavors(
-      flavors,
-      flavors.length,
-      Ci.nsIClipboard.kGlobalClipboard
-    );
-    if (hasPlacesData) {
-      return this._view.insertionPoint != null;
-    }
-
-    // if the clipboard doesn't have TYPE_X_MOZ_PLACE_* data, we also allow
-    // pasting of valid "text/unicode" and "text/x-moz-url" data
-    var xferable = Cc["@mozilla.org/widget/transferable;1"].createInstance(
-      Ci.nsITransferable
-    );
-    xferable.init(null);
-
-    xferable.addDataFlavor(PlacesUtils.TYPE_X_MOZ_URL);
-    xferable.addDataFlavor(PlacesUtils.TYPE_UNICODE);
-    clipboard.getData(xferable, Ci.nsIClipboard.kGlobalClipboard);
-
-    try {
-      // getAnyTransferData will throw if no data is available.
-      var data = {},
-        type = {};
-      xferable.getAnyTransferData(type, data);
-      data = data.value.QueryInterface(Ci.nsISupportsString).data;
-      if (
-        type.value != PlacesUtils.TYPE_X_MOZ_URL &&
-        type.value != PlacesUtils.TYPE_UNICODE
-      ) {
-        return false;
-      }
-
-      // unwrapNodes() will throw if the data blob is malformed.
-      PlacesUtils.unwrapNodes(data, type.value);
-      return this._view.insertionPoint != null;
-    } catch (e) {
-      // getAnyTransferData or unwrapNodes failed
-      return false;
-    }
   },
 
   /**
@@ -586,11 +544,25 @@ PlacesController.prototype = {
    *     visibility state is "auto-detected."
    *  8) The "hideifprivatebrowsing" attribute may be set on a menu-item to
    *     true if it should be hidden inside the private browsing mode
+   *  9) The "forcehideintabbrowser" attribute may be set on a menu-item if
+   *     it should be hidden when we're in a tabbed browsing window.
    * @param   aPopup
    *          The menupopup to build children into.
    * @return true if at least one item is visible, false otherwise.
    */
   buildContextMenu: function PC_buildContextMenu(aPopup) {
+    // In tabbed browsing windows, ensure the plain 'open' item gets hidden,
+    // unless we open in tabs by default, in which case we want it visible
+    // so users can use the context menu to force the bookmark to open in
+    // the current tab.
+    if (window.top.gBrowser) {
+      var openInCurrentTab = document.getElementById("placesContext_open");
+      if (!PlacesUIUtils.loadBookmarksInTabs) {
+        openInCurrentTab.setAttribute("forcehideintabbrowser", "true");
+      } else {
+        openInCurrentTab.removeAttribute("forcehideintabbrowser");
+      }
+    }
     var metadata = this._buildSelectionMetadata();
     var ip = this._view.insertionPoint;
     var noIp = !ip || ip.isTag;
@@ -609,11 +581,15 @@ PlacesController.prototype = {
           item.getAttribute("hideifnoinsertionpoint") == "true" &&
           noIp &&
           !(ip && ip.isTag && item.id == "placesContext_paste");
+        var hideIfInTabBrowser =
+          item.getAttribute("forcehideintabbrowser") == "true" &&
+          window.top.gBrowser;
         var hideIfPrivate =
           item.getAttribute("hideifprivatebrowsing") == "true" &&
           PrivateBrowsingUtils.isWindowPrivate(window);
         var shouldHideItem =
           hideIfNoIP ||
+          hideIfInTabBrowser ||
           hideIfPrivate ||
           !this._shouldShowMenuItem(item, metadata);
         item.hidden = item.disabled = shouldHideItem;
@@ -735,7 +711,7 @@ PlacesController.prototype = {
   async newItem(aType) {
     let ip = this._view.insertionPoint;
     if (!ip) {
-      throw Cr.NS_ERROR_NOT_AVAILABLE;
+      throw Components.Exception("", Cr.NS_ERROR_NOT_AVAILABLE);
     }
 
     let bookmarkGuid = PlacesUIUtils.showBookmarkDialog(
@@ -758,7 +734,7 @@ PlacesController.prototype = {
   async newSeparator() {
     var ip = this._view.insertionPoint;
     if (!ip) {
-      throw Cr.NS_ERROR_NOT_AVAILABLE;
+      throw Components.Exception("", Cr.NS_ERROR_NOT_AVAILABLE);
     }
 
     let index = await ip.getIndex();
@@ -922,7 +898,7 @@ PlacesController.prototype = {
       );
     }
 
-    if (transactions.length > 0) {
+    if (transactions.length) {
       await PlacesUIUtils.batchUpdatesForNode(
         this._view.result,
         totalItems,
@@ -1097,7 +1073,7 @@ PlacesController.prototype = {
   },
 
   _releaseClipboardOwnership: function PC__releaseClipboardOwnership() {
-    if (this.cutNodes.length > 0) {
+    if (this.cutNodes.length) {
       // This clears the logical clipboard, doesn't remove data.
       this.clipboard.emptyClipboard(Ci.nsIClipboard.kGlobalClipboard);
     }
@@ -1158,7 +1134,7 @@ PlacesController.prototype = {
     // This order matters here!  It controls how this and other applications
     // select data to be inserted based on type.
     contents.forEach(function(content) {
-      if (content.entries.length > 0) {
+      if (content.entries.length) {
         hasData = true;
         let glue =
           content.type == PlacesUtils.TYPE_X_MOZ_PLACE ? "," : PlacesUtils.endl;
@@ -1246,7 +1222,7 @@ PlacesController.prototype = {
     // No reason to proceed if there isn't a valid insertion point.
     let ip = this._view.insertionPoint;
     if (!ip) {
-      throw Cr.NS_ERROR_NOT_AVAILABLE;
+      throw Components.Exception("", Cr.NS_ERROR_NOT_AVAILABLE);
     }
 
     let action = this.clipboardAction;
@@ -1292,7 +1268,7 @@ PlacesController.prototype = {
       this._clearClipboard();
     }
 
-    if (itemsToSelect.length > 0) {
+    if (itemsToSelect.length) {
       this._view.selectItems(itemsToSelect, false);
     }
   },
@@ -1330,11 +1306,20 @@ PlacesController.prototype = {
     // Once tags and bookmarked are divorced, the tag-query check should be
     // removed.
     let parentNode = node.parent;
+    if (!parentNode) {
+      return false;
+    }
+
+    // Once tags and bookmarked are divorced, the tag-query check should be
+    // removed.
+    if (PlacesUtils.nodeIsTagQuery(parentNode)) {
+      return false;
+    }
+
     return (
-      parentNode != null &&
-      PlacesUtils.nodeIsFolder(parentNode) &&
-      !PlacesUIUtils.isFolderReadOnly(parentNode) &&
-      !PlacesUtils.nodeIsTagQuery(parentNode)
+      (PlacesUtils.nodeIsFolder(parentNode) &&
+        !PlacesUIUtils.isFolderReadOnly(parentNode)) ||
+      PlacesUtils.nodeIsQuery(parentNode)
     );
   },
 };

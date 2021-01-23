@@ -2,9 +2,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import print_function
-from __future__ import absolute_import
-
 import subprocess
 
 
@@ -14,7 +11,8 @@ def _run_pip(*args):
     """
     try:
         subprocess.check_output(['pip'] + list(args),
-                                stderr=subprocess.STDOUT)
+                                stderr=subprocess.STDOUT,
+                                universal_newlines=True)
         return True
     except subprocess.CalledProcessError as e:
         print(e.output)

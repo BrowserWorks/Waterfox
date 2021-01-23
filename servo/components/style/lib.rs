@@ -72,13 +72,11 @@ extern crate num_cpus;
 extern crate num_derive;
 extern crate num_integer;
 extern crate num_traits;
-extern crate ordered_float;
 extern crate owning_ref;
 extern crate parking_lot;
 extern crate precomputed_hash;
 extern crate rayon;
 extern crate selectors;
-#[cfg(feature = "servo")]
 #[macro_use]
 extern crate serde;
 pub extern crate servo_arc;
@@ -91,6 +89,8 @@ extern crate servo_config;
 extern crate servo_url;
 extern crate smallbitvec;
 extern crate smallvec;
+#[cfg(feature = "gecko")]
+extern crate static_prefs;
 #[cfg(feature = "servo")]
 extern crate string_cache;
 #[macro_use]
@@ -119,6 +119,8 @@ pub mod attr;
 pub mod author_styles;
 pub mod bezier;
 pub mod bloom;
+#[path = "properties/computed_value_flags.rs"]
+pub mod computed_value_flags;
 pub mod context;
 pub mod counter_style;
 pub mod custom_properties;
@@ -172,10 +174,12 @@ pub mod values;
 pub use crate::gecko_string_cache as string_cache;
 #[cfg(feature = "gecko")]
 pub use crate::gecko_string_cache::Atom;
+/// The namespace prefix type for Gecko, which is just an atom.
 #[cfg(feature = "gecko")]
-pub use crate::gecko_string_cache::Atom as Prefix;
+pub type Prefix = crate::gecko_string_cache::Atom;
+/// The local name of an element for Gecko, which is just an atom.
 #[cfg(feature = "gecko")]
-pub use crate::gecko_string_cache::Atom as LocalName;
+pub type LocalName = crate::gecko_string_cache::Atom;
 #[cfg(feature = "gecko")]
 pub use crate::gecko_string_cache::Namespace;
 
@@ -272,5 +276,28 @@ where
 
     fn is_zero(&self) -> bool {
         <Self as num_traits::Zero>::is_zero(self)
+    }
+}
+
+/// A trait pretty much similar to num_traits::One, but without the need of
+/// implementing `Mul`.
+pub trait One {
+    /// Reutrns the one value.
+    fn one() -> Self;
+
+    /// Returns whether this value is one.
+    fn is_one(&self) -> bool;
+}
+
+impl<T> One for T
+where
+    T: num_traits::One + PartialEq,
+{
+    fn one() -> Self {
+        <Self as num_traits::One>::one()
+    }
+
+    fn is_one(&self) -> bool {
+        *self == One::one()
     }
 }

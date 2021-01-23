@@ -1,0 +1,70 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Atributoj">
+
+<!ENTITY generalInfo.label                       "Ĝeneralaj informoj">
+<!ENTITY folderCharsetFallback2.label            "Alternativa teksta kodprezento:">
+<!ENTITY folderCharsetFallback2.accesskey        "A">
+<!ENTITY folderCharsetEnforce2.label             "Apliki elektitan kodprezenton por ĉiuj mesaĝoj en la mesaĝujo (ignori individuan kodprezenton difinitan en mesaĝkapo kaj aŭtomatan eltrovon de kodprezento)">
+<!ENTITY folderCharsetEnforce2.accesskey         "p">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Rekonstrui indekson en dosiero de sumigo">
+<!ENTITY folderRebuildSummaryFile2.label         "Ripari mesaĝujon">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "R">
+<!ENTITY folderRebuildSummaryFile.explanation    "Iam la sumiga dosiero de mesaĝujo (.msf) difektiĝas kaj mesaĝoj povas malaperi aŭ forigitaj mesaĝoj plue aperas; per ripari mesaĝujon tiaj problemoj povas malaperi.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Inkluzivi mesaĝojn en tiu ĉi mesaĝujo en rezultoj de ĝenerala serĉo">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "I">
+
+<!ENTITY retention.label "Konservo de mesaĝoj">
+<!ENTITY retentionUseAccount.label  "Uzi agordojn de kontoj">
+<!ENTITY retentionUseAccount.accesskey "U">
+<!ENTITY daysOld.label "tagoj">
+<!ENTITY message.label "mesaĝoj">
+<!ENTITY retentionCleanup.label "Por ŝpari diskspacon, eblas neinversigeble forigi malnovajn mesaĝojn.">
+<!ENTITY retentionCleanupImap.label "Por ŝpari diskspacon, eblas neinversigeble forigi malnovajn mesaĝojn – ambaŭ lokajn kopiojn kaj originalojn en la fora servilo.">
+<!ENTITY retentionCleanupPop.label "Por ŝpari diskspacon, eblas neinversigeble forigi malnovajn mesaĝojn, inkluzivante originalojn en la fora servilo.">
+<!ENTITY retentionDeleteMsg.label "Forigi mesaĝojn pli malnovajn ol">
+<!ENTITY retentionDeleteMsg.accesskey "m">
+<!ENTITY retentionKeepAll.label "Forigi neniujn mesaĝojn">
+<!ENTITY retentionKeepAll.accesskey "n">
+<!ENTITY retentionKeepRecent.label "Forigi ĉiujn, escepte de antaŭaj">
+<!ENTITY retentionKeepRecent.accesskey "e">
+<!ENTITY retentionApplyToFlagged.label "Ĉiam teni mesaĝojn markitajn per steleto">
+<!ENTITY retentionApplyToFlagged.accesskey "s">
+
+<!ENTITY folderSynchronizationTab.label          "Samtempigo">
+<!ENTITY folderCheckForNewMessages2.label         "Dum elŝuti mesaĝojn por tiu ĉi konto, ĉiam kontroli tiun ĉi mesaĝujon">
+<!ENTITY folderCheckForNewMessages2.accesskey     "k">
+
+<!ENTITY offlineFolder.check.label               "Igi tiun ĉi mesaĝujon uzebla malkonekte">
+<!ENTITY offlineFolder.check.accesskey           "I">
+<!ENTITY offlineFolder.button.label              "Elŝuti nun">
+<!ENTITY offlineFolder.button.accesskey          "E">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Igi tiun ĉi novaĵgrupon uzebla malkonekte">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "g">
+<!ENTITY offlineNewsgroup.button.label           "Elŝuti nun">
+<!ENTITY offlineNewsgroup.button.accesskey       "E">
+
+<!ENTITY folderProps.name.label                  "Nomo:">
+<!ENTITY folderProps.name.accesskey              "N">
+<!ENTITY folderProps.location.label              "Loko:">
+<!ENTITY folderProps.location.accesskey          "L">
+
+<!ENTITY folderSharingTab.label                  "Kunuzado">
+<!ENTITY privileges.button.label                 "Rajtoj…">
+<!ENTITY privileges.button.accesskey             "R">
+<!ENTITY permissionsDesc.label                   "Vi havas la jenajn rajtojn:">
+<!ENTITY folderType.label                        "Speco de mesaĝujo:">
+
+<!ENTITY folderQuotaTab.label                    "Disponebla spaco">
+<!ENTITY folderQuotaUsage.label                  "Uzo:">
+<!ENTITY folderQuotaStatus.label                 "Stato:">
+
+<!ENTITY numberOfMessages.label                  "Nombro da mesaĝoj:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "nekonata">
+<!ENTITY sizeOnDisk.label                        "Grando en disko:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "nekonata">

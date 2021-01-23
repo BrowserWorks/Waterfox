@@ -2,24 +2,28 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import, print_function, unicode_literals
 
+import io
 import logging
 import os
 import re
+import six
 
 from collections import (
     defaultdict,
     namedtuple,
 )
-from StringIO import StringIO
 from itertools import chain
+from operator import itemgetter
+from six import StringIO
 
 from mozpack.manifests import (
     InstallManifest,
 )
 import mozpack.path as mozpath
 
+from mozbuild import frontend
 from mozbuild.frontend.context import (
     AbsolutePath,
     Path,
@@ -28,9 +32,11 @@ from mozbuild.frontend.context import (
     ObjDirPath,
 )
 from .common import CommonBackend
+from .make import MakeBackend
 from ..frontend.data import (
     BaseLibrary,
     BaseProgram,
+    BaseRustLibrary,
     ChromeManifestEntry,
     ComputedFlags,
     ConfigFileSubstitution,
@@ -51,7 +57,6 @@ from ..frontend.data import (
     HostSources,
     InstallationTarget,
     JARManifest,
-    Library,
     Linkable,
     LocalInclude,
     LocalizedFiles,
@@ -59,98 +64,66 @@ from ..frontend.data import (
     ObjdirFiles,
     ObjdirPreprocessedFiles,
     PerSourceFlag,
-    PgoGenerateOnlySources,
     Program,
-    RustLibrary,
     HostSharedLibrary,
-    HostRustLibrary,
     RustProgram,
     RustTests,
+    SandboxedWasmLibrary,
     SharedLibrary,
     SimpleProgram,
     Sources,
     StaticLibrary,
     TestManifest,
     VariablePassthru,
+    WasmGeneratedSources,
+    WasmSources,
     XPIDLModule,
 )
 from ..util import (
     ensureParentDir,
     FileAvoidWrite,
     OrderedDefaultDict,
+    pairwise,
 )
 from ..makeutil import Makefile
 from mozbuild.shellutil import quote as shell_quote
 
-MOZBUILD_VARIABLES = [
-    b'ASFLAGS',
-    b'CMSRCS',
-    b'CMMSRCS',
-    b'CPP_UNIT_TESTS',
-    b'DIRS',
-    b'DIST_INSTALL',
-    b'EXTRA_DSO_LDOPTS',
-    b'EXTRA_JS_MODULES',
-    b'EXTRA_PP_COMPONENTS',
-    b'EXTRA_PP_JS_MODULES',
-    b'FORCE_SHARED_LIB',
-    b'FORCE_STATIC_LIB',
-    b'FINAL_LIBRARY',
-    b'HOST_CFLAGS',
-    b'HOST_CSRCS',
-    b'HOST_CMMSRCS',
-    b'HOST_CXXFLAGS',
-    b'HOST_EXTRA_LIBS',
-    b'HOST_LIBRARY_NAME',
-    b'HOST_PROGRAM',
-    b'HOST_SIMPLE_PROGRAMS',
-    b'JAR_MANIFEST',
-    b'JAVA_JAR_TARGETS',
-    b'LIBRARY_NAME',
-    b'LIBS',
-    b'MAKE_FRAMEWORK',
-    b'MODULE',
-    b'NO_DIST_INSTALL',
-    b'NO_EXPAND_LIBS',
-    b'NO_INTERFACES_MANIFEST',
-    b'OS_LIBS',
-    b'PARALLEL_DIRS',
-    b'PREF_JS_EXPORTS',
-    b'PROGRAM',
-    b'RESOURCE_FILES',
-    b'SHARED_LIBRARY_LIBS',
-    b'SHARED_LIBRARY_NAME',
-    b'SIMPLE_PROGRAMS',
-    b'SONAME',
-    b'STATIC_LIBRARY_NAME',
-    b'TEST_DIRS',
-    b'TOOL_DIRS',
-    # XXX config/Makefile.in specifies this in a make invocation
-    #'USE_EXTENSION_MANIFEST',
-    b'XPCSHELL_TESTS',
-    b'XPIDL_MODULE',
-]
+# To protect against accidentally adding logic to Makefiles that belong in moz.build,
+# we check if moz.build-like variables are defined in Makefiles. If they are, we throw
+# an error to encourage the usage of moz.build instead.
+_MOZBUILD_ONLY_VARIABLES = set(frontend.context.VARIABLES.keys()) - {
+    # The migration to moz.build from Makefiles still isn't complete, and there's still
+    # some straggling Makefile logic that uses variables that only moz.build should
+    # use.
+    # These remaining variables are excluded from our blacklist. As the variables here
+    # are migrated from Makefiles in the future, they should be removed from this
+    # "override" list.
+    'XPI_NAME',
+    'USE_EXTENSION_MANIFEST',
+    'CFLAGS',
+    'CXXFLAGS',
+}
 
 DEPRECATED_VARIABLES = [
-    b'ALLOW_COMPILER_WARNINGS',
-    b'EXPORT_LIBRARY',
-    b'EXTRA_LIBS',
-    b'FAIL_ON_WARNINGS',
-    b'HOST_LIBS',
-    b'LIBXUL_LIBRARY',
-    b'MOCHITEST_A11Y_FILES',
-    b'MOCHITEST_BROWSER_FILES',
-    b'MOCHITEST_BROWSER_FILES_PARTS',
-    b'MOCHITEST_CHROME_FILES',
-    b'MOCHITEST_FILES',
-    b'MOCHITEST_FILES_PARTS',
-    b'MOCHITEST_METRO_FILES',
-    b'MOCHITEST_ROBOCOP_FILES',
-    b'MODULE_OPTIMIZE_FLAGS',
-    b'MOZ_CHROME_FILE_FORMAT',
-    b'SHORT_LIBNAME',
-    b'TESTING_JS_MODULES',
-    b'TESTING_JS_MODULE_DIR',
+    'ALLOW_COMPILER_WARNINGS',
+    'EXPORT_LIBRARY',
+    'EXTRA_LIBS',
+    'FAIL_ON_WARNINGS',
+    'HOST_LIBS',
+    'LIBXUL_LIBRARY',
+    'MOCHITEST_A11Y_FILES',
+    'MOCHITEST_BROWSER_FILES',
+    'MOCHITEST_BROWSER_FILES_PARTS',
+    'MOCHITEST_CHROME_FILES',
+    'MOCHITEST_FILES',
+    'MOCHITEST_FILES_PARTS',
+    'MOCHITEST_METRO_FILES',
+    'MOCHITEST_ROBOCOP_FILES',
+    'MODULE_OPTIMIZE_FLAGS',
+    'MOZ_CHROME_FILE_FORMAT',
+    'SHORT_LIBNAME',
+    'TESTING_JS_MODULES',
+    'TESTING_JS_MODULE_DIR',
 ]
 
 MOZBUILD_VARIABLES_MESSAGE = 'It should only be defined in moz.build files.'
@@ -209,9 +182,8 @@ class BackendMakeFile(object):
         self.fh.write(buf)
 
     def write_once(self, buf):
-        if isinstance(buf, unicode):
-            buf = buf.encode('utf-8')
-        if b'\n' + buf not in self.fh.getvalue():
+        buf = six.ensure_text(buf)
+        if '\n' + buf not in six.ensure_text(self.fh.getvalue()):
             self.write(buf)
 
     # For compatibility with makeutil.Makefile
@@ -225,9 +197,9 @@ class BackendMakeFile(object):
             self.fh.write('NONRECURSIVE_TARGETS += export\n')
             self.fh.write('NONRECURSIVE_TARGETS_export += xpidl\n')
             self.fh.write('NONRECURSIVE_TARGETS_export_xpidl_DIRECTORY = '
-                '$(DEPTH)/xpcom/xpidl\n')
+                          '$(DEPTH)/xpcom/xpidl\n')
             self.fh.write('NONRECURSIVE_TARGETS_export_xpidl_TARGETS += '
-                'export\n')
+                          'export\n')
 
         return self.fh.close()
 
@@ -248,6 +220,7 @@ class RecursiveMakeTraversal(object):
     """
     SubDirectoryCategories = ['dirs', 'tests']
     SubDirectoriesTuple = namedtuple('SubDirectories', SubDirectoryCategories)
+
     class SubDirectories(SubDirectoriesTuple):
         def __new__(self):
             return RecursiveMakeTraversal.SubDirectoriesTuple.__new__(self, [], [])
@@ -301,6 +274,7 @@ class RecursiveMakeTraversal(object):
         SubDirectories members.
 
         The default filter corresponds to a default recursive traversal.
+
         """
         filter = filter or self.default_filter
 
@@ -312,7 +286,7 @@ class RecursiveMakeTraversal(object):
                 if start_node != '':
                     deps[start_node] = prev_nodes
                 prev_nodes = (start_node,)
-            if not start_node in self._traversal:
+            if start_node not in self._traversal:
                 return prev_nodes
             parallel_nodes = []
             for node in parallel:
@@ -338,7 +312,7 @@ class RecursiveMakeTraversal(object):
         current, parallel, sequential = self.call_filter(start, filter)
         if current is not None:
             yield start
-        if not start in self._traversal:
+        if start not in self._traversal:
             return
         for node in parallel:
             for n in self.traverse(node, filter):
@@ -363,7 +337,7 @@ class RecursiveMakeTraversal(object):
         return result
 
 
-class RecursiveMakeBackend(CommonBackend):
+class RecursiveMakeBackend(MakeBackend):
     """Backend that integrates with the existing recursive make build system.
 
     This backend facilitates the transition from Makefile.in to moz.build
@@ -379,7 +353,7 @@ class RecursiveMakeBackend(CommonBackend):
     """
 
     def _init(self):
-        CommonBackend._init(self)
+        MakeBackend._init(self)
 
         self._backend_files = {}
         self._idl_dirs = set()
@@ -390,7 +364,7 @@ class RecursiveMakeBackend(CommonBackend):
         self._test_manifests = {}
 
         self.backend_input_files.add(mozpath.join(self.environment.topobjdir,
-            'config', 'autoconf.mk'))
+                                                  'config', 'autoconf.mk'))
 
         self._install_manifests = defaultdict(InstallManifest)
         # The build system relies on some install manifests always existing
@@ -402,7 +376,9 @@ class RecursiveMakeBackend(CommonBackend):
 
         self._traversal = RecursiveMakeTraversal()
         self._compile_graph = OrderedDefaultDict(set)
-        self._rust_dirs = set()
+        self._rust_targets = set()
+        self._rust_lib_targets = set()
+        self._gkrust_target = None
 
         self._no_skip = {
             'export': set(),
@@ -424,7 +400,7 @@ class RecursiveMakeBackend(CommonBackend):
         if obj.objdir not in self._backend_files:
             self._backend_files[obj.objdir] = \
                 BackendMakeFile(obj.srcdir, obj.objdir, obj.config,
-                    obj.topsrcdir, self.environment.topobjdir, self.dry_run)
+                                obj.topsrcdir, self.environment.topobjdir, self.dry_run)
         return self._backend_files[obj.objdir]
 
     def consume_object(self, obj):
@@ -467,23 +443,27 @@ class RecursiveMakeBackend(CommonBackend):
                 '.m': 'CMSRCS',
                 '.mm': 'CMMSRCS',
                 '.cpp': 'CPPSRCS',
-                '.rs': 'RSSRCS',
                 '.S': 'SSRCS',
             }
             variables = [suffix_map[obj.canonical_suffix]]
             if isinstance(obj, GeneratedSources):
                 variables.append('GARBAGE')
                 base = backend_file.objdir
+                cls = ObjDirPath
+                prefix = '!'
             else:
                 base = backend_file.srcdir
+                cls = SourcePath
+                prefix = ''
             for f in sorted(obj.files):
-                f = mozpath.relpath(f, base)
+                p = self._pretty_path(
+                    cls(obj._context, prefix + mozpath.relpath(f, base)),
+                    backend_file,
+                )
                 for var in variables:
-                    backend_file.write('%s += %s\n' % (var, f))
-        elif isinstance(obj, PgoGenerateOnlySources):
-            assert obj.canonical_suffix == '.cpp'
-            for f in sorted(obj.files):
-                backend_file.write('PGO_GEN_ONLY_CPPSRCS += %s\n' % f)
+                    backend_file.write('%s += %s\n' % (var, p))
+            self._compile_graph[mozpath.join(
+                backend_file.relobjdir, 'target-objects')]
         elif isinstance(obj, (HostSources, HostGeneratedSources)):
             suffix_map = {
                 '.c': 'HOST_CSRCS',
@@ -491,21 +471,51 @@ class RecursiveMakeBackend(CommonBackend):
                 '.cpp': 'HOST_CPPSRCS',
             }
             variables = [suffix_map[obj.canonical_suffix]]
-            if isinstance(obj, GeneratedSources):
+            if isinstance(obj, HostGeneratedSources):
                 variables.append('GARBAGE')
                 base = backend_file.objdir
+                cls = ObjDirPath
+                prefix = '!'
             else:
                 base = backend_file.srcdir
+                cls = SourcePath
+                prefix = ''
             for f in sorted(obj.files):
-                f = mozpath.relpath(f, base)
+                p = self._pretty_path(
+                    cls(obj._context, prefix + mozpath.relpath(f, base)),
+                    backend_file,
+                )
                 for var in variables:
-                    backend_file.write('%s += %s\n' % (var, f))
+                    backend_file.write('%s += %s\n' % (var, p))
+            self._compile_graph[mozpath.join(
+                backend_file.relobjdir, 'host-objects')]
+        elif isinstance(obj, (WasmSources, WasmGeneratedSources)):
+            suffix_map = {
+                '.c': 'WASM_CSRCS',
+                '.cpp': 'WASM_CPPSRCS',
+            }
+            variables = [suffix_map[obj.canonical_suffix]]
+            if isinstance(obj, WasmGeneratedSources):
+                variables.append('GARBAGE')
+                base = backend_file.objdir
+                cls = ObjDirPath
+                prefix = '!'
+            else:
+                base = backend_file.srcdir
+                cls = SourcePath
+                prefix = ''
+            for f in sorted(obj.files):
+                p = self._pretty_path(
+                    cls(obj._context, prefix + mozpath.relpath(f, base)),
+                    backend_file,
+                )
+                for var in variables:
+                    backend_file.write('%s += %s\n' % (var, p))
+            self._compile_graph[mozpath.join(
+                backend_file.relobjdir, 'target-objects')]
         elif isinstance(obj, VariablePassthru):
             # Sorted so output is consistent and we don't bump mtimes.
             for k, v in sorted(obj.variables.items()):
-                if k == 'HAS_MISC_RULE':
-                    self._no_skip['misc'].add(backend_file.relobjdir)
-                    continue
                 if isinstance(v, list):
                     for item in v:
                         backend_file.write(
@@ -513,6 +523,9 @@ class RecursiveMakeBackend(CommonBackend):
                 elif isinstance(v, bool):
                     if v:
                         backend_file.write('%s := 1\n' % k)
+                elif isinstance(v, Path):
+                    path = self._pretty_path(Path(obj._context, v), backend_file)
+                    backend_file.write('%s := %s\n' % (k, path))
                 else:
                     backend_file.write('%s := %s\n' % (k, v))
         elif isinstance(obj, HostDefines):
@@ -521,107 +534,21 @@ class RecursiveMakeBackend(CommonBackend):
             self._process_defines(obj, backend_file)
 
         elif isinstance(obj, GeneratedFile):
-            if obj.required_for_compile:
+            if obj.required_before_compile:
                 tier = 'export'
+            elif obj.required_during_compile:
+                tier = None
             elif obj.localized:
                 tier = 'libs'
             else:
                 tier = 'misc'
-            self._no_skip[tier].add(backend_file.relobjdir)
-
-            # Localized generated files can use {AB_CD} and {AB_rCD} in their
-            # output paths.
-            if obj.localized:
-                substs = {'AB_CD': '$(AB_CD)', 'AB_rCD': '$(AB_rCD)'}
-            else:
-                substs = {}
-            outputs = []
-
-            needs_AB_rCD = False
-            for o in obj.outputs:
-                needs_AB_rCD = needs_AB_rCD or ('AB_rCD' in o)
-                try:
-                    outputs.append(o.format(**substs))
-                except KeyError as e:
-                    raise ValueError('%s not in %s is not a valid substitution in %s'
-                                     % (e.args[0], ', '.join(sorted(substs.keys())), o))
-
-            first_output = outputs[0]
-            dep_file = "%s.pp" % first_output
-            # The stub target file needs to go in MDDEPDIR so that it doesn't
-            # get written into generated Android resource directories, breaking
-            # Gradle tooling and/or polluting the Android packages.
-            stub_file = "$(MDDEPDIR)/%s.stub" % first_output
-
-            if obj.inputs:
-                if obj.localized:
-                    # Localized generated files can have locale-specific inputs, which are
-                    # indicated by paths starting with `en-US/` or containing `locales/en-US/`.
-                    def srcpath(p):
-                        if 'locales/en-US' in p:
-                            # We need an "absolute source path" relative to
-                            # topsrcdir, like "/source/path".
-                            if not p.startswith('/'):
-                                p = '/' + mozpath.relpath(p.full_path, obj.topsrcdir)
-                            e, f = p.split('locales/en-US/', 1)
-                            assert(f)
-                            return '$(call MERGE_RELATIVE_FILE,{},{}locales)'.format(
-                                f, e if not e.startswith('/') else e[len('/'):])
-                        elif p.startswith('en-US/'):
-                            e, f = p.split('en-US/', 1)
-                            assert(not e)
-                            return '$(call MERGE_FILE,%s)' % f
-                        return self._pretty_path(p, backend_file)
-                    inputs = [srcpath(f) for f in obj.inputs]
-                else:
-                    inputs = [self._pretty_path(f, backend_file) for f in obj.inputs]
-            else:
-                inputs = []
-
-            if needs_AB_rCD:
-                backend_file.write_once('include $(topsrcdir)/config/AB_rCD.mk\n')
-
-            force = ''
-            if obj.force:
-                force = ' FORCE'
-            elif obj.localized:
-                force = ' $(if $(IS_LANGUAGE_REPACK),FORCE)'
-
-            if obj.script:
-                # If we're doing this during export that means we need it during
-                # compile, but if we have an artifact build we don't run compile,
-                # so we can skip it altogether or let the rule run as the result of
-                # something depending on it.
-                if tier != 'export' or not self.environment.is_artifact_build:
-                    if not needs_AB_rCD:
-                        # Android localized resources have special Makefile
-                        # handling.
-                        backend_file.write('%s:: %s\n' % (tier, stub_file))
-                for output in outputs:
-                    backend_file.write('%s: %s ;\n' % (output, stub_file))
-                    backend_file.write('GARBAGE += %s\n' % output)
-                backend_file.write('GARBAGE += %s\n' % stub_file)
-                backend_file.write('EXTRA_MDDEPEND_FILES += %s\n' % dep_file)
-
-                backend_file.write("""{stub}: {script}{inputs}{backend}{force}
-\t$(REPORT_BUILD)
-\t$(call py_action,file_generate,{locale}{script} {method} {output} $(MDDEPDIR)/{dep_file} {stub}{inputs}{flags})
-\t@$(TOUCH) $@
-
-""".format(stub=stub_file,
-           output=first_output,
-           dep_file=dep_file,
-           inputs=' ' + ' '.join(inputs) if inputs else '',
-           flags=' ' + ' '.join(shell_quote(f) for f in obj.flags) if obj.flags else '',
-           backend=' backend.mk' if obj.flags else '',
-           # Locale repacks repack multiple locales from a single configured objdir,
-           # so standard mtime dependencies won't work properly when the build is re-run
-           # with a different locale as input. IS_LANGUAGE_REPACK will reliably be set
-           # in this situation, so simply force the generation to run in that case.
-           force=force,
-           locale='--locale=$(AB_CD) ' if obj.localized else '',
-           script=obj.script,
-           method=obj.method))
+            if tier:
+                self._no_skip[tier].add(backend_file.relobjdir)
+            backend_file.write_once('include $(topsrcdir)/config/AB_rCD.mk\n')
+            for stmt in self._format_statements_for_generated_file(
+                    obj, tier,
+                    extra_dependencies='backend.mk' if obj.flags else ''):
+                backend_file.write(stmt + '\n')
 
         elif isinstance(obj, JARManifest):
             self._no_skip['libs'].add(backend_file.relobjdir)
@@ -629,17 +556,17 @@ class RecursiveMakeBackend(CommonBackend):
 
         elif isinstance(obj, RustProgram):
             self._process_rust_program(obj, backend_file)
-            self._rust_dirs.add(obj.relobjdir)
             # Hook the program into the compile graph.
             build_target = self._build_target_for_obj(obj)
             self._compile_graph[build_target]
+            self._rust_targets.add(build_target)
 
         elif isinstance(obj, HostRustProgram):
             self._process_host_rust_program(obj, backend_file)
-            self._rust_dirs.add(obj.relobjdir)
             # Hook the program into the compile graph.
             build_target = self._build_target_for_obj(obj)
             self._compile_graph[build_target]
+            self._rust_targets.add(build_target)
 
         elif isinstance(obj, RustTests):
             self._process_rust_tests(obj, backend_file)
@@ -674,16 +601,19 @@ class RecursiveMakeBackend(CommonBackend):
         elif isinstance(obj, InstallationTarget):
             self._process_installation_target(obj, backend_file)
 
-        elif isinstance(obj, RustLibrary):
+        elif isinstance(obj, BaseRustLibrary):
             self.backend_input_files.add(obj.cargo_file)
             self._process_rust_library(obj, backend_file)
-            self._rust_dirs.add(obj.relobjdir)
             # No need to call _process_linked_libraries, because Rust
             # libraries are self-contained objects at this point.
 
             # Hook the library into the compile graph.
             build_target = self._build_target_for_obj(obj)
             self._compile_graph[build_target]
+            self._rust_targets.add(build_target)
+            self._rust_lib_targets.add(build_target)
+            if obj.is_gkrust:
+                self._gkrust_target = build_target
 
         elif isinstance(obj, SharedLibrary):
             self._process_shared_library(obj, backend_file)
@@ -692,6 +622,10 @@ class RecursiveMakeBackend(CommonBackend):
 
         elif isinstance(obj, StaticLibrary):
             self._process_static_library(obj, backend_file)
+            self._process_linked_libraries(obj, backend_file)
+
+        elif isinstance(obj, SandboxedWasmLibrary):
+            self._process_sandboxed_wasm_library(obj, backend_file)
             self._process_linked_libraries(obj, backend_file)
 
         elif isinstance(obj, HostLibrary):
@@ -780,22 +714,24 @@ class RecursiveMakeBackend(CommonBackend):
         root_deps_mk = Makefile()
 
         # Fill the dependencies for traversal of each tier.
-        for tier, filter in filters:
+        for tier, filter in sorted(filters, key=itemgetter(0)):
             main, all_deps = \
                 self._traversal.compute_dependencies(filter)
-            for dir, deps in all_deps.items():
-                if deps is not None or (dir in self._idl_dirs \
+            for dir, deps in sorted(all_deps.items()):
+                if deps is not None or (dir in self._idl_dirs
                                         and tier == 'export'):
                     rule = root_deps_mk.create_rule(['%s/%s' % (dir, tier)])
-                if deps:
-                    rule.add_dependencies('%s/%s' % (d, tier) for d in deps if d)
-                if dir in self._idl_dirs and tier == 'export':
-                    rule.add_dependencies(['xpcom/xpidl/%s' % tier])
+                    if deps:
+                        rule.add_dependencies(
+                            '%s/%s' % (d, tier) for d in sorted(deps) if d)
+                    if dir in self._idl_dirs and tier == 'export':
+                        rule.add_dependencies(['xpcom/xpidl/%s' % tier])
             rule = root_deps_mk.create_rule(['recurse_%s' % tier])
             if main:
-                rule.add_dependencies('%s/%s' % (d, tier) for d in main)
+                rule.add_dependencies('%s/%s' % (d, tier) for d in sorted(main))
 
-        all_compile_deps = reduce(lambda x,y: x|y,
+        all_compile_deps = six.moves.reduce(
+            lambda x, y: x | y,
             self._compile_graph.values()) if self._compile_graph else set()
         # Include the following as dependencies of the top recursion target for
         # compilation:
@@ -809,7 +745,7 @@ class RecursiveMakeBackend(CommonBackend):
         #   as direct dependencies of the top recursion target, to somehow
         #   prioritize them.
         #   1. See bug 1262241 comment 5.
-        compile_roots = [t for t, deps in self._compile_graph.iteritems()
+        compile_roots = [t for t, deps in six.iteritems(self._compile_graph)
                          if not deps or t not in all_compile_deps]
 
         def add_category_rules(category, roots, graph):
@@ -817,12 +753,28 @@ class RecursiveMakeBackend(CommonBackend):
             # Directories containing rust compilations don't generally depend
             # on other directories in the tree, so putting them first here will
             # start them earlier in the build.
-            rule.add_dependencies(chain((r for r in roots if mozpath.dirname(r) in self._rust_dirs),
-                                        (r for r in roots if mozpath.dirname(r) not in self._rust_dirs)))
+            rust_roots = sorted(r for r in roots if r in self._rust_targets)
+            rust_libs = sorted(r for r in roots if r in self._rust_lib_targets)
+            if category == 'compile' and rust_roots:
+                rust_rule = root_deps_mk.create_rule(['recurse_rust'])
+                rust_rule.add_dependencies(rust_roots)
+                # Ensure our cargo invocations are serialized, and gecko comes
+                # first. Cargo will lock on the build output directory anyway,
+                # so trying to run things in parallel is not useful. Dependencies
+                # for gecko are especially expensive to build and parallelize
+                # poorly, so prioritizing these will save some idle time in full
+                # builds.
+                for prior_target, target in pairwise(
+                        sorted([t for t in rust_libs],
+                               key=lambda t: t != self._gkrust_target)):
+                    r = root_deps_mk.create_rule([target])
+                    r.add_dependencies([prior_target])
+
+            rule.add_dependencies(chain(rust_roots, roots))
             for target, deps in sorted(graph.items()):
                 if deps:
                     rule = root_deps_mk.create_rule([target])
-                    rule.add_dependencies(deps)
+                    rule.add_dependencies(sorted(deps))
 
         non_default_roots = defaultdict(list)
         non_default_graphs = defaultdict(lambda: OrderedDefaultDict(set))
@@ -832,7 +784,8 @@ class RecursiveMakeBackend(CommonBackend):
             # rest of the compile graph.
             target_name = mozpath.basename(root)
 
-            if target_name not in ('target', 'host'):
+            if target_name not in ('target', 'target-objects',
+                                   'host', 'host-objects'):
                 non_default_roots[target_name].append(root)
                 non_default_graphs[target_name][root] = self._compile_graph[root]
                 del self._compile_graph[root]
@@ -847,7 +800,7 @@ class RecursiveMakeBackend(CommonBackend):
                 self._no_skip['syms'].remove(dirname)
 
         add_category_rules('compile', compile_roots, self._compile_graph)
-        for category, graph in non_default_graphs.iteritems():
+        for category, graph in sorted(six.iteritems(non_default_graphs)):
             add_category_rules(category, non_default_roots[category], graph)
 
         root_mk = Makefile()
@@ -863,11 +816,13 @@ class RecursiveMakeBackend(CommonBackend):
             set(self._compile_graph.keys()) | all_compile_deps)))
         root_mk.add_statement('syms_targets := %s' % ' '.join(sorted(
             set('%s/syms' % d for d in self._no_skip['syms']))))
+        root_mk.add_statement('rust_targets := %s' % ' '.join(sorted(
+            self._rust_targets)))
 
         root_mk.add_statement('non_default_tiers := %s' % ' '.join(sorted(
             non_default_roots.keys())))
 
-        for category, graphs in non_default_graphs.iteritems():
+        for category, graphs in sorted(six.iteritems(non_default_graphs)):
             category_dirs = [mozpath.dirname(target)
                              for target in graphs.keys()]
             root_mk.add_statement('%s_dirs := %s' % (category,
@@ -901,7 +856,8 @@ class RecursiveMakeBackend(CommonBackend):
                                              all_sources))
 
         if include_curdir_build_rules:
-            makefile.add_statement('\n'
+            makefile.add_statement(
+                '\n'
                 '# Make sometimes gets confused between "foo" and "$(CURDIR)/foo".\n'
                 '# Help it out by explicitly specifiying dependencies.')
             makefile.add_statement('all_absolute_unified_files := \\\n'
@@ -911,16 +867,16 @@ class RecursiveMakeBackend(CommonBackend):
             rule.add_dependencies(['$(CURDIR)/%: %'])
 
     def _check_blacklisted_variables(self, makefile_in, makefile_content):
-        if b'EXTERNALLY_MANAGED_MAKE_FILE' in makefile_content:
+        if 'EXTERNALLY_MANAGED_MAKE_FILE' in makefile_content:
             # Bypass the variable restrictions for externally managed makefiles.
             return
 
         for l in makefile_content.splitlines():
             l = l.strip()
             # Don't check comments
-            if l.startswith(b'#'):
+            if l.startswith('#'):
                 continue
-            for x in chain(MOZBUILD_VARIABLES, DEPRECATED_VARIABLES):
+            for x in chain(_MOZBUILD_ONLY_VARIABLES, DEPRECATED_VARIABLES):
                 if x not in l:
                     continue
 
@@ -928,7 +884,7 @@ class RecursiveMakeBackend(CommonBackend):
                 # may just appear as part of something else, like DIRS appears
                 # in GENERATED_DIRS.
                 if re.search(r'\b%s\s*[:?+]?=' % x, l):
-                    if x in MOZBUILD_VARIABLES:
+                    if x in _MOZBUILD_ONLY_VARIABLES:
                         message = MOZBUILD_VARIABLES_MESSAGE
                     else:
                         message = DEPRECATED_VARIABLES_MESSAGE
@@ -949,7 +905,7 @@ class RecursiveMakeBackend(CommonBackend):
                 stub = not os.path.exists(makefile_in)
                 if not stub:
                     self.log(logging.DEBUG, 'substitute_makefile',
-                        {'path': makefile}, 'Substituting makefile: {path}')
+                             {'path': makefile}, 'Substituting makefile: {path}')
                     self._makefile_in_count += 1
 
                     # In the export and libs tiers, we don't skip directories
@@ -961,7 +917,7 @@ class RecursiveMakeBackend(CommonBackend):
                             self._no_skip[tier].add(bf.relobjdir)
                 else:
                     self.log(logging.DEBUG, 'stub_makefile',
-                        {'path': makefile}, 'Creating stub Makefile: {path}')
+                             {'path': makefile}, 'Creating stub Makefile: {path}')
 
                 obj = self.Substitution()
                 obj.output_path = makefile
@@ -970,27 +926,26 @@ class RecursiveMakeBackend(CommonBackend):
                 obj.topobjdir = bf.environment.topobjdir
                 obj.config = bf.environment
                 self._create_makefile(obj, stub=stub)
-                with open(obj.output_path) as fh:
+                with io.open(obj.output_path, encoding='utf-8') as fh:
                     content = fh.read()
                     # Directories with a Makefile containing a tools target, or
                     # XPI_PKGNAME or INSTALL_EXTENSION_ID can't be skipped and
                     # must run during the 'tools' tier.
-                    for t in (b'XPI_PKGNAME', b'INSTALL_EXTENSION_ID',
-                            b'tools'):
+                    for t in ('XPI_PKGNAME', 'INSTALL_EXTENSION_ID', 'tools'):
                         if t not in content:
                             continue
-                        if t == b'tools' and not re.search('(?:^|\s)tools.*::', content, re.M):
+                        if t == 'tools' and not re.search('(?:^|\s)tools.*::', content, re.M):
                             continue
                         if objdir == self.environment.topobjdir:
                             continue
                         self._no_skip['tools'].add(mozpath.relpath(objdir,
-                            self.environment.topobjdir))
+                                                                   self.environment.topobjdir))
 
                     # Directories with a Makefile containing a check target
                     # can't be skipped and must run during the 'check' tier.
                     if re.search('(?:^|\s)check.*::', content, re.M):
                         self._no_skip['check'].add(mozpath.relpath(objdir,
-                            self.environment.topobjdir))
+                                                                   self.environment.topobjdir))
 
                     # Detect any Makefile.ins that contain variables on the
                     # moz.build-only list
@@ -1059,6 +1014,9 @@ class RecursiveMakeBackend(CommonBackend):
             backend_file.write('%s += %s\n' % (
                     non_unified_var, ' '.join(source_files)))
 
+        self._compile_graph[mozpath.join(
+            backend_file.relobjdir, 'target-objects')]
+
     def _process_directory_traversal(self, obj, backend_file):
         """Process a data.DirectoryTraversal instance."""
         fh = backend_file.fh
@@ -1067,10 +1025,10 @@ class RecursiveMakeBackend(CommonBackend):
             return (mozpath.relpath(d.translated, base) for d in dirs)
 
         if obj.dirs:
-            fh.write('DIRS := %s\n' % ' '.join(
-                relativize(backend_file.objdir, obj.dirs)))
-            self._traversal.add(backend_file.relobjdir,
-                dirs=relativize(self.environment.topobjdir, obj.dirs))
+            fh.write('DIRS := %s\n' % ' '.join(relativize(backend_file.objdir, obj.dirs)))
+            self._traversal.add(
+                backend_file.relobjdir, dirs=relativize(self.environment.topobjdir, obj.dirs)
+            )
 
         # The directory needs to be registered whether subdirectories have been
         # registered or not.
@@ -1094,7 +1052,10 @@ class RecursiveMakeBackend(CommonBackend):
         if obj.target and not obj.is_custom():
             backend_file.write('FINAL_TARGET = $(DEPTH)/%s\n' % (obj.target))
         else:
-            backend_file.write('FINAL_TARGET = $(if $(XPI_NAME),$(DIST)/xpi-stage/$(XPI_NAME),$(DIST)/bin)$(DIST_SUBDIR:%=/%)\n')
+            backend_file.write(
+                'FINAL_TARGET = $(if $(XPI_NAME),$(DIST)/xpi-stage/$(XPI_NAME),'
+                '$(DIST)/bin)$(DIST_SUBDIR:%=/%)\n'
+                )
 
         if not obj.enabled:
             backend_file.write('NO_DIST_INSTALL := 1\n')
@@ -1109,8 +1070,7 @@ class RecursiveMakeBackend(CommonBackend):
             self._install_manifests['dist_include'].add_optional_exists('%s.h' % stem)
 
         for module in manager.modules:
-            build_files.add_optional_exists(mozpath.join('.deps',
-                '%s.pp' % module))
+            build_files.add_optional_exists(mozpath.join('.deps', '%s.pp' % module))
 
         modules = manager.modules
         xpt_modules = sorted(modules.keys())
@@ -1150,9 +1110,9 @@ class RecursiveMakeBackend(CommonBackend):
 
         obj = self.Substitution()
         obj.output_path = mozpath.join(self.environment.topobjdir, 'config',
-            'makefiles', 'xpidl', 'Makefile')
+                                       'makefiles', 'xpidl', 'Makefile')
         obj.input_path = mozpath.join(self.environment.topsrcdir, 'config',
-            'makefiles', 'xpidl', 'Makefile.in')
+                                      'makefiles', 'xpidl', 'Makefile.in')
         obj.topsrcdir = self.environment.topsrcdir
         obj.topobjdir = self.environment.topobjdir
         obj.config = self.environment
@@ -1236,7 +1196,7 @@ class RecursiveMakeBackend(CommonBackend):
         # Much of the logic in this function could be moved to CommonBackend.
         for source in obj.source_relpaths:
             self.backend_input_files.add(mozpath.join(obj.topsrcdir,
-                source))
+                                                      source))
 
         # Don't allow files to be defined multiple times unless it is allowed.
         # We currently allow duplicates for non-test files or test files if
@@ -1251,7 +1211,7 @@ class RecursiveMakeBackend(CommonBackend):
         for base, pattern, dest in obj.pattern_installs:
             try:
                 self._install_manifests['_test_files'].add_pattern_link(base,
-                    pattern, dest)
+                                                                        pattern, dest)
             except ValueError:
                 if not obj.dupe_manifest:
                     raise
@@ -1264,7 +1224,7 @@ class RecursiveMakeBackend(CommonBackend):
                     raise
 
         m = self._test_manifests.setdefault(obj.flavor,
-            (obj.install_prefix, set()))
+                                            (obj.install_prefix, set()))
         m[1].add(obj.manifest_obj_relpath)
 
         try:
@@ -1295,12 +1255,14 @@ class RecursiveMakeBackend(CommonBackend):
 
     def _process_per_source_flag(self, per_source_flag, backend_file):
         for flag in per_source_flag.flags:
-            backend_file.write('%s_FLAGS += %s\n' % (mozpath.basename(per_source_flag.file_name), flag))
+            backend_file.write('%s_FLAGS += %s\n' %
+                               (mozpath.basename(per_source_flag.file_name), flag))
 
     def _process_computed_flags(self, computed_flags, backend_file):
         for var, flags in computed_flags.get_flags():
-            backend_file.write('COMPUTED_%s += %s\n' % (var,
-                                                        ' '.join(make_quote(shell_quote(f)) for f in flags)))
+            backend_file.write(
+                'COMPUTED_%s += %s\n' % (var,
+                                         ' '.join(make_quote(shell_quote(f)) for f in flags)))
 
     def _process_non_default_target(self, libdef, target_name, backend_file):
         backend_file.write("%s:: %s\n" % (libdef.output_category, target_name))
@@ -1314,7 +1276,9 @@ class RecursiveMakeBackend(CommonBackend):
         if libdef.soname:
             backend_file.write('DSO_SONAME := %s\n' % libdef.soname)
         if libdef.symbols_file:
-            backend_file.write('SYMBOLS_FILE := %s\n' % libdef.symbols_file)
+            if libdef.symbols_link_arg:
+                backend_file.write('EXTRA_DSO_LDOPTS += %s\n' % libdef.symbols_link_arg)
+                backend_file.write('EXTRA_DEPS += %s\n' % libdef.symbols_file)
         if not libdef.cxx_link:
             backend_file.write('LIB_IS_C_ONLY := 1\n')
         if libdef.output_category:
@@ -1332,6 +1296,9 @@ class RecursiveMakeBackend(CommonBackend):
         backend_file.write('REAL_LIBRARY := %s\n' % libdef.lib_name)
         if libdef.no_expand_lib:
             backend_file.write('NO_EXPAND_LIBS := 1\n')
+
+    def _process_sandboxed_wasm_library(self, libdef, backend_file):
+        backend_file.write('WASM_LIBRARY := %s\n' % libdef.lib_name)
 
     def _process_rust_library(self, libdef, backend_file):
         backend_file.write_once('%s := %s\n' % (libdef.LIB_FILE_VAR, libdef.import_name))
@@ -1356,137 +1323,99 @@ class RecursiveMakeBackend(CommonBackend):
             target_name = obj.output_category
         else:
             target_name = obj.KIND
+        if target_name == 'wasm':
+            target_name = 'target'
         return '%s/%s' % (mozpath.relpath(obj.objdir,
-            self.environment.topobjdir), target_name)
+                                          self.environment.topobjdir), target_name)
 
     def _process_linked_libraries(self, obj, backend_file):
         def pretty_relpath(lib, name):
             return os.path.normpath(mozpath.join(mozpath.relpath(lib.objdir, obj.objdir),
                                                  name))
 
-        topobjdir = mozpath.normsep(obj.topobjdir)
-        # This will create the node even if there aren't any linked libraries.
-        build_target = self._build_target_for_obj(obj)
-        self._compile_graph[build_target]
-
-        objs, pgo_gen_objs, no_pgo_objs, shared_libs, os_libs, static_libs = self._expand_libs(obj)
+        objs, shared_libs, os_libs, static_libs = self._expand_libs(obj)
 
         obj_target = obj.name
         if isinstance(obj, Program):
             obj_target = self._pretty_path(obj.output_path, backend_file)
 
-        profile_gen_objs = []
-
-        if obj.KIND == 'target':
-            is_unit_test = isinstance(obj, BaseProgram) and obj.is_unit_test
-
-            doing_pgo = self.environment.substs.get('MOZ_PGO')
-            obj_suffix_change_needed = (self.environment.substs.get('GNU_CC') or
-                                        self.environment.substs.get('CLANG_CL'))
-            if doing_pgo and obj_suffix_change_needed:
-                # We use a different OBJ_SUFFIX for the profile generate phase on
-                # systems where the pgo generate phase requires instrumentation
-                # that can only be removed by recompiling objects. These get
-                # picked up via OBJS_VAR_SUFFIX in config.mk.
-                if not is_unit_test and not isinstance(obj, SimpleProgram):
-                    profile_gen_objs = [o if o in no_pgo_objs else '%s.%s' %
-                                        (mozpath.splitext(o)[0], 'i_o') for o in objs]
-                    profile_gen_objs += ['%s.%s' % (mozpath.splitext(o)[0], 'i_o')
-                                         for o in pgo_gen_objs]
-
-        def write_obj_deps(target, objs_ref, pgo_objs_ref):
-            if pgo_objs_ref:
-                backend_file.write('ifdef MOZ_PROFILE_GENERATE\n')
-                backend_file.write('%s: %s\n' % (target, pgo_objs_ref))
-                backend_file.write('else\n')
-                backend_file.write('%s: %s\n' % (target, objs_ref))
-                backend_file.write('endif\n')
-            else:
-                backend_file.write('%s: %s\n' % (target, objs_ref))
-
         objs_ref = ' \\\n    '.join(os.path.relpath(o, obj.objdir)
                                     for o in objs)
-        pgo_objs_ref = ' \\\n    '.join(os.path.relpath(o, obj.objdir)
-                                        for o in profile_gen_objs)
         # Don't bother with a list file if we're only linking objects built
         # in this directory or building a real static library. This
         # accommodates clang-plugin, where we would otherwise pass an
         # incorrect list file format to the host compiler as well as when
         # creating an archive with AR, which doesn't understand list files.
-        if (objs == obj.objs and not isinstance(obj, (HostLibrary, StaticLibrary)) or
-          isinstance(obj, StaticLibrary) and obj.no_expand_lib):
+        if (objs == obj.objs and not isinstance(obj, (HostLibrary, StaticLibrary,
+                                                      SandboxedWasmLibrary)) or
+            isinstance(obj, (StaticLibrary, SandboxedWasmLibrary)) and
+            obj.no_expand_lib):
             backend_file.write_once('%s_OBJS := %s\n' % (obj.name,
                                                          objs_ref))
-            if profile_gen_objs:
-                backend_file.write_once('%s_PGO_OBJS := %s\n' % (obj.name,
-                                                                 pgo_objs_ref))
-            write_obj_deps(obj_target, objs_ref, pgo_objs_ref)
-        elif not isinstance(obj, (HostLibrary, StaticLibrary)):
+            backend_file.write('%s: %s\n' % (obj_target, objs_ref))
+        elif not isinstance(obj, (HostLibrary, StaticLibrary,
+                                  SandboxedWasmLibrary)):
             list_file_path = '%s.list' % obj.name.replace('.', '_')
             list_file_ref = self._make_list_file(obj.KIND, obj.objdir, objs,
                                                  list_file_path)
             backend_file.write_once('%s_OBJS := %s\n' %
                                     (obj.name, list_file_ref))
             backend_file.write_once('%s: %s\n' % (obj_target, list_file_path))
-            if profile_gen_objs:
-                pgo_list_file_path = '%s_pgo.list' % obj.name.replace('.', '_')
-                pgo_list_file_ref = self._make_list_file(obj.KIND, obj.objdir,
-                                                         profile_gen_objs,
-                                                         pgo_list_file_path)
-                backend_file.write_once('%s_PGO_OBJS := %s\n' %
-                                        (obj.name, pgo_list_file_ref))
-                backend_file.write_once('%s: %s\n' % (obj_target,
-                                                      pgo_list_file_path))
-            write_obj_deps(obj_target, objs_ref, pgo_objs_ref)
+            backend_file.write('%s: %s\n' % (obj_target, objs_ref))
 
         for lib in shared_libs:
+            assert obj.KIND != 'host' and obj.KIND != 'wasm'
             backend_file.write_once('SHARED_LIBS += %s\n' %
                                     pretty_relpath(lib, lib.import_name))
-        for lib in static_libs:
-            backend_file.write_once('STATIC_LIBS += %s\n' %
-                                    pretty_relpath(lib, lib.import_name))
-        for lib in os_libs:
-            if obj.KIND == 'target':
-                backend_file.write_once('OS_LIBS += %s\n' % lib)
-            else:
-                backend_file.write_once('HOST_EXTRA_LIBS += %s\n' % lib)
-
-        for lib in obj.linked_libraries:
-            if not isinstance(lib, ExternalLibrary):
-                self._compile_graph[build_target].add(
-                    self._build_target_for_obj(lib))
-            if isinstance(lib, HostRustLibrary):
-                backend_file.write_once('HOST_LIBS += %s\n' %
-                                        pretty_relpath(lib, lib.import_name))
 
         # We have to link any Rust libraries after all intermediate static
         # libraries have been listed to ensure that the Rust libraries are
         # searched after the C/C++ objects that might reference Rust symbols.
-        if isinstance(obj, (SharedLibrary, Program)):
-            self._process_rust_libraries(obj, backend_file, pretty_relpath)
+        var = 'HOST_LIBS' if obj.KIND == 'host' else 'STATIC_LIBS'
+        for lib in chain(
+                (l for l in static_libs if not isinstance(l, BaseRustLibrary)),
+                (l for l in static_libs if isinstance(l, BaseRustLibrary)),
+        ):
+            backend_file.write_once('%s += %s\n' %
+                                    (var, pretty_relpath(lib, lib.import_name)))
+
+        for lib in os_libs:
+            if obj.KIND == 'target':
+                backend_file.write_once('OS_LIBS += %s\n' % lib)
+            elif obj.KIND == 'host':
+                backend_file.write_once('HOST_EXTRA_LIBS += %s\n' % lib)
+
+        if not isinstance(obj, (StaticLibrary, HostLibrary)) or obj.no_expand_lib:
+            # This will create the node even if there aren't any linked libraries.
+            build_target = self._build_target_for_obj(obj)
+            self._compile_graph[build_target]
+
+            # Make the build target depend on all the target/host-objects that
+            # recursively are linked into it.
+            def recurse_libraries(obj):
+                for lib in obj.linked_libraries:
+                    if isinstance(lib, (StaticLibrary, HostLibrary)) and not lib.no_expand_lib:
+                        recurse_libraries(lib)
+                    elif not isinstance(lib, ExternalLibrary):
+                        self._compile_graph[build_target].add(
+                            self._build_target_for_obj(lib))
+                relobjdir = mozpath.relpath(obj.objdir, self.environment.topobjdir)
+                objects_target = mozpath.join(relobjdir, '%s-objects' % obj.KIND)
+                if objects_target in self._compile_graph:
+                    self._compile_graph[build_target].add(objects_target)
+
+            recurse_libraries(obj)
 
         # Process library-based defines
         self._process_defines(obj.lib_defines, backend_file)
 
-    def _process_rust_libraries(self, obj, backend_file, pretty_relpath):
-        assert isinstance(obj, (SharedLibrary, Program))
-
-        # If this library does not depend on any Rust libraries, then we are done.
-        direct_linked = [l for l in obj.linked_libraries if isinstance(l, RustLibrary)]
-        if not direct_linked:
-            return
-
-        # We should have already checked this in Linkable.link_library.
-        assert len(direct_linked) == 1
-
-        # TODO: see bug 1310063 for checking dependencies are set up correctly.
-
-        direct_linked = direct_linked[0]
-        backend_file.write('RUST_STATIC_LIB := %s\n' %
-                           pretty_relpath(direct_linked, direct_linked.import_name))
-
-        for lib in direct_linked.linked_system_libs:
-            backend_file.write_once('OS_LIBS += %s\n' % lib)
+    def _add_install_target(self, backend_file, install_target, tier, dest, files):
+        self._no_skip[tier].add(backend_file.relobjdir)
+        for f in files:
+            backend_file.write('%s_FILES += %s\n' % (install_target, f))
+        backend_file.write('%s_DEST := %s\n' % (install_target, dest))
+        backend_file.write('%s_TARGET := %s\n' % (install_target, tier))
+        backend_file.write('INSTALL_TARGETS += %s\n' % install_target)
 
     def _process_final_target_files(self, obj, files, backend_file):
         target = obj.install_target
@@ -1510,7 +1439,13 @@ class RecursiveMakeBackend(CommonBackend):
         for path, files in files.walk():
             target_var = (mozpath.join(target, path)
                           if path else target).replace('/', '_')
-            have_objdir_files = False
+            # We don't necessarily want to combine these, because non-wildcard
+            # absolute files tend to be libraries, and we don't want to mix
+            # those in with objdir headers that will be installed during export.
+            # (See bug 1642882 for details.)
+            objdir_files = []
+            absolute_files = []
+
             for f in files:
                 assert not isinstance(f, RenamedSourcePath)
                 dest = mozpath.join(reltarget, path, f.target_basename)
@@ -1519,27 +1454,39 @@ class RecursiveMakeBackend(CommonBackend):
                         if f.startswith('/') or isinstance(f, AbsolutePath):
                             basepath, wild = os.path.split(f.full_path)
                             if '*' in basepath:
-                                raise Exception("Wildcards are only supported in the filename part of "
-                                                "srcdir-relative or absolute paths.")
+                                raise Exception("Wildcards are only supported in the filename part"
+                                                " of srcdir-relative or absolute paths.")
 
                             install_manifest.add_pattern_link(basepath, wild, path)
                         else:
                             install_manifest.add_pattern_link(f.srcdir, f, path)
+                    elif isinstance(f, AbsolutePath):
+                        if not f.full_path.lower().endswith(('.dll', '.pdb', '.so')):
+                            raise Exception("Absolute paths installed to FINAL_TARGET_FILES must"
+                                            " only be shared libraries or associated debug"
+                                            " information.")
+                        install_manifest.add_optional_exists(dest)
+                        absolute_files.append(f.full_path)
                     else:
                         install_manifest.add_link(f.full_path, dest)
                 else:
                     install_manifest.add_optional_exists(dest)
-                    backend_file.write('%s_FILES += %s\n' % (
-                        target_var, self._pretty_path(f, backend_file)))
-                    have_objdir_files = True
-            if have_objdir_files:
+                    objdir_files.append(self._pretty_path(f, backend_file))
+            install_location = '$(DEPTH)/%s' % mozpath.join(target, path)
+            if objdir_files:
                 tier = 'export' if obj.install_target == 'dist/include' else 'misc'
-                self._no_skip[tier].add(backend_file.relobjdir)
-                backend_file.write('%s_DEST := $(DEPTH)/%s\n'
-                                   % (target_var,
-                                      mozpath.join(target, path)))
-                backend_file.write('%s_TARGET := %s\n' % (target_var, tier))
-                backend_file.write('INSTALL_TARGETS += %s\n' % target_var)
+                self._add_install_target(backend_file, target_var, tier,
+                                         install_location, objdir_files)
+            if absolute_files:
+                # Unfortunately, we can't use _add_install_target because on
+                # Windows, the absolute file paths that we want to install
+                # from often have spaces.  So we write our own rule.
+                self._no_skip['misc'].add(backend_file.relobjdir)
+                backend_file.write('misc::\n%s\n' %
+                                   '\n'.join(
+                                       '\t$(INSTALL) %s %s' % (
+                                           make_quote(shell_quote(f)), install_location)
+                                       for f in absolute_files))
 
     def _process_final_target_pp_files(self, obj, files, backend_file, name):
         # Bug 1177710 - We'd like to install these via manifests as
@@ -1651,7 +1598,7 @@ class RecursiveMakeBackend(CommonBackend):
 
     def _write_manifests(self, dest, manifests):
         man_dir = mozpath.join(self.environment.topobjdir, '_build_manifests',
-            dest)
+                               dest)
 
         for k, manifest in manifests.items():
             with self._write_file(mozpath.join(man_dir, k)) as fh:
@@ -1688,21 +1635,20 @@ class RecursiveMakeBackend(CommonBackend):
                 pp.context.update(extra)
             if not pp.context.get('autoconfmk', ''):
                 pp.context['autoconfmk'] = 'autoconf.mk'
-            pp.handleLine(b'# THIS FILE WAS AUTOMATICALLY GENERATED. DO NOT MODIFY BY HAND.\n');
-            pp.handleLine(b'DEPTH := @DEPTH@\n')
-            pp.handleLine(b'topobjdir := @topobjdir@\n')
-            pp.handleLine(b'topsrcdir := @top_srcdir@\n')
-            pp.handleLine(b'srcdir := @srcdir@\n')
-            pp.handleLine(b'srcdir_rel := @srcdir_rel@\n')
-            pp.handleLine(b'VPATH := @srcdir@\n')
-            pp.handleLine(b'relativesrcdir := @relativesrcdir@\n')
-            pp.handleLine(b'include $(DEPTH)/config/@autoconfmk@\n')
+            pp.handleLine('# THIS FILE WAS AUTOMATICALLY GENERATED. DO NOT MODIFY BY HAND.\n')
+            pp.handleLine('DEPTH := @DEPTH@\n')
+            pp.handleLine('topobjdir := @topobjdir@\n')
+            pp.handleLine('topsrcdir := @top_srcdir@\n')
+            pp.handleLine('srcdir := @srcdir@\n')
+            pp.handleLine('srcdir_rel := @srcdir_rel@\n')
+            pp.handleLine('relativesrcdir := @relativesrcdir@\n')
+            pp.handleLine('include $(DEPTH)/config/@autoconfmk@\n')
             if not stub:
                 pp.do_include(obj.input_path)
             # Empty line to avoid failures when last line in Makefile.in ends
             # with a backslash.
-            pp.handleLine(b'\n')
-            pp.handleLine(b'include $(topsrcdir)/config/recurse.mk\n')
+            pp.handleLine('\n')
+            pp.handleLine('include $(topsrcdir)/config/recurse.mk\n')
         if not stub:
             # Adding the Makefile.in here has the desired side-effect
             # that if the Makefile.in disappears, this will force
@@ -1732,18 +1678,19 @@ class RecursiveMakeBackend(CommonBackend):
             rule.add_commands([
                 '$(RM) $@',
                 '$(call py_action,preprocessor,$(DEFINES) $(ACDEFINES) '
-                    '$< -o $@)'
+                '$< -o $@)'
             ])
 
         mk.add_statement('ALL_IPDLSRCS := %s %s' % (' '.join(sorted_nonstatic_ipdl_basenames),
-                         ' '.join(sorted_static_ipdl_sources)))
+                                                    ' '.join(sorted_static_ipdl_sources)))
 
         self._add_unified_build_rules(mk, unified_ipdl_cppsrcs_mapping,
                                       unified_files_makefile_variable='CPPSRCS')
 
         # Preprocessed ipdl files are generated in ipdl_dir.
-        mk.add_statement('IPDLDIRS := %s %s' % (ipdl_dir, ' '.join(sorted(set(mozpath.dirname(p)
-            for p in sorted_static_ipdl_sources)))))
+        mk.add_statement(
+            'IPDLDIRS := %s %s' % (ipdl_dir, ' '.join(sorted(set(mozpath.dirname(p)
+                                                      for p in sorted_static_ipdl_sources)))))
 
         with self._write_file(mozpath.join(ipdl_dir, 'ipdlsrcs.mk')) as ipdls:
             mk.dump(ipdls, removal_guard=False)
@@ -1752,7 +1699,7 @@ class RecursiveMakeBackend(CommonBackend):
                              webidls, expected_build_output_files,
                              global_define_files):
         include_dir = mozpath.join(self.environment.topobjdir, 'dist',
-            'include')
+                                   'include')
         for f in expected_build_output_files:
             if f.startswith(include_dir):
                 self._install_manifests['dist_include'].add_optional_exists(
@@ -1776,20 +1723,54 @@ class RecursiveMakeBackend(CommonBackend):
         for source in sorted(webidls.all_preprocessed_sources()):
             basename = os.path.basename(source)
             rule = mk.create_rule([basename])
-            rule.add_dependencies([source, '$(GLOBAL_DEPS)'])
+            # GLOBAL_DEPS would be used here, but due to the include order of
+            # our makefiles it's not set early enough to be useful, so we use
+            # WEBIDL_PP_DEPS, which has analagous content.
+            rule.add_dependencies([source, '$(WEBIDL_PP_DEPS)'])
             rule.add_commands([
                 # Remove the file before writing so bindings that go from
                 # static to preprocessed don't end up writing to a symlink,
                 # which would modify content in the source directory.
                 '$(RM) $@',
                 '$(call py_action,preprocessor,$(DEFINES) $(ACDEFINES) '
-                    '$< -o $@)'
+                '$< -o $@)'
             ])
 
         self._add_unified_build_rules(mk,
-            unified_source_mapping,
-            unified_files_makefile_variable='unified_binding_cpp_files')
+                                      unified_source_mapping,
+                                      unified_files_makefile_variable='unified_binding_cpp_files')
 
         webidls_mk = mozpath.join(bindings_dir, 'webidlsrcs.mk')
         with self._write_file(webidls_mk) as fh:
             mk.dump(fh, removal_guard=False)
+
+        # Add the test directory to the compile graph.
+        if self.environment.substs.get('ENABLE_TESTS'):
+            self._compile_graph[mozpath.join(
+                mozpath.relpath(bindings_dir, self.environment.topobjdir),
+                'test', 'target-objects')]
+
+    def _format_generated_file_input_name(self, path, obj):
+        if obj.localized:
+            # Localized generated files can have locale-specific inputs, which
+            # are indicated by paths starting with `en-US/` or containing
+            # `locales/en-US/`.
+            if 'locales/en-US' in path:
+                # We need an "absolute source path" relative to
+                # topsrcdir, like "/source/path".
+                if not path.startswith('/'):
+                    path = '/' + mozpath.relpath(path.full_path, obj.topsrcdir)
+                e, f = path.split('locales/en-US/', 1)
+                assert(f)
+                return '$(call MERGE_RELATIVE_FILE,{},{}locales)'.format(
+                    f, e if not e.startswith('/') else e[len('/'):])
+            elif path.startswith('en-US/'):
+                e, f = path.split('en-US/', 1)
+                assert(not e)
+                return '$(call MERGE_FILE,%s)' % f
+            return self._pretty_path(path, self._get_backend_file_for(obj))
+        else:
+            return self._pretty_path(path, self._get_backend_file_for(obj))
+
+    def _format_generated_file_output_name(self, path, obj):
+        return path

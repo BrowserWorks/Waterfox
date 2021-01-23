@@ -4,11 +4,13 @@
 
 from __future__ import absolute_import, print_function, unicode_literals
 
-import __builtin__
+import codecs
 import inspect
 import logging
 import os
 import re
+import six
+from six.moves import builtins as __builtin__
 import sys
 import types
 from collections import OrderedDict
@@ -17,6 +19,7 @@ from functools import wraps
 from mozbuild.configure.options import (
     CommandLineHelper,
     ConflictingOptionError,
+    HELP_OPTIONS_CATEGORY,
     InvalidOptionError,
     Option,
     OptionValue,
@@ -28,12 +31,13 @@ from mozbuild.configure.util import (
     LineIO,
 )
 from mozbuild.util import (
-    encode,
+    ensure_subprocess_env,
     exec_,
     memoize,
     memoized_property,
     ReadOnlyDict,
     ReadOnlyNamespace,
+    system_encoding,
 )
 
 import mozpack.path as mozpath
@@ -49,6 +53,7 @@ class ConfigureError(Exception):
 
 class SandboxDependsFunction(object):
     '''Sandbox-visible representation of @depends functions.'''
+
     def __init__(self, unsandboxed):
         self._or = unsandboxed.__or__
         self._and = unsandboxed.__and__
@@ -76,6 +81,9 @@ class SandboxDependsFunction(object):
     def __eq__(self, other):
         raise ConfigureError('Cannot compare @depends functions.')
 
+    def __hash__(self):
+        return object.__hash__(self)
+
     def __ne__(self, other):
         raise ConfigureError('Cannot compare @depends functions.')
 
@@ -90,10 +98,6 @@ class SandboxDependsFunction(object):
 
     def __ge__(self, other):
         raise ConfigureError('Cannot compare @depends functions.')
-
-    def __nonzero__(self):
-        raise ConfigureError('Cannot use @depends functions in '
-                             'e.g. conditionals.')
 
     def __getattr__(self, key):
         return self._getattr(key).sandboxed
@@ -230,8 +234,12 @@ class CombinedDependsFunction(DependsFunction):
                 self._func is other._func and
                 set(self.dependencies) == set(other.dependencies))
 
+    def __hash__(self):
+        return object.__hash__(self)
+
     def __ne__(self, other):
         return not self == other
+
 
 class SandboxedGlobal(dict):
     '''Identifiable dict type for use as function global'''
@@ -280,11 +288,13 @@ class ConfigureSandbox(dict):
     # The default set of builtins. We expose unicode as str to make sandboxed
     # files more python3-ready.
     BUILTINS = ReadOnlyDict({
-        b: getattr(__builtin__, b)
+        b: getattr(__builtin__, b, None)
         for b in ('None', 'False', 'True', 'int', 'bool', 'any', 'all', 'len',
                   'list', 'tuple', 'set', 'dict', 'isinstance', 'getattr',
-                  'hasattr', 'enumerate', 'range', 'zip', 'AssertionError')
-    }, __import__=forbidden_import, str=unicode)
+                  'hasattr', 'enumerate', 'range', 'zip', 'AssertionError',
+                  '__build_class__',  # will be None on py2
+                  )
+    }, __import__=forbidden_import, str=six.text_type)
 
     # Expose a limited set of functions from os.path
     OS = ReadOnlyNamespace(path=ReadOnlyNamespace(**{
@@ -334,6 +344,9 @@ class ConfigureSandbox(dict):
         assert isinstance(config, dict)
         self._config = config
 
+        # Tracks how many templates "deep" we are in the stack.
+        self._template_depth = 0
+
         logging.addLevelName(TRACE, 'TRACE')
         if logger is None:
             logger = moz_logger = logging.getLogger('moz.configure')
@@ -357,14 +370,14 @@ class ConfigureSandbox(dict):
         # that can't be converted to ascii. Make our log methods robust to this
         # by detecting the encoding that a producer is likely to have used.
         encoding = getpreferredencoding()
+
         def wrapped_log_method(logger, key):
             method = getattr(logger, key)
-            if not encoding:
-                return method
+
             def wrapped(*args, **kwargs):
                 out_args = [
-                    arg.decode(encoding) if isinstance(arg, str) else arg
-                    for arg in args
+                    six.ensure_text(arg, encoding=encoding or 'utf-8')
+                    if isinstance(arg, six.binary_type) else arg for arg in args
                 ]
                 return method(*out_args, **kwargs)
             return wrapped
@@ -377,8 +390,8 @@ class ConfigureSandbox(dict):
         self.log_impl = ReadOnlyNamespace(**log_namespace)
 
         self._help = None
-        self._help_option = self.option_impl('--help',
-                                             help='print this message')
+        self._help_option = self.option_impl(
+            '--help', help='print this message', category=HELP_OPTIONS_CATEGORY)
         self._seen.add(self._help_option)
 
         self._always = DependsFunction(self, lambda: True, [])
@@ -388,7 +401,8 @@ class ConfigureSandbox(dict):
             self._help = HelpFormatter(argv[0])
             self._help.add(self._help_option)
         elif moz_logger:
-            handler = logging.FileHandler('config.log', mode='w', delay=True)
+            handler = logging.FileHandler('config.log', mode='w', delay=True,
+                                          encoding='utf-8')
             handler.setFormatter(formatter)
             logger.addHandler(handler)
 
@@ -430,7 +444,7 @@ class ConfigureSandbox(dict):
         if path:
             self.include_file(path)
 
-        for option in self._options.itervalues():
+        for option in six.itervalues(self._options):
             # All options must be referenced by some @depends function
             if option not in self._seen:
                 raise ConfigureError(
@@ -455,6 +469,9 @@ class ConfigureSandbox(dict):
                            implied_option.caller[2]))
                 # If the option is known, check that the implied value doesn't
                 # conflict with what value was attributed to the option.
+                if (implied_option.when and
+                        not self._value_for(implied_option.when)):
+                    continue
                 option_value = self._value_for_option(option)
                 if value != option_value:
                     reason = implied_option.reason
@@ -538,11 +555,16 @@ class ConfigureSandbox(dict):
     @memoize
     def _value_for_option(self, option):
         implied = {}
-        for implied_option in self._implied_options[:]:
-            if implied_option.name not in (option.name, option.env):
-                continue
-            self._implied_options.remove(implied_option)
+        matching_implied_options = [
+            o for o in self._implied_options if o.name in (option.name, option.env)
+        ]
+        # Update self._implied_options before going into the loop with the non-matching
+        # options.
+        self._implied_options = [
+            o for o in self._implied_options if o.name not in (option.name, option.env)
+        ]
 
+        for implied_option in matching_implied_options:
             if (implied_option.when and
                 not self._value_for(implied_option.when)):
                 continue
@@ -596,7 +618,7 @@ class ConfigureSandbox(dict):
         return value
 
     def _dependency(self, arg, callee_name, arg_name=None):
-        if isinstance(arg, types.StringTypes):
+        if isinstance(arg, six.string_types):
             prefix, name, values = Option.split_option(arg)
             if values != ():
                 raise ConfigureError("Option must not contain an '='")
@@ -660,8 +682,14 @@ class ConfigureSandbox(dict):
         '''
         when = self._normalize_when(kwargs.get('when'), 'option')
         args = [self._resolve(arg) for arg in args]
-        kwargs = {k: self._resolve(v) for k, v in kwargs.iteritems()
-                                      if k != 'when'}
+        kwargs = {k: self._resolve(v) for k, v in six.iteritems(kwargs)
+                  if k != 'when'}
+        # The Option constructor needs to look up the stack to infer a category
+        # for the Option, since the category is based on the filename where the
+        # Option is defined. However, if the Option is defined in a template, we
+        # want the category to reference the caller of the template rather than
+        # the caller of the option() function.
+        kwargs['define_depth'] = self._template_depth * 3
         option = Option(*args, **kwargs)
         if when:
             self._conditions[option] = when
@@ -740,7 +768,7 @@ class ConfigureSandbox(dict):
         with self.only_when_impl(when):
             what = self._resolve(what)
             if what:
-                if not isinstance(what, types.StringTypes):
+                if not isinstance(what, six.string_types):
                     raise TypeError("Unexpected type: '%s'" % type(what).__name__)
                 self.include_file(what)
 
@@ -758,7 +786,7 @@ class ConfigureSandbox(dict):
                 (k[:-len('_impl')], getattr(self, k))
                 for k in dir(self) if k.endswith('_impl') and k != 'template_impl'
             )
-            glob.update((k, v) for k, v in self.iteritems() if k not in glob)
+            glob.update((k, v) for k, v in six.iteritems(self) if k not in glob)
 
         template = self._prepare_function(func, update_globals)
 
@@ -783,8 +811,10 @@ class ConfigureSandbox(dict):
             def wrapper(*args, **kwargs):
                 args = [maybe_prepare_function(arg) for arg in args]
                 kwargs = {k: maybe_prepare_function(v)
-                          for k, v in kwargs.iteritems()}
+                          for k, v in kwargs.items()}
+                self._template_depth += 1
                 ret = template(*args, **kwargs)
+                self._template_depth -= 1
                 if isfunction(ret):
                     # We can't expect the sandboxed code to think about all the
                     # details of implementing decorators, so do some of the
@@ -812,13 +842,14 @@ class ConfigureSandbox(dict):
         This decorator imports the given _import from the given _from module
         optionally under a different _as name.
         The options correspond to the various forms for the import builtin.
+
             @imports('sys')
             @imports(_from='mozpack', _import='path', _as='mozpath')
         '''
         for value, required in (
                 (_import, True), (_from, False), (_as, False)):
 
-            if not isinstance(value, types.StringTypes) and (
+            if not isinstance(value, six.string_types) and (
                     required or value is not None):
                 raise TypeError("Unexpected type: '%s'" % type(value).__name__)
             if value is not None and not self.RE_MODULE.match(value):
@@ -866,7 +897,12 @@ class ConfigureSandbox(dict):
         def wrap(function):
             def wrapper(*args, **kwargs):
                 if 'env' not in kwargs:
-                    kwargs['env'] = encode(self._environ)
+                    kwargs['env'] = dict(self._environ)
+                # Subprocess on older Pythons can't handle unicode keys or
+                # values in environment dicts while subprocess on newer Pythons
+                # needs text in the env. Normalize automagically so callers
+                # don't have to deal with this.
+                kwargs['env'] = ensure_subprocess_env(kwargs['env'], encoding=system_encoding)
                 return function(*args, **kwargs)
             return wrapper
 
@@ -882,9 +918,24 @@ class ConfigureSandbox(dict):
             return self
         # Special case for the open() builtin, because otherwise, using it
         # fails with "IOError: file() constructor not accessible in
-        # restricted mode"
-        if what == '__builtin__.open':
-            return lambda *args, **kwargs: open(*args, **kwargs)
+        # restricted mode". We also make open() look more like python 3's,
+        # decoding to unicode strings unless the mode says otherwise.
+        if what == '__builtin__.open' or what == 'builtins.open':
+            if six.PY3:
+                return open
+
+            def wrapped_open(name, mode=None, buffering=None):
+                args = (name,)
+                kwargs = {}
+                if buffering is not None:
+                    kwargs['buffering'] = buffering
+                if mode is not None:
+                    args += (mode,)
+                    if 'b' in mode:
+                        return open(*args, **kwargs)
+                kwargs['encoding'] = system_encoding
+                return codecs.open(*args, **kwargs)
+            return wrapped_open
         # Special case os and os.environ so that os.environ is our copy of
         # the environment.
         if what == 'os.environ':
@@ -902,7 +953,11 @@ class ConfigureSandbox(dict):
         import_line = ''
         if '.' in what:
             _from, what = what.rsplit('.', 1)
+            if _from == '__builtin__' or _from.startswith('__builtin__.'):
+                _from = _from.replace('__builtin__', 'six.moves.builtins')
             import_line += 'from %s ' % _from
+        if what == '__builtin__':
+            what = 'six.moves.builtins'
         import_line += 'import %s as imported' % what
         glob = {}
         exec_(import_line, {}, glob)
@@ -917,7 +972,7 @@ class ConfigureSandbox(dict):
         name = self._resolve(name)
         if name is None:
             return
-        if not isinstance(name, types.StringTypes):
+        if not isinstance(name, six.string_types):
             raise TypeError("Unexpected type: '%s'" % type(name).__name__)
         if name in data:
             raise ConfigureError(
@@ -966,29 +1021,37 @@ class ConfigureSandbox(dict):
         The `value` argument indicates the value to pass to the option.
         It can be:
         - True. In this case `imply_option` injects the positive option
+
           (--enable-foo/--with-foo).
               imply_option('--enable-foo', True)
               imply_option('--disable-foo', True)
+
           are both equivalent to `--enable-foo` on the command line.
 
         - False. In this case `imply_option` injects the negative option
+
           (--disable-foo/--without-foo).
               imply_option('--enable-foo', False)
               imply_option('--disable-foo', False)
+
           are both equivalent to `--disable-foo` on the command line.
 
         - None. In this case `imply_option` does nothing.
               imply_option('--enable-foo', None)
               imply_option('--disable-foo', None)
-          are both equivalent to not passing any flag on the command line.
+
+        are both equivalent to not passing any flag on the command line.
 
         - a string or a tuple. In this case `imply_option` injects the positive
           option with the given value(s).
+
               imply_option('--enable-foo', 'a')
               imply_option('--disable-foo', 'a')
+
           are both equivalent to `--enable-foo=a` on the command line.
               imply_option('--enable-foo', ('a', 'b'))
               imply_option('--disable-foo', ('a', 'b'))
+
           are both equivalent to `--enable-foo=a,b` on the command line.
 
         Because imply_option('--disable-foo', ...) can be misleading, it is
@@ -1015,7 +1078,7 @@ class ConfigureSandbox(dict):
                 if isinstance(possible_reasons[0], Option):
                     reason = possible_reasons[0]
         if not reason and (isinstance(value, (bool, tuple)) or
-                           isinstance(value, types.StringTypes)):
+                           isinstance(value, six.string_types)):
             # A reason can be provided automatically when imply_option
             # is called with an immediate value.
             _, filename, line, _, _, _ = inspect.stack()[1]
@@ -1051,7 +1114,8 @@ class ConfigureSandbox(dict):
             return func
 
         glob = SandboxedGlobal(
-            (k, v) for k, v in func.func_globals.iteritems()
+            (k, v)
+            for k, v in six.iteritems(func.__globals__)
             if (inspect.isfunction(v) and v not in self._templates) or (
                 inspect.isclass(v) and issubclass(v, Exception))
         )
@@ -1074,20 +1138,20 @@ class ConfigureSandbox(dict):
         # Note this is not entirely bullet proof (if the value is e.g. a list,
         # the list contents could have changed), but covers the bases.
         closure = None
-        if func.func_closure:
+        if func.__closure__:
             def makecell(content):
                 def f():
                     content
-                return f.func_closure[0]
+                return f.__closure__[0]
 
             closure = tuple(makecell(cell.cell_contents)
-                            for cell in func.func_closure)
+                            for cell in func.__closure__)
 
         new_func = self.wraps(func)(types.FunctionType(
-            func.func_code,
+            func.__code__,
             glob,
             func.__name__,
-            func.func_defaults,
+            func.__defaults__,
             closure
         ))
         @self.wraps(new_func)

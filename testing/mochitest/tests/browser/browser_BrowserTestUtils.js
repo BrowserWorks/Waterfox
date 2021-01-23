@@ -1,5 +1,5 @@
 function getLastEventDetails(browser) {
-  return ContentTask.spawn(browser, {}, async function() {
+  return SpecialPowers.spawn(browser, [], async function() {
     return content.document.getElementById("out").textContent;
   });
 }
@@ -11,7 +11,7 @@ add_task(async function() {
     "<body onclick='" +
     onClickEvt +
     "' style='margin: 0'>" +
-    "<button id='one' style='margin: 0; margin-left: 16px; margin-top: 14px; width: 30px; height: 40px;'>Test</button>" +
+    "<button id='one' style='margin: 0; margin-left: 16px; margin-top: 14px; width: 80px; height: 40px;'>Test</button>" +
     "<div onmousedown='event.preventDefault()' style='margin: 0; width: 80px; height: 60px;'>Other</div>" +
     "<span id='out'></span></body>";
   let tab = await BrowserTestUtils.openNewForegroundTab(
@@ -23,7 +23,7 @@ add_task(async function() {
   await BrowserTestUtils.synthesizeMouseAtCenter("#one", {}, browser);
   let details = await getLastEventDetails(browser);
 
-  is(details, "button,31,34", "synthesizeMouseAtCenter");
+  is(details, "button,56,34", "synthesizeMouseAtCenter");
 
   await BrowserTestUtils.synthesizeMouse("#one", 4, 9, {}, browser);
   details = await getLastEventDetails(browser);
@@ -33,7 +33,12 @@ add_task(async function() {
   details = await getLastEventDetails(browser);
   is(details, "body,15,6", "synthesizeMouseAtPoint on body");
 
-  await BrowserTestUtils.synthesizeMouseAtPoint(20, 22, {}, browser);
+  await BrowserTestUtils.synthesizeMouseAtPoint(
+    20,
+    22,
+    {},
+    browser.browsingContext
+  );
   details = await getLastEventDetails(browser);
   is(details, "button,20,22", "synthesizeMouseAtPoint on button");
 
@@ -72,6 +77,43 @@ add_task(async function() {
     !cancelled,
     "synthesizeMouseAtCenter mouseup with complex selector cancelled"
   );
+
+  gBrowser.removeTab(tab);
+});
+
+add_task(async function mouse_in_iframe() {
+  let onClickEvt = "document.body.lastChild.textContent = event.target.id;";
+  const url = `<iframe style='margin: 30px;' src='data:text/html,<body onclick="${onClickEvt}">
+     <p><button>One</button></p><p><button id="two">Two</button></p><p id="out"></p></body>'></iframe>
+     <iframe style='margin: 10px;' src='data:text/html,<body onclick="${onClickEvt}">
+     <p><button>Three</button></p><p><button id="four">Four</button></p><p id="out"></p></body>'></iframe>`;
+  let tab = await BrowserTestUtils.openNewForegroundTab(
+    gBrowser,
+    "data:text/html," + url
+  );
+
+  let browser = tab.linkedBrowser;
+
+  await BrowserTestUtils.synthesizeMouse(
+    "#two",
+    5,
+    10,
+    {},
+    browser.browsingContext.children[0]
+  );
+
+  let details = await getLastEventDetails(browser.browsingContext.children[0]);
+  is(details, "two", "synthesizeMouse");
+
+  await BrowserTestUtils.synthesizeMouse(
+    "#four",
+    5,
+    10,
+    {},
+    browser.browsingContext.children[1]
+  );
+  details = await getLastEventDetails(browser.browsingContext.children[1]);
+  is(details, "four", "synthesizeMouse");
 
   gBrowser.removeTab(tab);
 });

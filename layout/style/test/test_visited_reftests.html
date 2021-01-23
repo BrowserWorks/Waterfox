@@ -95,6 +95,8 @@ var gTests = [
   "== logical-box-border-color-visited-link-002.html logical-box-border-color-visited-link-ref.html",
   "== logical-box-border-color-visited-link-003.html logical-box-border-color-visited-link-ref.html",
   "== svg-paint-currentcolor-visited.svg svg-paint-currentcolor-visited-ref.svg",
+
+  "== color-on-htmllinkelement-1.html color-on-htmllinkelement-1-ref.html",
 ];
 
 // We record the maximum number of times we had to look at a test before
@@ -126,8 +128,14 @@ async function runTests() {
   SimpleTest.requestFlakyTimeout("async link coloring");
   // Set caret to a known size, for tests of :visited caret-color styling
   await SpecialPowers.pushPrefEnv({'set': [['ui.caretWidth', 16]]});
-  await startIframe("visited-page.html");
+  info("opening visited page");
+  let win = window.open("css-visited/visited-page.html", "_blank");
+  await new Promise(resolve => {
+    win.onload = resolve;
+  });
+  info("running tests");
   await Promise.all(gTests.map(runTest));
+  win.close();
   SimpleTest.finish();
 }
 
@@ -137,8 +145,10 @@ function passes(equal, shot1, shot2)
   return correct;
 }
 
-function waitFor100ms() {
-  return new Promise(resolve => setTimeout(resolve, 100));
+function waitFor100msAndIdle() {
+  return new Promise(resolve => setTimeout(function() {
+    requestIdleCallback(resolve);
+  }, 100));
 }
 
 async function runTest(testLine) {
@@ -166,7 +176,7 @@ async function runTest(testLine) {
   // Always wait at least 100ms, so that any test that switches
   // from passing to failing when the asynchronous link coloring
   // happens should fail at least some of the time.
-  await waitFor100ms();
+  await waitFor100msAndIdle();
 
   let tries;
   let testSnapshot;
@@ -182,7 +192,7 @@ async function runTest(testLine) {
       break;
     }
     // Links might not have been colored yet. Try again in 100ms.
-    await waitFor100ms();
+    await waitFor100msAndIdle();
   }
 
   let result = assertSnapshots(testSnapshot, refSnapshot,

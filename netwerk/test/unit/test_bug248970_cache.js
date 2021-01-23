@@ -2,6 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+"use strict";
+
 // names for cache devices
 const kDiskDevice = "disk";
 const kMemoryDevice = "memory";
@@ -128,6 +130,9 @@ var check_data = function(status, entry) {
 function run_test() {
   // Simulate a profile dir for xpcshell
   do_get_profile();
+
+  Services.prefs.setBoolPref("browser.cache.offline.enable", true);
+  Services.prefs.setBoolPref("browser.cache.offline.storage.enable", true);
 
   appCache = Cc["@mozilla.org/network/application-cache-service;1"]
     .getService(Ci.nsIApplicationCacheService)

@@ -1,0 +1,143 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# strainu <crangasi2001@yahoo.com>
+# BuBBaX <mikebubbax@yahoo.com>
+# Alexandru Szasz <alexxed@gmail.com>
+# secarica <orice@secarica.ro>
+# turcan <nicturcan@gmail.com>
+# janimo <jani@ubuntu.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- Context Menu -->
+<!ENTITY popupWindowRejectCmd.label     "Nu deschide ferestre popup de la acest sait">
+<!ENTITY popupWindowRejectCmd.accesskey "r">
+<!ENTITY popupWindowAllowCmd.label      "Permite ferestre popup de la acest sait">
+<!ENTITY popupWindowAllowCmd.accesskey  "a">
+<!ENTITY openLinkCmd.label            "Deschide legătura în fereastră nouă">
+<!ENTITY openLinkCmd.accesskey        "D">
+<!ENTITY openLinkCmdInTab.label       "Deschide legătura în filă nouă">
+<!ENTITY openLinkCmdInTab.accesskey   "t">
+<!ENTITY openLinkInWindowCmd.label    "Deschis">
+<!ENTITY openLinkInWindowCmd.accesskey "D">
+<!ENTITY openFrameCmd.label           "Deschide cadrul în fereastră nouă">
+<!ENTITY openFrameCmd.accesskey       "D">
+<!ENTITY openFrameCmdInTab.label      "Deschide cadrul în filă nouă">
+<!ENTITY openFrameCmdInTab.accesskey  "D">
+<!ENTITY keywordfield.label           "Add a Keyword for this Search…">
+<!ENTITY keywordfield.accesskey       "K">
+<!ENTITY showOnlyThisFrameCmd.label     "Afișează doar acest cadru">
+<!ENTITY showOnlyThisFrameCmd.accesskey "s">
+<!ENTITY goBackCmd.label              "Înapoi">
+<!ENTITY goBackCmd.accesskey          "n">
+<!ENTITY goForwardCmd.label           "Înainte">
+<!ENTITY goForwardCmd.accesskey       "n">
+<!ENTITY goUpCmd.label                "În sus">
+<!ENTITY goUpCmd.accesskey            "u">
+<!ENTITY reloadCmd.label              "Reîncarcă">
+<!ENTITY reloadCmd.accesskey          "R">
+<!ENTITY reloadCmd.commandkey         "d">
+<!ENTITY stopCmd.label                "Oprește">
+<!ENTITY stopCmd.accesskey            "O">
+<!ENTITY reloadFrameCmd.label         "Reîncarcă cadrul">
+<!ENTITY reloadFrameCmd.accesskey     "R">
+<!ENTITY viewPartialSourceForSelectionCmd.label "Vezi sursa selecției">
+<!ENTITY viewPartialSourceForMathMLCmd.label    "Vezi sursa MathML">
+<!ENTITY viewPartialSourceCmd.accesskey "e">
+<!ENTITY viewPageSourceCmd.label      "Vezi sursa paginii">
+<!ENTITY viewPageSourceCmd.accesskey  "V">
+<!ENTITY viewFrameSourceCmd.label     "Vezi sursa cadrului">
+<!ENTITY viewFrameSourceCmd.accesskey "V">
+<!ENTITY viewPageInfoCmd.label        "Vezi informații despre pagină">
+<!ENTITY viewPageInfoCmd.accesskey    "i">
+<!ENTITY viewFrameInfoCmd.label       "Vezi informații despre cadru">
+<!ENTITY viewFrameInfoCmd.accesskey   "i">
+<!ENTITY fitImageCmd.label            "Potrivește imaginea la fereastră">
+<!ENTITY fitImageCmd.accesskey        "f">
+<!ENTITY reloadImageCmd.label         "Reîncarcă imaginea">
+<!ENTITY reloadImageCmd.accesskey     "e">
+<!ENTITY viewImageCmd.label           "Vezi imaginea">
+<!ENTITY viewImageCmd.accesskey       "i">
+<!ENTITY viewVideoCmd.label           "View Video">
+<!ENTITY viewVideoCmd.accesskey       "i">
+<!ENTITY viewBGImageCmd.label         "Vezi imaginea de fundal">
+<!ENTITY viewBGImageCmd.accesskey     "V">
+<!ENTITY setWallpaperCmd.label        "Setează ca fundal pe ecran">
+<!ENTITY setWallpaperCmd.accesskey    "S">
+<!ENTITY bookmarkPageCmd.label        "Pune un semn la această pagină">
+<!ENTITY bookmarkPageCmd.accesskey    "m">
+<!ENTITY bookmarkLinkCmd.label        "Pune semn de carte la această legătură">
+<!ENTITY bookmarkLinkCmd.accesskey    "l">
+<!ENTITY bookmarkFrameCmd.label       "Pune semn de carte la acest cadru">
+<!ENTITY bookmarkFrameCmd.accesskey   "m">
+<!ENTITY savePageAsCmd.label          "Salvează pagina ca...">
+<!ENTITY savePageCmd.label            "Salvează pagina">
+<!ENTITY savePageCmd.accesskey        "a">
+<!ENTITY savePageCmd.commandkey       "I">
+<!ENTITY saveFrameAsCmd.label         "Salvează cadrul ca...">
+<!ENTITY saveFrameCmd.label           "Salvează cadrul">
+<!ENTITY saveFrameCmd.accesskey       "S">
+<!ENTITY saveLinkAsCmd.label          "Salvează Legătura Ca">
+<!ENTITY saveLinkCmd.label            "Salvează ținta legăturii">
+<!ENTITY saveLinkCmd.accesskey        "r">
+<!ENTITY saveImageAsCmd.label         "Salvează imaginea ca...">
+<!ENTITY saveImageCmd.label           "Salvează imaginea">
+<!ENTITY saveImageCmd.accesskey       "v">
+<!ENTITY saveVideoCmd.label           "Salvează clipul ca…">
+<!ENTITY saveVideoCmd.accesskey       "v">
+<!ENTITY saveAudioCmd.label           "Salvează fișierul audio ca…">
+<!ENTITY saveAudioCmd.accesskey       "v">
+<!ENTITY copyLinkCmd.label            "Copiază adresa legăturii">
+<!ENTITY copyLinkCmd.accesskey        "C">
+<!ENTITY copyImageCmd.label           "Copiază imaginea">
+<!ENTITY copyImageCmd.accesskey       "o">
+<!ENTITY copyVideoURLCmd.label        "Copiază adresa clipului">
+<!ENTITY copyVideoURLCmd.accesskey    "o">
+<!ENTITY copyAudioURLCmd.label        "Copiază adresa fișierului audio">
+<!ENTITY copyAudioURLCmd.accesskey    "o">
+<!ENTITY metadataCmd.label            "Proprietăți">
+<!ENTITY metadataCmd.accesskey        "P">
+<!ENTITY copyEmailCmd.label           "Copiază adresa de email">
+<!ENTITY copyEmailCmd.accesskey       "e">
+<!ENTITY thisFrameMenu.label          "Acest cadru">
+<!ENTITY thisFrameMenu.accesskey      "A">
+<!ENTITY mediaPlay.label              "Redare">
+<!ENTITY mediaPlay.accesskey          "R">
+<!ENTITY mediaPause.label             "Pauză">
+<!ENTITY mediaPause.accesskey         "P">
+<!ENTITY mediaMute.label              "Oprește microfon">
+<!ENTITY mediaMute.accesskey          "m">
+<!ENTITY mediaUnmute.label            "Activează sonorul">
+<!ENTITY mediaUnmute.accesskey        "A">
+<!ENTITY mediaShowControls.label      "Show Media Controls">
+<!ENTITY mediaShowControls.accesskey  "a">
+<!ENTITY mediaHideControls.label      "Hide Media Controls">
+<!ENTITY mediaHideControls.accesskey  "a">
+<!ENTITY videoFullScreen.label        "Full Screen">
+<!ENTITY videoFullScreen.accesskey    "F">
+<!ENTITY search.accesskey             "W">
+<!ENTITY bidiSwitchPageDirectionItem.label        "Schimbă direcția paginii">
+<!ENTITY bidiSwitchPageDirectionItem.accesskey    "g">
+<!ENTITY bidiSwitchTextDirectionItem.label        "Schimbă direcția textului">
+<!ENTITY bidiSwitchTextDirectionItem.accesskey    "S">
+<!ENTITY spellAddToDictionary.label     "Adaugă la dicționar">
+<!ENTITY spellAddToDictionary.accesskey "o">
+<!ENTITY spellIgnoreWord.label          "Ignoră cuvânt">
+<!ENTITY spellIgnoreWord.accesskey      "I">
+<!ENTITY spellCheckEnable.label         "Verificați ortografie">
+<!ENTITY spellCheckEnable.accesskey     "V">
+<!ENTITY spellNoSuggestions.label       "(nicio sugestie de ortografie)">
+<!ENTITY spellDictionaries.label        "Limbaje">
+<!ENTITY spellDictionaries.accesskey    "L">
+<!ENTITY spellAddDictionaries.label     "Descarcă Mai Multe Dicționare">
+<!ENTITY spellAddDictionaries.accesskey "D">

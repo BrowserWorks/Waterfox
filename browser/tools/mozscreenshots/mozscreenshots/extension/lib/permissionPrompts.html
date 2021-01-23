@@ -1,3 +1,7 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -6,6 +10,7 @@
 </head>
 <body>
   <button id="geo" onclick="navigator.geolocation.getCurrentPosition(() => {})">Geolocation</button>
+  <button id="xr" onclick="content.navigator.getVRDisplays();">WebXR</button>
   <button id="persistent-storage" onclick="navigator.storage.persist()">Persistent Storage</button>
   <button id="webRTC-shareDevices" onclick="shareDevice({video: true, fake: true});">Video</button>
   <button id="webRTC-shareMicrophone" onclick="shareDevice({audio: true, fake: true});">Audio</button>
@@ -15,7 +20,7 @@
   <a id="addons" href="borderify.xpi">Install Add-On</a>
   <form>
     <input type="email" id="email" value="email@example.com" />
-    <input type="password" id="password" value="123456" />
+    <input type="password" id="password" value="" />
     <button type="submit" id="login-capture">Login</button>
   </form>
 

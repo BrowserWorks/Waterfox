@@ -20,19 +20,27 @@
 #elif defined(XP_WIN)
 #  include "nsWinRemoteServer.h"
 #  include "nsWinRemoteClient.h"
+#elif defined(XP_DARWIN)
+#  include "nsMacRemoteServer.h"
+#  include "nsMacRemoteClient.h"
 #endif
 #include "nsRemoteService.h"
 
-#include "nsAutoPtr.h"
+#include "nsIObserverService.h"
 #include "nsString.h"
 #include "nsServiceManagerUtils.h"
 #include "mozilla/ModuleUtils.h"
 #include "SpecialSystemDirectory.h"
 #include "mozilla/CmdLineAndEnvUtils.h"
+#include "mozilla/UniquePtr.h"
 
 // Time to wait for the remoting service to start
 #define START_TIMEOUT_SEC 5
 #define START_SLEEP_MSEC 100
+
+// When MOZ_DBUS_REMOTE is set both X11 and Wayland backends
+// use only DBus remote.
+#define DBUS_REMOTE_ENV "MOZ_DBUS_REMOTE"
 
 using namespace mozilla;
 
@@ -77,10 +85,10 @@ void nsRemoteService::LockStartup() {
 }
 
 void nsRemoteService::UnlockStartup() {
-  mRemoteLock.Unlock();
-  mRemoteLock.Cleanup();
-
   if (mRemoteLockDir) {
+    mRemoteLock.Unlock();
+    mRemoteLock.Cleanup();
+
     mRemoteLockDir->Remove(false);
     mRemoteLockDir = nullptr;
   }
@@ -91,21 +99,23 @@ RemoteResult nsRemoteService::StartClient(const char* aDesktopStartupID) {
     return REMOTE_NOT_FOUND;
   }
 
-  nsAutoPtr<nsRemoteClient> client;
+  UniquePtr<nsRemoteClient> client;
 
 #ifdef MOZ_WIDGET_GTK
   bool useX11Remote = GDK_IS_X11_DISPLAY(gdk_display_get_default());
 
 #  if defined(MOZ_ENABLE_DBUS)
-  if (!useX11Remote) {
-    client = new nsDBusRemoteClient();
+  if (!useX11Remote || getenv(DBUS_REMOTE_ENV)) {
+    client = MakeUnique<nsDBusRemoteClient>();
   }
 #  endif
-  if (useX11Remote) {
-    client = new nsXRemoteClient();
+  if (!client && useX11Remote) {
+    client = MakeUnique<nsXRemoteClient>();
   }
 #elif defined(XP_WIN)
-  client = new nsWinRemoteClient();
+  client = MakeUnique<nsWinRemoteClient>();
+#elif defined(XP_DARWIN)
+  client = MakeUnique<nsMacRemoteClient>();
 #else
   return REMOTE_NOT_FOUND;
 #endif
@@ -144,15 +154,17 @@ void nsRemoteService::StartupServer() {
   bool useX11Remote = GDK_IS_X11_DISPLAY(gdk_display_get_default());
 
 #  if defined(MOZ_ENABLE_DBUS)
-  if (!useX11Remote) {
+  if (!useX11Remote || getenv(DBUS_REMOTE_ENV)) {
     mRemoteServer = MakeUnique<nsDBusRemoteServer>();
   }
 #  endif
-  if (useX11Remote) {
+  if (!mRemoteServer && useX11Remote) {
     mRemoteServer = MakeUnique<nsGTKRemoteServer>();
   }
 #elif defined(XP_WIN)
   mRemoteServer = MakeUnique<nsWinRemoteServer>();
+#elif defined(XP_DARWIN)
+  mRemoteServer = MakeUnique<nsMacRemoteServer>();
 #else
   return;
 #endif
@@ -174,7 +186,10 @@ void nsRemoteService::StartupServer() {
 
 void nsRemoteService::ShutdownServer() { mRemoteServer = nullptr; }
 
-nsRemoteService::~nsRemoteService() { ShutdownServer(); }
+nsRemoteService::~nsRemoteService() {
+  UnlockStartup();
+  ShutdownServer();
+}
 
 NS_IMETHODIMP
 nsRemoteService::Observe(nsISupports* aSubject, const char* aTopic,

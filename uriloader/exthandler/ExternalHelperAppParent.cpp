@@ -13,12 +13,13 @@
 #include "mozilla/dom/ContentParent.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/BrowserParent.h"
-#include "nsIBrowserDOMWindow.h"
 #include "nsStringStream.h"
 #include "mozilla/ipc/URIUtils.h"
 #include "nsNetUtil.h"
 #include "mozilla/dom/Document.h"
 #include "mozilla/net/ChannelDiverterParent.h"
+#include "mozilla/dom/CanonicalBrowsingContext.h"
+#include "mozilla/dom/WindowGlobalParent.h"
 
 #include "mozilla/Unused.h"
 
@@ -33,11 +34,11 @@ NS_IMPL_ISUPPORTS_INHERITED(ExternalHelperAppParent, nsHashPropertyBag,
                             nsIStreamListener, nsIExternalHelperAppParent)
 
 ExternalHelperAppParent::ExternalHelperAppParent(
-    const Maybe<URIParams>& uri, const int64_t& aContentLength,
-    const bool& aWasFileChannel, const nsCString& aContentDispositionHeader,
+    nsIURI* uri, const int64_t& aContentLength, const bool& aWasFileChannel,
+    const nsCString& aContentDispositionHeader,
     const uint32_t& aContentDispositionHint,
     const nsString& aContentDispositionFilename)
-    : mURI(DeserializeURI(uri)),
+    : mURI(uri),
       mPending(false)
 #ifdef DEBUG
       ,
@@ -47,12 +48,13 @@ ExternalHelperAppParent::ExternalHelperAppParent(
       mIPCClosed(false),
       mLoadFlags(0),
       mStatus(NS_OK),
+      mCanceled(false),
       mContentLength(aContentLength),
       mWasFileChannel(aWasFileChannel) {
   mContentDispositionHeader = aContentDispositionHeader;
   if (!mContentDispositionHeader.IsEmpty()) {
     NS_GetFilenameFromDisposition(mContentDispositionFilename,
-                                  mContentDispositionHeader, mURI);
+                                  mContentDispositionHeader);
     mContentDisposition =
         NS_GetContentDispositionFromHeader(mContentDispositionHeader, this);
   } else {
@@ -61,33 +63,11 @@ ExternalHelperAppParent::ExternalHelperAppParent(
   }
 }
 
-already_AddRefed<nsIInterfaceRequestor> GetWindowFromBrowserParent(
-    PBrowserParent* aBrowser) {
-  if (!aBrowser) {
-    return nullptr;
-  }
-
-  nsCOMPtr<nsIInterfaceRequestor> window;
-  BrowserParent* browserParent = BrowserParent::GetFrom(aBrowser);
-  if (browserParent->GetOwnerElement()) {
-    window = do_QueryInterface(
-        browserParent->GetOwnerElement()->OwnerDoc()->GetWindow());
-  }
-
-  return window.forget();
-}
-
-void UpdateContentContext(nsIStreamListener* aListener,
-                          PBrowserParent* aBrowser) {
-  MOZ_ASSERT(aListener);
-  nsCOMPtr<nsIInterfaceRequestor> window = GetWindowFromBrowserParent(aBrowser);
-  static_cast<nsExternalAppHandler*>(aListener)->SetContentContext(window);
-}
-
 void ExternalHelperAppParent::Init(
     const Maybe<mozilla::net::LoadInfoArgs>& aLoadInfoArgs,
     const nsCString& aMimeContentType, const bool& aForceSave,
-    const Maybe<URIParams>& aReferrer, PBrowserParent* aBrowser) {
+    nsIURI* aReferrer, BrowsingContext* aContext,
+    const bool& aShouldCloseWindow) {
   mozilla::ipc::LoadInfoArgsToLoadInfo(aLoadInfoArgs,
                                        getter_AddRefs(mLoadInfo));
 
@@ -95,26 +75,31 @@ void ExternalHelperAppParent::Init(
       do_GetService(NS_EXTERNALHELPERAPPSERVICE_CONTRACTID);
   NS_ASSERTION(helperAppService, "No Helper App Service!");
 
-  nsCOMPtr<nsIURI> referrer = DeserializeURI(aReferrer);
-  if (referrer)
+  if (aReferrer) {
     SetPropertyAsInterface(NS_LITERAL_STRING("docshell.internalReferrer"),
-                           referrer);
-
-  nsCOMPtr<nsIInterfaceRequestor> window;
-  if (aBrowser) {
-    BrowserParent* browserParent = BrowserParent::GetFrom(aBrowser);
-    if (browserParent->GetOwnerElement())
-      window = do_QueryInterface(
-          browserParent->GetOwnerElement()->OwnerDoc()->GetWindow());
-
-    bool isPrivate = false;
-    nsCOMPtr<nsILoadContext> loadContext = browserParent->GetLoadContext();
-    loadContext->GetUsePrivateBrowsing(&isPrivate);
-    SetPrivate(isPrivate);
+                           aReferrer);
   }
 
-  helperAppService->DoContent(aMimeContentType, this, window, aForceSave,
-                              nullptr, getter_AddRefs(mListener));
+  if (aContext) {
+    WindowGlobalParent* parent =
+        aContext->Canonical()->GetCurrentWindowGlobal();
+    if (parent) {
+      RefPtr<BrowserParent> browser = parent->GetBrowserParent();
+      if (browser) {
+        bool isPrivate = false;
+        nsCOMPtr<nsILoadContext> loadContext = browser->GetLoadContext();
+        loadContext->GetUsePrivateBrowsing(&isPrivate);
+        SetPrivate(isPrivate);
+      }
+    }
+  }
+
+  helperAppService->CreateListener(aMimeContentType, this, aContext, aForceSave,
+                                   nullptr, getter_AddRefs(mListener));
+
+  if (mListener && aShouldCloseWindow) {
+    mListener->SetShouldCloseWindow();
+  }
 }
 
 void ExternalHelperAppParent::ActorDestroy(ActorDestroyReason why) {
@@ -128,11 +113,9 @@ void ExternalHelperAppParent::Delete() {
 }
 
 mozilla::ipc::IPCResult ExternalHelperAppParent::RecvOnStartRequest(
-    const nsCString& entityID, PBrowserParent* contentContext) {
+    const nsCString& entityID) {
   MOZ_ASSERT(!mDiverted,
              "child forwarding callbacks after request was diverted");
-
-  UpdateContentContext(mListener, contentContext);
 
   mEntityID = entityID;
   mPending = true;
@@ -142,7 +125,9 @@ mozilla::ipc::IPCResult ExternalHelperAppParent::RecvOnStartRequest(
 
 mozilla::ipc::IPCResult ExternalHelperAppParent::RecvOnDataAvailable(
     const nsCString& data, const uint64_t& offset, const uint32_t& count) {
-  if (NS_FAILED(mStatus)) return IPC_OK();
+  if (NS_FAILED(mStatus)) {
+    return IPC_OK();
+  }
 
   MOZ_ASSERT(!mDiverted,
              "child forwarding callbacks after request was diverted");
@@ -171,9 +156,8 @@ mozilla::ipc::IPCResult ExternalHelperAppParent::RecvOnStopRequest(
 }
 
 mozilla::ipc::IPCResult ExternalHelperAppParent::RecvDivertToParentUsing(
-    PChannelDiverterParent* diverter, PBrowserParent* contentContext) {
+    PChannelDiverterParent* diverter) {
   MOZ_ASSERT(diverter);
-  UpdateContentContext(mListener, contentContext);
   auto p = static_cast<mozilla::net::ChannelDiverterParent*>(diverter);
   p->DivertTo(this);
 #ifdef DEBUG
@@ -239,8 +223,15 @@ ExternalHelperAppParent::GetStatus(nsresult* aResult) {
 
 NS_IMETHODIMP
 ExternalHelperAppParent::Cancel(nsresult aStatus) {
+  mCanceled = true;
   mStatus = aStatus;
   Unused << SendCancel(aStatus);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+ExternalHelperAppParent::GetCanceled(bool* aCanceled) {
+  *aCanceled = mCanceled;
   return NS_OK;
 }
 
@@ -291,6 +282,16 @@ NS_IMETHODIMP
 ExternalHelperAppParent::SetLoadFlags(nsLoadFlags aLoadFlags) {
   mLoadFlags = aLoadFlags;
   return NS_OK;
+}
+
+NS_IMETHODIMP
+ExternalHelperAppParent::GetTRRMode(nsIRequest::TRRMode* aTRRMode) {
+  return GetTRRModeImpl(aTRRMode);
+}
+
+NS_IMETHODIMP
+ExternalHelperAppParent::SetTRRMode(nsIRequest::TRRMode aTRRMode) {
+  return SetTRRModeImpl(aTRRMode);
 }
 
 NS_IMETHODIMP
@@ -392,7 +393,9 @@ ExternalHelperAppParent::SetContentDisposition(uint32_t aContentDisposition) {
 NS_IMETHODIMP
 ExternalHelperAppParent::GetContentDispositionFilename(
     nsAString& aContentDispositionFilename) {
-  if (mContentDispositionFilename.IsEmpty()) return NS_ERROR_NOT_AVAILABLE;
+  if (mContentDispositionFilename.IsEmpty()) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
 
   aContentDispositionFilename = mContentDispositionFilename;
   return NS_OK;
@@ -408,7 +411,9 @@ ExternalHelperAppParent::SetContentDispositionFilename(
 NS_IMETHODIMP
 ExternalHelperAppParent::GetContentDispositionHeader(
     nsACString& aContentDispositionHeader) {
-  if (mContentDispositionHeader.IsEmpty()) return NS_ERROR_NOT_AVAILABLE;
+  if (mContentDispositionHeader.IsEmpty()) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
 
   aContentDispositionHeader = mContentDispositionHeader;
   return NS_OK;
@@ -416,10 +421,11 @@ ExternalHelperAppParent::GetContentDispositionHeader(
 
 NS_IMETHODIMP
 ExternalHelperAppParent::GetContentLength(int64_t* aContentLength) {
-  if (mContentLength < 0)
+  if (mContentLength < 0) {
     *aContentLength = -1;
-  else
+  } else {
     *aContentLength = mContentLength;
+  }
   return NS_OK;
 }
 

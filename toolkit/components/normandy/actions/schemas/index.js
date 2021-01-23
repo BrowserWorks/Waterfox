@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 var EXPORTED_SYMBOLS = ["ActionSchemas"];
 
 const ActionSchemas = {
@@ -11,6 +15,62 @@ const ActionSchemas = {
         description: "Message to log to the console",
         type: "string",
         default: "",
+      },
+    },
+  },
+
+  "messaging-experiment": {
+    $schema: "http://json-schema.org/draft-04/schema#",
+    title: "Messaging Experiment",
+    type: "object",
+    required: ["slug", "branches", "isEnrollmentPaused"],
+    properties: {
+      slug: {
+        description: "Unique identifier for this experiment",
+        type: "string",
+        pattern: "^[A-Za-z0-9\\-_]+$",
+      },
+      isEnrollmentPaused: {
+        description: "If true, new users will not be enrolled in the study.",
+        type: "boolean",
+        default: true,
+      },
+      branches: {
+        description: "List of experimental branches",
+        type: "array",
+        minItems: 1,
+        items: {
+          type: "object",
+          required: ["slug", "value", "ratio", "groups"],
+          properties: {
+            slug: {
+              description:
+                "Unique identifier for this branch of the experiment.",
+              type: "string",
+              pattern: "^[A-Za-z0-9\\-_]+$",
+            },
+            value: {
+              description: "Message content.",
+              type: "object",
+              properties: {},
+            },
+            ratio: {
+              description:
+                "Ratio of users who should be grouped into this branch.",
+              type: "integer",
+              minimum: 1,
+            },
+            groups: {
+              description:
+                "A list of experiment groups that can be used to exclude or select related experiments. May be empty.",
+              type: "array",
+              items: {
+                type: "string",
+                description: "Identifier of the group",
+              },
+            },
+          },
+        },
       },
     },
   },
@@ -67,7 +127,13 @@ const ActionSchemas = {
     $schema: "http://json-schema.org/draft-04/schema#",
     title: "Enroll a user in an opt-out SHIELD study",
     type: "object",
-    required: ["name", "description", "addonUrl", "extensionApiId"],
+    required: [
+      "name",
+      "description",
+      "addonUrl",
+      "extensionApiId",
+      "isEnrollmentPaused",
+    ],
     properties: {
       name: {
         description: "User-facing name of the study",
@@ -93,7 +159,105 @@ const ActionSchemas = {
       isEnrollmentPaused: {
         description: "If true, new users will not be enrolled in the study.",
         type: "boolean",
-        default: false,
+        default: true,
+      },
+    },
+  },
+
+  "addon-rollout": {
+    $schema: "http://json-schema.org/draft-04/schema#",
+    title: "Install add-on permanently",
+    type: "object",
+    required: ["extensionApiId", "slug"],
+    properties: {
+      extensionApiId: {
+        description:
+          "The record ID of the extension used for Normandy API calls.",
+        type: "integer",
+      },
+      slug: {
+        description:
+          "Unique identifer for the rollout, used in telemetry and rollbacks.",
+        type: "string",
+        pattern: "^[a-z0-9\\-_]+$",
+      },
+    },
+  },
+
+  "addon-rollback": {
+    $schema: "http://json-schema.org/draft-04/schema#",
+    title: "Undo an add-on rollout",
+    type: "object",
+    required: ["rolloutSlug"],
+    properties: {
+      rolloutSlug: {
+        description: "Unique identifer for the rollout to undo.",
+        type: "string",
+        pattern: "^[a-z0-9\\-_]+$",
+      },
+    },
+  },
+
+  "branched-addon-study": {
+    $schema: "http://json-schema.org/draft-04/schema#",
+    title: "Enroll a user in an add-on experiment, with managed branches",
+    type: "object",
+    required: [
+      "slug",
+      "userFacingName",
+      "userFacingDescription",
+      "branches",
+      "isEnrollmentPaused",
+    ],
+    properties: {
+      slug: {
+        description: "Machine-readable identifier",
+        type: "string",
+        minLength: 1,
+      },
+      userFacingName: {
+        description: "User-facing name of the study",
+        type: "string",
+        minLength: 1,
+      },
+      userFacingDescription: {
+        description: "User-facing description of the study",
+        type: "string",
+        minLength: 1,
+      },
+      isEnrollmentPaused: {
+        description: "If true, new users will not be enrolled in the study.",
+        type: "boolean",
+        default: true,
+      },
+      branches: {
+        description: "List of experimental branches",
+        type: "array",
+        minItems: 1,
+        items: {
+          type: "object",
+          required: ["slug", "ratio", "extensionApiId"],
+          properties: {
+            slug: {
+              description:
+                "Unique identifier for this branch of the experiment.",
+              type: "string",
+              pattern: "^[A-Za-z0-9\\-_]+$",
+            },
+            ratio: {
+              description:
+                "Ratio of users who should be grouped into this branch.",
+              type: "integer",
+              minimum: 1,
+            },
+            extensionApiId: {
+              description:
+                "The record ID of the add-on uploaded to the Normandy server. May be null, in which case no add-on will be installed.",
+              type: ["number", "null"],
+              default: null,
+            },
+          },
+        },
       },
     },
   },
@@ -168,11 +332,17 @@ const ActionSchemas = {
     },
   },
 
-  "multiple-preference-experiment": {
+  "multi-preference-experiment": {
     $schema: "http://json-schema.org/draft-04/schema#",
     title: "Run a feature experiment activated by a set of preferences.",
     type: "object",
-    required: ["slug", "userFacingName", "userFacingDescription", "branches"],
+    required: [
+      "slug",
+      "userFacingName",
+      "userFacingDescription",
+      "branches",
+      "isEnrollmentPaused",
+    ],
     properties: {
       slug: {
         description: "Unique identifier for this experiment",
@@ -204,7 +374,7 @@ const ActionSchemas = {
       isEnrollmentPaused: {
         description: "If true, new users will not be enrolled in the study.",
         type: "boolean",
-        default: false,
+        default: true,
       },
       branches: {
         description: "List of experimental branches",
@@ -253,7 +423,11 @@ const ActionSchemas = {
                       type: ["string", "number", "boolean"],
                     },
                   },
-                  required: ["preferenceType", "preferenceValue"],
+                  required: [
+                    "preferenceType",
+                    "preferenceBranchType",
+                    "preferenceValue",
+                  ],
                 },
               },
             },
@@ -267,7 +441,13 @@ const ActionSchemas = {
     $schema: "http://json-schema.org/draft-04/schema#",
     title: "Run a feature experiment activated by a preference.",
     type: "object",
-    required: ["slug", "preferenceName", "preferenceType", "branches"],
+    required: [
+      "slug",
+      "preferenceName",
+      "preferenceType",
+      "branches",
+      "isEnrollmentPaused",
+    ],
     properties: {
       slug: {
         description: "Unique identifier for this experiment",
@@ -307,7 +487,7 @@ const ActionSchemas = {
       isEnrollmentPaused: {
         description: "If true, new users will not be enrolled in the study.",
         type: "boolean",
-        default: false,
+        default: true,
       },
       branches: {
         description: "List of experimental branches",

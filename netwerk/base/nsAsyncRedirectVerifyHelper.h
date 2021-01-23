@@ -7,12 +7,9 @@
 #define nsAsyncRedirectVerifyHelper_h
 
 #include "nsIRunnable.h"
-#include "nsIThread.h"
 #include "nsIChannelEventSink.h"
-#include "nsIInterfaceRequestor.h"
 #include "nsIAsyncVerifyRedirectCallback.h"
 #include "nsCOMPtr.h"
-#include "nsAutoPtr.h"
 #include "nsCycleCollectionParticipant.h"
 #include "mozilla/Attributes.h"
 

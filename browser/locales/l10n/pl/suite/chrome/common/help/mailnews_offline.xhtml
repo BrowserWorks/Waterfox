@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" > %brandDTD;]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Praca w trybie offline</title>
+  <link rel="stylesheet" href="helpFileLayout.css" type="text/css"/>
+  <link rel="stylesheet" href="chrome://communicator/skin/smileys.css" type="text/css"/>
+</head>
+
+<body>
+
+<h1 id="working_offline">Praca w trybie offline</h1>
+<!-- TODO: start localizing -->
+<p>&brandShortName; Mail &amp; Newsgroups includes advanced features to help
+ you manage your messaging needs when you are not connected to the Internet.
+ You can download mail and news messages before going offline for later
+ reading, and you can defer sending mail messages and newsgroup posts until
+ you get back online. All of these features are explained in this
+ document.</p>
+<!-- TODO: stop localizing -->
+ 
+<div class="contentsBox">W tym rozdziale:
+  <ul>
+    <li><a href="#setting_up_mozilla_mail_and_newsgroups_to_work_offline">Przygotowywanie Kuriera Poczty do pracy w trybie offline</a></li>
+    <li><a href="#downloading_all_messages_for_offline_use">Pobieranie wszystkich wiadomości do pracy w trybie offline</a></li>
+    <li><a href="#downloading_an_individual_folder_for_offline_use">Pobieranie wybranego folderu do pracy w trybie offline</a></li>
+    <li><a href="#downloading_selected_or_flagged_messages_for_offline_use">Pobieranie wybranych lub oznaczonych wiadomości do pracy w trybie offline</a></li>
+    <li><a href="#downloading_directory_entries_for_offline_use">Pobieranie wpisów z katalogu (LDAP) do pracy w trybie offline</a></li>
+    <li><a href="#setting_up_your_accounts_for_working_offline">Konfiguracja kont do pracy w trybie offline</a></li>
+    <li><a href="#selecting_items_for_offline_viewing">Wybór elementów dostępnych w trybie offline</a></li>
+    <li><a href="#downloading_and_synchronizing_your_messages">Pobieranie i synchronizacja wiadomości</a></li>
+    <li><a href="#working_offline_and_reconnecting_later">Praca w trybie offline i późniejsze ponowne łączenie</a></li>
+  </ul>
+</div>
+
+<h2 id="setting_up_mozilla_mail_and_newsgroups_to_work_offline">Przygotowywanie Kuriera Poczty do pracy w trybie offline</h2>
+
+<p>Praca Kuriera Poczty &brandShortName; w trybie offline umożliwia pobranie wiadomości e-mail i odczytywanie ich przy braku połączenia z siecią Internet. Jeżeli użytkownik łączy się z siecią Internet za pomocą modemu telefonicznego (połączenie wdzwaniane, ang. dial-up) umożliwia to skrócenie czasu połączenia. Umożliwia to również dostęp do wiadomości po odłączeniu się od sieci firmowej, w trakcie podróży lub zmiany miejsca pracy. Funkcjonalność ta zapewnia automatyczne pobieranie nowych przychodzących wiadomości i wysyłanie utworzonych wiadomości w trakcie ponownego połączenia.</p>
+
+<p>Należy zauważyć, że wiadomości z kont POP są domyślnie pobierane, co oznacza, że większość funkcjonalności pracy w trybie offline nie jest związana z kontami POP.</p>
+
+<p>Jeżeli użytkownik ma zamiar okazjonalnie pracować w trybie offline, Kurier Poczty &brandShortName; pozwala:</p>
+
+<ul>
+  <li>Pobrać folder Odebrane do pracy w trybie offline.</li>
+  <li>Pobrać wybrany folder do pracy w trybie offline.</li>
+  <li>Pobrać tylko wybrane lub oznaczone wiadomości do pracy w trybie offline.</li>
+  <li>Pobrać wpisy z katalogu w Twojej książce adresowej do pracy w trybie offline.</li>
+</ul>
+
+<p>Jeżeli użytkownik często pracuje w trybie offline, Kurier Poczty &brandShortName; pozwala również:</p>
+
+<ul>
+  <li>Skonfigurować jedno lub więcej kont do użycia w trybie offline.</li>
+  <li>Skonfigurować preferencje miejsca na dysku do pracy w trybie offline dla każdego z kont.</li>
+  <li>Wskazać foldery i grupy dyskusyjne, które mają być dostępne do pracy w trybie offline.</li>
+</ul>
+
+<p>[<a href="#working_offline">Na początek rozdziału</a>]</p>
+
+<h2 id="downloading_all_messages_for_offline_use">Pobieranie wszystkich wiadomości do pracy w trybie offline</h2>
+
+<p>Użytkownik może skonfigurować Kuriera Poczty &brandShortName; tak, aby automatycznie pobierał wiadomości do użycia w trybie offline. Przy późniejszym połączeniu z siecią Kurier Poczty automatycznie zsynchronizuje wiadomości z zawartością serwera.</p>
+
+<p>Wiadomości z kont POP są domyślnie pobierane do folderu Odebrane, co oznacza, że ta część nie odnosi się do kont POP.</p>
+
+<p>Aby automatycznie pobrać wiadomości do pracy w trybie offline, należy w oknie Kuriera Poczty:</p>
+
+<ol>
+  <li>Z menu Edycja wybrać Konfiguracja kont.</li>
+  <li>W lewej części okna, poniżej nazwy konta, które ma być używane w trybie offline, wybrać kategorię Synchronizacja i miejsce na dysku. Ta kategoria nie jest dostępna dla kont POP.</li>
+  <li>Zaznaczyć opcję <q>Przechowuj wiadomości dla tego konta lokalnie na komputerze</q>.</li>
+  <li>Nacisnąć przycisk OK.</li>
+  <li>Po pobraniu wiadomości kliknąć na wskaźniku trybu Online/Offline <img src="images/online.png" alt=""/> w prawym dolnym rogu okna Kuriera Poczty, aby przejść do trybu offline.</li>
+</ol>
+
+<p><strong>Uwaga</strong>: to ustawienie również dotyczy wszystkich nowo utworzonych folderów. Podczas gdy ustawienia dla poszczególnych kont mogą zostać nadpisane dla <a href="#downloading_an_individual_folder_for_offline_use">pojedynczych folderów</a>, to ustawienia dla poszczególnych folderów zostają <em>usunięte</em> przy zmianie zaznaczenia opcji <q>Przechowuj wiadomości dla tego konta lokalnie na komputerze</q>.</p>
+
+<p>Kurier Poczty &brandShortName; automatycznie pobiera wszystkie wiadomości znajdujące się w folderze Odebrane. Użytkownik może dzięki temu je przeczytać i odpowiedzieć na nie podczas pracy w trybie offline. Po rozłączeniu z siecią Kurier Poczty pozostaje uruchomiony, możliwa jest więc dalsza praca z dostępnymi wiadomościami.</p>
+
+<p>Aby połączyć się z siecią Internet i pracować w trybie online, należy:</p>
+
+<ul>
+  <li>Kliknąć na wskaźniku trybu Online/Offline <img src="images/offline.png" alt=""/> w prawym dolnym rogu okna Kuriera Poczty, aby wrócić do trybu online.</li>
+</ul>
+
+<p>Po powrocie do trybu online Kurier Poczty &brandShortName; automatycznie synchronizuje wiadomości w folderze Odebrane z serwerem, replikując każdą zmianę wprowadzoną przez użytkownika w czasie pracy w trybie offline.</p>
+
+<p><strong>Wskazówka</strong>: Kurier Poczty &brandShortName; zapisuje wszystkie wiadomości wysyłane w trakcie pracy w trybie offline w folderze Niewysłane w Lokalnych folderach. Aby skonfigurować Kuriera Poczty &brandShortName; do automatycznego wysyłania niewysłanych wiadomości po ponownym połączeniu, należy użyć Preferencji w menu <span class="mac">&brandShortName;</span><span class="noMac">Edit</span> do zmiany <a href="#network_and_storage_preferences">preferencji trybu offline</a> dla wszystkich kont użytkownika.</p>
+
+<p>[<a href="#working_offline">Na początek rozdziału</a>]</p>
+
+<h2 id="downloading_an_individual_folder_for_offline_use">Pobieranie wybranego folderu do pracy w trybie offline</h2>
+
+<p>Ta część nie odnosi się do kont POP, gdyż nie pozwalają one na zarządzanie folderami na serwerze.</p>
+
+<p>Aby pobrać zawartość określonego folderu do użycia w trybie offline, należy:</p>
+
+<ol>
+  <li>W lewej części okna Kuriera Poczty wybrać folder, który ma być pobrany do pracy w trybie offline.</li>
+  <li>Z menu Edycja wybrać Właściwości folderu. Wyświetlone zostanie okno dialogowe Właściwości folderu.</li>
+  <li>Wybrać kartę Synchronizacja.</li>
+  <li>Zaznaczyć <q>Wybrany folder będzie dostępny w trybie offline</q>.</li>
+  <li>Wybrać przycisk Pobierz teraz jeżeli wiadomości z tego folderu mają zostać pobrane lub kontynuować pracę i przy gotowości do przejścia w tryb offline przejść do następnego kroku.</li>
+  <li>Kliknąć na ikonie oznaczającej pracę w trybie Online/Offline <img src="images/online.png" alt=""/> w prawym dolnym rogu okna Kuriera Poczty, aby przejść do trybu offline.</li>
+  <li>W oknie dialogowym Pracuj w trybie offline nacisnąć przycisk Pobierz.</li>
+</ol>
+
+<p>Kurier Poczty &brandShortName; automatycznie pobierze wszystkie wiadomości w wybranym folderze, aby możliwe było ich odczytanie i odpowiedzenie na nie w trakcie pracy w trybie offline. Po rozłączeniu Kurier Poczty &brandShortName; pozostanie uruchomiony, umożliwiając dalszą pracę z wiadomościami.</p>
+
+<p><strong>Uwaga</strong>: nagłówki wiadomości pobranych do pracy w trybie offline oznaczone są ciemnoszarą kopertą lub ikoną grup dyskusyjnych.</p>
+
+<p>Aby połączyć się z siecią Internet i pracować w trybie online, należy:</p>
+
+<ul>
+  <li>Kliknąć na ikonie oznaczającej pracę w trybie Online/Offline <img src="images/offline.png" alt=""/> w prawym dolnym rogu okna Kuriera Poczty, aby przejść do trybu offline.</li>
+</ul>
+
+<p>Kurier Poczty &brandShortName; automatycznie zsynchronizuje zawartość folderów dostępnych w trybie offline z zawartością folderów na serwerze, wprowadzając zmiany dokonane podczas pracy w trybie offline.</p>
+
+<p><strong>Wskazówka</strong>: Kurier Poczty &brandShortName; zapisuje wszystkie wiadomości wysłane w trakcie pracy w trybie offline w katalogu Niewysłane w Lokalnych Folderach. Po ponownym połączeniu, aby wysłać zapisane w nim wiadomości, należy wybrać Wyślij niewysłane wiadomości z menu Plik. Aby Kurier Poczty automatycznie wysyłał niewysłane wiadomości po ponownym połączeniu z siecią, należy zmienić <a href="#network_and_storage_preferences">preferencje trybu offline i miejsca na dysku</a>.</p>
+
+<p>[<a href="#working_offline">Na początek rozdziału</a>]</p>
+
+<h2 id="downloading_selected_or_flagged_messages_for_offline_use">Pobieranie wybranych lub oznaczonych wiadomości do pracy w trybie offline</h2>
+
+<p>Wiadomości z kont POP są domyślnie pobierane, ale jeżeli w konfiguracji serwera konta POP zaznaczona jest opcja <q>Pobierz tylko nagłówki</q>, to pobierane będą tylko nagłówki wiadomości. Aby pobrać pełną treść wiadomości należy skorzystać z porad z tego rozdziału.</p>
+
+<p>Aby pobrać wybrane wiadomości do pracy z nimi w trybie offline, należy w oknie Kuriera Poczty:</p>
+
+<ol>
+  <li>Wybrać katalog z wiadomościami e-mail lub wiadomościami z grupy dyskusyjnej, aby wyświetlić listę wiadomości.</li>
+  <li>Wybrać wiadomości do pobrania w wybrany sposób:
+    <ul>
+      <li>Aby wybrać grupę sąsiadujących wiadomości, należy kliknąć na pierwszej wiadomości z grupy, a następnie, trzymając wciśnięty klawisz Shift, kliknąć na ostatniej wiadomości w grupie.</li>
+      <li>Aby wybrać grupę wiadomości w różnych częściach listy, należy klikać na wybieranych wiadomościach, trzymając wciśnięty klawisz <kbd class="mac">Cmd</kbd>/<kbd class="noMac">Ctrl</kbd>.</li>
+    </ul>
+  </li>
+  <li>Z menu Plik wybrać Tryb offline, a następnie Pobierz wybrane wiadomości. Kurier Poczty &brandShortName; pobierze wybrane wiadomości.</li>
+</ol>
+
+<p>Aby pobrać oznaczone wiadomości do pracy z nimi w trybie offline, należy w oknie Kuriera Poczty:</p>
+
+<ol>
+  <li>Wybrać katalog z wiadomościami e-mail lub wiadomościami z grupy dyskusyjnej, aby wyświetlić listę wiadomości.</li>
+  <li>Kliknąć w kolumnie z flagą przy wiadomościach, które mają zostać pobrane. Flaga pojawi się po kliknięciu. Jeżeli kolumna nie jest widoczna, należy nacisnąć przycisk na prawym końcu nagłówka listy wiadomości (<img src="images/columns.png" alt=""/>) i wybrać z listy pozycję Oznaczone.</li>
+  <li>Z menu Plik wybrać Tryb offline, a następnie Pobierz oznaczone wiadomości. Kurier Poczty &brandShortName; pobierze oznaczone wiadomości.</li>
+</ol>
+
+<p>Po zakończeniu pobierania należy kliknąć na ikonie oznaczającej pracę w trybie Online/Offline <img src="images/online.png" alt=""/> w prawym dolnym rogu okna Kuriera Poczty, aby przejść do trybu offline. Po rozłączeniu Kurier Poczty &brandShortName; pozostanie uruchomiony umożliwiając dalszą pracę z wiadomościami.</p>
+
+<p>Należy zauważyć, że pozycje menu <q>Pobierz wybrane wiadomości</q> oraz <q>Pobierz oznaczone wiadomości</q> są również dostępne w menu kontekstowych tych wiadomości.</p>
+
+<p><strong>Uwaga</strong>: przy nagłówkach wiadomości pobranych do czytania w trybie offline wyświetlane są ciemniejsze szare koperty lub ikony wiadomości grup dyskusyjnych.</p>
+
+<p>Aby połączyć się ponownie z siecią Internet do pracy w trybie online, należy:</p>
+
+<ul>
+  <li>Kliknąć na ikonie wskaźnika pracy w trybie Online/Offline <img src="images/offline.png"
+    alt=""/> w prawym dolnym rogu okna Kuriera Poczty.</li>
+</ul>
+
+<p><strong>Wskazówka</strong>: Kurier Poczty &brandShortName; zapisuje wszystkie wiadomości wysłane w trakcie pracy w trybie offline w katalogu Niewysłane, mieszczącym się w katalogu Katalogi Lokalne. Po ponownym połączeniu do sieci Internet należy wybrać Wyślij niewysłane wiadomości z menu Plik, aby wysłać wszystkie wiadomości. Aby Kurier Poczty &brandShortName; automatycznie wysyłał niewysłane wiadomości po ponownym podłączeniu do sieci Internet, należy zmienić preferencje <a href="#network_and_storage_preferences">trybu offline</a> za pomocą opcji Preferencje <span class="mac">&brandShortName;</span> <span class="noMac">w menu Edycja</span>.</p>
+
+<p>[<a href="#working_offline">Na początek rozdziału</a>]</p>
+
+<h2 id="downloading_directory_entries_for_offline_use">Pobieranie wpisów z katalogu (LDAP) do pracy w trybie offline</h2>
+
+<p>Wpisy adresowe z katalogu można pobrać (skopiować) z serwera usług katalogowych, aby były dostępne lokalnie do pracy w trybie offline. Po pobraniu wpisów z katalogu w ten sam sposób można uaktualnić wpisy w lokalnej kopii katalogu, pobierając je ponownie z serwera.</p>
+
+<p>Aby pobrać z serwera lub uaktualnić lokalnie książkę adresową z katalogu LDAP do pracy w trybie offline, należy:</p>
+
+<ol>
+  <li>Upewnić się, że pracuje się w trybie online.</li>
+  <li>Z menu Okno wybrać Książka adresowa.</li>
+  <li>W oknie Książka adresowa wybrać katalog do pobrania (skopiowania).</li>
+  <li>Nacisnąć przycisk Właściwości na pasku narzędzi Książki adresowej. Wyświetlone zostanie okno dialogowe Właściwości serwera usług katalogowych.</li>
+  <li>Wybrać kartę Offline.</li>
+  <li>Nacisnąć przycisk Pobierz teraz, aby rozpocząć kopiowanie wpisów na lokalny komputer.</li>
+  <li>W przypadku wyświetlenia okna z prośbą, wprowadzić nazwę użytkownika serwera (konta pocztowego) i hasło oraz nacisnąć przycisk OK, aby rozpocząć pobieranie.
+
+    <p>Czas pobierania zależy od ilości wpisów, może to trochę potrwać.</p>
+  </li>
+</ol>
+
+<p>Po zakończeniu pobierania użytkownik może przeszukiwać katalog w trybie offline oraz używać go do automatycznego uzupełniania adresów w trakcie tworzenia wiadomości. Po pewnym czasie używania lokalnej kopii katalogu może wystąpić potrzeba uaktualnienia jej nowszymi wpisami. W tym celu należy użyć procedury opisanej powyżej.</p>
+
+<p>[<a href="#working_offline">Na początek rozdziału</a>]</p>
+
+<h2 id="setting_up_your_accounts_for_working_offline">Konfiguracja kont do pracy w trybie offline</h2>
+
+<p>Aby skonfigurować jedno lub więcej kont do pracy w trybie offline, należy użyć preferencji Trybu offline w oknie dialogowym Kuriera Poczty Konfiguracja kont. Po jednorazowym ustawieniu ich nie ma potrzeby dokonywania zmian przed każdym rozpoczęciem pracy w trybie offline. Zestaw dostępnych do ustawienia preferencji zależny jest od typu danego konta (IMAP, POP lub grup dyskusyjnych).</p>
+
+<p>Poniżej podsumowanie kroków, które należy wykonać, aby skonfigurować konta do pracy w trybie offline:</p>
+
+<ol> 
+  <li>Dla każdego konta, które ma być używane podczas pracy w trybie offline, należy użyć okna dialogowego Konfiguracja kont, aby ustawić preferencje dla synchronizacji i miejsca na dysku. Należy wskazać elementy (katalogi oraz grupy dyskusyjne), które mają być pobierane do pracy w trybie offline. Więcej w rozdziale <a href="#selecting_items_for_offline_viewing">Wybór elementów dostępnych w trybie offline</a>.
+
+    <p>Po ustawieniu nie ma potrzeby zmiany tych ustawień. Więcej o preferencjach trybu offline i miejsca na dysku w rozdziałach dla kont <a href="mailnews_account_settings.xhtml#synchronization_and_storage_settings_imap">IMAP</a>, <a href="mailnews_account_settings.xhtml#disk_space_settings_pop">POP</a>, <a href="mailnews_account_settings.xhtml#disk_space_settings_blogs">Blogi</a> i <a href="mailnews_account_settings.xhtml#synchronization_and_storage_settings_nntp">grup dyskusyjnych</a>.</p>
+
+    <p><strong>Wskazówka</strong>: aby skonfigurować preferencje synchronizacji i miejsca na dysku dla bieżącego konta, należy z menu Plik wybrać Tryb offline, a następnie Ustawienia trybu offline.</p>
+  </li>
+  <li>Z menu Plik wybrać Tryb offline i następnie Pobierz/Synchronizuj.</li>
+  <li>Wybrać typ wiadomości, które mają być pobierane.
+
+    <p><strong>Ważne</strong>: aby pobieranie działało, musi być wybrana co najmniej jedna kategoria (wiadomości pocztowe lub wiadomości grup dyskusyjnych).</p>
+  </li>
+  <li>Zaznaczyć opcję <q>Po zakończeniu pobierania i synchronizacji pracuj w trybie offline</q>.</li>
+  <li>Nacisnąć przycisk OK, aby pobrać wybrane elementy i przejść do trybu offline. Więcej informacji w rozdziale <a href="#downloading_and_synchronizing_your_messages">Pobieranie i synchronizacja wiadomości</a>.</li>
+</ol>
+
+<p>Dla kolejnych sesji offline można pominąć krok 1.</p>
+
+<p>[<a href="#working_offline">Na początek rozdziału</a>]</p>
+
+<h2 id="selecting_items_for_offline_viewing">Wybór elementów dostępnych w trybie offline</h2>
+
+<p>Zanim wiadomości pocztowe i z grup dyskusyjnych będą dostępne w trybie offline, należy wybrać je do pobierania. Można ustawić, aby całe konto lub poszczególne katalogi i grupy dyskusyjne były dostępne do wykorzystania w czasie pracy w trybie offline.</p>
+
+<p><strong>Uwaga</strong>: należy pamiętać, że wybór większej ilości elementów może zwiększyć czas pobierania oraz zajętość miejsca na dysku.</p>
+
+<p>Aby wybrać konta, katalogi i grupy dyskusyjne do przeglądania w trybie offline, należy w oknie Kuriera Poczty:</p>
+
+<ol>
+  <li>Z menu Edycja wybrać Konfiguracja kont. Wyświetlone zostanie okno dialogowe Konfiguracja kont.</li>
+  <li>Wybrać kategorię Synchronizacja i miejsce na dysku dla konta, którego ustawienia mają być zmieniane.</li>
+  <li>Nacisnąć przycisk <q>Zaawansowane</q>, aby wyświetlić foldery konta IMAP lub <q>Wybierz grupy dostępne w trybie offline</q>, aby wyświetlić subskrybowane przy pomocy tego konta grupy dyskusyjne.
+
+    <p><strong>Uwaga</strong>: widoczne są tylko grupy dyskusyjne, które już są <a href="mailnews_newsgroups.xhtml#subscribing_to_newsgroups">subskrybowane</a>. Konta POP oraz lokalne katalogi pocztowe nie są wyświetlane na liście.</p>
+  </li>
+  <li>Wybrać elementy (katalogi, grupy dyskusyjne), które mają być dostępne w trybie offline.</li>
+  <li>Nacisnąć przycisk OK.</li>
+</ol>
+
+<p>Po jednorazowym ustawieniu nie ma potrzeby dokonywania zmian przed każdym rozpoczęciem pracy w trybie offline. Jeżeli jednak zajdzie potrzeba zmiany, można to zrobić przed przejściem w tryb offline. Dostępny w trybie offline przycisk Wybierz foldery, jest również dostępny w trakcie używania polecenia <a href="#downloading_and_synchronizing_your_messages">Pobieranie i synchronizacja wiadomości</a>.</p>
+
+<p>[<a href="#working_offline">Na początek rozdziału</a>]</p>
+
+<h2 id="downloading_and_synchronizing_your_messages">Pobieranie i synchronizacja wiadomości</h2>
+
+<p>Jeżeli katalogi i grupy dyskusyjne do pracy w trybie offline zostały już wybrane, można rozpocząć ich pobieranie i synchronizację. Jeżeli nie zostały wybrane, to można je wybrać przed przejściem w tryb offline.</p>
+
+<p>Jeżeli okno dialogowe Pobierz i zsynchronizuj wiadomości nie jest widoczne, należy wykonać następujące kroki:</p>
+
+<p>Aby pobrać i wykonać synchronizację wiadomości, należy w oknie Kuriera Poczty:</p>
+
+<ol>
+  <li>Z menu Plik wybrać Tryb offline i następnie Pobierz/Synchronizuj.</li>
+  <li>Wybrać kategorie (wiadomości pocztowe lub z grup dyskusyjnych), które mają zostać pobrane.
+
+    <p><strong>Ważne</strong>: aby pobieranie działało, musi być wybrana co najmniej jedna kategoria (wiadomości pocztowe lub wiadomości grup dyskusyjnych). Jeżeli pola wyboru nie są zaznaczone, to oznacza, że elementy do pobierania nie zostały jeszcze wybrane. Należy użyć przycisku Konfiguruj, aby wybrać elementy do pobierania.</p>
+  </li>
+  <li>Aby wysłać wiadomości z katalogu Niewysłane przed przejściem do trybu offline, należy zaznaczyć opcję <q>Wyślij niewysłane wiadomości</q>.</li>
+  <li>Aby przejść do trybu offline natychmiast po tym jak Kurier Poczty &brandShortName; zakończy pobieranie, należy zaznaczyć opcję <q>Po zakończeniu pobierania i synchronizacji pracuj w trybie offline</q>.</li>
+  <li>Aby wybrać lub zmienić wybrane wcześniej elementy do pobierania, należy nacisnąć przycisk Konfiguruj. Więcej informacji w rozdziale <a href="#selecting_items_for_offline_viewing">Wybór elementów dostępnych w trybie offline</a>. Można pominąć ten krok, jeżeli elementy do pobrania zostały już wybrane.</li>
+  <li>Nacisnąć przycisk OK. Kurier Poczty &brandShortName; rozpocznie pobieranie wybranych elementów.</li>
+</ol>
+
+<p>Jeżeli została wybrana opcja przejścia w tryb offline po zakończeniu pobierania, Kurier Poczty &brandShortName; natychmiast przełączy się do pracy w trybie offline. W przeciwnym wypadku można przejść do trybu offline klikając na ikonie wskaźnika trybu Online/Offline <img src="images/online.png" alt=""/> w prawym dolnym rogu okna Kuriera Poczty.</p>
+
+<p>[<a href="#working_offline">Na początek rozdziału</a>]</p>
+
+<h2 id="working_offline_and_reconnecting_later">Ponowne połączenie po pracy w trybie offline</h2>
+
+<p>Aby połączyć się ponownie po pracy w trybie offline, należy w oknie Kuriera Poczty wykonać następujące czynności:</p>
+
+<p>Przejście w tryb offline:</p>
+
+<ol>
+  <li>Kliknąć na ikonie wskaźnika Online/Offline <img src="images/online.png" alt=""/> w prawym dolnym rogu okna Kuriera Poczty. Kurier Poczty zapyta o pobranie wiadomości przed przejściem do trybu offline.</li>
+  <li>Nacisnąć przycisk Pobierz, aby pobrać wiadomości przed przejściem w tryb offline. Jeżeli wiadomości mają nie być pobierane przed przejściem w tryb offline, należy nacisnąć przycisk Nie pobieraj.</li>
+</ol>
+
+<p><strong>Uwaga</strong>: wiadomości pobrane do czytania w trybie offline oznaczone są ciemniejszymi szarymi kopertami lub ikonami wiadomości grup dyskusyjnych.</p>
+
+<p><strong>Wskazówka</strong>: aby skonfigurować w Kurierze Poczty &brandShortName; obsługę pobierania przed przejściem w tryb offline, należy z menu <span class="mac">&brandShortName;</span> <span class="noMac">Edycja</span> wybrać Preferencje i w kategorii Kurier Poczty podkategorię Sieć i miejsce na dysku. Jeśli podkategorie nie są widoczne, to aby rozwinąć listę, należy podwójnie kliknąć na Kurier Poczty. Można zdecydować, aby Kurier Poczty &brandShortName; pytał, czy pobrać wiadomości przed przejściem do trybu offline, aby automatycznie pobierał wiadomości lub aby nie pobierał żadnych wiadomości.</p>
+
+<p>Aby połączyć się ponownie i wykonać synchronizację wiadomości należy:</p>
+
+<ol>
+  <li>Kliknąć na ikonie wskaźnika trybu Online/Offline <img src="images/offline.png"
+    alt=""/> w prawym dolnym rogu dowolnego okna &brandShortName;.</li>
+  <li>Z menu Plik wybrać Tryb offline i następnie Pobierz/Synchronizuj.</li>
+</ol>
+
+<p>Kurier Poczty &brandShortName; synchronizuje wiadomości z serwerem replikując wszystkie zmiany wprowadzone podczas pracy w trybie offline.</p>
+
+<p><strong>Wskazówka</strong>: aby skonfigurować zachowanie Kuriera Poczty &brandShortName; przy przechodzeniu do trybu offline należy w menu <span class="mac">&brandShortName;</span> <span class="noMac">Edycja</span> wybrać Preferencje i podkategorię Sieć i miejsce na dysku. Można zdecydować, aby Kurier Poczty &brandShortName; pytał o wysłanie niewysłanych wiadomości, aby automatycznie wysyłał niewysłane wiadomości lub aby nie wysyłał niewysłanych wiadomości.</p>
+
+<p>[<a href="#working_offline">Na początek rozdziału</a>]</p>
+
+</body>
+</html>

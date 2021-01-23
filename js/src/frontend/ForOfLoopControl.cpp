@@ -6,9 +6,13 @@
 
 #include "frontend/ForOfLoopControl.h"
 
-#include "frontend/BytecodeEmitter.h"
-#include "frontend/EmitterScope.h"
-#include "frontend/IfEmitter.h"
+#include "jsapi.h"  // CompletionKind
+
+#include "frontend/BytecodeEmitter.h"  // BytecodeEmitter
+#include "frontend/EmitterScope.h"     // EmitterScope
+#include "frontend/IfEmitter.h"        // InternalIfEmitter
+#include "vm/JSScript.h"               // TryNoteKind::ForOfIterClose
+#include "vm/Opcodes.h"                // JSOp
 
 using namespace js;
 using namespace js::frontend;
@@ -37,14 +41,10 @@ bool ForOfLoopControl::emitBeginCodeNeedingIteratorClose(BytecodeEmitter* bce) {
 
 bool ForOfLoopControl::emitEndCodeNeedingIteratorClose(BytecodeEmitter* bce) {
   if (!tryCatch_->emitCatch()) {
-    //              [stack] ITER ...
-    return false;
-  }
-
-  if (!bce->emit1(JSOP_EXCEPTION)) {
     //              [stack] ITER ... EXCEPTION
     return false;
   }
+
   unsigned slotFromTop = bce->bytecodeSection().stackDepth() - iterDepth_;
   if (!bce->emitDupAt(slotFromTop)) {
     //              [stack] ITER ... EXCEPTION ITER
@@ -54,11 +54,11 @@ bool ForOfLoopControl::emitEndCodeNeedingIteratorClose(BytecodeEmitter* bce) {
   // If ITER is undefined, it means the exception is thrown by
   // IteratorClose for non-local jump, and we should't perform
   // IteratorClose again here.
-  if (!bce->emit1(JSOP_UNDEFINED)) {
+  if (!bce->emit1(JSOp::Undefined)) {
     //              [stack] ITER ... EXCEPTION ITER UNDEF
     return false;
   }
-  if (!bce->emit1(JSOP_STRICTNE)) {
+  if (!bce->emit1(JSOp::StrictNe)) {
     //              [stack] ITER ... EXCEPTION NE
     return false;
   }
@@ -85,7 +85,7 @@ bool ForOfLoopControl::emitEndCodeNeedingIteratorClose(BytecodeEmitter* bce) {
     return false;
   }
 
-  if (!bce->emit1(JSOP_THROW)) {
+  if (!bce->emit1(JSOp::Throw)) {
     //              [stack] ITER ...
     return false;
   }
@@ -100,7 +100,7 @@ bool ForOfLoopControl::emitEndCodeNeedingIteratorClose(BytecodeEmitter* bce) {
     }
 
     InternalIfEmitter ifGeneratorClosing(bce);
-    if (!bce->emit1(JSOP_ISGENCLOSING)) {
+    if (!bce->emit1(JSOp::IsGenClosing)) {
       //            [stack] ITER ... FTYPE FVALUE CLOSING
       return false;
     }
@@ -136,13 +136,13 @@ bool ForOfLoopControl::emitEndCodeNeedingIteratorClose(BytecodeEmitter* bce) {
 bool ForOfLoopControl::emitIteratorCloseInInnermostScopeWithTryNote(
     BytecodeEmitter* bce,
     CompletionKind completionKind /* = CompletionKind::Normal */) {
-  ptrdiff_t start = bce->bytecodeSection().offset();
+  BytecodeOffset start = bce->bytecodeSection().offset();
   if (!emitIteratorCloseInScope(bce, *bce->innermostEmitterScope(),
                                 completionKind)) {
     return false;
   }
-  ptrdiff_t end = bce->bytecodeSection().offset();
-  return bce->addTryNote(JSTRY_FOR_OF_ITERCLOSE, 0, start, end);
+  BytecodeOffset end = bce->bytecodeSection().offset();
+  return bce->addTryNote(TryNoteKind::ForOfIterClose, 0, start, end);
 }
 
 bool ForOfLoopControl::emitIteratorCloseInScope(
@@ -163,33 +163,33 @@ bool ForOfLoopControl::emitIteratorCloseInScope(
 // iterator.
 bool ForOfLoopControl::emitPrepareForNonLocalJumpFromScope(
     BytecodeEmitter* bce, EmitterScope& currentScope, bool isTarget,
-    ptrdiff_t* tryNoteStart) {
+    BytecodeOffset* tryNoteStart) {
   // Pop unnecessary value from the stack.  Effectively this means
   // leaving try-catch block.  However, the performing IteratorClose can
   // reach the depth for try-catch, and effectively re-enter the
   // try-catch block.
-  if (!bce->emit1(JSOP_POP)) {
+  if (!bce->emit1(JSOp::Pop)) {
     //              [stack] NEXT ITER
     return false;
   }
 
   // Pop the iterator's next method.
-  if (!bce->emit1(JSOP_SWAP)) {
+  if (!bce->emit1(JSOp::Swap)) {
     //              [stack] ITER NEXT
     return false;
   }
-  if (!bce->emit1(JSOP_POP)) {
+  if (!bce->emit1(JSOp::Pop)) {
     //              [stack] ITER
     return false;
   }
 
   // Clear ITER slot on the stack to tell catch block to avoid performing
   // IteratorClose again.
-  if (!bce->emit1(JSOP_UNDEFINED)) {
+  if (!bce->emit1(JSOp::Undefined)) {
     //              [stack] ITER UNDEF
     return false;
   }
-  if (!bce->emit1(JSOP_SWAP)) {
+  if (!bce->emit1(JSOp::Swap)) {
     //              [stack] UNDEF ITER
     return false;
   }
@@ -204,16 +204,16 @@ bool ForOfLoopControl::emitPrepareForNonLocalJumpFromScope(
     // At the level of the target block, there's bytecode after the
     // loop that will pop the next method, the iterator, and the
     // value, so push two undefineds to balance the stack.
-    if (!bce->emit1(JSOP_UNDEFINED)) {
+    if (!bce->emit1(JSOp::Undefined)) {
       //            [stack] UNDEF UNDEF
       return false;
     }
-    if (!bce->emit1(JSOP_UNDEFINED)) {
+    if (!bce->emit1(JSOp::Undefined)) {
       //            [stack] UNDEF UNDEF UNDEF
       return false;
     }
   } else {
-    if (!bce->emit1(JSOP_POP)) {
+    if (!bce->emit1(JSOp::Pop)) {
       //            [stack]
       return false;
     }

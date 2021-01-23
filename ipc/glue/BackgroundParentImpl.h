@@ -8,6 +8,7 @@
 #define mozilla_ipc_backgroundparentimpl_h__
 
 #include "mozilla/Attributes.h"
+#include "mozilla/ipc/InputStreamUtils.h"
 #include "mozilla/ipc/PBackgroundParent.h"
 
 namespace mozilla {
@@ -20,7 +21,14 @@ namespace ipc {
 
 // Instances of this class should never be created directly. This class is meant
 // to be inherited in BackgroundImpl.
-class BackgroundParentImpl : public PBackgroundParent {
+class BackgroundParentImpl : public PBackgroundParent,
+                             public ParentToChildStreamActorManager {
+ public:
+  PParentToChildStreamParent* SendPParentToChildStreamConstructor(
+      PParentToChildStreamParent* aActor) override;
+  PFileDescriptorSetParent* SendPFileDescriptorSetConstructor(
+      const FileDescriptor& aFD) override;
+
  protected:
   BackgroundParentImpl();
   virtual ~BackgroundParentImpl();
@@ -36,15 +44,15 @@ class BackgroundParentImpl : public PBackgroundParent {
   virtual bool DeallocPBackgroundTestParent(
       PBackgroundTestParent* aActor) override;
 
-  virtual PBackgroundIDBFactoryParent* AllocPBackgroundIDBFactoryParent(
-      const LoggingInfo& aLoggingInfo) override;
+  virtual already_AddRefed<PBackgroundIDBFactoryParent>
+  AllocPBackgroundIDBFactoryParent(const LoggingInfo& aLoggingInfo) override;
+
+  virtual already_AddRefed<net::PBackgroundDataBridgeParent>
+  AllocPBackgroundDataBridgeParent(const uint64_t& aChannelID) override;
 
   virtual mozilla::ipc::IPCResult RecvPBackgroundIDBFactoryConstructor(
       PBackgroundIDBFactoryParent* aActor,
       const LoggingInfo& aLoggingInfo) override;
-
-  virtual bool DeallocPBackgroundIDBFactoryParent(
-      PBackgroundIDBFactoryParent* aActor) override;
 
   virtual PBackgroundIndexedDBUtilsParent*
   AllocPBackgroundIndexedDBUtilsParent() override;
@@ -55,10 +63,12 @@ class BackgroundParentImpl : public PBackgroundParent {
   virtual mozilla::ipc::IPCResult RecvFlushPendingFileDeletions() override;
 
   virtual PBackgroundSDBConnectionParent* AllocPBackgroundSDBConnectionParent(
+      const PersistenceType& aPersistenceType,
       const PrincipalInfo& aPrincipalInfo) override;
 
   virtual mozilla::ipc::IPCResult RecvPBackgroundSDBConnectionConstructor(
       PBackgroundSDBConnectionParent* aActor,
+      const PersistenceType& aPersistenceType,
       const PrincipalInfo& aPrincipalInfo) override;
 
   virtual bool DeallocPBackgroundSDBConnectionParent(
@@ -131,21 +141,16 @@ class BackgroundParentImpl : public PBackgroundParent {
   virtual bool DeallocPBackgroundStorageParent(
       PBackgroundStorageParent* aActor) override;
 
-  virtual PPendingIPCBlobParent* AllocPPendingIPCBlobParent(
-      const IPCBlob& aBlob) override;
+  virtual already_AddRefed<PIdleSchedulerParent> AllocPIdleSchedulerParent()
+      override;
 
-  virtual bool DeallocPPendingIPCBlobParent(
-      PPendingIPCBlobParent* aActor) override;
-
-  virtual PIPCBlobInputStreamParent* AllocPIPCBlobInputStreamParent(
-      const nsID& aID, const uint64_t& aSize) override;
+  virtual already_AddRefed<PIPCBlobInputStreamParent>
+  AllocPIPCBlobInputStreamParent(const nsID& aID,
+                                 const uint64_t& aSize) override;
 
   virtual mozilla::ipc::IPCResult RecvPIPCBlobInputStreamConstructor(
       PIPCBlobInputStreamParent* aActor, const nsID& aID,
       const uint64_t& aSize) override;
-
-  virtual bool DeallocPIPCBlobInputStreamParent(
-      PIPCBlobInputStreamParent* aActor) override;
 
   virtual PTemporaryIPCBlobParent* AllocPTemporaryIPCBlobParent() override;
 
@@ -172,6 +177,17 @@ class BackgroundParentImpl : public PBackgroundParent {
       const RemoteWorkerData& aData) override;
 
   virtual bool DeallocPRemoteWorkerParent(PRemoteWorkerParent* aActor) override;
+
+  virtual mozilla::dom::PRemoteWorkerControllerParent*
+  AllocPRemoteWorkerControllerParent(
+      const mozilla::dom::RemoteWorkerData& aRemoteWorkerData) override;
+
+  virtual mozilla::ipc::IPCResult RecvPRemoteWorkerControllerConstructor(
+      mozilla::dom::PRemoteWorkerControllerParent* aActor,
+      const mozilla::dom::RemoteWorkerData& aRemoteWorkerData) override;
+
+  virtual bool DeallocPRemoteWorkerControllerParent(
+      mozilla::dom::PRemoteWorkerControllerParent* aActor) override;
 
   virtual mozilla::dom::PRemoteWorkerServiceParent*
   AllocPRemoteWorkerServiceParent() override;
@@ -202,6 +218,27 @@ class BackgroundParentImpl : public PBackgroundParent {
   virtual PVsyncParent* AllocPVsyncParent() override;
 
   virtual bool DeallocPVsyncParent(PVsyncParent* aActor) override;
+
+  already_AddRefed<mozilla::psm::PVerifySSLServerCertParent>
+  AllocPVerifySSLServerCertParent(
+      const ByteArray& aServerCert, const nsTArray<ByteArray>& aPeerCertChain,
+      const nsCString& aHostName, const int32_t& aPort,
+      const OriginAttributes& aOriginAttributes,
+      const Maybe<ByteArray>& aStapledOCSPResponse,
+      const Maybe<ByteArray>& aSctsFromTLSExtension,
+      const Maybe<DelegatedCredentialInfoArg>& aDcInfo,
+      const uint32_t& aProviderFlags,
+      const uint32_t& aCertVerifierFlags) override;
+
+  virtual mozilla::ipc::IPCResult RecvPVerifySSLServerCertConstructor(
+      PVerifySSLServerCertParent* aActor, const ByteArray& aServerCert,
+      nsTArray<ByteArray>&& aPeerCertChain, const nsCString& aHostName,
+      const int32_t& aPort, const OriginAttributes& aOriginAttributes,
+      const Maybe<ByteArray>& aStapledOCSPResponse,
+      const Maybe<ByteArray>& aSctsFromTLSExtension,
+      const Maybe<DelegatedCredentialInfoArg>& aDcInfo,
+      const uint32_t& aProviderFlags,
+      const uint32_t& aCertVerifierFlags) override;
 
   virtual PBroadcastChannelParent* AllocPBroadcastChannelParent(
       const PrincipalInfo& aPrincipalInfo, const nsCString& aOrigin,
@@ -282,14 +319,11 @@ class BackgroundParentImpl : public PBackgroundParent {
 
   virtual mozilla::ipc::IPCResult RecvShutdownQuotaManager() override;
 
-  virtual PFileSystemRequestParent* AllocPFileSystemRequestParent(
-      const FileSystemParams&) override;
+  virtual already_AddRefed<PFileSystemRequestParent>
+  AllocPFileSystemRequestParent(const FileSystemParams&) override;
 
   virtual mozilla::ipc::IPCResult RecvPFileSystemRequestConstructor(
       PFileSystemRequestParent* actor, const FileSystemParams& params) override;
-
-  virtual bool DeallocPFileSystemRequestParent(
-      PFileSystemRequestParent*) override;
 
   // Gamepad API Background IPC
   virtual PGamepadEventChannelParent* AllocPGamepadEventChannelParent()
@@ -309,14 +343,12 @@ class BackgroundParentImpl : public PBackgroundParent {
   virtual bool DeallocPWebAuthnTransactionParent(
       PWebAuthnTransactionParent* aActor) override;
 
-  virtual PHttpBackgroundChannelParent* AllocPHttpBackgroundChannelParent(
-      const uint64_t& aChannelId) override;
+  virtual already_AddRefed<PHttpBackgroundChannelParent>
+  AllocPHttpBackgroundChannelParent(const uint64_t& aChannelId) override;
 
   virtual mozilla::ipc::IPCResult RecvPHttpBackgroundChannelConstructor(
       PHttpBackgroundChannelParent* aActor,
       const uint64_t& aChannelId) override;
-  virtual bool DeallocPHttpBackgroundChannelParent(
-      PHttpBackgroundChannelParent* aActor) override;
 
   virtual PClientManagerParent* AllocPClientManagerParent() override;
 
@@ -380,6 +412,10 @@ class BackgroundParentImpl : public PBackgroundParent {
   virtual mozilla::ipc::IPCResult RecvRemoveEndpoint(
       const nsString& aGroupName, const nsCString& aEndpointURL,
       const PrincipalInfo& aPrincipalInfo) override;
+
+  virtual dom::PMediaTransportParent* AllocPMediaTransportParent() override;
+  virtual bool DeallocPMediaTransportParent(
+      dom::PMediaTransportParent* aActor) override;
 };
 
 }  // namespace ipc

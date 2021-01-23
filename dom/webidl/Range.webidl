@@ -12,17 +12,11 @@
  * liability, trademark and document use rules apply.
  */
 
-[Constructor]
-interface Range {
+[Exposed=Window]
+interface Range : AbstractRange {
   [Throws]
-  readonly attribute Node startContainer;
-  [Throws]
-  readonly attribute unsigned long startOffset;
-  [Throws]
-  readonly attribute Node endContainer;
-  [Throws]
-  readonly attribute unsigned long endOffset;
-  readonly attribute boolean collapsed;
+  constructor();
+
   [Throws]
   readonly attribute Node commonAncestorContainer;
 
@@ -73,7 +67,7 @@ interface Range {
   [Throws]
   boolean intersectsNode(Node node);
 
-  [Throws]
+  [Throws, BinaryName="ToString"]
   stringifier;
 };
 

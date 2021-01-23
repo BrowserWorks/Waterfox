@@ -7,10 +7,11 @@
 #ifndef mozilla_mscom_COMPtrHolder_h
 #define mozilla_mscom_COMPtrHolder_h
 
+#include <utility>
+
 #include "mozilla/Assertions.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/DebugOnly.h"
-#include "mozilla/Move.h"
 #include "mozilla/mscom/ProxyStream.h"
 #include "mozilla/mscom/Ptr.h"
 #if defined(MOZ_SANDBOX)
@@ -40,7 +41,7 @@ class COMPtrHolder {
 
   Interface* Get() const { return mPtr.get(); }
 
-  MOZ_MUST_USE Interface* Release() { return mPtr.release(); }
+  [[nodiscard]] Interface* Release() { return mPtr.release(); }
 
   void Set(COMPtrType&& aPtr) { mPtr = std::forward<COMPtrType>(aPtr); }
 

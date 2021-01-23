@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Обратни разписки">
+<!ENTITY useGlobalPrefs.label         "Използват се общите правила за обратни разписки">
+<!ENTITY useGlobalPrefs.accesskey     "И">
+<!ENTITY globalReceipts.label         "Общи настройки…">
+<!ENTITY globalReceipts.accesskey     "О">
+<!ENTITY useCustomPrefs.label         "Използват се следните правила за обратни разписки">
+<!ENTITY useCustomPrefs.accesskey     "т">
+<!ENTITY requestReceipt.label         "При изпращане на писмо, винаги се изисква обратна разписка">
+<!ENTITY requestReceipt.accesskey     "р">
+<!ENTITY receiptArrive.label          "При пристигане на обратна разписка:">
+<!ENTITY leaveIt.label                "Остава в папка Получени">
+<!ENTITY leaveIt.accesskey            "О">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "Премества се в папка &quot;Изпратени&quot;">
+<!ENTITY moveToSent.accesskey         "П">
+<!ENTITY requestMDN.label             "При получаване на заявка за обратна разписка:">
+<!ENTITY returnSome.label             "Изпраща се обратна разписка според следните правила">
+<!ENTITY returnSome.accesskey         "з">
+<!ENTITY never.label                  "Никога не се изпраща обратна разписка">
+<!ENTITY never.accesskey              "Н">
+<!ENTITY notInToCc.label              "Ако не съм в До или Копие на писмото:">
+<!ENTITY notInToCc.accesskey          "А">
+<!ENTITY outsideDomain.label          "Ако подателя е извън моя домейн:">
+<!ENTITY outsideDomain.accesskey      "й">
+<!ENTITY otherCases.label             "Във всички други случаи:">
+<!ENTITY otherCases.accesskey         "В">
+<!ENTITY askMe.label                  "Запитване">
+<!ENTITY alwaysSend.label             "Автоматично изпращане">
+<!ENTITY neverSend.label              "Никога не изпраща">

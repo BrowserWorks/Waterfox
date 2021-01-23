@@ -1,6 +1,7 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
+from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import sys
@@ -18,14 +19,9 @@ from mach.config import (
     StringType,
 )
 from mach.decorators import SettingsProvider
-
 from mozunit import main
+from six import string_types
 
-
-if sys.version_info[0] == 3:
-    str_type = str
-else:
-    str_type = basestring
 
 CONFIG1 = r"""
 [foo]
@@ -140,7 +136,8 @@ class TestConfigSettings(unittest.TestCase):
         a = s.a
 
         # Assigning an undeclared setting raises.
-        with self.assertRaises(AttributeError):
+        exc_type = AttributeError if sys.version_info < (3, 0) else KeyError
+        with self.assertRaises(exc_type):
             a.undefined = True
 
         with self.assertRaises(KeyError):
@@ -195,11 +192,11 @@ class TestConfigSettings(unittest.TestCase):
         a.int = -4
         a.path = './foo/bar'
 
-        self.assertIsInstance(a.string, str_type)
+        self.assertIsInstance(a.string, string_types)
         self.assertIsInstance(a.boolean, bool)
         self.assertIsInstance(a.pos_int, int)
         self.assertIsInstance(a.int, int)
-        self.assertIsInstance(a.path, str_type)
+        self.assertIsInstance(a.path, string_types)
 
     def test_retrieval_type(self):
         self.retrieval_type_helper(Provider2)

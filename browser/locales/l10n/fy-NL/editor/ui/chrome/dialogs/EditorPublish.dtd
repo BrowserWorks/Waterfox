@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label            "Side publisearje">
+<!ENTITY windowTitleSettings.label    "Publikaasjeynstellingen">
+<!ENTITY publishTab.label             "Publisearje">
+<!ENTITY settingsTab.label            "Ynstellingen">
+<!ENTITY publishButton.label          "Publisearje">
+
+<!-- Publish Tab Panel -->
+<!ENTITY siteList.label               "Websitenamme:">
+<!ENTITY siteList.accesskey           "e">
+<!ENTITY siteList.tooltip             "Kies de website dy't jo publisearje wolle">
+<!ENTITY newSiteButton.label          "Nij website">
+<!ENTITY newSiteButton.accesskey      "N">
+<!ENTITY docDirList.label             "websitesubmap foar dizze side:">
+<!ENTITY docDirList.accesskey         "W">
+<!ENTITY docDirList.tooltip           "Kies of fier de namme yn fan de submap dêr't jo yn publisearje wolle">
+<!ENTITY publishImgCheckbox.label     "Ofbyldingen en oare bestannen byfoegje">
+<!ENTITY publishImgCheckbox.accesskey "o">
+<!ENTITY publishImgCheckbox.tooltip   "Ofbyldingen en oare bestannen dy't dizze side nei ferwiist publisearje">
+<!ENTITY sameLocationRadio.label      "Deselde lokaasje as de side brûke">
+<!ENTITY sameLocationRadio.accesskey  "s">
+<!ENTITY sameLocationRadio.tooltip    "Bestannen publisearje op deselde lokaasje as de side">
+<!ENTITY useSubdirRadio.label         "Dizze websitesubmap brûke:">
+<!ENTITY useSubdirRadio.accesskey     "s">
+<!ENTITY useSubdirRadio.tooltip       "Bestannen publisearje yn de selektearre websitesubmap">
+<!ENTITY otherDirList.tooltip         "Kies of fier de namme yn fan de submap dy't de bestannen yn publisearre wurde sille">
+<!ENTITY pageTitle.label              "Sidetitel:">
+<!ENTITY pageTitle.accesskey          "t">
+<!ENTITY pageTitle.tooltip            "Fier in titel yn om de side te identifisearjen yn it finster en yn blêdwizers">
+<!ENTITY pageTitleExample.label       "byg. &quot;Myn webite&quot;">
+<!ENTITY filename.label               "Bestânsnamme:">
+<!ENTITY filename.accesskey           "B">
+<!ENTITY filename.tooltip             "Fier in namme yn foar dit bestân dat einiget op ‘html’ foar in webside">
+<!ENTITY filenameExample.label        "bgl. &quot;mynwebside.html&quot;">
+<!ENTITY setDefaultButton.label       "As standert ynstelle">
+<!ENTITY setDefaultButton.accesskey   "d">
+<!ENTITY removeButton.label           "website fuortsmite">
+<!ENTITY removeButton.accesskey       "f">
+
+<!-- Settings Tab Panel -->
+<!ENTITY publishSites.label           "Publikaasjewebsites">
+<!ENTITY serverInfo.label             "Serverynformaasje">
+<!ENTITY loginInfo.label              "Oanmeldynformaasje">
+<!ENTITY siteName.label               "websitenamme:">
+<!ENTITY siteName.accesskey           "e">
+<!ENTITY siteName.tooltip             "In bynamme om dizze publikaasjewebsite te identisearjen (byg. ‘Mynwebsite’)">
+<!ENTITY siteUrl.label                "Publikaasjeadres (byg. ‘ftp://ftp.myisp.com/myusername’):">
+<!ENTITY siteUrl.accesskey            "a">
+<!ENTITY siteUrl.tooltip              "It FTP://- of HTTP://-adres dat troch jo ISP- of webhostingservice jûn is">
+<!ENTITY browseUrl.label              "HTTP-adres fan jo thússide (byg. ‘http://www.mynisp.com/mynbrûkersnamme’):">
+<!ENTITY browseUrl.accesskey          "T">
+<!ENTITY browseUrl.tooltip            "It HTTP://-adres fan jo haadmap (sûnder bestânsnamme)">
+<!ENTITY username.label               "Brûkersnamme:">
+<!ENTITY username.accesskey           "B">
+<!ENTITY username.tooltip             "De brûkersnamme om oan te melden by jo ISP- of webhostingservice">
+<!ENTITY password.label               "Wachtwurd:">
+<!ENTITY password.accesskey           "W">
+<!ENTITY password.tooltip             "It wachtwurd dat by jo brûkersnamme heart">
+<!ENTITY savePassword.label           "Wachtwurd bewarje">
+<!ENTITY savePassword.accesskey       "b">
+<!ENTITY savePassword.tooltip         "Selektearje dit om jo wachtwurd feilich te bewarjen mei de wachtwurdbehearder">

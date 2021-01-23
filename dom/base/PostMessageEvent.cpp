@@ -8,6 +8,9 @@
 
 #include "MessageEvent.h"
 #include "mozilla/dom/BlobBinding.h"
+#include "mozilla/dom/BrowsingContext.h"
+#include "mozilla/dom/BrowsingContextGroup.h"
+#include "mozilla/dom/DocGroup.h"
 #include "mozilla/dom/DocumentInlines.h"
 #include "mozilla/dom/File.h"
 #include "mozilla/dom/FileList.h"
@@ -18,7 +21,9 @@
 #include "mozilla/dom/PMessagePort.h"
 #include "mozilla/dom/StructuredCloneTags.h"
 #include "mozilla/dom/UnionConversions.h"
+#include "mozilla/BasePrincipal.h"
 #include "mozilla/EventDispatcher.h"
+#include "mozilla/StaticPrefs_dom.h"
 #include "nsDocShell.h"
 #include "nsGlobalWindow.h"
 #include "nsIConsoleService.h"
@@ -35,19 +40,22 @@ PostMessageEvent::PostMessageEvent(BrowsingContext* aSource,
                                    const nsAString& aCallerOrigin,
                                    nsGlobalWindowOuter* aTargetWindow,
                                    nsIPrincipal* aProvidedPrincipal,
-                                   const Maybe<uint64_t>& aCallerWindowID,
-                                   nsIURI* aCallerDocumentURI,
-                                   bool aIsFromPrivateWindow)
+                                   uint64_t aCallerWindowID, nsIURI* aCallerURI,
+                                   const nsCString& aScriptLocation,
+                                   bool aIsFromPrivateWindow,
+                                   const Maybe<nsID>& aCallerAgentClusterId)
     : Runnable("dom::PostMessageEvent"),
       mSource(aSource),
       mCallerOrigin(aCallerOrigin),
       mTargetWindow(aTargetWindow),
       mProvidedPrincipal(aProvidedPrincipal),
       mCallerWindowID(aCallerWindowID),
-      mCallerDocumentURI(aCallerDocumentURI),
+      mCallerAgentClusterId(aCallerAgentClusterId),
+      mCallerURI(aCallerURI),
+      mScriptLocation(Some(aScriptLocation)),
       mIsFromPrivateWindow(aIsFromPrivateWindow) {}
 
-PostMessageEvent::~PostMessageEvent() {}
+PostMessageEvent::~PostMessageEvent() = default;
 
 NS_IMETHODIMP
 PostMessageEvent::Run() {
@@ -59,9 +67,9 @@ PostMessageEvent::Run() {
   JSContext* cx = jsapi.cx();
 
   // The document URI is just used for the principal mismatch error message
-  // below. Use a stack variable so mCallerDocumentURI is not held onto after
+  // below. Use a stack variable so mCallerURI is not held onto after
   // this method finishes, regardless of the method outcome.
-  nsCOMPtr<nsIURI> callerDocumentURI = mCallerDocumentURI.forget();
+  nsCOMPtr<nsIURI> callerURI = std::move(mCallerURI);
 
   // If we bailed before this point we're going to leak mMessage, but
   // that's probably better than crashing.
@@ -71,6 +79,22 @@ PostMessageEvent::Run() {
       !(targetWindow = mTargetWindow->GetCurrentInnerWindowInternal()) ||
       targetWindow->IsDying())
     return NS_OK;
+
+  // If the window's document has suppressed event handling, hand off this event
+  // for running later. We check the top window's document so that when multiple
+  // same-origin windows exist in the same top window, postMessage events will
+  // be delivered in the same order they were posted, regardless of which window
+  // they were posted to.
+  if (nsCOMPtr<nsPIDOMWindowOuter> topWindow =
+          targetWindow->GetOuterWindow()->GetInProcessTop()) {
+    if (nsCOMPtr<nsPIDOMWindowInner> topInner =
+            topWindow->GetCurrentInnerWindow()) {
+      if (topInner->GetExtantDoc() &&
+          topInner->GetExtantDoc()->SuspendPostMessageEvent(this)) {
+        return NS_OK;
+      }
+    }
+  }
 
   JSAutoRealm ar(cx, targetWindow->GetWrapper());
 
@@ -101,10 +125,6 @@ PostMessageEvent::Run() {
       MOZ_DIAGNOSTIC_ASSERT(
           sourceAttrs.mUserContextId == targetAttrs.mUserContextId,
           "Target and source should have the same userContextId attribute.");
-      MOZ_DIAGNOSTIC_ASSERT(sourceAttrs.mInIsolatedMozBrowser ==
-                                targetAttrs.mInIsolatedMozBrowser,
-                            "Target and source should have the same "
-                            "inIsolatedMozBrowser attribute.");
 
       nsAutoString providedOrigin, targetOrigin;
       nsresult rv = nsContentUtils::GetUTFOrigin(targetPrin, targetOrigin);
@@ -112,30 +132,29 @@ PostMessageEvent::Run() {
       rv = nsContentUtils::GetUTFOrigin(mProvidedPrincipal, providedOrigin);
       NS_ENSURE_SUCCESS(rv, rv);
 
-      const char16_t* params[] = {providedOrigin.get(), targetOrigin.get()};
-
       nsAutoString errorText;
-      nsContentUtils::FormatLocalizedString(nsContentUtils::eDOM_PROPERTIES,
-                                            "TargetPrincipalDoesNotMatch",
-                                            params, errorText);
+      nsContentUtils::FormatLocalizedString(
+          errorText, nsContentUtils::eDOM_PROPERTIES,
+          "TargetPrincipalDoesNotMatch", providedOrigin, targetOrigin);
 
       nsCOMPtr<nsIScriptError> errorObject =
           do_CreateInstance(NS_SCRIPTERROR_CONTRACTID, &rv);
       NS_ENSURE_SUCCESS(rv, rv);
 
-      if (mCallerWindowID.isSome()) {
-        rv = errorObject->InitWithSourceURI(
-            errorText, callerDocumentURI, EmptyString(), 0, 0,
-            nsIScriptError::errorFlag, "DOM Window", mCallerWindowID.value());
-      } else {
-        nsString uriSpec;
-        rv = NS_GetSanitizedURIStringFromURI(callerDocumentURI, uriSpec);
-        NS_ENSURE_SUCCESS(rv, rv);
-
+      if (mCallerWindowID == 0) {
         rv = errorObject->Init(
-            errorText, uriSpec, EmptyString(), 0, 0, nsIScriptError::errorFlag,
-            "DOM Window", mIsFromPrivateWindow,
-            nsContentUtils::IsSystemPrincipal(mProvidedPrincipal));
+            errorText, NS_ConvertUTF8toUTF16(mScriptLocation.value()),
+            EmptyString(), 0, 0, nsIScriptError::errorFlag, "DOM Window",
+            mIsFromPrivateWindow, mProvidedPrincipal->IsSystemPrincipal());
+      } else if (callerURI) {
+        rv = errorObject->InitWithSourceURI(errorText, callerURI, EmptyString(),
+                                            0, 0, nsIScriptError::errorFlag,
+                                            "DOM Window", mCallerWindowID);
+      } else {
+        rv = errorObject->InitWithWindowID(
+            errorText, NS_ConvertUTF8toUTF16(mScriptLocation.value()),
+            EmptyString(), 0, 0, nsIScriptError::errorFlag, "DOM Window",
+            mCallerWindowID);
       }
       NS_ENSURE_SUCCESS(rv, rv);
 
@@ -152,10 +171,27 @@ PostMessageEvent::Run() {
   nsCOMPtr<mozilla::dom::EventTarget> eventTarget =
       do_QueryObject(targetWindow);
 
+  JS::CloneDataPolicy cloneDataPolicy;
+  MOZ_DIAGNOSTIC_ASSERT(targetWindow);
+  if (mCallerAgentClusterId.isSome() && targetWindow->GetDocGroup() &&
+      targetWindow->GetDocGroup()->AgentClusterId().Equals(
+          mCallerAgentClusterId.ref())) {
+    cloneDataPolicy.allowIntraClusterClonableSharedObjects();
+  }
+
+  if (targetWindow->IsSharedMemoryAllowed()) {
+    cloneDataPolicy.allowSharedMemoryObjects();
+  }
+
+  if (mHolder.empty()) {
+    DispatchError(cx, targetWindow, eventTarget);
+    return NS_OK;
+  }
+
   StructuredCloneHolder* holder;
   if (mHolder.constructed<StructuredCloneHolder>()) {
-    mHolder.ref<StructuredCloneHolder>().Read(ToSupports(targetWindow), cx,
-                                              &messageData, rv);
+    mHolder.ref<StructuredCloneHolder>().Read(
+        targetWindow->AsGlobal(), cx, &messageData, cloneDataPolicy, rv);
     holder = &mHolder.ref<StructuredCloneHolder>();
   } else {
     MOZ_ASSERT(mHolder.constructed<ipc::StructuredCloneData>());
@@ -163,6 +199,7 @@ PostMessageEvent::Run() {
     holder = &mHolder.ref<ipc::StructuredCloneData>();
   }
   if (NS_WARN_IF(rv.Failed())) {
+    JS_ClearPendingException(cx);
     DispatchError(cx, targetWindow, eventTarget);
     return NS_OK;
   }
@@ -222,6 +259,54 @@ void PostMessageEvent::Dispatch(nsGlobalWindowInner* aTargetWindow,
   nsEventStatus status = nsEventStatus_eIgnore;
   EventDispatcher::Dispatch(ToSupports(aTargetWindow), presContext,
                             internalEvent, aEvent, &status);
+}
+
+void PostMessageEvent::DispatchToTargetThread(ErrorResult& aError) {
+  nsCOMPtr<nsIRunnable> event = this;
+
+  if (StaticPrefs::dom_separate_event_queue_for_post_message_enabled() &&
+      !DocGroup::TryToLoadIframesInBackground()) {
+    BrowsingContext* bc = mTargetWindow->GetBrowsingContext();
+    bc = bc ? bc->Top() : nullptr;
+    if (bc && bc->IsLoading()) {
+      // As long as the top level is loading, we can dispatch events to the
+      // queue because the queue will be flushed eventually
+      aError = bc->Group()->QueuePostMessageEvent(event.forget());
+      return;
+    }
+  }
+
+  // XXX Loading iframes in background isn't enabled by default and doesn't
+  //     work with Fission at the moment.
+  if (DocGroup::TryToLoadIframesInBackground()) {
+    RefPtr<nsIDocShell> docShell = mTargetWindow->GetDocShell();
+    RefPtr<nsDocShell> dShell = nsDocShell::Cast(docShell);
+
+    // PostMessage that are added to the BrowsingContextGroup are the ones that
+    // can be flushed when the top level document is loaded.
+    // TreadAsBackgroundLoad DocShells are treated specially.
+    if (dShell) {
+      if (!dShell->TreatAsBackgroundLoad()) {
+        BrowsingContext* bc = mTargetWindow->GetBrowsingContext();
+        bc = bc ? bc->Top() : nullptr;
+        if (bc && bc->IsLoading()) {
+          // As long as the top level is loading, we can dispatch events to the
+          // queue because the queue will be flushed eventually
+          aError = bc->Group()->QueuePostMessageEvent(event.forget());
+          return;
+        }
+      } else if (mTargetWindow->GetExtantDoc() &&
+                 mTargetWindow->GetExtantDoc()->GetReadyStateEnum() <
+                     Document::READYSTATE_COMPLETE) {
+        mozilla::dom::DocGroup* docGroup = mTargetWindow->GetDocGroup();
+        aError = docGroup->QueueIframePostMessages(event.forget(),
+                                                   dShell->GetOuterWindowID());
+        return;
+      }
+    }
+  }
+
+  aError = mTargetWindow->Dispatch(TaskCategory::Other, event.forget());
 }
 
 }  // namespace dom

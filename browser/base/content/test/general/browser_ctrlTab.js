@@ -114,12 +114,12 @@ add_task(async function() {
       "Ctrl+Tab*2 -> Ctrl+W -> Ctrl+Shift+Tab*2 keeps the selected tab"
     );
   }
-  gBrowser.removeTab(gBrowser.tabContainer.lastElementChild);
+  gBrowser.removeTab(gBrowser.tabs[gBrowser.tabs.length - 1]);
   checkTabs(2);
 
   await ctrlTabTest([1], 1, 0);
 
-  gBrowser.removeTab(gBrowser.tabContainer.lastElementChild);
+  gBrowser.removeTab(gBrowser.tabs[gBrowser.tabs.length - 1]);
   checkTabs(1);
 
   {

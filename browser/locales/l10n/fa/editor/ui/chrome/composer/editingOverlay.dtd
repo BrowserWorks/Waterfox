@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- File menu items -->
+
+<!ENTITY openFileCmd.label "بازکردن پرونده…">
+<!ENTITY openFileCmd.accesskey "ب">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "بازکردن نشانی اینترنتی…">
+<!ENTITY openRemoteCmd.accesskey "ش">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "صفحه‌های اخیر">
+<!ENTITY fileRecentMenu.accesskey "ص">
+<!ENTITY saveCmd.label "ذخیره">
+<!ENTITY saveCmd.accesskey "ذ">
+<!ENTITY saveAsCmd.label "ذخیره به نام…">
+<!ENTITY saveAsCmd.accesskey "ن">
+<!ENTITY saveAsChangeEncodingCmd2.label "ذخیره و تغییر کد گذاری متن">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "ک">
+<!ENTITY publishCmd.label "انتشار‌">
+<!ENTITY publishCmd.accesskey "ا">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "انتشار به عنوان...">
+<!ENTITY publishAsCmd.accesskey "ش">
+<!ENTITY fileRevert.label "بازگشت">
+<!ENTITY fileRevert.accesskey "t">
+<!-- Edit menu items -->
+
+<!ENTITY publishSettings.label "انتشار پیکربندی سایت...">
+<!ENTITY publishSettings.accesskey "ا">
+<!-- Toolbar buttons/items -->
+
+<!ENTITY newToolbarCmd.label "جدید">
+<!ENTITY newToolbarCmd.tooltip "ایجاد یک صفحه نوشتاری جدید">
+<!ENTITY openToolbarCmd.label "باز کردن">
+<!ENTITY openToolbarCmd.tooltip "باز کردن یک پرونده‌ی محلی">
+<!ENTITY saveToolbarCmd.tooltip "ذخیره‌ی پرونده در یک مکان محلی">
+<!ENTITY publishToolbarCmd.tooltip "آپلود فایل به یک مکان دور">

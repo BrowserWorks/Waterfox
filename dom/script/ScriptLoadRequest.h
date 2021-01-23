@@ -7,16 +7,20 @@
 #ifndef mozilla_dom_ScriptLoadRequest_h
 #define mozilla_dom_ScriptLoadRequest_h
 
+#include "mozilla/Assertions.h"
 #include "mozilla/CORSMode.h"
+#include "mozilla/dom/Element.h"
 #include "mozilla/dom/SRIMetadata.h"
 #include "mozilla/LinkedList.h"
 #include "mozilla/Maybe.h"
-#include "mozilla/net/ReferrerPolicy.h"
+#include "mozilla/PreloaderBase.h"
+#include "mozilla/Utf8.h"  // mozilla::Utf8Unit
 #include "mozilla/Variant.h"
 #include "mozilla/Vector.h"
 #include "nsCOMPtr.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsIScriptElement.h"
+#include "ScriptKind.h"
 
 class nsICacheInfoChannel;
 
@@ -25,8 +29,6 @@ namespace dom {
 
 class ModuleLoadRequest;
 class ScriptLoadRequestList;
-
-enum class ScriptKind { eClassic, eModule };
 
 /*
  * Some options used when fetching script resources. This only loosely
@@ -44,14 +46,13 @@ class ScriptFetchOptions {
   NS_DECL_CYCLE_COLLECTION_NATIVE_CLASS(ScriptFetchOptions)
 
   ScriptFetchOptions(mozilla::CORSMode aCORSMode,
-                     mozilla::net::ReferrerPolicy aReferrerPolicy,
-                     nsIScriptElement* aElement,
+                     enum ReferrerPolicy aReferrerPolicy, Element* aElement,
                      nsIPrincipal* aTriggeringPrincipal);
 
   const mozilla::CORSMode mCORSMode;
-  const mozilla::net::ReferrerPolicy mReferrerPolicy;
+  const enum ReferrerPolicy mReferrerPolicy;
   bool mIsPreload;
-  nsCOMPtr<nsIScriptElement> mElement;
+  nsCOMPtr<Element> mElement;
   nsCOMPtr<nsIPrincipal> mTriggeringPrincipal;
 };
 
@@ -60,7 +61,7 @@ class ScriptFetchOptions {
  */
 
 class ScriptLoadRequest
-    : public nsISupports,
+    : public PreloaderBase,
       private mozilla::LinkedListElement<ScriptLoadRequest> {
   typedef LinkedListElement<ScriptLoadRequest> super;
 
@@ -79,21 +80,30 @@ class ScriptLoadRequest
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(ScriptLoadRequest)
 
+  // PreloaderBase
+  static void PrioritizeAsPreload(nsIChannel* aChannel);
+  virtual void PrioritizeAsPreload() override;
+
   bool IsModuleRequest() const { return mKind == ScriptKind::eModule; }
 
   ModuleLoadRequest* AsModuleRequest();
 
+#ifdef MOZ_GECKO_PROFILER
+  TimeStamp mOffThreadParseStartTime;
+  TimeStamp mOffThreadParseStopTime;
+#endif
+
   void FireScriptAvailable(nsresult aResult) {
     bool isInlineClassicScript = mIsInline && !IsModuleRequest();
-    Element()->ScriptAvailable(aResult, Element(), isInlineClassicScript, mURI,
-                               mLineNo);
+    GetScriptElement()->ScriptAvailable(aResult, GetScriptElement(),
+                                        isInlineClassicScript, mURI, mLineNo);
   }
   void FireScriptEvaluated(nsresult aResult) {
-    Element()->ScriptEvaluated(aResult, Element(), mIsInline);
+    GetScriptElement()->ScriptEvaluated(aResult, GetScriptElement(), mIsInline);
   }
 
   bool IsPreload() const {
-    MOZ_ASSERT_IF(mFetchOptions->mIsPreload, !Element());
+    MOZ_ASSERT_IF(mFetchOptions->mIsPreload, !GetScriptElement());
     return mFetchOptions->mIsPreload;
   }
 
@@ -159,17 +169,34 @@ class ScriptLoadRequest
   void SetBinASTSource();
   void SetBytecode();
 
-  using ScriptTextBuffer = Vector<char16_t, 0, JSMallocAllocPolicy>;
+  // Use a vector backed by the JS allocator for script text so that contents
+  // can be transferred in constant time to the JS engine, not copied in linear
+  // time.
+  template <typename Unit>
+  using ScriptTextBuffer = Vector<Unit, 0, JSMallocAllocPolicy>;
+
+  // BinAST data isn't transferred to the JS engine, so it doesn't need to use
+  // the JS allocator.
   using BinASTSourceBuffer = Vector<uint8_t>;
 
-  const ScriptTextBuffer& ScriptText() const {
-    MOZ_ASSERT(IsTextSource());
-    return mScriptData->as<ScriptTextBuffer>();
+  bool IsUTF16Text() const {
+    return mScriptData->is<ScriptTextBuffer<char16_t>>();
   }
-  ScriptTextBuffer& ScriptText() {
-    MOZ_ASSERT(IsTextSource());
-    return mScriptData->as<ScriptTextBuffer>();
+  bool IsUTF8Text() const {
+    return mScriptData->is<ScriptTextBuffer<Utf8Unit>>();
   }
+
+  template <typename Unit>
+  const ScriptTextBuffer<Unit>& ScriptText() const {
+    MOZ_ASSERT(IsTextSource());
+    return mScriptData->as<ScriptTextBuffer<Unit>>();
+  }
+  template <typename Unit>
+  ScriptTextBuffer<Unit>& ScriptText() {
+    MOZ_ASSERT(IsTextSource());
+    return mScriptData->as<ScriptTextBuffer<Unit>>();
+  }
+
   const BinASTSourceBuffer& ScriptBinASTData() const {
     MOZ_ASSERT(IsBinASTSource());
     return mScriptData->as<BinASTSourceBuffer>();
@@ -179,9 +206,31 @@ class ScriptLoadRequest
     return mScriptData->as<BinASTSourceBuffer>();
   }
 
-  enum class ScriptMode : uint8_t { eBlocking, eDeferred, eAsync };
+  size_t ScriptTextLength() const {
+    MOZ_ASSERT(IsTextSource());
+    return IsUTF16Text() ? ScriptText<char16_t>().length()
+                         : ScriptText<Utf8Unit>().length();
+  }
 
-  void SetScriptMode(bool aDeferAttr, bool aAsyncAttr);
+  void ClearScriptText() {
+    MOZ_ASSERT(IsTextSource());
+    return IsUTF16Text() ? ScriptText<char16_t>().clearAndFree()
+                         : ScriptText<Utf8Unit>().clearAndFree();
+  }
+
+  enum class ScriptMode : uint8_t {
+    eBlocking,
+    eDeferred,
+    eAsync,
+    eLinkPreload  // this is a load initiated by <link rel="preload"
+                  // as="script"> tag
+  };
+
+  void SetScriptMode(bool aDeferAttr, bool aAsyncAttr, bool aLinkPreload);
+
+  bool IsLinkPreloadScript() const {
+    return mScriptMode == ScriptMode::eLinkPreload;
+  }
 
   bool IsBlockingScript() const { return mScriptMode == ScriptMode::eBlocking; }
 
@@ -195,17 +244,21 @@ class ScriptLoadRequest
   }
 
   mozilla::CORSMode CORSMode() const { return mFetchOptions->mCORSMode; }
-  mozilla::net::ReferrerPolicy ReferrerPolicy() const {
+  enum ReferrerPolicy ReferrerPolicy() const {
     return mFetchOptions->mReferrerPolicy;
   }
-  nsIScriptElement* Element() const { return mFetchOptions->mElement; }
+  nsIScriptElement* GetScriptElement() const {
+    nsCOMPtr<nsIScriptElement> scriptElement =
+        do_QueryInterface(mFetchOptions->mElement);
+    return scriptElement;
+  }
   nsIPrincipal* TriggeringPrincipal() const {
     return mFetchOptions->mTriggeringPrincipal;
   }
 
   // Make this request a preload (speculative) request.
   void SetIsPreloadRequest() {
-    MOZ_ASSERT(!Element());
+    MOZ_ASSERT(!GetScriptElement());
     MOZ_ASSERT(!IsPreload());
     mFetchOptions->mIsPreload = true;
   }
@@ -213,14 +266,14 @@ class ScriptLoadRequest
   // Make a preload request into an actual load request for the given element.
   void SetIsLoadRequest(nsIScriptElement* aElement) {
     MOZ_ASSERT(aElement);
-    MOZ_ASSERT(!Element());
+    MOZ_ASSERT(!GetScriptElement());
     MOZ_ASSERT(IsPreload());
-    mFetchOptions->mElement = aElement;
+    mFetchOptions->mElement = do_QueryInterface(aElement);
     mFetchOptions->mIsPreload = false;
   }
 
   FromParser GetParserCreated() const {
-    nsIScriptElement* element = Element();
+    nsIScriptElement* element = GetScriptElement();
     if (!element) {
       return NOT_FROM_PARSER;
     }
@@ -269,10 +322,10 @@ class ScriptLoadRequest
   // it is parsed, and planned to be saved in the bytecode cache.
   JS::Heap<JSScript*> mScript;
 
-  // Holds script source data for non-inline scripts. Don't use nsString so we
-  // can give ownership to jsapi. Holds either char16_t source text characters
-  // or BinAST encoded bytes depending on mSourceEncoding.
-  Maybe<Variant<ScriptTextBuffer, BinASTSourceBuffer>> mScriptData;
+  // Holds script source data for non-inline scripts.
+  Maybe<Variant<ScriptTextBuffer<char16_t>, ScriptTextBuffer<Utf8Unit>,
+                BinASTSourceBuffer>>
+      mScriptData;
 
   // The length of script source text, set when reading completes. This is used
   // since mScriptData is cleared when the source is passed to the JS engine.

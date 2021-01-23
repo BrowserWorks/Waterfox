@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-composer.xul -->
+
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+<!ENTITY  pref.composer.title           "Composer">
+<!ENTITY  recentFiles.title             "เมนูหน้าล่าสุด">
+<!ENTITY  documentsInMenu.label         "จำนวนหน้าสูงสุดที่จะแสดงในรายการ:">
+<!ENTITY  documentsInMenu.accesskey     "จ">
+<!ENTITY  savingFiles.title             "เมื่อบันทึกหรือเผยแพร่หน้า">
+<!ENTITY  preserveExisting.label        "รักษาการจัดรูปแบบดั้งเดิม">
+<!ENTITY  preserveExisting.accesskey    "ร">
+<!ENTITY  preserveExisting.tooltip      "รักษาการแบ่งบรรทัดและการจัดรูปแบบดั้งเดิมของหน้า">
+<!ENTITY  saveAssociatedFiles.label     "บันทึกภาพและไฟล์ที่เชื่อมโยงกันอื่นๆ เมื่อบันทึกหน้า">
+<!ENTITY  saveAssociatedFiles.accesskey "บ">
+<!ENTITY  showPublishDialog.label       "แสดงกล่องโต้ตอบ เผยแพร่ เมื่อเผยแพร่หน้าเสมอ">
+<!ENTITY  showPublishDialog.accesskey   "ส">
+<!ENTITY  composerEditing.label         "การแก้ไข">
+<!ENTITY  maintainStructure.label       "รักษาเค้าโครงตารางเมื่อแทรกหรือลบเซลล์">
+<!ENTITY  maintainStructure.tooltip     "รักษารูปทรงสี่เหลี่ยมของตารางโดยเพิ่มเซลล์โดยอัตโนมัติหลังจากแทรกหรือลบเซลล์">
+<!ENTITY  maintainStructure.accesskey   "ก">
+<!ENTITY  useCSS.label                  "ใช้ลักษณะ CSS แทนองค์ประกอบและแอตทริบิวต์ HTML">
+<!ENTITY  useCSS.accesskey              "ช">
+<!ENTITY  crInPCreatesNewP.label        "ขึ้นย่อหน้าใหม่เมื่อขึ้นบรรทัดใหม่เสมอ">
+<!ENTITY  crInPCreatesNewP.accesskey    "ข">

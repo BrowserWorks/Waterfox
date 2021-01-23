@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY mailListWindow.title "Адрасны спіс">
+<!ENTITY addToAddressBook.label "Дадаць да:">
+<!ENTITY ListName.label "Назва спіса:">
+<!ENTITY ListNickName.label "Мянушка спіса:">
+<!ENTITY ListDescription.label "Апісанне:">
+<!ENTITY AddressTitle.label "Набярыце адрасы э-пошты, каб дадаць іх у адрасны спіс:">
+<!ENTITY addToAddressBook.accesskey "Д">
+<!ENTITY ListName.accesskey "С">
+<!ENTITY ListNickName.accesskey "М">
+<!ENTITY ListDescription.accesskey "А">

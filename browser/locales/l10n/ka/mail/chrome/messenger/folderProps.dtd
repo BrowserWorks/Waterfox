@@ -1,0 +1,74 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "პარამეტრები">
+
+<!ENTITY generalInfo.label                       "ზოგადი ინფორმაცია">
+<!ENTITY folderCharsetFallback2.label            "ტექსტის სათადარიგო კოდირება:">
+<!ENTITY folderCharsetFallback2.accesskey        "თ">
+<!ENTITY folderCharsetEnforce2.label             "კოდირების მითითება, საქაღალდეში არსებული ყველა შეტყობინებისთვის (თითეული შეტყობინების ტექსტის კოდირების პარამეტრები და თვითდადგენა, უგულებელყოფილი იქნება)">
+<!ENTITY folderCharsetEnforce2.accesskey         "მ">
+<!ENTITY folderRebuildSummaryFileTip2.label      "შეჯამების ფაილის ხელახლა ინდექსაცია">
+<!ENTITY folderRebuildSummaryFile2.label         "საქაღალდის აღდგენა">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "R">
+<!ENTITY folderRebuildSummaryFile.explanation    "ზოგჯერ საქაღალდის ინდექსის (.msf) ფაილი ზიანდება და წერილები შესაძლოა არ აისახოს ან აისახოს წაშლილად; საქაღალდის აღდგენამ შესაძლოა მოხსნას ეს პრობლემა.">
+<!ENTITY folderIncludeInGlobalSearch.label       "ამ საქაღალდის წერილების გათვალისწინება გლობალური ძიების შედეგებში">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "G">
+
+<!ENTITY retention.label "შენარჩუნების პირობები">
+<!ENTITY retentionUseAccount.label  "ჩემი ანგარიშის პარამეტრების გამოყენება">
+<!ENTITY retentionUseAccount.accesskey "U">
+<!ENTITY daysOld.label "დღე">
+<!ENTITY message.label "წერილები">
+<!ENTITY retentionCleanup.label "დისკზე ადგილის გასათავისუფლებლად ძველი წერილების შეუქცევადი წაშლა შეგიძლიათ.">
+<!ENTITY retentionCleanupImap.label "დისკზე ადგილის გასათავისუფლებლად შესაძლებელია ძველი გზავნილების შეუქცევადად წაშლა ორივეგან - ადგილობრივად და დაშორებულ სერვერზე.">
+<!ENTITY retentionCleanupPop.label "დისკზე ადგილის გასათავისუფლებლად შესაძლებელია ძველი გზავნილების შეუქცევადად წაშლა ადგილობრივად და დაშორებულ სერვერზეც.">
+<!ENTITY retentionDeleteMsg.label "წერილების წაშლა რომელთა ასაკიც მეტია ვიდრე">
+<!ENTITY retentionDeleteMsg.accesskey "m">
+<!ENTITY retentionKeepAll.label "წერილების არ წაშლა">
+<!ENTITY retentionKeepAll.accesskey "A">
+<!ENTITY retentionKeepRecent.label "ყველას წაშლა უახლესების გარდა">
+<!ENTITY retentionKeepRecent.accesskey "l">
+<!ENTITY retentionApplyToFlagged.label "ვარსკვლავიანი გზავნილების შენარჩუნება">
+<!ENTITY retentionApplyToFlagged.accesskey "e">
+
+<!ENTITY folderSynchronizationTab.label          "სინქრონიზაცია">
+<!ENTITY folderCheckForNewMessages2.label         "ამ საქაღალდის ახალ წერილებზე შემოწმება">
+<!ENTITY folderCheckForNewMessages2.accesskey     "c">
+
+<!ENTITY offlineFolder.check.label               "საქაღალდის არჩევა კავშირგარეშე გამოყენებისთვის">
+<!ENTITY offlineFolder.check.accesskey           "S">
+<!ENTITY offlineFolder.button.label              "გადმოწერა ახლავე">
+<!ENTITY offlineFolder.button.accesskey          "D">
+
+<!ENTITY selectofflineNewsgroup.check.label      "ჯგუფის არჩევა კავშირგარეშე გამოყენებისთვის">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "o">
+<!ENTITY offlineNewsgroup.button.label           "გადმოწერა ახლავე">
+<!ENTITY offlineNewsgroup.button.accesskey       "D">
+
+<!ENTITY folderProps.name.label                  "სახელი:">
+<!ENTITY folderProps.name.accesskey              "N">
+<!ENTITY folderProps.color.label                 "ხატულას ფერი:">
+<!ENTITY folderProps.color.accesskey             "ხ">
+<!ENTITY folderProps.reset.tooltip               "ნაგულისხმევი ფერის აღდგენა">
+<!ENTITY folderProps.location.label              "მისამართი:">
+<!ENTITY folderProps.location.accesskey          "L">
+
+<!ENTITY folderSharingTab.label                  "გაზიარება">
+<!ENTITY privileges.button.label                 "პრივილეგიები…">
+<!ENTITY privileges.button.accesskey             "P">
+<!ENTITY permissionsDesc.label                   "თქვენ გაქვთ შემდეგი უფლებები:">
+<!ENTITY folderOtherUsers.label                  "სხვები, რომელთაც აქვთ წვდომა ამ საქაღალდესთან:">
+<!ENTITY folderType.label                        "საქაღალდის სახეობა:">
+
+<!ENTITY folderQuotaTab.label                    "ზღვარი">
+<!ENTITY folderQuotaUsage.label                  "გამოყენება:">
+<!ENTITY folderQuotaStatus.label                 "სტატუსი:">
+
+<!ENTITY numberOfMessages.label                  "წერილთა რაოდენობა:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "უცნობია">
+<!ENTITY sizeOnDisk.label                        "ადგილი დისკზე:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "უცნობია">

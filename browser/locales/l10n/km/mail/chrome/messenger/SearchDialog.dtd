@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- for SearchDialog.xul -->
+
+<!ENTITY searchHeading.label         "Փնտրել նամակները՝">
+<!ENTITY searchHeading.accesskey     "h">
+<!ENTITY searchSubfolders.label      "Փնտրել ենթաթղթապանակներ">
+<!ENTITY searchSubfolders.accesskey  "e">
+<!ENTITY searchOnServer.label        "Բացել որոնումը սպասարկիչում">
+<!ENTITY searchOnServer.accesskey    "u">
+<!ENTITY resetButton.label           "Մաքրել">
+<!ENTITY resetButton.accesskey       "C">
+<!ENTITY openButton.label            "Բացել">
+<!ENTITY openButton.accesskey        "n">
+<!ENTITY deleteButton.label          "លុប​">
+<!ENTITY deleteButton.accesskey      "D">
+<!ENTITY searchDialogTitle.label     "Search Messages">
+<!ENTITY results.label               "Results">
+<!ENTITY moveButton.label            "ផ្លាស់ទី​ទៅ">
+<!ENTITY moveButton.accesskey        "T">
+<!ENTITY closeCmd.key                "W"> 
+<!ENTITY openInFolder.label          "Բացել թղթապանակում">
+<!ENTITY openInFolder.accesskey      "r">
+<!ENTITY saveAsVFButton.label        "Պահպանել որպես փնտրման թղթ.">
+<!ENTITY saveAsVFButton.accesskey    "v">
+<!-- for ABSearchDialog.xul -->
+
+<!ENTITY abSearchHeading.label       "Փնտրել՝ ">
+<!ENTITY abSearchHeading.accesskey   "h">
+<!ENTITY propertiesButton.label      "Հատկություններ">
+<!ENTITY propertiesButton.accesskey  "P">
+<!ENTITY composeButton.label         "Գրել">
+<!ENTITY composeButton.accesskey     "W">
+<!ENTITY deleteCardButton.label      "លុប​">
+<!ENTITY deleteCardButton.accesskey  "D">
+<!ENTITY abSearchDialogTitle.label   "Advanced Address Book Search">
+<!-- Thread Pane -->
+
+<!-- Thread Pane Tooltips -->
+

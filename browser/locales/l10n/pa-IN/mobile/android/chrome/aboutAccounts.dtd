@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAccounts.connected.title "ਫਾਇਰਫਾਕਸ ਖਾਤੇ">
+<!ENTITY aboutAccounts.connected.description "ਤੁਸੀਂ ਇਸ ਵਜੋਂ ਕਨੈਕਟ ਹੋ">
+<!ENTITY aboutAccounts.syncPreferences.label "ਸਿੰਕ ਸੈਟਿੰਗਾਂ ਨੂੰ ਚੈੱਕ ਕਰਨ ਲਈ ਇੱਥੇ ਛੂਹੋ">
+
+<!ENTITY aboutAccounts.noConnection.title "ਕੋਈ ਇੰਟਰਨੈੱਟ ਕਨੈਕਸ਼ਨ ਨਹੀਂ ਹੈ">
+<!ENTITY aboutAccounts.retry.label "ਮੁੜ-ਕੋਸ਼ਿਸ਼ ਕਰੋ">
+
+<!ENTITY aboutAccounts.restrictedError.title "ਪਾਬੰਦੀਸ਼ੁਦਾ">
+<!ENTITY aboutAccounts.restrictedError.description "ਤੁਸੀਂ ਇਸ ਪਰੋਫਾਈਲ ਤੋਂ ਫਾਇਰਫਾਕਸ ਖਾਤਿਆਂ ਦਾ ਇੰਤਜ਼ਾਮ ਨਹੀਂ ਕਰ ਸਕਦੇ ਹੋ।">

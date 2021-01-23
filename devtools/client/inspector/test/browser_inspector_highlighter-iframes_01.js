@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -26,7 +24,7 @@ const TEST_URI =
   '" />';
 
 add_task(async function() {
-  const { inspector, testActor } = await openInspectorForURL(TEST_URI);
+  const { toolbox, inspector, testActor } = await openInspectorForURL(TEST_URI);
   const outerFrameDiv = ["iframe", "div"];
   const innerFrameDiv = ["iframe", "iframe", "div"];
 
@@ -70,7 +68,7 @@ add_task(async function() {
   );
 
   info("Waiting for element picker to deactivate.");
-  await inspector.inspector.nodePicker.stop();
+  await toolbox.nodePicker.stop();
 
   function moveMouseOver(selector) {
     info("Waiting for element " + selector + " to be highlighted");
@@ -80,6 +78,6 @@ add_task(async function() {
         options: { type: "mousemove" },
         center: true,
       })
-      .then(() => inspector.inspector.nodePicker.once("picker-node-hovered"));
+      .then(() => toolbox.nodePicker.once("picker-node-hovered"));
   }
 });

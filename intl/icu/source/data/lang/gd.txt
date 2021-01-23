@@ -72,7 +72,7 @@ gd{
         bho{"Bhojpuri"}
         bi{"Bislama"}
         bik{"Bikol"}
-        bin{"Bini"}
+        bin{"Edo"}
         bjn{"Banjar"}
         bkm{"Kom"}
         bla{"Siksika"}
@@ -97,6 +97,7 @@ gd{
         car{"Carib"}
         cay{"Cayuga"}
         cch{"Atsam"}
+        ccp{"Chakma"}
         ce{"Deideanais"}
         ceb{"Cebuano"}
         cgg{"Chiga"}
@@ -168,6 +169,7 @@ gd{
         ewo{"Ewondo"}
         ext{"Cànan na h-Extremadura"}
         fa{"Peirsis"}
+        fa_AF{"Dari"}
         fan{"Fang"}
         fat{"Fanti"}
         ff{"Fulah"}
@@ -606,6 +608,14 @@ gd{
         zxx{"Susbaint nach eil ’na chànan"}
         zza{"Zazaki"}
     }
+    Languages%long{
+        zh_Hans{"Mandairinis Shimplichte"}
+        zh_Hant{"Mandairinis Thradaiseanta"}
+    }
+    Languages%menu{
+        yue{"Sìnis, Cantonais"}
+        zh{"Sìnis, Mandairinis"}
+    }
     Languages%short{
         az{"Azeri"}
         en_GB{"Beurla na RA"}
@@ -648,6 +658,7 @@ gd{
         Dupl{"Gearr-sgrìobhadh Duployé"}
         Egyp{"Sealbh-sgrìobhadh Èipheiteach"}
         Elba{"Elbasan"}
+        Elym{"Elymaidheach"}
         Ethi{"Ge’ez"}
         Geor{"Cairtbheilis"}
         Glag{"Glagoliticeach"}
@@ -669,6 +680,7 @@ gd{
         Hira{"Hiragana"}
         Hluw{"Dealbh-sgrìobhadh Anatolach"}
         Hmng{"Pahawh Hmong"}
+        Hmnp{"Nyiakeng Puachue Hmong"}
         Hrkt{"Katakana no Hiragana"}
         Hung{"Seann-Ungarais"}
         Ital{"Seann-Eadailtis"}
@@ -715,6 +727,7 @@ gd{
         Mtei{"Meitei Mayek"}
         Mult{"Multani"}
         Mymr{"Miànmar"}
+        Nand{"Nandinagari"}
         Narb{"Seann-Arabach Thuathach"}
         Nbat{"Nabataean"}
         Newa{"Newa"}
@@ -736,6 +749,7 @@ gd{
         Phnx{"Pheniceach"}
         Plrd{"Miao Phollard"}
         Prti{"Partais snaidh-sgrìobhte"}
+        Qaag{"Zawgyi"}
         Rjng{"Rejang"}
         Rohg{"Hanifi Rohingya"}
         Roro{"Rongorongo"}
@@ -777,6 +791,7 @@ gd{
         Ugar{"Ugariticeach"}
         Vaii{"Vai"}
         Wara{"Varang Kshiti"}
+        Wcho{"Wancho"}
         Wole{"Woleai"}
         Xpeo{"Seann-Pheirsis"}
         Xsux{"Gèinn-sgrìobhadh Sumer is Akkad"}
@@ -892,6 +907,7 @@ gd{
             hantfin{"Àireamhan ionmhasail na Sìnise Thradaiseanta"}
             hebr{"Àireamhan na h-Eabhra"}
             hmng{"Àireamhan Pahawh Hmong"}
+            hmnp{"Àireamhan Nyiakeng Puachue"}
             java{"Àireamhan na Deàbhanaise"}
             jpan{"Àireamhan na Seapanaise"}
             jpanfin{"Àireamhan ionmhasail na Seapanaise"}
@@ -940,6 +956,7 @@ gd{
             tirh{"Àireamhan Tirhuta"}
             vaii{"Àireamhan Vai"}
             wara{"Àireamhan Warang Citi"}
+            wcho{"Àireamhan Wancho"}
         }
     }
     Variants{
@@ -950,13 +967,13 @@ gd{
         1994{"Litreachadh stannardach dual-chainnt Resia"}
         1996{"Litreachadh na Gearmailtise 1996"}
         ABL1943{"Gnàthas-litreachaidh 1943"}
-        AKUAPEM{"AKUAPEM"}
+        AKUAPEM{"Akuapem"}
         ALALC97{"Ròmanachadh ALA-LC 1997"}
         ALUKU{"Dual-chainnt Aluku"}
         AO1990{"Aonta litreachadh na Portagailise 1990"}
         AREVELA{"Airmeinis an Ear"}
         AREVMDA{"Airmeinis an Iar"}
-        ASANTE{"ASANTE"}
+        ASANTE{"Asante"}
         BAKU1926{"Abidil Laideann aonaichte na Turcaise"}
         BALANKA{"Dual-chainnt Balanka de Anii"}
         BARLA{"Dual-chainntean Barlavento de Kabuverdianu"}
@@ -972,15 +989,18 @@ gd{
         EKAVSK{"Sèirbhis le fuaimneachadh iarach"}
         EMODENG{"Nua-Bheurla thràth"}
         FONIPA{"Comharran fuaim-eòlais an IPA"}
-        FONNAPA{"FONNAPA"}
+        FONNAPA{"Aibidil Fhuaim-eòlach Aimeireaga a Tuath"}
         FONUPA{"Comharran fuaim-eòlais an UPA"}
-        FONXSAMP{"FONXSAMP"}
+        FONXSAMP{"Tar-sgrìobhadh X-SAMPA"}
         HEPBURN{"Ròmanachadh Hepburn"}
         HOGNORSK{"Høgnorsk"}
-        HSISTEMO{"HSISTEMO"}
+        HSISTEMO{"Roghainn-èiginn stannardach litreachadh na h-Esperanto le h"}
         IJEKAVSK{"Sèirbis le fuaimneachadh Ijekavia"}
         ITIHASA{"Itihasa"}
-        IVANCHOV{"IVANCHOV"}
+        IVANCHOV{
+            "Bulgarian in 1899 orthography = Bulgairis le litreachadh na bliadhna 189"
+            "9"
+        }
         JAUER{"Jauer"}
         JYUTPING{"Jyutping"}
         KKCOR{"Litreachadh coitcheann"}
@@ -988,7 +1008,7 @@ gd{
         KSCOR{"Litreachadh stannardach"}
         LAUKIKA{"Laukika"}
         LIPAW{"Dual-chainnt Lipovaz Resia"}
-        LUNA1918{"LUNA1918"}
+        LUNA1918{"Litreachadh na Ruisise às dèidh 1917"}
         METELKO{"Aibidil Metelko"}
         MONOTON{"Greugais mhonotonach"}
         NDYUKA{"Dual-chainnt Ndyuka"}
@@ -1014,7 +1034,7 @@ gd{
         SAAHO{"Saho"}
         SCOTLAND{"Beurla Stannardach na h-Alba"}
         SCOUSE{"Scouse"}
-        SIMPLE{"SIMPLE"}
+        SIMPLE{"Samhlaidhean sìmplichte"}
         SOLBA{"Dual-chainnt Stolvizza/Solbica"}
         SOTAV{"Dual-chainntean Sotavento de Kabuverdianu"}
         SPANGLIS{"Spanglish"}
@@ -1030,9 +1050,9 @@ gd{
         VALENCIA{"Valencià"}
         VALLADER{"Vallader"}
         WADEGILE{"Ròmanachadh Wade-Giles"}
-        XSISTEMO{"XSISTEMO"}
+        XSISTEMO{"Roghainn-èiginn stannardach litreachadh na h-Esperanto le x"}
     }
-    Version{"2.1.49.82"}
+    Version{"37"}
     characterLabelPattern{
         all{"{0} – na h-uile"}
         category-list{"{0}: {1}"}

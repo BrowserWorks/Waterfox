@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "Sähköposti">
+<!ENTITY readMsgsLink.label           "Lue viestejä">
+<!ENTITY composeMsgLink.label         "Kirjoita uusi viesti">
+
+<!ENTITY newsSectionHdr.label         "Keskusteluryhmät">
+<!ENTITY subscribeNewsLink.label      "Muokkaa tilattuja keskusteluryhmiä">
+
+<!ENTITY feedsSectionHdr.label        "Syötteet">
+<!ENTITY subscribeFeeds.label         "Muokkaa tilauksia">
+
+<!ENTITY chat.label                   "Keskustelu">
+<!ENTITY movemail.label               "Movemail">
+
+<!ENTITY accountsSectionHdr.label     "Tilit">
+<!ENTITY subscribeImapFolders.label   "Muokkaa tilattuja kansioita">
+<!ENTITY settingsLink.label           "Muokkaa tämän tilin asetuksia">
+<!ENTITY setupNewAcct.label           "Määritä tili:">
+
+<!ENTITY advFeaturesSectionHdr.label  "Lisäominaisuudet">
+<!ENTITY searchMsgsLink.label         "Etsi viesteistä">
+<!ENTITY filtersLink.label            "Muokkaa viestisuodattimia">
+<!ENTITY junkSettings.label           "Roskapostin asetukset">
+<!ENTITY offlineLink.label            "Yhteydettömän tilan asetukset">

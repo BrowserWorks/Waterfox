@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "ანგარიშის დამატებითი პარამეტრები">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "IMAP სერვერის საქაღალდე:">
+<!ENTITY serverDirectory.accesskey "დ">
+<!ENTITY usingSubscription.label "მხოლოდ გამოწერილი საქაღალდეების ჩვენება">
+<!ENTITY usingSubscription.accesskey "წ">
+<!ENTITY dualUseFolders.label "სერვერი მუშაობს იმ საქაღალდეებთანაც, რომლებიც ქვესაქაღალდეებსა და წერილებს შეიცავენ">
+<!ENTITY dualUseFolders.accesskey "ქ">
+<!ENTITY maximumConnectionsNumber.label "სერვერთან კავშირების მაქსიმალური რაოდენობა ბუფერირებისთვის">
+<!ENTITY maximumConnectionsNumber.accesskey "მ">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "ეს პარამეტრები მიუთითებს თქვენი IMAP სერვერის სახელთა არეებს">
+<!ENTITY personalNamespace.label "სახელთა პირადი არე:">
+<!ENTITY personalNamespace.accesskey "პ">
+<!ENTITY publicNamespace.label "საზოგადო (ზიარი):">
+<!ENTITY publicNamespace.accesskey "ზ">
+<!ENTITY otherUsersNamespace.label "სხვა მომხმარებლების:">
+<!ENTITY otherUsersNamespace.accesskey "ხ">
+<!ENTITY overrideNamespaces.label "სერვერისთვის ამ სახელთა არეების გადაფარვის ნების დართვა">
+<!ENTITY overrideNamespaces.accesskey "ნ">
+<!ENTITY pop3DeferringDesc.label "ანგარიშის სერვერიდან წერილების ჩამოტვირთვისას, მოცემული საქაღალდის გამოყენება მათ შესანახად:">
+<!ENTITY accountInbox.label "ანგარიშის საფოსტო ყუთი">
+<!ENTITY accountInbox.accesskey "ს">
+<!ENTITY deferToServer.label "მიღებული წერილების საქაღალდე სხვა ანგარიშისთვის">
+<!ENTITY deferToServer.accesskey "ხ">
+<!ENTITY deferGetNewMail.label "სერვერის მითითება ახალი ფოსტის მიღებისას">
+<!ENTITY deferGetNewMail.accesskey "თ">

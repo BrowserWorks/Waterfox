@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "ਫਿਲਟਰ ਲਾਗ">
+<!ENTITY viewLogInfo.text "ਫਿਲਟਰ ਲਾਗ ਇੱਕ ਫਾਇਲ ਹੈ, ਜੋ ਕਿ  ਫਿਲਟਰ ਚੱਲਣ ਦੀ ਜਾਣਕਾਰੀ ਰੱਖਦੀ ਹੈ। ਲਾਗ ਰੱਖਣ ਨੂੰ ਯੋਗ ਕਰਨ ਲਈ ਹੇਠ ਦਿੱਤਾ ਚੋਣ ਬਕਸਾ ਇਸਤੇਮਾਲ ਕਰੋ।">
+<!ENTITY clearLog.label "ਲਾਗ ਹਟਾਓ">
+<!ENTITY clearLog.accesskey "C">
+<!ENTITY enableLog.label "ਫਿਲਟਰ ਲਾਗ ਰੱਖੋ">
+<!ENTITY enableLog.accesskey "E">
+<!ENTITY closeLog.label "ਬੰਦ ਕਰੋ">
+<!ENTITY closeLog.accesskey "o">

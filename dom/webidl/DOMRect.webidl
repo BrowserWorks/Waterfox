@@ -4,15 +4,22 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * The origin of this IDL file is
- * http://dev.w3.org/fxtf/geometry/
+ * https://drafts.fxtf.org/geometry/
  *
  * Copyright © 2012 W3C® (MIT, ERCIM, Keio), All Rights Reserved. W3C
  * liability, trademark and document use rules apply.
  */
 
-[Constructor(optional unrestricted double x = 0, optional unrestricted double y = 0,
-             optional unrestricted double width = 0, optional unrestricted double height = 0)]
+[Exposed=(Window,Worker),
+ Serializable]
 interface DOMRect : DOMRectReadOnly {
+    constructor(optional unrestricted double x = 0,
+                optional unrestricted double y = 0,
+                optional unrestricted double width = 0,
+                optional unrestricted double height = 0);
+
+    [NewObject] static DOMRect fromRect(optional DOMRectInit other = {});
+
     inherit attribute unrestricted double x;
     inherit attribute unrestricted double y;
     inherit attribute unrestricted double width;
@@ -20,9 +27,16 @@ interface DOMRect : DOMRectReadOnly {
 };
 
 [ProbablyShortLivingWrapper,
- Constructor(optional unrestricted double x = 0, optional unrestricted double y = 0,
-             optional unrestricted double width = 0, optional unrestricted double height = 0)]
+ Exposed=(Window,Worker),
+ Serializable]
 interface DOMRectReadOnly {
+    constructor(optional unrestricted double x = 0,
+                optional unrestricted double y = 0,
+                optional unrestricted double width = 0,
+                optional unrestricted double height = 0);
+
+    [NewObject] static DOMRectReadOnly fromRect(optional DOMRectInit other = {});
+
     readonly attribute unrestricted double x;
     readonly attribute unrestricted double y;
     readonly attribute unrestricted double width;

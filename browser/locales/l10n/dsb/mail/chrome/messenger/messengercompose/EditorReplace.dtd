@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from EdReplace.xul -->
+
+
+<!-- extracted from EdReplace.xhtml -->
+
+<!ENTITY replaceDialog.title "Pytaś a wuměniś">
+<!ENTITY findField.label "Tekst pytaś:">
+<!ENTITY findField.accesskey "T">
+<!ENTITY replaceField.label "Wuměniś pśez:">
+<!ENTITY replaceField.accesskey "m">
+<!ENTITY caseSensitiveCheckbox.label "Na wjelikopisanje źiwaś">
+<!ENTITY caseSensitiveCheckbox.accesskey "l">
+<!ENTITY wrapCheckbox.label "Wótzaprědka zachopiś">
+<!ENTITY wrapCheckbox.accesskey "W">
+<!ENTITY backwardsCheckbox.label "Naslědk pytaś">
+<!ENTITY backwardsCheckbox.accesskey "s">
+<!ENTITY findNextButton.label "Dalej pytaś">
+<!ENTITY findNextButton.accesskey "D">
+<!ENTITY replaceButton.label "Wuměniś">
+<!ENTITY replaceButton.accesskey "n">
+<!ENTITY replaceAndFindButton.label "Wuměniś a pytaś">
+<!ENTITY replaceAndFindButton.accesskey "t">
+<!ENTITY replaceAllButton.label "Wšykno wuměniś">
+<!ENTITY replaceAllButton.accesskey "o">
+<!ENTITY closeButton.label "Zacyniś">
+<!ENTITY closeButton.accesskey "Z">

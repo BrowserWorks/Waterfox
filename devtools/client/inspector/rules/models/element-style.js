@@ -37,7 +37,7 @@ loader.lazyRequireGetter(
 loader.lazyRequireGetter(
   this,
   "isCssVariable",
-  "devtools/shared/fronts/css-properties",
+  "devtools/client/fronts/css-properties",
   true
 );
 
@@ -69,10 +69,11 @@ class ElementStyle {
     this.ruleView = ruleView;
     this.store = store || {};
     this.pageStyle = pageStyle;
+    this.pseudoElements = [];
     this.showUserAgentStyles = showUserAgentStyles;
     this.rules = [];
     this.cssProperties = this.ruleView.cssProperties;
-    this.variables = new Map();
+    this.variablesMap = new Map();
 
     // We don't want to overwrite this.store.userProperties so we only create it
     // if it doesn't already exist.
@@ -112,6 +113,7 @@ class ElementStyle {
     }
 
     this.destroyed = true;
+    this.pseudoElements = [];
 
     for (const rule of this.rules) {
       if (rule.editor) {
@@ -170,6 +172,11 @@ class ElementStyle {
           this._maybeAddRule(entry, existingRules);
         }
 
+        // Store a list of all pseudo-element types found in the matching rules.
+        this.pseudoElements = this.rules
+          .filter(r => r.pseudoElement)
+          .map(r => r.pseudoElement);
+
         // Mark overridden computed styles.
         this.onRuleUpdated();
 
@@ -181,7 +188,7 @@ class ElementStyle {
 
         // We're done with the previous list of rules.
         for (const r of existingRules) {
-          if (r && r.editor) {
+          if (r?.editor) {
             r.editor.destroy();
           }
 
@@ -205,12 +212,14 @@ class ElementStyle {
   /**
    * Returns the Rule object of the given rule id.
    *
-   * @param  {String} id
+   * @param  {String|null} id
    *         The id of the Rule object.
    * @return {Rule|undefined} of the given rule id or undefined if it cannot be found.
    */
   getRule(id) {
-    return this.rules.find(rule => rule.domRule.actorID === id);
+    return id
+      ? this.rules.find(rule => rule.domRule.actorID === id)
+      : undefined;
   }
 
   /**
@@ -295,52 +304,41 @@ class ElementStyle {
    * Calls updateDeclarations with all supported pseudo elements
    */
   onRuleUpdated() {
-    this.variables.clear();
     this.updateDeclarations();
 
-    for (const pseudo of this.cssProperties.pseudoElements) {
+    // Update declarations for matching rules for pseudo-elements.
+    for (const pseudo of this.pseudoElements) {
       this.updateDeclarations(pseudo);
     }
   }
 
   /**
-   * Mark the declarations for a given pseudo element with an overridden flag if
-   * an earlier property overrides it and update the editor to show it in the
-   * UI. If there is any inactive CSS we also update the editors state to show
-   * the inactive CSS icon.
+   * Go over all CSS rules matching the selected element and mark the CSS declarations
+   * (aka TextProperty instances) with an `overridden` Boolean flag if an earlier or
+   * higher priority declaration overrides it. Rules are already ordered by specificity.
+   *
+   * If a pseudo-element type is passed (ex: ::before, ::first-line, etc),
+   * restrict the operation only to declarations in rules matching that pseudo-element.
+   *
+   * At the end, update the declaration's view (TextPropertyEditor instance) so it relects
+   * the latest state. Use this opportunity to also trigger checks for the "inactive"
+   * state of the declaration (whether it has effect or not).
    *
    * @param  {String} pseudo
-   *         Which pseudo element to flag as overridden.
-   *         Empty string or undefined will default to no pseudo element.
+   *         Optional pseudo-element for which to restrict marking CSS declarations as
+   *         overridden.
    */
   updateDeclarations(pseudo = "") {
-    // Gather all the text properties applied by these rules, ordered
-    // from more- to less-specific. Text properties from keyframes rule are
-    // excluded from being marked as overridden since a number of criteria such
-    // as time, and animation overlay are required to be check in order to
-    // determine if the property is overridden.
-    const textProps = [];
-    for (const rule of this.rules) {
-      if (
-        (rule.matchedSelectors.length > 0 ||
-          rule.domRule.type === ELEMENT_STYLE) &&
-        rule.pseudoElement === pseudo &&
-        !rule.keyframes
-      ) {
-        for (const textProp of rule.textProps.slice(0).reverse()) {
-          if (textProp.enabled) {
-            textProps.push(textProp);
-          }
-        }
-      }
-    }
-
-    // Gather all the computed properties applied by those text
-    // properties.
+    // Gather all text properties applicable to the selected element or pseudo-element.
+    const textProps = this._getDeclarations(pseudo);
+    // Gather all the computed properties applied by those text properties.
     let computedProps = [];
     for (const textProp of textProps) {
       computedProps = computedProps.concat(textProp.computed);
     }
+
+    // CSS Variables inherits from the normal element in case of pseudo element.
+    const variables = new Map(pseudo ? this.variablesMap.get("") : null);
 
     // Walk over the computed properties. As we see a property name
     // for the first time, mark that property's name as taken by this
@@ -396,10 +394,20 @@ class ElementStyle {
         taken[computedProp.name] = computedProp;
 
         if (isCssVariable(computedProp.name)) {
-          this.variables.set(computedProp.name, computedProp.value);
+          variables.set(computedProp.name, computedProp.value);
         }
       }
     }
+
+    // Find the CSS variables that have been updated.
+    const previousVariablesMap = new Map(this.variablesMap.get(pseudo));
+    const changedVariableNamesSet = new Set(
+      [...variables.keys(), ...previousVariablesMap.keys()].filter(
+        k => variables.get(k) !== previousVariablesMap.get(k)
+      )
+    );
+
+    this.variablesMap.set(pseudo, variables);
 
     // For each TextProperty, mark it overridden if all of its computed
     // properties are marked overridden. Update the text property's associated
@@ -409,7 +417,12 @@ class ElementStyle {
     for (const textProp of textProps) {
       // _updatePropertyOverridden will return true if the
       // overridden state has changed for the text property.
-      if (this._updatePropertyOverridden(textProp)) {
+      // _hasUpdatedCSSVariable will return true if the declaration contains any
+      // of the updated CSS variable names.
+      if (
+        this._updatePropertyOverridden(textProp) ||
+        this._hasUpdatedCSSVariable(textProp, changedVariableNamesSet)
+      ) {
         textProp.updateEditor();
       }
 
@@ -418,6 +431,90 @@ class ElementStyle {
         textProp.editor.updatePropertyState();
       }
     }
+  }
+
+  /**
+   * Returns true if the given declaration's property value contains a CSS variable
+   * matching any of the updated CSS variable names.
+   *
+   * @param {TextProperty} declaration
+   *        A TextProperty of a rule.
+   * @param {Set<>String} variableNamesSet
+   *        A Set of CSS variable names that have been updated.
+   */
+  _hasUpdatedCSSVariable(declaration, variableNamesSet) {
+    for (const variableName of variableNamesSet) {
+      if (declaration.hasCSSVariable(variableName)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Helper for |this.updateDeclarations()| to mark CSS declarations as overridden.
+   *
+   * Returns an array of CSS declarations (aka TextProperty instances) from all rules
+   * applicable to the selected element ordered from more- to less-specific.
+   *
+   * If a pseudo-element type is given, restrict the result only to declarations
+   * applicable to that pseudo-element.
+   *
+   * NOTE: this method skips CSS declarations in @keyframes rules because a number of
+   * criteria such as time and animation delay need to be checked in order to determine
+   * if the property is overridden at runtime.
+   *
+   * @param  {String} pseudo
+   *         Optional pseudo-element for which to restrict marking CSS declarations as
+   *         overridden. If omitted, only declarations for regular style rules are
+   *         returned (no pseudo-element style rules).
+   *
+   * @return {Array}
+   *         Array of TextProperty instances.
+   */
+  _getDeclarations(pseudo = "") {
+    const textProps = [];
+
+    for (const rule of this.rules) {
+      // Skip @keyframes rules
+      if (rule.keyframes) {
+        continue;
+      }
+
+      // Style rules must be considered only when they have selectors that match the node.
+      // When renaming a selector, the unmatched rule lingers in the Rule view, but it no
+      // longer matches the node. This strict check avoids accidentally causing
+      // declarations to be overridden in the remaining matching rules.
+      const isStyleRule =
+        rule.pseudoElement === "" && rule.matchedSelectors.length > 0;
+
+      // Style rules for pseudo-elements must always be considered, regardless if their
+      // selector matches the node. As a convenience, declarations in rules for
+      // pseudo-elements show up in a separate Pseudo-elements accordion when selecting
+      // the host node (instead of the pseudo-element node directly, which is sometimes
+      // impossible, for example with ::selection or ::first-line).
+      // Loosening the strict check on matched selectors ensures these declarations
+      // participate in the algorithm below to mark them as overridden.
+      const isPseudoElementRule =
+        rule.pseudoElement !== "" && rule.pseudoElement === pseudo;
+
+      const isElementStyle = rule.domRule.type === ELEMENT_STYLE;
+
+      const filterCondition =
+        pseudo === "" ? isStyleRule || isElementStyle : isPseudoElementRule;
+
+      // Collect all relevant CSS declarations (aka TextProperty instances).
+      if (filterCondition) {
+        for (const textProp of rule.textProps.slice(0).reverse()) {
+          if (textProp.enabled) {
+            textProps.push(textProp);
+          }
+        }
+      }
+    }
+
+    return textProps;
   }
 
   /**
@@ -462,15 +559,15 @@ class ElementStyle {
    * Given the id of the rule and the new declaration name, modifies the existing
    * declaration name to the new given value.
    *
-   * @param  {String} ruleID
+   * @param  {String} ruleId
    *         The Rule id of the given CSS declaration.
    * @param  {String} declarationId
    *         The TextProperty id for the CSS declaration.
    * @param  {String} name
    *         The new declaration name.
    */
-  async modifyDeclarationName(ruleID, declarationId, name) {
-    const rule = this.getRule(ruleID);
+  async modifyDeclarationName(ruleId, declarationId, name) {
+    const rule = this.getRule(ruleId);
     if (!rule) {
       return;
     }
@@ -749,11 +846,14 @@ class ElementStyle {
    *
    * @param  {String} name
    *         The name of the variable.
+   * @param  {String} pseudo
+   *         The pseudo-element name of the rule.
    * @return {String} the variable's value or null if the variable is
    *         not defined.
    */
-  getVariable(name) {
-    return this.variables.get(name);
+  getVariable(name, pseudo = "") {
+    const variables = this.variablesMap.get(pseudo);
+    return variables ? variables.get(name) : null;
   }
 
   /**

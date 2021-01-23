@@ -8,6 +8,7 @@
 
 interface nsIURI;
 interface nsIInputStream;
+webidl BrowsingContext;
 
 /**
  * Interface indicating what we found/corrected when fixing up a URI
@@ -18,7 +19,7 @@ interface nsIURIFixupInfo : nsISupports
   /**
    * Consumer that asked for fixed up URI.
    */
-  attribute nsISupports consumer;
+  attribute BrowsingContext consumer;
 
   /**
    * Our best guess as to what URI the consumer will want. Might
@@ -26,31 +27,31 @@ interface nsIURIFixupInfo : nsISupports
    * the input was invalid as a URI and FIXUP_FLAG_ALLOW_KEYWORD_LOOKUP
    * was not passed)
    */
-  readonly attribute nsIURI preferredURI;
+  attribute nsIURI preferredURI;
 
   /**
    * The fixed-up original input, *never* using a keyword search.
    * (might be null if the original input was not recoverable as
    * a URL, e.g. "foo bar"!)
    */
-  readonly attribute nsIURI fixedURI;
+  attribute nsIURI fixedURI;
 
   /**
    * The name of the keyword search provider used to provide a keyword search;
    * empty string if no keyword search was done.
    */
-  readonly attribute AString keywordProviderName;
+  attribute AString keywordProviderName;
 
   /**
    * The keyword as used for the search (post trimming etc.)
    * empty string if no keyword search was done.
    */
-  readonly attribute AString keywordAsSent;
+  attribute AString keywordAsSent;
 
   /**
    * Whether we changed the protocol instead of using one from the input as-is.
    */
-  readonly attribute boolean fixupChangedProtocol;
+  attribute boolean fixupChangedProtocol;
 
   /**
    * Whether we created an alternative URI. We might have added a prefix and/or
@@ -58,12 +59,12 @@ interface nsIURIFixupInfo : nsISupports
    * browser.fixup.alternate.prefix and .suffix prefs, with the defaults being
    * "www." and ".com", respectively.
    */
-  readonly attribute boolean fixupCreatedAlternateURI;
+  attribute boolean fixupCreatedAlternateURI;
 
   /**
    * The original input
    */
-  readonly attribute AUTF8String originalInput;
+  attribute AUTF8String originalInput;
 };
 
 
@@ -90,23 +91,16 @@ interface nsIURIFixup : nsISupports
     const unsigned long FIXUP_FLAGS_MAKE_ALTERNATE_URI = 2;
 
     /*
+     * Set when the fixup happens in a private context, the used search engine
+     * may differ in this case. Not all consumers care about this, because they
+     * may not want the url to be transformed in a search.
+     */
+    const unsigned long FIXUP_FLAG_PRIVATE_CONTEXT = 4;
+
+    /*
      * Fix common scheme typos.
      */
     const unsigned long FIXUP_FLAG_FIX_SCHEME_TYPOS = 8;
-
-    /* NB: If adding an extra flag, 4 is free (again) */
-
-    /**
-     * Converts an internal URI (e.g. one that has a username and password in
-     * it) into one which we can expose to the user, for example on the URL bar.
-     *
-     * @param  aURI       The URI to be converted
-     * @return nsIURI     The converted, exposable URI
-     * @throws NS_ERROR_MALFORMED_URI when the exposable portion of aURI is malformed
-     * @throws NS_ERROR_UNKNOWN_PROTOCOL when we can't get a protocol handler service
-     *         for the URI scheme.
-     */
-    nsIURI createExposableURI(in nsIURI aURI);
 
     /**
      * Converts the specified string into a URI, first attempting
@@ -136,11 +130,23 @@ interface nsIURIFixup : nsISupports
                                     [optional] out nsIInputStream aPostData);
 
     /**
+     * Convert load flags from nsIWebNavigation to URI fixup flags for use in
+     * createFixupURI or getFixupURIInfo.
+     *
+     * @param aURIText       Candidate URI; used for determining whether to
+     *                       allow keyword lookups.
+     * @param aDocShellFlags Load flags from nsIDocShell to convert.
+     */
+    unsigned long webNavigationFlagsToFixupFlags(
+        in AUTF8String aURIText, in unsigned long aDocShellFlags);
+
+    /**
      * Converts the specified keyword string into a URI.  Note that it's the
      * caller's responsibility to check whether keywords are enabled and
      * whether aKeyword is a sensible keyword.
      *
      * @param aKeyword  The keyword string to convert into a URI
+     * @param aIsPrivateContext Whether this is invoked from a private context.
      * @param aPostData The POST data to submit to the returned URI
      *                  (see nsISearchSubmission).
      *
@@ -148,6 +154,7 @@ interface nsIURIFixup : nsISupports
      *         data and aPostData is null.
      */
     nsIURIFixupInfo keywordToURI(in AUTF8String aKeyword,
+                                 [optional] in boolean aIsPrivateContext,
                                  [optional] out nsIInputStream aPostData);
 
     /**
@@ -157,10 +164,7 @@ interface nsIURIFixup : nsISupports
      * treated as a search term.
      *
      * @param aDomain A domain name to query.
-     * @param aDotPos The position of the first '.' character in aDomain, or
-     *                -1 if no '.' character exists.
      */
-    bool isDomainWhitelisted(in AUTF8String aDomain,
-                             in uint32_t aDotPos);
+    bool isDomainWhitelisted(in AUTF8String aDomain);
 };
 

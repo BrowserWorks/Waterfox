@@ -1,0 +1,65 @@
+<!--
+# Translator(s):
+#
+# evinteler <emil_vinteler2000@yahoo.com>
+# nicubunu <nicubunu@gmail.com>
+# Laudatti <Laudatti@gmail.com>
+# Alexandru Szasz <alexxed@gmail.com>
+# janimo <jani@ubuntu.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.viewing.messages.title      "Message Display">
+<!ENTITY style.label                      "Stil">
+<!ENTITY style.accesskey                  "S">
+<!ENTITY regular.label                    "Regular">
+<!ENTITY bold.label                       "Aldin">
+<!ENTITY italic.label                     "Italic">
+<!ENTITY boldItalic.label                 "Bold Italic">
+<!ENTITY size.label                       "Mărime:">
+<!ENTITY size.accesskey                   "M">
+<!ENTITY bigger.label                     "Mai mare">
+<!ENTITY smaller.label                    "Smaller">
+<!ENTITY color.label                      "Stabilire culori">
+<!ENTITY color.accesskey                  "c">
+<!ENTITY displayPlainText.caption         "Plain text messages">
+<!ENTITY fontPlainText.label              "Font:">
+<!ENTITY fontPlainText.accesskey          "F">
+<!ENTITY displayQuoted.label              "Settings for quoted messages:">
+<!ENTITY wrapInMsg.label                  "Wrap text to fit window width">
+<!ENTITY wrapInMsg.accesskey              "W">
+<!-- LOCALIZATION NOTE : (convertEmoticons.label) 'Emoticons' are also known as 'Smileys', e.g. :-)   -->
+<!ENTITY convertEmoticons.label           "Arată simbolurile emotive ca imagini">
+<!ENTITY convertEmoticons.accesskey       "A">
+<!ENTITY generalMessageDisplay.caption    "General">
+<!ENTITY autoMarkAsRead.label             "Marchează automat mesajele ca citite">
+<!ENTITY autoMarkAsRead.accesskey         "a">
+<!ENTITY markAsReadNoDelay.label          "Imediat la afișare">
+<!ENTITY markAsReadNoDelay.accesskey      "m">
+<!-- LOCALIZATION NOTE (markAsReadDelay.label): This will concatenate to
+     "After displaying for [___] seconds",
+     using (markAsReadDelay.label) and a number (secondsLabel.label). -->
+<!ENTITY markAsReadDelay.label            "După ce sunt afișate">
+<!ENTITY markAsReadDelay.accesskey        "t">
+<!ENTITY secondsLabel.label               "secunde">
+
+<!ENTITY openingMessages.label            "When opening messages, display them in:">
+<!ENTITY newWindowRadio.label             "O fereastră de mesaj nouă">
+<!ENTITY newWindowRadio.accesskey         "n">
+<!ENTITY existingWindowRadio.label        "O fereastră de mesaj existentă">
+<!ENTITY existingWindowRadio.accesskey    "e">
+<!ENTITY disableContent.label             "Block images and other content from remote sources">
+<!ENTITY disableContent.accesskey         "B">
+<!ENTITY showCondensedAddresses.label     "Arată numai numele pentru cei din agenda mea de contacte">
+<!ENTITY showCondensedAddresses.accesskey "o">
+<!ENTITY closeMsgWindowOnDelete.label     "Close message window when deleting the message">
+<!ENTITY closeMsgWindowOnDelete.accesskey "l">

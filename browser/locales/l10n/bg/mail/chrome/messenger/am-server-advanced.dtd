@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Разширени настройки">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "Директория на IMAP сървър:">
+<!ENTITY serverDirectory.accesskey "Д">
+<!ENTITY usingSubscription.label "Показване само на абонираните папки">
+<!ENTITY usingSubscription.accesskey "П">
+<!ENTITY dualUseFolders.label "Сървъра поддържа папки, които съдържат подпапки и писма">
+<!ENTITY dualUseFolders.accesskey "С">
+<!ENTITY maximumConnectionsNumber.label "Максимален брой кеширани връзки">
+<!ENTITY maximumConnectionsNumber.accesskey "М">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Тези настройки определят пространството от имена на вашия IMAP сървър">
+<!ENTITY personalNamespace.label "Лично именно пространство:">
+<!ENTITY personalNamespace.accesskey "Л">
+<!ENTITY publicNamespace.label "Обществено (споделено):">
+<!ENTITY publicNamespace.accesskey "щ">
+<!ENTITY otherUsersNamespace.label "Други потребители:">
+<!ENTITY otherUsersNamespace.accesskey "Д">
+<!ENTITY overrideNamespaces.label "Сървърът може да променя тези именни пространства">
+<!ENTITY overrideNamespaces.accesskey "С">
+<!ENTITY pop3DeferringDesc.label "При изтегляне на поща от този сървър да се използва следната папка за съхранение на нови писма:" >
+<!ENTITY accountInbox.label "Входяща кутия на тази сметка">
+<!ENTITY accountInbox.accesskey "з">
+<!ENTITY deferToServer.label "Входяща кутия на друга сметка">
+<!ENTITY deferToServer.accesskey "у">
+<!ENTITY deferGetNewMail.label "Включително и този сървър при получаване на нова поща">
+<!ENTITY deferGetNewMail.accesskey "В">

@@ -2,11 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-extern crate env_logger;
-extern crate euclid;
-
 use gleam::gl;
-use glutin::{self, GlContext};
+use glutin;
 use std::env;
 use std::path::PathBuf;
 use webrender;
@@ -14,7 +11,6 @@ use winit;
 use webrender::{DebugFlags, ShaderPrecacheFlags};
 use webrender::api::*;
 use webrender::api::units::*;
-
 
 struct Notifier {
     events_proxy: winit::EventsLoopProxy,
@@ -27,7 +23,7 @@ impl Notifier {
 }
 
 impl RenderNotifier for Notifier {
-    fn clone(&self) -> Box<RenderNotifier> {
+    fn clone(&self) -> Box<dyn RenderNotifier> {
         Box::new(Notifier {
             events_proxy: self.events_proxy.clone(),
         })
@@ -77,7 +73,7 @@ pub trait Example {
 
     fn render(
         &mut self,
-        api: &RenderApi,
+        api: &mut RenderApi,
         builder: &mut DisplayListBuilder,
         txn: &mut Transaction,
         device_size: DeviceIntSize,
@@ -87,19 +83,19 @@ pub trait Example {
     fn on_event(
         &mut self,
         _: winit::WindowEvent,
-        _: &RenderApi,
+        _: &mut RenderApi,
         _: DocumentId,
     ) -> bool {
         false
     }
     fn get_image_handlers(
         &mut self,
-        _gl: &gl::Gl,
-    ) -> (Option<Box<webrender::ExternalImageHandler>>,
-          Option<Box<webrender::OutputImageHandler>>) {
+        _gl: &dyn gl::Gl,
+    ) -> (Option<Box<dyn ExternalImageHandler>>,
+          Option<Box<dyn OutputImageHandler>>) {
         (None, None)
     }
-    fn draw_custom(&mut self, _gl: &gl::Gl) {
+    fn draw_custom(&mut self, _gl: &dyn gl::Gl) {
     }
 }
 
@@ -109,6 +105,17 @@ pub fn main_wrapper<E: Example>(
 ) {
     env_logger::init();
 
+    #[cfg(target_os = "macos")]
+    {
+        use core_foundation::{self as cf, base::TCFType};
+        let i = cf::bundle::CFBundle::main_bundle().info_dictionary();
+        let mut i = unsafe { i.to_mutable() };
+        i.set(
+            cf::string::CFString::new("NSSupportsAutomaticGraphicsSwitching"),
+            cf::boolean::CFBoolean::true_value().into_CFType(),
+        );
+    }
+
     let args: Vec<String> = env::args().collect();
     let res_path = if args.len() > 1 {
         Some(PathBuf::from(&args[1]))
@@ -117,35 +124,37 @@ pub fn main_wrapper<E: Example>(
     };
 
     let mut events_loop = winit::EventsLoop::new();
-    let context_builder = glutin::ContextBuilder::new()
-        .with_gl(glutin::GlRequest::GlThenGles {
-            opengl_version: (3, 2),
-            opengles_version: (3, 0),
-        });
     let window_builder = winit::WindowBuilder::new()
         .with_title(E::TITLE)
         .with_multitouch()
         .with_dimensions(winit::dpi::LogicalSize::new(E::WIDTH as f64, E::HEIGHT as f64));
-    let window = glutin::GlWindow::new(window_builder, context_builder, &events_loop)
+    let windowed_context = glutin::ContextBuilder::new()
+        .with_gl(glutin::GlRequest::GlThenGles {
+            opengl_version: (3, 2),
+            opengles_version: (3, 0),
+        })
+        .build_windowed(window_builder, &events_loop)
         .unwrap();
 
-    unsafe {
-        window.make_current().ok();
-    }
+    let windowed_context = unsafe { windowed_context.make_current().unwrap() };
 
-    let gl = match window.get_api() {
+    let gl = match windowed_context.get_api() {
         glutin::Api::OpenGl => unsafe {
-            gl::GlFns::load_with(|symbol| window.get_proc_address(symbol) as *const _)
+            gl::GlFns::load_with(
+                |symbol| windowed_context.get_proc_address(symbol) as *const _
+            )
         },
         glutin::Api::OpenGlEs => unsafe {
-            gl::GlesFns::load_with(|symbol| window.get_proc_address(symbol) as *const _)
+            gl::GlesFns::load_with(
+                |symbol| windowed_context.get_proc_address(symbol) as *const _
+            )
         },
         glutin::Api::WebGl => unimplemented!(),
     };
 
     println!("OpenGL version {}", gl.get_string(gl::VERSION));
     println!("Shader resource path: {:?}", res_path);
-    let device_pixel_ratio = window.get_hidpi_factor() as f32;
+    let device_pixel_ratio = windowed_context.window().get_hidpi_factor() as f32;
     println!("Device pixel ratio: {}", device_pixel_ratio);
 
     println!("Loading shaders...");
@@ -155,13 +164,14 @@ pub fn main_wrapper<E: Example>(
         precache_flags: E::PRECACHE_SHADER_FLAGS,
         device_pixel_ratio,
         clear_color: Some(ColorF::new(0.3, 0.0, 0.0, 1.0)),
-        //scatter_gpu_cache_updates: false,
         debug_flags,
+        //allow_texture_swizzling: false,
         ..options.unwrap_or(webrender::RendererOptions::default())
     };
 
     let device_size = {
-        let size = window
+        let size = windowed_context
+            .window()
             .get_inner_size()
             .unwrap()
             .to_physical(device_pixel_ratio as f64);
@@ -175,7 +185,7 @@ pub fn main_wrapper<E: Example>(
         None,
         device_size,
     ).unwrap();
-    let api = sender.create_api();
+    let mut api = sender.create_api();
     let document_id = api.add_document(device_size, 0);
 
     let (external, output) = example.get_image_handlers(&*gl);
@@ -190,12 +200,12 @@ pub fn main_wrapper<E: Example>(
 
     let epoch = Epoch(0);
     let pipeline_id = PipelineId(0, 0);
-    let layout_size = device_size.to_f32() / euclid::TypedScale::new(device_pixel_ratio);
+    let layout_size = device_size.to_f32() / euclid::Scale::new(device_pixel_ratio);
     let mut builder = DisplayListBuilder::new(pipeline_id, layout_size);
     let mut txn = Transaction::new();
 
     example.render(
-        &api,
+        &mut api,
         &mut builder,
         &mut txn,
         device_size,
@@ -225,9 +235,18 @@ pub fn main_wrapper<E: Example>(
         };
         match win_event {
             winit::WindowEvent::CloseRequested => return winit::ControlFlow::Break,
-            // skip high-frequency events
             winit::WindowEvent::AxisMotion { .. } |
-            winit::WindowEvent::CursorMoved { .. } => return winit::ControlFlow::Continue,
+            winit::WindowEvent::CursorMoved { .. } => {
+                custom_event = example.on_event(
+                        win_event,
+                        &mut api,
+                        document_id,
+                    );
+                // skip high-frequency events from triggering a frame draw.
+                if !custom_event {
+                    return winit::ControlFlow::Continue;
+                }
+            },
             winit::WindowEvent::KeyboardInput {
                 input: winit::KeyboardInput {
                     state: winit::ElementState::Pressed,
@@ -268,14 +287,14 @@ pub fn main_wrapper<E: Example>(
                 _ => {
                     custom_event = example.on_event(
                         win_event,
-                        &api,
+                        &mut api,
                         document_id,
                     )
                 },
             },
             other => custom_event = example.on_event(
                 other,
-                &api,
+                &mut api,
                 document_id,
             ),
         };
@@ -288,7 +307,7 @@ pub fn main_wrapper<E: Example>(
             let mut builder = DisplayListBuilder::new(pipeline_id, layout_size);
 
             example.render(
-                &api,
+                &mut api,
                 &mut builder,
                 &mut txn,
                 device_size,
@@ -310,7 +329,7 @@ pub fn main_wrapper<E: Example>(
         renderer.render(device_size).unwrap();
         let _ = renderer.flush_pipeline_info();
         example.draw_custom(&*gl);
-        window.swap_buffers().ok();
+        windowed_context.swap_buffers().ok();
 
         winit::ControlFlow::Continue
     });

@@ -10,13 +10,13 @@
 #include "imgINotificationObserver.h"
 #include "MediaDocument.h"
 #include "nsIDOMEventListener.h"
-#include "nsIImageDocument.h"
 
 namespace mozilla {
 namespace dom {
 
+class HTMLImageElement;
+
 class ImageDocument final : public MediaDocument,
-                            public nsIImageDocument,
                             public imgINotificationObserver,
                             public nsIDOMEventListener {
  public:
@@ -28,22 +28,19 @@ class ImageDocument final : public MediaDocument,
     return MediaDocumentKind::Image;
   }
 
-  virtual nsresult Init() override;
+  nsresult Init() override;
 
-  virtual nsresult StartDocumentLoad(const char* aCommand, nsIChannel* aChannel,
-                                     nsILoadGroup* aLoadGroup,
-                                     nsISupports* aContainer,
-                                     nsIStreamListener** aDocListener,
-                                     bool aReset = true,
-                                     nsIContentSink* aSink = nullptr) override;
+  nsresult StartDocumentLoad(const char* aCommand, nsIChannel* aChannel,
+                             nsILoadGroup* aLoadGroup, nsISupports* aContainer,
+                             nsIStreamListener** aDocListener,
+                             bool aReset = true,
+                             nsIContentSink* aSink = nullptr) override;
 
-  virtual void SetScriptGlobalObject(
-      nsIScriptGlobalObject* aScriptGlobalObject) override;
-  virtual void Destroy() override;
-  virtual void OnPageShow(bool aPersisted, EventTarget* aDispatchStartTarget,
-                          bool aOnlySystemGroup = false) override;
+  void SetScriptGlobalObject(nsIScriptGlobalObject*) override;
+  void Destroy() override;
+  void OnPageShow(bool aPersisted, EventTarget* aDispatchStartTarget,
+                  bool aOnlySystemGroup = false) override;
 
-  NS_DECL_NSIIMAGEDOCUMENT
   NS_DECL_IMGINOTIFICATIONOBSERVER
 
   // nsIDOMEventListener
@@ -53,36 +50,41 @@ class ImageDocument final : public MediaDocument,
 
   friend class ImageListener;
 
-  void DefaultCheckOverflowing() { CheckOverflowing(mResizeImageByDefault); }
+  void DefaultCheckOverflowing();
 
   // WebIDL API
-  virtual JSObject* WrapNode(JSContext* aCx,
-                             JS::Handle<JSObject*> aGivenProto) override;
+  JSObject* WrapNode(JSContext*, JS::Handle<JSObject*> aGivenProto) override;
 
   bool ImageIsOverflowing() const {
-    return mImageIsOverflowingHorizontally || mImageIsOverflowingVertically;
+    return ImageIsOverflowingHorizontally() || ImageIsOverflowingVertically();
   }
+
+  bool ImageIsOverflowingVertically() const {
+    return mImageHeight > mVisibleHeight;
+  }
+
+  bool ImageIsOverflowingHorizontally() const {
+    return mImageWidth > mVisibleWidth;
+  }
+
   bool ImageIsResized() const { return mImageIsResized; }
-  already_AddRefed<imgIRequest> GetImageRequest(ErrorResult& aRv);
   // ShrinkToFit is called from xpidl methods and we don't have a good
   // way to mark those MOZ_CAN_RUN_SCRIPT yet.
   MOZ_CAN_RUN_SCRIPT_BOUNDARY void ShrinkToFit();
   void RestoreImage();
-  void RestoreImageTo(int32_t aX, int32_t aY) { ScrollImageTo(aX, aY, true); }
-  void ToggleImageSize();
 
-  virtual void NotifyPossibleTitleChange(bool aBoundTitleElement) override;
+  void NotifyPossibleTitleChange(bool aBoundTitleElement) override;
 
  protected:
   virtual ~ImageDocument();
 
-  virtual nsresult CreateSyntheticDocument() override;
+  nsresult CreateSyntheticDocument() override;
 
   nsresult CheckOverflowing(bool changeState);
 
   void UpdateTitleAndCharset();
 
-  void ScrollImageTo(int32_t aX, int32_t aY, bool restoreImage);
+  void ScrollImageTo(int32_t aX, int32_t aY);
 
   float GetRatio() {
     return std::min(mVisibleWidth / mImageWidth, mVisibleHeight / mImageHeight);
@@ -90,9 +92,7 @@ class ImageDocument final : public MediaDocument,
 
   void ResetZoomLevel();
   float GetZoomLevel();
-#if defined(MOZ_WIDGET_ANDROID)
   float GetResolution();
-#endif
 
   void UpdateSizeFromLayout();
 
@@ -104,21 +104,17 @@ class ImageDocument final : public MediaDocument,
   };
   void SetModeClass(eModeClasses mode);
 
-  nsresult OnSizeAvailable(imgIRequest* aRequest, imgIContainer* aImage);
-  nsresult OnLoadComplete(imgIRequest* aRequest, nsresult aStatus);
+  void OnSizeAvailable(imgIRequest* aRequest, imgIContainer* aImage);
+  void OnLoadComplete(imgIRequest* aRequest, nsresult aStatus);
   void OnHasTransparency();
 
-  nsCOMPtr<Element> mImageContent;
+  RefPtr<HTMLImageElement> mImageContent;
 
   float mVisibleWidth;
   float mVisibleHeight;
   int32_t mImageWidth;
   int32_t mImageHeight;
 
-  bool mResizeImageByDefault;
-  bool mClickResizingEnabled;
-  bool mImageIsOverflowingHorizontally;
-  bool mImageIsOverflowingVertically;
   // mImageIsResized is true if the image is currently resized
   bool mImageIsResized;
   // mShouldResize is true if the image should be resized when it doesn't fit
@@ -132,9 +128,7 @@ class ImageDocument final : public MediaDocument,
   bool mHasCustomTitle;
 
   float mOriginalZoomLevel;
-#if defined(MOZ_WIDGET_ANDROID)
   float mOriginalResolution;
-#endif
 };
 
 }  // namespace dom

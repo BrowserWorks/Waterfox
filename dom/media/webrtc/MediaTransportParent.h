@@ -24,14 +24,16 @@ class MediaTransportParent : public dom::PMediaTransportParent {
   mozilla::ipc::IPCResult RecvCreateIceCtx(
       const string& name, nsTArray<RTCIceServer>&& iceServers,
       const RTCIceTransportPolicy& icePolicy);
-  mozilla::ipc::IPCResult RecvSetProxyServer(const dom::TabId& tabId,
-                                             const net::LoadInfoArgs& args,
-                                             const nsCString& alpn);
+  mozilla::ipc::IPCResult RecvSetProxyConfig(
+      const net::WebrtcProxyConfig& aProxyConfig);
   mozilla::ipc::IPCResult RecvEnsureProvisionalTransport(
       const string& transportId, const string& localUfrag,
       const string& localPwd, const int& componentCount);
+  mozilla::ipc::IPCResult RecvSetTargetForDefaultLocalAddressLookup(
+      const string& targetIp, uint16_t targetPort);
   mozilla::ipc::IPCResult RecvStartIceGathering(
-      const bool& defaultRouteOnly, const net::NrIceStunAddrArray& stunAddrs);
+      const bool& defaultRouteOnly, const bool& obfuscateAddresses,
+      const net::NrIceStunAddrArray& stunAddrs);
   mozilla::ipc::IPCResult RecvActivateTransport(
       const string& transportId, const string& localUfrag,
       const string& localPwd, const int& componentCount,
@@ -42,17 +44,17 @@ class MediaTransportParent : public dom::PMediaTransportParent {
   mozilla::ipc::IPCResult RecvRemoveTransportsExcept(
       const StringVector& transportIds);
   mozilla::ipc::IPCResult RecvStartIceChecks(const bool& isControlling,
-                                             const bool& isOfferer,
                                              const StringVector& iceOptions);
   mozilla::ipc::IPCResult RecvSendPacket(const string& transportId,
                                          const MediaPacket& packet);
   mozilla::ipc::IPCResult RecvAddIceCandidate(const string& transportId,
                                               const string& candidate,
-                                              const string& ufrag);
+                                              const string& ufrag,
+                                              const string& obfuscatedAddress);
   mozilla::ipc::IPCResult RecvUpdateNetworkState(const bool& online);
-  mozilla::ipc::IPCResult RecvGetIceStats(
-      const string& transportId, const double& now,
-      const RTCStatsReportInternal& reportIn, GetIceStatsResolver&& aResolve);
+  mozilla::ipc::IPCResult RecvGetIceStats(const string& transportId,
+                                          const double& now,
+                                          GetIceStatsResolver&& aResolve);
 
   void ActorDestroy(ActorDestroyReason aWhy);
 

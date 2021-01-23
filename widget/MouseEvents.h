@@ -22,13 +22,16 @@ class PBrowserBridgeParent;
 }  // namespace dom
 
 class WidgetPointerEvent;
+}  // namespace mozilla
+
+namespace mozilla {
 class WidgetPointerEventHolder final {
  public:
   nsTArray<WidgetPointerEvent> mEvents;
   NS_INLINE_DECL_REFCOUNTING(WidgetPointerEventHolder)
 
  private:
-  virtual ~WidgetPointerEventHolder() {}
+  virtual ~WidgetPointerEventHolder() = default;
 };
 
 /******************************************************************************
@@ -62,14 +65,7 @@ class WidgetPointerHelper {
         tangentialPressure(aTangentialPressure),
         convertToPointer(true) {}
 
-  explicit WidgetPointerHelper(const WidgetPointerHelper& aHelper)
-      : pointerId(aHelper.pointerId),
-        tiltX(aHelper.tiltX),
-        tiltY(aHelper.tiltY),
-        twist(aHelper.twist),
-        tangentialPressure(aHelper.tangentialPressure),
-        convertToPointer(aHelper.convertToPointer),
-        mCoalescedWidgetEvents(aHelper.mCoalescedWidgetEvents) {}
+  explicit WidgetPointerHelper(const WidgetPointerHelper& aHelper) = default;
 
   void AssignPointerHelperData(const WidgetPointerHelper& aEvent,
                                bool aCopyCoalescedEvents = false) {
@@ -100,8 +96,7 @@ class WidgetMouseEventBase : public WidgetInputEvent {
       : mPressure(0),
         mButton(0),
         mButtons(0),
-        mInputSource(/* MouseEvent_Binding::MOZ_SOURCE_MOUSE = */ 1),
-        mHitCluster(false) {}
+        mInputSource(/* MouseEvent_Binding::MOZ_SOURCE_MOUSE = */ 1) {}
   // Including MouseEventBinding.h here leads to an include loop, so
   // we have to hardcode MouseEvent_Binding::MOZ_SOURCE_MOUSE.
 
@@ -111,8 +106,7 @@ class WidgetMouseEventBase : public WidgetInputEvent {
         mPressure(0),
         mButton(0),
         mButtons(0),
-        mInputSource(/* MouseEvent_Binding::MOZ_SOURCE_MOUSE = */ 1),
-        mHitCluster(false) {}
+        mInputSource(/* MouseEvent_Binding::MOZ_SOURCE_MOUSE = */ 1) {}
   // Including MouseEventBinding.h here leads to an include loop, so
   // we have to hardcode MouseEvent_Binding::MOZ_SOURCE_MOUSE.
 
@@ -140,9 +134,6 @@ class WidgetMouseEventBase : public WidgetInputEvent {
   // Possible values a in MouseEvent
   uint16_t mInputSource;
 
-  // Touch near a cluster of links (true)
-  bool mHitCluster;
-
   bool IsLeftButtonPressed() const {
     return !!(mButtons & MouseButtonsFlag::eLeftFlag);
   }
@@ -166,7 +157,6 @@ class WidgetMouseEventBase : public WidgetInputEvent {
     mButton = aEvent.mButton;
     mButtons = aEvent.mButtons;
     mPressure = aEvent.mPressure;
-    mHitCluster = aEvent.mHitCluster;
     mInputSource = aEvent.mInputSource;
   }
 
@@ -193,8 +183,12 @@ class WidgetMouseEvent : public WidgetMouseEventBase,
   typedef bool ReasonType;
   enum Reason : ReasonType { eReal, eSynthesized };
 
-  typedef bool ContextMenuTriggerType;
-  enum ContextMenuTrigger : ContextMenuTriggerType { eNormal, eContextMenuKey };
+  typedef uint8_t ContextMenuTriggerType;
+  enum ContextMenuTrigger : ContextMenuTriggerType {
+    eNormal,
+    eContextMenuKey,
+    eControlClick
+  };
 
   typedef bool ExitFromType;
   enum ExitFrom : ExitFromType { eChild, eTopLevel };
@@ -241,8 +235,10 @@ class WidgetMouseEvent : public WidgetMouseEventBase,
   virtual ~WidgetMouseEvent() {
     NS_WARNING_ASSERTION(
         mMessage != eContextMenu ||
-            mButton == ((mContextMenuTrigger == eNormal) ? MouseButton::eRight
-                                                         : MouseButton::eLeft),
+            (mButton == ((mContextMenuTrigger == eNormal)
+                             ? MouseButton::eRight
+                             : MouseButton::eLeft) &&
+             (mContextMenuTrigger != eControlClick || IsControl())),
         "Wrong button set to eContextMenu event?");
   }
 #endif
@@ -366,6 +362,14 @@ class WidgetDragEvent : public WidgetMouseEvent {
     mUserCancelled = false;
     mDefaultPreventedOnContent = aEvent.mDefaultPreventedOnContent;
   }
+
+  /**
+   * Should be called before dispatching the DOM tree if this event is
+   * synthesized for tests because drop effect is initialized before
+   * dispatching from widget if it's not synthesized event, but synthesized
+   * events are not initialized in the path.
+   */
+  void InitDropEffectForTests();
 };
 
 /******************************************************************************

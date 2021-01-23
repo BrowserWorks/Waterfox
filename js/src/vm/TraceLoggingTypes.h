@@ -7,9 +7,17 @@
 #ifndef TraceLoggingTypes_h
 #define TraceLoggingTypes_h
 
-#include "builtin/String.h"
+#include "mozilla/Assertions.h"
+#include "mozilla/MemoryReporting.h"
+#include "mozilla/TimeStamp.h"
+
+#include <cstddef>
+#include <cstdint>
 
 #include "js/AllocPolicy.h"
+#include "js/Utility.h"
+
+class JSLinearString;
 
 // Tree items, meaning they have a start and stop and form a nested tree.
 #define TRACELOGGER_TREE_ITEMS(_)              \
@@ -61,10 +69,10 @@
   _(AliasAnalysis)                             \
   _(GVN)                                       \
   _(LICM)                                      \
-  _(Sincos)                                    \
   _(RangeAnalysis)                             \
   _(LoopUnrolling)                             \
   _(Sink)                                      \
+  _(FoldLoadsWithUnbox)                        \
   _(RemoveUnnecessaryBitops)                   \
   _(FoldLinearArithConstants)                  \
   _(EffectiveAddressAnalysis)                  \
@@ -145,6 +153,12 @@ inline bool TLTextIdIsTogglable(uint32_t id) {
     return false;
   }
   return true;
+}
+
+inline bool TLTextIdIsEnumEvent(uint32_t id) { return id < TraceLogger_Last; }
+
+inline bool TLTextIdIsScriptEvent(uint32_t id) {
+  return !TLTextIdIsEnumEvent(id);
 }
 
 inline bool TLTextIdIsTreeEvent(uint32_t id) {

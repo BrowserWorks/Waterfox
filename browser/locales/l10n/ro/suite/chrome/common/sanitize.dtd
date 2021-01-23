@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!ENTITY sanitizeDialog.title            "Ștergere date private">
+<!ENTITY sanitizeItems.label             "Șterge următoarele elemente:">
+
+<!ENTITY itemHistory.label               "Istoric">
+<!ENTITY itemHistory.accesskey           "I">
+<!ENTITY itemUrlBar.label                "Location Bar History">
+<!ENTITY itemUrlBar.accesskey            "L">
+<!ENTITY itemDownloads.label             "Istoric descărcări">
+<!ENTITY itemDownloads.accesskey         "d">
+<!ENTITY itemFormSearchHistory.label     "Date salvate de pe formulare și istoricul căutărilor">
+<!ENTITY itemFormSearchHistory.accesskey "f">
+<!ENTITY itemCache.label                 "Caută">
+<!ENTITY itemCache.accesskey             "a">
+<!ENTITY itemCookies.label               "Cookie-urile">
+<!ENTITY itemCookies.accesskey           "C">
+<!ENTITY itemOfflineApps.label           "Datele saiturilor offline">
+<!ENTITY itemOfflineApps.accesskey       "o">
+<!ENTITY itemPasswords.label             "Parolele salvate">
+<!ENTITY itemPasswords.accesskey         "P">
+<!ENTITY itemSessions.label              "Sesiuni autentificate">
+<!ENTITY itemSessions.accesskey          "S">
+
+<!ENTITY sanitizeButton.label            "Șterge datele private acum">

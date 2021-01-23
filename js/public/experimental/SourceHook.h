@@ -59,7 +59,7 @@ namespace js {
  */
 class SourceHook {
  public:
-  virtual ~SourceHook() {}
+  virtual ~SourceHook() = default;
 
   /**
    * Attempt to load the source for |filename|.
@@ -94,6 +94,6 @@ extern JS_FRIEND_API void SetSourceHook(JSContext* cx,
 extern JS_FRIEND_API mozilla::UniquePtr<SourceHook> ForgetSourceHook(
     JSContext* cx);
 
-} // namespace js
+}  // namespace js
 
-#endif // js_experimental_SourceHook_h
+#endif  // js_experimental_SourceHook_h

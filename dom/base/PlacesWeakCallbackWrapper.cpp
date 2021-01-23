@@ -12,8 +12,8 @@
 namespace mozilla {
 namespace dom {
 
-NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(PlacesWeakCallbackWrapper, mParent,
-                                      mCallback)
+NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE_WEAK_PTR(PlacesWeakCallbackWrapper,
+                                               mParent, mCallback)
 NS_IMPL_CYCLE_COLLECTION_ROOT_NATIVE(PlacesWeakCallbackWrapper, AddRef)
 NS_IMPL_CYCLE_COLLECTION_UNROOT_NATIVE(PlacesWeakCallbackWrapper, Release)
 
@@ -23,15 +23,14 @@ PlacesWeakCallbackWrapper::PlacesWeakCallbackWrapper(
 
 already_AddRefed<PlacesWeakCallbackWrapper>
 PlacesWeakCallbackWrapper::Constructor(const GlobalObject& aGlobal,
-                                       PlacesEventCallback& aCallback,
-                                       ErrorResult& rv) {
+                                       PlacesEventCallback& aCallback) {
   nsCOMPtr<nsISupports> parent = aGlobal.GetAsSupports();
   RefPtr<PlacesWeakCallbackWrapper> wrapper =
       new PlacesWeakCallbackWrapper(parent, aCallback);
   return wrapper.forget();
 }
 
-PlacesWeakCallbackWrapper::~PlacesWeakCallbackWrapper() {}
+PlacesWeakCallbackWrapper::~PlacesWeakCallbackWrapper() = default;
 
 nsISupports* PlacesWeakCallbackWrapper::GetParentObject() const {
   nsCOMPtr<nsISupports> parent = do_QueryReferent(mParent);

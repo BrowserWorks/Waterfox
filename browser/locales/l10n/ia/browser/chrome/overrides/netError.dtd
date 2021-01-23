@@ -1,0 +1,199 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Problema cargante le pagina">
+<!ENTITY retry.label "Retentar">
+<!ENTITY returnToPreviousPage.label "Retornar">
+<!ENTITY returnToPreviousPage1.label "Retroceder (Recommendate)">
+<!ENTITY advanced2.label "Avantiate…">
+<!ENTITY viewCertificate.label "Vider le certificato">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "Servitor non trovate">
+<!ENTITY dnsNotFound.longDesc1 "
+<strong>Si ille adresse es correcte, ecce tres altere cosas que tu pote tentar:</strong>
+<ul>
+  <li>Retentar plus tarde.</li>
+  <li>Verificar le connexion al rete.</li>
+  <li>Si le connexion es protegite per un firewall, verificar que &brandShortName; ha permission pro acceder al Web.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.longDesc "<ul> <li>Verifica si le nomine del file ha errores de majusculas e minusculas o altere errores orthographic.</li> <li>Verifica si le file ha essite movite, renominate o delite.</li> </ul>">
+
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>Illo pote haber essite removite, movite, o le permissiones del file pote impedir le accesso.</li>
+</ul>
+">
+
+<!ENTITY generic.longDesc "
+<p>&brandShortName; non pote cargar iste pagina pro alcun ration.</p>
+">
+
+<!ENTITY captivePortal.title "Authenticar se al rete">
+<!ENTITY captivePortal.longDesc2 "
+<p>Tu debe authenticar te a iste rete ante que tu pote acceder a Internet.</p>
+">
+
+<!ENTITY openPortalLoginPage.label2 "Aperir le pagina de authentication al rete">
+
+<!ENTITY malformedURI.pageTitle "URL invalide">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>Le documento requestate non es disponibile in le cache de &brandShortName;.</p><ul><li>Como precaution de securitate, &brandShortName; non re-requestara automaticamente documentos sensibile.</li><li>Clicca retentar pro re-requestar le documento ab le sito web.</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "
+<ul>
+  <li>Preme &quot;Retentar&quot; pro commutar al modo in linea e recargar le pagina.</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>Per favor contacta le proprietarios del sito web pro informar les de iste problema.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>Per favor contacta le proprietarios del sito web pro informar les de iste problema.</li>
+</ul>
+">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Es possibile que tu debe installar altere software pro aperir iste adresse.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>Controla que le parametros del proxy es correcte.</li>
+  <li>Contacta tu administrator de rete pro saper si le servitor del proxy functiona.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.longDesc "
+<ul>
+  <li>Controla que sia correcte le parametros del proxy.</li>
+  <li>Controla que tu computator ha un connexion de rete functionante.</li>
+  <li>Assecurate, si tu computator o rete es protegite per un firewall o proxy, 
+   que  &brandShortName; pote acceder le Web.</li>
+</ul>
+">
+
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Iste problema pote esser causate per le disactivation o refusa
+    de cookies.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>Verifica que tu systema ha le gestor de securitate personal installate.</li>
+  <li>Isto pote esser a causa de un configuration non standard del servitor.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>Le pagina que tu tenta vider non pote esser monstrate perque le authenticitate del datos recipite non poteva esser verificate.</li>
+  <li>Per favor contacta le proprietarios del sito web pro informar les de iste problema.</li>
+</ul>
+">
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara2 "&brandShortName; ha detegite un potential menacia de securitate e non ha continuate a <span class='hostname'/>. Si tu visita iste sito, attaccantes poterea tentar robar informationes como tu contrasignos, adresses de e-mail o detalios de carta de credito.">
+<!ENTITY certerror.sts.introPara "&brandShortName; ha detegite un menacia potential de securitate e non ha continuate a <span class='hostname'/> pois que iste sito web require un connexion secur.">
+
+<!ENTITY certerror.expiredCert.introPara "&brandShortName; ha detegite un problema e non ha continuate a <span class='hostname'/>. O le sito web es mal configurate, o le horologio de tu computator ha un hora errate.">
+<!ENTITY certerror.expiredCert.secondPara2 "Il pare que le certificato del sito es expirate, isto impedi a &brandShortName; de connecter se in modo secur. Si tu visita iste sito, alicuno pote attaccar e tentar de robar informationes como tu contrasignos, emails, o detalios de cartas de credito.">
+<!ENTITY certerror.expiredCert.sts.secondPara "Il pare que le certificato del sito es expirate, isto impedi a &brandShortName; de connecter se in modo secur.">
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "Que pote tu facer concernente a isto?">
+
+<!ENTITY certerror.unknownIssuer.whatCanYouDoAboutIt "
+<p>Le problema es probabilemente in le sito web, e il ha nulle cosa que tu pote facer pro resolver lo</p>
+<p>Si tu es in un rete corporative o usa un software anti-virus, tu pote demandar lor assistentia technic. Tu pote tamben notificar le administrator del sito super le problema.</p>
+">
+
+<!ENTITY certerror.expiredCert.whatCanYouDoAboutIt2 "
+<p>Le horologio de tu computator signa <span id='wrongSystemTime_systemDate2'/>. Verifica que le data, hora e fuso horari es configurate correctemente in tu systema, e alora refresca <span class='hostname'/>.</p>
+<p>Si le hora es jam correcte, le sito web es probabilemente mal configurate, e il ha nihil que tu pote facer pro resolver iste problema. Tu pote solo signalar iste problema al administrator del sito.</p>
+">
+
+<!ENTITY certerror.badCertDomain.whatCanYouDoAboutIt "
+<p>Le problema es probabilemente in le sito web, e il ha nulle cosa que tu pote facer pro resolver lo. Tu pote notificar le administrator del sito web super le problema.</p>
+">
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>Le sito pote esser temporarimente indisponibile o troppo occupate. Retenta in un momento.</li>
+  <li>Si tu non pote cargar alcun pagina, verifica le connexion de tu computator al rete.</li>
+  <li>Si tu computator o rete es protegite per un firewall o proxy, assecura te
+    que &brandShortName; es permittite a acceder al Web.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; impediva a iste pagina de cargar in iste maniera proque le pagina ha un regula de securitate de contento que non lo permitte.</p>">
+
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; ha blocate le cargamento de iste pagina in iste contexto perque le pagina ha un politica X-Frame-Options que non lo permitte.</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Le pagina que tu tenta vider non pote ser monstrate a causa de un error revelate in le transmission del datos.</p><ul><li>Per favor contacta le proprietarios del sito web pro informar les de iste problema.</li></ul>">
+
+<!ENTITY securityOverride.exceptionButton1Label "Acceptar le risco e continuar">
+
+<!ENTITY errorReporting.automatic2 "Reporta errores como tal pro adjutar Mozilla a identificar e blocar le sitos malitiose">
+<!ENTITY errorReporting.learnMore "Saper plus…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Per favor contacta le proprietarios del sito web pro informar les de iste problema.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Informationes avantiate: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.pagetitle2  "Advertentia: Potential risco de securitate avante">
+<!ENTITY certerror.sts.pagetitle  "Non connectite: possibile problema de securitate">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation1 "<span class='hostname'></span> ha un politica de securitate appellate HTTP Strict Transport Security (HSTS), le qual vole dicer que &brandShortName; solmente pote connecter se a illo de maniera secur. Tu pote adder un exception pro visitar iste sito.">
+<!ENTITY certerror.copyToClipboard.label "Copiar le texto al area de transferentia">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> usa technologia de securitate que es obsolete e vulnerabile a attaccos. Un attaccante pote facilemente revelar informationes que tu pensa esser secur. Le administrator del sito web debera reparar le servitor ante que tu pote visitar le sito.</p><p>Codice de error: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Pagina blocate">
+
+<!ENTITY certerror.mitm.longDesc "<span class='hostname'></span> es probabilemente un sito secur, ma un connexion secur non poteva esser establite. Iste problema es causate per <span class='mitm-name'/>, que es o un software in tu computator o tu rete.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt1 "Si tu programma antivirus ha un function que controla connexiones cryptate (generalmente appellate “scan web” o “scan https”), tenta disactivar iste function. Si isto non resolve le problema, tenta remover e reinstallar le software antivirus.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt2 "Si tu es in un rete corporative, tu pote contactar tu assistentia technic.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt3 "Si tu non cognosce <span class='mitm-name'/>, tunc isto pote esser un attacco e tu non deberea sequer al sito.">
+<!ENTITY certerror.mitm.sts.whatCanYouDoAboutIt3 "Si tu non cognosce <span class='mitm-name'/>, tunc isto pote esser un attacco, e il non ha qualcosa que tu pote facer pro acceder al sito.">
+
+<!ENTITY clockSkewError.longDesc "Tu computator signa que es <span id='wrongSystemTime_systemDate1'/>. isto impedi a &brandShortName; de connecter se con securitate. Pro visitar <span class='hostname'></span>, actualisa le horologio de tu computator al data, tempore e fuso horari currente. Pois refresca <span class='hostname'></span>.">
+
+<!ENTITY prefReset.longDesc "Pare que le configuration de securitate del rete pote esser le causa de isto. Vole tu restaurar le configuration predefinite?">
+<!ENTITY prefReset.label "Restaurar le parametros predefinite">
+
+<!ENTITY enableTls10.longDesc "Iste sito web pote non supportar le protocollo TLS 1.2, le version minime que &brandShortName; supporta. Activar TLS 1.0 e TLS 1.1 poterea permitter que iste connexion succede.">
+<!ENTITY enableTls10.note "TLS 1.0 e TLS 1.1 essera permanentemente disactivate in un version futur.">
+<!ENTITY enableTls10.label "Activar TLS 1.0 e 1.1">
+
+<!ENTITY networkProtocolError.longDesc "<p>Le pagina que tu tenta vider non pote esser monstrate perque un error ha essite detegite in le protocollo de rete.</p><ul><li>Per favor contacta le proprietarios del sito web pro informar les de iste problema.</li></ul>">

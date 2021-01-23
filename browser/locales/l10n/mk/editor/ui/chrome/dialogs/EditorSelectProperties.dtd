@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Својства на списокот со избор">
+
+<!ENTITY Select.label "Список со избор">
+<!ENTITY SelectName.label "Име на список:">
+<!ENTITY SelectName.accesskey "м">
+<!ENTITY SelectSize.label "Висина:">
+<!ENTITY SelectSize.accesskey "и">
+<!ENTITY SelectMultiple.label "Повеќекратен избор">
+<!ENTITY SelectMultiple.accesskey "о">
+<!ENTITY SelectDisabled.label "Оневозможено">
+<!ENTITY SelectDisabled.accesskey "н">
+<!ENTITY SelectTabIndex.label "Индекс на табот:">
+<!ENTITY SelectTabIndex.accesskey "И">
+
+<!ENTITY OptGroup.label "Опциона група">
+<!ENTITY OptGroupLabel.label "Име:">
+<!ENTITY OptGroupLabel.accesskey "И">
+<!ENTITY OptGroupDisabled.label "Оневозможено">
+<!ENTITY OptGroupDisabled.accesskey "н">
+
+<!ENTITY Option.label "Опција">
+<!ENTITY OptionText.label "Текст:">
+<!ENTITY OptionText.accesskey "Т">
+<!ENTITY OptionValue.label "Вредност:">
+<!ENTITY OptionValue.accesskey "В">
+<!ENTITY OptionSelected.label "Претходно избрано">
+<!ENTITY OptionSelected.accesskey "б">
+<!ENTITY OptionDisabled.label "Оневозможено">
+<!ENTITY OptionDisabled.accesskey "н">
+
+<!ENTITY TextHeader.label "Текст">
+<!ENTITY ValueHeader.label "Вредност">
+<!ENTITY SelectedHeader.label "Избрано">
+
+<!ENTITY AddOption.label "Додај опција">
+<!ENTITY AddOption.accesskey "о">
+<!ENTITY AddOptGroup.label "Додај група">
+<!ENTITY AddOptGroup.accesskey "г">
+<!ENTITY RemoveElement.label "Отстрани">
+<!ENTITY RemoveElement.accesskey "р">
+<!ENTITY MoveElementUp.label "Оди нагоре">
+<!ENTITY MoveElementUp.accesskey "г">
+<!ENTITY MoveElementDown.label "Оди надолу">
+<!ENTITY MoveElementDown.accesskey "д">

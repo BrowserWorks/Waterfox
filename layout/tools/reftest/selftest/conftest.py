@@ -2,6 +2,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from __future__ import absolute_import, print_function
+
 import json
 import os
 from argparse import Namespace
@@ -30,14 +32,14 @@ def normalize():
     return inner
 
 
-@pytest.fixture  # noqa: F811
+@pytest.fixture
 def parser(setup_test_harness):
     setup_test_harness(*setup_args)
     cmdline = pytest.importorskip('reftestcommandline')
     return cmdline.DesktopArgumentsParser()
 
 
-@pytest.fixture  # noqa: F811
+@pytest.fixture
 def get_reftest(setup_test_harness, binary, parser):
     setup_test_harness(*setup_args)
     runreftest = pytest.importorskip('runreftest')

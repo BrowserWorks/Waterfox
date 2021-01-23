@@ -7,6 +7,7 @@
   ======================================================================= */
 
 @namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
+@namespace html url("http://www.w3.org/1999/xhtml");
 
 /* ::::: tree ::::: */
 
@@ -45,6 +46,13 @@ treechildren::-moz-tree-row(selected, focus) {
   background-color: Highlight;
 }
 
+treechildren::-moz-tree-row(current, focus) {
+  border: 1px dotted Highlight;
+}
+
+treechildren::-moz-tree-row(selected, current, focus) {
+  border: 1px dotted #F3D982;
+}
 
 /* ::::: tree cells ::::: */
 
@@ -157,10 +165,9 @@ treechildren::-moz-tree-image {
 /* ::::: twisty :::::  */
 
 treechildren::-moz-tree-twisty {
-  padding-inline-end: 4px;
-  padding-inline-start: 4px;
   padding-top: 1px;
-  width: 8px; /* The image's width is 8 pixels */
+  padding-inline: 4px;
+  width: 12px; /* The image's width is 12 pixels */
   list-style-image: url("chrome://global/skin/icons/twisty-collapsed.svg");
   -moz-context-properties: fill;
   fill: currentColor;
@@ -189,10 +196,20 @@ treechildren::-moz-tree-cell-text(selected, editing) {
   color: inherit;
 }
 
-.tree-input {
+html|input.tree-input {
+  position: absolute;
+  top: 0;
+  left: 0;
   -moz-appearance: none;
+  -moz-box-flex: 1;
   border: 1px solid Highlight;
   margin: 0;
   margin-inline-start: -4px;
   padding: 1px;
+  font: inherit;
+}
+
+.scrollbar-topmost {
+  position: relative;
+  z-index: 2147483647;
 }

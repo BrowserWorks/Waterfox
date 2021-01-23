@@ -14,12 +14,17 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1131371
 <div id="display">
   <div id="content">
   </div>
+  <div id="elemWithAbsPosChild"><div style="position:absolute"></div></div>
+  <div id="elemWithFixedPosChild"><div style="position:fixed"></div></div>
 </div>
 <pre id="test">
 <script type="application/javascript">
 "use strict";
 
 /** Test for Bug 1131371 **/
+
+const elemWithAbsPosChild = document.getElementById("elemWithAbsPosChild");
+const elemWithFixedPosChild = document.getElementById("elemWithFixedPosChild");
 
 /**
  * This test verifies that certain style changes do or don't cause reflow
@@ -82,6 +87,12 @@ const gTestcases = [
   {
     beforeStyle: "text-shadow: -15px -20px teal",
     afterStyle:  "text-shadow:  30px  40px yellow",
+  },
+
+  // * switching overflow between things that shouldn't create scrollframes.
+  {
+    beforeStyle: "overflow: visible",
+    afterStyle: "overflow: -moz-hidden-unscrollable",
   },
 
   // Things that *should* cause reflow:
@@ -192,6 +203,47 @@ const gTestcases = [
     expectReflow: true,
   },
 
+  // * but only reflow if we don't need to construct / unconstruct a new frame.
+  {
+    beforeStyle: "overflow: scroll",
+    afterStyle:  "overflow: auto",
+    expectConstruction: false,
+    expectReflow: true,
+  },
+  {
+    beforeStyle: "overflow: auto",
+    afterStyle:  "overflow: scroll",
+    expectConstruction: false,
+    expectReflow: true,
+  },
+
+  // * FIXME(emilio, bug 1590247): Changes to or from hidden
+  // reconstruct, as we optimize out the scrollbars completely in the overflow:
+  // hidden case, but we could do better.
+  {
+    beforeStyle: "overflow: hidden",
+    afterStyle:  "overflow: auto",
+    expectConstruction: true,
+    expectReflow: true,
+  },
+  {
+    beforeStyle: "overflow: auto",
+    afterStyle:  "overflow: hidden",
+    expectConstruction: true,
+    expectReflow: true,
+  },
+  {
+    beforeStyle: "overflow: hidden",
+    afterStyle:  "overflow: scroll",
+    expectConstruction: true,
+    expectReflow: true,
+  },
+  {
+    beforeStyle: "overflow: scroll",
+    afterStyle:  "overflow: hidden",
+    expectConstruction: true,
+    expectReflow: true,
+  },
   // * Changing 'display' should cause frame construction and reflow.
   {
     beforeStyle: "display: inline",
@@ -200,6 +252,85 @@ const gTestcases = [
     expectReflow: true,
   },
 
+
+  // * Position changes trigger a reframe, unless whether we're a containing
+  // block doesn't change, in which case we just need to reflow.
+  {
+    beforeStyle: "position: static",
+    afterStyle:  "position: absolute",
+    expectConstruction: true,
+    expectReflow: true,
+  },
+  {
+    beforeStyle:  "position: absolute",
+    afterStyle: "position: fixed",
+    expectConstruction: true,
+    expectReflow: true,
+  },
+  {
+    beforeStyle:  "position: relative",
+    afterStyle: "position: fixed",
+    expectConstruction: true,
+    expectReflow: true,
+  },
+
+  // This doesn't change whether we're a containing block because there are no
+  // abspos descendants.
+  {
+    afterStyle: "position: static",
+    beforeStyle:  "position: relative",
+    expectReflow: true,
+  },
+
+  // This doesn't change whether we're a containing block, shouldn't reframe.
+  {
+    afterStyle: "position: sticky",
+    beforeStyle:  "position: relative",
+    expectReflow: true,
+  },
+
+  // These don't change whether we're a containing block for our
+  // absolutely-positioned child, so shouldn't reframe.
+  {
+    elem: elemWithAbsPosChild,
+    afterStyle: "position: sticky",
+    beforeStyle:  "position: relative",
+    expectReflow: true,
+  },
+  {
+    elem: elemWithFixedPosChild,
+    afterStyle: "position: sticky",
+    beforeStyle:  "position: relative",
+    expectReflow: true,
+  },
+  {
+    elem: elemWithFixedPosChild,
+    afterStyle: "position: static",
+    beforeStyle:  "position: relative",
+    expectReflow: true,
+  },
+  {
+    elem: elemWithFixedPosChild,
+    afterStyle: "position: static",
+    beforeStyle:  "position: sticky",
+    expectReflow: true,
+  },
+
+  // These ones do though.
+  {
+    elem: elemWithAbsPosChild,
+    afterStyle: "position: static",
+    beforeStyle:  "position: relative",
+    expectConstruction: true,
+    expectReflow: true,
+  },
+  {
+    elem: elemWithAbsPosChild,
+    afterStyle: "position: static",
+    beforeStyle:  "position: sticky",
+    expectConstruction: true,
+    expectReflow: true,
+  },
 ];
 
 // Helper function to let us call either "is" or "isnot" & assemble

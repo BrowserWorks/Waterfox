@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY settings.caption "Поставки">
+<!ENTITY security.caption "Безбедност и идентификување">
+<!ENTITY serverName.label "Име на серверот:">
+<!ENTITY serverName.accesskey "с">
+<!ENTITY serverDescription.label "Опис:">
+<!ENTITY serverDescription.accesskey "О">
+<!ENTITY serverPort.label "Порта:">
+<!ENTITY serverPort.accesskey "П">
+<!ENTITY userName.label "Корисничко име:">
+<!ENTITY userName.accesskey "м">
+<!ENTITY smtpEditTitle.label "SMTP сервер">
+<!ENTITY serverPortDefault.label "Основнa:">

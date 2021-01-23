@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -6,7 +5,7 @@
 
 "use strict";
 
-const TEST_URI = CHROME_URL_ROOT + "doc_tableWidget_keyboard_interaction.xul";
+const TEST_URI = CHROME_URL_ROOT + "doc_tableWidget_keyboard_interaction.xhtml";
 const TEST_OPT = "chrome,titlebar,toolbar,centerscreen,resizable,dialog=no";
 
 const { TableWidget } = require("devtools/client/shared/widgets/TableWidget");
@@ -30,9 +29,12 @@ function test() {
             col4: "Column 4",
           },
           uniqueId: "col1",
-          emptyText: "This is dummy empty text",
+          emptyText: "dummy-text",
           highlightUpdated: true,
           removableColumns: true,
+          l10n: {
+            setAttributes: function() {},
+          },
         });
         startTests();
       });

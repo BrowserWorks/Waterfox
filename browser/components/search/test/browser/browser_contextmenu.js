@@ -6,11 +6,20 @@
 
 const ENGINE_NAME = "mozSearch";
 const ENGINE_ID = "mozsearch-engine@search.waterfox.net";
+const PRIVATE_ENGINE_NAME = "mozPrivateSearch";
+const PRIVATE_ENGINE_ID = "mozsearch-engine-private@search.waterfox.net";
 
-add_task(async function() {
-  // We want select events to be fired.
+let engine;
+let privateEngine;
+
+add_task(async function setup() {
   await SpecialPowers.pushPrefEnv({
-    set: [["dom.select_events.enabled", true]],
+    set: [
+      // We want select events to be fired.
+      ["dom.select_events.enabled", true],
+      ["browser.search.separatePrivateDefault", true],
+      ["browser.search.separatePrivateDefault.ui.enabled", true],
+    ],
   });
 
   await Services.search.init();
@@ -29,21 +38,45 @@ add_task(async function() {
   );
 
   await Services.search.ensureBuiltinExtension(ENGINE_ID);
+  await Services.search.ensureBuiltinExtension(PRIVATE_ENGINE_ID);
 
-  let engine = await Services.search.getEngineByName(ENGINE_NAME);
-  ok(engine, "Got a search engine");
+  engine = await Services.search.getEngineByName(ENGINE_NAME);
+  Assert.ok(engine, "Got a search engine");
   let defaultEngine = await Services.search.getDefault();
   await Services.search.setDefault(engine);
 
-  let contextMenu = document.getElementById("contentAreaContextMenu");
-  ok(contextMenu, "Got context menu XUL");
+  privateEngine = await Services.search.getEngineByName(PRIVATE_ENGINE_NAME);
+  Assert.ok(privateEngine, "Got a search engine");
+  let defaultPrivateEngine = await Services.search.getDefaultPrivate();
+  await Services.search.setDefaultPrivate(privateEngine);
+
+  registerCleanupFunction(async () => {
+    await Services.search.setDefault(defaultEngine);
+    await Services.search.setDefaultPrivate(defaultPrivateEngine);
+    await Services.search.removeEngine(engine);
+    await Services.search.removeEngine(privateEngine);
+
+    resProt.setSubstitution("search-extensions", originalSubstitution);
+    // Finial re-init to make sure we drop the added built-in engines.
+    await Services.search.reInit();
+  });
+});
+
+async function checkContextMenu(
+  win,
+  expectedName,
+  expectedBaseUrl,
+  expectedPrivateName
+) {
+  let contextMenu = win.document.getElementById("contentAreaContextMenu");
+  Assert.ok(contextMenu, "Got context menu XUL");
 
   let tab = await BrowserTestUtils.openNewForegroundTab(
-    gBrowser,
-    "data:text/plain;charset=utf8,test%20search"
+    win.gBrowser,
+    "https://example.com/browser/browser/components/search/test/browser/test_search.html"
   );
 
-  await ContentTask.spawn(tab.linkedBrowser, "", async function() {
+  await SpecialPowers.spawn(tab.linkedBrowser, [""], async function() {
     return new Promise(resolve => {
       content.document.addEventListener(
         "selectionchange",
@@ -62,7 +95,7 @@ add_task(async function() {
   BrowserTestUtils.synthesizeMouseAtCenter(
     "body",
     eventDetails,
-    gBrowser.selectedBrowser
+    win.gBrowser.selectedBrowser
   );
   await popupPromise;
 
@@ -71,37 +104,110 @@ add_task(async function() {
     "id",
     "context-searchselect"
   )[0];
-  ok(searchItem, "Got search context menu item");
-  is(
+  Assert.ok(searchItem, "Got search context menu item");
+  Assert.equal(
     searchItem.label,
-    "Search " + ENGINE_NAME + " for \u201ctest search\u201d",
+    "Search " + expectedName + " for \u201ctest%20search\u201d",
     "Check context menu label"
   );
-  is(
+  Assert.equal(
     searchItem.disabled,
     false,
     "Check that search context menu item is enabled"
   );
 
-  await BrowserTestUtils.openNewForegroundTab(gBrowser, () => {
-    searchItem.click();
+  let loaded = BrowserTestUtils.waitForNewTab(
+    win.gBrowser,
+    expectedBaseUrl,
+    true
+  );
+  searchItem.click();
+  let searchTab = await loaded;
+  let browser = win.gBrowser.selectedBrowser;
+  await SpecialPowers.spawn(browser, [], async function() {
+    Assert.ok(
+      !/error/.test(content.document.body.innerHTML),
+      "Ensure there were no errors loading the search page"
+    );
   });
 
-  is(
-    gBrowser.currentURI.spec,
-    "https://example.com/browser/browser/components/search/test/browser/?test=test+search&ie=utf-8&channel=contextsearch",
-    "Checking context menu search URL"
-  );
+  searchItem = contextMenu.getElementsByAttribute(
+    "id",
+    "context-searchselect-private"
+  )[0];
+  Assert.ok(searchItem, "Got search in private window context menu item");
+  if (PrivateBrowsingUtils.isWindowPrivate(win)) {
+    Assert.ok(searchItem.hidden, "Search in private window should be hidden");
+  } else {
+    let expectedLabel = expectedPrivateName
+      ? "Search with " + expectedPrivateName + " in a Private Window"
+      : "Search in a Private Window";
+    Assert.equal(searchItem.label, expectedLabel, "Check context menu label");
+    Assert.equal(
+      searchItem.disabled,
+      false,
+      "Check that search context menu item is enabled"
+    );
+  }
 
   contextMenu.hidePopup();
 
-  // Remove the tab opened by the search
-  gBrowser.removeCurrentTab();
+  BrowserTestUtils.removeTab(searchTab);
+  BrowserTestUtils.removeTab(tab);
+}
 
-  await Services.search.setDefault(defaultEngine);
-  await Services.search.removeEngine(engine);
+add_task(async function test_normalWindow() {
+  await checkContextMenu(
+    window,
+    ENGINE_NAME,
+    "https://example.com/browser/browser/components/search/test/browser/mozsearch.sjs",
+    PRIVATE_ENGINE_NAME
+  );
+});
 
-  resProt.setSubstitution("search-extensions", originalSubstitution);
+add_task(async function test_privateWindow() {
+  const win = await BrowserTestUtils.openNewBrowserWindow({ private: true });
 
-  gBrowser.removeCurrentTab();
+  registerCleanupFunction(async () => {
+    await BrowserTestUtils.closeWindow(win);
+  });
+
+  await checkContextMenu(
+    win,
+    PRIVATE_ENGINE_NAME,
+    "https://example.com/browser/"
+  );
+});
+
+add_task(async function test_normalWindow_sameDefaults() {
+  // Set the private default engine to be the same as the current default engine
+  // in 'normal' mode.
+  await Services.search.setDefaultPrivate(await Services.search.getDefault());
+
+  await checkContextMenu(
+    window,
+    ENGINE_NAME,
+    "https://example.com/browser/browser/components/search/test/browser/mozsearch.sjs"
+  );
+});
+
+add_task(async function test_privateWindow_no_separate_engine() {
+  await SpecialPowers.pushPrefEnv({
+    set: [
+      // We want select events to be fired.
+      ["browser.search.separatePrivateDefault", false],
+    ],
+  });
+
+  const win = await BrowserTestUtils.openNewBrowserWindow({ private: true });
+
+  registerCleanupFunction(async () => {
+    await BrowserTestUtils.closeWindow(win);
+  });
+
+  await checkContextMenu(
+    win,
+    ENGINE_NAME,
+    "https://example.com/browser/browser/components/search/test/browser/mozsearch.sjs"
+  );
 });

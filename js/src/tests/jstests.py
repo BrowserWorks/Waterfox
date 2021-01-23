@@ -11,21 +11,25 @@ See the adjacent README.txt for more details.
 
 from __future__ import print_function
 
+import math
 import os
+import posixpath
+import re
 import shlex
 import sys
 import tempfile
-import textwrap
 import platform
+
 from os.path import abspath, dirname, isfile, realpath
 from contextlib import contextmanager
 from copy import copy
+from datetime import datetime
 from itertools import chain
 from subprocess import list2cmdline, call
 
 from lib.tests import RefTestCase, get_jitflags, get_cpu_count, \
     get_environment_overlay, change_env
-from lib.results import ResultsSink
+from lib.results import ResultsSink, TestOutput
 from lib.progressbar import ProgressBar
 
 if sys.platform.startswith('linux') or sys.platform.startswith('darwin'):
@@ -92,150 +96,163 @@ def parse_args():
         requested_paths :set<str>: Test paths specially requested on the CLI.
         excluded_paths :set<str>: Test paths specifically excluded by the CLI.
     """
-    from optparse import OptionParser, OptionGroup
-    op = OptionParser(usage=textwrap.dedent("""
-        %prog [OPTIONS] JS_SHELL [TESTS]
+    from argparse import ArgumentParser
+    op = ArgumentParser(
+        description='Run jstests JS shell tests',
+        epilog='Shell output format: [ pass | fail | timeout | skip ] progress | time')
+    op.add_argument('--xul-info', dest='xul_info_src',
+                    help='config data for xulRuntime'
+                    ' (avoids search for config/autoconf.mk)')
 
-        Shell output format: [ pass | fail | timeout | skip ] progress | time
-        """).strip())
-    op.add_option('--xul-info', dest='xul_info_src',
-                  help='config data for xulRuntime'
-                  ' (avoids search for config/autoconf.mk)')
+    harness_og = op.add_argument_group("Harness Controls", "Control how tests are run.")
+    harness_og.add_argument('-j', '--worker-count', type=int,
+                            default=max(1, get_cpu_count()),
+                            help='Number of tests to run in parallel'
+                            ' (default %(default)s)')
+    harness_og.add_argument('-t', '--timeout', type=float, default=150.0,
+                            help='Set maximum time a test is allows to run'
+                            ' (in seconds).')
+    harness_og.add_argument('--show-slow', action='store_true',
+                            help='Show tests taking longer than a minimum time'
+                            ' (in seconds).')
+    harness_og.add_argument('--slow-test-threshold', type=float, default=5.0,
+                            help='Time in seconds a test can take until it is'
+                            'considered slow (default %(default)s).')
+    harness_og.add_argument('-a', '--args', dest='shell_args', default='',
+                            help='Extra args to pass to the JS shell.')
+    harness_og.add_argument('--feature-args', dest='feature_args', default='',
+                            help='Extra args to pass to the JS shell even when feature-testing.')
+    harness_og.add_argument('--jitflags', dest='jitflags', default='none',
+                            type=str,
+                            help='IonMonkey option combinations. One of all,'
+                            ' debug, ion, and none (default %(default)s).')
+    harness_og.add_argument('--tbpl', action='store_true',
+                            help='Runs each test in all configurations tbpl'
+                            ' tests.')
+    harness_og.add_argument('--tbpl-debug', action='store_true',
+                            help='Runs each test in some faster configurations'
+                            ' tbpl tests.')
+    harness_og.add_argument('-g', '--debug', action='store_true',
+                            help='Run a test in debugger.')
+    harness_og.add_argument('--debugger', default='gdb -q --args',
+                            help='Debugger command.')
+    harness_og.add_argument('-J', '--jorendb', action='store_true',
+                            help='Run under JS debugger.')
+    harness_og.add_argument('--passthrough', action='store_true',
+                            help='Run tests with stdin/stdout attached to'
+                            ' caller.')
+    harness_og.add_argument('--test-reflect-stringify', dest="test_reflect_stringify",
+                            help="instead of running tests, use them to test the "
+                            "Reflect.stringify code in specified file")
+    harness_og.add_argument('--valgrind', action='store_true',
+                            help='Run tests in valgrind.')
+    harness_og.add_argument('--valgrind-args', default='',
+                            help='Extra args to pass to valgrind.')
+    harness_og.add_argument('--rr', action='store_true',
+                            help='Run tests under RR record-and-replay debugger.')
+    harness_og.add_argument('-C', '--check-output', action='store_true',
+                            help='Run tests to check output for different jit-flags')
+    harness_og.add_argument('--remote', action='store_true',
+                            help='Run tests on a remote device')
+    harness_og.add_argument('--deviceIP', action='store',
+                            type=str, dest='device_ip',
+                            help='IP address of remote device to test')
+    harness_og.add_argument('--devicePort', action='store',
+                            type=int, dest='device_port', default=20701,
+                            help='port of remote device to test')
+    harness_og.add_argument('--deviceSerial', action='store',
+                            type=str, dest='device_serial', default=None,
+                            help='ADB device serial number of remote device to test')
+    harness_og.add_argument('--remoteTestRoot', dest='remote_test_root', action='store',
+                            type=str, default='/data/local/tests',
+                            help='The remote directory to use as test root'
+                            ' (e.g. %(default)s)')
+    harness_og.add_argument('--localLib', dest='local_lib', action='store',
+                            type=str,
+                            help='The location of libraries to push -- preferably'
+                            ' stripped')
 
-    harness_og = OptionGroup(op, "Harness Controls",
-                             "Control how tests are run.")
-    harness_og.add_option('-j', '--worker-count', type=int,
-                          default=max(1, get_cpu_count()),
-                          help='Number of tests to run in parallel'
-                          ' (default %default)')
-    harness_og.add_option('-t', '--timeout', type=float, default=150.0,
-                          help='Set maximum time a test is allows to run'
-                          ' (in seconds).')
-    harness_og.add_option('--show-slow', action='store_true',
-                          help='Show tests taking longer than a minimum time'
-                          ' (in seconds).')
-    harness_og.add_option('--slow-test-threshold', type=float, default=5.0,
-                          help='Time in seconds a test can take until it is'
-                          'considered slow (default %default).')
-    harness_og.add_option('-a', '--args', dest='shell_args', default='',
-                          help='Extra args to pass to the JS shell.')
-    harness_og.add_option('--feature-args', dest='feature_args', default='',
-                          help='Extra args to pass to the JS shell even when feature-testing.')
-    harness_og.add_option('--jitflags', dest='jitflags', default='none',
-                          type='string',
-                          help='IonMonkey option combinations. One of all,'
-                          ' debug, ion, and none (default %default).')
-    harness_og.add_option('--tbpl', action='store_true',
-                          help='Runs each test in all configurations tbpl'
-                          ' tests.')
-    harness_og.add_option('--tbpl-debug', action='store_true',
-                          help='Runs each test in some faster configurations'
-                          ' tbpl tests.')
-    harness_og.add_option('-g', '--debug', action='store_true',
-                          help='Run a test in debugger.')
-    harness_og.add_option('--debugger', default='gdb -q --args',
-                          help='Debugger command.')
-    harness_og.add_option('-J', '--jorendb', action='store_true',
-                          help='Run under JS debugger.')
-    harness_og.add_option('--passthrough', action='store_true',
-                          help='Run tests with stdin/stdout attached to'
-                          ' caller.')
-    harness_og.add_option('--test-reflect-stringify', dest="test_reflect_stringify",
-                          help="instead of running tests, use them to test the "
-                          "Reflect.stringify code in specified file")
-    harness_og.add_option('--valgrind', action='store_true',
-                          help='Run tests in valgrind.')
-    harness_og.add_option('--valgrind-args', default='',
-                          help='Extra args to pass to valgrind.')
-    harness_og.add_option('--rr', action='store_true',
-                          help='Run tests under RR record-and-replay debugger.')
-    harness_og.add_option('-C', '--check-output', action='store_true',
-                          help='Run tests to check output for different jit-flags')
-    op.add_option_group(harness_og)
+    input_og = op.add_argument_group("Inputs", "Change what tests are run.")
+    input_og.add_argument('-f', '--file', dest='test_file', action='append',
+                          help='Get tests from the given file.')
+    input_og.add_argument('-x', '--exclude-file', action='append',
+                          help='Exclude tests from the given file.')
+    input_og.add_argument('--wpt', dest='wpt',
+                          choices=['enabled', 'disabled', 'if-running-everything'],
+                          default='if-running-everything',
+                          help="Enable or disable shell web-platform-tests "
+                          "(default: enable if no test paths are specified).")
+    input_og.add_argument('--include', action='append', dest='requested_paths', default=[],
+                          help='Include the given test file or directory.')
+    input_og.add_argument('--exclude', action='append', dest='excluded_paths', default=[],
+                          help='Exclude the given test file or directory.')
+    input_og.add_argument('-d', '--exclude-random', dest='random',
+                          action='store_false',
+                          help='Exclude tests marked as "random."')
+    input_og.add_argument('--run-skipped', action='store_true',
+                          help='Run tests marked as "skip."')
+    input_og.add_argument('--run-only-skipped', action='store_true',
+                          help='Run only tests marked as "skip."')
+    input_og.add_argument('--run-slow-tests', action='store_true',
+                          help='Do not skip tests marked as "slow."')
+    input_og.add_argument('--no-extensions', action='store_true',
+                          help='Run only tests conforming to the ECMAScript 5'
+                          ' standard.')
+    input_og.add_argument('--repeat', type=int, default=1,
+                          help='Repeat tests the given number of times.')
 
-    input_og = OptionGroup(op, "Inputs", "Change what tests are run.")
-    input_og.add_option('-f', '--file', dest='test_file', action='append',
-                        help='Get tests from the given file.')
-    input_og.add_option('-x', '--exclude-file', action='append',
-                        help='Exclude tests from the given file.')
-    input_og.add_option('--wpt', dest='wpt',
-                        type='choice',
-                        choices=['enabled', 'disabled', 'if-running-everything'],
-                        default='if-running-everything',
-                        help="Enable or disable shell web-platform-tests "
-                        "(default: enable if no test paths are specified).")
-    input_og.add_option('--include', action='append', dest='requested_paths', default=[],
-                        help='Include the given test file or directory.')
-    input_og.add_option('--exclude', action='append', dest='excluded_paths', default=[],
-                        help='Exclude the given test file or directory.')
-    input_og.add_option('-d', '--exclude-random', dest='random',
-                        action='store_false',
-                        help='Exclude tests marked as "random."')
-    input_og.add_option('--run-skipped', action='store_true',
-                        help='Run tests marked as "skip."')
-    input_og.add_option('--run-only-skipped', action='store_true',
-                        help='Run only tests marked as "skip."')
-    input_og.add_option('--run-slow-tests', action='store_true',
-                        help='Do not skip tests marked as "slow."')
-    input_og.add_option('--no-extensions', action='store_true',
-                        help='Run only tests conforming to the ECMAScript 5'
-                        ' standard.')
-    input_og.add_option('--repeat', type=int, default=1,
-                        help='Repeat tests the given number of times.')
-    op.add_option_group(input_og)
+    output_og = op.add_argument_group("Output", "Modify the harness and tests output.")
+    output_og.add_argument('-s', '--show-cmd', action='store_true',
+                           help='Show exact commandline used to run each test.')
+    output_og.add_argument('-o', '--show-output', action='store_true',
+                           help="Print each test's output to the file given by"
+                           " --output-file.")
+    output_og.add_argument('-F', '--failed-only', action='store_true',
+                           help="If a --show-* option is given, only print"
+                           " output for failed tests.")
+    output_og.add_argument('--no-show-failed', action='store_true',
+                           help="Don't print output for failed tests"
+                           " (no-op with --show-output).")
+    output_og.add_argument('-O', '--output-file',
+                           help='Write all output to the given file'
+                           ' (default: stdout).')
+    output_og.add_argument('--failure-file',
+                           help='Write all not-passed tests to the given file.')
+    output_og.add_argument('--no-progress', dest='hide_progress',
+                           action='store_true',
+                           help='Do not show the progress bar.')
+    output_og.add_argument('--tinderbox', dest='format', action='store_const',
+                           const='automation',
+                           help='Use automation-parseable output format.')
+    output_og.add_argument('--format', dest='format', default='none',
+                           choices=['automation', 'none'],
+                           help='Output format. Either automation or none'
+                           ' (default %(default)s).')
+    output_og.add_argument('--log-wptreport', dest='wptreport', action='store',
+                           help='Path to write a Web Platform Tests report (wptreport)')
+    output_og.add_argument('--this-chunk', type=int, default=1,
+                           help='The test chunk to run.')
+    output_og.add_argument('--total-chunks', type=int, default=1,
+                           help='The total number of test chunks.')
 
-    output_og = OptionGroup(op, "Output",
-                            "Modify the harness and tests output.")
-    output_og.add_option('-s', '--show-cmd', action='store_true',
-                         help='Show exact commandline used to run each test.')
-    output_og.add_option('-o', '--show-output', action='store_true',
-                         help="Print each test's output to the file given by"
-                         " --output-file.")
-    output_og.add_option('-F', '--failed-only', action='store_true',
-                         help="If a --show-* option is given, only print"
-                         " output for failed tests.")
-    output_og.add_option('--no-show-failed', action='store_true',
-                         help="Don't print output for failed tests"
-                         " (no-op with --show-output).")
-    output_og.add_option('-O', '--output-file',
-                         help='Write all output to the given file'
-                         ' (default: stdout).')
-    output_og.add_option('--failure-file',
-                         help='Write all not-passed tests to the given file.')
-    output_og.add_option('--no-progress', dest='hide_progress',
-                         action='store_true',
-                         help='Do not show the progress bar.')
-    output_og.add_option('--tinderbox', dest='format', action='store_const',
-                         const='automation',
-                         help='Use automation-parseable output format.')
-    output_og.add_option('--format', dest='format', default='none',
-                         type='choice', choices=['automation', 'none'],
-                         help='Output format. Either automation or none'
-                         ' (default %default).')
-    output_og.add_option('--log-wptreport', dest='wptreport', action='store',
-                         help='Path to write a Web Platform Tests report (wptreport)')
-    op.add_option_group(output_og)
+    special_og = op.add_argument_group("Special", "Special modes that do not run tests.")
+    special_og.add_argument('--make-manifests', metavar='BASE_TEST_PATH',
+                            help='Generate reftest manifest files.')
 
-    special_og = OptionGroup(op, "Special",
-                             "Special modes that do not run tests.")
-    special_og.add_option('--make-manifests', metavar='BASE_TEST_PATH',
-                          help='Generate reftest manifest files.')
-    op.add_option_group(special_og)
-    options, args = op.parse_args()
+    op.add_argument('--js-shell', metavar='JS_SHELL',
+                    help='JS shell to run tests with')
+    options, args = op.parse_known_args()
 
-    # Acquire the JS shell given on the command line.
-    options.js_shell = None
-    requested_paths = set(options.requested_paths)
-    if len(args) > 0:
-        options.js_shell = abspath(args[0])
-        requested_paths |= set(args[1:])
+    # Need a shell unless in a special mode.
+    if not options.make_manifests:
+        if not args:
+            op.error('missing JS_SHELL argument')
+        options.js_shell = os.path.abspath(args.pop(0))
 
-    # If we do not have a shell, we must be in a special mode.
-    if options.js_shell is None and not options.make_manifests:
-        op.error('missing JS_SHELL argument')
+    requested_paths = set(args)
 
     # Valgrind, gdb, and rr are mutually exclusive.
-    if sum(map(lambda e: 1 if e else 0, [options.valgrind, options.debug, options.rr])) > 1:
+    if sum(map(bool, (options.valgrind, options.debug, options.rr))) > 1:
         op.error("--valgrind, --debug, and --rr are mutually exclusive.")
 
     # Fill the debugger field, as needed.
@@ -351,12 +368,13 @@ def load_wpt_tests(xul_tester, requested_paths, excluded_paths, update_manifest=
     from wptrunner import products, testloader, wptcommandline, wpttest, wptlogging
 
     manifest_root = tempfile.gettempdir()
-    path_split = os.path.dirname(xul_tester.js_bin).split(os.path.sep)
-    if path_split[-2:] == ["dist", "bin"]:
-        maybe_root = os.path.join(*path_split[:-2])
-        if os.path.exists(os.path.join(maybe_root, "_tests")):
-            # Assume this is a gecko objdir.
-            manifest_root = maybe_root
+    (maybe_dist, maybe_bin) = os.path.split(os.path.dirname(xul_tester.js_bin))
+    if maybe_bin == "bin":
+        (maybe_root, maybe_dist) = os.path.split(maybe_dist)
+        if maybe_dist == "dist":
+            if os.path.exists(os.path.join(maybe_root, "_tests")):
+                # Assume this is a gecko objdir.
+                manifest_root = maybe_root
 
     logger = wptlogging.setup({}, {})
 
@@ -379,11 +397,13 @@ def load_wpt_tests(xul_tester, requested_paths, excluded_paths, update_manifest=
                 yield item_type, path, tests
 
     run_info_extras = products.load_product(kwargs["config"], "firefox")[-1](**kwargs)
-    run_info = wpttest.get_run_info(kwargs["test_paths"]["/"]["metadata_path"],
+    run_info = wpttest.get_run_info(kwargs["run_info"],
                                     "firefox",
                                     debug=xul_tester.test("isDebugBuild"),
                                     extras=run_info_extras)
-    run_info["release_or_beta"] = xul_tester.test("getBuildConfiguration().release_or_beta")
+    release_or_beta = xul_tester.test("getBuildConfiguration().release_or_beta")
+    run_info["release_or_beta"] = release_or_beta
+    run_info["nightly_build"] = not release_or_beta
 
     path_filter = testloader.TestFilter(test_manifests,
                                         include=requested_paths,
@@ -445,10 +465,10 @@ def load_tests(options, requested_paths, excluded_paths):
             xul_info = manifest.XULInfo.create(options.js_shell)
         else:
             xul_abi, xul_os, xul_debug = options.xul_info_src.split(r':')
-            xul_debug = xul_debug.lower() is 'true'
+            xul_debug = xul_debug.lower() == 'true'
             xul_info = manifest.XULInfo(xul_abi, xul_os, xul_debug)
         feature_args = shlex.split(options.feature_args)
-        xul_tester = manifest.XULInfoTester(xul_info, options.js_shell, feature_args)
+        xul_tester = manifest.XULInfoTester(xul_info, options, feature_args)
 
     test_dir = dirname(abspath(__file__))
     path_options = PathOptions(test_dir, requested_paths, excluded_paths)
@@ -559,12 +579,43 @@ def main():
                 print('    {}'.format(tc.path))
             return 2
 
-        cmd = test_gen.next().get_command(prefix)
+        cmd = next(test_gen).get_command(prefix)
         if options.show_cmd:
             print(list2cmdline(cmd))
         with changedir(test_dir), change_env(test_environment):
             call(cmd)
         return 0
+
+    # The test_gen generator is converted into a list in
+    # run_all_tests. Go ahead and do it here so we can apply
+    # chunking.
+    #
+    # If chunking is enabled, determine which tests are part of this chunk.
+    # This code was adapted from testing/mochitest/runtestsremote.py.
+    if options.total_chunks > 1:
+        tests_per_chunk = math.ceil(test_count / float(options.total_chunks))
+        start = int(round((options.this_chunk - 1) * tests_per_chunk))
+        end = int(round(options.this_chunk * tests_per_chunk))
+        test_gen = list(test_gen)[start:end]
+
+    if options.remote:
+        results = ResultsSink('jstests', options, test_count)
+        try:
+            from lib.remote import init_remote_dir, init_device
+            device = init_device(options)
+            jtd_tests = posixpath.join(options.remote_test_root, 'tests', 'tests')
+            init_remote_dir(device, jtd_tests)
+            device.push(test_dir, jtd_tests, timeout=600)
+            device.chmod(jtd_tests, recursive=True, root=True)
+            prefix[0] = options.js_shell
+            for test in test_gen:
+                out = run_test_remote(test, device, prefix, options)
+                results.push(out)
+            results.finish(True)
+        except KeyboardInterrupt:
+            results.finish(False)
+
+        return 0 if results.all_passed() else 1
 
     with changedir(test_dir), change_env(test_environment):
         results = ResultsSink('jstests', options, test_count)
@@ -578,6 +629,47 @@ def main():
         return 0 if results.all_passed() else 1
 
     return 0
+
+
+def run_test_remote(test, device, prefix, options):
+    from mozdevice import ADBDevice, ADBProcessError
+
+    cmd = test.get_command(prefix)
+    test_root_parent = os.path.dirname(test.root)
+    jtd_tests = posixpath.join(options.remote_test_root, 'tests')
+    cmd = [_.replace(test_root_parent, jtd_tests) for _ in cmd]
+
+    env = {
+        'TZ': 'PST8PDT',
+        'LD_LIBRARY_PATH': os.path.dirname(prefix[0])
+    }
+
+    adb_cmd = ADBDevice._escape_command_line(cmd)
+    start = datetime.now()
+    try:
+        # Allow ADBError or ADBTimeoutError to terminate the test run,
+        # but handle ADBProcessError in order to support the use of
+        # non-zero exit codes in the JavaScript shell tests.
+        out = device.shell_output(adb_cmd, env=env,
+                                  cwd=options.remote_test_root,
+                                  timeout=int(options.timeout))
+        returncode = 0
+    except ADBProcessError as e:
+        # Treat ignorable intermittent adb communication errors as
+        # skipped tests.
+        out = str(e.adb_process.stdout)
+        returncode = e.adb_process.exitcode
+        re_ignore = re.compile(r'error: (closed|device .* not found)')
+        if returncode == 1 and re_ignore.search(out):
+            print("Skipping {} due to ignorable adb error {}".format(test.path, out))
+            test.skip_if_cond = "true"
+            returncode = test.SKIPPED_EXIT_STATUS
+
+    elapsed = (datetime.now() - start).total_seconds()
+
+    # We can't distinguish between stdout and stderr so we pass
+    # the same buffer to both.
+    return TestOutput(test, cmd, out, out, returncode, elapsed, False)
 
 
 if __name__ == '__main__':

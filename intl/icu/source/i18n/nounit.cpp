@@ -11,7 +11,7 @@ U_NAMESPACE_BEGIN
 UOBJECT_DEFINE_RTTI_IMPLEMENTATION(NoUnit)
 
 NoUnit U_EXPORT2 NoUnit::base() {
-    return NoUnit("base");
+    return NoUnit("");
 }
 
 NoUnit U_EXPORT2 NoUnit::percent() {
@@ -29,7 +29,7 @@ NoUnit::NoUnit(const char* subtype) {
 NoUnit::NoUnit(const NoUnit& other) : MeasureUnit(other) {
 }
 
-UObject* NoUnit::clone() const {
+NoUnit* NoUnit::clone() const {
     return new NoUnit(*this);
 }
 

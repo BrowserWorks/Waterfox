@@ -26,14 +26,17 @@
   }
 
 class nsDisplayListBuilder;
+class nsIDocShell;
 
 namespace mozilla {
 class PresShell;
 namespace layers {
 class CanvasLayer;
 class CanvasRenderer;
+class CompositableHandle;
 class Layer;
 class LayerManager;
+class LayerTransactionChild;
 class WebRenderCanvasData;
 }  // namespace layers
 namespace gfx {
@@ -49,6 +52,8 @@ class nsICanvasRenderingContextInternal : public nsISupports,
   typedef mozilla::layers::Layer Layer;
   typedef mozilla::layers::LayerManager LayerManager;
   typedef mozilla::layers::WebRenderCanvasData WebRenderCanvasData;
+  typedef mozilla::layers::CompositableHandle CompositableHandle;
+  typedef mozilla::layers::LayerTransactionChild LayerTransactionChild;
 
   NS_DECLARE_STATIC_IID_ACCESSOR(NS_ICANVASRENDERINGCONTEXTINTERNAL_IID)
 
@@ -191,6 +196,11 @@ class nsICanvasRenderingContextInternal : public nsISupports,
   virtual void OnVisibilityChange() {}
 
   virtual void OnMemoryPressure() {}
+
+  virtual bool UpdateCompositableHandle(
+      LayerTransactionChild* aLayerTransaction, CompositableHandle aHandle) {
+    return false;
+  }
 
   //
   // shmem support

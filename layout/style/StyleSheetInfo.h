@@ -9,13 +9,12 @@
 
 #include "mozilla/css/SheetParsingMode.h"
 #include "mozilla/dom/SRIMetadata.h"
-#include "mozilla/net/ReferrerPolicy.h"
 #include "mozilla/CORSMode.h"
 
 #include "nsIURI.h"
+#include "nsIReferrerInfo.h"
 
 class nsIPrincipal;
-struct nsLayoutStylesheetCacheShm;
 
 namespace mozilla {
 class StyleSheet;
@@ -25,10 +24,9 @@ struct URLExtraData;
  * Struct for data common to CSSStyleSheetInner and ServoStyleSheet.
  */
 struct StyleSheetInfo final {
-  typedef net::ReferrerPolicy ReferrerPolicy;
+  typedef dom::ReferrerPolicy ReferrerPolicy;
 
-  StyleSheetInfo(CORSMode aCORSMode, ReferrerPolicy aReferrerPolicy,
-                 const dom::SRIMetadata& aIntegrity,
+  StyleSheetInfo(CORSMode aCORSMode, const dom::SRIMetadata& aIntegrity,
                  css::SheetParsingMode aParsingMode);
 
   // FIXME(emilio): aCopy should be const.
@@ -50,17 +48,18 @@ struct StyleSheetInfo final {
   nsCOMPtr<nsIURI> mBaseURI;           // for resolving relative URIs
   nsCOMPtr<nsIPrincipal> mPrincipal;
   CORSMode mCORSMode;
-  // The Referrer Policy of a stylesheet is used for its child sheets, so it is
-  // stored here.
-  ReferrerPolicy mReferrerPolicy;
+  // The ReferrerInfo of a stylesheet is used for its child sheets and loads
+  // come from this stylesheet, so it is stored here.
+  nsCOMPtr<nsIReferrerInfo> mReferrerInfo;
   dom::SRIMetadata mIntegrity;
 
-  // Pointer to start of linked list of child sheets. This is all fundamentally
-  // broken, because each of the child sheets has a unique parent... We can
-  // only hope (and currently this is the case) that any time page JS can get
-  // its hands on a child sheet that means we've already ensured unique infos
-  // throughout its parent chain and things are good.
-  RefPtr<StyleSheet> mFirstChild;
+  // Pointer to the list of child sheets. This is all fundamentally broken,
+  // because each of the child sheets has a unique parent... We can only hope
+  // (and currently this is the case) that any time page JS can get its hands on
+  // a child sheet that means we've already ensured unique infos throughout its
+  // parent chain and things are good.
+  nsTArray<RefPtr<StyleSheet>> mChildren;
+
   AutoTArray<StyleSheet*, 8> mSheets;
 
   // If a SourceMap or X-SourceMap response header is seen, this is
@@ -77,12 +76,6 @@ struct StyleSheetInfo final {
   nsString mSourceURL;
 
   RefPtr<const RawServoStyleSheetContents> mContents;
-
-  // The shared memory buffer that stores the rules in the style sheet, if
-  // this style sheet was loaded from the style sheet cache's shared memory.
-  //
-  // We need to hold on to this so it doesn't go away before we do.
-  RefPtr<nsLayoutStylesheetCacheShm> mSharedMemory;
 
   // XXX We already have mSheetURI, mBaseURI, and mPrincipal.
   //

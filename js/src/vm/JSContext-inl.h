@@ -9,15 +9,23 @@
 
 #include "vm/JSContext.h"
 
+#include <type_traits>
+#include <utility>
+
 #include "builtin/Object.h"
+#include "gc/Zone.h"
 #include "jit/JitFrames.h"
 #include "proxy/Proxy.h"
+#include "util/DiagnosticAssertions.h"
 #include "vm/BigIntType.h"
+#include "vm/GlobalObject.h"
 #include "vm/HelperThreads.h"
 #include "vm/Interpreter.h"
 #include "vm/Iteration.h"
 #include "vm/Realm.h"
 #include "vm/SymbolType.h"
+
+#include "vm/Activation-inl.h"  // js::Activation::hasWasmExitFP
 
 namespace js {
 
@@ -29,7 +37,16 @@ class ContextChecks {
   JS::Zone* zone() const { return cx->zone(); }
 
  public:
-  explicit ContextChecks(JSContext* cx) : cx(cx) {}
+  explicit ContextChecks(JSContext* cx) : cx(cx) {
+#ifdef DEBUG
+    if (realm()) {
+      GlobalObject* global = realm()->unsafeUnbarrieredMaybeGlobal();
+      if (global) {
+        checkObject(global);
+      }
+    }
+#endif
+  }
 
   /*
    * Set a breakpoint here (break js::ContextChecks::fail) to debug
@@ -68,16 +85,19 @@ class ContextChecks {
 
   void check(JSObject* obj, int argIndex) {
     if (obj) {
-      JS::AssertObjectIsNotGray(obj);
-      MOZ_ASSERT(!js::gc::IsAboutToBeFinalizedUnbarriered(&obj));
+      checkObject(obj);
       check(obj->compartment(), argIndex);
     }
   }
 
+  void checkObject(JSObject* obj) {
+    JS::AssertObjectIsNotGray(obj);
+    MOZ_ASSERT(!js::gc::IsAboutToBeFinalizedUnbarriered(&obj));
+  }
+
   template <typename T>
   void checkAtom(T* thing, int argIndex) {
-    static_assert(mozilla::IsSame<T, JSAtom>::value ||
-                      mozilla::IsSame<T, JS::Symbol>::value,
+    static_assert(std::is_same_v<T, JSAtom> || std::is_same_v<T, JS::Symbol>,
                   "Should only be called with JSAtom* or JS::Symbol* argument");
 
 #ifdef DEBUG
@@ -120,9 +140,8 @@ class ContextChecks {
   // Check the contents of any container class that supports the C++
   // iteration protocol, eg GCVector<jsid>.
   template <typename Container>
-  typename mozilla::EnableIf<
-      mozilla::IsSame<decltype(((Container*)nullptr)->begin()),
-                      decltype(((Container*)nullptr)->end())>::value>::Type
+  std::enable_if_t<std::is_same_v<decltype(std::declval<Container>().begin()),
+                                  decltype(std::declval<Container>().end())>>
   check(const Container& container, int argIndex) {
     for (auto i : container) {
       check(i, argIndex);
@@ -147,7 +166,7 @@ class ContextChecks {
     } else if (JSID_IS_SYMBOL(id)) {
       checkAtom(JSID_TO_SYMBOL(id), argIndex);
     } else {
-      MOZ_ASSERT(!JSID_IS_GCTHING(id));
+      MOZ_ASSERT(!id.isGCThing());
     }
   }
 
@@ -174,22 +193,27 @@ class ContextChecks {
   void check(TypeSet::Type type, int argIndex) {
     check(type.maybeCompartment(), argIndex);
   }
+
+  void check(JS::Handle<mozilla::Maybe<JS::Value>> maybe, int argIndex) {
+    if (maybe.get().isSome()) {
+      check(maybe.get().ref(), argIndex);
+    }
+  }
 };
 
 }  // namespace js
 
-template <class Head, class... Tail>
-inline void JSContext::checkImpl(int argIndex, const Head& head,
-                                 const Tail&... tail) {
-  js::ContextChecks(this).check(head, argIndex);
-  checkImpl(argIndex + 1, tail...);
+template <class... Args>
+inline void JSContext::checkImpl(const Args&... args) {
+  int argIndex = 0;
+  (..., js::ContextChecks(this).check(args, argIndex++));
 }
 
 template <class... Args>
 inline void JSContext::check(const Args&... args) {
 #ifdef JS_CRASH_DIAGNOSTICS
   if (contextChecksEnabled()) {
-    checkImpl(0, args...);
+    checkImpl(args...);
   }
 #endif
 }
@@ -197,7 +221,7 @@ inline void JSContext::check(const Args&... args) {
 template <class... Args>
 inline void JSContext::releaseCheck(const Args&... args) {
   if (contextChecksEnabled()) {
-    checkImpl(0, args...);
+    checkImpl(args...);
   }
 }
 
@@ -205,7 +229,7 @@ template <class... Args>
 MOZ_ALWAYS_INLINE void JSContext::debugOnlyCheck(const Args&... args) {
 #if defined(DEBUG) && defined(JS_CRASH_DIAGNOSTICS)
   if (contextChecksEnabled()) {
-    checkImpl(0, args...);
+    checkImpl(args...);
   }
 #endif
 }
@@ -302,46 +326,14 @@ inline void JSContext::minorGC(JS::GCReason reason) {
   runtime()->gc.minorGC(reason);
 }
 
-inline void JSContext::setPendingException(JS::HandleValue v,
-                                           js::HandleSavedFrame stack) {
-#if defined(NIGHTLY_BUILD)
-  do {
-    // Do not intercept exceptions if we are already
-    // in the exception interceptor. That would lead
-    // to infinite recursion.
-    if (this->runtime()->errorInterception.isExecuting) {
-      break;
-    }
-
-    // Check whether we have an interceptor at all.
-    if (!this->runtime()->errorInterception.interceptor) {
-      break;
-    }
-
-    // Make sure that we do not call the interceptor from within
-    // the interceptor.
-    this->runtime()->errorInterception.isExecuting = true;
-
-    // The interceptor must be infallible.
-    const mozilla::DebugOnly<bool> wasExceptionPending =
-        this->isExceptionPending();
-    this->runtime()->errorInterception.interceptor->interceptError(this, v);
-    MOZ_ASSERT(wasExceptionPending == this->isExceptionPending());
-
-    this->runtime()->errorInterception.isExecuting = false;
-  } while (false);
-#endif  // defined(NIGHTLY_BUILD)
-
-  // overRecursed_ is set after the fact by ReportOverRecursed.
-  this->overRecursed_ = false;
-  this->throwing = true;
-  this->unwrappedException() = v;
-  this->unwrappedExceptionStack() = stack;
-  check(v);
-}
-
 inline bool JSContext::runningWithTrustedPrincipals() {
-  return !realm() || realm()->principals() == runtime()->trustedPrincipals();
+  if (!realm()) {
+    return true;
+  }
+  if (!runtime()->trustedPrincipals()) {
+    return false;
+  }
+  return realm()->principals() == runtime()->trustedPrincipals();
 }
 
 inline void JSContext::enterRealm(JS::Realm* realm) {
@@ -371,7 +363,7 @@ inline void JSContext::setZone(js::Zone* zone,
     return;
   }
 
-  if (isAtomsZone == AtomsZone && helperThread()) {
+  if (isAtomsZone == AtomsZone && isHelperThreadContext()) {
     MOZ_ASSERT(!zone_->wasGCStarted());
     freeLists_ = atomsZoneFreeLists_;
   } else {
@@ -485,14 +477,5 @@ inline JSScript* JSContext::currentScript(
 }
 
 inline js::RuntimeCaches& JSContext::caches() { return runtime()->caches(); }
-
-inline js::AutoKeepAtoms::AutoKeepAtoms(
-    JSContext* cx MOZ_GUARD_OBJECT_NOTIFIER_PARAM_IN_IMPL)
-    : cx(cx) {
-  MOZ_GUARD_OBJECT_NOTIFIER_INIT;
-  cx->zone()->keepAtoms();
-}
-
-inline js::AutoKeepAtoms::~AutoKeepAtoms() { cx->zone()->releaseAtoms(); };
 
 #endif /* vm_JSContext_inl_h */

@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Opna skrá…">
+<!ENTITY openFileCmd.accesskey "O">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Opna staðsetningu…">
+<!ENTITY openRemoteCmd.accesskey "ð">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Nýlegar síður">
+<!ENTITY fileRecentMenu.accesskey "r">
+<!ENTITY saveCmd.label "Vista">
+<!ENTITY saveCmd.accesskey "s">
+<!ENTITY saveAsCmd.label "Vista sem…">
+<!ENTITY saveAsCmd.accesskey "a">
+<!ENTITY saveAsChangeEncodingCmd2.label "Vista og breyta textakóðun">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "e">
+<!ENTITY publishCmd.label "Gefa út">
+<!ENTITY publishCmd.accesskey "G">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Gefa út sem…">
+<!ENTITY publishAsCmd.accesskey "e">
+<!ENTITY fileRevert.label "Afturkalla">
+<!ENTITY fileRevert.accesskey "t">
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Stillingar útgáfuvefsvæðis…">
+<!ENTITY publishSettings.accesskey "S">
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "Nýr">
+<!ENTITY newToolbarCmd.tooltip "Búa til nýja síðu í ritli">
+<!ENTITY openToolbarCmd.label "Opna">
+<!ENTITY openToolbarCmd.tooltip "Opna staðbundna skrá">
+<!ENTITY saveToolbarCmd.tooltip "Vista skrá á staðbundna staðsetningu">
+<!ENTITY publishToolbarCmd.tooltip "Uphala skrá á fjartengda staðsetningu">

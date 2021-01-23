@@ -36,9 +36,7 @@ class UsageInfo;
 // to participate in centralized quota and storage handling.
 class Client {
  public:
-  typedef mozilla::Atomic<bool> AtomicBool;
-
-  NS_INLINE_DECL_PURE_VIRTUAL_REFCOUNTING
+  typedef Atomic<bool> AtomicBool;
 
   enum Type {
     IDB = 0,
@@ -56,75 +54,30 @@ class Client {
     return LS;
   }
 
-  virtual Type GetType() = 0;
+  static bool IsValidType(Type aType);
 
-  static nsresult TypeToText(Type aType, nsAString& aText) {
-    switch (aType) {
-      case IDB:
-        aText.AssignLiteral(IDB_DIRECTORY_NAME);
-        break;
+  static bool TypeToText(Type aType, nsAString& aText, const fallible_t&);
 
-      case DOMCACHE:
-        aText.AssignLiteral(DOMCACHE_DIRECTORY_NAME);
-        break;
+  static void TypeToText(Type aType, nsAString& aText);
 
-      case SDB:
-        aText.AssignLiteral(SDB_DIRECTORY_NAME);
-        break;
+  static void TypeToText(Type aType, nsACString& aText);
 
-      case LS:
-        if (CachedNextGenLocalStorageEnabled()) {
-          aText.AssignLiteral(LS_DIRECTORY_NAME);
-          break;
-        }
-        MOZ_FALLTHROUGH;
+  static bool TypeFromText(const nsAString& aText, Type& aType,
+                           const fallible_t&);
 
-      case TYPE_MAX:
-      default:
-        MOZ_ASSERT_UNREACHABLE("Bad id value!");
-        return NS_ERROR_UNEXPECTED;
-    }
+  static Type TypeFromText(const nsACString& aText);
 
-    return NS_OK;
-  }
+  static char TypeToPrefix(Type aType);
 
-  static nsresult TypeFromText(const nsAString& aText, Type& aType) {
-    if (aText.EqualsLiteral(IDB_DIRECTORY_NAME)) {
-      aType = IDB;
-    } else if (aText.EqualsLiteral(DOMCACHE_DIRECTORY_NAME)) {
-      aType = DOMCACHE;
-    } else if (aText.EqualsLiteral(SDB_DIRECTORY_NAME)) {
-      aType = SDB;
-    } else if (CachedNextGenLocalStorageEnabled() &&
-               aText.EqualsLiteral(LS_DIRECTORY_NAME)) {
-      aType = LS;
-    } else {
-      return NS_ERROR_FAILURE;
-    }
-
-    return NS_OK;
-  }
-
-  static nsresult NullableTypeFromText(const nsAString& aText,
-                                       Nullable<Type>* aType) {
-    if (aText.IsVoid()) {
-      *aType = Nullable<Type>();
-      return NS_OK;
-    }
-
-    Type type;
-    nsresult rv = TypeFromText(aText, type);
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      return rv;
-    }
-
-    *aType = Nullable<Type>(type);
-    return NS_OK;
-  }
+  static bool TypeFromPrefix(char aPrefix, Type& aType, const fallible_t&);
 
   static bool IsDeprecatedClient(const nsAString& aText) {
     return aText.EqualsLiteral(ASMJSCACHE_DIRECTORY_NAME);
   }
+
+  NS_INLINE_DECL_PURE_VIRTUAL_REFCOUNTING
+
+  virtual Type GetType() = 0;
 
   // Methods which are called on the IO thread.
   virtual nsresult UpgradeStorageFrom1_0To2_0(nsIFile* aDirectory) {
@@ -143,7 +96,7 @@ class Client {
                               const nsACString& aGroup,
                               const nsACString& aOrigin,
                               const AtomicBool& aCanceled,
-                              UsageInfo* aUsageInfo, bool aForGetUsage) = 0;
+                              UsageInfo* aUsageInfo) = 0;
 
   virtual nsresult GetUsageForOrigin(PersistenceType aPersistenceType,
                                      const nsACString& aGroup,
@@ -164,8 +117,6 @@ class Client {
 
   virtual void ReleaseIOThreadObjects() = 0;
 
-  virtual void OnStorageInitFailed(){};
-
   // Methods which are called on the background thread.
   virtual void AbortOperations(const nsACString& aOrigin) = 0;
 
@@ -178,7 +129,7 @@ class Client {
   virtual void ShutdownWorkThreads() = 0;
 
  protected:
-  virtual ~Client() {}
+  virtual ~Client() = default;
 };
 
 END_QUOTA_NAMESPACE

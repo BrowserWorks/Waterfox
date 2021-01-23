@@ -11,23 +11,15 @@ transforms:
 
 kind-dependencies:
     - release-secondary-balrog-scheduling
-    - push-apk
 
 job-defaults:
     name: notify-release-drivers-ship
     description: Sends email to release-drivers telling release was shipped.
     run-on-projects: []
     shipping-phase: ship
-    worker-type: b-linux
+    worker-type: succeed
     worker:
-        implementation: docker-worker
-        os: linux
-        docker-image: "ubuntu:16.10"
-        max-run-time: 600
-        command:
-            - /bin/bash
-            - -c
-            - echo "Dummy task"
+        implementation: succeed
     notifications:
         emails:
             by-project:
@@ -42,10 +34,3 @@ jobs:
         notifications:
             subject: "{task[shipping-product]} {release_config[version]} build{release_config[build_number]}/{config[params][project]} updates are ready for signoff in Balrog!"
             message: "{task[shipping-product]} {release_config[version]} build{release_config[build_number]}/{config[params][project]} updates are ready for signoff in Balrog!"
-    fennec-release-rc:
-        attributes:
-            release-type: release
-        shipping-product: fennec
-        notifications:
-            subject: "{task[shipping-product]} {release_config[version]} build{release_config[build_number]}/{config[params][project]} has shipped to the regular RC channel!"
-            message: "{task[shipping-product]} {release_config[version]} build{release_config[build_number]}/{config[params][project]} has shipped to the regular RC channel!"

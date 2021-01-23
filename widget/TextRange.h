@@ -13,7 +13,6 @@
 #include "nsColor.h"
 #include "nsISelectionController.h"
 #include "nsITextInputProcessor.h"
-#include "nsStyleConsts.h"
 #include "nsTArray.h"
 
 namespace mozilla {
@@ -23,14 +22,29 @@ namespace mozilla {
  ******************************************************************************/
 
 struct TextRangeStyle {
-  enum {
-    LINESTYLE_NONE = NS_STYLE_TEXT_DECORATION_STYLE_NONE,
-    LINESTYLE_SOLID = NS_STYLE_TEXT_DECORATION_STYLE_SOLID,
-    LINESTYLE_DOTTED = NS_STYLE_TEXT_DECORATION_STYLE_DOTTED,
-    LINESTYLE_DASHED = NS_STYLE_TEXT_DECORATION_STYLE_DASHED,
-    LINESTYLE_DOUBLE = NS_STYLE_TEXT_DECORATION_STYLE_DOUBLE,
-    LINESTYLE_WAVY = NS_STYLE_TEXT_DECORATION_STYLE_WAVY
+  typedef uint8_t LineStyleType;
+  // FYI: Modify IME_RANGE_LINE_* too when you modify LineStyle.
+  enum class LineStyle : LineStyleType {
+    None,
+    Solid,
+    Dotted,
+    Dashed,
+    Double,
+    Wavy,
   };
+  inline static LineStyle ToLineStyle(RawTextRangeType aRawLineStyle) {
+    switch (static_cast<LineStyle>(aRawLineStyle)) {
+      case LineStyle::None:
+      case LineStyle::Solid:
+      case LineStyle::Dotted:
+      case LineStyle::Dashed:
+      case LineStyle::Double:
+      case LineStyle::Wavy:
+        return static_cast<LineStyle>(aRawLineStyle);
+    }
+    MOZ_ASSERT_UNREACHABLE("aRawLineStyle value is invalid");
+    return LineStyle::None;
+  }
 
   enum {
     DEFINED_NONE = 0x00,
@@ -42,11 +56,14 @@ struct TextRangeStyle {
 
   // Initialize all members, because TextRange instances may be compared by
   // memcomp.
+  //
+  // FIXME(emilio): I don't think that'd be sound, as it has padding which the
+  // compiler is not guaranteed to initialize.
   TextRangeStyle() { Clear(); }
 
   void Clear() {
     mDefinedStyles = DEFINED_NONE;
-    mLineStyle = LINESTYLE_NONE;
+    mLineStyle = LineStyle::None;
     mIsBoldLine = false;
     mForegroundColor = mBackgroundColor = mUnderlineColor = NS_RGBA(0, 0, 0, 0);
   }
@@ -71,7 +88,7 @@ struct TextRangeStyle {
 
   bool IsNoChangeStyle() const {
     return !IsForegroundColorDefined() && !IsBackgroundColorDefined() &&
-           IsLineStyleDefined() && mLineStyle == LINESTYLE_NONE;
+           IsLineStyleDefined() && mLineStyle == LineStyle::None;
   }
 
   bool Equals(const TextRangeStyle& aOther) const {
@@ -98,7 +115,7 @@ struct TextRangeStyle {
   bool operator==(const TextRangeStyle& aOther) const { return Equals(aOther); }
 
   uint8_t mDefinedStyles;
-  uint8_t mLineStyle;  // DEFINED_LINESTYLE
+  LineStyle mLineStyle;  // DEFINED_LINESTYLE
 
   bool mIsBoldLine;  // DEFINED_LINESTYLE
 
@@ -167,7 +184,7 @@ struct TextRange {
 class TextRangeArray final : public AutoTArray<TextRange, 10> {
   friend class WidgetCompositionEvent;
 
-  ~TextRangeArray() {}
+  ~TextRangeArray() = default;
 
   NS_INLINE_DECL_REFCOUNTING(TextRangeArray)
 

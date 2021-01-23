@@ -1,5 +1,5 @@
 load 0-timescale.html # bug 1229166
-skip-if(Android) load 459439-1.html # bug 888557
+skip-if(Android) pref(media.autoplay.default,0) load 459439-1.html # bug 888557
 load 466607-1.html
 load 466945-1.html
 load 468763-1.html
@@ -7,7 +7,7 @@ load 474744-1.html
 HTTP load 481136-1.html # needs to be HTTP to recognize the ogg as an audio file?
 load 492286-1.xhtml
 load 493915-1.html
-load 495794-1.html
+pref(media.autoplay.default,0) load 495794-1.html
 load 497734-1.xhtml
 load 497734-2.html
 load 576612-1.html
@@ -17,7 +17,9 @@ skip-if(Android&&AndroidVersion=='22') HTTP load 795892-1.html # bug 1358718
 load 844563.html
 load 846612.html
 skip-if(verify&&isDebugBuild&&gtkWidget) load 852838.html
+load 865004.html
 load 865537-1.html
+load 865550.html
 skip-if(verify&&isDebugBuild&&gtkWidget) load 868504.html
 skip-if(verify&&isDebugBuild&&gtkWidget) load 874869.html
 skip-if(verify&&isDebugBuild&&gtkWidget) load 874915.html
@@ -66,13 +68,11 @@ skip-if(verify&&isDebugBuild&&gtkWidget) load 933151.html
 skip-if(verify&&isDebugBuild&&gtkWidget) load 933156.html
 load 944851.html
 skip-if(verify&&isDebugBuild&&gtkWidget) load 952756.html
-skip-if(verify&&isDebugBuild&&gtkWidget) load 966636.html
 skip-if(verify&&isDebugBuild&&gtkWidget) load 986901.html
 skip-if(verify&&isDebugBuild&&gtkWidget) load 990794.html
 skip-if(verify&&isDebugBuild&&gtkWidget) load 995289.html
 skip-if(verify&&isDebugBuild&&gtkWidget) load 1012609.html
 load 1015662.html
-skip-if(verify&&isDebugBuild&&gtkWidget) load 1020205.html
 skip-if(Android) test-pref(media.navigator.permission.disabled,true) load 1028458.html # bug 1048863
 skip-if(verify&&isDebugBuild&&gtkWidget) load 1041466.html
 skip-if(verify&&isDebugBuild&&gtkWidget) load 1045650.html
@@ -85,7 +85,7 @@ skip-if(verify&&isDebugBuild&&gtkWidget) load 1157994.html
 load 1158427.html
 skip-if(verify&&isDebugBuild&&gtkWidget) load 1185176.html
 load 1185192.html
-load 1257700.html
+skip-if(Android) load 1257700.html # bug 1575666
 load 1267263.html
 load 1270303.html
 load 1304948.html
@@ -106,6 +106,7 @@ skip-if(verify&&isDebugBuild&&gtkWidget) load buffer-source-ended-1.html
 load buffer-source-resampling-start-1.html
 load buffer-source-slow-resampling-1.html
 load convolver-memory-report-1.html
+load copyFromChannel-2.html
 skip-if(verify&&isDebugBuild&&gtkWidget) HTTP load media-element-source-seek-1.html
 skip-if(verify&&isDebugBuild&&gtkWidget) load offline-buffer-source-ended-1.html
 load oscillator-ended-1.html
@@ -114,14 +115,24 @@ skip-if(Android&&AndroidVersion=='22') load video-replay-after-audio-end.html # 
 # This needs to run at the end to avoid leaking busted state into other tests.
 skip-if(Android) load 691096-1.html # Bug 1365451
 load 1236639.html
-test-pref(media.navigator.permission.disabled,true) test-pref(media.getusermedia.insecure.enabled,true) test-pref(media.getusermedia.insecure.enabled,true) load 1388372.html
+test-pref(media.navigator.permission.disabled,true) test-pref(media.devices.insecure.enabled,true) test-pref(media.getusermedia.insecure.enabled,true) load 1388372.html
 load 1494073.html
 skip-if(Android) load 1526044.html # Bug 1528391
 skip-if(Android&&AndroidVersion<21) load encrypted-track-with-bad-sample-description-index.mp4 # Bug 1533211, unkip after bug 1550912
 load encrypted-track-without-tenc.mp4 # Bug 1533215
+asserts-if(Android,0-1) load encrypted-track-with-sample-missing-cenc-aux.mp4 # Bug 1533625, bug 1588967
 load 1533909.html
 load 1538727.html
 load empty-samples.webm # Bug 1540580
 test-pref(media.autoplay.block-webaudio,false) load 1545133.html
 load track-with-zero-dimensions.mp4 # Bug 1542539
+load 1560215.html
+skip-if(Android) load 1547784.html # Skip on Android as clearkey is not supported
 load 1547899.html
+load 1569645.html
+load 1575271.html
+load 1577184.html
+pref(media.autoplay.default,0) load 1587248.html
+load 1594466.html
+load 1604941.html
+skip-if(!winWidget) load 1608286.html

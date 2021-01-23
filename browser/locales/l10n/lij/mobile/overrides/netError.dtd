@@ -1,0 +1,200 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Erô into caregamento da pagina">
+<!ENTITY retry.label "Preuva Torna">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "No riescio a conette">
+<!ENTITY connectionFailure.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY deniedPortAccess.title "Sto indirisso o l'é riservou">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Server no trovou">
+<!-- LOCALIZATION NOTE (dnsNotFound.longDesc4) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside tags should be localized.  Do not change the ids. -->
+<!ENTITY dnsNotFound.longDesc4 "
+<ul>
+  <li>Contròlla che no ghe segian di eroî comme
+    <strong>ww</strong>.example.com in cangio de
+    <strong>www</strong>.example.com</li>
+    <div id='searchbox'>
+      <input id='searchtext' type='search'></input>
+      <button id='searchbutton'>Çerca</button>
+    </div>
+  <li>Se ti no riesci a navegâ in nisciunn-a pagina, contròlla a conescion dæti do teu dispoxitivo ò a conescion Wi-Fi.
+    <button id='wifi'>Abilita Wi-Fi</button>
+  </li>
+</ul>
+">
+
+<!ENTITY fileNotFound.title "File no trovou">
+<!ENTITY fileNotFound.longDesc "<ul>
+  <li>Contròlla o nomme  do file pe-e maioscole  ò atri eroi.</li>
+  <li>Contròlla se o file o l'é stæto mesciou, renòminou ò scancelou.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.title "Acesso a-o file negou">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>O peu ese stæto scancelou,mesciou, ò i permissi de acesso a-i file peuan proibine l'acesso.</li>
+</ul>
+">
+
+<!ENTITY generic.title "Belin!">
+<!ENTITY generic.longDesc "<p>&brandShortName; o no peu caregâ sta pagina pe quarche raxon.</p> ">
+
+<!ENTITY malformedURI.title "L'indirisso o no l'é valido">
+<!-- LOCALIZATION NOTE (malformedURI.longDesc2) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY malformedURI.longDesc2 "
+<ul>
+  <li>I indirissi web de solito son scriti coscì
+    <strong>http://www.example.com/</strong></li>
+    <div id='searchbox'>
+      <input id='searchtext' type='search'></input>
+      <button id='searchbutton'>Çerca</button>
+    </div>
+  <li>Stanni atento de avei deuviou e bare coscì (<strong>/</strong>).</li>
+</ul>
+">
+
+<!ENTITY netInterrupt.title "A conescion a l'é stæta scancelâ">
+<!ENTITY netInterrupt.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY notCached.title "Documento scheito">
+<!ENTITY notCached.longDesc "<p>O documento domandou o no l'é disponibile inta cache de &brandShortName;.</p><ul><li>Comme mezua de seguessa, o &brandShortName; o no domanda torna di documenti senscibili in aotomatico.</li><li>Sciacca Preuva Torna pe domandâ torna o documento a-o scito.</li></ul>">
+
+<!ENTITY netOffline.title "Mòddo feua linia">
+
+<!ENTITY contentEncodingError.title "Erô de còdifica do contegnuo">
+<!ENTITY contentEncodingError.longDesc "<ul>
+  <li>Pe piaxei ciamma o propietaio do scito pe informalo do problema.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.title "Tipo de file no seguo">
+<!ENTITY unsafeContentType.longDesc "<ul>
+  <li>Pe piaxei ciamma o propietaio do scito pe informalo do problema.</li>
+</ul>
+">
+
+<!ENTITY netReset.title "A conescion a l'é stæta inpostâ torna">
+<!ENTITY netReset.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY netTimeout.title "A conescion a gh'à misso tròppo tenpo">
+<!ENTITY netTimeout.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY unknownProtocolFound.title "Indirisso no interpretabile">
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Peu dase che ti doviæ instalâ atre aplicaçioin pe arvî st'indirisso.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.title "O server proxy o refua e conescioin">
+<!ENTITY proxyConnectFailure.longDesc "<ul>
+  <li>Contròlla se e inpostaçioin do proxy  son giuste.</li>
+  <li>Contatta o aministratô da ræ pe esê seguo che o proxy fonçionn-a.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.title "No riescio a trovâ o proxy">
+<!-- LOCALIZATION NOTE (proxyResolveFailure.longDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY proxyResolveFailure.longDesc3 "
+<ul>
+  <li>Contròlla e inpostaçioin do proxy pe ese seguo che en corette.</li>
+  <li>Contròlla pe ese seguo che o teu dispoxitivo o l'agge 'na conescion dæti ò Wi-Fi.
+    <button id='wifi'>Abilita Wi-Fi</button>
+  </li>
+</ul>
+">
+
+<!ENTITY redirectLoop.title "A pagina no redireçionn-a ben">
+<!ENTITY redirectLoop.longDesc "<ul>
+  <li>Sto problema peu ese caozou da-o fæto de avei dizabilitou ò no acetou i cookie.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.title "Risposta sbaliâ da-o server">
+<!ENTITY unknownSocketType.longDesc "<ul>
+  <li>Contròlla che o scistema o l'agge instalou o Personal Security Manager.</li>
+  <li>Sta cösa a poeiva ese dovua a de inpostaçioin no-standard do server.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.title "Conescion segua no riescia">
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>A pagina che ti preuvi a veddi a no peu ese mostrâ perché l'aotencitæ di dæti reçevui a no peu ese verificâ.</li>
+  <li>Pe piaxei senti 'n pö o propietaio do scito pe informalo do problema.</li>
+</ul>
+">
+
+<!ENTITY nssBadCert.title "Conescion segua no riescia">
+<!ENTITY nssBadCert.longDesc2 "<ul>
+<li>Sto chi o peu ese un problema co-e inpostaçion do server ò peu ascì ese quarchedun che o preuva a fâ finta de ese o server.</li>
+<li>Se ti ê conesso sensa problemi a sto server into passou, aloa l'erô o peu esê tenporaneo e ti peu provâ torna dòppo.</li>
+</ul>
+">
+
+<!-- LOCALIZATION NOTE (sharedLongDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY sharedLongDesc3 "
+<ul>
+  <li>O scito o porieiva ese tenporaneamente inacesibile ò tròppo traficou. Preuva torna tra quarche momento.</li>
+  <li>Se no ti riesci a caregâ nisciunn-a pagina, preuva a controlâ a conescion do teu computer.
+    <button id='wifi'>Abilita Wi-Fi</button>
+  </li>
+</ul>
+">
+
+<!ENTITY cspBlocked.title "Blocou da-i critei de seguessa di contegnui">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; o l'à blocou o caregamento da pagina con sta modalitæ perché a gh'à di critei de seguessa di contegnui ch'ou inpediscian.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Erô de contegnuo andæto a mâ">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>A pagina che ti veu vedde a no peu ese mostrâ perché gh'é 'n erô inta trasmiscion di dæti.</p><ul><li>Pe piaxei, ciamma o responsabile do scito pe informalo do problema.</li></ul>">
+
+<!ENTITY securityOverride.linkText "ò ti peu azonze 'na eceçion…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Pòrtime feua de chi!">
+<!ENTITY securityOverride.exceptionButtonLabel "Azonzi 'na eceçion…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <xul:button> tags.  The only language content is the label= field,
+which uses strings already defined above. The button is included here (instead of
+netError.xhtml) because it exposes functionality specific to firefox. -->
+
+<!ENTITY securityOverride.warningContent "<p>Ti no doviesci azonze 'na eceçion se ti uzi 'na conescion ch'a no l'é fidâ ò se ti no gh'æ l'andio de vedde di alarmi in sto server.</p>
+
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button>
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>
+ ">
+
+<!ENTITY remoteXUL.title "XUL Remòtto">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Pe piaxei ciamma o propietaio do scito pe informalo do problema.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Inposcibile conetise in mòddo seguo">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc "Informaçion avansæ: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY weakCryptoUsed.title "A teu conescion a no l'é segua">
+<!-- LOCALIZATION NOTE (weakCryptoUsed.longDesc) - Do not translate
+     "SSL_ERROR_NO_CYPHER_OVERLAP". -->
+<!ENTITY weakCryptoUsed.longDesc "Informaçion avansæ: SSL_ERROR_NO_CYPHER_OVERLAP">
+
+<!ENTITY inadequateSecurityError.title "A teu conescion a no l'é segua">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> o deuvia 'na tecnòlogia de seguessa vegia ch'a l'é debole . Un mascarson o peu pigiâ con façiliæ e teu informaçioin che ti pensi segian a-o seguo. L'aministratô do scito o deve dâ recatto a-o server primma che ti ti posse vixitâ sto scito.</p><p>Còdice d'erô: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY networkProtocolError.title "Erô de Protocòllo de ræ">
+<!ENTITY networkProtocolError.longDesc "<p>A pagina che ti voeivi vedde a no peu ese mostrâ perché gh'é 'n erô into protocòllo de ræ.</p><ul><li>Pe piaxei senti o propietaio do scito pe informalo do problema.</li></ul>">

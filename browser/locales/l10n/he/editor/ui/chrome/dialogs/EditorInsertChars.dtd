@@ -1,0 +1,32 @@
+<!--
+# Translator(s):
+#
+# Yaron <sh.yaron@gmail.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# http://tomercohen.com/ <tomer.mozilla@tomercohen.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "הוספת תו">
+<!ENTITY category.label "קטגוריה">
+<!ENTITY letter.label "אות:">
+<!ENTITY letter.accessKey "א">
+<!ENTITY character.label "תו:">
+<!ENTITY character.accessKey "ת">
+<!ENTITY accentUpper.label "תווי מבטא גדולים">
+<!ENTITY accentLower.label "תווי מבטא קטנים">
+<!ENTITY otherUpper.label "תווים גדולים אחרים">
+<!ENTITY otherLower.label "תווים קטנים אחרים">
+<!ENTITY commonSymbols.label "סימנים נפוצים">
+<!ENTITY insertButton.label "הוספה">
+<!ENTITY closeButton.label "סגירה">
+

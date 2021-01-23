@@ -381,8 +381,8 @@ add_task(async function test_apply_then_revert() {
   });
   deepEqual(
     await buf.fetchUnmergedGuids(),
-    [],
-    "Should merge all items, first time"
+    [PlacesUtils.bookmarks.menuGuid],
+    "Should leave menu with new remote structure unmerged after first time"
   );
 
   info("Revert local tree");
@@ -411,11 +411,12 @@ add_task(async function test_apply_then_revert() {
   let secondTimeRecords = await buf.apply({
     localTimeSeconds,
     remoteTimeSeconds: now,
+    notifyInStableOrder: true,
   });
   deepEqual(
     await buf.fetchUnmergedGuids(),
-    [],
-    "Should merge all items, second time"
+    [PlacesUtils.bookmarks.menuGuid],
+    "Should leave menu with new remote structure unmerged after second time"
   );
   deepEqual(
     secondTimeRecords,
@@ -433,19 +434,6 @@ add_task(async function test_apply_then_revert() {
 
   observer.check([
     {
-      name: "onItemRemoved",
-      params: {
-        itemId: localIdForD,
-        parentId: PlacesUtils.bookmarksMenuFolderId,
-        index: 1,
-        type: PlacesUtils.bookmarks.TYPE_BOOKMARK,
-        urlHref: "http://example.com/d",
-        guid: "bookmarkDDDD",
-        parentGuid: PlacesUtils.bookmarks.menuGuid,
-        source: PlacesUtils.bookmarks.SOURCES.SYNC,
-      },
-    },
-    {
       name: "onItemChanged",
       params: {
         itemId: localItemIds.get("bookmarkEEEE"),
@@ -457,6 +445,19 @@ add_task(async function test_apply_then_revert() {
         guid: "bookmarkEEEE",
         parentGuid: PlacesUtils.bookmarks.menuGuid,
         oldValue: "bookmarkEEE1",
+        source: PlacesUtils.bookmarks.SOURCES.SYNC,
+      },
+    },
+    {
+      name: "bookmark-removed",
+      params: {
+        itemId: localIdForD,
+        parentId: PlacesUtils.bookmarksMenuFolderId,
+        index: 1,
+        type: PlacesUtils.bookmarks.TYPE_BOOKMARK,
+        urlHref: "http://example.com/d",
+        guid: "bookmarkDDDD",
+        parentGuid: PlacesUtils.bookmarks.menuGuid,
         source: PlacesUtils.bookmarks.SOURCES.SYNC,
       },
     },
@@ -646,6 +647,9 @@ add_task(async function test_apply_then_revert() {
     },
     "Should apply new structure, second time"
   );
+
+  await storeChangesInMirror(buf, secondTimeRecords);
+  deepEqual(await buf.fetchUnmergedGuids(), [], "Should merge all items");
 
   await buf.finalize();
   await PlacesUtils.bookmarks.eraseEverything();

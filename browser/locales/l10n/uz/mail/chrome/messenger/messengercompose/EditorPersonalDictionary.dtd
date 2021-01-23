@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Shaxsiy lug‘at">
+
+<!ENTITY wordEditField.label "Yangi so‘z:">
+<!ENTITY wordEditField.accessKey "Y">
+<!ENTITY AddButton.label "Qo‘shish">
+<!ENTITY AddButton.accessKey "Q">
+<!ENTITY DictionaryList.label "Lug‘atdagi so‘zlar:">
+<!ENTITY DictionaryList.accessKey "W">
+<!ENTITY RemoveButton.label "Olib tashlash">
+<!ENTITY RemoveButton.accessKey "O">
+
+<!ENTITY CloseButton.label "Yopish">
+<!ENTITY CloseButton.accessKey "Y">

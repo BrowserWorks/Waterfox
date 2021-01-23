@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: where ".private" and ".normal" variants exist,
+   - the former is shown in a private browsing window and the latter in
+   - a regular (non-private) browsing window. -->
+
+<!ENTITY privatebrowsingpage.title.private       "Ahora está en una ventana de navegación privada">
+<!ENTITY privatebrowsingpage.title.normal        "¿Desea iniciar la navegación privada?">
+
+<!ENTITY privatebrowsingpage.status.private      "&brandShortName; no recordará ningún historial para esta ventana.">
+<!ENTITY privatebrowsingpage.status.normal       "No está actualmente en una ventana privada.">
+
+<!ENTITY privatebrowsingpage.common.description  "En una ventana de navegación privada, &brandShortName; no mantendrá historial de navegación, búsqueda, descargas, formularios web, historial, cookies o archivos temporales de internet.  Sin embargo, los marcadores creados y los archivos descargados se mantendrán.">
+<!ENTITY privatebrowsingpage.track.warn          "Mientras esta computadora no tenga un registro de su historial de navegación, su empleador o proveedor de Internet aún puede ser capaz de rastrear las páginas que visite">
+<!ENTITY privatebrowsingpage.learnmore.label     "Conocer más">
+<!ENTITY privatebrowsingpage.learnmore.accesskey "C">
+
+<!ENTITY privatebrowsingpage.close.info          "Cuando termine, cierre la ventana para detener la navegación privada.">
+<!ENTITY privatebrowsingpage.close.label         "Cerrar esta ventana ahora">
+<!ENTITY privatebrowsingpage.close.accesskey     "C">
+
+<!ENTITY privatebrowsingpage.start.info          "Para iniciar la navegación privada, haga clic en el botón aquí debajo o seleccione Archivo ▶ Nuevo ▶ Ventana privada desde el menú.">
+<!ENTITY privatebrowsingpage.private.label       "Abrir una nueva ventana privada">
+<!ENTITY privatebrowsingpage.private.accesskey   "b">
+

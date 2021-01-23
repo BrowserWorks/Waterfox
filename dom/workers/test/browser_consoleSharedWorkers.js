@@ -40,11 +40,7 @@ add_task(async function test() {
             "Hello world from a SharedWorker!",
             "A message from a SharedWorker \\o/"
           );
-          is(
-            obj.ID,
-            "chrome://mochitests/content/browser/dom/workers/test/sharedWorker_console.js",
-            "The ID is SharedWorker"
-          );
+          is(obj.ID, "sharedWorker_console.js", "The ID is SharedWorker");
           is(obj.innerID, "SharedWorker", "The ID is SharedWorker");
           is(order++, 1, "Then a log message.");
 
@@ -58,7 +54,7 @@ add_task(async function test() {
     var cl = new consoleListener();
   });
 
-  await ContentTask.spawn(tab.linkedBrowser, {}, async function() {
+  await SpecialPowers.spawn(tab.linkedBrowser, [], async function() {
     new content.SharedWorker("sharedWorker_console.js");
   });
 

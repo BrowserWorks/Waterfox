@@ -1,10 +1,9 @@
-%if 0
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-%endif
 
-@import url("chrome://global/skin/");
+@import url("chrome://global/skin/global.css");
+@namespace html url("http://www.w3.org/1999/xhtml");
 
 /* View buttons */
 #viewGroup > radio {
@@ -49,8 +48,7 @@
 }
 
 #mainDeck {
-  padding-left: 2px;
-  padding-right: 2px;
+  padding-inline: 2px;
 }
 
 #mainDeck {
@@ -62,19 +60,13 @@ tree {
   margin: .5em;
 }
 
-.gridSeparator {
-  width: .5em;
-}
-
-textbox {
-  background: transparent !important;
+html|input {
+  background: transparent;
   border: none;
   padding: 0;
-  margin-top: 1px;
-  -moz-appearance: none;
 }
 
-textbox.header {
+html|input.header {
   margin-inline-start: 0;
 }
 
@@ -85,7 +77,7 @@ textbox.header {
   border: 1px solid ThreeDLightShadow;
 }
 
-textbox[disabled] {
+html|input:disabled {
   font-style: italic;
 }
 
@@ -106,8 +98,7 @@ textbox[disabled] {
 /* Media Tab */
 #imagetree {
   min-height: 10em;
-  margin-top: 2px;
-  margin-bottom: 0;
+  margin-block: 2px 0;
 }
 
 #mediaSplitter {
@@ -115,8 +106,8 @@ textbox[disabled] {
   height: .8em;
 }
 
-#mediaGrid {
-  min-height: 9em;
+#mediaTable {
+  margin-bottom: 2em;
 }
 
 #mediaLabelColumn {
@@ -158,10 +149,6 @@ treechildren::-moz-tree-cell-text(broken) {
 
 /* Security Tab */
 
-#securityPanel grid {
+#securityPanel table {
   margin-bottom: 1em;
-}
-
-#securityPanel row {
-  -moz-box-align: center;
 }

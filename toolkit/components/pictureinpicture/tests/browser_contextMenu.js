@@ -80,7 +80,7 @@ add_task(async () => {
         let pipWin = await triggerPictureInPicture(browser, videoID);
         ok(pipWin, "Got Picture-in-Picture window.");
 
-        await ContentTask.spawn(browser, videoID, async videoID => {
+        await SpecialPowers.spawn(browser, [videoID], async videoID => {
           let video = content.document.getElementById(videoID);
           await ContentTaskUtils.waitForCondition(() => {
             return video.isCloningElementVisually;
@@ -99,9 +99,9 @@ add_task(async () => {
         );
         await closeContextMenu(menu);
 
-        let videoNotCloning = ContentTask.spawn(
+        let videoNotCloning = SpecialPowers.spawn(
           browser,
-          videoID,
+          [videoID],
           async videoID => {
             let video = content.document.getElementById(videoID);
             await ContentTaskUtils.waitForCondition(() => {
@@ -121,6 +121,32 @@ add_task(async () => {
           menuItem.getAttribute("checked"),
           "false",
           "Picture-in-Picture should be unchecked."
+        );
+        await closeContextMenu(menu);
+
+        // Due to bug 1592539, we're hiding the Picture-in-Picture
+        // context menu item for <video> elements that have srcObject
+        // set to anything but null.
+        await SpecialPowers.spawn(browser, [videoID], async videoID => {
+          // Construct a new video element, and capture a stream from it
+          // to redirect to the video that we're testing.
+          let newVideo = content.document.createElement("video");
+          content.document.body.appendChild(newVideo);
+
+          let testedVideo = content.document.getElementById(videoID);
+          newVideo.src = testedVideo.src;
+
+          testedVideo.srcObject = newVideo.mozCaptureStream();
+          await newVideo.play();
+          await testedVideo.play();
+
+          await newVideo.pause();
+          await testedVideo.pause();
+        });
+        menu = await openContextMenu(browser, videoID);
+        Assert.ok(
+          menuItem.hidden,
+          "Should not be showing Picture-in-Picture menu item."
         );
         await closeContextMenu(menu);
       }

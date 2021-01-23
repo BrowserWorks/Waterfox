@@ -15,6 +15,9 @@ const { updateAppInfo, getAppInfo } = ChromeUtils.import(
 const { FileTestUtils } = ChromeUtils.import(
   "resource://testing-common/FileTestUtils.jsm"
 );
+const { PermissionTestUtils } = ChromeUtils.import(
+  "resource://testing-common/PermissionTestUtils.jsm"
+);
 
 updateAppInfo({
   name: "XPCShell",
@@ -95,5 +98,41 @@ function checkUnlockedPref(prefName, prefValue) {
     Preferences.get(prefName),
     prefValue,
     `Pref ${prefName} has the correct value`
+  );
+}
+
+function checkUserPref(prefName, prefValue) {
+  equal(
+    Preferences.get(prefName),
+    prefValue,
+    `Pref ${prefName} has the correct value`
+  );
+}
+
+function checkClearPref(prefName, prefValue) {
+  equal(
+    Services.prefs.prefHasUserValue(prefName),
+    false,
+    `Pref ${prefName} has no user value`
+  );
+}
+
+function checkDefaultPref(prefName, prefValue) {
+  let defaultPrefBranch = Services.prefs.getDefaultBranch("");
+  let prefType = defaultPrefBranch.getPrefType(prefName);
+  notEqual(
+    prefType,
+    Services.prefs.PREF_INVALID,
+    `Pref ${prefName} is set on the default branch`
+  );
+}
+
+function checkUnsetPref(prefName) {
+  let defaultPrefBranch = Services.prefs.getDefaultBranch("");
+  let prefType = defaultPrefBranch.getPrefType(prefName);
+  equal(
+    prefType,
+    Services.prefs.PREF_INVALID,
+    `Pref ${prefName} is not set on the default branch`
   );
 }

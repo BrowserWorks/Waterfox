@@ -27,7 +27,20 @@
 #include "plgetopt.h"
 
 #define ADDR_BUFFER 100
-#define PORT_NUMBER 51877
+
+#ifdef DEBUG
+#define PORT_INC_DO +100
+#else
+#define PORT_INC_DO
+#endif
+#ifdef IS_64
+#define PORT_INC_3264 +200
+#else
+#define PORT_INC_3264
+#endif
+
+#define PORT_NUMBER 51877 PORT_INC_DO PORT_INC_3264
+
 #define SAMPLING_INTERVAL 10
 #define BUFFER_SIZE (32 * 1024)
 
@@ -55,9 +68,12 @@ static PRStatus PrintAddress(const PRNetAddr* address)
 {
     char buffer[ADDR_BUFFER];
     PRStatus rv = PR_NetAddrToString(address, buffer, sizeof(buffer));
-    if (PR_SUCCESS == rv)
+    if (PR_SUCCESS == rv) {
         PR_fprintf(err, "%s:%u\n", buffer, PR_ntohs(address->inet.port));
-    else PL_FPrintError(err, "PR_NetAddrToString");
+    }
+    else {
+        PL_FPrintError(err, "PR_NetAddrToString");
+    }
     return rv;
 }  /* PrintAddress */
 
@@ -93,21 +109,24 @@ static void PR_CALLBACK Clientel(void *arg)
             data.option = PR_SockOpt_RecvBufferSize;
             data.value.recv_buffer_size = (PRSize)xport_buffer;
             rv = PR_SetSocketOption(xport, &data);
-            if (PR_FAILURE == rv)
+            if (PR_FAILURE == rv) {
                 PL_FPrintError(err, "PR_SetSocketOption - ignored");
+            }
             data.option = PR_SockOpt_SendBufferSize;
             data.value.send_buffer_size = (PRSize)xport_buffer;
             rv = PR_SetSocketOption(xport, &data);
-            if (PR_FAILURE == rv)
+            if (PR_FAILURE == rv) {
                 PL_FPrintError(err, "PR_SetSocketOption - ignored");
+            }
         }
 
         rv = PR_Connect(xport, server_address, connect_timeout);
         if (PR_FAILURE == rv)
         {
             PL_FPrintError(err, "PR_Connect");
-            if (PR_IO_TIMEOUT_ERROR != PR_GetError())
+            if (PR_IO_TIMEOUT_ERROR != PR_GetError()) {
                 PR_Sleep(connect_timeout);
+            }
             PR_Close(xport);  /* delete it and start over */
         }
     } while (PR_FAILURE == rv);
@@ -115,7 +134,7 @@ static void PR_CALLBACK Clientel(void *arg)
     do
     {
         bytes = PR_Recv(
-            xport, buffer, buffer_size, 0, PR_INTERVAL_NO_TIMEOUT);
+                    xport, buffer, buffer_size, 0, PR_INTERVAL_NO_TIMEOUT);
         PR_Lock(shared->ml);
         now = PR_IntervalNow();
         shared->sampled += bytes;
@@ -147,13 +166,15 @@ static void Client(const char *server_name)
     PRIntervalTime dally = PR_SecondsToInterval(60);
     PR_fprintf(err, "Translating the name %s\n", server_name);
     rv = PR_GetHostByName(server_name, buffer, sizeof(buffer), &host);
-    if (PR_FAILURE == rv)
+    if (PR_FAILURE == rv) {
         PL_FPrintError(err, "PR_GetHostByName");
+    }
     else
     {
         if (PR_EnumerateHostEnt(
-            0, &host, PORT_NUMBER, &shared->server_address) < 0)
+                0, &host, PORT_NUMBER, &shared->server_address) < 0) {
             PL_FPrintError(err, "PR_EnumerateHostEnt");
+        }
         else
         {
             do
@@ -189,19 +210,21 @@ static void PR_CALLBACK Servette(void *arg)
         data.option = PR_SockOpt_RecvBufferSize;
         data.value.recv_buffer_size = (PRSize)xport_buffer;
         rv = PR_SetSocketOption(client, &data);
-        if (PR_FAILURE == rv)
+        if (PR_FAILURE == rv) {
             PL_FPrintError(err, "PR_SetSocketOption - ignored");
+        }
         data.option = PR_SockOpt_SendBufferSize;
         data.value.send_buffer_size = (PRSize)xport_buffer;
         rv = PR_SetSocketOption(client, &data);
-        if (PR_FAILURE == rv)
+        if (PR_FAILURE == rv) {
             PL_FPrintError(err, "PR_SetSocketOption - ignored");
+        }
     }
 
     do
     {
         bytes = PR_Send(
-            client, buffer, buffer_size, 0, PR_INTERVAL_NO_TIMEOUT);
+                    client, buffer, buffer_size, 0, PR_INTERVAL_NO_TIMEOUT);
 
         PR_Lock(shared->ml);
         now = PR_IntervalNow();
@@ -238,11 +261,15 @@ static void Server(void)
     }
 
     rv = PR_InitializeNetAddr(PR_IpAddrAny, PORT_NUMBER, &server_address);
-    if (PR_FAILURE == rv) PL_FPrintError(err, "PR_InitializeNetAddr");
+    if (PR_FAILURE == rv) {
+        PL_FPrintError(err, "PR_InitializeNetAddr");
+    }
     else
     {
         rv = PR_Bind(xport, &server_address);
-        if (PR_FAILURE == rv) PL_FPrintError(err, "PR_Bind");
+        if (PR_FAILURE == rv) {
+            PL_FPrintError(err, "PR_Bind");
+        }
         else
         {
             PRFileDesc *client;
@@ -252,8 +279,10 @@ static void Server(void)
             do
             {
                 client = PR_Accept(
-                    xport, &client_address, PR_INTERVAL_NO_TIMEOUT);
-                if (NULL == client) PL_FPrintError(err, "PR_Accept");
+                             xport, &client_address, PR_INTERVAL_NO_TIMEOUT);
+                if (NULL == client) {
+                    PL_FPrintError(err, "PR_Accept");
+                }
                 else
                 {
                     PR_fprintf(err, "Server accepting from ");
@@ -296,37 +325,39 @@ int main(int argc, char **argv)
 
     while (PL_OPT_EOL != (os = PL_GetNextOpt(opt)))
     {
-        if (PL_OPT_BAD == os) continue;
+        if (PL_OPT_BAD == os) {
+            continue;
+        }
         switch (opt->option)
         {
-        case 0:  /* Name of server */
-            server_name = opt->value;
-            break;
-        case 'G':  /* Globular threads */
-            thread_scope = PR_GLOBAL_THREAD;
-            break;
-        case 'X':  /* Use XTP as the transport */
-            protocol = 36;
-            break;
-        case '6':  /* Use IPv6 */
-            domain = PR_AF_INET6;
-            break;
-        case 's':  /* initial_streams */
-            initial_streams = atoi(opt->value);
-            break;
-        case 'C':  /* concurrency */
-            concurrency = atoi(opt->value);
-            break;
-        case 'b':  /* buffer size */
-            buffer_size = 1024 * atoi(opt->value);
-            break;
-        case 'B':  /* buffer size */
-            xport_buffer = 1024 * atoi(opt->value);
-            break;
-        case 'h':  /* user wants some guidance */
-        default:
-            Help();  /* so give him an earful */
-            return 2;  /* but not a lot else */
+            case 0:  /* Name of server */
+                server_name = opt->value;
+                break;
+            case 'G':  /* Globular threads */
+                thread_scope = PR_GLOBAL_THREAD;
+                break;
+            case 'X':  /* Use XTP as the transport */
+                protocol = 36;
+                break;
+            case '6':  /* Use IPv6 */
+                domain = PR_AF_INET6;
+                break;
+            case 's':  /* initial_streams */
+                initial_streams = atoi(opt->value);
+                break;
+            case 'C':  /* concurrency */
+                concurrency = atoi(opt->value);
+                break;
+            case 'b':  /* buffer size */
+                buffer_size = 1024 * atoi(opt->value);
+                break;
+            case 'B':  /* buffer size */
+                xport_buffer = 1024 * atoi(opt->value);
+                break;
+            case 'h':  /* user wants some guidance */
+            default:
+                Help();  /* so give him an earful */
+                return 2;  /* but not a lot else */
         }
     }
     PL_DestroyOptState(opt);
@@ -335,12 +366,12 @@ int main(int argc, char **argv)
     shared->ml = PR_NewLock();
 
     PR_fprintf(err,
-        "This machine is %s\n",
-        (NULL == server_name) ? "the SERVER" : "a CLIENT");
+               "This machine is %s\n",
+               (NULL == server_name) ? "the SERVER" : "a CLIENT");
 
     PR_fprintf(err,
-        "Transport being used is %s\n",
-        (6 == protocol) ? "TCP" : "XTP");
+               "Transport being used is %s\n",
+               (6 == protocol) ? "TCP" : "XTP");
 
     if (PR_GLOBAL_THREAD == thread_scope)
     {
@@ -359,18 +390,22 @@ int main(int argc, char **argv)
     }
 
     PR_fprintf(err,
-        "All threads will be %s\n",
-        (PR_GLOBAL_THREAD == thread_scope) ? "GLOBAL" : "LOCAL");
+               "All threads will be %s\n",
+               (PR_GLOBAL_THREAD == thread_scope) ? "GLOBAL" : "LOCAL");
 
     PR_fprintf(err, "Client buffer size will be %u\n", buffer_size);
-   
-    if (-1 != xport_buffer)
-    PR_fprintf(
-        err, "Transport send & receive buffer size will be %u\n", xport_buffer);
-    
 
-    if (NULL == server_name) Server();
-    else Client(server_name);
+    if (-1 != xport_buffer)
+        PR_fprintf(
+            err, "Transport send & receive buffer size will be %u\n", xport_buffer);
+
+
+    if (NULL == server_name) {
+        Server();
+    }
+    else {
+        Client(server_name);
+    }
 
     return 0;
 }  /* main */

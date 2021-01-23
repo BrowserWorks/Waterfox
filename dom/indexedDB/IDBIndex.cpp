@@ -6,8 +6,7 @@
 
 #include "IDBIndex.h"
 
-#include "FileInfo.h"
-#include "IDBCursor.h"
+#include "IDBCursorType.h"
 #include "IDBEvents.h"
 #include "IDBKeyRange.h"
 #include "IDBObjectStore.h"
@@ -30,17 +29,14 @@ using namespace mozilla::dom::indexedDB;
 
 namespace {
 
-already_AddRefed<IDBRequest> GenerateRequest(JSContext* aCx, IDBIndex* aIndex) {
+RefPtr<IDBRequest> GenerateRequest(JSContext* aCx, IDBIndex* aIndex) {
   MOZ_ASSERT(aIndex);
   aIndex->AssertIsOnOwningThread();
 
-  IDBTransaction* transaction = aIndex->ObjectStore()->Transaction();
+  auto transaction = aIndex->ObjectStore()->AcquireTransaction();
+  auto* const database = transaction->Database();
 
-  RefPtr<IDBRequest> request =
-      IDBRequest::Create(aCx, aIndex, transaction->Database(), transaction);
-  MOZ_ASSERT(request);
-
-  return request.forget();
+  return IDBRequest::Create(aCx, aIndex, database, std::move(transaction));
 }
 
 }  // namespace
@@ -65,14 +61,12 @@ IDBIndex::~IDBIndex() {
   }
 }
 
-already_AddRefed<IDBIndex> IDBIndex::Create(IDBObjectStore* aObjectStore,
-                                            const IndexMetadata& aMetadata) {
+RefPtr<IDBIndex> IDBIndex::Create(IDBObjectStore* aObjectStore,
+                                  const IndexMetadata& aMetadata) {
   MOZ_ASSERT(aObjectStore);
   aObjectStore->AssertIsOnOwningThread();
 
-  RefPtr<IDBIndex> index = new IDBIndex(aObjectStore, &aMetadata);
-
-  return index.forget();
+  return new IDBIndex(aObjectStore, &aMetadata);
 }
 
 #ifdef DEBUG
@@ -84,29 +78,71 @@ void IDBIndex::AssertIsOnOwningThread() const {
 
 #endif  // DEBUG
 
+RefPtr<IDBRequest> IDBIndex::OpenCursor(JSContext* aCx,
+                                        JS::Handle<JS::Value> aRange,
+                                        IDBCursorDirection aDirection,
+                                        ErrorResult& aRv) {
+  AssertIsOnOwningThread();
+
+  return OpenCursorInternal(/* aKeysOnly */ false, aCx, aRange, aDirection,
+                            aRv);
+}
+
+RefPtr<IDBRequest> IDBIndex::OpenKeyCursor(JSContext* aCx,
+                                           JS::Handle<JS::Value> aRange,
+                                           IDBCursorDirection aDirection,
+                                           ErrorResult& aRv) {
+  AssertIsOnOwningThread();
+
+  return OpenCursorInternal(/* aKeysOnly */ true, aCx, aRange, aDirection, aRv);
+}
+
+RefPtr<IDBRequest> IDBIndex::Get(JSContext* aCx, JS::Handle<JS::Value> aKey,
+                                 ErrorResult& aRv) {
+  AssertIsOnOwningThread();
+
+  return GetInternal(/* aKeyOnly */ false, aCx, aKey, aRv);
+}
+
+RefPtr<IDBRequest> IDBIndex::GetKey(JSContext* aCx, JS::Handle<JS::Value> aKey,
+                                    ErrorResult& aRv) {
+  AssertIsOnOwningThread();
+
+  return GetInternal(/* aKeyOnly */ true, aCx, aKey, aRv);
+}
+
+RefPtr<IDBRequest> IDBIndex::GetAll(JSContext* aCx, JS::Handle<JS::Value> aKey,
+                                    const Optional<uint32_t>& aLimit,
+                                    ErrorResult& aRv) {
+  AssertIsOnOwningThread();
+
+  return GetAllInternal(/* aKeysOnly */ false, aCx, aKey, aLimit, aRv);
+}
+
+RefPtr<IDBRequest> IDBIndex::GetAllKeys(JSContext* aCx,
+                                        JS::Handle<JS::Value> aKey,
+                                        const Optional<uint32_t>& aLimit,
+                                        ErrorResult& aRv) {
+  AssertIsOnOwningThread();
+
+  return GetAllInternal(/* aKeysOnly */ true, aCx, aKey, aLimit, aRv);
+}
+
 void IDBIndex::RefreshMetadata(bool aMayDelete) {
   AssertIsOnOwningThread();
-  MOZ_ASSERT_IF(mDeletedMetadata, mMetadata == mDeletedMetadata);
+  MOZ_ASSERT_IF(mDeletedMetadata, mMetadata == mDeletedMetadata.get());
 
-  const nsTArray<IndexMetadata>& indexes = mObjectStore->Spec().indexes();
-
-  bool found = false;
-
-  for (uint32_t count = indexes.Length(), index = 0; index < count; index++) {
-    const IndexMetadata& metadata = indexes[index];
-
-    if (metadata.id() == Id()) {
-      mMetadata = &metadata;
-
-      found = true;
-      break;
-    }
-  }
+  const auto& indexes = mObjectStore->Spec().indexes();
+  const auto foundIt = std::find_if(
+      indexes.cbegin(), indexes.cend(),
+      [id = Id()](const auto& metadata) { return metadata.id() == id; });
+  const bool found = foundIt != indexes.cend();
 
   MOZ_ASSERT_IF(!aMayDelete && !mDeletedMetadata, found);
 
   if (found) {
-    MOZ_ASSERT(mMetadata != mDeletedMetadata);
+    mMetadata = &*foundIt;
+    MOZ_ASSERT(mMetadata != mDeletedMetadata.get());
     mDeletedMetadata = nullptr;
   } else {
     NoteDeletion();
@@ -119,13 +155,13 @@ void IDBIndex::NoteDeletion() {
   MOZ_ASSERT(Id() == mMetadata->id());
 
   if (mDeletedMetadata) {
-    MOZ_ASSERT(mMetadata == mDeletedMetadata);
+    MOZ_ASSERT(mMetadata == mDeletedMetadata.get());
     return;
   }
 
-  mDeletedMetadata = new IndexMetadata(*mMetadata);
+  mDeletedMetadata = MakeUnique<IndexMetadata>(*mMetadata);
 
-  mMetadata = mDeletedMetadata;
+  mMetadata = mDeletedMetadata.get();
 }
 
 const nsString& IDBIndex::Name() const {
@@ -138,15 +174,15 @@ const nsString& IDBIndex::Name() const {
 void IDBIndex::SetName(const nsAString& aName, ErrorResult& aRv) {
   AssertIsOnOwningThread();
 
-  IDBTransaction* transaction = mObjectStore->Transaction();
+  const auto& transaction = mObjectStore->TransactionRef();
 
-  if (transaction->GetMode() != IDBTransaction::VERSION_CHANGE ||
+  if (transaction.GetMode() != IDBTransaction::Mode::VersionChange ||
       mDeletedMetadata) {
     aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
     return;
   }
 
-  if (!transaction->IsOpen()) {
+  if (!transaction.IsActive()) {
     aRv.Throw(NS_ERROR_DOM_INDEXEDDB_TRANSACTION_INACTIVE_ERR);
     return;
   }
@@ -161,7 +197,7 @@ void IDBIndex::SetName(const nsAString& aName, ErrorResult& aRv) {
   const int64_t indexId = Id();
 
   nsresult rv =
-      transaction->Database()->RenameIndex(mObjectStore->Id(), indexId, aName);
+      transaction.Database()->RenameIndex(mObjectStore->Id(), indexId, aName);
 
   if (NS_FAILED(rv)) {
     aRv.Throw(rv);
@@ -172,17 +208,16 @@ void IDBIndex::SetName(const nsAString& aName, ErrorResult& aRv) {
   // number to keep in sync with the parent.
   const uint64_t requestSerialNumber = IDBRequest::NextSerialNumber();
 
-  IDB_LOG_MARK(
-      "IndexedDB %s: Child  Transaction[%lld] Request[%llu]: "
+  IDB_LOG_MARK_CHILD_TRANSACTION_REQUEST(
       "database(%s).transaction(%s).objectStore(%s).index(%s)."
       "rename(%s)",
-      "IndexedDB %s: C T[%lld] R[%llu]: IDBIndex.rename()", IDB_LOG_ID_STRING(),
-      transaction->LoggingSerialNumber(), requestSerialNumber,
-      IDB_LOG_STRINGIFY(transaction->Database()),
+      "IDBIndex.rename()", transaction.LoggingSerialNumber(),
+      requestSerialNumber, IDB_LOG_STRINGIFY(transaction.Database()),
       IDB_LOG_STRINGIFY(transaction), IDB_LOG_STRINGIFY(mObjectStore),
       loggingOldIndex.get(), IDB_LOG_STRINGIFY(this));
 
-  transaction->RenameIndex(mObjectStore, indexId, aName);
+  mObjectStore->MutableTransactionRef().RenameIndex(mObjectStore, indexId,
+                                                    aName);
 }
 
 bool IDBIndex::Unique() const {
@@ -269,10 +304,9 @@ void IDBIndex::GetKeyPath(JSContext* aCx, JS::MutableHandle<JS::Value> aResult,
   aResult.set(mCachedKeyPath);
 }
 
-already_AddRefed<IDBRequest> IDBIndex::GetInternal(bool aKeyOnly,
-                                                   JSContext* aCx,
-                                                   JS::Handle<JS::Value> aKey,
-                                                   ErrorResult& aRv) {
+RefPtr<IDBRequest> IDBIndex::GetInternal(bool aKeyOnly, JSContext* aCx,
+                                         JS::Handle<JS::Value> aKey,
+                                         ErrorResult& aRv) {
   AssertIsOnOwningThread();
 
   if (mDeletedMetadata) {
@@ -280,14 +314,14 @@ already_AddRefed<IDBRequest> IDBIndex::GetInternal(bool aKeyOnly,
     return nullptr;
   }
 
-  IDBTransaction* transaction = mObjectStore->Transaction();
-  if (!transaction->IsOpen()) {
+  const auto& transaction = mObjectStore->TransactionRef();
+  if (!transaction.IsActive()) {
     aRv.Throw(NS_ERROR_DOM_INDEXEDDB_TRANSACTION_INACTIVE_ERR);
     return nullptr;
   }
 
   RefPtr<IDBKeyRange> keyRange;
-  IDBKeyRange::FromJSVal(aCx, aKey, getter_AddRefs(keyRange), aRv);
+  IDBKeyRange::FromJSVal(aCx, aKey, &keyRange, aRv);
   if (NS_WARN_IF(aRv.Failed())) {
     return nullptr;
   }
@@ -312,40 +346,45 @@ already_AddRefed<IDBRequest> IDBIndex::GetInternal(bool aKeyOnly,
     params = IndexGetParams(objectStoreId, indexId, serializedKeyRange);
   }
 
-  RefPtr<IDBRequest> request = GenerateRequest(aCx, this);
+  auto request = GenerateRequest(aCx, this);
   MOZ_ASSERT(request);
 
   if (aKeyOnly) {
-    IDB_LOG_MARK(
-        "IndexedDB %s: Child  Transaction[%lld] Request[%llu]: "
+    IDB_LOG_MARK_CHILD_TRANSACTION_REQUEST(
         "database(%s).transaction(%s).objectStore(%s).index(%s)."
         "getKey(%s)",
-        "IndexedDB %s: C T[%lld] R[%llu]: IDBIndex.getKey()",
-        IDB_LOG_ID_STRING(), transaction->LoggingSerialNumber(),
+        "IDBIndex.getKey()", transaction.LoggingSerialNumber(),
         request->LoggingSerialNumber(),
-        IDB_LOG_STRINGIFY(transaction->Database()),
+        IDB_LOG_STRINGIFY(transaction.Database()),
         IDB_LOG_STRINGIFY(transaction), IDB_LOG_STRINGIFY(mObjectStore),
         IDB_LOG_STRINGIFY(this), IDB_LOG_STRINGIFY(keyRange));
   } else {
-    IDB_LOG_MARK(
-        "IndexedDB %s: Child  Transaction[%lld] Request[%llu]: "
+    IDB_LOG_MARK_CHILD_TRANSACTION_REQUEST(
         "database(%s).transaction(%s).objectStore(%s).index(%s)."
         "get(%s)",
-        "IndexedDB %s: C T[%lld] R[%llu]: IDBIndex.get()", IDB_LOG_ID_STRING(),
-        transaction->LoggingSerialNumber(), request->LoggingSerialNumber(),
-        IDB_LOG_STRINGIFY(transaction->Database()),
+        "IDBIndex.get()", transaction.LoggingSerialNumber(),
+        request->LoggingSerialNumber(),
+        IDB_LOG_STRINGIFY(transaction.Database()),
         IDB_LOG_STRINGIFY(transaction), IDB_LOG_STRINGIFY(mObjectStore),
         IDB_LOG_STRINGIFY(this), IDB_LOG_STRINGIFY(keyRange));
   }
 
-  transaction->StartRequest(request, params);
+  auto& mutableTransaction = mObjectStore->MutableTransactionRef();
 
-  return request.forget();
+  // TODO: This is necessary to preserve request ordering only. Proper
+  // sequencing of requests should be done in a more sophisticated manner that
+  // doesn't require invalidating cursor caches (Bug 1580499).
+  mutableTransaction.InvalidateCursorCaches();
+
+  mutableTransaction.StartRequest(request, params);
+
+  return request;
 }
 
-already_AddRefed<IDBRequest> IDBIndex::GetAllInternal(
-    bool aKeysOnly, JSContext* aCx, JS::Handle<JS::Value> aKey,
-    const Optional<uint32_t>& aLimit, ErrorResult& aRv) {
+RefPtr<IDBRequest> IDBIndex::GetAllInternal(bool aKeysOnly, JSContext* aCx,
+                                            JS::Handle<JS::Value> aKey,
+                                            const Optional<uint32_t>& aLimit,
+                                            ErrorResult& aRv) {
   AssertIsOnOwningThread();
 
   if (mDeletedMetadata) {
@@ -353,14 +392,14 @@ already_AddRefed<IDBRequest> IDBIndex::GetAllInternal(
     return nullptr;
   }
 
-  IDBTransaction* transaction = mObjectStore->Transaction();
-  if (!transaction->IsOpen()) {
+  const auto& transaction = mObjectStore->TransactionRef();
+  if (!transaction.IsActive()) {
     aRv.Throw(NS_ERROR_DOM_INDEXEDDB_TRANSACTION_INACTIVE_ERR);
     return nullptr;
   }
 
   RefPtr<IDBKeyRange> keyRange;
-  IDBKeyRange::FromJSVal(aCx, aKey, getter_AddRefs(keyRange), aRv);
+  IDBKeyRange::FromJSVal(aCx, aKey, &keyRange, aRv);
   if (NS_WARN_IF(aRv.Failed())) {
     return nullptr;
   }
@@ -377,51 +416,53 @@ already_AddRefed<IDBRequest> IDBIndex::GetAllInternal(
 
   const uint32_t limit = aLimit.WasPassed() ? aLimit.Value() : 0;
 
-  RequestParams params;
-  if (aKeysOnly) {
-    params =
-        IndexGetAllKeysParams(objectStoreId, indexId, optionalKeyRange, limit);
-  } else {
-    params = IndexGetAllParams(objectStoreId, indexId, optionalKeyRange, limit);
-  }
+  const auto& params =
+      aKeysOnly ? RequestParams{IndexGetAllKeysParams(objectStoreId, indexId,
+                                                      optionalKeyRange, limit)}
+                : RequestParams{IndexGetAllParams(objectStoreId, indexId,
+                                                  optionalKeyRange, limit)};
 
-  RefPtr<IDBRequest> request = GenerateRequest(aCx, this);
+  auto request = GenerateRequest(aCx, this);
   MOZ_ASSERT(request);
 
   if (aKeysOnly) {
-    IDB_LOG_MARK(
-        "IndexedDB %s: Child  Transaction[%lld] Request[%llu]: "
+    IDB_LOG_MARK_CHILD_TRANSACTION_REQUEST(
         "database(%s).transaction(%s).objectStore(%s).index(%s)."
         "getAllKeys(%s, %s)",
-        "IndexedDB %s: C T[%lld] R[%llu]: IDBIndex.getAllKeys()",
-        IDB_LOG_ID_STRING(), transaction->LoggingSerialNumber(),
+        "IDBIndex.getAllKeys()", transaction.LoggingSerialNumber(),
         request->LoggingSerialNumber(),
-        IDB_LOG_STRINGIFY(transaction->Database()),
+        IDB_LOG_STRINGIFY(transaction.Database()),
         IDB_LOG_STRINGIFY(transaction), IDB_LOG_STRINGIFY(mObjectStore),
         IDB_LOG_STRINGIFY(this), IDB_LOG_STRINGIFY(keyRange),
         IDB_LOG_STRINGIFY(aLimit));
   } else {
-    IDB_LOG_MARK(
-        "IndexedDB %s: Child  Transaction[%lld] Request[%llu]: "
+    IDB_LOG_MARK_CHILD_TRANSACTION_REQUEST(
         "database(%s).transaction(%s).objectStore(%s).index(%s)."
         "getAll(%s, %s)",
-        "IndexedDB %s: C T[%lld] R[%llu]: IDBIndex.getAll()",
-        IDB_LOG_ID_STRING(), transaction->LoggingSerialNumber(),
+        "IDBIndex.getAll()", transaction.LoggingSerialNumber(),
         request->LoggingSerialNumber(),
-        IDB_LOG_STRINGIFY(transaction->Database()),
+        IDB_LOG_STRINGIFY(transaction.Database()),
         IDB_LOG_STRINGIFY(transaction), IDB_LOG_STRINGIFY(mObjectStore),
         IDB_LOG_STRINGIFY(this), IDB_LOG_STRINGIFY(keyRange),
         IDB_LOG_STRINGIFY(aLimit));
   }
 
-  transaction->StartRequest(request, params);
+  auto& mutableTransaction = mObjectStore->MutableTransactionRef();
 
-  return request.forget();
+  // TODO: This is necessary to preserve request ordering only. Proper
+  // sequencing of requests should be done in a more sophisticated manner that
+  // doesn't require invalidating cursor caches (Bug 1580499).
+  mutableTransaction.InvalidateCursorCaches();
+
+  mutableTransaction.StartRequest(request, params);
+
+  return request;
 }
 
-already_AddRefed<IDBRequest> IDBIndex::OpenCursorInternal(
-    bool aKeysOnly, JSContext* aCx, JS::Handle<JS::Value> aRange,
-    IDBCursorDirection aDirection, ErrorResult& aRv) {
+RefPtr<IDBRequest> IDBIndex::OpenCursorInternal(bool aKeysOnly, JSContext* aCx,
+                                                JS::Handle<JS::Value> aRange,
+                                                IDBCursorDirection aDirection,
+                                                ErrorResult& aRv) {
   AssertIsOnOwningThread();
 
   if (mDeletedMetadata) {
@@ -429,20 +470,20 @@ already_AddRefed<IDBRequest> IDBIndex::OpenCursorInternal(
     return nullptr;
   }
 
-  IDBTransaction* transaction = mObjectStore->Transaction();
-  if (!transaction->IsOpen()) {
+  const auto& transaction = mObjectStore->TransactionRef();
+  if (!transaction.IsActive()) {
     aRv.Throw(NS_ERROR_DOM_INDEXEDDB_TRANSACTION_INACTIVE_ERR);
     return nullptr;
   }
 
   RefPtr<IDBKeyRange> keyRange;
-  IDBKeyRange::FromJSVal(aCx, aRange, getter_AddRefs(keyRange), aRv);
+  IDBKeyRange::FromJSVal(aCx, aRange, &keyRange, aRv);
   if (NS_WARN_IF(aRv.Failed())) {
     return nullptr;
   }
 
-  int64_t objectStoreId = mObjectStore->Id();
-  int64_t indexId = Id();
+  const int64_t objectStoreId = mObjectStore->Id();
+  const int64_t indexId = Id();
 
   Maybe<SerializedKeyRange> optionalKeyRange;
 
@@ -453,68 +494,60 @@ already_AddRefed<IDBRequest> IDBIndex::OpenCursorInternal(
     optionalKeyRange.emplace(std::move(serializedKeyRange));
   }
 
-  IDBCursor::Direction direction = IDBCursor::ConvertDirection(aDirection);
+  const CommonIndexOpenCursorParams commonIndexParams = {
+      {objectStoreId, std::move(optionalKeyRange), aDirection}, indexId};
 
-  OpenCursorParams params;
-  if (aKeysOnly) {
-    IndexOpenKeyCursorParams openParams;
-    openParams.objectStoreId() = objectStoreId;
-    openParams.indexId() = indexId;
-    openParams.optionalKeyRange() = std::move(optionalKeyRange);
-    openParams.direction() = direction;
+  const auto params =
+      aKeysOnly ? OpenCursorParams{IndexOpenKeyCursorParams{commonIndexParams}}
+                : OpenCursorParams{IndexOpenCursorParams{commonIndexParams}};
 
-    params = std::move(openParams);
-  } else {
-    IndexOpenCursorParams openParams;
-    openParams.objectStoreId() = objectStoreId;
-    openParams.indexId() = indexId;
-    openParams.optionalKeyRange() = std::move(optionalKeyRange);
-    openParams.direction() = direction;
-
-    params = std::move(openParams);
-  }
-
-  RefPtr<IDBRequest> request = GenerateRequest(aCx, this);
+  auto request = GenerateRequest(aCx, this);
   MOZ_ASSERT(request);
 
   if (aKeysOnly) {
-    IDB_LOG_MARK(
-        "IndexedDB %s: Child  Transaction[%lld] Request[%llu]: "
+    IDB_LOG_MARK_CHILD_TRANSACTION_REQUEST(
         "database(%s).transaction(%s).objectStore(%s).index(%s)."
         "openKeyCursor(%s, %s)",
-        "IndexedDB %s: C T[%lld] R[%llu]: IDBIndex.openKeyCursor()",
-        IDB_LOG_ID_STRING(), transaction->LoggingSerialNumber(),
+        "IDBIndex.openKeyCursor()", transaction.LoggingSerialNumber(),
         request->LoggingSerialNumber(),
-        IDB_LOG_STRINGIFY(transaction->Database()),
+        IDB_LOG_STRINGIFY(transaction.Database()),
         IDB_LOG_STRINGIFY(transaction), IDB_LOG_STRINGIFY(mObjectStore),
         IDB_LOG_STRINGIFY(this), IDB_LOG_STRINGIFY(keyRange),
-        IDB_LOG_STRINGIFY(direction));
+        IDB_LOG_STRINGIFY(aDirection));
   } else {
-    IDB_LOG_MARK(
-        "IndexedDB %s: Child  Transaction[%lld] Request[%llu]: "
+    IDB_LOG_MARK_CHILD_TRANSACTION_REQUEST(
         "database(%s).transaction(%s).objectStore(%s).index(%s)."
         "openCursor(%s, %s)",
-        "IndexedDB %s: C T[%lld] R[%llu]: "
-        "IDBObjectStore.openKeyCursor()",
-        IDB_LOG_ID_STRING(), transaction->LoggingSerialNumber(),
+        "IDBIndex.openCursor()", transaction.LoggingSerialNumber(),
         request->LoggingSerialNumber(),
-        IDB_LOG_STRINGIFY(transaction->Database()),
+        IDB_LOG_STRINGIFY(transaction.Database()),
         IDB_LOG_STRINGIFY(transaction), IDB_LOG_STRINGIFY(mObjectStore),
         IDB_LOG_STRINGIFY(this), IDB_LOG_STRINGIFY(keyRange),
-        IDB_LOG_STRINGIFY(direction));
+        IDB_LOG_STRINGIFY(aDirection));
   }
 
-  BackgroundCursorChild* actor =
-      new BackgroundCursorChild(request, this, direction);
+  const auto actor =
+      aKeysOnly
+          ? static_cast<SafeRefPtr<BackgroundCursorChildBase>>(
+                MakeSafeRefPtr<BackgroundCursorChild<IDBCursorType::IndexKey>>(
+                    request, this, aDirection))
+          : MakeSafeRefPtr<BackgroundCursorChild<IDBCursorType::Index>>(
+                request, this, aDirection);
 
-  mObjectStore->Transaction()->OpenCursor(actor, params);
+  auto& mutableTransaction = mObjectStore->MutableTransactionRef();
 
-  return request.forget();
+  // TODO: This is necessary to preserve request ordering only. Proper
+  // sequencing of requests should be done in a more sophisticated manner that
+  // doesn't require invalidating cursor caches (Bug 1580499).
+  mutableTransaction.InvalidateCursorCaches();
+
+  mutableTransaction.OpenCursor(*actor, params);
+
+  return request;
 }
 
-already_AddRefed<IDBRequest> IDBIndex::Count(JSContext* aCx,
-                                             JS::Handle<JS::Value> aKey,
-                                             ErrorResult& aRv) {
+RefPtr<IDBRequest> IDBIndex::Count(JSContext* aCx, JS::Handle<JS::Value> aKey,
+                                   ErrorResult& aRv) {
   AssertIsOnOwningThread();
 
   if (mDeletedMetadata) {
@@ -522,14 +555,14 @@ already_AddRefed<IDBRequest> IDBIndex::Count(JSContext* aCx,
     return nullptr;
   }
 
-  IDBTransaction* transaction = mObjectStore->Transaction();
-  if (!transaction->IsOpen()) {
+  const auto& transaction = mObjectStore->TransactionRef();
+  if (!transaction.IsActive()) {
     aRv.Throw(NS_ERROR_DOM_INDEXEDDB_TRANSACTION_INACTIVE_ERR);
     return nullptr;
   }
 
   RefPtr<IDBKeyRange> keyRange;
-  IDBKeyRange::FromJSVal(aCx, aKey, getter_AddRefs(keyRange), aRv);
+  IDBKeyRange::FromJSVal(aCx, aKey, &keyRange, aRv);
   if (aRv.Failed()) {
     return nullptr;
   }
@@ -544,23 +577,27 @@ already_AddRefed<IDBRequest> IDBIndex::Count(JSContext* aCx,
     params.optionalKeyRange().emplace(serializedKeyRange);
   }
 
-  RefPtr<IDBRequest> request = GenerateRequest(aCx, this);
+  auto request = GenerateRequest(aCx, this);
   MOZ_ASSERT(request);
 
-  IDB_LOG_MARK(
-      "IndexedDB %s: Child  Transaction[%lld] Request[%llu]: "
+  IDB_LOG_MARK_CHILD_TRANSACTION_REQUEST(
       "database(%s).transaction(%s).objectStore(%s).index(%s)."
       "count(%s)",
-      "IndexedDB %s: C T[%lld] R[%llu]: IDBObjectStore.count()",
-      IDB_LOG_ID_STRING(), transaction->LoggingSerialNumber(),
-      request->LoggingSerialNumber(),
-      IDB_LOG_STRINGIFY(transaction->Database()),
+      "IDBIndex.count()", transaction.LoggingSerialNumber(),
+      request->LoggingSerialNumber(), IDB_LOG_STRINGIFY(transaction.Database()),
       IDB_LOG_STRINGIFY(transaction), IDB_LOG_STRINGIFY(mObjectStore),
       IDB_LOG_STRINGIFY(this), IDB_LOG_STRINGIFY(keyRange));
 
-  transaction->StartRequest(request, params);
+  auto& mutableTransaction = mObjectStore->MutableTransactionRef();
 
-  return request.forget();
+  // TODO: This is necessary to preserve request ordering only. Proper
+  // sequencing of requests should be done in a more sophisticated manner that
+  // doesn't require invalidating cursor caches (Bug 1580499).
+  mutableTransaction.InvalidateCursorCaches();
+
+  mutableTransaction.StartRequest(request, params);
+
+  return request;
 }
 
 NS_IMPL_CYCLE_COLLECTING_ADDREF(IDBIndex)
@@ -571,7 +608,7 @@ NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(IDBIndex)
   NS_INTERFACE_MAP_ENTRY(nsISupports)
 NS_INTERFACE_MAP_END
 
-NS_IMPL_CYCLE_COLLECTION_CLASS(IDBIndex)
+NS_IMPL_CYCLE_COLLECTION_MULTI_ZONE_JSHOLDER_CLASS(IDBIndex)
 
 NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN(IDBIndex)
   NS_IMPL_CYCLE_COLLECTION_TRACE_PRESERVED_WRAPPER

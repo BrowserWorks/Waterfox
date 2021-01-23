@@ -10,7 +10,7 @@ import { connect } from "../../utils/connect";
 
 import AccessibleImage from "./AccessibleImage";
 
-import { getSourceClassnames } from "../../utils/source";
+import { getSourceClassnames, isPretty } from "../../utils/source";
 import { getFramework } from "../../utils/tabs";
 import { getSymbols, getTabs } from "../../selectors";
 
@@ -19,33 +19,47 @@ import type { Symbols } from "../../reducers/types";
 
 import "./SourceIcon.css";
 
+type OwnProps = {|
+  source: Source,
+
+  // An additional validator for the icon returned
+  modifier?: string => string | null,
+|};
 type Props = {
   source: Source,
+  modifier?: string => string | null,
+
   // symbols will provide framework information
-  symbols: Symbols,
-  // An additional validator for the icon returned
-  shouldHide?: Function,
-  framework?: string,
+  symbols: ?Symbols,
+  framework: ?string,
 };
 
 class SourceIcon extends PureComponent<Props> {
   render() {
-    const { shouldHide, source, symbols, framework } = this.props;
-    const iconClass = framework
-      ? framework.toLowerCase()
-      : getSourceClassnames(source, symbols);
+    const { modifier, source, symbols, framework } = this.props;
+    let iconClass = "";
 
-    if (shouldHide && shouldHide(iconClass)) {
-      return null;
+    if (isPretty(source)) {
+      iconClass = "prettyPrint";
+    } else {
+      iconClass = framework
+        ? framework.toLowerCase()
+        : getSourceClassnames(source, symbols);
+    }
+
+    if (modifier) {
+      const modified = modifier(iconClass);
+      if (!modified) {
+        return null;
+      }
+      iconClass = modified;
     }
 
     return <AccessibleImage className={`source-icon ${iconClass}`} />;
   }
 }
 
-export default connect((state, props) => {
-  return {
-    symbols: getSymbols(state, props.source),
-    framework: getFramework(getTabs(state), props.source.url),
-  };
-})(SourceIcon);
+export default connect<Props, OwnProps, _, _, _, _>((state, props) => ({
+  symbols: getSymbols(state, props.source),
+  framework: getFramework(getTabs(state), props.source.url),
+}))(SourceIcon);

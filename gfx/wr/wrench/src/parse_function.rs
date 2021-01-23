@@ -4,12 +4,12 @@
 
 use std::str::CharIndices;
 
-// support arguments like '4', 'ab', '4.0', '>=10.14'
+// support arguments like '4', 'ab', '4.0', '>=10.14', '*123'
 fn acceptable_arg_character(c: char) -> bool {
-    c.is_alphanumeric() || c == '.' || c == '-' || c == '<' || c == '>' || c == '='
+    c.is_alphanumeric() || c == '.' || c == '-' || c == '<' || c == '>' || c == '=' || c == '*'
 }
 
-// A crapy parser for parsing strings like "translate(1, 3) blahblah"
+// A crappy parser for parsing strings like "translate(1, 3) blahblah"
 // Returns a tuple with three components:
 // - First component is the function name (e.g. "translate")
 // - Second component is the list of arguments (e.g. vec!["1", "3"])
@@ -68,21 +68,28 @@ pub fn parse_function(s: &str) -> (&str, Vec<&str>, &str) {
         p.skip_whitespace();
 
         let mut end = p.start;
-        let mut bracket_count: i32 = 0;
+        let mut brackets: Vec<char> = Vec::new();
         while let Some(k) = p.o {
-            let prev_bracket_count = bracket_count;
-            if k.1 == '[' {
-                bracket_count = bracket_count + 1;
-            } else if k.1 == ']' {
-                bracket_count = bracket_count - 1;
+            let prev_bracket_count = brackets.len();
+            match k.1 {
+                '[' | '(' => brackets.push(k.1),
+                ']' | ')' => {
+                    let open_bracket = match k.1 {
+                        ']' => '[',
+                        ')' => '(',
+                        _ => panic!(),
+                    };
+                    match brackets.pop() {
+                        // Allow final closing ) for command invocation after args
+                        None if k.1 == ')' => break,
+                        Some(bracket) if bracket == open_bracket => {}
+                        _ => panic!("Unexpected closing bracket {}", k.1),
+                    }
+                }
+                _ => {}
             }
 
-            if bracket_count < 0 {
-                println!("Unexpected closing bracket");
-                break;
-            }
-
-            let not_in_bracket = bracket_count == 0 && prev_bracket_count == 0;
+            let not_in_bracket = brackets.len() == 0 && prev_bracket_count == 0;
             if !acceptable_arg_character(k.1) && not_in_bracket {
                 break;
             }
@@ -100,7 +107,7 @@ pub fn parse_function(s: &str) -> (&str, Vec<&str>, &str) {
             // unless we find a comma we're done
             if k.1 != ',' {
                 if k.1 != ')' {
-                    println!("Unexpected closing character: {}", k.1);
+                    panic!("Unexpected closing character: {}", k.1);
                 }
                 break;
             }
@@ -122,4 +129,6 @@ fn test() {
     assert_eq!(parse_function("drop-shadow(0, [1, 2, 3, 4], 5)").1[1], "[1, 2, 3, 4]");
     assert_eq!(parse_function("drop-shadow(0, [1, 2, 3, 4], 5)").1[2], "5");
     assert_eq!(parse_function("drop-shadow(0, [1, 2, [3, 4]], 5)").1[1], "[1, 2, [3, 4]]");
+    assert_eq!(parse_function("func(nest([1, 2]), [3, 4])").1[0], "nest([1, 2])");
+    assert_eq!(parse_function("func(nest([1, 2]), [nest(3), nest(4)])").1[1], "[nest(3), nest(4)]");
 }

@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -19,7 +18,7 @@ const TEST_URI_2 = "data:text/html,<html><body>test</body></html>";
 
 add_task(async function() {
   await addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
-  const { inspector, view } = await openRuleView();
+  const { view } = await openRuleView();
   const highlighters = view.highlighters;
 
   info("Clicking on a selector icon");
@@ -36,7 +35,7 @@ add_task(async function() {
   ok(view.selectorHighlighter, "The selectorhighlighter instance was created");
   ok(isVisible, "The toggle event says the highlighter is visible");
 
-  await navigateTo(inspector, TEST_URI_2);
+  await navigateTo(TEST_URI_2);
   ok(
     !highlighters.selectorHighlighterShown,
     "The selectorHighlighterShown is unset."

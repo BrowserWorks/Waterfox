@@ -2,8 +2,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import
-
 import os
 import platform
 import signal
@@ -16,6 +14,7 @@ import pytest
 
 from mozlint.errors import LintersNotConfigured
 from mozlint.result import Issue, ResultSummary
+from itertools import chain
 
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -33,7 +32,7 @@ def test_roll_successful(lint, linters, files):
     assert len(result.issues) == 1
     assert result.failed == set([])
 
-    path = result.issues.keys()[0]
+    path = list(result.issues.keys())[0]
     assert os.path.basename(path) == 'foobar.js'
 
     errors = result.issues[path]
@@ -53,28 +52,33 @@ def test_roll_from_subdir(lint, linters):
         os.chdir(os.path.join(lint.root, 'files'))
 
         # Path relative to cwd works
-        result = lint.roll('no_foobar.js')
-        assert len(result.issues) == 0
+        result = lint.roll('foobar.js')
+        assert len(result.issues) == 1
         assert len(result.failed) == 0
-        assert result.returncode == 0
-
-        # Path relative to root doesn't work
-        result = lint.roll(os.path.join('files', 'no_foobar.js'))
-        assert len(result.issues) == 0
-        assert len(result.failed) == 3
         assert result.returncode == 1
 
-        # Paths from vcs are always joined to root instead of cwd
-        lint.mock_vcs([os.path.join('files', 'no_foobar.js')])
-        result = lint.roll(outgoing=True)
+        # Path relative to root doesn't work
+        result = lint.roll(os.path.join('files', 'foobar.js'))
         assert len(result.issues) == 0
         assert len(result.failed) == 0
         assert result.returncode == 0
 
-        result = lint.roll(workdir=True)
-        assert len(result.issues) == 0
+        # Paths from vcs are always joined to root instead of cwd
+        lint.mock_vcs([os.path.join('files', 'foobar.js')])
+        result = lint.roll(outgoing=True)
+        assert len(result.issues) == 1
         assert len(result.failed) == 0
-        assert result.returncode == 0
+        assert result.returncode == 1
+
+        result = lint.roll(workdir=True)
+        assert len(result.issues) == 1
+        assert len(result.failed) == 0
+        assert result.returncode == 1
+
+        result = lint.roll(rev='not public() and keyword("dummy revset expression")')
+        assert len(result.issues) == 1
+        assert len(result.failed) == 0
+        assert result.returncode == 1
     finally:
         os.chdir(oldcwd)
 
@@ -148,7 +152,7 @@ def test_roll_warnings(lint, linters, files):
 
 
 def fake_run_worker(config, paths, **lintargs):
-    result = ResultSummary()
+    result = ResultSummary(lintargs['root'])
     result.issues['count'].append(1)
     return result
 
@@ -188,6 +192,37 @@ def test_max_paths_per_job(monkeypatch, lint, linters, files, max_paths, expecte
 
 
 @pytest.mark.skipif(platform.system() == 'Windows',
+                    reason="monkeypatch issues with multiprocessing on Windows")
+@pytest.mark.parametrize('num_procs', [1, 4, 8, 16])
+def test_number_of_jobs_global(monkeypatch, lint, linters, files, num_procs):
+    monkeypatch.setattr(sys.modules[lint.__module__], '_run_worker', fake_run_worker)
+
+    linters = linters('global')
+    lint.read(linters)
+    num_jobs = len(lint.roll(files, num_procs=num_procs).issues['count'])
+
+    assert num_jobs == 1
+
+
+@pytest.mark.skipif(platform.system() == 'Windows',
+                    reason="monkeypatch issues with multiprocessing on Windows")
+@pytest.mark.parametrize('max_paths', [1, 4, 16])
+def test_max_paths_per_job_global(monkeypatch, lint, linters, files, max_paths):
+    monkeypatch.setattr(sys.modules[lint.__module__], '_run_worker', fake_run_worker)
+
+    files = files[:4]
+    assert len(files) == 4
+
+    linters = linters('global')[:1]
+    assert len(linters) == 1
+
+    lint.MAX_PATHS_PER_JOB = max_paths
+    lint.read(linters)
+    num_jobs = len(lint.roll(files, num_procs=2).issues['count'])
+    assert num_jobs == 1
+
+
+@pytest.mark.skipif(platform.system() == 'Windows',
                     reason="signal.CTRL_C_EVENT isn't causing a KeyboardInterrupt on Windows")
 def test_keyboard_interrupt():
     # We use two linters so we'll have two jobs. One (string.yml) will complete
@@ -195,16 +230,21 @@ def test_keyboard_interrupt():
     # will be be stuck blocking on the ProcessPoolExecutor._call_queue when the
     # signal arrives and the other still be doing work.
     cmd = [sys.executable, 'runcli.py', '-l=string', '-l=slow']
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=here)
+    env = os.environ.copy()
+    env['PYTHONPATH'] = os.pathsep.join(sys.path)
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                            cwd=here, env=env, universal_newlines=True)
     time.sleep(1)
     proc.send_signal(signal.SIGINT)
 
     out = proc.communicate()[0]
+    print(out)
     assert 'warning: not all files were linted' in out
+    assert '2 problems' in out
     assert 'Traceback' not in out
 
 
-def test_support_files(lint, linters, filedir, monkeypatch):
+def test_support_files(lint, linters, filedir, monkeypatch, files):
     jobs = []
 
     # Replace the original _generate_jobs with a new one that simply
@@ -219,27 +259,39 @@ def test_support_files(lint, linters, filedir, monkeypatch):
 
     linter_path = linters('support_files')[0]
     lint.read(linter_path)
+    lint.root = filedir
 
     # Modified support files only lint entire root if --outgoing or --workdir
     # are used.
     path = os.path.join(filedir, 'foobar.js')
     lint.mock_vcs([os.path.join(filedir, 'foobar.py')])
     lint.roll(path)
-    assert jobs[0] == [path]
+    actual_files = sorted(chain(*jobs))
+    assert actual_files == [path]
+
+    expected_files = sorted(files)
 
     jobs = []
     lint.roll(path, workdir=True)
-    assert jobs[0] == [lint.root]
+    actual_files = sorted(chain(*jobs))
+    assert actual_files == expected_files
 
     jobs = []
     lint.roll(path, outgoing=True)
-    assert jobs[0] == [lint.root]
+    actual_files = sorted(chain(*jobs))
+    assert actual_files == expected_files
+
+    jobs = []
+    lint.roll(path, rev='draft() and keyword("dummy revset expression")')
+    actual_files = sorted(chain(*jobs))
+    assert actual_files == expected_files
 
     # Lint config file is implicitly added as a support file
     lint.mock_vcs([linter_path])
     jobs = []
     lint.roll(path, outgoing=True, workdir=True)
-    assert jobs[0] == [lint.root]
+    actual_files = sorted(chain(*jobs))
+    assert actual_files == expected_files
 
 
 def test_setup(lint, linters, filedir, capfd):

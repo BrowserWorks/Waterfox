@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Smiley Menu items -->
+
+<!ENTITY insertSmiley.label "Fromlun">
+<!ENTITY insertSmiley.accesskey "m">
+
+<!ENTITY smiley1Cmd.label "Mousc'hoarzhiñ">
+<!ENTITY smiley1Cmd.accesskey "c">
+<!ENTITY smiley1Cmd.tooltip "Enlakaat ur fromarlun">
+<!ENTITY smiley2Cmd.label "Krizañ e dal">
+<!ENTITY smiley2Cmd.accesskey "K">
+<!ENTITY smiley2Cmd.tooltip "Enlakaat un dremm o krizañ e dal">
+<!ENTITY smiley3Cmd.label "Gwilc'hadenn">
+<!ENTITY smiley3Cmd.accesskey "l">
+<!ENTITY smiley3Cmd.tooltip "Enlakaat un dremm o wilc'hañ">
+<!ENTITY smiley4Cmd.label "Tennañ teod">
+<!ENTITY smiley4Cmd.accesskey "T">
+<!ENTITY smiley4Cmd.tooltip "Enlakaat un dremm o tennañ e deod">
+<!ENTITY smiley5Cmd.label "C'hoarzhin">
+<!ENTITY smiley5Cmd.accesskey "o">
+<!ENTITY smiley5Cmd.tooltip "Enlakaat un dremm o c'hoarzhin">
+<!ENTITY smiley6Cmd.label "Lakaet diaes">
+<!ENTITY smiley6Cmd.accesskey "k">
+<!ENTITY smiley6Cmd.tooltip "Enlakaat un dremm lakaet diaes">
+<!ENTITY smiley7Cmd.label "N'eo ket lakaet e soñj">
+<!ENTITY smiley7Cmd.accesskey "k">
+<!ENTITY smiley7Cmd.tooltip "Enlakaat un dremm n'eo ket lakaet e soñj">
+<!ENTITY smiley8Cmd.label "Souezhadenn">
+<!ENTITY smiley8Cmd.accesskey "S">
+<!ENTITY smiley8Cmd.tooltip "Enlakaat un dremm souezhet">
+<!ENTITY smiley9Cmd.label "Pokañ">
+<!ENTITY smiley9Cmd.accesskey "P">
+<!ENTITY smiley9Cmd.tooltip "Enlakaat un dremm o pokat">
+<!ENTITY smiley10Cmd.label "Yudal">
+<!ENTITY smiley10Cmd.accesskey "Y">
+<!ENTITY smiley10Cmd.tooltip "Enlakaat un dremm o huchal">
+<!ENTITY smiley11Cmd.label "Kool">
+<!ENTITY smiley11Cmd.accesskey "K">
+<!ENTITY smiley11Cmd.tooltip "Enlakaat un dremm koul">
+<!ENTITY smiley12Cmd.label "Beg-arc'hant">
+<!ENTITY smiley12Cmd.accesskey "B">
+<!ENTITY smiley12Cmd.tooltip "Enlakaat un dremm beg-arc'hant">
+<!ENTITY smiley13Cmd.label "Beg-troad">
+<!ENTITY smiley13Cmd.accesskey "B">
+<!ENTITY smiley13Cmd.tooltip "Enlakaat un dremm e veg-troad">
+<!ENTITY smiley14Cmd.label "Divlam">
+<!ENTITY smiley14Cmd.accesskey "D">
+<!ENTITY smiley14Cmd.tooltip "Enlakaat un dremm digablus">
+<!ENTITY smiley15Cmd.label "Gouelañ">
+<!ENTITY smiley15Cmd.accesskey "o">
+<!ENTITY smiley15Cmd.tooltip "Enlakaat un dremm o ouelañ">
+<!ENTITY smiley16Cmd.label "Diweuz serr">
+<!ENTITY smiley16Cmd.accesskey "D">
+<!ENTITY smiley16Cmd.tooltip "Enlakaat un dremm e ziweuz serr">
+<!ENTITY SmileButton.tooltip "Enlakaat ur fromarlun">
+

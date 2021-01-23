@@ -11,7 +11,6 @@
 #include "mozilla/RefPtr.h"
 #include "nsIStringBundle.h"
 #include "nsIUUIDGenerator.h"
-#include "nsIXULAppInfo.h"
 
 //#include "AudioSession.h"
 #include "nsCOMPtr.h"
@@ -260,6 +259,7 @@ void SpawnASCReleaseThread(RefPtr<IAudioSessionControl>&& aASC) {
   PRThread* thread = PR_CreateThread(
       PR_USER_THREAD,
       [](void* aRawPtr) {
+        NS_SetCurrentThreadName("AudioASCReleaser");
         static_cast<IAudioSessionControl*>(aRawPtr)->Release();
       },
       rawPtr, PR_PRIORITY_NORMAL, PR_LOCAL_THREAD, PR_UNJOINABLE_THREAD, 0);
@@ -277,14 +277,11 @@ void AudioSession::StopInternal() {
     mAudioSessionControl->UnregisterAudioSessionNotification(this);
   }
 
-  // Win7 is the only Windows version supported before Win8.
-  if (mAudioSessionControl && !IsWin8OrLater()) {
-    // bug 1419488: Avoid hanging due to Win7 race condition when destroying
-    // AudioSessionControl.  We do that by Moving the AudioSessionControl
-    // to a worker thread (that we never 'join') for destruction.
+  if (mAudioSessionControl) {
+    // Avoid hanging when destroying AudioSessionControl.  We do that by
+    // moving the AudioSessionControl to a worker thread (that we never
+    // 'join') for destruction.
     SpawnASCReleaseThread(std::move(mAudioSessionControl));
-  } else {
-    mAudioSessionControl = nullptr;
   }
 }
 

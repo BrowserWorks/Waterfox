@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!ENTITY accountTitle.label "Setările contului">
+<!ENTITY accountSettingsDesc.label "Acesta este un cont special, cu care nu este asociată nici o identitate.">
+<!ENTITY accountName.label "Nume cont:">
+<!ENTITY accountName.accesskey "N">
+<!ENTITY messageStorage.label "Stocare mesaje">
+<!ENTITY emptyTrashOnExit.label "Golește coșul de gunoi la ieșire">
+<!ENTITY emptyTrashOnExit.accesskey "G">
+<!ENTITY localPath.label "Director local:">
+<!ENTITY localFolderPicker.label "Alegeți directorul local">
+<!ENTITY browseFolder.label "Răsfoiește...">
+<!ENTITY browseFolder.accesskey "R">

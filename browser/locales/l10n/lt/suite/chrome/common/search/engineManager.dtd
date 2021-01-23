@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  engineManager.title       "Ieškyklių sąrašo tvarkymas">
+<!ENTITY  engineManager.style       "min-width: 35em;">
+<!ENTITY  engineManager.intro       "Įtrauktos šios ieškyklės:">
+
+<!ENTITY  columnLabel.name          "Pavadinimas">
+<!ENTITY  columnLabel.keyword       "Reikšminis žodis">
+<!-- Buttons -->
+
+<!ENTITY  up.label                  "Pakelti">
+<!ENTITY  up.accesskey              "P">
+<!ENTITY  dn.label                  "Nuleisti">
+<!ENTITY  dn.accesskey              "N">
+<!ENTITY  remove.label              "Pašalinti">
+<!ENTITY  remove.accesskey          "š">
+<!ENTITY  edit.label                "Keisti reikšminį žodį…">
+<!ENTITY  edit.accesskey            "K">
+
+<!ENTITY  addEngine.label           "Daugiau ieškyklių…">
+<!ENTITY  addEngine.accesskey       "D">
+
+<!ENTITY  enableSuggest.label       "Rodyti paieškos žodžių siūlymus">
+<!ENTITY  enableSuggest.accesskey   "R">
+
+<!ENTITY  restoreDefaults.label     "Atstatyti numatytąsias parinktis">
+<!ENTITY  restoreDefaults.accesskey "A">

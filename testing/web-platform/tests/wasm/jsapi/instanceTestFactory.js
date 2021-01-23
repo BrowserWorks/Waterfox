@@ -140,7 +140,7 @@ const instanceTestFactory = [
         .addBody([])
         .exportFunc();
 
-      builder.setTableLength(1);
+      builder.setTableBounds(1);
       builder.addExportOfKind("table", kExternalTable, 0);
 
       builder.addGlobal(kWasmI32, true)
@@ -183,7 +183,7 @@ const instanceTestFactory = [
       builder
         .addFunction("fn", kSig_i_v)
         .addBody([
-            kExprGetGlobal,
+            kExprGlobalGet,
             index,
             kExprReturn,
         ])

@@ -19,8 +19,10 @@ namespace dom {
 class VideoStreamTrack : public MediaStreamTrack {
  public:
   VideoStreamTrack(
-      DOMMediaStream* aStream, TrackID aTrackID, TrackID aInputTrackID,
+      nsPIDOMWindowInner* aWindow, mozilla::MediaTrack* aInputTrack,
       MediaStreamTrackSource* aSource,
+      MediaStreamTrackState aState = MediaStreamTrackState::Live,
+      bool aMuted = false,
       const MediaTrackConstraints& aConstraints = MediaTrackConstraints());
 
   void Destroy() override;
@@ -29,7 +31,9 @@ class VideoStreamTrack : public MediaStreamTrack {
   const VideoStreamTrack* AsVideoStreamTrack() const override { return this; }
 
   void AddVideoOutput(VideoFrameContainer* aSink);
+  void AddVideoOutput(VideoOutput* aOutput);
   void RemoveVideoOutput(VideoFrameContainer* aSink);
+  void RemoveVideoOutput(VideoOutput* aOutput);
 
   // WebIDL
   void GetKind(nsAString& aKind) override { aKind.AssignLiteral("video"); }
@@ -37,11 +41,7 @@ class VideoStreamTrack : public MediaStreamTrack {
   void GetLabel(nsAString& aLabel, CallerType aCallerType) override;
 
  protected:
-  already_AddRefed<MediaStreamTrack> CloneInternal(
-      DOMMediaStream* aOwningStream, TrackID aTrackID) override {
-    return do_AddRef(new VideoStreamTrack(
-        aOwningStream, aTrackID, mInputTrackID, mSource, mConstraints));
-  }
+  already_AddRefed<MediaStreamTrack> CloneInternal() override;
 
  private:
   nsTArray<RefPtr<VideoOutput>> mVideoOutputs;

@@ -23,9 +23,9 @@ add_task(async function() {
       url: "http://mochi.test:8888/",
       element: "body",
       go() {
-        return ContentTask.spawn(
+        return SpecialPowers.spawn(
           gBrowser.selectedBrowser,
-          { writeDomainURL },
+          [{ writeDomainURL }],
           async function(arg) {
             let contentBody = content.document.body;
             contentBody.style.backgroundImage =
@@ -36,7 +36,7 @@ add_task(async function() {
         );
       },
       verify() {
-        return ContentTask.spawn(gBrowser.selectedBrowser, null, async function(
+        return SpecialPowers.spawn(gBrowser.selectedBrowser, [], async function(
           arg
         ) {
           Assert.ok(
@@ -51,9 +51,9 @@ add_task(async function() {
       url: "http://mochi.test:8888/",
       element: "img",
       go() {
-        return ContentTask.spawn(
+        return SpecialPowers.spawn(
           gBrowser.selectedBrowser,
-          { writeDomainURL },
+          [{ writeDomainURL }],
           async function(arg) {
             let doc = content.document;
             let img = doc.createElement("img");
@@ -67,7 +67,7 @@ add_task(async function() {
         );
       },
       verify() {
-        return ContentTask.spawn(gBrowser.selectedBrowser, null, async function(
+        return SpecialPowers.spawn(gBrowser.selectedBrowser, [], async function(
           arg
         ) {
           Assert.ok(
@@ -80,11 +80,12 @@ add_task(async function() {
     {
       name: "show only this frame",
       url: "http://mochi.test:8888/",
-      element: ["iframe", "html"],
+      element: "html",
+      frameIndex: 0,
       go() {
-        return ContentTask.spawn(
+        return SpecialPowers.spawn(
           gBrowser.selectedBrowser,
-          { writeDomainURL },
+          [{ writeDomainURL }],
           async function(arg) {
             let doc = content.document;
             let iframe = doc.createElement("iframe");
@@ -105,7 +106,7 @@ add_task(async function() {
         );
       },
       verify() {
-        return ContentTask.spawn(gBrowser.selectedBrowser, null, async function(
+        return SpecialPowers.spawn(gBrowser.selectedBrowser, [], async function(
           arg
         ) {
           Assert.ok(
@@ -135,13 +136,33 @@ add_task(async function() {
       contentAreaContextMenu,
       "popupshown"
     );
-    await BrowserTestUtils.synthesizeMouse(
-      test.element,
-      3,
-      3,
-      { type: "contextmenu", button: 2 },
-      gBrowser.selectedBrowser
-    );
+
+    let browsingContext = gBrowser.selectedBrowser.browsingContext;
+    if (test.frameIndex != null) {
+      browsingContext = browsingContext.children[test.frameIndex];
+    }
+
+    await new Promise(r => {
+      SimpleTest.executeSoon(r);
+    });
+
+    // Sometimes, the iframe test fails as the child iframe hasn't finishing layout
+    // yet. Try again in this case.
+    while (true) {
+      try {
+        await BrowserTestUtils.synthesizeMouse(
+          test.element,
+          3,
+          3,
+          { type: "contextmenu", button: 2 },
+          browsingContext
+        );
+      } catch (ex) {
+        continue;
+      }
+      break;
+    }
+
     await popupShownPromise;
     info("onImage: " + gContextMenu.onImage);
 

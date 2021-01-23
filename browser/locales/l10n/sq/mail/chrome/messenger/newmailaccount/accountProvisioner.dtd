@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Mirë se vini te &brandShortName;-i">
+<!ENTITY header2.label "Dëshironi një adresë të re email-i?">
+<!ENTITY other.languages "Po ju shfaqim vetëm furnizues që ofrojnë adresa në zonën tuaj. Klikoni këtu që të shfaqen krejt furnizuesit.">
+<!ENTITY error.line1 "Na ndjeni, nuk gjetëm dot ndonjë nga adresat email të këshilluara.">
+<!ENTITY error.line2 "Që të gjeni më tepër email-e, mund edhe të provoni të kërkoni për nofka ose çfarëdo termi tjetër kërkimi">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before "Mundeni edhe të provoni një prej këtyre ">
+<!ENTITY error.suggest.middle "alternativave të lira për llogari email">
+<!ENTITY error.suggest.after ".">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before "Tungjatjeta ">
+<!ENTITY success.title.after ", mund të keni një prej adresave email vijuese:">
+<!ENTITY success.tip "(Që të gjeni më tepër email-e, mund të kërkoni për nofka ose çfarëdo termi tjetër kërkimi)">
+<!ENTITY partnership.description "Nga partneriteti me disa furnizues shërbimi email, &brandShortName;-i mund t&apos;ju ofrojë një llogari të re email-i. Që t&apos;ia filloni, thjesht plotësoni në fushat e mësipërme emrin dhe mbiemrin tuaj, ose çfarëdo fjale tjetër që do të donit.">
+<!ENTITY existing.header "Keni tashmë një adresë të cilën doni ta përdorni?">
+<!ENTITY tinyheader.title "Keni adresë?">
+<!ENTITY tinyheader.existing "Anashkaloje këtë dhe përdor email-in tim ekzistues">
+<!ENTITY content.close "Mendoj ta formësoj llogarinë time më vonë.">
+<!ENTITY successful.title "Përgëzime!">
+<!ENTITY successful.successMessage "E rregulluat me sukses llogarinë tuaj.">
+<!ENTITY successful.write "Shkruani ndonjë email">
+<!ENTITY successful.write.desc "Bëjuani të ditur adresën tuaj të re miqve dhe familjes.<br/> Ndaj edhe e hapët këtë llogari të re, apo jo?">
+<!ENTITY successful.customize "Përshtateni &brandShortName;-in përmes disa shtesash të hijshme">
+<!ENTITY successful.customize.desc "Ka me mijëra shtesa që ju lejojnë ta përshtatni &brandShortName;-it për ta bërë t&apos;u përshtatet nevojave tuaj të veçanta.">
+<!ENTITY successful.attach "Shto një nënshkrim personal te email-i im">
+<!ENTITY successful.attach.desc "Në fund të çdo mesazhi që dërgoni mund të bashkëngjitni vetvetiu një thënie ose të dhëna rreth vetes.">
+<!ENTITY successful.close "Mbylle këtë dritare.">
+<!ENTITY input.namePlaceholder "Emri juaj, ose nofka">
+<!ENTITY input.search "Kërkoni">
+<!ENTITY search_engine.title "Përshtatni motorin tuaj të kërkimeve">
+<!ENTITY search_engine.message "Furnizuesi i shërbimit tuaj email mund t&apos;ju ofrojë edhe aftësi kërkimesh.">
+<!ENTITY search_engine.button "Përfundoje">

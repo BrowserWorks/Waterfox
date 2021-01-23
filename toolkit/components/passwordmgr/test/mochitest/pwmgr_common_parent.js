@@ -89,10 +89,10 @@ function dumpLogins() {
 
 function dumpLogin(label, login) {
   var loginText = "";
-  loginText += "host: ";
-  loginText += login.hostname;
-  loginText += " / formURL: ";
-  loginText += login.formSubmitURL;
+  loginText += "origin: ";
+  loginText += login.origin;
+  loginText += " / formActionOrigin: ";
+  loginText += login.formActionOrigin;
   loginText += " / realm: ";
   loginText += login.httpRealm;
   loginText += " / user: ";
@@ -123,6 +123,12 @@ function onPrompt(subject, topic, data) {
 Services.obs.addObserver(onPrompt, "passwordmgr-prompt-change");
 Services.obs.addObserver(onPrompt, "passwordmgr-prompt-save");
 
+addMessageListener("cleanup", () => {
+  Services.obs.removeObserver(onStorageChanged, "passwordmgr-storage-changed");
+  Services.obs.removeObserver(onPrompt, "passwordmgr-prompt-change");
+  Services.obs.removeObserver(onPrompt, "passwordmgr-prompt-save");
+});
+
 // Begin message listeners
 
 addMessageListener(
@@ -145,6 +151,37 @@ addMessageListener("resetRecipes", async function() {
   sendAsyncMessage("recipesReset");
 });
 
+addMessageListener("getTelemetryEvents", options => {
+  options = Object.assign(
+    {
+      filterProps: {},
+      clear: false,
+    },
+    options
+  );
+  let snapshots = Services.telemetry.snapshotEvents(
+    Ci.nsITelemetry.DATASET_PRERELEASE_CHANNELS,
+    options.clear
+  );
+  let events = options.process in snapshots ? snapshots[options.process] : [];
+
+  // event is array of values like: [22476,"pwmgr","autocomplete_field","generatedpassword"]
+  let keys = ["id", "category", "method", "object", "value"];
+  events = events.filter(entry => {
+    for (let idx = 0; idx < keys.length; idx++) {
+      let key = keys[idx];
+      if (
+        key in options.filterProps &&
+        options.filterProps[key] !== entry[idx]
+      ) {
+        return false;
+      }
+    }
+    return true;
+  });
+  sendAsyncMessage("getTelemetryEvents", events);
+});
+
 addMessageListener("proxyLoginManager", msg => {
   // Recreate nsILoginInfo objects from vanilla JS objects.
   let recreatedArgs = msg.args.map((arg, index) => {
@@ -160,7 +197,7 @@ addMessageListener("proxyLoginManager", msg => {
     rv = LoginHelper.loginToVanillaObject(rv);
   } else if (
     Array.isArray(rv) &&
-    rv.length > 0 &&
+    !!rv.length &&
     rv[0] instanceof Ci.nsILoginInfo
   ) {
     rv = rv.map(login => LoginHelper.loginToVanillaObject(login));
@@ -181,9 +218,14 @@ addMessageListener("setMasterPassword", ({ enable }) => {
   }
 });
 
-Services.mm.addMessageListener(
-  "PasswordManager:onFormSubmit",
-  function onFormSubmit(message) {
-    sendAsyncMessage("formSubmissionProcessed", message.data, message.objects);
+LoginManagerParent.setListenerForTests((msg, data) => {
+  if (msg == "FormSubmit") {
+    sendAsyncMessage("formSubmissionProcessed", data);
+  } else if (msg == "PasswordEditedOrGenerated") {
+    sendAsyncMessage("passwordEditedOrGenerated", data);
   }
-);
+});
+
+addMessageListener("cleanup", () => {
+  LoginManagerParent.setListenerForTests(null);
+});

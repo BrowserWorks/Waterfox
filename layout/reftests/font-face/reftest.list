@@ -129,7 +129,7 @@ load 486974-1.html
 # Tests for bug 523717
 == underline-offset-change-1.html underline-offset-change-1-ref.html
 == underline-offset-change-2.html underline-offset-change-2-ref.html
-fails != underline-offset-change-1-ref.html underline-offset-change-2-ref.html # Bug 534132
+!= underline-offset-change-1-ref.html underline-offset-change-2-ref.html
 
 != 534352-1-extra-cmap-sentinel.html 534352-1-extra-cmap-sentinel-ref.html
 == bug533251.html bug533251-ref.html
@@ -164,8 +164,8 @@ fails-if(OSX) == color-1b.html color-1-ref.html
 fails-if(OSX) == color-2a.html color-2-ref.html
 != color-2a.html color-2-notref.html
 
-pref(gfx.downloadable_fonts.woff2.enabled,true) == woff2-1.html woff2-1-ref.html
-pref(gfx.downloadable_fonts.woff2.enabled,true) == woff2-totalsfntsize.html woff2-totalsfntsize-ref.html
+== woff2-1.html woff2-1-ref.html
+== woff2-totalsfntsize.html woff2-totalsfntsize-ref.html
 
 # sanity tests for reflow behavior with downloadable fonts
 HTTP(..) == reflow-sanity-1.html reflow-sanity-1-ref.html
@@ -195,12 +195,12 @@ random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) != meiryo-en-bolditalic.htm
 random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) != meiryo-en-bolditalic.html meiryo-en-bold.html # Bug 1392106
 
 # test support of variation-font format hints
-default-preferences pref(layout.css.font-variations.enabled,false)
+defaults pref(layout.css.font-variations.enabled,false)
 == variation-format-hint-1a.html variation-format-hint-1A-ref.html
 == variation-format-hint-1b.html variation-format-hint-1A-ref.html
 == variation-format-hint-1c.html variation-format-hint-1A-ref.html
 == variation-format-hint-1d.html variation-format-hint-1A-ref.html
-default-preferences pref(layout.css.font-variations.enabled,true)
+defaults pref(layout.css.font-variations.enabled,true)
 # Currently Windows 7 and macOS all fail on 
 # treeherder because our OS versions are too old to support variation fonts
 fails-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)||(cocoaWidget&&OSX<1012)) == variation-format-hint-1a.html variation-format-hint-1B-ttf-ref.html
@@ -208,4 +208,4 @@ fails-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)||(cocoaWidget&&OSX<1012)) == 
 fails-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)||(cocoaWidget&&OSX<1012)) == variation-format-hint-1c.html variation-format-hint-1B-woff-ref.html
 fails-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)||(cocoaWidget&&OSX<1012)) == variation-format-hint-1d.html variation-format-hint-1B-woff2-ref.html
 
-default-preferences
+defaults

@@ -7,9 +7,6 @@
 with Files("**"):
     BUG_COMPONENT = ("Firefox", "General")
 
-with Files("blocklist.xml"):
-    BUG_COMPONENT = ("Toolkit", "Blocklist Implementation")
-
 with Files("firefox.exe.manifest"):
     BUG_COMPONENT = ("Core", "Widget: Win32")
 with Files("module.ver"):
@@ -69,7 +66,6 @@ if CONFIG['CC_TYPE'] == 'clang-cl':
 
 if CONFIG['OS_ARCH'] == 'WINNT':
     RCINCLUDE = 'splash.rc'
-    DEFINES['MOZ_PHOENIX'] = True
     DIRS += [
         'winlauncher',
     ]
@@ -84,6 +80,15 @@ if CONFIG['OS_ARCH'] == 'WINNT':
         'ole32.dll',
         'rpcrt4.dll',
         'version.dll',
+    ]
+
+    if CONFIG['CC_TYPE'] == 'clang-cl':
+        libpath_flag = '-LIBPATH:'
+    else:
+        libpath_flag = '-L'
+
+    WIN32_EXE_LDFLAGS += [
+        libpath_flag + OBJDIR + '/winlauncher/freestanding',
     ]
 
 if CONFIG['MOZ_SANDBOX'] and CONFIG['OS_ARCH'] == 'Darwin':

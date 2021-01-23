@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!ENTITY accountTitle.label "Tilien asetukset">
+<!ENTITY accountName.label "Tilin nimi:">
+<!ENTITY accountName.accesskey "n">
+<!ENTITY identityTitle.label "Oletuskäyttäjätiedot">
+<!ENTITY identityDesc.label "Jokaiseen tiliin tallennetaan käyttäjätietosi, joista viestiesi vastaanottajat tunnistavat sinut.">
+<!ENTITY name.label "Nimi:">
+<!ENTITY name.accesskey "N">
+<!ENTITY email.label "Sähköpostiosoite:">
+<!ENTITY email.accesskey "e">
+<!ENTITY catchAll.label "Välitystietojen täsmätessä käytä vastauksessa tätä käyttäjätietoa:">
+<!ENTITY catchAll.accesskey "k">
+<!ENTITY replyTo.label "Vastausosoite:">
+<!ENTITY replyTo.accesskey "s">
+<!ENTITY replyTo.placeholder "Vastaanottajat vastaavat tähän osoitteeseen">
+<!ENTITY organization.label "Organisaatio:">
+<!ENTITY organization.accesskey "O">
+<!ENTITY signatureText.label "Allekirjoitus:">
+<!ENTITY signatureText.accesskey "A">
+<!ENTITY signatureHtml.label "Käytä HTML:ää">
+<!ENTITY signatureHtml.accesskey "L">
+<!ENTITY signatureFile.label "Liitä tiedosto allekirjoituksena:">
+<!ENTITY signatureFile.accesskey "t">
+<!ENTITY choose.label "Valitse…">
+<!ENTITY choose.accesskey "V">
+<!ENTITY editVCard.label "Muokkaa korttia…">
+<!ENTITY editVCard.accesskey "M">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "Liitä viesteihin vCard-käyntikortti">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "Muokkaa vaihtoehtoisia käyttäjätietoja…">
+<!ENTITY manageIdentities.accesskey "M">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Lähtevän postin (SMTP) palvelin:">
+<!ENTITY smtpName.accesskey "L">
+<!ENTITY smtpDefaultServer.label "Käytä oletuspalvelinta">
+
+<!ENTITY smtpServerEdit.label "Muokkaa SMTP-palvelinta…">
+<!ENTITY smtpServerEdit.accesskey "u">

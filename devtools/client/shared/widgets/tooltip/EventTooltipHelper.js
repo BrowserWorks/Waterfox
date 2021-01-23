@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -78,7 +76,10 @@ EventTooltip.prototype = {
 
       // Header
       const header = doc.createElementNS(XHTML_NS, "div");
-      header.className = "event-header devtools-toolbar";
+      header.className = "event-header";
+      const arrow = doc.createElementNS(XHTML_NS, "span");
+      arrow.className = "theme-twisty";
+      header.appendChild(arrow);
       this.container.appendChild(header);
 
       if (!listener.hide.type) {
@@ -126,12 +127,13 @@ EventTooltip.prototype = {
           sourceMapService.subscribe(
             location.url,
             location.line,
-            null,
+            location.column,
             callback
           );
           this._subscriptions.push({
             url: location.url,
             line: location.line,
+            column: location.column,
             callback,
           });
         }
@@ -228,19 +230,26 @@ EventTooltip.prototype = {
     const doc = this._tooltip.doc;
     const header = event.currentTarget;
     const content = header.nextElementSibling;
-    header.classList.toggle("content-expanded");
 
     if (content.hasAttribute("open")) {
+      header.classList.remove("content-expanded");
       content.removeAttribute("open");
     } else {
-      const contentNodes = doc.querySelectorAll(".event-tooltip-content-box");
-
-      for (const node of contentNodes) {
-        if (node !== content) {
-          node.removeAttribute("open");
-        }
+      // Close other open events first
+      const openHeaders = doc.querySelectorAll(
+        ".event-header.content-expanded"
+      );
+      const openContent = doc.querySelectorAll(
+        ".event-tooltip-content-box[open]"
+      );
+      for (const node of openHeaders) {
+        node.classList.remove("content-expanded");
+      }
+      for (const node of openContent) {
+        node.removeAttribute("open");
       }
 
+      header.classList.add("content-expanded");
       content.setAttribute("open", "");
 
       const eventEditor = this._eventEditors.get(content);
@@ -252,10 +261,7 @@ EventTooltip.prototype = {
       const { editor, handler } = eventEditor;
 
       const iframe = doc.createElementNS(XHTML_NS, "iframe");
-      iframe.setAttribute(
-        "style",
-        "width: 100%; height: 100%; border-style: none;"
-      );
+      iframe.classList.add("event-tooltip-editor-frame");
 
       editor.appendTo(content, iframe).then(() => {
         const tidied = beautify.js(handler, { indent_size: 2 });
@@ -280,7 +286,6 @@ EventTooltip.prototype = {
     const content = header.nextElementSibling;
 
     const { sourceActor, uri } = this._eventEditors.get(content);
-
     const location = this._parseLocation(uri);
     if (location) {
       // Save a copy of toolbox as it will be set to null when we hide the tooltip.
@@ -298,21 +303,28 @@ EventTooltip.prototype = {
   },
 
   /**
-   * Parse URI and return {url, line}; or return null if it can't be parsed.
+   * Parse URI and return {url, line, column}; or return null if it can't be parsed.
    */
   _parseLocation: function(uri) {
     if (uri && uri !== "?") {
       uri = uri.replace(/"/g, "");
 
-      const matches = uri.match(/(.*):(\d+$)/);
+      let matches = uri.match(/(.*):(\d+):(\d+$)/);
 
       if (matches) {
         return {
           url: matches[1],
           line: parseInt(matches[2], 10),
+          column: parseInt(matches[3], 10),
+        };
+      } else if ((matches = uri.match(/(.*):(\d+$)/))) {
+        return {
+          url: matches[1],
+          line: parseInt(matches[2], 10),
+          column: null,
         };
       }
-      return { url: uri, line: 1 };
+      return { url: uri, line: 1, column: null };
     }
     return null;
   },
@@ -352,7 +364,7 @@ EventTooltip.prototype = {
       sourceMapService.unsubscribe(
         subscription.url,
         subscription.line,
-        null,
+        subscription.column,
         subscription.callback
       );
     }

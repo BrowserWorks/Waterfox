@@ -82,12 +82,11 @@ class nsMathMLmfracFrame final : public nsMathMLContainerFrame {
   virtual nscoord FixInterFrameSpacing(ReflowOutput& aDesiredSize) override;
 
   // helper to translate the thickness attribute into a usable form
-  static nscoord CalcLineThickness(nsPresContext* aPresContext,
-                                   ComputedStyle* aComputedStyle,
-                                   nsString& aThicknessAttribute,
-                                   nscoord onePixel,
-                                   nscoord aDefaultRuleThickness,
-                                   float aFontSizeInflation);
+  nscoord CalcLineThickness(nsPresContext* aPresContext,
+                            ComputedStyle* aComputedStyle,
+                            nsString& aThicknessAttribute, nscoord onePixel,
+                            nscoord aDefaultRuleThickness,
+                            float aFontSizeInflation);
 
   uint8_t ScriptIncrement(nsIFrame* aFrame) override;
 
@@ -105,9 +104,8 @@ class nsMathMLmfracFrame final : public nsMathMLContainerFrame {
                          ReflowOutput& aDesiredSize, bool aWidthOnly);
 
   // Display a slash
-  void DisplaySlash(nsDisplayListBuilder* aBuilder, nsIFrame* aFrame,
-                    const nsRect& aRect, nscoord aThickness,
-                    const nsDisplayListSet& aLists);
+  void DisplaySlash(nsDisplayListBuilder* aBuilder, const nsRect& aRect,
+                    nscoord aThickness, const nsDisplayListSet& aLists);
 
   nsRect mLineRect;
   nsMathMLChar* mSlashChar;

@@ -10,13 +10,14 @@
 #include "jsapi-tests/tests.h"
 
 #include "vm/JSObject-inl.h"
+#include "vm/JSScript-inl.h"
 
 using namespace JS;
 
-static void ScriptCallback(JSRuntime* rt, void* data, JSScript* script,
+static void ScriptCallback(JSRuntime* rt, void* data, js::BaseScript* script,
                            const JS::AutoRequireNoGC& nogc) {
   unsigned& count = *static_cast<unsigned*>(data);
-  if (script->hasIonScript()) {
+  if (script->asJSScript()->hasIonScript()) {
     ++count;
   }
 }
@@ -34,15 +35,13 @@ unsigned countIonScripts(JSObject* global) {
 }
 
 bool testPreserveJitCode(bool preserveJitCode, unsigned remainingIonScripts) {
-  cx->options().setBaseline(true);
-  cx->options().setIon(true);
   cx->runtime()->setOffthreadIonCompilationEnabled(false);
 
   RootedObject global(cx, createTestGlobal(preserveJitCode));
   CHECK(global);
   JSAutoRealm ar(cx, global);
 
-  // The Ion JIT may be unavailable due to --disable-ion or lack of support
+  // The Ion JIT may be unavailable due to --disable-jit or lack of support
   // for this platform.
   if (!js::jit::IsIonEnabled(cx)) {
     knownFail = true;

@@ -7,7 +7,6 @@
 #include "Performance.h"
 
 #include "GeckoProfiler.h"
-#include "nsIDocShell.h"
 #include "nsRFPService.h"
 #include "PerformanceEntry.h"
 #include "PerformanceMainThread.h"
@@ -17,6 +16,7 @@
 #include "PerformanceResourceTiming.h"
 #include "PerformanceService.h"
 #include "PerformanceWorker.h"
+#include "mozilla/BasePrincipal.h"
 #include "mozilla/ErrorResult.h"
 #include "mozilla/dom/PerformanceBinding.h"
 #include "mozilla/dom/PerformanceEntryEvent.h"
@@ -53,9 +53,9 @@ already_AddRefed<Performance> Performance::CreateForMainThread(
     nsDOMNavigationTiming* aDOMTiming, nsITimedChannel* aChannel) {
   MOZ_ASSERT(NS_IsMainThread());
 
-  RefPtr<Performance> performance =
-      new PerformanceMainThread(aWindow, aDOMTiming, aChannel,
-                                nsContentUtils::IsSystemPrincipal(aPrincipal));
+  MOZ_ASSERT(aWindow->AsGlobal());
+  RefPtr<Performance> performance = new PerformanceMainThread(
+      aWindow, aDOMTiming, aChannel, aPrincipal->IsSystemPrincipal());
   return performance.forget();
 }
 
@@ -86,19 +86,20 @@ Performance::Performance(nsPIDOMWindowInner* aWindow, bool aSystemPrincipal)
   MOZ_ASSERT(NS_IsMainThread());
 }
 
-Performance::~Performance() {}
+Performance::~Performance() = default;
 
 DOMHighResTimeStamp Performance::Now() {
   DOMHighResTimeStamp rawTime = NowUnclamped();
+
+  // XXX: Remove this would cause functions in pkcs11f.h to fail.
+  // Bug 1628021 will find out the root cause.
   if (mSystemPrincipal) {
     return rawTime;
   }
 
-  const double maxResolutionMs = 0.020;
-  DOMHighResTimeStamp minimallyClamped =
-      floor(rawTime / maxResolutionMs) * maxResolutionMs;
-  return nsRFPService::ReduceTimePrecisionAsMSecs(minimallyClamped,
-                                                  GetRandomTimelineSeed());
+  return nsRFPService::ReduceTimePrecisionAsMSecs(
+      rawTime, GetRandomTimelineSeed(), mSystemPrincipal,
+      CrossOriginIsolated());
 }
 
 DOMHighResTimeStamp Performance::NowUnclamped() const {
@@ -114,12 +115,9 @@ DOMHighResTimeStamp Performance::TimeOrigin() {
   MOZ_ASSERT(mPerformanceService);
   DOMHighResTimeStamp rawTimeOrigin =
       mPerformanceService->TimeOrigin(CreationTimeStamp());
-  if (mSystemPrincipal) {
-    return rawTimeOrigin;
-  }
-
   // Time Origin is an absolute timestamp, so we supply a 0 context mix-in
-  return nsRFPService::ReduceTimePrecisionAsMSecs(rawTimeOrigin, 0);
+  return nsRFPService::ReduceTimePrecisionAsMSecs(
+      rawTimeOrigin, 0, mSystemPrincipal, CrossOriginIsolated());
 }
 
 JSObject* Performance::WrapObject(JSContext* aCx,
@@ -134,7 +132,7 @@ void Performance::GetEntries(nsTArray<RefPtr<PerformanceEntry>>& aRetval) {
     return;
   }
 
-  aRetval = mResourceEntries;
+  aRetval = mResourceEntries.Clone();
   aRetval.AppendElements(mUserEntries);
   aRetval.Sort(PerformanceEntryComparator());
 }
@@ -148,7 +146,7 @@ void Performance::GetEntriesByType(
   }
 
   if (aEntryType.EqualsLiteral("resource")) {
-    aRetval = mResourceEntries;
+    aRetval = mResourceEntries.Clone();
     return;
   }
 
@@ -173,6 +171,9 @@ void Performance::GetEntriesByName(
     return;
   }
 
+  // ::Measure expects that results from this function are already
+  // passed through ReduceTimePrecision. mResourceEntries and mUserEntries
+  // are, so the invariant holds.
   for (PerformanceEntry* entry : mResourceEntries) {
     if (entry->GetName().Equals(aName) &&
         (!aEntryType.WasPassed() ||
@@ -224,15 +225,13 @@ void Performance::Mark(const nsAString& aName, ErrorResult& aRv) {
   InsertUserEntry(performanceMark);
 
 #ifdef MOZ_GECKO_PROFILER
-  if (profiler_is_active()) {
-    nsCOMPtr<EventTarget> et = do_QueryInterface(GetOwner());
-    nsCOMPtr<nsIDocShell> docShell =
-        nsContentUtils::GetDocShellForEventTarget(et);
-    DECLARE_DOCSHELL_AND_HISTORY_ID(docShell);
-    profiler_add_marker(
-        "UserTiming", JS::ProfilingCategoryPair::DOM,
-        MakeUnique<UserTimingMarkerPayload>(aName, TimeStamp::Now(), docShellId,
-                                            docShellHistoryId));
+  if (profiler_can_accept_markers()) {
+    Maybe<uint64_t> innerWindowId;
+    if (GetOwner()) {
+      innerWindowId = Some(GetOwner()->WindowID());
+    }
+    PROFILER_ADD_MARKER_WITH_PAYLOAD("UserTiming", DOM, UserTimingMarkerPayload,
+                                     (aName, TimeStamp::Now(), innerWindowId));
   }
 #endif
 }
@@ -305,7 +304,7 @@ void Performance::Measure(const nsAString& aName,
   InsertUserEntry(performanceMeasure);
 
 #ifdef MOZ_GECKO_PROFILER
-  if (profiler_is_active()) {
+  if (profiler_can_accept_markers()) {
     TimeStamp startTimeStamp =
         CreationTimeStamp() + TimeDuration::FromMilliseconds(startTime);
     TimeStamp endTimeStamp =
@@ -322,14 +321,13 @@ void Performance::Measure(const nsAString& aName,
       endMark.emplace(aEndMark.Value());
     }
 
-    nsCOMPtr<EventTarget> et = do_QueryInterface(GetOwner());
-    nsCOMPtr<nsIDocShell> docShell =
-        nsContentUtils::GetDocShellForEventTarget(et);
-    DECLARE_DOCSHELL_AND_HISTORY_ID(docShell);
-    profiler_add_marker("UserTiming", JS::ProfilingCategoryPair::DOM,
-                        MakeUnique<UserTimingMarkerPayload>(
-                            aName, startMark, endMark, startTimeStamp,
-                            endTimeStamp, docShellId, docShellHistoryId));
+    Maybe<uint64_t> innerWindowId;
+    if (GetOwner()) {
+      innerWindowId = Some(GetOwner()->WindowID());
+    }
+    PROFILER_ADD_MARKER_WITH_PAYLOAD("UserTiming", DOM, UserTimingMarkerPayload,
+                                     (aName, startMark, endMark, startTimeStamp,
+                                      endTimeStamp, innerWindowId));
   }
 #endif
 }
@@ -573,10 +571,16 @@ class NotifyObserversTask final : public CancelableRunnable {
   }
 
  private:
-  ~NotifyObserversTask() {}
+  ~NotifyObserversTask() = default;
 
   RefPtr<Performance> mPerformance;
 };
+
+void Performance::QueueNotificationObserversTask() {
+  if (!mPendingNotificationObserversTask) {
+    RunNotificationObserversTask();
+  }
+}
 
 void Performance::RunNotificationObserversTask() {
   mPendingNotificationObserversTask = true;
@@ -614,9 +618,7 @@ void Performance::QueueEntry(PerformanceEntry* aEntry) {
   NS_OBSERVER_ARRAY_NOTIFY_XPCOM_OBSERVERS(
       interestedObservers, PerformanceObserver, QueueEntry, (aEntry));
 
-  if (!mPendingNotificationObserversTask) {
-    RunNotificationObserversTask();
-  }
+  QueueNotificationObserversTask();
 }
 
 void Performance::MemoryPressure() { mUserEntries.Clear(); }

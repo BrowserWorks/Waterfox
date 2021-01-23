@@ -9,13 +9,11 @@
 
 #include "mozilla/dom/nsCSPUtils.h"
 #include "mozilla/dom/SecurityPolicyViolationEvent.h"
-#include "mozilla/StaticPrefs.h"
+#include "mozilla/StaticPrefs_security.h"
 #include "nsIChannel.h"
 #include "nsIChannelEventSink.h"
-#include "nsIClassInfo.h"
 #include "nsIContentSecurityPolicy.h"
 #include "nsIInterfaceRequestor.h"
-#include "nsISerializable.h"
 #include "nsIStreamListener.h"
 #include "nsIWeakReferenceUtils.h"
 #include "nsXPCOM.h"
@@ -57,24 +55,23 @@ class nsCSPContext : public nsIContentSecurityPolicy {
   static bool Equals(nsIContentSecurityPolicy* aCSP,
                      nsIContentSecurityPolicy* aOtherCSP);
 
-  nsresult InitFromOther(nsCSPContext* otherContext,
-                         mozilla::dom::Document* aDoc,
-                         nsIPrincipal* aPrincipal);
-
-  void SetIPCPolicies(
-      const nsTArray<mozilla::ipc::ContentSecurityPolicy>& policies);
+  // Init a CSP from a different CSP
+  nsresult InitFromOther(nsCSPContext* otherContext);
 
   /**
-   * SetRequestContext() needs to be called before the innerWindowID
-   * is initialized on the document. Use this function to call back to
-   * flush queued up console messages and initalize the innerWindowID.
+   * SetRequestContextWithDocument() needs to be called before the
+   * innerWindowID is initialized on the document. Use this function
+   * to call back to flush queued up console messages and initialize
+   * the innerWindowID. Node, If SetRequestContextWithPrincipal() was
+   * called then we do not have a innerWindowID anyway and hence
+   * we can not flush messages to the correct console.
    */
   void flushConsoleMessages();
 
-  void logToConsole(const char* aName, const char16_t** aParams,
-                    uint32_t aParamsLength, const nsAString& aSourceName,
-                    const nsAString& aSourceLine, uint32_t aLineNumber,
-                    uint32_t aColumnNumber, uint32_t aSeverityFlag);
+  void logToConsole(const char* aName, const nsTArray<nsString>& aParams,
+                    const nsAString& aSourceName, const nsAString& aSourceLine,
+                    uint32_t aLineNumber, uint32_t aColumnNumber,
+                    uint32_t aSeverityFlag);
 
   /**
    * Construct SecurityPolicyViolationEventInit structure.
@@ -141,6 +138,10 @@ class nsCSPContext : public nsIContentSecurityPolicy {
         0);
   }
 
+  void AddIPCPolicy(const mozilla::ipc::ContentSecurityPolicy& aPolicy);
+  void SerializePolicies(
+      nsTArray<mozilla::ipc::ContentSecurityPolicy>& aPolicies);
+
  private:
   void EnsureIPCPoliciesRead();
 
@@ -163,7 +164,8 @@ class nsCSPContext : public nsIContentSecurityPolicy {
                              uint32_t aLineNumber, uint32_t aColumnNumber);
 
   nsString mReferrer;
-  uint64_t mInnerWindowID;  // used for web console logging
+  uint64_t mInnerWindowID;          // used for web console logging
+  bool mSkipAllowInlineStyleCheck;  // used to allow Devtools to edit styles
   // When deserializing an nsCSPContext instance, we initially just keep the
   // policies unparsed. We will only reconstruct actual CSP policy instances
   // when there's an attempt to use the CSP. Given a better way to serialize/
@@ -174,10 +176,7 @@ class nsCSPContext : public nsIContentSecurityPolicy {
   nsCOMPtr<nsIURI> mSelfURI;
   nsCOMPtr<nsILoadGroup> mCallingChannelLoadGroup;
   nsWeakPtr mLoadingContext;
-  // The CSP hangs off the principal, so let's store a raw pointer of the
-  // principal to avoid memory leaks. Within the destructor of the principal we
-  // explicitly set mLoadingPrincipal to null.
-  nsIPrincipal* mLoadingPrincipal;
+  nsCOMPtr<nsIPrincipal> mLoadingPrincipal;
 
   // helper members used to queue up web console messages till
   // the windowID becomes available. see flushConsoleMessages()

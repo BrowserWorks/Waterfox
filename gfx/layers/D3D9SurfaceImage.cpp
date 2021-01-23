@@ -85,7 +85,8 @@ bool DXGID3D9TextureData::Serialize(SurfaceDescriptor& aOutDescriptor) {
                mFormat == SurfaceFormat::P010 || mFormat == SurfaceFormat::P016;
   aOutDescriptor = SurfaceDescriptorD3D10(
       (WindowsHandle)(mHandle), mFormat, GetSize(),
-      isYUV ? gfx::YUVColorSpace::BT601 : gfx::YUVColorSpace::UNKNOWN);
+      isYUV ? gfx::YUVColorSpace::BT601 : gfx::YUVColorSpace::UNKNOWN,
+      gfx::ColorRange::LIMITED);
   return true;
 }
 
@@ -181,10 +182,11 @@ D3D9SurfaceImage::GetShareHandle() const { return mShareHandle; }
 
 gfx::IntSize D3D9SurfaceImage::GetSize() const { return mSize; }
 
-TextureClient* D3D9SurfaceImage::GetTextureClient(KnowsCompositor* aForwarder) {
+TextureClient* D3D9SurfaceImage::GetTextureClient(
+    KnowsCompositor* aKnowsCompositor) {
   MOZ_ASSERT(mTextureClient);
   MOZ_ASSERT(mTextureClient->GetAllocator() ==
-             aForwarder->GetTextureForwarder());
+             aKnowsCompositor->GetTextureForwarder());
   return mTextureClient;
 }
 
@@ -254,7 +256,7 @@ already_AddRefed<TextureClient> D3D9RecycleAllocator::Allocate(
   }
 
   return MakeAndAddRef<TextureClient>(data, aTextureFlags,
-                                      mSurfaceAllocator->GetTextureForwarder());
+                                      mKnowsCompositor->GetTextureForwarder());
 }
 
 already_AddRefed<TextureClient> D3D9RecycleAllocator::CreateOrRecycleClient(

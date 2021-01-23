@@ -8,10 +8,7 @@
 #define AppTrustDomain_h
 
 #include "mozpkix/pkixtypes.h"
-#include "mozilla/StaticMutex.h"
-#include "mozilla/UniquePtr.h"
 #include "nsDebug.h"
-#include "nsIX509CertDB.h"
 #include "ScopedNSSTypes.h"
 
 namespace mozilla {
@@ -36,6 +33,7 @@ class AppTrustDomain final : public mozilla::pkix::TrustDomain {
   virtual Result CheckRevocation(
       mozilla::pkix::EndEntityOrCA endEntityOrCA,
       const mozilla::pkix::CertID& certID, mozilla::pkix::Time time,
+      mozilla::pkix::Time validityPeriodBeginning,
       mozilla::pkix::Duration validityDuration,
       /*optional*/ const mozilla::pkix::Input* stapledOCSPresponse,
       /*optional*/ const mozilla::pkix::Input* aiaExtension) override;
@@ -78,10 +76,6 @@ class AppTrustDomain final : public mozilla::pkix::TrustDomain {
   void* mPinArg;  // non-owning!
   UniqueCERTCertificate mTrustedRoot;
   UniqueCERTCertificate mAddonsIntermediate;
-
-  static StaticMutex sMutex;
-  static UniquePtr<unsigned char[]> sDevImportedDERData;
-  static unsigned int sDevImportedDERLen;
 };
 
 }  // namespace psm

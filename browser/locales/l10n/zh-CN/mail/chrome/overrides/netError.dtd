@@ -1,0 +1,141 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "页面载入出错">
+<!ENTITY retry.label "重试">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "无法连接">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "此地址访问受限">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "找不到服务器">
+<!ENTITY dnsNotFound.longDesc "<ul> <li>请检查该地址是否输入错误，比如将<q><strong>www</strong>.example.com</q>错写成<q><strong>ww</strong>.example.com</q></li><li>如果您无法载入任何页面，请检查您计算机的网络连接。</li><li>如果您的计算机或网络受到防火墙或者代理服务器的保护，请确认 &brandShortName; 已被授权访问网络。</li></ul>">
+
+<!ENTITY fileNotFound.title "未找到文件">
+<!ENTITY fileNotFound.longDesc "<ul> 
+<li>请检查文件名的大小写或者其他输入错误。</li> 
+<li>请检查文件是否已被移动，重命名或删除。</li> 
+</ul>">
+
+<!ENTITY fileAccessDenied.title "访问文件被拒绝">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>它可能已被删除、移动，或者因文件权限拒绝访问。</li>
+</ul>
+">
+
+<!ENTITY generic.title "哎呀。">
+<!ENTITY generic.longDesc "<p>&brandShortName; 因未知原因无法载入此页面。</p>">
+
+<!ENTITY malformedURI.title "无效的地址">
+<!ENTITY malformedURI.longDesc "<ul> 
+<li>网页地址通常格式为 
+<strong>http://www.example.com/</strong></li> 
+<li>请确认您使用的是正斜杠（即 
+<strong>/</strong>）。</li> 
+</ul>">
+
+<!ENTITY netInterrupt.title "连接被中断">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "文档已过期">
+<!ENTITY notCached.longDesc "<p>您请求的文档已无法在缓存中找到。</p><ul><li>作为出于安全起见，&brandShortName; 不会自动重新获取敏感信息文档。</li><li>请点击重试并从网站来重新获取该文档。</li></ul>">
+
+<!ENTITY netOffline.title "脱机模式">
+<!ENTITY netOffline.longDesc2 "<ul> 
+<li>按“重试”切换到联机模式并重新加载此页面。</li> 
+</ul>">
+
+<!ENTITY contentEncodingError.title "内容编码错误">
+<!ENTITY contentEncodingError.longDesc " <ul>   <li>请联系网站所有者并告知该问题。</li> </ul> ">
+
+<!ENTITY unsafeContentType.title "不安全的文件类型">
+<!ENTITY unsafeContentType.longDesc " <ul>   <li>请联系网站所有者并告知该问题。</li> </ul> ">
+
+<!ENTITY netReset.title "连接被重置">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "连接超时">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "无法理解该地址">
+<!ENTITY unknownProtocolFound.longDesc "<ul> 
+<li>您可能需要安装其他软件以打开此地址。</li> 
+</ul>">
+
+<!ENTITY proxyConnectFailure.title "代理服务器拒绝连接">
+<!ENTITY proxyConnectFailure.longDesc "<ul><li>请检查浏览器的代理服务器设置是否正确。</li><li>请联系您的网络管理员以确认代理服务器工作正常。</li></ul>">
+
+<!ENTITY proxyResolveFailure.title "无法找到代理服务器">
+<!ENTITY proxyResolveFailure.longDesc "<ul><li>请检查浏览器的代理服务器设置是否正确。</li><li>请检查确认您的计算机有可用的网络连接。</li><li>如果您的计算机或网络受到防火墙或者代理服务器的保护，请确认 &brandShortName; 已被授权访问网络。</li></ul>">
+
+<!ENTITY redirectLoop.title "此页面重定向不正确">
+<!ENTITY redirectLoop.longDesc "<ul><li>此问题有时可能是因为禁用或拒绝接受 Cookie 导致的。</li></ul>">
+
+<!ENTITY unknownSocketType.title "意外的服务器响应">
+<!ENTITY unknownSocketType.longDesc "<ul> 
+<li>请检查您的系统安装了个人安全管理程序。</li> 
+<li>这可能是因为服务器端非标准的配置所导致。</li> 
+</ul>">
+
+<!ENTITY nssFailure2.title "安全连接失败">
+<!ENTITY nssFailure2.longDesc2 "<ul> 
+<li>你正要查看的网页无法显示，因为接收到的数据的真实性无法验证。</li> 
+<li>请联系网站所有者，向他们通报这一问题。</li> 
+</ul>">
+
+<!ENTITY nssBadCert.title "安全连接失败">
+<!ENTITY nssBadCert.longDesc2 "<ul> 
+<li>这可能是服务器配置的问题，或者有人尝试冒充该服务器所致。</li> 
+<li>如果您之前曾成功连接该服务器，那么此错误可能是暂时的，您可以稍后再试。</li> 
+</ul>">
+
+<!ENTITY sharedLongDesc "<ul> 
+<li>此站点暂时不可用或者太忙。请稍后再试。</li> 
+<li>如果您无法载入任何页面，请检查您计算机的网络连接。</li> 
+<li>如果您的计算机或网络受到防火墙或者代理服务器的保护，请确认 &brandShortName; 已被授权访问网络。</li> 
+</ul>">
+
+<!ENTITY cspBlocked.title "由于内容安全策略而被阻止">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; 阻止了这个页面载入，因为这个页面的内容安全政策不允许其以这种方式被载入。</p>">
+
+<!ENTITY xfoBlocked.title "因 X-Frame-Options 政策阻止">
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; 已依照该页面的 X-Frame-Options 政策阻止了其在此上下文中的载入。</p>">
+
+<!ENTITY corruptedContentErrorv2.title "损坏内容错误">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>您尝试查看的页面无法显示，因为检测到传输的数据含有错误。</p><ul><li>请联系此网站的管理员并告知此问题。</li></ul>">
+
+<!ENTITY securityOverride.linkText "或者，您可以添加一个例外…">
+<!ENTITY securityOverride.getMeOutOfHereButton "带我离开！">
+<!ENTITY securityOverride.exceptionButtonLabel "添加例外…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <button> tags. It uses strings already defined above. The
+button is included here (instead of netError.xhtml) because it exposes
+functionality specific to thunderbird. -->
+
+<!ENTITY securityOverride.warningContent "<p>如果您使用的是一个您不能完全信任的互联网连接，或者您并不使用警告的此服务器，您不应该添加一个例外。</p> 
+ 
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> 
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "远程 XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>请联系网站站长告知这个问题。</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "您的连接不安全">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> 使用了过时的安全技术，较容易遭受攻击。攻击者可以容易地获取您认为是安全的信息。需要该网站的管理员先修正服务器，然后您才能访问该网站。</p><p>错误代码：NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "页面已被封锁">
+
+<!ENTITY networkProtocolError.title "网络协议错误">
+<!ENTITY networkProtocolError.longDesc "<p>您尝试查看的页面无法显示，因为检测到了网络协议中的错误。</p><ul><li>建议向此网站的管理员反馈这个问题。</li></ul>">

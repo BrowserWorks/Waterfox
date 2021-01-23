@@ -2,6 +2,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from __future__ import absolute_import, print_function, unicode_literals
+
 from mozbuild.makeutil import (
     Makefile,
     read_dep_makefile,
@@ -10,8 +12,8 @@ from mozbuild.makeutil import (
 )
 from mozunit import main
 import os
+from six import StringIO
 import unittest
-from StringIO import StringIO
 
 
 class TestMakefile(unittest.TestCase):
@@ -20,67 +22,67 @@ class TestMakefile(unittest.TestCase):
         rule = Rule()
         rule.dump(out)
         self.assertEqual(out.getvalue(), '')
-        out.truncate(0)
 
+        out = StringIO()
         rule.add_targets(['foo', 'bar'])
         rule.dump(out)
         self.assertEqual(out.getvalue(), 'foo bar:\n')
-        out.truncate(0)
 
+        out = StringIO()
         rule.add_targets(['baz'])
         rule.add_dependencies(['qux', 'hoge', 'piyo'])
         rule.dump(out)
         self.assertEqual(out.getvalue(), 'foo bar baz: qux hoge piyo\n')
-        out.truncate(0)
 
+        out = StringIO()
         rule = Rule(['foo', 'bar'])
         rule.add_dependencies(['baz'])
         rule.add_commands(['echo $@'])
         rule.add_commands(['$(BAZ) -o $@ $<', '$(TOUCH) $@'])
         rule.dump(out)
         self.assertEqual(out.getvalue(),
-            'foo bar: baz\n' +
-            '\techo $@\n' +
-            '\t$(BAZ) -o $@ $<\n' +
-            '\t$(TOUCH) $@\n')
-        out.truncate(0)
+                         'foo bar: baz\n' +
+                         '\techo $@\n' +
+                         '\t$(BAZ) -o $@ $<\n' +
+                         '\t$(TOUCH) $@\n')
 
+        out = StringIO()
         rule = Rule(['foo'])
         rule.add_dependencies(['bar', 'foo', 'baz'])
         rule.dump(out)
         self.assertEqual(out.getvalue(), 'foo: bar baz\n')
-        out.truncate(0)
 
+        out = StringIO()
         rule.add_targets(['bar'])
         rule.dump(out)
         self.assertEqual(out.getvalue(), 'foo bar: baz\n')
-        out.truncate(0)
 
+        out = StringIO()
         rule.add_targets(['bar'])
         rule.dump(out)
         self.assertEqual(out.getvalue(), 'foo bar: baz\n')
-        out.truncate(0)
 
+        out = StringIO()
         rule.add_dependencies(['bar'])
         rule.dump(out)
         self.assertEqual(out.getvalue(), 'foo bar: baz\n')
-        out.truncate(0)
 
+        out = StringIO()
         rule.add_dependencies(['qux'])
         rule.dump(out)
         self.assertEqual(out.getvalue(), 'foo bar: baz qux\n')
-        out.truncate(0)
 
+        out = StringIO()
         rule.add_dependencies(['qux'])
         rule.dump(out)
         self.assertEqual(out.getvalue(), 'foo bar: baz qux\n')
-        out.truncate(0)
 
+        out = StringIO()
         rule.add_dependencies(['hoge', 'hoge'])
         rule.dump(out)
         self.assertEqual(out.getvalue(), 'foo bar: baz qux hoge\n')
-        out.truncate(0)
 
+        out = StringIO()
         rule.add_targets(['fuga', 'fuga'])
         rule.dump(out)
         self.assertEqual(out.getvalue(), 'foo bar fuga: baz qux hoge\n')
@@ -96,19 +98,19 @@ class TestMakefile(unittest.TestCase):
         rule.add_commands(['echo $@'])
         mk.dump(out, removal_guard=False)
         self.assertEqual(out.getvalue(),
-            'foo: bar baz qux\n' +
-            '\techo foo\n' +
-            'bar baz: hoge\n' +
-            '\techo $@\n')
-        out.truncate(0)
+                         'foo: bar baz qux\n' +
+                         '\techo foo\n' +
+                         'bar baz: hoge\n' +
+                         '\techo $@\n')
 
+        out = StringIO()
         mk.dump(out)
         self.assertEqual(out.getvalue(),
-            'foo: bar baz qux\n' +
-            '\techo foo\n' +
-            'bar baz: hoge\n' +
-            '\techo $@\n' +
-            'hoge qux:\n')
+                         'foo: bar baz qux\n' +
+                         '\techo foo\n' +
+                         'bar baz: hoge\n' +
+                         '\techo $@\n' +
+                         'hoge qux:\n')
 
     def test_statement(self):
         out = StringIO()
@@ -119,11 +121,11 @@ class TestMakefile(unittest.TestCase):
         mk.create_rule(['$(BAR)']).add_commands(['echo $@'])
         mk.dump(out, removal_guard=False)
         self.assertEqual(out.getvalue(),
-            'foo: bar\n' +
-            '\techo foo\n' +
-            'BAR = bar\n' +
-            '$(BAR):\n' +
-            '\techo $@\n')
+                         'foo: bar\n' +
+                         '\techo foo\n' +
+                         'BAR = bar\n' +
+                         '$(BAR):\n' +
+                         '\techo $@\n')
 
     @unittest.skipIf(os.name != 'nt', 'Test only applicable on Windows.')
     def test_path_normalization(self):
@@ -134,9 +136,9 @@ class TestMakefile(unittest.TestCase):
         rule.add_commands(['echo c:\\foo'])
         mk.dump(out)
         self.assertEqual(out.getvalue(),
-            'c:/foo: c:/bar c:/baz/qux\n' +
-            '\techo c:\\foo\n' +
-            'c:/bar c:/baz/qux:\n')
+                         'c:/foo: c:/bar c:/baz/qux\n' +
+                         '\techo c:\\foo\n' +
+                         'c:/bar c:/baz/qux:\n')
 
     def test_read_dep_makefile(self):
         input = StringIO(
@@ -160,6 +162,7 @@ class TestMakefile(unittest.TestCase):
         self.assertEqual(out.getvalue(),
                          'target: b c a\n' +
                          'a b c:\n')
+
 
 if __name__ == '__main__':
     main()

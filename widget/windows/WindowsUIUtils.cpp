@@ -12,18 +12,18 @@
 #include "WindowsUIUtils.h"
 
 #include "nsIObserverService.h"
-#include "nsIBaseWindow.h"
-#include "nsIDocShell.h"
 #include "nsIAppShellService.h"
 #include "nsAppShellCID.h"
-#include "nsIXULWindow.h"
 #include "mozilla/Services.h"
 #include "mozilla/WidgetUtils.h"
 #include "mozilla/WindowsVersion.h"
+#include "mozilla/media/MediaUtils.h"
 #include "nsString.h"
 #include "nsIWidget.h"
 #include "nsIWindowMediator.h"
 #include "nsPIDOMWindow.h"
+#include "nsWindowGfx.h"
+#include "Units.h"
 
 /* mingw currently doesn't support windows.ui.viewmanagement.h, so we disable it
  * until it's fixed. */
@@ -33,7 +33,6 @@
 
 #  pragma comment(lib, "runtimeobject.lib")
 
-using namespace mozilla;
 using namespace ABI::Windows::UI;
 using namespace ABI::Windows::UI::ViewManagement;
 using namespace Microsoft::WRL;
@@ -112,7 +111,26 @@ IDataTransferManagerInterop : public IUnknown {
 
 #  endif
 
+#  if !defined( \
+      ____x_ABI_CWindows_CApplicationModel_CDataTransfer_CIDataPackage4_INTERFACE_DEFINED__)
+#    define ____x_ABI_CWindows_CApplicationModel_CDataTransfer_CIDataPackage4_INTERFACE_DEFINED__
+
+MIDL_INTERFACE("13a24ec8-9382-536f-852a-3045e1b29a3b")
+IDataPackage4 : public IInspectable {
+ public:
+  virtual HRESULT STDMETHODCALLTYPE add_ShareCanceled(
+      __FITypedEventHandler_2_Windows__CApplicationModel__CDataTransfer__CDataPackage_IInspectable *
+          handler,
+      EventRegistrationToken * token) = 0;
+  virtual HRESULT STDMETHODCALLTYPE remove_ShareCanceled(
+      EventRegistrationToken token) = 0;
+};
+
+#  endif
+
 #endif
+
+using namespace mozilla;
 
 WindowsUIUtils::WindowsUIUtils() : mInTabletMode(eTabletModeUnknown) {}
 
@@ -122,6 +140,61 @@ WindowsUIUtils::~WindowsUIUtils() {}
  * Implement the nsISupports methods...
  */
 NS_IMPL_ISUPPORTS(WindowsUIUtils, nsIWindowsUIUtils)
+
+NS_IMETHODIMP
+WindowsUIUtils::GetSystemSmallIconSize(int32_t* aSize) {
+  NS_ENSURE_ARG(aSize);
+
+  mozilla::LayoutDeviceIntSize size =
+      nsWindowGfx::GetIconMetrics(nsWindowGfx::kSmallIcon);
+  *aSize = std::max(size.width, size.height);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+WindowsUIUtils::GetSystemLargeIconSize(int32_t* aSize) {
+  NS_ENSURE_ARG(aSize);
+
+  mozilla::LayoutDeviceIntSize size =
+      nsWindowGfx::GetIconMetrics(nsWindowGfx::kRegularIcon);
+  *aSize = std::max(size.width, size.height);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+WindowsUIUtils::SetWindowIcon(mozIDOMWindowProxy* aWindow,
+                              imgIContainer* aSmallIcon,
+                              imgIContainer* aBigIcon) {
+  NS_ENSURE_ARG(aWindow);
+
+  nsCOMPtr<nsIWidget> widget =
+      nsGlobalWindowOuter::Cast(aWindow)->GetMainWidget();
+  nsWindow* window = static_cast<nsWindow*>(widget.get());
+
+  nsresult rv;
+
+  if (aSmallIcon) {
+    HICON hIcon = nullptr;
+    rv = nsWindowGfx::CreateIcon(
+        aSmallIcon, false, mozilla::LayoutDeviceIntPoint(),
+        nsWindowGfx::GetIconMetrics(nsWindowGfx::kSmallIcon), &hIcon);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    window->SetSmallIcon(hIcon);
+  }
+
+  if (aBigIcon) {
+    HICON hIcon = nullptr;
+    rv = nsWindowGfx::CreateIcon(
+        aBigIcon, false, mozilla::LayoutDeviceIntPoint(),
+        nsWindowGfx::GetIconMetrics(nsWindowGfx::kRegularIcon), &hIcon);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    window->SetBigIcon(hIcon);
+  }
+
+  return NS_OK;
+}
 
 NS_IMETHODIMP
 WindowsUIUtils::GetInTabletMode(bool* aResult) {
@@ -201,124 +274,188 @@ WindowsUIUtils::UpdateTabletModeState() {
   return NS_OK;
 }
 
+#ifndef __MINGW32__
 struct HStringDeleter {
   typedef HSTRING pointer;
   void operator()(pointer aString) { WindowsDeleteString(aString); }
 };
 
-typedef mozilla::UniquePtr<HSTRING, HStringDeleter> HStringUniquePtr;
+typedef UniquePtr<HSTRING, HStringDeleter> HStringUniquePtr;
 
-NS_IMETHODIMP
-WindowsUIUtils::ShareUrl(const nsAString& aUrlToShare,
-                         const nsAString& aShareTitle) {
-#ifndef __MINGW32__
+Result<HStringUniquePtr, HRESULT> ConvertToWindowsString(
+    const nsAString& aStr) {
+  HSTRING rawStr;
+  HRESULT hr = WindowsCreateString(PromiseFlatString(aStr).get(), aStr.Length(),
+                                   &rawStr);
+  if (FAILED(hr)) {
+    return Err(hr);
+  }
+  return HStringUniquePtr(rawStr);
+}
+
+Result<Ok, nsresult> RequestShare(
+    const std::function<HRESULT(IDataRequestedEventArgs* pArgs)>& aCallback) {
   if (!IsWin10OrLater()) {
-    return NS_OK;
-  }
-
-  HSTRING rawTitle;
-  HRESULT hr = WindowsCreateString(PromiseFlatString(aShareTitle).get(),
-                                   aShareTitle.Length(), &rawTitle);
-  if (FAILED(hr)) {
-    return NS_OK;
-  }
-  HStringUniquePtr title(rawTitle);
-
-  HSTRING rawUrl;
-  hr = WindowsCreateString(PromiseFlatString(aUrlToShare).get(),
-                           aUrlToShare.Length(), &rawUrl);
-  if (FAILED(hr)) {
-    return NS_OK;
-  }
-  HStringUniquePtr url(rawUrl);
-
-  ComPtr<IUriRuntimeClassFactory> uriFactory;
-  hr = GetActivationFactory(
-      HStringReference(RuntimeClass_Windows_Foundation_Uri).Get(), &uriFactory);
-  if (FAILED(hr)) {
-    return NS_OK;
-  }
-
-  ComPtr<IUriRuntimeClass> uri;
-  hr = uriFactory->CreateUri(url.get(), &uri);
-  if (FAILED(hr)) {
-    return NS_OK;
+    return Err(NS_ERROR_FAILURE);
   }
 
   HWND hwnd = GetForegroundWindow();
   if (!hwnd) {
-    return NS_OK;
+    return Err(NS_ERROR_FAILURE);
   }
 
   ComPtr<IDataTransferManagerInterop> dtmInterop;
-  hr = RoGetActivationFactory(
+  ComPtr<IDataTransferManager> dtm;
+
+  HRESULT hr = RoGetActivationFactory(
       HStringReference(
           RuntimeClass_Windows_ApplicationModel_DataTransfer_DataTransferManager)
           .Get(),
       IID_PPV_ARGS(&dtmInterop));
-  if (FAILED(hr)) {
-    return NS_OK;
-  }
-
-  ComPtr<IDataTransferManager> dtm;
-  hr = dtmInterop->GetForWindow(hwnd, IID_PPV_ARGS(&dtm));
-  if (FAILED(hr)) {
-    return NS_OK;
+  if (FAILED(hr) ||
+      FAILED(dtmInterop->GetForWindow(hwnd, IID_PPV_ARGS(&dtm)))) {
+    return Err(NS_ERROR_FAILURE);
   }
 
   auto callback = Callback<
       ITypedEventHandler<DataTransferManager*, DataRequestedEventArgs*>>(
-      [uri = std::move(uri), title = std::move(title)](
-          IDataTransferManager*, IDataRequestedEventArgs* pArgs) -> HRESULT {
-        ComPtr<IDataRequest> spDataRequest;
-        HRESULT hr = pArgs->get_Request(&spDataRequest);
-        if (FAILED(hr)) {
-          return hr;
-        }
-
-        ComPtr<IDataPackage> spDataPackage;
-        hr = spDataRequest->get_Data(&spDataPackage);
-        if (FAILED(hr)) {
-          return hr;
-        }
-
-        ComPtr<IDataPackage2> spDataPackage2;
-        hr = spDataPackage->QueryInterface(IID_PPV_ARGS(&spDataPackage2));
-        if (FAILED(hr)) {
-          return hr;
-        }
-
-        ComPtr<IDataPackagePropertySet> spDataPackageProperties;
-        hr = spDataPackage->get_Properties(&spDataPackageProperties);
-        if (FAILED(hr)) {
-          return hr;
-        }
-
-        hr = spDataPackageProperties->put_Title(title.get());
-        if (FAILED(hr)) {
-          return hr;
-        }
-
-        hr = spDataPackage2->SetWebLink(uri.Get());
-        if (FAILED(hr)) {
-          return hr;
-        }
-
-        return S_OK;
+      [aCallback](IDataTransferManager*,
+                  IDataRequestedEventArgs* pArgs) -> HRESULT {
+        return aCallback(pArgs);
       });
 
   EventRegistrationToken dataRequestedToken;
-  hr = dtm->add_DataRequested(callback.Get(), &dataRequestedToken);
-  if (FAILED(hr)) {
-    return NS_OK;
+  if (FAILED(dtm->add_DataRequested(callback.Get(), &dataRequestedToken)) ||
+      FAILED(dtmInterop->ShowShareUIForWindow(hwnd))) {
+    return Err(NS_ERROR_FAILURE);
   }
 
-  hr = dtmInterop->ShowShareUIForWindow(hwnd);
-  if (FAILED(hr)) {
-    return NS_OK;
-  }
-
+  return Ok();
+}
 #endif
 
+RefPtr<SharePromise> WindowsUIUtils::Share(nsAutoString aTitle,
+                                           nsAutoString aText,
+                                           nsAutoString aUrl) {
+  auto promiseHolder = MakeRefPtr<
+      mozilla::media::Refcountable<MozPromiseHolder<SharePromise>>>();
+  RefPtr<SharePromise> promise = promiseHolder->Ensure(__func__);
+
+#ifndef __MINGW32__
+  auto result = RequestShare([promiseHolder, title = std::move(aTitle),
+                              text = std::move(aText), url = std::move(aUrl)](
+                                 IDataRequestedEventArgs* pArgs) {
+    ComPtr<IDataRequest> spDataRequest;
+    ComPtr<IDataPackage> spDataPackage;
+    ComPtr<IDataPackage2> spDataPackage2;
+    ComPtr<IDataPackage3> spDataPackage3;
+    ComPtr<IDataPackagePropertySet> spDataPackageProperties;
+
+    if (FAILED(pArgs->get_Request(&spDataRequest)) ||
+        FAILED(spDataRequest->get_Data(&spDataPackage)) ||
+        FAILED(spDataPackage.As(&spDataPackage2)) ||
+        FAILED(spDataPackage.As(&spDataPackage3)) ||
+        FAILED(spDataPackage->get_Properties(&spDataPackageProperties))) {
+      promiseHolder->Reject(NS_ERROR_FAILURE, __func__);
+      return E_FAIL;
+    }
+
+    /*
+     * Windows always requires a title, and an empty string does not work.
+     * Thus we trick the API by passing a whitespace when we have no title.
+     * https://docs.microsoft.com/en-us/windows/uwp/app-to-app/share-data
+     */
+    auto wTitle =
+        ConvertToWindowsString((title.IsVoid() || title.Length() == 0)
+                                   ? nsAutoString(NS_LITERAL_STRING(" "))
+                                   : title);
+    if (wTitle.isErr() ||
+        FAILED(spDataPackageProperties->put_Title(wTitle.unwrap().get()))) {
+      promiseHolder->Reject(NS_ERROR_FAILURE, __func__);
+      return E_FAIL;
+    }
+
+    // Assign even if empty, as Windows requires some data to share
+    auto wText = ConvertToWindowsString(text);
+    if (wText.isErr() || FAILED(spDataPackage->SetText(wText.unwrap().get()))) {
+      promiseHolder->Reject(NS_ERROR_FAILURE, __func__);
+      return E_FAIL;
+    }
+
+    if (!url.IsVoid()) {
+      auto wUrl = ConvertToWindowsString(url);
+      if (wUrl.isErr()) {
+        promiseHolder->Reject(NS_ERROR_FAILURE, __func__);
+        return wUrl.unwrapErr();
+      }
+
+      ComPtr<IUriRuntimeClassFactory> uriFactory;
+      ComPtr<IUriRuntimeClass> uri;
+
+      auto hr = GetActivationFactory(
+          HStringReference(RuntimeClass_Windows_Foundation_Uri).Get(),
+          &uriFactory);
+
+      if (FAILED(hr) ||
+          FAILED(uriFactory->CreateUri(wUrl.unwrap().get(), &uri)) ||
+          FAILED(spDataPackage2->SetWebLink(uri.Get()))) {
+        promiseHolder->RejectIfExists(NS_ERROR_FAILURE, __func__);
+        return E_FAIL;
+      }
+    }
+
+    auto completedCallback =
+        Callback<ITypedEventHandler<DataPackage*, ShareCompletedEventArgs*>>(
+            [promiseHolder](IDataPackage*,
+                            IShareCompletedEventArgs*) -> HRESULT {
+              promiseHolder->ResolveIfExists(true, __func__);
+              return S_OK;
+            });
+
+    EventRegistrationToken dataRequestedToken;
+    if (FAILED(spDataPackage3->add_ShareCompleted(completedCallback.Get(),
+                                                  &dataRequestedToken))) {
+      promiseHolder->Reject(NS_ERROR_FAILURE, __func__);
+      return E_FAIL;
+    }
+
+    ComPtr<IDataPackage4> spDataPackage4;
+    if (SUCCEEDED(spDataPackage.As(&spDataPackage4))) {
+      // Use SharedCanceled API only on supported versions of Windows
+      // So that the older ones can still use ShareUrl()
+
+      auto canceledCallback =
+          Callback<ITypedEventHandler<DataPackage*, IInspectable*>>(
+              [promiseHolder](IDataPackage*, IInspectable*) -> HRESULT {
+                promiseHolder->Reject(NS_ERROR_FAILURE, __func__);
+                return S_OK;
+              });
+
+      if (FAILED(spDataPackage4->add_ShareCanceled(canceledCallback.Get(),
+                                                   &dataRequestedToken))) {
+        promiseHolder->Reject(NS_ERROR_FAILURE, __func__);
+        return E_FAIL;
+      }
+    }
+
+    return S_OK;
+  });
+  if (result.isErr()) {
+    promiseHolder->Reject(result.unwrapErr(), __func__);
+  }
+#else
+  promiseHolder->Reject(NS_ERROR_FAILURE, __func__);
+#endif
+
+  return promise;
+}
+
+NS_IMETHODIMP
+WindowsUIUtils::ShareUrl(const nsAString& aUrlToShare,
+                         const nsAString& aShareTitle) {
+  nsAutoString text;
+  text.SetIsVoid(true);
+  WindowsUIUtils::Share(nsAutoString(aShareTitle), text,
+                        nsAutoString(aUrlToShare));
   return NS_OK;
 }

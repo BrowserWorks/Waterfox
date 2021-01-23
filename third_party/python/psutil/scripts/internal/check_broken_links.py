@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright (c) 2009, Giampaolo Rodola', Himanshu Shekhar.
 # All rights reserved. Use of this source code is governed by a
@@ -150,7 +150,7 @@ def parse_c(fname):
                 subidx = i + 1
                 while True:
                     nextline = lines[subidx].strip()
-                    if re.match('^\*     .+', nextline):
+                    if re.match(r'^\*     .+', nextline):
                         url += nextline[1:].strip()
                     else:
                         break
@@ -160,7 +160,7 @@ def parse_c(fname):
 
 
 def parse_generic(fname):
-    with open(fname) as f:
+    with open(fname, 'rt', errors='ignore') as f:
         text = f.read()
     return find_urls(text)
 
@@ -174,8 +174,8 @@ def get_urls(fname):
     elif fname.endswith('.c') or fname.endswith('.h'):
         return parse_c(fname)
     else:
-        with open(fname) as f:
-            if f.readline().strip().startswith('#!/usr/bin/env python'):
+        with open(fname, 'rt', errors='ignore') as f:
+            if f.readline().strip().startswith('#!/usr/bin/env python3'):
                 return parse_py(fname)
         return parse_generic(fname)
 

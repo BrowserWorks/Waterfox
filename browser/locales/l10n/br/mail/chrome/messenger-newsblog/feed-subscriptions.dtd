@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Koumanantoù da lanvioù">
+<!ENTITY learnMore.label             "Gouzout hiroc'h a-zivout al lanvioù">
+
+<!ENTITY feedTitle.label             "Titl :">
+<!ENTITY feedTitle.accesskey         "T">
+
+<!ENTITY feedLocation.label          "URL al lanv:">
+<!ENTITY feedLocation.accesskey      "U">
+<!ENTITY feedLocation2.placeholder   "Enankit un url lanv direizh">
+<!ENTITY locationValidate.label      "Talvoudañ">
+<!ENTITY validateText.label          "Gwiriañ talvoud al lanv.">
+
+<!ENTITY feedFolder.label            "Gwarediñ pennadoù al lanv e :">
+<!ENTITY feedFolder.accesskey        "n">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Gwiriañ ar pennadoù nevez bep ">
+<!ENTITY biffStart.accesskey         "p">
+<!ENTITY biffMinutes.label           "a vunutennoù">
+<!ENTITY biffMinutes.accesskey       "n">
+<!ENTITY biffDays.label              "a zevezhioù">
+<!ENTITY biffDays.accesskey          "z">
+<!ENTITY recommendedUnits.label      "An embanner a erbed:">
+
+<!ENTITY quickMode.label             "Diskouez krennad ar pennad e lec'h kargañ ar bajennad web">
+<!ENTITY quickMode.accesskey         "h">
+
+<!ENTITY autotagEnable.label         "Krouiñ klavioù ent emgefreek adalek anvioù rummadoù al lanv">
+<!ENTITY autotagEnable.accesskey     "t">
+<!ENTITY autotagUsePrefix.label      "Rakgeriañ ar c'hlavioù gant :">
+<!ENTITY autotagUsePrefix.accesskey  "R">
+<!ENTITY autoTagPrefix.placeholder   "Enankit ur rakger klav">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Ouzhpennañ">
+<!ENTITY button.addFeed.accesskey    "O">
+<!ENTITY button.verifyFeed.label     "Gwiriañ">
+<!ENTITY button.verifyFeed.accesskey "V">
+<!ENTITY button.updateFeed.label     "Embann">
+<!ENTITY button.updateFeed.accesskey "E">
+<!ENTITY button.removeFeed.label     "Dilemel">
+<!ENTITY button.removeFeed.accesskey "D">
+<!ENTITY button.importOPML.label     "Enporzhiañ">
+<!ENTITY button.importOPML.accesskey "i">
+<!ENTITY button.exportOPML.label     "Ezporzhiañ">
+<!ENTITY button.exportOPML.accesskey "z">
+<!ENTITY button.exportOPML.tooltip   "Ezporzhiañ al lanvioù gant ar framm teuliadoù; Reol + Klik pe Reol + Enankañ evit ezporzhiañ al lanvioù evel ur roll">
+
+<!ENTITY cmd.close.commandKey        "E">
+<!ENTITY button.close.label          "Serriñ">

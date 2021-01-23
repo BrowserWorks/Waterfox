@@ -27,27 +27,34 @@ class TransactionItem final {
 
   NS_DECL_CYCLE_COLLECTION_NATIVE_CLASS(TransactionItem)
 
-  nsresult AddChild(TransactionItem* aTransactionItem);
+  nsresult AddChild(TransactionItem& aTransactionItem);
   already_AddRefed<nsITransaction> GetTransaction();
-  nsresult GetIsBatch(bool* aIsBatch);
-  nsresult GetNumberOfChildren(int32_t* aNumChildren);
-  nsresult GetChild(int32_t aIndex, TransactionItem** aChild);
+  size_t NumberOfChildren() const {
+    return NumberOfUndoItems() + NumberOfRedoItems();
+  }
+  nsresult GetChild(size_t aIndex, TransactionItem** aChild);
 
-  nsresult DoTransaction();
-  nsresult UndoTransaction(TransactionManager* aTransactionManager);
-  nsresult RedoTransaction(TransactionManager* aTransactionManager);
+  MOZ_CAN_RUN_SCRIPT nsresult DoTransaction();
+  MOZ_CAN_RUN_SCRIPT nsresult
+  UndoTransaction(TransactionManager* aTransactionManager);
+  MOZ_CAN_RUN_SCRIPT nsresult
+  RedoTransaction(TransactionManager* aTransactionManager);
 
   nsCOMArray<nsISupports>& GetData() { return mData; }
 
  private:
-  nsresult UndoChildren(TransactionManager* aTransactionManager);
-  nsresult RedoChildren(TransactionManager* aTransactionManager);
+  MOZ_CAN_RUN_SCRIPT nsresult
+  UndoChildren(TransactionManager* aTransactionManager);
+  MOZ_CAN_RUN_SCRIPT nsresult
+  RedoChildren(TransactionManager* aTransactionManager);
 
-  nsresult RecoverFromUndoError(TransactionManager* aTransactionManager);
-  nsresult RecoverFromRedoError(TransactionManager* aTransactionManager);
+  MOZ_CAN_RUN_SCRIPT nsresult
+  RecoverFromUndoError(TransactionManager* aTransactionManager);
+  MOZ_CAN_RUN_SCRIPT nsresult
+  RecoverFromRedoError(TransactionManager* aTransactionManager);
 
-  nsresult GetNumberOfUndoItems(int32_t* aNumItems);
-  nsresult GetNumberOfRedoItems(int32_t* aNumItems);
+  size_t NumberOfUndoItems() const;
+  size_t NumberOfRedoItems() const;
 
   void CleanUp();
 

@@ -19,9 +19,6 @@
 #include "nsIChromeRegistry.h"
 #include "nsIFile.h"
 #include "nsIFileChannel.h"
-#include "nsIIOService.h"
-#include "nsILoadGroup.h"
-#include "nsIScriptSecurityManager.h"
 #include "nsIStandardURL.h"
 #include "nsNetUtil.h"
 #include "nsNetCID.h"
@@ -61,13 +58,6 @@ NS_IMETHODIMP
 nsChromeProtocolHandler::GetProtocolFlags(uint32_t* result) {
   *result = URI_STD | URI_IS_UI_RESOURCE | URI_IS_LOCAL_RESOURCE;
   return NS_OK;
-}
-
-NS_IMETHODIMP
-nsChromeProtocolHandler::NewURI(const nsACString& aSpec, const char* aCharset,
-                                nsIURI* aBaseURI, nsIURI** result) {
-  return nsChromeProtocolHandler::CreateNewURI(aSpec, aCharset, aBaseURI,
-                                               result);
 }
 
 /* static */ nsresult nsChromeProtocolHandler::CreateNewURI(

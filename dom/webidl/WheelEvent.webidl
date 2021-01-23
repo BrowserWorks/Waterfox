@@ -10,9 +10,11 @@
  * liability, trademark and document use rules apply.
  */
 
-[Constructor(DOMString type, optional WheelEventInit eventInitDict)]
+[Exposed=Window]
 interface WheelEvent : MouseEvent
 {
+  constructor(DOMString type, optional WheelEventInit eventInitDict = {});
+
   const unsigned long DOM_DELTA_PIXEL = 0x00;
   const unsigned long DOM_DELTA_LINE  = 0x01;
   const unsigned long DOM_DELTA_PAGE  = 0x02;

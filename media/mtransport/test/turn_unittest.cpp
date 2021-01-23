@@ -93,10 +93,10 @@ class TurnClient : public MtransportTest {
         received_(0),
         protocol_(IPPROTO_UDP) {}
 
-  ~TurnClient() {}
+  ~TurnClient() = default;
 
   static void SetUpTestCase() {
-    NrIceCtx::InitializeGlobals(false, false, false);
+    NrIceCtx::InitializeGlobals(NrIceCtx::GlobalConfig());
   }
 
   void SetTcp() { protocol_ = IPPROTO_TCP; }

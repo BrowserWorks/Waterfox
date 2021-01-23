@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "Post-dealain">
+<!ENTITY readMsgsLink.label           "Leugh teachdaireachdan">
+<!ENTITY composeMsgLink.label         "Sgrìobh teachdaireachd ùr">
+
+<!ENTITY newsSectionHdr.label         "Buidhnean-naidheachd">
+<!ENTITY subscribeNewsLink.label      "Rianaich fo-sgrìobhaidhean gu buidhnean-naidheachd">
+
+<!ENTITY feedsSectionHdr.label        "Inbhirean">
+<!ENTITY subscribeFeeds.label         "Rianaich fo-sgrìobhaidhean">
+
+<!ENTITY chat.label                   "Cabadaich">
+<!ENTITY movemail.label               "Movemail">
+
+<!ENTITY accountsSectionHdr.label     "Cunntasan">
+<!ENTITY subscribeImapFolders.label   "Rianaich fo-sgrìobhaidhean gu pasgain">
+<!ENTITY settingsLink.label           "Seall roghainnean a' chunntais seo">
+<!ENTITY setupNewAcct.label           "Suidhich cunntas:">
+
+<!ENTITY advFeaturesSectionHdr.label  "Feartan adhartach">
+<!ENTITY searchMsgsLink.label         "Rannsaich na teachdaireachdan">
+<!ENTITY filtersLink.label            "Rianaich criathragan nan teachdaireachd">
+<!ENTITY junkSettings.label           "Roghainnean a' phuist-thruilleis">
+<!ENTITY offlineLink.label            "Roghainnean airson obrachadh far loidhne">

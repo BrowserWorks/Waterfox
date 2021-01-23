@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE (tapToPlayPlugin): Mobile (used for touch interfaces) only has one type of plugin possible. -->
+
+<!ENTITY tapToPlayPlugin                                     "اضغط هنا لتفعيل الملحقة.">
+<!ENTITY clickToActivatePlugin                               "فعّل المُلحقة.">
+<!ENTITY checkForUpdates                                     "التمس التحديثات…">
+<!ENTITY blockedPlugin.label                                 "لقد حُجبت هذه الملحقة لحمايتك.">
+<!ENTITY hidePluginBtn.label                                 "أخفِ الملحقة">
+<!ENTITY managePlugins                                       "أدِر الملحقات…">
+
+<!-- LOCALIZATION NOTE (reloadPlugin.pre): include a trailing space as needed -->
+<!-- LOCALIZATION NOTE (reloadPlugin.middle): avoid leading/trailing spaces, this text is a link -->
+<!-- LOCALIZATION NOTE (reloadPlugin.post): include a starting space as needed -->
+
+<!ENTITY reloadPlugin.pre                                    "">
+<!ENTITY reloadPlugin.middle                                 "أعِد تحميل الصفحة">
+<!ENTITY reloadPlugin.post                                   " للمحاولة من جديد.">
+<!-- LOCALIZATION NOTE (report.please): This and the other report.* strings should be as short as possible, ideally 2-3 words. -->
+<!ENTITY report.please                                       "أرسِل بلاغ انهيار">
+<!ENTITY report.submitting                                   "يرسل البلاغ…">
+<!ENTITY report.submitted                                    "أُرسل البلاغ.">
+<!ENTITY report.disabled                                     "التبليغ بالانهيار معطل.">
+<!ENTITY report.failed                                       "فشل الإرسال.">
+<!ENTITY report.unavailable                                  "لا بلاغ متاح.">
+<!ENTITY report.comment                                      "ضع تعليقًا (التعليقات علنية)">
+<!ENTITY report.pageURL                                      "ضمِّن مسار الصفحة">
+
+<!ENTITY plugin.file                                         "ملف">
+<!ENTITY plugin.mimeTypes                                    "أنواع MIME">
+<!ENTITY plugin.flashProtectedMode.label                     "فعّل وضع الحماية لفلاش أدوبي">
+<!ENTITY plugin.enableBlocklists.label                       "احجب محتوى فلاش الخطير و المتطفّل">

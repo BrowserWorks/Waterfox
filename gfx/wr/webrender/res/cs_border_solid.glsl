@@ -45,15 +45,15 @@ varying vec2 vPos;
 
 #ifdef WR_VERTEX_SHADER
 
-in vec2 aTaskOrigin;
-in vec4 aRect;
-in vec4 aColor0;
-in vec4 aColor1;
-in int aFlags;
-in vec2 aWidths;
-in vec2 aRadii;
-in vec4 aHorizontallyAdjacentCorner;
-in vec4 aVerticallyAdjacentCorner;
+PER_INSTANCE in vec2 aTaskOrigin;
+PER_INSTANCE in vec4 aRect;
+PER_INSTANCE in vec4 aColor0;
+PER_INSTANCE in vec4 aColor1;
+PER_INSTANCE in int aFlags;
+PER_INSTANCE in vec2 aWidths;
+PER_INSTANCE in vec2 aRadii;
+PER_INSTANCE in vec4 aClipParams1;
+PER_INSTANCE in vec4 aClipParams2;
 
 vec2 get_outer_corner_scale(int segment) {
     vec2 p;
@@ -93,9 +93,10 @@ void main(void) {
         case SEGMENT_TOP_LEFT:
         case SEGMENT_TOP_RIGHT:
         case SEGMENT_BOTTOM_RIGHT:
-        case SEGMENT_BOTTOM_LEFT:
+        case SEGMENT_BOTTOM_LEFT: {
             mix_colors = do_aa ? MIX_AA : MIX_NO_AA;
             break;
+        }
         default:
             mix_colors = DONT_MIX;
             break;
@@ -111,16 +112,16 @@ void main(void) {
     vColorLine = vec4(outer, aWidths.y * -clip_sign.y, aWidths.x * clip_sign.x);
 
     vec2 horizontal_clip_sign = vec2(-clip_sign.x, clip_sign.y);
-    vHorizontalClipCenter_Sign = vec4(aHorizontallyAdjacentCorner.xy +
-                                      horizontal_clip_sign * aHorizontallyAdjacentCorner.zw,
+    vHorizontalClipCenter_Sign = vec4(aClipParams1.xy +
+                                      horizontal_clip_sign * aClipParams1.zw,
                                       horizontal_clip_sign);
-    vHorizontalClipRadii = aHorizontallyAdjacentCorner.zw;
+    vHorizontalClipRadii = aClipParams1.zw;
 
     vec2 vertical_clip_sign = vec2(clip_sign.x, -clip_sign.y);
-    vVerticalClipCenter_Sign = vec4(aVerticallyAdjacentCorner.xy +
-                                    vertical_clip_sign * aVerticallyAdjacentCorner.zw,
+    vVerticalClipCenter_Sign = vec4(aClipParams2.xy +
+                                    vertical_clip_sign * aClipParams2.zw,
                                     vertical_clip_sign);
-    vVerticalClipRadii = aVerticallyAdjacentCorner.zw;
+    vVerticalClipRadii = aClipParams2.zw;
 
     gl_Position = uTransform * vec4(aTaskOrigin + aRect.xy + vPos, 0.0, 1.0);
 }

@@ -15,9 +15,9 @@ namespace widget {
 
 static const char16_t UNICODE_BULLET = 0x2022;
 
-HeadlessLookAndFeel::HeadlessLookAndFeel() {}
+HeadlessLookAndFeel::HeadlessLookAndFeel() = default;
 
-HeadlessLookAndFeel::~HeadlessLookAndFeel() {}
+HeadlessLookAndFeel::~HeadlessLookAndFeel() = default;
 
 nsresult HeadlessLookAndFeel::NativeGetColor(ColorID aID, nscolor& aColor) {
   // For headless mode, we use GetStandinForNativeColor for everything we can,
@@ -27,8 +27,8 @@ nsresult HeadlessLookAndFeel::NativeGetColor(ColorID aID, nscolor& aColor) {
 
   switch (aID) {
     // Override the solid black that GetStandinForNativeColor provides for
-    // -moz-FieldText, to match our behavior under the real GTK.
-    case ColorID::MozFieldtext:
+    // FieldText, to match our behavior under the real GTK.
+    case ColorID::Fieldtext:
       aColor = NS_RGB(0x21, 0x21, 0x21);
       break;
 
@@ -285,6 +285,18 @@ nsresult HeadlessLookAndFeel::GetIntImpl(IntID aID, int32_t& aResult) {
       aResult = 1;
       break;
     case eIntID_GTKCSDReversedPlacement:
+      aResult = 0;
+      break;
+    case eIntID_SystemUsesDarkTheme:
+      aResult = 0;
+      break;
+    case eIntID_PrefersReducedMotion:
+      aResult = 0;
+      break;
+    case eIntID_PrimaryPointerCapabilities:
+      aResult = 0;
+      break;
+    case eIntID_AllPointerCapabilities:
       aResult = 0;
       break;
     default:

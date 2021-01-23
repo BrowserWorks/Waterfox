@@ -1,14 +1,17 @@
+//! Generate the ISA-specific settings.
+use std::collections::HashMap;
+
+use cranelift_codegen_shared::constant_hash::{generate_table, simple_hash};
+
 use crate::cdsl::camel_case;
 use crate::cdsl::settings::{
     BoolSetting, Predicate, Preset, Setting, SettingGroup, SpecificSetting,
 };
-use crate::constant_hash::{generate_table, simple_hash};
 use crate::error;
 use crate::srcgen::{Formatter, Match};
 use crate::unique_table::UniqueSeqTable;
-use std::collections::HashMap;
 
-pub enum ParentGroup {
+pub(crate) enum ParentGroup {
     None,
     Shared,
 }
@@ -79,7 +82,7 @@ fn gen_to_and_from_str(name: &str, values: &[&'static str], fmt: &mut Formatter)
             fmtln!(fmt, "f.write_str(match *self {");
             fmt.indent(|fmt| {
                 for v in values.iter() {
-                    fmtln!(fmt, "{}::{} => \"{}\",", name, camel_case(v), v);
+                    fmtln!(fmt, "Self::{} => \"{}\",", camel_case(v), v);
                 }
             });
             fmtln!(fmt, "})");
@@ -96,7 +99,7 @@ fn gen_to_and_from_str(name: &str, values: &[&'static str], fmt: &mut Formatter)
             fmtln!(fmt, "match s {");
             fmt.indent(|fmt| {
                 for v in values.iter() {
-                    fmtln!(fmt, "\"{}\" => Ok({}::{}),", v, name, camel_case(v));
+                    fmtln!(fmt, "\"{}\" => Ok(Self::{}),", v, camel_case(v));
                 }
                 fmtln!(fmt, "_ => Err(()),");
             });
@@ -196,7 +199,7 @@ fn gen_getters(group: &SettingGroup, fmt: &mut Formatter) {
         });
         fmtln!(fmt, "}");
 
-        if group.settings.len() > 0 {
+        if !group.settings.is_empty() {
             fmt.doc_comment("Dynamic numbered predicate getter.");
             fmtln!(fmt, "fn numbered_predicate(&self, p: usize) -> bool {");
             fmt.indent(|fmt| {
@@ -308,7 +311,9 @@ fn gen_descriptors(group: &SettingGroup, fmt: &mut Formatter) {
     hash_entries.extend(group.settings.iter().map(|x| SettingOrPreset::Setting(x)));
     hash_entries.extend(group.presets.iter().map(|x| SettingOrPreset::Preset(x)));
 
-    let hash_table = generate_table(&hash_entries, |entry| simple_hash(entry.name()));
+    let hash_table = generate_table(hash_entries.iter(), hash_entries.len(), |entry| {
+        simple_hash(entry.name())
+    });
     fmtln!(fmt, "static HASH_TABLE: [u16; {}] = [", hash_table.len());
     fmt.indent(|fmt| {
         for h in &hash_table {
@@ -429,7 +434,7 @@ fn gen_group(group: &SettingGroup, parent: ParentGroup, fmt: &mut Formatter) {
     gen_display(group, fmt);
 }
 
-pub fn generate(
+pub(crate) fn generate(
     settings: &SettingGroup,
     parent_group: ParentGroup,
     filename: &str,

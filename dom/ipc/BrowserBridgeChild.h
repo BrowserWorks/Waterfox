@@ -9,10 +9,18 @@
 
 #include "mozilla/dom/PBrowserBridgeChild.h"
 #include "mozilla/dom/BrowserChild.h"
+#include "mozilla/dom/ipc/IdType.h"
 
 namespace mozilla {
+
+namespace a11y {
+class RemoteIframeDocProxyAccessibleWrap;
+}
+
 namespace dom {
 class BrowsingContext;
+class ContentChild;
+class BrowserBridgeHost;
 
 /**
  * BrowserBridgeChild implements the child actor part of the PBrowserBridge
@@ -20,26 +28,24 @@ class BrowsingContext;
  */
 class BrowserBridgeChild : public PBrowserBridgeChild {
  public:
-  NS_INLINE_DECL_REFCOUNTING(BrowserBridgeChild);
+  typedef mozilla::layers::LayersId LayersId;
+
+  NS_INLINE_DECL_REFCOUNTING(BrowserBridgeChild, final);
 
   BrowserChild* Manager() {
-    MOZ_ASSERT(mIPCOpen);
+    MOZ_ASSERT(CanSend());
     return static_cast<BrowserChild*>(PBrowserBridgeChild::Manager());
   }
 
-  mozilla::layers::LayersId GetLayersId() { return mLayersId; }
+  TabId GetTabId() { return mId; }
+
+  LayersId GetLayersId() { return mLayersId; }
+
+  nsFrameLoader* GetFrameLoader() const { return mFrameLoader; }
 
   BrowsingContext* GetBrowsingContext() { return mBrowsingContext; }
 
-  // XXX(nika): We should have a load context here. (bug 1532664)
-  nsILoadContext* GetLoadContext() { return nullptr; }
-
-  static already_AddRefed<BrowserBridgeChild> Create(
-      nsFrameLoader* aFrameLoader, const TabContext& aContext,
-      const nsString& aRemoteType, BrowsingContext* aBrowsingContext);
-
-  void UpdateDimensions(const nsIntRect& aRect,
-                        const mozilla::ScreenIntSize& aSize);
+  nsILoadContext* GetLoadContext();
 
   void NavigateByKey(bool aForward, bool aForDocumentNavigation);
 
@@ -49,32 +55,62 @@ class BrowserBridgeChild : public PBrowserBridgeChild {
 
   void SetIsUnderHiddenEmbedderElement(bool aIsUnderHiddenEmbedderElement);
 
+  already_AddRefed<BrowserBridgeHost> FinishInit(nsFrameLoader* aFrameLoader);
+
+#if defined(ACCESSIBILITY) && defined(XP_WIN)
+  a11y::RemoteIframeDocProxyAccessibleWrap* GetEmbeddedDocAccessible() {
+    return mEmbeddedDocAccessible;
+  }
+#endif
+
   static BrowserBridgeChild* GetFrom(nsFrameLoader* aFrameLoader);
 
   static BrowserBridgeChild* GetFrom(nsIContent* aContent);
 
+  BrowserBridgeChild(BrowsingContext* aBrowsingContext, TabId aId,
+                     const LayersId& aLayersId);
+
  protected:
+  friend class ContentChild;
   friend class PBrowserBridgeChild;
 
-  mozilla::ipc::IPCResult RecvSetLayersId(
-      const mozilla::layers::LayersId& aLayersId);
-
-  mozilla::ipc::IPCResult RecvRequestFocus(const bool& aCanRaise);
+  mozilla::ipc::IPCResult RecvRequestFocus(const bool& aCanRaise,
+                                           const CallerType aCallerType);
 
   mozilla::ipc::IPCResult RecvMoveFocus(const bool& aForward,
                                         const bool& aForDocumentNavigation);
 
+  mozilla::ipc::IPCResult RecvSetEmbeddedDocAccessibleCOMProxy(
+      const IDispatchHolder& aCOMProxy);
+
+  mozilla::ipc::IPCResult RecvMaybeFireEmbedderLoadEvents(
+      EmbedderElementEventType aFireEventAtEmbeddingElement);
+
+  MOZ_CAN_RUN_SCRIPT_BOUNDARY
+  mozilla::ipc::IPCResult RecvScrollRectIntoView(
+      const nsRect& aRect, const ScrollAxis& aVertical,
+      const ScrollAxis& aHorizontal, const ScrollFlags& aScrollFlags,
+      const int32_t& aAppUnitsPerDevPixel);
+
+  mozilla::ipc::IPCResult RecvSubFrameCrashed();
+
+  mozilla::ipc::IPCResult RecvAddBlockedNodeByClassifier();
+
   void ActorDestroy(ActorDestroyReason aWhy) override;
 
  private:
-  explicit BrowserBridgeChild(nsFrameLoader* aFrameLoader,
-                              BrowsingContext* aBrowsingContext);
   ~BrowserBridgeChild();
 
-  mozilla::layers::LayersId mLayersId;
-  bool mIPCOpen;
+  void UnblockOwnerDocsLoadEvent();
+
+  TabId mId;
+  LayersId mLayersId;
+  bool mHadInitialLoad = false;
   RefPtr<nsFrameLoader> mFrameLoader;
   RefPtr<BrowsingContext> mBrowsingContext;
+#if defined(ACCESSIBILITY) && defined(XP_WIN)
+  RefPtr<a11y::RemoteIframeDocProxyAccessibleWrap> mEmbeddedDocAccessible;
+#endif
 };
 
 }  // namespace dom

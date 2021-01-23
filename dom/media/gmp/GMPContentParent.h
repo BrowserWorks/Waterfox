@@ -22,7 +22,9 @@ class GMPContentParent final : public PGMPContentParent, public GMPSharedMem {
   friend class PGMPContentParent;
 
  public:
-  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(GMPContentParent)
+  // Mark AddRef and Release as `final`, as they overload pure virtual
+  // implementations in PGMPContentParent.
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(GMPContentParent, final)
 
   explicit GMPContentParent(GMPParent* aParent = nullptr);
 
@@ -68,16 +70,6 @@ class GMPContentParent final : public PGMPContentParent, public GMPSharedMem {
   ~GMPContentParent();
 
   void ActorDestroy(ActorDestroyReason aWhy) override;
-
-  PGMPVideoDecoderParent* AllocPGMPVideoDecoderParent(
-      const uint32_t& aDecryptorId) override;
-  bool DeallocPGMPVideoDecoderParent(PGMPVideoDecoderParent* aActor) override;
-
-  PGMPVideoEncoderParent* AllocPGMPVideoEncoderParent() override;
-  bool DeallocPGMPVideoEncoderParent(PGMPVideoEncoderParent* aActor) override;
-
-  PChromiumCDMParent* AllocPChromiumCDMParent() override;
-  bool DeallocPChromiumCDMParent(PChromiumCDMParent* aActor) override;
 
   void CloseIfUnused();
   // Needed because NewRunnableMethod tried to use the class that the method

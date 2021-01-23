@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "ברוך בואך ל־&brandShortName;">
+<!ENTITY header2.label "האם ברצונך לקבל כתובת דוא״ל חדשה?">
+<!ENTITY other.languages "אנו מציגים אך ורק ספקים המציעים כתובות באזור שלך. יש ללחוץ כאן כדי להציג את כל הספקים.">
+<!ENTITY error.line1 "מצטערים, לא מצאנו אף כתובת דוא״ל להציע.">
+<!ENTITY error.line2 "אתה יכול לחפש כינויים או מונחים אחרים כדי למצוא עוד כתובות דוא״ל">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before "כמו כן, ניתן לנסות אחד מ">
+<!ENTITY error.suggest.middle "חשבונות דואר חופשיים חלופיים">
+<!ENTITY error.suggest.after ".">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before " שלום">
+<!ENTITY success.title.after ", כתובות הדואר הבאות זמינות עבורך:">
+<!ENTITY success.tip "(אתה יכול לחפש כינויים או מונחים אחרים כדי למצוא עוד כתובות דוא״ל)">
+<!ENTITY partnership.description "בשיתוף עם מספר ספקים, יש באפשרות &brandShortName; להציע לך חשבון דוא״ל חדש. עליך פשוט למלא את השם המלא שלך, או כל צמד מילים אחר שעולה על דעתך בשדות שלהלן כדי להתחיל.">
+<!ENTITY existing.header "האם כבר יש ברשותך כתובת שתרצה לעשות בה שימוש?">
+<!ENTITY tinyheader.title "יש לך כתובת?">
+<!ENTITY tinyheader.existing "דלג על זה והשתמש בדוא״ל קיים">
+<!ENTITY content.close "אני חושב שאני אגדיר את החשבון שלי מאוחר יותר.">
+<!ENTITY successful.title "ברכותינו!">
+<!ENTITY successful.successMessage "חשבונך הוגדר בהצלחה.">
+<!ENTITY successful.write "כתוב כמה הודעות דוא״ל">
+<!ENTITY successful.write.desc "ספרו לחבריכם ומשפחתכם על הכתובת החדשה שלכם.<br/> בשביל זה השגתם את הכתובת הזאת, לא?">
+<!ENTITY successful.customize "התאמה אישית של &brandShortName; עם מספר תוספות מגניבות">
+<!ENTITY successful.customize.desc "ישנן אלפי תוספות שמאפשרות לך להתאים את &brandShortName; לצרכיך המסוימים.">
+<!ENTITY successful.attach "צרף חתימה אישית לדוא״ל שלי">
+<!ENTITY successful.attach.desc "באפשרותך לצרף ציטוט או מעט פרטים אישיים על עצמך בכל הודעה שתישלח על ידיך.">
+<!ENTITY successful.close "סגור חלון זה.">
+<!ENTITY input.namePlaceholder "השם שלך או כינוי">
+<!ENTITY input.search "חפש">
+<!ENTITY search_engine.title "התאם את מנוע החיפוש שלך">
+<!ENTITY search_engine.message "ספק הדוא״ל שלך יכול גם לספק לך יכולות חיפוש ברשת.">
+<!ENTITY search_engine.button "סיום">

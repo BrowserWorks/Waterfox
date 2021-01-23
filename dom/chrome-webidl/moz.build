@@ -35,13 +35,25 @@ PREPROCESSED_WEBIDL_FILES = [
 WEBIDL_FILES = [
     'BrowsingContext.webidl',
     'ChannelWrapper.webidl',
+    'ClonedErrorHolder.webidl',
+    'DebuggerNotification.webidl',
+    'DebuggerNotificationObserver.webidl',
+    'DebuggerUtils.webidl',
+    'DocumentL10n.webidl',
+    'DOMCollectedFrames.webidl',
     'DominatorTree.webidl',
-    'DOMOverlays.webidl',
+    'DOMLocalization.webidl',
     'Flex.webidl',
+    'Fluent.webidl',
+    'FrameLoader.webidl',
     'HeapSnapshot.webidl',
     'InspectorUtils.webidl',
     'IteratorResult.webidl',
+    'JSActor.webidl',
+    'JSProcessActor.webidl',
     'JSWindowActor.webidl',
+    'L10nOverlays.webidl',
+    'Localization.webidl',
     'MatchGlob.webidl',
     'MatchPattern.webidl',
     'MessageManager.webidl',
@@ -73,4 +85,3 @@ if CONFIG['MOZ_PLACES']:
 WEBIDL_FILES += [
     'PrioEncoder.webidl',
 ]
-

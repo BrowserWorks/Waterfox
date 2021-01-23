@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "Kiegészítők">
+<!ENTITY aboutAddons.header2                    "Kiegészítők">
+
+<!ENTITY addonAction.enable                     "Engedélyezés">
+<!ENTITY addonAction.disable                    "Letiltás">
+<!ENTITY addonAction.uninstall                  "Eltávolítás">
+<!ENTITY addonAction.undo                       "Visszavonás">
+<!ENTITY addonAction.update                     "Frissítés">
+
+<!ENTITY addonUnsigned.message                  "A kiegészítőt nem tudta a &brandShortName; ellenőrizni.">
+<!ENTITY addonUnsigned.learnMore                "További tudnivalók">

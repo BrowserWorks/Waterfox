@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Tiɣmi">
+<!ENTITY lastPickedColor.label "Ini aneggaru i d-yettwadmen">
+<!ENTITY lastPickedColor.accessKey "n">
+<!ENTITY chooseColor1.label "Fren ini:">
+<!ENTITY chooseColor2.label "Sekcem azrir n yini HTML">
+<!ENTITY chooseColor2.accessKey "H">
+<!ENTITY setColorExample.label "(amedya.: &quot;#0000ff&quot; neɣ &quot;blue&quot;):">
+<!ENTITY default.label "Amezwer">
+<!ENTITY default.accessKey "A">
+<!ENTITY palette.label "Agalis n yiniten:">
+<!ENTITY standardPalette.label "Tizeɣt">
+<!ENTITY webPalette.label "Akk tiɣma web">
+<!ENTITY background.label "Agilal i:">
+<!ENTITY background.accessKey "g">
+<!ENTITY table.label "Tafelwit">
+<!ENTITY table.accessKey "T">
+<!ENTITY cell.label "Tabniqt(ti-in)">
+<!ENTITY cell.accessKey "b">

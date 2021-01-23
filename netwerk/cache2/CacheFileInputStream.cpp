@@ -27,6 +27,7 @@ CacheFileInputStream::Release() {
   }
 
   if (count == 1) {
+    CacheFileAutoLock lock(mFile);
     mFile->RemoveInput(this, mStatus);
   }
 
@@ -251,10 +252,11 @@ CacheFileInputStream::CloseWithStatus(nsresult aStatus) {
        "]",
        this, static_cast<uint32_t>(aStatus)));
 
-  return CloseWithStatusLocked(aStatus);
+  CloseWithStatusLocked(aStatus);
+  return NS_OK;
 }
 
-nsresult CacheFileInputStream::CloseWithStatusLocked(nsresult aStatus) {
+void CacheFileInputStream::CloseWithStatusLocked(nsresult aStatus) {
   LOG(
       ("CacheFileInputStream::CloseWithStatusLocked() [this=%p, "
        "aStatus=0x%08" PRIx32 "]",
@@ -266,8 +268,7 @@ nsresult CacheFileInputStream::CloseWithStatusLocked(nsresult aStatus) {
     // step out from ReadSegments. So if the stream is already closed the
     // following assertion must be true.
     MOZ_ASSERT(!mCallback || mInReadSegments);
-
-    return NS_OK;
+    return;
   }
 
   mClosed = true;
@@ -276,8 +277,6 @@ nsresult CacheFileInputStream::CloseWithStatusLocked(nsresult aStatus) {
   if (!mInReadSegments) {
     CleanUp();
   }
-
-  return NS_OK;
 }
 
 void CacheFileInputStream::CleanUp() {
@@ -292,7 +291,7 @@ void CacheFileInputStream::CleanUp() {
 
   MaybeNotifyListener();
 
-  mFile->ReleaseOutsideLock(mCacheEntryHandle.forget());
+  mFile->ReleaseOutsideLock(std::move(mCacheEntryHandle));
 }
 
 NS_IMETHODIMP
@@ -526,7 +525,7 @@ void CacheFileInputStream::ReleaseChunk() {
     mWaitingForUpdate = false;
   }
 
-  mFile->ReleaseOutsideLock(mChunk.forget());
+  mFile->ReleaseOutsideLock(std::move(mChunk));
 }
 
 void CacheFileInputStream::EnsureCorrectChunk(bool aReleaseOnly) {

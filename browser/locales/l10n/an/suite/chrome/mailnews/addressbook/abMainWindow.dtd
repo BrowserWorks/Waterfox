@@ -1,0 +1,120 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Title -->
+
+<!ENTITY addressbookWindow.title                        "Libreta d'adrezas">
+<!-- Menus:  the . means that the menu item isn't implemented yet -->
+<!-- File Menu -->
+
+
+<!ENTITY newContact.label                               "Contacto…">
+<!-- LOCALIZATION NOTE (newContact.accesskey) : DONT_TRANSLATE -->
+<!ENTITY newContact.accesskey                           "C">
+<!ENTITY newListCmd.label                               "Lista de correu…">
+<!-- LOCALIZATION NOTE (newListCmd.accesskey) : DONT_TRANSLATE -->  
+<!ENTITY newListCmd.accesskey                           "L">  
+<!ENTITY newAddressBookCmd.label                        "Libreta de direcciones…"> 
+<!ENTITY newAddressBookCmd.accesskey                    "o">  
+<!ENTITY newLDAPDirectoryCmd.label                      "Directorio LDAP…">
+<!-- LOCALIZATION NOTE (newLDAPDirectoryCmd.accesskey) : DONT_TRANSLATE -->
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "D">
+<!ENTITY newIM.label                                    "IM">
+<!ENTITY printContactViewCmd.label                      "Imprimir contacto…">
+<!ENTITY printContactViewCmd.accesskey                  "p">
+<!ENTITY printPreviewContactViewCmd.label               "Vista preliminar d'o contacto">
+<!ENTITY printPreviewContactViewCmd.accesskey           "V">
+<!ENTITY printContactViewCmd.key                        "P">
+<!ENTITY printAddressBook.label                         "Imprentar libreta d'adrezas…"> 
+<!ENTITY printAddressBook.accesskey                     "a"> 
+<!ENTITY printPreviewAddressBook.label                  "Vista preliminar d'a libreta d'adrezas"> 
+<!ENTITY printPreviewAddressBook.accesskey              "b">
+<!-- Edit Menu -->
+
+<!ENTITY deleteAbCmd.label                              "Eliminar libreta d'adrezas">  
+<!ENTITY deleteContactCmd.label                         "Eliminar contacto">
+<!ENTITY deleteContactsCmd.label                        "Eliminar contactos trigaus">
+<!ENTITY deleteListCmd.label                            "Eliminar lista">
+<!ENTITY deleteListsCmd.label                           "Eliminar listas trigadas">
+<!ENTITY deleteItemsCmd.label                           "Eliminar elementos trigaus">
+<!ENTITY swapFirstNameLastNameCmd.label                 "Intercambiar nombre y apellidos">
+<!ENTITY swapFirstNameLastNameCmd.accesskey             "y">  
+<!ENTITY propertiesCmd.label                            "Propiedatz…">
+<!-- LOCALIZATION NOTE (propertiesCmd.accesskey) : DONT_TRANSLATE -->  
+<!ENTITY propertiesCmd.accesskey                        "i">  
+<!ENTITY propertiesCmd.key                              "i">  
+<!-- View Menu -->
+
+<!ENTITY showAbToolbarCmd.label                         "Barra de ferramientas de direcciones"> 
+<!ENTITY showAbToolbarCmd.accesskey                     "o">  
+<!ENTITY layoutMenu.label                               "Layout">
+<!ENTITY layoutMenu.accesskey                           "L">
+<!ENTITY showDirectoryPane.label                        "Directory Pane">
+<!ENTITY showDirectoryPane.accesskey                    "D">
+<!ENTITY showContactPane2.label                         "Contact Pane">
+<!ENTITY showContactPane2.accesskey                     "C">
+<!ENTITY menu_ShowNameAs.label                          "Amostrar nombre como"> 
+<!ENTITY menu_ShowNameAs.accesskey                      "n"> 
+<!ENTITY firstLastCmd.label                             "Nombre y apellidos">  
+<!ENTITY firstLastCmd.accesskey                         "N"> 
+<!ENTITY lastFirstCmd.label                             "Apellidos, nombre">  
+<!ENTITY lastFirstCmd.accesskey                         "l"> 
+<!ENTITY displayNameCmd.label                           "Nombre mostrado">  
+<!ENTITY displayNameCmd.accesskey                       "d"> 
+<!-- Tasks Menu -->
+
+<!ENTITY importCmd.label                                "Importar…">
+<!ENTITY importCmd.accesskey                            "I">
+<!ENTITY exportCmd.label                                "Exportar…">
+<!ENTITY exportCmd.accesskey                            "E">
+<!-- Toolbar and Popup items -->  
+
+<!ENTITY newContactButton.label                         "Nuevo contacto">
+<!ENTITY newContactButton.accesskey                     "c">
+<!ENTITY newlistButton.label                            "Nueva lista">  
+<!ENTITY newlistButton.accesskey                        "l">  
+<!ENTITY editItemButton.label                           "Propiedatz">
+<!ENTITY editItemButton.accesskey                       "P">
+<!ENTITY newmsgButton.label                             "Redactar">  
+<!ENTITY newmsgButton.accesskey                         "c">  
+<!ENTITY deleteItemButton.label                         "Yliminar">
+<!ENTITY deleteItemButton.accesskey                     "l">
+<!ENTITY newimButton.label                              "Mensache instantanio">  
+<!ENTITY newimButton.accesskey                          "i">  
+<!ENTITY searchNameAndEmail.placeholder                 "Buscar en o nombre y adreza de correu">
+<!ENTITY searchBox.title                                "Buscar">
+<!-- Tooltips -->
+
+<!ENTITY addressbookToolbar.tooltip                     "Barra de ferramientas d'adrezas">
+<!ENTITY newContactButton.tooltip                       "Creyar un nuevo contacto d'a libreta d'adrezas">
+<!ENTITY newlistButton.tooltip                          "Creyar nueva lista"> 
+<!ENTITY editItemButton.tooltip                         "Editar l'elemento trigau">
+<!ENTITY newmsgButton.tooltip                           "Ninviar un mensache de correu"> 
+<!ENTITY newIM.tooltip                                  "Ninviar un mensache u conversación instantanios"> 
+<!ENTITY deleteItemButton.tooltip                       "Eliminar elemento trigau">
+<!ENTITY throbber.tooltip                               "Ir a la pachina prencipal de &vendorShortName;">
+<!ENTITY advancedButton.tooltip                         "Busca abanzada d'adrezas">
+<!-- Dir Tree header -->
+
+<!ENTITY dirTreeHeader.label                            "Libretas d'adrezas">
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+
+<!ENTITY contact.heading                                "Contact">
+<!ENTITY home.heading                                   "Home">
+<!ENTITY other.heading                                  "Other">
+<!ENTITY phone.heading                                  "Phone">
+<!ENTITY work.heading                                   "Work">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "Description">
+<!ENTITY addresses.heading                              "Addresses">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "Get Map">
+<!ENTITY mapIt.tooltip                                  "Display a map of this address from the Web">
+<!-- Status Bar -->  
+
+<!ENTITY statusText.label                               "">
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+<!-- Swap FN/LN UI  Set to "false" to show swap fn/ln UI -->
+
+<!ENTITY  hideSwapFnLnUI                                "true">

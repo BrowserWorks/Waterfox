@@ -11,8 +11,10 @@
  * liability, trademark and document use rules apply.
  */
 
-[Constructor(DOMString type, optional AnimationEventInit eventInitDict)]
+[Exposed=Window]
 interface AnimationEvent : Event {
+  constructor(DOMString type, optional AnimationEventInit eventInitDict = {});
+
   readonly attribute DOMString animationName;
   readonly attribute float     elapsedTime;
   readonly attribute DOMString pseudoElement;

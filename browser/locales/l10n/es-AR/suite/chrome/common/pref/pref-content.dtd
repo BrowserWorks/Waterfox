@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Appearance > Content prefs dialog.  -->
+
+<!ENTITY pref.content.title                     "Contenido">
+<!ENTITY pref.content.description               "Estas opciones influyen en cómo se muestran las páginas y los mensajes en &brandShortName;.">
+
+<!ENTITY siteIcons.label                        "Íconos del sitio web">
+<!ENTITY useSiteIcons.label                     "Mostrar íconos del sitio web">
+<!ENTITY useSiteIcons.accesskey                 "s">
+<!ENTITY useFavIcons2.label                     "Tratar de usar el favicon del servidor cuando la página no defina un ícono">
+<!ENTITY useFavIcons2.accesskey                 "i">
+
+<!ENTITY scrolling.label                        "Desplazamiento">
+<!ENTITY useAutoScroll.label                    "Usar desplazamiento automático">
+<!ENTITY useAutoScroll.accesskey                "t">
+<!ENTITY useSmoothScroll.label                  "Usar desplazamiento suave">
+<!ENTITY useSmoothScroll.accesskey              "U">
+
+<!ENTITY zoomPrefs.label                        "Opciones de zoom">
+<!-- LOCALIZATION NOTE (minZoom.label, maxZoom.label, percent.label):
+     single hbox with minZoom.label preceding the minZoom control and
+     maxZoom.label preceding the maxZoom control; percent.label shows
+     the ASCII '%' character at the end of that string -->
+<!ENTITY minZoom.label                          "Rango desde">
+<!ENTITY minZoom.accesskey                      "R">
+<!ENTITY maxZoom.label                          "hasta">
+<!ENTITY maxZoom.accesskey                      "h">
+<!ENTITY percent.label                          "&#37;">
+
+<!ENTITY siteSpecific.label                     "Recordar niveles de zoom para cada sitio">
+<!ENTITY siteSpecific.accesskey                 "m">
+<!ENTITY textZoomOnly.label                     "Hacer zoom sólo en el texto en lugar de la página completa">
+<!ENTITY textZoomOnly.accesskey                 "z">
+<!ENTITY enableAutomaticImageResizing.label     "Redimensionar las imágenes grandes para que quepan en la ventana del navegador">
+<!ENTITY enableAutomaticImageResizing.accesskey "R">
+
+<!ENTITY allowHWAccel.label                     "Usar aceleración gráfica cuando esté disponible">
+<!ENTITY allowHWAccel.accesskey                 "e">
+<!ENTITY blockAutoRefresh.label                 "Avisarme cuando sitios web traten de redirigir o recargar la página">
+<!ENTITY blockAutoRefresh.accesskey             "v">
+
+<!ENTITY showZoomStatusPanel.label              "Mostrar los controles de zoom en la barra de estado">

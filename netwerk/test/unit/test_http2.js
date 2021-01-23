@@ -1,6 +1,6 @@
 // test HTTP/2
 
-Cu.importGlobalProperties(["XMLHttpRequest"]);
+"use strict";
 
 // Generate a small and a large post with known pre-calculated md5 sums
 function generateContent(size) {
@@ -213,15 +213,10 @@ Http2ContinuedHeaderListener.prototype = new Http2CheckListener();
 
 Http2ContinuedHeaderListener.prototype.onStopsLeft = 2;
 
-Http2ContinuedHeaderListener.prototype.QueryInterface = function(aIID) {
-  if (
-    aIID.equals(Ci.nsIHttpPushListener) ||
-    aIID.equals(Ci.nsIStreamListener)
-  ) {
-    return this;
-  }
-  throw Cr.NS_ERROR_NO_INTERFACE;
-};
+Http2ContinuedHeaderListener.prototype.QueryInterface = ChromeUtils.generateQI([
+  "nsIHttpPushListener",
+  "nsIStreamListener",
+]);
 
 Http2ContinuedHeaderListener.prototype.getInterface = function(aIID) {
   return this.QueryInterface(aIID);
@@ -782,12 +777,7 @@ function h1ServerWK(metadata, response) {
   response.setHeader("Access-Control-Allow-Origin", "*", false);
   response.setHeader("Access-Control-Allow-Method", "GET", false);
 
-  var body =
-    '{"http://foo.example.com:' +
-    httpserv.identity.primaryPort +
-    '": { "tls-ports": [' +
-    serverPort +
-    "] }}";
+  var body = '["http://foo.example.com:' + httpserv.identity.primaryPort + '"]';
   response.bodyOutputStream.write(body, body.length);
 }
 
@@ -811,11 +801,7 @@ function h1ServerWK2(metadata, response) {
   response.setHeader("Access-Control-Allow-Method", "GET", false);
 
   var body =
-    '{"http://foo.example.com:' +
-    httpserv2.identity.primaryPort +
-    '": { "tls-ports": [' +
-    serverPort +
-    "] }}";
+    '["http://foo.example.com:' + httpserv2.identity.primaryPort + '"]';
   response.bodyOutputStream.write(body, body.length);
 }
 function test_http2_altsvc() {
@@ -830,19 +816,14 @@ var Http2PushApiListener = function() {};
 Http2PushApiListener.prototype = {
   checksPending: 9, // 4 onDataAvailable and 5 onStop
 
-  getInterface: function(aIID) {
+  getInterface(aIID) {
     return this.QueryInterface(aIID);
   },
 
-  QueryInterface: function(aIID) {
-    if (
-      aIID.equals(Ci.nsIHttpPushListener) ||
-      aIID.equals(Ci.nsIStreamListener)
-    ) {
-      return this;
-    }
-    throw Cr.NS_ERROR_NO_INTERFACE;
-  },
+  QueryInterface: ChromeUtils.generateQI([
+    "nsIHttpPushListener",
+    "nsIStreamListener",
+  ]),
 
   // nsIHttpPushListener
   onPush: function onPush(associatedChannel, pushChannel) {
@@ -1196,7 +1177,7 @@ FromDiskCacheListener.prototype = {
       // we don't have this hiding in the push cache somewhere - if we do, it
       // didn't get cancelled, and we have a bug.
       var chan = makeChan("https://localhost:" + serverPort + "/diskcache");
-      chan.listener = new PulledDiskCacheListener();
+      var listener = new PulledDiskCacheListener();
       chan.loadGroup = loadGroup;
       chan.asyncOpen(listener);
     });
@@ -1216,7 +1197,7 @@ Http2DiskCachePushListener.onStopRequest = function(request, status) {
   // Now we need to open a channel to ensure we get data from the disk cache
   // for the pushed item, instead of from the push cache.
   var chan = makeChan("https://localhost:" + serverPort + "/diskcache");
-  chan.listener = new FromDiskCacheListener();
+  var listener = new FromDiskCacheListener();
   chan.loadGroup = loadGroup;
   chan.asyncOpen(listener);
 };
@@ -1386,7 +1367,7 @@ function resetPrefs() {
   prefs.setBoolPref("network.http.altsvc.enabled", altsvcpref1);
   prefs.setBoolPref("network.http.altsvc.oe", altsvcpref2);
   prefs.clearUserPref("network.dns.localDomains");
-  prefs.clearUserPref("network.cookieSettings.unblocked_for_testing");
+  prefs.clearUserPref("network.cookieJarSettings.unblocked_for_testing");
 }
 
 function run_test() {
@@ -1430,7 +1411,7 @@ function run_test() {
     "network.dns.localDomains",
     "foo.example.com, bar.example.com"
   );
-  prefs.setBoolPref("network.cookieSettings.unblocked_for_testing", true);
+  prefs.setBoolPref("network.cookieJarSettings.unblocked_for_testing", true);
 
   loadGroup = Cc["@mozilla.org/network/load-group;1"].createInstance(
     Ci.nsILoadGroup

@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Нова фасцикла сачуване претраге">
+<!ENTITY name.label                 "Име:">
+<!ENTITY name.accesskey             "И">
+<!ENTITY description.label          "Направи као подфасциклу фацикле:">
+<!ENTITY description.accesskey      "Н">
+
+<!ENTITY searchTermCaption.label "Подеси услове претраге коришћене за ову фасциклу сачуване претраге: ">
+
+<!ENTITY folderSelectionCaption.label "Изаберите које фасцикле треба претражити: ">
+<!ENTITY chooseFoldersButton.label "Изабери…">
+<!ENTITY chooseFoldersButton.accesskey "з">
+
+<!ENTITY searchOnline.label "Претражи на мрежи (даје ажурне резултате за IMAP и новинске фасцикле али повећава време потребно за отварање фасцикле)">
+<!ENTITY searchOnline.accesskey "м">
+<!ENTITY newFolderButton.label       "Направи">
+<!ENTITY newFolderButton.accesskey   "п">
+<!ENTITY editFolderButton.label      "Ажурирај">
+<!ENTITY editFolderButton.accesskey  "А">

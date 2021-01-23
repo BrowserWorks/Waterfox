@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "Additivos">
+<!ENTITY aboutAddons.header2                    "Tu additivos">
+
+<!ENTITY addonAction.enable                     "Habilitar">
+<!ENTITY addonAction.disable                    "Inactivar">
+<!ENTITY addonAction.uninstall                  "Disinstallar">
+<!ENTITY addonAction.undo                       "Disfacer">
+<!ENTITY addonAction.update                     "Actualisar">
+
+<!ENTITY addonUnsigned.message                  "Iste additivo non ha potite esser verificate per &brandShortName;.">
+<!ENTITY addonUnsigned.learnMore                "Saper plus">

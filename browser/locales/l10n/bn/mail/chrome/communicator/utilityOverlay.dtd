@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- these things need to move into utilityOverlay.xul -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+
+<!ENTITY fileMenu.label "ফাইল (F)">
+<!ENTITY fileMenu.accesskey "F">
+<!ENTITY newMenu.label "নতুন (N)">
+<!ENTITY newMenu.accesskey "N">
+
+<!ENTITY editMenu.label "সম্পাদনা (E)">
+<!ENTITY editMenu.accesskey "E">
+<!ENTITY undoCmd.label "পূর্বাবস্থায় ফিরিয়ে আনা (U)">
+<!ENTITY undoCmd.accesskey "U">
+<!ENTITY redoCmd.label "পুনরায় করা (R)">
+<!ENTITY redoCmd.accesskey "R">
+<!ENTITY deleteCmd.label "মুছে ফেলা (D)">
+<!ENTITY deleteCmd.accesskey "D">
+<!ENTITY preferencesCmdUnix.label "পছন্দসমূহ (n)">
+<!ENTITY preferencesCmdUnix.accesskey "n">
+
+<!ENTITY viewMenu.label "প্রদর্শন (V)">
+<!ENTITY viewMenu.accesskey "V">
+<!ENTITY viewToolbarsMenu.label "টুলবার (T)">
+<!ENTITY viewToolbarsMenu.accesskey "T">
+<!ENTITY showTaskbarCmd.label "স্ট্যাটাস বার (S)">
+<!ENTITY showTaskbarCmd.accesskey "S">
+
+<!ENTITY closeCmd.label "বন্ধ (C)">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "C">
+
+<!ENTITY quitApplicationCmd.label "প্রস্থান (x)">
+<!ENTITY quitApplicationCmd.key "Q">
+<!ENTITY quitApplicationCmd.accesskey "x">
+
+<!ENTITY quitApplicationCmdUnix.label "প্রস্থান (Q)">
+<!ENTITY quitApplicationCmdUnix.accesskey "Q">
+
+<!ENTITY quitApplicationCmdMac.label "&brandShortName; থেকে প্রস্থান (Q)">
+<!ENTITY quitApplicationCmdMac.accesskey "Q">

@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Загрузки">
+<!ENTITY aboutDownloads.header                     "Ваши загрузки">
+<!ENTITY aboutDownloads.empty                      "Нет загрузок">
+
+<!ENTITY aboutDownloads.open                       "Открыть">
+<!ENTITY aboutDownloads.remove                     "Удалить">
+<!ENTITY aboutDownloads.removeAll                  "Удалить все">
+<!ENTITY aboutDownloads.pause                      "Приостановить">
+<!ENTITY aboutDownloads.resume                     "Возобновить">
+<!ENTITY aboutDownloads.cancel                     "Отменить">
+<!ENTITY aboutDownloads.retry                      "Повторить">

@@ -41,6 +41,7 @@ add_task(async function step_2() {
   gBrowser.removeCurrentTab();
   gBrowser.selectTabAtIndex(1);
   gBrowser.removeCurrentTab();
+  gBrowser.selectTabAtIndex(0);
 
   let promises = [];
   for (let i = 1; i < gBrowser.tabs.length; i++) {
@@ -64,14 +65,13 @@ add_task(async function step_3() {
 
 add_task(async function step_4() {
   info("Running step 4 - ensure we don't register subframes as open pages");
-  let tab = BrowserTestUtils.addTab(gBrowser);
-  BrowserTestUtils.loadURI(
-    tab.linkedBrowser,
+  let tab = BrowserTestUtils.addTab(
+    gBrowser,
     'data:text/html,<body><iframe src=""></iframe></body>'
   );
   await BrowserTestUtils.browserLoaded(tab.linkedBrowser);
 
-  await ContentTask.spawn(tab.linkedBrowser, null, async function() {
+  await SpecialPowers.spawn(tab.linkedBrowser, [], async function() {
     let iframe_loaded = ContentTaskUtils.waitForEvent(
       content.document,
       "load",
@@ -96,8 +96,7 @@ add_task(async function step_6() {
     "Running step 6 - check swapBrowsersAndCloseOther preserves registered switch-to-tab result"
   );
   let tabToKeep = BrowserTestUtils.addTab(gBrowser);
-  let tab = BrowserTestUtils.addTab(gBrowser);
-  BrowserTestUtils.loadURI(tab.linkedBrowser, "about:mozilla");
+  let tab = BrowserTestUtils.addTab(gBrowser, "about:mozilla");
   await BrowserTestUtils.browserLoaded(tab.linkedBrowser);
 
   gBrowser.updateBrowserRemoteness(tabToKeep.linkedBrowser, {
@@ -162,11 +161,7 @@ function ensure_opentabs_match_db() {
       continue;
     }
 
-    for (
-      let i = 0;
-      i < browserWin.gBrowser.tabContainer.childElementCount;
-      i++
-    ) {
+    for (let i = 0; i < browserWin.gBrowser.tabs.length; i++) {
       let browser = browserWin.gBrowser.getBrowserAtIndex(i);
       let url = browser.currentURI.spec;
       if (browserWin.isBlankPageURL(url)) {
@@ -185,7 +180,11 @@ function ensure_opentabs_match_db() {
 
 async function checkAutocompleteResults(expected) {
   info("Searching open pages.");
-  await promiseAutocompleteResultPopup(RESTRICT_TOKEN_OPENPAGE);
+  await UrlbarTestUtils.promiseAutocompleteResultPopup({
+    window,
+    waitForFocus: SimpleTest.waitForFocus,
+    value: RESTRICT_TOKEN_OPENPAGE,
+  });
 
   let resultCount = UrlbarTestUtils.getResultCount(window);
   for (let i = 0; i < resultCount; i++) {
@@ -202,9 +201,6 @@ async function checkAutocompleteResults(expected) {
     );
 
     let url = result.url;
-    if (!UrlbarPrefs.get("quantumbar")) {
-      url = PlacesUtils.parseActionUrl(url).params.url;
-    }
 
     info(`Search for ${url} in open tabs.`);
     let inExpected = url in expected;

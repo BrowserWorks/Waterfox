@@ -24,6 +24,7 @@
 class gfxContext;
 class nsIFrame;
 class nsSVGFilterPaintCallback;
+struct WrFiltersHolder;
 
 namespace mozilla {
 namespace dom {
@@ -48,6 +49,10 @@ class UserSpaceMetrics;
  * http://www.w3.org/TR/SVG11/filters.html#FilterEffectsRegion
  */
 class nsFilterInstance {
+  template <typename T>
+  using Span = mozilla::Span<T>;
+  using StyleFilter = mozilla::StyleFilter;
+
   typedef mozilla::gfx::IntRect IntRect;
   typedef mozilla::gfx::SourceSurface SourceSurface;
   typedef mozilla::gfx::DrawTarget DrawTarget;
@@ -71,7 +76,7 @@ class nsFilterInstance {
    * @return A FilterDescription describing the filter.
    */
   static FilterDescription GetFilterDescription(
-      nsIContent* aFilteredElement, const nsTArray<nsStyleFilter>& aFilterChain,
+      nsIContent* aFilteredElement, Span<const StyleFilter> aFilterChain,
       bool aFilterInputIsTainted, const UserSpaceMetrics& aMetrics,
       const gfxRect& aBBox,
       nsTArray<RefPtr<SourceSurface>>& aOutAdditionalImages);
@@ -122,9 +127,10 @@ class nsFilterInstance {
    * Try to build WebRender filters for a frame if the filters applied to it are
    * supported.
    */
-  static bool BuildWebRenderFilters(nsIFrame* aFilteredFrame,
-                                    WrFiltersHolder& aWrFilters,
-                                    mozilla::Maybe<nsRect>& aPostFilterClip);
+  static bool BuildWebRenderFilters(
+      nsIFrame* aFilteredFrame,
+      mozilla::Span<const mozilla::StyleFilter> aFilters,
+      WrFiltersHolder& aWrFilters, mozilla::Maybe<nsRect>& aPostFilterClip);
 
  private:
   /**
@@ -153,7 +159,7 @@ class nsFilterInstance {
    */
   nsFilterInstance(nsIFrame* aTargetFrame, nsIContent* aTargetContent,
                    const UserSpaceMetrics& aMetrics,
-                   const nsTArray<nsStyleFilter>& aFilterChain,
+                   Span<const StyleFilter> aFilterChain,
                    bool aFilterInputIsTainted,
                    nsSVGFilterPaintCallback* aPaintCallback,
                    const gfxMatrix& aPaintTransform,
@@ -251,7 +257,7 @@ class nsFilterInstance {
    * mPrimitiveDescriptions and mInputImages. aFilterInputIsTainted describes
    * whether the SourceGraphic is tainted.
    */
-  nsresult BuildPrimitives(const nsTArray<nsStyleFilter>& aFilterChain,
+  nsresult BuildPrimitives(Span<const StyleFilter> aFilterChain,
                            nsIFrame* aTargetFrame, bool aFilterInputIsTainted);
 
   /**
@@ -261,8 +267,7 @@ class nsFilterInstance {
    * tainted.
    */
   nsresult BuildPrimitivesForFilter(
-      const nsStyleFilter& aFilter, nsIFrame* aTargetFrame,
-      bool aInputIsTainted,
+      const StyleFilter& aFilter, nsIFrame* aTargetFrame, bool aInputIsTainted,
       nsTArray<FilterPrimitiveDescription>& aPrimitiveDescriptions);
 
   /**

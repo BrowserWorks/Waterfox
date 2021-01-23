@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "ਲਿਸਟ ਵਿਸ਼ੇਸ਼ਤਾ">
+
+<!ENTITY ListType.label "ਲਿਸਟ ਟਾਈਪ">
+<!ENTITY bulletStyle.label "ਬਿੰਦੀ ਸਟਾਈਲ:">
+<!ENTITY startingNumber.label "ਇੱਥੋਂ ਸ਼ੁਰੂ:">
+<!ENTITY startingNumber.accessKey "S">
+<!ENTITY none.value "ਕੋਈ ਨਹੀਂ">
+<!ENTITY bulletList.value "ਬਿੰਦੀਆਂ (ਨਾ-ਅੰਕੀ) ਲਿਸਟ">
+<!ENTITY numberList.value "ਗਿਣਤੀ ਲਿਸਟ">
+<!ENTITY definitionList.value "ਲਿਸਟ ਪ੍ਰੀਭਾਸ਼ਾ">
+<!ENTITY changeEntireListRadio.label "ਐਂਟਰੀ ਲਿਸਟ ਬਦਲੋ">
+<!ENTITY changeEntireListRadio.accessKey "C">
+<!ENTITY changeSelectedRadio.label "ਚੁਣੀ ਐਂਟਰੀ ਬਦਲੋ">
+<!ENTITY changeSelectedRadio.accessKey "I">

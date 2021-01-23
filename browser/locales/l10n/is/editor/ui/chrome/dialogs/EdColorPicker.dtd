@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Litur">
+<!ENTITY lastPickedColor.label "Seinasti valinn litur">
+<!ENTITY lastPickedColor.accessKey "l">
+<!ENTITY setColor1.label "Smelltu á lit eða">
+<!ENTITY setColor2.label "sláðu inn HTML litakóða">
+<!ENTITY setColor2.accessKey "H">
+<!ENTITY setColorExample.label "(t.d.: &quot;#0000ff&quot; eða &quot;blue&quot;):">
+<!ENTITY default.label "Sjálfgefið">
+<!ENTITY default.accessKey "S">
+<!ENTITY palette.label "Litatafla:">
+<!ENTITY standardPalette.label "Venjulegt">
+<!ENTITY webPalette.label "Allir veflitir">
+<!ENTITY background.label "Bakgrunnur fyrir:">
+<!ENTITY background.accessKey "B">
+<!ENTITY table.label "Tafla">
+<!ENTITY table.accessKey "T">
+<!ENTITY cell.label "Hólf">
+<!ENTITY cell.accessKey "H">

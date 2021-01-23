@@ -7,13 +7,14 @@
 #define ChromiumCDMCallback_h_
 
 #include "mozilla/CDMProxy.h"
+#include "mozilla/ErrorResult.h"                      // For ErrorResult
 #include "mozilla/dom/MediaKeyStatusMapBinding.h"     // For MediaKeyStatus
 #include "mozilla/dom/MediaKeyMessageEventBinding.h"  // For MediaKeyMessageType
 #include "mozilla/gmp/GMPTypes.h"                     // For CDMKeyInformation
 
 class ChromiumCDMCallback {
  public:
-  virtual ~ChromiumCDMCallback() {}
+  virtual ~ChromiumCDMCallback() = default;
 
   virtual void SetSessionId(uint32_t aPromiseId,
                             const nsCString& aSessionId) = 0;
@@ -26,7 +27,7 @@ class ChromiumCDMCallback {
 
   virtual void ResolvePromise(uint32_t aPromiseId) = 0;
 
-  virtual void RejectPromise(uint32_t aPromiseId, nsresult aError,
+  virtual void RejectPromise(uint32_t aPromiseId, mozilla::ErrorResult&& aError,
                              const nsCString& aErrorMessage) = 0;
 
   virtual void SessionMessage(const nsACString& aSessionId,

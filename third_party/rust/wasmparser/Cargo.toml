@@ -3,7 +3,7 @@
 # When uploading crates to the registry Cargo will automatically
 # "normalize" Cargo.toml files for maximal compatibility
 # with all versions of Cargo and also rewrite `path` dependencies
-# to registry (e.g. crates.io) dependencies
+# to registry (e.g., crates.io) dependencies
 #
 # If you believe there's an error in this file please file an
 # issue against the rust-lang/cargo repository. If you're
@@ -11,21 +11,26 @@
 # will likely look very different (and much more reasonable)
 
 [package]
+edition = "2018"
 name = "wasmparser"
-version = "0.29.2"
+version = "0.51.4"
 authors = ["Yury Delendik <ydelendik@mozilla.com>"]
-exclude = ["fuzz/**/*", "tests/**/*"]
+exclude = ["fuzz/**/*", "tests/**/*", "testsuite/**/*"]
 description = "A simple event-driven library for parsing WebAssembly binary files.\n"
 keywords = ["parser", "WebAssembly", "wasm"]
 license = "Apache-2.0 WITH LLVM-exception"
-repository = "https://github.com/yurydelendik/wasmparser.rs"
-[dependencies.hashmap_core]
-version = "0.1.9"
-optional = true
+repository = "https://github.com/bytecodealliance/wasmparser.rs"
+
+[[bench]]
+name = "benchmark"
+harness = false
+[dev-dependencies.criterion]
+version = "0.3"
+
+[dev-dependencies.wast]
+version = "7.0.0"
 
 [features]
-core = ["hashmap_core"]
-default = ["std"]
-std = []
+deterministic = []
 [badges.travis-ci]
-repository = "yurydelendik/wasmparser.rs"
+repository = "bytecodealliance/wasmparser.rs"

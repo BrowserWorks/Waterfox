@@ -31,6 +31,7 @@
 #include "sslproto.h"
 #include "plhash.h"
 #include "mozilla/Sprintf.h"
+#include "mozilla/Unused.h"
 
 using namespace mozilla;
 using namespace mozilla::psm;
@@ -134,7 +135,7 @@ char* strtok2(char* string, const char* delims, char** newStr) {
 enum client_auth_option { caNone = 0, caRequire = 1, caRequest = 2 };
 
 // Structs for passing data into jobs on the thread pool
-typedef struct {
+struct server_info_t {
   int32_t listen_port;
   string cert_nickname;
   PLHashTable* host_cert_table;
@@ -147,9 +148,9 @@ typedef struct {
   PLHashTable* host_tls13_table;
   PLHashTable* host_rc4_table;
   PLHashTable* host_failhandshake_table;
-} server_info_t;
+};
 
-typedef struct {
+struct connection_info_t {
   PRFileDesc* client_sock;
   PRNetAddr client_addr;
   server_info_t* server_info;
@@ -160,12 +161,12 @@ typedef struct {
   bool http_proxy_only;
   // true if this connection is for a WebSocket
   bool iswebsocket;
-} connection_info_t;
+};
 
-typedef struct {
+struct server_match_t {
   string fullHost;
   bool matched;
-} server_match_t;
+};
 
 const int32_t BUF_SIZE = 16384;
 const int32_t BUF_MARGIN = 1024;
@@ -380,8 +381,35 @@ bool ConfigureSSLServerSocket(PRFileDesc* socket, server_info_t* si,
   SSL_OptionSet(ssl_socket, SSL_SECURITY, true);
   SSL_OptionSet(ssl_socket, SSL_HANDSHAKE_AS_CLIENT, false);
   SSL_OptionSet(ssl_socket, SSL_HANDSHAKE_AS_SERVER, true);
+  SSL_OptionSet(ssl_socket, SSL_ENABLE_SESSION_TICKETS, true);
 
   if (clientAuth != caNone) {
+    // If we're requesting or requiring a client certificate, we should
+    // configure NSS to include the "certificate_authorities" field in the
+    // certificate request message. That way we can test that gecko properly
+    // takes note of it.
+    UniqueCERTCertificate issuer(
+        CERT_FindCertIssuer(cert.get(), PR_Now(), certUsageAnyCA));
+    if (!issuer) {
+      LOG_DEBUG(("Failed to find issuer for %s\n", certnick));
+      return false;
+    }
+    UniqueCERTCertList issuerList(CERT_NewCertList());
+    if (!issuerList) {
+      LOG_ERROR(("Failed to allocate new CERTCertList\n"));
+      return false;
+    }
+    if (CERT_AddCertToListTail(issuerList.get(), issuer.get()) != SECSuccess) {
+      LOG_ERROR(("Failed to add issuer to issuerList\n"));
+      return false;
+    }
+    Unused << issuer.release();  // Ownership transferred to issuerList.
+    if (SSL_SetTrustAnchors(ssl_socket, issuerList.get()) != SECSuccess) {
+      LOG_ERROR(
+          ("Failed to set certificate_authorities list for client "
+           "authentication\n"));
+      return false;
+    }
     SSL_OptionSet(ssl_socket, SSL_REQUEST_CERTIFICATE, true);
     SSL_OptionSet(ssl_socket, SSL_REQUIRE_CERTIFICATE, clientAuth == caRequire);
   }

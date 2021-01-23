@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# BuBBaX <mikebubbax@yahoo.com>
+# Laudatti <Laudatti@gmail.com>
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- extracted from content/pref-proxies.xul -->
+
+<!--LOCALIZATION NOTE : FILE The Proxies preferences dialog -->
+<!ENTITY  pref.proxies.title            "Proxy">
+<!ENTITY  pref.proxies.desc             "A Proxy is a network service that can filter and speed up your Internet connection.">
+<!ENTITY  proxyTitle.label              "Configurare proxy-uri pentru acces la internet">
+<!ENTITY  directTypeRadio.label         "Conexiune directă la internet">
+<!ENTITY  directTypeRadio.accesskey     "d">
+<!ENTITY  systemTypeRadio.label         "Folosește setările proxy ale sistemului">
+<!ENTITY  systemTypeRadio.accesskey     "u">
+<!ENTITY  manualTypeRadio.label         "Configurare proxy manuală:">
+<!ENTITY  manualTypeRadio.accesskey     "m">
+<!ENTITY  wpadTypeRadio.label           "Detectează automat setările pentru Proxy">
+<!ENTITY  wpadTypeRadio.accesskey       "a">
+<!ENTITY  autoTypeRadio.label           "URL de configurare proxy automată:">
+<!ENTITY  autoTypeRadio.accesskey       "c">
+<!ENTITY  reload.label                  "Reîncarcă">
+<!ENTITY  reload.accesskey              "R">
+<!ENTITY  http.label                    "Proxy:">
+<!ENTITY  http.accesskey                "P">
+<!ENTITY  port.label                    "Port:">
+<!ENTITY  HTTPPort.accesskey            "o">
+<!ENTITY  advanced.label                "Avansat…">
+<!ENTITY  advanced.accesskey            "v">
+<!ENTITY  noproxy.label                 "Niciun proxy pentru:">
+<!ENTITY  noproxy.accesskey             "N">
+<!ENTITY  noproxyExplain.label          "Exemplu: .mozilla.org, .net.nz, 192.168.1.0/24">

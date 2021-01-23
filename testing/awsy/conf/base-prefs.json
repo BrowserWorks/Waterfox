@@ -1,5 +1,5 @@
 {
-    "browser.urlbar.userMadeSearchSuggestionsChoice": true,
+    "browser.tabs.remote.separatePrivilegedContentProcess": true,
     "javascript.options.asyncstack": false,
     "image.mem.surfacecache.min_expiration_ms": 10000,
     "network.proxy.socks": "localhost",

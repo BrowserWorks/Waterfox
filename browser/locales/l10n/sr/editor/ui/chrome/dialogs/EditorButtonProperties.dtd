@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Својства дугмета">
+
+<!ENTITY Settings.label "Подешавања">
+
+<!ENTITY ButtonType.label "Врста">
+<!ENTITY ButtonType.accesskey "т">
+<!ENTITY submit.value "Поднеси">
+<!ENTITY reset.value "Поново постави">
+<!ENTITY button.value "Дугме">
+
+<!ENTITY ButtonName.label "Назив:">
+<!ENTITY ButtonName.accesskey "Н">
+<!ENTITY ButtonValue.label "Вредност:">
+<!ENTITY ButtonValue.accesskey "В">
+<!ENTITY tabIndex.label "Индекс језичка:">
+<!ENTITY tabIndex.accesskey "И">
+<!ENTITY ButtonDisabled.label "Онемогућено">
+<!ENTITY ButtonDisabled.accesskey "О">
+<!ENTITY AccessKey.label "Приступни кључ:">
+<!ENTITY AccessKey.accesskey "к">
+
+<!ENTITY RemoveButton.label "Уклони дугме">
+<!ENTITY RemoveButton.accesskey "У">

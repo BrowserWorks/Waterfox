@@ -2,56 +2,63 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/* globals ReflectedFluentElement */
+import { recordTelemetryEvent } from "../aboutLoginsUtils.js";
 
-class LoginFilter extends ReflectedFluentElement {
+export default class LoginFilter extends HTMLElement {
   connectedCallback() {
-    if (this.children.length) {
+    if (this.shadowRoot) {
       return;
     }
 
     let loginFilterTemplate = document.querySelector("#login-filter-template");
-    this.attachShadow({ mode: "open" }).appendChild(
-      loginFilterTemplate.content.cloneNode(true)
-    );
+    let shadowRoot = this.attachShadow({ mode: "open" });
+    document.l10n.connectRoot(shadowRoot);
+    shadowRoot.appendChild(loginFilterTemplate.content.cloneNode(true));
 
-    this.reflectFluentStrings();
+    this._input = this.shadowRoot.querySelector("input");
 
     this.addEventListener("input", this);
+    window.addEventListener("AboutLoginsFilterLogins", this);
+  }
+
+  focus() {
+    this._input.focus();
   }
 
   handleEvent(event) {
     switch (event.type) {
+      case "AboutLoginsFilterLogins": {
+        if (this.value != event.detail) {
+          this.value = event.detail;
+        }
+        break;
+      }
       case "input": {
-        this.dispatchEvent(
-          new CustomEvent("AboutLoginsFilterLogins", {
-            bubbles: true,
-            composed: true,
-            detail: event.originalTarget.value,
-          })
-        );
+        this._dispatchFilterEvent(event.originalTarget.value);
         break;
       }
     }
   }
 
-  static get reflectedFluentIDs() {
-    return ["placeholder"];
+  get value() {
+    return this._input.value;
   }
 
-  static get observedAttributes() {
-    return this.reflectedFluentIDs;
+  set value(val) {
+    this._input.value = val;
+    this._dispatchFilterEvent(val);
   }
 
-  handleSpecialCaseFluentString(attrName) {
-    if (attrName != "placeholder") {
-      return false;
-    }
-
-    this.shadowRoot.querySelector("input").placeholder = this.getAttribute(
-      attrName
+  _dispatchFilterEvent(value) {
+    this.dispatchEvent(
+      new CustomEvent("AboutLoginsFilterLogins", {
+        bubbles: true,
+        composed: true,
+        detail: value,
+      })
     );
-    return true;
+
+    recordTelemetryEvent({ object: "list", method: "filter" });
   }
 }
 customElements.define("login-filter", LoginFilter);

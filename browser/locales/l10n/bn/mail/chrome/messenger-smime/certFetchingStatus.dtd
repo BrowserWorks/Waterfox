@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE shown while obtaining certificates from a directory -->
+
+<!ENTITY title.label "সার্টিফিকেট ডাউনলোড করা হচ্ছে">
+<!ENTITY info.message "প্রাপকের সার্টিফিকেটের জন্য ডিরেক্টরি অনুসন্ধান করছে। এতে কয়েক মিনিট লাগতে পারে।">
+<!ENTITY stop.label "অনুসন্ধান বন্ধ করুন">

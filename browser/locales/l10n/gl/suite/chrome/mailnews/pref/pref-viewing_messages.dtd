@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.viewing.messages.title      "Visualización da mensaxe">
+<!ENTITY style.label                      "Estilo:">
+<!ENTITY style.accesskey                  "s">
+<!ENTITY regular.label                    "Normal">
+<!ENTITY bold.label                       "Negra">
+<!ENTITY italic.label                     "Cursiva">
+<!ENTITY boldItalic.label                 "Cursiva e negra">
+<!ENTITY size.label                       "Tamaño:">
+<!ENTITY size.accesskey                   "T">
+<!ENTITY bigger.label                     "Máis grande">
+<!ENTITY smaller.label                    "Menor">
+<!ENTITY color.label                      "Cor:">
+<!ENTITY color.accesskey                  "C">
+<!ENTITY displayPlainText.caption         "Mensaxes de texto sen formato">
+<!ENTITY fontPlainText.label              "Tipo de letra:">
+<!ENTITY fontPlainText.accesskey          "T">
+<!ENTITY displayQuoted.label              "Configuración para as mensaxes citadas:">
+<!ENTITY wrapInMsg.label                  "Axustar texto para axustarse á largura da xanela">
+<!ENTITY wrapInMsg.accesskey              "A">
+<!-- LOCALIZATION NOTE : (convertEmoticons.label) 'Emoticons' are also known as 'Smileys', e.g. :-)   -->
+<!ENTITY convertEmoticons.label           "Mostrar as emoticonas como imaxes">
+<!ENTITY convertEmoticons.accesskey       "M">
+<!ENTITY generalMessageDisplay.caption    "Xeral">
+<!ENTITY autoMarkAsRead.label             "Marcar as mensaxes como lidas automaticamente">
+<!ENTITY autoMarkAsRead.accesskey         "a">
+<!ENTITY markAsReadNoDelay.label          "Inmediatamente ao mostralas">
+<!ENTITY markAsReadNoDelay.accesskey      "m">
+<!-- LOCALIZATION NOTE (markAsReadDelay.label): This will concatenate to
+     "After displaying for [___] seconds",
+     using (markAsReadDelay.label) and a number (secondsLabel.label). -->
+<!ENTITY markAsReadDelay.label            "Despois de mostralas durante">
+<!ENTITY markAsReadDelay.accesskey        "t">
+<!ENTITY secondsLabel.label               "segundos">
+
+<!ENTITY openingMessages.label            "Ao arquivar mensaxes, gardalas en:">
+<!ENTITY newWindowRadio.label             "Nunha nova xanela de mensaxe">
+<!ENTITY newWindowRadio.accesskey         "N">
+<!ENTITY existingWindowRadio.label        "Nunha xanela de mensaxe existente">
+<!ENTITY existingWindowRadio.accesskey    "e">
+<!ENTITY disableContent.label             "Bloquear imaxes e outro contido de orixes remotas">
+<!ENTITY disableContent.accesskey         "B">
+<!ENTITY showCondensedAddresses.label     "Mostrar só o nome das persoas da miña axenda de enderezos">
+<!ENTITY showCondensedAddresses.accesskey "o">
+<!ENTITY closeMsgWindowOnDelete.label     "Pechar a xanela das mensaxes ao eliminar a mensaxe">
+<!ENTITY closeMsgWindowOnDelete.accesskey "l">

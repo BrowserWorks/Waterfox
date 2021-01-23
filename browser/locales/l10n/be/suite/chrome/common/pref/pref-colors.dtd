@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.colors.title "Колеры">
+<!ENTITY color "Тэкст і фон">
+<!ENTITY textColor.label "Тэкст:">
+<!ENTITY textColor.accesskey "Т">
+<!ENTITY backgroundColor.label "Фон:">
+<!ENTITY backgroundColor.accesskey "Ф">
+<!ENTITY useSystemColors.label "Карыстацца сістэмнымі колерамі">
+<!ENTITY useSystemColors.accesskey "с">
+<!ENTITY underlineLinks.label "Падкрэсліваць спасылкі">
+<!ENTITY underlineLinks.accesskey "к">
+<!ENTITY links "Колеры спасылак">
+<!ENTITY linkColor.label "Ненаведаныя спасылкі:">
+<!ENTITY linkColor.accesskey "с">
+<!ENTITY activeLinkColor.label "Дзейныя спасылкі:">
+<!ENTITY activeLinkColor.accesskey "Д">
+<!ENTITY visitedLinkColor.label "Наведаныя спасылкі:">
+<!ENTITY visitedLinkColor.accesskey "в">
+<!ENTITY someProvColors "Калі старонка сеціва забяспечваецца асабістымі колерамі і фонам">
+<!ENTITY alwaysUseDocumentColors.label "Заўсёды карыстацца фонам і колерамі, якія вызначаны старонкай сеціва">
+<!ENTITY alwaysUseDocumentColors.accesskey "ў">
+<!ENTITY useMyColors.label "Карыстацца выбранымі мной колерамі, не звяртаючы ўвагі на вызначаныя колеры і выяву фону">
+<!ENTITY useMyColors.accesskey "м">

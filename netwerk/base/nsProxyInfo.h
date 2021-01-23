@@ -9,6 +9,7 @@
 
 #include "nsIProxyInfo.h"
 #include "nsString.h"
+#include "mozilla/Atomics.h"
 #include "mozilla/Attributes.h"
 
 // Use to support QI nsIProxyInfo to nsProxyInfo
@@ -21,6 +22,8 @@
 
 namespace mozilla {
 namespace net {
+
+class ProxyInfoCloneArgs;
 
 // This class is exposed to other classes inside Necko for fast access
 // to the nsIProxyInfo attributes.
@@ -38,6 +41,8 @@ class nsProxyInfo final : public nsIProxyInfo {
   uint32_t Flags() const { return mFlags; }
   const nsCString& Username() const { return mUsername; }
   const nsCString& Password() const { return mPassword; }
+  uint32_t Timeout() { return mTimeout; }
+  uint32_t ResolveFlags() { return mResolveFlags; }
   const nsCString& ProxyAuthorizationHeader() const {
     return mProxyAuthorizationHeader;
   }
@@ -50,6 +55,11 @@ class nsProxyInfo final : public nsIProxyInfo {
   bool IsHTTPS();
   bool IsSOCKS();
 
+  static void SerializeProxyInfo(nsProxyInfo* aProxyInfo,
+                                 nsTArray<ProxyInfoCloneArgs>& aResult);
+  static nsProxyInfo* DeserializeProxyInfo(
+      const nsTArray<ProxyInfoCloneArgs>& aArgs);
+
  private:
   friend class nsProtocolProxyService;
 
@@ -61,6 +71,12 @@ class nsProxyInfo final : public nsIProxyInfo {
         mTimeout(UINT32_MAX),
         mNext(nullptr) {}
 
+  nsProxyInfo(const nsACString& aType, const nsACString& aHost, int32_t aPort,
+              const nsACString& aUsername, const nsACString& aPassword,
+              uint32_t aFlags, uint32_t aTimeout, uint32_t aResolveFlags,
+              const nsACString& aProxyAuthorizationHeader,
+              const nsACString& aConnectionIsolationKey);
+
   ~nsProxyInfo() { NS_IF_RELEASE(mNext); }
 
   const char* mType;  // pointer to statically allocated value
@@ -71,7 +87,9 @@ class nsProxyInfo final : public nsIProxyInfo {
   nsCString mConnectionIsolationKey;
   int32_t mPort;
   uint32_t mFlags;
-  uint32_t mResolveFlags;
+  // We need to read on multiple threads, but don't need to sync on anything
+  // else
+  Atomic<uint32_t, Relaxed> mResolveFlags;
   uint32_t mTimeout;
   nsProxyInfo* mNext;
 };

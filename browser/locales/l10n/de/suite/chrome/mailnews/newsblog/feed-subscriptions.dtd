@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Feed-Abonnements">
+<!ENTITY learnMore.label             "Mehr über Feeds erfahren">
+
+<!ENTITY feedTitle.label             "Titel:">
+<!ENTITY feedTitle.accesskey         "T">
+
+<!ENTITY feedLocation.label          "Feed-URL:">
+<!ENTITY feedLocation.accesskey      "U">
+<!ENTITY feedLocation2.placeholder   "Geben Sie eine gültige Feed-URL ein">
+<!ENTITY locationValidate.label      "Validieren">
+<!ENTITY validateText.label          "Validierung überprüfen und eine gültige URL beziehen.">
+
+<!ENTITY feedFolder.label            "Artikel speichern in:">
+<!ENTITY feedFolder.accesskey        "s">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Alle ">
+<!ENTITY biffStart.accesskey         "A">
+<!ENTITY biffMinutes.label           "Minuten">
+<!ENTITY biffMinutes.accesskey       "M">
+<!ENTITY biffDays.label              "Tage auf neue Artikel prüfen">
+<!ENTITY biffDays.accesskey          "n">
+<!ENTITY recommendedUnits.label      "Herausgeber empfiehlt:">
+
+<!ENTITY quickMode.label             "Die Artikel-Zusammenfassung anzeigen, anstatt die Webseite zu laden">
+<!ENTITY quickMode.accesskey         "Z">
+
+<!ENTITY autotagEnable.label         "Automatisch Tags aus Feed-&lt;category&gt;-Namen erstellen">
+<!ENTITY autotagEnable.accesskey     "o">
+<!ENTITY autotagUsePrefix.label      "Tags beginnen mit:">
+<!ENTITY autotagUsePrefix.accesskey  "b">
+<!ENTITY autoTagPrefix.placeholder   "Geben Sie ein Tag-Präfix an">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Hinzufügen">
+<!ENTITY button.addFeed.accesskey    "H">
+<!ENTITY button.verifyFeed.label     "Überprüfen">
+<!ENTITY button.verifyFeed.accesskey "p">
+<!ENTITY button.updateFeed.label     "Aktualisieren">
+<!ENTITY button.updateFeed.accesskey "k">
+<!ENTITY button.removeFeed.label     "Entfernen">
+<!ENTITY button.removeFeed.accesskey "E">
+<!ENTITY button.importOPML.label     "Importieren">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "Exportieren">
+<!ENTITY button.exportOPML.accesskey "x">
+<!ENTITY button.exportOPML.tooltip   "Export von Feeds mit Ordnerstruktur; Strg-Klick oder Strg-Enter, um Feeds als List zu exportieren">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Schließen">

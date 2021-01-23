@@ -125,8 +125,7 @@ var LiveBookmarkMigrator = {
       let title = doc.createElement("title");
       title.textContent = gBrowserBundle.formatStringFromName(
         "livebookmarkMigration.title",
-        [appName],
-        1
+        [appName]
       );
       head.appendChild(title);
 

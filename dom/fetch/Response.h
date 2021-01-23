@@ -25,11 +25,10 @@ namespace dom {
 
 class Headers;
 
-class Response final : public nsISupports,
-                       public FetchBody<Response>,
-                       public nsWrapperCache {
-  NS_DECL_CYCLE_COLLECTING_ISUPPORTS
-  NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(Response)
+class Response final : public FetchBody<Response>, public nsWrapperCache {
+  NS_DECL_ISUPPORTS_INHERITED
+  NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS_INHERITED(Response,
+                                                         FetchBody<Response>)
 
  public:
   Response(nsIGlobalObject* aGlobal, InternalResponse* aInternalResponse,
@@ -107,8 +106,8 @@ class Response final : public nsISupports,
 
   static already_AddRefed<Response> Constructor(
       const GlobalObject& aGlobal,
-      const Optional<Nullable<fetch::ResponseBodyInit>>& aBody,
-      const ResponseInit& aInit, ErrorResult& rv);
+      const Nullable<fetch::ResponseBodyInit>& aBody, const ResponseInit& aInit,
+      ErrorResult& rv);
 
   nsIGlobalObject* GetParentObject() const { return mOwner; }
 

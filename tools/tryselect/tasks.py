@@ -4,11 +4,9 @@
 
 from __future__ import absolute_import, print_function, unicode_literals
 
-import hashlib
 import json
 import os
 import re
-import shutil
 import sys
 from collections import defaultdict
 
@@ -28,7 +26,6 @@ from taskgraph.taskgraph import TaskGraph
 here = os.path.abspath(os.path.dirname(__file__))
 build = MozbuildObject.from_environment(cwd=here)
 
-
 PARAMETER_MISMATCH = """
 ERROR - The parameters being used to generate tasks differ from those expected
 by your working copy:
@@ -41,36 +38,31 @@ https://firefox-source-docs.mozilla.org/taskcluster/taskcluster/mach.html#parame
 """
 
 
-def invalidate(cache, root):
-    if not os.path.isfile(cache):
-        return
+def invalidate(cache):
+    try:
+        cmod = os.path.getmtime(cache)
+    except OSError as e:
+        # File does not exist. We catch OSError rather than use `isfile`
+        # because the recommended watchman hook could possibly invalidate the
+        # cache in-between the check to `isfile` and the call to `getmtime`
+        # below.
+        if e.errno == 2:
+            return
+        raise
 
-    tc_dir = os.path.join(root, 'taskcluster')
+    tc_dir = os.path.join(build.topsrcdir, 'taskcluster')
     tmod = max(os.path.getmtime(os.path.join(tc_dir, p)) for p, _ in FileFinder(tc_dir))
-    cmod = os.path.getmtime(cache)
 
     if tmod > cmod:
         os.remove(cache)
 
 
 def generate_tasks(params=None, full=False):
-    # TODO: Remove after January 1st, 2020.
-    # Try to delete the old taskgraph cache directories.
-    root = build.topsrcdir
-    root_hash = hashlib.sha256(os.path.abspath(root)).hexdigest()
-    old_cache_dirs = [
-        os.path.join(get_state_dir(), 'cache', 'taskgraph'),
-        os.path.join(get_state_dir(), 'cache', root_hash, 'taskgraph'),
-    ]
-    for cache_dir in old_cache_dirs:
-        if os.path.isdir(cache_dir):
-            shutil.rmtree(cache_dir)
-
     cache_dir = os.path.join(get_state_dir(srcdir=True), 'cache', 'taskgraph')
     attr = 'full_task_set' if full else 'target_task_set'
     cache = os.path.join(cache_dir, attr)
 
-    invalidate(cache, root)
+    invalidate(cache)
     if os.path.isfile(cache):
         with open(cache, 'r') as fh:
             return TaskGraph.from_json(json.load(fh))[1]
@@ -82,9 +74,9 @@ def generate_tasks(params=None, full=False):
 
     taskgraph.fast = True
     cwd = os.getcwd()
-    os.chdir(root)
+    os.chdir(build.topsrcdir)
 
-    root = os.path.join(root, 'taskcluster', 'ci')
+    root = os.path.join(build.topsrcdir, 'taskcluster', 'ci')
     params = parameters_loader(params, strict=False, overrides={'try_mode': 'try_select'})
 
     # Cache both full_task_set and target_task_set regardless of whether or not
@@ -106,6 +98,10 @@ def generate_tasks(params=None, full=False):
 
     tg_full = generate('full_task_set')
     tg_target = generate('target_task_set')
+    # discard results from these, we only need cache.
+    if full:
+        generate('full_task_graph')
+    generate('target_task_graph')
 
     os.chdir(cwd)
     if full:
@@ -139,8 +135,24 @@ def resolve_tests_by_suite(paths):
     _, run_tests = resolver.resolve_metadata(paths)
 
     suite_to_tests = defaultdict(list)
+
+    # A dictionary containing all the input paths that we haven't yet
+    # assigned to a specific test flavor.
+    remaining_paths_by_suite = defaultdict(lambda: set(paths))
+
     for test in run_tests:
         key, _ = get_suite_definition(test['flavor'], test.get('subsuite'), strict=True)
-        suite_to_tests[key].append(test['srcdir_relpath'])
+
+        test_path = test.get('srcdir_relpath')
+        if test_path is None:
+            continue
+        found_path = None
+        for path in remaining_paths_by_suite[key]:
+            if test_path.startswith(path):
+                found_path = path
+                break
+        if found_path:
+            suite_to_tests[key].append(found_path)
+            remaining_paths_by_suite[key].remove(found_path)
 
     return suite_to_tests

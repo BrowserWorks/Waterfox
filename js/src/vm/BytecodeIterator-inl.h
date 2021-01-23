@@ -10,9 +10,10 @@
 #include "vm/BytecodeIterator.h"
 
 #include "vm/JSScript.h"
+
 namespace js {
 
-BytecodeIterator::BytecodeIterator(const JSScript* script)
+inline BytecodeIterator::BytecodeIterator(const JSScript* script)
     : current_(script, script->code()) {}
 
 // AllBytecodesIterable
@@ -23,6 +24,16 @@ inline BytecodeIterator AllBytecodesIterable::begin() {
 
 inline BytecodeIterator AllBytecodesIterable::end() {
   return BytecodeIterator(BytecodeLocation(script_, script_->codeEnd()));
+}
+
+// BytecodeLocationRange
+
+inline BytecodeIterator BytecodeLocationRange::begin() {
+  return BytecodeIterator(beginLoc_);
+}
+
+inline BytecodeIterator BytecodeLocationRange::end() {
+  return BytecodeIterator(endLoc_);
 }
 
 }  // namespace js

@@ -8,7 +8,6 @@
 #define nsCSPUtils_h___
 
 #include "nsCOMPtr.h"
-#include "nsIContentPolicy.h"
 #include "nsIContentSecurityPolicy.h"
 #include "nsIURI.h"
 #include "nsLiteralString.h"
@@ -17,23 +16,26 @@
 #include "nsUnicharUtils.h"
 #include "mozilla/Logging.h"
 
+class nsIChannel;
+
 namespace mozilla {
 namespace dom {
 struct CSP;
+class Document;
 }  // namespace dom
 }  // namespace mozilla
 
 /* =============== Logging =================== */
 
-void CSP_LogLocalizedStr(const char* aName, const char16_t** aParams,
-                         uint32_t aLength, const nsAString& aSourceName,
+void CSP_LogLocalizedStr(const char* aName, const nsTArray<nsString>& aParams,
+                         const nsAString& aSourceName,
                          const nsAString& aSourceLine, uint32_t aLineNumber,
                          uint32_t aColumnNumber, uint32_t aFlags,
                          const nsACString& aCategory, uint64_t aInnerWindowID,
                          bool aFromPrivateWindow);
 
-void CSP_GetLocalizedStr(const char* aName, const char16_t** aParams,
-                         uint32_t aLength, nsAString& outResult);
+void CSP_GetLocalizedStr(const char* aName, const nsTArray<nsString>& aParams,
+                         nsAString& outResult);
 
 void CSP_LogStrMessage(const nsAString& aMsg);
 
@@ -84,7 +86,8 @@ static const char* CSPStrDirectives[] = {
     "child-src",                  // CHILD_SRC_DIRECTIVE
     "block-all-mixed-content",    // BLOCK_ALL_MIXED_CONTENT
     "sandbox",                    // SANDBOX_DIRECTIVE
-    "worker-src"                  // WORKER_SRC_DIRECTIVE
+    "worker-src",                 // WORKER_SRC_DIRECTIVE
+    "navigate-to"                 // NAVIGATE_TO_DIRECTIVE
 };
 
 inline const char* CSP_CSPDirectiveToString(CSPDirective aDir) {
@@ -105,14 +108,15 @@ inline CSPDirective CSP_StringToCSPDirective(const nsAString& aDir) {
   return nsIContentSecurityPolicy::NO_DIRECTIVE;
 }
 
-#define FOR_EACH_CSP_KEYWORD(MACRO)           \
-  MACRO(CSP_SELF, "'self'")                   \
-  MACRO(CSP_UNSAFE_INLINE, "'unsafe-inline'") \
-  MACRO(CSP_UNSAFE_EVAL, "'unsafe-eval'")     \
-  MACRO(CSP_NONE, "'none'")                   \
-  MACRO(CSP_NONCE, "'nonce-")                 \
-  MACRO(CSP_REPORT_SAMPLE, "'report-sample'") \
-  MACRO(CSP_STRICT_DYNAMIC, "'strict-dynamic'")
+#define FOR_EACH_CSP_KEYWORD(MACRO)             \
+  MACRO(CSP_SELF, "'self'")                     \
+  MACRO(CSP_UNSAFE_INLINE, "'unsafe-inline'")   \
+  MACRO(CSP_UNSAFE_EVAL, "'unsafe-eval'")       \
+  MACRO(CSP_NONE, "'none'")                     \
+  MACRO(CSP_NONCE, "'nonce-")                   \
+  MACRO(CSP_REPORT_SAMPLE, "'report-sample'")   \
+  MACRO(CSP_STRICT_DYNAMIC, "'strict-dynamic'") \
+  MACRO(CSP_UNSAFE_ALLOW_REDIRECTS, "'unsafe-allow-redirects'")
 
 enum CSPKeyword {
 #define KEYWORD_ENUM(id_, string_) id_,
@@ -203,6 +207,10 @@ CSPDirective CSP_ContentTypeToDirective(nsContentPolicyType aType);
 class nsCSPSrcVisitor;
 
 void CSP_PercentDecodeStr(const nsAString& aEncStr, nsAString& outDecStr);
+bool CSP_ShouldResponseInheritCSP(nsIChannel* aChannel);
+
+void CSP_ApplyMetaCSPToDoc(mozilla::dom::Document& aDoc,
+                           const nsAString& aPolicyStr);
 
 /* =============== nsCSPSrc ================== */
 
@@ -312,7 +320,8 @@ class nsCSPKeywordSrc : public nsCSPBaseSrc {
 
   inline void invalidate() const override {
     // keywords that need to invalidated
-    if (mKeyword == CSP_SELF || mKeyword == CSP_UNSAFE_INLINE) {
+    if (mKeyword == CSP_SELF || mKeyword == CSP_UNSAFE_INLINE ||
+        mKeyword == CSP_REPORT_SAMPLE) {
       mInvalidated = true;
     }
   }
@@ -422,8 +431,8 @@ class nsCSPSrcVisitor {
   virtual bool visitHashSrc(const nsCSPHashSrc& src) = 0;
 
  protected:
-  explicit nsCSPSrcVisitor(){};
-  virtual ~nsCSPSrcVisitor(){};
+  explicit nsCSPSrcVisitor() = default;
+  virtual ~nsCSPSrcVisitor() = default;
 };
 
 /* =============== nsCSPDirective ============= */
@@ -441,7 +450,9 @@ class nsCSPDirective {
   virtual void toString(nsAString& outStr) const;
   void toDomCSPStruct(mozilla::dom::CSP& outCSP) const;
 
-  virtual void addSrcs(const nsTArray<nsCSPBaseSrc*>& aSrcs) { mSrcs = aSrcs; }
+  virtual void addSrcs(const nsTArray<nsCSPBaseSrc*>& aSrcs) {
+    mSrcs = aSrcs.Clone();
+  }
 
   virtual bool restrictsContentType(nsContentPolicyType aContentType) const;
 
@@ -654,6 +665,9 @@ class nsCSPPolicy {
   inline uint32_t getNumDirectives() const { return mDirectives.Length(); }
 
   bool visitDirectiveSrcs(CSPDirective aDir, nsCSPSrcVisitor* aVisitor) const;
+
+  bool allowsNavigateTo(nsIURI* aURI, bool aWasRedirected,
+                        bool aEnforceWhitelist) const;
 
  private:
   nsUpgradeInsecureDirective* mUpgradeInsecDir;

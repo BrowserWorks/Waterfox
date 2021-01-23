@@ -38,10 +38,10 @@ class UDPSocketParent : public mozilla::net::PUDPSocketParent,
                                    const uint32_t& sendBufferSize);
   mozilla::ipc::IPCResult RecvConnect(const UDPAddressInfo& aAddressInfo);
   void DoSendConnectResponse(const UDPAddressInfo& aAddressInfo);
-  void SendConnectResponse(nsIEventTarget* aThread,
+  void SendConnectResponse(const nsCOMPtr<nsIEventTarget>& aThread,
                            const UDPAddressInfo& aAddressInfo);
-  void DoConnect(nsCOMPtr<nsIUDPSocket>& aSocket,
-                 nsCOMPtr<nsIEventTarget>& aReturnThread,
+  void DoConnect(const nsCOMPtr<nsIUDPSocket>& aSocket,
+                 const nsCOMPtr<nsIEventTarget>& aReturnThread,
                  const UDPAddressInfo& aAddressInfo);
 
   mozilla::ipc::IPCResult RecvOutgoingData(const UDPData& aData,
@@ -58,7 +58,7 @@ class UDPSocketParent : public mozilla::net::PUDPSocketParent,
   virtual ~UDPSocketParent();
 
   virtual void ActorDestroy(ActorDestroyReason why) override;
-  void Send(const InfallibleTArray<uint8_t>& aData, const UDPSocketAddr& aAddr);
+  void Send(const nsTArray<uint8_t>& aData, const UDPSocketAddr& aAddr);
   void Send(const IPCStream& aStream, const UDPSocketAddr& aAddr);
   nsresult BindInternal(const nsCString& aHost, const uint16_t& aPort,
                         const bool& aAddressReuse, const bool& aLoopback,
@@ -66,7 +66,8 @@ class UDPSocketParent : public mozilla::net::PUDPSocketParent,
                         const uint32_t& sendBufferSize);
   nsresult ConnectInternal(const nsCString& aHost, const uint16_t& aPort);
   void FireInternalError(uint32_t aLineNo);
-  void SendInternalError(nsIEventTarget* aThread, uint32_t aLineNo);
+  void SendInternalError(const nsCOMPtr<nsIEventTarget>& aThread,
+                         uint32_t aLineNo);
 
   PBackgroundParent* mBackgroundManager;
 

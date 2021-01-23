@@ -11,7 +11,7 @@
 #include "gfxMatrix.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/RefPtr.h"
-#include "nsAutoPtr.h"
+#include "mozilla/UniquePtr.h"
 #include "nsSVGPaintServerFrame.h"
 
 class nsIFrame;
@@ -41,7 +41,7 @@ class nsSVGPatternFrame final : public nsSVGPaintServerFrame {
   virtual already_AddRefed<gfxPattern> GetPaintServerPattern(
       nsIFrame* aSource, const DrawTarget* aDrawTarget,
       const gfxMatrix& aContextMatrix,
-      nsStyleSVGPaint nsStyleSVG::*aFillOrStroke, float aGraphicOpacity,
+      mozilla::StyleSVGPaint nsStyleSVG::*aFillOrStroke, float aGraphicOpacity,
       imgDrawingParams& aImgParams, const gfxRect* aOverrideBounds) override;
 
  public:
@@ -81,23 +81,25 @@ class nsSVGPatternFrame final : public nsSVGPaintServerFrame {
   mozilla::SVGAnimatedTransformList* GetPatternTransformList(
       nsIContent* aDefault);
   gfxMatrix GetPatternTransform();
-  const SVGAnimatedViewBox& GetViewBox(nsIContent* aDefault);
-  const SVGAnimatedViewBox& GetViewBox() { return GetViewBox(mContent); }
-  const SVGAnimatedPreserveAspectRatio& GetPreserveAspectRatio(
+  const mozilla::SVGAnimatedViewBox& GetViewBox(nsIContent* aDefault);
+  const mozilla::SVGAnimatedViewBox& GetViewBox() {
+    return GetViewBox(mContent);
+  }
+  const mozilla::SVGAnimatedPreserveAspectRatio& GetPreserveAspectRatio(
       nsIContent* aDefault);
-  const SVGAnimatedPreserveAspectRatio& GetPreserveAspectRatio() {
+  const mozilla::SVGAnimatedPreserveAspectRatio& GetPreserveAspectRatio() {
     return GetPreserveAspectRatio(mContent);
   }
-  const SVGAnimatedLength* GetLengthValue(uint32_t aIndex,
-                                          nsIContent* aDefault);
-  const SVGAnimatedLength* GetLengthValue(uint32_t aIndex) {
+  const mozilla::SVGAnimatedLength* GetLengthValue(uint32_t aIndex,
+                                                   nsIContent* aDefault);
+  const mozilla::SVGAnimatedLength* GetLengthValue(uint32_t aIndex) {
     return GetLengthValue(aIndex, mContent);
   }
 
   already_AddRefed<SourceSurface> PaintPattern(
       const DrawTarget* aDrawTarget, Matrix* patternMatrix,
       const Matrix& aContextMatrix, nsIFrame* aSource,
-      nsStyleSVGPaint nsStyleSVG::*aFillOrStroke, float aGraphicOpacity,
+      mozilla::StyleSVGPaint nsStyleSVG::*aFillOrStroke, float aGraphicOpacity,
       const gfxRect* aOverrideBounds, imgDrawingParams& aImgParams);
 
   /**
@@ -112,7 +114,7 @@ class nsSVGPatternFrame final : public nsSVGPaintServerFrame {
 
   gfxRect GetPatternRect(uint16_t aPatternUnits, const gfxRect& bbox,
                          const Matrix& aTargetCTM, nsIFrame* aTarget);
-  gfxMatrix ConstructCTM(const SVGAnimatedViewBox& aViewBox,
+  gfxMatrix ConstructCTM(const mozilla::SVGAnimatedViewBox& aViewBox,
                          uint16_t aPatternContentUnits, uint16_t aPatternUnits,
                          const gfxRect& callerBBox, const Matrix& callerCTM,
                          nsIFrame* aTarget);
@@ -122,7 +124,7 @@ class nsSVGPatternFrame final : public nsSVGPaintServerFrame {
   // referencing our pattern.  This must be temporary because different
   // referencing frames will all reference this one frame
   mozilla::SVGGeometryFrame* mSource;
-  nsAutoPtr<gfxMatrix> mCTM;
+  mozilla::UniquePtr<gfxMatrix> mCTM;
 
  protected:
   // This flag is used to detect loops in xlink:href processing

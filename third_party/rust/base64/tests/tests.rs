@@ -1,12 +1,12 @@
 extern crate base64;
 extern crate rand;
 
-use rand::{Rng, FromEntropy};
+use rand::{FromEntropy, Rng};
 
 use base64::*;
 
 mod helpers;
-use helpers::*;
+use self::helpers::*;
 
 // generate random contents of the specified length and test encode/decode roundtrip
 fn roundtrip_random(
@@ -141,7 +141,10 @@ fn display_wrapper_matches_normal_encode() {
 
     assert_eq!(
         encode(&bytes),
-        format!("{}", base64::display::Base64Display::with_config(&bytes, STANDARD))
+        format!(
+            "{}",
+            base64::display::Base64Display::with_config(&bytes, STANDARD)
+        )
     );
 }
 

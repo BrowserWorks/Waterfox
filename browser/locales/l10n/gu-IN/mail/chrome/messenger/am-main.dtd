@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "ખાતા સુયોજનો">
+<!ENTITY accountName.label "ખાતા નામ:">
+<!ENTITY accountName.accesskey "N">
+<!ENTITY identityTitle.label "મૂળભુત ઓળખ">
+<!ENTITY identityDesc.label "દરેક ખાતાને ઓળખ હોય છે, કે જે જ્યારે લોકો સંદેશાઓ વાંચે ત્યારે આ જાણકારી જુએ.">
+<!ENTITY name.label "તમારું નામ:">
+<!ENTITY name.accesskey "Y">
+<!ENTITY email.label "ઈમેલ સરનામુ:">
+<!ENTITY email.accesskey "E">
+<!ENTITY replyTo.label "વળતો જવાબ આપવાનું સરનામુ:">
+<!ENTITY replyTo.accesskey "s">
+<!ENTITY organization.label "સંસ્થા:">
+<!ENTITY organization.accesskey "O">
+<!ENTITY edit.label "ફેરફાર કરો...">
+<!ENTITY choose.label "પસંદ કરો...">
+<!ENTITY choose.accesskey "C">
+<!ENTITY editVCard.label "કાર્ડમાં ફેરફાર કરો...">
+<!ENTITY editVCard.accesskey "d">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "મારા vCard ને સંદેશાઓમાં જોડો">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "ઓળખોની વ્યવસ્થા કરો...">
+<!ENTITY manageIdentities.accesskey "M">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "આઉટગોઈંગ સર્વર (SMTP):">
+<!ENTITY smtpName.accesskey "u">
+<!ENTITY smtpDefaultServer.label "મૂળભુત સર્વર વાપરો">
+

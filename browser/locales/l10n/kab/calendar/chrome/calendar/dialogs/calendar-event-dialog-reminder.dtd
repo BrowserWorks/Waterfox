@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "Sbadu ismektiyen">
+<!ENTITY reminder.add.label                                "Rnu">
+<!ENTITY reminder.add.accesskey                            "R">
+<!ENTITY reminder.remove.label                             "Kkes">
+<!ENTITY reminder.remove.accesskey                         "K">
+
+<!ENTITY reminder.reminderDetails.label                    "Talqayt n usmekti">
+<!ENTITY reminder.action.label                             "Fren tigawt n usmekti">
+
+<!ENTITY reminder.action.alert.label                       "Sken alɣu">
+<!ENTITY reminder.action.email.label                       "Azen imayl">
+
+<!ENTITY alarm.units.minutes                               "tisdatin" >
+<!ENTITY alarm.units.hours                                 "isragen" >
+<!ENTITY alarm.units.days                                  "ussan" >

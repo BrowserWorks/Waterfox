@@ -12,20 +12,22 @@
 #include "mozilla/UniquePtr.h"
 
 #include "signaling/src/sdp/Sdp.h"
-#include "signaling/src/sdp/SdpErrorHolder.h"
+#include "signaling/src/sdp/SdpParser.h"
 
 namespace mozilla {
 
-class SipccSdpParser final : public SdpErrorHolder {
- public:
-  SipccSdpParser() {}
-  virtual ~SipccSdpParser() {}
+class SipccSdpParser final : public SdpParser {
+  static const std::string& ParserName();
 
-  /**
-   * This parses the provided text into an SDP object.
-   * This returns a nullptr-valued pointer if things go poorly.
-   */
-  UniquePtr<Sdp> Parse(const std::string& sdpText);
+ public:
+  SipccSdpParser() = default;
+  virtual ~SipccSdpParser() = default;
+
+  const std::string& Name() const override { return ParserName(); }
+
+  UniquePtr<SdpParser::Results> Parse(const std::string& aText) override;
+
+  static bool IsNamed(const std::string& aName);
 };
 
 }  // namespace mozilla

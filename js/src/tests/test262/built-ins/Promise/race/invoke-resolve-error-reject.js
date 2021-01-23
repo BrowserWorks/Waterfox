@@ -1,10 +1,10 @@
+// |reftest| async
 // Copyright (C) 2016 the V8 project authors. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
 description: Promise rejection in response to error from `Promise.resolve`
 esid: sec-promise.race
-es6id: 25.4.4.3
 info: |
     [...]
     11. Let result be PerformPromiseRace(iteratorRecord, promiseCapability, C).

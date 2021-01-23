@@ -11,13 +11,13 @@ let toString = Object.prototype.toString;
 (function prepare() {
   debug("Script loaded.");
   addTestReceiver();
-  sendAsyncMessage("mmMessagePort:finishScriptLoad", {}, {});
+  sendAsyncMessage("mmMessagePort:finishScriptLoad");
 })();
 
 function ok(condition, message) {
   debug("condition: " + condition + ", " + message + "\n");
   if (!condition) {
-    sendAsyncMessage("mmMessagePort:fail", { message: message });
+    sendAsyncMessage("mmMessagePort:fail", { message });
     throw "failed check: " + message;
   }
 }

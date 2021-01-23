@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY setDesktopBackground.title "Imposta sfondo del desktop">
+<!ENTITY position.label "Posizione:">
+<!ENTITY position.accesskey "P">
+<!ENTITY position.tile.label "Affiancata">
+<!ENTITY position.stretch.label "Estesa">
+<!ENTITY position.center.label "Centrata">
+<!ENTITY position.fill.label "Riempi">
+<!ENTITY position.fit.label "Adatta">
+<!ENTITY picker.label "Colore:">
+<!ENTITY picker.accesskey "C">
+<!ENTITY preview.caption "Anteprima">
+<!ENTITY apply.label "Applica">
+<!ENTITY apply.accesskey "A">
+<!ENTITY close.label "Chiudi">

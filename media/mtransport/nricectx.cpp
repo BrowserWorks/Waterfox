@@ -44,7 +44,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 
 #include "nr_socket_proxy_config.h"
-#include "mozilla/Telemetry.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/Unused.h"
 
@@ -57,7 +56,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "nsCOMPtr.h"
 #include "nsComponentManagerUtils.h"
 #include "nsError.h"
-#include "nsIEventTarget.h"
 #include "nsNetCID.h"
 #include "nsComponentManagerUtils.h"
 #include "nsServiceManagerUtils.h"
@@ -65,6 +63,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "runnable_utils.h"
 #include "nsIPrefService.h"
 #include "nsIPrefBranch.h"
+#include "nsIUUIDGenerator.h"
 
 // nICEr includes
 extern "C" {
@@ -96,6 +95,10 @@ extern "C" {
 #include "nrinterfaceprioritizer.h"
 #include "rlogconnector.h"
 #include "test_nr_socket.h"
+
+extern "C" {
+#include "mdns_service/mdns_service.h"
+}
 
 namespace mozilla {
 
@@ -252,8 +255,8 @@ nsresult NrIceTurnServer::ToNicerTurnStruct(nr_ice_turn_server* server) const {
   // C++03 23.2.4, Paragraph 1 stipulates that the elements
   // in std::vector must be contiguous, and can therefore be
   // used as input to functions expecting C arrays.
-  int r = r_data_create(&server->password, const_cast<UCHAR*>(&password_[0]),
-                        password_.size());
+  const UCHAR* data = password_.empty() ? nullptr : &password_[0];
+  int r = r_data_create(&server->password, data, password_.size());
   if (r) {
     RFREE(server->username);
     return NS_ERROR_OUT_OF_MEMORY;
@@ -262,11 +265,10 @@ nsresult NrIceTurnServer::ToNicerTurnStruct(nr_ice_turn_server* server) const {
   return NS_OK;
 }
 
-NrIceCtx::NrIceCtx(const std::string& name, Policy policy)
+NrIceCtx::NrIceCtx(const std::string& name, const Config& aConfig)
     : connection_state_(ICE_CTX_INIT),
       gathering_state_(ICE_CTX_GATHER_INIT),
       name_(name),
-      offerer_(false),
       ice_controlling_set_(false),
       streams_(),
       ctx_(nullptr),
@@ -274,18 +276,15 @@ NrIceCtx::NrIceCtx(const std::string& name, Policy policy)
       ice_handler_vtbl_(nullptr),
       ice_handler_(nullptr),
       trickle_(true),
-      policy_(policy),
+      config_(aConfig),
       nat_(nullptr),
-      proxy_config_(nullptr) {}
+      proxy_config_(nullptr),
+      obfuscate_host_addresses_(false) {}
 
 /* static */
-RefPtr<NrIceCtx> NrIceCtx::Create(const std::string& name, bool allow_loopback,
-                                  bool tcp_enabled, bool allow_link_local,
-                                  Policy policy) {
-  // InitializeGlobals only executes once
-  NrIceCtx::InitializeGlobals(allow_loopback, tcp_enabled, allow_link_local);
-
-  RefPtr<NrIceCtx> ctx = new NrIceCtx(name, policy);
+RefPtr<NrIceCtx> NrIceCtx::Create(const std::string& aName,
+                                  const Config& aConfig) {
+  RefPtr<NrIceCtx> ctx = new NrIceCtx(aName, aConfig);
 
   if (!ctx->Initialize()) {
     return nullptr;
@@ -314,6 +313,10 @@ void NrIceCtx::DestroyStream(const std::string& id) {
     auto preexisting_stream = it->second;
     streams_.erase(it);
     preexisting_stream->Close();
+  }
+
+  if (streams_.empty()) {
+    SetGatheringState(ICE_CTX_GATHER_INIT);
   }
 }
 
@@ -428,25 +431,29 @@ void NrIceCtx::trickle_cb(void* arg, nr_ice_ctx* ice_ctx,
   }
 
   if (!candidate) {
-    s->SignalCandidate(s, "", stream->ufrag);
+    s->SignalCandidate(s, "", stream->ufrag, "", "");
     return;
   }
+
+  std::string actual_addr;
+  std::string mdns_addr;
+  ctx->GenerateObfuscatedAddress(candidate, &mdns_addr, &actual_addr);
 
   // Format the candidate.
   char candidate_str[NR_ICE_MAX_ATTRIBUTE_SIZE];
   int r = nr_ice_format_candidate_attribute(candidate, candidate_str,
-                                            sizeof(candidate_str));
+                                            sizeof(candidate_str),
+                                            ctx->obfuscate_host_addresses_);
   MOZ_ASSERT(!r);
   if (r) return;
 
   MOZ_MTLOG(ML_INFO, "NrIceCtx(" << ctx->name_ << "): trickling candidate "
                                  << candidate_str);
 
-  s->SignalCandidate(s, candidate_str, stream->ufrag);
+  s->SignalCandidate(s, candidate_str, stream->ufrag, mdns_addr, actual_addr);
 }
 
-void NrIceCtx::InitializeGlobals(bool allow_loopback, bool tcp_enabled,
-                                 bool allow_link_local) {
+void NrIceCtx::InitializeGlobals(const GlobalConfig& aConfig) {
   RLogConnector::CreateInstance();
   // Initialize the crypto callbacks and logging stuff
   if (!initialized) {
@@ -464,59 +471,35 @@ void NrIceCtx::InitializeGlobals(bool allow_loopback, bool tcp_enabled,
     NR_reg_set_uchar((char*)NR_ICE_REG_PREF_TYPE_PEER_RFLX_TCP, 109);
     NR_reg_set_uchar((char*)NR_ICE_REG_PREF_TYPE_HOST_TCP, 125);
     NR_reg_set_uchar((char*)NR_ICE_REG_PREF_TYPE_RELAYED_TCP, 0);
-
-    int32_t stun_client_maximum_transmits = 7;
-    int32_t ice_trickle_grace_period = 5000;
-    int32_t ice_tcp_so_sock_count = 3;
-    int32_t ice_tcp_listen_backlog = 10;
-    nsAutoCString force_net_interface;
-    nsresult res;
-    nsCOMPtr<nsIPrefService> prefs =
-        do_GetService("@mozilla.org/preferences-service;1", &res);
-
-    if (NS_SUCCEEDED(res)) {
-      nsCOMPtr<nsIPrefBranch> branch = do_QueryInterface(prefs);
-      if (branch) {
-        branch->GetIntPref(
-            "media.peerconnection.ice.stun_client_maximum_transmits",
-            &stun_client_maximum_transmits);
-        branch->GetIntPref("media.peerconnection.ice.trickle_grace_period",
-                           &ice_trickle_grace_period);
-        branch->GetIntPref("media.peerconnection.ice.tcp_so_sock_count",
-                           &ice_tcp_so_sock_count);
-        branch->GetIntPref("media.peerconnection.ice.tcp_listen_backlog",
-                           &ice_tcp_listen_backlog);
-        branch->GetCharPref("media.peerconnection.ice.force_interface",
-                            force_net_interface);
-      }
-    }
-
     NR_reg_set_uint4((char*)"stun.client.maximum_transmits",
-                     stun_client_maximum_transmits);
+                     aConfig.mStunClientMaxTransmits);
     NR_reg_set_uint4((char*)NR_ICE_REG_TRICKLE_GRACE_PERIOD,
-                     ice_trickle_grace_period);
+                     aConfig.mTrickleIceGracePeriod);
     NR_reg_set_int4((char*)NR_ICE_REG_ICE_TCP_SO_SOCK_COUNT,
-                    ice_tcp_so_sock_count);
+                    aConfig.mIceTcpSoSockCount);
     NR_reg_set_int4((char*)NR_ICE_REG_ICE_TCP_LISTEN_BACKLOG,
-                    ice_tcp_listen_backlog);
+                    aConfig.mIceTcpListenBacklog);
 
-    NR_reg_set_char((char*)NR_ICE_REG_ICE_TCP_DISABLE, !tcp_enabled);
+    NR_reg_set_char((char*)NR_ICE_REG_ICE_TCP_DISABLE, !aConfig.mTcpEnabled);
 
-    if (allow_loopback) {
+    if (aConfig.mAllowLoopback) {
       NR_reg_set_char((char*)NR_STUN_REG_PREF_ALLOW_LOOPBACK_ADDRS, 1);
     }
 
-    if (allow_link_local) {
+    if (aConfig.mAllowLinkLocal) {
       NR_reg_set_char((char*)NR_STUN_REG_PREF_ALLOW_LINK_LOCAL_ADDRS, 1);
     }
-    if (force_net_interface.Length() > 0) {
-      // Stupid cast.... but needed
-      const nsCString& flat =
-          PromiseFlatCString(static_cast<nsACString&>(force_net_interface));
+    if (!aConfig.mForceNetInterface.Length()) {
       NR_reg_set_string((char*)NR_ICE_REG_PREF_FORCE_INTERFACE_NAME,
-                        const_cast<char*>(flat.get()));
+                        const_cast<char*>(aConfig.mForceNetInterface.get()));
     }
   }
+}
+
+void NrIceCtx::SetTargetForDefaultLocalAddressLookup(
+    const std::string& target_ip, uint16_t target_port) {
+  nr_ice_set_target_for_default_local_address_lookup(ctx_, target_ip.c_str(),
+                                                     target_port);
 }
 
 #define MAXADDRS 100  // mirrors setting in ice_ctx.c
@@ -565,7 +548,7 @@ bool NrIceCtx::Initialize() {
   int r;
 
   UINT4 flags = NR_ICE_CTX_FLAGS_AGGRESSIVE_NOMINATION;
-  switch (policy_) {
+  switch (config_.mPolicy) {
     case ICE_POLICY_RELAY:
       flags |= NR_ICE_CTX_FLAGS_RELAY_ONLY;
       break;
@@ -614,38 +597,14 @@ bool NrIceCtx::Initialize() {
     }
   }
 
-  nsAutoCString mapping_type;
-  nsAutoCString filtering_type;
-  bool block_udp = false;
-  bool block_tcp = false;
-
-  nsresult rv;
-  nsCOMPtr<nsIPrefService> pref_service =
-      do_GetService(NS_PREFSERVICE_CONTRACTID, &rv);
-
-  if (NS_SUCCEEDED(rv)) {
-    nsCOMPtr<nsIPrefBranch> pref_branch;
-    rv = pref_service->GetBranch(nullptr, getter_AddRefs(pref_branch));
-    if (NS_SUCCEEDED(rv)) {
-      Unused << pref_branch->GetCharPref(
-          "media.peerconnection.nat_simulator.mapping_type", mapping_type);
-      Unused << pref_branch->GetCharPref(
-          "media.peerconnection.nat_simulator.filtering_type", filtering_type);
-      Unused << pref_branch->GetBoolPref(
-          "media.peerconnection.nat_simulator.block_udp", &block_udp);
-      Unused << pref_branch->GetBoolPref(
-          "media.peerconnection.nat_simulator.block_tcp", &block_tcp);
-    }
-  }
-
-  if (!mapping_type.IsEmpty() && !filtering_type.IsEmpty()) {
-    MOZ_MTLOG(ML_DEBUG, "NAT filtering type: " << filtering_type.get());
-    MOZ_MTLOG(ML_DEBUG, "NAT mapping type: " << mapping_type.get());
+  if (config_.mNatSimulatorConfig.isSome()) {
     TestNat* test_nat = new TestNat;
-    test_nat->filtering_type_ = TestNat::ToNatBehavior(filtering_type.get());
-    test_nat->mapping_type_ = TestNat::ToNatBehavior(mapping_type.get());
-    test_nat->block_udp_ = block_udp;
-    test_nat->block_tcp_ = block_tcp;
+    test_nat->filtering_type_ = TestNat::ToNatBehavior(
+        config_.mNatSimulatorConfig->mFilteringType.get());
+    test_nat->mapping_type_ =
+        TestNat::ToNatBehavior(config_.mNatSimulatorConfig->mMappingType.get());
+    test_nat->block_udp_ = config_.mNatSimulatorConfig->mBlockUdp;
+    test_nat->block_tcp_ = config_.mNatSimulatorConfig->mBlockTcp;
     test_nat->enabled_ = true;
     SetNat(test_nat);
   }
@@ -674,6 +633,7 @@ bool NrIceCtx::Initialize() {
     return false;
   }
 
+  nsresult rv;
   sts_target_ = do_GetService(NS_SOCKETTRANSPORTSERVICE_CONTRACTID, &rv);
 
   if (!NS_SUCCEEDED(rv)) return false;
@@ -729,40 +689,6 @@ NrIceStats NrIceCtx::Destroy() {
     stats.turn_438s = ctx_->stats.turn_438s;
   }
 
-  if (!ice_start_time_.IsNull()) {
-    TimeDuration time_delta = TimeStamp::Now() - ice_start_time_;
-    ice_start_time_ = TimeStamp();  // null out
-
-    if (offerer_) {
-      Telemetry::Accumulate(Telemetry::WEBRTC_ICE_OFFERER_ABORT_TIME,
-                            time_delta.ToMilliseconds());
-    } else {
-      Telemetry::Accumulate(Telemetry::WEBRTC_ICE_ANSWERER_ABORT_TIME,
-                            time_delta.ToMilliseconds());
-    }
-
-    unsigned char rate_limit_bit_pattern = 0;
-    if (!mozilla::nr_socket_short_term_violation_time().IsNull() &&
-        mozilla::nr_socket_short_term_violation_time() >= ice_start_time_) {
-      rate_limit_bit_pattern |= 1;
-    }
-    if (!mozilla::nr_socket_long_term_violation_time().IsNull() &&
-        mozilla::nr_socket_long_term_violation_time() >= ice_start_time_) {
-      rate_limit_bit_pattern |= 2;
-    }
-
-    if (connection_state_ == ICE_CTX_FAILED) {
-      Telemetry::Accumulate(
-          Telemetry::WEBRTC_STUN_RATE_LIMIT_EXCEEDED_BY_TYPE_GIVEN_FAILURE,
-          rate_limit_bit_pattern);
-    } else if (connection_state_ == ICE_CTX_CONNECTED ||
-               connection_state_ == ICE_CTX_COMPLETED) {
-      Telemetry::Accumulate(
-          Telemetry::WEBRTC_STUN_RATE_LIMIT_EXCEEDED_BY_TYPE_GIVEN_SUCCESS,
-          rate_limit_bit_pattern);
-    }
-  }
-
   if (peer_) {
     nr_ice_peer_ctx_destroy(&peer_);
   }
@@ -781,7 +707,7 @@ NrIceStats NrIceCtx::Destroy() {
   return stats;
 }
 
-NrIceCtx::~NrIceCtx() {}
+NrIceCtx::~NrIceCtx() = default;
 
 void NrIceCtx::destroy_peer_ctx() { nr_ice_peer_ctx_destroy(&peer_); }
 
@@ -798,11 +724,6 @@ nsresult NrIceCtx::SetControlling(Controlling controlling) {
 
 NrIceCtx::Controlling NrIceCtx::GetControlling() {
   return (peer_->controlling) ? ICE_CONTROLLING : ICE_CONTROLLED;
-}
-
-nsresult NrIceCtx::SetPolicy(Policy policy) {
-  policy_ = policy;
-  return NS_OK;
 }
 
 nsresult NrIceCtx::SetStunServers(
@@ -866,12 +787,12 @@ nsresult NrIceCtx::SetResolver(nr_resolver* resolver) {
   return NS_OK;
 }
 
-nsresult NrIceCtx::SetProxyServer(NrSocketProxyConfig&& config) {
+nsresult NrIceCtx::SetProxyConfig(NrSocketProxyConfig&& config) {
   proxy_config_.reset(new NrSocketProxyConfig(std::move(config)));
   return NS_OK;
 }
 
-void NrIceCtx::SetCtxFlags(bool default_route_only, bool proxy_only) {
+void NrIceCtx::SetCtxFlags(bool default_route_only) {
   ASSERT_ON_THREAD(sts_target_);
 
   if (default_route_only) {
@@ -879,21 +800,16 @@ void NrIceCtx::SetCtxFlags(bool default_route_only, bool proxy_only) {
   } else {
     nr_ice_ctx_remove_flags(ctx_, NR_ICE_CTX_FLAGS_ONLY_DEFAULT_ADDRS);
   }
-
-  if (proxy_only) {
-    nr_ice_ctx_add_flags(ctx_, NR_ICE_CTX_FLAGS_ONLY_PROXY);
-  } else {
-    nr_ice_ctx_remove_flags(ctx_, NR_ICE_CTX_FLAGS_ONLY_PROXY);
-  }
 }
 
-nsresult NrIceCtx::StartGathering(bool default_route_only, bool proxy_only) {
+nsresult NrIceCtx::StartGathering(bool default_route_only,
+                                  bool obfuscate_host_addresses) {
   ASSERT_ON_THREAD(sts_target_);
-  SetGatheringState(ICE_CTX_GATHER_STARTED);
 
-  SetCtxFlags(default_route_only, proxy_only);
+  obfuscate_host_addresses_ = obfuscate_host_addresses;
 
-  TimeStamp start = TimeStamp::Now();
+  SetCtxFlags(default_route_only);
+
   // This might start gathering for the first time, or again after
   // renegotiation, or might do nothing at all if gathering has already
   // finished.
@@ -901,18 +817,14 @@ nsresult NrIceCtx::StartGathering(bool default_route_only, bool proxy_only) {
 
   if (!r) {
     SetGatheringState(ICE_CTX_GATHER_COMPLETE);
-    Telemetry::AccumulateTimeDelta(
-        Telemetry::WEBRTC_ICE_NR_ICE_GATHER_TIME_IMMEDIATE_SUCCESS, start);
-  } else if (r != R_WOULDBLOCK) {
+  } else if (r == R_WOULDBLOCK) {
+    SetGatheringState(ICE_CTX_GATHER_STARTED);
+  } else {
+    SetGatheringState(ICE_CTX_GATHER_COMPLETE);
     MOZ_MTLOG(ML_ERROR, "ICE FAILED: Couldn't gather ICE candidates for '"
                             << name_ << "', error=" << r);
     SetConnectionState(ICE_CTX_FAILED);
-    Telemetry::AccumulateTimeDelta(
-        Telemetry::WEBRTC_ICE_NR_ICE_GATHER_TIME_IMMEDIATE_FAILURE, start);
     return NS_ERROR_FAILURE;
-  } else {
-    Telemetry::AccumulateTimeDelta(Telemetry::WEBRTC_ICE_NR_ICE_GATHER_TIME,
-                                   start);
   }
 
   return NS_OK;
@@ -977,15 +889,12 @@ bool NrIceCtx::HasStreamsToConnect() const {
   return false;
 }
 
-nsresult NrIceCtx::StartChecks(bool offerer) {
+nsresult NrIceCtx::StartChecks() {
   int r;
   if (!HasStreamsToConnect()) {
     // Nothing to do
     return NS_OK;
   }
-
-  offerer_ = offerer;
-  ice_start_time_ = TimeStamp::Now();
 
   r = nr_ice_peer_ctx_pair_candidates(peer_);
   if (r) {
@@ -1044,44 +953,6 @@ void NrIceCtx::UpdateNetworkState(bool online) {
 void NrIceCtx::SetConnectionState(ConnectionState state) {
   if (state == connection_state_) return;
 
-  if (!ice_start_time_.IsNull() && (state > ICE_CTX_CHECKING)) {
-    TimeDuration time_delta = TimeStamp::Now() - ice_start_time_;
-    ice_start_time_ = TimeStamp();
-
-    switch (state) {
-      case ICE_CTX_INIT:
-      case ICE_CTX_CHECKING:
-        MOZ_CRASH();
-        break;
-      case ICE_CTX_CONNECTED:
-      case ICE_CTX_COMPLETED:
-        if (offerer_) {
-          Telemetry::Accumulate(Telemetry::WEBRTC_ICE_OFFERER_SUCCESS_TIME,
-                                time_delta.ToMilliseconds());
-        } else {
-          Telemetry::Accumulate(Telemetry::WEBRTC_ICE_ANSWERER_SUCCESS_TIME,
-                                time_delta.ToMilliseconds());
-        }
-        break;
-      case ICE_CTX_FAILED:
-        if (offerer_) {
-          Telemetry::Accumulate(Telemetry::WEBRTC_ICE_OFFERER_FAILURE_TIME,
-                                time_delta.ToMilliseconds());
-        } else {
-          Telemetry::Accumulate(Telemetry::WEBRTC_ICE_ANSWERER_FAILURE_TIME,
-                                time_delta.ToMilliseconds());
-        }
-        break;
-      case ICE_CTX_DISCONNECTED:
-        // We get this every time an ICE disconnect gets reported.
-        // Do we want a Telemetry probe counting how often this happens?
-        break;
-      case ICE_CTX_CLOSED:
-        // This doesn't seem to be used...
-        break;
-    }
-  }
-
   MOZ_MTLOG(ML_INFO, "NrIceCtx(" << name_ << "): state " << connection_state_
                                  << "->" << state);
   connection_state_ = state;
@@ -1107,6 +978,54 @@ void NrIceCtx::SetGatheringState(GatheringState state) {
   gathering_state_ = state;
 
   SignalGatheringStateChange(this, state);
+}
+
+void NrIceCtx::GenerateObfuscatedAddress(nr_ice_candidate* candidate,
+                                         std::string* mdns_address,
+                                         std::string* actual_address) {
+  if (candidate->type == HOST && obfuscate_host_addresses_) {
+    char addr[64];
+    if (nr_transport_addr_get_addrstring(&candidate->addr, addr,
+                                         sizeof(addr))) {
+      return;
+    }
+
+    *actual_address = addr;
+
+    const auto& iter = obfuscated_host_addresses_.find(*actual_address);
+    if (iter != obfuscated_host_addresses_.end()) {
+      *mdns_address = iter->second;
+    } else {
+      nsresult rv;
+      nsCOMPtr<nsIUUIDGenerator> uuidgen =
+          do_GetService("@mozilla.org/uuid-generator;1", &rv);
+      // If this fails, we'll return a zero UUID rather than something
+      // unexpected.
+      nsID id = {};
+      id.Clear();
+      if (NS_SUCCEEDED(rv)) {
+        rv = uuidgen->GenerateUUIDInPlace(&id);
+        if (NS_FAILED(rv)) {
+          id.Clear();
+        }
+      }
+
+      char chars[NSID_LENGTH];
+      id.ToProvidedString(chars);
+      // The string will look like {64888863-a253-424a-9b30-1ed285d20142},
+      // we want to trim off the braces.
+      const char* ptr_to_id = chars;
+      ++ptr_to_id;
+      chars[NSID_LENGTH - 2] = 0;
+
+      std::ostringstream o;
+      o << ptr_to_id << ".local";
+      *mdns_address = o.str();
+
+      obfuscated_host_addresses_[*actual_address] = *mdns_address;
+    }
+    candidate->mdns_addr = r_strdup(mdns_address->c_str());
+  }
 }
 
 }  // namespace mozilla

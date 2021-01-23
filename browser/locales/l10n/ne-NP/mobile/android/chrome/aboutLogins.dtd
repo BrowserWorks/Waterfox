@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+   %brandDTD;
+<!ENTITY aboutLogins.title                       "लग-इनहरू">
+<!ENTITY aboutLogins.update                      "अद्यावधिक गर्नुहोस्">
+<!ENTITY aboutLogins.emptyLoginText              "आफ्नो लगिनहरू सुरक्षित राख्नुहोस्। ">
+<!ENTITY aboutLogins.emptyLoginHint              "तपाईंले &brandShortName; प्रयोग गरी सेभ गर्नुभएको लगिनहरू र विश्वासपत्रहरू यहाँ देखिने छ।">

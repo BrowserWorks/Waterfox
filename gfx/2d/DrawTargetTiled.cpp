@@ -6,14 +6,13 @@
 
 #include "DrawTargetTiled.h"
 #include "Logging.h"
+#include "nsRegion.h"
 #include "PathHelpers.h"
-
-using namespace std;
 
 namespace mozilla {
 namespace gfx {
 
-DrawTargetTiled::DrawTargetTiled() {}
+DrawTargetTiled::DrawTargetTiled() = default;
 
 bool DrawTargetTiled::Init(const TileSet& aTiles) {
   if (!aTiles.mTileCount) {
@@ -33,16 +32,16 @@ bool DrawTargetTiled::Init(const TileSet& aTiles) {
       return false;
     }
     uint32_t newXMost =
-        max(mRect.XMost(),
-            mTiles[i].mTileOrigin.x + mTiles[i].mDrawTarget->GetSize().width);
+        std::max(mRect.XMost(), mTiles[i].mTileOrigin.x +
+                                    mTiles[i].mDrawTarget->GetSize().width);
     uint32_t newYMost =
-        max(mRect.YMost(),
-            mTiles[i].mTileOrigin.y + mTiles[i].mDrawTarget->GetSize().height);
+        std::max(mRect.YMost(), mTiles[i].mTileOrigin.y +
+                                    mTiles[i].mDrawTarget->GetSize().height);
     if (i == 0) {
       mRect.MoveTo(mTiles[0].mTileOrigin.x, mTiles[0].mTileOrigin.y);
     } else {
-      mRect.MoveTo(min(mRect.X(), mTiles[i].mTileOrigin.x),
-                   min(mRect.Y(), mTiles[i].mTileOrigin.y));
+      mRect.MoveTo(std::min(mRect.X(), mTiles[i].mTileOrigin.x),
+                   std::min(mRect.Y(), mTiles[i].mTileOrigin.y));
     }
     mRect.SetRightEdge(newXMost);
     mRect.SetBottomEdge(newYMost);
@@ -370,6 +369,43 @@ void DrawTargetTiled::PopLayer() {
   const PushedLayer& layer = mPushedLayers.back();
   SetPermitSubpixelAA(layer.mOldPermitSubpixelAA);
   mPushedLayers.pop_back();
+}
+
+RefPtr<DrawTarget> DrawTargetTiled::CreateClippedDrawTarget(
+    const Rect& aBounds, SurfaceFormat aFormat) {
+  Rect deviceRect = mTransform.TransformBounds(aBounds);
+
+  // Build up an approximation of the current clip rect by unioning
+  // the tiles that are not clipped
+  Rect clipRectApproximation;
+  for (size_t i = 0; i < mTiles.size(); i++) {
+    if (!mTiles[i].mClippedOut) {
+      clipRectApproximation = clipRectApproximation.Union(
+          Rect(mTiles[i].mTileOrigin.x, mTiles[i].mTileOrigin.y,
+               mTiles[i].mDrawTarget->GetSize().width,
+               mTiles[i].mDrawTarget->GetSize().height));
+    }
+  }
+
+  IntRect clipBounds;
+  if (!aBounds.IsEmpty()) {
+    clipBounds = IntRect::RoundOut(deviceRect.Intersect(clipRectApproximation));
+  } else {
+    clipBounds = IntRect::RoundOut(clipRectApproximation);
+  }
+
+  RefPtr<DrawTarget> result;
+  if (!clipBounds.IsEmpty()) {
+    RefPtr<DrawTarget> dt = CreateSimilarDrawTarget(
+        IntSize(clipBounds.width, clipBounds.height), aFormat);
+    result = gfx::Factory::CreateOffsetDrawTarget(
+        dt, IntPoint(clipBounds.x, clipBounds.y));
+    result->SetTransform(mTransform);
+  } else {
+    // Everything is clipped but we still want some kind of surface
+    result = CreateSimilarDrawTarget(IntSize(1, 1), aFormat);
+  }
+  return result;
 }
 
 void DrawTargetTiled::PadEdges(const IntRegion& aRegion) {

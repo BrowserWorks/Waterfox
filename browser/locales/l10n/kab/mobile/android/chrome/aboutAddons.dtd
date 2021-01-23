@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "Izegrar">
+<!ENTITY aboutAddons.header2                    "Izegrar-inek ">
+
+<!ENTITY addonAction.enable                     "Rmed">
+<!ENTITY addonAction.disable                    "Icekkel">
+<!ENTITY addonAction.uninstall                  "Kkes">
+<!ENTITY addonAction.undo                       "Sefsex">
+<!ENTITY addonAction.update                     "Leqqem">
+
+<!ENTITY addonUnsigned.message                  "Azegrir-agi ur yezmir ara ad ttwasenqed sɣur &brandShortName;">
+<!ENTITY addonUnsigned.learnMore                "Issin ugar">

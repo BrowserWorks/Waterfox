@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Tijaq Yakb'äl…">
+<!ENTITY openFileCmd.accesskey "j">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Tijaq ri Ajk'amaya'l K'ojlemal…">
+<!ENTITY openRemoteCmd.accesskey "K">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "K'ak'a' Ruxaq">
+<!ENTITY fileRecentMenu.accesskey "K">
+<!ENTITY saveCmd.label "Tiyak">
+<!ENTITY saveCmd.accesskey "y">
+<!ENTITY saveAsCmd.label "Tiyak Achi'el…">
+<!ENTITY saveAsCmd.accesskey "A">
+<!ENTITY saveAsChangeEncodingCmd2.label "Tiyak chuqa' Tijal Rucholajil Rucholajem Tzij">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "E">
+<!ENTITY publishCmd.label "Titalüx rutzijol">
+<!ENTITY publishCmd.accesskey "l">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Titalüx Rutzijol Achi'el…">
+<!ENTITY publishAsCmd.accesskey "l">
+<!ENTITY fileRevert.label "Tipixkolïx">
+<!ENTITY fileRevert.accesskey "x">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Tajin nitalüx rutzijol Runuk'ulem Ruxaq K'amaya'l…">
+<!ENTITY publishSettings.accesskey "t">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "K'ak'a'">
+<!ENTITY newToolbarCmd.tooltip "Titz'uk jun k'ak'a' ruxaq Nuk'unel">
+<!ENTITY openToolbarCmd.label "Tijaq">
+<!ENTITY openToolbarCmd.tooltip "Tijaq jun aj wawe' yakb'äl">
+<!ENTITY saveToolbarCmd.tooltip "Tiyak ri yakb'äl pa jun aj wawe' k'ojlib'äl">
+<!ENTITY publishToolbarCmd.tooltip "Tijotob'äx yakb'äl pa jun näj k'ojlib'äl">
+<!ENTITY printToolbarCmd.label "Titz'ajb'äx">
+<!ENTITY printToolbarCmd.tooltip "Titz'ajb'äx re ruxaq re'">

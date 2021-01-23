@@ -5,9 +5,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "WebMDecoder.h"
-#include "mozilla/Move.h"
+
+#include <utility>
+
 #include "mozilla/Preferences.h"
-#include "mozilla/StaticPrefs.h"
+#include "mozilla/StaticPrefs_media.h"
 #ifdef MOZ_AV1
 #  include "AOMDecoder.h"
 #endif
@@ -67,7 +69,7 @@ nsTArray<UniquePtr<TrackInfo>> WebMDecoder::GetTracksInfo(
       }
     }
 #ifdef MOZ_AV1
-    if (StaticPrefs::MediaAv1Enabled() && IsAV1CodecString(codec)) {
+    if (StaticPrefs::media_av1_enabled() && IsAV1CodecString(codec)) {
       tracks.AppendElement(
           CreateTrackInfoWithMIMETypeAndContainerTypeExtraParameters(
               NS_LITERAL_CSTRING("video/av1"), aType));
@@ -84,7 +86,7 @@ nsTArray<UniquePtr<TrackInfo>> WebMDecoder::GetTracksInfo(
 
 /* static */
 bool WebMDecoder::IsSupportedType(const MediaContainerType& aContainerType) {
-  if (!StaticPrefs::MediaWebMEnabled()) {
+  if (!StaticPrefs::media_webm_enabled()) {
     return false;
   }
 

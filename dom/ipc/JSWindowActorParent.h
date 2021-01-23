@@ -11,7 +11,8 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/ErrorResult.h"
 #include "mozilla/dom/BindingDeclarations.h"
-#include "mozilla/dom/JSWindowActor.h"
+#include "mozilla/dom/ContentParent.h"
+#include "mozilla/dom/JSActor.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsWrapperCache.h"
 
@@ -26,28 +27,32 @@ class WindowGlobalParent;
 namespace mozilla {
 namespace dom {
 
-class JSWindowActorParent final : public JSWindowActor {
+class JSWindowActorParent final : public JSActor {
  public:
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS_INHERITED(JSWindowActorParent,
-                                                         JSWindowActor)
+                                                         JSActor)
 
   JSObject* WrapObject(JSContext* aCx,
                        JS::Handle<JSObject*> aGivenProto) override;
 
   static already_AddRefed<JSWindowActorParent> Constructor(
-      GlobalObject& aGlobal, ErrorResult& aRv) {
+      GlobalObject& aGlobal) {
     return MakeAndAddRef<JSWindowActorParent>();
   }
 
-  WindowGlobalParent* Manager() const;
-  void Init(const nsAString& aName, WindowGlobalParent* aManager);
+  nsIGlobalObject* GetParentObject() const override;
+
+  WindowGlobalParent* GetManager() const;
+  void Init(const nsACString& aName, WindowGlobalParent* aManager);
   void StartDestroy();
   void AfterDestroy();
+  CanonicalBrowsingContext* GetBrowsingContext(ErrorResult& aRv);
 
  protected:
-  void SendRawMessage(const JSWindowActorMessageMeta& aMeta,
+  void SendRawMessage(const JSActorMessageMeta& aMeta,
                       ipc::StructuredCloneData&& aData,
+                      ipc::StructuredCloneData&& aStack,
                       ErrorResult& aRv) override;
 
  private:

@@ -1,3 +1,9 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 #ifndef dom_plugins_ipc_functionbrokeripcutils_h
 #define dom_plugins_ipc_functionbrokeripcutils_h 1
 
@@ -92,7 +98,7 @@ inline nsCString FormatBlob(const nsACString& aParam) {
 // Values indicate GetOpenFileNameW and GetSaveFileNameW.
 enum GetFileNameFunc { OPEN_FUNC, SAVE_FUNC };
 
-typedef nsTArray<nsCString> StringArray;
+typedef CopyableTArray<nsCString> StringArray;
 
 // IPC-capable version of the Windows OPENFILENAMEW struct.
 typedef struct _OpenFileNameIPC {
@@ -190,7 +196,7 @@ typedef struct _IPCInternetBuffers {
              (o.mBuffer == mBuffer) && (o.mBufferTotal == mBufferTotal);
     }
   };
-  nsTArray<Buffer> mBuffers;
+  CopyableTArray<Buffer> mBuffers;
 } IPCInternetBuffers;
 
 typedef struct _IPCPrintDlg {

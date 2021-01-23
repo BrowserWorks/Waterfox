@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Etiket Özellikleri">
+
+<!ENTITY Settings.label "Ayarlar">
+<!ENTITY Settings.accesskey "A">
+
+<!ENTITY EditLabelText.label "Metni Düzenle:">
+<!ENTITY EditLabelText.accesskey "D">
+<!ENTITY LabelFor.label "Kontrol İçin:">
+<!ENTITY LabelFor.accesskey "K">
+<!ENTITY AccessKey.label "Erişim Tuşu:">
+<!ENTITY AccessKey.accesskey "E">
+
+<!ENTITY RemoveLabel.label "Etiketi kaldır">
+<!ENTITY RemoveLabel.accesskey "l">

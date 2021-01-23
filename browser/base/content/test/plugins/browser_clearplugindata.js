@@ -38,7 +38,6 @@ function stored(needles) {
 add_task(async function() {
   registerCleanupFunction(function() {
     clearAllPluginPermissions();
-    Services.prefs.clearUserPref("plugins.click_to_play");
     Services.prefs.clearUserPref("extensions.blocklist.suppressUI");
     setTestPluginEnabledState(Ci.nsIPluginTag.STATE_ENABLED, "Test Plug-in");
     setTestPluginEnabledState(
@@ -51,8 +50,6 @@ add_task(async function() {
     window.focus();
     gTestBrowser = null;
   });
-
-  Services.prefs.setBoolPref("plugins.click_to_play", true);
 
   setTestPluginEnabledState(Ci.nsIPluginTag.STATE_ENABLED, "Test Plug-in");
   setTestPluginEnabledState(

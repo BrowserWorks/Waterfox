@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  windowClose.key "w">
+<!ENTITY  preferencesDefaultTitleMac.title "Možnosti">
+<!ENTITY  preferencesDefaultTitleWin.title "Možnosti">
+<!ENTITY  preferencesCloseButton.label "Zavrieť">
+<!ENTITY  preferencesCloseButton.accesskey "Z">
+
+<!--LOCALIZATION NOTE (.label): Preferences categories that appear on the left of the preferences dialog -->
+<!ENTITY prefWindow.title "Možnosti">
+<!ENTITY prefWindow.size "width: 102ch; height: 44em;">
+<!ENTITY prefWindowMac.size "width: 62em; height: 41em;">
+<!ENTITY prefWindowWin.size "width: 115ch; height: 43em;">
+<!ENTITY categoryHeader "Kategória">
+
+<!ENTITY appear.label "Vzhľad">
+<!ENTITY content.label "Obsah">
+<!ENTITY fonts.label "Písma">
+<!ENTITY colors.label "Farby">
+<!ENTITY media.label "Médiá">
+<!ENTITY spellingPane.label "Pravopis">
+
+<!ENTITY navigator.label "Prehliadač">
+<!ENTITY history.label "História">
+<!ENTITY languages.label "Jazyky">
+<!ENTITY applications.label "Pomocné aplikácie">
+<!ENTITY locationBar.label "Panel Adresa">
+<!ENTITY search.label "Vyhľadávanie na webe">
+<!ENTITY tabWindows.label "Prehliadanie na kartách">
+<!ENTITY links.label "Správanie sa odkazov">
+<!ENTITY download.label "Preberanie súborov">
+
+<!ENTITY security.label "Súkromie a bezpečnosť">
+<!ENTITY privatedata.label "Súkromné údaje">
+<!ENTITY cookies.label "Cookies">
+<!ENTITY images.label "Obrázky">
+<!ENTITY popups.label "Vyskakovacie okná">
+<!ENTITY passwords.label "Heslá">
+<!ENTITY masterpass.label "Hlavné heslá">
+<!ENTITY ssltls.label "SSL/TLS">
+<!ENTITY certs.label "Certifikáty">
+
+<!ENTITY sync.label "Synchronizácia">
+
+<!ENTITY advance.label "Rozšírené">
+<!ENTITY scriptsAndWindows.label "Skripty a zásuvné moduly">
+<!ENTITY keynav.label "Navigácia klávesnicou">
+<!ENTITY findAsYouType.label "Hľadanie počas písania">
+<!ENTITY cache.label "Vyrovnávacia pamäť">
+<!ENTITY offlineApps.label "Offline aplikácie">
+<!ENTITY proxies.label "Servery proxy">
+<!ENTITY httpnetworking.label "Spojenia HTTP">
+<!ENTITY smart.label "Inštalácia softvéru">
+<!ENTITY mousewheel.label "Koliesko myši">
+
+<!ENTITY focusSearch.key "f">

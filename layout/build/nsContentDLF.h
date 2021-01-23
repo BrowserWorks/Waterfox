@@ -39,20 +39,14 @@ class nsContentDLF final : public nsIDocumentLoaderFactory {
                           nsIStreamListener** aDocListener,
                           nsIContentViewer** aContentViewer);
 
-  nsresult CreateXULDocument(const char* aCommand, nsIChannel* aChannel,
-                             nsILoadGroup* aLoadGroup, nsIDocShell* aContainer,
-                             nsISupports* aExtraInfo,
-                             nsIStreamListener** aDocListener,
-                             nsIContentViewer** aContentViewer);
-
   /**
    * Create a blank document using the given loadgroup and given
    * principal.  aPrincipal is allowed to be null, in which case the
-   * new document will get the about:blank codebase principal.
+   * new document will get the about:blank content principal.
    */
   static already_AddRefed<mozilla::dom::Document> CreateBlankDocument(
       nsILoadGroup* aLoadGroup, nsIPrincipal* aPrincipal,
-      nsDocShell* aContainer);
+      nsIPrincipal* aStoragePrincipal, nsDocShell* aContainer);
 
  private:
   static nsresult EnsureUAStyleSheet();
@@ -87,8 +81,6 @@ nsresult NS_NewContentDocumentLoaderFactory(nsIDocumentLoaderFactory** aResult);
     { "Gecko-Content-Viewers", APPLICATION_XML, "@mozilla.org/content/document-loader-factory;1" }, \
     { "Gecko-Content-Viewers", APPLICATION_RDF_XML, "@mozilla.org/content/document-loader-factory;1" }, \
     { "Gecko-Content-Viewers", TEXT_RDF, "@mozilla.org/content/document-loader-factory;1" }, \
-    { "Gecko-Content-Viewers", TEXT_XUL, "@mozilla.org/content/document-loader-factory;1" }, \
-    { "Gecko-Content-Viewers", APPLICATION_CACHED_XUL, "@mozilla.org/content/document-loader-factory;1" }, \
     { "Gecko-Content-Viewers", VIEWSOURCE_CONTENT_TYPE, "@mozilla.org/content/document-loader-factory;1" }, \
     { "Gecko-Content-Viewers", IMAGE_SVG_XML, "@mozilla.org/content/document-loader-factory;1" }, \
     { "Gecko-Content-Viewers", APPLICATION_MATHML_XML, "@mozilla.org/content/document-loader-factory;1" }, \

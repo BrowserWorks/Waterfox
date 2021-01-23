@@ -11,6 +11,8 @@
 #include "mozilla/DebugOnly.h"
 #include "mozilla/EndianUtils.h"
 #include "mozilla/NullPrincipal.h"
+#include "mozilla/CheckedInt.h"
+#include "mozilla/gfx/Swizzle.h"
 #include <algorithm>
 
 #include <gio/gio.h>
@@ -30,6 +32,8 @@
 #include "prlink.h"
 #include "gfxPlatform.h"
 
+using mozilla::CheckedInt32;
+
 NS_IMPL_ISUPPORTS(nsIconChannel, nsIRequest, nsIChannel)
 
 static nsresult moz_gdk_pixbuf_to_channel(GdkPixbuf* aPixbuf, nsIURI* aURI,
@@ -44,41 +48,30 @@ static nsresult moz_gdk_pixbuf_to_channel(GdkPixbuf* aPixbuf, nsIURI* aURI,
                  NS_ERROR_UNEXPECTED);
 
   const int n_channels = 4;
-  gsize buf_size = 2 + n_channels * height * width;
-  uint8_t* const buf = (uint8_t*)moz_xmalloc(buf_size);
+  CheckedInt32 buf_size =
+      4 + n_channels * CheckedInt32(height) * CheckedInt32(width);
+  if (!buf_size.isValid()) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
+  uint8_t* const buf = (uint8_t*)moz_xmalloc(buf_size.value());
   uint8_t* out = buf;
 
   *(out++) = width;
   *(out++) = height;
+  *(out++) = uint8_t(mozilla::gfx::SurfaceFormat::OS_RGBA);
+
+  // Set all bits to ensure in nsIconDecoder we color manage and premultiply.
+  *(out++) = 0xFF;
 
   const guchar* const pixels = gdk_pixbuf_get_pixels(aPixbuf);
-  int rowextra = gdk_pixbuf_get_rowstride(aPixbuf) - width * n_channels;
+  int instride = gdk_pixbuf_get_rowstride(aPixbuf);
+  int outstride = width * n_channels;
 
-  // encode the RGB data and the A data
-  const guchar* in = pixels;
-  for (int y = 0; y < height; ++y, in += rowextra) {
-    for (int x = 0; x < width; ++x) {
-      uint8_t r = *(in++);
-      uint8_t g = *(in++);
-      uint8_t b = *(in++);
-      uint8_t a = *(in++);
-#define DO_PREMULTIPLY(c_) uint8_t(uint16_t(c_) * uint16_t(a) / uint16_t(255))
-#if MOZ_LITTLE_ENDIAN
-      *(out++) = DO_PREMULTIPLY(b);
-      *(out++) = DO_PREMULTIPLY(g);
-      *(out++) = DO_PREMULTIPLY(r);
-      *(out++) = a;
-#else
-      *(out++) = a;
-      *(out++) = DO_PREMULTIPLY(r);
-      *(out++) = DO_PREMULTIPLY(g);
-      *(out++) = DO_PREMULTIPLY(b);
-#endif
-#undef DO_PREMULTIPLY
-    }
-  }
-
-  NS_ASSERTION(out == buf + buf_size, "size miscalculation");
+  // encode the RGB data and the A data and adjust the stride as necessary.
+  mozilla::gfx::SwizzleData(pixels, instride,
+                            mozilla::gfx::SurfaceFormat::R8G8B8A8, out,
+                            outstride, mozilla::gfx::SurfaceFormat::OS_RGBA,
+                            mozilla::gfx::IntSize(width, height));
 
   nsresult rv;
   nsCOMPtr<nsIStringInputStream> stream =
@@ -92,7 +85,7 @@ static nsresult moz_gdk_pixbuf_to_channel(GdkPixbuf* aPixbuf, nsIURI* aURI,
 
   // stream takes ownership of buf and will free it on destruction.
   // This function cannot fail.
-  rv = stream->AdoptData((char*)buf, buf_size);
+  rv = stream->AdoptData((char*)buf, buf_size.value());
 
   // If this no longer holds then re-examine buf's lifetime.
   MOZ_ASSERT(NS_SUCCEEDED(rv));
@@ -100,7 +93,7 @@ static nsresult moz_gdk_pixbuf_to_channel(GdkPixbuf* aPixbuf, nsIURI* aURI,
 
   // nsIconProtocolHandler::NewChannel will provide the correct loadInfo for
   // this iconChannel. Use the most restrictive security settings for the
-  // temporary loadInfo to make sure the channel can not be openend.
+  // temporary loadInfo to make sure the channel can not be opened.
   nsCOMPtr<nsIPrincipal> nullPrincipal =
       mozilla::NullPrincipal::CreateWithoutOriginAttributes();
   return NS_NewInputStreamChannel(
@@ -198,10 +191,9 @@ nsresult nsIconChannel::InitWithGIO(nsIMozIconURI* aIconURI) {
 
   // Get icon for file specified by URI
   if (fileURI) {
-    bool isFile;
     nsAutoCString spec;
     fileURI->GetAsciiSpec(spec);
-    if (NS_SUCCEEDED(fileURI->SchemeIs("file", &isFile)) && isFile) {
+    if (fileURI->SchemeIs("file")) {
       GFile* file = g_file_new_for_uri(spec.get());
       GFileInfo* fileInfo =
           g_file_query_info(file, G_FILE_ATTRIBUTE_STANDARD_ICON,
@@ -329,7 +321,7 @@ nsresult nsIconChannel::Init(nsIURI* aURI) {
     GtkIconTheme* icon_theme = gtk_icon_theme_get_default();
     // Micking what gtk_icon_set_render_icon does with sizes, though it's not
     // critical as icons will be scaled to suit size.  It just means we follow
-    // the same pathes and so share caches.
+    // the same paths and so share caches.
     gint width, height;
     if (gtk_icon_size_lookup(icon_size, &width, &height)) {
       gint size = std::min(width, height);
@@ -354,7 +346,7 @@ nsresult nsIconChannel::Init(nsIURI* aURI) {
   }
 
   if (!icon_set) {
-    // Either we have choosen icon-name lookup for a bidi icon, or stockIcon is
+    // Either we have chosen icon-name lookup for a bidi icon, or stockIcon is
     // not a stock id so we assume it is an icon name.
     useIconName = true;
     // Creating a GtkIconSet is a convenient way to allow the style to

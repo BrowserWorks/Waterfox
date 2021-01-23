@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-composer.xul -->
+
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+<!ENTITY  pref.composer.title           "Composer">
+<!ENTITY  recentFiles.title             "תפריט דפים אחרונים">
+<!ENTITY  documentsInMenu.label         "מספר מרבי של דפים רשומים:">
+<!ENTITY  documentsInMenu.accesskey     "ר">
+<!ENTITY  savingFiles.title             "בעת שמירת או פרסום דפים">
+<!ENTITY  preserveExisting.label        "שמור על עיצוב מקור">
+<!ENTITY  preserveExisting.accesskey    "מ">
+<!ENTITY  preserveExisting.tooltip      "משמר שבירות שורה ועיצוב מקורי של הדף">
+<!ENTITY  saveAssociatedFiles.label     "שמור תמונות וקבצים מקושרים אחרים בעת שמירת דפים">
+<!ENTITY  saveAssociatedFiles.accesskey "ש">
+<!ENTITY  showPublishDialog.label       "תמיד הראה את תיבת הדו־שיח ״פרסום״ בעת פרסום דפים">
+<!ENTITY  showPublishDialog.accesskey   "ת">
+<!ENTITY  composerEditing.label         "עריכה">
+<!ENTITY  maintainStructure.label       "שמור על מבנה הטבלה בעת הכנסת או מחיקת תאים">
+<!ENTITY  maintainStructure.tooltip     "שמירה על צורה מלבנית של טבלה על־ידי הוספה אוטומטית של תאים לאחר הוספה או מחיקה של תאים">
+<!ENTITY  maintainStructure.accesskey   "צ">
+<!ENTITY  useCSS.label                  "השתמש בסגנונות CSS במקום רכיבי ותכונות HTML">
+<!ENTITY  useCSS.accesskey              "ה">
+<!ENTITY  crInPCreatesNewP.label        "מקש 'Return' בפסקה תמיד יוצר פסקה חדשה">
+<!ENTITY  crInPCreatesNewP.accesskey    "פ">
+

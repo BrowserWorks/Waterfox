@@ -251,39 +251,6 @@ add_task(async function test_filter_windowId() {
   await BrowserTestUtils.removeTab(tab);
 });
 
-// TODO Bug 1465520 test should be removed when filter name is.
-add_task(async function test_filter_isarticle_deprecated() {
-  let extension = ExtensionTestUtils.loadExtension({
-    manifest: {
-      permissions: ["tabs"],
-    },
-    background() {
-      // We expect only status updates, anything else is a failure.
-      browser.tabs.onUpdated.addListener(
-        (tabId, changeInfo) => {
-          browser.test.log(`got onUpdated ${JSON.stringify(changeInfo)}`);
-          if ("isArticle" in changeInfo) {
-            browser.test.notifyPass("isarticle");
-          }
-        },
-        { properties: ["isarticle"] }
-      );
-    },
-  });
-  await extension.startup();
-  let ok = extension.awaitFinish("isarticle");
-
-  let tab = await BrowserTestUtils.openNewForegroundTab(
-    gBrowser,
-    "http://mochi.test:8888/"
-  );
-  await ok;
-
-  await extension.unload();
-
-  await BrowserTestUtils.removeTab(tab);
-});
-
 add_task(async function test_filter_isArticle() {
   let extension = ExtensionTestUtils.loadExtension({
     manifest: {
@@ -321,7 +288,7 @@ add_task(async function test_filter_property() {
     manifest: {
       permissions: ["tabs"],
     },
-    background() {
+    async background() {
       // We expect only status updates, anything else is a failure.
       let properties = new Set([
         "audible",
@@ -334,8 +301,22 @@ add_task(async function test_filter_property() {
         "sharingState",
         "title",
       ]);
+
+      // Test that updated only happens after created.
+      let created = false;
+      let tabIds = (await browser.tabs.query({})).map(t => t.id);
+      browser.tabs.onCreated.addListener(tab => {
+        created = tab.id;
+      });
+
       browser.tabs.onUpdated.addListener(
         (tabId, changeInfo) => {
+          // ignore tabs created prior to extension startup
+          if (tabIds.includes(tabId)) {
+            return;
+          }
+          browser.test.assertEq(created, tabId, "tab created before updated");
+
           browser.test.log(`got onUpdated ${JSON.stringify(changeInfo)}`);
           browser.test.assertTrue(!!changeInfo.status, "changeInfo has status");
           if (Object.keys(changeInfo).some(p => properties.has(p))) {
@@ -351,9 +332,11 @@ add_task(async function test_filter_property() {
         },
         { properties: ["status"] }
       );
+      browser.test.sendMessage("ready");
     },
   });
   await extension.startup();
+  await extension.awaitMessage("ready");
   let ok = extension.awaitFinish("onUpdated");
 
   let tab = await BrowserTestUtils.openNewForegroundTab(

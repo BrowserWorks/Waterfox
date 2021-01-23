@@ -1,22 +1,28 @@
 package org.mozilla.geckoview.test;
 
+import org.mozilla.gecko.util.ThreadUtils;
 import org.mozilla.geckoview.GeckoResult;
-import org.mozilla.geckoview.GeckoResult.OnExceptionListener;
-import org.mozilla.geckoview.GeckoResult.OnValueListener;
+import org.mozilla.geckoview.test.util.Environment;
 import org.mozilla.geckoview.test.util.UiThreadUtils;
 
 import android.os.Handler;
 import android.os.Looper;
-import android.support.test.annotation.UiThreadTest;
-import android.support.test.filters.MediumTest;
-import android.support.test.runner.AndroidJUnit4;
+import androidx.test.annotation.UiThreadTest;
+import androidx.test.filters.MediumTest;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
@@ -24,28 +30,20 @@ import static org.junit.Assert.assertThat;
 @RunWith(AndroidJUnit4.class)
 @MediumTest
 public class GeckoResultTest {
-    private static final long DEFAULT_TIMEOUT = 5000;
-
     private static class MockException extends RuntimeException {
     }
 
     private boolean mDone;
 
+    private final Environment mEnv = new Environment();
+
     private void waitUntilDone() {
         assertThat("We should not be done", mDone, equalTo(false));
-
-        while (!mDone) {
-            UiThreadUtils.loopUntilIdle(DEFAULT_TIMEOUT);
-        }
+        UiThreadUtils.waitForCondition(() -> mDone, mEnv.getDefaultTimeoutMillis());
     }
 
     private void done() {
-        UiThreadUtils.HANDLER.post(new Runnable() {
-            @Override
-            public void run() {
-                mDone = true;
-            }
-        });
+        UiThreadUtils.HANDLER.post(() -> mDone = true);
     }
 
     @Before
@@ -56,13 +54,9 @@ public class GeckoResultTest {
     @Test
     @UiThreadTest
     public void thenWithResult() {
-        GeckoResult.fromValue(42).then(new OnValueListener<Integer, Void>() {
-            @Override
-            public GeckoResult<Void> onValue(Integer value) {
-                assertThat("Value should match", value, equalTo(42));
-                done();
-                return null;
-            }
+        GeckoResult.fromValue(42).accept(value -> {
+            assertThat("Value should match", value, equalTo(42));
+            done();
         });
 
         waitUntilDone();
@@ -72,13 +66,9 @@ public class GeckoResultTest {
     @UiThreadTest
     public void thenWithException() {
         final Throwable boom = new Exception("boom");
-        GeckoResult.fromException(boom).then(null, new OnExceptionListener<Void>() {
-            @Override
-            public GeckoResult<Void> onException(Throwable error) {
-                assertThat("Exception should match", error, equalTo(boom));
-                done();
-                return null;
-            }
+        GeckoResult.fromException(boom).accept(null, error -> {
+            assertThat("Exception should match", error, equalTo(boom));
+            done();
         });
 
         waitUntilDone();
@@ -94,22 +84,94 @@ public class GeckoResultTest {
     @UiThreadTest
     public void testCopy() {
         final GeckoResult<Integer> result = new GeckoResult<>(GeckoResult.fromValue(42));
-        result.then(new OnValueListener<Integer, Void>() {
-            @Override
-            public GeckoResult<Void> onValue(Integer value) throws Throwable {
-                assertThat("Value should match", value, equalTo(42));
-                done();
-                return null;
-            }
+        result.accept(value -> {
+            assertThat("Value should match", value, equalTo(42));
+            done();
         });
 
+        waitUntilDone();
+    }
+
+    @Test
+    @UiThreadTest
+    public void allOfError() throws Throwable {
+        final GeckoResult<List<Integer>> result = GeckoResult.allOf(
+                new GeckoResult<>(GeckoResult.fromValue(12)),
+                new GeckoResult<>(GeckoResult.fromValue(35)),
+                new GeckoResult<>(GeckoResult.fromException(
+                        new RuntimeException("Sorry not sorry"))),
+                new GeckoResult<>(GeckoResult.fromValue(0)));
+
+        UiThreadUtils.waitForResult(result.accept(
+            value -> { throw new AssertionError("result should fail"); },
+            error -> {
+                assertThat("Error should match", error instanceof RuntimeException, is(true));
+                assertThat("Error should match", error.getMessage(), equalTo("Sorry not sorry"));
+            }), mEnv.getDefaultTimeoutMillis());
+    }
+
+    @Test
+    @UiThreadTest
+    public void allOfEmpty() {
+        final GeckoResult<List<Integer>> result = GeckoResult.allOf();
+
+        result.accept(value -> {
+            assertThat("Value should match", value.isEmpty(), is(true));
+            done();
+        });
+
+        waitUntilDone();
+    }
+
+    @Test
+    @UiThreadTest
+    public void allOfNull() {
+        final GeckoResult<List<Integer>> result = GeckoResult.allOf(
+                (List<GeckoResult<Integer>>) null);
+
+        result.accept(value -> {
+            assertThat("Value should match", value, equalTo(null));
+            done();
+        });
+
+        waitUntilDone();
+    }
+
+    @Test
+    @UiThreadTest
+    public void allOfMany() {
+        final GeckoResult<Integer> pending1 = new GeckoResult<>();
+        final GeckoResult<Integer> pending2 = new GeckoResult<>();
+
+        final GeckoResult<List<Integer>> result = GeckoResult.allOf(
+                pending1,
+                new GeckoResult<>(GeckoResult.fromValue(12)),
+                pending2,
+                new GeckoResult<>(GeckoResult.fromValue(35)),
+                new GeckoResult<>(GeckoResult.fromValue(9)),
+                new GeckoResult<>(GeckoResult.fromValue(0)));
+
+        result.accept(value -> {
+            assertThat("Value should match", value, equalTo(
+                    Arrays.asList(123, 12, 321, 35, 9, 0)));
+            done();
+        });
+
+        try {
+            Thread.sleep(50);
+        } catch (InterruptedException ex) {
+        }
+
+        // Complete the results out of order so that we can verify the input order is preserved
+        pending2.complete(321);
+        pending1.complete(123);
         waitUntilDone();
     }
 
     @Test(expected = IllegalStateException.class)
     @UiThreadTest
     public void completeMultiple() {
-        final GeckoResult<Integer> deferred = new GeckoResult<Integer>();
+        final GeckoResult<Integer> deferred = new GeckoResult<>();
         deferred.complete(42);
         deferred.complete(43);
     }
@@ -117,7 +179,7 @@ public class GeckoResultTest {
     @Test(expected = IllegalStateException.class)
     @UiThreadTest
     public void completeMultipleExceptions() {
-        final GeckoResult<Integer> deferred = new GeckoResult<Integer>();
+        final GeckoResult<Integer> deferred = new GeckoResult<>();
         deferred.completeExceptionally(new Exception("boom"));
         deferred.completeExceptionally(new Exception("boom again"));
     }
@@ -125,7 +187,7 @@ public class GeckoResultTest {
     @Test(expected = IllegalStateException.class)
     @UiThreadTest
     public void completeMixed() {
-        final GeckoResult<Integer> deferred = new GeckoResult<Integer>();
+        final GeckoResult<Integer> deferred = new GeckoResult<>();
         deferred.complete(42);
         deferred.completeExceptionally(new Exception("boom again"));
     }
@@ -140,22 +202,12 @@ public class GeckoResultTest {
     @UiThreadTest
     public void completeThreaded() {
         final GeckoResult<Integer> deferred = new GeckoResult<>();
-        final Thread thread = new Thread() {
-            @Override
-            public void run() {
-                deferred.complete(42);
-            }
-        };
+        final Thread thread = new Thread(() -> deferred.complete(42));
 
-        deferred.then(new OnValueListener<Integer, Void>() {
-            @Override
-            public GeckoResult<Void> onValue(Integer value) {
-                assertThat("Value should match", value, equalTo(42));
-                assertThat("Thread should match", Thread.currentThread(),
-                        equalTo(Looper.getMainLooper().getThread()));
-                done();
-                return null;
-            }
+        deferred.accept(value -> {
+            assertThat("Value should match", value, equalTo(42));
+            ThreadUtils.assertOnUiThread();
+            done();
         });
 
         thread.start();
@@ -165,24 +217,17 @@ public class GeckoResultTest {
     @Test
     @UiThreadTest
     public void dispatchOnInitialThread() throws InterruptedException {
-        final Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                Looper.prepare();
-                final Thread dispatchThread = Thread.currentThread();
+        final Thread thread = new Thread(() -> {
+            Looper.prepare();
+            final Thread dispatchThread = Thread.currentThread();
 
-                GeckoResult.fromValue(42).then(new OnValueListener<Integer, Void>() {
-                    @Override
-                    public GeckoResult<Void> onValue(Integer value) throws Throwable {
-                        assertThat("Thread should match", Thread.currentThread(),
-                                equalTo(dispatchThread));
-                        Looper.myLooper().quit();
-                        return null;
-                    }
-                });
+            GeckoResult.fromValue(42).accept(value -> {
+                assertThat("Thread should match", Thread.currentThread(),
+                        equalTo(dispatchThread));
+                Looper.myLooper().quit();
+            });
 
-                Looper.loop();
-            }
+            Looper.loop();
         });
 
         thread.start();
@@ -194,22 +239,13 @@ public class GeckoResultTest {
     public void completeExceptionallyThreaded() {
         final GeckoResult<Integer> deferred = new GeckoResult<>();
         final Throwable boom = new Exception("boom");
-        final Thread thread = new Thread() {
-            @Override
-            public void run() {
-                deferred.completeExceptionally(boom);
-            }
-        };
+        final Thread thread = new Thread(() -> deferred.completeExceptionally(boom));
 
-        deferred.exceptionally(new OnExceptionListener<Void>() {
-            @Override
-            public GeckoResult<Void> onException(Throwable error) {
-                assertThat("Exception should match", error, equalTo(boom));
-                assertThat("Thread should match", Thread.currentThread(),
-                        equalTo(Looper.getMainLooper().getThread()));
-                done();
-                return null;
-            }
+        deferred.exceptionally(error -> {
+            assertThat("Exception should match", error, equalTo(boom));
+            ThreadUtils.assertOnUiThread();
+            done();
+            return null;
         });
 
         thread.start();
@@ -221,37 +257,21 @@ public class GeckoResultTest {
     public void resultChaining() {
         assertThat("We're on the UI thread", Thread.currentThread(), equalTo(Looper.getMainLooper().getThread()));
 
-        GeckoResult.fromValue(42).then(new OnValueListener<Integer, String>() {
-            @Override
-            public GeckoResult<String> onValue(Integer value) {
-                assertThat("Value should match", value, equalTo(42));
-                return GeckoResult.fromValue("hello");
-            }
-        }).then(new OnValueListener<String, Float>() {
-            @Override
-            public GeckoResult<Float> onValue(String value) {
-                assertThat("Value should match", value, equalTo("hello"));
-                return GeckoResult.fromValue(42.0f);
-            }
-        }).then(new OnValueListener<Float, Float>() {
-            @Override
-            public GeckoResult<Float> onValue(Float value) {
-                assertThat("Value should match", value, equalTo(42.0f));
-                return GeckoResult.fromException(new Exception("boom"));
-            }
-        }).exceptionally(new OnExceptionListener<Void>() {
-            @Override
-            public GeckoResult<Void> onException(Throwable error) {
-                assertThat("Error message should match", error.getMessage(), equalTo("boom"));
-                throw new MockException();
-            }
-        }).exceptionally(new OnExceptionListener<Void>() {
-            @Override
-            public GeckoResult<Void> onException(Throwable exception) {
-                assertThat("Exception should be MockException", exception, instanceOf(MockException.class));
-                done();
-                return null;
-            }
+        GeckoResult.fromValue(42).then(value -> {
+            assertThat("Value should match", value, equalTo(42));
+            return GeckoResult.fromValue("hello");
+        }).then(value -> {
+            assertThat("Value should match", value, equalTo("hello"));
+            return GeckoResult.fromValue(42.0f);
+        }).then(value -> {
+            assertThat("Value should match", value, equalTo(42.0f));
+            return GeckoResult.fromException(new Exception("boom"));
+        }).exceptionally(error -> {
+            assertThat("Error message should match", error.getMessage(), equalTo("boom"));
+            throw new MockException();
+        }).accept(null, exception -> {
+            assertThat("Exception should be MockException", exception, instanceOf(MockException.class));
+            done();
         });
 
         waitUntilDone();
@@ -262,18 +282,10 @@ public class GeckoResultTest {
     public void then_propagatedValue() {
         // The first GeckoResult only has an exception listener, so when the value 42 is
         // propagated to subsequent GeckoResult instances, the propagated value is coerced to null.
-        GeckoResult.fromValue(42).exceptionally(new OnExceptionListener<String>() {
-            @Override
-            public GeckoResult<String> onException(Throwable exception) throws Throwable {
-                return null;
-            }
-        }).then(new OnValueListener<String, Void>() {
-            @Override
-            public GeckoResult<Void> onValue(String value) throws Throwable {
-                assertThat("Propagated value is null", value, nullValue());
-                done();
-                return null;
-            }
+        GeckoResult.fromValue(42).exceptionally(error -> null)
+        .accept(value -> {
+            assertThat("Propagated value is null", value, nullValue());
+            done();
         });
 
         waitUntilDone();
@@ -282,11 +294,8 @@ public class GeckoResultTest {
     @UiThreadTest
     @Test(expected = GeckoResult.UncaughtException.class)
     public void then_uncaughtException() {
-        GeckoResult.fromValue(42).then(new OnValueListener<Integer, String>() {
-            @Override
-            public GeckoResult<String> onValue(Integer value) {
-                throw new MockException();
-            }
+        GeckoResult.fromValue(42).then(value -> {
+            throw new MockException();
         });
 
         waitUntilDone();
@@ -295,17 +304,9 @@ public class GeckoResultTest {
     @UiThreadTest
     @Test(expected = GeckoResult.UncaughtException.class)
     public void then_propagatedUncaughtException() {
-        GeckoResult.fromValue(42).then(new OnValueListener<Integer, String>() {
-            @Override
-            public GeckoResult<String> onValue(Integer value) {
-                throw new MockException();
-            }
-        }).then(new OnValueListener<String, Void>() {
-            @Override
-            public GeckoResult<Void> onValue(String value) throws Throwable {
-                return null;
-            }
-        });
+        GeckoResult.fromValue(42).then(value -> {
+            throw new MockException();
+        }).accept(value -> {});
 
         waitUntilDone();
     }
@@ -313,25 +314,14 @@ public class GeckoResultTest {
     @UiThreadTest
     @Test
     public void then_caughtException() {
-        GeckoResult.fromValue(42).then(new OnValueListener<Integer, String>() {
-            @Override
-            public GeckoResult<String> onValue(Integer value) throws Exception {
-                throw new MockException();
-            }
-        }).then(new OnValueListener<String, Void>() {
-            @Override
-            public GeckoResult<Void> onValue(String value) throws Throwable {
-                return null;
-            }
-        }).exceptionally(new OnExceptionListener<Void>() {
-            @Override
-            public GeckoResult<Void> onException(Throwable exception) throws Throwable {
+        GeckoResult.fromValue(42).then(value -> { throw new MockException(); })
+            .accept(value -> {})
+            .exceptionally(exception -> {
                 assertThat("Exception should be expected",
                            exception, instanceOf(MockException.class));
                 done();
                 return null;
-            }
-        });
+            });
 
         waitUntilDone();
     }
@@ -371,11 +361,10 @@ public class GeckoResultTest {
         assertThat("We shouldn't have a Looper", result.getLooper(), nullValue());
 
         try {
-            result.withHandler(queue.take()).then(value -> {
+            result.withHandler(queue.take()).accept(value -> {
                 assertThat("Thread should match", Thread.currentThread(), equalTo(thread));
                 assertThat("Value should match", value, equalTo(42));
                 Looper.myLooper().quit();
-                return null;
             });
 
             thread.join();
@@ -395,25 +384,6 @@ public class GeckoResultTest {
         GeckoResult.fromException(new MockException()).poll(0);
     }
 
-    @Test
-    public void pollIncompleteWithValue() throws Throwable {
-        final GeckoResult<Integer> result = new GeckoResult<>();
-
-        final Thread thread = new Thread(() -> result.complete(42));
-
-        thread.start();
-        assertThat("Value should match", result.poll(), equalTo(42));
-    }
-
-    @Test(expected = MockException.class)
-    public void pollIncompleteWithError() throws Throwable {
-        final GeckoResult<Void> result = new GeckoResult<>();
-
-        final Thread thread = new Thread(() -> result.completeExceptionally(new MockException()));
-
-        thread.start();
-        result.poll();
-    }
 
     @Test(expected = TimeoutException.class)
     public void pollTimeout() throws Throwable {
@@ -430,5 +400,122 @@ public class GeckoResultTest {
     @Test(expected = IllegalThreadStateException.class)
     public void pollWithLooper() throws Throwable {
         new GeckoResult<Void>().poll();
+    }
+
+    @UiThreadTest
+    @Test
+    public void cancelNoDelegate() {
+        GeckoResult<Void> result = new GeckoResult<Void>();
+        result.cancel().accept(value -> {
+            assertThat("Cancellation should fail", value, equalTo(false));
+            done();
+        });
+        waitUntilDone();
+    }
+
+    private GeckoResult<Integer> createCancellableResult() {
+        GeckoResult<Integer> result = new GeckoResult<>();
+        result.setCancellationDelegate(new GeckoResult.CancellationDelegate() {
+            @Override
+            public GeckoResult<Boolean> cancel() {
+                return GeckoResult.fromValue(true);
+            }
+        });
+
+        return result;
+    }
+
+    @UiThreadTest
+    @Test
+    public void cancelSuccess() {
+        GeckoResult<Integer> result = createCancellableResult();
+
+        result.cancel().accept(value -> {
+            assertThat("Cancel should succeed", value, equalTo(true));
+            result.exceptionally(exception -> {
+                assertThat("Exception should match", exception, instanceOf(CancellationException.class));
+                done();
+
+                return null;
+            });
+        });
+
+        waitUntilDone();
+    }
+
+    @UiThreadTest
+    @Test
+    public void cancelCompleted() {
+        GeckoResult<Integer> result = createCancellableResult();
+        result.complete(42);
+        result.cancel().accept(value -> {
+            assertThat("Cancel should fail", value, equalTo(false));
+            done();
+        });
+
+        waitUntilDone();
+    }
+
+    @UiThreadTest
+    @Test
+    public void cancelParent() {
+        GeckoResult<Integer> result = createCancellableResult();
+        GeckoResult<Integer> result2 = result.then(value -> GeckoResult.fromValue(42));
+
+        result.cancel().accept(value -> {
+            assertThat("Cancel should succeed", value, equalTo(true));
+            result2.exceptionally(exception -> {
+                assertThat("Exception should match", exception, instanceOf(CancellationException.class));
+                done();
+
+                return null;
+            });
+        });
+
+        waitUntilDone();
+    }
+
+    @UiThreadTest
+    @Test
+    public void cancelChildParentNotComplete() {
+        GeckoResult<Integer> result = new GeckoResult<Integer>()
+                .then(value -> createCancellableResult())
+                .then(value -> new GeckoResult<Integer>());
+
+        result.cancel().accept(value -> {
+            assertThat("Cancel should fail", value, equalTo(false));
+            done();
+        });
+
+        waitUntilDone();
+    }
+
+    @UiThreadTest
+    @Test
+    public void cancelChildParentComplete() {
+        final GeckoResult<Integer> result = GeckoResult.fromValue(42)
+                .then(value -> createCancellableResult())
+                .then(value -> new GeckoResult<Integer>());
+
+        final Handler handler = new Handler();
+        handler.post(() -> {
+            result.cancel().accept(value -> {
+                assertThat("Cancel should succeed", value, equalTo(true));
+                done();
+            });
+        });
+
+        waitUntilDone();
+    }
+
+    @UiThreadTest
+    @Test
+    public void getOrAccept() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        final Method ai = GeckoResult.class.getDeclaredMethod("getOrAccept", GeckoResult.Consumer.class);
+        ai.setAccessible(true);
+
+        final AtomicBoolean ran = new AtomicBoolean(false);
+        ai.invoke(GeckoResult.fromValue(42), (GeckoResult.Consumer<Integer>) o -> ran.set(true));
+        assertThat("Should've ran", ran.get(), equalTo(true));
     }
 }

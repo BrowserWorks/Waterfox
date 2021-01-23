@@ -8,12 +8,14 @@ import json
 import math
 import os
 import re
+import runpy
 import sys
 import atexit
-import shared_telemetry_utils as utils
+import six
+from . import shared_telemetry_utils as utils
 
 from ctypes import c_int
-from shared_telemetry_utils import ParserError
+from .shared_telemetry_utils import ParserError
 from collections import OrderedDict
 atexit.register(ParserError.exit_func)
 
@@ -44,6 +46,12 @@ BASE_DOC_URL = ("https://firefox-source-docs.mozilla.org/toolkit/components/"
                 "telemetry/telemetry/")
 HISTOGRAMS_DOC_URL = (BASE_DOC_URL + "collection/histograms.html")
 SCALARS_DOC_URL = (BASE_DOC_URL + "collection/scalars.html")
+
+GECKOVIEW_STREAMING_SUPPORTED_KINDS = [
+    'linear',
+    'exponential',
+    'categorical',
+]
 
 # parse_histograms.py is used by scripts from a mozilla-central build tree
 # and also by outside consumers, such as the telemetry server.  We need
@@ -91,29 +99,29 @@ def exponential_buckets(dmin, dmax, n_buckets):
     return ret_array
 
 
-whitelists = None
+allowlists = None
 
 
-def load_whitelist():
-    global whitelists
+def load_allowlist():
+    global allowlists
     try:
         parsers_path = os.path.realpath(os.path.dirname(__file__))
         # The parsers live in build_scripts/parsers in the Telemetry module, while
-        # the histogram-whitelists file lives in the root of the module. Account
-        # for that when looking for the whitelist.
+        # the histogram-allowlists file lives in the root of the module. Account
+        # for that when looking for the allowlist.
         # NOTE: if the parsers are moved, this logic will need to be updated.
         telemetry_module_path = os.path.abspath(os.path.join(parsers_path, os.pardir, os.pardir))
-        whitelist_path = os.path.join(telemetry_module_path, 'histogram-whitelists.json')
-        with open(whitelist_path, 'r') as f:
+        allowlist_path = os.path.join(telemetry_module_path, 'histogram-allowlists.json')
+        with open(allowlist_path, 'r') as f:
             try:
-                whitelists = json.load(f)
-                for name, whitelist in whitelists.iteritems():
-                    whitelists[name] = set(whitelist)
+                allowlists = json.load(f)
+                for name, allowlist in allowlists.items():
+                    allowlists[name] = set(allowlist)
             except ValueError:
-                ParserError('Error parsing whitelist: %s' % whitelist_path).handle_now()
+                ParserError('Error parsing allowlist: %s' % allowlist_path).handle_now()
     except IOError:
-        whitelists = None
-        ParserError('Unable to parse whitelist: %s.' % whitelist_path).handle_now()
+        allowlists = None
+        ParserError('Unable to parse allowlist: %s.' % allowlist_path).handle_now()
 
 
 class Histogram:
@@ -134,6 +142,7 @@ definition is a dict-like object that must contain at least the keys:
         if self._is_use_counter:
             definition.setdefault('record_in_processes', ['main', 'content'])
             definition.setdefault('releaseChannelCollection', 'opt-out')
+            definition.setdefault('products', ['firefox', 'fennec', 'geckoview'])
         self.verify_attributes(name, definition)
         self._name = name
         self._description = definition['description']
@@ -144,7 +153,7 @@ definition is a dict-like object that must contain at least the keys:
         self._labels = definition.get('labels', [])
         self._record_in_processes = definition.get('record_in_processes')
         self._record_into_store = definition.get('record_into_store', ['main'])
-        self._products = definition.get('products', ["all"])
+        self._products = definition.get('products')
         self._operating_systems = definition.get('operating_systems', ["all"])
 
         self.compute_bucket_parameters(definition)
@@ -303,8 +312,8 @@ the histogram."""
         self.check_keys(name, definition, allowed_keys)
         self.check_keys_field(name, definition)
         self.check_field_types(name, definition)
-        self.check_whitelisted_kind(name, definition)
-        self.check_whitelistable_fields(name, definition)
+        self.check_allowlisted_kind(name, definition)
+        self.check_allowlistable_fields(name, definition)
         self.check_expiration(name, definition)
         self.check_label_values(name, definition)
         self.check_record_in_processes(name, definition)
@@ -338,10 +347,10 @@ the histogram."""
             return
 
         # We forbid new probes from using "expires_in_version" : "default" field/value pair.
-        # Old ones that use this are added to the whitelist.
+        # Old ones that use this are added to the allowlist.
         if expiration == "default" and \
-           whitelists is not None and \
-           name not in whitelists['expiry_default']:
+           allowlists is not None and \
+           name not in allowlists['expiry_default']:
             ParserError('New histogram "%s" cannot have "default" %s value.' %
                         (name, field)).handle_later()
 
@@ -352,7 +361,7 @@ the histogram."""
            not utils.validate_expiration_version(expiration) and \
            self._strict_type_checks:
             ParserError(('Error for histogram {} - invalid {}: {}.'
-                        '\nSee: {}#expires-in-version')
+                         '\nSee: {}#expires-in-version')
                         .format(name, field, expiration, HISTOGRAMS_DOC_URL)).handle_later()
 
         expiration = utils.add_expiration_postfix(expiration)
@@ -365,7 +374,7 @@ the histogram."""
             return
 
         invalid = filter(lambda l: len(l) > MAX_LABEL_LENGTH, labels)
-        if len(invalid) > 0:
+        if len(list(invalid)) > 0:
             ParserError('Label values for "%s" exceed length limit of %d: %s' %
                         (name, MAX_LABEL_LENGTH, ', '.join(invalid))).handle_later()
 
@@ -376,7 +385,7 @@ the histogram."""
         # To make it easier to generate C++ identifiers from this etc., we restrict
         # the label values to a strict pattern.
         invalid = filter(lambda l: not re.match(CPP_IDENTIFIER_PATTERN, l, re.IGNORECASE), labels)
-        if len(invalid) > 0:
+        if len(list(invalid)) > 0:
             ParserError('Label values for %s are not matching pattern "%s": %s' %
                         (name, CPP_IDENTIFIER_PATTERN, ', '.join(invalid))).handle_later()
 
@@ -408,13 +417,22 @@ the histogram."""
         DOC_URL = HISTOGRAMS_DOC_URL + "#products"
 
         if not products:
-            # products is optional
-            return
+            ParserError('Histogram "%s" must have a "%s" field:\n%s'
+                        % (name, field, DOC_URL)).handle_now()
 
         for product in products:
             if not utils.is_valid_product(product):
                 ParserError('Histogram "%s" has unknown product "%s" in %s.\n%s' %
                             (name, product, field, DOC_URL)).handle_later()
+            if utils.is_geckoview_streaming_product(product):
+                kind = definition.get('kind')
+                if kind not in GECKOVIEW_STREAMING_SUPPORTED_KINDS:
+                    ParserError(('Histogram "%s" is of kind "%s" which is unsupported for '
+                                 'product "%s".') % (name, kind, product)).handle_later()
+                keyed = definition.get('keyed')
+                if keyed:
+                    ParserError('Keyed histograms like "%s" are unsupported for product "%s"' %
+                                (name, product)).handle_later()
 
     def check_operating_systems(self, name, definition):
         if not self._strict_type_checks:
@@ -467,13 +485,13 @@ the histogram."""
             raise ValueError('Label count for %s exceeds limit of %d' % (name, MAX_KEY_COUNT))
 
         invalid = filter(lambda k: len(k) > MAX_KEY_LENGTH, keys)
-        if len(invalid) > 0:
+        if len(list(invalid)) > 0:
             raise ValueError('"keys" values for %s are exceeding length "%d": %s' %
                              (name, MAX_KEY_LENGTH, ', '.join(invalid)))
 
-    def check_whitelisted_kind(self, name, definition):
+    def check_allowlisted_kind(self, name, definition):
         # We don't need to run any of these checks on the server.
-        if not self._strict_type_checks or whitelists is None:
+        if not self._strict_type_checks or allowlists is None:
             return
 
         # Disallow "flag" and "count" histograms on desktop, suggest to use
@@ -484,7 +502,7 @@ the histogram."""
 
         if not android_target and \
            hist_kind in ["flag", "count"] and \
-           name not in whitelists["kind"]:
+           name not in allowlists["kind"]:
             ParserError(('Unsupported kind "%s" for histogram "%s":\n'
                          'New "%s" histograms are not supported on Desktop, you should'
                          ' use scalars instead:\n'
@@ -493,25 +511,25 @@ the histogram."""
                          ' Add "operating_systems": ["android"] to your histogram definition.')
                         % (hist_kind, name, hist_kind, SCALARS_DOC_URL)).handle_now()
 
-    # Check for the presence of fields that old histograms are whitelisted for.
-    def check_whitelistable_fields(self, name, definition):
+    # Check for the presence of fields that old histograms are allowlisted for.
+    def check_allowlistable_fields(self, name, definition):
         # Use counters don't have any mechanism to add the fields checked here,
         # so skip the check for them.
         # We also don't need to run any of these checks on the server.
         if self._is_use_counter or not self._strict_type_checks:
             return
 
-        # In the pipeline we don't have whitelists available.
-        if whitelists is None:
+        # In the pipeline we don't have allowlists available.
+        if allowlists is None:
             return
 
         for field in ['alert_emails', 'bug_numbers']:
-            if field not in definition and name not in whitelists[field]:
+            if field not in definition and name not in allowlists[field]:
                 ParserError('New histogram "%s" must have a "%s" field.' %
                             (name, field)).handle_later()
-            if field in definition and name in whitelists[field]:
-                msg = 'Histogram "%s" should be removed from the whitelist for "%s" in ' \
-                      'histogram-whitelists.json.'
+            if field in definition and name in allowlists[field]:
+                msg = 'Histogram "%s" should be removed from the allowlist for "%s" in ' \
+                      'histogram-allowlists.json.'
                 ParserError(msg % (name, field)).handle_later()
 
     def check_field_types(self, name, definition):
@@ -522,22 +540,22 @@ the histogram."""
             "low": int,
             "high": int,
             "keyed": bool,
-            "expires_in_version": basestring,
-            "kind": basestring,
-            "description": basestring,
-            "releaseChannelCollection": basestring,
+            "expires_in_version": six.string_types,
+            "kind": six.string_types,
+            "description": six.string_types,
+            "releaseChannelCollection": six.string_types,
         }
 
         # For list fields we check the items types.
         type_checked_list_fields = {
             "bug_numbers": int,
-            "alert_emails": basestring,
-            "labels": basestring,
-            "record_in_processes": basestring,
-            "keys": basestring,
-            "products": basestring,
-            "operating_systems": basestring,
-            "record_into_store": basestring,
+            "alert_emails": six.string_types,
+            "labels": six.string_types,
+            "record_in_processes": six.string_types,
+            "keys": six.string_types,
+            "products": six.string_types,
+            "operating_systems": six.string_types,
+            "record_into_store": six.string_types,
         }
 
         # For the server-side, where _strict_type_checks==False, we want to
@@ -565,11 +583,11 @@ the histogram."""
                 definition["keyed"] = True
 
         def nice_type_name(t):
-            if t is basestring:
+            if t is str:
                 return "string"
             return t.__name__
 
-        for key, key_type in type_checked_fields.iteritems():
+        for key, key_type in type_checked_fields.items():
             if key not in definition:
                 continue
             if not isinstance(definition[key], key_type):
@@ -581,7 +599,7 @@ the histogram."""
             ParserError('Value for high in histogram "{0}" should be lower or equal to INT_MAX.'
                         .format(nice_type_name(c_int))).handle_later()
 
-        for key, key_type in type_checked_list_fields.iteritems():
+        for key, key_type in type_checked_list_fields.items():
             if key not in definition:
                 continue
             if not all(isinstance(x, key_type) for x in definition[key]):
@@ -591,7 +609,7 @@ the histogram."""
     def check_keys(self, name, definition, allowed_keys):
         if not self._strict_type_checks:
             return
-        for key in definition.iterkeys():
+        for key in iter(definition.keys()):
             if key not in allowed_keys:
                 ParserError('Key "%s" is not allowed for histogram "%s".' %
                             (key, name)).handle_later()
@@ -600,8 +618,11 @@ the histogram."""
         self._low = low
         self._high = high
         self._n_buckets = n_buckets
-        if whitelists is not None and self._n_buckets > 100 and type(self._n_buckets) is int:
-            if self._name not in whitelists['n_buckets']:
+        max_n_buckets = 101 if self._kind in ['enumerated', 'categorical'] else 100
+        if (allowlists is not None
+            and self._n_buckets > max_n_buckets
+            and type(self._n_buckets) is int):
+            if self._name not in allowlists['n_buckets']:
                 ParserError(
                     'New histogram "%s" is not permitted to have more than 100 buckets.\n'
                     'Histograms with large numbers of buckets use disproportionately high'
@@ -690,19 +711,23 @@ def load_histograms_into_dict(ordered_pairs, strict_type_checks):
 # just Histograms.json.  For each file's basename, we have a specific
 # routine to parse that file, and return a dictionary mapping histogram
 # names to histogram parameters.
-def from_Histograms_json(filename, strict_type_checks):
+def from_json(filename, strict_type_checks):
     with open(filename, 'r') as f:
         try:
             def hook(ps):
                 return load_histograms_into_dict(ps, strict_type_checks)
             histograms = json.load(f, object_pairs_hook=hook)
-        except ValueError, e:
+        except ValueError as e:
             ParserError("error parsing histograms in %s: %s" % (filename, e.message)).handle_now()
     return histograms
 
 
 def from_UseCounters_conf(filename, strict_type_checks):
     return usecounters.generate_histograms(filename)
+
+
+def from_UseCountersWorker_conf(filename, strict_type_checks):
+    return usecounters.generate_histograms(filename, True)
 
 
 def from_nsDeprecatedOperationList(filename, strict_type_checks):
@@ -730,17 +755,86 @@ def from_nsDeprecatedOperationList(filename, strict_type_checks):
     return histograms
 
 
-FILENAME_PARSERS = {
-    'Histograms.json': from_Histograms_json,
-    'nsDeprecatedOperationList.h': from_nsDeprecatedOperationList,
-}
+def to_camel_case(property_name):
+    return re.sub("(^|_|-)([a-z0-9])",
+                  lambda m: m.group(2).upper(),
+                  property_name.strip("_").strip("-"))
+
+
+def add_css_property_counters(histograms, property_name):
+    def add_counter(context):
+        name = 'USE_COUNTER2_CSS_PROPERTY_%s_%s' % (to_camel_case(property_name), context.upper())
+        histograms[name] = {
+            'expires_in_version': 'never',
+            'kind': 'boolean',
+            'description': 'Whether a %s used the CSS property %s' % (context, property_name)
+        }
+
+    add_counter('document')
+    add_counter('page')
+
+
+def from_ServoCSSPropList(filename, strict_type_checks):
+    histograms = collections.OrderedDict()
+    properties = runpy.run_path(filename)["data"]
+    for prop in properties:
+        add_css_property_counters(histograms, prop.name)
+    return histograms
+
+
+def from_counted_unknown_properties(filename, strict_type_checks):
+    histograms = collections.OrderedDict()
+    properties = runpy.run_path(filename)["COUNTED_UNKNOWN_PROPERTIES"]
+
+    # NOTE(emilio): Unlike ServoCSSProperties, `prop` here is just the property
+    # name.
+    #
+    # We use the same naming as CSS properties so that we don't get
+    # discontinuity when we implement or prototype them.
+    for prop in properties:
+        add_css_property_counters(histograms, prop)
+    return histograms
+
+
+# This is only used for probe-scraper.
+def from_properties_db(filename, strict_type_checks):
+    histograms = collections.OrderedDict()
+    with open(filename, 'r') as f:
+        in_css_properties = False
+
+        for line in f:
+            if not in_css_properties:
+                if line.startswith("exports.CSS_PROPERTIES = {"):
+                    in_css_properties = True
+                continue
+
+            if line.startswith("};"):
+                break
+
+            if not line.startswith("  \""):
+                continue
+
+            name = line.split("\"")[1]
+            add_css_property_counters(histograms, name)
+    return histograms
+
+
+FILENAME_PARSERS = [
+    (lambda x: from_json if x.endswith('.json') else None),
+    (lambda x: from_nsDeprecatedOperationList if x == 'nsDeprecatedOperationList.h' else None),
+    (lambda x: from_ServoCSSPropList if x == 'ServoCSSPropList.py' else None),
+    (lambda x: from_counted_unknown_properties if x == 'counted_unknown_properties.py' else None),
+    (lambda x: from_properties_db if x == 'properties-db.js' else None),
+]
 
 # Similarly to the dance above with buildconfig, usecounters may not be
 # available, so handle that gracefully.
 try:
     import usecounters
 
-    FILENAME_PARSERS['UseCounters.conf'] = from_UseCounters_conf
+    FILENAME_PARSERS.append(lambda x: from_UseCounters_conf if x == 'UseCounters.conf' else None)
+    FILENAME_PARSERS.append(
+        lambda x: from_UseCountersWorker_conf if x == 'UseCountersWorker.conf' else None)
 except ImportError:
     pass
 
@@ -750,11 +844,19 @@ def from_files(filenames, strict_type_checks=True):
 the histograms defined in filenames.
     """
     if strict_type_checks:
-        load_whitelist()
+        load_allowlist()
 
     all_histograms = OrderedDict()
     for filename in filenames:
-        parser = FILENAME_PARSERS[os.path.basename(filename)]
+        parser = None
+        for checkFn in FILENAME_PARSERS:
+            parser = checkFn(os.path.basename(filename))
+            if parser is not None:
+                break
+
+        if parser is None:
+            ParserError("Don't know how to parse %s." % filename).handle_now()
+
         histograms = parser(filename, strict_type_checks)
 
         # OrderedDicts are important, because then the iteration order over
@@ -764,32 +866,41 @@ the histograms defined in filenames.
         if not isinstance(histograms, OrderedDict):
             ParserError("Histogram parser did not provide an OrderedDict.").handle_now()
 
-        for (name, definition) in histograms.iteritems():
+        for (name, definition) in histograms.items():
             if name in all_histograms:
                 ParserError('Duplicate histogram name "%s".' % name).handle_later()
             all_histograms[name] = definition
 
-    # We require that all USE_COUNTER2_* histograms be defined in a contiguous
+    def check_continuity(iterable, filter_function, name):
+        indices = list(filter(filter_function, enumerate(iter(iterable.keys()))))
+        if indices:
+            lower_bound = indices[0][0]
+            upper_bound = indices[-1][0]
+            n_counters = upper_bound - lower_bound + 1
+            if n_counters != len(indices):
+                ParserError("Histograms %s must be defined in a contiguous block." %
+                            name).handle_later()
+
+    # We require that all USE_COUNTER2_*_WORKER histograms be defined in a contiguous
     # block.
-    use_counter_indices = filter(lambda x: x[1].startswith("USE_COUNTER2_"),
-                                 enumerate(all_histograms.iterkeys()))
-    if use_counter_indices:
-        lower_bound = use_counter_indices[0][0]
-        upper_bound = use_counter_indices[-1][0]
-        n_counters = upper_bound - lower_bound + 1
-        if n_counters != len(use_counter_indices):
-            ParserError("Use counter histograms must be defined in a contiguous block."
-                        ).handle_later()
+    check_continuity(all_histograms,
+                     lambda x: x[1].startswith("USE_COUNTER2_") and x[1].endswith("_WORKER"),
+                     "use counter worker")
+    # And all other USE_COUNTER2_* histograms be defined in a contiguous
+    # block.
+    check_continuity(all_histograms,
+                     lambda x: x[1].startswith("USE_COUNTER2_") and not x[1].endswith("_WORKER"),
+                     "use counter")
 
     # Check that histograms that were removed from Histograms.json etc.
-    # are also removed from the whitelists.
-    if whitelists is not None:
-        all_whitelist_entries = itertools.chain.from_iterable(whitelists.itervalues())
-        orphaned = set(all_whitelist_entries) - set(all_histograms.keys())
+    # are also removed from the allowlists.
+    if allowlists is not None:
+        all_allowlist_entries = itertools.chain.from_iterable(iter(allowlists.values()))
+        orphaned = set(all_allowlist_entries) - set(all_histograms.keys())
         if len(orphaned) > 0:
             msg = 'The following entries are orphaned and should be removed from ' \
-                  'histogram-whitelists.json:\n%s'
+                  'histogram-allowlists.json:\n%s'
             ParserError(msg % (', '.join(sorted(orphaned)))).handle_later()
 
-    for (name, definition) in all_histograms.iteritems():
+    for (name, definition) in all_histograms.items():
         yield Histogram(name, definition, strict_type_checks=strict_type_checks)

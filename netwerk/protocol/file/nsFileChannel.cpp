@@ -18,7 +18,6 @@
 #include "nsIFileStreams.h"
 #include "nsFileProtocolHandler.h"
 #include "nsProxyRelease.h"
-#include "nsAutoPtr.h"
 #include "nsIContentPolicy.h"
 #include "nsContentUtils.h"
 
@@ -239,11 +238,6 @@ nsFileChannel::nsFileChannel(nsIURI* uri) : mUploadLength(0), mFileURI(uri) {}
 nsresult nsFileChannel::Init() {
   NS_ENSURE_STATE(mLoadInfo);
 
-  nsresult rv;
-
-  rv = nsBaseChannel::Init();
-  NS_ENSURE_SUCCESS(rv, rv);
-
   // If we have a link file, we should resolve its target right away.
   // This is to protect against a same origin attack where the same link file
   // can point to different resources right after the first resource is loaded.
@@ -374,7 +368,7 @@ nsresult nsFileChannel::OpenContentStream(bool async, nsIInputStream** result,
     if (!uploadStream || !uploadStream->IsInitialized()) {
       return NS_ERROR_OUT_OF_MEMORY;
     }
-    stream = uploadStream.forget();
+    stream = std::move(uploadStream);
 
     mContentLength = 0;
 

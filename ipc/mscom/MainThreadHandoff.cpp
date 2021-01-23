@@ -4,23 +4,27 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#define INITGUID
+
 #include "mozilla/mscom/MainThreadHandoff.h"
+
+#include <utility>
 
 #include "mozilla/Assertions.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/DebugOnly.h"
-#include "mozilla/Move.h"
+#include "mozilla/ThreadLocal.h"
+#include "mozilla/TimeStamp.h"
+#include "mozilla/Unused.h"
 #include "mozilla/mscom/AgileReference.h"
 #include "mozilla/mscom/InterceptorLog.h"
 #include "mozilla/mscom/Registration.h"
 #include "mozilla/mscom/Utils.h"
-#include "mozilla/TimeStamp.h"
-#include "mozilla/ThreadLocal.h"
-#include "mozilla/Unused.h"
-#include "nsThreadUtils.h"
 #include "nsProxyRelease.h"
+#include "nsThreadUtils.h"
 
 using mozilla::DebugOnly;
+using mozilla::Unused;
 using mozilla::mscom::AgileReference;
 
 namespace {
@@ -188,7 +192,7 @@ class MOZ_RAII LogEvent final {
       return;
     }
 
-    mozilla::TimeStamp callEnd(TimeStamp::Now());
+    mozilla::TimeStamp callEnd(mozilla::TimeStamp::Now());
     mozilla::TimeDuration totalTime(callEnd - mCallStart);
     mozilla::TimeDuration overhead(totalTime - mGeckoDuration -
                                    mCaptureDuration);
@@ -199,13 +203,13 @@ class MOZ_RAII LogEvent final {
 
   void CaptureFrame(ICallFrame* aFrame, IUnknown* aTarget,
                     const mozilla::TimeDuration& aGeckoDuration) {
-    mozilla::TimeStamp captureStart(TimeStamp::Now());
+    mozilla::TimeStamp captureStart(mozilla::TimeStamp::Now());
 
     mozilla::mscom::InterceptorLog::CaptureFrame(aFrame, aTarget,
                                                  mCapturedFrame);
     mGeckoDuration = aGeckoDuration;
 
-    mozilla::TimeStamp captureEnd(TimeStamp::Now());
+    mozilla::TimeStamp captureEnd(mozilla::TimeStamp::Now());
 
     // Make sure that the time we spent in CaptureFrame isn't charged against
     // overall overhead
@@ -249,8 +253,8 @@ MainThreadHandoff::QueryInterface(REFIID riid, void** ppv) {
   }
 
   if (riid == IID_IUnknown || riid == IID_ICallFrameEvents ||
-      riid == IID_IInterceptorSink) {
-    punk = static_cast<IInterceptorSink*>(this);
+      riid == IID_IInterceptorSink || riid == IID_IMainThreadHandoff) {
+    punk = static_cast<IMainThreadHandoff*>(this);
   } else if (riid == IID_ICallFrameWalker) {
     punk = static_cast<ICallFrameWalker*>(this);
   }
@@ -282,7 +286,7 @@ MainThreadHandoff::Release() {
       // main thread right now, so we send a reference to ourselves to the main
       // thread to be re-released there.
       RefPtr<MainThreadHandoff> self = this;
-      NS_ReleaseOnMainThreadSystemGroup("MainThreadHandoff", self.forget());
+      NS_ReleaseOnMainThread("MainThreadHandoff", self.forget());
     }
   }
   return newRefCnt;
@@ -547,6 +551,14 @@ MainThreadHandoff::DisconnectHandlerRemotes() {
   }
 
   return mHandlerProvider->DisconnectHandlerRemotes();
+}
+
+HRESULT
+MainThreadHandoff::IsInterfaceMaybeSupported(REFIID aIid) {
+  if (!mHandlerProvider) {
+    return S_OK;
+  }
+  return mHandlerProvider->IsInterfaceMaybeSupported(aIid);
 }
 
 HRESULT

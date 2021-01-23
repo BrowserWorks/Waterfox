@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Вставити Math">
+
+<!ENTITY sourceEditField.label "Введіть програмний код LaTeX:">
+
+<!ENTITY options.label "Налаштування">
+<!ENTITY optionInline.label "Вбудований режим">
+<!ENTITY optionInline.accesskey "б">
+<!ENTITY optionDisplay.label "Режим відображення">
+<!ENTITY optionDisplay.accesskey "ж">
+<!ENTITY optionLTR.label "Напрямок зліва направо">
+<!ENTITY optionLTR.accesskey "л">
+<!ENTITY optionRTL.label "Напрямок справа наліво">
+<!ENTITY optionRTL.accesskey "п">
+
+<!ENTITY insertButton.label "Вставити">
+<!ENTITY insertButton.accesskey "В">

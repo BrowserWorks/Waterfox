@@ -1,0 +1,81 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY name.label                      "Nama anda:">
+<!ENTITY name.accesskey                  "n">
+<!ENTITY name.text                       "Nama anda, seperti yang ditunjukkan kepada orang lain">
+<!ENTITY email.label                     "Alamat e-mel:">
+<!ENTITY email.accesskey                 "A">
+<!ENTITY email.text                      "Alamat e-mel yang sedia ada">
+<!ENTITY password.label                  "Kata laluan:">
+<!ENTITY password.accesskey              "K">
+<!ENTITY password.placeholder            "Kata laluan">
+<!ENTITY password.text                   "Pilihan, hanya akan digunakan untuk mengesahkan nama pengguna">
+<!ENTITY rememberPassword.label          "Ingat kata laluan">
+<!ENTITY rememberPassword.accesskey      "t">
+
+<!ENTITY imapLong.label                  "IMAP (folder jauh)">
+<!ENTITY pop3Long.label                  "POP3 (menyimpan mel dalam komputer anda)">
+
+<!ENTITY incoming.label                  "Masuk:">
+<!ENTITY outgoing.label                  "Keluar:">
+<!ENTITY username.label                  "Nama pengguna:">
+<!ENTITY auth.label                      "Pengesahan">
+<!ENTITY imap.label                      "IMAP">
+<!ENTITY pop3.label                       "POP3">
+<!ENTITY smtp.label                      "SMTP">
+<!ENTITY autodetect.label                "Auto-kesan">
+<!-- LOCALIZATION NOTE(noEncryption.label): Neither SSL/TLS nor STARTTLS.
+     Transmission of emails in cleartext over the Internet. -->
+<!ENTITY noEncryption.label              "Tiada">
+<!ENTITY starttls.label                  "STARTTLS">
+<!ENTITY sslTls.label                    "SSL/TLS">
+
+<!ENTITY advancedSetup.label             "Konfigurasi lanjutan">
+<!ENTITY advancedSetup.accesskey         "K">
+<!ENTITY cancel.label                    "Batal">
+<!ENTITY cancel.accesskey                "a">
+<!ENTITY continue.label                  "Teruskan">
+<!ENTITY continue.accesskey              "T">
+<!ENTITY stop.label                      "Berhenti">
+<!ENTITY stop.accesskey                  "B">
+<!-- LOCALIZATION NOTE (half-manual-test.label): This is the text that is
+     displayed on the button in manual edit mode which will re-guess
+     the account configuration, taking into account the settings that
+     the user has manually changed. -->
+<!ENTITY half-manual-test.label          "Uji semula">
+<!ENTITY half-manual-test.accesskey      "s">
+<!ENTITY open-provisioner.label          "Dapatkan alamat e-mel baru…">
+<!ENTITY open-provisioner.accesskey      "b">
+
+
+<!ENTITY warning.label                   "Amaran!">
+<!ENTITY incomingSettings.label          "Tetapan masuk:">
+<!ENTITY outgoingSettings.label          "Tetapan keluar:">
+<!ENTITY technicaldetails.label          "Butiran Teknikal">
+<!-- LOCALIZATION NOTE (confirmWarning.label): If there is a security
+     warning on the outgoing server, then the user will need to check a
+     checkbox beside this text before continuing. -->
+<!ENTITY confirmWarning.label            "Saya faham akan risiko ini.">
+<!ENTITY confirmWarning.accesskey        "f">
+<!-- LOCALIZATION NOTE (doneAccount.label): If there is a security warning
+     on the incoming or outgoing servers, then the page that pops up will
+     have this text in a button to continue by creating the account. -->
+<!ENTITY doneAccount.label               "Siap">
+<!ENTITY doneAccount.accesskey           "S">
+<!-- LOCALIZATION NOTE (changeSettings.label): If there is a security warning on
+     the incoming or outgoing servers, then the page that pops up will have
+     this text in a button to take you back to the previous page to change
+     the settings and try again. -->
+<!ENTITY changeSettings.label            "Tukar Tetapan">
+<!ENTITY changeSettings.accesskey        "T">
+
+<!ENTITY contactYourProvider.description "&brandShortName; boleh mengizinkan anda untuk mendapatkan mel anda menggunakan konfigurasi yang disediakan. Walau bagaimanapun, anda perlu menghubungi pentadbir atau penyedia e-mel mengenai sambungan ini yang tidak wajar. Sila lihat FAQ Thunderbird untuk maklumat lanjut.">
+
+<!ENTITY insecureServer.tooltip.title    "Amaran! Ini adalah pelayan yang tidak selamat.">
+<!ENTITY insecureServer.tooltip.details  "Klik bulatan untuk maklumat lanjut.">
+
+<!ENTITY insecureUnencrypted.description "E-mel dan pengesahan anda dihantar tanpa enkripsi, jadi kata laluan (dan mesej anda) dengan mudah dapat dibaca oleh orang lain. &brandShortName; akan tetap menghantar mel, tetapi anda perlu menghubungi penyedia e-mel supaya pelayan boleh dikonfigurasi dengan sambungan yang selamat.">
+<!ENTITY insecureSelfSigned.description  "Pelayan ini menggunakan sijil yang tidak dipercayai, jadi kami tidak boleh pastikan bahawa ada pihak boleh memintas sambungan di antara &brandShortName; dengan pelayan. &brandShortName; akan tetap menghantar mel, tetapi anda benar-benar perlu minta penyedia e-mel untuk mengkonfigurasikan pelayan dengan sijil yang dipercayai.">
+<!ENTITY secureServer.description        "Tahniah! Ini adalah pelayan yang selamat.">

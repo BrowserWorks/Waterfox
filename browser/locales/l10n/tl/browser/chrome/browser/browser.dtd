@@ -1,0 +1,291 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY appmenu.tooltip                     "Buksan ang menu">
+<!ENTITY navbarOverflow.label                "Marami pang mga kagamitan…">
+
+<!-- Tab context menu -->
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "I-pin ang Tab">
+<!ENTITY  unpinTab.label                     "I-unpin ang Tab">
+
+<!ENTITY  listAllTabs.label      "Ilista ang lahat ng mga tabs">
+
+<!ENTITY tabCmd.label "Bagong Tab">
+<!ENTITY openFileCmd.label "Magbukas ng file…">
+<!ENTITY printCmd.label "I-print...">
+
+<!ENTITY taskManagerCmd.label "Task Manager">
+
+<!ENTITY menubarCmd.label "Menu Bar">
+<!ENTITY menubarCmd.accesskey "M">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY navbar.accessibleLabel "Navigation">
+<!ENTITY personalbarCmd.label "Bookmark Toolbar">
+<!ENTITY personalbarCmd.accesskey "B">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY personalbar.accessibleLabel "Mga bookmark">
+<!ENTITY bookmarksToolbarItem.label "Mga nakalagay sa Bookmark Toolbar">
+
+<!ENTITY fullScreenCmd.label "Buong Screen">
+
+
+<!ENTITY pictureInPictureHideToggle.label "Itago ang Toggle para sa Picture-in-Picture">
+<!ENTITY pictureInPictureHideToggle.accesskey "H">
+
+<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
+     for the Waterfox Account toolbar menu screen. The `Signed in as` text is
+     followed by the user's email. -->
+<!ENTITY fxa.menu.syncSettings2.label "Mga Setting sa &syncBrand.shortName.label;">
+<!ENTITY fxa.menu.connectAnotherDevice2.label "Magkonekta ng Isa Pang Device…">
+<!ENTITY fxa.menu.firefoxAccount "&syncBrand.fxAccount.label;">
+
+<!ENTITY fxa.menu.signin.label "Mag-sign in sa &brandProductName;">
+<!ENTITY fxa.menu.turnOnSync.label "Buksan ang &syncBrand.shortName.label;">
+<!ENTITY fxa.menu.firefoxServices.label "Mga serbisyo ng &brandProductName;">
+<!ENTITY fxa.menu.account.label "Account">
+<!ENTITY fxa.menu.settings.label "Mga setting">
+<!ENTITY fxa.menu.accountSettings.label "Mga Account Setting">
+<!ENTITY fxa.menu.manageAccount2.label "Pamahalaan ang Account">
+<!ENTITY fxa.menu.signOut.label "Sign Out…">
+<!ENTITY fxa.menu.setupSync.label "Mag-Set Up ng &syncBrand.shortName.label;…">
+
+<!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
+     for the Waterfox Account toolbar menu screen.  -->
+<!ENTITY fxa.service.sendTab.description "Magpadala agad ng tab sa device na naka-sign in ka.">
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "Ang">
+<!ENTITY fullscreenWarning.afterDomain.label "ay naka-full screen na ngayon">
+<!ENTITY fullscreenWarning.generic.label "Ang dokument na ito ay naka full screen">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "Umalis sa Full Screen (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "Umalis sa Full Screen (Esc)">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "ay may kontrol sa iyong pointer. Pindutin ang ESC para mabawi ang kontrol.">
+<!ENTITY pointerlockWarning.generic.label "Ang dokumentong ito ay may kontrol sa iyong pointer. Pindutin ang Esc para manumbalik ang kontrol.">
+
+<!ENTITY showAllBookmarks2.label "Ipakita Lahat ng mga Bookmark">
+<!ENTITY recentBookmarks.label "Mga Na-bookmark Kamakailan">
+<!ENTITY bookmarksToolbarChevron.tooltip "Magpakita ng karagdagang mga bookmark">
+
+<!ENTITY printButton.label            "I-print">
+<!ENTITY printButton.tooltip          "I-limbag ang pahina na ito">
+
+
+<!ENTITY searchItem.title             "Hanapin">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "Home">
+<!ENTITY homeButton.defaultPage.tooltip "&brandShortName; Home Page">
+
+<!ENTITY bookmarksButton.label          "Mga bookmark">
+
+<!ENTITY bookmarksSubview.label             "Mga bookmark">
+<!ENTITY bookmarksMenuButton2.label         "Menu ng mga Bookmark">
+<!ENTITY bookmarksMenuButton.other.label    "Iba pang mga Bookmark">
+<!ENTITY bookmarksMenuButton.mobile.label   "Mga Mobile Bookmark">
+<!ENTITY viewBookmarksSidebar2.label        "Ipakita ang Bookmark Sidebar">
+<!ENTITY hideBookmarksSidebar.label         "Itago ang Bookmark Sidebar">
+<!ENTITY viewBookmarksToolbar.label         "Ipakita ang Bookmark Sidebar">
+<!ENTITY hideBookmarksToolbar.label         "Itago ang Bookmark Toolbar">
+<!ENTITY searchBookmarks.label              "Hanapin sa mga Bookmark">
+<!ENTITY bookmarkingTools.label             "Mga Gamit sa Pag-bookmark">
+<!ENTITY addBookmarksMenu.label             "Idagdag ang Bookmark Menu sa Toolbar">
+<!ENTITY removeBookmarksMenu.label          "Alisin ang Bookmark Menu mula sa Toolbar">
+
+<!ENTITY historyButton.label            "Kasaysayan">
+
+<!ENTITY downloads.label              "Mga Download">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "Mga Download">
+<!ENTITY addons.label                 "Mga add-on">
+
+<!ENTITY webDeveloperMenu.label       "Web Developer">
+
+<!ENTITY newNavigatorCmd.label        "Bagong Window">
+<!ENTITY newPrivateWindow.label     "Bagong Private Window">
+
+<!ENTITY editMenu.label         "Edit">
+<!ENTITY preferencesCmd2.label       "Mga pagpipilian">
+<!ENTITY preferencesCmdUnix.label       "Mga Kagustuhan">
+<!ENTITY logins.label                           "Mga Login at Password">
+
+<!ENTITY overflowCustomizeToolbar.label       "I-customize ang Toolbar...">
+<!ENTITY overflowCustomizeToolbar.accesskey   "C">
+
+<!ENTITY historyMenu.label "Kasaysayan">
+<!ENTITY historyUndoMenu.label "Mga Naisarang Tab">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "Mga Bagong Sarang Window">
+
+<!ENTITY appMenuHistory.showAll.label "Ipakita ang Lahat na Kasaysayan">
+<!ENTITY appMenuHistory.clearRecent.label "Burahin ang Kasaysayan">
+<!ENTITY appMenuHistory.restoreSession.label "Ibalik ang Nakaraang Session">
+<!ENTITY appMenuHistory.viewSidebar.label "Tingnan ang Sidebar ng Kasaysayan">
+<!ENTITY appMenuHistory.hideSidebar.label "Itago ang Sidebar para sa Kasaysayan">
+<!ENTITY appMenuHistory.recentHistory.label "Nakaraang Kasaysayan">
+<!ENTITY appMenuHelp.label "Tulong">
+
+<!ENTITY appMenuRemoteTabs.label "Mga Naka-sync na Tab">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Walang bukas na tabs">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "Ipakita ang Higit Pa">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Magpakita ng higit pang mga tab mula sa device na ito">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Ipakita ang Lahat">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Ipakita ang lahat ng mga tab mula sa device na ito">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Buksan ang pag-sync ng tab upang makita ang listahan ng mga tab mula sa iba mo pang mga device.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Waterfox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Gusto mong makita ang iyong mga tab mula sa iba pang mga device dito?">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "Buksan ang Mga Kagustuhan sa Pag-sync">
+<!ENTITY appMenuRemoteTabs.welcome.label "Tingnan ang listahan ng mga tab mula sa iba mong mga device.">
+<!ENTITY appMenuRemoteTabs.unverified.label "Ang iyong account ay kailangang ma-verify.">
+<!ENTITY appMenuRemoteTabs.signintosync.label "Mag-sign in sa &syncBrand.shortName.label;…">
+<!ENTITY appMenuRemoteTabs.turnonsync.label "Buksan ang &syncBrand.shortName.label;…">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Pamahalaan ang mga Device...">
+<!ENTITY appMenuRemoteTabs.sidebar.label "Tingnan ang mga Naka-sync Tab Sidebar">
+<!ENTITY appMenuRemoteTabs.hidesidebar.label "Itago ang Synced Tabs Sidebar">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "Magkonekta ng Isa Pang Device">
+
+<!ENTITY appMenuRecentHighlights.label "Mga Nangunguna Kamakailan">
+
+<!ENTITY customizeMenu.addToToolbar.label "Ilagay sa Toolbar">
+<!ENTITY customizeMenu.addToToolbar.accesskey "A">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "I-dagdag sa Overflow Menu">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "M">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "I-unpin mula sa Overflow Menu">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "U">
+<!ENTITY customizeMenu.removeFromToolbar.label "Alisin sa Toolbar">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "R">
+<!ENTITY customizeMenu.addMoreItems.label "Magdagdag ng Higit pang Mga Item...">
+<!ENTITY customizeMenu.addMoreItems.accesskey "A">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "Higit pa">
+
+<!ENTITY contentSearchSubmit.tooltip  "Isumite ang hinahanap">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "Hanapin">
+<!ENTITY searchIcon.tooltip           "Hanapin">
+
+<!ENTITY openLinkCmdInTab.accesskey   "T">
+
+<!ENTITY pageAction.copyLink.label    "Kopyahin ang Link">
+
+<!-- LOCALIZATION NOTE(pocket-button.tooltiptext, saveToPocketCmd.label, saveLinkToPocketCmd.label, pocketMenuitem.label):
+  "Pocket" is a brand name. -->
+<!ENTITY saveToPocketCmd.label        "I-save ang Page sa Pocket">
+<!ENTITY pocketMenuitem.label         "Tingnan ang Pocket List">
+
+<!ENTITY emailPageCmd.label           "i-Email ang Link…">
+
+<!-- Media (video/audio) controls -->
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoom.label                 "i-Zoom">
+
+<!ENTITY sidebarCloseButton.tooltip     "Isara ang sidebar ">
+
+<!ENTITY quitApplicationCmdWin2.label       "Lumabas">
+<!ENTITY quitApplicationCmdWin2.accesskey   "x">
+<!ENTITY quitApplicationCmdWin2.tooltip     "Lumabas &brandShorterName;">
+<!ENTITY quitApplicationCmd.label       "Lumabas">
+<!ENTITY quitApplicationCmd.accesskey   "Q">
+<!ENTITY quitApplicationCmdMac2.label   "Isara ang &brandShorterName;">
+
+<!ENTITY allowPopups.accesskey "p">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Baguhin ang mga Kagustuhan para sa Pop-up Blocker…">
+<!ENTITY editPopupSettings.label "Baguhin ang mga Opsyon sa Pop-up Blocker…">
+<!ENTITY editPopupSettings.accesskey "E">
+<!ENTITY dontShowMessage.accesskey "D">
+
+<!ENTITY findOnCmd.label     "Hanapin sa Pahinang Ito…">
+
+<!ENTITY spellAddDictionaries.label "Ilagay sa Diksyonaryo...">
+<!ENTITY spellAddDictionaries.accesskey "A">
+
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "Mga tab ng browser">
+
+<!ENTITY syncBrand.shortName.label    "Sync">
+
+<!ENTITY customizeMode.autoHideDownloadsButton.label "Auto-hide">
+
+
+<!ENTITY uiTour.infoPanel.close "Isarado">
+
+<!ENTITY panicButton.thankyou.msg1                "Ang mga nakaraan mong kasaysayan ay sadyang natanggal na.">
+<!ENTITY panicButton.thankyou.msg2                "Ligtas na pag-browse!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Salamat!">
+
+<!ENTITY updateAvailable.panelUI.label "I-download ang &brandShorterName; na pagbabago">
+<!ENTITY updateManual.panelUI.label "I-download ang bagong kopya ng &brandShorterName;">
+<!ENTITY updateUnsupported.panelUI.label "Hindi ka maaaring magsagawa ng dagdag pang mga update">
+<!ENTITY updateRestart.panelUI.label2 "Mag-restart para ma-update ang &brandShorterName;">
+
+<!ENTITY sendToDevice.syncNotReady.label "Nag-sysync ng Devices…">
+
+<!ENTITY pageAction.shareUrl.label "Ibahagi">
+<!ENTITY pageAction.shareMore.label "Karagdagang detalye…">
+
+<!ENTITY libraryButton.tooltip "Tingnan ang kasaysayan, naka-save na mga bookmark, at iba pa">
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+<!ENTITY accessibilityIndicator.tooltip "Naka-enable ang mga Accessibility Feature">

@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title "Ukubhrawuza kwangasese">
+<!-- Localisation note: the plus sign here is a shorthand way of expressing the word "and". Contextually the privatebrowsingpage.title.private string
+                        is used as a title, with the privatebrowsingpage.title string preceding it but on a separate line.
+                        So the final line will say "Private Browsing + Tracking Protection". -->
+
+<!ENTITY privatebrowsingpage.title.private "+ Ukhuseleko Lokukhangela">
+<!-- Localization note (privatebrowsingpage.title.normal1): "Private Browsing"
+     is capitalized in English to be consistent with our existing uses of the
+     term. -->
+<!ENTITY privatebrowsingpage.title.normal1 "UkwiBhrawuza Yabucala">
+
+<!ENTITY privatebrowsingpage.description.trackingProtection "I-&brandShortName; ibhloka iinxalenye zamaphepha ezinokutreka ukubhrawuza kwakho.">
+<!ENTITY privatebrowsingpage.description.privateDetails "Asisayi kukhumbula  nayiphi na imbali, kodwa sidawnlowude iifayile neebhukmakhi ezintsha zisaya kugcinwa kwisixhobo sakho.">
+<!-- Localization note (privatebrowsingpage.description.normal2): "Private
+     Browsing is capitalized in English to be consistent with our existing uses
+     of the term. -->
+
+<!ENTITY privatebrowsingpage.description.normal2 "KukuBhrawuza Kwabucala, asisayi kugcina nayiphi na imbali yakho yokubhrawuza okanye iikhuki. Iibhukmaki ozongezayo neeefayile ozidawnlowuudayo ziya kugcinwa kwisixhobo sakho.">
+
+<!ENTITY privatebrowsingpage.link.private "Ufuna ukufunda ngaphezulu?">
+<!ENTITY privatebrowsingpage.link.normal "Vula ithebhu entsha yabucala">

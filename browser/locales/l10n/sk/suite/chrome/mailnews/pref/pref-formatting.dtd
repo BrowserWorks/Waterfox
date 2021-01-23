@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.formatting.title        "Formát odosielaných správ">
+<!ENTITY sendMaildesc.label           "Ak odosielate správu vo formáte HTML a jeden alebo viacerí adresáti nie sú schopní prijímať správy v tomto formáte:">
+<!ENTITY askMe.label                  "Opýtať sa (program požiada o výber formátu)">
+<!ENTITY askMe.accesskey              "O">
+<!ENTITY convertPlain2.label          "Konvertovať na správu vo formáte čistý text (stratí sa formátovanie)">
+<!ENTITY convertPlain2.accesskey      "K">
+<!ENTITY sendHTML2.label              "Odoslať správu vo formáte HTML (môže spôsobiť problémy so zobrazením)">
+<!ENTITY sendHTML2.accesskey          "m">
+<!ENTITY sendBoth2.label              "Odoslať ako HTML aj ako textovú správu (väčšia veľkosť správy)">
+<!ENTITY sendBoth2.accesskey          "L">
+
+<!-- Html and Plain Text Domains  -->
+<!ENTITY domain.title                 "Textové domény a domény HTML">
+<!ENTITY domaindesc.label             "Ak posielate správu na adresu s jedným z doménových názvov zobrazených nižšie, program ju automaticky odošle v správnom formáte.">
+<!ENTITY HTMLdomaintitle.label        "Doména HTML">
+<!ENTITY HTMLdomaintitle.accesskey    "H">
+<!ENTITY PlainTexttitle.label         "Textová doména">
+<!ENTITY PlainTexttitle.accesskey     "T">
+<!ENTITY AddButton.label              "Pridať…">
+<!ENTITY AddHtmlDomain.accesskey      "r">
+<!ENTITY AddPlainText.accesskey       "a">
+<!ENTITY DeleteButton.label           "Odstrániť">
+<!ENTITY DeleteHtmlDomain.accesskey   "d">
+<!ENTITY DeletePlainText.accesskey    "s">
+
+<!-- Add Domain Name -->
+<!ENTITY add.htmltitle                "Pridať názov domény HTML">
+<!ENTITY add.htmldomain               "Názov domény HTML:">
+<!ENTITY add.plaintexttitle           "Pridať názov textovej domény">
+<!ENTITY add.plaintextdomain          "Názov textovej domény:">
+
+<!ENTITY domainnameError.title        "Chyba názvu domény">
+<!-- LOCALIZATION NOTE: do not translate @string@ -->
+<!ENTITY invalidEntryError.label      "Názov domény @string@ nie je platný a bude ignorovaný. Platné názvy domén musia obsahovať aspoň jeden znak '.' a nejaké znaky vľavo aj vpravo od neho.">
+
+<!-- Global auto-detect switch -->
+<!ENTITY autoDowngrade.label          "Automaticky odoslať správu ako čistý text, ak nie je prítomné žiadne významné formátovanie (prepisuje iné možnosti)">
+<!ENTITY autoDowngrade.accesskey      "u">

@@ -7,10 +7,11 @@
 
 #include "mozilla/ContentCache.h"
 
+#include <utility>
+
 #include "mozilla/IMEStateManager.h"
 #include "mozilla/IntegerPrintfMacros.h"
 #include "mozilla/Logging.h"
-#include "mozilla/Move.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/TextComposition.h"
 #include "mozilla/TextEvents.h"
@@ -45,7 +46,7 @@ class GetRectText : public nsAutoCString {
     AppendInt(aRect.Height());
     AppendLiteral(" }");
   }
-  virtual ~GetRectText() {}
+  virtual ~GetRectText() = default;
 };
 
 class GetWritingModeName : public nsAutoCString {
@@ -61,7 +62,7 @@ class GetWritingModeName : public nsAutoCString {
     }
     AssignLiteral("Vertical (RTL)");
   }
-  virtual ~GetWritingModeName() {}
+  virtual ~GetWritingModeName() = default;
 };
 
 class GetEscapedUTF8String final : public NS_ConvertUTF16toUTF8 {
@@ -1119,9 +1120,13 @@ bool ContentCacheInParent::OnCompositionEvent(
   // RequestIMEToCommitComposition().  Then, eCommitComposition event will
   // be dispatched with the committed string in the remote process internally.
   if (mCommitStringByRequest) {
-    MOZ_ASSERT(aEvent.mMessage == eCompositionChange ||
-               aEvent.mMessage == eCompositionCommit);
-    *mCommitStringByRequest = aEvent.mData;
+    if (aEvent.mMessage == eCompositionCommitAsIs) {
+      *mCommitStringByRequest = mCompositionString;
+    } else {
+      MOZ_ASSERT(aEvent.mMessage == eCompositionChange ||
+                 aEvent.mMessage == eCompositionCommit);
+      *mCommitStringByRequest = aEvent.mData;
+    }
     // We need to wait eCompositionCommitRequestHandled from the remote process
     // in this case.  Therefore, mPendingEventsNeedingAck needs to be
     // incremented here.  Additionally, we stop sending eCompositionCommit(AsIs)

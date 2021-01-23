@@ -136,7 +136,8 @@ interface nsIXPCComponents_Utils : nsISupports
     jsval evalInSandbox(in AString source, in jsval sandbox,
                         [optional] in jsval version,
                         [optional] in AUTF8String filename,
-                        [optional] in long lineNo);
+                        [optional] in long lineNo,
+                        [optional] in bool enforceFilenameRestrictions);
 
     /*
      * Get the sandbox for running JS-implemented UA widgets (video controls etc.),
@@ -332,6 +333,13 @@ interface nsIXPCComponents_Utils : nsISupports
     [implicit_jscontext]
     jsval getJSTestingFunctions();
 
+    /**
+     * Returns an object containing `filename` and `lineNumber` properties
+     * describing the source location of the given function.
+     */
+    [implicit_jscontext]
+    jsval getFunctionSourceLocation(in jsval func);
+
     /*
      * To be called from JS only.
      *
@@ -416,27 +424,19 @@ interface nsIXPCComponents_Utils : nsISupports
     bool isDeadWrapper(in jsval obj);
 
     /**
-     * Determines whether this object is a cross-process wrapper.
+     * Determines whether this value is a remote object proxy, such as
+     * RemoteWindowProxy or RemoteLocationProxy, for an out-of-process frame.
+     *
+     * Remote object proxies do not grant chrome callers the same exemptions
+     * to the same-origin-policy that in-process wrappers typically do, so
+     * this can be used to determine whether access to cross-origin proxies is
+     * safe:
+     *
+     *   if (!Cu.isRemoteProxy(frame.contentWindow)) {
+     *     frame.contentWindow.doCrossOriginThing();
+     *   }
      */
-    bool isCrossProcessWrapper(in jsval obj);
-
-    /**
-     * CPOWs can have user data attached to them. This data originates
-     * in the local process via the
-     * nsIRemoteTagService.getRemoteObjectTag method. It's sent along
-     * with the CPOW to the remote process, where it can be fetched
-     * with this function, getCrossProcessWrapperTag.
-     */
-    ACString getCrossProcessWrapperTag(in jsval obj);
-
-    /**
-     * If CPOWs are disabled for browser code via the
-     * dom.ipc.cpows.forbid-unsafe-from-browser preferences, then only
-     * add-ons can use CPOWs. This function allows a non-addon scope
-     * to opt into CPOWs. It's necessary for the implementation of
-     * RemoteAddonsParent.jsm.
-     */
-    void permitCPOWsInScope(in jsval obj);
+    bool isRemoteProxy(in jsval val);
 
     /*
      * To be called from JS only. This is for Gecko internal use only, and may
@@ -462,14 +462,6 @@ interface nsIXPCComponents_Utils : nsISupports
     void setWantXrays(in jsval vscope);
 
     /*
-     * For gecko internal automation use only. Calling this in production code
-     * would result in security vulnerabilities, so it will crash if used outside
-     * of automation.
-     */
-    [implicit_jscontext]
-    void forcePermissiveCOWs();
-
-    /*
      * Dispatches a runnable to the current/main thread. If |scope| is passed,
      * the runnable will be dispatch in the compartment of |scope|, which
      * affects which error reporter gets called.
@@ -478,31 +470,21 @@ interface nsIXPCComponents_Utils : nsISupports
     void dispatch(in jsval runnable, [optional] in jsval scope);
 
     /*
-     * To be called from JS only.
+     * Bug 1621603 - Remove strict_mode.
      *
-     * These are the set of JSContext options that privileged script
-     * is allowed to control for the purposes of testing.  These
-     * options should be kept in sync with what's controllable in the
-     * jsshell and by setting prefs in nsJSEnvironment.
-     *
-     * NB: Assume that getting any of these attributes is relatively
-     * cheap, but setting any of them is relatively expensive.
+     * Do not use this API! Instead use "use strict"; at the top of your JS
+     * file.
      */
     [implicit_jscontext]
-    attribute boolean strict;
-
-    [implicit_jscontext]
-    attribute boolean werror;
-
-    [implicit_jscontext]
     attribute boolean strict_mode;
-
-    [implicit_jscontext]
-    attribute boolean ion;
 
     // Returns true if we're running in automation and certain security
     // restrictions can be eased.
     readonly attribute boolean isInAutomation;
+
+    // Called by automated tests to exit immediately after we are done getting
+    // test results.
+    void exitIfInAutomation();
 
     void crashIfNotInAutomation();
 
@@ -528,6 +510,11 @@ interface nsIXPCComponents_Utils : nsISupports
 
     [implicit_jscontext]
     void unblockScriptForGlobal(in jsval global);
+
+    /**
+     * Check whether the given object is an opaque wrapper (PermissiveXrayOpaque).
+     */
+    bool isOpaqueWrapper(in jsval obj);
 
     /**
      * Check whether the given object is an XrayWrapper.
@@ -666,6 +653,7 @@ interface nsIXPCComponents_Utils : nsISupports
     /*
      * Reads the given local file URL and returns its contents. This has the
      * same semantics of readUTF8File.
+     * Only supports file URLs or URLs that point into one of the omnijars.
      */
     AUTF8String readUTF8URI(in nsIURI url);
 
@@ -707,25 +695,16 @@ interface nsIXPCComponents_Utils : nsISupports
 
 /**
 * Interface for the 'Components' object.
-*
-* The first interface contains things that are available to non-chrome XBL code
-* that runs in a scope with an ExpandedPrincipal. The second interface
-* includes members that are only exposed to chrome.
 */
 
-[scriptable, builtinclass, uuid(eeeada2f-86c0-4609-b2bf-4bf2351b1ce6)]
-interface nsIXPCComponentsBase : nsISupports
+[scriptable, builtinclass, uuid(aa28aaf6-70ce-4b03-9514-afe43c7dfda8)]
+interface nsIXPCComponents : nsISupports
 {
     readonly attribute nsIXPCComponents_Interfaces      interfaces;
     readonly attribute nsIXPCComponents_Results         results;
 
     boolean isSuccessCode(in nsresult result);
 
-};
-
-[scriptable, builtinclass, uuid(aa28aaf6-70ce-4b03-9514-afe43c7dfda8)]
-interface nsIXPCComponents : nsIXPCComponentsBase
-{
     readonly attribute nsIXPCComponents_Classes         classes;
     // Will return null if there is no JS stack right now.
     readonly attribute nsIStackFrame                    stack;

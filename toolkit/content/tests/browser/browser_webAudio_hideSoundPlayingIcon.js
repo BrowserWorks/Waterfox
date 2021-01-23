@@ -13,15 +13,6 @@ function setup_test_preference() {
   });
 }
 
-function createAudioContext() {
-  content.ac = new content.AudioContext();
-  const ac = content.ac;
-  const dest = ac.destination;
-  const osc = ac.createOscillator();
-  osc.connect(dest);
-  osc.start();
-}
-
 async function resumeAudioContext() {
   const ac = content.ac;
   await ac.resume();
@@ -37,16 +28,21 @@ async function testResumeRunningAudioContext() {
   const browser = tab.linkedBrowser;
 
   info(`- create audio context -`);
-  // We want the same audio context to be used across different content
-  // tasks, so it needs to be loaded by a frame script.
-  const mm = tab.linkedBrowser.messageManager;
-  mm.loadFrameScript("data:,(" + createAudioContext.toString() + ")();", false);
+  // We want the same audio context to be used across different content tasks.
+  await SpecialPowers.spawn(tab.linkedBrowser, [], () => {
+    content.ac = new content.AudioContext();
+    const ac = content.ac;
+    const dest = ac.destination;
+    const osc = ac.createOscillator();
+    osc.connect(dest);
+    osc.start();
+  });
 
   info(`- wait for 'sound-playing' icon showing -`);
   await waitForTabPlayingEvent(tab, true);
 
   info(`- resume AudioContext -`);
-  await ContentTask.spawn(browser, null, resumeAudioContext);
+  await SpecialPowers.spawn(browser, [], resumeAudioContext);
 
   info(`- 'sound-playing' icon should still exist -`);
   await waitForTabPlayingEvent(tab, true);

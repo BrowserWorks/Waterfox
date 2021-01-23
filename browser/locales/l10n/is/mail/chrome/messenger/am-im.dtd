@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY accountWindow.title "Eiginleikar tengingar">
+<!ENTITY accountWindow.width "300">
+<!ENTITY account.general "Almennt">
+<!ENTITY account.advanced "Ítarlegir valkostir">
+<!ENTITY account.name "Notandanafn:">
+<!ENTITY account.password "Lykilorð:">
+<!ENTITY account.alias "Auðkenni:">
+<!ENTITY account.newMailNotification "Tilkynna nýjan póst">
+<!ENTITY account.autojoin "Sjálfvirkt tengdar rásir:">
+<!ENTITY account.proxySettings.caption "Staðgengilsstillingar:">
+<!ENTITY account.proxySettings.change.label "Breyta…">
+<!ENTITY account.proxySettings.change.accessKey "B">

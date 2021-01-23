@@ -23,23 +23,37 @@
 #include "mozilla/Maybe.h"
 #include "mozilla/RangedPtr.h"
 
-#include "builtin/Promise.h"
+#include <algorithm>
+
 #include "builtin/TypedObject.h"
 #include "gc/FreeOp.h"
 #include "jit/AtomicOperations.h"
 #include "jit/JitOptions.h"
+#include "jit/Simulator.h"
 #include "js/Printf.h"
 #include "js/PropertySpec.h"  // JS_{PS,FN}{,_END}
+#if defined(JS_CODEGEN_X64)   // Assembler::HasSSE41
+#  include "jit/x64/Assembler-x64.h"
+#  include "jit/x86-shared/Architecture-x86-shared.h"
+#  include "jit/x86-shared/Assembler-x86-shared.h"
+#endif
 #include "util/StringBuffer.h"
 #include "util/Text.h"
+#include "vm/ErrorObject.h"
+#include "vm/FunctionFlags.h"  // js::FunctionFlags
+#include "vm/GlobalObject.h"   // js::GlobalObject
 #include "vm/Interpreter.h"
+#include "vm/PlainObject.h"    // js::PlainObject
+#include "vm/PromiseObject.h"  // js::PromiseObject
 #include "vm/StringType.h"
+#include "vm/Warnings.h"  // js::WarnNumberASCII
 #include "wasm/WasmBaselineCompile.h"
 #include "wasm/WasmCompile.h"
 #include "wasm/WasmCraneliftCompile.h"
 #include "wasm/WasmInstance.h"
 #include "wasm/WasmIonCompile.h"
 #include "wasm/WasmModule.h"
+#include "wasm/WasmProcess.h"
 #include "wasm/WasmSignalHandlers.h"
 #include "wasm/WasmStubs.h"
 #include "wasm/WasmValidate.h"
@@ -53,39 +67,180 @@ using namespace js::jit;
 using namespace js::wasm;
 
 using mozilla::CheckedInt;
+using mozilla::MakeSpan;
 using mozilla::Nothing;
 using mozilla::RangedPtr;
 
 extern mozilla::Atomic<bool> fuzzingSafe;
 
-bool wasm::HasReftypesSupport(JSContext* cx) {
-#ifdef ENABLE_WASM_CRANELIFT
-  if (cx->options().wasmCranelift()) {
+static inline bool WasmMultiValueFlag(JSContext* cx) {
+#ifdef ENABLE_WASM_MULTI_VALUE
+  return cx->options().wasmMultiValue();
+#else
+  return false;
+#endif
+}
+
+static inline bool WasmSimdFlag(JSContext* cx) {
+#ifdef ENABLE_WASM_SIMD
+  return cx->options().wasmSimd() && js::jit::JitSupportsWasmSimd();
+#else
+  return false;
+#endif
+}
+
+// Compiler availability predicates.  These must be kept in sync with the
+// feature predicates in the next section below.
+//
+// These can't call the feature predicates since the feature predicates call
+// back to these predicates.  So there will be a small amount of duplicated
+// logic here, but as compilers reach feature parity that duplication will go
+// away.
+//
+// There's a static precedence order between the optimizing compilers.  This
+// order currently ranks Cranelift over Ion on all platforms because Cranelift
+// is disabled by default on all platforms: anyone who has enabled Cranelift
+// will wish to use it instead of Ion.
+//
+// The precedence order is implemented by guards in IonAvailable() and
+// CraneliftAvailable().  We expect that it will become more complex as the
+// default settings change.  But it should remain static.
+
+bool wasm::BaselineAvailable(JSContext* cx) {
+  // Baseline supports every feature supported by any compiler.
+  return cx->options().wasmBaseline() && BaselinePlatformSupport();
+}
+
+bool wasm::IonAvailable(JSContext* cx) {
+  if (!cx->options().wasmIon() || !IonPlatformSupport()) {
     return false;
   }
-#endif
-#ifdef ENABLE_WASM_REFTYPES
+  bool isDisabled = false;
+  MOZ_ALWAYS_TRUE(IonDisabledByFeatures(cx, &isDisabled));
+  return !isDisabled && !CraneliftAvailable(cx);
+}
+
+template <size_t ArrayLength>
+static inline bool Append(JSStringBuilder* reason, const char (&s)[ArrayLength],
+                          char* sep) {
+  if ((*sep && !reason->append(*sep)) || !reason->append(s)) {
+    return false;
+  }
+  *sep = ',';
   return true;
-#else
-  return false;
-#endif
 }
 
-bool wasm::HasGcSupport(JSContext* cx) {
-#ifdef ENABLE_WASM_CRANELIFT
-  if (cx->options().wasmCranelift()) {
+bool wasm::IonDisabledByFeatures(JSContext* cx, bool* isDisabled,
+                                 JSStringBuilder* reason) {
+  // Ion has no debugging support, no gc support.
+  bool debug = cx->realm() && cx->realm()->debuggerObservesAsmJS();
+  bool gc = cx->options().wasmGc();
+  if (reason) {
+    char sep = 0;
+    if (debug && !Append(reason, "debug", &sep)) {
+      return false;
+    }
+    if (gc && !Append(reason, "gc", &sep)) {
+      return false;
+    }
+  }
+  *isDisabled = debug || gc;
+  return true;
+}
+
+bool wasm::CraneliftAvailable(JSContext* cx) {
+  if (!cx->options().wasmCranelift() || !CraneliftPlatformSupport()) {
     return false;
   }
+  bool isDisabled = false;
+  MOZ_ALWAYS_TRUE(CraneliftDisabledByFeatures(cx, &isDisabled));
+  return !isDisabled;
+}
+
+bool wasm::CraneliftDisabledByFeatures(JSContext* cx, bool* isDisabled,
+                                       JSStringBuilder* reason) {
+  // Cranelift has no debugging support, no gc support, no multi-value support,
+  // no threads, no simd, and on ARM64, no reference types.
+  bool debug = cx->realm() && cx->realm()->debuggerObservesAsmJS();
+  bool gc = cx->options().wasmGc();
+  bool multiValue = WasmMultiValueFlag(cx);
+  bool threads =
+      cx->realm() &&
+      cx->realm()->creationOptions().getSharedMemoryAndAtomicsEnabled();
+#if defined(JS_CODEGEN_ARM64)
+  bool reftypesOnArm64 = cx->options().wasmReftypes();
+#else
+  // On other platforms, assume reftypes has been implemented.
+  bool reftypesOnArm64 = false;
 #endif
-#ifdef ENABLE_WASM_GC
-  return cx->options().wasmGc() && cx->options().wasmBaseline();
+  bool simd = WasmSimdFlag(cx);
+  if (reason) {
+    char sep = 0;
+    if (debug && !Append(reason, "debug", &sep)) {
+      return false;
+    }
+    if (gc && !Append(reason, "gc", &sep)) {
+      return false;
+    }
+    if (multiValue && !Append(reason, "multi-value", &sep)) {
+      return false;
+    }
+    if (threads && !Append(reason, "threads", &sep)) {
+      return false;
+    }
+    if (reftypesOnArm64 && !Append(reason, "reftypes", &sep)) {
+      return false;
+    }
+    if (simd && !Append(reason, "simd", &sep)) {
+      return false;
+    }
+  }
+  *isDisabled = debug || gc || multiValue || threads || reftypesOnArm64 || simd;
+  return true;
+}
+
+// Feature predicates.  These must be kept in sync with the predicates in the
+// section above.
+//
+// The meaning of these predicates is tricky: A predicate is true for a feature
+// if the feature is enabled and/or compiled-in *and* we have *at least one*
+// compiler that can support the feature.  Subsequent compiler selection must
+// ensure that only compilers that actually support the feature are used.
+
+bool wasm::ReftypesAvailable(JSContext* cx) {
+  // All compilers support reference types, except Cranelift on ARM64.
+#ifdef ENABLE_WASM_REFTYPES
+  return cx->options().wasmReftypes() &&
+         (BaselineAvailable(cx) || IonAvailable(cx) || CraneliftAvailable(cx));
 #else
   return false;
 #endif
 }
 
-bool wasm::HasCompilerSupport(JSContext* cx) {
-#if !MOZ_LITTLE_ENDIAN || defined(JS_CODEGEN_NONE)
+bool wasm::GcTypesAvailable(JSContext* cx) {
+  // Cranelift and Ion do not support GC.
+  return cx->options().wasmGc() && BaselineAvailable(cx);
+}
+
+bool wasm::MultiValuesAvailable(JSContext* cx) {
+  // Cranelift does not support multi-value.
+  return WasmMultiValueFlag(cx) && (BaselineAvailable(cx) || IonAvailable(cx));
+}
+
+bool wasm::SimdAvailable(JSContext* cx) {
+  // Cranelift does not support SIMD.
+  return WasmSimdFlag(cx) && (BaselineAvailable(cx) || IonAvailable(cx));
+}
+
+bool wasm::ThreadsAvailable(JSContext* cx) {
+  // Cranelift does not support atomics.
+  return cx->realm() &&
+         cx->realm()->creationOptions().getSharedMemoryAndAtomicsEnabled() &&
+         (BaselineAvailable(cx) || IonAvailable(cx));
+}
+
+bool wasm::HasPlatformSupport(JSContext* cx) {
+#if !MOZ_LITTLE_ENDIAN() || defined(JS_CODEGEN_NONE)
   return false;
 #endif
 
@@ -93,11 +248,11 @@ bool wasm::HasCompilerSupport(JSContext* cx) {
     return false;
   }
 
-  if (!cx->jitSupportsFloatingPoint()) {
+  if (!JitOptions.supportsFloatingPoint) {
     return false;
   }
 
-  if (!cx->jitSupportsUnalignedAccesses()) {
+  if (!JitOptions.supportsUnalignedAccesses) {
     return false;
   }
 
@@ -116,30 +271,26 @@ bool wasm::HasCompilerSupport(JSContext* cx) {
   }
 #endif
 
-  return BaselineCanCompile() || IonCanCompile() || CraneliftCanCompile();
-}
-
-bool wasm::HasOptimizedCompilerTier(JSContext* cx) {
-  return (cx->options().wasmIon() && IonCanCompile())
-#ifdef ENABLE_WASM_CRANELIFT
-         || (cx->options().wasmCranelift() && CraneliftCanCompile())
-#endif
-      ;
-}
-
-// Return whether wasm compilation is allowed by prefs.  This check
-// only makes sense if HasCompilerSupport() is true.
-static bool HasAvailableCompilerTier(JSContext* cx) {
-  return (cx->options().wasmBaseline() && BaselineCanCompile()) ||
-         HasOptimizedCompilerTier(cx);
+  // Test only whether the compilers are supported on the hardware, not whether
+  // they are enabled.
+  return BaselinePlatformSupport() || IonPlatformSupport() ||
+         CraneliftPlatformSupport();
 }
 
 bool wasm::HasSupport(JSContext* cx) {
-  return cx->options().wasm() && HasCompilerSupport(cx) &&
-         HasAvailableCompilerTier(cx);
+  // If the general wasm pref is on, it's on for everything.
+  bool prefEnabled = cx->options().wasm();
+  // If the general pref is off, check trusted principals.
+  if (MOZ_UNLIKELY(!prefEnabled)) {
+    prefEnabled = cx->options().wasmForTrustedPrinciples() && cx->realm() &&
+                  cx->realm()->principals() &&
+                  cx->realm()->principals()->isSystemOrAddonPrincipal();
+  }
+  return prefEnabled && HasPlatformSupport(cx) &&
+         (BaselineAvailable(cx) || IonAvailable(cx) || CraneliftAvailable(cx));
 }
 
-bool wasm::HasStreamingSupport(JSContext* cx) {
+bool wasm::StreamingCompilationAvailable(JSContext* cx) {
   // This should match EnsureStreamSupport().
   return HasSupport(cx) &&
          cx->runtime()->offThreadPromiseState.ref().initialized() &&
@@ -147,13 +298,37 @@ bool wasm::HasStreamingSupport(JSContext* cx) {
          cx->runtime()->reportStreamErrorCallback;
 }
 
-bool wasm::HasCachingSupport(JSContext* cx) {
-  return HasStreamingSupport(cx) && HasOptimizedCompilerTier(cx);
+bool wasm::CodeCachingAvailable(JSContext* cx) {
+  // At the moment, we require Ion support for code caching.  The main reason
+  // for this is that wasm::CompileAndSerialize() does not have access to
+  // information about which optimizing compiler it should use.  See comments in
+  // CompileAndSerialize(), below.
+  return StreamingCompilationAvailable(cx) && IonAvailable(cx);
+}
+
+bool wasm::CheckRefType(JSContext* cx, RefType::Kind targetTypeKind,
+                        HandleValue v, MutableHandleFunction fnval,
+                        MutableHandleAnyRef refval) {
+  switch (targetTypeKind) {
+    case RefType::Func:
+      if (!CheckFuncRefValue(cx, v, fnval)) {
+        return false;
+      }
+      break;
+    case RefType::Any:
+      if (!BoxAnyRef(cx, v, refval)) {
+        return false;
+      }
+      break;
+    case RefType::TypeIndex:
+      MOZ_CRASH("temporarily unsupported Ref type");
+  }
+  return true;
 }
 
 static bool ToWebAssemblyValue(JSContext* cx, ValType targetType, HandleValue v,
                                MutableHandleVal val) {
-  switch (targetType.code()) {
+  switch (targetType.kind()) {
     case ValType::I32: {
       int32_t i32;
       if (!ToInt32(cx, v, &i32)) {
@@ -178,45 +353,71 @@ static bool ToWebAssemblyValue(JSContext* cx, ValType targetType, HandleValue v,
       val.set(Val(d));
       return true;
     }
-    case ValType::FuncRef: {
-      RootedFunction fun(cx);
-      if (!CheckFuncRefValue(cx, v, &fun)) {
-        return false;
-      }
-      val.set(Val(ValType::FuncRef, AnyRef::fromJSObject(fun)));
-      return true;
-    }
-    case ValType::AnyRef: {
-      RootedAnyRef tmp(cx, AnyRef::null());
-      if (!BoxAnyRef(cx, v, &tmp)) {
-        return false;
-      }
-      val.set(Val(ValType::AnyRef, tmp));
-      return true;
-    }
-    case ValType::Ref:
-    case ValType::NullRef:
     case ValType::I64: {
+      BigInt* bigint = ToBigInt(cx, v);
+      if (!bigint) {
+        return false;
+      }
+      val.set(Val(BigInt::toUint64(bigint)));
+      return true;
+    }
+    case ValType::Ref: {
+      RootedFunction fun(cx);
+      RootedAnyRef any(cx, AnyRef::null());
+      if (!CheckRefType(cx, targetType.refTypeKind(), v, &fun, &any)) {
+        return false;
+      }
+      switch (targetType.refTypeKind()) {
+        case RefType::Func:
+          val.set(Val(RefType::func(), FuncRef::fromJSFunction(fun)));
+          return true;
+        case RefType::Any:
+          val.set(Val(targetType.refType(), any));
+          return true;
+        case RefType::TypeIndex:
+          break;
+      }
+      break;
+    }
+    case ValType::V128: {
       break;
     }
   }
   MOZ_CRASH("unexpected import value type, caller must guard");
 }
 
-static Value ToJSValue(const Val& val) {
-  switch (val.type().code()) {
+static bool ToJSValue(JSContext* cx, const Val& val, MutableHandleValue out) {
+  switch (val.type().kind()) {
     case ValType::I32:
-      return Int32Value(val.i32());
+      out.setInt32(val.i32());
+      return true;
     case ValType::F32:
-      return DoubleValue(JS::CanonicalizeNaN(double(val.f32())));
+      out.setDouble(JS::CanonicalizeNaN(double(val.f32())));
+      return true;
     case ValType::F64:
-      return DoubleValue(JS::CanonicalizeNaN(val.f64()));
-    case ValType::FuncRef:
-    case ValType::AnyRef:
-      return UnboxAnyRef(val.ref());
+      out.setDouble(JS::CanonicalizeNaN(val.f64()));
+      return true;
+    case ValType::I64: {
+      BigInt* bi = BigInt::createFromInt64(cx, val.i64());
+      if (!bi) {
+        return false;
+      }
+      out.setBigInt(bi);
+      return true;
+    }
     case ValType::Ref:
-    case ValType::NullRef:
-    case ValType::I64:
+      switch (val.type().refTypeKind()) {
+        case RefType::Func:
+          out.set(UnboxFuncRef(FuncRef::fromAnyRefUnchecked(val.ref())));
+          return true;
+        case RefType::Any:
+          out.set(UnboxAnyRef(val.ref()));
+          return true;
+        case RefType::TypeIndex:
+          break;
+      }
+      break;
+    case ValType::V128:
       break;
   }
   MOZ_CRASH("unexpected type when translating to a JS value");
@@ -347,26 +548,30 @@ bool js::wasm::GetImports(JSContext* cx, const Module& module,
           obj->val(&val);
         } else {
           if (IsNumberType(global.type())) {
-            if (!v.isNumber()) {
+            if (global.type() == ValType::I64 && !v.isBigInt()) {
+              return ThrowBadImportType(cx, import.field.get(), "BigInt");
+            }
+            if (global.type() != ValType::I64 && !v.isNumber()) {
               return ThrowBadImportType(cx, import.field.get(), "Number");
             }
           } else {
             MOZ_ASSERT(global.type().isReference());
-            if (!v.isNull() && !v.isObject() && global.type().isRef()) {
+            if (!global.type().isAnyRef() && !v.isObjectOrNull()) {
               return ThrowBadImportType(cx, import.field.get(),
-                                        "Object-or-null");
+                                        "Object-or-null value required for "
+                                        "non-externref reference type");
             }
-          }
-
-          if (global.type() == ValType::I64) {
-            JS_ReportErrorNumberUTF8(cx, GetErrorMessage, nullptr,
-                                     JSMSG_WASM_BAD_I64_LINK);
-            return false;
           }
 
           if (global.isMutable()) {
             JS_ReportErrorNumberUTF8(cx, GetErrorMessage, nullptr,
                                      JSMSG_WASM_BAD_GLOB_MUT_LINK);
+            return false;
+          }
+
+          if (global.type() == ValType::V128) {
+            JS_ReportErrorNumberUTF8(cx, GetErrorMessage, nullptr,
+                                     JSMSG_WASM_BAD_VAL_TYPE);
             return false;
           }
 
@@ -398,8 +603,8 @@ static bool DescribeScriptedCaller(JSContext* cx, ScriptedCaller* caller,
 
   JS::AutoFilename af;
   if (JS::DescribeScriptedCaller(cx, &af, &caller->line)) {
-    caller->filename.reset(
-        FormatIntroducedFilename(cx, af.get(), caller->line, introducer));
+    caller->filename =
+        FormatIntroducedFilename(cx, af.get(), caller->line, introducer);
     if (!caller->filename) {
       return false;
     }
@@ -487,11 +692,20 @@ bool wasm::CompileAndSerialize(const ShareableBytes& bytecode,
     return false;
   }
 
-  // The caller has ensured HasCachingSupport(). Moreover, we want to ensure
+  // The caller has ensured CodeCachingAvailable(). Moreover, we want to ensure
   // we go straight to tier-2 so that we synchronously call
   // JS::OptimizedEncodingListener::storeOptimizedEncoding().
   compileArgs->baselineEnabled = false;
+
+  // We always pick Ion here, and we depend on CodeCachingAvailable() having
+  // determined that Ion is available, see comments at CodeCachingAvailable().
+  // To do better, we need to pass information about which compiler that should
+  // be used into CompileAndSerialize().
   compileArgs->ionEnabled = true;
+
+  // The caller must ensure that huge memory support is configured the same in
+  // the receiving process of this serialized module.
+  compileArgs->hugeMemory = wasm::IsHugeMemoryEnabled();
 
   SerializeListener listener(serialized);
 
@@ -654,26 +868,59 @@ static bool GetLimits(JSContext* cx, HandleObject obj, uint32_t maxInitial,
   return true;
 }
 
+template <class Class, const char* name>
+static JSObject* CreateWasmConstructor(JSContext* cx, JSProtoKey key) {
+  RootedAtom className(cx, Atomize(cx, name, strlen(name)));
+  if (!className) {
+    return nullptr;
+  }
+
+  return NewNativeConstructor(cx, Class::construct, 1, className);
+}
+
 // ============================================================================
 // WebAssembly.Module class and methods
 
-const ClassOps WasmModuleObject::classOps_ = {nullptr, /* addProperty */
-                                              nullptr, /* delProperty */
-                                              nullptr, /* enumerate */
-                                              nullptr, /* newEnumerate */
-                                              nullptr, /* resolve */
-                                              nullptr, /* mayResolve */
-                                              WasmModuleObject::finalize};
+const JSClassOps WasmModuleObject::classOps_ = {
+    nullptr,                     // addProperty
+    nullptr,                     // delProperty
+    nullptr,                     // enumerate
+    nullptr,                     // newEnumerate
+    nullptr,                     // resolve
+    nullptr,                     // mayResolve
+    WasmModuleObject::finalize,  // finalize
+    nullptr,                     // call
+    nullptr,                     // hasInstance
+    nullptr,                     // construct
+    nullptr,                     // trace
+};
 
-const Class WasmModuleObject::class_ = {
+const JSClass WasmModuleObject::class_ = {
     "WebAssembly.Module",
     JSCLASS_DELAY_METADATA_BUILDER |
         JSCLASS_HAS_RESERVED_SLOTS(WasmModuleObject::RESERVED_SLOTS) |
         JSCLASS_FOREGROUND_FINALIZE,
     &WasmModuleObject::classOps_,
+    &WasmModuleObject::classSpec_,
 };
 
-const JSPropertySpec WasmModuleObject::properties[] = {JS_PS_END};
+const JSClass& WasmModuleObject::protoClass_ = PlainObject::class_;
+
+static constexpr char WasmModuleName[] = "Module";
+
+const ClassSpec WasmModuleObject::classSpec_ = {
+    CreateWasmConstructor<WasmModuleObject, WasmModuleName>,
+    GenericCreatePrototype<WasmModuleObject>,
+    WasmModuleObject::static_methods,
+    nullptr,
+    WasmModuleObject::methods,
+    WasmModuleObject::properties,
+    nullptr,
+    ClassSpec::DontDefineConstructor};
+
+const JSPropertySpec WasmModuleObject::properties[] = {
+    JS_STRING_SYM_PS(toStringTag, "WebAssembly.Module", JSPROP_READONLY),
+    JS_PS_END};
 
 const JSFunctionSpec WasmModuleObject::methods[] = {JS_FS_END};
 
@@ -685,8 +932,11 @@ const JSFunctionSpec WasmModuleObject::static_methods[] = {
     JS_FS_END};
 
 /* static */
-void WasmModuleObject::finalize(FreeOp* fop, JSObject* obj) {
-  obj->as<WasmModuleObject>().module().Release();
+void WasmModuleObject::finalize(JSFreeOp* fop, JSObject* obj) {
+  const Module& module = obj->as<WasmModuleObject>().module();
+  obj->zone()->decJitMemory(module.codeLength(module.code().stableTier()));
+  fop->release(obj, &module, module.gcMallocBytesExcludingCode(),
+               MemoryUse::WasmModule);
 }
 
 static bool IsModuleObject(JSObject* obj, const Module** module) {
@@ -792,11 +1042,18 @@ static JSString* FuncTypeToString(JSContext* cx, const FuncType& funcType) {
     return nullptr;
   }
 
-  if (funcType.ret() != ExprType::Void) {
-    const char* retStr = ToCString(funcType.ret());
-    if (!buf.append(retStr, strlen(retStr))) {
+  first = true;
+  for (ValType result : funcType.results()) {
+    if (!first && !buf.append(", ", strlen(", "))) {
       return nullptr;
     }
+
+    const char* resultStr = ToCString(result);
+    if (!buf.append(resultStr, strlen(resultStr))) {
+      return nullptr;
+    }
+
+    first = false;
   }
 
   if (!buf.append(')')) {
@@ -981,17 +1238,18 @@ bool WasmModuleObject::customSections(JSContext* cx, unsigned argc, Value* vp) {
       return false;
     }
 
-    Rooted<JSFlatString*> flat(cx, str->ensureFlat(cx));
-    if (!flat) {
+    Rooted<JSLinearString*> linear(cx, str->ensureLinear(cx));
+    if (!linear) {
       return false;
     }
 
-    if (!name.initLengthUninitialized(JS::GetDeflatedUTF8StringLength(flat))) {
+    if (!name.initLengthUninitialized(
+            JS::GetDeflatedUTF8StringLength(linear))) {
       return false;
     }
 
-    JS::DeflateStringToUTF8Buffer(flat,
-                                  RangedPtr<char>(name.begin(), name.length()));
+    mozilla::Unused << JS::DeflateStringToUTF8Buffer(
+        linear, MakeSpan(name.begin(), name.length()));
   }
 
   RootedValueVector elems(cx);
@@ -1033,13 +1291,17 @@ WasmModuleObject* WasmModuleObject::create(JSContext* cx, const Module& module,
     return nullptr;
   }
 
-  obj->initReservedSlot(MODULE_SLOT,
-                        PrivateValue(const_cast<Module*>(&module)));
+  // This accounts for module allocation size (excluding code which is handled
+  // separately - see below). This assumes that the size of associated data
+  // doesn't change for the life of the WasmModuleObject. The size is counted
+  // once per WasmModuleObject referencing a Module.
+  InitReservedSlot(obj, MODULE_SLOT, const_cast<Module*>(&module),
+                   module.gcMallocBytesExcludingCode(), MemoryUse::WasmModule);
   module.AddRef();
-  // We account for the first tier here; the second tier, if different, will be
-  // accounted for separately when it's been compiled.
-  cx->zone()->updateJitCodeMallocBytes(
-      module.codeLength(module.code().stableTier()));
+
+  // Bug 1569888: We account for the first tier here; the second tier, if
+  // different, also needs to be accounted for.
+  cx->zone()->incJitMemory(module.codeLength(module.code().stableTier()));
   return obj;
 }
 
@@ -1080,20 +1342,19 @@ static SharedCompileArgs InitCompileArgs(JSContext* cx,
 static bool ReportCompileWarnings(JSContext* cx,
                                   const UniqueCharsVector& warnings) {
   // Avoid spamming the console.
-  size_t numWarnings = Min<size_t>(warnings.length(), 3);
+  size_t numWarnings = std::min<size_t>(warnings.length(), 3);
 
   for (size_t i = 0; i < numWarnings; i++) {
-    if (!JS_ReportErrorFlagsAndNumberASCII(
-            cx, JSREPORT_WARNING, GetErrorMessage, nullptr,
-            JSMSG_WASM_COMPILE_WARNING, warnings[i].get()))
+    if (!WarnNumberASCII(cx, JSMSG_WASM_COMPILE_WARNING, warnings[i].get())) {
       return false;
+    }
   }
 
   if (warnings.length() > numWarnings) {
-    if (!JS_ReportErrorFlagsAndNumberASCII(
-            cx, JSREPORT_WARNING, GetErrorMessage, nullptr,
-            JSMSG_WASM_COMPILE_WARNING, "other warnings suppressed"))
+    if (!WarnNumberASCII(cx, JSMSG_WASM_COMPILE_WARNING,
+                         "other warnings suppressed")) {
       return false;
+    }
   }
 
   return true;
@@ -1148,8 +1409,15 @@ bool WasmModuleObject::construct(JSContext* cx, unsigned argc, Value* vp) {
     return false;
   }
 
-  RootedObject proto(
-      cx, &cx->global()->getPrototype(JSProto_WasmModule).toObject());
+  RootedObject proto(cx);
+  if (!GetPrototypeFromBuiltinConstructor(cx, callArgs, JSProto_WasmModule,
+                                          &proto)) {
+    return false;
+  }
+  if (!proto) {
+    proto = GlobalObject::getOrCreatePrototype(cx, JSProto_WasmModule);
+  }
+
   RootedObject moduleObj(cx, WasmModuleObject::create(cx, *module, proto));
   if (!moduleObj) {
     return false;
@@ -1169,25 +1437,42 @@ const Module& WasmModuleObject::module() const {
 // ============================================================================
 // WebAssembly.Instance class and methods
 
-const ClassOps WasmInstanceObject::classOps_ = {nullptr, /* addProperty */
-                                                nullptr, /* delProperty */
-                                                nullptr, /* enumerate */
-                                                nullptr, /* newEnumerate */
-                                                nullptr, /* resolve */
-                                                nullptr, /* mayResolve */
-                                                WasmInstanceObject::finalize,
-                                                nullptr, /* call */
-                                                nullptr, /* hasInstance */
-                                                nullptr, /* construct */
-                                                WasmInstanceObject::trace};
+const JSClassOps WasmInstanceObject::classOps_ = {
+    nullptr,                       // addProperty
+    nullptr,                       // delProperty
+    nullptr,                       // enumerate
+    nullptr,                       // newEnumerate
+    nullptr,                       // resolve
+    nullptr,                       // mayResolve
+    WasmInstanceObject::finalize,  // finalize
+    nullptr,                       // call
+    nullptr,                       // hasInstance
+    nullptr,                       // construct
+    WasmInstanceObject::trace,     // trace
+};
 
-const Class WasmInstanceObject::class_ = {
+const JSClass WasmInstanceObject::class_ = {
     "WebAssembly.Instance",
     JSCLASS_DELAY_METADATA_BUILDER |
         JSCLASS_HAS_RESERVED_SLOTS(WasmInstanceObject::RESERVED_SLOTS) |
         JSCLASS_FOREGROUND_FINALIZE,
     &WasmInstanceObject::classOps_,
+    &WasmInstanceObject::classSpec_,
 };
+
+const JSClass& WasmInstanceObject::protoClass_ = PlainObject::class_;
+
+static constexpr char WasmInstanceName[] = "Instance";
+
+const ClassSpec WasmInstanceObject::classSpec_ = {
+    CreateWasmConstructor<WasmInstanceObject, WasmInstanceName>,
+    GenericCreatePrototype<WasmInstanceObject>,
+    WasmInstanceObject::static_methods,
+    nullptr,
+    WasmInstanceObject::methods,
+    WasmInstanceObject::properties,
+    nullptr,
+    ClassSpec::DontDefineConstructor};
 
 static bool IsInstance(HandleValue v) {
   return v.isObject() && v.toObject().is<WasmInstanceObject>();
@@ -1210,6 +1495,7 @@ bool WasmInstanceObject::exportsGetter(JSContext* cx, unsigned argc,
 
 const JSPropertySpec WasmInstanceObject::properties[] = {
     JS_PSG("exports", WasmInstanceObject::exportsGetter, JSPROP_ENUMERATE),
+    JS_STRING_SYM_PS(toStringTag, "WebAssembly.Instance", JSPROP_READONLY),
     JS_PS_END};
 
 const JSFunctionSpec WasmInstanceObject::methods[] = {JS_FS_END};
@@ -1222,12 +1508,17 @@ bool WasmInstanceObject::isNewborn() const {
 }
 
 /* static */
-void WasmInstanceObject::finalize(FreeOp* fop, JSObject* obj) {
-  fop->delete_(&obj->as<WasmInstanceObject>().exports());
-  fop->delete_(&obj->as<WasmInstanceObject>().scopes());
-  fop->delete_(&obj->as<WasmInstanceObject>().indirectGlobals());
-  if (!obj->as<WasmInstanceObject>().isNewborn()) {
-    fop->delete_(&obj->as<WasmInstanceObject>().instance());
+void WasmInstanceObject::finalize(JSFreeOp* fop, JSObject* obj) {
+  WasmInstanceObject& instance = obj->as<WasmInstanceObject>();
+  fop->delete_(obj, &instance.exports(), MemoryUse::WasmInstanceExports);
+  fop->delete_(obj, &instance.scopes(), MemoryUse::WasmInstanceScopes);
+  fop->delete_(obj, &instance.indirectGlobals(),
+               MemoryUse::WasmInstanceGlobals);
+  if (!instance.isNewborn()) {
+    if (instance.instance().debugEnabled()) {
+      instance.instance().debug().finalize(fop);
+    }
+    fop->delete_(obj, &instance.instance(), MemoryUse::WasmInstanceInstance);
   }
 }
 
@@ -1251,13 +1542,13 @@ WasmInstanceObject* WasmInstanceObject::create(
     const ValVector& globalImportValues,
     const WasmGlobalObjectVector& globalObjs, HandleObject proto,
     UniqueDebugState maybeDebug) {
-  UniquePtr<ExportMap> exports = js::MakeUnique<ExportMap>();
+  UniquePtr<ExportMap> exports = js::MakeUnique<ExportMap>(cx->zone());
   if (!exports) {
     ReportOutOfMemory(cx);
     return nullptr;
   }
 
-  UniquePtr<ScopeMap> scopes = js::MakeUnique<ScopeMap>(cx->zone());
+  UniquePtr<ScopeMap> scopes = js::MakeUnique<ScopeMap>(cx->zone(), cx->zone());
   if (!scopes) {
     ReportOutOfMemory(cx);
     return nullptr;
@@ -1271,8 +1562,8 @@ WasmInstanceObject* WasmInstanceObject::create(
     }
   }
 
-  Rooted<UniquePtr<WasmGlobalObjectVector>> indirectGlobalObjs(
-      cx, js::MakeUnique<WasmGlobalObjectVector>());
+  Rooted<UniquePtr<GlobalObjectVector>> indirectGlobalObjs(
+      cx, js::MakeUnique<GlobalObjectVector>(cx->zone()));
   if (!indirectGlobalObjs || !indirectGlobalObjs->resize(indirectGlobals)) {
     ReportOutOfMemory(cx);
     return nullptr;
@@ -1287,39 +1578,52 @@ WasmInstanceObject* WasmInstanceObject::create(
     }
   }
 
-  AutoSetNewObjectMetadata metadata(cx);
-  RootedWasmInstanceObject obj(
-      cx, NewObjectWithGivenProto<WasmInstanceObject>(cx, proto));
-  if (!obj) {
-    return nullptr;
+  Instance* instance = nullptr;
+  RootedWasmInstanceObject obj(cx);
+
+  {
+    // We must delay creating metadata for this object until after all its
+    // slots have been initialized. We must also create the metadata before
+    // calling Instance::init as that may allocate new objects.
+    AutoSetNewObjectMetadata metadata(cx);
+    obj = NewObjectWithGivenProto<WasmInstanceObject>(cx, proto);
+    if (!obj) {
+      return nullptr;
+    }
+
+    MOZ_ASSERT(obj->isTenured(), "assumed by WasmTableObject write barriers");
+
+    // Finalization assumes these slots are always initialized:
+    InitReservedSlot(obj, EXPORTS_SLOT, exports.release(),
+                     MemoryUse::WasmInstanceExports);
+
+    InitReservedSlot(obj, SCOPES_SLOT, scopes.release(),
+                     MemoryUse::WasmInstanceScopes);
+
+    InitReservedSlot(obj, GLOBALS_SLOT, indirectGlobalObjs.release(),
+                     MemoryUse::WasmInstanceGlobals);
+
+    obj->initReservedSlot(INSTANCE_SCOPE_SLOT, UndefinedValue());
+
+    // The INSTANCE_SLOT may not be initialized if Instance allocation fails,
+    // leading to an observable "newborn" state in tracing/finalization.
+    MOZ_ASSERT(obj->isNewborn());
+
+    // Root the Instance via WasmInstanceObject before any possible GC.
+    instance = cx->new_<Instance>(
+        cx, obj, code, std::move(tlsData), memory, std::move(tables),
+        std::move(structTypeDescrs), std::move(maybeDebug));
+    if (!instance) {
+      return nullptr;
+    }
+
+    InitReservedSlot(obj, INSTANCE_SLOT, instance,
+                     MemoryUse::WasmInstanceInstance);
+    MOZ_ASSERT(!obj->isNewborn());
   }
 
-  MOZ_ASSERT(obj->isTenured(), "assumed by WasmTableObject write barriers");
-
-  // Finalization assumes these slots are always initialized:
-  obj->initReservedSlot(EXPORTS_SLOT, PrivateValue(exports.release()));
-  obj->initReservedSlot(SCOPES_SLOT, PrivateValue(scopes.release()));
-  obj->initReservedSlot(GLOBALS_SLOT,
-                        PrivateValue(indirectGlobalObjs.release()));
-  obj->initReservedSlot(INSTANCE_SCOPE_SLOT, UndefinedValue());
-
-  // The INSTANCE_SLOT may not be initialized if Instance allocation fails,
-  // leading to an observable "newborn" state in tracing/finalization.
-  MOZ_ASSERT(obj->isNewborn());
-
-  // Root the Instance via WasmInstanceObject before any possible GC.
-  auto* instance = cx->new_<Instance>(
-      cx, obj, code, std::move(tlsData), memory, std::move(tables),
-      std::move(structTypeDescrs), funcImports, globalImportValues, globalObjs,
-      std::move(maybeDebug));
-  if (!instance) {
-    return nullptr;
-  }
-
-  obj->initReservedSlot(INSTANCE_SLOT, PrivateValue(instance));
-  MOZ_ASSERT(!obj->isNewborn());
-
-  if (!instance->init(cx, dataSegments, elemSegments)) {
+  if (!instance->init(cx, funcImports, globalImportValues, globalObjs,
+                      dataSegments, elemSegments)) {
     return nullptr;
   }
 
@@ -1368,8 +1672,15 @@ bool WasmInstanceObject::construct(JSContext* cx, unsigned argc, Value* vp) {
     return false;
   }
 
-  RootedObject instanceProto(
-      cx, &cx->global()->getPrototype(JSProto_WasmInstance).toObject());
+  RootedObject instanceProto(cx);
+  if (!GetPrototypeFromBuiltinConstructor(cx, args, JSProto_WasmInstance,
+                                          &instanceProto)) {
+    return false;
+  }
+  if (!instanceProto) {
+    instanceProto =
+        GlobalObject::getOrCreatePrototype(cx, JSProto_WasmInstance);
+  }
 
   Rooted<ImportValues> imports(cx);
   if (!GetImports(cx, *module, importObj, imports.address())) {
@@ -1404,8 +1715,9 @@ WasmInstanceObject::ScopeMap& WasmInstanceObject::scopes() const {
   return *(ScopeMap*)getReservedSlot(SCOPES_SLOT).toPrivate();
 }
 
-WasmGlobalObjectVector& WasmInstanceObject::indirectGlobals() const {
-  return *(WasmGlobalObjectVector*)getReservedSlot(GLOBALS_SLOT).toPrivate();
+WasmInstanceObject::GlobalObjectVector& WasmInstanceObject::indirectGlobals()
+    const {
+  return *(GlobalObjectVector*)getReservedSlot(GLOBALS_SLOT).toPrivate();
 }
 
 static bool WasmCall(JSContext* cx, unsigned argc, Value* vp) {
@@ -1440,7 +1752,7 @@ bool WasmInstanceObject::getExportedFunction(
     }
     fun.set(NewNativeConstructor(cx, WasmCall, numArgs, name,
                                  gc::AllocKind::FUNCTION_EXTENDED,
-                                 SingletonObject, JSFunction::ASMJS_CTOR));
+                                 SingletonObject, FunctionFlags::ASMJS_CTOR));
     if (!fun) {
       return false;
     }
@@ -1455,7 +1767,7 @@ bool WasmInstanceObject::getExportedFunction(
 
     fun.set(NewNativeFunction(cx, WasmCall, numArgs, name,
                               gc::AllocKind::FUNCTION_EXTENDED, SingletonObject,
-                              JSFunction::WASM));
+                              FunctionFlags::WASM));
     if (!fun) {
       return false;
     }
@@ -1542,7 +1854,7 @@ WasmFunctionScope* WasmInstanceObject::getFunctionScope(
 }
 
 bool wasm::IsWasmExportedFunction(JSFunction* fun) {
-  return fun->kind() == JSFunction::Wasm;
+  return fun->kind() == FunctionFlags::Wasm;
 }
 
 bool wasm::CheckFuncRefValue(JSContext* cx, HandleValue v,
@@ -1573,8 +1885,8 @@ Instance& wasm::ExportedFunctionToInstance(JSFunction* fun) {
 }
 
 WasmInstanceObject* wasm::ExportedFunctionToInstanceObject(JSFunction* fun) {
-  MOZ_ASSERT(fun->kind() == JSFunction::Wasm ||
-             fun->kind() == JSFunction::AsmJS);
+  MOZ_ASSERT(fun->kind() == FunctionFlags::Wasm ||
+             fun->kind() == FunctionFlags::AsmJS);
   const Value& v = fun->getExtendedSlot(FunctionExtended::WASM_INSTANCE_SLOT);
   return &v.toObject().as<WasmInstanceObject>();
 }
@@ -1587,26 +1899,46 @@ uint32_t wasm::ExportedFunctionToFuncIndex(JSFunction* fun) {
 // ============================================================================
 // WebAssembly.Memory class and methods
 
-const ClassOps WasmMemoryObject::classOps_ = {nullptr, /* addProperty */
-                                              nullptr, /* delProperty */
-                                              nullptr, /* enumerate */
-                                              nullptr, /* newEnumerate */
-                                              nullptr, /* resolve */
-                                              nullptr, /* mayResolve */
-                                              WasmMemoryObject::finalize};
+const JSClassOps WasmMemoryObject::classOps_ = {
+    nullptr,                     // addProperty
+    nullptr,                     // delProperty
+    nullptr,                     // enumerate
+    nullptr,                     // newEnumerate
+    nullptr,                     // resolve
+    nullptr,                     // mayResolve
+    WasmMemoryObject::finalize,  // finalize
+    nullptr,                     // call
+    nullptr,                     // hasInstance
+    nullptr,                     // construct
+    nullptr,                     // trace
+};
 
-const Class WasmMemoryObject::class_ = {
+const JSClass WasmMemoryObject::class_ = {
     "WebAssembly.Memory",
     JSCLASS_DELAY_METADATA_BUILDER |
         JSCLASS_HAS_RESERVED_SLOTS(WasmMemoryObject::RESERVED_SLOTS) |
         JSCLASS_FOREGROUND_FINALIZE,
-    &WasmMemoryObject::classOps_};
+    &WasmMemoryObject::classOps_, &WasmMemoryObject::classSpec_};
+
+const JSClass& WasmMemoryObject::protoClass_ = PlainObject::class_;
+
+static constexpr char WasmMemoryName[] = "Memory";
+
+const ClassSpec WasmMemoryObject::classSpec_ = {
+    CreateWasmConstructor<WasmMemoryObject, WasmMemoryName>,
+    GenericCreatePrototype<WasmMemoryObject>,
+    WasmMemoryObject::static_methods,
+    nullptr,
+    WasmMemoryObject::methods,
+    WasmMemoryObject::properties,
+    nullptr,
+    ClassSpec::DontDefineConstructor};
 
 /* static */
-void WasmMemoryObject::finalize(FreeOp* fop, JSObject* obj) {
+void WasmMemoryObject::finalize(JSFreeOp* fop, JSObject* obj) {
   WasmMemoryObject& memory = obj->as<WasmMemoryObject>();
   if (memory.hasObservers()) {
-    fop->delete_(&memory.observers());
+    fop->delete_(obj, &memory.observers(), MemoryUse::WasmMemoryObservers);
   }
 }
 
@@ -1657,8 +1989,15 @@ bool WasmMemoryObject::construct(JSContext* cx, unsigned argc, Value* vp) {
     return false;
   }
 
-  RootedObject proto(
-      cx, &cx->global()->getPrototype(JSProto_WasmMemory).toObject());
+  RootedObject proto(cx);
+  if (!GetPrototypeFromBuiltinConstructor(cx, args, JSProto_WasmMemory,
+                                          &proto)) {
+    return false;
+  }
+  if (!proto) {
+    proto = GlobalObject::getOrCreatePrototype(cx, JSProto_WasmMemory);
+  }
+
   RootedWasmMemoryObject memoryObj(cx,
                                    WasmMemoryObject::create(cx, buffer, proto));
   if (!memoryObj) {
@@ -1714,6 +2053,7 @@ bool WasmMemoryObject::bufferGetter(JSContext* cx, unsigned argc, Value* vp) {
 
 const JSPropertySpec WasmMemoryObject::properties[] = {
     JS_PSG("buffer", WasmMemoryObject::bufferGetter, JSPROP_ENUMERATE),
+    JS_STRING_SYM_PS(toStringTag, "WebAssembly.Memory", JSPROP_READONLY),
     JS_PS_END};
 
 /* static */
@@ -1766,8 +2106,7 @@ SharedArrayRawBuffer* WasmMemoryObject::sharedArrayRawBuffer() const {
 
 uint32_t WasmMemoryObject::volatileMemoryLength() const {
   if (isShared()) {
-    SharedArrayRawBuffer::Lock lock(sharedArrayRawBuffer());
-    return sharedArrayRawBuffer()->byteLength(lock);
+    return sharedArrayRawBuffer()->volatileByteLength();
   }
   return buffer().byteLength();
 }
@@ -1789,24 +2128,42 @@ WasmMemoryObject::InstanceSet& WasmMemoryObject::observers() const {
 WasmMemoryObject::InstanceSet* WasmMemoryObject::getOrCreateObservers(
     JSContext* cx) {
   if (!hasObservers()) {
-    auto observers = MakeUnique<InstanceSet>(cx->zone());
+    auto observers = MakeUnique<InstanceSet>(cx->zone(), cx->zone());
     if (!observers) {
       ReportOutOfMemory(cx);
       return nullptr;
     }
 
-    setReservedSlot(OBSERVERS_SLOT, PrivateValue(observers.release()));
+    InitReservedSlot(this, OBSERVERS_SLOT, observers.release(),
+                     MemoryUse::WasmMemoryObservers);
   }
 
   return &observers();
 }
 
-bool WasmMemoryObject::movingGrowable() const {
-#ifdef WASM_HUGE_MEMORY
-  return false;
+bool WasmMemoryObject::isHuge() const {
+#ifdef WASM_SUPPORTS_HUGE_MEMORY
+  static_assert(ArrayBufferObject::MaxBufferByteLength < HugeMappedSize,
+                "Non-huge buffer may be confused as huge");
+  return buffer().wasmMappedSize() >= HugeMappedSize;
 #else
-  return !buffer().wasmMaxSize();
+  return false;
 #endif
+}
+
+bool WasmMemoryObject::movingGrowable() const {
+  return !isHuge() && !buffer().wasmMaxSize();
+}
+
+uint32_t WasmMemoryObject::boundsCheckLimit() const {
+  if (!buffer().isWasm() || isHuge()) {
+    return buffer().byteLength();
+  }
+  size_t mappedSize = buffer().wasmMappedSize();
+  MOZ_ASSERT(mappedSize <= UINT32_MAX);
+  MOZ_ASSERT(mappedSize >= wasm::GuardSize);
+  MOZ_ASSERT(wasm::IsValidBoundsCheckImmediate(mappedSize - wasm::GuardSize));
+  return mappedSize - wasm::GuardSize;
 }
 
 bool WasmMemoryObject::addMovingGrowObserver(JSContext* cx,
@@ -1832,8 +2189,8 @@ uint32_t WasmMemoryObject::growShared(HandleWasmMemoryObject memory,
   SharedArrayRawBuffer* rawBuf = memory->sharedArrayRawBuffer();
   SharedArrayRawBuffer::Lock lock(rawBuf);
 
-  MOZ_ASSERT(rawBuf->byteLength(lock) % PageSize == 0);
-  uint32_t oldNumPages = rawBuf->byteLength(lock) / PageSize;
+  MOZ_ASSERT(rawBuf->volatileByteLength() % PageSize == 0);
+  uint32_t oldNumPages = rawBuf->volatileByteLength() / PageSize;
 
   CheckedInt<uint32_t> newSize = oldNumPages;
   newSize += delta;
@@ -1876,31 +2233,24 @@ uint32_t WasmMemoryObject::grow(HandleWasmMemoryObject memory, uint32_t delta,
   }
 
   RootedArrayBufferObject newBuf(cx);
-  uint8_t* prevMemoryBase = nullptr;
 
-  if (Maybe<uint32_t> maxSize = oldBuf->wasmMaxSize()) {
-    if (newSize.value() > maxSize.value()) {
-      return -1;
-    }
-
-    if (!ArrayBufferObject::wasmGrowToSizeInPlace(newSize.value(), oldBuf,
-                                                  &newBuf, cx)) {
-      return -1;
-    }
-  } else {
-#ifdef WASM_HUGE_MEMORY
-    if (!ArrayBufferObject::wasmGrowToSizeInPlace(newSize.value(), oldBuf,
-                                                  &newBuf, cx)) {
-      return -1;
-    }
-#else
-    MOZ_ASSERT(memory->movingGrowable());
-    prevMemoryBase = oldBuf->dataPointer();
+  if (memory->movingGrowable()) {
+    MOZ_ASSERT(!memory->isHuge());
     if (!ArrayBufferObject::wasmMovingGrowToSize(newSize.value(), oldBuf,
                                                  &newBuf, cx)) {
       return -1;
     }
-#endif
+  } else {
+    if (Maybe<uint32_t> maxSize = oldBuf->wasmMaxSize()) {
+      if (newSize.value() > maxSize.value()) {
+        return -1;
+      }
+    }
+
+    if (!ArrayBufferObject::wasmGrowToSizeInPlace(newSize.value(), oldBuf,
+                                                  &newBuf, cx)) {
+      return -1;
+    }
   }
 
   memory->setReservedSlot(BUFFER_SLOT, ObjectValue(*newBuf));
@@ -1908,10 +2258,9 @@ uint32_t WasmMemoryObject::grow(HandleWasmMemoryObject memory, uint32_t delta,
   // Only notify moving-grow-observers after the BUFFER_SLOT has been updated
   // since observers will call buffer().
   if (memory->hasObservers()) {
-    MOZ_ASSERT(prevMemoryBase);
     for (InstanceSet::Range r = memory->observers().all(); !r.empty();
          r.popFront()) {
-      r.front()->instance().onMovingGrowMemory(prevMemoryBase);
+      r.front()->instance().onMovingGrowMemory();
     }
   }
 
@@ -1926,24 +2275,40 @@ bool js::wasm::IsSharedWasmMemoryObject(JSObject* obj) {
 // ============================================================================
 // WebAssembly.Table class and methods
 
-const ClassOps WasmTableObject::classOps_ = {nullptr, /* addProperty */
-                                             nullptr, /* delProperty */
-                                             nullptr, /* enumerate */
-                                             nullptr, /* newEnumerate */
-                                             nullptr, /* resolve */
-                                             nullptr, /* mayResolve */
-                                             WasmTableObject::finalize,
-                                             nullptr, /* call */
-                                             nullptr, /* hasInstance */
-                                             nullptr, /* construct */
-                                             WasmTableObject::trace};
+const JSClassOps WasmTableObject::classOps_ = {
+    nullptr,                    // addProperty
+    nullptr,                    // delProperty
+    nullptr,                    // enumerate
+    nullptr,                    // newEnumerate
+    nullptr,                    // resolve
+    nullptr,                    // mayResolve
+    WasmTableObject::finalize,  // finalize
+    nullptr,                    // call
+    nullptr,                    // hasInstance
+    nullptr,                    // construct
+    WasmTableObject::trace,     // trace
+};
 
-const Class WasmTableObject::class_ = {
+const JSClass WasmTableObject::class_ = {
     "WebAssembly.Table",
     JSCLASS_DELAY_METADATA_BUILDER |
         JSCLASS_HAS_RESERVED_SLOTS(WasmTableObject::RESERVED_SLOTS) |
         JSCLASS_FOREGROUND_FINALIZE,
-    &WasmTableObject::classOps_};
+    &WasmTableObject::classOps_, &WasmTableObject::classSpec_};
+
+const JSClass& WasmTableObject::protoClass_ = PlainObject::class_;
+
+static constexpr char WasmTableName[] = "Table";
+
+const ClassSpec WasmTableObject::classSpec_ = {
+    CreateWasmConstructor<WasmTableObject, WasmTableName>,
+    GenericCreatePrototype<WasmTableObject>,
+    WasmTableObject::static_methods,
+    nullptr,
+    WasmTableObject::methods,
+    WasmTableObject::properties,
+    nullptr,
+    ClassSpec::DontDefineConstructor};
 
 bool WasmTableObject::isNewborn() const {
   MOZ_ASSERT(is<WasmTableObject>());
@@ -1951,10 +2316,11 @@ bool WasmTableObject::isNewborn() const {
 }
 
 /* static */
-void WasmTableObject::finalize(FreeOp* fop, JSObject* obj) {
+void WasmTableObject::finalize(JSFreeOp* fop, JSObject* obj) {
   WasmTableObject& tableObj = obj->as<WasmTableObject>();
   if (!tableObj.isNewborn()) {
-    tableObj.table().Release();
+    auto& table = tableObj.table();
+    fop->release(obj, &table, table.gcMallocBytes(), MemoryUse::WasmTableTable);
   }
 }
 
@@ -1968,10 +2334,8 @@ void WasmTableObject::trace(JSTracer* trc, JSObject* obj) {
 
 /* static */
 WasmTableObject* WasmTableObject::create(JSContext* cx, const Limits& limits,
-                                         TableKind tableKind) {
-  RootedObject proto(cx,
-                     &cx->global()->getPrototype(JSProto_WasmTable).toObject());
-
+                                         TableKind tableKind,
+                                         HandleObject proto) {
   AutoSetNewObjectMetadata metadata(cx);
   RootedWasmTableObject obj(
       cx, NewObjectWithGivenProto<WasmTableObject>(cx, proto));
@@ -1988,7 +2352,9 @@ WasmTableObject* WasmTableObject::create(JSContext* cx, const Limits& limits,
     return nullptr;
   }
 
-  obj->initReservedSlot(TABLE_SLOT, PrivateValue(table.forget().take()));
+  size_t size = table->gcMallocBytes();
+  InitReservedSlot(obj, TABLE_SLOT, table.forget().take(), size,
+                   MemoryUse::WasmTableTable);
 
   MOZ_ASSERT(!obj->isNewborn());
   return obj;
@@ -2036,12 +2402,12 @@ bool WasmTableObject::construct(JSContext* cx, unsigned argc, Value* vp) {
   }
 
   TableKind tableKind;
-  if (StringEqualsAscii(elementLinearStr, "anyfunc") ||
-      StringEqualsAscii(elementLinearStr, "funcref")) {
+  if (StringEqualsLiteral(elementLinearStr, "anyfunc") ||
+      StringEqualsLiteral(elementLinearStr, "funcref")) {
     tableKind = TableKind::FuncRef;
 #ifdef ENABLE_WASM_REFTYPES
-  } else if (StringEqualsAscii(elementLinearStr, "anyref")) {
-    if (!HasReftypesSupport(cx)) {
+  } else if (StringEqualsLiteral(elementLinearStr, "externref")) {
+    if (!ReftypesAvailable(cx)) {
       JS_ReportErrorNumberUTF8(cx, GetErrorMessage, nullptr,
                                JSMSG_WASM_BAD_ELEMENT);
       return false;
@@ -2065,8 +2431,17 @@ bool WasmTableObject::construct(JSContext* cx, unsigned argc, Value* vp) {
     return false;
   }
 
-  RootedWasmTableObject table(cx,
-                              WasmTableObject::create(cx, limits, tableKind));
+  RootedObject proto(cx);
+  if (!GetPrototypeFromBuiltinConstructor(cx, args, JSProto_WasmTable,
+                                          &proto)) {
+    return false;
+  }
+  if (!proto) {
+    proto = GlobalObject::getOrCreatePrototype(cx, JSProto_WasmTable);
+  }
+
+  RootedWasmTableObject table(
+      cx, WasmTableObject::create(cx, limits, tableKind, proto));
   if (!table) {
     return false;
   }
@@ -2094,6 +2469,7 @@ bool WasmTableObject::lengthGetter(JSContext* cx, unsigned argc, Value* vp) {
 
 const JSPropertySpec WasmTableObject::properties[] = {
     JS_PSG("length", WasmTableObject::lengthGetter, JSPROP_ENUMERATE),
+    JS_STRING_SYM_PS(toStringTag, "WebAssembly.Table", JSPROP_READONLY),
     JS_PS_END};
 
 static bool ToTableIndex(JSContext* cx, HandleValue v, const Table& table,
@@ -2126,33 +2502,19 @@ bool WasmTableObject::getImpl(JSContext* cx, const CallArgs& args) {
     return false;
   }
 
-  switch (table.kind()) {
-    case TableKind::FuncRef: {
-      const FunctionTableElem& elem = table.getFuncRef(index);
-      if (!elem.code) {
-        args.rval().setNull();
-        return true;
-      }
-
-      Instance& instance = *elem.tls->instance;
-      const CodeRange& codeRange = *instance.code().lookupFuncRange(elem.code);
-
-      RootedWasmInstanceObject instanceObj(cx, instance.object());
+  switch (table.repr()) {
+    case TableRepr::Func: {
+      MOZ_RELEASE_ASSERT(table.kind() == TableKind::FuncRef);
       RootedFunction fun(cx);
-      if (!instanceObj->getExportedFunction(cx, instanceObj,
-                                            codeRange.funcIndex(), &fun)) {
+      if (!table.getFuncRef(cx, index, &fun)) {
         return false;
       }
-
-      args.rval().setObject(*fun);
+      args.rval().setObjectOrNull(fun);
       break;
     }
-    case TableKind::AnyRef: {
+    case TableRepr::Ref: {
       args.rval().set(UnboxAnyRef(table.getAnyRef(index)));
       break;
-    }
-    default: {
-      MOZ_CRASH("Unexpected table kind");
     }
   }
   return true;
@@ -2162,36 +2524,6 @@ bool WasmTableObject::getImpl(JSContext* cx, const CallArgs& args) {
 bool WasmTableObject::get(JSContext* cx, unsigned argc, Value* vp) {
   CallArgs args = CallArgsFromVp(argc, vp);
   return CallNonGenericMethod<IsTable, getImpl>(cx, args);
-}
-
-static void TableFunctionFill(JSContext* cx, Table* table, HandleFunction value,
-                              uint32_t index, uint32_t limit) {
-  if (!value) {
-    while (index < limit) {
-      table->setNull(index++);
-    }
-    return;
-  }
-
-  RootedWasmInstanceObject instanceObj(cx,
-                                       ExportedFunctionToInstanceObject(value));
-  uint32_t funcIndex = ExportedFunctionToFuncIndex(value);
-
-#ifdef DEBUG
-  RootedFunction f(cx);
-  MOZ_ASSERT(instanceObj->getExportedFunction(cx, instanceObj, funcIndex, &f));
-  MOZ_ASSERT(value == f);
-#endif
-
-  Instance& instance = instanceObj->instance();
-  Tier tier = instance.code().bestTier();
-  const MetadataTier& metadata = instance.metadata(tier);
-  const CodeRange& codeRange =
-      metadata.codeRange(metadata.lookupFuncExport(funcIndex));
-  void* code = instance.codeBase(tier) + codeRange.funcTableEntry();
-  while (index < limit) {
-    table->setFuncRef(index++, code, &instance);
-  }
 }
 
 /* static */
@@ -2209,29 +2541,25 @@ bool WasmTableObject::setImpl(JSContext* cx, const CallArgs& args) {
     return false;
   }
 
+  MOZ_ASSERT(index < MaxTableLength);
+  static_assert(MaxTableLength < UINT32_MAX, "Invariant");
+
   RootedValue fillValue(cx, args[1]);
+  RootedFunction fun(cx);
+  RootedAnyRef any(cx, AnyRef::null());
+  if (!CheckRefType(cx, ToElemValType(table.kind()).refTypeKind(), fillValue,
+                    &fun, &any)) {
+    return false;
+  }
   switch (table.kind()) {
-    case TableKind::FuncRef: {
-      RootedFunction fun(cx);
-      if (!CheckFuncRefValue(cx, fillValue, &fun)) {
-        return false;
-      }
-      MOZ_ASSERT(index < MaxTableLength);
-      static_assert(MaxTableLength < UINT32_MAX, "Invariant");
-      TableFunctionFill(cx, &table, fun, index, index + 1);
+    case TableKind::AsmJS:
+      MOZ_CRASH("Should not happen");
+    case TableKind::FuncRef:
+      table.fillFuncRef(index, 1, FuncRef::fromJSFunction(fun), cx);
       break;
-    }
-    case TableKind::AnyRef: {
-      RootedAnyRef tmp(cx, AnyRef::null());
-      if (!BoxAnyRef(cx, fillValue, &tmp)) {
-        return false;
-      }
-      table.setAnyRef(index, tmp);
+    case TableKind::AnyRef:
+      table.fillAnyRef(index, 1, any);
       break;
-    }
-    default: {
-      MOZ_CRASH("Unexpected table kind");
-    }
   }
 
   args.rval().setUndefined();
@@ -2246,8 +2574,9 @@ bool WasmTableObject::set(JSContext* cx, unsigned argc, Value* vp) {
 
 /* static */
 bool WasmTableObject::growImpl(JSContext* cx, const CallArgs& args) {
-  RootedWasmTableObject table(cx,
-                              &args.thisv().toObject().as<WasmTableObject>());
+  RootedWasmTableObject tableObj(
+      cx, &args.thisv().toObject().as<WasmTableObject>());
+  Table& table = tableObj->table();
 
   if (!args.requireAtLeast(cx, "WebAssembly.Table.grow", 1)) {
     return false;
@@ -2258,7 +2587,7 @@ bool WasmTableObject::growImpl(JSContext* cx, const CallArgs& args) {
     return false;
   }
 
-  uint32_t oldLength = table->table().grow(delta, cx);
+  uint32_t oldLength = table.grow(delta);
 
   if (oldLength == uint32_t(-1)) {
     JS_ReportErrorNumberUTF8(cx, GetErrorMessage, nullptr, JSMSG_WASM_BAD_GROW,
@@ -2277,46 +2606,40 @@ bool WasmTableObject::growImpl(JSContext* cx, const CallArgs& args) {
 
   static_assert(MaxTableLength < UINT32_MAX, "Invariant");
 
-  switch (table->table().kind()) {
-    case TableKind::FuncRef: {
-      if (fillValue.isNull()) {
-#ifdef DEBUG
-        for (uint32_t index = oldLength; index < oldLength + delta; index++) {
-          MOZ_ASSERT(table->table().getFuncRef(index).code == nullptr);
-        }
-#endif
-      } else {
-        RootedFunction fun(cx);
-        if (!CheckFuncRefValue(cx, fillValue, &fun)) {
-          return false;
-        }
-        TableFunctionFill(cx, &table->table(), fun, oldLength,
-                          oldLength + delta);
-      }
-      break;
+  if (!fillValue.isNull()) {
+    RootedFunction fun(cx);
+    RootedAnyRef any(cx, AnyRef::null());
+    if (!CheckRefType(cx, ToElemValType(table.kind()).refTypeKind(), fillValue,
+                      &fun, &any)) {
+      return false;
     }
-    case TableKind::AnyRef: {
-      RootedAnyRef tmp(cx, AnyRef::null());
-      if (!BoxAnyRef(cx, fillValue, &tmp)) {
-        return false;
-      }
-      if (!tmp.get().isNull()) {
-        for (uint32_t index = oldLength; index < oldLength + delta; index++) {
-          table->table().setAnyRef(index, tmp);
-        }
-      } else {
-#ifdef DEBUG
-        for (uint32_t index = oldLength; index < oldLength + delta; index++) {
-          MOZ_ASSERT(table->table().getAnyRef(index).isNull());
-        }
-#endif
-      }
-      break;
-    }
-    default: {
-      MOZ_CRASH("Unexpected table kind");
+    switch (table.repr()) {
+      case TableRepr::Func:
+        MOZ_ASSERT(table.kind() == TableKind::FuncRef);
+        table.fillFuncRef(oldLength, delta, FuncRef::fromJSFunction(fun), cx);
+        break;
+      case TableRepr::Ref:
+        table.fillAnyRef(oldLength, delta, any);
+        break;
     }
   }
+
+#ifdef DEBUG
+  if (fillValue.isNull()) {
+    switch (table.repr()) {
+      case TableRepr::Func:
+        for (uint32_t index = oldLength; index < oldLength + delta; index++) {
+          MOZ_ASSERT(table.getFuncRef(index).code == nullptr);
+        }
+        break;
+      case TableRepr::Ref:
+        for (uint32_t index = oldLength; index < oldLength + delta; index++) {
+          MOZ_ASSERT(table.getAnyRef(index).isNull());
+        }
+        break;
+    }
+  }
+#endif
 
   args.rval().setInt32(oldLength);
   return true;
@@ -2342,23 +2665,39 @@ Table& WasmTableObject::table() const {
 // ============================================================================
 // WebAssembly.global class and methods
 
-const ClassOps WasmGlobalObject::classOps_ = {nullptr, /* addProperty */
-                                              nullptr, /* delProperty */
-                                              nullptr, /* enumerate */
-                                              nullptr, /* newEnumerate */
-                                              nullptr, /* resolve */
-                                              nullptr, /* mayResolve */
-                                              WasmGlobalObject::finalize,
-                                              nullptr, /* call */
-                                              nullptr, /* hasInstance */
-                                              nullptr, /* construct */
-                                              WasmGlobalObject::trace};
+const JSClassOps WasmGlobalObject::classOps_ = {
+    nullptr,                     // addProperty
+    nullptr,                     // delProperty
+    nullptr,                     // enumerate
+    nullptr,                     // newEnumerate
+    nullptr,                     // resolve
+    nullptr,                     // mayResolve
+    WasmGlobalObject::finalize,  // finalize
+    nullptr,                     // call
+    nullptr,                     // hasInstance
+    nullptr,                     // construct
+    WasmGlobalObject::trace,     // trace
+};
 
-const Class WasmGlobalObject::class_ = {
+const JSClass WasmGlobalObject::class_ = {
     "WebAssembly.Global",
     JSCLASS_HAS_RESERVED_SLOTS(WasmGlobalObject::RESERVED_SLOTS) |
         JSCLASS_BACKGROUND_FINALIZE,
-    &WasmGlobalObject::classOps_};
+    &WasmGlobalObject::classOps_, &WasmGlobalObject::classSpec_};
+
+const JSClass& WasmGlobalObject::protoClass_ = PlainObject::class_;
+
+static constexpr char WasmGlobalName[] = "Global";
+
+const ClassSpec WasmGlobalObject::classSpec_ = {
+    CreateWasmConstructor<WasmGlobalObject, WasmGlobalName>,
+    GenericCreatePrototype<WasmGlobalObject>,
+    WasmGlobalObject::static_methods,
+    nullptr,
+    WasmGlobalObject::methods,
+    WasmGlobalObject::properties,
+    nullptr,
+    ClassSpec::DontDefineConstructor};
 
 /* static */
 void WasmGlobalObject::trace(JSTracer* trc, JSObject* obj) {
@@ -2369,43 +2708,44 @@ void WasmGlobalObject::trace(JSTracer* trc, JSObject* obj) {
     // there's nothing to trace yet.
     return;
   }
-  switch (global->type().code()) {
-    case ValType::FuncRef:
-    case ValType::AnyRef:
-      if (!global->cell()->ref.isNull()) {
-        // TODO/AnyRef-boxing: With boxed immediates and strings, the write
-        // barrier is going to have to be more complicated.
-        ASSERT_ANYREF_IS_JSOBJECT;
-        TraceManuallyBarrieredEdge(trc, global->cell()->ref.asJSObjectAddress(),
-                                   "wasm reference-typed global");
-      }
-      break;
+  switch (global->type().kind()) {
     case ValType::I32:
     case ValType::F32:
     case ValType::I64:
     case ValType::F64:
+    case ValType::V128:
       break;
     case ValType::Ref:
-      MOZ_CRASH("Ref NYI");
-    case ValType::NullRef:
-      MOZ_CRASH("NullRef not expressible");
+      switch (global->type().refTypeKind()) {
+        case RefType::Func:
+        case RefType::Any:
+          if (!global->cell()->ref.isNull()) {
+            // TODO/AnyRef-boxing: With boxed immediates and strings, the write
+            // barrier is going to have to be more complicated.
+            ASSERT_ANYREF_IS_JSOBJECT;
+            TraceManuallyBarrieredEdge(trc,
+                                       global->cell()->ref.asJSObjectAddress(),
+                                       "wasm reference-typed global");
+          }
+          break;
+        case RefType::TypeIndex:
+          MOZ_CRASH("Ref NYI");
+      }
+      break;
   }
 }
 
 /* static */
-void WasmGlobalObject::finalize(FreeOp*, JSObject* obj) {
+void WasmGlobalObject::finalize(JSFreeOp* fop, JSObject* obj) {
   WasmGlobalObject* global = reinterpret_cast<WasmGlobalObject*>(obj);
   if (!global->isNewborn()) {
-    js_delete(global->cell());
+    fop->delete_(obj, global->cell(), MemoryUse::WasmGlobalCell);
   }
 }
 
 /* static */
 WasmGlobalObject* WasmGlobalObject::create(JSContext* cx, HandleVal hval,
-                                           bool isMutable) {
-  RootedObject proto(
-      cx, &cx->global()->getPrototype(JSProto_WasmGlobal).toObject());
-
+                                           bool isMutable, HandleObject proto) {
   AutoSetNewObjectMetadata metadata(cx);
   RootedWasmGlobalObject obj(
       cx, NewObjectWithGivenProto<WasmGlobalObject>(cx, proto));
@@ -2426,7 +2766,7 @@ WasmGlobalObject* WasmGlobalObject::create(JSContext* cx, HandleVal hval,
   }
 
   const Val& val = hval.get();
-  switch (val.type().code()) {
+  switch (val.type().kind()) {
     case ValType::I32:
       cell->i32 = val.i32();
       break;
@@ -2439,28 +2779,32 @@ WasmGlobalObject* WasmGlobalObject::create(JSContext* cx, HandleVal hval,
     case ValType::F64:
       cell->f64 = val.f64();
       break;
-    case ValType::FuncRef:
-    case ValType::AnyRef:
-      MOZ_ASSERT(cell->ref.isNull(), "no prebarriers needed");
-      cell->ref = val.ref();
-      if (!cell->ref.isNull()) {
-        // TODO/AnyRef-boxing: With boxed immediates and strings, the write
-        // barrier is going to have to be more complicated.
-        ASSERT_ANYREF_IS_JSOBJECT;
-        JSObject::writeBarrierPost(cell->ref.asJSObjectAddress(), nullptr,
-                                   cell->ref.asJSObject());
+    case ValType::Ref:
+      switch (val.type().refTypeKind()) {
+        case RefType::Func:
+        case RefType::Any:
+          MOZ_ASSERT(cell->ref.isNull(), "no prebarriers needed");
+          cell->ref = val.ref();
+          if (!cell->ref.isNull()) {
+            // TODO/AnyRef-boxing: With boxed immediates and strings, the write
+            // barrier is going to have to be more complicated.
+            ASSERT_ANYREF_IS_JSOBJECT;
+            JSObject::writeBarrierPost(cell->ref.asJSObjectAddress(), nullptr,
+                                       cell->ref.asJSObject());
+          }
+          break;
+        case RefType::TypeIndex:
+          MOZ_CRASH("Ref NYI");
       }
       break;
-    case ValType::Ref:
-      MOZ_CRASH("Ref NYI");
-    case ValType::NullRef:
-      MOZ_CRASH("NullRef not expressible");
+    case ValType::V128:
+      cell->v128 = val.v128();
+      break;
   }
-
   obj->initReservedSlot(TYPE_SLOT,
                         Int32Value(int32_t(val.type().bitsUnsafe())));
   obj->initReservedSlot(MUTABLE_SLOT, JS::BooleanValue(isMutable));
-  obj->initReservedSlot(CELL_SLOT, PrivateValue(cell));
+  InitReservedSlot(obj, CELL_SLOT, cell, MemoryUse::WasmGlobalCell);
 
   MOZ_ASSERT(!obj->isNewborn());
 
@@ -2510,23 +2854,29 @@ bool WasmGlobalObject::construct(JSContext* cx, unsigned argc, Value* vp) {
   }
 
   ValType globalType;
-  if (StringEqualsAscii(typeLinearStr, "i32")) {
+  if (StringEqualsLiteral(typeLinearStr, "i32")) {
     globalType = ValType::I32;
-  } else if (args.length() == 1 && StringEqualsAscii(typeLinearStr, "i64")) {
+  } else if (args.length() == 1 && StringEqualsLiteral(typeLinearStr, "i64")) {
     // For the time being, i64 is allowed only if there is not an
     // initializing value.
     globalType = ValType::I64;
-  } else if (StringEqualsAscii(typeLinearStr, "f32")) {
+  } else if (StringEqualsLiteral(typeLinearStr, "f32")) {
     globalType = ValType::F32;
-  } else if (StringEqualsAscii(typeLinearStr, "f64")) {
+  } else if (StringEqualsLiteral(typeLinearStr, "f64")) {
     globalType = ValType::F64;
+  } else if (StringEqualsLiteral(typeLinearStr, "i64")) {
+    globalType = ValType::I64;
+#ifdef ENABLE_WASM_SIMD
+  } else if (SimdAvailable(cx) && StringEqualsLiteral(typeLinearStr, "v128")) {
+    globalType = ValType::V128;
+#endif
 #ifdef ENABLE_WASM_REFTYPES
-  } else if (HasReftypesSupport(cx) &&
-             StringEqualsAscii(typeLinearStr, "funcref")) {
-    globalType = ValType::FuncRef;
-  } else if (HasReftypesSupport(cx) &&
-             StringEqualsAscii(typeLinearStr, "anyref")) {
-    globalType = ValType::AnyRef;
+  } else if (ReftypesAvailable(cx) &&
+             StringEqualsLiteral(typeLinearStr, "funcref")) {
+    globalType = RefType::func();
+  } else if (ReftypesAvailable(cx) &&
+             StringEqualsLiteral(typeLinearStr, "externref")) {
+    globalType = RefType::any();
 #endif
   } else {
     JS_ReportErrorNumberUTF8(cx, GetErrorMessage, nullptr,
@@ -2540,7 +2890,7 @@ bool WasmGlobalObject::construct(JSContext* cx, unsigned argc, Value* vp) {
   RootedVal globalVal(cx);
 
   // Initialize with default value.
-  switch (globalType.code()) {
+  switch (globalType.kind()) {
     case ValType::I32:
       globalVal = Val(uint32_t(0));
       break;
@@ -2553,28 +2903,48 @@ bool WasmGlobalObject::construct(JSContext* cx, unsigned argc, Value* vp) {
     case ValType::F64:
       globalVal = Val(double(0.0));
       break;
-    case ValType::FuncRef:
-      globalVal = Val(ValType::FuncRef, AnyRef::null());
-      break;
-    case ValType::AnyRef:
-      globalVal = Val(ValType::AnyRef, AnyRef::null());
+    case ValType::V128:
+      globalVal = Val(V128());
       break;
     case ValType::Ref:
-      MOZ_CRASH("Ref NYI");
-    case ValType::NullRef:
-      MOZ_CRASH("NullRef not expressible");
+      switch (globalType.refTypeKind()) {
+        case RefType::Func:
+          globalVal = Val(RefType::func(), AnyRef::null());
+          break;
+        case RefType::Any:
+          globalVal = Val(RefType::any(), AnyRef::null());
+          break;
+        case RefType::TypeIndex:
+          MOZ_CRASH("Ref NYI");
+      }
+      break;
   }
 
   // Override with non-undefined value, if provided.
   RootedValue valueVal(cx, args.get(1));
   if (!valueVal.isUndefined() ||
       (args.length() >= 2 && globalType.isReference())) {
+    if (globalType == ValType::V128) {
+      JS_ReportErrorNumberUTF8(cx, GetErrorMessage, nullptr,
+                               JSMSG_WASM_BAD_VAL_TYPE);
+      return false;
+    }
     if (!ToWebAssemblyValue(cx, globalType, valueVal, &globalVal)) {
       return false;
     }
   }
 
-  WasmGlobalObject* global = WasmGlobalObject::create(cx, globalVal, isMutable);
+  RootedObject proto(cx);
+  if (!GetPrototypeFromBuiltinConstructor(cx, args, JSProto_WasmGlobal,
+                                          &proto)) {
+    return false;
+  }
+  if (!proto) {
+    proto = GlobalObject::getOrCreatePrototype(cx, JSProto_WasmGlobal);
+  }
+
+  WasmGlobalObject* global =
+      WasmGlobalObject::create(cx, globalVal, isMutable, proto);
   if (!global) {
     return false;
   }
@@ -2589,22 +2959,28 @@ static bool IsGlobal(HandleValue v) {
 
 /* static */
 bool WasmGlobalObject::valueGetterImpl(JSContext* cx, const CallArgs& args) {
-  switch (args.thisv().toObject().as<WasmGlobalObject>().type().code()) {
+  switch (args.thisv().toObject().as<WasmGlobalObject>().type().kind()) {
     case ValType::I32:
+    case ValType::I64:
     case ValType::F32:
     case ValType::F64:
-    case ValType::FuncRef:
-    case ValType::AnyRef:
-      args.rval().set(args.thisv().toObject().as<WasmGlobalObject>().value(cx));
+      args.thisv().toObject().as<WasmGlobalObject>().value(cx, args.rval());
       return true;
-    case ValType::I64:
+    case ValType::V128:
       JS_ReportErrorNumberUTF8(cx, GetErrorMessage, nullptr,
-                               JSMSG_WASM_BAD_I64_TYPE);
+                               JSMSG_WASM_BAD_VAL_TYPE);
       return false;
     case ValType::Ref:
-      MOZ_CRASH("Ref NYI");
-    case ValType::NullRef:
-      MOZ_CRASH("NullRef not expressible");
+      switch (
+          args.thisv().toObject().as<WasmGlobalObject>().type().refTypeKind()) {
+        case RefType::Func:
+        case RefType::Any:
+          args.thisv().toObject().as<WasmGlobalObject>().value(cx, args.rval());
+          return true;
+        case RefType::TypeIndex:
+          MOZ_CRASH("Ref NYI");
+      }
+      break;
   }
   MOZ_CRASH();
 }
@@ -2629,9 +3005,9 @@ bool WasmGlobalObject::valueSetterImpl(JSContext* cx, const CallArgs& args) {
     return false;
   }
 
-  if (global->type() == ValType::I64) {
+  if (global->type() == ValType::V128) {
     JS_ReportErrorNumberUTF8(cx, GetErrorMessage, nullptr,
-                             JSMSG_WASM_BAD_I64_TYPE);
+                             JSMSG_WASM_BAD_VAL_TYPE);
     return false;
   }
 
@@ -2639,40 +3015,7 @@ bool WasmGlobalObject::valueSetterImpl(JSContext* cx, const CallArgs& args) {
   if (!ToWebAssemblyValue(cx, global->type(), args.get(0), &val)) {
     return false;
   }
-
-  Cell* cell = global->cell();
-  switch (global->type().code()) {
-    case ValType::I32:
-      cell->i32 = val.get().i32();
-      break;
-    case ValType::F32:
-      cell->f32 = val.get().f32();
-      break;
-    case ValType::F64:
-      cell->f64 = val.get().f64();
-      break;
-    case ValType::FuncRef:
-    case ValType::AnyRef: {
-      AnyRef prevPtr = cell->ref;
-      // TODO/AnyRef-boxing: With boxed immediates and strings, the write
-      // barrier is going to have to be more complicated.
-      ASSERT_ANYREF_IS_JSOBJECT;
-      JSObject::writeBarrierPre(prevPtr.asJSObject());
-      cell->ref = val.get().ref();
-      if (!cell->ref.isNull()) {
-        JSObject::writeBarrierPost(cell->ref.asJSObjectAddress(),
-                                   prevPtr.asJSObject(),
-                                   cell->ref.asJSObject());
-      }
-      break;
-    }
-    case ValType::I64:
-      MOZ_CRASH("unexpected i64 when setting global's value");
-    case ValType::Ref:
-      MOZ_CRASH("Ref NYI");
-    case ValType::NullRef:
-      MOZ_CRASH("NullRef not expressible");
-  }
+  global->setVal(cx, val);
 
   args.rval().setUndefined();
   return true;
@@ -2687,6 +3030,7 @@ bool WasmGlobalObject::valueSetter(JSContext* cx, unsigned argc, Value* vp) {
 const JSPropertySpec WasmGlobalObject::properties[] = {
     JS_PSGS("value", WasmGlobalObject::valueGetter,
             WasmGlobalObject::valueSetter, JSPROP_ENUMERATE),
+    JS_STRING_SYM_PS(toStringTag, "WebAssembly.Global", JSPROP_READONLY),
     JS_PS_END};
 
 const JSFunctionSpec WasmGlobalObject::methods[] = {
@@ -2703,14 +3047,61 @@ bool WasmGlobalObject::isMutable() const {
   return getReservedSlot(MUTABLE_SLOT).toBoolean();
 }
 
+void WasmGlobalObject::setVal(JSContext* cx, wasm::HandleVal hval) {
+  const Val& val = hval.get();
+  Cell* cell = this->cell();
+  MOZ_ASSERT(type() == val.type());
+  switch (type().kind()) {
+    case ValType::I32:
+      cell->i32 = val.i32();
+      break;
+    case ValType::F32:
+      cell->f32 = val.f32();
+      break;
+    case ValType::F64:
+      cell->f64 = val.f64();
+      break;
+    case ValType::I64:
+      cell->i64 = val.i64();
+      break;
+    case ValType::V128:
+      MOZ_CRASH("unexpected v128 when setting global's value");
+    case ValType::Ref:
+      switch (this->type().refTypeKind()) {
+        case RefType::Func:
+        case RefType::Any: {
+          AnyRef prevPtr = cell->ref;
+          // TODO/AnyRef-boxing: With boxed immediates and strings, the write
+          // barrier is going to have to be more complicated.
+          ASSERT_ANYREF_IS_JSOBJECT;
+          JSObject::writeBarrierPre(prevPtr.asJSObject());
+          cell->ref = val.ref();
+          if (!cell->ref.isNull()) {
+            JSObject::writeBarrierPost(cell->ref.asJSObjectAddress(),
+                                       prevPtr.asJSObject(),
+                                       cell->ref.asJSObject());
+          }
+          break;
+        }
+        case RefType::TypeIndex: {
+          MOZ_CRASH("Ref NYI");
+        }
+      }
+      break;
+  }
+}
+
 void WasmGlobalObject::val(MutableHandleVal outval) const {
   Cell* cell = this->cell();
-  switch (type().code()) {
+  switch (type().kind()) {
     case ValType::I32:
       outval.set(Val(uint32_t(cell->i32)));
       return;
     case ValType::I64:
       outval.set(Val(uint64_t(cell->i64)));
+      return;
+    case ValType::V128:
+      outval.set(Val(cell->v128));
       return;
     case ValType::F32:
       outval.set(Val(cell->f32));
@@ -2718,25 +3109,26 @@ void WasmGlobalObject::val(MutableHandleVal outval) const {
     case ValType::F64:
       outval.set(Val(cell->f64));
       return;
-    case ValType::FuncRef:
-      outval.set(Val(ValType::FuncRef, cell->ref));
-      return;
-    case ValType::AnyRef:
-      outval.set(Val(ValType::AnyRef, cell->ref));
-      return;
     case ValType::Ref:
-      MOZ_CRASH("Ref NYI");
-    case ValType::NullRef:
-      MOZ_CRASH("NullRef not expressible");
+      switch (type().refTypeKind()) {
+        case RefType::Func:
+          outval.set(Val(RefType::func(), cell->ref));
+          return;
+        case RefType::Any:
+          outval.set(Val(RefType::any(), cell->ref));
+          return;
+        case RefType::TypeIndex:
+          MOZ_CRASH("Ref NYI");
+      }
+      break;
   }
   MOZ_CRASH("unexpected Global type");
 }
 
-Value WasmGlobalObject::value(JSContext* cx) const {
-  // ToJSValue crashes on I64; this is desirable.
+bool WasmGlobalObject::value(JSContext* cx, MutableHandleValue out) {
   RootedVal result(cx);
   val(&result);
-  return ToJSValue(result.get());
+  return ToJSValue(cx, result.get(), out);
 }
 
 WasmGlobalObject::Cell* WasmGlobalObject::cell() const {
@@ -3117,7 +3509,7 @@ static bool WebAssembly_validate(JSContext* cx, unsigned argc, Value* vp) {
 }
 
 static bool EnsureStreamSupport(JSContext* cx) {
-  // This should match wasm::HasStreamingSupport().
+  // This should match wasm::StreamingCompilationAvailable().
 
   if (!EnsurePromiseSupport(cx)) {
     return false;
@@ -3292,7 +3684,7 @@ class CompileStreamTask : public PromiseHelperTask, public JS::StreamConsumer {
       }
       case Code: {
         size_t copyLength =
-            Min<size_t>(length, codeBytes_.end() - codeBytesEnd_);
+            std::min<size_t>(length, codeBytes_.end() - codeBytesEnd_);
         memcpy(codeBytesEnd_, begin, copyLength);
         codeBytesEnd_ += copyLength;
 
@@ -3446,15 +3838,17 @@ class ResolveResponseClosure : public NativeObject {
   static const unsigned PROMISE_OBJ_SLOT = 1;
   static const unsigned INSTANTIATE_SLOT = 2;
   static const unsigned IMPORT_OBJ_SLOT = 3;
-  static const ClassOps classOps_;
+  static const JSClassOps classOps_;
 
-  static void finalize(FreeOp* fop, JSObject* obj) {
-    obj->as<ResolveResponseClosure>().compileArgs().Release();
+  static void finalize(JSFreeOp* fop, JSObject* obj) {
+    auto& closure = obj->as<ResolveResponseClosure>();
+    fop->release(obj, &closure.compileArgs(),
+                 MemoryUse::WasmResolveResponseClosure);
   }
 
  public:
   static const unsigned RESERVED_SLOTS = 4;
-  static const Class class_;
+  static const JSClass class_;
 
   static ResolveResponseClosure* create(JSContext* cx, const CompileArgs& args,
                                         HandleObject promise, bool instantiate,
@@ -3468,7 +3862,8 @@ class ResolveResponseClosure : public NativeObject {
     }
 
     args.AddRef();
-    obj->setReservedSlot(COMPILE_ARGS_SLOT, PrivateValue((void*)&args));
+    InitReservedSlot(obj, COMPILE_ARGS_SLOT, const_cast<CompileArgs*>(&args),
+                     MemoryUse::WasmResolveResponseClosure);
     obj->setReservedSlot(PROMISE_OBJ_SLOT, ObjectValue(*promise));
     obj->setReservedSlot(INSTANTIATE_SLOT, BooleanValue(instantiate));
     obj->setReservedSlot(IMPORT_OBJ_SLOT, ObjectOrNullValue(importObj));
@@ -3489,16 +3884,21 @@ class ResolveResponseClosure : public NativeObject {
   }
 };
 
-const ClassOps ResolveResponseClosure::classOps_ = {
-    nullptr, /* addProperty */
-    nullptr, /* delProperty */
-    nullptr, /* enumerate */
-    nullptr, /* newEnumerate */
-    nullptr, /* resolve */
-    nullptr, /* mayResolve */
-    ResolveResponseClosure::finalize};
+const JSClassOps ResolveResponseClosure::classOps_ = {
+    nullptr,                           // addProperty
+    nullptr,                           // delProperty
+    nullptr,                           // enumerate
+    nullptr,                           // newEnumerate
+    nullptr,                           // resolve
+    nullptr,                           // mayResolve
+    ResolveResponseClosure::finalize,  // finalize
+    nullptr,                           // call
+    nullptr,                           // hasInstance
+    nullptr,                           // construct
+    nullptr,                           // trace
+};
 
-const Class ResolveResponseClosure::class_ = {
+const JSClass ResolveResponseClosure::class_ = {
     "WebAssembly ResolveResponseClosure",
     JSCLASS_DELAY_METADATA_BUILDER |
         JSCLASS_HAS_RESERVED_SLOTS(ResolveResponseClosure::RESERVED_SLOTS) |
@@ -3678,146 +4078,69 @@ static const JSFunctionSpec WebAssembly_static_methods[] = {
           JSPROP_ENUMERATE),
     JS_FS_END};
 
-const Class js::WebAssemblyClass = {
-    js_WebAssembly_str, JSCLASS_HAS_CACHED_PROTO(JSProto_WebAssembly)};
-
-template <class Class>
-static bool InitConstructor(JSContext* cx, HandleObject wasm, const char* name,
-                            MutableHandleObject proto) {
-  proto.set(NewBuiltinClassInstance<PlainObject>(cx, SingletonObject));
-  if (!proto) {
-    return false;
-  }
-
-  if (!DefinePropertiesAndFunctions(cx, proto, Class::properties,
-                                    Class::methods)) {
-    return false;
-  }
-
-  RootedAtom className(cx, Atomize(cx, name, strlen(name)));
-  if (!className) {
-    return false;
-  }
-
-  RootedFunction ctor(cx,
-                      NewNativeConstructor(cx, Class::construct, 1, className));
-  if (!ctor) {
-    return false;
-  }
-
-  if (!DefinePropertiesAndFunctions(cx, ctor, nullptr, Class::static_methods)) {
-    return false;
-  }
-
-  if (!LinkConstructorAndPrototype(cx, ctor, proto)) {
-    return false;
-  }
-
-  UniqueChars tagStr(JS_smprintf("WebAssembly.%s", name));
-  if (!tagStr) {
-    ReportOutOfMemory(cx);
-    return false;
-  }
-
-  RootedAtom tag(cx, Atomize(cx, tagStr.get(), strlen(tagStr.get())));
-  if (!tag) {
-    return false;
-  }
-  if (!DefineToStringTag(cx, proto, tag)) {
-    return false;
-  }
-
-  RootedId id(cx, AtomToId(className));
-  RootedValue ctorValue(cx, ObjectValue(*ctor));
-  return DefineDataProperty(cx, wasm, id, ctorValue, 0);
-}
-
-static bool InitErrorClass(JSContext* cx, HandleObject wasm, const char* name,
-                           JSExnType exn) {
-  Handle<GlobalObject*> global = cx->global();
-  RootedObject proto(
-      cx, GlobalObject::getOrCreateCustomErrorPrototype(cx, global, exn));
-  if (!proto) {
-    return false;
-  }
-
-  RootedAtom className(cx, Atomize(cx, name, strlen(name)));
-  if (!className) {
-    return false;
-  }
-
-  RootedId id(cx, AtomToId(className));
-  RootedValue ctorValue(cx, global->getConstructor(GetExceptionProtoKey(exn)));
-  return DefineDataProperty(cx, wasm, id, ctorValue, 0);
-}
-
-JSObject* js::InitWebAssemblyClass(JSContext* cx,
-                                   Handle<GlobalObject*> global) {
+static JSObject* CreateWebAssemblyObject(JSContext* cx, JSProtoKey key) {
   MOZ_RELEASE_ASSERT(HasSupport(cx));
 
-  MOZ_ASSERT(!global->isStandardClassResolved(JSProto_WebAssembly));
-
+  Handle<GlobalObject*> global = cx->global();
   RootedObject proto(cx, GlobalObject::getOrCreateObjectPrototype(cx, global));
   if (!proto) {
     return nullptr;
   }
-
-  RootedObject wasm(cx, NewObjectWithGivenProto(cx, &WebAssemblyClass, proto,
-                                                SingletonObject));
-  if (!wasm) {
-    return nullptr;
-  }
-
-  if (!JS_DefineFunctions(cx, wasm, WebAssembly_static_methods)) {
-    return nullptr;
-  }
-
-  RootedObject moduleProto(cx), instanceProto(cx), memoryProto(cx),
-      tableProto(cx);
-  RootedObject globalProto(cx);
-  if (!InitConstructor<WasmModuleObject>(cx, wasm, "Module", &moduleProto)) {
-    return nullptr;
-  }
-  if (!InitConstructor<WasmInstanceObject>(cx, wasm, "Instance",
-                                           &instanceProto)) {
-    return nullptr;
-  }
-  if (!InitConstructor<WasmMemoryObject>(cx, wasm, "Memory", &memoryProto)) {
-    return nullptr;
-  }
-  if (!InitConstructor<WasmTableObject>(cx, wasm, "Table", &tableProto)) {
-    return nullptr;
-  }
-  if (!InitConstructor<WasmGlobalObject>(cx, wasm, "Global", &globalProto)) {
-    return nullptr;
-  }
-  if (!InitErrorClass(cx, wasm, "CompileError", JSEXN_WASMCOMPILEERROR)) {
-    return nullptr;
-  }
-  if (!InitErrorClass(cx, wasm, "LinkError", JSEXN_WASMLINKERROR)) {
-    return nullptr;
-  }
-  if (!InitErrorClass(cx, wasm, "RuntimeError", JSEXN_WASMRUNTIMEERROR)) {
-    return nullptr;
-  }
-
-  // Perform the final fallible write of the WebAssembly object to a global
-  // object property at the end. Only after that succeeds write all the
-  // constructor and prototypes to the JSProto slots. This ensures that
-  // initialization is atomic since a failed initialization can be retried.
-
-  if (!JS_DefineProperty(cx, global, js_WebAssembly_str, wasm,
-                         JSPROP_RESOLVING)) {
-    return nullptr;
-  }
-
-  global->setPrototype(JSProto_WasmModule, ObjectValue(*moduleProto));
-  global->setPrototype(JSProto_WasmInstance, ObjectValue(*instanceProto));
-  global->setPrototype(JSProto_WasmMemory, ObjectValue(*memoryProto));
-  global->setPrototype(JSProto_WasmTable, ObjectValue(*tableProto));
-  global->setPrototype(JSProto_WasmGlobal, ObjectValue(*globalProto));
-  global->setConstructor(JSProto_WebAssembly, ObjectValue(*wasm));
-
-  MOZ_ASSERT(global->isStandardClassResolved(JSProto_WebAssembly));
-  return wasm;
+  return NewSingletonObjectWithGivenProto(cx, &WebAssemblyClass, proto);
 }
+
+static bool WebAssemblyClassFinish(JSContext* cx, HandleObject wasm,
+                                   HandleObject proto) {
+  struct NameAndProtoKey {
+    const char* const name;
+    JSProtoKey key;
+  };
+
+  constexpr NameAndProtoKey entries[] = {
+      {"Module", JSProto_WasmModule},
+      {"Instance", JSProto_WasmInstance},
+      {"Memory", JSProto_WasmMemory},
+      {"Table", JSProto_WasmTable},
+      {"Global", JSProto_WasmGlobal},
+      {"CompileError", GetExceptionProtoKey(JSEXN_WASMCOMPILEERROR)},
+      {"LinkError", GetExceptionProtoKey(JSEXN_WASMLINKERROR)},
+      {"RuntimeError", GetExceptionProtoKey(JSEXN_WASMRUNTIMEERROR)},
+  };
+
+  RootedValue ctorValue(cx);
+  RootedId id(cx);
+  for (const auto& entry : entries) {
+    const char* name = entry.name;
+    JSProtoKey key = entry.key;
+
+    JSObject* ctor = GlobalObject::getOrCreateConstructor(cx, key);
+    if (!ctor) {
+      return false;
+    }
+    ctorValue.setObject(*ctor);
+
+    JSAtom* className = Atomize(cx, name, strlen(name));
+    if (!className) {
+      return false;
+    }
+    id.set(AtomToId(className));
+
+    if (!DefineDataProperty(cx, wasm, id, ctorValue, 0)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+static const ClassSpec WebAssemblyClassSpec = {CreateWebAssemblyObject,
+                                               nullptr,
+                                               WebAssembly_static_methods,
+                                               nullptr,
+                                               nullptr,
+                                               nullptr,
+                                               WebAssemblyClassFinish};
+
+const JSClass js::WebAssemblyClass = {
+    js_WebAssembly_str, JSCLASS_HAS_CACHED_PROTO(JSProto_WebAssembly),
+    JS_NULL_CLASS_OPS, &WebAssemblyClassSpec};

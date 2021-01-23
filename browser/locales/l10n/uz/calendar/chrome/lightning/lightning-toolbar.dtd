@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY lightning.toolbar.calendar.name "Taqvim asboblar paneli">
+<!ENTITY lightning.toolbar.calendar.name.accesskey "C">
+<!ENTITY lightning.toolbar.task.name "Vazifa asboblar paneli">
+<!ENTITY lightning.toolbar.task.name.accesskey "T">
+
+<!ENTITY lightning.toolbar.sync.label "Sinxronlash">
+<!ENTITY lightning.toolbar.sync.tooltip "Taqvimlarni qayta yuklash va o‘zgarishlarni sinxornlash">
+<!ENTITY lightning.toolbar.delete.label "O‘chirish">
+<!ENTITY lightning.toolbar.delete.tooltip "Tanlangan tadbir va vazifalarni o‘chirish">
+<!ENTITY lightning.toolbar.edit.label "Tahrirlash">
+<!ENTITY lightning.toolbar.edit.tooltip "Tanlangan tadbir yoki vazifani tahrirlash">
+<!ENTITY lightning.toolbar.gototoday.label "Bugunga o‘tish">
+<!ENTITY lightning.toolbar.gototoday.tooltip "Bugunga o‘tish">
+<!ENTITY lightning.toolbar.print.label "Chop qilish">
+<!ENTITY lightning.toolbar.print.tooltip "Tadbir yoki vazifalarni o‘chirish">
+<!-- Mode Toolbar -->
+
+<!ENTITY lightning.toolbar.calendar.label     "Taqvim">
+<!ENTITY lightning.toolbar.calendar.tooltip   "Taqvim ichki oynasiga o‘tish">
+<!ENTITY lightning.toolbar.calendar.accesskey "T">
+<!ENTITY lightning.toolbar.task.label         "Vazifalar">
+<!ENTITY lightning.toolbar.task.tooltip       "Vazifalar ichki oynasiga o‘tish">
+<!ENTITY lightning.toolbar.task.accesskey     "V">
+<!-- Toolbar write button -->
+
+<!ENTITY lightning.toolbar.newevent.label     "Tadbir">
+<!ENTITY lightning.toolbar.newevent.tooltip   "Yangi tadbir yaratish">
+<!ENTITY lightning.toolbar.newtask.label      "Vazifa">
+<!ENTITY lightning.toolbar.newtask.tooltip    "Yangi vazifa yaratish">
+<!-- Calendar and Task Mode Toolbar -->
+
+<!ENTITY lightning.toolbar.day.label                 "Kun">
+<!ENTITY lightning.toolbar.day.accesskey             "K">
+<!ENTITY lightning.toolbar.week.label                "Hafta">
+<!ENTITY lightning.toolbar.week.accesskey            "f">
+<!ENTITY lightning.toolbar.multiweek.label           "Bir necha hafta">
+<!ENTITY lightning.toolbar.multiweek.accesskey       "n">
+<!ENTITY lightning.toolbar.month.label               "Oy">
+<!ENTITY lightning.toolbar.month.accesskey           "O">
+<!-- LOCALIZATION NOTE: the same as appmenuButton.label and appmenuButton1.tooltip
+     from messenger.dtd -->
+<!ENTITY lightning.toolbar.appmenuButton.label       "AppMenu">
+<!ENTITY lightning.toolbar.appmenuButton1.tooltip    "&brandShortName; menyusini ko‘rsatish">
+<!ENTITY lightning.toolbar.calendarmenu.label        "Taqvim yon oynasi">
+<!ENTITY lightning.toolbar.calendarmenu.accesskey    "y">
+<!ENTITY lightning.toolbar.calendarpane.label        "Taqvim yon oynasini ko‘rsatish">
+<!ENTITY lightning.toolbar.calendarpane.accesskey    "y">

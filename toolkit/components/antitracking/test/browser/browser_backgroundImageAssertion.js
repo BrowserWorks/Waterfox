@@ -4,8 +4,6 @@ add_task(async function() {
   await SpecialPowers.flushPrefEnv();
   await SpecialPowers.pushPrefEnv({
     set: [
-      ["browser.contentblocking.allowlist.annotations.enabled", true],
-      ["browser.contentblocking.allowlist.storage.enabled", true],
       [
         "network.cookie.cookieBehavior",
         Ci.nsICookieService.BEHAVIOR_REJECT_TRACKER,
@@ -28,9 +26,9 @@ add_task(async function() {
   let browser = gBrowser.getBrowserForTab(tab);
   await BrowserTestUtils.browserLoaded(browser);
 
-  await ContentTask.spawn(
+  await SpecialPowers.spawn(
     browser,
-    { page: TEST_3RD_PARTY_PAGE_WITH_SVG },
+    [{ page: TEST_3RD_PARTY_PAGE_WITH_SVG }],
     async function(obj) {
       await new content.Promise(resolve => {
         let ifr = content.document.createElement("iframe");

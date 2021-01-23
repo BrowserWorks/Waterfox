@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title "Navigare privată">
+
+<!-- Localisation note: the plus sign here is a shorthand way of expressing the word "and". Contextually the privatebrowsingpage.title.private string
+                        is used as a title, with the privatebrowsingpage.title string preceding it but on a separate line.
+                        So the final line will say "Private Browsing + Tracking Protection". -->
+<!ENTITY privatebrowsingpage.title.private "+ Protecție împotriva urmăririi">
+<!-- Localization note (privatebrowsingpage.title.normal1): "Private Browsing"
+     is capitalized in English to be consistent with our existing uses of the
+     term. -->
+<!ENTITY privatebrowsingpage.title.normal1 "Nu ești în modul de navigare privată">
+
+<!ENTITY privatebrowsingpage.description.trackingProtection "&brandShortName; blochează părți ale paginii care îți pot urmări activitatea de navigare.">
+<!ENTITY privatebrowsingpage.description.privateDetails "Nu vom reține istoricul, însă fișierele descărcate și marcajele noi vor fi în continuare salvate pe dispozitiv.">
+
+<!-- Localization note (privatebrowsingpage.description.normal2): "Private
+     Browsing is capitalized in English to be consistent with our existing uses
+     of the term. -->
+<!ENTITY privatebrowsingpage.description.normal2 "În modul de navigare privată nu vom păstra nimic din istoricul de navigare sau cookie-uri. Marcajele pe care le adaugi și fișierele pe care le descarci vor fi în continuare salvate pe dispozitiv.">
+
+<!ENTITY privatebrowsingpage.link.private "Vrei să afli mai multe?">
+<!ENTITY privatebrowsingpage.link.normal "Deschide o filă privată nouă">

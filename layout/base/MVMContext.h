@@ -10,6 +10,7 @@
 #include "nsISupportsImpl.h"
 #include "nsStringFwd.h"
 #include "nsViewportInfo.h"
+#include "PresShell.h"
 
 class nsIDOMEventListener;
 class nsIObserver;
@@ -51,17 +52,15 @@ class MVMContext {
   virtual Maybe<LayoutDeviceIntSize> GetContentViewerSize() const = 0;
   virtual bool AllowZoomingForDocument() const = 0;
   virtual bool IsInReaderMode() const = 0;
+  virtual bool IsDocumentLoading() const = 0;
 
-  virtual void SetResolutionAndScaleTo(float aResolution) = 0;
+  virtual void SetResolutionAndScaleTo(float aResolution,
+                                       ResolutionChangeOrigin aOrigin) = 0;
   virtual void SetVisualViewportSize(const CSSSize& aSize) = 0;
+  virtual void PostVisualViewportResizeEventByDynamicToolbar() = 0;
   virtual void UpdateDisplayPortMargins() = 0;
 
-  enum class ResizeEventFlag {
-    IfNecessary,  // resize events will be fired if necessary.
-    Suppress,     // resize events will never be fired.
-  };
-  virtual void Reflow(const CSSSize& aNewSize, const CSSSize& aOldSize,
-                      ResizeEventFlag aResizeEventFlag) = 0;
+  virtual void Reflow(const CSSSize& aNewSize) = 0;
 };
 
 }  // namespace mozilla

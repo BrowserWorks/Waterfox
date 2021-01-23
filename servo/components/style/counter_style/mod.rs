@@ -220,9 +220,9 @@ macro_rules! counter_style_descriptors {
                             // rather than returning it.
                             let value = input.parse_entirely(|i| Parse::parse(self.context, i))?;
                             self.rule.$ident = Some(value)
-                        }
+                        },
                     )*
-                    _ => return Err(input.new_custom_error(SelectorParseErrorKind::UnexpectedIdent(name.clone())))
+                    _ => return Err(input.new_custom_error(SelectorParseErrorKind::UnexpectedIdent(name.clone()))),
                 }
                 Ok(())
             }
@@ -371,11 +371,11 @@ impl Parse for System {
             "fixed" => {
                 let first_symbol_value = input.try(|i| Integer::parse(context, i)).ok();
                 Ok(System::Fixed { first_symbol_value })
-            }
+            },
             "extends" => {
                 let other = parse_counter_style_name(input)?;
                 Ok(System::Extends(other))
-            }
+            },
         }
     }
 }
@@ -408,7 +408,10 @@ impl ToCss for System {
 }
 
 /// <https://drafts.csswg.org/css-counter-styles/#typedef-symbol>
-#[derive(Clone, Debug, Eq, PartialEq, ToComputedValue, ToCss, ToShmem, MallocSizeOf)]
+#[derive(
+    Clone, Debug, Eq, MallocSizeOf, PartialEq, ToComputedValue, ToResolvedValue, ToCss, ToShmem,
+)]
+#[repr(u8)]
 pub enum Symbol {
     /// <string>
     String(crate::OwnedStr),
@@ -461,7 +464,7 @@ impl Parse for Negative {
 }
 
 /// <https://drafts.csswg.org/css-counter-styles/#counter-style-range>
-#[derive(Clone, Debug, ToShmem, ToCss)]
+#[derive(Clone, Debug, ToCss, ToShmem)]
 pub struct CounterRange {
     /// The start of the range.
     pub start: CounterBound,
@@ -472,12 +475,9 @@ pub struct CounterRange {
 /// <https://drafts.csswg.org/css-counter-styles/#counter-style-range>
 ///
 /// Empty represents 'auto'
-#[derive(Clone, Debug, ToShmem, ToCss)]
+#[derive(Clone, Debug, ToCss, ToShmem)]
 #[css(comma)]
-pub struct CounterRanges(
-    #[css(iterable, if_empty = "auto")]
-    pub crate::OwnedSlice<CounterRange>,
-);
+pub struct CounterRanges(#[css(iterable, if_empty = "auto")] pub crate::OwnedSlice<CounterRange>);
 
 /// A bound found in `CounterRanges`.
 #[derive(Clone, Copy, Debug, ToCss, ToShmem)]
@@ -503,13 +503,9 @@ impl Parse for CounterRanges {
         let ranges = input.parse_comma_separated(|input| {
             let start = parse_bound(context, input)?;
             let end = parse_bound(context, input)?;
-            if let (CounterBound::Integer(start), CounterBound::Integer(end)) =
-                (start, end)
-            {
+            if let (CounterBound::Integer(start), CounterBound::Integer(end)) = (start, end) {
                 if start > end {
-                    return Err(
-                        input.new_custom_error(StyleParseErrorKind::UnspecifiedError)
-                    );
+                    return Err(input.new_custom_error(StyleParseErrorKind::UnspecifiedError));
                 }
             }
             Ok(CounterRange { start, end })
@@ -560,7 +556,10 @@ impl Parse for Fallback {
 }
 
 /// <https://drafts.csswg.org/css-counter-styles/#descdef-counter-style-symbols>
-#[derive(Clone, Debug, Eq, PartialEq, MallocSizeOf, ToComputedValue, ToCss, ToShmem)]
+#[derive(
+    Clone, Debug, Eq, MallocSizeOf, PartialEq, ToComputedValue, ToResolvedValue, ToCss, ToShmem,
+)]
+#[repr(C)]
 pub struct Symbols(#[css(iterable)] pub crate::OwnedSlice<Symbol>);
 
 impl Parse for Symbols {
@@ -659,7 +658,7 @@ impl Parse for SpeakAs {
                 "spell-out" => {
                     is_spell_out = true;
                     Err(())
-                }
+                },
                 _ => Err(()),
             }
         });

@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title "Brabhsáil Phríobháideach">
+<!-- Localisation note: the plus sign here is a shorthand way of expressing the word "and". Contextually the privatebrowsingpage.title.private string
+                        is used as a title, with the privatebrowsingpage.title string preceding it but on a separate line.
+                        So the final line will say "Private Browsing + Tracking Protection". -->
+
+<!ENTITY privatebrowsingpage.title.private "+ Cosaint ar Lorgaireacht">
+<!-- Localization note (privatebrowsingpage.title.normal1): "Private Browsing"
+     is capitalized in English to be consistent with our existing uses of the
+     term. -->
+<!ENTITY privatebrowsingpage.title.normal1 "Níl tú ag brabhsáil go príobháideach">
+
+<!ENTITY privatebrowsingpage.description.trackingProtection "Cuireann &brandShortName; bac ar chodanna áirithe de leathanaigh a d'fhéadfadh do chuid brabhsála a lorg.">
+<!ENTITY privatebrowsingpage.description.privateDetails "Ní choinneoimid do stair bhrabhsála, ach sábhálfar leabharmharcanna nua agus comhaid a íoslódálann tú ar do ghléas.">
+<!-- Localization note (privatebrowsingpage.description.normal2): "Private
+     Browsing is capitalized in English to be consistent with our existing uses
+     of the term. -->
+
+<!ENTITY privatebrowsingpage.description.normal2 "Le linn brabhsála príobháidí, ní choinneoimid aon fhianáin ná do stair bhrabhsála. Mar sin féin, sábhálfar leabharmharcanna a chruthaíonn tú agus comhaid a íoslódálann tú ar do ghléas.">
+
+<!ENTITY privatebrowsingpage.link.private "An bhfuil tuilleadh eolais uait?">
+<!ENTITY privatebrowsingpage.link.normal "Oscail cluaisín príobháideach nua">

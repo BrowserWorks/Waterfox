@@ -1,4 +1,4 @@
-/*
+/**
  * Test the password manager context menu.
  */
 
@@ -6,8 +6,8 @@
 
 "use strict";
 
-// The hostname for the test URIs.
-const TEST_HOSTNAME = "https://example.com";
+// The origin for the test URIs.
+const TEST_ORIGIN = "https://example.com";
 const MULTIPLE_FORMS_PAGE_PATH =
   "/browser/toolkit/components/passwordmgr/test/browser/multiple_forms.html";
 
@@ -38,7 +38,7 @@ add_task(async function test_context_menu_populate_password_noSchemeUpgrades() {
   await BrowserTestUtils.withNewTab(
     {
       gBrowser,
-      url: TEST_HOSTNAME + MULTIPLE_FORMS_PAGE_PATH,
+      url: TEST_ORIGIN + MULTIPLE_FORMS_PAGE_PATH,
     },
     async function(browser) {
       await openPasswordContextMenu(browser, "#test-password-1");
@@ -47,7 +47,7 @@ add_task(async function test_context_menu_populate_password_noSchemeUpgrades() {
       let popupMenu = document.getElementById("fill-login-popup");
       checkMenu(popupMenu, 2);
 
-      CONTEXT_MENU.hidePopup();
+      await closePopup(CONTEXT_MENU);
     }
   );
 });
@@ -61,7 +61,7 @@ add_task(async function test_context_menu_populate_password_schemeUpgrades() {
   await BrowserTestUtils.withNewTab(
     {
       gBrowser,
-      url: TEST_HOSTNAME + MULTIPLE_FORMS_PAGE_PATH,
+      url: TEST_ORIGIN + MULTIPLE_FORMS_PAGE_PATH,
     },
     async function(browser) {
       await openPasswordContextMenu(browser, "#test-password-1");
@@ -70,7 +70,7 @@ add_task(async function test_context_menu_populate_password_schemeUpgrades() {
       let popupMenu = document.getElementById("fill-login-popup");
       checkMenu(popupMenu, 3);
 
-      CONTEXT_MENU.hidePopup();
+      await closePopup(CONTEXT_MENU);
     }
   );
 });
@@ -86,7 +86,7 @@ add_task(
       {
         gBrowser,
         url:
-          TEST_HOSTNAME +
+          TEST_ORIGIN +
           "/browser/toolkit/components/" +
           "passwordmgr/test/browser/multiple_forms.html",
       },
@@ -97,7 +97,7 @@ add_task(
         let popupMenu = document.getElementById("fill-login-popup");
         checkMenu(popupMenu, 2);
 
-        CONTEXT_MENU.hidePopup();
+        await closePopup(CONTEXT_MENU);
       }
     );
   }
@@ -113,7 +113,7 @@ add_task(
       {
         gBrowser,
         url:
-          TEST_HOSTNAME +
+          TEST_ORIGIN +
           "/browser/toolkit/components/" +
           "passwordmgr/test/browser/multiple_forms.html",
       },
@@ -124,7 +124,7 @@ add_task(
         let popupMenu = document.getElementById("fill-login-popup");
         checkMenu(popupMenu, 3);
 
-        CONTEXT_MENU.hidePopup();
+        await closePopup(CONTEXT_MENU);
       }
     );
   }
@@ -139,12 +139,12 @@ add_task(async function test_context_menu_password_fill() {
   await BrowserTestUtils.withNewTab(
     {
       gBrowser,
-      url: TEST_HOSTNAME + MULTIPLE_FORMS_PAGE_PATH,
+      url: TEST_ORIGIN + MULTIPLE_FORMS_PAGE_PATH,
     },
     async function(browser) {
-      let formDescriptions = await ContentTask.spawn(
+      let formDescriptions = await SpecialPowers.spawn(
         browser,
-        {},
+        [],
         async function() {
           let forms = Array.from(
             content.document.getElementsByClassName("test-form")
@@ -156,15 +156,17 @@ add_task(async function test_context_menu_password_fill() {
       for (let description of formDescriptions) {
         info("Testing form: " + description);
 
-        let passwordInputIds = await ContentTask.spawn(
+        let passwordInputIds = await SpecialPowers.spawn(
           browser,
-          { description },
+          [{ description }],
           async function({ description }) {
             let formElement = content.document.querySelector(
               `[description="${description}"]`
             );
             let passwords = Array.from(
-              formElement.querySelectorAll("input[type='password']")
+              formElement.querySelectorAll(
+                "input[type='password'], input[data-type='password']"
+              )
             );
             return passwords.map(p => p.id);
           }
@@ -178,9 +180,9 @@ add_task(async function test_context_menu_password_fill() {
             browser,
             "#" + inputId,
             async function() {
-              let inputDisabled = await ContentTask.spawn(
+              let inputDisabled = await SpecialPowers.spawn(
                 browser,
-                { inputId },
+                [{ inputId }],
                 async function({ inputId }) {
                   let input = content.document.getElementById(inputId);
                   return input.disabled || input.readOnly;
@@ -192,8 +194,12 @@ add_task(async function test_context_menu_password_fill() {
               if (inputDisabled) {
                 Assert.ok(!POPUP_HEADER.hidden, "Popup menu is not hidden.");
                 Assert.ok(POPUP_HEADER.disabled, "Popup menu is disabled.");
-                CONTEXT_MENU.hidePopup();
+                await closePopup(CONTEXT_MENU);
               }
+              Assert.ok(
+                POPUP_HEADER.label.includes("Password"),
+                "top-level label is correct"
+              );
 
               return !inputDisabled;
             }
@@ -206,7 +212,7 @@ add_task(async function test_context_menu_password_fill() {
           // The only field affected by the password fill
           // should be the target password field itself.
           await assertContextMenuFill(browser, description, null, inputId, 1);
-          await ContentTask.spawn(browser, { inputId }, async function({
+          await SpecialPowers.spawn(browser, [{ inputId }], async function({
             inputId,
           }) {
             let passwordField = content.document.getElementById(inputId);
@@ -217,7 +223,7 @@ add_task(async function test_context_menu_password_fill() {
             );
           });
 
-          CONTEXT_MENU.hidePopup();
+          await closePopup(CONTEXT_MENU);
         }
       }
     }
@@ -233,12 +239,12 @@ add_task(async function test_context_menu_username_login_fill() {
   await BrowserTestUtils.withNewTab(
     {
       gBrowser,
-      url: TEST_HOSTNAME + MULTIPLE_FORMS_PAGE_PATH,
+      url: TEST_ORIGIN + MULTIPLE_FORMS_PAGE_PATH,
     },
     async function(browser) {
-      let formDescriptions = await ContentTask.spawn(
+      let formDescriptions = await SpecialPowers.spawn(
         browser,
-        {},
+        [],
         async function() {
           let forms = Array.from(
             content.document.getElementsByClassName("test-form")
@@ -249,15 +255,17 @@ add_task(async function test_context_menu_username_login_fill() {
 
       for (let description of formDescriptions) {
         info("Testing form: " + description);
-        let usernameInputIds = await ContentTask.spawn(
+        let usernameInputIds = await SpecialPowers.spawn(
           browser,
-          { description },
+          [{ description }],
           async function({ description }) {
             let formElement = content.document.querySelector(
               `[description="${description}"]`
             );
             let inputs = Array.from(
-              formElement.querySelectorAll("input[type='text']")
+              formElement.querySelectorAll(
+                "input[type='text']:not([data-type='password'])"
+              )
             );
             return inputs.map(p => p.id);
           }
@@ -273,17 +281,25 @@ add_task(async function test_context_menu_username_login_fill() {
             async function() {
               let headerHidden = POPUP_HEADER.hidden;
               let headerDisabled = POPUP_HEADER.disabled;
+              let headerLabel = POPUP_HEADER.label;
 
-              let data = { description, inputId, headerHidden, headerDisabled };
-              let shouldContinue = await ContentTask.spawn(
+              let data = {
+                description,
+                inputId,
+                headerHidden,
+                headerDisabled,
+                headerLabel,
+              };
+              let shouldContinue = await SpecialPowers.spawn(
                 browser,
-                data,
+                [data],
                 async function(data) {
                   let {
                     description,
                     inputId,
                     headerHidden,
                     headerDisabled,
+                    headerLabel,
                   } = data;
                   let formElement = content.document.querySelector(
                     `[description="${description}"]`
@@ -292,7 +308,7 @@ add_task(async function test_context_menu_username_login_fill() {
                   // We always want to check if the first password field is filled,
                   // since this is the current behavior from the _fillForm function.
                   let passwordField = formElement.querySelector(
-                    "input[type='password']"
+                    "input[type='password'], input[data-type='password']"
                   );
 
                   // If we don't want to see the actual popup menu,
@@ -312,12 +328,16 @@ add_task(async function test_context_menu_username_login_fill() {
                     }
                     return false;
                   }
+                  Assert.ok(
+                    headerLabel.includes("Login"),
+                    "top-level label is correct"
+                  );
                   return true;
                 }
               );
 
               if (!shouldContinue) {
-                CONTEXT_MENU.hidePopup();
+                await closePopup(CONTEXT_MENU);
               }
 
               return shouldContinue;
@@ -328,14 +348,16 @@ add_task(async function test_context_menu_username_login_fill() {
             continue;
           }
 
-          let passwordFieldId = await ContentTask.spawn(
+          let passwordFieldId = await SpecialPowers.spawn(
             browser,
-            { description },
+            [{ description }],
             async function({ description }) {
               let formElement = content.document.querySelector(
                 `[description="${description}"]`
               );
-              return formElement.querySelector("input[type='password']").id;
+              return formElement.querySelector(
+                "input[type='password'], input[data-type='password']"
+              ).id;
             }
           );
 
@@ -348,22 +370,24 @@ add_task(async function test_context_menu_username_login_fill() {
             1
           );
 
-          await ContentTask.spawn(browser, { passwordFieldId }, async function({
-            passwordFieldId,
-          }) {
-            let passwordField = content.document.getElementById(
-              passwordFieldId
-            );
-            if (!passwordField.hasAttribute("expectedFail")) {
-              Assert.equal(
-                passwordField.value,
-                "password1",
-                "Check upgraded login was actually used"
+          await SpecialPowers.spawn(
+            browser,
+            [{ passwordFieldId }],
+            async function({ passwordFieldId }) {
+              let passwordField = content.document.getElementById(
+                passwordFieldId
               );
+              if (!passwordField.hasAttribute("expectedFail")) {
+                Assert.equal(
+                  passwordField.value,
+                  "password1",
+                  "Check upgraded login was actually used"
+                );
+              }
             }
-          });
+          );
 
-          CONTEXT_MENU.hidePopup();
+          await closePopup(CONTEXT_MENU);
         }
       }
     }
@@ -379,76 +403,27 @@ add_task(async function test_context_menu_open_management() {
   await BrowserTestUtils.withNewTab(
     {
       gBrowser,
-      url: TEST_HOSTNAME + MULTIPLE_FORMS_PAGE_PATH,
+      url: TEST_ORIGIN + MULTIPLE_FORMS_PAGE_PATH,
     },
     async function(browser) {
       await openPasswordContextMenu(browser, "#test-password-1");
 
-      gContextMenu.openPasswordManager();
+      let openingFunc = () => gContextMenu.openPasswordManager();
       // wait until the management UI opens
-      let dialogWindow = await waitForPasswordManagerDialog();
+      let passwordManager = await openPasswordManager(openingFunc);
       info("Management UI dialog was opened");
 
       TelemetryTestUtils.assertEvents(
         [["pwmgr", "open_management", "contextmenu"]],
-        { category: "pwmgr", method: "open_management" }
+        { category: "pwmgr", method: "open_management" },
+        { clear: true, process: "content" }
       );
 
-      dialogWindow.close();
-      CONTEXT_MENU.hidePopup();
+      await passwordManager.close();
+      await closePopup(CONTEXT_MENU);
     }
   );
 });
-
-/**
- * Synthesize mouse clicks to open the password manager context menu popup
- * for a target password input element.
- *
- * assertCallback should return true if we should continue or else false.
- */
-async function openPasswordContextMenu(
-  browser,
-  passwordInput,
-  assertCallback = null
-) {
-  let contextMenuShownPromise = BrowserTestUtils.waitForEvent(
-    CONTEXT_MENU,
-    "popupshown"
-  );
-
-  // Synthesize a right mouse click over the password input element, we have to trigger
-  // both events because formfill code relies on this event happening before the contextmenu
-  // (which it does for real user input) in order to not show the password autocomplete.
-  let eventDetails = { type: "mousedown", button: 2 };
-  await BrowserTestUtils.synthesizeMouseAtCenter(
-    passwordInput,
-    eventDetails,
-    browser
-  );
-  // Synthesize a contextmenu event to actually open the context menu.
-  eventDetails = { type: "contextmenu", button: 2 };
-  await BrowserTestUtils.synthesizeMouseAtCenter(
-    passwordInput,
-    eventDetails,
-    browser
-  );
-
-  await contextMenuShownPromise;
-
-  if (assertCallback) {
-    let shouldContinue = await assertCallback();
-    if (!shouldContinue) {
-      return;
-    }
-  }
-
-  // Synthesize a mouse click over the fill login menu header.
-  let popupShownPromise = BrowserTestUtils.waitForCondition(
-    () => POPUP_HEADER.open
-  );
-  EventUtils.synthesizeMouseAtCenter(POPUP_HEADER, {});
-  await popupShownPromise;
-}
 
 /**
  * Verify that only the expected form fields are filled.
@@ -467,7 +442,7 @@ async function assertContextMenuFill(
     unchangedSelector += `:not(#${usernameFieldId})`;
   }
 
-  await ContentTask.spawn(browser, { unchangedSelector }, async function({
+  await SpecialPowers.spawn(browser, [{ unchangedSelector }], async function({
     unchangedSelector,
   }) {
     let unchangedFields = content.document.querySelectorAll(unchangedSelector);
@@ -559,14 +534,14 @@ async function assertContextMenuFill(
 }
 
 /**
- * Check if every login that matches the page hostname are available at the context menu.
+ * Check if every login that matches the page origin are available at the context menu.
  * @param {Element} contextMenu
  * @param {Number} expectedCount - Number of logins expected in the context menu. Used to ensure
  *                                  we continue testing something useful.
  */
 function checkMenu(contextMenu, expectedCount) {
   let logins = loginList().filter(login => {
-    return LoginHelper.isOriginMatching(login.hostname, TEST_HOSTNAME, {
+    return LoginHelper.isOriginMatching(login.origin, TEST_ORIGIN, {
       schemeUpgrades: Services.prefs.getBoolPref("signon.schemeUpgrades"),
     });
   });
@@ -588,7 +563,7 @@ function checkMenu(contextMenu, expectedCount) {
 /**
  * Search for a login by it's username.
  *
- * Only unique login/hostname combinations should be used at this test.
+ * Only unique login/origin combinations should be used at this test.
  */
 function getLoginFromUsername(username) {
   return loginList().find(login => login.username == username);
@@ -604,33 +579,33 @@ function getLoginFromUsername(username) {
 function loginList() {
   return [
     LoginTestUtils.testData.formLogin({
-      hostname: "https://example.com",
-      formSubmitURL: "https://example.com",
+      origin: "https://example.com",
+      formActionOrigin: "https://example.com",
       username: "username",
       password: "password",
     }),
     // Same as above but HTTP in order to test de-duping.
     LoginTestUtils.testData.formLogin({
-      hostname: "http://example.com",
-      formSubmitURL: "http://example.com",
+      origin: "http://example.com",
+      formActionOrigin: "http://example.com",
       username: "username",
       password: "password",
     }),
     LoginTestUtils.testData.formLogin({
-      hostname: "http://example.com",
-      formSubmitURL: "http://example.com",
+      origin: "http://example.com",
+      formActionOrigin: "http://example.com",
       username: "username1",
       password: "password1",
     }),
     LoginTestUtils.testData.formLogin({
-      hostname: "https://example.com",
-      formSubmitURL: "https://example.com",
+      origin: "https://example.com",
+      formActionOrigin: "https://example.com",
       username: "username2",
       password: "password2",
     }),
     LoginTestUtils.testData.formLogin({
-      hostname: "http://example.org",
-      formSubmitURL: "http://example.org",
+      origin: "http://example.org",
+      formActionOrigin: "http://example.org",
       username: "username-cross-origin",
       password: "password-cross-origin",
     }),

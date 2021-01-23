@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Fo-sgrìobhaidhean an inbhir">
+<!ENTITY learnMore.label             "Barrachd fiosrachaidh air inbhirean">
+
+<!ENTITY feedTitle.label             "Tiotal:">
+<!ENTITY feedTitle.accesskey         "T">
+
+<!ENTITY feedLocation.label          "URL an inbhir:">
+<!ENTITY feedLocation.accesskey      "U">
+<!ENTITY feedLocation2.placeholder   "Cuir URL dligheach de dh’inbhir a-steach">
+<!ENTITY locationValidate.label      "Dearbhaich">
+<!ENTITY validateText.label          "Sgrùdaich an dearbhadh is faigh URL dligheach.">
+
+<!ENTITY feedFolder.label            "Stòir artaigilean ann an:">
+<!ENTITY feedFolder.accesskey        "S">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Thoir sùil airson artaigealan ùra gach ">
+<!ENTITY biffStart.accesskey         "T">
+<!ENTITY biffMinutes.label           "mionaidean">
+<!ENTITY biffMinutes.accesskey       "n">
+<!ENTITY biffDays.label              "làithean">
+<!ENTITY biffDays.accesskey          "l">
+<!ENTITY recommendedUnits.label      "Tha am foillsichear a’ moladh:">
+
+<!ENTITY quickMode.label             "Seall gearr-chunntas na h-artaigil 's na luchdaich an duilleag-lìn">
+<!ENTITY quickMode.accesskey         "h">
+
+<!ENTITY autotagEnable.label         "Cruthaich tagaichean gu fèin-obrachail, stèidhichte air ainmean &lt;roinnean-seòrsa&gt; an inbhir">
+<!ENTITY autotagEnable.accesskey     "o">
+<!ENTITY autotagUsePrefix.label      "Cuir an ro-leasachan seo ris na tagaichean:">
+<!ENTITY autotagUsePrefix.accesskey  "r">
+<!ENTITY autoTagPrefix.placeholder   "Cuir ro-leasachan taga a-steach">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Cuir ris">
+<!ENTITY button.addFeed.accesskey    "C">
+<!ENTITY button.verifyFeed.label     "Dearbhaich">
+<!ENTITY button.verifyFeed.accesskey "D">
+<!ENTITY button.updateFeed.label     "Deasaich">
+<!ENTITY button.updateFeed.accesskey "e">
+<!ENTITY button.removeFeed.label     "Thoir air falbh">
+<!ENTITY button.removeFeed.accesskey "r">
+<!ENTITY button.importOPML.label     "Ion-phortaich">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "Às-phortaich">
+<!ENTITY button.exportOPML.accesskey "p">
+<!ENTITY button.exportOPML.tooltip   "Às-phortaich inbhirean còmhla ri structar nam pasgan aca; CTRL is briogadh no CTRL ENTER gus na h-inbhirean às-phortadh mar liosta">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Dùin">

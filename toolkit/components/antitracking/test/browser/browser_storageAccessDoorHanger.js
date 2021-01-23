@@ -6,7 +6,6 @@ Services.scriptloader.loadSubScript(CHROME_BASE + "head.js", this);
 
 const BLOCK = 0;
 const ALLOW = 1;
-const ALLOW_ON_ANY_SITE = 2;
 
 async function testDoorHanger(
   choice,
@@ -31,9 +30,6 @@ async function testDoorHanger(
   await SpecialPowers.flushPrefEnv();
   await SpecialPowers.pushPrefEnv({
     set: [
-      ["browser.contentblocking.allowlist.annotations.enabled", true],
-      ["browser.contentblocking.allowlist.storage.enabled", true],
-      [ContentBlocking.prefIntroCount, ContentBlocking.MAX_INTROS],
       ["dom.storage_access.auto_grants", true],
       ["dom.storage_access.auto_grants.delayed", false],
       ["dom.storage_access.enabled", true],
@@ -132,12 +128,6 @@ async function testDoorHanger(
             .type.startsWith("3rdPartyStorage^") &&
           subject.principal.origin == new URL(topPage).origin &&
           data == "added";
-      } else if (choice == ALLOW_ON_ANY_SITE) {
-        result =
-          subject &&
-          subject.QueryInterface(Ci.nsIPermission).type == "cookie" &&
-          subject.principal.origin == "https://tracking.example.org" &&
-          data == "added";
       }
       return result;
     });
@@ -172,8 +162,6 @@ async function testDoorHanger(
       }
     } else if (choice == ALLOW) {
       await clickSecondaryAction(choice - 1);
-    } else if (choice == ALLOW_ON_ANY_SITE) {
-      await clickSecondaryAction(choice - 1);
     }
     if (choice != BLOCK) {
       await permChanged;
@@ -181,9 +169,9 @@ async function testDoorHanger(
   });
 
   let url = TEST_3RD_PARTY_PAGE + "?disableWaitUntilPermission";
-  let ct = ContentTask.spawn(
+  let ct = SpecialPowers.spawn(
     browser,
-    { page: url, callback: runChecks.toString(), choice, useEscape },
+    [{ page: url, callback: runChecks.toString(), choice, useEscape }],
     async function(obj) {
       await new content.Promise(resolve => {
         let ifr = content.document.createElement("iframe");
@@ -245,119 +233,29 @@ async function preparePermissionsFromOtherSites(topPage) {
     // For the first page, don't do anything
   } else if (topPage == TEST_TOP_PAGE_2) {
     // For the second page, only add the permission from the first page
-    Services.perms.add(
-      Services.io.newURI(TEST_DOMAIN),
-      type,
-      permission,
-      expireType,
-      0
-    );
+    PermissionTestUtils.add(TEST_DOMAIN, type, permission, expireType, 0);
   } else if (topPage == TEST_TOP_PAGE_3) {
     // For the third page, add the permissions from the first two pages
-    Services.perms.add(
-      Services.io.newURI(TEST_DOMAIN),
-      type,
-      permission,
-      expireType,
-      0
-    );
-    Services.perms.add(
-      Services.io.newURI(TEST_DOMAIN_2),
-      type,
-      permission,
-      expireType,
-      0
-    );
+    PermissionTestUtils.add(TEST_DOMAIN, type, permission, expireType, 0);
+    PermissionTestUtils.add(TEST_DOMAIN_2, type, permission, expireType, 0);
   } else if (topPage == TEST_TOP_PAGE_4) {
     // For the fourth page, add the permissions from the first three pages
-    Services.perms.add(
-      Services.io.newURI(TEST_DOMAIN),
-      type,
-      permission,
-      expireType,
-      0
-    );
-    Services.perms.add(
-      Services.io.newURI(TEST_DOMAIN_2),
-      type,
-      permission,
-      expireType,
-      0
-    );
-    Services.perms.add(
-      Services.io.newURI(TEST_DOMAIN_3),
-      type,
-      permission,
-      expireType,
-      0
-    );
+    PermissionTestUtils.add(TEST_DOMAIN, type, permission, expireType, 0);
+    PermissionTestUtils.add(TEST_DOMAIN_2, type, permission, expireType, 0);
+    PermissionTestUtils.add(TEST_DOMAIN_3, type, permission, expireType, 0);
   } else if (topPage == TEST_TOP_PAGE_5) {
     // For the fifth page, add the permissions from the first four pages
-    Services.perms.add(
-      Services.io.newURI(TEST_DOMAIN),
-      type,
-      permission,
-      expireType,
-      0
-    );
-    Services.perms.add(
-      Services.io.newURI(TEST_DOMAIN_2),
-      type,
-      permission,
-      expireType,
-      0
-    );
-    Services.perms.add(
-      Services.io.newURI(TEST_DOMAIN_3),
-      type,
-      permission,
-      expireType,
-      0
-    );
-    Services.perms.add(
-      Services.io.newURI(TEST_DOMAIN_4),
-      type,
-      permission,
-      expireType,
-      0
-    );
+    PermissionTestUtils.add(TEST_DOMAIN, type, permission, expireType, 0);
+    PermissionTestUtils.add(TEST_DOMAIN_2, type, permission, expireType, 0);
+    PermissionTestUtils.add(TEST_DOMAIN_3, type, permission, expireType, 0);
+    PermissionTestUtils.add(TEST_DOMAIN_4, type, permission, expireType, 0);
   } else if (topPage == TEST_TOP_PAGE_6) {
     // For the sixth page, add the permissions from the first five pages
-    Services.perms.add(
-      Services.io.newURI(TEST_DOMAIN),
-      type,
-      permission,
-      expireType,
-      0
-    );
-    Services.perms.add(
-      Services.io.newURI(TEST_DOMAIN_2),
-      type,
-      permission,
-      expireType,
-      0
-    );
-    Services.perms.add(
-      Services.io.newURI(TEST_DOMAIN_3),
-      type,
-      permission,
-      expireType,
-      0
-    );
-    Services.perms.add(
-      Services.io.newURI(TEST_DOMAIN_4),
-      type,
-      permission,
-      expireType,
-      0
-    );
-    Services.perms.add(
-      Services.io.newURI(TEST_DOMAIN_5),
-      type,
-      permission,
-      expireType,
-      0
-    );
+    PermissionTestUtils.add(TEST_DOMAIN, type, permission, expireType, 0);
+    PermissionTestUtils.add(TEST_DOMAIN_2, type, permission, expireType, 0);
+    PermissionTestUtils.add(TEST_DOMAIN_3, type, permission, expireType, 0);
+    PermissionTestUtils.add(TEST_DOMAIN_4, type, permission, expireType, 0);
+    PermissionTestUtils.add(TEST_DOMAIN_5, type, permission, expireType, 0);
   } else {
     ok(false, "Unexpected top page: " + topPage);
   }
@@ -383,14 +281,6 @@ async function runRound(topPage, showPrompt, maxConcurrent) {
     await preparePermissionsFromOtherSites(topPage);
     await testDoorHanger(ALLOW, showPrompt, false, topPage, maxConcurrent);
     await cleanUp();
-    await preparePermissionsFromOtherSites(topPage);
-    await testDoorHanger(
-      ALLOW_ON_ANY_SITE,
-      showPrompt,
-      false,
-      topPage,
-      maxConcurrent
-    );
   } else {
     await preparePermissionsFromOtherSites(topPage);
     await testDoorHanger(ALLOW, showPrompt, false, topPage, maxConcurrent);

@@ -8,7 +8,7 @@
 # the locale directory, chrome registry entries and other information
 # necessary to produce the complete manifest file for a language pack.
 ###
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function, unicode_literals
 
 import argparse
 import sys
@@ -26,7 +26,6 @@ from mozpack.chrome.manifest import (
 )
 from mozbuild.configure.util import Version
 from mozbuild.preprocessor import Preprocessor
-import buildconfig
 
 
 def write_file(path, content):
@@ -308,7 +307,7 @@ def get_version_maybe_buildid(min_version):
     version = str(min_version)
     buildid = os.environ.get('MOZ_BUILD_DATE')
     if buildid and len(buildid) != 14:
-        print >>sys.stderr, 'Ignoring invalid MOZ_BUILD_DATE: %s' % buildid
+        print('Ignoring invalid MOZ_BUILD_DATE: %s' % buildid, file=sys.stderr)
         buildid = None
     if buildid:
         version = version + "buildid" + buildid
@@ -381,7 +380,7 @@ def get_version_maybe_buildid(min_version):
 ###
 def create_webmanifest(locstr, min_app_ver, max_app_ver, app_name,
                        l10n_basedir, langpack_eid, defines, chrome_entries):
-    locales = map(lambda loc: loc.strip(), locstr.split(','))
+    locales = list(map(lambda loc: loc.strip(), locstr.split(',')))
     main_locale = locales[0]
 
     author = build_author_string(
@@ -432,7 +431,7 @@ def create_webmanifest(locstr, min_app_ver, max_app_ver, app_name,
             'chrome_resources': cr
         }
 
-    return json.dumps(manifest, indent=2, ensure_ascii=False, encoding='utf8')
+    return json.dumps(manifest, indent=2, ensure_ascii=False)
 
 
 def main(args):

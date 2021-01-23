@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Adresboek ymportearje">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Ymportearre gegevens fan rekord:">
+<!ENTITY fieldMapImport.next.label "Folgjende">
+<!ENTITY fieldMapImport.next.accesskey "F">
+<!ENTITY fieldMapImport.previous.label "Foarige">
+<!ENTITY fieldMapImport.previous.accesskey "o">
+<!ENTITY fieldMapImport.text "Brûk Omheech ferpleatse en Omleech ferpleatse om de adresboekfjlden oan de lofterkant oerienkomme te litten mei de goede te ymportearjen gegevens oan de rjochterkant. Fink ûnderdielen dy't jo net ymportearje wolle út.">
+<!ENTITY fieldMapImport.up.label "Omheech ferpleatse">
+<!ENTITY fieldMapImport.up.accesskey "h">
+<!ENTITY fieldMapImport.down.label "Omleech ferpleatse">
+<!ENTITY fieldMapImport.down.accesskey "l">
+<!ENTITY fieldMapImport.fieldListTitle "Adresboekfjlden">
+<!ENTITY fieldMapImport.dataTitle "Rekord-gegevens om te ymportearjen">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Earste rekord hat fjildnammen">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "E">

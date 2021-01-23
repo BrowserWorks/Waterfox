@@ -1,19 +1,18 @@
 #![feature(test)]
-#![deny(warnings)]
 
-extern crate tokio_threadpool;
 extern crate futures;
 extern crate futures_cpupool;
 extern crate num_cpus;
 extern crate test;
+extern crate tokio_threadpool;
 
 const ITER: usize = 20_000;
 
 mod us {
-    use tokio_threadpool::*;
     use futures::future;
-    use test;
     use std::sync::mpsc;
+    use test;
+    use tokio_threadpool::*;
 
     #[bench]
     fn chained_spawn(b: &mut test::Bencher) {
@@ -24,10 +23,12 @@ mod us {
                 res_tx.send(()).unwrap();
             } else {
                 let pool_tx2 = pool_tx.clone();
-                pool_tx.spawn(future::lazy(move || {
-                    spawn(pool_tx2, res_tx, n - 1);
-                    Ok(())
-                })).unwrap();
+                pool_tx
+                    .spawn(future::lazy(move || {
+                        spawn(pool_tx2, res_tx, n - 1);
+                        Ok(())
+                    }))
+                    .unwrap();
             }
         }
 
@@ -44,8 +45,8 @@ mod cpupool {
     use futures::future::{self, Executor};
     use futures_cpupool::*;
     use num_cpus;
-    use test;
     use std::sync::mpsc;
+    use test;
 
     #[bench]
     fn chained_spawn(b: &mut test::Bencher) {
@@ -59,7 +60,9 @@ mod cpupool {
                 pool.execute(future::lazy(move || {
                     spawn(pool2, res_tx, n - 1);
                     Ok(())
-                })).ok().unwrap();
+                }))
+                .ok()
+                .unwrap();
             }
         }
 

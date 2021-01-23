@@ -33,10 +33,12 @@ enum class FontUsageKind {
 static FontUsageKind StyleFontUsage(ComputedStyle* aComputedStyle,
                                     nsPresContext* aPresContext,
                                     const gfxUserFontSet* aUserFontSet,
-                                    const gfxUserFontEntry* aFont) {
+                                    const gfxUserFontEntry* aFont,
+                                    const nsAString& aFamilyName) {
+  MOZ_ASSERT(NS_ConvertUTF8toUTF16(aFont->FamilyName()) == aFamilyName);
+
   // first, check if the family name is in the fontlist
-  if (!aComputedStyle->StyleFont()->mFont.fontlist.Contains(
-          aFont->FamilyName())) {
+  if (!aComputedStyle->StyleFont()->mFont.fontlist.Contains(aFamilyName)) {
     return FontUsageKind::None;
   }
 
@@ -59,11 +61,12 @@ static FontUsageKind StyleFontUsage(ComputedStyle* aComputedStyle,
 
 static FontUsageKind FrameFontUsage(nsIFrame* aFrame,
                                     nsPresContext* aPresContext,
-                                    const gfxUserFontEntry* aFont) {
+                                    const gfxUserFontEntry* aFont,
+                                    const nsAString& aFamilyName) {
   // check the style of the frame
   gfxUserFontSet* ufs = aPresContext->GetUserFontSet();
   FontUsageKind kind =
-      StyleFontUsage(aFrame->Style(), aPresContext, ufs, aFont);
+      StyleFontUsage(aFrame->Style(), aPresContext, ufs, aFont, aFamilyName);
   if (kind == FontUsageKind::FrameAndFontMetrics) {
     return kind;
   }
@@ -73,8 +76,8 @@ static FontUsageKind FrameFontUsage(nsIFrame* aFrame,
   for (ComputedStyle* extraContext;
        (extraContext = aFrame->GetAdditionalComputedStyle(contextIndex));
        ++contextIndex) {
-    kind =
-        std::max(kind, StyleFontUsage(extraContext, aPresContext, ufs, aFont));
+    kind = std::max(kind, StyleFontUsage(extraContext, aPresContext, ufs, aFont,
+                                         aFamilyName));
     if (kind == FontUsageKind::FrameAndFontMetrics) {
       break;
     }
@@ -133,23 +136,28 @@ void nsFontFaceUtils::MarkDirtyForFontChange(nsIFrame* aSubtreeRoot,
   nsPresContext* pc = aSubtreeRoot->PresContext();
   PresShell* presShell = pc->PresShell();
 
+  // gfxFontFamilyList::Contains expects a UTF-16 string. Convert it once
+  // here rather than on each call.
+  NS_ConvertUTF8toUTF16 familyName(aFont->FamilyName());
+
   // check descendants, iterating over subtrees that may include
   // additional subtrees associated with placeholders
   do {
     nsIFrame* subtreeRoot = subtrees.PopLastElement();
 
     // Check all descendants to see if they use the font
-    AutoTArray<Pair<nsIFrame*, ReflowAlreadyScheduled>, 32> stack;
-    stack.AppendElement(MakePair(subtreeRoot, ReflowAlreadyScheduled::No));
+    AutoTArray<std::pair<nsIFrame*, ReflowAlreadyScheduled>, 32> stack;
+    stack.AppendElement(
+        std::make_pair(subtreeRoot, ReflowAlreadyScheduled::No));
 
     do {
       auto pair = stack.PopLastElement();
-      nsIFrame* f = pair.first();
-      ReflowAlreadyScheduled alreadyScheduled = pair.second();
+      nsIFrame* f = pair.first;
+      ReflowAlreadyScheduled alreadyScheduled = pair.second;
 
       // if this frame uses the font, mark its descendants dirty
       // and skip checking its children
-      FontUsageKind kind = FrameFontUsage(f, pc, aFont);
+      FontUsageKind kind = FrameFontUsage(f, pc, aFont, familyName);
       if (kind != FontUsageKind::None) {
         if (alreadyScheduled == ReflowAlreadyScheduled::No) {
           ScheduleReflow(presShell, f);
@@ -159,8 +167,8 @@ void nsFontFaceUtils::MarkDirtyForFontChange(nsIFrame* aSubtreeRoot,
           MOZ_ASSERT(f->GetContent() && f->GetContent()->IsElement(),
                      "How could we target a non-element with selectors?");
           f->PresContext()->RestyleManager()->PostRestyleEvent(
-              Element::FromNode(f->GetContent()),
-              StyleRestyleHint_RECASCADE_SELF, nsChangeHint(0));
+              dom::Element::FromNode(f->GetContent()),
+              RestyleHint::RECASCADE_SELF, nsChangeHint(0));
         }
       }
 
@@ -174,12 +182,9 @@ void nsFontFaceUtils::MarkDirtyForFontChange(nsIFrame* aSubtreeRoot,
           }
         }
 
-        nsIFrame::ChildListIterator lists(f);
-        for (; !lists.IsDone(); lists.Next()) {
-          nsFrameList::Enumerator childFrames(lists.CurrentList());
-          for (; !childFrames.AtEnd(); childFrames.Next()) {
-            nsIFrame* kid = childFrames.get();
-            stack.AppendElement(MakePair(kid, alreadyScheduled));
+        for (const auto& childList : f->ChildLists()) {
+          for (nsIFrame* kid : childList.mList) {
+            stack.AppendElement(std::make_pair(kid, alreadyScheduled));
           }
         }
       }

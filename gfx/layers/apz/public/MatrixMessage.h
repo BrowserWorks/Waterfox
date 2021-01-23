@@ -7,29 +7,44 @@
 #ifndef mozilla_layers_MatrixMessage_h
 #define mozilla_layers_MatrixMessage_h
 
+#include "mozilla/Maybe.h"
 #include "mozilla/gfx/Matrix.h"
 #include "mozilla/layers/LayersTypes.h"
+#include "Units.h"  // for ScreenRect
 
 namespace mozilla {
 namespace layers {
 class MatrixMessage {
  public:
   // Don't use this one directly
-  MatrixMessage() {}
+  MatrixMessage() = default;
 
-  MatrixMessage(const LayerToScreenMatrix4x4& aMatrix,
+  MatrixMessage(const Maybe<LayerToScreenMatrix4x4>& aMatrix,
+                const ScreenRect& aTopLevelViewportVisibleRectInBrowserCoords,
                 const LayersId& aLayersId)
-      : mMatrix(aMatrix.ToUnknownMatrix()), mLayersId(aLayersId) {}
+      : mMatrix(ToUnknownMatrix(aMatrix)),
+        mTopLevelViewportVisibleRectInBrowserCoords(
+            aTopLevelViewportVisibleRectInBrowserCoords),
+        mLayersId(aLayersId) {}
 
-  inline LayerToScreenMatrix4x4 GetMatrix() const {
+  inline Maybe<LayerToScreenMatrix4x4> GetMatrix() const {
     return LayerToScreenMatrix4x4::FromUnknownMatrix(mMatrix);
+  }
+
+  inline ScreenRect GetTopLevelViewportVisibleRectInBrowserCoords() const {
+    return mTopLevelViewportVisibleRectInBrowserCoords;
   }
 
   inline const LayersId& GetLayersId() const { return mLayersId; }
 
   // Fields are public for IPC. Don't access directly
   // elsewhere.
-  gfx::Matrix4x4 mMatrix;  // Untyped for IPC
+  // Transform matrix to convert this layer to screen coordinate.
+  Maybe<gfx::Matrix4x4> mMatrix;  // Untyped for IPC
+  // The remote iframe document rectangle corresponding to this layer.
+  // The rectangle is the result of clipped out by ancestor async scrolling so
+  // that the rectangle will be empty if it's completely scrolled out of view.
+  ScreenRect mTopLevelViewportVisibleRectInBrowserCoords;
   LayersId mLayersId;
 };
 };  // namespace layers

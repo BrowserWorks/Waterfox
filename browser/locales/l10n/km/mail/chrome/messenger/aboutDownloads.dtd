@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Պահպանված ֆայլեր">
+<!ENTITY aboutDownloads.empty                      "មិន​មាន​ឯកសារ​បាន​រក្សាទុក">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "បើកថត​ដែល​ផ្ទុក">
+<!ENTITY cmd.show.accesskey                        "ថ">
+<!ENTITY cmd.showMac.label                         "បង្ហាញ​ក្នុង​កម្មវិធីស្វែងរក">
+<!ENTITY cmd.showMac.accesskey                     "ស">
+<!ENTITY cmd.open.label                            "បើក">
+<!ENTITY cmd.open.accesskey                        "ប">
+<!ENTITY cmd.removeFromHistory.label               "លុប​ចេញពី​ប្រវត្តិ">
+<!ENTITY cmd.removeFromHistory.accesskey           "ល">
+
+
+
+
+

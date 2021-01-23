@@ -1,4 +1,4 @@
-// |reftest| skip module -- export-star-as-namespace-from-module is not supported
+// |reftest| skip module async -- export-star-as-namespace-from-module is not supported
 // This file was procedurally generated from the following sources:
 // - src/dynamic-import/ns-get-nested-namespace-dflt-indirect.case
 // - src/dynamic-import/namespace/await.template
@@ -103,7 +103,7 @@ async function fn() {
     assert.sameValue(desc.writable, true, 'ns.namedNS2: is writable');
     assert.sameValue(desc.configurable, false, 'ns.namedNS2: is non-configurable');
 
-    var keys = Object.keys(ns.namedNS2);
+    var keys = Object.getOwnPropertyNames(ns.namedNS2);
 
     assert.sameValue(keys.length, 2);
     assert.sameValue(keys[0], 'default');

@@ -4,18 +4,23 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-gkrust_features = ['servo', 'bindgen']
+gkrust_features = []
 
 if CONFIG['MOZ_DEBUG']:
-    gkrust_features += ['gecko_debug']
+    gkrust_features += [
+        'gecko_debug',
+        'gecko_refcount_logging',
+    ]
 
-if CONFIG['MOZ_BUILD_WEBRENDER']:
-    gkrust_features += ['quantum_render']
-    if CONFIG['MOZ_WEBRENDER_DEBUGGER']:
-        gkrust_features += ['webrender_debugger']
+gkrust_features += ['quantum_render', 'webgpu']
+if CONFIG['MOZ_WEBRENDER_DEBUGGER']:
+    gkrust_features += ['webrender_debugger']
 
 if CONFIG['MOZ_PULSEAUDIO']:
     gkrust_features += ['cubeb_pulse_rust']
+
+if CONFIG['MOZ_AUDIOUNIT_RUST']:
+    gkrust_features += ['cubeb_coreaudio_rust']
 
 if CONFIG['MOZ_RUST_SIMD']:
     gkrust_features += ['simd-accel']
@@ -42,6 +47,9 @@ if CONFIG['ENABLE_WASM_CRANELIFT']:
     else:
         gkrust_features += ['cranelift_none']
 
+if CONFIG['JS_ENABLE_SMOOSH']:
+    gkrust_features += ['smoosh']
+
 if CONFIG['MOZ_GECKO_PROFILER']:
     gkrust_features += ['gecko_profiler']
 
@@ -56,3 +64,21 @@ if CONFIG['MOZ_NEW_XULSTORE']:
 
 if CONFIG['MOZ_NEW_CERT_STORAGE']:
     gkrust_features += ['new_cert_storage']
+
+if CONFIG['FUZZING_INTERFACES']:
+    gkrust_features += ['fuzzing_interfaces']
+
+if CONFIG['MOZ_WEBRTC']:
+    gkrust_features += ['webrtc']
+
+if CONFIG['ENABLE_REMOTE_AGENT']:
+    gkrust_features += ['remote_agent']
+
+if CONFIG['MOZ_GLEAN']:
+    gkrust_features += ['glean']
+
+if CONFIG['MOZ_RUST_FXA_CLIENT']:
+    gkrust_features += ['rust_fxa_client']
+
+if CONFIG['MOZ_USING_WASM_SANDBOXING']:
+    gkrust_features += ['wasm_library_sandboxing']

@@ -2,16 +2,20 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from __future__ import absolute_import, unicode_literals, print_function
+
 import sys
 import hashlib
 import re
 import os
+import functools
 from mozbuild.preprocessor import Preprocessor
 from mozbuild.util import DefinesAction
 from mozpack.packager.unpack import UnpackFinder
 from mozpack.files import DeflatedFile
 from collections import OrderedDict
-from StringIO import StringIO
+import six
+from six import StringIO
 import argparse
 import buildconfig
 
@@ -43,29 +47,34 @@ def normalize_path(p):
 
 
 def find_dupes(source, allowed_dupes, bail=True):
+    md5_chunk_size = 1024*10
     allowed_dupes = set(allowed_dupes)
     md5s = OrderedDict()
     for p, f in UnpackFinder(source):
-        content = f.open().read()
-        m = hashlib.md5(content).digest()
+        md5 = hashlib.md5()
+        content_size = 0
+        for buf in iter(functools.partial(f.open().read, md5_chunk_size), b''):
+            md5.update(six.ensure_binary(buf))
+            content_size += len(six.ensure_binary(buf))
+        m = md5.digest()
         if m not in md5s:
             if isinstance(f, DeflatedFile):
                 compressed = f.file.compressed_size
             else:
-                compressed = len(content)
-            md5s[m] = (len(content), compressed, [])
+                compressed = content_size
+            md5s[m] = (content_size, compressed, [])
         md5s[m][2].append(p)
     total = 0
     total_compressed = 0
     num_dupes = 0
     unexpected_dupes = []
-    for m, (size, compressed, paths) in sorted(md5s.iteritems(),
+    for m, (size, compressed, paths) in sorted(six.iteritems(md5s),
                                                key=lambda x: x[1][1]):
         if len(paths) > 1:
-            print 'Duplicates %d bytes%s%s:' % (size,
-                  ' (%d compressed)' % compressed if compressed != size else '',
-                  ' (%d times)' % (len(paths) - 1) if len(paths) > 2 else '')
-            print ''.join('  %s\n' % p for p in paths)
+            _compressed = ' (%d compressed)' % compressed if compressed != size else ''
+            _times = ' (%d times)' % (len(paths) - 1) if len(paths) > 2 else ''
+            print('Duplicates {} bytes{}{}:'.format(size, _compressed, _times))
+            print(''.join('  %s\n' % p for p in paths))
             total += (len(paths) - 1) * size
             total_compressed += (len(paths) - 1) * compressed
             num_dupes += 1
@@ -75,15 +84,15 @@ def find_dupes(source, allowed_dupes, bail=True):
                     unexpected_dupes.append(p)
 
     if num_dupes:
-        print "WARNING: Found %d duplicated files taking %d bytes (%s)" % \
-              (num_dupes, total,
-               '%d compressed' % total_compressed if total_compressed != total
-                                                  else 'uncompressed')
+        total_compressed = '%d compressed' % total_compressed \
+            if total_compressed != total else 'uncompressed'
+        print("WARNING: Found {} duplicated files taking {} bytes ({})".format(
+            num_dupes, total, total_compressed))
 
     if unexpected_dupes:
         errortype = "ERROR" if bail else "WARNING"
-        print "%s: The following duplicated files are not allowed:" % errortype
-        print "\n".join(unexpected_dupes)
+        print("{}: The following duplicated files are not allowed:".format(errortype))
+        print("\n".join(unexpected_dupes))
         if bail:
             sys.exit(1)
 

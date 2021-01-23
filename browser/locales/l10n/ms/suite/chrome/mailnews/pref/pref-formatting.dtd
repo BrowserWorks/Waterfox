@@ -1,0 +1,42 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.formatting.title        "Format Dihantar">
+<!ENTITY sendMaildesc.label           "Apabila menghantar mesej dalam format (HTML) dan lebih daripada seorang penerima tidak disenaraikan sebagai boleh menerima HTML:">
+<!ENTITY askMe.label                  "Tanya saya untuk tindakan lanjut (Mel akan meminta format yang mahu dipilih)">
+<!ENTITY askMe.accesskey              "t">
+<!ENTITY convertPlain2.label          "Tukar mesej ke teks biasa (format mungkin hilang)">
+<!ENTITY convertPlain2.accesskey      "T">
+<!ENTITY sendHTML2.label              "Hantar mesej sebagai HTML sahaja (boleh menyebabkan masalah paparan)">
+<!ENTITY sendHTML2.accesskey          "H">
+<!ENTITY sendBoth2.label              "Hantar mesej dalam teks biasa dan HTML (saiz lebih besar)">
+<!ENTITY sendBoth2.accesskey          "n">
+
+<!-- Html and Plain Text Domains  -->
+<!ENTITY domain.title                 "Domain HTML dan Teks Biasa">
+<!ENTITY domaindesc.label             "Apabila anda menghantar mesej ke alamat dengan salah satu nama domain yang disenaraikan di bawah, Mel akan secara automatik menghantar mesej dalam format yang diutamakan (teks berformat atau teks biasa).">
+<!ENTITY HTMLdomaintitle.label        "Domain HTML">
+<!ENTITY HTMLdomaintitle.accesskey    "M">
+<!ENTITY PlainTexttitle.label         "Domain Teks Biasa">
+<!ENTITY PlainTexttitle.accesskey     "B">
+<!ENTITY AddButton.label              "Tambah…">
+<!ENTITY AddHtmlDomain.accesskey      "T">
+<!ENTITY AddPlainText.accesskey       "h">
+<!ENTITY DeleteButton.label           "Buang">
+<!ENTITY DeleteHtmlDomain.accesskey   "g">
+<!ENTITY DeletePlainText.accesskey    "u">
+
+<!-- Add Domain Name -->
+<!ENTITY add.htmltitle                "Tambah Nama Domain HTML">
+<!ENTITY add.htmldomain               "Nama Domain HTML:">
+<!ENTITY add.plaintexttitle           "Tambah Nama Domain Teks Biasa">
+<!ENTITY add.plaintextdomain          "Nama Domain Teks Biasa:">
+
+<!ENTITY domainnameError.title        "Ralat Nama Domain">
+<!-- LOCALIZATION NOTE: do not translate @string@ -->
+<!ENTITY invalidEntryError.label      "Nama domain @string @ tidak sah dan akan diabaikan. Nama domain yang sah perlu ada sekurang-kurangnya satu '.' dan aksara pada kedua-dua bahagian.">
+
+<!-- Global auto-detect switch -->
+<!ENTITY autoDowngrade.label          "Hantar mesej secara automatik sebagai teks biasa jika tiada format yang ketara (mengatasi pilihan lain)">
+<!ENTITY autoDowngrade.accesskey      "o">

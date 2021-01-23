@@ -5,14 +5,15 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "ClientTiledPaintedLayer.h"
-#include "FrameMetrics.h"          // for FrameMetrics
-#include "Units.h"                 // for ScreenIntRect, CSSPoint, etc
-#include "UnitTransforms.h"        // for TransformTo
-#include "ClientLayerManager.h"    // for ClientLayerManager, etc
-#include "gfxPlatform.h"           // for gfxPlatform
-#include "gfxPrefs.h"              // for gfxPrefs
-#include "gfxRect.h"               // for gfxRect
-#include "mozilla/Assertions.h"    // for MOZ_ASSERT, etc
+#include "FrameMetrics.h"        // for FrameMetrics
+#include "Units.h"               // for ScreenIntRect, CSSPoint, etc
+#include "UnitTransforms.h"      // for TransformTo
+#include "ClientLayerManager.h"  // for ClientLayerManager, etc
+#include "gfxPlatform.h"         // for gfxPlatform
+#include "gfxRect.h"             // for gfxRect
+#include "mozilla/Assertions.h"  // for MOZ_ASSERT, etc
+#include "mozilla/StaticPrefs_layers.h"
+#include "mozilla/StaticPrefs_layout.h"
 #include "mozilla/gfx/BaseSize.h"  // for BaseSize
 #include "mozilla/gfx/gfxVars.h"
 #include "mozilla/gfx/Rect.h"  // for Rect, RectTyped
@@ -84,21 +85,6 @@ static LayerToParentLayerMatrix4x4 GetTransformToAncestorsParentLayer(
        ancestorParent ? iter != ancestorParent : iter.IsValid();
        iter = iter.GetParent()) {
     transform = transform * iter.GetTransform();
-
-    if (gfxPrefs::LayoutUseContainersForRootFrames()) {
-      // When scrolling containers, layout adds a post-scale into the transform
-      // of the displayport-ancestor (which we pick up in GetTransform() above)
-      // to cancel out the pres shell resolution (for historical reasons). The
-      // compositor in turn cancels out this post-scale (i.e., scales by the
-      // pres shell resolution), and to get correct calculations, we need to do
-      // so here, too.
-      //
-      // With containerless scrolling, the offending post-scale is on the
-      // parent layer of the displayport-ancestor, which we don't reach in this
-      // loop, so we don't need to worry about it.
-      float presShellResolution = iter.GetPresShellResolution();
-      transform.PostScale(presShellResolution, presShellResolution, 1.0f);
-    }
   }
   return ViewAs<LayerToParentLayerMatrix4x4>(transform);
 }
@@ -267,7 +253,7 @@ bool ClientTiledPaintedLayer::IsScrollingOnCompositor(
 }
 
 bool ClientTiledPaintedLayer::UseProgressiveDraw() {
-  if (!gfxPrefs::ProgressivePaint()) {
+  if (!StaticPrefs::layers_progressive_paint()) {
     // pref is disabled, so never do progressive
     return false;
   }
@@ -479,7 +465,7 @@ void ClientTiledPaintedLayer::RenderLayer() {
        isHalfTileWidthOrHeight) &&
       SingleTiledContentClient::ClientSupportsLayerSize(layerSize,
                                                         ClientManager()) &&
-      gfxPrefs::LayersSingleTileEnabled();
+      StaticPrefs::layers_single_tile_enabled();
 
   if (mContentClient && mHaveSingleTiledContentClient &&
       !wantSingleTiledContentClient) {

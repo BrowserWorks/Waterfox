@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Dajće mi tu won!">
+<!ENTITY safeb.palm.decline.label "Tute warnowanje ignorować">
+<!ENTITY safeb.palm.reportPage.label "Čehodla je so tuta strona zablokowała?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "wot <a id='advisory_provider'/> poradźowacy">
+
+<!ENTITY safeb.blocked.malwarePage.title "Nadpadowa strona zdźělena!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Tuta webstrona na <span id='malware_sitename'/> bu jako nadpadowa strona zdźělena a na zakładźe wašich wěstotnych nastajenjow zablokowana.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Nadpadowe strony pospytuja programy instalować, kotrež priwatne informacije kradnu, waš ličak wužiwaja, zo bychu druhe nadpadnyli abo waš system poškodźili.</p><p>Někotre nadpadowe strony rozdźěleja z wotpohladom škódnu softwaru, ale wjele z nich wohrožuje so bjez wědźenja abo dowolnosće jich wobsedźerjow.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "Wobšudne sydło!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "Tuta webstrona na <span id='phishing_sitename'/> bu jako wobšudne sydło zdźělena a na zakładźe wašich wěstotnych nastajenjow zablokowana.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>Wobšudne sydła su za to myslene, was zawjedować, něšto strašneho činić, kaž na př. instalowanje softwary abo přeradźowanje wašich wosobinskich datow, na př. hesłow, telefonowych čisłow abo čisłow kreditnych kartow.</p><p>Hdyž daty na tutej webstronje zapodaće, móže to ke kradnjenju identity abo druhej wobšudźe wjesć.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Njewitane softwarowe sydło zdźělene!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Tuta webstrona na <span id='unwanted_sitename'/> bu jako strona zdźělena, kotraž njewitanu softwaru wobsahuje a na zakładźe wašich wěstotnych nastajenjow zablokowana.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "Njewitane softwarowe strony pospytuju softwaru instalować, kotraž móže wobšudna być a waš system na njewočakowane wašnja wobwliwować.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "Sydło prědku móže škódnu softwaru wobsahować">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; je tutu stronu zablokował, dokelž móhła strašne nałoženja instalować, kotrež waše daty kradnu abo hašeja (na přikład fota, hesła, powěsće a kreditne karty).">

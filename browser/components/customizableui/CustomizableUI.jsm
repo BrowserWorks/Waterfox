@@ -18,10 +18,10 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   AddonManagerPrivate: "resource://gre/modules/AddonManager.jsm",
   SearchWidgetTracker: "resource:///modules/SearchWidgetTracker.jsm",
   CustomizableWidgets: "resource:///modules/CustomizableWidgets.jsm",
-  DeferredTask: "resource://gre/modules/DeferredTask.jsm",
   PanelMultiView: "resource:///modules/PanelMultiView.jsm",
   PrivateBrowsingUtils: "resource://gre/modules/PrivateBrowsingUtils.jsm",
   ShortcutUtils: "resource://gre/modules/ShortcutUtils.jsm",
+  BrowserUsageTelemetry: "resource:///modules/BrowserUsageTelemetry.jsm",
 });
 
 XPCOMUtils.defineLazyGetter(this, "gWidgetsBundle", function() {
@@ -224,6 +224,7 @@ var CustomizableUIInternal = {
       "stop-reload-button",
       "home-button",
       "urlbar-container",
+	  "search-container",
       "downloads-button",
       "library-button",
       "sidebar-button",
@@ -231,7 +232,6 @@ var CustomizableUIInternal = {
     ];
 
     if (AppConstants.MOZ_DEV_EDITION) {
-      navbarPlacements.splice(5, 0, "search-container");
     }
 
     this.registerArea(
@@ -240,6 +240,15 @@ var CustomizableUIInternal = {
         type: CustomizableUI.TYPE_TOOLBAR,
         overflowable: true,
         defaultPlacements: navbarPlacements,
+        defaultCollapsed: false,
+      },
+      true
+    );
+
+    this.registerArea(
+      CustomizableUI.AREA_STATUSBAR,
+      {
+        type: CustomizableUI.TYPE_TOOLBAR,
         defaultCollapsed: false,
       },
       true
@@ -1463,7 +1472,10 @@ var CustomizableUIInternal = {
 
     while (++nodeIndex < placements.length) {
       let nextNodeId = placements[nodeIndex];
-      let nextNode = aNode.ownerDocument.getElementById(nextNodeId);
+      // We use aAreaNode here, because if aNode is in a template, its
+      // `ownerDocument` is *not* going to be the browser.xhtml document,
+      // so we cannot rely on it.
+      let nextNode = aAreaNode.ownerDocument.getElementById(nextNodeId);
       // If the next placed widget exists, and is a direct child of the
       // container, or wrapped in a customize mode wrapper (toolbarpaletteitem)
       // inside the container, insert beside it.
@@ -1841,13 +1853,7 @@ var CustomizableUIInternal = {
     }
     try {
       if (Array.isArray(aFormatArgs) && aFormatArgs.length) {
-        return (
-          gWidgetsBundle.formatStringFromName(
-            name,
-            aFormatArgs,
-            aFormatArgs.length
-          ) || def
-        );
+        return gWidgetsBundle.formatStringFromName(name, aFormatArgs) || def;
       }
       return gWidgetsBundle.GetStringFromName(name) || def;
     } catch (ex) {
@@ -1866,7 +1872,9 @@ var CustomizableUIInternal = {
       return;
     }
 
-    let document = aShortcutNode.ownerDocument;
+    // Use ownerGlobal.document to ensure we get the right doc even for
+    // elements in template tags.
+    let { document } = aShortcutNode.ownerGlobal;
     let shortcutId = aShortcutNode.getAttribute("key");
     let shortcut;
     if (shortcutId) {
@@ -2020,7 +2028,7 @@ var CustomizableUIInternal = {
         }
       }
       let tagName = target.localName;
-      inInput = tagName == "input" || tagName == "textbox";
+      inInput = tagName == "input" || tagName == "searchbar";
       inItem = tagName == "toolbaritem" || tagName == "toolbarbutton";
       let isMenuItem = tagName == "menuitem";
       inMenu = inMenu || isMenuItem;
@@ -2051,7 +2059,8 @@ var CustomizableUIInternal = {
           (topmostMenuPopup && topmostMenuPopup.triggerNode) ||
           target.parentNode;
       } else {
-        target = target.parentNode;
+        // Skip any parent shadow roots
+        target = target.parentNode?.host?.parentNode || target.parentNode;
       }
     }
 
@@ -2859,8 +2868,6 @@ var CustomizableUIInternal = {
       return;
     }
     aWidget[aEventName] = function(...aArgs) {
-      // Wrap inside a try...catch to properly log errors, until bug 862627 is
-      // fixed, which in turn might help bug 503244.
       try {
         // Don't copy the function to the normalized widget object, instead
         // keep it on the original object provided to the API so that
@@ -3402,6 +3409,11 @@ var CustomizableUI = {
    * Constant reference to the ID of the non-dymanic (fixed) list in the overflow panel.
    */
   AREA_FIXED_OVERFLOW_PANEL: "widget-overflow-fixed-list",
+
+  /**
+   * Constant reference to the ID of the statusbar toolbar.
+   */
+  AREA_STATUSBAR: "status-bar",
 
   /**
    * Constant indicating the area is a menu panel.
@@ -4361,7 +4373,9 @@ var CustomizableUI = {
       "style",
     ];
 
-    let doc = aSubview.ownerDocument;
+    // Use ownerGlobal.document to ensure we get the right doc even for
+    // elements in template tags.
+    let doc = aSubview.ownerGlobal.document;
     let fragment = doc.createDocumentFragment();
     for (let menuChild of aMenuItems) {
       if (menuChild.hidden) {
@@ -4374,11 +4388,11 @@ var CustomizableUI = {
         // menus (which we don't copy) above the separator.
         if (
           !fragment.lastElementChild ||
-          fragment.lastElementChild.localName == "menuseparator"
+          fragment.lastElementChild.localName == "toolbarseparator"
         ) {
           continue;
         }
-        subviewItem = doc.createXULElement("menuseparator");
+        subviewItem = doc.createXULElement("toolbarseparator");
       } else if (menuChild.localName == "menuitem") {
         subviewItem = doc.createXULElement("toolbarbutton");
         CustomizableUI.addShortcut(menuChild, subviewItem);
@@ -4387,6 +4401,9 @@ var CustomizableUI = {
         if (!item.hasAttribute("onclick")) {
           subviewItem.addEventListener("click", event => {
             let newEvent = new doc.defaultView.MouseEvent(event.type, event);
+
+            // Telemetry should only pay attention to the original event.
+            BrowserUsageTelemetry.ignoreEvent(newEvent);
             item.dispatchEvent(newEvent);
           });
         }
@@ -4407,6 +4424,9 @@ var CustomizableUI = {
               event.sourceEvent,
               0
             );
+
+            // Telemetry should only pay attention to the original event.
+            BrowserUsageTelemetry.ignoreEvent(newEvent);
             item.dispatchEvent(newEvent);
           });
         }
@@ -4449,8 +4469,8 @@ var CustomizableUI = {
     return CustomizableUIInternal.getCustomizationTarget(aElement);
   },
 };
-Object.freeze(this.CustomizableUI);
-Object.freeze(this.CustomizableUI.windows);
+Object.freeze(CustomizableUI);
+Object.freeze(CustomizableUI.windows);
 
 /**
  * All external consumers of widgets are really interacting with these wrappers
@@ -4669,7 +4689,7 @@ function XULWidgetSingleWrapper(aWidgetId, aNode, aDocument) {
     }
     if (aNode) {
       // Return the last known node if it's still in the DOM...
-      if (aNode.ownerDocument.contains(aNode)) {
+      if (aNode.isConnected) {
         return aNode;
       }
       // ... or the toolbox
@@ -4724,19 +4744,21 @@ function XULWidgetSingleWrapper(aWidgetId, aNode, aDocument) {
   Object.freeze(this);
 }
 
-const LAZY_RESIZE_INTERVAL_MS = 200;
 const OVERFLOW_PANEL_HIDE_DELAY_MS = 500;
 
 function OverflowableToolbar(aToolbarNode) {
   this._toolbar = aToolbarNode;
+  this._target = CustomizableUI.getCustomizationTarget(this._toolbar);
+  if (this._target.parentNode != this._toolbar) {
+    throw new Error(
+      "Customization target must be a direct child of an overflowable toolbar."
+    );
+  }
   this._collapsed = new Map();
   this._enabled = true;
-  this._toolbar.addEventListener("overflow", this);
-  this._toolbar.addEventListener("underflow", this);
 
   this._toolbar.setAttribute("overflowable", "true");
   let doc = this._toolbar.ownerDocument;
-  this._target = CustomizableUI.getCustomizationTarget(this._toolbar);
   this._list = doc.getElementById(this._toolbar.getAttribute("overflowtarget"));
   this._list._customizationTarget = this._list;
 
@@ -4750,8 +4772,6 @@ function OverflowableToolbar(aToolbarNode) {
 
 OverflowableToolbar.prototype = {
   initialized: false,
-  _forceOnOverflow: false,
-  _addedListener: false,
 
   observe(aSubject, aTopic, aData) {
     if (
@@ -4783,20 +4803,13 @@ OverflowableToolbar.prototype = {
     CustomizableUIInternal.addPanelCloseListeners(this._panel);
 
     CustomizableUI.addListener(this);
-    this._addedListener = true;
 
-    // The 'overflow' event may have been fired before init was called.
-    if (this.overflowedDuringConstruction) {
-      this.onOverflow(this.overflowedDuringConstruction);
-      this.overflowedDuringConstruction = null;
-    }
+    this._checkOverflow();
 
     this.initialized = true;
   },
 
   uninit() {
-    this._toolbar.removeEventListener("overflow", this._toolbar);
-    this._toolbar.removeEventListener("underflow", this._toolbar);
     this._toolbar.removeAttribute("overflowable");
 
     if (!this.initialized) {
@@ -4816,28 +4829,11 @@ OverflowableToolbar.prototype = {
     this._chevron.removeEventListener("dragend", this);
     this._panel.removeEventListener("popuphiding", this);
     CustomizableUI.removeListener(this);
-    this._addedListener = false;
     CustomizableUIInternal.removePanelCloseListeners(this._panel);
   },
 
   handleEvent(aEvent) {
     switch (aEvent.type) {
-      case "overflow":
-        // Ignore vertical overflow and events from from nodes inside the toolbar.
-        if (aEvent.detail > 0 && aEvent.target == this._target) {
-          if (this.initialized) {
-            this.onOverflow(aEvent);
-          } else {
-            this.overflowedDuringConstruction = aEvent;
-          }
-        }
-        break;
-      case "underflow":
-        // Ignore vertical underflow and events from from nodes inside the toolbar.
-        if (aEvent.detail > 0 && aEvent.target == this._target) {
-          this.overflowedDuringConstruction = null;
-        }
-        break;
       case "aftercustomization":
         this._enable();
         break;
@@ -4890,26 +4886,13 @@ OverflowableToolbar.prototype = {
       let mainView = doc.getElementById(mainViewId);
       let contextMenu = doc.getElementById(mainView.getAttribute("context"));
       gELS.addSystemEventListener(contextMenu, "command", this, true);
-      let anchor = doc.getAnonymousElementByAttribute(
-        this._chevron,
-        "class",
-        "toolbarbutton-icon"
-      );
-      // Ensure we update the gEditUIVisible flag when opening the popup, in
-      // case the edit controls are in it.
-      this._panel.addEventListener(
-        "popupshowing",
-        () => doc.defaultView.updateEditUIVisibility(),
-        { once: true }
-      );
-      PanelMultiView.openPopup(this._panel, anchor || this._chevron, {
-        triggerEvent: aEvent,
-      }).catch(Cu.reportError);
-      this._chevron.open = true;
+      let anchor = this._chevron.icon;
 
+      let popupshown = false;
       this._panel.addEventListener(
         "popupshown",
         () => {
+          popupshown = true;
           this._panel.addEventListener("dragover", this);
           this._panel.addEventListener("dragend", this);
           // Wait until the next tick to resolve so all popupshown
@@ -4919,7 +4902,45 @@ OverflowableToolbar.prototype = {
         },
         { once: true }
       );
+
+      let openPanel = () => {
+        // Ensure we update the gEditUIVisible flag when opening the popup, in
+        // case the edit controls are in it.
+        this._panel.addEventListener(
+          "popupshowing",
+          () => {
+            doc.defaultView.updateEditUIVisibility();
+          },
+          { once: true }
+        );
+
+        this._panel.addEventListener(
+          "popuphidden",
+          () => {
+            if (!popupshown) {
+              // The panel was hidden again before it was shown. This can break
+              // consumers waiting for the panel to show. So we try again.
+              openPanel();
+            }
+          },
+          { once: true }
+        );
+
+        PanelMultiView.openPopup(this._panel, anchor || this._chevron, {
+          triggerEvent: aEvent,
+        });
+        this._chevron.open = true;
+      };
+
+      openPanel();
     });
+  },
+
+  /**
+   * Exposes whether _onOverflow is currently running.
+   */
+  isHandlingOverflow() {
+    return !!this._onOverflowHandle;
   },
 
   _onClickChevron(aEvent) {
@@ -4949,38 +4970,70 @@ OverflowableToolbar.prototype = {
   },
 
   /**
-   * Avoid re-entrancy in the overflow handling by keeping track of invocations:
+   * Returns an array with two elements, the first one a boolean representing
+   * whether we're overflowing, the second one a number representing the
+   * maximum width items may occupy so we don't overflow.
    */
-  _lastOverflowCounter: 0,
+  async _getOverflowInfo() {
+    let win = this._target.ownerGlobal;
+    let totalAvailWidth;
+    let targetWidth;
+    await win.promiseDocumentFlushed(() => {
+      let style = win.getComputedStyle(this._toolbar);
+      totalAvailWidth =
+        this._toolbar.clientWidth -
+        parseFloat(style.paddingLeft) -
+        parseFloat(style.paddingRight);
+      for (let child of this._toolbar.children) {
+        if (child.nodeName == "panel") {
+          // Ugh. PanelUI.showSubView puts customizationui-widget-panel
+          // directly into the toolbar. (bug 1158583)
+          continue;
+        }
+        style = win.getComputedStyle(child);
+        if (
+          style.display == "none" ||
+          (style.position != "static" && style.position != "relative")
+        ) {
+          continue;
+        }
+        totalAvailWidth -=
+          parseFloat(style.marginLeft) + parseFloat(style.marginRight);
+        if (child != this._target) {
+          totalAvailWidth -= child.clientWidth;
+        }
+      }
+      targetWidth = this._target.clientWidth;
+    });
+    log.debug(
+      `Getting overflow info: target width: ${targetWidth}; available width: ${totalAvailWidth}`
+    );
+    return [targetWidth > totalAvailWidth, totalAvailWidth];
+  },
 
   /**
    * Handle overflow in the toolbar by moving items to the overflow menu.
-   * @param {Event} aEvent
-   *        The overflow event that triggered handling overflow. May be omitted
-   *        in some cases (e.g. when we run this method after overflow handling
-   *        is re-enabled from customize mode, to ensure correct handling of
-   *        initial overflow).
    */
-  async onOverflow(aEvent) {
+  async _onOverflow() {
     if (!this._enabled) {
       return;
     }
 
-    let child = this._target.lastElementChild;
-
-    let thisOverflowResponse = ++this._lastOverflowCounter;
-
     let win = this._target.ownerGlobal;
-    let [scrollLeftMin, scrollLeftMax] = await win.promiseDocumentFlushed(
-      () => {
-        return [this._target.scrollLeftMin, this._target.scrollLeftMax];
-      }
-    );
-    if (win.closed || this._lastOverflowCounter != thisOverflowResponse) {
+    let onOverflowHandle = {};
+    this._onOverflowHandle = onOverflowHandle;
+
+    let [isOverflowing] = await this._getOverflowInfo();
+
+    // Stop if the window has closed or if we re-enter while waiting for
+    // layout.
+    if (win.closed || this._onOverflowHandle != onOverflowHandle) {
+      log.debug("Window closed or another overflow handler started.");
       return;
     }
 
-    while (child && scrollLeftMin != scrollLeftMax) {
+    let child = this._target.lastElementChild;
+    while (child && isOverflowing) {
       let prevChild = child.previousElementSibling;
 
       if (child.getAttribute("overflows") != "false") {
@@ -4999,75 +5052,85 @@ OverflowableToolbar.prototype = {
         );
 
         this._list.insertBefore(child, this._list.firstElementChild);
-        if (!this._addedListener) {
-          CustomizableUI.addListener(this);
-        }
         if (!CustomizableUI.isSpecialWidget(child.id)) {
           this._toolbar.setAttribute("overflowing", "true");
         }
       }
       child = prevChild;
-      [scrollLeftMin, scrollLeftMax] = await win.promiseDocumentFlushed(() => {
-        return [this._target.scrollLeftMin, this._target.scrollLeftMax];
-      });
-      // If the window has closed or if we re-enter because we were waiting
-      // for layout, stop.
-      if (win.closed || this._lastOverflowCounter != thisOverflowResponse) {
+      [isOverflowing] = await this._getOverflowInfo();
+      // Stop if the window has closed or if we re-enter while waiting for
+      // layout.
+      if (win.closed || this._onOverflowHandle != onOverflowHandle) {
+        log.debug("Window closed or another overflow handler started.");
         return;
       }
     }
 
     win.UpdateUrlbarSearchSplitterState();
-    // Reset the counter because we finished handling overflow.
-    this._lastOverflowCounter = 0;
+
+    this._onOverflowHandle = null;
   },
 
   _onResize(aEvent) {
     // Ignore bubbled-up resize events.
-    if (aEvent.target != aEvent.target.ownerGlobal.top) {
+    if (aEvent.target != aEvent.currentTarget) {
       return;
     }
-    if (!this._lazyResizeHandler) {
-      this._lazyResizeHandler = new DeferredTask(
-        this._onLazyResize.bind(this),
-        LAZY_RESIZE_INTERVAL_MS,
-        0
-      );
-    }
-    this._lazyResizeHandler.arm();
+    this._checkOverflow();
   },
 
   /**
    * Try to move toolbar items back to the toolbar from the overflow menu.
    * @param {boolean} shouldMoveAllItems
    *        Whether we should move everything (e.g. because we're being disabled)
-   * @param {number} targetWidth
-   *        Optional; the width of the toolbar in which we can put things.
+   * @param {number} totalAvailWidth
+   *        Optional; the width of the area in which we can put things.
    *        Some consumers pass this to avoid reflows.
    *        While there are items in the list, this width won't change, and so
    *        we can avoid flushing layout by providing it and/or caching it.
    *        Note that if `shouldMoveAllItems` is true, we never need the width
    *        anyway.
    */
-  _moveItemsBackToTheirOrigin(shouldMoveAllItems, targetWidth) {
+  async _moveItemsBackToTheirOrigin(shouldMoveAllItems, totalAvailWidth) {
+    log.debug(
+      `Attempting to move ${shouldMoveAllItems ? "all" : "some"} items back`
+    );
     let placements = gPlacements.get(this._toolbar.id);
     let win = this._target.ownerGlobal;
+    let moveItemsBackToTheirOriginHandle = {};
+    this._moveItemsBackToTheirOriginHandle = moveItemsBackToTheirOriginHandle;
+
     while (this._list.firstElementChild) {
       let child = this._list.firstElementChild;
       let minSize = this._collapsed.get(child.id);
+      log.debug(`Considering moving ${child.id} back, minSize: ${minSize}`);
 
       if (!shouldMoveAllItems && minSize) {
-        if (!targetWidth) {
-          let dwu = win.windowUtils;
-          targetWidth = Math.floor(
-            dwu.getBoundsWithoutFlushing(this._target).width
-          );
+        if (!totalAvailWidth) {
+          [, totalAvailWidth] = await this._getOverflowInfo();
+
+          // If the window has closed or if we re-enter because we were waiting
+          // for layout, stop.
+          if (
+            win.closed ||
+            this._moveItemsBackToTheirOriginHandle !=
+              moveItemsBackToTheirOriginHandle
+          ) {
+            log.debug(
+              "Window closed or _moveItemsBackToTheirOrigin called again."
+            );
+            return;
+          }
         }
-        if (targetWidth <= minSize) {
+        if (totalAvailWidth <= minSize) {
+          log.debug(
+            `Need ${minSize} but width is ${totalAvailWidth} so bailing`
+          );
           break;
         }
       }
 
+      log.debug(`Moving ${child.id} back`);
       this._collapsed.delete(child.id);
       let beforeNodeIndex = placements.indexOf(child.id) + 1;
       // If this is a skipintoolbarset item, meaning it doesn't occur in the placements list,
@@ -5110,50 +5173,50 @@ OverflowableToolbar.prototype = {
     if (collapsedWidgetIds.every(w => CustomizableUI.isSpecialWidget(w))) {
       this._toolbar.removeAttribute("overflowing");
     }
-    if (this._addedListener && !this._collapsed.size) {
-      CustomizableUI.removeListener(this);
-      this._addedListener = false;
-    }
+
+    this._moveItemsBackToTheirOriginHandle = null;
   },
 
-  async _onLazyResize() {
+  async _checkOverflow() {
     if (!this._enabled) {
       return;
     }
 
     let win = this._target.ownerGlobal;
-    let [min, max, targetWidth] = await win.promiseDocumentFlushed(() => {
-      return [
-        this._target.scrollLeftMin,
-        this._target.scrollLeftMax,
-        this._target.clientWidth,
-      ];
-    });
+    if (win.document.documentElement.hasAttribute("inDOMFullscreen")) {
+      // Toolbars are hidden and cannot be made visible in DOM fullscreen mode
+      // so there's nothing to do here.
+      return;
+    }
+
+    log.debug("Checking overflow");
+    let [isOverflowing, totalAvailWidth] = await this._getOverflowInfo();
     if (win.closed) {
       return;
     }
-    if (min != max) {
-      this.onOverflow();
+
+    if (isOverflowing) {
+      this._onOverflow();
     } else {
-      this._moveItemsBackToTheirOrigin(false, targetWidth);
+      this._moveItemsBackToTheirOrigin(false, totalAvailWidth);
     }
   },
 
   _disable() {
-    this._enabled = false;
     this._moveItemsBackToTheirOrigin(true);
-    if (this._lazyResizeHandler) {
-      this._lazyResizeHandler.disarm();
-    }
+    this._enabled = false;
   },
 
   _enable() {
     this._enabled = true;
-    this.onOverflow();
+    this._checkOverflow();
   },
 
   onWidgetBeforeDOMChange(aNode, aNextNode, aContainer) {
-    if (aContainer != this._target && aContainer != this._list) {
+    if (
+      !this._enabled ||
+      (aContainer != this._target && aContainer != this._list)
+    ) {
       return;
     }
     // When we (re)move an item, update all the items that come after it in the list
@@ -5176,11 +5239,13 @@ OverflowableToolbar.prototype = {
   },
 
   onWidgetAfterDOMChange(aNode, aNextNode, aContainer) {
-    if (aContainer != this._target && aContainer != this._list) {
+    if (
+      !this._enabled ||
+      (aContainer != this._target && aContainer != this._list)
+    ) {
       return;
     }
 
-    let nowInBar = aNode.parentNode == aContainer;
     let nowOverflowed = aNode.parentNode == this._list;
     let wasOverflowed = this._collapsed.has(aNode.id);
 
@@ -5206,14 +5271,7 @@ OverflowableToolbar.prototype = {
           aNode,
           this._target
         );
-      } else if (!nowInBar) {
-        // If it is not overflowed and not in the toolbar, and was not overflowed
-        // either, it moved out of the toolbar. That means there's now space in there!
-        // Let's try to move stuff back:
-        this._moveItemsBackToTheirOrigin(true);
       }
-      // If it's in the toolbar now, then we don't care. An overflow event may
-      // fire afterwards; that's ok!
     } else if (!nowOverflowed) {
       // If it used to be overflowed...
       // ... and isn't anymore, let's remove our bookkeeping:
@@ -5231,20 +5289,16 @@ OverflowableToolbar.prototype = {
       if (collapsedWidgetIds.every(w => CustomizableUI.isSpecialWidget(w))) {
         this._toolbar.removeAttribute("overflowing");
       }
-      if (this._addedListener && !this._collapsed.size) {
-        CustomizableUI.removeListener(this);
-        this._addedListener = false;
-      }
     } else if (aNode.previousElementSibling) {
       // but if it still is, it must have changed places. Bookkeep:
       let prevId = aNode.previousElementSibling.id;
       let minSize = this._collapsed.get(prevId);
       this._collapsed.set(aNode.id, minSize);
-    } else {
-      // If it's now the first item in the overflow list,
-      // maybe we can return it:
-      this._moveItemsBackToTheirOrigin(false);
     }
+
+    // We might overflow now if an item was added, or we may be able to move
+    // stuff back into the toolbar if an item was removed.
+    this._checkOverflow();
   },
 
   findOverflowedInsertionPoints(aNode) {
@@ -5266,7 +5320,9 @@ OverflowableToolbar.prototype = {
     while (++loopIndex < placements.length) {
       let nextNodeId = placements[loopIndex];
       if (loopIndex > nodeIndex) {
-        let nextNode = aNode.ownerDocument.getElementById(nextNodeId);
+        // Note that if aNode is in a template, its `ownerDocument` is *not*
+        // going to be the browser.xhtml document, so we cannot rely on it.
+        let nextNode = this._toolbar.ownerDocument.getElementById(nextNodeId);
         // If the node we're inserting can overflow, and the next node
         // in the toolbar is overflown, we should insert this node
         // in the overflow panel before it.

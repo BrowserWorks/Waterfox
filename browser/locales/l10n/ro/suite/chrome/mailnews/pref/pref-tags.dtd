@@ -1,0 +1,33 @@
+<!--
+# Translator(s):
+#
+# stas <stas@nerd.ro>
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.tags.title            "Tag-uri">
+<!ENTITY pref.tags.caption          "Customize Tags">
+<!ENTITY pref.tags.description      "Tags can be used to categorize and prioritize your messages. Modify the appearance and importance of tags using the settings below. Tags near the top are more important than those further down.">
+<!ENTITY tagColumn.label            "Etichetează">
+<!ENTITY colorColumn.label          "Culori">
+<!ENTITY defaultTagName.label       "Untitled Tag">
+<!ENTITY addTagButton.label         "Adaugă">
+<!ENTITY addTagButton.accesskey     "A">
+<!ENTITY deleteTagButton.label      "Șterge elementul">
+<!ENTITY deleteTagButton.accesskey  "t">
+<!ENTITY raiseTagButton.label       "Raise Importance">
+<!ENTITY raiseTagButton.accesskey   "R">
+<!ENTITY lowerTagButton.label       "Lower Importance">
+<!ENTITY lowerTagButton.accesskey   "L">
+<!ENTITY restoreButton.label        "Restaurează setările implicite">
+<!ENTITY restoreButton.accesskey    "s">

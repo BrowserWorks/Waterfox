@@ -11,48 +11,35 @@ ChromeUtils.defineModuleGetter(
   "PeerConnectionIdp",
   "resource://gre/modules/media/PeerConnectionIdp.jsm"
 );
-ChromeUtils.defineModuleGetter(
-  this,
-  "convertToRTCStatsReport",
-  "resource://gre/modules/media/RTCStatsReport.jsm"
-);
 
 const PC_CONTRACT = "@mozilla.org/dom/peerconnection;1";
 const PC_OBS_CONTRACT = "@mozilla.org/dom/peerconnectionobserver;1";
 const PC_ICE_CONTRACT = "@mozilla.org/dom/rtcicecandidate;1";
 const PC_SESSION_CONTRACT = "@mozilla.org/dom/rtcsessiondescription;1";
-const PC_STATS_CONTRACT = "@mozilla.org/dom/rtcstatsreport;1";
 const PC_STATIC_CONTRACT = "@mozilla.org/dom/peerconnectionstatic;1";
 const PC_SENDER_CONTRACT = "@mozilla.org/dom/rtpsender;1";
-const PC_RECEIVER_CONTRACT = "@mozilla.org/dom/rtpreceiver;1";
 const PC_TRANSCEIVER_CONTRACT = "@mozilla.org/dom/rtptransceiver;1";
 const PC_COREQUEST_CONTRACT = "@mozilla.org/dom/createofferrequest;1";
-const PC_DTMF_SENDER_CONTRACT = "@mozilla.org/dom/rtcdtmfsender;1";
 
 const PC_CID = Components.ID("{bdc2e533-b308-4708-ac8e-a8bfade6d851}");
 const PC_OBS_CID = Components.ID("{d1748d4c-7f6a-4dc5-add6-d55b7678537e}");
 const PC_ICE_CID = Components.ID("{02b9970c-433d-4cc2-923d-f7028ac66073}");
 const PC_SESSION_CID = Components.ID("{1775081b-b62d-4954-8ffe-a067bbf508a7}");
 const PC_MANAGER_CID = Components.ID("{7293e901-2be3-4c02-b4bd-cbef6fc24f78}");
-const PC_STATS_CID = Components.ID("{7fe6e18b-0da3-4056-bf3b-440ef3809e06}");
 const PC_STATIC_CID = Components.ID("{0fb47c47-a205-4583-a9fc-cbadf8c95880}");
 const PC_SENDER_CID = Components.ID("{4fff5d46-d827-4cd4-a970-8fd53977440e}");
-const PC_RECEIVER_CID = Components.ID("{d974b814-8fde-411c-8c45-b86791b81030}");
 const PC_TRANSCEIVER_CID = Components.ID(
   "{09475754-103a-41f5-a2d0-e1f27eb0b537}"
 );
 const PC_COREQUEST_CID = Components.ID(
   "{74b2122d-65a8-4824-aa9e-3d664cb75dc2}"
 );
-const PC_DTMF_SENDER_CID = Components.ID(
-  "{3610C242-654E-11E6-8EC0-6D1BE389A607}"
-);
 
 function logMsg(msg, file, line, flag, winID) {
   let scriptErrorClass = Cc["@mozilla.org/scripterror;1"];
   let scriptError = scriptErrorClass.createInstance(Ci.nsIScriptError);
   scriptError.initWithWindowID(
-    msg,
+    `WebRTC: ${msg}`,
     file,
     null,
     line,
@@ -234,7 +221,7 @@ setupPrototype(GlobalPCList, {
   _xpcom_factory: {
     createInstance(outer, iid) {
       if (outer) {
-        throw Cr.NS_ERROR_NO_AGGREGATION;
+        throw Components.Exception("", Cr.NS_ERROR_NO_AGGREGATION);
       }
       return _globalPCList.QueryInterface(iid);
     },
@@ -270,6 +257,11 @@ class RTCSessionDescription {
   }
 
   __init({ type, sdp }) {
+    if (!type) {
+      throw new this._win.TypeError(
+        "Missing required 'type' member of RTCSessionDescriptionInit"
+      );
+    }
     Object.assign(this, { _type: type, _sdp: sdp });
   }
 
@@ -317,51 +309,8 @@ setupPrototype(RTCSessionDescription, {
   QueryInterface: ChromeUtils.generateQI([Ci.nsIDOMGlobalPropertyInitializer]),
 });
 
-class RTCStatsReport {
-  constructor(pc, dict) {
-    this._pc = pc;
-    this._win = pc._win;
-    this._pcid = dict.pcid;
-    this._report = convertToRTCStatsReport(dict);
-  }
-
-  setInternal(aKey, aObj) {
-    return this.__DOM_IMPL__.__set(aKey, aObj);
-  }
-
-  // Must be called after our webidl sandwich is made.
-
-  makeStatsPublic() {
-    for (const key in this._report) {
-      const value = this._report[key];
-      if (value.type == "local-candidate" || value.type == "remote-candidate") {
-        delete value.transportId;
-      }
-      this.setInternal(key, Cu.cloneInto(value, this._win));
-    }
-  }
-
-  get mozPcid() {
-    return this._pcid;
-  }
-
-  __onget(key, stat) {
-    return stat;
-  }
-}
-setupPrototype(RTCStatsReport, {
-  classID: PC_STATS_CID,
-  contractID: PC_STATS_CONTRACT,
-  QueryInterface: ChromeUtils.generateQI([]),
-});
-
 // Records PC related telemetry
 class PeerConnectionTelemetry {
-  // Record which style(s) of invocation for getStats are used
-  recordGetStats() {
-    Services.telemetry.scalarAdd("webrtc.peerconnection.promise_stats_used", 1);
-    this.recordGetStats = () => {};
-  }
   // ICE connection state enters connected or completed.
   recordConnected() {
     Services.telemetry.scalarAdd("webrtc.peerconnection.connected", 1);
@@ -413,49 +362,24 @@ class PeerConnectionTelemetry {
   }
 }
 
-// Cache for RTPSourceEntries
-// Note: each cache is only valid for one JS event loop execution
-class RTCRtpSourceCache {
-  constructor() {
-    // The time in RTP source time (ms)
-    this.tsNowInRtpSourceTime = null;
-    // The time in JS
-    this.jsTimestamp = null;
-    // Time difference between JS time and RTP source time
-    this.timestampOffset = null;
-    // RTPSourceEntries cached by track id
-    this.rtpSourcesByTrackId = new Map();
-    // Has a cache wipe already been scheduled
-    this.scheduledClear = null;
-  }
-}
-
 class RTCPeerConnection {
   constructor() {
-    this._receiveStreams = new Map();
-    // Used to fire onaddstream, remove when we don't do that anymore.
-    this._newStreams = [];
     this._transceivers = [];
 
     this._pc = null;
     this._closed = false;
-    this._currentRole = null;
-    this._pendingRole = null;
 
     // http://rtcweb-wg.github.io/jsep/#rfc.section.4.1.9
     // canTrickle == null means unknown; when a remote description is received it
     // is set to true or false based on the presence of the "trickle" ice-option
     this._canTrickle = null;
+    this._localUfragsToReplace = new Set();
 
-    // States
-    this._iceGatheringState = this._iceConnectionState = "new";
+    // So we can record telemetry on state transitions
+    this._iceConnectionState = "new";
 
     this._hasStunServer = this._hasTurnServer = false;
     this._iceGatheredRelayCandidates = false;
-    // Stored webrtc timing information
-    this._storedRtpSourceReferenceTime = null;
-    // Stores cached RTP sources state
-    this._rtpSourceCache = new RTCRtpSourceCache();
     // Records telemetry
     this._pcTelemetry = new PeerConnectionTelemetry();
   }
@@ -473,6 +397,17 @@ class RTCPeerConnection {
       Services.prefs.getBoolPref("media.peerconnection.ice.relay_only")
     ) {
       rtcConfig.iceTransportPolicy = "relay";
+    }
+    if ("sdpSemantics" in rtcConfig) {
+      if (rtcConfig.sdpSemantics == "plan-b") {
+        this.logWarning(
+          `Outdated and non-standard {sdpSemantics: "plan-b"} is not ` +
+            `supported! WebRTC may be unreliable. Please update code to ` +
+            `follow standard "unified-plan".`
+        );
+      }
+      // Don't let it show up in getConfiguration.
+      delete rtcConfig.sdpSemantics;
     }
     this._config = Object.assign({}, rtcConfig);
 
@@ -511,8 +446,30 @@ class RTCPeerConnection {
         "RTCPeerConnection constructor passed invalid RTCConfiguration"
       );
     }
-    var principal = Cu.getWebIDLCallerPrincipal();
-    this._isChrome = principal.isSystemPrincipal;
+
+    let certificates = rtcConfig.certificates || [];
+
+    if (certificates.some(c => c.expires <= Date.now())) {
+      throw new this._win.DOMException(
+        "Unable to create RTCPeerConnection with an expired certificate",
+        "InvalidAccessError"
+      );
+    }
+
+    // TODO(bug 1531875): Check origin of certs
+
+    // TODO(bug 1176518): Remove this code once we support multiple certs
+    let certificate;
+    if (certificates.length == 1) {
+      certificate = certificates[0];
+    } else if (certificates.length) {
+      throw new this._win.DOMException(
+        "RTCPeerConnection does not currently support multiple certificates",
+        "NotSupportedError"
+      );
+    }
+
+    this._documentPrincipal = Cu.getWebIDLCallerPrincipal();
 
     if (_globalPCList._networkdown) {
       throw new this._win.DOMException(
@@ -542,17 +499,11 @@ class RTCPeerConnection {
     this.makeGetterSetterEH("onidpvalidationerror");
 
     this._pc = new this._win.PeerConnectionImpl();
-    this._operationsChain = this._win.Promise.resolve();
+    this._operations = [];
+    this._updateNegotiationNeededOnEmptyChain = false;
 
     this.__DOM_IMPL__._innerObject = this;
     const observer = new this._win.PeerConnectionObserver(this.__DOM_IMPL__);
-
-    this._warnDeprecatedStatsRemoteAccessNullable = {
-      warn: key =>
-        this
-          .logWarning(`Detected soon-to-break getStats() use with key="${key}"! stat.isRemote goes away in Firefox 66, but won't warn there!\
- - See https://blog.mozilla.org/webrtc/getstats-isremote-66/`),
-    };
 
     // Add a reference to the PeerConnection to global list (before init).
     _globalPCList.addPC(this);
@@ -564,7 +515,7 @@ class RTCPeerConnection {
       Services.tm.currentThread
     );
 
-    this._certificateReady = this._initCertificate(rtcConfig.certificates);
+    this._certificateReady = this._initCertificate(certificate);
     this._initIdp();
     _globalPCList.notifyLifecycleObservers(this, "initialized");
   }
@@ -583,24 +534,7 @@ class RTCPeerConnection {
     return this._config;
   }
 
-  async _initCertificate(certificates = []) {
-    let certificate;
-    if (certificates.length > 1) {
-      throw new this._win.DOMException(
-        "RTCPeerConnection does not currently support multiple certificates",
-        "NotSupportedError"
-      );
-    }
-    if (certificates.length) {
-      certificate = certificates.find(c => c.expires > Date.now());
-      if (!certificate) {
-        throw new this._win.DOMException(
-          "Unable to create RTCPeerConnection with an expired certificate",
-          "InvalidParameterError"
-        );
-      }
-    }
-
+  async _initCertificate(certificate) {
     if (!certificate) {
       certificate = await this._win.RTCPeerConnection.generateCertificate({
         name: "ECDSA",
@@ -632,21 +566,31 @@ class RTCPeerConnection {
 
   // Add a function to the internal operations chain.
 
-  async _chain(func) {
-    let p = (async () => {
-      await this._operationsChain;
-      // Don't _checkClosed() inside the chain, because it throws, and spec
-      // behavior is to NOT reject outstanding promises on close. This is what
-      // happens most of the time anyways, as the c++ code stops calling us once
-      // closed, hanging the chain. However, c++ may already have queued tasks
-      // on us, so if we're one of those then sit back.
-      if (this._closed) {
-        return null;
-      }
-      return func();
-    })();
-    // don't propagate errors in the operations chain (this is a fork of p).
-    this._operationsChain = p.catch(() => {});
+  _chain(operation) {
+    let resolveP, rejectP;
+    const p = new Promise((r, e) => {
+      resolveP = r;
+      rejectP = e;
+    });
+    this._operations.push(() => {
+      operation().then(resolveP, rejectP);
+      const doNextOperation = () => {
+        if (this._closed) {
+          return;
+        }
+        this._operations.shift();
+        if (this._operations.length) {
+          this._operations[0]();
+        } else if (this._updateNegotiationNeededOnEmptyChain) {
+          this._updateNegotiationNeededOnEmptyChain = false;
+          this.updateNegotiationNeeded();
+        }
+      };
+      p.then(doNextOperation, doNextOperation);
+    });
+    if (this._operations.length == 1) {
+      this._operations[0]();
+    }
     return p;
   }
 
@@ -754,7 +698,10 @@ class RTCPeerConnection {
         return Services.io.newURI(uriStr);
       } catch (e) {
         if (e.result == Cr.NS_ERROR_MALFORMED_URI) {
-          throw new this._win.SyntaxError(`${msg} - malformed URI: ${uriStr}`);
+          throw new this._win.DOMException(
+            `${msg} - malformed URI: ${uriStr}`,
+            "SyntaxError"
+          );
         }
         throw e;
       }
@@ -770,7 +717,10 @@ class RTCPeerConnection {
         );
       }
       if (urls.length == 0) {
-        throw new this._win.SyntaxError(`${msg} - urls is empty`);
+        throw new this._win.DOMException(
+          `${msg} - urls is empty`,
+          "SyntaxError"
+        );
       }
       urls
         .map(url => nicerNewURI(url))
@@ -807,8 +757,9 @@ class RTCPeerConnection {
             this._hasStunServer = true;
             stunServers += 1;
           } else {
-            throw new this._win.SyntaxError(
-              `${msg} - improper scheme: ${scheme}`
+            throw new this._win.DOMException(
+              `${msg} - improper scheme: ${scheme}`,
+              "SyntaxError"
             );
           }
           if (scheme in { stuns: 1 }) {
@@ -854,7 +805,7 @@ class RTCPeerConnection {
       e.message,
       e.fileName,
       e.lineNumber,
-      Ci.nsIScriptError.exceptionFlag
+      Ci.nsIScriptError.errorFlag
     );
 
     // Safely call onerror directly if present (necessary for testing)
@@ -930,12 +881,13 @@ class RTCPeerConnection {
     } else {
       options = optionsOrOnSucc;
     }
-
+    if (this._localUfragsToReplace.size > 0) {
+      options.iceRestart = true;
+    }
     // This entry-point handles both new and legacy call sig. Decipher which one
     if (onSuccess) {
       return this._legacy(onSuccess, onErr, () => this._createOffer(options));
     }
-
     return this._async(() => this._createOffer(options));
   }
 
@@ -983,29 +935,40 @@ class RTCPeerConnection {
       });
   }
 
-  async _createOffer(options) {
+  _createOffer(options) {
     this._checkClosed();
     this._ensureTransceiversForOfferToReceive(options);
     this._syncTransceivers();
-    let origin = Cu.getWebIDLCallerPrincipal().origin;
-    return this._chain(async () => {
-      let haveAssertion;
-      if (this._localIdp.enabled) {
-        haveAssertion = this._getIdentityAssertion(origin);
-      }
-      await this._getPermission();
-      await this._certificateReady;
-      let sdp = await new Promise((resolve, reject) => {
-        this._onCreateOfferSuccess = resolve;
-        this._onCreateOfferFailure = reject;
-        this._impl.createOffer(options);
-      });
-      if (haveAssertion) {
-        await haveAssertion;
-        sdp = this._localIdp.addIdentityAttribute(sdp);
-      }
-      return Cu.cloneInto({ type: "offer", sdp }, this._win);
+    return this._chain(() => this._createAnOffer(options));
+  }
+
+  async _createAnOffer(options = {}) {
+    switch (this.signalingState) {
+      case "stable":
+      case "have-local-offer":
+        break;
+      default:
+        throw new this._win.DOMException(
+          `Cannot create offer in ${this.signalingState}`,
+          "InvalidStateError"
+        );
+    }
+    let haveAssertion;
+    if (this._localIdp.enabled) {
+      haveAssertion = this._getIdentityAssertion();
+    }
+    await this._getPermission();
+    await this._certificateReady;
+    let sdp = await new Promise((resolve, reject) => {
+      this._onCreateOfferSuccess = resolve;
+      this._onCreateOfferFailure = reject;
+      this._impl.createOffer(options);
     });
+    if (haveAssertion) {
+      await haveAssertion;
+      sdp = this._localIdp.addIdentityAttribute(sdp);
+    }
+    return Cu.cloneInto({ type: "offer", sdp }, this._win);
   }
 
   createAnswer(optionsOrOnSucc, onErr) {
@@ -1016,49 +979,41 @@ class RTCPeerConnection {
     return this._async(() => this._createAnswer(optionsOrOnSucc));
   }
 
-  async _createAnswer(options) {
+  _createAnswer(options) {
     this._checkClosed();
     this._syncTransceivers();
-    let origin = Cu.getWebIDLCallerPrincipal().origin;
-    return this._chain(async () => {
-      // We give up line-numbers in errors by doing this here, but do all
-      // state-checks inside the chain, to support the legacy feature that
-      // callers don't have to wait for setRemoteDescription to finish.
-      if (!this.remoteDescription) {
-        throw new this._win.DOMException(
-          "setRemoteDescription not called",
-          "InvalidStateError"
-        );
-      }
-      if (this.remoteDescription.type != "offer") {
-        throw new this._win.DOMException(
-          "No outstanding offer",
-          "InvalidStateError"
-        );
-      }
-      let haveAssertion;
-      if (this._localIdp.enabled) {
-        haveAssertion = this._getIdentityAssertion(origin);
-      }
-      await this._getPermission();
-      await this._certificateReady;
-      let sdp = await new Promise((resolve, reject) => {
-        this._onCreateAnswerSuccess = resolve;
-        this._onCreateAnswerFailure = reject;
-        this._impl.createAnswer();
-      });
-      if (haveAssertion) {
-        await haveAssertion;
-        sdp = this._localIdp.addIdentityAttribute(sdp);
-      }
-      return Cu.cloneInto({ type: "answer", sdp }, this._win);
+    return this._chain(() => this._createAnAnswer());
+  }
+
+  async _createAnAnswer() {
+    if (this.signalingState != "have-remote-offer") {
+      throw new this._win.DOMException(
+        `Cannot create answer in ${this.signalingState}`,
+        "InvalidStateError"
+      );
+    }
+    let haveAssertion;
+    if (this._localIdp.enabled) {
+      haveAssertion = this._getIdentityAssertion();
+    }
+    await this._getPermission();
+    await this._certificateReady;
+    let sdp = await new Promise((resolve, reject) => {
+      this._onCreateAnswerSuccess = resolve;
+      this._onCreateAnswerFailure = reject;
+      this._impl.createAnswer();
     });
+    if (haveAssertion) {
+      await haveAssertion;
+      sdp = this._localIdp.addIdentityAttribute(sdp);
+    }
+    return Cu.cloneInto({ type: "answer", sdp }, this._win);
   }
 
   async _getPermission() {
     if (!this._havePermission) {
-      let privileged =
-        this._isChrome ||
+      const privileged =
+        this._documentPrincipal.isSystemPrincipal ||
         Services.prefs.getBoolPref("media.navigator.permission.disabled");
 
       if (privileged) {
@@ -1082,20 +1037,7 @@ class RTCPeerConnection {
     return this._havePermission;
   }
 
-  _sanityCheckSdp(action, type, sdp) {
-    if (action === undefined) {
-      throw new this._win.DOMException(
-        "Invalid type " + type + " provided to setLocalDescription",
-        "InvalidParameterError"
-      );
-    }
-    if (action == Ci.IPeerConnection.kActionPRAnswer) {
-      throw new this._win.DOMException(
-        "pranswer not yet implemented",
-        "NotSupportedError"
-      );
-    }
-
+  _sanityCheckSdp(sdp) {
     // The fippo butter finger filter AKA non-ASCII chars
     // Note: SDP allows non-ASCII character in the subject (who cares?)
     // eslint-disable-next-line no-control-regex
@@ -1112,26 +1054,56 @@ class RTCPeerConnection {
     return this._auto(onSucc, onErr, () => this._setLocalDescription(desc));
   }
 
-  async _setLocalDescription({ type, sdp }) {
+  _setLocalDescription({ type, sdp }) {
+    if (type == "pranswer") {
+      throw new this._win.DOMException(
+        "pranswer not yet implemented",
+        "NotSupportedError"
+      );
+    }
     this._checkClosed();
-
-    let action = this._actions[type];
-
-    this._sanityCheckSdp(action, type, sdp);
-
     return this._chain(async () => {
-      await this._getPermission();
+      // Avoid Promise.all ahead of synchronous part of spec algorithm, since it
+      // defers. NOTE: The spec says to return an already-rejected promise in
+      // some cases, which is difficult to achieve in practice from JS (would
+      // require avoiding await and then() entirely), but we want to come as
+      // close as we reasonably can.
+      const p = this._getPermission();
+      if (!type) {
+        switch (this.signalingState) {
+          case "stable":
+          case "have-local-offer":
+          case "have-remote-pranswer":
+            type = "offer";
+            break;
+          default:
+            type = "answer";
+            break;
+        }
+      }
+      if (!sdp) {
+        if (type == "offer") {
+          await this._createAnOffer();
+        } else if (type == "answer") {
+          await this._createAnAnswer();
+        }
+      } else {
+        this._sanityCheckSdp(sdp);
+      }
       await new Promise((resolve, reject) => {
-        this._onSetLocalDescriptionSuccess = resolve;
-        this._onSetLocalDescriptionFailure = reject;
-        this._impl.setLocalDescription(action, sdp);
+        this._onSetDescriptionSuccess = resolve;
+        this._onSetDescriptionFailure = reject;
+        this._impl.setLocalDescription(this._actions[type], sdp);
       });
+      await p;
       this._negotiationNeeded = false;
       if (type == "answer") {
-        this._currentRole = "answerer";
-        this._pendingRole = null;
-      } else {
-        this._pendingRole = "offerer";
+        if (this._localUfragsToReplace.size > 0) {
+          const ufrags = new Set(this._getUfragsWithPwds(sdp));
+          if (![...this._localUfragsToReplace].some(uf => ufrags.has(uf))) {
+            this._localUfragsToReplace.clear();
+          }
+        }
       }
       this.updateNegotiationNeeded();
     });
@@ -1141,51 +1113,57 @@ class RTCPeerConnection {
     // Only run a single identity verification at a time.  We have to do this to
     // avoid problems with the fact that identity validation doesn't block the
     // resolution of setRemoteDescription().
-    let p = (async () => {
-      // Should never throw
+    const validate = async () => {
       await this._lastIdentityValidation;
-      try {
-        const msg = await this._remoteIdp.verifyIdentityFromSDP(sdp, origin);
-        // If this pc has an identity already, then the identity in sdp must match
-        if (
-          this._impl.peerIdentity &&
-          (!msg || msg.identity !== this._impl.peerIdentity)
-        ) {
-          throw new this._win.DOMException(
-            "Peer Identity mismatch, expected: " + this._impl.peerIdentity,
-            "IncompatibleSessionDescriptionError"
-          );
-        }
-
-        if (msg) {
-          // Set new identity and generate an event.
-          this._impl.peerIdentity = msg.identity;
-          this._resolvePeerIdentity(
-            Cu.cloneInto(
-              {
-                idp: this._remoteIdp.provider,
-                name: msg.identity,
-              },
-              this._win
-            )
-          );
-        }
-      } catch (e) {
-        this._rejectPeerIdentity(e);
-        // If we don't expect a specific peer identity, failure to get a valid
-        // peer identity is not a terminal state, so replace the promise to
-        // allow another attempt.
-        if (!this._impl.peerIdentity) {
-          this._resetPeerIdentityPromise();
-        }
-        throw e;
+      const msg = await this._remoteIdp.verifyIdentityFromSDP(sdp, origin);
+      // If this pc has an identity already, then the identity in sdp must match
+      if (
+        this._impl.peerIdentity &&
+        (!msg || msg.identity !== this._impl.peerIdentity)
+      ) {
+        throw new this._win.DOMException(
+          "Peer Identity mismatch, expected: " + this._impl.peerIdentity,
+          "OperationError"
+        );
       }
-    })();
-    this._lastIdentityValidation = p.catch(() => {});
+
+      if (msg) {
+        // Set new identity and generate an event.
+        this._impl.peerIdentity = msg.identity;
+        this._resolvePeerIdentity(
+          Cu.cloneInto(
+            {
+              idp: this._remoteIdp.provider,
+              name: msg.identity,
+            },
+            this._win
+          )
+        );
+      }
+    };
+
+    const haveValidation = validate();
+
+    // Always eat errors on this chain
+    this._lastIdentityValidation = haveValidation.catch(() => {});
+
+    // If validation fails, we have some work to do. Fork it so it cannot
+    // interfere with the validation chain itself, even if the catch function
+    // throws.
+    haveValidation.catch(e => {
+      this._rejectPeerIdentity(e);
+
+      // If we don't expect a specific peer identity, failure to get a valid
+      // peer identity is not a terminal state, so replace the promise to
+      // allow another attempt.
+      if (!this._impl.peerIdentity) {
+        this._resetPeerIdentityPromise();
+      }
+    });
 
     // Only wait for IdP validation if we need identity matching
     if (this._impl.peerIdentity) {
-      await p;
+      await haveValidation;
     }
   }
 
@@ -1193,38 +1171,60 @@ class RTCPeerConnection {
     return this._auto(onSucc, onErr, () => this._setRemoteDescription(desc));
   }
 
-  async _setRemoteDescription({ type, sdp }) {
+  _setRemoteDescription({ type, sdp }) {
+    if (!type) {
+      throw new this._win.TypeError(
+        "Missing required 'type' member of RTCSessionDescriptionInit"
+      );
+    }
+    if (type == "pranswer") {
+      throw new this._win.DOMException(
+        "pranswer not yet implemented",
+        "NotSupportedError"
+      );
+    }
     this._checkClosed();
-
-    let action = this._actions[type];
-
-    this._sanityCheckSdp(action, type, sdp);
-
-    // Get caller's origin before hitting the promise chain
-    let origin = Cu.getWebIDLCallerPrincipal().origin;
-
     return this._chain(async () => {
-      let haveSetRemote = (async () => {
-        await this._getPermission();
+      const haveSetRemote = (async () => {
+        if (type == "offer" && this.signalingState == "have-local-offer") {
+          await new Promise((resolve, reject) => {
+            this._onSetDescriptionSuccess = resolve;
+            this._onSetDescriptionFailure = reject;
+            this._impl.setLocalDescription(
+              Ci.IPeerConnection.kActionRollback,
+              ""
+            );
+          });
+          this._transceivers = this._transceivers.filter(t => !t.shouldRemove);
+          this._updateCanTrickle();
+        }
+        this._sanityCheckSdp(sdp);
+        const p = this._getPermission();
         await new Promise((resolve, reject) => {
-          this._onSetRemoteDescriptionSuccess = resolve;
-          this._onSetRemoteDescriptionFailure = reject;
-          this._impl.setRemoteDescription(action, sdp);
+          this._onSetDescriptionSuccess = resolve;
+          this._onSetDescriptionFailure = reject;
+          this._impl.setRemoteDescription(this._actions[type], sdp);
         });
+        await p;
+        this._transceivers = this._transceivers.filter(t => !t.shouldRemove);
         this._updateCanTrickle();
       })();
 
-      if (action != Ci.IPeerConnection.kActionRollback) {
+      if (type != "rollback") {
         // Do setRemoteDescription and identity validation in parallel
-        await this._validateIdentity(sdp, origin);
+        await this._validateIdentity(sdp);
       }
       await haveSetRemote;
       this._negotiationNeeded = false;
       if (type == "answer") {
-        this._currentRole = "offerer";
-        this._pendingRole = null;
-      } else {
-        this._pendingRole = "answerer";
+        if (this._localUfragsToReplace.size > 0) {
+          const ufrags = new Set(
+            this._getUfragsWithPwds(this._impl.currentLocalDescription)
+          );
+          if (![...this._localUfragsToReplace].some(uf => ufrags.has(uf))) {
+            this._localUfragsToReplace.clear();
+          }
+        }
       }
       this.updateNegotiationNeeded();
     });
@@ -1241,16 +1241,18 @@ class RTCPeerConnection {
     );
   }
 
-  async _getIdentityAssertion(origin) {
+  async _getIdentityAssertion() {
     await this._certificateReady;
-    return this._localIdp.getIdentityAssertion(this._impl.fingerprint, origin);
+    return this._localIdp.getIdentityAssertion(
+      this._impl.fingerprint,
+      this._documentPrincipal.origin
+    );
   }
 
   getIdentityAssertion() {
     this._checkClosed();
-    let origin = Cu.getWebIDLCallerPrincipal().origin;
     return this._win.Promise.resolve(
-      this._chain(() => this._getIdentityAssertion(origin))
+      this._chain(() => this._getIdentityAssertion())
     );
   }
 
@@ -1293,9 +1295,8 @@ class RTCPeerConnection {
       cand.sdpMid == null &&
       cand.sdpMLineIndex == null
     ) {
-      throw new this._win.DOMException(
-        "Cannot add a candidate without specifying either sdpMid or sdpMLineIndex",
-        "TypeError"
+      throw new this._win.TypeError(
+        "Cannot add a candidate without specifying either sdpMid or sdpMLineIndex"
       );
     }
     return this._auto(onSucc, onErr, () => this._addIceCandidate(cand));
@@ -1308,7 +1309,16 @@ class RTCPeerConnection {
     usernameFragment,
   }) {
     this._checkClosed();
-    return this._chain(() => {
+    return this._chain(async () => {
+      if (
+        !this._impl.pendingRemoteDescription.length &&
+        !this._impl.currentRemoteDescription.length
+      ) {
+        throw new this._win.DOMException(
+          "No remoteDescription.",
+          "InvalidStateError"
+        );
+      }
       return new Promise((resolve, reject) => {
         this._onAddIceCandidateSuccess = resolve;
         this._onAddIceCandidateError = reject;
@@ -1320,6 +1330,32 @@ class RTCPeerConnection {
         );
       });
     });
+  }
+
+  restartIce() {
+    this._localUfragsToReplace = new Set([
+      ...this._getUfragsWithPwds(this._impl.currentLocalDescription),
+      ...this._getUfragsWithPwds(this._impl.pendingLocalDescription),
+    ]);
+    this.updateNegotiationNeeded();
+  }
+
+  _getUfragsWithPwds(sdp) {
+    return (
+      sdp
+        .split("\r\nm=")
+        .map(block => block.split("\r\n"))
+        .map(lines => [
+          lines.find(l => l.startsWith("a=ice-ufrag:")),
+          lines.find(l => l.startsWith("a=ice-pwd:")),
+        ])
+        // Even though our own SDP doesn't currently do this: JSEP says properties
+        // found in the session (array[0]) apply to all m-lines that don't specify
+        // them, like default values.
+        .map(([a, b], i, array) => [a || array[0][0], b || array[0][1]])
+        .filter(([a, b]) => a && b)
+        .map(array => array.join())
+    );
   }
 
   addStream(stream) {
@@ -1430,48 +1466,6 @@ class RTCPeerConnection {
     this._transceivers.push(transceiver);
   }
 
-  /* Returns a dictionary with three keys:
-   * sources: a list of contributing and synchronization sources
-   * sourceClockOffset: an offset to apply to the source timestamp to get a
-   * very close approximation of the sample time with respect to the local
-   * clock.
-   * jsTimestamp: the current JS time
-   * Note: because the two clocks can drift with respect to each other, once
-   *  a timestamp offset has been calculated it should not be recalculated
-   *  until the timestamp changes, this way it will not appear as if a new
-   *  audio level sample has arrived.
-   */
-  _getRtpSources(receiver) {
-    let cache = this._rtpSourceCache;
-    // Schedule cache invalidation
-    if (!cache.scheduledClear) {
-      cache.scheduledClear = true;
-      Promise.resolve().then(() => {
-        this._rtpSourceCache = new RTCRtpSourceCache();
-      });
-    }
-    // Fetch the RTP source local time, store it for reuse, calculate
-    // the local offset, likewise store it for reuse.
-    if (cache.tsNowInRtpSourceTime !== undefined) {
-      cache.tsNowInRtpSourceTime = this._impl.getNowInRtpSourceReferenceTime();
-      cache.jsTimestamp =
-        this._win.performance.now() + this._win.performance.timeOrigin;
-      cache.timestampOffset = cache.jsTimestamp - cache.tsNowInRtpSourceTime;
-    }
-    let id = receiver.track.id;
-    if (cache.rtpSourcesByTrackId[id] === undefined) {
-      cache.rtpSourcesByTrackId[id] = this._impl.getRtpSources(
-        receiver.track,
-        cache.tsNowInRtpSourceTime
-      );
-    }
-    return {
-      sources: cache.rtpSourcesByTrackId[id],
-      sourceClockOffset: cache.timestampOffset,
-      jsTimestamp: cache.jsTimestamp,
-    };
-  }
-
   addTransceiver(sendTrackOrKind, init) {
     this._checkClosed();
     let transceiver = this._addTransceiverNoEvents(sendTrackOrKind, init);
@@ -1484,115 +1478,34 @@ class RTCPeerConnection {
   }
 
   updateNegotiationNeeded() {
-    if (this._closed || this.signalingState != "stable") {
+    if (this._operations.length) {
+      this._updateNegotiationNeededOnEmptyChain = true;
       return;
     }
-
-    let negotiationNeeded = this._impl.checkNegotiationNeeded();
-    if (!negotiationNeeded) {
-      this._negotiationNeeded = false;
-      return;
-    }
-
-    if (this._negotiationNeeded) {
-      return;
-    }
-
-    this._negotiationNeeded = true;
-
     this._queueTaskWithClosedCheck(() => {
+      if (this._operations.length) {
+        this._updateNegotiationNeededOnEmptyChain = true;
+        return;
+      }
+      if (this.signalingState != "stable") {
+        return;
+      }
+
+      const negotiationNeeded =
+        this._impl.checkNegotiationNeeded() ||
+        this._localUfragsToReplace.size > 0;
+      if (!negotiationNeeded) {
+        this._negotiationNeeded = false;
+        return;
+      }
+
       if (this._negotiationNeeded) {
-        this.dispatchEvent(new this._win.Event("negotiationneeded"));
+        return;
       }
+
+      this._negotiationNeeded = true;
+      this.dispatchEvent(new this._win.Event("negotiationneeded"));
     });
-  }
-
-  _processTrackAdditionsAndRemovals() {
-    const removeList = [];
-    const addList = [];
-    const muteTracks = [];
-    const trackEventInits = [];
-
-    for (const transceiver of this._transceivers) {
-      transceiver.receiver.processTrackAdditionsAndRemovals(transceiver, {
-        removeList,
-        addList,
-        muteTracks,
-        trackEventInits,
-      });
-    }
-
-    muteTracks.forEach(track => {
-      // Check this as late as possible, in case JS has messed with this state.
-      if (!track.muted) {
-        track.mutedChanged(true);
-      }
-    });
-
-    for (const { stream, track } of removeList) {
-      // Check this as late as possible, in case JS messes with the track lists.
-      if (stream.getTracks().includes(track)) {
-        stream.removeTrack(track);
-        // Removing tracks from JS does not result in the stream getting a
-        // removetrack event, so we need to do that here.
-        stream.dispatchEvent(
-          new this._win.MediaStreamTrackEvent("removetrack", { track })
-        );
-      }
-    }
-
-    for (const { stream, track } of addList) {
-      // Check this as late as possible, in case JS messes with the track lists.
-      if (!stream.getTracks().includes(track)) {
-        stream.addTrack(track);
-        // Adding tracks from JS does not result in the stream getting an
-        // addtrack event, so we need to do that here.
-        stream.dispatchEvent(
-          new this._win.MediaStreamTrackEvent("addtrack", { track })
-        );
-      }
-    }
-
-    trackEventInits.forEach(init => {
-      this.dispatchEvent(new this._win.RTCTrackEvent("track", init));
-      // Fire legacy event as well for a little bit.
-      this.dispatchEvent(
-        new this._win.MediaStreamTrackEvent("addtrack", { track: init.track })
-      );
-    });
-  }
-
-  // TODO(Bug 1241291): Legacy event, remove eventually
-  _fireLegacyAddStreamEvents() {
-    for (let stream of this._newStreams) {
-      let ev = new this._win.MediaStreamEvent("addstream", { stream });
-      this.dispatchEvent(ev);
-    }
-    this._newStreams = [];
-  }
-
-  _getOrCreateStream(id) {
-    if (!this._receiveStreams.has(id)) {
-      let stream = new this._win.MediaStream();
-      stream.assignId(id);
-      this._newStreams.push(stream);
-      this._receiveStreams.set(id, stream);
-    }
-
-    return this._receiveStreams.get(id);
-  }
-
-  _insertDTMF(transceiverImpl, tones, duration, interToneGap) {
-    return this._impl.insertDTMF(
-      transceiverImpl,
-      tones,
-      duration,
-      interToneGap
-    );
-  }
-
-  _getDTMFToneBuffer(sender) {
-    return this._impl.getDTMFToneBuffer(sender.__DOM_IMPL__);
   }
 
   _replaceTrackNoRenegotiation(transceiverImpl, withTrack) {
@@ -1632,7 +1545,7 @@ class RTCPeerConnection {
 
   getRemoteStreams() {
     this._checkClosed();
-    return [...this._receiveStreams.values()];
+    return this._impl.getRemoteStreams();
   }
 
   getSenders() {
@@ -1645,36 +1558,6 @@ class RTCPeerConnection {
     return this.getTransceivers()
       .filter(transceiver => !transceiver.stopped)
       .map(transceiver => transceiver.receiver);
-  }
-
-  // test-only: get the current time using the webrtc clock
-  mozGetNowInRtpSourceReferenceTime() {
-    return this._impl.getNowInRtpSourceReferenceTime();
-  }
-
-  // test-only: insert a contributing source entry for a track
-  mozInsertAudioLevelForContributingSource(
-    receiver,
-    source,
-    timestamp,
-    hasLevel,
-    level
-  ) {
-    this._impl.insertAudioLevelForContributingSource(
-      receiver.track,
-      source,
-      timestamp,
-      hasLevel,
-      level
-    );
-  }
-
-  mozAddRIDExtension(receiver, extensionId) {
-    this._impl.addRIDExtension(receiver.track, extensionId);
-  }
-
-  mozAddRIDFilter(receiver, rid) {
-    this._impl.addRIDFilter(receiver.track, rid);
   }
 
   mozSetPacketCallback(callback) {
@@ -1699,21 +1582,21 @@ class RTCPeerConnection {
 
   get currentLocalDescription() {
     this._checkClosed();
-    let sdp = this._impl.currentLocalDescription;
+    const sdp = this._impl.currentLocalDescription;
     if (sdp.length == 0) {
       return null;
     }
-    const type = this._currentRole == "answerer" ? "answer" : "offer";
+    const type = this._impl.currentOfferer ? "offer" : "answer";
     return new this._win.RTCSessionDescription({ type, sdp });
   }
 
   get pendingLocalDescription() {
     this._checkClosed();
-    let sdp = this._impl.pendingLocalDescription;
+    const sdp = this._impl.pendingLocalDescription;
     if (sdp.length == 0) {
       return null;
     }
-    const type = this._pendingRole == "answerer" ? "answer" : "offer";
+    const type = this._impl.pendingOfferer ? "offer" : "answer";
     return new this._win.RTCSessionDescription({ type, sdp });
   }
 
@@ -1723,21 +1606,21 @@ class RTCPeerConnection {
 
   get currentRemoteDescription() {
     this._checkClosed();
-    let sdp = this._impl.currentRemoteDescription;
+    const sdp = this._impl.currentRemoteDescription;
     if (sdp.length == 0) {
       return null;
     }
-    const type = this._currentRole == "offerer" ? "answer" : "offer";
+    const type = this._impl.currentOfferer ? "answer" : "offer";
     return new this._win.RTCSessionDescription({ type, sdp });
   }
 
   get pendingRemoteDescription() {
     this._checkClosed();
-    let sdp = this._impl.pendingRemoteDescription;
+    const sdp = this._impl.pendingRemoteDescription;
     if (sdp.length == 0) {
       return null;
     }
-    const type = this._pendingRole == "offerer" ? "answer" : "offer";
+    const type = this._impl.pendingOfferer ? "answer" : "offer";
     return new this._win.RTCSessionDescription({ type, sdp });
   }
 
@@ -1754,7 +1637,7 @@ class RTCPeerConnection {
     this._impl.id = s;
   }
   get iceGatheringState() {
-    return this._iceGatheringState;
+    return this._pc.iceGatheringState;
   }
   get iceConnectionState() {
     return this._iceConnectionState;
@@ -1766,28 +1649,28 @@ class RTCPeerConnection {
     if (this._closed) {
       return "closed";
     }
-    return {
-      SignalingInvalid: "",
-      SignalingStable: "stable",
-      SignalingHaveLocalOffer: "have-local-offer",
-      SignalingHaveRemoteOffer: "have-remote-offer",
-      SignalingHaveLocalPranswer: "have-local-pranswer",
-      SignalingHaveRemotePranswer: "have-remote-pranswer",
-      SignalingClosed: "closed",
-    }[this._impl.signalingState];
+    return this._impl.signalingState;
   }
 
-  changeIceGatheringState(state) {
-    this._iceGatheringState = state;
+  handleIceGatheringStateChange() {
     _globalPCList.notifyLifecycleObservers(this, "icegatheringstatechange");
     this.dispatchEvent(new this._win.Event("icegatheringstatechange"));
+    if (this.iceGatheringState === "complete") {
+      this.dispatchEvent(
+        new this._win.RTCPeerConnectionIceEvent("icecandidate", {
+          candidate: null,
+        })
+      );
+    }
   }
 
   changeIceConnectionState(state) {
     if (state != this._iceConnectionState) {
       this._iceConnectionState = state;
       _globalPCList.notifyLifecycleObservers(this, "iceconnectionstatechange");
-      this.dispatchEvent(new this._win.Event("iceconnectionstatechange"));
+      if (!this._closed) {
+        this.dispatchEvent(new this._win.Event("iceconnectionstatechange"));
+      }
     }
   }
 
@@ -1811,26 +1694,7 @@ class RTCPeerConnection {
       }
     }
 
-    if (
-      this._iceConnectionState === "completed" ||
-      this._iceConnectionState === "connected"
-    ) {
-      this._pcTelemetry.recordGetStats();
-    }
-
-    return this._auto(onSucc, onErr, () => this._getStats(selector));
-  }
-
-  async _getStats(selector) {
-    // getStats is allowed even in closed state.
-    return this._chain(
-      () =>
-        new Promise((resolve, reject) => {
-          this._onGetStatsSuccess = resolve;
-          this._onGetStatsFailure = reject;
-          this._impl.getStats(selector);
-        })
-    );
+    return this._auto(onSucc, onErr, () => this._impl.getStats(selector));
   }
 
   createDataChannel(
@@ -1868,9 +1732,8 @@ class RTCPeerConnection {
       const byteCounter = new TextEncoder("utf-8");
 
       if (byteCounter.encode(protocol).length > 65535) {
-        throw new this._win.DOMException(
-          "protocol cannot be longer than 65535 bytes",
-          "TypeError"
+        throw new this._win.TypeError(
+          "protocol cannot be longer than 65535 bytes"
         );
       }
     }
@@ -1878,9 +1741,8 @@ class RTCPeerConnection {
     if (label.length > 32767) {
       const byteCounter = new TextEncoder("utf-8");
       if (byteCounter.encode(label).length > 65535) {
-        throw new this._win.DOMException(
-          "label cannot be longer than 65535 bytes",
-          "TypeError"
+        throw new this._win.TypeError(
+          "label cannot be longer than 65535 bytes"
         );
       }
     }
@@ -1888,19 +1750,15 @@ class RTCPeerConnection {
     if (!negotiated) {
       id = null;
     } else if (id === null) {
-      throw new this._win.DOMException(
-        "id is required when negotiated is true",
-        "TypeError"
-      );
+      throw new this._win.TypeError("id is required when negotiated is true");
     }
     if (maxPacketLifeTime !== undefined && maxRetransmits !== undefined) {
-      throw new this._win.DOMException(
-        "Both maxPacketLifeTime and maxRetransmits cannot be provided",
-        "TypeError"
+      throw new this._win.TypeError(
+        "Both maxPacketLifeTime and maxRetransmits cannot be provided"
       );
     }
     if (id == 65535) {
-      throw new this._win.DOMException("id cannot be 65535", "TypeError");
+      throw new this._win.TypeError("id cannot be 65535");
     }
     // Must determine the type where we still know if entries are undefined.
     let type;
@@ -1912,16 +1770,27 @@ class RTCPeerConnection {
       type = Ci.IPeerConnection.kDataChannelReliable;
     }
     // Synchronous since it doesn't block.
-    let dataChannel = this._impl.createDataChannel(
-      label,
-      protocol,
-      type,
-      ordered,
-      maxPacketLifeTime,
-      maxRetransmits,
-      negotiated,
-      id
-    );
+    let dataChannel;
+    try {
+      dataChannel = this._impl.createDataChannel(
+        label,
+        protocol,
+        type,
+        ordered,
+        maxPacketLifeTime,
+        maxRetransmits,
+        negotiated,
+        id
+      );
+    } catch (e) {
+      if (e.result != Cr.NS_ERROR_NOT_AVAILABLE) {
+        throw e;
+      }
+
+      const msg =
+        id === null ? "No available id could be generated" : "Id is in use";
+      throw new this._win.DOMException(msg, "OperationError");
+    }
 
     // Spec says to only do this if this is the first DataChannel created,
     // but the c++ code that does the "is negotiation needed" checking will
@@ -1978,25 +1847,12 @@ class PeerConnectionObserver {
     this._dompc._onCreateAnswerFailure(this.newError(error));
   }
 
-  onSetLocalDescriptionSuccess() {
-    this._dompc._onSetLocalDescriptionSuccess();
+  onSetDescriptionSuccess() {
+    this._dompc._onSetDescriptionSuccess();
   }
 
-  onSetRemoteDescriptionSuccess() {
-    this._dompc._processTrackAdditionsAndRemovals();
-    this._dompc._fireLegacyAddStreamEvents();
-    this._dompc._transceivers = this._dompc._transceivers.filter(
-      t => !t.shouldRemove
-    );
-    this._dompc._onSetRemoteDescriptionSuccess();
-  }
-
-  onSetLocalDescriptionError(error) {
-    this._dompc._onSetLocalDescriptionFailure(this.newError(error));
-  }
-
-  onSetRemoteDescriptionError(error) {
-    this._dompc._onSetRemoteDescriptionFailure(this.newError(error));
+  onSetDescriptionError(error) {
+    this._dompc._onSetDescriptionFailure(this.newError(error));
   }
 
   onAddIceCandidateSuccess() {
@@ -2019,8 +1875,6 @@ class PeerConnectionObserver {
         sdpMLineIndex,
         usernameFragment,
       });
-    } else {
-      candidate = null;
     }
     this.dispatchEvent(
       new win.RTCPeerConnectionIceEvent("icecandidate", { candidate })
@@ -2057,29 +1911,6 @@ class PeerConnectionObserver {
     if (pc.iceConnectionState === iceConnectionState) {
       return;
     }
-    if (pc.iceConnectionState === "new") {
-      var checking_histogram = Services.telemetry.getHistogramById(
-        "WEBRTC_ICE_CHECKING_RATE"
-      );
-      if (iceConnectionState === "checking") {
-        checking_histogram.add(true);
-      } else if (iceConnectionState === "failed") {
-        checking_histogram.add(false);
-      }
-    } else if (pc.iceConnectionState === "checking") {
-      var success_histogram = Services.telemetry.getHistogramById(
-        "WEBRTC_ICE_SUCCESS_RATE"
-      );
-      if (
-        iceConnectionState === "completed" ||
-        iceConnectionState === "connected"
-      ) {
-        success_histogram.add(true);
-        pc._pcTelemetry.recordConnected();
-      } else if (iceConnectionState === "failed") {
-        success_histogram.add(false);
-      }
-    }
 
     if (iceConnectionState === "failed") {
       if (!pc._hasStunServer) {
@@ -2100,29 +1931,6 @@ class PeerConnectionObserver {
     }
 
     pc.changeIceConnectionState(iceConnectionState);
-  }
-
-  // This method is responsible for updating iceGatheringState. This
-  // state is defined in the WebRTC specification as follows:
-  //
-  // iceGatheringState:
-  // ------------------
-  //   new        The object was just created, and no networking has occurred
-  //              yet.
-  //
-  //   gathering  The ICE agent is in the process of gathering candidates for
-  //              this RTCPeerConnection.
-  //
-  //   complete   The ICE agent has completed gathering. Events such as adding
-  //              a new interface or a new TURN server will cause the state to
-  //              go back to gathering.
-  //
-  handleIceGatheringStateChange(gatheringState) {
-    let pc = this._dompc;
-    if (pc.iceGatheringState === gatheringState) {
-      return;
-    }
-    pc.changeIceGatheringState(gatheringState);
   }
 
   onStateChange(state) {
@@ -2148,27 +1956,13 @@ class PeerConnectionObserver {
         break;
 
       case "IceGatheringState":
-        this.handleIceGatheringStateChange(this._dompc._pc.iceGatheringState);
+        this._dompc.handleIceGatheringStateChange();
         break;
 
       default:
         this._dompc.logWarning("Unhandled state type: " + state);
         break;
     }
-  }
-
-  onGetStatsSuccess(dict) {
-    let pc = this._dompc;
-    let chromeobj = new RTCStatsReport(pc, dict);
-    let webidlobj = pc._win.RTCStatsReport._create(pc._win, chromeobj);
-    chromeobj.makeStatsPublic();
-    pc._onGetStatsSuccess(webidlobj);
-  }
-
-  onGetStatsError(message) {
-    this._dompc._onGetStatsFailure(
-      this.newError({ name: "OperationError", message })
-    );
   }
 
   onTransceiverNeeded(kind, transceiverImpl) {
@@ -2181,12 +1975,30 @@ class PeerConnectionObserver {
     );
   }
 
-  onDTMFToneChange(track, tone) {
-    var pc = this._dompc;
-    var sender = pc.getSenders().find(sender => sender.track == track);
-    sender.dtmf.dispatchEvent(
-      new pc._win.RTCDTMFToneChangeEvent("tonechange", { tone })
+  fireTrackEvent(receiver, streams) {
+    const pc = this._dompc;
+    const transceiver = pc.getTransceivers().find(t => t.receiver == receiver);
+    if (!transceiver) {
+      return;
+    }
+    const track = receiver.track;
+    this.dispatchEvent(
+      new this._win.RTCTrackEvent("track", {
+        transceiver,
+        receiver,
+        track,
+        streams,
+      })
     );
+    // Fire legacy event as well for a little bit.
+    this.dispatchEvent(
+      new this._win.MediaStreamTrackEvent("addtrack", { track })
+    );
+  }
+
+  fireStreamEvent(stream) {
+    const ev = new this._win.MediaStreamEvent("addstream", { stream });
+    this.dispatchEvent(ev);
   }
 
   onPacket(level, type, sending, packet) {
@@ -2221,39 +2033,11 @@ setupPrototype(RTCPeerConnectionStatic, {
   QueryInterface: ChromeUtils.generateQI([Ci.nsIDOMGlobalPropertyInitializer]),
 });
 
-class RTCDTMFSender {
-  constructor(sender) {
-    this._sender = sender;
-  }
-
-  get toneBuffer() {
-    return this._sender._pc._getDTMFToneBuffer(this._sender);
-  }
-
-  get ontonechange() {
-    return this.__DOM_IMPL__.getEventHandler("ontonechange");
-  }
-
-  set ontonechange(handler) {
-    this.__DOM_IMPL__.setEventHandler("ontonechange", handler);
-  }
-
-  insertDTMF(tones, duration, interToneGap) {
-    this._sender._pc._checkClosed();
-    this._sender._transceiver.insertDTMF(tones, duration, interToneGap);
-  }
-}
-setupPrototype(RTCDTMFSender, {
-  classID: PC_DTMF_SENDER_CID,
-  contractID: PC_DTMF_SENDER_CONTRACT,
-  QueryInterface: ChromeUtils.generateQI([]),
-});
-
 class RTCRtpSender {
   constructor(pc, transceiverImpl, transceiver, track, kind, streams) {
     let dtmf = null;
     if (kind == "audio") {
-      dtmf = pc._win.RTCDTMFSender._create(pc._win, new RTCDTMFSender(this));
+      dtmf = transceiverImpl.dtmf;
     }
 
     Object.assign(this, {
@@ -2275,10 +2059,7 @@ class RTCRtpSender {
   async _replaceTrack(withTrack) {
     let pc = this._pc;
     if (withTrack && withTrack.kind != this._transceiver.getKind()) {
-      throw new pc._win.DOMException(
-        "Cannot replaceTrack with a different kind!",
-        "TypeError"
-      );
+      throw new pc._win.TypeError("Cannot replaceTrack with a different kind!");
     }
 
     pc._checkClosed();
@@ -2335,10 +2116,10 @@ class RTCRtpSender {
           );
         }
         if (!rid && parameters.encodings.length > 1) {
-          throw new this._pc._win.DOMException("Missing rid", "TypeError");
+          throw new this._pc._win.TypeError("Missing rid");
         }
         if (uniqueRids[rid]) {
-          throw new this._pc._win.DOMException("Duplicate rid", "TypeError");
+          throw new this._pc._win.TypeError("Duplicate rid");
         }
         uniqueRids[rid] = true;
         return uniqueRids;
@@ -2377,10 +2158,10 @@ class RTCRtpSender {
 
   getStats() {
     if (this.track) {
-      return this._pc._async(async () => this._pc._getStats(this.track));
+      return this._pc._async(async () => this._pc._impl.getStats(this.track));
     }
-    return this._pc._win.Promise.resolve().then(() =>
-      this._pc._win.RTCStatsReport._create(this._pc._win, new Map())
+    return this._pc._win.Promise.resolve().then(
+      () => new this._pc._win.RTCStatsReport()
     );
   }
 
@@ -2399,161 +2180,9 @@ setupPrototype(RTCRtpSender, {
   QueryInterface: ChromeUtils.generateQI([]),
 });
 
-class RTCRtpReceiver {
-  constructor(pc, transceiverImpl) {
-    Object.assign(this, {
-      _pc: pc,
-      _transceiverImpl: transceiverImpl,
-      track: transceiverImpl.getReceiveTrack(),
-      _recvBit: false,
-      _oldRecvBit: false,
-      _streams: [],
-      _oldstreams: [],
-      // Sync and contributing sources must be kept cached so that timestamps
-      // remain stable, as the timestamp offset can vary
-      // note key = entry.source + entry.sourceType
-      _rtpSources: new Map(),
-      _rtpSourcesJsTimestamp: null,
-    });
-  }
-
-  // TODO(bug 1401983): Create a getStats binding on TransceiverImpl, and use
-  // that here.
-  getStats() {
-    return this._pc._async(async () => this._pc.getStats(this.track));
-  }
-
-  _getRtpSource(source, type) {
-    this._fetchRtpSources();
-    return this._rtpSources.get(type + source).entry;
-  }
-
-  /* Fetch all of the RTP Contributing and Sync sources for the receiver
-   * and store them so they are available when asked for.
-   */
-  _fetchRtpSources() {
-    if (this._rtpSourcesJsTimestamp !== null) {
-      return;
-    }
-    // Queue microtask to mark the cache as stale after this task completes
-    Promise.resolve().then(() => (this._rtpSourcesJsTimestamp = null));
-    let { sources, sourceClockOffset, jsTimestamp } = this._pc._getRtpSources(
-      this
-    );
-    this._rtpSourcesJsTimestamp = jsTimestamp;
-    for (let entry of sources) {
-      // Set the clock offset for calculating the 10-second window
-      entry.sourceClockOffset = sourceClockOffset;
-      // Store the new entries or update existing entries
-      let key = entry.source + entry.sourceType;
-      let cached = this._rtpSources.get(key);
-      if (cached === undefined) {
-        this._rtpSources.set(key, entry);
-      } else if (cached.timestamp != entry.timestamp) {
-        // Only update if the timestamp has changed
-        // This also prevents the sourceClockOffset from changing unecessarily
-        // which could cause a value to flutter at the edge of the 10 second
-        // window.
-        this._rtpSources.set(key, entry);
-      }
-    }
-    // Clear old entries
-    let cutoffTime = this._rtpSourcesJsTimestamp - 10 * 1000;
-    let removeKeys = [];
-    for (let entry of this._rtpSources.values()) {
-      if (entry.timestamp + entry.sourceClockOffset < cutoffTime) {
-        removeKeys.push(entry.source + entry.sourceType);
-      }
-    }
-    for (let delKey of removeKeys) {
-      this._rtpSources.delete(delKey);
-    }
-  }
-
-  _getRtpSourcesByType(type) {
-    this._fetchRtpSources();
-    // Only return the values from within the last 10 seconds as per the spec
-    const cutoffTime = this._rtpSourcesJsTimestamp - 10 * 1000;
-    return [...this._rtpSources.values()]
-      .filter(entry => {
-        return (
-          entry.sourceType == type &&
-          entry.timestamp + entry.sourceClockOffset >= cutoffTime
-        );
-      })
-      .map(e => {
-        const newEntry = {
-          source: e.source,
-          timestamp: e.timestamp + e.sourceClockOffset,
-          audioLevel: e.audioLevel,
-        };
-        if (e.voiceActivityFlag !== undefined) {
-          Object.assign(newEntry, { voiceActivityFlag: e.voiceActivityFlag });
-        }
-        return newEntry;
-      })
-      .sort((a, b) => b.timestamp - a.timestamp);
-  }
-
-  getContributingSources() {
-    return this._getRtpSourcesByType("contributing");
-  }
-
-  getSynchronizationSources() {
-    return this._getRtpSourcesByType("synchronization");
-  }
-
-  setStreamIds(streamIds) {
-    this._streams = streamIds.map(id => this._pc._getOrCreateStream(id));
-  }
-
-  setRecvBit(recvBit) {
-    this._recvBit = recvBit;
-  }
-
-  processTrackAdditionsAndRemovals(
-    transceiver,
-    { removeList, addList, muteTracks, trackEventInits }
-  ) {
-    const receiver = this.__DOM_IMPL__;
-    const track = this.track;
-    const streams = this._streams;
-    const streamsAdded = streams.filter(s => !this._oldstreams.includes(s));
-    const streamsRemoved = this._oldstreams.filter(s => !streams.includes(s));
-
-    addList.push(...streamsAdded.map(stream => ({ stream, track })));
-    removeList.push(...streamsRemoved.map(stream => ({ stream, track })));
-    this._oldstreams = this._streams;
-
-    let needsTrackEvent = streamsAdded.length != 0;
-
-    if (this._recvBit != this._oldRecvBit) {
-      this._oldRecvBit = this._recvBit;
-      if (this._recvBit) {
-        // New track, set in case streamsAdded is empty
-        needsTrackEvent = true;
-      } else {
-        muteTracks.push(track);
-      }
-    }
-
-    if (needsTrackEvent) {
-      trackEventInits.push({ track, streams, receiver, transceiver });
-    }
-  }
-}
-setupPrototype(RTCRtpReceiver, {
-  classID: PC_RECEIVER_CID,
-  contractID: PC_RECEIVER_CONTRACT,
-  QueryInterface: ChromeUtils.generateQI([]),
-});
-
 class RTCRtpTransceiver {
   constructor(pc, transceiverImpl, init, kind, sendTrack) {
-    let receiver = pc._win.RTCRtpReceiver._create(
-      pc._win,
-      new RTCRtpReceiver(pc, transceiverImpl)
-    );
+    let receiver = transceiverImpl.receiver;
     let streams = (init && init.streams) || [];
     let sender = pc._win.RTCRtpSender._create(
       pc._win,
@@ -2669,40 +2298,6 @@ class RTCRtpTransceiver {
   unsetMid() {
     this.mid = null;
   }
-
-  insertDTMF(tones, duration, interToneGap) {
-    if (this.stopped) {
-      throw new this._pc._win.DOMException(
-        "Transceiver is stopped!",
-        "InvalidStateError"
-      );
-    }
-
-    if (!this.sender.track) {
-      throw new this._pc._win.DOMException(
-        "RTCRtpSender has no track",
-        "InvalidStateError"
-      );
-    }
-
-    duration = Math.max(40, Math.min(duration, 6000));
-    if (interToneGap < 30) {
-      interToneGap = 30;
-    }
-
-    tones = tones.toUpperCase();
-
-    if (tones.match(/[^0-9A-D#*,]/)) {
-      throw new this._pc._win.DOMException(
-        "Invalid DTMF characters",
-        "InvalidCharacterError"
-      );
-    }
-
-    // TODO (bug 1401983): Move this API to TransceiverImpl so we don't need the
-    // extra hops through RTCPeerConnection and PeerConnectionImpl
-    this._pc._insertDTMF(this._transceiverImpl, tones, duration, interToneGap);
-  }
 }
 
 setupPrototype(RTCRtpTransceiver, {
@@ -2724,15 +2319,12 @@ setupPrototype(CreateOfferRequest, {
 
 var EXPORTED_SYMBOLS = [
   "GlobalPCList",
-  "RTCDTMFSender",
   "RTCIceCandidate",
   "RTCSessionDescription",
   "RTCPeerConnection",
   "RTCPeerConnectionStatic",
-  "RTCRtpReceiver",
   "RTCRtpSender",
   "RTCRtpTransceiver",
-  "RTCStatsReport",
   "PeerConnectionObserver",
   "CreateOfferRequest",
 ];

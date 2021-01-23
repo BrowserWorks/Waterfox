@@ -137,13 +137,13 @@ class ClientRefLayer : public RefLayer, public ClientLayer {
   }
 
  protected:
-  virtual ~ClientRefLayer() { MOZ_COUNT_DTOR(ClientRefLayer); }
+  MOZ_COUNTED_DTOR_OVERRIDE(ClientRefLayer)
 
  public:
   Layer* AsLayer() override { return this; }
   ShadowableLayer* AsShadowableLayer() override { return this; }
 
-  void RenderLayer() override {}
+  void RenderLayer() override { RenderMaskLayers(this); }
 
   void ComputeEffectiveTransforms(
       const gfx::Matrix4x4& aTransformToSurface) override {

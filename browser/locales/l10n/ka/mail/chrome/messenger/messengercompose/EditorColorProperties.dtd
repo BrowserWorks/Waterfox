@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "გვერდის ფერები და ფონი">
+<!ENTITY pageColors.label "გვერდის ფერები">
+<!ENTITY defaultColorsRadio.label "სტანდარტული პალიტრა (გვერდის ფერები არ მიეთითება)">
+<!ENTITY defaultColorsRadio.accessKey "D">
+<!ENTITY defaultColorsRadio.tooltip "მხოლოდ ბროუზერის სტანდარტული პალიტრის გამოყენება">
+<!ENTITY customColorsRadio.label "თქვენი ფერების გამოყენება:">
+<!ENTITY customColorsRadio.accessKey "ქ">
+<!ENTITY customColorsRadio.tooltip "ფერების ეს პალიტრა ბროუზერის პალიტრას ჩაანაცვლებს">
+
+<!ENTITY normalText.label "ძირითადი ტექსტი">
+<!ENTITY normalText.accessKey "ძ">
+<!ENTITY linkText.label "ბმულის ტექსტი">
+<!ENTITY linkText.accessKey "ბ">
+<!ENTITY activeLinkText.label "მოქმედი ბმულის ტექსტი">
+<!ENTITY activeLinkText.accessKey "მ">
+<!ENTITY visitedLinkText.label "მონახულებული ბმულის ტექსტი">
+<!ENTITY visitedLinkText.accessKey "ო">
+<!ENTITY background.label "ფონი:">
+<!ENTITY background.accessKey "ფ">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "ფონის სურათი:">
+<!ENTITY backgroundImage.accessKey "უ">
+<!ENTITY backgroundImage.tooltip "სურათის ფაილის თქვენი გვერდის ფონად გამოყენება">
+<!ENTITY backgroundImage.shortenedDataURI "შემოკლებული URI მონაცემები (ასლის გაკეთებისას, სრული URI განთავსდება ბუფერში)">

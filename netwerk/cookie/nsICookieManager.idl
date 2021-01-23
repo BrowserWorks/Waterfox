@@ -13,17 +13,10 @@ class OriginAttributes;
 
 [ptr] native OriginAttributesPtr(mozilla::OriginAttributes);
 
-interface nsISimpleEnumerator;
-interface nsICookie2;
+interface nsICookie;
 interface nsIFile;
 
-[scriptable, function, uuid(20709db8-8dad-4e45-b33e-6e7c761dfc5d)]
-interface nsIPrivateModeCallback : nsISupports
-{
-  void callback();
-};
-
-/** 
+/**
  * An optional interface for accessing or removing the cookies
  * that are in the cookie list
  */
@@ -38,20 +31,28 @@ interface nsICookieManager : nsISupports
   void removeAll();
 
   /**
-   * Called to enumerate through each cookie in the cookie list.
-   * The objects enumerated over are of type nsICookie
-   * This enumerator should only be used for non-private browsing cookies.
-   * To retrieve an enumerator for private browsing cookies, use
+   * Returns an array of cookies in the cookie list.
+   * The objects in the array are of type nsICookie
+   * This array only contains non-private browsing cookies.
+   * To retrieve an array of private browsing cookies, use
    * getCookiesWithOriginAttributes.
    */
-  readonly attribute nsISimpleEnumerator enumerator;
+  readonly attribute Array<nsICookie> cookies;
 
   /**
-   * Called to enumerate through each session cookie in the cookie list.
-   * The objects enumerated over are of type nsICookie
-   * This enumerator should only be used for non-private browsing cookies.
+   * Returns an array of session cookies in the cookie list.
+   * The objects in the array are of type nsICookie
+   * This array only contains non-private browsing cookies.
    */
-  readonly attribute nsISimpleEnumerator sessionEnumerator;
+  readonly attribute Array<nsICookie> sessionCookies;
+
+  /**
+   * Returns current effective value of the "network.cookie.cookieBehavior".
+   */
+  readonly attribute uint32_t cookieBehavior;
+  %{C++
+    static uint32_t GetCookieBehavior();
+  %}
 
   /**
    * Called to remove an individual cookie from the cookie list, specified
@@ -66,22 +67,18 @@ interface nsICookieManager : nsISupports
    * @param aName The name specified in the cookie
    * @param aPath The path for which the cookie was set
    * @param aOriginAttributes The originAttributes of this cookie.
-   * @param aBlocked Indicates if cookies from this host should be permanently
-   *                 blocked.
    *
    */
   [implicit_jscontext]
   void remove(in AUTF8String   aHost,
               in ACString      aName,
               in AUTF8String   aPath,
-              in boolean       aBlocked,
               in jsval         aOriginAttributes);
 
   [notxpcom]
   nsresult removeNative(in AUTF8String   aHost,
                         in ACString      aName,
                         in AUTF8String   aPath,
-                        in boolean       aBlocked,
                         in OriginAttributesPtr aOriginAttributes);
 
   /**
@@ -124,7 +121,7 @@ interface nsICookieManager : nsISupports
   void add(in AUTF8String aHost,
            in AUTF8String aPath,
            in ACString    aName,
-           in ACString    aValue,
+           in AUTF8String aValue,
            in boolean     aIsSecure,
            in boolean     aIsHttpOnly,
            in boolean     aIsSession,
@@ -136,7 +133,7 @@ interface nsICookieManager : nsISupports
   nsresult addNative(in AUTF8String aHost,
                      in AUTF8String aPath,
                      in ACString    aName,
-                     in ACString    aValue,
+                     in AUTF8String aValue,
                      in boolean     aIsSecure,
                      in boolean     aIsHttpOnly,
                      in boolean     aIsSession,
@@ -188,7 +185,7 @@ interface nsICookieManager : nsISupports
   unsigned long countCookiesFromHost(in AUTF8String aHost);
 
   /**
-   * Returns an enumerator of cookies that exist within the base domain of
+   * Returns an array of cookies that exist within the base domain of
    * 'aHost'. Thus, for a host "weather.yahoo.com", the base domain would be
    * "yahoo.com", and any host or domain cookies for "yahoo.com" and its
    * subdomains would be returned.
@@ -200,25 +197,16 @@ interface nsICookieManager : nsISupports
    * @param aOriginAttributes The originAttributes of cookies that would be
    *                          retrived.
    *
-   * @return an nsISimpleEnumerator of nsICookie2 objects.
+   * @return an array of nsICookie objects.
    *
    * @see countCookiesFromHost
    */
   [implicit_jscontext]
-  nsISimpleEnumerator getCookiesFromHost(in AUTF8String aHost,
-                                         in jsval aOriginAttributes);
+  Array<nsICookie> getCookiesFromHost(in AUTF8String aHost,
+                                      in jsval aOriginAttributes);
 
   /**
-   * Import an old-style cookie file. Imported cookies will be added to the
-   * existing database. If the database contains any cookies the same as those
-   * being imported (i.e. domain, name, and path match), they will be replaced.
-   *
-   * @param aCookieFile the file to import, usually cookies.txt
-   */
-  void importCookies(in nsIFile aCookieFile);
-
-  /**
-   * Returns an enumerator of all cookies whose origin attributes matches aPattern
+   * Returns an array of all cookies whose origin attributes matches aPattern
    *
    * @param aPattern origin attribute pattern in JSON format
    *
@@ -228,8 +216,8 @@ interface nsICookieManager : nsISupports
    *        acceptable host strings. This attribute is optional. It will search
    *        all hosts if this attribute is not given.
    */
-  nsISimpleEnumerator getCookiesWithOriginAttributes(in AString aPattern,
-                                                     [optional] in AUTF8String aHost);
+  Array<nsICookie> getCookiesWithOriginAttributes(in AString aPattern,
+                                                  [optional] in AUTF8String aHost);
 
   /**
    * Remove all the cookies whose origin attributes matches aPattern
@@ -247,4 +235,20 @@ interface nsICookieManager : nsISupports
    * @param aPattern origin attribute pattern in JSON format
    */
   void removeCookiesFromExactHost(in AUTF8String aHost, in AString aPattern);
+
+  /**
+   * Removes all cookies that were created on or after aSinceWhen, and returns
+   * a Promise which will be resolved when the last such cookie has been
+   * removed.
+   *
+   * @param aSinceWhen the starting point in time after which no cookies should
+   *        be created when the Promise returned from this method is resolved.
+   */
+  [implicit_jscontext]
+  Promise removeAllSince(in int64_t aSinceWhen);
+
+  /**
+   * Retrieves all the cookies that were created on or after aSinceWhen, order
+   * by creation time */
+  Array<nsICookie> getCookiesSince(in int64_t aSinceWhen);
 };

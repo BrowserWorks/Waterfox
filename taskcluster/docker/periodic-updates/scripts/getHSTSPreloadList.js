@@ -175,7 +175,7 @@ function RedirectAndAuthStopper() {}
 RedirectAndAuthStopper.prototype = {
   // nsIChannelEventSink
   asyncOnChannelRedirect(oldChannel, newChannel, flags, callback) {
-    throw new Error(Cr.NS_ERROR_ENTITY_CHANGED);
+    throw Components.Exception("", Cr.NS_ERROR_ENTITY_CHANGED);
   },
 
   // nsIAuthPrompt2
@@ -184,7 +184,7 @@ RedirectAndAuthStopper.prototype = {
   },
 
   asyncPromptAuth(channel, callback, context, level, authInfo) {
-    throw new Error(Cr.NS_ERROR_NOT_IMPLEMENTED);
+    throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
   },
 
   getInterface(iid) {
@@ -368,15 +368,14 @@ function readCurrentList(filename) {
 }
 
 function combineLists(newHosts, currentHosts) {
+  let newHostsSet = new Set();
+
+  for (let newHost of newHosts) {
+    newHostsSet.add(newHost.name);
+  }
+
   for (let currentHost in currentHosts) {
-    let found = false;
-    for (let newHost of newHosts) {
-      if (newHost.name == currentHost) {
-        found = true;
-        break;
-      }
-    }
-    if (!found) {
+    if (!newHostsSet.has(currentHost)) {
       newHosts.push({ name: currentHost, retries: MAX_RETRIES });
     }
   }

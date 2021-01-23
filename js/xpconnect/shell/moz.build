@@ -37,6 +37,10 @@ if CONFIG['OS_ARCH'] == 'WINNT':
             '/security/sandbox/chromium-shim',
         ]
 
+        OS_LIBS += [
+            'version',
+        ]
+
         USE_LIBS += [
             'sandbox_s',
         ]
@@ -45,6 +49,10 @@ if CONFIG['OS_ARCH'] == 'WINNT':
             'winmm.dll',
             'user32.dll',
         ]
+
+    OS_LIBS += [
+        'ntdll',
+    ]
 
     DELAYLOAD_DLLS += [
         'xul.dll',

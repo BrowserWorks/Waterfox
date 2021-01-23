@@ -4,8 +4,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "necko-config.h"
-
 #define ALLOW_LATE_HTTPLOG_H_INCLUDE 1
 #include "base/basictypes.h"
 
@@ -13,9 +11,6 @@
 #include "nsIClassInfoImpl.h"
 #include "mozilla/Components.h"
 #include "mozilla/ModuleUtils.h"
-#include "nsIComponentManager.h"
-#include "nsIServiceManager.h"
-#include "nsICategoryManager.h"
 #include "nscore.h"
 #include "nsSimpleURI.h"
 #include "nsLoadGroup.h"
@@ -25,7 +20,6 @@
 #include "nsCategoryCache.h"
 #include "nsIContentSniffer.h"
 #include "nsStandardURL.h"
-#include "nsIThreadPool.h"
 #include "mozilla/net/BackgroundChannelRegistrar.h"
 #include "mozilla/net/NeckoChild.h"
 #include "RedirectChannelRegistrar.h"
@@ -85,8 +79,7 @@ nsresult nsCacheServiceConstructor(nsISupports* aOuter, const nsIID& aIID,
 
 #include "WebSocketChannel.h"
 #include "WebSocketChannelChild.h"
-namespace mozilla {
-namespace net {
+namespace mozilla::net {
 static BaseWebSocketChannel* WebSocketChannelConstructor(bool aSecure) {
   if (IsNeckoChild()) {
     return new WebSocketChannelChild(aSecure);
@@ -117,8 +110,7 @@ static BaseWebSocketChannel* WebSocketChannelConstructor(bool aSecure) {
 WEB_SOCKET_HANDLER_CONSTRUCTOR(WebSocketChannel, false)
 WEB_SOCKET_HANDLER_CONSTRUCTOR(WebSocketSSLChannel, true)
 #undef WEB_SOCKET_HANDLER_CONSTRUCTOR
-}  // namespace net
-}  // namespace mozilla
+}  // namespace mozilla::net
 
 ///////////////////////////////////////////////////////////////////////////////
 

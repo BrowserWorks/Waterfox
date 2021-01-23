@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY importDialog.windowTitle "Importer">
+<!ENTITY importAll.label          "Importer alt">
+<!ENTITY importAll.accesskey      "I">
+<!ENTITY importMail.label         "E-post">
+<!ENTITY importMail.accesskey     "E">
+<!ENTITY importAddressbook.label  "Adressebøker">
+<!ENTITY importAddressbook.accesskey "A">
+<!ENTITY importSettings.label     "Innstillingar">
+<!ENTITY importSettings.accesskey "I">
+<!ENTITY importFilters.label      "Filter">
+<!ENTITY importFilters.accesskey  "F">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "&brandShortName; E-post importvegvisar">
+
+
+<!ENTITY acctName.label           "Namn:">
+<!ENTITY acctName.accesskey       "N">
+
+<!ENTITY back.label               "&lt; Tilbake">
+<!ENTITY forward.label            "Neste &gt;">
+<!ENTITY finish.label             "Ferdig">
+<!ENTITY cancel.label             "Avbryt">
+
+
+<!ENTITY title.label              "Tittel">
+<!ENTITY processing.label         "Importerer…">

@@ -35,9 +35,9 @@ class nsNativeThemeWin : private nsNativeTheme, public nsITheme {
                                   const nsRect& aRect,
                                   const nsRect& aDirtyRect) override;
 
-  MOZ_MUST_USE LayoutDeviceIntMargin
-  GetWidgetBorder(nsDeviceContext* aContext, nsIFrame* aFrame,
-                  StyleAppearance aAppearance) override;
+  [[nodiscard]] LayoutDeviceIntMargin GetWidgetBorder(
+      nsDeviceContext* aContext, nsIFrame* aFrame,
+      StyleAppearance aAppearance) override;
 
   bool GetWidgetPadding(nsDeviceContext* aContext, nsIFrame* aFrame,
                         StyleAppearance aAppearance,
@@ -68,6 +68,8 @@ class nsNativeThemeWin : private nsNativeTheme, public nsITheme {
 
   bool ThemeDrawsFocusForWidget(StyleAppearance aAppearance) override;
 
+  bool ThemeWantsButtonInnerFocusRing(StyleAppearance) override { return true; }
+
   bool ThemeNeedsComboboxDropmarker() override;
 
   virtual bool WidgetAppearanceDependsOnWindowFocus(
@@ -92,7 +94,7 @@ class nsNativeThemeWin : private nsNativeTheme, public nsITheme {
                                        StyleAppearance aAppearance,
                                        const nsRect& aRect,
                                        const nsRect& aClipRect);
-  MOZ_MUST_USE LayoutDeviceIntMargin ClassicGetWidgetBorder(
+  [[nodiscard]] LayoutDeviceIntMargin ClassicGetWidgetBorder(
       nsDeviceContext* aContext, nsIFrame* aFrame, StyleAppearance aAppearance);
   bool ClassicGetWidgetPadding(nsDeviceContext* aContext, nsIFrame* aFrame,
                                StyleAppearance aAppearance,
@@ -105,11 +107,9 @@ class nsNativeThemeWin : private nsNativeTheme, public nsITheme {
                                   StyleAppearance aAppearance);
   void DrawCheckedRect(HDC hdc, const RECT& rc, int32_t fore, int32_t back,
                        HBRUSH defaultBack);
-  nsresult DrawCustomScrollbarPart(gfxContext* aContext, nsIFrame* aFrame,
-                                   mozilla::ComputedStyle* aStyle,
-                                   StyleAppearance aAppearance,
-                                   const nsRect& aRect,
-                                   const nsRect& aClipRect);
+  bool MayDrawCustomScrollbarPart(gfxContext* aContext, nsIFrame* aFrame,
+                                  StyleAppearance aAppearance,
+                                  const nsRect& aRect, const nsRect& aClipRect);
   uint32_t GetWidgetNativeDrawingFlags(StyleAppearance aAppearance);
   int32_t StandardGetState(nsIFrame* aFrame, StyleAppearance aAppearance,
                            bool wantFocused);
@@ -121,7 +121,7 @@ class nsNativeThemeWin : private nsNativeTheme, public nsITheme {
                                HANDLE aTheme, HDC aHdc, int aPart, int aState,
                                RECT* aWidgetRect, RECT* aClipRect);
 
-  MOZ_MUST_USE LayoutDeviceIntMargin GetCachedWidgetBorder(
+  [[nodiscard]] LayoutDeviceIntMargin GetCachedWidgetBorder(
       HANDLE aTheme, nsUXThemeClass aThemeClass, StyleAppearance aAppearance,
       int32_t aPart, int32_t aState);
 

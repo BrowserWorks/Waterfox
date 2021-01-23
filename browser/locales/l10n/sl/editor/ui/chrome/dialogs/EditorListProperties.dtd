@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Lastnosti seznama">
+
+<!ENTITY ListType.label "Vrsta seznama">
+<!ENTITY bulletStyle.label "Slog seznamskih točk:">
+<!ENTITY startingNumber.label "Začni pri:">
+<!ENTITY startingNumber.accessKey "Z">
+<!ENTITY none.value "Brez">
+<!ENTITY bulletList.value "Seznam (neoštevilčen) s seznamskimi točkami">
+<!ENTITY numberList.value "Oštevilčen seznam">
+<!ENTITY definitionList.value "Seznam določil">
+<!ENTITY changeEntireListRadio.label "Spremeni celoten seznam">
+<!ENTITY changeEntireListRadio.accessKey "z">
+<!ENTITY changeSelectedRadio.label "Spremeni samo izbrane predmete">
+<!ENTITY changeSelectedRadio.accessKey "i">

@@ -7,11 +7,19 @@
     "namespace": "manifest",
     "types": [
       {
+        "$extend": "OptionalPermissionNoPrompt",
+        "choices": [{
+          "type": "string",
+          "enum": [
+            "activeTab"
+          ]
+        }]
+      },
+      {
         "$extend": "OptionalPermission",
         "choices": [{
           "type": "string",
           "enum": [
-            "activeTab",
             "tabs"
           ]
         }]
@@ -1055,6 +1063,48 @@
                 "description": "The tab's current zoom settings."
               }
             ]
+          }
+        ]
+      },
+      {
+        "name": "goForward",
+        "type": "function",
+        "description": "Navigate to next page in tab's history, if available.",
+        "async": "callback",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "tabId",
+            "minimum": 0,
+            "optional": true,
+            "description": "The ID of the tab to navigate forward."
+          },
+          {
+            "type": "function",
+            "name": "callback",
+            "optional": true,
+            "parameters": []
+          }
+        ]
+      },
+      {
+        "name": "goBack",
+        "type": "function",
+        "description": "Navigate to previous page in tab's history, if available.",
+        "async": "callback",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "tabId",
+            "minimum": 0,
+            "optional": true,
+            "description": "The ID of the tab to navigate backward."
+          },
+          {
+            "type": "function",
+            "name": "callback",
+            "optional": true,
+            "parameters": []
           }
         ]
       }

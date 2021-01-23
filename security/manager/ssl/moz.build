@@ -4,21 +4,25 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+# osclientcerts is currently only implemented for Windows
+# osclientcerts transitively depends on winapi 0.2.8, which doesn't work with
+# AArch64
+if (CONFIG['OS_ARCH'] == 'WINNT' and CONFIG['CPU_ARCH'] != 'aarch64') or CONFIG['OS_ARCH'] == 'Darwin':
+    DIRS += [ 'osclientcerts' ]
+
 TEST_DIRS += [ 'tests' ]
 
 XPIDL_SOURCES += [
     'nsIASN1Object.idl',
     'nsIASN1PrintableItem.idl',
     'nsIASN1Sequence.idl',
-    'nsIBadCertListener2.idl',
     'nsICertificateDialogs.idl',
     'nsICertOverrideService.idl',
     'nsIClientAuthDialogs.idl',
+    'nsIClientAuthRememberService.idl',
     'nsIContentSignatureVerifier.idl',
     'nsICryptoHash.idl',
     'nsICryptoHMAC.idl',
-    'nsIGenKeypairInfoDlg.idl',
-    'nsIKeygenThread.idl',
     'nsIKeyModule.idl',
     'nsILocalCertService.idl',
     'nsINSSComponent.idl',
@@ -39,7 +43,6 @@ XPIDL_SOURCES += [
     'nsITokenPasswordDialogs.idl',
     'nsIX509Cert.idl',
     'nsIX509CertDB.idl',
-    'nsIX509CertList.idl',
     'nsIX509CertValidity.idl',
 ]
 
@@ -61,6 +64,7 @@ EXTRA_JS_MODULES.psm += [
 ]
 
 EXPORTS += [
+    'CommonSocketControl.h',
     'CryptoTask.h',
     'EnterpriseRoots.h',
     'nsClientAuthRemember.h',
@@ -69,6 +73,7 @@ EXPORTS += [
     'nsNSSComponent.h',
     'nsNSSHelper.h',
     'nsRandomGenerator.h',
+    'nsSecureBrowserUI.h',
     'nsSecurityHeaderParser.h',
     'NSSErrorsService.h',
     'nsSSLSocketProvider.h',
@@ -76,6 +81,8 @@ EXPORTS += [
     'RootCertificateTelemetryUtils.h',
     'ScopedNSSTypes.h',
     'SharedCertVerifier.h',
+    'SSLServerCertVerification.h',
+    'TransportSecurityInfo.h',
 ]
 
 EXPORTS.mozilla += [
@@ -85,7 +92,10 @@ EXPORTS.mozilla += [
 ]
 
 EXPORTS.mozilla.psm += [
-    'PSMContentListener.h',
+    'PSMIPCCommon.h',
+    'TransportSecurityInfo.h',
+    'VerifySSLServerCertChild.h',
+    'VerifySSLServerCertParent.h',
 ]
 
 EXPORTS.ipc += [
@@ -93,6 +103,7 @@ EXPORTS.ipc += [
 ]
 
 UNIFIED_SOURCES += [
+    'CommonSocketControl.cpp',
     'ContentSignatureVerifier.cpp',
     'CryptoTask.cpp',
     'CSTrustDomain.cpp',
@@ -102,9 +113,6 @@ UNIFIED_SOURCES += [
     'nsCertOverrideService.cpp',
     'nsClientAuthRemember.cpp',
     'nsCryptoHash.cpp',
-    'nsKeygenHandler.cpp',
-    'nsKeygenHandlerContent.cpp',
-    'nsKeygenThread.cpp',
     'nsKeyModule.cpp',
     'nsNSSASN1Object.cpp',
     'nsNSSCallbacks.cpp',
@@ -123,7 +131,7 @@ UNIFIED_SOURCES += [
     'nsPKCS12Blob.cpp',
     'nsProtectedAuthThread.cpp',
     'nsRandomGenerator.cpp',
-    'nsSecureBrowserUIImpl.cpp',
+    'nsSecureBrowserUI.cpp',
     'nsSecurityHeaderParser.cpp',
     'NSSErrorsService.cpp',
     'nsSiteSecurityService.cpp',
@@ -131,9 +139,8 @@ UNIFIED_SOURCES += [
     'nsSSLSocketProvider.cpp',
     'nsTLSSocketProvider.cpp',
     'OSKeyStore.cpp',
-    'OSReauthenticator.cpp',
     'PKCS11ModuleDB.cpp',
-    'PSMContentListener.cpp',
+    'PSMIPCCommon.cpp',
     'PSMRunnable.cpp',
     'PublicKeyPinningService.cpp',
     'RootCertificateTelemetryUtils.cpp',
@@ -141,9 +148,23 @@ UNIFIED_SOURCES += [
     'SharedSSLState.cpp',
     'SSLServerCertVerification.cpp',
     'TransportSecurityInfo.cpp',
+    'VerifySSLServerCertChild.cpp',
+    'VerifySSLServerCertParent.cpp',
 ]
 
-if 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
+if CONFIG['OS_ARCH'] == 'WINNT':
+    # On Windows this file includes ntsecapi.h, which contains definitions that
+    # conflict with headers included in remaining source files. We compile this
+    # one independently to prevent that interferance.
+    SOURCES += [
+        'OSReauthenticator.cpp',
+    ]
+else:
+    UNIFIED_SOURCES += [
+        'OSReauthenticator.cpp',
+    ]
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk':
     UNIFIED_SOURCES += [
         'LibSecret.cpp',
     ]
@@ -169,7 +190,8 @@ if CONFIG['OS_ARCH'] == 'WINNT':
     ]
 
 IPDL_SOURCES += [
-    'PPSMContentDownloader.ipdl',
+    'PSMIPCTypes.ipdlh',
+    'PVerifySSLServerCert.ipdl',
 ]
 
 if CONFIG['MOZ_XUL']:
@@ -201,6 +223,7 @@ FINAL_LIBRARY = 'xul'
 LOCAL_INCLUDES += [
     '/dom/base',
     '/dom/crypto',
+    '/netwerk/base',
     '/security/certverifier',
 ]
 
@@ -208,15 +231,9 @@ LOCAL_INCLUDES += [
     '!/dist/public/nss',
 ]
 
-GENERATED_FILES = [
-    'nsSTSPreloadList.h',
-]
-dafsa_data = GENERATED_FILES['nsSTSPreloadList.h']
-dafsa_data.script = '../../../xpcom/ds/tools/make_dafsa.py'
-dafsa_data.inputs = ['nsSTSPreloadList.inc']
-
-if CONFIG['NSS_DISABLE_DBM']:
-    DEFINES['NSS_DISABLE_DBM'] = '1'
+GeneratedFile('nsSTSPreloadList.h',
+              script='../../../xpcom/ds/tools/make_dafsa.py',
+              inputs=['nsSTSPreloadList.inc'])
 
 DEFINES['SSL_DISABLE_DEPRECATED_CIPHER_SUITE_NAMES'] = 'True'
 DEFINES['NSS_ENABLE_ECC'] = 'True'

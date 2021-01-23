@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Επιλογή επεξεργασίας αλλαγών">
+<!ENTITY conflictWarning.label "Η σελίδα έχει τροποποιηθεί από κάποιο άλλο πρόγραμμα, αλλά υπάρχουν και μη αποθηκευμένες αλλαγές που έγιναν με τον Composer">
+<!ENTITY conflictResolve.label "Επιλέξτε ποια έκδοση θέλετε να κρατήσετε: ">
+<!ENTITY keepCurrentPageButton.label "Διατήρηση των αλλαγών που πραγματοποιήθηκαν">
+<!ENTITY useOtherPageButton.label "Αντικατάσταση τρέχουσας σελίδας με άλλες αλλαγές">

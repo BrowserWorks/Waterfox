@@ -7,6 +7,7 @@
 #include "VRLayerChild.h"
 #include "gfxPlatform.h"
 #include "GLScreenBuffer.h"
+#include "../../../dom/canvas/ClientWebGLContext.h"
 #include "mozilla/layers/TextureClientSharedSurface.h"
 #include "SharedSurface.h"                  // for SharedSurface
 #include "SharedSurfaceGL.h"                // for SharedSurface
@@ -15,8 +16,7 @@
 #include "mozilla/dom/HTMLCanvasElement.h"
 #include "mozilla/layers/SyncObject.h"  // for SyncObjectClient
 
-namespace mozilla {
-namespace gfx {
+namespace mozilla::gfx {
 
 VRLayerChild::VRLayerChild()
     : mCanvasElement(nullptr), mIPCOpen(false), mLastSubmittedFrameId(0) {
@@ -38,6 +38,10 @@ void VRLayerChild::Initialize(dom::HTMLCanvasElement* aCanvasElement,
   mCanvasElement = aCanvasElement;
 }
 
+void VRLayerChild::SetXRFramebuffer(WebGLFramebufferJS* fb) {
+  mFramebuffer = fb;
+}
+
 void VRLayerChild::SubmitFrame(const VRDisplayInfo& aDisplayInfo) {
   uint64_t frameId = aDisplayInfo.GetFrameId();
 
@@ -48,6 +52,9 @@ void VRLayerChild::SubmitFrame(const VRDisplayInfo& aDisplayInfo) {
   if (!mCanvasElement || frameId == mLastSubmittedFrameId) {
     return;
   }
+
+  const auto& webgl = mCanvasElement->GetWebGLContext();
+  if (!webgl) return;
 
   // Keep the SharedSurfaceTextureClient alive long enough for
   // 1 extra frame, accomodating overlapped asynchronous rendering.
@@ -63,10 +70,10 @@ void VRLayerChild::SubmitFrame(const VRDisplayInfo& aDisplayInfo) {
    */
   if (!mThisFrameTexture || aDisplayInfo.mDisplayState.lastSubmittedFrameId ==
                                 mLastSubmittedFrameId) {
-    mThisFrameTexture = mCanvasElement->GetVRFrame();
+    mThisFrameTexture = webgl->GetVRFrame(mFramebuffer.get());
   }
 #else
-  mThisFrameTexture = mCanvasElement->GetVRFrame();
+  mThisFrameTexture = webgl->GetVRFrame(mFramebuffer.get());
 #endif  // defined(MOZ_WIDGET_ANDROID)
 
   mLastSubmittedFrameId = frameId;
@@ -104,6 +111,11 @@ bool VRLayerChild::IsIPCOpen() { return mIPCOpen; }
 void VRLayerChild::ClearSurfaces() {
   mThisFrameTexture = nullptr;
   mLastFrameTexture = nullptr;
+
+  const auto& webgl = mCanvasElement->GetWebGLContext();
+  if (webgl) {
+    webgl->ClearVRFrame();
+  }
 }
 
 void VRLayerChild::ActorDestroy(ActorDestroyReason aWhy) { mIPCOpen = false; }
@@ -131,5 +143,4 @@ void VRLayerChild::ReleaseIPDLReference() {
   Release();
 }
 
-}  // namespace gfx
-}  // namespace mozilla
+}  // namespace mozilla::gfx

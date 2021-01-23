@@ -7,6 +7,7 @@
 GeckoProgram('jsapi-tests', linkage=None)
 
 include('../js-cxxflags.mozbuild')
+include('../js-standalone.mozbuild')
 
 UNIFIED_SOURCES += [
     'selfTest.cpp',
@@ -16,12 +17,13 @@ UNIFIED_SOURCES += [
     'testArrayBufferView.cpp',
     'testArrayBufferWithUserOwnedContents.cpp',
     'testAtomicOperations.cpp',
+    'testAtomizeUtf8NonAsciiLatin1CodePoint.cpp',
+    'testBigInt.cpp',
     'testBoundFunction.cpp',
     'testBug604087.cpp',
     'testCallArgs.cpp',
     'testCallNonGenericMethodOnProxy.cpp',
     'testChromeBuffer.cpp',
-    'testCloneScript.cpp',
     'testCompileNonSyntactic.cpp',
     'testCompileUtf8.cpp',
     'testDateToLocaleString.cpp',
@@ -51,14 +53,13 @@ UNIFIED_SOURCES += [
     'testGCExactRooting.cpp',
     'testGCFinalizeCallback.cpp',
     'testGCGrayMarking.cpp',
-    'testGCHeapPostBarriers.cpp',
+    'testGCHeapBarriers.cpp',
     'testGCHooks.cpp',
     'testGCMarking.cpp',
     'testGCOutOfMemory.cpp',
     'testGCStoreBufferRemoval.cpp',
     'testGCUniqueId.cpp',
     'testGCWeakCache.cpp',
-    'testGCWeakRef.cpp',
     'testGetPropertyDescriptor.cpp',
     'testHashTable.cpp',
     'testIndexToString.cpp',
@@ -77,6 +78,7 @@ UNIFIED_SOURCES += [
     'testNewObject.cpp',
     'testNewTargetInvokeConstructor.cpp',
     'testNullRoot.cpp',
+    'testNumberToString.cpp',
     'testObjectEmulatingUndefined.cpp',
     'testOOM.cpp',
     'testParseJSON.cpp',
@@ -91,6 +93,7 @@ UNIFIED_SOURCES += [
     'testRegExp.cpp',
     'testResolveRecursion.cpp',
     'tests.cpp',
+    'testSABAccounting.cpp',
     'testSameValue.cpp',
     'testSavedStacks.cpp',
     'testScriptInfo.cpp',
@@ -100,6 +103,7 @@ UNIFIED_SOURCES += [
     'testSetPropertyIgnoringNamedGetter.cpp',
     'testSharedImmutableStringsCache.cpp',
     'testSourcePolicy.cpp',
+    'testSparseBitmap.cpp',
     'testStringBuffer.cpp',
     'testStringIsArrayIndex.cpp',
     'testStructuredClone.cpp',
@@ -129,7 +133,7 @@ SOURCES += [
     'hidePointer.cpp',
 ]
 
-if CONFIG['ENABLE_ION']:
+if not CONFIG['JS_CODEGEN_NONE']:
     UNIFIED_SOURCES += [
         'testJitDCEinGVN.cpp',
         'testJitFoldsTo.cpp',
@@ -160,6 +164,12 @@ if CONFIG['JS_BUILD_BINAST'] and CONFIG['JS_STANDALONE'] and not CONFIG['FUZZING
         'testBinASTReader.cpp',
     ]
 
+if CONFIG['OS_ARCH'] not in ('WINNT', 'Darwin') and CONFIG['OS_TARGET'] != 'Android':
+    # open_memstream() not available on Windows, macOS, or Android
+    UNIFIED_SOURCES += [
+        'testPrintError.cpp',
+    ]
+
 
 DEFINES['EXPORT_JS_API'] = True
 
@@ -171,16 +181,6 @@ LOCAL_INCLUDES += [
 USE_LIBS += [
     'static:js',
 ]
-
-if CONFIG['ENABLE_WASM_CRANELIFT']:
-    USE_LIBS += [
-        'jsrust'
-    ]
-
-if CONFIG['MOZ_NEEDS_LIBATOMIC']:
-    OS_LIBS += ['atomic']
-
-OS_LIBS += CONFIG['MOZ_ZLIB_LIBS']
 
 DEFINES['topsrcdir'] = '%s/js/src' % TOPSRCDIR
 OBJDIR_PP_FILES.js.src['jsapi-tests'] += ['jsapi-tests-gdb.py.in']

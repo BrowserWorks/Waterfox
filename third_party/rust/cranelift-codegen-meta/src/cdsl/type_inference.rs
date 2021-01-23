@@ -4,8 +4,8 @@ use crate::cdsl::typevar::{DerivedFunc, TypeSet, TypeVar};
 use std::collections::{HashMap, HashSet};
 use std::iter::FromIterator;
 
-#[derive(Hash, PartialEq, Eq)]
-pub enum Constraint {
+#[derive(Debug, Hash, PartialEq, Eq)]
+pub(crate) enum Constraint {
     /// Constraint specifying that a type var tv1 must be wider than or equal to type var tv2 at
     /// runtime. This requires that:
     /// 1) They have the same number of lanes
@@ -74,7 +74,7 @@ impl Constraint {
                 }
 
                 // Trivially false.
-                if (&ts1.lanes & &ts2.lanes).len() == 0 {
+                if (&ts1.lanes & &ts2.lanes).is_empty() {
                     return true;
                 }
 
@@ -122,7 +122,7 @@ enum TypeEnvRank {
 }
 
 /// Class encapsulating the necessary bookkeeping for type inference.
-pub struct TypeEnvironment {
+pub(crate) struct TypeEnvironment {
     vars: HashSet<VarIndex>,
     ranks: HashMap<TypeVar, TypeEnvRank>,
     equivalency_map: HashMap<TypeVar, TypeVar>,
@@ -155,19 +155,22 @@ impl TypeEnvironment {
     }
 
     fn add_constraint(&mut self, constraint: Constraint) {
-        if self
-            .constraints
-            .iter()
-            .find(|&item| item == &constraint)
-            .is_some()
-        {
+        if self.constraints.iter().any(|item| *item == constraint) {
             return;
         }
 
         // Check extra conditions for InTypeset constraints.
         if let Constraint::InTypeset(tv, _) = &constraint {
-            assert!(tv.base.is_none());
-            assert!(tv.name.starts_with("typeof_"));
+            assert!(
+                tv.base.is_none(),
+                "type variable is {:?}, while expecting none",
+                tv
+            );
+            assert!(
+                tv.name.starts_with("typeof_"),
+                "Name \"{}\" should start with \"typeof_\"",
+                tv.name
+            );
         }
 
         self.constraints.push(constraint);
@@ -257,7 +260,7 @@ impl TypeEnvironment {
                 .map(|tv| self.get_equivalent(tv).free_typevar())
                 .filter(|opt_tv| {
                     // Filter out singleton types.
-                    return opt_tv.is_some();
+                    opt_tv.is_some()
                 })
                 .map(|tv| tv.unwrap()),
         );
@@ -306,7 +309,7 @@ impl TypeEnvironment {
 
             children
                 .entry(parent_tv)
-                .or_insert(HashSet::new())
+                .or_insert_with(HashSet::new)
                 .insert(type_var.clone());
         }
 
@@ -314,7 +317,7 @@ impl TypeEnvironment {
         for (equivalent_tv, canon_tv) in self.equivalency_map.iter() {
             children
                 .entry(canon_tv.clone())
-                .or_insert(HashSet::new())
+                .or_insert_with(HashSet::new)
                 .insert(equivalent_tv.clone());
         }
 
@@ -364,7 +367,6 @@ impl TypeEnvironment {
 
             // Sanity check: translated constraints should refer only to real variables.
             for arg in constraint.typevar_args() {
-                assert!(vars_tv.contains(arg));
                 let arg_free_tv = arg.free_typevar();
                 assert!(arg_free_tv.is_none() || vars_tv.contains(&arg_free_tv.unwrap()));
             }
@@ -457,7 +459,7 @@ fn constrain_fixpoint(tv1: &TypeVar, tv2: &TypeVar) {
         }
     }
 
-    let old_tv2_ts = tv2.get_typeset().clone();
+    let old_tv2_ts = tv2.get_typeset();
     tv1.constrain_types(tv2.clone());
     // The above loop should ensure that all reference cycles have been handled.
     assert!(old_tv2_ts == tv2.get_typeset());
@@ -603,9 +605,9 @@ fn infer_definition(
 }
 
 /// Perform type inference on an transformation. Return an updated type environment or error.
-pub fn infer_transform(
+pub(crate) fn infer_transform(
     src: DefIndex,
-    dst: &Vec<DefIndex>,
+    dst: &[DefIndex],
     def_pool: &DefPool,
     var_pool: &mut VarPool,
 ) -> Result<TypeEnvironment, String> {
@@ -625,7 +627,7 @@ pub fn infer_transform(
         .map(|&var_index| {
             let var = var_pool.get_mut(var_index);
             let tv = type_env.get_equivalent(&var.get_or_create_typevar());
-            (var_index, tv.get_typeset().clone())
+            (var_index, tv.get_typeset())
         })
         .collect::<Vec<_>>();
 

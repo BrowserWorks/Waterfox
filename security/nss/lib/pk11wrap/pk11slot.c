@@ -397,7 +397,7 @@ PK11_NewSlotInfo(SECMODModule *mod)
     slot->defRWSession = PR_FALSE;
     slot->protectedAuthPath = PR_FALSE;
     slot->flags = 0;
-    slot->session = CK_INVALID_SESSION;
+    slot->session = CK_INVALID_HANDLE;
     slot->slotID = 0;
     slot->defaultFlags = 0;
     slot->refCount = 1;
@@ -419,6 +419,8 @@ PK11_NewSlotInfo(SECMODModule *mod)
     slot->hasRootCerts = PR_FALSE;
     slot->hasRootTrust = PR_FALSE;
     slot->nssToken = NULL;
+    slot->profileList = NULL;
+    slot->profileCount = 0;
     return slot;
 }
 
@@ -445,6 +447,9 @@ PK11_DestroySlot(PK11SlotInfo *slot)
 
     if (slot->mechanismList) {
         PORT_Free(slot->mechanismList);
+    }
+    if (slot->profileList) {
+        PORT_Free(slot->profileList);
     }
     if (slot->isThreadSafe && slot->sessionLock) {
         PZ_DestroyLock(slot->sessionLock);
@@ -732,22 +737,22 @@ PK11_GetRWSession(PK11SlotInfo *slot)
         haveMonitor = PR_TRUE;
     }
     if (slot->defRWSession) {
-        PORT_Assert(slot->session != CK_INVALID_SESSION);
-        if (slot->session != CK_INVALID_SESSION)
+        PORT_Assert(slot->session != CK_INVALID_HANDLE);
+        if (slot->session != CK_INVALID_HANDLE)
             return slot->session;
     }
 
     crv = PK11_GETTAB(slot)->C_OpenSession(slot->slotID,
                                            CKF_RW_SESSION | CKF_SERIAL_SESSION,
                                            slot, pk11_notify, &rwsession);
-    PORT_Assert(rwsession != CK_INVALID_SESSION || crv != CKR_OK);
-    if (crv != CKR_OK || rwsession == CK_INVALID_SESSION) {
+    PORT_Assert(rwsession != CK_INVALID_HANDLE || crv != CKR_OK);
+    if (crv != CKR_OK || rwsession == CK_INVALID_HANDLE) {
         if (crv == CKR_OK)
             crv = CKR_DEVICE_ERROR;
         if (haveMonitor)
             PK11_ExitSlotMonitor(slot);
         PORT_SetError(PK11_MapError(crv));
-        return CK_INVALID_SESSION;
+        return CK_INVALID_HANDLE;
     }
     if (slot->defRWSession) { /* we have the monitor */
         slot->session = rwsession;
@@ -760,7 +765,7 @@ PK11_RWSessionHasLock(PK11SlotInfo *slot, CK_SESSION_HANDLE session_handle)
 {
     PRBool hasLock;
     hasLock = (PRBool)(!slot->isThreadSafe ||
-                       (slot->defRWSession && slot->session != CK_INVALID_SESSION));
+                       (slot->defRWSession && slot->session != CK_INVALID_HANDLE));
     return hasLock;
 }
 
@@ -770,7 +775,7 @@ pk11_RWSessionIsDefault(PK11SlotInfo *slot, CK_SESSION_HANDLE rwsession)
     PRBool isDefault;
     isDefault = (PRBool)(slot->session == rwsession &&
                          slot->defRWSession &&
-                         slot->session != CK_INVALID_SESSION);
+                         slot->session != CK_INVALID_HANDLE);
     return isDefault;
 }
 
@@ -782,8 +787,8 @@ pk11_RWSessionIsDefault(PK11SlotInfo *slot, CK_SESSION_HANDLE rwsession)
 void
 PK11_RestoreROSession(PK11SlotInfo *slot, CK_SESSION_HANDLE rwsession)
 {
-    PORT_Assert(rwsession != CK_INVALID_SESSION);
-    if (rwsession != CK_INVALID_SESSION) {
+    PORT_Assert(rwsession != CK_INVALID_HANDLE);
+    if (rwsession != CK_INVALID_HANDLE) {
         PRBool doExit = PK11_RWSessionHasLock(slot, rwsession);
         if (!pk11_RWSessionIsDefault(slot, rwsession))
             PK11_GETTAB(slot)
@@ -1170,6 +1175,76 @@ PK11_ReadMechanismList(PK11SlotInfo *slot)
     return SECSuccess;
 }
 
+static SECStatus
+pk11_ReadProfileList(PK11SlotInfo *slot)
+{
+    CK_ATTRIBUTE findTemp[2];
+    CK_ATTRIBUTE *attrs;
+    CK_BBOOL cktrue = CK_TRUE;
+    CK_OBJECT_CLASS oclass = CKO_PROFILE;
+    int tsize;
+    int objCount;
+    CK_OBJECT_HANDLE *handles = NULL;
+    int i;
+
+    attrs = findTemp;
+    PK11_SETATTRS(attrs, CKA_TOKEN, &cktrue, sizeof(cktrue));
+    attrs++;
+    PK11_SETATTRS(attrs, CKA_CLASS, &oclass, sizeof(oclass));
+    attrs++;
+    tsize = attrs - findTemp;
+    PORT_Assert(tsize <= sizeof(findTemp) / sizeof(CK_ATTRIBUTE));
+
+    if (slot->profileList) {
+        PORT_Free(slot->profileList);
+        slot->profileList = NULL;
+    }
+    slot->profileCount = 0;
+
+    objCount = 0;
+    handles = pk11_FindObjectsByTemplate(slot, findTemp, tsize, &objCount);
+    if (handles == NULL) {
+        if (objCount < 0) {
+            return SECFailure; /* error code is set */
+        }
+        PORT_Assert(objCount == 0);
+        return SECSuccess;
+    }
+
+    slot->profileList = (CK_PROFILE_ID *)
+        PORT_Alloc(objCount * sizeof(CK_PROFILE_ID));
+    if (slot->profileList == NULL) {
+        PORT_Free(handles);
+        return SECFailure; /* error code is set */
+    }
+
+    for (i = 0; i < objCount; i++) {
+        CK_ULONG value;
+
+        value = PK11_ReadULongAttribute(slot, handles[i], CKA_PROFILE_ID);
+        if (value == CK_UNAVAILABLE_INFORMATION) {
+            continue;
+        }
+        slot->profileList[slot->profileCount++] = value;
+    }
+
+    PORT_Free(handles);
+    return SECSuccess;
+}
+
+static PRBool
+pk11_HasProfile(PK11SlotInfo *slot, CK_PROFILE_ID id)
+{
+    int i;
+
+    for (i = 0; i < slot->profileCount; i++) {
+        if (slot->profileList[i] == id) {
+            return PR_TRUE;
+        }
+    }
+    return PR_FALSE;
+}
+
 /*
  * initialize a new token
  * unlike initialize slot, this can be called multiple times in the lifetime
@@ -1241,7 +1316,7 @@ PK11_InitToken(PK11SlotInfo *slot, PRBool loadCerts)
     }
 
     /* Make sure our session handle is valid */
-    if (slot->session == CK_INVALID_SESSION) {
+    if (slot->session == CK_INVALID_HANDLE) {
         /* we know we don't have a valid session, go get one */
         CK_SESSION_HANDLE session;
 
@@ -1277,7 +1352,7 @@ PK11_InitToken(PK11SlotInfo *slot, PRBool loadCerts)
                                                    slot, pk11_notify, &slot->session);
             if (crv != CKR_OK) {
                 PORT_SetError(PK11_MapError(crv));
-                slot->session = CK_INVALID_SESSION;
+                slot->session = CK_INVALID_HANDLE;
                 if (!slot->isThreadSafe)
                     PK11_ExitSlotMonitor(slot);
                 return SECFailure;
@@ -1290,6 +1365,11 @@ PK11_InitToken(PK11SlotInfo *slot, PRBool loadCerts)
     status = nssToken_Refresh(slot->nssToken);
     if (status != PR_SUCCESS)
         return SECFailure;
+
+    rv = pk11_ReadProfileList(slot);
+    if (rv != SECSuccess) {
+        return SECFailure;
+    }
 
     if (!(slot->isInternal) && (slot->hasRandom)) {
         /* if this slot has a random number generater, use it to add entropy
@@ -1331,7 +1411,7 @@ PK11_InitToken(PK11SlotInfo *slot, PRBool loadCerts)
     /* work around a problem in softoken where it incorrectly
      * reports databases opened read only as read/write. */
     if (slot->isInternal && !slot->readOnly) {
-        CK_SESSION_HANDLE session = CK_INVALID_SESSION;
+        CK_SESSION_HANDLE session = CK_INVALID_HANDLE;
 
         /* try to open a R/W session */
         crv = PK11_GETTAB(slot)->C_OpenSession(slot->slotID,
@@ -1403,7 +1483,7 @@ pk11_isRootSlot(PK11SlotInfo *slot)
 {
     CK_ATTRIBUTE findTemp[1];
     CK_ATTRIBUTE *attrs;
-    CK_OBJECT_CLASS oclass = CKO_NETSCAPE_BUILTIN_ROOT_LIST;
+    CK_OBJECT_CLASS oclass = CKO_NSS_BUILTIN_ROOT_LIST;
     int tsize;
     CK_OBJECT_HANDLE handle;
 
@@ -1439,6 +1519,11 @@ PK11_InitSlot(SECMODModule *mod, CK_SLOT_ID slotID, PK11SlotInfo *slot)
     slot->slotID = slotID;
     slot->isThreadSafe = mod->isThreadSafe;
     slot->hasRSAInfo = PR_FALSE;
+    slot->module = mod; /* NOTE: we don't make a reference here because
+                         * modules have references to their slots. This
+                         * works because modules keep implicit references
+                         * from their slots, and won't unload and disappear
+                         * until all their slots have been freed */
 
     if (PK11_GETTAB(slot)->C_GetSlotInfo(slotID, &slotInfo) != CKR_OK) {
         slot->disabled = PR_TRUE;
@@ -1448,11 +1533,6 @@ PK11_InitSlot(SECMODModule *mod, CK_SLOT_ID slotID, PK11SlotInfo *slot)
 
     /* test to make sure claimed mechanism work */
     slot->needTest = mod->internal ? PR_FALSE : PR_TRUE;
-    slot->module = mod; /* NOTE: we don't make a reference here because
-                         * modules have references to their slots. This
-                         * works because modules keep implicit references
-                         * from their slots, and won't unload and disappear
-                         * until all their slots have been freed */
     (void)PK11_MakeString(NULL, slot->slot_name,
                           (char *)slotInfo.slotDescription, sizeof(slotInfo.slotDescription));
     slot->isHW = (PRBool)((slotInfo.flags & CKF_HW_SLOT) == CKF_HW_SLOT);
@@ -1512,7 +1592,7 @@ pk11_IsPresentCertLoad(PK11SlotInfo *slot, PRBool loadCerts)
     }
 
     /* permanent slots are always present */
-    if (slot->isPerm && (slot->session != CK_INVALID_SESSION)) {
+    if (slot->isPerm && (slot->session != CK_INVALID_HANDLE)) {
         return PR_TRUE;
     }
 
@@ -1530,10 +1610,10 @@ pk11_IsPresentCertLoad(PK11SlotInfo *slot, PRBool loadCerts)
     }
     if ((slotInfo.flags & CKF_TOKEN_PRESENT) == 0) {
         /* if the slot is no longer present, close the session */
-        if (slot->session != CK_INVALID_SESSION) {
+        if (slot->session != CK_INVALID_HANDLE) {
             PK11_GETTAB(slot)
                 ->C_CloseSession(slot->session);
-            slot->session = CK_INVALID_SESSION;
+            slot->session = CK_INVALID_HANDLE;
         }
         if (!slot->isThreadSafe)
             PK11_ExitSlotMonitor(slot);
@@ -1542,14 +1622,14 @@ pk11_IsPresentCertLoad(PK11SlotInfo *slot, PRBool loadCerts)
 
     /* use the session Info to determine if the card has been removed and then
      * re-inserted */
-    if (slot->session != CK_INVALID_SESSION) {
+    if (slot->session != CK_INVALID_HANDLE) {
         if (slot->isThreadSafe)
             PK11_EnterSlotMonitor(slot);
         crv = PK11_GETTAB(slot)->C_GetSessionInfo(slot->session, &sessionInfo);
         if (crv != CKR_OK) {
             PK11_GETTAB(slot)
                 ->C_CloseSession(slot->session);
-            slot->session = CK_INVALID_SESSION;
+            slot->session = CK_INVALID_HANDLE;
         }
         if (slot->isThreadSafe)
             PK11_ExitSlotMonitor(slot);
@@ -1558,7 +1638,7 @@ pk11_IsPresentCertLoad(PK11SlotInfo *slot, PRBool loadCerts)
         PK11_ExitSlotMonitor(slot);
 
     /* card has not been removed, current token info is correct */
-    if (slot->session != CK_INVALID_SESSION)
+    if (slot->session != CK_INVALID_HANDLE)
         return PR_TRUE;
 
     /* initialize the token info state */
@@ -1695,6 +1775,7 @@ PK11_IsFriendly(PK11SlotInfo *slot)
 {
     /* internal slot always has public readable certs */
     return (PRBool)(slot->isInternal ||
+                    pk11_HasProfile(slot, CKP_PUBLIC_CERTIFICATES_TOKEN) ||
                     ((slot->defaultFlags & SECMOD_FRIENDLY_FLAG) ==
                      SECMOD_FRIENDLY_FLAG));
 }
@@ -2032,6 +2113,19 @@ PK11_DoesMechanism(PK11SlotInfo *slot, CK_MECHANISM_TYPE type)
     return PR_FALSE;
 }
 
+PRBool pk11_filterSlot(PK11SlotInfo *slot, CK_MECHANISM_TYPE mechanism,
+                       CK_FLAGS mechanismInfoFlags, unsigned int keySize);
+/*
+ * Check that the given mechanism has the appropriate flags. This function
+ * presumes that slot can already do the given mechanism.
+ */
+PRBool
+PK11_DoesMechanismFlag(PK11SlotInfo *slot, CK_MECHANISM_TYPE type,
+                       CK_FLAGS flags)
+{
+    return !pk11_filterSlot(slot, type, flags, 0);
+}
+
 /*
  * Return true if a token that can do the desired mechanism exists.
  * This allows us to have hardware tokens that can do function XYZ magically
@@ -2096,10 +2190,6 @@ PK11_GetAllTokens(CK_MECHANISM_TYPE type, PRBool needRW, PRBool loadCerts,
     SECMODModuleList *modules;
     SECMODListLock *moduleLock;
     int i;
-#if defined(XP_WIN32)
-    int j = 0;
-    PRInt32 waste[16];
-#endif
 
     moduleLock = SECMOD_GetDefaultModuleListLock();
     if (!moduleLock) {
@@ -2124,18 +2214,6 @@ PK11_GetAllTokens(CK_MECHANISM_TYPE type, PRBool needRW, PRBool loadCerts,
 
     modules = SECMOD_GetDefaultModuleList();
     for (mlp = modules; mlp != NULL; mlp = mlp->next) {
-
-#if defined(XP_WIN32)
-        /* This is works around some horrible cache/page thrashing problems
-        ** on Win32.  Without this, this loop can take up to 6 seconds at
-        ** 100% CPU on a Pentium-Pro 200.  The thing this changes is to
-        ** increase the size of the stack frame and modify it.
-        ** Moving the loop code itself seems to have no effect.
-        ** Dunno why this combination makes a difference, but it does.
-        */
-        waste[j & 0xf] = j++;
-#endif
-
         for (i = 0; i < mlp->module->slotCount; i++) {
             PK11SlotInfo *slot = mlp->module->slots[i];
 
@@ -2556,7 +2634,7 @@ PK11_ResetToken(PK11SlotInfo *slot, char *sso_pwd)
     /* first shutdown the token. Existing sessions will get closed here */
     PK11_GETTAB(slot)
         ->C_CloseAllSessions(slot->slotID);
-    slot->session = CK_INVALID_SESSION;
+    slot->session = CK_INVALID_HANDLE;
 
     /* now re-init the token */
     crv = PK11_GETTAB(slot)->C_InitToken(slot->slotID,

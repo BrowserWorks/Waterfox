@@ -5,23 +5,15 @@
 // 1) network.cookie.lifetimePolicy = 0 (expire naturally)
 // 2) network.cookie.lifetimePolicy = 2 (expire at end of session)
 
-var test_generator = do_run_test();
+"use strict";
 
-function run_test() {
-  do_test_pending();
-  test_generator.next();
-}
-
-function finish_test() {
-  executeSoon(function() {
-    test_generator.return();
-    do_test_finished();
-  });
-}
-
-function* do_run_test() {
+add_task(async () => {
   // Set up a profile.
   let profile = do_get_profile();
+
+  CookieXPCShellUtils.createServer({
+    hosts: ["foo.com", "bar.com", "third.com"],
+  });
 
   // Create URIs and channels pointing to foo.com and bar.com.
   // We will use these to put foo.com into first and third party contexts.
@@ -48,36 +40,37 @@ function* do_run_test() {
   // test with cookies enabled, and third party cookies persistent.
   Services.prefs.setIntPref("network.cookie.cookieBehavior", 0);
   Services.prefs.setBoolPref("network.cookie.thirdparty.sessionOnly", false);
-  do_set_cookies(uri1, channel1, false, [1, 2, 3, 4]);
-  do_set_cookies(uri2, channel2, true, [1, 2, 3, 4]);
+  Services.prefs.setBoolPref(
+    "network.cookieJarSettings.unblocked_for_testing",
+    true
+  );
+
+  await do_set_cookies(uri1, channel1, false, [1, 2]);
+  await do_set_cookies(uri2, channel2, true, [1, 2]);
 
   // fake a profile change
-  do_close_profile(test_generator);
-  yield;
+  await promise_close_profile();
   do_load_profile();
-  Assert.equal(Services.cookies.countCookiesFromHost(uri1.host), 4);
+  Assert.equal(Services.cookies.countCookiesFromHost(uri1.host), 2);
   Assert.equal(Services.cookies.countCookiesFromHost(uri2.host), 0);
 
   // Again, but don't wait for the async close to complete. This should always
   // work, since we blocked on close above and haven't kicked off any writes
   // since then.
-  do_close_profile();
+  await promise_close_profile();
   do_load_profile();
-  Assert.equal(Services.cookies.countCookiesFromHost(uri1.host), 4);
+  Assert.equal(Services.cookies.countCookiesFromHost(uri1.host), 2);
   Assert.equal(Services.cookies.countCookiesFromHost(uri2.host), 0);
 
   // test with cookies set to session-only
   Services.prefs.setIntPref("network.cookie.lifetimePolicy", 2);
   Services.cookies.removeAll();
-  do_set_cookies(uri1, channel1, false, [1, 2, 3, 4]);
-  do_set_cookies(uri2, channel2, true, [1, 2, 3, 4]);
+  await do_set_cookies(uri1, channel1, false, [1, 2]);
+  await do_set_cookies(uri2, channel2, true, [1, 2]);
 
   // fake a profile change
-  do_close_profile(test_generator);
-  yield;
+  await promise_close_profile();
   do_load_profile();
   Assert.equal(Services.cookies.countCookiesFromHost(uri1.host), 0);
   Assert.equal(Services.cookies.countCookiesFromHost(uri2.host), 0);
-
-  finish_test();
-}
+});

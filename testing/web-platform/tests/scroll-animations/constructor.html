@@ -82,14 +82,14 @@ test(t => {
   let constructorFunc = function() {
     new ScrollTimeline({orientation: 'nonsense', timeRange: 100})
   };
-  assert_throws(TypeError(), constructorFunc);
+  assert_throws_js(TypeError, constructorFunc);
 
   // 'auto' for orientation was previously in the spec, but was removed. Make
   // sure that implementations do not support it.
   constructorFunc = function() {
     new ScrollTimeline({orientation: 'auto', timeRange: 100})
   };
-  assert_throws(TypeError(), constructorFunc);
+  assert_throws_js(TypeError, constructorFunc);
 }, 'Creating a ScrollTimeline with an invalid orientation value should throw');
 
 // startScrollOffset and endScrollOffset
@@ -182,7 +182,7 @@ for (const offset of gInvalidScrollOffsetValues) {
       new ScrollTimeline(
           {timeRange: 100, startScrollOffset: offset, endScrollOffset: offset})
     };
-    assert_throws(new TypeError(), constructorFunc);
+    assert_throws_js(TypeError, constructorFunc);
   }, '\'' + offset + '\' is an invalid scroll offset value');
 }
 
@@ -193,9 +193,55 @@ for (const suffix of gInvalidScrollOffsetSuffixes) {
       new ScrollTimeline(
           {timeRange: 100, startScrollOffset: offset, endScrollOffset: offset});
     };
-    assert_throws(new TypeError(), constructorFunc);
+    assert_throws_js(TypeError, constructorFunc);
   }, '\'' + suffix + '\' is an invalid scroll offset unit');
 }
+
+
+const offset_target = document.createElement('div');
+
+const gValidElementBasedScrollOffsetValues = [
+  {target: offset_target},
+  {target: offset_target, threshold: 0},
+  {target: offset_target, threshold: 0.5},
+  {target: offset_target, threshold: 1},
+];
+
+for (let offset of gValidElementBasedScrollOffsetValues) {
+  test(function() {
+    const scrollTimeline = new ScrollTimeline(
+        {timeRange: 100, startScrollOffset: offset, endScrollOffset: offset});
+
+    // Special case unspecified threshold since it gets initialized to 0.
+    if (!offset.hasOwnProperty('threshold'))
+      offset.threshold = 0;
+
+    assert_equals(scrollTimeline.startScrollOffset.target, offset.target);
+    assert_equals(scrollTimeline.startScrollOffset.threshold, offset.threshold);
+    assert_equals(scrollTimeline.endScrollOffset.target, offset.target);
+    assert_equals(scrollTimeline.endScrollOffset.threshold, offset.threshold);
+  }, '\'' + JSON.stringify(offset) + '\' is a valid scroll offset value');
+}
+
+
+const gInvalidElementBasedScrollOffsetValues = [
+  {}, // empty
+  {target: offset_target, threshold: "test"},
+  {target: offset_target, threshold: 2},
+  {target: offset_target, threshold: -0.2},
+];
+
+for (let offset of gInvalidElementBasedScrollOffsetValues) {
+  test(function() {
+    const constructorFunc = function() {
+      new ScrollTimeline(
+          {timeRange: 100, startScrollOffset: offset, endScrollOffset: offset})
+    };
+    assert_throws_js(TypeError, constructorFunc);
+  }, '\'' + JSON.stringify(offset) + '\' is an invalid scroll offset value');
+}
+
+
 
 // timeRange
 
@@ -230,35 +276,7 @@ for (let timeRange of gInvalidTimeRangeValues) {
     const constructorFunc = function() {
       new ScrollTimeline({timeRange: timeRange});
     };
-    assert_throws(new TypeError(), constructorFunc);
+    assert_throws_js(TypeError, constructorFunc);
   }, '\'' + timeRange + '\' is an invalid timeRange value');
 }
-
-// fill
-
-test(function() {
-  assert_equals(new ScrollTimeline({timeRange: 100}).fill, 'none');
-}, 'A ScrollTimeline created with the default fill should default to \'none\'');
-
-const gValidFillValues = [
-  'none',
-  'forwards',
-  'backwards',
-  'both',
-  'auto',
-];
-
-for (let fill of gValidFillValues) {
-  test(function() {
-    const scrollTimeline = new ScrollTimeline({fill: fill, timeRange: 100});
-    assert_equals(scrollTimeline.fill, fill);
-  }, '\'' + fill + '\' is a valid fill value');
-}
-
-test(t => {
-  let constructorFunc = function() {
-    new ScrollTimeline({fill: 'nonsense', timeRange: 100})
-  };
-  assert_throws(TypeError(), constructorFunc);
-}, 'Creating a ScrollTimeline with an invalid fill value should throw');
 </script>

@@ -71,7 +71,7 @@ async function runTest(aSourceWindow, aDestWindow, aExpectSwitch, aCallback) {
     "The test tab is on about:blank"
   );
   // Ensure that this tab's document has no child nodes
-  await ContentTask.spawn(testTab.linkedBrowser, null, async function() {
+  await SpecialPowers.spawn(testTab.linkedBrowser, [], async function() {
     ok(
       !content.document.body.hasChildNodes(),
       "The test tab has no child nodes"
@@ -83,16 +83,17 @@ async function runTest(aSourceWindow, aDestWindow, aExpectSwitch, aCallback) {
   );
 
   // Wait for the Awesomebar popup to appear.
-  // Use a slice to workaround bug 1507755.
-  let searchString = UrlbarPrefs.get("quantumbar")
-    ? TEST_URL
-    : TEST_URL.slice(1);
-  await promiseAutocompleteResultPopup(searchString, aDestWindow);
+  let searchString = TEST_URL;
+  await UrlbarTestUtils.promiseAutocompleteResultPopup({
+    window: aDestWindow,
+    waitForFocus: SimpleTest.waitForFocus,
+    value: searchString,
+  });
 
   info(`awesomebar popup appeared. aExpectSwitch: ${aExpectSwitch}`);
   // Make sure the last match is selected.
   while (
-    UrlbarTestUtils.getSelectedIndex(aDestWindow) <
+    UrlbarTestUtils.getSelectedRowIndex(aDestWindow) <
     UrlbarTestUtils.getResultCount(aDestWindow) - 1
   ) {
     info("handling key navigation for DOM_VK_DOWN key");

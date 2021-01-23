@@ -9,9 +9,11 @@ import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.annotation.WrapForJNI;
 import org.mozilla.gecko.mozglue.GeckoLoader;
 import org.mozilla.gecko.process.GeckoProcessManager;
+import org.mozilla.gecko.process.GeckoProcessType;
 import org.mozilla.gecko.util.GeckoBundle;
 import org.mozilla.gecko.util.ThreadUtils;
 import org.mozilla.geckoview.BuildConfig;
+import org.mozilla.geckoview.GeckoResult;
 
 import android.app.ActivityManager;
 import android.content.Context;
@@ -27,13 +29,13 @@ import android.os.Process;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.UiThread;
 import android.text.TextUtils;
 import android.util.Log;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -129,13 +131,12 @@ public class GeckoThread extends Thread {
     private static int uiThreadId;
 
     private static TelemetryUtils.Timer sInitTimer;
+    private static LinkedList<StateGeckoResult> sStateListeners = new LinkedList<>();
 
     // Main process parameters
     public static final int FLAG_DEBUGGING = 1 << 0; // Debugging mode.
     public static final int FLAG_PRELOAD_CHILD = 1 << 1; // Preload child during main thread start.
     public static final int FLAG_ENABLE_NATIVE_CRASHREPORTER = 1 << 2; // Enable native crash reporting.
-
-    public static final long DEFAULT_TIMEOUT = 5000;
 
     /* package */ static final String EXTRA_ARGS = "args";
     private static final String EXTRA_PREFS_FD = "prefsFd";
@@ -159,6 +160,13 @@ public class GeckoThread extends Thread {
         public int ipcFd;
         public int crashFd;
         public int crashAnnotationFd;
+    }
+
+    private static class StateGeckoResult extends GeckoResult<Void> {
+        final State state;
+        public StateGeckoResult(final State state) {
+            this.state = state;
+        }
     }
 
     GeckoThread() {
@@ -214,36 +222,6 @@ public class GeckoThread extends Thread {
         mInitialized = true;
         notifyAll();
         return true;
-    }
-
-    private static boolean canUseProfile(final Context context, final GeckoProfile profile,
-                                         final String profileName, final File profileDir) {
-        if (profileDir != null && !profileDir.isDirectory()) {
-            return false;
-        }
-
-        if (profile == null) {
-            // We haven't initialized; any profile is okay as long as we follow the guest mode setting.
-            return GeckoProfile.shouldUseGuestMode(context) ==
-                    GeckoProfile.isGuestProfile(context, profileName, profileDir);
-        }
-
-        // We already initialized and have a profile; see if it matches ours.
-        try {
-            return profileDir == null ? profileName.equals(profile.getName()) :
-                    profile.getDir().getCanonicalPath().equals(profileDir.getCanonicalPath());
-        } catch (final IOException e) {
-            Log.e(LOGTAG, "Cannot compare profile " + profileName);
-            return false;
-        }
-    }
-
-    public static boolean canUseProfile(final String profileName, final File profileDir) {
-        if (profileName == null) {
-            throw new IllegalArgumentException("Null profile name");
-        }
-        return canUseProfile(GeckoAppShell.getApplicationContext(), getActiveProfile(),
-                             profileName, profileDir);
     }
 
     public static boolean launch() {
@@ -448,13 +426,8 @@ public class GeckoThread extends Thread {
         initGeckoEnvironment();
 
         if ((mInitInfo.flags & FLAG_PRELOAD_CHILD) != 0) {
-            ThreadUtils.postToBackgroundThread(new Runnable() {
-                @Override
-                public void run() {
-                    // Preload the content ("tab") child process.
-                    GeckoProcessManager.getInstance().preload("tab");
-                }
-            });
+            // Preload the content ("tab") child process.
+            GeckoProcessManager.getInstance().preload(GeckoProcessType.CONTENT);
         }
 
         if ((mInitInfo.flags & FLAG_DEBUGGING) != 0) {
@@ -631,6 +604,8 @@ public class GeckoThread extends Thread {
                 sInitTimer.stop();
                 sInitTimer = null;
             }
+
+            notifyStateListeners();
         }
         return result;
     }
@@ -647,20 +622,34 @@ public class GeckoThread extends Thread {
                              "speculativeConnectNative", uri);
     }
 
-    @WrapForJNI(stubName = "WaitOnGecko")
-    @RobocopTarget
-    private static native boolean nativeWaitOnGecko(long timeoutMillis);
+    @UiThread
+    public static GeckoResult<Void> waitForState(final State state) {
+        final StateGeckoResult result = new StateGeckoResult(state);
+        if (isStateAtLeast(state)) {
+            result.complete(null);
+            return result;
+        }
 
-    public static void waitOnGeckoForever() {
-        nativeWaitOnGecko(0);
+        synchronized (sStateListeners) {
+            sStateListeners.add(result);
+        }
+        return result;
     }
 
-    public static boolean waitOnGecko() {
-        return waitOnGecko(DEFAULT_TIMEOUT);
-    }
+    private static void notifyStateListeners() {
+        synchronized (sStateListeners) {
+            final LinkedList<StateGeckoResult> newListeners = new LinkedList<>();
+            for (final StateGeckoResult result : sStateListeners) {
+                if (!isStateAtLeast(result.state)) {
+                    newListeners.add(result);
+                    continue;
+                }
 
-    public static boolean waitOnGecko(final long timeoutMillis) {
-        return nativeWaitOnGecko(timeoutMillis);
+                result.complete(null);
+            }
+
+            sStateListeners = newListeners;
+        }
     }
 
     @WrapForJNI(stubName = "OnPause", dispatchTo = "gecko")

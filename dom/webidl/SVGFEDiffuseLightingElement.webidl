@@ -10,6 +10,7 @@
  * liability, trademark and document use rules apply.
  */
 
+[Exposed=Window]
 interface SVGFEDiffuseLightingElement : SVGElement {
   [Constant]
   readonly attribute SVGAnimatedString in1;
@@ -23,4 +24,4 @@ interface SVGFEDiffuseLightingElement : SVGElement {
   readonly attribute SVGAnimatedNumber kernelUnitLengthY;
 };
 
-SVGFEDiffuseLightingElement implements SVGFilterPrimitiveStandardAttributes;
+SVGFEDiffuseLightingElement includes SVGFilterPrimitiveStandardAttributes;

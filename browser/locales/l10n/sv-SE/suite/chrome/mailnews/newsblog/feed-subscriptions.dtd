@@ -1,0 +1,56 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "RSS-prenumerationer">
+<!ENTITY learnMore.label             "Läs mer om Kanaler">
+
+<!ENTITY feedTitle.label             "Titel:">
+<!ENTITY feedTitle.accesskey         "T">
+
+<!ENTITY feedLocation.label          "Kanal-URL:">
+<!ENTITY feedLocation.accesskey      "K">
+<!ENTITY feedLocation.placeholder    "Ange en flödes-url att lägga till">
+<!ENTITY feedLocation2.placeholder   "Ange en giltig flödes-url">
+<!ENTITY locationValidate.label      "Kontrollera">
+<!ENTITY validateText.label          "Kontrollera giltighet och hämta en giltig url.">
+
+<!ENTITY feedFolder.label            "Lagra artiklar i:">
+<!ENTITY feedFolder.accesskey        "L">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Sök efter nya artiklar var ">
+<!ENTITY biffStart.accesskey         "ö">
+<!ENTITY biffMinutes.label           "minut">
+<!ENTITY biffMinutes.accesskey       "n">
+<!ENTITY biffDays.label              "dag">
+<!ENTITY biffDays.accesskey          "d">
+<!ENTITY recommendedUnits.label      "Utgivaren rekommenderar:">
+
+<!ENTITY quickMode.label             "Visa artikelsammanfattningen i stället för att hämta webbsidan">
+<!ENTITY quickMode.accesskey         "V">
+
+<!ENTITY autotagEnable.label         "Skapa automatiskt taggar från flödets &lt;kategori&gt; namn">
+<!ENTITY autotagEnable.accesskey     "a">
+<!ENTITY autotagUsePrefix.label      "Ge taggarna prefixet:">
+<!ENTITY autotagUsePrefix.accesskey  "p">
+<!ENTITY autoTagPrefix.placeholder   "Ange ett taggprefix">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Lägg till">
+<!ENTITY button.addFeed.accesskey    "L">
+<!ENTITY button.verifyFeed.label     "Kontrollera">
+<!ENTITY button.verifyFeed.accesskey "K">
+<!ENTITY button.updateFeed.label     "Redigera">
+<!ENTITY button.updateFeed.accesskey "e">
+<!ENTITY button.removeFeed.label     "Ta bort">
+<!ENTITY button.removeFeed.accesskey "b">
+<!ENTITY button.importOPML.label     "Importera">
+<!ENTITY button.importOPML.accesskey "I">
+<!ENTITY button.exportOPML.label     "Exportera">
+<!ENTITY button.exportOPML.accesskey "x">
+<!ENTITY button.exportOPML.tooltip   "Exportera flöden med mappstruktur; ctrl och klick eller ctrl-enter för att exportera flöden som en lista">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Stäng">

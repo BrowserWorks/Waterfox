@@ -3,15 +3,13 @@
  * file, You can obtain one at <http://mozilla.org/MPL/2.0/>. */
 
 // ReactJS
-const PropTypes = require("prop-types");
+const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
+const { span } = require("devtools/client/shared/vendor/react-dom-factories");
 
 // Dependencies
 const { interleave, isGrip, wrapRender } = require("./rep-utils");
 const PropRep = require("./prop-rep");
 const { MODE } = require("./constants");
-
-const dom = require("react-dom-factories");
-const { span } = dom;
 
 /**
  * Renders generic grip. Grip is client representation
@@ -193,11 +191,17 @@ function propIterator(props, object, max) {
     const length = max - indexes.length;
 
     const symbolsProps = ownSymbols.slice(0, length).map(symbolItem => {
+      const symbolValue = symbolItem.descriptor.value;
+      const symbolGrip =
+        symbolValue && symbolValue.getGrip
+          ? symbolValue.getGrip()
+          : symbolValue;
+
       return PropRep({
         ...props,
         mode: MODE.TINY,
         name: symbolItem,
-        object: symbolItem.descriptor.value,
+        object: symbolGrip,
         equal: ": ",
         defaultRep: Grip,
         title: null,

@@ -45,7 +45,7 @@ static void AnalyzeAsmHeapAddress(MDefinition* ptr, MIRGraph& graph) {
   MDefinition* lhs = ptr->toBitAnd()->getOperand(0);
   MDefinition* rhs = ptr->toBitAnd()->getOperand(1);
   if (lhs->isConstant()) {
-    mozilla::Swap(lhs, rhs);
+    std::swap(lhs, rhs);
   }
   if (!lhs->isAdd() || !rhs->isConstant()) {
     return;
@@ -54,7 +54,7 @@ static void AnalyzeAsmHeapAddress(MDefinition* ptr, MIRGraph& graph) {
   MDefinition* op0 = lhs->toAdd()->getOperand(0);
   MDefinition* op1 = lhs->toAdd()->getOperand(1);
   if (op0->isConstant()) {
-    mozilla::Swap(op0, op1);
+    std::swap(op0, op1);
   }
   if (!op1->isConstant()) {
     return;
@@ -69,7 +69,7 @@ static void AnalyzeAsmHeapAddress(MDefinition* ptr, MIRGraph& graph) {
   // The pattern was matched! Produce the replacement expression.
   MInstruction* and_ = MBitAnd::New(graph.alloc(), op0, rhs, MIRType::Int32);
   ptr->block()->insertBefore(ptr->toBitAnd(), and_);
-  MInstruction* add = MAdd::New(graph.alloc(), and_, op1, MIRType::Int32);
+  auto* add = MAdd::New(graph.alloc(), and_, op1, MDefinition::Truncate);
   ptr->block()->insertBefore(ptr->toBitAnd(), add);
   ptr->replaceAllUsesWith(add);
   ptr->block()->discard(ptr->toBitAnd());

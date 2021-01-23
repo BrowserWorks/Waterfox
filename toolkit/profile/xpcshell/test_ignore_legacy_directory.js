@@ -30,7 +30,7 @@ add_task(async () => {
         path: dedicatedProfile.leafName,
       },
       {
-        name: "dev-edition-default",
+        name: "68-edition-default",
         path: devProfile.leafName,
       },
     ],
@@ -87,7 +87,7 @@ add_task(async () => {
   profile = profileData.profiles[2];
   Assert.equal(
     profile.name,
-    "dev-edition-default",
+    "68-edition-default",
     "Should have the right name."
   );
   Assert.equal(

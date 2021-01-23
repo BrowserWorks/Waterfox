@@ -1,3 +1,5 @@
+"use strict";
+
 // Test nsITraceableChannel interface.
 // Replace original listener with TracingListener that modifies body of HTTP
 // response. Make sure that body received by original channel's listener
@@ -18,7 +20,7 @@ var gotOnStartRequest = false;
 function TracingListener() {}
 
 TracingListener.prototype = {
-  onStartRequest: function(request) {
+  onStartRequest(request) {
     dump("*** tracing listener onStartRequest\n");
 
     gotOnStartRequest = true;
@@ -44,7 +46,7 @@ TracingListener.prototype = {
     do_throw("replaced channel's listener during onStartRequest.");
   },
 
-  onStopRequest: function(request, statusCode) {
+  onStopRequest(request, statusCode) {
     dump("*** tracing listener onStopRequest\n");
 
     Assert.equal(gotOnStartRequest, true);
@@ -70,12 +72,7 @@ TracingListener.prototype = {
     }
   },
 
-  QueryInterface: function(iid) {
-    if (iid.equals(Ci.nsIRequestObserver) || iid.equals(Ci.nsISupports)) {
-      return this;
-    }
-    throw Cr.NS_NOINTERFACE;
-  },
+  QueryInterface: ChromeUtils.generateQI(["nsIRequestObserver"]),
 
   listener: null,
 };
@@ -83,7 +80,7 @@ TracingListener.prototype = {
 function HttpResponseExaminer() {}
 
 HttpResponseExaminer.prototype = {
-  register: function() {
+  register() {
     Cc["@mozilla.org/observer-service;1"]
       .getService(Ci.nsIObserverService)
       .addObserver(this, "http-on-examine-response", true);
@@ -91,7 +88,7 @@ HttpResponseExaminer.prototype = {
   },
 
   // Replace channel's listener.
-  observe: function(subject, topic, data) {
+  observe(subject, topic, data) {
     dump("In HttpResponseExaminer.observe\n");
     try {
       subject.QueryInterface(Ci.nsITraceableChannel);
@@ -112,16 +109,10 @@ HttpResponseExaminer.prototype = {
     dump("Did HttpResponseExaminer.observe\n");
   },
 
-  QueryInterface: function(iid) {
-    if (
-      iid.equals(Ci.nsIObserver) ||
-      iid.equals(Ci.nsISupportsWeakReference) ||
-      iid.equals(Ci.nsISupports)
-    ) {
-      return this;
-    }
-    throw Cr.NS_NOINTERFACE;
-  },
+  QueryInterface: ChromeUtils.generateQI([
+    "nsIObserver",
+    "nsISupportsWeakReference",
+  ]),
 };
 
 function test_handler(metadata, response) {

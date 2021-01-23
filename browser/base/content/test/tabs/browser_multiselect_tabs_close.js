@@ -1,9 +1,8 @@
-const PREF_MULTISELECT_TABS = "browser.tabs.multiselect";
 const PREF_WARN_ON_CLOSE = "browser.tabs.warnOnCloseOtherTabs";
 
 add_task(async function setPref() {
   await SpecialPowers.pushPrefEnv({
-    set: [[PREF_MULTISELECT_TABS, true], [PREF_WARN_ON_CLOSE, false]],
+    set: [[PREF_WARN_ON_CLOSE, false]],
   });
 });
 
@@ -26,11 +25,7 @@ add_task(async function usingTabCloseButton() {
   is(gBrowser.selectedTab, tab1, "Tab1 is active");
 
   // Closing a tab which is not multiselected
-  let tab4CloseBtn = document.getAnonymousElementByAttribute(
-    tab4,
-    "anonid",
-    "close-button"
-  );
+  let tab4CloseBtn = tab4.closeButton;
   let tab4Closing = BrowserTestUtils.waitForTabClosing(tab4);
 
   tab4.mOverCloseButton = true;
@@ -49,11 +44,7 @@ add_task(async function usingTabCloseButton() {
   is(gBrowser.multiSelectedTabsCount, 2, "Two multiselected tabs");
 
   // Closing a selected tab
-  let tab2CloseBtn = document.getAnonymousElementByAttribute(
-    tab2,
-    "anonid",
-    "close-button"
-  );
+  let tab2CloseBtn = tab2.closeButton;
   tab2.mOverCloseButton = true;
   let tab1Closing = BrowserTestUtils.waitForTabClosing(tab1);
   let tab2Closing = BrowserTestUtils.waitForTabClosing(tab2);

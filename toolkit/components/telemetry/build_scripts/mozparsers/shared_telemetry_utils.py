@@ -7,9 +7,10 @@
 
 from __future__ import print_function
 
+import os
 import re
-import yaml
 import sys
+import yaml
 
 # This is a list of flags that determine which process a measurement is allowed
 # to record from.
@@ -24,11 +25,14 @@ KNOWN_PROCESS_FLAGS = {
     'all_childs': 'AllChildren',  # Supporting files from before bug 1363725
 }
 
+GECKOVIEW_STREAMING_PRODUCT = 'geckoview_streaming'
+
 SUPPORTED_PRODUCTS = {
     'firefox': 'Firefox',
     'fennec': 'Fennec',
     'geckoview': 'Geckoview',
-    'all': 'All',
+    GECKOVIEW_STREAMING_PRODUCT: 'GeckoviewStreaming',
+    'thunderbird': 'Thunderbird',
 }
 
 SUPPORTED_OPERATING_SYSTEMS = [
@@ -81,13 +85,14 @@ class ParserError(Exception):
 
     def handle_now(self):
         ParserError.print_eventuals()
-        print(self.message, file=sys.stderr)
-        sys.exit(1)
+        print(str(self), file=sys.stderr)
+        sys.stderr.flush()
+        os._exit(1)
 
     @classmethod
     def print_eventuals(cls):
         while cls.eventual_errors:
-            print(cls.eventual_errors.pop(0).message, file=sys.stderr)
+            print(str(cls.eventual_errors.pop(0)), file=sys.stderr)
 
     @classmethod
     def exit_func(cls):
@@ -107,6 +112,10 @@ def is_valid_product(name):
     return (name in SUPPORTED_PRODUCTS)
 
 
+def is_geckoview_streaming_product(name):
+    return (name == GECKOVIEW_STREAMING_PRODUCT)
+
+
 def is_valid_os(name):
     return (name in SUPPORTED_OPERATING_SYSTEMS)
 
@@ -118,6 +127,8 @@ def canonical_os(os):
 
 
 def product_name_to_enum(product):
+    if not is_valid_product(product):
+        raise ParserError("Invalid product {}".format(product))
     return PRODUCT_ENUM_PREFIX + SUPPORTED_PRODUCTS.get(product)
 
 
@@ -166,7 +177,6 @@ class StringTable:
         :param name: the name of the output array.
         """
         entries = self.table.items()
-        entries.sort(key=lambda x: x[1])
 
         # Avoid null-in-string warnings with GCC and potentially
         # overlong string constants; write everything out the long way.
@@ -183,7 +193,7 @@ class StringTable:
         f.write("#else\n")
         f.write("constexpr char %s[] = {\n" % name)
         f.write("#endif\n")
-        for (string, offset) in entries:
+        for (string, offset) in sorted(entries, key=lambda x: x[1]):
             if "*/" in string:
                 raise ValueError("String in string table contains unexpected sequence '*/': %s" %
                                  string)
@@ -242,8 +252,8 @@ def load_yaml_file(filename):
     try:
         with open(filename, 'r') as f:
             return yaml.safe_load(f)
-    except IOError, e:
+    except IOError as e:
         raise ParserError('Error opening ' + filename + ': ' + e.message)
-    except ValueError, e:
+    except ValueError as e:
         raise ParserError('Error parsing processes in {}: {}'
                           .format(filename, e.message))

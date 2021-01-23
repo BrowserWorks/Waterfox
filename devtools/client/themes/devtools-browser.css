@@ -3,15 +3,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 @import url("resource://devtools/client/themes/splitters.css");
+/* Imports the styles that will apply to the browser window for Responsive Design Mode.
+   This is dynamically loaded when either the toolbox or RDM is open. */
+@import url("resource://devtools/client/responsive/responsive-browser.css");
 
-/* Eyedropper Widget */
-/* <panel> added to mainPopupSet */
-
-.devtools-eyedropper-panel {
-  pointer-events: none;
-  -moz-appearance: none;
-  width: 156px;
-  height: 120px;
-  background-color: transparent;
-  border: none;
+/* Set min-height to 29px as it matches the height of the .devtools-tabbar (/devtools/client/themes/toolbox.css#67)
+ * This prevents the shrinking of the toolbox until it disappears. */
+.devtools-toolbox-bottom-iframe {
+  min-height: 29px;
 }

@@ -1,0 +1,74 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-fonts.xul -->
+<!-- LOCALIZATION NOTE : FILE 'Fonts' prefs dialog -->
+
+<!ENTITY pref.fonts.title "Yazıtipleri">
+
+<!ENTITY language.label "Yazıtipleri:">
+<!ENTITY language.accesskey "t">
+
+<!ENTITY typefaces.label "Typeface">
+<!ENTITY sizes.label "Boyut (piksel)">
+
+<!ENTITY proportional.label "Orantılı:">
+<!ENTITY proportional.accesskey "O">
+
+<!ENTITY serif.label "Serif:">
+<!ENTITY serif.accesskey "S">
+<!ENTITY sans-serif.label "Sans-serif:">
+<!ENTITY sans-serif.accesskey "n">
+<!ENTITY monospace.label "Monospace:">
+<!ENTITY monospace.accesskey "M">
+<!-- LOCALIZATION NOTE (fantasy.label): 'Fantasy' means 'Ornate' -->
+<!ENTITY fantasy.label "Fantasy:">
+<!ENTITY fantasy.accesskey "F">
+<!ENTITY cursive.label "Cursive:">
+<!ENTITY cursive.accesskey "C">
+
+<!ENTITY font.langGroup.latin1 "Batı Avrupa">
+<!ENTITY font.langGroup.latin2 "Orta Avrupa">
+<!ENTITY font.langGroup.japanese "Japonca">
+<!ENTITY font.langGroup.trad-chinese "Traditional Chinese(Taiwan)">
+<!ENTITY font.langGroup.simpl-chinese "Basitleştirilmiş Çince">
+<!ENTITY font.langGroup.trad-chinese-hk "Traditional Chinese(Hong Kong)">
+<!ENTITY font.langGroup.korean "Korece">
+<!ENTITY font.langGroup.cyrillic "Cyrillic">
+<!ENTITY font.langGroup.baltic "Baltık">
+<!ENTITY font.langGroup.el "Yunanca">
+<!ENTITY font.langGroup.turkish "Türkçe">
+<!ENTITY font.langGroup.unicode "Other Languages">
+<!ENTITY font.langGroup.user-def "Kullanıcı tanımlı">
+<!ENTITY font.langGroup.thai "Tayca">
+<!ENTITY font.langGroup.hebrew "İbranice">
+<!ENTITY font.langGroup.arabic "Arapça">
+<!ENTITY font.langGroup.devanagari "Devanagari">
+<!ENTITY font.langGroup.tamil "Tamil Dili">
+<!ENTITY font.langGroup.armenian "Ermenice">
+<!ENTITY font.langGroup.bengali "Bengali">
+<!ENTITY font.langGroup.canadian "Birleştirilmiş Kanada hece alfabesi">
+<!ENTITY font.langGroup.ethiopic "Ethiopic">
+<!ENTITY font.langGroup.georgian "Gürcüce">
+<!ENTITY font.langGroup.gujarati "Gujarati Dili">
+<!ENTITY font.langGroup.gurmukhi "Gurmukhi">
+<!ENTITY font.langGroup.khmer "Kamboçya Dili">
+<!ENTITY font.langGroup.malayalam "Malayalam">
+<!-- Minimum font size -->
+<!ENTITY minSize.label "En küçük yazı boyutu:">
+<!ENTITY minSize.accesskey "z">
+<!ENTITY minSize.none "Hiçbiri">
+<!-- default font type -->
+
+<!ENTITY useDefaultFontSerif.label "Serif">
+<!ENTITY useDefaultFontSansSerif.label "Sans Serif">
+
+<!ENTITY useDocumentFonts.label "Allow documents to use other fonts">
+<!ENTITY useDocumentFonts.accesskey "o">
+<!-- leaving this stuff in for now -->
+
+
+<!ENTITY header2 "When a webpage chooses its own fonts">
+<!ENTITY useDefaultFont.label "Use my default fonts, ignoring the fonts the page has chosen">
+<!ENTITY useDefaultFont.accesskey "U">

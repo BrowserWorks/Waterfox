@@ -1,0 +1,70 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label           "Svojstva">
+
+<!ENTITY generalInfo.label                       "Opšti podaci">
+<!ENTITY folderCharsetFallback2.label            "Odstupno kodiranje teksta:">
+<!ENTITY folderCharsetFallback2.accesskey        "E">
+<!ENTITY folderCharsetEnforce2.label             "Primjeni kodnu stranicu na sve poruke u fascikli (postavke kodne stranice pojedinih poruka i automatsko otkrivanje će biti zanemareno)">
+<!ENTITY folderCharsetEnforce2.accesskey         "A">
+<!ENTITY folderRebuildSummaryFileTip2.label      "Ponovo izgradi skupnu indeks datoteku">
+<!ENTITY folderRebuildSummaryFile2.label         "Popravi fasciklu">
+<!ENTITY folderRebuildSummaryFile2.accesskey     "P">
+<!ENTITY folderRebuildSummaryFile.explanation    "Ponekad se (.msf) datoteka koja je indeks fascikle ošteti i poruke izgledaju nedostupne ili se izbrisane poruke i dalje pojavljuju; popravak fascikle može riješiti ove probleme.">
+<!ENTITY folderIncludeInGlobalSearch.label       "Uvrsti poruke iz ove fascikle u globalne rezultate pretraživanja">
+<!ENTITY folderIncludeInGlobalSearch.accesskey   "G">
+
+<!ENTITY retention.label "Politika čuvanja">
+<!ENTITY retentionUseAccount.label  "Koristi moje postavke računa">
+<!ENTITY retentionUseAccount.accesskey "K">
+<!ENTITY daysOld.label "dana staro">
+<!ENTITY message.label "poruke">
+<!ENTITY retentionCleanup.label "Kako bi se oslobodio prostor na disku, stare poruke se mogu trajno izbrisati.">
+<!ENTITY retentionCleanupImap.label "Kako bi se oslobodio prostor na disku, stare poruke mogu biti trajno izbrisane, kao i lokalne kopije i izvorne poruke na udaljenom serveru.">
+<!ENTITY retentionCleanupPop.label "Da bi se oslobodio prostor na disku, stare poruke se mogu trajno izbrisati, uključujući i izvorne poruke na udaljenom serveru.">
+<!ENTITY retentionDeleteMsg.label "Izbriši poruke starije od">
+<!ENTITY retentionDeleteMsg.accesskey "m">
+<!ENTITY retentionKeepAll.label "Ne briši nikakve poruke">
+<!ENTITY retentionKeepAll.accesskey "A">
+<!ENTITY retentionKeepRecent.label "Izbriši sve osim najnovijih">
+<!ENTITY retentionKeepRecent.accesskey "l">
+<!ENTITY retentionApplyToFlagged.label "Uvijek zadrži poruke označene zvjezdicom">
+<!ENTITY retentionApplyToFlagged.accesskey "e">
+
+<!ENTITY folderSynchronizationTab.label          "Sinhronizacija">
+<!ENTITY folderCheckForNewMessages2.label         "Prilikom primanja novih poruka za ovaj račun, uvijek provjeri ovu fasciklu">
+<!ENTITY folderCheckForNewMessages2.accesskey     "c">
+
+<!ENTITY offlineFolder.check.label               "Odaberi ovu fasciklu za izvanmrežno korištenje">
+<!ENTITY offlineFolder.check.accesskey           "S">
+<!ENTITY offlineFolder.button.label              "Preuzmi sada">
+<!ENTITY offlineFolder.button.accesskey          "D">
+
+<!ENTITY selectofflineNewsgroup.check.label      "Odaberi ovu interesnu grupu za izvanmrežno korištenje">
+<!ENTITY selectofflineNewsgroup.check.accesskey  "o">
+<!ENTITY offlineNewsgroup.button.label           "Preuzmi sada">
+<!ENTITY offlineNewsgroup.button.accesskey       "D">
+
+<!ENTITY folderProps.name.label                  "Naziv:">
+<!ENTITY folderProps.name.accesskey              "N">
+<!ENTITY folderProps.location.label              "Lokacija:">
+<!ENTITY folderProps.location.accesskey          "L">
+
+<!ENTITY folderSharingTab.label                  "Dijeljenje">
+<!ENTITY privileges.button.label                 "Privilegije…">
+<!ENTITY privileges.button.accesskey             "P">
+<!ENTITY permissionsDesc.label                   "Imate sljedeće dozvole:">
+<!ENTITY folderType.label                        "Vrsta fascikle:">
+
+<!ENTITY folderQuotaTab.label                    "Kvota">
+<!ENTITY folderQuotaUsage.label                  "Iskorištenost:">
+<!ENTITY folderQuotaStatus.label                 "Stanje:">
+
+<!ENTITY numberOfMessages.label                  "Broj poruka:">
+<!-- LOCALIZATION NOTE: When the number of messages can't be determined, this string is displayed as the number -->
+<!ENTITY numberUnknown.label                     "nepoznato">
+<!ENTITY sizeOnDisk.label                        "Veličina na disku:">
+<!-- LOCALIZATION NOTE: When the size can't be determined, this string is displayed as the size -->
+<!ENTITY sizeUnknown.label                       "nepoznata">

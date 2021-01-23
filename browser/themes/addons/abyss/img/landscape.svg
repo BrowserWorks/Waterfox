@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_2" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="32px" height="32px" viewBox="0 0 32 32" enable-background="new 0 0 32 32" xml:space="preserve" fill="context-fill">
+<path d="M17.891,8.001H6.69C6.308,8.001,6,8.325,6,8.691v14.617c0,0.367,0.308,0.69,0.69,0.69h18.621
+	c0.384,0,0.689-0.323,0.689-0.69v-7.227c-0.014-0.174-0.088-0.337-0.22-0.454l-7.406-7.42L18.36,8.189
+	C18.243,8.072,18.064,8.001,17.891,8.001z M18.578,15.423v-4.667l4.667,4.667H18.578z M7.377,9.378H17.2v6.732
+	c0,0.367,0.31,0.689,0.69,0.689h6.732v5.82H7.377V9.378L7.377,9.378z"/>
+</svg>

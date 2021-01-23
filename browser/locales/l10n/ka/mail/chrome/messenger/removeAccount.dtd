@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialogTitle                  "ანგარიშის და მონაცემების წაშლა">
+<!ENTITY removeButton.label           "წაშლა">
+<!ENTITY removeButton.accesskey       "წ">
+<!ENTITY removeAccount.label          "ანგარიშის მონაცემების წაშლა">
+<!ENTITY removeAccount.accesskey      "ა">
+<!ENTITY removeAccount.desc           "წაიშლება, მხოლოდ &brandShortName;-ში დამახსოვრებული ანგარიშის მონაცემები. უშუალოდ სერვერზე არსებულ ანგარიშს, არაფერი მოუვა.">
+<!ENTITY removeData.label             "წერილის მონაცემების წაშლა">
+<!ENTITY removeData.accesskey         "მ">
+<!ENTITY removeDataChat.label         "საუბრის მონაცემების წაშლა">
+<!ENTITY removeDataChat.accesskey     "მ">
+<!ENTITY removeDataLocalAccount.desc  "ანგარიშთან დაკავშირებული ყველა წერილის, საქაღალდისა და ფილტრის წაშლა, კომპიუტერის დისკიდან. სერვერზე არსებულ წერილებს, არ შეეხება. არ მიუთითოთ, თუ გეგმავთ მათ შენახვას, ან მოგვიანებით გამოყენებას &brandShortName;-ში.">
+<!ENTITY removeDataServerAccount.desc "ანგარიშთან დაკავშირებული ყველა წერილის, საქაღალდისა და ფილტრის წაშლა, კომპიუტერის დისკიდან. სერვერზე არსებულ წერილებს, არ შეეხება.">
+<!ENTITY removeDataChatAccount.desc   "წაიშლება კომპიუტერში არსებული, ამ ანგარიშის საუბრების ყველა ჩანაწერი.">
+<!ENTITY showData.label               "მონაცემთა ადგილმდებარეობის ჩვენება">
+<!ENTITY showData.accesskey           "ჩ">
+<!ENTITY progressPending              "შერჩეულ მონაცემთა წაშლა…">
+<!ENTITY progressSuccess              "წაიშალა წარმატებით.">
+<!ENTITY progressFailure              "წაშლა ვერ მოხერხდა.">

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "ลบ">
+<!ENTITY editContactPanelDeleteContact.accesskey "ล">
+
+<!ENTITY editContactName.label "ชื่อ:">
+<!ENTITY editContactName.accesskey "ช">
+
+<!ENTITY editContactEmail.label "อีเมล:">
+<!ENTITY editContactEmail.accesskey "อ">
+
+<!ENTITY editContactAddressBook.label "สมุดรายชื่อ:">
+<!ENTITY editContactAddressBook.accesskey "ส">
+
+<!ENTITY editContactPanelDone.label "เสร็จสิ้น">
+<!ENTITY editContactPanelDone.accesskey "ร">
+
+<!ENTITY contactMoveDisabledWarning.description "คุณไม่สามารถเปลี่ยนสมุดรายชื่อได้เนื่องจากผู้ติดต่ออยู่ในรายชื่อผู้รับจดหมาย">

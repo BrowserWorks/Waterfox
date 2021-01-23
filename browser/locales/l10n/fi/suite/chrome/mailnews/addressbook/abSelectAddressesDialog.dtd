@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY selectAddressWindow.title           "Valitse osoitteet">
+
+<!-- Buttons -->
+<!ENTITY toButton.label                      "Vastaanottaja->"> 
+<!ENTITY toButton.accesskey                  "V"> 
+<!ENTITY ccButton.label                      "Kopio->"> 
+<!ENTITY ccButton.accesskey                  "K"> 
+<!ENTITY bccButton.label                     "Piilokopio->">  
+<!ENTITY bccButton.accesskey                 "P">  
+<!ENTITY newButton.label                     "Uusi…"> 
+<!ENTITY newButton.accesskey                 "U"> 
+<!ENTITY editButton.label                    "Muokkaa…"> 
+<!ENTITY editButton.accesskey                "M">
+<!ENTITY removeButton.label                  "Poista"> 
+<!ENTITY removeButton.accesskey              "P"> 
+<!ENTITY lookIn.label                        "Etsi kohteesta:"> 
+<!ENTITY lookIn.accesskey                    "E"> 
+<!ENTITY for.label                           "seuraavaa:"> 
+<!ENTITY for.accesskey                       "s"> 
+<!ENTITY for.placeholder                     "Nimi tai sähköpostiosoite">
+<!ENTITY addressMessageTo.label              "Lähetä viesti osoitteeseen:"> 
+
+<!-- Tooltips items -->  
+<!ENTITY addressPickerNewButton.tooltip      "Luo uusi kortti osoitekirjaan"> 
+<!ENTITY addressPickerEditButton.tooltip     "Muokkaa valittua korttia"> 
+

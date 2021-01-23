@@ -9,5 +9,9 @@ DiagnosticsMatcher::DiagnosticsMatcher(CompilerInstance &CI) {
   cls##_.registerMatchers(&AstMatcher);                                        \
   cls##_.registerPPCallbacks(CI);
 #include "Checks.inc"
+#include "external/ExternalChecks.inc"
+#ifdef MOZ_CLANG_PLUGIN_ALPHA
+#include "alpha/AlphaChecks.inc"
+#endif
 #undef CHECK
 }

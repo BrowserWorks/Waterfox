@@ -1,0 +1,59 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of 
+Netscape Communicator, Please translate using the brandname in respective 
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word 
+"&brandShortName;" below.
+-->
+
+
+<!--
+LOCALIZATION NOTE : 'Communicator 4.x' is the used for previous versions of
+Netscape Communicator, Please translate using the brandname in respective
+languages for Netscape Communicator 4 releases.
+LOCALIZATION NOTE : Do not translate any of the occurrences of the word
+"&brandShortName;" below.
+-->
+
+<!ENTITY importDialog.windowTitle "Mewnforio">
+<!ENTITY importAll.label          "Mewnforio Popeth">
+<!ENTITY importAll.accesskey      "P">
+<!ENTITY importMail.label         "E-bost">
+<!ENTITY importMail.accesskey     "E">
+<!ENTITY importFeeds.label        "Tanysgrifiad Llif">
+<!ENTITY importFeeds.accesskey    "T">
+<!ENTITY importAddressbook.label  "Llyfrau Cyfeiriadau">
+<!ENTITY importAddressbook.accesskey "L">
+<!ENTITY importSettings.label     "Gosodiadau">
+<!ENTITY importSettings.accesskey "G">
+<!ENTITY importFilters.label      "Hidlau">
+<!ENTITY importFilters.accesskey  "H">
+
+<!ENTITY  window.width            "40em">
+<!ENTITY  window.macWidth         "45em">
+
+<!ENTITY importTitle.label        "Dewin Mewnforio E-bost &brandShortName;">
+<!ENTITY importShortDesc.label    "Mewnforio E-bost a Llyfrau Cyfeiriadau, Gosodiadau a Hidlau o raglenni eraill">
+
+<!ENTITY importDescription1.label "Bydd y dewin yn mewnforio negeseuon e-bost, dewisiadau cofnodion llyfrau cyfeiriadau a/neu hidlau o raglenni e-bost eraill ac ar fformat llyfr cyfeiriadau cyffredin i mewn i &brandShortName;.">
+<!ENTITY importDescription2.label "Unwaith y byddant wedi'u mewnforio bydd modd cael mynediad iddynt o fewn &brandShortName;.">
+
+<!ENTITY selectDescription.label  "Dewiswch y math o ffeil i'w mewnforio:">
+<!ENTITY selectDescriptionB.label "Dewiswch gyfrif cyfredol neu greu cyfrif newydd:">
+<!ENTITY selectDescription.accesskey "f">
+<!ENTITY acctName.label           "Enw:">
+<!ENTITY acctName.accesskey       "E">
+<!ENTITY noModulesFound.label     "Dim rhaglen na ffeil i fewnforio data ohoni wedi ei ganfod.">
+
+<!ENTITY back.label               "&lt; Nôl">
+<!ENTITY forward.label            "Nesaf &gt;">
+<!ENTITY finish.label             "Gorffen">
+<!ENTITY cancel.label             "Diddymu">
+
+<!ENTITY select.label             "neu ddewis y math o ddeunydd i'w fewnforio:">
+
+<!ENTITY title.label              "Teitl">
+<!ENTITY processing.label         "Mewnforio…">

@@ -33,8 +33,6 @@ namespace jit {
   _(AliasSummaries)                        \
   /* Information during GVN */             \
   _(GVN)                                   \
-  /* Information during sincos */          \
-  _(Sincos)                                \
   /* Information during sinking */         \
   _(Sink)                                  \
   /* Information during Range analysis */  \
@@ -57,15 +55,12 @@ namespace jit {
   _(Pools)                                 \
   /* Profiling-related information */      \
   _(Profiling)                             \
-  /* Information of tracked opt strats */  \
-  _(OptimizationTracking)                  \
-  _(OptimizationTrackingExtended)          \
   /* Debug info about the I$ */            \
   _(CacheFlush)                            \
   /* Output a list of MIR expressions */   \
   _(MIRExpressions)                        \
-  /* Print control flow graph */           \
-  _(CFG)                                   \
+  /* Spew Tracelogger summary stats */     \
+  _(ScriptStats)                           \
                                            \
   /* BASELINE COMPILER SPEW */             \
                                            \
@@ -103,7 +98,14 @@ namespace jit {
   /* Debug info about snapshots */         \
   _(IonSnapshots)                          \
   /* Generated inline cache stubs */       \
-  _(IonIC)
+  _(IonIC)                                 \
+                                           \
+  /* WARP SPEW */                          \
+                                           \
+  /* Generated WarpSnapshots */            \
+  _(WarpSnapshots)                         \
+  /* CacheIR transpiler logging */         \
+  _(WarpTranspiler)
 
 enum JitSpewChannel {
 #define JITSPEW_CHANNEL(name) JitSpew_##name,
@@ -188,6 +190,13 @@ void DisableChannel(JitSpewChannel channel);
 void EnableIonDebugSyncLogging();
 void EnableIonDebugAsyncLogging();
 
+#  define JitSpewIfEnabled(channel, fmt, ...) \
+    do {                                      \
+      if (JitSpewEnabled(channel)) {          \
+        JitSpew(channel, fmt, __VA_ARGS__);   \
+      }                                       \
+    } while (false);
+
 #else
 
 class GraphSpewer {
@@ -238,6 +247,9 @@ static inline void JitSpewCheckArguments(JitSpewChannel channel,
 #  define JitSpew(...) JitSpewCheckExpandedArgs_((__VA_ARGS__))
 #  define JitSpewStart(...) JitSpewCheckExpandedArgs_((__VA_ARGS__))
 #  define JitSpewCont(...) JitSpewCheckExpandedArgs_((__VA_ARGS__))
+
+#  define JitSpewIfEnabled(channel, fmt, ...) \
+    JitSpewCheckArguments(channel, fmt)
 
 static inline void JitSpewFin(JitSpewChannel channel) {}
 

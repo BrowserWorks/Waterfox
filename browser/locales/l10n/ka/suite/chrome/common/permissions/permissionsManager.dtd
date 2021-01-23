@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowtitle.label              "გამონაკლისები">
+<!ENTITY treehead.sitename.label        "საიტი">
+<!ENTITY treehead.status.label          "სტატუსი">
+<!ENTITY remove.label                   "საიტის მოცილება">
+<!ENTITY remove.accesskey               "R">
+<!ENTITY removeall.label                "ყველა საიტის მოცილება">
+<!ENTITY removeall.accesskey            "e">
+<!ENTITY address.label                  "ვებსაიტის მისამართი:">
+<!ENTITY address.accesskey              "d">
+<!ENTITY block.label                    "დაბლოკვა">
+<!ENTITY block.accesskey                "B">
+<!ENTITY session.label                  "დაშვება ამ სეანსზე">
+<!ENTITY session.accesskey              "S">
+<!ENTITY allow.label                    "დაშვება">
+<!ENTITY allow.accesskey                "A">

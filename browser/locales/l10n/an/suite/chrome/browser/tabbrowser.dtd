@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  untitledTab            "(Sin titol)">
+<!ENTITY  newTab.label           "Pestanya nueva">
+<!ENTITY  newTab.accesskey       "n">
+<!ENTITY  closeTab.label         "Zarrar pestanya">
+<!ENTITY  closeTab.accesskey         "Z">
+<!ENTITY  closeOtherTabs.label   "Zarrar as atras pestanyas">
+<!ENTITY  closeOtherTabs.accesskey         "a">
+<!ENTITY  reloadAllTabs.label    "Recargar todas as pestanyas">
+<!ENTITY  reloadAllTabs.accesskey         "a">
+<!ENTITY  reloadTab.label        "Recargar pestanya">
+<!ENTITY  reloadTab.accesskey         "R">
+<!ENTITY  bookmarkGroup.label    "Adhibir a marcadors iste grupo de pestanyas">
+<!ENTITY  bookmarkGroup.accesskey  "m">
+<!ENTITY  closeTabButton.tooltip   "Zarrar pestanya actual">
+<!ENTITY  newTabButton.tooltip   "Ubrir una pestanya nueva">
+<!ENTITY  listAllTabs.tooltip    "Listar todas as pestanyas">
+<!ENTITY  undoCloseTab.label    "Desfer zarrar pestanya">
+<!ENTITY  undoCloseTab.accesskey  "f">

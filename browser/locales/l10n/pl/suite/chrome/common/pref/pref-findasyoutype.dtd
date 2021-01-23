@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.findAsYouType.title "Znajdź wprowadzając">
+<!ENTITY findAsYouTypeBehavior.label "Ustawienia wyszukiwania Znajdź wprowadzając">
+<!ENTITY findAsYouTypeTip.label "Wskazówka: Wyszukiwanie Znajdź wprowadzając można uruchomić ręcznie, wciskając klawisz / lub ', a następnie wpisując tekst, który ma zostać odnaleziony. / rozpoczyna wyszukiwanie dowolnego tekstu, a ' wyłącznie odnośników.">
+<!ENTITY findAsYouTypeTimeout.label "Zakończ bieżące wyszukiwanie po kilku sekundach braku aktywności">
+<!ENTITY findAsYouTypeTimeout.accesskey "Z">
+<!ENTITY findAsYouTypeSound.label "Odtwórz dźwięk, gdy wprowadzony tekst nie zostanie odnaleziony">
+<!ENTITY findAsYouTypeSound.accesskey "O">
+<!ENTITY findAsYouTypeEnableAuto.label "Automatycznie rozpocznij wyszukiwanie tekstu wprowadzonego podczas przeglądania strony. Wyszukuj:">
+<!ENTITY findAsYouTypeEnableAuto.accesskey "A">
+<!ENTITY findAsYouTypeAutoText.label "Dowolny tekst znajdujący się na stronie">
+<!ENTITY findAsYouTypeAutoText.accesskey "D">
+<!ENTITY findAsYouTypeAutoLinks.label "Wyłącznie odnośniki">
+<!ENTITY findAsYouTypeAutoLinks.accesskey "o">
+
+<!ENTITY findAsYouTypeFindbarEnable.label "Wyświetlaj pasek wyszukiwania podczas używania funkcji Znajdź wprowadzając">
+<!ENTITY findAsYouTypeFindbarEnable.accesskey "W">
+<!ENTITY findAsYouTypeFindbarEnableTip.label "Uwaga: Znajdź wprowadzając bez wyświetlonego paska wprowadzania nie obsługuje znaków spoza alfabetu języka angielskiego.">

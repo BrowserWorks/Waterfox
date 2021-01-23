@@ -5,9 +5,15 @@
 "use strict";
 
 const Services = require("Services");
-const { ACTIVITY_TYPE, EVENTS } = require("../constants");
-const FirefoxDataProvider = require("./firefox-data-provider");
-const { getDisplayedTimingMarker } = require("../selectors/index");
+const {
+  ACTIVITY_TYPE,
+  EVENTS,
+  TEST_EVENTS,
+} = require("devtools/client/netmonitor/src/constants");
+const FirefoxDataProvider = require("devtools/client/netmonitor/src/connector/firefox-data-provider");
+const {
+  getDisplayedTimingMarker,
+} = require("devtools/client/netmonitor/src/selectors/index");
 
 // Network throttling
 loader.lazyRequireGetter(
@@ -27,7 +33,6 @@ class FirefoxConnector {
     this.willNavigate = this.willNavigate.bind(this);
     this.navigate = this.navigate.bind(this);
     this.displayCachedEvents = this.displayCachedEvents.bind(this);
-    this.onDocEvent = this.onDocEvent.bind(this);
     this.sendHTTPRequest = this.sendHTTPRequest.bind(this);
     this.setPreferences = this.setPreferences.bind(this);
     this.triggerActivity = this.triggerActivity.bind(this);
@@ -40,6 +45,12 @@ class FirefoxConnector {
     // Internals
     this.getLongString = this.getLongString.bind(this);
     this.getNetworkRequest = this.getNetworkRequest.bind(this);
+    this.onTargetAvailable = this.onTargetAvailable.bind(this);
+    this.onResourceAvailable = this.onResourceAvailable.bind(this);
+  }
+
+  get currentTarget() {
+    return this.toolbox.targetList.targetFront;
   }
 
   /**
@@ -52,61 +63,49 @@ class FirefoxConnector {
   async connect(connection, actions, getState) {
     this.actions = actions;
     this.getState = getState;
-    this.tabTarget = connection.tabConnection.tabTarget;
     this.toolbox = connection.toolbox;
 
     // The owner object (NetMonitorAPI) received all events.
     this.owner = connection.owner;
 
-    this.webConsoleClient = this.tabTarget.activeConsole;
+    await this.toolbox.targetList.watchTargets(
+      [this.toolbox.targetList.TYPES.FRAME],
+      this.onTargetAvailable
+    );
 
-    this.dataProvider = new FirefoxDataProvider({
-      webConsoleClient: this.webConsoleClient,
-      actions: this.actions,
-      owner: this.owner,
-    });
-
-    // Register all listeners
-    await this.addListeners();
-
-    // Listener for `will-navigate` event is (un)registered outside
-    // of the `addListeners` and `removeListeners` methods since
-    // these are used to pause/resume the connector.
-    // Paused network panel should be automatically resumed when page
-    // reload, so `will-navigate` listener needs to be there all the time.
-    if (this.tabTarget) {
-      this.tabTarget.on("will-navigate", this.willNavigate);
-      this.tabTarget.on("navigate", this.navigate);
-
-      // Initialize Emulation front for network throttling.
-      this.emulationFront = await this.tabTarget.getFront("emulation");
-    }
-
-    // Displaying cache events is only intended for the UI panel.
-    if (this.actions) {
-      this.displayCachedEvents();
-    }
+    await this.toolbox.resourceWatcher.watchResources(
+      [this.toolbox.resourceWatcher.TYPES.DOCUMENT_EVENT],
+      { onAvailable: this.onResourceAvailable }
+    );
   }
 
-  async disconnect() {
+  disconnect() {
+    // As this function might be called twice, we need to guard if already called.
+    if (this._destroyed) {
+      return;
+    }
+
+    this._destroyed = true;
+
+    this.toolbox.targetList.unwatchTargets(
+      [this.toolbox.targetList.TYPES.FRAME],
+      this.onTargetAvailable
+    );
+
+    this.toolbox.resourceWatcher.unwatchResources(
+      [this.toolbox.resourceWatcher.TYPES.DOCUMENT_EVENT],
+      { onAvailable: this.onResourceAvailable }
+    );
+
     if (this.actions) {
       this.actions.batchReset();
     }
 
-    await this.removeListeners();
+    this.removeListeners();
 
-    if (this.emulationFront) {
-      this.emulationFront.destroy();
-      this.emulationFront = null;
-    }
+    this.currentTarget.off("will-navigate", this.willNavigate);
 
-    if (this.tabTarget) {
-      this.tabTarget.off("will-navigate", this.willNavigate);
-      this.tabTarget.off("navigate", this.navigate);
-      this.tabTarget = null;
-    }
-
-    this.webConsoleClient = null;
+    this.webConsoleFront = null;
     this.dataProvider = null;
   }
 
@@ -118,34 +117,135 @@ class FirefoxConnector {
     await this.addListeners();
   }
 
+  async onTargetAvailable({ targetFront, isTargetSwitching }) {
+    if (!targetFront.isTopLevel) {
+      return;
+    }
+
+    if (isTargetSwitching) {
+      this.willNavigate();
+    }
+
+    // Listener for `will-navigate` event is (un)registered outside
+    // of the `addListeners` and `removeListeners` methods since
+    // these are used to pause/resume the connector.
+    // Paused network panel should be automatically resumed when page
+    // reload, so `will-navigate` listener needs to be there all the time.
+    targetFront.on("will-navigate", this.willNavigate);
+
+    this.webConsoleFront = await this.currentTarget.getFront("console");
+
+    this.dataProvider = new FirefoxDataProvider({
+      webConsoleFront: this.webConsoleFront,
+      actions: this.actions,
+      owner: this.owner,
+    });
+
+    // Register all listeners
+    await this.addListeners();
+
+    // Initialize Responsive Emulation front for network throttling.
+    this.responsiveFront = await this.currentTarget.getFront("responsive");
+
+    // Displaying cache events is only intended for the UI panel.
+    if (this.actions) {
+      this.displayCachedEvents();
+    }
+  }
+
+  async onResourceAvailable({ resourceType, targetFront, resource }) {
+    if (resourceType === this.toolbox.resourceWatcher.TYPES.DOCUMENT_EVENT) {
+      this.onDocEvent(resource);
+    }
+  }
+
   async addListeners() {
-    this.tabTarget.on("close", this.disconnect);
-    this.webConsoleClient.on("networkEvent", this.dataProvider.onNetworkEvent);
-    this.webConsoleClient.on(
+    this.webConsoleFront.on("networkEvent", this.dataProvider.onNetworkEvent);
+    this.webConsoleFront.on(
       "networkEventUpdate",
       this.dataProvider.onNetworkEventUpdate
     );
-    this.webConsoleClient.on("documentEvent", this.onDocEvent);
 
-    // The console actor supports listening to document events like
-    // DOMContentLoaded and load.
-    await this.webConsoleClient.startListeners(["DocumentEvents"]);
+    // Support for WebSocket monitoring is currently hidden behind this pref.
+    if (Services.prefs.getBoolPref("devtools.netmonitor.features.webSockets")) {
+      try {
+        // Initialize WebSocket front to intercept websocket traffic.
+        const webSocketFront = await this.currentTarget.getFront("webSocket");
+        webSocketFront.startListening();
+
+        webSocketFront.on(
+          "webSocketOpened",
+          this.dataProvider.onWebSocketOpened
+        );
+        webSocketFront.on(
+          "webSocketClosed",
+          this.dataProvider.onWebSocketClosed
+        );
+        webSocketFront.on("frameReceived", this.dataProvider.onFrameReceived);
+        webSocketFront.on("frameSent", this.dataProvider.onFrameSent);
+      } catch (e) {
+        // Support for FF68 or older
+      }
+    }
+
+    // Support for EventSource monitoring is currently hidden behind this pref.
+    if (
+      Services.prefs.getBoolPref(
+        "devtools.netmonitor.features.serverSentEvents"
+      )
+    ) {
+      const eventSourceFront = await this.currentTarget.getFront("eventSource");
+      eventSourceFront.startListening();
+
+      eventSourceFront.on(
+        "eventSourceConnectionOpened",
+        this.dataProvider.onEventSourceConnectionOpened
+      );
+      eventSourceFront.on(
+        "eventSourceConnectionClosed",
+        this.dataProvider.onEventSourceConnectionClosed
+      );
+      eventSourceFront.on("eventReceived", this.dataProvider.onEventReceived);
+    }
   }
 
-  async removeListeners() {
-    if (this.tabTarget) {
-      this.tabTarget.off("close", this.disconnect);
+  removeListeners() {
+    const webSocketFront = this.currentTarget.getCachedFront("webSocket");
+    if (webSocketFront) {
+      webSocketFront.off(
+        "webSocketOpened",
+        this.dataProvider.onWebSocketOpened
+      );
+      webSocketFront.off(
+        "webSocketClosed",
+        this.dataProvider.onWebSocketClosed
+      );
+      webSocketFront.off("frameReceived", this.dataProvider.onFrameReceived);
+      webSocketFront.off("frameSent", this.dataProvider.onFrameSent);
     }
-    if (this.webConsoleClient) {
-      this.webConsoleClient.off(
+
+    if (this.webConsoleFront) {
+      this.webConsoleFront.off(
         "networkEvent",
         this.dataProvider.onNetworkEvent
       );
-      this.webConsoleClient.off(
+      this.webConsoleFront.off(
         "networkEventUpdate",
         this.dataProvider.onNetworkEventUpdate
       );
-      this.webConsoleClient.off("docEvent", this.onDocEvent);
+    }
+
+    const eventSourceFront = this.currentTarget.getCachedFront("eventSource");
+    if (eventSourceFront) {
+      eventSourceFront.off(
+        "eventSourceConnectionOpened",
+        this.dataProvider.onEventSourceConnectionOpened
+      );
+      eventSourceFront.off(
+        "eventSourceConnectionClosed",
+        this.dataProvider.onEventSourceConnectionClosed
+      );
+      eventSourceFront.off("eventReceived", this.dataProvider.onEventReceived);
     }
   }
 
@@ -164,11 +264,16 @@ class FirefoxConnector {
       }
     }
 
-    // Resume is done automatically on page reload/navigation.
     if (this.actions && this.getState) {
       const state = this.getState();
+      // Resume is done automatically on page reload/navigation.
       if (!state.requests.recording) {
         this.actions.toggleRecording();
+      }
+
+      // Stop any ongoing search.
+      if (state.search.ongoingSearch) {
+        this.actions.stopOngoingSearch();
       }
     }
   }
@@ -207,7 +312,7 @@ class FirefoxConnector {
    * Display any network events already in the cache.
    */
   displayCachedEvents() {
-    for (const networkInfo of this.webConsoleClient.getNetworkEvents()) {
+    for (const networkInfo of this.webConsoleFront.getNetworkEvents()) {
       // First add the request to the timeline.
       this.dataProvider.onNetworkEvent(networkInfo);
       // Then replay any updates already received.
@@ -226,11 +331,20 @@ class FirefoxConnector {
    * @param {object} marker
    */
   onDocEvent(event) {
+    if (event.name === "dom-loading") {
+      // Netmonitor does not support dom-loading event yet.
+      return;
+    }
+
     if (this.actions) {
       this.actions.addTimingMarker(event);
     }
 
-    this.emit(EVENTS.TIMELINE_EVENT, event);
+    if (event.name === "dom-complete") {
+      this.navigate();
+    }
+
+    this.emitForTests(TEST_EVENTS.TIMELINE_EVENT, event);
   }
 
   /**
@@ -240,7 +354,7 @@ class FirefoxConnector {
    * @param {function} callback callback will be invoked after the request finished
    */
   sendHTTPRequest(data, callback) {
-    this.webConsoleClient.sendHTTPRequest(data).then(callback);
+    this.webConsoleFront.sendHTTPRequest(data).then(callback);
   }
 
   /**
@@ -249,7 +363,7 @@ class FirefoxConnector {
    * @param {object} filter request filter specifying what to block
    */
   blockRequest(filter) {
-    return this.webConsoleClient.blockRequest(filter);
+    return this.webConsoleFront.blockRequest(filter);
   }
 
   /**
@@ -258,7 +372,16 @@ class FirefoxConnector {
    * @param {object} filter request filter specifying what to unblock
    */
   unblockRequest(filter) {
-    return this.webConsoleClient.unblockRequest(filter);
+    return this.webConsoleFront.unblockRequest(filter);
+  }
+
+  /**
+   * Updates the list of blocked URLs
+   *
+   * @param {object} urls An array of URL strings
+   */
+  setBlockedUrls(urls) {
+    return this.webConsoleFront.setBlockedUrls(urls);
   }
 
   /**
@@ -268,7 +391,7 @@ class FirefoxConnector {
    * @param {function} callback callback will be invoked after the request finished
    */
   setPreferences(request) {
-    return this.webConsoleClient.setPreferences(request);
+    return this.webConsoleFront.setPreferences(request);
   }
 
   /**
@@ -286,19 +409,14 @@ class FirefoxConnector {
     };
 
     // Waits for a series of "navigation start" and "navigation stop" events.
-    const waitForNavigation = () => {
-      return new Promise(resolve => {
-        this.tabTarget.once("will-navigate", () => {
-          this.tabTarget.once("navigate", () => {
-            resolve();
-          });
-        });
-      });
+    const waitForNavigation = async () => {
+      await this.currentTarget.once("will-navigate");
+      await this.currentTarget.once("navigate");
     };
 
     // Reconfigures the tab, optionally triggering a reload.
     const reconfigureTab = options => {
-      return this.tabTarget.reconfigure({ options });
+      return this.currentTarget.reconfigure({ options });
     };
 
     // Reconfigures the tab and waits for the target to finish navigating.
@@ -312,7 +430,7 @@ class FirefoxConnector {
         return reconfigureTabAndWaitForNavigation({}).then(standBy);
       case ACTIVITY_TYPE.RELOAD.WITH_CACHE_ENABLED:
         this.currentActivity = ACTIVITY_TYPE.ENABLE_CACHE;
-        this.tabTarget.once("will-navigate", () => {
+        this.currentTarget.once("will-navigate", () => {
           this.currentActivity = type;
         });
         return reconfigureTabAndWaitForNavigation({
@@ -321,7 +439,7 @@ class FirefoxConnector {
         }).then(standBy);
       case ACTIVITY_TYPE.RELOAD.WITH_CACHE_DISABLED:
         this.currentActivity = ACTIVITY_TYPE.DISABLE_CACHE;
-        this.tabTarget.once("will-navigate", () => {
+        this.currentTarget.once("will-navigate", () => {
           this.currentActivity = type;
         });
         return reconfigureTabAndWaitForNavigation({
@@ -375,7 +493,7 @@ class FirefoxConnector {
    * @return {object} browser tab target instance
    */
   getTabTarget() {
-    return this.tabTarget;
+    return this.currentTarget;
   }
 
   /**
@@ -410,26 +528,27 @@ class FirefoxConnector {
 
   async updateNetworkThrottling(enabled, profile) {
     if (!enabled) {
-      await this.emulationFront.clearNetworkThrottling();
+      await this.responsiveFront.clearNetworkThrottling();
     } else {
       const data = throttlingProfiles.find(({ id }) => id == profile);
       const { download, upload, latency } = data;
-      await this.emulationFront.setNetworkThrottling({
+      await this.responsiveFront.setNetworkThrottling({
         downloadThroughput: download,
         uploadThroughput: upload,
         latency,
       });
     }
 
-    this.emit(EVENTS.THROTTLING_CHANGED, { profile });
+    this.emitForTests(TEST_EVENTS.THROTTLING_CHANGED, { profile });
   }
 
   /**
-   * Fire events for the owner object.
+   * Fire events for the owner object. These events are only
+   * used in tests so, don't fire them in production release.
    */
-  emit(type, data) {
+  emitForTests(type, data) {
     if (this.owner) {
-      this.owner.emit(type, data);
+      this.owner.emitForTests(type, data);
     }
   }
 }

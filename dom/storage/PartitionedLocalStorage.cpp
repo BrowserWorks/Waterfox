@@ -22,11 +22,10 @@ NS_IMPL_RELEASE_INHERITED(PartitionedLocalStorage, Storage)
 
 PartitionedLocalStorage::PartitionedLocalStorage(
     nsPIDOMWindowInner* aWindow, nsIPrincipal* aPrincipal,
-    nsIPrincipal* aStoragePrincipal)
-    : Storage(aWindow, aPrincipal, aStoragePrincipal),
-      mCache(new SessionStorageCache()) {}
+    nsIPrincipal* aStoragePrincipal, SessionStorageCache* aCache)
+    : Storage(aWindow, aPrincipal, aStoragePrincipal), mCache(aCache) {}
 
-PartitionedLocalStorage::~PartitionedLocalStorage() {}
+PartitionedLocalStorage::~PartitionedLocalStorage() = default;
 
 int64_t PartitionedLocalStorage::GetOriginQuotaUsage() const {
   return mCache->GetOriginQuotaUsage(SessionStorageCache::eSessionSetType);

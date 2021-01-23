@@ -21,7 +21,6 @@
 #include "mozilla/dom/PrototypeList.h"
 #include "mozilla/dom/RegisterBindings.h"
 #include "nsGlobalWindow.h"
-#include "nsIMemoryReporter.h"
 #include "nsTHashtable.h"
 #include "WrapperFactory.h"
 
@@ -62,9 +61,7 @@ bool WebIDLGlobalNameHash::DefineIfEnabled(
     JS::MutableHandle<JS::PropertyDescriptor> aDesc, bool* aFound) {
   MOZ_ASSERT(JSID_IS_STRING(aId), "Check for string id before calling this!");
 
-  const WebIDLNameTableEntry* entry;
-  { entry = GetEntry(JSID_TO_FLAT_STRING(aId)); }
-
+  const WebIDLNameTableEntry* entry = GetEntry(JSID_TO_LINEAR_STRING(aId));
   if (!entry) {
     *aFound = false;
     return true;
@@ -175,7 +172,7 @@ bool WebIDLGlobalNameHash::DefineIfEnabled(
 
 /* static */
 bool WebIDLGlobalNameHash::MayResolve(jsid aId) {
-  return GetEntry(JSID_TO_FLAT_STRING(aId)) != nullptr;
+  return GetEntry(JSID_TO_LINEAR_STRING(aId)) != nullptr;
 }
 
 /* static */
@@ -193,7 +190,7 @@ bool WebIDLGlobalNameHash::GetNames(JSContext* aCx, JS::Handle<JSObject*> aObj,
         (!entry.mEnabled || entry.mEnabled(aCx, aObj))) {
       JSString* str =
           JS_AtomizeStringN(aCx, sNames + entry.mNameOffset, entry.mNameLength);
-      if (!str || !aNames.append(NON_INTEGER_ATOM_TO_JSID(str))) {
+      if (!str || !aNames.append(PropertyKey::fromNonIntAtom(str))) {
         return false;
       }
     }
@@ -228,7 +225,7 @@ bool WebIDLGlobalNameHash::ResolveForSystemGlobal(JSContext* aCx,
   MOZ_ASSERT(!xpc::WrapperFactory::IsXrayWrapper(aObj), "Xrays not supported!");
 
   // Look up the corresponding entry in the name table, and resolve if enabled.
-  const WebIDLNameTableEntry* entry = GetEntry(JSID_TO_FLAT_STRING(aId));
+  const WebIDLNameTableEntry* entry = GetEntry(JSID_TO_LINEAR_STRING(aId));
   if (entry && (!entry->mEnabled || entry->mEnabled(aCx, aObj))) {
     if (NS_WARN_IF(!GetPerInterfaceObjectHandle(
             aCx, entry->mConstructorId, entry->mCreate,
@@ -264,7 +261,7 @@ bool WebIDLGlobalNameHash::NewEnumerateSystemGlobal(
     if (!entry.mEnabled || entry.mEnabled(aCx, aObj)) {
       JSString* str =
           JS_AtomizeStringN(aCx, sNames + entry.mNameOffset, entry.mNameLength);
-      if (!str || !aProperties.append(NON_INTEGER_ATOM_TO_JSID(str))) {
+      if (!str || !aProperties.append(PropertyKey::fromNonIntAtom(str))) {
         return false;
       }
     }

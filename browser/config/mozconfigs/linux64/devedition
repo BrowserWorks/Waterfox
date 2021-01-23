@@ -1,18 +1,8 @@
-export MOZ_PGO=1
-
 . "$topsrcdir/browser/config/mozconfigs/linux64/common-opt"
 
 # Add-on signing is not required for DevEdition
 MOZ_REQUIRE_SIGNING=0
 
 ac_add_options --with-branding=browser/branding/aurora
-
-export MOZ_LTO=1
-ac_add_options --enable-profile-use
-ac_add_options --with-pgo-jarlog=/builds/worker/fetches/en-US.log
-ac_add_options --with-pgo-profile-path=/builds/worker/fetches
-
-# Enable MOZ_ALLOW_LEGACY_EXTENSIONS
-ac_add_options "MOZ_ALLOW_LEGACY_EXTENSIONS=1"
 
 . "$topsrcdir/build/mozconfig.common.override"

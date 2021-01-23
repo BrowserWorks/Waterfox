@@ -9,6 +9,7 @@
 
 #include "mozilla/Maybe.h"
 
+#include "gc/MaybeRooted.h"
 #include "gc/Rooting.h"
 #include "js/TypeDecls.h"
 #include "js/Utility.h"
@@ -27,8 +28,7 @@ class PropertyName;
 } /* namespace js */
 
 /* Well-known predefined C strings. */
-#define DECLARE_PROTO_STR(name, init, clasp) \
-  extern const char js_##name##_str[];
+#define DECLARE_PROTO_STR(name, clasp) extern const char js_##name##_str[];
 JS_FOR_EACH_PROTOTYPE(DECLARE_PROTO_STR)
 #undef DECLARE_PROTO_STR
 
@@ -60,9 +60,21 @@ template <typename CharT>
 extern JSAtom* AtomizeChars(JSContext* cx, const CharT* chars, size_t length,
                             js::PinningBehavior pin = js::DoNotPinAtom);
 
+/**
+ * Create an atom whose contents are those of the |utf8ByteLength| code units
+ * starting at |utf8Chars|, interpreted as UTF-8.
+ *
+ * Throws if the code units do not contain valid UTF-8.
+ */
 extern JSAtom* AtomizeUTF8Chars(JSContext* cx, const char* utf8Chars,
                                 size_t utf8ByteLength);
 
+/**
+ * Create an atom whose contents are those of the |wtf8ByteLength| code units
+ * starting at |wtf8Chars|, interpreted as WTF-8.
+ *
+ * Throws if the code units do not contain valid WTF-8.
+ */
 extern JSAtom* AtomizeWTF8Chars(JSContext* cx, const char* wtf8Chars,
                                 size_t wtf8ByteLength);
 
@@ -78,6 +90,10 @@ extern JSAtom* ToAtom(JSContext* cx,
 // template<XDRMode mode>
 // XDRResult
 // XDRAtom(XDRState<mode>* xdr, js::MutableHandleAtom atomp);
+
+// template<XDRMode mode>
+// XDRResult
+// XDRAtomOrNull(XDRState<mode>* xdr, js::MutableHandleAtom atomp);
 
 extern JS::Handle<PropertyName*> ClassName(JSProtoKey key, JSContext* cx);
 

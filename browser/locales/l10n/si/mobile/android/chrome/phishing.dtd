@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Get me out of here!">
+<!ENTITY safeb.palm.decline.label "මෙම අවවාදය නොසළකන්න">
+<!ENTITY safeb.palm.reportPage.label "Why was this page blocked?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "උපදේශනය <a id='advisory_provider'/>  විසින්.">
+
+<!ENTITY safeb.blocked.malwarePage.title "ආක්‍රමණික බවට වාර්තාවූ වෙබ් අඩවියක්!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "This web page at <span id='malware_sitename'/> has been reported as an attack page and has been blocked based on your security preferences.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Attack pages try to install programs that steal private information, use your computer to attack others, or damage your system.</p><p>Some attack pages intentionally distribute harmful software, but many are compromised without the knowledge or permission of their owners.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "වංචනික අඩවියක්!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "<span id='phishing_sitename'/> හි අඩවිය  වංචනික අඩවියක් ලෙස වාර්තා වී ඇති අතර, ඔබගේ ආරක්ෂක තෝරාගැනීම අනුව එය අවහිර කර ඇත.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>වංචනික අඩවි මෘදුකාංග ස්ථාපනය, මුරපද, දුරකථන අංක, හෝ ණයපත් වැනි පුද්ගලික තොරතුරු හෙළි කිරීම වැනි භයානක ක්‍රියා සඳහා ඔබව රැවටීමට නිර්මාණය කර ඇත.</p><p>මෙම ජාල අඩවිය මත කිසියම් තොරතුරක් එක් කිරීම අනන්‍යතා සොරකම් වැනි වංචනික ක්‍රියාවකට පාදක විය හැක.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "අනවශ්‍ය මෘදුකාංග අඩවියක් වාර්ථා විය!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "<span id='unwanted_sitename'/> හි ජාල පිටුව අනවශ්‍ය මෘදුකාංග ලබාදෙන අඩවියක් ලෙස වාර්තා වී ඇති අතර, ඔබගේ ආරක්ෂක තෝරාගැනීම අනුව එය අවහිර කර ඇත.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "අනවශ්‍ය මෘදුකාංග පිටු වංචනික හෝ ඔබේ පද්ධතියට බලාපොරොත්තු රහිත ලෙස බලපෑ හැකි මෘදුකාංග ස්ථාපනයට තැත් කරයි.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "ඉදිරි අඩවිය සතුව මැල්වෙයා පැවතිය හැක">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "ඔබේ තොරතුරු (ඡායාරූප, මුරපද, පණිවුඩ හා ණයපත්) සොරකම් කිරීමට හෝ මකාදැමීමට ඉඩ ඇති යෙදුමක් ස්ථාපනයට තැත් කළ බැවින &brandShortName; විසින් මෙම පිටුව වළකා ඇත">

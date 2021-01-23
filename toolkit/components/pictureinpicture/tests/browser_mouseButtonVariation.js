@@ -21,7 +21,7 @@ add_task(async () => {
       await ensureVideosReady(browser);
       let videoID = "no-controls";
 
-      let { toggleClientRect } = await prepareForToggleClick(browser, videoID);
+      await prepareForToggleClick(browser, videoID);
 
       // Hover the mouse over the video to reveal the toggle, which is necessary
       // if we want to click on the toggle.
@@ -47,6 +47,8 @@ add_task(async () => {
         HOVER_VIDEO_OPACITY
       );
 
+      let toggleClientRect = await getToggleClientRect(browser, videoID);
+
       // The toggle center, because of how it slides out, is actually outside
       // of the bounds of a click event. For now, we move the mouse in by a
       // hard-coded 2 pixels along the x and y axis to achieve the hover.
@@ -56,7 +58,10 @@ add_task(async () => {
       info(
         "Clicking on toggle, and expecting a Picture-in-Picture window to open"
       );
-      let domWindowOpened = BrowserTestUtils.domWindowOpened(null);
+      // We need to wait for the window to have completed loading before we
+      // can close it as the document's type required by closeWindow may not
+      // be available.
+      let domWindowOpened = BrowserTestUtils.domWindowOpenedAndLoaded(null);
 
       await BrowserTestUtils.synthesizeMouseAtPoint(
         toggleLeft,

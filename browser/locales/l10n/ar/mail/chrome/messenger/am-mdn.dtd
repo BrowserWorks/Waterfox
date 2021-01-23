@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "عِلم الوصول">
+<!ENTITY useGlobalPrefs.label         "استخدم تفضيلاتي العامّة لإعلام الوصول لهذا الحساب">
+<!ENTITY useGlobalPrefs.accesskey     "س">
+<!ENTITY globalReceipts.label         "التفضيلات العامة…">
+<!ENTITY globalReceipts.accesskey     "ض">
+<!ENTITY useCustomPrefs.label         "خصِّص إعلام الوصول لهذا الحساب">
+<!ENTITY useCustomPrefs.accesskey     "خ">
+<!ENTITY requestReceipt.label         "اطلب إعلام الوصول دائمًا عند إرسال الرسائل">
+<!ENTITY requestReceipt.accesskey     "ط">
+<!ENTITY receiptArrive.label          "عند وصول الإعلام:">
+<!ENTITY leaveIt.label                "دعها في البريد الوارد">
+<!ENTITY leaveIt.accesskey            "د">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "انقلها إلى مجلّد ”المُرسَل“">
+<!ENTITY moveToSent.accesskey         "ن">
+<!ENTITY requestMDN.label             "عندما أستلم طلب إعلام وصول:">
+<!ENTITY returnSome.label             "اسمح بإعلام الوصول لبعض الرّسائل">
+<!ENTITY returnSome.accesskey         "س">
+<!ENTITY never.label                  "لا ترسل إعلام وصول مطلقًا">
+<!ENTITY never.accesskey              "ل">
+<!ENTITY notInToCc.label              "إذا لم أكن ضمن حقل إلى أو ن.ك للرسالة:">
+<!ENTITY notInToCc.accesskey          "ل">
+<!ENTITY outsideDomain.label          "إذا كان المرسل خارج نطاقي:">
+<!ENTITY outsideDomain.accesskey      "خ">
+<!ENTITY otherCases.label             "في كلّ الحالات الأخرى:">
+<!ENTITY otherCases.accesskey         "خ">
+<!ENTITY askMe.label                  "اسألني">
+<!ENTITY alwaysSend.label             "أرسل دائمًا">
+<!ENTITY neverSend.label              "لا ترسل أبدًا">

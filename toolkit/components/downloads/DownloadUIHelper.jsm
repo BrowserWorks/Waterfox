@@ -24,6 +24,12 @@ ChromeUtils.defineModuleGetter(
   "resource://gre/modules/Services.jsm"
 );
 
+// BrowserWindowTracker and PrivateBrowsingUtils are only used when opening downloaded files into a browser window
+XPCOMUtils.defineLazyModuleGetters(this, {
+  BrowserWindowTracker: "resource:///modules/BrowserWindowTracker.jsm",
+  PrivateBrowsingUtils: "resource://gre/modules/PrivateBrowsingUtils.jsm",
+});
+
 const kStringBundleUrl =
   "chrome://mozapps/locale/downloads/downloads.properties";
 
@@ -57,6 +63,76 @@ var DownloadUIHelper = {
   getPrompter(aParent) {
     return new DownloadPrompter(aParent || null);
   },
+
+  /**
+   * Open the given file as a file: URI in the active window
+   *
+   * @param nsIFile file         The downloaded file
+   * @param options.chromeWindow Optional chrome window where we could open the file URI
+   * @param options.openWhere    String indicating how to open the URI.
+   *                             One of "window", "tab", "tabshifted"
+   * @param options.isPrivate    Open in private window or not
+   * @param options.browsingContextId BrowsingContext ID of the initiating document
+   * @param options.userContextId UserContextID of the initiating document
+   */
+  loadFileIn(
+    file,
+    {
+      chromeWindow: browserWin,
+      openWhere = "tab",
+      isPrivate,
+      userContextId = 0,
+      browsingContextId = 0,
+    } = {}
+  ) {
+    let fileURI = Services.io.newFileURI(file);
+    let allowPrivate =
+      isPrivate || PrivateBrowsingUtils.permanentPrivateBrowsing;
+
+    if (
+      !browserWin ||
+      browserWin.document.documentElement.getAttribute("windowtype") !==
+        "navigator:browser"
+    ) {
+      // we'll need a private window for a private download, or if we're in private-only mode
+      // but otherwise we want to open files in a non-private window
+      browserWin = BrowserWindowTracker.getTopWindow({
+        private: allowPrivate,
+      });
+    }
+    // if there is no suitable browser window, we'll need to open one and ignore any other `openWhere` value
+    // this can happen if the library dialog is the only open window
+    if (!browserWin) {
+      // There is no browser window open, so open a new one.
+      let args = Cc["@mozilla.org/array;1"].createInstance(Ci.nsIMutableArray);
+      let strURI = Cc["@mozilla.org/supports-string;1"].createInstance(
+        Ci.nsISupportsString
+      );
+      strURI.data = fileURI.spec;
+      args.appendElement(strURI);
+      let features = "chrome,dialog=no,all";
+      if (isPrivate) {
+        features += ",private";
+      }
+      browserWin = Services.ww.openWindow(
+        null,
+        AppConstants.BROWSER_CHROME_URL,
+        null,
+        features,
+        args
+      );
+      return;
+    }
+
+    // a browser window will have the helpers from utilityOverlay.js
+    let browsingContext = browserWin?.BrowsingContext.get(browsingContextId);
+    browserWin.openTrustedLinkIn(fileURI.spec, openWhere, {
+      triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
+      private: isPrivate,
+      userContextId,
+      openerBrowser: browsingContext?.top?.embedderElement,
+    });
+  },
 };
 
 /**
@@ -72,11 +148,7 @@ XPCOMUtils.defineLazyGetter(DownloadUIHelper, "strings", function() {
     if (stringName in kStringsRequiringFormatting) {
       strings[stringName] = function() {
         // Convert "arguments" to a real array before calling into XPCOM.
-        return sb.formatStringFromName(
-          stringName,
-          Array.from(arguments),
-          arguments.length
-        );
+        return sb.formatStringFromName(stringName, Array.from(arguments));
       };
     } else {
       strings[stringName] = string.value;
@@ -96,7 +168,7 @@ var DownloadPrompter = function(aParent) {
   this._prompter = Services.ww.getNewPrompter(aParent);
 };
 
-this.DownloadPrompter.prototype = {
+DownloadPrompter.prototype = {
   /**
    * Constants with the different type of prompts.
    */

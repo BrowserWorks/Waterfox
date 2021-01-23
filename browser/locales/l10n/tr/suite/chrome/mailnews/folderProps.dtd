@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY folderProps.windowtitle.label "Özellikler">
+
+<!ENTITY generalInfo.label "Genel bilgiler">
+<!ENTITY folderCharsetTab.label "Öntanımlı karakter kodlaması:">
+<!ENTITY folderCharsetTab.accesskey "e">
+<!ENTITY folderCharsetOverride.label "Öntanımlamayı bu dizindeki postalara uyumla.">
+<!ENTITY folderCharsetOverride.accesskey "a">
+<!ENTITY folderRebuildSummaryFileTip2.label "Özet dosyası indeksini yeniden oluştur">
+<!ENTITY folderRebuildSummaryFile2.label "Repair Folder">
+<!ENTITY folderRebuildSummaryFile2.accesskey "R">
+<!ENTITY folderRebuildSummaryFile.explanation "Sometimes the folder index (.msf) file becomes damaged and messages may appear missing or deleted messages continue showing; repairing the folder may fix these issues.">
+<!ENTITY folderIncludeInGlobalSearch.label "Include messages in this folder in Global Search results">
+<!ENTITY folderIncludeInGlobalSearch.accesskey "G">
+
+<!ENTITY retention.label "Kayıt güvenliği">
+<!ENTITY retentionUseAccount.label "Hesap ayarlarınını kullan">
+<!ENTITY retentionUseAccount.accesskey "H">
+<!ENTITY daysOld.label "days old">
+<!ENTITY message.label "messages">
+<!ENTITY retentionCleanup.label "Keep messages:">
+<!ENTITY retentionCleanupImap.label "Keep messages, both the local copies and their originals on the server:">
+<!ENTITY retentionCleanupPop.label "Keep messages, including their originals on the server:">
+<!ENTITY retentionDeleteMsg.label "İleti">
+<!ENTITY retentionDeleteMsg.accesskey "t">
+<!ENTITY retentionKeepAll.label "Bütün iletiler">
+<!ENTITY retentionKeepAll.accesskey "B">
+<!ENTITY retentionKeepRecent.label "Yeni olanlar">
+<!ENTITY retentionKeepRecent.accesskey "Y">
+<!-- LOCALIZATION NOTE: Unhide with .keepUnreadOnly { display: -moz-box; } -->
+<!ENTITY retentionKeepUnreadHidden.label "Okunmuş iletileri sil (zaman ayarlarını gözardı et)">
+<!ENTITY retentionApplyToFlagged.label "Yıldızlı iletileri silme">
+<!ENTITY retentionApplyToFlagged.accesskey "Y">
+
+<!ENTITY folderSynchronizationTab.label "Eşzamanlama">
+<!ENTITY folderCheckForNewMessages2.label "When getting new messages for this account, always check this folder">
+<!ENTITY folderCheckForNewMessages2.accesskey "c">
+
+<!ENTITY offlineFolder.check.label "Bu dizini çevrim dışı kullanım için seç">
+<!ENTITY offlineFolder.check.accesskey "v">
+<!ENTITY offlineFolder.button.label "Hemen İndir">
+<!ENTITY offlineFolder.button.accesskey "d">
+
+<!ENTITY selectofflineNewsgroup.check.label "Bu haber grubunu çevrim dışı kullanımı için seç">
+<!ENTITY selectofflineNewsgroup.check.accesskey "u">
+<!ENTITY offlineNewsgroup.button.label "Hemen İndir">
+<!ENTITY offlineNewsgroup.button.accesskey "d">
+
+<!ENTITY folderProps.name.label "İsim:">
+<!ENTITY folderProps.name.accesskey "s">
+<!ENTITY folderProps.location.label "Konum:">
+<!ENTITY folderProps.location.accesskey "m">
+
+<!ENTITY folderSharingTab.label "Ortak kullanım">
+<!ENTITY privileges.button.label "Öncelikli haklar…">
+<!ENTITY privileges.button.accesskey "h">
+<!ENTITY permissionsDesc.label "İzinleriniz:">
+<!ENTITY folderType.label "Dizin türü:">
+
+<!ENTITY folderQuotaTab.label "Kota">
+<!ENTITY folderQuotaRoot.label "Kota kökü:">
+<!ENTITY folderQuotaUsage.label "Kullanım:">
+<!ENTITY folderQuotaStatus.label "Durum:">

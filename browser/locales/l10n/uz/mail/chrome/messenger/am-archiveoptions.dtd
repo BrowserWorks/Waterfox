@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-archiveoptions.xul -->
+
+
+<!-- extracted from am-archiveoptions.xhtml -->
+
+<!ENTITY dialogTitle.label "Arxivlash parametrlari">
+<!ENTITY archiveGranularityPrefix.label "Arxivlanayotganda xabarlar joylashtirilsin:">
+<!ENTITY archiveFlat.label "Yagona jild">
+<!ENTITY archiveFlat.accesskey "Y">
+<!ENTITY archiveYearly.label "Bir yillik arxivlangan jildlar">
+<!ENTITY archiveYearly.accesskey "B">
+<!ENTITY archiveMonthly.label "Oylik arxivlangan jildlar">
+<!ENTITY archiveMonthly.accesskey "O">
+<!ENTITY keepFolderStructure.label "Arxivlangan xabarlarning mavjud jild tuzilishi saqlansin">
+<!ENTITY keepFolderStructure.accesskey "s">
+<!ENTITY archiveExample.label "Masalan">
+<!-- LOCALIZATION NOTE (archiveFolderName.label): this should match the default
+     name for the "Archives" folder -->
+<!ENTITY archiveFolderName.label "Arxivlar">
+<!-- LOCALIZATION NOTE (inboxFolderName.label): this should match the default
+     name for the "Inbox" folder -->
+<!ENTITY inboxFolderName.label "Kiruvchi">

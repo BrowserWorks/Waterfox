@@ -10,6 +10,7 @@
 #include "chrome/common/ipc_message.h"
 
 #include "mozilla/RefPtr.h"
+#include "mozilla/UniquePtrExtensions.h"
 #include "mozilla/dom/ContentParent.h"
 
 namespace mozilla {
@@ -22,25 +23,16 @@ class ProtocolFuzzerHelper {
 
   static void CompositorBridgeParentSetup();
 
-  template <typename T>
-  static void AddShmemToProtocol(T* aProtocol, Shmem::SharedMemory* aSegment,
-                                 int32_t aId) {
-    GetToplevelState(aProtocol)->mShmemMap.AddWithID(aSegment, aId);
+  static void AddShmemToProtocol(IToplevelProtocol* aProtocol,
+                                 Shmem::SharedMemory* aSegment, int32_t aId) {
+    MOZ_ASSERT(!aProtocol->mShmemMap.Contains(aId),
+               "Don't insert with an existing ID");
+    aProtocol->mShmemMap.Put(aId, aSegment);
   }
 
-  template <typename T>
-  static void RemoveShmemFromProtocol(T* aProtocol, int32_t aId) {
-    GetToplevelState(aProtocol)->mShmemMap.RemoveIfPresent(aId);
-  }
-
- private:
-  template <typename T>
-  static mozilla::ipc::IToplevelProtocol::ToplevelState* GetToplevelState(
-      T* aProtocol) {
-    static_assert(std::is_base_of<mozilla::ipc::IToplevelProtocol, T>::value,
-                  "Only ToplevelProtocols are supported for now");
-    return static_cast<mozilla::ipc::IToplevelProtocol::ToplevelState*>(
-        static_cast<mozilla::ipc::IToplevelProtocol*>(aProtocol)->mState.get());
+  static void RemoveShmemFromProtocol(IToplevelProtocol* aProtocol,
+                                      int32_t aId) {
+    aProtocol->mShmemMap.Remove(aId);
   }
 };
 
@@ -101,7 +93,7 @@ void FuzzProtocol(T* aProtocol, const uint8_t* aData, size_t aSize,
     // and then that many bytes.
 
     if (m.is_sync()) {
-      nsAutoPtr<IPC::Message> reply;
+      UniquePtr<IPC::Message> reply;
       aProtocol->OnMessageReceived(m, *getter_Transfers(reply));
     } else {
       aProtocol->OnMessageReceived(m);

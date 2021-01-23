@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Labels -->
+<!ENTITY newFolderDialog.title      "Nove dossier">
+<!ENTITY name.label                 "Nomine:">
+<!ENTITY name.accesskey             "n">
+<!ENTITY description.label          "Crear como subdossier de:">
+<!ENTITY description.accesskey      "c">
+<!ENTITY folderRestriction1.label   "Iste servitor accepta solmente duo typos special de dossier.">
+<!ENTITY folderRestriction2.label   "Permitter que tu nove dossier contine:">
+<!ENTITY foldersOnly.label          "Dossiers solmente">
+<!ENTITY messagesOnly.label         "Messages solmente">
+<!ENTITY accept.label               "Crear dossier">
+<!ENTITY accept.accesskey           "r">

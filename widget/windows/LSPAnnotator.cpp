@@ -33,7 +33,6 @@ class LSPAnnotationGatherer : public Runnable {
 
   void Annotate();
   nsCString mString;
-  nsCOMPtr<nsIThread> mThread;
 };
 
 void LSPAnnotationGatherer::Annotate() {
@@ -43,15 +42,10 @@ void LSPAnnotationGatherer::Annotate() {
   if (cr && NS_SUCCEEDED(cr->GetEnabled(&enabled)) && enabled) {
     cr->AnnotateCrashReport(NS_LITERAL_CSTRING("Winsock_LSP"), mString);
   }
-  mThread->AsyncShutdown();
 }
 
 NS_IMETHODIMP
 LSPAnnotationGatherer::Run() {
-  NS_SetCurrentThreadName("LSP Annotator");
-
-  mThread = NS_GetCurrentThread();
-
   DWORD size = 0;
   int err;
   // Get the size of the buffer we need
@@ -99,23 +93,14 @@ LSPAnnotationGatherer::Run() {
     }
 
     str.AppendLiteral(" : ");
-    // If WSCGetProviderInfo is available, we should call it to obtain the
-    // category flags for this provider. When present, these flags inform
-    // Windows as to which order to chain the providers.
-    nsModuleHandle ws2_32(LoadLibraryW(L"ws2_32.dll"));
-    if (ws2_32) {
-      decltype(WSCGetProviderInfo)* pWSCGetProviderInfo =
-          reinterpret_cast<decltype(WSCGetProviderInfo)*>(
-              GetProcAddress(ws2_32, "WSCGetProviderInfo"));
-      if (pWSCGetProviderInfo) {
-        DWORD categoryInfo;
-        size_t categoryInfoSize = sizeof(categoryInfo);
-        if (!pWSCGetProviderInfo(
-                &providers[i].ProviderId, ProviderInfoLspCategories,
-                (PBYTE)&categoryInfo, &categoryInfoSize, 0, &err)) {
-          str.AppendPrintf("0x%x", categoryInfo);
-        }
-      }
+    // Call WSCGetProviderInfo to obtain the category flags for this provider.
+    // When present, these flags inform Windows as to which order to chain the
+    // providers.
+    DWORD categoryInfo;
+    size_t categoryInfoSize = sizeof(categoryInfo);
+    if (!WSCGetProviderInfo(&providers[i].ProviderId, ProviderInfoLspCategories,
+                            (PBYTE)&categoryInfo, &categoryInfoSize, 0, &err)) {
+      str.AppendPrintf("0x%lx", categoryInfo);
     }
 
     str.AppendLiteral(" : ");
@@ -142,9 +127,8 @@ LSPAnnotationGatherer::Run() {
 }
 
 void LSPAnnotate() {
-  nsCOMPtr<nsIThread> thread;
-  nsCOMPtr<nsIRunnable> runnable = do_QueryObject(new LSPAnnotationGatherer());
-  NS_NewNamedThread("LSP Annotate", getter_AddRefs(thread), runnable);
+  nsCOMPtr<nsIRunnable> runnable(new LSPAnnotationGatherer());
+  NS_DispatchBackgroundTask(runnable.forget());
 }
 
 }  // namespace crashreporter

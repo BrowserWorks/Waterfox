@@ -25,27 +25,26 @@ def buildid_header(output):
 def get_program_output(*command):
     try:
         with open(os.devnull) as stderr:
-            return subprocess.check_output(command, stderr=stderr)
+            return subprocess.check_output(command, stderr=stderr,
+                                           universal_newlines=True)
     except Exception:
         return ''
 
 
-def get_hg_info(workdir):
+def get_git_info(workdir):
     repo = get_program_output('git', '-C', workdir, 'remote', 'get-url', 'origin')
     if repo:
         repo = repo.strip()
         if repo.startswith('ssh://'):
             repo = 'https://' + repo[6:]
         repo = repo.rstrip('/')
-        if repo.endswith('.git'):
-            repo = repo[:-4]
 
-    changeset = get_hg_changeset(workdir)
+    changeset = get_git_changeset(workdir)
 
     return repo, changeset
 
 
-def get_hg_changeset(path):
+def get_git_changeset(path):
     return get_program_output('git', '-C', path, 'rev-parse', 'HEAD')
 
 
@@ -83,11 +82,11 @@ def source_repo_header(output):
         sourcestamp_path = os.path.join(
             buildconfig.topsrcdir, SOURCESTAMP_FILENAME)
         if os.path.exists(os.path.join(buildconfig.topsrcdir, '.git')):
-            repo, changeset = get_hg_info(buildconfig.topsrcdir)
+            repo, changeset = get_git_info(buildconfig.topsrcdir)
         elif os.path.exists(sourcestamp_path):
             repo, changeset = get_info_from_sourcestamp(sourcestamp_path)
     elif not changeset:
-        changeset = get_hg_changeset(buildconfig.topsrcdir)
+        changeset = get_git_changeset(buildconfig.topsrcdir)
         if not changeset:
             raise Exception('could not resolve changeset; '
                             'try setting MOZ_SOURCE_CHANGESET')

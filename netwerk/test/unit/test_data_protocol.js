@@ -4,6 +4,9 @@
 // - Textual content keeps all spaces
 // - Other content strips unescaped spaces
 // - Base64 content strips escaped and unescaped spaces
+
+"use strict";
+
 var urls = [
   ["data:,", "text/plain", ""],
   ["data:,foo", "text/plain", "foo"],
@@ -58,9 +61,7 @@ function run_test() {
 
     if (urls[idx][3] && request.nsIChannel.contentCharset !== urls[idx][3]) {
       do_throw(
-        `Charset mismatch! Test <${urls[idx][0]}> - Is <${
-          request.nsIChannel.contentCharset
-        }>, should be <${urls[idx][3]}>`
+        `Charset mismatch! Test <${urls[idx][0]}> - Is <${request.nsIChannel.contentCharset}>, should be <${urls[idx][3]}>`
       );
     }
 

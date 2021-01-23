@@ -24,7 +24,7 @@ NS_IMPL_ISUPPORTS(UDPSocketChildBase, nsISupports)
 
 UDPSocketChildBase::UDPSocketChildBase() : mIPCOpen(false) {}
 
-UDPSocketChildBase::~UDPSocketChildBase() {}
+UDPSocketChildBase::~UDPSocketChildBase() = default;
 
 void UDPSocketChildBase::ReleaseIPDLReference() {
   MOZ_ASSERT(mIPCOpen);
@@ -50,7 +50,7 @@ NS_IMETHODIMP_(MozExternalRefCountType) UDPSocketChild::Release(void) {
 
 UDPSocketChild::UDPSocketChild() : mBackgroundManager(nullptr), mLocalPort(0) {}
 
-UDPSocketChild::~UDPSocketChild() {}
+UDPSocketChild::~UDPSocketChild() = default;
 
 nsresult UDPSocketChild::SetBackgroundSpinsEvents() {
   using mozilla::ipc::BackgroundChild;
@@ -78,8 +78,8 @@ nsresult UDPSocketChild::Bind(nsIUDPSocketInternal* aSocket,
     if (aMainThreadEventTarget) {
       gNeckoChild->SetEventTargetForActor(this, aMainThreadEventTarget);
     }
-    if (!gNeckoChild->SendPUDPSocketConstructor(
-            this, IPC::Principal(aPrincipal), mFilterName)) {
+    if (!gNeckoChild->SendPUDPSocketConstructor(this, aPrincipal,
+                                                mFilterName)) {
       return NS_ERROR_FAILURE;
     }
   } else {
@@ -136,10 +136,7 @@ nsresult UDPSocketChild::SendDataInternal(const UDPSocketAddr& aAddr,
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
-  InfallibleTArray<uint8_t> array;
-  array.SwapElements(fallibleArray);
-
-  SendOutgoingData(array, aAddr);
+  SendOutgoingData(UDPData{std::move(fallibleArray)}, aAddr);
 
   return NS_OK;
 }
@@ -214,7 +211,7 @@ mozilla::ipc::IPCResult UDPSocketChild::RecvCallbackClosed() {
 }
 
 mozilla::ipc::IPCResult UDPSocketChild::RecvCallbackReceivedData(
-    const UDPAddressInfo& aAddressInfo, InfallibleTArray<uint8_t>&& aData) {
+    const UDPAddressInfo& aAddressInfo, nsTArray<uint8_t>&& aData) {
   UDPSOCKET_LOG(("%s: %s:%u length %zu", __FUNCTION__,
                  aAddressInfo.addr().get(), aAddressInfo.port(),
                  aData.Length()));

@@ -7,10 +7,8 @@
 #include "XMLHttpRequestWorker.h"
 
 #include "nsIDOMEventListener.h"
-#include "nsIRunnable.h"
-#include "nsIXPConnect.h"
 
-#include "jsapi.h"  // JS::AutoValueArray
+#include "jsapi.h"  // JS::RootedValueArray
 #include "jsfriendapi.h"
 #include "js/ArrayBuffer.h"  // JS::Is{,Detached}ArrayBufferObject
 #include "js/GCPolicyAPI.h"
@@ -23,6 +21,7 @@
 #include "mozilla/dom/File.h"
 #include "mozilla/dom/FormData.h"
 #include "mozilla/dom/ProgressEvent.h"
+#include "mozilla/dom/StreamBlobImpl.h"
 #include "mozilla/dom/StructuredCloneHolder.h"
 #include "mozilla/dom/UnionConversions.h"
 #include "mozilla/dom/URLSearchParams.h"
@@ -30,6 +29,7 @@
 #include "mozilla/dom/WorkerPrivate.h"
 #include "mozilla/dom/WorkerRef.h"
 #include "mozilla/dom/WorkerRunnable.h"
+#include "mozilla/dom/XMLHttpRequestBinding.h"
 #include "mozilla/Telemetry.h"
 #include "nsComponentManagerUtils.h"
 #include "nsContentUtils.h"
@@ -42,11 +42,6 @@
 
 namespace mozilla {
 namespace dom {
-
-/* static */
-void XMLHttpRequestWorker::StateData::trace(JSTracer* aTrc) {
-  JS::TraceEdge(aTrc, &mResponse, "XMLHttpRequestWorker::StateData::mResponse");
-}
 
 /**
  *  XMLHttpRequest in workers
@@ -130,7 +125,6 @@ class Proxy final : public nsIDOMEventListener {
   bool mUploadEventListenersAttached;
   bool mMainThreadSeenLoadStart;
   bool mInOpen;
-  bool mArrayBufferResponseWasTransferred;
 
  public:
   Proxy(XMLHttpRequestWorker* aXHRPrivate, const ClientInfo& aClientInfo,
@@ -159,8 +153,7 @@ class Proxy final : public nsIDOMEventListener {
         mSeenUploadLoadStart(false),
         mUploadEventListenersAttached(false),
         mMainThreadSeenLoadStart(false),
-        mInOpen(false),
-        mArrayBufferResponseWasTransferred(false) {}
+        mInOpen(false) {}
 
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSIDOMEVENTLISTENER
@@ -226,7 +219,7 @@ class WorkerThreadProxySyncRunnable : public WorkerMainThreadRunnable {
   }
 
  protected:
-  virtual ~WorkerThreadProxySyncRunnable() {}
+  virtual ~WorkerThreadProxySyncRunnable() = default;
 
   virtual void RunOnMainThread(ErrorResult& aRv) = 0;
 
@@ -234,19 +227,16 @@ class WorkerThreadProxySyncRunnable : public WorkerMainThreadRunnable {
   virtual bool MainThreadRun() override;
 };
 
-class SendRunnable final : public WorkerThreadProxySyncRunnable,
-                           public StructuredCloneHolder {
-  nsString mStringBody;
+class SendRunnable final : public WorkerThreadProxySyncRunnable {
+  RefPtr<BlobImpl> mBlobImpl;
   nsCOMPtr<nsIEventTarget> mSyncLoopTarget;
   bool mHasUploadListeners;
 
  public:
   SendRunnable(WorkerPrivate* aWorkerPrivate, Proxy* aProxy,
-               const nsAString& aStringBody)
+               BlobImpl* aBlobImpl)
       : WorkerThreadProxySyncRunnable(aWorkerPrivate, aProxy),
-        StructuredCloneHolder(CloningSupported, TransferringNotSupported,
-                              StructuredCloneScope::SameProcessDifferentThread),
-        mStringBody(aStringBody),
+        mBlobImpl(aBlobImpl),
         mHasUploadListeners(false) {}
 
   void SetHaveUploadListeners(bool aHasUploadListeners) {
@@ -258,7 +248,7 @@ class SendRunnable final : public WorkerThreadProxySyncRunnable,
   }
 
  private:
-  ~SendRunnable() {}
+  ~SendRunnable() = default;
 
   virtual void RunOnMainThread(ErrorResult& aRv) override;
 };
@@ -311,7 +301,7 @@ class MainThreadProxyRunnable : public MainThreadWorkerSyncRunnable {
     MOZ_ASSERT(aProxy);
   }
 
-  virtual ~MainThreadProxyRunnable() {}
+  virtual ~MainThreadProxyRunnable() = default;
 };
 
 class XHRUnpinRunnable final : public MainThreadWorkerControlRunnable {
@@ -326,7 +316,7 @@ class XHRUnpinRunnable final : public MainThreadWorkerControlRunnable {
   }
 
  private:
-  ~XHRUnpinRunnable() {}
+  ~XHRUnpinRunnable() = default;
 
   bool WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override {
     if (mXMLHttpRequestPrivate->SendInProgress()) {
@@ -347,7 +337,7 @@ class AsyncTeardownRunnable final : public Runnable {
   }
 
  private:
-  ~AsyncTeardownRunnable() {}
+  ~AsyncTeardownRunnable() = default;
 
   NS_IMETHOD
   Run() override {
@@ -385,7 +375,7 @@ class LoadStartDetectionRunnable final : public Runnable,
           mChannelId(aChannelId) {}
 
    private:
-    ~ProxyCompleteRunnable() {}
+    ~ProxyCompleteRunnable() = default;
 
     virtual bool WorkerRun(JSContext* aCx,
                            WorkerPrivate* aWorkerPrivate) override {
@@ -445,12 +435,9 @@ class LoadStartDetectionRunnable final : public Runnable,
   ~LoadStartDetectionRunnable() { AssertIsOnMainThread(); }
 };
 
-class EventRunnable final : public MainThreadProxyRunnable,
-                            public StructuredCloneHolder {
+class EventRunnable final : public MainThreadProxyRunnable {
   nsString mType;
-  nsString mResponseType;
-  JS::Heap<JS::Value> mResponse;
-  XMLHttpRequestStringSnapshot mResponseText;
+  UniquePtr<XMLHttpRequestWorker::ResponseData> mResponseData;
   nsString mResponseURL;
   nsCString mStatusText;
   uint64_t mLoaded;
@@ -461,10 +448,7 @@ class EventRunnable final : public MainThreadProxyRunnable,
   bool mUploadEvent;
   bool mProgressEvent;
   bool mLengthComputable;
-  bool mUseCachedArrayBufferResponse;
-  nsresult mResponseTextResult;
   nsresult mStatusResult;
-  nsresult mResponseResult;
   // mScopeObj is used in PreDispatch only.  We init it in our constructor, and
   // reset() in PreDispatch, to ensure that it's not still linked into the
   // runtime once we go off-thread.
@@ -475,10 +459,8 @@ class EventRunnable final : public MainThreadProxyRunnable,
                 bool aLengthComputable, uint64_t aLoaded, uint64_t aTotal,
                 JS::Handle<JSObject*> aScopeObj)
       : MainThreadProxyRunnable(aProxy->mWorkerPrivate, aProxy),
-        StructuredCloneHolder(CloningSupported, TransferringNotSupported,
-                              StructuredCloneScope::SameProcessDifferentThread),
         mType(aType),
-        mResponse(JS::UndefinedValue()),
+        mResponseData(new XMLHttpRequestWorker::ResponseData()),
         mLoaded(aLoaded),
         mTotal(aTotal),
         mEventStreamId(aProxy->mInnerEventStreamId),
@@ -487,19 +469,14 @@ class EventRunnable final : public MainThreadProxyRunnable,
         mUploadEvent(aUploadEvent),
         mProgressEvent(true),
         mLengthComputable(aLengthComputable),
-        mUseCachedArrayBufferResponse(false),
-        mResponseTextResult(NS_OK),
         mStatusResult(NS_OK),
-        mResponseResult(NS_OK),
         mScopeObj(RootingCx(), aScopeObj) {}
 
   EventRunnable(Proxy* aProxy, bool aUploadEvent, const nsString& aType,
                 JS::Handle<JSObject*> aScopeObj)
       : MainThreadProxyRunnable(aProxy->mWorkerPrivate, aProxy),
-        StructuredCloneHolder(CloningSupported, TransferringNotSupported,
-                              StructuredCloneScope::SameProcessDifferentThread),
         mType(aType),
-        mResponse(JS::UndefinedValue()),
+        mResponseData(new XMLHttpRequestWorker::ResponseData()),
         mLoaded(0),
         mTotal(0),
         mEventStreamId(aProxy->mInnerEventStreamId),
@@ -508,14 +485,11 @@ class EventRunnable final : public MainThreadProxyRunnable,
         mUploadEvent(aUploadEvent),
         mProgressEvent(false),
         mLengthComputable(0),
-        mUseCachedArrayBufferResponse(false),
-        mResponseTextResult(NS_OK),
         mStatusResult(NS_OK),
-        mResponseResult(NS_OK),
         mScopeObj(RootingCx(), aScopeObj) {}
 
  private:
-  ~EventRunnable() {}
+  ~EventRunnable() = default;
 
   bool PreDispatch(WorkerPrivate* /* unused */) final;
   bool WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override;
@@ -527,7 +501,7 @@ class SyncTeardownRunnable final : public WorkerThreadProxySyncRunnable {
       : WorkerThreadProxySyncRunnable(aWorkerPrivate, aProxy) {}
 
  private:
-  ~SyncTeardownRunnable() {}
+  ~SyncTeardownRunnable() = default;
 
   virtual void RunOnMainThread(ErrorResult& aRv) override {
     mProxy->Teardown(/* aSendUnpin */ true);
@@ -545,7 +519,7 @@ class SetBackgroundRequestRunnable final
       : WorkerThreadProxySyncRunnable(aWorkerPrivate, aProxy), mValue(aValue) {}
 
  private:
-  ~SetBackgroundRequestRunnable() {}
+  ~SetBackgroundRequestRunnable() = default;
 
   virtual void RunOnMainThread(ErrorResult& aRv) override {
     mProxy->mXHR->SetMozBackgroundRequest(mValue, aRv);
@@ -561,7 +535,7 @@ class SetWithCredentialsRunnable final : public WorkerThreadProxySyncRunnable {
       : WorkerThreadProxySyncRunnable(aWorkerPrivate, aProxy), mValue(aValue) {}
 
  private:
-  ~SetWithCredentialsRunnable() {}
+  ~SetWithCredentialsRunnable() = default;
 
   virtual void RunOnMainThread(ErrorResult& aRv) override {
     mProxy->mXHR->SetWithCredentials(mValue, aRv);
@@ -580,13 +554,11 @@ class SetResponseTypeRunnable final : public WorkerThreadProxySyncRunnable {
   XMLHttpRequestResponseType ResponseType() { return mResponseType; }
 
  private:
-  ~SetResponseTypeRunnable() {}
+  ~SetResponseTypeRunnable() = default;
 
   virtual void RunOnMainThread(ErrorResult& aRv) override {
-    mProxy->mXHR->SetResponseType(mResponseType, aRv);
-    if (!aRv.Failed()) {
-      mResponseType = mProxy->mXHR->ResponseType();
-    }
+    mProxy->mXHR->SetResponseTypeRaw(mResponseType);
+    mResponseType = mProxy->mXHR->ResponseType();
   }
 };
 
@@ -600,7 +572,7 @@ class SetTimeoutRunnable final : public WorkerThreadProxySyncRunnable {
         mTimeout(aTimeout) {}
 
  private:
-  ~SetTimeoutRunnable() {}
+  ~SetTimeoutRunnable() = default;
 
   virtual void RunOnMainThread(ErrorResult& aRv) override {
     mProxy->mXHR->SetTimeout(mTimeout, aRv);
@@ -613,7 +585,7 @@ class AbortRunnable final : public WorkerThreadProxySyncRunnable {
       : WorkerThreadProxySyncRunnable(aWorkerPrivate, aProxy) {}
 
  private:
-  ~AbortRunnable() {}
+  ~AbortRunnable() = default;
 
   virtual void RunOnMainThread(ErrorResult& aRv) override;
 };
@@ -629,7 +601,7 @@ class GetAllResponseHeadersRunnable final
         mResponseHeaders(aResponseHeaders) {}
 
  private:
-  ~GetAllResponseHeadersRunnable() {}
+  ~GetAllResponseHeadersRunnable() = default;
 
   virtual void RunOnMainThread(ErrorResult& aRv) override {
     mProxy->mXHR->GetAllResponseHeaders(mResponseHeaders, aRv);
@@ -648,7 +620,7 @@ class GetResponseHeaderRunnable final : public WorkerThreadProxySyncRunnable {
         mValue(aValue) {}
 
  private:
-  ~GetResponseHeaderRunnable() {}
+  ~GetResponseHeaderRunnable() = default;
 
   virtual void RunOnMainThread(ErrorResult& aRv) override {
     mProxy->mXHR->GetResponseHeader(mHeader, mValue, aRv);
@@ -672,6 +644,10 @@ class OpenRunnable final : public WorkerThreadProxySyncRunnable {
   // be passed on to the net monitor.
   UniquePtr<SerializedStackHolder> mOriginStack;
 
+  // Remember the worker thread's stack when the XHR was opened for profiling
+  // purposes.
+  UniqueProfilerBacktrace mSource;
+
  public:
   OpenRunnable(WorkerPrivate* aWorkerPrivate, Proxy* aProxy,
                const nsACString& aMethod, const nsAString& aURL,
@@ -680,7 +656,8 @@ class OpenRunnable final : public WorkerThreadProxySyncRunnable {
                bool aWithCredentials, uint32_t aTimeout,
                XMLHttpRequestResponseType aResponseType,
                const nsString& aMimeTypeOverride,
-               UniquePtr<SerializedStackHolder> aOriginStack)
+               UniquePtr<SerializedStackHolder> aOriginStack,
+               UniqueProfilerBacktrace aSource = nullptr)
       : WorkerThreadProxySyncRunnable(aWorkerPrivate, aProxy),
         mMethod(aMethod),
         mURL(aURL),
@@ -689,7 +666,8 @@ class OpenRunnable final : public WorkerThreadProxySyncRunnable {
         mTimeout(aTimeout),
         mResponseType(aResponseType),
         mMimeTypeOverride(aMimeTypeOverride),
-        mOriginStack(std::move(aOriginStack)) {
+        mOriginStack(std::move(aOriginStack)),
+        mSource(std::move(aSource)) {
     if (aUser.WasPassed()) {
       mUserStr = aUser.Value();
       mUser = &mUserStr;
@@ -701,7 +679,7 @@ class OpenRunnable final : public WorkerThreadProxySyncRunnable {
   }
 
  private:
-  ~OpenRunnable() {}
+  ~OpenRunnable() = default;
 
   virtual void RunOnMainThread(ErrorResult& aRv) override {
     WorkerPrivate* oldWorker = mProxy->mWorkerPrivate;
@@ -727,7 +705,7 @@ class SetRequestHeaderRunnable final : public WorkerThreadProxySyncRunnable {
         mValue(aValue) {}
 
  private:
-  ~SetRequestHeaderRunnable() {}
+  ~SetRequestHeaderRunnable() = default;
 
   virtual void RunOnMainThread(ErrorResult& aRv) override {
     mProxy->mXHR->SetRequestHeader(mHeader, mValue, aRv);
@@ -744,7 +722,7 @@ class OverrideMimeTypeRunnable final : public WorkerThreadProxySyncRunnable {
         mMimeType(aMimeType) {}
 
  private:
-  ~OverrideMimeTypeRunnable() {}
+  ~OverrideMimeTypeRunnable() = default;
 
   virtual void RunOnMainThread(ErrorResult& aRv) override {
     mProxy->mXHR->OverrideMimeType(mMimeType, aRv);
@@ -785,10 +763,10 @@ bool Proxy::Init() {
     return false;
   }
 
-  mXHR = new XMLHttpRequestMainThread();
+  mXHR = new XMLHttpRequestMainThread(ownerWindow ? ownerWindow->AsGlobal()
+                                                  : nullptr);
   mXHR->Construct(mWorkerPrivate->GetPrincipal(),
-                  ownerWindow ? ownerWindow->AsGlobal() : nullptr,
-                  mWorkerPrivate->CookieSettings(), true,
+                  mWorkerPrivate->CookieJarSettings(), true,
                   mWorkerPrivate->GetBaseURI(), mWorkerPrivate->GetLoadGroup(),
                   mWorkerPrivate->GetPerformanceStorage(),
                   mWorkerPrivate->CSPEventListener());
@@ -840,8 +818,8 @@ void Proxy::Teardown(bool aSendUnpin) {
       if (mSyncLoopTarget) {
         // We have an unclosed sync loop.  Fix that now.
         RefPtr<MainThreadStopSyncLoopRunnable> runnable =
-            new MainThreadStopSyncLoopRunnable(mWorkerPrivate,
-                                               mSyncLoopTarget.forget(), false);
+            new MainThreadStopSyncLoopRunnable(
+                mWorkerPrivate, std::move(mSyncLoopTarget), false);
         if (!runnable->Dispatch()) {
           MOZ_CRASH("We're going to hang at shutdown anyways.");
         }
@@ -1022,65 +1000,40 @@ bool EventRunnable::PreDispatch(WorkerPrivate* /* unused */) {
   RefPtr<XMLHttpRequestMainThread>& xhr = mProxy->mXHR;
   MOZ_ASSERT(xhr);
 
-  const EnumEntry& entry =
-      XMLHttpRequestResponseTypeValues::strings[static_cast<uint32_t>(
-          xhr->ResponseType())];
-  mResponseType.AssignASCII(entry.value, entry.length);
-
   ErrorResult rv;
-  xhr->GetResponseText(mResponseText, rv);
-  mResponseTextResult = rv.StealNSResult();
 
-  if (NS_SUCCEEDED(mResponseTextResult)) {
-    mResponseResult = mResponseTextResult;
-    if (mResponseText.IsVoid()) {
-      mResponse.setNull();
-    }
-  } else {
-    JS::Rooted<JS::Value> response(cx);
-    xhr->GetResponse(cx, &response, rv);
-    mResponseResult = rv.StealNSResult();
-    if (NS_SUCCEEDED(mResponseResult)) {
-      if (!response.isGCThing()) {
-        mResponse = response;
-      } else {
-        bool doClone = true;
-        JS::Rooted<JS::Value> transferable(cx);
-        JS::Rooted<JSObject*> obj(
-            cx, response.isObject() ? &response.toObject() : nullptr);
-        if (obj && JS::IsArrayBufferObject(obj)) {
-          // Use cached response if the arraybuffer has been transfered.
-          if (mProxy->mArrayBufferResponseWasTransferred) {
-            MOZ_ASSERT(JS::IsDetachedArrayBufferObject(obj));
-            mUseCachedArrayBufferResponse = true;
-            doClone = false;
-          } else {
-            MOZ_ASSERT(!JS::IsDetachedArrayBufferObject(obj));
-            JS::AutoValueArray<1> argv(cx);
-            argv[0].set(response);
-            obj = JS_NewArrayObject(cx, argv);
-            if (obj) {
-              transferable.setObject(*obj);
-              // Only cache the response when the readyState is DONE.
-              if (xhr->ReadyState() == 4) {
-                mProxy->mArrayBufferResponseWasTransferred = true;
-              }
-            } else {
-              mResponseResult = NS_ERROR_OUT_OF_MEMORY;
-              doClone = false;
-            }
-          }
-        }
+  XMLHttpRequestResponseType type = xhr->ResponseType();
 
-        if (doClone) {
-          Write(cx, response, transferable, JS::CloneDataPolicy(), rv);
-          if (NS_WARN_IF(rv.Failed())) {
-            NS_WARNING("Failed to clone response!");
-            mResponseResult = rv.StealNSResult();
-            mProxy->mArrayBufferResponseWasTransferred = false;
-          }
-        }
+  // We want to take the result data only if this is available.
+  if (mType.EqualsASCII(sEventStrings[STRING_readystatechange])) {
+    switch (type) {
+      case XMLHttpRequestResponseType::_empty:
+      case XMLHttpRequestResponseType::Text: {
+        xhr->GetResponseText(mResponseData->mResponseText, rv);
+        mResponseData->mResponseResult = rv.StealNSResult();
+        break;
       }
+
+      case XMLHttpRequestResponseType::Blob: {
+        mResponseData->mResponseBlobImpl = xhr->GetResponseBlobImpl();
+        break;
+      }
+
+      case XMLHttpRequestResponseType::Arraybuffer: {
+        mResponseData->mResponseArrayBufferBuilder =
+            xhr->GetResponseArrayBufferBuilder();
+        break;
+      }
+
+      case XMLHttpRequestResponseType::Json: {
+        mResponseData->mResponseResult =
+            xhr->GetResponseTextForJSON(mResponseData->mResponseJSON);
+        break;
+      }
+
+      default:
+        MOZ_CRASH("Invalid response type");
+        break;
     }
   }
 
@@ -1145,44 +1098,8 @@ bool EventRunnable::WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) {
     }
   }
 
-  JS::Rooted<UniquePtr<XMLHttpRequestWorker::StateData>> state(
-      aCx, new XMLHttpRequestWorker::StateData());
-
-  state->mResponseTextResult = mResponseTextResult;
-
-  state->mResponseText = mResponseText;
-
-  if (NS_SUCCEEDED(mResponseTextResult)) {
-    MOZ_ASSERT(mResponse.isUndefined() || mResponse.isNull());
-    state->mResponseResult = mResponseTextResult;
-    state->mResponse = mResponse;
-  } else {
-    state->mResponseResult = mResponseResult;
-
-    if (NS_SUCCEEDED(mResponseResult)) {
-      if (HasData()) {
-        MOZ_ASSERT(mResponse.isUndefined());
-
-        ErrorResult rv;
-        JS::Rooted<JS::Value> response(aCx);
-
-        GlobalObject globalObj(aCx,
-                               aWorkerPrivate->GlobalScope()->GetWrapper());
-        nsCOMPtr<nsIGlobalObject> global =
-            do_QueryInterface(globalObj.GetAsSupports());
-
-        Read(global, aCx, &response, rv);
-        if (NS_WARN_IF(rv.Failed())) {
-          rv.SuppressException();
-          return false;
-        }
-
-        state->mResponse = response;
-      } else {
-        state->mResponse = mResponse;
-      }
-    }
-  }
+  UniquePtr<XMLHttpRequestWorker::StateData> state(
+      new XMLHttpRequestWorker::StateData());
 
   state->mStatusResult = mStatusResult;
   state->mStatus = mStatus;
@@ -1194,7 +1111,10 @@ bool EventRunnable::WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) {
   state->mResponseURL = mResponseURL;
 
   XMLHttpRequestWorker* xhr = mProxy->mXMLHttpRequestPrivate;
-  xhr->UpdateState(*state.get(), mUseCachedArrayBufferResponse);
+  xhr->UpdateState(std::move(state),
+                   mType.EqualsASCII(sEventStrings[STRING_readystatechange])
+                       ? std::move(mResponseData)
+                       : nullptr);
 
   if (mUploadEvent && !xhr->GetUploadObjectNoCreate()) {
     return true;
@@ -1234,11 +1154,6 @@ bool EventRunnable::WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) {
   event->SetTrusted(true);
 
   target->DispatchEvent(*event);
-
-  // After firing the event set mResponse to null for chunked response types.
-  if (StringBeginsWith(mResponseType, NS_LITERAL_STRING("moz-chunked-"))) {
-    xhr->NullResponseText();
-  }
 
   return true;
 }
@@ -1323,6 +1238,10 @@ nsresult OpenRunnable::MainThreadRunInternal() {
     return rv.StealNSResult();
   }
 
+  if (mSource) {
+    mProxy->mXHR->SetSource(std::move(mSource));
+  }
+
   mProxy->mXHR->SetResponseType(mResponseType, rv);
   if (NS_WARN_IF(rv.Failed())) {
     return rv.StealNSResult();
@@ -1336,7 +1255,9 @@ void SendRunnable::RunOnMainThread(ErrorResult& aRv) {
       DocumentOrBlobOrArrayBufferViewOrArrayBufferOrFormDataOrURLSearchParamsOrUSVString>
       payload;
 
-  if (HasData()) {
+  if (!mBlobImpl) {
+    payload.SetNull();
+  } else {
     AutoSafeJSContext cx;
 
     JS::Rooted<JSObject*> globalObject(cx, JS::CurrentGlobalOrNull(cx));
@@ -1351,50 +1272,12 @@ void SendRunnable::RunOnMainThread(ErrorResult& aRv) {
       return;
     }
 
-    JS::Rooted<JS::Value> body(cx);
-    Read(parent, cx, &body, aRv);
-    if (NS_WARN_IF(aRv.Failed())) {
-      return;
-    }
+    RefPtr<Blob> blob = Blob::Create(parent, mBlobImpl);
+    MOZ_ASSERT(blob);
 
-    Maybe<
-        DocumentOrBlobOrArrayBufferViewOrArrayBufferOrFormDataOrURLSearchParamsOrUSVStringArgument>
-        holder;
-    holder.emplace(payload.SetValue());
-    bool done = false, failed = false, tryNext;
-
-    if (body.isObject()) {
-      done = (failed =
-                  !holder.ref().TrySetToDocument(cx, &body, tryNext, false)) ||
-             !tryNext ||
-             (failed = !holder.ref().TrySetToBlob(cx, &body, tryNext, false)) ||
-             !tryNext ||
-             (failed = !holder.ref().TrySetToArrayBufferView(cx, &body, tryNext,
-                                                             false)) ||
-             !tryNext ||
-             (failed = !holder.ref().TrySetToArrayBuffer(cx, &body, tryNext,
-                                                         false)) ||
-             !tryNext ||
-             (failed =
-                  !holder.ref().TrySetToFormData(cx, &body, tryNext, false)) ||
-             !tryNext ||
-             (failed = !holder.ref().TrySetToURLSearchParams(cx, &body, tryNext,
-                                                             false)) ||
-             !tryNext;
-    }
-
-    if (!done) {
-      done = (failed = !holder.ref().TrySetToUSVString(cx, &body, tryNext)) ||
-             !tryNext;
-    }
-    if (failed || !done) {
-      aRv.Throw(NS_ERROR_FAILURE);
-      return;
-    }
-  } else {
     DocumentOrBlobOrArrayBufferViewOrArrayBufferOrFormDataOrURLSearchParamsOrUSVString&
         ref = payload.SetValue();
-    ref.SetAsUSVString().Rebind(mStringBody.Data(), mStringBody.Length());
+    ref.SetAsBlob() = blob;
   }
 
   // Send() has been already called, reset the proxy.
@@ -1416,11 +1299,9 @@ void SendRunnable::RunOnMainThread(ErrorResult& aRv) {
     }
   }
 
-  mProxy->mArrayBufferResponseWasTransferred = false;
-
   mProxy->mInnerChannelId++;
 
-  mProxy->mXHR->Send(nullptr, payload, aRv);
+  mProxy->mXHR->Send(payload, aRv);
 
   if (!aRv.Failed()) {
     mProxy->mOutstandingSendCount++;
@@ -1436,9 +1317,15 @@ void SendRunnable::RunOnMainThread(ErrorResult& aRv) {
   }
 }
 
-XMLHttpRequestWorker::XMLHttpRequestWorker(WorkerPrivate* aWorkerPrivate)
-    : mWorkerPrivate(aWorkerPrivate),
+XMLHttpRequestWorker::XMLHttpRequestWorker(WorkerPrivate* aWorkerPrivate,
+                                           nsIGlobalObject* aGlobalObject)
+    : XMLHttpRequest(aGlobalObject),
+      mWorkerPrivate(aWorkerPrivate),
       mResponseType(XMLHttpRequestResponseType::_empty),
+      mStateData(new StateData()),
+      mResponseData(new ResponseData()),
+      mResponseArrayBufferValue(nullptr),
+      mResponseJSONValue(JS::UndefinedValue()),
       mTimeout(0),
       mBackgroundRequest(false),
       mWithCredentials(false),
@@ -1472,18 +1359,23 @@ NS_IMPL_CYCLE_COLLECTION_CLASS(XMLHttpRequestWorker)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(XMLHttpRequestWorker,
                                                   XMLHttpRequestEventTarget)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mUpload)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mResponseBlob)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(XMLHttpRequestWorker,
                                                 XMLHttpRequestEventTarget)
   tmp->ReleaseProxy(XHRIsGoingAway);
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mUpload)
-  tmp->mStateData.mResponse.setUndefined();
+  tmp->mResponseData = nullptr;
+  tmp->mResponseBlob = nullptr;
+  tmp->mResponseArrayBufferValue = nullptr;
+  tmp->mResponseJSONValue.setUndefined();
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN_INHERITED(XMLHttpRequestWorker,
                                                XMLHttpRequestEventTarget)
-  NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mStateData.mResponse)
+  NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mResponseArrayBufferValue)
+  NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mResponseJSONValue)
 NS_IMPL_CYCLE_COLLECTION_TRACE_END
 
 /* static */
@@ -1500,8 +1392,8 @@ already_AddRefed<XMLHttpRequest> XMLHttpRequestWorker::Construct(
     return nullptr;
   }
 
-  RefPtr<XMLHttpRequestWorker> xhr = new XMLHttpRequestWorker(workerPrivate);
-  xhr->BindToOwner(global);
+  RefPtr<XMLHttpRequestWorker> xhr =
+      new XMLHttpRequestWorker(workerPrivate, global);
 
   if (workerPrivate->XHRParamsAllowed()) {
     if (aParams.mMozSystem)
@@ -1579,10 +1471,10 @@ void XMLHttpRequestWorker::MaybeDispatchPrematureAbortEvents(ErrorResult& aRv) {
 
   // Only send readystatechange event when state changed.
   bool isStateChanged = false;
-  if ((mStateData.mReadyState == 1 && mStateData.mFlagSend) ||
-      mStateData.mReadyState == 2 || mStateData.mReadyState == 3) {
+  if ((mStateData->mReadyState == 1 && mStateData->mFlagSend) ||
+      mStateData->mReadyState == 2 || mStateData->mReadyState == 3) {
     isStateChanged = true;
-    mStateData.mReadyState = 4;
+    mStateData->mReadyState = 4;
   }
 
   if (mProxy->mSeenUploadLoadStart) {
@@ -1596,6 +1488,12 @@ void XMLHttpRequestWorker::MaybeDispatchPrematureAbortEvents(ErrorResult& aRv) {
     DispatchPrematureAbortEvent(mUpload, NS_LITERAL_STRING("loadend"), true,
                                 aRv);
     if (aRv.Failed()) {
+      return;
+    }
+
+    // Similarly to null check in ::Open, mProxy may have been cleared here.
+    if (!mProxy) {
+      aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
       return;
     }
 
@@ -1686,10 +1584,36 @@ void XMLHttpRequestWorker::Unpin() {
   NS_RELEASE_THIS();
 }
 
-void XMLHttpRequestWorker::SendInternal(SendRunnable* aRunnable,
+void XMLHttpRequestWorker::SendInternal(const BodyExtractorBase* aBody,
                                         ErrorResult& aRv) {
-  MOZ_ASSERT(aRunnable);
   mWorkerPrivate->AssertIsOnWorkerThread();
+
+  // We don't really need to keep the same body-type when we proxy the send()
+  // call to the main-thread XHR. Let's extract the nsIInputStream from the
+  // aBody and let's wrap it into a StreamBlobImpl.
+
+  RefPtr<BlobImpl> blobImpl;
+
+  if (aBody) {
+    nsAutoCString charset;
+    nsAutoCString defaultContentType;
+    nsCOMPtr<nsIInputStream> uploadStream;
+
+    uint64_t size_u64;
+    aRv = aBody->GetAsStream(getter_AddRefs(uploadStream), &size_u64,
+                             defaultContentType, charset);
+    if (NS_WARN_IF(aRv.Failed())) {
+      return;
+    }
+
+    blobImpl = StreamBlobImpl::Create(
+        uploadStream.forget(), NS_ConvertUTF8toUTF16(defaultContentType),
+        size_u64, NS_LITERAL_STRING("StreamBlobImpl"));
+    MOZ_ASSERT(blobImpl);
+  }
+
+  RefPtr<SendRunnable> sendRunnable =
+      new SendRunnable(mWorkerPrivate, mProxy, blobImpl);
 
   // No send() calls when open is running.
   if (mProxy->mOpenCount) {
@@ -1720,12 +1644,12 @@ void XMLHttpRequestWorker::SendInternal(SendRunnable* aRunnable,
 
   mProxy->mOuterChannelId++;
 
-  aRunnable->SetSyncLoopTarget(syncLoopTarget);
-  aRunnable->SetHaveUploadListeners(hasUploadListeners);
+  sendRunnable->SetSyncLoopTarget(syncLoopTarget);
+  sendRunnable->SetHaveUploadListeners(hasUploadListeners);
 
-  mStateData.mFlagSend = true;
+  mStateData->mFlagSend = true;
 
-  aRunnable->Dispatch(Canceling, aRv);
+  sendRunnable->Dispatch(Canceling, aRv);
   if (aRv.Failed()) {
     // Dispatch() may have spun the event loop and we may have already unrooted.
     // If so we don't want autoUnpin to try again.
@@ -1744,7 +1668,7 @@ void XMLHttpRequestWorker::SendInternal(SendRunnable* aRunnable,
   autoUnpin.Clear();
 
   bool succeeded = autoSyncLoop->Run();
-  mStateData.mFlagSend = false;
+  mStateData->mFlagSend = false;
 
   // Don't clobber an existing exception that we may have thrown on aRv
   // already... though can there really be one?  In any case, it seems to me
@@ -1775,20 +1699,22 @@ void XMLHttpRequestWorker::Open(const nsACString& aMethod,
       return;
     }
   } else {
-    Maybe<ClientInfo> clientInfo(mWorkerPrivate->GetClientInfo());
+    Maybe<ClientInfo> clientInfo(
+        mWorkerPrivate->GlobalScope()->GetClientInfo());
     if (clientInfo.isNothing()) {
       aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
       return;
     }
-    mProxy = new Proxy(this, clientInfo.ref(), mWorkerPrivate->GetController(),
-                       mMozAnon, mMozSystem);
+    mProxy = new Proxy(this, clientInfo.ref(),
+                       mWorkerPrivate->GlobalScope()->GetController(), mMozAnon,
+                       mMozSystem);
     alsoOverrideMimeType = true;
   }
 
   mProxy->mOuterEventStreamId++;
 
   UniquePtr<SerializedStackHolder> stack;
-  if (mWorkerPrivate->IsWatchedByDevtools()) {
+  if (mWorkerPrivate->IsWatchedByDevTools()) {
     if (JSContext* cx = nsContentUtils::GetCurrentJSContext()) {
       stack = GetCurrentStackForNetMonitor(cx);
     }
@@ -1797,8 +1723,8 @@ void XMLHttpRequestWorker::Open(const nsACString& aMethod,
   RefPtr<OpenRunnable> runnable = new OpenRunnable(
       mWorkerPrivate, mProxy, aMethod, aUrl, aUser, aPassword,
       mBackgroundRequest, mWithCredentials, mTimeout, mResponseType,
-      alsoOverrideMimeType ? mMimeTypeOverride : VoidString(),
-      std::move(stack));
+      alsoOverrideMimeType ? mMimeTypeOverride : VoidString(), std::move(stack),
+      profiler_get_backtrace());
 
   ++mProxy->mOpenCount;
   runnable->Dispatch(Canceling, aRv);
@@ -1927,7 +1853,6 @@ XMLHttpRequestUpload* XMLHttpRequestWorker::GetUpload(ErrorResult& aRv) {
 }
 
 void XMLHttpRequestWorker::Send(
-    JSContext* aCx,
     const Nullable<
         DocumentOrBlobOrArrayBufferViewOrArrayBufferOrFormDataOrURLSearchParamsOrUSVString>&
         aData,
@@ -1939,121 +1864,57 @@ void XMLHttpRequestWorker::Send(
     return;
   }
 
-  if (!mProxy || mStateData.mFlagSend) {
+  if (!mProxy || mStateData->mFlagSend) {
     aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
     return;
   }
 
-  RefPtr<SendRunnable> sendRunnable;
-
   if (aData.IsNull()) {
-    sendRunnable = new SendRunnable(mWorkerPrivate, mProxy, VoidString());
-    // Nothing to clone.
+    SendInternal(nullptr, aRv);
+    return;
   }
 
-  else if (aData.Value().IsDocument()) {
+  if (aData.Value().IsDocument()) {
     MOZ_CRASH("Documents are not exposed to workers.");
   }
 
-  else if (aData.Value().IsBlob()) {
-    RefPtr<Blob> blob = &aData.Value().GetAsBlob();
-    MOZ_ASSERT(blob);
-
-    RefPtr<BlobImpl> blobImpl = blob->Impl();
-    MOZ_ASSERT(blobImpl);
-
-    aRv = blobImpl->SetMutable(false);
-    if (NS_WARN_IF(aRv.Failed())) {
-      return;
-    }
-
-    JS::Rooted<JS::Value> value(aCx);
-    if (!GetOrCreateDOMReflector(aCx, blob, &value)) {
-      aRv.Throw(NS_ERROR_FAILURE);
-      return;
-    }
-
-    sendRunnable = new SendRunnable(mWorkerPrivate, mProxy, EmptyString());
-
-    sendRunnable->Write(aCx, value, aRv);
-    if (NS_WARN_IF(aRv.Failed())) {
-      return;
-    }
+  if (aData.Value().IsBlob()) {
+    BodyExtractor<const Blob> body(&aData.Value().GetAsBlob());
+    SendInternal(&body, aRv);
+    return;
   }
 
-  else if (aData.Value().IsArrayBuffer()) {
-    sendRunnable = new SendRunnable(mWorkerPrivate, mProxy, EmptyString());
-
-    JS::Rooted<JS::Value> value(aCx);
-    value.setObject(*aData.Value().GetAsArrayBuffer().Obj());
-
-    sendRunnable->Write(aCx, value, aRv);
-    if (NS_WARN_IF(aRv.Failed())) {
-      return;
-    }
+  if (aData.Value().IsArrayBuffer()) {
+    BodyExtractor<const ArrayBuffer> body(&aData.Value().GetAsArrayBuffer());
+    SendInternal(&body, aRv);
+    return;
   }
 
-  else if (aData.Value().IsArrayBufferView()) {
-    const ArrayBufferView& body = aData.Value().GetAsArrayBufferView();
-
-    if (JS_IsTypedArrayObject(body.Obj()) &&
-        JS_GetTypedArraySharedness(body.Obj())) {
-      // Throw if the object is mapping shared memory (must opt in).
-      aRv.ThrowTypeError<MSG_TYPEDARRAY_IS_SHARED>(
-          NS_LITERAL_STRING("Argument of XMLHttpRequest.send"));
-      return;
-    }
-
-    sendRunnable = new SendRunnable(mWorkerPrivate, mProxy, EmptyString());
-
-    JS::Rooted<JS::Value> value(aCx);
-    value.setObject(*body.Obj());
-
-    sendRunnable->Write(aCx, value, aRv);
-    if (NS_WARN_IF(aRv.Failed())) {
-      return;
-    }
+  if (aData.Value().IsArrayBufferView()) {
+    BodyExtractor<const ArrayBufferView> body(
+        &aData.Value().GetAsArrayBufferView());
+    SendInternal(&body, aRv);
+    return;
   }
 
-  else if (aData.Value().IsFormData()) {
-    JS::Rooted<JS::Value> value(aCx);
-    if (!GetOrCreateDOMReflector(aCx, &aData.Value().GetAsFormData(), &value)) {
-      aRv.Throw(NS_ERROR_FAILURE);
-      return;
-    }
-
-    sendRunnable = new SendRunnable(mWorkerPrivate, mProxy, EmptyString());
-
-    sendRunnable->Write(aCx, value, aRv);
-    if (NS_WARN_IF(aRv.Failed())) {
-      return;
-    }
+  if (aData.Value().IsFormData()) {
+    BodyExtractor<const FormData> body(&aData.Value().GetAsFormData());
+    SendInternal(&body, aRv);
+    return;
   }
 
-  else if (aData.Value().IsURLSearchParams()) {
-    JS::Rooted<JS::Value> value(aCx);
-    if (!GetOrCreateDOMReflector(aCx, &aData.Value().GetAsURLSearchParams(),
-                                 &value)) {
-      aRv.Throw(NS_ERROR_FAILURE);
-      return;
-    }
-
-    sendRunnable = new SendRunnable(mWorkerPrivate, mProxy, EmptyString());
-
-    sendRunnable->Write(aCx, value, aRv);
-    if (NS_WARN_IF(aRv.Failed())) {
-      return;
-    }
+  if (aData.Value().IsURLSearchParams()) {
+    BodyExtractor<const URLSearchParams> body(
+        &aData.Value().GetAsURLSearchParams());
+    SendInternal(&body, aRv);
+    return;
   }
 
-  else if (aData.Value().IsUSVString()) {
-    sendRunnable = new SendRunnable(mWorkerPrivate, mProxy,
-                                    aData.Value().GetAsUSVString());
-    // Nothing to clone.
+  if (aData.Value().IsUSVString()) {
+    BodyExtractor<const nsAString> body(&aData.Value().GetAsUSVString());
+    SendInternal(&body, aRv);
+    return;
   }
-
-  MOZ_ASSERT(sendRunnable);
-  SendInternal(sendRunnable, aRv);
 }
 
 void XMLHttpRequestWorker::Abort(ErrorResult& aRv) {
@@ -2071,13 +1932,13 @@ void XMLHttpRequestWorker::Abort(ErrorResult& aRv) {
   // Set our status to 0 and statusText to "" if we
   // will be aborting an ongoing fetch, so the upcoming
   // abort events we dispatch have the correct info.
-  if ((mStateData.mReadyState == XMLHttpRequest_Binding::OPENED &&
-       mStateData.mFlagSend) ||
-      mStateData.mReadyState == XMLHttpRequest_Binding::HEADERS_RECEIVED ||
-      mStateData.mReadyState == XMLHttpRequest_Binding::LOADING ||
-      mStateData.mReadyState == XMLHttpRequest_Binding::DONE) {
-    mStateData.mStatus = 0;
-    mStateData.mStatusText.Truncate();
+  if ((mStateData->mReadyState == XMLHttpRequest_Binding::OPENED &&
+       mStateData->mFlagSend) ||
+      mStateData->mReadyState == XMLHttpRequest_Binding::HEADERS_RECEIVED ||
+      mStateData->mReadyState == XMLHttpRequest_Binding::LOADING ||
+      mStateData->mReadyState == XMLHttpRequest_Binding::DONE) {
+    mStateData->mStatus = 0;
+    mStateData->mStatusText.Truncate();
   }
 
   MaybeDispatchPrematureAbortEvents(aRv);
@@ -2085,10 +1946,10 @@ void XMLHttpRequestWorker::Abort(ErrorResult& aRv) {
     return;
   }
 
-  if (mStateData.mReadyState == 4) {
+  if (mStateData->mReadyState == 4) {
     // No one did anything to us while we fired abort events, so reset our state
     // to "unsent"
-    mStateData.mReadyState = 0;
+    mStateData->mReadyState = 0;
   }
 
   mProxy->mOuterEventStreamId++;
@@ -2158,8 +2019,8 @@ void XMLHttpRequestWorker::OverrideMimeType(const nsAString& aMimeType,
   }
 
   // We're supposed to throw if the state is LOADING or DONE.
-  if (mStateData.mReadyState == XMLHttpRequest_Binding::LOADING ||
-      mStateData.mReadyState == XMLHttpRequest_Binding::DONE) {
+  if (mStateData->mReadyState == XMLHttpRequest_Binding::LOADING ||
+      mStateData->mReadyState == XMLHttpRequest_Binding::DONE) {
     aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
     return;
   }
@@ -2177,11 +2038,6 @@ void XMLHttpRequestWorker::SetResponseType(
     XMLHttpRequestResponseType aResponseType, ErrorResult& aRv) {
   mWorkerPrivate->AssertIsOnWorkerThread();
 
-  if (mCanceled) {
-    aRv.ThrowUncatchableException();
-    return;
-  }
-
   // "document" is fine for the main thread but not for a worker. Short-circuit
   // that here.
   if (aResponseType == XMLHttpRequestResponseType::Document) {
@@ -2195,9 +2051,10 @@ void XMLHttpRequestWorker::SetResponseType(
     return;
   }
 
-  if (SendInProgress() &&
-      (mProxy->mSeenLoadStart || mStateData.mReadyState > 1)) {
-    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
+  if (mStateData->mReadyState == XMLHttpRequest_Binding::LOADING ||
+      mStateData->mReadyState == XMLHttpRequest_Binding::DONE) {
+    aRv.Throw(
+        NS_ERROR_DOM_INVALID_STATE_XHR_MUST_NOT_BE_LOADING_OR_DONE_RESPONSE_TYPE);
     return;
   }
 
@@ -2211,63 +2068,140 @@ void XMLHttpRequestWorker::SetResponseType(
   mResponseType = runnable->ResponseType();
 }
 
-void XMLHttpRequestWorker::GetResponse(JSContext* /* unused */,
+void XMLHttpRequestWorker::GetResponse(JSContext* aCx,
                                        JS::MutableHandle<JS::Value> aResponse,
                                        ErrorResult& aRv) {
-  if (NS_SUCCEEDED(mStateData.mResponseTextResult) &&
-      mStateData.mResponse.isUndefined()) {
-    MOZ_ASSERT(NS_SUCCEEDED(mStateData.mResponseResult));
+  if (NS_FAILED(mResponseData->mResponseResult)) {
+    aRv.Throw(mResponseData->mResponseResult);
+    return;
+  }
 
-    if (mStateData.mResponseText.IsEmpty()) {
-      mStateData.mResponse =
-          JS_GetEmptyStringValue(mWorkerPrivate->GetJSContext());
-    } else {
-      XMLHttpRequestStringSnapshotReaderHelper helper(mStateData.mResponseText);
+  switch (mResponseType) {
+    case XMLHttpRequestResponseType::_empty:
+    case XMLHttpRequestResponseType::Text: {
+      JSString* str;
 
-      JSString* str = JS_NewUCStringCopyN(mWorkerPrivate->GetJSContext(),
-                                          helper.Buffer(), helper.Length());
+      if (mResponseData->mResponseText.IsEmpty()) {
+        aResponse.set(JS_GetEmptyStringValue(aCx));
+        return;
+      }
 
+      XMLHttpRequestStringSnapshotReaderHelper helper(
+          mResponseData->mResponseText);
+
+      str = JS_NewUCStringCopyN(aCx, helper.Buffer(), helper.Length());
       if (!str) {
         aRv.Throw(NS_ERROR_OUT_OF_MEMORY);
         return;
       }
 
-      mStateData.mResponse.setString(str);
+      aResponse.setString(str);
+      return;
     }
-  }
 
-  aRv = mStateData.mResponseResult;
-  aResponse.set(mStateData.mResponse);
+    case XMLHttpRequestResponseType::Arraybuffer: {
+      if (!mResponseData->mResponseArrayBufferBuilder) {
+        aResponse.setNull();
+        return;
+      }
+
+      if (!mResponseArrayBufferValue) {
+        mResponseArrayBufferValue =
+            mResponseData->mResponseArrayBufferBuilder->TakeArrayBuffer(aCx);
+        if (!mResponseArrayBufferValue) {
+          aRv.Throw(NS_ERROR_OUT_OF_MEMORY);
+          return;
+        }
+      }
+
+      aResponse.setObject(*mResponseArrayBufferValue);
+      return;
+    }
+
+    case XMLHttpRequestResponseType::Blob: {
+      if (!mResponseData->mResponseBlobImpl) {
+        aResponse.setNull();
+        return;
+      }
+
+      if (!mResponseBlob) {
+        mResponseBlob =
+            Blob::Create(GetOwnerGlobal(), mResponseData->mResponseBlobImpl);
+      }
+
+      if (!GetOrCreateDOMReflector(aCx, mResponseBlob, aResponse)) {
+        aResponse.setNull();
+      }
+
+      return;
+    }
+
+    case XMLHttpRequestResponseType::Json: {
+      if (mResponseData->mResponseJSON.IsVoid()) {
+        aResponse.setNull();
+        return;
+      }
+
+      if (mResponseJSONValue.isUndefined()) {
+        // The Unicode converter has already zapped the BOM if there was one
+        JS::Rooted<JS::Value> value(aCx);
+        if (!JS_ParseJSON(aCx, mResponseData->mResponseJSON.BeginReading(),
+                          mResponseData->mResponseJSON.Length(), &value)) {
+          JS_ClearPendingException(aCx);
+          mResponseJSONValue.setNull();
+        } else {
+          mResponseJSONValue = value;
+        }
+
+        mResponseData->mResponseJSON.Truncate();
+      }
+
+      aResponse.set(mResponseJSONValue);
+      return;
+    }
+
+    default:
+      MOZ_CRASH("Invalid type");
+      aResponse.setNull();
+      return;
+  }
 }
 
 void XMLHttpRequestWorker::GetResponseText(DOMString& aResponseText,
                                            ErrorResult& aRv) {
-  aRv = mStateData.mResponseTextResult;
-  if (aRv.Failed()) {
+  MOZ_DIAGNOSTIC_ASSERT(mResponseData);
+
+  if (mResponseType != XMLHttpRequestResponseType::_empty &&
+      mResponseType != XMLHttpRequestResponseType::Text) {
+    aRv.Throw(
+        NS_ERROR_DOM_INVALID_STATE_XHR_HAS_WRONG_RESPONSETYPE_FOR_RESPONSETEXT);
     return;
   }
 
-  if (!mStateData.mResponseText.GetAsString(aResponseText)) {
+  if (!mResponseData->mResponseText.GetAsString(aResponseText)) {
     aRv.Throw(NS_ERROR_OUT_OF_MEMORY);
     return;
   }
 }
 
-void XMLHttpRequestWorker::UpdateState(const StateData& aStateData,
-                                       bool aUseCachedArrayBufferResponse) {
-  if (aUseCachedArrayBufferResponse) {
-    MOZ_ASSERT(mStateData.mResponse.isObject() &&
-               JS::IsArrayBufferObject(&mStateData.mResponse.toObject()));
+void XMLHttpRequestWorker::UpdateState(
+    UniquePtr<StateData>&& aStateData,
+    UniquePtr<ResponseData>&& aResponseData) {
+  mStateData = std::move(aStateData);
 
-    JS::Rooted<JS::Value> response(mWorkerPrivate->GetJSContext(),
-                                   mStateData.mResponse);
-    mStateData = aStateData;
-    mStateData.mResponse = response;
-  } else {
-    mStateData = aStateData;
+  UniquePtr<ResponseData> responseData = std::move(aResponseData);
+  if (responseData) {
+    ResetResponseData();
+    mResponseData = std::move(responseData);
   }
 
   XMLHttpRequest_Binding::ClearCachedResponseTextValue(this);
+}
+
+void XMLHttpRequestWorker::ResetResponseData() {
+  mResponseBlob = nullptr;
+  mResponseArrayBufferValue = nullptr;
+  mResponseJSONValue.setUndefined();
 }
 
 }  // namespace dom

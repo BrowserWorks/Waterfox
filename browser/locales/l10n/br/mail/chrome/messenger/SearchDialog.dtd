@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- for SearchDialog.xul -->
+
+<!ENTITY searchHeading.label         "Klask kemennadennoù e-barzh :">
+<!ENTITY searchHeading.accesskey     "K">
+<!ENTITY searchSubfolders.label      "Klask isteuliadoù">
+<!ENTITY searchSubfolders.accesskey  "i">
+<!ENTITY searchOnServer.label        "Loc'hañ an enklask war an dafariad">
+<!ENTITY searchOnServer.accesskey    "L">
+<!ENTITY resetButton.label           "Skarzhañ">
+<!ENTITY resetButton.accesskey       "k">
+<!ENTITY openButton.label            "Digeriñ">
+<!ENTITY openButton.accesskey        "D">
+<!ENTITY deleteButton.label          "Dilemel">
+<!ENTITY deleteButton.accesskey      "D">
+<!ENTITY searchDialogTitle.label     "Klask er c'hemennadennoù">
+<!ENTITY results.label               "Disoc'hoù">
+<!ENTITY moveButton.label            "Dilec'hiañ etrezek">
+<!ENTITY moveButton.accesskey        "e">
+<!ENTITY closeCmd.key                "W"> 
+<!ENTITY openInFolder.label          "Digeriñ en teuliad">
+<!ENTITY openInFolder.accesskey      "r">
+<!ENTITY saveAsVFButton.label        "Enrollañ evel teuliad-klask">
+<!ENTITY saveAsVFButton.accesskey    "a">
+<!-- for ABSearchDialog.xul -->
+
+<!ENTITY abSearchHeading.label       "Klask e-barzh :">
+<!ENTITY abSearchHeading.accesskey   "s">
+<!ENTITY propertiesButton.label      "Perzhioù">
+<!ENTITY propertiesButton.accesskey  "P">
+<!ENTITY composeButton.label         "Skrivañ">
+<!ENTITY composeButton.accesskey     "S">
+<!ENTITY deleteCardButton.label      "Dilemel">
+<!ENTITY deleteCardButton.accesskey  "D">
+<!ENTITY abSearchDialogTitle.label   "Klask kempleshoc'h er c'harned posteloù">
+<!-- Thread Pane -->
+
+<!-- Thread Pane Tooltips -->
+

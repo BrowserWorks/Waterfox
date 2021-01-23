@@ -7,10 +7,10 @@
   --rule-highlight-background-color: var(--theme-highlight-yellow);
   --rule-header-background-color: var(--theme-toolbar-background);
   --rule-pseudo-class-text-color: var(--yellow-70) ;
-
-  /* This should be --yellow-50 but since we need an opacity of 0.4, we hard-code the
-  resulting color here for now. */
-  --rule-property-highlight-background-color: #FFF697;
+  --rule-unused-name-text-color: var(--grey-50);
+  --rule-unused-value-text-color: var(--grey-45);
+  --rule-overridden-name-text-color: var(--grey-50);
+  --rule-overridden-value-text-color: var(--grey-45);
 }
 
 :root.theme-dark {
@@ -18,9 +18,10 @@
   --rule-header-background-color: #222225;
   --rule-pseudo-class-text-color: var(--yellow-50);
 
-  /* This should be --yellow-50 but since we need an opacity of 0.3, we hard-code the
-  resulting color here for now. */
-  --rule-property-highlight-background-color: #605913;
+  --rule-unused-name-text-color: var(--grey-45);
+  --rule-unused-value-text-color: #787878;
+  --rule-overridden-name-text-color: var(--grey-45);
+  --rule-overridden-value-text-color: #787878;
 }
 
 /* Rule View Tabpanel */
@@ -40,8 +41,17 @@
 /* Rule View Toolbar */
 
 #ruleview-toolbar-container {
-  /* @TODO: Bug 1535956 - Use the right CSS variable for this */
-  line-height: calc(24px - 2px);
+  line-height: var(--theme-toolbar-height);
+}
+
+#ruleview-toolbar {
+  flex-wrap: wrap;
+  height: auto;
+}
+
+#ruleview-toolbar .devtools-searchbox {
+  flex-basis: 7em;
+  height: var(--theme-toolbar-height);
 }
 
 #ruleview-command-toolbar {
@@ -59,8 +69,13 @@
   display: none;
 }
 
+.ruleview-reveal-panel .add-class {
+  height: var(--theme-toolbar-height);
+  line-height: normal;
+}
+
 .ruleview-reveal-panel label {
-  -moz-user-select: none;
+  user-select: none;
   flex-grow: 1;
   display: flex;
   align-items: center;
@@ -107,7 +122,7 @@
 /* Rule View Container */
 
 #ruleview-container {
-  -moz-user-select: text;
+  user-select: text;
   overflow: auto;
   flex: auto;
   height: 100%;
@@ -139,10 +154,6 @@
 
 .ruleview-property:not(:hover) > .ruleview-enableproperty {
   pointer-events: none;
-}
-
-.ruleview-property-highlight-background-color {
-  background-color: var(--rule-property-highlight-background-color);
 }
 
 .ruleview-expandable-container {
@@ -195,7 +206,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 
-  -moz-user-select: none;
+  user-select: none;
   margin-bottom: 2px;
   margin-left: 1ch;
 }
@@ -226,12 +237,12 @@
   border-bottom: 1px solid var(--theme-splitter-color);
   color: var(--theme-toolbar-color);
   font-size: 12px;
+  line-height: 16px;
   padding: 4px;
   width: 100%;
   align-items: center;
   display: flex;
-
-  -moz-user-select: none;
+  user-select: none;
 }
 
 .ruleview-expandable-header {
@@ -239,7 +250,12 @@
 }
 
 .ruleview-expandable-header:hover {
-  background-color: var(--theme-toolbar-background-hover);
+  background-color: var(--theme-accordion-header-hover);
+}
+
+.ruleview-expandable-header .theme-twisty {
+  margin-inline-start: 0;
+  margin-inline-end: 2px;
 }
 
 .ruleview-rule-pseudo-element {
@@ -301,9 +317,12 @@
   border-bottom-color: transparent;
 }
 
-.ruleview-property.unused .ruleview-namecontainer,
-.ruleview-property.unused .ruleview-propertyvaluecontainer {
-  opacity: 0.5;
+.ruleview-property.unused .ruleview-propertyname {
+  color: var(--rule-unused-name-text-color);
+}
+
+.ruleview-property.unused .ruleview-propertyvalue {
+  color: var(--rule-unused-value-text-color);
 }
 
 .ruleview-overridden-rule-filter {
@@ -341,11 +360,58 @@
 
 .ruleview-enableproperty {
   position: relative;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+:root[platform="mac"] .ruleview-enableproperty {
+  left: -29px;
+  box-sizing: border-box;
+  margin-inline-start: 3px;
+  margin-inline-end: 9px;
+  width: 12px;
+  height: 12px;
+}
+
+/* The SVG checkbox on Windows and Linux */
+:root[platform="win"] .ruleview-enableproperty,
+:root[platform="linux"] .ruleview-enableproperty {
+  -moz-appearance: none;
   float: left;
-  left: -38px;
+  left: -27px;
   box-sizing: content-box;
-  border-left: 10px solid transparent;
-  background-clip: content-box;
+  margin-inline-start: 0;
+  margin-inline-end: 10px;
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 0;
+  padding: 0;
+  outline: none;
+  background: url("chrome://devtools/skin/images/checkbox.svg") center no-repeat content-box;
+  /* Using fill to paint the border, and stroke for the tick */
+  -moz-context-properties: fill, stroke;
+  fill: rgba(0,0,0,.3);
+  stroke: transparent;
+}
+
+:root[platform="win"].theme-dark .ruleview-enableproperty,
+:root[platform="linux"].theme-dark .ruleview-enableproperty {
+  fill: rgba(255,255,255,.4);
+}
+
+:root[platform="win"] .ruleview-enableproperty:checked,
+:root[platform="linux"] .ruleview-enableproperty:checked {
+  stroke: rgba(0,0,0,.6);
+}
+
+:root[platform="win"].theme-dark .ruleview-enableproperty:checked,
+:root[platform="linux"].theme-dark .ruleview-enableproperty:checked {
+  stroke: rgba(255,255,255,.8);
+}
+
+:root[platform="mac"] .ruleview-enableproperty {
+  -moz-appearance: checkbox;
 }
 
 .ruleview-warning,
@@ -353,19 +419,20 @@
   display: inline-block;
   width: 12px;
   height: 12px;
-  margin-inline-start: 5px;
-  background-image: url(chrome://devtools/skin/images/alert.svg);
-  background-size: cover;
+  background-size: 12px;
+  background-repeat: no-repeat;
   -moz-context-properties: fill;
+}
+
+.ruleview-warning {
+  background-image: url(chrome://devtools/skin/images/alert-small.svg);
   fill: var(--yellow-60);
 }
 
 .ruleview-unused-warning {
-  background-image: url(chrome://devtools/skin/images/alerticon-unused.svg);
+  background-image: url(chrome://devtools/skin/images/info-small.svg);
   background-color: var(--theme-sidebar-background);
-  -moz-context-properties: fill, stroke;
   fill: var(--theme-icon-dimmed-color);
-  stroke: var(--theme-icon-dimmed-color);
 }
 
 .ruleview-unused-warning:hover {
@@ -373,8 +440,10 @@
   stroke: var(--theme-icon-color);
 }
 
-.ruleview-rule:not(:hover) .ruleview-enableproperty {
-  visibility: hidden;
+.ruleview-rule:not(:hover) .ruleview-enableproperty:not(:focus) {
+  /* Use opacity to hide the checkbox instead of visibility:hidden,
+     so that it's possible to focus it with the keyboard. */
+  opacity: 0;
 }
 
 .ruleview-expander {
@@ -385,7 +454,7 @@
   margin-left: -6px;
 }
 
-.ruleview-expander.theme-twisty:dir(rtl):not([open]) {
+.ruleview-propertycontainer .ruleview-expander:dir(rtl):not([open]) {
   /* for preventing .theme-twisty's wrong direction in rtl; Bug 1296648 */
   transform: rotate(-90deg);
 }
@@ -532,6 +601,11 @@
   z-index: -1;
 }
 
+.ruleview-swatch.ruleview-colorswatch {
+  border: none;
+  padding: 0;
+}
+
 .ruleview-bezierswatch {
   background-image: url("chrome://devtools/skin/images/cubic-bezier-swatch.svg");
 }
@@ -546,6 +620,14 @@
 
 .ruleview-overridden {
   text-decoration: line-through solid var(--theme-text-color-alt);
+}
+
+.ruleview-property.ruleview-overridden .ruleview-propertyname {
+  color: var(--rule-overridden-name-text-color);
+}
+
+.ruleview-property.ruleview-overridden .ruleview-propertyvalue {
+  color: var(--rule-overridden-value-text-color);
 }
 
 /**
@@ -668,19 +750,35 @@
   align-items: center;
   justify-content: center;
   font-weight: 600;
+  direction: ltr;
 }
 
 #print-simulation-toggle::before {
   background-image: url("chrome://devtools/skin/images/rules-view-print-simulation.svg");
-  background-size: 14px;
+}
+
+#color-scheme-simulation-toggle::before {
+  -moz-context-properties: fill, fill-opacity;
+  background-image: url("chrome://mozapps/skin/extensions/category-themes.svg");
+  background-size: 12px;
+}
+
+#color-scheme-simulation-toggle[state="dark"] {
+  background-color: #333;
+}
+
+#color-scheme-simulation-toggle[state="dark"]::before {
+  fill: white;
+}
+
+#color-scheme-simulation-toggle[state="light"]::before {
+  fill: #bbb;
+}
+
+#color-scheme-simulation-toggle[state="no-preference"]::before {
+  fill-opacity: 0.5;
 }
 
 .flash-out {
-  animation: flash-out 1s ease-out;
-}
-
-@keyframes flash-out {
-  from {
-    background: var(--rule-property-highlight-background-color);
-  }
+  transition: background 1s;
 }

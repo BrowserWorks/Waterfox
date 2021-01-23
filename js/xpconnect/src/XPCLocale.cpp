@@ -28,7 +28,7 @@ class XPCLocaleObserver : public nsIObserver {
   void Init();
 
  private:
-  virtual ~XPCLocaleObserver(){};
+  virtual ~XPCLocaleObserver() = default;
 };
 
 NS_IMPL_ISUPPORTS(XPCLocaleObserver, nsIObserver);
@@ -70,7 +70,7 @@ struct XPCLocaleCallbacks : public JSLocaleCallbacks {
 
     // Disable the toLocaleUpper/Lower case hooks to use the standard,
     // locale-insensitive definition from String.prototype. (These hooks are
-    // only consulted when EXPOSE_INTL_API is not set.) Since EXPOSE_INTL_API
+    // only consulted when JS_HAS_INTL_API is not set.) Since JS_HAS_INTL_API
     // is always set, these hooks should be disabled.
     localeToUpperCase = nullptr;
     localeToLowerCase = nullptr;

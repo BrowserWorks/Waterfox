@@ -8,7 +8,9 @@
  */
 
 add_task(async function() {
-  const { tab, monitor } = await initNetMonitor(CUSTOM_GET_URL);
+  const { tab, monitor } = await initNetMonitor(CUSTOM_GET_URL, {
+    requestCount: 1,
+  });
   info("Starting test... ");
 
   // It seems that this test may be slow on Ubuntu builds running on ec2.
@@ -32,7 +34,7 @@ add_task(async function() {
       "The selected item in the requests menu was incorrect."
     );
     is(
-      !!document.querySelector(".network-details-panel"),
+      !!document.querySelector(".network-details-bar"),
       panelVisibility,
       "The network details panel should render correctly."
     );

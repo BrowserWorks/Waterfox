@@ -287,6 +287,8 @@ class RustJSPrincipal : public JSPrincipals {
     if (this->destroyCallback) this->destroyCallback(this);
   }
 
+  bool isSystemOrAddonPrincipal() { return false; }
+
   bool write(JSContext* cx, JSStructuredCloneWriter* writer) {
     return this->writeCallback ? this->writeCallback(cx, writer) : false;
   }
@@ -420,15 +422,26 @@ const void* GetSecurityWrapper() {
   return &js::CrossCompartmentSecurityWrapper::singleton;
 }
 
-JS::ReadOnlyCompileOptions* NewCompileOptions(JSContext* aCx, const char* aFile,
-                                              unsigned aLine) {
-  JS::OwningCompileOptions* opts = new JS::OwningCompileOptions(aCx);
-  opts->setFileAndLine(aCx, aFile, aLine);
-  return opts;
-}
-
 void DeleteCompileOptions(JS::ReadOnlyCompileOptions* aOpts) {
   delete static_cast<JS::OwningCompileOptions*>(aOpts);
+}
+
+JS::ReadOnlyCompileOptions* NewCompileOptions(JSContext* aCx, const char* aFile,
+                                              unsigned aLine) {
+  JS::CompileOptions opts(aCx);
+  opts.setFileAndLine(aFile, aLine);
+
+  JS::OwningCompileOptions* owned = new JS::OwningCompileOptions(aCx);
+  if (!owned) {
+    return nullptr;
+  }
+
+  if (!owned->copy(aCx, opts)) {
+    DeleteCompileOptions(owned);
+    return nullptr;
+  }
+
+  return owned;
 }
 
 JSObject* NewProxyObject(JSContext* aCx, const void* aHandler,
@@ -441,20 +454,28 @@ JSObject* NewProxyObject(JSContext* aCx, const void* aHandler,
 }
 
 JSObject* WrapperNew(JSContext* aCx, JS::HandleObject aObj,
-                     const void* aHandler, const JSClass* aClass,
-                     bool aSingleton) {
+                     const void* aHandler, const JSClass* aClass) {
   js::WrapperOptions options;
   if (aClass) {
-    options.setClass(js::Valueify(aClass));
+    options.setClass(aClass);
   }
-  options.setSingleton(aSingleton);
   return js::Wrapper::New(aCx, aObj, (const js::Wrapper*)aHandler, options);
 }
 
-const js::Class WindowProxyClass = PROXY_CLASS_DEF(
+JSObject* WrapperNewSingleton(JSContext* aCx, JS::HandleObject aObj,
+                              const void* aHandler, const JSClass* aClass) {
+  js::WrapperOptions options;
+  if (aClass) {
+    options.setClass(aClass);
+  }
+  return js::Wrapper::NewSingleton(aCx, aObj, (const js::Wrapper*)aHandler,
+                                   options);
+}
+
+const JSClass WindowProxyClass = PROXY_CLASS_DEF(
     "Proxy", JSCLASS_HAS_RESERVED_SLOTS(1)); /* additional class flags */
 
-const js::Class* GetWindowProxyClass() { return &WindowProxyClass; }
+const JSClass* GetWindowProxyClass() { return &WindowProxyClass; }
 
 JS::Value GetProxyReservedSlot(JSObject* obj, uint32_t slot) {
   return js::GetProxyReservedSlot(obj, slot);
@@ -466,7 +487,7 @@ void SetProxyReservedSlot(JSObject* obj, uint32_t slot, const JS::Value* val) {
 
 JSObject* NewWindowProxy(JSContext* aCx, JS::HandleObject aObj,
                          const void* aHandler) {
-  return WrapperNew(aCx, aObj, aHandler, Jsvalify(&WindowProxyClass), true);
+  return WrapperNewSingleton(aCx, aObj, aHandler, &WindowProxyClass);
 }
 
 JS::Value GetProxyPrivate(JSObject* obj) { return js::GetProxyPrivate(obj); }
@@ -492,7 +513,7 @@ void RUST_SET_JITINFO(JSFunction* func, const JSJitInfo* info) {
 }
 
 jsid RUST_INTERNED_STRING_TO_JSID(JSContext* cx, JSString* str) {
-  return INTERNED_STRING_TO_JSID(cx, str);
+  return JS::PropertyKey::fromPinnedString(str);
 }
 
 const JSErrorFormatString* RUST_js_GetErrorMessage(void* userRef,
@@ -554,25 +575,23 @@ const jsid* SliceRootedIdVector(const JS::PersistentRootedIdVector* v,
 
 void DestroyRootedIdVector(JS::PersistentRootedIdVector* v) { delete v; }
 
-JS::MutableHandleIdVector GetMutableHandleIdVector(JS::PersistentRootedIdVector* v) {
+JS::MutableHandleIdVector GetMutableHandleIdVector(
+    JS::PersistentRootedIdVector* v) {
   return JS::MutableHandleIdVector(v);
 }
 
-JS::PersistentRootedObjectVector* CreateRootedObjectVector(
-    JSContext* aCx) {
+JS::PersistentRootedObjectVector* CreateRootedObjectVector(JSContext* aCx) {
   JS::PersistentRootedObjectVector* vec =
       new JS::PersistentRootedObjectVector(aCx);
   return vec;
 }
 
 bool AppendToRootedObjectVector(JS::PersistentRootedObjectVector* v,
-                                          JSObject* obj) {
+                                JSObject* obj) {
   return v->append(obj);
 }
 
-void DeleteRootedObjectVector(JS::PersistentRootedObjectVector* v) {
-  delete v;
-}
+void DeleteRootedObjectVector(JS::PersistentRootedObjectVector* v) { delete v; }
 
 #if defined(__linux__)
 #  include <malloc.h>
@@ -624,6 +643,11 @@ void CallObjectTracer(JSTracer* trc, JS::Heap<JSObject*>* objp,
 void CallStringTracer(JSTracer* trc, JS::Heap<JSString*>* strp,
                       const char* name) {
   JS::TraceEdge(trc, strp, name);
+}
+
+void CallBigIntTracer(JSTracer* trc, JS::Heap<JS::BigInt*>* bip,
+                      const char* name) {
+  JS::TraceEdge(trc, bip, name);
 }
 
 void CallScriptTracer(JSTracer* trc, JS::Heap<JSScript*>* scriptp,

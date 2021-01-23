@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Povratnice">
+<!ENTITY useGlobalPrefs.label         "Za povratnice uporabi moje splošne nastavitve za ta račun">
+<!ENTITY useGlobalPrefs.accesskey     "Z">
+<!ENTITY globalReceipts.label         "Splošne nastavitve …">
+<!ENTITY globalReceipts.accesskey     "n">
+<!ENTITY useCustomPrefs.label         "Prilagodi povratnice za ta račun">
+<!ENTITY useCustomPrefs.accesskey     "P">
+<!ENTITY requestReceipt.label         "Ob pošiljanju sporočil vedno zahtevaj povratnico">
+<!ENTITY requestReceipt.accesskey     "O">
+<!ENTITY receiptArrive.label          "Ko povratnica prispe:">
+<!ENTITY leaveIt.label                "jo pusti v mapi &quot;Prejeto&quot;">
+<!ENTITY leaveIt.accesskey            "u">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "jo premakni v mojo mapo &quot;Poslano&quot;">
+<!ENTITY moveToSent.accesskey         "r">
+<!ENTITY requestMDN.label             "Kadar dobim zahtevo za povratnico:">
+<!ENTITY returnSome.label             "dovoli povratnice za nekatera sporočila">
+<!ENTITY returnSome.accesskey         "d">
+<!ENTITY never.label                  "nikoli ne pošlji povratnice">
+<!ENTITY never.accesskey              "n">
+<!ENTITY notInToCc.label              "Če nisem v Za ali Kp sporočila:">
+<!ENTITY notInToCc.accesskey          "s">
+<!ENTITY outsideDomain.label          "Če je pošiljatelj izven moje domene:">
+<!ENTITY outsideDomain.accesskey      "e">
+<!ENTITY otherCases.label             "V vseh ostalih primerih:">
+<!ENTITY otherCases.accesskey         "V">
+<!ENTITY askMe.label                  "Me vprašaj">
+<!ENTITY alwaysSend.label             "Vedno pošlji">
+<!ENTITY neverSend.label              "Nikoli ne pošiljaj">

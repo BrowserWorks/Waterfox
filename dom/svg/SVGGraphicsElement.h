@@ -25,13 +25,30 @@ class SVGGraphicsElement : public SVGGraphicsElementBase, public SVGTests {
   // interfaces:
   NS_DECL_ISUPPORTS_INHERITED
 
+  // WebIDL
+  bool Autofocus() const { return GetBoolAttr(nsGkAtoms::autofocus); }
+  void SetAutofocus(bool aAutofocus) {
+    SetBoolAttr(nsGkAtoms::autofocus, aAutofocus);
+  }
+
   bool IsFocusableInternal(int32_t* aTabIndex, bool aWithMouse) override;
+  nsresult BindToTree(BindContext&, nsINode& aParent) override;
   SVGElement* AsSVGElement() final { return this; }
 
  protected:
   // returns true if focusability has been definitively determined otherwise
   // false
   bool IsSVGFocusable(bool* aIsFocusable, int32_t* aTabIndex);
+
+  template <typename T>
+  bool IsInLengthInfo(const nsAtom* aAttribute, const T& aLengthInfos) const {
+    for (auto const& e : aLengthInfos) {
+      if (e.mName == aAttribute) {
+        return true;
+      }
+    }
+    return false;
+  }
 };
 
 }  // namespace dom

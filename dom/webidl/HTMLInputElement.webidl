@@ -22,8 +22,10 @@ enum SelectionMode {
 
 interface XULControllers;
 
-[HTMLConstructor]
+[Exposed=Window]
 interface HTMLInputElement : HTMLElement {
+  [HTMLConstructor] constructor();
+
   [CEReactions, Pure, SetterThrows]
            attribute DOMString accept;
   [CEReactions, Pure, SetterThrows]
@@ -32,6 +34,8 @@ interface HTMLInputElement : HTMLElement {
            attribute DOMString autocomplete;
   [CEReactions, Pure, SetterThrows]
            attribute boolean autofocus;
+  [CEReactions, Pure, SetterThrows, Pref="dom.capture.enabled"]
+           attribute DOMString capture;
   [CEReactions, Pure, SetterThrows]
            attribute boolean defaultChecked;
   [Pure]
@@ -56,8 +60,6 @@ interface HTMLInputElement : HTMLElement {
            attribute unsigned long height;
   [Pure]
            attribute boolean indeterminate;
-  [CEReactions, Pure, SetterThrows, Pref="dom.forms.inputmode"]
-           attribute DOMString inputMode;
   [Pure]
   readonly attribute HTMLElement? list;
   [CEReactions, Pure, SetterThrows]
@@ -93,7 +95,7 @@ interface HTMLInputElement : HTMLElement {
   [CEReactions, Pure, SetterThrows, NeedsCallerType]
            attribute [TreatNullAs=EmptyString] DOMString value;
   [Throws, Func="HTMLInputElement::ValueAsDateEnabled"]
-           attribute Date? valueAsDate;
+           attribute object? valueAsDate;
   [Pure, SetterThrows]
            attribute unrestricted double valueAsNumber;
   [CEReactions, SetterThrows]
@@ -146,7 +148,7 @@ partial interface HTMLInputElement {
 
 partial interface HTMLInputElement {
   [GetterThrows, ChromeOnly]
-  readonly attribute XULControllers        controllers;
+  readonly attribute XULControllers?       controllers;
   // Binaryname because we have a FragmentOrElement function named "TextLength()".
   [NeedsCallerType, BinaryName="inputTextLength"]
   readonly attribute long                  textLength;
@@ -168,18 +170,6 @@ partial interface HTMLInputElement {
   [ChromeOnly]
   void mozSetDndFilesAndDirectories(sequence<(File or Directory)> list);
 
-  // Number controls (<input type=number>) have an anonymous text control
-  // (<input type=text>) in the anonymous shadow tree that they contain. On
-  // such an anonymous text control this property provides access to the
-  // number control that owns the text control. This is useful, for example,
-  // in code that looks at the currently focused element to make decisions
-  // about which IME to bring up. Such code needs to be able to check for any
-  // owning number control since it probably wants to bring up a number pad
-  // instead of the standard keyboard, even when the anonymous text control has
-  // focus.
-  [ChromeOnly]
-  readonly attribute HTMLInputElement? ownerNumberControl;
-
   boolean mozIsTextField(boolean aExcludePassword);
 
   [ChromeOnly]
@@ -194,25 +184,32 @@ partial interface HTMLInputElement {
   AutocompleteInfo? getAutocompleteInfo();
 };
 
-[NoInterfaceObject]
-interface MozEditableElement {
-  [Pure, ChromeOnly]
+interface mixin MozEditableElement {
+  // Returns an nsIEditor instance which is associated with the element.
+  // If the element can be associated with an editor but not yet created,
+  // this creates new one automatically.
+  [Pure, ChromeOnly, BinaryName="editorForBindings"]
   readonly attribute nsIEditor? editor;
+
+  // Returns true if an nsIEditor instance has already been associated with
+  // the element.
+  [Pure, ChromeOnly]
+  readonly attribute boolean hasEditor;
 
   // This is set to true if "input" event should be fired with InputEvent on
   // the element.  Otherwise, i.e., if "input" event should be fired with
   // Event, set to false.
-  [Func="IsChromeOrXBLOrUAWidget"]
+  [ChromeOnly]
   readonly attribute boolean isInputEventTarget;
 
   // This is similar to set .value on nsIDOMInput/TextAreaElements, but handling
   // of the value change is closer to the normal user input, so 'change' event
   // for example will be dispatched when focusing out the element.
-  [Func="IsChromeOrXBLOrUAWidget", NeedsSubjectPrincipal]
+  [Func="IsChromeOrUAWidget", NeedsSubjectPrincipal]
   void setUserInput(DOMString input);
 };
 
-HTMLInputElement implements MozEditableElement;
+HTMLInputElement includes MozEditableElement;
 
 partial interface HTMLInputElement {
   [Pref="dom.input.dirpicker", SetterThrows]
@@ -231,7 +228,7 @@ partial interface HTMLInputElement {
   void chooseDirectory();
 };
 
-HTMLInputElement implements MozImageLoadingContent;
+HTMLInputElement includes MozImageLoadingContent;
 
 // https://wicg.github.io/entries-api/#idl-index
 partial interface HTMLInputElement {
@@ -265,26 +262,26 @@ partial interface HTMLInputElement {
    BinaryName="getMaximumAsDouble"]
   double getMaximum();
 
-  [Pref="dom.forms.datetime", Func="IsChromeOrXBLOrUAWidget"]
-  void openDateTimePicker(optional DateTimeValue initialValue);
+  [Pref="dom.forms.datetime", Func="IsChromeOrUAWidget"]
+  void openDateTimePicker(optional DateTimeValue initialValue = {});
 
-  [Pref="dom.forms.datetime", Func="IsChromeOrXBLOrUAWidget"]
-  void updateDateTimePicker(optional DateTimeValue value);
+  [Pref="dom.forms.datetime", Func="IsChromeOrUAWidget"]
+  void updateDateTimePicker(optional DateTimeValue value = {});
 
-  [Pref="dom.forms.datetime", Func="IsChromeOrXBLOrUAWidget"]
+  [Pref="dom.forms.datetime", Func="IsChromeOrUAWidget"]
   void closeDateTimePicker();
 
-  [Pref="dom.forms.datetime", Func="IsChromeOrXBLOrUAWidget"]
+  [Pref="dom.forms.datetime", Func="IsChromeOrUAWidget"]
   void setFocusState(boolean aIsFocused);
 
-  [Pref="dom.forms.datetime", Func="IsChromeOrXBLOrUAWidget"]
+  [Pref="dom.forms.datetime", Func="IsChromeOrUAWidget"]
   void updateValidityState();
 
-  [Pref="dom.forms.datetime", Func="IsChromeOrXBLOrUAWidget",
+  [Pref="dom.forms.datetime", Func="IsChromeOrUAWidget",
    BinaryName="getStepAsDouble"]
   double getStep();
 
-  [Pref="dom.forms.datetime", Func="IsChromeOrXBLOrUAWidget",
+  [Pref="dom.forms.datetime", Func="IsChromeOrUAWidget",
    BinaryName="getStepBaseAsDouble"]
   double getStepBase();
 };

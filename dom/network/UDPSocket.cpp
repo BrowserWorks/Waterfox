@@ -345,12 +345,12 @@ bool UDPSocket::Send(const StringOrBlobOrArrayBufferOrArrayBufferView& aData,
       aRv = strStream->SetData(data.BeginReading(), data.Length());
     } else if (aData.IsArrayBuffer()) {
       const ArrayBuffer& data = aData.GetAsArrayBuffer();
-      data.ComputeLengthAndData();
+      data.ComputeState();
       aRv = strStream->SetData(reinterpret_cast<const char*>(data.Data()),
                                data.Length());
     } else {
       const ArrayBufferView& data = aData.GetAsArrayBufferView();
-      data.ComputeLengthAndData();
+      data.ComputeState();
       aRv = strStream->SetData(reinterpret_cast<const char*>(data.Data()),
                                data.Length());
     }
@@ -572,7 +572,7 @@ void UDPSocket::HandleReceivedData(const nsACString& aRemoteAddress,
   }
 
   if (NS_FAILED(DispatchReceivedData(aRemoteAddress, aRemotePort, aData))) {
-    CloseWithReason(NS_ERROR_TYPE_ERR);
+    CloseWithReason(NS_ERROR_UNEXPECTED);
   }
 }
 

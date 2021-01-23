@@ -9,23 +9,24 @@ name = "geckoservo"
 path = "lib.rs"
 
 [features]
-bindgen = ["style/use_bindgen"]
 gecko_debug = ["style/gecko_debug", "nsstring/gecko_debug"]
 gecko_profiler = ["style/gecko_profiler"]
+gecko_refcount_logging = ["style/gecko_refcount_logging", "servo_arc/gecko_refcount_logging"]
 
 [dependencies]
 atomic_refcell = "0.1"
-cssparser = "0.25"
+bincode = "1.0"
+cssparser = "0.28"
 cstr = "0.1.2"
 libc = "0.2"
 log = {version = "0.4", features = ["release_max_level_info"]}
 malloc_size_of = {path = "../../components/malloc_size_of"}
 nsstring = {path = "../../../xpcom/rust/nsstring/"}
 num-traits = "0.2"
-parking_lot = "0.6"
+parking_lot = "0.10"
 selectors = {path = "../../components/selectors"}
 servo_arc = {path = "../../components/servo_arc"}
-smallvec = "0.6"
+smallvec = "1.0"
 style = {path = "../../components/style", features = ["gecko"]}
 style_traits = {path = "../../components/style_traits"}
 to_shmem = {path = "../../components/to_shmem"}

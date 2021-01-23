@@ -7,8 +7,6 @@
 #include "nsIOService.h"
 #include "nsInputStreamPump.h"
 #include "nsIStreamTransportService.h"
-#include "nsISeekableStream.h"
-#include "nsITransport.h"
 #include "nsIThreadRetargetableStreamListener.h"
 #include "nsThreadUtils.h"
 #include "nsCOMPtr.h"
@@ -50,6 +48,7 @@ nsInputStreamPump::nsInputStreamPump()
       mCloseWhenDone(false),
       mRetargeting(false),
       mAsyncStreamIsBuffered(false),
+      mOffMainThread(!NS_IsMainThread()),
       mMutex("nsInputStreamPump") {}
 
 nsresult nsInputStreamPump::Create(nsInputStreamPump** result,
@@ -113,8 +112,9 @@ nsresult nsInputStreamPump::EnsureWaiting() {
   // on only one thread at a time.
   MOZ_ASSERT(mAsyncStream);
   if (!mWaitingForInputStreamReady && !mProcessingCallbacks) {
-    // Ensure OnStateStop is called on the main thread.
-    if (mState == STATE_STOP) {
+    // Ensure OnStateStop is called on the main thread only when this pump is
+    // created on main thread.
+    if (mState == STATE_STOP && !mOffMainThread) {
       nsCOMPtr<nsIEventTarget> mainThread =
           mLabeledMainThreadTarget ? mLabeledMainThreadTarget
                                    : do_AddRef(GetMainThreadEventTarget());
@@ -143,8 +143,16 @@ nsresult nsInputStreamPump::EnsureWaiting() {
 // although this class can only be accessed from one thread at a time, we do
 // allow its ownership to move from thread to thread, assuming the consumer
 // understands the limitations of this.
-NS_IMPL_ISUPPORTS(nsInputStreamPump, nsIRequest, nsIThreadRetargetableRequest,
-                  nsIInputStreamCallback, nsIInputStreamPump)
+NS_IMPL_ADDREF(nsInputStreamPump)
+NS_IMPL_RELEASE(nsInputStreamPump)
+NS_INTERFACE_MAP_BEGIN(nsInputStreamPump)
+  NS_INTERFACE_MAP_ENTRY(nsIRequest)
+  NS_INTERFACE_MAP_ENTRY(nsIThreadRetargetableRequest)
+  NS_INTERFACE_MAP_ENTRY(nsIInputStreamCallback)
+  NS_INTERFACE_MAP_ENTRY(nsIInputStreamPump)
+  NS_INTERFACE_MAP_ENTRY_CONCRETE(nsInputStreamPump)
+  NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIInputStreamPump)
+NS_INTERFACE_MAP_END
 
 //-----------------------------------------------------------------------------
 // nsInputStreamPump::nsIRequest
@@ -176,7 +184,13 @@ nsInputStreamPump::GetStatus(nsresult* status) {
 
 NS_IMETHODIMP
 nsInputStreamPump::Cancel(nsresult status) {
-  MOZ_ASSERT(NS_IsMainThread());
+#if DEBUG
+  if (mOffMainThread) {
+    MOZ_ASSERT_IF(mTargetThread, mTargetThread->IsOnCurrentThread());
+  } else {
+    MOZ_ASSERT(NS_IsMainThread());
+  }
+#endif
 
   RecursiveMutexAutoLock lock(mMutex);
 
@@ -245,6 +259,16 @@ nsInputStreamPump::SetLoadFlags(nsLoadFlags aLoadFlags) {
 }
 
 NS_IMETHODIMP
+nsInputStreamPump::GetTRRMode(nsIRequest::TRRMode* aTRRMode) {
+  return GetTRRModeImpl(aTRRMode);
+}
+
+NS_IMETHODIMP
+nsInputStreamPump::SetTRRMode(nsIRequest::TRRMode aTRRMode) {
+  return SetTRRModeImpl(aTRRMode);
+}
+
+NS_IMETHODIMP
 nsInputStreamPump::GetLoadGroup(nsILoadGroup** aLoadGroup) {
   RecursiveMutexAutoLock lock(mMutex);
 
@@ -275,6 +299,12 @@ nsInputStreamPump::Init(nsIInputStream* stream, uint32_t segsize,
   mSegCount = segcount;
   mCloseWhenDone = closeWhenDone;
   mLabeledMainThreadTarget = mainThreadTarget;
+  if (mOffMainThread && mLabeledMainThreadTarget) {
+    MOZ_ASSERT(
+        false,
+        "Init stream pump off main thread with a main thread event target.");
+    return NS_ERROR_FAILURE;
+  }
 
   return NS_OK;
 }
@@ -285,54 +315,18 @@ nsInputStreamPump::AsyncRead(nsIStreamListener* listener, nsISupports* ctxt) {
 
   NS_ENSURE_TRUE(mState == STATE_IDLE, NS_ERROR_IN_PROGRESS);
   NS_ENSURE_ARG_POINTER(listener);
-  MOZ_ASSERT(NS_IsMainThread(),
+  MOZ_ASSERT(NS_IsMainThread() || mOffMainThread,
              "nsInputStreamPump should be read from the "
              "main thread only.");
 
-  //
-  // OK, we need to use the stream transport service if
-  //
-  // (1) the stream is blocking
-  // (2) the stream does not support nsIAsyncInputStream
-  //
-
-  bool nonBlocking;
-  nsresult rv = mStream->IsNonBlocking(&nonBlocking);
-  if (NS_FAILED(rv)) return rv;
-
-  if (nonBlocking) {
-    mAsyncStream = do_QueryInterface(mStream);
-    if (!mAsyncStream) {
-      rv = NonBlockingAsyncInputStream::Create(mStream.forget(),
-                                               getter_AddRefs(mAsyncStream));
-      if (NS_WARN_IF(NS_FAILED(rv))) return rv;
-    }
-    MOZ_ASSERT(mAsyncStream);
+  nsresult rv = NS_MakeAsyncNonBlockingInputStream(
+      mStream.forget(), getter_AddRefs(mAsyncStream), mCloseWhenDone, mSegSize,
+      mSegCount);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
   }
 
-  if (!mAsyncStream) {
-    // ok, let's use the stream transport service to read this stream.
-    nsCOMPtr<nsIStreamTransportService> sts =
-        do_GetService(kStreamTransportServiceCID, &rv);
-    if (NS_FAILED(rv)) return rv;
-
-    nsCOMPtr<nsITransport> transport;
-    rv = sts->CreateInputTransport(mStream, mCloseWhenDone,
-                                   getter_AddRefs(transport));
-    if (NS_FAILED(rv)) return rv;
-
-    nsCOMPtr<nsIInputStream> wrapper;
-    rv = transport->OpenInputStream(0, mSegSize, mSegCount,
-                                    getter_AddRefs(wrapper));
-    if (NS_FAILED(rv)) return rv;
-
-    mAsyncStream = do_QueryInterface(wrapper, &rv);
-    if (NS_FAILED(rv)) return rv;
-  }
-
-  // release our reference to the original stream.  from this point forward,
-  // we only reference the "stream" via mAsyncStream.
-  mStream = nullptr;
+  MOZ_ASSERT(mAsyncStream);
 
   // mStreamOffset now holds the number of bytes currently read.
   mStreamOffset = 0;
@@ -424,7 +418,7 @@ nsInputStreamPump::OnInputStreamReady(nsIAsyncInputStream* stream) {
 
     // Set mRetargeting so EnsureWaiting will be called. It ensures that
     // OnStateStop is called on the main thread.
-    if (nextState == STATE_STOP && !NS_IsMainThread()) {
+    if (nextState == STATE_STOP && !NS_IsMainThread() && !mOffMainThread) {
       mRetargeting = true;
     }
 
@@ -614,7 +608,7 @@ nsresult nsInputStreamPump::CallOnStateStop() {
 uint32_t nsInputStreamPump::OnStateStop() {
   mMutex.AssertCurrentThreadIn();
 
-  if (!NS_IsMainThread()) {
+  if (!NS_IsMainThread() && !mOffMainThread) {
     // This method can be called on a different thread if nsInputStreamPump
     // is used off the main-thread.
     nsresult rv = mLabeledMainThreadTarget->Dispatch(
@@ -707,6 +701,12 @@ nsInputStreamPump::RetargetDeliveryTo(nsIEventTarget* aNewTarget) {
   if (aNewTarget == mTargetThread) {
     NS_WARNING("Retargeting delivery to same thread");
     return NS_OK;
+  }
+
+  if (mOffMainThread) {
+    // Don't support retargeting if this pump is already used off the main
+    // thread.
+    return NS_ERROR_FAILURE;
   }
 
   // Ensure that |mListener| and any subsequent listeners can be retargeted

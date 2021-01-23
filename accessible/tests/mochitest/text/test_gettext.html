@@ -19,7 +19,7 @@
       // __h__e__l__l__o__ __m__y__ __f__r__i__e__n__d__
       //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15
 
-      var IDs = [ "i1", "d1", "e1", "t1" ];
+      var IDs = [ "i1", "d1", "d1wrap", "e1", "t1" ];
 
       testCharacterCount(IDs, 15);
 
@@ -96,6 +96,7 @@
 
   <input id="i1" value="hello my friend"/>
   <div id="d1">hello my friend</div>
+  <div id="d1wrap" style="word-wrap:break-word; width:1px">hello my friend</div>
   <div id="e1" contenteditable="true">hello my friend</div>
   <textarea id="t1">hello my friend</textarea>
 
@@ -111,12 +112,12 @@
 
 two words
 </div>
-  <div id="dbr3">oneword<br/><br/>two words<br/><br/></div>
+  <div id="dbr3">oneword<br/><br/>two words<br/></div>
   <div id="e3" contenteditable="true">oneword
 
 two words
 </div>
-  <div id="ebr3" contenteditable="true">oneword<br/><br/>two words<br/><br/></div>
+  <div id="ebr3" contenteditable="true">oneword<br/><br/>two words<br/></div>
   <textarea id="t3" cols="300">oneword
 
 two words

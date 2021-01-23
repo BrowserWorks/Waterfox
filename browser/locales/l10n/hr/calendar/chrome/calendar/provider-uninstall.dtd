@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Izbriši pružatelja usluge">
+<!ENTITY providerUninstall.accept.label                    "Ukini pretplatu na odabranom">
+<!ENTITY providerUninstall.accept.accesskey                "U">
+<!ENTITY providerUninstall.cancel.label                    "Zadrži dodatak">
+<!ENTITY providerUninstall.cancel.accesskey                "k">
+<!ENTITY providerUninstall.preName.label                   "Zatražili ste brisanje ili onemogućavanje:">
+<!ENTITY providerUninstall.postName.label                  "Ovo će onemogućiti niže navedene kalendare.">
+<!ENTITY providerUninstall.reinstallNote.label             "Ako ne planirate ponovno instalirati ovog pružatelja usluge, možete odabrati ukidanje pretplate na kalendare ovog pružatelja usluge.">

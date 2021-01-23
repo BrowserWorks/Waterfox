@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Gereksiz posta ayarları">
+<!ENTITY trainingWarning.label "Eğer bu özellik açılmışsa, Gereksiz ileti araç çubuğunu kullanarak &brandShortName; uygulamasına iletileri gereksiz olarak işaretleyip, işaretlemeyeceğini göstermelisiniz. Gereksiz ve gerekli iletileri tanımlamalısınız.">
+<!ENTITY level.label "Gereksiz posta kontrolünü etkinleştir">
+<!ENTITY level.accesskey "e">
+
+<!ENTITY move.label "Gereksiz posta tespit edildiğinde gelen iletileri">
+<!ENTITY move.accesskey "i">
+<!ENTITY junkFolderOn.label "Yandaki hesabın &quot;Gereksiz&quot; dizinine taşı">
+<!ENTITY junkFolderOn.accesskey "i">
+<!ENTITY otherFolder.label "Diğer:">
+<!ENTITY otherFolder.accesskey "D">
+<!ENTITY purge1.label "Gereksiz posta olarak işaretlenen postaların otomatik silinme süresi">
+<!ENTITY purge1.accesskey "m">
+<!ENTITY purge2.label "gün">
+
+<!ENTITY whitelist.label "Eğer aşağıdaki gönderen benim adres defterimde kayıtlı ise Gereksiz olarak işaretleme:">
+<!ENTITY whitelist.accesskey "E">
+
+<!ENTITY ispHeaders.label "Güvenli posta başlıkları: ">
+<!ENTITY ispHeaders.accesskey "t">

@@ -7,7 +7,6 @@
 #ifndef mozilla_ShellHeaderOnlyUtils_h
 #define mozilla_ShellHeaderOnlyUtils_h
 
-#include "mozilla/LauncherResult.h"
 #include "mozilla/WinHeaderOnlyUtils.h"
 
 #include <objbase.h>
@@ -21,12 +20,12 @@
 // NB: include this after shldisp.h so its macros do not conflict with COM
 // interfaces defined by shldisp.h
 #include <shellapi.h>
+#include <type_traits>
 
 #include <comdef.h>
 #include <comutil.h>
 
 #include "mozilla/RefPtr.h"
-#include "mozilla/TypeTraits.h"
 #include "mozilla/UniquePtr.h"
 
 namespace mozilla {
@@ -127,10 +126,11 @@ inline LauncherVoidResult ShellExecuteByExplorer(const _bstr_t& aPath,
   }
 
   // Passing the foreground privilege so that the shell can launch an
-  // application in the foreground.  If CoAllowSetForegroundWindow fails,
-  // we continue because it's not fatal.
+  // application in the foreground.  This fails with E_ACCESSDENIED if the
+  // current window is shown in the background.  We keep a soft assert for
+  // the other failures to investigate how it happened.
   hr = ::CoAllowSetForegroundWindow(shellDisp, nullptr);
-  MOZ_ASSERT(SUCCEEDED(hr));
+  MOZ_ASSERT(SUCCEEDED(hr) || hr == E_ACCESSDENIED);
 
   // shellapi.h macros interfere with the correct naming of the method being
   // called on IShellDispatch2. Temporarily remove that definition.
@@ -159,9 +159,9 @@ inline LauncherVoidResult ShellExecuteByExplorer(const _bstr_t& aPath,
 }
 
 using UniqueAbsolutePidl =
-    UniquePtr<RemovePointer<PIDLIST_ABSOLUTE>::Type, CoTaskMemFreeDeleter>;
+    UniquePtr<std::remove_pointer_t<PIDLIST_ABSOLUTE>, CoTaskMemFreeDeleter>;
 
-inline LauncherResult<PIDLIST_ABSOLUTE> ShellParseDisplayName(
+inline LauncherResult<UniqueAbsolutePidl> ShellParseDisplayName(
     const wchar_t* aPath) {
   PIDLIST_ABSOLUTE rawAbsPidl = nullptr;
   SFGAOF sfgao;
@@ -170,7 +170,7 @@ inline LauncherResult<PIDLIST_ABSOLUTE> ShellParseDisplayName(
     return LAUNCHER_ERROR_FROM_HRESULT(hr);
   }
 
-  return rawAbsPidl;
+  return UniqueAbsolutePidl(rawAbsPidl);
 }
 
 }  // namespace mozilla

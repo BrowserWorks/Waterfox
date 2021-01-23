@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY linksHeader.label "Tingkah laku Pautan">
+<!ENTITY newWindow.label "Tingkah laku membuka pautan">
+<!ENTITY newWindowDescription.label "Buka pautan adalah membuka tetingkap baru dalam:">
+<!ENTITY newWindowRestriction.label "Apabila skrip mahu membuka tetingkap baru:">
+<!ENTITY external.label "Pautan dari dalam aplikasi lain">
+<!ENTITY externalDescription.label "Buka pautan yang dirujuki dari aplikasi lain dalam:">
+
+<!ENTITY openCurrent.label "Tab/tetingkap semasa">
+<!ENTITY newWindowGroupCurrent.accesskey "s">
+<!ENTITY externalGroupCurrent.accesskey "t">
+
+<!ENTITY openTab.label "Tab baru dalam tetingkap semasa">
+<!ENTITY newWindowGroupTab.accesskey "t">
+<!ENTITY externalGroupTab.accesskey "a">
+
+<!ENTITY openWindow.label "Tetingkap baru">
+<!ENTITY newWindowGroupWindow.accesskey "t">
+<!ENTITY externalGroupWindow.accesskey "a">
+
+<!ENTITY divertAll.label "Sentiasa alih tetingkap ke dalam tab">
+<!ENTITY divertAll.accesskey "h">
+<!ENTITY divertNoFeatures.label "Jangan alih penyesuaian tetingkap ke dalam tab">
+<!ENTITY divertNoFeatures.accesskey "s">
+<!ENTITY dontDivert.label "Sentiasa buka tetingkap baru">
+<!ENTITY dontDivert.accesskey "n">

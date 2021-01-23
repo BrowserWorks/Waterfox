@@ -6,27 +6,13 @@ this.tabs = class extends ExtensionAPI {
   getAPI(context) {
     return {
       tabs: {
-        connect: function(tabId, connectInfo) {
-          let name = "";
-          if (connectInfo && connectInfo.name !== null) {
-            name = connectInfo.name;
-          }
-          let recipient = {
-            extensionId: context.extension.id,
-            tabId,
-          };
-          if (connectInfo && connectInfo.frameId !== null) {
-            recipient.frameId = connectInfo.frameId;
-          }
-          return context.messenger.connect(
-            context.messageManager,
-            name,
-            recipient
-          );
+        connect(tabId, options) {
+          const { frameId = null, name = "" } = options || {};
+          return context.messenger.nm.connect({ name, tabId, frameId });
         },
 
         sendMessage: function(tabId, message, options, responseCallback) {
-          let recipient = {
+          const recipient = {
             extensionId: context.extension.id,
             tabId: tabId,
           };

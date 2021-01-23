@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "Untuk menghemat ruang disk, jangan unduh:">
+<!ENTITY doNotDownloadNntp.label "Untuk menghemat ruang disk, jangan unduh pesan untuk penggunaan luring:">
+<!ENTITY doNotDownloadImap.label "Untuk menghemat ruang disk, pengunduhan pesan dari server dan penyimpanan luring salinan lokal dapat diatur berdasarkan umur atau besar pesan.">
+<!ENTITY allFoldersOffline2.label "Simpan pesan di semua folder untuk akun ini di komputer ini">
+<!ENTITY allFoldersOffline2.accesskey "o">
+<!ENTITY allFoldersOfflineNote.label "Catatan: Mengubah ini memengaruhi semua folder di akun ini. Untuk mengatur folder individual, gunakan tombol Advanced…">
+<!ENTITY offlineNotDownload.label "Pesan lebih besar dari">
+<!ENTITY offlineNotDownload.accesskey "P">
+<!ENTITY autosyncNotDownload.label "Jangan unduh pesan yang lebih besar dari">
+<!ENTITY autosyncNotDownload.accesskey "J">
+<!ENTITY kb.label "KB">
+<!ENTITY daysOld.label "hari">
+<!ENTITY message.label "pesan">
+<!ENTITY nntpNotDownloadRead.label "Membaca pesan">
+<!ENTITY nntpNotDownloadRead.accesskey "M">
+<!ENTITY nntpDownloadMsg.label "Pesan lebih dari">
+<!ENTITY nntpDownloadMsg.accesskey "e">
+<!ENTITY retentionCleanup.label "Untuk mengembalikan ruang disk, pesan yang sudah lama dapat dihapus secara permanen">
+<!ENTITY retentionCleanupImap.label "Untuk mengembalikan ruang disk, pesan yang sudah usang dapat dihapus secara permanen, termasuk salinan lokal dan dan pesan asli yang disimpan di server jarak jauh.">
+<!ENTITY retentionCleanupPop.label "Untuk mengembalikan ruang disk, pesan yang sudah lama dapat dihapus secara permanen, termasuk pesan asli yang disimpan di server jarak jauh.">
+<!ENTITY retentionKeepMsg.label "Hapus pesan yang lebih dari">
+<!ENTITY retentionKeepMsg.accesskey "l">
+<!ENTITY retentionKeepAll.label "Jangan hapus pesan sama sekali">
+<!ENTITY retentionKeepAll.accesskey "J">
+<!ENTITY retentionKeepRecent.label "Hapus selain yang paling akhir">
+<!ENTITY retentionKeepRecent.accesskey "a">
+<!ENTITY retentionApplyToFlagged.label "Selalu simpan pesan berbintang">
+<!ENTITY retentionApplyToFlagged.accesskey "e">
+<!ENTITY nntpRemoveMsgBody.label "Hapus isi dari pesan jika lebih dari">
+<!ENTITY nntpRemoveMsgBody.accesskey "H">
+<!ENTITY offlineSelectNntp.label "Pilih newsgroup untuk penggunaan luring…">
+<!ENTITY offlineSelectNntp.accesskey "P">
+<!ENTITY offlineImapAdvancedOffline.label "Canggih…">
+<!ENTITY offlineImapAdvancedOffline.accesskey "a">
+<!ENTITY syncGroupTitle.label "Proses Sinkronisasi Pesan">
+<!ENTITY diskspaceGroupTitle.label "Ruang Disk">
+
+<!-- LOCALIZATION NOTE: (ageAutosyncBefore.label, ageAutosyncMiddle.label, ageAutosyncAfter.label):
+  The entities ageAutosyncBefore.label, ageAutosyncMiddle.label, and ageAutosyncAfter.label appear
+  on a single line within the scope of useAutosync.ByAge as follows:
+
+  &ageAutosyncBefore.label [textbox for autosync value] &ageAutosyncMiddle.label; [dropdown for autosync interval] &ageAutosyncAfter.label;
+-->
+<!ENTITY allAutosync.label               "Sinkronkan semua pesan secara lokal">
+<!ENTITY allAutosync.accesskey           "S">
+<!ENTITY ageAutosyncBefore.label         "Hanya sinkronkan yang paling baru">
+<!ENTITY ageAutosync.accesskey           "b">
+<!ENTITY ageAutosyncMiddle.label         "">
+<!ENTITY dayAgeInterval.label            "Hari">
+<!ENTITY weekAgeInterval.label           "Minggu">
+<!ENTITY monthAgeInterval.label          "Bulan">
+<!ENTITY yearAgeInterval.label           "Tahun">
+<!ENTITY ageAutosyncAfter.label          "">

@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.editing.title "Configuración de páxina nueva">
+<!ENTITY authorName.label "Autor:">
+<!ENTITY authorName.accesskey "u">
+<!ENTITY pageColorHeader "Aspeutu predetermináu de la páxina">
+<!ENTITY defaultColors.label "Colores predeterminaos del llector (nun fixar los colores na páxina)">
+<!ENTITY defaultColors.accesskey "d">
+<!ENTITY customColors.label "Usar colores personalizaos:">
+<!ENTITY customColors.accesskey "c">
+<!ENTITY normalText.label "Testu normal">
+<!ENTITY normalText.accesskey "n">
+<!ENTITY linkText.label "Testu d'enllaz">
+<!ENTITY linkText.accesskey "l">
+<!ENTITY activeLinkText.label "Testu d'enllaz activu">
+<!ENTITY activeLinkText.accesskey "a">
+<!ENTITY visitedLinkText.label "Testu d'enllaz andáu">
+<!ENTITY visitedLinkText.accesskey "e">
+<!ENTITY background.label "Fondu:">
+<!ENTITY background.accesskey "F">
+<!ENTITY colon.character ":">
+<!ENTITY backgroundImage.label "Imaxe de fondu:">
+<!ENTITY backgroundImage.accesskey "m">
+<!ENTITY chooseFile.label "Esbillar ficheru…">
+<!ENTITY chooseFile.accesskey "b">

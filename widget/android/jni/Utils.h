@@ -1,3 +1,9 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 #ifndef mozilla_jni_Utils_h__
 #define mozilla_jni_Utils_h__
 
@@ -131,12 +137,6 @@ void SetNativeHandle(JNIEnv* env, jobject instance, uintptr_t handle);
 jclass GetClassRef(JNIEnv* aEnv, const char* aClassName);
 
 void DispatchToGeckoPriorityQueue(already_AddRefed<nsIRunnable> aCall);
-
-/**
- * Returns whether Gecko is running in a Fennec environment, as determined by
- * the presence of the GeckoApp class.
- */
-bool IsFennec();
 
 int GetAPIVersion();
 

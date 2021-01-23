@@ -9,6 +9,7 @@
 #include "mozilla/dom/DOMRect.h"
 #include "mozilla/dom/Document.h"
 #include "nsIContent.h"
+#include "nsIContentInlines.h"
 #include "nsSVGUtils.h"
 #include <limits>
 
@@ -107,8 +108,9 @@ void ResizeObservation::UpdateLastReportedSize(const nsSize& aSize) {
 }
 
 // Only needed for refcounted objects.
-NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(ResizeObserver, mOwner, mCallback,
-                                      mActiveTargets, mObservationMap)
+NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(ResizeObserver, mOwner, mDocument,
+                                      mCallback, mActiveTargets,
+                                      mObservationMap)
 NS_IMPL_CYCLE_COLLECTING_ADDREF(ResizeObserver)
 NS_IMPL_CYCLE_COLLECTING_RELEASE(ResizeObserver)
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(ResizeObserver)
@@ -121,31 +123,37 @@ already_AddRefed<ResizeObserver> ResizeObserver::Constructor(
     ErrorResult& aRv) {
   nsCOMPtr<nsPIDOMWindowInner> window =
       do_QueryInterface(aGlobal.GetAsSupports());
-
   if (!window) {
     aRv.Throw(NS_ERROR_FAILURE);
     return nullptr;
   }
 
-  Document* document = window->GetExtantDoc();
-
-  if (!document) {
+  Document* doc = window->GetExtantDoc();
+  if (!doc) {
     aRv.Throw(NS_ERROR_FAILURE);
     return nullptr;
   }
 
-  RefPtr<ResizeObserver> observer = new ResizeObserver(window.forget(), aCb);
-  document->AddResizeObserver(observer);
-
-  return observer.forget();
+  return do_AddRef(new ResizeObserver(std::move(window), doc, aCb));
 }
 
 void ResizeObserver::Observe(Element& aTarget,
                              const ResizeObserverOptions& aOptions,
                              ErrorResult& aRv) {
-  RefPtr<ResizeObservation> observation;
+  // NOTE(emilio): Per spec, this is supposed to happen on construction, but the
+  // spec isn't particularly sane here, see
+  // https://github.com/w3c/csswg-drafts/issues/4518
+  if (mObservationList.isEmpty()) {
+    MOZ_ASSERT(mObservationMap.IsEmpty());
+    if (MOZ_UNLIKELY(!mDocument)) {
+      return aRv.Throw(NS_ERROR_FAILURE);
+    }
+    mDocument->AddResizeObserver(*this);
+  }
 
-  if (mObservationMap.Get(&aTarget, getter_AddRefs(observation))) {
+  RefPtr<ResizeObservation>& observation =
+      mObservationMap.LookupForAdd(&aTarget).OrInsert([] { return nullptr; });
+  if (observation) {
     if (observation->BoxOptions() == aOptions.mBox) {
       // Already observed this target and the observed box is the same, so
       // return.
@@ -156,14 +164,17 @@ void ResizeObserver::Observe(Element& aTarget,
       // should be kept to make sure IsActive() returns the correct result.
       return;
     }
-    Unobserve(aTarget, aRv);
+    // Remove the pre-existing entry, but without unregistering ourselves from
+    // the controller.
+    observation->remove();
+    observation = nullptr;
   }
 
+  // FIXME(emilio): This should probably either flush or not look at the
+  // writing-mode or something.
   nsIFrame* frame = aTarget.GetPrimaryFrame();
   observation = new ResizeObservation(
       aTarget, aOptions.mBox, frame ? frame->GetWritingMode() : WritingMode());
-
-  mObservationMap.Put(&aTarget, observation);
   mObservationList.insertBack(observation);
 
   // Per the spec, we need to trigger notification in event loop that
@@ -182,19 +193,28 @@ void ResizeObserver::Unobserve(Element& aTarget, ErrorResult& aRv) {
              "If ResizeObservation found for an element, observation list "
              "must be not empty.");
   observation->remove();
+  if (mObservationList.isEmpty()) {
+    if (MOZ_LIKELY(mDocument)) {
+      mDocument->RemoveResizeObserver(*this);
+    }
+  }
 }
 
 void ResizeObserver::Disconnect() {
+  const bool registered = !mObservationList.isEmpty();
   mObservationList.clear();
   mObservationMap.Clear();
   mActiveTargets.Clear();
+  if (registered && MOZ_LIKELY(mDocument)) {
+    mDocument->RemoveResizeObserver(*this);
+  }
 }
 
 void ResizeObserver::GatherActiveObservations(uint32_t aDepth) {
   mActiveTargets.Clear();
   mHasSkippedTargets = false;
 
-  for (auto observation : mObservationList) {
+  for (auto* observation : mObservationList) {
     if (!observation->IsActive()) {
       continue;
     }
@@ -280,13 +300,13 @@ void ResizeObserverEntry::SetContentRectAndSize(const nsSize& aSize) {
   nsIFrame* frame = mTarget->GetPrimaryFrame();
 
   // 1. Update mContentRect.
-  nsMargin padding = frame ? frame->GetUsedPadding(): nsMargin();
+  nsMargin padding = frame ? frame->GetUsedPadding() : nsMargin();
   // Per the spec, we need to use the top-left padding offset as the origin of
   // our contentRect.
   nsRect rect(nsPoint(padding.left, padding.top), aSize);
   RefPtr<DOMRect> contentRect = new DOMRect(this);
   contentRect->SetLayoutRect(rect);
-  mContentRect = contentRect.forget();
+  mContentRect = std::move(contentRect);
 
   // 2. Update mContentBoxSize.
   const WritingMode wm = frame ? frame->GetWritingMode() : WritingMode();

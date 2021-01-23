@@ -1,5 +1,7 @@
-/* This Source Code Form is subject to the terms of the Mozilla Pub
- * License, v. 2.0. If a copy of the MPL was not distributed with t
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/AlertNotification.h"
@@ -23,7 +25,7 @@ NS_IMPL_ISUPPORTS(AlertNotification, nsIAlertNotification)
 AlertNotification::AlertNotification()
     : mTextClickable(false), mInPrivateBrowsing(false) {}
 
-AlertNotification::~AlertNotification() {}
+AlertNotification::~AlertNotification() = default;
 
 NS_IMETHODIMP
 AlertNotification::Init(const nsAString& aName, const nsAString& aImageURL,
@@ -119,7 +121,8 @@ AlertNotification::GetURI(nsIURI** aURI) {
     *aURI = nullptr;
     return NS_OK;
   }
-  return mPrincipal->GetURI(aURI);
+  auto* basePrin = BasePrincipal::Cast(mPrincipal);
+  return basePrin->GetURI(aURI);
 }
 
 NS_IMETHODIMP
@@ -160,9 +163,9 @@ AlertNotification::LoadImage(uint32_t aTimeout,
 
   RefPtr<AlertImageRequest> request = new AlertImageRequest(
       imageURI, mPrincipal, mInPrivateBrowsing, aTimeout, aListener, aUserData);
-  nsresult rv = request->Start();
+  request->Start();
   request.forget(aRequest);
-  return rv;
+  return NS_OK;
 }
 
 NS_IMPL_CYCLE_COLLECTION(AlertImageRequest, mURI, mPrincipal, mListener,
@@ -196,15 +199,15 @@ AlertImageRequest::~AlertImageRequest() {
   }
 }
 
-NS_IMETHODIMP
-AlertImageRequest::Notify(imgIRequest* aRequest, int32_t aType,
-                          const nsIntRect* aData) {
+void AlertImageRequest::Notify(imgIRequest* aRequest, int32_t aType,
+                               const nsIntRect* aData) {
   MOZ_ASSERT(aRequest == mRequest);
 
   uint32_t imgStatus = imgIRequest::STATUS_ERROR;
   nsresult rv = aRequest->GetImageStatus(&imgStatus);
   if (NS_WARN_IF(NS_FAILED(rv)) || (imgStatus & imgIRequest::STATUS_ERROR)) {
-    return NotifyMissing();
+    NotifyMissing();
+    return;
   }
 
   // If the image is already decoded, `FRAME_COMPLETE` will fire before
@@ -217,7 +220,8 @@ AlertImageRequest::Notify(imgIRequest* aRequest, int32_t aType,
       nsCOMPtr<imgIContainer> image;
       rv = aRequest->GetImage(getter_AddRefs(image));
       if (NS_WARN_IF(NS_FAILED(rv) || !image)) {
-        return NotifyMissing();
+        NotifyMissing();
+        return;
       }
 
       // Ask the image to decode at its intrinsic size.
@@ -227,14 +231,12 @@ AlertImageRequest::Notify(imgIRequest* aRequest, int32_t aType,
       image->RequestDecodeForSize(gfx::IntSize(width, height),
                                   imgIContainer::FLAG_HIGH_QUALITY_SCALING);
     }
-    return NS_OK;
+    return;
   }
 
   if (aType == imgINotificationObserver::FRAME_COMPLETE) {
     return NotifyComplete();
   }
-
-  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -286,13 +288,14 @@ nsresult AlertImageRequest::Start() {
   // Unfortunately, the PB loader checks the load group, and asserts if its
   // load context's PB flag isn't set. The fix is to pass the load group to
   // `nsIAlertNotification::loadImage`.
-  int32_t loadFlags =
-      mInPrivateBrowsing ? nsIRequest::LOAD_ANONYMOUS : nsIRequest::LOAD_NORMAL;
+  int32_t loadFlags = nsIRequest::LOAD_NORMAL;
+  if (mInPrivateBrowsing) {
+    loadFlags = nsIRequest::LOAD_ANONYMOUS;
+  }
 
-  rv = il->LoadImageXPCOM(mURI, nullptr, nullptr, NS_LITERAL_STRING("default"),
-                          mPrincipal, nullptr, this, nullptr, loadFlags,
-                          nullptr, nsIContentPolicy::TYPE_INTERNAL_IMAGE,
-                          getter_AddRefs(mRequest));
+  rv = il->LoadImageXPCOM(
+      mURI, nullptr, nullptr, mPrincipal, nullptr, this, nullptr, loadFlags,
+      nullptr, nsIContentPolicy::TYPE_INTERNAL_IMAGE, getter_AddRefs(mRequest));
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return NotifyMissing();
   }
@@ -306,26 +309,25 @@ nsresult AlertImageRequest::NotifyMissing() {
     mTimer = nullptr;
   }
   if (nsCOMPtr<nsIAlertNotificationImageListener> listener =
-          mListener.forget()) {
+          std::move(mListener)) {
     nsresult rv = listener->OnImageMissing(mUserData);
     NS_RELEASE_THIS();
     return rv;
   }
+
   return NS_OK;
 }
 
-nsresult AlertImageRequest::NotifyComplete() {
+void AlertImageRequest::NotifyComplete() {
   if (mTimer) {
     mTimer->Cancel();
     mTimer = nullptr;
   }
   if (nsCOMPtr<nsIAlertNotificationImageListener> listener =
-          mListener.forget()) {
-    nsresult rv = listener->OnImageReady(mUserData, mRequest);
+          std::move(mListener)) {
+    listener->OnImageReady(mUserData, mRequest);
     NS_RELEASE_THIS();
-    return rv;
   }
-  return NS_OK;
 }
 
 }  // namespace mozilla

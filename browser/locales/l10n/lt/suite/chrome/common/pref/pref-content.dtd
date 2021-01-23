@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE : FILE The Appearance > Content prefs dialog.  -->
+
+
+<!ENTITY pref.content.title                     "Turinys">
+<!ENTITY pref.content.description               "Šios nuostatos nurodo „&brandShortName;“, kaip atvaizduoti svetainių ir laiškų turinį.">
+
+<!ENTITY siteIcons.label                        "Svetainių piktogramos">
+<!ENTITY useSiteIcons.label                     "Rodyti svetainių piktogramas">
+<!ENTITY useSiteIcons.accesskey                 "R">
+
+
+
+
+
+<!ENTITY useSmoothScroll.label                  "Slinkti tolygiai">
+<!ENTITY useSmoothScroll.accesskey              "S">
+
+<!-- LOCALIZATION NOTE (minZoom.label, maxZoom.label, percent.label):
+     single hbox with minZoom.label preceding the minZoom control and
+     maxZoom.label preceding the maxZoom control; percent.label shows
+     the ASCII '%' character at the end of that string -->
+
+
+
+
+
+<!ENTITY siteSpecific.label                     "Atskirai įsiminti skirtingoms svetainėms taikomus mastelius">
+<!ENTITY siteSpecific.accesskey                 "t">
+<!ENTITY textZoomOnly.label                     "Nekeisti svetainės mastelio, keisti tik teksto dydį">
+<!ENTITY textZoomOnly.accesskey                 "k">
+<!ENTITY enableAutomaticImageResizing.label     "Sumažinti didelių paveikslų dydį, kad tilptų naršyklės lange">
+<!ENTITY enableAutomaticImageResizing.accesskey "m">
+
+<!ENTITY allowHWAccel.label                     "Kai įmanoma, naudoti aparatinį spartinimą">
+<!ENTITY allowHWAccel.accesskey                 "a">
+<!ENTITY blockAutoRefresh.label                 "Įspėti, kai tinklalapis bando peradresuoti naršyklę arba pakartotinai save įkelti">
+<!ENTITY blockAutoRefresh.accesskey             "p">

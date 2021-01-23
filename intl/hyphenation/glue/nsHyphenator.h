@@ -6,11 +6,23 @@
 #ifndef nsHyphenator_h__
 #define nsHyphenator_h__
 
+#include "mozilla/ipc/SharedMemoryBasic.h"
+#include "mozilla/UniquePtr.h"
+#include "mozilla/Variant.h"
 #include "nsCOMPtr.h"
 #include "nsString.h"
 #include "nsTArray.h"
 
 class nsIURI;
+struct HyphDic;
+
+namespace mozilla {
+template <>
+class DefaultDelete<const HyphDic> {
+ public:
+  void operator()(const HyphDic* ptr) const;
+};
+}  // namespace mozilla
 
 class nsHyphenator {
  public:
@@ -22,13 +34,22 @@ class nsHyphenator {
 
   nsresult Hyphenate(const nsAString& aText, nsTArray<bool>& aHyphens);
 
+  void ShareToProcess(base::ProcessId aPid,
+                      mozilla::ipc::SharedMemoryBasic::Handle* aOutHandle,
+                      uint32_t* aOutSize);
+
  private:
-  ~nsHyphenator();
+  ~nsHyphenator() = default;
 
-  void HyphenateWord(const nsAString& aString, uint32_t aStart,
-                     uint32_t aLimit, nsTArray<bool>& aHyphens);
+  void HyphenateWord(const nsAString& aString, uint32_t aStart, uint32_t aLimit,
+                     nsTArray<bool>& aHyphens);
 
-  void* mDict;
+  mozilla::Variant<const void*,  // raw pointer to uncompressed omnijar data
+                   RefPtr<mozilla::ipc::SharedMemoryBasic>,  // shmem block
+                   mozilla::UniquePtr<const HyphDic>  // loaded by mapped_hyph
+                   >
+      mDict;
+  uint32_t mDictSize;  // size of mDict data (not used if type is HyphDic)
   bool mHyphenateCapitalized;
 };
 

@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "歡迎使用 &brandShortName;">
+<!ENTITY header2.label "想要來個新的電子郵件信箱嗎？">
+<!ENTITY other.languages "我們只顯示您所在地區能夠使用的服務供應商。請點此處以顯示所有供應商。">
+<!ENTITY error.line1 "抱歉，我們無法找到任何您所提供的電子郵件地址。">
+<!ENTITY error.line2 "您可以試者搜尋其他暱稱或詞彙來尋找更多郵件帳號">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before "也許您可能想嘗試一下 ">
+<!ENTITY error.suggest.middle "其他免費的電子郵件帳號">
+<!ENTITY error.suggest.after "。">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before "哈囉 ">
+<!ENTITY success.title.after "，您可以使用下列的電子郵件地址:">
+<!ENTITY success.tip "（您也可以透過搜尋其他暱稱或詞彙來找到更多可用的電子郵件帳號）">
+<!ENTITY partnership.description "透過跟一些電子郵件供應商的合作，&brandShortName; 可以提供您一個全新的電子郵件帳號。您只要在上面的欄位輸入您的姓名，或是任何其他想用的名稱就可以開始使用。">
+<!ENTITY existing.header "已經有電子郵件地址了嗎？">
+<!ENTITY tinyheader.title "已經有地址了？">
+<!ENTITY tinyheader.existing "使用我現有的帳號">
+<!ENTITY content.close "我要稍後再來設定帳號。">
+<!ENTITY successful.title "恭喜！">
+<!ENTITY successful.successMessage "您已經成功設定好了您的帳號。">
+<!ENTITY successful.write "寫點信吧">
+<!ENTITY successful.write.desc "讓您的朋友跟家人知道您有了新的電子郵件地址。<br/> 這也是您要開新帳號的目的，不是嗎？">
+<!ENTITY successful.customize "透過一些超酷的附加元件自訂 &brandShortName;">
+<!ENTITY successful.customize.desc "有數以千計的附加元件可以讓您自訂 &brandShortName;，使其更符合您的需求。">
+<!ENTITY successful.attach "附加簽名檔到我的郵件裡">
+<!ENTITY successful.attach.desc "您可以在每封寄出的信件的結尾當中自動附加一段引用文字或是某些關於您的資訊。">
+<!ENTITY successful.close "關閉此視窗。">
+<!ENTITY input.namePlaceholder "您的姓名或暱稱">
+<!ENTITY input.search "搜尋">
+<!ENTITY search_engine.title "自訂搜尋引擎">
+<!ENTITY search_engine.message "您的電子郵件提供商也可以提供您網頁搜尋功能。">
+<!ENTITY search_engine.button "完成">
+

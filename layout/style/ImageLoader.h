@@ -19,7 +19,6 @@
 #include "imgIRequest.h"
 #include "imgINotificationObserver.h"
 #include "mozilla/Attributes.h"
-#include "mozilla/net/ReferrerPolicy.h"
 
 class imgIContainer;
 class nsIFrame;
@@ -28,19 +27,18 @@ class nsIURI;
 class nsIPrincipal;
 
 namespace mozilla {
+struct MediaFeatureChange;
 namespace dom {
 class Document;
 }
 
 namespace css {
 
-struct URLValue;
-
 /**
  * NOTE: All methods must be called from the main thread unless otherwise
  * specified.
  */
-class ImageLoader final : public imgINotificationObserver {
+class ImageLoader final {
  public:
   static void Init();
   static void Shutdown();
@@ -53,17 +51,13 @@ class ImageLoader final : public imgINotificationObserver {
     REQUEST_HAS_BLOCKED_ONLOAD = 1u << 1,
   };
 
-  explicit ImageLoader(dom::Document* aDocument)
-      : mDocument(aDocument), mInClone(false) {
+  explicit ImageLoader(dom::Document* aDocument) : mDocument(aDocument) {
     MOZ_ASSERT(mDocument);
   }
 
-  NS_DECL_ISUPPORTS
-  NS_DECL_IMGINOTIFICATIONOBSERVER
+  NS_INLINE_DECL_REFCOUNTING(ImageLoader)
 
   void DropDocumentReference();
-
-  imgRequestProxy* RegisterCSSImage(URLValue* aImage);
 
   void AssociateRequestToFrame(imgIRequest* aRequest, nsIFrame* aFrame,
                                FrameFlags aFlags);
@@ -79,17 +73,29 @@ class ImageLoader final : public imgINotificationObserver {
   // presshell pointer on the document has been cleared.
   void ClearFrames(nsPresContext* aPresContext);
 
-  static void LoadImage(URLValue* aImage, dom::Document* aLoadingDoc);
+  // Triggers an image load.
+  static already_AddRefed<imgRequestProxy> LoadImage(
+      const StyleComputedImageUrl&, dom::Document&);
 
-  // Cancels the image load for the given css::URLValue and deregisters
-  // it from any ImageLoaders it was registered with.
+  // Usually, only one style value owns a given proxy. However, we have a hack
+  // to share image proxies in chrome documents under some circumstances. We
+  // need to keep track of this so that we don't stop tracking images too early.
   //
-  // May be called from any thread.
-  static void DeregisterCSSImageFromAllLoaders(URLValue* aImage);
+  // In practice it shouldn't matter as these chrome images are mostly static,
+  // but it is always good to keep sanity.
+  static void NoteSharedLoad(imgRequestProxy*);
 
-  void FlushUseCounters();
+  // Undoes what `LoadImage` does.
+  static void UnloadImage(imgRequestProxy*);
+
+  // This is called whenever an image we care about notifies the
+  // GlobalImageObserver.
+  void Notify(imgIRequest*, int32_t aType, const nsIntRect* aData);
 
  private:
+  // Called when we stop caring about a given request.
+  void DeregisterImageRequest(imgIRequest*, nsPresContext*);
+
   // This callback is used to unblock document onload after a reflow
   // triggered from an image load.
   struct ImageReflowCallback final : public nsIReflowCallback {
@@ -105,7 +111,7 @@ class ImageLoader final : public imgINotificationObserver {
     void ReflowCallbackCanceled() override;
   };
 
-  ~ImageLoader() {}
+  ~ImageLoader() = default;
 
   // We need to be able to look up the frames associated with a request (for
   // delivering notifications) and the requests associated with a frame (when
@@ -149,18 +155,15 @@ class ImageLoader final : public imgINotificationObserver {
   void RequestReflowIfNeeded(FrameSet* aFrameSet, imgIRequest* aRequest);
   void RequestReflowOnFrame(FrameWithFlags* aFwf, imgIRequest* aRequest);
 
-  nsresult OnSizeAvailable(imgIRequest* aRequest, imgIContainer* aImage);
-  nsresult OnFrameComplete(imgIRequest* aRequest);
-  nsresult OnImageIsAnimated(imgIRequest* aRequest);
-  nsresult OnFrameUpdate(imgIRequest* aRequest);
-  nsresult OnLoadComplete(imgIRequest* aRequest);
+  void OnSizeAvailable(imgIRequest* aRequest, imgIContainer* aImage);
+  void OnFrameComplete(imgIRequest* aRequest);
+  void OnImageIsAnimated(imgIRequest* aRequest);
+  void OnFrameUpdate(imgIRequest* aRequest);
+  void OnLoadComplete(imgIRequest* aRequest);
 
   // Helpers for DropRequestsForFrame / DisassociateRequestFromFrame above.
   void RemoveRequestToFrameMapping(imgIRequest* aRequest, nsIFrame* aFrame);
   void RemoveFrameToRequestMapping(imgIRequest* aRequest, nsIFrame* aFrame);
-
-  // Helper for the public DeregisterCSSImageFromAllLoaders overload above.
-  static void DeregisterCSSImageFromAllLoaders(uint64_t aLoadID);
 
   // A map of imgIRequests to the nsIFrames that are using them.
   RequestToFrameMap mRequestToFrameMap;
@@ -170,41 +173,6 @@ class ImageLoader final : public imgINotificationObserver {
 
   // A weak pointer to our document. Nulled out by DropDocumentReference.
   dom::Document* mDocument;
-
-  // A map of css::URLValues, keyed by their LoadID(), to the imgRequestProxy
-  // representing the load of the image for this ImageLoader's document.
-  //
-  // We use the LoadID() as the key since we can only access mRegisteredImages
-  // on the main thread, but css::URLValues might be destroyed from other
-  // threads, and we don't want to leave dangling pointers around.
-  nsRefPtrHashtable<nsUint64HashKey, imgRequestProxy> mRegisteredImages;
-
-  // Are we cloning?  If so, ignore any notifications we get.
-  bool mInClone;
-
-  // Data associated with every css::URLValue object that has had a load
-  // started.
-  struct ImageTableEntry {
-    // Set of all ImageLoaders that have registered this css::URLValue.
-    nsTHashtable<nsPtrHashKey<ImageLoader>> mImageLoaders;
-
-    // The "canonical" image request for this css::URLValue.
-    //
-    // This request is held on to as long as the specified css::URLValue
-    // object is, so that any image that has already started loading (or
-    // has completed loading) will stay alive even if all computed values
-    // referencing the image requesst have gone away.
-    RefPtr<imgRequestProxy> mCanonicalRequest;
-  };
-
-  // A table of all css::URLValues that have been loaded, keyed by their
-  // LoadID(), mapping them to the set of ImageLoaders they have been registered
-  // in, and recording their "canonical" image request.
-  //
-  // We use the LoadID() as the key since we can only access sImages on the
-  // main thread, but css::URLValues might be destroyed from other threads,
-  // and we don't want to leave dangling pointers around.
-  static nsClassHashtable<nsUint64HashKey, ImageTableEntry>* sImages;
 };
 
 }  // namespace css

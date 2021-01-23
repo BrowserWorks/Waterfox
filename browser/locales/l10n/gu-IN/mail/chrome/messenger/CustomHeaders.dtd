@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "હેડરો વૈવિધ્યપૂર્ણ કરો">
+<!ENTITY addButton.label "એડ-ઓન">
+<!ENTITY addButton.accesskey "A">
+<!ENTITY removeButton.label "દૂર કરો">
+<!ENTITY removeButton.accesskey "R">
+<!ENTITY newMsgHeader.label "નવી સંદેશા હેડર:">
+<!ENTITY newMsgHeader.accesskey "N">

@@ -5,12 +5,21 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 #include "RDDChild.h"
 
+#include "mozilla/RDDProcessManager.h"
 #include "mozilla/dom/MemoryReportRequest.h"
 #include "mozilla/ipc/CrashReporterHost.h"
+#include "mozilla/gfx/gfxVars.h"
+#include "mozilla/gfx/GPUProcessManager.h"
 
 #if defined(XP_LINUX) && defined(MOZ_SANDBOX)
 #  include "mozilla/SandboxBroker.h"
 #  include "mozilla/SandboxBrokerPolicyFactory.h"
+#endif
+
+#include "mozilla/Telemetry.h"
+
+#if defined(XP_WIN)
+#  include "mozilla/WinDllServices.h"
 #endif
 
 #ifdef MOZ_GECKO_PROFILER
@@ -21,14 +30,15 @@
 namespace mozilla {
 
 using namespace layers;
+using namespace gfx;
 
-RDDChild::RDDChild(RDDProcessHost* aHost) : mHost(aHost), mRDDReady(false) {
+RDDChild::RDDChild(RDDProcessHost* aHost) : mHost(aHost) {
   MOZ_COUNT_CTOR(RDDChild);
 }
 
 RDDChild::~RDDChild() { MOZ_COUNT_DTOR(RDDChild); }
 
-bool RDDChild::Init(bool aStartMacSandbox) {
+bool RDDChild::Init() {
   Maybe<FileDescriptor> brokerFd;
 
 #if defined(XP_LINUX) && defined(MOZ_SANDBOX)
@@ -46,40 +56,21 @@ bool RDDChild::Init(bool aStartMacSandbox) {
   }
 #endif  // XP_LINUX && MOZ_SANDBOX
 
-  SendInit(brokerFd, aStartMacSandbox);
+  nsTArray<GfxVarUpdate> updates = gfxVars::FetchNonDefaultVars();
+
+  SendInit(updates, brokerFd, Telemetry::CanRecordReleaseData());
 
 #ifdef MOZ_GECKO_PROFILER
   Unused << SendInitProfiler(ProfilerParent::CreateForProcess(OtherPid()));
 #endif
 
-  return true;
-}
-
-bool RDDChild::EnsureRDDReady() {
-  if (mRDDReady) {
-    return true;
+  gfxVars::AddReceiver(this);
+  auto* gpm = gfx::GPUProcessManager::Get();
+  if (gpm) {
+    gpm->AddListener(this);
   }
 
-  mRDDReady = true;
   return true;
-}
-
-mozilla::ipc::IPCResult RDDChild::RecvInitComplete() {
-  // We synchronously requested RDD parameters before this arrived.
-  if (mRDDReady) {
-    return IPC_OK();
-  }
-
-  mRDDReady = true;
-  return IPC_OK();
-}
-
-mozilla::ipc::IPCResult RDDChild::RecvInitCrashReporter(
-    Shmem&& aShmem, const NativeThreadId& aThreadId) {
-  mCrashReporter = MakeUnique<ipc::CrashReporterHost>(GeckoProcessType_RDD,
-                                                      aShmem, aThreadId);
-
-  return IPC_OK();
 }
 
 bool RDDChild::SendRequestMemoryReport(const uint32_t& aGeneration,
@@ -91,6 +82,15 @@ bool RDDChild::SendRequestMemoryReport(const uint32_t& aGeneration,
                                                aMinimizeMemoryUsage, aDMDFile);
   return true;
 }
+
+void RDDChild::OnCompositorUnexpectedShutdown() {
+  auto* rddm = RDDProcessManager::Get();
+  if (rddm) {
+    rddm->CreateVideoBridge();
+  }
+}
+
+void RDDChild::OnVarChanged(const GfxVarUpdate& aVar) { SendUpdateVar(aVar); }
 
 mozilla::ipc::IPCResult RDDChild::RecvAddMemoryReport(
     const MemoryReport& aReport) {
@@ -109,16 +109,36 @@ mozilla::ipc::IPCResult RDDChild::RecvFinishMemoryReport(
   return IPC_OK();
 }
 
+mozilla::ipc::IPCResult RDDChild::RecvGetModulesTrust(
+    ModulePaths&& aModPaths, bool aRunAtNormalPriority,
+    GetModulesTrustResolver&& aResolver) {
+#if defined(XP_WIN)
+  RefPtr<DllServices> dllSvc(DllServices::Get());
+  dllSvc->GetModulesTrust(std::move(aModPaths), aRunAtNormalPriority)
+      ->Then(
+          GetMainThreadSerialEventTarget(), __func__,
+          [aResolver](ModulesMapResult&& aResult) {
+            aResolver(Some(ModulesMapResult(std::move(aResult))));
+          },
+          [aResolver](nsresult aRv) { aResolver(Nothing()); });
+  return IPC_OK();
+#else
+  return IPC_FAIL(this, "Unsupported on this platform");
+#endif  // defined(XP_WIN)
+}
+
 void RDDChild::ActorDestroy(ActorDestroyReason aWhy) {
   if (aWhy == AbnormalShutdown) {
-    if (mCrashReporter) {
-      mCrashReporter->GenerateCrashReport(OtherPid());
-      mCrashReporter = nullptr;
-    } else {
-      CrashReporter::FinalizeOrphanedMinidump(OtherPid(), GeckoProcessType_RDD);
-    }
+    GenerateCrashReport(OtherPid());
   }
 
+  auto* gpm = gfx::GPUProcessManager::Get();
+  if (gpm) {
+    // Note: the manager could have shutdown already.
+    gpm->RemoveListener(this);
+  }
+
+  gfxVars::RemoveReceiver(this);
   mHost->OnChannelClosed();
 }
 

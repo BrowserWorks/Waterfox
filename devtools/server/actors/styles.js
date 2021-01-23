@@ -124,10 +124,13 @@ var PageStyleActor = protocol.ActorClassWithSpec(pageStyleSpec, {
       );
     }
     this.walker = inspector.walker;
-    this.cssLogic = new CssLogic(InspectorUtils.isInheritedProperty);
+    this.cssLogic = new CssLogic();
 
     // Stores the association of DOM objects -> actors
     this.refMap = new Map();
+
+    // Latest node queried for its applied styles.
+    this.selectedElement = null;
 
     // Maps document elements to style elements, used to add new rules.
     this.styleElements = new WeakMap();
@@ -138,6 +141,7 @@ var PageStyleActor = protocol.ActorClassWithSpec(pageStyleSpec, {
     this.inspector.targetActor.on("will-navigate", this.onFrameUnload);
     this.inspector.targetActor.on("stylesheet-added", this.onStyleSheetAdded);
 
+    this._observedRules = [];
     this._styleApplied = this._styleApplied.bind(this);
     this._watchedSheets = new Set();
   },
@@ -152,12 +156,15 @@ var PageStyleActor = protocol.ActorClassWithSpec(pageStyleSpec, {
     this.inspector = null;
     this.walker = null;
     this.refMap = null;
+    this.selectedElement = null;
     this.cssLogic = null;
     this.styleElements = null;
 
     for (const sheet of this._watchedSheets) {
       sheet.off("style-applied", this._styleApplied);
     }
+
+    this._observedRules = [];
     this._watchedSheets.clear();
   },
 
@@ -349,11 +356,13 @@ var PageStyleActor = protocol.ActorClassWithSpec(pageStyleSpec, {
     const windows = this.inspector.targetActor.windows;
     let fontsList = [];
     for (const win of windows) {
-      fontsList = [
-        ...fontsList,
-        ...this.getUsedFontFaces(win.document.body, options),
-      ];
+      // Fall back to the documentElement for XUL documents.
+      const node = win.document.body
+        ? win.document.body
+        : win.document.documentElement;
+      fontsList = [...fontsList, ...this.getUsedFontFaces(node, options)];
     }
+
     return fontsList;
   },
 
@@ -571,6 +580,12 @@ var PageStyleActor = protocol.ActorClassWithSpec(pageStyleSpec, {
    *   `skipPseudo`: Exclude styles applied to pseudo elements of the provided node.
    */
   async getApplied(node, options) {
+    // Clear any previous references to StyleRuleActor instances for CSS rules.
+    // Assume the consumer has switched context to a new node and no longer
+    // interested in state changes of previous rules.
+    this._observedRules = [];
+    this.selectedElement = node.rawNode;
+
     if (!node) {
       return { entries: [], rules: [], sheets: [] };
     }
@@ -586,6 +601,12 @@ var PageStyleActor = protocol.ActorClassWithSpec(pageStyleSpec, {
       // See the comment in |form| to understand this.
       await rule.getAuthoredCssText();
     }
+
+    // Reference to instances of StyleRuleActor for CSS rules matching the node.
+    // Assume these are used by a consumer which wants to be notified when their
+    // state or declarations change either directly or indirectly.
+    this._observedRules = result.rules;
+
     return result;
   },
 
@@ -676,18 +697,87 @@ var PageStyleActor = protocol.ActorClassWithSpec(pageStyleSpec, {
     // Now any pseudos.
     if (showElementStyles && !options.skipPseudo) {
       for (const readPseudo of PSEUDO_ELEMENTS) {
-        this._getElementRules(
-          bindingElement,
-          readPseudo,
-          inherited,
-          options
-        ).forEach(oneRule => {
-          rules.push(oneRule);
-        });
+        if (this._pseudoIsRelevant(bindingElement, readPseudo)) {
+          this._getElementRules(
+            bindingElement,
+            readPseudo,
+            inherited,
+            options
+          ).forEach(oneRule => {
+            rules.push(oneRule);
+          });
+        }
       }
     }
 
     return rules;
+  },
+
+  _nodeIsTextfieldLike(node) {
+    if (node.nodeName == "TEXTAREA") {
+      return true;
+    }
+    return (
+      node.mozIsTextField &&
+      (node.mozIsTextField(false) || node.type == "number")
+    );
+  },
+
+  _nodeIsButtonLike(node) {
+    if (node.nodeName == "BUTTON") {
+      return true;
+    }
+    return (
+      node.nodeName == "INPUT" &&
+      ["submit", "color", "button"].includes(node.type)
+    );
+  },
+
+  _nodeIsListItem(node) {
+    const display = CssLogic.getComputedStyle(node).getPropertyValue("display");
+    // This is written this way to handle `inline list-item` and such.
+    return display.split(" ").includes("list-item");
+  },
+
+  // eslint-disable-next-line complexity
+  _pseudoIsRelevant(node, pseudo) {
+    switch (pseudo) {
+      case ":after":
+      case ":before":
+      case ":first-letter":
+      case ":first-line":
+      case ":selection":
+        return true;
+      case ":marker":
+        return this._nodeIsListItem(node);
+      case ":backdrop":
+        return node.matches(":fullscreen");
+      case ":cue":
+        return node.nodeName == "VIDEO";
+      case ":file-chooser-button":
+        return node.nodeName == "INPUT" && node.type == "file";
+      case ":placeholder":
+      case ":-moz-placeholder":
+        return this._nodeIsTextfieldLike(node);
+      case ":-moz-focus-inner":
+        return this._nodeIsButtonLike(node);
+      case ":-moz-math-anonymous":
+        // This one should be internal, really.
+        return false;
+      case ":-moz-meter-bar":
+        return node.nodeName == "METER";
+      case ":-moz-progress-bar":
+        return node.nodeName == "PROGRESS";
+      case ":-moz-color-swatch":
+        return node.nodeName == "INPUT" && node.type == "color";
+      case ":-moz-range-progress":
+      case ":-moz-range-thumb":
+      case ":-moz-range-track":
+      case ":-moz-focus-outer":
+        return node.nodeName == "INPUT" && node.type == "range";
+      default:
+        throw Error("Unhandled pseudo-element " + pseudo);
+    }
   },
 
   /**
@@ -701,7 +791,12 @@ var PageStyleActor = protocol.ActorClassWithSpec(pageStyleSpec, {
    * @returns Array
    */
   _getElementRules: function(node, pseudo, inherited, options) {
-    const domRules = InspectorUtils.getCSSStyleRules(node, pseudo);
+    const domRules = InspectorUtils.getCSSStyleRules(
+      node,
+      pseudo,
+      CssLogic.hasVisitedState(node)
+    );
+
     if (!domRules) {
       return [];
     }
@@ -733,6 +828,7 @@ var PageStyleActor = protocol.ActorClassWithSpec(pageStyleSpec, {
       }
 
       const ruleActor = this._styleRef(domRule);
+
       rules.push({
         rule: ruleActor,
         inherited: inherited,
@@ -816,14 +912,17 @@ var PageStyleActor = protocol.ActorClassWithSpec(pageStyleSpec, {
         const { bindingElement, pseudo } = CssLogic.getBindingElementAndPseudo(
           element
         );
+        const relevantLinkVisited = CssLogic.hasVisitedState(bindingElement);
         entry.matchedSelectors = [];
+
         for (let i = 0; i < selectors.length; i++) {
           if (
             InspectorUtils.selectorMatchesElement(
               bindingElement,
               domRule,
               i,
-              pseudo
+              pseudo,
+              relevantLinkVisited
             )
           ) {
             entry.matchedSelectors.push(selectors[i]);
@@ -1081,6 +1180,26 @@ var PageStyleActor = protocol.ActorClassWithSpec(pageStyleSpec, {
 
     return this.getNewAppliedProps(node, cssRule);
   },
+
+  /**
+   * Cause all StyleRuleActor instances of observed CSS rules to check whether the
+   * states of their declarations have changed.
+   *
+   * Observed rules are the latest rules returned by a call to PageStyleActor.getApplied()
+   *
+   * This is necessary because changes in one rule can cause the declarations in another
+   * to not be applicable (inactive CSS). The observers of those rules should be notified.
+   * Rules will fire a "rule-updated" event if any of their declarations changed state.
+   *
+   * Call this method whenever a CSS rule is mutated:
+   * - a CSS declaration is added/changed/disabled/removed
+   * - a selector is added/changed/removed
+   */
+  refreshObservedRules() {
+    for (const rule of this._observedRules) {
+      rule.refresh();
+    }
+  },
 });
 exports.PageStyleActor = PageStyleActor;
 
@@ -1306,9 +1425,12 @@ var StyleRuleActor = protocol.ActorClassWithSpec(styleRuleSpec, {
       line: this.line || undefined,
       column: this.column,
       traits: {
-        // Whether the style rule actor implements the setRuleText
-        // method.
+        // Indicates whether StyleRuleActor implements and can use the setRuleText method.
+        // It cannot use it if the stylesheet was programmatically mutated via the CSSOM.
         canSetRuleText: this.canSetRuleText,
+        // Indicates that StyleRuleActor emits the "rule-updated" event.
+        // Added in Firefox 72.
+        emitsRuleUpdatedEvent: true,
       },
     };
 
@@ -1385,7 +1507,7 @@ var StyleRuleActor = protocol.ActorClassWithSpec(styleRuleSpec, {
         cssText,
         true
       );
-      const el = this.pageStyle.cssLogic.viewedElement;
+      const el = this.pageStyle.selectedElement;
       const style = this.pageStyle.cssLogic.computedStyle;
 
       // We need to grab CSS from the window, since calling supports() on the
@@ -1395,6 +1517,7 @@ var StyleRuleActor = protocol.ActorClassWithSpec(styleRuleSpec, {
         // Use the 1-arg CSS.supports() call so that we also accept !important
         // in the value.
         decl.isValid = CSS.supports(`${decl.name}:${decl.value}`);
+        // TODO: convert from Object to Boolean. See Bug 1574471
         decl.isUsed = inactivePropertyHelper.isPropertyUsed(
           el,
           style,
@@ -1595,8 +1718,8 @@ var StyleRuleActor = protocol.ActorClassWithSpec(styleRuleSpec, {
       text = `${selectorText} {${ruleBodyText}}`;
     }
 
-    const prettyCSS = prettifyCSS(text);
-    return Promise.resolve(prettyCSS);
+    const { result } = prettifyCSS(text);
+    return Promise.resolve(result);
   },
 
   /**
@@ -1632,7 +1755,7 @@ var StyleRuleActor = protocol.ActorClassWithSpec(styleRuleSpec, {
 
     if (this.type === ELEMENT_STYLE) {
       // For element style rules, set the node's style attribute.
-      this.rawNode.setAttribute("style", newText);
+      this.rawNode.setAttributeDevtools("style", newText);
     } else {
       // For stylesheet rules, set the text in the stylesheet.
       const parentStyleSheet = this.pageStyle._sheetRef(this._parentSheet);
@@ -1648,7 +1771,10 @@ var StyleRuleActor = protocol.ActorClassWithSpec(styleRuleSpec, {
     }
 
     this.authoredText = newText;
+    this.pageStyle.refreshObservedRules();
 
+    // Returning this updated actor over the protocol will update its corresponding front
+    // and any references to it.
     return this;
   },
 
@@ -1702,6 +1828,8 @@ var StyleRuleActor = protocol.ActorClassWithSpec(styleRuleSpec, {
         this.rawStyle.removeProperty(mod.name);
       }
     }
+
+    this.pageStyle.refreshObservedRules();
 
     return this;
   },
@@ -1945,6 +2073,47 @@ var StyleRuleActor = protocol.ActorClassWithSpec(styleRuleSpec, {
 
       return { ruleProps, isMatching };
     });
+  },
+
+  /**
+   * Using the latest computed style applicable to the selected element,
+   * check the states of declarations in this CSS rule.
+   *
+   * If any have changed their used/unused state, potentially as a result of changes in
+   * another rule, fire a "rule-updated" event with this rule actor in its latest state.
+   */
+  refresh() {
+    let hasChanged = false;
+    const el = this.pageStyle.selectedElement;
+    const style = CssLogic.getComputedStyle(el);
+
+    for (const decl of this._declarations) {
+      // TODO: convert from Object to Boolean. See Bug 1574471
+      const isUsed = inactivePropertyHelper.isPropertyUsed(
+        el,
+        style,
+        this.rawRule,
+        decl.name
+      );
+
+      if (decl.isUsed.used !== isUsed.used) {
+        decl.isUsed = isUsed;
+        hasChanged = true;
+      }
+    }
+
+    if (hasChanged) {
+      // ⚠️ IMPORTANT ⚠️
+      // When an event is emitted via the protocol with the StyleRuleActor as payload, the
+      // corresponding StyleRuleFront will be automatically updated under the hood.
+      // Therefore, when the client looks up properties on the front reference it already
+      // has, it will get the latest values set on the actor, not the ones it originally
+      // had when the front was created. The client is not required to explicitly replace
+      // its previous front reference to the one it receives as this event's payload.
+      // The client doesn't even need to explicitly listen for this event.
+      // The update of the front happens automatically.
+      this.emit("rule-updated", this);
+    }
   },
 });
 

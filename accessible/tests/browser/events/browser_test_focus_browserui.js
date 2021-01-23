@@ -19,7 +19,7 @@ async function runTests(browser, accDoc) {
 
   onFocus = waitForEvent(EVENT_FOCUS, "buttonInputDoc");
   let url = snippetToURL(`<input id="input" type="button" value="button">`, {
-    id: "buttonInputDoc",
+    contentDocBodyAttrs: { id: "buttonInputDoc" },
   });
   browser.loadURI(url, {
     triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
@@ -32,8 +32,10 @@ async function runTests(browser, accDoc) {
   evt = await onFocus;
   testStates(evt.accessible, STATE_FOCUSED);
 
-  let inputField = browser.ownerDocument.getElementById("urlbar").inputField;
-  onFocus = waitForEvent(EVENT_FOCUS, getAccessible(inputField));
+  onFocus = waitForEvent(
+    EVENT_FOCUS,
+    event => event.accessible.DOMNode == gURLBar.inputField
+  );
   EventUtils.synthesizeKey("t", { accelKey: true }, browser.ownerGlobal);
   evt = await onFocus;
   testStates(evt.accessible, STATE_FOCUSED);

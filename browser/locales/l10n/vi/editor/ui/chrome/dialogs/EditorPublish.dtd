@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label            "Xuất bản trang">
+<!ENTITY windowTitleSettings.label    "Cài đặt xuất bản">
+<!ENTITY publishTab.label             "Xuất bản">
+<!ENTITY settingsTab.label            "Thiết lập">
+<!ENTITY publishButton.label          "Xuất bản">
+
+<!-- Publish Tab Panel -->
+<!ENTITY siteList.label               "Tên trang web:">
+<!ENTITY siteList.accesskey           "e">
+<!ENTITY siteList.tooltip             "Chọn trang web mà bạn muốn xuất bản tới">
+<!ENTITY newSiteButton.label          "Trang web mới">
+<!ENTITY newSiteButton.accesskey      "N">
+<!ENTITY docDirList.label             "Thư mục con trên trang web của trang này:">
+<!ENTITY docDirList.accesskey         "T">
+<!ENTITY docDirList.tooltip           "Chọn hoặc nhập tên của thư mục con từ xa của trang này">
+<!ENTITY publishImgCheckbox.label     "Bao gồm hình ảnh và tập tin khác">
+<!ENTITY publishImgCheckbox.accesskey "o">
+<!ENTITY publishImgCheckbox.tooltip   "Xuất bản hình ảnh và các tập tin khác được trang này trỏ tới">
+<!ENTITY sameLocationRadio.label      "Dùng cùng địa chỉ với trang">
+<!ENTITY sameLocationRadio.accesskey  "U">
+<!ENTITY sameLocationRadio.tooltip    "Xuất bản tập tin đến cùng địa chỉ với trang">
+<!ENTITY useSubdirRadio.label         "Dùng thư mục con của trang web này:">
+<!ENTITY useSubdirRadio.accesskey     "d">
+<!ENTITY useSubdirRadio.tooltip       "Xuất bản tập tin đến thư mục con từ xa">
+<!ENTITY otherDirList.tooltip         "Chọn hoặc nhập tên của thư mục con từ xa để xuất bản tập tin">
+<!ENTITY pageTitle.label              "Tiêu đề trang:">
+<!ENTITY pageTitle.accesskey          "T">
+<!ENTITY pageTitle.tooltip            "Nhập một tiêu đề để xác định trang trong cửa sổ và các trang đánh dấu">
+<!ENTITY pageTitleExample.label       "vd.: &quot;Trang web của tôi&quot;">
+<!ENTITY filename.label               "Tên tập tin:">
+<!ENTITY filename.accesskey           "F">
+<!ENTITY filename.tooltip             "Nhập tên cho tập tin này, viết thêm '.html' nếu là trang web">
+<!ENTITY filenameExample.label        "vd.: &quot;trangweb.html&quot;">
+<!ENTITY setDefaultButton.label       "Đặt làm mặc định">
+<!ENTITY setDefaultButton.accesskey   "D">
+<!ENTITY removeButton.label           "Xóa trang">
+<!ENTITY removeButton.accesskey       "R">
+
+<!-- Settings Tab Panel -->
+<!ENTITY publishSites.label           "Đang xuất bản trang web">
+<!ENTITY serverInfo.label             "Thông tin máy chủ">
+<!ENTITY loginInfo.label              "Thông tin đăng nhập">
+<!ENTITY siteName.label               "Tên trang web:">
+<!ENTITY siteName.accesskey           "e">
+<!ENTITY siteName.tooltip             "Một tên hiệu để nhận dạng trang web xuất bản này (vd: 'SiteCuaToi')">
+<!ENTITY siteUrl.label                "Địa chỉ xuất bản (e.g.: 'ftp://ftp.myisp.com/myusername'):">
+<!ENTITY siteUrl.accesskey            "a">
+<!ENTITY siteUrl.tooltip              "Địa chỉ FTP:// hoặc HTTP:// được cung cấp bởi ISP hoặc nhà dịch vụ lưu trữ web của bạn">
+<!ENTITY browseUrl.label              "Địa chỉ HTTP trang chủ của bạn (vd.: 'http://www.tênmiền.com/têntôi'):">
+<!ENTITY browseUrl.accesskey          "T">
+<!ENTITY browseUrl.tooltip            "Địa chỉ HTTP:// của thư mục chủ của bạn (không kèm tên tập tin)">
+<!ENTITY username.label               "Tên đăng nhập:">
+<!ENTITY username.accesskey           "U">
+<!ENTITY username.tooltip             "Tên đăng nhập mà bạn dùng để đăng nhập vào ISP hoặc nhà dịch vụ lưu trữ web của bạn">
+<!ENTITY password.label               "Mật khẩu:">
+<!ENTITY password.accesskey           "w">
+<!ENTITY password.tooltip             "Mật khẩu đi cùng với tên đăng nhập">
+<!ENTITY savePassword.label           "Lưu mật khẩu">
+<!ENTITY savePassword.accesskey       "S">
+<!ENTITY savePassword.tooltip         "Chọn để lưu an toàn mật khẩu của bạn bằng trình quản lí mật khẩu">

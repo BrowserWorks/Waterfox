@@ -1,0 +1,76 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/navigator.xul -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items --> 
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE --> 
+<!ENTITY mainWindow.title "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+
+<!ENTITY mainWindow.titleprivate "Navegación privada">
+
+<!ENTITY editPageCmd.label "Editar páxina">
+<!ENTITY editPageCmd.accesskey "E">
+<!ENTITY editPageCmd.commandkey "e">
+
+<!ENTITY navbarCmd.label "Barra de navegación">
+<!ENTITY navbarCmd.accesskey "n">
+<!ENTITY bookmarksToolbarCmd.label     "Barra de marcadores">
+<!ENTITY bookmarksToolbarCmd.accesskey "m">
+
+<!ENTITY closeWindow.label "Pechar xanela">
+<!ENTITY closeWindow.accesskey "P">
+
+<!ENTITY minimizeButton.tooltip       "Minimizar">
+<!ENTITY restoreButton.tooltip        "Restaurar">
+
+<!ENTITY feedsMenu.label "Subscribirse a esta páxina">
+<!ENTITY feedsMenu.accesskey "S">
+
+<!ENTITY menuBar.tooltip                  "Barra de menú">
+<!ENTITY bookmarksToolbar.tooltip         "Barra de marcadores">
+<!ENTITY navigationToolbar.tooltip        "Barra de navegación">
+
+<!-- Toolbar items --> 
+<!ENTITY backButton.label             "Atrás">
+<!ENTITY backButton.tooltip           "Retroceder unha páxina">
+<!ENTITY forwardButton.label          "Adiante">
+<!ENTITY forwardButton.tooltip        "Avanzar unha páxina">
+<!ENTITY reloadButton.label           "Recargar">
+<!ENTITY reloadButton.tooltip         "Recargar a páxina actual">
+<!ENTITY stopButton.label             "Deter">
+<!ENTITY stopButton.tooltip           "Deter a carga desta páxina">
+<!ENTITY searchButton.label           "Buscar">
+<!ENTITY searchButton.tooltip         "Escriba unha palabra no campo da esquerda e prema Buscar">
+<!ENTITY goButton.label               "Ir">
+<!ENTITY goButton.tooltip             "Escriba unha localización no campo da esquerda e prema Ir">
+<!ENTITY printButton.label            "Imprimir">
+<!ENTITY printButton.tooltip          "Imprimir esta páxina">
+
+<!ENTITY throbber.tooltip             "Ir á páxina de inicio de &vendorShortName;">
+
+<!ENTITY locationBar.tooltip          "Escriba un termo de busca, palabra clave ou enderezo web">
+<!ENTITY locationBar.accesskey        "L">
+<!ENTITY locationBar.title            "Localización">
+<!ENTITY proxyIcon.tooltip            "Arrastre e solte esta icona para crear unha ligazón a esta páxina">
+
+<!ENTITY searchItem.title             "Buscar">
+
+<!ENTITY bookmarksButton.label        "Marcadores">
+<!ENTITY bookmarksButton.tooltip      "Lista de marcadores">
+<!ENTITY homeButton.label             "Inicio">
+<!ENTITY bookmarksToolbarItem.label   "Elementos da barra de marcadores">
+<!ENTITY bookmarksToolbarChevron.tooltip "Amosar máis marcadores">
+
+<!-- Statusbar -->
+<!ENTITY  statusText.label            "Feito">
+
+<!ENTITY popupIcon.tooltiptext      "Desbloquear as xanelas emerxentes para este sitio web">
+

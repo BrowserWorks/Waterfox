@@ -13,9 +13,19 @@ const MockDocument = {
   /**
    * Create a document for the given URL containing the given HTML with the ownerDocument of all <form>s having a mocked location.
    */
-  createTestDocument(aDocumentURL, aContent = "<form>", aType = "text/html") {
+  createTestDocument(
+    aDocumentURL,
+    aContent = "<form>",
+    aType = "text/html",
+    useSystemPrincipal = false
+  ) {
     let parser = new DOMParser();
-    let parsedDoc = parser.parseFromString(aContent, aType);
+    let parsedDoc;
+    if (useSystemPrincipal) {
+      parsedDoc = parser.parseFromSafeString(aContent, aType);
+    } else {
+      parsedDoc = parser.parseFromString(aContent, aType);
+    }
 
     // Assign ownerGlobal to documentElement as well for the form-less
     // inputs treating it as rootElement.
@@ -67,10 +77,16 @@ const MockDocument = {
 
   mockNodePrincipalProperty(aElement, aURL) {
     Object.defineProperty(aElement, "nodePrincipal", {
-      value: Services.scriptSecurityManager.createCodebasePrincipal(
+      value: Services.scriptSecurityManager.createContentPrincipal(
         Services.io.newURI(aURL),
         {}
       ),
+    });
+  },
+
+  mockBrowsingContextProperty(aElement, aBC) {
+    Object.defineProperty(aElement, "browsingContext", {
+      value: aBC,
     });
   },
 

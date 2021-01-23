@@ -5,6 +5,7 @@
 "use strict";
 
 const { l10n } = require("devtools/shared/inspector/css-logic");
+const { PSEUDO_CLASSES } = require("devtools/shared/css/constants");
 const { ELEMENT_STYLE } = require("devtools/shared/specs/styles");
 const Rule = require("devtools/client/inspector/rules/models/rule");
 const {
@@ -138,6 +139,7 @@ RuleEditor.prototype = {
   _create: function() {
     this.element = this.doc.createElement("div");
     this.element.className = "ruleview-rule devtools-monospace";
+    this.element.dataset.ruleId = this.rule.domRule.actorID;
     this.element.setAttribute("uneditable", !this.isEditable);
     this.element.setAttribute("unmatched", this.rule.isUnmatched);
     this.element._ruleEditor = this;
@@ -252,7 +254,7 @@ RuleEditor.prototype = {
         this._ruleViewIsEditing = this.ruleView.isEditing;
       });
 
-      code.addEventListener("click", () => {
+      code.addEventListener("click", event => {
         const selection = this.doc.defaultView.getSelection();
         if (selection.isCollapsed && !this._ruleViewIsEditing) {
           this.newProperty();
@@ -302,7 +304,7 @@ RuleEditor.prototype = {
       return;
     }
 
-    const target = this.ruleView.inspector.target;
+    const target = this.ruleView.inspector.currentTarget;
     if (Tools.styleEditor.isTargetSupported(target)) {
       gDevTools.showToolbox(target, "styleeditor").then(toolbox => {
         const { url, line, column } = this._currentLocation;
@@ -478,12 +480,9 @@ RuleEditor.prototype = {
               selectorClass = "ruleview-selector";
               break;
             case SELECTOR_PSEUDO_CLASS:
-              selectorClass = [
-                ":active",
-                ":focus",
-                ":focus-within",
-                ":hover",
-              ].some(pseudo => selectorText.value === pseudo)
+              selectorClass = PSEUDO_CLASSES.some(
+                pseudo => selectorText.value === pseudo
+              )
                 ? "ruleview-selector-pseudo-class-lock"
                 : "ruleview-selector-pseudo-class";
               break;

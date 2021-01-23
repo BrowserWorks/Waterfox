@@ -20,10 +20,14 @@ using namespace ipc;
 RDDProcessImpl::RDDProcessImpl(ProcessId aParentPid)
     : ProcessChild(aParentPid) {}
 
-RDDProcessImpl::~RDDProcessImpl() {}
+RDDProcessImpl::~RDDProcessImpl() = default;
 
 bool RDDProcessImpl::Init(int aArgc, char* aArgv[]) {
 #if defined(MOZ_SANDBOX) && defined(OS_WIN)
+  // Preload AV dlls so we can enable Binary Signature Policy
+  // to restrict further dll loads.
+  LoadLibraryW(L"mozavcodec.dll");
+  LoadLibraryW(L"mozavutil.dll");
   mozilla::SandboxTarget::Instance()->StartSandbox();
 #endif
   char* parentBuildID = nullptr;
@@ -70,7 +74,7 @@ bool RDDProcessImpl::Init(int aArgc, char* aArgv[]) {
   }
 
   return mRDD.Init(ParentPid(), parentBuildID, IOThreadChild::message_loop(),
-                   IOThreadChild::channel());
+                   IOThreadChild::TakeChannel());
 }
 
 void RDDProcessImpl::CleanUp() { NS_ShutdownXPCOM(nullptr); }

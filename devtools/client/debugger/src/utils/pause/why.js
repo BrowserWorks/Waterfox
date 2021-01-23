@@ -16,18 +16,23 @@ const reasons = {
   exception: "whyPaused.exception",
   resumeLimit: "whyPaused.resumeLimit",
   breakpointConditionThrown: "whyPaused.breakpointConditionThrown",
+  eventBreakpoint: "whyPaused.eventBreakpoint",
+  getWatchpoint: "whyPaused.getWatchpoint",
+  setWatchpoint: "whyPaused.setWatchpoint",
+  mutationBreakpoint: "whyPaused.mutationBreakpoint",
+  interrupted: "whyPaused.interrupted",
 
   // V8
   DOM: "whyPaused.breakpoint",
   EventListener: "whyPaused.pauseOnDOMEvents",
-  XHR: "whyPaused.xhr",
+  XHR: "whyPaused.XHR",
   promiseRejection: "whyPaused.promiseRejection",
   assert: "whyPaused.assert",
   debugCommand: "whyPaused.debugCommand",
   other: "whyPaused.other",
 };
 
-export function getPauseReason(why?: Why): string | null {
+export function getPauseReason(why?: ?Why): string | null {
   if (!why) {
     return null;
   }
@@ -41,11 +46,11 @@ export function getPauseReason(why?: Why): string | null {
 }
 
 export function isException(why: Why) {
-  return why && why.type && why.type === "exception";
+  return why?.type === "exception";
 }
 
 export function isInterrupted(why: ?Why) {
-  return why && why.type && why.type === "interrupted";
+  return why?.type === "interrupted";
 }
 
 export function inDebuggerEval(why: ?Why) {

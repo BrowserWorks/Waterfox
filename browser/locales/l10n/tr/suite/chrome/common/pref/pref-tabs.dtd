@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY tabHeader.label "Sekmeli tarama">
+<!ENTITY tabDisplay.label "Sekme biçimi">
+<!ENTITY autoHide.label "Bir sekme açık olduğunda sekme çubuğunu gizle">
+<!ENTITY autoHide.accesskey "r">
+<!ENTITY background.label "Bağlantılarla açılan yeni sekmeye geç">
+<!ENTITY background.accesskey "B">
+<!ENTITY warnOnClose.label "Birden fazla sekmeye sahip pencereyi kapatmadan önce uyar">
+<!ENTITY warnOnClose.accesskey "B">
+<!ENTITY relatedAfterCurrent.label "Open related tabs after current tab">
+<!ENTITY relatedAfterCurrent.accesskey "O">
+<!ENTITY loadGroup.label "Yer imi grubu açıldığında">
+<!ENTITY loadGroupAppend.label "Yeni sekme ekle">
+<!ENTITY loadGroupAppend.accesskey "Y">
+<!ENTITY loadGroupReplace.label "Kullanılan sekmeleri değiştir">
+<!ENTITY loadGroupReplace.accesskey "K">
+<!ENTITY openTabs.label "Open tabs instead of windows for">

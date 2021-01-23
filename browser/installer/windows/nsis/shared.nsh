@@ -1,4 +1,4 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
+# This Source Code Form is subject to the terms of the Waterfox Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
@@ -27,7 +27,7 @@
   ${CreateShortcutsLog}
 
   ; Remove registry entries for non-existent apps and for apps that point to our
-  ; install location in the Software\Mozilla key and uninstall registry entries
+  ; install location in the Software\Waterfox key and uninstall registry entries
   ; that point to our install location for both HKCU and HKLM.
   SetShellVarContext current  ; Set SHCTX to the current user (e.g. HKCU)
   ${RegCleanMain} "Software\Waterfox"
@@ -57,17 +57,6 @@
     ReadRegStr $0 HKLM "Software\waterfox.net\Waterfox" "CurrentVersion"
     ${If} "$0" != "${GREVersion}"
       WriteRegStr HKLM "Software\waterfox.net\Waterfox" "CurrentVersion" "${GREVersion}"
-    ${EndIf}
-
-    ; Image File Execution Options were set for a short period on AArch64 (ARM64)
-    ; to disable multi-threaded DLL loading, which breaks with the sandbox.
-    ; A better solution was found, so this code is to clean up any entries left
-    ; lying around. Bug 1525981 tracks removing this.
-    ${If} "${ARCH}" == "AArch64"
-      StrCpy $0 "Software\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\${FileMainEXE}"
-      DeleteRegKey HKLM "$0"
-      StrCpy $0 "Software\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\plugin-container.exe"
-      DeleteRegKey HKLM "$0"
     ${EndIf}
   ${EndIf}
 
@@ -170,8 +159,47 @@
   ${EndIf}
 !endif
 
+!ifdef MOZ_UPDATE_AGENT
+  ; This macro runs the update agent with the update-task-local-service
+  ; command, if it detects the needed admin privileges. Otherwise it
+  ; runs with update-task.
+  ; Both commands attempt to remove the scheduled task, then register
+  ; a new one. If the task was registered by an elevated user, it won't
+  ; be removable when not elevated, so the unelevated attempt will fail
+  ; harmlessly.
+  ; Therefore it is safe to run this in both elevated and nonelevated
+  ; PostUpdate: The highest privileged run will win out, so the task can
+  ; run as Local Service if it was ever possible to register it that way.
+  ${PushRegisterUpdateAgentTaskCommand} "update"
+  Pop $0
+  ${If} "$0" != ""
+    nsExec::Exec $0
+    Pop $0
+  ${EndIf}
+!endif
+
 !ifdef MOZ_LAUNCHER_PROCESS
   ${ResetLauncherProcessDefaults}
+!endif
+
+; Make sure the scheduled task registration for the default browser agent gets
+; updated, but only if we're not the instance of PostUpdate that was started
+; by the service, because this needs to run as the actual user. Also, don't do
+; that if the installer was told not to register the agent task at all.
+!ifdef MOZ_DEFAULT_BROWSER_AGENT
+${If} $TmpVal == "HKCU"
+  ClearErrors
+  ReadRegDWORD $0 HKCU "Software\Waterfox\${AppName}\Installer\$AppUserModelID" \
+                    "DidRegisterDefaultBrowserAgent"
+  ${If} $0 != 0
+  ${OrIf} ${Errors}
+    Exec '"$INSTDIR\default-browser-agent.exe" register-task $AppUserModelID'
+  ${EndIf}
+${ElseIf} $TmpVal == "HKLM"
+  ; If we're the privileged PostUpdate, make sure that the unprivileged one
+  ; will have permission to create a task by clearing out the old one first.
+  Exec '"$INSTDIR\default-browser-agent.exe" unregister-task $AppUserModelID'
+${EndIf}
 !endif
 
 !macroend
@@ -455,12 +483,15 @@
     WriteRegStr SHCTX "$0\.xhtml" "" "WaterfoxHTML$5"
   ${EndIf}
 
+
   ${AddAssociationIfNoneExist} ".pdf" "WaterfoxHTML$5"
   ${AddAssociationIfNoneExist} ".oga" "WaterfoxHTML$5"
   ${AddAssociationIfNoneExist} ".ogg" "WaterfoxHTML$5"
   ${AddAssociationIfNoneExist} ".ogv" "WaterfoxHTML$5"
   ${AddAssociationIfNoneExist} ".pdf" "WaterfoxHTML$5"
   ${AddAssociationIfNoneExist} ".webm" "WaterfoxHTML$5"
+  ${AddAssociationIfNoneExist} ".svg" "WaterfoxHTML$5"
+  ${AddAssociationIfNoneExist} ".webp"  "WaterfoxHTML$5"
 
   ; An empty string is used for the 5th param because FirefoxHTML is not a
   ; protocol handler
@@ -472,11 +503,21 @@
   ; An empty string is used for the 4th & 5th params because the following
   ; protocol handlers already have a display name and the additional keys
   ; required for a protocol handler.
+!ifndef NIGHTLY_BUILD
+  ; Keep the compile-time conditional synchronized with the
+  ; "network.ftp.enabled" compile-time conditional.
   ${AddDisabledDDEHandlerValues} "ftp" "$2" "$8,1" "" ""
+!endif ; !NIGHTLY_BUILD
   ${AddDisabledDDEHandlerValues} "http" "$2" "$8,1" "" ""
   ${AddDisabledDDEHandlerValues} "https" "$2" "$8,1" "" ""
+  ${AddDisabledDDEHandlerValues} "mailto" "$2" "$8,1" "" ""
 !macroend
 !define SetHandlers "!insertmacro SetHandlers"
+
+!macro WriteApplicationsSupportedType RegKey Type
+  WriteRegStr ${RegKey} "Software\Classes\Applications\${FileMainEXE}\SupportedTypes" "${Type}" ""
+!macroend
+!define WriteApplicationsSupportedType "!insertmacro WriteApplicationsSupportedType"
 
 ; Adds the HKLM\Software\Clients\StartMenuInternet\Firefox-[pathhash] registry
 ; entries (does not use SHCTX).
@@ -541,15 +582,28 @@
 
   WriteRegStr ${RegKey} "$0\Capabilities\FileAssociations" ".htm"   "WaterfoxHTML$2"
   WriteRegStr ${RegKey} "$0\Capabilities\FileAssociations" ".html"  "WaterfoxHTML$2"
+  WriteRegStr ${RegKey} "$0\Capabilities\FileAssociations" ".pdf"   "WaterfoxHTML$2"
   WriteRegStr ${RegKey} "$0\Capabilities\FileAssociations" ".shtml" "WaterfoxHTML$2"
   WriteRegStr ${RegKey} "$0\Capabilities\FileAssociations" ".xht"   "WaterfoxHTML$2"
   WriteRegStr ${RegKey} "$0\Capabilities\FileAssociations" ".xhtml" "WaterfoxHTML$2"
+  WriteRegStr ${RegKey} "$0\Capabilities\FileAssociations" ".svg"   "WaterfoxHTML$2"
+  WriteRegStr ${RegKey} "$0\Capabilities\FileAssociations" ".webp"  "WaterfoxHTML$2"
 
   WriteRegStr ${RegKey} "$0\Capabilities\StartMenu" "StartMenuInternet" "$1"
 
+!ifndef NIGHTLY_BUILD
+  ; Keep the compile-time conditional synchronized with the
+  ; "network.ftp.enabled" compile-time conditional.
   WriteRegStr ${RegKey} "$0\Capabilities\URLAssociations" "ftp"    "WaterfoxURL$2"
+!else
+  ; We don't delete and re-create the entire key, so we need to remove
+  ; any existing registration.
+  DeleteRegValue ${RegKey} "$0\Capabilities\URLAssociations" "ftp"
+!endif ; !NIGHTLY_BUILD
+
   WriteRegStr ${RegKey} "$0\Capabilities\URLAssociations" "http"   "WaterfoxURL$2"
   WriteRegStr ${RegKey} "$0\Capabilities\URLAssociations" "https"  "WaterfoxURL$2"
+  WriteRegStr ${RegKey} "$0\Capabilities\URLAssociations" "mailto" "WaterfoxURL$2"
 
   WriteRegStr ${RegKey} "Software\RegisteredApplications" "$1" "$0\Capabilities"
 
@@ -574,20 +628,44 @@
     ; If we're going to create this key at all, we also need to list our supported
     ; file types in it, because otherwise we'll be shown as a suggestion for every
     ; single file type, whether we support it in any way or not.
-    WriteRegStr ${RegKey} "Software\Classes\Applications\${FileMainEXE}\SupportedTypes" \
-                ".htm" ""
-    WriteRegStr ${RegKey} "Software\Classes\Applications\${FileMainEXE}\SupportedTypes" \
-                ".html" ""
-    WriteRegStr ${RegKey} "Software\Classes\Applications\${FileMainEXE}\SupportedTypes" \
-                ".shtml" ""
-    WriteRegStr ${RegKey} "Software\Classes\Applications\${FileMainEXE}\SupportedTypes" \
-                ".xht" ""
-    WriteRegStr ${RegKey} "Software\Classes\Applications\${FileMainEXE}\SupportedTypes" \
-                ".xhtml" ""
-    WriteRegStr ${RegKey} "Software\Classes\Applications\${FileMainEXE}\SupportedTypes" \
-                ".svg" ""
-    WriteRegStr ${RegKey} "Software\Classes\Applications\${FileMainEXE}\SupportedTypes" \
-                ".webp" ""
+    ; We take a more expansive approach to the set of file types registered
+    ; here compared to elsewhere because this key is interpreted by the OS as
+    ; containing every file type that we can possibly open, so if something
+    ; isn't listed it assumes we can't open it and hides us from e.g. the Open
+    ; With context menu, even if the user has tried to add us there manually.
+    ; The list here was derived from the file /layout/build/components.conf,
+    ; filtered down to only those types which make sense to open on their own
+    ; in Firefox, basically meaning that plain text file types were left out,
+    ; but not JSON or XML types because we have specific viewers for those.
+    ${WriteApplicationsSupportedType} ${RegKey} ".apng"
+    ${WriteApplicationsSupportedType} ${RegKey} ".bmp"
+    ${WriteApplicationsSupportedType} ${RegKey} ".flac"
+    ${WriteApplicationsSupportedType} ${RegKey} ".gif"
+    ${WriteApplicationsSupportedType} ${RegKey} ".htm"
+    ${WriteApplicationsSupportedType} ${RegKey} ".html"
+    ${WriteApplicationsSupportedType} ${RegKey} ".ico"
+    ${WriteApplicationsSupportedType} ${RegKey} ".jfif"
+    ${WriteApplicationsSupportedType} ${RegKey} ".jpeg"
+    ${WriteApplicationsSupportedType} ${RegKey} ".jpg"
+    ${WriteApplicationsSupportedType} ${RegKey} ".json"
+    ${WriteApplicationsSupportedType} ${RegKey} ".m4a"
+    ${WriteApplicationsSupportedType} ${RegKey} ".mp3"
+    ${WriteApplicationsSupportedType} ${RegKey} ".oga"
+    ${WriteApplicationsSupportedType} ${RegKey} ".ogg"
+    ${WriteApplicationsSupportedType} ${RegKey} ".ogv"
+    ${WriteApplicationsSupportedType} ${RegKey} ".opus"
+    ${WriteApplicationsSupportedType} ${RegKey} ".pdf"
+    ${WriteApplicationsSupportedType} ${RegKey} ".pjpeg"
+    ${WriteApplicationsSupportedType} ${RegKey} ".pjp"
+    ${WriteApplicationsSupportedType} ${RegKey} ".png"
+    ${WriteApplicationsSupportedType} ${RegKey} ".rdf"
+    ${WriteApplicationsSupportedType} ${RegKey} ".shtml"
+    ${WriteApplicationsSupportedType} ${RegKey} ".svg"
+    ${WriteApplicationsSupportedType} ${RegKey} ".webm"
+    ${WriteApplicationsSupportedType} ${RegKey} ".webp"
+    ${WriteApplicationsSupportedType} ${RegKey} ".xht"
+    ${WriteApplicationsSupportedType} ${RegKey} ".xhtml"
+    ${WriteApplicationsSupportedType} ${RegKey} ".xml"
   ${EndIf}
 !macroend
 !define SetStartMenuInternet "!insertmacro SetStartMenuInternet"
@@ -685,7 +763,7 @@
 !macroend
 !define FixShellIconHandler "!insertmacro FixShellIconHandler"
 
-; Add Software\Mozilla\ registry entries (uses SHCTX).
+; Add Software\Waterfox\ registry entries (uses SHCTX).
 !macro SetAppKeys
   ; Check if this is an ESR release and if so add registry values so it is
   ; possible to determine that this is an ESR install (bug 726781).
@@ -919,9 +997,16 @@
   ; An empty string is used for the 4th & 5th params because the following
   ; protocol handlers already have a display name and the additional keys
   ; required for a protocol handler.
+
   ${IsHandlerForInstallDir} "ftp" $R9
   ${If} "$R9" == "true"
+!ifndef NIGHTLY_BUILD
+    ; Keep the compile-time conditional synchronized with the
+    ; "network.ftp.enabled" compile-time conditional.
     ${AddDisabledDDEHandlerValues} "ftp" "$2" "$8,1" "" ""
+!else
+    ${AddDisabledDDEHandlerValues} "ftp" "$2" "$8,1" "" "delete"
+!endif ; !NIGHTLY_BUILD
   ${EndIf}
 
   ${IsHandlerForInstallDir} "http" $R9
@@ -932,6 +1017,11 @@
   ${IsHandlerForInstallDir} "https" $R9
   ${If} "$R9" == "true"
     ${AddDisabledDDEHandlerValues} "https" "$2" "$8,1" "" ""
+  ${EndIf}
+
+  ${IsHandlerForInstallDir} "mailto" $R9
+  ${If} "$R9" == "true"
+    ${AddDisabledDDEHandlerValues} "mailto" "$2" "$8,1" "" ""
   ${EndIf}
 !macroend
 !define UpdateProtocolHandlers "!insertmacro UpdateProtocolHandlers"
@@ -1011,6 +1101,11 @@
 
 ; Removes various directories and files for reasons noted below.
 !macro RemoveDeprecatedFiles
+  ; Remove the toplevel chrome.manifest added by bug 1295542.
+  ${If} ${FileExists} "$INSTDIR\chrome.manifest"
+    Delete "$INSTDIR\chrome.manifest"
+  ${EndIf}
+
   ; Remove talkback if it is present (remove after bug 386760 is fixed)
   ${If} ${FileExists} "$INSTDIR\extensions\talkback@mozilla.org"
     RmDir /r /REBOOTOK "$INSTDIR\extensions\talkback@mozilla.org"
@@ -1144,6 +1239,9 @@
     ${If} ${Errors}
       ClearErrors
       WriteIniStr "$0" "TASKBAR" "Migrated" "true"
+      WriteRegDWORD HKCU \
+        "Software\Waterfox\${AppName}\Installer\$AppUserModelID" \
+        "WasPinnedToTaskbar" 1
       ${If} ${AtLeastWin7}
         ; If we didn't run the stub installer, AddTaskbarSC will be empty.
         ; We determine whether to pin based on whether we're the default
@@ -1164,6 +1262,28 @@
           ${EndIf}
         ${ElseIf} $AddTaskbarSC == "1"
           ${PinToTaskBar}
+        ${EndIf}
+      ${EndIf}
+    ${ElseIf} ${AtLeastWin10}
+      ${GetInstallerRegistryPref} "Software\Waterfox\${AppName}" \
+        "installer.taskbarpin.win10.enabled" $2
+      ${If} $2 == "true"
+        ; On Windows 10, we may have previously tried to make a taskbar pin
+        ; and failed because the API we tried to use was blocked by the OS.
+        ; We have an option that works in more cases now, so we're going to try
+        ; again, but also record that we've done so by writing a particular
+        ; registry value, so that we don't continue to do this repeatedly.
+        ClearErrors
+        ReadRegDWORD $2 HKCU \
+            "Software\Waterfox\${AppName}\Installer\$AppUserModelID" \
+            "WasPinnedToTaskbar"
+        ${If} ${Errors}
+          WriteRegDWORD HKCU \
+            "Software\Waterfox\${AppName}\Installer\$AppUserModelID" \
+            "WasPinnedToTaskbar" 1
+          ${If} $AddTaskbarSC != "0"
+            ${PinToTaskBar}
+          ${EndIf}
         ${EndIf}
       ${EndIf}
     ${EndIf}
@@ -1350,8 +1470,11 @@
   Push "mozsqlite3.dll"
   Push "xpcom.dll"
   Push "crashreporter.exe"
+  Push "default-browser-agent.exe"
   Push "minidump-analyzer.exe"
+  Push "pingsender.exe"
   Push "updater.exe"
+  Push "updateagent.exe"
   Push "${FileMainEXE}"
 !macroend
 !define PushFilesToCheck "!insertmacro PushFilesToCheck"
@@ -1379,19 +1502,8 @@
     System::Call 'advapi32::OpenServiceW(i R6, t "MpsSvc", i ${SERVICE_QUERY_CONFIG}) i.R7'
     ${If} $R7 != 0
       System::Call 'advapi32::CloseServiceHandle(i R7) n'
-      ; Open the service with SERVICE_QUERY_CONFIG so its status can be queried.
+      ; Open the service with SERVICE_QUERY_STATUS so its status can be queried.
       System::Call 'advapi32::OpenServiceW(i R6, t "MpsSvc", i ${SERVICE_QUERY_STATUS}) i.R7'
-    ${Else}
-      ; SharedAccess is the Firewall service on Windows XP.
-      ; When opening the service with SERVICE_QUERY_CONFIG the return value will
-      ; be 0 if the service is not installed.
-      System::Call 'advapi32::OpenServiceW(i R6, t "SharedAccess", i ${SERVICE_QUERY_CONFIG}) i.R7'
-      ${If} $R7 != 0
-        System::Call 'advapi32::CloseServiceHandle(i R7) n'
-        ; Open the service with SERVICE_QUERY_CONFIG so its status can be
-        ; queried.
-        System::Call 'advapi32::OpenServiceW(i R6, t "SharedAccess", i ${SERVICE_QUERY_STATUS}) i.R7'
-      ${EndIf}
     ${EndIf}
     ; Did the calls to OpenServiceW succeed?
     ${If} $R7 != 0
@@ -1497,7 +1609,22 @@ Function SetAsDefaultAppUserHKCU
   ${Unless} ${Errors}
     ; This is all protected by a user choice hash in Windows 8 so it won't
     ; help, but it also won't hurt.
-    AppAssocReg::SetAppAsDefaultAll "$R9"
+    AppAssocReg::SetAppAsDefault "$R9" ".htm" "file"
+    Pop $0
+    AppAssocReg::SetAppAsDefault "$R9" ".html" "file"
+    Pop $0
+    AppAssocReg::SetAppAsDefault "$R9" ".shtml" "file"
+    Pop $0
+    AppAssocReg::SetAppAsDefault "$R9" ".webp" "file"
+    Pop $0
+    AppAssocReg::SetAppAsDefault "$R9" ".xht" "file"
+    Pop $0
+    AppAssocReg::SetAppAsDefault "$R9" ".xhtml" "file"
+    Pop $0
+    AppAssocReg::SetAppAsDefault "$R9" "http" "protocol"
+    Pop $0
+    AppAssocReg::SetAppAsDefault "$R9" "https" "protocol"
+    Pop $0
   ${EndUnless}
   ${RemoveDeprecatedKeys}
   ${MigrateTaskBarShortcut}
@@ -1626,4 +1753,45 @@ FunctionEnd
   DeleteRegValue HKCU ${MOZ_LAUNCHER_SUBKEY} "$INSTDIR\${FileMainEXE}|Browser"
 !macroend
 !define ResetLauncherProcessDefaults "!insertmacro ResetLauncherProcessDefaults"
+!endif
+
+!ifdef MOZ_UPDATE_AGENT
+; Push, onto the stack, the command line used to register (or update) the
+; update agent scheduled task.
+;
+; InitHashAppModelId must have already been called to set $AppUserModelID,
+; if that is empty then an empty string will be pushed instead.
+;
+; COMMAND_BASE must be "register" or "update". Both will remove any
+; pre-existing task and register a new one, but "update" will first attempt
+; to copy some settings.
+!macro PushRegisterUpdateAgentTaskCommand COMMAND_BASE
+  Push $0
+  Push $1
+
+  Call IsUserAdmin
+  Pop $0
+  ; Register the update agent to run as Local Service if the user is an admin...
+  ${If} $0 == "true"
+  ; ...and if we have HKLM write access
+  ${AndIf} $TmpVal == "HKLM"
+    StrCpy $1 "${COMMAND_BASE}-task-local-service"
+  ${Else}
+    ; Otherwise attempt to register the task for the current user.
+    ; If we had previously registered the task while elevated, then we shouldn't
+    ; be able to replace it now with another task of the same name, so this
+    ; will fail harmlessly.
+    StrCpy $1 "${COMMAND_BASE}-task"
+  ${EndIf}
+
+  ${If} "$AppUserModelID" != ""
+    StrCpy $0 '"$INSTDIR\updateagent.exe" $1 "${UpdateAgentFullName} $AppUserModelID" "$AppUserModelID" "$INSTDIR"'
+  ${Else}
+    StrCpy $0 ''
+  ${EndIf}
+
+  Pop $1
+  Exch $0
+!macroend
+!define PushRegisterUpdateAgentTaskCommand "!insertmacro PushRegisterUpdateAgentTaskCommand"
 !endif

@@ -10,6 +10,7 @@
  * liability, trademark and document use rules apply.
  */
 
+[Exposed=Window]
 interface SVGFEGaussianBlurElement : SVGElement {
   [Constant]
   readonly attribute SVGAnimatedString in1;
@@ -21,4 +22,4 @@ interface SVGFEGaussianBlurElement : SVGElement {
   void setStdDeviation(float stdDeviationX, float stdDeviationY);
 };
 
-SVGFEGaussianBlurElement implements SVGFilterPrimitiveStandardAttributes;
+SVGFEGaussianBlurElement includes SVGFilterPrimitiveStandardAttributes;

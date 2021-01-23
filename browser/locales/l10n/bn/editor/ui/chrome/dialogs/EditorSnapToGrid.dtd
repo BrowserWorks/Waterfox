@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "গ্রিডে টেনে নেয়া হবে">
+
+<!ENTITY enableSnapToGrid.label "গ্রিডে টেনে নেয়া সক্রিয় করুন (e)">
+<!ENTITY enableSnapToGrid.accessKey "e">
+
+<!ENTITY sizeEditField.label "আকার (S):">
+<!ENTITY sizeEditField.accessKey "S">
+
+<!ENTITY pixelsLabel.value "পিক্সেল">

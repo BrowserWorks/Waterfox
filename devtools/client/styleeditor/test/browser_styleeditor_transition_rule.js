@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -24,9 +23,9 @@ add_task(async function() {
 
   await styleChanges;
 
-  const rules = await ContentTask.spawn(
+  const rules = await SpecialPowers.spawn(
     gBrowser.selectedBrowser,
-    0,
+    [0],
     async function(index) {
       const sheet = content.document.styleSheets[index];
       return [...sheet.cssRules].map(rule => rule.cssText);

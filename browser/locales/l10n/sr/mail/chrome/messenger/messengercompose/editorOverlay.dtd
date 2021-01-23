@@ -1,0 +1,303 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Attn: Localization - some of the menus in this dialog directly affect mail also. -->
+
+<!-- Edit menu items -->
+<!ENTITY pasteNoFormatting.label "Налепи без форматирања">
+<!ENTITY pasteNoFormatting.accesskey "н">
+<!ENTITY pasteNoFormatting.key "В">
+<!ENTITY pasteAsQuotationCmd.label "Налепи као цитат">
+<!ENTITY pasteAsQuotationCmd.accesskey "ц">
+
+<!-- Insert menu items -->
+<!ENTITY insertMenu.label "Убаци">
+<!ENTITY insertMenu.accesskey "и">
+<!ENTITY insertLinkCmd2.label "Веза…">
+<!ENTITY insertLinkCmd2.accesskey "В">
+<!ENTITY insertLinkCmd2.key "K">
+<!ENTITY insertAnchorCmd.label "Именовано сидро…">
+<!ENTITY insertAnchorCmd.accesskey "а">
+<!ENTITY insertImageCmd.label "Слика…">
+<!ENTITY insertImageCmd.accesskey "и">
+<!ENTITY insertHLineCmd.label "Водоравна линија">
+<!ENTITY insertHLineCmd.accesskey "о">
+<!ENTITY insertTableCmd.label "Табела…">
+<!ENTITY insertTableCmd.accesskey "Т">
+<!ENTITY insertHTMLCmd.label "HTML…">
+<!ENTITY insertHTMLCmd.accesskey "H">
+<!ENTITY insertMathCmd.label "Математика…">
+<!ENTITY insertMathCmd.accesskey "М">
+<!ENTITY insertCharsCmd.label "Знакови и симболи…">
+<!ENTITY insertCharsCmd.accesskey "З">
+<!ENTITY insertBreakAllCmd.label "Преламај слике испод">
+<!ENTITY insertBreakAllCmd.accesskey "к">
+
+<!-- Used just in context popup. -->
+<!ENTITY createLinkCmd.label "Направи везу…">
+<!ENTITY createLinkCmd.accesskey "у">
+<!ENTITY editLinkCmd.label "Уреди везу у новом састављачу">
+<!ENTITY editLinkCmd.accesskey "и">
+
+<!-- Font Face SubMenu -->
+<!ENTITY FontFaceSelect.tooltip "Изабери фонт">
+<!ENTITY fontfaceMenu.label "Фонт">
+<!ENTITY fontfaceMenu.accesskey "Ф">
+<!ENTITY fontVarWidth.label "Променљиве ширине">
+<!ENTITY fontVarWidth.accesskey "в">
+<!ENTITY fontFixedWidth.label "Утврђене ширине">
+<!ENTITY fontFixedWidth.accesskey "в">
+<!ENTITY fontFixedWidth.key "T">
+<!ENTITY fontHelvetica.label "Helvetica, Arial">
+<!ENTITY fontHelvetica.accesskey "л">
+<!ENTITY fontTimes.label "Times">
+<!ENTITY fontTimes.accesskey "Т">
+<!ENTITY fontCourier.label "Courier">
+<!ENTITY fontCourier.accesskey "К">
+
+<!-- Font Size SubMenu -->
+<!ENTITY FontSizeSelect.tooltip "Изабери величину фонта">
+<!ENTITY decreaseFontSize.label "Мања">
+<!ENTITY decreaseFontSize.accesskey "М">
+<!ENTITY decrementFontSize.key "&lt;">
+<!ENTITY decrementFontSize.key2 ","> <!-- < is above this key on many keyboards -->
+<!ENTITY increaseFontSize.label "Већа">
+<!ENTITY increaseFontSize.accesskey "В">
+<!ENTITY incrementFontSize.key "&gt;">
+<!ENTITY incrementFontSize.key2 "."> <!-- > is above this key on many keyboards -->
+
+<!ENTITY fontSizeMenu.label "Величина">
+<!ENTITY fontSizeMenu.accesskey "ч">
+<!ENTITY size-tinyCmd.label "сићушна">
+<!ENTITY size-tinyCmd.accesskey "н">
+<!ENTITY size-smallCmd.label "мала">
+<!ENTITY size-smallCmd.accesskey "л">
+<!ENTITY size-mediumCmd.label "средња">
+<!ENTITY size-mediumCmd.accesskey "д">
+<!ENTITY size-largeCmd.label "велика">
+<!ENTITY size-largeCmd.accesskey "е">
+<!ENTITY size-extraLargeCmd.label "веома велика">
+<!ENTITY size-extraLargeCmd.accesskey "л">
+<!ENTITY size-hugeCmd.label "огромна">
+<!ENTITY size-hugeCmd.accesskey "г">
+
+<!-- Font Style SubMenu -->
+<!ENTITY fontStyleMenu.label "Обликовање текста">
+<!ENTITY fontStyleMenu.accesskey "с">
+<!ENTITY styleBoldCmd.label "Подебљано">
+<!ENTITY styleBoldCmd.accesskey "б">
+<!ENTITY styleBoldCmd.key "B">
+<!ENTITY styleItalicCmd.label "Искошено">
+<!ENTITY styleItalicCmd.accesskey "И">
+<!ENTITY styleItalicCmd.key "I">
+<!ENTITY styleUnderlineCmd.label "Подвучено">
+<!ENTITY styleUnderlineCmd.accesskey "у">
+<!ENTITY styleUnderlineCmd.key "U">
+<!ENTITY styleStrikeThruCmd.label "Прецртано">
+<!ENTITY styleStrikeThruCmd.accesskey "ц">
+<!ENTITY styleSuperscriptCmd.label "Експонент">
+<!ENTITY styleSuperscriptCmd.accesskey "п">
+<!ENTITY styleSubscriptCmd.label "Индекс">
+<!ENTITY styleSubscriptCmd.accesskey "с">
+<!ENTITY styleNonbreakingCmd.label "Непреламајуће">
+<!ENTITY styleNonbreakingCmd.accesskey "Н">
+<!ENTITY styleEm.label "Истакнуто">
+<!ENTITY styleEm.accesskey "И">
+<!ENTITY styleStrong.label "Јаче истакнуто">
+<!ENTITY styleStrong.accesskey "т">
+<!ENTITY styleCite.label "Цитат">
+<!ENTITY styleCite.accesskey "Ц">
+<!ENTITY styleAbbr.label "Скраћеница">
+<!ENTITY styleAbbr.accesskey "а">
+<!ENTITY styleAcronym.label "Акроним">
+<!ENTITY styleAcronym.accesskey "р">
+<!ENTITY styleCode.label "Код">
+<!ENTITY styleCode.accesskey "о">
+<!ENTITY styleSamp.label "Узорак излаза">
+<!ENTITY styleSamp.accesskey "з">
+<!ENTITY styleVar.label "Променљива">
+<!ENTITY styleVar.accesskey "П">
+
+<!ENTITY formatFontColor.label "Боја текста…">
+<!ENTITY formatFontColor.accesskey "Б">
+<!ENTITY tableOrCellColor.label "Позадинска боја ћелије или табеле…">
+<!ENTITY tableOrCellColor.accesskey "Б">
+
+<!ENTITY formatRemoveStyles.key "Y">
+<!ENTITY formatRemoveLinks.key "K">
+<!ENTITY formatRemoveNamedAnchors.label "Уклони именована сидра">
+<!ENTITY formatRemoveNamedAnchors.accesskey "Р">
+<!ENTITY formatRemoveNamedAnchors2.key "R">
+
+<!ENTITY paragraphMenu.label "Пасус">
+<!ENTITY paragraphMenu.accesskey "П">
+<!ENTITY paragraphParagraphCmd.label "Пасус">
+<!ENTITY paragraphParagraphCmd.accesskey "П">
+<!ENTITY heading1Cmd.label "Заглавље 1">
+<!ENTITY heading1Cmd.accesskey "1">
+<!ENTITY heading2Cmd.label "Заглавље 2">
+<!ENTITY heading2Cmd.accesskey "2">
+<!ENTITY heading3Cmd.label "Заглавље 3">
+<!ENTITY heading3Cmd.accesskey "3">
+<!ENTITY heading4Cmd.label "Заглавље 4">
+<!ENTITY heading4Cmd.accesskey "4">
+<!ENTITY heading5Cmd.label "Заглавље 5">
+<!ENTITY heading5Cmd.accesskey "5">
+<!ENTITY heading6Cmd.label "Заглавље 6">
+<!ENTITY heading6Cmd.accesskey "6">
+<!ENTITY paragraphAddressCmd.label "Адреса">
+<!ENTITY paragraphAddressCmd.accesskey "А">
+<!ENTITY paragraphPreformatCmd.label "Преформатирано">
+<!ENTITY paragraphPreformatCmd.accesskey "ф">
+
+<!-- List menu items -->
+<!ENTITY formatlistMenu.label "Списак">
+<!ENTITY formatlistMenu.accesskey "к">
+<!ENTITY noneCmd.label "Ништа">
+<!ENTITY noneCmd.accesskey "Н">
+<!ENTITY listBulletCmd.label "Набрајано">
+<!ENTITY listBulletCmd.accesskey "б">
+<!ENTITY listNumberedCmd.label "Обележено бројевима">
+<!ENTITY listNumberedCmd.accesskey "м">
+<!ENTITY listTermCmd.label "Појам">
+<!ENTITY listTermCmd.accesskey "ј">
+<!ENTITY listDefinitionCmd.label "Дефиниција">
+<!ENTITY listDefinitionCmd.accesskey "Д">
+<!ENTITY listPropsCmd.label "Својства списка…">
+<!ENTITY listPropsCmd.accesskey "В">
+
+<!ENTITY ParagraphSelect.tooltip "Изаберите формат пасуса">
+<!-- Shared in Paragraph, and Toolbar menulist -->
+<!ENTITY bodyTextCmd.label "Текст тела">
+<!ENTITY bodyTextCmd.accesskey "Т">
+
+<!-- Align menu items -->
+<!ENTITY alignMenu.label "Поравнање">
+<!ENTITY alignMenu.accesskey "а">
+<!ENTITY alignLeft.label "Лево">
+<!ENTITY alignLeft.accesskey "Л">
+<!ENTITY alignLeft.tooltip "Поравнај лево">
+<!ENTITY alignCenter.label "По средини">
+<!ENTITY alignCenter.accesskey "С">
+<!ENTITY alignCenter.tooltip "Поравнај по средини">
+<!ENTITY alignRight.label "Десно">
+<!ENTITY alignRight.accesskey "Д">
+<!ENTITY alignRight.tooltip "Поравнај десно">
+<!ENTITY alignJustify.label "Обострано">
+<!ENTITY alignJustify.accesskey "б">
+<!ENTITY alignJustify.tooltip "Поравнај обострано">
+
+<!ENTITY increaseIndent.label "Повећај увлачење">
+<!ENTITY increaseIndent.accesskey "у">
+<!ENTITY increaseIndent.key "]">
+<!ENTITY decreaseIndent.label "Смањи увлачење">
+<!ENTITY decreaseIndent.accesskey "м">
+<!ENTITY decreaseIndent.key "[">
+
+<!ENTITY colorsAndBackground.label "Боје странице и позадина…">
+<!ENTITY colorsAndBackground.accesskey "а">
+
+<!-- Table Menu -->
+<!ENTITY tableMenu.label "Табела">
+<!ENTITY tableMenu.accesskey "б">
+
+<!-- Select Submenu -->
+<!ENTITY tableSelectMenu.label "Изабери">
+<!ENTITY tableSelectMenu.accesskey "з">
+
+<!ENTITY tableSelectMenu2.label "Изабери табелу">
+<!ENTITY tableSelectMenu2.accesskey "И">
+<!ENTITY tableInsertMenu2.label "Убаци табелу">
+<!ENTITY tableInsertMenu2.accesskey "У">
+<!ENTITY tableDeleteMenu2.label "Обриши табелу">
+<!ENTITY tableDeleteMenu2.accesskey "О">
+
+<!-- Insert SubMenu -->
+<!ENTITY tableInsertMenu.label "Убаци">
+<!ENTITY tableInsertMenu.accesskey "У">
+<!ENTITY tableTable.label "Табела">
+<!ENTITY tableTable.accesskey "Т">
+<!ENTITY tableRow.label "Ред">
+<!ENTITY tableRows.label "Ред(ови)">
+<!ENTITY tableRow.accesskey "Р">
+<!ENTITY tableRowAbove.label "Ред изнад">
+<!ENTITY tableRowAbove.accesskey "з">
+<!ENTITY tableRowBelow.label "Ред испод">
+<!ENTITY tableRowBelow.accesskey "п">
+<!ENTITY tableColumn.label "Колона">
+<!ENTITY tableColumns.label "Колоне">
+<!ENTITY tableColumn.accesskey "о">
+<!ENTITY tableColumnBefore.label "Колона пре">
+<!ENTITY tableColumnBefore.accesskey "р">
+<!ENTITY tableColumnAfter.label "Колона после">
+<!ENTITY tableColumnAfter.accesskey "а">
+<!ENTITY tableCell.label "Ћелија">
+<!ENTITY tableCells.label "Ћелије">
+<!ENTITY tableCell.accesskey "Ћ">
+<!ENTITY tableCellContents.label "Садржај ћелије">
+<!ENTITY tableCellContents.accesskey "ј">
+<!ENTITY tableAllCells.label "Све ћелије">
+<!ENTITY tableAllCells.accesskey "С">
+<!ENTITY tableCellBefore.label "Ћелија пре">
+<!ENTITY tableCellBefore.accesskey "п">
+<!ENTITY tableCellAfter.label "Ћелија после">
+<!ENTITY tableCellAfter.accesskey "о">
+<!-- Delete SubMenu -->
+<!ENTITY tableDeleteMenu.label "Обриши">
+<!ENTITY tableDeleteMenu.accesskey "О">
+
+<!-- text for "Join Cells" is in editor.properties
+     ("JoinSelectedCells" and "JoinCellToRight")
+     the access key must exist in both of those strings
+     But value must be set here for accesskey to draw properly
+-->
+<!ENTITY tableJoinCells.label "ј">
+<!ENTITY tableJoinCells.accesskey "ј">
+<!ENTITY tableSplitCell.label "Раздвоји ћелију">
+<!ENTITY tableSplitCell.accesskey "ћ">
+<!ENTITY convertToTable.label "Направи табелу из избора">
+<!ENTITY convertToTable.accesskey "р">
+<!ENTITY tableProperties.label "Својства табеле…">
+<!ENTITY tableProperties.accesskey "о">
+
+<!ENTITY imageToolbarCmd.label "Слика">
+<!ENTITY imageToolbarCmd.tooltip "Убаци нову слику или уреди својства изабране слике">
+<!ENTITY hruleToolbarCmd.label "В.Линија">
+<!ENTITY hruleToolbarCmd.tooltip "Убаци водоравну линију или уреди својства изабране линије">
+<!ENTITY tableToolbarCmd.label "Табела">
+<!ENTITY tableToolbarCmd.tooltip "Убаци нову табелу или уреди својства изабране табеле">
+<!ENTITY linkToolbarCmd.label "Веза">
+<!ENTITY linkToolbarCmd.tooltip "Убаци нову везу или уреди својства изабране везе">
+<!ENTITY anchorToolbarCmd.label "Сидро">
+<!ENTITY anchorToolbarCmd.tooltip "Убаци ново именовано сидро или уреди својства изабраног сидра">
+<!ENTITY TextColorButton.tooltip "Изаберите боју текста">
+<!ENTITY BackgroundColorButton.tooltip "Изаберите боју позадине">
+
+<!-- Editor toolbar -->
+<!ENTITY absoluteFontSizeToolbarCmd.tooltip "Постави величину фонта">
+<!ENTITY decreaseFontSizeToolbarCmd.tooltip "Мања боја фонта">
+<!ENTITY increaseFontSizeToolbarCmd.tooltip "Већа боја фонта">
+<!ENTITY boldToolbarCmd.tooltip "Подебљано">
+<!ENTITY italicToolbarCmd.tooltip "Искошено">
+<!ENTITY underlineToolbarCmd.tooltip "Подвучено">
+<!ENTITY bulletListToolbarCmd.tooltip "Примени или уклони набројани списак">
+<!ENTITY numberListToolbarCmd.tooltip "Примени или уклони списак означен бројевима">
+<!ENTITY outdentToolbarCmd.tooltip "Привуци текст (помери улево)">
+<!ENTITY indentToolbarCmd.tooltip "Увуци текст (помери удесно)">
+<!ENTITY AlignPopupButton.tooltip "Изаберите поравнање текста">
+<!ENTITY InsertPopupButton.tooltip "Убаците везу, сидро, слику, водоравну линију или табелу">
+<!ENTITY alignLeftButton.tooltip "Поравнај текст уз леву маргину">
+<!ENTITY alignCenterButton.tooltip "Поравнај текст по средини">
+<!ENTITY alignRightButton.tooltip "Поравнај текст уз десну маргину">
+<!ENTITY alignJustifyButton.tooltip "Поравнај текст уз леве и десне маргине">
+
+<!-- TOC manipulation -->
+<!ENTITY insertTOC.label          "Убаци">
+<!ENTITY insertTOC.accesskey      "у">
+<!ENTITY updateTOC.label          "Ажурирај">
+<!ENTITY updateTOC.accesskey      "у">
+<!ENTITY removeTOC.label          "Уклони">
+<!ENTITY removeTOC.accesskey      "к">
+<!ENTITY tocMenu.label            "Садржај…">
+<!ENTITY tocMenu.accesskey        "д">

@@ -10,7 +10,9 @@
 add_task(async function() {
   const { L10N } = require("devtools/client/netmonitor/src/utils/l10n");
 
-  const { tab, monitor } = await initNetMonitor(SIMPLE_URL);
+  const { tab, monitor } = await initNetMonitor(SIMPLE_URL, {
+    requestCount: 1,
+  });
   info("Starting test... ");
 
   const { $, $all, NetMonitorView, NetMonitorController } = monitor.panelWin;
@@ -105,7 +107,7 @@ add_task(async function() {
   const imageData = RequestsMenu._ctx.getImageData(0, 0, 161, 1);
   ok(imageData, "The image data should have been created.");
 
-  const data = imageData.data;
+  const { data } = imageData;
   ok(data, "The image data should contain a pixel array.");
 
   ok(hasPixelAt(0), "The tick at 0 is should not be empty.");

@@ -17,7 +17,7 @@ const TARGET_PAGE = ROOT + "dummy.html";
  *        the visibility state of the toolbars
  */
 function getToolbarsFromBrowserContent(aBrowser) {
-  return ContentTask.spawn(aBrowser, {}, async function() {
+  return SpecialPowers.spawn(aBrowser, [], async function() {
     return {
       toolbar: content.toolbar.visible,
       menubar: content.menubar.visible,
@@ -228,7 +228,7 @@ add_task(async function() {
   let defaultWindowPromise = BrowserTestUtils.waitForNewWindow({
     url: TARGET_PAGE,
   });
-  window.open(TARGET_PAGE, "_blank");
+  window.open(TARGET_PAGE, "_blank", "noopener");
   let defaultWindow = await defaultWindowPromise;
 
   // Check that all toolbars are visible
@@ -237,7 +237,7 @@ add_task(async function() {
 
   // Now lets open a window with toolbars hidden from this chrome context
   let features =
-    "location=no, personalbar=no, toolbar=no, scrollbars=no, menubar=no, status=no";
+    "location=no, personalbar=no, toolbar=no, scrollbars=no, menubar=no, status=no, noopener";
   let popupWindowPromise = BrowserTestUtils.waitForNewWindow({
     url: TARGET_PAGE,
   });

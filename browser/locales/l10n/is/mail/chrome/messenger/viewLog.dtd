@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Síu atburðaskrá">
+<!ENTITY viewLogInfo.text "Síu atburðarskráin skráir þær síur sem hafa verið keyrðar fyrir þennan reikning. Notaðu hakið hér fyrir neðan til að virkja atburðaskrá.">
+<!ENTITY clearLog.label "Hreinsa atburðaskrá">
+<!ENTITY clearLog.accesskey "H">
+<!ENTITY enableLog.label "Virkja síu atburðaskrá">
+<!ENTITY enableLog.accesskey "V">
+<!ENTITY closeLog.label "Loka">
+<!ENTITY closeLog.accesskey "o">

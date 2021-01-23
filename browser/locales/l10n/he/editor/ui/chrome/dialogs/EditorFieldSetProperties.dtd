@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "מאפייני סט שדות">
+
+<!ENTITY Legend.label "מקרא">
+<!ENTITY Legend.accesskey "L">
+
+<!ENTITY EditLegendText.label "ערוך מקרא:">
+<!ENTITY EditLegendText.accesskey "T">
+<!ENTITY LegendAlign.label "ישור מקרא:">
+<!ENTITY LegendAlign.accesskey "A">
+<!ENTITY AlignDefault.label "ברירת מחדל">
+<!ENTITY AlignLeft.label "שמאל">
+<!ENTITY AlignCenter.label "מרכז">
+<!ENTITY AlignRight.label "ימין">
+
+<!ENTITY RemoveFieldSet.label "הסר סט שדות">
+<!ENTITY RemoveFieldSet.accesskey "R">
+
+

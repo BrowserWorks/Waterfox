@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+<!-- LOCALIZATION NOTE  (editorWindow.titlemodifier): DONT_TRANSLATE -->
+
+<!ENTITY editorWindow.titlemodifier "Composer"> 
+<!ENTITY editorWindow.titlemodifiermenuseparator " - ">
+<!-- Menu items:  the . means that the menu item isn't implemented yet -->
+<!-- Toolbar-only items -->
+
+
+<!ENTITY compositionToolbar.tooltip "Mezuak prestatzeko tresna-barra">
+<!ENTITY previewToolbarCmd.label "Kudeatu">
+<!ENTITY previewToolbarCmd.tooltip "Kargatu orri hau nabigatzailean">
+<!-- File menu items -->
+
+<!ENTITY exportToTextCmd.label "Esportatu testura…">
+<!ENTITY exportToTextCmd.accesskey "t">
+<!ENTITY previewCmd.label "Arakatu orria">
+<!ENTITY previewCmd.accesskey "k">
+<!ENTITY sendPageCmd.label "Bidali orria…">
+<!ENTITY sendPageCmd.accesskey "d">
+<!-- View menu items -->
+
+<!ENTITY compositionToolbarCmd.label "Konposizio tresna-barra">
+<!ENTITY compositionToolbarCmd.accesskey "K">
+<!ENTITY formattingToolbarCmd.label "Formatu tresna-barra">
+<!ENTITY formattingToolbarCmd.accesskey "F">
+<!ENTITY editmodeToolbarCmd.label "Edizio modu tresna-barra">
+<!ENTITY editmodeToolbarCmd.accesskey "E">
+<!-- Format menu items -->
+
+<!ENTITY formatMenu.label "Formatua">
+<!ENTITY formatMenu.accesskey "o">
+<!ENTITY grid.label "Kokatze-sareta">
+<!ENTITY grid.accesskey "t">
+<!ENTITY pageProperties.label "Orriaren izenburua eta propietateak…">
+<!ENTITY pageProperties.accesskey "O">
+<!-- Tools menu items -->
+
+<!ENTITY validateCmd.label "Balidatu HTMLa">
+<!ENTITY validateCmd.accesskey "B">
+<!-- Display Mode toolbar and View menu items -->
+
+<!ENTITY NormalModeTab.label "Arrunta">
+<!ENTITY NormalMode.label "Editatze-modu arrunta">
+<!ENTITY NormalMode.accesskey "a">
+<!ENTITY NormalMode.tooltip "Erakutsi taularen ertzak eta izendun aingurak">
+<!ENTITY AllTagsModeTab.label "HTML etiketak">
+<!ENTITY AllTagsMode.label "HTML etiketak">
+<!ENTITY AllTagsMode.accesskey "T">
+<!ENTITY AllTagsMode.tooltip "Bistaratuikonoak HTML etiketa guztientzat">
+<!-- LOCALIZATION NOTE: (HTMLSourceModeTab.dir, HTMLSourceModeTab.label)
+     Do NOT translate text for 'HTMLSourceModeTab.dir', use latin "ltr" if
+     you want the <html> image to left of the 'HTMLSourceModeTab.label' text,
+     or use latin "rtl" if you want this image to the right of text. You do
+     not need to include HTML in the label 'HTMLSourceModeTab.label' -->
+<!ENTITY HTMLSourceModeTab.dir "ltr">
+<!ENTITY HTMLSourceModeTab.label "Iturburua">
+<!ENTITY HTMLSourceMode.label "HTML iturburua">
+<!ENTITY HTMLSourceMode.accesskey "H">
+<!ENTITY HTMLSourceMode.tooltip "Editatu HTML iturburua">
+<!ENTITY PreviewModeTab.label "Aurrebista">
+<!ENTITY PreviewMode.label "Aurreikusi">
+<!ENTITY PreviewMode.accesskey "i">
+<!ENTITY PreviewMode.tooltip "Bistaratu WYSIWYG gisa (nabigatzailean bezala)">

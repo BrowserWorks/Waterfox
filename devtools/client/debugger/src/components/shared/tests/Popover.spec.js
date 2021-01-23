@@ -5,7 +5,7 @@
 // @flow
 
 import React from "react";
-import { mount, shallow } from "enzyme";
+import { mount } from "enzyme";
 
 import Popover from "../Popover";
 
@@ -13,6 +13,21 @@ describe("Popover", () => {
   const onMouseLeave = jest.fn();
   const onKeyDown = jest.fn();
   const editorRef: any = {
+    getBoundingClientRect() {
+      return {
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 100,
+        top: 250,
+        right: 0,
+        bottom: 0,
+        left: 20,
+      };
+    },
+  };
+
+  const targetRef: any = {
     getBoundingClientRect() {
       return {
         x: 0,
@@ -42,26 +57,26 @@ describe("Popover", () => {
       onKeyDown={onKeyDown}
       editorRef={editorRef}
       targetPosition={targetPosition}
+      mouseout={() => {}}
+      target={targetRef}
     >
       <h1>Poppy!</h1>
     </Popover>
   );
 
-  const tooltip = shallow(
+  const tooltip = mount(
     <Popover
       type="tooltip"
       onMouseLeave={onMouseLeave}
       onKeyDown={onKeyDown}
       editorRef={editorRef}
       targetPosition={targetPosition}
+      mouseout={() => {}}
+      target={targetRef}
     >
       <h1>Toolie!</h1>
     </Popover>
   );
-
-  const div = document.createElement("div");
-
-  const event = { currentTarget: div };
 
   beforeEach(() => {
     onMouseLeave.mockClear();
@@ -72,31 +87,6 @@ describe("Popover", () => {
 
   it("render (tooltip)", () => expect(tooltip).toMatchSnapshot());
 
-  it("calls mouseLeave", () => {
-    popover.find(".popover").simulate("mouseleave", event);
-    expect(onMouseLeave).toHaveBeenCalled();
-  });
-
-  it("calls mouseLeave (tooltip)", () => {
-    tooltip.find(".tooltip").simulate("mouseleave", event);
-    expect(onMouseLeave).toHaveBeenCalled();
-  });
-
-  it("no mouse leave on bracket or gap", () => {
-    popover.find(".bracket-arrow").simulate("mouseleave", event);
-    expect(onMouseLeave).not.toHaveBeenCalled();
-  });
-
-  it("calls keyDown", () => {
-    popover.find(".popover").simulate("keydown", { key: "Escape" });
-    expect(onKeyDown).toHaveBeenCalled();
-  });
-
-  it("calls keyDown (tooltip)", () => {
-    tooltip.find(".tooltip").simulate("keydown", { key: "Escape" });
-    expect(onKeyDown).toHaveBeenCalled();
-  });
-
   it("mount popover", () => {
     const mountedPopover = mount(
       <Popover
@@ -104,6 +94,8 @@ describe("Popover", () => {
         onKeyDown={onKeyDown}
         editorRef={editorRef}
         targetPosition={targetPosition}
+        mouseout={() => {}}
+        target={targetRef}
       >
         <h1>Poppy!</h1>
       </Popover>
@@ -119,6 +111,8 @@ describe("Popover", () => {
         onKeyDown={onKeyDown}
         editorRef={editorRef}
         targetPosition={targetPosition}
+        mouseout={() => {}}
+        target={targetRef}
       >
         <h1>Toolie!</h1>
       </Popover>
@@ -155,6 +149,8 @@ describe("Popover", () => {
         onKeyDown={onKeyDown}
         editorRef={editor}
         targetPosition={target}
+        mouseout={() => {}}
+        target={targetRef}
       >
         <h1>Toolie!</h1>
       </Popover>
@@ -193,6 +189,8 @@ describe("Popover", () => {
         onKeyDown={onKeyDown}
         editorRef={editor}
         targetPosition={target}
+        mouseout={() => {}}
+        target={targetRef}
       >
         <h1>Toolie!</h1>
       </Popover>

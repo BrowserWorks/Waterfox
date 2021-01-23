@@ -9,6 +9,8 @@
 
 #include "nsISupports.h"
 
+#include "mozilla/Assertions.h"
+
 class nsAttrValue;
 class nsAtom;
 class nsIContent;
@@ -45,10 +47,16 @@ struct CharacterDataChangeInfo {
 
   /**
    * The offset such that mChangeEnd - mChangeStart is equal to the length of
-   * the text we removed. If this was a pure insert or append, this is equal to
-   * mChangeStart.
+   * the text we removed. If this was a pure insert, append or a result of
+   * `splitText()` this is equal to mChangeStart.
    */
   uint32_t mChangeEnd;
+
+  uint32_t LengthOfRemovedText() const {
+    MOZ_ASSERT(mChangeStart <= mChangeEnd);
+
+    return mChangeEnd - mChangeStart;
+  }
 
   /**
    * The length of the text that was inserted in place of the removed text.  If
@@ -92,7 +100,7 @@ struct CharacterDataChangeInfo {
  * any mutations to the current or any other document, or start a
  * network load.  If you need to perform such operations do that
  * during the _last_ nsIDocumentObserver::EndUpdate notification.  The
- * expection for this is ParentChainChanged, where mutations should be
+ * exception for this is ParentChainChanged, where mutations should be
  * done from an async event, as the notification might not be
  * surrounded by BeginUpdate/EndUpdate calls.
  */

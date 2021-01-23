@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Cajkowe nastajenja">
+<!ENTITY trainingDescription.label "Jolic zmóznjone, dejśo nejpjerwjej &brandShortName; treněrowaś, aby cajkowu e-mail identificěrował, z tym až z pomocu bublinka na cajkowej rědce markěrujuśo powěsći ako cajk abo njecajk. Dejśo powěsći ako cajk a teke ako njecajk markěrowaś. Pótom &brandShortName; móžo cajk awtomatiski markěrowaś.">
+<!ENTITY level.label "Pśiměrjate kontrolu cajkoweje e-maile za toś to konto zmóžniś">
+<!ENTITY level.accesskey "P">
+
+<!ENTITY move.label "Cajkowe powěsći pśesunuś do:">
+<!ENTITY move.accesskey "C">
+<!ENTITY junkFolderOn.label "Zarědnika &quot;Cajk&quot; na:">
+<!ENTITY junkFolderOn.accesskey "Z">
+<!ENTITY otherFolder.label "Drugego:">
+<!ENTITY otherFolder.accesskey "D">
+<!ENTITY purge1.label "Cajkowu e-mail awtomatiski lašowaś, kótaraž jo starša ako">
+<!ENTITY purge1.accesskey "l">
+<!ENTITY purge2.label "dnjow">
+
+<!ENTITY whitelistHeader.label "Njewóznjamjeńśo e-mail awtomatiski ako cajk, jolic wótpósłar jo w: ">
+<!ENTITY whitelistHeader.accesskey "o">
+
+<!ENTITY ispHeadersWarning.label "Jolic to jo zmóžnjone, wobglěda &brandShortName; powěsći, kótarež su pśez toś ten wenkowny klasifikator markěrowane, awtomatiski ako cajk.">
+<!ENTITY ispHeaders.label "E-mailowym głowam dowěriś, nastajenym wót: ">
+<!ENTITY ispHeaders.accesskey "E">
+
+<!ENTITY junkClassification.label "Wuběrk">
+<!ENTITY junkActions.label "Cel a chowanje">
+
+<!ENTITY globalJunkPrefs.label "Globalne cajkowe nastajenja…">
+<!ENTITY globalJunkPrefs.accesskey "G">

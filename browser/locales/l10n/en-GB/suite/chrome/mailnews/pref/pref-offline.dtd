@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-offline.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Offline' preferences dialog -->
+<!ENTITY pref.network.title               "Network &amp; Storage">
+<!ENTITY pref.offline.caption             "Offline">
+<!ENTITY textStartUp                      "When starting up:">
+<!ENTITY textStartUp.accesskey            "W">
+<!ENTITY menuitemRememberPrevState        "Remember previous online state">
+<!ENTITY menuitemAskMe                    "Ask me for online state at startup">
+<!ENTITY menuitemAlwaysOnline             "Always start up online">
+<!ENTITY menuitemAlwaysOffline            "Always start up offline">
+<!ENTITY menuitemAutomatic                "Detect automatically (if available)">
+<!ENTITY textGoingOnline                  "Send unsent messages when going online?">
+<!ENTITY radioAutoSend                    "Yes">
+<!ENTITY radioAutoSend.accesskey          "Y">
+<!ENTITY radioNotSend                     "No">
+<!ENTITY radioNotSend.accesskey           "N">
+<!ENTITY radioAskUnsent                   "Ask me">
+<!ENTITY radioAskUnsent.accesskey         "s">
+<!ENTITY textGoingOffline                 "Download messages for offline use when going offline?">
+<!ENTITY radioAutoDownload                "Yes">
+<!ENTITY radioAutoDownload.accesskey      "e">
+<!ENTITY radioNotDownload                 "No">
+<!ENTITY radioNotDownload.accesskey       "o">
+<!ENTITY radioAskDownload                 "Ask me">
+<!ENTITY radioAskDownload.accesskey       "k">
+<!ENTITY mailConnections.caption          "Mail Connections">
+<!ENTITY mailnewsTimeout.label            "Connection timeout:">
+<!ENTITY mailnewsTimeout.accesskey        "m">
+<!ENTITY mailnewsTimeoutSeconds.label     "seconds">
+<!ENTITY Diskspace                        "Disk Space">
+<!ENTITY offlineCompactFolders.label      "Compact all folders when it will save over">
+<!ENTITY offlineCompactFolders.accesskey  "C">
+<!ENTITY offlineCompactFoldersMB.label    "MB in total">

@@ -12,7 +12,6 @@
 #include "mozilla/ipc/URIUtils.h"
 #include "mozilla/dom/RemoteWorkerController.h"
 #include "nsIConsoleReportCollector.h"
-#include "nsINetworkInterceptController.h"
 #include "nsIPrincipal.h"
 #include "nsProxyRelease.h"
 
@@ -53,18 +52,15 @@ SharedWorkerManager::SharedWorkerManager(
 }
 
 SharedWorkerManager::~SharedWorkerManager() {
-  nsCOMPtr<nsIEventTarget> target =
-      SystemGroup::EventTargetFor(TaskCategory::Other);
-
-  NS_ProxyRelease("SharedWorkerManager::mLoadingPrincipal", target,
-                  mLoadingPrincipal.forget());
+  NS_ReleaseOnMainThread("SharedWorkerManager::mLoadingPrincipal",
+                         mLoadingPrincipal.forget());
   NS_ProxyRelease("SharedWorkerManager::mRemoteWorkerController",
                   mPBackgroundEventTarget, mRemoteWorkerController.forget());
 }
 
 bool SharedWorkerManager::MaybeCreateRemoteWorker(
     const RemoteWorkerData& aData, uint64_t aWindowID,
-    const MessagePortIdentifier& aPortIdentifier, base::ProcessId aProcessId) {
+    UniqueMessagePortId& aPortIdentifier, base::ProcessId aProcessId) {
   AssertIsOnBackgroundThread();
 
   if (!mRemoteWorkerController) {
@@ -79,7 +75,7 @@ bool SharedWorkerManager::MaybeCreateRemoteWorker(
     mRemoteWorkerController->AddWindowID(aWindowID);
   }
 
-  mRemoteWorkerController->AddPortIdentifier(aPortIdentifier);
+  mRemoteWorkerController->AddPortIdentifier(aPortIdentifier.release());
   return true;
 }
 
@@ -292,8 +288,8 @@ SharedWorkerManagerWrapper::SharedWorkerManagerWrapper(
 }
 
 SharedWorkerManagerWrapper::~SharedWorkerManagerWrapper() {
-  NS_ReleaseOnMainThreadSystemGroup("SharedWorkerManagerWrapper::mHolder",
-                                    mHolder.forget());
+  NS_ReleaseOnMainThread("SharedWorkerManagerWrapper::mHolder",
+                         mHolder.forget());
 }
 
 }  // namespace dom

@@ -9,6 +9,7 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/StaticPtr.h"
+#include "mozilla/dom/HTMLObjectElementBinding.h"
 #include "npapi.h"
 #include "nsCOMPtr.h"
 #include "nsIKeyEventInPluginCallback.h"
@@ -39,7 +40,6 @@ class TextComposition;
 namespace dom {
 class Element;
 class Event;
-struct MozPluginParameter;
 }  // namespace dom
 namespace widget {
 class PuppetWidget;
@@ -83,7 +83,7 @@ class nsPluginInstanceOwner final : public nsIPluginInstanceOwner,
 
   /**
    * Get the type of the HTML tag that was used ot instantiate this
-   * plugin.  Currently supported tags are EMBED, OBJECT and APPLET.
+   * plugin.  Currently supported tags are EMBED or OBJECT.
    */
   NS_IMETHOD GetTagType(nsPluginTagType* aResult);
 
@@ -251,7 +251,7 @@ class nsPluginInstanceOwner final : public nsIPluginInstanceOwner,
 
   bool UseAsyncRendering();
 
-  already_AddRefed<nsIURI> GetBaseURI() const;
+  nsIURI* GetBaseURI() const;
 
   bool GetCompositionString(uint32_t aIndex, nsTArray<uint8_t>* aString,
                             int32_t* aLength);
@@ -295,6 +295,8 @@ class nsPluginInstanceOwner final : public nsIPluginInstanceOwner,
   bool mGotCompositionData;
   bool mSentStartComposition;
   bool mPluginDidNotHandleIMEComposition;
+  uint32_t mWheelScrollLines;
+  uint32_t mWheelScrollChars;
 #endif
 
   nsPluginNativeWindow* mPluginWindow;

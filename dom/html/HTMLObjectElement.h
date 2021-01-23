@@ -47,15 +47,13 @@ class HTMLObjectElement final : public nsGenericHTMLFormElement,
 #endif
 
   // Element
-  virtual bool IsInteractiveHTMLContent(bool aIgnoreTabindex) const override;
+  virtual bool IsInteractiveHTMLContent() const override;
 
   // EventTarget
   virtual void AsyncEventRunning(AsyncEventDispatcher* aEvent) override;
 
-  virtual nsresult BindToTree(Document* aDocument, nsIContent* aParent,
-                              nsIContent* aBindingParent) override;
-  virtual void UnbindFromTree(bool aDeep = true,
-                              bool aNullParent = true) override;
+  virtual nsresult BindToTree(BindContext&, nsINode& aParent) override;
+  virtual void UnbindFromTree(bool aNullParent = true) override;
 
   virtual bool IsHTMLFocusable(bool aWithMouse, bool* aIsFocusable,
                                int32_t* aTabIndex) override;
@@ -142,7 +140,9 @@ class HTMLObjectElement final : public nsGenericHTMLFormElement,
   void SetDeclare(bool aValue, ErrorResult& aRv) {
     SetHTMLBoolAttr(nsGkAtoms::declare, aValue, aRv);
   }
-  uint32_t Hspace() { return GetUnsignedIntAttr(nsGkAtoms::hspace, 0); }
+  uint32_t Hspace() {
+    return GetDimensionAttrAsUnsignedInt(nsGkAtoms::hspace, 0);
+  }
   void SetHspace(uint32_t aValue, ErrorResult& aRv) {
     SetUnsignedIntAttr(nsGkAtoms::hspace, aValue, 0, aRv);
   }
@@ -152,7 +152,9 @@ class HTMLObjectElement final : public nsGenericHTMLFormElement,
   void SetStandby(const nsAString& aValue, ErrorResult& aRv) {
     SetHTMLAttr(nsGkAtoms::standby, aValue, aRv);
   }
-  uint32_t Vspace() { return GetUnsignedIntAttr(nsGkAtoms::vspace, 0); }
+  uint32_t Vspace() {
+    return GetDimensionAttrAsUnsignedInt(nsGkAtoms::vspace, 0);
+  }
   void SetVspace(uint32_t aValue, ErrorResult& aRv) {
     SetUnsignedIntAttr(nsGkAtoms::vspace, aValue, 0, aRv);
   }
@@ -196,12 +198,6 @@ class HTMLObjectElement final : public nsGenericHTMLFormElement,
                                           bool aNotify) override;
 
  private:
-  /**
-   * Returns if the element is currently focusable regardless of it's tabindex
-   * value. This is used to know the default tabindex value.
-   */
-  bool IsFocusableForTabIndex();
-
   nsContentPolicyType GetContentPolicyType() const override {
     return nsIContentPolicy::TYPE_INTERNAL_OBJECT;
   }

@@ -10,6 +10,7 @@
  * liability, trademark and document use rules apply.
  */
 
+[Exposed=Window]
 interface SVGAElement : SVGGraphicsElement {
   readonly attribute SVGAnimatedString target;
 
@@ -32,5 +33,5 @@ interface SVGAElement : SVGGraphicsElement {
   attribute DOMString text;
 };
 
-SVGAElement implements SVGURIReference;
+SVGAElement includes SVGURIReference;
 

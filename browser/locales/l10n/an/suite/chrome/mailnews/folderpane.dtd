@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY nameColumn.label   "Nombre"> 
+<!ENTITY unreadColumn.label "No leitos"> 
+<!ENTITY totalColumn.label "Total"> 
+<!ENTITY folderSizeColumn.label "Grandaria"> 
+<!ENTITY folderLocationToolbarItem.title "Ubicación d'a carpeta">
+<!ENTITY mailViewsToolbarItem.title "Vistas de correu">
+<!ENTITY searchToolbarItem.title "Buscar">
+<!ENTITY searchSubjectOrAddress.placeholder "Buscar por afer u adreza">

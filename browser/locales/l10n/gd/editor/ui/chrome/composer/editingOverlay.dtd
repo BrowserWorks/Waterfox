@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- File menu items -->
+
+<!ENTITY openFileCmd.label "Fosgail faidhle…">
+<!ENTITY openFileCmd.accesskey "F">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Fosgail seòladh-lìn…">
+<!ENTITY openRemoteCmd.accesskey "s">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Duilleagan faisg ort">
+<!ENTITY fileRecentMenu.accesskey "D">
+<!ENTITY saveCmd.label "Sàbhail">
+<!ENTITY saveCmd.accesskey "S">
+<!ENTITY saveAsCmd.label "Sàbhail mar…">
+<!ENTITY saveAsCmd.accesskey "m">
+<!ENTITY saveAsChangeEncodingCmd2.label "Sàbhail e is atharraich còdachadh an teacsa">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "e">
+<!ENTITY publishCmd.label "Foillsich">
+<!ENTITY publishCmd.accesskey "c">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Foillsich mar…">
+<!ENTITY publishAsCmd.accesskey "s">
+<!ENTITY fileRevert.label "Neo-dhèan">
+<!ENTITY fileRevert.accesskey "N">
+<!-- Edit menu items -->
+
+<!ENTITY publishSettings.label "Foillsich roghainnean na làraich…">
+<!ENTITY publishSettings.accesskey "n">
+<!-- Toolbar buttons/items -->
+
+<!ENTITY newToolbarCmd.label "Ùr">
+<!ENTITY newToolbarCmd.tooltip "Cruthaich duilleag sgrìobhadair ùr">
+<!ENTITY openToolbarCmd.label "Fosgail">
+<!ENTITY openToolbarCmd.tooltip "Fosgail faidhle ionadail">
+<!ENTITY saveToolbarCmd.tooltip "Sàbhail faidhle gu h-ionadail">
+<!ENTITY publishToolbarCmd.tooltip "Luchdaich suas faidhle gu àite cèin">

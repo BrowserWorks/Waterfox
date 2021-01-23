@@ -3,35 +3,24 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const { XPCOMUtils } = ChromeUtils.import(
+  "resource://gre/modules/XPCOMUtils.jsm"
+);
 
-ChromeUtils.defineModuleGetter(this, "PrivateBrowsingUtils",
-  "resource://gre/modules/PrivateBrowsingUtils.jsm");
+XPCOMUtils.defineLazyModuleGetters(this, {
+  PrivateBrowsingUtils: "resource://gre/modules/PrivateBrowsingUtils.jsm",
+  EveryWindow: "resource:///modules/EveryWindow.jsm",
+});
 
 const FEW_MINUTES = 15 * 60 * 1000; // 15 mins
-const MATCH_PATTERN_OPTIONS = {ignorePath: true};
-
-/**
- * Wait for browser startup to finish to avoid accessing uninitialized
- * properties
- */
-async function checkStartupFinished(win) {
-  if (!win.gBrowserInit.delayedStartupFinished) {
-    await new Promise(resolve => {
-      let delayedStartupObserver = (subject, topic) => {
-        if (topic === "browser-delayed-startup-finished" && subject === win) {
-          Services.obs.removeObserver(delayedStartupObserver, "browser-delayed-startup-finished");
-          resolve();
-        }
-      };
-
-      Services.obs.addObserver(delayedStartupObserver, "browser-delayed-startup-finished");
-    });
-  }
-}
 
 function isPrivateWindow(win) {
-  return !(win instanceof Ci.nsIDOMWindow) || win.closed || PrivateBrowsingUtils.isWindowPrivate(win);
+  return (
+    !(win instanceof Ci.nsIDOMWindow) ||
+    win.closed ||
+    PrivateBrowsingUtils.isWindowPrivate(win)
+  );
 }
 
 /**
@@ -41,12 +30,13 @@ function isPrivateWindow(win) {
  *
  * @returns {object} - {host, url} pair that matched the whitelist
  */
-function checkURLMatch(aLocationURI, {hosts, matchPatternSet}, aRequest) {
+function checkURLMatch(aLocationURI, { hosts, matchPatternSet }, aRequest) {
   // If checks pass we return a match
   let match;
   try {
-    match = {host: aLocationURI.host, url: aLocationURI.spec};
-  } catch (e) { // nsIURI.host can throw for non-nsStandardURL nsIURIs
+    match = { host: aLocationURI.host, url: aLocationURI.spec };
+  } catch (e) {
+    // nsIURI.host can throw for non-nsStandardURL nsIURIs
     return false;
   }
 
@@ -70,13 +60,24 @@ function checkURLMatch(aLocationURI, {hosts, matchPatternSet}, aRequest) {
   const originalLocation = aRequest.QueryInterface(Ci.nsIChannel).originalURI;
   // We have been redirected
   if (originalLocation.spec !== aLocationURI.spec) {
-    return hosts.has(originalLocation.host) && {
-      host: originalLocation.host,
-      url: originalLocation.spec,
-    };
+    return (
+      hosts.has(originalLocation.host) && {
+        host: originalLocation.host,
+        url: originalLocation.spec,
+      }
+    );
   }
 
   return false;
+}
+
+function createMatchPatternSet(patterns, flags) {
+  try {
+    return new MatchPatternSet(new Set(patterns), flags);
+  } catch (e) {
+    Cu.reportError(e);
+  }
+  return new MatchPatternSet([]);
 }
 
 /**
@@ -84,260 +85,500 @@ function checkURLMatch(aLocationURI, {hosts, matchPatternSet}, aRequest) {
  * have idempotent `init` and `uninit` methods.
  */
 this.ASRouterTriggerListeners = new Map([
-  ["frequentVisits", {
-    _initialized: false,
-    _triggerHandler: null,
-    _hosts: null,
-    _matchPatternSet: null,
-    _visits: null,
+  [
+    "openArticleURL",
+    {
+      id: "openArticleURL",
+      _initialized: false,
+      _triggerHandler: null,
+      _hosts: new Set(),
+      _matchPatternSet: null,
+      readerModeEvent: "Reader:UpdateReaderButton",
 
-    async init(triggerHandler, hosts = [], patterns) {
-      if (!this._initialized) {
-        this.onTabSwitch = this.onTabSwitch.bind(this);
-
-        // Add listeners to all existing browser windows
-        for (let win of Services.wm.getEnumerator("navigator:browser")) {
-          if (isPrivateWindow(win)) {
-            continue;
-          }
-          await checkStartupFinished(win);
-          win.addEventListener("TabSelect", this.onTabSwitch);
-          win.gBrowser.addTabsProgressListener(this);
+      init(triggerHandler, hosts, patterns) {
+        if (!this._initialized) {
+          this.receiveMessage = this.receiveMessage.bind(this);
+          Services.mm.addMessageListener(this.readerModeEvent, this);
+          this._triggerHandler = triggerHandler;
+          this._initialized = true;
         }
-
-        this._initialized = true;
-        this._visits = new Map();
-      }
-      this._triggerHandler = triggerHandler;
-      if (patterns) {
-        if (this._matchPatternSet) {
-          this._matchPatternSet = new MatchPatternSet(new Set([
-            ...this._matchPatternSet.patterns,
+        if (patterns) {
+          this._matchPatternSet = createMatchPatternSet([
+            ...(this._matchPatternSet ? this._matchPatternSet.patterns : []),
             ...patterns,
-          ]), MATCH_PATTERN_OPTIONS);
-        } else {
-          this._matchPatternSet = new MatchPatternSet(patterns, MATCH_PATTERN_OPTIONS);
+          ]);
         }
-      }
-      if (this._hosts) {
-        hosts.forEach(h => this._hosts.add(h));
-      } else {
-        this._hosts = new Set(hosts); // Clone the hosts to avoid unexpected behaviour
-      }
-    },
-
-    /* _updateVisits - Record visit timestamps for websites that match `this._hosts` and only
-     * if it's been more than FEW_MINUTES since the last visit.
-     * @param {string} host - Location host of current selected tab
-     * @returns {boolean} - If the new visit has been recorded
-     */
-    _updateVisits(host) {
-      const visits = this._visits.get(host);
-
-      if (visits && Date.now() - visits[0] > FEW_MINUTES) {
-        this._visits.set(host, [Date.now(), ...visits]);
-        return true;
-      }
-      if (!visits) {
-        this._visits.set(host, [Date.now()]);
-        return true;
-      }
-
-      return false;
-    },
-
-    onTabSwitch(event) {
-      if (!event.target.ownerGlobal.gBrowser) {
-        return;
-      }
-
-      const {gBrowser} = event.target.ownerGlobal;
-      const match = checkURLMatch(gBrowser.currentURI, {hosts: this._hosts, matchPatternSet: this._matchPatternSet});
-      if (match) {
-        this.triggerHandler(gBrowser.selectedBrowser, match);
-      }
-    },
-
-    triggerHandler(aBrowser, match) {
-      const updated = this._updateVisits(match.host);
-
-      // If the previous visit happend less than FEW_MINUTES ago
-      // no updates were made, no need to trigger the handler
-      if (!updated) {
-        return;
-      }
-
-      this._triggerHandler(aBrowser, {
-        id: "frequentVisits",
-        param: match,
-        context: {
-          // Remapped to {host, timestamp} because JEXL operators can only
-          // filter over collections (arrays of objects)
-          recentVisits: this._visits.get(match.host).map(timestamp => ({host: match.host, timestamp})),
-        },
-      });
-    },
-
-    onLocationChange(aBrowser, aWebProgress, aRequest, aLocationURI, aFlags) {
-      // Some websites trigger redirect events after they finish loading even
-      // though the location remains the same. This results in onLocationChange
-      // events to be fired twice.
-      const isSameDocument = !!(aFlags & Ci.nsIWebProgressListener.LOCATION_CHANGE_SAME_DOCUMENT);
-      if (aWebProgress.isTopLevel && !isSameDocument) {
-        const match = checkURLMatch(aLocationURI, {hosts: this._hosts, matchPatternSet: this._matchPatternSet}, aRequest);
-        if (match) {
-          this.triggerHandler(aBrowser, match);
+        if (hosts) {
+          hosts.forEach(h => this._hosts.add(h));
         }
-      }
-    },
+      },
 
-    observe(win, topic, data) {
-      let onLoad;
-
-      switch (topic) {
-        case "domwindowopened":
-          if (isPrivateWindow(win)) {
-            break;
+      receiveMessage({ data, target }) {
+        if (data && data.isArticle) {
+          const match = checkURLMatch(target.currentURI, {
+            hosts: this._hosts,
+            matchPatternSet: this._matchPatternSet,
+          });
+          if (match) {
+            this._triggerHandler(target, { id: this.id, param: match });
           }
-          onLoad = () => {
-            // Ignore non-browser windows.
-            if (win.document.documentElement.getAttribute("windowtype") === "navigator:browser") {
-              win.addEventListener("TabSelect", this.onTabSwitch);
-              win.gBrowser.addTabsProgressListener(this);
+        }
+      },
+
+      uninit() {
+        if (this._initialized) {
+          Services.mm.removeMessageListener(this.readerModeEvent, this);
+          this._initialized = false;
+          this._triggerHandler = null;
+          this._hosts = new Set();
+          this._matchPatternSet = null;
+        }
+      },
+    },
+  ],
+  [
+    "openBookmarkedURL",
+    {
+      id: "openBookmarkedURL",
+      _initialized: false,
+      _triggerHandler: null,
+      _hosts: new Set(),
+      bookmarkEvent: "bookmark-icon-updated",
+
+      init(triggerHandler) {
+        if (!this._initialized) {
+          Services.obs.addObserver(this, this.bookmarkEvent);
+          this._triggerHandler = triggerHandler;
+          this._initialized = true;
+        }
+      },
+
+      observe(subject, topic, data) {
+        if (topic === this.bookmarkEvent && data === "starred") {
+          const browser = Services.wm.getMostRecentBrowserWindow();
+          if (browser) {
+            this._triggerHandler(browser.gBrowser.selectedBrowser, {
+              id: this.id,
+            });
+          }
+        }
+      },
+
+      uninit() {
+        if (this._initialized) {
+          Services.obs.removeObserver(this, this.bookmarkEvent);
+          this._initialized = false;
+          this._triggerHandler = null;
+          this._hosts = new Set();
+        }
+      },
+    },
+  ],
+  [
+    "frequentVisits",
+    {
+      id: "frequentVisits",
+      _initialized: false,
+      _triggerHandler: null,
+      _hosts: null,
+      _matchPatternSet: null,
+      _visits: null,
+
+      init(triggerHandler, hosts = [], patterns) {
+        if (!this._initialized) {
+          this.onTabSwitch = this.onTabSwitch.bind(this);
+          EveryWindow.registerCallback(
+            this.id,
+            win => {
+              if (!isPrivateWindow(win)) {
+                win.addEventListener("TabSelect", this.onTabSwitch);
+                win.gBrowser.addTabsProgressListener(this);
+              }
+            },
+            win => {
+              if (!isPrivateWindow(win)) {
+                win.removeEventListener("TabSelect", this.onTabSwitch);
+                win.gBrowser.removeTabsProgressListener(this);
+              }
             }
-          };
-          win.addEventListener("load", onLoad, {once: true});
-          break;
+          );
+          this._visits = new Map();
+          this._initialized = true;
+        }
+        this._triggerHandler = triggerHandler;
+        if (patterns) {
+          this._matchPatternSet = createMatchPatternSet([
+            ...(this._matchPatternSet ? this._matchPatternSet.patterns : []),
+            ...patterns,
+          ]);
+        }
+        if (this._hosts) {
+          hosts.forEach(h => this._hosts.add(h));
+        } else {
+          this._hosts = new Set(hosts); // Clone the hosts to avoid unexpected behaviour
+        }
+      },
 
-        case "domwindowclosed":
-          if ((win instanceof Ci.nsIDOMWindow) &&
-              win.document.documentElement.getAttribute("windowtype") === "navigator:browser") {
-            win.removeEventListener("TabSelect", this.onTabSwitch);
-            win.gBrowser.removeTabsProgressListener(this);
-          }
-          break;
-      }
-    },
+      /* _updateVisits - Record visit timestamps for websites that match `this._hosts` and only
+       * if it's been more than FEW_MINUTES since the last visit.
+       * @param {string} host - Location host of current selected tab
+       * @returns {boolean} - If the new visit has been recorded
+       */
+      _updateVisits(host) {
+        const visits = this._visits.get(host);
 
-    uninit() {
-      if (this._initialized) {
-        Services.ww.unregisterNotification(this);
-
-        for (let win of Services.wm.getEnumerator("navigator:browser")) {
-          if (isPrivateWindow(win)) {
-            continue;
-          }
-
-          win.removeEventListener("TabSelect", this.onTabSwitch);
-          win.gBrowser.removeTabsProgressListener(this);
+        if (visits && Date.now() - visits[0] > FEW_MINUTES) {
+          this._visits.set(host, [Date.now(), ...visits]);
+          return true;
+        }
+        if (!visits) {
+          this._visits.set(host, [Date.now()]);
+          return true;
         }
 
-        this._initialized = false;
-        this._triggerHandler = null;
-        this._hosts = null;
-        this._matchPatternSet = null;
-        this._visits = null;
-      }
+        return false;
+      },
+
+      onTabSwitch(event) {
+        if (!event.target.ownerGlobal.gBrowser) {
+          return;
+        }
+
+        const { gBrowser } = event.target.ownerGlobal;
+        const match = checkURLMatch(gBrowser.currentURI, {
+          hosts: this._hosts,
+          matchPatternSet: this._matchPatternSet,
+        });
+        if (match) {
+          this.triggerHandler(gBrowser.selectedBrowser, match);
+        }
+      },
+
+      triggerHandler(aBrowser, match) {
+        const updated = this._updateVisits(match.host);
+
+        // If the previous visit happend less than FEW_MINUTES ago
+        // no updates were made, no need to trigger the handler
+        if (!updated) {
+          return;
+        }
+
+        this._triggerHandler(aBrowser, {
+          id: this.id,
+          param: match,
+          context: {
+            // Remapped to {host, timestamp} because JEXL operators can only
+            // filter over collections (arrays of objects)
+            recentVisits: this._visits
+              .get(match.host)
+              .map(timestamp => ({ host: match.host, timestamp })),
+          },
+        });
+      },
+
+      onLocationChange(aBrowser, aWebProgress, aRequest, aLocationURI, aFlags) {
+        // Some websites trigger redirect events after they finish loading even
+        // though the location remains the same. This results in onLocationChange
+        // events to be fired twice.
+        const isSameDocument = !!(
+          aFlags & Ci.nsIWebProgressListener.LOCATION_CHANGE_SAME_DOCUMENT
+        );
+        if (aWebProgress.isTopLevel && !isSameDocument) {
+          const match = checkURLMatch(
+            aLocationURI,
+            { hosts: this._hosts, matchPatternSet: this._matchPatternSet },
+            aRequest
+          );
+          if (match) {
+            this.triggerHandler(aBrowser, match);
+          }
+        }
+      },
+
+      uninit() {
+        if (this._initialized) {
+          EveryWindow.unregisterCallback(this.id);
+
+          this._initialized = false;
+          this._triggerHandler = null;
+          this._hosts = null;
+          this._matchPatternSet = null;
+          this._visits = null;
+        }
+      },
     },
-  }],
+  ],
 
   /**
    * Attach listeners to every browser window to detect location changes, and
    * notify the trigger handler whenever we navigate to a URL with a hostname
    * we're looking for.
    */
-  ["openURL", {
-    _initialized: false,
-    _triggerHandler: null,
-    _hosts: null,
+  [
+    "openURL",
+    {
+      id: "openURL",
+      _initialized: false,
+      _triggerHandler: null,
+      _hosts: null,
+      _matchPatternSet: null,
 
-    /*
-     * If the listener is already initialised, `init` will replace the trigger
-     * handler and add any new hosts to `this._hosts`.
-     */
-    async init(triggerHandler, hosts = [], patterns) {
-      if (!this._initialized) {
-        this.onLocationChange = this.onLocationChange.bind(this);
+      /*
+       * If the listener is already initialised, `init` will replace the trigger
+       * handler and add any new hosts to `this._hosts`.
+       */
+      init(triggerHandler, hosts = [], patterns) {
+        if (!this._initialized) {
+          this.onLocationChange = this.onLocationChange.bind(this);
+          EveryWindow.registerCallback(
+            this.id,
+            win => {
+              if (!isPrivateWindow(win)) {
+                win.addEventListener("TabSelect", this.onTabSwitch);
+                win.gBrowser.addTabsProgressListener(this);
+              }
+            },
+            win => {
+              if (!isPrivateWindow(win)) {
+                win.removeEventListener("TabSelect", this.onTabSwitch);
+                win.gBrowser.removeTabsProgressListener(this);
+              }
+            }
+          );
 
-        // Listen for new windows being opened
-        Services.ww.registerNotification(this);
+          this._initialized = true;
+        }
+        this._triggerHandler = triggerHandler;
+        if (patterns) {
+          this._matchPatternSet = createMatchPatternSet([
+            ...(this._matchPatternSet ? this._matchPatternSet.patterns : []),
+            ...patterns,
+          ]);
+        }
+        if (this._hosts) {
+          hosts.forEach(h => this._hosts.add(h));
+        } else {
+          this._hosts = new Set(hosts); // Clone the hosts to avoid unexpected behaviour
+        }
+      },
 
-        // Add listeners to all existing browser windows
-        for (let win of Services.wm.getEnumerator("navigator:browser")) {
-          if (isPrivateWindow(win)) {
-            continue;
+      uninit() {
+        if (this._initialized) {
+          EveryWindow.unregisterCallback(this.id);
+
+          this._initialized = false;
+          this._triggerHandler = null;
+          this._hosts = null;
+          this._matchPatternSet = null;
+        }
+      },
+
+      onLocationChange(aBrowser, aWebProgress, aRequest, aLocationURI, aFlags) {
+        // Some websites trigger redirect events after they finish loading even
+        // though the location remains the same. This results in onLocationChange
+        // events to be fired twice.
+        const isSameDocument = !!(
+          aFlags & Ci.nsIWebProgressListener.LOCATION_CHANGE_SAME_DOCUMENT
+        );
+        if (aWebProgress.isTopLevel && !isSameDocument) {
+          const match = checkURLMatch(
+            aLocationURI,
+            { hosts: this._hosts, matchPatternSet: this._matchPatternSet },
+            aRequest
+          );
+          if (match) {
+            this._triggerHandler(aBrowser, { id: this.id, param: match });
           }
-          await checkStartupFinished(win);
-          win.gBrowser.addTabsProgressListener(this);
+        }
+      },
+    },
+  ],
+
+  /**
+   * Add an observer notification to notify the trigger handler whenever the user
+   * saves or updates a login via the login capture doorhanger.
+   */
+  [
+    "newSavedLogin",
+    {
+      _initialized: false,
+      _triggerHandler: null,
+
+      /**
+       * If the listener is already initialised, `init` will replace the trigger
+       * handler.
+       */
+      init(triggerHandler) {
+        if (!this._initialized) {
+          Services.obs.addObserver(this, "LoginStats:NewSavedPassword");
+          Services.obs.addObserver(this, "LoginStats:LoginUpdateSaved");
+          this._initialized = true;
+        }
+        this._triggerHandler = triggerHandler;
+      },
+
+      uninit() {
+        if (this._initialized) {
+          Services.obs.removeObserver(this, "LoginStats:NewSavedPassword");
+          Services.obs.removeObserver(this, "LoginStats:LoginUpdateSaved");
+
+          this._initialized = false;
+          this._triggerHandler = null;
+        }
+      },
+
+      observe(aSubject, aTopic, aData) {
+        if (aSubject.currentURI.asciiHost === "accounts.firefox.com") {
+          // Don't notify about saved logins on the FxA login origin since this
+          // trigger is used to promote login Sync and getting a recommendation
+          // to enable Sync during the sign up process is a bad UX.
+          return;
         }
 
-        this._initialized = true;
-      }
-      this._triggerHandler = triggerHandler;
-      if (this._hosts) {
-        hosts.forEach(h => this._hosts.add(h));
-      } else {
-        this._hosts = new Set(hosts); // Clone the hosts to avoid unexpected behaviour
-      }
-    },
-
-    uninit() {
-      if (this._initialized) {
-        Services.ww.unregisterNotification(this);
-
-        for (let win of Services.wm.getEnumerator("navigator:browser")) {
-          if (isPrivateWindow(win)) {
-            continue;
-          }
-
-          win.gBrowser.removeTabsProgressListener(this);
-        }
-
-        this._initialized = false;
-        this._triggerHandler = null;
-        this._hosts = null;
-      }
-    },
-
-    onLocationChange(aBrowser, aWebProgress, aRequest, aLocationURI, aFlags) {
-      // Some websites trigger redirect events after they finish loading even
-      // though the location remains the same. This results in onLocationChange
-      // events to be fired twice.
-      const isSameDocument = !!(aFlags & Ci.nsIWebProgressListener.LOCATION_CHANGE_SAME_DOCUMENT);
-      if (aWebProgress.isTopLevel && !isSameDocument) {
-        const match = checkURLMatch(aLocationURI, {hosts: this._hosts}, aRequest);
-        if (match) {
-          this._triggerHandler(aBrowser, {id: "openURL", param: match});
-        }
-      }
-    },
-
-    observe(win, topic, data) {
-      let onLoad;
-
-      switch (topic) {
-        case "domwindowopened":
-          if (isPrivateWindow(win)) {
+        switch (aTopic) {
+          case "LoginStats:NewSavedPassword": {
+            this._triggerHandler(aSubject, {
+              id: "newSavedLogin",
+              context: { type: "save" },
+            });
             break;
           }
-          onLoad = () => {
-            // Ignore non-browser windows.
-            if (win.document.documentElement.getAttribute("windowtype") === "navigator:browser") {
-              win.gBrowser.addTabsProgressListener(this);
-            }
-          };
-          win.addEventListener("load", onLoad, {once: true});
-          break;
-
-        case "domwindowclosed":
-          if ((win instanceof Ci.nsIDOMWindow) &&
-              win.document.documentElement.getAttribute("windowtype") === "navigator:browser") {
-            win.gBrowser.removeTabsProgressListener(this);
+          case "LoginStats:LoginUpdateSaved": {
+            this._triggerHandler(aSubject, {
+              id: "newSavedLogin",
+              context: { type: "update" },
+            });
+            break;
           }
-          break;
-      }
+          default: {
+            throw new Error(`Unexpected observer notification: ${aTopic}`);
+          }
+        }
+      },
     },
-  }],
+  ],
+
+  /**
+   * Attach listener to count location changes and notify the trigger handler
+   * on content blocked event
+   */
+  [
+    "contentBlocking",
+    {
+      _initialized: false,
+      _triggerHandler: null,
+      _events: [],
+      _sessionPageLoad: 0,
+      onLocationChange: null,
+
+      init(triggerHandler, params, patterns) {
+        params.forEach(p => this._events.push(p));
+
+        if (!this._initialized) {
+          Services.obs.addObserver(this, "SiteProtection:ContentBlockingEvent");
+          Services.obs.addObserver(
+            this,
+            "SiteProtection:ContentBlockingMilestone"
+          );
+          this.onLocationChange = this._onLocationChange.bind(this);
+          EveryWindow.registerCallback(
+            this.id,
+            win => {
+              if (!isPrivateWindow(win)) {
+                win.gBrowser.addTabsProgressListener(this);
+              }
+            },
+            win => {
+              if (!isPrivateWindow(win)) {
+                win.gBrowser.removeTabsProgressListener(this);
+              }
+            }
+          );
+
+          this._initialized = true;
+        }
+        this._triggerHandler = triggerHandler;
+      },
+
+      uninit() {
+        if (this._initialized) {
+          Services.obs.removeObserver(
+            this,
+            "SiteProtection:ContentBlockingEvent"
+          );
+          Services.obs.removeObserver(
+            this,
+            "SiteProtection:ContentBlockingMilestone"
+          );
+          EveryWindow.unregisterCallback(this.id);
+          this.onLocationChange = null;
+          this._initialized = false;
+        }
+        this._triggerHandler = null;
+        this._events = [];
+        this._sessionPageLoad = 0;
+      },
+
+      observe(aSubject, aTopic, aData) {
+        switch (aTopic) {
+          case "SiteProtection:ContentBlockingEvent":
+            const { browser, host, event } = aSubject.wrappedJSObject;
+            if (this._events.filter(e => (e & event) === e).length) {
+              this._triggerHandler(browser, {
+                id: "contentBlocking",
+                param: {
+                  host,
+                  type: event,
+                },
+                context: {
+                  pageLoad: this._sessionPageLoad,
+                },
+              });
+            }
+            break;
+          case "SiteProtection:ContentBlockingMilestone":
+            if (this._events.includes(aSubject.wrappedJSObject.event)) {
+              this._triggerHandler(
+                Services.wm.getMostRecentBrowserWindow().gBrowser
+                  .selectedBrowser,
+                {
+                  id: "contentBlocking",
+                  context: {
+                    pageLoad: this._sessionPageLoad,
+                  },
+                  param: {
+                    host: aSubject.wrappedJSObject.event,
+                  },
+                }
+              );
+            }
+            break;
+        }
+      },
+
+      _onLocationChange(
+        aBrowser,
+        aWebProgress,
+        aRequest,
+        aLocationURI,
+        aFlags
+      ) {
+        // Some websites trigger redirect events after they finish loading even
+        // though the location remains the same. This results in onLocationChange
+        // events to be fired twice.
+        const isSameDocument = !!(
+          aFlags & Ci.nsIWebProgressListener.LOCATION_CHANGE_SAME_DOCUMENT
+        );
+        if (
+          ["http", "https"].includes(aLocationURI.scheme) &&
+          aWebProgress.isTopLevel &&
+          !isSameDocument
+        ) {
+          this._sessionPageLoad += 1;
+        }
+      },
+    },
+  ],
 ]);
 
 const EXPORTED_SYMBOLS = ["ASRouterTriggerListeners"];

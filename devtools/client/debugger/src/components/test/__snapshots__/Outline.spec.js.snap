@@ -11,6 +11,7 @@ exports[`Outline renders a list of functions when properties change 1`] = `
     />
     <ul
       className="outline-list devtools-monospace"
+      dir="ltr"
     >
       <li
         className="outline-list__element"
@@ -54,7 +55,7 @@ exports[`Outline renders a list of functions when properties change 1`] = `
       </li>
     </ul>
     <div
-      className="outline-footer bottom"
+      className="outline-footer"
     >
       <button
         className=""
@@ -78,21 +79,25 @@ exports[`Outline renders outline renders functions by function class 1`] = `
     />
     <ul
       className="outline-list devtools-monospace"
+      dir="ltr"
     >
       <li
         className="outline-list__class"
         key="x_klass"
       >
         <h2
+          className=""
           onClick={[Function]}
         >
-          <span
-            className="keyword"
-          >
-            class
-          </span>
-           
-          x_klass
+          <div>
+            <span
+              className="keyword"
+            >
+              class
+            </span>
+             
+            x_klass
+          </div>
         </h2>
         <ul
           className="outline-list__class-list"
@@ -124,15 +129,18 @@ exports[`Outline renders outline renders functions by function class 1`] = `
         key="a_klass"
       >
         <h2
+          className=""
           onClick={[Function]}
         >
-          <span
-            className="keyword"
-          >
-            class
-          </span>
-           
-          a_klass
+          <div>
+            <span
+              className="keyword"
+            >
+              class
+            </span>
+             
+            a_klass
+          </div>
         </h2>
         <ul
           className="outline-list__class-list"
@@ -181,7 +189,7 @@ exports[`Outline renders outline renders functions by function class 1`] = `
       </li>
     </ul>
     <div
-      className="outline-footer bottom"
+      className="outline-footer"
     >
       <button
         className=""
@@ -205,61 +213,25 @@ exports[`Outline renders outline renders functions by function class, alphabetic
     />
     <ul
       className="outline-list devtools-monospace"
+      dir="ltr"
     >
-      <li
-        className="outline-list__class"
-        key="x_klass"
-      >
-        <h2
-          onClick={[Function]}
-        >
-          <span
-            className="keyword"
-          >
-            class
-          </span>
-           
-          x_klass
-        </h2>
-        <ul
-          className="outline-list__class-list"
-        >
-          <li
-            className="outline-list__element"
-            key="x_function:25:undefined"
-            onClick={[Function]}
-            onContextMenu={[Function]}
-          >
-            <span
-              className="outline-list__element-icon"
-            >
-              λ
-            </span>
-            <PreviewFunction
-              func={
-                Object {
-                  "name": "x_function",
-                  "parameterNames": undefined,
-                }
-              }
-            />
-          </li>
-        </ul>
-      </li>
       <li
         className="outline-list__class"
         key="a_klass"
       >
         <h2
+          className=""
           onClick={[Function]}
         >
-          <span
-            className="keyword"
-          >
-            class
-          </span>
-           
-          a_klass
+          <div>
+            <span
+              className="keyword"
+            >
+              class
+            </span>
+             
+            a_klass
+          </div>
         </h2>
         <ul
           className="outline-list__class-list"
@@ -306,9 +278,52 @@ exports[`Outline renders outline renders functions by function class, alphabetic
           </li>
         </ul>
       </li>
+      <li
+        className="outline-list__class"
+        key="x_klass"
+      >
+        <h2
+          className=""
+          onClick={[Function]}
+        >
+          <div>
+            <span
+              className="keyword"
+            >
+              class
+            </span>
+             
+            x_klass
+          </div>
+        </h2>
+        <ul
+          className="outline-list__class-list"
+        >
+          <li
+            className="outline-list__element"
+            key="x_function:25:undefined"
+            onClick={[Function]}
+            onContextMenu={[Function]}
+          >
+            <span
+              className="outline-list__element-icon"
+            >
+              λ
+            </span>
+            <PreviewFunction
+              func={
+                Object {
+                  "name": "x_function",
+                  "parameterNames": undefined,
+                }
+              }
+            />
+          </li>
+        </ul>
+      </li>
     </ul>
     <div
-      className="outline-footer bottom"
+      className="outline-footer"
     >
       <button
         className="active"
@@ -332,6 +347,7 @@ exports[`Outline renders outline renders ignore anonymous functions 1`] = `
     />
     <ul
       className="outline-list devtools-monospace"
+      dir="ltr"
     >
       <li
         className="outline-list__element"
@@ -355,7 +371,7 @@ exports[`Outline renders outline renders ignore anonymous functions 1`] = `
       </li>
     </ul>
     <div
-      className="outline-footer bottom"
+      className="outline-footer"
     >
       <button
         className=""
@@ -419,6 +435,7 @@ exports[`Outline renders outline sorts functions alphabetically by function name
     />
     <ul
       className="outline-list devtools-monospace"
+      dir="ltr"
     >
       <li
         className="outline-list__element"
@@ -482,7 +499,7 @@ exports[`Outline renders outline sorts functions alphabetically by function name
       </li>
     </ul>
     <div
-      className="outline-footer bottom"
+      className="outline-footer"
     >
       <button
         className="active"

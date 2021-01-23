@@ -32,7 +32,7 @@ import pywatchman
 
 def print_line(prefix, m, now=None):
     now = now or datetime.datetime.utcnow()
-    print(b'[%s %sZ] %s' % (prefix, now.isoformat(), m))
+    print('[%s %sZ] %s' % (prefix, now.isoformat(), m))
 
 
 def print_copy_result(elapsed, destdir, result, verbose=True):
@@ -74,7 +74,6 @@ class Daemon(object):
         # http://searchfox.org/mozilla-central/rev/ad093e98f42338effe2e2513e26c3a311dd96422/config/faster/rules.mk#92-93
         defines.update({
             'AB_CD': 'en-US',
-            'BUILD_FASTER': '1',
         })
         return defines
 
@@ -108,8 +107,8 @@ class Daemon(object):
                   ['name', '.hg', 'wholename'],
                   ['dirname', '.git'],
                   ['name', '.git', 'wholename'],
+                  ],
                  ],
-                ],
             ],
             'fields': ['name'],
         }
@@ -204,7 +203,7 @@ class Daemon(object):
 
             while True:
                 try:
-                    _watch_result = self.client.receive()
+                    self.client.receive()
 
                     changed = self.changed_files()
                     if not changed:
@@ -228,7 +227,7 @@ class Daemon(object):
 
                 except pywatchman.SocketTimeout:
                     # Let's check to see if we're still functional.
-                    _version = self.client.query('version')
+                    self.client.query('version')
 
         except pywatchman.CommandError as e:
             # Abstract away pywatchman errors.

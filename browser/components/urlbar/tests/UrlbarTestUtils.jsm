@@ -10,11 +10,19 @@ const { XPCOMUtils } = ChromeUtils.import(
 );
 
 XPCOMUtils.defineLazyModuleGetters(this, {
+  AddonTestUtils: "resource://testing-common/AddonTestUtils.jsm",
+  AppConstants: "resource://gre/modules/AppConstants.jsm",
   BrowserTestUtils: "resource://testing-common/BrowserTestUtils.jsm",
-  PlacesUtils: "resource://gre/modules/PlacesUtils.jsm",
+  BrowserUtils: "resource://gre/modules/BrowserUtils.jsm",
+  BrowserWindowTracker: "resource:///modules/BrowserWindowTracker.jsm",
+  FormHistory: "resource://gre/modules/FormHistory.jsm",
+  PlacesSearchAutocompleteProvider:
+    "resource://gre/modules/PlacesSearchAutocompleteProvider.jsm",
+  setTimeout: "resource://gre/modules/Timer.jsm",
   TestUtils: "resource://testing-common/TestUtils.jsm",
+  UrlbarController: "resource:///modules/UrlbarController.jsm",
   UrlbarPrefs: "resource:///modules/UrlbarPrefs.jsm",
-  UrlbarTokenizer: "resource:///modules/UrlbarTokenizer.jsm",
+  UrlbarProvider: "resource:///modules/UrlbarUtils.jsm",
   UrlbarUtils: "resource:///modules/UrlbarUtils.jsm",
 });
 
@@ -22,19 +30,11 @@ var UrlbarTestUtils = {
   /**
    * Waits to a search to be complete.
    * @param {object} win The window containing the urlbar
-   * @param {function} restoreAnimationsFn optional Function to be used to
-   *        restore animations once done.
    * @returns {Promise} Resolved when done.
    */
-  promiseSearchComplete(win, restoreAnimationsFn = null) {
-    let urlbar = getUrlbarAbstraction(win);
-    return BrowserTestUtils.waitForPopupEvent(urlbar.panel, "shown").then(
-      async () => {
-        await urlbar.promiseSearchComplete();
-        if (typeof restoreAnimations == "function") {
-          restoreAnimationsFn();
-        }
-      }
+  async promiseSearchComplete(win) {
+    return this.promisePopupOpen(win, () => {}).then(
+      () => win.gURLBar.lastQueryContextPromise
     );
   },
 
@@ -45,7 +45,7 @@ var UrlbarTestUtils = {
    * @param {function} options.waitForFocus The SimpleTest function
    * @param {boolean} [options.fireInputEvent] whether an input event should be
    *        used when starting the query (simulates the user's typing, sets
-   *        userTypedValued, etc.)
+   *        userTypedValued, triggers engagement event telemetry, etc.)
    * @param {number} [options.selectionStart] The input's selectionStart
    * @param {number} [options.selectionEnd] The input's selectionEnd
    */
@@ -57,37 +57,31 @@ var UrlbarTestUtils = {
     selectionStart = -1,
     selectionEnd = -1,
   } = {}) {
-    let urlbar = getUrlbarAbstraction(window);
-    let restoreAnimationsFn = urlbar.disableAnimations();
     await new Promise(resolve => waitForFocus(resolve, window));
-    let lastSearchString = urlbar.lastSearchString;
-    urlbar.focus();
-    urlbar.value = value;
-    if (selectionStart >= 0 && selectionEnd >= 0) {
-      urlbar.selectionEnd = selectionEnd;
-      urlbar.selectionStart = selectionStart;
+    window.gURLBar.inputField.focus();
+    // Using the value setter in some cases may trim and fetch unexpected
+    // results, then pick an alternate path.
+    if (UrlbarPrefs.get("trimURLs") && value != BrowserUtils.trimURL(value)) {
+      window.gURLBar.inputField.value = value;
+      fireInputEvent = true;
+    } else {
+      window.gURLBar.value = value;
     }
+    if (selectionStart >= 0 && selectionEnd >= 0) {
+      window.gURLBar.selectionEnd = selectionEnd;
+      window.gURLBar.selectionStart = selectionStart;
+    }
+
+    // An input event will start a new search, so be careful not to start a
+    // search if we fired an input event since that would start two searches.
     if (fireInputEvent) {
       // This is necessary to get the urlbar to set gBrowser.userTypedValue.
-      urlbar.fireInputEvent();
+      this.fireInputEvent(window);
     } else {
-      window.gURLBar.setAttribute("pageproxystate", "invalid");
+      window.gURLBar.setPageProxyState("invalid");
+      window.gURLBar.startQuery();
     }
-    // An input event will start a new search, with a couple of exceptions, so
-    // be careful not to call startSearch if we fired an input event since that
-    // would start two searches.  The first exception is when the new search and
-    // old search are the same.  Many tests do consecutive searches with the
-    // same string and expect new searches to start, so call startSearch
-    // directly then.  The second exception is when searching with the legacy
-    // urlbar and an empty string.
-    if (
-      !fireInputEvent ||
-      value == lastSearchString ||
-      (!urlbar.quantumbar && !value)
-    ) {
-      urlbar.startSearch(value, selectionStart, selectionEnd);
-    }
-    return this.promiseSearchComplete(window, restoreAnimationsFn);
+    return this.promiseSearchComplete(window);
   },
 
   /**
@@ -99,8 +93,12 @@ var UrlbarTestUtils = {
    * @returns {HtmlElement|XulElement} the result's element.
    */
   async waitForAutocompleteResultAt(win, index) {
-    let urlbar = getUrlbarAbstraction(win);
-    return urlbar.promiseResultAt(index);
+    // TODO Bug 1530338: Quantum Bar doesn't yet implement lazy results replacement.
+    await this.promiseSearchComplete(win);
+    if (index >= win.gURLBar.view._rows.length) {
+      throw new Error("Not enough results");
+    }
+    return win.gURLBar.view._rows.children[index];
   },
 
   /**
@@ -109,8 +107,7 @@ var UrlbarTestUtils = {
    * @returns {object} The oneOffSearchButtons
    */
   getOneOffSearchButtons(win) {
-    let urlbar = getUrlbarAbstraction(win);
-    return urlbar.oneOffSearchButtons;
+    return win.gURLBar.view.oneOffSearchButtons;
   },
 
   /**
@@ -119,50 +116,110 @@ var UrlbarTestUtils = {
    * @returns {boolean} True if the buttons are visible.
    */
   getOneOffSearchButtonsVisible(win) {
-    let urlbar = getUrlbarAbstraction(win);
-    return urlbar.oneOffSearchButtonsVisible;
+    return this.getOneOffSearchButtons(win).style.display != "none";
   },
 
   /**
-   * Gets an abstracted rapresentation of the result at an index.
-   * @see See the implementation of UrlbarAbstraction.getDetailsOfResultAt.
+   * Gets an abstracted representation of the result at an index.
    * @param {object} win The window containing the urlbar
    * @param {number} index The index to look for
    * @returns {object} An object with numerous properties describing the result.
    */
   async getDetailsOfResultAt(win, index) {
-    let urlbar = getUrlbarAbstraction(win);
-    return urlbar.getDetailsOfResultAt(index);
+    let element = await this.waitForAutocompleteResultAt(win, index);
+    let details = {};
+    let result = element.result;
+    let { url, postData } = UrlbarUtils.getUrlFromResult(result);
+    details.url = url;
+    details.postData = postData;
+    details.type = result.type;
+    details.source = result.source;
+    details.heuristic = result.heuristic;
+    details.autofill = !!result.autofill;
+    details.image = element.getElementsByClassName("urlbarView-favicon")[0].src;
+    details.title = result.title;
+    details.tags = "tags" in result.payload ? result.payload.tags : [];
+    let actions = element.getElementsByClassName("urlbarView-action");
+    let urls = element.getElementsByClassName("urlbarView-url");
+    let typeIcon = element.querySelector(".urlbarView-type-icon");
+    await win.document.l10n.translateFragment(element);
+    details.displayed = {
+      title: element.getElementsByClassName("urlbarView-title")[0].textContent,
+      action: actions.length ? actions[0].textContent : null,
+      url: urls.length ? urls[0].textContent : null,
+      typeIcon: typeIcon
+        ? win.getComputedStyle(typeIcon)["background-image"]
+        : null,
+    };
+    details.element = {
+      action: element.getElementsByClassName("urlbarView-action")[0],
+      row: element,
+      separator: element.getElementsByClassName(
+        "urlbarView-title-separator"
+      )[0],
+      title: element.getElementsByClassName("urlbarView-title")[0],
+      url: element.getElementsByClassName("urlbarView-url")[0],
+    };
+    if (details.type == UrlbarUtils.RESULT_TYPE.SEARCH) {
+      details.searchParams = {
+        engine: result.payload.engine,
+        keyword: result.payload.keyword,
+        query: result.payload.query,
+        suggestion: result.payload.suggestion,
+        isSearchHistory: result.payload.isSearchHistory,
+        inPrivateWindow: result.payload.inPrivateWindow,
+        isPrivateEngine: result.payload.isPrivateEngine,
+      };
+    } else if (details.type == UrlbarUtils.RESULT_TYPE.KEYWORD) {
+      details.keyword = result.payload.keyword;
+    }
+    return details;
   },
 
   /**
    * Gets the currently selected element.
-   * @param {object} win The window containing the urlbar
-   * @returns {HtmlElement|XulElement} the selected element.
+   * @param {object} win The window containing the urlbar.
+   * @returns {HtmlElement|XulElement} The selected element.
    */
   getSelectedElement(win) {
-    let urlbar = getUrlbarAbstraction(win);
-    return urlbar.getSelectedElement();
+    return win.gURLBar.view.selectedElement || null;
   },
 
   /**
-   * Gets the index of the currently selected item.
+   * Gets the index of the currently selected element.
    * @param {object} win The window containing the urlbar.
    * @returns {number} The selected index.
    */
-  getSelectedIndex(win) {
-    let urlbar = getUrlbarAbstraction(win);
-    return urlbar.getSelectedIndex();
+  getSelectedElementIndex(win) {
+    return win.gURLBar.view.selectedElementIndex;
   },
 
   /**
-   * Selects the item at the index specified.
+   * Gets the currently selected row. If the selected element is a descendant of
+   * a row, this will return the ancestor row.
+   * @param {object} win The window containing the urlbar.
+   * @returns {HTMLElement|XulElement} The selected row.
+   */
+  getSelectedRow(win) {
+    return win.gURLBar.view._getSelectedRow() || null;
+  },
+
+  /**
+   * Gets the index of the currently selected element.
+   * @param {object} win The window containing the urlbar.
+   * @returns {number} The selected row index.
+   */
+  getSelectedRowIndex(win) {
+    return win.gURLBar.view.selectedRowIndex;
+  },
+
+  /**
+   * Selects the element at the index specified.
    * @param {object} win The window containing the urlbar.
    * @param {index} index The index to select.
    */
-  setSelectedIndex(win, index) {
-    let urlbar = getUrlbarAbstraction(win);
-    urlbar.setSelectedIndex(index);
+  setSelectedRowIndex(win, index) {
+    win.gURLBar.view.selectedRowIndex = index;
   },
 
   /**
@@ -172,25 +229,7 @@ var UrlbarTestUtils = {
    * @returns {number} the number of results.
    */
   getResultCount(win) {
-    let urlbar = getUrlbarAbstraction(win);
-    return urlbar.getResultCount();
-  },
-
-  /**
-   * Returns the results panel object associated with the window.
-   * @note generally tests should use getDetailsOfResultAt rather than
-   * accessing panel elements directly.
-   * @param {object} win The window containing the urlbar
-   * @returns {object} the results panel object.
-   */
-  getPanel(win) {
-    let urlbar = getUrlbarAbstraction(win);
-    return urlbar.panel;
-  },
-
-  getDropMarker(win) {
-    let urlbar = getUrlbarAbstraction(win);
-    return urlbar.dropMarker;
+    return win.gURLBar.view._rows.children.length;
   },
 
   /**
@@ -199,8 +238,20 @@ var UrlbarTestUtils = {
    * @returns {boolean} whether at least one search suggestion is present.
    */
   promiseSuggestionsPresent(win) {
-    let urlbar = getUrlbarAbstraction(win);
-    return urlbar.promiseSearchSuggestions();
+    // TODO Bug 1530338: Quantum Bar doesn't yet implement lazy results replacement. When
+    // we do that, we'll have to be sure the suggestions we find are relevant
+    // for the current query. For now let's just wait for the search to be
+    // complete.
+    return this.promiseSearchComplete(win).then(context => {
+      // Look for search suggestions.
+      let firstSearchSuggestionIndex = context.results.findIndex(
+        r => r.type == UrlbarUtils.RESULT_TYPE.SEARCH && r.payload.suggestion
+      );
+      if (firstSearchSuggestionIndex == -1) {
+        throw new Error("Cannot find a search suggestion");
+      }
+      return firstSearchSuggestionIndex;
+    });
   },
 
   /**
@@ -220,17 +271,27 @@ var UrlbarTestUtils = {
   },
 
   /**
-   * Waits for the popup to be hidden.
+   * Waits for the popup to be shown.
    * @param {object} win The window containing the urlbar
    * @param {function} openFn Function to be used to open the popup.
    * @returns {Promise} resolved once the popup is closed
    */
-  promisePopupOpen(win, openFn) {
+  async promisePopupOpen(win, openFn) {
     if (!openFn) {
       throw new Error("openFn should be supplied to promisePopupOpen");
     }
-    let urlbar = getUrlbarAbstraction(win);
-    return urlbar.promisePopupOpen(openFn);
+    await openFn();
+    if (win.gURLBar.view.isOpen) {
+      return;
+    }
+    await new Promise(resolve => {
+      win.gURLBar.controller.addQueryListener({
+        onViewOpen() {
+          win.gURLBar.controller.removeQueryListener(this);
+          resolve();
+        },
+      });
+    });
   },
 
   /**
@@ -240,9 +301,23 @@ var UrlbarTestUtils = {
    *        supplied it will default to a closing the popup directly.
    * @returns {Promise} resolved once the popup is closed
    */
-  promisePopupClose(win, closeFn = null) {
-    let urlbar = getUrlbarAbstraction(win);
-    return urlbar.promisePopupClose(closeFn);
+  async promisePopupClose(win, closeFn = null) {
+    if (closeFn) {
+      await closeFn();
+    } else {
+      win.gURLBar.view.close();
+    }
+    if (!win.gURLBar.view.isOpen) {
+      return;
+    }
+    await new Promise(resolve => {
+      win.gURLBar.controller.addQueryListener({
+        onViewClose() {
+          win.gURLBar.controller.removeQueryListener(this);
+          resolve();
+        },
+      });
+    });
   },
 
   /**
@@ -250,8 +325,7 @@ var UrlbarTestUtils = {
    * @returns {boolean} Whether the popup is open
    */
   isPopupOpen(win) {
-    let urlbar = getUrlbarAbstraction(win);
-    return urlbar.isPopupOpen();
+    return win.gURLBar.view.isOpen;
   },
 
   /**
@@ -260,9 +334,10 @@ var UrlbarTestUtils = {
    * @returns {Promise} resolved when fetching is complete
    * @resolves {number} a userContextId
    */
-  promiseUserContextId(win) {
-    let urlbar = getUrlbarAbstraction(win);
-    return urlbar.promiseUserContextId();
+  async promiseUserContextId(win) {
+    const defaultId = Ci.nsIScriptSecurityManager.DEFAULT_USER_CONTEXT_ID;
+    let context = await win.gURLBar.lastQueryContextPromise;
+    return context.userContextId || defaultId;
   },
 
   /**
@@ -270,384 +345,289 @@ var UrlbarTestUtils = {
    * @param {object} win The browser window
    */
   fireInputEvent(win) {
-    getUrlbarAbstraction(win).fireInputEvent();
+    // Set event.data to the last character in the input, for a couple of
+    // reasons: It simulates the user typing, and it's necessary for autofill.
+    let event = new InputEvent("input", {
+      data: win.gURLBar.value[win.gURLBar.value.length - 1] || null,
+    });
+    win.gURLBar.inputField.dispatchEvent(event);
+  },
+
+  /**
+   * Returns a new mock controller.  This is useful for xpcshell tests.
+   * @param {object} options Additional options to pass to the UrlbarController
+   *        constructor.
+   * @returns {UrlbarController} A new controller.
+   */
+  newMockController(options = {}) {
+    return new UrlbarController(
+      Object.assign(
+        {
+          input: {
+            isPrivate: false,
+            window: {
+              location: {
+                href: AppConstants.BROWSER_CHROME_URL,
+              },
+            },
+          },
+        },
+        options
+      )
+    );
+  },
+
+  /**
+   * Initializes some external components used by the urlbar.  This is necessary
+   * in xpcshell tests but not in browser tests.
+   */
+  async initXPCShellDependencies() {
+    // The FormHistoryStartup component must be initialized since urlbar uses
+    // form history.
+    Cc["@mozilla.org/satchel/form-history-startup;1"]
+      .getService(Ci.nsIObserver)
+      .observe(null, "profile-after-change", null);
+
+    // These two calls are necessary because UrlbarMuxerUnifiedComplete.sort
+    // calls PlacesSearchAutocompleteProvider.parseSubmissionURL, so we need
+    // engines and PlacesSearchAutocompleteProvider.
+    try {
+      await AddonTestUtils.promiseStartupManager();
+    } catch (error) {
+      if (!error.message.includes("already started")) {
+        throw error;
+      }
+    }
+    await PlacesSearchAutocompleteProvider.ensureReady();
+  },
+};
+
+UrlbarTestUtils.formHistory = {
+  /**
+   * Performs an operation on the urlbar's form history.
+   *
+   * @param {object} updateObject
+   *   An object describing the form history operation.  See FormHistory.jsm.
+   * @param {object} window
+   *   The window containing the urlbar.
+   */
+  async update(
+    updateObject = {},
+    window = BrowserWindowTracker.getTopWindow()
+  ) {
+    await new Promise((resolve, reject) => {
+      FormHistory.update(
+        Object.assign(
+          {
+            fieldname: this.getFormHistoryName(window),
+          },
+          updateObject
+        ),
+        {
+          handleError(error) {
+            reject(error);
+          },
+          handleCompletion(errored) {
+            if (!errored) {
+              resolve();
+            }
+          },
+        }
+      );
+    });
+  },
+
+  /**
+   * Adds values to the urlbar's form history.
+   *
+   * @param {array} values
+   *   The form history string values to remove.
+   * @param {object} window
+   *   The window containing the urlbar.
+   */
+  async add(values = [], window = BrowserWindowTracker.getTopWindow()) {
+    for (let value of values) {
+      await this.update(
+        {
+          value,
+          op: "bump",
+        },
+        window
+      );
+    }
+  },
+
+  /**
+   * Removes values from the urlbar's form history.  If you want to remove all
+   * history, use clearFormHistory.
+   *
+   * @param {array} values
+   *   The form history string values to remove.
+   * @param {object} window
+   *   The window containing the urlbar.
+   */
+  async remove(values = [], window = BrowserWindowTracker.getTopWindow()) {
+    for (let value of values) {
+      await this.update(
+        {
+          value,
+          op: "remove",
+        },
+        window
+      );
+    }
+  },
+
+  /**
+   * Removes all values from the urlbar's form history.  If you want to remove
+   * individual values, use removeFormHistory.
+   *
+   * @param {object} window
+   *   The window containing the urlbar.
+   */
+  async clear(window = BrowserWindowTracker.getTopWindow()) {
+    await this.update({ op: "remove" }, window);
+  },
+
+  /**
+   * Searches the urlbar's form history.
+   *
+   * @param {object} criteria
+   *   Criteria to narrow the search.  See FormHistory.search.
+   * @param {object} window
+   *   The window containing the urlbar.
+   * @returns {Promise}
+   *   A promise resolved with an array of found form history entries.
+   */
+  search(criteria = {}, window = BrowserWindowTracker.getTopWindow()) {
+    return new Promise((resolve, reject) => {
+      let results = [];
+      FormHistory.search(
+        null,
+        Object.assign(
+          {
+            fieldname: this.getFormHistoryName(window),
+          },
+          criteria
+        ),
+        {
+          handleResult(result) {
+            results.push(result);
+          },
+          handleError(error) {
+            reject(error);
+          },
+          handleCompletion(errored) {
+            if (!errored) {
+              resolve(results);
+            }
+          },
+        }
+      );
+    });
+  },
+
+  /**
+   * Returns a promise that's resolved on the next form history change.
+   *
+   * @param {string} change
+   *   Null to listen for any change, or one of: add, remove, update
+   * @returns {Promise}
+   *   Resolved on the next specified form history change.
+   */
+  promiseChanged(change = null) {
+    return TestUtils.topicObserved(
+      "satchel-storage-changed",
+      (subject, data) => !change || data == "formhistory-" + change
+    );
+  },
+
+  /**
+   * Returns the form history name for the urlbar in a window.
+   *
+   * @param {object} window
+   *   The window.
+   * @returns {string}
+   *   The form history name of the urlbar in the window.
+   */
+  getFormHistoryName(window = BrowserWindowTracker.getTopWindow()) {
+    return window ? window.gURLBar.formHistoryName : "searchbar-history";
   },
 };
 
 /**
- * Maps windows to urlbar abstractions.
+ * A test provider.  If you need a test provider whose behavior is different
+ * from this, then consider modifying the implementation below if you think the
+ * new behavior would be useful for other tests.  Otherwise, you can create a
+ * new TestProvider instance and then override its methods.
  */
-var gUrlbarAbstractions = new WeakMap();
-
-function getUrlbarAbstraction(win) {
-  if (!gUrlbarAbstractions.has(win)) {
-    gUrlbarAbstractions.set(win, new UrlbarAbstraction(win));
+class TestProvider extends UrlbarProvider {
+  /**
+   * Constructor.
+   *
+   * @param {array} results
+   *   An array of UrlbarResult objects that will be the provider's results.
+   * @param {string} [name]
+   *   The provider's name.  Provider names should be unique.
+   * @param {UrlbarUtils.PROVIDER_TYPE} [type]
+   *   The provider's type.
+   * @param {number} [priority]
+   *   The provider's priority.  Built-in providers have a priority of zero.
+   * @param {number} [addTimeout]
+   *   If non-zero, each result will be added on this timeout.  If zero, all
+   *   results will be added immediately and synchronously.
+   * @param {function} [onCancel]
+   *   If given, a function that will be called when the provider's cancelQuery
+   *   method is called.
+   */
+  constructor({
+    results,
+    name = "TestProvider" + Math.floor(Math.random() * 100000),
+    type = UrlbarUtils.PROVIDER_TYPE.PROFILE,
+    priority = 0,
+    addTimeout = 0,
+    onCancel = null,
+  } = {}) {
+    super();
+    this._results = results;
+    this._name = name;
+    this._type = type;
+    this._priority = priority;
+    this._addTimeout = addTimeout;
+    this._onCancel = onCancel;
   }
-  return gUrlbarAbstractions.get(win);
+  get name() {
+    return this._name;
+  }
+  get type() {
+    return this._type;
+  }
+  getPriority(context) {
+    return this._priority;
+  }
+  isActive(context) {
+    return true;
+  }
+  async startQuery(context, addCallback) {
+    for (let result of this._results) {
+      if (!this._addTimeout) {
+        addCallback(this, result);
+      } else {
+        await new Promise(resolve => {
+          setTimeout(() => {
+            addCallback(this, result);
+            resolve();
+          }, this._addTimeout);
+        });
+      }
+    }
+  }
+  cancelQuery(context) {
+    if (this._onCancel) {
+      this._onCancel();
+    }
+  }
+  pickResult(result) {}
 }
 
-/**
- * Abstracts the urlbar implementation, so it can be used regardless of
- * Quantum Bar being enabled.
- */
-class UrlbarAbstraction {
-  constructor(win) {
-    if (!win) {
-      throw new Error("Must provide a browser window");
-    }
-    this.urlbar = win.gURLBar;
-    this.quantumbar = UrlbarPrefs.get("quantumbar");
-    this.window = win;
-    this.window.addEventListener(
-      "unload",
-      () => {
-        this.urlbar = null;
-        this.window = null;
-      },
-      { once: true }
-    );
-  }
-
-  /**
-   * Disable animations.
-   * @returns {function} can be invoked to restore the previous behavior.
-   */
-  disableAnimations() {
-    if (!this.quantumbar) {
-      let dontAnimate = !!this.urlbar.popup.getAttribute("dontanimate");
-      this.urlbar.popup.setAttribute("dontanimate", "true");
-      return () => {
-        this.urlbar.popup.setAttribute("dontanimate", dontAnimate);
-      };
-    }
-    return () => {};
-  }
-
-  /**
-   * Focus the input field.
-   */
-  focus() {
-    this.urlbar.inputField.focus();
-  }
-
-  /**
-   * Dispatches an input event to the input field.
-   */
-  fireInputEvent() {
-    // Set event.data to the last character in the input, for a couple of
-    // reasons: It simulates the user typing, and it's necessary for autofill.
-    let event = new InputEvent("input", {
-      data: this.urlbar.value[this.urlbar.value.length - 1] || null,
-    });
-    this.urlbar.inputField.dispatchEvent(event);
-  }
-
-  set value(val) {
-    this.urlbar.value = val;
-  }
-  get value() {
-    return this.urlbar.value;
-  }
-
-  get lastSearchString() {
-    return this.quantumbar
-      ? this.urlbar._lastSearchString
-      : this.urlbar.controller.searchString;
-  }
-
-  get panel() {
-    return this.quantumbar ? this.urlbar.panel : this.urlbar.popup;
-  }
-
-  get dropMarker() {
-    return this.window.document.getAnonymousElementByAttribute(
-      this.urlbar.textbox,
-      "anonid",
-      "historydropmarker"
-    );
-  }
-
-  get oneOffSearchButtons() {
-    return this.quantumbar
-      ? this.urlbar.view.oneOffSearchButtons
-      : this.urlbar.popup.oneOffSearchButtons;
-  }
-
-  get oneOffSearchButtonsVisible() {
-    if (!this.quantumbar) {
-      return (
-        this.window.getComputedStyle(this.oneOffSearchButtons.container)
-          .display != "none"
-      );
-    }
-
-    return this.oneOffSearchButtons.style.display != "none";
-  }
-
-  startSearch(text, selectionStart = -1, selectionEnd = -1) {
-    if (this.quantumbar) {
-      this.urlbar.value = text;
-      if (selectionStart >= 0 && selectionEnd >= 0) {
-        this.urlbar.selectionEnd = selectionEnd;
-        this.urlbar.selectionStart = selectionStart;
-      }
-      this.urlbar.setAttribute("pageproxystate", "invalid");
-      this.urlbar.startQuery();
-    } else {
-      // Force the controller to do consecutive searches for the same string by
-      // calling resetInternalState.
-      this.urlbar.controller.resetInternalState();
-      this.urlbar.controller.startSearch(text);
-    }
-  }
-
-  promiseSearchComplete() {
-    if (this.quantumbar) {
-      return this.urlbar.lastQueryContextPromise;
-    }
-    return BrowserTestUtils.waitForCondition(
-      () =>
-        this.urlbar.controller.searchStatus >=
-        Ci.nsIAutoCompleteController.STATUS_COMPLETE_NO_MATCH,
-      "waiting urlbar search to complete",
-      100,
-      50
-    );
-  }
-
-  async promiseUserContextId() {
-    const defaultId = Ci.nsIScriptSecurityManager.DEFAULT_USER_CONTEXT_ID;
-    if (this.quantumbar) {
-      let context = await this.urlbar.lastQueryContextPromise;
-      return context.userContextId || defaultId;
-    }
-    return this.urlbar.userContextId || defaultId;
-  }
-
-  async promiseResultAt(index) {
-    if (!this.quantumbar) {
-      // In the legacy address bar, old results are replaced when new results
-      // arrive, thus it's possible for a result to be present but refer to
-      // a previous query. This ensures the given result refers to the current
-      // query by checking its query string against the string being searched
-      // for.
-      let searchString = this.urlbar.controller.searchString;
-      await BrowserTestUtils.waitForCondition(
-        () =>
-          this.panel.richlistbox.itemChildren.length > index &&
-          this.panel.richlistbox.itemChildren[index].getAttribute("ac-text") ==
-            searchString.trim(),
-        `Waiting for the autocomplete result for "${searchString}" at [${index}] to appear`
-      );
-      // Ensure the addition is complete, for proper mouse events on the entries.
-      await new Promise(resolve =>
-        this.window.requestIdleCallback(resolve, { timeout: 1000 })
-      );
-      return this.panel.richlistbox.itemChildren[index];
-    }
-    // TODO Bug 1530338: Quantum Bar doesn't yet implement lazy results replacement.
-    await this.promiseSearchComplete();
-    if (index >= this.urlbar.view._rows.length) {
-      throw new Error("Not enough results");
-    }
-    return this.urlbar.view._rows.children[index];
-  }
-
-  getSelectedElement() {
-    if (this.quantumbar) {
-      return this.urlbar.view._selected || null;
-    }
-    return this.panel.selectedIndex >= 0
-      ? this.panel.richlistbox.itemChildren[this.panel.selectedIndex]
-      : null;
-  }
-
-  getSelectedIndex() {
-    return this.quantumbar
-      ? this.urlbar.view.selectedIndex
-      : this.panel.selectedIndex;
-  }
-
-  setSelectedIndex(index) {
-    if (!this.quantumbar) {
-      return (this.panel.selectedIndex = index);
-    }
-    return (this.urlbar.view.selectedIndex = index);
-  }
-
-  getResultCount() {
-    return this.quantumbar
-      ? this.urlbar.view._rows.children.length
-      : this.urlbar.controller.matchCount;
-  }
-
-  async getDetailsOfResultAt(index) {
-    let element = await this.promiseResultAt(index);
-    function getType(style, action) {
-      if (style.includes("searchengine") || style.includes("suggestions")) {
-        return UrlbarUtils.RESULT_TYPE.SEARCH;
-      } else if (style.includes("extension")) {
-        return UrlbarUtils.RESULT_TYPE.OMNIBOX;
-      } else if (action && action.type == "keyword") {
-        return UrlbarUtils.RESULT_TYPE.KEYWORD;
-      } else if (action && action.type == "remotetab") {
-        return UrlbarUtils.RESULT_TYPE.REMOTE_TAB;
-      } else if (action && action.type == "switchtab") {
-        return UrlbarUtils.RESULT_TYPE.TAB_SWITCH;
-      }
-      return UrlbarUtils.RESULT_TYPE.URL;
-    }
-    let details = {};
-    if (this.quantumbar) {
-      let result = element.result;
-      let { url, postData } = UrlbarUtils.getUrlFromResult(result);
-      details.url = url;
-      details.postData = postData;
-      details.type = result.type;
-      details.heuristic = result.heuristic;
-      details.autofill = !!result.autofill;
-      details.image = element.getElementsByClassName(
-        "urlbarView-favicon"
-      )[0].src;
-      details.title = result.title;
-      details.tags = "tags" in result.payload ? result.payload.tags : [];
-      let actions = element.getElementsByClassName("urlbarView-action");
-      let urls = element.getElementsByClassName("urlbarView-url");
-      let typeIcon = element.querySelector(".urlbarView-type-icon");
-      let typeIconStyle = this.window.getComputedStyle(typeIcon);
-      details.displayed = {
-        title: element.getElementsByClassName("urlbarView-title")[0]
-          .textContent,
-        action: actions.length > 0 ? actions[0].textContent : null,
-        url: urls.length > 0 ? urls[0].textContent : null,
-        typeIcon: typeIconStyle["background-image"],
-      };
-      details.element = {
-        action: element.getElementsByClassName("urlbarView-action")[0],
-        row: element,
-        separator: element.getElementsByClassName(
-          "urlbarView-title-separator"
-        )[0],
-        title: element.getElementsByClassName("urlbarView-title")[0],
-        url: element.getElementsByClassName("urlbarView-url")[0],
-      };
-      if (details.type == UrlbarUtils.RESULT_TYPE.SEARCH) {
-        details.searchParams = {
-          engine: result.payload.engine,
-          keyword: result.payload.keyword,
-          query: result.payload.query,
-          suggestion: result.payload.suggestion,
-        };
-      } else if (details.type == UrlbarUtils.RESULT_TYPE.KEYWORD) {
-        details.keyword = result.payload.keyword;
-      }
-    } else {
-      details.url = this.urlbar.controller.getFinalCompleteValueAt(index);
-
-      let style = this.urlbar.controller.getStyleAt(index);
-      let action = PlacesUtils.parseActionUrl(
-        this.urlbar.controller.getValueAt(index)
-      );
-      details.type = getType(style, action);
-      details.heuristic = style.includes("heuristic");
-      details.autofill = style.includes("autofill");
-      details.image = element.getAttribute("image");
-      details.title = element.getAttribute("title");
-      details.tags = style.includes("tag")
-        ? [...element.getElementsByClassName("ac-tags")].map(e => e.textContent)
-        : [];
-      let typeIconStyle = this.window.getComputedStyle(element._typeIcon);
-      details.displayed = {
-        title: element._titleText.textContent,
-        action: action ? element._actionText.textContent : "",
-        url: element._urlText.textContent,
-        typeIcon: typeIconStyle.listStyleImage,
-      };
-      details.element = {
-        action: element._actionText,
-        row: element,
-        separator: element._separator,
-        title: element._titleText,
-        url: element._urlText,
-      };
-      if (details.type == UrlbarUtils.RESULT_TYPE.SEARCH && action) {
-        // Strip restriction tokens from input.
-        let query = action.params.input;
-        let restrictTokens = Object.values(UrlbarTokenizer.RESTRICT);
-        if (restrictTokens.includes(query[0])) {
-          query = query.substring(1).trim();
-        }
-        details.searchParams = {
-          engine: action.params.engineName,
-          keyword: action.params.alias,
-          query,
-          suggestion: action.params.searchSuggestion,
-        };
-      } else if (details.type == UrlbarUtils.RESULT_TYPE.KEYWORD) {
-        details.keyword = action.params.keyword;
-      }
-    }
-    return details;
-  }
-
-  async promiseSearchSuggestions() {
-    if (!this.quantumbar) {
-      return TestUtils.waitForCondition(() => {
-        let controller = this.urlbar.controller;
-        let matchCount = controller.matchCount;
-        for (let i = 0; i < matchCount; i++) {
-          let url = controller.getValueAt(i);
-          let action = PlacesUtils.parseActionUrl(url);
-          if (
-            action &&
-            action.type == "searchengine" &&
-            action.params.searchSuggestion
-          ) {
-            return true;
-          }
-        }
-        return false;
-      }, "Waiting for suggestions");
-    }
-    // TODO Bug 1530338: Quantum Bar doesn't yet implement lazy results replacement. When
-    // we do that, we'll have to be sure the suggestions we find are relevant
-    // for the current query. For now let's just wait for the search to be
-    // complete.
-    return this.promiseSearchComplete().then(context => {
-      // Look for search suggestions.
-      if (
-        !context.results.some(
-          r => r.type == UrlbarUtils.RESULT_TYPE.SEARCH && r.payload.suggestion
-        )
-      ) {
-        throw new Error("Cannot find a search suggestion");
-      }
-    });
-  }
-
-  async promisePopupOpen(openFn) {
-    await openFn();
-    return BrowserTestUtils.waitForPopupEvent(this.panel, "shown");
-  }
-
-  closePopup() {
-    if (this.quantumbar) {
-      this.urlbar.view.close();
-    } else {
-      this.urlbar.popup.hidePopup();
-    }
-  }
-
-  async promisePopupClose(closeFn) {
-    if (closeFn) {
-      await closeFn();
-    } else {
-      this.closePopup();
-    }
-    return BrowserTestUtils.waitForPopupEvent(this.panel, "hidden");
-  }
-
-  isPopupOpen() {
-    return this.panel.state == "open" || this.panel.state == "showing";
-  }
-}
+UrlbarTestUtils.TestProvider = TestProvider;

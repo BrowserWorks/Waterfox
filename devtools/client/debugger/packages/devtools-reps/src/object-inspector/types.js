@@ -13,7 +13,7 @@ export type Grip = {
   userDisplayName?: string,
   name: string,
   extensible: boolean,
-  location: {
+  location?: {
     url: string,
     line: number,
     column: number,
@@ -69,7 +69,7 @@ export type PropertiesIterator = {
   slice: (start: number, count: number) => Promise<GripProperties>,
 };
 
-export type ObjectClient = {
+export type ObjectFront = {
   enumEntries: () => Promise<PropertiesIterator>,
   enumProperties: (options: Object) => Promise<PropertiesIterator>,
   enumSymbols: () => Promise<PropertiesIterator>,
@@ -77,7 +77,7 @@ export type ObjectClient = {
   getProxySlots: () => Promise<{ proxyTarget: Object, proxyHandler: Object }>,
 };
 
-export type LongStringClient = {
+export type LongStringFront = {
   substring: (
     start: number,
     end: number,
@@ -89,9 +89,9 @@ export type LongStringClient = {
   ) => void,
 };
 
-export type CreateObjectClient = RdpGrip => ObjectClient;
+export type CreateObjectFront = RdpGrip => ObjectFront;
 
-export type CreateLongStringClient = RdpGrip => LongStringClient;
+export type CreateLongStringFront = RdpGrip => LongStringFront;
 
 export type CachedNodes = Map<Path, Array<Node>>;
 
@@ -116,9 +116,6 @@ export type Props = {
   roots: Array<Node>,
   disableWrap: boolean,
   dimTopLevelWindow: boolean,
-  releaseActor: string => void,
-  createObjectClient: CreateObjectClient,
-  createLongStringClient: CreateLongStringClient,
   onFocus: ?(Node) => any,
   onActivate: ?(Node) => any,
   onDoubleClick: ?(
@@ -147,7 +144,6 @@ export type Props = {
       setExpanded: (Node, boolean) => any,
     }
   ) => any,
-  actors: Set<string>,
   expandedPaths: Set<Path>,
   focusedItem: ?Node,
   activeItem: ?Node,
@@ -162,7 +158,6 @@ export type ReduxAction = {
 };
 
 export type State = {
-  actors: Set<string>,
   expandedPaths: Set<Path>,
   focusedItem: ?Node,
   activeItem: ?Node,

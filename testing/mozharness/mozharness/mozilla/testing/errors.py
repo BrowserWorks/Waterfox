@@ -25,6 +25,13 @@ _mochitest_summary = {
     'known_fail_group': "Todo",
 }
 
+_reftest_summary = {
+    'regex': re.compile(r'''REFTEST INFO \| (Successful|Unexpected|Known problems): (\d+) \('''),  # NOQA: E501
+    'pass_group': "Successful",
+    'fail_group': "Unexpected",
+    'known_fail_group': "Known problems",
+}
+
 TinderBoxPrintRe = {
     "mochitest-chrome_summary": _mochitest_summary,
     "mochitest-webgl1-core_summary": _mochitest_summary,
@@ -32,6 +39,7 @@ TinderBoxPrintRe = {
     "mochitest-webgl2-core_summary": _mochitest_summary,
     "mochitest-webgl2-ext_summary": _mochitest_summary,
     "mochitest-webgl2-deqp_summary": _mochitest_summary,
+    "mochitest-webgpu_summary": _mochitest_summary,
     "mochitest-media_summary": _mochitest_summary,
     "mochitest-plain_summary": _mochitest_summary,
     "mochitest-plain-gpu_summary": _mochitest_summary,
@@ -41,31 +49,17 @@ TinderBoxPrintRe = {
         'fail_group': "failed",
         'known_fail_group': "todo",
     },
-    "reftest_summary": {
-        'regex': re.compile(r'''REFTEST INFO \| (Successful|Unexpected|Known problems): (\d+) \('''),  # NOQA: E501
-        'pass_group': "Successful",
-        'fail_group': "Unexpected",
-        'known_fail_group': "Known problems",
-    },
-    "crashtest_summary": {
-        'regex': re.compile(r'''REFTEST INFO \| (Successful|Unexpected|Known problems): (\d+) \('''),  # NOQA: E501
-        'pass_group': "Successful",
-        'fail_group': "Unexpected",
-        'known_fail_group': "Known problems",
-    },
+    "reftest_summary": _reftest_summary,
+    "reftest-qr_summary": _reftest_summary,
+    "crashtest_summary": _reftest_summary,
+    "crashtest-qr_summary": _reftest_summary,
     "xpcshell_summary": {
         'regex': re.compile(r'''INFO \| (Passed|Failed|Todo): (\d+)'''),
         'pass_group': "Passed",
         'fail_group': "Failed",
         'known_fail_group': "Todo",
     },
-    "jsreftest_summary": {
-        'regex': re.compile(r'''REFTEST INFO \| (Successful|Unexpected|Known problems): (\d+) \('''),  # NOQA: E501
-        'pass_group': "Successful",
-        'fail_group': "Unexpected",
-        'known_fail_group': "Known problems",
-    },
-    "robocop_summary": _mochitest_summary,
+    "jsreftest_summary": _reftest_summary,
     "instrumentation_summary": _mochitest_summary,
     "cppunittest_summary": {
         'regex': re.compile(r'''cppunittests INFO \| (Passed|Failed): (\d+)'''),
@@ -91,12 +85,6 @@ TinderBoxPrintRe = {
         'fail_group': "FAILED",
         'known_fail_group': None,
     },
-    "mozmill_summary": {
-        'regex': re.compile(r'''INFO (Passed|Failed|Skipped): (\d+)'''),
-        'pass_group': "Passed",
-        'fail_group': "Failed",
-        'known_fail_group': "Skipped",
-    },
     "geckoview_summary": {
         'regex': re.compile(r'''(Passed|Failed): (\d+)'''),
         'pass_group': "Passed",
@@ -111,7 +99,7 @@ TinderBoxPrintRe = {
     },
 
     "harness_error": {
-        'full_regex': re.compile(r"(?:TEST-UNEXPECTED-FAIL|PROCESS-CRASH) \| .* \| (application crashed|missing output line for total leaks!|negative leaks caught!|\d+ bytes leaked)"),  # NOQA: E501
+        'full_regex': re.compile(r"(?:TEST-UNEXPECTED-FAIL|PROCESS-CRASH) \| .* \|[^\|]* (application crashed|missing output line for total leaks!|negative leaks caught!|\d+ bytes leaked)"),  # NOQA: E501
         'minimum_regex': re.compile(r'''(TEST-UNEXPECTED|PROCESS-CRASH)'''),
         'retry_regex': re.compile(r'''(FAIL-SHOULD-RETRY|No space left on device|ADBError|ADBProcessError|ADBTimeoutError|program finished with exit code 80|INFRA-ERROR)''')  # NOQA: E501
     },
@@ -121,7 +109,7 @@ TestPassed = [
     {'regex': re.compile('''(TEST-INFO|TEST-KNOWN-FAIL|TEST-PASS|INFO \| )'''), 'level': INFO},
 ]
 
-HarnessErrorList = [
+BaseHarnessErrorList = [
     {'substr': 'TEST-UNEXPECTED', 'level': ERROR, },
     {'substr': 'PROCESS-CRASH', 'level': ERROR, },
     {'regex': re.compile('''ERROR: (Address|Leak)Sanitizer'''), 'level': ERROR, },
@@ -129,6 +117,13 @@ HarnessErrorList = [
     {'substr': 'pure virtual method called', 'level': ERROR, },
     {'substr': 'Pure virtual function called!', 'level': ERROR, },
 ]
+
+HarnessErrorList = BaseHarnessErrorList + [
+    {'substr': 'A content process crashed', 'level': ERROR, },
+]
+
+# wpt can have expected crashes so we can't always turn treeherder orange in those cases
+WptHarnessErrorList = BaseHarnessErrorList
 
 LogcatErrorList = [
     {'substr': 'Fatal signal 11 (SIGSEGV)', 'level': ERROR,

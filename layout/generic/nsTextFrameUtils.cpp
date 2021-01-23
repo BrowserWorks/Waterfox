@@ -6,6 +6,7 @@
 
 #include "nsTextFrameUtils.h"
 
+#include "mozilla/dom/Text.h"
 #include "nsBidiUtils.h"
 #include "nsCharTraits.h"
 #include "nsIContent.h"
@@ -16,6 +17,7 @@
 #include <algorithm>
 
 using namespace mozilla;
+using namespace mozilla::dom;
 
 // static
 bool nsTextFrameUtils::IsSpaceCombiningSequenceTail(const char16_t* aChars,
@@ -98,14 +100,14 @@ static CharT* TransformWhiteSpaces(
       aEnd < aLength) {
     uint32_t ucs4before;
     uint32_t ucs4after;
-    if (aBegin > 1 && NS_IS_LOW_SURROGATE(aText[aBegin - 1]) &&
-        NS_IS_HIGH_SURROGATE(aText[aBegin - 2])) {
+    if (aBegin > 1 &&
+        NS_IS_SURROGATE_PAIR(aText[aBegin - 2], aText[aBegin - 1])) {
       ucs4before = SURROGATE_TO_UCS4(aText[aBegin - 2], aText[aBegin - 1]);
     } else {
       ucs4before = aText[aBegin - 1];
     }
-    if (aEnd + 1 < aLength && NS_IS_HIGH_SURROGATE(aText[aEnd]) &&
-        NS_IS_LOW_SURROGATE(aText[aEnd + 1])) {
+    if (aEnd + 1 < aLength &&
+        NS_IS_SURROGATE_PAIR(aText[aEnd], aText[aEnd + 1])) {
       ucs4after = SURROGATE_TO_UCS4(aText[aEnd], aText[aEnd + 1]);
     } else {
       ucs4after = aText[aEnd];
@@ -340,8 +342,8 @@ template bool nsTextFrameUtils::IsSkippableCharacterForTransformText(
     char16_t aChar);
 
 uint32_t nsTextFrameUtils::ComputeApproximateLengthWithWhitespaceCompression(
-    nsIContent* aContent, const nsStyleText* aStyleText) {
-  const nsTextFragment* frag = aContent->GetText();
+    Text* aText, const nsStyleText* aStyleText) {
+  const nsTextFragment* frag = &aText->TextFragment();
   // This is an approximation so we don't really need anything
   // too fancy here.
   uint32_t len;
@@ -388,7 +390,9 @@ bool nsSkipCharsRunIterator::NextRun() {
         mRemainingLength -= mRunLength;
       }
     }
-    if (!mRemainingLength) return false;
+    if (!mRemainingLength) {
+      return false;
+    }
     int32_t length;
     mSkipped = mIterator.IsOriginalCharSkipped(&length);
     mRunLength = std::min(length, mRemainingLength);

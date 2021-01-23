@@ -30,14 +30,16 @@ class GfxInfo : public GfxInfoBase {
   NS_IMETHOD GetD2DEnabled(bool* aD2DEnabled) override;
   NS_IMETHOD GetDWriteEnabled(bool* aDWriteEnabled) override;
   NS_IMETHOD GetDWriteVersion(nsAString& aDwriteVersion) override;
+  NS_IMETHOD GetHasBattery(bool* aHasBattery) override;
   NS_IMETHOD GetCleartypeParameters(nsAString& aCleartypeParams) override;
   NS_IMETHOD GetWindowProtocol(nsAString& aWindowProtocol) override;
+  NS_IMETHOD GetDesktopEnvironment(nsAString& aDesktopEnvironment) override;
   NS_IMETHOD GetAdapterDescription(nsAString& aAdapterDescription) override;
   NS_IMETHOD GetAdapterDriver(nsAString& aAdapterDriver) override;
   NS_IMETHOD GetAdapterVendorID(nsAString& aAdapterVendorID) override;
   NS_IMETHOD GetAdapterDeviceID(nsAString& aAdapterDeviceID) override;
   NS_IMETHOD GetAdapterSubsysID(nsAString& aAdapterSubsysID) override;
-  NS_IMETHOD GetAdapterRAM(nsAString& aAdapterRAM) override;
+  NS_IMETHOD GetAdapterRAM(uint32_t* aAdapterRAM) override;
   NS_IMETHOD GetAdapterDriverVendor(nsAString& aAdapterDriverVendor) override;
   NS_IMETHOD GetAdapterDriverVersion(nsAString& aAdapterDriverVersion) override;
   NS_IMETHOD GetAdapterDriverDate(nsAString& aAdapterDriverDate) override;
@@ -46,12 +48,15 @@ class GfxInfo : public GfxInfoBase {
   NS_IMETHOD GetAdapterVendorID2(nsAString& aAdapterVendorID) override;
   NS_IMETHOD GetAdapterDeviceID2(nsAString& aAdapterDeviceID) override;
   NS_IMETHOD GetAdapterSubsysID2(nsAString& aAdapterSubsysID) override;
-  NS_IMETHOD GetAdapterRAM2(nsAString& aAdapterRAM) override;
+  NS_IMETHOD GetAdapterRAM2(uint32_t* aAdapterRAM) override;
   NS_IMETHOD GetAdapterDriverVendor2(nsAString& aAdapterDriverVendor) override;
   NS_IMETHOD GetAdapterDriverVersion2(
       nsAString& aAdapterDriverVersion) override;
   NS_IMETHOD GetAdapterDriverDate2(nsAString& aAdapterDriverDate) override;
   NS_IMETHOD GetIsGPU2Active(bool* aIsGPU2Active) override;
+  NS_IMETHOD GetDisplayInfo(nsTArray<nsString>& aDisplayInfo) override;
+  NS_IMETHOD GetDisplayWidth(nsTArray<uint32_t>& aDisplayWidth) override;
+  NS_IMETHOD GetDisplayHeight(nsTArray<uint32_t>& aDisplayHeight) override;
   using GfxInfoBase::GetFeatureStatus;
   using GfxInfoBase::GetFeatureSuggestedDriverVersion;
 
@@ -77,9 +82,15 @@ class GfxInfo : public GfxInfoBase {
   virtual const nsTArray<GfxDriverInfo>& GetGfxDriverInfo() override;
 
  private:
+  struct ScreenInfo {
+    gfx::Rect mScreenDimensions;
+  };
+
+ private:
   void AddCrashReportAnnotations();
-  int32_t WebRtcHwEncodeSupported();
-  int32_t WebRtcHwDecodeSupported();
+  int32_t WebRtcHwVp8EncodeSupported();
+  int32_t WebRtcHwVp8DecodeSupported();
+  int32_t WebRtcHwH264Supported();
 
   bool mInitialized;
 
@@ -94,6 +105,7 @@ class GfxInfo : public GfxInfoBase {
   nsCString mOSVersion;
   uint32_t mOSVersionInteger;
   int32_t mSDKVersion;
+  ScreenInfo mScreenInfo;
 };
 
 }  // namespace widget

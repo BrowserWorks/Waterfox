@@ -1,12 +1,10 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft= javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 "use strict";
 
-const { Cc, Ci, Cr } = require("chrome");
+const { Cc, Ci, Cr, Cu, components: Components } = require("chrome");
 const ChromeUtils = require("ChromeUtils");
 const Services = require("Services");
 
@@ -27,6 +25,11 @@ loader.lazyRequireGetter(
   true
 );
 loader.lazyImporter(this, "NetUtil", "resource://gre/modules/NetUtil.jsm");
+loader.lazyGetter(
+  this,
+  "WebExtensionPolicy",
+  () => Cu.getGlobalForObject(Cu).WebExtensionPolicy
+);
 
 // Network logging
 
@@ -85,7 +88,7 @@ NetworkResponseListener.prototype = {
     if (this._wrappedNotificationCallbacks) {
       return this._wrappedNotificationCallbacks.getInterface(iid);
     }
-    throw Cr.NS_ERROR_NO_INTERFACE;
+    throw Components.Exception("", Cr.NS_ERROR_NO_INTERFACE);
   },
 
   /**
@@ -217,6 +220,7 @@ NetworkResponseListener.prototype = {
    * @param nsISupports context
    */
   onStartRequest: function(request) {
+    request = request.QueryInterface(Ci.nsIChannel);
     // Converter will call this again, we should just ignore that.
     if (this.request) {
       return;
@@ -326,12 +330,20 @@ NetworkResponseListener.prototype = {
     // was a redirect from http to https, the request object seems to contain
     // security info for the https request after redirect.
     const secinfo = this.httpActivity.channel.securityInfo;
+    if (secinfo) {
+      secinfo.QueryInterface(Ci.nsITransportSecurityInfo);
+    }
     const info = NetworkHelper.parseSecurityInfo(secinfo, this.httpActivity);
 
     let isRacing = false;
-    const channel = this.httpActivity.channel;
-    if (channel instanceof Ci.nsICacheInfoChannel) {
-      isRacing = channel.isRacing();
+    try {
+      const channel = this.httpActivity.channel;
+      if (channel instanceof Ci.nsICacheInfoChannel) {
+        isRacing = channel.isRacing();
+      }
+    } catch (err) {
+      // See the following bug for more details:
+      // https://bugzilla.mozilla.org/show_bug.cgi?id=1582589
     }
 
     this.httpActivity.owner.addSecurityInfo(info, isRacing);
@@ -372,7 +384,7 @@ NetworkResponseListener.prototype = {
    * Handle progress event as data is transferred.  This is used to record the
    * size on the wire, which may be compressed / encoded.
    */
-  onProgress: function(request, context, progress, progressMax) {
+  onProgress: function(request, progress, progressMax) {
     this.transferredSize = progress;
     // Need to forward as well to keep things like Download Manager's progress
     // bar working properly.
@@ -496,9 +508,27 @@ NetworkResponseListener.prototype = {
 
     this.receivedData = "";
 
+    let id;
+    let reason;
+
+    try {
+      const properties = this.request.QueryInterface(Ci.nsIPropertyBag);
+      reason = this.request.loadInfo.requestBlockingReason;
+      id = properties.getProperty("cancelledByExtension");
+
+      // WebExtensionPolicy is not available for workers
+      if (typeof WebExtensionPolicy !== "undefined") {
+        id = WebExtensionPolicy.getByID(id).name;
+      }
+    } catch (err) {
+      // "cancelledByExtension" doesn't have to be available.
+    }
+
     this.httpActivity.owner.addResponseContent(response, {
       discardResponseBody: this.httpActivity.discardResponseBody,
       truncated: this.truncated,
+      blockedReason: reason,
+      blockingExtension: id,
     });
 
     this._wrappedNotificationCallbacks = null;

@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY toolbar.searchPlaceholder     "Nana'ui'">
+
+<!ENTITY newPref.namePlaceholder       "Si yugui'">
+
+<!ENTITY newPref.valueBoolean          "Boolean">
+<!ENTITY newPref.valueString           "Sa nanikò' dugui'i">
+<!ENTITY newPref.valueInteger          "Hua chre' ma">
+
+<!ENTITY newPref.stringPlaceholder     "Duguatûj sa nanikò' dugui'i">
+<!ENTITY newPref.numberPlaceholder     "Duguatûj 'ngo nûmero">
+
+<!ENTITY newPref.toggleButton          "Toogle">
+<!ENTITY newPref.cancelButton          "Dure'">
+
+<!ENTITY contextMenu.copyPrefName      "Guxun si yugui ni nachrunt a'ngô hiuj u">
+<!ENTITY contextMenu.copyPrefValue     "Guxun sa du'uee ni nachrunt a'ngô hiuj u">

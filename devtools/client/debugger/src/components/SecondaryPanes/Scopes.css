@@ -13,6 +13,14 @@
   margin-top: -2px;
 }
 
+.scopes-content .node.object-node {
+  padding-inline-start: 7px;
+}
+
+.scopes-content .pane.scopes-list {
+  font-family: var(--monospace-font-family);
+}
+
 .scopes-content .toggle-map-scopes a.mdn {
   padding-inline-start: 3px;
 }
@@ -38,7 +46,6 @@ html[dir="rtl"] .object-node {
 }
 
 .objectBox-object,
-.objectBox-string,
 .objectBox-text,
 .objectBox-table,
 .objectLink-textNode,
@@ -84,7 +91,11 @@ html[dir="rtl"] .object-node {
 
 .scopes-list .tree.object-inspector .node.object-node {
   display: flex;
-  align-items: center;
+}
+
+.scopes-list .tree.object-inspector .tree-node button.arrow,
+.scopes-list button.invoke-getter {
+  margin-top: 2px;
 }
 
 .scopes-list .tree {

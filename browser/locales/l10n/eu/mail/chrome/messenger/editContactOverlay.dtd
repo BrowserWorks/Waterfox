@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "Ezabatu">
+<!ENTITY editContactPanelDeleteContact.accesskey "E">
+
+<!ENTITY editContactName.label "Izena:">
+<!ENTITY editContactName.accesskey "n">
+
+<!ENTITY editContactEmail.label "E-posta:">
+<!ENTITY editContactEmail.accesskey "E">
+
+<!ENTITY editContactAddressBook.label "Helbide-liburua:">
+<!ENTITY editContactAddressBook.accesskey "a">
+
+<!ENTITY editContactPanelDone.label "Eginda">
+<!ENTITY editContactPanelDone.accesskey "d">
+
+<!ENTITY contactMoveDisabledWarning.description "Ezin duzu helbide-liburua aldatu kontaktua posta-zerrenda batean dagoelako.">

@@ -2,10 +2,12 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import, print_function
+from __future__ import absolute_import, print_function, unicode_literals
 
 import hashlib
 import os
+import six
+
 
 here = os.path.join(os.path.dirname(__file__))
 
@@ -32,7 +34,7 @@ def get_state_dir(srcdir=False):
     srcdir = os.path.abspath(MozbuildObject.from_environment(cwd=here).topsrcdir)
     # Shortening to 12 characters makes these directories a bit more manageable
     # in a terminal and is more than good enough for this purpose.
-    srcdir_hash = hashlib.sha256(srcdir).hexdigest()[:12]
+    srcdir_hash = hashlib.sha256(six.ensure_binary(srcdir)).hexdigest()[:12]
 
     state_dir = os.path.join(state_dir, 'srcdirs', '{}-{}'.format(
         os.path.basename(srcdir), srcdir_hash))

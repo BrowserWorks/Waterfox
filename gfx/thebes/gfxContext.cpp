@@ -17,7 +17,7 @@
 #include "gfxASurface.h"
 #include "gfxPattern.h"
 #include "gfxPlatform.h"
-#include "gfxPrefs.h"
+
 #include "GeckoProfiler.h"
 #include "gfx2DGlue.h"
 #include "mozilla/gfx/PathHelpers.h"
@@ -292,8 +292,13 @@ void gfxContext::SnappedClip(const gfxRect& rect) {
 
 // transform stuff
 void gfxContext::Multiply(const gfxMatrix& matrix) {
+  Multiply(ToMatrix(matrix));
+}
+
+// transform stuff
+void gfxContext::Multiply(const Matrix& matrix) {
   CURRENTSTATE_CHANGED()
-  ChangeTransform(ToMatrix(matrix) * mTransform);
+  ChangeTransform(matrix * mTransform);
 }
 
 void gfxContext::SetMatrix(const gfx::Matrix& matrix) {
@@ -427,11 +432,9 @@ bool gfxContext::CurrentDash(FallibleTArray<Float>& dashes,
   const AzureState& state = CurrentState();
   int count = state.strokeOptions.mDashLength;
 
-  if (count <= 0 || !dashes.SetLength(count, fallible)) {
+  if (count <= 0 || !dashes.Assign(state.dashPattern, fallible)) {
     return false;
   }
-
-  dashes = state.dashPattern;
 
   *offset = state.strokeOptions.mDashOffset;
 
@@ -585,19 +588,19 @@ bool gfxContext::ClipContainsRect(const gfxRect& aRect) {
 
 // rendering sources
 
-void gfxContext::SetColor(const Color& aColor) {
+void gfxContext::SetColor(const sRGBColor& aColor) {
   CURRENTSTATE_CHANGED()
   CurrentState().pattern = nullptr;
   CurrentState().color = ToDeviceColor(aColor);
 }
 
-void gfxContext::SetDeviceColor(const Color& aColor) {
+void gfxContext::SetDeviceColor(const DeviceColor& aColor) {
   CURRENTSTATE_CHANGED()
   CurrentState().pattern = nullptr;
   CurrentState().color = aColor;
 }
 
-bool gfxContext::GetDeviceColor(Color& aColorOut) {
+bool gfxContext::GetDeviceColor(DeviceColor& aColorOut) {
   if (CurrentState().pattern) {
     return CurrentState().pattern->GetSolidColor(aColorOut);
   }
@@ -853,7 +856,8 @@ void gfxContext::ChangeTransform(const Matrix& aNewMatrix,
 }
 
 Rect gfxContext::GetAzureDeviceSpaceClipBounds() const {
-  Rect rect(CurrentState().deviceOffset.x, CurrentState().deviceOffset.y,
+  Rect rect(CurrentState().deviceOffset.x + Float(mDT->GetRect().x),
+            CurrentState().deviceOffset.y + Float(mDT->GetRect().y),
             Float(mDT->GetSize().width), Float(mDT->GetSize().height));
   for (unsigned int i = 0; i < mStateStack.Length(); i++) {
     for (unsigned int c = 0; c < mStateStack[i].pushedClips.Length(); c++) {

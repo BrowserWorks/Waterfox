@@ -52,40 +52,35 @@ inline bool IsLowerCase(uint32_t c) { return ToUpperCase(c) != c; }
 
 #ifdef MOZILLA_INTERNAL_API
 
-class nsCaseInsensitiveStringComparator : public nsStringComparator {
- public:
-  nsCaseInsensitiveStringComparator() = default;
+uint32_t ToFoldedCase(uint32_t aChar);
+void ToFoldedCase(nsAString& aString);
+void ToFoldedCase(const char16_t* aIn, char16_t* aOut, uint32_t aLen);
 
-  virtual int32_t operator()(const char16_t*, const char16_t*, uint32_t,
-                             uint32_t) const override;
-};
+uint32_t ToNaked(uint32_t aChar);
+void ToNaked(nsAString& aString);
 
-class nsCaseInsensitiveUTF8StringComparator : public nsCStringComparator {
- public:
-  virtual int32_t operator()(const char*, const char*, uint32_t,
-                             uint32_t) const override;
-};
+int32_t nsCaseInsensitiveStringComparator(const char16_t*, const char16_t*,
+                                          uint32_t, uint32_t);
+
+int32_t nsCaseInsensitiveUTF8StringComparator(const char*, const char*,
+                                              uint32_t, uint32_t);
 
 class nsCaseInsensitiveStringArrayComparator {
  public:
   template <class A, class B>
   bool Equals(const A& a, const B& b) const {
-    return a.Equals(b, nsCaseInsensitiveStringComparator());
+    return a.Equals(b, nsCaseInsensitiveStringComparator);
   }
 };
 
-class nsASCIICaseInsensitiveStringComparator : public nsStringComparator {
- public:
-  nsASCIICaseInsensitiveStringComparator() {}
-  virtual int operator()(const char16_t*, const char16_t*, uint32_t,
-                         uint32_t) const override;
-};
+int32_t nsASCIICaseInsensitiveStringComparator(const char16_t*, const char16_t*,
+                                               uint32_t, uint32_t);
 
 inline bool CaseInsensitiveFindInReadable(
     const nsAString& aPattern, nsAString::const_iterator& aSearchStart,
     nsAString::const_iterator& aSearchEnd) {
   return FindInReadable(aPattern, aSearchStart, aSearchEnd,
-                        nsCaseInsensitiveStringComparator());
+                        nsCaseInsensitiveStringComparator);
 }
 
 inline bool CaseInsensitiveFindInReadable(const nsAString& aPattern,
@@ -93,7 +88,7 @@ inline bool CaseInsensitiveFindInReadable(const nsAString& aPattern,
   nsAString::const_iterator searchBegin, searchEnd;
   return FindInReadable(aPattern, aHay.BeginReading(searchBegin),
                         aHay.EndReading(searchEnd),
-                        nsCaseInsensitiveStringComparator());
+                        nsCaseInsensitiveStringComparator);
 }
 
 #endif  // MOZILLA_INTERNAL_API
@@ -118,8 +113,9 @@ uint32_t GetLowerUTF8Codepoint(const char* aStr, const char* aEnd,
 
 /**
  * This function determines whether the UTF-8 sequence pointed to by aLeft is
- * case-insensitively-equal to the UTF-8 sequence pointed to by aRight, as
- * defined by having matching lower-cased codepoints.
+ * case insensitively equal to the UTF-8 sequence pointed to by aRight (or
+ * optionally, case and diacritic insensitively equal), as defined by having
+ * matching (naked) lower-cased codepoints.
  *
  * aLeftEnd marks the first memory location past aLeft that is not part of
  * aLeft; aRightEnd similarly marks the end of aRight.
@@ -135,11 +131,15 @@ uint32_t GetLowerUTF8Codepoint(const char* aStr, const char* aEnd,
  * false, possibly leaving aLeftNext and aRightNext uninitialized.  If the
  * function returns true, aErr is guaranteed to be false and both aLeftNext and
  * aRightNext are guaranteed to be initialized.
+ *
+ * If aMatchDiacritics is false, the comparison is neither case-sensitive nor
+ * diacritic-sensitive.
  */
 bool CaseInsensitiveUTF8CharsEqual(const char* aLeft, const char* aRight,
                                    const char* aLeftEnd, const char* aRightEnd,
                                    const char** aLeftNext,
-                                   const char** aRightNext, bool* aErr);
+                                   const char** aRightNext, bool* aErr,
+                                   bool aMatchDiacritics = true);
 
 namespace mozilla {
 

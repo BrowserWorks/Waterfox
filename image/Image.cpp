@@ -4,7 +4,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "Image.h"
-#include "gfxPrefs.h"
+
+#include "imgRequest.h"
 #include "Layers.h"  // for LayerManager
 #include "nsRefreshDriver.h"
 #include "nsContentUtils.h"
@@ -20,9 +21,40 @@ namespace image {
 // Memory Reporting
 ///////////////////////////////////////////////////////////////////////////////
 
-ImageMemoryCounter::ImageMemoryCounter(Image* aImage, SizeOfState& aState,
-                                       bool aIsUsed)
-    : mIsUsed(aIsUsed) {
+ImageMemoryCounter::ImageMemoryCounter(imgRequest* aRequest,
+                                       SizeOfState& aState, bool aIsUsed)
+    : mProgress(UINT32_MAX),
+      mType(UINT16_MAX),
+      mIsUsed(aIsUsed),
+      mHasError(false),
+      mValidating(false) {
+  MOZ_ASSERT(aRequest);
+
+  // We don't have the image object yet, but we can get some information.
+  nsCOMPtr<nsIURI> imageURL;
+  nsresult rv = aRequest->GetURI(getter_AddRefs(imageURL));
+  if (NS_SUCCEEDED(rv) && imageURL) {
+    imageURL->GetSpec(mURI);
+  }
+
+  mType = imgIContainer::TYPE_REQUEST;
+  mHasError = NS_FAILED(aRequest->GetImageErrorCode());
+  mValidating = !!aRequest->GetValidator();
+
+  RefPtr<ProgressTracker> tracker = aRequest->GetProgressTracker();
+  if (tracker) {
+    mProgress = tracker->GetProgress();
+  }
+}
+
+ImageMemoryCounter::ImageMemoryCounter(imgRequest* aRequest, Image* aImage,
+                                       SizeOfState& aState, bool aIsUsed)
+    : mProgress(UINT32_MAX),
+      mType(UINT16_MAX),
+      mIsUsed(aIsUsed),
+      mHasError(false),
+      mValidating(false) {
+  MOZ_ASSERT(aRequest);
   MOZ_ASSERT(aImage);
 
   // Extract metadata about the image.
@@ -38,6 +70,13 @@ ImageMemoryCounter::ImageMemoryCounter(Image* aImage, SizeOfState& aState,
   mIntrinsicSize.SizeTo(width, height);
 
   mType = aImage->GetType();
+  mHasError = aImage->HasError();
+  mValidating = !!aRequest->GetValidator();
+
+  RefPtr<ProgressTracker> tracker = aImage->GetProgressTracker();
+  if (tracker) {
+    mProgress = tracker->GetProgress();
+  }
 
   // Populate memory counters for source and decoded data.
   mValues.SetSource(aImage->SizeOfSourceWithComputedFallback(aState));
@@ -406,9 +445,7 @@ void ImageResource::NotifyDrawingObservers() {
     return;
   }
 
-  bool match = false;
-  if ((NS_FAILED(mURI->SchemeIs("resource", &match)) || !match) &&
-      (NS_FAILED(mURI->SchemeIs("chrome", &match)) || !match)) {
+  if (!mURI->SchemeIs("resource") && !mURI->SchemeIs("chrome")) {
     return;
   }
 

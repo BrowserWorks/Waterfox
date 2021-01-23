@@ -21,7 +21,6 @@ const kPrefLetterboxingDimensions =
 const kPrefLetterboxingTesting =
   "privacy.resistFingerprinting.letterboxing.testing";
 const kTopicDOMWindowOpened = "domwindowopened";
-const kEventLetterboxingSizeUpdate = "Letterboxing:ContentSizeUpdated";
 
 var logConsole;
 function log(msg) {
@@ -116,17 +115,6 @@ class _RFPHelper {
     }
   }
 
-  receiveMessage(aMessage) {
-    switch (aMessage.name) {
-      case kEventLetterboxingSizeUpdate:
-        let win = aMessage.target.ownerGlobal;
-        this._updateMarginsForTabsInWindow(win);
-        break;
-      default:
-        break;
-    }
-  }
-
   _handlePrefChanged(data) {
     switch (data) {
       case kPrefResistFingerprinting:
@@ -141,6 +129,10 @@ class _RFPHelper {
       default:
         break;
     }
+  }
+
+  contentSizeUpdated(win) {
+    this._updateMarginsForTabsInWindow(win);
   }
 
   // ============================================================================
@@ -179,6 +171,7 @@ class _RFPHelper {
       case 0: // will prompt
       // This should only happen when turning privacy.resistFingerprinting off.
       // Works like disabling accept-language spoofing.
+      // fall through
       case 1: // don't spoof
         if (
           Services.prefs.prefHasUserValue("javascript.use_us_english_locale")
@@ -200,7 +193,7 @@ class _RFPHelper {
 
   _shouldPromptForLanguagePref() {
     return (
-      Services.locale.appLocaleAsLangTag.substr(0, 2) !== "en" &&
+      Services.locale.appLocaleAsBCP47.substr(0, 2) !== "en" &&
       Services.prefs.getIntPref(kPrefSpoofEnglish) === 0
     );
   }
@@ -265,8 +258,7 @@ class _RFPHelper {
     );
     let message = navigatorBundle.formatStringFromName(
       "privacy.spoof_english",
-      [brandShortName],
-      1
+      [brandShortName]
     );
     let response = Services.prompt.confirmEx(
       null,
@@ -318,11 +310,32 @@ class _RFPHelper {
   _handleLetterboxingPrefChanged() {
     if (Services.prefs.getBoolPref(kPrefLetterboxing, false)) {
       Services.ww.registerNotification(this);
+      this._registerActor();
       this._attachAllWindows();
     } else {
+      this._unregisterActor();
       this._detachAllWindows();
       Services.ww.unregisterNotification(this);
     }
+  }
+
+  _registerActor() {
+    ChromeUtils.registerWindowActor("RFPHelper", {
+      parent: {
+        moduleURI: "resource:///actors/RFPHelperParent.jsm",
+      },
+      child: {
+        moduleURI: "resource:///actors/RFPHelperChild.jsm",
+        events: {
+          resize: {},
+        },
+      },
+      allFrames: true,
+    });
+  }
+
+  _unregisterActor() {
+    ChromeUtils.unregisterWindowActor("RFPHelper");
   }
 
   // The function to parse the dimension set from the pref value. The pref value
@@ -406,11 +419,23 @@ class _RFPHelper {
       let containerWidth = browserContainer.clientWidth;
       let containerHeight = browserContainer.clientHeight;
 
+      // If the findbar or devtools are out, we need to subtract their height (plus 1
+      // for the separator) from the container height, because we need to adjust our
+      // letterboxing to account for it; however it is not included in that dimension
+      // (but rather is subtracted from the content height.)
+      let findBar = win.gFindBarInitialized ? win.gFindBar : undefined;
+      let findBarOffset =
+        findBar && !findBar.hidden ? findBar.clientHeight + 1 : 0;
+      let devtools = browserContainer.getElementsByClassName(
+        "devtools-toolbox-bottom-iframe"
+      );
+      let devtoolsOffset = devtools.length ? devtools[0].clientHeight : 0;
+
       return {
         contentWidth,
         contentHeight,
         containerWidth,
-        containerHeight,
+        containerHeight: containerHeight - findBarOffset - devtoolsOffset,
       };
     });
 
@@ -567,10 +592,6 @@ class _RFPHelper {
   _attachWindow(aWindow) {
     aWindow.gBrowser.addTabsProgressListener(this);
     aWindow.addEventListener("TabOpen", this);
-    aWindow.messageManager.addMessageListener(
-      kEventLetterboxingSizeUpdate,
-      this
-    );
 
     // Rounding the content viewport.
     this._updateMarginsForTabsInWindow(aWindow);
@@ -594,10 +615,6 @@ class _RFPHelper {
     let tabBrowser = aWindow.gBrowser;
     tabBrowser.removeTabsProgressListener(this);
     aWindow.removeEventListener("TabOpen", this);
-    aWindow.messageManager.removeMessageListener(
-      kEventLetterboxingSizeUpdate,
-      this
-    );
 
     // Clear all margins and tooltip for all browsers.
     for (let tab of tabBrowser.tabs) {
@@ -620,8 +637,7 @@ class _RFPHelper {
     }
   }
 
-  _handleDOMWindowOpened(aSubject) {
-    let win = aSubject.QueryInterface(Ci.nsIDOMWindow);
+  _handleDOMWindowOpened(win) {
     let self = this;
 
     win.addEventListener(

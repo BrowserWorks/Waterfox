@@ -1,3 +1,7 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this file,
+# You can obtain one at http://mozilla.org/MPL/2.0/.
+
 # Pretty-printers for InterpreterRegs.
 
 import gdb
@@ -12,7 +16,6 @@ class InterpreterTypeCache(object):
     # Cache information about the Interpreter types for this objfile.
     def __init__(self):
         self.tValue = gdb.lookup_type('JS::Value')
-        self.tJSOp = gdb.lookup_type('JSOp')
         self.tScriptFrameIterData = gdb.lookup_type('js::ScriptFrameIter::Data')
         self.tInterpreterFrame = gdb.lookup_type('js::InterpreterFrame')
         self.tBaselineFrame = gdb.lookup_type('js::jit::BaselineFrame')
@@ -36,12 +39,7 @@ class InterpreterRegs(object):
         fp_ = 'fp_ = {}'.format(self.value['fp_'])
         slots = (self.value['fp_'] + 1).cast(self.itc.tValue.pointer())
         sp = 'sp = fp_.slots() + {}'.format(self.value['sp'] - slots)
-        pc = self.value['pc']
-        try:
-            opcode = pc.dereference().cast(self.itc.tJSOp)
-        except Exception:
-            opcode = 'bad pc'
-        pc = 'pc = {} ({})'.format(pc.cast(self.cache.void_ptr_t), opcode)
+        pc = 'pc = {}'.format(self.value['pc'])
         return '{{ {}, {}, {} }}'.format(fp_, sp, pc)
 
 

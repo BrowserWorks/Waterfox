@@ -9,26 +9,26 @@
 #include "nsCoord.h"
 #include "nsCSSPropertyID.h"
 #include "nsTArrayForwardDeclare.h"
-#include "gfxFontFamilyList.h"
 #include "nsStringFwd.h"
-#include "nsStyleStruct.h"
 #include "nsCRT.h"
+#include "nsColor.h"
+#include "nsGkAtoms.h"
 
 class nsCSSValue;
-class nsStyleCoord;
 class nsIContent;
 class nsIPrincipal;
 class nsIURI;
 struct gfxFontFeature;
-struct gfxAlternateValue;
 struct nsCSSKTableEntry;
 struct nsCSSValueList;
+struct nsStylePosition;
 
 namespace mozilla {
 class FontSlantStyle;
 namespace dom {
+class Document;
 class Element;
-}
+}  // namespace dom
 }  // namespace mozilla
 
 // Style utility functions
@@ -59,15 +59,6 @@ class nsStyleUtil {
                                    nsAString& aResult);
 
  public:
-  // Append a bitmask-valued property's value(s) (space-separated) to aResult.
-  static void AppendBitmaskCSSValue(const nsCSSKTableEntry aTable[],
-                                    int32_t aMaskedValue, int32_t aFirstMask,
-                                    int32_t aLastMask, nsAString& aResult);
-
-  static void AppendAngleValue(const nsStyleCoord& aValue, nsAString& aResult);
-
-  static void AppendPaintOrderValue(uint8_t aValue, nsAString& aResult);
-
   static void AppendCSSNumber(float aNumber, nsAString& aResult) {
     aResult.AppendFloat(aNumber);
   }
@@ -127,7 +118,7 @@ class nsStyleUtil {
   static bool ObjectPropsMightCauseOverflow(const nsStylePosition* aStylePos);
 
   /*
-   *  Does this principal have a CSP that blocks the application of
+   *  Does the document have a CSP that blocks the application of
    *  inline styles? Returns false if application of the style should
    *  be blocked.
    *
@@ -136,15 +127,11 @@ class nsStyleUtil {
    *      Included to check the nonce attribute if one is provided. Allowed to
    *      be null, if this is for something other than a <style> element (in
    *      which case nonces won't be checked).
-   *  @param aPrincipal
-   *      The principal of the of the document (*not* of the style sheet).
-   *      The document's principal is where any Content Security Policy that
-   *      should be used to block or allow inline styles will be located.
+   *  @param aDocument
+   *      The document containing the inline style (for querying the CSP);
    *  @param aTriggeringPrincipal
    *      The principal of the scripted caller which added the inline
    *      stylesheet, or null if no scripted caller can be identified.
-   *  @param aSourceURI
-   *      URI of document containing inline style (for reporting violations)
    *  @param aLineNumber
    *      Line number of inline style element in the containing document (for
    *      reporting violations)
@@ -159,10 +146,9 @@ class nsStyleUtil {
    *      Does CSP allow application of the specified inline style?
    */
   static bool CSPAllowsInlineStyle(mozilla::dom::Element* aContent,
-                                   nsIPrincipal* aPrincipal,
+                                   mozilla::dom::Document* aDocument,
                                    nsIPrincipal* aTriggeringPrincipal,
-                                   nsIURI* aSourceURI, uint32_t aLineNumber,
-                                   uint32_t aColumnNumber,
+                                   uint32_t aLineNumber, uint32_t aColumnNumber,
                                    const nsAString& aStyleText, nsresult* aRv);
 
   template <size_t N>

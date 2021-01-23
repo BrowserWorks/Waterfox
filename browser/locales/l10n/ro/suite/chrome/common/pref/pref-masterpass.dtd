@@ -1,0 +1,37 @@
+<!--
+# Translator(s):
+#
+# Iosif Fettich <ifettich@netsoft.ro>
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.masterpass.title                  "Parole generale">
+<!ENTITY  managepassword.caption                 "Limită de timp pentru parola generală">
+<!ENTITY  managepassword.text                    "&brandShortName; vă va cere parola generală:">
+<!ENTITY  managepassword.askfirsttime            "Prima data când este necesară">
+<!ENTITY  managepassword.askfirsttime.accesskey  "t">
+<!ENTITY  managepassword.askeverytime            "De fiecare dată când este ncesară">
+<!ENTITY  managepassword.askeverytime.accesskey  "e">
+<!ENTITY  managepassword.asktimeout              "Dacă nu a mai fost folosită de ">
+<!ENTITY  managepassword.asktimeout.accesskey    "n">
+<!ENTITY  managepassword.timeout.unit            "minute sau mai mult">
+
+<!ENTITY  changepassword.caption                 "Schimbare parolă master">
+<!ENTITY  changepassword.text                    "Parola dumneavoastră generală protejează informații private cum ar fi parole web și certificate.">
+<!ENTITY  changepassword.button                  "Schimbă parola...">
+<!ENTITY  changepassword.accesskey               "A">
+
+<!ENTITY  resetpassword.caption                  "Resetează parola generală">
+<!ENTITY  resetpassword.text                     "Dacă resetați parola dumneavoastră generală, toate parolele web și email, datele din formulare, certificatele personale și cheile private se vor pierde.">
+<!ENTITY  resetpassword.button                   "Resetează parola">
+<!ENTITY  resetpassword.accesskey                "L">

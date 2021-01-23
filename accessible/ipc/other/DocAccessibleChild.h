@@ -13,6 +13,7 @@ namespace mozilla {
 namespace a11y {
 
 class Accessible;
+class DocAccessiblePlatformExtChild;
 class HyperTextAccessible;
 class TextLeafAccessible;
 class ImageAccessible;
@@ -24,6 +25,8 @@ class TableCellAccessible;
  * and their lifetime is the same as the document they represent.
  */
 class DocAccessibleChild : public DocAccessibleChildBase {
+  friend DocAccessiblePlatformExtChild;
+
  public:
   DocAccessibleChild(DocAccessible* aDoc, IProtocol* aManager)
       : DocAccessibleChildBase(aDoc) {
@@ -52,8 +55,8 @@ class DocAccessibleChild : public DocAccessibleChildBase {
   /*
    * Get the name for the accessible with given id.
    */
-  virtual mozilla::ipc::IPCResult RecvName(const uint64_t& aID,
-                                           nsString* aName) override;
+  virtual mozilla::ipc::IPCResult RecvName(const uint64_t& aID, nsString* aName,
+                                           uint32_t* aFlag) override;
 
   virtual mozilla::ipc::IPCResult RecvValue(const uint64_t& aID,
                                             nsString* aValue) override;
@@ -81,8 +84,9 @@ class DocAccessibleChild : public DocAccessibleChildBase {
   virtual mozilla::ipc::IPCResult RecvARIARoleAtom(const uint64_t& aID,
                                                    nsString* aRole) override;
 
-  virtual mozilla::ipc::IPCResult RecvGetLevelInternal(
-      const uint64_t& aID, int32_t* aLevel) override;
+  virtual mozilla::ipc::IPCResult RecvGroupPosition(
+      const uint64_t& aID, int32_t* aLevel, int32_t* aSimilarItemsInGroup,
+      int32_t* aPositionInGroup) override;
 
   virtual mozilla::ipc::IPCResult RecvAttributes(
       const uint64_t& aID, nsTArray<Attribute>* aAttributes) override;
@@ -455,10 +459,10 @@ class DocAccessibleChild : public DocAccessibleChildBase {
       const uint64_t& aID, nsString* aURL, nsString* aDocType,
       nsString* aMimeType) override;
 
-  virtual mozilla::ipc::IPCResult RecvAccessibleAtPoint(
+  virtual mozilla::ipc::IPCResult RecvChildAtPoint(
       const uint64_t& aID, const int32_t& aX, const int32_t& aY,
-      const bool& aNeedsScreenCoords, const uint32_t& aWhich, uint64_t* aResult,
-      bool* aOk) override;
+      const uint32_t& aWhich, PDocAccessibleChild** aResultDoc,
+      uint64_t* aResultID) override;
 
   virtual mozilla::ipc::IPCResult RecvExtents(const uint64_t& aID,
                                               const bool& aNeedsScreenCoords,
@@ -470,6 +474,14 @@ class DocAccessibleChild : public DocAccessibleChildBase {
       int32_t* aHeight) override;
   virtual mozilla::ipc::IPCResult RecvDOMNodeID(const uint64_t& aID,
                                                 nsString* aDOMNodeID) override;
+
+  virtual bool DeallocPDocAccessiblePlatformExtChild(
+      PDocAccessiblePlatformExtChild* aActor) override;
+
+  virtual PDocAccessiblePlatformExtChild* AllocPDocAccessiblePlatformExtChild()
+      override;
+
+  DocAccessiblePlatformExtChild* GetPlatformExtension();
 
  private:
   Accessible* IdToAccessible(const uint64_t& aID) const;

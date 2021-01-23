@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- These are added to the Advanced - Scripts & Plugins panel -->
+<!ENTITY enbPluginCheckMailNews.label     "ფოსტა და ჯგუფები">
+<!ENTITY enbPluginCheckMailNews.accesskey "a">
+
+<!-- These are added to the Window menu -->
+<!ENTITY mail.label                       "ფოსტა და ჯგუფები">
+<!ENTITY mail.accesskey                   "M">
+<!ENTITY addressbook.label                "წიგნაკი">
+<!ENTITY addressbook.accesskey            "A">
+
+<!-- These are added to Preferences dialog -->
+<!ENTITY viewingMessages.label            "წერილის ჩვენება">
+<!ENTITY notifications.label              "შეტყობინებები">
+<!ENTITY composingMessages.label          "შექმნა">
+<!ENTITY format.label                     "გაგზავნის ფორმატი">
+<!ENTITY address.label                    "ადრესაცია">
+<!ENTITY junk.label                       "ჯართი">
+<!ENTITY tags.label                       "ჭდეები">
+<!ENTITY return.label                     "მიღების შეტყობინება">
+<!ENTITY characterEncoding2.label         "ტექსტის კოდირება">
+<!ENTITY networkStorage.label             "ქსელი და ადგილი დისკზე">

@@ -1,0 +1,55 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+---
+job-defaults:
+    when:
+        files-changed:
+            - "remote/**"
+    platform: linux64/opt
+    require-build:
+        linux64/opt: build-linux64/opt
+    fetches:
+        build:
+            - target.tar.bz2
+        toolchain:
+            - linux64-node
+    treeherder:
+        kind: test
+        tier: 2
+    worker-type: t-linux-xlarge-source
+    worker:
+        docker-image: {in-tree: desktop1604-test}
+        max-run-time: 1800
+        artifacts:
+            - type: file
+              name: public/remote/results.json
+              path: /builds/worker/results.json
+            - type: file
+              name: public/remote/pup_errorsummary.json
+              path: /builds/worker/pup_errorsummary.json
+            - type: file
+              name: public/remote/pup_raw.log
+              path: /builds/worker/pup_raw.log
+
+puppeteer:
+    description: Puppeteer tests against Firefox CDP-based remote protocol
+    run-on-projects: ["mozilla-central"]
+    treeherder:
+        symbol: remote(pup)
+    run:
+        using: run-task
+        command: >
+            cd $GECKO_PATH/ &&
+            ./mach puppeteer-test -vv --binary $MOZ_FETCHES_DIR/firefox/firefox --headless --write-results /builds/worker/results.json --log-tbpl - --log-errorsummary /builds/worker/pup_errorsummary.json --log-raw /builds/worker/pup_raw.log
+
+puppeteer-fis:
+    description: Puppeteer tests against Firefox CDP-based remote protocol with Fission (site isolation) turned on
+    run-on-projects: []
+    treeherder:
+        symbol: remote(pup-fis)
+    run:
+        using: run-task
+        command: >
+            cd $GECKO_PATH/ &&
+            ./mach puppeteer-test -vv --binary $MOZ_FETCHES_DIR/firefox/firefox --headless --enable-fission --write-results /builds/worker/results.json --log-tbpl - --log-errorsummary /builds/worker/pup_errorsummary.json --log-raw /builds/worker/pup_raw.log

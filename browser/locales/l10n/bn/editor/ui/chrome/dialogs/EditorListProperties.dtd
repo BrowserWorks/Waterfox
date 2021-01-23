@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "তালিকার বৈশিষ্ট্য">
+
+<!ENTITY ListType.label "তালিকার ধরণ">
+<!ENTITY bulletStyle.label "বুলেট শৈলী:">
+<!ENTITY startingNumber.label "শুরু হবে (S):">
+<!ENTITY startingNumber.accessKey "S">
+<!ENTITY none.value "কোনোটি নয়">
+<!ENTITY bulletList.value "বুলেট (অসংখ্যায়িত) তালিকা">
+<!ENTITY numberList.value "সংখ্যায়িত তালিকা">
+<!ENTITY definitionList.value "সংজ্ঞার তালিকা">
+<!ENTITY changeEntireListRadio.label "সম্পূর্ণ তালিকা পরিবর্তন (C)">
+<!ENTITY changeEntireListRadio.accessKey "C">
+<!ENTITY changeSelectedRadio.label "শুধুমাত্র নির্বাচিত আইটেম পরিবর্তন (i)">
+<!ENTITY changeSelectedRadio.accessKey "i">

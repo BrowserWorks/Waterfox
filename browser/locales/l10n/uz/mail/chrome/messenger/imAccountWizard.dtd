@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Chat hisobi ustasi">
+
+<!ENTITY accountProtocolTitle.label   "Chat tarmog‘i">
+<!ENTITY accountProtocolInfo.label    "Chat hisobingiz tarmog‘ini tanlang.">
+<!ENTITY accountProtocolField.label   "Tarmoq:">
+<!ENTITY accountProtocolGetMore.label "Ko‘proq olish…">
+
+<!ENTITY accountUsernameTitle.label   "Foydalanuvchi nomi">
+<!ENTITY accountUsernameDuplicate.label "Ushbu hisob allaqachon moslangan!">
+
+<!ENTITY accountPasswordTitle.label   "Parol">
+<!ENTITY accountPasswordInfo.label    "Pastdagi maydonchaga parolni kiriting.">
+<!ENTITY accountPasswordField.label   "Parol:">
+<!ENTITY accountPasswordManager.label "Bu yerga kiritilgan parol Parol menejeriga saqlanadi. Bu hisobga ulanish uchun har safar parol kiritishni xohlasangiz, bu maydonchani bo‘sh qoldiring.">
+
+<!ENTITY accountAdvancedTitle.label   "Qo‘shimcha moslamalar">
+<!ENTITY accountAdvancedInfo.label    "Xohlasangiz, bu bosqichni tashlab ketishingiz mumkin.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Yangi xat kelganda ogohlantirilsin">
+<!ENTITY accountAliasGroupbox.caption "Kompyuterdagi taxallus">
+<!ENTITY accountAliasField.label      "Taxallus:">
+<!ENTITY accountAliasInfo.label       "Bu faqat suhbatlashayotganingizda suhbatlarda ko‘rinadi, masofadagi kontaktlar buni ko‘rmaydi.">
+<!ENTITY accountProxySettings.caption "Proksi sozlamalari">
+<!ENTITY accountProxySettings.change.label     "O‘zgartirish…">
+<!ENTITY accountProxySettings.change.accessKey "g">
+
+<!ENTITY accountSummaryTitle.label   "Natija">
+<!ENTITY accountSummaryInfo.label    "Siz kiritgan ma’lumotlarning jamlanmasi quyida ko‘rsatilgan. Hisob yaratishdan oldin uni tekshirib chiqing.">
+<!ENTITY accountSummary.connectNow.label "Bu hisob hozir ulansin.">

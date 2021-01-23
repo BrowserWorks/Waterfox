@@ -7,8 +7,7 @@
 /**
  * ChildSHistory represents a view of session history from a child process. It
  * exposes getters for some cached history state, and mutators which are
- * implemented by communicating with the actual history storage in
- * ParentSHistory.
+ * implemented by communicating with the actual history storage.
  *
  * NOTE: Currently session history is in transition, meaning that we're still
  * using the legacy nsSHistory class internally. The API exposed from this class
@@ -23,29 +22,32 @@
 #include "nsCOMPtr.h"
 #include "mozilla/ErrorResult.h"
 #include "nsWrapperCache.h"
+#include "nsThreadUtils.h"
+#include "mozilla/LinkedList.h"
 
-class nsSHistory;
-class nsDocShell;
+class nsISHEntry;
 class nsISHistory;
-class nsIWebNavigation;
-class nsIGlobalObject;
 
 namespace mozilla {
 namespace dom {
 
-class ParentSHistory;
+class BrowsingContext;
 
 class ChildSHistory : public nsISupports, public nsWrapperCache {
  public:
-  friend class ParentSHistory;
-
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(ChildSHistory)
   nsISupports* GetParentObject() const;
   JSObject* WrapObject(JSContext* cx,
                        JS::Handle<JSObject*> aGivenProto) override;
 
-  explicit ChildSHistory(nsDocShell* aDocShell);
+  explicit ChildSHistory(BrowsingContext* aBrowsingContext);
+
+  // Create or destroy the session history implementation in the child process.
+  // This can be removed once session history is stored exclusively in the
+  // parent process.
+  void SetIsInProcess(bool aIsInProcess);
+  bool IsInProcess() { return !!mHistory; }
 
   int32_t Count();
   int32_t Index();
@@ -62,6 +64,9 @@ class ChildSHistory : public nsISupports, public nsWrapperCache {
    */
   bool CanGo(int32_t aOffset);
   void Go(int32_t aOffset, ErrorResult& aRv);
+  void AsyncGo(int32_t aOffset);
+
+  void RemovePendingHistoryNavigations();
 
   /**
    * Evicts all content viewers within the current process.
@@ -70,13 +75,37 @@ class ChildSHistory : public nsISupports, public nsWrapperCache {
 
   nsISHistory* LegacySHistory();
 
-  ParentSHistory* GetParentIfSameProcess();
+  void SetLength(uint32_t aLength) { mLength = aLength; }
 
  private:
-  virtual ~ChildSHistory();
+  virtual ~ChildSHistory() = default;
 
-  RefPtr<nsDocShell> mDocShell;
-  RefPtr<nsSHistory> mHistory;
+  class PendingAsyncHistoryNavigation
+      : public Runnable,
+        public mozilla::LinkedListElement<PendingAsyncHistoryNavigation> {
+   public:
+    PendingAsyncHistoryNavigation(ChildSHistory* aHistory, int32_t aOffset)
+        : Runnable("PendingAsyncHistoryNavigation"),
+          mHistory(aHistory),
+          mOffset(aOffset) {}
+
+    NS_IMETHOD Run() override {
+      if (isInList()) {
+        remove();
+        mHistory->Go(mOffset, IgnoreErrors());
+      }
+      return NS_OK;
+    }
+
+   private:
+    RefPtr<ChildSHistory> mHistory;
+    int32_t mOffset;
+  };
+
+  RefPtr<BrowsingContext> mBrowsingContext;
+  nsCOMPtr<nsISHistory> mHistory;
+  mozilla::LinkedList<PendingAsyncHistoryNavigation> mPendingNavigations;
+  uint32_t mLength = 0;
 };
 
 }  // namespace dom

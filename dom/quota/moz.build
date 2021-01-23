@@ -5,21 +5,9 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 with Files("**"):
-    BUG_COMPONENT = ("Core", "DOM: Quota Manager")
+    BUG_COMPONENT = ("Core", "Storage: Quota Manager")
 
-MOCHITEST_MANIFESTS += ['test/mochitest.ini']
-
-BROWSER_CHROME_MANIFESTS += ['test/browser.ini']
-
-XPCSHELL_TESTS_MANIFESTS += [
-    'test/unit/xpcshell.ini'
-]
-
-TEST_HARNESS_FILES.xpcshell.dom.quota.test += [
-    'test/head-shared.js',
-]
-
-TEST_DIRS += ['test/gtest']
+DIRS += ['test']
 
 XPIDL_SOURCES += [
     'nsIQuotaCallbacks.idl',
@@ -39,6 +27,7 @@ EXPORTS.mozilla.dom.quota += [
     'CheckedUnsafePtr.h',
     'Client.h',
     'FileStreams.h',
+    'InitializationTypes.h',
     'MemoryOutputStream.h',
     'OriginScope.h',
     'PersistenceType.h',
@@ -57,9 +46,11 @@ XPCOM_MANIFESTS += [
 UNIFIED_SOURCES += [
     'ActorsChild.cpp',
     'ActorsParent.cpp',
+    'Client.cpp',
     'FileStreams.cpp',
     'MemoryOutputStream.cpp',
     'nsIndexedDBProtocolHandler.cpp',
+    'PersistenceType.cpp',
     'QuotaCommon.cpp',
     'QuotaManagerService.cpp',
     'QuotaRequests.cpp',

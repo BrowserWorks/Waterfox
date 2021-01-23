@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+
+<!ENTITY windowTitle.label "Ceist puist HTML">
+
+<!ENTITY recipient.label "Tha coltas gu bheil cuid dhe na faightearan ag ràdh nach urrainn dhaibh post HTML fhaighinn.">
+
+<!ENTITY question.label "Am bu toigh leat an teachdaireachd a thionndadh 'na theacsa lom no bheil thu airson a chur ann an HTML co-dhiù?">
+
+<!ENTITY plainTextAndHtml.label "Cuir ann an teacsa lom is HTML">
+<!ENTITY plainTextAndHtml.accesskey "a">
+<!ENTITY plainTextOnly.label "Cuir ann an teacsa lom a-mhàin">
+<!ENTITY plainTextOnly.accesskey "C">
+<!ENTITY htmlOnly.label "Cuir ann an HTML a-mhàin">
+<!ENTITY htmlOnly.accesskey "H">
+
+<!ENTITY send.label "Cuir">
+<!ENTITY send.accesskey "C">

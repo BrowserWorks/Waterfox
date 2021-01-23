@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from EdReplace.xul -->
+
+
+<!-- extracted from EdReplace.xhtml -->
+
+<!ENTITY replaceDialog.title "Pronađi i zamjeni">
+<!ENTITY findField.label "Pronađi tekst:">
+<!ENTITY findField.accesskey "n">
+<!ENTITY replaceField.label "Zamjeni s:">
+<!ENTITY replaceField.accesskey "e">
+<!ENTITY caseSensitiveCheckbox.label "Pazi na velika/mala slova">
+<!ENTITY caseSensitiveCheckbox.accesskey "P">
+<!ENTITY wrapCheckbox.label "Omotaj oko">
+<!ENTITY wrapCheckbox.accesskey "O">
+<!ENTITY backwardsCheckbox.label "Traži unazad">
+<!ENTITY backwardsCheckbox.accesskey "T">
+<!ENTITY findNextButton.label "Traži sljedeće">
+<!ENTITY findNextButton.accesskey "s">
+<!ENTITY replaceButton.label "Zamjeni">
+<!ENTITY replaceButton.accesskey "Z">
+<!ENTITY replaceAndFindButton.label "Zamjeni i traži">
+<!ENTITY replaceAndFindButton.accesskey "a">
+<!ENTITY replaceAllButton.label "Zamjeni sve">
+<!ENTITY replaceAllButton.accesskey "m">
+<!ENTITY closeButton.label "Zatvori">
+<!ENTITY closeButton.accesskey "Z">

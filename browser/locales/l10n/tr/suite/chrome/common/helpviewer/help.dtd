@@ -1,0 +1,57 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY printCmd.commandkey            "p">
+
+<!ENTITY findOnCmd.commandkey           "F">
+<!ENTITY findAgainCmd.commandkey        "G">
+<!ENTITY findAgainCmd.commandkey2       "VK_F3">
+
+<!ENTITY backButton.label               "Geri">
+<!ENTITY backButton.accesskey           "G">
+<!ENTITY backButton.tooltip             "Bir sayfa geriye git">
+<!ENTITY forwardButton.label            "İleri">
+<!ENTITY forwardButton.accesskey        "r">
+<!ENTITY forwardButton.tooltip          "Bir sayfa ileriye git">
+<!ENTITY copyCmd.label                  "Kopyala">
+<!ENTITY copyCmd.accesskey              "K">
+<!ENTITY selectAllCmd.label             "Tümünü seç">
+<!ENTITY selectAllCmd.accesskey         "T">
+<!ENTITY goBackCmd.commandkey           "[">
+<!ENTITY goForwardCmd.commandkey        "]">
+<!ENTITY homeButton.label               "Başlangıç">
+<!ENTITY homeButton.tooltip             "Yardım ana sayfasına gider">
+<!ENTITY printButton.label              "Yazdır">
+<!ENTITY printButton.tooltip            "Bu sayfayı yazdırır">
+<!ENTITY closeWindow.commandkey         "W">
+
+<!ENTITY search.emptytext               "Ara">
+<!ENTITY searchHeader.label             "Arama sonuçları">
+<!ENTITY toctab.label                   "İçerik">
+<!ENTITY toctab.accesskey               "e">
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+
+<!ENTITY fullZoomReduceCmd.commandkey   "-">
+<!ENTITY fullZoomReduceCmd.commandkey2  "">
+<!ENTITY fullZoomEnlargeCmd.commandkey  "+">
+<!-- + is above this key on many keyboards -->
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "="> 
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+<!ENTITY fullZoomResetCmd.commandkey    "0">
+<!ENTITY fullZoomResetCmd.commandkey2   "">
+
+<!ENTITY helpSearch.commandkey          "k">
+
+<!ENTITY zLevel.label                   "Hep ön planda tut">
+<!ENTITY zLevel.accesskey               "t">
+
+<!ENTITY fullZoomReduceBtn.label        "Yazı boyutunu küçült">
+<!ENTITY fullZoomReduceBtn.accesskey    "b">
+<!ENTITY fullZoomEnlargeBtn.label       "Yazı boyutunu büyüt">
+<!ENTITY fullZoomEnlargeBtn.accesskey   "u">

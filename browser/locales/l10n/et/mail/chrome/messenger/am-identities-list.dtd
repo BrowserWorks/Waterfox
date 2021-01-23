@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY identitiesListManageDesc.label "Halda selle konto identiteete. Esimest identiteeti kasutatakse vaikimisi identiteedina.">
+<!ENTITY identitiesListAdd.label        "Lisa...">
+<!ENTITY identitiesListAdd.accesskey    "L">
+<!ENTITY identitiesListEdit.label       "Redigeeri...">
+<!ENTITY identitiesListEdit.accesskey   "E">
+<!ENTITY identitiesListDefault.label    "Määra vaikimisi identiteediks">
+<!ENTITY identitiesListDefault.accesskey "M">
+<!ENTITY identitiesListDelete.label     "Kustuta">
+<!ENTITY identitiesListDelete.accesskey "K">
+<!ENTITY identitiesListClose.label      "Sulge">
+<!ENTITY identitiesListClose.accesskey  "S">

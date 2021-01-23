@@ -12,7 +12,8 @@ class HSTSDataCallbackWrapper;
 }
 }
 %}
-[ptr] native HSTSDataCallbackWrapperPtr(mozilla::net::HSTSDataCallbackWrapper);
+
+native HSTSDataCallbackWrapperAlreadyAddRefed(RefPtr<mozilla::net::HSTSDataCallbackWrapper>);
 
 [scriptable, builtinclass, uuid(c48126d9-2ddd-485b-a51a-378e917e75f8)]
 interface nsIHttpProtocolHandler : nsIProxiedProtocolHandler
@@ -57,6 +58,11 @@ interface nsIHttpProtocolHandler : nsIProxiedProtocolHandler
     [must_use] readonly attribute ACString misc;
 
     /**
+     * Get the Alt-Svc cache keys (used for testing).
+     */
+    [must_use] readonly attribute Array<ACString> altSvcCacheKeys;
+
+    /**
      * This function is used to ensure HSTS data storage is ready to read after
      * the returned promise is resolved.
      * Note that this function should only used for testing.
@@ -68,10 +74,8 @@ interface nsIHttpProtocolHandler : nsIProxiedProtocolHandler
     /**
      * A C++ friendly version of EnsureHSTSDataReady
      */
-    %{C++
-        virtual nsresult EnsureHSTSDataReadyNative(
-            already_AddRefed<mozilla::net::HSTSDataCallbackWrapper> aCallback) = 0;
-    %}
+    [noscript]
+    void EnsureHSTSDataReadyNative(in HSTSDataCallbackWrapperAlreadyAddRefed aCallback);
 };
 
 %{C++
@@ -116,6 +120,12 @@ interface nsIHttpProtocolHandler : nsIProxiedProtocolHandler
  */
 #define NS_HTTP_ON_OPENING_REQUEST_TOPIC "http-on-opening-request"
 
+ /**
+ * This observer topic is notified when a document channel is opened.
+ * It is similar to http-on-opening-request.
+ */
+#define NS_DOCUMENT_ON_OPENING_REQUEST_TOPIC "document-on-opening-request"
+
 /**
  * Before an HTTP request is sent to the server, this observer topic is
  * notified.  The observer of this topic can then choose to set any additional
@@ -123,6 +133,13 @@ interface nsIHttpProtocolHandler : nsIProxiedProtocolHandler
  * The "subject" of the notification is the nsIHttpChannel instance.
  */
 #define NS_HTTP_ON_MODIFY_REQUEST_TOPIC "http-on-modify-request"
+
+/**
+  * Before an HTTP request is sent to the server via a document channel this
+  * observer topic is notified.
+  * It is similar to http-on-modify-request.
+*/
+#define NS_DOCUMENT_ON_MODIFY_REQUEST_TOPIC "document-on-modify-request"
 
 /**
  * Before an HTTP connection to the server is created, this observer topic is
@@ -162,23 +179,6 @@ interface nsIHttpProtocolHandler : nsIProxiedProtocolHandler
  * at all.
  */
 #define NS_HTTP_ON_EXAMINE_CACHED_RESPONSE_TOPIC "http-on-examine-cached-response"
-
-/**
- * The observer of this topic is notified before before the response for a HTTP
- * load is available. The "subject" of the notification is the nsIHttpChannel
- * instance. Observers may call "switchProcessTo" to perform a process switch
- * while this is being run.
- */
-#define NS_HTTP_ON_MAY_CHANGE_PROCESS_TOPIC "http-on-may-change-process"
-
-/**
- * Before an HTTP request corresponding to a channel with the LOAD_DOCUMENT_URI
- * flag is sent to the server, this observer topic is notified. The observer of
- * this topic can then choose to modify the user agent for this request before
- * the request is actually sent to the server. Additionally, the modified user
- * agent will be propagated to sub-resource requests from the same load group.
- */
-#define NS_HTTP_ON_USERAGENT_REQUEST_TOPIC "http-on-useragent-request"
 
 /**
  * This topic is notified for every http channel right after it called

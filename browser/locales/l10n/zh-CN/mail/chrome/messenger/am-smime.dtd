@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY e2eTitle.label "端到端加密">
+<!ENTITY e2eLearnMore.label "详细了解">
+
+<!ENTITY e2eEnc.description "若不进行端到端加密，邮件服务提供商可以轻易获知您的邮件内容，并进行大规模监控。">
+<!ENTITY e2eeReqWarning.description "若您要求加密，须先获取每个收件人的公钥或证书才能发送消息。">
+
+<!ENTITY e2eSigning.description "数字签名可让收件人确认消息是您本人发送的，且内容未经窜改。">
+<!ENTITY e2eTechPref.description "首选加密技术：">
+
+<!ENTITY doNotEncrypt.label "默认不启用加密">
+<!ENTITY doNotEncrypt.accesskey "N">
+<!ENTITY requireEncryptMessage.label "默认要求加密">
+<!ENTITY requireEncryptMessage.accesskey "u">
+<!ENTITY encryptionCert2.message "个人加密证书：">
+<!ENTITY digitalSign.certificate.button "选择…">
+<!ENTITY digitalSign.certificate.accesskey "S">
+<!ENTITY digitalSign.certificate_clear.button "清空">
+<!ENTITY digitalSign.certificate_clear.accesskey "C">
+<!ENTITY encryption.certificate.button "选择…">
+<!ENTITY encryption.certificate.accesskey "t">
+<!ENTITY encryption.certificate_clear.button "清空">
+<!ENTITY encryption.certificate_clear.accesskey "e">
+<!ENTITY signingGroupTitle.label "数字签名">
+<!ENTITY signMessage2.label "默认添加我的数字签名">
+<!ENTITY signMessage.accesskey "D">
+
+<!ENTITY signingCert2.message "个人数字签名证书：">
+
+<!ENTITY sendingDefaults.label "发送消息时的默认设置">
+
+<!ENTITY technologyAutomatic.label "根据可用的密钥或证书自动选择">
+
+<!ENTITY certificates2.label "S/MIME">
+<!ENTITY manageCerts3.label "管理 S/MIME 证书">
+<!ENTITY manageCerts3.accesskey "M">
+<!ENTITY manageDevices2.label "S/MIME 安全设备">
+<!ENTITY manageDevices2.accesskey "y">
+
+<!ENTITY technologySMIME.label "首选 S/MIME">
+<!ENTITY technologyOpenPGP.label "首选 OpenPGP">
+
+<!ENTITY openpgpKeys.label "OpenPGP">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "选择证书">
+<!ENTITY certPicker.info  "证书：">
+<!ENTITY certPicker.detailsLabel "选定证书的详细信息：">
+
+<!ENTITY openpgpKey.message "用于加密和数字签名的个人密钥：">
+<!ENTITY openpgpKey.button "设置个人密钥…">
+<!ENTITY openpgpKey.accesskey "o">

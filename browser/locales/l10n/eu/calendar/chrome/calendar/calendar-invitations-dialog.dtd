@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- Calendar Invitations Dialog -->
+<!ENTITY calendar.invitations.dialog.invitations.text                   "Gonbidapenak">
+<!ENTITY calendar.invitations.dialog.statusmessage.updating.text        "Gonbidapenen zerrenda eguneratzen.">
+<!ENTITY calendar.invitations.dialog.statusmessage.noinvitations.text   "Ez da berretsi gabeko gonbidapenik aurkitu.">
+
+<!-- Calendar Invitations List -->
+<!ENTITY calendar.invitations.list.accept.button.label                  "Onartu">
+<!ENTITY calendar.invitations.list.decline.button.label                 "Baztertu">
+<!ENTITY calendar.invitations.list.recurrentevent.text                  "Errepikatuko den gertaera">
+<!ENTITY calendar.invitations.list.alldayevent.text                     "Egun osoko gertaera">
+<!ENTITY calendar.invitations.list.location.text                        "Kokapena: ">
+<!ENTITY calendar.invitations.list.organizer.text                       "Antolatzailea: ">
+<!ENTITY calendar.invitations.list.attendee.text                        "Bertaratzea: ">
+<!ENTITY calendar.invitations.list.none.text                            "Bat ere ez">

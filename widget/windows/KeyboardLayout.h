@@ -124,7 +124,7 @@ class MOZ_STACK_CLASS UniCharsAndModifiers final {
   nsAutoString mChars;
   // 5 is enough number for normal keyboard layout handling.  On Windows,
   // a dead key sequence may cause inputting up to 5 characters per key press.
-  AutoTArray<Modifiers, 5> mModifiers;
+  CopyableAutoTArray<Modifiers, 5> mModifiers;
 };
 
 struct DeadKeyEntry {
@@ -441,6 +441,7 @@ class MOZ_STACK_CLASS NativeKey final {
    */
   static bool IsControlChar(char16_t aChar);
 
+  bool IsShift() const { return mModKeyState.IsShift(); }
   bool IsControl() const { return mModKeyState.IsControl(); }
   bool IsAlt() const { return mModKeyState.IsAlt(); }
   bool MaybeEmulatingAltGraph() const;
@@ -604,6 +605,22 @@ class MOZ_STACK_CLASS NativeKey final {
    */
   bool IsIMEDoingKakuteiUndo() const;
 
+  /**
+   * This returns true if user types a number key in numpad with Alt key
+   * to input a Unicode character from its scalar value.
+   * Note that inputting Unicode scalar value is available without NumLock.
+   * Therefore, this returns true even if user presses a function key on
+   * numpad without NumLock, but that may be intended to perform a shortcut
+   * key like Alt + Home.
+   */
+  bool MaybeTypingUnicodeScalarValue() const {
+    return !mIsExtended && IsSysKeyDownOrKeyUpMessage() && IsAlt() &&
+           !IsControl() && !IsShift() &&
+           ((mScanCode >= 0x004F && mScanCode <= 0x0052) ||  // Numpad0-3
+            (mScanCode >= 0x004B && mScanCode <= 0x004D) ||  // Numpad4-6
+            (mScanCode >= 0x0047 && mScanCode <= 0x0049));   // Numpad7-9
+  }
+
   bool IsKeyDownMessage() const {
     return (mMsg.message == WM_KEYDOWN || mMsg.message == WM_SYSKEYDOWN ||
             mMsg.message == MOZ_WM_KEYDOWN);
@@ -611,6 +628,9 @@ class MOZ_STACK_CLASS NativeKey final {
   bool IsKeyUpMessage() const {
     return (mMsg.message == WM_KEYUP || mMsg.message == WM_SYSKEYUP ||
             mMsg.message == MOZ_WM_KEYUP);
+  }
+  bool IsSysKeyDownOrKeyUpMessage() const {
+    return mMsg.message == WM_SYSKEYDOWN || mMsg.message == WM_SYSKEYUP;
   }
   bool IsCharOrSysCharMessage(const MSG& aMSG) const {
     return IsCharOrSysCharMessage(aMSG.message);

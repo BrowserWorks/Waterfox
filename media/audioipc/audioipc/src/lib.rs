@@ -2,36 +2,20 @@
 //
 // This program is made available under an ISC-style license.  See the
 // accompanying file LICENSE for details
-
+#![warn(unused_extern_crates)]
 #![recursion_limit = "1024"]
 #[macro_use]
 extern crate error_chain;
-
 #[macro_use]
 extern crate log;
-
 #[macro_use]
 extern crate serde_derive;
-
-extern crate bincode;
-extern crate bytes;
-extern crate cubeb;
 #[macro_use]
 extern crate futures;
-extern crate iovec;
-extern crate libc;
-extern crate memmap;
-#[macro_use]
-extern crate scoped_tls;
-extern crate serde;
-extern crate tokio_core;
 #[macro_use]
 extern crate tokio_io;
-extern crate tokio_uds;
-#[cfg(windows)]
-extern crate winapi;
 
-mod async;
+mod async_msg;
 #[cfg(unix)]
 mod cmsg;
 pub mod codec;
@@ -41,7 +25,7 @@ pub mod errors;
 #[cfg(unix)]
 pub mod fd_passing;
 #[cfg(unix)]
-pub use fd_passing as platformhandle_passing;
+pub use crate::fd_passing as platformhandle_passing;
 #[cfg(windows)]
 pub mod handle_passing;
 #[cfg(windows)]
@@ -53,14 +37,24 @@ mod msg;
 pub mod rpc;
 pub mod shm;
 
-pub use messages::{ClientMessage, ServerMessage};
-use std::env::temp_dir;
-use std::path::PathBuf;
+// TODO: Remove local fork when https://github.com/tokio-rs/tokio/pull/1294 is resolved.
+#[cfg(unix)]
+mod tokio_uds_stream;
 
 #[cfg(windows)]
-use std::os::windows::io::{FromRawHandle, IntoRawHandle};
+mod tokio_named_pipes;
+
+pub use crate::messages::{ClientMessage, ServerMessage};
+
+// TODO: Remove hardcoded size and allow allocation based on cubeb backend requirements.
+pub const SHM_AREA_SIZE: usize = 2 * 1024 * 1024;
+
 #[cfg(unix)]
 use std::os::unix::io::{FromRawFd, IntoRawFd};
+#[cfg(windows)]
+use std::os::windows::io::{FromRawHandle, IntoRawHandle};
+
+use std::cell::RefCell;
 
 // This must match the definition of
 // ipc::FileDescriptor::PlatformHandleType in Gecko.
@@ -70,10 +64,18 @@ pub type PlatformHandleType = std::os::windows::raw::HANDLE;
 pub type PlatformHandleType = libc::c_int;
 
 // This stands in for RawFd/RawHandle.
-#[derive(Copy, Clone, Debug)]
-pub struct PlatformHandle(PlatformHandleType);
+#[derive(Clone, Debug)]
+pub struct PlatformHandle(RefCell<Inner>);
+
+#[derive(Clone, Debug)]
+struct Inner {
+    handle: PlatformHandleType,
+    owned: bool,
+}
 
 unsafe impl Send for PlatformHandle {}
+
+pub const INVALID_HANDLE_VALUE: PlatformHandleType = -1isize as PlatformHandleType;
 
 // Custom serialization to treat HANDLEs as i64.  This is not valid in
 // general, but after sending the HANDLE value to a remote process we
@@ -85,7 +87,8 @@ impl serde::Serialize for PlatformHandle {
     where
         S: serde::Serializer,
     {
-        serializer.serialize_i64(self.0 as i64)
+        let h = self.0.borrow();
+        serializer.serialize_i64(h.handle as i64)
     }
 }
 
@@ -93,7 +96,7 @@ struct PlatformHandleVisitor;
 impl<'de> serde::de::Visitor<'de> for PlatformHandleVisitor {
     type Value = PlatformHandle;
 
-    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         formatter.write_str("an integer between -2^63 and 2^63")
     }
 
@@ -101,7 +104,8 @@ impl<'de> serde::de::Visitor<'de> for PlatformHandleVisitor {
     where
         E: serde::de::Error,
     {
-        Ok(PlatformHandle::new(value as PlatformHandleType))
+        let owned = cfg!(windows);
+        Ok(PlatformHandle::new(value as PlatformHandleType, owned))
     }
 }
 
@@ -121,49 +125,54 @@ fn valid_handle(handle: PlatformHandleType) -> bool {
 
 #[cfg(windows)]
 fn valid_handle(handle: PlatformHandleType) -> bool {
-    const INVALID_HANDLE_VALUE: PlatformHandleType = -1isize as PlatformHandleType;
     const NULL_HANDLE_VALUE: PlatformHandleType = 0isize as PlatformHandleType;
     handle != INVALID_HANDLE_VALUE && handle != NULL_HANDLE_VALUE
 }
 
 impl PlatformHandle {
-    pub fn new(raw: PlatformHandleType) -> PlatformHandle {
-        PlatformHandle(raw)
-    }
-
-    pub fn try_new(raw: PlatformHandleType) -> Option<PlatformHandle> {
-        if !valid_handle(raw) {
-            return None;
-        }
-        Some(PlatformHandle::new(raw))
+    pub fn new(raw: PlatformHandleType, owned: bool) -> PlatformHandle {
+        assert!(valid_handle(raw));
+        let inner = Inner {
+            handle: raw,
+            owned: owned,
+        };
+        PlatformHandle(RefCell::new(inner))
     }
 
     #[cfg(windows)]
     pub fn from<T: IntoRawHandle>(from: T) -> PlatformHandle {
-        PlatformHandle::new(from.into_raw_handle())
+        PlatformHandle::new(from.into_raw_handle(), true)
     }
 
     #[cfg(unix)]
     pub fn from<T: IntoRawFd>(from: T) -> PlatformHandle {
-        PlatformHandle::new(from.into_raw_fd())
+        PlatformHandle::new(from.into_raw_fd(), true)
     }
 
     #[cfg(windows)]
-    pub unsafe fn into_file(self) -> std::fs::File {
-        std::fs::File::from_raw_handle(self.0)
+    pub unsafe fn into_file(&self) -> std::fs::File {
+        std::fs::File::from_raw_handle(self.into_raw())
     }
 
     #[cfg(unix)]
-    pub unsafe fn into_file(self) -> std::fs::File {
-        std::fs::File::from_raw_fd(self.0)
+    pub unsafe fn into_file(&self) -> std::fs::File {
+        std::fs::File::from_raw_fd(self.into_raw())
     }
 
-    pub fn as_raw(&self) -> PlatformHandleType {
-        self.0
+    pub unsafe fn into_raw(&self) -> PlatformHandleType {
+        let mut h = self.0.borrow_mut();
+        assert!(h.owned);
+        h.owned = false;
+        h.handle
     }
+}
 
-    pub unsafe fn close(self) {
-        close_platformhandle(self.0);
+impl Drop for PlatformHandle {
+    fn drop(&mut self) {
+        let inner = self.0.borrow();
+        if inner.owned {
+            unsafe { close_platformhandle(inner.handle) }
+        }
     }
 }
 
@@ -177,21 +186,27 @@ unsafe fn close_platformhandle(handle: PlatformHandleType) {
     winapi::um::handleapi::CloseHandle(handle);
 }
 
-pub fn get_shm_path(dir: &str) -> PathBuf {
-    let pid = std::process::id();
-    let mut temp = temp_dir();
-    temp.push(&format!("cubeb-shm-{}-{}", pid, dir));
-    temp
-}
-
 #[cfg(unix)]
 pub mod messagestream_unix;
 #[cfg(unix)]
-pub use messagestream_unix::*;
+pub use crate::messagestream_unix::*;
 
 #[cfg(windows)]
 pub mod messagestream_win;
 #[cfg(windows)]
 pub use messagestream_win::*;
+
 #[cfg(windows)]
-mod tokio_named_pipes;
+pub fn server_platform_init() {
+    use winapi::shared::winerror;
+    use winapi::um::combaseapi;
+    use winapi::um::objbase;
+
+    unsafe {
+        let r = combaseapi::CoInitializeEx(std::ptr::null_mut(), objbase::COINIT_MULTITHREADED);
+        assert!(winerror::SUCCEEDED(r));
+    }
+}
+
+#[cfg(unix)]
+pub fn server_platform_init() {}

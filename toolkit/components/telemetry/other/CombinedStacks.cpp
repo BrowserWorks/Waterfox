@@ -7,10 +7,10 @@
 #include "CombinedStacks.h"
 
 #include "jsapi.h"
+#include "js/Array.h"  // JS::NewArrayObject
 #include "mozilla/HangAnnotations.h"
 
-namespace mozilla {
-namespace Telemetry {
+namespace mozilla::Telemetry {
 
 // The maximum number of chrome hangs stacks that we're keeping.
 const size_t kMaxChromeStacksKept = 50;
@@ -18,7 +18,9 @@ const size_t kMaxChromeStacksKept = 50;
 CombinedStacks::CombinedStacks() : CombinedStacks(kMaxChromeStacksKept) {}
 
 CombinedStacks::CombinedStacks(size_t aMaxStacksCount)
-    : mNextIndex(0), mMaxStacksCount(aMaxStacksCount) {}
+    : mNextIndex(0),
+      mMaxStacksCount(aMaxStacksCount),
+      mIsFromTerminatorWatchdog(false) {}
 
 size_t CombinedStacks::GetModuleCount() const { return mModules.size(); }
 
@@ -104,6 +106,28 @@ void CombinedStacks::RemoveStack(unsigned aIndex) {
   }
 }
 
+bool CombinedStacks::GetIsFromTerminatorWatchdog() {
+  return mIsFromTerminatorWatchdog;
+}
+
+void CombinedStacks::SetIsFromTerminatorWatchdog(
+    bool aIsFromTerminatorWatchdog) {
+  mIsFromTerminatorWatchdog = aIsFromTerminatorWatchdog;
+}
+
+void CombinedStacks::Swap(CombinedStacks& aOther) {
+  mModules.swap(aOther.mModules);
+  mStacks.swap(aOther.mStacks);
+
+  size_t nextIndex = aOther.mNextIndex;
+  aOther.mNextIndex = mNextIndex;
+  mNextIndex = nextIndex;
+
+  size_t maxStacksCount = aOther.mMaxStacksCount;
+  aOther.mMaxStacksCount = mMaxStacksCount;
+  mMaxStacksCount = maxStacksCount;
+}
+
 #if defined(MOZ_GECKO_PROFILER)
 void CombinedStacks::Clear() {
   mNextIndex = 0;
@@ -118,7 +142,7 @@ JSObject* CreateJSStackObject(JSContext* cx, const CombinedStacks& stacks) {
     return nullptr;
   }
 
-  JS::Rooted<JSObject*> moduleArray(cx, JS_NewArrayObject(cx, 0));
+  JS::Rooted<JSObject*> moduleArray(cx, JS::NewArrayObject(cx, 0));
   if (!moduleArray) {
     return nullptr;
   }
@@ -134,7 +158,7 @@ JSObject* CreateJSStackObject(JSContext* cx, const CombinedStacks& stacks) {
     const Telemetry::ProcessedStack::Module& module =
         stacks.GetModule(moduleIndex);
 
-    JS::Rooted<JSObject*> moduleInfoArray(cx, JS_NewArrayObject(cx, 0));
+    JS::Rooted<JSObject*> moduleInfoArray(cx, JS::NewArrayObject(cx, 0));
     if (!moduleInfoArray) {
       return nullptr;
     }
@@ -161,7 +185,7 @@ JSObject* CreateJSStackObject(JSContext* cx, const CombinedStacks& stacks) {
     }
   }
 
-  JS::Rooted<JSObject*> reportArray(cx, JS_NewArrayObject(cx, 0));
+  JS::Rooted<JSObject*> reportArray(cx, JS::NewArrayObject(cx, 0));
   if (!reportArray) {
     return nullptr;
   }
@@ -173,7 +197,7 @@ JSObject* CreateJSStackObject(JSContext* cx, const CombinedStacks& stacks) {
   const size_t length = stacks.GetStackCount();
   for (size_t i = 0; i < length; ++i) {
     // Represent call stack PCs as (module index, offset) pairs.
-    JS::Rooted<JSObject*> pcArray(cx, JS_NewArrayObject(cx, 0));
+    JS::Rooted<JSObject*> pcArray(cx, JS::NewArrayObject(cx, 0));
     if (!pcArray) {
       return nullptr;
     }
@@ -186,7 +210,7 @@ JSObject* CreateJSStackObject(JSContext* cx, const CombinedStacks& stacks) {
     const uint32_t pcCount = stack.size();
     for (size_t pcIndex = 0; pcIndex < pcCount; ++pcIndex) {
       const Telemetry::ProcessedStack::Frame& frame = stack[pcIndex];
-      JS::Rooted<JSObject*> framePair(cx, JS_NewArrayObject(cx, 0));
+      JS::Rooted<JSObject*> framePair(cx, JS::NewArrayObject(cx, 0));
       if (!framePair) {
         return nullptr;
       }
@@ -211,5 +235,4 @@ JSObject* CreateJSStackObject(JSContext* cx, const CombinedStacks& stacks) {
   return ret;
 }
 
-}  // namespace Telemetry
-}  // namespace mozilla
+}  // namespace mozilla::Telemetry

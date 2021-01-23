@@ -17,11 +17,8 @@ ChromeUtils.defineModuleGetter(
   "resource://gre/modules/AddonManager.jsm"
 );
 
-XPCOMUtils.defineLazyServiceGetter(
-  this,
-  "aboutNewTabService",
-  "@mozilla.org/browser/aboutnewtab-service;1",
-  "nsIAboutNewTabService"
+const { AboutNewTab } = ChromeUtils.import(
+  "resource:///modules/AboutNewTab.jsm"
 );
 
 const { AddonTestUtils } = ChromeUtils.import(
@@ -46,7 +43,7 @@ function awaitEvent(eventName) {
   });
 }
 
-const DEFAULT_NEW_TAB_URL = aboutNewTabService.newTabURL;
+const DEFAULT_NEW_TAB_URL = AboutNewTab.newTabURL;
 
 add_task(async function test_multiple_extensions_overriding_newtab_page() {
   const NEWTAB_URI_2 = "webext-newtab-1.html";
@@ -57,6 +54,9 @@ add_task(async function test_multiple_extensions_overriding_newtab_page() {
   const CONTROLLED_BY_THIS = "controlled_by_this_extension";
   const CONTROLLED_BY_OTHER = "controlled_by_other_extensions";
   const NOT_CONTROLLABLE = "not_controllable";
+
+  const NEW_TAB_PRIVATE_ALLOWED = "browser.newtab.privateAllowed";
+  const NEW_TAB_EXTENSION_CONTROLLED = "browser.newtab.extensionControlled";
 
   function background() {
     browser.test.onMessage.addListener(async msg => {
@@ -110,6 +110,31 @@ add_task(async function test_multiple_extensions_overriding_newtab_page() {
     );
   }
 
+  function verifyNewTabSettings(ext, expectedLevelOfControl) {
+    if (expectedLevelOfControl !== NOT_CONTROLLABLE) {
+      // Verify the preferences are set as expected.
+      let policy = WebExtensionPolicy.getByID(ext.id);
+      equal(
+        policy && policy.privateBrowsingAllowed,
+        Services.prefs.getBoolPref(NEW_TAB_PRIVATE_ALLOWED),
+        "private browsing flag set correctly"
+      );
+      ok(
+        Services.prefs.getBoolPref(NEW_TAB_EXTENSION_CONTROLLED),
+        `extension controlled flag set correctly`
+      );
+    } else {
+      ok(
+        !Services.prefs.prefHasUserValue(NEW_TAB_PRIVATE_ALLOWED),
+        "controlled flag reset"
+      );
+      ok(
+        !Services.prefs.prefHasUserValue(NEW_TAB_EXTENSION_CONTROLLED),
+        "controlled flag reset"
+      );
+    }
+  }
+
   let extObj = {
     manifest: {
       chrome_url_overrides: {},
@@ -127,10 +152,11 @@ add_task(async function test_multiple_extensions_overriding_newtab_page() {
 
   extObj.manifest.chrome_url_overrides = { newtab: NEWTAB_URI_3 };
   extObj.manifest.applications.gecko.id = EXT_3_ID;
+  extObj.incognitoOverride = "spanning";
   let ext3 = ExtensionTestUtils.loadExtension(extObj);
 
   equal(
-    aboutNewTabService.newTabURL,
+    AboutNewTab.newTabURL,
     DEFAULT_NEW_TAB_URL,
     "newTabURL is set to the default."
   );
@@ -139,32 +165,32 @@ add_task(async function test_multiple_extensions_overriding_newtab_page() {
 
   await ext1.startup();
   equal(
-    aboutNewTabService.newTabURL,
+    AboutNewTab.newTabURL,
     DEFAULT_NEW_TAB_URL,
     "newTabURL is still set to the default."
   );
 
-  await checkNewTabPageOverride(
-    ext1,
-    aboutNewTabService.newTabURL,
-    NOT_CONTROLLABLE
-  );
+  await checkNewTabPageOverride(ext1, AboutNewTab.newTabURL, NOT_CONTROLLABLE);
+  verifyNewTabSettings(ext1, NOT_CONTROLLABLE);
 
   await ext2.startup();
   ok(
-    aboutNewTabService.newTabURL.endsWith(NEWTAB_URI_2),
+    AboutNewTab.newTabURL.endsWith(NEWTAB_URI_2),
     "newTabURL is overridden by the second extension."
   );
   await checkNewTabPageOverride(ext1, NEWTAB_URI_2, CONTROLLED_BY_OTHER);
+  verifyNewTabSettings(ext2, CONTROLLED_BY_THIS);
 
   // Verify that calling set and clear do nothing.
   ext2.sendMessage("trySet");
   await ext2.awaitMessage("newTabPageSet");
   await checkNewTabPageOverride(ext1, NEWTAB_URI_2, CONTROLLED_BY_OTHER);
+  verifyNewTabSettings(ext2, CONTROLLED_BY_THIS);
 
   ext2.sendMessage("tryClear");
   await ext2.awaitMessage("newTabPageCleared");
   await checkNewTabPageOverride(ext1, NEWTAB_URI_2, CONTROLLED_BY_OTHER);
+  verifyNewTabSettings(ext2, CONTROLLED_BY_THIS);
 
   // Disable the second extension.
   let addon = await AddonManager.getAddonByID(EXT_2_ID);
@@ -172,72 +198,83 @@ add_task(async function test_multiple_extensions_overriding_newtab_page() {
   await addon.disable();
   await disabledPromise;
   equal(
-    aboutNewTabService.newTabURL,
+    AboutNewTab.newTabURL,
     DEFAULT_NEW_TAB_URL,
     "newTabURL url is reset to the default after second extension is disabled."
   );
-  await checkNewTabPageOverride(
-    ext1,
-    aboutNewTabService.newTabURL,
-    NOT_CONTROLLABLE
-  );
+  await checkNewTabPageOverride(ext1, AboutNewTab.newTabURL, NOT_CONTROLLABLE);
+  verifyNewTabSettings(ext1, NOT_CONTROLLABLE);
 
   // Re-enable the second extension.
   let enabledPromise = awaitEvent("ready");
   await addon.enable();
   await enabledPromise;
   ok(
-    aboutNewTabService.newTabURL.endsWith(NEWTAB_URI_2),
+    AboutNewTab.newTabURL.endsWith(NEWTAB_URI_2),
     "newTabURL is overridden by the second extension."
   );
   await checkNewTabPageOverride(ext2, NEWTAB_URI_2, CONTROLLED_BY_THIS);
+  verifyNewTabSettings(ext2, CONTROLLED_BY_THIS);
 
   await ext1.unload();
   ok(
-    aboutNewTabService.newTabURL.endsWith(NEWTAB_URI_2),
+    AboutNewTab.newTabURL.endsWith(NEWTAB_URI_2),
     "newTabURL is still overridden by the second extension."
   );
   await checkNewTabPageOverride(ext2, NEWTAB_URI_2, CONTROLLED_BY_THIS);
+  verifyNewTabSettings(ext2, CONTROLLED_BY_THIS);
 
   await ext3.startup();
   ok(
-    aboutNewTabService.newTabURL.endsWith(NEWTAB_URI_3),
+    AboutNewTab.newTabURL.endsWith(NEWTAB_URI_3),
     "newTabURL is overridden by the third extension."
   );
   await checkNewTabPageOverride(ext2, NEWTAB_URI_3, CONTROLLED_BY_OTHER);
+  verifyNewTabSettings(ext3, CONTROLLED_BY_THIS);
 
   // Disable the second extension.
   disabledPromise = awaitEvent("shutdown");
   await addon.disable();
   await disabledPromise;
   ok(
-    aboutNewTabService.newTabURL.endsWith(NEWTAB_URI_3),
+    AboutNewTab.newTabURL.endsWith(NEWTAB_URI_3),
     "newTabURL is still overridden by the third extension."
   );
   await checkNewTabPageOverride(ext3, NEWTAB_URI_3, CONTROLLED_BY_THIS);
+  verifyNewTabSettings(ext3, CONTROLLED_BY_THIS);
 
   // Re-enable the second extension.
   enabledPromise = awaitEvent("ready");
   await addon.enable();
   await enabledPromise;
   ok(
-    aboutNewTabService.newTabURL.endsWith(NEWTAB_URI_3),
+    AboutNewTab.newTabURL.endsWith(NEWTAB_URI_3),
     "newTabURL is still overridden by the third extension."
   );
   await checkNewTabPageOverride(ext3, NEWTAB_URI_3, CONTROLLED_BY_THIS);
+  verifyNewTabSettings(ext3, CONTROLLED_BY_THIS);
 
   await ext3.unload();
   ok(
-    aboutNewTabService.newTabURL.endsWith(NEWTAB_URI_2),
+    AboutNewTab.newTabURL.endsWith(NEWTAB_URI_2),
     "newTabURL reverts to being overridden by the second extension."
   );
   await checkNewTabPageOverride(ext2, NEWTAB_URI_2, CONTROLLED_BY_THIS);
+  verifyNewTabSettings(ext2, CONTROLLED_BY_THIS);
 
   await ext2.unload();
   equal(
-    aboutNewTabService.newTabURL,
+    AboutNewTab.newTabURL,
     DEFAULT_NEW_TAB_URL,
     "newTabURL url is reset to the default."
+  );
+  ok(
+    !Services.prefs.prefHasUserValue(NEW_TAB_PRIVATE_ALLOWED),
+    "controlled flag reset"
+  );
+  ok(
+    !Services.prefs.prefHasUserValue(NEW_TAB_EXTENSION_CONTROLLED),
+    "controlled flag reset"
   );
 
   await promiseShutdownManager();
@@ -252,7 +289,7 @@ add_task(async function test_temporary_installation() {
   const PAGE2 = "page2.html";
 
   equal(
-    aboutNewTabService.newTabURL,
+    AboutNewTab.newTabURL,
     DEFAULT_NEW_TAB_URL,
     "newTabURL is set to the default."
   );
@@ -273,7 +310,7 @@ add_task(async function test_temporary_installation() {
 
   await permanent.startup();
   ok(
-    aboutNewTabService.newTabURL.endsWith(PAGE1),
+    AboutNewTab.newTabURL.endsWith(PAGE1),
     "newTabURL is overridden by permanent extension."
   );
 
@@ -291,7 +328,7 @@ add_task(async function test_temporary_installation() {
 
   await temporary.startup();
   ok(
-    aboutNewTabService.newTabURL.endsWith(PAGE2),
+    AboutNewTab.newTabURL.endsWith(PAGE2),
     "newTabURL is overridden by temporary extension."
   );
 
@@ -299,14 +336,14 @@ add_task(async function test_temporary_installation() {
   await permanent.awaitStartup();
 
   ok(
-    aboutNewTabService.newTabURL.endsWith(PAGE1),
+    AboutNewTab.newTabURL.endsWith(PAGE1),
     "newTabURL is back to the value set by permanent extension."
   );
 
   await permanent.unload();
 
   equal(
-    aboutNewTabService.newTabURL,
+    AboutNewTab.newTabURL,
     DEFAULT_NEW_TAB_URL,
     "newTabURL is set back to the default."
   );

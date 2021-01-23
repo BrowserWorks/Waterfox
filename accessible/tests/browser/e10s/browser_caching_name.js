@@ -21,12 +21,14 @@ loadScripts({ name: "name.js", dir: MOCHITESTS_DIR });
  *
  *
  * Options include:
- *   * recreated   - subrtee is recreated and the test should only continue
- *                   after a reorder event
- *   * textchanged - text is inserted into a subtree and the test should only
- *                   continue after a text inserted event
+ *   * waitFor - changes in the subtree will result in an accessible event
+ *                     being fired, the test must only continue after the event
+ *                     is receieved.
  */
-const ARIARule = [{ attr: "aria-labelledby" }, { attr: "aria-label" }];
+const ARIARule = [
+  { attr: "aria-labelledby" },
+  { attr: "aria-label", waitFor: EVENT_NAME_CHANGE },
+];
 const HTMLControlHeadRule = [...ARIARule, { elm: "label", isSibling: true }];
 const rules = {
   CSSContent: [{ elm: "style", isSibling: true }, { fromsubtree: true }],
@@ -37,7 +39,11 @@ const rules = {
     { attr: "title" },
   ],
   HTMLElm: [...ARIARule, { attr: "title" }],
-  HTMLImg: [...ARIARule, { attr: "alt", recreated: true }, { attr: "title" }],
+  HTMLImg: [
+    ...ARIARule,
+    { attr: "alt", waitFor: EVENT_NAME_CHANGE },
+    { attr: "title" },
+  ],
   HTMLImgEmptyAlt: [...ARIARule, { attr: "title" }, { attr: "alt" }],
   HTMLInputButton: [
     ...HTMLControlHeadRule,
@@ -46,22 +52,22 @@ const rules = {
   ],
   HTMLInputImage: [
     ...HTMLControlHeadRule,
-    { attr: "alt", recreated: true },
-    { attr: "value", recreated: true },
+    { attr: "alt", waitFor: EVENT_NAME_CHANGE },
+    { attr: "value" },
     { attr: "title" },
   ],
   HTMLInputImageNoValidSrc: [
     ...HTMLControlHeadRule,
-    { attr: "alt", recreated: true },
-    { attr: "value", recreated: true },
+    { attr: "alt", waitFor: EVENT_NAME_CHANGE },
+    { attr: "value" },
   ],
   HTMLInputReset: [
     ...HTMLControlHeadRule,
-    { attr: "value", textchanged: true },
+    { attr: "value", waitFor: EVENT_TEXT_INSERTED },
   ],
   HTMLInputSubmit: [
     ...HTMLControlHeadRule,
-    { attr: "value", textchanged: true },
+    { attr: "value", waitFor: EVENT_TEXT_INSERTED },
   ],
   HTMLLink: [...ARIARule, { fromsubtree: true }, { attr: "title" }],
   HTMLLinkImage: [...ARIARule, { elm: "img" }, { attr: "title" }],
@@ -333,12 +339,14 @@ const markupTests = [
     id: "btn",
     ruleset: "CSSContent",
     markup: `
-    <style>
-      button::before {
-        content: "do not ";
-      }
-    </style>
-    <button id="btn">press me</button>`,
+    <div role="main">
+      <style>
+        button::before {
+          content: "do not ";
+        }
+      </style>
+      <button id="btn">press me</button>
+    </div>`,
     expected: ["do not press me", "press me"],
   },
   {
@@ -396,19 +404,17 @@ const markupTests = [
  */
 async function testAttrRule(browser, target, rule, expected) {
   let { id, parent, acc } = target;
-  let { recreated, textchanged, attr } = rule;
+  let { waitFor, attr } = rule;
 
   testName(acc, expected);
 
-  if (recreated || textchanged) {
+  if (waitFor) {
     let [event] = await contentSpawnMutation(
       browser,
       {
-        expected: [
-          recreated ? [EVENT_REORDER, parent] : [EVENT_TEXT_INSERTED, id],
-        ],
+        expected: [[waitFor, waitFor === EVENT_REORDER ? parent : id]],
       },
-      ([contentId, contentAttr]) =>
+      (contentId, contentAttr) =>
         content.document.getElementById(contentId).removeAttribute(contentAttr),
       [id, attr]
     );
@@ -443,7 +449,7 @@ async function testElmRule(browser, target, rule, expected) {
       expected: [[EVENT_REORDER, isSibling ? parent : id]],
     },
     contentElm => content.document.querySelector(`${contentElm}`).remove(),
-    elm
+    [elm]
   );
 
   // Update accessible just in case it is now defunct.
@@ -477,7 +483,7 @@ async function testSubtreeRule(browser, target, rule, expected) {
         elm.firstChild.remove();
       }
     },
-    id
+    [id]
   );
 
   // Update accessible just in case it is now defunct.
@@ -510,12 +516,24 @@ async function testNameRule(browser, target, ruleset, expected) {
 }
 
 markupTests.forEach(({ id, ruleset, markup, expected }) =>
-  addAccessibleTask(markup, async function(browser, accDoc) {
-    // Find a target accessible from an accessible subtree.
-    let acc = findAccessibleChildByID(accDoc, id);
-    // Find target's parent accessible from an accessible subtree.
-    let parent = getAccessibleDOMNodeID(acc.parent);
-    let target = { id, parent, acc };
-    await testNameRule(browser, target, rules[ruleset], expected);
-  })
+  addAccessibleTask(
+    markup,
+    async function(browser, accDoc) {
+      const observer = {
+        observe(subject, topic, data) {
+          const event = subject.QueryInterface(nsIAccessibleEvent);
+          console.log(eventToString(event));
+        },
+      };
+      Services.obs.addObserver(observer, "accessible-event");
+      // Find a target accessible from an accessible subtree.
+      let acc = findAccessibleChildByID(accDoc, id);
+      // Find target's parent accessible from an accessible subtree.
+      let parent = getAccessibleDOMNodeID(acc.parent);
+      let target = { id, parent, acc };
+      await testNameRule(browser, target, rules[ruleset], expected);
+      Services.obs.removeObserver(observer, "accessible-event");
+    },
+    { iframe: true, remoteIframe: true }
+  )
 );

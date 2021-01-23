@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"[
+  <!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd" >
+  %brandDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Pomocník pre blokovanie vyskakovacích okien v aplikácii &brandShortName;</title>
+<link rel="stylesheet" href="helpFileLayout.css"
+  type="text/css"/>
+</head>
+<body>
+
+<div class="boilerPlate">Tento dokument je poskytnutý len pre vašu informáciu. Môže vám pomôcť
+  urobiť konkrétne kroky pre ochranu súkromia a bezpečnosti vašich informácií na internete.
+  Napriek tomu sa tento dokument nezaoberá všetkými témami online
+  súkromia a bezpečnosti, ani nereprezentuje odporúčania o tom,
+  čo znamená adekvátna ochrana súkromia a bezpečnosti na internete.</div>
+
+<h1 id="controlling_popups">Ovládanie vyskakovacích okien</h1>
+
+<p><strong>Čo sú vyskakovacie okná?</strong></p>
+
+<p>Vyskakovacie okná sú okná, ktoré sa objavujú automaticky bez vášho povolenia.
+  Majú rôzne veľkosti, ale obyčajne nezaberajú celú obrazovku.
+  Niektoré okná sa objavujú nad aktuálnym oknom prehliadača,
+  iné môžu byť pod ním.</p>
+
+<p>&brandShortName; vám umožňuje kontrolovať oba druhy vyskakovacích okien pomocou
+  <a href="#privacy_and_security_preferences_popup_windows">panel Vyskakovacie okná v okne Možnosti</a>.
+  Keďže je potláčanie vyskakovacích okien štandardne vypnuté,
+  musíte ho zapnúť, aby sa už vyskakovacie okná v prehliadači neobjavovali.</p>
+
+<p>Ak je okno potlačené, &brandShortName; môže prehrať zvuk, zobraziť ikonu
+  <img src="chrome://navigator/skin/icons/popup-blocked.png" alt="Ikona na ovládanie
+  vyskakovacích okien"/> v stavovom riadku, notifikačný panel nad obsahom stránky alebo
+  kombináciu týchto možností. Ikonu a notifikačný panel môžete použiť na pridanie aktuálnej
+  webovej stránky do zoznamu výnimiek, čím bude mať táto stránka nabudúce povolené
+  vyskakovacie okná zobraziť.</p>
+
+<p><strong>Potláčanie vyskakovacích okien môže narušiť funkciu niektorých stránok</strong>:
+  Niektoré servery, napríklad bankové, používajú vyskakovacie okná na dôležité funkcie.
+  Zakázanie všetkých okien spôsobí zablokovanie takýchto funkcií. Ak chcete povoliť zvoleným serverom
+  používať vyskakovacie okná, ale zároveň zakázať ich všetkým ostatným, môžete tieto servery pridať do
+  zoznamu povolených serverov. Bližšie informácie nájdete v sekcii
+  <a href="#privacy_and_security_preferences_popup_windows">Súkromie a bezpečnosť - Vyskakovacie okná</a>.</p>
+
+<p><b>Blokovanie vyskakovacích okien nefunguje vždy</b>: Aj keď &brandShortName; potlačí
+  väčšinu okien, niektoré stránky, hoci blokované, môžu použiť iné metódy na zobrazenie
+  vyskakovacích okien.</p>
+
+<p><strong>Povolenie vyskakovacích okien z určitých serverov</strong>: Ak ste zapli
+  blokovanie vyskakovacích okien, stále môžete dovoliť niektorým serverom ich zobrazovanie.
+  Prejdite na stránku a potom v menu Nástroje vyberte Správca vyskakovacích okien.
+  Tam zvoľte Povoliť vyskakovacie okná z tohto servera.</p>
+
+<p>Ďalšia sekcia popisuje ovládanie správania sa vyskakovacích okien pomocou nastavení a ikony
+vyskakovacích okien.</p>
+
+<h2 id="privacy_and_security_preferences_popup_windows">Súkromie a bezpečnosť - Vyskakovacie okná</h2>
+
+<p>Táto sekcia popisuje, ako používať panel nastavení vyskakovacích okien.
+  Ak ho ešte nemáte otvorený, použite tento postup:</p>
+
+<ol>
+  <li>Otvorte ponuku <span class="mac">&brandShortName;</span><span class="noMac">Upraviť</span> a vyberte položku
+    Možnosti.</li>
+  <li>V kategórii Súkromie a bezpečnosť vyberte položku Vyskakovacie okná. (Ak nevidíte žiadnu podkategóriu, dvojitým
+    kliknutím na položku Súkromie a bezpečnosť zobrazíte ich zoznam.)</li>
+</ol>
+
+<ul>
+  <li><strong>Blokovať nevyžiadané vyskakovacie okná</strong>: Vyberte túto možnosť, ak chcete potlačiť otváranie
+    vyskakovacích okien v prehliadači.</li>
+  <li><strong>Povolené stránky:</strong> Kliknutím na toto tlačidlo zobrazíte a môžete upraviť zoznam serverov,
+    ktorým chcete povoliť zobrazovanie vyskakovacích okien.
+  <ul>
+    <li><strong>Povolené stránky</strong>: Zoznam povolených stránok sa zobrazí, keď kliknete na tlačidlo
+      "Povolené servery". Môžete pridávať alebo odstrániť servery, ktoré majú povolené zobrazovať vyskakovacie okná.</li>
+    <li><strong>Povoliť</strong>: Zadajte názov servera, ktorý chcete pridať do zoznamu a potom kliknite na toto tlačidlo.</li>
+    <li><strong>Odstrániť</strong>: Použite na vymazanie označeného servera.</li>
+    <li><strong>Odstrániť všetky</strong>: Toto tlačidlo vymaže všetky servery v zozname.</li>
+  </ul>
+  </li>
+</ul>
+
+<h3>Pri zablokovaní vyskakovacieho okna</h3>
+
+<ul>
+  <li><strong>Prehrať zvuk</strong>: Ak chcete prehrať zvuk vždy, keď prehliadač
+    zablokuje vyskakovacie okno, zvoľte túto možnosť a určte systémový zvuk alebo 
+    umiestnenie zvukového súboru.
+    <ul>
+      <li><strong>Prehľadávať</strong>: Použite na vyhľadanie súboru.</li>
+      <li><strong>Prehrať</strong>: Kliknutím si vypočujete zvolený zvuk.</li>
+    </ul>
+  </li>
+  <li><strong>Zobraziť ikonu v stavovom riadku prehliadača</strong>: Vyberte na
+  zobrazenie ikony  <img src="chrome://navigator/skin/icons/popup-blocked.png"
+  alt="Ikona na ovládanie vyskakovacích okien"/> v stavovom riadku prehliadača. Ikona upozorní,
+  že práve bolo zablokované vyskakovacie okno.
+
+  <p><strong>Poznámka</strong>: Keď sa ikona
+    <img src="chrome://navigator/skin/icons/popup-blocked.png" alt="Ikona na ovládanie
+    vyskakovacích okien"/> objaví, ostane viditeľná až kým neprejdete na iný server.</p>
+  </li>
+  <li><strong>Zobraziť notifikačný panel nad horným okrajom stránky</strong>:
+    Po označení tejto voľby sa vždy po zablokovaní vyskakovacieho okna objaví nad obsahom stránky
+    notifikačný panel. Spôsob spracovávania vyskakovacích okien nastavíte po
+    kliknutí na tlačidlo Nastavenia v pravej časti tohto panela.
+  </li>
+</ul>
+
+<p><strong>Použitie ikony vyskakovacích okien alebo notifikačného panela na povolenie vyskakovacích
+  okien zo servera</strong>: Ikonu vyskakovacích okien prípadne notifikačný panel
+  môžete použiť aj na rýchle pridanie servera do zoznamu povolených serverov. Kliknite
+  na ikonu <img src="chrome://navigator/skin/icons/popup-blocked.png" alt="Ikona na ovládanie
+  vyskakovacích okien"/> a otvorí sa zoznam povolených serverov. Aktuálny server je
+  predvyplnený. Kliknite na tlačidlo Povoliť a potom na OK, čím potvrdíte pridanie.
+  Podobne môžete využiť aj notifikačný panel, keď kliknete na tlačidlo Nastavenia v pravej
+  časti tohto panela.</p>
+
+<p><strong>Poznámka</strong>: Zakázanie vyskakovacích okien nemusí vždy fungovať a môže narušiť
+funkčnosť niektorých stránok. Ďalšie informácie o blokovaní vyskakovacích okien nájdete v kapitole
+<a href="#controlling_popups">Ovládanie vyskakovacích okien</a>.</p>
+
+</body>
+</html>

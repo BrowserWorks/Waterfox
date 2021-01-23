@@ -6,19 +6,26 @@
 
 #include "mozilla/a11y/HandlerProvider.h"
 
+#include <memory.h>
+
+#include <utility>
+
 #include "Accessible2_3.h"
+#include "AccessibleApplication.h"
 #include "AccessibleDocument.h"
+#include "AccessibleEditableText.h"
+#include "AccessibleImage.h"
 #include "AccessibleRelation.h"
 #include "AccessibleTable.h"
 #include "AccessibleTable2.h"
 #include "AccessibleTableCell.h"
 #include "HandlerData.h"
 #include "HandlerData_i.c"
+#include "ISimpleDOM.h"
 #include "mozilla/Assertions.h"
+#include "mozilla/UniquePtr.h"
 #include "mozilla/a11y/AccessibleWrap.h"
-#include "mozilla/a11y/HandlerDataCleanup.h"
 #include "mozilla/dom/ContentChild.h"
-#include "mozilla/Move.h"
 #include "mozilla/mscom/AgileReference.h"
 #include "mozilla/mscom/FastMarshaler.h"
 #include "mozilla/mscom/Interceptor.h"
@@ -27,11 +34,9 @@
 #include "mozilla/mscom/Ptr.h"
 #include "mozilla/mscom/StructStream.h"
 #include "mozilla/mscom/Utils.h"
-#include "mozilla/UniquePtr.h"
-#include "nsThreadUtils.h"
 #include "nsTArray.h"
-
-#include <memory.h>
+#include "nsThreadUtils.h"
+#include "uiautomation.h"
 
 namespace mozilla {
 namespace a11y {
@@ -41,7 +46,8 @@ HandlerProvider::HandlerProvider(REFIID aIid,
     : mRefCnt(0),
       mMutex("mozilla::a11y::HandlerProvider::mMutex"),
       mTargetUnkIid(aIid),
-      mTargetUnk(std::move(aTarget)) {}
+      mTargetUnk(std::move(aTarget)),
+      mPayloadMutex("mozilla::a11y::HandlerProvider::mPayloadMutex") {}
 
 HRESULT
 HandlerProvider::QueryInterface(REFIID riid, void** ppv) {
@@ -101,31 +107,38 @@ void HandlerProvider::GetAndSerializePayload(
     return;
   }
 
-  IA2Payload payload{};
+  IA2PayloadPtr payload;
+  {  // Scope for lock
+    MutexAutoLock lock(mPayloadMutex);
+    if (mPayload) {
+      // The payload was already built by prebuildPayload() called during a
+      // bulk fetch operation.
+      payload = std::move(mPayload);
+    }
+  }
 
-  if (!mscom::InvokeOnMainThread("HandlerProvider::BuildInitialIA2Data", this,
-                                 &HandlerProvider::BuildInitialIA2Data,
-                                 aInterceptor, &payload.mStaticData,
-                                 &payload.mDynamicData) ||
-      !payload.mDynamicData.mUniqueId) {
-    return;
+  if (!payload) {
+    // We don't have a pre-built payload, so build it now.
+    payload.reset(new IA2Payload());
+    if (!mscom::InvokeOnMainThread(
+            "HandlerProvider::BuildInitialIA2Data", this,
+            &HandlerProvider::BuildInitialIA2Data,
+            std::forward<NotNull<mscom::IInterceptor*>>(aInterceptor),
+            std::forward<StaticIA2Data*>(&payload->mStaticData),
+            std::forward<DynamicIA2Data*>(&payload->mDynamicData)) ||
+        !payload->mDynamicData.mUniqueId) {
+      return;
+    }
   }
 
   // But we set mGeckoBackChannel on the current thread which resides in the
   // MTA. This is important to ensure that COM always invokes
   // IGeckoBackChannel methods in an MTA background thread.
-
   RefPtr<IGeckoBackChannel> payloadRef(this);
   // AddRef/Release pair for this reference is handled by payloadRef
-  payload.mGeckoBackChannel = this;
+  payload->mGeckoBackChannel = this;
 
-  mSerializer = MakeUnique<mscom::StructToStream>(payload, &IA2Payload_Encode);
-
-  // Now that we have serialized payload, we should clean up any
-  // BSTRs, interfaces, etc. fetched in BuildInitialIA2Data.
-  CleanupStaticIA2Data(payload.mStaticData);
-  // No need to zero memory, since payload is going out of scope.
-  CleanupDynamicIA2Data(payload.mDynamicData, false);
+  mSerializer = MakeUnique<mscom::StructToStream>(*payload, &IA2Payload_Encode);
 }
 
 HRESULT
@@ -162,7 +175,7 @@ void HandlerProvider::BuildStaticIA2Data(
 
   // Include interfaces the client is likely to request.
   // This is cheap here and saves multiple cross-process calls later.
-  // These interfaces must be released in CleanupStaticIA2Data!
+  // These interfaces must be released in ReleaseStaticIA2DataInterfaces!
 
   // If the target is already an IAccessible2, this pointer is redundant.
   // However, the target might be an IAccessibleHyperlink, etc., in which
@@ -209,7 +222,8 @@ void HandlerProvider::BuildStaticIA2Data(
   }
 }
 
-void HandlerProvider::BuildDynamicIA2Data(DynamicIA2Data* aOutIA2Data) {
+void HandlerProvider::BuildDynamicIA2Data(DynamicIA2Data* aOutIA2Data,
+                                          bool aMarshaledByCom) {
   MOZ_ASSERT(aOutIA2Data);
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(IsTargetInterfaceCacheable());
@@ -229,12 +243,23 @@ void HandlerProvider::BuildDynamicIA2Data(DynamicIA2Data* aOutIA2Data) {
 
   auto hasFailed = [&hr]() -> bool { return FAILED(hr); };
 
-  auto cleanup = [aOutIA2Data]() -> void {
-    CleanupDynamicIA2Data(*aOutIA2Data);
+  auto cleanup = [aOutIA2Data, aMarshaledByCom]() -> void {
+    CleanupDynamicIA2Data(*aOutIA2Data, aMarshaledByCom);
   };
 
   mscom::ExecuteWhen<decltype(hasFailed), decltype(cleanup)> onFail(hasFailed,
                                                                     cleanup);
+
+  // When allocating memory to be returned to the client, you *must* use
+  // allocMem, not CoTaskMemAlloc!
+  auto allocMem = [aMarshaledByCom](size_t aSize) {
+    if (aMarshaledByCom) {
+      return ::CoTaskMemAlloc(aSize);
+    }
+    // We use midl_user_allocate rather than CoTaskMemAlloc because this
+    // struct is being marshaled by RPC, not COM.
+    return ::midl_user_allocate(aSize);
+  };
 
   const VARIANT kChildIdSelf = {VT_I4};
   VARIANT varVal;
@@ -340,19 +365,55 @@ void HandlerProvider::BuildDynamicIA2Data(DynamicIA2Data* aOutIA2Data) {
     if (FAILED(hr)) {
       return;
     }
+
+    // Because the same headers can apply to many cells, include the ids of
+    // header cells, rather than the actual objects. Otherwise, we might
+    // end up marshaling the same objects (and their payloads) many times.
+    IUnknown** headers = nullptr;
+    hr = cell->get_rowHeaderCells(&headers, &aOutIA2Data->mNRowHeaderCells);
+    if (FAILED(hr)) {
+      return;
+    }
+    if (aOutIA2Data->mNRowHeaderCells > 0) {
+      aOutIA2Data->mRowHeaderCellIds = static_cast<long*>(
+          allocMem(sizeof(long) * aOutIA2Data->mNRowHeaderCells));
+      for (long i = 0; i < aOutIA2Data->mNRowHeaderCells; ++i) {
+        RefPtr<IAccessible2> headerAcc;
+        hr = headers[i]->QueryInterface(IID_IAccessible2,
+                                        getter_AddRefs(headerAcc));
+        MOZ_ASSERT(SUCCEEDED(hr));
+        headers[i]->Release();
+        hr = headerAcc->get_uniqueID(&aOutIA2Data->mRowHeaderCellIds[i]);
+        MOZ_ASSERT(SUCCEEDED(hr));
+      }
+    }
+    ::CoTaskMemFree(headers);
+
+    hr = cell->get_columnHeaderCells(&headers,
+                                     &aOutIA2Data->mNColumnHeaderCells);
+    if (FAILED(hr)) {
+      return;
+    }
+    if (aOutIA2Data->mNColumnHeaderCells > 0) {
+      aOutIA2Data->mColumnHeaderCellIds = static_cast<long*>(
+          allocMem(sizeof(long) * aOutIA2Data->mNColumnHeaderCells));
+      for (long i = 0; i < aOutIA2Data->mNColumnHeaderCells; ++i) {
+        RefPtr<IAccessible2> headerAcc;
+        hr = headers[i]->QueryInterface(IID_IAccessible2,
+                                        getter_AddRefs(headerAcc));
+        MOZ_ASSERT(SUCCEEDED(hr));
+        headers[i]->Release();
+        hr = headerAcc->get_uniqueID(&aOutIA2Data->mColumnHeaderCellIds[i]);
+        MOZ_ASSERT(SUCCEEDED(hr));
+      }
+    }
+    ::CoTaskMemFree(headers);
   }
 
   // NB: get_uniqueID should be the final property retrieved in this method,
   // as its presence is used to determine whether the rest of this data
   // retrieval was successful.
   hr = target->get_uniqueID(&aOutIA2Data->mUniqueId);
-}
-
-void HandlerProvider::CleanupStaticIA2Data(StaticIA2Data& aData) {
-  // When CoMarshalInterface writes interfaces out to a stream, it AddRefs.
-  // Therefore, we must release our references after this.
-  ReleaseStaticIA2DataInterfaces(aData);
-  ZeroMemory(&aData, sizeof(StaticIA2Data));
 }
 
 void HandlerProvider::BuildInitialIA2Data(
@@ -363,11 +424,6 @@ void HandlerProvider::BuildInitialIA2Data(
     return;
   }
   BuildDynamicIA2Data(aOutDynamicData);
-  if (!aOutDynamicData->mUniqueId) {
-    // Building dynamic data failed, which means building the payload failed.
-    // However, we've already built static data, so we must clean this up.
-    CleanupStaticIA2Data(*aOutStaticData);
-  }
 }
 
 bool HandlerProvider::IsTargetInterfaceCacheable() {
@@ -421,6 +477,29 @@ HandlerProvider::DisconnectHandlerRemotes() {
 
   IUnknown* unk = static_cast<IGeckoBackChannel*>(this);
   return ::CoDisconnectObject(unk, 0);
+}
+
+HRESULT
+HandlerProvider::IsInterfaceMaybeSupported(REFIID aIid) {
+  static_assert(&NEWEST_IA2_IID == &IID_IAccessible2_3,
+                "You have modified NEWEST_IA2_IID. This code needs updating.");
+  if (aIid == IID_IUnknown || aIid == IID_IDispatch ||
+      aIid == IID_IAccessible || aIid == IID_IServiceProvider ||
+      aIid == IID_IEnumVARIANT || aIid == IID_IAccessible2 ||
+      aIid == IID_IAccessible2_2 || aIid == IID_IAccessible2_3 ||
+      aIid == IID_IAccessibleAction || aIid == IID_IAccessibleApplication ||
+      aIid == IID_IAccessibleComponent || aIid == IID_IAccessibleDocument ||
+      aIid == IID_IAccessibleEditableText || aIid == IID_IAccessibleHyperlink ||
+      aIid == IID_IAccessibleHypertext || aIid == IID_IAccessibleHypertext2 ||
+      aIid == IID_IAccessibleImage || aIid == IID_IAccessibleRelation ||
+      aIid == IID_IAccessibleTable || aIid == IID_IAccessibleTable2 ||
+      aIid == IID_IAccessibleTableCell || aIid == IID_IAccessibleText ||
+      aIid == IID_IAccessibleValue || aIid == IID_ISimpleDOMNode ||
+      aIid == IID_ISimpleDOMDocument || aIid == IID_ISimpleDOMText ||
+      aIid == IID_IAccessibleEx || aIid == IID_IRawElementProviderSimple) {
+    return S_OK;
+  }
+  return E_NOINTERFACE;
 }
 
 REFIID
@@ -503,7 +582,8 @@ HandlerProvider::Refresh(DynamicIA2Data* aOutData) {
 
   if (!mscom::InvokeOnMainThread("HandlerProvider::BuildDynamicIA2Data", this,
                                  &HandlerProvider::BuildDynamicIA2Data,
-                                 aOutData)) {
+                                 std::forward<DynamicIA2Data*>(aOutData),
+                                 /* aMarshaledByCom */ true)) {
     return E_FAIL;
   }
 
@@ -520,8 +600,22 @@ HandlerProvider::Refresh(DynamicIA2Data* aOutData) {
   return S_OK;
 }
 
+void HandlerProvider::PrebuildPayload(
+    NotNull<mscom::IInterceptor*> aInterceptor) {
+  MOZ_ASSERT(NS_IsMainThread());
+  MutexAutoLock lock(mPayloadMutex);
+  mPayload.reset(new IA2Payload());
+  BuildInitialIA2Data(aInterceptor, &mPayload->mStaticData,
+                      &mPayload->mDynamicData);
+  if (!mPayload->mDynamicData.mUniqueId) {
+    // Building the payload failed.
+    mPayload.reset();
+  }
+}
+
 template <typename Interface>
 HRESULT HandlerProvider::ToWrappedObject(Interface** aObj) {
+  MOZ_ASSERT(NS_IsMainThread());
   mscom::STAUniquePtr<Interface> inObj(*aObj);
   RefPtr<HandlerProvider> hprov = new HandlerProvider(
       __uuidof(Interface), mscom::ToInterceptorTargetPtr(inObj));
@@ -529,7 +623,32 @@ HRESULT HandlerProvider::ToWrappedObject(Interface** aObj) {
       mscom::MainThreadHandoff::WrapInterface(std::move(inObj), hprov, aObj);
   if (FAILED(hr)) {
     *aObj = nullptr;
+    return hr;
   }
+  // Build the payload for this object now to avoid a cross-thread call when
+  // marshaling it later.
+  RefPtr<mscom::IInterceptor> interceptor;
+  hr = (*aObj)->QueryInterface(mscom::IID_IInterceptor,
+                               getter_AddRefs(interceptor));
+  MOZ_ASSERT(SUCCEEDED(hr));
+  // Even though we created a new HandlerProvider, that won't be used if
+  // there's an existing Interceptor. Therefore, we must get the
+  // HandlerProvider from the Interceptor.
+  RefPtr<mscom::IInterceptorSink> interceptorSink;
+  interceptor->GetEventSink(getter_AddRefs(interceptorSink));
+  MOZ_ASSERT(interceptorSink);
+  RefPtr<mscom::IMainThreadHandoff> handoff;
+  hr = interceptorSink->QueryInterface(mscom::IID_IMainThreadHandoff,
+                                       getter_AddRefs(handoff));
+  // If a11y Interceptors stop using MainThreadHandoff as their event sink, we
+  // *really* want to know about it ASAP.
+  MOZ_DIAGNOSTIC_ASSERT(SUCCEEDED(hr),
+                        "A11y Interceptor isn't using MainThreadHandoff");
+  RefPtr<mscom::IHandlerProvider> usedIHprov;
+  handoff->GetHandlerProvider(getter_AddRefs(usedIHprov));
+  MOZ_ASSERT(usedIHprov);
+  auto usedHprov = static_cast<HandlerProvider*>(usedIHprov.get());
+  usedHprov->PrebuildPayload(WrapNotNull(interceptor));
   return hr;
 }
 
@@ -628,8 +747,12 @@ HandlerProvider::get_AllTextInfo(BSTR* aText,
   HRESULT hr;
   if (!mscom::InvokeOnMainThread(
           "HandlerProvider::GetAllTextInfoMainThread", this,
-          &HandlerProvider::GetAllTextInfoMainThread, aText, aHyperlinks,
-          aNHyperlinks, aAttribRuns, aNAttribRuns, &hr)) {
+          &HandlerProvider::GetAllTextInfoMainThread,
+          std::forward<BSTR*>(aText),
+          std::forward<IAccessibleHyperlink***>(aHyperlinks),
+          std::forward<long*>(aNHyperlinks),
+          std::forward<IA2TextSegment**>(aAttribRuns),
+          std::forward<long*>(aNAttribRuns), std::forward<HRESULT*>(&hr))) {
     return E_FAIL;
   }
 
@@ -694,10 +817,11 @@ HandlerProvider::get_RelationsInfo(IARelationData** aRelations,
   }
 
   HRESULT hr;
-  if (!mscom::InvokeOnMainThread("HandlerProvider::GetRelationsInfoMainThread",
-                                 this,
-                                 &HandlerProvider::GetRelationsInfoMainThread,
-                                 aRelations, aNRelations, &hr)) {
+  if (!mscom::InvokeOnMainThread(
+          "HandlerProvider::GetRelationsInfoMainThread", this,
+          &HandlerProvider::GetRelationsInfoMainThread,
+          std::forward<IARelationData**>(aRelations),
+          std::forward<long*>(aNRelations), std::forward<HRESULT*>(&hr))) {
     return E_FAIL;
   }
 
@@ -835,10 +959,11 @@ HandlerProvider::get_AllChildren(AccChildData** aChildren, ULONG* aNChildren) {
   MOZ_ASSERT(mscom::IsCurrentThreadMTA());
 
   HRESULT hr;
-  if (!mscom::InvokeOnMainThread("HandlerProvider::GetAllChildrenMainThread",
-                                 this,
-                                 &HandlerProvider::GetAllChildrenMainThread,
-                                 aChildren, aNChildren, &hr)) {
+  if (!mscom::InvokeOnMainThread(
+          "HandlerProvider::GetAllChildrenMainThread", this,
+          &HandlerProvider::GetAllChildrenMainThread,
+          std::forward<AccChildData**>(aChildren),
+          std::forward<ULONG*>(aNChildren), std::forward<HRESULT*>(&hr))) {
     return E_FAIL;
   }
 

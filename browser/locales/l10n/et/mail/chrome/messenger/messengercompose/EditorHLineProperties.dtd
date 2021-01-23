@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label         "Horisontaaljoone omadused">
+
+<!ENTITY dimensionsBox.label       "Mõõtmed">
+<!ENTITY heightEditField.label     "Kõrgus:">
+<!ENTITY heightEditField.accessKey "K">
+<!ENTITY widthEditField.label      "Laius:">
+<!ENTITY widthEditField.accessKey  "L">
+<!ENTITY pixelsPopup.value         "pikslit">
+<!ENTITY alignmentBox.label        "Joondus">
+<!ENTITY leftRadio.label           "Vasakule">
+<!ENTITY leftRadio.accessKey       "V">
+<!ENTITY centerRadio.label         "Keskele">
+<!ENTITY centerRadio.accessKey     "K">
+<!ENTITY rightRadio.label          "Paremale">
+<!ENTITY rightRadio.accessKey      "P">
+
+<!ENTITY threeDShading.label       "Ruumiline varjutamine">
+<!ENTITY threeDShading.accessKey   "V">
+<!ENTITY saveSettings.label        "Vaikeväärtuseks">
+<!ENTITY saveSettings.accessKey    "V">
+<!ENTITY saveSettings.tooltip      "Salvesta need sätted edaspidi loodavate horisontaaljoonte tarvis">

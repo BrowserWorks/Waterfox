@@ -5,7 +5,7 @@
 declTest("test event triggering actor creation", {
   async test(browser) {
     // Add a select element to the DOM of the loaded document.
-    await ContentTask.spawn(browser, {}, async function() {
+    await SpecialPowers.spawn(browser, [], async function() {
       content.document.body.innerHTML += `
         <select id="testSelect">
           <option>A</option>
@@ -32,7 +32,7 @@ declTest("test event triggering actor creation", {
     is(data, "mozshowdropdown");
 
     let parent = browser.browsingContext.currentWindowGlobal;
-    let actorParent = parent.getActor("Test");
+    let actorParent = parent.getActor("TestWindow");
     ok(actorParent, "JSWindowActorParent should have value.");
     is(
       subject.wrappedJSObject,

@@ -16,7 +16,8 @@
 #  include "GeckoTaskTracerImpl.h"
 #endif
 
-#include "mozilla/Move.h"
+#include <utility>
+
 #include "nsISupportsImpl.h"
 
 #ifdef MOZ_TASK_TRACER
@@ -98,7 +99,7 @@ Message::Message(const char* data, int data_len)
 Message::Message(Message&& other) : Pickle(std::move(other)) {
   MOZ_COUNT_CTOR(IPC::Message);
 #if defined(OS_POSIX)
-  file_descriptor_set_ = other.file_descriptor_set_.forget();
+  file_descriptor_set_ = std::move(other.file_descriptor_set_);
 #endif
 }
 
@@ -182,6 +183,13 @@ uint32_t Message::num_fds() const {
 }
 
 #endif
+
+void Message::AssertAsLargeAsHeader() const {
+  MOZ_DIAGNOSTIC_ASSERT(size() >= MSG_HEADER_SZ);
+  MOZ_DIAGNOSTIC_ASSERT(CurrentSize() >= MSG_HEADER_SZ);
+  // Our buffers should agree with what our header specifies.
+  MOZ_DIAGNOSTIC_ASSERT(size() == CurrentSize());
+}
 
 #ifdef MOZ_TASK_TRACER
 void* MessageTask() { return reinterpret_cast<void*>(&MessageTask); }

@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY directoryName.label               "ਨਾਂ: ">
+<!ENTITY directoryName.accesskey           "n">
+<!ENTITY directoryHostname.label           "ਹੋਸਟ ਨਾਂ: ">
+<!ENTITY directoryHostname.accesskey       "o">
+<!ENTITY directoryBaseDN.label             "ਬੇਸ DN: ">
+<!ENTITY directoryBaseDN.accesskey         "b">
+<!ENTITY findButton.label                  "ਖੋਜ">
+<!ENTITY findButton.accesskey              "f">
+<!ENTITY directorySecure.label             "ਸੁਰੱਖਿਅਤ ਕੁਨੈਕਸ਼ਨ(SSL) ਵਰਤੋਂ">
+<!ENTITY directorySecure.accesskey         "U">
+<!ENTITY directoryLogin.label              "ਬਾਇਡ DN: ">
+<!ENTITY directoryLogin.accesskey          "i">
+<!ENTITY General.tab                       "ਸਧਾਰਨ">
+<!ENTITY Offline.tab                       "ਆਫਲਾਈਨ">
+<!ENTITY Advanced.tab                      "ਤਕਨੀਕੀ">
+<!ENTITY portNumber.label                  "ਪੋਰਟ ਨੰਬਰ: ">
+<!ENTITY portNumber.accesskey              "p">
+<!ENTITY searchFilter.label                "ਖੋਜ ਫਿਲਟਰ: ">
+<!ENTITY searchFilter.accesskey            "f">
+<!ENTITY scope.label                       "ਸੀਮਾ: ">
+<!ENTITY scope.accesskey                   "c">
+<!ENTITY scopeOneLevel.label               "ਇੱਕ ਪੱਧਰ">
+<!ENTITY scopeOneLevel.accesskey           "L">
+<!ENTITY scopeSubtree.label                "ਲੜੀ">
+<!ENTITY scopeSubtree.accesskey            "S">
+<!ENTITY return.label                      "ਇਸ ਤੋਂ ਵੱਧ ਵਾਪਿਸ ਨਾ ਕਰੋ">
+<!ENTITY return.accesskey                  "r">
+<!ENTITY results.label                     "ਨਤੀਜੇ">
+<!ENTITY offlineText.label                 "ਤੁਸੀਂ ਇਸ ਡਾਇਰੈਕਟਰੀ ਦੀ ਇੱਕ ਲੋਕਲ 
+ਕਾਪੀ ਬਣਾ ਸਕਦੇ ਹੋ ਤਾਂ ਕਿ ਤੁਹਾਡੇ ਆਫਲਾਇਨ ਕੰਮ ਕਰਨ ਤੇ ਵੀ ਇਸ ਨੂੰ ਇਸਤੇਮਾਲ ਕੀਤਾ ਜਾ ਸਕੇ">
+<!ENTITY saslMechanism.label               "ਲਾਗਇਨ ਢੰਗ: ">
+<!ENTITY saslMechanism.accesskey           "m">
+<!ENTITY saslOff.label                     "ਸਧਾਰਨ">
+<!ENTITY saslOff.accesskey                 "l">
+<!ENTITY saslGSSAPI.label                  "ਕਰਬਰੋਸ(GSSAPI)">
+<!ENTITY saslGSSAPI.accesskey              "K">
+
+<!-- Localization note: this is here because the width of the dialog 
+     is determined by the width of the base DN box; and that is likely
+     to vary somewhat with the language.
+-->
+<!ENTITY newDirectoryWidth                 "36em">

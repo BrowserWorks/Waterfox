@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Event Menu -->
+
+<!ENTITY event.new.event                        "Cita nova…">
+<!ENTITY event.new.event.accesskey              "N">
+
+<!ENTITY event.new.task                         "Tasca nova…">
+<!ENTITY event.new.task.accesskey               "t">
+
+<!ENTITY calendar.import.label                  "Importa…">
+<!ENTITY calendar.import.accesskey              "I">
+
+<!ENTITY calendar.export.label                  "Exporta…">
+<!ENTITY calendar.export.accesskey              "E">
+
+<!ENTITY calendar.publish.label                 "Publica…">
+<!ENTITY calendar.publish.accesskey             "b">
+
+<!ENTITY calendar.deletecalendar.label          "Suprimeix el calendari seleccionat…">
+<!ENTITY calendar.deletecalendar.accesskey      "S">
+<!ENTITY calendar.unsubscribecalendar.label     "Cancel·la la subscripció al calendari seleccionat…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "u">
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+
+<!ENTITY calendar.removecalendar.label          "Elimina el calendari seleccionat…">
+<!ENTITY calendar.removecalendar.accesskey      "E">
+
+
+<!ENTITY calendar.menu.customize.label          "Personalitza…">
+<!ENTITY calendar.menu.customize.accesskey      "z">
+
+<!ENTITY showUnifinderCmd.label                 "Cerca cites">
+<!ENTITY showUnifinderCmd.accesskey             "C">
+<!ENTITY showUnifinderCmd.tooltip               "Mostra/amaga la subfinestra de cerca de cites">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "Mostra les tasques al calendari">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "t">
+
+<!ENTITY goTodayCmd.label                       "Avui">
+<!ENTITY goTodayCmd.accesskey                   "u">
+
+<!ENTITY showCurrentView.label                  "Vista actual">
+<!ENTITY showCurrentView.accesskey              "V">
+
+<!ENTITY calendar.properties.label              "Propietats del calendari…">
+<!ENTITY calendar.properties.accesskey          "P">

@@ -1,0 +1,279 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY appmenu.tooltip                     "Deschide meniul">
+<!ENTITY navbarOverflow.label                "Mai multe instrumente…">
+
+<!-- Tab context menu -->
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "Fixează fila">
+<!ENTITY  unpinTab.label                     "Anulează fixarea filei">
+
+<!ENTITY  listAllTabs.label      "Listează toate filele">
+
+<!ENTITY tabCmd.label "Filă nouă">
+<!ENTITY openFileCmd.label "Deschide un fișier…">
+<!ENTITY printCmd.label "Tipărește…">
+
+<!ENTITY taskManagerCmd.label "Manager de activități">
+
+<!ENTITY menubarCmd.label "Bară de meniu">
+<!ENTITY menubarCmd.accesskey "M">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY navbar.accessibleLabel "Navigare">
+<!ENTITY personalbarCmd.label "Bară de marcaje">
+<!ENTITY personalbarCmd.accesskey "B">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY personalbar.accessibleLabel "Marcaje">
+<!ENTITY bookmarksToolbarItem.label "Elemente pe bara de marcaje">
+
+<!ENTITY fullScreenCmd.label "Ecran complet">
+
+<!ENTITY pictureInPictureHideToggle.label "Ascunde comutatorul Picture-in-Picture">
+<!ENTITY pictureInPictureHideToggle.accesskey "H">
+
+<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
+     for the Waterfox Account toolbar menu screen. The `Signed in as` text is
+     followed by the user's email. -->
+<!ENTITY fxa.menu.syncSettings2.label "Setări &syncBrand.shortName.label;">
+<!ENTITY fxa.menu.connectAnotherDevice2.label "Conectează alt dispozitiv…">
+<!ENTITY fxa.menu.firefoxAccount "&syncBrand.fxAccount.label;">
+<!ENTITY fxa.menu.signin.label "Autentifică-te în &brandProductName;">
+<!ENTITY fxa.menu.turnOnSync.label "Activează &syncBrand.shortName.label;">
+<!ENTITY fxa.menu.firefoxServices.label "Servicii &brandProductName;">
+<!ENTITY fxa.menu.account.label "Cont">
+<!ENTITY fxa.menu.settings.label "Setări">
+<!ENTITY fxa.menu.accountSettings.label "Setările contului">
+<!ENTITY fxa.menu.manageAccount2.label "Gestionează contul">
+<!ENTITY fxa.menu.signOut.label "Deconectează-te…">
+<!ENTITY fxa.menu.setupSync.label "Configurare &syncBrand.shortName.label;…">
+
+<!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
+     for the Waterfox Account toolbar menu screen.  -->
+<!ENTITY fxa.service.sendTab.description "Trimite o filă instantaneu oricărui dispozitiv pe care te-ai autentificat.">
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "este acum în modul de ecran complet">
+<!ENTITY fullscreenWarning.generic.label "Documentul este acum în modul de ecran complet">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "Ieși din modul de ecran complet (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "Ieși din modul de ecran complet (esc)">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "controlează acum cursorul. Apasă Esc pentru a prelua controlul.">
+<!ENTITY pointerlockWarning.generic.label "Documentul controlează acum cursorul. Apasă Esc pentru a prelua controlul.">
+
+<!ENTITY showAllBookmarks2.label "Afișează toate marcajele">
+<!ENTITY recentBookmarks.label "Marcate recent">
+<!ENTITY bookmarksToolbarChevron.tooltip "Afișează mai multe marcaje">
+
+<!ENTITY printButton.label            "Tipărește">
+<!ENTITY printButton.tooltip          "Tipărește pagina">
+
+<!ENTITY searchItem.title             "Caută">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "Pagină de start">
+<!ENTITY homeButton.defaultPage.tooltip "Pagina de start &brandShortName;">
+
+<!ENTITY bookmarksButton.label          "Marcaje">
+
+<!ENTITY bookmarksSubview.label             "Marcaje">
+<!ENTITY bookmarksMenuButton2.label         "Meniu de marcaje">
+<!ENTITY bookmarksMenuButton.other.label    "Alte marcaje">
+<!ENTITY bookmarksMenuButton.mobile.label   "Marcaje mobile">
+<!ENTITY viewBookmarksSidebar2.label        "Vezi bara laterală de marcaje">
+<!ENTITY hideBookmarksSidebar.label         "Ascunde bara laterală de marcaje">
+<!ENTITY viewBookmarksToolbar.label         "Vezi bara de marcaje">
+<!ENTITY hideBookmarksToolbar.label         "Ascunde bara de marcaje">
+<!ENTITY searchBookmarks.label              "Caută marcaje">
+<!ENTITY bookmarkingTools.label             "Instrumente pentru marcaje">
+<!ENTITY addBookmarksMenu.label             "Adaugă meniul de marcaje în bara de unelte">
+<!ENTITY removeBookmarksMenu.label          "Elimină meniul de marcaje din bara de unelte">
+
+<!ENTITY historyButton.label            "Istoric">
+
+<!ENTITY downloads.label              "Descărcări">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "Descărcări">
+<!ENTITY addons.label                 "Suplimente">
+
+<!ENTITY webDeveloperMenu.label       "Dezvoltator web">
+
+<!ENTITY newNavigatorCmd.label        "Fereastră nouă">
+<!ENTITY newPrivateWindow.label     "Fereastră privată nouă">
+
+<!ENTITY editMenu.label         "Editare">
+<!ENTITY preferencesCmd2.label       "Opțiuni">
+<!ENTITY preferencesCmdUnix.label       "Preferințe">
+<!ENTITY logins.label                           "Date de autentificare și parole">
+
+<!ENTITY overflowCustomizeToolbar.label       "Personalizează bara de instrumente…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "C">
+
+<!ENTITY historyMenu.label "Istoric">
+<!ENTITY historyUndoMenu.label "File închise recent">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "Ferestre închise recent">
+
+<!ENTITY appMenuHistory.showAll.label "Afișează tot istoricul">
+<!ENTITY appMenuHistory.clearRecent.label "Șterge istoricul recent…">
+<!ENTITY appMenuHistory.restoreSession.label "Restaurează sesiunea anterioară">
+<!ENTITY appMenuHistory.viewSidebar.label "Vezi bara laterală cu istoricul">
+<!ENTITY appMenuHistory.hideSidebar.label "Ascunde bara laterală de istoric">
+<!ENTITY appMenuHistory.recentHistory.label "Istoric recent">
+<!ENTITY appMenuHelp.label "Ajutor">
+
+<!ENTITY appMenuRemoteTabs.label "File sincronizate">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Nicio filă deschisă">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "Afișează mai multe">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Afișează mai multe file de pe acest dispozitiv">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Afișează tot">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Afișează toate filele de pe acest dispozitiv">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Activează sincronizarea filelor pentru a vedea o listă cu file de pe celelalte dispozitive.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Waterfox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Vrei să vezi aici filele de pe celelalte dispozitive?">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "Deschide preferințele de sincronizare">
+<!ENTITY appMenuRemoteTabs.welcome.label "Afișează o listă cu filele de pe celelalte dispozitive.">
+<!ENTITY appMenuRemoteTabs.unverified.label "Contul tău trebuie verificat.">
+<!ENTITY appMenuRemoteTabs.signintosync.label "Autentifică-te în &syncBrand.shortName.label;…">
+<!ENTITY appMenuRemoteTabs.turnonsync.label "Activează &syncBrand.shortName.label;…">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Gestionează dispozitivele…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "Vezi bara laterală cu file sincronizate">
+<!ENTITY appMenuRemoteTabs.hidesidebar.label "Ascunde bara laterală cu file sincronizate">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "Conectează alt dispozitiv">
+
+<!ENTITY appMenuRecentHighlights.label "Evidențieri recente">
+
+<!ENTITY customizeMenu.addToToolbar.label "Adaugă în bara de instrumente">
+<!ENTITY customizeMenu.addToToolbar.accesskey "A">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "Adaugă în meniul excedentar">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "M">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Anulează fixarea în meniul excedentar">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "U">
+<!ENTITY customizeMenu.removeFromToolbar.label "Elimină din bara de instrumente">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "R">
+<!ENTITY customizeMenu.addMoreItems.label "Adaugă mai multe elemente…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "A">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "Mai multe">
+
+<!ENTITY contentSearchSubmit.tooltip  "Trimite căutarea">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "Caută">
+<!ENTITY searchIcon.tooltip           "Căutare">
+
+<!ENTITY openLinkCmdInTab.accesskey   "T">
+
+<!ENTITY pageAction.copyLink.label    "Copiază linkul">
+
+<!-- LOCALIZATION NOTE(pocket-button.tooltiptext, saveToPocketCmd.label, saveLinkToPocketCmd.label, pocketMenuitem.label):
+  "Pocket" is a brand name. -->
+<!ENTITY saveToPocketCmd.label        "Salvează pagina în Pocket">
+<!ENTITY pocketMenuitem.label         "Vezi lista Pocket">
+
+<!ENTITY emailPageCmd.label           "Trimite linkul prin e-mail…">
+
+<!ENTITY fullZoom.label                 "Zoom">
+
+<!ENTITY sidebarCloseButton.tooltip     "Închide bara laterală">
+
+<!ENTITY quitApplicationCmdWin2.label       "Ieși">
+<!ENTITY quitApplicationCmdWin2.accesskey   "x">
+<!ENTITY quitApplicationCmdWin2.tooltip     "Ieși din &brandShorterName;">
+<!ENTITY quitApplicationCmd.label       "Ieși">
+<!ENTITY quitApplicationCmd.accesskey   "Q">
+<!ENTITY quitApplicationCmdMac2.label   "Ieși din &brandShorterName;">
+
+<!ENTITY allowPopups.accesskey "p">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Editează preferințele de blocare a ferestrelor pop-up…">
+<!ENTITY editPopupSettings.label "Editează opțiunile de blocare a ferestrelor pop-up…">
+<!ENTITY editPopupSettings.accesskey "E">
+<!ENTITY dontShowMessage.accesskey "D">
+
+<!ENTITY findOnCmd.label     "Caută în pagină…">
+
+<!ENTITY spellAddDictionaries.label "Adaugă dicționare…">
+<!ENTITY spellAddDictionaries.accesskey "A">
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "Filele browserului">
+
+<!ENTITY syncBrand.shortName.label    "Sync">
+
+<!ENTITY customizeMode.autoHideDownloadsButton.label "Ascunde automat">
+
+
+<!ENTITY uiTour.infoPanel.close "Închide">
+
+<!ENTITY panicButton.thankyou.msg1                "Istoricul tău recent a fost șters.">
+<!ENTITY panicButton.thankyou.msg2                "Navigare în siguranță!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Îți mulțumim!">
+
+<!ENTITY updateAvailable.panelUI.label "Descarcă actualizarea pentru &brandShorterName;">
+<!ENTITY updateManual.panelUI.label "Descarcă o copie nouă de &brandShorterName;">
+<!ENTITY updateUnsupported.panelUI.label "Nu poți efectua alte actualizări">
+<!ENTITY updateRestart.panelUI.label2 "Repornește pentru a actualiza &brandShorterName;">
+
+<!ENTITY sendToDevice.syncNotReady.label "Se sincronizează dispozitivele…">
+
+<!ENTITY pageAction.shareUrl.label "Partajează">
+<!ENTITY pageAction.shareMore.label "Mai multe…">
+
+<!ENTITY libraryButton.tooltip "Vezi istoricul, marcajele salvate și multe altele">
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+<!ENTITY accessibilityIndicator.tooltip "Funcții de accesibilitate activate">

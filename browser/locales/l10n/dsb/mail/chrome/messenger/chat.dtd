@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Online-kontakty">
+<!ENTITY offlineContactsHeader.label   "Offline-kontakty">
+<!ENTITY conversationsHeader.label     "Konwersacije">
+<!ENTITY searchResultConversation.label "Pytański wuslědk">
+<!ENTITY chat.noConv.title             "Konwersacije se how zwobraznjuju.">
+<!ENTITY chat.noConv.description       "Kontaktowu lisćinu w lěwem wobłuku wužywaś, aby konwersaciju startował.">
+<!ENTITY chat.noPreviousConv.description       "&brandShortName; tuchylu njama pjerwjejšne konwersacije za toś ten kontakt.">
+<!ENTITY chat.noAccount.title             "Njejsćo chatowe konto załožył.">
+<!ENTITY chat.noAccount.description       "Dowólśo &brandShortName; was pśez proces konfigurěrowanja wašogo chatowego konta wjasć.">
+<!ENTITY chat.accountWizard.button       "Prědne kšace">
+<!ENTITY chat.noConnectedAccount.title             "Waše chatowe konta njejsu zwězane.">
+<!ENTITY chat.noConnectedAccount.description       "Móžośo je z dialoga 'Chatowy status' zwězaś:">
+<!ENTITY chat.showAccountManager.button       "Chatowy status pokazaś">
+
+<!ENTITY chat.participants             "Wobźělniki:">
+<!ENTITY chat.previousConversations    "Pjerwjejšne konwersacije:">
+<!ENTITY chat.ongoingConversation      "Běžna konwersacija">
+
+<!ENTITY openConversationCmd.label     "Konwersaciju startowaś">
+<!ENTITY openConversationCmd.accesskey "K">
+<!ENTITY closeConversationCmd.label    "Konwersaciju zacyniś">
+<!ENTITY closeConversationCmd.accesskey "z">
+<!ENTITY aliasCmd.label                "Pśemjeniś">
+<!ENTITY aliasCmd.accesskey            "P">
+<!ENTITY deleteCmd.label               "Kontakt wótpóraś">
+<!ENTITY deleteCmd.accesskey           "w">
+
+<!ENTITY openConversationButton.tooltip  "Konwersaciju startowaś">
+<!ENTITY closeConversationButton.tooltip "Konwersaciju zacyniś">
+
+<!ENTITY addBuddyButton.label          "Kontakt pśidaś">
+<!ENTITY joinChatButton.label          "Do chata stupiś">
+<!ENTITY chatAccountsButton.label      "Konta pokazaś">
+
+<!ENTITY status.available          "Stoj k dispoziciji">
+<!ENTITY status.unavailable        "Njestoj k dispoziciji">
+<!ENTITY status.offline            "Offline">
+
+<!ENTITY openLinkCmd.label            "Wótkaz wócyniś…">
+<!ENTITY openLinkCmd.accesskey        "c">

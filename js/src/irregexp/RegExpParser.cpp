@@ -32,8 +32,9 @@
 
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Casting.h"
-#include "mozilla/Move.h"
 #include "mozilla/Range.h"
+
+#include <utility>
 
 #include "frontend/TokenStream.h"
 #include "gc/GC.h"
@@ -271,11 +272,7 @@ static size_t ComputeColumn(const Latin1Char* begin, const Latin1Char* end) {
 }
 
 static size_t ComputeColumn(const char16_t* begin, const char16_t* end) {
-#if JS_COLUMN_DIMENSION_IS_CODE_POINTS
   return unicode::CountCodePoints(begin, end);
-#else
-  return PointerRangeSize(begin, end);
-#endif
 }
 
 template <typename CharT>
@@ -338,7 +335,8 @@ RegExpParser<CharT>::SyntaxError(unsigned errorNumber, ...)
     va_list args;
     va_start(args, errorNumber);
 
-    ReportCompileError(ts.context(), std::move(err), nullptr, JSREPORT_ERROR, errorNumber, &args);
+    ReportCompileErrorLatin1(ts.context(), std::move(err), nullptr,
+                             errorNumber, &args);
 
     va_end(args);
 }
@@ -648,7 +646,7 @@ RegExpParser<CharT>::ParseClassCharacterEscape(widechar* code)
             *code = 0;
             return true;
         }
-        MOZ_FALLTHROUGH;
+        [[fallthrough]];
       case '1': case '2': case '3': case '4': case '5': case '6': case '7':
         if (unicode_) {
             ReportError(JSMSG_INVALID_IDENTITY_ESCAPE);
@@ -1686,7 +1684,7 @@ RegExpParser<CharT>::ParseDisjunction()
                     Advance();
                     break;
                 }
-                MOZ_FALLTHROUGH;
+                [[fallthrough]];
               case 'd': case 's': case 'w': {
                 widechar c = Next();
                 Advance(2);
@@ -1728,7 +1726,7 @@ RegExpParser<CharT>::ParseDisjunction()
                     Advance(2);
                     break;
                 }
-                MOZ_FALLTHROUGH;
+                [[fallthrough]];
               }
               case '0': {
                 if (unicode_) {
@@ -1858,7 +1856,7 @@ RegExpParser<CharT>::ParseDisjunction()
             int dummy;
             if (ParseIntervalQuantifier(&dummy, &dummy))
                 return ReportError(JSMSG_NOTHING_TO_REPEAT);
-            MOZ_FALLTHROUGH;
+            [[fallthrough]];
           }
           default:
             if (unicode_) {

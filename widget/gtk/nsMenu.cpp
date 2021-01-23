@@ -14,11 +14,8 @@
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/GuardObjects.h"
 #include "mozilla/MouseEvents.h"
-#include "mozilla/Move.h"
 #include "mozilla/PresShell.h"
 #include "mozilla/PresShellInlines.h"
-#include "nsAutoPtr.h"
-#include "nsBindingManager.h"
 #include "nsComponentManagerUtils.h"
 #include "nsContentUtils.h"
 #include "nsCSSValue.h"
@@ -31,8 +28,6 @@
 #include "nsString.h"
 #include "nsStyleStruct.h"
 #include "nsThreadUtils.h"
-#include "nsXBLBinding.h"
-#include "nsXBLService.h"
 
 #include "nsNativeMenuDocListener.h"
 
@@ -113,44 +108,6 @@ DispatchMouseEvent(nsIContent *aTarget, mozilla::EventMessage aMsg)
 
     WidgetMouseEvent event(true, aMsg, nullptr, WidgetMouseEvent::eReal);
     EventDispatcher::Dispatch(aTarget, nullptr, &event);
-}
-
-static void
-AttachXBLBindings(nsIContent *aContent)
-{
-    dom::Document *doc = aContent->OwnerDoc();
-    PresShell *shell = doc->GetPresShell();
-    if (!shell) {
-        return;
-    }
-
-    RefPtr<ComputedStyle> style =
-        shell->StyleSet()->ResolveStyleLazily(*aContent->AsElement());
-
-    if (!style) {
-        return;
-    }
-
-    const nsStyleDisplay* display = style->StyleDisplay();
-    if (!display->mBinding) {
-        return;
-    }
-
-    nsXBLService* xbl = nsXBLService::GetInstance();
-    if (!xbl) {
-        return;
-    }
-
-    RefPtr<nsXBLBinding> binding;
-    nsresult rv = xbl->LoadBindings(aContent->AsElement(),
-                                    display->mBinding->GetURI(),
-                                    display->mBinding->ExtraData()->Principal(),
-                                    getter_AddRefs(binding));
-    if ((NS_FAILED(rv) && rv != NS_ERROR_XBL_BLOCKED) || !binding) {
-        return;
-    }
-
-    doc->BindingManager()->AddToAttachedQueue(binding);
 }
 
 void
@@ -362,8 +319,6 @@ nsMenu::InitializePopup()
         return;
     }
 
-    AttachXBLBindings(mPopupContent);
-
     DocListener()->RegisterForContentChanges(mPopupContent, this);
 }
 
@@ -488,8 +443,6 @@ nsMenu::InitializeNativeData()
     mNeedsUpdate = true;
 
     MaybeAddPlaceholderItem();
-
-    AttachXBLBindings(ContentNode());
 }
 
 void

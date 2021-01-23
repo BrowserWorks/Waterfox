@@ -18,6 +18,15 @@ const serviceWorkerRegistrationSpec = generateActorSpec({
   },
 
   methods: {
+    allowShutdown: {
+      request: {},
+    },
+    preventShutdown: {
+      request: {},
+    },
+    push: {
+      request: {},
+    },
     start: {
       request: {},
     },

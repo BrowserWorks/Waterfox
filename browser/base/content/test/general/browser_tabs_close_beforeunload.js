@@ -43,7 +43,7 @@ add_task(async function() {
     );
   });
   info("Opening second tab using a click");
-  await ContentTask.spawn(firstTab.linkedBrowser, "", async function() {
+  await SpecialPowers.spawn(firstTab.linkedBrowser, [""], async function() {
     content.document.getElementsByTagName("a")[0].click();
   });
   info("Waiting for the second tab to be opened");
@@ -51,11 +51,7 @@ add_task(async function() {
   info("Waiting for the load in that tab to finish");
   await secondTabLoadedPromise;
 
-  let closeBtn = document.getAnonymousElementByAttribute(
-    secondTab,
-    "anonid",
-    "close-button"
-  );
+  let closeBtn = secondTab.closeButton;
   info("closing second tab (which will self-close in beforeunload)");
   closeBtn.click();
   ok(

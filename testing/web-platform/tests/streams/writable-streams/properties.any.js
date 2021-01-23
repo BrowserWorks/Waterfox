@@ -1,4 +1,4 @@
-// META: global=worker,jsshell
+// META: global=window,worker,jsshell
 'use strict';
 
 // The purpose of this file is to test for objects, attributes and arguments that should not exist.
@@ -44,6 +44,10 @@ const expected = {
     abort: {
       type: 'method',
       length: 1
+    },
+    close: {
+      type: 'method',
+      length: 0
     },
     getWriter: {
       type: 'method',

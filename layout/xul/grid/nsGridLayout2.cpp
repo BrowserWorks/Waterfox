@@ -14,7 +14,6 @@
 #include "nsGridLayout2.h"
 #include "nsGridRowGroupLayout.h"
 #include "nsGridRow.h"
-#include "nsBox.h"
 #include "nsIScrollableFrame.h"
 #include "nsSprocketLayout.h"
 #include "mozilla/ReflowInput.h"
@@ -68,9 +67,9 @@ void nsGridLayout2::AddWidth(nsSize& aSize, nscoord aSize2,
                              bool aIsHorizontal) {
   nscoord& size = GET_WIDTH(aSize, aIsHorizontal);
 
-  if (size != NS_INTRINSICSIZE) {
-    if (aSize2 == NS_INTRINSICSIZE)
-      size = NS_INTRINSICSIZE;
+  if (size != NS_UNCONSTRAINEDSIZE) {
+    if (aSize2 == NS_UNCONSTRAINEDSIZE)
+      size = NS_UNCONSTRAINEDSIZE;
     else
       size += aSize2;
   }
@@ -103,7 +102,7 @@ nsSize nsGridLayout2::GetXULMinSize(nsIFrame* aBox, nsBoxLayoutState& aState) {
       }
     }
 
-    AddMargin(aBox, total);
+    AddXULMargin(aBox, total);
     AddOffset(aBox, total);
     AddLargestSize(minSize, total);
   }
@@ -138,7 +137,7 @@ nsSize nsGridLayout2::GetXULPrefSize(nsIFrame* aBox, nsBoxLayoutState& aState) {
       }
     }
 
-    AddMargin(aBox, total);
+    AddXULMargin(aBox, total);
     AddOffset(aBox, total);
     AddLargestSize(pref, total);
   }
@@ -151,7 +150,7 @@ nsSize nsGridLayout2::GetXULMaxSize(nsIFrame* aBox, nsBoxLayoutState& aState) {
 
   // if there are no <rows> tags that will sum up our columns,
   // sum up our columns here.
-  nsSize total(NS_INTRINSICSIZE, NS_INTRINSICSIZE);
+  nsSize total(NS_UNCONSTRAINEDSIZE, NS_UNCONSTRAINEDSIZE);
   nsIFrame* rowsBox = mGrid.GetRowsBox();
   nsIFrame* columnsBox = mGrid.GetColumnsBox();
   if (!rowsBox || !columnsBox) {
@@ -175,7 +174,7 @@ nsSize nsGridLayout2::GetXULMaxSize(nsIFrame* aBox, nsBoxLayoutState& aState) {
       }
     }
 
-    AddMargin(aBox, total);
+    AddXULMargin(aBox, total);
     AddOffset(aBox, total);
     AddSmallestSize(maxSize, total);
   }

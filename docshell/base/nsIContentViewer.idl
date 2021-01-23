@@ -21,7 +21,10 @@ class nsDOMNavigationTiming;
 namespace mozilla {
 class Encoding;
 class PresShell;
-}
+namespace dom {
+class WindowGlobalChild;
+} // namespace dom
+} // namespace mozilla
 %}
 
 [ptr] native nsIWidgetPtr(nsIWidget);
@@ -32,12 +35,14 @@ class PresShell;
 [ref] native nsIContentViewerTArray(nsTArray<nsCOMPtr<nsIContentViewer> >);
 [ptr] native Encoding(const mozilla::Encoding);
 [ptr] native PresShellPtr(mozilla::PresShell);
+[ptr] native WindowGlobalChildPtr(mozilla::dom::WindowGlobalChild);
 
 [scriptable, builtinclass, uuid(2da17016-7851-4a45-a7a8-00b360e01595)]
 interface nsIContentViewer : nsISupports
 {
   [noscript] void init(in nsIWidgetPtr aParentWidget,
-                       [const] in nsIntRectRef aBounds);
+                       [const] in nsIntRectRef aBounds,
+                       in WindowGlobalChildPtr aWindowActor);
 
   attribute nsIDocShell container;
 
@@ -100,7 +105,7 @@ interface nsIContentViewer : nsISupports
 
   /**
    * All users of a content viewer are responsible for calling both
-   * close() and destroy(), in that order. 
+   * close() and destroy(), in that order.
    *
    * close() should be called when the load of a new page for the next
    * content viewer begins, and destroy() should be called when the next
@@ -234,15 +239,6 @@ interface nsIContentViewer : nsISupports
    */
   [noscript,notxpcom,nostdcall] void setNavigationTiming(in nsDOMNavigationTimingPtr aTiming);
 
-  /** The amount by which to scale all text. Default is 1.0. */
-  attribute float textZoom;
-
-  /** The actual text zoom in effect, as modified by the system font scale. */
-  readonly attribute float effectiveTextZoom;
-
-  /** The amount by which to scale all lengths. Default is 1.0. */
-  attribute float fullZoom;
-
   /**
    * The actual full zoom in effect, as modified by the device context.
    * For a requested full zoom, the device context may choose a slightly
@@ -252,8 +248,10 @@ interface nsIContentViewer : nsISupports
    * of 90% is actually 89.1%, for example. This value is provided primarily to
    * support media queries of dppx values, because those queries are matched
    * against the actual native device pixel ratio and the actual full zoom.
+   *
+   * You should only need this for testing.
    */
-  readonly attribute float deviceFullZoom;
+  readonly attribute float deviceFullZoomForTest;
 
   /**
    * The value used to override devicePixelRatio and media queries dppx.
@@ -326,6 +324,19 @@ interface nsIContentViewer : nsISupports
    * Restore the viewer's natural media type
    */
   void stopEmulatingMedium();
+
+  cenum PrefersColorScheme : 8 {
+    PREFERS_COLOR_SCHEME_LIGHT,
+    PREFERS_COLOR_SCHEME_DARK,
+    PREFERS_COLOR_SCHEME_NO_PREFERENCE,
+    PREFERS_COLOR_SCHEME_NONE, /* This clears the override. */
+  };
+
+  /*
+   * Emulate or stop emulating the prefers color scheme on this page and
+   * subdocuments.
+   */
+  void emulatePrefersColorScheme(in nsIContentViewer_PrefersColorScheme aPrefersColorScheme);
 
   [noscript, notxpcom] Encoding getHintCharset();
   [noscript, notxpcom] void setHintCharset(in Encoding aEncoding);

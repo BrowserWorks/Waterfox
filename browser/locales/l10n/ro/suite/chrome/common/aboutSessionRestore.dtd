@@ -1,0 +1,34 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!ENTITY restorepage.tabtitle       "Restaurează sesiunea">
+<!ENTITY restorepage.pagetitle      "Doriți să restaurați sesiunea anterioară?">
+<!-- LOCALIZATION NOTE: If "closed unexpectedly" sounds too awkward in the translation,
+                        you may translate "crash" instead (even though it's IT-speak) -->
+<!ENTITY restorepage.issueDesc      "Sesiunea dumneavoastră de &brandShortName; s-a încheiat neașteptat. Ne cerem scuze pentru orice inconvenient creat. Puteți restaura filele și ferestrele din sesiunea anterioară sau puteți începe o nouă sesiunea dacă nu mai aveți nevoie de ele.">
+<!ENTITY restorepage.remedies       "Dacă &brandShortName; se închide în mod repetat:">
+<!ENTITY restorepage.dueToChrome    "Încercați să dezactivați extensiile recent instalate din gestionarul de suplimente.">
+<!ENTITY restorepage.dueToContent   "Încercați să restaurați sesiunea fără pagini pe care le suspectați că ar putea crea problema:">
+
+<!ENTITY restorepage.restoreButton  "Restaurează sesiunea anterioară">
+<!ENTITY restorepage.restore.access "L">
+<!ENTITY restorepage.cancelButton   "Pornește o sesiune nouă">
+<!ENTITY restorepage.cancel.access  "F">
+
+<!ENTITY restorepage.restoreHeader  "Restaurează">
+<!ENTITY restorepage.listHeader     "Ferestre și file">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Fereastra &#37;S">

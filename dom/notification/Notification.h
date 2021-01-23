@@ -10,7 +10,6 @@
 #include "mozilla/DOMEventTargetHelper.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/dom/NotificationBinding.h"
-#include "mozilla/dom/WorkerHolder.h"
 
 #include "nsIObserver.h"
 #include "nsISupports.h"
@@ -19,9 +18,6 @@
 #include "nsHashKeys.h"
 #include "nsTHashtable.h"
 #include "nsWeakReference.h"
-
-#define NOTIFICATIONTELEMETRYSERVICE_CONTRACTID \
-  "@mozilla.org/notificationTelemetryService;1"
 
 class nsIPrincipal;
 class nsIVariant;
@@ -32,42 +28,8 @@ namespace dom {
 class NotificationRef;
 class WorkerNotificationObserver;
 class Promise;
+class StrongWorkerRef;
 class WorkerPrivate;
-
-class Notification;
-class NotificationWorkerHolder final : public WorkerHolder {
-  // Since the feature is strongly held by a Notification, it is ok to hold
-  // a raw pointer here.
-  Notification* mNotification;
-
- public:
-  explicit NotificationWorkerHolder(Notification* aNotification);
-
-  bool Notify(WorkerStatus aStatus) override;
-};
-
-// Records telemetry probes at application startup, when a notification is
-// shown, and when the notification permission is revoked for a site.
-class NotificationTelemetryService final : public nsIObserver {
- public:
-  NS_DECL_ISUPPORTS
-  NS_DECL_NSIOBSERVER
-
-  NotificationTelemetryService();
-
-  static already_AddRefed<NotificationTelemetryService> GetInstance();
-
-  nsresult Init();
-  void RecordDNDSupported();
-  void RecordPermissions();
-
- private:
-  virtual ~NotificationTelemetryService();
-
-  bool GetNotificationPermission(nsISupports* aSupports, uint32_t* aCapability);
-
-  bool mDNDRecorded;
-};
 
 /*
  * Notifications on workers introduce some lifetime issues. The property we
@@ -132,7 +94,6 @@ class Notification : public DOMEventTargetHelper,
   friend class ServiceWorkerNotificationObserver;
   friend class WorkerGetRunnable;
   friend class WorkerNotificationObserver;
-  friend class NotificationTelemetryService;
 
  public:
   IMPL_EVENT_HANDLER(click)
@@ -220,7 +181,7 @@ class Notification : public DOMEventTargetHelper,
   static already_AddRefed<Promise> ShowPersistentNotification(
       JSContext* aCx, nsIGlobalObject* aGlobal, const nsAString& aScope,
       const nsAString& aTitle, const NotificationOptions& aOptions,
-      ErrorResult& aRv);
+      const ServiceWorkerRegistrationDescriptor& aDescriptor, ErrorResult& aRv);
 
   void Close();
 
@@ -385,13 +346,12 @@ class Notification : public DOMEventTargetHelper,
 
   bool IsTargetThread() const { return NS_IsMainThread() == !mWorkerPrivate; }
 
-  bool RegisterWorkerHolder();
-  void UnregisterWorkerHolder();
+  bool CreateWorkerRef();
 
   nsresult ResolveIconAndSoundURL(nsString&, nsString&);
 
   // Only used for Notifications on Workers, worker thread only.
-  UniquePtr<NotificationWorkerHolder> mWorkerHolder;
+  RefPtr<StrongWorkerRef> mWorkerRef;
   // Target thread only.
   uint32_t mTaskCount;
 };

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "ਤਕਨੀਕੀ ਵਿਸ਼ੇਸ਼ਤਾ ਐਡੀਟਰ">
+<!ENTITY AttName.label                  "ਗੁਣ: ">
+<!ENTITY AttValue.label                 "ਮੁੱਲ: ">
+<!ENTITY PropertyName.label             "ਵਿਸ਼ੇਸ਼ਤਾ: ">
+<!ENTITY currentattributesfor.label     "ਇਸ ਲਈ ਮੌਜੂਦਾ ਗੁਣ: ">
+<!ENTITY tree.attributeHeader.label     "ਗੁਣ">
+<!ENTITY tree.propertyHeader.label      "ਵਿਸ਼ੇਸ਼ਤਾ">
+<!ENTITY tree.valueHeader.label         "ਮੁੱਲ">
+<!ENTITY tabHTML.label                  "HTMLਵਿਸ਼ੇਸ਼ਤਾ">
+<!ENTITY tabCSS.label                   "ਇਨਲਾਈਨ ਸਟਾਈਲ">
+<!ENTITY tabJSE.label                   "JavaScript ਘਟਨਾ">
+
+<!ENTITY editAttribute.label    "ਇੱਕ ਉੱਤੇ ਦਿੱਤੀ ਇਕਾਈ ਵਿੱਚ ਸੋਧ ਕਰਨ ਲਈ ਕਲਿੱਕ ਕਰੋ">
+<!ENTITY removeAttribute.label  "ਹਟਾਓ">

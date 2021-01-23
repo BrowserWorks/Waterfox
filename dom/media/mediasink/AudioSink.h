@@ -23,11 +23,20 @@ namespace mozilla {
 class AudioConverter;
 
 class AudioSink : private AudioStream::DataSource {
-  using PlaybackParams = MediaSink::PlaybackParams;
-
  public:
+  struct PlaybackParams {
+    PlaybackParams(double aVolume, double aPlaybackRate, bool aPreservesPitch)
+        : mVolume(aVolume),
+          mPlaybackRate(aPlaybackRate),
+          mPreservesPitch(aPreservesPitch) {}
+    double mVolume;
+    double mPlaybackRate;
+    bool mPreservesPitch;
+  };
+
   AudioSink(AbstractThread* aThread, MediaQueue<AudioData>& aAudioQueue,
-            const media::TimeUnit& aStartTime, const AudioInfo& aInfo);
+            const media::TimeUnit& aStartTime, const AudioInfo& aInfo,
+            AudioDeviceInfo* aAudioDevice);
 
   ~AudioSink();
 
@@ -57,7 +66,9 @@ class AudioSink : private AudioStream::DataSource {
 
   MediaEventSource<bool>& AudibleEvent() { return mAudibleEvent; }
 
-  nsCString GetDebugInfo();
+  void GetDebugInfo(dom::MediaSinkDebugInfo& aInfo);
+
+  const RefPtr<AudioDeviceInfo>& AudioDevice() { return mAudioDevice; }
 
  private:
   // Allocate and initialize mAudioStream. Returns NS_OK on success.
@@ -68,6 +79,7 @@ class AudioSink : private AudioStream::DataSource {
   UniquePtr<AudioStream::Chunk> PopFrames(uint32_t aFrames) override;
   bool Ended() const override;
   void Drained() override;
+  void Errored() override;
 
   void CheckIsAudible(const AudioData* aData);
 
@@ -85,6 +97,10 @@ class AudioSink : private AudioStream::DataSource {
   media::TimeUnit mLastGoodPosition;
 
   const AudioInfo mInfo;
+
+  // The output device this AudioSink is playing data to. The system's default
+  // device is used if this is null.
+  const RefPtr<AudioDeviceInfo> mAudioDevice;
 
   // Used on the task queue of MDSM only.
   bool mPlaying;

@@ -1,0 +1,90 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/viewSource.xul -->
+
+<!-- extracted from content/viewSource.xhtml -->
+
+<!-- LOCALIZATION NOTE (mainWindow.title) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.title "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifier "&brandFullName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifierseparator) : DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifierseparator " - ">
+<!ENTITY mainWindow.preface "Burim i: ">
+
+<!ENTITY editMenu.label "Përpunoni">
+<!ENTITY editMenu.accesskey "P">
+<!ENTITY fileMenu.label "Kartelë">
+<!ENTITY fileMenu.accesskey "K">
+<!ENTITY savePageCmd.label "Ruajeni Faqen Si…">
+<!ENTITY savePageCmd.accesskey "R">
+<!ENTITY savePageCmd.commandkey "S">
+<!ENTITY pageSetupCmd.label "Rregullim Faqeje…">
+<!ENTITY pageSetupCmd.accesskey "u">
+<!ENTITY printPreviewCmd.label "Paraparje e Shtypjes">
+<!ENTITY printPreviewCmd.accesskey "P">
+<!ENTITY printCmd.label "Shtypni…">
+<!ENTITY printCmd.accesskey "y">
+<!ENTITY printCmd.commandkey "P">
+<!ENTITY closeCmd.label "Mbylleni">
+<!ENTITY closeCmd.accesskey "M">
+<!ENTITY closeCmd.commandkey "W">
+
+<!-- LOCALIZATION NOTE :
+textEnlarge.commandkey3, textReduce.commandkey2 and
+textReset.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY textEnlarge.commandkey "+">
+<!ENTITY textEnlarge.commandkey2 "=">
+<!ENTITY textEnlarge.commandkey3 "">
+<!ENTITY textReduce.commandkey "-">
+<!ENTITY textReduce.commandkey2 "">
+<!ENTITY textReset.commandkey "0">
+<!ENTITY textReset.commandkey2 "">
+
+<!ENTITY goToLineCmd.label "Kaloni te Rreshti…">
+<!ENTITY goToLineCmd.accesskey "o">
+<!ENTITY goToLineCmd.commandkey "l">
+
+<!ENTITY viewMenu.label           "Shiheni">
+<!ENTITY viewMenu.accesskey       "i">
+<!ENTITY reloadCmd.label "Ringarkoje">
+<!ENTITY reloadCmd.accesskey "R">
+<!ENTITY reloadCmd.commandkey "r">
+<!ENTITY menu_wrapLongLines.title "Mbështill Rreshta të Gjatë">
+<!ENTITY menu_wrapLongLines.accesskey "M">
+<!ENTITY menu_highlightSyntax.label "Theksim Sintakse">
+<!ENTITY menu_highlightSyntax.accesskey "T">
+<!ENTITY menu_textSize.label "Madhësi Teksti">
+<!ENTITY menu_textSize.accesskey "a">
+<!ENTITY menu_textEnlarge.label "Rrite">
+<!ENTITY menu_textEnlarge.accesskey "R">
+<!ENTITY menu_textReduce.label "Zvogëloje">
+<!ENTITY menu_textReduce.accesskey "Z">
+<!ENTITY menu_textReset.label "Normale">
+<!ENTITY menu_textReset.accesskey "N">
+
+<!ENTITY findOnCmd.label     "Gjeni në Këtë Faqe…">
+<!ENTITY findOnCmd.accesskey "G">
+<!ENTITY findOnCmd.commandkey "f">
+<!ENTITY findAgainCmd.label  "Gjeje Sërish">
+<!ENTITY findAgainCmd.accesskey "e">
+<!ENTITY findAgainCmd.commandkey "g">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY findSelectionCmd.commandkey "e">
+
+<!ENTITY backCmd.label "Mbrapsht">
+<!ENTITY backCmd.accesskey "M">
+<!ENTITY forwardCmd.label "Përpara">
+<!ENTITY forwardCmd.accesskey "P">
+<!ENTITY goBackCmd.commandKey "[">
+<!ENTITY goForwardCmd.commandKey "]">
+
+<!ENTITY copyLinkCmd.label "Kopjo Vendndodhje Lidhjeje">
+<!ENTITY copyLinkCmd.accesskey "V">
+<!ENTITY copyEmailCmd.label "Kopjo Adresë Email">
+<!ENTITY copyEmailCmd.accesskey "E">

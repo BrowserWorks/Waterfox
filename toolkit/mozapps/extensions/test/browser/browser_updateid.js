@@ -9,33 +9,20 @@ var gManagerWindow;
 var gCategoryUtilities;
 
 function getName(item) {
-  if (gManagerWindow.useHtmlViews) {
-    return item.addonNameEl.textContent;
-  }
-  return gManagerWindow.document.getAnonymousElementByAttribute(
-    item,
-    "anonid",
-    "name"
-  ).textContent;
+  return item.addonNameEl.textContent;
 }
 
 async function getUpdateButton(item) {
-  if (gManagerWindow.useHtmlViews) {
-    let button = item.querySelector('[action="install-update"]');
-    let panel = button.closest("panel-list");
-    let shown = BrowserTestUtils.waitForEvent(panel, "shown");
-    panel.show();
-    await shown;
-    return button;
-  }
-  return gManagerWindow.document.getAnonymousElementByAttribute(
-    item,
-    "anonid",
-    "update-btn"
-  );
+  let button = item.querySelector('[action="install-update"]');
+  let panel = button.closest("panel-list");
+  let shown = BrowserTestUtils.waitForEvent(panel, "shown");
+  let moreOptionsButton = item.querySelector('[action="more-options"]');
+  EventUtils.synthesizeMouseAtCenter(moreOptionsButton, {}, item.ownerGlobal);
+  await shown;
+  return button;
 }
 
-async function test_updateid() {
+add_task(async function test_updateid() {
   // Close the existing about:addons tab and unrestier the existing MockProvider
   // instance if a previous failed test has not been able to clear them.
   if (gManagerWindow) {
@@ -97,24 +84,4 @@ async function test_updateid() {
   gManagerWindow = null;
   gProvider.unregister();
   gProvider = null;
-}
-
-add_task(async function test_XUL_updateid() {
-  await SpecialPowers.pushPrefEnv({
-    set: [["extensions.htmlaboutaddons.enabled", false]],
-  });
-
-  await test_updateid();
-
-  // No popPrefEnv because of bug 1557397.
-});
-
-add_task(async function test_HTML_updateid() {
-  await SpecialPowers.pushPrefEnv({
-    set: [["extensions.htmlaboutaddons.enabled", true]],
-  });
-
-  await test_updateid();
-
-  // No popPrefEnv because of bug 1557397.
 });

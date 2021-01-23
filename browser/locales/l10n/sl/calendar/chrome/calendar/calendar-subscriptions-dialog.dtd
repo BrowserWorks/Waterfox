@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- Calendar Subscriptions Dialog -->
+<!ENTITY calendar.subscriptions.dialog.title                            "Naroči se na koledarje">
+<!ENTITY calendar.subscriptions.dialog.search.label.value               "Prikaži koledarje, ki vsebujejo:">
+<!ENTITY calendar.subscriptions.dialog.search.button.label              "Išči">
+<!ENTITY calendar.subscriptions.dialog.select.label.value               "Izberite koledarje za prijavo:">
+<!ENTITY calendar.subscriptions.dialog.subscribe.button.label           "Naroči se">
+<!ENTITY calendar.subscriptions.dialog.unsubscribe.button.label         "Odjavi se">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.busy.label         "Išči …">
+<!ENTITY calendar.subscriptions.dialog.statusmessage.nomatches.label    "Ni zadetkov.">

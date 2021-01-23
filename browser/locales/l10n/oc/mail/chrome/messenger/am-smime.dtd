@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY digitalSign.certificate.button "Seleccionar un certificat…">
+<!ENTITY digitalSign.certificate.accesskey "S">
+<!ENTITY digitalSign.certificate_clear.button "Escafar">
+<!ENTITY digitalSign.certificate_clear.accesskey "E">
+<!ENTITY encryption.certificate.button "Seleccionar…">
+<!ENTITY encryption.certificate.accesskey "c">
+<!ENTITY encryption.certificate_clear.button "Escafar">
+<!ENTITY encryption.certificate_clear.accesskey "r">
+<!ENTITY signingGroupTitle.label "Signatura">
+<!ENTITY signMessage.accesskey "S">
+

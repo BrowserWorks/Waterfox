@@ -2,6 +2,7 @@
 name = "baldrdash"
 version = "0.1.0"
 authors = ["The Spidermonkey and Cranelift developers"]
+edition = "2018"
 
 [lib]
 crate-type = ["rlib"]
@@ -10,19 +11,16 @@ name = "baldrdash"
 [dependencies]
 # The build system redirects the versions of cranelift-codegen and
 # cranelift-wasm to pinned commits. If you want to update Cranelift in Gecko,
-# you should update the following files:
-# - $TOP_LEVEL/Cargo.toml, look for the revision (rev) hashes of both cranelift
-# dependencies (codegen and wasm).
-# - $TOP_LEVEL/.cargo/config.in, look for the revision (rev) field of the
-# Cranelift source.
-cranelift-codegen = { version = "0.30", default-features = false }
-cranelift-wasm = "0.30"
-target-lexicon = "0.4.0"
+# you should update the following $TOP_LEVEL/Cargo.toml file: look for the
+# revision (rev) hashes of both cranelift dependencies (codegen and wasm).
+cranelift-codegen = { version = "0.63.0", default-features = false }
+cranelift-wasm = "0.63.0"
 log = { version = "0.4.6", default-features = false, features = ["release_max_level_info"] }
-env_logger = "0.5.6"
+env_logger = "0.6"
+smallvec = "1.0"
 
 [build-dependencies]
-bindgen = {version = "0.49", default-features = false} # disable `logging` to reduce code size
+bindgen = {version = "0.53", default-features = false} # disable `logging` to reduce code size
 
 [features]
 default = ['cranelift-codegen/std']

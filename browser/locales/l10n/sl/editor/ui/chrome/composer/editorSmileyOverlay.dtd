@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Smiley Menu items -->
+<!ENTITY insertSmiley.label "Smeško">
+<!ENTITY insertSmiley.accesskey "S">
+
+<!ENTITY smiley1Cmd.label "Nasmeh">
+<!ENTITY smiley1Cmd.accesskey "s">
+<!ENTITY smiley1Cmd.tooltip "Vstavi smeška">
+<!ENTITY smiley2Cmd.label "Grd pogled">
+<!ENTITY smiley2Cmd.accesskey "G">
+<!ENTITY smiley2Cmd.tooltip "Vstavi grd pogled">
+<!ENTITY smiley3Cmd.label "Pomežik">
+<!ENTITY smiley3Cmd.accesskey "ž">
+<!ENTITY smiley3Cmd.tooltip "Vstavi pomežik">
+<!ENTITY smiley4Cmd.label "Jezik">
+<!ENTITY smiley4Cmd.accesskey "J">
+<!ENTITY smiley4Cmd.tooltip "Vstavi obraz, ki kaže jezik">
+<!ENTITY smiley5Cmd.label "Smeh">
+<!ENTITY smiley5Cmd.accesskey "h">
+<!ENTITY smiley5Cmd.tooltip "Vstavi nasmejan obraz">
+<!ENTITY smiley6Cmd.label "Osramočen">
+<!ENTITY smiley6Cmd.accesskey "č">
+<!ENTITY smiley6Cmd.tooltip "Vstavi osramočen obraz">
+<!ENTITY smiley7Cmd.label "Neodločen">
+<!ENTITY smiley7Cmd.accesskey "o">
+<!ENTITY smiley7Cmd.tooltip "Vstavi neodločen obraz">
+<!ENTITY smiley8Cmd.label "Presenečen">
+<!ENTITY smiley8Cmd.accesskey "r">
+<!ENTITY smiley8Cmd.tooltip "Vstavi presenečen obraz">
+<!ENTITY smiley9Cmd.label "Poljub">
+<!ENTITY smiley9Cmd.accesskey "b">
+<!ENTITY smiley9Cmd.tooltip "Vstavi poljubček">
+<!ENTITY smiley10Cmd.label "Krik">
+<!ENTITY smiley10Cmd.accesskey "K">
+<!ENTITY smiley10Cmd.tooltip "Vstavi obraz, ki kriči">
+<!ENTITY smiley11Cmd.label "Kul">
+<!ENTITY smiley11Cmd.accesskey "u">
+<!ENTITY smiley11Cmd.tooltip "Vstavi kul obraz">
+<!ENTITY smiley12Cmd.label "Usta denarja">
+<!ENTITY smiley12Cmd.accesskey "d">
+<!ENTITY smiley12Cmd.tooltip "Vstavi usta denarja">
+<!ENTITY smiley13Cmd.label "Zarečeno">
+<!ENTITY smiley13Cmd.accesskey "Z">
+<!ENTITY smiley13Cmd.tooltip "Vstavi obraz z nogo v ustih">
+<!ENTITY smiley14Cmd.label "Nedolžen">
+<!ENTITY smiley14Cmd.accesskey "N">
+<!ENTITY smiley14Cmd.tooltip "Vstavi nedolžen obraz">
+<!ENTITY smiley15Cmd.label "Jok">
+<!ENTITY smiley15Cmd.accesskey "k">
+<!ENTITY smiley15Cmd.tooltip "Vstavi objokan obraz">
+<!ENTITY smiley16Cmd.label "Zapečatene ustnice">
+<!ENTITY smiley16Cmd.accesskey "a">
+<!ENTITY smiley16Cmd.tooltip "Vstavi zapečatene ustnice">
+<!ENTITY SmileButton.label "Vstavi smeška">
+<!ENTITY SmileButton.tooltip "Vstavi smeška">

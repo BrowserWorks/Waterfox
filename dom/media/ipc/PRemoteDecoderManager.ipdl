@@ -3,11 +3,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+include protocol PTexture;
 include protocol PRemoteDecoder;
+include LayersSurfaces;
 include "mozilla/dom/MediaIPCUtils.h";
 
 using VideoInfo from "MediaInfo.h";
 using AudioInfo from "MediaInfo.h";
+using struct mozilla::layers::TextureFactoryIdentifier from "mozilla/layers/CompositorTypes.h";
 using mozilla::CreateDecoderParams::OptionSet from "PlatformDecoderModule.h";
 
 namespace mozilla {
@@ -30,9 +33,14 @@ sync protocol PRemoteDecoderManager
 
 parent:
   sync PRemoteDecoder(RemoteDecoderInfoIPDL info,
-                      OptionSet options)
+                      OptionSet options,
+                      TextureFactoryIdentifier? identifier)
          returns (bool success,
                   nsCString aErrorDescription);
+
+  sync Readback(SurfaceDescriptorGPUVideo sd) returns (SurfaceDescriptor aResult);
+
+  async DeallocateSurfaceDescriptorGPUVideo(SurfaceDescriptorGPUVideo sd);
 };
 
 } // namespace mozilla

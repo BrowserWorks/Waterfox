@@ -12,7 +12,6 @@ add_task(async function() {
       Ci.nsIPluginTag.STATE_ENABLED,
       "Second Test Plug-in"
     );
-    Services.prefs.clearUserPref("plugins.click_to_play");
     Services.prefs.clearUserPref("extensions.blocklist.suppressUI");
     gBrowser.removeCurrentTab();
     window.focus();
@@ -25,7 +24,6 @@ add_task(async function() {
 
   gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
 
-  Services.prefs.setBoolPref("plugins.click_to_play", true);
   setTestPluginEnabledState(Ci.nsIPluginTag.STATE_CLICKTOPLAY, "Test Plug-in");
   let bindingPromise = BrowserTestUtils.waitForContentEvent(
     gBrowser.selectedBrowser,
@@ -53,7 +51,7 @@ add_task(async function() {
 
   // Display a context menu on the test plugin so we can test
   // activation menu options.
-  await ContentTask.spawn(gBrowser.selectedBrowser, {}, async function() {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], async function() {
     let plugin = content.document.getElementById("test");
     let bounds = plugin.getBoundingClientRect();
     let left = (bounds.left + bounds.right) / 2;
@@ -89,5 +87,5 @@ add_task(async function() {
 
   // check plugin state
   pluginInfo = await promiseForPluginInfo("test", gBrowser.selectedBrowser);
-  ok(pluginInfo.activated, "plugin should not be activated");
+  ok(pluginInfo.activated, "plugin should be activated");
 });

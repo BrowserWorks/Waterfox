@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Новая виртуальная папка">
+<!ENTITY name.label                    "Имя:">
+<!ENTITY name.accesskey                "м">
+<!ENTITY description.label             "Создать как вложенную папку:">
+<!ENTITY description.accesskey         "д">
+
+<!ENTITY searchTermCaption.label       "Настроить критерии поиска, используемые для этой виртуальной папки:">
+
+<!ENTITY folderSelectionCaption.label  "Выберите папки, в которых будет производиться поиск:">
+<!ENTITY chooseFoldersButton.label     "Выбрать…">
+<!ENTITY chooseFoldersButton.accesskey "б">
+
+<!ENTITY searchOnline.label            "Поиск онлайн (дает актуальные результаты для папок IMAP и групп новостей, но увеличивает время открытия папки)">
+<!ENTITY searchOnline.accesskey        "с">
+<!ENTITY newFolderButton.label         "Создать">
+<!ENTITY newFolderButton.accesskey     "з">
+<!ENTITY editFolderButton.label        "Обновить">
+<!ENTITY editFolderButton.accesskey    "н">

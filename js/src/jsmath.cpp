@@ -49,25 +49,8 @@ using mozilla::IsNegativeZero;
 using mozilla::Maybe;
 using mozilla::NegativeInfinity;
 using mozilla::NumberEqualsInt32;
-using mozilla::NumberIsInt32;
 using mozilla::PositiveInfinity;
 using mozilla::WrappingMultiply;
-
-static const JSConstDoubleSpec math_constants[] = {
-    // clang-format off
-    {"E"      ,  M_E       },
-    {"LOG2E"  ,  M_LOG2E   },
-    {"LOG10E" ,  M_LOG10E  },
-    {"LN2"    ,  M_LN2     },
-    {"LN10"   ,  M_LN10    },
-    {"PI"     ,  M_PI      },
-    {"SQRT2"  ,  M_SQRT2   },
-    {"SQRT1_2",  M_SQRT1_2 },
-    {nullptr  ,  0         }
-    // clang-format on
-};
-
-typedef double (*UnaryMathFunctionType)(double);
 
 template <UnaryMathFunctionType F>
 static bool math_function(JSContext* cx, HandleValue val,
@@ -78,7 +61,8 @@ static bool math_function(JSContext* cx, HandleValue val,
   }
 
   // NB: Always stored as a double so the math function can be inlined
-  // through MMathFunction.
+  // through MMathFunction. We also rely on this to avoid type monitoring
+  // in CallIRGenerator::tryAttachMathSqrt.
   double z = F(x);
   res.setDouble(z);
   return true;
@@ -94,9 +78,6 @@ static bool math_function(JSContext* cx, unsigned argc, Value* vp) {
 
   return math_function<F>(cx, args[0], args.rval());
 }
-
-const Class js::MathClass = {js_Math_str,
-                             JSCLASS_HAS_CACHED_PROTO(JSProto_Math)};
 
 bool js::math_abs_handle(JSContext* cx, js::HandleValue v,
                          js::MutableHandleValue r) {
@@ -544,7 +525,7 @@ template <typename T>
 T js::GetBiggestNumberLessThan(T x) {
   MOZ_ASSERT(!IsNegative(x));
   MOZ_ASSERT(IsFinite(x));
-  typedef typename mozilla::FloatingPoint<T>::Bits Bits;
+  using Bits = typename mozilla::FloatingPoint<T>::Bits;
   Bits bits = mozilla::BitwiseCast<Bits>(x);
   MOZ_ASSERT(bits > 0, "will underflow");
   return mozilla::BitwiseCast<T>(bits - 1);
@@ -613,18 +594,6 @@ bool js::math_sin_handle(JSContext* cx, HandleValue val,
 
 bool js::math_sin(JSContext* cx, unsigned argc, Value* vp) {
   return math_function<math_sin_impl>(cx, argc, vp);
-}
-
-void js::math_sincos_impl(double x, double* sin, double* cos) {
-  AutoUnsafeCallWithABI unsafe;
-#if defined(HAVE_SINCOS)
-  sincos(x, sin, cos);
-#elif defined(HAVE___SINCOS)
-  __sincos(x, sin, cos);
-#else
-  *sin = js::math_sin_impl(x);
-  *cos = js::math_cos_impl(x);
-#endif
 }
 
 double js::math_sqrt_impl(double x) {
@@ -910,6 +879,110 @@ static bool math_toSource(JSContext* cx, unsigned argc, Value* vp) {
   return true;
 }
 
+UnaryMathFunctionType js::GetUnaryMathFunctionPtr(UnaryMathFunction fun) {
+  switch (fun) {
+    case UnaryMathFunction::Log:
+      return math_log_impl;
+    case UnaryMathFunction::Sin:
+      return math_sin_impl;
+    case UnaryMathFunction::Cos:
+      return math_cos_impl;
+    case UnaryMathFunction::Exp:
+      return math_exp_impl;
+    case UnaryMathFunction::Tan:
+      return math_tan_impl;
+    case UnaryMathFunction::ATan:
+      return math_atan_impl;
+    case UnaryMathFunction::ASin:
+      return math_asin_impl;
+    case UnaryMathFunction::ACos:
+      return math_acos_impl;
+    case UnaryMathFunction::Log10:
+      return math_log10_impl;
+    case UnaryMathFunction::Log2:
+      return math_log2_impl;
+    case UnaryMathFunction::Log1P:
+      return math_log1p_impl;
+    case UnaryMathFunction::ExpM1:
+      return math_expm1_impl;
+    case UnaryMathFunction::CosH:
+      return math_cosh_impl;
+    case UnaryMathFunction::SinH:
+      return math_sinh_impl;
+    case UnaryMathFunction::TanH:
+      return math_tanh_impl;
+    case UnaryMathFunction::ACosH:
+      return math_acosh_impl;
+    case UnaryMathFunction::ASinH:
+      return math_asinh_impl;
+    case UnaryMathFunction::ATanH:
+      return math_atanh_impl;
+    case UnaryMathFunction::Trunc:
+      return math_trunc_impl;
+    case UnaryMathFunction::Cbrt:
+      return math_cbrt_impl;
+    case UnaryMathFunction::Floor:
+      return math_floor_impl;
+    case UnaryMathFunction::Ceil:
+      return math_ceil_impl;
+    case UnaryMathFunction::Round:
+      return math_round_impl;
+  }
+  MOZ_CRASH("Unknown function");
+}
+
+const char* js::GetUnaryMathFunctionName(UnaryMathFunction fun) {
+  switch (fun) {
+    case UnaryMathFunction::Log:
+      return "Log";
+    case UnaryMathFunction::Sin:
+      return "Sin";
+    case UnaryMathFunction::Cos:
+      return "Cos";
+    case UnaryMathFunction::Exp:
+      return "Exp";
+    case UnaryMathFunction::Tan:
+      return "Tan";
+    case UnaryMathFunction::ACos:
+      return "ACos";
+    case UnaryMathFunction::ASin:
+      return "ASin";
+    case UnaryMathFunction::ATan:
+      return "ATan";
+    case UnaryMathFunction::Log10:
+      return "Log10";
+    case UnaryMathFunction::Log2:
+      return "Log2";
+    case UnaryMathFunction::Log1P:
+      return "Log1P";
+    case UnaryMathFunction::ExpM1:
+      return "ExpM1";
+    case UnaryMathFunction::CosH:
+      return "CosH";
+    case UnaryMathFunction::SinH:
+      return "SinH";
+    case UnaryMathFunction::TanH:
+      return "TanH";
+    case UnaryMathFunction::ACosH:
+      return "ACosH";
+    case UnaryMathFunction::ASinH:
+      return "ASinH";
+    case UnaryMathFunction::ATanH:
+      return "ATanH";
+    case UnaryMathFunction::Trunc:
+      return "Trunc";
+    case UnaryMathFunction::Cbrt:
+      return "Cbrt";
+    case UnaryMathFunction::Floor:
+      return "Floor";
+    case UnaryMathFunction::Ceil:
+      return "Ceil";
+    case UnaryMathFunction::Round:
+      return "Round";
+  }
+  MOZ_CRASH("Unknown function");
+}
+
 static const JSFunctionSpec math_static_methods[] = {
     JS_FN(js_toSource_str, math_toSource, 0, 0),
     JS_INLINABLE_FN("abs", math_abs, 1, 0, MathAbs),
@@ -949,31 +1022,36 @@ static const JSFunctionSpec math_static_methods[] = {
     JS_INLINABLE_FN("cbrt", math_cbrt, 1, 0, MathCbrt),
     JS_FS_END};
 
-JSObject* js::InitMathClass(JSContext* cx, Handle<GlobalObject*> global) {
+static const JSPropertySpec math_static_properties[] = {
+    JS_DOUBLE_PS("E", M_E, JSPROP_READONLY | JSPROP_PERMANENT),
+    JS_DOUBLE_PS("LOG2E", M_LOG2E, JSPROP_READONLY | JSPROP_PERMANENT),
+    JS_DOUBLE_PS("LOG10E", M_LOG10E, JSPROP_READONLY | JSPROP_PERMANENT),
+    JS_DOUBLE_PS("LN2", M_LN2, JSPROP_READONLY | JSPROP_PERMANENT),
+    JS_DOUBLE_PS("LN10", M_LN10, JSPROP_READONLY | JSPROP_PERMANENT),
+    JS_DOUBLE_PS("PI", M_PI, JSPROP_READONLY | JSPROP_PERMANENT),
+    JS_DOUBLE_PS("SQRT2", M_SQRT2, JSPROP_READONLY | JSPROP_PERMANENT),
+    JS_DOUBLE_PS("SQRT1_2", M_SQRT1_2, JSPROP_READONLY | JSPROP_PERMANENT),
+
+    JS_STRING_SYM_PS(toStringTag, "Math", JSPROP_READONLY),
+    JS_PS_END};
+
+static JSObject* CreateMathObject(JSContext* cx, JSProtoKey key) {
+  Handle<GlobalObject*> global = cx->global();
   RootedObject proto(cx, GlobalObject::getOrCreateObjectPrototype(cx, global));
   if (!proto) {
     return nullptr;
   }
-  RootedObject Math(
-      cx, NewObjectWithGivenProto(cx, &MathClass, proto, SingletonObject));
-  if (!Math) {
-    return nullptr;
-  }
-
-  if (!JS_DefineProperty(cx, global, js_Math_str, Math, JSPROP_RESOLVING)) {
-    return nullptr;
-  }
-  if (!JS_DefineFunctions(cx, Math, math_static_methods)) {
-    return nullptr;
-  }
-  if (!JS_DefineConstDoubles(cx, Math, math_constants)) {
-    return nullptr;
-  }
-  if (!DefineToStringTag(cx, Math, cx->names().Math)) {
-    return nullptr;
-  }
-
-  global->setConstructor(JSProto_Math, ObjectValue(*Math));
-
-  return Math;
+  return NewSingletonObjectWithGivenProto(cx, &MathClass, proto);
 }
+
+static const ClassSpec MathClassSpec = {CreateMathObject,
+                                        nullptr,
+                                        math_static_methods,
+                                        math_static_properties,
+                                        nullptr,
+                                        nullptr,
+                                        nullptr};
+
+const JSClass js::MathClass = {js_Math_str,
+                               JSCLASS_HAS_CACHED_PROTO(JSProto_Math),
+                               JS_NULL_CLASS_OPS, &MathClassSpec};

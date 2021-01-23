@@ -77,9 +77,15 @@ enum class TextureFlags : uint32_t {
   NON_BLOCKING_READ_LOCK = 1 << 15,
   // Enable a blocking read lock.
   BLOCKING_READ_LOCK = 1 << 16,
+  // Keep TextureClient alive when host side is used
+  WAIT_HOST_USAGE_END = 1 << 17,
+  // The texture is guaranteed to have alpha 1.0 everywhere; some backends
+  // have trouble with RGBX/BGRX formats, so we use RGBA/BGRA but set this
+  // hint when we know alpha is opaque (eg. WebGL)
+  IS_OPAQUE = 1 << 18,
 
   // OR union of all valid bits
-  ALL_BITS = (1 << 17) - 1,
+  ALL_BITS = (1 << 19) - 1,
   // the default flags
   DEFAULT = NO_FLAGS
 };
@@ -174,6 +180,7 @@ struct TextureFactoryIdentifier {
   bool mSupportsTextureDirectMapping;
   bool mCompositorUseANGLE;
   bool mCompositorUseDComp;
+  bool mUseCompositorWnd;
   bool mSupportsTextureBlitting;
   bool mSupportsPartialUploads;
   bool mSupportsComponentAlpha;
@@ -186,7 +193,7 @@ struct TextureFactoryIdentifier {
       int32_t aMaxTextureSize = 4096,
       bool aSupportsTextureDirectMapping = false,
       bool aCompositorUseANGLE = false, bool aCompositorUseDComp = false,
-      bool aSupportsTextureBlitting = false,
+      bool aUseCompositorWnd = false, bool aSupportsTextureBlitting = false,
       bool aSupportsPartialUploads = false, bool aSupportsComponentAlpha = true,
       SyncHandle aSyncHandle = 0)
       : mParentBackend(aLayersBackend),
@@ -195,6 +202,7 @@ struct TextureFactoryIdentifier {
         mSupportsTextureDirectMapping(aSupportsTextureDirectMapping),
         mCompositorUseANGLE(aCompositorUseANGLE),
         mCompositorUseDComp(aCompositorUseDComp),
+        mUseCompositorWnd(aUseCompositorWnd),
         mSupportsTextureBlitting(aSupportsTextureBlitting),
         mSupportsPartialUploads(aSupportsPartialUploads),
         mSupportsComponentAlpha(aSupportsComponentAlpha),
@@ -209,6 +217,7 @@ struct TextureFactoryIdentifier {
                aOther.mSupportsTextureDirectMapping &&
            mCompositorUseANGLE == aOther.mCompositorUseANGLE &&
            mCompositorUseDComp == aOther.mCompositorUseDComp &&
+           mUseCompositorWnd == aOther.mUseCompositorWnd &&
            mSupportsTextureBlitting == aOther.mSupportsTextureBlitting &&
            mSupportsPartialUploads == aOther.mSupportsPartialUploads &&
            mSupportsComponentAlpha == aOther.mSupportsComponentAlpha &&

@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Pretplate kanala">
+<!ENTITY learnMore.label             "Saznajte više o Kanalima">
+
+<!ENTITY feedTitle.label             "Naslov:">
+<!ENTITY feedTitle.accesskey         "N">
+
+<!ENTITY feedLocation.label          "URL kanala:">
+<!ENTITY feedLocation.accesskey      "U">
+<!ENTITY feedLocation2.placeholder   "Unesite ispravnu web adresu kanala">
+<!ENTITY locationValidate.label      "Provjeri ispravnost">
+<!ENTITY validateText.label          "Provjeri ispravnost i dohvati ispravan url.">
+
+<!ENTITY feedFolder.label            "Spremi članke u:">
+<!ENTITY feedFolder.accesskey        "S">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Preuzmi nove članke svakih ">
+<!ENTITY biffStart.accesskey         "k">
+<!ENTITY biffMinutes.label           "minute">
+<!ENTITY biffMinutes.accesskey       "n">
+<!ENTITY biffDays.label              "dani">
+<!ENTITY biffDays.accesskey          "d">
+<!ENTITY recommendedUnits.label      "Izdavatelj preporučuje:">
+
+<!ENTITY quickMode.label             "Prikaži kratki pregled članka umjesto učitavanja web stranice">
+<!ENTITY quickMode.accesskey         "r">
+
+<!ENTITY autotagEnable.label         "Automatski stvori oznake iz naziva &lt;kategorija&gt; kanala">
+<!ENTITY autotagEnable.accesskey     "o">
+<!ENTITY autotagUsePrefix.label      "Prefiks za oznake:">
+<!ENTITY autotagUsePrefix.accesskey  "P">
+<!ENTITY autoTagPrefix.placeholder   "Unesite prefiks oznake">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Dodaj">
+<!ENTITY button.addFeed.accesskey    "a">
+<!ENTITY button.verifyFeed.label     "Provjeri">
+<!ENTITY button.verifyFeed.accesskey "v">
+<!ENTITY button.updateFeed.label     "Uredi">
+<!ENTITY button.updateFeed.accesskey "e">
+<!ENTITY button.removeFeed.label     "Ukloni">
+<!ENTITY button.removeFeed.accesskey "U">
+<!ENTITY button.importOPML.label     "Uvezi">
+<!ENTITY button.importOPML.accesskey "i">
+<!ENTITY button.exportOPML.label     "Izvezi">
+<!ENTITY button.exportOPML.accesskey "z">
+<!ENTITY button.exportOPML.tooltip   "Izvezi kanale sa strukturom mapa; ctrl klik ili ctrl enter za izvoz kanala kao popis">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Zatvori">

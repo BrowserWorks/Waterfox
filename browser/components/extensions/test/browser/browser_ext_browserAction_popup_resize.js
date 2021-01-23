@@ -4,10 +4,6 @@
 
 loadTestSubscript("head_browserAction.js");
 
-add_task(async function testSetup() {
-  Services.prefs.setBoolPref("toolkit.cosmeticAnimations.enabled", false);
-});
-
 add_task(async function testBrowserActionPopupResize() {
   let extension = ExtensionTestUtils.loadExtension({
     manifest: {
@@ -33,9 +29,7 @@ add_task(async function testBrowserActionPopupResize() {
     Assert.lessOrEqual(
       Math.abs(dims.window.innerHeight - expected),
       1,
-      `Panel window should be ${expected}px tall (was ${
-        dims.window.innerHeight
-      })`
+      `Panel window should be ${expected}px tall (was ${dims.window.innerHeight})`
     );
     is(
       dims.body.clientHeight,

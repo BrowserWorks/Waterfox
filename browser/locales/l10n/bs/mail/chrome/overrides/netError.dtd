@@ -1,0 +1,104 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Problem pri učitavanju stranice">
+<!ENTITY retry.label "Pokušaj ponovo">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Ne mogu da se povežem">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Ova adresa je zabranjena">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Server nije pronađen">
+<!ENTITY dnsNotFound.longDesc "<ul> <li>Provjerite da u adresi nema greška poput <strong>ww</strong>.primjer.ba umjesto <strong>www</strong>.primjer.ba</li> <li>Ukoliko ne možete učitati niti jednu stranicu, provjerite mrežnu konekciju vašeg računara.</li> <li>Ako su vaš računar ili mreža zaštićeni firewallom ili proxyjem, provjerite da li &brandShortName; ima dozvolu za pristup Webu.</li> </ul>">
+
+<!ENTITY fileNotFound.title "Fajl nije pronađen">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Provjerite velika i mala slova ili prisutnost ostalih pravopisnih grešaka.</li> <li>Provjerite da li je fajl premješten, preimenovan ili obrisan.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "Pristup fajlu je odbijen">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Možda je uklonjen, premješten ili dozvole za fajl spriječavaju pristup.</li> </ul>">
+
+<!ENTITY generic.title "Ups.">
+<!ENTITY generic.longDesc "<p>&brandShortName; iz nekog razloga ne može da učita stranicu.</p>">
+
+<!ENTITY malformedURI.title "Adresa nije ispravna">
+<!ENTITY malformedURI.longDesc "<ul> <li>Adrese web stranica se uobičajeno pišu kao <strong>http://www.primjer.ba/</strong></li> <li>Provjerite koristite li kose crte prema naprijed (tj. <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "Veza je prekinuta">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Dokument je istekao">
+<!ENTITY notCached.longDesc "<p>Traženi dokument nije dostupan u privremenoj memoriji.</p><ul><li>Kao mjeru predostrožnosti, &brandShortName; ne traži automatski ponovo povjerljive dokumente.</li><li>Kliknite Pokušaj ponovo kako biste ponovo zatražili dokument s web stranice.</li></ul>">
+
+<!ENTITY netOffline.title "Offline režim">
+<!ENTITY netOffline.longDesc2 "<ul> <li>Kliknite &quot;Pokušaj ponovo&quot; da se prebacite na online režim i ponovo učitate stranicu.</li> </ul>">
+
+<!ENTITY contentEncodingError.title "Greška kodne stranice sadržaja">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Molimo da kontaktirate vlasnike web stranice i obavijestite ih o ovom problemu.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Nesiguran tip fajla">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Molimo da kontaktirate vlasnike web stranice i obavijestite ih o ovom problemu.</li> </ul>">
+
+<!ENTITY netReset.title "Veza je resetovana">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Veza je istekla">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Adresa nije razumiva">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Možda ćete trebati instalirati drugi program da biste mogli otvoriti ovu adresu.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "Proxy server odbija veze">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Provjerite da li su postavke proxyja ispravne.</li> <li>Kontaktirajte vašeg mrežnog administratora da provjerite da li proxy server radi.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "Ne mogu da pronađem proxy server">
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Provjerite da li su postavke proxyja ispravne.</li> <li>Provjerite da li radi mrežna konekcija vašeg računara.</li> <li>Ako su vaš računar ili mreža zaštićeni firewallom ili proxyjem, provjerite da li &brandShortName; ima dozvoljen pristup Webu.</li> </ul>">
+
+<!ENTITY redirectLoop.title "Stranica ne preusmjerava pravilno">
+<!ENTITY redirectLoop.longDesc "<ul> <li>Ovaj problem ponekad može biti izazvan onemogućavanjem ili odbijanjem prihvatanja kolačića.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "Neočekivani odgovor od servera">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Provjerite da li je na vaš sistem instaliran Personal Security Manager.</li> <li>Ovo može biti usljed nestandardne konfiguracije servera.</li> </ul>">
+
+<!ENTITY nssFailure2.title "Sigurna veza nije uspjela">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Stranica koju pokušavate otvoriti ne može biti prikazana jer autentičnost primljenih podataka nije moguće provjeriti.</li> <li>Molimo da kontaktirate vlasnike web stranice i da ih obavijestite o ovom problemu.</li> </ul>">
+
+<!ENTITY nssBadCert.title "Sigurna veza nije uspjela">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>Ovo bi mogao biti problem sa konfiguracijom servera ili neko pokušava da se predstavi kao server.</li> <li>Ukoliko ste se ranije uspješno povezivali na server onda je greška privremena pa možete ponovo pokušati kasnije.</li> </ul>">
+
+<!ENTITY sharedLongDesc "<ul> <li>Web stranica je možda privremeno nedostupna ili je prezauzeta. Pokušajte ponovo za par trenutaka.</li> <li>Ukoliko ne možete učitati niti jednu stranicu, provjerite mrežnu konekciju vašeg računara.</li> <li>Ako su vaš računar ili mreža zaštićeni firewallom ili proxyjem, provjerite da li &brandShortName; ima dozvoljen pristup Webu.</li> </ul>">
+
+<!ENTITY cspBlocked.title "Blokirala sigurnosna politika sadržaja">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; je spriječio učitavanje stranice na ovaj način jer stranica ima sigurnosnu politiku sadržaja koja to zabranjuje.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Greška oštećenog sadržaja">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Stranica koju želite pogledati ne može biti prikazana usljed greške u prijenosu.</p><ul><li>Molimo da obavijestite vlasnike web stranice o ovom problemu.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Ili možete dodati izuzetak…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Vodi me odavde!">
+<!ENTITY securityOverride.exceptionButtonLabel "Dodaj izuzetak…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <button> tags. It uses strings already defined above. The
+button is included here (instead of netError.xhtml) because it exposes
+functionality specific to thunderbird. -->
+
+<!ENTITY securityOverride.warningContent "<p>Ne biste trebali dodati izuzetak ukoliko koristite internet konekciju kojoj ne vjerujete u potpunosti ili ako niste navikli da vidite upozorenje za ovaj server.</p>   <button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> <button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "Udaljeni XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Molimo da obavijestite vlasnike web stranice o ovom problemu.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "Vaša veza nije sigurna">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> koristi sigurnosne tehnologije koje su zastarjele i podložne napadima. Napadač može jednostavno otkriti informacije za koje ste smatrali da su sigurne. Administrator web stranice će trebati popraviti server prije nego što možete posjetiti stranicu.</p><p>Kod greške: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Blokirana stranica">
+

@@ -19,7 +19,6 @@
 #include "mozilla/URLExtraData.h"
 #include "SVGObserverUtils.h"
 #include "nsSVGUseFrame.h"
-#include "mozilla/net/ReferrerPolicy.h"
 
 NS_IMPL_NS_NEW_SVG_ELEMENT(Use)
 
@@ -133,7 +132,8 @@ nsresult SVGUseElement::AfterSetAttr(int32_t aNamespaceID, nsAtom* aAttribute,
 nsresult SVGUseElement::Clone(dom::NodeInfo* aNodeInfo,
                               nsINode** aResult) const {
   *aResult = nullptr;
-  SVGUseElement* it = new SVGUseElement(do_AddRef(aNodeInfo));
+  SVGUseElement* it =
+      new (aNodeInfo->NodeInfoManager()) SVGUseElement(do_AddRef(aNodeInfo));
 
   nsCOMPtr<nsINode> kungFuDeathGrip(it);
   nsresult rv1 = it->Init();
@@ -149,18 +149,16 @@ nsresult SVGUseElement::Clone(dom::NodeInfo* aNodeInfo,
   return NS_FAILED(rv1) ? rv1 : rv2;
 }
 
-nsresult SVGUseElement::BindToTree(Document* aDocument, nsIContent* aParent,
-                                   nsIContent* aBindingParent) {
-  nsresult rv =
-      SVGUseElementBase::BindToTree(aDocument, aParent, aBindingParent);
+nsresult SVGUseElement::BindToTree(BindContext& aContext, nsINode& aParent) {
+  nsresult rv = SVGUseElementBase::BindToTree(aContext, aParent);
   NS_ENSURE_SUCCESS(rv, rv);
 
   TriggerReclone();
   return NS_OK;
 }
 
-void SVGUseElement::UnbindFromTree(bool aDeep, bool aNullParent) {
-  SVGUseElementBase::UnbindFromTree(aDeep, aNullParent);
+void SVGUseElement::UnbindFromTree(bool aNullParent) {
+  SVGUseElementBase::UnbindFromTree(aNullParent);
   OwnerDoc()->UnscheduleSVGUseElementShadowTreeUpdate(*this);
 }
 
@@ -193,7 +191,8 @@ already_AddRefed<DOMSVGAnimatedLength> SVGUseElement::Height() {
 
 void SVGUseElement::CharacterDataChanged(nsIContent* aContent,
                                          const CharacterDataChangeInfo&) {
-  if (nsContentUtils::IsInSameAnonymousTree(this, aContent)) {
+  if (nsContentUtils::IsInSameAnonymousTree(mReferencedElementTracker.get(),
+                                            aContent)) {
     TriggerReclone();
   }
 }
@@ -201,7 +200,8 @@ void SVGUseElement::CharacterDataChanged(nsIContent* aContent,
 void SVGUseElement::AttributeChanged(Element* aElement, int32_t aNamespaceID,
                                      nsAtom* aAttribute, int32_t aModType,
                                      const nsAttrValue* aOldValue) {
-  if (nsContentUtils::IsInSameAnonymousTree(this, aElement)) {
+  if (nsContentUtils::IsInSameAnonymousTree(mReferencedElementTracker.get(),
+                                            aElement)) {
     TriggerReclone();
   }
 }
@@ -209,7 +209,7 @@ void SVGUseElement::AttributeChanged(Element* aElement, int32_t aNamespaceID,
 void SVGUseElement::ContentAppended(nsIContent* aFirstNewContent) {
   // FIXME(emilio, bug 1442336): Why does this check the parent but
   // ContentInserted the child?
-  if (nsContentUtils::IsInSameAnonymousTree(this,
+  if (nsContentUtils::IsInSameAnonymousTree(mReferencedElementTracker.get(),
                                             aFirstNewContent->GetParent())) {
     TriggerReclone();
   }
@@ -218,14 +218,16 @@ void SVGUseElement::ContentAppended(nsIContent* aFirstNewContent) {
 void SVGUseElement::ContentInserted(nsIContent* aChild) {
   // FIXME(emilio, bug 1442336): Why does this check the child but
   // ContentAppended the parent?
-  if (nsContentUtils::IsInSameAnonymousTree(this, aChild)) {
+  if (nsContentUtils::IsInSameAnonymousTree(mReferencedElementTracker.get(),
+                                            aChild)) {
     TriggerReclone();
   }
 }
 
 void SVGUseElement::ContentRemoved(nsIContent* aChild,
                                    nsIContent* aPreviousSibling) {
-  if (nsContentUtils::IsInSameAnonymousTree(this, aChild)) {
+  if (nsContentUtils::IsInSameAnonymousTree(mReferencedElementTracker.get(),
+                                            aChild)) {
     TriggerReclone();
   }
 }
@@ -235,25 +237,47 @@ void SVGUseElement::NodeWillBeDestroyed(const nsINode* aNode) {
   UnlinkSource();
 }
 
-bool SVGUseElement::IsCyclicReferenceTo(const Element& aTarget) const {
+// Returns whether this node could ever be displayed.
+static bool NodeCouldBeRendered(const nsINode& aNode) {
+  if (aNode.IsSVGElement(nsGkAtoms::symbol)) {
+    // Only <symbol> elements in the root of a <svg:use> shadow tree are
+    // displayed.
+    auto* shadowRoot = ShadowRoot::FromNodeOrNull(aNode.GetParentNode());
+    return shadowRoot && shadowRoot->Host()->IsSVGElement(nsGkAtoms::use);
+  }
+  // TODO: Do we have other cases we can optimize out easily?
+  return true;
+}
+
+// Circular loop detection, plus detection of whether this shadow tree is
+// rendered at all.
+auto SVGUseElement::ScanAncestors(const Element& aTarget) const -> ScanResult {
   if (&aTarget == this) {
-    return true;
+    return ScanResult::CyclicReference;
   }
-  if (mOriginal && mOriginal->IsCyclicReferenceTo(aTarget)) {
-    return true;
+  if (mOriginal &&
+      mOriginal->ScanAncestors(aTarget) == ScanResult::CyclicReference) {
+    return ScanResult::CyclicReference;
   }
-  for (nsINode* parent = GetParentOrHostNode(); parent;
-       parent = parent->GetParentOrHostNode()) {
+  auto result = ScanResult::Ok;
+  for (nsINode* parent = GetParentOrShadowHostNode(); parent;
+       parent = parent->GetParentOrShadowHostNode()) {
     if (parent == &aTarget) {
-      return true;
+      return ScanResult::CyclicReference;
     }
     if (auto* use = SVGUseElement::FromNode(*parent)) {
       if (mOriginal && use->mOriginal == mOriginal) {
-        return true;
+        return ScanResult::CyclicReference;
       }
     }
+    // Do we have other similar cases we can optimize out easily?
+    if (!NodeCouldBeRendered(*parent)) {
+      // NOTE(emilio): We can't just return here. If we're cyclic, we need to
+      // know.
+      result = ScanResult::Invisible;
+    }
   }
-  return false;
+  return result;
 }
 
 //----------------------------------------------------------------------
@@ -299,9 +323,7 @@ void SVGUseElement::UpdateShadowTree() {
     return;
   }
 
-  // circular loop detection
-
-  if (IsCyclicReferenceTo(*targetElement)) {
+  if (ScanAncestors(*targetElement) != ScanResult::Ok) {
     return;
   }
 
@@ -315,8 +337,8 @@ void SVGUseElement::UpdateShadowTree() {
                                              ? nullptr
                                              : OwnerDoc()->NodeInfoManager();
 
-    nsCOMPtr<nsINode> newNode = nsNodeUtils::Clone(
-        targetElement, true, nodeInfoManager, nullptr, IgnoreErrors());
+    nsCOMPtr<nsINode> newNode =
+        targetElement->Clone(true, nodeInfoManager, IgnoreErrors());
     if (!newNode) {
       return;
     }
@@ -334,11 +356,11 @@ void SVGUseElement::UpdateShadowTree() {
                                mLengthAttributes[ATTR_HEIGHT]);
   }
 
-  // The specs do not say which referrer policy we should use, pass RP_Unset for
-  // now
-  mContentURLData = new URLExtraData(
-      baseURI.forget(), do_AddRef(OwnerDoc()->GetDocumentURI()),
-      do_AddRef(NodePrincipal()), mozilla::net::RP_Unset);
+  // Bug 1415044 the specs do not say which referrer information we should use.
+  // This may change if there's any spec comes out.
+  auto referrerInfo = MakeRefPtr<ReferrerInfo>(*this);
+  mContentURLData = new URLExtraData(baseURI.forget(), referrerInfo.forget(),
+                                     do_AddRef(NodePrincipal()));
 
   targetElement->AddMutationObserver(this);
 }
@@ -420,10 +442,10 @@ void SVGUseElement::LookupHref() {
   nsCOMPtr<nsIURI> targetURI;
   nsContentUtils::NewURIWithDocumentCharset(getter_AddRefs(targetURI), href,
                                             GetComposedDoc(), baseURI);
-  // Bug 1415044 to investigate which referrer we should use
-  mReferencedElementTracker.ResetToURIFragmentID(
-      this, targetURI, OwnerDoc()->GetDocumentURI(),
-      OwnerDoc()->GetReferrerPolicy());
+  nsCOMPtr<nsIReferrerInfo> referrerInfo =
+      ReferrerInfo::CreateForSVGResources(OwnerDoc());
+
+  mReferencedElementTracker.ResetToURIFragmentID(this, targetURI, referrerInfo);
 }
 
 void SVGUseElement::TriggerReclone() {
@@ -449,8 +471,8 @@ gfxMatrix SVGUseElement::PrependLocalTransformsTo(
   gfxMatrix userToParent;
 
   if (aWhich == eUserSpaceToParent || aWhich == eAllTransforms) {
-    userToParent =
-        GetUserToParentTransform(mAnimateMotionTransform, mTransforms);
+    userToParent = GetUserToParentTransform(mAnimateMotionTransform.get(),
+                                            mTransforms.get());
     if (aWhich == eUserSpaceToParent) {
       return userToParent * aMatrix;
     }

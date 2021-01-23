@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProduct2.label      "Mbi &brandShorterName;-in">
+<!ENTITY aboutProduct2.accesskey  "R">
+
+<!ENTITY preferencesCmdMac.label        "Parapëlqime…">
+
+<!ENTITY servicesMenuMac.label          "Shërbime">
+
+<!ENTITY hideThisAppCmdMac2.label       "Fshihe &brandShorterName;-in">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Fshihi të Tjerat">
+
+<!ENTITY showAllAppsCmdMac.label        "Shfaqi të Tëra">
+
+<!ENTITY touchBarCmdMac.label           "Përshtatni Shtyllën e Prekjeve…">

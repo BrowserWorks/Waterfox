@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  pref.history.title                "Sivuhistoria">
+
+<!ENTITY  pref.history.caption              "Sivuhistoria">
+<!ENTITY  historyPages.label                "Sivuhistoria on lista sivuista, joilla olet käynyt.">
+<!ENTITY  enableHistory.label               "Säilytä sivuhistoria">
+<!ENTITY  enableHistory.accesskey           "S">
+<!ENTITY  clearHistory.label                "Tyhjennä sivuhistoria">
+<!ENTITY  clearHistory.accesskey            "T">
+
+<!ENTITY  locationBarHistory.caption        "Osoitepalkkihistoria">
+<!ENTITY  urlBarHistoryEnabled.caption      "Säilytä osoitepalkkihistoria">
+<!ENTITY  urlBarHistoryEnabled.accesskey    "l">
+<!ENTITY  clearLocationBar.label            "Tyhjentää osoitevalikossa näytettävän sivustolistan.">
+<!ENTITY  clearLocationBarButton.label      "Tyhjennä osoitepalkki">
+<!ENTITY  clearLocationBarButton.accesskey  "o">
+<!ENTITY  formfillHistory.caption           "Lomake- ja hakuhistoria">
+<!ENTITY  enableFormfill.label              "Salli lomake- ja hakuhistorian tallennus">
+<!ENTITY  enableFormfill.accesskey          "a">
+<!ENTITY  formfillExpire.label              "Säilytä lomake- ja hakuhistoria enintään">
+<!ENTITY  formfillExpire.accesskey          "i">
+<!ENTITY  formfillDays.label                "päivältä">

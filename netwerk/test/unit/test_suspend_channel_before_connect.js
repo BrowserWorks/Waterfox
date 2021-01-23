@@ -1,3 +1,5 @@
+"use strict";
+
 var CC = Components.Constructor;
 
 const ServerSocket = CC(
@@ -22,13 +24,13 @@ function TestServer() {
 }
 
 TestServer.prototype = {
-  onSocketAccepted: function(socket, trans) {
+  onSocketAccepted(socket, trans) {
     Assert.ok(false, "Socket should not have tried to connect!");
   },
 
-  onStopListening: function(socket) {},
+  onStopListening(socket) {},
 
-  stop: function() {
+  stop() {
     try {
       this.listener.close();
     } catch (ignore) {}
@@ -36,14 +38,9 @@ TestServer.prototype = {
 };
 
 var requestListenerObserver = {
-  QueryInterface: function queryinterface(iid) {
-    if (iid.equals(Ci.nsISupports) || iid.equals(Ci.nsIObserver)) {
-      return this;
-    }
-    throw Cr.NS_ERROR_NO_INTERFACE;
-  },
+  QueryInterface: ChromeUtils.generateQI(["nsIObserver"]),
 
-  observe: function(subject, topic, data) {
+  observe(subject, topic, data) {
     if (
       topic === "http-on-modify-request" &&
       subject instanceof Ci.nsIHttpChannel
@@ -87,7 +84,7 @@ var listener = {
 // not try to connect at all until it is resumed. In this case we are going to
 // wait for some time and cancel the channel before resuming it.
 add_test(function testNoConnectChannelCanceledEarly() {
-  serv = new TestServer();
+  let serv = new TestServer();
 
   obs.addObserver(requestListenerObserver, "http-on-modify-request");
   var chan = NetUtil.newChannel({
@@ -100,7 +97,3 @@ add_test(function testNoConnectChannelCanceledEarly() {
     serv.stop();
   });
 });
-
-function run_test() {
-  run_next_test();
-}

@@ -25,9 +25,8 @@ def add_command(config, tasks):
     for task in tasks:
         config_task = config_tasks[task['name']]
         total_chunks = task["extra"]["chunks"]
-        task['worker'].setdefault('env', {}).update(
-            CHANNEL=config_task.task['extra']['channel'],
-        )
+        task['worker'].setdefault('env', {})['CHANNEL'] = (
+            config_task.task['extra']['channel'])
         task.setdefault('fetches', {})[config_task.label] = [
             "update-verify.cfg",
         ]
@@ -44,8 +43,8 @@ def add_command(config, tasks):
                 chunked["worker"]["env"] = {}
             chunked["run"] = {
                 'using': 'run-task',
-                'command': 'cd /builds/worker/checkouts/gecko && '
-                           'tools/update-verify/scripts/chunked-verify.sh '
+                'cwd': '{checkout}',
+                'command': 'tools/update-verify/scripts/chunked-verify.sh '
                            '{} {}'.format(
                                total_chunks,
                                this_chunk,

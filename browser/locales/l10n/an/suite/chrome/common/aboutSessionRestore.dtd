@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY restorepage.tabtitle       "Restaurar sesión">
+<!ENTITY restorepage.pagetitle      "Le fería goyo restaurar a suya sesión?">
+<!-- LOCALIZATION NOTE: If "closed unexpectedly" sounds too awkward in the translation,
+                        you may translate "crash" instead (even though it's IT-speak) -->
+<!ENTITY restorepage.issueDesc      "a suya sesión anterior de se &brandShortName; zarró inasperadament. Sentimos fundament as molestias causadas. Puede restaurar as pestanyas y finestras d'a suya sesión anterior, u encetar una nueva sesión si ya no son necesarias.">
+<!ENTITY restorepage.remedies       "Si &brandShortName; se zarra constantment:">
+<!ENTITY restorepage.dueToChrome    "Intente desactivar as extensions adhibidas recientment en l'administrador de complementos.">
+<!ENTITY restorepage.dueToContent   "Intente restaurar a suya sesión sin garra pachina web que sospeite que pueda estar causando o problema:">
+
+<!ENTITY restorepage.restoreButton  "Restaurar sesión anterior">
+<!ENTITY restorepage.restore.access "R">
+<!ENTITY restorepage.cancelButton   "Encetar sesión nueva">
+<!ENTITY restorepage.cancel.access  "S">
+
+<!ENTITY restorepage.restoreHeader  "Restaurar">
+<!ENTITY restorepage.listHeader     "Finestras y pestanyas">
+<!-- LOCALIZATION NOTE: &#37;S will be replaced with a number. -->
+<!ENTITY restorepage.windowLabel    "Window &#37;S">

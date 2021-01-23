@@ -4,12 +4,14 @@
 
 from __future__ import absolute_import
 
+import sys
+from unittest import skipIf
+
 from marionette_driver import By
 from marionette_driver.keys import Keys
 
 from marionette_harness import (
     MarionetteTestCase,
-    skip_if_mobile,
     WindowManagerMixin,
 )
 
@@ -89,7 +91,8 @@ class TestSwitchToWindowContent(WindowManagerMixin, MarionetteTestCase):
         self.assertEqual(self.marionette.current_window_handle, self.start_tab)
         self.assertEqual(self.get_selected_tab_index(), self.selected_tab_index)
 
-    @skip_if_mobile("Fennec doesn't support other chrome windows")
+    @skipIf(sys.platform.startswith("linux"),
+            "Bug 1557232 - Original window sometimes doesn't receive focus")
     def test_switch_tabs_in_different_windows_with_focus_change(self):
         new_tab1 = self.open_tab(focus=True)
         self.assertEqual(self.marionette.current_window_handle, self.start_tab)

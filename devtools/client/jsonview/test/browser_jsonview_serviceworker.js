@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -23,9 +21,9 @@ add_task(async function() {
   const swTab = BrowserTestUtils.addTab(gBrowser, EMPTY_PAGE);
   const browser = gBrowser.getBrowserForTab(swTab);
   await BrowserTestUtils.browserLoaded(browser);
-  await ContentTask.spawn(
+  await SpecialPowers.spawn(
     browser,
-    { script: SW, scope: TEST_JSON_URL },
+    [{ script: SW, scope: TEST_JSON_URL }],
     async opts => {
       const reg = await content.navigator.serviceWorker.register(opts.script, {
         scope: opts.scope,
@@ -72,9 +70,9 @@ add_task(async function() {
   await clickJsonNode(".jsonPanelBox .treeTable .treeLabel");
   is(await countRows(), 1, "There must be one row");
 
-  await ContentTask.spawn(
+  await SpecialPowers.spawn(
     browser,
-    { script: SW, scope: TEST_JSON_URL },
+    [{ script: SW, scope: TEST_JSON_URL }],
     async opts => {
       const reg = await content.navigator.serviceWorker.getRegistration(
         opts.scope

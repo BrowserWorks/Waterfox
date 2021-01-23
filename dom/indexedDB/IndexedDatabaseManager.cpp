@@ -7,8 +7,6 @@
 #include "IndexedDatabaseManager.h"
 
 #include "chrome/common/ipc_channel.h"  // for IPC::Channel::kMaximumMessageSize
-#include "nsIConsoleService.h"
-#include "nsIDOMWindow.h"
 #include "nsIScriptError.h"
 #include "nsIScriptGlobalObject.h"
 
@@ -62,10 +60,10 @@ using namespace mozilla::ipc;
 
 class FileManagerInfo {
  public:
-  already_AddRefed<FileManager> GetFileManager(PersistenceType aPersistenceType,
-                                               const nsAString& aName) const;
+  [[nodiscard]] SafeRefPtr<FileManager> GetFileManager(
+      PersistenceType aPersistenceType, const nsAString& aName) const;
 
-  void AddFileManager(FileManager* aFileManager);
+  void AddFileManager(SafeRefPtr<FileManager> aFileManager);
 
   bool HasFileManagers() const {
     AssertIsOnIOThread();
@@ -83,16 +81,17 @@ class FileManagerInfo {
                                       const nsAString& aName);
 
  private:
-  nsTArray<RefPtr<FileManager> >& GetArray(PersistenceType aPersistenceType);
+  nsTArray<SafeRefPtr<FileManager> >& GetArray(
+      PersistenceType aPersistenceType);
 
-  const nsTArray<RefPtr<FileManager> >& GetImmutableArray(
+  const nsTArray<SafeRefPtr<FileManager> >& GetImmutableArray(
       PersistenceType aPersistenceType) const {
     return const_cast<FileManagerInfo*>(this)->GetArray(aPersistenceType);
   }
 
-  nsTArray<RefPtr<FileManager> > mPersistentStorageFileManagers;
-  nsTArray<RefPtr<FileManager> > mTemporaryStorageFileManagers;
-  nsTArray<RefPtr<FileManager> > mDefaultStorageFileManagers;
+  nsTArray<SafeRefPtr<FileManager> > mPersistentStorageFileManagers;
+  nsTArray<SafeRefPtr<FileManager> > mTemporaryStorageFileManagers;
+  nsTArray<SafeRefPtr<FileManager> > mDefaultStorageFileManagers;
 };
 
 }  // namespace indexedDB
@@ -103,8 +102,6 @@ namespace {
 
 NS_DEFINE_IID(kIDBPrivateRequestIID, PRIVATE_IDBREQUEST_IID);
 
-const uint32_t kDeleteTimeoutMs = 1000;
-
 // The threshold we use for structured clone data storing.
 // Anything smaller than the threshold is compressed and stored in the database.
 // Anything larger is compressed and stored outside the database.
@@ -112,6 +109,14 @@ const int32_t kDefaultDataThresholdBytes = 1024 * 1024;  // 1MB
 
 // The maximal size of a serialized object to be transfered through IPC.
 const int32_t kDefaultMaxSerializedMsgSize = IPC::Channel::kMaximumMessageSize;
+
+// The maximum number of records to preload (in addition to the one requested by
+// the child).
+//
+// TODO: The current number was chosen for no particular reason. Telemetry
+// should be added to determine whether this is a reasonable number for an
+// overwhelming majority of cases.
+const int32_t kDefaultMaxPreloadExtraRecords = 64;
 
 #define IDB_PREF_BRANCH_ROOT "dom.indexedDB."
 
@@ -123,6 +128,9 @@ const char kPrefMaxSerilizedMsgSize[] =
     IDB_PREF_BRANCH_ROOT "maxSerializedMsgSize";
 const char kPrefErrorEventToSelfError[] =
     IDB_PREF_BRANCH_ROOT "errorEventToSelfError";
+const char kPreprocessingPref[] = IDB_PREF_BRANCH_ROOT "preprocessing";
+const char kPrefMaxPreloadExtraRecords[] =
+    IDB_PREF_BRANCH_ROOT "maxPreloadExtraRecords";
 
 #define IDB_PREF_LOGGING_BRANCH_ROOT IDB_PREF_BRANCH_ROOT "logging."
 
@@ -147,13 +155,14 @@ Atomic<bool> gFileHandleEnabled(false);
 Atomic<bool> gPrefErrorEventToSelfError(false);
 Atomic<int32_t> gDataThresholdBytes(0);
 Atomic<int32_t> gMaxSerializedMsgSize(0);
+Atomic<bool> gPreprocessingEnabled(false);
+Atomic<int32_t> gMaxPreloadExtraRecords(0);
 
-void AtomicBoolPrefChangedCallback(const char* aPrefName,
-                                   Atomic<bool>* aClosure) {
+void AtomicBoolPrefChangedCallback(const char* aPrefName, void* aBool) {
   MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(aClosure);
+  MOZ_ASSERT(aBool);
 
-  *aClosure = Preferences::GetBool(aPrefName);
+  *static_cast<Atomic<bool>*>(aBool) = Preferences::GetBool(aPrefName);
 }
 
 void DataThresholdPrefChangedCallback(const char* aPrefName, void* aClosure) {
@@ -183,11 +192,31 @@ void MaxSerializedMsgSizePrefChangeCallback(const char* aPrefName,
   MOZ_ASSERT(gMaxSerializedMsgSize > 0);
 }
 
+void MaxPreloadExtraRecordsPrefChangeCallback(const char* aPrefName,
+                                              void* aClosure) {
+  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(!strcmp(aPrefName, kPrefMaxPreloadExtraRecords));
+  MOZ_ASSERT(!aClosure);
+
+  gMaxPreloadExtraRecords =
+      Preferences::GetInt(aPrefName, kDefaultMaxPreloadExtraRecords);
+  MOZ_ASSERT(gMaxPreloadExtraRecords >= 0);
+
+  // TODO: We could also allow setting a negative value to preload all available
+  // records, but this doesn't seem to be too useful in general, and it would
+  // require adaptations in ActorsParent.cpp
+}
+
+auto DatabaseNameMatchPredicate(const nsAString* const aName) {
+  MOZ_ASSERT(aName);
+  return [aName](const auto& fileManager) {
+    return fileManager->DatabaseName() == *aName;
+  };
+}
+
 }  // namespace
 
-IndexedDatabaseManager::IndexedDatabaseManager()
-    : mFileMutex("IndexedDatabaseManager.mFileMutex"),
-      mBackgroundActor(nullptr) {
+IndexedDatabaseManager::IndexedDatabaseManager() : mBackgroundActor(nullptr) {
   NS_ASSERTION(NS_IsMainThread(), "Wrong thread!");
 }
 
@@ -281,6 +310,13 @@ nsresult IndexedDatabaseManager::Init() {
   Preferences::RegisterCallbackAndCall(MaxSerializedMsgSizePrefChangeCallback,
                                        kPrefMaxSerilizedMsgSize);
 
+  Preferences::RegisterCallbackAndCall(AtomicBoolPrefChangedCallback,
+                                       kPreprocessingPref,
+                                       &gPreprocessingEnabled);
+
+  Preferences::RegisterCallbackAndCall(MaxPreloadExtraRecordsPrefChangeCallback,
+                                       kPrefMaxPreloadExtraRecords);
+
   nsAutoCString acceptLang;
   Preferences::GetLocalizedCString("intl.accept_languages", acceptLang);
 
@@ -336,14 +372,16 @@ void IndexedDatabaseManager::Destroy() {
   Preferences::UnregisterCallback(MaxSerializedMsgSizePrefChangeCallback,
                                   kPrefMaxSerilizedMsgSize);
 
+  Preferences::UnregisterCallback(AtomicBoolPrefChangedCallback,
+                                  kPreprocessingPref, &gPreprocessingEnabled);
+
   delete this;
 }
 
 // static
 nsresult IndexedDatabaseManager::CommonPostHandleEvent(
-    EventChainPostVisitor& aVisitor, IDBFactory* aFactory) {
+    EventChainPostVisitor& aVisitor, const IDBFactory& aFactory) {
   MOZ_ASSERT(aVisitor.mDOMEvent);
-  MOZ_ASSERT(aFactory);
 
   if (!gPrefErrorEventToSelfError) {
     return NS_OK;
@@ -436,8 +474,8 @@ nsresult IndexedDatabaseManager::CommonPostHandleEvent(
 
   // Log the error to the error console.
   ScriptErrorHelper::Dump(errorName, init.mFilename, init.mLineno, init.mColno,
-                          nsIScriptError::errorFlag, aFactory->IsChrome(),
-                          aFactory->InnerWindowID());
+                          nsIScriptError::errorFlag, aFactory.IsChrome(),
+                          aFactory.InnerWindowID());
 
   return NS_OK;
 }
@@ -486,11 +524,12 @@ bool IndexedDatabaseManager::DefineIndexedDB(JSContext* aCx,
     return false;
   }
 
-  RefPtr<IDBFactory> factory;
-  if (NS_FAILED(
-          IDBFactory::CreateForMainThreadJS(global, getter_AddRefs(factory)))) {
+  auto res = IDBFactory::CreateForMainThreadJS(global);
+  if (res.isErr()) {
     return false;
   }
+
+  auto factory = res.unwrap();
 
   MOZ_ASSERT(factory, "This should never fail for chrome!");
 
@@ -617,13 +656,31 @@ uint32_t IndexedDatabaseManager::MaxSerializedMsgSize() {
   return gMaxSerializedMsgSize;
 }
 
+// static
+bool IndexedDatabaseManager::PreprocessingEnabled() {
+  MOZ_ASSERT(gDBManager,
+             "PreprocessingEnabled() called before indexedDB has been "
+             "initialized!");
+
+  return gPreprocessingEnabled;
+}
+
+// static
+int32_t IndexedDatabaseManager::MaxPreloadExtraRecords() {
+  MOZ_ASSERT(gDBManager,
+             "MaxPreloadExtraRecords() called before indexedDB has been "
+             "initialized!");
+
+  return gMaxPreloadExtraRecords;
+}
+
 void IndexedDatabaseManager::ClearBackgroundActor() {
   MOZ_ASSERT(NS_IsMainThread());
 
   mBackgroundActor = nullptr;
 }
 
-already_AddRefed<FileManager> IndexedDatabaseManager::GetFileManager(
+SafeRefPtr<FileManager> IndexedDatabaseManager::GetFileManager(
     PersistenceType aPersistenceType, const nsACString& aOrigin,
     const nsAString& aDatabaseName) {
   AssertIsOnIOThread();
@@ -633,13 +690,11 @@ already_AddRefed<FileManager> IndexedDatabaseManager::GetFileManager(
     return nullptr;
   }
 
-  RefPtr<FileManager> fileManager =
-      info->GetFileManager(aPersistenceType, aDatabaseName);
-
-  return fileManager.forget();
+  return info->GetFileManager(aPersistenceType, aDatabaseName);
 }
 
-void IndexedDatabaseManager::AddFileManager(FileManager* aFileManager) {
+void IndexedDatabaseManager::AddFileManager(
+    SafeRefPtr<FileManager> aFileManager) {
   AssertIsOnIOThread();
   NS_ASSERTION(aFileManager, "Null file manager!");
 
@@ -649,17 +704,14 @@ void IndexedDatabaseManager::AddFileManager(FileManager* aFileManager) {
     mFileManagerInfos.Put(aFileManager->Origin(), info);
   }
 
-  info->AddFileManager(aFileManager);
+  info->AddFileManager(std::move(aFileManager));
 }
 
 void IndexedDatabaseManager::InvalidateAllFileManagers() {
   AssertIsOnIOThread();
 
-  for (auto iter = mFileManagerInfos.ConstIter(); !iter.Done(); iter.Next()) {
-    auto value = iter.Data();
-    MOZ_ASSERT(value);
-
-    value->InvalidateAllFileManagers();
+  for (const auto& fileManagerInfo : mFileManagerInfos) {
+    fileManagerInfo.GetData()->InvalidateAllFileManagers();
   }
 
   mFileManagerInfos.Clear();
@@ -702,7 +754,7 @@ void IndexedDatabaseManager::InvalidateFileManager(
 nsresult IndexedDatabaseManager::BlockAndGetFileReferences(
     PersistenceType aPersistenceType, const nsACString& aOrigin,
     const nsAString& aDatabaseName, int64_t aFileId, int32_t* aRefCnt,
-    int32_t* aDBRefCnt, int32_t* aSliceRefCnt, bool* aResult) {
+    int32_t* aDBRefCnt, bool* aResult) {
   MOZ_ASSERT(NS_IsMainThread());
 
   if (NS_WARN_IF(!InTestingMode())) {
@@ -733,7 +785,7 @@ nsresult IndexedDatabaseManager::BlockAndGetFileReferences(
 
   if (!mBackgroundActor->SendGetFileReferences(
           aPersistenceType, nsCString(aOrigin), nsString(aDatabaseName),
-          aFileId, aRefCnt, aDBRefCnt, aSliceRefCnt, aResult)) {
+          aFileId, aRefCnt, aDBRefCnt, aResult)) {
     return NS_ERROR_FAILURE;
   }
 
@@ -802,33 +854,27 @@ const nsCString& IndexedDatabaseManager::GetLocale() {
   return idbManager->mLocale;
 }
 
-already_AddRefed<FileManager> FileManagerInfo::GetFileManager(
+SafeRefPtr<FileManager> FileManagerInfo::GetFileManager(
     PersistenceType aPersistenceType, const nsAString& aName) const {
   AssertIsOnIOThread();
 
-  const nsTArray<RefPtr<FileManager> >& managers =
-      GetImmutableArray(aPersistenceType);
+  const auto& managers = GetImmutableArray(aPersistenceType);
 
-  for (uint32_t i = 0; i < managers.Length(); i++) {
-    const RefPtr<FileManager>& fileManager = managers[i];
+  const auto end = managers.cend();
+  const auto foundIt =
+      std::find_if(managers.cbegin(), end, DatabaseNameMatchPredicate(&aName));
 
-    if (fileManager->DatabaseName() == aName) {
-      RefPtr<FileManager> result = fileManager;
-      return result.forget();
-    }
-  }
-
-  return nullptr;
+  return foundIt != end ? foundIt->clonePtr() : nullptr;
 }
 
-void FileManagerInfo::AddFileManager(FileManager* aFileManager) {
+void FileManagerInfo::AddFileManager(SafeRefPtr<FileManager> aFileManager) {
   AssertIsOnIOThread();
 
-  nsTArray<RefPtr<FileManager> >& managers = GetArray(aFileManager->Type());
+  nsTArray<SafeRefPtr<FileManager> >& managers = GetArray(aFileManager->Type());
 
   NS_ASSERTION(!managers.Contains(aFileManager), "Adding more than once?!");
 
-  managers.AppendElement(aFileManager);
+  managers.AppendElement(std::move(aFileManager));
 }
 
 void FileManagerInfo::InvalidateAllFileManagers() const {
@@ -853,7 +899,7 @@ void FileManagerInfo::InvalidateAndRemoveFileManagers(
     PersistenceType aPersistenceType) {
   AssertIsOnIOThread();
 
-  nsTArray<RefPtr<FileManager> >& managers = GetArray(aPersistenceType);
+  nsTArray<SafeRefPtr<FileManager> >& managers = GetArray(aPersistenceType);
 
   for (uint32_t i = 0; i < managers.Length(); i++) {
     managers[i]->Invalidate();
@@ -866,19 +912,18 @@ void FileManagerInfo::InvalidateAndRemoveFileManager(
     PersistenceType aPersistenceType, const nsAString& aName) {
   AssertIsOnIOThread();
 
-  nsTArray<RefPtr<FileManager> >& managers = GetArray(aPersistenceType);
+  auto& managers = GetArray(aPersistenceType);
+  const auto end = managers.cend();
+  const auto foundIt =
+      std::find_if(managers.cbegin(), end, DatabaseNameMatchPredicate(&aName));
 
-  for (uint32_t i = 0; i < managers.Length(); i++) {
-    RefPtr<FileManager>& fileManager = managers[i];
-    if (fileManager->DatabaseName() == aName) {
-      fileManager->Invalidate();
-      managers.RemoveElementAt(i);
-      return;
-    }
+  if (foundIt != end) {
+    (*foundIt)->Invalidate();
+    managers.RemoveElementAt(foundIt.GetIndex());
   }
 }
 
-nsTArray<RefPtr<FileManager> >& FileManagerInfo::GetArray(
+nsTArray<SafeRefPtr<FileManager> >& FileManagerInfo::GetArray(
     PersistenceType aPersistenceType) {
   switch (aPersistenceType) {
     case PERSISTENCE_TYPE_PERSISTENT:

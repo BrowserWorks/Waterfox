@@ -5,7 +5,8 @@
 #ifndef MP4METADATA_H_
 #define MP4METADATA_H_
 
-#include "mozilla/TypeTraits.h"
+#include <type_traits>
+
 #include "mozilla/UniquePtr.h"
 #include "DecoderData.h"
 #include "Index.h"
@@ -42,7 +43,7 @@ class StreamAdaptor {
  public:
   explicit StreamAdaptor(ByteStream* aSource) : mSource(aSource), mOffset(0) {}
 
-  ~StreamAdaptor() {}
+  ~StreamAdaptor() = default;
 
   bool Read(uint8_t* buffer, uintptr_t size, size_t* bytes_read);
 
@@ -73,7 +74,7 @@ class MP4Metadata : public DecoderDoctorLifeLogger<MP4Metadata> {
 
    private:
     mozilla::MediaResult mResult;
-    typename mozilla::Decay<T>::Type mT;
+    std::decay_t<T> mT;
   };
 
   using ResultAndByteBuffer = ResultAndType<RefPtr<mozilla::MediaByteBuffer>>;
@@ -95,7 +96,7 @@ class MP4Metadata : public DecoderDoctorLifeLogger<MP4Metadata> {
   ResultAndCryptoFile Crypto() const;
 
   using ResultAndIndice = ResultAndType<mozilla::UniquePtr<IndiceWrapper>>;
-  ResultAndIndice GetTrackIndice(mozilla::TrackID aTrackID);
+  ResultAndIndice GetTrackIndice(uint32_t aTrackId);
 
   nsresult Parse();
 

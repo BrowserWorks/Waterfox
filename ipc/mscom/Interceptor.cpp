@@ -6,19 +6,21 @@
 
 #define INITGUID
 
-#include "mozilla/Move.h"
+#include "mozilla/mscom/Interceptor.h"
+
+#include <utility>
+
+#include "MainThreadUtils.h"
+#include "mozilla/Assertions.h"
+#include "mozilla/ThreadLocal.h"
+#include "mozilla/Unused.h"
 #include "mozilla/mscom/DispatchForwarder.h"
 #include "mozilla/mscom/FastMarshaler.h"
-#include "mozilla/mscom/Interceptor.h"
 #include "mozilla/mscom/InterceptorLog.h"
 #include "mozilla/mscom/MainThreadInvoker.h"
 #include "mozilla/mscom/Objref.h"
 #include "mozilla/mscom/Registration.h"
 #include "mozilla/mscom/Utils.h"
-#include "mozilla/ThreadLocal.h"
-#include "MainThreadUtils.h"
-#include "mozilla/Assertions.h"
-#include "mozilla/Unused.h"
 #include "nsDirectoryServiceDefs.h"
 #include "nsDirectoryServiceUtils.h"
 #include "nsExceptionHandler.h"
@@ -47,7 +49,7 @@ class LiveSet final {
 
   void Put(IUnknown* aKey, already_AddRefed<IWeakReference> aValue) {
     mMutex.AssertCurrentThreadOwns();
-    mLiveSet.Put(aKey, std::move(aValue));
+    mLiveSet.Put(aKey, RefPtr<IWeakReference>{std::move(aValue)});
   }
 
   RefPtr<IWeakReference> Get(IUnknown* aKey) {
@@ -299,6 +301,15 @@ Interceptor::GetMarshalSizeMax(REFIID riid, void* pv, DWORD dwDestContext,
   if (FAILED(hr) || !sentinel.IsOutermost()) {
     return hr;
   }
+
+#if defined(MOZ_MSCOM_REMARSHAL_NO_HANDLER)
+  if (XRE_IsContentProcess() && IsCallerExternalProcess()) {
+    // The caller isn't our chrome process, so we do not provide a handler
+    // payload. Even though we're only getting the size here, calculating the
+    // payload size might actually require building the payload.
+    return hr;
+  }
+#endif  // defined(MOZ_MSCOM_REMARSHAL_NO_HANDLER)
 
   DWORD payloadSize = 0;
   hr = mEventSink->GetHandlerPayloadSize(WrapNotNull(this),
@@ -702,6 +713,10 @@ Interceptor::QueryInterfaceTarget(REFIID aIid, void** aOutput,
     // thread is also querying for IMarshal. If we do need to respond to these
     // special interfaces, this should be done before this point; e.g. in
     // Interceptor::QueryInterface like we do for INoMarshal.
+    return E_NOINTERFACE;
+  }
+
+  if (mEventSink->IsInterfaceMaybeSupported(aIid) == E_NOINTERFACE) {
     return E_NOINTERFACE;
   }
 

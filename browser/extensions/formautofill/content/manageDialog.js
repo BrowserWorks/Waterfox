@@ -39,7 +39,7 @@ ChromeUtils.defineModuleGetter(
 ChromeUtils.defineModuleGetter(
   this,
   "OSKeyStore",
-  "resource://formautofill/OSKeyStore.jsm"
+  "resource://gre/modules/OSKeyStore.jsm"
 );
 
 XPCOMUtils.defineLazyGetter(this, "reauthPasswordPromptMessage", () => {
@@ -48,8 +48,7 @@ XPCOMUtils.defineLazyGetter(this, "reauthPasswordPromptMessage", () => {
   );
   return FormAutofillUtils.stringBundle.formatStringFromName(
     `editCreditCardPasswordPrompt.${AppConstants.platform}`,
-    [brandShortName],
-    1
+    [brandShortName]
   );
 });
 
@@ -372,7 +371,8 @@ class ManageCreditCards extends ManageRecords {
     // Ask for reauth if user is trying to edit an existing credit card.
     if (
       !creditCard ||
-      (await OSKeyStore.ensureLoggedIn(reauthPasswordPromptMessage))
+      (await FormAutofillUtils.ensureLoggedIn(reauthPasswordPromptMessage))
+        .authenticated
     ) {
       let decryptedCCNumObj = {};
       if (creditCard && creditCard["cc-number-encrypted"]) {

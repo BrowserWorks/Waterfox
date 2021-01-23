@@ -1,4 +1,5 @@
 const TEST_URL = "http://www.example.com/browser/dom/base/test/dummy.html";
+const TEST_URL_2 = "http://example.org/browser/dom/base/test/dummy.html";
 const PRELOADED_STATE = "preloaded";
 const CONSUMED_STATE = "consumed";
 
@@ -15,18 +16,6 @@ add_task(async function() {
   });
 });
 
-// Ensure that the preloaded browser exists, and it's finished loading.
-async function ensurePreloaded(gBrowser) {
-  NewTabPagePreloading.maybeCreatePreloadedBrowser(gBrowser.ownerGlobal);
-  // We cannot use the regular BrowserTestUtils helper for waiting here, since that
-  // would try to insert the preloaded browser, which would only break things.
-  await ContentTask.spawn(gBrowser.preloadedBrowser, null, async () => {
-    await ContentTaskUtils.waitForCondition(() => {
-      return content.document && content.document.readyState == "complete";
-    });
-  });
-}
-
 add_task(async function() {
   // This test is only relevant in e10s.
   if (!gMultiProcessBrowser) {
@@ -36,61 +25,78 @@ add_task(async function() {
   ppmm.releaseCachedProcesses();
 
   // Wait for the preloaded browser to load.
-  await ensurePreloaded(gBrowser);
+  await BrowserTestUtils.maybeCreatePreloadedBrowser(gBrowser);
 
-  // Store the number of processes (note: +1 for the parent process).
-  const { childCount: originalChildCount } = ppmm;
+  // Store the number of processes.
+  let expectedChildCount = ppmm.childCount;
 
-  // Use the preloaded browser and create another one.
-  BrowserOpenTab();
-  let tab1 = gBrowser.selectedTab;
-  await ensurePreloaded(gBrowser);
+  // Open 3 tabs using the preloaded browser.
+  let tabs = [];
+  for (let i = 0; i < 3; i++) {
+    BrowserOpenTab();
+    tabs.unshift(gBrowser.selectedTab);
+    await BrowserTestUtils.maybeCreatePreloadedBrowser(gBrowser);
 
-  // Check that the process count did not change.
-  is(
-    ppmm.childCount,
-    originalChildCount,
-    "Preloaded browser should not create a new content process."
-  );
-
-  // Let's do another round.
-  BrowserOpenTab();
-  let tab2 = gBrowser.selectedTab;
-  await ensurePreloaded(gBrowser);
-
-  // Check that the process count did not change.
-  is(
-    ppmm.childCount,
-    originalChildCount,
-    "Preloaded browser should (still) not create a new content process."
-  );
+    // Check that the process count did not change.
+    is(
+      ppmm.childCount,
+      expectedChildCount,
+      "Preloaded browser should not create a new content process."
+    );
+  }
 
   // Navigate to a content page from the parent side.
-  BrowserTestUtils.loadURI(tab2.linkedBrowser, TEST_URL);
-  await BrowserTestUtils.browserLoaded(tab2.linkedBrowser, false, TEST_URL);
+  //
+  // We should create a new content process.
+  expectedChildCount += 1;
+  BrowserTestUtils.loadURI(tabs[0].linkedBrowser, TEST_URL);
+  await BrowserTestUtils.browserLoaded(tabs[0].linkedBrowser, false, TEST_URL);
   is(
     ppmm.childCount,
-    originalChildCount + 1,
+    expectedChildCount,
     "Navigating away from the preloaded browser (parent side) should create a new content process."
   );
 
-  // Navigate to a content page from the child side.
-  await BrowserTestUtils.switchTab(gBrowser, tab1);
-  /* eslint-disable no-shadow */
-  await ContentTask.spawn(tab1.linkedBrowser, null, async function() {
-    const TEST_URL = "http://www.example.com/browser/dom/base/test/dummy.html";
-    content.location.href = TEST_URL;
+  // Navigate to the same content page from the child side.
+  //
+  // We already have a content process for TEST_URL, so we don't create a new
+  // one when Fission is enabled.
+  expectedChildCount += gFissionBrowser ? 0 : 1;
+  await BrowserTestUtils.switchTab(gBrowser, tabs[1]);
+  await SpecialPowers.spawn(tabs[1].linkedBrowser, [TEST_URL], url => {
+    content.location.href = url;
   });
-  /* eslint-enable no-shadow */
-  await BrowserTestUtils.browserLoaded(tab1.linkedBrowser, false, TEST_URL);
+  await BrowserTestUtils.browserLoaded(tabs[1].linkedBrowser, false, TEST_URL);
   is(
     ppmm.childCount,
-    originalChildCount + 2,
-    "Navigating away from the preloaded browser (child side) should create a new content process."
+    expectedChildCount,
+    `Navigating away from the preloaded browser (child side, same-origin) should${
+      gFissionBrowser ? " not " : " "
+    }create a new content process.`
   );
 
-  BrowserTestUtils.removeTab(tab1);
-  BrowserTestUtils.removeTab(tab2);
+  // Navigate to a new content page from the child side.
+  //
+  // We should create a new content process, with or without Fission.
+  expectedChildCount += 1;
+  await BrowserTestUtils.switchTab(gBrowser, tabs[2]);
+  await ContentTask.spawn(tabs[2].linkedBrowser, TEST_URL_2, url => {
+    content.location.href = url;
+  });
+  await BrowserTestUtils.browserLoaded(
+    tabs[2].linkedBrowser,
+    false,
+    TEST_URL_2
+  );
+  is(
+    ppmm.childCount,
+    expectedChildCount,
+    "Navigating away from the preloaded browser (child side, cross-origin) should create a new content process."
+  );
+
+  for (let tab of tabs) {
+    BrowserTestUtils.removeTab(tab);
+  }
 
   // Make sure the preload browser does not keep any of the new processes alive.
   NewTabPagePreloading.removePreloadedBrowser(window);
@@ -102,7 +108,7 @@ add_task(async function() {
 
 add_task(async function preloaded_state_attribute() {
   // Wait for a preloaded browser to exist, use it, and then create another one
-  await ensurePreloaded(gBrowser);
+  await BrowserTestUtils.maybeCreatePreloadedBrowser(gBrowser);
   let preloadedTabState = gBrowser.preloadedBrowser.getAttribute(
     "preloadedState"
   );
@@ -113,7 +119,7 @@ add_task(async function preloaded_state_attribute() {
   );
 
   BrowserOpenTab();
-  await ensurePreloaded(gBrowser);
+  await BrowserTestUtils.maybeCreatePreloadedBrowser(gBrowser);
 
   // Now check that the tabs have the correct browser attributes set
   let consumedTabState = gBrowser.selectedBrowser.getAttribute(
@@ -134,6 +140,11 @@ add_task(async function preloaded_state_attribute() {
 
   // Navigate away and check that the attribute has been removed altogether
   BrowserTestUtils.loadURI(gBrowser.selectedBrowser, TEST_URL);
+  await BrowserTestUtils.browserLoaded(
+    gBrowser.selectedBrowser,
+    false,
+    TEST_URL
+  );
   let navigatedTabHasState = gBrowser.selectedBrowser.hasAttribute(
     "preloadedState"
   );

@@ -11,27 +11,27 @@
 #include "nsIXULAppInfo.h"
 #include "nsPluginArray.h"
 #include "nsMimeTypeArray.h"
-#include "mozilla/AntiTrackingCommon.h"
+#include "mozilla/ContentBlocking.h"
+#include "mozilla/ContentBlockingNotifier.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/dom/BodyExtractor.h"
 #include "mozilla/dom/FetchBinding.h"
 #include "mozilla/dom/File.h"
-#include "nsGeolocation.h"
+#include "Geolocation.h"
 #include "nsIClassOfService.h"
 #include "nsIHttpProtocolHandler.h"
 #include "nsIContentPolicy.h"
-#include "nsIContentSecurityPolicy.h"
 #include "nsContentPolicyUtils.h"
 #include "nsISupportsPriority.h"
-#include "nsICachingChannel.h"
 #include "nsIWebProtocolHandlerRegistrar.h"
-#include "nsICookiePermission.h"
-#include "nsIScriptSecurityManager.h"
 #include "nsCharSeparatedTokenizer.h"
 #include "nsContentUtils.h"
 #include "nsUnicharUtils.h"
 #include "mozilla/Preferences.h"
-#include "mozilla/StaticPrefs.h"
+#include "mozilla/StaticPrefs_dom.h"
+#include "mozilla/StaticPrefs_media.h"
+#include "mozilla/StaticPrefs_network.h"
+#include "mozilla/StaticPrefs_privacy.h"
 #include "mozilla/Telemetry.h"
 #include "BatteryManager.h"
 #include "mozilla/dom/CredentialsContainer.h"
@@ -39,6 +39,7 @@
 #include "mozilla/dom/FeaturePolicyUtils.h"
 #include "mozilla/dom/GamepadServiceTest.h"
 #include "mozilla/dom/MediaCapabilities.h"
+#include "mozilla/dom/MediaSession.h"
 #include "mozilla/dom/WakeLock.h"
 #include "mozilla/dom/power/PowerManagerService.h"
 #include "mozilla/dom/MIDIAccessManager.h"
@@ -52,6 +53,7 @@
 #include "mozilla/dom/VRDisplay.h"
 #include "mozilla/dom/VRDisplayEvent.h"
 #include "mozilla/dom/VRServiceTest.h"
+#include "mozilla/dom/XRSystem.h"
 #include "mozilla/dom/workerinternals/RuntimeService.h"
 #include "mozilla/Hal.h"
 #include "mozilla/ClearOnShutdown.h"
@@ -65,15 +67,14 @@
 #include "nsRFPService.h"
 #include "nsStringStream.h"
 #include "nsComponentManagerUtils.h"
+#include "nsICookieManager.h"
 #include "nsICookieService.h"
-#include "nsIStringStream.h"
 #include "nsIHttpChannel.h"
-#include "nsIHttpChannelInternal.h"
 #include "nsStreamUtils.h"
 #include "WidgetUtils.h"
-#include "nsIPresentationService.h"
 #include "nsIScriptError.h"
 #include "ReferrerInfo.h"
+#include "mozilla/PermissionDelegateHandler.h"
 
 #include "nsIExternalProtocolHandler.h"
 #include "BrowserChild.h"
@@ -82,7 +83,6 @@
 #include "mozilla/dom/MediaDevices.h"
 #include "MediaManager.h"
 
-#include "nsIDOMGlobalPropertyInitializer.h"
 #include "nsJSUtils.h"
 
 #include "mozilla/dom/NavigatorBinding.h"
@@ -99,27 +99,24 @@
 #  include "mozilla/Hal.h"
 #endif
 
+#if defined(XP_WIN)
+#  include "mozilla/WindowsVersion.h"
+#endif
+
 #include "mozilla/EMEUtils.h"
 #include "mozilla/DetailedPromise.h"
 #include "mozilla/Unused.h"
 
+#include "mozilla/webgpu/Instance.h"
+#include "mozilla/dom/WindowGlobalChild.h"
+
+#include "mozilla/intl/LocaleService.h"
+
 namespace mozilla {
 namespace dom {
 
-static bool sVibratorEnabled = false;
-static uint32_t sMaxVibrateMS = 0;
-static uint32_t sMaxVibrateListLen = 0;
 static const nsLiteralCString kVibrationPermissionType =
     NS_LITERAL_CSTRING("vibration");
-
-/* static */
-void Navigator::Init() {
-  Preferences::AddBoolVarCache(&sVibratorEnabled, "dom.vibrator.enabled", true);
-  Preferences::AddUintVarCache(&sMaxVibrateMS, "dom.vibrator.max_vibrate_ms",
-                               10000);
-  Preferences::AddUintVarCache(&sMaxVibrateListLen,
-                               "dom.vibrator.max_vibrate_list_len", 128);
-}
 
 Navigator::Navigator(nsPIDOMWindowInner* aWindow) : mWindow(aWindow) {}
 
@@ -138,6 +135,7 @@ NS_IMPL_CYCLE_COLLECTION_CLASS(Navigator)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(Navigator)
   tmp->Invalidate();
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mWindow)
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mSharePromise)
   NS_IMPL_CYCLE_COLLECTION_UNLINK_PRESERVED_WRAPPER
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
@@ -154,6 +152,9 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(Navigator)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mMediaDevices)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mServiceWorkerContainer)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mMediaCapabilities)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mMediaSession)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mAddonManager)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mWebGpu)
 
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mWindow)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mMediaKeySystemAccessManager)
@@ -161,6 +162,8 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(Navigator)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mGamepadServiceTest)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mVRGetDisplaysPromises)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mVRServiceTest)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mSharePromise)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mXRSystem)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_TRACE_WRAPPERCACHE(Navigator)
@@ -223,7 +226,23 @@ void Navigator::Invalidate() {
     mVRServiceTest = nullptr;
   }
 
+  if (mXRSystem) {
+    mXRSystem->Shutdown();
+    mXRSystem = nullptr;
+  }
+
   mMediaCapabilities = nullptr;
+
+  if (mMediaSession) {
+    mMediaSession->Shutdown();
+    mMediaSession = nullptr;
+  }
+
+  mAddonManager = nullptr;
+
+  mWebGpu = nullptr;
+
+  mSharePromise = nullptr;
 }
 
 void Navigator::GetUserAgent(nsAString& aUserAgent, CallerType aCallerType,
@@ -235,7 +254,7 @@ void Navigator::GetUserAgent(nsAString& aUserAgent, CallerType aCallerType,
     nsIDocShell* docshell = window->GetDocShell();
     nsString customUserAgent;
     if (docshell) {
-      docshell->GetCustomUserAgent(customUserAgent);
+      docshell->GetBrowsingContext()->GetCustomUserAgent(customUserAgent);
 
       if (!customUserAgent.IsEmpty()) {
         aUserAgent = customUserAgent;
@@ -299,7 +318,13 @@ void Navigator::GetAppName(nsAString& aAppName, CallerType aCallerType) const {
  *
  * "en", "en-US" and "i-cherokee" and "" are valid languages tokens.
  *
- * An empty array will be returned if there is no valid languages.
+ * If there is no valid language, the value of getWebExposedLocales is
+ * used to ensure that locale spoofing is honored and to reduce
+ * fingerprinting.
+ *
+ * See RFC 7231, Section 9.7 "Browser Fingerprinting" and
+ * RFC 2616, Section 15.1.4 "Privacy Issues Connected to Accept Headers"
+ * for more detail.
  */
 /* static */
 void Navigator::GetAcceptLanguages(nsTArray<nsString>& aLanguages) {
@@ -345,29 +370,29 @@ void Navigator::GetAcceptLanguages(nsTArray<nsString>& aLanguages) {
 
     aLanguages.AppendElement(lang);
   }
+  if (aLanguages.Length() == 0) {
+    nsTArray<nsCString> locales;
+    mozilla::intl::LocaleService::GetInstance()->GetWebExposedLocales(locales);
+    aLanguages.AppendElement(NS_ConvertUTF8toUTF16(locales[0]));
+  }
 }
 
 /**
- * Do not use UI language (chosen app locale) here but the first value set in
- * the Accept Languages header, see ::GetAcceptLanguages().
+ * Returns the first language from GetAcceptLanguages.
  *
- * See RFC 2616, Section 15.1.4 "Privacy Issues Connected to Accept Headers" for
- * the reasons why.
+ * Full details above in GetAcceptLanguages.
  */
 void Navigator::GetLanguage(nsAString& aLanguage) {
   nsTArray<nsString> languages;
   GetLanguages(languages);
-  if (languages.Length() >= 1) {
-    aLanguage.Assign(languages[0]);
-  } else {
-    aLanguage.Truncate();
-  }
+  MOZ_ASSERT(languages.Length() >= 1);
+  aLanguage.Assign(languages[0]);
 }
 
 void Navigator::GetLanguages(nsTArray<nsString>& aLanguages) {
   GetAcceptLanguages(aLanguages);
 
-  // The returned value is cached by the binding code. The window listen to the
+  // The returned value is cached by the binding code. The window listens to the
   // accept languages change and will clear the cache when needed. It has to
   // take care of dispatching the DOM event already and the invalidation and the
   // event has to be timed correctly.
@@ -483,7 +508,7 @@ StorageManager* Navigator::Storage() {
 }
 
 bool Navigator::CookieEnabled() {
-  bool cookieEnabled = (StaticPrefs::network_cookie_cookieBehavior() !=
+  bool cookieEnabled = (nsICookieManager::GetCookieBehavior() !=
                         nsICookieService::BEHAVIOR_REJECT);
 
   // Check whether an exception overrides the global cookie behavior
@@ -498,23 +523,20 @@ bool Navigator::CookieEnabled() {
     return cookieEnabled;
   }
 
-  nsCOMPtr<nsIURI> codebaseURI;
-  doc->NodePrincipal()->GetURI(getter_AddRefs(codebaseURI));
-
-  if (!codebaseURI) {
-    // Not a codebase, so technically can't set cookies, but let's
+  uint32_t rejectedReason = 0;
+  bool granted = false;
+  nsresult rv = doc->NodePrincipal()->HasFirstpartyStorageAccess(
+      mWindow, &rejectedReason, &granted);
+  if (NS_FAILED(rv)) {
+    // Not a content, so technically can't set cookies, but let's
     // just return the default value.
     return cookieEnabled;
   }
 
-  uint32_t rejectedReason = 0;
-  bool granted = AntiTrackingCommon::IsFirstPartyStorageAccessGrantedFor(
-      mWindow, codebaseURI, &rejectedReason);
-
-  AntiTrackingCommon::NotifyBlockingDecision(
+  ContentBlockingNotifier::OnDecision(
       mWindow,
-      granted ? AntiTrackingCommon::BlockingDecision::eAllow
-              : AntiTrackingCommon::BlockingDecision::eBlock,
+      granted ? ContentBlockingNotifier::BlockingDecision::eAllow
+              : ContentBlockingNotifier::BlockingDecision::eBlock,
       rejectedReason);
   return granted;
 }
@@ -545,7 +567,7 @@ void Navigator::GetBuildID(nsAString& aBuildID, CallerType aCallerType,
       if (doc) {
         nsIURI* uri = doc->GetDocumentURI();
         if (uri) {
-          MOZ_ALWAYS_SUCCEEDS(uri->SchemeIs("https", &isHTTPS));
+          isHTTPS = uri->SchemeIs("https");
           if (isHTTPS) {
             MOZ_ALWAYS_SUCCEEDS(uri->GetHost(host));
           }
@@ -628,7 +650,7 @@ class VibrateWindowListener : public nsIDOMEventListener {
   NS_DECL_NSIDOMEVENTLISTENER
 
  private:
-  virtual ~VibrateWindowListener() {}
+  virtual ~VibrateWindowListener() = default;
 
   nsWeakPtr mWindow;
   nsWeakPtr mDocument;
@@ -736,32 +758,41 @@ bool Navigator::Vibrate(const nsTArray<uint32_t>& aPattern) {
     return false;
   }
 
-  nsTArray<uint32_t> pattern(aPattern);
+  nsTArray<uint32_t> pattern(aPattern.Clone());
 
-  if (pattern.Length() > sMaxVibrateListLen) {
-    pattern.SetLength(sMaxVibrateListLen);
+  if (pattern.Length() > StaticPrefs::dom_vibrator_max_vibrate_list_len()) {
+    pattern.SetLength(StaticPrefs::dom_vibrator_max_vibrate_list_len());
   }
 
   for (size_t i = 0; i < pattern.Length(); ++i) {
-    pattern[i] = std::min(sMaxVibrateMS, pattern[i]);
+    pattern[i] =
+        std::min(StaticPrefs::dom_vibrator_max_vibrate_ms(), pattern[i]);
   }
 
-  // The spec says we check sVibratorEnabled after we've done the sanity
+  // The spec says we check dom.vibrator.enabled after we've done the sanity
   // checking on the pattern.
-  if (!sVibratorEnabled) {
+  if (!StaticPrefs::dom_vibrator_enabled()) {
     return true;
   }
 
   mRequestedVibrationPattern.SwapElements(pattern);
-  nsCOMPtr<nsIPermissionManager> permMgr = services::GetPermissionManager();
-  if (!permMgr) {
+
+  PermissionDelegateHandler* permissionHandler =
+      doc->GetPermissionDelegateHandler();
+  if (NS_WARN_IF(!permissionHandler)) {
     return false;
   }
 
   uint32_t permission = nsIPermissionManager::UNKNOWN_ACTION;
 
-  permMgr->TestPermissionFromPrincipal(doc->NodePrincipal(),
-                                       kVibrationPermissionType, &permission);
+  permissionHandler->GetPermission(kVibrationPermissionType, &permission,
+                                   false);
+
+  if (permission == nsIPermissionManager::DENY_ACTION) {
+    // Abort without observer service or on denied session permission.
+    SetVibrationPermission(false /* permitted */, false /* persistent */);
+    return false;
+  }
 
   if (permission == nsIPermissionManager::ALLOW_ACTION ||
       mRequestedVibrationPattern.IsEmpty() ||
@@ -772,14 +803,12 @@ bool Navigator::Vibrate(const nsTArray<uint32_t>& aPattern) {
     return true;
   }
 
+  // Request user permission.
   nsCOMPtr<nsIObserverService> obs = services::GetObserverService();
-  if (!obs || permission == nsIPermissionManager::DENY_ACTION) {
-    // Abort without observer service or on denied session permission.
-    SetVibrationPermission(false /* permitted */, false /* persistent */);
+  if (!obs) {
     return true;
   }
 
-  // Request user permission.
   obs->NotifyObservers(ToSupports(this), "Vibration:Request", nullptr);
 
   return true;
@@ -790,6 +819,15 @@ bool Navigator::Vibrate(const nsTArray<uint32_t>& aPattern) {
 //*****************************************************************************
 
 uint32_t Navigator::MaxTouchPoints(CallerType aCallerType) {
+  nsIDocShell* docshell = GetDocShell();
+  BrowsingContext* bc = docshell ? docshell->GetBrowsingContext() : nullptr;
+
+  // Responsive Design Mode overrides the maxTouchPoints property when
+  // touch simulation is enabled.
+  if (bc && bc->InRDMPane()) {
+    return bc->GetMaxTouchPointsOverride();
+  }
+
   // The maxTouchPoints is going to reveal the detail of users' hardware. So,
   // we will spoof it into 0 if fingerprinting resistance is on.
   if (aCallerType != CallerType::System &&
@@ -808,13 +846,9 @@ uint32_t Navigator::MaxTouchPoints(CallerType aCallerType) {
 //    Navigator::nsIDOMClientInformation
 //*****************************************************************************
 
-void Navigator::RegisterContentHandler(const nsAString& aMIMEType,
-                                       const nsAString& aURI,
-                                       const nsAString& aTitle,
-                                       ErrorResult& aRv) {}
-
 // This list should be kept up-to-date with the spec:
 // https://html.spec.whatwg.org/multipage/system-state.html#custom-handlers
+// If you change this list, please also update the copy in E10SUtils.jsm.
 static const char* const kSafeSchemes[] = {
     "bitcoin", "geo",  "im",   "irc",         "ircs", "magnet", "mailto",
     "mms",     "news", "nntp", "openpgp4fpr", "sip",  "sms",    "smsto",
@@ -829,14 +863,14 @@ void Navigator::CheckProtocolHandlerAllowed(const nsAString& aScheme,
     aHandlerURI->GetSpec(spec);
     nsPrintfCString message("Permission denied to add %s as a protocol handler",
                             spec.get());
-    aRv.ThrowDOMException(NS_ERROR_DOM_SECURITY_ERR, message);
+    aRv.ThrowSecurityError(message);
   };
 
   auto raisePermissionDeniedScheme = [&] {
     nsPrintfCString message(
         "Permission denied to add a protocol handler for %s",
         NS_ConvertUTF16toUTF8(aScheme).get());
-    aRv.ThrowDOMException(NS_ERROR_DOM_SECURITY_ERR, message);
+    aRv.ThrowSecurityError(message);
   };
 
   if (!aDocumentURI || !aHandlerURI) {
@@ -849,7 +883,7 @@ void Navigator::CheckProtocolHandlerAllowed(const nsAString& aScheme,
   // If the uri doesn't contain '%s', it won't be a good handler - the %s
   // gets replaced with the handled URI.
   if (!FindInReadable(NS_LITERAL_CSTRING("%s"), spec)) {
-    aRv.ThrowDOMException(NS_ERROR_DOM_SYNTAX_ERR);
+    aRv.ThrowSyntaxError("Handler URI does not contain \"%s\".");
     return;
   }
 
@@ -958,9 +992,6 @@ void Navigator::RegisterProtocolHandler(const nsAString& aScheme,
   }
 
   nsCOMPtr<Document> doc = mWindow->GetDoc();
-  if (!mWindow->IsSecureContext()) {
-    doc->WarnOnceAbout(Document::eRegisterProtocolHandlerInsecure);
-  }
 
   // Determine if doc is allowed to assign this handler
   nsIURI* docURI = doc->GetDocumentURIObject();
@@ -1010,7 +1041,7 @@ Geolocation* Navigator::GetGeolocation(ErrorResult& aRv) {
 }
 
 class BeaconStreamListener final : public nsIStreamListener {
-  ~BeaconStreamListener() {}
+  ~BeaconStreamListener() = default;
 
  public:
   BeaconStreamListener() : mLoadGroup(nullptr) {}
@@ -1115,26 +1146,39 @@ bool Navigator::SendBeaconInternal(const nsAString& aUrl,
   nsresult rv = nsContentUtils::NewURIWithDocumentCharset(
       getter_AddRefs(uri), aUrl, doc, doc->GetDocBaseURI());
   if (NS_FAILED(rv)) {
-    aRv.ThrowTypeError<MSG_INVALID_URL>(aUrl);
+    aRv.ThrowTypeError<MSG_INVALID_URL>(NS_ConvertUTF16toUTF8(aUrl));
     return false;
   }
 
   // Spec disallows any schemes save for HTTP/HTTPs
-  bool isValidScheme;
-  if (!(NS_SUCCEEDED(uri->SchemeIs("http", &isValidScheme)) && isValidScheme) &&
-      !(NS_SUCCEEDED(uri->SchemeIs("https", &isValidScheme)) &&
-        isValidScheme)) {
-    aRv.ThrowTypeError<MSG_INVALID_URL_SCHEME>(NS_LITERAL_STRING("Beacon"),
-                                               aUrl);
+  if (!uri->SchemeIs("http") && !uri->SchemeIs("https")) {
+    aRv.ThrowTypeError<MSG_INVALID_URL_SCHEME>("Beacon",
+                                               uri->GetSpecOrDefault());
     return false;
   }
 
-  // No need to use CORS for sendBeacon unless it's a BLOB
-  nsSecurityFlags securityFlags =
-      aType == eBeaconTypeBlob
-          ? nsILoadInfo::SEC_REQUIRE_CORS_DATA_INHERITS
-          : nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_INHERITS;
-  securityFlags |= nsILoadInfo::SEC_COOKIES_INCLUDE;
+  nsCOMPtr<nsIInputStream> in;
+  nsAutoCString contentTypeWithCharset;
+  nsAutoCString charset;
+  uint64_t length = 0;
+  if (aBody) {
+    aRv = aBody->GetAsStream(getter_AddRefs(in), &length,
+                             contentTypeWithCharset, charset);
+    if (NS_WARN_IF(aRv.Failed())) {
+      return false;
+    }
+  }
+
+  nsSecurityFlags securityFlags = nsILoadInfo::SEC_COOKIES_INCLUDE;
+  // Ensure that only streams with content types that are safelisted ignore CORS
+  // rules
+  if (aBody && !contentTypeWithCharset.IsVoid() &&
+      !nsContentUtils::IsCORSSafelistedRequestHeader(
+          NS_LITERAL_CSTRING("content-type"), contentTypeWithCharset)) {
+    securityFlags |= nsILoadInfo::SEC_REQUIRE_CORS_DATA_INHERITS;
+  } else {
+    securityFlags |= nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_INHERITS;
+  }
 
   nsCOMPtr<nsIChannel> channel;
   rv = NS_NewChannel(getter_AddRefs(channel), uri, doc, securityFlags,
@@ -1152,23 +1196,11 @@ bool Navigator::SendBeaconInternal(const nsAString& aUrl,
     return false;
   }
 
-  nsCOMPtr<nsIReferrerInfo> referrerInfo =
-      new ReferrerInfo(doc->GetDocumentURI(), doc->GetReferrerPolicy());
+  auto referrerInfo = MakeRefPtr<ReferrerInfo>(*doc);
   rv = httpChannel->SetReferrerInfoWithoutClone(referrerInfo);
   MOZ_ASSERT(NS_SUCCEEDED(rv));
 
-  nsCOMPtr<nsIInputStream> in;
-  nsAutoCString contentTypeWithCharset;
-  nsAutoCString charset;
-  uint64_t length = 0;
-
   if (aBody) {
-    aRv = aBody->GetAsStream(getter_AddRefs(in), &length,
-                             contentTypeWithCharset, charset);
-    if (NS_WARN_IF(aRv.Failed())) {
-      return false;
-    }
-
     nsCOMPtr<nsIUploadChannel2> uploadChannel = do_QueryInterface(channel);
     if (!uploadChannel) {
       aRv.Throw(NS_ERROR_FAILURE);
@@ -1278,14 +1310,12 @@ void Navigator::MozGetUserMediaDevices(
   }
   if (Document* doc = mWindow->GetExtantDoc()) {
     if (!mWindow->IsSecureContext()) {
-      doc->SetDocumentAndPageUseCounter(
-          eUseCounter_custom_MozGetUserMediaInsec);
+      doc->SetUseCounter(eUseCounter_custom_MozGetUserMediaInsec);
     }
     nsINode* node = doc;
     while ((node = nsContentUtils::GetCrossDocParentNode(node))) {
       if (NS_FAILED(nsContentUtils::CheckSameOrigin(doc, node))) {
-        doc->SetDocumentAndPageUseCounter(
-            eUseCounter_custom_MozGetUserMediaXOrigin);
+        doc->SetUseCounter(eUseCounter_custom_MozGetUserMediaXOrigin);
         break;
       }
     }
@@ -1327,6 +1357,110 @@ Promise* Navigator::GetBattery(ErrorResult& aRv) {
   return mBatteryPromise;
 }
 
+//*****************************************************************************
+//    Navigator::Share() - Web Share API
+//*****************************************************************************
+
+Promise* Navigator::Share(const ShareData& aData, ErrorResult& aRv) {
+  if (NS_WARN_IF(!mWindow || !mWindow->GetDocShell() ||
+                 !mWindow->GetExtantDoc())) {
+    aRv.Throw(NS_ERROR_UNEXPECTED);
+    return nullptr;
+  }
+
+  if (mSharePromise) {
+    NS_WARNING("Only one share picker at a time per navigator instance");
+    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
+    return nullptr;
+  }
+
+  // If none of data's members title, text, or url are present, reject p with
+  // TypeError, and abort these steps.
+  bool someMemberPassed = aData.mTitle.WasPassed() || aData.mText.WasPassed() ||
+                          aData.mUrl.WasPassed();
+  if (!someMemberPassed) {
+    aRv.ThrowTypeError(
+        "Must have a title, text, or url in the ShareData dictionary");
+    return nullptr;
+  }
+
+  // null checked above
+  auto doc = mWindow->GetExtantDoc();
+
+  // If data's url member is present, try to resolve it...
+  nsCOMPtr<nsIURI> url;
+  if (aData.mUrl.WasPassed()) {
+    auto result = doc->ResolveWithBaseURI(aData.mUrl.Value());
+    if (NS_WARN_IF(result.isErr())) {
+      aRv.ThrowTypeError<MSG_INVALID_URL>(
+          NS_ConvertUTF16toUTF8(aData.mUrl.Value()));
+      return nullptr;
+    }
+    url = result.unwrap();
+  }
+
+  // Process the title member...
+  nsCString title;
+  if (aData.mTitle.WasPassed()) {
+    title.Assign(NS_ConvertUTF16toUTF8(aData.mTitle.Value()));
+  } else {
+    title.SetIsVoid(true);
+  }
+
+  // Process the text member...
+  nsCString text;
+  if (aData.mText.WasPassed()) {
+    text.Assign(NS_ConvertUTF16toUTF8(aData.mText.Value()));
+  } else {
+    text.SetIsVoid(true);
+  }
+
+  // The spec does the "triggered by user activation" after the data checks.
+  // Unfortunately, both Chrome and Safari behave this way, so interop wins.
+  // https://github.com/w3c/web-share/pull/118
+  if (StaticPrefs::dom_webshare_requireinteraction() &&
+      !UserActivation::IsHandlingUserInput()) {
+    NS_WARNING("Attempt to share not triggered by user activation");
+    aRv.Throw(NS_ERROR_DOM_NOT_ALLOWED_ERR);
+    return nullptr;
+  }
+
+  // Let mSharePromise be a new promise.
+  mSharePromise = Promise::Create(mWindow->AsGlobal(), aRv);
+  if (aRv.Failed()) {
+    return nullptr;
+  }
+
+  IPCWebShareData data(title, text, url);
+  auto wgc = mWindow->GetWindowGlobalChild();
+  if (!wgc) {
+    aRv.Throw(NS_ERROR_FAILURE);
+    return nullptr;
+  }
+
+  auto shareResolver = [self = RefPtr<Navigator>(this)](nsresult aResult) {
+    MOZ_ASSERT(self->mSharePromise);
+    if (NS_SUCCEEDED(aResult)) {
+      self->mSharePromise->MaybeResolveWithUndefined();
+    } else {
+      self->mSharePromise->MaybeReject(aResult);
+    }
+    self->mSharePromise = nullptr;
+  };
+
+  auto shareRejector = [self = RefPtr<Navigator>(this)](
+                           mozilla::ipc::ResponseRejectReason&& aReason) {
+    // IPC died or maybe page navigated...
+    if (self->mSharePromise) {
+      self->mSharePromise = nullptr;
+    }
+  };
+
+  // Do the share
+  wgc->SendShare(data, shareResolver, shareRejector);
+  return mSharePromise;
+}
+
 already_AddRefed<LegacyMozTCPSocket> Navigator::MozTCPSocket() {
   RefPtr<LegacyMozTCPSocket> socket = new LegacyMozTCPSocket(GetWindow());
   return socket.forget();
@@ -1363,23 +1497,101 @@ already_AddRefed<Promise> Navigator::GetVRDisplays(ErrorResult& aRv) {
     return nullptr;
   }
 
-  nsGlobalWindowInner* win = nsGlobalWindowInner::Cast(mWindow);
-  win->NotifyVREventListenerAdded();
-
   RefPtr<Promise> p = Promise::Create(mWindow->AsGlobal(), aRv);
   if (aRv.Failed()) {
     return nullptr;
   }
 
-  // We pass mWindow's id to RefreshVRDisplays, so NotifyVRDisplaysUpdated will
-  // be called asynchronously, resolving the promises in mVRGetDisplaysPromises.
-  if (!VRDisplay::RefreshVRDisplays(win->WindowID())) {
-    p->MaybeReject(NS_ERROR_FAILURE);
-    return p.forget();
+  RefPtr<BrowserChild> browser(BrowserChild::GetFrom(mWindow));
+  if (!browser) {
+    MOZ_ASSERT(XRE_IsParentProcess());
+    FinishGetVRDisplays(true, p);
+  } else {
+    RefPtr<Navigator> self(this);
+    int browserID = browser->ChromeOuterWindowID();
+
+    browser->SendIsWindowSupportingWebVR(browserID)->Then(
+        GetCurrentThreadSerialEventTarget(), __func__,
+        [self, p](bool isSupported) {
+          self->FinishGetVRDisplays(isSupported, p);
+        },
+        [p](const mozilla::ipc::ResponseRejectReason) {
+          p->MaybeRejectWithTypeError("Unable to start display enumeration");
+        });
+  }
+
+  return p.forget();
+}
+
+void Navigator::FinishGetVRDisplays(bool isWebVRSupportedInwindow, Promise* p) {
+  if (!isWebVRSupportedInwindow) {
+    // WebVR in this window is not supported, so resolve the promise
+    // with no displays available
+    nsTArray<RefPtr<VRDisplay>> vrDisplaysEmpty;
+    p->MaybeResolve(vrDisplaysEmpty);
+    return;
+  }
+
+  // Since FinishGetVRDisplays can be called asynchronously after an IPC
+  // response, it's possible that the Window can be torn down before this
+  // call. In that case, the Window's cyclic references to VR objects are
+  // also torn down and should not be recreated via
+  // NotifyHasXRSession.
+  nsGlobalWindowInner* win = nsGlobalWindowInner::Cast(mWindow);
+  if (win->IsDying()) {
+    // The Window has been torn down, so there is no further work that can
+    // be done.
+    p->MaybeRejectWithTypeError(
+        "Unable to return VRDisplays for a closed window.");
+    return;
   }
 
   mVRGetDisplaysPromises.AppendElement(p);
-  return p.forget();
+  win->RequestXRPermission();
+}
+
+void Navigator::OnXRPermissionRequestAllow() {
+  // The permission request that results in this callback could have
+  // been instantiated by WebVR, WebXR, or both.
+  nsGlobalWindowInner* win = nsGlobalWindowInner::Cast(mWindow);
+  bool usingWebXR = false;
+
+  if (mXRSystem) {
+    usingWebXR = mXRSystem->OnXRPermissionRequestAllow();
+  }
+
+  bool rejectWebVR = true;
+  // If WebVR and WebXR both requested permission, only grant it to
+  // WebXR, which takes priority.
+  if (!usingWebXR) {
+    // We pass mWindow's id to RefreshVRDisplays, so NotifyVRDisplaysUpdated
+    // will be called asynchronously, resolving the promises in
+    // mVRGetDisplaysPromises.
+    rejectWebVR = !VRDisplay::RefreshVRDisplays(win->WindowID());
+  }
+  // Even if WebXR took priority, reject requests for WebVR in case they were
+  // made simultaneously and coelesced into a single permission prompt.
+  if (rejectWebVR) {
+    for (auto& p : mVRGetDisplaysPromises) {
+      // Failed to refresh, reject the promise now
+      p->MaybeRejectWithTypeError("Failed to find attached VR displays.");
+    }
+    mVRGetDisplaysPromises.Clear();
+  }
+}
+
+void Navigator::OnXRPermissionRequestCancel() {
+  if (mXRSystem) {
+    mXRSystem->OnXRPermissionRequestCancel();
+  }
+
+  nsTArray<RefPtr<VRDisplay>> vrDisplays;
+  for (auto& p : mVRGetDisplaysPromises) {
+    // Resolve the promise with no vr displays when
+    // the user blocks access.
+    p->MaybeResolve(vrDisplays);
+  }
+  mVRGetDisplaysPromises.Clear();
 }
 
 void Navigator::GetActiveVRDisplays(
@@ -1389,7 +1601,7 @@ void Navigator::GetActiveVRDisplays(
    * GetActiveVRDisplays should only enumerate displays that
    * are already active without causing any other hardware to be
    * activated.
-   * We must not call nsGlobalWindow::NotifyVREventListenerAdded here,
+   * We must not call nsGlobalWindow::NotifyHasXRSession here,
    * as that would cause enumeration and activation of other VR hardware.
    * Activating VR hardware is intrusive to the end user, as it may
    * involve physically powering on devices that the user did not
@@ -1434,12 +1646,23 @@ void Navigator::NotifyActiveVRDisplaysChanged() {
 VRServiceTest* Navigator::RequestVRServiceTest() {
   // Ensure that the Mock VR devices are not released prematurely
   nsGlobalWindowInner* win = nsGlobalWindowInner::Cast(mWindow);
-  win->NotifyVREventListenerAdded();
+  win->NotifyHasXRSession();
 
   if (!mVRServiceTest) {
     mVRServiceTest = VRServiceTest::CreateTestService(mWindow);
   }
   return mVRServiceTest;
+}
+
+XRSystem* Navigator::GetXr(ErrorResult& aRv) {
+  if (!mWindow) {
+    aRv.Throw(NS_ERROR_UNEXPECTED);
+    return nullptr;
+  }
+  if (!mXRSystem) {
+    mXRSystem = XRSystem::Create(mWindow);
+  }
+  return mXRSystem;
 }
 
 bool Navigator::IsWebVRContentDetected() const {
@@ -1533,6 +1756,19 @@ bool Navigator::HasUserMediaSupport(JSContext* cx, JSObject* obj) {
           StaticPrefs::media_peerconnection_enabled()) &&
          (IsSecureContextOrObjectIsFromSecureContext(cx, obj) ||
           StaticPrefs::media_devices_insecure_enabled());
+}
+
+/* static */
+bool Navigator::HasShareSupport(JSContext* cx, JSObject* obj) {
+  if (!Preferences::GetBool("dom.webshare.enabled")) {
+    return false;
+  }
+#if defined(XP_WIN) && !defined(__MINGW32__)
+  // The first public build that supports ShareCanceled API
+  return IsWindows10BuildOrLater(18956);
+#else
+  return true;
+#endif
 }
 
 /* static */
@@ -1761,21 +1997,17 @@ already_AddRefed<Promise> Navigator::RequestMediaKeySystemAccess(
                                                 mWindow->IsSecureContext())
                     .get());
 
-  Telemetry::Accumulate(Telemetry::MEDIA_EME_SECURE_CONTEXT,
-                        mWindow->IsSecureContext());
-
   if (!mWindow->IsSecureContext()) {
     Document* doc = mWindow->GetExtantDoc();
-    nsString uri;
+    AutoTArray<nsString, 1> params;
+    nsString* uri = params.AppendElement();
     if (doc) {
-      Unused << doc->GetDocumentURI(uri);
+      Unused << doc->GetDocumentURI(*uri);
     }
-    const char16_t* params[] = {uri.get()};
-    nsContentUtils::ReportToConsole(nsIScriptError::warningFlag,
-                                    NS_LITERAL_CSTRING("Media"), doc,
-                                    nsContentUtils::eDOM_PROPERTIES,
-                                    "MediaEMEInsecureContextDeprecatedWarning",
-                                    params, ArrayLength(params));
+    nsContentUtils::ReportToConsole(
+        nsIScriptError::warningFlag, NS_LITERAL_CSTRING("Media"), doc,
+        nsContentUtils::eDOM_PROPERTIES,
+        "MediaEMEInsecureContextDeprecatedWarning", params);
   }
 
   Document* doc = mWindow->GetExtantDoc();
@@ -1828,11 +2060,47 @@ dom::MediaCapabilities* Navigator::MediaCapabilities() {
   return mMediaCapabilities;
 }
 
+dom::MediaSession* Navigator::MediaSession() {
+  if (!mMediaSession) {
+    mMediaSession = new dom::MediaSession(GetWindow());
+  }
+  return mMediaSession;
+}
+
+bool Navigator::HasCreatedMediaSession() const {
+  return mMediaSession != nullptr;
+}
+
 Clipboard* Navigator::Clipboard() {
   if (!mClipboard) {
     mClipboard = new dom::Clipboard(GetWindow());
   }
   return mClipboard;
+}
+
+AddonManager* Navigator::GetMozAddonManager(ErrorResult& aRv) {
+  if (!mAddonManager) {
+    nsPIDOMWindowInner* win = GetWindow();
+    if (!win) {
+      aRv.Throw(NS_ERROR_UNEXPECTED);
+      return nullptr;
+    }
+
+    mAddonManager = ConstructJSImplementation<AddonManager>(
+        "@mozilla.org/addon-web-api/manager;1", win->AsGlobal(), aRv);
+    if (aRv.Failed()) {
+      return nullptr;
+    }
+  }
+
+  return mAddonManager;
+}
+
+webgpu::Instance* Navigator::Gpu() {
+  if (!mWebGpu) {
+    mWebGpu = webgpu::Instance::Create(GetWindow()->AsGlobal());
+  }
+  return mWebGpu;
 }
 
 /* static */

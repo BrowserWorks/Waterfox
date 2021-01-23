@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Gordetako bilaketa-karpeta berria">
+<!ENTITY name.label                 "Izena:">
+<!ENTITY name.accesskey             "I">
+<!ENTITY description.label          "Sortu honen azpikarpeta gisa:">
+<!ENTITY description.accesskey      "S">
+
+<!ENTITY searchTermCaption.label "Konfiguratu karpeta birtual honetarako erabiliko den bilaketa-irizpidea: ">
+
+<!ENTITY folderSelectionCaption.label "Hautatu zein karpetatan bilatu: ">
+<!ENTITY chooseFoldersButton.label "Aukeratu…">
+<!ENTITY chooseFoldersButton.accesskey "A">
+
+<!ENTITY searchOnline.label "Bilatu linean (eguneratutako emaitzak ematen ditu IMAP eta berrien karpetentzat baina karpeta irekitzeko denbora luzatzen du)">
+<!ENTITY searchOnline.accesskey "B">
+<!ENTITY newFolderButton.label       "Sortu">
+<!ENTITY newFolderButton.accesskey   "S">
+<!ENTITY editFolderButton.label      "Eguneratu">
+<!ENTITY editFolderButton.accesskey  "E">

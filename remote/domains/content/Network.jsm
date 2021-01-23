@@ -11,26 +11,14 @@ const { ContentProcessDomain } = ChromeUtils.import(
 );
 
 class Network extends ContentProcessDomain {
-  constructor(session) {
-    super(session);
-    this.enabled = false;
-  }
-
-  destructor() {
-    this.disable();
-  }
-
   // commands
 
-  async enable() {
-    if (!this.enabled) {
-      this.enabled = true;
-    }
-  }
+  /**
+   * Internal methods: the following methods are not part of CDP;
+   * note the _ prefix.
+   */
 
-  disable() {
-    if (this.enabled) {
-      this.enabled = false;
-    }
+  _updateLoadFlags(flags) {
+    this.docShell.defaultLoadFlags = flags;
   }
 }

@@ -2,11 +2,14 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function, unicode_literals
 
-from mozbuild.preprocessor import Preprocessor
-import re
+import codecs
+from collections import deque
+import json
 import os
+import re
+import six
 from mozpack.errors import errors
 from mozpack.chrome.manifest import (
     Manifest,
@@ -20,8 +23,7 @@ from mozpack.files import (
     ExecutableFile,
 )
 import mozpack.path as mozpath
-from collections import deque
-import json
+from mozbuild.preprocessor import Preprocessor
 
 
 class Component(object):
@@ -281,12 +283,12 @@ class SimplePackager(object):
             self._file_queue.append(self.formatter.add, path, file)
             if mozpath.basename(path) == 'install.rdf':
                 addon = True
-                install_rdf = file.open().read()
+                install_rdf = six.ensure_text(file.open().read())
                 if self.UNPACK_ADDON_RE.search(install_rdf):
                     addon = 'unpacked'
                 self._add_addon(mozpath.dirname(path), addon)
             elif mozpath.basename(path) == 'manifest.json':
-                manifest = file.open().read()
+                manifest = six.ensure_text(file.open().read())
                 try:
                     parsed = json.loads(manifest)
                 except ValueError:
@@ -320,7 +322,7 @@ class SimplePackager(object):
             b = mozpath.normsep(file.path)
             if b.endswith('/' + path) or b == path:
                 base = os.path.normpath(b[:-len(path)])
-        for e in parse_manifest(base, path, file.open()):
+        for e in parse_manifest(base, path, codecs.getreader('utf-8')(file.open())):
             # ManifestResources need to be given after ManifestChrome, so just
             # put all ManifestChrome in a separate queue to make them first.
             if isinstance(e, ManifestChrome):
@@ -366,7 +368,8 @@ class SimplePackager(object):
 
         bases = self.get_bases()
         broken_bases = sorted(
-            m for m, includer in self._included_manifests.iteritems()
+            m
+            for m, includer in six.iteritems(self._included_manifests)
             if mozpath.basedir(m, bases) != mozpath.basedir(includer, bases))
         for m in broken_bases:
             errors.fatal('"%s" is included from "%s", which is outside "%s"' %

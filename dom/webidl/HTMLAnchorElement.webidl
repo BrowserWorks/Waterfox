@@ -12,8 +12,10 @@
  */
 
 // http://www.whatwg.org/specs/web-apps/current-work/#the-a-element
-[HTMLConstructor]
+[Exposed=Window]
 interface HTMLAnchorElement : HTMLElement {
+  [HTMLConstructor] constructor();
+
            [CEReactions, SetterThrows]
            attribute DOMString target;
            [CEReactions, SetterThrows]
@@ -35,7 +37,7 @@ interface HTMLAnchorElement : HTMLElement {
            attribute DOMString text;
 };
 
-HTMLAnchorElement implements HTMLHyperlinkElementUtils;
+HTMLAnchorElement includes HTMLHyperlinkElementUtils;
 
 // http://www.whatwg.org/specs/web-apps/current-work/#other-elements,-attributes-and-apis
 partial interface HTMLAnchorElement {

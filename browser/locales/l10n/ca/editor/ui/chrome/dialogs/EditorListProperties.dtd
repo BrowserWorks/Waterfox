@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Propietats de la llista">
+
+<!ENTITY ListType.label "Tipus de llista">
+<!ENTITY bulletStyle.label "Estil de pic:">
+<!ENTITY startingNumber.label "Comença a:">
+<!ENTITY startingNumber.accessKey "C">
+<!ENTITY none.value "Cap">
+<!ENTITY bulletList.value "Llista de pics (sense numerar)">
+<!ENTITY numberList.value "Llista numerada">
+<!ENTITY definitionList.value "Llista de definició">
+<!ENTITY changeEntireListRadio.label "Canvia tota la llista">
+<!ENTITY changeEntireListRadio.accessKey "C">
+<!ENTITY changeSelectedRadio.label "Canvia només els elements seleccionats">
+<!ENTITY changeSelectedRadio.accessKey "v">

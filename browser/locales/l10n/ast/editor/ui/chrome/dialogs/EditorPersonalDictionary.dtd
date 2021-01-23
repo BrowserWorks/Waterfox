@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!ENTITY windowTitle.label "Diccionariu personal">
+<!ENTITY wordEditField.label "Pallabra nueva:">
+<!ENTITY wordEditField.accessKey "N">
+<!ENTITY AddButton.label "Amestar">
+<!ENTITY AddButton.accessKey "A">
+<!ENTITY DictionaryList.label "Pallabres nel diccionariu:">
+<!ENTITY DictionaryList.accessKey "d">
+<!ENTITY ReplaceButton.label "Trocar">
+<!ENTITY ReplaceButton.accessKey "T">
+<!ENTITY RemoveButton.label "Desaniciar">
+<!ENTITY RemoveButton.accessKey "e">
+<!ENTITY CloseButton.label "Zarrar">
+<!ENTITY CloseButton.accessKey "Z">

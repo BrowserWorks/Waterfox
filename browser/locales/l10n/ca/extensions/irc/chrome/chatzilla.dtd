@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Menubar.tooltip "Menú principal">
+<!ENTITY Toolbar.tooltip "Barra principal">
+
+<!ENTITY multiline-expand.tooltip "Commuta a entrada de línia múltiple (Ctrl+Up)">
+<!ENTITY multiline-contract.tooltip "Commuta a entrada d'una sola línia (Ctrl+Avall)">
+<!ENTITY multiline-send.tooltip "Envia aquest text (Ctrl+tecla de retorn)">
+<!ENTITY server-nick.tooltip        "Canvia el sobrenom i posa en estat d'absent. Per a moure el focus al quadre d'entrada, premeu la tecla d'escapada.">
+
+<!ENTITY Underline.label "Subratllat">
+<!ENTITY Bold.label "Negreta">
+<!ENTITY Reverse.label "Vídeo enrere">
+<!ENTITY Normal.label "Normal">
+<!ENTITY Color.label "Color">
+<!ENTITY ForeBack.label "xx=Endavant yy=Enrere">

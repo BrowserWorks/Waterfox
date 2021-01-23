@@ -50,19 +50,16 @@ add_task(async function() {
   await SpecialPowers.flushPrefEnv();
   await SpecialPowers.pushPrefEnv({
     set: [
-      ["browser.contentblocking.allowlist.annotations.enabled", true],
-      ["browser.contentblocking.allowlist.storage.enabled", true],
       ["privacy.trackingprotection.enabled", true],
       // the test doesn't open a private window, so we don't care about this pref's value
       ["privacy.trackingprotection.pbmode.enabled", false],
       // tracking annotations aren't needed in this test, only TP is needed
       ["privacy.trackingprotection.annotate_channels", false],
-      // prevent the content blocking on-boarding UI to start mid-way through the test!
-      [ContentBlocking.prefIntroCount, ContentBlocking.MAX_INTROS],
       [
         "privacy.restrict3rdpartystorage.userInteractionRequiredForHosts",
         "tracking.example.com,tracking.example.org",
       ],
+      ["privacy.trackingprotection.testing.report_blocked_node", true],
     ],
   });
 
@@ -80,9 +77,9 @@ add_task(async function() {
   await promise;
 
   info("Verify the number of tracking nodes found");
-  await ContentTask.spawn(
+  await SpecialPowers.spawn(
     browser,
-    { expected: gExpectedResourcesSeen },
+    [{ expected: gExpectedResourcesSeen }],
     async function(obj) {
       is(
         content.document.blockedNodeByClassifierCount,

@@ -51,11 +51,7 @@ class nsNavHistoryQuery final : public nsINavHistoryQuery {
   const nsTArray<nsCString>& Parents() const { return mParents; }
 
   const nsTArray<nsString>& Tags() const { return mTags; }
-  nsresult SetTags(const nsTArray<nsString>& aTags) {
-    if (!mTags.ReplaceElementsAt(0, mTags.Length(), aTags))
-      return NS_ERROR_OUT_OF_MEMORY;
-    return NS_OK;
-  }
+  void SetTags(nsTArray<nsString> aTags) { mTags = std::move(aTags); }
   bool TagsAreNot() { return mTagsAreNot; }
 
   const nsTArray<uint32_t>& Transitions() const { return mTransitions; }
@@ -63,7 +59,7 @@ class nsNavHistoryQuery final : public nsINavHistoryQuery {
   nsresult Clone(nsNavHistoryQuery** _clone);
 
  private:
-  ~nsNavHistoryQuery() {}
+  ~nsNavHistoryQuery() = default;
 
  protected:
   // IF YOU ADD MORE ITEMS:
@@ -121,7 +117,7 @@ class nsNavHistoryQueryOptions final : public nsINavHistoryQueryOptions {
   nsresult Clone(nsNavHistoryQueryOptions** _clone);
 
  private:
-  ~nsNavHistoryQueryOptions() {}
+  ~nsNavHistoryQueryOptions() = default;
 
   // IF YOU ADD MORE ITEMS:
   //  * Add to the copy constructor

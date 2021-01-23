@@ -138,7 +138,7 @@ static int copy_subcoefs(coef *coeff,
      * dimensions are non-zero. This leads to braching to specific optimized
      * simd versions (e.g. dc-only) so that we get full asm coverage in this
      * test */
-    const int16_t *const scan = dav1d_scans[tx][dav1d_tx_type_class[txtp]];
+    const uint16_t *const scan = dav1d_scans[tx][dav1d_tx_type_class[txtp]];
     const int sub_high = subsh > 0 ? subsh * 8 - 1 : 0;
     const int sub_low  = subsh > 1 ? sub_high - 8 : 0;
     int n, eob;
@@ -226,9 +226,9 @@ void bitfn(checkasm_check_itx)(void) {
     Dav1dInvTxfmDSPContext c;
     bitfn(dav1d_itx_dsp_init)(&c);
 
-    ALIGN_STK_32(coef, coeff, 2, [32 * 32]);
-    ALIGN_STK_32(pixel, c_dst, 64 * 64,);
-    ALIGN_STK_32(pixel, a_dst, 64 * 64,);
+    ALIGN_STK_64(coef, coeff, 2, [32 * 32]);
+    ALIGN_STK_64(pixel, c_dst, 64 * 64,);
+    ALIGN_STK_64(pixel, a_dst, 64 * 64,);
 
     static const uint8_t txfm_size_order[N_RECT_TX_SIZES] = {
         TX_4X4,   RTX_4X8,  RTX_4X16,
@@ -273,11 +273,12 @@ void bitfn(checkasm_check_itx)(void) {
                              HIGHBD_TAIL_SUFFIX);
                     call_new(a_dst, w * sizeof(*c_dst), coeff[1], eob
                              HIGHBD_TAIL_SUFFIX);
-                    if (memcmp(c_dst, a_dst, w * h * sizeof(*c_dst)) ||
-                        memcmp(coeff[0], coeff[1], sizeof(*coeff)))
-                    {
+
+                    checkasm_check_pixel(c_dst, w * sizeof(*c_dst),
+                                         a_dst, w * sizeof(*a_dst),
+                                         w, h, "dst");
+                    if (memcmp(coeff[0], coeff[1], sizeof(*coeff)))
                         fail();
-                    }
 
                     bench_new(a_dst, w * sizeof(*c_dst), coeff[0], eob
                               HIGHBD_TAIL_SUFFIX);

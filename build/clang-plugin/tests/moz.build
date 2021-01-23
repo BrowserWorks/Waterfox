@@ -30,27 +30,40 @@ SOURCES += [
     'TestNoAutoType.cpp',
     'TestNoDuplicateRefCntMember.cpp',
     'TestNoExplicitMoveConstructor.cpp',
+    'TestNoNewThreadsChecker.cpp',
     'TestNonHeapClass.cpp',
     'TestNonMemMovable.cpp',
     'TestNonMemMovableStd.cpp',
     'TestNonMemMovableStdAtomic.cpp',
     'TestNonParameterChecker.cpp',
     'TestNonTemporaryClass.cpp',
+    'TestNonTrivialTypeInFfi.cpp',
+    'TestNoPrincipalGetUri.cpp',
     'TestNoRefcountedInsideLambdas.cpp',
+    'TestNoUsingNamespaceMozillaJava.cpp',
     'TestOverrideBaseCall.cpp',
     'TestOverrideBaseCallAnnotation.cpp',
     'TestParamTraitsEnum.cpp',
     'TestRefCountedCopyConstructor.cpp',
     'TestSprintfLiteral.cpp',
     'TestStackClass.cpp',
+    'TestStaticLocalClass.cpp',
     'TestTemporaryClass.cpp',
     'TestTrivialCtorDtor.cpp',
+    'TestTrivialDtor.cpp',
 ]
 
 if CONFIG['OS_ARCH'] == 'WINNT':
     SOURCES += [
+        'TestFopenUsage.cpp',
         'TestLoadLibraryUsage.cpp',
     ]
+
+include('../external/tests/sources.mozbuild')
+
+if CONFIG['ENABLE_CLANG_PLUGIN_ALPHA']:
+    DEFINES["MOZ_CLANG_PLUGIN_ALPHA"] = "1"
+    include('../alpha/tests/sources.mozbuild')
 
 DisableStlWrapping()
 NoVisibilityFlags()

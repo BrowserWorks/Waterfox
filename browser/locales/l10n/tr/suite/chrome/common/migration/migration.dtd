@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migrationWizard.title "İçe aktarma sihirbazı">
+
+<!ENTITY importAllFrom.label "Aşağıdaki uygulamalardan bütün öğeleri içe aktar:">
+<!ENTITY importBookmarksFrom.label "Yer imlerini buradan içe aktar:">
+
+<!ENTITY importFromSeamonkey.label "SeaMonkey 1.x, Netscape 6/7 veya Mozilla 1.x">
+<!ENTITY importFromSeamonkey.accesskey "S">
+<!ENTITY importFromThunderbird.label "Thunderbird">
+<!ENTITY importFromThunderbird.accesskey "T">
+<!ENTITY importFromFile.label "Dosya">
+<!ENTITY importFromFile.accesskey "o">
+<!ENTITY importFromNothing.label "İçe bir şey aktarma">
+<!ENTITY importFromNothing.accesskey "ç">
+
+<!ENTITY importSource.title "Ayarları ve verileri içe aktarma">
+<!ENTITY importItems.title "İçe aktarılacak öğeler">
+<!ENTITY importItems.label "İçe aktarılacak öğeyi seçin:">
+
+<!ENTITY selectProfile.title "Kimlik seç">
+<!ENTITY selectProfile.label "Aşağıdaki kimlikler buradan içe aktarılabilir:">
+
+<!ENTITY migrating.title "İçe aktarılıyor…">
+<!ENTITY migrating.label "Aşağıdaki öğeler içe aktarılıyor…">
+
+<!ENTITY done.title "İçe aktarma tamamlandı">
+<!ENTITY done.label "Aşağıdaki öğeler başarılı şekilde içe aktarıldı:">

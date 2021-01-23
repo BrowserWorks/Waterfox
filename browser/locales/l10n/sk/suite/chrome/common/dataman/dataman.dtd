@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dataman.windowTitle "Správca údajov">
+
+<!ENTITY selectAll.key "a">
+
+<!ENTITY select.all.label "Všetky typy údajov">
+<!ENTITY select.cookies.label "Len súbory cookies">
+<!ENTITY select.permissions.label "Len povolenia">
+<!ENTITY select.preferences.label "Len nastavenia">
+<!ENTITY select.passwords.label "Len heslá">
+<!ENTITY select.storage.label "Len úložisko">
+
+<!ENTITY domain.search.placeholder "Hľadať v doménach">
+<!ENTITY domain.search.key "f">
+
+<!ENTITY domain.tree.domain.label "Doména">
+
+<!ENTITY domain.ctx.forgetdomain.label "Zabudnúť na túto doménu">
+<!ENTITY domain.ctx.forgetdomain.accesskey "Z">
+<!ENTITY domain.ctx.forgetglobal.label "Zabudnúť na všetky údaje">
+<!ENTITY domain.ctx.forgetglobal.accesskey "Z">
+
+<!ENTITY data.search.key "k">
+
+<!ENTITY tab.cookies.label "Cookies">
+<!ENTITY tab.permissions.label "Povolenia">
+<!ENTITY tab.preferences.label "Nastavenia">
+<!ENTITY tab.passwords.label "Heslá">
+<!ENTITY tab.storage.label "Úložisko">
+<!ENTITY tab.formdata.label "Údaje formulárov">
+<!ENTITY tab.forget.label "Zabudnúť">
+
+<!-- cookies -->
+<!ENTITY cookies.description "Z tejto domény sú vo vašom počítači uložené nasledovné súbory cookies:">
+
+<!ENTITY cookies.tree.host.label "Webová stránka">
+<!ENTITY cookies.tree.name.label "Názov cookie">
+<!ENTITY cookies.tree.expires.label "Platnosť vyprší">
+
+<!ENTITY cookies.infobox.label "Informácie o zvolenom súbore cookie">
+
+<!ENTITY cookies.info.name.label "Názov:">
+<!ENTITY cookies.info.value.label "Obsah:">
+<!ENTITY cookies.info.host.label "Server:">
+<!ENTITY cookies.info.domain.label "Doména:">
+<!ENTITY cookies.info.path.label "Cesta:">
+<!ENTITY cookies.info.sendtype.label "Odoslané pre:">
+<!ENTITY cookies.info.expires.label "Vyprší:">
+
+<!ENTITY cookies.ctx.remove.label "Odstrániť">
+<!ENTITY cookies.ctx.remove.accesskey "d">
+<!ENTITY cookies.ctx.selectAll.label "Vybrať všetko">
+<!ENTITY cookies.ctx.selectAll.accesskey "a">
+
+<!ENTITY cookies.button.remove.label "Odstrániť">
+<!ENTITY cookies.button.remove.accesskey "d">
+
+<!ENTITY cookies.blockOnRemove.label "Pri odstraňovaní zablokovať danej stránke možnosť nastavovania cookies v budúcnosti">
+<!ENTITY cookies.blockOnRemove.accesskey "P">
+
+<!-- permissions -->
+<!ENTITY perm.UseDefault "Použiť predvolené">
+<!ENTITY perm.AskAlways "Vždy sa opýtať">
+<!ENTITY perm.NeverSave "Nikdy neukladať">
+<!ENTITY perm.Allow "Povoliť">
+<!ENTITY perm.AllowSameDomain "Povoliť pre rovnakú doménu">
+<!ENTITY perm.AllowSession "Povoliť pre reláciu">
+<!ENTITY perm.Block "Blokovať">
+
+<!ENTITY perm.host.placeholder "Zadajte názov servera">
+<!ENTITY perm.button.add.label "Pridať">
+<!ENTITY perm.button.add.accesskey "P">
+
+<!-- preferences -->
+<!ENTITY prefs.description "Nastavenia obsahu je spôsob, akým &brandShortName; ukladá nastavenia ako úroveň priblíženia stránky osobitne pre každú stránku.">
+
+<!ENTITY prefs.tree.host.label "Webová stránka">
+<!ENTITY prefs.tree.name.label "Názov predvoľby">
+<!ENTITY prefs.tree.value.label "Hodnota">
+
+<!ENTITY prefs.ctx.remove.label "Odstrániť">
+<!ENTITY prefs.ctx.remove.accesskey "d">
+<!ENTITY prefs.ctx.selectAll.label "Vybrať všetko">
+<!ENTITY prefs.ctx.selectAll.accesskey "a">
+
+<!ENTITY prefs.button.remove.label "Odstrániť">
+<!ENTITY prefs.button.remove.accesskey "d">
+
+<!-- passwords -->
+<!ENTITY pwd.description "Pre túto doménu máte uložené nasledovné heslá:">
+
+<!ENTITY pwd.tree.host.label "Webová stránka">
+<!ENTITY pwd.tree.username.label "Používateľské meno">
+<!ENTITY pwd.tree.password.label "Heslo">
+
+<!ENTITY pwd.ctx.remove.label "Odstrániť">
+<!ENTITY pwd.ctx.remove.accesskey "d">
+<!ENTITY pwd.ctx.copyPasswordCmd.label "Kopírovať heslo">
+<!ENTITY pwd.ctx.copyPasswordCmd.accesskey "K">
+<!ENTITY pwd.ctx.selectAll.label "Vybrať všetko">
+<!ENTITY pwd.ctx.selectAll.accesskey "a">
+
+<!ENTITY pwd.button.remove.label "Odstrániť">
+<!ENTITY pwd.button.remove.accesskey "d">
+
+<!-- storage -->
+<!ENTITY storage.description "Táto doména používa v tomto počítači nasledujúce webové úložiská:">
+
+<!ENTITY storage.tree.host.label "Webová stránka">
+<!ENTITY storage.tree.type.label "Typ">
+<!ENTITY storage.tree.size.label "Veľkosť">
+
+<!ENTITY storage.ctx.remove.label "Odstrániť">
+<!ENTITY storage.ctx.remove.accesskey "d">
+<!ENTITY storage.ctx.selectAll.label "Vybrať všetko">
+<!ENTITY storage.ctx.selectAll.accesskey "a">
+
+<!ENTITY storage.button.remove.label "Odstrániť">
+<!ENTITY storage.button.remove.accesskey "O">
+
+<!-- form data -->
+<!ENTITY fdata.search.placeholder "Hľadať v poliach formulárov">
+
+<!ENTITY fdata.tree.fieldname.label "Názov poľa">
+<!ENTITY fdata.tree.value.label "Zadaná hodnota">
+<!ENTITY fdata.tree.usecount.label "Počet použití">
+<!ENTITY fdata.tree.firstused.label "Prvýkrát použité">
+<!ENTITY fdata.tree.lastused.label "Naposledy použité">
+
+<!ENTITY fdata.ctx.remove.label "Odstrániť">
+<!ENTITY fdata.ctx.remove.accesskey "d">
+<!ENTITY fdata.ctx.selectAll.label "Vybrať všetko">
+<!ENTITY fdata.ctx.selectAll.accesskey "a">
+
+<!ENTITY fdata.button.remove.label "Odstrániť">
+<!ENTITY fdata.button.remove.accesskey "d">
+
+<!-- forget -->
+<!ENTITY forget.cookies.label "Cookies">
+<!ENTITY forget.cookies.accesskey "C">
+<!ENTITY forget.permissions.label "Povolenia">
+<!ENTITY forget.permissions.accesskey "P">
+<!ENTITY forget.preferences.label "Nastavenia pre obsah">
+<!ENTITY forget.preferences.accesskey "N">
+<!ENTITY forget.passwords.label "Heslá">
+<!ENTITY forget.passwords.accesskey "H">
+<!ENTITY forget.storage.label "Úložisko">
+<!ENTITY forget.storage.accesskey "o">
+<!ENTITY forget.formdata.label "Údaje formulárov">
+<!ENTITY forget.formdata.accesskey "d">
+
+<!ENTITY forget.button.label "Zabudnúť na tieto údaje">
+<!ENTITY forget.button.accesskey "Z">

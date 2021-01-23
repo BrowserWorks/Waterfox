@@ -84,7 +84,8 @@ Reverb::Reverb(const AudioChunk& impulseResponse, size_t maxFFTSize,
   size_t impulseResponseBufferLength = impulseResponse.mDuration;
   float scale = impulseResponse.mVolume;
 
-  AutoTArray<const float*, 4> irChannels(impulseResponse.ChannelData<float>());
+  CopyableAutoTArray<const float*, 4> irChannels(
+      impulseResponse.ChannelData<float>());
   AutoTArray<float, 1024> tempBuf;
 
   if (normalize) {
@@ -147,10 +148,10 @@ void Reverb::initialize(const nsTArray<const float*>& impulseResponseBuffer,
     const float* channel = impulseResponseBuffer[channelIndex];
     size_t length = impulseResponseBufferLength;
 
-    nsAutoPtr<ReverbConvolver> convolver(
+    UniquePtr<ReverbConvolver> convolver(
         new ReverbConvolver(channel, length, maxFFTSize, convolverRenderPhase,
                             useBackgroundThreads));
-    m_convolvers.AppendElement(convolver.forget());
+    m_convolvers.AppendElement(std::move(convolver));
 
     convolverRenderPhase += WEBAUDIO_BLOCK_SIZE;
   }

@@ -1,19 +1,18 @@
 /* exported MANAGE_ADDRESSES_DIALOG_URL, MANAGE_CREDIT_CARDS_DIALOG_URL, EDIT_ADDRESS_DIALOG_URL, EDIT_CREDIT_CARD_DIALOG_URL,
             BASE_URL, TEST_ADDRESS_1, TEST_ADDRESS_2, TEST_ADDRESS_3, TEST_ADDRESS_4, TEST_ADDRESS_5, TEST_ADDRESS_CA_1, TEST_ADDRESS_DE_1,
             TEST_ADDRESS_IE_1,
-            TEST_CREDIT_CARD_1, TEST_CREDIT_CARD_2, TEST_CREDIT_CARD_3, FORM_URL, CREDITCARD_FORM_URL,
+            TEST_CREDIT_CARD_1, TEST_CREDIT_CARD_2, TEST_CREDIT_CARD_3, FORM_URL, CREDITCARD_FORM_URL, CREDITCARD_FORM_IFRAME_URL
             FTU_PREF, ENABLED_AUTOFILL_ADDRESSES_PREF, AUTOFILL_CREDITCARDS_AVAILABLE_PREF, ENABLED_AUTOFILL_CREDITCARDS_PREF,
             SUPPORTED_COUNTRIES_PREF,
             SYNC_USERNAME_PREF, SYNC_ADDRESSES_PREF, SYNC_CREDITCARDS_PREF, SYNC_CREDITCARDS_AVAILABLE_PREF, CREDITCARDS_USED_STATUS_PREF,
-            DEFAULT_REGION_PREF,
-            sleep, expectPopupOpen, openPopupOn, expectPopupClose, closePopup, clickDoorhangerButton,
-            getAddresses, saveAddress, removeAddresses, saveCreditCard,
+            sleep, expectPopupOpen, openPopupOn, openPopupForSubframe, expectPopupClose, closePopup, closePopupForSubframe,
+            clickDoorhangerButton, getAddresses, saveAddress, removeAddresses, saveCreditCard,
             getDisplayedPopupItems, getDoorhangerCheckbox,
-            getNotification, getDoorhangerButton, removeAllRecords, testDialog */
+            getNotification, getDoorhangerButton, removeAllRecords, expectWarningText, testDialog */
 
 "use strict";
 
-ChromeUtils.import("resource://formautofill/OSKeyStore.jsm", this);
+ChromeUtils.import("resource://gre/modules/OSKeyStore.jsm", this);
 ChromeUtils.import("resource://testing-common/OSKeyStoreTestUtils.jsm", this);
 
 const MANAGE_ADDRESSES_DIALOG_URL =
@@ -32,6 +31,10 @@ const CREDITCARD_FORM_URL =
   "https://example.org" +
   HTTP_TEST_PATH +
   "creditCard/autocomplete_creditcard_basic.html";
+const CREDITCARD_FORM_IFRAME_URL =
+  "https://example.org" +
+  HTTP_TEST_PATH +
+  "creditCard/autocomplete_creditcard_iframe.html";
 
 const FTU_PREF = "extensions.formautofill.firstTimeUse";
 const CREDITCARDS_USED_STATUS_PREF = "extensions.formautofill.creditCards.used";
@@ -47,7 +50,6 @@ const SYNC_ADDRESSES_PREF = "services.sync.engine.addresses";
 const SYNC_CREDITCARDS_PREF = "services.sync.engine.creditcards";
 const SYNC_CREDITCARDS_AVAILABLE_PREF =
   "services.sync.engine.creditcards.available";
-const DEFAULT_REGION_PREF = "browser.search.region";
 
 const TEST_ADDRESS_1 = {
   "given-name": "John",
@@ -175,13 +177,32 @@ async function sleep(ms = 500) {
   await new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function focusAndWaitForFieldsIdentified(browser, selector) {
+async function focusAndWaitForFieldsIdentified(browserOrContext, selector) {
   info("expecting the target input being focused and identified");
   /* eslint no-shadow: ["error", { "allow": ["selector", "previouslyFocused", "previouslyIdentified"] }] */
-  const { previouslyFocused, previouslyIdentified } = await ContentTask.spawn(
-    browser,
-    { selector },
-    async function({ selector }) {
+
+  const { FormAutofillParent } = ChromeUtils.import(
+    "resource://formautofill/FormAutofillParent.jsm"
+  );
+
+  // If the input is previously focused, no more notifications will be
+  // sent as the notification goes along with focus event.
+  let fieldsIdentifiedPromiseResolver;
+  let fieldsIdentifiedObserver = {
+    fieldsIdentified() {
+      fieldsIdentifiedPromiseResolver();
+    },
+  };
+
+  let fieldsIdentifiedPromise = new Promise(resolve => {
+    fieldsIdentifiedPromiseResolver = resolve;
+    FormAutofillParent.addMessageObserver(fieldsIdentifiedObserver);
+  });
+
+  const { previouslyFocused, previouslyIdentified } = await SpecialPowers.spawn(
+    browserOrContext,
+    [selector],
+    async function(selector) {
       const { FormLikeFactory } = ChromeUtils.import(
         "resource://gre/modules/FormLikeFactory.jsm"
       );
@@ -198,32 +219,41 @@ async function focusAndWaitForFieldsIdentified(browser, selector) {
     }
   );
 
+  // Only wait for the fields identified notification if the
+  // focus was not previously assigned to the input.
+  if (previouslyFocused) {
+    fieldsIdentifiedPromiseResolver();
+  } else {
+    info("!previouslyFocused");
+  }
+
+  // If a browsing context was supplied, focus its parent frame as well.
+  if (
+    browserOrContext instanceof BrowsingContext &&
+    browserOrContext.parent != browserOrContext
+  ) {
+    await SpecialPowers.spawn(
+      browserOrContext.parent,
+      [browserOrContext],
+      async function(browsingContext) {
+        browsingContext.embedderElement.focus();
+      }
+    );
+  }
+
   if (previouslyIdentified) {
     info("previouslyIdentified");
+    FormAutofillParent.removeMessageObserver(fieldsIdentifiedObserver);
     return;
   }
 
-  // Once the input is previously focused, no more FormAutofill:FieldsIdentified will be
-  // sent as the message goes along with focus event.
-  if (!previouslyFocused) {
-    info("!previouslyFocused");
-    await new Promise(resolve => {
-      Services.mm.addMessageListener(
-        "FormAutofill:FieldsIdentified",
-        function onIdentified() {
-          Services.mm.removeMessageListener(
-            "FormAutofill:FieldsIdentified",
-            onIdentified
-          );
-          resolve();
-        }
-      );
-    });
-    info("FieldsIdentified");
-  }
   // Wait 500ms to ensure that "markAsAutofillField" is completely finished.
+  await fieldsIdentifiedPromise;
+  info("FieldsIdentified");
+  FormAutofillParent.removeMessageObserver(fieldsIdentifiedObserver);
+
   await sleep();
-  await ContentTask.spawn(browser, {}, async function() {
+  await SpecialPowers.spawn(browserOrContext, [], async function() {
     const { FormLikeFactory } = ChromeUtils.import(
       "resource://gre/modules/FormLikeFactory.jsm"
     );
@@ -243,7 +273,7 @@ async function expectPopupOpen(browser) {
   await BrowserTestUtils.waitForCondition(() => {
     const listItemElems = getDisplayedPopupItems(browser);
     return (
-      [...listItemElems].length > 0 &&
+      !![...listItemElems].length &&
       [...listItemElems].every(item => {
         return (
           (item.getAttribute("originaltype") == "autofill-profile" ||
@@ -264,6 +294,14 @@ async function openPopupOn(browser, selector) {
   await expectPopupOpen(browser);
 }
 
+async function openPopupForSubframe(browser, frameBrowsingContext, selector) {
+  await SimpleTest.promiseFocus(browser);
+  await focusAndWaitForFieldsIdentified(frameBrowsingContext, selector);
+  info("openPopupOn: before VK_DOWN");
+  await BrowserTestUtils.synthesizeKey("VK_DOWN", {}, frameBrowsingContext);
+  await expectPopupOpen(browser);
+}
+
 async function expectPopupClose(browser) {
   await BrowserTestUtils.waitForCondition(
     () => !browser.autoCompletePopup.popupOpen,
@@ -272,24 +310,31 @@ async function expectPopupClose(browser) {
 }
 
 async function closePopup(browser) {
-  await ContentTask.spawn(browser, {}, async function() {
+  await SpecialPowers.spawn(browser, [], async function() {
     content.document.activeElement.blur();
   });
 
   await expectPopupClose(browser);
 }
 
+async function closePopupForSubframe(browser, frameBrowsingContext) {
+  await SpecialPowers.spawn(frameBrowsingContext, [], async function() {
+    content.document.activeElement.blur();
+  });
+
+  await expectPopupClose(browser);
+}
+
+function emulateMessageToBrowser(name, data) {
+  let actor = gBrowser.selectedBrowser.browsingContext.currentWindowGlobal.getActor(
+    "FormAutofill"
+  );
+  return actor.receiveMessage({ name, data });
+}
+
 function getRecords(data) {
   info(`expecting record retrievals: ${data.collectionName}`);
-  return new Promise(resolve => {
-    Services.cpmm.addMessageListener("FormAutofill:Records", function getResult(
-      result
-    ) {
-      Services.cpmm.removeMessageListener("FormAutofill:Records", getResult);
-      resolve(result.data);
-    });
-    Services.cpmm.sendAsyncMessage("FormAutofill:GetRecords", data);
-  });
+  return emulateMessageToBrowser("FormAutofill:GetRecords", data);
 }
 
 function getAddresses() {
@@ -300,36 +345,40 @@ function getCreditCards() {
   return getRecords({ collectionName: "creditCards" });
 }
 
-function saveAddress(address) {
+async function saveAddress(address) {
   info("expecting address saved");
-  Services.cpmm.sendAsyncMessage("FormAutofill:SaveAddress", { address });
-  return TestUtils.topicObserved("formautofill-storage-changed");
+  let observePromise = TestUtils.topicObserved("formautofill-storage-changed");
+  await emulateMessageToBrowser("FormAutofill:SaveAddress", { address });
+  await observePromise;
 }
 
-function saveCreditCard(creditcard) {
+async function saveCreditCard(creditcard) {
   info("expecting credit card saved");
   let creditcardClone = Object.assign({}, creditcard);
-  Services.cpmm.sendAsyncMessage("FormAutofill:SaveCreditCard", {
+  let observePromise = TestUtils.topicObserved("formautofill-storage-changed");
+  await emulateMessageToBrowser("FormAutofill:SaveCreditCard", {
     creditcard: creditcardClone,
   });
-  return TestUtils.topicObserved("formautofill-storage-changed");
+  await observePromise;
 }
 
-function removeAddresses(guids) {
+async function removeAddresses(guids) {
   info("expecting address removed");
-  Services.cpmm.sendAsyncMessage("FormAutofill:RemoveAddresses", { guids });
-  return TestUtils.topicObserved("formautofill-storage-changed");
+  let observePromise = TestUtils.topicObserved("formautofill-storage-changed");
+  await emulateMessageToBrowser("FormAutofill:RemoveAddresses", { guids });
+  await observePromise;
 }
 
-function removeCreditCards(guids) {
+async function removeCreditCards(guids) {
   info("expecting credit card removed");
-  Services.cpmm.sendAsyncMessage("FormAutofill:RemoveCreditCards", { guids });
-  return TestUtils.topicObserved("formautofill-storage-changed");
+  let observePromise = TestUtils.topicObserved("formautofill-storage-changed");
+  await emulateMessageToBrowser("FormAutofill:RemoveCreditCards", { guids });
+  await observePromise;
 }
 
 function getNotification(index = 0) {
   let notifications = PopupNotifications.panel.childNodes;
-  ok(notifications.length > 0, "at least one notification displayed");
+  ok(!!notifications.length, "at least one notification displayed");
   ok(true, notifications.length + " notification(s)");
   return notifications[index];
 }
@@ -397,6 +446,26 @@ async function waitForFocusAndFormReady(win) {
     new Promise(resolve => waitForFocus(resolve, win)),
     BrowserTestUtils.waitForEvent(win, "FormReady"),
   ]);
+}
+
+// Verify that the warning in the autocomplete popup has the expected text.
+async function expectWarningText(browser, expectedText) {
+  const {
+    autoCompletePopup: { richlistbox: itemsBox },
+  } = browser;
+  let warningBox = itemsBox.querySelector(
+    ".autocomplete-richlistitem:last-child"
+  );
+
+  while (warningBox.collapsed) {
+    warningBox = warningBox.previousSibling;
+  }
+  warningBox = warningBox._warningTextBox;
+
+  await BrowserTestUtils.waitForCondition(() => {
+    return warningBox.textContent == expectedText;
+  }, `Waiting for expected warning text: ${expectedText}, Got ${warningBox.textContent}`);
+  ok(true, `Got expected warning text: ${expectedText}`);
 }
 
 async function testDialog(url, testFn, arg = undefined) {

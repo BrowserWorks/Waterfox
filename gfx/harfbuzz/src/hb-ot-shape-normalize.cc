@@ -24,6 +24,10 @@
  * Google Author(s): Behdad Esfahbod
  */
 
+#include "hb.hh"
+
+#ifndef HB_NO_OT_SHAPE
+
 #include "hb-ot-shape-normalize.hh"
 #include "hb-ot-shape-complex.hh"
 #include "hb-ot-shape.hh"
@@ -229,7 +233,7 @@ handle_variation_selector_cluster (const hb_ot_shape_normalize_context_t *c,
       }
       else
       {
-        /* Just pass on the two characters separately, let GSUB do its magic. */
+	/* Just pass on the two characters separately, let GSUB do its magic. */
 	set_glyph (buffer->cur(), font);
 	buffer->next_glyph ();
 	set_glyph (buffer->cur(), font);
@@ -330,7 +334,7 @@ _hb_ot_shape_normalize (const hb_ot_shape_plan_t *plan,
     {
       unsigned int end;
       for (end = buffer->idx + 1; end < count; end++)
-	if (unlikely (HB_UNICODE_GENERAL_CATEGORY_IS_MARK (_hb_glyph_info_get_general_category (&buffer->info[end]))))
+	if (unlikely (_hb_glyph_info_is_unicode_mark (&buffer->info[end])))
 	  break;
 
       if (end < count)
@@ -339,7 +343,7 @@ _hb_ot_shape_normalize (const hb_ot_shape_plan_t *plan,
       /* From idx to end are simple clusters. */
       if (might_short_circuit)
       {
-        unsigned int done = font->get_nominal_glyphs (end - buffer->idx,
+	unsigned int done = font->get_nominal_glyphs (end - buffer->idx,
 						      &buffer->cur().codepoint,
 						      sizeof (buffer->info[0]),
 						      &buffer->cur().glyph_index(),
@@ -356,7 +360,7 @@ _hb_ot_shape_normalize (const hb_ot_shape_plan_t *plan,
 
       /* Find all the marks now. */
       for (end = buffer->idx + 1; end < count; end++)
-	if (!HB_UNICODE_GENERAL_CATEGORY_IS_MARK (_hb_glyph_info_get_general_category (&buffer->info[end])))
+	if (!_hb_glyph_info_is_unicode_mark(&buffer->info[end]))
 	  break;
 
       /* idx to end is one non-simple cluster. */
@@ -431,7 +435,7 @@ _hb_ot_shape_normalize (const hb_ot_shape_plan_t *plan,
 	   * This is both an optimization to avoid trying to compose every two neighboring
 	   * glyphs in most scripts AND a desired feature for Hangul.  Apparently Hangul
 	   * fonts are not designed to mix-and-match pre-composed syllables and Jamo. */
-	  HB_UNICODE_GENERAL_CATEGORY_IS_MARK (_hb_glyph_info_get_general_category (&buffer->cur())))
+	  _hb_glyph_info_is_unicode_mark(&buffer->cur()))
       {
 	if (/* If there's anything between the starter and this char, they should have CCC
 	     * smaller than this character's. */
@@ -469,3 +473,6 @@ _hb_ot_shape_normalize (const hb_ot_shape_plan_t *plan,
     buffer->swap_buffers ();
   }
 }
+
+
+#endif

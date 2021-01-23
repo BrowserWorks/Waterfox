@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Appearance > Content prefs dialog.  -->
+
+<!ENTITY pref.content.title                     "Contido">
+<!ENTITY pref.content.description               "Estas configuracións inflúen en como se mostra o contido dos sitios web e as mensaxes no &brandShortName;.">
+<!ENTITY siteIcons.label                        "Iconas do sitio web">
+<!ENTITY useSiteIcons.label                     "Mostrar as iconas do sitio web">
+<!ENTITY useSiteIcons.accesskey                 "s">
+<!ENTITY useFavIcons.label                      "Buscar de modo agresivo iconas do sitio web se a páxina non define un">
+<!ENTITY useFavIcons.accesskey                  "a">
+<!ENTITY enableAutomaticImageResizing.label     "Redimensiona as imaxes grandes para axustalas á xanela do navegador">
+<!ENTITY enableAutomaticImageResizing.accesskey "R">
+<!ENTITY useSmoothScroll.label                  "Utilizar desprazamento suave">
+<!ENTITY useSmoothScroll.accesskey              "U">
+<!ENTITY allowHWAccel.label                     "Usar a aceleración por hardware cando estea dispoñíbel">
+<!ENTITY allowHWAccel.accesskey                 "e">
+<!ENTITY textZoomOnly.label                     "Só ampliar o texto no lugar da páxina completa">
+<!ENTITY textZoomOnly.accesskey                 "x">
+<!ENTITY blockAutoRefresh.label                 "Avisarme cando os sitios web tenten redireccionar ou recargar a páxina">
+<!ENTITY blockAutoRefresh.accesskey             "w">
+<!ENTITY siteSpecific.label                     "Lembrar os niveis de ampliación para cada sitio">
+<!ENTITY siteSpecific.accesskey                 "m">

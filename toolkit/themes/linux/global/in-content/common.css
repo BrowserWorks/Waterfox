@@ -4,6 +4,13 @@
 
 %include ../../../shared/in-content/common.inc.css
 
+@media (prefers-color-scheme: dark) {
+  /* Don't apply scrollbar-color since it removes the native scrollbar style on Linux */
+  :root {
+    scrollbar-color: initial;
+  }
+}
+
 xul|tab[visuallyselected] {
   /* Override styles for tab[selected] from
      toolkit/themes/linux/global/tabbox.css */
@@ -13,7 +20,7 @@ xul|tab[visuallyselected] {
 /* Overriding appearance also avoids incorrect selection background color with
    light text. */
 xul|button > xul|*.button-box,
-xul|menulist > xul|*.menulist-label-box,
+xul|menulist::part(label-box),
 xul|*.radio-label-box,
 xul|*.checkbox-label-box {
   -moz-appearance: none;
@@ -31,10 +38,9 @@ xul|menulist {
   font-size: inherit;
 }
 
-xul|*.menulist-dropmarker {
+xul|menulist::part(dropmarker) {
   display: -moz-box;
-  margin-top: 6px;
-  margin-bottom: 6px;
+  margin-block: 6px;
 }
 
 xul|checkbox[checked] > xul|*.checkbox-check,
@@ -43,7 +49,7 @@ xul|*.radio-check[selected] {
   fill: -moz-fieldText;
 }
 
-xul|menulist:-moz-focusring > xul|*.menulist-label-box {
+xul|menulist:-moz-focusring::part(label-box) {
   outline: none;
 }
 

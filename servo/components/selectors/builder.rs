@@ -17,7 +17,7 @@
 //! is non-trivial. This module encapsulates those details and presents an
 //! easy-to-use API for the parser.
 
-use crate::parser::{Combinator, Component, SelectorImpl};
+use crate::parser::{Combinator, Component, NonTSPseudoClass, SelectorImpl};
 use crate::sink::Push;
 use servo_arc::{Arc, HeaderWithLength, ThinArc};
 use smallvec::{self, SmallVec};
@@ -84,12 +84,6 @@ impl<Impl: SelectorImpl> SelectorBuilder<Impl> {
         self.current_len = 0;
     }
 
-    /// Returns true if no simple selectors have ever been pushed to this builder.
-    #[inline(always)]
-    pub fn is_empty(&self) -> bool {
-        self.simple_selectors.is_empty()
-    }
-
     /// Returns true if combinators have ever been pushed to this builder.
     #[inline(always)]
     pub fn has_combinators(&self) -> bool {
@@ -102,18 +96,21 @@ impl<Impl: SelectorImpl> SelectorBuilder<Impl> {
         &mut self,
         parsed_pseudo: bool,
         parsed_slotted: bool,
+        parsed_part: bool,
     ) -> ThinArc<SpecificityAndFlags, Component<Impl>> {
         // Compute the specificity and flags.
-        let mut spec = SpecificityAndFlags(specificity(self.simple_selectors.iter()));
+        let specificity = specificity(self.simple_selectors.iter());
+        let mut flags = SelectorFlags::empty();
         if parsed_pseudo {
-            spec.0 |= HAS_PSEUDO_BIT;
+            flags |= SelectorFlags::HAS_PSEUDO;
         }
-
         if parsed_slotted {
-            spec.0 |= HAS_SLOTTED_BIT;
+            flags |= SelectorFlags::HAS_SLOTTED;
         }
-
-        self.build_with_specificity_and_flags(spec)
+        if parsed_part {
+            flags |= SelectorFlags::HAS_PART;
+        }
+        self.build_with_specificity_and_flags(SpecificityAndFlags { specificity, flags })
     }
 
     /// Builds with an explicit SpecificityAndFlags. This is separated from build() so
@@ -145,7 +142,7 @@ impl<Impl: SelectorImpl> SelectorBuilder<Impl> {
         let iter = SelectorBuilderIter {
             current_simple_selectors: current.iter(),
             rest_of_simple_selectors: rest,
-            combinators: self.combinators.drain().rev(),
+            combinators: self.combinators.drain(..).rev(),
         };
 
         Arc::into_thin(Arc::from_header_and_iter(header, iter))
@@ -155,7 +152,7 @@ impl<Impl: SelectorImpl> SelectorBuilder<Impl> {
 struct SelectorBuilderIter<'a, Impl: SelectorImpl> {
     current_simple_selectors: slice::Iter<'a, Component<Impl>>,
     rest_of_simple_selectors: &'a [Component<Impl>],
-    combinators: iter::Rev<smallvec::Drain<'a, (Combinator, usize)>>,
+    combinators: iter::Rev<smallvec::Drain<'a, [(Combinator, usize); 16]>>,
 }
 
 impl<'a, Impl: SelectorImpl> ExactSizeIterator for SelectorBuilderIter<'a, Impl> {
@@ -194,28 +191,44 @@ fn split_from_end<T>(s: &[T], at: usize) -> (&[T], &[T]) {
     s.split_at(s.len() - at)
 }
 
-pub const HAS_PSEUDO_BIT: u32 = 1 << 30;
-pub const HAS_SLOTTED_BIT: u32 = 1 << 31;
+bitflags! {
+    /// Flags that indicate at which point of parsing a selector are we.
+    #[derive(Default, ToShmem)]
+    pub (crate) struct SelectorFlags : u8 {
+        const HAS_PSEUDO = 1 << 0;
+        const HAS_SLOTTED = 1 << 1;
+        const HAS_PART = 1 << 2;
+    }
+}
 
-/// We use ten bits for each specificity kind (id, class, element), and the two
-/// high bits for the pseudo and slotted flags.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, ToShmem)]
-pub struct SpecificityAndFlags(pub u32);
+pub struct SpecificityAndFlags {
+    /// There are two free bits here, since we use ten bits for each specificity
+    /// kind (id, class, element).
+    pub(crate) specificity: u32,
+    /// There's padding after this field due to the size of the flags.
+    pub(crate) flags: SelectorFlags,
+}
 
 impl SpecificityAndFlags {
     #[inline]
     pub fn specificity(&self) -> u32 {
-        self.0 & !(HAS_PSEUDO_BIT | HAS_SLOTTED_BIT)
+        self.specificity
     }
 
     #[inline]
     pub fn has_pseudo_element(&self) -> bool {
-        (self.0 & HAS_PSEUDO_BIT) != 0
+        self.flags.intersects(SelectorFlags::HAS_PSEUDO)
     }
 
     #[inline]
     pub fn is_slotted(&self) -> bool {
-        (self.0 & HAS_SLOTTED_BIT) != 0
+        self.flags.intersects(SelectorFlags::HAS_SLOTTED)
+    }
+
+    #[inline]
+    pub fn is_part(&self) -> bool {
+        self.flags.intersects(SelectorFlags::HAS_PART)
     }
 }
 
@@ -309,10 +322,27 @@ where
             Component::NthLastOfType(..) |
             Component::FirstOfType |
             Component::LastOfType |
-            Component::OnlyOfType |
-            Component::NonTSPseudoClass(..) => {
+            Component::OnlyOfType => {
                 specificity.class_like_selectors += 1;
             },
+            Component::NonTSPseudoClass(ref pseudo) => {
+                if !pseudo.has_zero_specificity() {
+                    specificity.class_like_selectors += 1;
+                }
+            },
+            Component::Is(ref list) => {
+                // https://drafts.csswg.org/selectors/#specificity-rules:
+                //
+                //     The specificity of an :is() pseudo-class is replaced by the
+                //     specificity of the most specific complex selector in its
+                //     selector list argument.
+                let mut max = 0;
+                for selector in &**list {
+                    max = std::cmp::max(selector.specificity(), max);
+                }
+                *specificity += Specificity::from(max);
+            },
+            Component::Where(..) |
             Component::ExplicitUniversalType |
             Component::ExplicitAnyNamespace |
             Component::ExplicitNoNamespace |

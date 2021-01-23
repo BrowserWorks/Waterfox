@@ -5,9 +5,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/dom/PopupBlocker.h"
-#include "mozilla/EventStateManager.h"
+#include "mozilla/dom/UserActivation.h"
+#include "mozilla/BasePrincipal.h"
+#include "mozilla/MouseEvents.h"
 #include "mozilla/Preferences.h"
-#include "mozilla/StaticPrefs.h"
+#include "mozilla/StaticPrefs_dom.h"
 #include "mozilla/TextEvents.h"
 #include "mozilla/TimeStamp.h"
 #include "nsXULPopupManager.h"
@@ -29,6 +31,8 @@ static TimeStamp sLastAllowedExternalProtocolIFrameTimeStamp;
 // This token is by default set to false. When a popup/filePicker is shown, it
 // is set to true.
 static bool sUnusedPopupToken = false;
+
+static uint32_t sOpenPopupSpamCount = 0;
 
 void PopupAllowedEventsChanged() {
   if (sPopupAllowedEvents) {
@@ -144,7 +148,7 @@ bool PopupBlocker::TryUsePopupOpeningToken(nsIPrincipal* aPrincipal) {
     return true;
   }
 
-  if (aPrincipal && nsContentUtils::IsSystemPrincipal(aPrincipal)) {
+  if (aPrincipal && aPrincipal->IsSystemPrincipal()) {
     return true;
   }
 
@@ -185,8 +189,8 @@ PopupBlocker::PopupControlState PopupBlocker::GetEventPopupControlState(
     case eBasicEventClass:
       // For these following events only allow popups if they're
       // triggered while handling user input. See
-      // PresShell::EventHandler::PrepareToDispatchEvent() for details.
-      if (EventStateManager::IsHandlingUserInput()) {
+      // UserActivation::IsUserInteractionEvent() for details.
+      if (UserActivation::IsHandlingUserInput()) {
         abuse = PopupBlocker::openBlocked;
         switch (aEvent->mMessage) {
           case eFormSelect:
@@ -207,8 +211,8 @@ PopupBlocker::PopupControlState PopupBlocker::GetEventPopupControlState(
     case eEditorInputEventClass:
       // For this following event only allow popups if it's triggered
       // while handling user input. See
-      // PresShell::EventHandler::PrepareToDispatchEvent() for details.
-      if (EventStateManager::IsHandlingUserInput()) {
+      // UserActivation::IsUserInteractionEvent() for details.
+      if (UserActivation::IsHandlingUserInput()) {
         abuse = PopupBlocker::openBlocked;
         switch (aEvent->mMessage) {
           case eEditorInput:
@@ -224,8 +228,8 @@ PopupBlocker::PopupControlState PopupBlocker::GetEventPopupControlState(
     case eInputEventClass:
       // For this following event only allow popups if it's triggered
       // while handling user input. See
-      // PresShell::EventHandler::PrepareToDispatchEvent() for details.
-      if (EventStateManager::IsHandlingUserInput()) {
+      // UserActivation::IsUserInteractionEvent() for details.
+      if (UserActivation::IsHandlingUserInput()) {
         abuse = PopupBlocker::openBlocked;
         switch (aEvent->mMessage) {
           case eFormChange:
@@ -370,8 +374,8 @@ PopupBlocker::PopupControlState PopupBlocker::GetEventPopupControlState(
     case eFormEventClass:
       // For these following events only allow popups if they're
       // triggered while handling user input. See
-      // PresShell::EventHandler::PrepareToDispatchEvent() for details.
-      if (EventStateManager::IsHandlingUserInput()) {
+      // UserActivation::IsUserInteractionEvent() for details.
+      if (UserActivation::IsHandlingUserInput()) {
         abuse = PopupBlocker::openBlocked;
         switch (aEvent->mMessage) {
           case eFormSubmit:
@@ -406,6 +410,8 @@ void PopupBlocker::Initialize() {
 
 /* static */
 void PopupBlocker::Shutdown() {
+  MOZ_ASSERT(sOpenPopupSpamCount == 0);
+
   if (sPopupAllowedEvents) {
     free(sPopupAllowedEvents);
   }
@@ -441,17 +447,29 @@ void PopupBlocker::ResetLastExternalProtocolIframeAllowed() {
   sLastAllowedExternalProtocolIFrameTimeStamp = TimeStamp();
 }
 
+/* static */
+void PopupBlocker::RegisterOpenPopupSpam() { sOpenPopupSpamCount++; }
+
+/* static */
+void PopupBlocker::UnregisterOpenPopupSpam() {
+  MOZ_ASSERT(sOpenPopupSpamCount);
+  sOpenPopupSpamCount--;
+}
+
+/* static */
+uint32_t PopupBlocker::GetOpenPopupSpamCount() { return sOpenPopupSpamCount; }
+
 }  // namespace dom
 }  // namespace mozilla
 
-nsAutoPopupStatePusherInternal::nsAutoPopupStatePusherInternal(
+AutoPopupStatePusherInternal::AutoPopupStatePusherInternal(
     mozilla::dom::PopupBlocker::PopupControlState aState, bool aForce)
     : mOldState(
           mozilla::dom::PopupBlocker::PushPopupControlState(aState, aForce)) {
   mozilla::dom::PopupBlocker::PopupStatePusherCreated();
 }
 
-nsAutoPopupStatePusherInternal::~nsAutoPopupStatePusherInternal() {
+AutoPopupStatePusherInternal::~AutoPopupStatePusherInternal() {
   mozilla::dom::PopupBlocker::PopPopupControlState(mOldState);
   mozilla::dom::PopupBlocker::PopupStatePusherDestroyed();
 }

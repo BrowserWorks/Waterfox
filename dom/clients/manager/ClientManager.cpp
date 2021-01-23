@@ -9,9 +9,7 @@
 #include "ClientHandle.h"
 #include "ClientManagerChild.h"
 #include "ClientManagerOpChild.h"
-#include "ClientPrefs.h"
 #include "ClientSource.h"
-#include "mozilla/dom/WorkerHolderToken.h"
 #include "mozilla/dom/WorkerPrivate.h"
 #include "mozilla/ipc/BackgroundChild.h"
 #include "mozilla/ipc/PBackgroundChild.h"
@@ -54,27 +52,12 @@ ClientManager::ClientManager() {
     return;
   }
 
-  RefPtr<WorkerHolderToken> workerHolderToken;
-  if (!NS_IsMainThread()) {
-    WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();
-    MOZ_DIAGNOSTIC_ASSERT(workerPrivate);
-
-    // Note, it would be nice to replace this with a WorkerRef, but
-    // currently there is no WorkerRef option that matches what we
-    // need here.  We need something like a StrongWorkerRef that will
-    // let us keep the worker alive until our actor is destroyed, but
-    // we also need to use AllowIdleShutdownStart like WeakWorkerRef.
-    // We need AllowIdleShutdownStart since every worker thread will
-    // have a ClientManager to support creating its ClientSource.
-    workerHolderToken = WorkerHolderToken::Create(
-        workerPrivate, Canceling, WorkerHolderToken::AllowIdleShutdownStart);
-    if (NS_WARN_IF(!workerHolderToken)) {
-      Shutdown();
-      return;
-    }
+  ClientManagerChild* actor = ClientManagerChild::Create();
+  if (NS_WARN_IF(!actor)) {
+    Shutdown();
+    return;
   }
 
-  ClientManagerChild* actor = new ClientManagerChild(workerHolderToken);
   PClientManagerChild* sentActor =
       parentActor->SendPClientManagerConstructor(actor);
   if (NS_WARN_IF(!sentActor)) {
@@ -148,6 +131,25 @@ UniquePtr<ClientSource> ClientManager::CreateSourceInternal(
   return source;
 }
 
+UniquePtr<ClientSource> ClientManager::CreateSourceInternal(
+    const ClientInfo& aClientInfo, nsISerialEventTarget* aEventTarget) {
+  NS_ASSERT_OWNINGTHREAD(ClientManager);
+
+  ClientSourceConstructorArgs args(aClientInfo.Id(), aClientInfo.Type(),
+                                   aClientInfo.PrincipalInfo(),
+                                   aClientInfo.CreationTime());
+  UniquePtr<ClientSource> source(new ClientSource(this, aEventTarget, args));
+
+  if (IsShutdown()) {
+    source->Shutdown();
+    return source;
+  }
+
+  source->Activate(GetActor());
+
+  return source;
+}
+
 already_AddRefed<ClientHandle> ClientManager::CreateHandleInternal(
     const ClientInfo& aClientInfo, nsISerialEventTarget* aSerialEventTarget) {
   NS_ASSERT_OWNINGTHREAD(ClientManager);
@@ -178,7 +180,7 @@ RefPtr<ClientOpPromise> ClientManager::StartOp(
   RefPtr<ClientManager> kungFuGrip = this;
 
   MaybeExecute(
-      [aArgs, promise, kungFuGrip](ClientManagerChild* aActor) {
+      [&aArgs, promise, kungFuGrip](ClientManagerChild* aActor) {
         ClientManagerOpChild* actor =
             new ClientManagerOpChild(kungFuGrip, aArgs, promise);
         if (!aActor->SendPClientManagerOpConstructor(actor, aArgs)) {
@@ -186,9 +188,13 @@ RefPtr<ClientOpPromise> ClientManager::StartOp(
           return;
         }
       },
-      [promise] { promise->Reject(NS_ERROR_DOM_INVALID_STATE_ERR, __func__); });
+      [promise] {
+        CopyableErrorResult rv;
+        rv.ThrowInvalidStateError("Client has been destroyed");
+        promise->Reject(rv, __func__);
+      });
 
-  return promise.forget();
+  return promise;
 }
 
 // static
@@ -241,8 +247,6 @@ void ClientManager::Startup() {
 #ifdef MOZ_DIAGNOSTIC_ASSERT_ENABLED
   sClientManagerThreadLocalIndexDuplicate = sClientManagerThreadLocalIndex;
 #endif
-
-  ClientPrefsInit();
 }
 
 // static
@@ -268,6 +272,34 @@ UniquePtr<ClientSource> ClientManager::CreateSource(
     const PrincipalInfo& aPrincipal) {
   RefPtr<ClientManager> mgr = GetOrCreateForCurrentThread();
   return mgr->CreateSourceInternal(aType, aEventTarget, aPrincipal);
+}
+
+// static
+UniquePtr<ClientSource> ClientManager::CreateSourceFromInfo(
+    const ClientInfo& aClientInfo, nsISerialEventTarget* aEventTarget) {
+  RefPtr<ClientManager> mgr = GetOrCreateForCurrentThread();
+  return mgr->CreateSourceInternal(aClientInfo, aEventTarget);
+}
+
+Maybe<ClientInfo> ClientManager::CreateInfo(ClientType aType,
+                                            nsIPrincipal* aPrincipal) {
+  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_ASSERT(aPrincipal);
+
+  PrincipalInfo principalInfo;
+  nsresult rv = PrincipalToPrincipalInfo(aPrincipal, &principalInfo);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    MOZ_CRASH("ClientManager::CreateSource() cannot serialize bad principal");
+  }
+
+  nsID id;
+  rv = nsContentUtils::GenerateUUIDInPlace(id);
+  MOZ_DIAGNOSTIC_ASSERT(NS_SUCCEEDED(rv));
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return Nothing();
+  }
+
+  return Some(ClientInfo(id, aType, principalInfo, TimeStamp::Now()));
 }
 
 // static

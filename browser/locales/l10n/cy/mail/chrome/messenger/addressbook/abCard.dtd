@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Contact.tab                     "Cysylltiad">
+<!ENTITY Contact.accesskey               "C">
+<!ENTITY Name.box                        "Enw">
+
+<!-- LOCALIZATION NOTE:
+ NameField1, NameField2, PhoneticField1, PhoneticField2
+ those fields are either LN or FN depends on the target country.
+ "FirstName" and "LastName" can be swapped for id to change the order
+ but they should not be translated (same applied to phonetic id).
+ Make sure the translation of label corresponds to the order of id.
+-->
+
+<!-- LOCALIZATION NOTE (NameField1.id) : DONT_TRANSLATE -->
+<!ENTITY NameField1.id                  "FirstName">
+<!-- LOCALIZATION NOTE (NameField2.id) : DONT_TRANSLATE -->
+<!ENTITY NameField2.id                  "LastName">
+<!-- LOCALIZATION NOTE (PhoneticField1.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField1.id              "PhoneticFirstName">
+<!-- LOCALIZATION NOTE (PhoneticField2.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField2.id              "PhoneticLastName">
+
+<!ENTITY NameField1.label               "Cyntaf:">
+<!ENTITY NameField1.accesskey           "y">
+<!ENTITY NameField2.label               "Olaf:">
+<!ENTITY NameField2.accesskey           "O">
+<!ENTITY PhoneticField1.label           "Ffoneteg:">
+<!ENTITY PhoneticField2.label           "Ffoneteg:">
+<!ENTITY DisplayName.label              "Dangos:">
+<!ENTITY DisplayName.accesskey          "D">
+<!ENTITY preferDisplayName.label        "Dewis enw dangos o flaen pennyn neges">
+<!ENTITY preferDisplayName.accesskey    "d">
+<!ENTITY NickName.label                 "Llys Enw:">
+<!ENTITY NickName.accesskey             "L">
+
+<!ENTITY PrimaryEmail.label             "E-bost:">
+<!ENTITY PrimaryEmail.accesskey         "E">
+<!ENTITY SecondEmail.label              "E-bost Ychwanegol:">
+<!ENTITY SecondEmail.accesskey          "Y">
+<!ENTITY PreferMailFormat.label         "Dewis derbyn negeseuon wedi'u fformatio fel:">
+<!ENTITY PreferMailFormat.accesskey     "w">
+<!ENTITY PlainText.label                "Testun Plaen">
+<!ENTITY HTML.label                     "HTML">
+<!ENTITY Unknown.label                  "Anhysbys">
+<!ENTITY chatName.label                 "Enw Sgwrsio:">
+
+<!ENTITY WorkPhone.label                "Gwaith:">
+<!ENTITY WorkPhone.accesskey            "G">
+<!ENTITY HomePhone.label                "Cartref:">
+<!ENTITY HomePhone.accesskey            "C">
+<!ENTITY FaxNumber.label                "Ffacs:">
+<!ENTITY FaxNumber.accesskey            "s">
+<!ENTITY PagerNumber.label              "Swnyn:">
+<!ENTITY PagerNumber.accesskey          "w">
+<!ENTITY CellularNumber.label           "Symudol:">
+<!ENTITY CellularNumber.accesskey       "y">
+
+<!ENTITY Home.tab                       "Preifat">
+<!ENTITY Home.accesskey                 "P">
+<!ENTITY HomeAddress.label              "Cyfeiriad:">
+<!ENTITY HomeAddress.accesskey          "d">
+<!ENTITY HomeAddress2.label             "">
+<!ENTITY HomeAddress2.accesskey         "">
+<!ENTITY HomeCity.label                 "Tref/Dinas:">
+<!ENTITY HomeCity.accesskey             "T">
+<!ENTITY HomeState.label                "Sir/Talaith:">
+<!ENTITY HomeState.accesskey            "S">
+<!ENTITY HomeZipCode.label              "Cod Post/ZIP:">
+<!ENTITY HomeZipCode.accesskey          "Z">
+<!ENTITY HomeCountry.label              "Gwlad:">
+<!ENTITY HomeCountry.accesskey          "G">
+<!ENTITY HomeWebPage.label              "Tudalen We:">
+<!ENTITY HomeWebPage.accesskey          "u">
+<!ENTITY Birthday.label                 "Pen-blwydd:">
+<!ENTITY Birthday.accesskey             "P">
+<!ENTITY Month.placeholder              "Mis">
+<!ENTITY Day.placeholder                "Diwrnod">
+<!ENTITY Year.placeholder               "Blwyddyn">
+<!ENTITY Age.label                      "Oed:">
+<!ENTITY Age.placeholder                "Oed">
+
+<!ENTITY Work.tab                       "Gwaith">
+<!ENTITY Work.accesskey                 "w">
+<!ENTITY JobTitle.label                 "Teitl:">
+<!ENTITY JobTitle.accesskey             "e">
+<!ENTITY Department.label               "Adran:">
+<!ENTITY Department.accesskey           "A">
+<!ENTITY Company.label                  "Corff:">
+<!ENTITY Company.accesskey              "o">
+<!ENTITY WorkAddress.label              "Cyfeiriad:">
+<!ENTITY WorkAddress.accesskey          "y">
+<!ENTITY WorkAddress2.label             "">
+<!ENTITY WorkAddress2.accesskey         "">
+<!ENTITY WorkCity.label                 "Tref/Dinas:">
+<!ENTITY WorkCity.accesskey             "D">
+<!ENTITY WorkState.label                "Sir/Talaith:">
+<!ENTITY WorkState.accesskey            "T">
+<!ENTITY WorkZipCode.label              "Cod Post/ZIP:">
+<!ENTITY WorkZipCode.accesskey          "Z">
+<!ENTITY WorkCountry.label              "Gwlad:">
+<!ENTITY WorkCountry.accesskey          "w">
+<!ENTITY WorkWebPage.label              "Tudalen We:">
+<!ENTITY WorkWebPage.accesskey          "u">
+
+<!ENTITY Other.tab                      "Arall">
+<!ENTITY Other.accesskey                "a">
+<!ENTITY Custom1.label                  "Cyfaddasu 1:">
+<!ENTITY Custom1.accesskey              "1">
+<!ENTITY Custom2.label                  "Cyfaddasu 2:">
+<!ENTITY Custom2.accesskey              "2">
+<!ENTITY Custom3.label                  "Cyfaddasu 3:">
+<!ENTITY Custom3.accesskey              "3">
+<!ENTITY Custom4.label                  "Cyfaddasu 4:">
+<!ENTITY Custom4.accesskey              "4">
+<!ENTITY Notes.label                    "Nodiadau:">
+<!ENTITY Notes.accesskey                "N">
+
+<!ENTITY Chat.tab                       "Sgwrsio">
+<!ENTITY Chat.accesskey                 "S">
+<!ENTITY Gtalk.label                    "Google Talk:">
+<!ENTITY Gtalk.accesskey                "G">
+<!ENTITY AIM.label                      "AIM:">
+<!ENTITY AIM2.accesskey                 "M">
+<!ENTITY Yahoo.label                    "Yahoo!:">
+<!ENTITY Yahoo.accesskey                "Y">
+<!ENTITY Skype.label                    "Skype:">
+<!ENTITY Skype.accesskey                "S">
+<!ENTITY QQ.label                       "QQ:">
+<!ENTITY QQ.accesskey                   "Q">
+<!ENTITY MSN.label                      "MSN:">
+<!ENTITY MSN2.accesskey                 "N">
+<!ENTITY ICQ.label                      "ICQ:">
+<!ENTITY ICQ.accesskey                  "I">
+<!ENTITY XMPP.label                     "Jabber ID:">
+<!ENTITY XMPP.accesskey                 "J">
+<!ENTITY IRC.label                      "Llysenw IRC:">
+<!ENTITY IRC.accesskey                  "L">
+
+<!ENTITY Photo.tab                      "Ffoto">
+<!ENTITY Photo.accesskey                "o">
+<!ENTITY GenericPhoto.label             "Ffoto Generig">
+<!ENTITY GenericPhoto.accesskey         "G">
+<!ENTITY DefaultPhoto.label             "Rhagosodiad">
+<!ENTITY PhotoFile.label                "Ar y Cyfrifiadur hwn">
+<!ENTITY PhotoFile.accesskey            "A">
+<!ENTITY BrowsePhoto.label              "Pori">
+<!ENTITY BrowsePhoto.accesskey          "r">
+<!ENTITY PhotoURL.label                 "Ar y We">
+<!ENTITY PhotoURL.accesskey             "W">
+<!ENTITY PhotoURL.placeholder           "Gludo neu deipio cyfeiriad gwe'r ffoto">
+<!ENTITY UpdatePhoto.label              "Diweddaru">
+<!ENTITY UpdatePhoto.accesskey          "i">
+<!ENTITY PhotoDropTarget.label          "Llusgo ffoto newydd yma">

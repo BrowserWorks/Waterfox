@@ -23,9 +23,6 @@ const { atom } = ChromeUtils.import("chrome://marionette/content/atom.js");
 const { Capabilities, PageLoadStrategy } = ChromeUtils.import(
   "chrome://marionette/content/capabilities.js"
 );
-const { capture } = ChromeUtils.import(
-  "chrome://marionette/content/capture.js"
-);
 const { element, WebElement } = ChromeUtils.import(
   "chrome://marionette/content/element.js"
 );
@@ -533,18 +530,23 @@ function dispatch(fn) {
     });
 
     req
-      .then(rv => sendResponse(rv, id), err => sendError(err, id))
+      .then(
+        rv => sendResponse(rv, id),
+        err => sendError(err, id)
+      )
       .catch(err => sendError(err, id));
   };
 }
 
-let getPageSourceFn = dispatch(getPageSource);
 let getActiveElementFn = dispatch(getActiveElement);
+let getBrowsingContextIdFn = dispatch(getBrowsingContextId);
 let getElementAttributeFn = dispatch(getElementAttribute);
 let getElementPropertyFn = dispatch(getElementProperty);
 let getElementTextFn = dispatch(getElementText);
 let getElementTagNameFn = dispatch(getElementTagName);
 let getElementRectFn = dispatch(getElementRect);
+let getPageSourceFn = dispatch(getPageSource);
+let getScreenshotRectFn = dispatch(getScreenshotRect);
 let isElementEnabledFn = dispatch(isElementEnabled);
 let findElementContentFn = dispatch(findElementContent);
 let findElementsContentFn = dispatch(findElementsContent);
@@ -554,7 +556,6 @@ let isElementDisplayedFn = dispatch(isElementDisplayed);
 let getElementValueOfCssPropertyFn = dispatch(getElementValueOfCssProperty);
 let switchToShadowRootFn = dispatch(switchToShadowRoot);
 let singleTapFn = dispatch(singleTap);
-let takeScreenshotFn = dispatch(takeScreenshot);
 let performActionsFn = dispatch(performActions);
 let releaseActionsFn = dispatch(releaseActions);
 let actionChainFn = dispatch(actionChain);
@@ -580,6 +581,7 @@ function startListeners() {
   addMessageListener("Marionette:findElementContent", findElementContentFn);
   addMessageListener("Marionette:findElementsContent", findElementsContentFn);
   addMessageListener("Marionette:getActiveElement", getActiveElementFn);
+  addMessageListener("Marionette:getBrowsingContextId", getBrowsingContextIdFn);
   addMessageListener("Marionette:getElementAttribute", getElementAttributeFn);
   addMessageListener("Marionette:getElementProperty", getElementPropertyFn);
   addMessageListener("Marionette:getElementRect", getElementRectFn);
@@ -591,6 +593,7 @@ function startListeners() {
   );
   addMessageListener("Marionette:get", get);
   addMessageListener("Marionette:getPageSource", getPageSourceFn);
+  addMessageListener("Marionette:getScreenshotRect", getScreenshotRectFn);
   addMessageListener("Marionette:goBack", goBack);
   addMessageListener("Marionette:goForward", goForward);
   addMessageListener("Marionette:isElementDisplayed", isElementDisplayedFn);
@@ -607,7 +610,6 @@ function startListeners() {
   addMessageListener("Marionette:switchToFrame", switchToFrame);
   addMessageListener("Marionette:switchToParentFrame", switchToParentFrame);
   addMessageListener("Marionette:switchToShadowRoot", switchToShadowRootFn);
-  addMessageListener("Marionette:takeScreenshot", takeScreenshotFn);
   addMessageListener("Marionette:waitForPageLoaded", waitForPageLoaded);
 }
 
@@ -626,6 +628,10 @@ function deregister() {
   );
   removeMessageListener("Marionette:getActiveElement", getActiveElementFn);
   removeMessageListener(
+    "Marionette:getBrowsingContextId",
+    getBrowsingContextIdFn
+  );
+  removeMessageListener(
     "Marionette:getElementAttribute",
     getElementAttributeFn
   );
@@ -639,6 +645,7 @@ function deregister() {
   );
   removeMessageListener("Marionette:get", get);
   removeMessageListener("Marionette:getPageSource", getPageSourceFn);
+  removeMessageListener("Marionette:getScreenshotRect", getScreenshotRectFn);
   removeMessageListener("Marionette:goBack", goBack);
   removeMessageListener("Marionette:goForward", goForward);
   removeMessageListener("Marionette:isElementDisplayed", isElementDisplayedFn);
@@ -654,7 +661,6 @@ function deregister() {
   removeMessageListener("Marionette:switchToFrame", switchToFrame);
   removeMessageListener("Marionette:switchToParentFrame", switchToParentFrame);
   removeMessageListener("Marionette:switchToShadowRoot", switchToShadowRootFn);
-  removeMessageListener("Marionette:takeScreenshot", takeScreenshotFn);
   removeMessageListener("Marionette:waitForPageLoaded", waitForPageLoaded);
 }
 
@@ -1290,12 +1296,30 @@ function getActiveElement() {
 }
 
 /**
+ * Return the current browsing context id.
+ *
+ * @param {boolean=} topContext
+ *     If set to true use the window's top-level browsing context,
+ *     otherwise the one from the currently selected frame. Defaults to false.
+ *
+ * @return {number}
+ *     Id of the browsing context.
+ */
+function getBrowsingContextId(topContext = false) {
+  if (topContext) {
+    return content.docShell.browsingContext.id;
+  }
+
+  return curContainer.frame.docShell.browsingContext.id;
+}
+
+/**
  * Send click event to element.
  *
  * @param {number} commandID
  *     ID of the currently handled message between the driver and
  *     listener.
- * @param {WebElement} el
+ * @param {WebElement} webElRef
  *     Reference to the web element to click.
  * @param {number} pageTimeout
  *     Timeout in milliseconds the method has to wait for the page being
@@ -1627,74 +1651,58 @@ function switchToFrame(msg) {
 }
 
 /**
- * Perform a screen capture in content context.
+ * Returns the rect of the element to screenshot.
+ *
+ * Because the screen capture takes place in the parent process the dimensions
+ * for the screenshot have to be determined in the appropriate child process.
+ *
+ * Also it takes care of scrolling an element into view if requested.
+ *
+ * @param {Object.<string, ?>} opts
+ *     Options.
  *
  * Accepted values for |opts|:
  *
- *     @param {UUID=} id
- *         Optional web element reference of an element to take a screenshot
- *         of.
- *     @param {boolean=} full
- *         True to take a screenshot of the entire document element.  Is not
- *         considered if {@code id} is not defined.  Defaults to true.
- *     @param {Array.<UUID>=} highlights
- *         Draw a border around the elements found by their web element
- *         references.
- *     @param {boolean=} scroll
- *         When |id| is given, scroll it into view before taking the
- *         screenshot.  Defaults to true.
- *
+ * @param {WebElement} webEl
+ *     Optional element to take a screenshot of.
+ * @param {boolean=} full
+ *     True to take a screenshot of the entire document element. Is only
+ *     considered if <var>id</var> is not defined. Defaults to true.
+ * @param {boolean=} scroll
+ *     When <var>id</var> is given, scroll it into view before taking the
+ *     screenshot.  Defaults to true.
  * @param {capture.Format} format
  *     Format to return the screenshot in.
  * @param {Object.<string, ?>} opts
  *     Options.
  *
- * @return {string}
- *     Base64 encoded string or a SHA-256 hash of the screenshot.
+ * @return {DOMRect}
+ *     The area to take a snapshot from
  */
-function takeScreenshot(format, opts = {}) {
-  let id = opts.id;
-  let full = !!opts.full;
-  let highlights = opts.highlights || [];
-  let scroll = !!opts.scroll;
+function getScreenshotRect({ el, full = true, scroll = true } = {}) {
+  let win = el ? curContainer.frame : content;
 
-  let win = curContainer.frame;
+  let rect;
 
-  let canvas;
-  let highlightEls = highlights
-    .map(ref => WebElement.fromUUID(ref, "content"))
-    .map(webEl => seenEls.get(webEl, win));
-
-  // viewport
-  if (!id && !full) {
-    canvas = capture.viewport(win, highlightEls);
-
-    // element or full document element
-  } else {
-    let el;
-    if (id) {
-      let webEl = WebElement.fromUUID(id, "content");
-      el = seenEls.get(webEl, win);
-      if (scroll) {
-        element.scrollIntoView(el);
-      }
-    } else {
-      el = win.document.documentElement;
+  if (el) {
+    if (scroll) {
+      element.scrollIntoView(el);
     }
-
-    canvas = capture.element(el, highlightEls);
+    rect = getElementRect(el);
+  } else if (full) {
+    const docEl = win.document.documentElement;
+    rect = new DOMRect(0, 0, docEl.scrollWidth, docEl.scrollHeight);
+  } else {
+    // viewport
+    rect = new DOMRect(
+      win.pageXOffset,
+      win.pageYOffset,
+      win.innerWidth,
+      win.innerHeight
+    );
   }
 
-  switch (format) {
-    case capture.Format.Base64:
-      return capture.toBase64(canvas);
-
-    case capture.Format.Hash:
-      return capture.toHash(canvas);
-
-    default:
-      throw new TypeError("Unknown screenshot format: " + format);
-  }
+  return rect;
 }
 
 function flushRendering() {
@@ -1710,7 +1718,7 @@ function flushRendering() {
     let root = win.document.documentElement;
     if (root) {
       try {
-        // Flush pending restyles and reflows for this window
+        // Flush pending restyles and reflows for this window (layout)
         root.getBoundingClientRect();
       } catch (e) {
         logger.error("flushWindow failed", e);
@@ -1736,80 +1744,103 @@ function flushRendering() {
         "but the root document doesn't have one!"
     );
   }
-
-  logger.debug(`flushRendering ${windowUtils.isMozAfterPaintPending}`);
-  return windowUtils.isMozAfterPaintPending;
 }
 
 async function reftestWait(url, remote) {
   let win = curContainer.frame;
   let document = curContainer.frame.document;
-
-  let windowUtils = content.windowUtils;
-
-  let reftestWait = false;
+  let reftestWait;
 
   if (document.location.href !== url || document.readyState != "complete") {
-    logger.debug(truncate`Waiting for page load of ${url}`);
-    await new Promise(resolve => {
-      let maybeResolve = event => {
-        if (
-          event.target === curContainer.frame.document &&
-          event.target.location.href === url
-        ) {
-          win = curContainer.frame;
-          document = curContainer.frame.document;
-          reftestWait = document.documentElement.classList.contains(
-            "reftest-wait"
-          );
-          removeEventListener("load", maybeResolve, { once: true });
-          win.setTimeout(resolve, 0);
-        }
-      };
-      addEventListener("load", maybeResolve, true);
-    });
+    reftestWait = await documentLoad(win, url);
+    win = curContainer.frame;
+    document = curContainer.frame.document;
   } else {
-    // Ensure that the event loop has spun at least once since load,
-    // so that setTimeout(fn, 0) in the load event has run
-    logger.debug("Waiting for event loop to spin");
     reftestWait = document.documentElement.classList.contains("reftest-wait");
-    await new Promise(resolve => win.setTimeout(resolve, 0));
   }
+
+  logger.debug("Waiting for event loop to spin");
+  await new Promise(resolve => win.setTimeout(resolve, 0));
+
+  await paintComplete(win, remote);
 
   let root = document.documentElement;
   if (reftestWait) {
-    // Check again in case reftest-wait was removed since the load event
-    if (root.classList.contains("reftest-wait")) {
-      logger.debug("Waiting for reftest-wait removal");
-      await new Promise(resolve => {
-        let observer = new win.MutationObserver(() => {
-          if (!root.classList.contains("reftest-wait")) {
-            observer.disconnect();
-            logger.debug("reftest-wait removed");
-            win.setTimeout(resolve, 0);
-          }
-        });
-        observer.observe(root, { attributes: true });
-      });
-    }
+    let event = new Event("TestRendered", { bubbles: true });
+    root.dispatchEvent(event);
+    logger.info("Emitted TestRendered event");
+    await reftestWaitRemoved(win, root);
+    await paintComplete(win, remote);
   }
+  if (
+    win.innerWidth < document.documentElement.scrollWidth ||
+    win.innerHeight < document.documentElement.scrollHeight
+  ) {
+    logger.warn(
+      `${url} overflows viewport (width: ${document.documentElement.scrollWidth}, height: ${document.documentElement.scrollHeight})`
+    );
+  }
+}
 
+function documentLoad(win, url) {
+  logger.debug(truncate`Waiting for page load of ${url}`);
+  return new Promise(resolve => {
+    let maybeResolve = event => {
+      if (
+        event.target === curContainer.frame.document &&
+        event.target.location.href === url
+      ) {
+        let reftestWait = win.document.documentElement.classList.contains(
+          "reftest-wait"
+        );
+        removeEventListener("load", maybeResolve, { once: true });
+        resolve(reftestWait);
+      }
+    };
+    addEventListener("load", maybeResolve, true);
+  });
+}
+
+function paintComplete(win, remote) {
   logger.debug("Waiting for rendering");
-
-  await new Promise(resolve => {
+  let windowUtils = content.windowUtils;
+  return new Promise(resolve => {
     let maybeResolve = () => {
-      if (flushRendering()) {
+      flushRendering();
+      if (remote) {
+        // Flush display (paint)
+        windowUtils.updateLayerTree();
+      }
+      if (windowUtils.isMozAfterPaintPending) {
+        logger.debug(`reftestWait: ${windowUtils.isMozAfterPaintPending}`);
         win.addEventListener("MozAfterPaint", maybeResolve, { once: true });
       } else {
-        win.setTimeout(resolve, 0);
+        // resolve at the start of the next frame in case of leftover paints
+        win.requestAnimationFrame(() => {
+          win.requestAnimationFrame(resolve);
+        });
       }
     };
     maybeResolve();
   });
+}
 
-  if (remote) {
-    windowUtils.updateLayerTree();
-  }
+function reftestWaitRemoved(win, root) {
+  logger.debug("Waiting for reftest-wait removal");
+  return new Promise(resolve => {
+    let observer = new win.MutationObserver(() => {
+      if (!root.classList.contains("reftest-wait")) {
+        observer.disconnect();
+        logger.debug("reftest-wait removed");
+        win.setTimeout(resolve, 0);
+      }
+    });
+    if (root.classList.contains("reftest-wait")) {
+      observer.observe(root, { attributes: true });
+    } else {
+      win.setTimeout(resolve, 0);
+    }
+  });
 }
 
 function domAddEventListener(msg) {

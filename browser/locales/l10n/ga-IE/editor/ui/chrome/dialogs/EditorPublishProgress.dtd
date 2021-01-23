@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY siteUrl.label         "URL an tSuímh:">
+<!ENTITY docSubdir.label       "Fochomhadlann na leathanach:">
+<!ENTITY otherSubdir.label     "Fochomhadlann na n-íomhánna:">
+
+<!ENTITY status.label          "Á fhoilsiú…">
+<!ENTITY fileList.label        "Stádas Foilsithe">
+<!ENTITY succeeded.label       "D'éirigh leis">
+<!ENTITY failed.label          "Teipthe">
+
+<!ENTITY keepOpen              "Fág an fhuinneog seo ar oscailt tar éis críoch an fhoilsithe.">
+<!ENTITY closeButton.label     "Dún">

@@ -159,13 +159,15 @@ function testConstructorFatalOption(data, expectedString) {
 
 function testConstructorEncodingOption(aData, aExpectedString) {
   function errorMessage(encoding) {
-    return `The given encoding '${String(encoding).trim()}' is not supported.`;
+    return `TextDecoder constructor: The given encoding '${String(
+      encoding
+    ).trim()}' is not supported.`;
   }
 
   // valid encoding passed
   var encoding = "iso-8859-11";
   testCharset({
-    encoding: encoding,
+    encoding,
     input: aData,
     expected: aExpectedString,
     msg: "decoder testing constructor valid encoding.",
@@ -174,7 +176,7 @@ function testConstructorEncodingOption(aData, aExpectedString) {
   // passing spaces for encoding
   encoding = "   ";
   testCharset({
-    encoding: encoding,
+    encoding,
     input: aData,
     error: "RangeError",
     errorMessage: errorMessage(encoding),
@@ -184,7 +186,7 @@ function testConstructorEncodingOption(aData, aExpectedString) {
   // invalid encoding passed
   encoding = "asdfasdf";
   testCharset({
-    encoding: encoding,
+    encoding,
     input: aData,
     error: "RangeError",
     errorMessage: errorMessage(encoding),
@@ -194,7 +196,7 @@ function testConstructorEncodingOption(aData, aExpectedString) {
   // null encoding passed
   encoding = null;
   testCharset({
-    encoding: encoding,
+    encoding,
     input: aData,
     error: "RangeError",
     errorMessage: errorMessage(encoding),
@@ -204,7 +206,7 @@ function testConstructorEncodingOption(aData, aExpectedString) {
   // empty encoding passed
   encoding = "";
   testCharset({
-    encoding: encoding,
+    encoding,
     input: aData,
     error: "RangeError",
     errorMessage: errorMessage(encoding),
@@ -519,7 +521,7 @@ function testDecodeStreamCompositions() {
       }
       testCharset({
         encoding: t.encoding,
-        array: array,
+        array,
         msg: "decode() stream test " + t.encoding + " " + a.join("-") + ".",
       });
       while (a[l] > 1) {

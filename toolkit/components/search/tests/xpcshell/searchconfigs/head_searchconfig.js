@@ -7,14 +7,29 @@ const { XPCOMUtils } = ChromeUtils.import(
   "resource://gre/modules/XPCOMUtils.jsm"
 );
 XPCOMUtils.defineLazyModuleGetters(this, {
+  AddonManager: "resource://gre/modules/AddonManager.jsm",
   AddonTestUtils: "resource://testing-common/AddonTestUtils.jsm",
+  AppConstants: "resource://gre/modules/AppConstants.jsm",
   ObjectUtils: "resource://gre/modules/ObjectUtils.jsm",
   OS: "resource://gre/modules/osfile.jsm",
+  Region: "resource://gre/modules/Region.jsm",
+  RemoteSettings: "resource://services-settings/remote-settings.js",
+  SearchEngine: "resource://gre/modules/SearchEngine.jsm",
+  SearchEngineSelector: "resource://gre/modules/SearchEngineSelector.jsm",
   SearchTestUtils: "resource://testing-common/SearchTestUtils.jsm",
+  SearchUtils: "resource://gre/modules/SearchUtils.jsm",
   Services: "resource://gre/modules/Services.jsm",
+  sinon: "resource://testing-common/Sinon.jsm",
 });
 
+XPCOMUtils.defineLazyServiceGetters(this, {
+  gEnvironment: ["@mozilla.org/process/environment;1", "nsIEnvironment"],
+});
+
+XPCOMUtils.defineLazyGlobalGetters(this, ["fetch"]);
+
 const GLOBAL_SCOPE = this;
+const TEST_DEBUG = gEnvironment.get("TEST_DEBUG");
 
 const URLTYPE_SUGGEST_JSON = "application/x-suggestions+json";
 const URLTYPE_SEARCH_HTML = "text/html";
@@ -25,6 +40,8 @@ const SUBMISSION_PURPOSES = [
   "homepage",
   "newtab",
 ];
+
+let engineSelector;
 
 /**
  * This class implements the test harness for search configuration tests.
@@ -72,13 +89,6 @@ class SearchConfigTest {
    */
   constructor(config = {}) {
     this._config = config;
-
-    // This is intended for development-only. Setting it to true restricts the
-    // set of locales and regions that are covered, to provide tests that are
-    // quicker to run.
-    // Turning it on will generate one error at the end of the test, as a reminder
-    // that it needs to be changed back before shipping.
-    this._testDebug = false;
   }
 
   /**
@@ -93,12 +103,50 @@ class SearchConfigTest {
       "42"
     );
 
+    const SEARCH_CONFIG = gEnvironment.get("SEARCH_CONFIG");
+    if (SEARCH_CONFIG) {
+      if (!(SEARCH_CONFIG in SearchUtils.ENGINES_URLS)) {
+        throw new Error(`Invalid value for SEARCH_CONFIG`);
+      }
+      const url = SearchUtils.ENGINES_URLS[SEARCH_CONFIG];
+      const response = await fetch(url);
+      const config = await response.json();
+      const settings = await RemoteSettings(SearchUtils.SETTINGS_KEY);
+      sinon.stub(settings, "get").returns(config.data);
+    }
+
     // Disable region checks.
     Services.prefs.setBoolPref("browser.search.geoSpecificDefaults", false);
-    Services.prefs.setCharPref("browser.search.geoip.url", "");
+
+    // Enable separatePrivateDefault testing. We test with this on, as we have
+    // separate tests for ensuring the normal = private when this is off.
+    Services.prefs.setBoolPref(
+      SearchUtils.BROWSER_SEARCH_PREF + "separatePrivateDefault.ui.enabled",
+      true
+    );
+    Services.prefs.setBoolPref(
+      SearchUtils.BROWSER_SEARCH_PREF + "separatePrivateDefault",
+      true
+    );
+
+    // We need to force modern config off before we start. Modern config uses
+    // the results from the engine selector directly, whereas the legacy
+    // config uses the search service which needs to know we want to run
+    // it in legacy mode.
+    Services.prefs.setBoolPref(
+      SearchUtils.BROWSER_SEARCH_PREF + "modernConfig",
+      false
+    );
 
     await AddonTestUtils.promiseStartupManager();
     await Services.search.init();
+
+    // We must use the engine selector that the search service has created (if
+    // it has), as remote settings can only easily deal with us loading the
+    // configuration once - after that, it tries to access the network.
+    engineSelector =
+      Services.search.wrappedJSObject._engineSelector ||
+      new SearchEngineSelector();
 
     // Note: we don't use the helper function here, so that we have at least
     // one message output per process.
@@ -110,8 +158,11 @@ class SearchConfigTest {
 
   /**
    * Runs the test.
+   * @param {boolean} useEngineSelector
+   *   Flag to run the tests against the SearchEngineSelector or use
+   *   existing list.json.
    */
-  async run() {
+  async run(useEngineSelector = false) {
     const locales = await this._getLocales();
     const regions = this._regions;
 
@@ -119,22 +170,40 @@ class SearchConfigTest {
     // when updating the requested/available locales.
     for (let region of regions) {
       for (let locale of locales) {
-        info(`Checking region: "${region}" locale: "${locale}"`);
-        await this._reinit(region, locale);
-
-        this._assertDefaultEngines(region, locale);
-        const engines = await Services.search.getVisibleEngines();
+        if (!useEngineSelector) {
+          await this._reinit(region, locale);
+        }
+        const engines = await this._getEngines(
+          useEngineSelector,
+          region,
+          locale
+        );
+        this._assertEngineRules([engines[0]], region, locale, "default");
         const isPresent = this._assertAvailableEngines(region, locale, engines);
         if (isPresent) {
           this._assertEngineDetails(region, locale, engines);
         }
       }
     }
+  }
 
-    this.assertOk(
-      !this._testDebug,
-      "Should not have test debug turned on in production"
-    );
+  async _getEngines(useEngineSelector, region, locale) {
+    if (useEngineSelector) {
+      let engines = [];
+      let configs = await engineSelector.fetchEngineConfiguration(
+        locale,
+        region || "default",
+        AppConstants.MOZ_APP_VERSION_DISPLAY.endsWith("esr")
+          ? "esr"
+          : AppConstants.MOZ_UPDATE_CHANNEL
+      );
+      for (let config of configs.engines) {
+        let engine = await Services.search.makeEngineFromConfig(config);
+        engines.push(engine);
+      }
+      return engines;
+    }
+    return Services.search.getVisibleEngines();
   }
 
   /**
@@ -146,7 +215,11 @@ class SearchConfigTest {
    *   The two-letter locale code.
    */
   async _reinit(region, locale) {
-    Services.prefs.setStringPref("browser.search.region", region.toUpperCase());
+    Region._setRegion(region?.toUpperCase(), true);
+    if (region) {
+      await SearchTestUtils.promiseSearchNotification("engines-reloaded");
+    }
+
     const reinitCompletePromise = SearchTestUtils.promiseSearchNotification(
       "reinit-complete"
     );
@@ -165,12 +238,19 @@ class SearchConfigTest {
    * @returns {Set} the list of regions for the tests to run with.
    */
   get _regions() {
-    if (this._testDebug) {
-      return new Set(["by", "cn", "kz", "us", "ru", "tr"]);
+    // TODO: The legacy configuration worked with null as an unknown region,
+    // for the search engine selector, we expect "default" but apply the
+    // fallback in _getEngines. Once we remove the legacy configuration, we can
+    // simplify this.
+    if (TEST_DEBUG) {
+      return new Set(["by", "cn", "kz", "us", "ru", "tr", null]);
     }
     const chunk =
       Services.prefs.getIntPref("browser.search.config.test.section", -1) - 1;
-    const regions = Services.intl.getAvailableLocaleDisplayNames("region");
+    const regions = [
+      ...Services.intl.getAvailableLocaleDisplayNames("region"),
+      null,
+    ];
     const chunkSize = Math.ceil(regions.length / 4);
     const startPoint = chunk * chunkSize;
     return regions.slice(startPoint, startPoint + chunkSize);
@@ -180,15 +260,24 @@ class SearchConfigTest {
    * @returns {array} the list of locales for the tests to run with.
    */
   async _getLocales() {
-    if (this._testDebug) {
-      return ["be", "en-US", "kk", "tr", "ru", "zh-CN"];
+    if (TEST_DEBUG) {
+      return ["be", "en-US", "kk", "tr", "ru", "zh-CN", "ach", "unknown"];
     }
     const data = await OS.File.read(do_get_file("all-locales").path, {
       encoding: "utf-8",
     });
     // "en-US" is not in all-locales as it is the default locale
     // add it manually to ensure it is tested.
-    return [...data.split("\n").filter(e => e != ""), "en-US"];
+    let locales = [...data.split("\n").filter(e => e != ""), "en-US"];
+    // BCP47 requires all variants are 5-8 characters long. Our
+    // build sytem uses the short `mac` variant, this is invalid, and inside
+    // the app we turn it into `ja-JP-macos`
+    locales = locales.map(l => (l == "ja-JP-mac" ? "ja-JP-macos" : l));
+    // The locale sometimes can be unknown or a strange name, e.g. if the updater
+    // is disabled, it may be "und", add one here so we know what happens if we
+    // hit it.
+    locales.push("unknown");
+    return locales;
   }
 
   /**
@@ -327,6 +416,14 @@ class SearchConfigTest {
       locale,
       "default"
     );
+    // At the moment, this uses the same section as the normal default, as
+    // we don't set this differently for any region/locale.
+    this._assertEngineRules(
+      [Services.search.originalPrivateDefaultEngine],
+      region,
+      locale,
+      "default"
+    );
   }
 
   /**
@@ -367,6 +464,11 @@ class SearchConfigTest {
         this._localeRegionInSection(value.excluded, region, locale);
       return included && !excluded;
     });
+    this.assertEqual(
+      details.length,
+      1,
+      `Should have just one details section for region: ${region} locale: ${locale}`
+    );
 
     const engine = this._findEngine(engines, this._config.identifier);
     this.assertOk(engine, "Should have an engine present");
@@ -394,6 +496,13 @@ class SearchConfigTest {
           engine._internalAliases,
           rule.aliases,
           "Should have the correct aliases for the engine"
+        );
+      }
+      if (rule.telemetryId) {
+        this.assertEqual(
+          engine.telemetryId,
+          rule.telemetryId,
+          `Should have the correct telemetryId ${location}.`
         );
       }
     }
@@ -439,9 +548,7 @@ class SearchConfigTest {
         this.assertOk(
           submission.uri.host.endsWith(rules.domain),
           `Should have the correct domain for type: ${urlType} ${location}.
-           Got "${submission.uri.host}", expected to end with "${
-            rules.domain
-          }".`
+           Got "${submission.uri.host}", expected to end with "${rules.domain}".`
         );
       }
     }
@@ -466,18 +573,14 @@ class SearchConfigTest {
       const submissionQueryParams = submission.uri.query.split("&");
       this.assertOk(
         submissionQueryParams.includes(code),
-        `Expected "${code}" in url "${
-          submission.uri.spec
-        }" from purpose "${purpose}" ${location}`
+        `Expected "${code}" in url "${submission.uri.spec}" from purpose "${purpose}" ${location}`
       );
 
       const paramName = code.split("=")[0];
       this.assertOk(
         submissionQueryParams.filter(param => param.startsWith(paramName))
           .length == 1,
-        `Expected only one "${paramName}" parameter in "${
-          submission.uri.spec
-        }" from purpose "${purpose}" ${location}`
+        `Expected only one "${paramName}" parameter in "${submission.uri.spec}" from purpose "${purpose}" ${location}`
       );
     }
   }
@@ -489,7 +592,7 @@ class SearchConfigTest {
    *   Debug string with locale + region information.
    * @param {object} engine
    *   The engine being tested.
-   * @param {object} rules
+   * @param {object} rule
    *   Rules to test.
    */
   _assertCorrectUrlCode(location, engine, rule) {
@@ -497,9 +600,7 @@ class SearchConfigTest {
       const submission = engine.getSubmission("test", URLTYPE_SEARCH_HTML);
       this.assertOk(
         submission.uri.query.split("&").includes(rule.searchUrlCode),
-        `Expected "${rule.searchUrlCode}" in search url "${
-          submission.uri.spec
-        }"`
+        `Expected "${rule.searchUrlCode}" in search url "${submission.uri.spec}"`
       );
     }
     if (rule.searchFormUrlCode) {
@@ -513,9 +614,7 @@ class SearchConfigTest {
       const submission = engine.getSubmission("test", URLTYPE_SUGGEST_JSON);
       this.assertOk(
         submission.uri.query.split("&").includes(rule.suggestUrlCode),
-        `Expected "${rule.suggestUrlCode}" in suggestion url "${
-          submission.uri.spec
-        }"`
+        `Expected "${rule.suggestUrlCode}" in suggestion url "${submission.uri.spec}"`
       );
     }
   }
@@ -525,14 +624,15 @@ class SearchConfigTest {
    * failures. These help the tests to run faster, and avoid clogging up the
    * python test runner process.
    */
+
   assertOk(value, message) {
-    if (!value || this._testDebug) {
+    if (!value || TEST_DEBUG) {
       Assert.ok(value, message);
     }
   }
 
   assertEqual(actual, expected, message) {
-    if (actual != expected || this._testDebug) {
+    if (actual != expected || TEST_DEBUG) {
       Assert.equal(actual, expected, message);
     }
   }

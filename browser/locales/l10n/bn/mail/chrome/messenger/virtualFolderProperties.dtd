@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "নতুন সংরক্ষিত অনুসন্ধান ফোল্ডার">
+<!ENTITY name.label "নাম (N):">
+<!ENTITY name.accesskey "N">
+<!ENTITY description.label "যার সাবফোল্ডার হিসেবে তৈরি করা হবে (C):">
+<!ENTITY description.accesskey "C">
+
+<!ENTITY searchTermCaption.label "এই সংরক্ষিত অনুসন্ধান ফোল্ডারের জন্য ব্যবহৃত অনুসন্ধানের নির্ণায়ক কনফিগার করা হবে:">
+
+<!ENTITY folderSelectionCaption.label "অনুসন্ধানের জন্য ফোল্ডার নির্বাচন করা হবে:">
+<!ENTITY chooseFoldersButton.label "পছন্দ করুন... (h)">
+<!ENTITY chooseFoldersButton.accesskey "h">
+
+<!ENTITY searchOnline.label "অনলাইনে অনুসন্ধান করা হবে (IMAP এবং খবর ফোল্ডারের সর্বশেষ ফলাফল দেয়, কিন্তু ফোল্ডারটি খোলার সময় বেড়ে যায়) (S)">
+<!ENTITY searchOnline.accesskey "S">
+<!ENTITY newFolderButton.label "তৈরি (r)">
+<!ENTITY newFolderButton.accesskey "r">
+<!ENTITY editFolderButton.label "হালনাগাদ (U)">
+<!ENTITY editFolderButton.accesskey "U">

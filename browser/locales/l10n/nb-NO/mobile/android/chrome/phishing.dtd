@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Få meg bort herfra!">
+<!ENTITY safeb.palm.decline.label "Ignorer denne advarselen">
+<!ENTITY safeb.palm.reportPage.label "Hvorfor ble denne nettsiden blokkert?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Rådgiving levert av <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "Rapportert som angrepsnettsted!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Dette nettstedet på <span id='malware_sitename'/> er rapportert som et angrepsnettsted, og er blokkert basert på sikkerhetsinnstillingene.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Angrepsnettsted forsøker å installere programmer som stjeler privat informasjon, bruker datamaskinen din for å angripe andre eller skade systemet ditt.</p><p>Noen angrepsnettsted sprer med hensikt programmer som er skadelige, og mange kan få programmene installert uten at de vet om det, eller gir tillatelse til det.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "Villedende nettsted!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "Nettstedet på <span id='phishing_sitename'/> er rapportert som et villedende nettsted, og er blokkert basert på sikkerhetsinnstillingene dine.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>Villedende nettsider er laget for å lure deg til å gjøre noe farlig, som å installere programmer, eller oppgi personlig informasjon som f.eks. passord, telefonnumre eller kredittkort.</p><p>Innskriving av informasjon på denne siden kan føre til identitetstyveri eller annen svindel.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Rapporter nettsted med uønskede programmer!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Denne nettsiden på <span id='unwanted_sitename'/> er rapportert som at den inneholder uønskede programmer, og er blokkert basert på sikkerhetsinnstillingene dine.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "Uønskede program-sider forsøker å installere programmer som kan være misvisende og påvirke systemet ditt på uventede måter.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "Nettstedet forut kan inneholde skadelig programvare">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; blokkerte denne siden fordi den kan prøve å installere farlige apper som stjeler eller sletter din informasjon (for eksempel bilder, passord, meldinger og kredittkort).">

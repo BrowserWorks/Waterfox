@@ -15,9 +15,6 @@ add_task(async function setup() {
   engine = Service.engineManager.get("passwords");
   store = engine._store;
   tracker = engine._tracker;
-
-  // Don't do asynchronous writes.
-  tracker.persistChangedIDs = false;
 });
 
 add_task(async function test_tracking() {
@@ -32,7 +29,7 @@ add_task(async function test_tracking() {
     let record = {
       id: "GUID" + recordNum,
       hostname: "http://foo.bar.com",
-      formSubmitURL: "http://foo.bar.com/baz",
+      formSubmitURL: "http://foo.bar.com",
       username: "john" + recordNum,
       password: "smith",
       usernameField: "username",

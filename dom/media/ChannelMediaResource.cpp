@@ -11,6 +11,7 @@
 #include "nsIClassOfService.h"
 #include "nsIInputStream.h"
 #include "nsIThreadRetargetableRequest.h"
+#include "nsITimedChannel.h"
 #include "nsHttp.h"
 #include "nsNetUtil.h"
 
@@ -588,20 +589,25 @@ nsresult ChannelMediaResource::SetupChannelHeaders(int64_t aOffset) {
   return NS_OK;
 }
 
-nsresult ChannelMediaResource::Close() {
+RefPtr<GenericPromise> ChannelMediaResource::Close() {
   NS_ASSERTION(NS_IsMainThread(), "Only call on main thread");
 
   if (!mClosed) {
     CloseChannel();
-    mCacheStream.Close();
     mClosed = true;
+    return mCacheStream.Close();
   }
-  return NS_OK;
+  return GenericPromise::CreateAndResolve(true, __func__);
 }
 
 already_AddRefed<nsIPrincipal> ChannelMediaResource::GetCurrentPrincipal() {
   MOZ_ASSERT(NS_IsMainThread());
   return do_AddRef(mSharedInfo->mPrincipal);
+}
+
+bool ChannelMediaResource::HadCrossOriginRedirects() {
+  MOZ_ASSERT(NS_IsMainThread());
+  return mSharedInfo->mHadCrossOriginRedirects;
 }
 
 bool ChannelMediaResource::CanClone() {
@@ -736,6 +742,10 @@ nsresult ChannelMediaResource::RecreateChannel() {
           ? nsILoadInfo::SEC_REQUIRE_CORS_DATA_INHERITS
           : nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_INHERITS;
 
+  if (element->GetCORSMode() == CORS_USE_CREDENTIALS) {
+    securityFlags |= nsILoadInfo::SEC_COOKIES_INCLUDE;
+  }
+
   MOZ_ASSERT(element->IsAnyOfHTMLElements(nsGkAtoms::audio, nsGkAtoms::video));
   nsContentPolicyType contentPolicyType =
       element->IsHTMLElement(nsGkAtoms::audio)
@@ -814,6 +824,20 @@ void ChannelMediaResource::UpdatePrincipal() {
                                                 principal)) {
     for (auto* r : mSharedInfo->mResources) {
       r->CacheClientNotifyPrincipalChanged();
+    }
+  }
+
+  // ChannelMediaResource can recreate the channel. When this happens, we don't
+  // want to overwrite mHadCrossOriginRedirects because the new channel could
+  // skip intermediate redirects.
+  if (!mSharedInfo->mHadCrossOriginRedirects) {
+    nsCOMPtr<nsITimedChannel> timedChannel = do_QueryInterface(mChannel);
+    if (timedChannel) {
+      bool allRedirectsSameOrigin = false;
+      mSharedInfo->mHadCrossOriginRedirects =
+          NS_SUCCEEDED(timedChannel->GetAllRedirectsSameOrigin(
+              &allRedirectsSameOrigin)) &&
+          !allRedirectsSameOrigin;
     }
   }
 }
@@ -911,9 +935,8 @@ double ChannelMediaResource::GetDownloadRate(bool* aIsReliable) {
 
 int64_t ChannelMediaResource::GetLength() { return mCacheStream.GetLength(); }
 
-nsCString ChannelMediaResource::GetDebugInfo() {
-  return NS_LITERAL_CSTRING("ChannelMediaResource: ") +
-         mCacheStream.GetDebugInfo();
+void ChannelMediaResource::GetDebugInfo(dom::MediaResourceDebugInfo& aInfo) {
+  mCacheStream.GetDebugInfo(aInfo.mCacheStream);
 }
 
 // ChannelSuspendAgent

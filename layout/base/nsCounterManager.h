@@ -89,11 +89,11 @@ struct nsCounterUseNode : public nsCounterNode {
   }
 
   // args go directly to member variables here and of nsGenConNode
-  nsCounterUseNode(nsStyleContentData::CounterFunction* aCounterFunction,
+  nsCounterUseNode(mozilla::CounterStylePtr aCounterStyle, nsString aSeparator,
                    uint32_t aContentIndex, bool aAllCounters)
       : nsCounterNode(aContentIndex, USE),
-        mCounterStyle(aCounterFunction->mCounterStyle),
-        mSeparator(aCounterFunction->mSeparator),
+        mCounterStyle(std::move(aCounterStyle)),
+        mSeparator(std::move(aSeparator)),
         mAllCounters(aAllCounters) {
     NS_ASSERTION(aContentIndex <= INT32_MAX, "out of range");
   }
@@ -263,11 +263,6 @@ class nsCounterManager {
   }
 
  private:
-  // for |AddCounterChanges| only
-  bool AddCounterChangeNode(nsIFrame* aFrame, int32_t aIndex,
-                            const nsStyleCounterData& aCounterData,
-                            nsCounterNode::Type aType);
-
   nsClassHashtable<nsRefPtrHashKey<nsAtom>, nsCounterList> mNames;
 };
 

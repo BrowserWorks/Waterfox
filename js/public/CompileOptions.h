@@ -61,6 +61,7 @@
 #include "jstypes.h"  // JS_PUBLIC_API
 
 #include "js/RootingAPI.h"  // JS::PersistentRooted, JS::Rooted
+#include "js/Value.h"
 
 struct JS_PUBLIC_API JSContext;
 class JS_PUBLIC_API JSObject;
@@ -98,26 +99,37 @@ class JS_PUBLIC_API TransitiveCompileOptions {
    */
   bool mutedErrors_ = false;
 
+  // Either the Realm configuration or specialized VM operating modes may
+  // disallow syntax-parse altogether. These conditions are checked in the
+  // CompileOptions constructor.
+  bool forceFullParse_ = false;
+
+  // Either the Realm configuration or the compile request may force
+  // strict-mode.
+  bool forceStrictMode_ = false;
+
+  // The context has specified that source pragmas should be parsed.
+  bool sourcePragmas_ = true;
+
   const char* filename_ = nullptr;
   const char* introducerFilename_ = nullptr;
   const char16_t* sourceMapURL_ = nullptr;
 
+  // Flag used to bypass the filename validation callback.
+  // See also SetFilenameValidationCallback.
+  bool skipFilenameValidation_ = false;
+
  public:
   // POD options.
   bool selfHostingMode = false;
-  bool canLazilyParse = true;
-  bool strictOption = false;
-  bool extraWarningsOption = false;
-  bool werrorOption = false;
   AsmJSOption asmJSOption = AsmJSOption::Disabled;
   bool throwOnAsmJSValidationFailureOption = false;
   bool forceAsync = false;
+  bool discardSource = false;
   bool sourceIsLazy = false;
   bool allowHTMLComments = true;
-  bool isProbablySystemCode = false;
   bool hideScriptFromDebugger = false;
-  bool bigIntEnabledOption = false;
-  bool fieldsEnabledOption = false;
+  bool nonSyntacticScope = false;
 
   /**
    * |introductionType| is a statically allocated C string: one of "eval",
@@ -128,6 +140,9 @@ class JS_PUBLIC_API TransitiveCompileOptions {
   unsigned introductionLineno = 0;
   uint32_t introductionOffset = 0;
   bool hasIntroductionInfo = false;
+
+  // Mask of operation kinds which should be instrumented.
+  uint32_t instrumentationKinds = 0;
 
  protected:
   TransitiveCompileOptions() = default;
@@ -140,10 +155,14 @@ class JS_PUBLIC_API TransitiveCompileOptions {
   // Read-only accessors for non-POD options. The proper way to set these
   // depends on the derived type.
   bool mutedErrors() const { return mutedErrors_; }
+  bool forceFullParse() const { return forceFullParse_; }
+  bool forceStrictMode() const { return forceStrictMode_; }
+  bool skipFilenameValidation() const { return skipFilenameValidation_; }
+  bool sourcePragmas() const { return sourcePragmas_; }
   const char* filename() const { return filename_; }
   const char* introducerFilename() const { return introducerFilename_; }
   const char16_t* sourceMapURL() const { return sourceMapURL_; }
-  virtual JSObject* element() const = 0;
+  virtual Value privateValue() const = 0;
   virtual JSString* elementAttributeName() const = 0;
   virtual JSScript* introductionScript() const = 0;
 
@@ -156,11 +175,9 @@ class JS_PUBLIC_API TransitiveCompileOptions {
   // with the specified script.
   virtual JSScript* scriptOrModule() const = 0;
 
- private:
-  void operator=(const TransitiveCompileOptions&) = delete;
+  TransitiveCompileOptions(const TransitiveCompileOptions&) = delete;
+  TransitiveCompileOptions& operator=(const TransitiveCompileOptions&) = delete;
 };
-
-class JS_PUBLIC_API CompileOptions;
 
 /**
  * The class representing a full set of compile options.
@@ -179,47 +196,27 @@ class JS_PUBLIC_API ReadOnlyCompileOptions : public TransitiveCompileOptions {
   // The offset within the ScriptSource's full uncompressed text of the first
   // character we're presenting for compilation with this CompileOptions.
   //
-  // When we compile a LazyScript, we pass the compiler only the substring of
-  // the source the lazy function occupies. With chunked decompression, we
-  // may not even have the complete uncompressed source present in memory. But
-  // parse node positions are offsets within the ScriptSource's full text,
-  // and LazyScripts indicate their substring of the full source by its
-  // starting and ending offsets within the full text. This
-  // scriptSourceOffset field lets the frontend convert between these
-  // offsets and offsets within the substring presented for compilation.
+  // When we compile a lazy script, we pass the compiler only the substring of
+  // the source the lazy function occupies. With chunked decompression, we may
+  // not even have the complete uncompressed source present in memory. But parse
+  // node positions are offsets within the ScriptSource's full text, and
+  // BaseScript indicate their substring of the full source by its starting and
+  // ending offsets within the full text. This scriptSourceOffset field lets the
+  // frontend convert between these offsets and offsets within the substring
+  // presented for compilation.
   unsigned scriptSourceOffset = 0;
 
-  // isRunOnce only applies to non-function scripts.
+  // These only apply to non-function scripts.
   bool isRunOnce = false;
-
-  bool nonSyntacticScope = false;
   bool noScriptRval = false;
-  bool allowSyntaxParser = true;
-
- private:
-  friend class CompileOptions;
 
  protected:
   ReadOnlyCompileOptions() = default;
 
-  // Set all POD options (those not requiring reference counts, copies,
-  // rooting, or other hand-holding) to their values in |rhs|.
-  void copyPODOptions(const ReadOnlyCompileOptions& rhs);
+  void copyPODNonTransitiveOptions(const ReadOnlyCompileOptions& rhs);
 
- public:
-  // Read-only accessors for non-POD options. The proper way to set these
-  // depends on the derived type.
-  bool mutedErrors() const { return mutedErrors_; }
-  const char* filename() const { return filename_; }
-  const char* introducerFilename() const { return introducerFilename_; }
-  const char16_t* sourceMapURL() const { return sourceMapURL_; }
-  JSObject* element() const override = 0;
-  JSString* elementAttributeName() const override = 0;
-  JSScript* introductionScript() const override = 0;
-  JSScript* scriptOrModule() const override = 0;
-
- private:
-  void operator=(const ReadOnlyCompileOptions&) = delete;
+  ReadOnlyCompileOptions(const ReadOnlyCompileOptions&) = delete;
+  ReadOnlyCompileOptions& operator=(const ReadOnlyCompileOptions&) = delete;
 };
 
 /**
@@ -236,17 +233,17 @@ class JS_PUBLIC_API ReadOnlyCompileOptions : public TransitiveCompileOptions {
  * anything else it entrains, will never be freed.
  */
 class JS_PUBLIC_API OwningCompileOptions final : public ReadOnlyCompileOptions {
-  PersistentRooted<JSObject*> elementRoot;
   PersistentRooted<JSString*> elementAttributeNameRoot;
   PersistentRooted<JSScript*> introductionScriptRoot;
   PersistentRooted<JSScript*> scriptOrModuleRoot;
+  PersistentRooted<Value> privateValueRoot;
 
  public:
   // A minimal constructor, for use with OwningCompileOptions::copy.
   explicit OwningCompileOptions(JSContext* cx);
   ~OwningCompileOptions();
 
-  JSObject* element() const override { return elementRoot; }
+  Value privateValue() const override { return privateValueRoot; }
   JSString* elementAttributeName() const override {
     return elementAttributeNameRoot;
   }
@@ -258,113 +255,13 @@ class JS_PUBLIC_API OwningCompileOptions final : public ReadOnlyCompileOptions {
   /** Set this to a copy of |rhs|.  Return false on OOM. */
   bool copy(JSContext* cx, const ReadOnlyCompileOptions& rhs);
 
-  /* These setters make copies of their string arguments and are fallible. */
-  MOZ_MUST_USE bool setFile(JSContext* cx, const char* f);
-  MOZ_MUST_USE bool setFileAndLine(JSContext* cx, const char* f, unsigned l);
-  MOZ_MUST_USE bool setSourceMapURL(JSContext* cx, const char16_t* s);
-  MOZ_MUST_USE bool setIntroducerFilename(JSContext* cx, const char* s);
-
-  /* These setters are infallible, and can be chained. */
-
-  OwningCompileOptions& setLine(unsigned l) {
-    lineno = l;
-    return *this;
-  }
-
-  OwningCompileOptions& setElement(JSObject* e) {
-    elementRoot = e;
-    return *this;
-  }
-
-  OwningCompileOptions& setElementAttributeName(JSString* p) {
-    elementAttributeNameRoot = p;
-    return *this;
-  }
-
-  OwningCompileOptions& setIntroductionScript(JSScript* s) {
-    introductionScriptRoot = s;
-    return *this;
-  }
-
-  OwningCompileOptions& setScriptOrModule(JSScript* s) {
-    scriptOrModuleRoot = s;
-    return *this;
-  }
-
-  OwningCompileOptions& setMutedErrors(bool mute) {
-    mutedErrors_ = mute;
-    return *this;
-  }
-
-  OwningCompileOptions& setColumn(unsigned c) {
-    column = c;
-    return *this;
-  }
-
-  OwningCompileOptions& setScriptSourceOffset(unsigned o) {
-    scriptSourceOffset = o;
-    return *this;
-  }
-
-  OwningCompileOptions& setIsRunOnce(bool once) {
-    isRunOnce = once;
-    return *this;
-  }
-
-  OwningCompileOptions& setNoScriptRval(bool nsr) {
-    noScriptRval = nsr;
-    return *this;
-  }
-
-  OwningCompileOptions& setSelfHostingMode(bool shm) {
-    selfHostingMode = shm;
-    return *this;
-  }
-
-  OwningCompileOptions& setCanLazilyParse(bool clp) {
-    canLazilyParse = clp;
-    return *this;
-  }
-
-  OwningCompileOptions& setAllowSyntaxParser(bool clp) {
-    allowSyntaxParser = clp;
-    return *this;
-  }
-
-  OwningCompileOptions& setSourceIsLazy(bool l) {
-    sourceIsLazy = l;
-    return *this;
-  }
-
-  OwningCompileOptions& setNonSyntacticScope(bool n) {
-    nonSyntacticScope = n;
-    return *this;
-  }
-
-  OwningCompileOptions& setIntroductionType(const char* t) {
-    introductionType = t;
-    return *this;
-  }
-
-  bool setIntroductionInfo(JSContext* cx, const char* introducerFn,
-                           const char* intro, unsigned line, JSScript* script,
-                           uint32_t offset) {
-    if (!setIntroducerFilename(cx, introducerFn)) {
-      return false;
-    }
-
-    introductionType = intro;
-    introductionLineno = line;
-    introductionScriptRoot = script;
-    introductionOffset = offset;
-    hasIntroductionInfo = true;
-    return true;
-  }
-
   size_t sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf) const;
 
  private:
-  void operator=(const CompileOptions& rhs) = delete;
+  void release();
+
+  OwningCompileOptions(const OwningCompileOptions&) = delete;
+  OwningCompileOptions& operator=(const OwningCompileOptions&) = delete;
 };
 
 /**
@@ -377,49 +274,36 @@ class JS_PUBLIC_API OwningCompileOptions final : public ReadOnlyCompileOptions {
 class MOZ_STACK_CLASS JS_PUBLIC_API CompileOptions final
     : public ReadOnlyCompileOptions {
  private:
-  Rooted<JSObject*> elementRoot;
   Rooted<JSString*> elementAttributeNameRoot;
   Rooted<JSScript*> introductionScriptRoot;
   Rooted<JSScript*> scriptOrModuleRoot;
+  Rooted<Value> privateValueRoot;
 
  public:
+  // Default options determined using the JSContext.
   explicit CompileOptions(JSContext* cx);
 
+  // Copy both the transitive and the non-transitive options from another
+  // options object.
   CompileOptions(JSContext* cx, const ReadOnlyCompileOptions& rhs)
       : ReadOnlyCompileOptions(),
-        elementRoot(cx),
         elementAttributeNameRoot(cx),
         introductionScriptRoot(cx),
-        scriptOrModuleRoot(cx) {
-    copyPODOptions(rhs);
-
-    filename_ = rhs.filename();
-    introducerFilename_ = rhs.introducerFilename();
-    sourceMapURL_ = rhs.sourceMapURL();
-    elementRoot = rhs.element();
-    elementAttributeNameRoot = rhs.elementAttributeName();
-    introductionScriptRoot = rhs.introductionScript();
-    scriptOrModuleRoot = rhs.scriptOrModule();
-  }
-
-  CompileOptions(JSContext* cx, const TransitiveCompileOptions& rhs)
-      : ReadOnlyCompileOptions(),
-        elementRoot(cx),
-        elementAttributeNameRoot(cx),
-        introductionScriptRoot(cx),
-        scriptOrModuleRoot(cx) {
+        scriptOrModuleRoot(cx),
+        privateValueRoot(cx) {
+    copyPODNonTransitiveOptions(rhs);
     copyPODTransitiveOptions(rhs);
 
     filename_ = rhs.filename();
     introducerFilename_ = rhs.introducerFilename();
     sourceMapURL_ = rhs.sourceMapURL();
-    elementRoot = rhs.element();
+    privateValueRoot = rhs.privateValue();
     elementAttributeNameRoot = rhs.elementAttributeName();
     introductionScriptRoot = rhs.introductionScript();
     scriptOrModuleRoot = rhs.scriptOrModule();
   }
 
-  JSObject* element() const override { return elementRoot; }
+  Value privateValue() const override { return privateValueRoot; }
 
   JSString* elementAttributeName() const override {
     return elementAttributeNameRoot;
@@ -452,18 +336,13 @@ class MOZ_STACK_CLASS JS_PUBLIC_API CompileOptions final
     return *this;
   }
 
-  CompileOptions& setElement(JSObject* e) {
-    elementRoot = e;
+  CompileOptions& setPrivateValue(const Value& v) {
+    privateValueRoot = v;
     return *this;
   }
 
   CompileOptions& setElementAttributeName(JSString* p) {
     elementAttributeNameRoot = p;
-    return *this;
-  }
-
-  CompileOptions& setIntroductionScript(JSScript* s) {
-    introductionScriptRoot = s;
     return *this;
   }
 
@@ -497,18 +376,13 @@ class MOZ_STACK_CLASS JS_PUBLIC_API CompileOptions final
     return *this;
   }
 
+  CompileOptions& setSkipFilenameValidation(bool b) {
+    skipFilenameValidation_ = b;
+    return *this;
+  }
+
   CompileOptions& setSelfHostingMode(bool shm) {
     selfHostingMode = shm;
-    return *this;
-  }
-
-  CompileOptions& setCanLazilyParse(bool clp) {
-    canLazilyParse = clp;
-    return *this;
-  }
-
-  CompileOptions& setAllowSyntaxParser(bool clp) {
-    allowSyntaxParser = clp;
     return *this;
   }
 
@@ -543,13 +417,18 @@ class MOZ_STACK_CLASS JS_PUBLIC_API CompileOptions final
   CompileOptions& setIntroductionInfoToCaller(JSContext* cx,
                                               const char* introductionType);
 
-  CompileOptions& maybeMakeStrictMode(bool strict) {
-    strictOption = strictOption || strict;
+  CompileOptions& setForceFullParse() {
+    forceFullParse_ = true;
     return *this;
   }
 
- private:
-  void operator=(const CompileOptions& rhs) = delete;
+  CompileOptions& setForceStrictMode() {
+    forceStrictMode_ = true;
+    return *this;
+  }
+
+  CompileOptions(const CompileOptions& rhs) = delete;
+  CompileOptions& operator=(const CompileOptions& rhs) = delete;
 };
 
 }  // namespace JS

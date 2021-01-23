@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "GeneratedJNIWrappers.h"
+#include "mozilla/java/HardwareCodecCapabilityUtilsWrappers.h"
 #include "MediaInfo.h"
 #include "OpusDecoder.h"
 #include "RemoteDataDecoder.h"
@@ -26,7 +26,6 @@
           ("%s: " arg, __func__, ##__VA_ARGS__))
 
 using namespace mozilla;
-using namespace mozilla::java::sdk;
 using media::TimeUnit;
 
 namespace mozilla {
@@ -74,6 +73,7 @@ bool AndroidDecoderModule::SupportsMimeType(const nsACString& aMimeType) {
   // To avoid this we check for wav types here.
   if (aMimeType.EqualsLiteral("audio/x-wav") ||
       aMimeType.EqualsLiteral("audio/wave; codecs=1") ||
+      aMimeType.EqualsLiteral("audio/wave; codecs=3") ||
       aMimeType.EqualsLiteral("audio/wave; codecs=6") ||
       aMimeType.EqualsLiteral("audio/wave; codecs=7") ||
       aMimeType.EqualsLiteral("audio/wave; codecs=65534")) {
@@ -101,6 +101,12 @@ bool AndroidDecoderModule::SupportsMimeType(const nsACString& aMimeType) {
   // Not all android devices support Theora even when they say they do.
   if (TheoraDecoder::IsTheora(aMimeType)) {
     SLOG("Rejecting video of type %s", aMimeType.Data());
+    return false;
+  }
+
+  if (aMimeType.EqualsLiteral("audio/mpeg") &&
+      StaticPrefs::media_ffvpx_mp3_enabled()) {
+    // Prefer the ffvpx mp3 software decoder if available.
     return false;
   }
 

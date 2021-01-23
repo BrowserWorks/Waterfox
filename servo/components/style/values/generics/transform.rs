@@ -11,8 +11,8 @@ use crate::values::specified::length::Length as SpecifiedLength;
 use crate::values::specified::length::LengthPercentage as SpecifiedLengthPercentage;
 use crate::values::{computed, CSSFloat};
 use crate::Zero;
-use app_units::Au;
-use euclid::{self, Rect, Transform3D};
+use euclid;
+use euclid::default::{Rect, Transform3D};
 use std::fmt::{self, Write};
 use style_traits::{CssWriter, ToCss};
 
@@ -22,8 +22,10 @@ use style_traits::{CssWriter, ToCss};
     Clone,
     Copy,
     Debug,
+    Deserialize,
     MallocSizeOf,
     PartialEq,
+    Serialize,
     SpecifiedValueInfo,
     ToComputedValue,
     ToCss,
@@ -50,8 +52,10 @@ pub use self::GenericMatrix as Matrix;
     Clone,
     Copy,
     Debug,
+    Deserialize,
     MallocSizeOf,
     PartialEq,
+    Serialize,
     SpecifiedValueInfo,
     ToComputedValue,
     ToCss,
@@ -140,8 +144,10 @@ fn is_same<N: PartialEq>(x: &N, y: &N) -> bool {
 #[derive(
     Clone,
     Debug,
+    Deserialize,
     MallocSizeOf,
     PartialEq,
+    Serialize,
     SpecifiedValueInfo,
     ToComputedValue,
     ToCss,
@@ -150,7 +156,6 @@ fn is_same<N: PartialEq>(x: &N, y: &N) -> bool {
 )]
 #[repr(C, u8)]
 /// A single operation in the list of a `transform` value
-/// cbindgen:derive-tagged-enum-copy-constructor=true
 pub enum GenericTransformOperation<Angle, Number, Length, Integer, LengthPercentage>
 where
     Angle: Zero,
@@ -240,16 +245,24 @@ where
     #[allow(missing_docs)]
     #[css(comma, function = "interpolatematrix")]
     InterpolateMatrix {
-        from_list: GenericTransform<GenericTransformOperation<Angle, Number, Length, Integer, LengthPercentage>>,
-        to_list: GenericTransform<GenericTransformOperation<Angle, Number, Length, Integer, LengthPercentage>>,
+        from_list: GenericTransform<
+            GenericTransformOperation<Angle, Number, Length, Integer, LengthPercentage>,
+        >,
+        to_list: GenericTransform<
+            GenericTransformOperation<Angle, Number, Length, Integer, LengthPercentage>,
+        >,
         progress: computed::Percentage,
     },
     /// A intermediate type for accumulation of mismatched transform lists.
     #[allow(missing_docs)]
     #[css(comma, function = "accumulatematrix")]
     AccumulateMatrix {
-        from_list: GenericTransform<GenericTransformOperation<Angle, Number, Length, Integer, LengthPercentage>>,
-        to_list: GenericTransform<GenericTransformOperation<Angle, Number, Length, Integer, LengthPercentage>>,
+        from_list: GenericTransform<
+            GenericTransformOperation<Angle, Number, Length, Integer, LengthPercentage>,
+        >,
+        to_list: GenericTransform<
+            GenericTransformOperation<Angle, Number, Length, Integer, LengthPercentage>,
+        >,
         count: Integer,
     },
 }
@@ -259,8 +272,10 @@ pub use self::GenericTransformOperation as TransformOperation;
 #[derive(
     Clone,
     Debug,
+    Deserialize,
     MallocSizeOf,
     PartialEq,
+    Serialize,
     SpecifiedValueInfo,
     ToComputedValue,
     ToCss,
@@ -313,7 +328,7 @@ where
 /// Convert a length type into the absolute lengths.
 pub trait ToAbsoluteLength {
     /// Returns the absolute length as pixel value.
-    fn to_pixel_length(&self, containing_len: Option<Au>) -> Result<CSSFloat, ()>;
+    fn to_pixel_length(&self, containing_len: Option<ComputedLength>) -> Result<CSSFloat, ()>;
 }
 
 impl ToAbsoluteLength for SpecifiedLength {
@@ -321,7 +336,7 @@ impl ToAbsoluteLength for SpecifiedLength {
     // parsing a transform list of DOMMatrix because we want to return a DOM Exception
     // if there is relative length.
     #[inline]
-    fn to_pixel_length(&self, _containing_len: Option<Au>) -> Result<CSSFloat, ()> {
+    fn to_pixel_length(&self, _containing_len: Option<ComputedLength>) -> Result<CSSFloat, ()> {
         match *self {
             SpecifiedLength::NoCalc(len) => len.to_computed_pixel_length_without_context(),
             SpecifiedLength::Calc(ref calc) => calc.to_computed_pixel_length_without_context(),
@@ -334,34 +349,34 @@ impl ToAbsoluteLength for SpecifiedLengthPercentage {
     // parsing a transform list of DOMMatrix because we want to return a DOM Exception
     // if there is relative length.
     #[inline]
-    fn to_pixel_length(&self, _containing_len: Option<Au>) -> Result<CSSFloat, ()> {
+    fn to_pixel_length(&self, _containing_len: Option<ComputedLength>) -> Result<CSSFloat, ()> {
         use self::SpecifiedLengthPercentage::*;
         match *self {
             Length(len) => len.to_computed_pixel_length_without_context(),
             Calc(ref calc) => calc.to_computed_pixel_length_without_context(),
-            _ => Err(()),
+            Percentage(..) => Err(()),
         }
     }
 }
 
 impl ToAbsoluteLength for ComputedLength {
     #[inline]
-    fn to_pixel_length(&self, _containing_len: Option<Au>) -> Result<CSSFloat, ()> {
+    fn to_pixel_length(&self, _containing_len: Option<ComputedLength>) -> Result<CSSFloat, ()> {
         Ok(self.px())
     }
 }
 
 impl ToAbsoluteLength for ComputedLengthPercentage {
     #[inline]
-    fn to_pixel_length(&self, containing_len: Option<Au>) -> Result<CSSFloat, ()> {
+    fn to_pixel_length(&self, containing_len: Option<ComputedLength>) -> Result<CSSFloat, ()> {
         match containing_len {
-            Some(relative_len) => Ok(self.to_pixel_length(relative_len).px()),
+            Some(relative_len) => Ok(self.resolve(relative_len).px()),
             // If we don't have reference box, we cannot resolve the used value,
             // so only retrieve the length part. This will be used for computing
             // distance without any layout info.
             //
             // FIXME(emilio): This looks wrong.
-            None => Ok(self.length_component().px()),
+            None => Ok(self.resolve(Zero::zero()).px()),
         }
     }
 }
@@ -372,7 +387,10 @@ pub trait ToMatrix {
     fn is_3d(&self) -> bool;
 
     /// Return the equivalent 3d matrix.
-    fn to_3d_matrix(&self, reference_box: Option<&Rect<Au>>) -> Result<Transform3D<f64>, ()>;
+    fn to_3d_matrix(
+        &self,
+        reference_box: Option<&Rect<ComputedLength>>,
+    ) -> Result<Transform3D<f64>, ()>;
 }
 
 /// A little helper to deal with both specified and computed angles.
@@ -418,7 +436,10 @@ where
     /// However, for specified TransformOperation, we will return Err(()) if there is any relative
     /// lengths because the only caller, DOMMatrix, doesn't accept relative lengths.
     #[inline]
-    fn to_3d_matrix(&self, reference_box: Option<&Rect<Au>>) -> Result<Transform3D<f64>, ()> {
+    fn to_3d_matrix(
+        &self,
+        reference_box: Option<&Rect<ComputedLength>>,
+    ) -> Result<Transform3D<f64>, ()> {
         use self::TransformOperation::*;
         use std::f64;
 
@@ -521,7 +542,7 @@ impl<T: ToMatrix> Transform<T> {
     #[cfg_attr(rustfmt, rustfmt_skip)]
     pub fn to_transform_3d_matrix(
         &self,
-        reference_box: Option<&Rect<Au>>
+        reference_box: Option<&Rect<ComputedLength>>
     ) -> Result<(Transform3D<CSSFloat>, bool), ()> {
         let cast_3d_transform = |m: Transform3D<f64>| -> Transform3D<CSSFloat> {
             use std::{f32, f64};
@@ -534,6 +555,15 @@ impl<T: ToMatrix> Transform<T> {
             )
         };
 
+        let (m, is_3d) = self.to_transform_3d_matrix_f64(reference_box)?;
+        Ok((cast_3d_transform(m), is_3d))
+    }
+
+    /// Same as Transform::to_transform_3d_matrix but a f64 version.
+    pub fn to_transform_3d_matrix_f64(
+        &self,
+        reference_box: Option<&Rect<ComputedLength>>,
+    ) -> Result<(Transform3D<f64>, bool), ()> {
         // We intentionally use Transform3D<f64> during computation to avoid error propagation
         // because using f32 to compute triangle functions (e.g. in create_rotation()) is not
         // accurate enough. In Gecko, we also use "double" to compute the triangle functions.
@@ -545,10 +575,10 @@ impl<T: ToMatrix> Transform<T> {
         for operation in &*self.0 {
             let matrix = operation.to_3d_matrix(reference_box)?;
             contain_3d |= operation.is_3d();
-            transform = transform.pre_mul(&matrix);
+            transform = transform.pre_transform(&matrix);
         }
 
-        Ok((cast_3d_transform(transform), contain_3d))
+        Ok((transform, contain_3d))
     }
 }
 
@@ -594,8 +624,10 @@ pub fn get_normalized_vector_and_angle<T: Zero>(
     Clone,
     Copy,
     Debug,
+    Deserialize,
     MallocSizeOf,
     PartialEq,
+    Serialize,
     SpecifiedValueInfo,
     ToAnimatedZero,
     ToComputedValue,
@@ -606,6 +638,7 @@ pub fn get_normalized_vector_and_angle<T: Zero>(
 /// A value of the `Rotate` property
 ///
 /// <https://drafts.csswg.org/css-transforms-2/#individual-transforms>
+/// cbindgen:private-default-tagged-enum-constructor=false
 pub enum GenericRotate<Number, Angle> {
     /// 'none'
     None,
@@ -668,8 +701,10 @@ where
     Clone,
     Copy,
     Debug,
+    Deserialize,
     MallocSizeOf,
     PartialEq,
+    Serialize,
     SpecifiedValueInfo,
     ToAnimatedZero,
     ToComputedValue,
@@ -680,48 +715,63 @@ where
 /// A value of the `Scale` property
 ///
 /// <https://drafts.csswg.org/css-transforms-2/#individual-transforms>
+/// cbindgen:private-default-tagged-enum-constructor=false
 pub enum GenericScale<Number> {
     /// 'none'
     None,
-    /// '<number>{1,2}'
-    Scale(Number, Number),
-    /// '<number>{3}'
-    Scale3D(Number, Number, Number),
+    /// '<number>{1,3}'
+    Scale(Number, Number, Number),
 }
 
 pub use self::GenericScale as Scale;
 
-impl<Number: ToCss + PartialEq> ToCss for Scale<Number> {
+impl<Number> ToCss for Scale<Number>
+where
+    Number: ToCss + PartialEq + Copy,
+    f32: From<Number>,
+{
     fn to_css<W>(&self, dest: &mut CssWriter<W>) -> fmt::Result
     where
         W: fmt::Write,
+        f32: From<Number>,
     {
         match *self {
             Scale::None => dest.write_str("none"),
-            Scale::Scale(ref x, ref y) => {
+            Scale::Scale(ref x, ref y, ref z) => {
                 x.to_css(dest)?;
-                if x != y {
+
+                let is_3d = f32::from(*z) != 1.0;
+                if is_3d || x != y {
                     dest.write_char(' ')?;
                     y.to_css(dest)?;
                 }
+
+                if is_3d {
+                    dest.write_char(' ')?;
+                    z.to_css(dest)?;
+                }
                 Ok(())
-            },
-            Scale::Scale3D(ref x, ref y, ref z) => {
-                x.to_css(dest)?;
-                dest.write_char(' ')?;
-                y.to_css(dest)?;
-                dest.write_char(' ')?;
-                z.to_css(dest)
             },
         }
     }
 }
 
+#[inline]
+fn y_axis_and_z_axis_are_zero<LengthPercentage: Zero, Length: Zero>(
+    _: &LengthPercentage,
+    y: &LengthPercentage,
+    z: &Length,
+) -> bool {
+    y.is_zero() && z.is_zero()
+}
+
 #[derive(
     Clone,
     Debug,
+    Deserialize,
     MallocSizeOf,
     PartialEq,
+    Serialize,
     SpecifiedValueInfo,
     ToAnimatedZero,
     ToComputedValue,
@@ -738,25 +788,25 @@ impl<Number: ToCss + PartialEq> ToCss for Scale<Number> {
 /// or two values (per usual, if the second value is 0px, the default, it must
 /// be omitted when serializing).
 ///
-/// If a 3d translation is specified, all three values must be serialized.
-///
-/// We don't omit the 3rd component even if it is 0px for now, and the
-/// related spec issue is https://github.com/w3c/csswg-drafts/issues/3305
+/// If a 3d translation is specified and the value can be expressed as 2d, we treat as 2d and
+/// serialize accoringly. Otherwise, we serialize all three values.
+/// https://github.com/w3c/csswg-drafts/issues/3305
 ///
 /// <https://drafts.csswg.org/css-transforms-2/#individual-transforms>
+/// cbindgen:private-default-tagged-enum-constructor=false
 pub enum GenericTranslate<LengthPercentage, Length>
 where
     LengthPercentage: Zero,
+    Length: Zero,
 {
     /// 'none'
     None,
-    /// '<length-percentage>' or '<length-percentage> <length-percentage>'
+    /// <length-percentage> [ <length-percentage> <length>? ]?
     Translate(
         LengthPercentage,
-        #[css(skip_if = "Zero::is_zero")] LengthPercentage,
+        #[css(contextual_skip_if = "y_axis_and_z_axis_are_zero")] LengthPercentage,
+        #[css(skip_if = "Zero::is_zero")] Length,
     ),
-    /// '<length-percentage> <length-percentage> <length>'
-    Translate3D(LengthPercentage, LengthPercentage, Length),
 }
 
 pub use self::GenericTranslate as Translate;
@@ -775,9 +825,8 @@ pub use self::GenericTranslate as Translate;
     ToResolvedValue,
     ToShmem,
 )]
+#[repr(u8)]
 pub enum TransformStyle {
-    #[cfg(feature = "servo")]
-    Auto,
     Flat,
     #[css(keyword = "preserve-3d")]
     Preserve3d,

@@ -8,6 +8,9 @@ FINAL_LIBRARY = 'mozglue'
 
 EXPORTS.mozilla += [
     'AutoProfilerLabel.h',
+    'decimal/Decimal.h',
+    'decimal/DoubleConversion.h',
+    'MmapFaultHandler.h',
     'PlatformConditionVariable.h',
     'PlatformMutex.h',
     'Printf.h',
@@ -17,6 +20,7 @@ EXPORTS.mozilla += [
 
 EXPORTS.mozilla.glue += [
     'Debug.h',
+    'WinUtils.h',
 ]
 
 if CONFIG['OS_ARCH'] == 'WINNT':
@@ -27,14 +31,13 @@ if CONFIG['OS_ARCH'] == 'WINNT':
 
 SOURCES += [
     'AutoProfilerLabel.cpp',
+    'MmapFaultHandler.cpp',
     'Printf.cpp',
     'StackWalk.cpp',
     'TimeStamp.cpp',
 ]
 
 OS_LIBS += CONFIG['REALTIME_LIBS']
-
-DEFINES['IMPL_MFBT'] = True
 
 if CONFIG['OS_ARCH'] == 'WINNT':
     DIRS += [
@@ -50,10 +53,14 @@ if CONFIG['OS_ARCH'] == 'WINNT':
         'WindowsMapRemoteView.h',
         'WindowsProcessMitigations.h',
     ]
+    EXPORTS.mozilla.glue += [
+        'WindowsUnicode.h',
+    ]
     SOURCES += [
         'TimeStamp_windows.cpp',
         'WindowsMapRemoteView.cpp',
         'WindowsProcessMitigations.cpp',
+        'WindowsUnicode.cpp',
     ]
     OS_LIBS += ['dbghelp']
 elif CONFIG['HAVE_CLOCK_MONOTONIC']:
@@ -77,3 +84,16 @@ else:
         'ConditionVariable_posix.cpp',
         'Mutex_posix.cpp',
     ]
+
+if CONFIG['MOZ_LINKER'] or CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
+    LOCAL_INCLUDES += [
+        '/mozglue/linker',
+    ]
+
+SOURCES += [
+    'decimal/Decimal.cpp',
+]
+
+if CONFIG['CC_TYPE'] == 'clang':
+    # Suppress warnings from third-party V8 Decimal code.
+    SOURCES['decimal/Decimal.cpp'].flags += ['-Wno-implicit-fallthrough']

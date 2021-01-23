@@ -56,7 +56,7 @@ In case you want to run the tests with another binary like [Firefox Nightly]:
 	% ./mach marionette-test --binary /path/to/nightly/firefox TEST
 
 When working on Marionette it is often useful to surface the stdout
-from Gecko, which can be achived using the `--gecko-log` option.
+from Gecko, which can be achieved using the `--gecko-log` option.
 See <Debugging.html> for usage instructions, but the gist is that
 you can redirect all Gecko output to stdout:
 
@@ -119,8 +119,7 @@ option. Marionette Test Runner will take care of forwarding the port and
 starting Fennec with the correct prefs. (You may need to run
 `adb forward --remove-all` to allow the runner to start.)
 
-    % ./mach marionette-test --emulator --app='fennec' --address=127.0.0.1:2828 --disable-e10s
-    --startup-timeout=300
+    % ./mach marionette-test --emulator --app='fennec' --address=127.0.0.1:2828 --startup-timeout=300
 
 If you need to troubleshoot the Marionette connection, the most basic check is
 to start Fennec, make sure the `marionette.enabled` browser preference is

@@ -15,14 +15,10 @@ add_task(async function test_setup() {
   requestLongerTimeout(2);
 
   // Stop search-engine loads from hitting the network
-  await Services.search.addEngineWithDetails(
-    "MozSearch",
-    "",
-    "",
-    "",
-    "GET",
-    "http://example.com/?q={searchTerms}"
-  );
+  await Services.search.addEngineWithDetails("MozSearch", {
+    method: "GET",
+    template: "http://example.com/?q={searchTerms}",
+  });
   let engine = Services.search.getEngineByName("MozSearch");
   originalEngine = await Services.search.getDefault();
   await Services.search.setDefault(engine);
@@ -32,17 +28,8 @@ add_task(async function test_setup() {
 add_task(async function single_url() {
   await dropText("mochi.test/first", ["http://www.mochi.test/first"]);
 });
-add_task(async function single_javascript() {
-  await dropText("javascript:'bad'", ["javascript:'bad'"]);
-});
-add_task(async function single_javascript_capital() {
-  await dropText("jAvascript:'bad'", ["javascript:'bad'"]);
-});
 add_task(async function single_url2() {
   await dropText("mochi.test/second", ["http://www.mochi.test/second"]);
-});
-add_task(async function single_data_url() {
-  await dropText("data:text/html,bad", ["data:text/html,bad"]);
 });
 add_task(async function single_url3() {
   await dropText("mochi.test/third", ["http://www.mochi.test/third"]);
@@ -53,18 +40,6 @@ add_task(async function multiple_urls() {
   await dropText("mochi.test/1\nmochi.test/2", [
     "http://www.mochi.test/1",
     "http://www.mochi.test/2",
-  ]);
-});
-add_task(async function multiple_urls_javascript() {
-  await dropText("javascript:'bad1'\nmochi.test/3", [
-    "javascript:'bad1'",
-    "http://www.mochi.test/3",
-  ]);
-});
-add_task(async function multiple_urls_data() {
-  await dropText("mochi.test/4\ndata:text/html,bad1", [
-    "http://www.mochi.test/4",
-    "data:text/html,bad1",
   ]);
 });
 
@@ -203,9 +178,7 @@ function dropText(text, expectedURLs) {
 async function drop(dragData, expectedURLs) {
   let dragDataString = JSON.stringify(dragData);
   info(
-    `Starting test for dragData:${dragDataString}; expectedURLs.length:${
-      expectedURLs.length
-    }`
+    `Starting test for dragData:${dragDataString}; expectedURLs.length:${expectedURLs.length}`
   );
   let EventUtils = {};
   Services.scriptloader.loadSubScript(
@@ -213,10 +186,15 @@ async function drop(dragData, expectedURLs) {
     EventUtils
   );
 
-  // Since synthesizeDrop triggers the srcElement, need to use another button.
-  let dragSrcElement = document.getElementById("downloads-button");
-  ok(dragSrcElement, "Downloads button exists");
-  let newTabButton = document.getElementById("new-tab-button");
+  // Since synthesizeDrop triggers the srcElement, need to use another button
+  // that should be visible.
+  let dragSrcElement = document.getElementById("sidebar-button");
+  ok(dragSrcElement, "Sidebar button exists");
+  let newTabButton = document.getElementById(
+    gBrowser.tabContainer.hasAttribute("overflow")
+      ? "new-tab-button"
+      : "tabs-newtab-button"
+  );
   ok(newTabButton, "New Tab button exists");
 
   let awaitDrop = BrowserTestUtils.waitForEvent(newTabButton, "drop");

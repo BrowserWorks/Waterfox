@@ -9,6 +9,13 @@ const { NetUtil } = ChromeUtils.import("resource://gre/modules/NetUtil.jsm");
 const gAppRep = Cc[
   "@mozilla.org/reputationservice/application-reputation-service;1"
 ].getService(Ci.nsIApplicationReputationService);
+
+const ReferrerInfo = Components.Constructor(
+  "@mozilla.org/referrer-info;1",
+  "nsIReferrerInfo",
+  "init"
+);
+
 var gHttpServ = null;
 var gTables = {};
 var gExpectedRemote = false;
@@ -28,6 +35,13 @@ var binaryFile = "binaryFile.exe";
 var nonBinaryFile = "nonBinaryFile.txt";
 
 const appRepURLPref = "browser.safebrowsing.downloads.remote.url";
+
+function createReferrerInfo(
+  aURI,
+  aRefererPolicy = Ci.nsIReferrerInfo.NO_REFERRER
+) {
+  return new ReferrerInfo(aRefererPolicy, true, aURI);
+}
 
 function readFileToString(aFilename) {
   let f = do_get_file(aFilename);
@@ -283,28 +297,51 @@ add_test(function test_local_blacklist() {
   );
 });
 
-add_test(function test_referer_blacklist() {
+add_test(async function test_referer_blacklist() {
   Services.prefs.setCharPref(appRepURLPref, "http://localhost:4444/download");
-  let expected = get_telemetry_snapshot();
-  expected.shouldBlock++;
-  add_telemetry_count(expected.local, BLOCK_LIST, 1);
-  add_telemetry_count(expected.local, NO_LIST, 1);
-  add_telemetry_count(expected.reason, LocalBlocklist, 1);
+  let testReferrerPolicies = [
+    Ci.nsIReferrerInfo.EMPTY,
+    Ci.nsIReferrerInfo.NO_REFERRER,
+    Ci.nsIReferrerInfo.NO_REFERRER_WHEN_DOWNGRADE,
+    Ci.nsIReferrerInfo.ORIGIN,
+    Ci.nsIReferrerInfo.ORIGIN_WHEN_CROSS_ORIGIN,
+    Ci.nsIReferrerInfo.UNSAFE_URL,
+    Ci.nsIReferrerInfo.SAME_ORIGIN,
+    Ci.nsIReferrerInfo.STRICT_ORIGIN,
+    Ci.nsIReferrerInfo.STRICT_ORIGIN_WHEN_CROSS_ORIGIN,
+  ];
 
-  gAppRep.queryReputation(
-    {
-      sourceURI: exampleURI,
-      referrerURI: blocklistedURI,
-      fileSize: 12,
-    },
-    function onComplete(aShouldBlock, aStatus) {
-      Assert.equal(Cr.NS_OK, aStatus);
-      Assert.ok(aShouldBlock);
-      check_telemetry(expected);
+  function runReferrerPolicyTest(referrerPolicy) {
+    return new Promise(resolve => {
+      let expected = get_telemetry_snapshot();
+      expected.shouldBlock++;
+      add_telemetry_count(expected.local, BLOCK_LIST, 1);
+      add_telemetry_count(expected.local, NO_LIST, 1);
+      add_telemetry_count(expected.reason, LocalBlocklist, 1);
 
-      run_next_test();
-    }
-  );
+      gAppRep.queryReputation(
+        {
+          sourceURI: exampleURI,
+          referrerInfo: createReferrerInfo(blocklistedURI, referrerPolicy),
+          fileSize: 12,
+        },
+        function onComplete(aShouldBlock, aStatus) {
+          Assert.equal(Cr.NS_OK, aStatus);
+          Assert.ok(aShouldBlock);
+          check_telemetry(expected);
+          resolve();
+        }
+      );
+    });
+  }
+
+  // We run tests with referrer policies but download protection should use
+  // "full URL" original referrer to block the download
+  for (let i = 0; i < testReferrerPolicies.length; ++i) {
+    await runReferrerPolicyTest(testReferrerPolicies[i]);
+  }
+
+  run_next_test();
 });
 
 add_test(function test_blocklist_trumps_allowlist() {
@@ -318,9 +355,10 @@ add_test(function test_blocklist_trumps_allowlist() {
   gAppRep.queryReputation(
     {
       sourceURI: whitelistedURI,
-      referrerURI: blocklistedURI,
+      referrerInfo: createReferrerInfo(blocklistedURI),
       suggestedFileName: binaryFile,
       fileSize: 12,
+      signatureInfo: [],
     },
     function onComplete(aShouldBlock, aStatus) {
       Assert.equal(Cr.NS_OK, aStatus);
@@ -347,13 +385,13 @@ add_test(function test_redirect_on_blocklist() {
 
   let redirect1 = {
     QueryInterface: ChromeUtils.generateQI([Ci.nsIRedirectHistoryEntry]),
-    principal: secman.createCodebasePrincipal(exampleURI, {}),
+    principal: secman.createContentPrincipal(exampleURI, {}),
   };
   badRedirects.appendElement(redirect1);
 
   let redirect2 = {
     QueryInterface: ChromeUtils.generateQI([Ci.nsIRedirectHistoryEntry]),
-    principal: secman.createCodebasePrincipal(blocklistedURI, {}),
+    principal: secman.createContentPrincipal(blocklistedURI, {}),
   };
   badRedirects.appendElement(redirect2);
 
@@ -361,17 +399,18 @@ add_test(function test_redirect_on_blocklist() {
   // whitelist (i.e. it will match NO_LIST).
   let redirect3 = {
     QueryInterface: ChromeUtils.generateQI([Ci.nsIRedirectHistoryEntry]),
-    principal: secman.createCodebasePrincipal(whitelistedURI, {}),
+    principal: secman.createContentPrincipal(whitelistedURI, {}),
   };
   badRedirects.appendElement(redirect3);
 
   gAppRep.queryReputation(
     {
       sourceURI: whitelistedURI,
-      referrerURI: exampleURI,
+      referrerInfo: createReferrerInfo(exampleURI),
       redirects: badRedirects,
       suggestedFileName: binaryFile,
       fileSize: 12,
+      signatureInfo: [],
     },
     function onComplete(aShouldBlock, aStatus) {
       Assert.equal(Cr.NS_OK, aStatus);
@@ -392,6 +431,7 @@ add_test(function test_whitelisted_source() {
       sourceURI: whitelistedURI,
       suggestedFileName: binaryFile,
       fileSize: 12,
+      signatureInfo: [],
     },
     function onComplete(aShouldBlock, aStatus) {
       Assert.equal(Cr.NS_OK, aStatus);
@@ -427,10 +467,11 @@ add_test(function test_whitelisted_referrer() {
   let expected = get_telemetry_snapshot();
   add_telemetry_count(expected.local, NO_LIST, 2);
   add_telemetry_count(expected.reason, NonBinaryFile, 1);
+
   gAppRep.queryReputation(
     {
       sourceURI: exampleURI,
-      referrerURI: whitelistedURI,
+      referrerInfo: createReferrerInfo(exampleURI),
       fileSize: 12,
     },
     function onComplete(aShouldBlock, aStatus) {
@@ -454,7 +495,7 @@ add_test(function test_whitelisted_redirect() {
 
   let redirect1 = {
     QueryInterface: ChromeUtils.generateQI([Ci.nsIRedirectHistoryEntry]),
-    principal: secman.createCodebasePrincipal(exampleURI, {}),
+    principal: secman.createContentPrincipal(exampleURI, {}),
   };
   okayRedirects.appendElement(redirect1);
 
@@ -462,7 +503,7 @@ add_test(function test_whitelisted_redirect() {
   // whitelist (i.e. it will match NO_LIST).
   let redirect2 = {
     QueryInterface: ChromeUtils.generateQI([Ci.nsIRedirectHistoryEntry]),
-    principal: secman.createCodebasePrincipal(whitelistedURI, {}),
+    principal: secman.createContentPrincipal(whitelistedURI, {}),
   };
   okayRedirects.appendElement(redirect2);
 
@@ -499,7 +540,7 @@ add_test(function test_remote_lookup_protocolbuf() {
   let redirects = Cc["@mozilla.org/array;1"].createInstance(Ci.nsIMutableArray);
   let redirect1 = {
     QueryInterface: ChromeUtils.generateQI([Ci.nsIRedirectHistoryEntry]),
-    principal: secman.createCodebasePrincipal(exampleRedirectURI, {}),
+    principal: secman.createContentPrincipal(exampleRedirectURI, {}),
   };
   redirects.appendElement(redirect1);
 
@@ -509,11 +550,12 @@ add_test(function test_remote_lookup_protocolbuf() {
   gAppRep.queryReputation(
     {
       sourceURI: exampleURI,
-      referrerURI: exampleReferrerURI,
+      referrerInfo: createReferrerInfo(exampleReferrerURI),
       suggestedFileName: binaryFile,
       sha256Hash,
       redirects,
       fileSize: 12,
+      signatureInfo: [],
     },
     function onComplete(aShouldBlock, aStatus) {
       Assert.equal(Cr.NS_OK, aStatus);

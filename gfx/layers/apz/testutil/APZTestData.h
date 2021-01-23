@@ -9,14 +9,15 @@
 
 #include <map>
 
-#include "gfxPrefs.h"
 #include "nsDebug.h"  // for NS_WARNING
 #include "nsTArray.h"
 #include "mozilla/Assertions.h"       // for MOZ_ASSERT
 #include "mozilla/DebugOnly.h"        // for DebugOnly
 #include "mozilla/GfxMessageUtils.h"  // for ParamTraits specializations
-#include "mozilla/ToString.h"         // for ToString
+#include "mozilla/StaticPrefs_apz.h"
+#include "mozilla/ToString.h"  // for ToString
 #include "mozilla/gfx/CompositorHitTestInfo.h"
+#include "mozilla/layers/LayersMessageUtils.h"  // for ParamTraits specializations
 #include "mozilla/layers/ScrollableLayerGuid.h"
 #include "ipc/IPCMessageUtils.h"
 #include "js/TypeDecls.h"
@@ -75,8 +76,8 @@ class APZTestData {
   }
   void RecordHitResult(const ScreenPoint& aPoint,
                        const mozilla::gfx::CompositorHitTestInfo& aResult,
-                       const ViewID& aScrollId) {
-    mHitResults.AppendElement(HitResult{aPoint, aResult, aScrollId});
+                       const LayersId& aLayersId, const ViewID& aScrollId) {
+    mHitResults.AppendElement(HitResult{aPoint, aResult, aLayersId, aScrollId});
   }
   void RecordAdditionalData(const std::string& aKey,
                             const std::string& aValue) {
@@ -97,13 +98,14 @@ class APZTestData {
   struct HitResult {
     ScreenPoint point;
     mozilla::gfx::CompositorHitTestInfo result;
+    LayersId layersId;
     ViewID scrollId;
   };
 
  private:
   DataStore mPaints;
   DataStore mRepaintRequests;
-  nsTArray<HitResult> mHitResults;
+  CopyableTArray<HitResult> mHitResults;
   // Additional free-form data that's not grouped paint or scroll frame.
   std::map<std::string, std::string> mAdditionalData;
 
@@ -130,7 +132,7 @@ class APZPaintLogHelper {
  public:
   APZPaintLogHelper(APZTestData* aTestData, SequenceNumber aPaintSequenceNumber)
       : mTestData(aTestData), mPaintSequenceNumber(aPaintSequenceNumber) {
-    MOZ_ASSERT(!aTestData || gfxPrefs::APZTestLoggingEnabled(),
+    MOZ_ASSERT(!aTestData || StaticPrefs::apz_test_logging_enabled(),
                "don't call me");
   }
 
@@ -168,13 +170,15 @@ struct ParamTraits<mozilla::layers::APZTestData> {
     WriteParam(aMsg, aParam.mPaints);
     WriteParam(aMsg, aParam.mRepaintRequests);
     WriteParam(aMsg, aParam.mHitResults);
+    WriteParam(aMsg, aParam.mAdditionalData);
   }
 
   static bool Read(const Message* aMsg, PickleIterator* aIter,
                    paramType* aResult) {
     return (ReadParam(aMsg, aIter, &aResult->mPaints) &&
             ReadParam(aMsg, aIter, &aResult->mRepaintRequests) &&
-            ReadParam(aMsg, aIter, &aResult->mHitResults));
+            ReadParam(aMsg, aIter, &aResult->mHitResults) &&
+            ReadParam(aMsg, aIter, &aResult->mAdditionalData));
   }
 };
 
@@ -197,6 +201,7 @@ struct ParamTraits<mozilla::layers::APZTestData::HitResult> {
   static void Write(Message* aMsg, const paramType& aParam) {
     WriteParam(aMsg, aParam.point);
     WriteParam(aMsg, aParam.result);
+    WriteParam(aMsg, aParam.layersId);
     WriteParam(aMsg, aParam.scrollId);
   }
 
@@ -204,6 +209,7 @@ struct ParamTraits<mozilla::layers::APZTestData::HitResult> {
                    paramType* aResult) {
     return (ReadParam(aMsg, aIter, &aResult->point) &&
             ReadParam(aMsg, aIter, &aResult->result) &&
+            ReadParam(aMsg, aIter, &aResult->layersId) &&
             ReadParam(aMsg, aIter, &aResult->scrollId));
   }
 };

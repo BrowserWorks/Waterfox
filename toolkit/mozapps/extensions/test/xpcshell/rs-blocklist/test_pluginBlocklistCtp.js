@@ -133,6 +133,13 @@ add_task(async function setup() {
   createAppInfo("xpcshell@tests.mozilla.org", "XPCShell", "1", "1.9");
 
   Services.prefs.setBoolPref("plugin.load_flash_only", false);
+  // plugin.load_flash_only is only respected if xpc::IsInAutomation is true.
+  // This is not the case by default in xpcshell tests, unless the following
+  // pref is also set. Fixing this generically is bug 1598804
+  Services.prefs.setBoolPref(
+    "security.turn_off_all_security_so_that_viruses_can_take_over_this_computer",
+    true
+  );
   gPluginHost = Cc["@mozilla.org/plugin/host;1"].getService(Ci.nsIPluginHost);
   await promiseStartupManager();
 });
@@ -263,9 +270,8 @@ add_task(async function test_disable_blocklist() {
     Ci.nsIBlocklistService.STATE_VULNERABLE_UPDATE_AVAILABLE
   );
 
-  // it should still be possible to make a plugin click-to-play via the pref
-  // and setting that plugin's enabled state to click-to-play
-  Services.prefs.setBoolPref("plugins.click_to_play", true);
+  // it should still be possible to make a plugin click-to-play
+  // by setting that plugin's enabled state to click-to-play
   let previousEnabledState = plugin.enabledState;
   plugin.enabledState = Ci.nsIPluginTag.STATE_CLICKTOPLAY;
   Assert.equal(

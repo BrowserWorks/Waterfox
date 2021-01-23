@@ -1,4 +1,3 @@
-/* vim:set ts=2 sw=2 sts=2 et: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -8,9 +7,10 @@
   grid-row: 1 / 1;
 }
 
-.network-monitor .custom-method-and-url .custom-url-value{
+.network-monitor .custom-method-and-url .custom-url-value {
   grid-column: 2 / 2;
   grid-row: 2 / 2;
+  margin-inline-start: 12px;
 }
 
 .network-monitor .custom-method-and-url .custom-method-value {
@@ -18,11 +18,10 @@
   grid-row: 2 / 2;
 }
 
-
 .network-monitor .custom-method-and-url .custom-url-value-label {
   grid-column: 2 / 2;
   grid-row: 1 / 1 ;
-  margin-left: 12px;
+  margin-inline-start: 12px;
 }
 
 .network-monitor .tabpanel-summary-container.custom-method-and-url {
@@ -41,21 +40,24 @@
   font-weight: 400;
   margin-top: 4px;
   padding: 8px;
-}
-
-.network-monitor .custom-method-and-url .custom-url-value {
-  margin-left: 12px;
+  direction: ltr;
 }
 
 .network-monitor .custom-request-panel {
-  padding-left: 0;
-  padding-right: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
-.network-monitor .custom-request-panel > div:not(.custom-request) {
+.network-monitor .custom-request-panel .custom-request-panel-content {
+  flex: 1 1 auto;
+  height: auto;
+  overflow: auto;
+}
+
+.network-monitor .custom-request-panel-content > div:not(.custom-request) {
   margin-bottom: 12px;
-  padding-left: 16px;
-  padding-right: 16px;
+  padding-inline: 16px;
 }
 
 .network-monitor .custom-request {
@@ -66,7 +68,9 @@
 .network-monitor .custom-request .custom-request-button-container {
   display: flex;
   flex-wrap: wrap-reverse;
-  margin-left: 12px;
+  gap: 8px;
+  margin-block: 16px 12px;
+  margin-inline: 16px;
 }
 
 .network-monitor .custom-request-panel .custom-request-label {
@@ -77,8 +81,7 @@
 .network-monitor .custom-request button {
   height: 24px;
   margin-bottom: 4px;
-  padding-left: 8px;
-  padding-right: 8px;
+  padding-inline: 8px;
   width: auto;
 }
 
@@ -101,20 +104,19 @@
 }
 
 .network-monitor .custom-request #custom-request-close-button {
-  margin-right: 4px;
+  margin-inline-end: 4px;
 }
 
-.network-monitor .custom-request .custom-header {
+.network-monitor .custom-header {
   border-bottom-width: 1px;
   border-style: solid;
   border-width: 0;
-  flex: 1 0 100%;
-  height: 24px;
-  margin-bottom: 16px;
+  flex: none;
+  height: calc(var(--theme-toolbar-height) + 1px);
   padding: 4px 16px;
 }
 
-:root.theme-dark .network-details-panel .custom-request-panel {
+:root.theme-dark .network-details-bar .custom-request-panel {
   background-color: var(--grey-85);
 }
 
@@ -136,8 +138,8 @@
   border-bottom: 1px solid var(--theme-splitter-color);
 }
 
-:root.theme-dark .network-details-panel .custom-request-panel input,
-:root.theme-dark .network-details-panel .custom-request-panel textarea {
+:root.theme-dark .network-details-bar .custom-request-panel input,
+:root.theme-dark .network-details-bar .custom-request-panel textarea {
   background-color: var(--grey-70);
   border: 1px solid var(--grey-85);
   color: white;
@@ -147,7 +149,7 @@
   color: var(--grey-40);
 }
 
-:root.theme-light .network-details-panel .custom-request-label.custom-header {
+:root.theme-light .network-details-bar .custom-request-label.custom-header {
   background-color: var(--grey-10);
   border-bottom: 1px solid var(--grey-25);
 }
@@ -169,8 +171,8 @@
   -moz-outline-radius: 2px;
 }
 
-:root.theme-light .network-details-panel .custom-request-panel input,
-:root.theme-light .network-details-panel .custom-request-panel textarea {
+:root.theme-light .network-details-bar .custom-request-panel input,
+:root.theme-light .network-details-bar .custom-request-panel textarea {
   background-color: white;
   border: 1px solid var(--grey-25);
   color: var(--grey-90);

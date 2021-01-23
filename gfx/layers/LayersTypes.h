@@ -16,7 +16,6 @@
 #include "mozilla/TimeStamp.h"  // for TimeStamp
 #include "mozilla/TypedEnumBits.h"
 #include "nsRegion.h"
-#include "nsStyleConsts.h"
 
 #include <stdio.h>            // FILE
 #include "mozilla/Logging.h"  // for PR_LOG
@@ -43,6 +42,9 @@ struct ParamTraits;
 }  // namespace IPC
 
 namespace mozilla {
+
+enum class StyleBorderStyle : uint8_t;
+
 namespace layers {
 
 class TextureHost;
@@ -51,7 +53,7 @@ class TextureHost;
 #undef OPAQUE
 
 struct LayersId {
-  uint64_t mId;
+  uint64_t mId = 0;
 
   bool IsValid() const { return mId != 0; }
 
@@ -82,11 +84,11 @@ struct BaseTransactionId {
 
   bool IsValid() const { return mId != 0; }
 
-  MOZ_MUST_USE BaseTransactionId<T> Next() const {
+  [[nodiscard]] BaseTransactionId<T> Next() const {
     return BaseTransactionId<T>{mId + 1};
   }
 
-  MOZ_MUST_USE BaseTransactionId<T> Prev() const {
+  [[nodiscard]] BaseTransactionId<T> Prev() const {
     return BaseTransactionId<T>{mId - 1};
   }
 
@@ -124,7 +126,7 @@ typedef BaseTransactionId<TransactionIdType> TransactionId;
 struct LayersObserverEpoch {
   uint64_t mId;
 
-  MOZ_MUST_USE LayersObserverEpoch Next() const {
+  [[nodiscard]] LayersObserverEpoch Next() const {
     return LayersObserverEpoch{mId + 1};
   }
 
@@ -153,6 +155,19 @@ enum class LayersBackend : int8_t {
   LAYERS_CLIENT,
   LAYERS_WR,
   LAYERS_LAST
+};
+
+const char* GetLayersBackendName(LayersBackend aBackend);
+
+enum class TextureType : int8_t {
+  Unknown = 0,
+  D3D11,
+  DIB,
+  X11,
+  MacIOSurface,
+  AndroidNativeWindow,
+  WaylandDMABUF,
+  Last
 };
 
 enum class BufferMode : int8_t { BUFFER_NONE, BUFFERED };
@@ -351,7 +366,7 @@ typedef gfx::Matrix4x4Typed<ParentLayerPixel, ParentLayerPixel>
 typedef gfx::Matrix4x4Typed<CSSTransformedLayerPixel, ParentLayerPixel>
     AsyncTransformMatrix;
 
-typedef Array<gfx::Color, 4> BorderColors;
+typedef Array<gfx::DeviceColor, 4> BorderColors;
 typedef Array<LayerSize, 4> BorderCorners;
 typedef Array<LayerCoord, 4> BorderWidths;
 typedef Array<StyleBorderStyle, 4> BorderStyles;
@@ -366,7 +381,7 @@ class LayerHandle final {
 
  public:
   LayerHandle() : mHandle(0) {}
-  LayerHandle(const LayerHandle& aOther) : mHandle(aOther.mHandle) {}
+  LayerHandle(const LayerHandle& aOther) = default;
   explicit LayerHandle(uint64_t aHandle) : mHandle(aHandle) {}
   bool IsValid() const { return mHandle != 0; }
   explicit operator bool() const { return IsValid(); }
@@ -388,8 +403,7 @@ class CompositableHandle final {
 
  public:
   CompositableHandle() : mHandle(0) {}
-  CompositableHandle(const CompositableHandle& aOther)
-      : mHandle(aOther.mHandle) {}
+  CompositableHandle(const CompositableHandle& aOther) = default;
   explicit CompositableHandle(uint64_t aHandle) : mHandle(aHandle) {}
   bool IsValid() const { return mHandle != 0; }
   explicit operator bool() const { return IsValid(); }
@@ -409,9 +423,29 @@ MOZ_DEFINE_ENUM_CLASS_WITH_BASE(ScrollDirection, uint32_t, (
 ));
 
 MOZ_DEFINE_ENUM_CLASS_WITH_BASE(CompositionPayloadType, uint8_t, (
+  /**
+   * A |CompositionPayload| with this type indicates a key press happened
+   * before composition and will be used to determine latency between key press
+   * and presentation in |mozilla::Telemetry::KEYPRESS_PRESENT_LATENCY|
+   */
   eKeyPress,
+
+  /**
+   * A |CompositionPayload| with this type indicates that an APZ scroll event
+   * occurred that will be included in the composition.
+   */
   eAPZScroll,
+
+  /**
+   * A |CompositionPayload| with this type indicates that an APZ pinch-to-zoom
+   * event occurred that will be included in the composition.
+   */
   eAPZPinchZoom,
+
+  /**
+   * A |CompositionPayload| with this type indicates that content was painted
+   * that will be included in the composition.
+   */
   eContentPaint
 ));
 // clang-format on

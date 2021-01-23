@@ -6,27 +6,28 @@
 
 #include "InternalRequest.h"
 
-#include "nsIContentPolicy.h"
-#include "mozilla/dom/Document.h"
-#include "nsStreamUtils.h"
-
 #include "mozilla/ErrorResult.h"
+#include "mozilla/dom/Document.h"
 #include "mozilla/dom/FetchTypes.h"
+#include "mozilla/dom/IPCBlobInputStreamChild.h"
 #include "mozilla/dom/ScriptSettings.h"
-
 #include "mozilla/dom/WorkerCommon.h"
 #include "mozilla/dom/WorkerPrivate.h"
+#include "mozilla/ipc/IPCStreamUtils.h"
+#include "mozilla/ipc/PBackgroundChild.h"
+#include "nsIContentPolicy.h"
+#include "nsStreamUtils.h"
 
 namespace mozilla {
 namespace dom {
 // The global is used to extract the principal.
-already_AddRefed<InternalRequest> InternalRequest::GetRequestConstructorCopy(
+SafeRefPtr<InternalRequest> InternalRequest::GetRequestConstructorCopy(
     nsIGlobalObject* aGlobal, ErrorResult& aRv) const {
   MOZ_RELEASE_ASSERT(!mURLList.IsEmpty(),
                      "Internal Request's urlList should not be empty when "
                      "copied from constructor.");
-  RefPtr<InternalRequest> copy =
-      new InternalRequest(mURLList.LastElement(), mFragment);
+  auto copy =
+      MakeSafeRefPtr<InternalRequest>(mURLList.LastElement(), mFragment);
   copy->SetMethod(mMethod);
   copy->mHeaders = new InternalHeaders(*mHeaders);
   copy->SetUnsafeRequest();
@@ -35,8 +36,6 @@ already_AddRefed<InternalRequest> InternalRequest::GetRequestConstructorCopy(
   // The "client" is not stored in our implementation. Fetch API users should
   // use the appropriate window/document/principal and other Gecko security
   // mechanisms as appropriate.
-  copy->mSameOriginDataURL = true;
-  copy->mPreserveContentCodings = true;
   copy->mReferrer = mReferrer;
   copy->mReferrerPolicy = mReferrerPolicy;
   copy->mEnvironmentReferrerPolicy = mEnvironmentReferrerPolicy;
@@ -50,18 +49,17 @@ already_AddRefed<InternalRequest> InternalRequest::GetRequestConstructorCopy(
   copy->mCredentialsMode = mCredentialsMode;
   copy->mCacheMode = mCacheMode;
   copy->mRedirectMode = mRedirectMode;
-  copy->mCreatedByFetchEvent = mCreatedByFetchEvent;
   copy->mContentPolicyTypeOverridden = mContentPolicyTypeOverridden;
 
   copy->mPreferredAlternativeDataType = mPreferredAlternativeDataType;
-  return copy.forget();
+  return copy;
 }
 
-already_AddRefed<InternalRequest> InternalRequest::Clone() {
-  RefPtr<InternalRequest> clone = new InternalRequest(*this);
+SafeRefPtr<InternalRequest> InternalRequest::Clone() {
+  auto clone = MakeSafeRefPtr<InternalRequest>(*this, ConstructorGuard{});
 
   if (!mBodyStream) {
-    return clone.forget();
+    return clone;
   }
 
   nsCOMPtr<nsIInputStream> clonedBody;
@@ -77,7 +75,7 @@ already_AddRefed<InternalRequest> InternalRequest::Clone() {
   if (replacementBody) {
     mBodyStream.swap(replacementBody);
   }
-  return clone.forget();
+  return clone;
 }
 InternalRequest::InternalRequest(const nsACString& aURL,
                                  const nsACString& aFragment)
@@ -87,25 +85,11 @@ InternalRequest::InternalRequest(const nsACString& aURL,
       mContentPolicyType(nsIContentPolicy::TYPE_FETCH),
       mReferrer(NS_LITERAL_STRING(kFETCH_CLIENT_REFERRER_STR)),
       mReferrerPolicy(ReferrerPolicy::_empty),
-      mEnvironmentReferrerPolicy(net::RP_Unset),
+      mEnvironmentReferrerPolicy(ReferrerPolicy::_empty),
       mMode(RequestMode::No_cors),
       mCredentialsMode(RequestCredentials::Omit),
-      mResponseTainting(LoadTainting::Basic),
       mCacheMode(RequestCache::Default),
-      mRedirectMode(RequestRedirect::Follow),
-      mMozErrors(false),
-      mAuthenticationFlag(false),
-      mPreserveContentCodings(false)
-      // FIXME(nsm): This should be false by default, but will lead to the
-      // algorithm never loading data: URLs right now. See Bug 1018872 about
-      // how certain contexts will override it to set it to true. Fetch
-      // specification does not handle this yet.
-      ,
-      mSameOriginDataURL(true),
-      mSkipServiceWorker(false),
-      mSynchronous(false),
-      mUnsafeRequest(false),
-      mUseURLCredentials(false) {
+      mRedirectMode(RequestRedirect::Follow) {
   MOZ_ASSERT(!aURL.IsEmpty());
   AddURL(aURL, aFragment);
 }
@@ -122,29 +106,19 @@ InternalRequest::InternalRequest(
       mContentPolicyType(aContentPolicyType),
       mReferrer(aReferrer),
       mReferrerPolicy(aReferrerPolicy),
-      mEnvironmentReferrerPolicy(net::RP_Unset),
+      mEnvironmentReferrerPolicy(ReferrerPolicy::_empty),
       mMode(aMode),
       mCredentialsMode(aRequestCredentials),
-      mResponseTainting(LoadTainting::Basic),
       mCacheMode(aCacheMode),
       mRedirectMode(aRequestRedirect),
-      mIntegrity(aIntegrity),
-      mMozErrors(false),
-      mAuthenticationFlag(false),
-      mPreserveContentCodings(false)
-      // FIXME See the above comment in the default constructor.
-      ,
-      mSameOriginDataURL(true),
-      mSkipServiceWorker(false),
-      mSynchronous(false),
-      mUnsafeRequest(false),
-      mUseURLCredentials(false) {
+      mIntegrity(aIntegrity) {
   MOZ_ASSERT(!aURL.IsEmpty());
   AddURL(aURL, aFragment);
 }
-InternalRequest::InternalRequest(const InternalRequest& aOther)
+InternalRequest::InternalRequest(const InternalRequest& aOther,
+                                 ConstructorGuard)
     : mMethod(aOther.mMethod),
-      mURLList(aOther.mURLList),
+      mURLList(aOther.mURLList.Clone()),
       mHeaders(new InternalHeaders(*aOther.mHeaders)),
       mBodyLength(InternalResponse::UNKNOWN_BODY_SIZE),
       mContentPolicyType(aOther.mContentPolicyType),
@@ -159,19 +133,49 @@ InternalRequest::InternalRequest(const InternalRequest& aOther)
       mIntegrity(aOther.mIntegrity),
       mMozErrors(aOther.mMozErrors),
       mFragment(aOther.mFragment),
-      mAuthenticationFlag(aOther.mAuthenticationFlag),
-      mPreserveContentCodings(aOther.mPreserveContentCodings),
-      mSameOriginDataURL(aOther.mSameOriginDataURL),
       mSkipServiceWorker(aOther.mSkipServiceWorker),
       mSynchronous(aOther.mSynchronous),
       mUnsafeRequest(aOther.mUnsafeRequest),
       mUseURLCredentials(aOther.mUseURLCredentials),
-      mCreatedByFetchEvent(aOther.mCreatedByFetchEvent),
       mContentPolicyTypeOverridden(aOther.mContentPolicyTypeOverridden) {
   // NOTE: does not copy body stream... use the fallible Clone() for that
 }
 
-InternalRequest::~InternalRequest() {}
+InternalRequest::InternalRequest(const IPCInternalRequest& aIPCRequest)
+    : mMethod(aIPCRequest.method()),
+      mURLList(aIPCRequest.urlList().Clone()),
+      mHeaders(new InternalHeaders(aIPCRequest.headers(),
+                                   aIPCRequest.headersGuard())),
+      mBodyLength(aIPCRequest.bodySize()),
+      mPreferredAlternativeDataType(aIPCRequest.preferredAlternativeDataType()),
+      mContentPolicyType(
+          static_cast<nsContentPolicyType>(aIPCRequest.contentPolicyType())),
+      mReferrer(aIPCRequest.referrer()),
+      mReferrerPolicy(aIPCRequest.referrerPolicy()),
+      mMode(aIPCRequest.requestMode()),
+      mCredentialsMode(aIPCRequest.requestCredentials()),
+      mCacheMode(aIPCRequest.cacheMode()),
+      mRedirectMode(aIPCRequest.requestRedirect()),
+      mIntegrity(aIPCRequest.integrity()),
+      mFragment(aIPCRequest.fragment()) {
+  if (aIPCRequest.principalInfo()) {
+    mPrincipalInfo = MakeUnique<mozilla::ipc::PrincipalInfo>(
+        aIPCRequest.principalInfo().ref());
+  }
+
+  const Maybe<BodyStreamVariant>& body = aIPCRequest.body();
+
+  // This constructor is (currently) only used for parent -> child communication
+  // (constructed on the child side).
+  if (body) {
+    MOZ_ASSERT(body->type() == BodyStreamVariant::TParentToChildStream);
+    mBodyStream = static_cast<IPCBlobInputStreamChild*>(
+                      body->get_ParentToChildStream().actorChild())
+                      ->CreateStream();
+  }
+}
+
+InternalRequest::~InternalRequest() = default;
 
 void InternalRequest::SetContentPolicyType(
     nsContentPolicyType aContentPolicyType) {
@@ -237,9 +241,6 @@ RequestDestination InternalRequest::MapContentPolicyTypeToRequestDestination(
     case nsIContentPolicy::TYPE_REFRESH:
       destination = RequestDestination::_empty;
       break;
-    case nsIContentPolicy::TYPE_XBL:
-      destination = RequestDestination::_empty;
-      break;
     case nsIContentPolicy::TYPE_PING:
       destination = RequestDestination::_empty;
       break;
@@ -254,9 +255,12 @@ RequestDestination InternalRequest::MapContentPolicyTypeToRequestDestination(
       destination = RequestDestination::_empty;
       break;
     case nsIContentPolicy::TYPE_DTD:
+    case nsIContentPolicy::TYPE_INTERNAL_DTD:
+    case nsIContentPolicy::TYPE_INTERNAL_FORCE_ALLOWED_DTD:
       destination = RequestDestination::_empty;
       break;
     case nsIContentPolicy::TYPE_FONT:
+    case nsIContentPolicy::TYPE_INTERNAL_FONT_PRELOAD:
       destination = RequestDestination::Font;
       break;
     case nsIContentPolicy::TYPE_MEDIA:
@@ -294,6 +298,12 @@ RequestDestination InternalRequest::MapContentPolicyTypeToRequestDestination(
       break;
     case nsIContentPolicy::TYPE_SPECULATIVE:
       destination = RequestDestination::_empty;
+      break;
+    case nsIContentPolicy::TYPE_INTERNAL_AUDIOWORKLET:
+      destination = RequestDestination::Audioworklet;
+      break;
+    case nsIContentPolicy::TYPE_INTERNAL_PAINTWORKLET:
+      destination = RequestDestination::Paintworklet;
       break;
     default:
       MOZ_ASSERT(false, "Unhandled nsContentPolicyType value");

@@ -53,6 +53,8 @@ struct MOZ_STACK_CLASS CreateDecoderParams final {
                                   // initialization data are dropped. Pass this
                                   // option to raise an error if frames are
                                   // delivered before initialization data.
+    DefaultPlaybackDeviceMono,    // Currently only used by Opus on RDD to avoid
+                                  // initialization of audio backends on RDD
 
     SENTINEL  // one past the last valid value
   };
@@ -64,7 +66,7 @@ struct MOZ_STACK_CLASS CreateDecoderParams final {
     bool mUse = false;
   };
 
-  // Do not wrap H264 decoder in a H264Converter.
+  // Do not wrap decoder in a MediaChangeMonitor.
   struct NoWrapper {
     NoWrapper() = default;
     explicit NoWrapper(bool aDontUseWrapper)
@@ -194,8 +196,8 @@ class PlatformDecoderModule {
   }
 
  protected:
-  PlatformDecoderModule() {}
-  virtual ~PlatformDecoderModule() {}
+  PlatformDecoderModule() = default;
+  virtual ~PlatformDecoderModule() = default;
 
   friend class MediaChangeMonitor;
   friend class PDMFactory;
@@ -258,7 +260,7 @@ DDLoggedTypeDeclName(MediaDataDecoder);
 // for decoding.
 class MediaDataDecoder : public DecoderDoctorLifeLogger<MediaDataDecoder> {
  protected:
-  virtual ~MediaDataDecoder() {}
+  virtual ~MediaDataDecoder() = default;
 
  public:
   typedef TrackInfo::TrackType TrackType;
@@ -285,6 +287,23 @@ class MediaDataDecoder : public DecoderDoctorLifeLogger<MediaDataDecoder> {
   // input, the DecodePromise may be resolved with an empty array of samples to
   // indicate that Decode should be called again before a MediaData is returned.
   virtual RefPtr<DecodePromise> Decode(MediaRawData* aSample) = 0;
+
+  // This could probably be implemented as a wrapper that takes a
+  // generic MediaDataDecoder and manages batching as needed.  For now
+  // only AudioTrimmer with RemoteMediaDataDecoder supports batch
+  // decoding.
+  // Inserts an array of samples into the decoder's decode pipeline. The
+  // DecodePromise will be resolved with the decoded MediaData. In case
+  // the decoder needs more input, the DecodePromise may be resolved
+  // with an empty array of samples to indicate that Decode should be
+  // called again before a MediaData is returned.
+  virtual bool CanDecodeBatch() { return false; }
+  virtual RefPtr<DecodePromise> DecodeBatch(
+      nsTArray<RefPtr<MediaRawData>>&& aSamples) {
+    MOZ_CRASH("DecodeBatch not implemented yet");
+    return MediaDataDecoder::DecodePromise::CreateAndReject(
+        NS_ERROR_DOM_MEDIA_DECODE_ERR, __func__);
+  }
 
   // Causes all complete samples in the pipeline that can be decoded to be
   // output. If the decoder can't produce samples from the current output,

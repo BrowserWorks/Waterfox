@@ -1,4 +1,4 @@
-// |reftest| skip -- class-static-methods-private is not supported
+// |reftest| skip async -- class-static-methods-private is not supported
 // This file was procedurally generated from the following sources:
 // - src/async-generators/yield-spread-obj.case
 // - src/async-generators/default/async-class-expr-static-private-method.template
@@ -7,7 +7,6 @@ description: Use yield value in a object spread position (Static async generator
 esid: prod-AsyncGeneratorPrivateMethod
 features: [object-spread, async-iteration, class-static-methods-private]
 flags: [generated, async]
-includes: [compareArray.js]
 info: |
     ClassElement :
       static PrivateMethodDefinition

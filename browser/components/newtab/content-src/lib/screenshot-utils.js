@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 /**
  * List of helper functions for screenshot-based images.
  *
@@ -12,7 +16,11 @@
  */
 export const ScreenshotUtils = {
   isBlob(isLocal, image) {
-    return !!(image && image.path && ((!isLocal && image.data) || (isLocal && image.url)));
+    return !!(
+      image &&
+      image.path &&
+      ((!isLocal && image.data) || (isLocal && image.url))
+    );
   },
 
   // This should always be called with a remote image and not a local image.
@@ -21,9 +29,12 @@ export const ScreenshotUtils = {
       return null;
     }
     if (this.isBlob(false, remoteImage)) {
-      return {url: global.URL.createObjectURL(remoteImage.data), path: remoteImage.path};
+      return {
+        url: global.URL.createObjectURL(remoteImage.data),
+        path: remoteImage.path,
+      };
     }
-    return {url: remoteImage};
+    return { url: remoteImage };
   },
 
   // Revokes the object URL of the image if the local image is a blob.
@@ -38,9 +49,9 @@ export const ScreenshotUtils = {
   isRemoteImageLocal(localImage, remoteImage) {
     // Both remoteImage and localImage are present.
     if (remoteImage && localImage) {
-      return this.isBlob(false, remoteImage) ?
-             localImage.path === remoteImage.path :
-             localImage.url === remoteImage;
+      return this.isBlob(false, remoteImage)
+        ? localImage.path === remoteImage.path
+        : localImage.url === remoteImage;
     }
 
     // This will only handle the remaining three possible outcomes.

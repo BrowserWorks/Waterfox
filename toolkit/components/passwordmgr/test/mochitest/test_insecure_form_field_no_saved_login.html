@@ -31,15 +31,17 @@ let chromeScript = runChecksAfterCommonInit();
 <pre id="test">
 <script class="testbody" type="text/javascript">
 
-/** Test for Login Manager: contextual inscure password warning without saved logins. **/
+/** Test for Login Manager: contextual insecure password warning without saved logins. **/
 
 // Set to pref before the document loads.
+let originalInsecureEnabled = SpecialPowers.getBoolPref(
+  "security.insecure_field_warning.contextual.enabled");
 SpecialPowers.setBoolPref(
   "security.insecure_field_warning.contextual.enabled", true);
 
 SimpleTest.registerCleanupFunction(() => {
-  SpecialPowers.clearUserPref(
-    "security.insecure_field_warning.contextual.enabled");
+  SpecialPowers.setBoolPref(
+    "security.insecure_field_warning.contextual.enabled", originalInsecureEnabled);
 });
 
 let uname = $_(1, "uname");
@@ -80,6 +82,14 @@ add_task(async function test_form1_warning_entry() {
   let popupState = await getPopupState();
   is(popupState.open, true, "Check popup is opened");
   is(popupState.selectedIndex, -1, "Check no entries are selected upon opening");
+
+  let acEvents = await getTelemetryEvents({ process: "parent", filterProps: TelemetryFilterPropsAC, clear: true });
+  is(acEvents.length, 1, "One autocomplete event");
+  checkACTelemetryEvent(acEvents[0], uname, {
+    "hadPrevious": "0",
+    "insecureWarning": "1",
+    "loginsFooter": "1"
+  });
 
   synthesizeKey("KEY_ArrowDown"); // select insecure warning
   checkLoginForm(uname, "", pword, ""); // value shouldn't update just by selecting

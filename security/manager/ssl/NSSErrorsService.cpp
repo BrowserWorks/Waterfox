@@ -4,6 +4,7 @@
 
 #include "NSSErrorsService.h"
 
+#include "nsIStringBundle.h"
 #include "nsNSSComponent.h"
 #include "nsServiceManagerUtils.h"
 #include "mozpkix/pkixnss.h"
@@ -32,7 +33,7 @@ static bool IsPSMError(PRErrorCode error) {
 
 NS_IMPL_ISUPPORTS(NSSErrorsService, nsINSSErrorsService)
 
-NSSErrorsService::~NSSErrorsService() {}
+NSSErrorsService::~NSSErrorsService() = default;
 
 nsresult NSSErrorsService::Init() {
   nsresult rv;

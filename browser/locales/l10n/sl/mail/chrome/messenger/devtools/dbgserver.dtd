@@ -1,0 +1,4 @@
+<!ENTITY options.title "Možnosti razvojnih orodij">
+<!ENTITY options.status.label "Stanje:">
+<!ENTITY options.port.label "Vrata:">
+<!ENTITY options.forcelocal.label "Dovoli povezave iz ostalih računalnikov">

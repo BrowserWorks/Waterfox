@@ -11,17 +11,25 @@ const {
 const dom = require("devtools/client/shared/vendor/react-dom-factories");
 const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
 
-const AnimationName = createFactory(require("./AnimationName"));
-const DelaySign = createFactory(require("./DelaySign"));
-const EndDelaySign = createFactory(require("./EndDelaySign"));
-const SummaryGraphPath = createFactory(require("./SummaryGraphPath"));
+const AnimationName = createFactory(
+  require("devtools/client/inspector/animation/components/graph/AnimationName")
+);
+const DelaySign = createFactory(
+  require("devtools/client/inspector/animation/components/graph/DelaySign")
+);
+const EndDelaySign = createFactory(
+  require("devtools/client/inspector/animation/components/graph/EndDelaySign")
+);
+const SummaryGraphPath = createFactory(
+  require("devtools/client/inspector/animation/components/graph/SummaryGraphPath")
+);
 
 const {
   getFormattedTitle,
   getFormatStr,
   getStr,
   numberWithDecimals,
-} = require("../../utils/l10n");
+} = require("devtools/client/inspector/animation/utils/l10n");
 
 class SummaryGraph extends PureComponent {
   static get propTypes() {
@@ -49,6 +57,8 @@ class SummaryGraph extends PureComponent {
   getTitleText(state) {
     const getTime = time =>
       getFormatStr("player.timeLabel", numberWithDecimals(time / 1000, 2));
+    const getTimeOrInfinity = time =>
+      time === Infinity ? getStr("player.infiniteDurationText") : getTime(time);
 
     let text = "";
 
@@ -65,10 +75,7 @@ class SummaryGraph extends PureComponent {
 
     // Adding the duration.
     text += getStr("player.animationDurationLabel") + " ";
-    text +=
-      state.duration === Infinity
-        ? getStr("player.infiniteDurationText")
-        : getTime(state.duration);
+    text += getTimeOrInfinity(state.duration);
     text += "\n";
 
     // Adding the endDelay.
@@ -91,9 +98,7 @@ class SummaryGraph extends PureComponent {
       text += getFormatStr(
         "player.animationIterationStartLabel2",
         state.iterationStart,
-        state.duration === Infinity
-          ? getStr("player.infiniteDurationText")
-          : getTime(state.iterationStart * state.duration)
+        getTimeOrInfinity(state.iterationStart * state.duration)
       );
       text += "\n";
     }

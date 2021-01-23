@@ -1,0 +1,114 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY toField4.label "At">
+<!ENTITY fromField4.label "Oddi wrth">
+<!ENTITY senderField4.label "Anfonwr">
+<!ENTITY author.label "Awdur">
+<!ENTITY organizationField4.label "Corff">
+<!ENTITY replyToField4.label "Ateb i">
+
+<!ENTITY subjectField4.label "Pwnc">
+<!ENTITY ccField4.label "Cc">
+<!ENTITY bccField4.label "Bcc">
+<!ENTITY newsgroupsField4.label "Grwpiau Newyddion">
+<!ENTITY followupToField4.label "Ymateb">
+<!ENTITY tagsHdr4.label "Tagiau">
+<!ENTITY dateField4.label "Dyddiad">
+<!ENTITY userAgentField4.label "Asiant defnyddiwr">
+<!ENTITY referencesField4.label "Cyfeiriadau">
+<!ENTITY messageIdField4.label "Enw Neges">
+<!ENTITY inReplyToField4.label "Wrth ateb i">
+<!ENTITY originalWebsite4.label "Gwefan">
+
+<!ENTITY hdrArchiveButton1.label "Archifo">
+<!ENTITY hdrArchiveButton1.tooltip "Archifo'r neges">
+<!ENTITY hdrSmartReplyButton1.label "Ateb Clyfar">
+<!ENTITY hdrReplyButton1.label "Ateb">
+<!ENTITY hdrReplyButton2.tooltip "Ateb i anfonwr y neges">
+<!ENTITY hdrReplyAllButton1.label "Ateb Pawb">
+<!ENTITY hdrReplyAllButton1.tooltip "Ateb yr anfonwr a phob derbyniwr">
+<!ENTITY hdrReplyListButton1.label "Ateb i'r Rhestr">
+<!ENTITY hdrReplyListButton1.tooltip "Ateb i'r rhestr e-bost">
+<!ENTITY hdrFollowupButton1.label "Dilyn">
+<!ENTITY hdrFollowupButton1.tooltip "Gosod cofnod dilynol i'r grŵp newyddion">
+<!ENTITY hdrForwardButton1.label "Ymlaen">
+<!ENTITY hdrForwardButton1.tooltip "Anfon y neges ymlaen">
+<!ENTITY hdrJunkButton1.label "Sbam">
+<!ENTITY hdrJunkButton1.tooltip "Nodi'r neges fel sbam">
+<!ENTITY hdrTrashButton1.label "Dileu">
+<!ENTITY hdrTrashButton1.tooltip "Dileu'r neges">
+
+<!ENTITY hdrViewToolbarShowFull.label "Dangos Eiconau a Thestun">
+<!ENTITY hdrViewToolbarShowFull.accesskey "E">
+<!ENTITY hdrViewToolbarShowIcons.label "Dangos Eiconau yn Unig">
+<!ENTITY hdrViewToolbarShowIcons.accesskey "U">
+<!ENTITY hdrViewToolbarShowText.label "Dangos Testun yn Unig">
+<!ENTITY hdrViewToolbarShowText.accesskey "U">
+<!ENTITY hdrViewToolbarAlwaysReplySender.label "Dangos Ateb i Anfonwr Bob Tro">
+<!ENTITY hdrViewToolbarAlwaysReplySender.accesskey "B">
+
+<!ENTITY otherActionsButton2.label "Rhagor">
+<!ENTITY otherActionsButton.tooltip "Rhagor o weithredoedd">
+<!ENTITY otherActionsOpenConversation1.label "Agor mewn Sgwrs">
+<!ENTITY otherActionsOpenConversation1.accesskey "S">
+<!ENTITY otherActionsOpenInNewWindow1.label "Agor Ffenestr Newydd">
+<!ENTITY otherActionsOpenInNewWindow1.accesskey "F">
+<!ENTITY otherActionsOpenInNewTab1.label "Agor mewn Tab Newydd">
+<!ENTITY otherActionsOpenInNewTab1.accesskey "T">
+<!ENTITY markAsReadMenuItem1.label "Marcio wedi Darllen">
+<!ENTITY markAsReadMenuItem1.accesskey "D">
+<!ENTITY markAsUnreadMenuItem1.label "Marcio heb Ddarllen">
+<!ENTITY markAsUnreadMenuItem1.accesskey "D">
+<!ENTITY saveAsMenuItem1.label "Cadw fel…">
+<!ENTITY saveAsMenuItem1.accesskey "C">
+<!ENTITY viewSourceMenuItem1.label "Gweld y Ffynhonell">
+<!ENTITY viewSourceMenuItem1.accesskey "F">
+<!ENTITY otherActionsPrint1.label "Argraffu…">
+<!ENTITY otherActionsPrint1.accesskey "A">
+
+<!-- Attachment bar context menu items -->
+<!ENTITY startExpandedCmd.label    "Dangos y Paen Atodiad yn Gyntaf">
+<!ENTITY startExpandedCmd.accesskey    "D">
+
+<!-- Attachment context menu items -->
+<!ENTITY openAttachmentCmd.label    "Agor">
+<!ENTITY openAttachmentCmd.accesskey    "o">
+<!ENTITY saveAsAttachmentCmd.label    "Cadw Fel…">
+<!ENTITY saveAsAttachmentCmd.accesskey    "C">
+<!ENTITY detachAttachmentCmd.label    "Datod…">
+<!ENTITY detachAttachmentCmd.accesskey    "D">
+<!ENTITY deleteAttachmentCmd.label    "Dileu">
+<!ENTITY deleteAttachmentCmd.accesskey    "l">
+<!ENTITY openAllAttachmentsCmd.label    "Agor Popeth…">
+<!ENTITY openAllAttachmentsCmd.accesskey    "A">
+<!ENTITY saveAllAttachmentsCmd.label    "Cadw Popeth…">
+<!ENTITY saveAllAttachmentsCmd.accesskey    "P">
+<!ENTITY detachAllAttachmentsCmd.label    "Datod Popeth…">
+<!ENTITY detachAllAttachmentsCmd.accesskey    "a">
+<!ENTITY deleteAllAttachmentsCmd.label    "Dileu Popeth…">
+<!ENTITY deleteAllAttachmentsCmd.accesskey    "i">
+
+<!ENTITY openAttachment.tooltip "Agor y ffeil atodol">
+
+<!ENTITY detachedAttachmentFolder.show.label        "Agor Ffolder Cynhwysol">
+<!ENTITY detachedAttachmentFolder.show.accesskey    "F">
+<!ENTITY detachedAttachmentFolder.showMac.label     "Dangos yn y Canfyddwr">
+<!ENTITY detachedAttachmentFolder.showMac.accesskey "C">
+
+<!-- Attachment toolbar items -->
+<!ENTITY saveAttachmentButton1.label       "Cadw">
+<!ENTITY saveAttachmentButton1.tooltip     "Cadw'r ffeil atodol">
+<!ENTITY saveAllAttachmentsButton1.label   "Cadw Pob Un">
+<!ENTITY saveAllAttachmentsButton1.tooltip "Cadw'r holl ffeiliau atodol">
+
+<!ENTITY copyLinkCmd.label        "Copïo Lleoliad Dolen">
+<!ENTITY copyLinkCmd.accesskey    "C">
+
+<!ENTITY CopyMessageId.label "Cadw Neges-Dynodiad">
+<!ENTITY CopyMessageId.accesskey "N">
+<!ENTITY OpenMessageForMsgId.label "Agor Neges ar gyfer Enw">
+<!ENTITY OpenMessageForMsgId.accesskey "A">
+<!ENTITY OpenBrowserWithMsgId.label "Agor Porwr gyda Neges-Dynodiad">
+<!ENTITY OpenBrowserWithMsgId.accesskey "P">

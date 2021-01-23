@@ -32,10 +32,6 @@ function test()
 
 // =====
 
-  uneval(function(){[y] = [x];});
-
-// =====
-
   function g(code)
   {
     var f = new Function(code);

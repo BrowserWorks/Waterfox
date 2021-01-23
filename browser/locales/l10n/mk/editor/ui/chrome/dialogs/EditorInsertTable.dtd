@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Внесување на табела">
+
+<!ENTITY size.label "Големина">
+<!ENTITY numRowsEditField.label "Редици:">
+<!ENTITY numRowsEditField.accessKey "Р">
+<!ENTITY numColumnsEditField.label "Колони:">
+<!ENTITY numColumnsEditField.accessKey "К">
+<!ENTITY widthEditField.label "Ширина:">
+<!ENTITY widthEditField.accessKey "р">
+<!ENTITY borderEditField.label "Граница:">
+<!ENTITY borderEditField.accessKey "Г">
+<!ENTITY borderEditField.tooltip "Внесете број за граница на табелата, или внесете нула (0) за да нема граница">
+<!ENTITY pixels.label "пиксели">

@@ -12,7 +12,6 @@
 }
 
 .sources-panel * {
-  -moz-user-select: none;
   user-select: none;
 }
 
@@ -22,7 +21,8 @@
   text-align: start;
   white-space: nowrap;
   color: inherit;
-  display: block;
+  display: flex;
+  flex-wrap: wrap;
   border-bottom: 1px solid var(--theme-splitter-color);
 }
 
@@ -67,6 +67,10 @@
   align-items: center;
   width: 100%;
   padding: 3px 8px 3px 6px;
+}
+
+.sources-list .managed-tree .tree .tree-node:not(.focused):hover {
+  background: var(--theme-toolbar-background-hover);
 }
 
 .sources-list .img {
@@ -123,7 +127,6 @@
   width: 100%;
   background: var(--theme-body-background);
   display: flex;
-  -moz-user-select: none;
   user-select: none;
   box-sizing: border-box;
   height: var(--editor-header-height);

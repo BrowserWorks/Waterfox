@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Εισαγωγή χαρακτήρα">
+<!ENTITY category.label "Κατηγορία">
+<!ENTITY letter.label "Γράμμα:">
+<!ENTITY letter.accessKey "Γ">
+<!ENTITY character.label "Χαρακτήρας:">
+<!ENTITY character.accessKey "Χ">
+<!ENTITY accentUpper.label "Κεφαλαία με τόνο">
+<!ENTITY accentLower.label "Πεζά με τόνο">
+<!ENTITY otherUpper.label "Άλλα κεφαλαία">
+<!ENTITY otherLower.label "Άλλα πεζά">
+<!ENTITY commonSymbols.label "Κοινά σύμβολα">
+<!ENTITY insertButton.label "Εισαγωγή">
+<!ENTITY closeButton.label "Κλείσιμο">

@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Ticha' Kenuk' taq Jaloj">
+<!ENTITY conflictWarning.label "Xajalatäj re ruxaq re' ruma jun chik cholkema', chuqa' e k'o taq jaloj, ri man eyakon ta pa ri Nuk'unel.">
+<!ENTITY conflictResolve.label "Tacha' ri ruwäch xtijike':">
+<!ENTITY keepCurrentPageButton.label "Keyake' ri taq rujaloj ruxaq k'o wakami">
+<!ENTITY useOtherPageButton.label "Tik'ex ri ruxaq k'o wakami rik'in ri ch'aqa' chik taq jaloj">

@@ -9,7 +9,7 @@
  */
 
 const HTML_NS = "http://www.w3.org/1999/xhtml";
-const TEST_URI = CHROME_URL_ROOT + "doc_html_tooltip.xul";
+const TEST_URI = CHROME_URL_ROOT + "doc_html_tooltip.xhtml";
 
 const CONTAINER_HEIGHT = 300;
 const CONTAINER_WIDTH = 200;
@@ -25,7 +25,7 @@ add_task(async function() {
   await pushPref("devtools.toolbox.footer.height", 400);
 
   await addTab("about:blank");
-  const [, , doc] = await createHost("bottom", TEST_URI);
+  const { doc } = await createHost("bottom", TEST_URI);
 
   const tooltip = new HTMLTooltip(doc, { useXulWrapper: false });
   info("Set tooltip content 50px tall, but request a container 200px tall");

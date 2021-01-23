@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('BigInt')) -- BigInt is not enabled unconditionally
 // Copyright (C) 2016 the V8 project authors. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 /*---
@@ -24,7 +23,7 @@ info: |
   5. If parent is not null, then
     a. Return ? parent.[[HasProperty]](P).
   6. Return false.
-includes: [testBigIntTypedArray.js, detachArrayBuffer.js]
+includes: [testBigIntTypedArray.js]
 features: [BigInt, Reflect, Proxy, TypedArray]
 ---*/
 

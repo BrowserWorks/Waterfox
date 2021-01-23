@@ -7,10 +7,12 @@
 
 #include "ClassifierDummyChannel.h"
 
-#include "mozilla/AntiTrackingCommon.h"
+#include "mozilla/ContentBlocking.h"
 #include "mozilla/net/ClassifierDummyChannelChild.h"
+#include "mozilla/net/UrlClassifierCommon.h"
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/StaticPrefs_privacy.h"
 #include "nsContentSecurityManager.h"
 #include "nsIChannel.h"
 #include "nsIURI.h"
@@ -58,8 +60,7 @@ ClassifierDummyChannel::StorageAllowed(
     return eAsyncNeeded;
   }
 
-  if (AntiTrackingCommon::IsFirstPartyStorageAccessGrantedFor(httpChannel, uri,
-                                                              nullptr)) {
+  if (ContentBlocking::ShouldAllowAccessFor(httpChannel, uri, nullptr)) {
     return eStorageGranted;
   }
 
@@ -73,6 +74,7 @@ NS_INTERFACE_MAP_BEGIN(ClassifierDummyChannel)
   NS_INTERFACE_MAP_ENTRY(nsIRequest)
   NS_INTERFACE_MAP_ENTRY(nsIChannel)
   NS_INTERFACE_MAP_ENTRY(nsIHttpChannelInternal)
+  NS_INTERFACE_MAP_ENTRY(nsIClassifiedChannel)
   NS_INTERFACE_MAP_ENTRY_CONCRETE(ClassifierDummyChannel)
 NS_INTERFACE_MAP_END
 
@@ -82,7 +84,8 @@ ClassifierDummyChannel::ClassifierDummyChannel(nsIURI* aURI,
                                                nsILoadInfo* aLoadInfo)
     : mTopWindowURI(aTopWindowURI),
       mTopWindowURIResult(aTopWindowURIResult),
-      mClassificationFlags(0) {
+      mFirstPartyClassificationFlags(0),
+      mThirdPartyClassificationFlags(0) {
   MOZ_ASSERT(XRE_IsParentProcess());
 
   SetOriginalURI(aURI);
@@ -90,21 +93,20 @@ ClassifierDummyChannel::ClassifierDummyChannel(nsIURI* aURI,
 }
 
 ClassifierDummyChannel::~ClassifierDummyChannel() {
-  NS_ReleaseOnMainThreadSystemGroup("ClassifierDummyChannel::mLoadInfo",
-                                    mLoadInfo.forget());
-  NS_ReleaseOnMainThreadSystemGroup("ClassifierDummyChannel::mURI",
-                                    mURI.forget());
-  NS_ReleaseOnMainThreadSystemGroup("ClassifierDummyChannel::mTopWindowURI",
-                                    mTopWindowURI.forget());
-}
-
-uint32_t ClassifierDummyChannel::ClassificationFlags() const {
-  return mClassificationFlags;
+  NS_ReleaseOnMainThread("ClassifierDummyChannel::mLoadInfo",
+                         mLoadInfo.forget());
+  NS_ReleaseOnMainThread("ClassifierDummyChannel::mURI", mURI.forget());
+  NS_ReleaseOnMainThread("ClassifierDummyChannel::mTopWindowURI",
+                         mTopWindowURI.forget());
 }
 
 void ClassifierDummyChannel::AddClassificationFlags(
-    uint32_t aClassificationFlags) {
-  mClassificationFlags |= aClassificationFlags;
+    uint32_t aClassificationFlags, bool aThirdParty) {
+  if (aThirdParty) {
+    mThirdPartyClassificationFlags |= aClassificationFlags;
+  } else {
+    mFirstPartyClassificationFlags |= aClassificationFlags;
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -292,6 +294,16 @@ ClassifierDummyChannel::GetLoadFlags(nsLoadFlags* aLoadFlags) {
 }
 
 NS_IMETHODIMP
+ClassifierDummyChannel::GetTRRMode(nsIRequest::TRRMode* aTRRMode) {
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+ClassifierDummyChannel::SetTRRMode(nsIRequest::TRRMode aTRRMode) {
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
 ClassifierDummyChannel::SetLoadFlags(nsLoadFlags aLoadFlags) {
   return NS_ERROR_NOT_IMPLEMENTED;
 }
@@ -332,7 +344,7 @@ ClassifierDummyChannel::TakeAllSecurityMessages(
 }
 
 NS_IMETHODIMP
-ClassifierDummyChannel::SetCookie(const char* aCookieHeader) {
+ClassifierDummyChannel::SetCookie(const nsACString& aCookieHeader) {
   return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -568,6 +580,7 @@ void ClassifierDummyChannel::SetCorsPreflightParameters(
     const nsTArray<nsCString>& aUnsafeHeaders) {}
 
 void ClassifierDummyChannel::SetAltDataForChild(bool aIsForChild) {}
+void ClassifierDummyChannel::DisableAltDataCache() {}
 
 NS_IMETHODIMP
 ClassifierDummyChannel::GetBlockAuthPrompt(bool* aBlockAuthPrompt) {
@@ -627,8 +640,108 @@ void ClassifierDummyChannel::SetIPv4Disabled() {}
 
 void ClassifierDummyChannel::SetIPv6Disabled() {}
 
-NS_IMETHODIMP ClassifierDummyChannel::GetCrossOriginOpenerPolicy(
+bool ClassifierDummyChannel::GetHasNonEmptySandboxingFlag() { return false; }
+
+void ClassifierDummyChannel::SetHasNonEmptySandboxingFlag(
+    bool aHasNonEmptySandboxingFlag) {}
+
+NS_IMETHODIMP ClassifierDummyChannel::ComputeCrossOriginOpenerPolicy(
+    nsILoadInfo::CrossOriginOpenerPolicy aInitiatorPolicy,
+    nsILoadInfo::CrossOriginOpenerPolicy* aOutPolicy) {
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+ClassifierDummyChannel::GetCrossOriginOpenerPolicy(
     nsILoadInfo::CrossOriginOpenerPolicy* aPolicy) {
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP ClassifierDummyChannel::HasCrossOriginOpenerPolicyMismatch(
+    bool* aIsMismatch) {
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP ClassifierDummyChannel::SetMatchedInfo(
+    const nsACString& aList, const nsACString& aProvider,
+    const nsACString& aFullHash) {
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP ClassifierDummyChannel::GetMatchedList(nsACString& aMatchedList) {
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP ClassifierDummyChannel::GetMatchedProvider(
+    nsACString& aMatchedProvider) {
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP ClassifierDummyChannel::GetMatchedFullHash(
+    nsACString& aMatchedFullHash) {
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP ClassifierDummyChannel::SetMatchedTrackingInfo(
+    const nsTArray<nsCString>& aLists, const nsTArray<nsCString>& aFullHashes) {
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP ClassifierDummyChannel::GetMatchedTrackingLists(
+    nsTArray<nsCString>& aMatchedTrackingLists) {
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP ClassifierDummyChannel::GetMatchedTrackingFullHashes(
+    nsTArray<nsCString>& aMatchedTrackingFullHashes) {
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP ClassifierDummyChannel::GetFirstPartyClassificationFlags(
+    uint32_t* aFirstPartyClassificationFlags) {
+  *aFirstPartyClassificationFlags = mFirstPartyClassificationFlags;
+  return NS_OK;
+}
+
+NS_IMETHODIMP ClassifierDummyChannel::GetThirdPartyClassificationFlags(
+    uint32_t* aThirdPartyClassificationFlags) {
+  *aThirdPartyClassificationFlags = mThirdPartyClassificationFlags;
+  return NS_OK;
+}
+
+NS_IMETHODIMP ClassifierDummyChannel::GetClassificationFlags(
+    uint32_t* aClassificationFlags) {
+  if (mThirdPartyClassificationFlags) {
+    *aClassificationFlags = mThirdPartyClassificationFlags;
+  } else {
+    *aClassificationFlags = mFirstPartyClassificationFlags;
+  }
+  return NS_OK;
+}
+
+NS_IMETHODIMP ClassifierDummyChannel::IsThirdPartyTrackingResource(
+    bool* aIsTrackingResource) {
+  MOZ_ASSERT(
+      !(mFirstPartyClassificationFlags && mThirdPartyClassificationFlags));
+  *aIsTrackingResource = UrlClassifierCommon::IsTrackingClassificationFlag(
+      mThirdPartyClassificationFlags);
+  return NS_OK;
+}
+
+NS_IMETHODIMP ClassifierDummyChannel::IsThirdPartySocialTrackingResource(
+    bool* aIsThirdPartySocialTrackingResource) {
+  MOZ_ASSERT(!mFirstPartyClassificationFlags ||
+             !mThirdPartyClassificationFlags);
+  *aIsThirdPartySocialTrackingResource =
+      UrlClassifierCommon::IsSocialTrackingClassificationFlag(
+          mThirdPartyClassificationFlags);
+  return NS_OK;
+}
+
+void ClassifierDummyChannel::DoDiagnosticAssertWhenOnStopNotCalledOnDestroy() {}
+
+NS_IMETHODIMP ClassifierDummyChannel::GetResponseEmbedderPolicy(
+    nsILoadInfo::CrossOriginEmbedderPolicy* aOutPolicy) {
   return NS_ERROR_NOT_IMPLEMENTED;
 }
 

@@ -18,6 +18,7 @@ from six import text_type
 from taskgraph import create
 from taskgraph.config import load_graph_config
 from taskgraph.util import taskcluster, yaml, hash
+from taskgraph.util.python_path import import_sibling_modules
 from taskgraph.parameters import Parameters
 from mozbuild.util import memoize
 
@@ -218,8 +219,6 @@ def register_callback_action(name, title, symbol, description, order=10000,
                         'action': action,
                         'repository': repository,
                         'push': push,
-                        # parameters is long, so fetch it from the actions.json variables
-                        'parameters': {'$eval': 'parameters'},
                     },
 
                     # and pass everything else through from our own context
@@ -267,9 +266,7 @@ def render_actions_json(parameters, graph_config):
             actions.append(action)
     return {
         'version': 1,
-        'variables': {
-            'parameters': dict(**parameters),
-        },
+        'variables': {},
         'actions': actions,
     }
 
@@ -308,6 +305,7 @@ def trigger_action_callback(task_group_id, task_id, input, callback, parameters,
     the action callback in testing mode, without actually creating tasks.
     """
     graph_config = load_graph_config(root)
+    graph_config.register()
     callbacks = _get_callbacks(graph_config)
     cb = callbacks.get(callback, None)
     if not cb:
@@ -327,10 +325,7 @@ def trigger_action_callback(task_group_id, task_id, input, callback, parameters,
 def _load(graph_config):
     # Load all modules from this folder, relying on the side-effects of register_
     # functions to populate the action registry.
-    actions_dir = os.path.dirname(__file__)
-    for f in os.listdir(actions_dir):
-        if f.endswith('.py') and f not in ('__init__.py', 'registry.py', 'util.py'):
-            __import__('taskgraph.actions.' + f[:-3])
+    import_sibling_modules(exceptions=('util.py',))
     return callbacks, actions
 
 

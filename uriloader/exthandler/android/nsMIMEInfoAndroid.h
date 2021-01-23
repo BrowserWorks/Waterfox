@@ -12,14 +12,14 @@
 
 class nsMIMEInfoAndroid final : public nsIMIMEInfo {
  public:
-  static MOZ_MUST_USE bool GetMimeInfoForMimeType(
+  [[nodiscard]] static bool GetMimeInfoForMimeType(
       const nsACString& aMimeType, nsMIMEInfoAndroid** aMimeInfo);
-  static MOZ_MUST_USE bool GetMimeInfoForFileExt(const nsACString& aFileExt,
-                                                 nsMIMEInfoAndroid** aMimeInfo);
+  [[nodiscard]] static bool GetMimeInfoForFileExt(
+      const nsACString& aFileExt, nsMIMEInfoAndroid** aMimeInfo);
 
-  static MOZ_MUST_USE nsresult GetMimeInfoForURL(const nsACString& aURL,
-                                                 bool* found,
-                                                 nsIHandlerInfo** info);
+  [[nodiscard]] static nsresult GetMimeInfoForURL(const nsACString& aURL,
+                                                  bool* found,
+                                                  nsIHandlerInfo** info);
 
   NS_DECL_ISUPPORTS
   NS_DECL_NSIMIMEINFO
@@ -30,8 +30,13 @@ class nsMIMEInfoAndroid final : public nsIMIMEInfo {
  private:
   ~nsMIMEInfoAndroid() {}
 
-  virtual MOZ_MUST_USE nsresult LaunchDefaultWithFile(nsIFile* aFile);
-  virtual MOZ_MUST_USE nsresult LoadUriInternal(nsIURI* aURI);
+  /**
+   * Internal helper to avoid adding duplicates.
+   */
+  void AddUniqueExtension(const nsACString& aExtension);
+
+  [[nodiscard]] virtual nsresult LaunchDefaultWithFile(nsIFile* aFile);
+  [[nodiscard]] virtual nsresult LoadUriInternal(nsIURI* aURI);
   nsCOMPtr<nsIMutableArray> mHandlerApps;
   nsCString mType;
   nsTArray<nsCString> mExtensions;

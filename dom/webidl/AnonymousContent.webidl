@@ -16,7 +16,7 @@
  * the inserted content.
  */
 
-[ChromeOnly]
+[ChromeOnly, Exposed=Window]
 interface AnonymousContent {
   /**
    * Get the text content of an element inside this custom anonymous content.
@@ -66,7 +66,7 @@ interface AnonymousContent {
   Animation setAnimationForElement(DOMString elementId,
                                    object? keyframes,
                                    optional UnrestrictedDoubleOrKeyframeAnimationOptions
-                                     options);
+                                     options = {});
 
   /**
    * Accepts a list of (possibly overlapping) DOMRects which describe a shape
@@ -84,11 +84,17 @@ interface AnonymousContent {
    */
   [Throws]
   DOMString? getComputedStylePropertyValue(DOMString elementId,
-                                           DOMString propertyName);
+                                           UTF8String propertyName);
 
   /**
    * If event's original target is in the anonymous content, this returns the id
    * attribute value of the target.
    */
   DOMString? getTargetIdForEvent(Event event);
+
+  /**
+   * Set given style to this AnonymousContent.
+   */
+  [Throws]
+  void setStyle(UTF8String property, UTF8String value);
 };

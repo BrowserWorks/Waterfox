@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "કોષ્ટક એડ-ઓન">
+
+<!ENTITY size.label "માપ">
+<!ENTITY numRowsEditField.label "હરોળો:">
+<!ENTITY numRowsEditField.accessKey "R">
+<!ENTITY numColumnsEditField.label "સ્તંભો:">
+<!ENTITY numColumnsEditField.accessKey "C">
+<!ENTITY widthEditField.label "પહોળાઈ:">
+<!ENTITY widthEditField.accessKey "W">
+<!ENTITY borderEditField.label "કિનારી:">
+<!ENTITY borderEditField.accessKey "B">
+<!ENTITY borderEditField.tooltip "કોષ્ટકની કિનારી માટે નંબર લખો, અથવા કોઈપણ કિનારી ના રાખવી હોય તો શૂન્ય (૦) લખો">
+<!ENTITY pixels.label "પિક્સેલો">

@@ -4,6 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsParentalControlsService.h"
+#include "nsComponentManagerUtils.h"
 #include "nsString.h"
 #include "nsIArray.h"
 #include "nsIWidget.h"
@@ -13,15 +14,86 @@
 #include "nsILocalFileWin.h"
 #include "nsArrayUtils.h"
 #include "nsIXULAppInfo.h"
+#include "nsWindowsHelpers.h"
+#include "nsIWindowsRegKey.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/WindowsVersion.h"
+
+#include <sddl.h>
 
 using namespace mozilla;
 
 NS_IMPL_ISUPPORTS(nsParentalControlsService, nsIParentalControlsService)
 
+// Get the SID string for the user associated with this process's token.
+static nsAutoString GetUserSid() {
+  nsAutoString ret;
+  HANDLE rawToken;
+  BOOL success =
+      ::OpenProcessToken(::GetCurrentProcess(), TOKEN_QUERY, &rawToken);
+  if (!success) {
+    return ret;
+  }
+  nsAutoHandle token(rawToken);
+
+  DWORD bufLen;
+  success = ::GetTokenInformation(token, TokenUser, nullptr, 0, &bufLen);
+  if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
+    return ret;
+  }
+
+  UniquePtr<char[]> buf = MakeUnique<char[]>(bufLen);
+  success = ::GetTokenInformation(token, TokenUser, buf.get(), bufLen, &bufLen);
+  MOZ_ASSERT(success);
+
+  if (success) {
+    TOKEN_USER* tokenUser = (TOKEN_USER*)(buf.get());
+    PSID sid = tokenUser->User.Sid;
+    LPWSTR sidStr;
+    success = ::ConvertSidToStringSidW(sid, &sidStr);
+    if (success) {
+      ret = sidStr;
+      ::LocalFree(sidStr);
+    }
+  }
+  return ret;
+}
+
 nsParentalControlsService::nsParentalControlsService()
     : mEnabled(false), mProvider(0), mPC(nullptr) {
+  // On at least some builds of Windows 10, the old parental controls API no
+  // longer exists, so we have to pull the info we need out of the registry.
+  if (IsWin10OrLater()) {
+    nsAutoString regKeyName;
+    regKeyName.AppendLiteral(
+        "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Parental Controls\\"
+        "Users\\");
+    regKeyName.Append(GetUserSid());
+    regKeyName.AppendLiteral("\\Web");
+
+    nsresult rv;
+    nsCOMPtr<nsIWindowsRegKey> regKey =
+        do_CreateInstance("@mozilla.org/windows-registry-key;1", &rv);
+    if (NS_FAILED(rv)) {
+      return;
+    }
+
+    rv = regKey->Open(nsIWindowsRegKey::ROOT_KEY_LOCAL_MACHINE, regKeyName,
+                      nsIWindowsRegKey::ACCESS_READ);
+    if (NS_FAILED(rv)) {
+      return;
+    }
+
+    uint32_t filterOn = 0;
+    rv = regKey->ReadIntValue(NS_LITERAL_STRING("Filter On"), &filterOn);
+    if (NS_FAILED(rv)) {
+      return;
+    }
+
+    mEnabled = filterOn != 0;
+    return;
+  }
+
   HRESULT hr;
   CoInitialize(nullptr);
   hr = CoCreateInstance(__uuidof(WindowsParentalControls), nullptr,
@@ -73,7 +145,16 @@ NS_IMETHODIMP
 nsParentalControlsService::GetBlockFileDownloadsEnabled(bool* aResult) {
   *aResult = false;
 
-  if (!mEnabled) return NS_ERROR_NOT_AVAILABLE;
+  if (!mEnabled) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  // If we're on Windows 10 and we don't have the whole API available, then
+  // we can't tell if file downloads are allowed, so assume they are to avoid
+  // breaking downloads for every single user with parental controls.
+  if (!mPC) {
+    return NS_OK;
+  }
 
   RefPtr<IWPCWebSettings> wpcws;
   if (SUCCEEDED(mPC->GetWebSettings(nullptr, getter_AddRefs(wpcws)))) {
@@ -89,7 +170,15 @@ NS_IMETHODIMP
 nsParentalControlsService::GetLoggingEnabled(bool* aResult) {
   *aResult = false;
 
-  if (!mEnabled) return NS_ERROR_NOT_AVAILABLE;
+  if (!mEnabled) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  // If we're on Windows 10 and we don't have the whole API available, then
+  // we don't know how logging should be done, so report that it's disabled.
+  if (!mPC) {
+    return NS_OK;
+  }
 
   // Check the general purpose logging flag
   RefPtr<IWPCSettings> wpcs;
@@ -132,105 +221,6 @@ nsParentalControlsService::Log(int16_t aEntryType, bool blocked,
     default:
       break;
   }
-
-  return NS_OK;
-}
-
-// Override a single URI
-NS_IMETHODIMP
-nsParentalControlsService::RequestURIOverride(
-    nsIURI* aTarget, nsIInterfaceRequestor* aWindowContext, bool* _retval) {
-  *_retval = false;
-
-  if (!mEnabled) return NS_ERROR_NOT_AVAILABLE;
-
-  NS_ENSURE_ARG_POINTER(aTarget);
-
-  nsAutoCString spec;
-  aTarget->GetSpec(spec);
-  if (spec.IsEmpty()) return NS_ERROR_INVALID_ARG;
-
-  HWND hWnd = nullptr;
-  // If we have a native window, use its handle instead
-  nsCOMPtr<nsIWidget> widget(do_GetInterface(aWindowContext));
-  if (widget) hWnd = (HWND)widget->GetNativeData(NS_NATIVE_WINDOW);
-  if (hWnd == nullptr) hWnd = GetDesktopWindow();
-
-  BOOL ret;
-  RefPtr<IWPCWebSettings> wpcws;
-  if (SUCCEEDED(mPC->GetWebSettings(nullptr, getter_AddRefs(wpcws)))) {
-    wpcws->RequestURLOverride(hWnd, NS_ConvertUTF8toUTF16(spec).get(), 0,
-                              nullptr, &ret);
-    *_retval = ret;
-  }
-
-  return NS_OK;
-}
-
-// Override a web page
-NS_IMETHODIMP
-nsParentalControlsService::RequestURIOverrides(
-    nsIArray* aTargets, nsIInterfaceRequestor* aWindowContext, bool* _retval) {
-  *_retval = false;
-
-  if (!mEnabled) return NS_ERROR_NOT_AVAILABLE;
-
-  NS_ENSURE_ARG_POINTER(aTargets);
-
-  uint32_t arrayLength = 0;
-  aTargets->GetLength(&arrayLength);
-  if (!arrayLength) return NS_ERROR_INVALID_ARG;
-
-  if (arrayLength == 1) {
-    nsCOMPtr<nsIURI> uri = do_QueryElementAt(aTargets, 0);
-    if (!uri) return NS_ERROR_INVALID_ARG;
-    return RequestURIOverride(uri, aWindowContext, _retval);
-  }
-
-  HWND hWnd = nullptr;
-  // If we have a native window, use its handle instead
-  nsCOMPtr<nsIWidget> widget(do_GetInterface(aWindowContext));
-  if (widget) hWnd = (HWND)widget->GetNativeData(NS_NATIVE_WINDOW);
-  if (hWnd == nullptr) hWnd = GetDesktopWindow();
-
-  // The first entry should be the root uri
-  nsAutoCString rootSpec;
-  nsCOMPtr<nsIURI> rootURI = do_QueryElementAt(aTargets, 0);
-  if (!rootURI) return NS_ERROR_INVALID_ARG;
-
-  rootURI->GetSpec(rootSpec);
-  if (rootSpec.IsEmpty()) return NS_ERROR_INVALID_ARG;
-
-  // Allocate an array of sub uri
-  int32_t count = arrayLength - 1;
-  auto arrUrls = MakeUnique<LPCWSTR[]>(count);
-
-  uint32_t uriIdx = 0, idx;
-  for (idx = 1; idx < arrayLength; idx++) {
-    nsCOMPtr<nsIURI> uri = do_QueryElementAt(aTargets, idx);
-    if (!uri) continue;
-
-    nsAutoCString subURI;
-    if (NS_FAILED(uri->GetSpec(subURI))) continue;
-
-    arrUrls[uriIdx] = (LPCWSTR)UTF8ToNewUnicode(subURI);  // allocation
-    if (!arrUrls[uriIdx]) continue;
-
-    uriIdx++;
-  }
-
-  if (!uriIdx) return NS_ERROR_INVALID_ARG;
-
-  BOOL ret;
-  RefPtr<IWPCWebSettings> wpcws;
-  if (SUCCEEDED(mPC->GetWebSettings(nullptr, getter_AddRefs(wpcws)))) {
-    wpcws->RequestURLOverride(hWnd, NS_ConvertUTF8toUTF16(rootSpec).get(),
-                              uriIdx, (LPCWSTR*)arrUrls.get(), &ret);
-    *_retval = ret;
-  }
-
-  // Free up the allocated strings in our array
-  for (idx = 0; idx < uriIdx; idx++) free((void*)arrUrls[idx]);
 
   return NS_OK;
 }

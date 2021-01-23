@@ -32,6 +32,13 @@ void CheckNumberOfProperties(const char* aName, JSContext* aCx,
                              JS::HandleValue aSnapshot,
                              uint32_t expectedNumProperties);
 
+bool EventPresent(JSContext* aCx, const JS::RootedValue& aSnapshot,
+                  const nsACString& aCategory, const nsACString& aMethod,
+                  const nsACString& aObject);
+
+void GetEventSnapshot(JSContext* aCx, JS::MutableHandle<JS::Value> aResult,
+                      ProcessID aProcessType = ProcessID::Parent);
+
 void GetScalarsSnapshot(bool aKeyed, JSContext* aCx,
                         JS::MutableHandle<JS::Value> aResult,
                         ProcessID aProcessType = ProcessID::Parent);
@@ -48,6 +55,13 @@ void GetElement(JSContext* cx, uint32_t index, JS::HandleValue valueIn,
 void GetSnapshots(JSContext* cx, nsCOMPtr<nsITelemetry> mTelemetry,
                   const char* name, JS::MutableHandleValue valueOut,
                   bool is_keyed);
+
+void GetOriginSnapshot(JSContext* aCx, JS::MutableHandle<JS::Value> aResult,
+                       bool aClear = false);
+
+void GetEncodedOriginStrings(
+    JSContext* aCx, const nsCString& aEncoding,
+    nsTArray<mozilla::Tuple<nsCString, nsCString>>& aPrioStrings);
 
 }  // namespace TelemetryTestHelpers
 

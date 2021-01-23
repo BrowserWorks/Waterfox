@@ -22,7 +22,12 @@ add_task(async function origin() {
 
   // Do an initial search that triggers autofill so that the placeholder has an
   // initial value.
-  await promiseAutocompleteResultPopup("ex", window, true);
+  await UrlbarTestUtils.promiseAutocompleteResultPopup({
+    window,
+    waitForFocus: SimpleTest.waitForFocus,
+    value: "ex",
+    fireInputEvent: true,
+  });
   let details = await UrlbarTestUtils.getDetailsOfResultAt(window, 0);
   Assert.ok(details.autofill);
   Assert.equal(gURLBar.value, "example.com/");
@@ -51,7 +56,12 @@ add_task(async function tokenAlias() {
 
   // Do an initial search that triggers autofill so that the placeholder has an
   // initial value.
-  await promiseAutocompleteResultPopup("@__ex", window, true);
+  await UrlbarTestUtils.promiseAutocompleteResultPopup({
+    window,
+    waitForFocus: SimpleTest.waitForFocus,
+    value: "@__ex",
+    fireInputEvent: true,
+  });
   let details = await UrlbarTestUtils.getDetailsOfResultAt(window, 0);
   Assert.ok(details.autofill);
   Assert.equal(gURLBar.value, "@__example ");
@@ -71,7 +81,12 @@ add_task(async function noMatch1() {
 
   // Do an initial search that triggers autofill so that the placeholder has an
   // initial value.
-  await promiseAutocompleteResultPopup("ex", window, true);
+  await UrlbarTestUtils.promiseAutocompleteResultPopup({
+    window,
+    waitForFocus: SimpleTest.waitForFocus,
+    value: "ex",
+    fireInputEvent: true,
+  });
   let details = await UrlbarTestUtils.getDetailsOfResultAt(window, 0);
   Assert.ok(details.autofill);
   Assert.equal(gURLBar.value, "example.com/");
@@ -89,7 +104,12 @@ add_task(async function noMatch1() {
 
   // Search for "ex" again.  It should be autofilled.  Placeholder autofill
   // won't happen.  It's not important for this test to check that.
-  await promiseAutocompleteResultPopup("ex", window, true);
+  await UrlbarTestUtils.promiseAutocompleteResultPopup({
+    window,
+    waitForFocus: SimpleTest.waitForFocus,
+    value: "ex",
+    fireInputEvent: true,
+  });
   details = await UrlbarTestUtils.getDetailsOfResultAt(window, 0);
   Assert.ok(details.autofill);
   Assert.equal(gURLBar.value, "example.com/");
@@ -113,7 +133,12 @@ add_task(async function noMatch2() {
 
   // Do an initial search that triggers autofill so that the placeholder has an
   // initial value.
-  await promiseAutocompleteResultPopup("moz", window, true);
+  await UrlbarTestUtils.promiseAutocompleteResultPopup({
+    window,
+    waitForFocus: SimpleTest.waitForFocus,
+    value: "moz",
+    fireInputEvent: true,
+  });
   let details = await UrlbarTestUtils.getDetailsOfResultAt(window, 0);
   Assert.ok(details.autofill);
   Assert.equal(gURLBar.value, "mozilla.org/");
@@ -155,7 +180,54 @@ add_task(async function noMatch2() {
   await cleanUp();
 });
 
-async function searchAndCheck(searchString, expectedAutofillValue) {
+add_task(async function clear_placeholder_for_keyword_or_alias() {
+  info("Clear the autofill placeholder if a keyword is typed");
+  await PlacesTestUtils.addVisits("http://example.com/");
+  await PlacesUtils.keywords.insert({
+    keyword: "ex",
+    url: "http://somekeyword.com/",
+  });
+  let engine = await Services.search.addEngineWithDetails("AutofillTest", {
+    alias: "exam",
+    template: "http://example.com/?search={searchTerms}",
+  });
+  registerCleanupFunction(async function() {
+    await PlacesUtils.keywords.remove("ex");
+    await Services.search.removeEngine(engine);
+  });
+
+  // Do an initial search that triggers autofill so that the placeholder has an
+  // initial value.
+  await UrlbarTestUtils.promiseAutocompleteResultPopup({
+    window,
+    waitForFocus: SimpleTest.waitForFocus,
+    value: "e",
+    fireInputEvent: true,
+  });
+  let details = await UrlbarTestUtils.getDetailsOfResultAt(window, 0);
+  Assert.ok(details.autofill);
+  Assert.equal(gURLBar.value, "example.com/");
+  Assert.equal(gURLBar.selectionStart, "e".length);
+  Assert.equal(gURLBar.selectionEnd, "example.com/".length);
+
+  // The values are initially autofilled on input, then the placeholder is
+  // removed when the first non-autofill result arrives.
+
+  // Matches the keyword.
+  await searchAndCheck("ex", "example.com/", "ex");
+  await searchAndCheck("EXA", "EXAmple.com/", "EXAmple.com/");
+  // Matches the alias.
+  await searchAndCheck("eXaM", "eXaMple.com/", "eXaM");
+  await searchAndCheck("examp", "example.com/", "example.com/");
+
+  await cleanUp();
+});
+
+async function searchAndCheck(
+  searchString,
+  expectedAutofillValue,
+  onCompleteValue = ""
+) {
   gURLBar.value = searchString;
 
   // Placeholder autofill is done on input, so fire an input event.  As the
@@ -172,6 +244,13 @@ async function searchAndCheck(searchString, expectedAutofillValue) {
   Assert.equal(gURLBar.selectionEnd, expectedAutofillValue.length);
 
   await UrlbarTestUtils.promiseSearchComplete(window);
+
+  if (onCompleteValue) {
+    // Check the final value after the results arrived.
+    Assert.equal(gURLBar.value, onCompleteValue);
+    Assert.equal(gURLBar.selectionStart, searchString.length);
+    Assert.equal(gURLBar.selectionEnd, onCompleteValue.length);
+  }
 }
 
 async function cleanUp() {

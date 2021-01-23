@@ -1,4 +1,10 @@
+/* global arguments */
+
+"use strict";
+
 var CC = Components.Constructor;
+
+var dns = Cc["@mozilla.org/network/dns-service;1"].getService(Ci.nsIDNSService);
 
 const BinaryInputStream = CC(
   "@mozilla.org/binaryinputstream;1",
@@ -30,7 +36,7 @@ function launchConnection(socks_vers, socks_port, dest_host, dest_port, dns) {
     -1,
     null
   );
-  var trans = sts.createTransport(null, 0, dest_host, dest_port, pi);
+  var trans = sts.createTransport([], dest_host, dest_port, pi);
   var input = trans.openInputStream(Ci.nsITransport.OPEN_BLOCKING, 0, 0);
   var output = trans.openOutputStream(Ci.nsITransport.OPEN_BLOCKING, 0, 0);
   var bin = new BinaryInputStream(input);
@@ -47,7 +53,7 @@ function launchConnection(socks_vers, socks_port, dest_host, dest_port, dns) {
 
 for (var arg of arguments) {
   print("client: running test", arg);
-  test = arg.split("|");
+  let test = arg.split("|");
   launchConnection(
     test[0],
     parseInt(test[1]),

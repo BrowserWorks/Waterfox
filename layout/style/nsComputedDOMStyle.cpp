@@ -15,6 +15,7 @@
 #include "mozilla/PresShell.h"
 #include "mozilla/PresShellInlines.h"
 #include "mozilla/StaticPtr.h"
+#include "mozilla/StaticPrefs_layout.h"
 
 #include "nsError.h"
 #include "nsIFrame.h"
@@ -22,6 +23,7 @@
 #include "mozilla/ComputedStyle.h"
 #include "nsIScrollableFrame.h"
 #include "nsContentUtils.h"
+#include "nsDocShell.h"
 #include "nsIContent.h"
 #include "nsStyleConsts.h"
 
@@ -44,10 +46,7 @@
 #include "mozilla/ServoStyleSet.h"
 #include "mozilla/RestyleManager.h"
 #include "mozilla/ViewportFrame.h"
-#include "imgIRequest.h"
 #include "nsLayoutUtils.h"
-#include "nsCSSKeywords.h"
-#include "nsStyleCoord.h"
 #include "nsDisplayList.h"
 #include "nsDOMCSSDeclaration.h"
 #include "nsStyleTransformMatrix.h"
@@ -58,6 +57,7 @@
 #include "mozilla/AppUnits.h"
 #include <algorithm>
 #include "mozilla/ComputedStyleInlines.h"
+#include "nsPrintfCString.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -83,24 +83,9 @@ static nsDOMCSSValueList* GetROCSSValueList(bool aCommaDelimited) {
   return new nsDOMCSSValueList(aCommaDelimited);
 }
 
-template <typename T>
-already_AddRefed<CSSValue> GetBackgroundList(
-    T nsStyleImageLayers::Layer::*aMember, uint32_t nsStyleImageLayers::*aCount,
-    const nsStyleImageLayers& aLayers, const nsCSSKTableEntry aTable[]) {
-  RefPtr<nsDOMCSSValueList> valueList = GetROCSSValueList(true);
-
-  for (uint32_t i = 0, i_end = aLayers.*aCount; i < i_end; ++i) {
-    RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-    val->SetIdent(
-        nsCSSProps::ValueToKeywordEnum(aLayers.mLayers[i].*aMember, aTable));
-    valueList->AppendCSSValue(val.forget());
-  }
-
-  return valueList.forget();
-}
-
 // Whether aDocument needs to restyle for aElement
-static bool ElementNeedsRestyle(Element* aElement, nsAtom* aPseudo) {
+static bool ElementNeedsRestyle(Element* aElement, nsAtom* aPseudo,
+                                bool aMayNeedToFlushLayout) {
   const Document* doc = aElement->GetComposedDoc();
   if (!doc) {
     // If the element is out of the document we don't return styles for it, so
@@ -171,7 +156,7 @@ static bool ElementNeedsRestyle(Element* aElement, nsAtom* aPseudo) {
   // Note this is different from Gecko: we only check if any ancestor needs
   // to restyle _itself_, not descendants, since dirty descendants can be
   // another subtree.
-  return restyleManager->HasPendingRestyleAncestor(aElement);
+  return Servo_HasPendingRestyleAncestor(aElement, aMayNeedToFlushLayout);
 }
 
 /**
@@ -188,11 +173,6 @@ struct ComputedStyleMap {
     nsCSSPropertyID mProperty;
     ComputeMethod mGetter;
 
-    bool IsLayoutFlushNeeded() const {
-      return nsCSSProps::PropHasFlags(mProperty,
-                                      CSSPropFlags::GetCSNeedsLayoutFlush);
-    }
-
     bool IsEnabled() const {
       return nsCSSProps::IsEnabled(mProperty, CSSEnabledState::ForAllContent);
     }
@@ -200,7 +180,7 @@ struct ComputedStyleMap {
 
   // This generated file includes definition of kEntries which is typed
   // Entry[] and used below, so this #include has to be put here.
-#include "nsComputedDOMStyleGenerated.cpp"
+#include "nsComputedDOMStyleGenerated.inc"
 
   /**
    * Returns the number of properties that should be exposed on an
@@ -308,12 +288,7 @@ nsComputedDOMStyle::nsComputedDOMStyle(dom::Element* aElement,
       mPresShell(nullptr),
       mStyleType(aStyleType),
       mExposeVisitedStyle(false),
-      mResolvedComputedStyle(false)
-#ifdef DEBUG
-      ,
-      mFlushedPendingReflows(false)
-#endif
-{
+      mResolvedComputedStyle(false) {
   MOZ_ASSERT(aElement);
   MOZ_ASSERT(aDocument);
   // TODO(emilio, bug 548397, https://github.com/w3c/csswg-drafts/issues/2403):
@@ -369,14 +344,16 @@ nsresult nsComputedDOMStyle::GetPropertyValue(const nsCSSPropertyID aPropID,
   // This is mostly to avoid code duplication with GetPropertyCSSValue(); if
   // perf ever becomes an issue here (doubtful), we can look into changing
   // this.
-  return GetPropertyValue(
-      NS_ConvertASCIItoUTF16(nsCSSProps::GetStringValue(aPropID)), aValue);
+  return GetPropertyValue(nsCSSProps::GetStringValue(aPropID), aValue);
 }
 
-nsresult nsComputedDOMStyle::SetPropertyValue(const nsCSSPropertyID aPropID,
-                                              const nsAString& aValue,
-                                              nsIPrincipal* aSubjectPrincipal) {
-  return NS_ERROR_DOM_NO_MODIFICATION_ALLOWED_ERR;
+void nsComputedDOMStyle::SetPropertyValue(const nsCSSPropertyID aPropID,
+                                          const nsACString& aValue,
+                                          nsIPrincipal* aSubjectPrincipal,
+                                          ErrorResult& aRv) {
+  aRv.ThrowNoModificationAllowedError(nsPrintfCString(
+      "Can't set value for property '%s' in computed style",
+      PromiseFlatCString(nsCSSProps::GetStringValue(aPropID)).get()));
 }
 
 void nsComputedDOMStyle::GetCssText(nsAString& aCssText) {
@@ -386,13 +363,13 @@ void nsComputedDOMStyle::GetCssText(nsAString& aCssText) {
 void nsComputedDOMStyle::SetCssText(const nsAString& aCssText,
                                     nsIPrincipal* aSubjectPrincipal,
                                     ErrorResult& aRv) {
-  aRv.Throw(NS_ERROR_DOM_NO_MODIFICATION_ALLOWED_ERR);
+  aRv.ThrowNoModificationAllowedError("Can't set cssText on computed style");
 }
 
 uint32_t nsComputedDOMStyle::Length() {
   // Make sure we have up to date style so that we can include custom
   // properties.
-  UpdateCurrentStyleSources(false);
+  UpdateCurrentStyleSources(eCSSPropertyExtra_variable);
   if (!mComputedStyle) {
     return 0;
   }
@@ -408,7 +385,7 @@ uint32_t nsComputedDOMStyle::Length() {
 css::Rule* nsComputedDOMStyle::GetParentRule() { return nullptr; }
 
 NS_IMETHODIMP
-nsComputedDOMStyle::GetPropertyValue(const nsAString& aPropertyName,
+nsComputedDOMStyle::GetPropertyValue(const nsACString& aPropertyName,
                                      nsAString& aReturn) {
   aReturn.Truncate();
 
@@ -422,8 +399,7 @@ nsComputedDOMStyle::GetPropertyValue(const nsAString& aPropertyName,
     }
   }
 
-  const bool layoutFlushIsNeeded = entry && entry->IsLayoutFlushNeeded();
-  UpdateCurrentStyleSources(layoutFlushIsNeeded);
+  UpdateCurrentStyleSources(prop);
   if (!mComputedStyle) {
     return NS_OK;
   }
@@ -432,7 +408,7 @@ nsComputedDOMStyle::GetPropertyValue(const nsAString& aPropertyName,
 
   if (!entry) {
     MOZ_ASSERT(nsCSSProps::IsCustomPropertyName(aPropertyName));
-    const nsAString& name =
+    const nsACString& name =
         Substring(aPropertyName, CSS_CUSTOM_NAME_PREFIX_LENGTH);
     Servo_GetCustomPropertyValue(mComputedStyle, &name, &aReturn);
     return NS_OK;
@@ -442,10 +418,12 @@ nsComputedDOMStyle::GetPropertyValue(const nsAString& aPropertyName,
     MOZ_ASSERT(entry);
     MOZ_ASSERT(entry->mGetter == &nsComputedDOMStyle::DummyGetter);
 
+    DebugOnly<nsCSSPropertyID> logicalProp = prop;
+
     prop = Servo_ResolveLogicalProperty(prop, mComputedStyle);
     entry = GetComputedStyleMap()->FindEntryForProperty(prop);
 
-    MOZ_ASSERT(layoutFlushIsNeeded == entry->IsLayoutFlushNeeded(),
+    MOZ_ASSERT(NeedsToFlushLayout(logicalProp) == NeedsToFlushLayout(prop),
                "Logical and physical property don't agree on whether layout is "
                "needed");
   }
@@ -462,7 +440,7 @@ nsComputedDOMStyle::GetPropertyValue(const nsAString& aPropertyName,
   }
 
   MOZ_ASSERT(entry->mGetter == &nsComputedDOMStyle::DummyGetter);
-  Servo_GetPropertyValue(mComputedStyle, prop, &aReturn);
+  mComputedStyle->GetComputedPropertyValue(prop, aReturn);
   return NS_OK;
 }
 
@@ -610,17 +588,18 @@ nsMargin nsComputedDOMStyle::GetAdjustedValuesForBoxSizing() {
   return adjustment;
 }
 
-static void AddImageURL(nsIURI& aURI, nsTArray<nsString>& aURLs) {
-  nsAutoCString spec;
+static void AddImageURL(nsIURI& aURI, nsTArray<nsCString>& aURLs) {
+  nsCString spec;
   nsresult rv = aURI.GetSpec(spec);
   if (NS_FAILED(rv)) {
     return;
   }
 
-  aURLs.AppendElement(NS_ConvertUTF8toUTF16(spec));
+  aURLs.AppendElement(std::move(spec));
 }
 
-static void AddImageURL(const css::URLValue& aURL, nsTArray<nsString>& aURLs) {
+static void AddImageURL(const StyleComputedUrl& aURL,
+                        nsTArray<nsCString>& aURLs) {
   if (aURL.IsLocalRef()) {
     return;
   }
@@ -630,44 +609,36 @@ static void AddImageURL(const css::URLValue& aURL, nsTArray<nsString>& aURLs) {
   }
 }
 
-static void AddImageURL(const nsStyleImageRequest& aRequest,
-                        nsTArray<nsString>& aURLs) {
-  if (auto* value = aRequest.GetImageValue()) {
-    AddImageURL(*value, aURLs);
-  }
-}
-
-static void AddImageURL(const nsStyleImage& aImage, nsTArray<nsString>& aURLs) {
-  if (auto* urlValue = aImage.GetURLValue()) {
+static void AddImageURL(const StyleImage& aImage, nsTArray<nsCString>& aURLs) {
+  if (auto* urlValue = aImage.GetImageRequestURLValue()) {
     AddImageURL(*urlValue, aURLs);
   }
 }
 
-static void AddImageURL(const StyleShapeSource& aShapeSource,
-                        nsTArray<nsString>& aURLs) {
-  switch (aShapeSource.GetType()) {
-    case StyleShapeSourceType::URL:
-      AddImageURL(aShapeSource.URL(), aURLs);
-      break;
-    case StyleShapeSourceType::Image:
-      AddImageURL(aShapeSource.ShapeImage(), aURLs);
-      break;
-    default:
-      break;
+static void AddImageURL(const StyleShapeOutside& aShapeOutside,
+                        nsTArray<nsCString>& aURLs) {
+  if (aShapeOutside.IsImage()) {
+    AddImageURL(aShapeOutside.AsImage(), aURLs);
+  }
+}
+
+static void AddImageURL(const StyleClipPath& aClipPath,
+                        nsTArray<nsCString>& aURLs) {
+  if (aClipPath.IsUrl()) {
+    AddImageURL(aClipPath.AsUrl(), aURLs);
   }
 }
 
 static void AddImageURLs(const nsStyleImageLayers& aLayers,
-                         nsTArray<nsString>& aURLs) {
+                         nsTArray<nsCString>& aURLs) {
   for (auto i : IntegerRange(aLayers.mLayers.Length())) {
     AddImageURL(aLayers.mLayers[i].mImage, aURLs);
   }
 }
 
-// FIXME(stylo-everywhere): This should be `const ComputedStyle&`.
 static void CollectImageURLsForProperty(nsCSSPropertyID aProp,
-                                        ComputedStyle& aStyle,
-                                        nsTArray<nsString>& aURLs) {
+                                        const ComputedStyle& aStyle,
+                                        nsTArray<nsCString>& aURLs) {
   if (nsCSSProps::IsShorthand(aProp)) {
     CSSPROPS_FOR_SHORTHAND_SUBPROPERTIES(p, aProp,
                                          CSSEnabledState::ForAllContent) {
@@ -678,8 +649,8 @@ static void CollectImageURLsForProperty(nsCSSPropertyID aProp,
 
   switch (aProp) {
     case eCSSProperty_cursor:
-      for (auto& image : aStyle.StyleUI()->mCursorImages) {
-        AddImageURL(*image.mImage, aURLs);
+      for (auto& image : aStyle.StyleUI()->mCursor.images.AsSpan()) {
+        AddImageURL(image.url, aURLs);
       }
       break;
     case eCSSProperty_background_image:
@@ -688,11 +659,13 @@ static void CollectImageURLsForProperty(nsCSSPropertyID aProp,
     case eCSSProperty_mask_clip:
       AddImageURLs(aStyle.StyleSVGReset()->mMask, aURLs);
       break;
-    case eCSSProperty_list_style_image:
-      if (nsStyleImageRequest* image = aStyle.StyleList()->mListStyleImage) {
-        AddImageURL(*image, aURLs);
+    case eCSSProperty_list_style_image: {
+      const auto& image = aStyle.StyleList()->mListStyleImage;
+      if (image.IsUrl()) {
+        AddImageURL(image.AsUrl(), aURLs);
       }
       break;
+    }
     case eCSSProperty_border_image_source:
       AddImageURL(aStyle.StyleBorder()->mBorderImageSource, aURLs);
       break;
@@ -707,16 +680,19 @@ static void CollectImageURLsForProperty(nsCSSPropertyID aProp,
   }
 }
 
-void nsComputedDOMStyle::GetCSSImageURLs(const nsAString& aPropertyName,
-                                         nsTArray<nsString>& aImageURLs,
+void nsComputedDOMStyle::GetCSSImageURLs(const nsACString& aPropertyName,
+                                         nsTArray<nsCString>& aImageURLs,
                                          mozilla::ErrorResult& aRv) {
   nsCSSPropertyID prop = nsCSSProps::LookupProperty(aPropertyName);
   if (prop == eCSSProperty_UNKNOWN) {
-    aRv.Throw(NS_ERROR_DOM_SYNTAX_ERR);
+    // Note: not using nsPrintfCString here in case aPropertyName contains
+    // nulls.
+    aRv.ThrowSyntaxError(NS_LITERAL_CSTRING("Invalid property name '") +
+                         aPropertyName + NS_LITERAL_CSTRING("'"));
     return;
   }
 
-  UpdateCurrentStyleSources(false);
+  UpdateCurrentStyleSources(prop);
 
   if (!mComputedStyle) {
     return;
@@ -776,9 +752,61 @@ void nsComputedDOMStyle::SetFrameComputedStyle(mozilla::ComputedStyle* aStyle,
   mPresShellId = mPresShell->GetPresShellId();
 }
 
-bool nsComputedDOMStyle::NeedsToFlush() const {
+static bool MayNeedToFlushLayout(nsCSSPropertyID aPropID) {
+  switch (aPropID) {
+    case eCSSProperty_width:
+    case eCSSProperty_height:
+    case eCSSProperty_block_size:
+    case eCSSProperty_inline_size:
+    case eCSSProperty_line_height:
+    case eCSSProperty_grid_template_rows:
+    case eCSSProperty_grid_template_columns:
+    case eCSSProperty_perspective_origin:
+    case eCSSProperty_transform_origin:
+    case eCSSProperty_transform:
+    case eCSSProperty_border_top_width:
+    case eCSSProperty_border_bottom_width:
+    case eCSSProperty_border_left_width:
+    case eCSSProperty_border_right_width:
+    case eCSSProperty_border_block_start_width:
+    case eCSSProperty_border_block_end_width:
+    case eCSSProperty_border_inline_start_width:
+    case eCSSProperty_border_inline_end_width:
+    case eCSSProperty_top:
+    case eCSSProperty_right:
+    case eCSSProperty_bottom:
+    case eCSSProperty_left:
+    case eCSSProperty_inset_block_start:
+    case eCSSProperty_inset_block_end:
+    case eCSSProperty_inset_inline_start:
+    case eCSSProperty_inset_inline_end:
+    case eCSSProperty_padding_top:
+    case eCSSProperty_padding_right:
+    case eCSSProperty_padding_bottom:
+    case eCSSProperty_padding_left:
+    case eCSSProperty_padding_block_start:
+    case eCSSProperty_padding_block_end:
+    case eCSSProperty_padding_inline_start:
+    case eCSSProperty_padding_inline_end:
+    case eCSSProperty_margin_top:
+    case eCSSProperty_margin_right:
+    case eCSSProperty_margin_bottom:
+    case eCSSProperty_margin_left:
+    case eCSSProperty_margin_block_start:
+    case eCSSProperty_margin_block_end:
+    case eCSSProperty_margin_inline_start:
+    case eCSSProperty_margin_inline_end:
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool nsComputedDOMStyle::NeedsToFlushStyle(nsCSSPropertyID aPropID) const {
+  bool mayNeedToFlushLayout = MayNeedToFlushLayout(aPropID);
+
   // We always compute styles from the element's owner document.
-  if (ElementNeedsRestyle(mElement, mPseudo)) {
+  if (ElementNeedsRestyle(mElement, mPseudo, mayNeedToFlushLayout)) {
     return true;
   }
 
@@ -786,9 +814,9 @@ bool nsComputedDOMStyle::NeedsToFlush() const {
   // If parent document is there, also needs to check if there is some change
   // that needs to flush this document (e.g. size change for iframe).
   while (doc->StyleOrLayoutObservablyDependsOnParentDocumentLayout()) {
-    Document* parentDocument = doc->GetParentDocument();
+    Document* parentDocument = doc->GetInProcessParentDocument();
     Element* element = parentDocument->FindContentForSubDocument(doc);
-    if (ElementNeedsRestyle(element, nullptr)) {
+    if (ElementNeedsRestyle(element, nullptr, mayNeedToFlushLayout)) {
       return true;
     }
     doc = parentDocument;
@@ -797,41 +825,202 @@ bool nsComputedDOMStyle::NeedsToFlush() const {
   return false;
 }
 
-void nsComputedDOMStyle::UpdateCurrentStyleSources(bool aNeedsLayoutFlush) {
+static nsIFrame* StyleFrame(nsIFrame* aOuterFrame) {
+  MOZ_ASSERT(aOuterFrame);
+  if (!aOuterFrame->IsTableWrapperFrame()) {
+    return aOuterFrame;
+  }
+  // If the frame is a table wrapper frame then we should get the style from the
+  // inner table frame.
+  nsIFrame* inner = aOuterFrame->PrincipalChildList().FirstChild();
+  NS_ASSERTION(inner, "table wrapper must have an inner");
+  NS_ASSERTION(!inner->GetNextSibling(),
+               "table wrapper frames should have just one child, the inner "
+               "table");
+  return inner;
+}
+
+static bool IsNonReplacedInline(nsIFrame* aFrame) {
+  // FIXME: this should be IsInlineInsideStyle() since width/height
+  // doesn't apply to ruby boxes.
+  return aFrame->StyleDisplay()->IsInlineFlow() &&
+         !aFrame->IsFrameOfType(nsIFrame::eReplaced);
+}
+
+static Side SideForPaddingOrMarginOrInsetProperty(nsCSSPropertyID aPropID) {
+  switch (aPropID) {
+    case eCSSProperty_top:
+    case eCSSProperty_margin_top:
+    case eCSSProperty_padding_top:
+      return eSideTop;
+    case eCSSProperty_right:
+    case eCSSProperty_margin_right:
+    case eCSSProperty_padding_right:
+      return eSideRight;
+    case eCSSProperty_bottom:
+    case eCSSProperty_margin_bottom:
+    case eCSSProperty_padding_bottom:
+      return eSideBottom;
+    case eCSSProperty_left:
+    case eCSSProperty_margin_left:
+    case eCSSProperty_padding_left:
+      return eSideLeft;
+    default:
+      MOZ_ASSERT_UNREACHABLE("Unexpected property");
+      return eSideTop;
+  }
+}
+
+static bool PaddingNeedsUsedValue(const LengthPercentage& aValue,
+                                  const ComputedStyle& aStyle) {
+  return !aValue.ConvertsToLength() || aStyle.StyleDisplay()->HasAppearance();
+}
+
+bool nsComputedDOMStyle::NeedsToFlushLayout(nsCSSPropertyID aPropID) const {
+  MOZ_ASSERT(aPropID != eCSSProperty_UNKNOWN);
+  if (aPropID == eCSSPropertyExtra_variable) {
+    return false;
+  }
+  nsIFrame* outerFrame = GetOuterFrame();
+  if (!outerFrame) {
+    return false;
+  }
+  nsIFrame* frame = StyleFrame(outerFrame);
+  auto* style = frame->Style();
+  if (nsCSSProps::PropHasFlags(aPropID, CSSPropFlags::IsLogical)) {
+    aPropID = Servo_ResolveLogicalProperty(aPropID, style);
+  }
+
+  switch (aPropID) {
+    case eCSSProperty_width:
+    case eCSSProperty_height:
+      return !IsNonReplacedInline(frame);
+    case eCSSProperty_line_height:
+      return frame->StyleText()->mLineHeight.IsMozBlockHeight();
+    case eCSSProperty_grid_template_rows:
+    case eCSSProperty_grid_template_columns:
+      return !!nsGridContainerFrame::GetGridContainerFrame(frame);
+    case eCSSProperty_perspective_origin:
+      return style->StyleDisplay()->mPerspectiveOrigin.HasPercent();
+    case eCSSProperty_transform_origin:
+      return style->StyleDisplay()->mTransformOrigin.HasPercent();
+    case eCSSProperty_transform:
+      return style->StyleDisplay()->mTransform.HasPercent();
+    case eCSSProperty_border_top_width:
+    case eCSSProperty_border_bottom_width:
+    case eCSSProperty_border_left_width:
+    case eCSSProperty_border_right_width:
+      // FIXME(emilio): This should return false per spec (bug 1551000), but
+      // themed borders don't make that easy, so for now flush for that case.
+      //
+      // TODO(emilio): If we make GetUsedBorder() stop returning 0 for an
+      // unreflowed frame, or something of that sort, then we can stop flushing
+      // layout for themed frames.
+      return style->StyleDisplay()->HasAppearance();
+    case eCSSProperty_top:
+    case eCSSProperty_right:
+    case eCSSProperty_bottom:
+    case eCSSProperty_left:
+      // Doing better than this is actually hard.
+      return style->StyleDisplay()->mPosition != StylePositionProperty::Static;
+    case eCSSProperty_padding_top:
+    case eCSSProperty_padding_right:
+    case eCSSProperty_padding_bottom:
+    case eCSSProperty_padding_left: {
+      Side side = SideForPaddingOrMarginOrInsetProperty(aPropID);
+      // Theming can override used padding, sigh.
+      //
+      // TODO(emilio): If we make GetUsedPadding() stop returning 0 for an
+      // unreflowed frame, or something of that sort, then we can stop flushing
+      // layout for themed frames.
+      return PaddingNeedsUsedValue(style->StylePadding()->mPadding.Get(side),
+                                   *style);
+    }
+    case eCSSProperty_margin_top:
+    case eCSSProperty_margin_right:
+    case eCSSProperty_margin_bottom:
+    case eCSSProperty_margin_left: {
+      // NOTE(emilio): This is dubious, but matches other browsers.
+      // See https://github.com/w3c/csswg-drafts/issues/2328
+      Side side = SideForPaddingOrMarginOrInsetProperty(aPropID);
+      return !style->StyleMargin()->mMargin.Get(side).ConvertsToLength();
+    }
+    default:
+      return false;
+  }
+}
+
+void nsComputedDOMStyle::Flush(Document& aDocument, FlushType aFlushType) {
+  MOZ_ASSERT(mElement->IsInComposedDoc());
+
+#ifdef DEBUG
+  {
+    nsCOMPtr<Document> document = do_QueryReferent(mDocumentWeak);
+    MOZ_ASSERT(document == &aDocument);
+  }
+#endif
+
+  aDocument.FlushPendingNotifications(aFlushType);
+  if (MOZ_UNLIKELY(&aDocument != mElement->OwnerDoc())) {
+    mElement->OwnerDoc()->FlushPendingNotifications(aFlushType);
+  }
+}
+
+nsIFrame* nsComputedDOMStyle::GetOuterFrame() const {
+  if (!mPseudo) {
+    return mElement->GetPrimaryFrame();
+  }
+  nsAtom* property = nullptr;
+  if (mPseudo == nsCSSPseudoElements::before()) {
+    property = nsGkAtoms::beforePseudoProperty;
+  } else if (mPseudo == nsCSSPseudoElements::after()) {
+    property = nsGkAtoms::afterPseudoProperty;
+  } else if (mPseudo == nsCSSPseudoElements::marker()) {
+    property = nsGkAtoms::markerPseudoProperty;
+  }
+  if (!property) {
+    return nullptr;
+  }
+  auto* pseudo = static_cast<Element*>(mElement->GetProperty(property));
+  return pseudo ? pseudo->GetPrimaryFrame() : nullptr;
+}
+
+void nsComputedDOMStyle::UpdateCurrentStyleSources(nsCSSPropertyID aPropID) {
   nsCOMPtr<Document> document = do_QueryReferent(mDocumentWeak);
   if (!document) {
     ClearComputedStyle();
     return;
   }
 
-  // TODO(emilio): We may want to handle a few special-cases here:
+  // We don't return styles for disconnected elements anymore, so don't go
+  // through the trouble of flushing or what not.
   //
-  //  * https://github.com/w3c/csswg-drafts/issues/1964
-  //  * https://github.com/w3c/csswg-drafts/issues/1548
-
-  // If the property we are computing relies on layout, then we must flush.
-  const bool needsToFlush = aNeedsLayoutFlush || NeedsToFlush();
-  if (needsToFlush) {
-    // Flush _before_ getting the presshell, since that could create a new
-    // presshell.  Also note that we want to flush the style on the document
-    // we're computing style in, not on the document mElement is in -- the two
-    // may be different.
-    document->FlushPendingNotifications(aNeedsLayoutFlush ? FlushType::Layout
-                                                          : FlushType::Style);
+  // TODO(emilio): We may want to return earlier for elements outside of the
+  // flat tree too: https://github.com/w3c/csswg-drafts/issues/1964
+  if (!mElement->IsInComposedDoc()) {
+    ClearComputedStyle();
+    return;
   }
 
-#ifdef DEBUG
-  mFlushedPendingReflows = aNeedsLayoutFlush;
-#endif
+  DebugOnly<bool> didFlush = false;
+  if (NeedsToFlushStyle(aPropID)) {
+    didFlush = true;
+    // We look at the frame in NeedsToFlushLayout, so flush frames, not only
+    // styles.
+    Flush(*document, FlushType::Frames);
+  }
 
-  RefPtr<PresShell> presShellForContent =
-      nsContentUtils::GetPresShellForContent(mElement);
-  if (presShellForContent && presShellForContent->GetDocument() != document) {
-    presShellForContent->GetDocument()->FlushPendingNotifications(
-        FlushType::Style);
-    if (presShellForContent->IsDestroying()) {
-      presShellForContent = nullptr;
-    }
+  if (NeedsToFlushLayout(aPropID)) {
+    MOZ_ASSERT(MayNeedToFlushLayout(aPropID));
+    didFlush = true;
+    Flush(*document, FlushType::Layout);
+#ifdef DEBUG
+    mFlushedPendingReflows = true;
+#endif
+  } else {
+#ifdef DEBUG
+    mFlushedPendingReflows = false;
+#endif
   }
 
   mPresShell = document->GetPresShell();
@@ -852,69 +1041,33 @@ void nsComputedDOMStyle::UpdateCurrentStyleSources(bool aNeedsLayoutFlush) {
   uint64_t currentGeneration =
       mPresShell->GetPresContext()->GetUndisplayedRestyleGeneration();
 
-  if (mComputedStyle) {
-    // We can't rely on the undisplayed restyle generation if mElement is
-    // out-of-document, since that generation is not incremented for DOM changes
-    // on out-of-document elements.
-    //
-    // So we always need to update the style to ensure it it up-to-date.
-    if (mComputedStyleGeneration == currentGeneration &&
-        mPresShellId == mPresShell->GetPresShellId() &&
-        mElement->IsInComposedDoc()) {
-      // Our cached style is still valid.
-      return;
-    }
-    // We've processed some restyles, so the cached style might be out of date.
-    mComputedStyle = nullptr;
+  if (mComputedStyle && mComputedStyleGeneration == currentGeneration &&
+      mPresShellId == mPresShell->GetPresShellId()) {
+    // Our cached style is still valid.
+    return;
   }
+
+  mComputedStyle = nullptr;
 
   // XXX the !mElement->IsHTMLElement(nsGkAtoms::area)
   // check is needed due to bug 135040 (to avoid using
   // mPrimaryFrame). Remove it once that's fixed.
   if (mStyleType == eAll && !mElement->IsHTMLElement(nsGkAtoms::area)) {
-    mOuterFrame = nullptr;
-
-    if (!mPseudo) {
-      mOuterFrame = mElement->GetPrimaryFrame();
-    } else {
-      nsAtom* property = nullptr;
-      if (mPseudo == nsCSSPseudoElements::before()) {
-        property = nsGkAtoms::beforePseudoProperty;
-      } else if (mPseudo == nsCSSPseudoElements::after()) {
-        property = nsGkAtoms::afterPseudoProperty;
-      } else if (mPseudo == nsCSSPseudoElements::marker()) {
-        property = nsGkAtoms::markerPseudoProperty;
-      }
-      if (property) {
-        auto* pseudo = static_cast<Element*>(mElement->GetProperty(property));
-        mOuterFrame = pseudo ? pseudo->GetPrimaryFrame() : nullptr;
-      }
-    }
-
+    mOuterFrame = GetOuterFrame();
     mInnerFrame = mOuterFrame;
     if (mOuterFrame) {
-      LayoutFrameType type = mOuterFrame->Type();
-      if (type == LayoutFrameType::TableWrapper) {
-        // If the frame is a table wrapper frame then we should get the style
-        // from the inner table frame.
-        mInnerFrame = mOuterFrame->PrincipalChildList().FirstChild();
-        NS_ASSERTION(mInnerFrame, "table wrapper must have an inner");
-        NS_ASSERTION(!mInnerFrame->GetNextSibling(),
-                     "table wrapper frames should have just one child, "
-                     "the inner table");
-      }
-
+      mInnerFrame = StyleFrame(mOuterFrame);
       SetFrameComputedStyle(mInnerFrame->Style(), currentGeneration);
       NS_ASSERTION(mComputedStyle, "Frame without style?");
     }
   }
 
   if (!mComputedStyle || MustReresolveStyle(mComputedStyle)) {
+    PresShell* presShellForContent = mElement->OwnerDoc()->GetPresShell();
     // Need to resolve a style.
     RefPtr<ComputedStyle> resolvedComputedStyle = DoGetComputedStyleNoFlush(
         mElement, mPseudo,
-        presShellForContent ? presShellForContent.get() : mPresShell,
-        mStyleType);
+        presShellForContent ? presShellForContent : mPresShell, mStyleType);
     if (!resolvedComputedStyle) {
       ClearComputedStyle();
       return;
@@ -924,7 +1077,7 @@ void nsComputedDOMStyle::UpdateCurrentStyleSources(bool aNeedsLayoutFlush) {
     // will flush, since we flushed style at the top of this function.
     // We don't need to check this if we only flushed the parent.
     NS_ASSERTION(
-        !needsToFlush ||
+        !didFlush ||
             currentGeneration ==
                 mPresShell->GetPresContext()->GetUndisplayedRestyleGeneration(),
         "why should we have flushed style again?");
@@ -961,40 +1114,46 @@ void nsComputedDOMStyle::ClearCurrentStyleSources() {
   mPresShell = nullptr;
 }
 
-NS_IMETHODIMP
-nsComputedDOMStyle::RemoveProperty(const nsAString& aPropertyName,
-                                   nsAString& aReturn) {
-  return NS_ERROR_DOM_NO_MODIFICATION_ALLOWED_ERR;
+void nsComputedDOMStyle::RemoveProperty(const nsACString& aPropertyName,
+                                        nsAString& aReturn, ErrorResult& aRv) {
+  // Note: not using nsPrintfCString here in case aPropertyName contains
+  // nulls.
+  aRv.ThrowNoModificationAllowedError(
+      NS_LITERAL_CSTRING("Can't remove property '") + aPropertyName +
+      NS_LITERAL_CSTRING("' from computed style"));
 }
 
-void nsComputedDOMStyle::GetPropertyPriority(const nsAString& aPropertyName,
+void nsComputedDOMStyle::GetPropertyPriority(const nsACString& aPropertyName,
                                              nsAString& aReturn) {
   aReturn.Truncate();
 }
 
-NS_IMETHODIMP
-nsComputedDOMStyle::SetProperty(const nsAString& aPropertyName,
-                                const nsAString& aValue,
-                                const nsAString& aPriority,
-                                nsIPrincipal* aSubjectPrincipal) {
-  return NS_ERROR_DOM_NO_MODIFICATION_ALLOWED_ERR;
+void nsComputedDOMStyle::SetProperty(const nsACString& aPropertyName,
+                                     const nsACString& aValue,
+                                     const nsAString& aPriority,
+                                     nsIPrincipal* aSubjectPrincipal,
+                                     ErrorResult& aRv) {
+  // Note: not using nsPrintfCString here in case aPropertyName contains
+  // nulls.
+  aRv.ThrowNoModificationAllowedError(
+      NS_LITERAL_CSTRING("Can't set value for property '") + aPropertyName +
+      NS_LITERAL_CSTRING("' in computed style"));
 }
 
 void nsComputedDOMStyle::IndexedGetter(uint32_t aIndex, bool& aFound,
-                                       nsAString& aPropName) {
+                                       nsACString& aPropName) {
   ComputedStyleMap* map = GetComputedStyleMap();
   uint32_t length = map->Length();
 
   if (aIndex < length) {
     aFound = true;
-    CopyASCIItoUTF16(nsCSSProps::GetStringValue(map->PropertyAt(aIndex)),
-                     aPropName);
+    aPropName.Assign(nsCSSProps::GetStringValue(map->PropertyAt(aIndex)));
     return;
   }
 
   // Custom properties are exposed with indexed properties just after all
   // of the built-in properties.
-  UpdateCurrentStyleSources(false);
+  UpdateCurrentStyleSources(eCSSPropertyExtra_variable);
   if (!mComputedStyle) {
     aFound = false;
     return;
@@ -1005,10 +1164,10 @@ void nsComputedDOMStyle::IndexedGetter(uint32_t aIndex, bool& aFound,
   const uint32_t index = aIndex - length;
   if (index < count) {
     aFound = true;
-    nsString varName;
-    Servo_GetCustomPropertyNameAt(mComputedStyle, index, &varName);
     aPropName.AssignLiteral("--");
-    aPropName.Append(varName);
+    if (nsAtom* atom = Servo_GetCustomPropertyNameAt(mComputedStyle, index)) {
+      aPropName.Append(nsAtomCString(atom));
+    }
   } else {
     aFound = false;
   }
@@ -1162,37 +1321,16 @@ already_AddRefed<nsROCSSPrimitiveValue> nsComputedDOMStyle::MatrixToCSSValue(
 
 already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetOsxFontSmoothing() {
   if (nsContentUtils::ShouldResistFingerprinting(
-          mPresShell->GetPresContext()->GetDocShell()))
+          mPresShell->GetPresContext()->GetDocShell())) {
     return nullptr;
-
-  RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-  val->SetIdent(nsCSSProps::ValueToKeywordEnum(
-      StyleFont()->mFont.smoothing, nsCSSProps::kFontSmoothingKTable));
-  return val.forget();
-}
-
-static void SetValueToCalc(const nsStyleCoord::CalcValue* aCalc,
-                           nsROCSSPrimitiveValue* aValue) {
-  RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-  nsAutoString tmp, result;
-
-  result.AppendLiteral("calc(");
-
-  val->SetAppUnits(aCalc->mLength);
-  val->GetCssText(tmp);
-  result.Append(tmp);
-
-  if (aCalc->mHasPercent) {
-    result.AppendLiteral(" + ");
-
-    val->SetPercent(aCalc->mPercent);
-    val->GetCssText(tmp);
-    result.Append(tmp);
   }
 
-  result.Append(')');
-
-  aValue->SetString(result);  // not really SetString
+  nsAutoString result;
+  mComputedStyle->GetComputedPropertyValue(eCSSProperty__moz_osx_font_smoothing,
+                                           result);
+  RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
+  val->SetString(result);
+  return val.forget();
 }
 
 already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetImageLayerPosition(
@@ -1225,10 +1363,10 @@ void nsComputedDOMStyle::SetValueToPosition(const Position& aPosition,
   aValueList->AppendCSSValue(valY.forget());
 }
 
-void nsComputedDOMStyle::SetValueToURLValue(const css::URLValue* aURL,
+void nsComputedDOMStyle::SetValueToURLValue(const StyleComputedUrl* aURL,
                                             nsROCSSPrimitiveValue* aValue) {
   if (!aURL) {
-    aValue->SetIdent(eCSSKeyword_none);
+    aValue->SetString("none");
     return;
   }
 
@@ -1242,9 +1380,7 @@ void nsComputedDOMStyle::SetValueToURLValue(const css::URLValue* aURL,
   }
 
   // Otherwise, serialize the specified URL value.
-  nsAutoString source;
-  aURL->GetSourceString(source);
-
+  NS_ConvertUTF8toUTF16 source(aURL->SpecifiedSerialization());
   nsAutoString url;
   url.AppendLiteral(u"url(");
   nsStyleUtil::AppendEscapedCSSString(source, url, '"');
@@ -1252,39 +1388,50 @@ void nsComputedDOMStyle::SetValueToURLValue(const css::URLValue* aURL,
   aValue->SetString(url);
 }
 
-void nsComputedDOMStyle::AppendGridLineNames(
-    nsString& aResult, const nsTArray<nsString>& aLineNames) {
-  uint32_t numLines = aLineNames.Length();
-  if (numLines == 0) {
+enum class Brackets { No, Yes };
+
+static void AppendGridLineNames(nsAString& aResult,
+                                Span<const StyleCustomIdent> aLineNames,
+                                Brackets aBrackets) {
+  if (aLineNames.IsEmpty()) {
+    if (aBrackets == Brackets::Yes) {
+      aResult.AppendLiteral("[]");
+    }
     return;
   }
+  uint32_t numLines = aLineNames.Length();
+  if (aBrackets == Brackets::Yes) {
+    aResult.Append('[');
+  }
   for (uint32_t i = 0;;) {
-    nsStyleUtil::AppendEscapedCSSIdent(aLineNames[i], aResult);
+    nsStyleUtil::AppendEscapedCSSIdent(
+        nsDependentAtomString(aLineNames[i].AsAtom()), aResult);
     if (++i == numLines) {
       break;
     }
     aResult.Append(' ');
   }
+  if (aBrackets == Brackets::Yes) {
+    aResult.Append(']');
+  }
 }
 
-void nsComputedDOMStyle::AppendGridLineNames(
-    nsDOMCSSValueList* aValueList, const nsTArray<nsString>& aLineNames,
-    bool aSuppressEmptyList) {
+static void AppendGridLineNames(nsDOMCSSValueList* aValueList,
+                                Span<const StyleCustomIdent> aLineNames,
+                                bool aSuppressEmptyList = true) {
   if (aLineNames.IsEmpty() && aSuppressEmptyList) {
     return;
   }
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
   nsAutoString lineNamesString;
-  lineNamesString.Assign('[');
-  AppendGridLineNames(lineNamesString, aLineNames);
-  lineNamesString.Append(']');
+  AppendGridLineNames(lineNamesString, aLineNames, Brackets::Yes);
   val->SetString(lineNamesString);
   aValueList->AppendCSSValue(val.forget());
 }
 
-void nsComputedDOMStyle::AppendGridLineNames(
-    nsDOMCSSValueList* aValueList, const nsTArray<nsString>& aLineNames1,
-    const nsTArray<nsString>& aLineNames2) {
+static void AppendGridLineNames(nsDOMCSSValueList* aValueList,
+                                Span<const StyleCustomIdent> aLineNames1,
+                                Span<const StyleCustomIdent> aLineNames2) {
   if (aLineNames1.IsEmpty() && aLineNames2.IsEmpty()) {
     return;
   }
@@ -1292,370 +1439,306 @@ void nsComputedDOMStyle::AppendGridLineNames(
   nsAutoString lineNamesString;
   lineNamesString.Assign('[');
   if (!aLineNames1.IsEmpty()) {
-    AppendGridLineNames(lineNamesString, aLineNames1);
+    AppendGridLineNames(lineNamesString, aLineNames1, Brackets::No);
   }
   if (!aLineNames2.IsEmpty()) {
     if (!aLineNames1.IsEmpty()) {
       lineNamesString.Append(' ');
     }
-    AppendGridLineNames(lineNamesString, aLineNames2);
+    AppendGridLineNames(lineNamesString, aLineNames2, Brackets::No);
   }
   lineNamesString.Append(']');
   val->SetString(lineNamesString);
   aValueList->AppendCSSValue(val.forget());
 }
 
-already_AddRefed<CSSValue> nsComputedDOMStyle::GetGridTrackSize(
-    const nsStyleCoord& aMinValue, const nsStyleCoord& aMaxValue) {
-  if (aMinValue.GetUnit() == eStyleUnit_None) {
+void nsComputedDOMStyle::SetValueToTrackBreadth(
+    nsROCSSPrimitiveValue* aValue, const StyleTrackBreadth& aBreadth) {
+  using Tag = StyleTrackBreadth::Tag;
+  switch (aBreadth.tag) {
+    case Tag::MinContent:
+      return aValue->SetString("min-content");
+    case Tag::MaxContent:
+      return aValue->SetString("max-content");
+    case Tag::Auto:
+      return aValue->SetString("auto");
+    case Tag::Breadth:
+      return SetValueToLengthPercentage(aValue, aBreadth.AsBreadth(), true);
+    case Tag::Fr: {
+      nsAutoString tmpStr;
+      nsStyleUtil::AppendCSSNumber(aBreadth.AsFr(), tmpStr);
+      tmpStr.AppendLiteral("fr");
+      return aValue->SetString(tmpStr);
+    }
+    default:
+      MOZ_ASSERT_UNREACHABLE("Unknown breadth value");
+      return;
+  }
+}
+
+already_AddRefed<nsROCSSPrimitiveValue> nsComputedDOMStyle::GetGridTrackBreadth(
+    const StyleTrackBreadth& aBreadth) {
+  RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
+  SetValueToTrackBreadth(val, aBreadth);
+  return val.forget();
+}
+
+already_AddRefed<nsROCSSPrimitiveValue> nsComputedDOMStyle::GetGridTrackSize(
+    const StyleTrackSize& aTrackSize) {
+  if (aTrackSize.IsFitContent()) {
     // A fit-content() function.
     RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
     nsAutoString argumentStr, fitContentStr;
     fitContentStr.AppendLiteral("fit-content(");
-    MOZ_ASSERT(aMaxValue.IsCoordPercentCalcUnit(),
+    MOZ_ASSERT(aTrackSize.AsFitContent().IsBreadth(),
                "unexpected unit for fit-content() argument value");
-    SetValueToCoord(val, aMaxValue, true);
-    val->GetCssText(argumentStr);
+    SetValueToLengthPercentage(val, aTrackSize.AsFitContent().AsBreadth(),
+                               true);
+    val->GetCssText(argumentStr, IgnoreErrors());
     fitContentStr.Append(argumentStr);
     fitContentStr.Append(char16_t(')'));
     val->SetString(fitContentStr);
     return val.forget();
   }
 
-  if (aMinValue == aMaxValue) {
-    RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-    SetValueToCoord(val, aMinValue, true, nullptr,
-                    nsCSSProps::kGridTrackBreadthKTable);
-    return val.forget();
+  if (aTrackSize.IsBreadth()) {
+    return GetGridTrackBreadth(aTrackSize.AsBreadth());
+  }
+
+  MOZ_ASSERT(aTrackSize.IsMinmax());
+  auto& min = aTrackSize.AsMinmax()._0;
+  auto& max = aTrackSize.AsMinmax()._1;
+  if (min == max) {
+    return GetGridTrackBreadth(min);
   }
 
   // minmax(auto, <flex>) is equivalent to (and is our internal representation
   // of) <flex>, and both compute to <flex>
-  if (aMinValue.GetUnit() == eStyleUnit_Auto &&
-      aMaxValue.GetUnit() == eStyleUnit_FlexFraction) {
-    RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-    SetValueToCoord(val, aMaxValue, true);
-    return val.forget();
+  if (min.IsAuto() && max.IsFr()) {
+    return GetGridTrackBreadth(max);
   }
 
-  RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
   nsAutoString argumentStr, minmaxStr;
   minmaxStr.AppendLiteral("minmax(");
 
-  SetValueToCoord(val, aMinValue, true, nullptr,
-                  nsCSSProps::kGridTrackBreadthKTable);
-  val->GetCssText(argumentStr);
-  minmaxStr.Append(argumentStr);
+  {
+    RefPtr<nsROCSSPrimitiveValue> argValue = GetGridTrackBreadth(min);
+    argValue->GetCssText(argumentStr, IgnoreErrors());
+    minmaxStr.Append(argumentStr);
+    argumentStr.Truncate();
+  }
 
   minmaxStr.AppendLiteral(", ");
 
-  SetValueToCoord(val, aMaxValue, true, nullptr,
-                  nsCSSProps::kGridTrackBreadthKTable);
-  val->GetCssText(argumentStr);
-  minmaxStr.Append(argumentStr);
+  {
+    RefPtr<nsROCSSPrimitiveValue> argValue = GetGridTrackBreadth(max);
+    argValue->GetCssText(argumentStr, IgnoreErrors());
+    minmaxStr.Append(argumentStr);
+  }
 
   minmaxStr.Append(char16_t(')'));
+  RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
   val->SetString(minmaxStr);
   return val.forget();
 }
 
 already_AddRefed<CSSValue> nsComputedDOMStyle::GetGridTemplateColumnsRows(
-    const nsStyleGridTemplate& aTrackList,
-    const ComputedGridTrackInfo* aTrackInfo) {
-  if (aTrackList.mIsSubgrid) {
-    // XXX TODO: add support for repeat(auto-fill) for 'subgrid' (bug 1234311)
-    NS_ASSERTION(aTrackList.mMinTrackSizingFunctions.IsEmpty() &&
-                     aTrackList.mMaxTrackSizingFunctions.IsEmpty(),
-                 "Unexpected sizing functions with subgrid");
+    const StyleGridTemplateComponent& aTrackList,
+    const ComputedGridTrackInfo& aTrackInfo) {
+  if (aTrackInfo.mIsMasonry) {
+    RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
+    val->SetString("masonry");
+    return val.forget();
+  }
+
+  if (aTrackInfo.mIsSubgrid) {
     RefPtr<nsDOMCSSValueList> valueList = GetROCSSValueList(false);
-
     RefPtr<nsROCSSPrimitiveValue> subgridKeyword = new nsROCSSPrimitiveValue;
-    subgridKeyword->SetIdent(eCSSKeyword_subgrid);
+    subgridKeyword->SetString("subgrid");
     valueList->AppendCSSValue(subgridKeyword.forget());
-
-    for (uint32_t i = 0, len = aTrackList.mLineNameLists.Length();; ++i) {
-      if (MOZ_UNLIKELY(aTrackList.IsRepeatAutoIndex(i))) {
-        MOZ_ASSERT(aTrackList.mIsAutoFill, "subgrid can only have 'auto-fill'");
-        MOZ_ASSERT(aTrackList.mRepeatAutoLineNameListAfter.IsEmpty(),
-                   "mRepeatAutoLineNameListAfter isn't used for subgrid");
-        RefPtr<nsROCSSPrimitiveValue> start = new nsROCSSPrimitiveValue;
-        start->SetString(NS_LITERAL_STRING("repeat(auto-fill,"));
-        valueList->AppendCSSValue(start.forget());
-        AppendGridLineNames(valueList, aTrackList.mRepeatAutoLineNameListBefore,
-                            /*aSuppressEmptyList*/ false);
-        RefPtr<nsROCSSPrimitiveValue> end = new nsROCSSPrimitiveValue;
-        end->SetString(NS_LITERAL_STRING(")"));
-        valueList->AppendCSSValue(end.forget());
-      }
-      if (i == len) {
-        break;
-      }
-      AppendGridLineNames(valueList, aTrackList.mLineNameLists[i],
-                          /*aSuppressEmptyList*/ false);
+    for (const auto& lineNames : aTrackInfo.mResolvedLineNames) {
+      AppendGridLineNames(valueList, lineNames, /*aSuppressEmptyList*/ false);
+    }
+    uint32_t line = aTrackInfo.mResolvedLineNames.Length();
+    uint32_t lastLine = aTrackInfo.mNumExplicitTracks + 1;
+    const Span<const StyleCustomIdent> empty;
+    for (; line < lastLine; ++line) {
+      AppendGridLineNames(valueList, empty, /*aSuppressEmptyList*/ false);
     }
     return valueList.forget();
   }
 
-  uint32_t numSizes = aTrackList.mMinTrackSizingFunctions.Length();
-  MOZ_ASSERT(aTrackList.mMaxTrackSizingFunctions.Length() == numSizes,
-             "Different number of min and max track sizing functions");
-  if (aTrackInfo) {
-    DebugOnly<bool> isAutoFill =
-        aTrackList.HasRepeatAuto() && aTrackList.mIsAutoFill;
-    DebugOnly<bool> isAutoFit =
-        aTrackList.HasRepeatAuto() && !aTrackList.mIsAutoFill;
-    DebugOnly<uint32_t> numExplicitTracks = aTrackInfo->mNumExplicitTracks;
-    MOZ_ASSERT(numExplicitTracks == numSizes ||
-                   (isAutoFill && numExplicitTracks >= numSizes) ||
-                   (isAutoFit && numExplicitTracks + 1 >= numSizes),
-               "expected all explicit tracks (or possibly one less, if there's "
-               "an 'auto-fit' track, since that can collapse away)");
-    numSizes = aTrackInfo->mSizes.Length();
-  }
+  const bool serializeImplicit =
+      StaticPrefs::layout_css_serialize_grid_implicit_tracks();
 
-  // An empty <track-list> without repeats is represented as "none" in syntax.
-  if (numSizes == 0 && !aTrackList.HasRepeatAuto()) {
+  const nsTArray<nscoord>& trackSizes = aTrackInfo.mSizes;
+  const uint32_t numExplicitTracks = aTrackInfo.mNumExplicitTracks;
+  const uint32_t numLeadingImplicitTracks =
+      aTrackInfo.mNumLeadingImplicitTracks;
+  uint32_t numSizes = trackSizes.Length();
+  MOZ_ASSERT(numSizes >= numLeadingImplicitTracks + numExplicitTracks);
+
+  const bool hasTracksToSerialize =
+      serializeImplicit ? !!numSizes : !!numExplicitTracks;
+  const bool hasRepeatAuto = aTrackList.HasRepeatAuto();
+  if (!hasTracksToSerialize && !hasRepeatAuto) {
     RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-    val->SetIdent(eCSSKeyword_none);
+    val->SetString("none");
     return val.forget();
   }
 
+  // We've done layout on the grid and have resolved the sizes of its tracks,
+  // so we'll return those sizes here.  The grid spec says we MAY use
+  // repeat(<positive-integer>, Npx) here for consecutive tracks with the same
+  // size, but that doesn't seem worth doing since even for repeat(auto-*)
+  // the resolved size might differ for the repeated tracks.
   RefPtr<nsDOMCSSValueList> valueList = GetROCSSValueList(false);
-  if (aTrackInfo) {
-    // We've done layout on the grid and have resolved the sizes of its tracks,
-    // so we'll return those sizes here.  The grid spec says we MAY use
-    // repeat(<positive-integer>, Npx) here for consecutive tracks with the same
-    // size, but that doesn't seem worth doing since even for repeat(auto-*)
-    // the resolved size might differ for the repeated tracks.
-    const nsTArray<nscoord>& trackSizes = aTrackInfo->mSizes;
-    const uint32_t numExplicitTracks = aTrackInfo->mNumExplicitTracks;
-    const uint32_t numLeadingImplicitTracks =
-        aTrackInfo->mNumLeadingImplicitTracks;
-    MOZ_ASSERT(numSizes >= numLeadingImplicitTracks + numExplicitTracks);
 
-    // Add any leading implicit tracks.
+  // Add any leading implicit tracks.
+  if (serializeImplicit) {
     for (uint32_t i = 0; i < numLeadingImplicitTracks; ++i) {
       RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
       val->SetAppUnits(trackSizes[i]);
       valueList->AppendCSSValue(val.forget());
     }
+  }
 
-    // Then add any explicit tracks and removed auto-fit tracks.
-    if (numExplicitTracks || aTrackList.HasRepeatAuto()) {
-      int32_t endOfRepeat = 0;  // first index after any repeat() tracks
-      int32_t offsetToLastRepeat = 0;
-      if (aTrackList.HasRepeatAuto()) {
-        // offsetToLastRepeat is -1 if all repeat(auto-fit) tracks are empty
-        offsetToLastRepeat =
-            numExplicitTracks + 1 - aTrackList.mLineNameLists.Length();
-        endOfRepeat = aTrackList.mRepeatAutoIndex + offsetToLastRepeat + 1;
-      }
-
-      uint32_t repeatIndex = 0;
-      uint32_t numRepeatTracks = aTrackInfo->mRemovedRepeatTracks.Length();
-      enum LinePlacement { LinesPrecede, LinesFollow, LinesBetween };
-      auto AppendRemovedAutoFits = [this, aTrackInfo, &valueList, aTrackList,
-                                    &repeatIndex,
-                                    numRepeatTracks](LinePlacement aPlacement) {
-        // Add in removed auto-fit tracks and lines here, if necessary
-        bool atLeastOneTrackReported = false;
-        while (repeatIndex < numRepeatTracks &&
-               aTrackInfo->mRemovedRepeatTracks[repeatIndex]) {
-          if ((aPlacement == LinesPrecede) ||
-              ((aPlacement == LinesBetween) && atLeastOneTrackReported)) {
-            // Precede it with the lines between repeats.
-            AppendGridLineNames(valueList,
-                                aTrackList.mRepeatAutoLineNameListAfter,
-                                aTrackList.mRepeatAutoLineNameListBefore);
-          }
-
-          // Removed 'auto-fit' tracks are reported as 0px.
-          RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-          val->SetAppUnits(0);
-          valueList->AppendCSSValue(val.forget());
-          atLeastOneTrackReported = true;
-
-          if (aPlacement == LinesFollow) {
-            // Follow it with the lines between repeats.
-            AppendGridLineNames(valueList,
-                                aTrackList.mRepeatAutoLineNameListAfter,
-                                aTrackList.mRepeatAutoLineNameListBefore);
-          }
-          repeatIndex++;
-        }
-        repeatIndex++;
-      };
-
-      for (int32_t i = 0;; i++) {
-        if (aTrackList.HasRepeatAuto()) {
-          if (i == aTrackList.mRepeatAutoIndex) {
-            const nsTArray<nsString>& lineNames = aTrackList.mLineNameLists[i];
-            if (i == endOfRepeat) {
-              // All auto-fit tracks are empty, but we report them anyway.
-              AppendGridLineNames(valueList, lineNames,
-                                  aTrackList.mRepeatAutoLineNameListBefore);
-
-              AppendRemovedAutoFits(LinesBetween);
-
-              AppendGridLineNames(valueList,
-                                  aTrackList.mRepeatAutoLineNameListAfter,
-                                  aTrackList.mLineNameLists[i + 1]);
-            } else {
-              AppendGridLineNames(valueList, lineNames,
-                                  aTrackList.mRepeatAutoLineNameListBefore);
-              AppendRemovedAutoFits(LinesFollow);
-            }
-          } else if (i == endOfRepeat) {
-            // Before appending the last line, finish off any removed auto-fits.
-            AppendRemovedAutoFits(LinesPrecede);
-
-            const nsTArray<nsString>& lineNames =
-                aTrackList.mLineNameLists[aTrackList.mRepeatAutoIndex + 1];
-            AppendGridLineNames(
-                valueList, aTrackList.mRepeatAutoLineNameListAfter, lineNames);
-          } else if (i > aTrackList.mRepeatAutoIndex && i < endOfRepeat) {
-            AppendGridLineNames(valueList,
-                                aTrackList.mRepeatAutoLineNameListAfter,
-                                aTrackList.mRepeatAutoLineNameListBefore);
-            AppendRemovedAutoFits(LinesFollow);
-          } else {
-            uint32_t j = i > endOfRepeat ? i - offsetToLastRepeat : i;
-            const nsTArray<nsString>& lineNames = aTrackList.mLineNameLists[j];
-            AppendGridLineNames(valueList, lineNames);
-          }
-        } else {
-          const nsTArray<nsString>& lineNames = aTrackList.mLineNameLists[i];
-          AppendGridLineNames(valueList, lineNames);
-        }
-        if (uint32_t(i) == numExplicitTracks) {
-          break;
-        }
-        RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-        val->SetAppUnits(trackSizes[i + numLeadingImplicitTracks]);
-        valueList->AppendCSSValue(val.forget());
-      }
+  if (hasRepeatAuto) {
+    const auto* const autoRepeatValue = aTrackList.GetRepeatAutoValue();
+    const auto repeatLineNames = autoRepeatValue->line_names.AsSpan();
+    MOZ_ASSERT(repeatLineNames.Length() >= 2);
+    // Number of tracks inside the repeat, not including any repetitions.
+    const uint32_t numRepeatTracks = autoRepeatValue->track_sizes.len;
+    MOZ_ASSERT(repeatLineNames.Length() == numRepeatTracks + 1);
+    // The total of all tracks in all repetitions of the repeat.
+    const uint32_t totalNumRepeatTracks =
+        aTrackInfo.mRemovedRepeatTracks.Length();
+    const uint32_t repeatStart = aTrackInfo.mRepeatFirstTrack;
+    // We need to skip over any track sizes which were resolved to 0 by
+    // collapsed tracks. Keep track of the iteration separately.
+    const auto explicitTrackSizeBegin =
+        trackSizes.cbegin() + numLeadingImplicitTracks;
+    const auto explicitTrackSizeEnd =
+        explicitTrackSizeBegin + numExplicitTracks;
+    auto trackSizeIter = explicitTrackSizeBegin;
+    // Write any leading explicit tracks before the repeat.
+    for (uint32_t i = 0; i < repeatStart; i++) {
+      AppendGridLineNames(valueList, aTrackInfo.mResolvedLineNames[i]);
+      RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
+      val->SetAppUnits(*trackSizeIter++);
+      valueList->AppendCSSValue(val.forget());
     }
-
-    // Add any trailing implicit tracks.
+    auto lineNameIter = aTrackInfo.mResolvedLineNames.cbegin() + repeatStart;
+    // Write the track names at the start of the repeat, including the names
+    // at the end of the last non-repeat track. Unlike all later repeat line
+    // name lists, this one needs the resolved line name which includes both
+    // the last non-repeat line names and the leading repeat line names.
+    AppendGridLineNames(valueList, *lineNameIter++);
+    {
+      // Write out the first repeat value, checking for size zero (removed
+      // track).
+      const nscoord firstRepeatTrackSize =
+          (!aTrackInfo.mRemovedRepeatTracks[0]) ? *trackSizeIter++ : 0;
+      RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
+      val->SetAppUnits(firstRepeatTrackSize);
+      valueList->AppendCSSValue(val.forget());
+    }
+    // Write the line names and track sizes inside the repeat, checking for
+    // removed tracks (size 0).
+    for (uint32_t i = 1; i < totalNumRepeatTracks; i++) {
+      const uint32_t repeatIndex = i % numRepeatTracks;
+      // If we are rolling over from one repetition to the next, include track
+      // names from both the end of the previous repeat and the start of the
+      // next.
+      if (repeatIndex == 0) {
+        AppendGridLineNames(valueList,
+                            repeatLineNames[numRepeatTracks].AsSpan(),
+                            repeatLineNames[0].AsSpan());
+      } else {
+        AppendGridLineNames(valueList, repeatLineNames[repeatIndex].AsSpan());
+      }
+      MOZ_ASSERT(aTrackInfo.mRemovedRepeatTracks[i] ||
+                 trackSizeIter != explicitTrackSizeEnd);
+      const nscoord repeatTrackSize =
+          (!aTrackInfo.mRemovedRepeatTracks[i]) ? *trackSizeIter++ : 0;
+      RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
+      val->SetAppUnits(repeatTrackSize);
+      valueList->AppendCSSValue(val.forget());
+    }
+    // The resolved line names include a single repetition of the auto-repeat
+    // line names. Skip over those.
+    lineNameIter += numRepeatTracks - 1;
+    // Write out any more tracks after the repeat.
+    while (trackSizeIter != explicitTrackSizeEnd) {
+      AppendGridLineNames(valueList, *lineNameIter++);
+      RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
+      val->SetAppUnits(*trackSizeIter++);
+      valueList->AppendCSSValue(val.forget());
+    }
+    // Write the final trailing line name.
+    AppendGridLineNames(valueList, *lineNameIter++);
+  } else if (numExplicitTracks > 0) {
+    // If there are explicit tracks but no repeat tracks, just serialize those.
+    for (uint32_t i = 0;; i++) {
+      AppendGridLineNames(valueList, aTrackInfo.mResolvedLineNames[i]);
+      if (i == numExplicitTracks) {
+        break;
+      }
+      RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
+      val->SetAppUnits(trackSizes[i + numLeadingImplicitTracks]);
+      valueList->AppendCSSValue(val.forget());
+    }
+  }
+  // Add any trailing implicit tracks.
+  if (serializeImplicit) {
     for (uint32_t i = numLeadingImplicitTracks + numExplicitTracks;
          i < numSizes; ++i) {
       RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
       val->SetAppUnits(trackSizes[i]);
       valueList->AppendCSSValue(val.forget());
     }
-  } else {
-    // We don't have a frame.  So, we'll just return a serialization of
-    // the tracks from the style (without resolved sizes).
-    for (uint32_t i = 0;; i++) {
-      const nsTArray<nsString>& lineNames = aTrackList.mLineNameLists[i];
-      if (!lineNames.IsEmpty()) {
-        AppendGridLineNames(valueList, lineNames);
-      }
-      if (i == numSizes) {
-        break;
-      }
-      if (MOZ_UNLIKELY(aTrackList.IsRepeatAutoIndex(i))) {
-        RefPtr<nsROCSSPrimitiveValue> start = new nsROCSSPrimitiveValue;
-        start->SetString(aTrackList.mIsAutoFill
-                             ? NS_LITERAL_STRING("repeat(auto-fill,")
-                             : NS_LITERAL_STRING("repeat(auto-fit,"));
-        valueList->AppendCSSValue(start.forget());
-        if (!aTrackList.mRepeatAutoLineNameListBefore.IsEmpty()) {
-          AppendGridLineNames(valueList,
-                              aTrackList.mRepeatAutoLineNameListBefore);
-        }
-
-        valueList->AppendCSSValue(
-            GetGridTrackSize(aTrackList.mMinTrackSizingFunctions[i],
-                             aTrackList.mMaxTrackSizingFunctions[i]));
-        if (!aTrackList.mRepeatAutoLineNameListAfter.IsEmpty()) {
-          AppendGridLineNames(valueList,
-                              aTrackList.mRepeatAutoLineNameListAfter);
-        }
-        RefPtr<nsROCSSPrimitiveValue> end = new nsROCSSPrimitiveValue;
-        end->SetString(NS_LITERAL_STRING(")"));
-        valueList->AppendCSSValue(end.forget());
-      } else {
-        valueList->AppendCSSValue(
-            GetGridTrackSize(aTrackList.mMinTrackSizingFunctions[i],
-                             aTrackList.mMaxTrackSizingFunctions[i]));
-      }
-    }
   }
 
   return valueList.forget();
-}
-
-already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetGridAutoColumns() {
-  return GetGridTrackSize(StylePosition()->mGridAutoColumnsMin,
-                          StylePosition()->mGridAutoColumnsMax);
-}
-
-already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetGridAutoRows() {
-  return GetGridTrackSize(StylePosition()->mGridAutoRowsMin,
-                          StylePosition()->mGridAutoRowsMax);
 }
 
 already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetGridTemplateColumns() {
-  const ComputedGridTrackInfo* info = nullptr;
-
   nsGridContainerFrame* gridFrame =
       nsGridContainerFrame::GetGridFrameWithComputedInfo(mInnerFrame);
-
-  if (gridFrame) {
-    info = gridFrame->GetComputedTemplateColumns();
+  if (!gridFrame) {
+    // The element doesn't have a box - return the computed value.
+    // https://drafts.csswg.org/css-grid/#resolved-track-list
+    nsAutoString string;
+    mComputedStyle->GetComputedPropertyValue(eCSSProperty_grid_template_columns,
+                                             string);
+    RefPtr<nsROCSSPrimitiveValue> value = new nsROCSSPrimitiveValue;
+    value->SetString(string);
+    return value.forget();
   }
 
-  return GetGridTemplateColumnsRows(StylePosition()->GridTemplateColumns(),
-                                    info);
+  // GetGridFrameWithComputedInfo() above ensures that this returns non-null:
+  const ComputedGridTrackInfo* info = gridFrame->GetComputedTemplateColumns();
+  return GetGridTemplateColumnsRows(StylePosition()->mGridTemplateColumns,
+                                    *info);
 }
 
 already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetGridTemplateRows() {
-  const ComputedGridTrackInfo* info = nullptr;
-
   nsGridContainerFrame* gridFrame =
       nsGridContainerFrame::GetGridFrameWithComputedInfo(mInnerFrame);
-
-  if (gridFrame) {
-    info = gridFrame->GetComputedTemplateRows();
+  if (!gridFrame) {
+    // The element doesn't have a box - return the computed value.
+    // https://drafts.csswg.org/css-grid/#resolved-track-list
+    nsAutoString string;
+    mComputedStyle->GetComputedPropertyValue(eCSSProperty_grid_template_rows,
+                                             string);
+    RefPtr<nsROCSSPrimitiveValue> value = new nsROCSSPrimitiveValue;
+    value->SetString(string);
+    return value.forget();
   }
 
-  return GetGridTemplateColumnsRows(StylePosition()->GridTemplateRows(), info);
-}
-
-already_AddRefed<CSSValue> nsComputedDOMStyle::GetGridLine(
-    const nsStyleGridLine& aGridLine) {
-  if (aGridLine.IsAuto()) {
-    RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-    val->SetIdent(eCSSKeyword_auto);
-    return val.forget();
-  }
-
-  RefPtr<nsDOMCSSValueList> valueList = GetROCSSValueList(false);
-
-  if (aGridLine.mHasSpan) {
-    RefPtr<nsROCSSPrimitiveValue> span = new nsROCSSPrimitiveValue;
-    span->SetIdent(eCSSKeyword_span);
-    valueList->AppendCSSValue(span.forget());
-  }
-
-  if (aGridLine.mInteger != 0) {
-    RefPtr<nsROCSSPrimitiveValue> integer = new nsROCSSPrimitiveValue;
-    integer->SetNumber(aGridLine.mInteger);
-    valueList->AppendCSSValue(integer.forget());
-  }
-
-  if (!aGridLine.mLineName.IsEmpty()) {
-    RefPtr<nsROCSSPrimitiveValue> lineName = new nsROCSSPrimitiveValue;
-    nsString escapedLineName;
-    nsStyleUtil::AppendEscapedCSSIdent(aGridLine.mLineName, escapedLineName);
-    lineName->SetString(escapedLineName);
-    valueList->AppendCSSValue(lineName.forget());
-  }
-
-  NS_ASSERTION(valueList->Length() > 0,
-               "Should have appended at least one value");
-  return valueList.forget();
+  // GetGridFrameWithComputedInfo() above ensures that this returns non-null:
+  const ComputedGridTrackInfo* info = gridFrame->GetComputedTemplateRows();
+  return GetGridTemplateColumnsRows(StylePosition()->mGridTemplateRows, *info);
 }
 
 already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetPaddingTop() {
@@ -1739,105 +1822,53 @@ already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetLineHeight() {
   } else if (lh.IsNumber()) {
     val->SetNumber(lh.AsNumber());
   } else if (lh.IsMozBlockHeight()) {
-    val->SetIdent(eCSSKeyword__moz_block_height);
+    val->SetString("-moz-block-height");
   } else {
     MOZ_ASSERT(lh.IsNormal());
-    val->SetIdent(eCSSKeyword_normal);
+    val->SetString("normal");
   }
   return val.forget();
 }
 
 already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetTextDecoration() {
+  auto getPropertyValue = [&](nsCSSPropertyID aID) {
+    RefPtr<nsROCSSPrimitiveValue> value = new nsROCSSPrimitiveValue;
+    nsAutoString string;
+    mComputedStyle->GetComputedPropertyValue(aID, string);
+    value->SetString(string);
+    return value.forget();
+  };
+
   const nsStyleTextReset* textReset = StyleTextReset();
-
-  bool isInitialStyle =
-      textReset->mTextDecorationStyle == NS_STYLE_TEXT_DECORATION_STYLE_SOLID;
-  const mozilla::StyleColor& color = textReset->mTextDecorationColor;
-
-  RefPtr<nsROCSSPrimitiveValue> textDecorationLine = new nsROCSSPrimitiveValue;
-
-  {
-    nsAutoString decorationLine;
-    Servo_GetPropertyValue(mComputedStyle, eCSSProperty_text_decoration_line,
-                           &decorationLine);
-    textDecorationLine->SetString(decorationLine);
-  }
-
-  if (isInitialStyle && color.IsCurrentColor()) {
-    return textDecorationLine.forget();
-  }
-
   RefPtr<nsDOMCSSValueList> valueList = GetROCSSValueList(false);
 
-  valueList->AppendCSSValue(textDecorationLine.forget());
-  if (!isInitialStyle) {
-    valueList->AppendCSSValue(DoGetTextDecorationStyle());
+  if (textReset->mTextDecorationLine != StyleTextDecorationLine::NONE) {
+    valueList->AppendCSSValue(
+        getPropertyValue(eCSSProperty_text_decoration_line));
   }
-  if (!color.IsCurrentColor()) {
-    valueList->AppendCSSValue(DoGetTextDecorationColor());
+
+  if (textReset->mTextDecorationStyle != NS_STYLE_TEXT_DECORATION_STYLE_SOLID) {
+    valueList->AppendCSSValue(
+        getPropertyValue(eCSSProperty_text_decoration_style));
+  }
+
+  // The resolved color shouldn't be currentColor, so we always serialize it.
+  RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
+  SetValueFromComplexColor(val, StyleTextReset()->mTextDecorationColor);
+  valueList->AppendCSSValue(val.forget());
+
+  if (!textReset->mTextDecorationThickness.IsAuto()) {
+    valueList->AppendCSSValue(
+        getPropertyValue(eCSSProperty_text_decoration_thickness));
   }
 
   return valueList.forget();
 }
 
-already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetTextDecorationColor() {
-  RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-  SetValueFromComplexColor(val, StyleTextReset()->mTextDecorationColor);
-  return val.forget();
-}
-
-already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetTextDecorationStyle() {
-  RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-
-  val->SetIdent(
-      nsCSSProps::ValueToKeywordEnum(StyleTextReset()->mTextDecorationStyle,
-                                     nsCSSProps::kTextDecorationStyleKTable));
-
-  return val.forget();
-}
-
-/* Border image properties */
-
-void nsComputedDOMStyle::AppendFourSideCoordValues(
-    nsDOMCSSValueList* aList, const nsStyleSides& aValues) {
-  const nsStyleCoord& top = aValues.Get(eSideTop);
-  const nsStyleCoord& right = aValues.Get(eSideRight);
-  const nsStyleCoord& bottom = aValues.Get(eSideBottom);
-  const nsStyleCoord& left = aValues.Get(eSideLeft);
-
-  auto appendValue = [this, aList](const nsStyleCoord& value) {
-    RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-    SetValueToCoord(val, value, true);
-    aList->AppendCSSValue(val.forget());
-  };
-  appendValue(top);
-  if (top != right || top != bottom || top != left) {
-    appendValue(right);
-    if (top != bottom || right != left) {
-      appendValue(bottom);
-      if (right != left) {
-        appendValue(left);
-      }
-    }
-  }
-}
-
 already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetHeight() {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
 
-  bool calcHeight = false;
-
-  if (mInnerFrame) {
-    calcHeight = true;
-
-    const nsStyleDisplay* displayData = StyleDisplay();
-    if (displayData->mDisplay == mozilla::StyleDisplay::Inline &&
-        !mInnerFrame->IsFrameOfType(nsIFrame::eReplaced)) {
-      calcHeight = false;
-    }
-  }
-
-  if (calcHeight) {
+  if (mInnerFrame && !IsNonReplacedInline(mInnerFrame)) {
     AssertFlushedPendingReflows();
     nsMargin adjustedValues = GetAdjustedValuesForBoxSizing();
     val->SetAppUnits(mInnerFrame->GetContentRect().height +
@@ -1852,19 +1883,7 @@ already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetHeight() {
 already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetWidth() {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
 
-  bool calcWidth = false;
-
-  if (mInnerFrame) {
-    calcWidth = true;
-
-    const nsStyleDisplay* displayData = StyleDisplay();
-    if (displayData->mDisplay == mozilla::StyleDisplay::Inline &&
-        !mInnerFrame->IsFrameOfType(nsIFrame::eReplaced)) {
-      calcWidth = false;
-    }
-  }
-
-  if (calcWidth) {
+  if (mInnerFrame && !IsNonReplacedInline(mInnerFrame)) {
     AssertFlushedPendingReflows();
     nsMargin adjustedValues = GetAdjustedValuesForBoxSizing();
     val->SetAppUnits(mInnerFrame->GetContentRect().width +
@@ -1946,27 +1965,25 @@ already_AddRefed<CSSValue> nsComputedDOMStyle::GetOffsetWidthFor(
     mozilla::Side aSide) {
   const nsStyleDisplay* display = StyleDisplay();
 
-  AssertFlushedPendingReflows();
-
-  uint8_t position = display->mPosition;
+  mozilla::StylePositionProperty position = display->mPosition;
   if (!mOuterFrame) {
     // GetNonStaticPositionOffset or GetAbsoluteOffset don't handle elements
     // without frames in any sensible way. GetStaticOffset, however, is perfect
     // for that case.
-    position = NS_STYLE_POSITION_STATIC;
+    position = StylePositionProperty::Static;
   }
 
   switch (position) {
-    case NS_STYLE_POSITION_STATIC:
+    case StylePositionProperty::Static:
       return GetStaticOffset(aSide);
-    case NS_STYLE_POSITION_STICKY:
+    case StylePositionProperty::Sticky:
       return GetNonStaticPositionOffset(
           aSide, false, &nsComputedDOMStyle::GetScrollFrameContentWidth,
           &nsComputedDOMStyle::GetScrollFrameContentHeight);
-    case NS_STYLE_POSITION_ABSOLUTE:
-    case NS_STYLE_POSITION_FIXED:
+    case StylePositionProperty::Absolute:
+    case StylePositionProperty::Fixed:
       return GetAbsoluteOffset(aSide);
-    case NS_STYLE_POSITION_RELATIVE:
+    case StylePositionProperty::Relative:
       return GetNonStaticPositionOffset(
           aSide, true, &nsComputedDOMStyle::GetCBContentWidth,
           &nsComputedDOMStyle::GetCBContentHeight);
@@ -1992,7 +2009,7 @@ already_AddRefed<CSSValue> nsComputedDOMStyle::GetNonStaticPositionOffset(
 
   if (coord.IsAuto()) {
     if (!aResolveAuto) {
-      val->SetIdent(eCSSKeyword_auto);
+      val->SetString("auto");
       return val.forget();
     }
     coord = positionData->mOffset.Get(NS_OPPOSITE_SIDE(aSide));
@@ -2099,11 +2116,11 @@ already_AddRefed<CSSValue> nsComputedDOMStyle::GetPaddingWidthFor(
     mozilla::Side aSide) {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
 
-  if (!mInnerFrame) {
-    SetValueToLengthPercentage(val, StylePadding()->mPadding.Get(aSide), true);
+  auto& padding = StylePadding()->mPadding.Get(aSide);
+  if (!mInnerFrame || !PaddingNeedsUsedValue(padding, *mComputedStyle)) {
+    SetValueToLengthPercentage(val, padding, true);
   } else {
     AssertFlushedPendingReflows();
-
     val->SetAppUnits(mInnerFrame->GetUsedPadding().Side(aSide));
   }
 
@@ -2111,11 +2128,20 @@ already_AddRefed<CSSValue> nsComputedDOMStyle::GetPaddingWidthFor(
 }
 
 bool nsComputedDOMStyle::GetLineHeightCoord(nscoord& aCoord) {
-  AssertFlushedPendingReflows();
+  nscoord blockHeight = NS_UNCONSTRAINEDSIZE;
+  const auto& lh = StyleText()->mLineHeight;
 
-  nscoord blockHeight = NS_AUTOHEIGHT;
-  if (StyleText()->mLineHeight.IsMozBlockHeight()) {
-    if (!mInnerFrame) return false;
+  if (lh.IsNormal() &&
+      StaticPrefs::layout_css_line_height_normal_as_resolved_value_enabled()) {
+    return false;
+  }
+
+  if (lh.IsMozBlockHeight()) {
+    AssertFlushedPendingReflows();
+
+    if (!mInnerFrame) {
+      return false;
+    }
 
     if (nsLayoutUtils::IsNonWrapperBlock(mInnerFrame)) {
       blockHeight = mInnerFrame->GetContentRect().height;
@@ -2136,7 +2162,7 @@ bool nsComputedDOMStyle::GetLineHeightCoord(nscoord& aCoord) {
   // the text zoom, if any.
   const nsStyleFont* font = StyleFont();
   float fCoord = float(aCoord);
-  if (font->mAllowZoom) {
+  if (font->mAllowZoomAndMinSize) {
     fCoord /= presContext->EffectiveTextZoom();
   }
   if (font->mFont.size != font->mSize) {
@@ -2152,7 +2178,7 @@ already_AddRefed<CSSValue> nsComputedDOMStyle::GetBorderWidthFor(
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
 
   nscoord width;
-  if (mInnerFrame) {
+  if (mInnerFrame && mComputedStyle->StyleDisplay()->HasAppearance()) {
     AssertFlushedPendingReflows();
     width = mInnerFrame->GetUsedBorder().Side(aSide);
   } else {
@@ -2163,20 +2189,13 @@ already_AddRefed<CSSValue> nsComputedDOMStyle::GetBorderWidthFor(
   return val.forget();
 }
 
-already_AddRefed<CSSValue> nsComputedDOMStyle::GetBorderColorFor(
-    mozilla::Side aSide) {
-  RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-  SetValueFromComplexColor(val, StyleBorder()->BorderColorFor(aSide));
-  return val.forget();
-}
-
 already_AddRefed<CSSValue> nsComputedDOMStyle::GetMarginWidthFor(
     mozilla::Side aSide) {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
 
-  if (!mInnerFrame) {
-    SetValueToLengthPercentageOrAuto(val, StyleMargin()->mMargin.Get(aSide),
-                                     false);
+  auto& margin = StyleMargin()->mMargin.Get(aSide);
+  if (!mInnerFrame || margin.ConvertsToLength()) {
+    SetValueToLengthPercentageOrAuto(val, margin, false);
   } else {
     AssertFlushedPendingReflows();
 
@@ -2195,13 +2214,13 @@ void nsComputedDOMStyle::SetValueToExtremumLength(nsROCSSPrimitiveValue* aValue,
                                                   StyleExtremumLength aSize) {
   switch (aSize) {
     case StyleExtremumLength::MaxContent:
-      return aValue->SetIdent(eCSSKeyword_max_content);
+      return aValue->SetString("max-content");
     case StyleExtremumLength::MinContent:
-      return aValue->SetIdent(eCSSKeyword_min_content);
+      return aValue->SetString("min-content");
     case StyleExtremumLength::MozAvailable:
-      return aValue->SetIdent(eCSSKeyword__moz_available);
+      return aValue->SetString("-moz-available");
     case StyleExtremumLength::MozFitContent:
-      return aValue->SetIdent(eCSSKeyword__moz_fit_content);
+      return aValue->SetString("-moz-fit-content");
   }
   MOZ_ASSERT_UNREACHABLE("Unknown extremum length?");
 }
@@ -2209,7 +2228,7 @@ void nsComputedDOMStyle::SetValueToExtremumLength(nsROCSSPrimitiveValue* aValue,
 void nsComputedDOMStyle::SetValueToSize(nsROCSSPrimitiveValue* aValue,
                                         const StyleSize& aSize) {
   if (aSize.IsAuto()) {
-    return aValue->SetIdent(eCSSKeyword_auto);
+    return aValue->SetString("auto");
   }
   if (aSize.IsExtremumLength()) {
     return SetValueToExtremumLength(aValue, aSize.AsExtremumLength());
@@ -2221,7 +2240,7 @@ void nsComputedDOMStyle::SetValueToSize(nsROCSSPrimitiveValue* aValue,
 void nsComputedDOMStyle::SetValueToMaxSize(nsROCSSPrimitiveValue* aValue,
                                            const StyleMaxSize& aSize) {
   if (aSize.IsNone()) {
-    return aValue->SetIdent(eCSSKeyword_none);
+    return aValue->SetString("none");
   }
   if (aSize.IsExtremumLength()) {
     return SetValueToExtremumLength(aValue, aSize.AsExtremumLength());
@@ -2234,7 +2253,7 @@ void nsComputedDOMStyle::SetValueToLengthPercentageOrAuto(
     nsROCSSPrimitiveValue* aValue, const LengthPercentageOrAuto& aSize,
     bool aClampNegativeCalc) {
   if (aSize.IsAuto()) {
-    return aValue->SetIdent(eCSSKeyword_auto);
+    return aValue->SetString("auto");
   }
   SetValueToLengthPercentage(aValue, aSize.AsLengthPercentage(),
                              aClampNegativeCalc);
@@ -2258,113 +2277,9 @@ void nsComputedDOMStyle::SetValueToLengthPercentage(
     return aValue->SetPercent(result);
   }
 
-  // TODO(emilio): This intentionally matches the serialization of
-  // SetValueToCalc, but goes against the spec. Update this when possible.
-  RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-  nsAutoString tmp, result;
-  result.AppendLiteral("calc(");
-  val->SetAppUnits(CSSPixel::ToAppUnits(aLength.LengthInCSSPixels()));
-  val->GetCssText(tmp);
-  result.Append(tmp);
-  if (aLength.HasPercent()) {
-    result.AppendLiteral(" + ");
-    val->SetPercent(aLength.Percentage());
-    val->GetCssText(tmp);
-    result.Append(tmp);
-  }
-  result.Append(')');
+  nsAutoString result;
+  Servo_LengthPercentage_ToCss(&aLength, &result);
   aValue->SetString(result);
-}
-
-void nsComputedDOMStyle::SetValueToCoord(
-    nsROCSSPrimitiveValue* aValue, const nsStyleCoord& aCoord,
-    bool aClampNegativeCalc, PercentageBaseGetter aPercentageBaseGetter,
-    const KTableEntry aTable[]) {
-  MOZ_ASSERT(aValue, "Must have a value to work with");
-
-  switch (aCoord.GetUnit()) {
-    case eStyleUnit_Normal:
-      aValue->SetIdent(eCSSKeyword_normal);
-      break;
-
-    case eStyleUnit_Auto:
-      aValue->SetIdent(eCSSKeyword_auto);
-      break;
-
-    case eStyleUnit_Percent: {
-      nscoord percentageBase;
-      if (aPercentageBaseGetter &&
-          (this->*aPercentageBaseGetter)(percentageBase)) {
-        nscoord val =
-            NSCoordSaturatingMultiply(percentageBase, aCoord.GetPercentValue());
-        aValue->SetAppUnits(val);
-      } else {
-        aValue->SetPercent(aCoord.GetPercentValue());
-      }
-    } break;
-
-    case eStyleUnit_Factor:
-      aValue->SetNumber(aCoord.GetFactorValue());
-      break;
-
-    case eStyleUnit_Coord: {
-      nscoord val = aCoord.GetCoordValue();
-      aValue->SetAppUnits(val);
-    } break;
-
-    case eStyleUnit_Integer:
-      aValue->SetNumber(aCoord.GetIntValue());
-      break;
-
-    case eStyleUnit_Enumerated:
-      NS_ASSERTION(aTable, "Must have table to handle this case");
-      aValue->SetIdent(
-          nsCSSProps::ValueToKeywordEnum(aCoord.GetIntValue(), aTable));
-      break;
-
-    case eStyleUnit_None:
-      aValue->SetIdent(eCSSKeyword_none);
-      break;
-
-    case eStyleUnit_Calc:
-      nscoord percentageBase;
-      if (!aCoord.CalcHasPercent()) {
-        nscoord val = aCoord.ComputeCoordPercentCalc(0);
-        if (aClampNegativeCalc && val < 0) {
-          MOZ_ASSERT(aCoord.IsCalcUnit(), "parser should have rejected value");
-          val = 0;
-        }
-        aValue->SetAppUnits(val);
-      } else if (aPercentageBaseGetter &&
-                 (this->*aPercentageBaseGetter)(percentageBase)) {
-        nscoord val = aCoord.ComputeCoordPercentCalc(percentageBase);
-        if (aClampNegativeCalc && val < 0) {
-          MOZ_ASSERT(aCoord.IsCalcUnit(), "parser should have rejected value");
-          val = 0;
-        }
-        aValue->SetAppUnits(val);
-      } else {
-        nsStyleCoord::Calc* calc = aCoord.GetCalcValue();
-        SetValueToCalc(calc, aValue);
-      }
-      break;
-
-    case eStyleUnit_Degree:
-      aValue->SetDegree(aCoord.GetAngleValue());
-      break;
-
-    case eStyleUnit_FlexFraction: {
-      nsAutoString tmpStr;
-      nsStyleUtil::AppendCSSNumber(aCoord.GetFlexFractionValue(), tmpStr);
-      tmpStr.AppendLiteral("fr");
-      aValue->SetString(tmpStr);
-      break;
-    }
-
-    default:
-      NS_ERROR("Can't handle this unit");
-      break;
-  }
 }
 
 nscoord nsComputedDOMStyle::StyleCoordToNSCoord(
@@ -2386,8 +2301,6 @@ nscoord nsComputedDOMStyle::StyleCoordToNSCoord(
                            "percentage base value overflowed to become "
                            "negative for a property "
                            "that disallows negative values");
-      MOZ_ASSERT(aCoord.was_calc || (aCoord.HasPercent() && percentageBase < 0),
-                 "parser should have rejected value");
       result = 0;
     }
     return result;
@@ -2516,7 +2429,7 @@ already_AddRefed<CSSValue> nsComputedDOMStyle::GetTransformValue(
    */
   if (aTransform.IsNone()) {
     RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-    val->SetIdent(eCSSKeyword_none);
+    val->SetString("none");
     return val.forget();
   }
 
@@ -2535,21 +2448,11 @@ already_AddRefed<CSSValue> nsComputedDOMStyle::GetTransformValue(
    * using the named transforms.  Until a real solution is found, we'll just
    * use this approach.
    */
-  nsStyleTransformMatrix::TransformReferenceBox refBox(mInnerFrame,
-                                                       nsSize(0, 0));
-
+  nsStyleTransformMatrix::TransformReferenceBox refBox(mInnerFrame, nsRect());
   gfx::Matrix4x4 matrix = nsStyleTransformMatrix::ReadTransforms(
       aTransform, refBox, float(mozilla::AppUnitsPerCSSPixel()));
 
   return MatrixToCSSValue(matrix);
-}
-
-void nsComputedDOMStyle::SetCssTextToCoord(nsAString& aCssText,
-                                           const nsStyleCoord& aCoord,
-                                           bool aClampNegativeCalc) {
-  RefPtr<nsROCSSPrimitiveValue> value = new nsROCSSPrimitiveValue;
-  SetValueToCoord(value, aCoord, aClampNegativeCalc);
-  value->GetCssText(aCssText);
 }
 
 already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetMask() {
@@ -2562,21 +2465,18 @@ already_AddRefed<CSSValue> nsComputedDOMStyle::DoGetMask() {
   if (svg->mMask.mImageCount > 1 ||
       firstLayer.mClip != StyleGeometryBox::BorderBox ||
       firstLayer.mOrigin != StyleGeometryBox::BorderBox ||
-      firstLayer.mComposite != NS_STYLE_MASK_COMPOSITE_ADD ||
+      firstLayer.mComposite != StyleMaskComposite::Add ||
       firstLayer.mMaskMode != StyleMaskMode::MatchSource ||
-      !nsStyleImageLayers::IsInitialPositionForLayerType(
-          firstLayer.mPosition, nsStyleImageLayers::LayerType::Mask) ||
+      firstLayer.mPosition != Position::FromPercentage(0.0f) ||
       !firstLayer.mRepeat.IsInitialValue() ||
       !firstLayer.mSize.IsInitialValue() ||
-      !(firstLayer.mImage.GetType() == eStyleImageType_Null ||
-        firstLayer.mImage.GetType() == eStyleImageType_Image ||
-        firstLayer.mImage.GetType() == eStyleImageType_URL)) {
+      !(firstLayer.mImage.IsNone() || firstLayer.mImage.IsUrl())) {
     return nullptr;
   }
 
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
 
-  SetValueToURLValue(firstLayer.mImage.GetURLValue(), val);
+  SetValueToURLValue(firstLayer.mImage.GetImageRequestURLValue(), val);
 
   return val.forget();
 }
@@ -2585,9 +2485,8 @@ already_AddRefed<CSSValue> nsComputedDOMStyle::DummyGetter() {
   MOZ_CRASH("DummyGetter is not supposed to be invoked");
 }
 
-static void MarkComputedStyleMapDirty(const char* aPref,
-                                      ComputedStyleMap* aData) {
-  aData->MarkDirty();
+static void MarkComputedStyleMapDirty(const char* aPref, void* aMap) {
+  static_cast<ComputedStyleMap*>(aMap)->MarkDirty();
 }
 
 void nsComputedDOMStyle::ParentChainChanged(nsIContent* aContent) {

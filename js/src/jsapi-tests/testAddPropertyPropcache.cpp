@@ -5,6 +5,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "js/Array.h"  // JS::NewArrayObject
 #include "jsapi-tests/tests.h"
 
 static int callCount = 0;
@@ -15,7 +16,19 @@ static bool AddProperty(JSContext* cx, JS::HandleObject obj, JS::HandleId id,
   return true;
 }
 
-static const JSClassOps AddPropertyClassOps = {AddProperty};
+static const JSClassOps AddPropertyClassOps = {
+    AddProperty,  // addProperty
+    nullptr,      // delProperty
+    nullptr,      // enumerate
+    nullptr,      // newEnumerate
+    nullptr,      // resolve
+    nullptr,      // mayResolve
+    nullptr,      // finalize
+    nullptr,      // call
+    nullptr,      // hasInstance
+    nullptr,      // construct
+    nullptr,      // trace
+};
 
 static const JSClass AddPropertyClass = {"AddPropertyTester", 0,
                                          &AddPropertyClassOps};
@@ -33,7 +46,7 @@ BEGIN_TEST(testAddPropertyHook) {
   JS_InitClass(cx, global, obj, &AddPropertyClass, nullptr, 0, nullptr, nullptr,
                nullptr, nullptr);
 
-  obj = JS_NewArrayObject(cx, 0);
+  obj = JS::NewArrayObject(cx, 0);
   CHECK(obj);
   JS::RootedValue arr(cx, JS::ObjectValue(*obj));
 

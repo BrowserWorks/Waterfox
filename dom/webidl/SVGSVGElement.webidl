@@ -12,6 +12,7 @@
 
 interface SVGViewSpec;
 
+[Exposed=Window]
 interface SVGSVGElement : SVGGraphicsElement {
 
   [Constant]
@@ -68,6 +69,6 @@ interface SVGSVGElement : SVGGraphicsElement {
   Element? getElementById(DOMString elementId);
 };
 
-SVGSVGElement implements SVGFitToViewBox;
-SVGSVGElement implements SVGZoomAndPanValues;
+SVGSVGElement includes SVGFitToViewBox;
+SVGSVGElement includes SVGZoomAndPan;
 

@@ -108,7 +108,10 @@ function annotateCrashReport(sessionId) {
   try {
     const cr = Cc["@mozilla.org/toolkit/crash-reporter;1"];
     if (cr) {
-      cr.getService(Ci.nsICrashReporter).setTelemetrySessionId(sessionId);
+      cr.getService(Ci.nsICrashReporter).annotateCrashReport(
+        "TelemetrySessionId",
+        sessionId
+      );
     }
   } catch (e) {
     // Ignore errors when crash reporting is disabled
@@ -628,7 +631,6 @@ var Impl = {
     // Add extended set measurements common to chrome & content processes
     if (Telemetry.canRecordExtended) {
       payloadObj.log = [];
-      payloadObj.webrtc = protect(() => Telemetry.webrtcStats);
     }
 
     if (Utils.isContentProcess) {
@@ -683,8 +685,12 @@ var Impl = {
         ) {
           payloadLoc = payloadObj;
         }
-        // The Dynamic process only collects scalars.
-        if (processType == "dynamic" && key !== "scalars") {
+        // The Dynamic process only collects scalars and keyed scalars.
+        if (
+          processType == "dynamic" &&
+          key !== "scalars" &&
+          key !== "keyedScalars"
+        ) {
           continue;
         }
 
@@ -721,7 +727,7 @@ var Impl = {
 
       if (
         this._slowSQLStartup &&
-        Object.keys(this._slowSQLStartup).length != 0 &&
+        !!Object.keys(this._slowSQLStartup).length &&
         (Object.keys(this._slowSQLStartup.mainThread).length ||
           Object.keys(this._slowSQLStartup.otherThreads).length)
       ) {
@@ -740,7 +746,7 @@ var Impl = {
       // Adding captured stacks to the payload only if any exist and clearing
       // captures for this sub-session.
       let stacks = protect(() => Telemetry.snapshotCapturedStacks(true));
-      if (stacks && "captures" in stacks && stacks.captures.length > 0) {
+      if (stacks && "captures" in stacks && stacks.captures.length) {
         payloadObj.processes.parent.capturedStacks = stacks;
       }
     }
@@ -955,12 +961,14 @@ var Impl = {
   },
 
   getFlashVersion: function getFlashVersion() {
-    let host = Cc["@mozilla.org/plugin/host;1"].getService(Ci.nsIPluginHost);
-    let tags = host.getPluginTags();
+    if (AppConstants.MOZ_APP_NAME == "firefox") {
+      let host = Cc["@mozilla.org/plugin/host;1"].getService(Ci.nsIPluginHost);
+      let tags = host.getPluginTags();
 
-    for (let i = 0; i < tags.length; i++) {
-      if (tags[i].name == "Shockwave Flash") {
-        return tags[i].version;
+      for (let i = 0; i < tags.length; i++) {
+        if (tags[i].name == "Shockwave Flash") {
+          return tags[i].version;
+        }
       }
     }
 
@@ -1107,7 +1115,7 @@ var Impl = {
     reason = reason || REASON_GATHER_PAYLOAD;
     // This function returns the current Telemetry payload to the caller.
     // We only gather startup info once.
-    if (Object.keys(this._slowSQLStartup).length == 0) {
+    if (!Object.keys(this._slowSQLStartup).length) {
       this._slowSQLStartup = Telemetry.slowSQL;
     }
     Services.telemetry.gatherMemory();

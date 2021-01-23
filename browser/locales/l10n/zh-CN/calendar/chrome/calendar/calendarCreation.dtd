@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "创建新日历" >
+<!ENTITY wizard.label             "创建一个新日历" >
+<!ENTITY wizard.description       "定位您的日历" >
+
+<!ENTITY initialpage.description    "您的日历可以保存在您的电脑上，或者是可远程存取的服务器上，或者是与朋友或合作者共享的服务器上。" >
+<!ENTITY initialpage.computer.label  "保存在我的电脑中">
+<!ENTITY initialpage.network.label  "保存在网络上">
+
+<!ENTITY locationpage.description         "提供为访问您的远程日历所必需的信息" >
+<!ENTITY locationpage.login.description   "可选：输入用户名和密码" >
+<!ENTITY locationpage.username.label      "用户名：" >
+<!ENTITY locationpage.password.label      "密码：" >
+
+<!ENTITY custompage.shortdescription  "自定义您的日历" >
+<!ENTITY custompage.longdescription   "您可以给日历取一个昵称，也可以给事件设置不同的颜色" >
+
+<!ENTITY finishpage.shortdescription  "日历已创建" >
+<!ENTITY finishpage.longdescription   "您的日历已成功创建。" >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "其他">
+
+<!ENTITY buttons.create.label "新建日历">
+<!ENTITY buttons.create.accesskey "r">
+
+<!ENTITY buttons.find.label "寻找日历">
+<!ENTITY buttons.find.accesskey "F">
+
+<!ENTITY buttons.back.label "返回">
+<!ENTITY buttons.back.accesskey "B">
+
+<!ENTITY buttons.subscribe.label "订阅">
+<!ENTITY buttons.subscribe.accesskey "S">
+
+<!ENTITY calendartype.label "日历类型：">
+<!ENTITY location.label "位置：">
+<!ENTITY location.placeholder "日历服务器的网址或主机名称">
+
+<!ENTITY network.nocredentials.label "此网址无须输入账号密码">
+<!ENTITY network.loading.description "请稍等，我们正在检测您的日历。">
+<!ENTITY network.notfound.description "未能在此位置找到日历。请检查设置。">
+<!ENTITY network.authfail.description "您输入的账号密码未被接受。请检查设置。">
+
+<!ENTITY network.subscribe.single.description "请选择您要订阅的日历。">
+<!ENTITY network.subscribe.multiple.description "此位置有几种不同类型的日历。请先选择要订阅的日历类型，再勾选要订阅的日历。">

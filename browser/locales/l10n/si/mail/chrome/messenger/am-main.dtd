@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "ගිණුමේ සැකසුම්">
+<!ENTITY accountName.label "ගිණුමේ නම:">
+<!ENTITY accountName.accesskey "N">
+<!ENTITY identityTitle.label "පෙරනිමි (Default) හැඳුනුම">
+<!ENTITY identityDesc.label "සෑම ගිණුමකටම හැඳුනුමක් ඇත, අනෙකුත් පුද්ගලයින් ඔබගේ ලිපි කියවන විටදී එම තොරතුරු දකි.">
+<!ENTITY name.label "ඔබේ නම:">
+<!ENTITY name.accesskey "Y">
+<!ENTITY email.label "ඊමේල් ලිපිනය:">
+<!ENTITY email.accesskey "E">
+<!ENTITY replyTo.label "පිලිතුරු ලබන ලිපිනය:">
+<!ENTITY replyTo.accesskey "s">
+<!ENTITY replyTo.placeholder "ලබන්නා මෙම වෙනත් ලිපිනයට පිළිතුරු සපයනු ඇත">
+<!ENTITY organization.label "ආයතනය:">
+<!ENTITY organization.accesskey "O">
+<!ENTITY signatureText.label "අත්සන් පාඨය:">
+<!ENTITY signatureText.accesskey "x">
+<!ENTITY signatureHtml.label "HTML භාවිතා කරන්න (e.g., &lt;b&gt;bold&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "L">
+<!ENTITY signatureFile.label "අත්සන ගොනුවකින් අමුණන්න (text, HTML, or image):">
+<!ENTITY signatureFile.accesskey "t">
+<!ENTITY edit.label "සැකසුම්...">
+<!ENTITY choose.label "තෝරන්න...">
+<!ENTITY choose.accesskey "C">
+<!ENTITY editVCard.label "කාඩ්පත (vCard) සැකසීම...">
+<!ENTITY editVCard.accesskey "d">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "මගේ vCard ලිපි සමඟ අමුණා යවන්න">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "හැඳුනුම් කළමණාකරණය...">
+<!ENTITY manageIdentities.accesskey "M">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "(SMTP) යැවුම් සේවාදායකය:">
+<!ENTITY smtpName.accesskey "u">
+<!ENTITY smtpDefaultServer.label "පෙරනිමි සේවාදායකය භාවිතා කරන්න">
+

@@ -22,8 +22,7 @@ typedef OnBeforeUnloadEventHandlerNonNull? OnBeforeUnloadEventHandler;
 callback OnErrorEventHandlerNonNull = any ((Event or DOMString) event, optional DOMString source, optional unsigned long lineno, optional unsigned long column, optional any error);
 typedef OnErrorEventHandlerNonNull? OnErrorEventHandler;
 
-[NoInterfaceObject]
-interface GlobalEventHandlers {
+interface mixin GlobalEventHandlers {
            attribute EventHandler onabort;
            attribute EventHandler onblur;
 // We think the spec is wrong here. See OnErrorEventHandlerForNodes/Window
@@ -32,6 +31,8 @@ interface GlobalEventHandlers {
            attribute EventHandler onfocus;
            //(Not implemented)attribute EventHandler oncancel;
            attribute EventHandler onauxclick;
+           [Pref="dom.input_events.beforeinput.enabled"]
+           attribute EventHandler onbeforeinput;
            attribute EventHandler oncanplay;
            attribute EventHandler oncanplaythrough;
            attribute EventHandler onchange;
@@ -51,6 +52,8 @@ interface GlobalEventHandlers {
            attribute EventHandler ondurationchange;
            attribute EventHandler onemptied;
            attribute EventHandler onended;
+           [Pref="dom.formdata.event.enabled"]
+           attribute EventHandler onformdata;
            attribute EventHandler oninput;
            attribute EventHandler oninvalid;
            attribute EventHandler onkeydown;
@@ -135,14 +138,17 @@ interface GlobalEventHandlers {
 
            // CSS-Animation and CSS-Transition legacy handlers.
            // This handler isn't standard.
+           [BinaryName="onwebkitAnimationEnd"]
            attribute EventHandler onwebkitanimationend;
+           [BinaryName="onwebkitAnimationIteration"]
            attribute EventHandler onwebkitanimationiteration;
+           [BinaryName="onwebkitAnimationStart"]
            attribute EventHandler onwebkitanimationstart;
+           [BinaryName="onwebkitTransitionEnd"]
            attribute EventHandler onwebkittransitionend;
 };
 
-[NoInterfaceObject]
-interface WindowEventHandlers {
+interface mixin WindowEventHandlers {
            attribute EventHandler onafterprint;
            attribute EventHandler onbeforeprint;
            attribute OnBeforeUnloadEventHandler onbeforeunload;
@@ -155,16 +161,13 @@ interface WindowEventHandlers {
            attribute EventHandler onpagehide;
            attribute EventHandler onpageshow;
            attribute EventHandler onpopstate;
-           [Func="mozilla::dom::DOMPrefs::dom_promise_rejection_events_enabled"]
            attribute EventHandler onrejectionhandled;
            attribute EventHandler onstorage;
-           [Func="mozilla::dom::DOMPrefs::dom_promise_rejection_events_enabled"]
            attribute EventHandler onunhandledrejection;
            attribute EventHandler onunload;
 };
 
-[NoInterfaceObject]
-interface DocumentAndElementEventHandlers {
+interface mixin DocumentAndElementEventHandlers {
   attribute EventHandler oncopy;
   attribute EventHandler oncut;
   attribute EventHandler onpaste;
@@ -175,12 +178,10 @@ interface DocumentAndElementEventHandlers {
 // whether an ErrorEvent was fired. We don't do that, and until we do we'll
 // need to distinguish between onerror on Window or on nodes.
 
-[NoInterfaceObject]
-interface OnErrorEventHandlerForNodes {
+interface mixin OnErrorEventHandlerForNodes {
            attribute EventHandler onerror;
 };
 
-[NoInterfaceObject]
-interface OnErrorEventHandlerForWindow {
+interface mixin OnErrorEventHandlerForWindow {
            attribute OnErrorEventHandler onerror;
 };

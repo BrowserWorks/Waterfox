@@ -2,8 +2,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import
-
 import os
 import subprocess
 
@@ -31,7 +29,7 @@ def capture_commands(monkeypatch):
 
 @pytest.fixture
 def result():
-    result = ResultSummary()
+    result = ResultSummary('/fake/root')
     result.issues['foo.py'].extend([
         Issue(
             linter='no-foobar',

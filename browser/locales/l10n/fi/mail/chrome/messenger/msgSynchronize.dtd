@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label  "Nouda ja synkronoi viestit">
+<!ENTITY MsgSelect.label  "Yhteydettömässä tilassa käytettävät kohteet">
+<!ENTITY MsgSyncDesc.label  "Jos olet jo valinnut yhteydettömässä tilassa käytettävät kansiot ja ryhmät, voit synkronoida paikalliset kopiosi niistä nyt. Muussa tapauksessa valitse yhteystilassa käytettävät ryhmät ja kansiot napsauttamalla Valitse.">
+<!ENTITY MsgSyncDirections.label  "Nouda tai synkronoi:">
+<!ENTITY syncTypeMail.label  "Sähköpostiviestit">
+<!ENTITY syncTypeMail.accesskey  "S">
+<!ENTITY syncTypeNews.label  "Keskusteluryhmäviestit">
+<!ENTITY syncTypeNews.accesskey  "K">
+<!ENTITY sendMessage.label  "Lähetä lähtevät viestit">
+<!ENTITY sendMessage.accesskey  "L">
+<!ENTITY workOffline.label  "Siirry yhteydettömään tilaan, kun nouto tai synkronointi on valmis">
+<!ENTITY workOffline.accesskey  "r">
+<!ENTITY selectButton.label  "Valitse…">
+<!ENTITY selectButton.accesskey  "V">
+<!ENTITY MsgSelectDesc.label  "Valitse yhteydettömässä tilassa käytettävät postikansiot ja keskusteluryhmät.">
+<!ENTITY MsgSelectInd.label  "Nouda">
+<!ENTITY MsgSelectItems.label  "Kansiot ja keskusteluryhmät">

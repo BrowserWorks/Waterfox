@@ -58,7 +58,7 @@ class ServiceWorkerRegistrationProxy final
 
   void FireUpdateFound() override;
 
-  void RegistrationRemoved() override;
+  void RegistrationCleared() override;
 
   void GetScope(nsAString& aScope) const override;
 
@@ -75,7 +75,8 @@ class ServiceWorkerRegistrationProxy final
 
   RefPtr<GenericPromise> Unregister();
 
-  RefPtr<ServiceWorkerRegistrationPromise> Update();
+  RefPtr<ServiceWorkerRegistrationPromise> Update(
+      const nsCString& aNewestWorkerScriptUrl);
 
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(ServiceWorkerRegistrationProxy,
                                         override);

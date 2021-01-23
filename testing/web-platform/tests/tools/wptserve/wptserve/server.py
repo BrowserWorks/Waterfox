@@ -29,7 +29,8 @@ from .router import Router
 from .utils import HTTPException
 from .constants import h2_headers
 
-"""HTTP server designed for testing purposes.
+"""
+HTTP server designed for testing purposes.
 
 The server is designed to provide flexibility in the way that
 requests are handled, and to provide control both of exactly
@@ -669,8 +670,8 @@ class WebTestHttpd(object):
 
             _host, self.port = self.httpd.socket.getsockname()
         except Exception:
-            self.logger.error("Failed to start HTTP server. "
-                              "You may need to edit /etc/hosts or similar, see README.md.")
+            self.logger.critical("Failed to start HTTP server on port %s; "
+                                 "is something already using that port?" % port)
             raise
 
     def start(self, block=False):

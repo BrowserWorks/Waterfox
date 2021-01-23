@@ -6,7 +6,11 @@ add_task(async function testLocalStorage() {
   async function background() {
     function openTabs() {
       let promise = new Promise(resolve => {
-        let tabURLs = ["http://example.com/", "http://example.net/"];
+        // Open tabs on every one of the urls that the test extension
+        // content script is going to match.
+        const manifest = browser.runtime.getManifest();
+        const tabURLs = manifest.content_scripts[0].matches;
+        browser.test.log(`Opening tabs on ${JSON.stringify(tabURLs)}`);
 
         let tabs;
         let waitingCount = tabURLs.length;
@@ -52,6 +56,14 @@ add_task(async function testLocalStorage() {
     await browser.tabs.sendMessage(tabs[0].id, "checkLocalStorageCleared");
     await browser.tabs.sendMessage(tabs[1].id, "checkLocalStorageSet");
 
+    if (SpecialPowers.Services.lsm.nextGenLocalStorageEnabled === false) {
+      // This assertion fails when localStorage is using the legacy
+      // implementation (See Bug 1595431).
+      browser.test.log("Skipped assertion on nextGenLocalStorageEnabled=false");
+    } else {
+      await browser.tabs.sendMessage(tabs[2].id, "checkLocalStorageSet");
+    }
+
     await sendMessageToTabs(tabs, "resetLocalStorage");
     await sendMessageToTabs(tabs, "checkLocalStorageSet");
     await browser.browsingData.removeLocalStorage({});
@@ -90,7 +102,11 @@ add_task(async function testLocalStorage() {
       permissions: ["browsingData"],
       content_scripts: [
         {
-          matches: ["http://example.com/", "http://example.net/"],
+          matches: [
+            "http://example.com/",
+            "http://example.net/",
+            "http://test1.example.com/",
+          ],
           js: ["content-script.js"],
           run_at: "document_start",
         },
@@ -103,5 +119,60 @@ add_task(async function testLocalStorage() {
 
   await extension.startup();
   await extension.awaitFinish("done");
+  await extension.unload();
+});
+
+// Verify that browsingData.removeLocalStorage doesn't break on data stored
+// in about:newtab or file principals.
+add_task(async function test_browserData_on_aboutnewtab_and_file_data() {
+  let extension = ExtensionTestUtils.loadExtension({
+    async background() {
+      await browser.browsingData.removeLocalStorage({}).catch(err => {
+        browser.test.fail(`${err} :: ${err.stack}`);
+      });
+      browser.test.sendMessage("done");
+    },
+    manifest: {
+      permissions: ["browsingData"],
+    },
+  });
+
+  // Let's create some data on about:newtab origin.
+  const { SiteDataTestUtils } = ChromeUtils.import(
+    "resource://testing-common/SiteDataTestUtils.jsm"
+  );
+  await SiteDataTestUtils.addToIndexedDB("about:newtab", "foo", "bar", {});
+  await SiteDataTestUtils.addToIndexedDB("file:///fake/file", "foo", "bar", {});
+
+  await extension.startup();
+  await extension.awaitMessage("done");
+  await extension.unload();
+});
+
+add_task(async function test_browserData_should_not_remove_extension_data() {
+  if (!Services.prefs.getBoolPref("dom.storage.next_gen")) {
+    // When LSNG isn't enabled, the browsingData API does still clear
+    // all the extensions localStorage if called without a list of specific
+    // origins to clear.
+    info("Test skipped because LSNG is currently disabled");
+    return;
+  }
+
+  let extension = ExtensionTestUtils.loadExtension({
+    async background() {
+      window.localStorage.setItem("key", "value");
+      await browser.browsingData.removeLocalStorage({}).catch(err => {
+        browser.test.fail(`${err} :: ${err.stack}`);
+      });
+      browser.test.sendMessage("done", window.localStorage.getItem("key"));
+    },
+    manifest: {
+      permissions: ["browsingData"],
+    },
+  });
+
+  await extension.startup();
+  const lsValue = await extension.awaitMessage("done");
+  is(lsValue, "value", "Got the expected localStorage data");
   await extension.unload();
 });

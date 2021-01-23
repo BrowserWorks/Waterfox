@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title "Табліца зместу">
+<!ENTITY buildToc.label "Пабудаваць табліцу зместу з:">
+<!ENTITY tag.label "Меціна:">
+<!ENTITY class.label "Клас:">
+<!ENTITY header1.label "Узровень 1">
+<!ENTITY header2.label "Узровень 2">
+<!ENTITY header3.label "Узровень 3">
+<!ENTITY header4.label "Узровень 4">
+<!ENTITY header5.label "Узровень 5">
+<!ENTITY header6.label "Узровень 6">
+<!ENTITY makeReadOnly.label "Зрабіць табліцу зместу даступнай толькі для чытання">
+<!ENTITY orderedList.label "Пранумараваць усе запісы ў табліцы зместу">

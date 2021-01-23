@@ -5,6 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/ProcInfo.h"
+#include "mozilla/ipc/GeckoChildProcessHost.h"
 #include <windows.h>
 #include <psapi.h>
 #include <tlhelp32.h>
@@ -22,6 +23,9 @@ uint64_t ToNanoSeconds(const FILETIME& aFileTime) {
 
 void AppendThreads(ProcInfo* info) {
   THREADENTRY32 te32;
+  // `GetThreadDescription` is available as of Windows 10.
+  // We attempt to import it dynamically, knowing that it
+  // may be `nullptr`.
   auto getThreadDescription =
       reinterpret_cast<GETTHREADDESCRIPTION>(::GetProcAddress(
           ::GetModuleHandleW(L"Kernel32.dll"), "GetThreadDescription"));
@@ -72,7 +76,8 @@ void AppendThreads(ProcInfo* info) {
 }
 
 RefPtr<ProcInfoPromise> GetProcInfo(base::ProcessId pid, int32_t childId,
-                                    const ProcType& type) {
+                                    const ProcType& type,
+                                    const nsAString& origin) {
   auto holder = MakeUnique<MozPromiseHolder<ProcInfoPromise>>();
   RefPtr<ProcInfoPromise> promise = holder->Ensure(__func__);
 
@@ -85,8 +90,12 @@ RefPtr<ProcInfoPromise> GetProcInfo(base::ProcessId pid, int32_t childId,
     return promise;
   }
 
+  // Ensure that the string is still alive when `ResolveGetProcInfo` is called.
+  nsString originCopy(origin);
   RefPtr<nsIRunnable> r = NS_NewRunnableFunction(
-      __func__, [holder = std::move(holder), pid, type, childId]() -> void {
+      __func__,
+      [holder = std::move(holder), originCopy = std::move(originCopy), pid,
+       type, childId]() -> void {
         nsAutoHandle handle(OpenProcess(
             PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid));
 
@@ -117,6 +126,7 @@ RefPtr<ProcInfoPromise> GetProcInfo(base::ProcessId pid, int32_t childId,
         info.pid = pid;
         info.childId = childId;
         info.type = type;
+        info.origin = originCopy;
         info.filename.Assign(filename);
         info.cpuKernel = ToNanoSeconds(kernelTime);
         info.cpuUser = ToNanoSeconds(userTime);

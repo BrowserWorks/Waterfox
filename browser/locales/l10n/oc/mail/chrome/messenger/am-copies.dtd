@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "Paramètres còpias e dorsièrs">
+<!ENTITY sendingPrefix.label "Al moment del mandadís de messatges, automaticament :">
+<!ENTITY fccMailFolder.label "Plaçar una còpia dins :">
+<!ENTITY fccMailFolder.accesskey "P">
+<!ENTITY fccReplyFollowsParent.label "Plaçar las responsas dins lo dorsièr del messatge al qual es estat respondut">
+<!ENTITY fccReplyFollowsParent.accesskey "l">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Bcc a aquestas adreças :">
+<!ENTITY bccAddress.accesskey "B">
+<!ENTITY saveMessageDlg.label "Demandar una confirmacion quand los messatges son enregistrats">
+<!ENTITY saveMessageDlg.accesskey "g">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "Dorsièr « Mandats » de :">
+<!ENTITY sentFolderOn.accesskey "e">
+<!ENTITY sentInOtherFolder.label "Autre :">
+<!ENTITY sentInOtherFolder.accesskey "A">
+<!ENTITY keepArchives.label "Conservar los archius dins :">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesFolderOn.label "Dorsièrs « Archius » de :">
+<!ENTITY archivesFolderOn.accesskey "o">
+<!ENTITY archiveInOtherFolder.label "Autre :">
+<!ENTITY archiveInOtherFolder.accesskey "u">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "Dorsièr « Borrolhons » de :">
+<!ENTITY draftsFolderOn.accesskey "D">
+<!ENTITY draftInOtherFolder.label "Autre :">
+<!ENTITY draftInOtherFolder.accesskey "t">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "Dorsièr « Modèls » de :">
+<!ENTITY templatesFolderOn.accesskey "m">
+<!ENTITY templateInOtherFolder.label "Autre :">
+<!ENTITY templateInOtherFolder.accesskey "r">

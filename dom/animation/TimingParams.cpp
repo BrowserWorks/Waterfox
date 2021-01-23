@@ -48,7 +48,8 @@ TimingParams TimingParams::FromOptionsType(const OptionsType& aOptions,
       result.mDuration.emplace(
           StickyTimeDuration::FromMilliseconds(durationInMs));
     } else {
-      aRv.Throw(NS_ERROR_DOM_TYPE_ERR);
+      nsPrintfCString error("Duration value %g is less than 0", durationInMs);
+      aRv.ThrowTypeError(error);
       return result;
     }
     result.Update();
@@ -198,7 +199,8 @@ Maybe<ComputedTimingFunction> TimingParams::ParseEasing(
   nsTimingFunction timingFunction;
   RefPtr<URLExtraData> url = ServoCSSParser::GetURLExtraData(aDocument);
   if (!ServoCSSParser::ParseEasing(aEasing, url, timingFunction)) {
-    aRv.ThrowTypeError<dom::MSG_INVALID_EASING_ERROR>(aEasing);
+    aRv.ThrowTypeError<dom::MSG_INVALID_EASING_ERROR>(
+        NS_ConvertUTF16toUTF8(aEasing));
     return Nothing();
   }
 

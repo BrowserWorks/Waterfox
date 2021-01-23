@@ -13,7 +13,6 @@ for platform in all_platforms:
     ]
 
 whitelist['nightly']['macosx64'] += [
-    'ac_add_options --disable-install-strip',
     'ac_add_options --enable-instruments',
     'ac_add_options --enable-dtrace',
     'if test `uname -s` != Linux; then',
@@ -30,16 +29,12 @@ for platform in all_platforms:
         'ac_add_options --enable-official-branding',
         'export BUILDING_RELEASE=1',
     ]
-whitelist['release']['win32'] += ['export MOZ_PGO=1']
-whitelist['release']['win64'] += ['export MOZ_PGO=1']
 
 whitelist['release']['linux32'] += [
     'export MOZILLA_OFFICIAL=1',
-    'export MOZ_PGO=1',
 ]
 whitelist['release']['linux64'] += [
     'export MOZILLA_OFFICIAL=1',
-    '. "$topsrcdir/build/mozconfig.pgo"',
 ]
 
 if __name__ == '__main__':

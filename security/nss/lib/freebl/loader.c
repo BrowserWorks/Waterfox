@@ -396,7 +396,11 @@ SEED_CreateContext(const unsigned char *key, const unsigned char *iv,
 {
     if (!vector && PR_SUCCESS != freebl_RunLoaderOnce())
         return NULL;
+#ifndef NSS_DISABLE_DEPRECATED_SEED
     return (vector->p_SEED_CreateContext)(key, iv, mode, encrypt);
+#else
+    return NULL;
+#endif
 }
 
 void
@@ -404,7 +408,11 @@ SEED_DestroyContext(SEEDContext *cx, PRBool freeit)
 {
     if (!vector && PR_SUCCESS != freebl_RunLoaderOnce())
         return;
+#ifndef NSS_DISABLE_DEPRECATED_SEED
     (vector->p_SEED_DestroyContext)(cx, freeit);
+#else
+    return;
+#endif
 }
 
 SECStatus
@@ -414,8 +422,12 @@ SEED_Encrypt(SEEDContext *cx, unsigned char *output, unsigned int *outputLen,
 {
     if (!vector && PR_SUCCESS != freebl_RunLoaderOnce())
         return SECFailure;
+#ifndef NSS_DISABLE_DEPRECATED_SEED
     return (vector->p_SEED_Encrypt)(cx, output, outputLen, maxOutputLen, input,
                                     inputLen);
+#else
+    return SECFailure;
+#endif
 }
 
 SECStatus
@@ -425,8 +437,12 @@ SEED_Decrypt(SEEDContext *cx, unsigned char *output, unsigned int *outputLen,
 {
     if (!vector && PR_SUCCESS != freebl_RunLoaderOnce())
         return SECFailure;
+#ifndef NSS_DISABLE_DEPRECATED_SEED
     return (vector->p_SEED_Decrypt)(cx, output, outputLen, maxOutputLen, input,
                                     inputLen);
+#else
+    return SECFailure;
+#endif
 }
 
 AESContext *
@@ -468,6 +484,19 @@ AES_Decrypt(AESContext *cx, unsigned char *output,
         return SECFailure;
     return (vector->p_AES_Decrypt)(cx, output, outputLen, maxOutputLen,
                                    input, inputLen);
+}
+
+SECStatus
+AES_AEAD(AESContext *cx, unsigned char *output,
+         unsigned int *outputLen, unsigned int maxOutputLen,
+         const unsigned char *input, unsigned int inputLen,
+         void *params, unsigned int paramsLen,
+         const unsigned char *aad, unsigned int aadLen)
+{
+    if (!vector && PR_SUCCESS != freebl_RunLoaderOnce())
+        return SECFailure;
+    return (vector->p_AES_AEAD)(cx, output, outputLen, maxOutputLen, input,
+                                inputLen, params, paramsLen, aad, aadLen);
 }
 
 SECStatus
@@ -1125,6 +1154,7 @@ AESKeyWrap_Encrypt(AESKeyWrapContext *cx, unsigned char *output,
     return vector->p_AESKeyWrap_Encrypt(cx, output, outputLen, maxOutputLen,
                                         input, inputLen);
 }
+
 SECStatus
 AESKeyWrap_Decrypt(AESKeyWrapContext *cx, unsigned char *output,
                    unsigned int *outputLen, unsigned int maxOutputLen,
@@ -1134,6 +1164,28 @@ AESKeyWrap_Decrypt(AESKeyWrapContext *cx, unsigned char *output,
         return SECFailure;
     return vector->p_AESKeyWrap_Decrypt(cx, output, outputLen, maxOutputLen,
                                         input, inputLen);
+}
+
+SECStatus
+AESKeyWrap_EncryptKWP(AESKeyWrapContext *cx, unsigned char *output,
+                      unsigned int *outputLen, unsigned int maxOutputLen,
+                      const unsigned char *input, unsigned int inputLen)
+{
+    if (!vector && PR_SUCCESS != freebl_RunLoaderOnce())
+        return SECFailure;
+    return vector->p_AESKeyWrap_EncryptKWP(cx, output, outputLen, maxOutputLen,
+                                           input, inputLen);
+}
+
+SECStatus
+AESKeyWrap_DecryptKWP(AESKeyWrapContext *cx, unsigned char *output,
+                      unsigned int *outputLen, unsigned int maxOutputLen,
+                      const unsigned char *input, unsigned int inputLen)
+{
+    if (!vector && PR_SUCCESS != freebl_RunLoaderOnce())
+        return SECFailure;
+    return vector->p_AESKeyWrap_DecryptKWP(cx, output, outputLen, maxOutputLen,
+                                           input, inputLen);
 }
 
 PRBool
@@ -1305,7 +1357,11 @@ SEED_InitContext(SEEDContext *cx, const unsigned char *key,
 {
     if (!vector && PR_SUCCESS != freebl_RunLoaderOnce())
         return SECFailure;
+#ifndef NSS_DISABLE_DEPRECATED_SEED
     return (vector->p_SEED_InitContext)(cx, key, keylen, iv, mode, encrypt, xtra);
+#else
+    return SECFailure;
+#endif
 }
 
 SECStatus
@@ -2127,6 +2183,38 @@ ChaCha20Poly1305_Open(const ChaCha20Poly1305Context *ctx,
         nonce, nonceLen, ad, adLen);
 }
 
+SECStatus
+ChaCha20Poly1305_Encrypt(const ChaCha20Poly1305Context *ctx,
+                         unsigned char *output, unsigned int *outputLen,
+                         unsigned int maxOutputLen,
+                         const unsigned char *input, unsigned int inputLen,
+                         const unsigned char *nonce, unsigned int nonceLen,
+                         const unsigned char *ad, unsigned int adLen,
+                         unsigned char *tagOut)
+{
+    if (!vector && PR_SUCCESS != freebl_RunLoaderOnce())
+        return SECFailure;
+    return (vector->p_ChaCha20Poly1305_Encrypt)(
+        ctx, output, outputLen, maxOutputLen, input, inputLen,
+        nonce, nonceLen, ad, adLen, tagOut);
+}
+
+SECStatus
+ChaCha20Poly1305_Decrypt(const ChaCha20Poly1305Context *ctx,
+                         unsigned char *output, unsigned int *outputLen,
+                         unsigned int maxOutputLen,
+                         const unsigned char *input, unsigned int inputLen,
+                         const unsigned char *nonce, unsigned int nonceLen,
+                         const unsigned char *ad, unsigned int adLen,
+                         unsigned char *tagIn)
+{
+    if (!vector && PR_SUCCESS != freebl_RunLoaderOnce())
+        return SECFailure;
+    return (vector->p_ChaCha20Poly1305_Decrypt)(
+        ctx, output, outputLen, maxOutputLen, input, inputLen,
+        nonce, nonceLen, ad, adLen, tagIn);
+}
+
 int
 EC_GetPointSize(const ECParams *params)
 {
@@ -2244,4 +2332,55 @@ BLAKE2B_Resurrect(unsigned char *space, void *arg)
         return NULL;
     }
     return (vector->p_BLAKE2B_Resurrect)(space, arg);
+}
+
+/* == New for CMAC == */
+SECStatus
+CMAC_Init(CMACContext *ctx, CMACCipher type, const unsigned char *key,
+          unsigned int key_len)
+{
+    if (!vector && PR_SUCCESS != freebl_RunLoaderOnce())
+        return SECFailure;
+    return (vector->p_CMAC_Init)(ctx, type, key, key_len);
+}
+
+CMACContext *
+CMAC_Create(CMACCipher type, const unsigned char *key, unsigned int key_len)
+{
+    if (!vector && PR_SUCCESS != freebl_RunLoaderOnce())
+        return NULL;
+    return (vector->p_CMAC_Create)(type, key, key_len);
+}
+
+SECStatus
+CMAC_Begin(CMACContext *ctx)
+{
+    if (!vector && PR_SUCCESS != freebl_RunLoaderOnce())
+        return SECFailure;
+    return (vector->p_CMAC_Begin)(ctx);
+}
+
+SECStatus
+CMAC_Update(CMACContext *ctx, const unsigned char *data, unsigned int data_len)
+{
+    if (!vector && PR_SUCCESS != freebl_RunLoaderOnce())
+        return SECFailure;
+    return (vector->p_CMAC_Update)(ctx, data, data_len);
+}
+
+SECStatus
+CMAC_Finish(CMACContext *ctx, unsigned char *result, unsigned int *result_len,
+            unsigned int max_result_len)
+{
+    if (!vector && PR_SUCCESS != freebl_RunLoaderOnce())
+        return SECFailure;
+    return (vector->p_CMAC_Finish)(ctx, result, result_len, max_result_len);
+}
+
+void
+CMAC_Destroy(CMACContext *ctx, PRBool free_it)
+{
+    if (!vector && PR_SUCCESS != freebl_RunLoaderOnce())
+        return;
+    (vector->p_CMAC_Destroy)(ctx, free_it);
 }

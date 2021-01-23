@@ -148,10 +148,22 @@ interface nsISearchEngine : nsISupports
   readonly attribute AString searchForm;
 
   /**
+   * The identifier to use for this engine when submitting to telemetry.
+   */
+  readonly attribute AString telemetryId;
+
+  /**
    * An optional unique identifier for this search engine within the context of
    * the distribution, as provided by the distributing entity.
    */
   readonly attribute AString identifier;
+
+  /**
+   * Whether or not this extension is provided by the application, e.g. it is
+   * in the list of configured search engines, or provided by a distribution
+   * set-up.
+   */
+  readonly attribute boolean isAppProvided;
 
   /**
    * Gets a string representing the hostname from which search results for a
@@ -184,6 +196,11 @@ interface nsISearchParseSubmissionResult : nsISupports
   readonly attribute AString terms;
 
   /**
+   * The name of the query parameter used by `engine` for queries. E.g. "q".
+   */
+  readonly attribute AString termsParameterName;
+
+  /**
    * The offset of the string |terms| in the URL passed in to
    * nsISearchEngine::parseSubmissionURL, or -1 if the URL does not represent
    * a search submission.
@@ -211,21 +228,16 @@ interface nsISearchService : nsISupports
    * immediately, if initialization has already been completed by some previous
    * call to this method.
    * This method should only be called when you need or want to wait for the
-   * full initialization of the search service, which may include waiting for
-   * outbound service requests.
-   *
-   * @param skipRegionCheck
-   *        Flag to avoid SearchService from waiting on the results
-   *        of the region lookups before completing initialisation.
-   *        Exposed for testing only.
+   * full initialization of the search service.
    */
-  Promise init([optional] in boolean skipRegionCheck);
+  Promise init();
 
   /**
    * Exposed for testing.
    */
-  void reInit([optional] in boolean skipRegionCheck);
+  void reInit();
   void reset();
+  Promise makeEngineFromConfig(in jsval config);
   Promise ensureBuiltinExtension(in AString id,
                                 [optional] in jsval locales);
 
@@ -301,61 +313,38 @@ interface nsISearchService : nsISupports
    * @param name
    *        The search engine's name. Must be unique. Must not be null.
    *
-   * @param iconURL
-   *        Optional: A URL string pointing to the icon to be used to represent
-   *        the engine.
-   *        This is a jsval so that an object can be passed to replace the
-   *        parameters below.
+   * @param  details
+   *         An object that can contain the following fields:
    *
-   * @param alias
-   *        Optional: A unique shortcut that can be used to retrieve the
-   *        search engine.
+   *         {iconURL} Optional: A URL string pointing to the icon to be used to
+   *                   represent the engine.
    *
-   * @param description
-   *        Optional: a description of the search engine.
+   *         {alias} Optional: A unique shortcut that can be used to retrieve the
+   *                 search engine.
    *
-   * @param method
-   *        Optional: The HTTP request method used when submitting a search query.
-   *        Case insensitive value of either "get" or "post".
-   *        Defaults to "get".
+   *         {description} Optional: A description of the search engine.
    *
-   * @param template
-   *        The template for the URL to which search queries should be sent. The
-   *        template will be subjected to OpenSearch parameter substitution.
-   *        See http://www.opensearch.org/Specifications/OpenSearch
-   *        Must not be null.
+   *         {method} Optional: The HTTP request method used when submitting a
+   *                  search query. Case insensitive value of either "get" or "post".
+   *                  Defaults to "get".
    *
-   * @param extensionID [optional]
-   *        Optional: The correct extensionID if called by an add-on.
+   *         {template} The template for the URL to which search queries should be
+   *                    sent. The template will be subjected to OpenSearch parameter
+   *                    substitution.
+   *                    See http://www.opensearch.org/Specifications/OpenSearch
+   *                    Must not be null.
    *
-   * Alternatively, all of these parameters except for name can be
-   * passed as an object in place of parameter two.
+   *         {extensionID} Optional: The correct extensionID if called by an add-on.
    *
-   *   Services.search.addEngineWithDetails("Example engine", {
-   *     template: "http://example.com/?search={searchTerms}",
-   *     description: "Example search engine description",
-   *     suggestURL: http://example.com/?suggest={searchTerms},
-   * });
+   *         {suggestURL} Optional: The URL to which search suggestion requests should
+   *                      be sent.
    *
-   * Using this method, you can use new parameters:
-   *
-   * @param suggestURL [optional]
-   *        Optional: The URL to which search suggestion requests
-   *        should be sent.
-   *
-   * @param postData [optional]
-   *        Optional: For POST requests, a string of URL parameters
-   *        to send, separated by '&'.  The string will be subjected
-   *        to OpenSearch parameter substitution.
+   *         {postData} Optional: For POST requests, a string of URL parameters to send,
+   *                    seperated by '&'. The string will be subjected to OpenSearch
+   *                    parameter substitution.
    *
    */
-  Promise addEngineWithDetails(in AString name,
-                               in jsval iconURL,
-                               [optional] in AString alias,
-                               [optional] in AString description,
-                               [optional] in AString method,
-                               [optional] in AString url,
-                               [optional] in AString extensionID);
+  Promise addEngineWithDetails(in AString name, in jsval details);
 
   /**
    * Adds search providers to the search service.  If the search
@@ -368,6 +357,16 @@ interface nsISearchService : nsISupports
    * @returns Promise that resolves when finished.
    */
   Promise addEnginesFromExtension(in jsval extension);
+
+  /**
+   * Returns an engine object given a search WebExtension.
+   *
+   * @returns an array of nsISearchEngine objects.
+   */
+  Promise getEngineParams(in jsval extension,
+                          in jsval manifest,
+                          in AString locale,
+                          in jsval params);
 
   /**
    * Un-hides all engines in the set of engines returned by getDefaultEngines.
@@ -396,6 +395,7 @@ interface nsISearchService : nsISupports
 
   /**
    * Returns an array of all installed search engines.
+   * The array is sorted either to the user requirements or the default order.
    *
    * @returns an array of nsISearchEngine objects.
    */
@@ -404,6 +404,7 @@ interface nsISearchService : nsISupports
   /**
    * Returns an array of all installed search engines whose hidden attribute is
    * false.
+   * The array is sorted either to the user requirements or the default order.
    *
    * @returns an array of nsISearchEngine objects.
    */
@@ -412,6 +413,7 @@ interface nsISearchService : nsISupports
   /**
    * Returns an array of all default search engines. This includes all loaded
    * engines that aren't in the user's profile directory.
+   * The array is sorted to the default order.
    *
    * @returns an array of nsISearchEngine objects.
    */
@@ -463,6 +465,12 @@ interface nsISearchService : nsISupports
   readonly attribute nsISearchEngine originalDefaultEngine;
 
   /**
+   * The original Engine object that is the default for this region when in
+   * private browsing mode, ignoring changes the user may have subsequently made.
+   */
+  readonly attribute nsISearchEngine originalPrivateDefaultEngine;
+
+  /**
    * The currently active search engine.
    * Unless the application doesn't ship any search plugin, this should never
    * be null. If the currently active engine is removed, this attribute will
@@ -476,11 +484,50 @@ interface nsISearchService : nsISupports
   Promise setDefault(in nsISearchEngine engine);
 
   /**
+   * The currently active search engine for private browsing mode.
+   * @see defaultEngine.
+   */
+  attribute nsISearchEngine defaultPrivateEngine;
+
+  Promise getDefaultPrivate();
+  Promise setDefaultPrivate(in nsISearchEngine engine);
+
+  /**
+   * Allows the add-on manager to discover if a WebExtension based search engine
+   * may change the default to an application provided search engine.
+   * If that WebExtension is on the allow list, then it will override the
+   * built-in engine's urls and parameters.
+   *
+   *  @param extension
+   *        The extension to load from.
+   *  @returns An object with two booleans:
+   *        - canChangeToAppProvided: indicates if the WebExtension engine may
+   *            set the named engine as default e.g. it is application provided.
+   *        - canInstallEngine: indicates if the WebExtension engine may be
+   *            installed, e.g. it is not an app-provided engine.
+   */
+  Promise maybeSetAndOverrideDefault(in jsval extension);
+
+  /**
    * Gets a representation of the default engine in an anonymized JSON
    * string suitable for recording in the Telemetry environment.
    *
-   * @return an object containing anonymized info about the default engine:
-   *         name, loadPath, submissionURL (for default engines).
+   * @return {object} result
+   *   contains anonymized info about the default engine(s).
+   * @return {string} result.defaultSearchEngine
+   *   contains the telemetry id of the default engine.
+   * @return {object} result.defaultSearchEngineData
+   *   contains information about the default engine:
+   *     name, loadPath, original submissionURL
+   * @return {string} [result.defaultPrivateSearchEngine]
+   *   only returned if the preference for having a separate engine in private
+   *   mode is turned on.
+   *   contains the telemetry id of the default engine for private browsing mode.
+   * @return {object} [result.defaultPrivateSearchEngineData]
+   *   only returned if the preference for having a separate engine in private
+   *   mode is turned on.
+   *   contains information about the default engine for private browsing mode:
+   *     name, loadPath, original submissionURL
    */
   Promise getDefaultEngineInfo();
 

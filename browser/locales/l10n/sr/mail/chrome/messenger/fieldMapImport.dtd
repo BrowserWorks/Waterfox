@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Увези именик">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Увезени подаци за унос: ">
+<!ENTITY fieldMapImport.next.label "Следеће">
+<!ENTITY fieldMapImport.next.accesskey "С">
+<!ENTITY fieldMapImport.previous.label "Претходно">
+<!ENTITY fieldMapImport.previous.accesskey "П">
+<!ENTITY fieldMapImport.text "Користите „Помери горе“ и „Помери доле“ да бисте ускладили поља именика на левој страни исправним подацима за увоз на десној. Дештиклирајте ставке које не желите да увезете.">
+<!ENTITY fieldMapImport.up.label "Помери горе">
+<!ENTITY fieldMapImport.up.accesskey "г">
+<!ENTITY fieldMapImport.down.label "Помери доле">
+<!ENTITY fieldMapImport.down.accesskey "д">
+<!ENTITY fieldMapImport.fieldListTitle "Поља именика">
+<!ENTITY fieldMapImport.dataTitle "Уноси са подацима за увоз">
+<!ENTITY fieldMapImport.skipFirstRecord.label "Први унос садржи имена поља">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "П">

@@ -7,7 +7,6 @@ load 231475-1.html
 load 244933-1.html
 load 275912-1.html
 load 293388-1.html
-load 308120-1.xul
 load 325730-1.html
 load 326618-1.html
 load 326646-1.html
@@ -16,7 +15,6 @@ load 327571-1.html
 load 327694.html
 load 327695-1.html
 load 329481-1.xhtml
-load 330925-1.xhtml
 load 336381-1.xhtml
 load 336715-1.xhtml
 load 338391-1.xhtml
@@ -29,7 +27,6 @@ load 344434-1.xhtml
 load 344882-1.html
 load 345837-1.xhtml
 load 346381-1.html
-load 348049-1.xhtml
 load 349355-1.html
 load 359432-1.xhtml
 load 360599-1.html
@@ -48,12 +45,8 @@ load 384663-1.html
 load 386000-1.html
 load 386794-1.html
 load 387460-1.html
-load 395469-1.xhtml
-load 395469-2.xhtml
 load 399712-1.html
 load 400763-1.html
-load 401993-1.html
-load 404869-1.xul
 load 407818.html
 load 410860-1.xml
 load 411882-1.xhtml
@@ -196,11 +189,11 @@ load 1154598.xhtml
 load 1157995.html
 load 1158412.html
 load 1181619.html
+load 1228882.html
 load 1230422.html
 load 1251361.html
 load 1281715.html
 load 1281745.html
-load 1291535.html
 load 1304437.html
 load 1324209.html
 load 1324463.html
@@ -210,9 +203,9 @@ load 1326194-2.html
 load 1332939.html
 load 1341693.html
 load 1352453.html
-load 1353529.xul
+load chrome://reftest/content/crashtests/dom/base/crashtests/1353529.xhtml
 load 1368327.html
-load 1369363.xul
+load chrome://reftest/content/crashtests/dom/base/crashtests/1369363.xhtml
 load 1370072.html
 pref(clipboard.autocopy,true) load 1370737.html
 load 1370968.html
@@ -231,7 +224,7 @@ load 1406109-1.html
 load 1411473.html
 load 1413815.html
 load 1419799.html
-skip-if(!browserIsRemote) pref(dom.disable_open_during_load,false) load 1419902.html # skip on non e10s loads, Bug 1419902
+skip-if(!browserIsRemote) skip-if(geckoview&&webrender) skip-if(geckoview&&isDebugBuild) skip-if(AddressSanitizer) pref(dom.disable_open_during_load,false) load 1419902.html # skip on non e10s loads, Bug 1419902. Bug 1563013 for GV+WR. Bug 1524493 GV+debug. Bug 1573281 asan
 load 1422883.html
 load 1428053.html
 load 1441029.html
@@ -246,9 +239,19 @@ load 1505875.html
 load 1508845.html
 load 1516289.html
 load 1516560.html
+pref(javascript.options.dynamicImport,true) load 1529203-1.html
+skip-if(Android) pref(javascript.options.dynamicImport,true) pref(dom.disable_open_during_load,false) pref(browser.link.open_newwindow,2) load 1529203-2.html
+skip-if(Android) pref(dom.disable_open_during_load,false) pref(browser.link.open_newwindow,2) load 1529203-3.html
 load 1528675.html
+load 1566310.html
+skip-if(Android) pref(dom.disable_open_during_load,false) pref(browser.link.open_newwindow,2) load 1588259.html
 load structured_clone_container_throws.html
 load xhr_empty_datauri.html
 load xhr_html_nullresponse.html
 load xhr-with-pagehide-1.html
 pref(layout.css.resizeobserver.enabled,true) load 1555786.html
+load 1577191.html
+load eventSource_invalid_scheme_worker_shutdown.html
+load 1291535.html
+skip-if(!isDebugBuild||xulRuntime.OS!="Linux") load 1611853.html
+load 1619322.html

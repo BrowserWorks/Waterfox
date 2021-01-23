@@ -6,6 +6,8 @@
 #ifndef gfx_src_gfxTelemetry_h__
 #define gfx_src_gfxTelemetry_h__
 
+#include <cstdint>
+
 namespace mozilla {
 namespace gfx {
 
@@ -40,6 +42,14 @@ enum class FeatureStatus {
   BlockedScreenUnknown,
   BlockedNoGfxInfo,
   BlockedOverride,
+  BlockedReleaseChannelIntel,
+  BlockedReleaseChannelAMD,
+  BlockedReleaseChannelNvidia,
+  BlockedReleaseChannelBattery,
+  BlockedReleaseChannelAndroid,
+
+  // This feature has been blocked by the allowlist.
+  Denied,
 
   // This feature has been blocked by the graphics blacklist.
   Blacklisted,

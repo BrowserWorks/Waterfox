@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "ទំនាក់ទំនង​លើ​បណ្ដាញ">
+<!ENTITY offlineContactsHeader.label   "ទំនាក់ទំនង​ក្រៅ​បណ្ដាញ">
+<!ENTITY conversationsHeader.label     "ការ​សន្ទនា">
+<!ENTITY searchResultConversation.label "លទ្ធផល​ស្វែងរក">
+<!ENTITY chat.noConv.title             "ការ​សន្ទនា​នឹង​បង្ហាញ​នៅ​ទីនេះ។">
+<!ENTITY chat.noConv.description       "ប្រើ​បញ្ជី​ទំនាក់ទំនង​នៅ​ផ្ទាំង​ខាងឆ្វេង​ដើម្បី​ចាប់ផ្ដើម​ការ​សន្ទនា។">
+<!ENTITY chat.noPreviousConv.description       "&brandShortName; បច្ចុប្បន្ន​មិន​មាន​ការ​សន្ទនា​ពីមុន​ណាមួយ​ដែល​បាន​ផ្ទុក​សម្រាប់​ទំនាក់ទំនង​នេះ​ទេ។">
+<!ENTITY chat.noAccount.title             "អ្នក​មិន​ទាន់​បាន​បង្កើត​គណនី​ជជែក។">
+<!ENTITY chat.noAccount.description       "ឲ្យ &brandShortName; ណែនាំ​អ្នក​អំពី​របៀប​បង្កើត​គណនី​គណនី​ជជែក។">
+<!ENTITY chat.accountWizard.button       "ចាប់ផ្ដើម">
+<!ENTITY chat.noConnectedAccount.title             "គណនី​ជជែក​របស់​អ្នក​មិន​ត្រូវ​បាន​តភ្ជាប់។">
+<!ENTITY chat.noConnectedAccount.description       "អ្នក​អាច​តភ្ជាប់​ពួកគេ​ពី​ប្រអប់ 'ស្ថានភាព​ជជែក' ៖">
+<!ENTITY chat.showAccountManager.button       "បង្ហាញ​ស្ថានភាព​ជជែក">
+
+<!ENTITY chat.participants             "អ្នកចូលរួម៖">
+<!ENTITY chat.previousConversations    "ការ​សន្ទនា​ពីមុន៖">
+<!ENTITY chat.ongoingConversation      "ការ​សន្ទនា​ដែល​កំពុង​ប្រព្រឹត្ត">
+
+<!ENTITY openConversationCmd.label     "ចាប់ផ្ដើម​ការសន្ទនា">
+<!ENTITY openConversationCmd.accesskey "C">
+<!ENTITY closeConversationCmd.label    "បិទ​ការសន្ទនា">
+<!ENTITY closeConversationCmd.accesskey "C">
+<!ENTITY aliasCmd.label                "Անվանափոխել">
+<!ENTITY aliasCmd.accesskey            "R">
+<!ENTITY deleteCmd.label               "លុប​ទំនាក់ទំនង​ចេញ​">
+<!ENTITY deleteCmd.accesskey           "v">
+
+<!ENTITY openConversationButton.tooltip  "ចាប់ផ្ដើម​ការសន្ទនា">
+<!ENTITY closeConversationButton.tooltip "បិទ​ការសន្ទនា">
+
+<!ENTITY addBuddyButton.label          "បន្ថែម​ទំនាក់ទំនង​">
+<!ENTITY joinChatButton.label          "ចូលរួម​ជជែក">
+<!ENTITY chatAccountsButton.label      "បង្ហាញ​គណនី">
+
+<!ENTITY status.available          "មាន">
+<!ENTITY status.unavailable        "មិន​មាន">
+<!ENTITY status.offline            "Offline">
+
+<!ENTITY openLinkCmd.label            "បើក​តំណ...">
+<!ENTITY openLinkCmd.accesskey        "O">

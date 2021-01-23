@@ -23,18 +23,12 @@ namespace mozilla {
  */
 class CryptoTask : public Runnable {
  public:
-  template <size_t LEN>
-  nsresult Dispatch(const char (&taskThreadName)[LEN]) {
-    static_assert(LEN <= 15, "Thread name must be no more than 15 characters");
-    return Dispatch(nsDependentCString(taskThreadName, LEN - 1));
-  }
-
-  nsresult Dispatch(const nsACString& taskThreadName);
+  nsresult Dispatch();
 
  protected:
   CryptoTask() : Runnable("CryptoTask"), mRv(NS_ERROR_NOT_INITIALIZED) {}
 
-  virtual ~CryptoTask() {}
+  virtual ~CryptoTask() = default;
 
   /**
    * Called on a background thread (never the main thread). Its result will be
@@ -51,7 +45,6 @@ class CryptoTask : public Runnable {
   NS_IMETHOD Run() final;
 
   nsresult mRv;
-  nsCOMPtr<nsIThread> mThread;
 };
 
 }  // namespace mozilla

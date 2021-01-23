@@ -7,6 +7,7 @@ Transform the beetmover task into an actual task description.
 
 from __future__ import absolute_import, print_function, unicode_literals
 
+from six import text_type
 from taskgraph.loader.single_dep import schema
 from taskgraph.transforms.base import TransformSequence
 from taskgraph.transforms.beetmover import craft_release_properties
@@ -23,7 +24,6 @@ from taskgraph.util.schema import (
 from taskgraph.util.scriptworker import (
     add_scope_prefix,
     get_beetmover_bucket_scope,
-    get_worker_type_for_scope,
 )
 from taskgraph.util.taskcluster import get_artifact_prefix
 from taskgraph.transforms.task import task_description_schema
@@ -37,14 +37,14 @@ logger = logging.getLogger(__name__)
 
 beetmover_description_schema = schema.extend({
     # depname is used in taskref's to identify the taskID of the unsigned things
-    Required('depname', default='build'): basestring,
+    Required('depname', default='build'): text_type,
 
     # unique label to describe this beetmover task, defaults to {dep.label}-beetmover
-    Optional('label'): basestring,
+    Optional('label'): text_type,
 
-    Required('partner-bucket-scope'): optionally_keyed_by('release-level', basestring),
-    Required('partner-public-path'): Any(None, basestring),
-    Required('partner-private-path'): Any(None, basestring),
+    Required('partner-bucket-scope'): optionally_keyed_by('release-level', text_type),
+    Required('partner-public-path'): Any(None, text_type),
+    Required('partner-private-path'): Any(None, text_type),
 
     Optional('extra'): object,
     Required('shipping-phase'): task_description_schema['shipping-phase'],
@@ -136,7 +136,7 @@ def populate_scopes_and_worker_type(config, job, bucket_scope, partner_public=Fa
 
     task = deepcopy(job)
     task['scopes'] = [bucket_scope, action_scope]
-    task['worker-type'] = get_worker_type_for_scope(config, bucket_scope)
+    task['worker-type'] = 'beetmover'
     task['partner_public'] = partner_public
     if partner_public:
         task['label'] = "{}-public".format(task['label'])
@@ -145,13 +145,10 @@ def populate_scopes_and_worker_type(config, job, bucket_scope, partner_public=Fa
 
 @transforms.add
 def split_public_and_private(config, jobs):
-
+    public_bucket_scope = get_beetmover_bucket_scope(config)
     partner_config = get_partner_config_by_kind(config, config.kind)
 
     for job in jobs:
-        public_bucket_scope = get_beetmover_bucket_scope(
-            config, job_release_type=job.get('attributes', {}).get('release-type')
-        )
         partner_bucket_scope = add_scope_prefix(config, job['partner-bucket-scope'])
         partner, subpartner, _ = job['extra']['repack_id'].split('/')
 

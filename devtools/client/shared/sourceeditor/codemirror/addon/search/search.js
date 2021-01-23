@@ -1,5 +1,5 @@
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
-// Distributed under an MIT license: http://codemirror.net/LICENSE
+// Distributed under an MIT license: https://codemirror.net/LICENSE
 
 // Define search commands. Depends on dialog.js or another
 // implementation of the openDialog method.
@@ -11,7 +11,7 @@
 
 (function(mod) {
   if (typeof exports == "object" && typeof module == "object") // CommonJS
-    mod(require("../../lib/codemirror"), require("./searchcursor"), require("../dialog/dialog"));
+    mod(require("devtools/client/shared/sourceeditor/codemirror/lib/codemirror"), require("devtools/client/shared/sourceeditor/codemirror/addon/search/searchcursor"), require("devtools/client/shared/sourceeditor/codemirror/addon/dialog/dialog"));
   else if (typeof define == "function" && define.amd) // AMD
     define(["../../lib/codemirror", "./searchcursor", "../dialog/dialog"], mod);
   else // Plain browser env
@@ -78,10 +78,12 @@
   }
 
   function parseString(string) {
-    return string.replace(/\\(.)/g, function(_, ch) {
+    return string.replace(/\\([nrt\\])/g, function(match, ch) {
       if (ch == "n") return "\n"
       if (ch == "r") return "\r"
-      return ch
+      if (ch == "t") return "\t"
+      if (ch == "\\") return "\\"
+      return match
     })
   }
 

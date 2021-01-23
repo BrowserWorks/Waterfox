@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY GeneratedName.label "Імя">
+<!ENTITY GeneratedName.accesskey "І">
+<!ENTITY PrimaryEmail.label "Э-Пошта">
+<!ENTITY PrimaryEmail.accesskey "Э">
+<!ENTITY Company.label "Установа">
+<!ENTITY Company.accesskey "в">
+<!ENTITY _PhoneticName.label "Фанетычнае імя">
+<!ENTITY _PhoneticName.accesskey "е">
+<!ENTITY NickName.label "Мянушка">
+<!ENTITY NickName.accesskey "я">
+<!ENTITY SecondEmail.label "Дадатковая э-пошта">
+<!ENTITY SecondEmail.accesskey "ш">
+<!ENTITY Department.label "Аддзел">
+<!ENTITY Department.accesskey "д">
+<!ENTITY JobTitle.label "Пасада">
+<!ENTITY JobTitle.accesskey "П">
+<!ENTITY CellularNumber.label "Мабільнік">
+<!ENTITY CellularNumber.accesskey "М">
+<!ENTITY PagerNumber.label "Гартач">
+<!ENTITY PagerNumber.accesskey "Г">
+<!ENTITY FaxNumber.label "Факс">
+<!ENTITY FaxNumber.accesskey "Ф">
+<!ENTITY HomePhone.label "Хатні тэляфон">
+<!ENTITY HomePhone.accesskey "Х">
+<!ENTITY WorkPhone.label "Працоўны тэляфон">
+<!ENTITY WorkPhone.accesskey "П">
+<!ENTITY ScreenName.label "Экраннае імя">
+<!ENTITY ScreenName.accesskey "Э">
+<!ENTITY sortAscending.label "Узыходны">
+<!ENTITY sortAscending.accesskey "У">
+<!ENTITY sortDescending.label "Сыходны">
+<!ENTITY sortDescending.accesskey "С">
+<!ENTITY composeEmail.label "Укласці э-ліст да">
+<!ENTITY composeEmail.accesskey "У">
+<!ENTITY copyAddress.label "Капіяваць адрас э-пошты">
+<!ENTITY copyAddress.accesskey "а">
+<!ENTITY deleteAddrBookCard.label "Выдаліць">
+<!ENTITY deleteAddrBookCard.accesskey "д">
+<!ENTITY newAddrBookCard.label "Новая картка…">
+<!ENTITY newAddrBookCard.accesskey "Н">
+<!ENTITY newAddrBookMailingList.label "Новы адрасны спіс…">
+<!ENTITY newAddrBookMailingList.accesskey "А">
+<!ENTITY addrBookCardProperties.label "Уласцівасці">
+<!ENTITY addrBookCardProperties.accesskey "У">

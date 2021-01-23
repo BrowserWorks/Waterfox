@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+
+<!ENTITY fileMenu.label          "கோப்பு">
+<!ENTITY fileMenu.accesskey        "F">
+<!ENTITY newMenu.label            "புதிய">
+<!ENTITY newMenu.accesskey          "N">
+
+<!ENTITY editMenu.label          "தொகு">
+<!ENTITY editMenu.accesskey        "E">
+<!ENTITY undoCmd.label            "செயல்நீக்கு">
+<!ENTITY undoCmd.accesskey          "U">
+<!ENTITY redoCmd.label            "மீண்டும் செய்">
+<!ENTITY redoCmd.accesskey          "R">
+<!ENTITY deleteCmd.label          "அழி">
+<!ENTITY deleteCmd.accesskey        "D">
+
+
+<!ENTITY preferencesCmdUnix.label       "முன்னுரிமைகள்">
+<!ENTITY preferencesCmdUnix.accesskey     "n">
+
+<!ENTITY viewMenu.label          "பார்வை">
+<!ENTITY viewMenu.accesskey        "V">
+<!ENTITY viewToolbarsMenu.label        "கருவிப்பட்டைகள்">
+<!ENTITY viewToolbarsMenu.accesskey      "T">
+
+
+
+<!ENTITY closeCmd.label      "மூடு">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "C">
+
+<!ENTITY quitApplicationCmd.label  "வெளியேறு">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "x">
+
+<!ENTITY quitApplicationCmdUnix.label  "வெளியேறு">
+<!ENTITY quitApplicationCmdUnix.accesskey  "Q">
+
+<!ENTITY quitApplicationCmdMac.label  "&brandShortName; விட்டு வெளியேறு">
+<!ENTITY quitApplicationCmdMac.accesskey  "Q">

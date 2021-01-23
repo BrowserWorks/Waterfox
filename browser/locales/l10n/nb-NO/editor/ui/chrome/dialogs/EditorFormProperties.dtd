@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Skjemaegenskaper">
+
+<!ENTITY Settings.label "Innstillinger">
+
+<!ENTITY FormName.label "Skjemanavn:">
+<!ENTITY FormName.accesskey "n">
+<!ENTITY FormAction.label "Hendelses-URL:">
+<!ENTITY FormAction.accesskey "H">
+<!ENTITY FormMethod.label "Metode:">
+<!ENTITY FormMethod.accesskey "M">
+<!ENTITY FormEncType.label "Tegnkoding:">
+<!ENTITY FormEncType.accesskey "T">
+<!ENTITY FormTarget.label "Målramme:">
+<!ENTITY FormTarget.accesskey "M">
+
+<!ENTITY RemoveForm.label "Fjern skjema">
+<!ENTITY RemoveForm.accesskey "r">

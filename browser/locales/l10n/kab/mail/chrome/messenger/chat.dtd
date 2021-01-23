@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Inermisen uqqinen">
+<!ENTITY offlineContactsHeader.label   "Inermisen iruqqinen">
+<!ENTITY conversationsHeader.label     "Idiwenniten">
+<!ENTITY searchResultConversation.label "Agemuḍ n unadi">
+<!ENTITY chat.noConv.title             "Idiwenniyen ad ttuseknen d-agi.">
+<!ENTITY chat.noConv.description       "Seqdec tabdart n umermis n uẓelmaḍ n ugalis i wensenker n udiwenni.">
+<!ENTITY chat.noPreviousConv.description       "&brandShortName; ulac degs akka tura idiwinniyen yettwakelsen i unermis-agi.">
+<!ENTITY chat.noAccount.title             "Ur tesbaduḍ ara amiḍan n usqerdec ar tura.">
+<!ENTITY chat.noAccount.description       "Eǧǧ &brandShortName; ak-d-yesken akala n usebded n umiḍan-inek n udiwenni usrid.">
+<!ENTITY chat.accountWizard.button       "Bdu">
+<!ENTITY chat.noConnectedAccount.title             "Imiḍanen-inek n udiwenni usrid ur qqinen ara.">
+<!ENTITY chat.noConnectedAccount.description       "Tzemreḍ ad ten-teqqneḍ si tebwaṭ 'Addad n udiqenni usrid':">
+<!ENTITY chat.showAccountManager.button       "Sken addad n udiwenni usrid">
+
+<!ENTITY chat.participants             "Imttekkiyen:">
+<!ENTITY chat.previousConversations    "Idiwenniten izewwaren:">
+<!ENTITY chat.ongoingConversation      "Adiwinni iteddun">
+
+<!ENTITY openConversationCmd.label     "Senker adiwenni">
+<!ENTITY openConversationCmd.accesskey "d">
+<!ENTITY closeConversationCmd.label    "Mdel adiwenni">
+<!ENTITY closeConversationCmd.accesskey "M">
+<!ENTITY aliasCmd.label                "Snifel isem">
+<!ENTITY aliasCmd.accesskey            "n">
+<!ENTITY deleteCmd.label               "Kkes anermis">
+<!ENTITY deleteCmd.accesskey           "K">
+
+<!ENTITY openConversationButton.tooltip  "Senker adiwenni">
+<!ENTITY closeConversationButton.tooltip "Mdel adiwenni">
+
+<!ENTITY addBuddyButton.label          "Rnu anermis">
+<!ENTITY joinChatButton.label          "Ddu ɣeṛ udiwinni usrid">
+<!ENTITY chatAccountsButton.label      "Sken imiḍanen">
+
+<!ENTITY status.available          "Yella">
+<!ENTITY status.unavailable        "Ulac-it">
+<!ENTITY status.offline            "Aruqqin">
+
+<!ENTITY openLinkCmd.label            "Ldi aseɣwen…">
+<!ENTITY openLinkCmd.accesskey        "L">

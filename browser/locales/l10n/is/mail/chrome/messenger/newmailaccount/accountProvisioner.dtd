@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "Velkomin í &brandShortName;">
+<!ENTITY header2.label "Viltu nýtt tölvupóstfang?">
+<!ENTITY other.languages "Aðeins eru birtir þjónustuaðilar á þínu svæði.  Smelltu til að sýna alla aðila.">
+<!ENTITY error.line1 "Því miður, fannst ekki nein tillaga að tölvupóstfangi.">
+<!ENTITY error.line2 "Þú getur prófað að leita eftir gælunafni eða öðru til að birta fleiri niðurstöður.">
+
+<!-- LOCALIZATION NOTE(error.suggest.before, error.suggest.middle, error.suggest.after):
+     error.suggest.before, error.suggest.middle, and error.suggest.after all go into
+     one line with error.suggest.middle that links to a site which provides download
+     of free account alternatives. -->
+<!ENTITY error.suggest.before "Þú gætir einnig reynt einhverja af þessum ">
+<!ENTITY error.suggest.middle "ókeypis tölvupóst miðlurum">
+<!ENTITY error.suggest.after ".">
+
+<!-- LOCALIZATION NOTE(success.title.before, success.title.after):
+     success.title.before and success.title.after all go into one line, wrapping
+     around the name that the user has typed in to the search input. -->
+<!ENTITY success.title.before "Halló ">
+<!ENTITY success.title.after ", eftirfarandi tölvupóstföng eru tiltæk fyrir þig:">
+<!ENTITY success.tip "(Þú getur einnig reynt að leita eftir gælunöfnum eða öðru til að sjá fleiri póstföng)">
+<!ENTITY partnership.description "Í samstarfi við nokkra þjónustuaðila, getur &brandShortName; boðið þér upp á aðgang að tölvupósti. Sláðu bara inn fornafn og eftirnafn, eða hvaða önnur orð sem þú vilt, í svæðin hér fyrir ofan til að halda áfram.">
+<!ENTITY existing.header "Ertu þegar með tölvupóstfang sem þú vilt nota?">
+<!ENTITY tinyheader.title "Ertu með tölvupóstfang?">
+<!ENTITY tinyheader.existing "Sleppa þessu og nota tölvupóstfangið sem ég er þegar með">
+<!ENTITY content.close "Ég ætla að stilla reikninginn seinna.">
+<!ENTITY successful.title "Til hamingju!">
+<!ENTITY successful.successMessage "Tókst að setja upp reikninginn þinn.">
+<!ENTITY successful.write "Skrifa tölvupóst">
+<!ENTITY successful.write.desc "Láttu vini þína og fjölskyldu vita af nýja tölvupóstfanginu.<br/> Er það ekki einmitt ástæðan fyrir því að þú fékkst þér nýjan aðgang?">
+<!ENTITY successful.customize "Sérsníða &brandShortName; með flottum viðbótum">
+<!ENTITY successful.customize.desc "Til eru þúsund viðbóta sem gera þér kleyft að sérsníða &brandShortName; að þínum þörfum.">
+<!ENTITY successful.attach "Bæta persónulegri undirskrift við tölvupóstinn">
+<!ENTITY successful.attach.desc "Hægt er að bæta sjálfvirkt við tilvitnun eða öðrum upplýsingum um sjálfan þig í niðurlagi hvers pósts sem þú sendir.">
+<!ENTITY successful.close "Loka þessum glugga.">
+<!ENTITY input.namePlaceholder "Nafnið þitt, eða gælunafn">
+<!ENTITY input.search "Leita">
+<!ENTITY search_engine.title "Sérsníða leitarvélina">
+<!ENTITY search_engine.message "Þinn þjónustaðili fyrir tölvupóst getur boðið þér upp á leitareiginleika.">
+<!ENTITY search_engine.button "Ljúka">

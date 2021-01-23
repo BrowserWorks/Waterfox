@@ -69,7 +69,7 @@ let gMgr = Cc["@mozilla.org/memory-reporter-manager;1"].getService(
 const gPageName = "about:memory";
 document.title = gPageName;
 
-const gUnnamedProcessStr = "Main Process";
+const gMainProcessPrefix = "Main Process";
 
 const gFilterUpdateDelayMS = 300;
 
@@ -147,7 +147,7 @@ function stringMatchesFilter(aString, aFilter) {
 
 // ---------------------------------------------------------------------------
 
-function onUnload() {}
+window.onunload = function() {};
 
 // ---------------------------------------------------------------------------
 
@@ -268,12 +268,13 @@ function newElement(aTagName, aClassName) {
 const explicitTreeDescription =
   "This tree covers explicit memory allocations by the application.  It includes \
 \n\n\
-* allocations made at the operating system level (via calls to functions such as \
-VirtualAlloc, vm_allocate, and mmap), \
-\n\n\
-* allocations made at the heap allocation level (via functions such as malloc, \
+* all allocations made at the heap allocation level (via functions such as malloc, \
 calloc, realloc, memalign, operator new, and operator new[]) that have not been \
 explicitly decommitted (i.e. evicted from memory and swap), and \
+\n\n\
+* some allocations (those covered by memory reporters) made at the operating \
+system level (via calls to functions such as VirtualAlloc, vm_allocate, and \
+mmap), \
 \n\n\
 * where possible, the overhead of the heap allocator itself.\
 \n\n\
@@ -304,7 +305,7 @@ function appendHiddenFileInput(aP, aId, aChangeListener) {
   return input;
 }
 
-function onLoad() {
+window.onload = function() {
   // Generate the header.
 
   let header = appendElement(document.body, "div", "ancillary");
@@ -494,7 +495,7 @@ function onLoad() {
       }
     }
   }
-}
+};
 
 // ---------------------------------------------------------------------------
 
@@ -1168,7 +1169,16 @@ function appendAboutMemoryMain(
       "bad presence"
     );
 
-    let process = aProcess === "" ? gUnnamedProcessStr : aProcess;
+    // If the process is empty, that means this process -- which is the main
+    // process, because this is chrome JS code -- is doing the dumping.
+    // Generate the process identifier: `Main Process (pid $PID)`.
+    //
+    // Note that `HandleReportAndFinishReportingCallbacks::Callback()` handles
+    // this when saving memory reports to file. So, if we are loading memory
+    // reports from file then `aProcess` will already be non-empty.
+    let process = aProcess
+      ? aProcess
+      : gMainProcessPrefix + " (pid " + Services.appinfo.processID + ")";
 
     // Store the "resident" value for each process, so that if we filter it
     // out, we can still use it to correctly sort processes and generate the
@@ -1255,10 +1265,10 @@ function appendAboutMemoryMain(
       );
 
       // Always put the main process first.
-      if (aProcessA == gUnnamedProcessStr) {
+      if (aProcessA.startsWith(gMainProcessPrefix)) {
         return -1;
       }
-      if (aProcessB == gUnnamedProcessStr) {
+      if (aProcessB.startsWith(gMainProcessPrefix)) {
         return 1;
       }
 
@@ -1747,7 +1757,7 @@ function appendWarningElements(
     );
   }
 
-  if (gUnsafePathsWithInvalidValuesForThisProcess.length > 0) {
+  if (gUnsafePathsWithInvalidValuesForThisProcess.length) {
     let div = appendElement(aP, "div");
     appendElementWithText(
       div,

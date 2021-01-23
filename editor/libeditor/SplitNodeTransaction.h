@@ -10,15 +10,13 @@
 #include "mozilla/EditTransactionBase.h"  // for EditTxn, etc.
 #include "nsCOMPtr.h"                     // for nsCOMPtr
 #include "nsCycleCollectionParticipant.h"
+#include "nsIContent.h"
 #include "nsISupportsImpl.h"  // for NS_DECL_ISUPPORTS_INHERITED
 #include "nscore.h"           // for NS_IMETHOD
 
-class nsIContent;
-class nsINode;
-
 namespace mozilla {
 
-class EditorBase;
+class HTMLEditor;
 
 /**
  * A transaction that splits a node into two identical nodes, with the children
@@ -27,8 +25,8 @@ class EditorBase;
 class SplitNodeTransaction final : public EditTransactionBase {
  private:
   template <typename PT, typename CT>
-  SplitNodeTransaction(EditorBase& aEditorBase,
-                       const EditorDOMPointBase<PT, CT>& aStartOfRightNode);
+  SplitNodeTransaction(HTMLEditor& aHTMLEditor,
+                       const EditorDOMPointBase<PT, CT>& aStartOfRightContent);
 
  public:
   /**
@@ -36,41 +34,42 @@ class SplitNodeTransaction final : public EditTransactionBase {
    * existing node (right node), and split the contents between the same point
    * in both nodes.
    *
-   * @param aEditorBase         The provider of core editing operations.
-   * @param aStartOfRightNode   The point to split.  Its container will be
-   *                            the right node, i.e., become the new node's
-   *                            next sibling.  And the point will be start
-   *                            of the right node.
+   * @param aHTMLEditor             The provider of core editing operations.
+   * @param aStartOfRightContent    The point to split.  Its container will be
+   *                                the right node, i.e., become the new node's
+   *                                next sibling.  And the point will be start
+   *                                of the right node.
    */
   template <typename PT, typename CT>
   static already_AddRefed<SplitNodeTransaction> Create(
-      EditorBase& aEditorBase,
-      const EditorDOMPointBase<PT, CT>& aStartOfRightNode);
+      HTMLEditor& aHTMLEditor,
+      const EditorDOMPointBase<PT, CT>& aStartOfRightContent);
 
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(SplitNodeTransaction,
                                            EditTransactionBase)
 
   NS_DECL_EDITTRANSACTIONBASE
+  NS_DECL_EDITTRANSACTIONBASE_GETASMETHODS_OVERRIDE(SplitNodeTransaction)
 
-  NS_IMETHOD RedoTransaction() override;
+  MOZ_CAN_RUN_SCRIPT NS_IMETHOD RedoTransaction() override;
 
-  nsIContent* GetNewNode();
+  nsIContent* GetNewLeftContent() const { return mNewLeftContent; }
 
  protected:
-  virtual ~SplitNodeTransaction();
+  virtual ~SplitNodeTransaction() = default;
 
-  RefPtr<EditorBase> mEditorBase;
+  RefPtr<HTMLEditor> mHTMLEditor;
 
   // The container is existing right node (will be split).
   // The point referring this is start of the right node after it's split.
-  EditorDOMPoint mStartOfRightNode;
+  EditorDOMPoint mStartOfRightContent;
 
-  // The node we create when splitting mExistingRightNode.
-  nsCOMPtr<nsIContent> mNewLeftNode;
+  // The node we create when splitting mExistingRightContent.
+  nsCOMPtr<nsIContent> mNewLeftContent;
 
-  // The parent shared by mExistingRightNode and mNewLeftNode.
-  nsCOMPtr<nsINode> mParent;
+  // The parent shared by mExistingRightContent and mNewLeftContent.
+  nsCOMPtr<nsINode> mContainerParentNode;
 };
 
 }  // namespace mozilla

@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sidebar.panels.label           "Barra lateral">
+<!ENTITY sidebar.reload.label           "Recargar">
+<!ENTITY sidebar.reload.accesskey       "R">
+<!ENTITY sidebar.picker.label           "Pestañas">
+<!ENTITY sidebar.customize.label        "Personalizar barra lateral…">
+<!ENTITY sidebar.customize.accesskey    "P">
+<!ENTITY sidebar.hide.label             "Ocultar pestaña">
+<!ENTITY sidebar.hide.accesskey         "O">
+<!ENTITY sidebar.switch.label           "Cambiar a pestaña">
+<!ENTITY sidebar.switch.accesskey       "t">
+<!ENTITY sidebarCmd.label               "Barra lateral">
+<!ENTITY sidebarCmd.accesskey           "B">
+<!ENTITY sidebar.loading.label          "Cargando…">
+<!ENTITY sidebar.loadstopped.label      "Carga detenida">
+<!ENTITY sidebar.loading.stop.label     "Detener">
+<!ENTITY sidebar.loading.stop.accesskey "D">
+
+<!-- LOCALIZATION NOTE (showHideSidebarCmd.key): This is only used on the
+     mac platform, other platforms use VK_F9. -->
+<!ENTITY showHideSidebarCmd.key         "S">
+
+<!ENTITY sidebar.no-panels.state     "La barra lateral está vacía.">
+<!ENTITY sidebar.no-panels.add       'Puede agregar pestañas al hacer clic en el botón "Pestañas" que está encima.'>
+<!ENTITY sidebar.no-panels.hide      'Si quiere ocultar la barra lateral completamente, haga clic en "Ver" en el menú y seleccione "Barra lateral" en el sub menú "Mostrar/Ocultar".'>
+<!ENTITY sidebar.sbDirectory.label   "Directorio de barras laterales…">
+
+<!ENTITY sidebar.pagenotfound.label  "Esta pestaña no está disponible en este momento.">
+<!ENTITY sidebar.close.tooltip       "Cerrar barra lateral">
+<!ENTITY sidebar.open.tooltip        "Abrir barra lateral">
+
+<!ENTITY sidebar.search.label         "Buscar">
+<!ENTITY sidebar.client-bookmarks.label     "Marcadores">
+<!ENTITY sidebar.client-history.label       "Historial">
+<!ENTITY sidebar.client-addressbook.label   "Libreta de direcciones">

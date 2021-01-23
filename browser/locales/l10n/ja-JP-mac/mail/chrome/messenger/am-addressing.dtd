@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label		"編集とアドレス入力">
+<!ENTITY addressingGroupTitle.label	"アドレス入力">
+<!ENTITY addressingText.label		"アドレスを自動補完する際に検索する LDAP サーバー:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label		"共通の LDAP サーバー設定を使用する">
+<!ENTITY useGlobal.accesskey		"U">
+<!ENTITY editDirectories.label		"LDAP サーバーの編集...">
+<!ENTITY editDirectories.accesskey	"E">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label		"個別の LDAP サーバーを指定する:">
+<!ENTITY directories.accesskey		"d">
+<!ENTITY directoriesNone.label		"None">
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label	"編集">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label			"HTML 形式でメッセージを編集する">
+<!ENTITY useHtml.accesskey		"C">
+<!ENTITY autoQuote.label		"返信時には元のメッセージを自動的に引用する">
+<!ENTITY autoQuote.accesskey		"m">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label			"引用時の返答位置:">
+<!ENTITY quoting.accesskey		"q">
+<!ENTITY aboveQuote.label		"引用部の上">
+<!ENTITY belowQuote.label		"引用部の下">
+<!ENTITY selectAndQuote.label		"引用部を選択">
+<!ENTITY place.label			"署名を挿入する位置:">
+<!ENTITY place.accesskey		"s">
+<!ENTITY belowText.label		"引用部の下 (推奨)">
+<!ENTITY aboveText.label		"返信部の下 (引用部の上)">
+<!ENTITY includeSigOnReply.label	"返信メッセージに自分の署名を挿入する">
+<!ENTITY includeSigOnReply.accesskey	"I">
+<!ENTITY includeSigOnForward.label	"転送メッセージに自分の署名を挿入する">
+<!ENTITY includeSigOnForward.accesskey	"w">
+
+<!ENTITY globalComposingPrefs.label	"共通の編集設定...">
+<!ENTITY globalComposingPrefs.accesskey	"G">
+
+<!ENTITY globalAddressingPrefs.label		"共通のアドレス入力設定...">
+<!ENTITY globalAddressingPrefs.accesskey	"P">

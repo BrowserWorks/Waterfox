@@ -10,8 +10,6 @@
 #   .extra file instead of the annotation name
 # - ping: A boolean that indicates whether the annotation is whitelisted for
 #   going into the crash ping, if not specified this defaults to false
-# - content: A boolean that indicates whether the field will be included in
-#   subprocess reports, if not specified this defaults to true
 
 A11yHandlerRegistered:
   description: >
@@ -104,25 +102,44 @@ AsyncShutdownTimeout:
 
 AvailablePageFile:
   description: >
-    Windows-only, maximum amount of memory that can be committed.  This
-    annotation is populated with the contents of the MEMORYSTATUSEX's structure
-    ullAvailPageFile field.
+    Available commit-space in bytes.
+    - Under Windows, computed from the PERFORMANCE_INFORMATION structure by substracting
+      the CommitTotal field from the CommitLimit field.
+    - Under Linux, computed from /proc/meminfo's CommitLimit - Committed_AS. Note that
+      the kernel is not guaranteed to enforce that CommittedLimit >= Committed_AS. If
+      Committed_AS > CommittedLimit, this value is set to 0.
+    - Not available on other platforms.
   type: string
   ping: true
 
 AvailablePhysicalMemory:
   description: >
-    Windows-only, amount of free physical memory in bytes. This annotation
-    is populated with the contents of the MEMORYSTATUSEX's structure
+    Amount of free physical memory in bytes.
+    - Under Windows, populated with the contents of the MEMORYSTATUSEX's structure
     ullAvailPhys field.
+    - Under macOS, populated with vm_statistics64_data_t::free_count.
+    - Under Linux, populated with /proc/meminfo's MemFree.
+    - Not available on other platforms.
+  type: string
+  ping: true
+
+AvailableSwapMemory:
+  description: >
+    Amount of free swap space in bytes.
+    - Under macOS, populated with the contents of
+      sysctl "vm.swapusage" :: xsu_avail.
+    - Under Linux, populated with /proc/meminfo's SwapFree.
+    - Not available on other platforms.
   type: string
   ping: true
 
 AvailableVirtualMemory:
   description: >
-    Windows-only, amount of free virtual memory in bytes. This annotation is
-    populated with the contents of the MEMORYSTATUSEX's structure
-    ullAvailVirtual field.
+    Amount of free virtual memory in bytes
+    - Under Windows, populated with the contents of the MEMORYSTATUSEX's structure ullAvailVirtual field.
+    - Under Linux, populated with /proc/meminfo's MemAvailable.
+    - Not available on other platforms.
+    - For macOS, see AvailableSwapMemory, AvailablePhysicalMemory and PurgeablePhysicalMemory.
   type: string
   ping: true
 
@@ -142,6 +159,12 @@ BlocklistInitFailed:
     Set to 1 if the DLL blocklist could not be initialized.
   type: boolean
   ping: true
+
+Breadcrumbs:
+  description: >
+    Trail of events that occurred before a report. this will consist of multiple breadcrumbs with
+    timestamp, message, category, level, type and data in JSON format.
+  type: string
 
 BreakpadReserveAddress:
   description: >
@@ -256,10 +279,22 @@ CycleCollector:
     Reason why the cycle collector crashed.
   type: string
 
+DesktopEnvironment:
+  description: >
+    Desktop environment used on Linux, e.g. GNOME, KDE, XFCE, etc.
+  type: string
+
 DeviceResetReason:
   description: >
     Reason why a DirectX device has been reset, Windows only.
   type: string
+
+DOMFissionEnabled:
+  description: >
+    Set to 1 when DOM fission is enabled, and subframes are potentially loaded
+    in a separate process.
+  type: boolean
+  ping: true
 
 DOMIPCEnabled:
   description: >
@@ -294,14 +329,12 @@ FramePoisonBase:
     Base pointer of the memory area used for the poison value we place in freed
     memory.
   type: string
-  content: false
 
 FramePoisonSize:
   description: >
     Size of the memory area used for the poison value we place in freed
     memory.
   type: integer
-  content: false
 
 GetHGlobalFromStreamFailure:
   description: >
@@ -344,6 +377,40 @@ GraphicsStartupTest:
     Set to 1 by the graphics driver crash guard when it's activated.
   type: boolean
 
+PHCKind:
+  description: >
+    The allocation kind, if the crash involved a bad access of a special PHC
+    allocation.
+  type: string
+
+PHCBaseAddress:
+  description: >
+    The allocation's base address, if the crash involved a bad access of a
+    special PHC allocation. Encoded as a decimal address.
+  type: string
+
+PHCUsableSize:
+  description: >
+    The allocation's usable size, if the crash involved a bad access of a
+    special PHC allocation.
+  # A 32-bit integer is enough because the maximum usable size of a special PHC
+  # allocation is far less than 2 GiB.
+  type: integer
+
+PHCAllocStack:
+  description: >
+    The allocation's allocation stack trace, if the crash involved a bad access
+    of a special PHC allocation. Encoded as a comma-separated list of decimal
+    addresses.
+  type: string
+
+PHCFreeStack:
+  description: >
+    The allocation's free stack trace, if the crash involved a bad access
+    of a special PHC allocation. Encoded as a comma-separated list of decimal
+    addresses.
+  type: string
+
 HangMonitorDescription:
   description: >
     Name of the hang monitor that generated the crash.
@@ -366,8 +433,16 @@ IndexedDBShutdownTimeout:
     This annotation is present if IndexedDB shutdown was not finished in time
     and the browser was crashed instead of waiting for IndexedDB shutdown to
     finish. The condition that caused the hang is contained in the annotation.
+    The condition is constructed by stringifying status of objects which blocked
+    IndexedDB shutdown. Objects are divided into three groups:
+    FactoryOperations, LiveDatabases and DatabaseMaintenances. Each group is
+    reported separately and contains the number of objects in the group and
+    status of individual objects in the group (duplicit entries are removed):
+    "GroupName: N (objectStatus1, objectStatus2, ...)" where N is the number of
+    objects in the group. Status of individual objects is constructed by taking
+    selected object properties. Properties which contain origin strings are
+    anonymized.
   type: string
-  content: false
   ping: true
 
 InstallTime:
@@ -473,10 +548,27 @@ IsWayland:
     If true then the Wayland windowing system was in use.
   type: boolean
 
+IsWaylandDRM:
+  description: >
+    If true then the Wayland DRM backend was in use.
+  type: boolean
+
 JavaStackTrace:
   description: >
     Java stack trace, only present on Firefox for Android if we encounter an
     uncaught Java exception.
+  type: string
+
+JSActorMessage:
+  description: >
+    If an actor is currently treating a message, this is the name of the message.
+    Otherwise, empty.
+  type: string
+
+JSActorName:
+  description: >
+    If an actor is currently treating a message, this is the name of the actor.
+    Otherwise, empty.
   type: string
 
 JSLargeAllocationFailure:
@@ -507,8 +599,16 @@ LocalStorageShutdownTimeout:
     This annotation is present if LocalStorage shutdown was not finished in time
     and the browser was crashed instead of waiting for LocalStorage shutdown to
     finish. The condition that caused the hang is contained in the annotation.
+    The condition is constructed by stringifying status of objects which blocked
+    LocalStorage shutdown. Objects are divided into three groups:
+    PrepareDatastoreOperations, Datastores and LiveDatabases. Each group is
+    reported separately and contains the number of objects in the group and
+    status of individual objects in the group (duplicit entries are removed):
+    "GroupName: N (objectStatus1, objectStatus2, ...)" where N is the number of
+    objects in the group. Status of individual objects is constructed by taking
+    selected object properties. Properties which contain origin strings are
+    anonymized.
   type: string
-  content: false
   ping: true
 
 LowCommitSpaceEvents:
@@ -516,6 +616,12 @@ LowCommitSpaceEvents:
     Number of times the available memory tracker has detected a that
     commit-space was running low. This is a Windows-specific annotation.
   type: integer
+  ping: true
+
+MainThreadRunnableName:
+  description: >
+    Name of the currently executing nsIRunnable on the main thread.
+  type: string
   ping: true
 
 MarshalActCtxManifestPath:
@@ -627,27 +733,18 @@ ProxyStreamValid:
     Set to "false" when encountering an invalid IPC proxy stream.
   type: string
 
+PurgeablePhysicalMemory:
+  description: >
+    macOS only. Amount of physical memory currently allocated but which may
+    be deallocated by the system in case of memory pressure. Populated from
+    vm_statistics64_data_t::purgeable_count * vm_page_size.
+  type: string
+  ping: true
+
 RDDProcessStatus:
   description: >
     Status of the RDD process, can be set to "Running" or "Destroyed"
   type: string
-
-RecordReplay:
-  description: >
-    Set to 1 if this crash happened in a Web Replay middleman, recording,
-    or replaying process.
-  type: boolean
-
-RecordReplayError:
-  description: >
-    Any fatal error that occurred while recording/replaying a tab.
-  type: string
-
-RecordReplayHang:
-  description: >
-    The presence of this annotation indicates that this crash was generated in
-    response to a hang in a replaying process.
-  type: boolean
 
 ReleaseChannel:
   description: >
@@ -679,9 +776,9 @@ ServerURL:
 
 ShutdownProgress:
   description: >
-   Shutdown step at which the browser crashed, can be set to "quit-application",
-   "profile-change-teardown", "profile-before-change", "xpcom-will-shutdown" or
-   "xpcom-shutdown".
+    Shutdown step at which the browser crashed, can be set to "quit-application",
+    "profile-change-teardown", "profile-before-change", "xpcom-will-shutdown" or
+    "xpcom-shutdown".
   type: string
   ping: true
 
@@ -689,14 +786,12 @@ StartupCrash:
   description: >
     If set to 1 then this crash occurred during startup.
   type: boolean
-  content: false
   ping: true
 
 StartupTime:
   description: >
     The time when Firefox was launched expressed in seconds since the Epoch.
   type: integer
-  content: false
 
 StatFailure:
   description: >
@@ -710,6 +805,13 @@ StorageConnectionNotClosed:
     closed during shutdown. The annotation holds the filename of the database
     associated with the connection.
   type: string
+
+SubmittedFromInfobar:
+  description: >
+    This annotation is set to 1 when the crash report has been manually
+    submitted from Firefox info-bar or has been automatically submitted after
+    the user opted-in to auto-submission.
+  type: boolean
 
 SystemMemoryUsePercentage:
   description: >
@@ -763,25 +865,32 @@ ThreadIdNameMapping:
 
 TotalPageFile:
   description: >
-    Windows-only, current committed memory limit. This annotation is
-    populated with the contents of the MEMORYSTATUSEX's structure
-    ullTotalPageFile field.
+    Maximum amount of memory that can be committed without extending the swap/page file.
+    - Under Windows, populated with the contents of the PERFORMANCE_INFORMATION's
+      structure CommitLimit field.
+    - Under Linux, populated with /proc/meminfo MemTotal + SwapTotal. The swap file
+      typically cannot be extended, so that's a hard limit.
+    - Not available on other systems.
   type: string
   ping: true
 
 TotalPhysicalMemory:
   description: >
-    Windows-only, amount of physical memory in bytes. This annotation is
-    populated with the contents of the MEMORYSTATUSEX's structure
+    Amount of physical memory in bytes.
+    - Under Windows, populated with the contents of the MEMORYSTATUSEX's structure
     ullTotalPhys field.
+    - Under macOS, populated with sysctl "hw.memsize".
+    - Under Linux, populated with /proc/meminfo's "MemTotal".
+    - Not available on other systems.
   type: string
   ping: true
 
 TotalVirtualMemory:
   description: >
-    Windows-only, size of the virtual address space. This annotation is
-    populated with the contents of the MEMORYSTATUSEX's structure
-    ullTotalVirtual field.
+    Size of the virtual address space.
+    - Under Windows, populated with the contents of the MEMORYSTATUSEX's structure
+      ullTotalVirtual field.
+    - Not available on other platforms.
   type: string
   ping: true
 
@@ -812,7 +921,6 @@ URL:
   description: >
     URL being loaded.
   type: string
-  content: false
 
 User32BeforeBlocklist:
   description: >

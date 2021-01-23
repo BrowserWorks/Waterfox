@@ -4,9 +4,10 @@
 
 const TESTPAGE = `${SECURE_TESTROOT}webapi_checkavailable.html`;
 
-Services.prefs.setBoolPref("extensions.webapi.testing", true);
-registerCleanupFunction(() => {
-  Services.prefs.clearUserPref("extensions.webapi.testing");
+add_task(async function setup() {
+  await SpecialPowers.pushPrefEnv({
+    set: [["extensions.webapi.testing", true]],
+  });
 });
 
 function testWithAPI(task) {
@@ -16,7 +17,7 @@ function testWithAPI(task) {
 }
 
 function API_uninstallByID(browser, id) {
-  return ContentTask.spawn(browser, id, async function(id) {
+  return SpecialPowers.spawn(browser, [id], async function(id) {
     let addon = await content.navigator.mozAddonManager.getAddonByID(id);
 
     let result = await addon.uninstall();

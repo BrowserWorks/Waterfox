@@ -41,10 +41,8 @@ class MOZ_RAII DXGIYCbCrTextureAllocationHelper
 
 class D3D11YCbCrRecycleAllocator : public TextureClientRecycleAllocator {
  public:
-  explicit D3D11YCbCrRecycleAllocator(KnowsCompositor* aAllocator)
-      : TextureClientRecycleAllocator(aAllocator) {}
-
-  KnowsCompositor* GetAllocator() const { return mSurfaceAllocator; }
+  explicit D3D11YCbCrRecycleAllocator(KnowsCompositor* aKnowsCompositor)
+      : TextureClientRecycleAllocator(aKnowsCompositor) {}
 
  protected:
   already_AddRefed<TextureClient> Allocate(
@@ -68,7 +66,7 @@ class D3D11YCbCrImage : public Image {
 
   already_AddRefed<gfx::SourceSurface> GetAsSourceSurface() override;
 
-  TextureClient* GetTextureClient(KnowsCompositor* aForwarder) override;
+  TextureClient* GetTextureClient(KnowsCompositor* aKnowsCompositor) override;
 
   gfx::IntRect GetPictureRect() const override { return mPictureRect; }
 
@@ -80,6 +78,7 @@ class D3D11YCbCrImage : public Image {
   gfx::IntRect mPictureRect;
   gfx::ColorDepth mColorDepth;
   gfx::YUVColorSpace mColorSpace;
+  gfx::ColorRange mColorRange;
   RefPtr<TextureClient> mTextureClient;
 };
 

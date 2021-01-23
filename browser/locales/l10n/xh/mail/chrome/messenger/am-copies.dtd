@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "Iikopi &amp; Iziqulathi zeefayili">
+<!ENTITY sendingPrefix.label "Xa kuthunyelwa imiyalezo, ngokuzenzekela: ">
+<!ENTITY fccMailFolder.label "Beka ikopi phakathi:">
+<!ENTITY fccMailFolder.accesskey "B">
+<!ENTITY fccReplyFollowsParent.label "Place replies in the folder of the message being replied to">
+<!ENTITY fccReplyFollowsParent.accesskey "R">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Cc these email addresses:">
+<!ENTITY ccAddress.accesskey "C">
+<!ENTITY ccAddressList.placeholder "Separate addresses with commas">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "I-Bcc ezi dilesi zemeyile:">
+<!ENTITY bccAddress.accesskey "B">
+<!ENTITY bccAddressList.placeholder "Separate addresses with commas">
+<!ENTITY saveMessageDlg.label "Bonisa ingxoxo yokuqinisekisa xa umyalezo ugciniwe">
+<!ENTITY saveMessageDlg.accesskey "B">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "I-&quot;Ithunyelwe&quot; Isiqulathi seefayili sikwimo yokusebenza:">
+<!ENTITY sentFolderOn.accesskey "n">
+<!ENTITY sentInOtherFolder.label "Okunye:">
+<!ENTITY sentInOtherFolder.accesskey "O">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Message Archives">
+<!ENTITY keepArchives.label "Keep message archives in:">
+<!ENTITY keepArchives.accesskey "K">
+<!ENTITY archiveHierarchyButton.label "Archive options…">
+<!ENTITY archiveHierarchyButton.accesskey "A">
+<!ENTITY archivesFolderOn.label "&quot;Archives&quot; Folder on:">
+<!ENTITY archivesFolderOn.accesskey "n">
+<!ENTITY archiveInOtherFolder.label "Other:">
+<!ENTITY archiveInOtherFolder.accesskey "h">
+<!ENTITY specialFolders.label "Drafts and Templates">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "&quot;Imiyilo&quot; Isiqulathi seefayili siyasebenza:">
+<!ENTITY draftsFolderOn.accesskey "I">
+<!ENTITY draftInOtherFolder.label "Okunye:">
+<!ENTITY draftInOtherFolder.accesskey "k">
+<!ENTITY keepTemplates.label "Keep message templates in:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "&quot;Isakhelo seenkcukacha&quot; Isiqulathi seefayili siyasebenza:">
+<!ENTITY templatesFolderOn.accesskey "k">
+<!ENTITY templateInOtherFolder.label "Okunye:">
+<!ENTITY templateInOtherFolder.accesskey "n">

@@ -17,33 +17,35 @@ body {
 
 <div class="slideshow-container">
   <div class='carousel-image'>
-    <img src="resources/circle.svg" elementtiming='image0'>
+    <img src="resources/circle.svg" elementtiming='image0' id='image0'>
   </div>
   <div class='carousel-image'>
-    <img src="resources/square100.png" elementtiming='image1'>
+    <img src="resources/square100.png" elementtiming='image1' id='image1'>
   </div>
 </div>
 
 <script>
   async_test(function (t) {
+    assert_implements(window.PerformanceElementTiming, "PerformanceElementTiming is not implemented");
     const beforeRenderTimes = [];
     let entry_count = 0;
     const entry_count_per_element = [0, 0];
-    const index = window.location.href.lastIndexOf('/');
-    const pathname0 = window.location.href.substring(0, index) +
-        '/resources/circle.svg';
-    const pathname1 = window.location.href.substring(0, index) +
-        '/resources/square100.png';
-    const observer = new PerformanceObserver(list => {
+    const pathname0 = window.location.origin + '/element-timing/resources/circle.svg';
+    const pathname1 = window.location.origin + '/element-timing/resources/square100.png';
+    const observer = new PerformanceObserver(t.step_func(list => {
       list.getEntries().forEach(entry => {
         if (entry_count % 2 == 0) {
-          checkElement(entry, pathname0, 'image0', beforeRenderTimes[entry_count]);
+          checkElement(entry, pathname0, 'image0', 'image0', beforeRenderTimes[entry_count],
+              document.getElementById('image0'));
           checkRect(entry, [0, 200, 0, 200]);
+          checkNaturalSize(entry, 200, 200);
           entry_count_per_element[0]++;
         }
         else {
-          checkElement(entry, pathname1, 'image1', beforeRenderTimes[entry_count]);
+          checkElement(entry, pathname1, 'image1', 'image1', beforeRenderTimes[entry_count],
+              document.getElementById('image1'));
           checkRect(entry, [0, 100, 0, 100]);
+          checkNaturalSize(entry, 100, 100);
           entry_count_per_element[1]++;
         }
         entry_count++;
@@ -54,7 +56,7 @@ body {
           t.done();
         }
       })
-    });
+    }));
     observer.observe({entryTypes: ['element']});
     let slideIndex = 0;
     showCarousel();

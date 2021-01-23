@@ -1,10 +1,8 @@
-.body {
-  margin-inline-start: 28px;
-}
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 .shortcut.card {
-  /* Preferences content is 664px and the cards have 16px of left/right padding. */
-  width: 632px;
   margin-bottom: 16px;
 }
 
@@ -16,7 +14,7 @@
   box-shadow: var(--card-shadow);
 }
 
-.card-heading-icon {
+.shortcut.card .card-heading-icon {
   width: 24px;
   height: 24px;
   margin-inline-end: 16px;
@@ -35,13 +33,29 @@
 
 .shortcut-row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   margin-top: 10px;
 }
 
-.card.shortcut:not([expanded]) > .shortcut-row[hide-before-expand] {
+.shortcut.card:not([expanded]) > .shortcut-row[hide-before-expand] {
   display: none;
+}
+
+.shortcut-label {
+  flex-grow: 1;
+}
+
+.shortcut-remove-button {
+  background-image: url("chrome://global/skin/icons/delete.svg");
+  background-position: center;
+  background-repeat: no-repeat;
+  -moz-context-properties: fill;
+  fill: currentColor;
+  min-width: 32px;
+}
+
+.shortcut-input[shortcut=""] + .shortcut-remove-button {
+  visibility: hidden;
 }
 
 .expand-row {
@@ -53,9 +67,17 @@
   margin: 8px 0 0;
 }
 
+.expand-button[warning]:not(:focus) {
+  outline: 2px solid var(--yellow-60);
+  outline-offset: -1px;
+  -moz-outline-radius: 3px;
+  box-shadow: 0 0 0 4px var(--yellow-60-a30);
+}
+
 .shortcut-input {
-  font-size: 12px;
-  padding: 4px 8px;
+  /* Shortcuts should always be left-to-right. */
+  direction: ltr;
+  text-align: match-parent;
 }
 
 .extension-heading {
@@ -64,6 +86,8 @@
 
 .error-message {
   --error-background: var(--red-60);
+  --warning-background: var(--yellow-50);
+  --warning-text-color: var(--yellow-90);
   color: white;
   display: flex;
   flex-direction: column;
@@ -72,12 +96,17 @@
 }
 
 .error-message-icon {
-  margin-left: 10px;
+  margin-inline-start: 10px;
   width: 14px;
   height: 8px;
   fill: var(--error-background);
   stroke: var(--error-background);
   -moz-context-properties: fill, stroke;
+}
+
+.error-message[type="warning"] > .error-message-icon {
+  fill: var(--warning-background);
+  stroke: var(--warning-background);
 }
 
 .error-message-label {
@@ -90,6 +119,11 @@
   word-wrap: break-word;
 }
 
+.error-message[type="warning"] > .error-message-label {
+  background-color: var(--warning-background);
+  color: var(--warning-text-color);
+}
+
 .error-message-arrow {
   background-color: var(--error-background);
   content: "";
@@ -97,4 +131,9 @@
   width: 8px;
   transform: translate(4px, -6px) rotate(45deg);
   position: absolute;
+}
+
+/* The margin between message bars. */
+message-bar-stack > * {
+  margin-bottom: 8px;
 }

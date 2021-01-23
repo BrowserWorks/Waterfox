@@ -3,13 +3,23 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 :root {
+  --player-bg-color: #000;
   --btn-bg-color: rgba(50,50,50,0.55);
   --close-btn-bg-color: rgb(211,216,220);
   --resize-margin: 5px;
 }
 
+button::-moz-focus-inner {
+  border: 0;
+}
+
 body {
   margin: 0;
+  background-color: var(--player-bg-color);
+}
+
+body:fullscreen {
+  -moz-window-dragging: no-drag;
 }
 
 .player-holder {
@@ -33,6 +43,16 @@ browser {
   -moz-window-dragging: drag;
 }
 
+#controls button {
+  -moz-appearance: none;
+  border: 0;
+}
+
+#controls[keying] button:-moz-focusring {
+  outline: 2px solid #fff;
+  box-shadow: 1px 2px 5px #000;
+}
+
 #controls-bottom {
   display: flex;
   position: absolute;
@@ -41,7 +61,7 @@ browser {
   width: 100%;
 }
 
-#gap {
+.gap {
   flex: 0.1;
   max-width: 50px;
 }
@@ -67,10 +87,15 @@ browser {
   background-repeat: no-repeat;
 }
 
+#controls[keying] .control-item:focus {
+  border-radius: 0px;
+}
+
 #controls:hover .control-item {
   opacity: 0.8;
 }
 
+#controls[keying] .control-item,
 #controls[showing] .control-item,
 #controls:hover .control-item:hover {
   opacity: 1;
@@ -84,24 +109,24 @@ browser {
   top: 10px;
 }
 
-#play {
-  background-image: url("chrome://global/skin/pictureinpicture/play.svg");
-  display: block;
+#playpause {
   left: 55%;
 }
 
-#pause {
+#controls.playing #playpause {
   background-image: url("chrome://global/skin/pictureinpicture/pause.svg");
-  display: none;
-  left: 55%;
 }
 
-.playing #play {
-  display: none;
+#controls:not(.playing) #playpause {
+  background-image: url("chrome://global/skin/pictureinpicture/play.svg");
 }
 
-.playing #pause {
-  display: block;
+#controls.muted #audio {
+  background-image: url("chrome://global/skin/pictureinpicture/audio-mute.svg");
+}
+
+#controls:not(.muted) #audio {
+  background-image: url("chrome://global/skin/pictureinpicture/audio.svg");
 }
 
 #unpip {
@@ -113,4 +138,8 @@ browser {
   background-position: 60%;
   background-repeat: no-repeat;
   background-size: 80%;
+}
+
+#unpip:-moz-locale-dir(rtl) {
+  transform: scaleX(-1);
 }

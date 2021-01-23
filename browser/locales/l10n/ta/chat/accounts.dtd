@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Account manager window for Instantbird -->
+
+<!ENTITY accounts.title                      "&brandShortName; - கணக்குகள்">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "உடனடி செய்தி நிலை">
+<!ENTITY accountsWindow2.style               "அகலம்: 41em; உயரம்: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "புதிய கணக்கு">
+<!ENTITY accountManager.newAccount.accesskey "N">
+<!ENTITY accountManager.close.label          "அடை">
+<!ENTITY accountManager.close.accesskey      "l">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "இதுவரை எந்த கணக்கும் கட்டமைக்கப்படவில்லை">
+<!ENTITY accountManager.noAccount.description " &accountManager.newAccount.label;பொத்தானைச் சுண்டினால் &brandShortName; உலாவி தங்களைக் கட்டமைப்புச் செய்முறைக்கு வழிகாட்டும்.">
+<!ENTITY account.autoSignOn.label     "துடங்கும்போது உள்நுழை">
+<!ENTITY account.autoSignOn.accesskey "S">
+<!ENTITY account.connect.label        "இணை">
+<!ENTITY account.connect.accesskey    "o">
+<!ENTITY account.disconnect.label     "இணைப்பைத் துண்டி">
+<!ENTITY account.disconnect.accesskey "i">
+<!ENTITY account.delete.label         "அழி">
+<!ENTITY account.delete.accesskey     "D">
+<!ENTITY account.edit.label           "பண்புகள்">
+<!ENTITY account.edit.accesskey       "P">
+<!ENTITY account.moveup.label         "மேலே நகற்று">
+<!ENTITY account.movedown.label       "கீழே நகற்று">
+<!ENTITY account.cancelReconnection.label         "இணைப்பை ரத்துசெய்">
+<!ENTITY account.cancelReconnection.accesskey     "a">
+<!ENTITY account.copyDebugLog.label     "வழுநீக்கு பதிவைப் படியெடு">
+<!ENTITY account.copyDebugLog.accesskey "C">
+<!ENTITY account.showDebugLog.label     "வழுநீக்கப் பதிவைக் காண்பி">
+<!ENTITY account.showDebugLog.accesskey "h">
+<!ENTITY account.connecting           "இணைக்கிறது...">
+
+

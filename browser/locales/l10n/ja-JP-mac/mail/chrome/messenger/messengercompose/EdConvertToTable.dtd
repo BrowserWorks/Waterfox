@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label	"表に変換">
+<!ENTITY instructions1.label	"各段落を新しい表の行に変換します。">
+<!ENTITY instructions2.label	"選択部分を列に区切る文字を選んでください:">
+<!ENTITY commaRadio.label	"カンマ">
+<!ENTITY spaceRadio.label	"スペース">
+<!ENTITY otherRadio.label	"他の文字:">
+<!ENTITY deleteCharCheck.label	"区切り文字を削除する">
+<!ENTITY collapseSpaces.label	"余分なスペースを無視する">
+<!ENTITY collapseSpaces.tooltip	"隣接した複数のスペースを 1 つの区切り文字に変換します">

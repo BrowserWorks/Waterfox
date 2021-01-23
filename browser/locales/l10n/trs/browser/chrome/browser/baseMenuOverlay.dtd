@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProduct2.label      "rayi'î &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey  "r">
+
+<!ENTITY preferencesCmdMac.label        "Sa arajsun' doj">
+
+<!ENTITY servicesMenuMac.label          "Sun ruguñu'unj un">
+
+<!ENTITY hideThisAppCmdMac2.label       "Nagi'iaj hùi &brandShorterName;">
+
+<!ENTITY hideOtherAppsCmdMac.label      "Nagi'iaj hùi a'ngô da'aj man">
+
+<!ENTITY showAllAppsCmdMac.label        "Nadigân daran'anj">
+
+<!ENTITY touchBarCmdMac.label           "Nadunā sa huā riña barrâ tâktil…">

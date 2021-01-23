@@ -42,19 +42,17 @@ class TabTarget extends Target {
 
     // Define the HTTP path to query this target
     this.path = `/devtools/page/${this.id}`;
-  }
 
-  connect() {
     Services.obs.addObserver(this, "message-manager-disconnect");
   }
 
-  disconnect() {
+  destructor() {
     Services.obs.removeObserver(this, "message-manager-disconnect");
-    super.disconnect();
+    super.destructor();
   }
 
-  get id() {
-    return this.browsingContext.id;
+  get browserContextId() {
+    return parseInt(this.browser.getAttribute("usercontextid"));
   }
 
   get browsingContext() {
@@ -67,6 +65,10 @@ class TabTarget extends Target {
 
   get window() {
     return this.browser.ownerGlobal;
+  }
+
+  get tab() {
+    return this.window.gBrowser.getTabForBrowser(this.browser);
   }
 
   /**
@@ -132,6 +134,7 @@ class TabTarget extends Target {
       title: this.title,
       type: this.type,
       url: this.url,
+      browsingContextId: this.browsingContext.id,
       webSocketDebuggerUrl: this.wsDebuggerURL,
     };
   }

@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY messageMarkByDate.label "Cuir comharra gun deach teachdaireachd a leughadh a-rèir cinn-là">
+<!ENTITY markByDateLower.label "Cuir comharra gun deach teachdaireachdan a leughadh a tha o:">
+<!ENTITY markByDateLower.accesskey "C">
+<!ENTITY markByDateUpper.label "Gu:">
+<!ENTITY markByDateUpper.accesskey "G">

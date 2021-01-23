@@ -118,8 +118,10 @@ void AudioData::EnsureAudioBuffer() {
     return;
   }
   const AudioDataValue* srcData = GetAdjustedData();
-  mAudioBuffer =
-      SharedBuffer::Create(mFrames * mChannels * sizeof(AudioDataValue));
+  CheckedInt<size_t> bufferSize(sizeof(AudioDataValue));
+  bufferSize *= mFrames;
+  bufferSize *= mChannels;
+  mAudioBuffer = SharedBuffer::Create(bufferSize);
 
   AudioDataValue* destData = static_cast<AudioDataValue*>(mAudioBuffer->Data());
   for (uint32_t i = 0; i < mFrames; ++i) {
@@ -222,26 +224,7 @@ VideoData::VideoData(int64_t aOffset, const TimeUnit& aTime,
   mTimecode = aTimecode;
 }
 
-VideoData::~VideoData() {}
-
-void VideoData::SetListener(UniquePtr<Listener> aListener) {
-  MOZ_ASSERT(!mSentToCompositor,
-             "Listener should be registered before sending data");
-
-  mListener = std::move(aListener);
-}
-
-void VideoData::MarkSentToCompositor() {
-  if (mSentToCompositor) {
-    return;
-  }
-
-  mSentToCompositor = true;
-  if (mListener != nullptr) {
-    mListener->OnSentToCompositor();
-    mListener = nullptr;
-  }
-}
+VideoData::~VideoData() = default;
 
 size_t VideoData::SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const {
   size_t size = aMallocSizeOf(this);
@@ -308,6 +291,9 @@ bool VideoData::SetVideoDataToImage(PlanarYCbCrImage* aVideoImage,
     return false;
   }
 
+  MOZ_ASSERT(aBuffer.mYUVColorSpace != gfx::YUVColorSpace::UNKNOWN,
+             "We must know the colorframe at this point");
+
   PlanarYCbCrData data = ConstructPlanarYCbCrData(aInfo, aBuffer, aPicture);
 
   aVideoImage->SetDelayedConversion(true);
@@ -335,6 +321,9 @@ already_AddRefed<VideoData> VideoData::CreateAndCopyData(
   if (!ValidateBufferAndPicture(aBuffer, aPicture)) {
     return nullptr;
   }
+
+  MOZ_ASSERT(aBuffer.mYUVColorSpace != gfx::YUVColorSpace::UNKNOWN,
+             "We must know the colorframe at this point");
 
   RefPtr<VideoData> v(new VideoData(aOffset, aTime, aDuration, aKeyframe,
                                     aTimecode, aInfo.mDisplay, 0));
@@ -416,7 +405,7 @@ already_AddRefed<VideoData> VideoData::CreateAndCopyData(
   }
 
   RefPtr<layers::TextureClient> texture =
-      videoImage->GetTextureClient(/* aForwarder */ nullptr);
+      videoImage->GetTextureClient(/* aKnowsCompositor */ nullptr);
   if (!texture) {
     NS_WARNING("Failed to allocate TextureClient");
     return nullptr;
@@ -493,7 +482,7 @@ already_AddRefed<MediaRawData> MediaRawData::Clone() const {
   return s.forget();
 }
 
-MediaRawData::~MediaRawData() {}
+MediaRawData::~MediaRawData() = default;
 
 size_t MediaRawData::SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const {
   size_t size = aMallocSizeOf(this);

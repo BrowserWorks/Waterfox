@@ -6,12 +6,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 include protocol PNecko;
-include URIParams;
 
 namespace mozilla {
 namespace net {
 
-async protocol PDataChannel
+async refcounted protocol PDataChannel
 {
   manager PNecko;
 

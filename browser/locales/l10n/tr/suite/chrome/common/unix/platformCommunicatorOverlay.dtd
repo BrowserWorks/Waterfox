@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- unix -->
+<!-- LOCALIZATION NOTE : FILE Do not translate all the Cmd.key and accesskey --> 
+
+<!ENTITY closeCmd.label "Kapat">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "K">
+
+<!ENTITY quitApplicationCmd.label "Çık">
+<!ENTITY quitApplicationCmd.key "Q">
+<!ENTITY quitApplicationCmd.accesskey "k">
+
+<!ENTITY redoCmd.key "Y">
+
+<!ENTITY findCmd.key2 "VK_F19">
+<!ENTITY findTypeTextCmd.key "VK_HELP">
+<!ENTITY findTypeLinksCmd.key "'">
+
+<!ENTITY accel.emacs_conflict "accel,shift">
+<!-- Help viewer -->
+
+<!ENTITY openHelpCmd.label "Yardım içeriği">
+<!ENTITY openHelpCmd.accesskey "d">
+<!ENTITY openHelpCmd.key "VK_F1">
+<!-- Key labels, for mousewheel prefs -->
+
+<!ENTITY ctrlKey.label "Ctrl">
+<!ENTITY altKey.label "Alt">
+<!ENTITY shiftKey.label "Shift">

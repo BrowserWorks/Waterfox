@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.tags.title "Меткі">
+<!ENTITY pref.tags.caption "Наладжванне метак">
+<!ENTITY pref.tags.description "Меціны могуць ужывацца для размеркавання вашых лістоў па катэгорыям і надання ім прыярытэтаў. Змяняйце выгляд і важнасць мецінаў з дапамогаю наладжванняў унізе. Меціны ўгары важнейшыя за меціны ўнізе.">
+<!ENTITY tagColumn.label "Метка">
+<!ENTITY colorColumn.label "Колер">
+<!ENTITY defaultTagName.label "Метка без загалоўка">
+<!ENTITY addTagButton.label "Дадаць">
+<!ENTITY addTagButton.accesskey "Д">
+<!ENTITY deleteTagButton.label "Выдаліць">
+<!ENTITY deleteTagButton.accesskey "ы">
+<!ENTITY raiseTagButton.label "Павялічыць важнасць">
+<!ENTITY raiseTagButton.accesskey "в">
+<!ENTITY lowerTagButton.label "Паменшыць важнасць">
+<!ENTITY lowerTagButton.accesskey "м">
+<!ENTITY restoreButton.label "Аднавіць змоўчныя">
+<!ENTITY restoreButton.accesskey "А">

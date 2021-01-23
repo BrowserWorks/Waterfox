@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!ENTITY addressing.label          "Viestien kirjoitus ja osoitteet">
+<!ENTITY addressingGroupTitle.label "Osoitteet">
+<!ENTITY autocompleteToMyDomain.label     "Lisää osoitteisiin oma verkkoalue automaattisesti">
+<!ENTITY autocompleteToMyDomain.accesskey "o">
+<!ENTITY addressingText.label      "Etsittäessä osoitteita:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Käytä yleisiä LDAP-palvelinasetuksia">
+<!ENTITY useGlobal.accesskey       "y">
+<!ENTITY editDirectories.label     "Muokkaa hakemistoja…">
+<!ENTITY editDirectories.accesskey "e">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Käytä seuraavaa LDAP-palvelinta:">
+<!ENTITY directories.accesskey     "D">
+<!ENTITY directoriesNone.label     "Ei mitään">
+
+<!-- am-addressing.xul -->
+
+<!ENTITY compositionGroupTitle.label          "Viestien kirjoitus">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Kirjoita viestit HTML-muodossa">
+<!ENTITY useHtml.accesskey                    "K">
+<!ENTITY autoQuote.label                      "Vastattaessa liitä alkuperäinen viesti lainauksena">
+<!ENTITY autoQuote.accesskey                  "V">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "Lainattaessa">
+<!ENTITY quoting.accesskey                    "L">
+<!ENTITY aboveQuote.label                     "aloita vastaukseni ennen lainausta">
+<!ENTITY belowQuote.label                     "aloita vastaukseni lainauksen jälkeen">
+<!ENTITY selectAndQuote.label                 "valitse lainattu teksti">
+<!ENTITY place.label                          "sekä sijoita allekirjoitukseni">
+<!ENTITY place.accesskey                      "s">
+<!ENTITY belowText.label                      "lainauksen loppuun (suositeltu)">
+<!ENTITY aboveText.label                      "vastaukseni loppuun (ennen lainausta)">
+<!ENTITY includeSigOnReply.label              "Lisää allekirjoitus vastauksiin">
+<!ENTITY includeSigOnReply.accesskey          "s">
+<!ENTITY includeSigOnForward.label            "Lisää allekirjoitus välitettyihin viesteihin">
+<!ENTITY includeSigOnForward.accesskey        "L">
+
+<!ENTITY globalComposingPrefs.label           "Yleiset viestienkirjoitusasetukset…">
+<!ENTITY globalComposingPrefs.accesskey       "Y">
+
+<!ENTITY globalAddressingPrefs.label          "Yleiset viestienosoitusasetukset…">
+<!ENTITY globalAddressingPrefs.accesskey      "e">

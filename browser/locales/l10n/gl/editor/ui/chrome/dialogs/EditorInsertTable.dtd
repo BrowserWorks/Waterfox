@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Inserir táboa">
+
+<!ENTITY size.label "Tamaño">
+<!ENTITY numRowsEditField.label "Filas:">
+<!ENTITY numRowsEditField.accessKey "F">
+<!ENTITY numColumnsEditField.label "Columnas:">
+<!ENTITY numColumnsEditField.accessKey "C">
+<!ENTITY widthEditField.label "Largura:">
+<!ENTITY widthEditField.accessKey "L">
+<!ENTITY borderEditField.label "Bordo:">
+<!ENTITY borderEditField.accessKey "B">
+<!ENTITY borderEditField.tooltip "Introducir un número para o bordo da táboa ou cero (0) para ningún bordo">
+<!ENTITY pixels.label "píxeles">

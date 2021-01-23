@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "შენახული ახალი საძიებო საქაღალდე">
+<!ENTITY name.label                 "სახელი:">
+<!ENTITY name.accesskey             "N">
+<!ENTITY description.label          "შექმნა როგორც ქვესაქაღალდე:">
+<!ENTITY description.accesskey      "C">
+
+<!ENTITY searchTermCaption.label "ამ შენახული ძიების საქაღალდისთვის გამოყენებული საძიებო კრიტერიუმის შეცვლა: ">
+
+<!ENTITY folderSelectionCaption.label "საძიებო საქაღალდეების შერჩევა: ">
+<!ENTITY chooseFoldersButton.label "შერჩევა…">
+<!ENTITY chooseFoldersButton.accesskey "h">
+
+<!ENTITY searchOnline.label "ძიება კავშირის რეჟიმში (იძლევა განახლებულ შედეგებს IMAP და სიახლეების საქაღალდეებიდან, თუმცა საქაღალდის გახსნის დრო იზრდება)">
+<!ENTITY searchOnline.accesskey "S">
+<!ENTITY newFolderButton.label       "შექმნა">
+<!ENTITY newFolderButton.accesskey   "r">
+<!ENTITY editFolderButton.label      "განახლება">
+<!ENTITY editFolderButton.accesskey  "U">

@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from EdReplace.xul -->
+
+<!ENTITY replaceDialog.title "ढूंढें व बदलें">
+<!ENTITY findField.label "पाठ ढूंढें:">
+<!ENTITY findField.accesskey "n">
+<!ENTITY replaceField.label "इससे बदलें:">
+<!ENTITY replaceField.accesskey "e">
+<!ENTITY caseSensitiveCheckbox.label "अपर/लोअर केस मिलान करें">
+<!ENTITY caseSensitiveCheckbox.accesskey "c">
+<!ENTITY wrapCheckbox.label "गिर्द लपेटें">
+<!ENTITY wrapCheckbox.accesskey "W">
+<!ENTITY backwardsCheckbox.label "पीछे खोजें">
+<!ENTITY backwardsCheckbox.accesskey "b">
+<!ENTITY findNextButton.label "अगला ढूंढें">
+<!ENTITY findNextButton.accesskey "F">
+<!ENTITY replaceButton.label "बदलें">
+<!ENTITY replaceButton.accesskey "R">
+<!ENTITY replaceAndFindButton.label "बदलें व ढूंढें">
+<!ENTITY replaceAndFindButton.accesskey "d">
+<!ENTITY replaceAllButton.label "सबको बदलें">
+<!ENTITY replaceAllButton.accesskey "A">
+<!ENTITY closeButton.label "बंद करें">
+<!ENTITY notFoundWarning.label "पाठ जिसे आपने डाला है नहीं मिला.">

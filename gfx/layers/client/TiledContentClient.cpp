@@ -12,12 +12,12 @@
 #include "ClientLayerManager.h"       // for ClientLayerManager
 #include "gfxContext.h"               // for gfxContext, etc
 #include "gfxPlatform.h"              // for gfxPlatform
-#include "gfxPrefs.h"                 // for gfxPrefs
 #include "gfxRect.h"                  // for gfxRect
 #include "mozilla/MathAlgorithms.h"   // for Abs
-#include "mozilla/gfx/Point.h"        // for IntSize
-#include "mozilla/gfx/Rect.h"         // for Rect
-#include "mozilla/gfx/Tools.h"        // for BytesPerPixel
+#include "mozilla/StaticPrefs_apz.h"
+#include "mozilla/gfx/Point.h"  // for IntSize
+#include "mozilla/gfx/Rect.h"   // for Rect
+#include "mozilla/gfx/Tools.h"  // for BytesPerPixel
 #include "mozilla/layers/CompositableForwarder.h"
 #include "mozilla/layers/CompositorBridgeChild.h"  // for CompositorBridgeChild
 #include "mozilla/layers/LayerMetricsWrapper.h"
@@ -29,6 +29,8 @@
 #include "nsMathUtils.h"          // for NS_lroundf
 #include "LayersLogging.h"
 #include "UnitTransforms.h"  // for TransformTo
+#include "mozilla/StaticPrefs_apz.h"
+#include "mozilla/StaticPrefs_layers.h"
 #include "mozilla/UniquePtr.h"
 
 #ifdef GFX_TILEDLAYER_DEBUG_OVERLAY
@@ -229,9 +231,9 @@ bool SharedFrameMetricsHelper::AboutToCheckerboard(
   CSSRect showing =
       CSSRect(aCompositorMetrics.GetScrollOffset(),
               aCompositorMetrics.CalculateBoundedCompositedSizeInCssPixels());
-  showing.Inflate(
-      LayerSize(gfxPrefs::APZDangerZoneX(), gfxPrefs::APZDangerZoneY()) /
-      aCompositorMetrics.LayersPixelsPerCSSPixel());
+  showing.Inflate(LayerSize(StaticPrefs::apz_danger_zone_x(),
+                            StaticPrefs::apz_danger_zone_y()) /
+                  aCompositorMetrics.LayersPixelsPerCSSPixel());
 
   // Clamp both rects to the scrollable rect, because having either of those
   // exceed the scrollable rect doesn't make sense, and could lead to false
@@ -600,7 +602,7 @@ Maybe<AcquiredBackBuffer> TileClient::AcquireBackBuffer(
     // later (copying pixels and texture upload). But this could increase
     // our memory usage and lead to OOM more frequently from spikes in usage,
     // so we have this behavior behind a pref.
-    if (!gfxPrefs::LayersTileRetainBackBuffer()) {
+    if (!StaticPrefs::layers_tiles_retain_back_buffer()) {
       DiscardBackBuffer();
     }
     Flip();
@@ -678,7 +680,7 @@ Maybe<AcquiredBackBuffer> TileClient::AcquireBackBuffer(
   RefPtr<DrawTargetCapture> capture;
   if (aFlags & TilePaintFlags::Async) {
     capture = Factory::CreateCaptureDrawTargetForTarget(
-        target, gfxPrefs::LayersOMTPCaptureLimit());
+        target, StaticPrefs::layers_omtp_capture_limit_AtStartup());
     target = capture;
   }
 

@@ -29,6 +29,8 @@
 #include "src/ipred.h"
 #include "src/levels.h"
 
+#include <stdio.h>
+
 static const char *const intra_pred_mode_names[N_IMPL_INTRA_PRED_MODES] = {
     [DC_PRED]       = "dc",
     [DC_128_PRED]   = "dc_128",
@@ -64,9 +66,9 @@ static const uint8_t z_angles[27] = {
 };
 
 static void check_intra_pred(Dav1dIntraPredDSPContext *const c) {
-    ALIGN_STK_32(pixel, c_dst, 64 * 64,);
-    ALIGN_STK_32(pixel, a_dst, 64 * 64,);
-    ALIGN_STK_32(pixel, topleft_buf, 257,);
+    ALIGN_STK_64(pixel, c_dst, 64 * 64,);
+    ALIGN_STK_64(pixel, a_dst, 64 * 64,);
+    ALIGN_STK_64(pixel, topleft_buf, 257,);
     pixel *const topleft = topleft_buf + 128;
 
     declare_func(void, pixel *dst, ptrdiff_t stride, const pixel *topleft,
@@ -83,11 +85,16 @@ static void check_intra_pred(Dav1dIntraPredDSPContext *const c) {
                 {
                     const ptrdiff_t stride = w * sizeof(pixel);
 
-                    int a = 0;
-                    if (mode >= Z1_PRED && mode <= Z3_PRED) /* angle */
+                    int a = 0, maxw = 0, maxh = 0;
+                    if (mode >= Z1_PRED && mode <= Z3_PRED) { /* angle */
                         a = (90 * (mode - Z1_PRED) + z_angles[rnd() % 27]) |
                             (rnd() & 0x600);
-                    else if (mode == FILTER_PRED) /* filter_idx */
+                        if (mode == Z2_PRED) {
+                            maxw = rnd(), maxh = rnd();
+                            maxw = 1 + (maxw & (maxw & 4096 ? 4095 : w - 1));
+                            maxh = 1 + (maxh & (maxh & 4096 ? 4095 : h - 1));
+                        }
+                    } else if (mode == FILTER_PRED) /* filter_idx */
                         a = (rnd() % 5) | (rnd() & ~511);
 
 #if BITDEPTH == 16
@@ -99,13 +106,23 @@ static void check_intra_pred(Dav1dIntraPredDSPContext *const c) {
                     for (int i = -h * 2; i <= w * 2; i++)
                         topleft[i] = rnd() & bitdepth_max;
 
-                    const int maxw = 1 + (rnd() % 128), maxh = 1 + (rnd() % 128);
                     call_ref(c_dst, stride, topleft, w, h, a, maxw, maxh
                              HIGHBD_TAIL_SUFFIX);
                     call_new(a_dst, stride, topleft, w, h, a, maxw, maxh
                              HIGHBD_TAIL_SUFFIX);
-                    if (memcmp(c_dst, a_dst, w * h * sizeof(*c_dst)))
-                        fail();
+                    if (checkasm_check_pixel(c_dst, stride, a_dst, stride,
+                                             w, h, "dst"))
+                    {
+                        if (mode == Z1_PRED || mode == Z3_PRED)
+                            fprintf(stderr, "angle = %d (0x%03x)\n",
+                                    a & 0x1ff, a & 0x600);
+                        else if (mode == Z2_PRED)
+                            fprintf(stderr, "angle = %d (0x%03x), "
+                                    "max_width = %d, max_height = %d\n",
+                                    a & 0x1ff, a & 0x600, maxw, maxh);
+                        else if (mode == FILTER_PRED)
+                            fprintf(stderr, "filter_idx = %d\n", a & 0x1ff);
+                    }
 
                     bench_new(a_dst, stride, topleft, w, h, a, 128, 128
                               HIGHBD_TAIL_SUFFIX);
@@ -115,9 +132,9 @@ static void check_intra_pred(Dav1dIntraPredDSPContext *const c) {
 }
 
 static void check_cfl_ac(Dav1dIntraPredDSPContext *const c) {
-    ALIGN_STK_32(int16_t, c_dst, 32 * 32,);
-    ALIGN_STK_32(int16_t, a_dst, 32 * 32,);
-    ALIGN_STK_32(pixel, luma, 32 * 32,);
+    ALIGN_STK_64(int16_t, c_dst, 32 * 32,);
+    ALIGN_STK_64(int16_t, a_dst, 32 * 32,);
+    ALIGN_STK_64(pixel, luma, 32 * 32,);
 
     declare_func(void, int16_t *ac, const pixel *y, ptrdiff_t stride,
                  int w_pad, int h_pad, int cw, int ch);
@@ -144,8 +161,9 @@ static void check_cfl_ac(Dav1dIntraPredDSPContext *const c) {
 
                             call_ref(c_dst, luma, stride, w_pad, h_pad, w, h);
                             call_new(a_dst, luma, stride, w_pad, h_pad, w, h);
-                            if (memcmp(c_dst, a_dst, w * h * sizeof(*c_dst)))
-                                fail();
+                            checkasm_check(int16_t, c_dst, w * sizeof(*c_dst),
+                                                    a_dst, w * sizeof(*a_dst),
+                                                    w, h, "dst");
                         }
                     }
 
@@ -157,10 +175,10 @@ static void check_cfl_ac(Dav1dIntraPredDSPContext *const c) {
 }
 
 static void check_cfl_pred(Dav1dIntraPredDSPContext *const c) {
-    ALIGN_STK_32(pixel, c_dst, 32 * 32,);
-    ALIGN_STK_32(pixel, a_dst, 32 * 32,);
-    ALIGN_STK_32(int16_t, ac, 32 * 32,);
-    ALIGN_STK_32(pixel, topleft_buf, 257,);
+    ALIGN_STK_64(pixel, c_dst, 32 * 32,);
+    ALIGN_STK_64(pixel, a_dst, 32 * 32,);
+    ALIGN_STK_64(int16_t, ac, 32 * 32,);
+    ALIGN_STK_64(pixel, topleft_buf, 257,);
     pixel *const topleft = topleft_buf + 128;
 
     declare_func(void, pixel *dst, ptrdiff_t stride, const pixel *topleft,
@@ -198,8 +216,8 @@ static void check_cfl_pred(Dav1dIntraPredDSPContext *const c) {
                              HIGHBD_TAIL_SUFFIX);
                     call_new(a_dst, stride, topleft, w, h, ac, alpha
                              HIGHBD_TAIL_SUFFIX);
-                    if (memcmp(c_dst, a_dst, w * h * sizeof(*c_dst)))
-                        fail();
+                    checkasm_check_pixel(c_dst, stride, a_dst, stride,
+                                         w, h, "dst");
 
                     bench_new(a_dst, stride, topleft, w, h, ac, alpha
                               HIGHBD_TAIL_SUFFIX);
@@ -209,9 +227,9 @@ static void check_cfl_pred(Dav1dIntraPredDSPContext *const c) {
 }
 
 static void check_pal_pred(Dav1dIntraPredDSPContext *const c) {
-    ALIGN_STK_32(pixel, c_dst, 64 * 64,);
-    ALIGN_STK_32(pixel, a_dst, 64 * 64,);
-    ALIGN_STK_32(uint8_t, idx, 64 * 64,);
+    ALIGN_STK_64(pixel, c_dst, 64 * 64,);
+    ALIGN_STK_64(pixel, a_dst, 64 * 64,);
+    ALIGN_STK_64(uint8_t, idx, 64 * 64,);
     ALIGN_STK_16(uint16_t, pal, 8,);
 
     declare_func(void, pixel *dst, ptrdiff_t stride, const uint16_t *pal,
@@ -236,8 +254,7 @@ static void check_pal_pred(Dav1dIntraPredDSPContext *const c) {
 
                 call_ref(c_dst, stride, pal, idx, w, h);
                 call_new(a_dst, stride, pal, idx, w, h);
-                if (memcmp(c_dst, a_dst, w * h * sizeof(*c_dst)))
-                    fail();
+                checkasm_check_pixel(c_dst, stride, a_dst, stride, w, h, "dst");
 
                 bench_new(a_dst, stride, pal, idx, w, h);
             }

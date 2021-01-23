@@ -1,0 +1,221 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressbookWindow.title                        "Karned chomlec'hioù">
+<!ENTITY blankResultsPaneMessage.label                  "N'eo diskouezet an darempredoù er c'harned-mañ nemet pa vez klasket">
+<!ENTITY localResultsOnlyMessage.label                  "Ne vo ket diskouezet an darempredoù o tont eus karnedoù chomlec'hioù a-bell a-raok ma vefe klasket">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label                                 "Restr">
+<!ENTITY fileMenu.accesskey                             "R">
+<!ENTITY newMenu.label                                  "Nevez">
+<!ENTITY newMenu.accesskey                              "N">
+<!ENTITY newContact.label                               "Darempred…">
+<!ENTITY newContact.accesskey                           "e">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "Roll-skignañ…">
+<!ENTITY newListCmd.accesskey                           "l">
+<!ENTITY newAddressBookCmd.label                        "Karned chomlec'hioù…">
+<!ENTITY newAddressBookCmd.accesskey                    "c">
+<!ENTITY newLDAPDirectoryCmd.label                      "Kavlec'hiad LDAP…">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "D">
+<!ENTITY newMessageCmd.label                            "Kemennadenn">
+<!ENTITY newMessageCmd.key                              "M">
+<!ENTITY newMessageCmd.accesskey                        "m">
+<!-- LOCALIZATION NOTE (osxAddressBook) : These entities are only used on Mac -->
+<!ENTITY osxAddressBook.label                           "Implijout ar c'harned chomlec'hioù Mac OS X">
+<!ENTITY osxAddressBook.accesskey                       "I">
+<!ENTITY closeCmd.label                                 "Serriñ">
+<!ENTITY closeCmd.key                                   "W">
+<!ENTITY closeCmd.accesskey                             "S">
+<!ENTITY printSetupCmd.label                            "Pajennaozañ…">
+<!ENTITY printSetupCmd.accesskey                        "P">
+<!ENTITY printPreviewContactCmd.label                   "Alberz moullañ an darempred">
+<!ENTITY printPreviewContactCmd.accesskey               "b">
+<!ENTITY printPreviewAddressBook.label                  "Alberz moullañ ar c'harned posteloù">
+<!ENTITY printPreviewAddressBook.accesskey              "m">
+<!ENTITY printContactCmd.label                          "Moullañ un darempred">
+<!ENTITY printContactCmd.accesskey                      "p">
+<!ENTITY printContactCmd.key                            "P">
+<!ENTITY printAddressBook.label                         "Moullañ ar c'harned posteloù…">
+<!ENTITY printAddressBook.accesskey                     "a">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label                                 "Embann">
+<!ENTITY editMenu.accesskey                             "E">
+<!ENTITY deleteCmd.label                                "Dilemel">
+<!ENTITY deleteAbCmd.label                              "Dilemel ar c'harned posteloù">
+<!ENTITY deleteContactCmd.label                         "Dilemel an darempred">
+<!ENTITY deleteContactsCmd.label                        "Dilemel an darempredoù">
+<!ENTITY deleteListCmd.label                            "Dilemel ar roll">
+<!ENTITY deleteListsCmd.label                           "Dilemel ar rolloù">
+<!ENTITY deleteItemsCmd.label                           "Dilemel an elfennoù">
+<!ENTITY searchAddressesCmd.key                         "f">
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+<!ENTITY propertiesMenu.label                           "Perzhioù">
+<!ENTITY propertiesMenu.accesskey                       "P">
+<!ENTITY propertiesCmd.key                              "i">
+<!ENTITY abPropertiesMenu.label                         "Perzhioù ar c'harned chomlec'h">
+<!ENTITY abPropertiesMenu.accesskey                     "P">
+<!ENTITY contactPropertiesMenu.label                    "Perzhioù an darempred">
+<!ENTITY contactPropertiesMenu.accesskey                "d">
+<!ENTITY mailingListPropertiesMenu.label                "Perzhioù ar roll skignañ">
+<!ENTITY mailingListPropertiesMenu.accesskey            "i">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label                                 "Gwelout">
+<!ENTITY viewMenu.accesskey                             "w">
+<!ENTITY viewToolbarsMenu.label                         "Barrennoù ostilhoù">
+<!ENTITY viewToolbarsMenu.accesskey                     "B">
+<!ENTITY menubarCmd.label                               "Barrenn lañser">
+<!ENTITY menubarCmd.accesskey                           "B">
+<!ENTITY showAbToolbarCmd.label                         "Barrenn ostilhoù ar c'harned posteloù">
+<!ENTITY showAbToolbarCmd.accesskey                     "o">
+<!ENTITY showTaskbarCmd.label                           "Barrenn stad">
+<!ENTITY showTaskbarCmd.accesskey                       "B">
+<!ENTITY customizeToolbar.label                         "Personelaat…">
+<!ENTITY customizeToolbar.accesskey                     "P">
+<!ENTITY layoutMenu.label                               "Aozadur">
+<!ENTITY layoutMenu.accesskey                           "A">
+<!ENTITY showDirectoryPane.label                        "Penel ar c'havlec'hioù">
+<!ENTITY showDirectoryPane.accesskey                    "l">
+<!ENTITY showContactPane2.label                         "Penel an darempred">
+<!ENTITY showContactPane2.accesskey                     "d">
+<!ENTITY menu_ShowNameAs.label                          "Diskouez an anv evel">
+<!ENTITY menu_ShowNameAs.accesskey                      "n">
+<!-- LOCALIZATION NOTE (firstLastCmd2.label): We're not including a comma here
+because displayed names don't have the comma in between. -->
+<!ENTITY firstLastCmd2.label                            "Anv-bihan Anv">
+<!ENTITY firstLastCmd2.accesskey                        "b">
+<!ENTITY lastFirstCmd.label                             "Anv, Anv-bihan">
+<!ENTITY lastFirstCmd.accesskey                         "A">
+<!ENTITY displayNameCmd.label                           "Anv da skrammañ">
+<!ENTITY displayNameCmd.accesskey                       "d">
+<!ENTITY sortMenu.label                                 "Rummañ dre">
+<!ENTITY sortMenu.accesskey                             "R">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label                                "Ostilhoù">
+<!ENTITY tasksMenu.accesskey                            "O">
+<!ENTITY messengerCmd.label                             "Posteloù ha strolladoù-keleier">
+<!ENTITY messengerCmd.accesskey                         "P">
+<!ENTITY messengerCmd.commandkey                        "1">
+<!ENTITY addressBookCmd.label                           "Karned chomlec'hioù">
+<!ENTITY addressBookCmd.accesskey                       "a">
+<!ENTITY addressBookCmd.key                             "B">
+<!ENTITY searchAddressesCmd.label                       "Klask posteloù…">
+<!ENTITY searchAddressesCmd.accesskey                   "s">
+<!ENTITY importCmd.label                                "Enporzhiañ…">
+<!ENTITY importCmd.accesskey                            "n">
+<!ENTITY exportCmd.label                                "Ezporzhiañ…">
+<!ENTITY exportCmd.accesskey                            "z">
+<!ENTITY preferencesCmd2.label                          "Dibarzhioù…">
+<!ENTITY preferencesCmd2.accesskey                      "D">
+<!ENTITY preferencesCmdUnix.label                       "Gwellvezioù">
+<!ENTITY preferencesCmdUnix.accesskey                   "w">
+
+<!-- Address Book Toolbar and Context Menus -->
+<!ENTITY newContactButton.label                         "Darempred nevez">
+<!ENTITY newContactButton.accesskey                     "a">
+<!ENTITY newlistButton.label                            "Roll nevez">
+<!ENTITY newlistButton.accesskey                        "l">
+<!ENTITY showAsDefault.label                            "Kavlec'hiad loc'hañ dre ziouer">
+<!ENTITY showAsDefault.accesskey                        "l">
+<!ENTITY editPropertiesButton.label                     "Embann">
+<!ENTITY propertiesContext.label                        "Perzhioù">
+<!ENTITY propertiesContext.accesskey                    "P">
+<!ENTITY abPropertiesContext.label                      "Perzhioù">
+<!ENTITY abPropertiesContext.accesskey                  "P">
+<!ENTITY editContactContext.label                       "Embann an darempred">
+<!ENTITY editContactContext.accesskey                   "E">
+<!ENTITY editMailingListContext.label                   "Embann ar roll">
+<!ENTITY editMailingListContext.accesskey               "E">
+<!ENTITY newmsgButton.label                             "Skrivañ">
+<!ENTITY newmsgButton.accesskey                         "S">
+<!ENTITY newIM.label                                    "Kemennadenn brim">
+<!ENTITY newIM.accesskey                                "i">
+<!ENTITY printButton.label                              "Moullañ...">
+<!ENTITY printButton.accesskey                          "M">
+<!ENTITY deleteButton2.label                            "Dilemel">
+<!ENTITY deleteButton2.accesskey                        "D">
+
+<!-- Address Book Toolbar Tooltips -->
+<!ENTITY columnChooser.tooltip                          "Diuzañ ar bannoù da ziskouez">
+<!ENTITY newContactButton.tooltip                       "Krouiñ un darempred nevez">
+<!ENTITY newlistButton.tooltip                          "Krouiñ ur roll nevez">
+<!ENTITY editPropertiesButton.tooltip                   "Embann an elfenn diuzet">
+<!ENTITY editAbPropertiesButton.tooltip                 "Embann perzhioù ar c'harned chomlec'h diuzet">
+<!ENTITY editContactPropertiesButton.tooltip            "Embann an darempred diuzet">
+<!ENTITY editMailingListPropertiesButton.tooltip        "Embann ar roll posteloù diuzet">
+<!ENTITY newmsgButton.tooltip                           "Kas ur postel">
+<!ENTITY newIM.tooltip                                  "Kas ur gemennadenn diadaol pe flapañ">
+<!ENTITY deleteButton2.tooltip                          "Dilemel an elfenn diuzet">
+
+<!-- Search Bar -->
+<!ENTITY SearchNameOrEmail.label                        "Anv pe bostel :">
+<!ENTITY SearchNameOrEmail.accesskey                    "n">
+<!ENTITY advancedButton.tooltip                         "Klask postel kempleshoc'h">
+<!ENTITY quickSearchCmd.key                             "k">
+<!ENTITY searchItem.title "Klask prim">
+
+<!-- Results Pane -->
+<!ENTITY Addrbook.label                                 "Karned chomlec'hioù…">
+<!ENTITY Addrbook.accesskey                             "c">
+<!ENTITY GeneratedName.label                            "Anv">
+<!ENTITY GeneratedName.accesskey                        "A">
+<!ENTITY PrimaryEmail.label                             "Postel">
+<!ENTITY PrimaryEmail.accesskey                         "P">
+<!ENTITY ChatName.label                                 "Anv postelerezh prim">
+<!ENTITY ChatName.accesskey                             "p">
+<!ENTITY Company.label                                  "Aozadur">
+<!ENTITY Company.accesskey                              "z">
+<!ENTITY NickName.label                                 "Moranv">
+<!ENTITY NickName.accesskey                             "r">
+<!ENTITY SecondEmail.label                              "Postel Ouzhpenn">
+<!ENTITY SecondEmail.accesskey                          "l">
+<!ENTITY Department.label                               "Departamant">
+<!ENTITY Department.accesskey                           "r">
+<!ENTITY JobTitle.label                                 "Titl">
+<!ENTITY JobTitle.accesskey                             "T">
+<!ENTITY CellularNumber.label                           "Hezougell">
+<!ENTITY CellularNumber.accesskey                       "z">
+<!ENTITY PagerNumber.label                              "Pajenner">
+<!ENTITY PagerNumber.accesskey                          "P">
+<!ENTITY FaxNumber.label                                "Pelleiler">
+<!ENTITY FaxNumber.accesskey                            "l">
+<!ENTITY HomePhone.label                                "Pellgomz er gêr">
+<!ENTITY HomePhone.accesskey                            "g">
+<!ENTITY WorkPhone.label                                "Pellgomz Labour">
+<!ENTITY WorkPhone.accesskey                            "L">
+<!ENTITY sortAscending.label                            "War-gresk">
+<!ENTITY sortAscending.accesskey                        "W">
+<!ENTITY sortDescending.label                           "War-zigresk">
+<!ENTITY sortDescending.accesskey                       "W">
+<!ENTITY _PhoneticName.label                            "Anv soniadel">
+<!ENTITY _PhoneticName.accesskey                        "o">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "Darempred">
+<!ENTITY home.heading                                   "Er gêr">
+<!ENTITY other.heading                                  "All">
+<!ENTITY chat.heading                                   "Postelerezh prim">
+<!ENTITY phone.heading                                  "Pellgomz">
+<!ENTITY work.heading                                   "Labour">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "Deskrivadur">
+<!ENTITY addresses.heading                              "Posteloù">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "Kerc'hat ar gartenn">
+<!ENTITY mapIt.tooltip                                  "Skrammañ ur gartenn eus ar chomlec'h-mañ diouzh internet">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label                               "">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY windowMenu.label                               "Prenestr">
+<!ENTITY minimizeWindow.label                           "Bihanaat ar prenestr">
+<!ENTITY minimizeWindow.key                             "m">
+<!ENTITY bringAllToFront.label                          "Kas pep tra d'ar rakleur">
+<!ENTITY zoomWindow.label                               "Zoum">

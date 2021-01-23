@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY e2eTitle.label "Uçtan uca şifreleme">
+<!ENTITY e2eLearnMore.label "Daha fazla bilgi al">
+
+<!ENTITY e2eEnc.description "Uçtan uca şifreleme olmazsa iletilerinizin içeriği kolayca e-posta sağlayıcınız ve başkaları tarafından gözetlenebilir.">
+<!ENTITY e2eeReqWarning.description "Şifrelemeyi zorunlu tutarsanız ileti göndermek için her alıcının ortak anahtarına veya sertifikasına sahip olmanız gerekir.">
+
+<!ENTITY e2eSigning.description "Dijital imza, alıcıların iletinin sizin tarafınızdan gönderildiğini ve içeriğin değiştirilmediğini doğrulamasını sağlar.">
+<!ENTITY e2eTechPref.description "Tercih edilen şifreleme teknolojisi:">
+
+<!ENTITY doNotEncrypt.label "Şifrelemeyi varsayılan olarak etkinleştirme">
+<!ENTITY doNotEncrypt.accesskey "N">
+<!ENTITY requireEncryptMessage.label "Şifrelemeyi varsayılan olarak zorunlu tut">
+<!ENTITY requireEncryptMessage.accesskey "u">
+<!ENTITY encryptionCert2.message "Şifreleme için kişisel sertifika:">
+<!ENTITY digitalSign.certificate.button "Seç…">
+<!ENTITY digitalSign.certificate.accesskey "S">
+<!ENTITY digitalSign.certificate_clear.button "Temizle">
+<!ENTITY digitalSign.certificate_clear.accesskey "T">
+<!ENTITY encryption.certificate.button "Seç…">
+<!ENTITY encryption.certificate.accesskey "e">
+<!ENTITY encryption.certificate_clear.button "Temizle">
+<!ENTITY encryption.certificate_clear.accesskey "z">
+<!ENTITY signingGroupTitle.label "Sayısal imza">
+<!ENTITY signMessage2.label "Dijital imzamı varsayılan olarak ekle">
+<!ENTITY signMessage.accesskey "o">
+
+<!ENTITY signingCert2.message "Dijital imza için kişisel sertifika:">
+
+<!ENTITY sendingDefaults.label "Varsayılan ileti gönderme ayarları">
+
+<!ENTITY technologyAutomatic.label "Kullanılabilir anahtarlara veya sertifikalara göre otomatik olarak seç">
+
+<!ENTITY certificates2.label "S/MIME">
+<!ENTITY manageCerts3.label "S/MIME sertifikalarını yönet">
+<!ENTITY manageCerts3.accesskey "M">
+<!ENTITY manageDevices2.label "S/MIME güvenlik cihazları">
+<!ENTITY manageDevices2.accesskey "c">
+
+<!ENTITY technologySMIME.label "S/MIME’ı tercih et">
+<!ENTITY technologyOpenPGP.label "OpenPGP’yi tercih et">
+
+<!ENTITY openpgpKeys.label "OpenPGP">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Sertifika seçin">
+<!ENTITY certPicker.info  "Sertifika:">
+<!ENTITY certPicker.detailsLabel "Seçilen sertifikanın ayrıntıları:">
+
+<!ENTITY openpgpKey.message "Şifreleme ve dijital imzalama için kişisel anahtar:">
+<!ENTITY openpgpKey.button "Kişisel anahtarı ayarla…">
+<!ENTITY openpgpKey.accesskey "a">

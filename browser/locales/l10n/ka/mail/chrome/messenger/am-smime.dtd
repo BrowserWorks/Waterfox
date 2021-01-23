@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY e2eTitle.label "გამჭოლი დაშიფვრა">
+<!ENTITY e2eLearnMore.label "ვრცლად">
+
+<!ENTITY e2eEnc.description "გამჭოლი დაშიფვრის გარეშე, წერილის შიგთავსი მარტივად გამჟღავნდება თქვენი ელფოსტის მომწოდებლისთვის ან საერთო მეთვალყურეებისთვის.">
+<!ENTITY e2eeReqWarning.description "თუ გესაჭიროებათ დაშიფვრა წერილის გასაგზავნად, უნდა გქონდეთ საჯარო გასაღები ან სერტიფიკატი თითოეული მიმღებისთვის.">
+
+<!ENTITY e2eSigning.description "ციფრული ხელმოწერა საშუალებას აძლევს მიმღებს დაადასტუროს, რომ წერილი ნამდვილად თქვენ გაუგზავნეთ და შესაბამისად მისი შიგთავსი არავის შეუცვლია.">
+<!ENTITY e2eTechPref.description "დაცვის უპირატესი საშუალება:">
+
+<!ENTITY doNotEncrypt.label "არ ჩაირთოს დაშიფვრა ნაგულისხმევად">
+<!ENTITY doNotEncrypt.accesskey "ა">
+<!ENTITY requireEncryptMessage.label "დაშიფვრის მოთხოვნა ნაგულისხმევად">
+<!ENTITY requireEncryptMessage.accesskey "ფ">
+<!ENTITY encryptionCert2.message "პირადი სერტიფიკატი დაშიფვრისთვის:">
+<!ENTITY digitalSign.certificate.button "შერჩევა…">
+<!ENTITY digitalSign.certificate.accesskey "S">
+<!ENTITY digitalSign.certificate_clear.button "გასუფთავება">
+<!ENTITY digitalSign.certificate_clear.accesskey "C">
+<!ENTITY encryption.certificate.button "შერჩევა…">
+<!ENTITY encryption.certificate.accesskey "ჩ">
+<!ENTITY encryption.certificate_clear.button "გასუფთავება">
+<!ENTITY encryption.certificate_clear.accesskey "უ">
+<!ENTITY signingGroupTitle.label "ციფრული ხელმოწერა">
+<!ENTITY signMessage2.label "ჩემი ციფრული ხელმოწერის დამატება ნაგულისხმევად">
+<!ENTITY signMessage.accesskey "დ">
+
+<!ENTITY signingCert2.message "პირადი სერტიფიკატი ციფრული ხელმოწერისთვის:">
+
+<!ENTITY sendingDefaults.label "ნაგულისხმევი პარამეტრები, წერილების გასაგზავნად">
+
+<!ENTITY technologyAutomatic.label "თვითშერჩევა, ხელმისაწვდომი გასაღებების ან სერტიფიკატების მიხედვით">
+
+<!ENTITY certificates2.label "S/MIME">
+<!ENTITY manageCerts3.label "S/MIME სერტიფიკატების მართვა">
+<!ENTITY manageCerts3.accesskey "მ">
+<!ENTITY manageDevices2.label "S/MIME უსაფრთხოების მოწყობილობები">
+<!ENTITY manageDevices2.accesskey "უ">
+
+<!ENTITY technologySMIME.label "უპირატესად S/MIME">
+<!ENTITY technologyOpenPGP.label "უპირატესად OpenPGP">
+
+<!ENTITY openpgpKeys.label "OpenPGP">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "სერტიფიკატის არჩევა">
+<!ENTITY certPicker.info  "სერტიფიკატი:">
+<!ENTITY certPicker.detailsLabel "შერჩეული სერტიფიკატის მონაცემები:">
+
+<!ENTITY openpgpKey.message "პირადი გასაღები დასაშიფრად და ციფრული ხელმოწერისთვის:">
+<!ENTITY openpgpKey.button "პირადი გასაღების მითითება…">
+<!ENTITY openpgpKey.accesskey "რ">

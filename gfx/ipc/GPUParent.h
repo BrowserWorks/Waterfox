@@ -31,14 +31,13 @@ class GPUParent final : public PGPUParent {
   static void GetGPUProcessName(nsACString& aStr);
 
   bool Init(base::ProcessId aParentPid, const char* aParentBuildID,
-            MessageLoop* aIOLoop, IPC::Channel* aChannel);
+            MessageLoop* aIOLoop, UniquePtr<IPC::Channel> aChannel);
   void NotifyDeviceReset();
 
-  PAPZInputBridgeParent* AllocPAPZInputBridgeParent(const LayersId& aLayersId);
-  bool DeallocPAPZInputBridgeParent(PAPZInputBridgeParent* aActor);
+  already_AddRefed<PAPZInputBridgeParent> AllocPAPZInputBridgeParent(
+      const LayersId& aLayersId);
 
-  mozilla::ipc::IPCResult RecvInit(nsTArray<GfxPrefSetting>&& prefs,
-                                   nsTArray<GfxVarUpdate>&& vars,
+  mozilla::ipc::IPCResult RecvInit(nsTArray<GfxVarUpdate>&& vars,
                                    const DevicePrefs& devicePrefs,
                                    nsTArray<LayerTreeIdMapping>&& mappings);
   mozilla::ipc::IPCResult RecvInitCompositorManager(
@@ -47,6 +46,8 @@ class GPUParent final : public PGPUParent {
       Endpoint<PVsyncBridgeParent>&& aVsyncEndpoint);
   mozilla::ipc::IPCResult RecvInitImageBridge(
       Endpoint<PImageBridgeParent>&& aEndpoint);
+  mozilla::ipc::IPCResult RecvInitVideoBridge(
+      Endpoint<PVideoBridgeParent>&& aEndpoint);
   mozilla::ipc::IPCResult RecvInitVRManager(
       Endpoint<PVRManagerParent>&& aEndpoint);
   mozilla::ipc::IPCResult RecvInitVR(Endpoint<PVRGPUChild>&& aVRGPUChild);
@@ -55,16 +56,16 @@ class GPUParent final : public PGPUParent {
       Endpoint<PUiCompositorControllerParent>&& aEndpoint);
   mozilla::ipc::IPCResult RecvInitProfiler(
       Endpoint<PProfilerChild>&& aEndpoint);
-  mozilla::ipc::IPCResult RecvUpdatePref(const GfxPrefSetting& pref);
   mozilla::ipc::IPCResult RecvUpdateVar(const GfxVarUpdate& pref);
+  mozilla::ipc::IPCResult RecvPreferenceUpdate(const Pref& pref);
   mozilla::ipc::IPCResult RecvNewContentCompositorManager(
       Endpoint<PCompositorManagerParent>&& aEndpoint);
   mozilla::ipc::IPCResult RecvNewContentImageBridge(
       Endpoint<PImageBridgeParent>&& aEndpoint);
   mozilla::ipc::IPCResult RecvNewContentVRManager(
       Endpoint<PVRManagerParent>&& aEndpoint);
-  mozilla::ipc::IPCResult RecvNewContentVideoDecoderManager(
-      Endpoint<PVideoDecoderManagerParent>&& aEndpoint);
+  mozilla::ipc::IPCResult RecvNewContentRemoteDecoderManager(
+      Endpoint<PRemoteDecoderManagerParent>&& aEndpoint);
   mozilla::ipc::IPCResult RecvGetDeviceStatus(GPUDeviceData* aOutStatus);
   mozilla::ipc::IPCResult RecvSimulateDeviceReset(GPUDeviceData* aOutStatus);
   mozilla::ipc::IPCResult RecvAddLayerTreeIdMapping(
@@ -77,6 +78,16 @@ class GPUParent final : public PGPUParent {
       const bool& minimizeMemoryUsage,
       const Maybe<ipc::FileDescriptor>& DMDFile);
   mozilla::ipc::IPCResult RecvShutdownVR();
+
+  mozilla::ipc::IPCResult RecvUpdatePerfStatsCollectionMask(
+      const uint64_t& aMask);
+  mozilla::ipc::IPCResult RecvCollectPerfStatsJSON(
+      CollectPerfStatsJSONResolver&& aResolver);
+
+#if defined(MOZ_SANDBOX) && defined(MOZ_DEBUG) && defined(ENABLE_TESTS)
+  mozilla::ipc::IPCResult RecvInitSandboxTesting(
+      Endpoint<PSandboxTestingChild>&& aEndpoint);
+#endif
 
   void ActorDestroy(ActorDestroyReason aWhy) override;
 

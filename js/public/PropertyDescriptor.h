@@ -122,9 +122,6 @@ struct JS_PUBLIC_API PropertyDescriptor {
 
   PropertyDescriptor() = default;
 
-  static void trace(PropertyDescriptor* self, JSTracer* trc) {
-    self->trace(trc);
-  }
   void trace(JSTracer* trc);
 };
 

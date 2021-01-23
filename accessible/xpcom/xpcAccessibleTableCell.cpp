@@ -10,10 +10,10 @@
 #include "nsIAccessibleTable.h"
 #include "TableAccessible.h"
 #include "TableCellAccessible.h"
-#include "xpcAccessibleDocument.h"
 
 #include "nsComponentManagerUtils.h"
 #include "nsIMutableArray.h"
+#include "xpcAccessibleDocument.h"
 
 using namespace mozilla;
 using namespace mozilla::a11y;

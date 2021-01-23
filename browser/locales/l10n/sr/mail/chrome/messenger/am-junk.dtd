@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Подешавања непожељне поште">
+<!ENTITY trainingDescription.label "Ако укључите ово, потребно је да прво истренирате &brandShortName; да би могао да препозна непожељну пошту тако што ћете користити дугме „Непожељно“ да бисте означили поруку као непожељну, ако је потребно. Мораћете сами да препознајете пожељну и непожељну пошту. Након тога, &brandShortName; ће сам почети са означавањем непожељне поште.">
+<!ENTITY level.label "Укључи адаптивну контролу непожељне поште за овај налог">
+<!ENTITY level.accesskey "У">
+
+<!ENTITY move.label "Помери нову непожељну пошту у:">
+<!ENTITY move.accesskey "м">
+<!ENTITY junkFolderOn.label "Фасциклу &quot;Смеће&quot; на:">
+<!ENTITY junkFolderOn.accesskey "Ф">
+<!ENTITY otherFolder.label "Друго:">
+<!ENTITY otherFolder.accesskey "о">
+<!ENTITY purge1.label "Аутоматски обриши непожељну пошту старију од">
+<!ENTITY purge1.accesskey "у">
+<!ENTITY purge2.label "дан(а)">
+
+<!ENTITY whitelistHeader.label "Не означавај аутоматски пошту као непожељну ако је пошиљалац у: ">
+<!ENTITY whitelistHeader.accesskey "Н">
+
+<!ENTITY ispHeadersWarning.label "Ако укључите ово, &brandShortName; ће аутоматски сматрати да су поруке, које овај спољни класификатор означи, непожељне.">
+<!ENTITY ispHeaders.label "Веруј заглављима непожељне поште које је поставио: ">
+<!ENTITY ispHeaders.accesskey "В">
+
+<!ENTITY junkClassification.label "Одабир">
+<!ENTITY junkActions.label "Одредиште и задржавање">
+
+<!ENTITY globalJunkPrefs.label "Опште поставке непожељне поште…">
+<!ENTITY globalJunkPrefs.accesskey "О">

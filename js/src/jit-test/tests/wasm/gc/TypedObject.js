@@ -1,11 +1,9 @@
-// |jit-test| skip-if: !wasmGcEnabled() || wasmCompileMode() != 'baseline'
+// |jit-test| skip-if: !wasmReftypesEnabled() || !wasmGcEnabled() || wasmCompileMode() != 'baseline'
 
 // We can read the object fields from JS, and write them if they are mutable.
 
 {
     let ins = wasmEvalText(`(module
-                             (gc_feature_opt_in 3)
-
                              (type $p (struct (field f64) (field (mut i32))))
 
                              (func (export "mkp") (result anyref)
@@ -24,8 +22,6 @@
 
 {
     let ins = wasmEvalText(`(module
-                             (gc_feature_opt_in 3)
-
                              (type $p (struct (field f64)))
 
                              (func (export "mkp") (result anyref)
@@ -44,18 +40,16 @@
 
 {
     let ins = wasmEvalText(`(module
-                             (gc_feature_opt_in 3)
-
                              (type $q (struct (field (mut f64))))
-                             (type $p (struct (field (mut (ref $q)))))
+                             (type $p (struct (field (mut (ref opt $q)))))
 
                              (type $r (struct (field (mut anyref))))
 
                              (func (export "mkp") (result anyref)
-                              (struct.new $p (ref.null)))
+                              (struct.new $p (ref.null opt $q)))
 
                              (func (export "mkr") (result anyref)
-                              (struct.new $r (ref.null))))`).exports;
+                              (struct.new $r (ref.null extern))))`).exports;
 
     assertEq(typeof ins.mkp().constructor, "function");
     assertErrorMessage(() => new (ins.mkp().constructor)({_0:null}),
@@ -74,16 +68,14 @@
 
 {
     let ins = wasmEvalText(`(module
-                             (gc_feature_opt_in 3)
-
                              (type $q (struct (field (mut f64))))
-                             (type $p (struct (field (mut (ref $q))) (field (mut anyref))))
+                             (type $p (struct (field (mut (ref opt $q))) (field (mut anyref))))
 
                              (func (export "mkq") (result anyref)
                               (struct.new $q (f64.const 1.5)))
 
                              (func (export "mkp") (result anyref)
-                              (struct.new $p (ref.null) (ref.null))))`).exports;
+                              (struct.new $p (ref.null opt $q) (ref.null extern))))`).exports;
     let q = ins.mkq();
     assertEq(typeof q, "object");
     assertEq(q._0, 1.5);
@@ -104,7 +96,6 @@
 
 {
     let ins = wasmEvalText(`(module
-                             (gc_feature_opt_in 3)
                              (type $p (struct (field (mut i64))))
                              (func (export "mkp") (result anyref)
                               (struct.new $p (i64.const 0x1234567887654321))))`).exports;
@@ -133,13 +124,12 @@
 {
     let ins = wasmEvalText(
         `(module
-          (gc_feature_opt_in 3)
           (type $p (struct (field i64)))
           (type $q (struct (field i32) (field i32)))
           (func $f (param anyref) (result i32)
-           (ref.is_null (struct.narrow anyref (ref $q) (local.get 0))))
+           (ref.is_null extern (struct.narrow anyref (ref opt $q) (local.get 0))))
           (func $g (param anyref) (result i32)
-           (ref.is_null (struct.narrow anyref (ref $p) (local.get 0))))
+           (ref.is_null extern (struct.narrow anyref (ref opt $p) (local.get 0))))
           (func (export "t1") (result i32)
            (call $f (struct.new $p (i64.const 0))))
           (func (export "t2") (result i32)

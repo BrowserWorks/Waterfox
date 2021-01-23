@@ -49,6 +49,10 @@ function do_test() {
     "-webkit-gradient",
   ];
 
+  if (SpecialPowers.getBoolPref("layout.css.conic-gradient.enabled")) {
+    allGradients.push("conic-gradient", "repeating-conic-gradient");
+  }
+
   // test a property with keywords and colors
   var prop = "color";
   var values = InspectorUtils.getCSSValuesForProperty(prop);
@@ -89,13 +93,10 @@ function do_test() {
   var values = InspectorUtils.getCSSValuesForProperty(prop);
   var expected = [ "initial", "inherit", "unset", "revert", "none", "inline", "block", "inline-block", "list-item",
       "table", "inline-table", "table-row-group", "table-header-group", "table-footer-group", "table-row",
-      "table-column-group", "table-column", "table-cell", "table-caption", "-moz-box", "-moz-inline-box",
-      "-moz-grid", "-moz-inline-grid", "-moz-grid-group", "-moz-grid-line", "-moz-stack", "-moz-inline-stack",
-      "-moz-deck", "-moz-popup", "-moz-groupbox",
+      "table-column-group", "table-column", "table-cell", "table-caption",
       "flex", "inline-flex", "-webkit-box", "-webkit-inline-box",
-      "-webkit-flex", "-webkit-inline-flex",
-      "grid", "inline-grid",
-      "ruby", "ruby-base", "ruby-base-container", "ruby-text", "ruby-text-container",
+      "grid", "inline-grid", "inline list-item", "inline flow-root list-item", "flow-root list-item",
+      "ruby", "ruby-base", "ruby-base-container", "ruby-text", "ruby-text-container", "block ruby",
       "contents", "flow-root" ];
   ok(testValues(values, expected), "property display's values.");
 
@@ -156,7 +157,7 @@ function do_test() {
 
   var prop = "quotes"
   var values = InspectorUtils.getCSSValuesForProperty(prop);
-  var expected = [ "inherit", "initial", "unset", "none", "revert" ];
+  var expected = [ "inherit", "initial", "unset", "revert", "auto", "none" ];
   ok(testValues(values, expected), "property quotes's values.");
 
   // Regression test for bug 1255384.

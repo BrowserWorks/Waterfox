@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY propertiesMenu.label               "Ominaisuudet">
+<!ENTITY propertiesMenu.accesskey           "i">
+<!ENTITY propertiesCmd.key                  "i">
+<!ENTITY abPropertiesMenu.label             "Osoitekirjan ominaisuudet">
+<!ENTITY abPropertiesMenu.accesskey         "i">
+<!ENTITY contactPropertiesMenu.label        "Yhteyshenkilön ominaisuudet">
+<!ENTITY contactPropertiesMenu.accesskey    "i">
+<!ENTITY mailingListPropertiesMenu.label    "Postituslistan ominaisuudet">
+<!ENTITY mailingListPropertiesMenu.accesskey "i">
+
+<!ENTITY abContextMenuButton.tooltip        "Näytä Osoitekirjan pikavalikko">
+<!ENTITY addressbookPicker.label            "Osoitekirja:">
+<!ENTITY addressbookPicker.accesskey        "O">
+<!ENTITY searchContacts.label               "Etsi yhteyshenkilöitä:">
+<!ENTITY searchContacts.accesskey           "y">
+<!ENTITY SearchNameOrEmail.label            "Nimestä tai osoitteesta">
+
+<!ENTITY addtoToFieldMenu.label             "Lisää vastaanottajakenttään">
+<!ENTITY addtoToFieldMenu.accesskey         "v">
+<!ENTITY addtoCcFieldMenu.label             "Lisää kopiokenttään">
+<!ENTITY addtoCcFieldMenu.accesskey         "k">
+<!ENTITY addtoBccFieldMenu.label            "Lisää piilokopiokenttään">
+<!ENTITY addtoBccFieldMenu.accesskey        "p">
+<!ENTITY deleteAddrBookCard.label           "Poista">
+<!ENTITY deleteAddrBookCard.accesskey       "P">
+<!ENTITY propertiesContext.label            "Ominaisuudet">
+<!ENTITY propertiesContext.accesskey        "O">
+<!ENTITY abPropertiesContext.label          "Ominaisuudet">
+<!ENTITY abPropertiesContext.accesskey      "O">
+<!ENTITY editContactContext.label           "Muokkaa yhteyshenkilön tietoja">
+<!ENTITY editContactContext.accesskey       "M">
+<!ENTITY editMailingListContext.label       "Muokkaa luetteloa">
+<!ENTITY editMailingListContext.accesskey   "M">
+
+<!ENTITY newContactAbContext.label          "Uusi yhteyshenkilö">
+<!ENTITY newContactAbContext.accesskey      "y">
+<!ENTITY newListAbContext.label             "Uusi lista">
+<!ENTITY newListAbContext.accesskey         "l">
+
+<!ENTITY toButton.label                     "Vastaanottaja:">
+<!ENTITY toButton.accesskey                 "V">
+<!ENTITY ccButton.label                     "Kopio:">
+<!ENTITY ccButton.accesskey                 "K">
+<!ENTITY bccButton.label                    "Piilokopio:">
+<!ENTITY bccButton.accesskey                "P">

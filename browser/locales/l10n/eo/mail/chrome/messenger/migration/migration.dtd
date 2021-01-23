@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "Enportilo de datumoj kaj agordoj">
+
+<!ENTITY importFromWin.label            "Enporti elekteblojn, agordoj pri kontoj, adresaron, filtrilojn kaj aliajn datumojn el:">
+<!ENTITY importFromNonWin.label         "Enporti preferojn, agordoj pri kontoj, adresaron, filtrilojn kaj aliajn datumojn el:">
+<!ENTITY importSourceNotFound.label     "Ne trovis programon el kiu eblas enporti datumojn.">
+
+<!ENTITY importFromNothing.label        "Enporti nenion">
+<!ENTITY importFromNothing.accesskey    "n">
+<!ENTITY importFromSeamonkey3.label     "SeaMonkey (versio 2 aŭ pli nova)">
+<!ENTITY importFromSeamonkey3.accesskey "S">
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "Enporti agordojn kaj mesaĝujojn">
+<!ENTITY importItems.title              "Elementoj por enporti">
+<!ENTITY importItems.label              "Elekti elementojn por enporti:">
+
+<!ENTITY migrating.title                "Enportado…">
+<!ENTITY migrating.label                "La jenaj elementoj estas nune enportataj…">
+
+<!ENTITY selectProfile.title            "Elekti profilon">
+<!ENTITY selectProfile.label            "Eblas enporti el la jenaj profiloj:">
+
+<!ENTITY done.title                     "Enportado finita">
+<!ENTITY done.label                     "La jenaj elementoj estas sukcese enportitaj:">

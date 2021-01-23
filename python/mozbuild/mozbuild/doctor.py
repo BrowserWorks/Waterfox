@@ -2,16 +2,18 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, # You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 import os
 import subprocess
+import six
 import sys
 
 import psutil
 
 from distutils.util import strtobool
 from distutils.version import LooseVersion
+
 import mozpack.path as mozpath
 
 # Minimum recommended logical processors in system.
@@ -33,6 +35,7 @@ directory access by deferring Last Access Time modification on disk by up to an
 hour. Backup programs that rely on this feature may be affected.
 https://technet.microsoft.com/en-us/library/cc785435.aspx
 '''
+
 
 class Doctor(object):
     def __init__(self, srcdir, objdir, fix):
@@ -69,7 +72,7 @@ class Doctor(object):
                 denied = True
         if denied:
             print('run "mach doctor --fix" AS ADMIN to re-attempt fixing your system')
-        elif False: # elif fixable:
+        elif False and fixable:  # elif fixable:  # 'and fixable' avoids flake8 error
             print('run "mach doctor --fix" as admin to attempt fixing your system')
         return int(not good)
 
@@ -83,7 +86,7 @@ class Doctor(object):
         valid = False
         while not valid and limit > 0:
             try:
-                choice = strtobool(raw_input(prompt + '[Y/N]\n'))
+                choice = strtobool(six.moves.input(prompt + '[Y/N]\n'))
                 valid = True
             except ValueError:
                 print("ERROR! Please enter a valid option!")
@@ -103,11 +106,12 @@ class Doctor(object):
             if status == 'SKIPPED':
                 continue
             self.results.append(result)
-            print('%s...\t%s\n' % (
-                   result.get('desc', ''),
-                   status
-                )
-            ).expandtabs(40)
+            print(
+                '{}...\t{}\n'.format(
+                    result.get('desc', ''),
+                    status
+                ).expandtabs(40)
+            )
 
     @property
     def platform(self):
@@ -202,7 +206,7 @@ class Doctor(object):
                 status = 'GOOD'
                 desc = 'lastaccess disabled systemwide'
             elif disablelastaccess == 0:
-                if False: # if self.fix:
+                if False:  # if self.fix:
                     choice = self.prompt_bool(DISABLE_LASTACCESS_WIN)
                     if not choice:
                         return {'status': 'BAD, NOT FIXED',
@@ -236,17 +240,25 @@ class Doctor(object):
         return results
 
     def check_mount_lastaccess(self, mount):
-        partitions = psutil.disk_partitions()
+        partitions = psutil.disk_partitions(all=True)
         atime_opts = {'atime', 'noatime', 'relatime', 'norelatime'}
         option = ''
+        fstype = ''
         for partition in partitions:
             if partition.mountpoint == mount:
                 mount_opts = set(partition.opts.split(','))
                 intersection = list(atime_opts & mount_opts)
+                fstype = partition.fstype
                 if len(intersection) == 1:
                     option = intersection[0]
                 break
-        if not option:
+
+        if fstype == 'tmpfs':
+            status = 'GOOD'
+            desc = '%s is a tmpfs so noatime/reltime is not needed' % (
+                mount
+            )
+        elif not option:
             status = 'BAD'
             if self.platform == 'linux':
                 option = 'noatime/relatime'

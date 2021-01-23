@@ -39,6 +39,7 @@ var { getTestLogger, initTestLogging } = ChromeUtils.import(
 var { MockRegistrar } = ChromeUtils.import(
   "resource://testing-common/MockRegistrar.jsm"
 );
+var { NetUtil } = ChromeUtils.import("resource://gre/modules/NetUtil.jsm");
 
 function do_check_empty(obj) {
   do_check_attribute_count(obj, 0);
@@ -137,7 +138,27 @@ function promiseStopServer(server) {
  * all available input is read.
  */
 function readBytesFromInputStream(inputStream, count) {
-  return CommonUtils.readBytesFromInputStream(inputStream, count);
+  if (!count) {
+    count = inputStream.available();
+  }
+  if (!count) {
+    return "";
+  }
+  return NetUtil.readInputStreamToString(inputStream, count, {
+    charset: "UTF-8",
+  });
+}
+
+function writeBytesToOutputStream(outputStream, string) {
+  if (!string) {
+    return;
+  }
+  let converter = Cc[
+    "@mozilla.org/intl/converter-output-stream;1"
+  ].createInstance(Ci.nsIConverterOutputStream);
+  converter.init(outputStream, "UTF-8");
+  converter.writeString(string);
+  converter.close();
 }
 
 /*
@@ -168,7 +189,7 @@ var PACSystemSettings = {
   mainThreadOnly: true,
   PACURI: null,
   getProxyForURI: function getProxyForURI(aURI) {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+    throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
   },
 };
 
@@ -231,32 +252,10 @@ function getUptakeTelemetrySnapshot(key) {
 }
 
 function checkUptakeTelemetry(snapshot1, snapshot2, expectedIncrements) {
-  const STATUSES = [
-    "up_to_date",
-    "success",
-    "backoff",
-    "pref_disabled",
-    "parse_error",
-    "content_error",
-    "sign_error",
-    "sign_retry_error",
-    "conflict_error",
-    "sync_error",
-    "apply_error",
-    "server_error",
-    "certificate_error",
-    "download_error",
-    "timeout_error",
-    "network_error",
-    "offline_error",
-    "cleanup_error",
-    "unknown_error",
-    "custom_1_error",
-    "custom_2_error",
-    "custom_3_error",
-    "custom_4_error",
-    "custom_5_error",
-  ];
+  const { UptakeTelemetry } = ChromeUtils.import(
+    "resource://services-common/uptake-telemetry.js"
+  );
+  const STATUSES = Object.values(UptakeTelemetry.HISTOGRAM_LABELS);
 
   for (const status of STATUSES) {
     const key = STATUSES.indexOf(status);
@@ -297,4 +296,8 @@ async function withFakeChannel(channel, f) {
   } finally {
     module.Policy = oldPolicy;
   }
+}
+
+function arrayEqual(a, b) {
+  return JSON.stringify(a) == JSON.stringify(b);
 }

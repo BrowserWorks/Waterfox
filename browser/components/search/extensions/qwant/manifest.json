@@ -1,8 +1,7 @@
 {
   "name": "Qwant",
-  "description": "Search Qwant",
   "manifest_version": 2,
-  "version": "1.0",
+  "version": "1.1",
   "applications": {
     "gecko": {
       "id": "qwant@search.waterfox.net"
@@ -19,10 +18,10 @@
     "search_provider": {
       "name": "Qwant",
       "search_url": "https://www.qwant.com/",
-      "search_form": "https://www.qwant.com/?q={searchTerms}",
-      "search_url_get_params": "q={searchTerms}",
+      "search_url_get_params": "client=brz-moz&q={searchTerms}",
       "suggest_url": "https://api.qwant.com/api/suggest/",
-      "suggest_url_get_params": "client=opensearch&q={searchTerms}"
+      "suggest_url_get_params": "client=opensearch&q={searchTerms}",
+      "search_form": "https://www.qwant.com/"
     }
   }
 }

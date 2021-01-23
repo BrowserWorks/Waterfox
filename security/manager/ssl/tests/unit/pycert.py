@@ -30,13 +30,14 @@ keyUsage:[digitalSignature,nonRepudiation,keyEncipherment,
 extKeyUsage:[serverAuth,clientAuth,codeSigning,emailProtection
              nsSGC, # Netscape Server Gated Crypto
              OCSPSigning,timeStamping]
-subjectAlternativeName:[<dNSName|directoryName>,...]
+subjectAlternativeName:[<dNSName|directoryName|"ip4:"iPV4Address>,...]
 authorityInformationAccess:<OCSP URI>
 certificatePolicies:[<policy OID>,...]
 nameConstraints:{permitted,excluded}:[<dNSName|directoryName>,...]
 nsCertType:sslServer
 TLSFeature:[<TLSFeature>,...]
 embeddedSCTList:[<key specification>:<YYYYMMDD>,...]
+delegationUsage:
 
 Where:
   [] indicates an optional field or component of a field
@@ -92,11 +93,12 @@ import base64
 import datetime
 import hashlib
 import re
+import socket
+import six
 import sys
 
 import pyct
 import pykey
-
 
 class Error(Exception):
     """Base class for exceptions in this module."""
@@ -196,6 +198,14 @@ class UnknownTLSFeature(UnknownBaseError):
         self.category = 'TLSFeature'
 
 
+class UnknownDelegatedCredentialError(UnknownBaseError):
+    """Helper exception type to handle unknown Delegated Credential args."""
+
+    def __init__(self, value):
+        UnknownBaseError.__init__(self, value)
+        self.category = 'delegatedCredential'
+
+
 class InvalidSCTSpecification(Error):
     """Helper exception type to handle invalid SCT specifications."""
 
@@ -282,7 +292,8 @@ def stringToDN(string, tag=None):
             # The value may have things like '\0' (i.e. a slash followed by
             # the number zero) that have to be decoded into the resulting
             # '\x00' (i.e. a byte with value zero).
-            nameComponent[encoding] = value.decode(encoding='string_escape')
+            nameComponent[encoding] = six.ensure_binary(value).decode(
+                encoding='unicode_escape')
         ava['value'] = nameComponent
         rdn = rfc2459.RelativeDistinguishedName()
         rdn.setComponentByPosition(0, ava)
@@ -351,7 +362,7 @@ def serialBytesToString(serialBytes):
         raise InvalidSerialNumber("{} bytes is too long".format(serialBytesLen))
     # Prepend the ASN.1 INTEGER tag and length bytes.
     stringBytes = [getASN1Tag(univ.Integer), serialBytesLen] + serialBytes
-    return ''.join(chr(b) for b in stringBytes)
+    return bytes(stringBytes)
 
 
 class Certificate(object):
@@ -397,23 +408,24 @@ class Certificate(object):
         the build system on OS X (see the comment above main, later in
         this file)."""
         hasher = hashlib.sha256()
-        hasher.update(str(self.versionValue))
-        hasher.update(self.signature)
-        hasher.update(self.issuer)
-        hasher.update(str(self.notBefore))
-        hasher.update(str(self.notAfter))
-        hasher.update(self.subject)
+        hasher.update(six.ensure_binary(str(self.versionValue)))
+        hasher.update(six.ensure_binary(self.signature))
+        hasher.update(six.ensure_binary(self.issuer))
+        hasher.update(six.ensure_binary(str(self.notBefore)))
+        hasher.update(six.ensure_binary(str(self.notAfter)))
+        hasher.update(six.ensure_binary(self.subject))
         if self.extensionLines:
             for extensionLine in self.extensionLines:
-                hasher.update(extensionLine)
+                hasher.update(six.ensure_binary(extensionLine))
         if self.savedEmbeddedSCTListData:
             # savedEmbeddedSCTListData is
             # (embeddedSCTListSpecification, critical), where |critical|
             # may be None
-            hasher.update(self.savedEmbeddedSCTListData[0])
+            hasher.update(six.ensure_binary(self.savedEmbeddedSCTListData[0]))
             if (self.savedEmbeddedSCTListData[1]):
-                hasher.update(self.savedEmbeddedSCTListData[1])
-        serialBytes = [ord(c) for c in hasher.digest()[:20]]
+                hasher.update(
+                    six.ensure_binary(self.savedEmbeddedSCTListData[1]))
+        serialBytes = [c for c in hasher.digest()[:20]]
         # Ensure that the most significant bit isn't set (which would
         # indicate a negative number, which isn't valid for serial
         # numbers).
@@ -501,6 +513,8 @@ class Certificate(object):
             self.addTLSFeature(value, critical)
         elif extensionType == 'embeddedSCTList':
             self.savedEmbeddedSCTListData = (value, critical)
+        elif extensionType == 'delegationUsage':
+            self.addDelegationUsage(critical)
         else:
             raise UnknownExtensionTypeError(extensionType)
 
@@ -570,6 +584,8 @@ class Certificate(object):
         self.addExtension(rfc2459.id_ce_extKeyUsage, extKeyUsageExtension, critical)
 
     def addSubjectAlternativeName(self, names, critical):
+        IPV4_PREFIX = 'ip4:'
+
         subjectAlternativeName = rfc2459.SubjectAltName()
         for count, name in enumerate(names.split(',')):
             generalName = rfc2459.GeneralName()
@@ -579,11 +595,13 @@ class Certificate(object):
                 generalName['directoryName'] = directoryName
             elif '@' in name:
                 generalName['rfc822Name'] = name
+            elif name.startswith(IPV4_PREFIX):
+                generalName['iPAddress'] = socket.inet_pton(socket.AF_INET, name[len(IPV4_PREFIX):])
             else:
                 # The string may have things like '\0' (i.e. a slash
                 # followed by the number zero) that have to be decoded into
                 # the resulting '\x00' (i.e. a byte with value zero).
-                generalName['dNSName'] = name.decode(encoding='string_escape')
+                generalName['dNSName'] = six.ensure_binary(name).decode('unicode_escape')
             subjectAlternativeName.setComponentByPosition(count, generalName)
         self.addExtension(rfc2459.id_ce_subjectAltName, subjectAlternativeName, critical)
 
@@ -635,11 +653,17 @@ class Certificate(object):
         self.addExtension(univ.ObjectIdentifier('2.16.840.1.113730.1.1'), univ.BitString("'01'B"),
                           critical)
 
+    def addDelegationUsage(self, critical):
+        if critical:
+            raise UnknownDelegatedCredentialError(critical)
+        self.addExtension(univ.ObjectIdentifier('1.3.6.1.4.1.44363.44'), univ.Null(),
+                          critical)
+
     def addTLSFeature(self, features, critical):
         namedFeatures = {'OCSPMustStaple': 5}
         featureList = [f.strip() for f in features.split(',')]
         sequence = univ.Sequence()
-        for feature in featureList:
+        for pos, feature in enumerate(featureList):
             featureValue = 0
             try:
                 featureValue = int(feature)
@@ -648,8 +672,7 @@ class Certificate(object):
                     featureValue = namedFeatures[feature]
                 except Exception:
                     raise UnknownTLSFeature(feature)
-            sequence.setComponentByPosition(len(sequence),
-                                            univ.Integer(featureValue))
+            sequence.setComponentByPosition(pos, univ.Integer(featureValue))
         self.addExtension(univ.ObjectIdentifier('1.3.6.1.5.5.7.1.24'), sequence,
                           critical)
 
@@ -669,7 +692,7 @@ class Certificate(object):
             signed = sct.signAndEncode()
             lengthPrefix = pack('!H', len(signed))
             encodedSCTs.append(lengthPrefix + signed)
-        encodedSCTBytes = "".join(encodedSCTs)
+        encodedSCTBytes = b''.join(encodedSCTs)
         lengthPrefix = pack('!H', len(encodedSCTBytes))
         extensionBytes = lengthPrefix + encodedSCTBytes
         self.addExtension(univ.ObjectIdentifier('1.3.6.1.4.1.11129.2.4.2'),
@@ -731,7 +754,7 @@ class Certificate(object):
     def toPEM(self):
         output = '-----BEGIN CERTIFICATE-----'
         der = self.toDER()
-        b64 = base64.b64encode(der)
+        b64 = six.ensure_text(base64.b64encode(der))
         while b64:
             output += '\n' + b64[:64]
             b64 = b64[64:]

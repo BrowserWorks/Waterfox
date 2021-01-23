@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-composer.xul -->
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+
+
+
+<!ENTITY  pref.composer.title           "Composer">
+<!ENTITY  recentFiles.title             "Umuɣ n isebtar n melmi kan">
+<!ENTITY  documentsInMenu.label         "Amḍan afellay n isebtar d-yettwabedren:">
+<!ENTITY  documentsInMenu.accesskey     "l">
+<!ENTITY  savingFiles.title             "Ticki isebtar ttwakelsen neɣ ttwaẓergen">
+<!ENTITY  preserveExisting.label        "Ḥrez amasal n uɣbalu aneẓli">
+<!ENTITY  preserveExisting.accesskey    "m">
+<!ENTITY  preserveExisting.tooltip      "Eǧǧ angaz gar izirigen akked umasal aneẓli n usebter">
+<!ENTITY  saveAssociatedFiles.label     "Sekles tugniwin akked ifuyla icudden ɣer-s ticki isebtar ttwakelsen">
+<!ENTITY  saveAssociatedFiles.accesskey "g">
+<!ENTITY  showPublishDialog.label       "Skan yal ass asfaylu n udiwenni di tezrigt n isebtar">
+<!ENTITY  showPublishDialog.accesskey   "S">
+<!ENTITY  composerEditing.label         "Taẓrigt">
+<!ENTITY  maintainStructure.label       "Ḥrez taneɣruft n tfelwit-agi ticki taggareḍ neɣ tettekkseḍ tibniqin">
+<!ENTITY  maintainStructure.tooltip     "Ad yeḥrez talɣa n tfelwit tasremt s tmerna s wudem awurman n tebniqin seld timerna neɣ tukksa n tebniqin.">
+<!ENTITY  maintainStructure.accesskey   "r">
+<!ENTITY  useCSS.label                  "Seqdec iɣunab CSS deg umḍiq n iferdisen akked imyerren HTML">
+<!ENTITY  useCSS.accesskey              "d">
+<!ENTITY  crInPCreatesNewP.label        "Tuɣalin ɣer izirig ad yernu yal tikelt taseddaṛt tamaynut">
+<!ENTITY  crInPCreatesNewP.accesskey    "ɣ">

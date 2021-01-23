@@ -106,7 +106,7 @@ nb{
         ER{"Eritrea"}
         ES{"Spania"}
         ET{"Etiopia"}
-        EU{"EU"}
+        EU{"Den europeiske union"}
         EZ{"eurosonen"}
         FI{"Finland"}
         FJ{"Fiji"}
@@ -287,6 +287,8 @@ nb{
         VU{"Vanuatu"}
         WF{"Wallis og Futuna"}
         WS{"Samoa"}
+        XA{"pseudospråk – aksenter"}
+        XB{"pseudospråk – RTL"}
         XK{"Kosovo"}
         YE{"Jemen"}
         YT{"Mayotte"}
@@ -296,12 +298,9 @@ nb{
         ZZ{"ukjent område"}
     }
     Countries%short{
-        GB{"Storbritannia"}
         HK{"Hongkong"}
         MO{"Macao"}
         PS{"Palestina"}
-        UN{"FN"}
-        US{"USA"}
     }
     Countries%variant{
         CD{"Den demokratiske republikken Kongo"}
@@ -309,6 +308,7 @@ nb{
         CZ{"Den tsjekkiske republikk"}
         FK{"Falklandsøyene (Islas Malvinas)"}
         SZ{"Swaziland"}
+        TL{"Timor-Leste"}
     }
-    Version{"2.1.48.42"}
+    Version{"37"}
 }

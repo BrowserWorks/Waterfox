@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Taq Richinil Rucha'ik Cholajem">
+
+<!ENTITY Select.label "Rucha'ik Cholajem">
+<!ENTITY SelectName.label "Rucholb'al B'i'aj:">
+<!ENTITY SelectName.accesskey "B">
+<!ENTITY SelectSize.label "Raqän:">
+<!ENTITY SelectSize.accesskey "R">
+<!ENTITY SelectMultiple.label "Jalajöj Cha'onem">
+<!ENTITY SelectMultiple.accesskey "J">
+<!ENTITY SelectDisabled.label "Chupun">
+<!ENTITY SelectDisabled.accesskey "C">
+<!ENTITY SelectTabIndex.label "Rucholajem Ruwi':">
+<!ENTITY SelectTabIndex.accesskey "R">
+
+<!ENTITY OptGroup.label "Cha'oj Molaj">
+<!ENTITY OptGroupLabel.label "Yaketal:">
+<!ENTITY OptGroupLabel.accesskey "E">
+<!ENTITY OptGroupDisabled.label "Chupun">
+<!ENTITY OptGroupDisabled.accesskey "C">
+
+<!ENTITY Option.label "Cha'oj">
+<!ENTITY OptionText.label "Rucholajem tzij:">
+<!ENTITY OptionText.accesskey "t">
+<!ENTITY OptionValue.label "Retal:">
+<!ENTITY OptionValue.accesskey "R">
+<!ENTITY OptionSelected.label "Nab'ey Cha'on">
+<!ENTITY OptionSelected.accesskey "C">
+<!ENTITY OptionDisabled.label "Chupun">
+<!ENTITY OptionDisabled.accesskey "C">
+
+<!ENTITY TextHeader.label "Tz'ib'atzij">
+<!ENTITY ValueHeader.label "Retal">
+<!ENTITY SelectedHeader.label "Cha'on">
+
+<!ENTITY AddOption.label "Titz'aqatisäx Cha'oj">
+<!ENTITY AddOption.accesskey "C">
+<!ENTITY AddOptGroup.label "Titz'aqatisäx Molaj">
+<!ENTITY AddOptGroup.accesskey "M">
+<!ENTITY RemoveElement.label "Tiyuj">
+<!ENTITY RemoveElement.accesskey "y">
+<!ENTITY MoveElementUp.label "Tijotob'äx">
+<!ENTITY MoveElementUp.accesskey "b">
+<!ENTITY MoveElementDown.label "Tiqasäx">
+<!ENTITY MoveElementDown.accesskey "q">

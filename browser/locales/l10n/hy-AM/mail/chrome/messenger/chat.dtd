@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Առցանց կոնտակտներ">
+<!ENTITY offlineContactsHeader.label   "Անցանց կոնտակտներ">
+<!ENTITY conversationsHeader.label     "Զրուցաշարեր">
+<!ENTITY searchResultConversation.label "Փնտրման արդյունքը">
+<!ENTITY chat.noConv.title             "Զրուցաշարերը կցուցադրվեն այստեղ։">
+<!ENTITY chat.noConv.description       "Զրույցը սկսելու համար օգտագործեք ձախում գտնվող անձանց ցանկը։">
+<!ENTITY chat.noPreviousConv.description       "&brandShortName;-ը չունի որևէ զրուցաշար։">
+<!ENTITY chat.noAccount.title             "Դեռ մուտք չեք գործել:">
+<!ENTITY chat.noAccount.description       "Թույլատրել &brandShortName;-ին ուղեկցել Ձեզ զրույցի կարգավորումների ընթացքում:">
+<!ENTITY chat.accountWizard.button       "Սկսել">
+<!ENTITY chat.noConnectedAccount.title             "Զրույցի հաշիվները միացված չեն:">
+<!ENTITY chat.noConnectedAccount.description       "Կարող եք կապակցել 'Զրույցի վիճակը' պատուհանից:">
+<!ENTITY chat.showAccountManager.button       "Ցուցադրել զրույցի վիճակը">
+
+<!ENTITY chat.participants             "Մասնակիցներ.">
+<!ENTITY chat.previousConversations    "Նախորդ զրուցաշարերը.">
+<!ENTITY chat.ongoingConversation      "Ընթացող զրուցաշար">
+
+<!ENTITY openConversationCmd.label     "Սկսել զրուցաշար">
+<!ENTITY openConversationCmd.accesskey "զ">
+<!ENTITY closeConversationCmd.label    "Փակել զրուցաշարը">
+<!ENTITY closeConversationCmd.accesskey "Փ">
+<!ENTITY aliasCmd.label                "Վերանվանել">
+<!ENTITY aliasCmd.accesskey            "Վ">
+<!ENTITY deleteCmd.label               "Ջնջել կոնտակտը">
+<!ENTITY deleteCmd.accesskey           "Ջ">
+
+<!ENTITY openConversationButton.tooltip  "Սկսել զրուցաշար">
+<!ENTITY closeConversationButton.tooltip "Փակել զրուցաշարը">
+
+<!ENTITY addBuddyButton.label          "Ավելացնել կոնտակտ">
+<!ENTITY joinChatButton.label          "Միանալ Զրույցին">
+<!ENTITY chatAccountsButton.label      "Ցուցադրել օգտվողներին">
+
+<!ENTITY status.available          "Հասանելի">
+<!ENTITY status.unavailable        "Անհասանելի">
+<!ENTITY status.offline            "Անցանց">
+
+<!ENTITY openLinkCmd.label            "Բացել հղումը">
+<!ENTITY openLinkCmd.accesskey        "Բ">

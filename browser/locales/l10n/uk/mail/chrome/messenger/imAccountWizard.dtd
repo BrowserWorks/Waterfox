@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Майстер облікових записів">
+
+<!ENTITY accountProtocolTitle.label   "Протокол">
+<!ENTITY accountProtocolInfo.label    "Виберіть протокол вашого облікового запису IM зі списку.">
+<!ENTITY accountProtocolField.label   "Протокол:">
+<!ENTITY accountProtocolGetMore.label "Отримати більше…">
+
+<!ENTITY accountUsernameTitle.label   "Ім’я користувача">
+<!ENTITY accountUsernameDuplicate.label "Цей обліковий запис уже налаштовано!">
+
+<!ENTITY accountPasswordTitle.label   "Пароль">
+<!ENTITY accountPasswordInfo.label    "Введіть ваш пароль у цьому полі.">
+<!ENTITY accountPasswordField.label   "Пароль:">
+<!ENTITY accountPasswordManager.label "Введений вами пароль буде збережений в Керівнику Паролями. Якщо ви хочете щоразу вводити пароль при підключенні цього запису, то лишіть це поле порожнім.">
+
+<!ENTITY accountAdvancedTitle.label   "Розширені параметри">
+<!ENTITY accountAdvancedInfo.label    "Залиште пустим, щоб пропустити цей крок, якщо хочете.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Повідомити на новий e-mail">
+<!ENTITY accountAliasGroupbox.caption "Локальний псевдонім">
+<!ENTITY accountAliasField.label      "Псевдонім:">
+<!ENTITY accountAliasInfo.label       "Це буде показано лише у ваших розмовах, коли ви говорите. Віддалені контакти не побачать цього.">
+<!ENTITY accountProxySettings.caption "Параметри проксі">
+<!ENTITY accountProxySettings.change.label     "Змінити…">
+<!ENTITY accountProxySettings.change.accessKey "З">
+
+<!ENTITY accountSummaryTitle.label   "Сумарно">
+<!ENTITY accountSummaryInfo.label    "Введена вами сумарна інформація показана нижче. Перевірте її перед створенням облікового запису.">
+<!ENTITY accountSummary.connectNow.label "Під'єднатись до цього облікового запису зараз.">

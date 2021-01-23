@@ -9,9 +9,9 @@ sr_Latn{
         colBackwards{"Sortiranje prema obrnutim akcentima"}
         colCaseFirst{"Ređanje prema malom/velikom slovu"}
         colCaseLevel{"Sortiranje prema malom/velikom slovu"}
-        colNormalization{"Normalizovano sortiranje"}
-        colNumeric{"Numeričko sortiranje"}
-        colStrength{"Sortiranje prema jačini"}
+        colNormalization{"normalizovano sortiranje"}
+        colNumeric{"numeričko sortiranje"}
+        colStrength{"sortiranje prema jačini"}
         collation{"redosled sortiranja"}
         currency{"valuta"}
         hc{"prikazivanje vremena (12- ili 24-časovno)"}
@@ -84,7 +84,7 @@ sr_Latn{
         cad{"kado"}
         car{"karipski"}
         cch{"atsam"}
-        ccp{"ccp"}
+        ccp{"čakma"}
         ce{"čečenski"}
         ceb{"sebuanski"}
         cgg{"čiga"}
@@ -121,7 +121,7 @@ sr_Latn{
         din{"dinka"}
         dje{"zarma"}
         doi{"dogri"}
-        dsb{"donji lužičkosrpski"}
+        dsb{"donjolužičkosrpski"}
         dua{"duala"}
         dum{"srednjeholandski"}
         dv{"maldivski"}
@@ -147,6 +147,7 @@ sr_Latn{
         eu{"baskijski"}
         ewo{"evondo"}
         fa{"persijski"}
+        fa_AF{"dari"}
         fan{"fang"}
         fat{"fanti"}
         ff{"fula"}
@@ -195,7 +196,7 @@ sr_Latn{
         hmn{"hmonški"}
         ho{"hiri motu"}
         hr{"hrvatski"}
-        hsb{"gornji lužičkosrpski"}
+        hsb{"gornjolužičkosrpski"}
         ht{"haićanski"}
         hu{"mađarski"}
         hup{"hupa"}
@@ -530,10 +531,12 @@ sr_Latn{
         zxx{"bez lingvističkog sadržaja"}
         zza{"zaza"}
     }
+    Languages%menu{
+        yue{"kantonski kineski"}
+        zh{"mandarinski kineski"}
+    }
     Languages%short{
         az{"azerski"}
-        en_GB{"engleski (UK)"}
-        en_US{"engleski (SAD)"}
     }
     Languages%variant{
         ps{"pašto"}
@@ -850,7 +853,7 @@ sr_Latn{
         TARASK{"Taraskijevička ortografija"}
         VALENCIA{"Valencijska"}
     }
-    Version{"2.1.49.82"}
+    Version{"37"}
     characterLabelPattern{
         all{"{0} — sve"}
         category-list{"{0}: {1}"}

@@ -1,0 +1,186 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Памылка загрузкі старонкі">
+<!ENTITY retry.label "Паспрабуйце зноў">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Нельга злучыцца">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Гэты адрас абмежаваны">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Паслугач не знойдзены">
+<!ENTITY dnsNotFound.longDesc "
+<ul>
+  <li>Праверце адрас. Магчыма, вы зрабілі памылку падчас набору, як
+    <strong>ww</strong>.example.com замест
+    <strong>www</strong>.example.com</li>
+  <li>Праверце злучэнне вашага кампутара з сеткаю, калі вы не 
+     здольны загрузіць ніводную старонку.</li>
+  <li>Упэўніцеся, калі ваш кампутар або сетка абараняюцца сетказаслонаю ці 
+    пасярэднікам,  што &brandShortName; дазволена мець доступ у Сеціва.</li>
+</ul>">
+
+<!ENTITY fileNotFound.title "Файл не знойдзены">
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>Упэўніцеся, што няма ніякай памылкі ў назве файла, такой, як 
+  прапушчаная/лішняя літара або вялікая літара замест малой, або інакшай?</li> 
+  <li>Упэўніцеся, што файл не быў перайменаваны, выдалены або перамешчаны?</li>
+ </ul>">
+
+<!ENTITY fileAccessDenied.title "Доступ да файла быў забаронены">
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>Возможно, что он был удалён или перемещён, или разрешения на файл не дают получить к нему доступ.</li>
+</ul>
+">
+
+<!ENTITY generic.title "Ух?!">
+<!ENTITY generic.longDesc "
+<p>&brandShortName; не можа загрузіць гэтую старонку з невядомай прычыны.</p>">
+
+<!ENTITY malformedURI.title "Несапраўдны адрас">
+<!ENTITY malformedURI.longDesc "
+<ul>
+  <li>Адрас Сеціва звычайна пішацца, як
+    <strong>http://www.example.com/</strong></li>
+  <li>Упэўніцеся, што вы ўжываеце простыя косыя рыскі (г.зн.
+    <strong>/</strong>).</li>
+</ul>
+">
+
+<!ENTITY netInterrupt.title "Злучэнне перарвана">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Дакумент састарэў">
+<!ENTITY notCached.longDesc '<p>Запатрабаваны дакумент не даступны ў запасніку.</p><ul><li>Дзеля бяспекі &brandShortName; не перазапытвае значныя дакументы самастойна.</li><li>Пстрыкніце "Паспрабаваць зноў", каб запытаць дакумент з пляцоўкі сеціва ізноў.</li></ul>'>
+
+<!ENTITY netOffline.title "Пазасеткавы рэжым">
+<!ENTITY netOffline.longDesc2 "
+<ul>
+  <li>Націсніце &quot;Паспрабаваць зноў&quot;, каб перключыцца ў сеткавы рэжым і абнавіць старонку.</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.title "Памылка кадавання змесціва">
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>Паведамце, калі ласка, уладальнікам пляцоўкі сеціва пра гэтую праблему.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.title "Небяспечны тып файла">
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>Паведамце, калі ласка, уласнікам пляцоўкі сеціва пра гэтую загану.</li>
+</ul>
+">
+
+<!ENTITY netReset.title "Злучэнне скінута">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Злучэнне па-за часам">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Немагчыма распазнаць адрас">
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Магчыма, вы павінны ўсталяваць іншую праграму, каб адчыніць гэты адрас.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.title "Паслугач-пасярэднік адмовіўся злучацца">
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>Упэўніцеся, што наладжванні пасярэдніка правільныя.</li>
+  <li>Звяжыцеся з спраўцам сеткі, каб ўпэўніцца, што
+    паслугач-пасярэднік працуе.</li>
+</ul>">
+
+<!ENTITY proxyResolveFailure.title "Немагчыма знайсці паслугач-пасярэднік">
+<!ENTITY proxyResolveFailure.longDesc "
+<ul>
+  <li>Упэўніцеся, што наладжванні пасярэдніка правільныя.</li>
+  <li>Упэўніцеся, што злучэнне вашага кампутара з сеткаю працуе.</li>
+  <li>Упэўніцеся, калі ваш кампутар або сетка абараняюцца сетказаслонаю ці 
+    пасярэднікам,  што &brandShortName; дазволена мець доступ у Сеціва.</li>
+</ul>">
+
+<!ENTITY redirectLoop.title "Старонка няправільна перанакіроўваецца">
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Гэтая праблема часам вынікае з забароны або адмаўлення ад
+    набывання бірак.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.title "Нечаканы адказ паслугача">
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>Упэўніцеся, што Асабісты Кіраўнік Бяспекі ўсталяваны ў
+    вашай сістэме.</li>
+  <li>Гэта магчыма з нагоды незвычайнай наладкі паслугача.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.title "Няўдача бяспечнага злучэння">
+
+<!ENTITY nssBadCert.title "Няўдача бяспечнага злучэння">
+<!ENTITY nssBadCert.longDesc2 "
+<ul>
+  <li>Гэта можа быць праблемай наладкі паслугача ці, магчыма,
+хтосьці спрабуе прыкінуцца гэтым паслугачом.</li>
+  <li>Калі вы паспяхова злучаліся з гэтым паслугачом раней, дык памылка можа
+быць часовай, таму вы можаце паспрабаваць ізноў пасля.</li>
+</ul>
+">
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>Магчыма, пляцоўка часова недаступна або перагружана. Паспрабуйце
+    зноў трохі пазней.</li>
+  <li>Праверце злучэнне вашага кампутара з сеткаю, калі вы не здольны
+    загрузіць ніякую старонку.</li>
+  <li>Упэўніцеся, калі ваш кампутар або сетка абараняюцца сетказаслонаю ці 
+    пасярэднікам,  што &brandShortName; дазволена мець доступ у Сеціва.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.title "Заблакавана палітыкай абароны змесціва">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; адмовіў старонцы ў загрузцы такім спосабам, бо палітыка бяспекі змесціва гэтай старонкі забараняе гэта.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Памылка скажэння змесціва">
+
+<!ENTITY securityOverride.linkText "Ці вы можаце дадаць выключэнне…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Пакінуць гэтае месца!">
+<!ENTITY securityOverride.exceptionButtonLabel "Дадаць выключэнне…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <button> tags. It uses strings already defined above. The
+button is included here (instead of netError.xhtml) because it exposes
+functionality specific to thunderbird. -->
+
+<!ENTITY securityOverride.warningContent "
+<p>Вы не павінны дадаваць выключэнне, калі вы ўжываеце злучэнне з інтэрнэтам, якому вы цалкам не давяраеце, ці калі вам не даводзілася бачыць папярэджанне для гэтага паслугача.</p>
+
+<button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button>
+<button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>
+">
+
+<!ENTITY remoteXUL.title "Адлеглы XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Паведамце, калі ласка, уладальнікам пляцоўкі сеціва пра гэтую праблему.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "Ваша злучэнне не бяспечнае">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+
+<!ENTITY blockedByPolicy.title "Заблакаваная старонка">
+

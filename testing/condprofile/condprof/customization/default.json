@@ -1,0 +1,10 @@
+{
+   "name": "default",
+   "addons":{},
+   "prefs":{
+
+   },
+   "scenario": {
+       "full": {"max_urls": 150}
+   }
+}

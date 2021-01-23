@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.junk.title "Junk &amp; Suspect Mail">
+<!ENTITY junkSettings.caption "Configuración global de correu vasuera">
+<!ENTITY junkMail.intro "Vaiga a Configuración de cuentas ta establir configuracions de correu vasuera especificas de cada cuenta.">
+<!-- Junk Mail Controls -->
+
+<!ENTITY manualMark.label               "Quan marco os mensaches como vasuera:">
+<!ENTITY manualMark.accesskey           "Q">
+<!ENTITY manualMarkModeMove.label       "Move them to the account's &quot;Junk&quot; folder">
+<!ENTITY manualMarkModeMove.accesskey   "M">
+<!ENTITY manualMarkModeDelete.label     "Eliminar-los">
+<!ENTITY manualMarkModeDelete.accesskey "E">
+
+<!ENTITY markAsRead.intro               "Marcar mensaches como leitos:">
+<!ENTITY autoMarkAsRead.label           "Cuando &brandShortName; determina que son vasuera">
+<!ENTITY autoMarkAsRead.accesskey       "u">
+<!ENTITY manualMarkAsRead.label         "Quan los marco como vasuera manualment">
+<!ENTITY manualMarkAsRead.accesskey     "v">
+
+<!ENTITY enableJunkLogging.label        "Activar rechistro d'o filtro de correu vasuera">
+<!ENTITY enableJunkLogging.accesskey    "A">
+<!ENTITY openJunkLog.label              "Mostrar o rechistro">
+<!ENTITY openJunkLog.accesskey          "s">
+<!ENTITY resetTrainingData.label        "Reiniciar datos d'entrenamiento">
+<!ENTITY resetTrainingData.accesskey    "R">
+
+<!ENTITY pref.suspectMail.caption       "Correu sospitoso">
+<!-- Phishing Detector -->
+
+<!ENTITY pref.phishing.caption            "Correu fraudulento">
+<!ENTITY enablePhishingDetector.label     "Decir-me si o mensache que soi leyendo pareixe un mensache fraudulento">
+<!ENTITY enablePhishingDetector.accesskey "D">
+<!-- Anti Virus -->
+
+<!ENTITY pref.antivirus.caption           "Antivirus">
+<!ENTITY antiVirus.label                  "Permitir a os clients antivirus analisar os mensaches entrantes mas facilment">
+<!ENTITY antiVirus.accesskey              "P">

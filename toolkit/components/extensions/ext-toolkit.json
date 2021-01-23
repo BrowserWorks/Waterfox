@@ -20,6 +20,7 @@
     "url": "chrome://extensions/content/parent/ext-browserSettings.js",
     "schema": "chrome://extensions/content/schemas/browser_settings.json",
     "scopes": ["addon_parent"],
+    "settings": true,
     "paths": [
       ["browserSettings"]
     ]
@@ -44,6 +45,7 @@
     "url": "chrome://extensions/content/parent/ext-contextualIdentities.js",
     "schema": "chrome://extensions/content/schemas/contextual_identities.json",
     "scopes": ["addon_parent"],
+    "settings": true,
     "events": ["startup"],
     "permissions": ["contextualIdentities"],
     "paths": [
@@ -82,6 +84,14 @@
       ["extension"]
     ]
   },
+  "activityLog": {
+    "url": "chrome://extensions/content/parent/ext-activityLog.js",
+    "schema": "chrome://extensions/content/schemas/activity_log.json",
+    "scopes": ["addon_parent"],
+    "paths": [
+      ["activityLog"]
+    ]
+  },
   "i18n": {
     "url": "chrome://extensions/content/parent/ext-i18n.js",
     "schema": "chrome://extensions/content/schemas/i18n.json",
@@ -106,6 +116,14 @@
       ["management"]
     ]
   },
+  "networkStatus": {
+    "url": "chrome://extensions/content/parent/ext-networkStatus.js",
+    "schema": "chrome://extensions/content/schemas/network_status.json",
+    "scopes": ["addon_parent"],
+    "paths": [
+      ["networkStatus"]
+    ]
+  },
   "notifications": {
     "url": "chrome://extensions/content/parent/ext-notifications.js",
     "schema": "chrome://extensions/content/schemas/notifications.json",
@@ -126,6 +144,7 @@
     "url": "chrome://extensions/content/parent/ext-privacy.js",
     "schema": "chrome://extensions/content/schemas/privacy.json",
     "scopes": ["addon_parent"],
+    "settings": true,
     "paths": [
       ["privacy"]
     ]
@@ -140,6 +159,7 @@
     "url": "chrome://extensions/content/parent/ext-proxy.js",
     "schema": "chrome://extensions/content/schemas/proxy.json",
     "scopes": ["addon_parent"],
+    "settings": true,
     "paths": [
       ["proxy"]
     ]
@@ -179,14 +199,6 @@
     "manifest": ["theme"],
     "paths": [
       ["theme"]
-    ]
-  },
-  "topSites": {
-    "url": "chrome://extensions/content/parent/ext-topSites.js",
-    "schema": "chrome://extensions/content/schemas/top_sites.json",
-    "scopes": ["addon_parent"],
-    "paths": [
-      ["topSites"]
     ]
   },
   "userScripts": {

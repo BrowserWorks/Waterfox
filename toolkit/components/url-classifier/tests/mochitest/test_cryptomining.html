@@ -39,9 +39,10 @@ async function runTest(test) {
     [ "privacy.trackingprotection.annotate_channels", false ],
     [ "privacy.trackingprotection.cryptomining.enabled", true ],
     [ "privacy.trackingprotection.fingerprinting.enabled", false ],
+    [ "privacy.trackingprotection.socialtracking.enabled", false ],
   ]});
 
-  info("Testing: " + test.config.toSource() + "\n");
+  info("Testing: " + JSON.stringify(test.config) + "\n");
 
   // Let's load an image with a random query string, just to avoid network cache.
   let result = await new Promise(resolve => {
@@ -69,30 +70,21 @@ async function runTests() {
     const {UrlClassifierTestUtils} = ChromeUtils.import("resource://testing-common/UrlClassifierTestUtils.jsm");
 
     addMessageListener("loadTrackers", __ => {
-      UrlClassifierTestUtils.addTestTrackers().then(___ => {
-        sendAsyncMessage("trackersLoaded");
-      });
+      return UrlClassifierTestUtils.addTestTrackers();
     });
 
     addMessageListener("unloadTrackers", __ => {
       UrlClassifierTestUtils.cleanupTestTrackers();
-      sendAsyncMessage("trackersUnloaded");
     });
   });
 
-  await new Promise(resolve => {
-    chromeScript.addMessageListener("trackersLoaded", resolve);
-    chromeScript.sendAsyncMessage("loadTrackers");
-  });
+  await chromeScript.sendQuery("loadTrackers");
 
   for (let test in tests) {
     await runTest(tests[test]);
   }
 
-  await new Promise(resolve => {
-    chromeScript.addMessageListener("trackersUnloaded", resolve);
-    chromeScript.sendSyncMessage("unloadTrackers");
-  });
+  await chromeScript.sendQuery("unloadTrackers");
 
   chromeScript.destroy();
   SimpleTest.finish();

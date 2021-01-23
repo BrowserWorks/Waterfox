@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Roghainnean na liosta">
+
+<!ENTITY ListType.label "Seòrsa na liosta">
+<!ENTITY bulletStyle.label "Stoidhle nam peilear:">
+<!ENTITY startingNumber.label "Tòisich aig:">
+<!ENTITY startingNumber.accessKey "s">
+<!ENTITY none.value "Chan eil gin">
+<!ENTITY bulletList.value "Liosta pheilearaichte (gun àireamhan)">
+<!ENTITY numberList.value "Liosta àireamhaichte">
+<!ENTITY definitionList.value "Liosta nam mìneachaidhean">
+<!ENTITY changeEntireListRadio.label "Atharraich an liosta gu lèir">
+<!ENTITY changeEntireListRadio.accessKey "c">
+<!ENTITY changeSelectedRadio.label "Na atharraich ach na rudan a tha air a thaghadh">
+<!ENTITY changeSelectedRadio.accessKey "i">

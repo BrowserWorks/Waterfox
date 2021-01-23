@@ -99,7 +99,6 @@
 #define mozilla_ServoBindingTypes_h
 
 #include "mozilla/RefPtr.h"
-#include "mozilla/ServoComputedData.h"
 #include "mozilla/ServoTypes.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/gfx/Types.h"
@@ -117,7 +116,6 @@ class nsCSSPropertyIDSet;
 class nsCSSValue;
 class nsINode;
 class nsPresContext;
-class nsXBLBinding;
 struct nsFontFaceRuleContainer;
 struct nsTimingFunction;
 
@@ -173,8 +171,6 @@ SERVO_ARC_TYPE(ComputedStyle, mozilla::ComputedStyle)
 
 // Other special cases.
 
-// TODO(heycam): Handle these elsewhere.
 struct RawServoAnimationValueTable;
-struct RawServoAnimationValueMap;
 
 #endif  // mozilla_ServoBindingTypes_h

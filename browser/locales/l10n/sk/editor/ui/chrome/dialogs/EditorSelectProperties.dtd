@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+   
+<!ENTITY windowTitle.label "Vlastnosti výberového poľa">
+
+<!ENTITY Select.label "Výberové pole">
+<!ENTITY SelectName.label "Názov poľa:">
+<!ENTITY SelectName.accesskey "N">
+<!ENTITY SelectSize.label "Výška:">
+<!ENTITY SelectSize.accesskey "V">
+<!ENTITY SelectMultiple.label "Povoliť výber viacerých možností">
+<!ENTITY SelectMultiple.accesskey "b">
+<!ENTITY SelectDisabled.label "Zakázané">
+<!ENTITY SelectDisabled.accesskey "a">
+<!ENTITY SelectTabIndex.label "Poradie">
+<!ENTITY SelectTabIndex.accesskey "r">
+
+<!ENTITY OptGroup.label "Skupina možností">
+<!ENTITY OptGroupLabel.label "Popis:">
+<!ENTITY OptGroupLabel.accesskey "i">
+<!ENTITY OptGroupDisabled.label "Zakázaná">
+<!ENTITY OptGroupDisabled.accesskey "a">
+
+<!ENTITY Option.label "Možnosť">
+<!ENTITY OptionText.label "Text:">
+<!ENTITY OptionText.accesskey "T">
+<!ENTITY OptionValue.label "Hodnota:">
+<!ENTITY OptionValue.accesskey "H">
+<!ENTITY OptionSelected.label "Na začiatku označená">
+<!ENTITY OptionSelected.accesskey "e">
+<!ENTITY OptionDisabled.label "Zakázaná">
+<!ENTITY OptionDisabled.accesskey "a">
+
+<!ENTITY TextHeader.label "Text">
+<!ENTITY ValueHeader.label "Hodnota">
+<!ENTITY SelectedHeader.label "Vybraná">
+
+<!ENTITY AddOption.label "Pridať možnosť">
+<!ENTITY AddOption.accesskey "P">
+<!ENTITY AddOptGroup.label "Pridať skupinu">
+<!ENTITY AddOptGroup.accesskey "s">
+<!ENTITY RemoveElement.label "Odstrániť">
+<!ENTITY RemoveElement.accesskey "d">
+<!ENTITY MoveElementUp.label "Posunúť nahor">
+<!ENTITY MoveElementUp.accesskey "u">
+<!ENTITY MoveElementDown.label "Posunúť nadol">
+<!ENTITY MoveElementDown.accesskey "n">

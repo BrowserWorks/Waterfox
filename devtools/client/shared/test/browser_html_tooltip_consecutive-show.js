@@ -10,7 +10,7 @@
  */
 
 const HTML_NS = "http://www.w3.org/1999/xhtml";
-const TEST_URI = CHROME_URL_ROOT + "doc_html_tooltip.xul";
+const TEST_URI = CHROME_URL_ROOT + "doc_html_tooltip.xhtml";
 
 const {
   HTMLTooltip,
@@ -25,7 +25,11 @@ function getTooltipContent(doc) {
 }
 
 add_task(async function() {
-  const [, , doc] = await createHost("bottom", TEST_URI);
+  const { doc } = await createHost("bottom", TEST_URI);
+
+  // Creating a host is not correctly waiting when DevTools run in content frame
+  // See Bug 1571421.
+  await wait(1000);
 
   const box1 = doc.getElementById("box1");
   const box2 = doc.getElementById("box2");

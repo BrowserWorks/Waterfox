@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "ფაილის გახსნა…">
+<!ENTITY openFileCmd.accesskey "გ">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "ვებმისამართის გახსნა…">
+<!ENTITY openRemoteCmd.accesskey "მ">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "ბოლო გვერდები">
+<!ENTITY fileRecentMenu.accesskey "ბ">
+<!ENTITY saveCmd.label "შენახვა">
+<!ENTITY saveCmd.accesskey "შ">
+<!ENTITY saveAsCmd.label "შენახვა როგორც…">
+<!ENTITY saveAsCmd.accesskey "რ">
+<!ENTITY saveAsChangeEncodingCmd2.label "შენახვა და ტექსტის კოდირების შეცვლა">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "ც">
+<!ENTITY publishCmd.label "გამოქვეყნება">
+<!ENTITY publishCmd.accesskey "ქ">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "გამოქვეყნება როგორც…">
+<!ENTITY publishAsCmd.accesskey "ვ">
+<!ENTITY fileRevert.label "დაბრუნება">
+<!ENTITY fileRevert.accesskey "უ">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "გამოსაქვეყნებელი საიტის პარამეტრები…">
+<!ENTITY publishSettings.accesskey "ყ">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "ახალი">
+<!ENTITY newToolbarCmd.tooltip "ახალი გვერდის შექმნა">
+<!ENTITY openToolbarCmd.label "გახსნა">
+<!ENTITY openToolbarCmd.tooltip "ადგილობრივი ფაილის გახსნა">
+<!ENTITY saveToolbarCmd.tooltip "ფაილის შენახვა კომპიუტერში">
+<!ENTITY publishToolbarCmd.tooltip "ფაილის ატვირთვა გარე სერვერზე">
+<!ENTITY printToolbarCmd.label "ამობეჭდვა">
+<!ENTITY printToolbarCmd.tooltip "ამ გვერდის ამობეჭდვა">

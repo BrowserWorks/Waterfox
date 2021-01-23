@@ -2,10 +2,11 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import, print_function, unicode_literals
 
 from contextlib import contextmanager
 import json
+import six
 
 from .files import (
     AbsoluteSymlinkFile,
@@ -116,7 +117,7 @@ class InstallManifest(object):
         self._source_files = set()
 
         if path or fileobj:
-            with _auto_fileobj(path, fileobj, 'rb') as fh:
+            with _auto_fileobj(path, fileobj, 'r') as fh:
                 self._source_files.add(fh.name)
                 self._load_from_fileobj(fh)
 
@@ -127,7 +128,9 @@ class InstallManifest(object):
                                             version)
 
         for line in fileobj:
-            line = line.rstrip()
+            # Explicitly strip on \n so we don't strip out the FIELD_SEPARATOR
+            # as well.
+            line = line.rstrip('\n')
 
             fields = line.split(self.FIELD_SEPARATOR)
 
@@ -175,7 +178,7 @@ class InstallManifest(object):
                 dest, content = fields[1:]
 
                 self.add_content(
-                    self._decode_field_entry(content).encode('utf-8'), dest)
+                    six.ensure_text(self._decode_field_entry(content)), dest)
                 continue
 
             # Don't fail for non-actionable items, allowing
@@ -228,7 +231,7 @@ class InstallManifest(object):
 
         It is an error if both are specified.
         """
-        with _auto_fileobj(path, fileobj, 'wb') as fh:
+        with _auto_fileobj(path, fileobj, 'wt') as fh:
             fh.write('%d\n' % self.CURRENT_VERSION)
 
             for dest in sorted(self._dests):
@@ -243,12 +246,12 @@ class InstallManifest(object):
                         source = mozpath.join(base, path)
                         parts = ['%d' % type, mozpath.join(dest, path), source]
                         fh.write('%s\n' % self.FIELD_SEPARATOR.join(
-                            p.encode('utf-8') for p in parts))
+                            six.ensure_text(p) for p in parts))
                 else:
                     parts = ['%d' % entry[0], dest]
                     parts.extend(entry[1:])
                     fh.write('%s\n' % self.FIELD_SEPARATOR.join(
-                        p.encode('utf-8') for p in parts))
+                        six.ensure_text(p) for p in parts))
 
     def add_link(self, source, dest):
         """Add a link to this manifest.

@@ -13,13 +13,13 @@
 
 #include "mozilla/Attributes.h"  // for final
 #include "mozilla/dom/NodeInfo.h"
+#include "mozilla/dom/DOMArena.h"
 #include "mozilla/MruCache.h"
 #include "nsCOMPtr.h"                      // for member
 #include "nsCycleCollectionParticipant.h"  // for NS_DECL_CYCLE_*
 #include "nsDataHashtable.h"
 #include "nsStringFwd.h"
 
-class nsBindingManager;
 class nsAtom;
 class nsIPrincipal;
 class nsWindowSizes;
@@ -29,7 +29,7 @@ struct already_AddRefed;
 namespace mozilla {
 namespace dom {
 class Document;
-}
+}  // namespace dom
 }  // namespace mozilla
 
 class nsNodeInfoManager final {
@@ -98,8 +98,6 @@ class nsNodeInfoManager final {
 
   void RemoveNodeInfo(mozilla::dom::NodeInfo* aNodeInfo);
 
-  nsBindingManager* GetBindingManager() const { return mBindingManager; }
-
   /**
    * Returns true if SVG nodes in this document have real SVG semantics.
    */
@@ -111,6 +109,15 @@ class nsNodeInfoManager final {
   bool MathMLEnabled() {
     return mMathMLEnabled.valueOr(InternalMathMLEnabled());
   }
+
+  mozilla::dom::DOMArena* GetArenaAllocator() { return mArena; }
+  void SetArenaAllocator(mozilla::dom::DOMArena* aArena);
+
+  void* Allocate(size_t aSize);
+
+  void Free(void* aPtr) { free(aPtr); }
+
+  bool HasAllocated() { return mHasAllocated; }
 
   void AddSizeOfIncludingThis(nsWindowSizes& aSizes) const;
 
@@ -161,10 +168,13 @@ class nsNodeInfoManager final {
       mCommentNodeInfo;  // WEAK to avoid circular ownership
   mozilla::dom::NodeInfo* MOZ_NON_OWNING_REF
       mDocumentNodeInfo;  // WEAK to avoid circular ownership
-  RefPtr<nsBindingManager> mBindingManager;
   NodeInfoCache mRecentlyUsedNodeInfos;
   mozilla::Maybe<bool> mSVGEnabled;     // Lazily initialized.
   mozilla::Maybe<bool> mMathMLEnabled;  // Lazily initialized.
+
+  // For dom_arena_allocator_enabled
+  RefPtr<mozilla::dom::DOMArena> mArena;
+  bool mHasAllocated = false;
 };
 
 #endif /* nsNodeInfoManager_h___ */

@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY migration.title "Data Import: &brandFullName;">
+<!ENTITY migration.welcome "Selamat Datang">
+<!ENTITY migration.importing "Mengimport">
+<!ENTITY migration.list.description "&brandShortName; boleh mengimport data kalendar daripada banyak aplikasi yang popular. Data daripada aplikasi berikut telah dijumpai dalam komputer anda. Sila pilih data yang anda mahu import.">
+<!ENTITY migration.progress.description "Mengimport data yang dipilih">

@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Ldi afaylu…">
+<!ENTITY openFileCmd.accesskey "L">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Ldi tansa web…">
+<!ENTITY openRemoteCmd.accesskey "L">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Isebtra n melmi kan">
+<!ENTITY fileRecentMenu.accesskey "I">
+<!ENTITY saveCmd.label "Sekles">
+<!ENTITY saveCmd.accesskey "k">
+<!ENTITY saveAsCmd.label "Sekles s yisem…">
+<!ENTITY saveAsCmd.accesskey "k">
+<!ENTITY saveAsChangeEncodingCmd2.label "Sekles u snifel asettengel n uḍris">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "k">
+<!ENTITY publishCmd.label "Ẓereg">
+<!ENTITY publishCmd.accesskey "e">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Ẓreg ds yisem...">
+<!ENTITY publishAsCmd.accesskey "g">
+<!ENTITY fileRevert.label "Uɣal">
+<!ENTITY fileRevert.accesskey "U">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Taẓirigt n iɣewarren n usmel...">
+<!ENTITY publishSettings.accesskey "ẓ">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "Amaynut">
+<!ENTITY newToolbarCmd.tooltip "Rnu asebter amsuddes amaynut">
+<!ENTITY openToolbarCmd.label "Ldi">
+<!ENTITY openToolbarCmd.tooltip "Ldi afaylu adigan">
+<!ENTITY saveToolbarCmd.tooltip "Sekles afaylu ɣef adeg adigan">
+<!ENTITY publishToolbarCmd.tooltip "Sali afaylu ɣer adeg anmeggag">
+<!ENTITY printToolbarCmd.label "Siggez">
+<!ENTITY printToolbarCmd.tooltip "Siggez asebter-a">

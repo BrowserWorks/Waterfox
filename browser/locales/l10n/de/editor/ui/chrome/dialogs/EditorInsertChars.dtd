@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Window title -->
+<!ENTITY windowTitle.label "Zeichen einfügen">
+<!ENTITY category.label "Kategorie">
+<!ENTITY letter.label "Buchstabe:">
+<!ENTITY letter.accessKey "B">
+<!ENTITY character.label "Zeichen:">
+<!ENTITY character.accessKey "Z">
+<!ENTITY accentUpper.label "Akzent Großbuchstabe">
+<!ENTITY accentLower.label "Akzent Kleinbuchstabe">
+<!ENTITY otherUpper.label "Andere Großbuchstaben">
+<!ENTITY otherLower.label "Andere Kleinbuchstaben">
+<!ENTITY commonSymbols.label "Übliche Symbole">
+<!ENTITY insertButton.label "Einfügen">
+<!ENTITY closeButton.label "Schließen">

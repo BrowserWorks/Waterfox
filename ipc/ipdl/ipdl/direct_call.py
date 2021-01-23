@@ -17,6 +17,8 @@ DIRECT_CALL_OVERRIDES = {
         "BackgroundMutableFileParentBase", "mozilla/dom/filehandle/ActorsParent.h"
     ),
 
+    ("PCanvas", "parent"): ("CanvasTranslator", "mozilla/layers/CanvasTranslator.h"),
+
     ("PChromiumCDM", "parent"): ("ChromiumCDMParent", "ChromiumCDMParent.h"),
 
     ("PCompositorBridge", "parent"): (
@@ -49,16 +51,6 @@ DIRECT_CALL_OVERRIDES = {
     ),
     ("PPresentationRequest", "parent"): (
         "PresentationRequestParent", "mozilla/dom/PresentationParent.h"
-    ),
-
-    ("PPrinting", "child"): ("nsPrintingProxy", "nsPrintingProxy.h"),
-    ("PPrinting", "parent"): ("PrintingParent", "mozilla/embedding/printingui/PrintingParent.h"),
-
-    ("PPSMContentDownloader", "child"): (
-        "PSMContentDownloaderChild", "mozilla/psm/PSMContentListener.h"
-    ),
-    ("PPSMContentDownloader", "parent"): (
-        "PSMContentDownloaderParent", "mozilla/psm/PSMContentListener.h"
     ),
 
     ("PRemoteSpellcheckEngine", "child"): (
@@ -409,6 +401,34 @@ DIRECT_CALL_OVERRIDES = {
     ("PTestUrgentHangs", "parent"): (
         "TestUrgentHangsParent", "mozilla/_ipdltest/TestUrgentHangs.h"
     ),
+
+    ("PBackgroundFileHandle", "child"):
+    ("indexedDB::BackgroundFileHandleChild", "mozilla/dom/indexedDB/ActorsChild.h"),
+    ("PBackgroundFileRequest", "child"):
+    ("indexedDB::BackgroundFileRequestChild", "mozilla/dom/indexedDB/ActorsChild.h"),
+    ("PBackgroundIDBCursor", "child"):
+    ("indexedDB::BackgroundCursorChildBase", "mozilla/dom/indexedDB/ActorsChild.h"),
+    ("PBackgroundIDBDatabase", "child"):
+    ("indexedDB::BackgroundDatabaseChild", "mozilla/dom/indexedDB/ActorsChild.h"),
+    ("PBackgroundIDBDatabaseRequest", "child"):
+    ("indexedDB::BackgroundDatabaseRequestChild",
+     "mozilla/dom/indexedDB/ActorsChild.h"),
+    ("PBackgroundIDBFactory", "child"):
+    ("indexedDB::BackgroundFactoryChild", "mozilla/dom/indexedDB/ActorsChild.h"),
+    ("PBackgroundIDBFactoryRequest", "child"):
+    ("indexedDB::BackgroundFactoryRequestChild",
+     "mozilla/dom/indexedDB/ActorsChild.h"),
+    ("PBackgroundIDBRequest", "child"):
+    ("indexedDB::BackgroundRequestChild", "mozilla/dom/indexedDB/ActorsChild.h"),
+    ("PBackgroundIDBTransaction", "child"):
+    ("indexedDB::BackgroundTransactionChild", "mozilla/dom/indexedDB/ActorsChild.h"),
+    ("PBackgroundIDBVersionChangeTransaction", "child"):
+    ("indexedDB::BackgroundVersionChangeTransactionChild",
+     "mozilla/dom/indexedDB/ActorsChild.h"),
+    ("PBackgroundIndexedDBUtils", "child"):
+    ("indexedDB::BackgroundUtilsChild", "mozilla/dom/indexedDB/ActorsChild.h"),
+    ("PBackgroundMutableFile", "child"):
+    ("indexedDB::BackgroundMutableFileChild", "mozilla/dom/indexedDB/ActorsChild.h"),
 }
 
 # Our long term goal is to burn this list down, so new entries should be added
@@ -418,8 +438,6 @@ DIRECT_CALL_OVERRIDES = {
 # set() of (Protocol, side)
 VIRTUAL_CALL_CLASSES = set([
     # Defined as a strange template
-    ("PJavaScript", "child"),
-    ("PJavaScript", "parent"),
     ("PMedia", "parent"),
     ("PTexture", "parent"),
 
@@ -467,23 +485,11 @@ VIRTUAL_CALL_CLASSES = set([
     # .h is not exported
     ("PBackground", "child"),
     ("PBackground", "parent"),
-    ("PBackgroundFileHandle", "child"),
-    ("PBackgroundFileRequest", "child"),
-    ("PBackgroundIDBCursor", "child"),
-    ("PBackgroundIDBDatabase", "child"),
-    ("PBackgroundIDBDatabaseRequest", "child"),
-    ("PBackgroundIDBFactory", "child"),
-    ("PBackgroundIDBFactoryRequest", "child"),
-    ("PBackgroundIDBRequest", "child"),
-    ("PBackgroundIDBTransaction", "child"),
-    ("PBackgroundIDBVersionChangeTransaction", "child"),
-    ("PBackgroundIndexedDBUtils", "child"),
     ("PBackgroundLSDatabase", "child"),
     ("PBackgroundLSObserver", "child"),
     ("PBackgroundLSRequest", "child"),
     ("PBackgroundLSSimpleRequest", "child"),
     ("PBackgroundLSSnapshot", "child"),
-    ("PBackgroundMutableFile", "child"),
     ("PBackgroundSDBConnection", "child"),
     ("PBackgroundSDBRequest", "child"),
     ("PBroadcastChannel", "child"),
@@ -516,6 +522,12 @@ VIRTUAL_CALL_CLASSES = set([
     ("PHandlerService", "parent"),
     ("PPluginBackgroundDestroyer", "child"),
     ("PPluginBackgroundDestroyer", "parent"),
+    ("PRemotePrintJob", "child"),
+    ("PRemotePrintJob", "parent"),
+    # PRemotePrintJob, PPrinting, PPrintProgressDialog and PPrintSettingsDialog
+    # need to be virtual for --disable-printing builds.
+    ("PPrinting", "child"),
+    ("PPrinting", "parent"),
     ("PPrintProgressDialog", "child"),
     ("PPrintProgressDialog", "parent"),
     ("PPrintSettingsDialog", "child"),
@@ -555,8 +567,8 @@ VIRTUAL_CALL_CLASSES = set([
     ("PSpeechSynthesisRequest", "parent"),
     ("PStunAddrsRequest", "child"),
     ("PStunAddrsRequest", "parent"),
-    ("PWebrtcProxyChannel", "child"),
-    ("PWebrtcProxyChannel", "parent"),
+    ("PWebrtcTCPSocket", "child"),
+    ("PWebrtcTCPSocket", "parent"),
 
     # .h includes something that's a LOCAL_INCLUDE
     ("PBackgroundLocalStorageCache", "child"),

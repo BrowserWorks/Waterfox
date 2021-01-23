@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Lataukset">
+<!ENTITY aboutDownloads.header                     "Lataukset">
+<!ENTITY aboutDownloads.empty                      "Ei latauksia">
+
+<!ENTITY aboutDownloads.open                       "Avaa">
+<!ENTITY aboutDownloads.remove                     "Poista">
+<!ENTITY aboutDownloads.removeAll                  "Poista kaikki">
+<!ENTITY aboutDownloads.pause                      "Pysäytä">
+<!ENTITY aboutDownloads.resume                     "Jatka">
+<!ENTITY aboutDownloads.cancel                     "Peruuta">
+<!ENTITY aboutDownloads.retry                      "Yritä uudestaan">

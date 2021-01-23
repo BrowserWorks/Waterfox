@@ -47,7 +47,7 @@ USE_LIBS += [
     'xz-embedded',
 ]
 
-if 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk':
     have_progressui = 1
     srcs += [
         'progressui_gtk.cpp',
@@ -78,6 +78,13 @@ if have_progressui == 0:
 
 SOURCES += sorted(srcs)
 
+if CONFIG['MOZ_TSAN']:
+    # Since mozglue is not linked to the updater,
+    # we need to include our own TSan suppression list.
+    SOURCES += [
+        'TsanOptions.cpp',
+    ]
+
 DEFINES['NS_NO_XPCOM'] = True
 DisableStlWrapping()
 for var in ('MAR_CHANNEL_ID', 'MOZ_APP_VERSION'):
@@ -100,7 +107,7 @@ if CONFIG['CC_TYPE'] == 'clang-cl':
 elif CONFIG['OS_ARCH'] == 'WINNT':
     WIN32_EXE_LDFLAGS += ['-municode']
 
-if 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk':
     CXXFLAGS += CONFIG['TK_CFLAGS']
     OS_LIBS += CONFIG['TK_LIBS']
 

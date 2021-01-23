@@ -7,12 +7,15 @@
 #ifndef _mozilla_dom_ClientInfo_h
 #define _mozilla_dom_ClientInfo_h
 
+#include "X11UndefineNone.h"
 #include "mozilla/dom/ClientBinding.h"
+#include "mozilla/Maybe.h"
 #include "mozilla/UniquePtr.h"
 
 namespace mozilla {
 
 namespace ipc {
+class CSPInfo;
 class PrincipalInfo;
 }  // namespace ipc
 
@@ -44,9 +47,16 @@ class ClientInfo final {
   ~ClientInfo();
 
   bool operator==(const ClientInfo& aRight) const;
+  bool operator!=(const ClientInfo& aRight) const;
 
   // Get the unique identifier chosen at the time of the global's creation.
   const nsID& Id() const;
+
+  // This function should only be called on EnsureClientSource().
+  // XXX Bug 1579785 will merge this into the constructor (requiring pass a
+  // AgentClusterId)
+  void SetAgentClusterId(const nsID& aId);
+  const Maybe<nsID>& AgentClusterId() const;
 
   // Determine what kind of global this is; e.g. Window, Worker, SharedWorker,
   // etc.
@@ -84,9 +94,14 @@ class ClientInfo final {
   // Determine if the client is in private browsing mode.
   bool IsPrivateBrowsing() const;
 
-  // Get a main-thread nsIPrincipal for the client.  This may return nullptr
-  // if the PrincipalInfo() fails to deserialize for some reason.
-  nsCOMPtr<nsIPrincipal> GetPrincipal() const;
+  // Get a main-thread nsIPrincipal for the client.
+  Result<nsCOMPtr<nsIPrincipal>, nsresult> GetPrincipal() const;
+
+  const Maybe<mozilla::ipc::CSPInfo>& GetCspInfo() const;
+  void SetCspInfo(const mozilla::ipc::CSPInfo& aCSPInfo);
+
+  const Maybe<mozilla::ipc::CSPInfo>& GetPreloadCspInfo() const;
+  void SetPreloadCspInfo(const mozilla::ipc::CSPInfo& aPreloadCSPInfo);
 };
 
 }  // namespace dom

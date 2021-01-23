@@ -7,45 +7,9 @@
 #ifndef gc_DeletePolicy_h
 #define gc_DeletePolicy_h
 
-#include "js/TracingAPI.h"
+#include "gc/ClearEdgesTracer.h"
 
 namespace js {
-namespace gc {
-
-struct ClearEdgesTracer final : public JS::CallbackTracer {
-  ClearEdgesTracer();
-
-#ifdef DEBUG
-  TracerKind getTracerKind() const override { return TracerKind::ClearEdges; }
-#endif
-
-  template <typename T>
-  inline void clearEdge(T** thingp);
-
-  void onObjectEdge(JSObject** objp) override;
-  void onStringEdge(JSString** strp) override;
-  void onSymbolEdge(JS::Symbol** symp) override;
-  void onBigIntEdge(JS::BigInt** bip) override;
-  void onScriptEdge(JSScript** scriptp) override;
-  void onShapeEdge(js::Shape** shapep) override;
-  void onObjectGroupEdge(js::ObjectGroup** groupp) override;
-  void onBaseShapeEdge(js::BaseShape** basep) override;
-  void onJitCodeEdge(js::jit::JitCode** codep) override;
-  void onLazyScriptEdge(js::LazyScript** lazyp) override;
-  void onScopeEdge(js::Scope** scopep) override;
-  void onRegExpSharedEdge(js::RegExpShared** sharedp) override;
-  void onChild(const JS::GCCellPtr& thing) override;
-};
-
-#ifdef DEBUG
-inline bool IsClearEdgesTracer(JSTracer* trc) {
-  return trc->isCallbackTracer() &&
-         trc->asCallbackTracer()->getTracerKind() ==
-             JS::CallbackTracer::TracerKind::ClearEdges;
-}
-#endif
-
-}  // namespace gc
 
 /*
  * Provides a delete policy that can be used for objects which have their

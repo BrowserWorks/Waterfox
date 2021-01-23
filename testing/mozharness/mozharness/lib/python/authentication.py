@@ -5,6 +5,8 @@
 # ***** END LICENSE BLOCK *****
 
 """module for http authentication operations"""
+from __future__ import print_function
+
 import getpass
 import os
 
@@ -33,16 +35,21 @@ def get_credentials():
             # We want to remove files which contain the password
             os.remove(CREDENTIALS_PATH)
     else:
-        https_username = \
-                raw_input("Please enter your full LDAP email address: ")
+        try:
+            input_method = raw_input
+        except NameError:
+            input_method = input
+
+        https_username = input_method(
+            "Please enter your full LDAP email address: ")
 
         with open(CREDENTIALS_PATH, "w+") as file_handler:
             file_handler.write("%s\n" % https_username)
 
-        os.chmod(CREDENTIALS_PATH, 0600)
+        os.chmod(CREDENTIALS_PATH, 0o600)
 
     if not LDAP_PASSWORD:
-        print "Please enter your LDAP password (we won't store it):"
+        print("Please enter your LDAP password (we won't store it):")
         LDAP_PASSWORD = getpass.getpass()
 
     return https_username, LDAP_PASSWORD

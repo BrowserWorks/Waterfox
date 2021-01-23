@@ -9,35 +9,40 @@
 
 #include "mozilla/dom/VRDisplayEventBinding.h"
 #include "nsISupportsImpl.h"  // for NS_INLINE_DECL_REFCOUNTING
+#include "VRManagerChild.h"
 
 class nsGlobalWindowInner;
 
 namespace mozilla {
 namespace dom {
 
-class VREventObserver final {
+class VREventObserver final : public gfx::VRManagerEventObserver {
  public:
-  NS_INLINE_DECL_REFCOUNTING(VREventObserver)
+  NS_INLINE_DECL_REFCOUNTING(VREventObserver, override)
   explicit VREventObserver(nsGlobalWindowInner* aGlobalWindow);
 
   void NotifyAfterLoad();
-  void NotifyVRDisplayMounted(uint32_t aDisplayID);
-  void NotifyVRDisplayUnmounted(uint32_t aDisplayID);
+  void NotifyVRDisplayMounted(uint32_t aDisplayID) override;
+  void NotifyVRDisplayUnmounted(uint32_t aDisplayID) override;
   void NotifyVRDisplayNavigation(uint32_t aDisplayID);
   void NotifyVRDisplayRequested(uint32_t aDisplayID);
-  void NotifyVRDisplayConnect(uint32_t aDisplayID);
-  void NotifyVRDisplayDisconnect(uint32_t aDisplayID);
-  void NotifyVRDisplayPresentChange(uint32_t aDisplayID);
-  void NotifyPresentationGenerationChanged(uint32_t aDisplayID);
+  void NotifyVRDisplayConnect(uint32_t aDisplayID) override;
+  void NotifyVRDisplayDisconnect(uint32_t aDisplayID) override;
+  void NotifyVRDisplayPresentChange(uint32_t aDisplayID) override;
+  void NotifyPresentationGenerationChanged(uint32_t aDisplayID) override;
+  void NotifyEnumerationCompleted() override;
+  void NotifyDetectRuntimesCompleted() override;
 
   void DisconnectFromOwner();
   void UpdateSpentTimeIn2DTelemetry(bool aUpdate);
   void StartActivity();
   void StopActivity();
-  bool GetStopActivityStatus();
+  bool GetStopActivityStatus() const override;
 
  private:
   ~VREventObserver();
+
+  bool IsWebVR(uint32_t aDisplayID) const;
 
   RefPtr<nsGlobalWindowInner> mWindow;
   // For WebVR telemetry for tracking users who view content

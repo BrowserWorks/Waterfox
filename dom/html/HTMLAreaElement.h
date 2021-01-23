@@ -11,7 +11,6 @@
 #include "mozilla/dom/Link.h"
 #include "nsGenericHTMLElement.h"
 #include "nsGkAtoms.h"
-#include "nsIURL.h"
 
 namespace mozilla {
 class EventChainPostVisitor;
@@ -43,10 +42,8 @@ class HTMLAreaElement final : public nsGenericHTMLElement, public Link {
   virtual void GetLinkTarget(nsAString& aTarget) override;
   virtual already_AddRefed<nsIURI> GetHrefURI() const override;
 
-  virtual nsresult BindToTree(Document* aDocument, nsIContent* aParent,
-                              nsIContent* aBindingParent) override;
-  virtual void UnbindFromTree(bool aDeep = true,
-                              bool aNullParent = true) override;
+  virtual nsresult BindToTree(BindContext&, nsINode& aParent) override;
+  virtual void UnbindFromTree(bool aNullParent = true) override;
 
   virtual nsresult Clone(dom::NodeInfo*, nsINode** aResult) const override;
 

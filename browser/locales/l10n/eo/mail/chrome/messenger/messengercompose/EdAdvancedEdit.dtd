@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY WindowTitle.label              "Spertula redaktilo de atributoj">
+<!ENTITY AttName.label                  "Atributo: ">
+<!ENTITY AttValue.label                 "Valoro: ">
+<!ENTITY PropertyName.label             "Eco: ">
+<!ENTITY currentattributesfor.label     "Nunaj atributoj por: ">
+<!ENTITY tree.attributeHeader.label     "Atributo">
+<!ENTITY tree.propertyHeader.label      "Eco">
+<!ENTITY tree.valueHeader.label         "Valoro">
+<!ENTITY tabHTML.label                  "Atributoj HTML">
+<!ENTITY tabCSS.label                   "Entekstaj stiloj">
+<!ENTITY tabJSE.label                   "Ĝavoskript-okazaĵoj">
+
+<!ENTITY editAttribute.label    "Klaku elementon por ŝanĝi ĝian valoron">
+<!ENTITY removeAttribute.label  "Forigi">

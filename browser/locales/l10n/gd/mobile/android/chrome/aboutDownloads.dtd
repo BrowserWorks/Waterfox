@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Luchdaidhean a-nuas">
+<!ENTITY aboutDownloads.header                     "Na luchdaich thu a-nuas">
+<!ENTITY aboutDownloads.empty                      "Cha deach dad a luchdadh a-nuas">
+
+<!ENTITY aboutDownloads.open                       "Fosgail">
+<!ENTITY aboutDownloads.remove                     "Sguab às">
+<!ENTITY aboutDownloads.removeAll                  "Sguab às a h-uile">
+<!ENTITY aboutDownloads.pause                      "Cuir 'na stad">
+<!ENTITY aboutDownloads.resume                     "Lean air">
+<!ENTITY aboutDownloads.cancel                     "Sguir dheth">
+<!ENTITY aboutDownloads.retry                      "Feuch ris a-rithist">

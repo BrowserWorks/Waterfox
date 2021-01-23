@@ -7,6 +7,7 @@ Transform the signing task into an actual task description.
 
 from __future__ import absolute_import, print_function, unicode_literals
 
+from six import text_type
 from taskgraph.loader.single_dep import schema
 from taskgraph.transforms.base import TransformSequence
 from taskgraph.util.attributes import copy_attributes_from_dependent_job
@@ -14,7 +15,6 @@ from taskgraph.util.keyed_by import evaluate_keyed_by
 from taskgraph.util.schema import taskref_or_string
 from taskgraph.util.scriptworker import (
     get_signing_cert_scope_per_platform,
-    get_worker_type_for_scope,
 )
 from taskgraph.transforms.task import task_description_schema
 from voluptuous import Required, Optional
@@ -30,20 +30,23 @@ signing_description_schema = schema.extend({
         Required('taskId'): taskref_or_string,
 
         # type of signing task (for CoT)
-        Required('taskType'): basestring,
+        Required('taskType'): text_type,
 
         # Paths to the artifacts to sign
-        Required('paths'): [basestring],
+        Required('paths'): [text_type],
 
         # Signing formats to use on each of the paths
-        Required('formats'): [basestring],
+        Required('formats'): [text_type],
     }],
 
     # depname is used in taskref's to identify the taskID of the unsigned things
-    Required('depname'): basestring,
+    Required('depname'): text_type,
+
+    # attributes for this task
+    Optional('attributes'): {text_type: object},
 
     # unique label to describe this signing task, defaults to {dep.label}-signing
-    Optional('label'): basestring,
+    Optional('label'): text_type,
 
     # treeherder is allowed here to override any defaults we use for signing.  See
     # taskcluster/taskgraph/transforms/task.py for the schema details, and the
@@ -51,14 +54,15 @@ signing_description_schema = schema.extend({
     Optional('treeherder'): task_description_schema['treeherder'],
 
     # Routes specific to this task, if defined
-    Optional('routes'): [basestring],
+    Optional('routes'): [text_type],
 
     Optional('shipping-phase'): task_description_schema['shipping-phase'],
     Optional('shipping-product'): task_description_schema['shipping-product'],
+    Optional('dependent-tasks'): {text_type: object},
 
     # Optional control for how long a task may run (aka maxRunTime)
     Optional('max-run-time'): int,
-    Optional('extra'): {basestring: object},
+    Optional('extra'): {text_type: object},
 
     # Max number of partner repacks per chunk
     Optional('repacks-per-chunk'): int,
@@ -71,7 +75,9 @@ signing_description_schema = schema.extend({
 @transforms.add
 def set_defaults(config, jobs):
     for job in jobs:
-        job.setdefault('depname', 'build')
+        if not job.get('depname'):
+            dep_job = job['primary-dependency']
+            job['depname'] = dep_job.kind
         yield job
 
 
@@ -91,7 +97,7 @@ def add_entitlements_link(config, jobs):
         )
         if entitlements_path:
             job['entitlements-url'] = config.params.file_url(
-                entitlements_path, endpoint="raw-file"
+                entitlements_path,
             )
         yield job
 
@@ -108,8 +114,7 @@ def make_task_description(config, jobs):
             for f in artifacts['formats']:
                 formats.add(f)  # Add each format only once
 
-        is_nightly = dep_job.attributes.get(
-            'nightly', dep_job.attributes.get('shippable', False))
+        is_shippable = dep_job.attributes.get('shippable', False)
         build_platform = dep_job.attributes.get('build_platform')
         treeherder = None
         if 'partner' not in config.kind and 'eme-free' not in config.kind:
@@ -143,7 +148,8 @@ def make_task_description(config, jobs):
             )
         )
 
-        attributes = copy_attributes_from_dependent_job(dep_job)
+        attributes = job['attributes'] if job.get('attributes') else \
+            copy_attributes_from_dependent_job(dep_job)
         attributes['signed'] = True
 
         if dep_job.attributes.get('chunk_locales'):
@@ -151,10 +157,9 @@ def make_task_description(config, jobs):
             attributes['chunk_locales'] = dep_job.attributes.get('chunk_locales')
 
         signing_cert_scope = get_signing_cert_scope_per_platform(
-            build_platform, is_nightly, config,
-            job_release_type=dep_job.attributes.get('release-type')
+            build_platform, is_shippable, config
         )
-        worker_type_alias = get_worker_type_for_scope(config, signing_cert_scope)
+        worker_type_alias = 'linux-signing' if is_shippable else 'linux-depsigning'
         mac_behavior = None
         task = {
             'label': label,
@@ -163,7 +168,7 @@ def make_task_description(config, jobs):
                        'upstream-artifacts': job['upstream-artifacts'],
                        'max-run-time': job.get('max-run-time', 3600)},
             'scopes': [signing_cert_scope] + signing_format_scopes,
-            'dependencies': {job['depname']: dep_job.label},
+            'dependencies': _generate_dependencies(job),
             'attributes': attributes,
             'run-on-projects': dep_job.attributes.get('run_on_projects'),
             'optimization': dep_job.optimization,
@@ -173,6 +178,28 @@ def make_task_description(config, jobs):
         }
 
         if 'macosx' in build_platform:
+            shippable = "false"
+            if "shippable" in attributes and attributes["shippable"]:
+                shippable = "true"
+            mac_behavior = evaluate_keyed_by(
+                config.graph_config['mac-notarization']['mac-behavior'],
+                'mac behavior',
+                {
+                    'project': config.params['project'],
+                    'shippable': shippable,
+                },
+            )
+            if mac_behavior == 'mac_notarize':
+                if 'part-1' in config.kind:
+                    mac_behavior = 'mac_notarize_part_1'
+                elif config.kind.endswith('signing'):
+                    mac_behavior = 'mac_notarize_part_3'
+                else:
+                    raise Exception("Unknown kind {} for mac_behavior!".format(config.kind))
+            else:
+                if 'part-1' in config.kind:
+                    continue
+            task['worker']['mac-behavior'] = mac_behavior
             worker_type_alias_map = {
                 'linux-depsigning': 'mac-depsigning',
                 'linux-signing': 'mac-signing',
@@ -185,15 +212,6 @@ def make_task_description(config, jobs):
                     " ({} not found in mapping)".format(worker_type_alias)
                 )
             worker_type_alias = worker_type_alias_map[worker_type_alias]
-            mac_behavior = evaluate_keyed_by(
-                config.graph_config['mac-notarization']['mac-behavior'],
-                'mac behavior',
-                {
-                    'release-type': config.params['release_type'],
-                    'platform': build_platform,
-                },
-            )
-            task['worker']['mac-behavior'] = mac_behavior
             if job.get('entitlements-url'):
                 task['worker']['entitlements-url'] = job['entitlements-url']
 
@@ -207,6 +225,15 @@ def make_task_description(config, jobs):
             task['priority'] = job['priority']
 
         yield task
+
+
+def _generate_dependencies(job):
+    if isinstance(job.get('dependent-tasks'), dict):
+        deps = {}
+        for k, v in job['dependent-tasks'].items():
+            deps[k] = v.label
+        return deps
+    return {job['depname']: job['primary-dependency'].label}
 
 
 def _generate_treeherder_platform(dep_th_platform, build_platform, build_type):

@@ -35,7 +35,7 @@ class BasicCardDetails final {
  public:
   struct Address {
     nsString country;
-    nsTArray<nsString> addressLine;
+    CopyableTArray<nsString> addressLine;
     nsString region;
     nsString regionCode;
     nsString city;
@@ -97,46 +97,45 @@ class PaymentRequest final : public DOMEventTargetHelper,
                                JS::Handle<JSObject*> aGivenProto) override;
 
   static already_AddRefed<PaymentRequest> CreatePaymentRequest(
-      nsPIDOMWindowInner* aWindow, nsresult& aRv);
+      nsPIDOMWindowInner* aWindow, ErrorResult& aRv);
 
   static bool PrefEnabled(JSContext* aCx, JSObject* aObj);
 
-  static nsresult IsValidStandardizedPMI(const nsAString& aIdentifier,
-                                         nsAString& aErrorMsg);
+  // Parameter validation methods
+  static void IsValidStandardizedPMI(const nsAString& aIdentifier,
+                                     ErrorResult& aRv);
 
-  static nsresult IsValidPaymentMethodIdentifier(const nsAString& aIdentifier,
-                                                 nsAString& aErrorMsg);
+  static void IsValidPaymentMethodIdentifier(const nsAString& aIdentifier,
+                                             ErrorResult& aRv);
 
-  static nsresult IsValidMethodData(
-      JSContext* aCx, const Sequence<PaymentMethodData>& aMethodData,
-      nsAString& aErrorMsg);
+  static void IsValidMethodData(JSContext* aCx,
+                                const Sequence<PaymentMethodData>& aMethodData,
+                                ErrorResult& aRv);
 
-  static nsresult IsValidNumber(const nsAString& aItem, const nsAString& aStr,
-                                nsAString& aErrorMsg);
-  static nsresult IsNonNegativeNumber(const nsAString& aItem,
-                                      const nsAString& aStr,
-                                      nsAString& aErrorMsg);
+  static void IsValidNumber(const nsAString& aItem, const nsAString& aStr,
+                            ErrorResult& aRv);
 
-  static nsresult IsValidCurrencyAmount(const nsAString& aItem,
-                                        const PaymentCurrencyAmount& aAmount,
-                                        const bool aIsTotalItem,
-                                        nsAString& aErrorMsg);
+  static void IsNonNegativeNumber(const nsAString& aItem, const nsAString& aStr,
+                                  ErrorResult& aRv);
 
-  static nsresult IsValidCurrency(const nsAString& aItem,
-                                  const nsAString& aCurrency,
-                                  nsAString& aErrorMsg);
+  static void IsValidCurrencyAmount(const nsAString& aItem,
+                                    const PaymentCurrencyAmount& aAmount,
+                                    const bool aIsTotalItem, ErrorResult& aRv);
 
-  static nsresult IsValidDetailsInit(const PaymentDetailsInit& aDetails,
-                                     const bool aRequestShipping,
-                                     nsAString& aErrorMsg);
+  static void IsValidCurrency(const nsAString& aItem,
+                              const nsAString& aCurrency, ErrorResult& aRv);
 
-  static nsresult IsValidDetailsUpdate(const PaymentDetailsUpdate& aDetails,
-                                       const bool aRequestShipping);
+  static void IsValidDetailsInit(const PaymentDetailsInit& aDetails,
+                                 const bool aRequestShipping, ErrorResult& aRv);
 
-  static nsresult IsValidDetailsBase(const PaymentDetailsBase& aDetails,
-                                     const bool aRequestShipping,
-                                     nsAString& aErrorMsg);
+  static void IsValidDetailsUpdate(const PaymentDetailsUpdate& aDetails,
+                                   const bool aRequestShipping,
+                                   ErrorResult& aRv);
 
+  static void IsValidDetailsBase(const PaymentDetailsBase& aDetails,
+                                 const bool aRequestShipping, ErrorResult& aRv);
+
+  // Webidl implementation
   static already_AddRefed<PaymentRequest> Constructor(
       const GlobalObject& aGlobal,
       const Sequence<PaymentMethodData>& aMethodData,
@@ -152,14 +151,15 @@ class PaymentRequest final : public DOMEventTargetHelper,
                           const ResponseData& aData,
                           const nsAString& aPayerName,
                           const nsAString& aPayerEmail,
-                          const nsAString& aPayerPhone, nsresult aRv);
-  void RejectShowPayment(nsresult aRejectReason);
+                          const nsAString& aPayerPhone, ErrorResult&& aResult);
+  void RejectShowPayment(ErrorResult&& aRejectReason);
   void RespondComplete();
 
   already_AddRefed<Promise> Abort(ErrorResult& aRv);
   void RespondAbortPayment(bool aResult);
 
-  nsresult RetryPayment(JSContext* aCx, const PaymentValidationErrors& aErrors);
+  void RetryPayment(JSContext* aCx, const PaymentValidationErrors& aErrors,
+                    ErrorResult& aRv);
 
   void GetId(nsAString& aRetVal) const;
   void GetInternalId(nsAString& aRetVal);
@@ -189,8 +189,9 @@ class PaymentRequest final : public DOMEventTargetHelper,
   void SetOptions(const PaymentOptions& aOptions);
   nsresult UpdateShippingOption(const nsAString& aShippingOption);
 
-  nsresult UpdatePayment(JSContext* aCx, const PaymentDetailsUpdate& aDetails);
-  void AbortUpdate(nsresult aRv);
+  void UpdatePayment(JSContext* aCx, const PaymentDetailsUpdate& aDetails,
+                     ErrorResult& aRv);
+  void AbortUpdate(ErrorResult& aReason);
 
   void SetShippingType(const Nullable<PaymentShippingType>& aShippingType);
   Nullable<PaymentShippingType> GetShippingType() const;
@@ -266,8 +267,8 @@ class PaymentRequest final : public DOMEventTargetHelper,
   // but we don't actually store the full [[options]] internal slot.
   bool mRequestShipping;
 
-  // The error is set in AbortUpdate(). The value is NS_OK by default.
-  nsresult mUpdateError;
+  // The error is set in AbortUpdate(). The value is not-failed by default.
+  ErrorResult mUpdateError;
 
   enum { eUnknown, eCreated, eInteractive, eClosed } mState;
 

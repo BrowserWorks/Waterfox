@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Çevrimiçi Kişiler">
+<!ENTITY offlineContactsHeader.label   "Çevrimdışı Kişiler">
+<!ENTITY conversationsHeader.label     "Sohbetler">
+<!ENTITY searchResultConversation.label "Arama sonucu">
+<!ENTITY chat.noConv.title             "Sohbetler burada görünecektir.">
+<!ENTITY chat.noConv.description       "Bir görüşme başlatmak için sol bölmedeki kişi listesini kullanın.">
+<!ENTITY chat.noPreviousConv.description       "&brandShortName; bu kişi kayıtlı geçmiş görüşmeye sahip değil.">
+<!ENTITY chat.noAccount.title             "Henüz bir sohbet hesabı kurmadınız.">
+<!ENTITY chat.noAccount.description       "&brandShortName; sohbet hesabınızı kurmanız için size yol gösterebilir.">
+<!ENTITY chat.accountWizard.button       "Başlayın">
+<!ENTITY chat.noConnectedAccount.title             "Sohbet hesaplarınıza bağlanılmadı.">
+<!ENTITY chat.noConnectedAccount.description       "'Sohbet durumu' penceresinden bağlanabilirsiniz:">
+<!ENTITY chat.showAccountManager.button       "Sohbet durumunu göster">
+
+<!ENTITY chat.participants             "Katılımcılar:">
+<!ENTITY chat.previousConversations    "Önceki görüşmeler:">
+<!ENTITY chat.ongoingConversation      "Süren sohbet">
+
+<!ENTITY openConversationCmd.label     "Sohbet başlat">
+<!ENTITY openConversationCmd.accesskey "b">
+<!ENTITY closeConversationCmd.label    "Sohbeti kapat">
+<!ENTITY closeConversationCmd.accesskey "k">
+<!ENTITY aliasCmd.label                "Adını değiștir">
+<!ENTITY aliasCmd.accesskey            "d">
+<!ENTITY deleteCmd.label               "Kişiyi sil">
+<!ENTITY deleteCmd.accesskey           "s">
+
+<!ENTITY openConversationButton.tooltip  "Sohbet başlat">
+<!ENTITY closeConversationButton.tooltip "Sohbeti kapat">
+
+<!ENTITY addBuddyButton.label          "Kişi ekle">
+<!ENTITY joinChatButton.label          "Sohbete katıl">
+<!ENTITY chatAccountsButton.label      "Hesapları göster">
+
+<!ENTITY status.available          "Müsait">
+<!ENTITY status.unavailable        "Müsait değil">
+<!ENTITY status.offline            "Çevrimdışı">
+
+<!ENTITY openLinkCmd.label            "Bağlantıyı aç…">
+<!ENTITY openLinkCmd.accesskey        "B">

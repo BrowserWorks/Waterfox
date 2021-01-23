@@ -11,7 +11,7 @@ interface ReferrerInfo;
 /**
  * This dictionary holds load arguments for docshell loads.
  */
-
+[GenerateInit]
 dictionary LoadURIOptions {
   /**
    * The principal that initiated the load.
@@ -61,4 +61,28 @@ dictionary LoadURIOptions {
    * and cannot be used to resolve aURI.
    */
   URI? baseURI = null;
+
+  /**
+   * Set to indicate that the URI to be loaded was triggered by a user
+   * action. (Mostly used in the context of Sec-Fetch-User).
+   */
+  boolean hasValidUserGestureActivation = false;
+
+  /**
+   * If the HTTPS-Only mode is enabled, every insecure request gets
+   * upgraded to HTTPS by default. This behavior can be disabled through
+   * the loadinfo flag HTTPS_ONLY_EXEMPT. The flag gets carried over to
+   * the next loadinfo through the loadstate as long as it's a same-origin
+   * request or if the triggering principal is a system principal.
+   *
+   * This flag should only ever be true if coming from the HTTPS-Only Mode
+   * error page.
+   */
+  boolean isHttpsOnlyModeUpgradeExempt = false;
+
+  /**
+   * If non-0, a value to pass to nsIDocShell::setCancelContentJSEpoch
+   * when initiating the load.
+   */
+  long cancelContentJSEpoch = 0;
 };

@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutAddons.title2                     "Askouezhioù">
+<!ENTITY aboutAddons.header2                    "Hoc'h askouezhioù">
+
+<!ENTITY addonAction.enable                     "Aotren">
+<!ENTITY addonAction.disable                    "Diweredekaat">
+<!ENTITY addonAction.uninstall                  "Distaliañ">
+<!ENTITY addonAction.undo                       "Dizober">
+<!ENTITY addonAction.update                     "Hizivaat">
+
+<!ENTITY addonUnsigned.message                  "N'hall ket bezañ gwiriekaet an askouezh gant &brandShortName;.">
+<!ENTITY addonUnsigned.learnMore                "Gouzout hiroc'h">

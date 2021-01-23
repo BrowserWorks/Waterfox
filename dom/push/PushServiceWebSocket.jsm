@@ -5,9 +5,6 @@
 
 "use strict";
 
-const { Preferences } = ChromeUtils.import(
-  "resource://gre/modules/Preferences.jsm"
-);
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { XPCOMUtils } = ChromeUtils.import(
   "resource://gre/modules/XPCOMUtils.jsm"
@@ -60,7 +57,7 @@ const kDELIVERY_REASON_TO_CODE = {
   [Ci.nsIPushErrorReporter.DELIVERY_INTERNAL_ERROR]: 303,
 };
 
-const prefs = new Preferences("dom.push.");
+const prefs = Services.prefs.getBranch("dom.push.");
 
 const EXPORTED_SYMBOLS = ["PushServiceWebSocket"];
 
@@ -254,15 +251,8 @@ var PushServiceWebSocket = {
     }
   },
 
-  validServerURI(serverURI) {
-    if (serverURI.scheme == "ws") {
-      return !!prefs.get("testing.allowInsecureServerURL");
-    }
-    return serverURI.scheme == "wss";
-  },
-
   get _UAID() {
-    return prefs.get("userAgentID");
+    return prefs.getStringPref("userAgentID");
   },
 
   set _UAID(newID) {
@@ -275,7 +265,7 @@ var PushServiceWebSocket = {
       return;
     }
     console.debug("New _UAID", newID);
-    prefs.set("userAgentID", newID);
+    prefs.setStringPref("userAgentID", newID);
   },
 
   _ws: null,
@@ -348,7 +338,7 @@ var PushServiceWebSocket = {
       this._makeWebSocket = options.makeWebSocket;
     }
 
-    this._requestTimeout = prefs.get("requestTimeout");
+    this._requestTimeout = prefs.getIntPref("requestTimeout");
 
     return Promise.resolve();
   },
@@ -363,7 +353,7 @@ var PushServiceWebSocket = {
     console.debug("shutdownWS()");
 
     if (this._currentState == STATE_READY) {
-      prefs.ignore("userAgentID", this);
+      prefs.removeObserver("userAgentID", this);
     }
 
     this._currentState = STATE_SHUT_DOWN;
@@ -428,8 +418,8 @@ var PushServiceWebSocket = {
 
     // Calculate new timeout, but cap it to pingInterval.
     let retryTimeout =
-      prefs.get("retryBaseInterval") * Math.pow(2, this._retryFailCount);
-    retryTimeout = Math.min(retryTimeout, prefs.get("pingInterval"));
+      prefs.getIntPref("retryBaseInterval") * Math.pow(2, this._retryFailCount);
+    retryTimeout = Math.min(retryTimeout, prefs.getIntPref("pingInterval"));
 
     this._retryFailCount++;
 
@@ -480,13 +470,13 @@ var PushServiceWebSocket = {
     }
     this._pingTimer.init(
       this,
-      prefs.get("pingInterval"),
+      prefs.getIntPref("pingInterval"),
       Ci.nsITimer.TYPE_ONE_SHOT
     );
   },
 
   _makeWebSocket(uri) {
-    if (!prefs.get("connection.enabled")) {
+    if (!prefs.getBoolPref("connection.enabled")) {
       console.warn(
         "makeWebSocket: connection.enabled is not set to true.",
         "Aborting."
@@ -510,6 +500,8 @@ var PushServiceWebSocket = {
       Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
       Ci.nsIContentPolicy.TYPE_WEBSOCKET
     );
+    // Allow deprecated HTTP request from SystemPrincipal
+    socket.loadInfo.allowDeprecatedSystemRequests = true;
 
     return socket;
   },
@@ -616,7 +608,7 @@ var PushServiceWebSocket = {
     function finishHandshake() {
       this._UAID = reply.uaid;
       this._currentState = STATE_READY;
-      prefs.observe("userAgentID", this);
+      prefs.addObserver("userAgentID", this);
 
       // Handle broadcasts received in response to the "hello" message.
       if (!ObjectUtils.isEmpty(reply.broadcasts)) {
@@ -1066,13 +1058,46 @@ var PushServiceWebSocket = {
       return;
     }
 
+    this._mainPushService
+      .getAllUnexpired()
+      .then(
+        records => this._sendHello(records),
+        err => {
+          console.warn(
+            "Error fetching existing records before handshake; assuming none",
+            err
+          );
+          this._sendHello([]);
+        }
+      )
+      .catch(err => {
+        // If we failed to send the handshake, back off and reconnect.
+        console.warn("Failed to send handshake; reconnecting", err);
+        this._reconnect();
+      });
+  },
+
+  /**
+   * Sends a `hello` handshake to the server.
+   *
+   * @param {Array<PushRecordWebSocket>} An array of records for existing
+   *        subscriptions, used to determine whether to rotate our UAID.
+   */
+  _sendHello(records) {
     let data = {
       messageType: "hello",
       broadcasts: this._broadcastListeners,
       use_webpush: true,
     };
 
-    if (this._UAID) {
+    if (records.length && this._UAID) {
+      // Only send our UAID if we have existing push subscriptions, to
+      // avoid tying a persistent identifier to the connection (bug
+      // 1617136). The push server will issue our client a new UAID in
+      // the `hello` response, which we'll store until either the next
+      // time we reconnect, or the user subscribes to push. Once we have a
+      // push subscription, we'll stop rotating the UAID when we connect,
+      // so that we can receive push messages for them.
       data.uaid = this._UAID;
     }
 

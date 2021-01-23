@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Kichinil Ruk'ojlib'al Rucholajem Tzij">
+
+<!ENTITY Settings.label "Taq nuk'ulem">
+
+<!ENTITY TextAreaName.label "Ruk'ojlib'al B'i'aj:">
+<!ENTITY TextAreaName.accessKey "B">
+<!ENTITY TextAreaRows.label "Taq cholaj:">
+<!ENTITY TextAreaRows.accessKey "c">
+<!ENTITY TextAreaCols.label "Taq tem:">
+<!ENTITY TextAreaCols.accessKey "t">
+<!ENTITY TextAreaReadOnly.label "Xa xe Sik'inïk">
+<!ENTITY TextAreaReadOnly.accessKey "X">
+<!ENTITY TextAreaDisabled.label "Chupun">
+<!ENTITY TextAreaDisabled.accessKey "C">
+<!ENTITY TextAreaTabIndex.label "Rucholajem Ruwi':">
+<!ENTITY TextAreaTabIndex.accessKey "R">
+<!ENTITY TextAreaAccessKey.label "Rupitz'b'al Okem:">
+<!ENTITY TextAreaAccessKey.accessKey "R">
+<!ENTITY InitialText.label "Nab'ey Rucholajem Tzij:">
+<!ENTITY InitialText.accessKey "R">
+
+<!ENTITY TextAreaWrap.label "Rub'anikil Tz'ajïk:">
+<!ENTITY TextAreaWrap.accessKey "T">
+<!ENTITY WrapDefault.value "K'o wi">
+<!ENTITY WrapOff.value "Chupül">
+<!ENTITY WrapHard.value "Köw">
+<!ENTITY WrapSoft.value "B'uyül">
+<!ENTITY WrapPhysical.value "Ch'akul">
+<!ENTITY WrapVirtual.value "Kematz'ib'il">

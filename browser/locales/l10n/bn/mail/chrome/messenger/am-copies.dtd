@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "কপি ও ফোল্ডার">
+<!ENTITY sendingPrefix.label "স্বয়ংক্রিয়ভাবে বার্তা পাঠানোর সময়:">
+<!ENTITY fccMailFolder.label "কপি রাখা হবে: (P)">
+<!ENTITY fccMailFolder.accesskey "P">
+<!ENTITY fccReplyFollowsParent.label "যেসব বার্তার উত্তর পাঠাতে হবে সেগুলো ফোল্ডারে রাখা হবে (c)">
+<!ENTITY fccReplyFollowsParent.accesskey "c">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "এই ঠিকানাসমূহে Cc করা হবে: (C)">
+<!ENTITY ccAddress.accesskey "C">
+<!ENTITY ccAddressList.placeholder "ঠিকানাসমূহ কমার সাহায্যে আলাদা করুন">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "এই ইমেইল ঠিকানায় Bcc করা হবে: (B)">
+<!ENTITY bccAddress.accesskey "B">
+<!ENTITY bccAddressList.placeholder "ঠিকানাসমূহ কমার সাহায্যে আলাদা করুন">
+<!ENTITY saveMessageDlg.label "বার্তা সংরক্ষণের সময় নিশ্চিতকরণ ডায়ালগ প্রদর্শন (w)">
+<!ENTITY saveMessageDlg.accesskey "w">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "&quot;প্রেরিত&quot; ফোল্ডারে: (S)">
+<!ENTITY sentFolderOn.accesskey "S">
+<!ENTITY sentInOtherFolder.label "অন্যান্য: (O)">
+<!ENTITY sentInOtherFolder.accesskey "O">
+<!ENTITY keepArchives.label "বার্তার আর্কাইভ রাখা হবে:">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesFolderOn.label "&quot;আর্কাইভ&quot; ফোল্ডারে: (n)">
+<!ENTITY archivesFolderOn.accesskey "n">
+<!ENTITY archiveInOtherFolder.label "অন্যান্য: (h)">
+<!ENTITY archiveInOtherFolder.accesskey "h">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "&quot;খসড়া&quot; ফোল্ডারে: (D)">
+<!ENTITY draftsFolderOn.accesskey "D">
+<!ENTITY draftInOtherFolder.label "অন্যান্য: (t)">
+<!ENTITY draftInOtherFolder.accesskey "t">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "&quot;ফর্মা&quot; ফোল্ডারে: (m)">
+<!ENTITY templatesFolderOn.accesskey "m">
+<!ENTITY templateInOtherFolder.label "অন্যান্য: (e)">
+<!ENTITY templateInOtherFolder.accesskey "e">

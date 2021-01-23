@@ -91,8 +91,7 @@ mozilla::ipc::IPCResult CacheStorageParent::RecvPCacheOpConstructor(
 
   if (NS_WARN_IF(NS_FAILED(mVerifiedStatus))) {
     ErrorResult result(mVerifiedStatus);
-    Unused << CacheOpParent::Send__delete__(actor, result, void_t());
-    result.SuppressException();
+    Unused << CacheOpParent::Send__delete__(actor, std::move(result), void_t());
     return IPC_OK();
   }
 
@@ -109,8 +108,8 @@ mozilla::ipc::IPCResult CacheStorageParent::RecvTeardown() {
   return IPC_OK();
 }
 
-void CacheStorageParent::OnPrincipalVerified(nsresult aRv,
-                                             ManagerId* aManagerId) {
+void CacheStorageParent::OnPrincipalVerified(
+    nsresult aRv, const SafeRefPtr<ManagerId>& aManagerId) {
   MOZ_DIAGNOSTIC_ASSERT(mVerifier);
   MOZ_DIAGNOSTIC_ASSERT(!mManagerId);
   MOZ_DIAGNOSTIC_ASSERT(NS_SUCCEEDED(mVerifiedStatus));
@@ -119,7 +118,7 @@ void CacheStorageParent::OnPrincipalVerified(nsresult aRv,
     mVerifiedStatus = aRv;
   }
 
-  mManagerId = aManagerId;
+  mManagerId = aManagerId.clonePtr();
   mVerifier->RemoveListener(this);
   mVerifier = nullptr;
 }

@@ -36,8 +36,8 @@ class ImageOps {
    protected:
     friend class ImageOps;
 
-    ImageBuffer() {}
-    virtual ~ImageBuffer() {}
+    ImageBuffer() = default;
+    virtual ~ImageBuffer() = default;
 
     virtual already_AddRefed<SourceBuffer> GetSourceBuffer() const = 0;
   };
@@ -78,6 +78,15 @@ class ImageOps {
                                         Orientation aOrientation);
   static already_AddRefed<imgIContainer> Orient(imgIContainer* aImage,
                                                 Orientation aOrientation);
+
+  /**
+   * Creates a version of an existing image which undoes any rotation and/or
+   * flipping that it has automatically handled.
+   *
+   * This only undoes the effect of a RasterImage's automatic orientation
+   * handling.
+   */
+  static already_AddRefed<imgIContainer> Unorient(imgIContainer* aImage);
 
   /**
    * Creates an image from a gfxDrawable.

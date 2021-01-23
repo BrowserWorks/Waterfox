@@ -1,5 +1,7 @@
 // This file tests channel event sinks (bug 315598 et al)
 
+"use strict";
+
 const { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
 
 XPCOMUtils.defineLazyGetter(this, "URL", function() {
@@ -17,24 +19,15 @@ const categoryName = "net-channel-event-sinks";
  * itself when asked for nsIChannelEventSink.
  */
 var eventsink = {
-  QueryInterface: function eventsink_qi(iid) {
-    if (
-      iid.equals(Ci.nsISupports) ||
-      iid.equals(Ci.nsIFactory) ||
-      iid.equals(Ci.nsIChannelEventSink)
-    ) {
-      return this;
-    }
-    throw Cr.NS_ERROR_NO_INTERFACE;
-  },
+  QueryInterface: ChromeUtils.generateQI(["nsIFactory", "nsIChannelEventSink"]),
   createInstance: function eventsink_ci(outer, iid) {
     if (outer) {
-      throw Cr.NS_ERROR_NO_AGGREGATION;
+      throw Components.Exception("", Cr.NS_ERROR_NO_AGGREGATION);
     }
     return this.QueryInterface(iid);
   },
   lockFactory: function eventsink_lockf(lock) {
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+    throw Components.Exception("", Cr.NS_ERROR_NOT_IMPLEMENTED);
   },
 
   asyncOnChannelRedirect: function eventsink_onredir(
@@ -45,14 +38,14 @@ var eventsink = {
   ) {
     // veto
     this.called = true;
-    throw Cr.NS_BINDING_ABORTED;
+    throw Components.Exception("", Cr.NS_BINDING_ABORTED);
   },
 
   getInterface: function eventsink_gi(iid) {
     if (iid.equals(Ci.nsIChannelEventSink)) {
       return this;
     }
-    throw Cr.NS_ERROR_NO_INTERFACE;
+    throw Components.Exception("", Cr.NS_ERROR_NO_INTERFACE);
   },
 
   called: false,
@@ -93,7 +86,7 @@ var listener = {
       do_throw("Unexpected exception: " + e);
     }
 
-    throw Cr.NS_ERROR_ABORT;
+    throw Components.Exception("", Cr.NS_ERROR_ABORT);
   },
 
   onDataAvailable: function test_ODA() {

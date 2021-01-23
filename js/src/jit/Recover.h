@@ -107,11 +107,11 @@ namespace jit {
   _(NewArray)                  \
   _(NewArrayCopyOnWrite)       \
   _(NewIterator)               \
-  _(NewDerivedTypedObject)     \
   _(NewCallObject)             \
   _(CreateThisWithTemplate)    \
   _(Lambda)                    \
   _(LambdaArrow)               \
+  _(FunctionWithProto)         \
   _(ObjectState)               \
   _(ArrayState)                \
   _(SetArrayLength)            \
@@ -488,7 +488,7 @@ class RSign final : public RInstruction {
 
 class RMathFunction final : public RInstruction {
  private:
-  uint8_t function_;
+  UnaryMathFunction function_;
 
  public:
   RINSTRUCTION_HEADER_NUM_OP_(MathFunction, 1)
@@ -636,14 +636,6 @@ class RNewIterator final : public RInstruction {
                             SnapshotIterator& iter) const override;
 };
 
-class RNewDerivedTypedObject final : public RInstruction {
- public:
-  RINSTRUCTION_HEADER_NUM_OP_(NewDerivedTypedObject, 3)
-
-  MOZ_MUST_USE bool recover(JSContext* cx,
-                            SnapshotIterator& iter) const override;
-};
-
 class RCreateThisWithTemplate final : public RInstruction {
  public:
   RINSTRUCTION_HEADER_NUM_OP_(CreateThisWithTemplate, 1)
@@ -663,6 +655,14 @@ class RLambda final : public RInstruction {
 class RLambdaArrow final : public RInstruction {
  public:
   RINSTRUCTION_HEADER_NUM_OP_(LambdaArrow, 3)
+
+  MOZ_MUST_USE bool recover(JSContext* cx,
+                            SnapshotIterator& iter) const override;
+};
+
+class RFunctionWithProto final : public RInstruction {
+ public:
+  RINSTRUCTION_HEADER_NUM_OP_(FunctionWithProto, 3)
 
   MOZ_MUST_USE bool recover(JSContext* cx,
                             SnapshotIterator& iter) const override;

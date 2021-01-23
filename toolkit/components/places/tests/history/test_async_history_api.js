@@ -349,7 +349,7 @@ add_task(async function test_non_addable_uri_errors() {
     "mailbox:Inbox",
     "moz-anno:favicon:http://mozilla.org/made-up-favicon",
     "view-source:http://mozilla.org",
-    "chrome://browser/content/browser.xul",
+    "chrome://browser/content/browser.xhtml",
     "resource://gre-resources/hiddenWindow.html",
     "data:,Hello%2C%20World!",
     "javascript:alert('hello wolrd!');",
@@ -376,7 +376,7 @@ add_task(async function test_non_addable_uri_errors() {
   });
 
   let placesResult = await promiseUpdatePlaces(places);
-  if (placesResult.results.length > 0) {
+  if (placesResult.results.length) {
     do_throw("Unexpected success.");
   }
   for (let place of placesResult.errors) {
@@ -397,7 +397,7 @@ add_task(async function test_duplicate_guid_errors() {
 
   Assert.equal(false, await PlacesUtils.history.hasVisits(place.uri));
   let placesResult = await promiseUpdatePlaces(place);
-  if (placesResult.errors.length > 0) {
+  if (placesResult.errors.length) {
     do_throw("Unexpected error.");
   }
   let placeInfo = placesResult.results[0];
@@ -411,7 +411,7 @@ add_task(async function test_duplicate_guid_errors() {
 
   Assert.equal(false, await PlacesUtils.history.hasVisits(badPlace.uri));
   placesResult = await promiseUpdatePlaces(badPlace);
-  if (placesResult.results.length > 0) {
+  if (placesResult.results.length) {
     do_throw("Unexpected success.");
   }
   let badPlaceInfo = placesResult.errors[0];
@@ -439,7 +439,7 @@ add_task(async function test_invalid_referrerURI_ignored() {
   );
 
   let placesResult = await promiseUpdatePlaces(place);
-  if (placesResult.errors.length > 0) {
+  if (placesResult.errors.length) {
     do_throw("Unexpected error.");
   }
   let placeInfo = placesResult.results[0];
@@ -474,7 +474,7 @@ add_task(async function test_nonnsIURI_referrerURI_ignored() {
   Assert.equal(false, await PlacesUtils.history.hasVisits(place.uri));
 
   let placesResult = await promiseUpdatePlaces(place);
-  if (placesResult.errors.length > 0) {
+  if (placesResult.errors.length) {
     do_throw("Unexpected error.");
   }
   let placeInfo = placesResult.results[0];
@@ -508,7 +508,7 @@ add_task(async function test_old_referrer_ignored() {
   // as being invalid.
   Assert.equal(false, await PlacesUtils.history.hasVisits(referrerPlace.uri));
   let placesResult = await promiseUpdatePlaces(referrerPlace);
-  if (placesResult.errors.length > 0) {
+  if (placesResult.errors.length) {
     do_throw("Unexpected error.");
   }
 
@@ -526,7 +526,7 @@ add_task(async function test_old_referrer_ignored() {
 
   Assert.equal(false, await PlacesUtils.history.hasVisits(place.uri));
   placesResult = await promiseUpdatePlaces(place);
-  if (placesResult.errors.length > 0) {
+  if (placesResult.errors.length) {
     do_throw("Unexpected error.");
   }
   let placeInfo = placesResult.results[0];
@@ -558,7 +558,7 @@ add_task(async function test_place_id_ignored() {
 
   Assert.equal(false, await PlacesUtils.history.hasVisits(place.uri));
   let placesResult = await promiseUpdatePlaces(place);
-  if (placesResult.errors.length > 0) {
+  if (placesResult.errors.length) {
     do_throw("Unexpected error.");
   }
   let placeInfo = placesResult.results[0];
@@ -575,7 +575,7 @@ add_task(async function test_place_id_ignored() {
 
   Assert.equal(false, await PlacesUtils.history.hasVisits(badPlace.uri));
   placesResult = await promiseUpdatePlaces(badPlace);
-  if (placesResult.errors.length > 0) {
+  if (placesResult.errors.length) {
     do_throw("Unexpected error.");
   }
   placeInfo = placesResult.results[0];
@@ -624,6 +624,9 @@ add_task(async function test_add_visit() {
     visits: [],
   };
   for (let t in PlacesUtils.history.TRANSITIONS) {
+    if (t == "EMBED") {
+      continue;
+    }
     let transitionType = PlacesUtils.history.TRANSITIONS[t];
     place.visits.push(new VisitInfo(transitionType, VISIT_TIME));
   }
@@ -631,7 +634,7 @@ add_task(async function test_add_visit() {
 
   let callbackCount = 0;
   let placesResult = await promiseUpdatePlaces(place);
-  if (placesResult.errors.length > 0) {
+  if (placesResult.errors.length) {
     do_throw("Unexpected error.");
   }
   for (let placeInfo of placesResult.results) {
@@ -684,6 +687,9 @@ add_task(async function test_properties_saved() {
   // Check each transition type to make sure it is saved properly.
   let places = [];
   for (let t in PlacesUtils.history.TRANSITIONS) {
+    if (t == "EMBED") {
+      continue;
+    }
     let transitionType = PlacesUtils.history.TRANSITIONS[t];
     let place = {
       uri: NetUtil.newURI(
@@ -698,7 +704,7 @@ add_task(async function test_properties_saved() {
 
   let callbackCount = 0;
   let placesResult = await promiseUpdatePlaces(places);
-  if (placesResult.errors.length > 0) {
+  if (placesResult.errors.length) {
     do_throw("Unexpected error.");
   }
   for (let placeInfo of placesResult.results) {
@@ -774,7 +780,7 @@ add_task(async function test_guid_saved() {
   Assert.equal(false, await PlacesUtils.history.hasVisits(place.uri));
 
   let placesResult = await promiseUpdatePlaces(place);
-  if (placesResult.errors.length > 0) {
+  if (placesResult.errors.length) {
     do_throw("Unexpected error.");
   }
   let placeInfo = placesResult.results[0];
@@ -802,7 +808,7 @@ add_task(async function test_referrer_saved() {
 
   let resultCount = 0;
   let placesResult = await promiseUpdatePlaces(places);
-  if (placesResult.errors.length > 0) {
+  if (placesResult.errors.length) {
     do_throw("Unexpected error.");
   }
   for (let placeInfo of placesResult.results) {
@@ -846,14 +852,14 @@ add_task(async function test_guid_change_saved() {
   Assert.equal(false, await PlacesUtils.history.hasVisits(place.uri));
 
   let placesResult = await promiseUpdatePlaces(place);
-  if (placesResult.errors.length > 0) {
+  if (placesResult.errors.length) {
     do_throw("Unexpected error.");
   }
   // Then, change the guid with visits.
   place.guid = "_GUIDCHANGE_";
   place.visits = [new VisitInfo()];
   placesResult = await promiseUpdatePlaces(place);
-  if (placesResult.errors.length > 0) {
+  if (placesResult.errors.length) {
     do_throw("Unexpected error.");
   }
   do_check_guid_for_uri(place.uri, place.guid);
@@ -871,7 +877,7 @@ add_task(async function test_title_change_saved() {
   Assert.equal(false, await PlacesUtils.history.hasVisits(place.uri));
 
   let placesResult = await promiseUpdatePlaces(place);
-  if (placesResult.errors.length > 0) {
+  if (placesResult.errors.length) {
     do_throw("Unexpected error.");
   }
 
@@ -879,7 +885,7 @@ add_task(async function test_title_change_saved() {
   place.title = "";
   place.visits = [new VisitInfo()];
   placesResult = await promiseUpdatePlaces(place);
-  if (placesResult.errors.length > 0) {
+  if (placesResult.errors.length) {
     do_throw("Unexpected error.");
   }
   do_check_title_for_uri(place.uri, null);
@@ -888,7 +894,7 @@ add_task(async function test_title_change_saved() {
   place.title = "title change";
   place.visits = [new VisitInfo()];
   placesResult = await promiseUpdatePlaces(place);
-  if (placesResult.errors.length > 0) {
+  if (placesResult.errors.length) {
     do_throw("Unexpected error.");
   }
   do_check_title_for_uri(place.uri, place.title);
@@ -897,7 +903,7 @@ add_task(async function test_title_change_saved() {
   place.title = null;
   place.visits = [new VisitInfo()];
   placesResult = await promiseUpdatePlaces(place);
-  if (placesResult.errors.length > 0) {
+  if (placesResult.errors.length) {
     do_throw("Unexpected error.");
   }
   do_check_title_for_uri(place.uri, place.title);
@@ -916,14 +922,14 @@ add_task(async function test_no_title_does_not_clear_title() {
   Assert.equal(false, await PlacesUtils.history.hasVisits(place.uri));
 
   let placesResult = await promiseUpdatePlaces(place);
-  if (placesResult.errors.length > 0) {
+  if (placesResult.errors.length) {
     do_throw("Unexpected error.");
   }
   // Now, make sure that not specifying a title does not clear it.
   delete place.title;
   place.visits = [new VisitInfo()];
   placesResult = await promiseUpdatePlaces(place);
-  if (placesResult.errors.length > 0) {
+  if (placesResult.errors.length) {
     do_throw("Unexpected error.");
   }
   do_check_title_for_uri(place.uri, TITLE);
@@ -950,7 +956,7 @@ add_task(async function test_title_change_notifies() {
 
   PlacesUtils.history.addObserver(silentObserver);
   let placesResult = await promiseUpdatePlaces(place);
-  if (placesResult.errors.length > 0) {
+  if (placesResult.errors.length) {
     do_throw("Unexpected error.");
   }
 
@@ -1167,7 +1173,7 @@ add_task(async function test_ignore_errors() {
 
   Assert.equal(false, await PlacesUtils.history.hasVisits(place.uri));
   let placesResult = await promiseUpdatePlaces(place);
-  if (placesResult.errors.length > 0) {
+  if (placesResult.errors.length) {
     do_throw("Unexpected error.");
   }
   let placeInfo = placesResult.results[0];
@@ -1181,7 +1187,7 @@ add_task(async function test_ignore_errors() {
 
   Assert.equal(false, await PlacesUtils.history.hasVisits(badPlace.uri));
   placesResult = await promiseUpdatePlaces(badPlace, { ignoreErrors: true });
-  if (placesResult.results.length > 0) {
+  if (placesResult.results.length) {
     do_throw("Unexpected success.");
   }
   Assert.equal(
@@ -1239,7 +1245,7 @@ add_task(async function test_ignore_results_and_errors() {
 
   Assert.equal(false, await PlacesUtils.history.hasVisits(place.uri));
   let placesResult = await promiseUpdatePlaces(place);
-  if (placesResult.errors.length > 0) {
+  if (placesResult.errors.length) {
     do_throw("Unexpected error.");
   }
   let placeInfo = placesResult.results[0];

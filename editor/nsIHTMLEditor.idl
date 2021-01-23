@@ -7,7 +7,6 @@
 #include "domstubs.idl"
 
 interface nsIContent;
-interface nsIArray;
 
 webidl Document;
 webidl Element;
@@ -67,6 +66,7 @@ interface nsIHTMLEditor : nsISupports
    * @param aAll        [OUT] PR_TRUE if all of the text nodes in the
    *                          selection have the property
    */
+  [can_run_script]
   void getInlineProperty(in AString aProperty,
                          in AString aAttribute,
                          in AString aValue,
@@ -74,20 +74,13 @@ interface nsIHTMLEditor : nsISupports
                          out boolean aAny,
                          out boolean aAll);
 
+  [can_run_script]
   AString getInlinePropertyWithAttrValue(in AString aProperty,
                                          in AString aAttribute,
                                          in AString aValue,
                                          out boolean aFirst,
                                          out boolean aAny,
                                          out boolean aAll);
-
-  /**
-   * removeAllInlineProperties() deletes all the inline properties from all
-   * text in the current selection.
-   */
-  [can_run_script]
-  void removeAllInlineProperties();
-
 
   /**
    * removeInlineProperty() removes a property which changes inline style of
@@ -104,22 +97,6 @@ interface nsIHTMLEditor : nsISupports
    */
   [can_run_script]
   void removeInlineProperty(in AString aProperty, in AString aAttribute);
-
-  /**
-   *  Increase font size for text in selection by 1 HTML unit
-   *  All existing text is scanned for existing <FONT SIZE> attributes
-   *  so they will be incremented instead of inserting new <FONT> tag
-   */
-  [can_run_script]
-  void increaseFontSize();
-
-  /**
-   *  Decrease font size for text in selection by 1 HTML unit
-   *  All existing text is scanned for existing <FONT SIZE> attributes
-   *  so they will be decreased instead of inserting new <FONT> tag
-   */
-  [can_run_script]
-  void decreaseFontSize();
 
   /* ------------ HTML content methods -------------- */
 
@@ -208,19 +185,11 @@ interface nsIHTMLEditor : nsISupports
   void setCaretAfterElement(in Element aElement);
 
   /**
-   * SetParagraphFormat       Insert a block paragraph tag around selection
-   * @param aParagraphFormat  "p", "h1" to "h6", "address", "pre", or "blockquote"
-   */
-  [can_run_script]
-  void setParagraphFormat(in AString aParagraphFormat);
-
-  /**
    * getParagraphState returns what block tag paragraph format is in
    * the selection.
    * @param aMixed     True if there is more than one format
    * @return           Name of block tag. "" is returned for none.
    */
-  [can_run_script]
   AString getParagraphState(out boolean aMixed);
 
   /**
@@ -229,20 +198,15 @@ interface nsIHTMLEditor : nsISupports
    * @return          Name of face.  Note: "tt" is returned for
    *                  tt tag.  "" is returned for none.
    */
+  [can_run_script]
   AString getFontFaceState(out boolean aMixed);
-
-  /**
-   * getBackgroundColorState returns what the background color of the selection.
-   * @param aMixed     True if there is more than one font color
-   * @return           Color string. "" is returned for none.
-   */
-  AString getBackgroundColorState(out boolean aMixed);
 
   /**
    * getHighlightColorState returns what the highlight color of the selection.
    * @param aMixed     True if there is more than one font color
    * @return           Color string. "" is returned for none.
    */
+  [can_run_script]
   AString getHighlightColorState(out boolean aMixed);
 
   /**
@@ -254,7 +218,6 @@ interface nsIHTMLEditor : nsISupports
    * @param aUL       true if an "ul" list is selected.
    * @param aDL       true if a "dl" list is selected.
    */
-  [can_run_script]
   void getListState(out boolean aMixed, out boolean aOL, out boolean aUL,
                     out boolean aDL);
 
@@ -262,18 +225,19 @@ interface nsIHTMLEditor : nsISupports
    * getListItemState returns what list item type is in the selection.
    * @param aMixed    True if there is more than one type of list item, or
    *                  if there is some list and non-list
+   *                  XXX This ignores `<li>` element selected state.
+   *                      For example, even if `<li>` and `<dt>` are selected,
+   *                      this is set to false.
    * @param aLI       true if "li" list items are selected.
    * @param aDT       true if "dt" list items are selected.
    * @param aDD       true if "dd" list items are selected.
    */
-  [can_run_script]
   void getListItemState(out boolean aMixed, out boolean aLI,
                         out boolean aDT, out boolean aDD);
 
   /**
    * getAlignment     returns what alignment is in the selection.
-   * @param aMixed    True if there is more than one type of list item, or
-   *                  if there is some list and non-list
+   * @param aMixed    Always returns false.
    * @param aAlign    enum value for first encountered alignment
    *                  (left/center/right)
    */
@@ -294,24 +258,13 @@ interface nsIHTMLEditor : nsISupports
    *
    * @param aListType  Unused.
    */
+  [can_run_script]
   void removeList(in AString aListType);
 
   /**
-   * Document me!
-   *
-   */
-  [can_run_script]
-  void indent(in AString aIndent);
-
-  /**
-   * Document me!
-   *
-   */
-  void  align(in AString aAlign);
-
-  /**
-   * GetElementOrParentByTagName() looks for an element node whose name matches
-   * aTagName from aNode or anchor node of Selection to <body> element.
+   * GetElementOrParentByTagName() returns an inclusive ancestor element whose
+   * name matches aTagName from aNode or anchor node of Selection to <body>
+   * element or null if there is no element matching with aTagName.
    *
    * @param aTagName        The tag name which you want to look for.
    *                        Must not be empty string.
@@ -388,15 +341,6 @@ interface nsIHTMLEditor : nsISupports
    */
   [can_run_script]
   void setBackgroundColor(in AString aColor);
-
-  /**
-   * Find all the nodes in the document which contain references
-   * to outside URIs (e.g. a href, img src, script src, etc.)
-   * The objects in the array will be type nsIURIRefObject.
-   *
-   * @return aNodeList    the linked nodes found
-   */
-  nsIArray getLinkedObjects();
 
   /**
    * A boolean which is true is the HTMLEditor has been instantiated

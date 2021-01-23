@@ -41,7 +41,8 @@ class ServiceWorkerRegistrationMainThread final
 
   void ClearServiceWorkerRegistration(ServiceWorkerRegistration* aReg) override;
 
-  void Update(ServiceWorkerRegistrationCallback&& aSuccessCB,
+  void Update(const nsCString& aNewestWorkerScriptUrl,
+              ServiceWorkerRegistrationCallback&& aSuccessCB,
               ServiceWorkerFailureCallback&& aFailureCB) override;
 
   void Unregister(ServiceWorkerBoolCallback&& aSuccessCB,
@@ -53,7 +54,7 @@ class ServiceWorkerRegistrationMainThread final
 
   void FireUpdateFound() override;
 
-  void RegistrationRemoved() override;
+  void RegistrationCleared() override;
 
   void GetScope(nsAString& aScope) const override { aScope = mScope; }
 
@@ -67,7 +68,7 @@ class ServiceWorkerRegistrationMainThread final
 
   void StopListeningForEvents();
 
-  void RegistrationRemovedInternal();
+  void RegistrationClearedInternal();
 
   ServiceWorkerRegistration* mOuter;
   ServiceWorkerRegistrationDescriptor mDescriptor;
@@ -91,14 +92,15 @@ class ServiceWorkerRegistrationWorkerThread final
   explicit ServiceWorkerRegistrationWorkerThread(
       const ServiceWorkerRegistrationDescriptor& aDescriptor);
 
-  void RegistrationRemoved();
+  void RegistrationCleared();
 
   // ServiceWorkerRegistration::Inner
   void SetServiceWorkerRegistration(ServiceWorkerRegistration* aReg) override;
 
   void ClearServiceWorkerRegistration(ServiceWorkerRegistration* aReg) override;
 
-  void Update(ServiceWorkerRegistrationCallback&& aSuccessCB,
+  void Update(const nsCString& aNewestWorkerScriptUrl,
+              ServiceWorkerRegistrationCallback&& aSuccessCB,
               ServiceWorkerFailureCallback&& aFailureCB) override;
 
   void Unregister(ServiceWorkerBoolCallback&& aSuccessCB,

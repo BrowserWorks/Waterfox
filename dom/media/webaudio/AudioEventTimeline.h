@@ -20,7 +20,7 @@
 
 namespace mozilla {
 
-class AudioNodeStream;
+class AudioNodeTrack;
 
 namespace dom {
 
@@ -32,14 +32,14 @@ struct AudioTimelineEvent final {
     ExponentialRamp,
     SetTarget,
     SetValueCurve,
-    Stream,
+    Track,
     Cancel
   };
 
   AudioTimelineEvent(Type aType, double aTime, float aValue,
                      double aTimeConstant = 0.0, double aDuration = 0.0,
                      const float* aCurve = nullptr, uint32_t aCurveLength = 0);
-  explicit AudioTimelineEvent(AudioNodeStream* aStream);
+  explicit AudioTimelineEvent(AudioNodeTrack* aTrack);
   AudioTimelineEvent(const AudioTimelineEvent& rhs);
   ~AudioTimelineEvent();
 
@@ -74,7 +74,7 @@ struct AudioTimelineEvent final {
   // duration of D, we sample the buffer at floor(mCurveLength*(T-T0)/D)
   // if T<T0+D, and just take the last sample in the buffer otherwise.
   float* mCurve;
-  RefPtr<AudioNodeStream> mStream;
+  RefPtr<AudioNodeTrack> mTrack;
   double mTimeConstant;
   double mDuration;
 #ifdef DEBUG
@@ -128,17 +128,21 @@ class AudioEventTimeline {
       return false;
     }
     if (!WebAudioUtils::IsTimeValid(aEvent.mTimeConstant)) {
-      aRv.ThrowRangeError<MSG_INVALID_AUDIOPARAM_EXPONENTIAL_CONSTANT_ERROR>();
+      aRv.ThrowRangeError(
+          "The exponential constant passed to setTargetAtTime must be "
+          "non-negative.");
       return false;
     }
 
     if (aEvent.mType == AudioTimelineEvent::SetValueCurve) {
       if (!aEvent.mCurve || aEvent.mCurveLength < 2) {
-        aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
+        aRv.ThrowInvalidStateError("Curve length must be at least 2");
         return false;
       }
       if (aEvent.mDuration <= 0) {
-        aRv.ThrowRangeError<MSG_INVALID_CURVE_DURATION_ERROR>();
+        aRv.ThrowRangeError(
+            "The curve duration for setValueCurveAtTime must be strictly "
+            "positive.");
         return false;
       }
     }
@@ -151,7 +155,7 @@ class AudioEventTimeline {
       if (mEvents[i].mType == AudioTimelineEvent::SetValueCurve &&
           TimeOf(mEvents[i]) <= TimeOf(aEvent) &&
           TimeOf(mEvents[i]) + mEvents[i].mDuration > TimeOf(aEvent)) {
-        aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
+        aRv.ThrowNotSupportedError("Can't add events during a curve event");
         return false;
       }
     }
@@ -162,7 +166,8 @@ class AudioEventTimeline {
       for (unsigned i = 0; i < mEvents.Length(); ++i) {
         if (TimeOf(aEvent) < TimeOf(mEvents[i]) &&
             TimeOf(aEvent) + aEvent.mDuration > TimeOf(mEvents[i])) {
-          aRv.Throw(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
+          aRv.ThrowNotSupportedError(
+              "Can't add curve events that overlap other events");
           return false;
         }
       }
@@ -171,19 +176,23 @@ class AudioEventTimeline {
     // Make sure that invalid values are not used for exponential curves
     if (aEvent.mType == AudioTimelineEvent::ExponentialRamp) {
       if (aEvent.mValue <= 0.f) {
-        aRv.ThrowRangeError<MSG_INVALID_AUDIOPARAM_EXPONENTIAL_VALUE_ERROR>();
+        aRv.ThrowRangeError(
+            "The value passed to exponentialRampToValueAtTime must be "
+            "positive.");
         return false;
       }
       const AudioTimelineEvent* previousEvent =
           GetPreviousEvent(TimeOf(aEvent));
       if (previousEvent) {
         if (previousEvent->mValue <= 0.f) {
-          aRv.Throw(NS_ERROR_DOM_SYNTAX_ERR);
+          // XXXbz I see no mention of SyntaxError in the Web Audio API spec
+          aRv.ThrowSyntaxError("Previous event value must be positive");
           return false;
         }
       } else {
         if (mValue <= 0.f) {
-          aRv.Throw(NS_ERROR_DOM_SYNTAX_ERR);
+          // XXXbz I see no mention of SyntaxError in the Web Audio API spec
+          aRv.ThrowSyntaxError("Our value must be positive");
           return false;
         }
       }
@@ -220,11 +229,6 @@ class AudioEventTimeline {
   float GetValue() const {
     // This method should only be called if HasSimpleValue() returns true
     MOZ_ASSERT(HasSimpleValue());
-    return mValue;
-  }
-
-  float Value() const {
-    // TODO: Return the current value based on the timeline of the AudioContext
     return mValue;
   }
 
@@ -335,6 +339,10 @@ class AudioEventTimeline {
             mEvents[1].Time<TimeType>(), &mEvents[0], nullptr);
       }
 
+      MOZ_ASSERT(!mEvents[0].mTrack,
+                 "AudioParam tracks should never be destroyed on the real-time "
+                 "thread.");
+      JS::AutoSuppressGCAnalysis suppress;
       mEvents.RemoveElementAt(0);
     }
   }

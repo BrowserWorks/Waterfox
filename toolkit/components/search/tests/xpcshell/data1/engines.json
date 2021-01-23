@@ -1,0 +1,24 @@
+{
+  "data": [
+    {
+      "webExtension": {
+        "id": "engine1@search.waterfox.net"
+      },
+      "orderHint": 10000,
+      "appliesTo": [{
+        "included": { "everywhere": true },
+        "default": "yes"
+      }]
+    },
+    {
+      "webExtension": {
+        "id": "engine2@search.waterfox.net"
+      },
+      "orderHint": 7000,
+      "appliesTo": [{
+        "included": { "everywhere": true },
+        "default": "no"
+      }]
+    }
+  ]
+}

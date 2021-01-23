@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 /* eslint no-unused-vars: [2, {"vars": "local"}] */
@@ -30,11 +29,10 @@ registerCleanupFunction(() => {
  */
 async function selectAndHighlightNode(selectorOrNodeFront, inspector) {
   info("Highlighting and selecting the node " + selectorOrNodeFront);
-
   const nodeFront = await getNodeFront(selectorOrNodeFront, inspector);
-  const updated = inspector.toolbox.once("highlighter-ready");
+  const onHovered = inspector.toolbox.nodePicker.once("picker-node-hovered");
   inspector.selection.setNodeFront(nodeFront, { reason: "test-highlight" });
-  await updated;
+  await onHovered;
 }
 
 /**

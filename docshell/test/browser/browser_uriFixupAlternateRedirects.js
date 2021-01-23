@@ -33,9 +33,9 @@ add_task(async function() {
     let errorPageLoaded = BrowserTestUtils.waitForErrorPage(tab.linkedBrowser);
     EventUtils.synthesizeKey("KEY_Enter");
     await errorPageLoaded;
-    let [contentURL, originalURL] = await ContentTask.spawn(
+    let [contentURL, originalURL] = await SpecialPowers.spawn(
       tab.linkedBrowser,
-      null,
+      [],
       () => {
         return [
           content.document.documentURI,
@@ -59,6 +59,7 @@ add_task(async function() {
       "example",
       "Should be an error for http://example, not http://www.example.com/"
     );
+
     BrowserTestUtils.removeTab(tab);
   }
 });

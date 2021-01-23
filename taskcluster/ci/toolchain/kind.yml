@@ -9,7 +9,6 @@ kind-dependencies:
 
 transforms:
     - taskgraph.transforms.try_job:transforms
-    - taskgraph.transforms.use_toolchains:transforms
     - taskgraph.transforms.job:transforms
     - taskgraph.transforms.cached_tasks:transforms
     - taskgraph.transforms.task:transforms
@@ -29,7 +28,10 @@ jobs-from:
     - cctools-port.yml
     - clang-tidy.yml
     - clang.yml
+    - dump-syms.yml
+    - fix-stacks.yml
     - gcc.yml
+    - geckodriver.yml
     - gn.yml
     - grcov.yml
     - mingw.yml
@@ -40,3 +42,4 @@ jobs-from:
     - rust.yml
     - rust-size.yml
     - sccache.yml
+    - dist-toolchains.yml

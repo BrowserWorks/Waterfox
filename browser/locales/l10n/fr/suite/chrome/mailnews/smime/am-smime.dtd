@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY securityTitle.label "Sécurité">
+<!ENTITY securityTab.label "Sécurité">
+<!ENTITY securityHeading.label "Pour envoyer et recevoir des messages signés ou chiffrés, vous devez spécifier un certificat de signature numérique et un certificat de chiffrement.">
+<!ENTITY encryptionGroupTitle.label "Chiffrement">
+<!ENTITY encryptionChoiceLabel.label "Utiliser le chiffrement pour l’envoi des messages :">
+<!ENTITY neverEncrypt.label "Jamais">
+<!ENTITY neverEncrypt.accesskey "J">
+<!ENTITY alwaysEncryptMessage.label "Toujours chiffrer les messages">
+<!ENTITY alwaysEncryptMessage.accesskey "T">
+<!ENTITY encryptionCert.message "Certificat personnel pour chiffrer et déchiffrer les messages envoyés :">
+<!ENTITY digitalSign.certificate.button "Sélectionner un certificat…">
+<!ENTITY digitalSign.certificate.accesskey "S">
+<!ENTITY digitalSign.certificate_clear.button "Effacer">
+<!ENTITY digitalSign.certificate_clear.accesskey "E">
+<!ENTITY encryption.certificate.button "Sélectionner un certificat…">
+<!ENTITY encryption.certificate.accesskey "c">
+<!ENTITY encryption.certificate_clear.button "Effacer">
+<!ENTITY encryption.certificate_clear.accesskey "f">
+<!ENTITY signingGroupTitle.label "Signature">
+<!ENTITY signMessage.label "Signer les messages numériquement">
+<!ENTITY signMessage.accesskey "n">
+<!ENTITY signingCert.message "Certificat personnel pour signer numériquement les messages envoyés :">
+
+<!ENTITY certificates.label "Certificats">
+<!ENTITY manageCerts2.label "Gérer les certificats…">
+<!ENTITY manageCerts2.accesskey "G">
+<!ENTITY manageDevices.label "Gérer les périphériques de sécurité…">
+<!ENTITY manageDevices.accesskey "r">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Sélectionner un certificat">
+<!ENTITY certPicker.info  "Certificat :">
+<!ENTITY certPicker.detailsLabel "Détails du certificat sélectionné :">

@@ -7,10 +7,11 @@
 
 use crate::context::StackLimitChecker;
 use crate::dom::{TElement, TNode, TShadowRoot};
-use crate::selector_parser::SelectorImpl;
+use crate::invalidation::element::invalidation_map::{Dependency, DependencyInvalidationKind};
 use selectors::matching::matches_compound_selector_from;
 use selectors::matching::{CompoundSelectorMatchingResult, MatchingContext};
-use selectors::parser::{Combinator, Component, Selector};
+use selectors::parser::{Combinator, Component};
+use selectors::OpaqueElement;
 use smallvec::SmallVec;
 use std::fmt;
 
@@ -28,10 +29,31 @@ where
 
     /// Whether the invalidation processor only cares about light-tree
     /// descendants of a given element, that is, doesn't invalidate
-    /// pseudo-elements, NAC, or XBL anon content.
+    /// pseudo-elements, NAC, shadow dom...
     fn light_tree_only(&self) -> bool {
         false
     }
+
+    /// When a dependency from a :where or :is selector matches, it may still be
+    /// the case that we don't need to invalidate the full style. Consider the
+    /// case of:
+    ///
+    ///   div .foo:where(.bar *, .baz) .qux
+    ///
+    /// We can get to the `*` part after a .bar class change, but you only need
+    /// to restyle the element if it also matches .foo.
+    ///
+    /// Similarly, you only need to restyle .baz if the whole result of matching
+    /// the selector changes.
+    ///
+    /// This function is called to check the result of matching the "outer"
+    /// dependency that we generate for the parent of the `:where` selector,
+    /// that is, in the case above it should match
+    /// `div .foo:where(.bar *, .baz)`.
+    ///
+    /// Returning true unconditionally here is over-optimistic and may
+    /// over-invalidate.
+    fn check_outer_dependency(&mut self, dependency: &Dependency, element: E) -> bool;
 
     /// The matching context that should be used to process invalidations.
     fn matching_context(&mut self) -> &mut MatchingContext<'a, E::Impl>;
@@ -72,11 +94,15 @@ pub struct DescendantInvalidationLists<'a> {
     pub dom_descendants: InvalidationVector<'a>,
     /// Invalidations for slotted children of an element.
     pub slotted_descendants: InvalidationVector<'a>,
+    /// Invalidations for ::part()s of an element.
+    pub parts: InvalidationVector<'a>,
 }
 
 impl<'a> DescendantInvalidationLists<'a> {
     fn is_empty(&self) -> bool {
-        self.dom_descendants.is_empty() && self.slotted_descendants.is_empty()
+        self.dom_descendants.is_empty() &&
+            self.slotted_descendants.is_empty() &&
+            self.parts.is_empty()
     }
 }
 
@@ -104,6 +130,8 @@ enum DescendantInvalidationKind {
     Dom,
     /// A ::slotted() descendant invalidation.
     Slotted,
+    /// A ::part() descendant invalidation.
+    Part,
 }
 
 /// The kind of invalidation we're processing.
@@ -120,11 +148,23 @@ enum InvalidationKind {
 /// relative to a current element we are processing, must be restyled.
 #[derive(Clone)]
 pub struct Invalidation<'a> {
-    selector: &'a Selector<SelectorImpl>,
+    /// The dependency that generated this invalidation.
+    ///
+    /// Note that the offset inside the dependency is not really useful after
+    /// construction.
+    dependency: &'a Dependency,
+    /// The right shadow host from where the rule came from, if any.
+    ///
+    /// This is needed to ensure that we match the selector with the right
+    /// state, as whether some selectors like :host and ::part() match depends
+    /// on it.
+    scope: Option<OpaqueElement>,
     /// The offset of the selector pointing to a compound selector.
     ///
     /// This order is a "parse order" offset, that is, zero is the leftmost part
     /// of the selector written as parsed / serialized.
+    ///
+    /// It is initialized from the offset from `dependency`.
     offset: usize,
     /// Whether the invalidation was already matched by any previous sibling or
     /// ancestor.
@@ -136,11 +176,21 @@ pub struct Invalidation<'a> {
 }
 
 impl<'a> Invalidation<'a> {
-    /// Create a new invalidation for a given selector and offset.
-    pub fn new(selector: &'a Selector<SelectorImpl>, offset: usize) -> Self {
+    /// Create a new invalidation for matching a dependency.
+    pub fn new(
+        dependency: &'a Dependency,
+        scope: Option<OpaqueElement>,
+    ) -> Self {
+        debug_assert!(
+            dependency.selector_offset == dependency.selector.len() + 1 ||
+            dependency.invalidation_kind() != DependencyInvalidationKind::Element,
+            "No point to this, if the dependency matched the element we should just invalidate it"
+        );
         Self {
-            selector,
-            offset,
+            dependency,
+            scope,
+            // + 1 to go past the combinator.
+            offset: dependency.selector.len() + 1 - dependency.selector_offset,
             matched_by_any_previous: false,
         }
     }
@@ -156,7 +206,7 @@ impl<'a> Invalidation<'a> {
         // for the weird pseudos in <input type="number">.
         //
         // We should be able to do better here!
-        match self.selector.combinator_at_parse_order(self.offset - 1) {
+        match self.dependency.selector.combinator_at_parse_order(self.offset - 1) {
             Combinator::Descendant | Combinator::LaterSibling | Combinator::PseudoElement => true,
             Combinator::Part |
             Combinator::SlotAssignment |
@@ -170,13 +220,11 @@ impl<'a> Invalidation<'a> {
             return InvalidationKind::Descendant(DescendantInvalidationKind::Dom);
         }
 
-        match self.selector.combinator_at_parse_order(self.offset - 1) {
+        match self.dependency.selector.combinator_at_parse_order(self.offset - 1) {
             Combinator::Child | Combinator::Descendant | Combinator::PseudoElement => {
                 InvalidationKind::Descendant(DescendantInvalidationKind::Dom)
             },
-            Combinator::Part => {
-                unimplemented!("Need to add invalidation for shadow parts");
-            },
+            Combinator::Part => InvalidationKind::Descendant(DescendantInvalidationKind::Part),
             Combinator::SlotAssignment => {
                 InvalidationKind::Descendant(DescendantInvalidationKind::Slotted)
             },
@@ -190,7 +238,7 @@ impl<'a> fmt::Debug for Invalidation<'a> {
         use cssparser::ToCss;
 
         f.write_str("Invalidation(")?;
-        for component in self.selector.iter_raw_parse_order_from(self.offset) {
+        for component in self.dependency.selector.iter_raw_parse_order_from(self.offset) {
             if matches!(*component, Component::Combinator(..)) {
                 break;
             }
@@ -451,11 +499,6 @@ where
 
         let mut sibling_invalidations = InvalidationVector::new();
         for child in parent.dom_children() {
-            // TODO(emilio): We handle <xbl:children> fine, because they appear
-            // in selector-matching (note bug 1374247, though).
-            //
-            // This probably needs a shadow root check on `child` here, and
-            // recursing if that's the case.
             let child = match child.as_element() {
                 Some(e) => e,
                 None => continue,
@@ -470,6 +513,60 @@ where
         }
 
         any_descendant
+    }
+
+    fn invalidate_parts_in_shadow_tree(
+        &mut self,
+        shadow: <E::ConcreteNode as TNode>::ConcreteShadowRoot,
+        invalidations: &[Invalidation<'b>],
+    ) -> bool {
+        debug_assert!(!invalidations.is_empty());
+
+        let mut any = false;
+        let mut sibling_invalidations = InvalidationVector::new();
+
+        for node in shadow.as_node().dom_descendants() {
+            let element = match node.as_element() {
+                Some(e) => e,
+                None => continue,
+            };
+
+            if element.has_part_attr() {
+                any |= self.invalidate_child(
+                    element,
+                    invalidations,
+                    &mut sibling_invalidations,
+                    DescendantInvalidationKind::Part,
+                );
+                debug_assert!(
+                    sibling_invalidations.is_empty(),
+                    "::part() shouldn't have sibling combinators to the right, \
+                     this makes no sense! {:?}",
+                    sibling_invalidations
+                );
+            }
+
+            if let Some(shadow) = element.shadow_root() {
+                if element.exports_any_part() {
+                    any |= self.invalidate_parts_in_shadow_tree(shadow, invalidations)
+                }
+            }
+        }
+
+        any
+    }
+
+    fn invalidate_parts(&mut self, invalidations: &[Invalidation<'b>]) -> bool {
+        if invalidations.is_empty() {
+            return false;
+        }
+
+        let shadow = match self.element.shadow_root() {
+            Some(s) => s,
+            None => return false,
+        };
+
+        self.invalidate_parts_in_shadow_tree(shadow, invalidations)
     }
 
     fn invalidate_slotted_elements(&mut self, invalidations: &[Invalidation<'b>]) -> bool {
@@ -541,13 +638,6 @@ where
             any_descendant |= self.invalidate_dom_descendants_of(root.as_node(), invalidations);
         }
 
-        // This is needed for XBL (technically) unconditionally, because XBL
-        // bindings do not block combinators in any way. However this is kinda
-        // broken anyway, since we should be looking at XBL rules too.
-        if let Some(anon_content) = self.element.xbl_binding_anonymous_content() {
-            any_descendant |= self.invalidate_dom_descendants_of(anon_content, invalidations);
-        }
-
         if let Some(marker) = self.element.marker_pseudo_element() {
             any_descendant |= self.invalidate_pseudo_element_or_nac(marker, invalidations);
         }
@@ -598,6 +688,7 @@ where
 
         any_descendant |= self.invalidate_non_slotted_descendants(&invalidations.dom_descendants);
         any_descendant |= self.invalidate_slotted_elements(&invalidations.slotted_descendants);
+        any_descendant |= self.invalidate_parts(&invalidations.parts);
 
         any_descendant
     }
@@ -639,7 +730,7 @@ where
             }
         }
 
-        sibling_invalidations.extend(new_sibling_invalidations.drain());
+        sibling_invalidations.extend(new_sibling_invalidations.drain(..));
         invalidated_self
     }
 
@@ -672,7 +763,7 @@ where
                 debug_assert_eq!(
                     descendant_invalidation_kind,
                     DescendantInvalidationKind::Dom,
-                    "Slotted invalidations don't propagate."
+                    "Slotted or part invalidations don't propagate."
                 );
                 descendant_invalidations.dom_descendants.push(invalidation);
             }
@@ -699,184 +790,252 @@ where
             self.element, invalidation, invalidation_kind
         );
 
-        let matching_result = matches_compound_selector_from(
-            &invalidation.selector,
-            invalidation.offset,
-            self.processor.matching_context(),
-            &self.element,
-        );
+        let matching_result = {
+            let context = self.processor.matching_context();
+            context.current_host = invalidation.scope;
 
-        let mut invalidated_self = false;
-        let mut matched = false;
-        match matching_result {
+            matches_compound_selector_from(
+                &invalidation.dependency.selector,
+                invalidation.offset,
+                context,
+                &self.element,
+            )
+        };
+
+        let next_invalidation = match matching_result {
+            CompoundSelectorMatchingResult::NotMatched => {
+                return SingleInvalidationResult {
+                    invalidated_self: false,
+                    matched: false,
+                }
+            },
             CompoundSelectorMatchingResult::FullyMatched => {
                 debug!(" > Invalidation matched completely");
-                matched = true;
-                invalidated_self = true;
+                // We matched completely. If we're an inner selector now we need
+                // to go outside our selector and carry on invalidating.
+                let mut cur_dependency = invalidation.dependency;
+                loop {
+                    cur_dependency = match cur_dependency.parent {
+                        None => return SingleInvalidationResult {
+                            invalidated_self: true,
+                            matched: true,
+                        },
+                        Some(ref p) => &**p,
+                    };
+
+                    debug!(" > Checking outer dependency {:?}", cur_dependency);
+
+                    // The inner selector changed, now check if the full
+                    // previous part of the selector did, before keeping
+                    // checking for descendants.
+                    if !self.processor.check_outer_dependency(cur_dependency, self.element) {
+                        return SingleInvalidationResult {
+                            invalidated_self: false,
+                            matched: false,
+                        }
+                    }
+
+                    if cur_dependency.invalidation_kind() == DependencyInvalidationKind::Element {
+                        continue;
+                    }
+
+                    debug!(" > Generating invalidation");
+                    break Invalidation::new(cur_dependency, invalidation.scope)
+                }
             },
             CompoundSelectorMatchingResult::Matched {
                 next_combinator_offset,
             } => {
-                let next_combinator = invalidation
-                    .selector
-                    .combinator_at_parse_order(next_combinator_offset);
-                matched = true;
-
-                if matches!(next_combinator, Combinator::PseudoElement) {
-                    // This will usually be the very next component, except for
-                    // the fact that we store compound selectors the other way
-                    // around, so there could also be state pseudo-classes.
-                    let pseudo_selector = invalidation
-                        .selector
-                        .iter_raw_parse_order_from(next_combinator_offset + 1)
-                        .skip_while(|c| matches!(**c, Component::NonTSPseudoClass(..)))
-                        .next()
-                        .unwrap();
-
-                    let pseudo = match *pseudo_selector {
-                        Component::PseudoElement(ref pseudo) => pseudo,
-                        _ => unreachable!(
-                            "Someone seriously messed up selector parsing: \
-                             {:?} at offset {:?}: {:?}",
-                            invalidation.selector, next_combinator_offset, pseudo_selector,
-                        ),
-                    };
-
-                    // FIXME(emilio): This is not ideal, and could not be
-                    // accurate if we ever have stateful element-backed eager
-                    // pseudos.
-                    //
-                    // Ideally, we'd just remove element-backed eager pseudos
-                    // altogether, given they work fine without it. Only gotcha
-                    // is that we wouldn't style them in parallel, which may or
-                    // may not be an issue.
-                    //
-                    // Also, this could be more fine grained now (perhaps a
-                    // RESTYLE_PSEUDOS hint?).
-                    //
-                    // Note that we'll also restyle the pseudo-element because
-                    // it would match this invalidation.
-                    if self.processor.invalidates_on_eager_pseudo_element() {
-                        if pseudo.is_eager() {
-                            invalidated_self = true;
-                        }
-                        // If we start or stop matching some marker rules, and
-                        // don't have a marker, then we need to restyle the
-                        // element to potentially create one.
-                        //
-                        // Same caveats as for other eager pseudos apply, this
-                        // could be more fine-grained.
-                        if pseudo.is_marker() && self.element.marker_pseudo_element().is_none() {
-                            invalidated_self = true;
-                        }
-                    }
-                }
-
-                let next_invalidation = Invalidation {
-                    selector: invalidation.selector,
+                Invalidation {
+                    dependency: invalidation.dependency,
+                    scope: invalidation.scope,
                     offset: next_combinator_offset + 1,
                     matched_by_any_previous: false,
-                };
-
-                debug!(
-                    " > Invalidation matched, next: {:?}, ({:?})",
-                    next_invalidation, next_combinator
-                );
-
-                let next_invalidation_kind = next_invalidation.kind();
-
-                // We can skip pushing under some circumstances, and we should
-                // because otherwise the invalidation list could grow
-                // exponentially.
-                //
-                //  * First of all, both invalidations need to be of the same
-                //    kind. This is because of how we propagate them going to
-                //    the right of the tree for sibling invalidations and going
-                //    down the tree for children invalidations. A sibling
-                //    invalidation that ends up generating a children
-                //    invalidation ends up (correctly) in five different lists,
-                //    not in the same list five different times.
-                //
-                //  * Then, the invalidation needs to be matched by a previous
-                //    ancestor/sibling, in order to know that this invalidation
-                //    has been generated already.
-                //
-                //  * Finally, the new invalidation needs to be
-                //    `effective_for_next()`, in order for us to know that it is
-                //    still in the list, since we remove the dependencies that
-                //    aren't from the lists for our children / siblings.
-                //
-                // To go through an example, let's imagine we are processing a
-                // dom subtree like:
-                //
-                //   <div><address><div><div/></div></address></div>
-                //
-                // And an invalidation list with a single invalidation like:
-                //
-                //   [div div div]
-                //
-                // When we process the invalidation list for the outer div, we
-                // match it, and generate a `div div` invalidation, so for the
-                // <address> child we have:
-                //
-                //   [div div div, div div]
-                //
-                // With the first of them marked as `matched`.
-                //
-                // When we process the <address> child, we don't match any of
-                // them, so both invalidations go untouched to our children.
-                //
-                // When we process the second <div>, we match _both_
-                // invalidations.
-                //
-                // However, when matching the first, we can tell it's been
-                // matched, and not push the corresponding `div div`
-                // invalidation, since we know it's necessarily already on the
-                // list.
-                //
-                // Thus, without skipping the push, we'll arrive to the
-                // innermost <div> with:
-                //
-                //   [div div div, div div, div div, div]
-                //
-                // While skipping it, we won't arrive here with duplicating
-                // dependencies:
-                //
-                //   [div div div, div div, div]
-                //
-                let can_skip_pushing = next_invalidation_kind == invalidation_kind &&
-                    invalidation.matched_by_any_previous &&
-                    next_invalidation.effective_for_next();
-
-                if can_skip_pushing {
-                    debug!(
-                        " > Can avoid push, since the invalidation had \
-                         already been matched before"
-                    );
-                } else {
-                    match next_invalidation_kind {
-                        InvalidationKind::Descendant(DescendantInvalidationKind::Dom) => {
-                            descendant_invalidations
-                                .dom_descendants
-                                .push(next_invalidation);
-                        },
-                        InvalidationKind::Descendant(DescendantInvalidationKind::Slotted) => {
-                            descendant_invalidations
-                                .slotted_descendants
-                                .push(next_invalidation);
-                        },
-                        InvalidationKind::Sibling => {
-                            sibling_invalidations.push(next_invalidation);
-                        },
-                    }
                 }
             },
-            CompoundSelectorMatchingResult::NotMatched => {},
+        };
+
+        debug_assert_ne!(
+            next_invalidation.offset,
+            0,
+            "Rightmost selectors shouldn't generate more invalidations",
+        );
+
+        let mut invalidated_self = false;
+        let next_combinator = next_invalidation
+            .dependency
+            .selector
+            .combinator_at_parse_order(next_invalidation.offset - 1);
+
+        if matches!(next_combinator, Combinator::PseudoElement) {
+            // This will usually be the very next component, except for
+            // the fact that we store compound selectors the other way
+            // around, so there could also be state pseudo-classes.
+            let pseudo = next_invalidation
+                .dependency
+                .selector
+                .iter_raw_parse_order_from(next_invalidation.offset)
+                .flat_map(|c| {
+                    if let Component::PseudoElement(ref pseudo) = *c {
+                        return Some(pseudo);
+                    }
+
+                    // TODO: Would be nice to make this a diagnostic_assert! of
+                    // sorts.
+                    debug_assert!(
+                        c.maybe_allowed_after_pseudo_element(),
+                        "Someone seriously messed up selector parsing: \
+                         {:?} at offset {:?}: {:?}",
+                        next_invalidation.dependency, next_invalidation.offset, c,
+                    );
+
+                    None
+                })
+                .next()
+                .unwrap();
+
+            // FIXME(emilio): This is not ideal, and could not be
+            // accurate if we ever have stateful element-backed eager
+            // pseudos.
+            //
+            // Ideally, we'd just remove element-backed eager pseudos
+            // altogether, given they work fine without it. Only gotcha
+            // is that we wouldn't style them in parallel, which may or
+            // may not be an issue.
+            //
+            // Also, this could be more fine grained now (perhaps a
+            // RESTYLE_PSEUDOS hint?).
+            //
+            // Note that we'll also restyle the pseudo-element because
+            // it would match this invalidation.
+            if self.processor.invalidates_on_eager_pseudo_element() {
+                if pseudo.is_eager() {
+                    invalidated_self = true;
+                }
+                // If we start or stop matching some marker rules, and
+                // don't have a marker, then we need to restyle the
+                // element to potentially create one.
+                //
+                // Same caveats as for other eager pseudos apply, this
+                // could be more fine-grained.
+                if pseudo.is_marker() && self.element.marker_pseudo_element().is_none() {
+                    invalidated_self = true;
+                }
+
+                // FIXME: ::selection doesn't generate elements, so the
+                // regular invalidation doesn't work for it. We store
+                // the cached selection style holding off the originating
+                // element, so we need to restyle it in order to invalidate
+                // it. This is still not quite correct, since nothing
+                // triggers a repaint necessarily, but matches old Gecko
+                // behavior, and the ::selection implementation needs to
+                // change significantly anyway to implement
+                // https://github.com/w3c/csswg-drafts/issues/2474.
+                if pseudo.is_selection() {
+                    invalidated_self = true;
+                }
+            }
+        }
+
+        debug!(
+            " > Invalidation matched, next: {:?}, ({:?})",
+            next_invalidation, next_combinator
+        );
+
+        let next_invalidation_kind = next_invalidation.kind();
+
+        // We can skip pushing under some circumstances, and we should
+        // because otherwise the invalidation list could grow
+        // exponentially.
+        //
+        //  * First of all, both invalidations need to be of the same
+        //    kind. This is because of how we propagate them going to
+        //    the right of the tree for sibling invalidations and going
+        //    down the tree for children invalidations. A sibling
+        //    invalidation that ends up generating a children
+        //    invalidation ends up (correctly) in five different lists,
+        //    not in the same list five different times.
+        //
+        //  * Then, the invalidation needs to be matched by a previous
+        //    ancestor/sibling, in order to know that this invalidation
+        //    has been generated already.
+        //
+        //  * Finally, the new invalidation needs to be
+        //    `effective_for_next()`, in order for us to know that it is
+        //    still in the list, since we remove the dependencies that
+        //    aren't from the lists for our children / siblings.
+        //
+        // To go through an example, let's imagine we are processing a
+        // dom subtree like:
+        //
+        //   <div><address><div><div/></div></address></div>
+        //
+        // And an invalidation list with a single invalidation like:
+        //
+        //   [div div div]
+        //
+        // When we process the invalidation list for the outer div, we
+        // match it, and generate a `div div` invalidation, so for the
+        // <address> child we have:
+        //
+        //   [div div div, div div]
+        //
+        // With the first of them marked as `matched`.
+        //
+        // When we process the <address> child, we don't match any of
+        // them, so both invalidations go untouched to our children.
+        //
+        // When we process the second <div>, we match _both_
+        // invalidations.
+        //
+        // However, when matching the first, we can tell it's been
+        // matched, and not push the corresponding `div div`
+        // invalidation, since we know it's necessarily already on the
+        // list.
+        //
+        // Thus, without skipping the push, we'll arrive to the
+        // innermost <div> with:
+        //
+        //   [div div div, div div, div div, div]
+        //
+        // While skipping it, we won't arrive here with duplicating
+        // dependencies:
+        //
+        //   [div div div, div div, div]
+        //
+        let can_skip_pushing = next_invalidation_kind == invalidation_kind &&
+            invalidation.matched_by_any_previous &&
+            next_invalidation.effective_for_next();
+
+        if can_skip_pushing {
+            debug!(
+                " > Can avoid push, since the invalidation had \
+                 already been matched before"
+            );
+        } else {
+            match next_invalidation_kind {
+                InvalidationKind::Descendant(DescendantInvalidationKind::Dom) => {
+                    descendant_invalidations
+                        .dom_descendants
+                        .push(next_invalidation);
+                },
+                InvalidationKind::Descendant(DescendantInvalidationKind::Part) => {
+                    descendant_invalidations.parts.push(next_invalidation);
+                },
+                InvalidationKind::Descendant(DescendantInvalidationKind::Slotted) => {
+                    descendant_invalidations
+                        .slotted_descendants
+                        .push(next_invalidation);
+                },
+                InvalidationKind::Sibling => {
+                    sibling_invalidations.push(next_invalidation);
+                },
+            }
         }
 
         SingleInvalidationResult {
             invalidated_self,
-            matched,
+            matched: true,
         }
     }
 }

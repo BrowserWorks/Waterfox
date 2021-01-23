@@ -1,8 +1,8 @@
+use alloc::boxed::Box;
 use core::fmt;
 use core::marker::PhantomData;
 use core::mem;
 use core::ptr;
-use alloc::boxed::Box;
 
 /// Number of words a piece of `Data` can hold.
 ///
@@ -24,7 +24,7 @@ pub struct Deferred {
 
 impl fmt::Debug for Deferred {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write!(f, "Deferred {{ ... }}")
+        f.pad("Deferred { .. }")
     }
 }
 
@@ -36,6 +36,9 @@ impl Deferred {
 
         unsafe {
             if size <= mem::size_of::<Data>() && align <= mem::align_of::<Data>() {
+                // TODO(taiki-e): when the minimum supported Rust version is bumped to 1.36+,
+                // replace this with `mem::MaybeUninit`.
+                #[allow(deprecated)]
                 let mut data: Data = mem::uninitialized();
                 ptr::write(&mut data as *mut Data as *mut F, f);
 
@@ -51,6 +54,9 @@ impl Deferred {
                 }
             } else {
                 let b: Box<F> = Box::new(f);
+                // TODO(taiki-e): when the minimum supported Rust version is bumped to 1.36+,
+                // replace this with `mem::MaybeUninit`.
+                #[allow(deprecated)]
                 let mut data: Data = mem::uninitialized();
                 ptr::write(&mut data as *mut Data as *mut Box<F>, b);
 
@@ -78,8 +84,8 @@ impl Deferred {
 
 #[cfg(test)]
 mod tests {
-    use std::cell::Cell;
     use super::Deferred;
+    use std::cell::Cell;
 
     #[test]
     fn on_stack() {

@@ -8,9 +8,9 @@
 import copy
 import os
 import platform
-import urllib2
+from six.moves import urllib
 import json
-from urlparse import urlparse, ParseResult
+from six.moves.urllib.parse import urlparse, ParseResult
 
 from mozharness.base.errors import BaseErrorList
 from mozharness.base.log import FATAL, WARNING
@@ -20,7 +20,6 @@ from mozharness.base.python import (
     virtualenv_config_options,
 )
 from mozharness.mozilla.automation import AutomationMixin, TBPL_WARNING
-from mozharness.mozilla.fetches import FetchesMixin
 from mozharness.mozilla.structuredlog import StructuredOutputParser
 from mozharness.mozilla.testing.unittest import DesktopUnittestOutputParser
 from mozharness.mozilla.testing.try_tools import TryToolsMixin, try_config_options
@@ -103,7 +102,7 @@ testing_config_options = [
 
 # TestingMixin {{{1
 class TestingMixin(VirtualenvMixin, AutomationMixin, ResourceMonitoringMixin,
-                   TooltoolMixin, TryToolsMixin, VerifyToolsMixin, FetchesMixin):
+                   TooltoolMixin, TryToolsMixin, VerifyToolsMixin):
     """
     The steps to identify + download the proper bits for [browser] unit
     tests and Talos.
@@ -118,8 +117,6 @@ class TestingMixin(VirtualenvMixin, AutomationMixin, ResourceMonitoringMixin,
     symbols_path = None
     jsshell_url = None
     minidump_stackwalk_path = None
-    nodejs_path = None
-    default_tools_repo = 'https://hg.mozilla.org/build/tools'
 
     def query_build_dir_url(self, file_name):
         """
@@ -134,7 +131,7 @@ class TestingMixin(VirtualenvMixin, AutomationMixin, ResourceMonitoringMixin,
             self.fatal("Can't figure out build directory urls without an installer_url "
                        "or test_packages_url!")
 
-        reference_url = urllib2.unquote(reference_url)
+        reference_url = urllib.parse.unquote(reference_url)
         parts = list(urlparse(reference_url))
 
         last_slash = parts[2].rfind('/')
@@ -232,7 +229,7 @@ class TestingMixin(VirtualenvMixin, AutomationMixin, ResourceMonitoringMixin,
         if c.get("test_packages_url"):
             c["test_packages_url"] = _replace_url(c["test_packages_url"], c["replace_urls"])
 
-        for key, value in self.config.iteritems():
+        for key, value in self.config.items():
             if type(value) == str and value.startswith("http"):
                 self.config[key] = _replace_url(value, c["replace_urls"])
 
@@ -255,20 +252,20 @@ class TestingMixin(VirtualenvMixin, AutomationMixin, ResourceMonitoringMixin,
 
             self.https_username, self.https_password = get_credentials()
             # This creates a password manager
-            passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
+            passman = urllib.request.HTTPPasswordMgrWithDefaultRealm()
             # Because we have put None at the start it will use this username/password
             # combination from here on
             passman.add_password(None, url, self.https_username, self.https_password)
-            authhandler = urllib2.HTTPBasicAuthHandler(passman)
+            authhandler = urllib.request.HTTPBasicAuthHandler(passman)
 
-            return urllib2.build_opener(authhandler).open(url, **kwargs)
+            return urllib.request.build_opener(authhandler).open(url, **kwargs)
 
         # If we have the developer_run flag enabled then we will switch
         # URLs to the right place and enable http authentication
         if "developer_config.py" in self.config["config_files"]:
             return _urlopen_basic_auth(url, **kwargs)
         else:
-            return urllib2.urlopen(url, **kwargs)
+            return urllib.request.urlopen(url, **kwargs)
 
     def _query_binary_version(self, regex, cmd):
         output = self.get_output_from_command(cmd, silent=False)
@@ -311,7 +308,6 @@ You can set this by specifying --test-url URL
         # This is a difference in the convention of the configs more than
         # to how these tests are run, so we pave over these differences here.
         aliases = {
-            'robocop': 'mochitest',
             'mochitest-chrome': 'mochitest',
             'mochitest-media': 'mochitest',
             'mochitest-plain': 'mochitest',
@@ -321,12 +317,13 @@ You can set this by specifying --test-url URL
             'mochitest-webgl2-core': 'mochitest',
             'mochitest-webgl2-ext': 'mochitest',
             'mochitest-webgl2-deqp': 'mochitest',
+            'mochitest-webgpu': 'mochitest',
             'geckoview': 'mochitest',
             'geckoview-junit': 'mochitest',
-            'jsreftest': 'reftest',
+            'reftest-qr': 'reftest',
             'crashtest': 'reftest',
+            'crashtest-qr': 'reftest',
             'reftest-debug': 'reftest',
-            'jsreftest-debug': 'reftest',
             'crashtest-debug': 'reftest',
         }
         suite_categories = [aliases.get(name, name) for name in suite_categories]
@@ -337,7 +334,18 @@ You can set this by specifying --test-url URL
         self.mkdir_p(test_install_dir)
         package_requirements = self._read_packages_manifest()
         target_packages = []
+        c = self.config
         for category in suite_categories:
+            specified_suites = c.get("specified_{}_suites".format(category))
+            if specified_suites:
+                found = False
+                for specified_suite in specified_suites:
+                    if specified_suite in package_requirements:
+                        target_packages.extend(package_requirements[specified_suite])
+                        found = True
+                if found:
+                    continue
+
             if category in package_requirements:
                 target_packages.extend(package_requirements[category])
             else:
@@ -368,6 +376,10 @@ You can set this by specifying --test-url URL
                 self.info("Special-casing the jsshell zip file")
                 unpack_dirs = None
                 target_dir = dirs['abs_test_bin_dir']
+
+            if "web-platform" in file_name:
+                self.info("Extracting everything from web-platform archive")
+                unpack_dirs = None
 
             url = self.query_build_dir_url(file_name)
             self.download_unpack(url, target_dir,
@@ -542,136 +554,28 @@ Did you run with --create-virtualenv? Is mozinstall in virtualenv_modules?""")
     def uninstall(self):
         self.uninstall_app()
 
-    def query_minidump_tooltool_manifest(self):
-        if self.config.get('minidump_tooltool_manifest_path'):
-            return self.config['minidump_tooltool_manifest_path']
-
-        self.info('Minidump tooltool manifest unknown. Determining based upon '
-                  'platform and architecture.')
-        platform_name = self.platform_name()
-
-        if platform_name:
-            tooltool_path = "config/tooltool-manifests/%s/releng.manifest" % \
-                TOOLTOOL_PLATFORM_DIR[platform_name]
-            return tooltool_path
-        else:
-            self.fatal('We could not determine the minidump\'s filename.')
-
-    def query_minidump_filename(self):
-        if self.config.get('minidump_stackwalk_path'):
-            return self.config['minidump_stackwalk_path']
-
-        self.info('Minidump filename unknown. Determining based upon platform '
-                  'and architecture.')
-        platform_name = self.platform_name()
-        if platform_name:
-            minidump_filename = '%s-minidump_stackwalk' % TOOLTOOL_PLATFORM_DIR[platform_name]
-            if platform_name in ('win32', 'win64'):
-                minidump_filename += '.exe'
-            return minidump_filename
-        else:
-            self.fatal('We could not determine the minidump\'s filename.')
-
-    def query_nodejs_tooltool_manifest(self):
-        if self.config.get('nodejs_tooltool_manifest_path'):
-            return self.config['nodejs_tooltool_manifest_path']
-
-        self.info('NodeJS tooltool manifest unknown. Determining based upon '
-                  'platform and architecture.')
-        platform_name = self.platform_name()
-
-        if platform_name:
-            tooltool_path = "config/tooltool-manifests/%s/nodejs.manifest" % \
-                TOOLTOOL_PLATFORM_DIR[platform_name]
-            return tooltool_path
-        else:
-            self.fatal('Could not determine nodejs manifest filename')
-
-    def query_nodejs_filename(self):
-        if self.config.get('nodejs_path'):
-            return self.config['nodejs_path']
-
-        self.fatal('Could not determine nodejs filename')
-
-    def query_nodejs(self, manifest=None):
-        if self.nodejs_path:
-            return self.nodejs_path
-
-        c = self.config
-        dirs = self.query_abs_dirs()
-
-        nodejs_path = self.query_nodejs_filename()
-        if not self.config.get('download_nodejs'):
-            self.nodejs_path = nodejs_path
-            return self.nodejs_path
-
-        if not manifest:
-            tooltool_manifest_path = self.query_nodejs_tooltool_manifest()
-            manifest = os.path.join(dirs.get('abs_test_install_dir',
-                                             os.path.join(dirs['abs_work_dir'], 'tests')),
-                                    tooltool_manifest_path)
-
-        self.info('grabbing nodejs binary from tooltool')
-        try:
-            self.tooltool_fetch(
-                manifest=manifest,
-                output_dir=dirs['abs_work_dir'],
-                cache=c.get('tooltool_cache')
-            )
-        except KeyError:
-            self.error('missing a required key')
-
-        abs_nodejs_path = os.path.join(dirs['abs_work_dir'], nodejs_path)
-
-        if os.path.exists(abs_nodejs_path):
-            if self.platform_name() not in ('win32', 'win64'):
-                self.chmod(abs_nodejs_path, 0755)
-            self.nodejs_path = abs_nodejs_path
-        else:
-            msg = """nodejs path was given but couldn't be found. Tried looking in '%s'""" % \
-                abs_nodejs_path
-            self.warning(msg)
-            self.record_status(TBPL_WARNING, WARNING)
-
-        return self.nodejs_path
-
     def query_minidump_stackwalk(self, manifest=None):
         if self.minidump_stackwalk_path:
             return self.minidump_stackwalk_path
 
-        c = self.config
-        dirs = self.query_abs_dirs()
+        minidump_stackwalk_path = None
 
-        # This is the path where we either download to or is already on the host
-        minidump_stackwalk_path = self.query_minidump_filename()
+        if 'MOZ_FETCHES_DIR' in os.environ:
+            minidump_stackwalk_path = os.path.join(
+                os.environ['MOZ_FETCHES_DIR'],
+                'minidump_stackwalk',
+                'minidump_stackwalk')
 
-        if not manifest:
-            tooltool_manifest_path = self.query_minidump_tooltool_manifest()
-            manifest = os.path.join(dirs.get('abs_test_install_dir',
-                                             os.path.join(dirs['abs_work_dir'], 'tests')),
-                                    tooltool_manifest_path)
+            if self.platform_name() in ('win32', 'win64'):
+                minidump_stackwalk_path += '.exe'
 
-        self.info('grabbing minidump binary from tooltool')
-        try:
-            self.tooltool_fetch(
-                manifest=manifest,
-                output_dir=dirs['abs_work_dir'],
-                cache=c.get('tooltool_cache')
-            )
-        except KeyError:
-            self.error('missing a required key.')
-
-        abs_minidump_path = os.path.join(dirs['abs_work_dir'],
-                                         minidump_stackwalk_path)
-        if os.path.exists(abs_minidump_path):
-            self.chmod(abs_minidump_path, 0755)
-            self.minidump_stackwalk_path = abs_minidump_path
-        else:
-            self.warning("minidump stackwalk path was given but couldn't be found. "
-                         "Tried looking in '%s'" % abs_minidump_path)
+        if not minidump_stackwalk_path or not os.path.isfile(minidump_stackwalk_path):
+            self.error("minidump_stackwalk path was not fetched?")
             # don't burn the job but we should at least turn them orange so it is caught
             self.record_status(TBPL_WARNING, WARNING)
+            return None
 
+        self.minidump_stackwalk_path = minidump_stackwalk_path
         return self.minidump_stackwalk_path
 
     def query_options(self, *args, **kwargs):
@@ -744,3 +648,9 @@ Did you run with --create-virtualenv? Is mozinstall in virtualenv_modules?""")
         c = self.config
         if c.get('run_cmd_checks_enabled'):
             self._run_cmd_checks(c.get('postflight_run_cmd_suites', []))
+
+    def query_abs_dirs(self):
+        abs_dirs = super(TestingMixin, self).query_abs_dirs()
+        if 'MOZ_FETCHES_DIR' in os.environ:
+            abs_dirs['abs_fetches_dir'] = os.environ['MOZ_FETCHES_DIR']
+        return abs_dirs

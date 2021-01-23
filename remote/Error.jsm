@@ -102,7 +102,15 @@ class FatalError extends RemoteAgentError {
 class UnsupportedError extends RemoteAgentError {}
 
 /** The requested remote method does not exist. */
-class UnknownMethodError extends RemoteAgentError {}
+class UnknownMethodError extends RemoteAgentError {
+  constructor(domain, command = null) {
+    if (command) {
+      super(`${domain}.${command}`);
+    } else {
+      super(domain);
+    }
+  }
+}
 
 function formatError(error, { stack = false } = {}) {
   const els = [];

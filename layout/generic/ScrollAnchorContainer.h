@@ -8,6 +8,7 @@
 #define mozilla_layout_ScrollAnchorContainer_h_
 
 #include "nsPoint.h"
+#include "mozilla/Saturate.h"
 
 class nsFrameList;
 class nsIFrame;
@@ -63,6 +64,11 @@ class ScrollAnchorContainer final {
   void SelectAnchor();
 
   /**
+   * Whether this scroll frame can maintain an anchor node at the moment.
+   */
+  bool CanMaintainAnchor() const;
+
+  /**
    * Notify the scroll anchor container that its scroll frame has been
    * scrolled by a user and should invalidate itself.
    */
@@ -82,9 +88,11 @@ class ScrollAnchorContainer final {
 
   /**
    * Notify this scroll anchor container that its anchor node should be
-   * invalidated and recomputed at the next available opportunity.
+   * invalidated, and recomputed at the next available opportunity if
+   * ScheduleSelection is Yes.
    */
-  void InvalidateAnchor();
+  enum class ScheduleSelection { No, Yes };
+  void InvalidateAnchor(ScheduleSelection = ScheduleSelection::Yes);
 
   /**
    * Notify this scroll anchor container that it will be destroyed along with
@@ -127,6 +135,10 @@ class ScrollAnchorContainer final {
   // anchor node, if one was found in this child list, or null otherwise.
   nsIFrame* FindAnchorInList(const nsFrameList& aFrameList) const;
 
+  // Notes that a given adjustment has happened, and maybe disables scroll
+  // anchoring on this scroller altogether based on various prefs.
+  void AdjustmentMade(nscoord aAdjustment);
+
   // The owner of this scroll anchor container
   ScrollFrameHelper* mScrollFrame;
 
@@ -140,6 +152,20 @@ class ScrollAnchorContainer final {
   // scroll frame. This is used for calculating the distance to scroll to keep
   // the anchor node in the same relative position
   nscoord mLastAnchorOffset;
+
+  // The number of consecutive scroll anchoring adjustments that have happened
+  // without a user scroll.
+  SaturateUint32 mConsecutiveScrollAnchoringAdjustments{0};
+
+  // The total length that has been adjusted by all the consecutive adjustments
+  // referenced above. Note that this is a sum, so that oscillating adjustments
+  // average towards zero.
+  nscoord mConsecutiveScrollAnchoringAdjustmentLength{0};
+
+  // True if we've been disabled by the heuristic controlled by
+  // layout.css.scroll-anchoring.max-consecutive-adjustments and
+  // layout.css.scroll-anchoring.min-adjustment-threshold.
+  bool mDisabled : 1;
 
   // True if we should recalculate our anchor node at the next chance
   bool mAnchorNodeIsDirty : 1;

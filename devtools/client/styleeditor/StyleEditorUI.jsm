@@ -1,11 +1,10 @@
-/* vim:set ts=2 sw=2 sts=2 et: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 "use strict";
 
-this.EXPORTED_SYMBOLS = ["StyleEditorUI"];
+const EXPORTED_SYMBOLS = ["StyleEditorUI"];
 
 const { loader, require } = ChromeUtils.import(
   "resource://devtools/shared/Loader.jsm"
@@ -37,8 +36,7 @@ const {
 loader.lazyRequireGetter(
   this,
   "ResponsiveUIManager",
-  "devtools/client/responsive.html/manager",
-  true
+  "devtools/client/responsive/manager"
 );
 loader.lazyRequireGetter(
   this,
@@ -61,6 +59,8 @@ const PREF_SIDEBAR_WIDTH = "devtools.styleeditor.mediaSidebarWidth";
 const PREF_NAV_WIDTH = "devtools.styleeditor.navSidebarWidth";
 const PREF_ORIG_SOURCES = "devtools.source-map.client-service.enabled";
 
+const HTML_NS = "http://www.w3.org/1999/xhtml";
+
 /**
  * StyleEditorUI is controls and builds the UI of the Style Editor, including
  * maintaining a list of editors for each stylesheet on a debuggee.
@@ -71,20 +71,14 @@ const PREF_ORIG_SOURCES = "devtools.source-map.client-service.enabled";
  *   'error': An error occured
  *
  * @param {Toolbox} toolbox
- * @param {StyleEditorFront} debuggee
- *        Client-side front for interacting with the page's stylesheets
- * @param {Target} target
- *        Interface for the page we're debugging
  * @param {Document} panelDoc
  *        Document of the toolbox panel to populate UI in.
  * @param {CssProperties} A css properties database.
  */
-function StyleEditorUI(toolbox, debuggee, target, panelDoc, cssProperties) {
+function StyleEditorUI(toolbox, panelDoc, cssProperties) {
   EventEmitter.decorate(this);
 
   this._toolbox = toolbox;
-  this._debuggee = debuggee;
-  this._target = target;
   this._panelDoc = panelDoc;
   this._cssProperties = cssProperties;
   this._window = this._panelDoc.defaultView;
@@ -113,6 +107,8 @@ function StyleEditorUI(toolbox, debuggee, target, panelDoc, cssProperties) {
   this._openLinkNewTab = this._openLinkNewTab.bind(this);
   this._copyUrl = this._copyUrl.bind(this);
   this._addStyleSheet = this._addStyleSheet.bind(this);
+  this._onTargetAvailable = this._onTargetAvailable.bind(this);
+  this._onTargetDestroyed = this._onTargetDestroyed.bind(this);
 
   this._prefObserver = new PrefObserver("devtools.styleeditor.");
   this._prefObserver.on(PREF_MEDIA_SIDEBAR, this._onMediaPrefChanged);
@@ -120,12 +116,17 @@ function StyleEditorUI(toolbox, debuggee, target, panelDoc, cssProperties) {
     "devtools.source-map.client-service."
   );
   this._sourceMapPrefObserver.on(PREF_ORIG_SOURCES, this._onNewDocument);
-
-  this._debuggee.on("stylesheet-added", this._addStyleSheet);
 }
-this.StyleEditorUI = StyleEditorUI;
 
 StyleEditorUI.prototype = {
+  get cssProperties() {
+    return this._cssProperties;
+  },
+
+  get currentTarget() {
+    return this._toolbox.targetList.targetFront;
+  },
+
   /*
    * Index of selected stylesheet in document.styleSheets
    */
@@ -136,27 +137,24 @@ StyleEditorUI.prototype = {
   },
 
   /**
-   * Initiates the style editor ui creation, the inspector front to get
-   * reference to the walker and the selector highlighter if available
+   * Initiates the style editor ui creation, and start to track TargetList updates.
    */
   async initialize() {
-    await this.initializeHighlighter();
-
     this.createUI();
 
-    const styleSheets = await this._debuggee.getStyleSheets();
-    await this._resetStyleSheetList(styleSheets);
-
-    this._target.on("will-navigate", this._clear);
-    this._target.on("navigate", this._onNewDocument);
+    await this._toolbox.targetList.watchTargets(
+      [this._toolbox.targetList.TYPES.FRAME],
+      this._onTargetAvailable,
+      this._onTargetDestroyed
+    );
   },
 
-  async initializeHighlighter() {
-    await this._toolbox.initInspector();
-    this._walker = this._toolbox.walker;
+  async initializeHighlighter(targetFront) {
+    const inspectorFront = await targetFront.getFront("inspector");
+    this._walker = inspectorFront.walker;
 
     try {
-      this._highlighter = await this._toolbox.inspector.getHighlighterByType(
+      this._highlighter = await inspectorFront.getHighlighterByType(
         SELECTOR_HIGHLIGHTER_TYPE
       );
     } catch (e) {
@@ -174,12 +172,11 @@ StyleEditorUI.prototype = {
    * Build the initial UI and wire buttons with event handlers.
    */
   createUI: function() {
-    const viewRoot = this._root.parentNode.querySelector(".splitview-root");
+    this._view = new SplitView(this._root);
 
-    this._view = new SplitView(viewRoot);
-
-    wire(this._view.rootElement, ".style-editor-newButton", () => {
-      this._debuggee.addStyleSheet(null);
+    wire(this._view.rootElement, ".style-editor-newButton", async () => {
+      const stylesheetsFront = await this.currentTarget.getFront("stylesheets");
+      stylesheetsFront.addStyleSheet(null);
     });
 
     wire(this._view.rootElement, ".style-editor-importButton", () => {
@@ -243,20 +240,16 @@ StyleEditorUI.prototype = {
 
   /**
    * Refresh editors to reflect the stylesheets in the document.
-   *
-   * @param {string} event
-   *        Event name
-   * @param {StyleSheet} styleSheet
-   *        StyleSheet object for new sheet
    */
-  _onNewDocument: function() {
+  async _onNewDocument() {
     this._suppressAdd = true;
-    this._debuggee
-      .getStyleSheets()
-      .then(styleSheets => {
-        return this._resetStyleSheetList(styleSheets);
-      })
-      .catch(console.error);
+    try {
+      const stylesheetsFront = await this.currentTarget.getFront("stylesheets");
+      const styleSheets = await stylesheetsFront.getStyleSheets();
+      await this._resetStyleSheetList(styleSheets);
+    } catch (e) {
+      console.error(e);
+    }
   },
 
   /**
@@ -351,11 +344,17 @@ StyleEditorUI.prototype = {
           return editor;
         }
 
-        const { href, nodeHref, actorID: id, sourceMapURL } = styleSheet;
-        const url = href || nodeHref;
+        const {
+          href,
+          nodeHref,
+          actorID: id,
+          sourceMapURL,
+          sourceMapBaseURL,
+        } = styleSheet;
         const sources = await sourceMapService.getOriginalURLs({
           id,
-          url,
+          url: href || nodeHref,
+          sourceMapBaseURL,
           sourceMapURL,
         });
         // A single generated sheet might map to multiple original
@@ -365,14 +364,10 @@ StyleEditorUI.prototype = {
           this._removeStyleSheetEditor(editor);
           editor = null;
 
-          for (const source of sources) {
-            const generatedId = sourceMapService.generatedToOriginalId(
-              id,
-              source
-            );
+          for (const { id: originalId, url: originalURL } of sources) {
             const original = new OriginalSource(
-              source,
-              generatedId,
+              originalURL,
+              originalId,
               sourceMapService
             );
 
@@ -389,6 +384,36 @@ StyleEditorUI.prototype = {
       this._seenSheets.set(styleSheet, promise);
     }
     return this._seenSheets.get(styleSheet);
+  },
+
+  _getInlineStyleSheetsCount() {
+    return this.editors.filter(editor => !editor.styleSheet.href).length;
+  },
+
+  _getNewStyleSheetsCount() {
+    return this.editors.filter(editor => editor.isNew).length;
+  },
+
+  /**
+   * Finds the index to be shown in the Style Editor for inline or
+   * user-created style sheets, returns undefined if not of either type.
+   *
+   * @param {StyleSheet}  styleSheet
+   *        Object representing stylesheet
+   * @param {Boolean} isNew
+   *         Optional if stylesheet is a new sheet created by user
+   * @return {(Number|undefined)}
+   *         Optional Integer representing the index of the current stylesheet
+   *         among all stylesheets of its type (inline or user-created)
+   */
+  _getNextFriendlyIndex: function(styleSheet, isNew) {
+    if (styleSheet.href) {
+      return undefined;
+    }
+
+    return isNew
+      ? this._getNewStyleSheetsCount()
+      : this._getInlineStyleSheetsCount();
   },
 
   /**
@@ -416,7 +441,8 @@ StyleEditorUI.prototype = {
       file,
       isNew,
       this._walker,
-      this._highlighter
+      this._highlighter,
+      this._getNextFriendlyIndex(styleSheet, isNew)
     );
 
     editor.on("property-change", this._summaryChange.bind(this, editor));
@@ -456,7 +482,7 @@ StyleEditorUI.prototype = {
           securityFlags: Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_DATA_INHERITS,
           contentPolicyType: Ci.nsIContentPolicy.TYPE_OTHER,
         },
-        (stream, status) => {
+        async (stream, status) => {
           if (!Components.isSuccessCode(status)) {
             this.emit("error", { key: LOAD_ERROR, level: "warning" });
             return;
@@ -468,16 +494,17 @@ StyleEditorUI.prototype = {
           stream.close();
 
           this._suppressAdd = true;
-          this._debuggee.addStyleSheet(source).then(styleSheet => {
-            this._suppressAdd = false;
-            this._addStyleSheet(styleSheet, true).then(editor => {
-              if (editor) {
-                editor.savedFile = selectedFile;
-              }
-              // Just for testing purposes.
-              this.emit("test:editor-updated", editor);
-            });
-          });
+          const stylesheetsFront = await this.currentTarget.getFront(
+            "stylesheets"
+          );
+          const styleSheet = await stylesheetsFront.addStyleSheet(source);
+          this._suppressAdd = false;
+          const editor = await this._addStyleSheet(styleSheet, true);
+          if (editor) {
+            editor.savedFile = selectedFile;
+          }
+          // Just for testing purposes.
+          this.emit("test:editor-updated", editor);
         }
       );
     };
@@ -785,7 +812,7 @@ StyleEditorUI.prototype = {
     col = col || 0;
 
     const editorPromise = editor.getSourceEditor().then(() => {
-      editor.sourceEditor.setCursor({ line: line, ch: col });
+      editor.setCursor(line, col);
       this._styleSheetBoundToSelect = null;
     });
 
@@ -985,26 +1012,26 @@ StyleEditorUI.prototype = {
         }
         inSource = true;
 
-        const div = this._panelDoc.createElement("div");
+        const div = this._panelDoc.createElementNS(HTML_NS, "div");
         div.className = "media-rule-label";
         div.addEventListener(
           "click",
           this._jumpToLocation.bind(this, location)
         );
 
-        const cond = this._panelDoc.createElement("div");
+        const cond = this._panelDoc.createElementNS(HTML_NS, "div");
         cond.className = "media-rule-condition";
         if (!rule.matches) {
           cond.classList.add("media-condition-unmatched");
         }
-        if (this._target.isLocalTab) {
+        if (this.currentTarget.isLocalTab) {
           this._setConditionContents(cond, rule.conditionText);
         } else {
           cond.textContent = rule.conditionText;
         }
         div.appendChild(cond);
 
-        const link = this._panelDoc.createElement("div");
+        const link = this._panelDoc.createElementNS(HTML_NS, "div");
         link.className = "media-rule-line theme-link";
         if (location.line != -1) {
           link.textContent = ":" + location.line;
@@ -1042,7 +1069,7 @@ StyleEditorUI.prototype = {
       );
       element.appendChild(node);
 
-      const link = this._panelDoc.createElement("a");
+      const link = this._panelDoc.createElementNS(HTML_NS, "a");
       link.href = "#";
       link.className = "media-responsive-mode-toggle";
       link.textContent = rawText.substring(match.index, matchEnd);
@@ -1078,18 +1105,20 @@ StyleEditorUI.prototype = {
   },
 
   /**
-   * Launches the responsive mode with a specific width or height
+   * Launches the responsive mode with a specific width or height.
    *
    * @param  {object} options
    *         Object with width or/and height properties.
    */
   async _launchResponsiveMode(options = {}) {
-    const tab = this._target.tab;
-    const win = this._target.tab.ownerDocument.defaultView;
+    const tab = this.currentTarget.localTab;
+    const win = this.currentTarget.localTab.ownerDocument.defaultView;
 
     await ResponsiveUIManager.openIfNeeded(win, tab, {
       trigger: "style_editor",
     });
+    this.emit("responsive-mode-opened");
+
     ResponsiveUIManager.getResponsiveUIForTab(tab).setViewportSize(options);
   },
 
@@ -1104,7 +1133,40 @@ StyleEditorUI.prototype = {
     this.selectStyleSheet(source, location.line - 1, location.column - 1);
   },
 
+  async _onTargetAvailable({ targetFront }) {
+    if (targetFront.isTopLevel) {
+      await this.initializeHighlighter(targetFront);
+
+      const stylesheetsFront = await targetFront.getFront("stylesheets");
+      stylesheetsFront.on("stylesheet-added", this._addStyleSheet);
+      targetFront.on("will-navigate", this._clear);
+      targetFront.on("navigate", this._onNewDocument);
+
+      await this._onNewDocument();
+    }
+  },
+
+  async _onTargetDestroyed({ targetFront }) {
+    if (targetFront.isTopLevel) {
+      this._clear();
+    }
+  },
+
   destroy: function() {
+    this._toolbox.targetList.unwatchTargets(
+      [this._toolbox.targetList.TYPES.FRAME],
+      this._onTargetAvailable,
+      this._onTargetDestroyed
+    );
+
+    this.currentTarget.off("will-navigate", this._clear);
+    this.currentTarget.off("navigate", this._onNewDocument);
+
+    const stylesheetsFront = this.currentTarget.getCachedFront("stylesheets");
+    if (stylesheetsFront) {
+      stylesheetsFront.off("stylesheet-added", this._addStyleSheet);
+    }
+
     this._clearStyleSheetEditors();
 
     this._seenSheets = null;
@@ -1118,7 +1180,5 @@ StyleEditorUI.prototype = {
     this._sourceMapPrefObserver.destroy();
     this._prefObserver.off(PREF_MEDIA_SIDEBAR, this._onMediaPrefChanged);
     this._prefObserver.destroy();
-
-    this._debuggee.off("stylesheet-added", this._addStyleSheet);
   },
 };

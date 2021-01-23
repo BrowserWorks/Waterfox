@@ -33,9 +33,7 @@ async function add_link(aOptions = {}) {
       info("add_link, aOptions: " + JSON.stringify(aOptions, null, 2));
       await navigateToAddCardPage(frame);
       info(`add_link, from the add card page,
-          verifyPersistCheckbox with expectPersist: ${
-            aOptions.expectDefaultCardPersist
-          }`);
+          verifyPersistCheckbox with expectPersist: ${aOptions.expectDefaultCardPersist}`);
       await verifyPersistCheckbox(frame, {
         checkboxSelector: "basic-card-form .persist-checkbox",
         expectPersist: aOptions.expectDefaultCardPersist,
@@ -344,11 +342,13 @@ async function add_link(aOptions = {}) {
         }
       );
 
-      ContentTask.spawn(
+      SpecialPowers.spawn(
         browser,
-        {
-          eventName: "paymentmethodchange",
-        },
+        [
+          {
+            eventName: "paymentmethodchange",
+          },
+        ],
         PTU.ContentTasks.promisePaymentRequestEvent
       );
       info("added paymentmethodchange handler");
@@ -359,11 +359,13 @@ async function add_link(aOptions = {}) {
       );
 
       info("waiting for paymentmethodchange event");
-      await ContentTask.spawn(
+      await SpecialPowers.spawn(
         browser,
-        {
-          eventName: "paymentmethodchange",
-        },
+        [
+          {
+            eventName: "paymentmethodchange",
+          },
+        ],
         PTU.ContentTasks.awaitPaymentEventPromise
       );
 
@@ -470,9 +472,9 @@ async function add_link(aOptions = {}) {
 
       // Add a handler to complete the payment above.
       info("acknowledging the completion from the merchant page");
-      let result = await ContentTask.spawn(
+      let result = await SpecialPowers.spawn(
         browser,
-        {},
+        [],
         PTU.ContentTasks.addCompletionHandler
       );
 

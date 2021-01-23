@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title  "Suodatinloki">
+<!ENTITY viewLogInfo.text  "Suodatinloki on tiedosto, joka pitää kirjaa suoritetuista suodattimista.">
+<!ENTITY clearLog.label  "Tyhjennä loki">
+<!ENTITY clearLog.accesskey  "T">
+<!ENTITY enableLog.label  "Ota suodatinloki käyttöön">
+<!ENTITY enableLog.accesskey  "s">
+<!ENTITY closeLog.label  "Sulje">
+<!ENTITY closeLog.accesskey  "S">

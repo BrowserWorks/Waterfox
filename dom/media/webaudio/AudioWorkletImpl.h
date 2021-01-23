@@ -8,10 +8,11 @@
 #define AudioWorkletImpl_h
 
 #include "mozilla/dom/WorkletImpl.h"
+#include "mozilla/dom/AudioWorkletGlobalScope.h"
 
 namespace mozilla {
 
-class AudioNodeStream;
+class AudioNodeTrack;
 
 namespace dom {
 class AudioContext;
@@ -29,8 +30,18 @@ class AudioWorkletImpl final : public WorkletImpl {
 
   nsresult SendControlMessage(already_AddRefed<nsIRunnable> aRunnable) override;
 
+  nsContentPolicyType ContentPolicyType() const override {
+    return nsIContentPolicy::TYPE_INTERNAL_AUDIOWORKLET;
+  }
+
+  // Execution thread only.
+  dom::AudioWorkletGlobalScope* GetGlobalScope() {
+    return static_cast<dom::AudioWorkletGlobalScope*>(
+        WorkletImpl::GetGlobalScope());
+  }
+
   // Any thread:
-  AudioNodeStream* DestinationStream() { return mDestinationStream; }
+  AudioNodeTrack* DestinationTrack() const { return mDestinationTrack; }
 
  protected:
   // Execution thread only.
@@ -38,10 +49,10 @@ class AudioWorkletImpl final : public WorkletImpl {
 
  private:
   AudioWorkletImpl(nsPIDOMWindowInner* aWindow, nsIPrincipal* aPrincipal,
-                   AudioNodeStream* aDestinationStream);
+                   AudioNodeTrack* aDestinationTrack);
   ~AudioWorkletImpl();
 
-  const RefPtr<AudioNodeStream> mDestinationStream;
+  const RefPtr<AudioNodeTrack> mDestinationTrack;
 };
 
 }  // namespace mozilla

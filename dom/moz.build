@@ -44,6 +44,7 @@ DIRS += [
     'commandhandler',
     'credentialmanagement',
     'crypto',
+    'debugger',
     'encoding',
     'events',
     'fetch',
@@ -85,7 +86,6 @@ DIRS += [
     'url',
     'webauthn',
     'webidl',
-    'xbl',
     'xml',
     'xslt',
     'xul',
@@ -118,7 +118,7 @@ TEST_DIRS += [
     'imptests',
 ]
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('gtk3', 'cocoa', 'windows'):
+if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('gtk', 'cocoa', 'windows'):
     TEST_DIRS += ['plugins/test']
 
-SPHINX_TREES['dom'] = 'docs'
+SPHINX_TREES['/dom'] = 'docs'

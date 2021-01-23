@@ -13,7 +13,15 @@ include protocol PParentToChildStream; //FIXME: bug #792908
 include PBackgroundSharedTypes;
 include IPCStream;
 
+using refcounted class nsIReferrerInfo from "mozilla/dom/ReferrerInfoUtils.h";
+
 namespace mozilla {
+
+// FIXME When session history lives in the parent we need to figure out how to
+//       point the parent process at the right entry to get the cache key.
+union SessionHistoryEntryOrCacheKey {
+  uint32_t;
+};
 
 // nsIWebBrowserPersistDocument has attributes which can be read
 // synchronously.  To avoid using sync IPC for them, the actor sends
@@ -26,9 +34,9 @@ struct WebBrowserPersistDocumentAttrs {
   nsCString contentType;
   nsCString characterSet;
   nsString title;
-  nsString referrer;
+  nsIReferrerInfo referrerInfo;
   nsString contentDisposition;
-  uint32_t cacheKey;
+  SessionHistoryEntryOrCacheKey sessionHistoryEntryOrCacheKey;
   uint32_t persistFlags;
   PrincipalInfo principal;
 };

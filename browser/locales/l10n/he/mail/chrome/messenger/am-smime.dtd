@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY digitalSign.certificate.button "בחירה…">
+<!ENTITY digitalSign.certificate.accesskey "ב">
+<!ENTITY digitalSign.certificate_clear.button "מחיקה">
+<!ENTITY digitalSign.certificate_clear.accesskey "מ">
+<!ENTITY encryption.certificate.button "בחירה…">
+<!ENTITY encryption.certificate.accesskey "ח">
+<!ENTITY encryption.certificate_clear.button "מחיקה">
+<!ENTITY encryption.certificate_clear.accesskey "ק">
+<!ENTITY signingGroupTitle.label "חתימה דיגיטלית">
+<!ENTITY signMessage.accesskey "ד">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "בחירת אישור">
+<!ENTITY certPicker.info  "אישור:">
+<!ENTITY certPicker.detailsLabel "פרטי האישור הנבחר:">
+

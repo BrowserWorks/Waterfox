@@ -8,15 +8,14 @@
 #include "nsChromeRegistryContent.h"
 #include "nsString.h"
 #include "nsNetUtil.h"
-#include "nsIResProtocolHandler.h"
 
 nsChromeRegistryContent::nsChromeRegistryContent() {}
 
 void nsChromeRegistryContent::RegisterRemoteChrome(
-    const InfallibleTArray<ChromePackage>& aPackages,
-    const InfallibleTArray<SubstitutionMapping>& aSubstitutions,
-    const InfallibleTArray<OverrideMapping>& aOverrides,
-    const nsACString& aLocale, bool aReset) {
+    const nsTArray<ChromePackage>& aPackages,
+    const nsTArray<SubstitutionMapping>& aSubstitutions,
+    const nsTArray<OverrideMapping>& aOverrides, const nsACString& aLocale,
+    bool aReset) {
   MOZ_ASSERT(aReset || mLocale.IsEmpty(), "RegisterChrome twice?");
 
   if (aReset) {
@@ -44,24 +43,20 @@ void nsChromeRegistryContent::RegisterRemoteChrome(
 }
 
 void nsChromeRegistryContent::RegisterPackage(const ChromePackage& aPackage) {
-  nsCOMPtr<nsIIOService> io(do_GetIOService());
-  if (!io) return;
-
   nsCOMPtr<nsIURI> content, locale, skin;
 
   if (aPackage.contentBaseURI.spec.Length()) {
-    nsresult rv = NS_NewURI(getter_AddRefs(content),
-                            aPackage.contentBaseURI.spec, nullptr, nullptr, io);
+    nsresult rv =
+        NS_NewURI(getter_AddRefs(content), aPackage.contentBaseURI.spec);
     if (NS_FAILED(rv)) return;
   }
   if (aPackage.localeBaseURI.spec.Length()) {
-    nsresult rv = NS_NewURI(getter_AddRefs(locale), aPackage.localeBaseURI.spec,
-                            nullptr, nullptr, io);
+    nsresult rv =
+        NS_NewURI(getter_AddRefs(locale), aPackage.localeBaseURI.spec);
     if (NS_FAILED(rv)) return;
   }
   if (aPackage.skinBaseURI.spec.Length()) {
-    nsresult rv = NS_NewURI(getter_AddRefs(skin), aPackage.skinBaseURI.spec,
-                            nullptr, nullptr, io);
+    nsresult rv = NS_NewURI(getter_AddRefs(skin), aPackage.skinBaseURI.spec);
     if (NS_FAILED(rv)) return;
   }
 
@@ -89,8 +84,7 @@ void nsChromeRegistryContent::RegisterSubstitution(
 
   nsCOMPtr<nsIURI> resolvedURI;
   if (aSubstitution.resolvedURI.spec.Length()) {
-    rv = NS_NewURI(getter_AddRefs(resolvedURI), aSubstitution.resolvedURI.spec,
-                   nullptr, nullptr, io);
+    rv = NS_NewURI(getter_AddRefs(resolvedURI), aSubstitution.resolvedURI.spec);
     if (NS_FAILED(rv)) return;
   }
 
@@ -101,16 +95,12 @@ void nsChromeRegistryContent::RegisterSubstitution(
 
 void nsChromeRegistryContent::RegisterOverride(
     const OverrideMapping& aOverride) {
-  nsCOMPtr<nsIIOService> io(do_GetIOService());
-  if (!io) return;
-
   nsCOMPtr<nsIURI> chromeURI, overrideURI;
-  nsresult rv = NS_NewURI(getter_AddRefs(chromeURI), aOverride.originalURI.spec,
-                          nullptr, nullptr, io);
+  nsresult rv =
+      NS_NewURI(getter_AddRefs(chromeURI), aOverride.originalURI.spec);
   if (NS_FAILED(rv)) return;
 
-  rv = NS_NewURI(getter_AddRefs(overrideURI), aOverride.overrideURI.spec,
-                 nullptr, nullptr, io);
+  rv = NS_NewURI(getter_AddRefs(overrideURI), aOverride.overrideURI.spec);
   if (NS_FAILED(rv)) return;
 
   mOverrideTable.Put(chromeURI, overrideURI);
@@ -165,21 +155,7 @@ nsChromeRegistryContent::CheckForNewChrome() { CONTENT_NOT_IMPLEMENTED(); }
 NS_IMETHODIMP
 nsChromeRegistryContent::IsLocaleRTL(const nsACString& aPackage,
                                      bool* aResult) {
-  *aResult = GetDirectionForLocale(mLocale);
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsChromeRegistryContent::GetSelectedLocale(const nsACString& aPackage,
-                                           bool aAsBCP47, nsACString& aLocale) {
-  if (aPackage != nsDependentCString("global")) {
-    NS_ERROR("Uh-oh, caller wanted something other than 'some local'");
-    return NS_ERROR_NOT_AVAILABLE;
-  }
-  aLocale = mLocale;
-  if (aAsBCP47) {
-    SanitizeForBCP47(aLocale);
-  }
+  *aResult = mozilla::intl::LocaleService::IsLocaleRTL(mLocale);
   return NS_OK;
 }
 

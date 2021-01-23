@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY virtualFolderProperties.title "Novo cartafol de busca gardado">
+<!ENTITY name.label                 "Nome:">
+<!ENTITY name.accesskey             "N">
+<!ENTITY description.label          "Crear como subcartafol de:">
+<!ENTITY description.accesskey      "C">
+
+<!ENTITY searchTermCaption.label "Configurar os criterios de busca utilizados no cartafol gardado: ">
+
+<!ENTITY folderSelectionCaption.label "Seleccione os cartafoles en que buscar: ">
+<!ENTITY chooseFoldersButton.label "Escoller…">
+<!ENTITY chooseFoldersButton.accesskey "E">
+
+<!ENTITY searchOnline.label "Busca en liña (Fornece resultados actualizados para cartafoles IMAP e de noticias mais diminúe o tempo de abertura do cartafol)">
+<!ENTITY searchOnline.accesskey "B">
+<!ENTITY newFolderButton.label       "Crear">
+<!ENTITY newFolderButton.accesskey   "r">
+<!ENTITY editFolderButton.label      "Actualizar">
+<!ENTITY editFolderButton.accesskey  "u">

@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Junk-Filter">
+<!ENTITY trainingDescription.label "Wenn er aktiviert ist, muss &brandShortName; erst trainiert werden. Verwenden Sie die Schaltfläche &quot;Junk&quot; in der Symbolleiste, um Nachrichten als &quot;Junk&quot; oder &quot;Kein Junk&quot; zu kennzeichnen. Danach wird &brandShortName; in der Lage sein, Junk automatisch zu erkennen.">
+<!ENTITY level.label "Junk-Filter für dieses Konto aktivieren">
+<!ENTITY level.accesskey "F">
+
+<!ENTITY move.label "Neue Junk-Nachrichten verschieben in:">
+<!ENTITY move.accesskey "N">
+<!ENTITY junkFolderOn.label "Ordner &quot;Junk&quot; in:">
+<!ENTITY junkFolderOn.accesskey "O">
+<!ENTITY otherFolder.label "Anderer Ordner:">
+<!ENTITY otherFolder.accesskey "A">
+<!ENTITY purge1.label "Junk-Nachrichten löschen, die älter sind als">
+<!ENTITY purge1.accesskey "u">
+<!ENTITY purge2.label "Tage">
+
+<!ENTITY whitelistHeader.label "Nachrichten nicht automatisch als Junk kennzeichnen, falls der Absender in einem der folgenden Adressbücher ist:">
+<!ENTITY whitelistHeader.accesskey "b">
+
+<!ENTITY ispHeadersWarning.label "Falls diese Option aktiviert ist, wird &brandShortName; die von diesem externen Filter markierten Nachrichten automatisch als Junk einstufen.">
+<!ENTITY ispHeaders.label "Junk-Kopfzeilen dieses externen Filters vertrauen:">
+<!ENTITY ispHeaders.accesskey "J">
+
+<!ENTITY junkClassification.label "Klassifizierung">
+<!ENTITY junkActions.label "Speicherplatz">
+
+<!ENTITY globalJunkPrefs.label "Globale Einstellungen…">
+<!ENTITY globalJunkPrefs.accesskey "G">

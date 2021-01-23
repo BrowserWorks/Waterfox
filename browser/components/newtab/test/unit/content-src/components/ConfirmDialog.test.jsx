@@ -1,8 +1,7 @@
-import {actionCreators as ac, actionTypes as at} from "common/Actions.jsm";
-import {_ConfirmDialog as ConfirmDialog} from "content-src/components/ConfirmDialog/ConfirmDialog";
-import {FormattedMessage} from "react-intl";
+import { actionCreators as ac, actionTypes as at } from "common/Actions.jsm";
+import { _ConfirmDialog as ConfirmDialog } from "content-src/components/ConfirmDialog/ConfirmDialog";
 import React from "react";
-import {shallowWithIntl} from "test/unit/utils";
+import { shallow } from "enzyme";
 
 describe("<ConfirmDialog>", () => {
   let wrapper;
@@ -14,12 +13,14 @@ describe("<ConfirmDialog>", () => {
       visible: true,
       data: {
         onConfirm: [],
-        cancel_button_string_id: "topsites_form_cancel_button",
-        confirm_button_string_id: "topsites_form_save_button",
+        cancel_button_string_id: "newtab-topsites-delete-history-button",
+        confirm_button_string_id: "newtab-topsites-cancel-button",
         eventSource: "HIGHLIGHTS",
       },
     };
-    wrapper = shallowWithIntl(<ConfirmDialog dispatch={dispatch} {...ConfirmDialogProps} />);
+    wrapper = shallow(
+      <ConfirmDialog dispatch={dispatch} {...ConfirmDialogProps} />
+    );
   });
   it("should render an overlay", () => {
     assert.ok(wrapper.find(".modal-overlay").exists());
@@ -29,7 +30,9 @@ describe("<ConfirmDialog>", () => {
   });
   it("should not render if visible is false", () => {
     ConfirmDialogProps.visible = false;
-    wrapper = shallowWithIntl(<ConfirmDialog dispatch={dispatch} {...ConfirmDialogProps} />);
+    wrapper = shallow(
+      <ConfirmDialog dispatch={dispatch} {...ConfirmDialogProps} />
+    );
 
     assert.lengthOf(wrapper.find(".confirmation-dialog"), 0);
   });
@@ -39,28 +42,44 @@ describe("<ConfirmDialog>", () => {
     assert.lengthOf(wrapper.find(`.icon-${iconName}`), 0);
 
     ConfirmDialogProps.data.icon = iconName;
-    wrapper = shallowWithIntl(<ConfirmDialog dispatch={dispatch} {...ConfirmDialogProps} />);
+    wrapper = shallow(
+      <ConfirmDialog dispatch={dispatch} {...ConfirmDialogProps} />
+    );
 
     // But if we do provide an icon - we should show it
     assert.lengthOf(wrapper.find(`.icon-${iconName}`), 1);
   });
-  describe("intl message check", () => {
+  describe("fluent message check", () => {
     it("should render the message body sent via props", () => {
-      Object.assign(ConfirmDialogProps.data, {body_string_id: ["foo", "bar"]});
-      wrapper = shallowWithIntl(<ConfirmDialog dispatch={dispatch} {...ConfirmDialogProps} />);
-
-      let msgs = wrapper.find(".modal-message").find(FormattedMessage);
+      Object.assign(ConfirmDialogProps.data, {
+        body_string_id: ["foo", "bar"],
+      });
+      wrapper = shallow(
+        <ConfirmDialog dispatch={dispatch} {...ConfirmDialogProps} />
+      );
+      let msgs = wrapper.find(".modal-message").find("p");
       assert.equal(msgs.length, ConfirmDialogProps.data.body_string_id.length);
-
-      msgs.forEach((fm, i) => assert.equal(fm.props().id, ConfirmDialogProps.data.body_string_id[i]));
+      msgs.forEach((fm, i) =>
+        assert.equal(
+          fm.prop("data-l10n-id"),
+          ConfirmDialogProps.data.body_string_id[i]
+        )
+      );
     });
     it("should render the correct primary button text", () => {
-      Object.assign(ConfirmDialogProps.data, {confirm_button_string_id: "primary_foo"});
-      wrapper = shallowWithIntl(<ConfirmDialog dispatch={dispatch} {...ConfirmDialogProps} />);
+      Object.assign(ConfirmDialogProps.data, {
+        confirm_button_string_id: "primary_foo",
+      });
+      wrapper = shallow(
+        <ConfirmDialog dispatch={dispatch} {...ConfirmDialogProps} />
+      );
 
-      let doneLabel = wrapper.find(".actions").childAt(1).find(FormattedMessage);
+      let doneLabel = wrapper.find(".actions").childAt(1);
       assert.ok(doneLabel.exists());
-      assert.equal(doneLabel.props().id, ConfirmDialogProps.data.confirm_button_string_id);
+      assert.equal(
+        doneLabel.prop("data-l10n-id"),
+        ConfirmDialogProps.data.confirm_button_string_id
+      );
     });
   });
   describe("click events", () => {
@@ -73,7 +92,7 @@ describe("<ConfirmDialog>", () => {
       // Two events are emitted: UserEvent+AlsoToMain.
       assert.calledTwice(dispatch);
       assert.propertyVal(dispatch.firstCall.args[0], "type", at.DIALOG_CANCEL);
-      assert.calledWith(dispatch, {type: at.DIALOG_CANCEL});
+      assert.calledWith(dispatch, { type: at.DIALOG_CANCEL });
     });
     it("should emit UserEvent DIALOG_CANCEL when you click the overlay", () => {
       let overlay = wrapper.find(".modal-overlay");
@@ -84,7 +103,10 @@ describe("<ConfirmDialog>", () => {
       // Two events are emitted: UserEvent+AlsoToMain.
       assert.calledTwice(dispatch);
       assert.isUserEventAction(dispatch.secondCall.args[0]);
-      assert.calledWith(dispatch, ac.UserEvent({event: at.DIALOG_CANCEL, source: "HIGHLIGHTS"}));
+      assert.calledWith(
+        dispatch,
+        ac.UserEvent({ event: at.DIALOG_CANCEL, source: "HIGHLIGHTS" })
+      );
     });
     it("should emit AlsoToMain DIALOG_CANCEL on cancel", () => {
       let cancelButton = wrapper.find(".actions").childAt(0);
@@ -95,7 +117,7 @@ describe("<ConfirmDialog>", () => {
       // Two events are emitted: UserEvent+AlsoToMain.
       assert.calledTwice(dispatch);
       assert.propertyVal(dispatch.firstCall.args[0], "type", at.DIALOG_CANCEL);
-      assert.calledWith(dispatch, {type: at.DIALOG_CANCEL});
+      assert.calledWith(dispatch, { type: at.DIALOG_CANCEL });
     });
     it("should emit UserEvent DIALOG_CANCEL on cancel", () => {
       let cancelButton = wrapper.find(".actions").childAt(0);
@@ -106,17 +128,22 @@ describe("<ConfirmDialog>", () => {
       // Two events are emitted: UserEvent+AlsoToMain.
       assert.calledTwice(dispatch);
       assert.isUserEventAction(dispatch.secondCall.args[0]);
-      assert.calledWith(dispatch, ac.UserEvent({event: at.DIALOG_CANCEL, source: "HIGHLIGHTS"}));
+      assert.calledWith(
+        dispatch,
+        ac.UserEvent({ event: at.DIALOG_CANCEL, source: "HIGHLIGHTS" })
+      );
     });
     it("should emit UserEvent on primary button", () => {
       Object.assign(ConfirmDialogProps.data, {
         body_string_id: ["foo", "bar"],
         onConfirm: [
-          ac.AlsoToMain({type: at.DELETE_URL, data: "foo.bar"}),
-          ac.UserEvent({event: "DELETE"}),
+          ac.AlsoToMain({ type: at.DELETE_URL, data: "foo.bar" }),
+          ac.UserEvent({ event: "DELETE" }),
         ],
       });
-      wrapper = shallowWithIntl(<ConfirmDialog dispatch={dispatch} {...ConfirmDialogProps} />);
+      wrapper = shallow(
+        <ConfirmDialog dispatch={dispatch} {...ConfirmDialogProps} />
+      );
       let doneButton = wrapper.find(".actions").childAt(1);
 
       assert.ok(doneButton);
@@ -132,11 +159,13 @@ describe("<ConfirmDialog>", () => {
       Object.assign(ConfirmDialogProps.data, {
         body_string_id: ["foo", "bar"],
         onConfirm: [
-          ac.AlsoToMain({type: at.DELETE_URL, data: "foo.bar"}),
-          ac.UserEvent({event: "DELETE"}),
+          ac.AlsoToMain({ type: at.DELETE_URL, data: "foo.bar" }),
+          ac.UserEvent({ event: "DELETE" }),
         ],
       });
-      wrapper = shallowWithIntl(<ConfirmDialog dispatch={dispatch} {...ConfirmDialogProps} />);
+      wrapper = shallow(
+        <ConfirmDialog dispatch={dispatch} {...ConfirmDialogProps} />
+      );
       let doneButton = wrapper.find(".actions").childAt(1);
 
       assert.ok(doneButton);

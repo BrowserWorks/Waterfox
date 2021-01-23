@@ -20,13 +20,15 @@ import {
   getPauseReason,
   getSourceWithContent,
   getCurrentThread,
+  getPausePreviewLocation,
 } from "../../selectors";
 
-import type { Frame, Why, SourceWithContent } from "../../types";
+import type { SourceLocation, Why, SourceWithContent } from "../../types";
 
+type OwnProps = {||};
 type Props = {
-  frame: Frame,
-  why: Why,
+  location: ?SourceLocation,
+  why: ?Why,
   source: ?SourceWithContent,
 };
 
@@ -35,44 +37,49 @@ type TextClasses = {
   lineClass: string,
 };
 
-function isDocumentReady(source: ?SourceWithContent, frame) {
-  return (
-    frame && source && source.content && hasDocument(frame.location.sourceId)
-  );
+function isDocumentReady(
+  source: ?SourceWithContent,
+  location: ?SourceLocation
+) {
+  return location && source && source.content && hasDocument(location.sourceId);
 }
 
 export class DebugLine extends PureComponent<Props> {
   debugExpression: null;
 
   componentDidMount() {
-    const { why, frame, source } = this.props;
-    this.setDebugLine(why, frame, source);
+    const { why, location, source } = this.props;
+    this.setDebugLine(why, location, source);
   }
 
   componentWillUnmount() {
-    const { why, frame, source } = this.props;
-    this.clearDebugLine(why, frame, source);
+    const { why, location, source } = this.props;
+    this.clearDebugLine(why, location, source);
   }
 
   componentDidUpdate(prevProps: Props) {
-    const { why, frame, source } = this.props;
+    const { why, location, source } = this.props;
 
     startOperation();
-    this.clearDebugLine(prevProps.why, prevProps.frame, prevProps.source);
-    this.setDebugLine(why, frame, source);
+    this.clearDebugLine(prevProps.why, prevProps.location, prevProps.source);
+    this.setDebugLine(why, location, source);
     endOperation();
   }
 
-  setDebugLine(why: Why, frame: Frame, source: ?SourceWithContent) {
-    if (!isDocumentReady(source, frame)) {
+  setDebugLine(
+    why: ?Why,
+    location: ?SourceLocation,
+    source: ?SourceWithContent
+  ) {
+    if (!location || !isDocumentReady(source, location)) {
       return;
     }
-    const sourceId = frame.location.sourceId;
+    const { sourceId } = location;
     const doc = getDocument(sourceId);
 
-    let { line, column } = toEditorPosition(frame.location);
-    const { markTextClass, lineClass } = this.getTextClasses(why);
-    doc.addLineClass(line, "line", lineClass);
+    let { line, column } = toEditorPosition(location);
+    let { markTextClass, lineClass } = this.getTextClasses(why);
+    doc.addLineClass(line, "wrapClass", lineClass);
 
     const lineText = doc.getLine(line);
     column = Math.max(column, getIndentation(lineText));
@@ -81,6 +88,10 @@ export class DebugLine extends PureComponent<Props> {
     // another source tab, codeMirror will be null.
     const columnEnd = doc.cm ? getTokenEnd(doc.cm, line, column) : null;
 
+    if (columnEnd === null) {
+      markTextClass += " to-line-end";
+    }
+
     this.debugExpression = doc.markText(
       { ch: column, line },
       { ch: columnEnd, line },
@@ -88,8 +99,12 @@ export class DebugLine extends PureComponent<Props> {
     );
   }
 
-  clearDebugLine(why: Why, frame: Frame, source: ?SourceWithContent) {
-    if (!isDocumentReady(source, frame)) {
+  clearDebugLine(
+    why: ?Why,
+    location: ?SourceLocation,
+    source: ?SourceWithContent
+  ) {
+    if (!location || !isDocumentReady(source, location)) {
       return;
     }
 
@@ -97,15 +112,14 @@ export class DebugLine extends PureComponent<Props> {
       this.debugExpression.clear();
     }
 
-    const sourceId = frame.location.sourceId;
-    const { line } = toEditorPosition(frame.location);
-    const doc = getDocument(sourceId);
+    const { line } = toEditorPosition(location);
+    const doc = getDocument(location.sourceId);
     const { lineClass } = this.getTextClasses(why);
-    doc.removeLineClass(line, "line", lineClass);
+    doc.removeLineClass(line, "wrapClass", lineClass);
   }
 
-  getTextClasses(why: Why): TextClasses {
-    if (isException(why)) {
+  getTextClasses(why: ?Why): TextClasses {
+    if (why && isException(why)) {
       return {
         markTextClass: "debug-expression-error",
         lineClass: "new-debug-line-error",
@@ -122,11 +136,14 @@ export class DebugLine extends PureComponent<Props> {
 
 const mapStateToProps = state => {
   const frame = getVisibleSelectedFrame(state);
+  const previewLocation = getPausePreviewLocation(state);
+  const location = previewLocation || frame?.location;
   return {
     frame,
-    source: frame && getSourceWithContent(state, frame.location.sourceId),
+    location,
+    source: location && getSourceWithContent(state, location.sourceId),
     why: getPauseReason(state, getCurrentThread(state)),
   };
 };
 
-export default connect(mapStateToProps)(DebugLine);
+export default connect<Props, OwnProps, _, _, _, _>(mapStateToProps)(DebugLine);

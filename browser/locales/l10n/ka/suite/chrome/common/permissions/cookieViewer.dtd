@@ -1,0 +1,46 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     tab.cookiesonsystem.label      "შენახული ფუნთუშები">
+<!ENTITY     tab.bannedservers.label        "ფუნთუშების საიტები">
+<!ENTITY     div.bannedservers.label        "საიტები, რომელსაც ნებას რთავთ, ან უკრძალავთ ფუნთუშების კომპიუტერში შენახვას.">
+<!ENTITY     div.cookiesonsystem.label      "კომპიუტერში შენახული ფუნთუშების ჩვენება და ამოშლა.">
+<!ENTITY     treehead.cookiename.label      "ფუნთუშის სახელი">
+<!ENTITY     treehead.cookiedomain.label    "საიტი">
+<!ENTITY     treehead.cookieexpires.label   "ვადა">
+<!ENTITY     treehead.infoselected.label    "შერჩეული ფუნთუშის მონაცემები">
+<!ENTITY     button.removecookie.label      "ფუნთუშის ამოშლა">
+<!ENTITY     button.removecookie.accesskey  "ა">
+<!ENTITY     button.removeallcookies.label  "ყველა ფუნთუშის ამოშლა">
+<!ENTITY     button.removeallcookies.accesskey "მ">
+
+<!ENTITY     search.placeholder             "ფუნთუშების მოძიება">
+<!ENTITY     focusSearch.key                "f">
+<!ENTITY     selectAll.key                  "a">
+
+<!ENTITY     props.name.label               "სახელი:">
+<!ENTITY     props.value.label              "შიგთავსი:">
+<!ENTITY     props.domain.label             "ჰოსტი:">
+<!ENTITY     props.path.label               "გეზი:">
+<!ENTITY     props.secure.label             "გაიგზავნოს:">
+<!ENTITY     props.expires.label            "ვადა:">
+
+<!ENTITY     treehead.sitename.label        "საიტი">
+<!ENTITY     treehead.scheme.label          "სქემა">
+<!ENTITY     treehead.status.label          "სტატუსი">
+<!ENTITY     windowtitle.label              "ფუნთუშების მმართველი">
+
+<!ENTITY     blockSite.label                "დაბლოკვა">
+<!ENTITY     blockSite.accesskey            "B">
+<!ENTITY     allowSite.label                "დაშვება">
+<!ENTITY     allowSite.accesskey            "A">
+<!ENTITY     allowSiteSession.label         "სეანსი">
+<!ENTITY     allowSiteSession.accesskey     "S">
+<!ENTITY     removepermission.label         "საიტის მოცილება">
+<!ENTITY     removepermission.accesskey     "R">
+<!ENTITY     removeallpermissions.label     "ყველა საიტის მოცილება">
+<!ENTITY     removeallpermissions.accesskey "e">
+
+<!ENTITY     futureCookies.label            "ფუნთუშებამოშლილი საიტებისთვის, მომავალში ფუნთუშების ჩაწერის აკრძალვა">
+<!ENTITY     futureCookies.accesskey        "ჩ">

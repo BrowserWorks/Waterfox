@@ -8,11 +8,11 @@
 
 #include "AsyncPanZoomController.h"
 #include "FrameMetrics.h"
-#include "gfxPrefs.h"
 #include "nsPoint.h"
 #include "ScrollAnimationPhysics.h"
 #include "ScrollAnimationBezierPhysics.h"
 #include "ScrollAnimationMSDPhysics.h"
+#include "mozilla/StaticPrefs_general.h"
 
 namespace mozilla {
 namespace layers {
@@ -21,7 +21,7 @@ GenericScrollAnimation::GenericScrollAnimation(
     AsyncPanZoomController& aApzc, const nsPoint& aInitialPosition,
     const ScrollAnimationBezierPhysicsSettings& aSettings)
     : mApzc(aApzc), mFinalDestination(aInitialPosition) {
-  if (gfxPrefs::SmoothScrollMSDPhysicsEnabled()) {
+  if (StaticPrefs::general_smoothScroll_msdPhysics_enabled()) {
     mAnimationPhysics = MakeUnique<ScrollAnimationMSDPhysics>(aInitialPosition);
   } else {
     mAnimationPhysics =

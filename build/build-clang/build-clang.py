@@ -1,7 +1,10 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python3
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# Only necessary for flake8 to be happy...
+from __future__ import print_function
 
 import os
 import os.path
@@ -14,12 +17,14 @@ import fnmatch
 import glob
 import errno
 import re
-from contextlib import contextmanager
 import sys
-import which
+import tarfile
+from contextlib import contextmanager
 from distutils.dir_util import copy_tree
 
-URL_REPO = "https://github.com/llvm/llvm-project"
+from shutil import which
+
+import zstandard
 
 
 def symlink(source, link_name):
@@ -33,38 +38,58 @@ def symlink(source, link_name):
 
 
 def check_run(args):
-    print >> sys.stderr, ' '.join(args)
-    p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    # CMake `message(STATUS)` messages, as appearing in failed source code
-    # compiles, appear on stdout, so we only capture that.
-    (out, _) = p.communicate()
-    r = p.returncode
-    if r != 0:
-        cmake_output_re = re.compile("See also \"(.*/CMakeOutput.log)\"")
-        cmake_error_re = re.compile("See also \"(.*/CMakeError.log)\"")
-        output_match = cmake_output_re.search(out)
-        error_match = cmake_error_re.search(out)
+    print(' '.join(args), file=sys.stderr, flush=True)
+    if args[0] == 'cmake':
+        # CMake `message(STATUS)` messages, as appearing in failed source code
+        # compiles, appear on stdout, so we only capture that.
+        p = subprocess.Popen(args, stdout=subprocess.PIPE)
+        lines = []
+        for line in p.stdout:
+            lines.append(line)
+            sys.stdout.write(line.decode())
+            sys.stdout.flush()
+        r = p.wait()
+        if r != 0:
+            cmake_output_re = re.compile(b"See also \"(.*/CMakeOutput.log)\"")
+            cmake_error_re = re.compile(b"See also \"(.*/CMakeError.log)\"")
 
-        print >> sys.stderr, out
+            def find_first_match(re):
+                for l in lines:
+                    match = re.search(l)
+                    if match:
+                        return match
 
-        def dump_file(log):
-            with open(log, 'rb') as f:
-                print >> sys.stderr, "\nContents of", log, "follow\n"
-                print >> sys.stderr, f.read()
-        if output_match:
-            dump_file(output_match.group(1))
-        if error_match:
-            dump_file(error_match.group(1))
+            output_match = find_first_match(cmake_output_re)
+            error_match = find_first_match(cmake_error_re)
+
+            def dump_file(log):
+                with open(log, 'rb') as f:
+                    print("\nContents of", log, "follow\n", file=sys.stderr)
+                    print(f.read(), file=sys.stderr)
+            if output_match:
+                dump_file(output_match.group(1))
+            if error_match:
+                dump_file(error_match.group(1))
+    else:
+        r = subprocess.call(args)
     assert r == 0
 
 
 def run_in(path, args):
+    with chdir(path):
+        check_run(args)
+
+
+@contextmanager
+def chdir(path):
     d = os.getcwd()
-    print >> sys.stderr, 'cd "%s"' % path
+    print('cd "%s"' % path, file=sys.stderr)
     os.chdir(path)
-    check_run(args)
-    print >> sys.stderr, 'cd "%s"' % d
-    os.chdir(d)
+    try:
+        yield
+    finally:
+        print('cd "%s"' % d, file=sys.stderr)
+        os.chdir(d)
 
 
 def patch(patch, srcdir):
@@ -73,14 +98,14 @@ def patch(patch, srcdir):
                '-s'])
 
 
-def import_clang_tidy(source_dir):
+def import_clang_tidy(source_dir, build_clang_tidy_alpha):
     clang_plugin_path = os.path.join(os.path.dirname(sys.argv[0]),
                                      '..', 'clang-plugin')
     clang_tidy_path = os.path.join(source_dir,
                                    'clang-tools-extra/clang-tidy')
     sys.path.append(clang_plugin_path)
     from import_mozilla_checks import do_import
-    do_import(clang_plugin_path, clang_tidy_path)
+    do_import(clang_plugin_path, clang_tidy_path, build_clang_tidy_alpha)
 
 
 def build_package(package_build_dir, cmake_args):
@@ -95,7 +120,7 @@ def build_package(package_build_dir, cmake_args):
         shutil.rmtree(package_build_dir + "/CMakeFiles")
 
     run_in(package_build_dir, ["cmake"] + cmake_args)
-    run_in(package_build_dir, ["ninja", "install"])
+    run_in(package_build_dir, ["ninja", "install", "-v"])
 
 
 @contextmanager
@@ -107,21 +132,16 @@ def updated_env(env):
     os.environ.update(old_env)
 
 
-def build_tar_package(tar, name, base, directory):
+def build_tar_package(name, base, directory):
     name = os.path.realpath(name)
-    # On Windows, we have to convert this into an msys path so that tar can
-    # understand it.
-    if is_windows():
-        name = name.replace('\\', '/')
+    print('tarring {} from {}/{}'.format(name, base, directory), file=sys.stderr)
+    assert name.endswith(".tar.zst")
 
-        def f(match):
-            return '/' + match.group(1).lower()
-        name = re.sub(r'^([A-Za-z]):', f, name)
-    run_in(base, [tar,
-                  "-c",
-                  "-%s" % ("J" if ".xz" in name else "j"),
-                  "-f",
-                  name, directory])
+    cctx = zstandard.ZstdCompressor()
+    with open(name, "wb") as f, cctx.stream_writer(f) as z:
+        with tarfile.open(mode="w|", fileobj=z) as tf:
+            with chdir(base):
+                tf.add(directory)
 
 
 def mkdir_p(path):
@@ -161,21 +181,21 @@ def install_libgcc(gcc_dir, clang_dir, is_final_stage):
     out = subprocess.check_output([os.path.join(gcc_bin_dir, "gcc"),
                                    '-print-libgcc-file-name'])
 
-    libgcc_dir = os.path.dirname(out.rstrip())
+    libgcc_dir = os.path.dirname(out.decode().rstrip())
     clang_lib_dir = os.path.join(clang_dir, "lib", "gcc",
                                  "x86_64-unknown-linux-gnu",
                                  os.path.basename(libgcc_dir))
     mkdir_p(clang_lib_dir)
-    copy_tree(libgcc_dir, clang_lib_dir)
+    copy_tree(libgcc_dir, clang_lib_dir, preserve_symlinks=True)
     libgcc_dir = os.path.join(gcc_dir, "lib64")
     clang_lib_dir = os.path.join(clang_dir, "lib")
-    copy_tree(libgcc_dir, clang_lib_dir)
+    copy_tree(libgcc_dir, clang_lib_dir, preserve_symlinks=True)
     libgcc_dir = os.path.join(gcc_dir, "lib32")
     clang_lib_dir = os.path.join(clang_dir, "lib32")
-    copy_tree(libgcc_dir, clang_lib_dir)
+    copy_tree(libgcc_dir, clang_lib_dir, preserve_symlinks=True)
     include_dir = os.path.join(gcc_dir, "include")
     clang_include_dir = os.path.join(clang_dir, "include")
-    copy_tree(include_dir, clang_include_dir)
+    copy_tree(include_dir, clang_include_dir, preserve_symlinks=True)
 
 
 def install_import_library(build_dir, clang_dir):
@@ -198,16 +218,6 @@ def install_asan_symbols(build_dir, clang_dir):
     shutil.copy2(src_path[0], dst_path[0])
 
 
-def git_clone(base_dir, url, directory, revision):
-    run_in(base_dir, ["git", "clone", "-n", url, directory])
-    run_in(os.path.join(base_dir, directory), ["git", "checkout", revision])
-
-
-def git_update(directory, revision):
-    run_in(directory, ["git", "remote", "update"])
-    run_in(directory, ["git", "reset", "--hard", revision])
-
-
 def is_darwin():
     return platform.system() == "Darwin"
 
@@ -223,11 +233,11 @@ def is_windows():
 def build_one_stage(cc, cxx, asm, ld, ar, ranlib, libtool,
                     src_dir, stage_dir, package_name, build_libcxx,
                     osx_cross_compile, build_type, assertions,
-                    python_path, gcc_dir, libcxx_include_dir,
+                    python_path, gcc_dir, libcxx_include_dir, build_wasm,
                     compiler_rt_source_dir=None, runtimes_source_link=None,
                     compiler_rt_source_link=None,
                     is_final_stage=False, android_targets=None,
-                    extra_targets=None):
+                    extra_targets=None, pgo_phase=None):
     if is_final_stage and (android_targets or extra_targets):
         # Linking compiler-rt under "runtimes" activates LLVM_RUNTIME_TARGETS
         # and related arguments.
@@ -248,6 +258,7 @@ def build_one_stage(cc, cxx, asm, ld, ar, ranlib, libtool,
         return path.replace('\\', '/')
 
     def cmake_base_args(cc, cxx, asm, ld, ar, ranlib, libtool, inst_dir):
+        machine_targets = "X86;ARM;AArch64" if is_final_stage else "X86"
         cmake_args = [
             "-GNinja",
             "-DCMAKE_C_COMPILER=%s" % slashify_path(cc[0]),
@@ -262,14 +273,19 @@ def build_one_stage(cc, cxx, asm, ld, ar, ranlib, libtool,
             "-DCMAKE_SHARED_LINKER_FLAGS=%s" % ' '.join(ld[1:]),
             "-DCMAKE_BUILD_TYPE=%s" % build_type,
             "-DCMAKE_INSTALL_PREFIX=%s" % inst_dir,
-            "-DLLVM_TARGETS_TO_BUILD=X86;ARM;AArch64",
+            "-DLLVM_TARGETS_TO_BUILD=%s" % machine_targets,
             "-DLLVM_ENABLE_ASSERTIONS=%s" % ("ON" if assertions else "OFF"),
             "-DPYTHON_EXECUTABLE=%s" % slashify_path(python_path),
             "-DLLVM_TOOL_LIBCXX_BUILD=%s" % ("ON" if build_libcxx else "OFF"),
-            "-DLIBCXX_LIBCPPABI_VERSION=\"\"",
+            "-DLLVM_ENABLE_BINDINGS=OFF",
         ]
+        if not is_final_stage:
+            cmake_args += ["-DLLVM_ENABLE_PROJECTS=clang;compiler-rt"]
+        if build_wasm:
+            cmake_args += ["-DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=WebAssembly"]
         if is_linux():
             cmake_args += ["-DLLVM_BINUTILS_INCDIR=%s/include" % gcc_dir]
+            cmake_args += ["-DLLVM_ENABLE_LIBXML2=FORCE_ON"]
         if is_windows():
             cmake_args.insert(-1, "-DLLVM_EXPORT_SYMBOLS_FOR_PLUGINS=ON")
             cmake_args.insert(-1, "-DLLVM_USE_CRT_RELEASE=MT")
@@ -289,7 +305,7 @@ def build_one_stage(cc, cxx, asm, ld, ar, ranlib, libtool,
                 "-DCOMPILER_RT_BUILD_XRAY=OFF",
                 "-DLIBCXXABI_LIBCXX_INCLUDES=%s" % libcxx_include_dir,
                 "-DCMAKE_OSX_SYSROOT=%s" % slashify_path(os.getenv("CROSS_SYSROOT")),
-                "-DCMAKE_FIND_ROOT_PATH=%s" % slashify_path(os.getenv("CROSS_CCTOOLS_PATH")), # noqa
+                "-DCMAKE_FIND_ROOT_PATH=%s" % slashify_path(os.getenv("CROSS_SYSROOT")),
                 "-DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER",
                 "-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=ONLY",
                 "-DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=ONLY",
@@ -297,7 +313,17 @@ def build_one_stage(cc, cxx, asm, ld, ar, ranlib, libtool,
                 "-DCMAKE_OSX_ARCHITECTURES=x86_64",
                 "-DDARWIN_osx_ARCHS=x86_64",
                 "-DDARWIN_osx_SYSROOT=%s" % slashify_path(os.getenv("CROSS_SYSROOT")),
-                "-DLLVM_DEFAULT_TARGET_TRIPLE=x86_64-darwin11"
+                "-DLLVM_DEFAULT_TARGET_TRIPLE=x86_64-apple-darwin"
+            ]
+        if pgo_phase == "gen":
+            # Per https://releases.llvm.org/10.0.0/docs/HowToBuildWithPGO.html
+            cmake_args += [
+                "-DLLVM_BUILD_INSTRUMENTED=IR",
+                "-DLLVM_BUILD_RUNTIME=No",
+            ]
+        if pgo_phase == "use":
+            cmake_args += [
+                "-DLLVM_PROFDATA_FILE=%s/merged.profdata" % stage_dir,
             ]
         return cmake_args
 
@@ -338,13 +364,14 @@ def build_one_stage(cc, cxx, asm, ld, ar, ranlib, libtool,
 
         android_link_flags = "-fuse-ld=lld"
 
-        for target, cfg in android_targets.iteritems():
-            sysroot_dir = cfg["ndk_sysroot"]
-            android_gcc_dir = cfg["ndk_toolchain"]
+        for target, cfg in android_targets.items():
+            sysroot_dir = cfg["ndk_sysroot"].format(**os.environ)
+            android_gcc_dir = cfg["ndk_toolchain"].format(**os.environ)
             android_include_dirs = cfg["ndk_includes"]
             api_level = cfg["api_level"]
 
-            android_flags = ["-isystem %s" % d for d in android_include_dirs]
+            android_flags = ["-isystem %s" % d.format(**os.environ)
+                             for d in android_include_dirs]
             android_flags += ["--gcc-toolchain=%s" % android_gcc_dir]
             android_flags += ["-D__ANDROID_API__=%s" % api_level]
 
@@ -417,8 +444,9 @@ def build_one_stage(cc, cxx, asm, ld, ar, ranlib, libtool,
             ]
             build_package(compiler_rt_build_dir, cmake_args)
             os.environ['LIB'] = old_lib
-        install_import_library(build_dir, inst_dir)
-        install_asan_symbols(build_dir, inst_dir)
+        if is_final_stage:
+            install_import_library(build_dir, inst_dir)
+            install_asan_symbols(build_dir, inst_dir)
 
 
 # Return the absolute path of a build tool.  We first look to see if the
@@ -432,17 +460,17 @@ def build_one_stage(cc, cxx, asm, ld, ar, ranlib, libtool,
 def get_tool(config, key):
     f = None
     if key in config:
-        f = config[key]
+        f = config[key].format(**os.environ)
         if os.path.isabs(f):
             if not os.path.exists(f):
                 raise ValueError("%s must point to an existing path" % key)
             return f
 
     # Assume that we have the name of some program that should be on PATH.
-    try:
-        return which.which(f) if f else which.which(key)
-    except which.WhichError:
-        raise ValueError("%s not found on PATH" % f)
+    tool = which(f) if f else which(key)
+    if not tool:
+        raise ValueError("%s not found on PATH" % (f or key))
+    return tool
 
 
 # This function is intended to be called on the final build directory when
@@ -492,7 +520,8 @@ def prune_final_dir_for_clang_tidy(final_dir, osx_cross_compile):
 
     # Remove the target-specific files.
     if is_linux():
-        shutil.rmtree(os.path.join(final_dir, "x86_64-unknown-linux-gnu"))
+        if os.path.exists(os.path.join(final_dir, "x86_64-unknown-linux-gnu")):
+            shutil.rmtree(os.path.join(final_dir, "x86_64-unknown-linux-gnu"))
 
     # In lib/, only keep lib/clang/N.M.O/include and the LLVM shared library.
     re_ver_num = re.compile(r"^\d+\.\d+\.\d+$", re.I)
@@ -500,9 +529,10 @@ def prune_final_dir_for_clang_tidy(final_dir, osx_cross_compile):
         name = os.path.basename(f)
         if name == "clang":
             continue
-        if osx_cross_compile and name == 'libLLVM.dylib':
+        if osx_cross_compile and name in ['libLLVM.dylib', 'libclang-cpp.dylib']:
             continue
-        if is_linux() and fnmatch.fnmatch(name, 'libLLVM*.so'):
+        if is_linux() and (fnmatch.fnmatch(name, 'libLLVM*.so') or
+                           fnmatch.fnmatch(name, 'libclang-cpp.so*')):
             continue
         delete(f)
     for f in glob.glob("%s/lib/clang/*" % final_dir):
@@ -512,7 +542,7 @@ def prune_final_dir_for_clang_tidy(final_dir, osx_cross_compile):
         if os.path.basename(f) != "include":
             delete(f)
 
-    # Completely remove libexec/, msbuilld-bin and tools, if it exists.
+    # Completely remove libexec/, msbuild-bin and tools, if it exists.
     shutil.rmtree(os.path.join(final_dir, "libexec"))
     for d in ("msbuild-bin", "tools"):
         d = os.path.join(final_dir, d)
@@ -534,8 +564,6 @@ if __name__ == "__main__":
     parser.add_argument('-c', '--config', required=True,
                         type=argparse.FileType('r'),
                         help="Clang configuration file")
-    parser.add_argument('-b', '--base-dir', required=False,
-                        help="Base directory for code and build artifacts")
     parser.add_argument('--clean', required=False,
                         action='store_true',
                         help="Clean the build directory")
@@ -548,35 +576,11 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # The directories end up in the debug info, so the easy way of getting
-    # a reproducible build is to run it in a know absolute directory.
-    # We use a directory that is registered as a volume in the Docker image.
-
-    if args.base_dir:
-        base_dir = args.base_dir
-    elif os.environ.get('MOZ_AUTOMATION') and not is_windows():
-        base_dir = "/builds/worker/workspace/moz-toolchain"
-    else:
-        # Handles both the Windows automation case and the local build case
-        # TODO: Because Windows taskcluster builds are run with distinct
-        # user IDs for each job, we can't store things in some globally
-        # accessible directory: one job will run, checkout LLVM to that
-        # directory, and then if another job runs, the new user won't be
-        # able to access the previously-checked out code--or be able to
-        # delete it.  So on Windows, we build in the task-specific home
-        # directory; we will eventually add -fdebug-prefix-map options
-        # to the LLVM build to bring back reproducibility.
-        base_dir = os.path.join(os.getcwd(), 'build-clang')
-
-    source_dir = base_dir + "/src"
-    build_dir = base_dir + "/build"
-
-    if not os.path.exists(base_dir):
-        os.makedirs(base_dir)
-    elif os.listdir(base_dir) and not os.path.exists(os.path.join(base_dir, '.build-clang')):
-        raise ValueError("Base directory %s exists and is not a build-clang directory. "
-                         "Supply a non-existent or empty directory with --base-dir" % base_dir)
-    open(os.path.join(base_dir, '.build-clang'), 'a').close()
+    if not os.path.exists('llvm/LLVMBuild.txt'):
+        raise Exception('The script must be run from the root directory of the '
+                        'llvm-project tree')
+    source_dir = os.getcwd()
+    build_dir = source_dir + "/build"
 
     if args.clean:
         shutil.rmtree(build_dir)
@@ -603,16 +607,21 @@ if __name__ == "__main__":
         cc_name = "clang-cl"
         cxx_name = "clang-cl"
 
+    config_dir = os.path.dirname(args.config.name)
     config = json.load(args.config)
 
-    llvm_revision = config["llvm_revision"]
-    if not re.match(r'^[0-9a-fA-F]{40}$', llvm_revision):
-        raise ValueError("Incorrect format of the git revision")
     stages = 3
     if "stages" in config:
         stages = int(config["stages"])
-        if stages not in (1, 2, 3):
-            raise ValueError("We only know how to build 1, 2, or 3 stages")
+        if stages not in (1, 2, 3, 4):
+            raise ValueError("We only know how to build 1, 2, 3, or 4 stages.")
+    pgo = False
+    if "pgo" in config:
+        pgo = config["pgo"]
+        if pgo not in (True, False):
+            raise ValueError("Only boolean values are accepted for pgo.")
+        if pgo and stages != 4:
+            raise ValueError("PGO is only supported in 4-stage builds.")
     build_type = "Release"
     if "build_type" in config:
         build_type = config["build_type"]
@@ -624,11 +633,22 @@ if __name__ == "__main__":
         build_libcxx = config["build_libcxx"]
         if build_libcxx not in (True, False):
             raise ValueError("Only boolean values are accepted for build_libcxx.")
+    build_wasm = False
+    if "build_wasm" in config:
+        build_wasm = config["build_wasm"]
+        if build_wasm not in (True, False):
+            raise ValueError("Only boolean values are accepted for build_wasm.")
     build_clang_tidy = False
     if "build_clang_tidy" in config:
         build_clang_tidy = config["build_clang_tidy"]
         if build_clang_tidy not in (True, False):
             raise ValueError("Only boolean values are accepted for build_clang_tidy.")
+    build_clang_tidy_alpha = False
+    # check for build_clang_tidy_alpha only if build_clang_tidy is true
+    if build_clang_tidy and "build_clang_tidy_alpha" in config:
+        build_clang_tidy_alpha = config["build_clang_tidy_alpha"]
+        if build_clang_tidy_alpha not in (True, False):
+            raise ValueError("Only boolean values are accepted for build_clang_tidy_alpha.")
     osx_cross_compile = False
     if "osx_cross_compile" in config:
         osx_cross_compile = config["osx_cross_compile"]
@@ -647,7 +667,7 @@ if __name__ == "__main__":
     python_path = config["python_path"]
     gcc_dir = None
     if "gcc_dir" in config:
-        gcc_dir = config["gcc_dir"]
+        gcc_dir = config["gcc_dir"].format(**os.environ)
         if not os.path.exists(gcc_dir):
             raise ValueError("gcc_dir must point to an existing path")
     ndk_dir = None
@@ -655,7 +675,7 @@ if __name__ == "__main__":
     if "android_targets" in config:
         android_targets = config["android_targets"]
         for attr in ("ndk_toolchain", "ndk_sysroot", "ndk_includes", "api_level"):
-            for target, cfg in android_targets.iteritems():
+            for target, cfg in android_targets.items():
                 if attr not in cfg:
                     raise ValueError("must specify '%s' as a key for android target: %s" %
                                      (attr, target))
@@ -664,7 +684,7 @@ if __name__ == "__main__":
         extra_targets = config["extra_targets"]
         if not isinstance(extra_targets, list):
             raise ValueError("extra_targets must be a list")
-        if not all(isinstance(t, (str, unicode)) for t in extra_targets):
+        if not all(isinstance(t, str) for t in extra_targets):
             raise ValueError("members of extra_targets should be strings")
     if is_linux() and gcc_dir is None:
         raise ValueError("Config file needs to set gcc_dir")
@@ -681,15 +701,8 @@ if __name__ == "__main__":
     if not os.path.exists(source_dir):
         os.makedirs(source_dir)
 
-    if not args.skip_checkout:
-        if os.path.exists(os.path.join(source_dir, '.git')):
-            git_update(source_dir, llvm_revision)
-        else:
-            delete(source_dir)
-            git_clone(base_dir, URL_REPO, source_dir, llvm_revision)
-
     for p in config.get("patches", []):
-        patch(p, source_dir)
+        patch(os.path.join(config_dir, p), source_dir)
 
     compiler_rt_source_link = llvm_source_dir + "/projects/compiler-rt"
 
@@ -715,7 +728,7 @@ if __name__ == "__main__":
     package_name = "clang"
     if build_clang_tidy:
         package_name = "clang-tidy"
-        import_clang_tidy(source_dir)
+        import_clang_tidy(source_dir, build_clang_tidy_alpha)
 
     if not os.path.exists(build_dir):
         os.makedirs(build_dir)
@@ -727,6 +740,7 @@ if __name__ == "__main__":
     stage1_inst_dir = stage1_dir + '/' + package_name
 
     final_stage_dir = stage1_dir
+    final_inst_dir = stage1_inst_dir
 
     if is_darwin():
         extra_cflags = []
@@ -772,7 +786,7 @@ if __name__ == "__main__":
         extra_cxxflags = ["-stdlib=libc++"]
         extra_cxxflags2 = ["-stdlib=libc++"]
 
-        extra_flags = ["-target", "x86_64-darwin11", "-mlinker-version=137",
+        extra_flags = ["-target", "x86_64-apple-darwin", "-mlinker-version=137",
                        "-B", "%s/bin" % os.getenv("CROSS_CCTOOLS_PATH"),
                        "-isysroot", os.getenv("CROSS_SYSROOT"),
                        # technically the sysroot flag there should be enough to deduce this,
@@ -794,14 +808,17 @@ if __name__ == "__main__":
         [ld] + extra_ldflags,
         ar, ranlib, libtool,
         llvm_source_dir, stage1_dir, package_name, build_libcxx, osx_cross_compile,
-        build_type, assertions, python_path, gcc_dir, libcxx_include_dir)
+        build_type, assertions, python_path, gcc_dir, libcxx_include_dir, build_wasm,
+        is_final_stage=(stages == 1))
 
     runtimes_source_link = llvm_source_dir + "/runtimes/compiler-rt"
 
-    if stages > 1:
+    if stages >= 2:
         stage2_dir = build_dir + '/stage2'
         stage2_inst_dir = stage2_dir + '/' + package_name
         final_stage_dir = stage2_dir
+        final_inst_dir = stage2_inst_dir
+        pgo_phase = "gen" if pgo else None
         build_one_stage(
             [stage1_inst_dir + "/bin/%s%s" %
                 (cc_name, exe_ext)] + extra_cflags2,
@@ -812,14 +829,16 @@ if __name__ == "__main__":
             [ld] + extra_ldflags,
             ar, ranlib, libtool,
             llvm_source_dir, stage2_dir, package_name, build_libcxx, osx_cross_compile,
-            build_type, assertions, python_path, gcc_dir, libcxx_include_dir,
+            build_type, assertions, python_path, gcc_dir, libcxx_include_dir, build_wasm,
             compiler_rt_source_dir, runtimes_source_link, compiler_rt_source_link,
             is_final_stage=(stages == 2), android_targets=android_targets,
-            extra_targets=extra_targets)
+            extra_targets=extra_targets, pgo_phase=pgo_phase)
 
-    if stages > 2:
+    if stages >= 3:
         stage3_dir = build_dir + '/stage3'
+        stage3_inst_dir = stage3_dir + '/' + package_name
         final_stage_dir = stage3_dir
+        final_inst_dir = stage3_inst_dir
         build_one_stage(
             [stage2_inst_dir + "/bin/%s%s" %
                 (cc_name, exe_ext)] + extra_cflags2,
@@ -830,14 +849,58 @@ if __name__ == "__main__":
             [ld] + extra_ldflags,
             ar, ranlib, libtool,
             llvm_source_dir, stage3_dir, package_name, build_libcxx, osx_cross_compile,
-            build_type, assertions, python_path, gcc_dir, libcxx_include_dir,
+            build_type, assertions, python_path, gcc_dir, libcxx_include_dir, build_wasm,
             compiler_rt_source_dir, runtimes_source_link, compiler_rt_source_link,
             (stages == 3), extra_targets=extra_targets)
+
+    if stages >= 4:
+        stage4_dir = build_dir + '/stage4'
+        stage4_inst_dir = stage4_dir + '/' + package_name
+        final_stage_dir = stage4_dir
+        final_inst_dir = stage4_inst_dir
+        pgo_phase = None
+        if pgo:
+            pgo_phase = "use"
+            llvm_profdata = stage3_inst_dir + "/bin/llvm-profdata%s" % exe_ext
+            merge_cmd = [llvm_profdata, 'merge', '-o', 'merged.profdata']
+            profraw_files = glob.glob(os.path.join(stage2_dir, 'build',
+                                                   'profiles', '*.profraw'))
+            if not os.path.exists(stage4_dir):
+                os.mkdir(stage4_dir)
+            run_in(stage4_dir, merge_cmd + profraw_files)
+        build_one_stage(
+            [stage3_inst_dir + "/bin/%s%s" %
+                (cc_name, exe_ext)] + extra_cflags2,
+            [stage3_inst_dir + "/bin/%s%s" %
+                (cxx_name, exe_ext)] + extra_cxxflags2,
+            [stage3_inst_dir + "/bin/%s%s" %
+                (cc_name, exe_ext)] + extra_asmflags,
+            [ld] + extra_ldflags,
+            ar, ranlib, libtool,
+            llvm_source_dir, stage4_dir, package_name, build_libcxx, osx_cross_compile,
+            build_type, assertions, python_path, gcc_dir, libcxx_include_dir, build_wasm,
+            compiler_rt_source_dir, runtimes_source_link, compiler_rt_source_link,
+            (stages == 4), extra_targets=extra_targets, pgo_phase=pgo_phase)
 
     if build_clang_tidy:
         prune_final_dir_for_clang_tidy(os.path.join(final_stage_dir, package_name),
                                        osx_cross_compile)
 
+    # Copy the wasm32 builtins to the final_inst_dir if the archive is present.
+    if "wasi-sysroot" in config:
+        sysroot = config["wasi-sysroot"].format(**os.environ)
+        if os.path.isdir(sysroot):
+            for srcdir in glob.glob(
+                    os.path.join(sysroot, "lib", "clang", "*", "lib", "wasi")):
+                print("Copying from wasi-sysroot srcdir %s" % srcdir)
+                # Copy the contents of the "lib/wasi" subdirectory to the
+                # appropriate location in final_inst_dir.
+                version = os.path.basename(os.path.dirname(os.path.dirname(
+                    srcdir)))
+                destdir = os.path.join(final_inst_dir, "lib", "clang", version,
+                                       "lib", "wasi")
+                mkdir_p(destdir)
+                copy_tree(srcdir, destdir)
+
     if not args.skip_tar:
-        ext = "bz2" if is_darwin() or is_windows() else "xz"
-        build_tar_package("tar", "%s.tar.%s" % (package_name, ext), final_stage_dir, package_name)
+        build_tar_package("%s.tar.zst" % package_name, final_stage_dir, package_name)

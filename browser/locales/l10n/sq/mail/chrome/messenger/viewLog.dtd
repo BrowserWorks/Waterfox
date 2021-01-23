@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Regjistër Filtrash">
+<!ENTITY viewLogInfo.text "Regjistri i Filtrave është një kartelë që dokumenton cilët filtra janë përdorur. Përdorni kutizën më poshtë për të aktivizuar regjistrimin.">
+<!ENTITY clearLog.label "Spastroje Regjistrin">
+<!ENTITY clearLog.accesskey "P">
+<!ENTITY enableLog.label "Aktivizo Regjistrin e Filtrave">
+<!ENTITY enableLog.accesskey "A">
+<!ENTITY closeLog.label "Mbylleni">
+<!ENTITY closeLog.accesskey "M">

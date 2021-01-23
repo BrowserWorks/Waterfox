@@ -3,34 +3,37 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 use super::{BasicParseError, Parser, ParserInput, Token};
+use matches::matches;
 
 /// Parse the *An+B* notation, as found in the `:nth-child()` selector.
 /// The input is typically the arguments of a function,
 /// in which case the caller needs to check if the arguments’ parser is exhausted.
 /// Return `Ok((A, B))`, or `Err(())` for a syntax error.
 pub fn parse_nth<'i, 't>(input: &mut Parser<'i, 't>) -> Result<(i32, i32), BasicParseError<'i>> {
-    // FIXME: remove .clone() when lifetimes are non-lexical.
-    match input.next()?.clone() {
+    match *input.next()? {
         Token::Number {
             int_value: Some(b), ..
         } => Ok((0, b)),
         Token::Dimension {
             int_value: Some(a),
-            unit,
+            ref unit,
             ..
         } => {
             match_ignore_ascii_case! {
-                &unit,
+                unit,
                 "n" => Ok(parse_b(input, a)?),
                 "n-" => Ok(parse_signless_b(input, a, -1)?),
                 _ => match parse_n_dash_digits(&*unit) {
                     Ok(b) => Ok((a, b)),
-                    Err(()) => Err(input.new_basic_unexpected_token_error(Token::Ident(unit.clone())))
+                    Err(()) => {
+                        let unit = unit.clone();
+                        Err(input.new_basic_unexpected_token_error(Token::Ident(unit)))
+                    }
                 }
             }
         }
-        Token::Ident(value) => {
-            match_ignore_ascii_case! { &value,
+        Token::Ident(ref value) => {
+            match_ignore_ascii_case! { value,
                 "even" => Ok((2, 0)),
                 "odd" => Ok((2, 1)),
                 "n" => Ok(parse_b(input, 1)?),
@@ -41,30 +44,41 @@ pub fn parse_nth<'i, 't>(input: &mut Parser<'i, 't>) -> Result<(i32, i32), Basic
                     let (slice, a) = if value.starts_with("-") {
                         (&value[1..], -1)
                     } else {
-                        (&*value, 1)
+                        (&**value, 1)
                     };
                     match parse_n_dash_digits(slice) {
                         Ok(b) => Ok((a, b)),
-                        Err(()) => Err(input.new_basic_unexpected_token_error(Token::Ident(value.clone())))
+                        Err(()) => {
+                            let value = value.clone();
+                            Err(input.new_basic_unexpected_token_error(Token::Ident(value)))
+                        }
                     }
                 }
             }
         }
-        // FIXME: remove .clone() when lifetimes are non-lexical.
-        Token::Delim('+') => match input.next_including_whitespace()?.clone() {
-            Token::Ident(value) => {
-                match_ignore_ascii_case! { &value,
+        Token::Delim('+') => match *input.next_including_whitespace()? {
+            Token::Ident(ref value) => {
+                match_ignore_ascii_case! { value,
                     "n" => parse_b(input, 1),
                     "n-" => parse_signless_b(input, 1, -1),
-                    _ => match parse_n_dash_digits(&*value) {
+                    _ => match parse_n_dash_digits(value) {
                         Ok(b) => Ok((1, b)),
-                        Err(()) => Err(input.new_basic_unexpected_token_error(Token::Ident(value.clone())))
+                        Err(()) => {
+                            let value = value.clone();
+                            Err(input.new_basic_unexpected_token_error(Token::Ident(value)))
+                        }
                     }
                 }
             }
-            token => Err(input.new_basic_unexpected_token_error(token)),
+            ref token => {
+                let token = token.clone();
+                Err(input.new_basic_unexpected_token_error(token))
+            }
         },
-        token => Err(input.new_basic_unexpected_token_error(token)),
+        ref token => {
+            let token = token.clone();
+            Err(input.new_basic_unexpected_token_error(token))
+        }
     }
 }
 
@@ -105,7 +119,7 @@ fn parse_n_dash_digits(string: &str) -> Result<i32, ()> {
     let bytes = string.as_bytes();
     if bytes.len() >= 3
         && bytes[..2].eq_ignore_ascii_case(b"n-")
-        && bytes[2..].iter().all(|&c| matches!(c, b'0'...b'9'))
+        && bytes[2..].iter().all(|&c| matches!(c, b'0'..=b'9'))
     {
         Ok(parse_number_saturate(&string[1..]).unwrap()) // Include the minus sign
     } else {

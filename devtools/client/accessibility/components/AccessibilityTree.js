@@ -19,13 +19,19 @@ const TreeView = createFactory(
 // Reps
 const { MODE } = require("devtools/client/shared/components/reps/reps");
 
-const { fetchChildren } = require("../actions/accessibles");
+const {
+  fetchChildren,
+} = require("devtools/client/accessibility/actions/accessibles");
 
-const { L10N } = require("../utils/l10n");
-const { isFiltered } = require("../utils/audit");
-const AccessibilityRow = createFactory(require("./AccessibilityRow"));
-const AccessibilityRowValue = createFactory(require("./AccessibilityRowValue"));
-const { Provider } = require("../provider");
+const { L10N } = require("devtools/client/accessibility/utils/l10n");
+const { isFiltered } = require("devtools/client/accessibility/utils/audit");
+const AccessibilityRow = createFactory(
+  require("devtools/client/accessibility/components/AccessibilityRow")
+);
+const AccessibilityRowValue = createFactory(
+  require("devtools/client/accessibility/components/AccessibilityRowValue")
+);
+const { Provider } = require("devtools/client/accessibility/provider");
 
 const { scrollIntoView } = require("devtools/client/shared/scroll");
 
@@ -35,14 +41,18 @@ const { scrollIntoView } = require("devtools/client/shared/scroll");
 class AccessibilityTree extends Component {
   static get propTypes() {
     return {
-      walker: PropTypes.object,
+      toolboxDoc: PropTypes.object.isRequired,
       dispatch: PropTypes.func.isRequired,
       accessibles: PropTypes.object,
       expanded: PropTypes.object,
       selected: PropTypes.string,
       highlighted: PropTypes.object,
-      supports: PropTypes.object,
       filtered: PropTypes.bool,
+      getAccessibilityTreeRoot: PropTypes.func.isRequired,
+      startListeningForAccessibilityEvents: PropTypes.func.isRequired,
+      stopListeningForAccessibilityEvents: PropTypes.func.isRequired,
+      highlightAccessible: PropTypes.func.isRequired,
+      unhighlightAccessible: PropTypes.func.isRequired,
     };
   }
 
@@ -53,17 +63,22 @@ class AccessibilityTree extends Component {
     this.onReorder = this.onReorder.bind(this);
     this.onTextChange = this.onTextChange.bind(this);
     this.renderValue = this.renderValue.bind(this);
+    this.scrollSelectedRowIntoView = this.scrollSelectedRowIntoView.bind(this);
   }
 
   /**
-   * Add accessibility walker front event listeners that affect tree rendering
-   * and updates.
+   * Add accessibility event listeners that affect tree rendering and updates.
    */
   componentWillMount() {
-    const { walker } = this.props;
-    walker.on("reorder", this.onReorder);
-    walker.on("name-change", this.onNameChange);
-    walker.on("text-change", this.onTextChange);
+    this.props.startListeningForAccessibilityEvents({
+      reorder: this.onReorder,
+      "name-change": this.onNameChange,
+      "text-change": this.onTextChange,
+    });
+    window.on(
+      EVENTS.NEW_ACCESSIBLE_FRONT_INSPECTED,
+      this.scrollSelectedRowIntoView
+    );
     return null;
   }
 
@@ -71,35 +86,57 @@ class AccessibilityTree extends Component {
     // When filtering is toggled, make sure that the selected row remains in
     // view.
     if (this.props.filtered !== prevProps.filtered) {
-      const selected = document.querySelector(".treeTable .treeRow.selected");
-      if (selected) {
-        scrollIntoView(selected, { center: true });
-      }
+      this.scrollSelectedRowIntoView();
     }
 
     window.emit(EVENTS.ACCESSIBILITY_INSPECTOR_UPDATED);
   }
 
   /**
-   * Remove accessible walker front event listeners.
+   * Remove accessible event listeners.
    */
   componentWillUnmount() {
-    const { walker } = this.props;
-    walker.off("reorder", this.onReorder);
-    walker.off("name-change", this.onNameChange);
-    walker.off("text-change", this.onTextChange);
+    this.props.stopListeningForAccessibilityEvents({
+      reorder: this.onReorder,
+      "name-change": this.onNameChange,
+      "text-change": this.onTextChange,
+    });
+
+    window.off(
+      EVENTS.NEW_ACCESSIBLE_FRONT_INSPECTED,
+      this.scrollSelectedRowIntoView
+    );
   }
 
   /**
    * Handle accessible reorder event. If the accessible is cached and rendered
    * within the accessibility tree, re-fetch its children and re-render the
    * corresponding subtree.
-   * @param {Object} accessible accessible object that had its subtree
-   *                            reordered.
+   * @param {Object} accessibleFront
+   *        accessible front that had its subtree reordered.
    */
-  onReorder(accessible) {
-    if (this.props.accessibles.has(accessible.actorID)) {
-      this.props.dispatch(fetchChildren(accessible));
+  onReorder(accessibleFront) {
+    if (this.props.accessibles.has(accessibleFront.actorID)) {
+      this.props.dispatch(fetchChildren(accessibleFront));
+    }
+  }
+
+  scrollSelectedRowIntoView() {
+    const { treeview } = this.refs;
+    if (!treeview) {
+      return;
+    }
+
+    const treeEl = treeview.treeRef.current;
+    if (!treeEl) {
+      return;
+    }
+
+    const selected = treeEl.ownerDocument.querySelector(
+      ".treeTable .treeRow.selected"
+    );
+    if (selected) {
+      scrollIntoView(selected, { center: true });
     }
   }
 
@@ -107,21 +144,23 @@ class AccessibilityTree extends Component {
    * Handle accessible name change event. If the name of an accessible changes
    * and that accessible is cached and rendered within the accessibility tree,
    * re-fetch its parent's children and re-render the corresponding subtree.
-   * @param {Object} accessible accessible object that had its name changed.
-   * @param {Object} parent     optional parent accessible object. Note: if it
-   *                            parent is not present, we assume that the top
-   *                            level document's name has changed and use
-   *                            accessible walker as a parent.
+   * @param {Object} accessibleFront
+   *        accessible front that had its name changed.
+   * @param {Object} parentFront
+   *        optional parent accessible front. Note: if it parent is not
+   *        present, we assume that the top level document's name has changed
+   *        and use accessible walker as a parent.
    */
-  onNameChange(accessible, parent) {
-    const { accessibles, walker, dispatch } = this.props;
-    parent = parent || walker;
+  onNameChange(accessibleFront, parentFront) {
+    const { accessibles, dispatch } = this.props;
+    const accessibleWalkerFront = accessibleFront.getParent();
+    parentFront = parentFront || accessibleWalkerFront;
 
     if (
-      accessibles.has(accessible.actorID) ||
-      accessibles.has(parent.actorID)
+      accessibles.has(accessibleFront.actorID) ||
+      accessibles.has(parentFront.actorID)
     ) {
-      dispatch(fetchChildren(parent));
+      dispatch(fetchChildren(parentFront));
     }
   }
 
@@ -130,13 +169,13 @@ class AccessibilityTree extends Component {
    * an accessible changes and that accessible is cached and rendered within the
    * accessibility tree, re-fetch its children and re-render the corresponding
    * subtree.
-   * @param  {Object} accessible  accessible object that had its child text
-   *                              changed.
+   * @param  {Object} accessibleFront
+   *         accessible front that had its child text changed.
    */
-  onTextChange(accessible) {
+  onTextChange(accessibleFront) {
     const { accessibles, dispatch } = this.props;
-    if (accessibles.has(accessible.actorID)) {
-      dispatch(fetchChildren(accessible));
+    if (accessibles.has(accessibleFront.actorID)) {
+      dispatch(fetchChildren(accessibleFront));
     }
   }
 
@@ -165,35 +204,35 @@ class AccessibilityTree extends Component {
       expanded,
       selected,
       highlighted: highlightedItem,
-      supports,
-      walker,
+      toolboxDoc,
       filtered,
+      getAccessibilityTreeRoot,
+      highlightAccessible,
+      unhighlightAccessible,
     } = this.props;
-
-    // Historically, the first context menu item is snapshot function and it is available
-    // for all accessible object.
-    const hasContextMenu = supports.snapshot;
 
     const renderRow = rowProps => {
       const { object } = rowProps.member;
       const highlighted = object === highlightedItem;
       return AccessibilityRow(
         Object.assign({}, rowProps, {
-          walker,
-          hasContextMenu,
+          toolboxDoc,
           highlighted,
           decorator: {
             getRowClass: function() {
               return highlighted ? ["highlighted"] : [];
             },
           },
+          highlightAccessible,
+          unhighlightAccessible,
         })
       );
     };
     const className = filtered ? "filtered" : undefined;
 
     return TreeView({
-      object: walker,
+      ref: "treeview",
+      object: getAccessibilityTreeRoot(),
       mode: MODE.SHORT,
       provider: new Provider(accessibles, filtered, dispatch),
       columns: columns,
@@ -213,33 +252,32 @@ class AccessibilityTree extends Component {
           this.rows.find(row => row.props.member.path === nodePath),
           { preventAutoScroll: true }
         );
-      },
-      onContextMenuTree:
-        hasContextMenu &&
-        function(e) {
-          // If context menu event is triggered on (or bubbled to) the TreeView, it was
-          // done via keyboard. Open context menu for currently selected row.
-          let row = this.getSelectedRow();
-          if (!row) {
-            return;
-          }
 
-          row = row.getWrappedInstance();
-          row.onContextMenu(e);
-        },
+        return true;
+      },
+      onContextMenuTree: function(e) {
+        // If context menu event is triggered on (or bubbled to) the TreeView, it was
+        // done via keyboard. Open context menu for currently selected row.
+        let row = this.getSelectedRow();
+        if (!row) {
+          return;
+        }
+
+        row = row.getWrappedInstance();
+        row.onContextMenu(e);
+      },
     });
   }
 }
 
 const mapStateToProps = ({
   accessibles,
-  ui: { expanded, selected, supports, highlighted },
+  ui: { expanded, selected, highlighted },
   audit: { filters },
 }) => ({
   accessibles,
   expanded,
   selected,
-  supports,
   highlighted,
   filtered: isFiltered(filters),
 });

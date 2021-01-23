@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.masterpass.title "Contraseñas maestras">
+<!ENTITY changepassword.caption "Cambiar contraseña maestra">
+<!ENTITY changepassword.text "Su contraseña maestra protege la información confidencial tal como contraseñas de sus sitios web y certificados.">
+<!ENTITY changepassword.button "Cambiar contraseña…">
+<!ENTITY changepassword.accesskey "C">
+<!ENTITY resetpassword.caption "Restablecer la contraseña maestra">
+<!ENTITY resetpassword.text "Si restablece su contraseña maestra, se perderán todas las contraseñas guardadas de sus sitios web y correos, datos de formularios, certificados personales y claves privadas.">
+<!ENTITY resetpassword.button "Restablecer contraseña">
+<!ENTITY resetpassword.accesskey "R">

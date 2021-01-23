@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+   
+<!-- Labels -->
+<!ENTITY newFolderDialog.title      "Nije map">
+<!ENTITY name.label                 "Namme:">
+<!ENTITY name.accesskey             "N">
+<!ENTITY description.label          "Meitsje as in submap fan:">
+<!ENTITY description.accesskey      "M">
+<!ENTITY folderRestriction1.label   "Dizze server beheint mappen ta twa spesjale soarten.">
+<!ENTITY folderRestriction2.label   "Tastean dat de nije map befettet:">
+<!ENTITY foldersOnly.label          "Allinnich mappen">
+<!ENTITY messagesOnly.label         "Allinnich berjochten">
+<!ENTITY accept.label               "Map meitsje">
+<!ENTITY accept.accesskey           "a">

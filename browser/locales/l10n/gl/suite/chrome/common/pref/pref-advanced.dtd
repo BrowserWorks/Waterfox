@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Advanced' prefs settings -->
+<!ENTITY pref.advanced.title        "Opcións avanzadas">
+
+<!ENTITY systemPref.caption         "Preferencias do sistema">
+<!ENTITY systemPrefCheck.label      "Usar as preferencias do sistema">
+<!ENTITY systemPrefCheck.accesskey  "U">
+<!ENTITY systemPref.desc            "Con esta opción, &brandShortName; herda as preferencias do sistema. A configuracion do sistema sobrescribirá a configuración do &brandShortName;.">
+
+<!ENTITY prefCheckDefault.caption   "Integración co sistema">
+<!ENTITY prefCheckDefaultClient.label "Comprobar a configuración de aplicativos predeterminados ao iniciar">
+<!ENTITY prefCheckDefaultClient.accesskey "C">
+
+<!ENTITY crashReports.caption       "Informador de erros">
+<!ENTITY submitCrashes.label        "Enviar informes de erro">
+<!ENTITY submitCrashes.accesskey    "s">

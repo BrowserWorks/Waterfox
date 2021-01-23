@@ -9,7 +9,6 @@ add_task(async function() {
   registerCleanupFunction(async function() {
     clearAllPluginPermissions();
     Services.prefs.clearUserPref("extensions.blocklist.suppressUI");
-    Services.prefs.clearUserPref("plugins.click_to_play");
     setTestPluginEnabledState(Ci.nsIPluginTag.STATE_ENABLED, "Test Plug-in");
     setTestPluginEnabledState(
       Ci.nsIPluginTag.STATE_ENABLED,
@@ -19,7 +18,6 @@ add_task(async function() {
       gTestRoot + "blockNoPlugins",
       gTestBrowser
     );
-    resetBlocklist();
     gBrowser.removeCurrentTab();
     window.focus();
     gTestBrowser = null;
@@ -28,7 +26,6 @@ add_task(async function() {
 
 add_task(async function() {
   Services.prefs.setBoolPref("extensions.blocklist.suppressUI", true);
-  Services.prefs.setBoolPref("plugins.click_to_play", true);
 
   gBrowser.selectedTab = BrowserTestUtils.addTab(gBrowser);
   gTestBrowser = gBrowser.selectedBrowser;
@@ -57,7 +54,7 @@ add_task(async function() {
   // Work around for delayed PluginBindingAttached
   await promiseUpdatePluginBindings(gTestBrowser);
 
-  await ContentTask.spawn(gTestBrowser, {}, async function() {
+  await SpecialPowers.spawn(gTestBrowser, [], async function() {
     let test = content.document.getElementById("test");
     Assert.ok(test.activated, "task 1a: test plugin should be activated!");
   });
@@ -78,7 +75,7 @@ add_task(async function() {
   // Work around for delayed PluginBindingAttached
   await promiseUpdatePluginBindings(gTestBrowser);
 
-  await ContentTask.spawn(gTestBrowser, {}, async function() {
+  await SpecialPowers.spawn(gTestBrowser, [], async function() {
     let test = content.document.getElementById("test");
     ok(!test.activated, "task 2a: test plugin shouldn't activate!");
   });
@@ -108,7 +105,7 @@ add_task(async function() {
   // Work around for delayed PluginBindingAttached
   await promiseUpdatePluginBindings(gTestBrowser);
 
-  await ContentTask.spawn(gTestBrowser, {}, async function() {
+  await SpecialPowers.spawn(gTestBrowser, [], async function() {
     let test = content.document.getElementById("test");
     Assert.ok(test.activated, "task 3a: test plugin should be activated!");
   });
@@ -129,7 +126,7 @@ add_task(async function() {
   // Work around for delayed PluginBindingAttached
   await promiseUpdatePluginBindings(gTestBrowser);
 
-  await ContentTask.spawn(gTestBrowser, {}, async function() {
+  await SpecialPowers.spawn(gTestBrowser, [], async function() {
     let test = content.document.getElementById("test");
     Assert.ok(!test.activated, "task 4a: test plugin shouldn't activate!");
   });

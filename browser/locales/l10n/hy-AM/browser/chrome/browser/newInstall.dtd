@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
+ discrete download of Waterfox" and "version" is used to mean "the specific
+ revision number of a given Waterfox channel". These terms are not synonymous.
+-->
+
+<!ENTITY window.title "Կարևոր նորություններ">
+<!ENTITY window.style "width: 490px">
+<!ENTITY sync "Ձեր Waterfox-ում այս ներբեռնումների հետ &brandShortName;-ի պահպանած տեղեկությունը համաժամեցնելու համար, մուտք գործեք ձեր &syncBrand.fxAccount.label;-ի հետ։">
+<!ENTITY continue-button "Շարունակել">
+
+<!ENTITY mainText "&brandShortName;-ի այս տեղակայումը ունի նոր հատկագիր: Այս համակարգչում այն չի տարածում էջանիշեր, գաղտնաբառեր և օգտագործողի նախընտրությունները Waterfox-ի (ներառյալ Waterfox, Waterfox ESR, Waterfox Beta, Waterfox Developer Edition և Waterfox Nightly) այլ տեղակայումների հետ։">

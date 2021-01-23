@@ -16,16 +16,10 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/DOMEventTargetHelper.h"
-#include "nsIObserver.h"
-#include "nsIStreamListener.h"
-#include "nsIChannelEventSink.h"
-#include "nsIInterfaceRequestor.h"
-#include "nsITimer.h"
-#include "nsIHttpChannel.h"
 #include "nsDeque.h"
 
 class nsIGlobalObject;
-class nsICookieSettings;
+class nsICookieJarSettings;
 
 namespace mozilla {
 
@@ -81,8 +75,8 @@ class EventSource final : public DOMEventTargetHelper {
   void Close();
 
  private:
-  EventSource(nsIGlobalObject* aGlobal, nsICookieSettings* aCookieSettings,
-              bool aWithCredentials);
+  EventSource(nsIGlobalObject* aGlobal,
+              nsICookieJarSettings* aCookieJarSettings, bool aWithCredentials);
   virtual ~EventSource();
   // prevent bad usage
   EventSource(const EventSource& x) = delete;

@@ -145,7 +145,7 @@ add_task(async function test_query_on_toolbar() {
   });
 
   // Get first child and check it is the just inserted query.
-  Assert.ok(toolbarNode.childCount > 0, "Toolbar node has children");
+  Assert.greater(toolbarNode.childCount, 0, "Toolbar node has children");
   let queryNode = toolbarNode.getChild(0);
   Assert.equal(
     queryNode.title,
@@ -177,8 +177,9 @@ add_task(async function test_query_on_toolbar() {
 
   // Execute the delete command and check bookmark has been removed.
   let promiseItemRemoved = PlacesTestUtils.waitForNotification(
-    "onItemRemoved",
-    (...args) => query.guid == args[5]
+    "bookmark-removed",
+    events => events.some(event => query.guid == event.guid),
+    "places"
   );
   PO._places.controller.doCommand("cmd_delete");
   await promiseItemRemoved;

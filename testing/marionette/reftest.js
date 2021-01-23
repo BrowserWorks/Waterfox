@@ -23,10 +23,17 @@ const { Log } = ChromeUtils.import("chrome://marionette/content/log.js");
 
 XPCOMUtils.defineLazyGetter(this, "logger", Log.get);
 
+ChromeUtils.defineModuleGetter(
+  this,
+  "E10SUtils",
+  "resource://gre/modules/E10SUtils.jsm"
+);
+
 this.EXPORTED_SYMBOLS = ["reftest"];
 
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 const PREF_E10S = "browser.tabs.remote.autostart";
+const PREF_FISSION = "fission.autostart";
 
 const SCREENSHOT_MODE = {
   unexpected: 0,
@@ -62,7 +69,8 @@ reftest.Runner = class {
     this.canvasCache = new DefaultMap(undefined, () => new Map([[null, []]]));
     this.windowUtils = null;
     this.lastURL = null;
-    this.remote = Preferences.get(PREF_E10S);
+    this.useRemoteTabs = Preferences.get(PREF_E10S);
+    this.useRemoteSubframes = Preferences.get(PREF_FISSION);
   }
 
   /**
@@ -137,7 +145,7 @@ reftest.Runner = class {
     assert.positiveInteger(height);
 
     let reftestWin = this.parentWindow.open(
-      "chrome://marionette/content/reftest.xul",
+      "chrome://marionette/content/reftest.xhtml",
       "reftest",
       `chrome,height=${height},width=${width}`
     );
@@ -157,15 +165,9 @@ reftest.Runner = class {
       browser = reftestWin.document.createElementNS(XUL_NS, "xul:browser");
       browser.permanentKey = {};
       browser.setAttribute("id", "browser");
-      browser.setAttribute("anonid", "initialBrowser");
       browser.setAttribute("type", "content");
       browser.setAttribute("primary", "true");
-      if (this.remote) {
-        browser.setAttribute("remote", "true");
-        browser.setAttribute("remoteType", "web");
-      } else {
-        browser.setAttribute("remote", "false");
-      }
+      browser.setAttribute("remote", this.useRemoteTabs ? "true" : "false");
     }
     // Make sure the browser element is exactly the right size, no matter
     // what size our window is
@@ -188,9 +190,14 @@ max-width: ${width}px; max-height: ${height}px`;
     return reftestWin;
   }
 
-  abort() {
-    if (this.reftestWin) {
+  async abort() {
+    if (this.reftestWin && this.reftestWin != this.parentWindow) {
       this.driver.closeChromeWindow();
+      let parentHandle = this.driver.findWindow(
+        [this.parentWindow],
+        () => true
+      );
+      await this.driver.setWindowHandle(parentHandle);
     }
     this.reftestWin = null;
   }
@@ -278,7 +285,7 @@ max-width: ${width}px; max-height: ${height}px`;
     let result = await Promise.race([testRunner, timeoutPromise]);
     this.parentWindow.clearTimeout(timeoutHandle);
     if (result.status === STATUS.TIMEOUT) {
-      this.abort();
+      await this.abort();
     }
 
     return result;
@@ -324,11 +331,20 @@ max-width: ${width}px; max-height: ${height}px`;
           extras
         );
       } catch (e) {
-        comparison = { lhs: null, rhs: null, passed: false, error: e };
+        comparison = {
+          lhs: null,
+          rhs: null,
+          passed: false,
+          error: e,
+          msg: null,
+        };
+      }
+      if (comparison.msg) {
+        result.message += `${comparison.msg}\n`;
       }
       if (comparison.error !== null) {
         result.status = STATUS.ERROR;
-        result.message = String(comparison.error);
+        result.message += String(comparison.error);
         result.stack = comparison.error.stack;
       }
 
@@ -350,7 +366,7 @@ max-width: ${width}px; max-height: ${height}px`;
         if (references.length) {
           for (let i = references.length - 1; i >= 0; i--) {
             let item = references[i];
-            stack.push([rhsUrl, item[0], item[1], item[2]]);
+            stack.push([rhsUrl, ...item]);
           }
         } else {
           // Reached a leaf node so all of one reference chain passed
@@ -412,6 +428,7 @@ max-width: ${width}px; max-height: ${height}px`;
     let error = null;
     let pixelsDifferent = null;
     let maxDifferences = {};
+    let msg = null;
 
     try {
       pixelsDifferent = this.windowUtils.compareCanvases(
@@ -433,10 +450,9 @@ max-width: ${width}px; max-height: ${height}px`;
       switch (relation) {
         case "==":
           if (!passed) {
-            logger.info(
+            msg =
               `Found ${pixelsDifferent} pixels different, ` +
-                `maximum difference per channel ${maxDifferences.value}`
-            );
+              `maximum difference per channel ${maxDifferences.value}`;
           }
           break;
         case "!=":
@@ -448,7 +464,7 @@ max-width: ${width}px; max-height: ${height}px`;
           );
       }
     }
-    return { lhs, rhs, passed, error };
+    return { lhs, rhs, passed, error, msg };
   }
 
   isAcceptableDifference(maxDifference, pixelsDifferent, allowed) {
@@ -474,9 +490,41 @@ max-width: ${width}px; max-height: ${height}px`;
   ensureFocus(win) {
     const focusManager = Services.focus;
     if (focusManager.activeWindow != win) {
-      focusManager.activeWindow = win;
+      win.focus();
     }
     this.driver.curBrowser.contentBrowser.focus();
+  }
+
+  updateBrowserRemotenessByURL(browser, url) {
+    // We don't use remote tabs on Android.
+    if (Services.appinfo.OS === "Android") {
+      return;
+    }
+
+    let remoteType = E10SUtils.getRemoteTypeForURI(
+      url,
+      this.useRemoteTabs,
+      this.useRemoteSubframes
+    );
+
+    // Only re-construct the browser if its remote type needs to change.
+    if (browser.remoteType !== remoteType) {
+      if (remoteType === E10SUtils.NOT_REMOTE) {
+        browser.removeAttribute("remote");
+        browser.removeAttribute("remoteType");
+      } else {
+        browser.setAttribute("remote", "true");
+        browser.setAttribute("remoteType", remoteType);
+      }
+
+      browser.changeRemoteness({ remoteType });
+      browser.construct();
+
+      // XXX: This appears to be working fine as is, should we be reinitializing
+      // something here? If so, what? The listener.js framescript is registered
+      // on the reftest.xhtml chrome window (which shouldn't be changing?), and
+      // driver.js uses the global message manager to listen for messages.
+    }
   }
 
   async screenshot(win, url, timeout) {
@@ -545,6 +593,14 @@ browserRect.height: ${browserRect.height}`);
         logger.debug(`Refreshing page`);
         await this.driver.listener.refresh(navigateOpts);
       } else {
+        // HACK: DocumentLoadListener currently doesn't know how to
+        // process-switch loads in a non-tabbed <browser>. We need to manually
+        // set the browser's remote type in order to ensure that the load
+        // happens in the correct process.
+        //
+        // See bug 1636169.
+        this.updateBrowserRemotenessByURL(win.gBrowser, url);
+
         navigateOpts.url = url;
         navigateOpts.loadEventExpected = false;
         await this.driver.listener.get(navigateOpts);
@@ -552,15 +608,16 @@ browserRect.height: ${browserRect.height}`);
       }
 
       this.ensureFocus(win);
-      await this.driver.listener.reftestWait(url, this.remote);
+      await this.driver.listener.reftestWait(url, this.useRemoteTabs);
 
-      canvas = capture.canvas(
+      canvas = await capture.canvas(
         win,
+        win.docShell.browsingContext,
         0, // left
         0, // top
         browserRect.width,
         browserRect.height,
-        { canvas, flags }
+        { canvas, flags, readback: true }
       );
     }
     if (

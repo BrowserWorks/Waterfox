@@ -35,7 +35,7 @@ nsProgressFrame::nsProgressFrame(ComputedStyle* aStyle,
                                  nsPresContext* aPresContext)
     : nsContainerFrame(aStyle, aPresContext, kClassID), mBarDiv(nullptr) {}
 
-nsProgressFrame::~nsProgressFrame() {}
+nsProgressFrame::~nsProgressFrame() = default;
 
 void nsProgressFrame::DestroyFrom(nsIFrame* aDestructRoot,
                                   PostDestroyData& aPostDestroyData) {
@@ -56,9 +56,9 @@ nsresult nsProgressFrame::CreateAnonymousContent(
   // Associate ::-moz-progress-bar pseudo-element to the anonymous child.
   mBarDiv->SetPseudoElementType(PseudoStyleType::mozProgressBar);
 
-  if (!aElements.AppendElement(mBarDiv)) {
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
+  // XXX(Bug 1631371) Check if this should use a fallible operation as it
+  // pretended earlier, or change the return type to void.
+  aElements.AppendElement(mBarDiv);
 
   return NS_OK;
 }
@@ -140,7 +140,7 @@ void nsProgressFrame::ReflowChildFrame(nsIFrame* aChild,
     size *= position;
   }
 
-  if (!vertical && (wm.IsVertical() ? wm.IsVerticalRL() : !wm.IsBidiLTR())) {
+  if (!vertical && wm.IsPhysicalRTL()) {
     xoffset += aReflowInput.ComputedWidth() - size;
   }
 
@@ -178,9 +178,9 @@ void nsProgressFrame::ReflowChildFrame(nsIFrame* aChild,
 
   ReflowOutput barDesiredSize(aReflowInput);
   ReflowChild(aChild, aPresContext, barDesiredSize, reflowInput, xoffset,
-              yoffset, 0, aStatus);
+              yoffset, ReflowChildFlags::Default, aStatus);
   FinishReflowChild(aChild, aPresContext, barDesiredSize, &reflowInput, xoffset,
-                    yoffset, 0);
+                    yoffset, ReflowChildFlags::Default);
 }
 
 nsresult nsProgressFrame::AttributeChanged(int32_t aNameSpaceID,
@@ -248,12 +248,10 @@ bool nsProgressFrame::ShouldUseNativeStyle() const {
   //   background.
   return StyleDisplay()->mAppearance == StyleAppearance::ProgressBar &&
          !PresContext()->HasAuthorSpecifiedRules(
-             this,
-             NS_AUTHOR_SPECIFIED_BORDER | NS_AUTHOR_SPECIFIED_BACKGROUND) &&
+             this, NS_AUTHOR_SPECIFIED_BORDER_OR_BACKGROUND) &&
          barFrame &&
          barFrame->StyleDisplay()->mAppearance ==
              StyleAppearance::Progresschunk &&
          !PresContext()->HasAuthorSpecifiedRules(
-             barFrame,
-             NS_AUTHOR_SPECIFIED_BORDER | NS_AUTHOR_SPECIFIED_BACKGROUND);
+             barFrame, NS_AUTHOR_SPECIFIED_BORDER_OR_BACKGROUND);
 }

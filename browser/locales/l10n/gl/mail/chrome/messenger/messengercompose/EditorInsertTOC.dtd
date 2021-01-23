@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title        "Táboa de contidos">
+<!ENTITY buildToc.label      "Construír táboa de contidos de:">
+<!ENTITY tag.label           "Etiqueta:">
+<!ENTITY class.label         "Clase:">
+<!ENTITY header1.label       "Nivel 1">
+<!ENTITY header2.label       "Nivel 2">
+<!ENTITY header3.label       "Nivel 3">
+<!ENTITY header4.label       "Nivel 4">
+<!ENTITY header5.label       "Nivel 5">
+<!ENTITY header6.label       "Nivel 6">
+<!ENTITY makeReadOnly.label  "Facer a táboa de contidos só de lectura">
+<!ENTITY orderedList.label   "Numerar todas as entradas da táboa de contidos">

@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- extracted from content/pref-composer.xul -->
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+
+
+
+<!ENTITY  pref.composer.title           "Composer">
+<!ENTITY  recentFiles.title             "Վերջին էջերի ընտրացանկը">
+<!ENTITY  documentsInMenu.label         "Էջերի առավելագույն քանակը.">
+<!ENTITY  documentsInMenu.accesskey     "n">
+<!ENTITY  savingFiles.title             "Էջերը պահպանելիս կամ հրապարակելիս">
+<!ENTITY  preserveExisting.label        "Պահել օրիգինալ ձևը">
+<!ENTITY  preserveExisting.accesskey    "P">
+<!ENTITY  preserveExisting.tooltip      "Պահում է գծատողերը և էջի իսկական տեսքը">
+<!ENTITY  saveAssociatedFiles.label     "Էջերը պահպանելիս պահպանել նկարները և այլ ասոցիացված ֆայլերը">
+<!ENTITY  saveAssociatedFiles.accesskey "S">
+<!ENTITY  showPublishDialog.label       "Էջերը հրապարակելիս միշտ ցուցադրել Հրապարակել պատուհանը">
+<!ENTITY  showPublishDialog.accesskey   "A">
+<!ENTITY  composerEditing.label         "Խմբագրում">
+<!ENTITY  maintainStructure.label       "Որոշել աղյուսակի լայքնը՝ վանդակներ ներմուծելիս կամ ջնջելիս">
+<!ENTITY  maintainStructure.tooltip     "Պահում է աղյուսակի ուղղանկյուն ձևը՝ վանդակները ավելացնելիս կամ ջնջելիս">
+<!ENTITY  maintainStructure.accesskey   "M">
+<!ENTITY  useCSS.label                  "Օգտագործել CSS ոճեր՝ HTML բաղադրիչների փոխարեն">
+<!ENTITY  useCSS.accesskey              "U">
+<!ENTITY  crInPCreatesNewP.label        "Վերադարձը պարագրաֆին միշտ ստեղծում է նոր պարագրաֆ">
+<!ENTITY  crInPCreatesNewP.accesskey    "R">

@@ -63,6 +63,7 @@ add_task(async function() {
     await PlacesUtils.bookmarks.eraseEverything();
   });
 
+  StarUI._createPanelIfNeeded();
   let bookmarkPanel = document.getElementById("editBookmarkPanel");
   bookmarkPanel.setAttribute("animate", false);
   let shownPromise = promisePopupShown(bookmarkPanel);
@@ -118,6 +119,9 @@ add_task(async function() {
 
   // Remove the second bookmark, then nuke some of the tags.
   await PlacesUtils.bookmarks.remove(bm2);
+
+  // Allow the tag updates to complete
+  await PlacesTestUtils.promiseAsyncUpdates();
 
   // Doing this backwords tests more interesting paths.
   for (let i = tags.length - 1; i >= 0; i -= 2) {

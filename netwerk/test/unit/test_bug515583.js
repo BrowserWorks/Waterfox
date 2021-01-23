@@ -1,3 +1,5 @@
+"use strict";
+
 const URL = "ftp://localhost/bug515583/";
 
 const tests = [
@@ -14,8 +16,8 @@ const tests = [
       URL +
       "\n" +
       "200: filename content-length last-modified file-type\n" +
-      '201: "A" 2048 Wed%2C%2003%20Mar%201993%2018%3A09%3A01 FILE \n' +
-      '201: "E" 2048 Mon%2C%2008%20Mar%201993%2018%3A09%3A01 FILE \n',
+      '201: "A" 2048 Wed%2C%2003%20Mar%201993%2018%3A09%3A01%20GMT FILE \n' +
+      '201: "E" 2048 Mon%2C%2008%20Mar%201993%2018%3A09%3A01%20GMT FILE \n',
   ],
   [
     "\r\r\r\n",
@@ -54,7 +56,7 @@ function storeData(status, entry) {
     URI: url,
     contentLength: -1,
     pending: true,
-    isPending: function() {
+    isPending() {
       return this.pending;
     },
     QueryInterface: ChromeUtils.generateQI([Ci.nsIChannel]),

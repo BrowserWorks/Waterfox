@@ -74,7 +74,7 @@ class nsAutoTObserverArray : protected nsTObserverArray_base {
   typedef T elem_type;
   typedef nsTArray<T> array_type;
 
-  nsAutoTObserverArray() {}
+  nsAutoTObserverArray() = default;
 
   //
   // Accessor methods
@@ -183,8 +183,8 @@ class nsAutoTObserverArray : protected nsTObserverArray_base {
   // Append an element to the array.
   // @param aItem The item to append.
   template <class Item>
-  void AppendElement(const Item& aItem) {
-    mArray.AppendElement(aItem);
+  void AppendElement(Item&& aItem) {
+    mArray.AppendElement(std::forward<Item>(aItem));
   }
 
   // Same as above, but without copy-constructing. This is useful to avoid
@@ -404,11 +404,17 @@ class nsTObserverArray : public nsAutoTObserverArray<T, 0> {
   // Initialization methods
   //
 
-  nsTObserverArray() {}
+  nsTObserverArray() = default;
 
   // Initialize this array and pre-allocate some number of elements.
   explicit nsTObserverArray(size_type aCapacity) {
     base_type::mArray.SetCapacity(aCapacity);
+  }
+
+  nsTObserverArray Clone() const {
+    auto result = nsTObserverArray{};
+    result.mArray.Assign(this->mArray);
+    return result;
   }
 };
 

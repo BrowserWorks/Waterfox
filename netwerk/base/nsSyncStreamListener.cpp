@@ -4,7 +4,6 @@
 
 #include "nsIOService.h"
 #include "nsSyncStreamListener.h"
-#include "nsIPipe.h"
 #include "nsThreadUtils.h"
 #include <algorithm>
 
@@ -51,7 +50,7 @@ NS_IMPL_ISUPPORTS(nsSyncStreamListener, nsIStreamListener, nsIRequestObserver,
 
 NS_IMETHODIMP
 nsSyncStreamListener::GetInputStream(nsIInputStream** result) {
-  NS_ADDREF(*result = this);
+  *result = do_AddRef(this).take();
   return NS_OK;
 }
 
@@ -117,8 +116,14 @@ nsSyncStreamListener::Available(uint64_t* result) {
 
   mStatus = mPipeIn->Available(result);
   if (NS_SUCCEEDED(mStatus) && (*result == 0) && !mDone) {
-    mStatus = WaitForData();
-    if (NS_SUCCEEDED(mStatus)) mStatus = mPipeIn->Available(result);
+    nsresult rv = WaitForData();
+    if (NS_FAILED(rv)) {
+      // Note that `WaitForData` could fail `mStatus`. Do not overwrite if it's
+      // the case.
+      mStatus = NS_SUCCEEDED(mStatus) ? rv : mStatus;
+    } else if (NS_SUCCEEDED(mStatus)) {
+      mStatus = mPipeIn->Available(result);
+    }
   }
   return mStatus;
 }

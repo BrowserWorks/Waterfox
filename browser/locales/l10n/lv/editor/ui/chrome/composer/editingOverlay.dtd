@@ -1,0 +1,36 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- File menu items -->
+
+<!ENTITY openFileCmd.label "Atvērt failu…">
+<!ENTITY openFileCmd.accesskey "A">
+<!ENTITY openFileCmd.key "A">
+
+
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Nesenās lapas">
+<!ENTITY fileRecentMenu.accesskey "N">
+<!ENTITY saveCmd.label "Saglabāt">
+<!ENTITY saveCmd.accesskey "S">
+<!ENTITY saveAsCmd.label "Saglabāt kā…">
+<!ENTITY saveAsCmd.accesskey "a">
+<!ENTITY saveAsChangeEncodingCmd2.label "Saglabāt un mainīt teksta kodējumu">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "k">
+<!ENTITY publishCmd.label "Publicēt">
+<!ENTITY publishCmd.accesskey "b">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Publicēt kā…">
+<!ENTITY publishAsCmd.accesskey "t">
+
+
+<!-- Edit menu items -->
+
+<!-- Toolbar buttons/items -->
+
+<!ENTITY newToolbarCmd.label "Jauns">
+
+<!ENTITY openToolbarCmd.label "Atvērt">
+<!ENTITY openToolbarCmd.tooltip "Atvērt lokālu failu">
+<!ENTITY saveToolbarCmd.tooltip "Saglabāt failu lokāli">
+

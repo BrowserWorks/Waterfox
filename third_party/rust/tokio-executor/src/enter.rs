@@ -1,9 +1,9 @@
-use std::prelude::v1::*;
 use std::cell::Cell;
+use std::error::Error;
 use std::fmt;
+use std::prelude::v1::*;
 
-#[cfg(feature = "unstable-futures")]
-use futures2;
+use futures::{self, Future};
 
 thread_local!(static ENTERED: Cell<bool> = Cell::new(false));
 
@@ -11,11 +11,8 @@ thread_local!(static ENTERED: Cell<bool> = Cell::new(false));
 ///
 /// For more details, see [`enter` documentation](fn.enter.html)
 pub struct Enter {
-    on_exit: Vec<Box<Callback>>,
+    on_exit: Vec<Box<dyn Callback>>,
     permanent: bool,
-
-    #[cfg(feature = "unstable-futures")]
-    _enter2: futures2::executor::Enter,
 }
 
 /// An error returned by `enter` if an execution scope has already been
@@ -27,8 +24,20 @@ pub struct EnterError {
 impl fmt::Debug for EnterError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("EnterError")
-            .field("reason", &"attempted to run an executor while another executor is already running")
+            .field("reason", &self.description())
             .finish()
+    }
+}
+
+impl fmt::Display for EnterError {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        write!(fmt, "{}", self.description())
+    }
+}
+
+impl Error for EnterError {
+    fn description(&self) -> &str {
+        "attempted to run an executor while another executor is already running"
     }
 }
 
@@ -53,18 +62,54 @@ pub fn enter() -> Result<Enter, EnterError> {
             Ok(Enter {
                 on_exit: Vec::new(),
                 permanent: false,
-
-                #[cfg(feature = "unstable-futures")]
-                _enter2: futures2::executor::enter().unwrap(),
             })
         }
     })
 }
 
+// Forces the current "entered" state to be cleared while the closure
+// is executed.
+//
+// # Warning
+//
+// This is hidden for a reason. Do not use without fully understanding
+// executors. Misuing can easily cause your program to deadlock.
+#[doc(hidden)]
+pub fn exit<F: FnOnce() -> R, R>(f: F) -> R {
+    // Reset in case the closure panics
+    struct Reset;
+    impl Drop for Reset {
+        fn drop(&mut self) {
+            ENTERED.with(|c| {
+                c.set(true);
+            });
+        }
+    }
+
+    ENTERED.with(|c| {
+        debug_assert!(c.get());
+        c.set(false);
+    });
+
+    let reset = Reset;
+    let ret = f();
+    ::std::mem::forget(reset);
+
+    ENTERED.with(|c| {
+        assert!(!c.get(), "closure claimed permanent executor");
+        c.set(true);
+    });
+
+    ret
+}
+
 impl Enter {
     /// Register a callback to be invoked if and when the thread
     /// ceased to act as an executor.
-    pub fn on_exit<F>(&mut self, f: F) where F: FnOnce() + 'static {
+    pub fn on_exit<F>(&mut self, f: F)
+    where
+        F: FnOnce() + 'static,
+    {
         self.on_exit.push(Box::new(f));
     }
 
@@ -75,6 +120,12 @@ impl Enter {
     /// invoked.
     pub fn make_permanent(mut self) {
         self.permanent = true;
+    }
+
+    /// Blocks the thread on the specified future, returning the value with
+    /// which that future completes.
+    pub fn block_on<F: Future>(&mut self, f: F) -> Result<F::Item, F::Error> {
+        futures::executor::spawn(f).wait_future()
     }
 }
 
@@ -90,7 +141,7 @@ impl Drop for Enter {
             assert!(c.get());
 
             if self.permanent {
-                return
+                return;
             }
 
             for callback in self.on_exit.drain(..) {

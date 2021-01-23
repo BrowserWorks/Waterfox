@@ -1,0 +1,43 @@
+<!--
+# Translator(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  SSLProtocolVersions.caption       "Versiuni de protocol SSL">
+<!ENTITY  SSLWarnings.caption               "Avertismente SSL">
+<!ENTITY  SSLClientAuthMethod.caption       "Selectare certificat client">
+
+<!ENTITY pref.ssl.title                     "Secure Sockets Layer (SSL)">
+<!ENTITY enable.ssl3                        "Permite SSL versiunea 3">
+<!ENTITY enable.ssl3.accesskey              "3">
+<!ENTITY enable.tls                         "Permite TLS">
+<!ENTITY enable.tls.accesskey               "t">
+
+<!ENTITY warn.description                   "&brandShortName; vă poate alerta despre securitatea paginii pe care o vizualizați. Cereți &brandShortName; să arate un avertisment și să ceară permisiunea înainte de:">
+<!ENTITY warn.enteringsecure                "Încărcarea unei pagini care suportă criptare">
+<!ENTITY warn.enteringsecure.accesskey      "n">
+<!ENTITY warn.enteringweak                  "Încărcarea unei pagini care folosește criptare de slabă calitate">
+<!ENTITY warn.enteringweak.accesskey        "o">
+<!ENTITY warn.insecurepost                  "Trimiterea de formulare de la o pagină necriptată la o pagină necriptată">
+<!ENTITY warn.insecurepost.accesskey        "T">
+<!ENTITY warn.leavingsecure                 "Părăsirea unei pagini care suportă criptare">
+<!ENTITY warn.leavingsecure.accesskey       "a">
+<!ENTITY warn.viewmixed                     "Vizualizarea unei pagini cu amestec de conținut criptat/necriptat">
+<!ENTITY warn.viewmixed.accesskey           "V">
+
+<!ENTITY certselect.description             "Decideți cum selectează &brandShortName; un certificat de securitate pentru a fi prezentat saiturilor web care necesită unul:">
+<!ENTITY certselect.auto                    "Selectează automat">
+<!ENTITY certselect.auto.accesskey          "a">
+<!ENTITY certselect.ask                     "Întrebă de fiecare dată">
+<!ENTITY certselect.ask.accesskey           "e">

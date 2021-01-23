@@ -27,7 +27,7 @@ struct OriginKeyTest {
   const char* mOriginKey;
 };
 
-already_AddRefed<nsIPrincipal> GetCodebasePrincipal(const char* aSpec) {
+already_AddRefed<nsIPrincipal> GetContentPrincipal(const char* aSpec) {
   nsCOMPtr<nsIURI> uri;
   nsresult rv = NS_NewURI(getter_AddRefs(uri), nsDependentCString(aSpec));
   if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -37,7 +37,7 @@ already_AddRefed<nsIPrincipal> GetCodebasePrincipal(const char* aSpec) {
   OriginAttributes attrs;
 
   nsCOMPtr<nsIPrincipal> principal =
-      BasePrincipal::CreateCodebasePrincipal(uri, attrs);
+      BasePrincipal::CreateContentPrincipal(uri, attrs);
 
   return principal.forget();
 }
@@ -45,7 +45,8 @@ already_AddRefed<nsIPrincipal> GetCodebasePrincipal(const char* aSpec) {
 void CheckGeneratedOriginKey(nsIPrincipal* aPrincipal, const char* aOriginKey) {
   nsCString originAttrSuffix;
   nsCString originKey;
-  nsresult rv = GenerateOriginKey(aPrincipal, originAttrSuffix, originKey);
+  nsresult rv = aPrincipal->GetStorageOriginKey(originKey);
+  aPrincipal->OriginAttributesRef().CreateSuffix(originAttrSuffix);
   if (aOriginKey) {
     ASSERT_EQ(rv, NS_OK) << "GenerateOriginKey should not fail";
     EXPECT_TRUE(originKey == nsDependentCString(aOriginKey));
@@ -109,9 +110,9 @@ TEST(LocalStorage, OriginKey)
   };
 
   for (const auto& test : tests) {
-    principal = GetCodebasePrincipal(test.mSpec);
+    principal = GetContentPrincipal(test.mSpec);
     ASSERT_TRUE(principal)
-    << "GetCodebasePrincipal() should not fail";
+    << "GetContentPrincipal() should not fail";
 
     CheckGeneratedOriginKey(principal, test.mOriginKey);
   }

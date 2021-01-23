@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title "Бяспечны рэжым &brandShortName;">
+<!ENTITY window.width "43em">
+<!ENTITY safeModeDescription.label "&brandShortName; зараз працуе ў бяспечным рэжыме, у якім часова забаронены ўсталяваныя вамі наладжванні, тэмы і пашырэнні.">
+<!ENTITY safeModeDescription2.label "Вы можаце зрабіць асобныя або ўсе гэтыя змяненні заўсёднымі:">
+<!ENTITY disableAddons.label "Забараніць усе дадаткі">
+<!ENTITY disableAddons.accesskey "З">
+<!ENTITY resetToolbars.label "Узнавіць прыладапаліцы і памеры вокнаў">
+<!ENTITY resetToolbars.accesskey "У">
+<!ENTITY deleteBookmarks.label "Выдаліць усе закладкі акрамя адновак">
+<!ENTITY deleteBookmarks.accesskey "з">
+<!ENTITY resetUserPrefs.label "Узнавіць усе змоўчныя карыстальніцкія перавагі &brandShortName;">
+<!ENTITY resetUserPrefs.accesskey "н">
+<!ENTITY restoreSearch.label "Аднавіць змоўчныя машыны пошуку">
+<!ENTITY restoreSearch.accesskey "д">
+<!ENTITY changeAndRestartButton.label "Захаваць змяненні і перазапусціць">
+<!ENTITY continueButton.label "Працягнуць працаваць у бяспечным рэжыме">

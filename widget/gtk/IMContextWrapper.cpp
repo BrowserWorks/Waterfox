@@ -131,7 +131,7 @@ class GetWritingModeName : public nsAutoCString {
     }
     AssignLiteral("Vertical (RTL)");
   }
-  virtual ~GetWritingModeName() {}
+  virtual ~GetWritingModeName() = default;
 };
 
 class GetTextRangeStyleText final : public nsAutoCString {
@@ -171,28 +171,29 @@ class GetTextRangeStyleText final : public nsAutoCString {
 
     AppendLiteral(" }");
   }
-  void AppendLineStyle(uint8_t aLineStyle) {
+  void AppendLineStyle(TextRangeStyle::LineStyle aLineStyle) {
     switch (aLineStyle) {
-      case TextRangeStyle::LINESTYLE_NONE:
-        AppendLiteral("LINESTYLE_NONE");
+      case TextRangeStyle::LineStyle::None:
+        AppendLiteral("LineStyle::None");
         break;
-      case TextRangeStyle::LINESTYLE_SOLID:
-        AppendLiteral("LINESTYLE_SOLID");
+      case TextRangeStyle::LineStyle::Solid:
+        AppendLiteral("LineStyle::Solid");
         break;
-      case TextRangeStyle::LINESTYLE_DOTTED:
-        AppendLiteral("LINESTYLE_DOTTED");
+      case TextRangeStyle::LineStyle::Dotted:
+        AppendLiteral("LineStyle::Dotted");
         break;
-      case TextRangeStyle::LINESTYLE_DASHED:
-        AppendLiteral("LINESTYLE_DASHED");
+      case TextRangeStyle::LineStyle::Dashed:
+        AppendLiteral("LineStyle::Dashed");
         break;
-      case TextRangeStyle::LINESTYLE_DOUBLE:
-        AppendLiteral("LINESTYLE_DOUBLE");
+      case TextRangeStyle::LineStyle::Double:
+        AppendLiteral("LineStyle::Double");
         break;
-      case TextRangeStyle::LINESTYLE_WAVY:
-        AppendLiteral("LINESTYLE_WAVY");
+      case TextRangeStyle::LineStyle::Wavy:
+        AppendLiteral("LineStyle::Wavy");
         break;
       default:
-        AppendPrintf("Invalid(0x%02X)", aLineStyle);
+        AppendPrintf("Invalid(0x%02X)",
+                     static_cast<TextRangeStyle::LineStyleType>(aLineStyle));
         break;
     }
   }
@@ -200,7 +201,7 @@ class GetTextRangeStyleText final : public nsAutoCString {
     AppendPrintf("{ R=0x%02X, G=0x%02X, B=0x%02X, A=0x%02X }", NS_GET_R(aColor),
                  NS_GET_G(aColor), NS_GET_B(aColor), NS_GET_A(aColor));
   }
-  virtual ~GetTextRangeStyleText(){};
+  virtual ~GetTextRangeStyleText() = default;
 };
 
 const static bool kUseSimpleContextDefault = false;
@@ -1115,6 +1116,13 @@ void IMContextWrapper::OnFocusChangeInGecko(bool aFocus) {
   // We shouldn't carry over the removed string to another editor.
   mSelectedStringRemovedByComposition.Truncate();
   mSelection.Clear();
+
+  // When the focus changes, we need to inform IM about the new cursor
+  // position. Chinese input methods generally rely on this because they
+  // usually don't start composition until a character is picked.
+  if (aFocus && EnsureToCacheSelection()) {
+    SetCursorPosition(GetActiveContext());
+  }
 }
 
 void IMContextWrapper::ResetIME() {
@@ -1286,7 +1294,6 @@ void IMContextWrapper::SetInputContext(nsWindow* aCaller,
   mInputContext = *aContext;
 
   if (changingEnabledState) {
-#ifdef MOZ_WIDGET_GTK
     static bool sInputPurposeSupported = !gtk_check_version(3, 6, 0);
     if (sInputPurposeSupported && mInputContext.mIMEState.MaybeEditable()) {
       GtkIMContext* currentContext = GetCurrentContext();
@@ -1321,12 +1328,30 @@ void IMContextWrapper::SetInputContext(nsWindow* aCaller,
           purpose = GTK_INPUT_PURPOSE_PHONE;
         } else if (inputType.EqualsLiteral("number")) {
           purpose = GTK_INPUT_PURPOSE_NUMBER;
+        } else if (mInputContext.mHTMLInputInputmode.EqualsLiteral("decimal")) {
+          purpose = GTK_INPUT_PURPOSE_NUMBER;
+        } else if (mInputContext.mHTMLInputInputmode.EqualsLiteral("email")) {
+          purpose = GTK_INPUT_PURPOSE_EMAIL;
+        } else if (mInputContext.mHTMLInputInputmode.EqualsLiteral("numeric")) {
+          purpose = GTK_INPUT_PURPOSE_DIGITS;
+        } else if (mInputContext.mHTMLInputInputmode.EqualsLiteral("tel")) {
+          purpose = GTK_INPUT_PURPOSE_PHONE;
+        } else if (mInputContext.mHTMLInputInputmode.EqualsLiteral("url")) {
+          purpose = GTK_INPUT_PURPOSE_URL;
         }
+        // Search by type and inputmode isn't supported on GTK.
 
         g_object_set(currentContext, "input-purpose", purpose, nullptr);
+
+        // Although GtkInputHints is enum type, value is bit field.
+        gint hints = GTK_INPUT_HINT_NONE;
+        if (mInputContext.mHTMLInputInputmode.EqualsLiteral("none")) {
+          hints |= GTK_INPUT_HINT_INHIBIT_OSK;
+        }
+
+        g_object_set(currentContext, "input-hints", hints, nullptr);
       }
     }
-#endif  // #ifdef MOZ_WIDGET_GTK
 
     // Even when aState is not enabled state, we need to set IME focus.
     // Because some IMs are updating the status bar of them at this time.
@@ -1443,17 +1468,10 @@ void IMContextWrapper::OnSelectionChange(
 
   MOZ_LOG(gGtkIMLog, LogLevel::Info,
           ("0x%p OnSelectionChange(aCaller=0x%p, aIMENotification={ "
-           "mSelectionChangeData={ mOffset=%u, Length()=%u, mReversed=%s, "
-           "mWritingMode=%s, mCausedByComposition=%s, "
-           "mCausedBySelectionEvent=%s, mOccurredDuringComposition=%s "
-           "} }), mCompositionState=%s, mIsDeletingSurrounding=%s, "
+           "mSelectionChangeData=%s }), "
+           "mCompositionState=%s, mIsDeletingSurrounding=%s, "
            "mRetrieveSurroundingSignalReceived=%s",
-           this, aCaller, selectionChangeData.mOffset,
-           selectionChangeData.Length(), ToChar(selectionChangeData.mReversed),
-           GetWritingModeName(selectionChangeData.GetWritingMode()).get(),
-           ToChar(selectionChangeData.mCausedByComposition),
-           ToChar(selectionChangeData.mCausedBySelectionEvent),
-           ToChar(selectionChangeData.mOccurredDuringComposition),
+           this, aCaller, ToString(selectionChangeData).c_str(),
            GetCompositionStateName(), ToChar(mIsDeletingSurrounding),
            ToChar(retrievedSurroundingSignalReceived)));
 
@@ -1700,6 +1718,10 @@ gboolean IMContextWrapper::OnRetrieveSurroundingNative(GtkIMContext* aContext) {
   if (NS_FAILED(GetCurrentParagraph(uniStr, cursorPos))) {
     return FALSE;
   }
+
+  // Despite taking a pointer and a length, IBus wants the string to be
+  // zero-terminated and doesn't like U+0000 within the string.
+  uniStr.ReplaceChar(char16_t(0), char16_t(0xFFFD));
 
   NS_ConvertUTF16toUTF8 utf8Str(nsDependentSubstring(uniStr, 0, cursorPos));
   uint32_t cursorPosInUTF8 = utf8Str.Length();
@@ -2141,7 +2163,7 @@ bool IMContextWrapper::DispatchCompositionStart(GtkIMContext* aContext) {
     NS_ConvertUTF8toUTF16 im(GetIMName());
     // 72 is kMaximumKeyStringLength in TelemetryScalar.cpp
     if (im.Length() > 72) {
-      if (NS_IS_LOW_SURROGATE(im[72 - 1]) && NS_IS_HIGH_SURROGATE(im[72 - 2])) {
+      if (NS_IS_SURROGATE_PAIR(im[72 - 2], im[72 - 1])) {
         im.Truncate(72 - 2);
       } else {
         im.Truncate(72 - 1);
@@ -2611,24 +2633,24 @@ bool IMContextWrapper::SetTextRange(PangoAttrIterator* aPangoAttrIter,
   if (attrUnderline) {
     switch (attrUnderline->value) {
       case PANGO_UNDERLINE_NONE:
-        style.mLineStyle = TextRangeStyle::LINESTYLE_NONE;
+        style.mLineStyle = TextRangeStyle::LineStyle::None;
         break;
       case PANGO_UNDERLINE_DOUBLE:
-        style.mLineStyle = TextRangeStyle::LINESTYLE_DOUBLE;
+        style.mLineStyle = TextRangeStyle::LineStyle::Double;
         break;
       case PANGO_UNDERLINE_ERROR:
-        style.mLineStyle = TextRangeStyle::LINESTYLE_WAVY;
+        style.mLineStyle = TextRangeStyle::LineStyle::Wavy;
         break;
       case PANGO_UNDERLINE_SINGLE:
       case PANGO_UNDERLINE_LOW:
-        style.mLineStyle = TextRangeStyle::LINESTYLE_SOLID;
+        style.mLineStyle = TextRangeStyle::LineStyle::Solid;
         break;
       default:
         MOZ_LOG(gGtkIMLog, LogLevel::Warning,
                 ("0x%p   SetTextRange(), retrieved unknown underline "
                  "style: %d",
                  this, attrUnderline->value));
-        style.mLineStyle = TextRangeStyle::LINESTYLE_SOLID;
+        style.mLineStyle = TextRangeStyle::LineStyle::Solid;
         break;
     }
     style.mDefinedStyles |= TextRangeStyle::DEFINED_LINESTYLE;
@@ -2641,7 +2663,7 @@ bool IMContextWrapper::SetTextRange(PangoAttrIterator* aPangoAttrIter,
       style.mDefinedStyles |= TextRangeStyle::DEFINED_UNDERLINE_COLOR;
     }
   } else {
-    style.mLineStyle = TextRangeStyle::LINESTYLE_NONE;
+    style.mLineStyle = TextRangeStyle::LineStyle::None;
     style.mDefinedStyles |= TextRangeStyle::DEFINED_LINESTYLE;
   }
 
@@ -3131,7 +3153,7 @@ void IMContextWrapper::Selection::Assign(
     const WidgetQueryContentEvent& aEvent) {
   MOZ_ASSERT(aEvent.mMessage == eQuerySelectedText);
   MOZ_ASSERT(aEvent.mSucceeded);
-  mString = aEvent.mReply.mString.Length();
+  mString = aEvent.mReply.mString;
   mOffset = aEvent.mReply.mOffset;
   mWritingMode = aEvent.GetWritingMode();
 }

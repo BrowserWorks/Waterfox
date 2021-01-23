@@ -1,0 +1,350 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Attn: Localization - some of the menus in this dialog directly affect mail also. -->
+
+<!-- File menu items -->
+
+<!ENTITY saveCmd.key "S">
+
+<!-- Edit menu items -->
+<!ENTITY pasteNoFormatting.label "හැඩගැසුම් නොමැතිව අලවන්න">
+<!ENTITY pasteNoFormatting.accesskey "o">
+<!ENTITY pasteNoFormatting.key "V">
+<!ENTITY pasteAs.label "අලවන අයුර">
+<!ENTITY pasteAs.accesskey "A">
+
+<!-- LOCALIZATION NOTE: Text for menu item is in editor.properties
+     Set to: "Table" or "Nested Table" depending on context 
+     This accesskey must be in both strings -->
+<!ENTITY pasteAsQuotationCmd.label "උපුටා ගැනීමක් සේ අලවන්න">
+<!ENTITY pasteAsQuotationCmd.accesskey "Q">
+<!ENTITY pasteAsQuotationCmd.key "o">
+<!ENTITY findCmd.label "සෙවීම සහ ප්‍රතිස්ථාපනය කිරීම...">
+<!ENTITY enableInlineSpellChecker.label "ලියන විටදීම අක්ෂර වින්‍යාස පරීක්ෂා කරන්න">
+<!ENTITY enableInlineSpellChecker.accesskey "S">
+<!ENTITY checkSpellingCmd2.label "අක්ෂර වින්‍යාස පරීක්ෂා කරන්න">
+<!ENTITY checkSpellingCmd2.accesskey "h">
+<!ENTITY checkSpellingCmd2.key "K">
+
+<!-- Insert menu items -->
+<!ENTITY insertMenu.label "ඇතුලත් කිරීම්">
+<!ENTITY insertMenu.accesskey "I">
+<!ENTITY insertLinkCmd.label "ඈඳුම්...">
+<!ENTITY insertLinkCmd.accesskey "L">
+<!ENTITY insertLinkCmd.key "L">
+<!ENTITY insertAnchorCmd.label "නම්කළ නැංගූරම (Named Anchor)...">
+<!ENTITY insertAnchorCmd.accesskey "A">
+<!ENTITY insertImageCmd.label "රූප...">
+<!ENTITY insertImageCmd.accesskey "I">
+<!ENTITY insertHLineCmd.label "තිරස් ඉරි">
+<!ENTITY insertHLineCmd.accesskey "o">
+<!ENTITY insertTableCmd.label "වගු...">
+<!ENTITY insertTableCmd.accesskey "T">
+<!ENTITY insertHTMLCmd.label "HTML...">
+<!ENTITY insertHTMLCmd.accesskey "H">
+<!ENTITY insertCharsCmd.label "අකුරු සහ සළකුණු...">
+<!ENTITY insertCharsCmd.accesskey "C">
+<!ENTITY insertBreakAllCmd.label "අනුරුවට පහළින් කඩන්න">
+<!ENTITY insertBreakAllCmd.accesskey "k">
+
+<!-- Used just in context popup. -->
+<!ENTITY createLinkCmd.label "සබැඳි නිර්මාණය කරන්න...">
+<!ENTITY createLinkCmd.accesskey "k">
+<!ENTITY editLinkCmd.label "නව සකසනය තුළ සබැඳිය සකසන්න">
+<!ENTITY editLinkCmd.accesskey "i">
+
+<!-- Font Face SubMenu -->
+<!ENTITY FontFaceSelect.tooltip "අකුරු හැඩයක් තෝරන්න">
+<!ENTITY fontfaceMenu.label "අකුරු හැඩ">
+<!ENTITY fontfaceMenu.accesskey "F">
+<!ENTITY fontVarWidth.label "වෙනස් වන පළල">
+<!ENTITY fontVarWidth.accesskey "V">
+<!ENTITY fontFixedWidth.label "නිශ්චිත පළල">
+<!ENTITY fontFixedWidth.accesskey "x">
+<!ENTITY fontFixedWidth.key "T">
+<!ENTITY fontHelvetica.label "Helvetica, Arial">
+<!ENTITY fontHelvetica.accesskey "l">
+<!ENTITY fontTimes.label "Times">
+<!ENTITY fontTimes.accesskey "T">
+<!ENTITY fontCourier.label "Courier">
+<!ENTITY fontCourier.accesskey "C">
+
+<!-- Font Size SubMenu -->
+<!ENTITY FontSizeSelect.tooltip "අකුරු ප්‍රමාණය තෝරන්න">
+<!ENTITY decreaseFontSize.label "කුඩා">
+<!ENTITY decreaseFontSize.accesskey "r">
+<!ENTITY decrementFontSize.key "&lt;">
+<!ENTITY decrementFontSize.key2 ","> <!-- < is above this key on many keyboards -->
+<!ENTITY increaseFontSize.label "විශාල">
+<!ENTITY increaseFontSize.accesskey "g">
+<!ENTITY incrementFontSize.key "&gt;">
+<!ENTITY incrementFontSize.key2 "."> <!-- > is above this key on many keyboards -->
+
+<!ENTITY fontSizeMenu.label "විශාලත්වය">
+<!ENTITY fontSizeMenu.accesskey "z">
+<!ENTITY size-xx-smallCmd.label "ඉතාම කුඩා (xx-small)">
+<!ENTITY size-xx-smallCmd.accesskey "a">
+<!ENTITY size-x-smallCmd.label "ඉතා කුඩා (x-small)">
+<!ENTITY size-x-smallCmd.accesskey "m">
+<!ENTITY size-smallCmd.label "කුඩා">
+<!ENTITY size-smallCmd.accesskey "s">
+<!ENTITY size-mediumCmd.label "මධ්‍යම">
+<!ENTITY size-mediumCmd.accesskey "d">
+<!ENTITY size-largeCmd.label "විශාල">
+<!ENTITY size-largeCmd.accesskey "l">
+<!ENTITY size-x-largeCmd.label "ඉතා විශාල (x-large)">
+<!ENTITY size-x-largeCmd.accesskey "x">
+<!ENTITY size-xx-largeCmd.label "ඉතාම විශාල (xx-large)">
+<!ENTITY size-xx-largeCmd.accesskey "e">
+
+<!-- Font Style SubMenu -->
+<!ENTITY fontStyleMenu.label "පාඨ විලාසය">
+<!ENTITY fontStyleMenu.accesskey "S">
+<!ENTITY styleBoldCmd.label "තද">
+<!ENTITY styleBoldCmd.accesskey "B">
+<!ENTITY styleBoldCmd.key "B">
+<!ENTITY styleItalicCmd.label "ඇල">
+<!ENTITY styleItalicCmd.accesskey "I">
+<!ENTITY styleItalicCmd.key "I">
+<!ENTITY styleUnderlineCmd.label "යටින් ඉරි ඇඳි">
+<!ENTITY styleUnderlineCmd.accesskey "U">
+<!ENTITY styleUnderlineCmd.key "U">
+<!ENTITY styleStrikeThruCmd.label "මැදින් ඉරි ඇඳි">
+<!ENTITY styleStrikeThruCmd.accesskey "k">
+<!ENTITY styleSuperscriptCmd.label "උඩුලකුණු (Superscript)">
+<!ENTITY styleSuperscriptCmd.accesskey "p">
+<!ENTITY styleSubscriptCmd.label "යටිලකුණු (Subscript)">
+<!ENTITY styleSubscriptCmd.accesskey "S">
+<!ENTITY styleNonbreakingCmd.label "නොකැඩුණු">
+<!ENTITY styleNonbreakingCmd.accesskey "N">
+<!ENTITY styleEm.label "අවධාරණය කළ">
+<!ENTITY styleEm.accesskey "E">
+<!ENTITY styleStrong.label "දැඩිව අවධාරණය කළ">
+<!ENTITY styleStrong.accesskey "t">
+<!ENTITY styleCite.label "Citation">
+<!ENTITY styleCite.accesskey "C">
+<!ENTITY styleAbbr.label "කෙටියෙදුම">
+<!ENTITY styleAbbr.accesskey "A">
+<!ENTITY styleAcronym.label "සංකේතනාමය">
+<!ENTITY styleAcronym.accesskey "r">
+<!ENTITY styleCode.label "කේතය">
+<!ENTITY styleCode.accesskey "o">
+<!ENTITY styleSamp.label "ආදර්ශ ප්‍රතිදානය (Sample Output)">
+<!ENTITY styleSamp.accesskey "m">
+<!ENTITY styleVar.label "විචල්‍ය">
+<!ENTITY styleVar.accesskey "V">
+
+<!ENTITY formatFontColor.label "පාඨ වර්ණය...">
+<!ENTITY formatFontColor.accesskey "C">
+<!ENTITY tableOrCellColor.label "වගු හෝ කොටු පසුබිම් වර්ණය...">
+<!ENTITY tableOrCellColor.accesskey "B">
+
+<!ENTITY formatRemoveStyles.key "Y">
+<!ENTITY formatRemoveLinks.key "K">
+<!ENTITY formatRemoveNamedAnchors.label "නම්කළ නැංගූරම් ඉවත්කිරීම">
+<!ENTITY formatRemoveNamedAnchors.accesskey "R">
+<!ENTITY formatRemoveNamedAnchors2.key "A">
+
+<!ENTITY paragraphMenu.label "ඡේදය">
+<!ENTITY paragraphMenu.accesskey "P">
+<!ENTITY paragraphParagraphCmd.label "ඡේදය">  
+<!ENTITY paragraphParagraphCmd.accesskey "P">
+<!ENTITY heading1Cmd.label "ශීර්ෂය 1">
+<!ENTITY heading1Cmd.accesskey "1">
+<!ENTITY heading2Cmd.label "ශීර්ෂය 2">
+<!ENTITY heading2Cmd.accesskey "2">
+<!ENTITY heading3Cmd.label "ශීර්ෂය 3">
+<!ENTITY heading3Cmd.accesskey "3">
+<!ENTITY heading4Cmd.label "ශීර්ෂය 4">
+<!ENTITY heading4Cmd.accesskey "4">
+<!ENTITY heading5Cmd.label "ශීර්ෂය 5">
+<!ENTITY heading5Cmd.accesskey "5">
+<!ENTITY heading6Cmd.label "ශීර්ෂය 6">
+<!ENTITY heading6Cmd.accesskey "6">
+<!ENTITY paragraphAddressCmd.label "ලිපිනය">
+<!ENTITY paragraphAddressCmd.accesskey "A">
+<!ENTITY paragraphPreformatCmd.label "Preformat">
+<!ENTITY paragraphPreformatCmd.accesskey "f">
+
+<!-- List menu items -->
+<!ENTITY formatlistMenu.label "ලැයිස්තුව">
+<!ENTITY formatlistMenu.accesskey "L">
+<!ENTITY noneCmd.label "කිසිවක් නැත">
+<!ENTITY noneCmd.accesskey "N">
+<!ENTITY listBulletCmd.label "බුලට් යෙදූ">
+<!ENTITY listBulletCmd.accesskey "B">
+<!ENTITY listNumberedCmd.label "අංක යෙදූ">
+<!ENTITY listNumberedCmd.accesskey "m">
+<!ENTITY listTermCmd.label "පදය">
+<!ENTITY listTermCmd.accesskey "T">
+<!ENTITY listDefinitionCmd.label "අර්ථ දැක්වීම්">
+<!ENTITY listDefinitionCmd.accesskey "D">
+<!ENTITY listPropsCmd.label "ලැයිස්තු ගුණාංග...">
+<!ENTITY listPropsCmd.accesskey "L">
+
+<!ENTITY ParagraphSelect.tooltip "ඡේද හැඩතලයක් තෝරන්න ">
+<!-- Shared in Paragraph, and Toolbar menulist -->
+<!ENTITY bodyTextCmd.label "බ‍ඳේ පාඨ">
+<!ENTITY bodyTextCmd.accesskey "T">
+<!-- isn't used in menu now, but may be added in future -->
+<!ENTITY advancedPropertiesCmd.label "වැඩිදුර ගුණාංග">
+<!ENTITY advancedPropertiesCmd.accesskey "v">
+
+<!-- Align menu items -->
+<!ENTITY alignMenu.label "පෙළගැස්ම">
+<!ENTITY alignMenu.accesskey "A">
+<!ENTITY alignLeft.label "වම">
+<!ENTITY alignLeft.accesskey "L">
+<!ENTITY alignLeft.tooltip "වමට පෙළගැස්මA">
+<!ENTITY alignCenter.label "මැද">
+<!ENTITY alignCenter.accesskey "C">
+<!ENTITY alignCenter.tooltip "මැදට පෙළගැස්ම">
+<!ENTITY alignRight.label "දකුණ">
+<!ENTITY alignRight.accesskey "R">
+<!ENTITY alignRight.tooltip "දකුණට පෙළගැස්ම">
+<!ENTITY alignJustify.label "සමව පෙළ">
+<!ENTITY alignJustify.accesskey "J">
+<!ENTITY alignJustify.tooltip "සමව පෙළගැස්ම">
+
+<!-- Layer toolbar items -->
+<!ENTITY layer.tooltip "ස්තරය">
+<!ENTITY layerSendToBack.tooltip "පසුපසට යවන්න">
+<!ENTITY layerBringToFront.tooltip "මතුපිටට තන්න">
+
+<!ENTITY increaseIndent.label "එබුම (Indent) වැඩි කරන්න">
+<!ENTITY increaseIndent.accesskey "I">
+<!ENTITY increaseIndent.key "]">
+<!ENTITY decreaseIndent.label "එබුම (Indent) අඩු කරන්න">
+<!ENTITY decreaseIndent.accesskey "D">
+<!ENTITY decreaseIndent.key "[">
+<!ENTITY colorsAndBackground.label "පිටු වර්ණ සහ පසුබිම...">
+<!ENTITY colorsAndBackground.accesskey "u">
+<!-- Table Menu -->
+<!ENTITY tableMenu.label "වගු">
+<!ENTITY tableMenu.accesskey "b">
+<!-- Select Submenu -->
+<!ENTITY tableSelectMenu.label "තෝරන්න">
+<!ENTITY tableSelectMenu.accesskey "S">
+
+<!ENTITY tableSelectMenu2.label "වගු තෝරන්න">
+<!ENTITY tableSelectMenu2.accesskey "S">
+<!ENTITY tableInsertMenu2.label "වගු ඇතුලත් කරන්න">
+<!ENTITY tableInsertMenu2.accesskey "I">
+<!ENTITY tableDeleteMenu2.label "වගු මකන්න">
+<!ENTITY tableDeleteMenu2.accesskey "D">
+
+<!-- Insert SubMenu -->
+<!ENTITY tableInsertMenu.label "ඇතුලත් කරන්න">
+<!ENTITY tableInsertMenu.accesskey "I">
+<!ENTITY tableTable.label "වගු">
+<!ENTITY tableTable.accesskey "T">
+<!ENTITY tableRow.label "පේළි">
+<!ENTITY tableRows.label "පේළි(ය)">
+<!ENTITY tableRow.accesskey "R">
+<!ENTITY tableRowAbove.label "පේළිය ඉහළින්">
+<!ENTITY tableRowAbove.accesskey "R">
+<!-- uses tablerow.accesskey -->
+<!ENTITY tableRowBelow.label "පේළිය පහළින්">
+<!ENTITY tableRowBelow.accesskey "B">
+<!ENTITY tableColumn.label "තීරු">
+<!ENTITY tableColumns.label "තීරු(ව)">
+<!ENTITY tableColumn.accesskey "o">
+<!ENTITY tableColumnBefore.label "තීරුව පෙර">
+<!ENTITY tableColumnBefore.accesskey "o">
+<!-- uses tablecolumn.accesskey -->
+<!ENTITY tableColumnAfter.label "තීරුව පසුව">
+<!ENTITY tableColumnAfter.accesskey "A">
+<!ENTITY tableCell.label "කොටු">
+<!ENTITY tableCells.label "කොටු(ව)">
+<!ENTITY tableCell.accesskey "C">
+<!ENTITY tableCellContents.label "කොටු අන්තර්ගතය">
+<!ENTITY tableCellContents.accesskey "n">
+<!ENTITY tableAllCells.label "සියළු කොටු">
+<!ENTITY tableAllCells.accesskey "A">
+<!ENTITY tableCellBefore.label "කොටුව පෙර">
+<!ENTITY tableCellBefore.accesskey "C">
+<!-- uses tablecell.accesskey -->
+<!ENTITY tableCellAfter.label "කොටුව පසු">
+<!ENTITY tableCellAfter.accesskey "f">
+<!-- Delete SubMenu -->
+<!ENTITY tableDeleteMenu.label "මකන්න">
+<!ENTITY tableDeleteMenu.accesskey "D">
+<!-- text for "Join Cells" is in editor.properties 
+     ("JoinSelectedCells" and "JoinCellToRight")
+     the access key must exist in both of those strings
+     But value must be set here for accesskey to draw properly
+-->
+<!ENTITY tableJoinCells.label "j">
+<!ENTITY tableJoinCells.accesskey "j">
+<!ENTITY tableSplitCell.label "කොටුව බෙදන්න">
+<!ENTITY tableSplitCell.accesskey "C">
+<!ENTITY convertToTable.label "තෝරාගත් කොටසින් වගුව සෑදීම">
+<!ENTITY convertToTable.accesskey "r">
+<!ENTITY tableProperties.label "වගු ලක්ෂණ...">
+<!ENTITY tableProperties.accesskey "o">
+
+
+<!-- Toolbar-only items -->
+<!ENTITY menuBar.tooltip "මෙනු තීරුව">
+<!ENTITY formatToolbar.tooltip "හැඩතල මෙවලම්තීරුව">
+<!ENTITY cutToolbarCmd.tooltip "කපන්න">
+<!ENTITY copyToolbarCmd.tooltip "පිටපත් කරන්න">
+<!ENTITY pasteToolbarCmd.tooltip "අලවන්න">
+<!ENTITY printToolbarCmd.label "මුද්‍රණය">
+<!ENTITY printToolbarCmd.tooltip "මෙම පිටුව මුද්‍රණය කිරීම">
+<!ENTITY findToolbarCmd.label "සෙයෙන්න">
+<!ENTITY findToolbarCmd.tooltip "පිටුවේ පාඨ සෙවීම">
+<!ENTITY spellToolbarCmd.label "අක්ෂර වින්‍යාසය">
+<!ENTITY spellToolbarCmd.tooltip "තෝරාගත් කොටාස් හෝ පිටුවේ අක්ෂර වින්‍යාසය පරීක්ෂා කිරීම">
+<!ENTITY imageToolbarCmd.label "රූප">
+<!ENTITY imageToolbarCmd.tooltip "නව රූපයක් ඇතුළු කිරීම හෝ කෝරාගත් රූපයක ලක්ෂණ සැකසීම">
+<!ENTITY hruleToolbarCmd.label "තිරස් රේඛාව">
+<!ENTITY hruleToolbarCmd.tooltip "නව තිරසි රේඛාවක් ඇතුළු කිරීම හෝ කෝරාගත් රේඛාවක ලක්ෂණ සැකසීම">
+<!ENTITY tableToolbarCmd.label "වගු">
+<!ENTITY tableToolbarCmd.tooltip "නව වතුවක් ඇතුළු කිරීම හෝ කෝරාගත් වගුවක ලක්ෂණ සැකසීම">
+<!ENTITY linkToolbarCmd.label "සබැඳි">
+<!ENTITY linkToolbarCmd.tooltip "නව සබැඳියන් එක් කිරීම හෝ කෝරාගත් සබැඳියක ලක්ෂණ සැකසීම">
+<!ENTITY anchorToolbarCmd.label "නැංගූරම">
+<!ENTITY anchorToolbarCmd.tooltip "නව නම්කළ නැංගූරමක් (named anchor) ඇතුලත් කිරීම හෝ තෝරාගත් එකක ලක්ෂණ සැකසීම">
+<!ENTITY TextColorButton.tooltip "පාඨ සඳහා වර්ණ තේරීම">
+<!ENTITY BackgroundColorButton.tooltip "පසුබිම සඳහා වර්ණ තේරීම">
+<!ENTITY throbber.tooltip "&vendorShortName; මුල් පිටුවට යන්න">
+<!ENTITY HighlightColorButton.tooltip "පාඨ ඉස්මතු කිරීම සඳහා වර්ණ තේරීම">
+
+<!-- Editor toolbar -->
+<!ENTITY decreaseFontSizeToolbarCmd.tooltip "කුඩා ප්‍රමාණාය් පාඨ">
+<!ENTITY increaseFontSizeToolbarCmd.tooltip "විශාල ප්‍රමාණාය් පාඨ">
+<!ENTITY boldToolbarCmd.tooltip "තද">
+<!ENTITY italicToolbarCmd.tooltip "ඇල">
+<!ENTITY underlineToolbarCmd.tooltip "යටින් ඉරි ඇඳි">
+<!ENTITY bulletListToolbarCmd.tooltip "බුලට් යෙදූ ලැයිස්තුවක් යෙදීම හෝ ඉවත්කිරීම">
+<!ENTITY numberListToolbarCmd.tooltip "අංක යෙදූ ලැයිස්තුවක් යෙදීම හෝ ඉවත්කිරීම">
+<!ENTITY outdentToolbarCmd.tooltip "Outdent text (වමට ගෙනයාමට)">
+<!ENTITY indentToolbarCmd.tooltip "Indent text (දකුණට ගෙනයාමට)">
+<!ENTITY AlignPopupButton.tooltip "පාඨ පෙළගැසුම තේරීම">
+<!ENTITY InsertPopupButton.tooltip "ඈඳුමක්, නැංගූරමක්, රූපයක් , තිරස් රේඛාවක් හෝ වගුවක් ඇතුලත් කිරීම">
+<!ENTITY alignLeftButton.tooltip "වම් මාර්ජීනය ඔස්සේ පාඨ පෙළගස්සන්න">
+<!ENTITY alignCenterButton.tooltip "පාඨ පෙළගැස්ම හරි මැදින්">
+<!ENTITY alignRightButton.tooltip "දකුණු මාර්ජීනය ඔස්සේ පාඨ පෙළගස්සන්න">
+<!ENTITY alignJustifyButton.tooltip "දකුණු සහ වම් මාර්ජීනයන් ඔස්සේ පාඨ පෙළගස්සන්න">
+
+
+<!-- Structure Toolbar Context Menu items -->
+<!ENTITY structSelect.label         "තෝරන්න">
+<!ENTITY structSelect.accesskey     "s">
+<!ENTITY structRemoveTag.label      "ටැග් ඉවත් කරන්න">
+<!ENTITY structRemoveTag.accesskey  "r">
+<!ENTITY structChangeTag.label      "ටැග් වෙනස් කරන්න">
+<!ENTITY structChangeTag.accesskey  "c">
+
+<!-- TOC manipulation -->
+<!ENTITY insertTOC.label          "ඇතුලත් කරන්න">
+<!ENTITY insertTOC.accesskey      "i">
+<!ENTITY updateTOC.label          "යාවත්කාලීන කරන්න">
+<!ENTITY updateTOC.accesskey      "u">
+<!ENTITY removeTOC.label          "ඉවත් කරන්න">
+<!ENTITY removeTOC.accesskey      "r">
+<!ENTITY tocMenu.label            "පටුන...">
+<!ENTITY tocMenu.accesskey        "b">

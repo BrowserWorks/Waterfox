@@ -11,8 +11,9 @@
 #ifndef mozilla_ReverseIterator_h
 #define mozilla_ReverseIterator_h
 
+#include <utility>
+
 #include "mozilla/Attributes.h"
-#include "mozilla/TypeTraits.h"
 
 namespace mozilla {
 
@@ -26,7 +27,7 @@ class ReverseIterator {
   MOZ_IMPLICIT ReverseIterator(const ReverseIterator<Iterator>& aOther)
       : mCurrent(aOther.mCurrent) {}
 
-  decltype(*DeclVal<IteratorT>()) operator*() const {
+  decltype(*std::declval<IteratorT>()) operator*() const {
     IteratorT tmp = mCurrent;
     return *--tmp;
   }

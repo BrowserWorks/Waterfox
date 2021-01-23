@@ -1,10 +1,10 @@
 ﻿// © 2016 and later: Unicode, Inc. and others.
 // License & terms of use: http://www.unicode.org/copyright.html#License
 zh_Hant_HK{
-    Version{"2.1.47.86"}
+    Version{"37"}
     units{
         acceleration{
-            meter-per-second-squared{
+            meter-per-square-second{
                 dnam{"米/平方秒"}
                 other{"{0} 米/平方秒"}
             }
@@ -53,17 +53,21 @@ zh_Hant_HK{
                 dnam{"每公升毫摩爾"}
                 other{"每公升 {0} 毫摩爾"}
             }
-            part-per-million{
+            permillion{
                 other{"{0} ppm"}
             }
         }
         consumption{
+            liter-per-100-kilometer{
+                dnam{"公升/100公里"}
+            }
             liter-per-kilometer{
                 dnam{"公升/公里"}
                 other{"{0} 公升/公里"}
             }
             mile-per-gallon{
-                dnam{"英里每加侖"}
+                dnam{"英里/加侖"}
+                other{"{0} 英里/加侖"}
             }
         }
         coordinate{
@@ -217,7 +221,7 @@ zh_Hant_HK{
                 dnam{"百帕斯卡"}
                 other{"{0} 百帕斯卡"}
             }
-            inch-hg{
+            inch-ofhg{
                 dnam{"英吋汞柱"}
                 other{"{0} 英吋汞柱"}
             }
@@ -225,7 +229,7 @@ zh_Hant_HK{
                 dnam{"兆帕斯卡"}
                 other{"{0} 兆帕斯卡"}
             }
-            pound-per-square-inch{
+            pound-force-per-square-inch{
                 dnam{"磅/平方吋"}
                 other{"{0} 磅/平方吋"}
             }
@@ -255,7 +259,7 @@ zh_Hant_HK{
             }
         }
         torque{
-            pound-foot{
+            pound-force-foot{
                 dnam{"磅尺"}
                 other{"{0} 磅尺"}
             }
@@ -311,7 +315,7 @@ zh_Hant_HK{
     }
     unitsNarrow{
         acceleration{
-            meter-per-second-squared{
+            meter-per-square-second{
                 dnam{"米每平方秒"}
             }
         }
@@ -353,12 +357,12 @@ zh_Hant_HK{
             millimole-per-liter{
                 dnam{"毫摩爾/公升"}
             }
-            part-per-million{
+            permillion{
                 other{"{0} ppm"}
             }
         }
         consumption{
-            liter-per-100kilometers{
+            liter-per-100-kilometer{
                 other{"{0}L/100km"}
             }
         }
@@ -484,11 +488,11 @@ zh_Hant_HK{
             }
         }
         pressure{
-            inch-hg{
+            inch-ofhg{
                 dnam{"英吋汞柱"}
                 other{"{0}″ Hg"}
             }
-            pound-per-square-inch{
+            pound-force-per-square-inch{
                 dnam{"磅每平方吋"}
             }
         }
@@ -550,7 +554,7 @@ zh_Hant_HK{
             g-force{
                 other{"{0} G"}
             }
-            meter-per-second-squared{
+            meter-per-square-second{
                 dnam{"米每平方秒"}
                 other{"{0} 米每平方秒"}
             }
@@ -598,12 +602,15 @@ zh_Hant_HK{
                 per{"{0} 每平方英里"}
             }
         }
+        compound{
+            times{"{0}⋅{1}"}
+        }
         concentr{
             millimole-per-liter{
                 dnam{"毫摩爾/公升"}
                 other{"{0} 毫摩爾/公升"}
             }
-            part-per-million{
+            permillion{
                 other{"{0} ppm"}
             }
         }
@@ -663,6 +670,36 @@ zh_Hant_HK{
             }
             kilojoule{
                 dnam{"千焦"}
+            }
+        }
+        graphics{
+            dot-per-centimeter{
+                dnam{"dpcm"}
+                other{"{0} dpcm"}
+            }
+            dot-per-inch{
+                dnam{"dpi"}
+                other{"{0} dpi"}
+            }
+            em{
+                dnam{"em"}
+                other{"{0} em"}
+            }
+            megapixel{
+                dnam{"MP"}
+                other{"{0} MP"}
+            }
+            pixel{
+                dnam{"px"}
+                other{"{0} px"}
+            }
+            pixel-per-centimeter{
+                dnam{"ppcm"}
+                other{"{0} ppcm"}
+            }
+            pixel-per-inch{
+                dnam{"ppi"}
+                other{"{0} ppi"}
             }
         }
         length{
@@ -741,11 +778,15 @@ zh_Hant_HK{
             }
         }
         pressure{
-            inch-hg{
+            inch-ofhg{
                 dnam{"英吋汞柱"}
                 other{"{0} 英吋汞柱"}
             }
-            pound-per-square-inch{
+            pascal{
+                dnam{"帕"}
+                other{"{0} 帕"}
+            }
+            pound-force-per-square-inch{
                 dnam{"磅每平方吋"}
                 other{"{0} 磅每平方吋"}
             }

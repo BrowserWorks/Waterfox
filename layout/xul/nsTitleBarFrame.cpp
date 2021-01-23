@@ -37,7 +37,6 @@ nsTitleBarFrame::nsTitleBarFrame(ComputedStyle* aStyle,
                                  nsPresContext* aPresContext, ClassID aID)
     : nsBoxFrame(aStyle, aPresContext, aID, false) {
   mTrackingMouseMove = false;
-  UpdateMouseThrough();
 }
 
 void nsTitleBarFrame::BuildDisplayListForChildren(
@@ -66,19 +65,16 @@ nsresult nsTitleBarFrame::HandleEvent(nsPresContext* aPresContext,
     case eMouseDown: {
       if (aEvent->AsMouseEvent()->mButton == MouseButton::eLeft) {
         // titlebar has no effect in non-chrome shells
-        nsCOMPtr<nsIDocShellTreeItem> dsti = aPresContext->GetDocShell();
-        if (dsti) {
-          if (dsti->ItemType() == nsIDocShellTreeItem::typeChrome) {
-            // we're tracking.
-            mTrackingMouseMove = true;
+        if (aPresContext->IsChrome()) {
+          // we're tracking.
+          mTrackingMouseMove = true;
 
-            // start capture.
-            PresShell::SetCapturingContent(GetContent(),
-                                           CaptureFlags::IgnoreAllowedState);
+          // start capture.
+          PresShell::SetCapturingContent(GetContent(),
+                                         CaptureFlags::IgnoreAllowedState);
 
-            // remember current mouse coordinates.
-            mLastPoint = aEvent->mRefPoint;
-          }
+          // remember current mouse coordinates.
+          mLastPoint = aEvent->mRefPoint;
         }
 
         *aEventStatus = nsEventStatus_eConsumeNoDefault;
@@ -138,7 +134,14 @@ nsresult nsTitleBarFrame::HandleEvent(nsPresContext* aPresContext,
 
     case eMouseClick: {
       WidgetMouseEvent* mouseEvent = aEvent->AsMouseEvent();
-      if (mouseEvent->IsLeftClickEvent()) {
+      if (mouseEvent->IsLeftClickEvent()
+#ifdef XP_MACOSX
+          // On Mac, ctrl-click will send a context menu event from the widget,
+          // so we don't want to dispatch widget command if it is redispatched
+          // from the mouse event with ctrl key is pressed.
+          && !mouseEvent->IsControl()
+#endif
+      ) {
         MouseClicked(mouseEvent);
       }
       break;

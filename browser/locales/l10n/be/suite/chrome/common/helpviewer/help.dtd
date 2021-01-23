@@ -1,0 +1,43 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY printCmd.commandkey "p">
+<!ENTITY findOnCmd.commandkey "F">
+<!ENTITY findAgainCmd.commandkey "G">
+<!ENTITY findAgainCmd.commandkey2 "VK_F3">
+<!ENTITY backButton.label "Назад">
+<!ENTITY backButton.accesskey "д">
+<!ENTITY backButton.tooltip "Вярнуцца на папярэднюю старонку">
+<!ENTITY forwardButton.label "Наперад">
+<!ENTITY forwardButton.accesskey "п">
+<!ENTITY forwardButton.tooltip "Перайсці на адну старонку ўперад">
+<!ENTITY copyCmd.label "Капіяваць">
+<!ENTITY copyCmd.accesskey "К">
+<!ENTITY selectAllCmd.label "Вылучыць усё">
+<!ENTITY selectAllCmd.accesskey "у">
+<!ENTITY goBackCmd.commandkey "[">
+<!ENTITY goForwardCmd.commandkey "]">
+<!ENTITY homeButton.label "Дадому">
+<!ENTITY homeButton.tooltip "Перайсці на пачатковую старонку даведкі">
+<!ENTITY printButton.label "Друкаваць">
+<!ENTITY printButton.tooltip "Надрукаваць гэтую старонку">
+<!ENTITY closeWindow.commandkey "W">
+<!ENTITY search.emptytext "Пошук">
+<!ENTITY searchHeader.label "Вынікі пошуку">
+<!ENTITY toctab.label "Змест">
+<!ENTITY toctab.accesskey "З">
+<!ENTITY fullZoomReduceCmd.commandkey "-">
+<!ENTITY fullZoomReduceCmd.commandkey2 "">
+<!ENTITY fullZoomEnlargeCmd.commandkey "+">
+<!ENTITY fullZoomEnlargeCmd.commandkey2 "=">
+<!ENTITY fullZoomEnlargeCmd.commandkey3 "">
+<!ENTITY fullZoomResetCmd.commandkey "0">
+<!ENTITY fullZoomResetCmd.commandkey2 "">
+<!ENTITY helpSearch.commandkey "k">
+<!ENTITY zLevel.label "Заўсёды зверху">
+<!ENTITY zLevel.accesskey "ё">
+<!ENTITY fullZoomReduceBtn.label "Паменшыць">
+<!ENTITY fullZoomReduceBtn.accesskey "м">
+<!ENTITY fullZoomEnlargeBtn.label "Павялічыць">
+<!ENTITY fullZoomEnlargeBtn.accesskey "в">

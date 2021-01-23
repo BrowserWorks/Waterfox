@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
 
 ChromeUtils.defineModuleGetter(
@@ -20,6 +24,11 @@ ChromeUtils.defineModuleGetter(
   this,
   "FileUtils",
   "resource://gre/modules/FileUtils.jsm"
+);
+ChromeUtils.defineModuleGetter(
+  this,
+  "DownloadLastDir",
+  "resource://gre/modules/DownloadLastDir.jsm"
 );
 
 var { EventEmitter, ignoreEvent } = ExtensionCommon;
@@ -60,6 +69,7 @@ const DOWNLOAD_ITEM_CHANGE_FIELDS = [
 ];
 
 // From https://fetch.spec.whatwg.org/#forbidden-header-name
+// Since bug 1367626 we allow extensions to set REFERER.
 const FORBIDDEN_HEADERS = [
   "ACCEPT-CHARSET",
   "ACCEPT-ENCODING",
@@ -75,7 +85,6 @@ const FORBIDDEN_HEADERS = [
   "HOST",
   "KEEP-ALIVE",
   "ORIGIN",
-  "REFERER",
   "TE",
   "TRAILER",
   "TRANSFER-ENCODING",
@@ -93,13 +102,18 @@ class DownloadItem {
     this.download = download;
     this.extension = extension;
     this.prechange = {};
+    this._error = null;
   }
 
   get url() {
     return this.download.source.url;
   }
   get referrer() {
-    return this.download.source.referrer;
+    const uri = this.download.source.referrerInfo
+      ? this.download.source.referrerInfo.originalReferrer
+      : null;
+
+    return uri && uri.spec;
   }
   get filename() {
     return this.download.target.path;
@@ -131,7 +145,7 @@ class DownloadItem {
     if (this.download.succeeded) {
       return "complete";
     }
-    if (this.download.canceled) {
+    if (this.download.canceled || this.error) {
       return "interrupted";
     }
     return "in_progress";
@@ -151,6 +165,9 @@ class DownloadItem {
     );
   }
   get error() {
+    if (this._error) {
+      return this._error;
+    }
     if (
       !this.download.startTime ||
       !this.download.stopped ||
@@ -170,6 +187,9 @@ class DownloadItem {
       return "CRASH";
     }
     return "USER_CANCELED";
+  }
+  set error(value) {
+    this._error = value && value.toString();
   }
   get bytesReceived() {
     return this.download.currentBytes;
@@ -545,7 +565,7 @@ this.downloads = class extends ExtensionAPI {
           }
 
           if (filename != null) {
-            if (filename.length == 0) {
+            if (!filename.length) {
               return Promise.reject({ message: "filename must not be empty" });
             }
 
@@ -563,9 +583,12 @@ this.downloads = class extends ExtensionAPI {
             }
 
             if (
-              path.components.some(
-                component => component != DownloadPaths.sanitize(component)
-              )
+              path.components.some(component => {
+                let sanitized = DownloadPaths.sanitize(component, {
+                  compressWhitespaces: false,
+                });
+                return component != sanitized;
+              })
             ) {
               return Promise.reject({
                 message: "filename must not contain illegal characters",
@@ -630,12 +653,51 @@ this.downloads = class extends ExtensionAPI {
             return Promise.resolve();
           }
 
+          function allowHttpStatus(download, status) {
+            const item = DownloadMap.byDownload.get(download);
+            if (item === null) {
+              return true;
+            }
+
+            let error = null;
+            switch (status) {
+              case 204: // No Content
+              case 205: // Reset Content
+              case 404: // Not Found
+                error = "SERVER_BAD_CONTENT";
+                break;
+
+              case 403: // Forbidden
+                error = "SERVER_FORBIDDEN";
+                break;
+
+              case 402: // Unauthorized
+              case 407: // Proxy authentication required
+                error = "SERVER_UNAUTHORIZED";
+                break;
+
+              default:
+                if (status >= 400) {
+                  error = "SERVER_FAILED";
+                }
+                break;
+            }
+
+            if (error) {
+              item.error = error;
+              return false;
+            }
+
+            // No error, ergo allow the request.
+            return true;
+          }
+
           async function createTarget(downloadsDir) {
             if (!filename) {
               let uri = Services.io.newURI(options.url);
               if (uri instanceof Ci.nsIURL) {
                 filename = DownloadPaths.sanitize(
-                  Services.textToSubURI.unEscapeURIForUI("UTF-8", uri.fileName)
+                  Services.textToSubURI.unEscapeURIForUI(uri.fileName)
                 );
               }
             }
@@ -687,16 +749,54 @@ this.downloads = class extends ExtensionAPI {
               return target;
             }
 
-            const window = Services.wm.getMostRecentWindow("navigator:browser");
+            if (!("windowTracker" in global)) {
+              return target;
+            }
+
+            // At this point we are committed to displaying the file picker.
+            const downloadLastDir = new DownloadLastDir(
+              null,
+              options.incognito
+            );
+
+            async function getLastDirectory() {
+              return new Promise(resolve => {
+                downloadLastDir.getFileAsync(extension.baseURI, file => {
+                  resolve(file);
+                });
+              });
+            }
+
+            function saveLastDirectory(lastDir) {
+              downloadLastDir.setFile(extension.baseURI, lastDir);
+            }
+
+            // Use windowTracker to find a window, rather than Services.wm,
+            // so that this doesn't break where navigator:browser isn't the
+            // main window (e.g. Thunderbird).
+            const window = global.windowTracker.getTopWindow().window;
             const basename = OS.Path.basename(target);
             const ext = basename.match(/\.([^.]+)$/);
+
+            // If the filename passed in by the extension is a simple name
+            // and not a path, we open the file picker so it displays the
+            // last directory that was chosen by the user.
+            const pathSep = AppConstants.platform === "win" ? "\\" : "/";
+            const lastFilePickerDirectory =
+              !filename || !filename.includes(pathSep)
+                ? await getLastDirectory()
+                : undefined;
 
             // Setup the file picker Save As dialog.
             const picker = Cc["@mozilla.org/filepicker;1"].createInstance(
               Ci.nsIFilePicker
             );
             picker.init(window, null, Ci.nsIFilePicker.modeSave);
-            picker.displayDirectory = new FileUtils.File(dir);
+            if (lastFilePickerDirectory) {
+              picker.displayDirectory = lastFilePickerDirectory;
+            } else {
+              picker.displayDirectory = new FileUtils.File(dir);
+            }
             picker.appendFilters(Ci.nsIFilePicker.filterAll);
             picker.defaultString = basename;
 
@@ -709,6 +809,7 @@ this.downloads = class extends ExtensionAPI {
                 if (result === Ci.nsIFilePicker.returnCancel) {
                   reject({ message: "Download canceled by the user" });
                 } else {
+                  saveLastDirectory(picker.file.parent);
                   resolve(picker.file.path);
                 }
               });
@@ -723,6 +824,13 @@ this.downloads = class extends ExtensionAPI {
                 url: options.url,
                 isPrivate: options.incognito,
               };
+
+              // Unless the API user explicitly wants errors ignored,
+              // set the allowHttpStatus callback, which will instruct
+              // DownloadCore to cancel downloads on HTTP errors.
+              if (!options.allowHttpErrors) {
+                source.allowHttpStatus = allowHttpStatus;
+              }
 
               if (options.method || options.headers || options.body) {
                 source.adjustChannel = adjustChannel;
@@ -741,13 +849,18 @@ this.downloads = class extends ExtensionAPI {
               return DownloadMap.getDownloadList();
             })
             .then(list => {
+              const item = DownloadMap.newFromDownload(download, extension);
               list.add(download);
 
               // This is necessary to make pause/resume work.
               download.tryToKeepPartialData = true;
-              download.start();
 
-              const item = DownloadMap.newFromDownload(download, extension);
+              // Do not handle errors.
+              // Extensions will use listeners to be informed about errors.
+              // Just ignore any errors from |start()| to avoid spamming the
+              // error console.
+              download.start().catch(() => {});
+
               return item.id;
             });
         },
@@ -768,9 +881,7 @@ this.downloads = class extends ExtensionAPI {
             return OS.File.remove(item.filename, { ignoreAbsent: false }).catch(
               err => {
                 return Promise.reject({
-                  message: `Could not remove download id ${
-                    item.id
-                  } because the file doesn't exist`,
+                  message: `Could not remove download id ${item.id} because the file doesn't exist`,
                 });
               }
             );
@@ -796,9 +907,7 @@ this.downloads = class extends ExtensionAPI {
             }
             if (item.state != "in_progress") {
               return Promise.reject({
-                message: `Download ${id} cannot be paused since it is in state ${
-                  item.state
-                }`,
+                message: `Download ${id} cannot be paused since it is in state ${item.state}`,
               });
             }
 
@@ -820,6 +929,7 @@ this.downloads = class extends ExtensionAPI {
               });
             }
 
+            item.error = null;
             return item.download.start();
           });
         },
@@ -849,9 +959,7 @@ this.downloads = class extends ExtensionAPI {
                 dirobj.launch();
               } else {
                 throw new Error(
-                  `Download directory ${
-                    dirobj.path
-                  } is not actually a directory`
+                  `Download directory ${dirobj.path} is not actually a directory`
                 );
               }
             })
@@ -930,8 +1038,10 @@ this.downloads = class extends ExtensionAPI {
                 let chromeWebNav = Services.appShell.createWindowlessBrowser(
                   true
                 );
+                let system = Services.scriptSecurityManager.getSystemPrincipal();
                 chromeWebNav.docShell.createAboutBlankContentViewer(
-                  Services.scriptSecurityManager.getSystemPrincipal()
+                  system,
+                  system
                 );
 
                 let img = chromeWebNav.document.createElement("img");
@@ -998,7 +1108,7 @@ this.downloads = class extends ExtensionAPI {
                 };
               }
             });
-            if (Object.keys(changes).length > 0) {
+            if (Object.keys(changes).length) {
               changes.id = item.id;
               fire.async(changes);
             }

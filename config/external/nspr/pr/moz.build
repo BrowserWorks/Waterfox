@@ -16,12 +16,10 @@ AllowCompilerWarnings()
 DEFINES['_NSPR_BUILD_'] = True
 if CONFIG['OS_ARCH'] == 'Linux':
     OS_LIBS += CONFIG['REALTIME_LIBS']
-    DEFINES.update(
-        LINUX=True,
-        HAVE_FCNTL_FILE_LOCKING=True,
-        HAVE_POINTER_LOCALTIME_R=True,
-        _GNU_SOURCE=True,
-    )
+    DEFINES['LINUX'] = True
+    DEFINES['HAVE_FCNTL_FILE_LOCKING'] = True
+    DEFINES['HAVE_POINTER_LOCALTIME_R'] = True
+    DEFINES['_GNU_SOURCE'] = True
     SOURCES += ['/nsprpub/pr/src/md/unix/linux.c']
     if CONFIG['CPU_ARCH'] == 'x86_64':
         SOURCES += ['/nsprpub/pr/src/md/unix/os_Linux_x86_64.s']
@@ -31,11 +29,9 @@ if CONFIG['OS_ARCH'] == 'Linux':
     elif CONFIG['CPU_ARCH'] == 'ppc':
         SOURCES += ['/nsprpub/pr/src/md/unix/os_Linux_ppc.s']
 elif CONFIG['OS_TARGET'] in ('FreeBSD', 'OpenBSD', 'NetBSD'):
-    DEFINES.update(
-        HAVE_BSD_FLOCK=True,
-        HAVE_SOCKLEN_T=True,
-        HAVE_POINTER_LOCALTIME_R=True,
-    )
+    DEFINES['HAVE_BSD_FLOCK'] = True
+    DEFINES['HAVE_SOCKLEN_T'] = True
+    DEFINES['HAVE_POINTER_LOCALTIME_R'] = True
     DEFINES[CONFIG['OS_TARGET'].upper()] = True
     SOURCES += ['/nsprpub/pr/src/md/unix/%s.c' % CONFIG['OS_TARGET'].lower()]
 elif CONFIG['OS_TARGET'] == 'Darwin':
@@ -44,32 +40,23 @@ elif CONFIG['OS_TARGET'] == 'Darwin':
     DEFINES['FD_SETSIZE'] = 4096
     DEFINES['_DARWIN_UNLIMITED_SELECT'] = True
     if not CONFIG['HOST_MAJOR_VERSION']:
-        DEFINES.update(
-            HAS_CONNECTX=True,
-        )
+        DEFINES['HAS_CONNECTX'] = True
     elif CONFIG['HOST_MAJOR_VERSION'] >= '15':
-        DEFINES.update(
-            HAS_CONNECTX=True,
-        )
-    DEFINES.update(
-        DARWIN=True,
-        HAVE_BSD_FLOCK=True,
-        HAVE_SOCKLEN_T=True,
-        HAVE_POINTER_LOCALTIME_R=True,
-    )
+        DEFINES['HAS_CONNECTX'] = True
+    DEFINES['DARWIN'] = True
+    DEFINES['HAVE_BSD_FLOCK'] = True
+    DEFINES['HAVE_SOCKLEN_T'] = True
+    DEFINES['HAVE_POINTER_LOCALTIME_R'] = True
     SOURCES += [
         '/nsprpub/pr/src/md/unix/darwin.c',
         '/nsprpub/pr/src/md/unix/os_Darwin.s',
     ]
-    if not CONFIG['MOZ_IOS']:
-        DEFINES['HAVE_CRT_EXTERNS_H'] = True
+    DEFINES['HAVE_CRT_EXTERNS_H'] = True
 elif CONFIG['OS_TARGET'] == 'SunOS':
-    DEFINES.update(
-        HAVE_FCNTL_FILE_LOCKING=True,
-        HAVE_SOCKLEN_T=True,
-        _PR_HAVE_OFF64_T=True,
-        _PR_INET6=True,
-    )
+    DEFINES['HAVE_FCNTL_FILE_LOCKING'] = True
+    DEFINES['HAVE_SOCKLEN_T'] = True
+    DEFINES['_PR_HAVE_OFF64_T'] = True
+    DEFINES['_PR_INET6'] = True
     DEFINES['SOLARIS'] = True
     SOURCES += ['/nsprpub/pr/src/md/unix/solaris.c']
     if CONFIG['CPU_ARCH'] == 'x86_64':
@@ -86,15 +73,13 @@ elif CONFIG['OS_TARGET'] == 'WINNT':
         'mswsock',
         'winmm',
     ]
-    DEFINES.update(
-        XP_PC=True,
-        WIN32=True,
-        # For historical reasons we use the WIN95 NSPR target instead of
-        # WINNT.
-        WIN95=True,
-        WINNT=False,
-        _PR_GLOBAL_THREADS_ONLY=True,
-    )
+    DEFINES['XP_PC'] = True
+    DEFINES['WIN32'] = True
+    # For historical reasons we use the WIN95 NSPR target instead of
+    # WINNT.
+    DEFINES['WIN95'] = True
+    DEFINES['WINNT'] = False
+    DEFINES['_PR_GLOBAL_THREADS_ONLY'] = True
     if not CONFIG['DEBUG']:
       DEFINES['DO_NOT_WAIT_FOR_CONNECT_OVERLAPPED_OPERATIONS'] = True
     if CONFIG['CPU_ARCH'] == 'x86_64':
@@ -118,7 +103,6 @@ LOCAL_INCLUDES += [
 SOURCES += [
     '/nsprpub/pr/src/io/prpolevt.c', # conflicting definition of PRFilePrivate
     '/nsprpub/pr/src/misc/praton.c', # duplicate definition of index_hex
-    '/nsprpub/pr/src/misc/prcountr.c', # duplicate definition of QName, RName
  ]
 
 UNIFIED_SOURCES += [
@@ -138,9 +122,7 @@ UNIFIED_SOURCES += [
     '/nsprpub/pr/src/malloc/prmem.c',
     '/nsprpub/pr/src/md/prosdep.c',
     '/nsprpub/pr/src/memory/prseg.c',
-    '/nsprpub/pr/src/memory/prshm.c',
     '/nsprpub/pr/src/memory/prshma.c',
-    '/nsprpub/pr/src/misc/pralarm.c',
     '/nsprpub/pr/src/misc/pratom.c',
     '/nsprpub/pr/src/misc/prdtoa.c',
     '/nsprpub/pr/src/misc/prenv.c',
@@ -151,15 +133,11 @@ UNIFIED_SOURCES += [
     '/nsprpub/pr/src/misc/prinrval.c',
     '/nsprpub/pr/src/misc/pripc.c',
     '/nsprpub/pr/src/misc/prlog2.c',
-    '/nsprpub/pr/src/misc/prlong.c',
     '/nsprpub/pr/src/misc/prnetdb.c',
-    '/nsprpub/pr/src/misc/prolock.c',
     '/nsprpub/pr/src/misc/prrng.c',
     '/nsprpub/pr/src/misc/prsystem.c',
-    '/nsprpub/pr/src/misc/prthinfo.c',
     '/nsprpub/pr/src/misc/prtime.c',
     '/nsprpub/pr/src/misc/prtpool.c',
-    '/nsprpub/pr/src/misc/prtrace.c',
     '/nsprpub/pr/src/threads/prcmon.c',
     '/nsprpub/pr/src/threads/prrwlock.c',
     '/nsprpub/pr/src/threads/prtpd.c',
@@ -173,7 +151,6 @@ if CONFIG['OS_TARGET'] != 'WINNT':
         '/nsprpub/pr/src/md/unix/uxproces.c',
         '/nsprpub/pr/src/md/unix/uxrng.c',
         '/nsprpub/pr/src/md/unix/uxshm.c',
-        '/nsprpub/pr/src/md/unix/uxwrap.c',
         '/nsprpub/pr/src/pthreads/ptio.c',
         '/nsprpub/pr/src/pthreads/ptmisc.c',
         '/nsprpub/pr/src/pthreads/ptsynch.c',
@@ -223,7 +200,6 @@ EXPORTS.nspr += [
     '/nsprpub/pr/include/prbit.h',
     '/nsprpub/pr/include/prclist.h',
     '/nsprpub/pr/include/prcmon.h',
-    '/nsprpub/pr/include/prcountr.h',
     '/nsprpub/pr/include/prcvar.h',
     '/nsprpub/pr/include/prdtoa.h',
     '/nsprpub/pr/include/prenv.h',
@@ -242,7 +218,6 @@ EXPORTS.nspr += [
     '/nsprpub/pr/include/prmon.h',
     '/nsprpub/pr/include/prmwait.h',
     '/nsprpub/pr/include/prnetdb.h',
-    '/nsprpub/pr/include/prolock.h',
     '/nsprpub/pr/include/prpdce.h',
     '/nsprpub/pr/include/prprf.h',
     '/nsprpub/pr/include/prproces.h',

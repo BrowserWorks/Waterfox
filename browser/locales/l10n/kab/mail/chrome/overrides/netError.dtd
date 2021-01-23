@@ -1,0 +1,109 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Ugur deg usali n usebter">
+<!ENTITY retry.label "Ɛreḍ tikelt nniḍen">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Igguma ad iqqen">
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.title "Tansa-yagi tegdel">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Ulac aqeddac">
+<!ENTITY dnsNotFound.longDesc "<ul><li>Senqed taseddast n tensa am <strong>ww</strong>.example.com deg umḍiq n  <strong>www</strong>.example.com</li> <li>Ma yella ur tezmiṛeḍ ara ad tinigeḍ ɣef isemlen, senqed tuqqna ɣeṛ uẓeṭṭa n uselkim.</li><li>Ma yella aselkim-inek neɣ aẓeṭṭa inek ittummesten s uɣwṛab n tmes neɣ aseɣẓan agrawan, wali ma yella  &brandShortName;  yezmer ad yekcem ɣer Web.</li></ul>">
+
+<!ENTITY fileNotFound.title "Ulac afaylu">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Senqed isekkilen imeqqṛanen n yisem n ufaylu neɣ tuccḍiwin nniḍen.</li> <li>Wali ma yella afaylu yettwasenkez, yettwasnifel yisem-is neɣ yettwakkes.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "Anekcum ɣer ufaylu yegdel">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Ahat yettwakkes, yettwasenkez, neɣ d izerfan ɣef ufaylu i yesweḥlen anekcum.</li> </ul>">
+
+<!ENTITY generic.title "Ayhu.">
+<!ENTITY generic.longDesc "<p>S teɣẓinin ur nettwassen ara &brandShortName; ur izmir ara ad isali asebter-agi.</p>">
+
+<!ENTITY malformedURI.title "Tansa tarameɣtut">
+<!ENTITY malformedURI.longDesc "<ul> <li>Tansiwin web ttwarunt am <strong>http://www.example.com/</strong></li> <li>Wali ma yella tesseqdaceḍ islacen  (amedya <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "Tuqqna teḥbes">
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.title "Isemli ifut">
+<!ENTITY notCached.longDesc "<p>Isemli i d-sutreḍ ulac-it di  tuffirt.</p><ul><li>Ɣef udem n tɣellist, &brandShortName; ur isutur ara tikelt nniḍen isemliyen yeṭṭafaṛen taṛuzi.</li><li>Sit ɣef Ɛreḍ tikelt nniḍen akken ad tesutreḍ tikelt nniḍen isemli seg usmel web.</li></ul>">
+
+<!ENTITY netOffline.title "Aska war tuqqna">
+<!ENTITY netOffline.longDesc2 "<ul><li>Sit ɣef &quot;Ɛreḍ tikelt nniḍen&quot; akken ad tuɣaleḍ ɣer uskar uqqin sakin smiren asebter.</li></ul>">
+
+<!ENTITY contentEncodingError.title "Tuccḍa n usettengel n ugbur">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Ma ulac aɣilif, nermes imawlan n usmel web ɣef wugur-agi.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Tawsit n ufaylu aranelkan">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Ma ulac aɣilif, nermes imawlan n usmel web ɣef wugur-agi.</li> </ul>">
+
+<!ENTITY netReset.title "Tuqqna teţuwennez tikelt nniḍen.">
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.title "Tanzagt n uraǧu tezri">
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.title "Ur nessin ara tansa">
+<!ENTITY unknownProtocolFound.longDesc "<ul><li>Ahat issefk ad tesbeddeḍ asnas nniḍen akken ad tizmired ad telidiḍ tawsit n tensa-yagi.</li></ul>">
+
+<!ENTITY proxyConnectFailure.title "Aqeddac aseɣẓan agrawan yugi tuqqniwin.">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Senqed ma yella iɣewwaren n useɣẓan agrawan d imeɣta.</li> <li>Nermes anebdal-ik n uẓeṭṭa iwakken ad twaliḍ ma yella aqeddac aseɣẓan arayan  iiteddu.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "Aqeddac aseɣẓan agrawan ulac-it">
+<!ENTITY proxyResolveFailure.longDesc "<ul> <li>Senqed ma yella iɣewwaren n useɣẓan agrawan d imeɣta.</li> <li>Senqed ma yella tuqqna n uẓeṭṭa n uselkim-inek t-tteddu.</li> <li>Ma yella aselkim-inek neɣ aẓeṭṭa yinek ittummesten s uɣwṛab n tmes, Wali ma yella &brandShortName; ɣur-s tasiregt n unekcum ɣer Web.</li> </ul>">
+
+<!ENTITY redirectLoop.title "Asebter ur yettuwelleh ara akken iwata">
+<!ENTITY redirectLoop.longDesc "<ul> <li>Ugur-agi yettek-d seg tukksa n urmad neɣ asewḥel n inagan n tuqqna.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "Aqeddac yerra-d yir tiririt ur nettwaṛǧi ara">
+<!ENTITY unknownSocketType.longDesc "<ul><li>Senqed ma yella amsefrak n tɣellist tudmawant tebded ɣef unagraw-ik.</li><li>Ahat aqeddac ur iţuswel ara akken iwata.</li></ul>">
+
+<!ENTITY nssFailure2.title "Tuqqna taɣelsant ur teddi ara">
+<!ENTITY nssFailure2.longDesc2 "<ul><li>Asebter-agi i tebɣiḍ ad twaliḍ ur yizmir ara ad yettwasken, acku ur nemzir ara ad nsenqed  asesteb n isefka d-itturemsen</li><li>Ma ulac aɣilif nermes imawlan n usmel web ɣef ugur-agi.</li></ul>">
+
+<!ENTITY nssBadCert.title "Tuqqna taɣelsant ur teddi ara">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>Ay-agi yezmer ad yili d ugur n twila n uqeddac neɣ d albaɛḍ i yɛarḍenad yakwer tamagit n uqeddac-agi.</li> <li>Ma yella teqqneḍ yakan s trennawt ɣer uqeddac-agi, tuccḍa tezmerahat ad tili  d tuskudant, u tzemreḍ ad tɛerḍeḍ i tikelt nniḍen ticki.</li> </ul>">
+
+<!ENTITY sharedLongDesc "<ul> <li>Asmel ulac-it akka tura neɣ ur yestufi ara. Ɛreḍ tikkelt nniden akka kra n wakud.</li> <li>Ma yella ur tezmireḍ ara ad d-saliḍ isebtar, senqed tuqqna yinek n uẓeṭṭa Internet.</li> <li> Ma yella aselkim-inek yettumesten s uɣrab n tmes neɣ apṛuksi, wali ma yella &brandShortName; yezmer ad yekcem ɣer web.</li> </ul>">
+
+<!ENTITY cspBlocked.title "Tesweḥl-it tsertit n tɣellist n ugbur.">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; yesewḥel asebter-agi seg usali s wudem-agi acku asebter yegber tasertit n tɣellist n ugbur i t-isweḥlen.</p>">
+
+<!ENTITY xfoBlocked.title "Tessewḥel-it tsertit X-Frame-Options">
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; isewḥel asali n usebter-a deg usatal-a acku asebter ɣur-s tasertit X-Frame-Options ur t-yeǧǧan ara.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Tuccḍa  n ugbur ixesṛen">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Agbur i tettaɛraḍeḍ ad tesekneḍ  ur yezmir ara ad d-iban acku tella tuccḍa n tuzna n isefka.</p><ul><li>Ma ulac aɣilifn nermes imawlan akken ad ẓren ugur-agi.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Neɣ tzemreḍ ad ternuḍ tasureft...">
+<!ENTITY securityOverride.getMeOutOfHereButton "Suffeɣ-iyi s ya!">
+<!ENTITY securityOverride.exceptionButtonLabel "Rnu tasureft...">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <button> tags. It uses strings already defined above. The
+button is included here (instead of netError.xhtml) because it exposes
+functionality specific to thunderbird. -->
+
+<!ENTITY securityOverride.warningContent "<p>Yessefk ad ternuḍ tasureft ma yella tessaqdaceḍ tuqqna Internet ur tettamneḍ ara neɣ ma yella ur d-cliɛeḍ ara deg ilɣuten n uqeddac-agi.</p>  <button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> <button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "XUL anmeggag">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Ma ulac aɣilif, nermes imawlan n usmel web ɣef wugur-agi.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "Tuqqna yinek mačči d taɣelsant">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> iseqdac tatiknulujit taqbuṛt ur nezmir ad terr zzedmat. Aẓeddam yezmer ad yzkker s wudem fessusen talɣut i tɣileḍ d taɣelsant.  Andbal n usmel yesra di tazwara ad iseggem aqeddac send ad tezmireḍ ad terzuḍ ɣe usmel.</p><p>Tangalt n tuccḍa: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Asebter iwaḥlen">
+
+<!ENTITY networkProtocolError.title "Tuccḍa deg uneggaf n uẓeṭṭa">
+<!ENTITY networkProtocolError.longDesc "<p>Asebter-agi i tebɣiḍ ad twaliḍ ur yizmir ara ad ittwasken, acku tella tuccḍa deg uneggaf n uẓeṭṭa.</p><ul><li>Ma ulac aɣilif nermes imawlan n usmel web ɣef ugur-agi.</li></ul>">

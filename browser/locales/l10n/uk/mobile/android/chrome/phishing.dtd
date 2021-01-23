@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeb.palm.accept.label "Заберіть мене звідси!">
+<!ENTITY safeb.palm.decline.label "Ігнорувати це попередження">
+<!ENTITY safeb.palm.reportPage.label "Чому цю сторінку заблоковано?">
+<!-- Localization note (safeb.palm.advisory.desc) - Please don't translate <a id="advisory_provider"/> tag.  It will be replaced at runtime with advisory link-->
+<!ENTITY safeb.palm.advisory.desc "Інформація отримана від <a id='advisory_provider'/>">
+
+<!ENTITY safeb.blocked.malwarePage.title "Сторінка звітована як нападницька!">
+<!-- Localization note (safeb.blocked.malware.shortDesc) - Please don't translate the contents of the <span id="malware_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.malwarePage.shortDesc "Ця веб-сторінка <span id='malware_sitename'/> відома як нападницька, тому вона була заблокована згідно з вашими вподобаннями безпеки.">
+<!ENTITY safeb.blocked.malwarePage.longDesc "<p>Нападницькі сторінки намагаються встановити програми що крадуть конфіденційну інформацію, використовують ваш комп’ютер для подальших атак чи ушкоджують вашу систему.</p><p>Деякі нападницькі сторінки навмисно розповсюджують шкідливі програми, проте чимало використовуються втемну, без відома та дозволу їх хазяїв.</p>">
+
+<!ENTITY safeb.blocked.phishingPage.title3 "Шахрайський сайт!">
+<!-- Localization note (safeb.blocked.phishingPage.shortDesc3) - Please don't translate the contents of the <span id="phishing_sitename"/> tag. It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.phishingPage.shortDesc3 "Веб-сторінка <span id='phishing_sitename'/> відома, як шахрайська, і була заблокована згідно з вашими вподобаннями безпеки.">
+<!ENTITY safeb.blocked.phishingPage.longDesc3 "<p>Шахрайські сайти створені, щоб схилити вас до виконання небезпечних дій, наприклад, встановлення програмного забезпечення, або розкриття вашої особистої інформації, такої як паролі, номери телефонів або кредитних карток.</p><p>Введення будь-якої інформації на цій веб-сторінці може призвести до викрадення даних чи інших видів шахрайства.</p>">
+
+<!ENTITY safeb.blocked.unwantedPage.title "Відомий сайт з небажаним програмним забезпеченням!">
+<!-- Localization note (safeb.blocked.unwanted.shortDesc) - Please don't translate the contents of the <span id="unwanted_sitename"/> tag.  It will be replaced at runtime with a domain name (e.g. www.badsite.com) -->
+<!ENTITY safeb.blocked.unwantedPage.shortDesc "Веб-сторінка <span id='unwanted_sitename'/> відома як така, що розповсюджує небажане програмне забезпечення, і тому була заблокована згідно з вашими вподобаннями безпеки.">
+<!ENTITY safeb.blocked.unwantedPage.longDesc "Сторінки такого типу намагаються встановити програмне забезпечення, яке може вас ввести в оману та призвести до непередбачуваних змін у системі.">
+
+<!ENTITY safeb.blocked.harmfulPage.title "Цей сайт може містити зловмисне програмне забезпечення">
+<!ENTITY safeb.blocked.harmfulPage.shortDesc "&brandShortName; заблокував цю сторінку, тому що вона може намагатися встановити небезпечне програмне забезпечення, що викрадає чи видаляє вашу інформацію (наприклад, фотографії, паролі, повідомлення й кредитні картки).">

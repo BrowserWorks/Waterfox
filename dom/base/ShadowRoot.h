@@ -34,28 +34,34 @@ class Rule;
 
 namespace dom {
 
+class CSSImportRule;
 class Element;
 class HTMLInputElement;
 
 class ShadowRoot final : public DocumentFragment,
                          public DocumentOrShadowRoot,
-                         public nsStubMutationObserver,
                          public nsIRadioGroupContainer {
+  friend class DocumentOrShadowRoot;
+
  public:
   NS_IMPL_FROMNODE_HELPER(ShadowRoot, IsShadowRoot());
 
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(ShadowRoot, DocumentFragment)
   NS_DECL_ISUPPORTS_INHERITED
 
-  NS_DECL_NSIMUTATIONOBSERVER_ATTRIBUTECHANGED
-  NS_DECL_NSIMUTATIONOBSERVER_CONTENTAPPENDED
-  NS_DECL_NSIMUTATIONOBSERVER_CONTENTINSERTED
-  NS_DECL_NSIMUTATIONOBSERVER_CONTENTREMOVED
-
   ShadowRoot(Element* aElement, ShadowRootMode aMode,
              already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo);
 
   void AddSizeOfExcludingThis(nsWindowSizes&, size_t* aNodeSize) const final;
+
+  // Try to reassign an element to a slot.
+  void MaybeReassignElement(Element&);
+  // Called when an element is inserted as a direct child of our host. Tries to
+  // slot the child in one of our slots.
+  void MaybeSlotHostChild(nsIContent&);
+  // Called when a direct child of our host is removed. Tries to un-slot the
+  // child from the currently-assigned slot, if any.
+  void MaybeUnslotHostChild(nsIContent&);
 
   // Shadow DOM v1
   Element* Host() const {
@@ -68,15 +74,13 @@ class ShadowRoot final : public DocumentFragment,
   ShadowRootMode Mode() const { return mMode; }
   bool IsClosed() const { return mMode == ShadowRootMode::Closed; }
 
-  void RemoveSheet(StyleSheet* aSheet);
+  void RemoveSheetFromStyles(StyleSheet&);
   void RuleAdded(StyleSheet&, css::Rule&);
   void RuleRemoved(StyleSheet&, css::Rule&);
   void RuleChanged(StyleSheet&, css::Rule*);
-  void StyleSheetApplicableStateChanged(StyleSheet&, bool aApplicable);
-
-  StyleSheetList* StyleSheets() {
-    return &DocumentOrShadowRoot::EnsureDOMStyleSheets();
-  }
+  void ImportRuleLoaded(CSSImportRule&, StyleSheet&);
+  void SheetCloned(StyleSheet&);
+  void StyleSheetApplicableStateChanged(StyleSheet&);
 
   /**
    * Clones internal state, for example stylesheets, of aOther to 'this'.
@@ -99,17 +103,12 @@ class ShadowRoot final : public DocumentFragment,
   nsresult Bind();
 
  private:
-  void InsertSheetIntoAuthorData(size_t aIndex, StyleSheet&);
+  void InsertSheetIntoAuthorData(size_t aIndex, StyleSheet&,
+                                 const nsTArray<RefPtr<StyleSheet>>&);
 
   void AppendStyleSheet(StyleSheet& aSheet) {
     InsertSheetAt(SheetCount(), aSheet);
   }
-
-  /**
-   * Try to reassign an element to a slot and returns whether the assignment
-   * changed.
-   */
-  void MaybeReassignElement(Element* aElement);
 
   /**
    * Represents the insertion point in a slot for a given node.
@@ -130,7 +129,7 @@ class ShadowRoot final : public DocumentFragment,
    * It's the caller's responsibility to actually call InsertAssignedNode /
    * AppendAssignedNode in the slot as needed.
    */
-  SlotAssignment SlotAssignmentFor(nsIContent* aContent);
+  SlotAssignment SlotAssignmentFor(nsIContent&);
 
   /**
    * Explicitly invalidates the style and layout of the flattened-tree subtree
@@ -152,6 +151,15 @@ class ShadowRoot final : public DocumentFragment,
   void AddSlot(HTMLSlotElement* aSlot);
   void RemoveSlot(HTMLSlotElement* aSlot);
   bool HasSlots() const { return !mSlotMap.IsEmpty(); };
+  HTMLSlotElement* GetDefaultSlot() const {
+    SlotArray* list = mSlotMap.Get(NS_LITERAL_STRING(""));
+    return list ? (*list)->ElementAt(0) : nullptr;
+  }
+
+  void PartAdded(const Element&);
+  void PartRemoved(const Element&);
+
+  const nsTArray<const Element*>& Parts() const { return mParts; }
 
   const RawServoAuthorStyles* GetServoStyles() const {
     return mServoStyles.get();
@@ -161,8 +169,12 @@ class ShadowRoot final : public DocumentFragment,
 
   mozilla::ServoStyleRuleMap& ServoStyleRuleMap();
 
-  JSObject* WrapObject(JSContext* aCx,
-                       JS::Handle<JSObject*> aGivenProto) override;
+  JSObject* WrapNode(JSContext*, JS::Handle<JSObject*> aGivenProto) final;
+
+  void NodeInfoChanged(Document* aOldDoc) override {
+    DocumentFragment::NodeInfoChanged(aOldDoc);
+    ClearAdoptedStyleSheets();
+  }
 
   void AddToIdTable(Element* aElement, nsAtom* aId);
   void RemoveFromIdTable(Element* aElement, nsAtom* aId);
@@ -257,6 +269,10 @@ class ShadowRoot final : public DocumentFragment,
   // the given name. The slots are stored as a weak pointer because the elements
   // are in the shadow tree and should be kept alive by its parent.
   nsClassHashtable<nsStringHashKey, SlotArray> mSlotMap;
+
+  // Unordered array of all elements that have a part attribute in this shadow
+  // tree.
+  nsTArray<const Element*> mParts;
 
   bool mIsUAWidget;
 

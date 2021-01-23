@@ -5,7 +5,6 @@
 
 #include "nsLookAndFeel.h"
 #include "nsCocoaFeatures.h"
-#include "nsIServiceManager.h"
 #include "nsNativeThemeColors.h"
 #include "nsStyleConsts.h"
 #include "nsCocoaFeatures.h"
@@ -41,8 +40,6 @@ nsLookAndFeel::nsLookAndFeel()
       mUseOverlayScrollbarsCached(false),
       mAllowOverlayScrollbarsOverlap(-1),
       mAllowOverlayScrollbarsOverlapCached(false),
-      mPrefersReducedMotion(-1),
-      mPrefersReducedMotionCached(false),
       mSystemUsesDarkTheme(-1),
       mSystemUsesDarkThemeCached(false),
       mColorTextSelectBackground(0),
@@ -101,10 +98,6 @@ static nscolor GetColorFromNSColorWithAlpha(NSColor* aColor, float alpha) {
 void nsLookAndFeel::NativeInit() { EnsureInit(); }
 
 void nsLookAndFeel::RefreshImpl() {
-  if (mShouldRetainCacheForTest) {
-    return;
-  }
-
   nsXPLookAndFeel::RefreshImpl();
 
   // We should only clear the cache if we're in the main browser process.
@@ -252,7 +245,7 @@ nsresult nsLookAndFeel::NativeGetColor(ColorID aID, nscolor& aColor) {
         break;
       }
       // Otherwise fall through and return the regular button text:
-      MOZ_FALLTHROUGH;
+      [[fallthrough]];
     case ColorID::Buttontext:
     case ColorID::MozButtonhovertext:
       aColor = mColorButtonHoverText;
@@ -328,11 +321,11 @@ nsresult nsLookAndFeel::NativeGetColor(ColorID aID, nscolor& aColor) {
       aColor = mColorWindowFrame;
       break;
     case ColorID::Window:
-    case ColorID::MozField:
+    case ColorID::Field:
     case ColorID::MozCombobox:
       aColor = NS_RGB(0xff, 0xff, 0xff);
       break;
-    case ColorID::MozFieldtext:
+    case ColorID::Fieldtext:
     case ColorID::MozComboboxtext:
       aColor = mColorFieldText;
       break;
@@ -775,6 +768,8 @@ void nsLookAndFeel::EnsureInit() {
   color = [NSColor currentControlTint];
   mColorActiveSourceListSelection =
       (color == NSGraphiteControlTint) ? NS_RGB(0xa0, 0xa0, 0xa0) : NS_RGB(0x0a, 0x64, 0xdc);
+
+  RecordTelemetry();
 
   NS_OBJC_END_TRY_ABORT_BLOCK
 }

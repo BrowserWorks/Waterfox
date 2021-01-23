@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY joinChatWindow.title           "Ddu ɣer udiwenni s srid">
+<!ENTITY name.label                     "Taxxamt">
+<!ENTITY optional.label                 "(afrayan)">
+<!ENTITY account.label                  "Amiḍan">
+<!ENTITY autojoin.label                 "Ddu ɣer udiwenni usrid s wudem awurman">
+<!ENTITY autojoin.accesskey             "A">

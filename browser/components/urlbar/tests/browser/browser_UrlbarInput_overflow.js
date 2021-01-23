@@ -4,7 +4,7 @@
 
 async function testVal(aExpected, overflowSide = "") {
   info(`Testing ${aExpected}`);
-  URLBarSetURI(makeURI(aExpected));
+  gURLBar.setURI(makeURI(aExpected));
 
   Assert.equal(
     gURLBar.selectionStart,
@@ -59,11 +59,34 @@ async function testVal(aExpected, overflowSide = "") {
     "Check the textoverflow attribute"
   );
   if (overflowSide) {
-    let side = gURLBar.inputField.scrollLeft == 0 ? "end" : "start";
+    let side =
+      gURLBar.getAttribute("domaindir") == "ltr" ||
+      (gURLBar.inputField.scrollLeft == 0 &&
+        !gURLBar.hasAttribute("rtltext") &&
+        !gURLBar.hasAttribute("domaindir"))
+        ? "right"
+        : "left";
     Assert.equal(side, overflowSide, "Check the overflow side");
     Assert.equal(
       getComputedStyle(gURLBar.valueFormatter.scheme).visibility,
-      scheme && isOverflowed && overflowSide == "start" ? "visible" : "hidden",
+      scheme && isOverflowed && overflowSide == "left" ? "visible" : "hidden",
+      "Check the scheme box visibility"
+    );
+
+    info("Focus, change scroll position and blur, to ensure proper restore");
+    gURLBar.focus();
+    EventUtils.synthesizeKey("KEY_End");
+    gURLBar.blur();
+    await window.promiseDocumentFlushed(() => {});
+    // The attribute doesn't always change, so we can't use waitForAttribute.
+    await TestUtils.waitForCondition(
+      () => gURLBar.getAttribute("textoverflow") === overflowSide
+    );
+
+    Assert.equal(side, overflowSide, "Check the overflow side");
+    Assert.equal(
+      getComputedStyle(gURLBar.valueFormatter.scheme).visibility,
+      scheme && isOverflowed && overflowSide == "left" ? "visible" : "hidden",
       "Check the scheme box visibility"
     );
   }
@@ -75,7 +98,7 @@ add_task(async function() {
   // override the value we set with an empty value.
   let tab = await BrowserTestUtils.openNewForegroundTab(gBrowser);
   registerCleanupFunction(function() {
-    URLBarSetURI();
+    gURLBar.setURI();
     BrowserTestUtils.removeTab(tab);
   });
 
@@ -87,17 +110,17 @@ add_task(async function() {
 
   // Mix the direction of the tests to cover more cases, and to ensure the
   // textoverflow attribute changes every time, because tewtVal waits for that.
-  await testVal(`https://mozilla.org/${lotsOfSpaces}/test/`, "end");
+  await testVal(`https://mozilla.org/${lotsOfSpaces}/test/`, "right");
   await testVal(`https://mozilla.org/`);
-  await testVal(`https://${rtlDomain}/${lotsOfSpaces}/test/`, "start");
+  await testVal(`https://${rtlDomain}/${lotsOfSpaces}/test/`, "left");
 
-  await testVal(`ftp://mozilla.org/${lotsOfSpaces}/test/`, "end");
-  await testVal(`ftp://${rtlDomain}/${lotsOfSpaces}/test/`, "start");
+  await testVal(`ftp://mozilla.org/${lotsOfSpaces}/test/`, "right");
+  await testVal(`ftp://${rtlDomain}/${lotsOfSpaces}/test/`, "left");
   await testVal(`ftp://mozilla.org/`);
-  await testVal(`http://${rtlDomain}/${lotsOfSpaces}/test/`, "start");
+  await testVal(`http://${rtlDomain}/${lotsOfSpaces}/test/`, "left");
   await testVal(`http://mozilla.org/`);
-  await testVal(`http://mozilla.org/${lotsOfSpaces}/test/`, "end");
-  await testVal(`https://${rtlDomain}:80/${lotsOfSpaces}/test/`, "start");
+  await testVal(`http://mozilla.org/${lotsOfSpaces}/test/`, "right");
+  await testVal(`https://${rtlDomain}:80/${lotsOfSpaces}/test/`, "left");
 
   info("Test with formatting disabled");
   await SpecialPowers.pushPrefEnv({
@@ -108,9 +131,9 @@ add_task(async function() {
   });
 
   await testVal(`https://mozilla.org/`);
-  await testVal(`https://${rtlDomain}/${lotsOfSpaces}/test/`, "start");
-  await testVal(`https://mozilla.org/${lotsOfSpaces}/test/`, "end");
+  await testVal(`https://${rtlDomain}/${lotsOfSpaces}/test/`, "left");
+  await testVal(`https://mozilla.org/${lotsOfSpaces}/test/`, "right");
 
   info("Test with trimURLs disabled");
-  await testVal(`http://${rtlDomain}/${lotsOfSpaces}/test/`, "start");
+  await testVal(`http://${rtlDomain}/${lotsOfSpaces}/test/`, "left");
 });

@@ -8,7 +8,7 @@ const { Component } = require("devtools/client/shared/vendor/react");
 const { findDOMNode } = require("devtools/client/shared/vendor/react-dom");
 const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
 const dom = require("devtools/client/shared/vendor/react-dom-factories");
-const { L10N } = require("../utils/l10n");
+const { L10N } = require("devtools/client/netmonitor/src/utils/l10n");
 
 loader.lazyRequireGetter(
   this,
@@ -51,6 +51,10 @@ class DropHarHandler extends Component {
 
   onDragEnter(event) {
     event.preventDefault();
+    if (event.dataTransfer.files.length === 0) {
+      return;
+    }
+
     startDragging(findDOMNode(this));
   }
 
@@ -68,7 +72,7 @@ class DropHarHandler extends Component {
     event.preventDefault();
     stopDragging(findDOMNode(this));
 
-    const files = event.dataTransfer.files;
+    const { files } = event.dataTransfer;
     if (!files) {
       return;
     }

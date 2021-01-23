@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Event Menu -->
+<!ENTITY event.new.event                        "New Event…">
+<!ENTITY event.new.event.accesskey              "N">
+
+<!ENTITY event.new.task                         "New Task…">
+<!ENTITY event.new.task.accesskey               "k">
+
+<!ENTITY calendar.import.label                  "Import…">
+<!ENTITY calendar.import.accesskey              "I">
+
+<!ENTITY calendar.export.label                  "Export…">
+<!ENTITY calendar.export.accesskey              "E">
+
+<!ENTITY calendar.publish.label                 "Publish…">
+<!ENTITY calendar.publish.accesskey             "b">
+
+<!ENTITY calendar.deletecalendar.label          "Delete Selected Calendar…">
+<!ENTITY calendar.deletecalendar.accesskey      "D">
+<!ENTITY calendar.unsubscribecalendar.label     "Unsubscribe Selected Calendar…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "U">
+
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+<!ENTITY calendar.removecalendar.label          "Remove Selected Calendar…">
+<!ENTITY calendar.removecalendar.accesskey      "R">
+
+
+<!ENTITY calendar.menu.customize.label          "Customise…">
+<!ENTITY calendar.menu.customize.accesskey      "C">
+
+<!ENTITY showUnifinderCmd.label                 "Find Events">
+<!ENTITY showUnifinderCmd.accesskey             "F">
+<!ENTITY showUnifinderCmd.tooltip               "Toggle the find events pane">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "Show Tasks in Calendar">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "T">
+
+<!ENTITY goTodayCmd.label                       "Today">
+<!ENTITY goTodayCmd.accesskey                   "T">
+
+<!ENTITY showCurrentView.label                  "Current View">
+<!ENTITY showCurrentView.accesskey              "V">
+
+<!ENTITY calendar.properties.label              "Calendar Properties…">
+<!ENTITY calendar.properties.accesskey          "C">

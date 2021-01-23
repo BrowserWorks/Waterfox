@@ -40,10 +40,6 @@ var gMockPrompter = {
   // how objects get wrapped when going across xpcom boundaries.
   promptPassword(dialogTitle, text, password, checkMsg, checkValue) {
     this.numPrompts++;
-    if (this.numPrompts > 1) {
-      // don't keep retrying a bad password
-      return false;
-    }
     equal(
       text,
       "Please enter your master password.",
@@ -51,6 +47,10 @@ var gMockPrompter = {
     );
     equal(checkMsg, null, "checkMsg should be null");
     ok(this.passwordToTry, "passwordToTry should be non-null");
+    if (this.passwordToTry == "DontTryThisPassword") {
+      // Cancel the prompt in this case.
+      return false;
+    }
     password.value = this.passwordToTry;
     return true;
   },
@@ -82,7 +82,7 @@ async function encrypt_decrypt_test() {
   let text = new Uint8Array([0x01, 0x00, 0x01]);
   let ciphertext = "";
   try {
-    ciphertext = await keystore.asyncEncryptBytes(LABELS[0], text.length, text);
+    ciphertext = await keystore.asyncEncryptBytes(LABELS[0], text);
     ok(ciphertext, "We should have a ciphertext now.");
   } catch (e) {
     ok(false, "Error encrypting " + e);
@@ -160,6 +160,33 @@ add_task(async function() {
     );
     await delete_all_secrets();
   }
+
+  // Check lock/unlock behaviour.
+  // Unfortunately we can only test this automatically for the NSS key store.
+  // Uncomment the outer keystore.isNSSKeyStore to test other key stores manually.
+  if (keystore.isNSSKeyStore) {
+    await delete_all_secrets();
+    await encrypt_decrypt_test();
+    await keystore.asyncLock();
+    info("Keystore should be locked. Cancel the login request.");
+    try {
+      if (keystore.isNSSKeyStore) {
+        gMockPrompter.passwordToTry = "DontTryThisPassword";
+      }
+      await keystore.asyncUnlock();
+      ok(false, "Unlock should've rejected.");
+    } catch (e) {
+      ok(
+        e.result == Cr.NS_ERROR_FAILURE || e.result == Cr.NS_ERROR_ABORT,
+        "Rejected login prompt."
+      );
+    }
+    // clean up
+    if (keystore.isNSSKeyStore) {
+      gMockPrompter.passwordToTry = "hunter2";
+    }
+    await delete_all_secrets();
+  }
 });
 
 // Test that if we kick off a background operation and then call a synchronous function on the
@@ -175,7 +202,7 @@ add_task(async function() {
 
   try {
     let text = new Uint8Array(8192);
-    let promise = keystore.asyncEncryptBytes(LABELS[0], text.length, text);
+    let promise = keystore.asyncEncryptBytes(LABELS[0], text);
     /* eslint-disable no-unused-expressions */
     keystore.isNSSKeyStore; // we don't care what this is - we just need to access it
     /* eslint-enable no-unused-expressions */
@@ -200,11 +227,7 @@ add_task(async function() {
   ok(recoveryPhrase, "A recovery phrase should've been created.");
 
   let text = new Uint8Array([0x01, 0x00, 0x01]);
-  let ciphertext = await keystore.asyncEncryptBytes(
-    LABELS[0],
-    text.length,
-    text
-  );
+  let ciphertext = await keystore.asyncEncryptBytes(LABELS[0], text);
   ok(ciphertext, "We should have a ciphertext now.");
 
   await keystore.asyncDeleteSecret(LABELS[0]);
@@ -266,11 +289,7 @@ add_task(async function() {
   ok(recoveryPhrase, "A recovery phrase should've been created.");
 
   let text = new Uint8Array([0x66, 0x6f, 0x6f, 0x66]);
-  let ciphertext = await keystore.asyncEncryptBytes(
-    LABELS[0],
-    text.length,
-    text
-  );
+  let ciphertext = await keystore.asyncEncryptBytes(LABELS[0], text);
   ok(ciphertext, "We should have a ciphertext now.");
 
   let newRecoveryPhrase = await keystore.asyncGenerateSecret(LABELS[0]);
@@ -312,11 +331,7 @@ add_task(async function() {
   ok(newRecoveryPhrase, "A new recovery phrase should've been created.");
 
   let text = new Uint8Array([0x66, 0x6f, 0x6f, 0x66]);
-  let ciphertext = await keystore.asyncEncryptBytes(
-    LABELS[0],
-    text.length,
-    text
-  );
+  let ciphertext = await keystore.asyncEncryptBytes(LABELS[0], text);
   ok(ciphertext, "We should have a ciphertext now.");
 
   await keystore.asyncRecoverSecret(LABELS[0], recoveryPhrase);

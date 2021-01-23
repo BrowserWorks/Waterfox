@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD
+    SYSTEM "chrome://branding/locale/brand.dtd">
+  %brandDTD;
+
+<!ENTITY playButton.playLabel "Ойнау">
+<!ENTITY playButton.pauseLabel "Аялдату">
+<!ENTITY muteButton.muteLabel "Дыбысын сөндіру">
+<!ENTITY muteButton.unmuteLabel "Даусын қосу">
+<!ENTITY fullscreenButton.enterfullscreenlabel "Толық экран режимі">
+<!ENTITY fullscreenButton.exitfullscreenlabel "Толық экраннан шығу">
+<!ENTITY castingButton.castingLabel "Экранға шақыру">
+<!ENTITY closedCaption.off "Сөнд">
+<!-- LOCALIZATION NOTE (volumeScrubber.label): This label is exposed to
+     accessibility software to clarify what the slider is for. -->
+<!ENTITY volumeScrubber.label "Дыбыс деңгейін келтірушісі">
+
+<!-- LOCALIZATION NOTE (pictureInPicture.label): This string is used as part of
+the Picture-in-Picture video toggle button when the mouse is hovering it. -->
+<!ENTITY pictureInPicture.label "Суреттегі сурет">
+
+<!-- LOCALIZATION NOTE (pictureInPictureToggle.label): This string is used as the
+label for a variation of the Picture-in-Picture video toggle button when the mouse is
+hovering over the video. -->
+<!ENTITY pictureInPictureToggle.label "Суреттегі сурет режимінде қарау">
+<!-- LOCALIZATION NOTE (pictureInPictureExplainer): This string is used as part of
+a variation of the Picture-in-Picture video toggle button. When using this variation,
+this string appears below the toggle when the mouse hovers the toggle. -->
+
+<!ENTITY error.aborted "Видеоны жүктеу тоқтатылған.">
+<!ENTITY error.network "Видеоны жүктеу желілік қате салдарынан үзілді.">
+<!ENTITY error.decode "Видео файлын ойнату мүмкін емес, өйткені ол зақымдалған.">
+<!ENTITY error.srcNotSupported "Видео пішімі не MIME түріне қолдау жоқ.">
+<!ENTITY error.noSource2 "Пішімі не MIME түріне қолдауы бар ешбір видео табылмады.">
+<!ENTITY error.generic "Видеоны ойнату белгісіз қате салдарынан үзілді.">
+
+<!ENTITY status.pictureInPicture "Бұл видео суреттегі сурет режимінде ойнатылады.">
+
+<!-- LOCALIZATION NOTE (positionAndDuration.nameFormat): the #1 string is the current
+media position, and the #2 string is the total duration. For example, when at
+the 5 minute mark in a 6 hour long video, #1 would be "5:00" and #2 would be
+"6:00:00", result string would be "5:00 / 6:00:00".
+Note that #2 is not always available. For example, when at the 5 minute mark in an
+unknown duration video, #1 would be "5:00" and the string which is surrounded by
+<span> would be deleted, result string would be "5:00".
+-->
+<!ENTITY positionAndDuration.nameFormat "#1<span> / #2</span>">
+

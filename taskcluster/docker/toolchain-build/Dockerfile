@@ -25,16 +25,22 @@ RUN apt-get update && \
       gawk \
       gcc-multilib \
       gnupg \
+      jq \
       libbz2-dev \
       libcurl4-openssl-dev \
       libssl-dev \
+      libxml2-dev \
       libtool \
+      libucl-dev \
       ninja-build \
       p7zip-full \
       procps \
       python-pip \
       python-setuptools \
       python-virtualenv \
+      python3-distutils-extra \
+      python3-requests \
+      python3-pytoml \
       subversion \
       tar \
       unzip \

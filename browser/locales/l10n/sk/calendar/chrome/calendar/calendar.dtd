@@ -1,0 +1,411 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- General -->
+<!ENTITY calendar.calendar.label     "Kalendár">
+<!ENTITY calendar.calendar.accesskey "K">
+
+<!ENTITY calendar.newevent.button.tooltip         "Vytvoriť novú udalosť" >
+<!ENTITY calendar.newtask.button.tooltip          "Vytvoriť novú úlohu" >
+
+<!ENTITY calendar.unifinder.todoitems.label       "Úlohy" >
+
+<!ENTITY calendar.unifinder.showcompletedtodos.label "Zobraziť dokončené úlohy">
+
+<!ENTITY calendar.today.button.label          "Dnes">
+<!ENTITY calendar.tomorrow.button.label       "Zajtra">
+<!ENTITY calendar.upcoming.button.label       "Nadchádzajúce">
+
+<!ENTITY calendar.events.filter.all.label "Všetky udalosti">
+<!ENTITY calendar.events.filter.today.label "Dnešné udalosti">
+<!ENTITY calendar.events.filter.future.label "Všetky budúce udalosti">
+<!ENTITY calendar.events.filter.current.label "Udalosti práve vybraného dňa">
+<!ENTITY calendar.events.filter.currentview.label "Udalosti v aktuálnom zobrazení">
+<!ENTITY calendar.events.filter.next7Days.label "Udalosti za posledných 7 dní">
+<!ENTITY calendar.events.filter.next14Days.label "Udalosti za posledných 14 dní">
+<!ENTITY calendar.events.filter.next31Days.label "Udalosti za posledných 31 dní">
+<!ENTITY calendar.events.filter.thisCalendarMonth.label "Udalosti v aktuálnom mesačnom kalendári">
+
+<!-- LOCALIZATION NOTE(calendar.unifinder.tree.done.tooltip)
+   - This label and tooltip is used for the column with the checkbox in the
+   - task tree view. -->
+<!ENTITY calendar.unifinder.tree.done.label                "Hotovo">
+<!ENTITY calendar.unifinder.tree.done.tooltip2             "Usporiadať podľa stĺpca Hotovo">
+<!ENTITY calendar.unifinder.tree.priority.label            "Priorita">
+<!ENTITY calendar.unifinder.tree.priority.tooltip2         "Usporiadať podľa stĺpca Priorita">
+<!ENTITY calendar.unifinder.tree.title.label               "Názov">
+<!ENTITY calendar.unifinder.tree.title.tooltip2            "Usporiadať podľa stĺpca Názov">
+<!ENTITY calendar.unifinder.tree.percentcomplete.label     "&#37; dokončenia">
+<!ENTITY calendar.unifinder.tree.percentcomplete.tooltip2  "Usporiadať podľa stĺpca &#37; dokončenia">
+<!ENTITY calendar.unifinder.tree.startdate.label           "Začiatok">
+<!ENTITY calendar.unifinder.tree.startdate.tooltip2        "Usporiadať podľa stĺpca Začiatok">
+<!ENTITY calendar.unifinder.tree.enddate.label             "Koniec">
+<!ENTITY calendar.unifinder.tree.enddate.tooltip2          "Usporiadať podľa stĺpca Koniec">
+<!ENTITY calendar.unifinder.tree.duedate.label             "Splniť do">
+<!ENTITY calendar.unifinder.tree.duedate.tooltip2          "Usporiadať podľa stĺpca Splniť do">
+<!ENTITY calendar.unifinder.tree.completeddate.label       "Dokončené">
+<!ENTITY calendar.unifinder.tree.completeddate.tooltip2    "Usporiadať podľa stĺpca Dokončené">
+<!ENTITY calendar.unifinder.tree.categories.label          "Kategória">
+<!ENTITY calendar.unifinder.tree.categories.tooltip2       "Usporiadať podľa stĺpca Kategória">
+<!ENTITY calendar.unifinder.tree.location.label            "Miesto konania">
+<!ENTITY calendar.unifinder.tree.location.tooltip2         "Usporiadať podľa stĺpca Miesto konania">
+<!ENTITY calendar.unifinder.tree.status.label              "Stav">
+<!ENTITY calendar.unifinder.tree.status.tooltip2           "Usporiadať podľa stĺpca Stav">
+<!ENTITY calendar.unifinder.tree.calendarname.label        "Názov kalendára">
+<!ENTITY calendar.unifinder.tree.calendarname.tooltip2     "Usporiadať podľa stĺpca Názov kalendára">
+<!ENTITY calendar.unifinder.tree.duration.label            "Termín o">
+<!ENTITY calendar.unifinder.tree.duration.tooltip2         "Usporiadať podľa stĺpca Termín o">
+<!ENTITY calendar.unifinder.close.tooltip                  "Zavrieť vyhľadávanie udalostí a zoznam udalostí">
+
+<!ENTITY calendar.today.button.tooltip          "Prejsť na dnešný deň" >
+<!ENTITY calendar.todaypane.button.tooltip      "Zobraziť panel Dnes" >
+
+<!ENTITY calendar.day.button.tooltip            "Zmeniť pohľad na denný" >
+<!ENTITY calendar.week.button.tooltip           "Zmeniť pohľad na týždenný" >
+<!ENTITY calendar.month.button.tooltip          "Zmeniť pohľad na mesačný" >
+<!ENTITY calendar.multiweek.button.tooltip      "Zmeniť pohľad na viactýždenný" >
+
+<!ENTITY calendar.nextday.label                 "Nasledujúci deň" >
+<!ENTITY calendar.prevday.label                 "Predchádzajúci deň" >
+<!ENTITY calendar.nextday.accesskey             "a" >
+<!ENTITY calendar.prevday.accesskey             "e" >
+<!ENTITY calendar.nextweek.label                "Nasledujúci týždeň" >
+<!ENTITY calendar.prevweek.label                "Predchádzajúci týždeň" >
+<!ENTITY calendar.nextweek.accesskey            "a" >
+<!ENTITY calendar.prevweek.accesskey            "e" >
+<!ENTITY calendar.nextmonth.label               "Nasledujúci mesiac" >
+<!ENTITY calendar.prevmonth.label               "Predchádzajúci mesiac" >
+<!ENTITY calendar.nextmonth.accesskey           "a" >
+<!ENTITY calendar.prevmonth.accesskey           "e" >
+
+<!ENTITY calendar.navigation.nextday.tooltip    "Jeden deň dopredu" >
+<!ENTITY calendar.navigation.prevday.tooltip    "Jeden deň naspäť" >
+<!ENTITY calendar.navigation.nextweek.tooltip   "Jeden týždeň dopredu" >
+<!ENTITY calendar.navigation.prevweek.tooltip   "Jeden týždeň naspäť" >
+<!ENTITY calendar.navigation.nextmonth.tooltip  "Jeden mesiac dopredu" >
+<!ENTITY calendar.navigation.prevmonth.tooltip  "Jeden mesiac naspäť" >
+
+<!ENTITY calendar.newevent.button.label         "Nová udalosť" >
+<!ENTITY calendar.newtask.button.label          "Nová úloha" >
+<!ENTITY calendar.print.button.label            "Tlačiť" >
+<!ENTITY calendar.print.button.accesskey        "T">
+
+<!ENTITY calendar.day.button.label              "Deň" >
+<!ENTITY calendar.week.button.label             "Týždeň" >
+<!ENTITY calendar.month.button.label            "Mesiac" >
+<!ENTITY calendar.multiweek.button.label        "Viac týždňov" >
+<!ENTITY calendar.onlyworkday.checkbox.label    "Iba pracovné dni" >
+<!ENTITY calendar.onlyworkday.checkbox.accesskey  "r" >
+<!ENTITY calendar.displaytodos.checkbox.label   "Úlohy v pohľade" >
+<!ENTITY calendar.displaytodos.checkbox.accesskey "h" >
+<!ENTITY calendar.completedtasks.checkbox.label     "Zobraziť dokončené úlohy" >
+<!ENTITY calendar.completedtasks.checkbox.accesskey "b" >
+
+<!ENTITY calendar.orientation.label "Otočiť" >
+<!ENTITY calendar.orientation.accesskey "o" >
+
+<!ENTITY calendar.search.options.searchfor " obsahujúce">
+
+<!ENTITY calendar.list.header.label                 "Kalendár">
+
+<!ENTITY calendar.task.filter.title.label           "Zobraziť">
+<!ENTITY calendar.task.filter.all.label             "Všetky">
+<!ENTITY calendar.task.filter.all.accesskey         "V">
+<!ENTITY calendar.task.filter.today.label           "Dnes">
+<!ENTITY calendar.task.filter.today.accesskey       "D">
+<!ENTITY calendar.task.filter.next7days.label       "Nasledujúcich 7 dní">
+<!ENTITY calendar.task.filter.next7days.accesskey   "N">
+<!ENTITY calendar.task.filter.notstarted.label      "Nezačaté úlohy">
+<!ENTITY calendar.task.filter.notstarted.accesskey  "e">
+<!ENTITY calendar.task.filter.overdue.label         "Oneskorené úlohy">
+<!ENTITY calendar.task.filter.overdue.accesskey     "O">
+<!ENTITY calendar.task.filter.completed.label       "Vykonané úlohy">
+<!ENTITY calendar.task.filter.completed.accesskey   "k">
+<!ENTITY calendar.task.filter.open.label            "Nedokončené úlohy">
+<!ENTITY calendar.task.filter.open.accesskey        "h">
+
+<!-- LOCALIZATION NOTE(calendar.task.filter.current.label)
+     "Current Tasks" will show all tasks, except those with a start date set
+     that is after today and after the selected date. If a task repeats, a
+     separate entry will be shown for each of the occurrences that happen on or
+     before today (or the selected date, whichever is later). -->
+<!ENTITY calendar.task.filter.current.label         "Aktuálne úlohy">
+<!ENTITY calendar.task.filter.current.accesskey     "t">
+
+<!ENTITY calendar.task-details.title.label           "názov">
+<!ENTITY calendar.task-details.organizer.label       "od">
+<!ENTITY calendar.task-details.priority.label        "priorita">
+<!ENTITY calendar.task-details.priority.low.label    "Nízka">
+<!ENTITY calendar.task-details.priority.normal.label "Normálna">
+<!ENTITY calendar.task-details.priority.high.label   "Vysoká">
+<!ENTITY calendar.task-details.status.label          "stav">
+<!ENTITY calendar.task-details.category.label        "kategória">
+<!ENTITY calendar.task-details.repeat.label          "opakovať">
+<!ENTITY calendar.task-details.attachments.label     "prílohy">
+<!ENTITY calendar.task-details.start.label           "dátum začatia">
+<!ENTITY calendar.task-details.due.label             "termín splnenia">
+
+<!ENTITY calendar.task.category.button.tooltip  "Pridať úlohu do kategórie">
+<!ENTITY calendar.task.complete.button.tooltip  "Označiť vybrané úlohy ako dokončené">
+<!ENTITY calendar.task.priority.button.tooltip  "Zmeniť prioritu">
+
+<!ENTITY calendar.task.text-filter.textbox.emptytext.base1           "Filtrovať úlohy #1">
+<!ENTITY calendar.task.text-filter.textbox.emptytext.keylabel.nonmac "&lt;Ctrl+Shift+K&gt;">
+<!ENTITY calendar.task.text-filter.textbox.emptytext.keylabel.mac    "&lt;&#x21E7;&#x2318;K&gt;">
+
+<!-- Context Menu -->
+<!ENTITY calendar.context.modifyorviewitem.label      "Otvoriť">
+<!ENTITY calendar.context.modifyorviewitem.accesskey  "O">
+<!ENTITY calendar.context.modifyorviewtask.label      "Otvoriť úlohu…">
+<!ENTITY calendar.context.modifyorviewtask.accesskey  "O">
+<!ENTITY calendar.context.newevent.label              "Nová udalosť…">
+<!ENTITY calendar.context.newevent.accesskey          "N">
+<!ENTITY calendar.context.newtodo.label               "Nová úloha…">
+<!ENTITY calendar.context.newtodo.accesskey           "h">
+<!ENTITY calendar.context.deletetask.label            "Odstrániť úlohu">
+<!ENTITY calendar.context.deletetask.accesskey        "s">
+<!ENTITY calendar.context.deleteevent.label           "Odstrániť udalosť">
+<!ENTITY calendar.context.deleteevent.accesskey       "r">
+<!ENTITY calendar.context.cutevent.label              "Vystrihnúť">
+<!ENTITY calendar.context.cutevent.accesskey          "V">
+<!ENTITY calendar.context.copyevent.label             "Kopírovať">
+<!ENTITY calendar.context.copyevent.accesskey         "K">
+<!ENTITY calendar.context.pasteevent.label            "Prilepiť">
+<!ENTITY calendar.context.pasteevent.accesskey        "P">
+<!ENTITY calendar.context.button.label                "Panel Dnes">
+<!ENTITY calendar.context.button.accesskey            "D">
+
+<!ENTITY calendar.context.attendance.menu.label                 "Účasť">
+<!ENTITY calendar.context.attendance.menu.accesskey             "a">
+<!ENTITY calendar.context.attendance.occurrence.label           "Tento termín">
+<!ENTITY calendar.context.attendance.all2.label                 "Celá séria">
+<!ENTITY calendar.context.attendance.send.label                 "Odoslať upozornenie">
+<!ENTITY calendar.context.attendance.send.accesskey             "s">
+<!ENTITY calendar.context.attendance.dontsend.label             "Neodosielať upozornenie">
+<!ENTITY calendar.context.attendance.dontsend.accesskey         "d">
+
+<!ENTITY calendar.context.attendance.occ.accepted.accesskey     "a">
+<!ENTITY calendar.context.attendance.occ.accepted.label         "Prijaté">
+<!ENTITY calendar.context.attendance.occ.tentative.accesskey    "i">
+<!ENTITY calendar.context.attendance.occ.tentative.label        "Predbežne prijaté">
+<!ENTITY calendar.context.attendance.occ.declined.accesskey     "e">
+<!ENTITY calendar.context.attendance.occ.declined.label         "Odmietnuté">
+<!ENTITY calendar.context.attendance.occ.delegated.accesskey    "m">
+<!ENTITY calendar.context.attendance.occ.delegated.label        "Účasťou bol poverený niekto iný">
+<!ENTITY calendar.context.attendance.occ.needsaction.accesskey  "S">
+<!ENTITY calendar.context.attendance.occ.needsaction.label      "Stále vyžaduje akciu">
+<!ENTITY calendar.context.attendance.occ.inprogress.accesskey   "i">
+<!ENTITY calendar.context.attendance.occ.inprogress.label       "Prebieha">
+<!ENTITY calendar.context.attendance.occ.completed.accesskey    "k">
+<!ENTITY calendar.context.attendance.occ.completed.label        "Dokončené">
+
+<!ENTITY calendar.context.attendance.all.accepted.accesskey     "j">
+<!ENTITY calendar.context.attendance.all.accepted.label         "Prijaté">
+<!ENTITY calendar.context.attendance.all.tentative.accesskey    "e">
+<!ENTITY calendar.context.attendance.all.tentative.label        "Predbežne prijaté">
+<!ENTITY calendar.context.attendance.all.declined.accesskey     "d">
+<!ENTITY calendar.context.attendance.all.declined.label         "Odmietnuté">
+<!ENTITY calendar.context.attendance.all.delegated.accesskey    "i">
+<!ENTITY calendar.context.attendance.all.delegated.label        "Účasťou bol poverený niekto iný">
+<!ENTITY calendar.context.attendance.all.needsaction.accesskey  "l">
+<!ENTITY calendar.context.attendance.all.needsaction.label      "Stále vyžaduje akciu">
+<!ENTITY calendar.context.attendance.all.inprogress.accesskey   "P">
+<!ENTITY calendar.context.attendance.all.inprogress.label       "Prebieha">
+<!ENTITY calendar.context.attendance.all.completed.accesskey    "e">
+<!ENTITY calendar.context.attendance.all.completed.label        "Dokončené">
+
+<!-- Task Context Menu -->
+<!ENTITY calendar.context.progress.label              "Stav">
+<!ENTITY calendar.context.progress.accesskey          "S">
+<!ENTITY calendar.context.priority.label              "Priorita">
+<!ENTITY calendar.context.priority.accesskey          "P">
+<!ENTITY calendar.context.postpone.label              "Odložiť úlohu">
+<!ENTITY calendar.context.postpone.accesskey          "O">
+
+<!ENTITY percnt "&#38;#37;" ><!--=percent sign-->
+
+<!ENTITY calendar.context.markcompleted.label     "Označiť ako dokončenú">
+<!ENTITY calendar.context.markcompleted.accesskey "d">
+
+<!ENTITY progress.level.0             "0&percnt; dokončených">
+<!ENTITY progress.level.0.accesskey   "0">
+<!ENTITY progress.level.25            "25&percnt; dokončených">
+<!ENTITY progress.level.25.accesskey  "2">
+<!ENTITY progress.level.50            "50&percnt; dokončených">
+<!ENTITY progress.level.50.accesskey  "5">
+<!ENTITY progress.level.75            "75&percnt; dokončených">
+<!ENTITY progress.level.75.accesskey  "7">
+<!ENTITY progress.level.100            "100&percnt; dokončených">
+<!ENTITY progress.level.100.accesskey  "1">
+
+<!ENTITY priority.level.none                "Nešpecifikovaná">
+<!ENTITY priority.level.none.accesskey      "e">
+<!ENTITY priority.level.low                 "Nízka">
+<!ENTITY priority.level.low.accesskey       "N">
+<!ENTITY priority.level.normal              "Normálna">
+<!ENTITY priority.level.normal.accesskey    "o">
+<!ENTITY priority.level.high                "Vysoká">
+<!ENTITY priority.level.high.accesskey      "V">
+
+<!ENTITY calendar.context.postpone.1hour.label      "O jednu hodinu">
+<!ENTITY calendar.context.postpone.1hour.accesskey  "h">
+<!ENTITY calendar.context.postpone.1day.label       "O jeden deň">
+<!ENTITY calendar.context.postpone.1day.accesskey   "O">
+<!ENTITY calendar.context.postpone.1week.label      "O jeden týždeň">
+<!ENTITY calendar.context.postpone.1week.accesskey  "d">
+
+<!ENTITY calendar.copylink.label       "Kopírovať adresu odkazu">
+<!ENTITY calendar.copylink.accesskey   "K">
+
+<!-- Task View -->
+<!-- Note that the above *.context.* strings are currently used for the other
+     task action buttons -->
+<!ENTITY calendar.taskview.delete.label     "Odstrániť">
+
+<!-- Server Context Menu -->
+<!ENTITY calendar.context.newserver.label              "Nový kalendár…">
+<!ENTITY calendar.context.newserver.accesskey          "N">
+<!ENTITY calendar.context.findcalendar.label           "Hľadať kalendár…" >
+<!ENTITY calendar.context.findcalendar.accesskey       "H" >
+<!ENTITY calendar.context.deleteserver2.label          "Vymazať kalendár…">
+<!ENTITY calendar.context.deleteserver2.accesskey      "m">
+
+<!-- LOCALIZATION NOTE (calendar.context.removeserver.label): Removing the
+      calendar is the general action of removing it, while deleting means to
+      clear the data and unsubscribing means just taking it out of the calendar
+      list. -->
+<!ENTITY calendar.context.removeserver.label           "Odstrániť kalendár…">
+<!ENTITY calendar.context.removeserver.accesskey       "d">
+<!ENTITY calendar.context.unsubscribeserver.label      "Odhlásiť odber kalendára…">
+<!ENTITY calendar.context.unsubscribeserver.accesskey  "h">
+<!ENTITY calendar.context.synccalendars.label          "Synchronizovať kalendáre">
+<!ENTITY calendar.context.synccalendars.accesskey      "c">
+<!ENTITY calendar.context.publish.label                "Publikovať celý kalendár…">
+<!ENTITY calendar.context.publish.accesskey            "P">
+<!ENTITY calendar.context.export.label                 "Exportovať kalendár…">
+<!ENTITY calendar.context.export.accesskey             "E">
+<!ENTITY calendar.context.properties.label             "Vlastnosti">
+<!ENTITY calendar.context.properties.accesskey         "V">
+
+<!-- LOCALIZATION NOTE (calendar.context.showcalendar.accesskey)
+     This is the access key used for the showCalendar string -->
+<!ENTITY calendar.context.showcalendar.accesskey      "r">
+
+<!-- LOCALIZATION NOTE (calendar.context.hidecalendar.accesskey)
+     This is the access key used for the hideCalendar string -->
+<!ENTITY calendar.context.hidecalendar.accesskey      "r">
+
+<!-- LOCALIZATION NOTE (calendar.context.showonly.accesskey)
+     This is the access key used for the showOnlyCalendar string -->
+<!ENTITY calendar.context.showonly.accesskey           "e">
+<!ENTITY calendar.context.showall.label                "Zobraziť všetky kalendáre">
+<!ENTITY calendar.context.showall.accesskey            "v">
+
+<!ENTITY calendar.context.convertmenu.label              "Konvertovať na">
+<!ENTITY calendar.context.convertmenu.accesskey.mail     "v">
+<!ENTITY calendar.context.convertmenu.accesskey.calendar "v">
+<!ENTITY calendar.context.convertmenu.event.label        "Udalosť…">
+<!ENTITY calendar.context.convertmenu.event.accesskey    "U">
+<!ENTITY calendar.context.convertmenu.message.label      "Správa…">
+<!ENTITY calendar.context.convertmenu.message.accesskey  "S">
+<!ENTITY calendar.context.convertmenu.task.label         "Úloha…">
+<!ENTITY calendar.context.convertmenu.task.accesskey     "h">
+
+<!ENTITY calendar.tasks.view.minimonth.label           "Mini Mesiac">
+<!ENTITY calendar.tasks.view.minimonth.accesskey       "e">
+
+<!ENTITY calendar.tasks.view.calendarlist.label        "Zoznam kalendárov">
+<!ENTITY calendar.tasks.view.calendarlist.accesskey    "Z">
+
+<!ENTITY calendar.tasks.view.filtertasks.label           "Filtrovať úlohy">
+<!ENTITY calendar.tasks.view.filtertasks.accesskey       "F">
+
+<!-- Calendar Alarm Dialog -->
+
+<!ENTITY calendar.alarm.location.label              "Umiestnenie:" >
+<!ENTITY calendar.alarm.details.label               "Podrobnosti…" >
+
+<!ENTITY calendar.alarm.snoozefor.label             "Odložiť o" >
+<!ENTITY calendar.alarm.snoozeallfor.label          "Odložiť všetky o" >
+<!ENTITY calendar.alarm.title.label                 "Upozornenie kalendára" >
+<!ENTITY calendar.alarm.dismiss.label               "Zrušiť" >
+<!ENTITY calendar.alarm.dismissall.label            "Zrušiť všetky" >
+
+<!ENTITY calendar.alarm.snooze.5minutes.label       "5 minút" >
+<!ENTITY calendar.alarm.snooze.10minutes.label      "10 minút" >
+<!ENTITY calendar.alarm.snooze.15minutes.label      "15 minút" >
+<!ENTITY calendar.alarm.snooze.30minutes.label      "30 minút" >
+<!ENTITY calendar.alarm.snooze.45minutes.label      "45 minút" >
+<!ENTITY calendar.alarm.snooze.1hour.label          "1 hodinu" >
+<!ENTITY calendar.alarm.snooze.2hours.label         "2 hodiny" >
+<!ENTITY calendar.alarm.snooze.1day.label           "1 deň" >
+
+<!-- LOCALIZATION NOTE (calendar.alarm.snooze.cancel)
+     This string is not seen in the UI, it is read by screen readers when the
+     user focuses the "Cancel" button in the "Snooze for..." popup of the alarm
+     dialog. -->
+<!ENTITY calendar.alarm.snooze.cancel               "Zrušiť odloženie">
+
+<!-- Calendar Server Dialog -->
+<!ENTITY calendar.server.dialog.title.edit          "Upraviť kalendár">
+<!ENTITY calendar.server.dialog.name.label          "Názov kalendára:">
+
+<!-- Calendar Properties -->
+<!ENTITY calendarproperties.color.label                    "Farba:">
+<!ENTITY calendarproperties.webdav.label                   "iCalendar (ICS)">
+<!ENTITY calendarproperties.caldav.label                   "CalDAV">
+<!ENTITY calendarproperties.wcap.label                     "Sun Java System Calendar Server (WCAP)">
+<!ENTITY calendarproperties.format.label                   "Formát:">
+<!ENTITY calendarproperties.location.label                 "Umiestnenie:">
+<!ENTITY calendarproperties.refreshInterval.label          "Obnoviť kalendár:">
+<!ENTITY calendarproperties.refreshInterval.manual.label   "Manuálne">
+<!ENTITY calendarproperties.name.label                     "Názov:">
+<!ENTITY calendarproperties.readonly.label                 "Iba na čítanie">
+<!ENTITY calendarproperties.firealarms.label               "Zobraziť upozornenia">
+<!ENTITY calendarproperties.cache3.label                   "Podpora pre režim offline">
+<!ENTITY calendarproperties.enabled.label                  "Zapnúť tento kalendár">
+<!ENTITY calendarproperties.enabled2.label                 "Povoliť tento kalendár">
+<!ENTITY calendarproperties.forceDisabled.label            "Poskytovateľ tohto kalendára nebol nájdený. Toto sa často stáva, ak zakážete alebo odinštalujte určité rozšírenia.">
+<!ENTITY calendarproperties.unsubscribe.label              "Odhlásiť sa">
+<!ENTITY calendarproperties.unsubscribe.accesskey          "O">
+
+<!-- Calendar Publish Dialog -->
+<!ENTITY calendar.publish.dialog.title              "Publikovať kalendár">
+<!ENTITY calendar.publish.url.label                 "Adresa URL:">
+<!ENTITY calendar.publish.publish.button      "Publikovať">
+<!ENTITY calendar.publish.close.button      "Zavrieť">
+
+<!ENTITY calendar.publish.example.url.description   "Príklad: http://www.myserver.com/webdav/test.ics">
+
+<!-- Select Calendar Dialog -->
+<!ENTITY calendar.select.dialog.title    "Výber kalendára">
+
+<!-- Calendar Printing -->
+<!ENTITY calendar.print.window.title "Tlač kalendára">
+<!ENTITY calendar.print.title.label "Názov">
+<!ENTITY calendar.print.layout.label "Rozmiestnenie">
+<!ENTITY calendar.print.range.label "Rozsah tlače">
+<!ENTITY calendar.print.currentView2.label "Aktuálne zobrazenie">
+<!ENTITY calendar.print.selectedEventsAndTasks.label "Označené udalosti/úlohy">
+<!ENTITY calendar.print.tasks.label "Úlohy">
+<!ENTITY calendar.print.events.label "Udalosti">
+<!ENTITY calendar.print.custom.label "Vlastné:">
+<!ENTITY calendar.print.from.label "Od:">
+<!ENTITY calendar.print.to.label "Do:">
+<!ENTITY calendar.print.settingsGroup.label "Nastavenia tlače">
+<!ENTITY calendar.print.optionsGroup.label "Možnosti">
+<!ENTITY calendar.print.taskswithnoduedate.label "Úlohy bez termínu ukončenia">
+<!ENTITY calendar.print.completedtasks.label "Dokončené úlohy">
+
+<!-- Error reporting -->
+<!ENTITY calendar.error.detail "Podrobnosti…">
+<!ENTITY calendar.error.code "Kód chyby:">
+<!ENTITY calendar.error.description "Popis:">
+<!ENTITY calendar.error.title "Vyskytla sa chyba:">
+
+<!-- Extract buttons in message header -->
+<!ENTITY calendar.extract.event.button         "Pridať ako udalosť">
+<!ENTITY calendar.extract.task.button          "Pridať ako úlohu">
+<!ENTITY calendar.extract.event.button.tooltip "Extrahuje informácie o termínoch z e-mailovej správy a pridá ich do kalendára ako udalosť">
+<!ENTITY calendar.extract.task.button.tooltip  "Extrahuje informácie o termínoch z e-mailovej správy a pridá ich do kalendára ako úlohu">

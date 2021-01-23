@@ -14,13 +14,16 @@
 const { Cc, Ci, Cu } = require("chrome");
 const Services = require("Services");
 
-const { ChromeDebuggerActor } = require("devtools/server/actors/thread");
+const { ThreadActor } = require("devtools/server/actors/thread");
 const { WebConsoleActor } = require("devtools/server/actors/webconsole");
 const makeDebugger = require("devtools/server/actors/utils/make-debugger");
-const { ActorPool } = require("devtools/server/actors/common");
 const { Pool } = require("devtools/shared/protocol");
 const { assert } = require("devtools/shared/DevToolsUtils");
 const { TabSources } = require("devtools/server/actors/utils/TabSources");
+const { ActorClassWithSpec, Actor } = require("devtools/shared/protocol");
+const {
+  contentProcessTargetSpec,
+} = require("devtools/shared/specs/targets/content-process");
 
 loader.lazyRequireGetter(
   this,
@@ -34,53 +37,54 @@ loader.lazyRequireGetter(
   "devtools/server/actors/memory",
   true
 );
-loader.lazyRequireGetter(
-  this,
-  "PromisesActor",
-  "devtools/server/actors/promises",
-  true
-);
 
-function ContentProcessTargetActor(connection) {
-  this.conn = connection;
-  this._contextPool = new ActorPool(this.conn);
-  this.conn.addActorPool(this._contextPool);
-  this.threadActor = null;
+const ContentProcessTargetActor = ActorClassWithSpec(contentProcessTargetSpec, {
+  initialize: function(connection) {
+    Actor.prototype.initialize.call(this, connection);
+    this.conn = connection;
+    this.threadActor = null;
 
-  // Use a see-everything debugger
-  this.makeDebugger = makeDebugger.bind(null, {
-    findDebuggees: dbg => dbg.findAllGlobals(),
-    shouldAddNewGlobalAsDebuggee: global => true,
-  });
+    // Use a see-everything debugger
+    this.makeDebugger = makeDebugger.bind(null, {
+      findDebuggees: dbg => dbg.findAllGlobals(),
+      shouldAddNewGlobalAsDebuggee: global => true,
+    });
 
-  const sandboxPrototype = {
-    get tabs() {
-      return Array.from(
-        Services.ww.getWindowEnumerator(),
-        win => win.docShell.messageManager
-      );
-    },
-  };
+    const sandboxPrototype = {
+      get tabs() {
+        return Array.from(
+          Services.ww.getWindowEnumerator(),
+          win => win.docShell.messageManager
+        );
+      },
+    };
 
-  // Scope into which the webconsole executes:
-  // A sandbox with chrome privileges with a `tabs` getter.
-  const systemPrincipal = Cc["@mozilla.org/systemprincipal;1"].createInstance(
-    Ci.nsIPrincipal
-  );
-  const sandbox = Cu.Sandbox(systemPrincipal, {
-    sandboxPrototype,
-    wantGlobalProperties: ["ChromeUtils"],
-  });
-  this._consoleScope = sandbox;
+    // Scope into which the webconsole executes:
+    // A sandbox with chrome privileges with a `tabs` getter.
+    const systemPrincipal = Cc["@mozilla.org/systemprincipal;1"].createInstance(
+      Ci.nsIPrincipal
+    );
+    const sandbox = Cu.Sandbox(systemPrincipal, {
+      sandboxPrototype,
+      wantGlobalProperties: ["ChromeUtils"],
+    });
+    this._consoleScope = sandbox;
 
-  this._workerList = null;
-  this._workerTargetActorPool = null;
-  this._onWorkerListChanged = this._onWorkerListChanged.bind(this);
-}
-exports.ContentProcessTargetActor = ContentProcessTargetActor;
+    this._workerList = null;
+    this._workerTargetActorPool = null;
+    this._onWorkerListChanged = this._onWorkerListChanged.bind(this);
 
-ContentProcessTargetActor.prototype = {
-  actorPrefix: "contentProcessTarget",
+    // Try to destroy the Content Process Target when the content process shuts down.
+    // The parent process can't communicate during shutdown as the communication channel
+    // is already down (message manager or JS Window Actor API).
+    // So that we have to observe to some event fired from this process.
+    // While such cleanup doesn't sound ultimately necessary (the process will be completely destroyed)
+    // mochitests are asserting that there is no leaks during process shutdown.
+    // Do not override destroy as Protocol.js may override it when calling destroy,
+    // and we won't be able to call removeObserver correctly.
+    this.destroyObserver = this.destroy.bind(this);
+    Services.obs.addObserver(this.destroyObserver, "xpcom-shutdown");
+  },
 
   get isRootActor() {
     return true;
@@ -109,35 +113,36 @@ ContentProcessTargetActor.prototype = {
     return this._sources;
   },
 
+  /*
+   * Return a Debugger instance or create one if there is none yet
+   */
+  get dbg() {
+    if (!this._dbg) {
+      this._dbg = this.makeDebugger();
+    }
+    return this._dbg;
+  },
+
   form: function() {
     if (!this._consoleActor) {
       this._consoleActor = new WebConsoleActor(this.conn, this);
-      this._contextPool.addActor(this._consoleActor);
+      this.manage(this._consoleActor);
     }
 
     if (!this.threadActor) {
-      this.threadActor = new ChromeDebuggerActor(this.conn, this);
-      this._contextPool.addActor(this.threadActor);
+      this.threadActor = new ThreadActor(this, null);
+      this.manage(this.threadActor);
     }
     if (!this.memoryActor) {
       this.memoryActor = new MemoryActor(this.conn, this);
-      this._contextPool.addActor(this.memoryActor);
-    }
-    // Promises actor is being tested by xpcshell test, which uses the content process
-    // target actor. But this actor isn't being used outside of tests yet.
-    if (!this._promisesActor) {
-      this._promisesActor = new PromisesActor(this.conn, this);
-      this._contextPool.addActor(this._promisesActor);
+      this.manage(this.memoryActor);
     }
 
     return {
       actor: this.actorID,
-      name: "Content process",
-
       consoleActor: this._consoleActor.actorID,
-      chromeDebugger: this.threadActor.actorID,
+      threadActor: this.threadActor.actorID,
       memoryActor: this.memoryActor.actorID,
-      promisesActor: this._promisesActor.actorID,
 
       traits: {
         networkMonitor: false,
@@ -145,30 +150,36 @@ ContentProcessTargetActor.prototype = {
     };
   },
 
-  onListWorkers: function() {
+  ensureWorkerList() {
     if (!this._workerList) {
       this._workerList = new WorkerTargetActorList(this.conn, {});
     }
-    return this._workerList.getList().then(actors => {
-      const pool = new Pool(this.conn);
-      for (const actor of actors) {
-        pool.manage(actor);
-      }
+    return this._workerList;
+  },
 
-      // Do not destroy the pool before transfering ownership to the newly created
-      // pool, so that we do not accidently destroy actors that are still in use.
-      if (this._workerTargetActorPool) {
-        this._workerTargetActorPool.destroy();
-      }
+  listWorkers: function() {
+    return this.ensureWorkerList()
+      .getList()
+      .then(actors => {
+        const pool = new Pool(this.conn, "workers");
+        for (const actor of actors) {
+          pool.manage(actor);
+        }
 
-      this._workerTargetActorPool = pool;
-      this._workerList.onListChanged = this._onWorkerListChanged;
+        // Do not destroy the pool before transfering ownership to the newly created
+        // pool, so that we do not accidentally destroy actors that are still in use.
+        if (this._workerTargetActorPool) {
+          this._workerTargetActorPool.destroy();
+        }
 
-      return {
-        from: this.actorID,
-        workers: actors.map(actor => actor.form()),
-      };
-    });
+        this._workerTargetActorPool = pool;
+        this._workerList.onListChanged = this._onWorkerListChanged;
+
+        return {
+          from: this.actorID,
+          workers: actors,
+        };
+      });
   },
 
   _onWorkerListChanged: function() {
@@ -176,25 +187,34 @@ ContentProcessTargetActor.prototype = {
     this._workerList.onListChanged = null;
   },
 
+  pauseMatchingServiceWorkers(request) {
+    this.ensureWorkerList().workerPauser.setPauseServiceWorkers(request.origin);
+  },
+
   destroy: function() {
-    this.conn.removeActorPool(this._contextPool);
-    this._contextPool = null;
+    if (!this.actorID) {
+      return;
+    }
+    Actor.prototype.destroy.call(this);
 
     // Tell the live lists we aren't watching any more.
     if (this._workerList) {
-      this._workerList.onListChanged = null;
+      this._workerList.destroy();
+      this._workerList = null;
     }
+
+    if (this._sources) {
+      this._sources.destroy();
+      this._sources = null;
+    }
+
+    if (this._dbg) {
+      this._dbg.disable();
+      this._dbg = null;
+    }
+
+    Services.obs.removeObserver(this.destroyObserver, "xpcom-shutdown");
   },
+});
 
-  preNest: function() {
-    // TODO: freeze windows
-    // window mediator doesn't work in child.
-    // it doesn't throw, but doesn't return any window
-  },
-
-  postNest: function() {},
-};
-
-ContentProcessTargetActor.prototype.requestTypes = {
-  listWorkers: ContentProcessTargetActor.prototype.onListWorkers,
-};
+exports.ContentProcessTargetActor = ContentProcessTargetActor;

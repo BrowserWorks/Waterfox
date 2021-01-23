@@ -14,7 +14,7 @@ pub fn expand_heap_addr(
     inst: ir::Inst,
     func: &mut ir::Function,
     cfg: &mut ControlFlowGraph,
-    _isa: &TargetIsa,
+    isa: &dyn TargetIsa,
 ) {
     // Unpack the instruction.
     let (heap, offset, access_size) = match func.dfg[inst] {
@@ -32,16 +32,24 @@ pub fn expand_heap_addr(
 
     match func.heaps[heap].style {
         ir::HeapStyle::Dynamic { bound_gv } => {
-            dynamic_addr(inst, heap, offset, access_size, bound_gv, func)
+            dynamic_addr(isa, inst, heap, offset, access_size, bound_gv, func)
         }
-        ir::HeapStyle::Static { bound } => {
-            static_addr(inst, heap, offset, access_size, bound.into(), func, cfg)
-        }
+        ir::HeapStyle::Static { bound } => static_addr(
+            isa,
+            inst,
+            heap,
+            offset,
+            access_size,
+            bound.into(),
+            func,
+            cfg,
+        ),
     }
 }
 
 /// Expand a `heap_addr` for a dynamic heap.
 fn dynamic_addr(
+    isa: &dyn TargetIsa,
     inst: ir::Inst,
     heap: ir::Heap,
     offset: ir::Value,
@@ -74,19 +82,24 @@ fn dynamic_addr(
     } else {
         // We need an overflow check for the adjusted offset.
         let access_size_val = pos.ins().iconst(offset_ty, access_size as i64);
-        let (adj_offset, overflow) = pos.ins().iadd_cout(offset, access_size_val);
-        pos.ins().trapnz(overflow, ir::TrapCode::HeapOutOfBounds);
+        let (adj_offset, overflow) = pos.ins().iadd_ifcout(offset, access_size_val);
+        pos.ins().trapif(
+            isa.unsigned_add_overflow_condition(),
+            overflow,
+            ir::TrapCode::HeapOutOfBounds,
+        );
         oob = pos
             .ins()
             .icmp(IntCC::UnsignedGreaterThan, adj_offset, bound);
     }
     pos.ins().trapnz(oob, ir::TrapCode::HeapOutOfBounds);
 
-    compute_addr(inst, heap, addr_ty, offset, offset_ty, pos.func);
+    compute_addr(isa, inst, heap, addr_ty, offset, offset_ty, pos.func);
 }
 
 /// Expand a `heap_addr` for a static heap.
 fn static_addr(
+    isa: &dyn TargetIsa,
     inst: ir::Inst,
     heap: ir::Heap,
     offset: ir::Value,
@@ -101,26 +114,38 @@ fn static_addr(
     let mut pos = FuncCursor::new(func).at_inst(inst);
     pos.use_srcloc(inst);
 
-    // Start with the bounds check. Trap if `offset + access_size > bound`.
+    // The goal here is to trap if `offset + access_size > bound`.
+    //
+    // This first case is a trivial case where we can easily trap.
     if access_size > bound {
         // This will simply always trap since `offset >= 0`.
         pos.ins().trap(ir::TrapCode::HeapOutOfBounds);
         pos.func.dfg.replace(inst).iconst(addr_ty, 0);
 
-        // Split Ebb, as the trap is a terminator instruction.
-        let curr_ebb = pos.current_ebb().expect("Cursor is not in an ebb");
-        let new_ebb = pos.func.dfg.make_ebb();
-        pos.insert_ebb(new_ebb);
-        cfg.recompute_ebb(pos.func, curr_ebb);
-        cfg.recompute_ebb(pos.func, new_ebb);
+        // Split Block, as the trap is a terminator instruction.
+        let curr_block = pos.current_block().expect("Cursor is not in a block");
+        let new_block = pos.func.dfg.make_block();
+        pos.insert_block(new_block);
+        cfg.recompute_block(pos.func, curr_block);
+        cfg.recompute_block(pos.func, new_block);
         return;
     }
 
-    // Check `offset > limit` which is now known non-negative.
+    // After the trivial case is done we're now mostly interested in trapping
+    // if `offset > bound - access_size`. We know `bound - access_size` here is
+    // non-negative from the above comparison.
+    //
+    // If we can know `bound - access_size >= 4GB` then with a 32-bit offset
+    // we're guaranteed:
+    //
+    //      bound - access_size >= 4GB > offset
+    //
+    // or, in other words, `offset < bound - access_size`, meaning we can't trap
+    // for any value of `offset`.
+    //
+    // With that we have an optimization here where with 32-bit offsets and
+    // `bound - access_size >= 4GB` we can omit a bounds check.
     let limit = bound - access_size;
-
-    // We may be able to omit the check entirely for 32-bit offsets if the heap bound is 4 GB or
-    // more.
     if offset_ty != ir::types::I32 || limit < 0xffff_ffff {
         let oob = if limit & 1 == 1 {
             // Prefer testing `offset >= limit - 1` when limit is odd because an even number is
@@ -134,11 +159,12 @@ fn static_addr(
         pos.ins().trapnz(oob, ir::TrapCode::HeapOutOfBounds);
     }
 
-    compute_addr(inst, heap, addr_ty, offset, offset_ty, pos.func);
+    compute_addr(isa, inst, heap, addr_ty, offset, offset_ty, pos.func);
 }
 
 /// Emit code for the base address computation of a `heap_addr` instruction.
 fn compute_addr(
+    isa: &dyn TargetIsa,
     inst: ir::Inst,
     heap: ir::Heap,
     addr_ty: ir::Type,
@@ -165,7 +191,12 @@ fn compute_addr(
     }
 
     // Add the heap base address base
-    let base_gv = pos.func.heaps[heap].base;
-    let base = pos.ins().global_value(addr_ty, base_gv);
+    let base = if isa.flags().enable_pinned_reg() && isa.flags().use_pinned_reg_as_heap_base() {
+        pos.ins().get_pinned_reg(isa.pointer_type())
+    } else {
+        let base_gv = pos.func.heaps[heap].base;
+        pos.ins().global_value(addr_ty, base_gv)
+    };
+
     pos.func.dfg.replace(inst).iadd(base, offset);
 }

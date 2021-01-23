@@ -7,12 +7,11 @@
 #ifndef vm_SharedMem_h
 #define vm_SharedMem_h
 
-#include "mozilla/TypeTraits.h"
+#include <type_traits>
 
 template <typename T>
 class SharedMem {
-  // static_assert(mozilla::IsPointer<T>::value,
-  //               "SharedMem encapsulates pointer types");
+  static_assert(std::is_pointer_v<T>, "SharedMem encapsulates pointer types");
 
   enum Sharedness { IsUnshared, IsShared };
 
@@ -76,12 +75,11 @@ class SharedMem {
   template <typename U>
   inline SharedMem<U> cast() const {
 #ifdef DEBUG
-    MOZ_ASSERT(asValue() %
-                   sizeof(mozilla::Conditional<
-                          mozilla::IsVoid<
-                              typename mozilla::RemovePointer<U>::Type>::value,
-                          char, typename mozilla::RemovePointer<U>::Type>) ==
-               0);
+    MOZ_ASSERT(
+        asValue() %
+            sizeof(std::conditional_t<std::is_void_v<std::remove_pointer_t<U>>,
+                                      char, std::remove_pointer_t<U>>) ==
+        0);
     if (sharedness_ == IsUnshared) {
       return SharedMem<U>::unshared(unwrap());
     }
@@ -122,12 +120,11 @@ class SharedMem {
   // Cast to char*, add nbytes, and cast back to T.  Simplifies code in a few
   // places.
   SharedMem addBytes(size_t nbytes) {
-    MOZ_ASSERT(nbytes %
-                   sizeof(mozilla::Conditional<
-                          mozilla::IsVoid<
-                              typename mozilla::RemovePointer<T>::Type>::value,
-                          char, typename mozilla::RemovePointer<T>::Type>) ==
-               0);
+    MOZ_ASSERT(
+        nbytes %
+            sizeof(std::conditional_t<std::is_void_v<std::remove_pointer_t<T>>,
+                                      char, std::remove_pointer_t<T>>) ==
+        0);
     return SharedMem(
         reinterpret_cast<T>(reinterpret_cast<char*>(ptr_) + nbytes), *this);
   }

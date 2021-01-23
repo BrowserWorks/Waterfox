@@ -18,26 +18,29 @@ inline void EmitBaselineTailCallVM(TrampolinePtr target, MacroAssembler& masm,
                                    uint32_t argSize) {
   // We assume during this that R0 and R1 have been pushed, and that R2 is
   // unused.
-  MOZ_ASSERT(R2 == ValueOperand(r1, r0));
+  static_assert(R2 == ValueOperand(r1, r0));
 
   // Compute frame size.
   masm.movePtr(BaselineFrameReg, r0);
   masm.as_add(r0, r0, Imm8(BaselineFrame::FramePointerOffset));
   masm.ma_sub(BaselineStackReg, r0);
 
-  // Store frame size without VMFunction arguments for GC marking.
+#ifdef DEBUG
+  // Store frame size without VMFunction arguments for debug assertions.
   {
     ScratchRegisterScope scratch(masm);
     masm.ma_sub(r0, Imm32(argSize), r1, scratch);
   }
-  masm.store32(
-      r1, Address(BaselineFrameReg, BaselineFrame::reverseOffsetOfFrameSize()));
+  Address frameSizeAddr(BaselineFrameReg,
+                        BaselineFrame::reverseOffsetOfDebugFrameSize());
+  masm.store32(r1, frameSizeAddr);
+#endif
 
   // Push frame descriptor and perform the tail call.
   // ICTailCallReg (lr) already contains the return address (as we keep
   // it there through the stub calls), but the VMWrapper code being called
   // expects the return address to also be pushed on the stack.
-  MOZ_ASSERT(ICTailCallReg == lr);
+  static_assert(ICTailCallReg == lr);
   masm.makeFrameDescriptor(r0, FrameType::BaselineJS, ExitFrameLayout::Size());
   masm.push(r0);
   masm.push(lr);
@@ -74,8 +77,11 @@ inline void EmitBaselineEnterStubFrame(MacroAssembler& masm, Register scratch) {
   masm.as_add(scratch, scratch, Imm8(BaselineFrame::FramePointerOffset));
   masm.ma_sub(BaselineStackReg, scratch);
 
-  masm.store32(scratch, Address(BaselineFrameReg,
-                                BaselineFrame::reverseOffsetOfFrameSize()));
+#ifdef DEBUG
+  Address frameSizeAddr(BaselineFrameReg,
+                        BaselineFrame::reverseOffsetOfDebugFrameSize());
+  masm.store32(scratch, frameSizeAddr);
+#endif
 
   // Note: when making changes here, don't forget to update STUB_FRAME_SIZE if
   // needed.

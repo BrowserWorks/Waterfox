@@ -71,8 +71,8 @@ class WindowManagerMixin(object):
                         "Newly opened browsing context is of type {} and not tab.".format(
                             result["type"]))
         except Exception:
-            exc, val, tb = sys.exc_info()
-            reraise(exc, 'Failed to trigger opening a new tab: {}'.format(val), tb)
+            exc_cls, exc, tb = sys.exc_info()
+            reraise(exc_cls, exc_cls('Failed to trigger opening a new tab: {}'.format(exc)), tb)
         else:
             Wait(self.marionette).until(
                 lambda mn: len(mn.window_handles) == len(current_tabs) + 1,
@@ -83,7 +83,7 @@ class WindowManagerMixin(object):
 
             return new_tab
 
-    def open_window(self, callback=None, focus=False):
+    def open_window(self, callback=None, focus=False, private=False):
         current_windows = self.marionette.chrome_window_handles
         current_tabs = self.marionette.window_handles
 
@@ -98,16 +98,16 @@ class WindowManagerMixin(object):
 
         try:
             if callable(callback):
-                callback()
+                callback(focus)
             else:
-                result = self.marionette.open(type="window", focus=focus)
+                result = self.marionette.open(type="window", focus=focus, private=private)
                 if result["type"] != "window":
                     raise Exception(
                         "Newly opened browsing context is of type {} and not window.".format(
                             result["type"]))
         except Exception:
-            exc, val, tb = sys.exc_info()
-            reraise(exc, 'Failed to trigger opening a new window: {}'.format(val), tb)
+            exc_cls, exc, tb = sys.exc_info()
+            reraise(exc_cls, exc_cls('Failed to trigger opening a new window: {}'.format(exc)), tb)
         else:
             Wait(self.marionette).until(
                 lambda mn: len(mn.chrome_window_handles) == len(current_windows) + 1,
@@ -136,10 +136,10 @@ class WindowManagerMixin(object):
         Can be replaced with "WebDriver:NewWindow" once the command
         supports opening generic chrome windows beside browsers (bug 1507771).
         """
-        def open_with_js():
+        def open_with_js(focus):
             with self.marionette.using_context("chrome"):
                 self.marionette.execute_async_script("""
-                  let [url, resolve] = arguments;
+                  let [url, focus, resolve] = arguments;
 
                   function waitForEvent(target, type, args) {
                     return new Promise(resolve => {
@@ -163,20 +163,20 @@ class WindowManagerMixin(object):
                     let win = window.openDialog(url, null, "chrome,centerscreen");
                     let focused = waitForFocus(win);
 
-                    // Bug 1509380 - Missing focus/activate event when Firefox is not
-                    // the top-most application. As such wait for the next tick, and
-                    // manually focus the newly opened window.
-                    win.setTimeout(() => win.focus(), 0);
+                    win.focus();
                     await focused;
 
-                    // Now refocus our original window and wait for that to happen.
-                    focused = waitForFocus(window);
-                    window.focus();
-                    await focused;
+                    // The new window shouldn't get focused. As such set the
+                    // focus back to the opening window.
+                    if (!focus && Services.focus.activeWindow != window) {
+                      let focused = waitForFocus(window);
+                      window.focus();
+                      await focused;
+                    }
 
-                    resolve();
+                    resolve(win.windowUtils.outerWindowID);
                   })();
-                """, script_args=(url,))
+                """, script_args=(url, focus))
 
         with self.marionette.using_context("chrome"):
             return self.open_window(callback=open_with_js, focus=focus)

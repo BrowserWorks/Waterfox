@@ -9,7 +9,6 @@
 
 #include <stdint.h>
 #include "prtime.h"
-#include "nsAutoPtr.h"
 #include "nsString.h"
 #include "nsError.h"
 #include "nsTArray.h"
@@ -32,26 +31,14 @@ enum class HttpVersion {
   v0_9 = 9,
   v1_0 = 10,
   v1_1 = 11,
-  v2_0 = 20
+  v2_0 = 20,
+  v3_0 = 30
 };
 
-enum class SpdyVersion {
-  NONE = 0,
-  // SPDY_VERSION_2 = 2, REMOVED
-  // SPDY_VERSION_3 = 3, REMOVED
-  // SPDY_VERSION_31 = 4, REMOVED
-  HTTP_2 = 5
+enum class SpdyVersion { NONE = 0, HTTP_2 = 5 };
 
-  // leave room for official versions. telem goes to 48
-  // 24 was a internal spdy/3.1
-  // 25 was spdy/4a2
-  // 26 was http/2-draft08 and http/2-draft07 (they were the same)
-  // 27 was http/2-draft09, h2-10, and h2-11
-  // 28 was http/2-draft12
-  // 29 was http/2-draft13
-  // 30 was h2-14 and h2-15
-  // 31 was h2-16
-};
+extern const nsCString kHttp3Version;
+const char kHttp3VersionHEX[] = "ff0000001b";  // this is draft 27.
 
 //-----------------------------------------------------------------------------
 // http connection capabilities
@@ -107,10 +94,6 @@ enum class SpdyVersion {
 // on ERROR_NET_RESET.
 #define NS_HTTP_CONNECTION_RESTARTABLE (1 << 13)
 
-// Disallow name resolutions for this transaction to use TRR - primarily
-// for use with TRR implementations themselves
-#define NS_HTTP_DISABLE_TRR (1 << 14)
-
 // Allow re-using a spdy/http2 connection with NS_HTTP_ALLOW_KEEPALIVE not set.
 // This is primarily used to allow connection sharing for websockets over http/2
 // without accidentally allowing it for websockets not over http/2
@@ -127,6 +110,21 @@ enum class SpdyVersion {
 // The connection should not use IPv6
 #define NS_HTTP_DISABLE_IPV6 (1 << 18)
 
+// Encodes the TRR mode.
+#define NS_HTTP_TRR_MODE_MASK ((1 << 19) | (1 << 20))
+
+// The connection could bring the peeked data for sniffing
+#define NS_HTTP_CALL_CONTENT_SNIFFER (1 << 21)
+
+// Disallow the use of the HTTP3 protocol. This is meant for the contexts
+// such as HTTP upgrade which are not supported by HTTP3.
+#define NS_HTTP_DISALLOW_HTTP3 (1 << 22)
+
+#define NS_HTTP_TRR_FLAGS_FROM_MODE(x) ((static_cast<uint32_t>(x) & 3) << 19)
+
+#define NS_HTTP_TRR_MODE_FROM_FLAGS(x) \
+  (static_cast<nsIRequest::TRRMode>((((x)&NS_HTTP_TRR_MODE_MASK) >> 19) & 3))
+
 //-----------------------------------------------------------------------------
 // some default values
 //-----------------------------------------------------------------------------
@@ -141,6 +139,10 @@ enum class SpdyVersion {
 //-----------------------------------------------------------------------------
 
 struct nsHttpAtom {
+  nsHttpAtom() : _val(nullptr){};
+  explicit nsHttpAtom(const char* val) : _val(val) {}
+  nsHttpAtom(const nsHttpAtom& other) = default;
+
   operator const char*() const { return _val; }
   const char* get() const { return _val; }
 
@@ -152,7 +154,7 @@ struct nsHttpAtom {
 };
 
 namespace nsHttp {
-MOZ_MUST_USE nsresult CreateAtomTable();
+[[nodiscard]] nsresult CreateAtomTable();
 void DestroyAtomTable();
 
 // The mutex is valid any time the Atom Table is valid
@@ -198,12 +200,12 @@ const char* FindToken(const char* input, const char* token,
 //
 // TODO(darin): Replace this with something generic.
 //
-MOZ_MUST_USE bool ParseInt64(const char* input, const char** next,
-                             int64_t* result);
+[[nodiscard]] bool ParseInt64(const char* input, const char** next,
+                              int64_t* result);
 
 // Variant on ParseInt64 that expects the input string to contain nothing
 // more than the value being parsed.
-inline MOZ_MUST_USE bool ParseInt64(const char* input, int64_t* result) {
+[[nodiscard]] inline bool ParseInt64(const char* input, int64_t* result) {
   const char* next;
   return ParseInt64(input, &next, result) && *next == '\0';
 }
@@ -242,8 +244,6 @@ void NotifyActiveTabLoadOptimization();
 TimeStamp const GetLastActiveTabLoadOptimizationHit();
 void SetLastActiveTabLoadOptimizationHit(TimeStamp const& when);
 bool IsBeforeLastActiveTabLoadOptimization(TimeStamp const& when);
-
-HttpVersion GetHttpVersionFromSpdy(SpdyVersion sv);
 
 // Declare all atoms
 //
@@ -331,6 +331,11 @@ class ParsedHeaderValueListList {
 };
 
 void LogHeaders(const char* lineStart);
+
+// Convert HTTP response codes returned by a proxy to nsresult.
+// This function should be only used when we get a failed response to the
+// CONNECT method.
+nsresult HttpProxyResponseToErrorCode(uint32_t aStatusCode);
 
 }  // namespace net
 }  // namespace mozilla

@@ -18,13 +18,12 @@ XPIDL_MODULE = 'migration'
 
 EXTRA_JS_MODULES += [
     'ChromeMigrationUtils.jsm',
-    'ChromeProfileMigrator.jsm',
-    'FirefoxProfileMigrator.jsm',
-    'LfirefoxProfileMigrator.jsm',    
+    'ChromeProfileMigrator.jsm',   
+    'FirefoxProfileMigrator.jsm',    
     'MigrationUtils.jsm',
     'ProfileMigrator.jsm',
-    'WaterfoxClassicProfileMigrator.jsm',    
-    'WaterfoxProfileMigrator.jsm',
+    'WaterfoxClassicProfileMigrator.jsm',
+    'WaterfoxProfileMigrator.jsm',   
 ]
 
 if CONFIG['OS_ARCH'] == 'WINNT':
@@ -37,6 +36,7 @@ if CONFIG['OS_ARCH'] == 'WINNT':
     ]
     EXTRA_JS_MODULES += [
         '360seProfileMigrator.jsm',
+        'ChromeWindowsLoginCrypto.jsm',
         'EdgeProfileMigrator.jsm',
         'ESEDBReader.jsm',
         'IEProfileMigrator.jsm',
@@ -44,9 +44,20 @@ if CONFIG['OS_ARCH'] == 'WINNT':
     ]
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
+    EXPORTS += [
+        'nsKeychainMigrationUtils.h',
+    ]
     EXTRA_JS_MODULES += [
+        'ChromeMacOSLoginCrypto.jsm',
         'SafariProfileMigrator.jsm',
     ]
+    SOURCES += [
+        'nsKeychainMigrationUtils.mm',
+    ]
+    XPIDL_SOURCES += [
+        'nsIKeychainMigrationUtils.idl',
+    ]
+
 
 XPCOM_MANIFESTS += [
     'components.conf',
@@ -55,4 +66,4 @@ XPCOM_MANIFESTS += [
 FINAL_LIBRARY = 'browsercomps'
 
 with Files('**'):
-    BUG_COMPONENT = ('Firefox', 'Migration')
+    BUG_COMPONENT = ('WaterfoxRefresh', 'Migration')

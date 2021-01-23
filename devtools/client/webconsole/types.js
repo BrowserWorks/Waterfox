@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -34,6 +32,7 @@ exports.ConsoleMessage = function(props) {
     {
       id: null,
       innerWindowID: null,
+      targetFront: null,
       allowRepeating: true,
       source: null,
       timeStamp: null,
@@ -49,7 +48,6 @@ exports.ConsoleMessage = function(props) {
       groupId: null,
       errorMessageName: null,
       exceptionDocURL: null,
-      executionPoint: undefined,
       cssSelectors: "",
       userProvidedStyles: null,
       notes: null,
@@ -58,6 +56,8 @@ exports.ConsoleMessage = function(props) {
       private: false,
       logpointId: undefined,
       chromeContext: false,
+      hasException: false,
+      isPromiseRejection: false,
     },
     props
   );
@@ -68,6 +68,7 @@ exports.NetworkEventMessage = function(props) {
     {
       id: null,
       actor: null,
+      targetFront: null,
       level: MESSAGE_LEVEL.LOG,
       isXHR: false,
       request: null,

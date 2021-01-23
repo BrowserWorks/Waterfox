@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutProduct2.label      "&brandShorterName; ਬਾਰੇ">
+<!ENTITY aboutProduct2.accesskey  "A">
+
+<!ENTITY preferencesCmdMac.label        "…ਮੇਰੀ ਪਸੰਦ">
+
+<!ENTITY servicesMenuMac.label          "ਸਰਵਿਸਾਂ">
+
+<!ENTITY hideThisAppCmdMac2.label       "&brandShorterName; ਓਹਲੇ">
+
+<!ENTITY hideOtherAppsCmdMac.label      "ਹੋਰ ਓਹਲੇ">
+
+<!ENTITY showAllAppsCmdMac.label        "ਸਭ ਵੇਖੋ">
+
+<!ENTITY touchBarCmdMac.label           "…ਟੱਚ ਪੱਟੀ ਨੂੰ ਪਸੰਦ ਮੁਤਾਬਕ ਢਾਲੋ">

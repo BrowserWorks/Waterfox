@@ -7,6 +7,8 @@ import logging
 import os
 import copy
 import attr
+import six
+from six import text_type, ensure_text
 
 from . import filter_tasks
 from .graph import Graph
@@ -35,8 +37,8 @@ class KindNotFound(Exception):
 @attr.s(frozen=True)
 class Kind(object):
 
-    name = attr.ib(type=basestring)
-    path = attr.ib(type=basestring)
+    name = attr.ib(type=text_type)
+    path = attr.ib(type=text_type)
     config = attr.ib(type=dict)
     graph_config = attr.ib(type=GraphConfig)
 
@@ -114,7 +116,7 @@ class TaskGraphGenerator(object):
         """
         if root_dir is None:
             root_dir = 'taskcluster/ci'
-        self.root_dir = root_dir
+        self.root_dir = ensure_text(root_dir)
         self._parameters = parameters
         self._target_kind = target_kind
 
@@ -222,6 +224,8 @@ class TaskGraphGenerator(object):
 
         yield ('graph_config', graph_config)
 
+        graph_config.register()
+
         if callable(self._parameters):
             parameters = self._parameters(graph_config)
         else:
@@ -243,7 +247,7 @@ class TaskGraphGenerator(object):
         self.verify_kinds(kinds)
 
         edges = set()
-        for kind in kinds.itervalues():
+        for kind in six.itervalues(kinds):
             for dep in kind.config.get('kind-dependencies', []):
                 edges.add((kind.name, dep, 'kind-dependency'))
         kind_graph = Graph(set(kinds), edges)
@@ -277,7 +281,7 @@ class TaskGraphGenerator(object):
         logger.info("Generating full task graph")
         edges = set()
         for t in full_task_set:
-            for depname, dep in t.dependencies.iteritems():
+            for depname, dep in six.iteritems(t.dependencies):
                 edges.add((t.label, dep, depname))
 
         full_task_graph = TaskGraph(all_tasks,
@@ -304,11 +308,11 @@ class TaskGraphGenerator(object):
 
         logger.info("Generating target task graph")
         # include all docker-image build tasks here, in case they are needed for a graph morph
-        docker_image_tasks = set(t.label for t in full_task_graph.tasks.itervalues()
+        docker_image_tasks = set(t.label for t in six.itervalues(full_task_graph.tasks)
                                  if t.attributes['kind'] == 'docker-image')
         # include all tasks with `always_target` set
         if parameters["tasks_for"] == "hg-push":
-            always_target_tasks = set(t.label for t in full_task_graph.tasks.itervalues()
+            always_target_tasks = set(t.label for t in six.itervalues(full_task_graph.tasks)
                                       if t.attributes.get('always_target'))
         else:
             always_target_tasks = set()
@@ -326,15 +330,25 @@ class TaskGraphGenerator(object):
         do_not_optimize = set(parameters.get('do_not_optimize', []))
         if not parameters.get('optimize_target_tasks', True):
             do_not_optimize = set(target_task_set.graph.nodes).union(do_not_optimize)
-        optimized_task_graph, label_to_taskid = optimize_task_graph(target_task_graph,
-                                                                    parameters,
-                                                                    do_not_optimize,
-                                                                    existing_tasks=existing_tasks)
+
+        # this is used for testing experimental optimization strategies
+        strategies = os.environ.get('TASKGRAPH_OPTIMIZE_STRATEGIES',
+                                    parameters['try_task_config'].get('optimize-strategies'))
+        if strategies:
+            strategies = find_object(strategies)
+
+        optimized_task_graph, label_to_taskid = optimize_task_graph(
+            target_task_graph,
+            parameters,
+            do_not_optimize,
+            existing_tasks=existing_tasks,
+            strategy_override=strategies,
+        )
 
         yield verifications('optimized_task_graph', optimized_task_graph, graph_config)
 
         morphed_task_graph, label_to_taskid = morph(
-            optimized_task_graph, label_to_taskid, parameters)
+            optimized_task_graph, label_to_taskid, parameters, graph_config)
 
         yield 'label_to_taskid', label_to_taskid
         yield verifications('morphed_task_graph', morphed_task_graph, graph_config)
@@ -342,7 +356,7 @@ class TaskGraphGenerator(object):
     def _run_until(self, name):
         while name not in self._run_results:
             try:
-                k, v = self._run.next()
+                k, v = next(self._run)
             except StopIteration:
                 raise AttributeError("No such run result {}".format(name))
             self._run_results[k] = v
@@ -355,7 +369,7 @@ class TaskGraphGenerator(object):
         parameters_dict = dict(**parameters)
         verify_docs(
             filename="parameters.rst",
-            identifiers=parameters_dict.keys(),
+            identifiers=list(parameters_dict),
             appearing_as="inline-literal"
          )
 
@@ -368,7 +382,7 @@ class TaskGraphGenerator(object):
 
     def verify_attributes(self, all_tasks):
         attribute_set = set()
-        for label, task in all_tasks.iteritems():
+        for label, task in six.iteritems(all_tasks):
             attribute_set.update(task.attributes.keys())
         verify_docs(
             filename="attributes.rst",

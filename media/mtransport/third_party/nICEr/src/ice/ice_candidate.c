@@ -346,6 +346,7 @@ int nr_ice_candidate_destroy(nr_ice_candidate **candp)
         break;
     }
 
+    RFREE(cand->mdns_addr);
     RFREE(cand->foundation);
     RFREE(cand->label);
     RFREE(cand);
@@ -935,7 +936,7 @@ static void nr_ice_turn_allocated_cb(NR_SOCKET s, int how, void *cb_arg)
 #endif /* USE_TURN */
 
 /* Format the candidate attribute as per ICE S 15.1 */
-int nr_ice_format_candidate_attribute(nr_ice_candidate *cand, char *attr, int maxlen)
+int nr_ice_format_candidate_attribute(nr_ice_candidate *cand, char *attr, int maxlen, int obfuscate_srflx_addr)
   {
     int r,_status;
     char addr[64];
@@ -946,8 +947,14 @@ int nr_ice_format_candidate_attribute(nr_ice_candidate *cand, char *attr, int ma
     assert(!strcmp(nr_ice_candidate_type_names[HOST], "host"));
     assert(!strcmp(nr_ice_candidate_type_names[RELAYED], "relay"));
 
-    if(r=nr_transport_addr_get_addrstring(&cand->addr,addr,sizeof(addr)))
-      ABORT(r);
+    if (cand->mdns_addr) {
+      /* mdns_addr is NSID_LENGTH which is 39, - 2 for removing the "{" and "}"
+         + 6 for ".local" for a total of 43. */
+      strncpy(addr, cand->mdns_addr, sizeof(addr) - 1);
+    } else {
+      if(r=nr_transport_addr_get_addrstring(&cand->addr,addr,sizeof(addr)))
+        ABORT(r);
+    }
     if(r=nr_transport_addr_get_port(&cand->addr,&port))
       ABORT(r);
     /* https://tools.ietf.org/html/rfc6544#section-4.5 */
@@ -969,6 +976,16 @@ int nr_ice_format_candidate_attribute(nr_ice_candidate *cand, char *attr, int ma
       case HOST:
         break;
       case SERVER_REFLEXIVE:
+        if (obfuscate_srflx_addr) {
+          snprintf(attr,maxlen," raddr 0.0.0.0 rport 0");
+        } else {
+          if(r=nr_transport_addr_get_addrstring(raddr,addr,sizeof(addr)))
+            ABORT(r);
+          if(r=nr_transport_addr_get_port(raddr,&port))
+            ABORT(r);
+          snprintf(attr,maxlen," raddr %s rport %d",addr,port);
+        }
+        break;
       case PEER_REFLEXIVE:
         if(r=nr_transport_addr_get_addrstring(raddr,addr,sizeof(addr)))
           ABORT(r);

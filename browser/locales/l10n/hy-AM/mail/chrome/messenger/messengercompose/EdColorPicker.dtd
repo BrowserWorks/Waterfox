@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Գույնը">
+<!ENTITY lastPickedColor.label "Վերջին նշված գույնը">
+<!ENTITY lastPickedColor.accessKey "Վ">
+<!ENTITY chooseColor1.label "Ընտրել գույն">
+<!ENTITY chooseColor2.label "Մուտքագրել HTML գունային տող">
+<!ENTITY chooseColor2.accessKey "H">
+<!ENTITY setColorExample.label "օրինակ՝ &quot;#0000ff&quot; կամ &quot;blue&quot;).">
+<!ENTITY default.label "Ծրագրային">
+<!ENTITY default.accessKey "Ծ">
+<!ENTITY palette.label "Գույները.">
+<!ENTITY standardPalette.label "Ստանդարտ">
+<!ENTITY webPalette.label "Բոլոր վեբ գույները">
+<!ENTITY background.label "Խորապատկերը՝">
+<!ENTITY background.accessKey "Խ">
+<!ENTITY table.label "Աղյուսակ">
+<!ENTITY table.accessKey "Ա">
+<!ENTITY cell.label "Վանդակներ">
+<!ENTITY cell.accessKey "Վ">

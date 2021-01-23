@@ -8,15 +8,20 @@
 
 #include <stdio.h>
 
-#ifdef SYMBIAN
-#define NO_SUCH_SEM_NAME "c:\\data\\nosuchsem.sem"
-#define SEM_NAME1 "c:\\data\\foo.sem"
-#define EXE_NAME "nspr_tests_semaerr1.exe"
+#ifdef DEBUG
+#define SEM_D "D"
 #else
-#define NO_SUCH_SEM_NAME "/tmp/nosuchsem.sem"
-#define SEM_NAME1 "/tmp/foo.sem"
-#define EXE_NAME "semaerr1"
+#define SEM_D
 #endif
+#ifdef IS_64
+#define SEM_64 "64"
+#else
+#define SEM_64
+#endif
+
+#define NO_SUCH_SEM_NAME "/tmp/nosuchsem.sem" SEM_D SEM_64
+#define SEM_NAME1 "/tmp/foo.sem" SEM_D SEM_64
+#define EXE_NAME "semaerr1"
 #define SEM_MODE  0666
 
 static PRBool debug_mode = PR_FALSE;
@@ -39,7 +44,9 @@ int main(int argc, char **argv)
     PRInt32 exit_code;
 
     while (PL_OPT_EOL != (os = PL_GetNextOpt(opt))) {
-        if (PL_OPT_BAD == os) continue;
+        if (PL_OPT_BAD == os) {
+            continue;
+        }
         switch (opt->option) {
             case 'd':  /* debug mode */
                 debug_mode = PR_TRUE;

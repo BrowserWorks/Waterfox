@@ -37,7 +37,7 @@ function createCookie(userContextId) {
     COOKIE.isSession,
     COOKIE.expiry,
     { userContextId },
-    Ci.nsICookie2.SAMESITE_UNSET
+    Ci.nsICookie.SAMESITE_NONE
   );
 }
 

@@ -1,0 +1,116 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- WARNING! This file contains UTF-8 encoded characters!
+   - If this ==> … <== doesn't look like an ellipsis (three dots in a row),
+   - your editor isn't using UTF-8 encoding and may munge up the document!
+  -->
+
+<!-- Tools menu -->
+<!ENTITY lightning.preferencesLabel "Calendari">
+
+<!-- New menu popup in File menu -->
+<!ENTITY lightning.menupopup.new.event.label    "Cita…">
+<!ENTITY lightning.menupopup.new.event.accesskey "C">
+<!ENTITY lightning.menupopup.new.task.label     "Tasca…">
+<!ENTITY lightning.menupopup.new.task.accesskey "T">
+<!ENTITY lightning.menupopup.new.calendar.label "Calendari…">
+<!ENTITY lightning.menupopup.new.calendar.accesskey "n">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.label               "Obre">
+<!ENTITY lightning.menupopup.open.accesskey           "O">
+<!ENTITY lightning.menupopup.open.message.label       "Missatge desat…">
+<!ENTITY lightning.menupopup.open.message.accesskey   "M">
+
+<!-- Open menu popup in File menu -->
+<!ENTITY lightning.menupopup.open.calendar.label      "Fitxer de calendari…">
+<!ENTITY lightning.menupopup.open.calendar.accesskey  "c">
+
+<!-- View Menu -->
+<!ENTITY lightning.menu.view.calendar.label            "Calendari">
+<!ENTITY lightning.menu.view.calendar.accesskey        "C">
+<!ENTITY lightning.menu.view.tasks.label               "Tasques">
+<!ENTITY lightning.menu.view.tasks.accesskey           "T">
+
+<!-- Events and Tasks menu -->
+<!ENTITY lightning.menu.eventtask.label                "Cites i tasques">
+<!ENTITY lightning.menu.eventtask.accesskey            "i">
+
+<!-- properties dialog, calendar creation wizard -->
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.email.label,
+     lightning.calendarproperties.forceEmailScheduling.label)
+     These strings are used in the calendar wizard and the calendar properties dialog, but are only
+     displayed when setting/using a caldav calendar -->
+<!ENTITY lightning.calendarproperties.email.label                           "Correu electrònic:">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.label            "Prefereix la planificació del correu electrònic del costat del client">
+<!-- LOCALIZATON NOTE(lightning.calendarproperties.forceEmailScheduling.tooltiptext1,
+     lightning.calendarproperties.forceEmailScheduling.tooltiptext2)
+     - tooltiptext1 is used in the calendar wizard when setting a new caldav calendar
+     - tooltiptext2 is used in the calendar properties dialog for caldav calendars -->
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext1     "Per ara, només podeu activar-ho després d'haver configurat aquest calendari en el seu diàleg de propietats si el servidor de calendari s'encarrega de la planificació.">
+<!ENTITY lightning.calendarproperties.forceEmailScheduling.tooltiptext2     "Aquesta opció només està disponible si el servidor del calendari s'encarrega de la planificació. Si l'activeu, s'utilitzarà la planificació basada en correu electrònic estàndard en lloc de deixar que se n'encarregui el servidor.">
+
+<!-- iMIP Bar (meeting support) -->
+<!ENTITY lightning.imipbar.btnAccept.label                                  "Accepta">
+<!ENTITY lightning.imipbar.btnAccept2.tooltiptext                           "Accepta la invitació a la cita">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences.label                       "Accepta-ho tot">
+<!ENTITY lightning.imipbar.btnAcceptRecurrences2.tooltiptext                "Accepta la invitació en totes les ocurrències de la cita">
+<!ENTITY lightning.imipbar.btnAdd.label                                     "Afegeix">
+<!ENTITY lightning.imipbar.btnAdd.tooltiptext                               "Afegeix la cita al calendari">
+<!ENTITY lightning.imipbar.btnDecline.label                                 "Declina">
+<!ENTITY lightning.imipbar.btnDecline2.tooltiptext                          "Declina la invitació a la cita">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences.label                      "Declina-ho tot">
+<!ENTITY lightning.imipbar.btnDeclineRecurrences2.tooltiptext               "Declina la invitació en totes les ocurrències de la cita">
+<!ENTITY lightning.imipbar.btnDeclineCounter.label                          "Declina">
+<!ENTITY lightning.imipbar.btnDeclineCounter.tooltiptext                    "Declina la contraproposta">
+<!ENTITY lightning.imipbar.btnDelete.label                                  "Suprimeix">
+<!ENTITY lightning.imipbar.btnDelete.tooltiptext                            "Suprimeix del calendari">
+<!ENTITY lightning.imipbar.btnDetails.label                                 "Detalls…">
+<!ENTITY lightning.imipbar.btnDetails.tooltiptext                           "Mostra els detalls de la cita">
+<!ENTITY lightning.imipbar.btnDoNotShowImipBar.label                        "No mostris aquests missatges">
+<!ENTITY lightning.imipbar.btnGoToCalendar.label                            "Calendari">
+<!ENTITY lightning.imipbar.btnGoToCalendar.tooltiptext                      "Vés a la pestanya del calendari">
+<!ENTITY lightning.imipbar.btnMore.label                                    "Més">
+<!ENTITY lightning.imipbar.btnMore.tooltiptext                              "Feu clic aquí per veure més opcions">
+<!ENTITY lightning.imipbar.btnReconfirm2.label                              "Reconfirma">
+<!ENTITY lightning.imipbar.btnReconfirm.tooltiptext                         "Envia una reconfirmació a l'organitzador">
+<!ENTITY lightning.imipbar.btnReschedule.label                              "Replanifica">
+<!ENTITY lightning.imipbar.btnReschedule.tooltiptext                        "Replanifica la cita">
+<!ENTITY lightning.imipbar.btnSaveCopy.label                                "Desa'n una còpia">
+<!ENTITY lightning.imipbar.btnSaveCopy.tooltiptext                          "Desa una còpia de la cita al calendari independentment de la resposta a l'organitzador. S'esborrarà la llista d'assistents.">
+<!ENTITY lightning.imipbar.btnTentative.label                               "Provisional">
+<!ENTITY lightning.imipbar.btnTentative2.tooltiptext                        "Accepta la invitació a la cita provisionalment">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences.label                    "Tot provisional">
+<!ENTITY lightning.imipbar.btnTentativeRecurrences2.tooltiptext             "Accepta la invitació provisionalment en totes les ocurrències de la cita">
+<!ENTITY lightning.imipbar.btnUpdate.label                                  "Actualitza">
+<!ENTITY lightning.imipbar.btnUpdate.tooltiptext                            "Actualitza la cita al calendari">
+<!ENTITY lightning.imipbar.description                                      "Aquest missatge conté una invitació a una cita.">
+
+<!ENTITY lightning.imipbar.btnSend.label                                    "Envia una resposta ara">
+<!ENTITY lightning.imipbar.btnSend.tooltiptext                              "Envia una resposta a l'organitzador">
+<!ENTITY lightning.imipbar.btnSendSeries.tooltiptext                        "Envia una resposta a l'organitzador per a tota la sèrie">
+<!ENTITY lightning.imipbar.btnDontSend.label                                "No enviïs cap resposta">
+<!ENTITY lightning.imipbar.btnDontSend.tooltiptext                          "Canvia el vostre estat de participació sense enviar cap resposta a l'organitzador">
+<!ENTITY lightning.imipbar.btnDontSendSeries.tooltiptext                    "Canvia el vostre estat de participació de tota la sèrie sense enviar cap resposta a l'organitzador">
+
+<!-- Lightning specific keybindings -->
+<!ENTITY lightning.keys.event.showCalendar.key "C">
+<!ENTITY lightning.keys.event.showTasks.key "D">
+<!ENTITY lightning.keys.event.new "I">
+<!ENTITY lightning.keys.todo.new "D">
+
+<!-- Account Central page -->
+<!ENTITY lightning.acctCentral.newCalendar.label "Crea un calendari nou">
+
+<!-- today-pane-specific -->
+<!ENTITY todaypane.showMinimonth.label "Mostra el Mini-mes">
+<!ENTITY todaypane.showMinimonth.accesskey "M">
+<!ENTITY todaypane.showMiniday.label "Mostra el Mini-dia">
+<!ENTITY todaypane.showMiniday.accesskey  "d">
+<!ENTITY todaypane.showNone.label "No mostris res">
+<!ENTITY todaypane.showNone.accesskey "r">
+<!ENTITY todaypane.showTodayPane.label "Mostra el plafó d'avui">
+<!ENTITY todaypane.showTodayPane.accesskey "a">
+<!ENTITY todaypane.statusButton.label "Plafó d'avui">

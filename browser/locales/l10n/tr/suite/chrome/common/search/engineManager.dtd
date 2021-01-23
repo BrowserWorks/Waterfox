@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY engineManager.title "Arama motorları listesini yönet">
+<!ENTITY engineManager.style "min-width: 35em;">
+<!ENTITY engineManager.intro "Kurulu olan arama motorları:">
+
+<!ENTITY columnLabel.name "İsim">
+<!ENTITY columnLabel.keyword "Anahtar kelime">
+<!-- Buttons -->
+
+<!ENTITY up.label "Yukarıya taşı">
+<!ENTITY up.accesskey "u">
+<!ENTITY dn.label "Aşağıya taşı">
+<!ENTITY dn.accesskey "t">
+<!ENTITY remove.label "Kaldır">
+<!ENTITY remove.accesskey "r">
+<!ENTITY edit.label "Anahtar kelime düzenle…">
+<!ENTITY edit.accesskey "t">
+
+<!ENTITY addEngine.label "Daha fazla arama motoru bul…">
+<!ENTITY addEngine.accesskey "a">
+
+<!ENTITY enableSuggest.label "Arama önerilerini göster">
+<!ENTITY enableSuggest.accesskey "s">
+
+<!ENTITY restoreDefaults.label "Öntanımlıları geri getir">
+<!ENTITY restoreDefaults.accesskey "e">

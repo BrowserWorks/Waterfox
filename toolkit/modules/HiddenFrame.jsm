@@ -11,9 +11,9 @@ const { PromiseUtils } = ChromeUtils.import(
 );
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
-const XUL_PAGE = "chrome://global/content/win.xul";
+const XUL_PAGE = "chrome://global/content/win.xhtml";
 
-const gAllHiddenFrames = new WeakSet();
+const gAllHiddenFrames = new Set();
 
 let cleanupRegistered = false;
 function ensureCleanupRegistered() {
@@ -112,8 +112,9 @@ HiddenFrame.prototype = {
     );
     let docShell = this._browser.docShell;
     let systemPrincipal = Services.scriptSecurityManager.getSystemPrincipal();
-    docShell.createAboutBlankContentViewer(systemPrincipal);
-    docShell.useGlobalHistory = false;
+    docShell.createAboutBlankContentViewer(systemPrincipal, systemPrincipal);
+    let browsingContext = this._browser.browsingContext;
+    browsingContext.useGlobalHistory = false;
     let loadURIOptions = {
       triggeringPrincipal: systemPrincipal,
     };

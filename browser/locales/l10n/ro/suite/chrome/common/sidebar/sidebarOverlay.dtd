@@ -1,0 +1,47 @@
+<!--
+# Translator(s):
+#
+# BuBBaX <mikebubbax@yahoo.com>
+# stas <stas@nerd.ro>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sidebar.panels.label           "Bară laterală">
+<!ENTITY sidebar.reload.label           "Reîncarcă">
+<!ENTITY sidebar.reload.accesskey       "R">
+<!ENTITY sidebar.picker.label           "File">
+<!ENTITY sidebar.customize.label        "Personalizare Bara laterală">
+<!ENTITY sidebar.customize.accesskey    "P">
+<!ENTITY sidebar.hide.label             "Ascunde Fila">
+<!ENTITY sidebar.hide.accesskey         "A">
+<!ENTITY sidebar.switch.label           "Schimbă la fila">
+<!ENTITY sidebar.switch.accesskey       "S">
+<!ENTITY sidebarCmd.label               "Panoul lateral">
+<!ENTITY sidebarCmd.accesskey           "P">
+<!ENTITY sidebar.loading.label          "Încărcare...">
+<!ENTITY sidebar.loadstopped.label      "încărcarea s-a oprit">
+<!ENTITY sidebar.loading.stop.label     "Oprește">
+<!ENTITY sidebar.loading.stop.accesskey "O">
+
+<!ENTITY sidebar.no-panels.state     "Bara laterală este momentan goală.">
+<!ENTITY sidebar.no-panels.add       'You may add tabs by clicking on the "Tabs" button above.'>
+<!ENTITY sidebar.no-panels.hide      'If you would like to completely hide the Sidebar, click on the "View" menu above, and select "Sidebar" from the "Show/Hide" sub-menu.'>
+<!ENTITY sidebar.sbDirectory.label   "Directorul Barei Laterale">
+
+<!ENTITY sidebar.pagenotfound.label  "Această filă nu este disponibilă acum.">
+<!ENTITY sidebar.close.tooltip       "Închideți Bara Laterală">
+<!ENTITY sidebar.open.tooltip        "Deschideți Bara Laterală">
+
+<!ENTITY sidebar.search.label         "Search">
+<!ENTITY sidebar.client-bookmarks.label     "Bookmarks">
+<!ENTITY sidebar.client-history.label       "History">
+<!ENTITY sidebar.client-addressbook.label   "Address Book">

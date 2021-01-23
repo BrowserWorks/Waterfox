@@ -112,7 +112,7 @@ add_task(async () => {
       selectedProfile.rootDir.equals(devDefaultProfile),
       "Should be using the right directory."
     );
-    Assert.equal(selectedProfile.name, "dev-edition-default");
+    Assert.equal(selectedProfile.name, "68-edition-default");
   } else {
     Assert.ok(
       selectedProfile.rootDir.equals(mydefaultProfile),

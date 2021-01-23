@@ -1,5 +1,13 @@
-const {actionTypes: at} = ChromeUtils.import("resource://activity-stream/common/Actions.jsm");
-const {ASRouter} = ChromeUtils.import("resource://activity-stream/lib/ASRouter.jsm");
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+const { actionTypes: at } = ChromeUtils.import(
+  "resource://activity-stream/common/Actions.jsm"
+);
+const { ASRouter } = ChromeUtils.import(
+  "resource://activity-stream/lib/ASRouter.jsm"
+);
 
 /**
  * @class ASRouterFeed - Connects ASRouter singleton (see above) to Activity Stream's

@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Eremu ezarpen propietateak">
+
+<!ENTITY Legend.label "Legenda">
+<!ENTITY Legend.accesskey "L">
+
+<!ENTITY EditLegendText.label "Editatu legenda:">
+<!ENTITY EditLegendText.accesskey "t">
+<!ENTITY LegendAlign.label "Lerrokatu legenda:">
+<!ENTITY LegendAlign.accesskey "a">
+<!ENTITY AlignDefault.label "Lehenetsia">
+<!ENTITY AlignLeft.label "Ezkerra">
+<!ENTITY AlignCenter.label "Erdia">
+<!ENTITY AlignRight.label "Eskuina">
+
+<!ENTITY RemoveFieldSet.label "Ezabatu eremu ezarpenak">
+<!ENTITY RemoveFieldSet.accesskey "r">

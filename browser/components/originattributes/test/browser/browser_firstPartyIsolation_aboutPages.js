@@ -1,10 +1,12 @@
+if (SpecialPowers.useRemoteSubframes) {
+  requestLongerTimeout(2);
+}
+
 add_task(async function setup() {
   Services.prefs.setBoolPref("privacy.firstparty.isolate", true);
-  Services.prefs.setBoolPref("signon.management.page.enabled", true);
 
   registerCleanupFunction(function() {
     Services.prefs.clearUserPref("privacy.firstparty.isolate");
-    Services.prefs.clearUserPref("signon.management.page.enabled");
   });
 });
 
@@ -19,8 +21,8 @@ add_task(async function test_remote_window_open_aboutBlank() {
 
   Assert.ok(browser.isRemoteBrowser, "should be a remote browser");
 
-  await ContentTask.spawn(browser, {}, async function() {
-    info("origin " + content.document.nodePrincipal.origin);
+  await SpecialPowers.spawn(browser, [], async function() {
+    Assert.ok(true, "origin " + content.document.nodePrincipal.origin);
 
     Assert.ok(
       content.document.nodePrincipal.isNullPrincipal,
@@ -45,12 +47,17 @@ add_task(async function test_remote_window_open_aboutBlank() {
  * a null principal. So we test if it has correct firstPartyDomain set.
  */
 add_task(async function test_nonremote_window_open_aboutBlank() {
+  if (SpecialPowers.useRemoteSubframes) {
+    ok(true, "We cannot test non-e10s mode in Fission. So, we skip this.");
+    return;
+  }
+
   let win = await BrowserTestUtils.openNewBrowserWindow({ remote: false });
   let browser = win.gBrowser.selectedBrowser;
 
   Assert.ok(!browser.isRemoteBrowser, "shouldn't be a remote browser");
 
-  await ContentTask.spawn(browser, {}, async function() {
+  await SpecialPowers.spawn(browser, [], async function() {
     info("origin " + content.document.nodePrincipal.origin);
 
     Assert.ok(
@@ -72,15 +79,6 @@ add_task(async function test_nonremote_window_open_aboutBlank() {
   win.close();
 });
 
-function frame_script() {
-  content.document.body.innerHTML = `
-    <a href="data:text/plain,hello" id="test">hello</a>
-  `;
-
-  let element = content.document.getElementById("test");
-  element.click();
-}
-
 /**
  * Check if data: URI inherits firstPartyDomain from about:blank correctly.
  */
@@ -92,15 +90,21 @@ add_task(async function test_remote_window_open_data_uri() {
   });
   let win = await BrowserTestUtils.openNewBrowserWindow({ remote: true });
   let browser = win.gBrowser.selectedBrowser;
-  let mm = browser.messageManager;
-  mm.loadFrameScript("data:,(" + frame_script.toString() + ")();", true);
+
+  await SpecialPowers.spawn(browser, [], () => {
+    content.document.body.innerHTML = `
+      <a href="data:text/plain,hello" id="test">hello</a>`;
+
+    let element = content.document.getElementById("test");
+    element.click();
+  });
 
   await BrowserTestUtils.browserLoaded(browser, false, function(url) {
     return url == "data:text/plain,hello";
   });
 
-  await ContentTask.spawn(browser, {}, async function() {
-    info("origin: " + content.document.nodePrincipal.origin);
+  await SpecialPowers.spawn(browser, [], async function() {
+    Assert.ok(true, "origin: " + content.document.nodePrincipal.origin);
 
     Assert.ok(
       content.document.nodePrincipal.isNullPrincipal,
@@ -123,18 +127,17 @@ add_task(async function test_remote_window_open_data_uri() {
 add_task(async function test_remote_window_open_data_uri2() {
   let win = await BrowserTestUtils.openNewBrowserWindow({ remote: true });
   let browser = win.gBrowser.selectedBrowser;
+  const TEST_PAGE =
+    "http://mochi.test:8888/browser/browser/components/originattributes/test/browser/test2.html";
 
   // The iframe test2.html will fetch test2.js, which will have cookies.
   const DATA_URI = `data:text/html,
-                    <iframe id="iframe1" src="http://mochi.test:8888/browser/browser/components/originattributes/test/browser/test2.html"></iframe>`;
+                    <iframe id="iframe1" src="${TEST_PAGE}"></iframe>`;
   BrowserTestUtils.loadURI(browser, DATA_URI);
-  await BrowserTestUtils.browserLoaded(browser, true);
+  await BrowserTestUtils.browserLoaded(browser, true, TEST_PAGE);
 
-  await ContentTask.spawn(browser, {}, async function() {
-    info("origin " + content.document.nodePrincipal.origin);
-
-    let iframe = content.document.getElementById("iframe1");
-    info("iframe principal: " + iframe.contentDocument.nodePrincipal.origin);
+  await SpecialPowers.spawn(browser, [], async function() {
+    Assert.ok(true, "origin " + content.document.nodePrincipal.origin);
 
     Assert.ok(
       content.document.nodePrincipal.isNullPrincipal,
@@ -146,15 +149,27 @@ add_task(async function test_remote_window_open_data_uri2() {
       "data: URI should have firstPartyDomain set."
     );
 
-    Assert.equal(
-      iframe.contentDocument.nodePrincipal.originAttributes.firstPartyDomain,
-      content.document.nodePrincipal.originAttributes.firstPartyDomain,
-      "iframe should inherit firstPartyDomain from parent document."
-    );
-    Assert.equal(
-      iframe.contentDocument.cookie,
-      "test2=foo",
-      "iframe should have cookies"
+    let iframe = content.document.getElementById("iframe1");
+    await SpecialPowers.spawn(
+      iframe,
+      [content.document.nodePrincipal.originAttributes.firstPartyDomain],
+      function(firstPartyDomain) {
+        Assert.ok(
+          true,
+          "iframe principal: " + content.document.nodePrincipal.origin
+        );
+
+        Assert.equal(
+          content.document.nodePrincipal.originAttributes.firstPartyDomain,
+          firstPartyDomain,
+          "iframe should inherit firstPartyDomain from parent document."
+        );
+        Assert.equal(
+          content.document.cookie,
+          "test2=foo",
+          "iframe should have cookies"
+        );
+      }
     );
   });
 
@@ -168,7 +183,7 @@ add_task(async function test_aboutURL() {
   let aboutURLs = [];
 
   // List of about: URLs that will initiate network requests.
-  let networkURLs = ["credits"];
+  let networkURLs = ["credits", "logins"];
 
   for (let cid in Cc) {
     let result = cid.match(
@@ -186,7 +201,7 @@ add_task(async function test_aboutURL() {
       let flags = am.getURIFlags(uri);
 
       // We load pages with URI_SAFE_FOR_UNTRUSTED_CONTENT set, this means they
-      // are not loaded with System Principal but with codebase principal.
+      // are not loaded with System Principal but with content principal.
       // Also we skip pages with HIDE_FROM_ABOUTABOUT, some of them may have
       // errors while loading.
       if (
@@ -194,7 +209,10 @@ add_task(async function test_aboutURL() {
         !(flags & Ci.nsIAboutModule.HIDE_FROM_ABOUTABOUT) &&
         !networkURLs.includes(aboutType) &&
         // handle about:newtab in browser_firstPartyIsolation_about_newtab.js
-        aboutType !== "newtab"
+        aboutType !== "newtab" &&
+        // protections kicks of async messaging as soon as it loads,
+        // this test closes the tab too soon causing errors
+        aboutType !== "protections"
       ) {
         aboutURLs.push(aboutType);
       }
@@ -211,26 +229,29 @@ add_task(async function test_aboutURL() {
     let attrs = {
       firstPartyDomain: "about.ef2a7dd5-93bc-417f-a698-142c3116864f.mozilla",
     };
-    await ContentTask.spawn(tab.linkedBrowser, { attrs, url }, async function(
-      args
-    ) {
-      info(
-        "loading page about:" +
-          args.url +
-          ", origin is " +
-          content.document.nodePrincipal.origin
-      );
-      info("principal " + content.document.nodePrincipal);
-      Assert.equal(
-        content.document.nodePrincipal.originAttributes.firstPartyDomain,
-        args.attrs.firstPartyDomain,
-        "The about page should have firstPartyDomain set"
-      );
-      Assert.ok(
-        content.document.nodePrincipal.isCodebasePrincipal,
-        "The principal should be a codebase principal."
-      );
-    });
+    await SpecialPowers.spawn(
+      tab.linkedBrowser,
+      [{ attrs, url }],
+      async function(args) {
+        Assert.ok(
+          true,
+          "loading page about:" +
+            args.url +
+            ", origin is " +
+            content.document.nodePrincipal.origin
+        );
+        Assert.ok(true, "principal " + content.document.nodePrincipal);
+        Assert.equal(
+          content.document.nodePrincipal.originAttributes.firstPartyDomain,
+          args.attrs.firstPartyDomain,
+          "The about page should have firstPartyDomain set"
+        );
+        Assert.ok(
+          content.document.nodePrincipal.isContentPrincipal,
+          "The principal should be a content principal."
+        );
+      }
+    );
 
     gBrowser.removeTab(tab);
   }

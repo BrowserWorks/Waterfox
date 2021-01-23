@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY fieldMapImport.title "Внасяне на адресник">
+<!ENTITY fieldMapImport.size "width: 40em; height: 30em;">
+<!ENTITY fieldMapImport.recordNumber "Внесени данни за запис: ">
+<!ENTITY fieldMapImport.next.label "Напред">
+<!ENTITY fieldMapImport.next.accesskey "п">
+<!ENTITY fieldMapImport.previous.label "Назад">
+<!ENTITY fieldMapImport.previous.accesskey "з">
+<!ENTITY fieldMapImport.text "Използвайте Премества нагоре и Премества надолу, за да нагласите полетата на адресника отляво да съвпадат с правилните данни за внасяне отдясно. Премахнете отметките пред елементите, които не искате да бъдат внесени.">
+<!ENTITY fieldMapImport.up.label "Преместване нагоре">
+<!ENTITY fieldMapImport.up.accesskey "г">
+<!ENTITY fieldMapImport.down.label "Премества надолу">
+<!ENTITY fieldMapImport.down.accesskey "д">
+<!ENTITY fieldMapImport.fieldListTitle "Полета на адресника">
+<!ENTITY fieldMapImport.dataTitle "Внасяне на данни за запис">
+<!ENTITY fieldMapImport.skipFirstRecord.label "В първия запис са имената на полетата">
+<!ENTITY fieldMapImport.skipFirstRecord.accessKey "ж">

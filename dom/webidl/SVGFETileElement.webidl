@@ -10,9 +10,10 @@
  * liability, trademark and document use rules apply.
  */
 
+[Exposed=Window]
 interface SVGFETileElement : SVGElement {
   [Constant]
   readonly attribute SVGAnimatedString in1;
 };
 
-SVGFETileElement implements SVGFilterPrimitiveStandardAttributes;
+SVGFETileElement includes SVGFilterPrimitiveStandardAttributes;

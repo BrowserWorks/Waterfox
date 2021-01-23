@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Title -->
+
+<!ENTITY mailListWindowAdd.title        "Rhestr E-bostio Newydd">
+<!-- Labels and Access Keys -->
+
+<!ENTITY addToAddressBook.label         "Ychwanegu at: ">
+<!ENTITY addToAddressBook.accesskey     "Y">
+<!ENTITY ListName.label                 "Enw'r Rhestr: ">
+<!ENTITY ListName.accesskey             "R">
+<!ENTITY ListNickName.label             "Llys Enw'r Rhestr: ">
+<!ENTITY ListNickName.accesskey         "L">
+<!ENTITY ListDescription.label          "Disgrifiad: ">
+<!ENTITY ListDescription.accesskey      "D">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "Teipiwch gyfeiriadau e-bost i'w hychwanegu at y rhestr e-bostio:">
+<!ENTITY AddressTitle.accesskey         "e">
+<!ENTITY UpButton.label                 "Symud i Fyny">
+<!ENTITY DownButton.label               "Symud i Lawr">
+

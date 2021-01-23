@@ -8,8 +8,8 @@ Transform the signing task into an actual task description.
 from __future__ import absolute_import, print_function, unicode_literals
 
 from taskgraph.transforms.base import TransformSequence
+from taskgraph.util.attributes import copy_attributes_from_dependent_job
 from taskgraph.util.signed_artifacts import generate_specifications_of_artifacts_to_sign
-from taskgraph.util.taskcluster import get_artifact_path
 
 
 transforms = TransformSequence()
@@ -22,9 +22,10 @@ def add_signed_routes(config, jobs):
 
     for job in jobs:
         dep_job = job['primary-dependency']
+        enable_signing_routes = job.pop('enable-signing-routes', True)
 
         job['routes'] = []
-        if dep_job.attributes.get('shippable'):
+        if dep_job.attributes.get('shippable') and enable_signing_routes:
             for dep_route in dep_job.task.get('routes', []):
                 if not dep_route.startswith('index.gecko.v2'):
                     continue
@@ -32,14 +33,6 @@ def add_signed_routes(config, jobs):
                 rest = ".".join(dep_route.split(".")[4:])
                 job['routes'].append(
                     'index.gecko.v2.{}.signed.{}'.format(branch, rest))
-        if dep_job.attributes.get('nightly'):
-            for dep_route in dep_job.task.get('routes', []):
-                if not dep_route.startswith('index.gecko.v2'):
-                    continue
-                branch = dep_route.split(".")[3]
-                rest = ".".join(dep_route.split(".")[4:])
-                job['routes'].append(
-                    'index.gecko.v2.{}.signed-nightly.{}'.format(branch, rest))
 
         yield job
 
@@ -48,23 +41,26 @@ def add_signed_routes(config, jobs):
 def define_upstream_artifacts(config, jobs):
     for job in jobs:
         dep_job = job['primary-dependency']
-        build_platform = dep_job.attributes.get('build_platform')
+        upstream_artifact_task = job.pop('upstream-artifact-task', dep_job)
+
+        job['attributes'] = copy_attributes_from_dependent_job(dep_job)
 
         artifacts_specifications = generate_specifications_of_artifacts_to_sign(
-            dep_job,
+            config,
+            job,
             keep_locale_template=False,
             kind=config.kind,
+            dep_kind=upstream_artifact_task.kind
         )
 
-        if 'android' in build_platform:
-            # We're in the job that creates both multilocale and en-US APKs
-            artifacts_specifications[0]['artifacts'].append(
-                get_artifact_path(dep_job, 'en-US/target.apk')
-            )
+        task_ref = '<{}>'.format(upstream_artifact_task.kind)
+        task_type = 'build'
+        if 'notarization' in upstream_artifact_task.kind:
+            task_type = 'scriptworker'
 
         job['upstream-artifacts'] = [{
-            'taskId': {'task-reference': '<build>'},
-            'taskType': 'build',
+            'taskId': {'task-reference': task_ref},
+            'taskType': task_type,
             'paths': spec['artifacts'],
             'formats': spec['formats'],
         } for spec in artifacts_specifications]

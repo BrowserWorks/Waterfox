@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "过滤器日志">
+<!ENTITY viewLogInfo.text "过滤器日志是用于记录已执行的过滤器的文件。选择下面的复选框即可启用日志。">
+<!ENTITY clearLog.label "清空日志">
+<!ENTITY clearLog.accesskey "C">
+<!ENTITY enableLog.label "启用过滤器日志">
+<!ENTITY enableLog.accesskey "E">
+<!ENTITY closeLog.label "关闭">
+<!ENTITY closeLog.accesskey "o">

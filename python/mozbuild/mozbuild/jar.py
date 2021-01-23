@@ -8,20 +8,22 @@ processing jar.mn files.
 See the documentation for jar.mn on MDC for further details on the format.
 '''
 
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function, unicode_literals
 
-import sys
-import os
 import errno
-import re
+import io
 import logging
+import os
+import re
+import six
+from six import BytesIO
+import sys
 from time import localtime
-from MozZipFile import ZipFile
-from cStringIO import StringIO
-from collections import defaultdict
 
+from MozZipFile import ZipFile
 from mozbuild.preprocessor import Preprocessor
 from mozbuild.action.buildlist import addEntriesToListFile
+from mozbuild.util import ensure_bytes
 from mozpack.files import FileFinder
 import mozpack.path as mozpath
 if sys.platform == 'win32':
@@ -42,12 +44,12 @@ class ZipEntry(object):
     def __init__(self, name, zipfile):
         self._zipfile = zipfile
         self._name = name
-        self._inner = StringIO()
+        self._inner = BytesIO()
 
     def write(self, content):
         '''Append the given content to this zip entry'''
 
-        self._inner.write(content)
+        self._inner.write(ensure_bytes(content))
         return
 
     def close(self):
@@ -58,7 +60,7 @@ class ZipEntry(object):
 
 def getModTime(aPath):
     if not os.path.isfile(aPath):
-        return 0
+        return localtime(0)
     mtime = os.stat(aPath).st_mtime
     return localtime(mtime)
 
@@ -90,7 +92,8 @@ class JarInfo(object):
         self.entries = []
 
 
-class DeprecatedJarManifest(Exception): pass
+class DeprecatedJarManifest(Exception):
+    pass
 
 
 class JarManifestParser(object):
@@ -107,9 +110,10 @@ class JarManifestParser(object):
     relsrcline = re.compile('relativesrcdir\s+(?P<relativesrcdir>.+?):')
     regline = re.compile('\%\s+(.*)$')
     entryre = '(?P<optPreprocess>\*)?(?P<optOverwrite>\+?)\s+'
-    entryline = re.compile(entryre
-                           + '(?P<output>[\w\d.\-\_\\\/\+\@]+)\s*(\((?P<locale>\%?)(?P<source>[\w\d.\-\_\\\/\@\*]+)\))?\s*$'
-                           )
+    entryline = re.compile(
+        entryre + ('(?P<output>[\w\d.\-\_\\\/\+\@]+)\s*'
+                   '(\((?P<locale>\%?)(?P<source>[\w\d.\-\_\\\/\@\*]+)\))?\s*$')
+        )
 
     def __init__(self):
         self._current_jar = None
@@ -197,7 +201,7 @@ class JarMaker(object):
       '''
 
     def __init__(self, outputFormat='flat', useJarfileManifest=True,
-        useChromeManifest=False):
+                 useChromeManifest=False):
 
         self.outputFormat = outputFormat
         self.useJarfileManifest = useJarfileManifest
@@ -207,7 +211,6 @@ class JarMaker(object):
         self.sourcedirs = []
         self.localedirs = None
         self.l10nbase = None
-        self.l10nmerge = None
         self.relativesrcdir = None
         self.rootManifestAppId = None
         self._seen_output = set()
@@ -224,10 +227,10 @@ class JarMaker(object):
 
         p = self.pp.getCommandLineParser(unescapeDefines=True)
         p.add_option('-f', type='choice', default='jar',
-            choices=('jar', 'flat', 'symlink'),
-            help='fileformat used for output',
-            metavar='[jar, flat, symlink]',
-            )
+                     choices=('jar', 'flat', 'symlink'),
+                     help='fileformat used for output',
+                     metavar='[jar, flat, symlink]',
+                     )
         p.add_option('-v', action='store_true', dest='verbose',
                      help='verbose output')
         p.add_option('-q', action='store_false', dest='verbose',
@@ -238,14 +241,10 @@ class JarMaker(object):
         p.add_option('-s', type='string', action='append', default=[],
                      help='source directory')
         p.add_option('-t', type='string', help='top source directory')
-        p.add_option('-c', '--l10n-src', type='string', action='append'
-                     , help='localization directory')
+        p.add_option('-c', '--l10n-src', type='string',
+                     action='append', help='localization directory')
         p.add_option('--l10n-base', type='string', action='store',
-                     help='base directory to be used for localization (requires relativesrcdir)'
-                     )
-        p.add_option('--locale-mergedir', type='string', action='store'
-                     ,
-                     help='base directory to be used for l10n-merge (requires l10n-base and relativesrcdir)'
+                     help='merged directory to be used for localization (requires relativesrcdir)'
                      )
         p.add_option('--relativesrcdir', type='string',
                      help='relativesrcdir to be used for localization')
@@ -292,19 +291,19 @@ class JarMaker(object):
             chromeDir = \
                 os.path.basename(os.path.dirname(os.path.normpath(chromeManifest)))
             logging.info("adding '%s' entry to root chrome manifest appid=%s"
-                          % (chromeDir, self.rootManifestAppId))
+                         % (chromeDir, self.rootManifestAppId))
             addEntriesToListFile(rootChromeManifest,
                                  ['manifest %s/chrome.manifest application=%s'
                                   % (chromeDir,
-                                 self.rootManifestAppId)])
+                                     self.rootManifestAppId)])
 
     def updateManifest(self, manifestPath, chromebasepath, register):
         '''updateManifest replaces the % in the chrome registration entries
         with the given chrome base path, and updates the given manifest file.
         '''
         myregister = dict.fromkeys(map(lambda s: s.replace('%',
-            chromebasepath), register))
-        addEntriesToListFile(manifestPath, myregister.iterkeys())
+                                                           chromebasepath), register))
+        addEntriesToListFile(manifestPath, six.iterkeys(myregister))
 
     def makeJar(self, infile, jardir):
         '''makeJar is the main entry point to JarMaker.
@@ -314,7 +313,7 @@ class JarMaker(object):
         '''
 
         # making paths absolute, guess srcdir if file and add to sourcedirs
-        _normpath = lambda p: os.path.normpath(os.path.abspath(p))
+        def _normpath(p): return os.path.normpath(os.path.abspath(p))
         self.topsourcedir = _normpath(self.topsourcedir)
         self.sourcedirs = [_normpath(p) for p in self.sourcedirs]
         if self.localedirs:
@@ -322,7 +321,7 @@ class JarMaker(object):
         elif self.relativesrcdir:
             self.localedirs = \
                 self.generateLocaleDirs(self.relativesrcdir)
-        if isinstance(infile, basestring):
+        if isinstance(infile, six.text_type):
             logging.info('processing ' + infile)
             self.sourcedirs.append(_normpath(os.path.dirname(infile)))
         pp = self.pp.clone()
@@ -340,15 +339,13 @@ class JarMaker(object):
             l10nrelsrcdir = relativesrcdir
         locdirs = []
 
-        # generate locales dirs, merge, l10nbase, en-US
-        if self.l10nmerge:
-            locdirs.append(os.path.join(self.l10nmerge, l10nrelsrcdir))
+        # generate locales merge or en-US
         if self.l10nbase:
             locdirs.append(os.path.join(self.l10nbase, l10nrelsrcdir))
-        if self.l10nmerge or not self.l10nbase:
-            # add en-US if we merge, or if it's not l10n
+        else:
+            # add en-US if it's not l10n
             locdirs.append(os.path.join(self.topsourcedir,
-                           relativesrcdir, 'en-US'))
+                                        relativesrcdir, 'en-US'))
         return locdirs
 
     def processJarSection(self, jarinfo, jardir):
@@ -457,15 +454,15 @@ class JarMaker(object):
             if jf is not None:
                 jf.close()
             raise RuntimeError('File "{0}" not found in {1}'.format(src,
-                               ', '.join(src_base)))
+                                                                    ', '.join(src_base)))
 
         if out in self._seen_output:
             raise RuntimeError('%s already added' % out)
         self._seen_output.add(out)
 
         if e.preprocess:
-            outf = outHelper.getOutput(out)
-            inf = open(realsrc)
+            outf = outHelper.getOutput(out, mode='w')
+            inf = io.open(realsrc, encoding='utf-8')
             pp = self.pp.clone()
             if src[-4:] == '.css':
                 pp.setMarker('%')
@@ -501,10 +498,10 @@ class JarMaker(object):
             try:
                 info = self.jarfile.getinfo(aPath)
                 return info.date_time
-            except:
-                return 0
+            except Exception:
+                return localtime(0)
 
-        def getOutput(self, name):
+        def getOutput(self, name, mode='wb'):
             return ZipEntry(name, self.jarfile)
 
     class OutputHelper_flat(object):
@@ -519,7 +516,7 @@ class JarMaker(object):
         def getDestModTime(self, aPath):
             return getModTime(os.path.join(self.basepath, aPath))
 
-        def getOutput(self, name):
+        def getOutput(self, name, mode='wb'):
             out = self.ensureDirFor(name)
 
             # remove previous link or file
@@ -528,7 +525,10 @@ class JarMaker(object):
             except OSError as e:
                 if e.errno != errno.ENOENT:
                     raise
-            return open(out, 'wb')
+            if 'b' in mode:
+                return io.open(out, mode)
+            else:
+                return io.open(out, mode, encoding='utf-8', newline='\n')
 
         def ensureDirFor(self, name):
             out = os.path.join(self.basepath, name)
@@ -559,7 +559,7 @@ class JarMaker(object):
                 os.symlink(src, out)
             else:
                 # On Win32, use ctypes to create a hardlink
-                rv = CreateHardLink(out, src, None)
+                rv = CreateHardLink(ensure_bytes(out), ensure_bytes(src), None)
                 if rv == 0:
                     raise WinError()
 
@@ -582,12 +582,6 @@ def main(args=None):
             p.error('both l10n-src and l10n-base are not supported')
         jm.l10nbase = options.l10n_base
         jm.relativesrcdir = options.relativesrcdir
-        jm.l10nmerge = options.locale_mergedir
-        if jm.l10nmerge and not os.path.isdir(jm.l10nmerge):
-            logging.warning("WARNING: --locale-mergedir passed, but '%s' does not exist. "
-                "Ignore this message if the locale is complete." % jm.l10nmerge)
-    elif options.locale_mergedir:
-        p.error('l10n-base required when using locale-mergedir')
     jm.localedirs = options.l10n_src
     if options.root_manifest_entry_appid:
         jm.rootManifestAppId = options.root_manifest_entry_appid
@@ -605,4 +599,5 @@ def main(args=None):
         infile = sys.stdin
     else:
         (infile, ) = args
+        infile = six.ensure_text(infile)
     jm.makeJar(infile, options.d)

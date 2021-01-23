@@ -6,6 +6,7 @@
 #include "VsyncBridgeChild.h"
 #include "VsyncIOThreadHolder.h"
 #include "mozilla/dom/ContentChild.h"
+#include "mozilla/gfx/GPUProcessManager.h"
 
 namespace mozilla {
 namespace gfx {
@@ -14,7 +15,7 @@ VsyncBridgeChild::VsyncBridgeChild(RefPtr<VsyncIOThreadHolder> aThread,
                                    const uint64_t& aProcessToken)
     : mThread(aThread), mProcessToken(aProcessToken) {}
 
-VsyncBridgeChild::~VsyncBridgeChild() {}
+VsyncBridgeChild::~VsyncBridgeChild() = default;
 
 /* static */
 RefPtr<VsyncBridgeChild> VsyncBridgeChild::Create(
@@ -115,7 +116,7 @@ void VsyncBridgeChild::ActorDestroy(ActorDestroyReason aWhy) {
   }
 }
 
-void VsyncBridgeChild::DeallocPVsyncBridgeChild() { Release(); }
+void VsyncBridgeChild::ActorDealloc() { Release(); }
 
 void VsyncBridgeChild::ProcessingError(Result aCode, const char* aReason) {
   MOZ_RELEASE_ASSERT(aCode == MsgDropped,

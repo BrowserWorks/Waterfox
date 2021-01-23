@@ -6,10 +6,10 @@
 
 #include "ClearSiteData.h"
 
+#include "mozilla/net/HttpBaseChannel.h"
 #include "mozilla/OriginAttributes.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Services.h"
-#include "mozilla/StaticPrefs.h"
 #include "mozilla/Unused.h"
 #include "nsASCIIMask.h"
 #include "nsCharSeparatedTokenizer.h"
@@ -163,11 +163,7 @@ void ClearSiteData::ClearDataFromChannel(nsIHttpChannel* aChannel) {
     return;
   }
 
-  nsCOMPtr<nsIContentSecurityManager> csm =
-      do_GetService(NS_CONTENTSECURITYMANAGER_CONTRACTID);
-
-  bool secure;
-  rv = csm->IsOriginPotentiallyTrustworthy(principal, &secure);
+  bool secure = principal->GetIsOriginPotentiallyTrustworthy();
   if (NS_WARN_IF(NS_FAILED(rv)) || !secure) {
     return;
   }
@@ -288,38 +284,22 @@ void ClearSiteData::LogToConsoleInternal(
     nsIHttpChannel* aChannel, nsIURI* aURI, const char* aMsg,
     const nsTArray<nsString>& aParams) const {
   MOZ_ASSERT(aChannel);
-  MOZ_ASSERT(aURI);
 
-  uint64_t windowID = 0;
+  nsCOMPtr<net::HttpBaseChannel> httpChannel = do_QueryInterface(aChannel);
+  if (!httpChannel) {
+    return;
+  }
 
-  nsresult rv = aChannel->GetTopLevelContentWindowId(&windowID);
+  nsAutoCString uri;
+  nsresult rv = aURI->GetSpec(uri);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return;
   }
 
-  if (!windowID) {
-    nsCOMPtr<nsILoadGroup> loadGroup;
-    nsresult rv = aChannel->GetLoadGroup(getter_AddRefs(loadGroup));
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      return;
-    }
-
-    if (loadGroup) {
-      windowID = nsContentUtils::GetInnerWindowID(loadGroup);
-    }
-  }
-
-  nsAutoString localizedMsg;
-  rv = nsContentUtils::FormatLocalizedString(
-      nsContentUtils::eSECURITY_PROPERTIES, aMsg, aParams, localizedMsg);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return;
-  }
-
-  rv = nsContentUtils::ReportToConsoleByWindowID(
-      localizedMsg, nsIScriptError::infoFlag,
-      NS_LITERAL_CSTRING("Clear-Site-Data"), windowID, aURI);
-  Unused << NS_WARN_IF(NS_FAILED(rv));
+  httpChannel->AddConsoleReport(nsIScriptError::infoFlag,
+                                NS_LITERAL_CSTRING("Clear-Site-Data"),
+                                nsContentUtils::eSECURITY_PROPERTIES, uri, 0, 0,
+                                nsDependentCString(aMsg), aParams);
 }
 
 void ClearSiteData::TypeToString(Type aType, nsAString& aStr) const {

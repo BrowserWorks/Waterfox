@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -7,7 +5,7 @@
 
 /* global Debugger */
 
-const { ActorClassWithSpec } = require("devtools/shared/protocol");
+const { ActorClassWithSpec, Actor } = require("devtools/shared/protocol");
 const { createValueGrip } = require("devtools/server/actors/object/utils");
 const { environmentSpec } = require("devtools/shared/specs/environment");
 
@@ -23,6 +21,8 @@ const { environmentSpec } = require("devtools/shared/specs/environment");
  */
 const EnvironmentActor = ActorClassWithSpec(environmentSpec, {
   initialize: function(environment, threadActor) {
+    Actor.prototype.initialize.call(this, threadActor.conn);
+
     this.obj = environment;
     this.threadActor = threadActor;
   },
@@ -34,6 +34,7 @@ const EnvironmentActor = ActorClassWithSpec(environmentSpec, {
    */
   destroy: function() {
     this.obj.actor = null;
+    Actor.prototype.destroy.call(this);
   },
 
   /**
@@ -49,10 +50,12 @@ const EnvironmentActor = ActorClassWithSpec(environmentSpec, {
       form.type = this.obj.type;
     }
 
+    form.scopeKind = this.obj.scopeKind;
+
     // Does this environment have a parent?
     if (this.obj.parent) {
       form.parent = this.threadActor
-        .createEnvironmentActor(this.obj.parent, this.registeredPool)
+        .createEnvironmentActor(this.obj.parent, this.getParent())
         .form();
     }
 
@@ -60,7 +63,7 @@ const EnvironmentActor = ActorClassWithSpec(environmentSpec, {
     if (this.obj.type == "object" || this.obj.type == "with") {
       form.object = createValueGrip(
         this.obj.object,
-        this.registeredPool,
+        this.getParent(),
         this.threadActor.objectGrip
       );
     }
@@ -69,7 +72,7 @@ const EnvironmentActor = ActorClassWithSpec(environmentSpec, {
     if (this.obj.callee) {
       form.function = createValueGrip(
         this.obj.callee,
-        this.registeredPool,
+        this.getParent(),
         this.threadActor.objectGrip
       );
     }
@@ -147,7 +150,7 @@ const EnvironmentActor = ActorClassWithSpec(environmentSpec, {
       const desc = {
         value: value,
         configurable: false,
-        writable: !(value && value.optimizedOut),
+        writable: !value?.optimizedOut,
         enumerable: true,
       };
 
@@ -159,19 +162,19 @@ const EnvironmentActor = ActorClassWithSpec(environmentSpec, {
       if ("value" in desc) {
         descForm.value = createValueGrip(
           desc.value,
-          this.registeredPool,
+          this.getParent(),
           this.threadActor.objectGrip
         );
         descForm.writable = desc.writable;
       } else {
         descForm.get = createValueGrip(
           desc.get,
-          this.registeredPool,
+          this.getParent(),
           this.threadActor.objectGrip
         );
         descForm.set = createValueGrip(
           desc.set,
-          this.registeredPool,
+          this.getParent(),
           this.threadActor.objectGrip
         );
       }
@@ -210,19 +213,19 @@ const EnvironmentActor = ActorClassWithSpec(environmentSpec, {
       if ("value" in desc) {
         descForm.value = createValueGrip(
           desc.value,
-          this.registeredPool,
+          this.getParent(),
           this.threadActor.objectGrip
         );
         descForm.writable = desc.writable;
       } else {
         descForm.get = createValueGrip(
           desc.get || undefined,
-          this.registeredPool,
+          this.getParent(),
           this.threadActor.objectGrip
         );
         descForm.set = createValueGrip(
           desc.set || undefined,
-          this.registeredPool,
+          this.getParent(),
           this.threadActor.objectGrip
         );
       }

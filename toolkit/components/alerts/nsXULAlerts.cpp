@@ -12,15 +12,13 @@
 #include "mozilla/LookAndFeel.h"
 #include "mozilla/dom/Notification.h"
 #include "mozilla/Unused.h"
-#include "nsIServiceManager.h"
 #include "nsISupportsPrimitives.h"
 #include "nsPIDOMWindow.h"
 #include "nsIWindowWatcher.h"
 
 using namespace mozilla;
-using mozilla::dom::NotificationTelemetryService;
 
-#define ALERT_CHROME_URL "chrome://global/content/alerts/alert.xul"
+#define ALERT_CHROME_URL "chrome://global/content/alerts/alert.xhtml"
 
 namespace {
 StaticRefPtr<nsXULAlerts> gXULAlerts;
@@ -376,6 +374,19 @@ nsXULAlerts::SetManualDoNotDisturb(bool aDoNotDisturb) {
 NS_IMETHODIMP
 nsXULAlerts::GetManualDoNotDisturb(bool* aRetVal) {
   *aRetVal = mDoNotDisturb;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsXULAlerts::GetSuppressForScreenSharing(bool* aRetVal) {
+  NS_ENSURE_ARG(aRetVal);
+  *aRetVal = mSuppressForScreenSharing;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsXULAlerts::SetSuppressForScreenSharing(bool aSuppress) {
+  mSuppressForScreenSharing = aSuppress;
   return NS_OK;
 }
 

@@ -31,7 +31,7 @@ const TYPES = {
 const NATIVE_MANIFEST_SCHEMA =
   "chrome://extensions/content/schemas/native_manifest.json";
 
-const REGPATH = "Software\\Waterfox";
+const REGPATH = "Software\\Mozilla";
 
 var NativeManifests = {
   _initializePromise: null,
@@ -59,7 +59,7 @@ var NativeManifests = {
     return this._initializePromise;
   },
 
-  _winLookup(type, name, context) {
+  async _winLookup(type, name, context) {
     const REGISTRY = Ci.nsIWindowsRegKey;
     let regPath = `${REGPATH}\\${TYPES[type]}\\${name}`;
     let path = WindowsRegistry.readRegKey(
@@ -87,12 +87,12 @@ var NativeManifests = {
     if (!path) {
       return null;
     }
-    return this._tryPath(type, path, name, context).then(manifest =>
-      manifest ? { path, manifest } : null
-    );
+
+    let manifest = await this._tryPath(type, path, name, context, true);
+    return manifest ? { path, manifest } : null;
   },
 
-  _tryPath(type, path, name, context) {
+  _tryPath(type, path, name, context, logIfNotFound) {
     return Promise.resolve()
       .then(() => OS.File.read(path, { encoding: "utf-8" }))
       .then(data => {
@@ -119,17 +119,13 @@ var NativeManifests = {
 
         if (manifest.type !== type) {
           Cu.reportError(
-            `Native manifest ${path} has type property ${
-              manifest.type
-            } (expected ${type})`
+            `Native manifest ${path} has type property ${manifest.type} (expected ${type})`
           );
           return null;
         }
         if (manifest.name !== name) {
           Cu.reportError(
-            `Native manifest ${path} has name property ${
-              manifest.name
-            } (expected ${name})`
+            `Native manifest ${path} has name property ${manifest.name} (expected ${name})`
           );
           return null;
         }
@@ -142,17 +138,16 @@ var NativeManifests = {
           );
           return null;
         }
-        if (context.envType !== "addon_parent") {
-          Cu.reportError(
-            `Attempting to connect to a native host that does not allow messages from content scripts ${path}.`
-          );
-          return;
-        }
 
         return manifest;
       })
       .catch(ex => {
         if (ex instanceof OS.File.Error && ex.becauseNoSuchFile) {
+          if (logIfNotFound) {
+            Cu.reportError(
+              `Error reading native manifest file ${path}: file is referenced in the registry but does not exist`
+            );
+          }
           return null;
         }
         throw ex;
@@ -162,7 +157,7 @@ var NativeManifests = {
   async _tryPaths(type, name, dirs, context) {
     for (let dir of dirs) {
       let path = OS.Path.join(dir, TYPES[type], `${name}.json`);
-      let manifest = await this._tryPath(type, path, name, context);
+      let manifest = await this._tryPath(type, path, name, context, false);
       if (manifest) {
         return { path, manifest };
       }

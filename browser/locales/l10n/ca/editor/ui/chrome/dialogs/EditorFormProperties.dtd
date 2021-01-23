@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Propietats del formulari">
+
+<!ENTITY Settings.label "Paràmetres">
+
+<!ENTITY FormName.label "Nom del formulari:">
+<!ENTITY FormName.accesskey "N">
+<!ENTITY FormAction.label "URL de l'acció:">
+<!ENTITY FormAction.accesskey "a">
+<!ENTITY FormMethod.label "Mètode:">
+<!ENTITY FormMethod.accesskey "M">
+<!ENTITY FormEncType.label "Codificació:">
+<!ENTITY FormEncType.accesskey "i">
+<!ENTITY FormTarget.label "Marc de destí:">
+<!ENTITY FormTarget.accesskey "t">
+
+<!ENTITY RemoveForm.label "Suprimeix el formulari">
+<!ENTITY RemoveForm.accesskey "S">

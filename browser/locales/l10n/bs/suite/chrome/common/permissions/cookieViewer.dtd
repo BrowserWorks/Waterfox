@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY     tab.cookiesonsystem.label      "Pohranjeni kolačići">
+<!ENTITY     tab.bannedservers.label        "Web stranice kolačića">
+<!ENTITY     div.bannedservers.label        "Upravljajte web stranicama koje mogu i ne mogu spremati kolačiće na vaš računar.">
+<!ENTITY     div.cookiesonsystem.label      "Pogledajte i uklonite kolačiće koji su pohranjeni na vaš računar.">
+<!ENTITY     treehead.cookiename.label      "Naziv kolačića">
+<!ENTITY     treehead.cookiedomain.label    "Web stranica">
+<!ENTITY     treehead.cookieexpires.label   "Ističe">
+<!ENTITY     treehead.infoselected.label    "Informacije o odabranom kolačiću">
+<!ENTITY     button.removecookie.label      "Ukloni kolačić">
+<!ENTITY     button.removeallcookies.label  "Ukloni sve kolačiće">
+
+<!ENTITY     search.placeholder             "Traži kolačiće">
+
+<!ENTITY     props.name.label               "Naziv:">
+<!ENTITY     props.value.label              "Sadržaj:">
+<!ENTITY     props.domain.label             "Host:">
+<!ENTITY     props.path.label               "Putanja:">
+<!ENTITY     props.secure.label             "Pošalji za:">
+<!ENTITY     props.expires.label            "Ističe:">
+
+<!ENTITY     treehead.sitename.label        "Web stranica">
+<!ENTITY     treehead.scheme.label          "Šema">
+<!ENTITY     treehead.status.label          "Status">
+<!ENTITY     windowtitle.label              "Menadžer kolačića">
+
+<!ENTITY     blockSite.label                "Blokiraj">
+<!ENTITY     allowSite.label                "Dozvoli">
+<!ENTITY     allowSiteSession.label         "Sesija">
+<!ENTITY     removepermission.label         "Ukloni web stranicu">
+<!ENTITY     removeallpermissions.label     "Ukloni sve web stranice">
+

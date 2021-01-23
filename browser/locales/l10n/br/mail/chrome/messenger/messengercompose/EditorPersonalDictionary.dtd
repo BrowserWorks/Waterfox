@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Geriadur personel">
+
+<!ENTITY wordEditField.label "Ger nevez :">
+<!ENTITY wordEditField.accessKey "n">
+<!ENTITY AddButton.label "Ouzhpennañ">
+<!ENTITY AddButton.accessKey "a">
+<!ENTITY DictionaryList.label "Gerioù er geriadur :">
+<!ENTITY DictionaryList.accessKey "e">
+<!ENTITY RemoveButton.label "Dilemel">
+<!ENTITY RemoveButton.accessKey "e">
+
+<!ENTITY CloseButton.label "Serriñ">
+<!ENTITY CloseButton.accessKey "S">

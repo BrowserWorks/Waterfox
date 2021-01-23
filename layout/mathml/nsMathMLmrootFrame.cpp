@@ -36,7 +36,7 @@ nsMathMLmrootFrame::nsMathMLmrootFrame(ComputedStyle* aStyle,
       mSqrChar(),
       mBarRect() {}
 
-nsMathMLmrootFrame::~nsMathMLmrootFrame() {}
+nsMathMLmrootFrame::~nsMathMLmrootFrame() = default;
 
 void nsMathMLmrootFrame::Init(nsIContent* aContent, nsContainerFrame* aParent,
                               nsIFrame* aPrevInFlow) {
@@ -243,7 +243,8 @@ void nsMathMLmrootFrame::Reflow(nsPresContext* aPresContext,
   nsBoundingMetrics radicalSize;
   mSqrChar.Stretch(this, drawTarget, fontSizeInflation,
                    NS_STRETCH_DIRECTION_VERTICAL, contSize, radicalSize,
-                   NS_STRETCH_LARGER, StyleVisibility()->mDirection);
+                   NS_STRETCH_LARGER,
+                   StyleVisibility()->mDirection == StyleDirection::Rtl);
   // radicalSize have changed at this point, and should match with
   // the bounding metrics of the char
   mSqrChar.GetBoundingMetrics(bmSqr);
@@ -317,7 +318,7 @@ void nsMathMLmrootFrame::Reflow(nsPresContext* aPresContext,
       (indexRaisedAscent + indexSize.BlockStartAscent() - bmIndex.ascent);
   FinishReflowChild(indexFrame, aPresContext, indexSize, nullptr,
                     MirrorIfRTL(aDesiredSize.Width(), indexSize.Width(), dx),
-                    dy, 0);
+                    dy, ReflowChildFlags::Default);
 
   // place the radical symbol and the radical bar
   dx = dxSqr;
@@ -332,7 +333,7 @@ void nsMathMLmrootFrame::Reflow(nsPresContext* aPresContext,
   dy = aDesiredSize.BlockStartAscent() - baseSize.BlockStartAscent();
   FinishReflowChild(baseFrame, aPresContext, baseSize, nullptr,
                     MirrorIfRTL(aDesiredSize.Width(), baseSize.Width(), dx), dy,
-                    0);
+                    ReflowChildFlags::Default);
 
   mReference.x = 0;
   mReference.y = aDesiredSize.BlockStartAscent();

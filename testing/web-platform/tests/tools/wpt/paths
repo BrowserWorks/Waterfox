@@ -1,6 +1,7 @@
 tools/ci/
+tools/docker/
 tools/lint/
 tools/manifest/
+tools/quic/
 tools/serve/
-tools/taskcluster/
 tools/wpt/

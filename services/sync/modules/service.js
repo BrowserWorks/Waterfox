@@ -76,6 +76,9 @@ const { DeclinedEngines } = ChromeUtils.import(
 const { Status } = ChromeUtils.import("resource://services-sync/status.js");
 ChromeUtils.import("resource://services-sync/telemetry.js");
 const { Svc, Utils } = ChromeUtils.import("resource://services-sync/util.js");
+const { fxAccounts } = ChromeUtils.import(
+  "resource://gre/modules/FxAccounts.jsm"
+);
 
 function getEngineModules() {
   let result = {
@@ -85,10 +88,6 @@ function getEngineModules() {
     Password: { module: "passwords.js", symbol: "PasswordEngine" },
     Prefs: { module: "prefs.js", symbol: "PrefsEngine" },
     Tab: { module: "tabs.js", symbol: "TabEngine" },
-    ExtensionStorage: {
-      module: "extension-storage.js",
-      symbol: "ExtensionStorageEngine",
-    },
   };
   if (Svc.Prefs.get("engine.addresses.available", false)) {
     result.Addresses = {
@@ -107,6 +106,12 @@ function getEngineModules() {
     controllingPref: "services.sync.engine.bookmarks.buffer",
     whenFalse: "BookmarksEngine",
     whenTrue: "BufferedBookmarksEngine",
+  };
+  result["Extension-Storage"] = {
+    module: "extension-storage.js",
+    controllingPref: "webextensions.storage.sync.kinto",
+    whenTrue: "ExtensionStorageEngineKinto",
+    whenFalse: "ExtensionStorageEngineBridge",
   };
   return result;
 }
@@ -266,9 +271,9 @@ Sync11Service.prototype = {
     // Fetch keys.
     let cryptoKeys = new CryptoWrapper(CRYPTO_COLLECTION, KEYS_WBO);
     try {
-      let cryptoResp = (await cryptoKeys.fetch(
-        this.resource(this.cryptoKeysURL)
-      )).response;
+      let cryptoResp = (
+        await cryptoKeys.fetch(this.resource(this.cryptoKeysURL))
+      ).response;
 
       // Save out the ciphertext for when we reupload. If there's a bug in
       // CollectionKeyManager, this will prevent us from uploading junk.
@@ -497,6 +502,50 @@ Sync11Service.prototype = {
     this.engineManager.setDeclined(declined);
   },
 
+  /**
+   * This method updates the local engines state from an existing meta/global
+   * when Sync is disabled.
+   * Running this code if sync is enabled would end up in very weird results
+   * (but we're nice and we check before doing anything!).
+   */
+  async updateLocalEnginesState() {
+    await this.promiseInitialized;
+
+    // Sanity check, this method is not meant to be run if Sync is enabled!
+    if (Svc.Prefs.get("username", "")) {
+      throw new Error("Sync is enabled!");
+    }
+
+    // For historical reasons the behaviour of setCluster() is bizarre,
+    // so just check what we care about - the meta URL.
+    if (!this.metaURL) {
+      await this.identity.setCluster();
+      if (!this.metaURL) {
+        this._log.warn("Could not find a cluster.");
+        return;
+      }
+    }
+    // Clear the cache so we always fetch the latest meta/global.
+    this.recordManager.clearCache();
+    let meta = await this.recordManager.get(this.metaURL);
+    if (!meta) {
+      this._log.info("Meta record is null, aborting engine state update.");
+      return;
+    }
+    const declinedEngines = meta.payload.declined;
+    const allEngines = this.engineManager.getAll().map(e => e.name);
+    // We don't want our observer of the enabled prefs to treat the change as
+    // a user-change, otherwise we will do the wrong thing with declined etc.
+    this._ignorePrefObserver = true;
+    try {
+      for (const engine of allEngines) {
+        Svc.Prefs.set(`engine.${engine}`, !declinedEngines.includes(engine));
+      }
+    } finally {
+      this._ignorePrefObserver = false;
+    }
+  },
+
   QueryInterface: ChromeUtils.generateQI([
     Ci.nsIObserver,
     Ci.nsISupportsWeakReference,
@@ -664,9 +713,9 @@ Sync11Service.prototype = {
         if (infoCollections && CRYPTO_COLLECTION in infoCollections) {
           try {
             cryptoKeys = new CryptoWrapper(CRYPTO_COLLECTION, KEYS_WBO);
-            let cryptoResp = (await cryptoKeys.fetch(
-              this.resource(this.cryptoKeysURL)
-            )).response;
+            let cryptoResp = (
+              await cryptoKeys.fetch(this.resource(this.cryptoKeysURL))
+            ).response;
 
             if (cryptoResp.success) {
               await this.handleFetchedKeys(syncKeyBundle, cryptoKeys);
@@ -909,6 +958,22 @@ Sync11Service.prototype = {
     }
   },
 
+  // configures/enabled/turns-on sync. There must be an FxA user signed in.
+  async configure() {
+    // We don't, and must not, throw if sync is already configured, because we
+    // might end up being called as part of a "reconnect" flow. We also want to
+    // avoid checking the FxA user is the same as the pref because the email
+    // address for the FxA account can change - we'd need to use the uid.
+    let user = await fxAccounts.getSignedInUser();
+    if (!user) {
+      throw new Error("No FxA user is signed in");
+    }
+    this._log.info("Configuring sync with current FxA user");
+    Svc.Prefs.set("username", user.email);
+    Svc.Obs.notify("weave:connected");
+  },
+
+  // resets/turns-off sync.
   async startOver() {
     this._log.trace("Invoking Service.startOver.");
     await this._stopTracking();
@@ -930,10 +995,6 @@ Sync11Service.prototype = {
       this._log.debug("Skipping client data removal: no cluster URL.");
     }
 
-    // We want let UI consumers of the following notification know as soon as
-    // possible, so let's fake for the CLIENT_NOT_CONFIGURED status for now
-    // by emptying the passphrase (we still need the password).
-    this._log.info("Service.startOver dropping sync key and logging out.");
     this.identity.resetCredentials();
     this.status.login = LOGIN_FAILED_NO_USERNAME;
     this.logout();
@@ -951,8 +1012,6 @@ Sync11Service.prototype = {
     this.clusterURL = null;
 
     Svc.Prefs.set("lastversion", WEAVE_VERSION);
-
-    this.identity.deleteSyncCredentials();
 
     try {
       this.identity.finalize();
@@ -1030,9 +1089,7 @@ Sync11Service.prototype = {
       );
     } else if (configResponse.status != 200) {
       this._log.warn(
-        `info/configuration returned ${
-          configResponse.status
-        } - using default configuration`
+        `info/configuration returned ${configResponse.status} - using default configuration`
       );
       this.errorHandler.checkServerError(configResponse);
       return false;
@@ -1312,31 +1369,37 @@ Sync11Service.prototype = {
           this.identity.prefetchMigrationSentinel(this);
         }
 
-        // Now let's update our declined engines (but only if we have a metaURL;
-        // if Sync failed due to no node we will not have one)
-        if (this.metaURL) {
-          let meta = await this.recordManager.get(this.metaURL);
-          if (!meta) {
-            this._log.warn("No meta/global; can't update declined state.");
-            return;
-          }
-
-          let declinedEngines = new DeclinedEngines(this);
-          let didChange = declinedEngines.updateDeclined(
-            meta,
-            this.engineManager
-          );
-          if (!didChange) {
-            this._log.info(
-              "No change to declined engines. Not reuploading meta/global."
-            );
-            return;
-          }
-
-          await this.uploadMetaGlobal(meta);
-        }
+        // Now let's update our declined engines
+        await this._maybeUpdateDeclined();
       })
     )();
+  },
+
+  /**
+   * Update the "declined" information in meta/global if necessary.
+   */
+  async _maybeUpdateDeclined() {
+    // if Sync failed due to no node we will not have a meta URL, so can't
+    // update anything.
+    if (!this.metaURL) {
+      return;
+    }
+    let meta = await this.recordManager.get(this.metaURL);
+    if (!meta) {
+      this._log.warn("No meta/global; can't update declined state.");
+      return;
+    }
+
+    let declinedEngines = new DeclinedEngines(this);
+    let didChange = declinedEngines.updateDeclined(meta, this.engineManager);
+    if (!didChange) {
+      this._log.info(
+        "No change to declined engines. Not reuploading meta/global."
+      );
+      return;
+    }
+
+    await this.uploadMetaGlobal(meta);
   },
 
   /**

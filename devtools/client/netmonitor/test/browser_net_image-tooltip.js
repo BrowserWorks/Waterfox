@@ -10,7 +10,9 @@ const IMAGE_TOOLTIP_REQUESTS = 1;
  * Tests if image responses show a popup in the requests menu when hovered.
  */
 add_task(async function test() {
-  const { tab, monitor } = await initNetMonitor(IMAGE_TOOLTIP_URL);
+  const { tab, monitor } = await initNetMonitor(IMAGE_TOOLTIP_URL, {
+    requestCount: 1,
+  });
   info("Starting test... ");
 
   const { document, store, windowRequire, connector } = monitor.panelWin;
@@ -43,7 +45,7 @@ add_task(async function test() {
 
   info("Reloading the debuggee and performing all requests again...");
   await triggerActivity(ACTIVITY_TYPE.RELOAD.WITH_CACHE_ENABLED);
-  await ContentTask.spawn(tab.linkedBrowser, {}, async function() {
+  await SpecialPowers.spawn(tab.linkedBrowser, [], async function() {
     content.wrappedJSObject.performRequests();
   });
   await onEvents;

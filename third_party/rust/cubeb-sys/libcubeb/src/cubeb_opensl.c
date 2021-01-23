@@ -57,12 +57,19 @@
 #endif
 
 #define ANDROID_VERSION_GINGERBREAD_MR1 10
+#define ANDROID_VERSION_JELLY_BEAN 18
 #define ANDROID_VERSION_LOLLIPOP 21
 #define ANDROID_VERSION_MARSHMALLOW 23
+#define ANDROID_VERSION_N_MR1 25
 #endif
 
 #define DEFAULT_SAMPLE_RATE 48000
 #define DEFAULT_NUM_OF_FRAMES 480
+// If the latency requested is above this threshold, this stream is considered
+// intended for playback (vs. real-time). Tell Android it should favor saving
+// power over performance or latency.
+// This is around 100ms at 44100 or 48000
+#define POWERSAVE_LATENCY_FRAMES_THRESHOLD 4000
 
 static struct cubeb_ops const opensl_ops;
 
@@ -84,7 +91,7 @@ struct cubeb {
 };
 
 #define NELEMS(A) (sizeof(A) / sizeof A[0])
-#define NBUFS 4
+#define NBUFS 2
 
 struct cubeb_stream {
   /* Note: Must match cubeb_stream layout in cubeb.c. */
@@ -155,10 +162,13 @@ struct cubeb_stream {
   cubeb_resampler * resampler;
   unsigned int user_output_rate;
   unsigned int output_configured_rate;
-  unsigned int latency_frames;
+  unsigned int buffer_size_frames;
+  // Audio output latency used in cubeb_stream_get_position().
+  unsigned int output_latency_ms;
   int64_t lastPosition;
   int64_t lastPositionTimeStamp;
   int64_t lastCompensativePosition;
+  int voice;
 };
 
 /* Forward declaration. */
@@ -742,7 +752,7 @@ opensl_init(cubeb ** context, char const * context_name)
   }
 
   ctx->p_output_latency_function = cubeb_output_latency_load_method(android_version);
-  if (!ctx->p_output_latency_function) {
+  if (!cubeb_output_latency_method_is_loaded(ctx->p_output_latency_function)) {
     LOG("Warning: output latency is not available, cubeb_stream_get_position() is not supported");
   }
 
@@ -783,6 +793,53 @@ opensl_destroy(cubeb * ctx)
 }
 
 static void opensl_stream_destroy(cubeb_stream * stm);
+
+#if defined(__ANDROID__) && (__ANDROID_API__ >= ANDROID_VERSION_LOLLIPOP)
+static int
+opensl_set_format_ext(SLAndroidDataFormat_PCM_EX * format, cubeb_stream_params * params)
+{
+  assert(format);
+  assert(params);
+
+  format->formatType = SL_ANDROID_DATAFORMAT_PCM_EX;
+  format->numChannels = params->channels;
+  // sampleRate is in milliHertz
+  format->sampleRate = params->rate * 1000;
+  format->channelMask = params->channels == 1 ?
+                       SL_SPEAKER_FRONT_CENTER :
+                       SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT;
+
+  switch (params->format) {
+    case CUBEB_SAMPLE_S16LE:
+      format->bitsPerSample = SL_PCMSAMPLEFORMAT_FIXED_16;
+      format->containerSize = SL_PCMSAMPLEFORMAT_FIXED_16;
+      format->representation = SL_ANDROID_PCM_REPRESENTATION_SIGNED_INT;
+      format->endianness = SL_BYTEORDER_LITTLEENDIAN;
+      break;
+    case CUBEB_SAMPLE_S16BE:
+      format->bitsPerSample = SL_PCMSAMPLEFORMAT_FIXED_16;
+      format->containerSize = SL_PCMSAMPLEFORMAT_FIXED_16;
+      format->representation = SL_ANDROID_PCM_REPRESENTATION_SIGNED_INT;
+      format->endianness = SL_BYTEORDER_BIGENDIAN;
+      break;
+    case CUBEB_SAMPLE_FLOAT32LE:
+      format->bitsPerSample = SL_PCMSAMPLEFORMAT_FIXED_32;
+      format->containerSize = SL_PCMSAMPLEFORMAT_FIXED_32;
+      format->representation = SL_ANDROID_PCM_REPRESENTATION_FLOAT;
+      format->endianness = SL_BYTEORDER_LITTLEENDIAN;
+      break;
+    case CUBEB_SAMPLE_FLOAT32BE:
+      format->bitsPerSample = SL_PCMSAMPLEFORMAT_FIXED_32;
+      format->containerSize = SL_PCMSAMPLEFORMAT_FIXED_32;
+      format->representation = SL_ANDROID_PCM_REPRESENTATION_FLOAT;
+      format->endianness = SL_BYTEORDER_BIGENDIAN;
+      break;
+    default:
+      return CUBEB_ERROR_INVALID_FORMAT;
+  }
+  return CUBEB_OK;
+}
+#endif
 
 static int
 opensl_set_format(SLDataFormat_PCM * format, cubeb_stream_params * params)
@@ -846,16 +903,17 @@ opensl_configure_capture(cubeb_stream * stm, cubeb_stream_params * params)
   lDataSource.pLocator = &lDataLocatorIn;
   lDataSource.pFormat = NULL;
 
-  const SLuint32 lSoundRecorderIIDCount = 2;
   const SLInterfaceID lSoundRecorderIIDs[] = { stm->context->SL_IID_RECORD,
-                                               stm->context->SL_IID_ANDROIDSIMPLEBUFFERQUEUE };
-  const SLboolean lSoundRecorderReqs[] = { SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE };
+                                               stm->context->SL_IID_ANDROIDSIMPLEBUFFERQUEUE,
+                                               stm->context->SL_IID_ANDROIDCONFIGURATION };
+
+  const SLboolean lSoundRecorderReqs[] = { SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE };
   // create the audio recorder abstract object
   SLresult res = (*stm->context->eng)->CreateAudioRecorder(stm->context->eng,
                                                            &stm->recorderObj,
                                                            &lDataSource,
                                                            &lDataSink,
-                                                           lSoundRecorderIIDCount,
+                                                           NELEMS(lSoundRecorderIIDs),
                                                            lSoundRecorderIIDs,
                                                            lSoundRecorderReqs);
   // Sample rate not supported. Try again with default sample rate!
@@ -874,7 +932,7 @@ opensl_configure_capture(cubeb_stream * stm, cubeb_stream_params * params)
                                                     &stm->recorderObj,
                                                     &lDataSource,
                                                     &lDataSink,
-                                                    lSoundRecorderIIDCount,
+                                                    NELEMS(lSoundRecorderIIDs),
                                                     lSoundRecorderIIDs,
                                                     lSoundRecorderReqs);
 
@@ -884,6 +942,36 @@ opensl_configure_capture(cubeb_stream * stm, cubeb_stream_params * params)
     }
   }
 
+
+  if (get_android_version() > ANDROID_VERSION_JELLY_BEAN) {
+    SLAndroidConfigurationItf recorderConfig;
+    res = (*stm->recorderObj)
+              ->GetInterface(stm->recorderObj,
+                             stm->context->SL_IID_ANDROIDCONFIGURATION,
+                             &recorderConfig);
+
+    if (res != SL_RESULT_SUCCESS) {
+      LOG("Failed to get the android configuration interface for recorder. Error "
+          "code: %lu",
+          res);
+      return CUBEB_ERROR;
+    }
+
+    // Voice recognition is the lowest latency, according to the docs. Camcorder
+    // uses a microphone that is in the same direction as the camera.
+    SLint32 streamType = stm->voice ? SL_ANDROID_RECORDING_PRESET_VOICE_RECOGNITION
+                                    : SL_ANDROID_RECORDING_PRESET_CAMCORDER;
+
+    res = (*recorderConfig)
+              ->SetConfiguration(recorderConfig, SL_ANDROID_KEY_RECORDING_PRESET,
+                                 &streamType, sizeof(SLint32));
+
+    if (res != SL_RESULT_SUCCESS) {
+      LOG("Failed to set the android configuration to VOICE for the recorder. "
+          "Error code: %lu", res);
+      return CUBEB_ERROR;
+    }
+  }
   // realize the audio recorder
   res = (*stm->recorderObj)->Realize(stm->recorderObj, SL_BOOLEAN_FALSE);
   if (res != SL_RESULT_SUCCESS) {
@@ -937,7 +1025,7 @@ opensl_configure_capture(cubeb_stream * stm, cubeb_stream_params * params)
 
   // Calculate length of input buffer according to requested latency
   stm->input_frame_size = params->channels * sizeof(int16_t);
-  stm->input_buffer_length = (stm->input_frame_size * stm->latency_frames);
+  stm->input_buffer_length = (stm->input_frame_size * stm->buffer_size_frames);
 
   // Calculate the capacity of input array
   stm->input_array_capacity = NBUFS;
@@ -979,15 +1067,36 @@ opensl_configure_playback(cubeb_stream * stm, cubeb_stream_params * params) {
   assert(params);
 
   stm->user_output_rate = params->rate;
-  stm->framesize = params->channels * sizeof(int16_t);
+  if(params->format == CUBEB_SAMPLE_S16NE || params->format == CUBEB_SAMPLE_S16BE) {
+    stm->framesize = params->channels * sizeof(int16_t);
+  } else if(params->format == CUBEB_SAMPLE_FLOAT32NE || params->format == CUBEB_SAMPLE_FLOAT32BE) {
+    stm->framesize = params->channels * sizeof(float);
+  }
   stm->lastPosition = -1;
   stm->lastPositionTimeStamp = 0;
   stm->lastCompensativePosition = -1;
 
-  SLDataFormat_PCM format;
-  int r = opensl_set_format(&format, params);
-  if (r != CUBEB_OK) {
-    return CUBEB_ERROR_INVALID_FORMAT;
+  void* format = NULL;
+  SLuint32* format_sample_rate = NULL;
+
+#if defined(__ANDROID__) && (__ANDROID_API__ >= ANDROID_VERSION_LOLLIPOP)
+  SLAndroidDataFormat_PCM_EX pcm_ext_format;
+  if (get_android_version() >= ANDROID_VERSION_LOLLIPOP) {
+    if (opensl_set_format_ext(&pcm_ext_format, params) != CUBEB_OK) {
+      return CUBEB_ERROR_INVALID_FORMAT;
+    }
+    format = &pcm_ext_format;
+    format_sample_rate = &pcm_ext_format.sampleRate;
+  }
+#endif
+
+  SLDataFormat_PCM pcm_format;
+  if(!format) {
+    if(opensl_set_format(&pcm_format, params) != CUBEB_OK) {
+      return CUBEB_ERROR_INVALID_FORMAT;
+    }
+    format = &pcm_format;
+    format_sample_rate = &pcm_format.samplesPerSec;
   }
 
   SLDataLocator_BufferQueue loc_bufq;
@@ -995,7 +1104,7 @@ opensl_configure_playback(cubeb_stream * stm, cubeb_stream_params * params) {
   loc_bufq.numBuffers = NBUFS;
   SLDataSource source;
   source.pLocator = &loc_bufq;
-  source.pFormat = &format;
+  source.pFormat = format;
 
   SLDataLocator_OutputMix loc_outmix;
   loc_outmix.locatorType = SL_DATALOCATOR_OUTPUTMIX;
@@ -1031,7 +1140,7 @@ opensl_configure_playback(cubeb_stream * stm, cubeb_stream_params * params) {
   if (res == SL_RESULT_CONTENT_UNSUPPORTED &&
       preferred_sampling_rate != DEFAULT_SAMPLE_RATE) {
     preferred_sampling_rate = DEFAULT_SAMPLE_RATE;
-    format.samplesPerSec = preferred_sampling_rate * 1000;
+    *format_sample_rate = preferred_sampling_rate * 1000;
     res = (*stm->context->eng)->CreateAudioPlayer(stm->context->eng,
                                                   &stm->playerObj,
                                                   &source,
@@ -1048,7 +1157,7 @@ opensl_configure_playback(cubeb_stream * stm, cubeb_stream_params * params) {
 
   stm->output_configured_rate = preferred_sampling_rate;
   stm->bytespersec = stm->output_configured_rate * stm->framesize;
-  stm->queuebuf_len = stm->framesize * stm->latency_frames;
+  stm->queuebuf_len = stm->framesize * stm->buffer_size_frames;
 
   // Calculate the capacity of input array
   stm->queuebuf_capacity = NBUFS;
@@ -1063,11 +1172,90 @@ opensl_configure_playback(cubeb_stream * stm, cubeb_stream_params * params) {
     assert(stm->queuebuf[i]);
   }
 
+  SLAndroidConfigurationItf playerConfig = NULL;
+
+  if (get_android_version() >= ANDROID_VERSION_N_MR1) {
+    res = (*stm->playerObj)
+              ->GetInterface(stm->playerObj,
+                             stm->context->SL_IID_ANDROIDCONFIGURATION,
+                             &playerConfig);
+    if (res != SL_RESULT_SUCCESS) {
+      LOG("Failed to get Android configuration interface. Error code: %lu", res);
+      return CUBEB_ERROR;
+    }
+
+    SLint32 streamType = SL_ANDROID_STREAM_MEDIA;
+    if (stm->voice) {
+      streamType = SL_ANDROID_STREAM_VOICE;
+    }
+    res = (*playerConfig)->SetConfiguration(playerConfig,
+                                            SL_ANDROID_KEY_STREAM_TYPE,
+                                            &streamType,
+                                            sizeof(streamType));
+    if (res != SL_RESULT_SUCCESS) {
+      LOG("Failed to set Android configuration to %d Error code: %lu",
+          streamType, res);
+    }
+
+    SLuint32 performanceMode = SL_ANDROID_PERFORMANCE_LATENCY;
+    if (stm->buffer_size_frames > POWERSAVE_LATENCY_FRAMES_THRESHOLD) {
+      performanceMode = SL_ANDROID_PERFORMANCE_POWER_SAVING;
+    }
+
+    res = (*playerConfig)->SetConfiguration(playerConfig,
+                                            SL_ANDROID_KEY_PERFORMANCE_MODE,
+                                            &performanceMode,
+                                            sizeof(performanceMode));
+    if (res != SL_RESULT_SUCCESS) {
+      LOG("Failed to set Android performance mode to %d Error code: %lu. This is"
+          " not fatal", performanceMode, res);
+    }
+  }
+
   res = (*stm->playerObj)->Realize(stm->playerObj, SL_BOOLEAN_FALSE);
   if (res != SL_RESULT_SUCCESS) {
     LOG("Failed to realize player object. Error code: %lu", res);
     return CUBEB_ERROR;
   }
+
+  // There are two ways of getting the audio output latency:
+  // - a configuration value, only available on some devices (notably devices
+  // running FireOS)
+  // - A Java method, that we call using JNI.
+  //
+  // The first method is prefered, if available, because it can account for more
+  // latency causes, and is more precise.
+
+  // Latency has to be queried after the realization of the interface, when
+  // using SL_IID_ANDROIDCONFIGURATION.
+  SLuint32 audioLatency = 0;
+  SLuint32 paramSize = sizeof(SLuint32);
+  // The reported latency is in milliseconds.
+  if (playerConfig) {
+    res = (*playerConfig)->GetConfiguration(playerConfig,
+                                            (const SLchar *)"androidGetAudioLatency",
+                                            &paramSize,
+                                            &audioLatency);
+    if (res == SL_RESULT_SUCCESS) {
+      LOG("Got playback latency using android configuration extension");
+      stm->output_latency_ms = audioLatency;
+    }
+  }
+  // `playerConfig` is available, but the above failed, or `playerConfig` is not
+  // available. In both cases, we need to acquire the output latency by an other
+  // mean.
+  if ((playerConfig && res != SL_RESULT_SUCCESS) ||
+      !playerConfig) {
+    if (cubeb_output_latency_method_is_loaded(stm->context->p_output_latency_function)) {
+      LOG("Got playback latency using JNI");
+      stm->output_latency_ms = cubeb_get_output_latency(stm->context->p_output_latency_function);
+    } else {
+      LOG("No alternate latency querying method loaded, A/V sync will be off.");
+      stm->output_latency_ms = 0;
+    }
+  }
+
+  LOG("Audio output latency: %dms", stm->output_latency_ms);
 
   res = (*stm->playerObj)->GetInterface(stm->playerObj,
                                         stm->context->SL_IID_PLAY,
@@ -1148,6 +1336,14 @@ opensl_validate_stream_param(cubeb_stream_params * stream_params)
   return CUBEB_OK;
 }
 
+int has_pref_set(cubeb_stream_params* input_params,
+                 cubeb_stream_params* output_params,
+                 cubeb_stream_prefs pref)
+{
+  return (input_params && input_params->prefs & pref) ||
+         (output_params && output_params->prefs & pref);
+}
+
 static int
 opensl_stream_init(cubeb * ctx, cubeb_stream ** stream, char const * stream_name,
                    cubeb_devid input_device,
@@ -1185,10 +1381,14 @@ opensl_stream_init(cubeb * ctx, cubeb_stream ** stream, char const * stream_name
   stm->data_callback = data_callback;
   stm->state_callback = state_callback;
   stm->user_ptr = user_ptr;
-  stm->latency_frames = latency_frames ? latency_frames : DEFAULT_NUM_OF_FRAMES;
+  stm->buffer_size_frames = latency_frames ? latency_frames : DEFAULT_NUM_OF_FRAMES;
   stm->input_enabled = (input_stream_params) ? 1 : 0;
   stm->output_enabled = (output_stream_params) ? 1 : 0;
   stm->shutdown = 1;
+  stm->voice = has_pref_set(input_stream_params, output_stream_params, CUBEB_STREAM_PREF_VOICE);
+
+  LOG("cubeb stream prefs: voice: %s", stm->voice ? "true" : "false");
+
 
 #ifdef DEBUG
   pthread_mutexattr_t attr;
@@ -1203,7 +1403,7 @@ opensl_stream_init(cubeb * ctx, cubeb_stream ** stream, char const * stream_name
   if (output_stream_params) {
     LOG("Playback params: Rate %d, channels %d, format %d, latency in frames %d.",
         output_stream_params->rate, output_stream_params->channels,
-        output_stream_params->format, stm->latency_frames);
+        output_stream_params->format, stm->buffer_size_frames);
     r = opensl_configure_playback(stm, output_stream_params);
     if (r != CUBEB_OK) {
       opensl_stream_destroy(stm);
@@ -1214,7 +1414,7 @@ opensl_stream_init(cubeb * ctx, cubeb_stream ** stream, char const * stream_name
   if (input_stream_params) {
     LOG("Capture params: Rate %d, channels %d, format %d, latency in frames %d.",
         input_stream_params->rate, input_stream_params->channels,
-        input_stream_params->format, stm->latency_frames);
+        input_stream_params->format, stm->buffer_size_frames);
     r = opensl_configure_capture(stm, input_stream_params);
     if (r != CUBEB_OK) {
       opensl_stream_destroy(stm);
@@ -1452,10 +1652,6 @@ opensl_stream_get_position(cubeb_stream * stm, uint64_t * position)
   uint32_t compensation_msec = 0;
   SLresult res;
 
-  if (!cubeb_output_latency_method_is_loaded(stm->context->p_output_latency_function)) {
-    return CUBEB_ERROR_NOT_SUPPORTED;
-  }
-
   res = (*stm->play)->GetPosition(stm->play, &msec);
   if (res != SL_RESULT_SUCCESS)
     return CUBEB_ERROR;
@@ -1471,22 +1667,22 @@ opensl_stream_get_position(cubeb_stream * stm, uint64_t * position)
   }
 
   uint64_t samplerate = stm->user_output_rate;
-  uint32_t mixer_latency = cubeb_get_output_latency(stm->context->p_output_latency_function);
+  uint32_t output_latency = stm->output_latency_ms;
 
   pthread_mutex_lock(&stm->mutex);
   int64_t maximum_position = stm->written * (int64_t)stm->user_output_rate / stm->output_configured_rate;
   pthread_mutex_unlock(&stm->mutex);
   assert(maximum_position >= 0);
 
-  if (msec > mixer_latency) {
+  if (msec > output_latency) {
     int64_t unadjusted_position;
     if (stm->lastCompensativePosition > msec + compensation_msec) {
       // Over compensation, use lastCompensativePosition.
       unadjusted_position =
-        samplerate * (stm->lastCompensativePosition - mixer_latency) / 1000;
+        samplerate * (stm->lastCompensativePosition - output_latency) / 1000;
     } else {
       unadjusted_position =
-        samplerate * (msec - mixer_latency + compensation_msec) / 1000;
+        samplerate * (msec - output_latency + compensation_msec) / 1000;
       stm->lastCompensativePosition = msec + compensation_msec;
     }
     *position = unadjusted_position < maximum_position ?
@@ -1495,6 +1691,18 @@ opensl_stream_get_position(cubeb_stream * stm, uint64_t * position)
     *position = 0;
   }
   return CUBEB_OK;
+}
+
+static int
+opensl_stream_get_latency(cubeb_stream * stm, uint32_t * latency)
+{
+  assert(stm);
+  assert(latency);
+
+  uint32_t stream_latency_frames =
+    stm->user_output_rate * (stm->output_latency_ms / 1000);
+
+  return stream_latency_frames + cubeb_resampler_latency(stm->resampler);
 }
 
 int
@@ -1543,9 +1751,9 @@ static struct cubeb_ops const opensl_ops = {
   .stream_stop = opensl_stream_stop,
   .stream_reset_default_device = NULL,
   .stream_get_position = opensl_stream_get_position,
-  .stream_get_latency = NULL,
+  .stream_get_latency = opensl_stream_get_latency,
+  .stream_get_input_latency = NULL,
   .stream_set_volume = opensl_stream_set_volume,
-  .stream_set_panning = NULL,
   .stream_get_current_device = NULL,
   .stream_device_destroy = NULL,
   .stream_register_device_changed_callback = NULL,

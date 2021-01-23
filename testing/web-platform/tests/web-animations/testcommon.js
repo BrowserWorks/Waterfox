@@ -87,23 +87,6 @@ function createStyle(test, rules, doc) {
   });
 }
 
-// Create a pseudo element
-function getPseudoElement(test, type) {
-  createStyle(test, { '@keyframes anim': '',
-                      [`.pseudo::${type}`]: 'animation: anim 10s; ' +
-                                            'content: \'\';'  });
-  const div = createDiv(test);
-  if (type == 'marker') {
-    div.style.display = 'list-item';
-  }
-  div.classList.add('pseudo');
-  const anims = document.getAnimations();
-  assert_true(anims.length >= 1);
-  const anim = anims[anims.length - 1];
-  anim.cancel();
-  return anim.effect.target;
-}
-
 // Cubic bezier with control points (0, 0), (x1, y1), (x2, y2), and (1, 1).
 function cubicBezier(x1, y1, x2, y2) {
   const xForT = t => {
@@ -195,6 +178,16 @@ function waitForNextFrame() {
     }
   }());
   });
+}
+
+async function insertFrameAndAwaitLoad(test, iframe, doc) {
+  const eventWatcher = new EventWatcher(test, iframe, ['load']);
+  const event_promise = eventWatcher.wait_for('load');
+
+  doc.body.appendChild(iframe);
+  test.add_cleanup(() => { doc.body.removeChild(iframe); });
+
+  await event_promise;
 }
 
 // Returns 'matrix()' or 'matrix3d()' function string generated from an array.

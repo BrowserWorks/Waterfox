@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -22,7 +21,7 @@ add_task(async function() {
 
   info("Play a transition by adding the expand class, wait for mutations");
   let onMutations = expectMutationEvents(animations, 2);
-  await ContentTask.spawn(gBrowser.selectedBrowser, {}, () => {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], () => {
     const el = content.document.querySelector(".all-transitions");
     el.classList.add("expand");
   });
@@ -38,7 +37,7 @@ add_task(async function() {
 
   info("Play the transition back by removing the class, wait for mutations");
   onMutations = expectMutationEvents(animations, 4);
-  await ContentTask.spawn(gBrowser.selectedBrowser, {}, () => {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], () => {
     const el = content.document.querySelector(".all-transitions");
     el.classList.remove("expand");
   });

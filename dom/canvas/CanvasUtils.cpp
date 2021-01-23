@@ -6,15 +6,14 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-#include "nsIServiceManager.h"
-
-#include "nsIConsoleService.h"
 #include "nsICanvasRenderingContextInternal.h"
 #include "nsIHTMLCollection.h"
-#include "mozilla/dom/HTMLCanvasElement.h"
 #include "mozilla/dom/BrowserChild.h"
-#include "mozilla/EventStateManager.h"
-#include "mozilla/StaticPrefs.h"
+#include "mozilla/dom/HTMLCanvasElement.h"
+#include "mozilla/dom/UserActivation.h"
+#include "mozilla/BasePrincipal.h"
+#include "mozilla/StaticPrefs_privacy.h"
+#include "mozilla/StaticPrefs_webgl.h"
 #include "nsIPrincipal.h"
 
 #include "nsGfxCIID.h"
@@ -34,7 +33,6 @@
 #include "nsContentUtils.h"
 #include "nsUnicharUtils.h"
 #include "nsPrintfCString.h"
-#include "nsIConsoleService.h"
 #include "jsapi.h"
 
 #define TOPIC_CANVAS_PERMISSIONS_PROMPT "canvas-permissions-prompt"
@@ -60,7 +58,7 @@ bool IsImageExtractionAllowed(Document* aDocument, JSContext* aCx,
   }
 
   // The system principal can always extract canvas data.
-  if (nsContentUtils::IsSystemPrincipal(&aPrincipal)) {
+  if (aPrincipal.IsSystemPrincipal()) {
     return true;
   }
 
@@ -76,8 +74,7 @@ bool IsImageExtractionAllowed(Document* aDocument, JSContext* aCx,
   docURI->GetSpec(docURISpec);
 
   // Allow local files to extract canvas data.
-  bool isFileURL;
-  if (NS_SUCCEEDED(docURI->SchemeIs("file", &isFileURL)) && isFileURL) {
+  if (docURI->SchemeIs("file")) {
     return true;
   }
 
@@ -124,8 +121,8 @@ bool IsImageExtractionAllowed(Document* aDocument, JSContext* aCx,
   // Check if the site has permission to extract canvas data.
   // Either permit or block extraction if a stored permission setting exists.
   uint32_t permission;
-  rv = permissionManager->TestPermission(
-      topLevelDocURI, PERMISSION_CANVAS_EXTRACT_DATA, &permission);
+  rv = permissionManager->TestPermissionFromPrincipal(
+      principal, PERMISSION_CANVAS_EXTRACT_DATA, &permission);
   NS_ENSURE_SUCCESS(rv, false);
   switch (permission) {
     case nsIPermissionManager::ALLOW_ACTION:
@@ -138,24 +135,12 @@ bool IsImageExtractionAllowed(Document* aDocument, JSContext* aCx,
 
   // At this point, permission is unknown
   // (nsIPermissionManager::UNKNOWN_ACTION).
-  
-  // Check if the user has explicitly disabled all
-  // or delegated all other checks and fingerprinting resistence
-  // to an extension (or nothing) such as canvasblocker
-  bool isDelegateCanvasProtection =
-      StaticPrefs::
-          privacy_resistFingerprinting_delegateCanvasProtection() &&
-      !EventStateManager::IsHandlingUserInput();
-
-  if (isDelegateCanvasProtection) {
-    return true;
-  }
 
   // Check if the request is in response to user input
   bool isAutoBlockCanvas =
       StaticPrefs::
           privacy_resistFingerprinting_autoDeclineNoUserInputCanvasPrompts() &&
-      !EventStateManager::IsHandlingUserInput();
+      !UserActivation::IsHandlingUserInput();
 
   if (isAutoBlockCanvas) {
     nsAutoString message;
@@ -179,11 +164,14 @@ bool IsImageExtractionAllowed(Document* aDocument, JSContext* aCx,
 
   // Prompt the user (asynchronous).
   nsPIDOMWindowOuter* win = aDocument->GetWindow();
+  nsAutoCString origin;
+  rv = principal->GetOrigin(origin);
+  NS_ENSURE_SUCCESS(rv, false);
+
   if (XRE_IsContentProcess()) {
     BrowserChild* browserChild = BrowserChild::GetFrom(win);
     if (browserChild) {
-      browserChild->SendShowCanvasPermissionPrompt(topLevelDocURISpec,
-                                                   isAutoBlockCanvas);
+      browserChild->SendShowCanvasPermissionPrompt(origin, isAutoBlockCanvas);
     }
   } else {
     nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
@@ -192,7 +180,7 @@ bool IsImageExtractionAllowed(Document* aDocument, JSContext* aCx,
                            isAutoBlockCanvas
                                ? TOPIC_CANVAS_PERMISSIONS_PROMPT_HIDE_DOORHANGER
                                : TOPIC_CANVAS_PERMISSIONS_PROMPT,
-                           NS_ConvertUTF8toUTF16(topLevelDocURISpec).get());
+                           NS_ConvertUTF8toUTF16(origin).get());
     }
   }
 
@@ -212,9 +200,16 @@ bool GetCanvasContextType(const nsAString& str,
     return true;
   }
 
-  if (WebGL2Context::IsSupported()) {
+  if (StaticPrefs::webgl_enable_webgl2()) {
     if (str.EqualsLiteral("webgl2")) {
       *out_type = dom::CanvasContextType::WebGL2;
+      return true;
+    }
+  }
+
+  if (StaticPrefs::dom_webgpu_enabled()) {
+    if (str.EqualsLiteral("gpupresent")) {
+      *out_type = dom::CanvasContextType::WebGPU;
       return true;
     }
   }
@@ -303,14 +298,19 @@ bool HasDrawWindowPrivilege(JSContext* aCx, JSObject* /* unused */) {
                                              nsGkAtoms::all_urlsPermission);
 }
 
-bool CheckWriteOnlySecurity(bool aCORSUsed, nsIPrincipal* aPrincipal) {
+bool CheckWriteOnlySecurity(bool aCORSUsed, nsIPrincipal* aPrincipal,
+                            bool aHadCrossOriginRedirects) {
   if (!aPrincipal) {
     return true;
   }
 
   if (!aCORSUsed) {
+    if (aHadCrossOriginRedirects) {
+      return true;
+    }
+
     nsIGlobalObject* incumbentSettingsObject = dom::GetIncumbentGlobal();
-    if (NS_WARN_IF(!incumbentSettingsObject)) {
+    if (!incumbentSettingsObject) {
       return true;
     }
 

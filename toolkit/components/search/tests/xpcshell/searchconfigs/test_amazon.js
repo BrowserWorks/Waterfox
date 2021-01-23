@@ -21,7 +21,6 @@ const test = new SearchConfigTest({
             "ach",
             "af",
             "ar",
-            "as",
             "az",
             "bg",
             "bn",
@@ -50,22 +49,19 @@ const test = new SearchConfigTest({
             "ia",
             "is",
             "it",
-            "ja-JP-mac",
+            "ja-JP-macos",
             "ja",
             "ka",
             "km",
             "kn",
             "lij",
             "lt",
-            "mai",
             "mk",
-            "ml",
             "mr",
             "ms",
             "my",
             "nb-NO",
             "nn-NO",
-            "or",
             "pa-IN",
             "pt-PT",
             "ro",
@@ -94,6 +90,7 @@ const test = new SearchConfigTest({
       // Note: the order here is important. A region/locale match higher up in the
       // list will override a region/locale match lower down.
       domain: "amazon.com.au",
+      telemetryId: "amazon-au",
       aliases: ["@amazon"],
       included: [
         {
@@ -103,14 +100,13 @@ const test = new SearchConfigTest({
               "ach",
               "af",
               "ar",
-              "as",
               "az",
               "bg",
               "bn-IN",
               "cak",
+              "unknown",
               "eo",
               "en-US",
-              "en-ZA",
               "es-AR",
               "fa",
               "gn",
@@ -158,11 +154,12 @@ const test = new SearchConfigTest({
     },
     {
       domain: "amazon.ca",
+      telemetryId: "amazon-ca",
       aliases: ["@amazon"],
       included: [
         {
           locales: {
-            matches: ["ca", "en-CA"],
+            matches: ["en-CA"],
           },
         },
         {
@@ -172,14 +169,13 @@ const test = new SearchConfigTest({
               "ach",
               "af",
               "ar",
-              "as",
               "az",
               "bg",
               "bn-IN",
               "cak",
+              "unknown",
               "eo",
               "en-US",
-              "en-ZA",
               "es-AR",
               "fa",
               "gn",
@@ -212,6 +208,7 @@ const test = new SearchConfigTest({
     },
     {
       domain: "amazon.fr",
+      telemetryId: "amazon-france",
       aliases: ["@amazon"],
       included: [
         {
@@ -226,14 +223,13 @@ const test = new SearchConfigTest({
               "ach",
               "af",
               "ar",
-              "as",
               "az",
               "bg",
               "bn-IN",
               "cak",
+              "unknown",
               "eo",
               "en-US",
-              "en-ZA",
               "es-AR",
               "fa",
               "gn",
@@ -262,6 +258,7 @@ const test = new SearchConfigTest({
     },
     {
       domain: "amazon.co.uk",
+      telemetryId: "amazon-en-GB",
       aliases: ["@amazon"],
       included: [
         {
@@ -291,14 +288,13 @@ const test = new SearchConfigTest({
               "ach",
               "af",
               "ar",
-              "as",
               "az",
               "bg",
               "bn-IN",
               "cak",
+              "unknown",
               "eo",
               "en-US",
-              "en-ZA",
               "es-AR",
               "fa",
               "gn",
@@ -327,6 +323,7 @@ const test = new SearchConfigTest({
     },
     {
       domain: "amazon.com",
+      telemetryId: "amazondotcom",
       aliases: ["@amazon"],
       included: [
         {
@@ -335,14 +332,13 @@ const test = new SearchConfigTest({
               "ach",
               "af",
               "ar",
-              "as",
               "az",
               "bg",
               "bn-IN",
               "cak",
+              "unknown",
               "eo",
               "en-US",
-              "en-ZA",
               "es-AR",
               "fa",
               "gn",
@@ -370,6 +366,7 @@ const test = new SearchConfigTest({
     },
     {
       domain: "amazon.cn",
+      telemetryId: "amazondotcn",
       included: [
         {
           locales: {
@@ -382,6 +379,7 @@ const test = new SearchConfigTest({
     },
     {
       domain: "amazon.co.jp",
+      telemetryId: "amazon-jp",
       aliases: ["@amazon"],
       included: [
         {
@@ -395,6 +393,7 @@ const test = new SearchConfigTest({
     },
     {
       domain: "amazon.de",
+      telemetryId: "amazon-de",
       aliases: ["@amazon"],
       included: [
         {
@@ -403,27 +402,17 @@ const test = new SearchConfigTest({
           },
         },
       ],
+      searchUrlCode: "tag=firefox-de-21",
       noSuggestionsURL: true,
     },
     {
       domain: "amazon.in",
+      telemetryId: "amazon-in",
       aliases: ["@amazon"],
       included: [
         {
           locales: {
-            matches: [
-              "bn",
-              "gu-IN",
-              "kn",
-              "mai",
-              "ml",
-              "mr",
-              "or",
-              "pa-IN",
-              "ta",
-              "te",
-              "ur",
-            ],
+            matches: ["bn", "gu-IN", "kn", "mr", "pa-IN", "ta", "te", "ur"],
           },
         },
       ],
@@ -431,6 +420,7 @@ const test = new SearchConfigTest({
     },
     {
       domain: "amazon.it",
+      telemetryId: "amazon-it",
       aliases: ["@amazon"],
       included: [
         {
@@ -451,5 +441,10 @@ add_task(async function setup() {
 });
 
 add_task(async function test_searchConfig_amazon() {
-  await test.run();
+  await test.run(true);
+  // Only applies to the default locale fallback for the legacy config.
+  // Note: when we remove the legacy config, we should remove the "unknown"
+  // references in the 'details' section of the test above.
+  test._config.available.included[0].locales.matches.push("unknown");
+  await test.run(false);
 });

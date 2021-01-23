@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.security.title "Prywatność i zabezpieczenia">
+
+<!ENTITY tracking.label "Śledzenie użytkownika">
+<!ENTITY trackingIntro.label "Witryny mogą śledzić sposób ich użytkowania, co ogranicza prywatność użytkownika.">
+
+<!ENTITY doNotTrack.label "Informuj witryny, że użytkownik nie chce być śledzony">
+<!ENTITY doNotTrack.accesskey "w">
+<!ENTITY trackProtect.label "Zapobiegaj śledzeniu przez znane witryny">
+<!ENTITY trackProtect.accesskey "u">
+<!ENTITY warnTrackContent.label "Ostrzegaj, jeśli znane sytuacje śledzenia użytkownika zostaną wykryte">
+<!ENTITY warnTrackContent.accesskey "n">
+
+<!ENTITY geoLocation.label "Przeglądanie z uwzględnieniem położenia geograficznego">
+<!ENTITY geoIntro.label "Witryny mogą żądać więcej informacji o obecnym położeniu.">
+
+<!ENTITY geoEnabled.label "Pytaj o zgodę w przypadku żądania">
+<!ENTITY geoEnabled.accesskey "a">
+<!ENTITY geoDisabled.label "Deaktywuj tę funkcję i odmawiaj wszystkim żądaniom">
+<!ENTITY geoDisabled.accesskey "e">
+
+<!-- LOCALIZATION NOTE (safeBrowsing.label, blockWebForgeries.label, blockAttackSites.label):
+  The methods by which forged (phished) and attack sites will be detected by
+  phishing providers will vary from human review to machine-based heuristics
+  to a combination of both, so it's important that these strings convey the
+  meaning "reported" (and not something like "known").
+-->
+<!ENTITY safeBrowsing.label "Bezpieczne przeglądanie">
+<!ENTITY safeBrowsingIntro.label "&brandShortName; może blokować witryny zgłoszone jako zawierające niebezpieczną zawartość.">
+
+<!ENTITY blockAttackSites.label "Blokuj witryny zgłoszone jako stwarzające zagrożenie (robaki, wirusy)">
+<!ENTITY blockAttackSites.accesskey "z">
+
+<!ENTITY blockWebForgeries.label "Blokuj witryny zgłoszone jako próby oszustwa internetowego (Phishing)">
+<!ENTITY blockWebForgeries.accesskey "o">

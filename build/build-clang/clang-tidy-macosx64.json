@@ -1,5 +1,4 @@
 {
-    "llvm_revision": "d2298e74235598f15594fe2c99bbac870a507c59",
     "stages": "1",
     "build_libcxx": true,
     "build_type": "Release",
@@ -7,16 +6,18 @@
     "build_clang_tidy": true,
     "osx_cross_compile": true,
     "python_path": "/usr/bin/python2.7",
-    "gcc_dir": "/builds/worker/workspace/build/src/gcc",
-    "cc": "/builds/worker/workspace/build/src/clang/bin/clang",
-    "cxx": "/builds/worker/workspace/build/src/clang/bin/clang++",
-    "as": "/builds/worker/workspace/build/src/clang/bin/clang",
-    "ar": "/builds/worker/workspace/build/src/cctools/bin/x86_64-darwin11-ar",
-    "ranlib": "/builds/worker/workspace/build/src/cctools/bin/x86_64-darwin11-ranlib",
-    "libtool": "/builds/worker/workspace/build/src/cctools/bin/x86_64-darwin11-libtool",
-    "ld": "/builds/worker/workspace/build/src/clang/bin/clang",
+    "gcc_dir": "{MOZ_FETCHES_DIR}/gcc",
+    "cc": "{MOZ_FETCHES_DIR}/clang/bin/clang",
+    "cxx": "{MOZ_FETCHES_DIR}/clang/bin/clang++",
+    "as": "{MOZ_FETCHES_DIR}/clang/bin/clang",
+    "ar": "{MOZ_FETCHES_DIR}/cctools/bin/x86_64-apple-darwin-ar",
+    "ranlib": "{MOZ_FETCHES_DIR}/cctools/bin/x86_64-apple-darwin-ranlib",
+    "libtool": "{MOZ_FETCHES_DIR}/cctools/bin/x86_64-apple-darwin-libtool",
+    "ld": "{MOZ_FETCHES_DIR}/clang/bin/clang",
     "patches": [
-      "clang-tidy-8.patch",
-      "compiler-rt-no-codesign.patch"
+      "clang-tidy-ci.patch",
+      "clang-tidy-no-errors.patch",
+      "compiler-rt-no-codesign.patch",
+      "clang_format_10.patch"
     ]
 }

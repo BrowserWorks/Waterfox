@@ -9,22 +9,54 @@ import os
 import re
 import sys
 import time
-import types
 import unittest
 import warnings
 import weakref
 
-from unittest.case import (
-    _ExpectedFailure,
-    _UnexpectedSuccess,
-    SkipTest,
-)
+from unittest.case import SkipTest
+
+import six
 
 from marionette_driver.errors import (
     TimeoutException,
     UnresponsiveInstanceException
 )
 from mozlog import get_default_logger
+
+
+# ExpectedFailure and UnexpectedSuccess are adapted from the Python 2
+# private classes _ExpectedFailure and _UnexpectedSuccess in
+# unittest/case.py which are no longer available in Python 3.
+class ExpectedFailure(Exception):
+    """
+    Raise this when a test is expected to fail.
+
+    This is an implementation detail.
+    """
+
+    def __init__(self, exc_info):
+        super(ExpectedFailure, self).__init__()
+        self.exc_info = exc_info
+
+
+class UnexpectedSuccess(Exception):
+    """
+    The test was supposed to fail, but it didn't!
+    """
+    pass
+
+
+try:
+    # Since these errors can be thrown during execution under Python 2
+    # we must support them until Marionette completes its transition
+    # from Python 2 to Python 3.
+    from unittest.case import (
+        _ExpectedFailure,
+        _UnexpectedSuccess,
+    )
+except ImportError:
+    _ExpectedFailure = ExpectedFailure
+    _UnexpectedSuccess = UnexpectedSuccess
 
 
 def _wraps_parameterized(func, func_suffix, args, kwargs):
@@ -47,7 +79,7 @@ class MetaParameterized(type):
     RE_ESCAPE_BAD_CHARS = re.compile(r'[\.\(\) -/]')
 
     def __new__(cls, name, bases, attrs):
-        for k, v in attrs.items():
+        for k, v in list(attrs.items()):
             if callable(v) and hasattr(v, 'metaparameters'):
                 for func_suffix, args, kwargs in v.metaparameters:
                     func_suffix = cls.RE_ESCAPE_BAD_CHARS.sub('_', func_suffix)
@@ -61,9 +93,9 @@ class MetaParameterized(type):
         return type.__new__(cls, name, bases, attrs)
 
 
+@six.add_metaclass(MetaParameterized)
 class CommonTestCase(unittest.TestCase):
 
-    __metaclass__ = MetaParameterized
     match_re = None
     failureException = AssertionError
     pydebugger = None
@@ -140,7 +172,7 @@ class CommonTestCase(unittest.TestCase):
                     self.setUp()
             except SkipTest as e:
                 self._addSkip(result, str(e))
-            except (KeyboardInterrupt, UnresponsiveInstanceException) as e:
+            except (KeyboardInterrupt, UnresponsiveInstanceException):
                 raise
             except _ExpectedFailure as e:
                 expected_failure(result, e.exc_info)
@@ -160,7 +192,7 @@ class CommonTestCase(unittest.TestCase):
                 except self.failureException:
                     self._enter_pm()
                     result.addFailure(self, sys.exc_info())
-                except (KeyboardInterrupt, UnresponsiveInstanceException) as e:
+                except (KeyboardInterrupt, UnresponsiveInstanceException):
                     raise
                 except _ExpectedFailure as e:
                     expected_failure(result, e.exc_info)
@@ -188,7 +220,7 @@ class CommonTestCase(unittest.TestCase):
                             raise _ExpectedFailure(sys.exc_info())
                     else:
                         self.tearDown()
-                except (KeyboardInterrupt, UnresponsiveInstanceException) as e:
+                except (KeyboardInterrupt, UnresponsiveInstanceException):
                     raise
                 except _ExpectedFailure as e:
                     expected_failure(result, e.exc_info)
@@ -230,7 +262,7 @@ class CommonTestCase(unittest.TestCase):
     def test_name(self):
         rel_path = None
         if os.path.exists(self.filepath):
-            rel_path = self._fix_test_path(os.path.relpath(self.filepath))
+            rel_path = self._fix_test_path(self.filepath)
 
         return '{0} {1}.{2}'.format(rel_path,
                                     self.__class__.__name__,
@@ -276,10 +308,13 @@ class CommonTestCase(unittest.TestCase):
             "tests{}".format(os.path.sep),
         ]
 
+        path = os.path.relpath(path)
         for prefix in test_path_prefixes:
             if path.startswith(prefix):
                 path = path[len(prefix):]
                 break
+        path = path.replace('\\', '/')
+
         return path
 
 
@@ -316,7 +351,7 @@ class MarionetteTestCase(CommonTestCase):
 
         for name in dir(test_mod):
             obj = getattr(test_mod, name)
-            if (isinstance(obj, (type, types.ClassType)) and
+            if (isinstance(obj, six.class_types) and
                     issubclass(obj, unittest.TestCase)):
                 testnames = testloader.getTestCaseNames(obj)
                 for testname in testnames:

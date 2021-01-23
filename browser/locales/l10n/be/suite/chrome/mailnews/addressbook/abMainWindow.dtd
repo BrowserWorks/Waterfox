@@ -1,0 +1,89 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY addressbookWindow.title "Адрасная кніга">
+<!ENTITY newContact.label "Сувязь…">
+<!ENTITY newContact.accesskey "С">
+<!ENTITY newListCmd.label "Адрасны спіс…">
+<!ENTITY newListCmd.accesskey "С">
+<!ENTITY newAddressBookCmd.label "Адрасную кнігу…">
+<!ENTITY newAddressBookCmd.accesskey "К">
+<!ENTITY newLDAPDirectoryCmd.label "Дырэкторыю LDAP…">
+<!ENTITY newLDAPDirectoryCmd.accesskey "L">
+<!ENTITY newIM.label "ВМП">
+<!ENTITY printContactViewCmd.label "Друкаваць сувязь…">
+<!ENTITY printContactViewCmd.accesskey "Д">
+<!ENTITY printPreviewContactViewCmd.label "Перадпрагляд друку сувязі">
+<!ENTITY printPreviewContactViewCmd.accesskey "г">
+<!ENTITY printContactViewCmd.key "P">
+<!ENTITY printAddressBook.label "Надрукаваць адрасную кнігу…">
+<!ENTITY printAddressBook.accesskey "А">
+<!ENTITY printPreviewAddressBook.label "Перадпрагляд адраснай кнігі">
+<!ENTITY printPreviewAddressBook.accesskey "К">
+<!ENTITY deleteAbCmd.label "Выдаліць адрасную кнігу">
+<!ENTITY deleteContactCmd.label "Выдаліць сувязь">
+<!ENTITY deleteContactsCmd.label "Выдаліць вылучаныя сувязі">
+<!ENTITY deleteListCmd.label "Выдаліць спіс">
+<!ENTITY deleteListsCmd.label "Выдаліць вылучаныя спісы">
+<!ENTITY deleteItemsCmd.label "Выдаліць вылучаныя адзінкі">
+<!ENTITY swapFirstNameLastNameCmd.label "Абменяць імя/прозвішча">
+<!ENTITY swapFirstNameLastNameCmd.accesskey "м">
+<!ENTITY propertiesCmd.label "Уласцівасці…">
+<!ENTITY propertiesCmd.accesskey "і">
+<!ENTITY propertiesCmd.key "i">
+<!ENTITY showAbToolbarCmd.label "Паліца прыладаў адраснай кнігі">
+<!ENTITY showAbToolbarCmd.accesskey "р">
+<!ENTITY layoutMenu.label "Раскладка">
+<!ENTITY layoutMenu.accesskey "Р">
+<!ENTITY showDirectoryPane.label "Шыба дырэкторыяў">
+<!ENTITY showDirectoryPane.accesskey "Ш">
+<!ENTITY showContactPane2.label "Шыба сувязяў">
+<!ENTITY showContactPane2.accesskey "Ш">
+<!ENTITY menu_ShowNameAs.label "Паказваць імёны як">
+<!ENTITY menu_ShowNameAs.accesskey "І">
+<!ENTITY firstLastCmd.label "Імя Прозвішча">
+<!ENTITY firstLastCmd.accesskey "І">
+<!ENTITY lastFirstCmd.label "Прозвішча Імя">
+<!ENTITY lastFirstCmd.accesskey "П">
+<!ENTITY displayNameCmd.label "Адлюстроўнае імя">
+<!ENTITY displayNameCmd.accesskey "А">
+<!ENTITY importCmd.label "Імпарт…">
+<!ENTITY importCmd.accesskey "І">
+<!ENTITY exportCmd.label "Экспарт…">
+<!ENTITY exportCmd.accesskey "Э">
+<!ENTITY newContactButton.label "Новая сувязь">
+<!ENTITY newContactButton.accesskey "с">
+<!ENTITY newlistButton.label "Новы спіс">
+<!ENTITY newlistButton.accesskey "С">
+<!ENTITY editItemButton.label "Уласцівасці">
+<!ENTITY editItemButton.accesskey "У">
+<!ENTITY newmsgButton.label "Укласці">
+<!ENTITY newmsgButton.accesskey "У">
+<!ENTITY deleteItemButton.label "Выдаліць">
+<!ENTITY deleteItemButton.accesskey "д">
+<!ENTITY newimButton.label "Вокамгненнае паведамленне">
+<!ENTITY newimButton.accesskey "м">
+<!ENTITY searchNameAndEmail.placeholder "Пошук імяў і э-адрасоў">
+<!ENTITY searchBox.title "Пошук">
+<!ENTITY addressbookToolbar.tooltip "Паліца прыладаў адраснай кнігі">
+<!ENTITY newContactButton.tooltip "Стварыць новую сувязь у адраснай кнізе">
+<!ENTITY newlistButton.tooltip "Стварыць новы спіс">
+<!ENTITY editItemButton.tooltip "Праўка вылучанай адзінкі">
+<!ENTITY newmsgButton.tooltip "Даслаць паштовы ліст">
+<!ENTITY newIM.tooltip "Даслаць вокамгненнае паведамленне ці распачаць гутарку">
+<!ENTITY deleteItemButton.tooltip "Выдаліць вылучаную адзінку">
+<!ENTITY throbber.tooltip "Пайсці на хатнюю старонку &vendorShortName;">
+<!ENTITY advancedButton.tooltip "Пашыраны пошук адрасоў">
+<!ENTITY dirTreeHeader.label "Адрасныя кнігі">
+<!ENTITY contact.heading "Сувязь">
+<!ENTITY home.heading "Пачатак">
+<!ENTITY other.heading "Іншае">
+<!ENTITY phone.heading "Тэляфон">
+<!ENTITY work.heading "Працоўныя">
+<!ENTITY description.heading "Апісанне">
+<!ENTITY addresses.heading "Адрасы">
+<!ENTITY mapItButton.label "Атрымаць мапу">
+<!ENTITY mapIt.tooltip "Адлюстроўваць мапу гэтага адраса з Сеціва">
+<!ENTITY statusText.label "">
+<!ENTITY hideSwapFnLnUI "false">

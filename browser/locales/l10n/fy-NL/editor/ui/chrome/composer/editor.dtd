@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!-- LOCALIZATION NOTE  (editorWindow.titlemodifier): DONT_TRANSLATE -->
+<!ENTITY editorWindow.titlemodifier "Composer"> 
+<!ENTITY editorWindow.titlemodifiermenuseparator " - ">
+
+<!-- Menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- Toolbar-only items -->
+<!ENTITY compositionToolbar.tooltip "Komposysjearkbalk">
+<!ENTITY previewToolbarCmd.label "Besjen">
+<!ENTITY previewToolbarCmd.tooltip "Dizze side yn de browser lade">
+
+<!-- File menu items -->
+<!ENTITY exportToTextCmd.label "Eksportearje nei tekst…">
+<!ENTITY exportToTextCmd.accesskey "k">
+<!ENTITY previewCmd.label "Side besjen">
+<!ENTITY previewCmd.accesskey "b">
+<!ENTITY sendPageCmd.label "Side ferstjoere…">
+<!ENTITY sendPageCmd.accesskey "f">
+
+<!-- View menu items -->
+<!ENTITY compositionToolbarCmd.label "Komposysje-arkbalke">
+<!ENTITY compositionToolbarCmd.accesskey "K">
+<!ENTITY formattingToolbarCmd.label "Opmaakarkbalke">
+<!ENTITY formattingToolbarCmd.accesskey "O">
+<!ENTITY editmodeToolbarCmd.label "Bewurkingsarkbalke">
+<!ENTITY editmodeToolbarCmd.accesskey "a">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "Opmaak">
+<!ENTITY formatMenu.accesskey "M">
+<!ENTITY grid.label "Raster pleatse">
+<!ENTITY grid.accesskey "t">
+<!ENTITY pageProperties.label "Sidetitel en -eigenskippen…">
+<!ENTITY pageProperties.accesskey "P">
+
+<!-- Tools menu items -->
+<!ENTITY validateCmd.label "HTML falidearje">
+<!ENTITY validateCmd.accesskey "f">
+
+<!-- Display Mode toolbar and View menu items -->
+<!ENTITY NormalModeTab.label "Normaal">
+<!ENTITY NormalMode.label "Normale bewurkingsmodus">
+<!ENTITY NormalMode.accesskey "N">
+<!ENTITY NormalMode.tooltip "Tabelrannen en ankerferwizingen toane">
+<!ENTITY AllTagsModeTab.label "HTML-labels">
+<!ENTITY AllTagsMode.label "HTML-labels">
+<!ENTITY AllTagsMode.accesskey "a">
+<!ENTITY AllTagsMode.tooltip "Piktogrammen werjaan foar alle HTML-labels">
+<!-- LOCALIZATION NOTE: (HTMLSourceModeTab.dir, HTMLSourceModeTab.label)
+     Do NOT translate text for 'HTMLSourceModeTab.dir', use latin "ltr" if
+     you want the <html> image to left of the 'HTMLSourceModeTab.label' text,
+     or use latin "rtl" if you want this image to the right of text. You do
+     not need to include HTML in the label 'HTMLSourceModeTab.label' -->
+<!ENTITY HTMLSourceModeTab.dir "ltr">
+<!ENTITY HTMLSourceModeTab.label "Boarne">
+<!ENTITY HTMLSourceMode.label "HTML-boarne">
+<!ENTITY HTMLSourceMode.accesskey "H">
+<!ENTITY HTMLSourceMode.tooltip "HTML-boarne bewurkje">
+<!ENTITY PreviewModeTab.label "Foarbyld">
+<!ENTITY PreviewMode.label "Foarbyld">
+<!ENTITY PreviewMode.accesskey "F">
+<!ENTITY PreviewMode.tooltip "Werjaan as WYSIWYG (lykas yn de browser)">

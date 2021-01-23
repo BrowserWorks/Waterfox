@@ -15,7 +15,8 @@ include "ImageLayers.h";
 
 using mozilla::gfx::Glyph from "mozilla/gfx/2D.h";
 using mozilla::gfx::SamplingFilter from "mozilla/gfx/2D.h";
-using struct mozilla::gfx::Color from "mozilla/gfx/2D.h";
+using struct mozilla::gfx::DeviceColor from "mozilla/gfx/2D.h";
+using struct mozilla::gfx::Point from "mozilla/gfx/Point.h";
 using struct mozilla::gfx::Point3D from "mozilla/gfx/Point.h";
 using mozilla::gfx::IntPoint from "mozilla/gfx/Point.h";
 using class mozilla::gfx::Matrix4x4 from "mozilla/gfx/Matrix.h";
@@ -29,11 +30,14 @@ using mozilla::ScreenRotation from "mozilla/WidgetUtils.h";
 using nsCSSPropertyID from "nsCSSPropertyID.h";
 using hal::ScreenOrientation from "mozilla/HalScreenConfiguration.h";
 using struct mozilla::layers::TextureInfo from "mozilla/layers/CompositorTypes.h";
+using mozilla::CSSPoint from "Units.h";
+using mozilla::CSSRect from "Units.h";
 using mozilla::LayerMargin from "Units.h";
 using mozilla::LayerPoint from "Units.h";
 using mozilla::LayerCoord from "Units.h";
 using mozilla::LayerSize from "Units.h";
 using mozilla::LayerRect from "Units.h";
+using mozilla::LayerIntSize from "Units.h";
 using mozilla::LayerIntRegion from "Units.h";
 using mozilla::ParentLayerIntRect from "Units.h";
 using mozilla::LayoutDeviceIntRect from "Units.h";
@@ -54,6 +58,15 @@ using struct mozilla::void_t from "ipc/IPCMessageUtils.h";
 using mozilla::layers::LayersId from "mozilla/layers/LayersTypes.h";
 using mozilla::layers::TransactionId from "mozilla/layers/LayersTypes.h";
 using mozilla::VsyncId from "mozilla/VsyncDispatcher.h";
+using mozilla::LengthPercentage from "mozilla/ServoStyleConsts.h";
+using mozilla::RayReferenceData from "mozilla/MotionPathUtils.h";
+using mozilla::StyleOffsetPath from "mozilla/ServoStyleConsts.h";
+using mozilla::StyleOffsetRotate from "mozilla/ServoStyleConsts.h";
+using mozilla::StylePositionOrAuto from "mozilla/ServoStyleConsts.h";
+using mozilla::StyleRotate from "mozilla/ServoStyleConsts.h";
+using mozilla::StyleScale from "mozilla/ServoStyleConsts.h";
+using mozilla::StyleTranslate from "mozilla/ServoStyleConsts.h";
+using mozilla::StyleTransform from "mozilla/ServoStyleConsts.h";
 
 namespace mozilla {
 namespace layers {
@@ -106,70 +119,20 @@ union TimingFunction {
   StepFunction;
 };
 
-// Send the angle with units rather than sending all angles in radians
-// to avoid having floating point error introduced by unit switching.
-struct CSSAngle {
-  float value;
-  int unit; // an nsCSSUnit that is valid for angles
-};
-
-struct LayerColor { Color value; };
-struct Perspective { float value; };
-struct RotationX { CSSAngle angle; };
-struct RotationY { CSSAngle angle; };
-struct RotationZ { CSSAngle angle; };
-struct Rotation { CSSAngle angle; };
-struct Rotation3D {
-  float x;
-  float y;
-  float z;
-  CSSAngle angle;
-};
-struct Scale {
-  float x;
-  float y;
-  float z;
-};
-struct Skew { CSSAngle x; CSSAngle y; };
-struct SkewX { CSSAngle x; };
-struct SkewY { CSSAngle y; };
-struct TransformMatrix { Matrix4x4 value; };
-struct Translation {
-  float x;
-  float y;
-  float z;
-};
-
-union Rotate {
-  // null_t represents |rotate: none|.
-  null_t;
-  Rotation;
-  Rotation3D;
-};
-
-union TransformFunction {
-  Perspective;
-  RotationX;
-  RotationY;
-  RotationZ;
-  Rotation;
-  Rotation3D;
-  Scale;
-  Skew;
-  SkewX;
-  SkewY;
-  Translation;
-  TransformMatrix;
-};
+struct LayerColor { DeviceColor value; };
 
 union Animatable {
   null_t;
   float;
   nscolor;
-  Rotate;
-  Scale;
-  Translation;
-  TransformFunction[];
+  StyleRotate;
+  StyleScale;
+  StyleTranslate;
+  StyleTransform;
+  StyleOffsetPath;
+  LengthPercentage;
+  StyleOffsetRotate;
+  StylePositionOrAuto;
 };
 
 struct AnimationSegment {
@@ -180,6 +143,14 @@ struct AnimationSegment {
   uint8_t startComposite;
   uint8_t endComposite;
   TimingFunction sampleFn;
+};
+
+struct MotionPathData {
+  // the transform-origin property for motion in css pixels
+  CSSPoint origin;
+  // the adjustment for the anchor point of motion path.
+  CSSPoint anchorAdjustment;
+  RayReferenceData rayReferenceData;
 };
 
 // Transforms need extra information to correctly convert the list of transform
@@ -196,6 +167,7 @@ struct TransformData {
   float inheritedYScale;
   // True if the parent has perspective transform
   bool hasPerspectiveParent;
+  MotionPathData? motionPathData;
 };
 
 struct Animation {
@@ -232,7 +204,6 @@ struct Animation {
   // This uses dom::FillMode.
   uint8_t fillMode;
   nsCSSPropertyID property;
-  TransformData? data;
   float playbackRate;
   // When performing an asynchronous update to the playbackRate, |playbackRate|
   // above is the updated playbackRate while |previousPlaybackRate| is the
@@ -249,11 +220,18 @@ struct Animation {
   // True if the animation has a fixed current time (e.g. paused and
   // forward-filling animations).
   bool isNotPlaying;
+  // True if this is not an animating property. For some transform-like
+  // properties, we just send their baseStyles for merging with other animating
+  // properties. In this case, we don't have animation information on this
+  // property, and so don't need to do interpolation.
+  bool isNotAnimating;
   // The base style that animations should composite with. This is only set for
   // animations with a composite mode of additive or accumulate, and only for
   // the first animation in the set (i.e. the animation that is lowest in the
   // stack). In all other cases the value is null_t.
   Animatable baseStyle;
+  // An optional data specific for transform like properies.
+  TransformData? transformData;
 };
 
 struct CompositorAnimations {
@@ -289,17 +267,12 @@ struct ContainerLayerAttributes {
   float presShellResolution;
 };
 
-struct GlyphArray
-{
-  LayerColor color;
-  Glyph[] glyphs;
-};
-
 struct ColorLayerAttributes     { LayerColor color; IntRect bounds; };
 struct CanvasLayerAttributes    { SamplingFilter samplingFilter; IntRect bounds; };
 struct RefLayerAttributes {
   LayersId id;
   EventRegionsOverride eventRegionsOverride;
+  LayerIntSize remoteDocumentSize;
 };
 struct ImageLayerAttributes     { SamplingFilter samplingFilter; IntSize scaleToSize; ScaleMode scaleMode; };
 
@@ -345,7 +318,6 @@ struct OpRepositionChild  { LayerHandle container; LayerHandle childLayer; Layer
 struct OpRaiseToTopChild  { LayerHandle container; LayerHandle childLayer; };
 
 struct OpSetDiagnosticTypes { DiagnosticTypes diagnostics; };
-struct OpWindowOverlayChanged { };
 
 struct ShmemSection {
   Shmem shmem;
@@ -475,8 +447,7 @@ union Edit {
   OpCreateRefLayer;
 
   OpSetDiagnosticTypes;
-  OpWindowOverlayChanged;
-
+  
   OpSetRoot;
   OpInsertAfter;
   OpPrependChild;

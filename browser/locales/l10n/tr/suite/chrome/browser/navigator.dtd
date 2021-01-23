@@ -1,0 +1,73 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/navigator.xul -->
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items --> 
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys --> 
+<!-- LOCALIZATION NOTE (mainWindow.title): DONT_TRANSLATE --> 
+
+
+<!ENTITY mainWindow.title "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifier) : DONT_TRANSLATE --> 
+<!ENTITY mainWindow.titlemodifier "&brandShortName;">
+<!-- LOCALIZATION NOTE (mainWindow.titlemodifiermenuseparator): DONT_TRANSLATE -->
+<!ENTITY mainWindow.titlemodifiermenuseparator " - ">
+
+<!ENTITY editPageCmd.label "Sayfayı düzenle">
+<!ENTITY editPageCmd.accesskey "S">
+<!ENTITY editPageCmd.commandkey "E">
+
+<!ENTITY navbarCmd.label "Gezinti araç çubuğu">
+<!ENTITY navbarCmd.accesskey "t">
+<!ENTITY personalbarCmd.label "Kişisel araç çubuğu">
+<!ENTITY personalbarCmd.accesskey "K">
+
+<!ENTITY closeWindow.label "Pencereyi kapat">
+<!ENTITY closeWindow.accesskey "c">
+
+<!ENTITY minimizeButton.tooltip "Küçült">
+<!ENTITY restoreButton.tooltip "Kurtar">
+
+<!ENTITY feedsMenu.label "Bu sayfaya abone ol">
+<!ENTITY feedsMenu.accesskey "B">
+
+<!ENTITY menuBar.tooltip "Menü çubuğu">
+<!ENTITY personalToolbar.tooltip "Kişisel araç çubuğu">
+<!ENTITY navigationToolbar.tooltip "Gezinti araç çubuğu">
+<!-- Toolbar items --> 
+
+<!ENTITY backButton.label "Geri">
+<!ENTITY backButton.tooltip "Bir sayfa geri git">
+<!ENTITY forwardButton.label "İleri">
+<!ENTITY forwardButton.tooltip "Bir sayfa ileri git">
+<!ENTITY reloadButton.label "Tazele">
+<!ENTITY reloadButton.tooltip "Geçerli sayfayı tazele">
+<!ENTITY stopButton.label "Dur">
+<!ENTITY stopButton.tooltip "Sayfayı yüklemeyi durdur">
+<!ENTITY searchButton.label "Search">
+<!ENTITY searchButton.tooltip "Aranacak kelimeyi yazıp Ara tuşuna basın">
+<!ENTITY goButton.label "Git">
+<!ENTITY goButton.tooltip "Gidilecek konumu girip Git tuşuna basın">
+<!ENTITY printButton.label "Yazdır">
+<!ENTITY printButton.tooltip "Bu sayfayı yazdır">
+
+<!ENTITY throbber.tooltip "&vendorShortName; anasayfasına git">
+
+<!ENTITY locationBar.tooltip "Aranacak kelime, anahtar kelime veya web adresi girin">
+<!ENTITY locationBar.accesskey "d">
+<!ENTITY locationBar.title "Konum">
+<!ENTITY proxyIcon.tooltip "Bu sayfaya bağlantı oluşturmak için simgeyi sürükleyip bırakın">
+
+<!ENTITY searchItem.title "Search">
+
+<!ENTITY bookmarksButton.label "Yer imleri">
+<!ENTITY bookmarksButton.tooltip "Yer imleri listesi">
+<!ENTITY homeButton.label "Başlangıç">
+<!ENTITY bookmarksToolbarItem.label "Yer imi simgeleri">
+<!ENTITY bookmarksToolbarChevron.tooltip "Daha fazla yer imi göster">
+<!-- Statusbar -->
+
+<!ENTITY statusText.label "Tamamlandı">
+
+<!ENTITY popupIcon.tooltiptext "Bu sitenin açılır pencerelerine izin ver">

@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-search.xul -->
+
+<!-- LOCALIZATION NOTE : FILE The Search prefs dialog -->
+
+<!ENTITY pref.search.title                "Vyhľadávanie na webe">
+<!ENTITY legendHeader                     "Predvolený vyhľadávací modul">
+<!ENTITY defaultSearchEngine.label        "Vyhľadávať pomocou:">
+<!ENTITY defaultSearchEngine.accesskey    "h">
+
+<!ENTITY openInTab.label                  "Výsledky vyhľadávania v bočnom paneli otvárať na novej karte">
+<!ENTITY openInTab.accesskey              "V">
+<!ENTITY openContextSearchTab.label       "Výsledky vyhľadávania pomocou kontextovej ponuky otvárať na novej karte">
+<!ENTITY openContextSearchTab.accesskey   "s">
+<!ENTITY openSidebarSearchPanel.label     "Pri spustení vyhľadávania otvoriť v bočnom paneli kartu Vyhľadávanie">
+<!ENTITY openSidebarSearchPanel.accesskey "r">
+
+<!ENTITY engineManager.label              "Správa vyhľadávacích modulov…">
+
+<!ENTITY searchResults.label              "Výsledky vyhľadávania">

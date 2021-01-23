@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "匯入精靈">
+
+<!ENTITY importFrom.label               "由下列來源匯入選項、書籤、歷史記錄、已存密碼及其他資料:">
+<!ENTITY importFromUnix.label           "由下列來源匯入偏好設定、書籤、記錄、密碼等資料:">
+
+<!ENTITY importFromIE.label             "Microsoft Internet Explorer">
+<!ENTITY importFromIE.accesskey         "M">
+<!ENTITY importFromEdge.label           "Microsoft Edge">
+<!ENTITY importFromEdge.accesskey       "E">
+<!ENTITY importFromEdgeLegacy.label     "Microsoft Edge 傳統版">
+<!ENTITY importFromEdgeLegacy.accesskey "L">
+<!ENTITY importFromEdgeBeta.label       "Microsoft Edge Beta">
+<!ENTITY importFromEdgeBeta.accesskey   "d">
+<!ENTITY importFromNothing.label        "不要匯入任何東西">
+<!ENTITY importFromNothing.accesskey    "D">
+<!ENTITY importFromSafari.label         "Safari">
+<!ENTITY importFromSafari.accesskey     "S">
+<!ENTITY importFromCanary.label         "Chrome Canary">
+<!ENTITY importFromCanary.accesskey     "n">
+<!ENTITY importFromChrome.label         "Chrome">
+<!ENTITY importFromChrome.accesskey     "C">
+<!ENTITY importFromChromeBeta.label     "Chrome Beta">
+<!ENTITY importFromChromeBeta.accesskey "B">
+<!ENTITY importFromChromeDev.label      "Chrome Dev">
+<!ENTITY importFromChromeDev.accesskey  "D">
+<!ENTITY importFromChromium.label       "Chromium">
+<!ENTITY importFromChromium.accesskey   "u">
+<!ENTITY importFromFirefox.label        "Firefox">
+<!ENTITY importFromFirefox.accesskey    "X">
+<!ENTITY importFrom360se.label          "360 安全瀏覽器">
+<!ENTITY importFrom360se.accesskey      "3">
+
+<!ENTITY noMigrationSources.label       "找不到包含書籤、瀏覽記錄或密碼等個人資訊的瀏覽程式。">
+
+<!ENTITY importSource.title             "匯入設定與個人資料">
+<!ENTITY importItems.title              "要匯入的項目">
+<!ENTITY importItems.label              "選取要匯入的項目:">
+
+<!ENTITY migrating.title                "匯入中…">
+<!ENTITY migrating.label                "正在匯入下列項目…">
+
+<!ENTITY selectProfile.title            "選取設定檔">
+<!ENTITY selectProfile.label            "可匯入下列設定檔的內容:">
+
+<!ENTITY done.title                     "匯入完成">
+<!ENTITY done.label                     "成功匯入下列項目:">
+
+<!ENTITY closeSourceBrowser.label       "請確定已關閉選擇的瀏覽器後繼續。">

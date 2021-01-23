@@ -21,7 +21,7 @@
 #include "rtc_base/constructormagic.h"
 #include "rtc_base/logging.h"
 #include "rtc_base/win32.h"
-#include <VersionHelpers.h>
+#include <versionhelpers.h>
 
 namespace webrtc {
 
@@ -304,8 +304,26 @@ void WindowCapturerWin::CaptureFrame() {
   // PrintWindow() whenever window size changes, including the first time of
   // capturing - it somehow affects what we get from BitBlt() on the subsequent
   // captures.
+  //
+  // For Windows 8.1 and later, we want to always use PrintWindow when the
+  // cropping screen capturer falls back to the window capturer. I.e.
+  // on Windows 8.1 and later, PrintWindow is only used when the window is
+  // occluded. When the window is not occluded, it is much faster to capture
+  // the screen and to crop it to the window position and size.
+  if (rtc::IsWindows8OrLater()) {
+    // Special flag that makes PrintWindow to work on Windows 8.1 and later.
+    // Indeed certain apps (e.g. those using DirectComposition rendering) can't
+    // be captured using BitBlt or PrintWindow without this flag. Note that on
+    // Windows 8.0 this flag is not supported so the block below will fallback
+    // to the other call to PrintWindow. It seems to be very tricky to detect
+    // Windows 8.0 vs 8.1 so a try/fallback is more approriate here.
+    #define PW_RENDERFULLCONTENT    0x00000002 //tma
+    const UINT flags = PW_RENDERFULLCONTENT;
+    result = PrintWindow(window_, mem_dc, flags);
+  }
 
-  if (!aero_checker_.IsAeroEnabled() || !previous_size_.equals(frame->size())) {
+  if (!result && (!aero_checker_.IsAeroEnabled() ||
+                  !previous_size_.equals(frame->size()))) {
     result = PrintWindow(window_, mem_dc, 0);
   }
 

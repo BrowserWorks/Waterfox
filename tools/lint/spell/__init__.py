@@ -2,22 +2,20 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import, print_function
-
 import os
-import signal
-import which
 import re
 
-# Py3/Py2 compatibility.
+# py2-compat
 try:
     from json.decoder import JSONDecodeError
 except ImportError:
     JSONDecodeError = ValueError
 
+from mozfile import which
+
 from mozlint import result
 from mozlint.util import pip
-from mozprocess import ProcessHandlerMixin
+from mozlint.util.implementation import LintProcess
 
 here = os.path.abspath(os.path.dirname(__file__))
 CODESPELL_REQUIREMENTS_PATH = os.path.join(here, 'codespell_requirements.txt')
@@ -40,11 +38,7 @@ results = []
 CODESPELL_FORMAT_REGEX = re.compile(r'(.*):(.*): (.*) ==> (.*)$')
 
 
-class CodespellProcess(ProcessHandlerMixin):
-    def __init__(self, config, *args, **kwargs):
-        self.config = config
-        kwargs['processOutputLine'] = [self.process_line]
-        ProcessHandlerMixin.__init__(self, *args, **kwargs)
+class CodespellProcess(LintProcess):
 
     def process_line(self, line):
         try:
@@ -59,17 +53,13 @@ class CodespellProcess(ProcessHandlerMixin):
         m = re.match(r'^[a-z][A-Z][a-z]*', typo)
         if m:
             return
-        res = {'path': abspath,
-               'message': typo + " ==> " + correct,
-               'level': 'error',
-               'lineno': line,
-               }
+        res = {
+            'path': abspath,
+            'message': typo.strip() + " ==> " + correct,
+            'level': 'error',
+            'lineno': line,
+        }
         results.append(result.from_config(self.config, **res))
-
-    def run(self, *args, **kwargs):
-        orig = signal.signal(signal.SIGINT, signal.SIG_IGN)
-        ProcessHandlerMixin.run(self, *args, **kwargs)
-        signal.signal(signal.SIGINT, orig)
 
 
 def run_process(config, cmd):
@@ -90,20 +80,18 @@ def get_codespell_binary():
     if binary:
         return binary
 
-    try:
-        return which.which('codespell')
-    except which.WhichError:
-        return None
+    return which('codespell')
 
 
-def lint(paths, config, fix=None, **lintargs):
-
+def setup(root, **lintargs):
     if not pip.reinstall_program(CODESPELL_REQUIREMENTS_PATH):
         print(CODESPELL_INSTALL_ERROR)
         return 1
 
-    binary = get_codespell_binary()
 
+def lint(paths, config, fix=None, **lintargs):
+    log = lintargs['log']
+    binary = get_codespell_binary()
     if not binary:
         print(CODESPELL_NOT_FOUND)
         if 'MOZ_AUTOMATION' in os.environ:
@@ -111,8 +99,14 @@ def lint(paths, config, fix=None, **lintargs):
         return []
 
     config['root'] = lintargs['root']
+
+    skip_files = ''
+    if 'exclude' in config:
+        skip_files = '--skip=*.dic,{}'.format(','.join(config['exclude']))
+
     exclude_list = os.path.join(here, 'exclude-list.txt')
-    cmd_args = [binary,
+    cmd_args = [which('python'),
+                binary,
                 '--disable-colors',
                 # Silence some warnings:
                 # 1: disable warnings about wrong encoding
@@ -121,12 +115,11 @@ def lint(paths, config, fix=None, **lintargs):
                 #    that were disabled in dictionary.
                 '--quiet-level=7',
                 '--ignore-words=' + exclude_list,
-                # Ignore dictonnaries
-                '--skip=*.dic',
-                ]
+                skip_files]
 
     if fix:
         cmd_args.append('--write-changes')
+    log.debug("Command: {}".format(' '.join(cmd_args)))
 
     base_command = cmd_args + paths
 

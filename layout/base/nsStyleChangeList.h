@@ -16,6 +16,7 @@
 
 #include "nsChangeHint.h"
 #include "nsCOMPtr.h"
+#include "nsTArray.h"
 
 class nsIFrame;
 class nsIContent;
@@ -38,8 +39,8 @@ class nsStyleChangeList : private AutoTArray<nsStyleChangeData, 10> {
   using base_type::Length;
   using base_type::operator[];
 
-  nsStyleChangeList() { MOZ_COUNT_CTOR(nsStyleChangeList); }
-  ~nsStyleChangeList() { MOZ_COUNT_DTOR(nsStyleChangeList); }
+  MOZ_COUNTED_DEFAULT_CTOR(nsStyleChangeList)
+  MOZ_COUNTED_DTOR(nsStyleChangeList)
   void AppendChange(nsIFrame* aFrame, nsIContent* aContent, nsChangeHint aHint);
 
   // Starting from the end of the list, removes all changes until the list is

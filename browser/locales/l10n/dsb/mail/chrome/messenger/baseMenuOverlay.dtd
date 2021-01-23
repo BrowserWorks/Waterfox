@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Help Menu -->
+<!ENTITY helpMenu.label "Pomoc">
+<!ENTITY helpMenu.accesskey "P">
+<!-- LOCALIZATION NOTE some localizations of Windows use "?"
+                       for the help button in the menubar but Gnome does not.   -->
+<!ENTITY helpMenuWin.label "Pomoc">
+<!ENTITY helpMenuWin.accesskey "P">
+<!ENTITY aboutProduct2.label "Wó &brandShorterName;">
+<!ENTITY aboutProduct2.accesskey "W">
+<!ENTITY helpTroubleshootingInfo.label     "Informacije wó problemach">
+<!ENTITY helpTroubleshootingInfo.accesskey "I">
+<!ENTITY helpSafeMode.label     "Ze znjemóžnjonymi dodankami startowaś…">
+<!ENTITY helpSafeMode.accesskey "Z">
+<!ENTITY helpSafeMode.stop.label     "Ze zmóžnjonymi dodankami znowego startowaś">
+<!ENTITY helpSafeMode.stop.accesskey "Z">
+<!ENTITY productHelp.label "Pomoc &brandShortName;">
+<!ENTITY productHelp.accesskey "P">
+<!ENTITY productHelp.commandkey "VK_F1">
+<!ENTITY productHelpMac.commandkey "?">
+<!ENTITY productHelpMac.modifiers "accel">
+
+<!ENTITY helpKeyboardShortcuts.label "Tastowe skrotconki">
+<!ENTITY helpKeyboardShortcuts.accesskey "T">
+
+<!ENTITY helpFeedbackPage.label "Pósudk pósłaś…">
+<!ENTITY helpFeedbackPage.accesskey "s">
+
+<!ENTITY helpShowTour2.label "Tura &brandShorterName;">
+<!ENTITY helpShowTour2.accesskey "u">
+
+<!ENTITY helpGetInvolvedPage.label "Cyńśo sobu">
+<!ENTITY helpGetInvolvedPage.accesskey "C">
+
+<!ENTITY helpDonationsPage.label "Pósćiś">
+<!ENTITY helpDonationsPage.accesskey "P">

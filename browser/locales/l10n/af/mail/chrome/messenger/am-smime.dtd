@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY digitalSign.certificate.button "Kies…">
+<!ENTITY digitalSign.certificate.accesskey "S">
+<!ENTITY digitalSign.certificate_clear.button "Maak skoon">
+<!ENTITY digitalSign.certificate_clear.accesskey "K">
+<!ENTITY encryption.certificate.button "Kies…">
+<!ENTITY encryption.certificate.accesskey "K">
+<!ENTITY encryption.certificate_clear.button "Maak skoon">
+<!ENTITY encryption.certificate_clear.accesskey "a">
+<!ENTITY signingGroupTitle.label "Digitale ondertekening">
+<!ENTITY signMessage.accesskey "O">
+
+
+<!-- Strings for the cert picker dialog -->
+
+

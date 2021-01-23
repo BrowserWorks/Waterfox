@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY GeneratedName.label "Adı ">
+<!ENTITY GeneratedName.accesskey "A">
+<!ENTITY PrimaryEmail.label "E-posta">
+<!ENTITY PrimaryEmail.accesskey "p">
+<!ENTITY Company.label "Kurum">
+<!ENTITY Company.accesskey "K">
+<!ENTITY _PhoneticName.label "Okunuşu">
+<!ENTITY _PhoneticName.accesskey "O">
+<!ENTITY NickName.label "Takma adı">
+<!ENTITY NickName.accesskey "T">
+<!ENTITY SecondEmail.label "Başka e-posta">
+<!ENTITY SecondEmail.accesskey "ş">
+<!ENTITY Department.label "Bölüm">
+<!ENTITY Department.accesskey "m">
+<!ENTITY JobTitle.label "Başlık">
+<!ENTITY JobTitle.accesskey "B">
+<!ENTITY CellularNumber.label "Cep telefonu">
+<!ENTITY CellularNumber.accesskey "e">
+<!ENTITY PagerNumber.label "Çağrı cihazı">
+<!ENTITY PagerNumber.accesskey "Ç">
+<!ENTITY FaxNumber.label "Faks">
+<!ENTITY FaxNumber.accesskey "F">
+<!ENTITY HomePhone.label "Ev telefonu">
+<!ENTITY HomePhone.accesskey "E">
+<!ENTITY WorkPhone.label "İş telefonu">
+<!ENTITY WorkPhone.accesskey "İ">
+<!ENTITY ScreenName.label "Ekran adı">
+<!ENTITY ScreenName.accesskey "E">
+<!ENTITY sortAscending.label "Artan">
+<!ENTITY sortAscending.accesskey "t">
+<!ENTITY sortDescending.label "Azalan">
+<!ENTITY sortDescending.accesskey "z">
+<!-- context menu -->
+
+<!ENTITY composeEmail.label "İleti oluştur">
+<!ENTITY composeEmail.accesskey "İ">
+<!ENTITY copyAddress.label "E-posta adresini kopyala">
+<!ENTITY copyAddress.accesskey "k">
+<!ENTITY deleteAddrBookCard.label "Sil">
+<!ENTITY deleteAddrBookCard.accesskey "S">
+<!ENTITY newAddrBookCard.label "Yeni kartvizit…">
+<!ENTITY newAddrBookCard.accesskey "Y">
+<!ENTITY newAddrBookMailingList.label "Yeni posta listesi…">
+<!ENTITY newAddrBookMailingList.accesskey "l">
+<!ENTITY addrBookCardProperties.label "Özellikler">
+<!ENTITY addrBookCardProperties.accesskey "e">

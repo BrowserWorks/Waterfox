@@ -11,17 +11,13 @@
 #include "nsPIDOMWindow.h"
 #include "mozilla/dom/Document.h"
 #include "mozilla/dom/DocumentInlines.h"
-#include "nsPresContext.h"
 #include "nsIDocShell.h"
 #include "nsIWebNavigation.h"
-#include "nsIURI.h"
-#include "nsIInterfaceRequestorUtils.h"
 #include "nsReadableUtils.h"
 #include "nsContentUtils.h"
-#include "nsISHistory.h"
 #include "mozilla/dom/Location.h"
-#include "mozilla/Preferences.h"
 #include "mozilla/RefPtr.h"
+#include "mozilla/StaticPrefs_dom.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -40,7 +36,7 @@ NS_INTERFACE_MAP_END
 nsHistory::nsHistory(nsPIDOMWindowInner* aInnerWindow)
     : mInnerWindow(do_GetWeakReference(aInnerWindow)) {}
 
-nsHistory::~nsHistory() {}
+nsHistory::~nsHistory() = default;
 
 nsPIDOMWindowInner* nsHistory::GetParentObject() const {
   nsCOMPtr<nsPIDOMWindowInner> win(do_QueryReferent(mInnerWindow));
@@ -142,63 +138,30 @@ void nsHistory::GetState(JSContext* aCx, JS::MutableHandle<JS::Value> aResult,
 void nsHistory::Go(int32_t aDelta, ErrorResult& aRv) {
   nsCOMPtr<nsPIDOMWindowInner> win(do_QueryReferent(mInnerWindow));
   if (!win || !win->HasActiveDocument()) {
-    aRv.Throw(NS_ERROR_DOM_SECURITY_ERR);
-
-    return;
+    return aRv.Throw(NS_ERROR_DOM_SECURITY_ERR);
   }
 
   if (!aDelta) {
-    nsCOMPtr<nsPIDOMWindowOuter> window;
-    if (nsIDocShell* docShell = GetDocShell()) {
-      window = docShell->GetWindow();
-    }
-
-    if (window && window->IsHandlingResizeEvent()) {
-      // history.go(0) (aka location.reload()) was called on a window
-      // that is handling a resize event. Sites do this since Netscape
-      // 4.x needed it, but we don't, and it's a horrible experience
-      // for nothing.  In stead of reloading the page, just clear
-      // style data and reflow the page since some sites may use this
-      // trick to work around gecko reflow bugs, and this should have
-      // the same effect.
-
-      nsCOMPtr<Document> doc = window->GetExtantDoc();
-
-      nsPresContext* pcx;
-      if (doc && (pcx = doc->GetPresContext())) {
-        pcx->RebuildAllStyleData(NS_STYLE_HINT_REFLOW,
-                                 RestyleHint::RestyleSubtree());
-      }
-
-      return;
-    }
-
     // https://html.spec.whatwg.org/multipage/history.html#the-history-interface
     // "When the go(delta) method is invoked, if delta is zero, the user agent
     // must act as if the location.reload() method was called instead."
-    RefPtr<Location> location = window ? window->GetLocation() : nullptr;
-
-    if (location) {
-      nsresult rv = location->Reload(false);
-
-      if (NS_FAILED(rv)) {
-        aRv.Throw(NS_ERROR_FAILURE);
-      }
-
-      return;
-    }
+    RefPtr<Location> location = win->Location();
+    return location->Reload(false, aRv);
   }
 
   RefPtr<ChildSHistory> session_history = GetSessionHistory();
   if (!session_history) {
     aRv.Throw(NS_ERROR_FAILURE);
-
     return;
   }
 
   // Ignore the return value from Go(), since returning errors from Go() can
   // lead to exceptions and a possible leak of history length
-  session_history->Go(aDelta, IgnoreErrors());
+  if (StaticPrefs::dom_window_history_async()) {
+    session_history->AsyncGo(aDelta);
+  } else {
+    session_history->Go(aDelta, IgnoreErrors());
+  }
 }
 
 void nsHistory::Back(ErrorResult& aRv) {
@@ -216,7 +179,11 @@ void nsHistory::Back(ErrorResult& aRv) {
     return;
   }
 
-  sHistory->Go(-1, IgnoreErrors());
+  if (StaticPrefs::dom_window_history_async()) {
+    sHistory->AsyncGo(-1);
+  } else {
+    sHistory->Go(-1, IgnoreErrors());
+  }
 }
 
 void nsHistory::Forward(ErrorResult& aRv) {
@@ -234,7 +201,11 @@ void nsHistory::Forward(ErrorResult& aRv) {
     return;
   }
 
-  sHistory->Go(1, IgnoreErrors());
+  if (StaticPrefs::dom_window_history_async()) {
+    sHistory->AsyncGo(1);
+  } else {
+    sHistory->Go(1, IgnoreErrors());
+  }
 }
 
 void nsHistory::PushState(JSContext* aCx, JS::Handle<JS::Value> aData,
@@ -296,7 +267,7 @@ already_AddRefed<ChildSHistory> nsHistory::GetSessionHistory() const {
 
   // Get the root DocShell from it
   nsCOMPtr<nsIDocShellTreeItem> root;
-  docShell->GetSameTypeRootTreeItem(getter_AddRefs(root));
+  docShell->GetInProcessSameTypeRootTreeItem(getter_AddRefs(root));
   nsCOMPtr<nsIWebNavigation> webNav(do_QueryInterface(root));
   NS_ENSURE_TRUE(webNav, nullptr);
 

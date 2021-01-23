@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY dialog.title             "Tichinäx ri Kikajtz'ik Samajib'äl">
+<!ENTITY dialog.dimensions        "width: 92ch; height: 36em;">
+<!ENTITY instructions.description "Yatikïr natz'aqatisaj o ye'awelesaj el taq ch'akulal rik'in ye'aqirirej pa kikajtzik samajib'äl.">
+<!ENTITY show.label               "Tik'ut pe:">
+<!ENTITY iconsAndText.label       "Taq Wachib'äl chuqa' Tz'ib'atzij">
+<!ENTITY icons.label              "Taq wachib'äl">
+<!ENTITY text.label               "Tz'ib'atzij">
+<!ENTITY iconsBesideText.label    "Taq wachib'äl chuchi' Tz'ib'atzij">
+<!ENTITY useSmallIcons.label      "Ke'okisäx Koköj Wachib'äl">
+<!ENTITY restoreDefaultSet.label  "Ketzolïx ri E K'o wi">
+<!ENTITY showTitlebar2.label      "Rub'i' molsamaj">
+<!ENTITY extraDragSpace2.label    "Tiqirirëx Kojol">
+<!ENTITY saveChanges.label        "Xk'is">
+<!ENTITY undoChanges.label        "Ketzolïx ri taq jaloj">

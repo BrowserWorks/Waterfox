@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY doNotDownloadPop3Movemail.label "ડિસ્કની જગ્યા બચાવવા માટે, ડાઉનલોડ કરો નહિં:">
+<!ENTITY offlineNotDownload.label "આના કરતાં મોટા સંદેશાઓ">
+<!ENTITY offlineNotDownload.accesskey "M">
+<!ENTITY kb.label "KB">
+<!ENTITY daysOld.label "જૂના દિવસો">
+<!ENTITY message.label "સંદેશાઓ">
+<!ENTITY nntpNotDownloadRead.label "સંદેશાઓ વાંચો">
+<!ENTITY nntpNotDownloadRead.accesskey "R">
+<!ENTITY nntpDownloadMsg.label "આના કરતાં વધુ સંદેશાઓ">
+<!ENTITY nntpDownloadMsg.accesskey "e">
+<!ENTITY retentionCleanup.label "ડિસ્ક જગ્યા પાછી મેળવવા માટે, જૂના સંદેશાઓ કાયમ માટે કાઢી શકાશે">
+<!ENTITY retentionKeepMsg.label "આના કરતાં વધુ સંદેશાઓ કાઢી નાંખો">
+<!ENTITY retentionKeepMsg.accesskey "m">
+<!ENTITY retentionKeepAll.label "કોઈપણ સંદેશાઓ કાઢશો નહિં">
+<!ENTITY retentionKeepAll.accesskey "A">
+<!ENTITY offlineSelectNntp.label "સમાચાર જૂથોને ઓફલાઈન વપરાશ માટે પસંદ કરો...">
+<!ENTITY diskspaceGroupTitle.label "ડિસ્ક જગ્યા">
+

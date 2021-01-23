@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY privatebrowsingpage.title "Приватний перегляд">
+
+<!-- Localisation note: the plus sign here is a shorthand way of expressing the word "and". Contextually the privatebrowsingpage.title.private string
+                        is used as a title, with the privatebrowsingpage.title string preceding it but on a separate line.
+                        So the final line will say "Private Browsing + Tracking Protection". -->
+<!ENTITY privatebrowsingpage.title.private "+ Захист від стеження">
+<!-- Localization note (privatebrowsingpage.title.normal1): "Private Browsing"
+     is capitalized in English to be consistent with our existing uses of the
+     term. -->
+<!ENTITY privatebrowsingpage.title.normal1 "Ви не в приватному перегляді">
+
+<!ENTITY privatebrowsingpage.description.trackingProtection "&brandShortName; блокує частини сторінок, які можуть стежити за вашою діяльністю.">
+<!ENTITY privatebrowsingpage.description.privateDetails "Ми не будемо запам'ятовувати будь-яку історію, але завантажені файли й нові закладки все одно будуть збережені на вашому пристрої.">
+
+<!-- Localization note (privatebrowsingpage.description.normal2): "Private
+     Browsing is capitalized in English to be consistent with our existing uses
+     of the term. -->
+<!ENTITY privatebrowsingpage.description.normal2 "В приватному перегляді ми не будемо зберігати будь-яку історію перегляду чи куки. Додані вами закладки та завантажені файли все одно будуть збережені на вашому пристрої.">
+
+<!ENTITY privatebrowsingpage.link.private "Хочете дізнатися більше?">
+<!ENTITY privatebrowsingpage.link.normal "Відкрити нову приватну вкладку">

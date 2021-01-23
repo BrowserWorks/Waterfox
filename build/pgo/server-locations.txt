@@ -94,6 +94,7 @@ http://sub2.test1.example.com:80     privileged
 http://sub2.test2.example.com:80     privileged
 http://noxul.example.com:80          privileged,noxul
 http://example.net:80                privileged
+http://supports-insecure.expired.example.com:80 privileged
 # Used to test that clearing Service Workers for domain example.com, does not clear prefixexample.com
 http://prefixexample.com:80
 
@@ -119,7 +120,12 @@ https://mismatch.expired.example.com:443	privileged,cert=expired
 https://mismatch.untrusted.example.com:443	privileged,cert=untrusted
 https://untrusted-expired.example.com:443	privileged,cert=untrustedandexpired
 https://mismatch.untrusted-expired.example.com:443	privileged,cert=untrustedandexpired
+https://supports-insecure.expired.example.com:443   privileged,cert=expired
 https://no-subject-alt-name.example.com:443   cert=noSubjectAltName
+
+# Used for secure contexts on ip addresses, see bug 1616675. Note that
+# 127.0.0.1 prompts ssltunnel.cpp to do special-cases, so we use .2
+https://127.0.0.2:443                  privileged,ipV4Address
 
 # Prevent safebrowsing tests from hitting the network for its-a-trap.html and
 # its-an-attack.html.
@@ -175,6 +181,7 @@ http://fingerprinting.example.com:80
 http://not-tracking.example.com:80
 http://tracking.example.org:80
 http://another-tracking.example.net:80
+http://social-tracking.example.org:80
 http://itisatracker.org:80
 https://itisatracker.org:443
 http://trackertest.org:80
@@ -192,6 +199,7 @@ https://fingerprinting.example.com:443
 https://not-tracking.example.com:443
 https://tracking.example.org:443
 https://another-tracking.example.net:443
+https://social-tracking.example.org:443
 
 #
 # Used while testing flash blocking (Bug 1307604)
@@ -203,6 +211,12 @@ http://exception.flashblock.example.com:80
 http://subdocument.example.com:80
 https://subdocument.example.com:443
 http://exception.subdocument.example.com:80
+
+#
+# Used while testing tracking protection (Bug 1580416)
+# Not that apps.fbsbx.com is a public suffix
+#
+http://mochitest.apps.fbsbx.com:80
 
 #
 # Flash usage can fail unless this URL exists

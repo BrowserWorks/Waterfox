@@ -1,0 +1,239 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY appmenu.tooltip                     "Vula imenyu">
+<!ENTITY navbarOverflow.label                "Izixhobo ezingakumbi…">
+
+<!-- LOCALIZATION NOTE (duplicateTab.label): This is a command to duplicate
+a tab (i.e. it is a verb, not adjective). -->
+
+<!-- Tab context menu -->
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "Qhobosha iithebhu">
+<!ENTITY  unpinTab.label                     "Khulula iithebhu">
+
+<!ENTITY  listAllTabs.label      "Dwelisa zonke iithebhu">
+
+<!ENTITY tabCmd.label "thebhu entsha">
+<!ENTITY openFileCmd.label "Vula ifayile…">
+<!ENTITY printCmd.label "Printa…">
+
+<!ENTITY menubarCmd.label "Ibha yemenyu">
+<!ENTITY menubarCmd.accesskey "I">
+<!ENTITY personalbarCmd.label "Ithulbha yebhukhmakhi">
+<!ENTITY personalbarCmd.accesskey "I">
+<!ENTITY bookmarksToolbarItem.label "Iiayithem zethulbha yeebhukhmakhi">
+
+<!-- LOCALIZATION NOTE (pageSourceCmd.SafariCommandKey should match the
+Option+Command keyboard shortcut letter that Safari and Chrome use for "View
+Source" on macOS. pageSourceCmd.commandkey above is Waterfox's official keyboard
+shortcut shown in the GUI. SafariCommandKey is an alias provided for the
+convenience of Safari and Chrome users on macOS. See bug 1398988. -->
+
+<!ENTITY fullScreenCmd.label "Isikrini esiZeleyo">
+
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "ngoku siskrini esipheleleyo">
+<!ENTITY fullscreenWarning.generic.label "Olu xwebhu ngoku lusiskrini esipheleleyo">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "Phuma KwiSkrini Esipheleleyo (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "Phuma KwiSkrini Esipheleleyo (esc)">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "ilawula ipoyinta yakho. Cofa uEsc ukuze uphinde uthathe ulawulo.">
+<!ENTITY pointerlockWarning.generic.label "Olu xwebhu lulawula ipoyinta yakho. Cofa uEsc ukuze uphinde uthathe ulawulo.">
+
+<!ENTITY showAllBookmarks2.label "Bonisa zonke iibhukhmakhi">
+<!ENTITY recentBookmarks.label "Okufakwe Ibhukmakhi Kutshanje">
+<!ENTITY bookmarksToolbarChevron.tooltip "Bonisa iibhukhmakhi ezininzi">
+
+<!ENTITY printButton.label            "Printa">
+<!ENTITY printButton.tooltip          "Printa eli phepha">
+
+
+<!ENTITY searchItem.title             "Khangela">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "Ekhaya">
+
+<!ENTITY bookmarksButton.label          "Iibhukhmakhi">
+
+<!ENTITY bookmarksMenuButton.other.label    "Ezinye iiBhukmakhi">
+<!ENTITY bookmarksMenuButton.mobile.label   "IZalathisi eZiphawulayo zeMobhayili">
+<!ENTITY viewBookmarksSidebar2.label        "Bona ibha esecaleni yeeBhukhmakhi">
+<!ENTITY viewBookmarksToolbar.label         "Bona iThulbha Yeebhukhmakhi">
+<!ENTITY searchBookmarks.label              "Khangela iiBhukhmakhi">
+
+<!ENTITY historyButton.label            "Imbali">
+
+<!ENTITY downloads.label              "Okukhutshelwayo">
+<!ENTITY addons.label                 "zongezelelo">
+
+<!ENTITY webDeveloperMenu.label       "Umphuhlisi-webhu">
+
+<!ENTITY newNavigatorCmd.label        "Ifestile entsha">
+<!ENTITY newPrivateWindow.label     "Ifestile yangasese entsha">
+
+<!ENTITY editMenu.label         "Hlela">
+<!ENTITY preferencesCmd2.label       "Ekunokukhethwa kuko">
+<!ENTITY preferencesCmdUnix.label       "Iipriferensi">
+
+<!ENTITY historyMenu.label "Imbali">
+<!ENTITY historyUndoMenu.label "Iithebhu ezivaliweyo kutshanje">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "Iifestile ezivalwe kutshanje">
+
+<!ENTITY appMenuHistory.showAll.label "Bonisa Yonke iMbali">
+<!ENTITY appMenuHistory.clearRecent.label "Susa iMbali Yakutshanje…">
+<!ENTITY appMenuHistory.restoreSession.label "Buyisela Iseshini yangaPhambili">
+<!ENTITY appMenuHistory.viewSidebar.label "Bona ibha esecaleni yeMbali">
+<!ENTITY appMenuHelp.label "Uncedo">
+
+<!ENTITY appMenuRemoteTabs.label "Iithebhu Ezingqamanisiweyo">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Azikho iithebhu ezivuliweyo">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "Bonisa Ngakumbi">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Bonisa iithebhu ezingakumbi kwesi sixhobo">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Bonisa Konke">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Bonisa zonke iithebhu kwesi sixhobo">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Layita ungqamaniso lwethebhu ukuze ujonge uludwe lweethebhu kwezinye izixhobo zakho.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.label): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Waterfox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Ufuna ukubona iithebhu kwezinye izixhobo apha?">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Lawula iZixhobo…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "Jonga Iithebhu Ezingqamanisiweyo Zebha Esecaleni">
+
+
+<!ENTITY customizeMenu.addToToolbar.label "Yongeza kwiThulbha">
+<!ENTITY customizeMenu.addToToolbar.accesskey "Y">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.pinToOverflowMenu.label, customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. These labels are only used in Photon, where you can put
+     items into this menu permanently (pinned). -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "Yongeza kwiMenyu yokuPhuphuma">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "k">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Yikhulule kwiMenyu yokuPhuphuma">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "Y">
+<!ENTITY customizeMenu.removeFromToolbar.label "Yishenxise kwiThulbha">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "Y">
+<!ENTITY customizeMenu.addMoreItems.label "Yongeza izinto ezingakumbi…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "Y">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "Okungakumbi">
+
+<!ENTITY contentSearchSubmit.tooltip  "Faka ukukhangela">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "Khangela">
+<!ENTITY searchIcon.tooltip           "Khangela">
+
+<!ENTITY openLinkCmdInTab.accesskey   "k">
+
+<!ENTITY emailPageCmd.label           "Ikhonkco leimeyile…">
+
+<!-- Media (video/audio) controls -->
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoom.label                 "Yandisa/nciphisa">
+
+<!ENTITY sidebarCloseButton.tooltip     "Vala ibha esecaleni">
+
+<!ENTITY quitApplicationCmdWin2.label       "Phuma">
+<!ENTITY quitApplicationCmdWin2.accesskey   "h">
+<!ENTITY quitApplicationCmdWin2.tooltip     "Phuma kwi-&brandShorterName;">
+<!ENTITY quitApplicationCmd.label       "Yeka">
+<!ENTITY quitApplicationCmd.accesskey   "Y">
+<!ENTITY quitApplicationCmdMac2.label   "Yeka i-&brandShorterName;">
+
+<!ENTITY allowPopups.accesskey "p">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Hlela iZikhethwa zeZithinteli eziZivelelayo…">
+<!ENTITY editPopupSettings.label "Hlela Ekukhethwa Kuko kweZithinteli eziZivelelayo…">
+<!ENTITY editPopupSettings.accesskey "H">
+<!ENTITY dontShowMessage.accesskey "D">
+
+<!ENTITY findOnCmd.label     "Fumana kweli phepha…">
+
+<!ENTITY spellAddDictionaries.label "Yongeza izichazi-magama…">
+<!ENTITY spellAddDictionaries.accesskey "Y">
+
+<!-- LOCALIZATION NOTE (identity.securityView.label)
+     This is the header of the security subview in the Site Identity panel. -->
+
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "Iithebhu zokubhrawuza">
+
+
+<!ENTITY syncBrand.shortName.label    "Ungqamaniso">
+
+
+<!ENTITY uiTour.infoPanel.close "Vala">
+
+<!ENTITY panicButton.thankyou.msg1                "IMbali yakho yakutsha nje isusiwe.">
+<!ENTITY panicButton.thankyou.msg2                "Ukubhrawuza okukhuselekileyo!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Siyabulela!">
+
+<!ENTITY updateAvailable.panelUI.label "Khuphela i-&brandShorterName; hlaziya">
+
+<!ENTITY updateManual.panelUI.label "Khuphela ikopi entsha ye-&brandShorterName;">
+
+<!ENTITY updateRestart.panelUI.label2 "Phinda uqale ukuze uhlaziye i-&brandShorterName;">
+
+
+<!ENTITY sendToDevice.syncNotReady.label "Iingqamanisa iziXhobo…">
+
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+
+<!-- LOCALIZATION NOTE: (addonPostInstallMessage.label):
+     The first <image> tag is replaced with the icon for the add-ons menu.
+     The second <image> tag is replaced with the icon for the toolbar menu. -->
+

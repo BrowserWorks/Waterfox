@@ -7,7 +7,10 @@
 #include "CompositionRecorder.h"
 #include "gfxUtils.h"
 #include "mozilla/gfx/2D.h"
-#include "gfxPrefs.h"
+#include "mozilla/gfx/gfxVars.h"
+#include "nsIInputStream.h"
+#include "nsIBinaryOutputStream.h"
+#include "nsIObjectOutputStream.h"
 
 #include <ctime>
 #include <iomanip>
@@ -27,18 +30,32 @@ namespace layers {
 CompositionRecorder::CompositionRecorder(TimeStamp aRecordingStart)
     : mRecordingStart(aRecordingStart) {}
 
-CompositionRecorder::~CompositionRecorder() {}
-
 void CompositionRecorder::RecordFrame(RecordedFrame* aFrame) {
   mCollectedFrames.AppendElement(aFrame);
 }
 
 void CompositionRecorder::WriteCollectedFrames() {
-  std::time_t t = std::time(nullptr);
-  std::tm tm = *std::localtime(&t);
+  // The directory has the format of
+  // "[LayersWindowRecordingPath]/windowrecording-[mRecordingStartTime as unix
+  // timestamp]". We need mRecordingStart as a unix timestamp here because we
+  // want the consumer of these files to be able to compute an absolute
+  // timestamp of each screenshot, so that we can align screenshots with timed
+  // data from other sources, such as Gecko profiler information. The time of
+  // each screenshot is part of the screenshot's filename, expressed as
+  // milliseconds *relative to mRecordingStart*. We want to compute the number
+  // of milliseconds between midnight 1 January 1970 UTC and mRecordingStart,
+  // unfortunately, mozilla::TimeStamp does not have a built-in way of doing
+  // that. However, PR_Now() returns the number of microseconds since midnight 1
+  // January 1970 UTC. We call PR_Now() and TimeStamp::NowUnfuzzed() very
+  // closely to each other so that they return their representation of "the same
+  // time", and then compute (Now - (Now - mRecordingStart)).
   std::stringstream str;
-  str << gfxPrefs::LayersWindowRecordingPath() << "windowrecording-"
-      << std::put_time(&tm, "%Y%m%d%H%M%S");
+  nsCString recordingStartTime;
+  TimeDuration delta = TimeStamp::NowUnfuzzed() - mRecordingStart;
+  recordingStartTime.AppendFloat(
+      static_cast<double>(PR_Now() / 1000.0 - delta.ToMilliseconds()));
+  str << gfxVars::LayersWindowRecordingPath() << "windowrecording-"
+      << recordingStartTime;
 
 #ifdef XP_WIN
   _mkdir(str.str().c_str());
@@ -59,6 +76,31 @@ void CompositionRecorder::WriteCollectedFrames() {
   }
   mCollectedFrames.Clear();
 }
+
+CollectedFrames CompositionRecorder::GetCollectedFrames() {
+  nsTArray<CollectedFrame> frames;
+
+  TimeDuration delta = TimeStamp::NowUnfuzzed() - mRecordingStart;
+  double recordingStart = PR_Now() / 1000.0 - delta.ToMilliseconds();
+
+  for (RefPtr<RecordedFrame>& frame : mCollectedFrames) {
+    nsCString buffer;
+
+    RefPtr<DataSourceSurface> surf = frame->GetSourceSurface();
+    double offset = (frame->GetTimeStamp() - mRecordingStart).ToMilliseconds();
+
+    gfxUtils::EncodeSourceSurface(surf, ImageType::PNG, EmptyString(),
+                                  gfxUtils::eDataURIEncode, nullptr, &buffer);
+
+    frames.EmplaceBack(offset, std::move(buffer));
+  }
+
+  mCollectedFrames.Clear();
+
+  return CollectedFrames(recordingStart, std::move(frames));
+}
+
+void CompositionRecorder::ClearCollectedFrames() { mCollectedFrames.Clear(); }
 
 }  // namespace layers
 }  // namespace mozilla

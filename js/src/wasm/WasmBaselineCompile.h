@@ -25,8 +25,9 @@ namespace js {
 namespace wasm {
 
 // Return whether BaselineCompileFunction can generate code on the current
-// device.
-bool BaselineCanCompile();
+// device.  Usually you do *not* want to call this, you want
+// BaselineAvailable().
+MOZ_MUST_USE bool BaselinePlatformSupport();
 
 // Generate adequate code quickly.
 MOZ_MUST_USE bool BaselineCompileFunctions(const ModuleEnvironment& env,
@@ -40,13 +41,13 @@ class BaseLocalIter {
   using ConstValTypeRange = mozilla::Range<const ValType>;
 
   const ValTypeVector& locals_;
-  size_t argsLength_;
-  ConstValTypeRange argsRange_;  // range struct cache for ABIArgIter
-  jit::ABIArgIter<ConstValTypeRange> argsIter_;
+  const ArgTypeVector& args_;
+  jit::ABIArgIter<ArgTypeVector> argsIter_;
   size_t index_;
-  int32_t localSize_;
-  int32_t reservedSize_;
+  int32_t frameSize_;
+  int32_t nextFrameSize_;
   int32_t frameOffset_;
+  int32_t stackResultPointerOffset_;
   jit::MIRType mirType_;
   bool done_;
 
@@ -54,7 +55,7 @@ class BaseLocalIter {
   int32_t pushLocal(size_t nbytes);
 
  public:
-  BaseLocalIter(const ValTypeVector& locals, size_t argsLength,
+  BaseLocalIter(const ValTypeVector& locals, const ArgTypeVector& args,
                 bool debugEnabled);
   void operator++(int);
   bool done() const { return done_; }
@@ -65,14 +66,23 @@ class BaseLocalIter {
   }
   int32_t frameOffset() const {
     MOZ_ASSERT(!done_);
+    MOZ_ASSERT(frameOffset_ != INT32_MAX);
     return frameOffset_;
   }
   size_t index() const {
     MOZ_ASSERT(!done_);
     return index_;
   }
-  int32_t currentLocalSize() const { return localSize_; }
-  int32_t reservedSize() const { return reservedSize_; }
+  // The size in bytes taken up by the previous `index_` locals, also including
+  // fixed allocations like the DebugFrame and "hidden" locals like a spilled
+  // stack results pointer.
+  int32_t frameSize() const { return frameSize_; }
+
+  int32_t stackResultPointerOffset() const {
+    MOZ_ASSERT(args_.hasSyntheticStackResultPointerArg());
+    MOZ_ASSERT(stackResultPointerOffset_ != INT32_MAX);
+    return stackResultPointerOffset_;
+  }
 
 #ifdef DEBUG
   bool isArg() const {

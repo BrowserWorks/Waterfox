@@ -8,6 +8,7 @@
 #include "nsMacSharingService.h"
 
 #include "jsapi.h"
+#include "js/Array.h"  // JS::NewArrayObject
 #include "nsCocoaUtils.h"
 #include "mozilla/MacStringHelpers.h"
 
@@ -77,13 +78,12 @@ NSString* const openSharingSubpaneProtocolValue = @"com.apple.share-services";
 @end
 
 static NSString* NSImageToBase64(const NSImage* aImage) {
-  [aImage lockFocus];
-  NSBitmapImageRep* bitmapRep = [[NSBitmapImageRep alloc]
-      initWithFocusedViewRect:NSMakeRect(0, 0, aImage.size.width, aImage.size.height)];
-  [aImage unlockFocus];
+  CGImageRef cgRef = [aImage CGImageForProposedRect:nil context:nil hints:nil];
+  NSBitmapImageRep* bitmapRep = [[NSBitmapImageRep alloc] initWithCGImage:cgRef];
+  [bitmapRep setSize:[aImage size]];
   NSData* imageData = [bitmapRep representationUsingType:NSPNGFileType properties:@{}];
-  [bitmapRep release];
   NSString* base64Encoded = [imageData base64EncodedStringWithOptions:0];
+  [bitmapRep release];
   return [NSString stringWithFormat:@"data:image/png;base64,%@", base64Encoded];
 }
 
@@ -100,7 +100,7 @@ nsresult nsMacSharingService::GetSharingProviders(const nsAString& aPageUrl, JSC
                                                   JS::MutableHandleValue aResult) {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NSRESULT;
 
-  JS::Rooted<JSObject*> array(aCx, JS_NewArrayObject(aCx, 0));
+  JS::Rooted<JSObject*> array(aCx, JS::NewArrayObject(aCx, 0));
   NSURL* url = [NSURL URLWithString:nsCocoaUtils::ToNSString(aPageUrl)];
 
   NSArray* sharingService =

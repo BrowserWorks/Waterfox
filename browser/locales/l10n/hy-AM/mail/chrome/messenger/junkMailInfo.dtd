@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "Թափոն նամակի մասին">
+<!ENTITY window.width  "450">
+<!ENTITY info1a.label  "&brandShortName;-ը միանգամից ջնջում է մուտքային նամակները, որոնք որակվում են որպես թափոն։ Նամակները, որոնք &brandShortName;-ը որակում է որպես փոստաղբ, կցուցադրվի թափոնի պատկերով։">
+<!ENTITY info1b.label  ".">
+<!ENTITY info2.label   "Նախ Դուք պետք է վարժեցնեք &brandShortName;-ին թափոն նամակները որոշելու համար՝ օգտագործելով Թափոն կոճակը՝ նշելու համար նամակը պիտանի է, թե ոչ։">
+<!ENTITY info3.label   "Եթե մեկ անգամ &brandShortName;-ը որոշի նամակը որպես թափոն, ապա Թափոնի կարգավորուներում կարող եք նշել, որպեսզի այն միանգամից ուղարկվի Փոստաղբ թղթապանակ։">
+<!ENTITY info4.label   "Մանրամասները Օգնությունում։">

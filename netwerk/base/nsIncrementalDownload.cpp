@@ -115,7 +115,6 @@ class nsIncrementalDownload final : public nsIIncrementalDownload,
   nsresult ClearRequestHeader(nsIHttpChannel* channel);
 
   nsCOMPtr<nsIRequestObserver> mObserver;
-  nsCOMPtr<nsISupports> mObserverContext;
   nsCOMPtr<nsIProgressEventSink> mProgressSink;
   nsCOMPtr<nsIURI> mURI;
   nsCOMPtr<nsIURI> mFinalURI;
@@ -174,8 +173,7 @@ void nsIncrementalDownload::UpdateProgress() {
   mLastProgressUpdate = PR_Now();
 
   if (mProgressSink)
-    mProgressSink->OnProgress(this, mObserverContext, mCurrentSize + mChunkLen,
-                              mTotalSize);
+    mProgressSink->OnProgress(this, mCurrentSize + mChunkLen, mTotalSize);
 }
 
 nsresult nsIncrementalDownload::CallOnStartRequest() {
@@ -196,7 +194,6 @@ void nsIncrementalDownload::CallOnStopRequest() {
 
   mObserver->OnStopRequest(this, mStatus);
   mObserver = nullptr;
-  mObserverContext = nullptr;
 }
 
 nsresult nsIncrementalDownload::StartTimer(int32_t interval) {
@@ -220,7 +217,7 @@ nsresult nsIncrementalDownload::ProcessTimeout() {
                               nsContentUtils::GetSystemPrincipal(),
                               nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
                               nsIContentPolicy::TYPE_OTHER,
-                              nullptr,  // nsICookieSettings
+                              nullptr,  // nsICookieJarSettings
                               nullptr,  // PerformanceStorage
                               nullptr,  // loadGroup
                               this,     // aCallbacks
@@ -372,6 +369,16 @@ nsIncrementalDownload::SetLoadFlags(nsLoadFlags loadFlags) {
 }
 
 NS_IMETHODIMP
+nsIncrementalDownload::GetTRRMode(nsIRequest::TRRMode* aTRRMode) {
+  return GetTRRModeImpl(aTRRMode);
+}
+
+NS_IMETHODIMP
+nsIncrementalDownload::SetTRRMode(nsIRequest::TRRMode aTRRMode) {
+  return SetTRRModeImpl(aTRRMode);
+}
+
+NS_IMETHODIMP
 nsIncrementalDownload::GetLoadGroup(nsILoadGroup** loadGroup) {
   return NS_ERROR_NOT_IMPLEMENTED;
 }
@@ -458,7 +465,6 @@ nsIncrementalDownload::Start(nsIRequestObserver* observer,
   if (NS_FAILED(rv)) return rv;
 
   mObserver = observer;
-  mObserverContext = context;
   mProgressSink = do_QueryInterface(observer);  // ok if null
 
   mIsPending = true;

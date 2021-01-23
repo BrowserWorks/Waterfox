@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Уласцівасці тэкставага абсягу">
+<!ENTITY Settings.label "Наладжванні">
+<!ENTITY TextAreaName.label "Назва поля:">
+<!ENTITY TextAreaName.accessKey "Н">
+<!ENTITY TextAreaRows.label "Радкоў:">
+<!ENTITY TextAreaRows.accessKey "Р">
+<!ENTITY TextAreaCols.label "Слупкоў:">
+<!ENTITY TextAreaCols.accessKey "С">
+<!ENTITY TextAreaReadOnly.label "Толькі для чытання">
+<!ENTITY TextAreaReadOnly.accessKey "Ч">
+<!ENTITY TextAreaDisabled.label "Забароненае">
+<!ENTITY TextAreaDisabled.accessKey "З">
+<!ENTITY TextAreaTabIndex.label "Паказальнік зруху:">
+<!ENTITY TextAreaTabIndex.accessKey "р">
+<!ENTITY TextAreaAccessKey.label "Клавіша доступу:">
+<!ENTITY TextAreaAccessKey.accessKey "К">
+<!ENTITY InitialText.label "Пачатковы тэкст:">
+<!ENTITY InitialText.accessKey "П">
+<!ENTITY TextAreaWrap.label "Рэжым загінання:">
+<!ENTITY TextAreaWrap.accessKey "г">
+<!ENTITY WrapDefault.value "Змоўчны">
+<!ENTITY WrapOff.value "Без">
+<!ENTITY WrapHard.value "Жорсткі">
+<!ENTITY WrapSoft.value "Мяккі">
+<!ENTITY WrapPhysical.value "Фізічны">
+<!ENTITY WrapVirtual.value "Уяўны">

@@ -10,16 +10,17 @@
 
 #include "jsapi.h"
 
-#include "js/CompilationAndEvaluation.h"  // JS::CompileDontInflate
+#include "js/CompilationAndEvaluation.h"  // JS::Compile
 #include "js/HeapAPI.h"
 #include "js/SourceText.h"  // JS::Source{Ownership,Text}
 #include "jsapi-tests/tests.h"
 
 class TestTracer final : public JS::CallbackTracer {
-  void onChild(const JS::GCCellPtr& thing) override {
+  bool onChild(const JS::GCCellPtr& thing) override {
     if (thing.asCell() == expectedCell && thing.kind() == expectedKind) {
       found = true;
     }
+    return true;
   }
 
  public:
@@ -50,7 +51,7 @@ BEGIN_TEST(testPrivateGCThingValue) {
   CHECK(srcBuf.init(cx, code, mozilla::ArrayLength(code) - 1,
                     JS::SourceOwnership::Borrowed));
 
-  JS::RootedScript script(cx, JS::CompileDontInflate(cx, options, srcBuf));
+  JS::RootedScript script(cx, JS::Compile(cx, options, srcBuf));
   CHECK(script);
   JS_SetReservedSlot(obj, 0, PrivateGCThingValue(script));
 

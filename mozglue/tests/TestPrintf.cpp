@@ -96,7 +96,6 @@ static void TestPrintfFormats() {
   MOZ_RELEASE_ASSERT(print_one("27270", "%zu", (size_t)27270));
   MOZ_RELEASE_ASSERT(print_one("27270", "%zu", (size_t)27270));
   MOZ_RELEASE_ASSERT(print_one("hello", "he%so", "ll"));
-  MOZ_RELEASE_ASSERT(print_one("(null)", "%s", zero()));
   MOZ_RELEASE_ASSERT(print_one("hello   ", "%-8s", "hello"));
   MOZ_RELEASE_ASSERT(print_one("   hello", "%8s", "hello"));
   MOZ_RELEASE_ASSERT(print_one("hello   ", "%*s", -8, "hello"));
@@ -152,7 +151,12 @@ static void TestPrintfFormats() {
       print_one("7799 9977", "%2$zu %1$zu", (size_t)9977, (size_t)7799));
 }
 
-int main() {
+#if defined(XP_WIN)
+int wmain()
+#else
+int main()
+#endif  // defined(XP_WIN)
+{
   TestPrintfFormats();
   TestPrintfTargetPrint();
 

@@ -4,15 +4,18 @@
 
 from __future__ import absolute_import
 
+import io
 import os
 import sys
+
+from six import string_types
 
 __all__ = ['read_ini', 'combine_fields']
 
 
 class IniParseError(Exception):
     def __init__(self, fp, linenum, msg):
-        if isinstance(fp, basestring):
+        if isinstance(fp, string_types):
             path = fp
         elif hasattr(fp, 'name'):
             path = fp.name
@@ -22,14 +25,13 @@ class IniParseError(Exception):
         super(IniParseError, self).__init__(msg)
 
 
-def read_ini(fp, variables=None, default='DEFAULT', defaults_only=False,
-             comments=None, separators=None, strict=True, handle_defaults=True):
+def read_ini(fp, defaults=None, default='DEFAULT', comments=None,
+             separators=None, strict=True, handle_defaults=True):
     """
     read an .ini file and return a list of [(section, values)]
     - fp : file pointer or path to read
-    - variables : default set of variables
+    - defaults : default set of variables
     - default : name of the section for the default section
-    - defaults_only : if True, return the default section only
     - comments : characters that if they start a line denote a comment
     - separators : strings that denote key, value separation in order
     - strict : whether to be strict about parsing
@@ -37,14 +39,15 @@ def read_ini(fp, variables=None, default='DEFAULT', defaults_only=False,
     """
 
     # variables
-    variables = variables or {}
+    defaults = defaults or {}
+    default_section = {}
     comments = comments or ('#',)
     separators = separators or ('=', ':')
     sections = []
     key = value = None
     section_names = set()
-    if isinstance(fp, basestring):
-        fp = file(fp)
+    if isinstance(fp, string_types):
+        fp = io.open(fp, encoding='utf-8')
 
     # read the lines
     for (linenum, line) in enumerate(fp.read().splitlines(), start=1):
@@ -67,11 +70,11 @@ def read_ini(fp, variables=None, default='DEFAULT', defaults_only=False,
         while comment_start == sys.maxsize and inline_prefixes:
             next_prefixes = {}
             for prefix, index in inline_prefixes.items():
-                index = line.find(prefix, index+1)
+                index = stripped.find(prefix, index+1)
                 if index == -1:
                     continue
                 next_prefixes[prefix] = index
-                if index == 0 or (index > 0 and line[index-1].isspace()):
+                if index == 0 or (index > 0 and stripped[index-1].isspace()):
                     comment_start = min(comment_start, index)
             inline_prefixes = next_prefixes
 
@@ -88,7 +91,7 @@ def read_ini(fp, variables=None, default='DEFAULT', defaults_only=False,
                 if strict:
                     assert default not in section_names
                 section_names.add(default)
-                current_section = variables
+                current_section = default_section
                 continue
 
             if strict:
@@ -121,11 +124,13 @@ def read_ini(fp, variables=None, default='DEFAULT', defaults_only=False,
                 value = value.strip()
                 key_indent = line_indent
 
+                # make sure this key isn't already in the section
+                if key:
+                    assert key not in current_section
+
                 if strict:
-                    # make sure this key isn't already in the section or empty
+                    # make sure this key isn't empty
                     assert key
-                    if current_section is not variables:
-                        assert key not in current_section
 
                 current_section[key] = value
                 break
@@ -133,20 +138,12 @@ def read_ini(fp, variables=None, default='DEFAULT', defaults_only=False,
             # something bad happened!
             raise IniParseError(fp, linenum, "Unexpected line '{}'".format(stripped))
 
-    # server-root is a special os path declared relative to the manifest file.
-    # inheritance demands we expand it as absolute
-    if 'server-root' in variables:
-        root = os.path.join(os.path.dirname(fp.name),
-                            variables['server-root'])
-        variables['server-root'] = os.path.abspath(root)
-
-    # return the default section only if requested
-    if defaults_only:
-        return [(default, variables)]
-
-    global_vars = variables if handle_defaults else {}
-    sections = [(i, combine_fields(global_vars, j)) for i, j in sections]
-    return sections
+    # merge global defaults with the DEFAULT section
+    defaults = combine_fields(defaults, default_section)
+    if handle_defaults:
+        # merge combined defaults into each section
+        sections = [(i, combine_fields(defaults, j)) for i, j in sections]
+    return sections, defaults
 
 
 def combine_fields(global_vars, local_vars):
@@ -157,8 +154,9 @@ def combine_fields(global_vars, local_vars):
     if not global_vars:
         return local_vars
     if not local_vars:
-        return global_vars
+        return global_vars.copy()
     field_patterns = {
+        'prefs': '%s %s',
         'skip-if': '(%s) || (%s)',
         'support-files': '%s %s',
     }

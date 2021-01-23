@@ -1,4 +1,3 @@
-/* vim: set ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -79,7 +78,7 @@ function waitForLinkedBrowserEvent(tab, event) {
 }
 
 function contentReadyState(tab) {
-  return ContentTask.spawn(tab.linkedBrowser, null, function() {
+  return SpecialPowers.spawn(tab.linkedBrowser, [], function() {
     return content.document.readyState;
   });
 }

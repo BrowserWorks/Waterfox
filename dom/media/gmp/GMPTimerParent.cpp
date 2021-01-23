@@ -4,25 +4,19 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "GMPTimerParent.h"
-#include "nsComponentManagerUtils.h"
+
+#include "GMPLog.h"
 #include "mozilla/Unused.h"
-#include "nsAutoPtr.h"
+#include "nsComponentManagerUtils.h"
 
 namespace mozilla {
 
-#ifdef LOG
-#  undef LOG
-#endif
-
 extern LogModule* GetGMPLog();
-
-#define LOGD(msg) MOZ_LOG(GetGMPLog(), mozilla::LogLevel::Debug, msg)
-#define LOG(level, msg) MOZ_LOG(GetGMPLog(), (level), msg)
 
 #ifdef __CLASS__
 #  undef __CLASS__
 #endif
-#define __CLASS__ "GMPParent"
+#define __CLASS__ "GMPTimerParent"
 
 namespace gmp {
 
@@ -31,7 +25,8 @@ GMPTimerParent::GMPTimerParent(nsISerialEventTarget* aGMPEventTarget)
 
 mozilla::ipc::IPCResult GMPTimerParent::RecvSetTimer(
     const uint32_t& aTimerId, const uint32_t& aTimeoutMs) {
-  LOGD(("%s::%s: %p mIsOpen=%d", __CLASS__, __FUNCTION__, this, mIsOpen));
+  GMP_LOG_DEBUG("%s::%s: %p mIsOpen=%d", __CLASS__, __FUNCTION__, this,
+                mIsOpen);
 
   MOZ_ASSERT(mGMPEventTarget->IsOnCurrentThread());
 
@@ -40,10 +35,10 @@ mozilla::ipc::IPCResult GMPTimerParent::RecvSetTimer(
   }
 
   nsresult rv;
-  nsAutoPtr<Context> ctx(new Context());
+  UniquePtr<Context> ctx(new Context());
 
   rv = NS_NewTimerWithFuncCallback(
-      getter_AddRefs(ctx->mTimer), &GMPTimerParent::GMPTimerExpired, ctx,
+      getter_AddRefs(ctx->mTimer), &GMPTimerParent::GMPTimerExpired, ctx.get(),
       aTimeoutMs, nsITimer::TYPE_ONE_SHOT, "gmp::GMPTimerParent::RecvSetTimer",
       mGMPEventTarget);
   NS_ENSURE_SUCCESS(rv, IPC_OK());
@@ -51,13 +46,14 @@ mozilla::ipc::IPCResult GMPTimerParent::RecvSetTimer(
   ctx->mId = aTimerId;
   ctx->mParent = this;
 
-  mTimers.PutEntry(ctx.forget());
+  mTimers.PutEntry(ctx.release());
 
   return IPC_OK();
 }
 
 void GMPTimerParent::Shutdown() {
-  LOGD(("%s::%s: %p mIsOpen=%d", __CLASS__, __FUNCTION__, this, mIsOpen));
+  GMP_LOG_DEBUG("%s::%s: %p mIsOpen=%d", __CLASS__, __FUNCTION__, this,
+                mIsOpen);
 
   MOZ_ASSERT(mGMPEventTarget->IsOnCurrentThread());
 
@@ -72,7 +68,8 @@ void GMPTimerParent::Shutdown() {
 }
 
 void GMPTimerParent::ActorDestroy(ActorDestroyReason aWhy) {
-  LOGD(("%s::%s: %p mIsOpen=%d", __CLASS__, __FUNCTION__, this, mIsOpen));
+  GMP_LOG_DEBUG("%s::%s: %p mIsOpen=%d", __CLASS__, __FUNCTION__, this,
+                mIsOpen);
 
   Shutdown();
 }
@@ -80,15 +77,16 @@ void GMPTimerParent::ActorDestroy(ActorDestroyReason aWhy) {
 /* static */
 void GMPTimerParent::GMPTimerExpired(nsITimer* aTimer, void* aClosure) {
   MOZ_ASSERT(aClosure);
-  nsAutoPtr<Context> ctx(static_cast<Context*>(aClosure));
+  UniquePtr<Context> ctx(static_cast<Context*>(aClosure));
   MOZ_ASSERT(ctx->mParent);
   if (ctx->mParent) {
-    ctx->mParent->TimerExpired(ctx);
+    ctx->mParent->TimerExpired(ctx.get());
   }
 }
 
 void GMPTimerParent::TimerExpired(Context* aContext) {
-  LOGD(("%s::%s: %p mIsOpen=%d", __CLASS__, __FUNCTION__, this, mIsOpen));
+  GMP_LOG_DEBUG("%s::%s: %p mIsOpen=%d", __CLASS__, __FUNCTION__, this,
+                mIsOpen);
   MOZ_ASSERT(mGMPEventTarget->IsOnCurrentThread());
 
   if (!mIsOpen) {
@@ -104,3 +102,5 @@ void GMPTimerParent::TimerExpired(Context* aContext) {
 
 }  // namespace gmp
 }  // namespace mozilla
+
+#undef __CLASS__

@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE 'Private Data' prefs settings
+    These entities go on top of the sanitize.dtd definitions
+-->
+<!ENTITY pref.privatedata.title           "Data Peribadi">
+
+
+<!ENTITY clearPrivateData.label           "Buang Data Peribadi">
+
+<!ENTITY alwaysClear.label                "Sentiasa buang data peribadi apabila saya tutup &brandShortName;">
+<!ENTITY alwaysClear.accesskey            "t">
+
+<!ENTITY askBeforeClear.label             "Tanya saya sebelum membuang data peribadi">
+<!ENTITY askBeforeClear.accesskey         "y">
+
+<!ENTITY clearDataSettings.label          "Apabila diminta membuang data peribadi, &brandShortName; perlu buang:">
+
+<!--LOCALIZATION NOTE (clearDataDialog.label, clearDataSilent.label, clearDataDialog.accesskey):
+  The only difference bettween the two labels is that one calls a dialog, the other doesn't.
+  The same accesskey is used for both labels.
+-->
+<!ENTITY clearDataDialog.label            "Buang Sekarang…">
+<!ENTITY clearDataSilent.label            "Buang Sekarang">
+<!ENTITY clearDataDialog.accesskey        "S">

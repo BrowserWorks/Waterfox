@@ -85,8 +85,6 @@ const Container_Menu = 2;
 const Container_Unfiled = 3;
 const Container_Places = 4;
 
-const DESCRIPTION_ANNO = "bookmarkProperties/description";
-
 const MICROSEC_PER_SEC = 1000000;
 
 const EXPORT_INDENT = "    "; // four spaces
@@ -574,8 +572,7 @@ BookmarkImporter.prototype = {
         .split(",")
         .filter(
           aTag =>
-            aTag.length > 0 &&
-            aTag.length <= PlacesUtils.bookmarks.MAX_TAG_LENGTH
+            !!aTag.length && aTag.length <= PlacesUtils.bookmarks.MAX_TAG_LENGTH
         );
 
       // If we end up with none, then delete the property completely.
@@ -866,7 +863,7 @@ function BookmarkExporter(aBookmarksTree) {
 
   for (let key of ["toolbarFolder", "unfiledBookmarksFolder"]) {
     let root = rootsMap.get(key);
-    if (root.children && root.children.length > 0) {
+    if (root.children && root.children.length) {
       if (!this._root.children) {
         this._root.children = [];
       }
@@ -953,8 +950,6 @@ BookmarkExporter.prototype = {
       this._writeLine(">" + escapeHtmlEntities(aItem.title) + "</H3>");
     }
 
-    this._writeDescription(aItem, aIndent);
-
     this._writeLine(aIndent + "<DL><p>");
     if (aItem.children) {
       await this._writeContainerContents(aItem, aIndent);
@@ -1016,7 +1011,6 @@ BookmarkExporter.prototype = {
       this._writeAttribute("TAGS", escapeHtmlEntities(aItem.tags));
     }
     this._writeLine(">" + escapeHtmlEntities(aItem.title) + "</A>");
-    this._writeDescription(aItem, aIndent);
   },
 
   _writeDateAttributes(aItem) {
@@ -1053,16 +1047,6 @@ BookmarkExporter.prototype = {
         "data:image/png;base64," +
         base64EncodeString(String.fromCharCode.apply(String, favicon.data));
       this._writeAttribute("ICON", faviconContents);
-    }
-  },
-
-  _writeDescription(aItem, aIndent) {
-    let descriptionAnno =
-      aItem.annos && aItem.annos.find(anno => anno.name == DESCRIPTION_ANNO);
-    if (descriptionAnno) {
-      this._writeLine(
-        aIndent + "<DD>" + escapeHtmlEntities(descriptionAnno.value)
-      );
     }
   },
 };

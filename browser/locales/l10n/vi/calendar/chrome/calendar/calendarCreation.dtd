@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY wizard.title             "Tạo lịch mới" >
+<!ENTITY wizard.label             "Tạo một bộ lịch mới" >
+<!ENTITY wizard.description       "Khởi tạo bộ lịch của bạn" >
+
+<!ENTITY initialpage.description    "Bộ lịch của bạn có thể được lưu trữ trên máy tính hoặc trên một máy chủ để có thể truy cập nó từ xa hoặc chia sẻ nó với bạn bè hoặc đồng nghiệp." >
+<!ENTITY initialpage.computer.label  "Trên máy tính của tôi">
+<!ENTITY initialpage.network.label  "Trên mạng">
+
+<!ENTITY locationpage.description         "Cung cấp thông tin về những thứ cần thiết để truy cập bộ lịch từ xa của bạn" >
+<!ENTITY locationpage.login.description   "Tùy chọn: nhập tên đăng nhập và mật khẩu" >
+<!ENTITY locationpage.username.label      "Tên đăng nhập:" >
+<!ENTITY locationpage.password.label      "Mật khẩu:" >
+
+<!ENTITY custompage.shortdescription  "Tùy biến lịch của bạn" >
+<!ENTITY custompage.longdescription   "Bạn có thể đặt biệt danh cho bộ lịch của bạn và tô màu các sự kiện của bộ lịch này." >
+
+<!ENTITY finishpage.shortdescription  "Đã tạo lịch" >
+<!ENTITY finishpage.longdescription   "Bộ lịch của bạn đã được tạo." >
+
+<!-- Below are new strings for the revised new calendar dialog. The above strings should be
+    removed/renamed later on -->
+
+<!ENTITY sourcetabs.other.label  "Khác">
+
+<!ENTITY buttons.create.label "Tạo lịch">
+<!ENTITY buttons.create.accesskey "r">
+
+<!ENTITY buttons.find.label "Tìm lịch">
+<!ENTITY buttons.find.accesskey "F">
+
+<!ENTITY buttons.back.label "Quay lại">
+<!ENTITY buttons.back.accesskey "B">
+
+<!ENTITY buttons.subscribe.label "Đăng kí">
+<!ENTITY buttons.subscribe.accesskey "S">
+
+<!ENTITY calendartype.label "Kiểu lịch:">
+<!ENTITY location.label "Địa chỉ:">
+<!ENTITY location.placeholder "URL hoặc tên máy chủ của máy chủ lịch">
+
+<!ENTITY network.nocredentials.label "Vị trí này không yêu cầu thông tin đăng nhập">
+<!ENTITY network.loading.description "Xin vui lòng chờ trong khi lịch của bạn đang được phát hiện.">
+<!ENTITY network.notfound.description "Không thể tìm thấy lịch tại địa chỉ này. Vui lòng kiểm tra cài đặt của bạn.">
+<!ENTITY network.authfail.description "Thông tin đăng nhập bạn đã nhập không được chấp nhận. Vui lòng kiểm tra cài đặt của bạn.">
+
+<!ENTITY network.subscribe.single.description "Vui lòng chọn lịch bạn muốn đăng ký.">
+<!ENTITY network.subscribe.multiple.description "Nhiều loại lịch có sẵn cho địa chỉ này. Vui lòng chọn kiểu lịch, sau đó đánh dấu các lịch bạn muốn đăng ký.">

@@ -28,9 +28,10 @@
 // IMPORTANT: Do not change this list without review from
 //            a JavaScript Engine peer!
 var ecmaGlobals = [
+  { name: "AggregateError", insecureContext: true, nightly: true },
   { name: "Array", insecureContext: true },
   { name: "ArrayBuffer", insecureContext: true },
-  { name: "Atomics", insecureContext: true, disabled: true },
+  { name: "Atomics", insecureContext: true },
   { name: "BigInt", insecureContext: true },
   { name: "BigInt64Array", insecureContext: true },
   { name: "BigUint64Array", insecureContext: true },
@@ -66,7 +67,11 @@ var ecmaGlobals = [
   { name: "Reflect", insecureContext: true },
   { name: "RegExp", insecureContext: true },
   { name: "Set", insecureContext: true },
-  { name: "SharedArrayBuffer", insecureContext: true, disabled: true },
+  {
+    name: "SharedArrayBuffer",
+    insecureContext: true,
+    crossOringinIsolated: true,
+  },
   { name: "String", insecureContext: true },
   { name: "Symbol", insecureContext: true },
   { name: "SyntaxError", insecureContext: true },
@@ -113,9 +118,21 @@ var interfaceNamesInGlobalScope = [
   // IMPORTANT: Do not change this list without review from a DOM peer!
   { name: "Directory", insecureContext: true },
   // IMPORTANT: Do not change this list without review from a DOM peer!
-  { name: "DOMError", insecureContext: true },
-  // IMPORTANT: Do not change this list without review from a DOM peer!
   { name: "DOMException", insecureContext: true },
+  // IMPORTANT: Do not change this list without review from a DOM peer!
+  { name: "DOMMatrix", insecureContext: true },
+  // IMPORTANT: Do not change this list without review from a DOM peer!
+  { name: "DOMMatrixReadOnly", insecureContext: true },
+  // IMPORTANT: Do not change this list without review from a DOM peer!
+  { name: "DOMPoint", insecureContext: true },
+  // IMPORTANT: Do not change this list without review from a DOM peer!
+  { name: "DOMPointReadOnly", insecureContext: true },
+  // IMPORTANT: Do not change this list without review from a DOM peer!
+  { name: "DOMQuad", insecureContext: true },
+  // IMPORTANT: Do not change this list without review from a DOM peer!
+  { name: "DOMRect", insecureContext: true },
+  // IMPORTANT: Do not change this list without review from a DOM peer!
+  { name: "DOMRectReadOnly", insecureContext: true },
   // IMPORTANT: Do not change this list without review from a DOM peer!
   { name: "DOMRequest", insecureContext: true },
   // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -199,21 +216,32 @@ var interfaceNamesInGlobalScope = [
   // IMPORTANT: Do not change this list without review from a DOM peer!
   { name: "ProgressEvent", insecureContext: true },
   // IMPORTANT: Do not change this list without review from a DOM peer!
-  { name: "PushManager", insecureContext: true, fennec: true },
+  { name: "PromiseRejectionEvent", insecureContext: true },
   // IMPORTANT: Do not change this list without review from a DOM peer!
-  { name: "PushSubscription", insecureContext: true, fennec: true },
+  { name: "PushManager", insecureContext: true },
   // IMPORTANT: Do not change this list without review from a DOM peer!
-  { name: "PushSubscriptionOptions", insecureContext: true, fennec: true },
+  { name: "PushSubscription", insecureContext: true },
+  // IMPORTANT: Do not change this list without review from a DOM peer!
+  {
+    name: "PushSubscriptionOptions",
+    insecureContext: true,
+  },
+  // IMPORTANT: Do not change this list without review from a DOM peer!
+  { name: "Report", nightly: true, insecureContext: true },
+  // IMPORTANT: Do not change this list without review from a DOM peer!
+  { name: "ReportBody", nightly: true, insecureContext: true },
+  // IMPORTANT: Do not change this list without review from a DOM peer!
+  { name: "ReportingObserver", nightly: true, insecureContext: true },
   // IMPORTANT: Do not change this list without review from a DOM peer!
   { name: "Request", insecureContext: true },
   // IMPORTANT: Do not change this list without review from a DOM peer!
   { name: "Response", insecureContext: true },
   // IMPORTANT: Do not change this list without review from a DOM peer!
-  { name: "ServiceWorkerRegistration", insecureContext: true, fennec: true },
+  { name: "ServiceWorkerRegistration", insecureContext: true },
   // IMPORTANT: Do not change this list without review from a DOM peer!
   { name: "StorageManager", fennec: false },
   // IMPORTANT: Do not change this list without review from a DOM peer!
-  { name: "SubtleCrypto", insecureContext: true },
+  { name: "SubtleCrypto" },
   // IMPORTANT: Do not change this list without review from a DOM peer!
   { name: "TextDecoder", insecureContext: true },
   // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -266,11 +294,13 @@ var interfaceNamesInGlobalScope = [
 
 function createInterfaceMap({
   isNightly,
+  isEarlyBetaOrEarlier,
   isRelease,
   isDesktop,
   isAndroid,
   isInsecureContext,
   isFennec,
+  isCrossOringinIsolated,
 }) {
   var interfaceMap = {};
 
@@ -293,7 +323,9 @@ function createInterfaceMap({
           // false.  That way entries without an insecureContext annotation
           // will get treated as "insecureContext: false", which means exposed
           // only in secure contexts.
-          (isInsecureContext && !Boolean(entry.insecureContext)) ||
+          (isInsecureContext && !entry.insecureContext) ||
+          entry.earlyBetaOrEarlier === !isEarlyBetaOrEarlier ||
+          entry.crossOringinIsolated === !isCrossOringinIsolated ||
           entry.disabled
         ) {
           interfaceMap[entry.name] = false;

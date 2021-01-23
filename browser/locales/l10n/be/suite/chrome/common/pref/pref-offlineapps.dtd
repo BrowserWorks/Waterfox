@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.offlineapps.title "Пазасеткавыя сеціўныя прыстасаванні">
+<!ENTITY pref.offlineCache.caption "Пазасеткавае сеціўнае змесціва і карыстальніцкія здаткі">
+<!ENTITY clearOfflineAppCache.label "Ачысціць">
+<!ENTITY clearOfflineAppCache.accesskey "А">
+<!ENTITY offlineNotify.label "Папярэджваць мяне, калі сеціўныя пляцоўкі пажадаюць захаваць здаткі для пазасеткавага карыстання.">
+<!ENTITY offlineNotify.accesskey "П">
+<!ENTITY offlineNotifyPermissions.label "Кіраваць дазволамі">
+<!ENTITY offlineNotifyPermissions.accesskey "К">
+<!ENTITY offlineAppsList.label "Наступныя пляцоўкі Сеціва маюць дазвол на захаванне здаткаў для пазасеткавага ўжывання:">
+<!ENTITY offlineAppsListRemove.label "Ачысціць здаткі…">
+<!ENTITY offlineAppsListRemove.accesskey "ч">

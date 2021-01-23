@@ -5,6 +5,7 @@
 
 const EXAMPLE_ORIGIN = "https://www.example.com";
 const EXAMPLE_ORIGIN_2 = "https://example.org";
+const EXAMPLE_ORIGIN_3 = "http://localhost:8000";
 
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { SiteDataManager } = ChromeUtils.import(
@@ -12,6 +13,9 @@ const { SiteDataManager } = ChromeUtils.import(
 );
 const { SiteDataTestUtils } = ChromeUtils.import(
   "resource://testing-common/SiteDataTestUtils.jsm"
+);
+const { PermissionTestUtils } = ChromeUtils.import(
+  "resource://testing-common/PermissionTestUtils.jsm"
 );
 ChromeUtils.defineModuleGetter(
   this,
@@ -119,7 +123,7 @@ add_task(async function testRemove() {
   await SiteDataManager.updateSites();
 
   let uri = Services.io.newURI(EXAMPLE_ORIGIN);
-  Services.perms.add(uri, "camera", Services.perms.ALLOW_ACTION);
+  PermissionTestUtils.add(uri, "camera", Services.perms.ALLOW_ACTION);
 
   SiteDataTestUtils.addToCookies(EXAMPLE_ORIGIN, "foo1", "bar1");
   SiteDataTestUtils.addToCookies(EXAMPLE_ORIGIN, "foo2", "bar2");
@@ -127,10 +131,17 @@ add_task(async function testRemove() {
   SiteDataTestUtils.addToCookies(EXAMPLE_ORIGIN_2, "foo", "bar");
   await SiteDataTestUtils.addToIndexedDB(EXAMPLE_ORIGIN_2, 2048);
   await SiteDataTestUtils.persist(EXAMPLE_ORIGIN_2);
+  await SiteDataTestUtils.addToIndexedDB(EXAMPLE_ORIGIN_3, 2048);
 
   await SiteDataManager.updateSites();
 
   let sites = await SiteDataManager.getSites();
+
+  Assert.equal(sites.length, 3, "Has three sites.");
+
+  await SiteDataManager.remove(["localhost"]);
+
+  sites = await SiteDataManager.getSites();
 
   Assert.equal(sites.length, 2, "Has two sites.");
 
@@ -151,25 +162,25 @@ add_task(async function testRemove() {
   let cookies = Services.cookies.countCookiesFromHost("example.com");
   Assert.equal(cookies, 0, "Has cleared cookies for example.com");
 
-  let perm = Services.perms.testPermission(uri, "persistent-storage");
+  let perm = PermissionTestUtils.testPermission(uri, "persistent-storage");
   Assert.equal(
     perm,
     Services.perms.UNKNOWN_ACTION,
     "Cleared the persistent-storage permission."
   );
-  perm = Services.perms.testPermission(uri, "camera");
+  perm = PermissionTestUtils.testPermission(uri, "camera");
   Assert.equal(
     perm,
     Services.perms.ALLOW_ACTION,
     "Did not clear other permissions."
   );
 
-  Services.perms.remove(uri, "camera");
+  PermissionTestUtils.remove(uri, "camera");
 });
 
 add_task(async function testRemoveSiteData() {
   let uri = Services.io.newURI(EXAMPLE_ORIGIN);
-  Services.perms.add(uri, "camera", Services.perms.ALLOW_ACTION);
+  PermissionTestUtils.add(uri, "camera", Services.perms.ALLOW_ACTION);
 
   SiteDataTestUtils.addToCookies(EXAMPLE_ORIGIN, "foo1", "bar1");
   SiteDataTestUtils.addToCookies(EXAMPLE_ORIGIN, "foo2", "bar2");
@@ -199,18 +210,18 @@ add_task(async function testRemoveSiteData() {
   let cookies = Services.cookies.countCookiesFromHost("example.org");
   Assert.equal(cookies, 0, "Has cleared cookies for example.org");
 
-  let perm = Services.perms.testPermission(uri, "persistent-storage");
+  let perm = PermissionTestUtils.testPermission(uri, "persistent-storage");
   Assert.equal(
     perm,
     Services.perms.UNKNOWN_ACTION,
     "Cleared the persistent-storage permission."
   );
-  perm = Services.perms.testPermission(uri, "camera");
+  perm = PermissionTestUtils.testPermission(uri, "camera");
   Assert.equal(
     perm,
     Services.perms.ALLOW_ACTION,
     "Did not clear other permissions."
   );
 
-  Services.perms.remove(uri, "camera");
+  PermissionTestUtils.remove(uri, "camera");
 });

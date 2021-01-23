@@ -17,15 +17,14 @@
 
 #include "nsIAppShell.h"
 #include "nsAppStartupNotifier.h"
-#include "nsIDirectoryService.h"
 #include "nsIFile.h"
-#include "nsIToolkitChromeRegistry.h"
 #include "nsIToolkitProfile.h"
 
 #ifdef XP_WIN
 #  include <process.h>
 #  include <shobjidl.h>
 #  include "mozilla/ipc/WindowsMessageLoop.h"
+#  include "mozilla/WinDllServices.h"
 #endif
 
 #include "nsAppDirectoryServiceDefs.h"
@@ -41,7 +40,6 @@
 #ifdef MOZ_ASAN_REPORTER
 #  include "CmdLineAndEnvUtils.h"
 #endif
-#include "ThreadAnnotation.h"
 
 #include "mozilla/Omnijar.h"
 #if defined(XP_MACOSX)
@@ -63,14 +61,14 @@
 
 #include "mozilla/AbstractThread.h"
 #include "mozilla/FilePreferences.h"
+#include "mozilla/IOInterposer.h"
 #include "mozilla/RDDProcessImpl.h"
+#include "mozilla/UniquePtr.h"
 
 #include "mozilla/ipc/BrowserProcessSubThread.h"
 #include "mozilla/ipc/GeckoChildProcessHost.h"
 #include "mozilla/ipc/IOThreadChild.h"
 #include "mozilla/ipc/ProcessChild.h"
-#include "mozilla/recordreplay/ChildIPC.h"
-#include "mozilla/recordreplay/ParentIPC.h"
 #include "ScopedXREEmbed.h"
 
 #include "mozilla/plugins/PluginProcessChild.h"
@@ -82,14 +80,15 @@
 #include "mozilla/ipc/XPCShellEnvironment.h"
 #if defined(XP_WIN)
 #  include "mozilla/WindowsConsole.h"
+#  include "mozilla/WindowsDllBlocklist.h"
 #endif
-#include "mozilla/WindowsDllBlocklist.h"
 
 #include "GMPProcessChild.h"
 #include "mozilla/gfx/GPUProcessImpl.h"
 #include "mozilla/net/SocketProcessImpl.h"
 
 #include "GeckoProfiler.h"
+#include "BaseProfiler.h"
 
 #if defined(MOZ_SANDBOX) && defined(XP_WIN)
 #  include "mozilla/sandboxTarget.h"
@@ -132,6 +131,10 @@ using mozilla::_ipdltest::IPDLUnitTestProcessChild;
 #  include "mozilla/sandboxing/sandboxLogging.h"
 #endif
 
+#if defined(MOZ_ENABLE_FORKSERVER)
+#  include "mozilla/ipc/ForkServer.h"
+#endif
+
 #include "VRProcessChild.h"
 
 using namespace mozilla;
@@ -142,7 +145,6 @@ using mozilla::ipc::IOThreadChild;
 using mozilla::ipc::ProcessChild;
 using mozilla::ipc::ScopedXREEmbed;
 
-using mozilla::dom::ContentChild;
 using mozilla::dom::ContentParent;
 using mozilla::dom::ContentProcess;
 using mozilla::plugins::PluginProcessChild;
@@ -151,7 +153,6 @@ using mozilla::gmp::GMPProcessChild;
 
 using mozilla::ipc::TestShellCommandParent;
 using mozilla::ipc::TestShellParent;
-using mozilla::ipc::XPCShellEnvironment;
 
 using mozilla::startup::sChildProcessType;
 
@@ -202,7 +203,7 @@ nsresult XRE_InitEmbedding2(nsIFile* aLibXULDirectory, nsIFile* aAppDirectory,
   // If the app wants to autoregister every time (for instance, if it's debug),
   // it can do so after we return from this function.
 
-  nsAppStartupNotifier::NotifyObservers(APPSTARTUP_TOPIC);
+  nsAppStartupNotifier::NotifyObservers(APPSTARTUP_CATEGORY);
 
   return NS_OK;
 }
@@ -223,7 +224,7 @@ void XRE_TermEmbedding() {
   delete gDirServiceProvider;
 }
 
-const char* XRE_ChildProcessTypeToString(GeckoProcessType aProcessType) {
+const char* XRE_GeckoProcessTypeToString(GeckoProcessType aProcessType) {
   return (aProcessType < GeckoProcessType_End)
              ? kGeckoProcessTypeString[aProcessType]
              : "invalid";
@@ -240,15 +241,13 @@ const char* XRE_ChildProcessTypeToAnnotation(GeckoProcessType aProcessType) {
     case GeckoProcessType_Content:
       return "content";
     default:
-      return XRE_ChildProcessTypeToString(aProcessType);
+      return XRE_GeckoProcessTypeToString(aProcessType);
   }
 }
 
-namespace mozilla {
-namespace startup {
+namespace mozilla::startup {
 GeckoProcessType sChildProcessType = GeckoProcessType_Default;
-}  // namespace startup
-}  // namespace mozilla
+}  // namespace mozilla::startup
 
 #if defined(MOZ_WIDGET_ANDROID)
 void XRE_SetAndroidChildFds(JNIEnv* env, const XRE_AndroidChildFds& fds) {
@@ -263,7 +262,7 @@ void XRE_SetAndroidChildFds(JNIEnv* env, const XRE_AndroidChildFds& fds) {
 
 void XRE_SetProcessType(const char* aProcessTypeString) {
   static bool called = false;
-  if (called) {
+  if (called && sChildProcessType != GeckoProcessType_ForkServer) {
     MOZ_CRASH();
   }
   called = true;
@@ -275,25 +274,6 @@ void XRE_SetProcessType(const char* aProcessTypeString) {
       return;
     }
   }
-}
-
-bool
-#if defined(XP_WIN)
-XRE_SetRemoteExceptionHandler(const char* aPipe /*= 0*/,
-                              uintptr_t aCrashTimeAnnotationFile)
-#else
-XRE_SetRemoteExceptionHandler(const char* aPipe /*= 0*/)
-#endif
-{
-  recordreplay::AutoPassThroughThreadEvents pt;
-#if defined(XP_WIN)
-  return CrashReporter::SetRemoteExceptionHandler(nsDependentCString(aPipe),
-                                                  aCrashTimeAnnotationFile);
-#elif defined(XP_MACOSX)
-  return CrashReporter::SetRemoteExceptionHandler(nsDependentCString(aPipe));
-#else
-  return CrashReporter::SetRemoteExceptionHandler();
-#endif
 }
 
 #if defined(XP_WIN)
@@ -337,6 +317,17 @@ int GetDebugChildPauseTime() {
 #endif
 }
 
+static bool IsCrashReporterEnabled(const char* aArg) {
+  // on windows and mac, |aArg| is the named pipe on which the server is
+  // listening for requests, or "-" if crash reporting is disabled.
+#if defined(XP_MACOSX) || defined(XP_WIN)
+  return 0 != strcmp("-", aArg);
+#else
+  // on POSIX, |aArg| is "true" if crash reporting is enabled, false otherwise
+  return 0 != strcmp("false", aArg);
+#endif
+}
+
 }  // namespace
 
 nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
@@ -346,7 +337,7 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
   NS_ENSURE_ARG_POINTER(aArgv[0]);
   MOZ_ASSERT(aChildData);
 
-  recordreplay::Initialize(aArgc, aArgv);
+  NS_SetCurrentThreadName("MainThread");
 
 #ifdef MOZ_ASAN_REPORTER
   // In ASan reporter builds, we need to set ASan's log_path as early as
@@ -406,6 +397,8 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
 
   mozilla::LogModule::Init(aArgc, aArgv);
 
+  AUTO_BASE_PROFILER_LABEL("XRE_InitChildProcess (around Gecko Profiler)",
+                           OTHER);
   AUTO_PROFILER_INIT;
   AUTO_PROFILER_LABEL("XRE_InitChildProcess", OTHER);
 
@@ -425,9 +418,6 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
 #  endif /* MOZ_SANDBOX */
 
   const char* const mach_port_name = aArgv[--aArgc];
-
-  Maybe<recordreplay::AutoPassThroughThreadEvents> pt;
-  pt.emplace();
 
   const int kTimeoutMs = 1000;
 
@@ -508,11 +498,11 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
   }
 #  endif /* MOZ_SANDBOX */
 
-  pt.reset();
 #endif /* XP_MACOSX */
 
   SetupErrorHandling(aArgv[0]);
 
+  bool exceptionHandlerIsSet = false;
   if (!CrashReporter::IsDummy()) {
 #if defined(XP_WIN)
     if (aArgc < 1) {
@@ -526,35 +516,23 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
     if (aArgc < 1) return NS_ERROR_FAILURE;
     const char* const crashReporterArg = aArgv[--aArgc];
 
+    if (IsCrashReporterEnabled(crashReporterArg)) {
 #if defined(XP_MACOSX)
-    // on windows and mac, |crashReporterArg| is the named pipe on which the
-    // server is listening for requests, or "-" if crash reporting is
-    // disabled.
-    if (0 != strcmp("-", crashReporterArg) &&
-        !XRE_SetRemoteExceptionHandler(crashReporterArg)) {
-      // Bug 684322 will add better visibility into this condition
-      NS_WARNING("Could not setup crash reporting\n");
-    }
+      exceptionHandlerIsSet =
+          CrashReporter::SetRemoteExceptionHandler(crashReporterArg);
 #elif defined(XP_WIN)
-    if (0 != strcmp("-", crashReporterArg) &&
-        !XRE_SetRemoteExceptionHandler(crashReporterArg,
-                                       crashTimeAnnotationFile)) {
-      // Bug 684322 will add better visibility into this condition
-      NS_WARNING("Could not setup crash reporting\n");
-    }
+      exceptionHandlerIsSet = CrashReporter::SetRemoteExceptionHandler(
+          crashReporterArg, crashTimeAnnotationFile);
 #else
-    // on POSIX, |crashReporterArg| is "true" if crash reporting is
-    // enabled, false otherwise
-    if (0 != strcmp("false", crashReporterArg) &&
-        !XRE_SetRemoteExceptionHandler(nullptr)) {
-      // Bug 684322 will add better visibility into this condition
-      NS_WARNING("Could not setup crash reporting\n");
-    }
+      exceptionHandlerIsSet = CrashReporter::SetRemoteExceptionHandler();
 #endif
-  }
 
-  // For Init/Shutdown thread name annotations in the crash reporter.
-  CrashReporter::InitThreadAnnotationRAII annotation;
+      if (!exceptionHandlerIsSet) {
+        // Bug 684322 will add better visibility into this condition
+        NS_WARNING("Could not setup crash reporting\n");
+      }
+    }
+  }
 
   gArgv = aArgv;
   gArgc = aArgc;
@@ -577,8 +555,7 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
 #  endif
     printf_stderr(
         "\n\nCHILDCHILDCHILDCHILD (process type %s)\n  debug me @ %d\n\n",
-        XRE_ChildProcessTypeToString(XRE_GetProcessType()),
-        base::GetCurrentProcId());
+        XRE_GetProcessTypeString(), base::GetCurrentProcId());
     sleep(GetDebugChildPauseTime());
   }
 #elif defined(OS_WIN)
@@ -589,8 +566,7 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
   } else if (PR_GetEnv("MOZ_DEBUG_CHILD_PAUSE")) {
     printf_stderr(
         "\n\nCHILDCHILDCHILDCHILD (process type %s)\n  debug me @ %d\n\n",
-        XRE_ChildProcessTypeToString(XRE_GetProcessType()),
-        base::GetCurrentProcId());
+        XRE_GetProcessTypeString(), base::GetCurrentProcId());
     ::Sleep(GetDebugChildPauseTime());
   }
 #endif
@@ -604,9 +580,6 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
   char* end = 0;
   base::ProcessId parentPID = strtol(parentPIDString, &end, 10);
   MOZ_ASSERT(!*end, "invalid parent PID");
-
-  // While replaying, use the parent PID that existed while recording.
-  parentPID = recordreplay::RecordReplayValue(parentPID);
 
 #ifdef XP_MACOSX
   mozilla::ipc::SharedMemoryBasic::SetupMachMemory(
@@ -665,66 +638,69 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
   }
 #endif
 
-  // If we are recording or replaying, initialize state and update arguments
-  // according to those which were captured by the MiddlemanProcessChild in the
-  // middleman process. No argument manipulation should happen between this
-  // call and the point where the process child is initialized.
-  recordreplay::child::InitRecordingOrReplayingProcess(&aArgc, &aArgv);
-
   {
     // This is a lexical scope for the MessageLoop below.  We want it
     // to go out of scope before NS_LogTerm() so that we don't get
     // spurious warnings about XPCOM objects being destroyed from a
     // static context.
 
+    Maybe<IOInterposerInit> ioInterposerGuard;
+
     // Associate this thread with a UI MessageLoop
     MessageLoop uiMessageLoop(uiLoopType);
     {
-      nsAutoPtr<ProcessChild> process;
+      UniquePtr<ProcessChild> process;
       switch (XRE_GetProcessType()) {
         case GeckoProcessType_Default:
           MOZ_CRASH("This makes no sense");
           break;
 
         case GeckoProcessType_Plugin:
-          process = new PluginProcessChild(parentPID);
+          process = MakeUnique<PluginProcessChild>(parentPID);
           break;
 
         case GeckoProcessType_Content:
-          process = new ContentProcess(parentPID);
+          process = MakeUnique<ContentProcess>(parentPID);
           break;
 
         case GeckoProcessType_IPDLUnitTest:
 #ifdef MOZ_IPDL_TESTS
-          process = new IPDLUnitTestProcessChild(parentPID);
+          process = MakeUnique<IPDLUnitTestProcessChild>(parentPID);
 #else
           MOZ_CRASH("rebuild with --enable-ipdl-tests");
 #endif
           break;
 
         case GeckoProcessType_GMPlugin:
-          process = new gmp::GMPProcessChild(parentPID);
+          process = MakeUnique<gmp::GMPProcessChild>(parentPID);
           break;
 
         case GeckoProcessType_GPU:
-          process = new gfx::GPUProcessImpl(parentPID);
+          process = MakeUnique<gfx::GPUProcessImpl>(parentPID);
           break;
 
         case GeckoProcessType_VR:
-          process = new gfx::VRProcessChild(parentPID);
+          process = MakeUnique<gfx::VRProcessChild>(parentPID);
           break;
 
         case GeckoProcessType_RDD:
-          process = new RDDProcessImpl(parentPID);
+          process = MakeUnique<RDDProcessImpl>(parentPID);
           break;
 
         case GeckoProcessType_Socket:
-          process = new net::SocketProcessImpl(parentPID);
+          ioInterposerGuard.emplace();
+          process = MakeUnique<net::SocketProcessImpl>(parentPID);
           break;
 
 #if defined(MOZ_SANDBOX) && defined(XP_WIN)
         case GeckoProcessType_RemoteSandboxBroker:
-          process = new RemoteSandboxBrokerProcessChild(parentPID);
+          process = MakeUnique<RemoteSandboxBrokerProcessChild>(parentPID);
+          break;
+#endif
+
+#if defined(MOZ_ENABLE_FORKSERVER)
+        case GeckoProcessType_ForkServer:
+          MOZ_CRASH("Fork server should not go here");
           break;
 #endif
         default:
@@ -740,6 +716,10 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
       // chrome process is killed in cases where the user shuts the system
       // down or logs off.
       ::SetProcessShutdownParameters(0x280 - 1, SHUTDOWN_NORETRY);
+
+      RefPtr<DllServices> dllSvc(DllServices::Get());
+      auto dllSvcDisable =
+          MakeScopeExit([&dllSvc]() { dllSvc->DisableFull(); });
 #endif
 
 #if defined(MOZ_SANDBOX) && defined(XP_WIN)
@@ -773,6 +753,10 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
       mozilla::ipc::SharedMemoryBasic::Shutdown();
 #endif
     }
+  }
+
+  if (exceptionHandlerIsSet) {
+    CrashReporter::UnsetRemoteExceptionHandler();
   }
 
   return XRE_DeinitCommandLine();
@@ -823,7 +807,10 @@ nsresult XRE_InitParentProcess(int aArgc, char* aArgv[],
 
   mozilla::LogModule::Init(aArgc, aArgv);
 
+  AUTO_BASE_PROFILER_LABEL("XRE_InitParentProcess (around Gecko Profiler)",
+                           OTHER);
   AUTO_PROFILER_INIT;
+  AUTO_PROFILER_LABEL("XRE_InitParentProcess", OTHER);
 
   ScopedXREEmbed embed;
 
@@ -1017,5 +1004,11 @@ void XRE_InstallX11ErrorHandler() {
 #  else
   InstallX11ErrorHandler();
 #  endif
+}
+#endif
+
+#ifdef MOZ_ENABLE_FORKSERVER
+int XRE_ForkServer(int* aArgc, char*** aArgv) {
+  return mozilla::ipc::ForkServer::RunForkServer(aArgc, aArgv) ? 1 : 0;
 }
 #endif

@@ -5,7 +5,7 @@ const { mountObjectInspector } = require("../test-utils");
 
 const repsPath = "../../../reps";
 const { MODE } = require(`${repsPath}/constants`);
-const ObjectClient = require("../__mocks__/object-client");
+const ObjectFront = require("../__mocks__/object-front");
 const gripRepStubs = require(`${repsPath}/stubs/grip`);
 const gripPropertiesStubs = require("../../stubs/grip");
 const {
@@ -16,7 +16,7 @@ const {
   waitForDispatch,
 } = require("../test-utils");
 const { createNode, NODE_TYPES } = require("../../utils/node");
-const { getActors, getExpandedPaths } = require("../../reducer");
+const { getExpandedPaths } = require("../../reducer");
 
 const protoStub = {
   prototype: {
@@ -43,32 +43,36 @@ function generateDefaults(overrides) {
         },
       },
     ],
-    createObjectClient: grip => ObjectClient(grip),
+    createObjectFront: grip => ObjectFront(grip),
     mode: MODE.LONG,
     ...overrides,
   };
 }
-const LongStringClientMock = require("../__mocks__/long-string-client");
+const { LongStringFront } = require("../__mocks__/string-front");
 
-function mount(props, { initialState } = {}) {
-  const client = {
-    createObjectClient: grip =>
-      ObjectClient(grip, {
+function getClient(overrides = {}) {
+  return {
+    releaseActor: () => {},
+
+    createObjectFront: grip =>
+      ObjectFront(grip, {
         getPrototype: () => Promise.resolve(protoStub),
         getProxySlots: () =>
           Promise.resolve(gripRepStubs.get("testProxySlots")),
       }),
 
-    createLongStringClient: grip =>
-      LongStringClientMock(grip, {
-        substring: function(initiaLength, length, cb) {
-          cb({
-            substring: "<<<<",
-          });
+    createLongStringFront: grip =>
+      LongStringFront(grip, {
+        substring: async function(initiaLength, length) {
+          return "<<<<";
         },
       }),
-  };
 
+    ...overrides,
+  };
+}
+
+function mount(props, { initialState, client = getClient() } = {}) {
   return mountObjectInspector({
     client,
     props: generateDefaults(props),
@@ -138,7 +142,7 @@ describe("ObjectInspector - state", () => {
       storeHasExactExpandedPaths(store, [
         "root-1",
         "root-2",
-        "Symbol(root-1/<prototype>)",
+        "root-1◦<prototype>",
       ])
     ).toBeTruthy();
 
@@ -159,12 +163,6 @@ describe("ObjectInspector - state", () => {
     wrapper.update();
 
     expect(storeHasLoadedProperty(store, "root-1")).toBeTruthy();
-    // We don't want to track root actors.
-    expect(
-      getActors(store.getState()).has(
-        gripRepStubs.get("testMoreThanMaxProps").actor
-      )
-    ).toBeFalsy();
     expect(formatObjectInspector(wrapper)).toMatchSnapshot();
 
     nodes = wrapper.find(".node");
@@ -178,13 +176,39 @@ describe("ObjectInspector - state", () => {
     // Once all the loading promises are resolved, actors and loadedProperties
     // should have the expected values.
     expect(formatObjectInspector(wrapper)).toMatchSnapshot();
-    expect(
-      storeHasLoadedProperty(store, "Symbol(root-1/<prototype>)")
-    ).toBeTruthy();
+    expect(storeHasLoadedProperty(store, "root-1◦<prototype>")).toBeTruthy();
+  });
 
-    expect(
-      getActors(store.getState()).has(protoStub.prototype.actor)
-    ).toBeTruthy();
+  it("does not handle actors when client does not have releaseActor function", async () => {
+    const { wrapper, store } = mount(
+      {},
+      { client: getClient({ releaseActor: null }) }
+    );
+
+    expect(formatObjectInspector(wrapper)).toMatchSnapshot();
+    let nodes = wrapper.find(".node");
+    const root1 = nodes.at(0);
+
+    let onPropertiesLoad = waitForDispatch(store, "NODE_PROPERTIES_LOADED");
+    root1.simulate("click");
+    await onPropertiesLoad;
+    wrapper.update();
+
+    expect(storeHasLoadedProperty(store, "root-1")).toBeTruthy();
+    expect(formatObjectInspector(wrapper)).toMatchSnapshot();
+
+    nodes = wrapper.find(".node");
+    const protoNode = nodes.at(1);
+
+    onPropertiesLoad = waitForDispatch(store, "NODE_PROPERTIES_LOADED");
+    protoNode.simulate("click");
+    await onPropertiesLoad;
+    wrapper.update();
+
+    // Once all the loading promises are resolved, actors and loadedProperties
+    // should have the expected values.
+    expect(formatObjectInspector(wrapper)).toMatchSnapshot();
+    expect(storeHasLoadedProperty(store, "root-1◦<prototype>")).toBeTruthy();
   });
 
   it.skip("has the expected state when expanding a proxy node", async () => {
@@ -204,11 +228,6 @@ describe("ObjectInspector - state", () => {
     // the expected values.
     expect(formatObjectInspector(wrapper)).toMatchSnapshot();
 
-    // We don't want to track root actors.
-    expect(
-      getActors(store.getState()).has(gripRepStubs.get("testProxy").actor)
-    ).toBeFalsy();
-
     nodes = wrapper.find(".node");
     const handlerNode = nodes.at(3);
     onLoadProperties = waitForDispatch(store, "NODE_PROPERTIES_LOADED");
@@ -217,9 +236,7 @@ describe("ObjectInspector - state", () => {
     wrapper.update();
 
     expect(formatObjectInspector(wrapper)).toMatchSnapshot();
-    expect(
-      storeHasLoadedProperty(store, "Symbol(root-2/<handler>)")
-    ).toBeTruthy();
+    expect(storeHasLoadedProperty(store, "root-2◦<handler>")).toBeTruthy();
   });
 
   it("does not expand if the user selected some text", async () => {

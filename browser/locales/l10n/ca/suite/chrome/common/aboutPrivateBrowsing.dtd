@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- LOCALIZATION NOTE: where ".private" and ".normal" variants exist,
+   - the former is shown in a private browsing window and the latter in
+   - a regular (non-private) browsing window. -->
+
+
+<!ENTITY privatebrowsingpage.title.private       "Aquesta és una finestra de navegació privada">
+<!ENTITY privatebrowsingpage.title.normal        "Voleu iniciar la navegació privada?">
+
+<!ENTITY privatebrowsingpage.status.private      "El &brandShortName; no recordarà res de l'historial d'aquesta finestra.">
+<!ENTITY privatebrowsingpage.status.normal       "Actualment no esteu en una finestra privada.">
+
+<!ENTITY privatebrowsingpage.common.description  "En una finestra de navegació privada, el &brandShortName; no conservarà l'historial de navegació, l'historial de cerques, l'historial de baixades, l'historial dels formularis web, les galetes ni altres fitxers temporals d'Internet. Per altra banda, sí que es conservaran els fitxers que baixeu i les adreces d'interès que deseu.">
+<!ENTITY privatebrowsingpage.track.warn          "Encara que l'ordinador no tindrà cap registre del vostre historial de navegació, el vostre proveïdor d'Internet o el vostre patró sí que podrien conèixer les pàgines que visiteu.">
+<!ENTITY privatebrowsingpage.learnmore.label     "Més informació">
+<!ENTITY privatebrowsingpage.learnmore.accesskey "M">
+
+<!ENTITY privatebrowsingpage.close.info          "En acabar, tanqueu la finestra per aturar la navegació privada.">
+<!ENTITY privatebrowsingpage.close.label         "Tanca aquesta finestra ara">
+<!ENTITY privatebrowsingpage.close.accesskey     "c">
+
+<!ENTITY privatebrowsingpage.start.info          "Per iniciar la navegació privada, feu clic al botó següent o seleccioneu Fitxer ▶ Nou ▶ Finestra privada al menú.">
+<!ENTITY privatebrowsingpage.private.label       "Obre una finestra privada nova">
+<!ENTITY privatebrowsingpage.private.accesskey   "O">

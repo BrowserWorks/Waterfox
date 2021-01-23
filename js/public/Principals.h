@@ -20,16 +20,14 @@ struct JSStructuredCloneWriter;
 
 struct JSPrincipals {
   /* Don't call "destroy"; use reference counting macros below. */
-  mozilla::Atomic<int32_t, mozilla::SequentiallyConsistent,
-                  mozilla::recordreplay::Behavior::DontPreserve>
-      refcount;
+  mozilla::Atomic<int32_t, mozilla::SequentiallyConsistent> refcount{0};
 
 #ifdef JS_DEBUG
   /* A helper to facilitate principals debugging. */
   uint32_t debugToken;
 #endif
 
-  JSPrincipals() : refcount(0) {}
+  JSPrincipals() = default;
 
   void setDebugToken(uint32_t token) {
 #ifdef JS_DEBUG
@@ -42,6 +40,12 @@ struct JSPrincipals {
    * true on success.
    */
   virtual bool write(JSContext* cx, JSStructuredCloneWriter* writer) = 0;
+
+  /*
+   * Whether the principal corresponds to a System or AddOn Principal.
+   * Technically this also checks for an ExpandedAddonPrincipal.
+   */
+  virtual bool isSystemOrAddonPrincipal() = 0;
 
   /*
    * This is not defined by the JS engine but should be provided by the
@@ -64,7 +68,7 @@ typedef bool (*JSSubsumesOp)(JSPrincipals* first, JSPrincipals* second);
  * Used to check if a CSP instance wants to disable eval() and friends.
  * See GlobalObject::isRuntimeCodeGenEnabled() in vm/GlobalObject.cpp.
  */
-typedef bool (*JSCSPEvalChecker)(JSContext* cx, JS::HandleValue value);
+typedef bool (*JSCSPEvalChecker)(JSContext* cx, JS::HandleString code);
 
 struct JSSecurityCallbacks {
   JSCSPEvalChecker contentSecurityPolicyAllows;
@@ -123,5 +127,34 @@ using JSReadPrincipalsOp = bool (*)(JSContext* cx,
  */
 extern JS_PUBLIC_API void JS_InitReadPrincipalsCallback(
     JSContext* cx, JSReadPrincipalsOp read);
+
+namespace JS {
+
+class MOZ_RAII AutoHoldPrincipals {
+  JSContext* cx_;
+  JSPrincipals* principals_ = nullptr;
+
+ public:
+  explicit AutoHoldPrincipals(JSContext* cx, JSPrincipals* principals = nullptr)
+      : cx_(cx) {
+    reset(principals);
+  }
+
+  ~AutoHoldPrincipals() { reset(nullptr); }
+
+  void reset(JSPrincipals* principals) {
+    if (principals) {
+      JS_HoldPrincipals(principals);
+    }
+    if (principals_) {
+      JS_DropPrincipals(cx_, principals_);
+    }
+    principals_ = principals;
+  }
+
+  JSPrincipals* get() const { return principals_; }
+};
+
+}  // namespace JS
 
 #endif /* js_Principals_h */

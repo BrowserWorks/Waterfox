@@ -6,23 +6,26 @@
 
 // Globals
 
-var { XPCOMUtils } = ChromeUtils.import(
+const { AppConstants } = ChromeUtils.import(
+  "resource://gre/modules/AppConstants.jsm"
+);
+const { XPCOMUtils } = ChromeUtils.import(
   "resource://gre/modules/XPCOMUtils.jsm"
 );
-var { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
-var { LoginRecipesContent, LoginRecipesParent } = ChromeUtils.import(
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const { LoginRecipesContent, LoginRecipesParent } = ChromeUtils.import(
   "resource://gre/modules/LoginRecipes.jsm"
 );
-var { LoginHelper } = ChromeUtils.import(
+const { LoginHelper } = ChromeUtils.import(
   "resource://gre/modules/LoginHelper.jsm"
 );
-var { FileTestUtils } = ChromeUtils.import(
+const { FileTestUtils } = ChromeUtils.import(
   "resource://testing-common/FileTestUtils.jsm"
 );
-var { LoginTestUtils } = ChromeUtils.import(
+const { LoginTestUtils } = ChromeUtils.import(
   "resource://testing-common/LoginTestUtils.jsm"
 );
-var { MockDocument } = ChromeUtils.import(
+const { MockDocument } = ChromeUtils.import(
   "resource://testing-common/MockDocument.jsm"
 );
 
@@ -46,6 +49,9 @@ const LoginInfo = Components.Constructor(
 
 const TestData = LoginTestUtils.testData;
 const newPropertyBag = LoginHelper.newPropertyBag;
+
+const NEW_PASSWORD_HEURISTIC_ENABLED_PREF =
+  "signon.generation.confidenceThreshold";
 
 /**
  * All the tests are implemented with add_task, this starts them automatically.
@@ -77,19 +83,18 @@ add_task(async function test_common_initialize() {
   // Before initializing the service for the first time, we should copy the key
   // file required to decrypt the logins contained in the SQLite databases used
   // by migration tests.  This file is not required for the other tests.
+  const keyDBName = "key4.db";
   await OS.File.copy(
-    do_get_file("data/key3.db").path,
-    OS.Path.join(OS.Constants.Path.profileDir, "key3.db")
+    do_get_file(`data/${keyDBName}`).path,
+    OS.Path.join(OS.Constants.Path.profileDir, keyDBName)
   );
 
   // Ensure that the service and the storage module are initialized.
   await Services.logins.initializationPromise;
+});
 
-  // Ensure that every test file starts with an empty database.
-  LoginTestUtils.clearData();
-
-  // Clean up after every test.
-  registerCleanupFunction(() => LoginTestUtils.clearData());
+add_task(async function test_common_prefs() {
+  Services.prefs.setStringPref(NEW_PASSWORD_HEURISTIC_ENABLED_PREF, "0.75");
 });
 
 /**

@@ -140,7 +140,9 @@ bool NetAddrToString(const NetAddr* addr, char* buf, uint32_t bufSize) {
 
 bool IsLoopBackAddress(const NetAddr* addr) {
   if (addr->raw.family == AF_INET) {
-    return (addr->inet.ip == htonl(INADDR_LOOPBACK));
+    // Consider 127.0.0.1/8 as loopback
+    uint32_t ipv4Addr = ntohl(addr->inet.ip);
+    return (ipv4Addr >> 24) == 127;
   }
   if (addr->raw.family == AF_INET6) {
     if (IPv6ADDR_IS_LOOPBACK(&addr->inet6.ip)) {
@@ -172,9 +174,22 @@ bool IsIPAddrAny(const NetAddr* addr) {
   return false;
 }
 
+bool IsIPAddrV4(const NetAddr* addr) { return addr->raw.family == AF_INET; }
+
 bool IsIPAddrV4Mapped(const NetAddr* addr) {
   if (addr->raw.family == AF_INET6) {
     return IPv6ADDR_IS_V4MAPPED(&addr->inet6.ip);
+  }
+  return false;
+}
+
+static bool isLocalIPv4(uint32_t networkEndianIP) {
+  uint32_t addr32 = ntohl(networkEndianIP);
+  if (addr32 >> 24 == 0x0A ||    // 10/8 prefix (RFC 1918).
+      addr32 >> 20 == 0xAC1 ||   // 172.16/12 prefix (RFC 1918).
+      addr32 >> 16 == 0xC0A8 ||  // 192.168/16 prefix (RFC 1918).
+      addr32 >> 16 == 0xA9FE) {  // 169.254/16 prefix (Link Local).
+    return true;
   }
   return false;
 }
@@ -184,23 +199,37 @@ bool IsIPAddrLocal(const NetAddr* addr) {
 
   // IPv4 RFC1918 and Link Local Addresses.
   if (addr->raw.family == AF_INET) {
-    uint32_t addr32 = ntohl(addr->inet.ip);
-    if (addr32 >> 24 == 0x0A ||    // 10/8 prefix (RFC 1918).
-        addr32 >> 20 == 0xAC1 ||   // 172.16/12 prefix (RFC 1918).
-        addr32 >> 16 == 0xC0A8 ||  // 192.168/16 prefix (RFC 1918).
-        addr32 >> 16 == 0xA9FE) {  // 169.254/16 prefix (Link Local).
-      return true;
-    }
+    return isLocalIPv4(addr->inet.ip);
   }
   // IPv6 Unique and Link Local Addresses.
+  // or mapped IPv4 addresses
   if (addr->raw.family == AF_INET6) {
     uint16_t addr16 = ntohs(addr->inet6.ip.u16[0]);
     if (addr16 >> 9 == 0xfc >> 1 ||    // fc00::/7 Unique Local Address.
         addr16 >> 6 == 0xfe80 >> 6) {  // fe80::/10 Link Local Address.
       return true;
     }
+    if (IPv6ADDR_IS_V4MAPPED(&addr->inet6.ip)) {
+      return isLocalIPv4(IPv6ADDR_V4MAPPED_TO_IPADDR(&addr->inet6.ip));
+    }
   }
+
   // Not an IPv4/6 local address.
+  return false;
+}
+
+bool IsIPAddrShared(const NetAddr* addr) {
+  MOZ_ASSERT(addr);
+
+  // IPv4 RFC6598.
+  if (addr->raw.family == AF_INET) {
+    uint32_t addr32 = ntohl(addr->inet.ip);
+    if (addr32 >> 22 == 0x644 >> 2) {  // 100.64/10 prefix (RFC 6598).
+      return true;
+    }
+  }
+
+  // Not an IPv4 shared address.
   return false;
 }
 
@@ -276,6 +305,8 @@ NetAddrElement::NetAddrElement(const NetAddrElement& netAddr) {
   mAddress = netAddr.mAddress;
 }
 
+NetAddrElement::NetAddrElement(const NetAddr& netAddr) { mAddress = netAddr; }
+
 NetAddrElement::~NetAddrElement() = default;
 
 AddrInfo::AddrInfo(const nsACString& host, const PRAddrInfo* prAddrInfo,
@@ -284,7 +315,9 @@ AddrInfo::AddrInfo(const nsACString& host, const PRAddrInfo* prAddrInfo,
     : mHostName(host),
       mCanonicalName(cname),
       ttl(NO_TTL_DATA),
-      mFromTRR(false) {
+      mFromTRR(false),
+      mTrrFetchDuration(0),
+      mTrrFetchDurationNetworkOnly(0) {
   MOZ_ASSERT(prAddrInfo,
              "Cannot construct AddrInfo with a null prAddrInfo pointer!");
   const uint32_t nameCollisionAddr = htonl(0x7f003535);  // 127.0.53.53
@@ -308,13 +341,17 @@ AddrInfo::AddrInfo(const nsACString& host, const nsACString& cname,
     : mHostName(host),
       mCanonicalName(cname),
       ttl(NO_TTL_DATA),
-      mFromTRR(aTRR) {}
+      mFromTRR(aTRR),
+      mTrrFetchDuration(0),
+      mTrrFetchDurationNetworkOnly(0) {}
 
 AddrInfo::AddrInfo(const nsACString& host, unsigned int aTRR)
     : mHostName(host),
       mCanonicalName(EmptyCString()),
       ttl(NO_TTL_DATA),
-      mFromTRR(aTRR) {}
+      mFromTRR(aTRR),
+      mTrrFetchDuration(0),
+      mTrrFetchDurationNetworkOnly(0) {}
 
 // deep copy constructor
 AddrInfo::AddrInfo(const AddrInfo* src) {
@@ -322,6 +359,8 @@ AddrInfo::AddrInfo(const AddrInfo* src) {
   mCanonicalName = src->mCanonicalName;
   ttl = src->ttl;
   mFromTRR = src->mFromTRR;
+  mTrrFetchDuration = src->mTrrFetchDuration;
+  mTrrFetchDurationNetworkOnly = src->mTrrFetchDurationNetworkOnly;
 
   for (auto element = src->mAddresses.getFirst(); element;
        element = element->getNext()) {
@@ -329,7 +368,7 @@ AddrInfo::AddrInfo(const AddrInfo* src) {
   }
 }
 
-AddrInfo::~AddrInfo() {}
+AddrInfo::~AddrInfo() = default;
 
 void AddrInfo::AddAddress(NetAddrElement* address) {
   MOZ_ASSERT(address, "Cannot add the address to an uninitialized list");

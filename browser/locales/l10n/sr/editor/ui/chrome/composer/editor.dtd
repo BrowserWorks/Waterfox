@@ -1,0 +1,67 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Window title -->
+<!-- LOCALIZATION NOTE  (editorWindow.titlemodifier): DONT_TRANSLATE -->
+<!ENTITY editorWindow.titlemodifier "Composer"> 
+<!ENTITY editorWindow.titlemodifiermenuseparator " - ">
+
+<!-- Menu items:  the . means that the menu item isn't implemented yet -->
+
+<!-- Toolbar-only items -->
+<!ENTITY compositionToolbar.tooltip "Састав траке са алатима">
+<!ENTITY previewToolbarCmd.label "Прегледај">
+<!ENTITY previewToolbarCmd.tooltip "Прикажи ову страницу у прегледачу">
+
+<!-- File menu items -->
+<!ENTITY exportToTextCmd.label "Извези у текст…">
+<!ENTITY exportToTextCmd.accesskey "к">
+<!ENTITY previewCmd.label "Прегледај страницу">
+<!ENTITY previewCmd.accesskey "г">
+<!ENTITY sendPageCmd.label "Пошаљи страницу…">
+<!ENTITY sendPageCmd.accesskey "и">
+
+<!-- View menu items -->
+<!ENTITY compositionToolbarCmd.label "Састав траке са алатима">
+<!ENTITY compositionToolbarCmd.accesskey "ц">
+<!ENTITY formattingToolbarCmd.label "Форматирај траку са алатима">
+<!ENTITY formattingToolbarCmd.accesskey "ф">
+<!ENTITY editmodeToolbarCmd.label "Уређивање траке са алатима">
+<!ENTITY editmodeToolbarCmd.accesskey "е">
+
+<!-- Format menu items -->
+<!ENTITY formatMenu.label "Форматирај">
+<!ENTITY formatMenu.accesskey "о">
+<!ENTITY grid.label "Мрежа положаја">
+<!ENTITY grid.accesskey "ж">
+<!ENTITY pageProperties.label "Наслов странице и својства…">
+<!ENTITY pageProperties.accesskey "л">
+
+<!-- Tools menu items -->
+<!ENTITY validateCmd.label "Потврди HTML">
+<!ENTITY validateCmd.accesskey "в">
+
+<!-- Display Mode toolbar and View menu items -->
+<!ENTITY NormalModeTab.label "Нормално">
+<!ENTITY NormalMode.label "Нормални уређивачки режим">
+<!ENTITY NormalMode.accesskey "Н">
+<!ENTITY NormalMode.tooltip "Прикажи границе табеле и именована сидра">
+<!ENTITY AllTagsModeTab.label "HTML ознаке">
+<!ENTITY AllTagsMode.label "HTML ознаке">
+<!ENTITY AllTagsMode.accesskey "з">
+<!ENTITY AllTagsMode.tooltip "Прикажи иконице за све HTML ознаке">
+<!-- LOCALIZATION NOTE: (HTMLSourceModeTab.dir, HTMLSourceModeTab.label)
+     Do NOT translate text for 'HTMLSourceModeTab.dir', use latin "ltr" if
+     you want the <html> image to left of the 'HTMLSourceModeTab.label' text,
+     or use latin "rtl" if you want this image to the right of text. You do
+     not need to include HTML in the label 'HTMLSourceModeTab.label' -->
+<!ENTITY HTMLSourceModeTab.dir "ltr">
+<!ENTITY HTMLSourceModeTab.label "Извор">
+<!ENTITY HTMLSourceMode.label "HTML изворни код">
+<!ENTITY HTMLSourceMode.accesskey "H">
+<!ENTITY HTMLSourceMode.tooltip "Уреди HTML изворни">
+<!ENTITY PreviewModeTab.label "Прикажи">
+<!ENTITY PreviewMode.label "Прикажи">
+<!ENTITY PreviewMode.accesskey "П">
+<!ENTITY PreviewMode.tooltip "Прикажи као WYSIWYG (као у прегледачу)">

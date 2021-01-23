@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE (messengerCmd.label): DONT_TRANSLATE -->
+
+<!ENTITY messengerCmd.label "Mail &amp; Newsgroups">
+<!ENTITY messengerCmd.accesskey "m">
+<!ENTITY messengerCmd.commandkey "2">
+<!ENTITY addressBookCmd.label "Adres defteri">
+<!ENTITY addressBookCmd.accesskey "A">
+<!ENTITY addressBookCmd.commandkey "5">
+
+<!ENTITY taskMessenger.tooltip "Posta ve haber grupları">
+<!ENTITY taskAddressBook.tooltip "Adres defteri">
+<!-- searchAddressesCmd is also used by addressbook -->
+
+<!ENTITY searchAddressesCmd.label "Adreslerde ara…">
+<!ENTITY searchAddressesCmd.accesskey "A">
+
+<!ENTITY searchMailCmd.label "İletilerde ara…">
+<!ENTITY searchMailCmd.accesskey "İ">
+<!ENTITY searchMailCmd.key "f">

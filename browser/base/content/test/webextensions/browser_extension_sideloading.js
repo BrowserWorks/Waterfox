@@ -38,72 +38,37 @@ function promiseEvent(eventEmitter, event) {
   });
 }
 
-async function getAddonElement(managerWindow, addonId) {
-  if (managerWindow.useHtmlViews) {
-    // about:addons is using the new HTML page.
-    const { contentDocument: doc } = managerWindow.document.getElementById(
-      "html-view-browser"
-    );
-    const card = await BrowserTestUtils.waitForCondition(
-      () => doc.querySelector(`addon-card[addon-id="${addonId}"]`),
-      `Found entry for sideload extension addon "${addonId}" in HTML about:addons`
-    );
-
-    return card;
-  }
-
-  // about:addons is using the XUL-based views.
-  let list = managerWindow.document.getElementById("addon-list");
-  // Make sure XBL bindings are applied
-  list.clientHeight;
-  const item = Array.from(list.children).find(_item => _item.value == addonId);
-  ok(item, "Found entry for sideloaded extension in about:addons");
-
-  return item;
+function getAddonElement(managerWindow, addonId) {
+  const { contentDocument: doc } = managerWindow.document.getElementById(
+    "html-view-browser"
+  );
+  return BrowserTestUtils.waitForCondition(
+    () => doc.querySelector(`addon-card[addon-id="${addonId}"]`),
+    `Found entry for sideload extension addon "${addonId}" in HTML about:addons`
+  );
 }
 
-function assertDisabledSideloadedAddonElement(managerWindow, addonElement) {
-  if (managerWindow.useHtmlViews) {
-    // about:addons is using the new HTML page.
-    const doc = addonElement.ownerDocument;
-    const enableBtn = addonElement.querySelector('[action="toggle-disabled"]');
-    is(
-      doc.l10n.getAttributes(enableBtn).id,
-      "enable-addon-button",
-      "The button has the enable label"
-    );
-  } else {
-    addonElement.scrollIntoView({ behavior: "instant" });
-    ok(
-      BrowserTestUtils.is_visible(addonElement._enableBtn),
-      "Enable button is visible for sideloaded extension"
-    );
-    ok(
-      BrowserTestUtils.is_hidden(addonElement._disableBtn),
-      "Disable button is not visible for sideloaded extension"
-    );
-  }
+function assertSideloadedAddonElementState(addonElement, checked) {
+  const enableBtn = addonElement.querySelector('[action="toggle-disabled"]');
+  is(
+    enableBtn.checked,
+    checked,
+    `The enable button is ${!checked ? " not " : ""} checked`
+  );
+  is(enableBtn.localName, "input", "The enable button is an input");
+  is(enableBtn.type, "checkbox", "It's a checkbox");
 }
 
 function clickEnableExtension(managerWindow, addonElement) {
-  if (managerWindow.useHtmlViews) {
-    addonElement.querySelector('[action="toggle-disabled"]').click();
-  } else {
-    BrowserTestUtils.synthesizeMouseAtCenter(
-      addonElement._enableBtn,
-      {},
-      gBrowser.selectedBrowser
-    );
-  }
+  addonElement.querySelector('[action="toggle-disabled"]').click();
 }
 
-async function test_sideloading({ useHtmlViews }) {
+add_task(async function test_sideloading() {
   const DEFAULT_ICON_URL =
     "chrome://mozapps/skin/extensions/extensionGeneric.svg";
 
   await SpecialPowers.pushPrefEnv({
     set: [
-      ["extensions.htmlaboutaddons.enabled", useHtmlViews],
       ["xpinstall.signatures.required", false],
       ["extensions.autoDisableScopes", 15],
       ["extensions.ui.ignoreUnsigned", true],
@@ -256,7 +221,7 @@ async function test_sideloading({ useHtmlViews }) {
   // XUL or HTML about:addons addon entry element.
   const addonElement = await getAddonElement(win, ID2);
 
-  assertDisabledSideloadedAddonElement(win, addonElement);
+  assertSideloadedAddonElementState(addonElement, false);
 
   info("Test enabling sideloaded addon 2 from about:addons enable button");
 
@@ -303,6 +268,7 @@ async function test_sideloading({ useHtmlViews }) {
 
   addon2 = await AddonManager.getAddonByID(ID2);
   is(addon2.userDisabled, false, "Addon 2 should be enabled");
+  assertSideloadedAddonElementState(addonElement, true);
 
   // Test post install notification on addon 2.
   await testPostInstallIncognitoCheckbox(addon2);
@@ -436,12 +402,4 @@ async function test_sideloading({ useHtmlViews }) {
     expectedEventsAddon2.length,
     "Got the expected number of telemetry events for addon2"
   );
-}
-
-add_task(async function test_xul_aboutaddons_sideloading() {
-  await test_sideloading({ useHtmlViews: false });
-});
-
-add_task(async function test_html_aboutaddons_sideloading() {
-  await test_sideloading({ useHtmlViews: true });
 });

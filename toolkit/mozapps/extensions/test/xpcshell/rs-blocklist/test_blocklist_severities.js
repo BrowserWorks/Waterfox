@@ -3,8 +3,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+// useMLBF=true only supports one type of severity (hard block). The value of
+// appDisabled in the extension blocklist is checked in test_blocklist_mlbf.js.
+Services.prefs.setBoolPref("extensions.blocklist.useMLBF", false);
+
 const URI_EXTENSION_BLOCKLIST_DIALOG =
-  "chrome://mozapps/content/extensions/blocklist.xul";
+  "chrome://mozapps/content/extensions/blocklist.xhtml";
 
 // Workaround for Bug 658720 - URL formatter can leak during xpcshell tests
 const PREF_BLOCKLIST_ITEM_URL = "extensions.blocklist.itemURL";

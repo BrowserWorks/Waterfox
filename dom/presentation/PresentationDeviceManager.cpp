@@ -13,6 +13,7 @@
 #include "nsCOMPtr.h"
 #include "nsIMutableArray.h"
 #include "nsIObserverService.h"
+#include "nsISupportsPrimitives.h"
 #include "nsXULAppAPI.h"
 #include "PresentationSessionRequest.h"
 #include "PresentationTerminateRequest.h"
@@ -24,7 +25,7 @@ NS_IMPL_ISUPPORTS(PresentationDeviceManager, nsIPresentationDeviceManager,
                   nsIPresentationDeviceListener, nsIObserver,
                   nsISupportsWeakReference)
 
-PresentationDeviceManager::PresentationDeviceManager() {}
+PresentationDeviceManager::PresentationDeviceManager() = default;
 
 PresentationDeviceManager::~PresentationDeviceManager() {
   UnloadDeviceProviders();

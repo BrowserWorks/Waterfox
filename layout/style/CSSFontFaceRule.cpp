@@ -52,11 +52,13 @@ void CSSFontFaceRuleDecl::SetCssText(const nsAString& aCssText,
   if (ContainingRule()->IsReadOnly()) {
     return;
   }
-  aRv.Throw(NS_ERROR_NOT_IMPLEMENTED);  // bug 443978
+  // bug 443978
+  aRv.ThrowNotSupportedError(
+      "Can't set cssText on CSSFontFaceRule declarations");
 }
 
 NS_IMETHODIMP
-CSSFontFaceRuleDecl::GetPropertyValue(const nsAString& aPropName,
+CSSFontFaceRuleDecl::GetPropertyValue(const nsACString& aPropName,
                                       nsAString& aResult) {
   aResult.Truncate();
   nsCSSFontDesc descID = nsCSSProps::LookupFontDesc(aPropName);
@@ -66,15 +68,14 @@ CSSFontFaceRuleDecl::GetPropertyValue(const nsAString& aPropName,
   return NS_OK;
 }
 
-NS_IMETHODIMP
-CSSFontFaceRuleDecl::RemoveProperty(const nsAString& aPropName,
-                                    nsAString& aResult) {
+void CSSFontFaceRuleDecl::RemoveProperty(const nsACString& aPropName,
+                                         nsAString& aResult, ErrorResult& aRv) {
   nsCSSFontDesc descID = nsCSSProps::LookupFontDesc(aPropName);
   NS_ASSERTION(descID >= eCSSFontDesc_UNKNOWN && descID < eCSSFontDesc_COUNT,
                "LookupFontDesc returned value out of range");
 
   if (ContainingRule()->IsReadOnly()) {
-    return NS_OK;
+    return;
   }
 
   aResult.Truncate();
@@ -82,28 +83,29 @@ CSSFontFaceRuleDecl::RemoveProperty(const nsAString& aPropName,
     GetPropertyValue(descID, aResult);
     Servo_FontFaceRule_ResetDescriptor(mRawRule, descID);
   }
-  return NS_OK;
 }
 
-void CSSFontFaceRuleDecl::GetPropertyPriority(const nsAString& aPropName,
+void CSSFontFaceRuleDecl::GetPropertyPriority(const nsACString& aPropName,
                                               nsAString& aResult) {
   // font descriptors do not have priorities at present
   aResult.Truncate();
 }
 
-NS_IMETHODIMP
-CSSFontFaceRuleDecl::SetProperty(const nsAString& aPropName,
-                                 const nsAString& aValue,
-                                 const nsAString& aPriority,
-                                 nsIPrincipal* aSubjectPrincipal) {
+void CSSFontFaceRuleDecl::SetProperty(const nsACString& aPropName,
+                                      const nsACString& aValue,
+                                      const nsAString& aPriority,
+                                      nsIPrincipal* aSubjectPrincipal,
+                                      ErrorResult& aRv) {
   // FIXME(heycam): If we are changing unicode-range, then a FontFace object
   // representing this rule must have its mUnicodeRange value invalidated.
 
   if (ContainingRule()->IsReadOnly()) {
-    return NS_OK;
+    return;
   }
 
-  return NS_ERROR_NOT_IMPLEMENTED;  // bug 443978
+  // bug 443978
+  aRv.ThrowNotSupportedError(
+      "Can't set properties on CSSFontFaceRule declarations");
 }
 
 uint32_t CSSFontFaceRuleDecl::Length() {
@@ -111,11 +113,11 @@ uint32_t CSSFontFaceRuleDecl::Length() {
 }
 
 void CSSFontFaceRuleDecl::IndexedGetter(uint32_t aIndex, bool& aFound,
-                                        nsAString& aResult) {
+                                        nsACString& aResult) {
   nsCSSFontDesc id = Servo_FontFaceRule_IndexGetter(mRawRule, aIndex);
   if (id != eCSSFontDesc_UNKNOWN) {
     aFound = true;
-    aResult.AssignASCII(nsCSSProps::GetStringValue(id).get());
+    aResult.Assign(nsCSSProps::GetStringValue(id));
   } else {
     aFound = false;
   }
@@ -129,6 +131,8 @@ nsINode* CSSFontFaceRuleDecl::GetParentObject() {
 
 JSObject* CSSFontFaceRuleDecl::WrapObject(JSContext* cx,
                                           JS::Handle<JSObject*> aGivenProto) {
+  // If this changes to use a different type, remove the 'concrete'
+  // annotation from CSSStyleDeclaration.
   return CSSStyleDeclaration_Binding::Wrap(cx, this, aGivenProto);
 }
 
@@ -148,15 +152,14 @@ NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN_INHERITED(CSSFontFaceRule,
   tmp->mDecl.TraceWrapper(aCallbacks, aClosure);
 NS_IMPL_CYCLE_COLLECTION_TRACE_END
 
-NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(CSSFontFaceRule,
-                                                mozilla::css::Rule)
+NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(CSSFontFaceRule)
   // Keep this in sync with IsCCLeaf.
 
-  // Unlink the wrapper for our declaraton.  This just expands out
-  // NS_IMPL_CYCLE_COLLECTION_UNLINK_PRESERVED_WRAPPER which we can't use
-  // directly because the wrapper is on the declaration, not on us.
-  tmp->mDecl.ReleaseWrapper(static_cast<nsISupports*>(p));
-NS_IMPL_CYCLE_COLLECTION_UNLINK_END
+  // Unlink the wrapper for our declaration.
+  //
+  // Note that this has to happen before unlinking css::Rule.
+  tmp->UnlinkDeclarationWrapper(tmp->mDecl);
+NS_IMPL_CYCLE_COLLECTION_UNLINK_END_INHERITED(mozilla::css::Rule)
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(CSSFontFaceRule,
                                                   mozilla::css::Rule)

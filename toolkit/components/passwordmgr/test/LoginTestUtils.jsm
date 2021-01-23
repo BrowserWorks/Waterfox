@@ -7,11 +7,15 @@
 
 "use strict";
 
-var EXPORTED_SYMBOLS = ["LoginTestUtils"];
+const EXPORTED_SYMBOLS = ["LoginTestUtils"];
 
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
-const { Assert } = ChromeUtils.import("resource://testing-common/Assert.jsm");
+let { Assert: AssertCls } = ChromeUtils.import(
+  "resource://testing-common/Assert.jsm"
+);
+let Assert = AssertCls;
+
 const { TestUtils } = ChromeUtils.import(
   "resource://testing-common/TestUtils.jsm"
 );
@@ -22,7 +26,11 @@ const LoginInfo = Components.Constructor(
   "init"
 );
 
-var LoginTestUtils = {
+this.LoginTestUtils = {
+  setAssertReporter(reporterFunc) {
+    Assert = new AssertCls(Cu.waiveXrays(reporterFunc));
+  },
+
   /**
    * Forces the storage module to save all data, and the Login Manager service
    * to replace the storage module with a newly initialized instance.
@@ -37,9 +45,40 @@ var LoginTestUtils = {
    */
   clearData() {
     Services.logins.removeAllLogins();
-    for (let hostname of Services.logins.getAllDisabledHosts()) {
-      Services.logins.setLoginSavingEnabled(hostname, true);
+    for (let origin of Services.logins.getAllDisabledHosts()) {
+      Services.logins.setLoginSavingEnabled(origin, true);
     }
+  },
+
+  /**
+   * Add a new login to the store
+   */
+  async addLogin({
+    username,
+    password,
+    origin = "https://example.com",
+    formActionOrigin,
+  }) {
+    const login = LoginTestUtils.testData.formLogin({
+      origin,
+      formActionOrigin: formActionOrigin || origin,
+      username,
+      password,
+    });
+    let storageChangedPromised = TestUtils.topicObserved(
+      "passwordmgr-storage-changed",
+      (_, data) => data == "addLogin"
+    );
+    Services.logins.addLogin(login);
+    let [savedLogin] = await storageChangedPromised;
+    return savedLogin;
+  },
+
+  resetGeneratedPasswordsCache() {
+    let { LoginManagerParent } = ChromeUtils.import(
+      "resource://gre/modules/LoginManagerParent.jsm"
+    );
+    LoginManagerParent.getGeneratedPasswordsByPrincipalOrigin().clear();
   },
 
   /**
@@ -87,7 +126,7 @@ var LoginTestUtils = {
  * Any modification to the test data requires updating the tests accordingly, in
  * particular the search tests.
  */
-this.LoginTestUtils.testData = {
+LoginTestUtils.testData = {
   /**
    * Returns a new nsILoginInfo for use with form submits.
    *
@@ -108,6 +147,9 @@ this.LoginTestUtils.testData = {
     loginInfo.QueryInterface(Ci.nsILoginMetaInfo);
     if (modifications) {
       for (let [name, value] of Object.entries(modifications)) {
+        if (name == "httpRealm" && value !== null) {
+          throw new Error("httpRealm not supported for form logins");
+        }
         loginInfo[name] = value;
       }
     }
@@ -127,13 +169,16 @@ this.LoginTestUtils.testData = {
       null,
       "The HTTP Realm",
       "the username",
-      "the password",
-      "",
-      ""
+      "the password"
     );
     loginInfo.QueryInterface(Ci.nsILoginMetaInfo);
     if (modifications) {
       for (let [name, value] of Object.entries(modifications)) {
+        if (name == "formActionOrigin" && value !== null) {
+          throw new Error(
+            "formActionOrigin not supported for HTTP auth. logins"
+          );
+        }
         loginInfo[name] = value;
       }
     }
@@ -170,7 +215,7 @@ this.LoginTestUtils.testData = {
         "form_field_password"
       ),
 
-      // Subdomains are treated as completely different sites.
+      // Subdomains can be treated as completely different sites depending on the UI invoked.
       new LoginInfo(
         "https://example.com",
         "https://example.com",
@@ -181,7 +226,7 @@ this.LoginTestUtils.testData = {
         "form_field_password"
       ),
 
-      // Forms found on the same host, but with different hostnames in the
+      // Forms found on the same origin, but with different origins in the
       // "action" attribute, are handled independently.
       new LoginInfo(
         "http://www3.example.com",
@@ -264,6 +309,23 @@ this.LoginTestUtils.testData = {
         "form_field_password"
       ),
 
+      // Logins can be saved on non-default ports
+      new LoginInfo(
+        "https://www7.example.com:8080",
+        "https://www7.example.com:8080",
+        null,
+        "8080_username",
+        "8080_pass"
+      ),
+
+      new LoginInfo(
+        "https://www7.example.com:8080",
+        null,
+        "My dev server",
+        "8080_username2",
+        "8080_pass2"
+      ),
+
       // --- Examples of authentication logins (subdomains of example.org) ---
 
       // Simple HTTP authentication login.
@@ -272,9 +334,7 @@ this.LoginTestUtils.testData = {
         null,
         "The HTTP Realm",
         "the username",
-        "the password",
-        "",
-        ""
+        "the password"
       ),
 
       // Simple FTP authentication login.
@@ -283,9 +343,7 @@ this.LoginTestUtils.testData = {
         null,
         "ftp://ftp.example.org",
         "the username",
-        "the password",
-        "",
-        ""
+        "the password"
       ),
 
       // Multiple HTTP authentication logins can be stored for different realms.
@@ -294,18 +352,14 @@ this.LoginTestUtils.testData = {
         null,
         "The HTTP Realm",
         "the username",
-        "the password",
-        "",
-        ""
+        "the password"
       ),
       new LoginInfo(
         "http://www2.example.org",
         null,
         "The HTTP Realm Other",
         "the username other",
-        "the password other",
-        "",
-        ""
+        "the password other"
       ),
 
       // --- Both form and authentication logins (example.net) ---
@@ -342,27 +396,21 @@ this.LoginTestUtils.testData = {
         null,
         "The HTTP Realm",
         "the username",
-        "the password",
-        "",
-        ""
+        "the password"
       ),
       new LoginInfo(
         "http://example.net",
         null,
         "The HTTP Realm Other",
         "username two",
-        "the password",
-        "",
-        ""
+        "the password"
       ),
       new LoginInfo(
         "ftp://example.net",
         null,
         "ftp://example.net",
         "the username",
-        "the password",
-        "",
-        ""
+        "the password"
       ),
 
       // --- Examples of logins added by extensions (chrome scheme) ---
@@ -381,15 +429,33 @@ this.LoginTestUtils.testData = {
         null,
         "Example Login Two",
         "the username",
-        "the password two",
-        "",
-        ""
+        "the password two"
+      ),
+
+      // -- file:/// URIs throw accessing nsIURI.host
+
+      new LoginInfo(
+        "file:///",
+        "file:///",
+        null,
+        "file: username",
+        "file: password"
+      ),
+
+      // -- javascript: URIs throw accessing nsIURI.host.
+      // They should only be used for the formActionOrigin.
+      new LoginInfo(
+        "https://js.example.com",
+        "javascript:",
+        null,
+        "javascript: username",
+        "javascript: password"
       ),
     ];
   },
 };
 
-this.LoginTestUtils.recipes = {
+LoginTestUtils.recipes = {
   getRecipeParent() {
     let { LoginManagerParent } = ChromeUtils.import(
       "resource://gre/modules/LoginManagerParent.jsm"
@@ -403,7 +469,7 @@ this.LoginTestUtils.recipes = {
   },
 };
 
-this.LoginTestUtils.masterPassword = {
+LoginTestUtils.masterPassword = {
   masterPassword: "omgsecret!",
 
   _set(enable) {
@@ -440,5 +506,56 @@ this.LoginTestUtils.masterPassword = {
 
   disable() {
     this._set(false);
+  },
+};
+
+/**
+ * Utilities related to interacting with login fields in content.
+ */
+LoginTestUtils.loginField = {
+  checkPasswordMasked(field, expected, msg) {
+    let { editor } = field;
+    let valueLength = field.value.length;
+    Assert.equal(
+      editor.autoMaskingEnabled,
+      expected,
+      `Check autoMaskingEnabled: ${msg}`
+    );
+    Assert.equal(editor.unmaskedStart, 0, `unmaskedStart is 0: ${msg}`);
+    if (expected) {
+      Assert.equal(editor.unmaskedEnd, 0, `Password is masked: ${msg}`);
+    } else {
+      Assert.equal(
+        editor.unmaskedEnd,
+        valueLength,
+        `Unmasked to the end: ${msg}`
+      );
+    }
+  },
+};
+
+LoginTestUtils.generation = {
+  LENGTH: 15,
+  REGEX: /^[a-km-np-zA-HJ-NP-Z2-9]{15}$/,
+};
+
+LoginTestUtils.telemetry = {
+  async waitForEventCount(count, process = "content", category = "pwmgr") {
+    let events = await TestUtils.waitForCondition(() => {
+      let events = Services.telemetry.snapshotEvents(
+        Ci.nsITelemetry.DATASET_PRERELEASE_CHANNELS,
+        false
+      )[process];
+
+      if (!events) {
+        return null;
+      }
+
+      events = events.filter(e => e[1] == category);
+      dump(`Waiting for ${count} events, got ${events.length}\n`);
+      return events.length == count ? events : null;
+    }, "waiting for telemetry event count of: " + count);
+    Assert.equal(events.length, count, "waiting for telemetry event count");
+    return events;
   },
 };

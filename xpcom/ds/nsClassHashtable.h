@@ -7,10 +7,25 @@
 #ifndef nsClassHashtable_h__
 #define nsClassHashtable_h__
 
-#include "mozilla/Move.h"
+#include <utility>
+
+#include "mozilla/UniquePtr.h"
 #include "nsBaseHashtable.h"
 #include "nsHashKeys.h"
-#include "nsAutoPtr.h"
+
+/**
+ * Helper class that provides methods to wrap and unwrap the UserDataType.
+ */
+template <class T>
+class nsUniquePtrConverter {
+ public:
+  using UserDataType = T*;
+  using DataType = mozilla::UniquePtr<T>;
+
+  static UserDataType Unwrap(DataType& src) { return src.get(); }
+  static DataType Wrap(UserDataType&& src) { return DataType(std::move(src)); }
+  static DataType Wrap(const UserDataType& src) { return DataType(src); }
+};
 
 /**
  * templated hashtable class maps keys to C++ object pointers.
@@ -21,18 +36,22 @@
  * @see nsInterfaceHashtable, nsClassHashtable
  */
 template <class KeyClass, class T>
-class nsClassHashtable : public nsBaseHashtable<KeyClass, nsAutoPtr<T>, T*> {
+class nsClassHashtable : public nsBaseHashtable<KeyClass, mozilla::UniquePtr<T>,
+                                                T*, nsUniquePtrConverter<T>> {
  public:
   typedef typename KeyClass::KeyType KeyType;
   typedef T* UserDataType;
-  typedef nsBaseHashtable<KeyClass, nsAutoPtr<T>, T*> base_type;
+  typedef nsBaseHashtable<KeyClass, mozilla::UniquePtr<T>, T*,
+                          nsUniquePtrConverter<T>>
+      base_type;
 
   using base_type::IsEmpty;
   using base_type::Remove;
 
-  nsClassHashtable() {}
+  nsClassHashtable() = default;
   explicit nsClassHashtable(uint32_t aInitLength)
-      : nsBaseHashtable<KeyClass, nsAutoPtr<T>, T*>(aInitLength) {}
+      : nsBaseHashtable<KeyClass, mozilla::UniquePtr<T>, T*,
+                        nsUniquePtrConverter<T>>(aInitLength) {}
 
   /**
    * Looks up aKey in the hash table. If it doesn't exist a new object of
@@ -52,6 +71,16 @@ class nsClassHashtable : public nsBaseHashtable<KeyClass, nsAutoPtr<T>, T*> {
    * @returns nullptr if the key is not present.
    */
   UserDataType Get(KeyType aKey) const;
+
+  // For now, overload Put, rather than hiding it.
+  using base_type::Put;
+
+  template <typename U, typename = std::enable_if_t<std::is_base_of_v<T, U>>>
+  void Put(KeyType aKey, mozilla::UniquePtr<U>&& aData);
+
+  template <typename U, typename = std::enable_if_t<std::is_base_of_v<T, U>>>
+  [[nodiscard]] bool Put(KeyType aKey, mozilla::UniquePtr<U>&& aData,
+                         const mozilla::fallible_t&);
 };
 
 template <typename K, typename T>
@@ -80,9 +109,10 @@ T* nsClassHashtable<KeyClass, T>::LookupOrAdd(KeyType aKey,
   auto count = this->Count();
   typename base_type::EntryType* ent = this->PutEntry(aKey);
   if (count != this->Count()) {
-    ent->mData = new T(std::forward<Args>(aConstructionArgs)...);
+    ent->SetData(
+        mozilla::MakeUnique<T>(std::forward<Args>(aConstructionArgs)...));
   }
-  return ent->mData;
+  return ent->GetData().get();
 }
 
 template <class KeyClass, class T>
@@ -91,7 +121,7 @@ bool nsClassHashtable<KeyClass, T>::Get(KeyType aKey, T** aRetVal) const {
 
   if (ent) {
     if (aRetVal) {
-      *aRetVal = ent->mData;
+      *aRetVal = ent->GetData().get();
     }
 
     return true;
@@ -111,7 +141,32 @@ T* nsClassHashtable<KeyClass, T>::Get(KeyType aKey) const {
     return nullptr;
   }
 
-  return ent->mData;
+  return ent->GetData().get();
+}
+
+template <class KeyClass, class T>
+template <typename U, typename>
+void nsClassHashtable<KeyClass, T>::Put(KeyType aKey,
+                                        mozilla::UniquePtr<U>&& aData) {
+  if (!Put(aKey, std::move(aData), mozilla::fallible)) {
+    NS_ABORT_OOM(this->mTable.EntrySize() * this->mTable.EntryCount());
+  }
+}
+
+template <class KeyClass, class T>
+template <typename U, typename>
+bool nsClassHashtable<KeyClass, T>::Put(KeyType aKey,
+                                        mozilla::UniquePtr<U>&& aData,
+                                        const mozilla::fallible_t&) {
+  typename base_type::EntryType* ent = this->PutEntry(aKey, mozilla::fallible);
+
+  if (!ent) {
+    return false;
+  }
+
+  ent->SetData(std::move(aData));
+
+  return true;
 }
 
 #endif  // nsClassHashtable_h__

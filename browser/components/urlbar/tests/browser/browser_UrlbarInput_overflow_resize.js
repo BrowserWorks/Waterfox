@@ -3,7 +3,7 @@
 
 async function testVal(win, url) {
   info(`Testing ${url}`);
-  win.URLBarSetURI(makeURI(url));
+  win.gURLBar.setURI(makeURI(url));
 
   let urlbar = win.gURLBar;
   urlbar.blur();
@@ -22,7 +22,7 @@ async function testVal(win, url) {
       "The urlbar input field is completely scrolled to the end"
     );
     await TestUtils.waitForCondition(
-      () => urlbar.getAttribute("textoverflow") == "start",
+      () => urlbar.getAttribute("textoverflow") == "left",
       "Wait for the textoverflow attribute"
     );
   }

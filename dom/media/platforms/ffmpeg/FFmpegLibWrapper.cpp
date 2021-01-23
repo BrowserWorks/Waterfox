@@ -6,7 +6,7 @@
 #include "FFmpegLog.h"
 #include "mozilla/PodOperations.h"
 #ifdef MOZ_FFMPEG
-#  include "mozilla/StaticPrefs.h"
+#  include "mozilla/StaticPrefs_media.h"
 #endif
 #include "mozilla/Types.h"
 #include "PlatformDecoderModule.h"
@@ -44,7 +44,7 @@ FFmpegLibWrapper::LinkResult FFmpegLibWrapper::Link() {
     }
 #ifdef MOZ_FFMPEG
     if (version < (54u << 16 | 35u << 8 | 1u) &&
-        !StaticPrefs::MediaLibavcodecAllowObsolete()) {
+        !StaticPrefs::media_libavcodec_allow_obsolete()) {
       // Refuse any libavcodec version prior to 54.35.1.
       // (Unless media.libavcodec.allow-obsolete==true)
       Unlink();
@@ -101,15 +101,20 @@ FFmpegLibWrapper::LinkResult FFmpegLibWrapper::Link() {
                       : LinkResult::UnknownFutureLibAVVersion;
   }
 
-#define AV_FUNC_OPTION(func, ver)                                     \
+#define AV_FUNC_OPTION_SILENT(func, ver)                              \
   if ((ver)&version) {                                                \
     if (!(func = (decltype(func))PR_FindSymbol(                       \
               ((ver)&AV_FUNC_AVUTIL_MASK) ? mAVUtilLib : mAVCodecLib, \
               #func))) {                                              \
-      FFMPEG_LOG("Couldn't load function " #func);                    \
     }                                                                 \
   } else {                                                            \
     func = (decltype(func)) nullptr;                                  \
+  }
+
+#define AV_FUNC_OPTION(func, ver)                            \
+  AV_FUNC_OPTION_SILENT(func, ver)                           \
+  if ((ver)&version && (func) == (decltype(func)) nullptr) { \
+    FFMPEG_LOG("Couldn't load function " #func);             \
   }
 
 #define AV_FUNC(func, ver)                              \
@@ -151,8 +156,48 @@ FFmpegLibWrapper::LinkResult FFmpegLibWrapper::Link() {
   AV_FUNC(av_frame_unref, (AV_FUNC_AVUTIL_55 | AV_FUNC_AVUTIL_56 |
                            AV_FUNC_AVUTIL_57 | AV_FUNC_AVUTIL_58))
   AV_FUNC_OPTION(av_frame_get_colorspace, AV_FUNC_AVUTIL_ALL)
+  AV_FUNC_OPTION(av_frame_get_color_range, AV_FUNC_AVUTIL_ALL)
+#ifdef MOZ_WAYLAND
+  AV_FUNC_OPTION_SILENT(avcodec_get_hw_config, AV_FUNC_58)
+  AV_FUNC_OPTION_SILENT(av_hwdevice_ctx_init, AV_FUNC_58)
+  AV_FUNC_OPTION_SILENT(av_hwdevice_ctx_alloc, AV_FUNC_58)
+  AV_FUNC_OPTION_SILENT(av_buffer_ref, AV_FUNC_AVUTIL_58)
+  AV_FUNC_OPTION_SILENT(av_buffer_unref, AV_FUNC_AVUTIL_58)
+  AV_FUNC_OPTION_SILENT(av_hwframe_transfer_get_formats, AV_FUNC_58)
+  AV_FUNC_OPTION_SILENT(av_hwdevice_ctx_create_derived, AV_FUNC_58)
+  AV_FUNC_OPTION_SILENT(av_hwframe_ctx_alloc, AV_FUNC_58)
+  AV_FUNC_OPTION_SILENT(av_dict_set, AV_FUNC_58)
+  AV_FUNC_OPTION_SILENT(av_dict_free, AV_FUNC_58)
+#endif
 #undef AV_FUNC
 #undef AV_FUNC_OPTION
+
+#ifdef MOZ_WAYLAND
+#  define VA_FUNC_OPTION_SILENT(func)                             \
+    if (!(func = (decltype(func))PR_FindSymbol(mVALib, #func))) { \
+      func = (decltype(func)) nullptr;                            \
+    }
+
+  // mVALib is optional and may not be present.
+  if (mVALib) {
+    VA_FUNC_OPTION_SILENT(vaExportSurfaceHandle)
+    VA_FUNC_OPTION_SILENT(vaSyncSurface)
+    VA_FUNC_OPTION_SILENT(vaInitialize)
+    VA_FUNC_OPTION_SILENT(vaTerminate)
+  }
+#  undef VA_FUNC_OPTION_SILENT
+
+#  define VAW_FUNC_OPTION_SILENT(func)                                   \
+    if (!(func = (decltype(func))PR_FindSymbol(mVALibWayland, #func))) { \
+      FFMPEG_LOG("Couldn't load function " #func);                       \
+    }
+
+  // mVALibWayland is optional and may not be present.
+  if (mVALibWayland) {
+    VAW_FUNC_OPTION_SILENT(vaGetDisplayWl)
+  }
+#  undef VAW_FUNC_OPTION_SILENT
+#endif
 
   avcodec_register_all();
   if (MOZ_LOG_TEST(sPDMLog, LogLevel::Debug)) {
@@ -172,13 +217,43 @@ void FFmpegLibWrapper::Unlink() {
     // This prevents ASAN and valgrind to report sizeof(pthread_mutex_t) leaks.
     av_lockmgr_register(nullptr);
   }
+#ifndef MOZ_TSAN
+  // With TSan, we cannot unload libav once we have loaded it because
+  // TSan does not support unloading libraries that are matched from its
+  // suppression list. Hence we just keep the library loaded in TSan builds.
   if (mAVUtilLib && mAVUtilLib != mAVCodecLib) {
     PR_UnloadLibrary(mAVUtilLib);
   }
   if (mAVCodecLib) {
     PR_UnloadLibrary(mAVCodecLib);
   }
+#endif
+#ifdef MOZ_WAYLAND
+  if (mVALib) {
+    PR_UnloadLibrary(mVALib);
+  }
+  if (mVALibWayland) {
+    PR_UnloadLibrary(mVALibWayland);
+  }
+#endif
   PodZero(this);
 }
+
+#ifdef MOZ_WAYLAND
+bool FFmpegLibWrapper::IsVAAPIAvailable() {
+#  define VA_FUNC_LOADED(func) (func != nullptr)
+  return VA_FUNC_LOADED(avcodec_get_hw_config) &&
+         VA_FUNC_LOADED(av_hwdevice_ctx_alloc) &&
+         VA_FUNC_LOADED(av_hwdevice_ctx_init) &&
+         VA_FUNC_LOADED(av_buffer_ref) && VA_FUNC_LOADED(av_buffer_unref) &&
+         VA_FUNC_LOADED(av_hwframe_transfer_get_formats) &&
+         VA_FUNC_LOADED(av_hwdevice_ctx_create_derived) &&
+         VA_FUNC_LOADED(av_hwframe_ctx_alloc) && VA_FUNC_LOADED(av_dict_set) &&
+         VA_FUNC_LOADED(av_dict_free) &&
+         VA_FUNC_LOADED(vaExportSurfaceHandle) &&
+         VA_FUNC_LOADED(vaSyncSurface) && VA_FUNC_LOADED(vaInitialize) &&
+         VA_FUNC_LOADED(vaTerminate) && VA_FUNC_LOADED(vaGetDisplayWl);
+}
+#endif
 
 }  // namespace mozilla

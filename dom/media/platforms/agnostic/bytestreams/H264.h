@@ -36,6 +36,15 @@ enum NAL_TYPES {
   H264_NAL_SLICE_EXT_DVC = 21,
 };
 
+// According to ITU-T Rec H.264 (2017/04) Table 7.6.
+enum SLICE_TYPES {
+  P_SLICE = 0,
+  B_SLICE = 1,
+  I_SLICE = 2,
+  SP_SLICE = 3,
+  SI_SLICE = 4,
+};
+
 struct SPSData {
   bool operator==(const SPSData& aOther) const;
   bool operator!=(const SPSData& aOther) const;
@@ -460,6 +469,8 @@ class H264 {
 
   static bool DecodeSPSFromExtraData(const mozilla::MediaByteBuffer* aExtraData,
                                      SPSData& aDest);
+  /* Decode SPS NAL RBSP and fill SPSData structure */
+  static bool DecodeSPS(const mozilla::MediaByteBuffer* aSPS, SPSData& aDest);
 
   // If the given aExtraData is valid, return the aExtraData.max_num_ref_frames
   // clamped to be in the range of [4, 16]; otherwise return 4.
@@ -480,6 +491,11 @@ class H264 {
   static already_AddRefed<mozilla::MediaByteBuffer> CreateExtraData(
       uint8_t aProfile, uint8_t aConstraints, uint8_t aLevel,
       const gfx::IntSize& aSize);
+  static void WriteExtraData(mozilla::MediaByteBuffer* aDestExtraData,
+                             const uint8_t aProfile, const uint8_t aConstraints,
+                             const uint8_t aLevel,
+                             const Span<const uint8_t> aSPS,
+                             const Span<const uint8_t> aPPS);
 
  private:
   friend class SPSNAL;
@@ -491,8 +507,6 @@ class H264 {
       const uint8_t* aNAL, size_t aLength);
   static already_AddRefed<mozilla::MediaByteBuffer> EncodeNALUnit(
       const uint8_t* aNAL, size_t aLength);
-  /* Decode SPS NAL RBSP and fill SPSData structure */
-  static bool DecodeSPS(const mozilla::MediaByteBuffer* aSPS, SPSData& aDest);
   static bool vui_parameters(mozilla::BitReader& aBr, SPSData& aDest);
   // Read HRD parameters, all data is ignored.
   static void hrd_parameters(mozilla::BitReader& aBr);
@@ -501,6 +515,9 @@ class H264 {
   // point.
   static bool DecodeRecoverySEI(const mozilla::MediaByteBuffer* aSEI,
                                 SEIRecoveryData& aDest);
+  // Decode NAL Slice payload and return true if its slice type is I slice or SI
+  // slice.
+  static bool DecodeISlice(const mozilla::MediaByteBuffer* aSlice);
 };
 
 }  // namespace mozilla

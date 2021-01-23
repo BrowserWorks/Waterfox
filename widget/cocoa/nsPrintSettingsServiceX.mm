@@ -7,17 +7,14 @@
 
 #include "nsCOMPtr.h"
 #include "nsQueryObject.h"
-#include "nsIServiceManager.h"
 #include "nsPrintSettingsX.h"
-#include "nsIWebBrowserPrint.h"
 #include "nsCocoaUtils.h"
 
 using namespace mozilla::embedding;
 
 NS_IMETHODIMP
-nsPrintSettingsServiceX::SerializeToPrintData(nsIPrintSettings* aSettings, nsIWebBrowserPrint* aWBP,
-                                              PrintData* data) {
-  nsresult rv = nsPrintSettingsService::SerializeToPrintData(aSettings, aWBP, data);
+nsPrintSettingsServiceX::SerializeToPrintData(nsIPrintSettings* aSettings, PrintData* data) {
+  nsresult rv = nsPrintSettingsService::SerializeToPrintData(aSettings, data);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
@@ -33,46 +30,13 @@ nsPrintSettingsServiceX::SerializeToPrintData(nsIPrintSettings* aSettings, nsIWe
   data->adjustedPaperHeight() = adjustedHeight;
 
   if (XRE_IsParentProcess()) {
-    return SerializeToPrintDataParent(aSettings, aWBP, data);
-  }
-
-  return SerializeToPrintDataChild(aSettings, aWBP, data);
-}
-
-nsresult nsPrintSettingsServiceX::SerializeToPrintDataChild(nsIPrintSettings* aSettings,
-                                                            nsIWebBrowserPrint* aWBP,
-                                                            PrintData* data) {
-  // If we are in the child process, we don't need to populate
-  // nsPrintSettingsX completely. The parent discards almost all of
-  // this data (bug 1328975). Furthermore, reading some of the
-  // printer/printing settings from the OS causes a connection to the
-  // printer to be made which is blocked by sandboxing and results in hangs.
-  if (aWBP) {
-    // When serializing an nsIWebBrowserPrint, we need to pass up the first
-    // document name. We could pass up the entire collection of document
-    // names, but the OS X printing prompt code only really cares about
-    // the first one, so we just send the first to save IPC traffic.
-    char16_t** docTitles;
-    uint32_t titleCount;
-    nsresult rv = aWBP->EnumerateDocumentNames(&titleCount, &docTitles);
-    if (NS_SUCCEEDED(rv)) {
-      if (titleCount > 0) {
-        data->printJobName().Assign(docTitles[0]);
-      }
-
-      for (int32_t i = titleCount - 1; i >= 0; i--) {
-        free(docTitles[i]);
-      }
-      free(docTitles);
-      docTitles = nullptr;
-    }
+    return SerializeToPrintDataParent(aSettings, data);
   }
 
   return NS_OK;
 }
 
 nsresult nsPrintSettingsServiceX::SerializeToPrintDataParent(nsIPrintSettings* aSettings,
-                                                             nsIWebBrowserPrint* aWBP,
                                                              PrintData* data) {
   RefPtr<nsPrintSettingsX> settingsX(do_QueryObject(aSettings));
   if (NS_WARN_IF(!settingsX)) {
@@ -124,7 +88,7 @@ nsresult nsPrintSettingsServiceX::SerializeToPrintDataParent(nsIPrintSettings* a
   data->scalingFactor() = scalingFactor;
 
   int32_t orientation;
-  if ([printInfo orientation] == NS_PAPER_ORIENTATION_PORTRAIT) {
+  if ([printInfo orientation] == NSPaperOrientationPortrait) {
     orientation = nsIPrintSettings::kPortraitOrientation;
   } else {
     orientation = nsIPrintSettings::kLandscapeOrientation;
@@ -148,9 +112,6 @@ nsresult nsPrintSettingsServiceX::SerializeToPrintDataParent(nsIPrintSettings* a
   }
 
   data->numCopies() = [[dict objectForKey:NSPrintCopies] intValue];
-  data->printAllPages() = [[dict objectForKey:NSPrintAllPages] boolValue];
-  data->startPageRange() = [[dict objectForKey:NSPrintFirstPage] intValue];
-  data->endPageRange() = [[dict objectForKey:NSPrintLastPage] intValue];
   data->mustCollate() = [[dict objectForKey:NSPrintMustCollate] boolValue];
   data->printReversed() = [[dict objectForKey:NSPrintReversePageOrder] boolValue];
   data->pagesAcross() = [[dict objectForKey:NSPrintPagesAcross] unsignedShortValue];

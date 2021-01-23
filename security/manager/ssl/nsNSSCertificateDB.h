@@ -28,8 +28,12 @@ class nsNSSCertificateDB final : public nsIX509CertDB
   static nsresult FindCertByDBKey(const nsACString& aDBKey,
                                   mozilla::UniqueCERTCertificate& cert);
 
+  static nsresult ConstructCertArrayFromUniqueCertList(
+      const mozilla::UniqueCERTCertList& aCertListIn,
+      nsTArray<RefPtr<nsIX509Cert>>& aCertListOut);
+
  protected:
-  virtual ~nsNSSCertificateDB() {}
+  virtual ~nsNSSCertificateDB() = default;
 
  private:
   // Use this function to generate a default nickname for a user
@@ -38,17 +42,19 @@ class nsNSSCertificateDB final : public nsIX509CertDB
                                    nsIInterfaceRequestor* ctx,
                                    nsCString& nickname);
 
-  static nsresult ImportCACerts(int numCACerts, SECItem* CACerts,
+  static nsresult ImportCACerts(nsTArray<nsTArray<uint8_t>>& CACerts,
                                 nsIInterfaceRequestor* ctx);
 
   static void DisplayCertificateAlert(nsIInterfaceRequestor* ctx,
                                       const char* stringID,
                                       nsIX509Cert* certToShow);
 
-  CERTDERCerts* getCertsFromPackage(const mozilla::UniquePLArenaPool& arena,
-                                    uint8_t* data, uint32_t length);
+  nsresult getCertsFromPackage(nsTArray<nsTArray<uint8_t>>& collectArgs,
+                               uint8_t* data, uint32_t length);
   nsresult handleCACertDownload(mozilla::NotNull<nsIArray*> x509Certs,
                                 nsIInterfaceRequestor* ctx);
+  nsresult ConstructX509FromSpan(const mozilla::Span<const uint8_t> aInputSpan,
+                                 nsIX509Cert** _retval);
 };
 
 #define NS_X509CERTDB_CID                            \

@@ -4,9 +4,6 @@
 user_pref("app.normandy.api_url", "https://localhost/selfsupport-dummy/");
 user_pref("app.update.staging.enabled", false);
 user_pref("app.update.url.android", "");
-user_pref("browser.ping-centre.production.endpoint", "https://localhost");
-// Make sure Ping Centre doesn't hit the network.
-user_pref("browser.ping-centre.staging.endpoint", "https://localhost");
 user_pref("browser.safebrowsing.blockedURIs.enabled", false);
 user_pref("browser.safebrowsing.downloads.enabled", false);
 user_pref("browser.safebrowsing.downloads.remote.url", "http://127.0.0.1/safebrowsing-dummy/gethash");
@@ -41,6 +38,7 @@ user_pref("extensions.autoDisableScopes", 0);
 // Disable blocklist updates so we don't have them reported as leaks
 user_pref("extensions.blocklist.enabled", false);
 user_pref("extensions.getAddons.cache.enabled", false);
+user_pref("extensions.getAddons.get.url", "http://localhost/extensions-dummy/repositoryGetURL");
 user_pref("extensions.systemAddon.update.url", "http://localhost/dummy-system-addons.xml");
 user_pref("gfx.color_management.force_srgb", true);
 user_pref("gfx.color_management.mode", 2);
@@ -103,3 +101,5 @@ user_pref("ui.systemUsesDarkTheme", 0);
 user_pref("dom.push.serverURL", "");
 // Disable intermittent telemetry collection
 user_pref("toolkit.telemetry.initDelay", 99999999);
+// Setting this pref to true for usercss reftests, since it relies on userContent.css
+user_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);

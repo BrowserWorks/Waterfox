@@ -17,9 +17,8 @@ class HTMLMarqueeElement final : public nsGenericHTMLElement {
   explicit HTMLMarqueeElement(already_AddRefed<dom::NodeInfo>&& aNodeInfo)
       : nsGenericHTMLElement(std::move(aNodeInfo)) {}
 
-  nsresult BindToTree(Document* aDocument, nsIContent* aParent,
-                      nsIContent* aBindingParent) override;
-  void UnbindFromTree(bool aDeep = true, bool aNullParent = true) override;
+  nsresult BindToTree(BindContext&, nsINode& aParent) override;
+  void UnbindFromTree(bool aNullParent = true) override;
 
   static const int kDefaultLoop = -1;
   static const int kDefaultScrollAmount = 6;
@@ -49,7 +48,9 @@ class HTMLMarqueeElement final : public nsGenericHTMLElement {
   void SetHeight(const nsAString& aHeight, ErrorResult& aError) {
     SetHTMLAttr(nsGkAtoms::height, aHeight, aError);
   }
-  uint32_t Hspace() { return GetIntAttr(nsGkAtoms::hspace, 0); }
+  uint32_t Hspace() {
+    return GetDimensionAttrAsUnsignedInt(nsGkAtoms::hspace, 0);
+  }
   void SetHspace(uint32_t aValue, ErrorResult& aError) {
     SetUnsignedIntAttr(nsGkAtoms::hspace, aValue, 0, aError);
   }
@@ -88,7 +89,9 @@ class HTMLMarqueeElement final : public nsGenericHTMLElement {
   void SetWidth(const nsAString& aWidth, ErrorResult& aError) {
     SetHTMLAttr(nsGkAtoms::width, aWidth, aError);
   }
-  uint32_t Vspace() { return GetIntAttr(nsGkAtoms::vspace, 0); }
+  uint32_t Vspace() {
+    return GetDimensionAttrAsUnsignedInt(nsGkAtoms::vspace, 0);
+  }
   void SetVspace(uint32_t aValue, ErrorResult& aError) {
     SetUnsignedIntAttr(nsGkAtoms::vspace, aValue, 0, aError);
   }

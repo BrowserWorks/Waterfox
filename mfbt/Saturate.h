@@ -9,11 +9,12 @@
 #ifndef mozilla_Saturate_h
 #define mozilla_Saturate_h
 
-#include "mozilla/Attributes.h"
-#include "mozilla/Move.h"
-#include "mozilla/TypeTraits.h"
-
 #include <limits>
+#include <stdint.h>
+#include <type_traits>
+#include <utility>
+
+#include "mozilla/Attributes.h"
 
 namespace mozilla {
 namespace detail {
@@ -41,7 +42,7 @@ class SaturateOp {
     // We should actually check for |std::is_scalar<T>::value| to be
     // true, but this type trait is not available everywhere. Relax
     // this assertion if you want to use floating point values as well.
-    static_assert(IsIntegral<T>::value,
+    static_assert(std::is_integral_v<T>,
                   "Integral type required in instantiation");
   }
 
@@ -114,7 +115,7 @@ class SaturateOp {
 
 /**
  * |Saturate<T>| is a value type for saturation arithmetics. It's
- * build on top of |SaturateOp<T>|.
+ * built on top of |SaturateOp<T>|.
  */
 template <typename T>
 class Saturate {

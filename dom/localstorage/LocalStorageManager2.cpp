@@ -8,6 +8,7 @@
 
 #include "LSObject.h"
 #include "mozilla/dom/Promise.h"
+#include "mozilla/UniquePtr.h"
 
 namespace mozilla {
 namespace dom {
@@ -175,9 +176,11 @@ NS_IMPL_ISUPPORTS(LocalStorageManager2, nsIDOMStorageManager,
 
 NS_IMETHODIMP
 LocalStorageManager2::PrecacheStorage(nsIPrincipal* aPrincipal,
+                                      nsIPrincipal* aStoragePrincipal,
                                       Storage** _retval) {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aPrincipal);
+  MOZ_ASSERT(aStoragePrincipal);
   MOZ_ASSERT(_retval);
 
   // This method was created as part of the e10s-ification of the old LS
@@ -266,13 +269,14 @@ LocalStorageManager2::Preload(nsIPrincipal* aPrincipal, JSContext* aContext,
 
   nsCString originAttrSuffix;
   nsCString originKey;
-  nsresult rv = GenerateOriginKey(aPrincipal, originAttrSuffix, originKey);
+  nsresult rv = aPrincipal->GetStorageOriginKey(originKey);
+  aPrincipal->OriginAttributesRef().CreateSuffix(originAttrSuffix);
   if (NS_FAILED(rv)) {
     return NS_ERROR_NOT_AVAILABLE;
   }
 
-  nsAutoPtr<PrincipalInfo> principalInfo(new PrincipalInfo());
-  rv = CheckedPrincipalToPrincipalInfo(aPrincipal, *principalInfo);
+  PrincipalInfo principalInfo;
+  rv = CheckedPrincipalToPrincipalInfo(aPrincipal, principalInfo);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
@@ -287,8 +291,8 @@ LocalStorageManager2::Preload(nsIPrincipal* aPrincipal, JSContext* aContext,
   }
 
   LSRequestCommonParams commonParams;
-  commonParams.principalInfo() = *principalInfo;
-  commonParams.storagePrincipalInfo() = *principalInfo;
+  commonParams.principalInfo() = principalInfo;
+  commonParams.storagePrincipalInfo() = principalInfo;
   commonParams.originKey() = originKey;
 
   LSRequestPreloadDatastoreParams params(commonParams);
@@ -356,11 +360,16 @@ LSRequestChild* LocalStorageManager2::StartRequest(
     return nullptr;
   }
 
-  auto actor = new LSRequestChild(aCallback);
+  auto actor = new LSRequestChild();
 
   if (!backgroundActor->SendPBackgroundLSRequestConstructor(actor, aParams)) {
     return nullptr;
   }
+
+  // Must set callback after calling SendPBackgroundLSRequestConstructor since
+  // it can be called synchronously when SendPBackgroundLSRequestConstructor
+  // fails.
+  actor->SetCallback(aCallback);
 
   return actor;
 }
@@ -376,14 +385,19 @@ nsresult LocalStorageManager2::StartSimpleRequest(
     return NS_ERROR_FAILURE;
   }
 
-  RefPtr<SimpleRequestResolver> resolver = new SimpleRequestResolver(aPromise);
-
-  auto actor = new LSSimpleRequestChild(resolver);
+  auto actor = new LSSimpleRequestChild();
 
   if (!backgroundActor->SendPBackgroundLSSimpleRequestConstructor(actor,
                                                                   aParams)) {
     return NS_ERROR_FAILURE;
   }
+
+  RefPtr<SimpleRequestResolver> resolver = new SimpleRequestResolver(aPromise);
+
+  // Must set callback after calling SendPBackgroundLSRequestConstructor since
+  // it can be called synchronously when SendPBackgroundLSRequestConstructor
+  // fails.
+  actor->SetCallback(resolver);
 
   return NS_OK;
 }

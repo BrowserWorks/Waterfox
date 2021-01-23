@@ -23,24 +23,15 @@ class CryptoBuffer : public FallibleTArray<uint8_t> {
   uint8_t* Assign(const uint8_t* aData, uint32_t aLength);
   uint8_t* Assign(const nsACString& aString);
   uint8_t* Assign(const SECItem* aItem);
-  uint8_t* Assign(const InfallibleTArray<uint8_t>& aData);
+  uint8_t* Assign(const nsTArray<uint8_t>& aData);
   uint8_t* Assign(const ArrayBuffer& aData);
   uint8_t* Assign(const ArrayBufferView& aData);
   uint8_t* Assign(const ArrayBufferViewOrArrayBuffer& aData);
   uint8_t* Assign(const OwningArrayBufferViewOrArrayBuffer& aData);
+  uint8_t* Assign(const Uint8Array& aArray);
 
   uint8_t* AppendSECItem(const SECItem* aItem);
   uint8_t* AppendSECItem(const SECItem& aItem);
-
-  template <typename T, JSObject* UnwrapArray(JSObject*),
-            void GetLengthAndDataAndSharedness(JSObject*, uint32_t*, bool*,
-                                               T**)>
-  uint8_t* Assign(
-      const TypedArray_base<T, UnwrapArray, GetLengthAndDataAndSharedness>&
-          aArray) {
-    aArray.ComputeLengthAndData();
-    return Assign(aArray.Data(), aArray.Length());
-  }
 
   nsresult FromJwkBase64(const nsString& aBase64);
   nsresult ToJwkBase64(nsString& aBase64) const;
@@ -50,6 +41,14 @@ class CryptoBuffer : public FallibleTArray<uint8_t> {
   bool ToNewUnsignedBuffer(uint8_t** aBuf, uint32_t* aBufLen) const;
 
   bool GetBigIntValue(unsigned long& aRetVal);
+
+  CryptoBuffer InfallibleClone() const {
+    CryptoBuffer result;
+    if (!result.Assign(*this)) {
+      MOZ_CRASH("Out of memory");
+    }
+    return result;
+  }
 };
 
 }  // namespace dom

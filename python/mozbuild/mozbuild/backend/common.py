@@ -2,11 +2,12 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import, print_function, unicode_literals
 
 import itertools
 import json
 import os
+import six
 
 from collections import defaultdict
 
@@ -33,11 +34,10 @@ from mozbuild.frontend.data import (
     GnProjectData,
     HostLibrary,
     HostGeneratedSources,
-    HostRustLibrary,
     IPDLCollection,
     LocalizedPreprocessedFiles,
     LocalizedFiles,
-    RustLibrary,
+    SandboxedWasmLibrary,
     SharedLibrary,
     StaticLibrary,
     UnifiedSources,
@@ -53,9 +53,9 @@ from mozbuild.preprocessor import Preprocessor
 from mozpack.chrome.manifest import parse_manifest_line
 
 from mozbuild.util import (
-    group_unified_files,
     mkdir,
 )
+
 
 class XPIDLManager(object):
     """Helps manage XPCOM IDLs in the context of the build system."""
@@ -100,7 +100,8 @@ class XPIDLManager(object):
 
         The stem of an IDL file is the basename of the file with no .idl extension.
         """
-        return itertools.chain(*[m.stems() for m in self.modules.itervalues()])
+        return itertools.chain(*[m.stems() for m in six.itervalues(self.modules)])
+
 
 class BinariesCollection(object):
     """Tracks state of binaries produced by the build."""
@@ -108,6 +109,7 @@ class BinariesCollection(object):
     def __init__(self):
         self.shared_libraries = []
         self.programs = []
+
 
 class CommonBackend(BuildBackend):
     """Holds logic common to all build backends."""
@@ -175,14 +177,16 @@ class CommonBackend(BuildBackend):
             return False
 
         elif isinstance(obj, GeneratedFile):
-            if obj.required_for_compile:
-                for f in obj.required_for_compile:
+            if obj.required_during_compile or obj.required_before_compile:
+                for f in itertools.chain(obj.required_before_compile,
+                                         obj.required_during_compile):
                     fullpath = ObjDirPath(obj._context, '!' + f).full_path
                     self._handle_generated_sources([fullpath])
             return False
 
         elif isinstance(obj, Exports):
-            objdir_files = [f.full_path for path, files in obj.files.walk() for f in files if isinstance(f, ObjDirPath)]
+            objdir_files = [f.full_path for path, files in obj.files.walk()
+                            for f in files if isinstance(f, ObjDirPath)]
             if objdir_files:
                 self._handle_generated_sources(objdir_files)
             return False
@@ -201,9 +205,7 @@ class CommonBackend(BuildBackend):
         if len(self._idl_manager.modules):
             self._write_rust_xpidl_summary(self._idl_manager)
             self._handle_idl_manager(self._idl_manager)
-            self._handle_generated_sources(mozpath.join(self.environment.topobjdir, 'dist/include/%s.h' % stem)
-                                           for stem in self._idl_manager.idl_stems())
-
+            self._handle_xpidl_sources()
 
         for config in self._configs:
             self.backend_input_files.add(config.source)
@@ -229,34 +231,22 @@ class CommonBackend(BuildBackend):
         shared_libs = []
         static_libs = []
         objs = []
-        no_pgo_objs = []
 
         seen_objs = set()
-        seen_pgo_gen_only_objs = set()
         seen_libs = set()
 
         def add_objs(lib):
-            seen_pgo_gen_only_objs.update(lib.pgo_gen_only_objs)
-
             for o in lib.objs:
                 if o in seen_objs:
                     continue
 
-                # The front end should keep pgo generate-only objects and
-                # normal objects separate.
-                assert o not in seen_pgo_gen_only_objs
-
                 seen_objs.add(o)
                 objs.append(o)
-                # This is slightly odd, but for consistency with the
-                # recursivemake backend we don't replace OBJ_SUFFIX if any
-                # object in a library has `no_pgo` set.
-                if lib.no_pgo_objs or lib.no_pgo:
-                    no_pgo_objs.append(o)
 
         def expand(lib, recurse_objs, system_libs):
-            if isinstance(lib, (HostLibrary, StaticLibrary)):
-                if not isinstance(lib, HostLibrary) and lib.no_expand_lib:
+            if isinstance(lib, (HostLibrary, StaticLibrary,
+                                SandboxedWasmLibrary)):
+                if lib.no_expand_lib:
                     static_libs.append(lib)
                     recurse_objs = False
                 elif recurse_objs:
@@ -278,11 +268,11 @@ class CommonBackend(BuildBackend):
 
         add_objs(input_bin)
 
-        system_libs = not isinstance(input_bin, (HostLibrary, StaticLibrary))
+        system_libs = not isinstance(input_bin, (HostLibrary, StaticLibrary,
+                                                 SandboxedWasmLibrary))
         for lib in input_bin.linked_libraries:
-            if isinstance(lib, RustLibrary):
-                continue
-            elif isinstance(lib, (HostLibrary, StaticLibrary)):
+            if isinstance(lib, (HostLibrary, StaticLibrary,
+                                SandboxedWasmLibrary)):
                 expand(lib, True, system_libs)
             elif isinstance(lib, SharedLibrary):
                 if lib not in seen_libs:
@@ -294,8 +284,7 @@ class CommonBackend(BuildBackend):
                 seen_libs.add(lib)
                 os_libs.append(lib)
 
-        return (objs, sorted(seen_pgo_gen_only_objs), no_pgo_objs, \
-                shared_libs, os_libs, static_libs)
+        return (objs, shared_libs, os_libs, static_libs)
 
     def _make_list_file(self, kind, objdir, objs, name):
         if not objs:
@@ -332,7 +321,24 @@ class CommonBackend(BuildBackend):
         return ref
 
     def _handle_generated_sources(self, files):
-        self._generated_sources.update(mozpath.relpath(f, self.environment.topobjdir) for f in files)
+        self._generated_sources.update(mozpath.relpath(
+            f, self.environment.topobjdir) for f in files)
+
+    def _handle_xpidl_sources(self):
+        bindings_rt_dir = mozpath.join(self.environment.topobjdir, 'dist', 'xpcrs', 'rt')
+        bindings_bt_dir = mozpath.join(self.environment.topobjdir, 'dist', 'xpcrs', 'bt')
+        include_dir = mozpath.join(self.environment.topobjdir, 'dist', 'include')
+
+        self._handle_generated_sources(
+            itertools.chain.from_iterable(
+                (
+                    mozpath.join(include_dir, '%s.h' % stem),
+                    mozpath.join(bindings_rt_dir, '%s.rs' % stem),
+                    mozpath.join(bindings_bt_dir, '%s.rs' % stem),
+                )
+                for stem in self._idl_manager.idl_stems()
+            )
+        )
 
     def _handle_webidl_collection(self, webidls):
 
@@ -396,7 +402,7 @@ class CommonBackend(BuildBackend):
                 includeTemplate += (
                     '\n'
                     '#if defined(_WINDOWS_) && !defined(MOZ_WRAPPED_WINDOWS_H)\n'
-                    '#pragma message("wrapper failure reason: " MOZ_WINDOWS_WRAPPER_DISABLED_REASON)\n'
+                    '#pragma message("wrapper failure reason: " MOZ_WINDOWS_WRAPPER_DISABLED_REASON)\n'  # noqa
                     '#error "%(cppfile)s included unwrapped windows.h"\n'
                     "#endif")
             includeTemplate += (
@@ -411,7 +417,7 @@ class CommonBackend(BuildBackend):
                 'so it cannot be built in unified mode."\n'
                 '#undef INITGUID\n'
                 '#endif')
-            f.write('\n'.join(includeTemplate % { "cppfile": s } for
+            f.write('\n'.join(includeTemplate % {"cppfile": s} for
                               s in source_filenames))
 
     def _write_unified_files(self, unified_source_mapping, output_directory,
@@ -457,7 +463,6 @@ class CommonBackend(BuildBackend):
         ab_cd = obj.config.substs['MOZ_UI_LOCALE'][0]
         pp.context.update(
             AB_CD=ab_cd,
-            BUILD_FASTER=1,
         )
         pp.out = JarManifestParser()
         try:

@@ -1,11 +1,6 @@
-if test -d "$topsrcdir/clang/bin"; then
-    CLANG_DIR=`cd "$topsrcdir/clang/bin" ; pwd`
+if test -d "$MOZ_FETCHES_DIR/clang/bin"; then
+    CLANG_DIR=`cd "$MOZ_FETCHES_DIR/clang/bin" ; pwd`
     export PATH="${CLANG_DIR}:${PATH}"
-
-    if $(cd $topsrcdir/clang/lib/clang/* && test -d lib/windows); then
-        CLANG_LIB_DIR="$(cd $topsrcdir/clang/lib/clang/* && cd lib/windows && pwd)"
-        export LIB=$LIB:$CLANG_LIB_DIR
-    fi
 fi
 
 export CC=clang-cl
@@ -13,7 +8,14 @@ export CXX=clang-cl
 export ENABLE_CLANG_PLUGIN=1
 
 if [ -n "$UPLOAD_PATH" ]; then
-    DIAGNOSTICS_DIR="$(cmd.exe //e:on //c if not exist ${UPLOAD_PATH} mkdir ${UPLOAD_PATH} && cd ${UPLOAD_PATH} && pwd)"
+    case "$(uname -s)" in
+    MINGW*)
+        DIAGNOSTICS_DIR="$(cmd.exe //e:on //c if not exist ${UPLOAD_PATH} mkdir ${UPLOAD_PATH} && cd ${UPLOAD_PATH} && pwd)"
+        ;;
+    *)
+        DIAGNOSTICS_DIR="${UPLOAD_PATH}"
+        ;;
+    esac
     export CFLAGS="$CFLAGS -fcrash-diagnostics-dir=${DIAGNOSTICS_DIR}"
     export CXXFLAGS="$CXXFLAGS -fcrash-diagnostics-dir=${DIAGNOSTICS_DIR}"
 fi

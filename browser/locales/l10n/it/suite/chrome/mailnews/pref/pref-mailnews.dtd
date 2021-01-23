@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.mailnews.title              "Posta e gruppi di discussione">
+<!ENTITY generalSettings.caption          "Impostazioni generali">
+<!ENTITY confirmMove.label                "Chiedi conferma prima di spostare cartelle nel Cestino">
+<!ENTITY confirmMove.accesskey            "C">
+<!ENTITY preserveThreading.label          "Mantieni la divisione per argomenti durante l'ordinamento dei messaggi">
+<!ENTITY preserveThreading.accesskey      "M">
+<!ENTITY loadInBackground.label           "Passa alla nuova scheda aperta">
+<!ENTITY loadInBackground.accesskey       "P">
+<!ENTITY mailBiffOnNewWindow.label        "Controlla i nuovi messaggi solo dopo l'apertura di Posta e gruppi di discussione">
+<!ENTITY mailBiffOnNewWindow.accesskey    "o">
+
+<!ENTITY defaultMailSettings.description  "Rendi &brandShortName; l'applicazione predefinita per:">
+<!ENTITY setDefaultMail.label             "Posta">
+<!ENTITY setDefaultMail.accesskey         "P">
+<!ENTITY setDefaultNews.label             "Gruppi di discussione">
+<!ENTITY setDefaultNews.accesskey         "G">
+<!ENTITY setDefaultFeed.label             "Feed">
+<!ENTITY setDefaultFeed.accesskey         "F">
+
+<!ENTITY useInternalSettings.description  "Utilizza &brandShortName; Posta e gruppi di discussione quando si apre un link nel browser per:">
+<!ENTITY useInternalMail.label            "Posta (mailto:)">
+<!ENTITY useInternalMail.accesskey        "a">
+<!ENTITY useInternalNews.label            "Gruppi di discussione (news:, snews:, nntp:)">
+<!ENTITY useInternalNews.accesskey        "s">
+
+<!ENTITY messengerStartPage.caption       "Pagina di avvio Posta">
+<!ENTITY enableStartPage.label            "All'avvio di Posta, visualizza la pagina iniziale nell'area dei messaggi">
+<!ENTITY enableStartPage.accesskey        "A">
+<!ENTITY location.label                   "Indirizzo:">
+<!ENTITY location.accesskey               "I">
+<!ENTITY useDefault.label                 "Ripristina predefinito">
+<!ENTITY useDefault.accesskey             "d">
+<!ENTITY rememberLastMsg.label            "Ricorda l'ultimo messaggio selezionato">
+<!ENTITY rememberLastMsg.accesskey        "R">

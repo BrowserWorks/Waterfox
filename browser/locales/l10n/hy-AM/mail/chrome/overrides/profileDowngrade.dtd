@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE:
+ This UI can be most easily shown by modifying the version in compatibility.ini
+ to a newer version and then starting Thunderbird.
+ For this feature, "installation" is used to mean "this discrete download of
+ Thunderbird" and "version" is used to mean "the specific revision number of a
+ given Thunderbird channel". These terms are not synonymous.
+-->
+<!ENTITY window.title "Դուք սկսել եք &brandProductName;-ի հին տարբերակը">
+<!ENTITY window.style "width: 490px;">
+
+<!ENTITY window.nosync2 "&brandProductName;-ի ավելի նոր տարբերակը Ձեր հաշվում կարող է փոփոխություններ կատարել, որոնք այլևս համատեղելի չեն այս հին տարբերակի հետ։ Օգտագործեք այս հաշիվը միայն այդ նոր տարբերակի հետ կամ այս տեղակայման համար &brandShortName;-ի նոր հաշիվ ստեղծեք։ Նոր հաշվի ստեղծումը  նորից պահաջում է Ձեր հաշիվների սահմանում, օրացույցեր և հավելումներ։">
+
+<!ENTITY window.moreinfo "Լրացուցիչ տեղեկություններ…">
+<!ENTITY window.create "Ստեղծել նոր հաշիվ">
+<!ENTITY window.quit-win "Ելք">
+<!ENTITY window.quit-nonwin "Փակել">

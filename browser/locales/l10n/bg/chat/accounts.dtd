@@ -1,0 +1,41 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Account manager window for Instantbird -->
+<!ENTITY accounts.title                      "Сметки - &brandShortName;">
+<!ENTITY accountManager.width                "450">
+<!-- Instant messaging account status window for Thunderbird -->
+<!ENTITY accountsWindow.title                "Състояние на незабавните съобщения">
+<!ENTITY accountsWindow2.style               "width: 41em; height: 27em;">
+
+<!ENTITY accountManager.newAccount.label     "Нова сметка">
+<!ENTITY accountManager.newAccount.accesskey "Н">
+<!ENTITY accountManager.close.label          "Затваряне">
+<!ENTITY accountManager.close.accesskey      "З">
+<!-- This should match account.commandkey in instantbird.dtd -->
+<!ENTITY accountManager.close.commandkey     "a">
+<!-- This title must be short, displayed with a big font size -->
+<!ENTITY accountManager.noAccount.title      "Няма настроена сметка">
+<!ENTITY accountManager.noAccount.description "Щракнете на бутона &accountManager.newAccount.label; и оставете &brandShortName; да ви води в процеса на настройка.">
+<!ENTITY account.autoSignOn.label     "Вписване при пускане">
+<!ENTITY account.autoSignOn.accesskey "В">
+<!ENTITY account.connect.label        "Свързване">
+<!ENTITY account.connect.accesskey    "С">
+<!ENTITY account.disconnect.label     "Изключване">
+<!ENTITY account.disconnect.accesskey "И">
+<!ENTITY account.delete.label         "Изтриване">
+<!ENTITY account.delete.accesskey     "И">
+<!ENTITY account.edit.label           "Свойства">
+<!ENTITY account.edit.accesskey       "С">
+<!ENTITY account.moveup.label         "Преместване нагоре">
+<!ENTITY account.movedown.label       "Преместване на&amp;долу">
+<!ENTITY account.cancelReconnection.label         "Прекъсване на повторното свързване">
+<!ENTITY account.cancelReconnection.accesskey     "П">
+<!ENTITY account.copyDebugLog.label     "Копиране на журнала">
+<!ENTITY account.copyDebugLog.accesskey "К">
+<!ENTITY account.showDebugLog.label     "Показване на журнала">
+<!ENTITY account.showDebugLog.accesskey "П">
+<!ENTITY account.connecting           "Свързване…">
+<!ENTITY account.disconnecting        "Изключване…">
+<!ENTITY account.disconnected         "Извън мрежа">

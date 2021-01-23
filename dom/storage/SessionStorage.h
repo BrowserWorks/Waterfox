@@ -23,16 +23,15 @@ class SessionStorage final : public Storage {
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(SessionStorage, Storage)
 
   SessionStorage(nsPIDOMWindowInner* aWindow, nsIPrincipal* aPrincipal,
-                 SessionStorageCache* aCache, SessionStorageManager* aManager,
-                 const nsAString& aDocumentURI, bool aIsPrivate);
+                 nsIPrincipal* aStoragePrincipal, SessionStorageCache* aCache,
+                 SessionStorageManager* aManager, const nsAString& aDocumentURI,
+                 bool aIsPrivate);
 
   StorageType Type() const override { return eSessionStorage; }
 
   SessionStorageManager* Manager() const { return mManager; }
 
   SessionStorageCache* Cache() const { return mCache; }
-
-  already_AddRefed<SessionStorage> Clone() const;
 
   int64_t GetOriginQuotaUsage() const override;
 

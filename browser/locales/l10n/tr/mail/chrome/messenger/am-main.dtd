@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-main.xul -->
+
+<!-- extracted from am-main.xhtml -->
+
+<!ENTITY accountTitle.label "Hesap Ayarları">
+<!ENTITY accountName.label "Hesap adı:">
+<!ENTITY accountName.accesskey "d">
+<!ENTITY identityTitle.label "Varsayılan kimlik">
+<!ENTITY identityDesc.label "Her hesabın kendi kimliği vardır. Alıcılar bu bilgileri e-postanızı okudukları zaman görürler.">
+<!ENTITY name.label "İsminiz:">
+<!ENTITY name.accesskey "s">
+<!ENTITY email.label "E-posta adresi:">
+<!ENTITY email.accesskey "E">
+<!ENTITY catchAll.label "Teslim üst bilgileri eşleştiğinde bu kimlikten yanıt ver:">
+<!ENTITY catchAll.accesskey "ü">
+<!ENTITY replyTo.label "Reply-to adresi:">
+<!ENTITY replyTo.accesskey "s">
+<!ENTITY replyTo.placeholder "Alıcılar bu diğer adrese yanıt verecektir">
+<!ENTITY organization.label "Kurum:">
+<!ENTITY organization.accesskey "K">
+<!ENTITY signatureText.label "İmza metni:">
+<!ENTITY signatureText.accesskey "n">
+<!ENTITY signatureHtml.label "HTML kullan (örn. &lt;b&gt;kalın&lt;/b&gt;)">
+<!ENTITY signatureHtml.accesskey "L">
+<!ENTITY signatureFile.label "Bunun yerine imzayı bir dosyadan ekle (metin, HTML veya resim):">
+<!ENTITY signatureFile.accesskey "d">
+<!ENTITY edit.label "Düzenle…">
+<!ENTITY choose.label "Seç…">
+<!ENTITY choose.accesskey "e">
+<!ENTITY editVCard.label "Kartviziti düzenle…">
+<!ENTITY editVCard.accesskey "d">
+<!-- LOCALIZATION NOTE (attachVCard.label) : do not translate "vCard" in below line -->
+<!ENTITY attachVCard.label "İletilere vCard'ımı ekle">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY manageIdentities.label "Kimlikleri yönet…">
+<!ENTITY manageIdentities.accesskey "m">
+
+<!-- LOCALIZATION NOTE (smtpName.label) : do not translate "SMTP" in below line -->
+<!ENTITY smtpName.label "Giden sunucusu (SMTP):">
+<!ENTITY smtpName.accesskey "u">
+<!ENTITY smtpDefaultServer.label "Varsayılan sunucuyu kullan">
+
+<!ENTITY smtpServerEdit.label "SMTP sunucusunu düzenle…">
+<!ENTITY smtpServerEdit.accesskey "P">

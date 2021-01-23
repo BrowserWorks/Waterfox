@@ -22,14 +22,13 @@
  * header.
  *
  */
+"use strict";
 
 const { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
 
-Cu.importGlobalProperties(["XMLHttpRequest"]);
-
 // the topic we observe to use the API.  http-on-opening-request might also
 // work for some purposes.
-redirectHook = "http-on-examine-response";
+let redirectHook = "http-on-examine-response";
 
 var httpServer = null,
   httpServer2 = null;
@@ -120,24 +119,18 @@ function Redirector() {
 Redirector.prototype = {
   // This class observes an event and uses that to
   // trigger a redirectTo(uri) redirect using the new API
-  register: function() {
+  register() {
     Cc["@mozilla.org/observer-service;1"]
       .getService(Ci.nsIObserverService)
       .addObserver(this, redirectHook, true);
   },
 
-  QueryInterface: function(iid) {
-    if (
-      iid.equals(Ci.nsIObserver) ||
-      iid.equals(Ci.nsISupportsWeakReference) ||
-      iid.equals(Ci.nsISupports)
-    ) {
-      return this;
-    }
-    throw Cr.NS_NOINTERFACE;
-  },
+  QueryInterface: ChromeUtils.generateQI([
+    "nsIObserver",
+    "nsISupportsWeakReference",
+  ]),
 
-  observe: function(subject, topic, data) {
+  observe(subject, topic, data) {
     if (topic == redirectHook) {
       if (!(subject instanceof Ci.nsIHttpChannel)) {
         do_throw(redirectHook + " observed a non-HTTP channel");

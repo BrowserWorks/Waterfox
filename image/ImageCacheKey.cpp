@@ -5,21 +5,23 @@
 
 #include "ImageCacheKey.h"
 
+#include <utility>
+
+#include "mozilla/ContentBlocking.h"
 #include "mozilla/HashFunctions.h"
-#include "mozilla/Move.h"
+#include "mozilla/StorageAccess.h"
+#include "mozilla/StoragePrincipalHelper.h"
 #include "mozilla/Unused.h"
-#include "nsContentUtils.h"
-#include "nsICookieService.h"
-#include "nsLayoutUtils.h"
-#include "nsString.h"
-#include "mozilla/AntiTrackingCommon.h"
-#include "mozilla/HashFunctions.h"
 #include "mozilla/dom/BlobURLProtocolHandler.h"
+#include "mozilla/dom/Document.h"
 #include "mozilla/dom/File.h"
 #include "mozilla/dom/ServiceWorkerManager.h"
-#include "mozilla/dom/Document.h"
+#include "mozilla/StaticPrefs_privacy.h"
+#include "nsContentUtils.h"
 #include "nsHashKeys.h"
+#include "nsLayoutUtils.h"
 #include "nsPrintfCString.h"
+#include "nsString.h"
 
 namespace mozilla {
 
@@ -44,12 +46,12 @@ ImageCacheKey::ImageCacheKey(nsIURI* aURI, const OriginAttributes& aAttrs,
                              Document* aDocument)
     : mURI(aURI),
       mOriginAttributes(aAttrs),
-      mControlledDocument(GetSpecialCaseDocumentToken(aDocument, aURI)),
-      mTopLevelBaseDomain(GetTopLevelBaseDomain(aDocument, aURI)),
+      mControlledDocument(GetSpecialCaseDocumentToken(aDocument)),
+      mIsolationKey(GetIsolationKey(aDocument, aURI)),
       mIsChrome(false) {
-  if (SchemeIs("blob")) {
+  if (mURI->SchemeIs("blob")) {
     mBlobSerial = BlobSerial(mURI);
-  } else if (SchemeIs("chrome")) {
+  } else if (mURI->SchemeIs("chrome")) {
     mIsChrome = true;
   }
 }
@@ -60,7 +62,7 @@ ImageCacheKey::ImageCacheKey(const ImageCacheKey& aOther)
       mBlobRef(aOther.mBlobRef),
       mOriginAttributes(aOther.mOriginAttributes),
       mControlledDocument(aOther.mControlledDocument),
-      mTopLevelBaseDomain(aOther.mTopLevelBaseDomain),
+      mIsolationKey(aOther.mIsolationKey),
       mHash(aOther.mHash),
       mIsChrome(aOther.mIsChrome) {}
 
@@ -70,7 +72,7 @@ ImageCacheKey::ImageCacheKey(ImageCacheKey&& aOther)
       mBlobRef(std::move(aOther.mBlobRef)),
       mOriginAttributes(aOther.mOriginAttributes),
       mControlledDocument(aOther.mControlledDocument),
-      mTopLevelBaseDomain(aOther.mTopLevelBaseDomain),
+      mIsolationKey(aOther.mIsolationKey),
       mHash(aOther.mHash),
       mIsChrome(aOther.mIsChrome) {}
 
@@ -82,8 +84,8 @@ bool ImageCacheKey::operator==(const ImageCacheKey& aOther) const {
   }
   // Don't share the image cache between two top-level documents of different
   // base domains.
-  if (!mTopLevelBaseDomain.Equals(aOther.mTopLevelBaseDomain,
-                                  nsCaseInsensitiveCStringComparator())) {
+  if (!mIsolationKey.Equals(aOther.mIsolationKey,
+                            nsCaseInsensitiveCStringComparator)) {
     return false;
   }
   // The origin attributes always have to match.
@@ -138,19 +140,13 @@ void ImageCacheKey::EnsureHash() const {
     hash = HashString(spec);
   }
 
-  hash = AddToHash(hash, HashString(suffix), HashString(mTopLevelBaseDomain),
+  hash = AddToHash(hash, HashString(suffix), HashString(mIsolationKey),
                    HashString(ptr));
   mHash.emplace(hash);
 }
 
-bool ImageCacheKey::SchemeIs(const char* aScheme) {
-  bool matches = false;
-  return NS_SUCCEEDED(mURI->SchemeIs(aScheme, &matches)) && matches;
-}
-
 /* static */
-void* ImageCacheKey::GetSpecialCaseDocumentToken(Document* aDocument,
-                                                 nsIURI* aURI) {
+void* ImageCacheKey::GetSpecialCaseDocumentToken(Document* aDocument) {
   // Cookie-averse documents can never have storage granted to them.  Since they
   // may not have inner windows, they would require special handling below, so
   // just bail out early here.
@@ -169,17 +165,27 @@ void* ImageCacheKey::GetSpecialCaseDocumentToken(Document* aDocument,
 }
 
 /* static */
-nsCString ImageCacheKey::GetTopLevelBaseDomain(Document* aDocument,
-                                               nsIURI* aURI) {
+nsCString ImageCacheKey::GetIsolationKey(Document* aDocument, nsIURI* aURI) {
   if (!aDocument || !aDocument->GetInnerWindow()) {
     return EmptyCString();
   }
 
+  // Network-state isolation
+  if (StaticPrefs::privacy_partition_network_state()) {
+    OriginAttributes oa;
+    StoragePrincipalHelper::GetOriginAttributesForNetworkState(aDocument, oa);
+
+    nsAutoCString suffix;
+    oa.CreateSuffix(suffix);
+
+    return std::move(suffix);
+  }
+
   // If the window is 3rd party resource, let's see if first-party storage
   // access is granted for this image.
-  if (nsContentUtils::IsThirdPartyTrackingResourceWindow(
-          aDocument->GetInnerWindow())) {
-    return nsContentUtils::StorageDisabledByAntiTracking(aDocument, aURI)
+  if (nsContentUtils::IsThirdPartyWindowOrChannel(aDocument->GetInnerWindow(),
+                                                  nullptr, nullptr)) {
+    return StorageDisabledByAntiTracking(aDocument, aURI)
                ? aDocument->GetBaseDomain()
                : EmptyCString();
   }
@@ -190,10 +196,11 @@ nsCString ImageCacheKey::GetTopLevelBaseDomain(Document* aDocument,
   // this point.  The best approach here is to be conservative: if we are sure
   // that the permission is granted, let's return 0. Otherwise, let's make a
   // unique image cache per the top-level document eTLD+1.
-  if (!AntiTrackingCommon::MaybeIsFirstPartyStorageAccessGrantedFor(
+  if (!ContentBlocking::ApproximateAllowAccessForWithoutChannel(
           aDocument->GetInnerWindow(), aURI)) {
-    nsPIDOMWindowOuter* top = aDocument->GetInnerWindow()->GetScriptableTop();
-    nsPIDOMWindowInner* topInner = top->GetCurrentInnerWindow();
+    nsPIDOMWindowOuter* top =
+        aDocument->GetInnerWindow()->GetInProcessScriptableTop();
+    nsPIDOMWindowInner* topInner = top ? top->GetCurrentInnerWindow() : nullptr;
     if (!topInner) {
       return aDocument
           ->GetBaseDomain();  // because we don't have anything better!

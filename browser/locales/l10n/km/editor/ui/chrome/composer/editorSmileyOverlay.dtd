@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Smiley Menu items -->
+
+<!ENTITY insertSmiley.label "Ժպտիկ">
+<!ENTITY insertSmiley.accesskey "S">
+
+<!ENTITY smiley1Cmd.label "Ժպիտ">
+<!ENTITY smiley1Cmd.accesskey "S">
+<!ENTITY smiley1Cmd.tooltip "Ներմուծել ժպտացող երես">
+<!ENTITY smiley2Cmd.label "Մռայլ">
+<!ENTITY smiley2Cmd.accesskey "F">
+<!ENTITY smiley2Cmd.tooltip "Ներմուծել մռայլ երես">
+<!ENTITY smiley3Cmd.label "Հուշում">
+<!ENTITY smiley3Cmd.accesskey "W">
+<!ENTITY smiley3Cmd.tooltip "Ներմուծել թարթող երես">
+<!ENTITY smiley4Cmd.label "Լեզվանի">
+<!ENTITY smiley4Cmd.accesskey "T">
+<!ENTITY smiley4Cmd.tooltip "Ներմուծել լեզվանի երես">
+<!ENTITY smiley5Cmd.label "Ծիծաղող">
+<!ENTITY smiley5Cmd.accesskey "L">
+<!ENTITY smiley5Cmd.tooltip "Ներմուծել ծիծաղող երես">
+<!ENTITY smiley6Cmd.label "Շփոթված">
+<!ENTITY smiley6Cmd.accesskey "E">
+<!ENTITY smiley6Cmd.tooltip "Ներմուծել շփոթված երես">
+<!ENTITY smiley7Cmd.label "Անորոշ">
+<!ENTITY smiley7Cmd.accesskey "U">
+<!ENTITY smiley7Cmd.tooltip "Ներմուծել անորոշ երես">
+<!ENTITY smiley8Cmd.label "Զարմանք">
+<!ENTITY smiley8Cmd.accesskey "p">
+<!ENTITY smiley8Cmd.tooltip "Ներմուծել զարմացած երես">
+<!ENTITY smiley9Cmd.label "Համբույր">
+<!ENTITY smiley9Cmd.accesskey "K">
+<!ENTITY smiley9Cmd.tooltip "Ներմուծել համբուրող երես">
+<!ENTITY smiley10Cmd.label "Գոռալ">
+<!ENTITY smiley10Cmd.accesskey "Y">
+<!ENTITY smiley10Cmd.tooltip "Ներմուծել ճչացող երես">
+<!ENTITY smiley11Cmd.label "Գժոտ">
+<!ENTITY smiley11Cmd.accesskey "C">
+<!ENTITY smiley11Cmd.tooltip "Ներմուծել գժոտ երես">
+<!ENTITY smiley12Cmd.label "Փողոտ ">
+<!ENTITY smiley12Cmd.accesskey "M">
+<!ENTITY smiley12Cmd.tooltip "Ներմուծել փողի գլխով երես">
+<!ENTITY smiley13Cmd.label "Գլխիվայր ">
+<!ENTITY smiley13Cmd.accesskey "o">
+<!ENTITY smiley13Cmd.tooltip "Ներմուծել գլխիվայր երես">
+<!ENTITY smiley14Cmd.label "Անմեղ">
+<!ENTITY smiley14Cmd.accesskey "I">
+<!ENTITY smiley14Cmd.tooltip "Ներմուծել անմեղ երես">
+<!ENTITY smiley15Cmd.label "Լաց">
+<!ENTITY smiley15Cmd.accesskey "r">
+<!ENTITY smiley15Cmd.tooltip "Ներմուծել լացող երես">
+<!ENTITY smiley16Cmd.label "Դուրս-ցցված">
+<!ENTITY smiley16Cmd.accesskey "a">
+<!ENTITY smiley16Cmd.tooltip "Ներմուծել դուրս-ցցված երես">
+<!ENTITY SmileButton.tooltip "Ներմուծել ժպտացող երես">
+

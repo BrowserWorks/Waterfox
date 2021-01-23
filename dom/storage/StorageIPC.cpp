@@ -14,6 +14,8 @@
 #include "mozilla/ipc/PBackgroundParent.h"
 #include "mozilla/dom/ContentParent.h"
 #include "mozilla/Unused.h"
+#include "nsCOMPtr.h"
+#include "nsIPrincipal.h"
 #include "nsThreadUtils.h"
 
 namespace mozilla {
@@ -69,23 +71,33 @@ void LocalStorageCacheChild::ActorDestroy(ActorDestroyReason aWhy) {
 }
 
 mozilla::ipc::IPCResult LocalStorageCacheChild::RecvObserve(
-    const PrincipalInfo& aPrincipalInfo, const uint32_t& aPrivateBrowsingId,
-    const nsString& aDocumentURI, const nsString& aKey,
-    const nsString& aOldValue, const nsString& aNewValue) {
+    const PrincipalInfo& aPrincipalInfo,
+    const PrincipalInfo& aCachePrincipalInfo,
+    const uint32_t& aPrivateBrowsingId, const nsString& aDocumentURI,
+    const nsString& aKey, const nsString& aOldValue,
+    const nsString& aNewValue) {
   AssertIsOnOwningThread();
 
-  nsresult rv;
-  nsCOMPtr<nsIPrincipal> principal =
-      PrincipalInfoToPrincipal(aPrincipalInfo, &rv);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
+  auto principalOrErr = PrincipalInfoToPrincipal(aPrincipalInfo);
+  if (NS_WARN_IF(principalOrErr.isErr())) {
     return IPC_FAIL_NO_REASON(this);
   }
 
-  Storage::NotifyChange(/* aStorage */ nullptr, principal, aKey, aOldValue,
-                        aNewValue,
-                        /* aStorageType */ u"localStorage", aDocumentURI,
-                        /* aIsPrivate */ !!aPrivateBrowsingId,
-                        /* aImmediateDispatch */ true);
+  auto cachePrincipalOrErr = PrincipalInfoToPrincipal(aCachePrincipalInfo);
+  if (NS_WARN_IF(cachePrincipalOrErr.isErr())) {
+    return IPC_FAIL_NO_REASON(this);
+  }
+
+  nsCOMPtr<nsIPrincipal> principal = principalOrErr.unwrap();
+  nsCOMPtr<nsIPrincipal> cachePrincipal = cachePrincipalOrErr.unwrap();
+
+  if (StorageUtils::PrincipalsEqual(principal, cachePrincipal)) {
+    Storage::NotifyChange(/* aStorage */ nullptr, principal, aKey, aOldValue,
+                          aNewValue,
+                          /* aStorageType */ u"localStorage", aDocumentURI,
+                          /* aIsPrivate */ !!aPrivateBrowsingId,
+                          /* aImmediateDispatch */ true);
+  }
 
   return IPC_OK();
 }
@@ -122,7 +134,7 @@ StorageDBChild::StorageDBChild(LocalStorageManager* aManager)
   MOZ_ASSERT(!NextGenLocalStorageEnabled());
 }
 
-StorageDBChild::~StorageDBChild() {}
+StorageDBChild::~StorageDBChild() = default;
 
 // static
 StorageDBChild* StorageDBChild::Get() {
@@ -162,7 +174,7 @@ StorageDBChild* StorageDBChild::GetOrCreate() {
 
 nsTHashtable<nsCStringHashKey>& StorageDBChild::OriginsHavingData() {
   if (!mOriginsHavingData) {
-    mOriginsHavingData = new nsTHashtable<nsCStringHashKey>;
+    mOriginsHavingData = MakeUnique<nsTHashtable<nsCStringHashKey>>();
   }
 
   return *mOriginsHavingData;
@@ -242,7 +254,7 @@ void StorageDBChild::SyncPreload(LocalStorageCacheBridge* aCache,
   // incoming async responses from the parent, hence we have to do a sync
   // preload instead.  We are smart though, we only demand keys that are left to
   // load in case the async preload has already loaded some keys.
-  InfallibleTArray<nsString> keys, values;
+  nsTArray<nsString> keys, values;
   nsresult rv;
   SendPreload(aCache->OriginSuffix(), aCache->OriginNoSuffix(),
               aCache->LoadedCount(), &keys, &values, &rv);
@@ -453,8 +465,8 @@ mozilla::ipc::IPCResult SessionStorageObserverChild::RecvObserve(
 }
 
 LocalStorageCacheParent::LocalStorageCacheParent(
-    const PrincipalInfo& aPrincipalInfo, const nsACString& aOriginKey,
-    uint32_t aPrivateBrowsingId)
+    const mozilla::ipc::PrincipalInfo& aPrincipalInfo,
+    const nsACString& aOriginKey, uint32_t aPrivateBrowsingId)
     : mPrincipalInfo(aPrincipalInfo),
       mOriginKey(aOriginKey),
       mPrivateBrowsingId(aPrivateBrowsingId),
@@ -512,9 +524,14 @@ mozilla::ipc::IPCResult LocalStorageCacheParent::RecvNotify(
 
   for (LocalStorageCacheParent* localStorageCacheParent : *array) {
     if (localStorageCacheParent != this) {
+      // When bug 1443925 is fixed, we can compare mPrincipalInfo against
+      // localStorageCacheParent->PrincipalInfo() here on the background thread
+      // instead of posting it to the main thread.  The advantage of doing so is
+      // that it would save an IPC message in the case where the principals do
+      // not match.
       Unused << localStorageCacheParent->SendObserve(
-          mPrincipalInfo, mPrivateBrowsingId, aDocumentURI, aKey, aOldValue,
-          aNewValue);
+          mPrincipalInfo, localStorageCacheParent->PrincipalInfo(),
+          mPrivateBrowsingId, aDocumentURI, aKey, aOldValue, aNewValue);
     }
   }
 
@@ -606,7 +623,7 @@ void StorageDBParent::Init() {
 
   StorageDBThread* storageThread = StorageDBThread::Get();
   if (storageThread) {
-    InfallibleTArray<nsCString> scopes;
+    nsTArray<nsCString> scopes;
     storageThread->GetOriginsHavingData(&scopes);
     mozilla::Unused << SendOriginsHavingData(scopes);
   }
@@ -671,9 +688,8 @@ class SyncLoadCacheHelper : public LocalStorageCacheBridge {
  public:
   SyncLoadCacheHelper(const nsCString& aOriginSuffix,
                       const nsCString& aOriginNoSuffix,
-                      uint32_t aAlreadyLoadedCount,
-                      InfallibleTArray<nsString>* aKeys,
-                      InfallibleTArray<nsString>* aValues, nsresult* rv)
+                      uint32_t aAlreadyLoadedCount, nsTArray<nsString>* aKeys,
+                      nsTArray<nsString>* aValues, nsresult* rv)
       : mMonitor("DOM Storage SyncLoad IPC"),
         mSuffix(aOriginSuffix),
         mOrigin(aOriginNoSuffix),
@@ -730,8 +746,8 @@ class SyncLoadCacheHelper : public LocalStorageCacheBridge {
  private:
   Monitor mMonitor;
   nsCString mSuffix, mOrigin;
-  InfallibleTArray<nsString>* mKeys;
-  InfallibleTArray<nsString>* mValues;
+  nsTArray<nsString>* mKeys;
+  nsTArray<nsString>* mValues;
   nsresult* mRv;
   bool mLoaded;
   uint32_t mLoadedCount;
@@ -741,8 +757,8 @@ class SyncLoadCacheHelper : public LocalStorageCacheBridge {
 
 mozilla::ipc::IPCResult StorageDBParent::RecvPreload(
     const nsCString& aOriginSuffix, const nsCString& aOriginNoSuffix,
-    const uint32_t& aAlreadyLoadedCount, InfallibleTArray<nsString>* aKeys,
-    InfallibleTArray<nsString>* aValues, nsresult* aRv) {
+    const uint32_t& aAlreadyLoadedCount, nsTArray<nsString>* aKeys,
+    nsTArray<nsString>* aValues, nsresult* aRv) {
   StorageDBThread* storageThread = StorageDBThread::GetOrCreate(mProfilePath);
   if (!storageThread) {
     return IPC_FAIL_NO_REASON(this);

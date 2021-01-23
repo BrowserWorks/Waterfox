@@ -1,15 +1,53 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+// @ts-check
 "use strict";
-const Services = require("Services");
+
+/**
+ * @typedef {import("./@types/perf").Action} Action
+ * @typedef {import("./@types/perf").Library} Library
+ * @typedef {import("./@types/perf").PerfFront} PerfFront
+ * @typedef {import("./@types/perf").SymbolTableAsTuple} SymbolTableAsTuple
+ * @typedef {import("./@types/perf").RecordingState} RecordingState
+ * @typedef {import("./@types/perf").GetSymbolTableCallback} GetSymbolTableCallback
+ * @typedef {import("./@types/perf").PreferenceFront} PreferenceFront
+ * @typedef {import("./@types/perf").PerformancePref} PerformancePref
+ * @typedef {import("./@types/perf").RecordingStateFromPreferences} RecordingStateFromPreferences
+ * @typedef {import("./@types/perf").RestartBrowserWithEnvironmentVariable} RestartBrowserWithEnvironmentVariable
+ * @typedef {import("./@types/perf").GetEnvironmentVariable} GetEnvironmentVariable
+ * @typedef {import("./@types/perf").GetActiveBrowsingContextID} GetActiveBrowsingContextID
+ * @typedef {import("./@types/perf").MinimallyTypedGeckoProfile} MinimallyTypedGeckoProfile
+ */
+
+const ChromeUtils = require("ChromeUtils");
+const { createLazyLoaders } = ChromeUtils.import(
+  "resource://devtools/client/performance-new/typescript-lazy-load.jsm.js"
+);
+
+const lazy = createLazyLoaders({
+  Chrome: () => require("chrome"),
+  Services: () => require("Services"),
+  OS: () => ChromeUtils.import("resource://gre/modules/osfile.jsm"),
+  ProfilerGetSymbols: () =>
+    ChromeUtils.import("resource://gre/modules/ProfilerGetSymbols.jsm"),
+  PerfSymbolication: () =>
+    ChromeUtils.import(
+      "resource://devtools/client/performance-new/symbolication.jsm.js"
+    ),
+});
 
 const TRANSFER_EVENT = "devtools:perf-html-transfer-profile";
 const SYMBOL_TABLE_REQUEST_EVENT = "devtools:perf-html-request-symbol-table";
 const SYMBOL_TABLE_RESPONSE_EVENT = "devtools:perf-html-reply-symbol-table";
+
+/** @type {PerformancePref["UIBaseUrl"]} */
 const UI_BASE_URL_PREF = "devtools.performance.recording.ui-base-url";
+/** @type {PerformancePref["UIBaseUrlPathPref"]} */
+const UI_BASE_URL_PATH_PREF = "devtools.performance.recording.ui-base-url-path";
+
 const UI_BASE_URL_DEFAULT = "https://profiler.firefox.com";
-const OBJDIRS_PREF = "devtools.performance.recording.objdirs";
+const UI_BASE_URL_PATH_DEFAULT = "/from-addon";
 
 /**
  * This file contains all of the privileged browser-specific functionality. This helps
@@ -23,14 +61,15 @@ const OBJDIRS_PREF = "devtools.performance.recording.objdirs";
  * profiler.firefox.com to be analyzed. This function opens up profiler.firefox.com
  * into a new browser tab, and injects the profile via a frame script.
  *
- * @param {object} profile - The Gecko profile.
- * @param {function} getSymbolTableCallback - A callback function with the signature
+ * @param {MinimallyTypedGeckoProfile} profile - The Gecko profile.
+ * @param {GetSymbolTableCallback} getSymbolTableCallback - A callback function with the signature
  *   (debugName, breakpadId) => Promise<SymbolTableAsTuple>, which will be invoked
  *   when profiler.firefox.com sends SYMBOL_TABLE_REQUEST_EVENT messages to us. This
  *   function should obtain a symbol table for the requested binary and resolve the
  *   returned promise with it.
  */
 function receiveProfile(profile, getSymbolTableCallback) {
+  const Services = lazy.Services();
   // Find the most recently used window, as the DevTools client could be in a variety
   // of hosts.
   const win = Services.wm.getMostRecentWindow("navigator:browser");
@@ -38,13 +77,20 @@ function receiveProfile(profile, getSymbolTableCallback) {
     throw new Error("No browser window");
   }
   const browser = win.gBrowser;
-  Services.focus.activeWindow = win;
+  win.focus();
 
+  // Allow the user to point to something other than profiler.firefox.com.
   const baseUrl = Services.prefs.getStringPref(
     UI_BASE_URL_PREF,
     UI_BASE_URL_DEFAULT
   );
-  const tab = browser.addWebTab(`${baseUrl}/from-addon`, {
+  // Allow tests to override the path.
+  const baseUrlPath = Services.prefs.getStringPref(
+    UI_BASE_URL_PATH_PREF,
+    UI_BASE_URL_PATH_DEFAULT
+  );
+
+  const tab = browser.addWebTab(`${baseUrl}${baseUrlPath}`, {
     triggeringPrincipal: Services.scriptSecurityManager.createNullPrincipal({
       userContextId: browser.contentPrincipal.userContextId,
     }),
@@ -69,11 +115,13 @@ function receiveProfile(profile, getSymbolTableCallback) {
         });
       },
       error => {
+        // Re-wrap the error object into an object that is Structured Clone-able.
+        const { name, message, lineNumber, fileName } = error;
         mm.sendAsyncMessage(SYMBOL_TABLE_RESPONSE_EVENT, {
           status: "error",
           debugName,
           breakpadId,
-          error: `${error}`,
+          error: { name, message, lineNumber, fileName },
         });
       }
     );
@@ -81,152 +129,141 @@ function receiveProfile(profile, getSymbolTableCallback) {
 }
 
 /**
- * Don't trust that the user has stored the correct value in preferences, or that it
- * even exists. Gracefully handle malformed data or missing data. Ensure that this
- * function always returns a valid array of strings.
- * @param {PreferenceFront} preferenceFront
- * @param {string} prefName
- * @param {array of string} defaultValue
- */
-async function _getArrayOfStringsPref(preferenceFront, prefName, defaultValue) {
-  let array;
-  try {
-    const text = await preferenceFront.getCharPref(prefName);
-    array = JSON.parse(text);
-  } catch (error) {
-    return defaultValue;
-  }
-
-  if (
-    Array.isArray(array) &&
-    array.every(feature => typeof feature === "string")
-  ) {
-    return array;
-  }
-
-  return defaultValue;
-}
-
-/**
- * Similar to _getArrayOfStringsPref, but gets the pref from the host browser
- * instance, *not* from the debuggee.
- * Don't trust that the user has stored the correct value in preferences, or that it
- * even exists. Gracefully handle malformed data or missing data. Ensure that this
- * function always returns a valid array of strings.
- * @param {string} prefName
- * @param {array of string} defaultValue
- */
-async function _getArrayOfStringsHostPref(prefName, defaultValue) {
-  let array;
-  try {
-    const text = Services.prefs.getStringPref(
-      prefName,
-      JSON.stringify(defaultValue)
-    );
-    array = JSON.parse(text);
-  } catch (error) {
-    return defaultValue;
-  }
-
-  if (
-    Array.isArray(array) &&
-    array.every(feature => typeof feature === "string")
-  ) {
-    return array;
-  }
-
-  return defaultValue;
-}
-
-/**
- * Attempt to get a int preference value from the debuggee.
+ * Returns a function getDebugPathFor(debugName, breakpadId) => Library which
+ * resolves a (debugName, breakpadId) pair to the library's information, which
+ * contains the absolute paths on the file system where the binary and its
+ * optional pdb file are stored.
  *
- * @param {PreferenceFront} preferenceFront
- * @param {string} prefName
- * @param {number} defaultValue
+ * This is needed for the following reason:
+ *  - In order to obtain a symbol table for a system library, we need to know
+ *    the library's absolute path on the file system. On Windows, we
+ *    additionally need to know the absolute path to the library's PDB file,
+ *    which we call the binary's "debugPath".
+ *  - Symbol tables are requested asynchronously, by the profiler UI, after the
+ *    profile itself has been obtained.
+ *  - When the symbol tables are requested, we don't want the profiler UI to
+ *    pass us arbitrary absolute file paths, as an extra defense against
+ *    potential information leaks.
+ *  - Instead, when the UI requests symbol tables, it identifies the library
+ *    with a (debugName, breakpadId) pair. We need to map that pair back to the
+ *    absolute paths.
+ *  - We get the "trusted" paths from the "libs" sections of the profile. We
+ *    trust these paths because we just obtained the profile directly from
+ *    Gecko.
+ *  - This function builds the (debugName, breakpadId) => Library mapping and
+ *    retains it on the returned closure so that it can be consulted after the
+ *    profile has been passed to the UI.
+ *
+ * @param {MinimallyTypedGeckoProfile} profile - The profile JSON object
+ * @returns {(debugName: string, breakpadId: string) => Library | undefined}
  */
-async function _getIntPref(preferenceFront, prefName, defaultValue) {
-  try {
-    return await preferenceFront.getIntPref(prefName);
-  } catch (error) {
-    return defaultValue;
+function createLibraryMap(profile) {
+  const map = new Map();
+
+  /**
+   * @param {MinimallyTypedGeckoProfile} processProfile
+   */
+  function fillMapForProcessRecursive(processProfile) {
+    for (const lib of processProfile.libs) {
+      const { debugName, breakpadId } = lib;
+      const key = [debugName, breakpadId].join(":");
+      map.set(key, lib);
+    }
+    for (const subprocess of processProfile.processes) {
+      fillMapForProcessRecursive(subprocess);
+    }
   }
+
+  fillMapForProcessRecursive(profile);
+  return function getLibraryFor(debugName, breakpadId) {
+    const key = [debugName, breakpadId].join(":");
+    return map.get(key);
+  };
 }
 
 /**
- * Get the recording settings from the preferences. These settings are stored once
- * for local debug targets, and another set of settings for remote targets. This
- * is helpful for configuring for remote targets like Android phones that may require
- * different features or configurations.
+ * Return a function `getSymbolTable` that calls getSymbolTableMultiModal with the
+ * right arguments.
  *
- * @param {PreferenceFront} preferenceFront
- * @param {object} defaultSettings See the getRecordingSettings selector for the shape
- *                                 of the object and how it gets defined.
+ * @param {MinimallyTypedGeckoProfile} profile - The raw profie (not gzipped).
+ * @param {() => string[]} getObjdirs - A function that returns an array of objdir paths
+ *   on the host machine that should be searched for relevant build artifacts.
+ * @param {PerfFront} perfFront
+ * @return {GetSymbolTableCallback}
  */
-async function getRecordingPreferences(preferenceFront, defaultSettings = {}) {
-  const [entries, interval, features, threads, objdirs] = await Promise.all([
-    _getIntPref(
-      preferenceFront,
-      `devtools.performance.recording.entries`,
-      defaultSettings.entries
-    ),
-    _getIntPref(
-      preferenceFront,
-      `devtools.performance.recording.interval`,
-      defaultSettings.interval
-    ),
-    _getArrayOfStringsPref(
-      preferenceFront,
-      `devtools.performance.recording.features`,
-      defaultSettings.features
-    ),
-    _getArrayOfStringsPref(
-      preferenceFront,
-      `devtools.performance.recording.threads`,
-      defaultSettings.threads
-    ),
-    _getArrayOfStringsHostPref(OBJDIRS_PREF, defaultSettings.objdirs),
-  ]);
+function createMultiModalGetSymbolTableFn(profile, getObjdirs, perfFront) {
+  const libraryGetter = createLibraryMap(profile);
 
-  // The pref stores the value in usec.
-  const newInterval = interval / 1000;
-  return { entries, interval: newInterval, features, threads, objdirs };
+  return async function getSymbolTable(debugName, breakpadId) {
+    const lib = libraryGetter(debugName, breakpadId);
+    if (!lib) {
+      throw new Error(
+        `Could not find the library for "${debugName}", "${breakpadId}".`
+      );
+    }
+    const objdirs = getObjdirs();
+    const { getSymbolTableMultiModal } = lazy.PerfSymbolication();
+    return getSymbolTableMultiModal(lib, objdirs, perfFront);
+  };
 }
 
 /**
- * Take the recording settings, as defined by the getRecordingSettings selector, and
- * persist them to preferences. Some of these prefs get persisted on the debuggee,
- * and some of them on the host browser instance.
+ * Restarts the browser with a given environment variable set to a value.
  *
- * @param {PreferenceFront} preferenceFront
- * @param {object} defaultSettings See the getRecordingSettings selector for the shape
- *                                 of the object and how it gets defined.
+ * @type {RestartBrowserWithEnvironmentVariable}
  */
-async function setRecordingPreferences(preferenceFront, settings) {
-  await Promise.all([
-    preferenceFront.setIntPref(
-      `devtools.performance.recording.entries`,
-      settings.entries
-    ),
-    preferenceFront.setIntPref(
-      `devtools.performance.recording.interval`,
-      // The pref stores the value in usec.
-      settings.interval * 1000
-    ),
-    preferenceFront.setCharPref(
-      `devtools.performance.recording.features`,
-      JSON.stringify(settings.features)
-    ),
-    preferenceFront.setCharPref(
-      `devtools.performance.recording.threads`,
-      JSON.stringify(settings.threads)
-    ),
-    Services.prefs.setCharPref(OBJDIRS_PREF, JSON.stringify(settings.objdirs)),
-  ]);
+function restartBrowserWithEnvironmentVariable(envName, value) {
+  const Services = lazy.Services();
+  const { Cc, Ci } = lazy.Chrome();
+  const env = Cc["@mozilla.org/process/environment;1"].getService(
+    Ci.nsIEnvironment
+  );
+  env.set(envName, value);
+
+  Services.startup.quit(
+    Services.startup.eForceQuit | Services.startup.eRestart
+  );
+}
+
+/**
+ * Gets an environment variable from the browser.
+ *
+ * @type {GetEnvironmentVariable}
+ */
+function getEnvironmentVariable(envName) {
+  const { Cc, Ci } = lazy.Chrome();
+  const env = Cc["@mozilla.org/process/environment;1"].getService(
+    Ci.nsIEnvironment
+  );
+  return env.get(envName);
+}
+
+/**
+ * @param {Window} window
+ * @param {string[]} objdirs
+ * @param {(objdirs: string[]) => unknown} changeObjdirs
+ */
+function openFilePickerForObjdir(window, objdirs, changeObjdirs) {
+  const { Cc, Ci } = lazy.Chrome();
+  const FilePicker = Cc["@mozilla.org/filepicker;1"].createInstance(
+    Ci.nsIFilePicker
+  );
+  FilePicker.init(window, "Pick build directory", FilePicker.modeGetFolder);
+  FilePicker.open(rv => {
+    if (rv == FilePicker.returnOK) {
+      const path = FilePicker.file.path;
+      if (path && !objdirs.includes(path)) {
+        const newObjdirs = [...objdirs, path];
+        changeObjdirs(newObjdirs);
+      }
+    }
+  });
 }
 
 module.exports = {
   receiveProfile,
-  getRecordingPreferences,
-  setRecordingPreferences,
+  createMultiModalGetSymbolTableFn,
+  restartBrowserWithEnvironmentVariable,
+  getEnvironmentVariable,
+  openFilePickerForObjdir,
 };

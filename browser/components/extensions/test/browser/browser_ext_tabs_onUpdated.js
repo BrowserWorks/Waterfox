@@ -215,11 +215,15 @@ add_task(async function test_without_tabs_permission() {
   await do_test_update(async function background() {
     const url =
       "http://mochi.test:8888/browser/browser/components/extensions/test/browser/context_tabs_onUpdated_page.html";
-    const tab = await browser.tabs.create({ url });
+    let tab = null;
     let count = 0;
 
     browser.tabs.onUpdated.addListener(function onUpdated(tabId, changeInfo) {
-      browser.test.assertEq(tabId, tab.id, "Check tab id");
+      // An attention change can happen during tabs.create, so
+      // we can't compare against tab yet.
+      if (!("attention" in changeInfo)) {
+        browser.test.assertEq(tabId, tab.id, "Check tab id");
+      }
       browser.test.log(`onUpdated: ${JSON.stringify(changeInfo)}`);
 
       browser.test.assertFalse(
@@ -237,7 +241,9 @@ add_task(async function test_without_tabs_permission() {
 
       if (changeInfo.status == "complete") {
         count++;
-        if (count === 2) {
+        if (count === 1) {
+          browser.tabs.reload(tabId);
+        } else {
           browser.test.log("Reload complete");
           browser.tabs.onUpdated.removeListener(onUpdated);
           browser.tabs.remove(tabId);
@@ -246,8 +252,48 @@ add_task(async function test_without_tabs_permission() {
       }
     });
 
-    browser.tabs.reload(tab.id);
+    tab = await browser.tabs.create({ url });
   }, false /* withPermissions */);
+});
+
+add_task(async function test_onUpdated_after_onRemoved() {
+  let extension = ExtensionTestUtils.loadExtension({
+    manifest: {
+      permissions: ["tabs"],
+    },
+    async background() {
+      const url =
+        "http://mochi.test:8888/browser/browser/components/extensions/test/browser/context_tabs_onUpdated_page.html";
+      let removed = false;
+      let tab;
+
+      // If remove happens fast and we never receive onUpdated, that is ok, but
+      // we never want to receive onUpdated after onRemoved.
+      browser.tabs.onUpdated.addListener(function onUpdated(tabId, changeInfo) {
+        if (!tab || tab.id !== tabId) {
+          return;
+        }
+        browser.test.assertFalse(
+          removed,
+          "tab has not been removed before onUpdated"
+        );
+      });
+
+      browser.tabs.onRemoved.addListener((tabId, removedInfo) => {
+        if (!tab || tab.id !== tabId) {
+          return;
+        }
+        removed = true;
+        browser.test.notifyPass("onRemoved");
+      });
+
+      tab = await browser.tabs.create({ url });
+      browser.tabs.remove(tab.id);
+    },
+  });
+  await extension.startup();
+  await extension.awaitFinish("onRemoved");
+  await extension.unload();
 });
 
 add_task(forceGC);

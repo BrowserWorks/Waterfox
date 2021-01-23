@@ -93,12 +93,13 @@ EXPORTS.mozilla.dom += [
 EXPORTS.mozilla.layers += [
     'AnimationHelper.h',
     'AnimationInfo.h',
+    'AnimationStorageData.h',
     'apz/public/APZInputBridge.h',
     'apz/public/APZSampler.h',
-    'apz/public/APZTypes.h',
     'apz/public/APZUpdater.h',
     'apz/public/CompositorController.h',
     'apz/public/GeckoContentController.h',
+    'apz/public/GeckoContentControllerTypes.h',
     'apz/public/IAPZCTreeManager.h',
     'apz/public/MatrixMessage.h',
     'apz/public/MetricsSharingController.h',
@@ -130,6 +131,7 @@ EXPORTS.mozilla.layers += [
     'basic/TextureHostBasic.h',
     'BSPTree.h',
     'BufferTexture.h',
+    'CanvasDrawEventRecorder.h',
     'CanvasRenderer.h',
     'client/CanvasClient.h',
     'client/CompositableClient.h',
@@ -142,6 +144,7 @@ EXPORTS.mozilla.layers += [
     'client/TextureClientPool.h',
     'client/TextureClientRecycleAllocator.h',
     'client/TextureClientSharedSurface.h',
+    'client/TextureRecorded.h',
     'client/TiledContentClient.h',
     'composite/AsyncCompositionManager.h',
     'composite/CanvasLayerComposite.h',
@@ -176,6 +179,9 @@ EXPORTS.mozilla.layers += [
     'ipc/APZCTreeManagerParent.h',
     'ipc/APZInputBridgeChild.h',
     'ipc/APZInputBridgeParent.h',
+    'ipc/CanvasChild.h',
+    'ipc/CanvasThread.h',
+    'ipc/CanvasTranslator.h',
     'ipc/CompositableForwarder.h',
     'ipc/CompositableTransactionParent.h',
     'ipc/CompositorBridgeChild.h',
@@ -210,6 +216,7 @@ EXPORTS.mozilla.layers += [
     'ipc/UiCompositorControllerParent.h',
     'ipc/VideoBridgeChild.h',
     'ipc/VideoBridgeParent.h',
+    'ipc/VideoBridgeUtils.h',
     'LayerAttributes.h',
     'LayerMetricsWrapper.h',
     'LayersHelpers.h',
@@ -223,6 +230,8 @@ EXPORTS.mozilla.layers += [
     'mlgpu/MLGPUScreenshotGrabber.h',
     'mlgpu/ShaderDefinitionsMLGPU.h',
     'mlgpu/UtilityMLGPU.h',
+    'NativeLayer.h',
+    'OOPCanvasRenderer.h',
     'opengl/CompositingRenderTargetOGL.h',
     'opengl/CompositorOGL.h',
     'opengl/MacIOSurfaceTextureClientOGL.h',
@@ -239,15 +248,17 @@ EXPORTS.mozilla.layers += [
     'ShareableCanvasRenderer.h',
     'SourceSurfaceSharedData.h',
     'SourceSurfaceVolatileData.h',
+    'SurfacePool.h',
     'SyncObject.h',
     'TextureSourceProvider.h',
     'TextureWrapperImage.h',
     'TransactionIdAllocator.h',
+    'TreeTraversal.h',
     'UpdateImageHelper.h',
     'wr/AsyncImagePipelineManager.h',
     'wr/ClipManager.h',
+    'wr/DisplayItemCache.h',
     'wr/IpcResourceUpdateQueue.h',
-    'wr/RenderRootBoundary.h',
     'wr/RenderRootStateManager.h',
     'wr/RenderRootTypes.h',
     'wr/StackingContextHelper.h',
@@ -255,6 +266,7 @@ EXPORTS.mozilla.layers += [
     'wr/WebRenderBridgeParent.h',
     'wr/WebRenderCanvasRenderer.h',
     'wr/WebRenderCommandBuilder.h',
+    'wr/WebRenderCompositionRecorder.h',
     'wr/WebRenderDrawEventRecorder.h',
     'wr/WebRenderImageHost.h',
     'wr/WebRenderLayerManager.h',
@@ -263,7 +275,6 @@ EXPORTS.mozilla.layers += [
     'wr/WebRenderScrollData.h',
     'wr/WebRenderScrollDataWrapper.h',
     'wr/WebRenderTextureHost.h',
-    'wr/WebRenderTextureHostWrapper.h',
     'wr/WebRenderUserData.h',
     'ZoomConstraints.h',
 ]
@@ -285,9 +296,22 @@ if CONFIG['MOZ_X11']:
         'opengl/X11TextureSourceOGL.cpp',
     ]
 
+if CONFIG['MOZ_WAYLAND']:
+    EXPORTS.mozilla.layers += [
+        'opengl/WaylandDMABUFTextureClientOGL.h',
+        'opengl/WaylandDMABUFTextureHostOGL.h',
+        'WaylandDMABUFSurfaceImage.h',
+    ]
+    SOURCES += [
+        'opengl/WaylandDMABUFTextureClientOGL.cpp',
+        'opengl/WaylandDMABUFTextureHostOGL.cpp',
+        'WaylandDMABUFSurfaceImage.cpp',
+    ]
+
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
     EXPORTS.mozilla.layers += [
-        'opengl/GLManager.h',
+        'NativeLayerCA.h',
+        'SurfacePoolCA.h',
         'TextureSync.h',
     ]
     EXPORTS += [
@@ -295,7 +319,8 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
         'MacIOSurfaceImage.h',
     ]
     UNIFIED_SOURCES += [
-        'opengl/GLManager.cpp',
+        'NativeLayerCA.mm',
+        'SurfacePoolCA.mm',
         'TextureSync.cpp',
     ]
     SOURCES += [
@@ -303,16 +328,15 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
         'MacIOSurfaceHelpers.cpp',
         'MacIOSurfaceImage.cpp',
     ]
+    OS_LIBS += [
+        '-framework IOSurface',
+    ]
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
     UNIFIED_SOURCES += [
         'apz/src/AndroidAPZ.cpp',
-        'apz/src/AndroidDynamicToolbarAnimator.cpp',
         'apz/src/AndroidFlingPhysics.cpp',
         'apz/src/AndroidVelocityTracker.cpp',
-    ]
-    EXPORTS.mozilla.layers += [
-        'apz/src/AndroidDynamicToolbarAnimator.h',
     ]
 
 UNIFIED_SOURCES += [
@@ -341,6 +365,7 @@ UNIFIED_SOURCES += [
     'apz/src/OverscrollHandoffState.cpp',
     'apz/src/PotentialCheckerboardDurationTracker.cpp',
     'apz/src/QueuedInput.cpp',
+    'apz/src/SampledAPZCState.cpp',
     'apz/src/SimpleVelocityTracker.cpp',
     'apz/src/WheelScrollAnimation.cpp',
     'apz/testutil/APZTestData.cpp',
@@ -361,7 +386,6 @@ UNIFIED_SOURCES += [
     'AxisPhysicsMSDModel.cpp',
     'basic/BasicCanvasLayer.cpp',
     'basic/BasicColorLayer.cpp',
-    'basic/BasicCompositor.cpp',
     'basic/BasicContainerLayer.cpp',
     'basic/BasicImages.cpp',
     'basic/BasicLayerManager.cpp',
@@ -370,6 +394,7 @@ UNIFIED_SOURCES += [
     'basic/TextureHostBasic.cpp',
     'BSPTree.cpp',
     'BufferTexture.cpp',
+    'CanvasDrawEventRecorder.cpp',
     'CanvasRenderer.cpp',
     'client/CanvasClient.cpp',
     'client/ClientCanvasLayer.cpp',
@@ -386,10 +411,10 @@ UNIFIED_SOURCES += [
     'client/ImageClient.cpp',
     'client/MultiTiledContentClient.cpp',
     'client/SingleTiledContentClient.cpp',
-    'client/TextureClient.cpp',
     'client/TextureClientPool.cpp',
     'client/TextureClientRecycleAllocator.cpp',
     'client/TextureClientSharedSurface.cpp',
+    'client/TextureRecorded.cpp',
     'client/TiledContentClient.cpp',
     'composite/AsyncCompositionManager.cpp',
     'composite/CanvasLayerComposite.cpp',
@@ -423,6 +448,9 @@ UNIFIED_SOURCES += [
     'ipc/APZCTreeManagerParent.cpp',
     'ipc/APZInputBridgeChild.cpp',
     'ipc/APZInputBridgeParent.cpp',
+    'ipc/CanvasChild.cpp',
+    'ipc/CanvasThread.cpp',
+    'ipc/CanvasTranslator.cpp',
     'ipc/CompositableTransactionParent.cpp',
     'ipc/CompositorBench.cpp',
     'ipc/CompositorBridgeChild.cpp',
@@ -495,6 +523,7 @@ UNIFIED_SOURCES += [
     'TextureWrapperImage.cpp',
     'wr/AsyncImagePipelineManager.cpp',
     'wr/ClipManager.cpp',
+    'wr/DisplayItemCache.cpp',
     'wr/IpcResourceUpdateQueue.cpp',
     'wr/RenderRootStateManager.cpp',
     'wr/RenderRootTypes.cpp',
@@ -503,19 +532,21 @@ UNIFIED_SOURCES += [
     'wr/WebRenderBridgeParent.cpp',
     'wr/WebRenderCanvasRenderer.cpp',
     'wr/WebRenderCommandBuilder.cpp',
+    'wr/WebRenderCompositionRecorder.cpp',
     'wr/WebRenderDrawEventRecorder.cpp',
     'wr/WebRenderImageHost.cpp',
     'wr/WebRenderLayerManager.cpp',
     'wr/WebRenderLayersLogging.cpp',
     'wr/WebRenderScrollData.cpp',
-    'wr/WebRenderTextureHostWrapper.cpp',
     'wr/WebRenderUserData.cpp',
     # XXX here are some unified build error.
     #'wr/WebRenderTextureHost.cpp'
 ]
 
 SOURCES += [
+    'basic/BasicCompositor.cpp',
     'basic/BasicImageLayer.cpp',
+    'client/TextureClient.cpp',
     'ImageContainer.cpp',
     'PersistentBufferProvider.cpp',
     'protobuf/LayerScopePacket.pb.cc',
@@ -538,7 +569,9 @@ IPDL_SOURCES += [
     'ipc/PAPZ.ipdl',
     'ipc/PAPZCTreeManager.ipdl',
     'ipc/PAPZInputBridge.ipdl',
+    'ipc/PCanvas.ipdl',
     'ipc/PCompositorBridge.ipdl',
+    'ipc/PCompositorBridgeTypes.ipdlh',
     'ipc/PCompositorManager.ipdl',
     'ipc/PImageBridge.ipdl',
     'ipc/PLayerTransaction.ipdl',
@@ -552,17 +585,10 @@ IPDL_SOURCES += [
 include('/ipc/chromium/chromium-config.mozbuild')
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
-  GENERATED_FILES = [
-      'CompositorD3D11Shaders.h',
-      'MLGShaders.h',
-  ]
-
-  d3d11_shaders = GENERATED_FILES['CompositorD3D11Shaders.h']
-  d3d11_shaders.script = 'd3d11/genshaders.py'
-  d3d11_shaders.inputs = ['d3d11/shaders.manifest']
-  mlg_shaders = GENERATED_FILES['MLGShaders.h']
-  mlg_shaders.script = 'd3d11/genshaders.py'
-  mlg_shaders.inputs = ['d3d11/mlgshaders/shaders.manifest']
+  GeneratedFile('CompositorD3D11Shaders.h', script='d3d11/genshaders.py',
+                inputs=['d3d11/shaders.manifest'])
+  GeneratedFile('MLGShaders.h', script='d3d11/genshaders.py',
+                inputs=['d3d11/mlgshaders/shaders.manifest'])
 
 LOCAL_INCLUDES += [
     '/docshell/base',  # for nsDocShell.h
@@ -585,6 +611,7 @@ if CONFIG['ENABLE_TESTS']:
 
 MOCHITEST_MANIFESTS += ['apz/test/mochitest/mochitest.ini']
 MOCHITEST_CHROME_MANIFESTS += ['apz/test/mochitest/chrome.ini']
+BROWSER_CHROME_MANIFESTS += ['apz/test/mochitest/browser.ini']
 
 CXXFLAGS += CONFIG['MOZ_CAIRO_CFLAGS']
 CXXFLAGS += CONFIG['TK_CFLAGS']

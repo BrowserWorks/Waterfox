@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Window.title        "An clàr-innse">
+<!ENTITY buildToc.label      "Tog clàr-innse air:">
+<!ENTITY tag.label           "Taga:">
+<!ENTITY class.label         "Clas:">
+<!ENTITY header1.label       "Leibheil 1">
+<!ENTITY header2.label       "Leibheil 2">
+<!ENTITY header3.label       "Leibheil 3">
+<!ENTITY header4.label       "Leibheil 4">
+<!ENTITY header5.label       "Leibheil 5">
+<!ENTITY header6.label       "Leibheil 6">
+<!ENTITY makeReadOnly.label  "Dèan clàr-innse a tha ri leughadh a-mhàin">
+<!ENTITY orderedList.label   "Cuir àireamh ri gach clàr sa chlàr-innse">

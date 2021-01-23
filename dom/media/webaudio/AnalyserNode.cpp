@@ -7,7 +7,7 @@
 #include "mozilla/dom/AnalyserNode.h"
 #include "mozilla/dom/AnalyserNodeBinding.h"
 #include "AudioNodeEngine.h"
-#include "AudioNodeStream.h"
+#include "AudioNodeTrack.h"
 #include "mozilla/Mutex.h"
 #include "mozilla/PodOperations.h"
 
@@ -25,14 +25,14 @@ namespace dom {
 class AnalyserNodeEngine final : public AudioNodeEngine {
   class TransferBuffer final : public Runnable {
    public:
-    TransferBuffer(AudioNodeStream* aStream, const AudioChunk& aChunk)
+    TransferBuffer(AudioNodeTrack* aTrack, const AudioChunk& aChunk)
         : Runnable("dom::AnalyserNodeEngine::TransferBuffer"),
-          mStream(aStream),
+          mTrack(aTrack),
           mChunk(aChunk) {}
 
     NS_IMETHOD Run() override {
       RefPtr<AnalyserNode> node =
-          static_cast<AnalyserNode*>(mStream->Engine()->NodeMainThread());
+          static_cast<AnalyserNode*>(mTrack->Engine()->NodeMainThread());
       if (node) {
         node->AppendChunk(mChunk);
       }
@@ -40,7 +40,7 @@ class AnalyserNodeEngine final : public AudioNodeEngine {
     }
 
    private:
-    RefPtr<AudioNodeStream> mStream;
+    RefPtr<AudioNodeTrack> mTrack;
     AudioChunk mChunk;
   };
 
@@ -49,7 +49,7 @@ class AnalyserNodeEngine final : public AudioNodeEngine {
     MOZ_ASSERT(NS_IsMainThread());
   }
 
-  virtual void ProcessBlock(AudioNodeStream* aStream, GraphTime aFrom,
+  virtual void ProcessBlock(AudioNodeTrack* aTrack, GraphTime aFrom,
                             const AudioBlock& aInput, AudioBlock* aOutput,
                             bool* aFinished) override {
     *aOutput = aInput;
@@ -63,7 +63,7 @@ class AnalyserNodeEngine final : public AudioNodeEngine {
 
       --mChunksToProcess;
       if (mChunksToProcess == 0) {
-        aStream->ScheduleCheckForInactive();
+        aTrack->ScheduleCheckForInactive();
       }
 
     } else {
@@ -72,7 +72,7 @@ class AnalyserNodeEngine final : public AudioNodeEngine {
     }
 
     RefPtr<TransferBuffer> transfer =
-        new TransferBuffer(aStream, aInput.AsAudioChunk());
+        new TransferBuffer(aTrack, aInput.AsAudioChunk());
     mAbstractMainThread->Dispatch(transfer.forget());
   }
 
@@ -123,9 +123,9 @@ AnalyserNode::AnalyserNode(AudioContext* aContext)
       mMinDecibels(-100.),
       mMaxDecibels(-30.),
       mSmoothingTimeConstant(.8) {
-  mStream = AudioNodeStream::Create(aContext, new AnalyserNodeEngine(this),
-                                    AudioNodeStream::NO_STREAM_FLAGS,
-                                    aContext->Graph());
+  mTrack =
+      AudioNodeTrack::Create(aContext, new AnalyserNodeEngine(this),
+                             AudioNodeTrack::NO_TRACK_FLAGS, aContext->Graph());
 
   // Enough chunks must be recorded to handle the case of fftSize being
   // increased to maximum immediately before getFloatTimeDomainData() is
@@ -155,7 +155,8 @@ JSObject* AnalyserNode::WrapObject(JSContext* aCx,
 void AnalyserNode::SetFftSize(uint32_t aValue, ErrorResult& aRv) {
   // Disallow values that are not a power of 2 and outside the [32,32768] range
   if (aValue < 32 || aValue > MAX_FFT_SIZE || (aValue & (aValue - 1)) != 0) {
-    aRv.Throw(NS_ERROR_DOM_INDEX_SIZE_ERR);
+    aRv.ThrowIndexSizeError(nsPrintfCString(
+        "FFT size %u is not a power of two in the range 32 to 32768", aValue));
     return;
   }
   if (FftSize() != aValue) {
@@ -166,7 +167,9 @@ void AnalyserNode::SetFftSize(uint32_t aValue, ErrorResult& aRv) {
 
 void AnalyserNode::SetMinDecibels(double aValue, ErrorResult& aRv) {
   if (aValue >= mMaxDecibels) {
-    aRv.Throw(NS_ERROR_DOM_INDEX_SIZE_ERR);
+    aRv.ThrowIndexSizeError(nsPrintfCString(
+        "%g is not strictly smaller than current maxDecibels (%g)", aValue,
+        mMaxDecibels));
     return;
   }
   mMinDecibels = aValue;
@@ -174,7 +177,9 @@ void AnalyserNode::SetMinDecibels(double aValue, ErrorResult& aRv) {
 
 void AnalyserNode::SetMaxDecibels(double aValue, ErrorResult& aRv) {
   if (aValue <= mMinDecibels) {
-    aRv.Throw(NS_ERROR_DOM_INDEX_SIZE_ERR);
+    aRv.ThrowIndexSizeError(nsPrintfCString(
+        "%g is not strictly larger than current minDecibels (%g)", aValue,
+        mMinDecibels));
     return;
   }
   mMaxDecibels = aValue;
@@ -183,7 +188,9 @@ void AnalyserNode::SetMaxDecibels(double aValue, ErrorResult& aRv) {
 void AnalyserNode::SetMinAndMaxDecibels(double aMinValue, double aMaxValue,
                                         ErrorResult& aRv) {
   if (aMinValue >= aMaxValue) {
-    aRv.Throw(NS_ERROR_DOM_INDEX_SIZE_ERR);
+    aRv.ThrowIndexSizeError(nsPrintfCString(
+        "minDecibels value (%g) must be smaller than maxDecibels value (%g)",
+        aMinValue, aMaxValue));
     return;
   }
   mMinDecibels = aMinValue;
@@ -192,7 +199,8 @@ void AnalyserNode::SetMinAndMaxDecibels(double aMinValue, double aMaxValue,
 
 void AnalyserNode::SetSmoothingTimeConstant(double aValue, ErrorResult& aRv) {
   if (aValue < 0 || aValue > 1) {
-    aRv.Throw(NS_ERROR_DOM_INDEX_SIZE_ERR);
+    aRv.ThrowIndexSizeError(
+        nsPrintfCString("%g is not in the range [0, 1]", aValue));
     return;
   }
   mSmoothingTimeConstant = aValue;
@@ -204,7 +212,7 @@ void AnalyserNode::GetFloatFrequencyData(const Float32Array& aArray) {
     return;
   }
 
-  aArray.ComputeLengthAndData();
+  aArray.ComputeState();
 
   float* buffer = aArray.Data();
   size_t length = std::min(size_t(aArray.Length()), mOutputBuffer.Length());
@@ -223,7 +231,7 @@ void AnalyserNode::GetByteFrequencyData(const Uint8Array& aArray) {
 
   const double rangeScaleFactor = 1.0 / (mMaxDecibels - mMinDecibels);
 
-  aArray.ComputeLengthAndData();
+  aArray.ComputeState();
 
   unsigned char* buffer = aArray.Data();
   size_t length = std::min(size_t(aArray.Length()), mOutputBuffer.Length());
@@ -240,7 +248,7 @@ void AnalyserNode::GetByteFrequencyData(const Uint8Array& aArray) {
 }
 
 void AnalyserNode::GetFloatTimeDomainData(const Float32Array& aArray) {
-  aArray.ComputeLengthAndData();
+  aArray.ComputeState();
 
   float* buffer = aArray.Data();
   size_t length = std::min(aArray.Length(), FftSize());
@@ -249,7 +257,7 @@ void AnalyserNode::GetFloatTimeDomainData(const Float32Array& aArray) {
 }
 
 void AnalyserNode::GetByteTimeDomainData(const Uint8Array& aArray) {
-  aArray.ComputeLengthAndData();
+  aArray.ComputeState();
 
   size_t length = std::min(aArray.Length(), FftSize());
 

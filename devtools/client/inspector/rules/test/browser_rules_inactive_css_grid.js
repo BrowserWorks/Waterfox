@@ -1,6 +1,5 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
- http://creativecommons.org/publicdomain/zero/1.0/ */
+http://creativecommons.org/publicdomain/zero/1.0/ */
 
 "use strict";
 
@@ -9,6 +8,9 @@
 const TEST_URI = `
 <head>
   <style>
+    html {
+      grid-area: foo;
+    }
     #container {
       width: 200px;
       height: 100px;
@@ -16,6 +18,7 @@ const TEST_URI = `
       column-gap: 10px;
       row-gap: 10px;
       align-self: start;
+      position: relative;
     }
 
     .item-1 {
@@ -24,6 +27,11 @@ const TEST_URI = `
       grid-row-start: 1;
       grid-row-end: auto;
       flex-direction: row
+    }
+
+    #abspos {
+      position: absolute;
+      grid-column: 2;
     }
 
     #self-aligned {
@@ -38,11 +46,27 @@ const TEST_URI = `
       <div class="grid-item item-2">2</div>
       <div class="grid-item item-3">3</div>
       <div class="grid-item item-4">4</div>
+      <div class="grid-item item-5">
+        <div id="abspos">AbsPos item</div>
+      </div>
     </div>
     <div id="self-aligned"></div>
 </body>`;
 
 const BEFORE = [
+  {
+    // Check first that the getting grid-related data about the <html> node doesn't break.
+    // See bug 1576484.
+    selector: "html",
+    inactiveDeclarations: [
+      {
+        declaration: {
+          "grid-area": "foo",
+        },
+        ruleIndex: 1,
+      },
+    ],
+  },
   {
     selector: "#self-aligned",
     inactiveDeclarations: [
@@ -71,6 +95,17 @@ const BEFORE = [
       {
         declaration: {
           "flex-direction": "row",
+        },
+        ruleIndex: 1,
+      },
+    ],
+  },
+  {
+    selector: "#abspos",
+    activeDeclarations: [
+      {
+        declarations: {
+          "grid-column": 2,
         },
         ruleIndex: 1,
       },
@@ -146,6 +181,17 @@ const AFTER = [
       },
     ],
   },
+  {
+    selector: "#abspos",
+    inactiveDeclarations: [
+      {
+        declaration: {
+          "grid-column": 2,
+        },
+        ruleIndex: 1,
+      },
+    ],
+  },
 ];
 
 add_task(async function() {
@@ -157,9 +203,65 @@ add_task(async function() {
   await runInactiveCSSTests(view, inspector, BEFORE);
 
   // Toggle `display:grid` to disabled.
-  await toggleDeclaration(inspector, view, 0, {
+  await toggleDeclaration(view, 0, {
     display: "grid",
   });
   await view.once("ruleview-refreshed");
   await runInactiveCSSTests(view, inspector, AFTER);
+
+  info("Toggle `display: grid` to enabled again.");
+  await selectNode("#container", inspector);
+  await toggleDeclaration(view, 0, {
+    display: "grid",
+  });
+  await runAbsPosGridElementTests(view, inspector);
 });
+
+/**
+ * Tests for absolute positioned elements in a grid.
+ */
+async function runAbsPosGridElementTests(view, inspector) {
+  info("Toggling `position: relative` to disabled.");
+  await toggleDeclaration(view, 1, {
+    position: "relative",
+  });
+  await runInactiveCSSTests(view, inspector, [
+    {
+      selector: "#abspos",
+      inactiveDeclarations: [
+        {
+          declaration: {
+            "grid-column": 2,
+          },
+          ruleIndex: 1,
+        },
+      ],
+    },
+  ]);
+
+  info("Toggling `position: relative` back to enabled.");
+  await selectNode("#container", inspector);
+  await toggleDeclaration(view, 1, {
+    position: "relative",
+  });
+
+  info("Toggling `position: absolute` on grid element to disabled.");
+  await selectNode("#abspos", inspector);
+  await toggleDeclaration(view, 1, {
+    position: "absolute",
+  });
+
+  await runInactiveCSSTests(view, inspector, [
+    {
+      selector: "#abspos",
+      inactiveDeclarations: [
+        {
+          declaration: {
+            "grid-column": 2,
+          },
+          ruleIndex: 1,
+        },
+      ],
+    },
+  ]);
+}

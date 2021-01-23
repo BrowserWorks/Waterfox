@@ -183,7 +183,7 @@ struct IntRectTyped
   // Same as Union(), but in the cases where aRect is non-empty, the union is
   // done while guarding against overflow. If an overflow is detected, Nothing
   // is returned.
-  MOZ_MUST_USE Maybe<Self> SafeUnion(const Self& aRect) const {
+  [[nodiscard]] Maybe<Self> SafeUnion(const Self& aRect) const {
     if (this->IsEmpty()) {
       return aRect.Overflows() ? Nothing() : Some(aRect);
     } else if (aRect.IsEmpty()) {
@@ -195,7 +195,7 @@ struct IntRectTyped
 
   // Same as UnionEdges, but guards against overflow. If an overflow is
   // detected, Nothing is returned.
-  MOZ_MUST_USE Maybe<Self> SafeUnionEdges(const Self& aRect) const {
+  [[nodiscard]] Maybe<Self> SafeUnionEdges(const Self& aRect) const {
     if (this->Overflows() || aRect.Overflows()) {
       return Nothing();
     }
@@ -364,11 +364,15 @@ struct RectCornerRadii final {
   RectCornerRadii() = default;
 
   explicit RectCornerRadii(Float radius) {
-    NS_FOR_CSS_FULL_CORNERS(i) { radii[i].SizeTo(radius, radius); }
+    for (const auto i : mozilla::AllPhysicalCorners()) {
+      radii[i].SizeTo(radius, radius);
+    }
   }
 
   RectCornerRadii(Float radiusX, Float radiusY) {
-    NS_FOR_CSS_FULL_CORNERS(i) { radii[i].SizeTo(radiusX, radiusY); }
+    for (const auto i : mozilla::AllPhysicalCorners()) {
+      radii[i].SizeTo(radiusX, radiusY);
+    }
   }
 
   RectCornerRadii(Float tl, Float tr, Float br, Float bl) {
@@ -402,7 +406,9 @@ struct RectCornerRadii final {
   }
 
   void Scale(Float aXScale, Float aYScale) {
-    NS_FOR_CSS_FULL_CORNERS(i) { radii[i].Scale(aXScale, aYScale); }
+    for (const auto i : mozilla::AllPhysicalCorners()) {
+      radii[i].Scale(aXScale, aYScale);
+    }
   }
 
   const Size TopLeft() const { return radii[eCornerTopLeft]; }

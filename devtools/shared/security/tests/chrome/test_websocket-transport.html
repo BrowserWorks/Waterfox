@@ -13,8 +13,9 @@
 window.onload = function() {
   const {require} = ChromeUtils.import("resource://devtools/shared/Loader.jsm");
   const Services = require("Services");
-  const {DebuggerClient} = require("devtools/shared/client/debugger-client");
-  const {DebuggerServer} = require("devtools/server/main");
+  // eslint-disable-next-line mozilla/reject-some-requires
+  const {DevToolsClient} = require("devtools/client/devtools-client");
+  const {DevToolsServer} = require("devtools/server/devtools-server");
   const { SocketListener } = require("devtools/shared/security/socket");
 
   Services.prefs.setBoolPref("devtools.debugger.remote-enabled", true);
@@ -26,32 +27,32 @@ window.onload = function() {
   });
 
   add_task(async function() {
-    DebuggerServer.init();
-    DebuggerServer.registerAllActors();
+    DevToolsServer.init();
+    DevToolsServer.registerAllActors();
 
-    is(DebuggerServer.listeningSockets, 0, "0 listening sockets");
+    is(DevToolsServer.listeningSockets, 0, "0 listening sockets");
 
     const socketOptions = {
       portOrPath: -1,
       webSocket: true,
     };
-    const listener = new SocketListener(DebuggerServer, socketOptions);
+    const listener = new SocketListener(DevToolsServer, socketOptions);
     ok(listener, "Socket listener created");
     await listener.open();
-    is(DebuggerServer.listeningSockets, 1, "1 listening socket");
+    is(DevToolsServer.listeningSockets, 1, "1 listening socket");
 
-    const transport = await DebuggerClient.socketConnect({
+    const transport = await DevToolsClient.socketConnect({
       host: "127.0.0.1",
       port: listener.port,
       webSocket: true,
     });
     ok(transport, "Client transport created");
 
-    const client = new DebuggerClient(transport);
+    const client = new DevToolsClient(transport);
     const onUnexpectedClose = () => {
       ok(false, "Closed unexpectedly");
     };
-    client.addListener("closed", onUnexpectedClose);
+    client.on("closed", onUnexpectedClose);
 
     await client.connect();
 
@@ -60,12 +61,12 @@ window.onload = function() {
     const reply = await client.mainRoot.echo({ message });
     is(reply.message, message, "Echo message matches");
 
-    client.removeListener("closed", onUnexpectedClose);
+    client.off("closed", onUnexpectedClose);
     transport.close();
     listener.close();
-    is(DebuggerServer.listeningSockets, 0, "0 listening sockets");
+    is(DevToolsServer.listeningSockets, 0, "0 listening sockets");
 
-    DebuggerServer.destroy();
+    DevToolsServer.destroy();
   });
 };
 </script>

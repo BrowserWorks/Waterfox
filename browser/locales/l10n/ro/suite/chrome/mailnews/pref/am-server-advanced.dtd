@@ -1,0 +1,49 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--
+# Translator(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+# janimo <jani@ubuntu.com>
+# Laudatti <Laudatti@gmail.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!ENTITY serverAdvanced.label "Setări avansate pentru cont">
+<!-- LOCALIZATION NOTE (serverDirectory.label): DONT_TRANSLATE "IMAP" -->
+<!ENTITY serverDirectory.label "IMAP server directory:">
+<!ENTITY serverDirectory.accesskey "d">
+<!ENTITY usingSubscription.label "Afișează doar dosarele la care sunt abonat(ă)">
+<!ENTITY usingSubscription.accesskey "A">
+<!ENTITY dualUseFolders.label "Serverul suportă dosare care conțin subdosare și mesaje">
+<!ENTITY dualUseFolders.accesskey "S">
+<!ENTITY useIdle.label "Folosește comanda IDLE dacă serverul o suportă">
+<!ENTITY useIdle.accesskey "I">
+<!ENTITY maximumConnectionsNumber.label "Număr maxim de conexiuni memorate temporar">
+<!ENTITY maximumConnectionsNumber.accesskey "m">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): DONT_TRANSLATE "IMAP" -->
+<!ENTITY namespaceDesc.label "These preferences specify the namespaces on your IMAP server">
+<!ENTITY personalNamespace.label "Namespace personal:">
+<!ENTITY personalNamespace.accesskey "p">
+<!ENTITY publicNamespace.label "Public (partajat):">
+<!ENTITY publicNamespace.accesskey "u">
+<!ENTITY otherUsersNamespace.label "Alți utilizatori:">
+<!ENTITY otherUsersNamespace.accesskey "o">
+<!ENTITY overrideNamespaces.label "Permite serverului să suprascrie aceste nume de spații">
+<!ENTITY overrideNamespaces.accesskey "a">
+<!ENTITY pop3Desc.label "Când se descarcă mesaje pop3 de pe acest server, folosește următorul dosar pentru mesajele noi:" >
+<!ENTITY globalInbox.label "Căsuța poștală globală (Contul local)">
+<!ENTITY globalInbox.accesskey "g">
+<!ENTITY accountDirectory.label "Căsuță poștală pentru contul acestui server">
+<!ENTITY accountDirectory.accesskey "i">
+<!ENTITY deferToServer.label "Căsuța poștală pentru alt cont">
+<!ENTITY deferToServer.accesskey "C">
+<!ENTITY deferGetNewMail.label "Include acest server la recepționarea mesajelor noi">
+<!ENTITY deferGetNewMail.accesskey "I">

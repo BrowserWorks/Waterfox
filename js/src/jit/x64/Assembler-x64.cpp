@@ -7,6 +7,7 @@
 #include "jit/x64/Assembler-x64.h"
 
 #include "gc/Marking.h"
+#include "util/Memory.h"
 
 using namespace js;
 using namespace js::jit;
@@ -26,12 +27,13 @@ ABIArgGenerator::ABIArgGenerator()
 
 ABIArg ABIArgGenerator::next(MIRType type) {
 #if defined(XP_WIN)
-  JS_STATIC_ASSERT(NumIntArgRegs == NumFloatArgRegs);
+  static_assert(NumIntArgRegs == NumFloatArgRegs);
   if (regIndex_ == NumIntArgRegs) {
-    if (IsSimdType(type)) {
-      // On Win64, >64 bit args need to be passed by reference, but wasm
-      // doesn't allow passing SIMD values to FFIs. The only way to reach
-      // here is asm to asm calls, so we can break the ABI here.
+    if (type == MIRType::Simd128) {
+      // On Win64, >64 bit args need to be passed by reference.  However, wasm
+      // doesn't allow passing SIMD values to JS, so the only way to reach this
+      // is wasm to wasm calls.  Ergo we can break the native ABI here and use
+      // the Wasm ABI instead.
       stackOffset_ = AlignBytes(stackOffset_, SimdMemoryAlignment);
       current_ = ABIArg(stackOffset_);
       stackOffset_ += Simd128DataSize;
@@ -46,6 +48,7 @@ ABIArg ABIArgGenerator::next(MIRType type) {
     case MIRType::Int64:
     case MIRType::Pointer:
     case MIRType::RefOrNull:
+    case MIRType::StackResults:
       current_ = ABIArg(IntArgRegs[regIndex_++]);
       break;
     case MIRType::Float32:
@@ -54,13 +57,7 @@ ABIArg ABIArgGenerator::next(MIRType type) {
     case MIRType::Double:
       current_ = ABIArg(FloatArgRegs[regIndex_++]);
       break;
-    case MIRType::Int8x16:
-    case MIRType::Int16x8:
-    case MIRType::Int32x4:
-    case MIRType::Float32x4:
-    case MIRType::Bool8x16:
-    case MIRType::Bool16x8:
-    case MIRType::Bool32x4:
+    case MIRType::Simd128:
       // On Win64, >64 bit args need to be passed by reference, but wasm
       // doesn't allow passing SIMD values to FFIs. The only way to reach
       // here is asm to asm calls, so we can break the ABI here.
@@ -76,6 +73,7 @@ ABIArg ABIArgGenerator::next(MIRType type) {
     case MIRType::Int64:
     case MIRType::Pointer:
     case MIRType::RefOrNull:
+    case MIRType::StackResults:
       if (intRegIndex_ == NumIntArgRegs) {
         current_ = ABIArg(stackOffset_);
         stackOffset_ += sizeof(uint64_t);
@@ -96,13 +94,7 @@ ABIArg ABIArgGenerator::next(MIRType type) {
         current_ = ABIArg(FloatArgRegs[floatRegIndex_++]);
       }
       break;
-    case MIRType::Int8x16:
-    case MIRType::Int16x8:
-    case MIRType::Int32x4:
-    case MIRType::Float32x4:
-    case MIRType::Bool8x16:
-    case MIRType::Bool16x8:
-    case MIRType::Bool32x4:
+    case MIRType::Simd128:
       if (floatRegIndex_ == NumFloatArgRegs) {
         stackOffset_ = AlignBytes(stackOffset_, SimdMemoryAlignment);
         current_ = ABIArg(stackOffset_);
@@ -155,23 +147,6 @@ size_t Assembler::addPatchableJump(JmpSrc src, RelocationKind reloc) {
   return index;
 }
 
-/* static */
-uint8_t* Assembler::PatchableJumpAddress(JitCode* code, size_t index) {
-  // The assembler stashed the offset into the code of the fragments used
-  // for far jumps at the start of the relocation table.
-  uint32_t jumpOffset = *(uint32_t*)code->jumpRelocTable();
-  jumpOffset += index * SizeOfJumpTableEntry;
-
-  MOZ_ASSERT(jumpOffset + SizeOfExtendedJump <= code->instructionsSize());
-  return code->raw() + jumpOffset;
-}
-
-/* static */
-void Assembler::PatchJumpEntry(uint8_t* entry, uint8_t* target) {
-  uint8_t** index = (uint8_t**)(entry + SizeOfExtendedJump - sizeof(void*));
-  *index = target;
-}
-
 void Assembler::finish() {
   if (oom()) {
     return;
@@ -215,7 +190,7 @@ void Assembler::finish() {
   }
 }
 
-void Assembler::executableCopy(uint8_t* buffer, bool flushICache) {
+void Assembler::executableCopy(uint8_t* buffer) {
   AssemblerX86Shared::executableCopy(buffer);
 
   for (size_t i = 0; i < jumps_.length(); i++) {

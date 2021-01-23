@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editfield0.label "Si yuguit"> 
+<!ENTITY editfield1.label "Da'nga' huìi"> 
+<!ENTITY copyCmd.label    "Guyun'">
+<!ENTITY copyCmd.accesskey "G">
+<!ENTITY selectAllCmd.label "Ganahui' da'ua ngê ma">
+<!ENTITY selectAllCmd.accesskey "G">

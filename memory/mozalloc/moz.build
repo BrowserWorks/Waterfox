@@ -6,6 +6,7 @@
 NoVisibilityFlags()
 
 EXPORTS.mozilla += [
+    'cxxalloc.h',
     'mozalloc.h',
     'mozalloc_abort.h',
     'mozalloc_oom.h',
@@ -35,6 +36,15 @@ SOURCES += [
     'mozalloc_abort.cpp',
 ]
 
+if CONFIG['MOZ_MEMORY']:
+    # In MinGW, we don't want to actually export these functions out of the library
+    # as the functions in libc++ correctly forward to jemalloc and exporting them
+    # produces duplicate symbol errors.
+    if not (CONFIG['CC_TYPE'] == 'clang' and CONFIG['OS_TARGET'] == 'WINNT'):
+        SOURCES += [
+            'cxxalloc.cpp',
+        ]
+
 if CONFIG['CPU_ARCH'] == 'arm' and CONFIG['CC_TYPE'] == 'clang':
     SOURCES['mozalloc_abort.cpp'].flags += ['-Wno-infinite-recursion']
 
@@ -44,8 +54,6 @@ FINAL_LIBRARY = 'mozglue'
 DEFINES['_GNU_SOURCE'] = True
 
 DisableStlWrapping()
-
-DEFINES['IMPL_MFBT'] = True
 
 LOCAL_INCLUDES += [
     '!/xpcom',

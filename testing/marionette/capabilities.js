@@ -332,9 +332,7 @@ class Proxy {
           [p.socksProxy, p.socksProxyPort] = fromHost("socks", json.socksProxy);
           p.socksVersion = assert.positiveInteger(
             json.socksVersion,
-            pprint`Expected "socksVersion" to be a positive integer, got ${
-              json.socksVersion
-            }`
+            pprint`Expected "socksVersion" to be a positive integer, got ${json.socksVersion}`
           );
         }
         if (typeof json.noProxy != "undefined") {
@@ -435,7 +433,7 @@ class Capabilities extends Map {
   constructor() {
     super([
       // webdriver
-      ["browserName", appinfo.name],
+      ["browserName", getWebDriverBrowserName()],
       ["browserVersion", appinfo.version],
       ["platformName", getWebDriverPlatformName()],
       ["platformVersion", Services.sysinfo.getProperty("version")],
@@ -595,8 +593,22 @@ this.Proxy = Proxy;
 this.Timeouts = Timeouts;
 this.UnhandledPromptBehavior = UnhandledPromptBehavior;
 
+function getWebDriverBrowserName() {
+  // Similar to chromedriver which reports "chrome" as browser name for all
+  // WebView apps, we will report "firefox" for all GeckoView apps.
+  if (Services.androidBridge) {
+    return "firefox";
+  }
+
+  return appinfo.name;
+}
+
 function getWebDriverPlatformName() {
   let name = Services.sysinfo.getProperty("name");
+
+  if (Services.androidBridge) {
+    return "android";
+  }
 
   switch (name) {
     case "Windows_NT":

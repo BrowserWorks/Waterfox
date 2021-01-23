@@ -7,11 +7,13 @@
  *   https://www.w3.org/TR/payment-method-basic-card/
  */
 
+[GenerateInit]
 dictionary BasicCardRequest {
   sequence<DOMString> supportedNetworks = [];
   boolean requestSecurityCode = true;
 };
 
+[GenerateConversionToJS]
 dictionary BasicCardResponse {
            DOMString cardholderName = "";
   required DOMString cardNumber;
@@ -21,10 +23,12 @@ dictionary BasicCardResponse {
            PaymentAddress? billingAddress = null;
 };
 
+[GenerateConversionToJS]
 dictionary BasicCardChangeDetails {
   PaymentAddress? billingAddress = null;
 };
 
+[GenerateInit]
 dictionary BasicCardErrors {
   DOMString cardNumber;
   DOMString cardholderName;

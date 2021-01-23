@@ -35,7 +35,7 @@ BEGIN_TEST(testGCOutOfMemory) {
   CHECK(JS_GetPendingException(cx, &root));
   CHECK(root.isString());
   bool match = false;
-  CHECK(JS_StringEqualsAscii(cx, root.toString(), "out of memory", &match));
+  CHECK(JS_StringEqualsLiteral(cx, root.toString(), "out of memory", &match));
   CHECK(match);
   JS_ClearPendingException(cx);
 
@@ -64,10 +64,11 @@ virtual JSContext* createContext() override {
   // OOM. (Actually, this only happens with nursery zeal, because normally
   // the nursery will start out with only a single chunk before triggering a
   // major GC.)
-  JSContext* cx = JS_NewContext(1024 * 1024, js::gc::ChunkSize);
+  JSContext* cx = JS_NewContext(1024 * 1024);
   if (!cx) {
     return nullptr;
   }
+  JS_SetGCParameter(cx, JSGC_MAX_NURSERY_BYTES, js::gc::ChunkSize);
   setNativeStackQuota(cx);
   return cx;
 }

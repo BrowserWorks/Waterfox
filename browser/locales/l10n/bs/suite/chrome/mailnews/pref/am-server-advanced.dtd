@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Napredne postavke računa">
+<!-- LOCALIZATION NOTE (serverDirectory.label): DONT_TRANSLATE "IMAP" -->
+<!ENTITY serverDirectory.label "IMAP server direktorij:">
+<!ENTITY usingSubscription.label "Prikaži samo direktorije na koje sam pretplaćen(a)">
+<!ENTITY dualUseFolders.label "Server podržava direktorije koje sadrže poddirektorije i poruke">
+<!ENTITY maximumConnectionsNumber.label "Maksimalan broj serverskih veza koje treba spremiti u predmemoriju">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): DONT_TRANSLATE "IMAP" -->
+<!ENTITY namespaceDesc.label "Ove postavke određuju imenski prostor na vašem IMAP serveru">
+<!ENTITY personalNamespace.label "Lični imenski prostor:">
+<!ENTITY publicNamespace.label "Javni (podijeljeni):">
+<!ENTITY otherUsersNamespace.label "Ostali korisnici:">
+<!ENTITY overrideNamespaces.label "Dozvoli serveru da premosti ove imenske prostore">
+<!ENTITY pop3DeferringDesc.label "Prilikom preuzimanja pošte sa servera ovog računa, koristi sljedeći direktorij za pohranu novih poruka:" >
+<!ENTITY accountInbox.label "Primljena pošta za ovaj račun">
+<!ENTITY deferToServer.label "Primljena pošta za drugi račun">
+<!ENTITY deferGetNewMail.label "Uključi ovaj server prilikom primanja nove pošte">

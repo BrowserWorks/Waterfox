@@ -1,0 +1,10 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY joinChatWindow.title           "Vestlusega liitumine">
+<!ENTITY name.label                     "Kanal">
+<!ENTITY optional.label                 "(valikuline)">
+<!ENTITY account.label                  "Konto">
+<!ENTITY autojoin.label                 "Selle kanaliga liitutakse automaatselt">
+<!ENTITY autojoin.accesskey             "S">

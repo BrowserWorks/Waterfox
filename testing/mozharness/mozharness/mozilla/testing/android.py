@@ -34,6 +34,7 @@ class AndroidMixin(object):
         self.logcat_proc = None
         self.logcat_file = None
         self.use_gles3 = False
+        self.xre_path = None
         super(AndroidMixin, self).__init__(**kwargs)
 
     @property
@@ -85,7 +86,7 @@ class AndroidMixin(object):
     def is_emulator(self):
         try:
             c = self.config
-            return True if c.get('emulator_manifest') else False
+            return True if c.get('emulator_avd_name') else False
         except AttributeError:
             return False
 
@@ -157,7 +158,7 @@ class AndroidMixin(object):
         if "deprecated_sdk_path" in self.config:
             sdk_path = os.path.abspath(os.path.join(avd_home_dir, '..'))
         else:
-            sdk_path = os.path.join(self.abs_dirs['abs_work_dir'], 'android-sdk-linux')
+            sdk_path = self.abs_dirs['abs_sdk_dir']
         if os.path.exists(sdk_path):
             env['ANDROID_SDK_HOME'] = sdk_path
             self.info("Found sdk at %s" % sdk_path)
@@ -302,6 +303,11 @@ class AndroidMixin(object):
                 self.info("Found Android bogomips: %d" % bogomips)
                 break
 
+    def logcat_path(self):
+        logcat_filename = 'logcat-%s.log' % self.device_serial
+        return os.path.join(self.query_abs_dirs()['abs_blob_upload_dir'],
+                            logcat_filename)
+
     def logcat_start(self):
         """
            Start recording logcat. Writes logcat to the upload directory.
@@ -310,10 +316,7 @@ class AndroidMixin(object):
         # corresponding device is stopped. Output is written directly to
         # the blobber upload directory so that it is uploaded automatically
         # at the end of the job.
-        logcat_filename = 'logcat-%s.log' % self.device_serial
-        logcat_path = os.path.join(self.abs_dirs['abs_blob_upload_dir'],
-                                   logcat_filename)
-        self.logcat_file = open(logcat_path, 'w')
+        self.logcat_file = open(self.logcat_path(), 'w')
         logcat_cmd = [self.adb_path, '-s', self.device_serial, 'logcat', '-v',
                       'threadtime', 'Trace:S', 'StrictMode:S',
                       'ExchangeService:S']
@@ -330,19 +333,36 @@ class AndroidMixin(object):
             self.logcat_proc.kill()
             self.logcat_file.close()
 
-    def install_apk(self, apk):
+    def install_apk(self, apk, replace=False):
         """
            Install the specified apk.
         """
         import mozdevice
         try:
-            self.device.install_app(apk)
-        except (mozdevice.ADBError, mozdevice.ADBTimeoutError), e:
+            self.device.install_app(apk, replace=replace)
+        except (mozdevice.ADBError, mozdevice.ADBProcessError, mozdevice.ADBTimeoutError) as e:
             self.info('Failed to install %s on %s: %s %s' %
-                      (self.installer_path, self.device_name,
+                      (apk, self.device_name,
                        type(e).__name__, e))
-            self.fatal('INFRA-ERROR: Failed to install %s' %
-                       os.path.basename(self.installer_path),
+            self.fatal('INFRA-ERROR: %s Failed to install %s' %
+                       (type(e).__name__, os.path.basename(apk)),
+                       EXIT_STATUS_DICT[TBPL_RETRY])
+
+    def uninstall_apk(self):
+        """
+           Uninstall the app associated with the configured apk, if it is
+           installed.
+        """
+        import mozdevice
+        try:
+            package_name = self.query_package_name()
+            self.device.uninstall_app(package_name)
+        except (mozdevice.ADBError, mozdevice.ADBProcessError, mozdevice.ADBTimeoutError) as e:
+            self.info('Failed to uninstall %s from %s: %s %s' %
+                      (package_name, self.device_name,
+                       type(e).__name__, e))
+            self.fatal('INFRA-ERROR: %s Failed to uninstall %s' %
+                       (type(e).__name__, package_name),
                        EXIT_STATUS_DICT[TBPL_RETRY])
 
     def is_boot_completed(self):
@@ -356,7 +376,16 @@ class AndroidMixin(object):
         return False
 
     def shell_output(self, cmd):
-        return self.device.shell_output(cmd, timeout=30)
+        import mozdevice
+        try:
+            return self.device.shell_output(cmd, timeout=30)
+        except (mozdevice.ADBTimeoutError) as e:
+            self.info('Failed to run shell command %s from %s: %s %s' %
+                      (cmd, self.device_name,
+                       type(e).__name__, e))
+            self.fatal('INFRA-ERROR: %s Failed to run shell command %s' %
+                       (type(e).__name__, cmd),
+                       EXIT_STATUS_DICT[TBPL_RETRY])
 
     def device_screenshot(self, prefix):
         """
@@ -372,7 +401,10 @@ class AndroidMixin(object):
             os.environ["MOZ_UPLOAD_DIR"] = dirs['abs_blob_upload_dir']
             reset_dir = True
         if self.is_emulator:
-            dump_screen(self.xre_path, self, prefix=prefix)
+            if self.xre_path:
+                dump_screen(self.xre_path, self, prefix=prefix)
+            else:
+                self.info('Not saving screenshot: no XRE configured')
         else:
             dump_device_screen(self.device, self, prefix=prefix)
         if reset_dir:
@@ -553,8 +585,6 @@ class AndroidMixin(object):
                                        output_dir=dirs['abs_work_dir'],
                                        cache=cache):
                     self.fatal("Unable to download emulator via tooltool!")
-        else:
-            self.fatal("Cannot get emulator: configure emulator_url or emulator_manifest")
         if not os.path.isfile(self.adb_path):
             self.fatal("The adb binary '%s' is not a valid file!" % self.adb_path)
         self.kill_processes("xpcshell")
@@ -582,8 +612,7 @@ class AndroidMixin(object):
         self.logcat_start()
         self.delete_ANRs()
         self.delete_tombstones()
-        # Get a post-boot device process list for diagnostics
-        self.info(self.shell_output('ps'))
+        self.info("verify_device complete")
 
     @PreScriptAction('run-tests')
     def timed_screenshots(self, action, success=None):

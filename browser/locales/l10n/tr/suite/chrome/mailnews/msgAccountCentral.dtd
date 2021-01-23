@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label "E-Posta">
+<!ENTITY readMsgsLink.label "Postaları oku">
+<!ENTITY composeMsgLink.label "Yeni ileti oluştur">
+
+<!ENTITY newsSectionHdr.label "Haber Grupları">
+<!ENTITY subscribeNewsLink.label "Haber gruplarına abone ol">
+
+<!ENTITY accountsSectionHdr.label "Hesaplar">
+<!ENTITY subscribeImapFolders.label "Dosya aboneliklerini düzenle">
+<!ENTITY settingsLink.label "Bu hesabın ayarlarını görüntüle">
+<!ENTITY newAcctLink.label "Yeni hesap aç">
+
+<!ENTITY advFeaturesSectionHdr.label "Geniş Seçenekler">
+<!ENTITY searchMsgsLink.label "İletilerde ara">
+<!ENTITY filtersLink.label "Posta süzgeçlerin yönetimi">
+<!ENTITY junkSettings.label "Gereksiz posta ayarları">
+<!ENTITY offlineLink.label "Çevrim dışı ayarları">
+
+<!ENTITY feedsSectionHdr.label "Canlı yer imleri">
+<!ENTITY subscribeFeeds.label "Aboneliklerini denetle…">
+

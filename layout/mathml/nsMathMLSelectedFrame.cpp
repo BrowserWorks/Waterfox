@@ -9,7 +9,7 @@
 
 using namespace mozilla;
 
-nsMathMLSelectedFrame::~nsMathMLSelectedFrame() {}
+nsMathMLSelectedFrame::~nsMathMLSelectedFrame() = default;
 
 NS_IMETHODIMP
 nsMathMLSelectedFrame::TransmitAutomaticData() {
@@ -150,7 +150,7 @@ nsresult nsMathMLSelectedFrame::Place(DrawTarget* aDrawTarget,
     GetReflowAndBoundingMetricsFor(childFrame, aDesiredSize, mBoundingMetrics);
     if (aPlaceOrigin) {
       FinishReflowChild(childFrame, PresContext(), aDesiredSize, nullptr, 0, 0,
-                        0);
+                        ReflowChildFlags::Default);
     }
     mReference.x = 0;
     mReference.y = aDesiredSize.BlockStartAscent();

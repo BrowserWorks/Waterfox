@@ -1,0 +1,128 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Title -->
+<!ENTITY addressbookWindow.title                        "Adresár">
+
+<!-- Menus:  the . means that the menu item isn't implemented yet -->
+
+<!ENTITY blankResultsPaneMessage.label                  "Tento adresár zobrazuje kontakty až po vyhľadávaní">
+<!ENTITY localResultsOnlyMessage.label                  "Kontakty zo vzdialených adresárov nie sú zobrazené až pokiaľ nevykonáte hľadanie">
+<!-- File Menu -->
+<!ENTITY newContact.label                               "Kontakt…">
+<!ENTITY newContact.accesskey                           "K">
+<!ENTITY newContact.key                                 "N">
+<!ENTITY newListCmd.label                               "Rozosielací zoznam">
+<!ENTITY newListCmd.accesskey                           "R">
+<!ENTITY newAddressBookCmd.label                        "Adresár">
+<!ENTITY newAddressBookCmd.accesskey                    "A">
+<!ENTITY newLDAPDirectoryCmd.label                      "Priečinok LDAP…">
+<!ENTITY newLDAPDirectoryCmd.accesskey                  "L">
+<!ENTITY newIM.label                                    "IM">
+<!ENTITY printContactViewCmd.label                      "Tlačiť kontakt…">
+<!ENTITY printContactViewCmd.accesskey                  "T">
+<!ENTITY printContactViewCmd.key                        "P">
+<!ENTITY printPreviewContactViewCmd.label               "Ukážka pred tlačou kontaktu">
+<!ENTITY printPreviewContactViewCmd.accesskey           "U">
+<!ENTITY printAddressBook.label                         "Tlačiť adresár…">
+<!ENTITY printAddressBook.accesskey                     "d">
+<!ENTITY printPreviewAddressBook.label                  "Ukážka pred tlačou adresára">
+<!ENTITY printPreviewAddressBook.accesskey              "e">
+
+<!-- Edit Menu -->
+<!ENTITY deleteAbCmd.label                              "Odstrániť adresár">
+<!ENTITY deleteContactCmd.label                         "Odstrániť kontakt">
+<!ENTITY deleteContactsCmd.label                        "Odstrániť označené kontakty">
+<!ENTITY deleteListCmd.label                            "Odstrániť zoznam">
+<!ENTITY deleteListsCmd.label                           "Odstrániť označené zoznamy">
+<!ENTITY deleteItemsCmd.label                           "Odstrániť označené položky">
+<!ENTITY swapFirstNameLastNameCmd.label                 "Vymeniť meno a priezvisko">
+<!ENTITY swapFirstNameLastNameCmd.accesskey             "m">
+<!ENTITY propertiesCmd.label                            "Vlastnosti…">
+<!ENTITY propertiesCmd.accesskey                        "l">
+<!ENTITY propertiesCmd.key                              "i">
+
+<!-- View Menu -->
+<!ENTITY showAbToolbarCmd.label                         "Panel nástrojov Adresár">
+<!ENTITY showAbToolbarCmd.accesskey                     "A">
+<!ENTITY layoutMenu.label                               "Rozloženie">
+<!ENTITY layoutMenu.accesskey                           "R">
+<!ENTITY showDirectoryPane.label                        "Panel adresárov">
+<!ENTITY showDirectoryPane.accesskey                    "a">
+<!ENTITY showContactPane2.label                         "Panel kontaktov">
+<!ENTITY showContactPane2.accesskey                     "k">
+<!ENTITY menu_ShowNameAs.label                          "Meno zobraziť ako">
+<!ENTITY menu_ShowNameAs.accesskey                      "M">
+<!ENTITY firstLastCmd.label                             "Meno priezvisko">
+<!ENTITY firstLastCmd.accesskey                         "M">
+<!ENTITY lastFirstCmd.label                             "Priezvisko, meno">
+<!ENTITY lastFirstCmd.accesskey                         "P">
+<!ENTITY displayNameCmd.label                           "Zobrazované meno">
+<!ENTITY displayNameCmd.accesskey                       "Z">
+
+<!-- LOCALIZATION NOTE (toggleDirectoryPaneCmd.key): This is only used on the
+     mac platform, other platforms use VK_F9. -->
+<!ENTITY toggleDirectoryPaneCmd.key                     "S">
+
+<!-- Tasks Menu -->
+<!ENTITY importCmd.label                                "Import…">
+<!ENTITY importCmd.accesskey                            "I">
+<!ENTITY exportCmd.label                                "Export…">
+<!ENTITY exportCmd.accesskey                            "x">
+
+<!-- Toolbar and Popup items -->
+<!ENTITY newContactButton.label                         "Nový kontakt">
+<!ENTITY newContactButton.accesskey                     "k">
+<!ENTITY newlistButton.label                            "Nový zoznam">
+<!ENTITY newlistButton.accesskey                        "z">
+<!ENTITY editItemButton.label                           "Vlastnosti">
+<!ENTITY editItemButton.accesskey                       "l">
+<!ENTITY newmsgButton.label                             "Nová správa">
+<!ENTITY newmsgButton.accesskey                         "N">
+<!ENTITY deleteItemButton.label                         "Odstrániť">
+<!ENTITY deleteItemButton.accesskey                     "d">
+<!ENTITY newimButton.label                              "Rýchla správa">
+<!ENTITY newimButton.accesskey                          "R">
+<!ENTITY printButton.label                              "Tlačiť">
+<!ENTITY printButton.accesskey                          "l">
+<!ENTITY searchNameAndEmail.placeholder                 "Hľadať meno alebo e-mail">
+<!ENTITY searchBox.title                                "Hľadať">
+
+<!-- Tooltips -->
+<!ENTITY addressbookToolbar.tooltip                     "Panel Adresár">
+<!ENTITY newContactButton.tooltip                       "Vytvoriť nový kontakt adresára">
+<!ENTITY newlistButton.tooltip                          "Vytvoriť nový zoznam">
+<!ENTITY editItemButton.tooltip                         "Upraviť označenú položku">
+<!ENTITY newmsgButton.tooltip                           "Odoslať správu">
+<!ENTITY newIM.tooltip                                  "Odoslať rýchlu správu alebo začať konverzáciu (Instant message - IM)">
+<!ENTITY printButton.tooltip                            "Vytlačiť označenú položku">
+<!ENTITY deleteItemButton.tooltip                       "Odstrániť označenú položku">
+<!ENTITY throbber.tooltip                               "Prejsť na domovskú stránku &vendorShortName;">
+<!ENTITY throbber.tooltip2                              "Prejsť na domovskú stránku &brandShortName;">
+<!ENTITY advancedButton.tooltip                         "Pokročilé hľadanie adresy">
+
+<!-- Dir Tree header -->
+<!ENTITY dirTreeHeader.label                            "Adresáre">
+
+<!-- Card Summary Pane -->
+<!-- Box Headings -->
+<!ENTITY contact.heading                                "Kontakt">
+<!ENTITY home.heading                                   "Domov">
+<!ENTITY other.heading                                  "Ostatné">
+<!ENTITY chat.heading                                   "Konverzácie">
+<!ENTITY phone.heading                                  "Telefón">
+<!ENTITY work.heading                                   "Zamestnanie">
+<!-- Special Box Headings, for mailing lists -->
+<!ENTITY description.heading                            "Popis">
+<!ENTITY addresses.heading                              "Adresy">
+<!-- For Map It! -->
+<!ENTITY mapItButton.label                              "Zobraziť mapu">
+<!ENTITY mapIt.tooltip                                  "Zobraziť adresu na mape">
+
+<!-- Status Bar -->
+<!ENTITY statusText.label                               "">
+
+<!-- LOCALIZATION NOTE (hideSwapFnLnUI) : DONT_TRANSLATE -->
+<!-- Swap FN/LN UI  Set to "false" to show swap fn/ln UI -->
+<!ENTITY  hideSwapFnLnUI                                "true">

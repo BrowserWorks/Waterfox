@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "ලදුපත්">
+<!ENTITY useGlobalPrefs.label         "මගේ පොදු ලදුපත් මනාපයන් මෙම ගිණුම සඳහා භාවිතා කරන්න">
+<!ENTITY useGlobalPrefs.accesskey     "U">
+<!ENTITY globalReceipts.label         "පොදු මනාපයන්…">
+<!ENTITY globalReceipts.accesskey     "G">
+<!ENTITY useCustomPrefs.label         "මෙම ගිණුම සඳහා ලදුපත් රිසිකරනය">
+<!ENTITY useCustomPrefs.accesskey     "C">
+<!ENTITY requestReceipt.label         "ලිපි යැවීමේදී, සෑම විටම ලදුපතක් ඉල්ලුම් කරන්න">
+<!ENTITY requestReceipt.accesskey     "W">
+<!ENTITY receiptArrive.label          "ලදුපතක් ලැබුන විටදී:">
+<!ENTITY leaveIt.label                "එය මාගේ ලදලිපි හි තබන්න">
+<!ENTITY leaveIt.accesskey            "I">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "එය මාගේ &quot;යැවූලිපි&quot; ෆෝල්ඩරයට යවන්න">
+<!ENTITY moveToSent.accesskey         "M">
+<!ENTITY requestMDN.label             "මට ලදුපතක් සඳහා ඉල්ලීමක් ලැබුන විටදී:">
+<!ENTITY returnSome.label             "සමහර ලිපි සඳහා ලදුපතක් යවන්න">
+<!ENTITY returnSome.accesskey         "e">
+<!ENTITY never.label                  "කිසිම විටෙක ලදුපතක් නොයවන්න">
+<!ENTITY never.accesskey              "N">
+<!ENTITY notInToCc.label              "මම ලිපියේ ලබන්නා තීරුවේ හෝ පිටපත් තීරුවේ නොසිටීනම්:">
+<!ENTITY notInToCc.accesskey          "T">
+<!ENTITY outsideDomain.label          "එවන්නා මගේ වසමෙන් (domain) පිට අයෙකු නම්:">
+<!ENTITY outsideDomain.accesskey      "s">
+<!ENTITY otherCases.label             "අනෙක් සියළු අවස්ථාවන්හිදී:">
+<!ENTITY otherCases.accesskey         "o">
+<!ENTITY askMe.label                  "ගෙන් විමසන්න">
+<!ENTITY alwaysSend.label             "සෑමවිටම යවන්න">
+<!ENTITY neverSend.label              "කිසිවිටක නොයවන්න">

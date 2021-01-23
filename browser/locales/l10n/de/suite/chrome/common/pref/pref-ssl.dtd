@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY SSLTLSProtocolVersions.caption     "SSL/TLS-Protokollversionen">
+<!ENTITY SSLTLSWarnings.caption             "SSL/TLS-Warnungen">
+<!ENTITY SSLMixedContent.caption            "Gemischte Inhalte">
+<!ENTITY SSLClientAuthMethod.caption        "Client-Zertifikat-Auswahl">
+
+<!ENTITY pref.ssltls.title                  "Transport Layer Security (SSL/TLS)">
+<!ENTITY limit.description                  "Sie können beschränken, welche Verschlüsselungsprotokolle für sichere Verbindungen verwendet werden. Wählen Sie eine einzelne Version oder einen durchgängigen Bereich an Versionen.">
+<!ENTITY limit.enable.label                 "Aktivieren:">
+<!ENTITY limit.tls10.label                  "TLS 1.0">
+<!ENTITY limit.tls10.accesskey              "T">
+<!ENTITY limit.tls11.label                  "TLS 1.1">
+<!ENTITY limit.tls11.accesskey              "1">
+<!ENTITY limit.tls12.label                  "TLS 1.2">
+<!ENTITY limit.tls12.accesskey              "2">
+<!ENTITY limit.tls13.label                  "TLS 1.3">
+<!ENTITY limit.tls13.accesskey              "3">
+
+<!ENTITY warn.description2                  "&brandShortName; kann Sie über den Sicherheitsstatus der Webseite warnen, die Sie ansehen. &brandShortName; soll eine Warnung anzeigen, wenn:">
+<!ENTITY warn.enteringsecure                "Laden einer Seite, die Verschlüsselung unterstützt">
+<!ENTITY warn.enteringsecure.accesskey      "L">
+<!ENTITY warn.insecurepost                  "Senden von Formulardaten von einer unverschlüsselten Seite an eine unverschlüsselte Seite">
+<!ENTITY warn.insecurepost.accesskey        "S">
+<!ENTITY warn.leavingsecure                 "Verlassen einer Seite, die Verschlüsselung unterstützt">
+<!ENTITY warn.leavingsecure.accesskey       "V">
+
+<!ENTITY mixed.description                  "Verschlüsselte Seiten könnten unverschlüsselte Inhalte enthalten, die auf Abhören oder Betrug anfällig sein könnten. &brandShortName; kann diese erkennen und blockieren:">
+<!ENTITY warn.mixedactivecontent            "Warnen, wenn verschlüsselte Seiten unsichere Inhalte enthalten">
+<!ENTITY warn.mixedactivecontent.accesskey  "W">
+<!ENTITY block.activecontent                "Unsichere Inhalte auf verschlüsselten Seiten nicht laden">
+<!ENTITY block.activecontent.accesskey      "n">
+<!ENTITY warn.mixeddisplaycontent           "Warnen, wenn verschlüsselte Seiten andere Arten von gemischten Inhalten enthalten">
+<!ENTITY warn.mixeddisplaycontent.accesskey "e">
+<!ENTITY block.displaycontent               "Keine anderen Arten von gemischten Inhalten auf verschlüsselten Seiten anzeigen">
+<!ENTITY block.displaycontent.accesskey     "d">
+
+<!ENTITY certselect.description             "Bestimmen Sie, wie &brandShortName; ein Sicherheitszertifikat auswählt, das Websites vorgezeigt wird, die ein solches verlangen:">
+<!ENTITY certselect.auto                    "Automatisch wählen">
+<!ENTITY certselect.auto.accesskey          "u">
+<!ENTITY certselect.ask                     "Jedes Mal fragen">
+<!ENTITY certselect.ask.accesskey           "J">

@@ -141,7 +141,7 @@ mod details {
 
     impl Default for PassTimes {
         fn default() -> Self {
-            PassTimes {
+            Self {
                 pass: [Default::default(); NUM_PASSES],
             }
         }
@@ -252,7 +252,7 @@ mod details {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::string::ToString;
+    use alloc::string::ToString;
 
     #[test]
     fn display() {

@@ -7,11 +7,26 @@
 
 #include "nsAppRunner.h"
 #include "nsIObserverService.h"
+#include "nsIOService.h"
 #include "SocketProcessParent.h"
+#include "ProcessUtils.h"
+#include "mozilla/ipc/FileDescriptor.h"
+
+#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
+#  include "mozilla/SandboxBroker.h"
+#  include "mozilla/SandboxBrokerPolicyFactory.h"
+#  include "mozilla/SandboxSettings.h"
+#endif
 
 #ifdef MOZ_GECKO_PROFILER
 #  include "ProfilerParent.h"
 #endif
+
+#if defined(XP_MACOSX) && defined(MOZ_SANDBOX)
+#  include "mozilla/Sandbox.h"
+#endif
+
+using namespace mozilla::ipc;
 
 namespace mozilla {
 namespace net {
@@ -75,6 +90,10 @@ class OfflineObserver final : public nsIObserver {
 
 NS_IMPL_ISUPPORTS(OfflineObserver, nsIObserver)
 
+#if defined(XP_MACOSX) && defined(MOZ_SANDBOX)
+bool SocketProcessHost::sLaunchWithMacSandbox = false;
+#endif
+
 SocketProcessHost::SocketProcessHost(Listener* aListener)
     : GeckoChildProcessHost(GeckoProcessType_Socket),
       mListener(aListener),
@@ -84,6 +103,13 @@ SocketProcessHost::SocketProcessHost(Listener* aListener)
       mChannelClosed(false) {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_COUNT_CTOR(SocketProcessHost);
+#if defined(XP_MACOSX) && defined(MOZ_SANDBOX)
+  if (!sLaunchWithMacSandbox) {
+    sLaunchWithMacSandbox =
+        (PR_GetEnv("MOZ_DISABLE_SOCKET_PROCESS_SANDBOX") == nullptr);
+  }
+  mDisableOSActivityMode = sLaunchWithMacSandbox;
+#endif
 }
 
 SocketProcessHost::~SocketProcessHost() {
@@ -140,7 +166,6 @@ void SocketProcessHost::OnChannelConnected(int32_t peer_pid) {
 
 void SocketProcessHost::OnChannelError() {
   MOZ_ASSERT(!NS_IsMainThread());
-
   GeckoChildProcessHost::OnChannelError();
 
   // Post a task to the main thread. Take the lock because mTaskFactory is not
@@ -180,7 +205,7 @@ void SocketProcessHost::InitAfterConnect(bool aSucceeded) {
   if (aSucceeded) {
     mSocketProcessParent = MakeUnique<SocketProcessParent>(this);
     DebugOnly<bool> rv = mSocketProcessParent->Open(
-        GetChannel(), base::GetProcId(GetChildProcessHandle()));
+        TakeChannel(), base::GetProcId(GetChildProcessHandle()));
     MOZ_ASSERT(rv);
 
     nsCOMPtr<nsIIOService> ioService(do_GetIOService());
@@ -188,6 +213,25 @@ void SocketProcessHost::InitAfterConnect(bool aSucceeded) {
     bool offline = false;
     DebugOnly<nsresult> result = ioService->GetOffline(&offline);
     MOZ_ASSERT(NS_SUCCEEDED(result), "Failed getting offline?");
+
+    Maybe<FileDescriptor> brokerFd;
+
+#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
+    if (GetEffectiveSocketProcessSandboxLevel() > 0) {
+      auto policy = SandboxBrokerPolicyFactory::GetSocketProcessPolicy(
+          GetActor()->OtherPid());
+      if (policy != nullptr) {
+        brokerFd = Some(FileDescriptor());
+        mSandboxBroker = SandboxBroker::Create(
+            std::move(policy), GetActor()->OtherPid(), brokerFd.ref());
+        // This is unlikely to fail and probably indicates OS resource
+        // exhaustion.
+        Unused << NS_WARN_IF(mSandboxBroker == nullptr);
+        MOZ_ASSERT(brokerFd.ref().IsValid());
+      }
+      Unused << GetActor()->SendInitLinuxSandbox(brokerFd);
+    }
+#endif  // XP_LINUX && MOZ_SANDBOX
 
 #ifdef MOZ_GECKO_PROFILER
     Unused << GetActor()->SendInitProfiler(
@@ -256,6 +300,21 @@ void SocketProcessHost::DestroyProcess() {
   MessageLoop::current()->PostTask(NS_NewRunnableFunction(
       "DestroySocketProcessRunnable", [this] { Destroy(); }));
 }
+
+#if defined(XP_MACOSX) && defined(MOZ_SANDBOX)
+bool SocketProcessHost::FillMacSandboxInfo(MacSandboxInfo& aInfo) {
+  GeckoChildProcessHost::FillMacSandboxInfo(aInfo);
+  if (!aInfo.shouldLog && PR_GetEnv("MOZ_SANDBOX_SOCKET_PROCESS_LOGGING")) {
+    aInfo.shouldLog = true;
+  }
+  return true;
+}
+
+/* static */
+MacSandboxType SocketProcessHost::GetMacSandboxType() {
+  return MacSandboxType_Socket;
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // SocketProcessMemoryReporter

@@ -3,27 +3,33 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef WEBGPU_BindGroupLayout_H_
-#define WEBGPU_BindGroupLayout_H_
+#ifndef GPU_BindGroupLayout_H_
+#define GPU_BindGroupLayout_H_
 
 #include "nsWrapperCache.h"
 #include "ObjectModel.h"
+#include "mozilla/webgpu/WebGPUTypes.h"
 
 namespace mozilla {
 namespace webgpu {
 
 class Device;
 
-class BindGroupLayout final : public ChildOf<Device> {
+class BindGroupLayout final : public ObjectBase, public ChildOf<Device> {
  public:
-  WEBGPU_DECL_GOOP(BindGroupLayout)
+  GPU_DECL_CYCLE_COLLECTION(BindGroupLayout)
+  GPU_DECL_JS_WRAP(BindGroupLayout)
+
+  BindGroupLayout(Device* const aParent, RawId aId);
+
+  const RawId mId;
 
  private:
-  BindGroupLayout() = delete;
-  virtual ~BindGroupLayout();
+  ~BindGroupLayout();
+  void Cleanup();
 };
 
 }  // namespace webgpu
 }  // namespace mozilla
 
-#endif  // WEBGPU_BindGroupLayout_H_
+#endif  // GPU_BindGroupLayout_H_

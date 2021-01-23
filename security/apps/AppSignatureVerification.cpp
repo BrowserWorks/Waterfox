@@ -25,9 +25,7 @@
 #include "nsComponentManagerUtils.h"
 #include "nsDependentString.h"
 #include "nsHashKeys.h"
-#include "nsIDirectoryEnumerator.h"
 #include "nsIFile.h"
-#include "nsIFileStreams.h"
 #include "nsIInputStream.h"
 #include "nsIStringEnumerator.h"
 #include "nsIZipReader.h"
@@ -808,7 +806,7 @@ class CoseVerificationContext {
  public:
   explicit CoseVerificationContext(AppTrustedRoot aTrustedRoot)
       : mTrustedRoot(aTrustedRoot), mCertDER(nullptr), mCertDERLen(0) {}
-  ~CoseVerificationContext() {}
+  ~CoseVerificationContext() = default;
 
   AppTrustedRoot GetTrustedRoot() { return mTrustedRoot; }
   nsresult SetCert(SECItem* aCertDER) {
@@ -1043,7 +1041,7 @@ class SignaturePolicy {
       mSHA256Allowed = true;
     }
   }
-  ~SignaturePolicy() {}
+  ~SignaturePolicy() = default;
   bool ProcessCOSE() { return mProcessCose; }
   bool COSERequired() { return mCoseRequired; }
   bool PK7Required() { return mPK7Required; }
@@ -1282,7 +1280,6 @@ nsresult OpenSignedAppFile(AppTrustedRoot aTrustedRoot, nsIFile* aJarFile,
   }
 
   // Return the signer's certificate to the reader if they want it.
-  // XXX: We should return an nsIX509CertList with the whole validated chain.
   if (aSignerCert) {
     // The COSE certificate is authoritative.
     if (aPolicy.COSERequired() || (coseCertItem && coseCertItem->len != 0)) {
@@ -1368,5 +1365,5 @@ nsNSSCertificateDB::OpenSignedAppFileAsync(
   SignaturePolicy policy(policyInt);
   RefPtr<OpenSignedAppFileTask> task(
       new OpenSignedAppFileTask(aTrustedRoot, aJarFile, policy, aCallback));
-  return task->Dispatch("SignedJAR");
+  return task->Dispatch();
 }

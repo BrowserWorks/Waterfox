@@ -20,6 +20,11 @@
 }
 
 /* This overrides color: -moz-buttonhovertext from toolbarbutton.css */
-.identity-popup-content-blocking-category:hover {
+#protections-popup toolbarbutton:not([disabled="true"]):hover,
+#protections-popup toolbarbutton:not([disabled="true"]):hover:active {
   color: inherit;
+}
+
+.protections-popup-tp-switch:-moz-focusring {
+  outline: 1px dotted;
 }

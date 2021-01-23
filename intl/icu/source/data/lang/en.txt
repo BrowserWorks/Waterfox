@@ -140,6 +140,7 @@ en{
         chp{"Chipewyan"}
         chr{"Cherokee"}
         chy{"Cheyenne"}
+        cic{"Chickasaw"}
         ckb{"Central Kurdish"}
         co{"Corsican"}
         cop{"Coptic"}
@@ -408,7 +409,7 @@ en{
         mt{"Maltese"}
         mua{"Mundang"}
         mul{"Multiple languages"}
-        mus{"Creek"}
+        mus{"Muscogee"}
         mwl{"Mirandese"}
         mwr{"Marwari"}
         mwv{"Mentawai"}
@@ -661,6 +662,14 @@ en{
     }
     Languages%long{
         zh{"Mandarin Chinese"}
+        zh_Hans{"Simplified Mandarin Chinese"}
+        zh_Hant{"Traditional Mandarin Chinese"}
+    }
+    Languages%menu{
+        ars{"Arabic, Najdi"}
+        ckb{"Kurdish, Central"}
+        yue{"Chinese, Cantonese"}
+        zh{"Chinese, Mandarin"}
     }
     Languages%short{
         az{"Azeri"}
@@ -668,6 +677,7 @@ en{
         en_US{"US English"}
     }
     Languages%variant{
+        ckb{"Kurdish, Sorani"}
         ky{"Kirghiz"}
         my{"Myanmar Language"}
         ps{"Pushto"}
@@ -679,6 +689,7 @@ en{
         Aghb{"Caucasian Albanian"}
         Ahom{"Ahom"}
         Arab{"Arabic"}
+        Aran{"Nastaliq"}
         Armi{"Imperial Aramaic"}
         Armn{"Armenian"}
         Avst{"Avestan"}
@@ -699,12 +710,14 @@ en{
         Cari{"Carian"}
         Cham{"Cham"}
         Cher{"Cherokee"}
+        Chrs{"Chorasmian"}
         Cirt{"Cirth"}
         Copt{"Coptic"}
         Cprt{"Cypriot"}
         Cyrl{"Cyrillic"}
         Cyrs{"Old Church Slavonic Cyrillic"}
         Deva{"Devanagari"}
+        Diak{"Dives Akuru"}
         Dogr{"Dogra"}
         Dsrt{"Deseret"}
         Dupl{"Duployan shorthand"}
@@ -749,6 +762,7 @@ en{
         Khar{"Kharoshthi"}
         Khmr{"Khmer"}
         Khoj{"Khojki"}
+        Kits{"Khitan small script"}
         Knda{"Kannada"}
         Kore{"Korean"}
         Kpel{"Kpelle"}
@@ -807,6 +821,7 @@ en{
         Phnx{"Phoenician"}
         Plrd{"Pollard Phonetic"}
         Prti{"Inscriptional Parthian"}
+        Qaag{"Zawgyi"}
         Rjng{"Rejang"}
         Rohg{"Hanifi Rohingya"}
         Roro{"Rongorongo"}
@@ -854,6 +869,7 @@ en{
         Wole{"Woleai"}
         Xpeo{"Old Persian"}
         Xsux{"Sumero-Akkadian Cuneiform"}
+        Yezi{"Yezidi"}
         Yiii{"Yi"}
         Zanb{"Zanabazar Square"}
         Zinh{"Inherited"}
@@ -1103,6 +1119,7 @@ en{
             cham{"Cham Digits"}
             cyrl{"Cyrillic Numerals"}
             deva{"Devanagari Digits"}
+            diak{"Dives Akuru Digits"}
             ethi{"Ethiopic Numerals"}
             finance{"Financial Numerals"}
             fullwide{"Full-Width Digits"}
@@ -1158,6 +1175,7 @@ en{
             roman{"Roman Numerals"}
             romanlow{"Roman Lowercase Numerals"}
             saur{"Saurashtra Digits"}
+            segment{"Segmented Digits"}
             shrd{"Sharada Digits"}
             sind{"Khudawadi Digits"}
             sinh{"Sinhala Lith Digits"}
@@ -1257,7 +1275,7 @@ en{
         VALENCIA{"Valencian"}
         WADEGILE{"Wade-Giles Romanization"}
     }
-    Version{"2.1.48.65"}
+    Version{"37"}
     characterLabelPattern{
         all{"{0} — all"}
         category-list{"{0}: {1}"}

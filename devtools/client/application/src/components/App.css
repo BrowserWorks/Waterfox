@@ -6,54 +6,29 @@
  * General styles
  */
 
-h1 {
-  font-size: 22px;
-  font-weight: normal;
+a.disabled-link,
+a.disabled-link:hover,
+a.disabled-link:visited {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-a {
-  margin: 0 10px;
-}
-
-a,
-a:hover,
-a:visited {
-  color: var(--theme-highlight-blue) !important;
-  cursor: pointer;
-}
-
-a.disabled,
-a.disabled:hover,
-a.disabled:visited {
-  opacity: 0.5 !important;
-  cursor: default;
-}
-
-/*
- * The current layout of the application panel is
- *
- *  +---------------------------------------------+
- *  | (header) "Service workers"                  |
- *  +---------------------------------------------+
- *  | Service worker 1                            |
- *  |   (...)                                     |
- *  | Service worker N           (see Worker.css) |
- *  +---------------------------------------------+
- *  |                     Link to about:debugging |
- *  +---------------------------------------------+
- */
-.application {
-  height: 100vh;
-  padding: 0 2rem;
+.app {
   display: grid;
-  -moz-user-select: none;
+  min-width: calc(var(--base-unit) * 90);
 }
 
-.application--empty {
-  align-items: center;
-  justify-content: center;
+/* wide layout -> two columns, 1 row */
+@media(min-width: 701px) {
+  .app {
+    grid-template-columns: calc(var(--base-unit) * 50) auto;
+    height: 100vh;
+  }
 }
 
-.application:not(.application--empty) {
-  grid-template-rows: 1fr auto;
+/* vertical layout -> 1 column, 2 rows */
+@media(max-width: 700px) {
+  .app {
+    grid-template-rows: auto 1fr;
+  }
 }

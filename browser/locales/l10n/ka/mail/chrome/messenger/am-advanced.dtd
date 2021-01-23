@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-advanced.xul -->
+
+<!-- extracted from am-advanced.xhtml -->
+
+<!-- LOCALIZATION NOTE (smtpServer.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpServer.label "გამავალი ფოსტის (SMTP) სერვერის პარამეტრები">
+
+<!-- LOCALIZATION NOTE (smtpDescription.label): do not translate "SMTP" in below line -->
+<!ENTITY smtpDescription.label "თქვენი ანგარიშების მართვისას შეგიძლიათ ისარგებლოთ სერვერით ამ სიიდან და მიუთითოთ იგი. როგორც გასული ფოსტის (SMTP) სერვერი ან შეარჩიოთ სიიდან ნაგულისხმები სერვერი დაჭერით ღილაკზე &quot;ნაგულისხმები სერვერი&quot;.">
+
+<!ENTITY smtpListAdd.label  "დამატება…">
+<!ENTITY smtpListAdd.accesskey  "დ">
+<!ENTITY smtpListEdit.label "ჩასწორება…">
+<!ENTITY smtpListEdit.accesskey "ჩ">
+<!ENTITY smtpListDelete.label "ამოშლა">
+<!ENTITY smtpListDelete.accesskey "ა">
+<!ENTITY smtpListSetDefault.label "ნაგულისხმევი">
+<!ENTITY smtpListSetDefault.accesskey "ნ">
+
+<!ENTITY serverDetails.label "მითითებული სერვერის მონაცემები:">
+<!ENTITY serverDescription.label "აღწერილობა: ">
+<!ENTITY serverName.label "სერვერის სახელი: ">
+<!ENTITY serverPort.label "პორტი: ">
+<!ENTITY userName.label   "სახელი: ">
+<!ENTITY connectionSecurity.label "კავშირის უსაფრთხოება: ">
+<!ENTITY authMethod.label   "აუთენტიფიკაციის მეთოდი: ">

@@ -1,29 +1,15 @@
-/*
-# -*- Mode: Java; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
-*/
+/* - This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-%include ../../../../toolkit/themes/osx/global/shared.inc
+%include ../../shared/preferences/preferences.inc.css
 
-window {
-  font: -moz-dialog;
+body {
+  font-size: 1.36em;
 }
 
 tabpanels {
   padding: 20px 7px 7px;
-}
-
-#popupPolicyRow {
-  margin-bottom: 4px !important;
-  padding-bottom: 4px !important;
-  border-bottom: 1px solid #ccc;
-}
-
-#translationAttributionImage {
-  width: 70px;
-  cursor: pointer;
 }
 
 #browserUseCurrent,
@@ -48,17 +34,6 @@ tabpanels {
   font: message-box !important;
 }
 
-/* General Pane */
-
-#useFirefoxSync,
-#getStarted {
-  font-size: 90%;
-}
-
-#isNotDefaultLabel {
-  font-weight: bold;
-}
-
 /**
  * Update Preferences
  */
@@ -68,14 +43,4 @@ tabpanels {
 
 .updateControls {
   margin-inline-start: 10px;
-}
-
-/* ----- SYNC PANE ----- */
-
-#noFxaAccount {
-  line-height: 1.2em;
-}
-
-#noFxaAccount > label:first-child {
-  margin-bottom: 0.6em;
 }

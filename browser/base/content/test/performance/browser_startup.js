@@ -36,8 +36,6 @@ const startupPhases = {
         "resource://gre/modules/MainProcessSingleton.jsm",
         "resource://gre/modules/XPCOMUtils.jsm",
         "resource://gre/modules/Services.jsm",
-        // Bugs to fix: The following components shouldn't be initialized that early.
-        "resource://gre/modules/PushComponents.jsm", // bug 1369436
       ]),
     },
   },
@@ -69,6 +67,7 @@ const startupPhases = {
         "resource://gre/modules/PlacesUtils.jsm",
         "resource://gre/modules/Promise.jsm", // imported by devtools during _delayedStartup
         "resource://gre/modules/Preferences.jsm",
+        "resource://gre/modules/Sqlite.jsm",
       ]),
       services: new Set(["@mozilla.org/browser/search-service;1"]),
     },
@@ -85,6 +84,7 @@ const startupPhases = {
         "nsPlacesExpiration.js",
       ]),
       modules: new Set([
+        "resource://gre/modules/Blocklist.jsm",
         // Bug 1391495 - BrowserWindowTracker.jsm is intermittently used.
         // "resource:///modules/BrowserWindowTracker.jsm",
         "resource://gre/modules/BookmarkHTMLUtils.jsm",
@@ -95,7 +95,7 @@ const startupPhases = {
         "resource://gre/modules/FxAccountsStorage.jsm",
         "resource://gre/modules/PlacesBackups.jsm",
         "resource://gre/modules/PlacesSyncUtils.jsm",
-        "resource://gre/modules/Sqlite.jsm",
+        "resource://gre/modules/PushComponents.jsm",
       ]),
       services: new Set([
         "@mozilla.org/browser/annotation-service;1",
@@ -186,12 +186,14 @@ add_task(async function() {
       .filter(c => c != "startupRecorder.js");
   }
 
-  function printStack(scriptType, name) {
+  function getStack(scriptType, name) {
     if (scriptType == "modules") {
-      info(Cu.getModuleImportStack(name));
-    } else if (scriptType == "components") {
-      info(componentStacks.get(name));
+      return Cu.getModuleImportStack(name);
     }
+    if (scriptType == "components") {
+      return componentStacks.get(name);
+    }
+    return "";
   }
 
   // This block only adds debug output to help find the next bugs to file,
@@ -207,7 +209,7 @@ add_task(async function() {
         if (!previous || !data[previous][scriptType].includes(f)) {
           info(`${scriptType} loaded ${phase}: ${f}`);
           if (kDumpAllStacks) {
-            printStack(scriptType, f);
+            info(getStack(scriptType, f));
           }
         }
       }
@@ -233,8 +235,8 @@ add_task(async function() {
           `should have no unexpected ${scriptType} loaded ${phase}`
         );
         for (let script of loadedList[scriptType]) {
-          ok(false, `unexpected ${scriptType}: ${script}`);
-          printStack(scriptType, script);
+          let message = `unexpected ${scriptType}: ${script}`;
+          record(false, message, undefined, getStack(scriptType, script));
         }
         is(
           whitelist[scriptType].size,
@@ -251,9 +253,11 @@ add_task(async function() {
       for (let scriptType in blacklist) {
         for (let file of blacklist[scriptType]) {
           let loaded = loadedList[scriptType].includes(file);
-          ok(!loaded, `${file} is not allowed ${phase}`);
-          if (loaded) {
-            printStack(scriptType, file);
+          let message = `${file} is not allowed ${phase}`;
+          if (!loaded) {
+            ok(true, message);
+          } else {
+            record(false, message, undefined, getStack(scriptType, file));
           }
         }
       }

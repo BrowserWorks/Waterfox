@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('BigInt')) -- BigInt is not enabled unconditionally
 // Copyright (C) 2018 Igalia, S.L. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 /*---
@@ -89,4 +88,5 @@ assert.throws(TypeError, function() {
 assert.throws(TypeError, function() {
   undefined & 1n;
 }, 'undefined & 1n throws TypeError');
+
 reportCompare(0, 0);

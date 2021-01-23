@@ -118,12 +118,22 @@ static inline D2D1_MATRIX_3X2_F D2DMatrix(const Matrix& aTransform) {
                           aTransform._22, aTransform._31, aTransform._32);
 }
 
-static inline D2D1_COLOR_F D2DColor(const Color& aColor) {
+static inline D2D1_COLOR_F D2DColor(const DeviceColor& aColor) {
   return D2D1::ColorF(aColor.r, aColor.g, aColor.b, aColor.a);
 }
 
 static inline IntSize ToIntSize(const D2D1_SIZE_U& aSize) {
   return IntSize(aSize.width, aSize.height);
+}
+
+static inline SurfaceFormat ToPixelFormat(const DXGI_FORMAT& aFormat) {
+  switch (aFormat) {
+    case DXGI_FORMAT_A8_UNORM:
+    case DXGI_FORMAT_R8_UNORM:
+      return SurfaceFormat::A8;
+    default:
+      return SurfaceFormat::B8G8R8A8;
+  }
 }
 
 static inline SurfaceFormat ToPixelFormat(const D2D1_PIXEL_FORMAT& aFormat) {

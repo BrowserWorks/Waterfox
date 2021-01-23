@@ -20,6 +20,7 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/EventForwards.h"
 #include "mozilla/dom/BindingDeclarations.h"
+#include "mozilla/dom/DataTransferItemList.h"
 #include "mozilla/dom/File.h"
 
 class nsINode;
@@ -33,7 +34,6 @@ class EventStateManager;
 namespace dom {
 
 class DataTransferItem;
-class DataTransferItemList;
 class DOMStringList;
 class Element;
 class FileList;
@@ -115,8 +115,8 @@ class DataTransfer final : public nsISupports, public nsWrapperCache {
     mParent = aNewParent;
   }
 
-  static already_AddRefed<DataTransfer> Constructor(const GlobalObject& aGlobal,
-                                                    ErrorResult& aRv);
+  static already_AddRefed<DataTransfer> Constructor(
+      const GlobalObject& aGlobal);
 
   /**
    * The actual effect that will be used, and should always be one of the
@@ -198,6 +198,8 @@ class DataTransfer final : public nsISupports, public nsWrapperCache {
   void UpdateDragImage(Element& aElement, int32_t aX, int32_t aY);
 
   void GetTypes(nsTArray<nsString>& aTypes, CallerType aCallerType) const;
+  bool HasType(const nsAString& aType) const;
+  bool HasFile() const;
 
   void GetData(const nsAString& aFormat, nsAString& aData,
                nsIPrincipal& aSubjectPrincipal, ErrorResult& aRv);
@@ -273,6 +275,8 @@ class DataTransfer final : public nsISupports, public nsWrapperCache {
   uint32_t EffectAllowedInt() const { return mEffectAllowed; }
 
   void GetMozTriggeringPrincipalURISpec(nsAString& aPrincipalURISpec);
+
+  nsIContentSecurityPolicy* GetMozCSP();
 
   mozilla::dom::Element* GetDragTarget() const { return mDragTarget; }
 

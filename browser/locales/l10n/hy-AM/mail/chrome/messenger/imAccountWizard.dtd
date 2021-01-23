@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Կանոնավոր կցորդ">
+
+<!ENTITY accountProtocolTitle.label   "Զրույցի ցանկը">
+<!ENTITY accountProtocolInfo.label    "Ընտրեք զրույցի ցանցը։">
+<!ENTITY accountProtocolField.label   "Ցանց՝">
+<!ENTITY accountProtocolGetMore.label "Իմանալ ավելին...">
+
+<!ENTITY accountUsernameTitle.label   "Օգտվողի Անունը">
+<!ENTITY accountUsernameDuplicate.label "Այս փոստարկղը արդեն կարգավորված է!">
+
+<!ENTITY accountPasswordTitle.label   "Գաղտնաբառը">
+<!ENTITY accountPasswordInfo.label    "Նշեք Ձեր գաղտնաբառը։">
+<!ENTITY accountPasswordField.label   "Գաղտնաբառը.">
+<!ENTITY accountPasswordManager.label "Նշված գաղտնաբառը կպահպանվի Գաղտնաբառերի Կառավարչում։ Մի ընտրեք սա, եթե ցանկանում եք ամեն անգամ մուտքագրել Ձեր գաղտնաբառը։">
+
+<!ENTITY accountAdvancedTitle.label   "Ընդլայնված ընտրանքներ">
+<!ENTITY accountAdvancedInfo.label    "Կարող եք բաց թողնել այս քայլը։">
+<!ENTITY accountAdvanced.newMailNotification.label   "Տեղեկացնել նոր նամակի մասին">
+<!ENTITY accountAliasGroupbox.caption "Տեղային մականուն">
+<!ENTITY accountAliasField.label      "Մականուններ.">
+<!ENTITY accountAliasInfo.label       "Կցուցադրվի միայն զրուցի ժամանակ: ">
+<!ENTITY accountProxySettings.caption "Միջնորդի կարգավորումներ">
+<!ENTITY accountProxySettings.change.label     "Փոխել...">
+<!ENTITY accountProxySettings.change.accessKey "Փ">
+
+<!ENTITY accountSummaryTitle.label   "Ընդհանուր">
+<!ENTITY accountSummaryInfo.label    "Ստորև կարող եք տեսնել մուտքագրված տեղեկությունների ամփոփումը: Ստուգեք դրանք՝ մինչև հաշիվը բացելը:">
+<!ENTITY accountSummary.connectNow.label "Կապակցել փոստարկղին։">

@@ -71,6 +71,24 @@ impl SharedRwLock {
         }
     }
 
+    /// Create a new global shared lock (servo).
+    #[cfg(feature = "servo")]
+    pub fn new_leaked() -> Self {
+        SharedRwLock {
+            arc: Arc::new_leaked(RwLock::new(())),
+        }
+    }
+
+    /// Create a new global shared lock (gecko).
+    #[cfg(feature = "gecko")]
+    pub fn new_leaked() -> Self {
+        SharedRwLock {
+            cell: Some(Arc::new_leaked(AtomicRefCell::new(
+                SomethingZeroSizedButTyped,
+            ))),
+        }
+    }
+
     /// Create a new read-only shared lock (gecko).
     #[cfg(feature = "gecko")]
     pub fn read_only() -> Self {
@@ -240,20 +258,20 @@ impl<T> Locked<T> {
 
 #[cfg(feature = "gecko")]
 impl<T: ToShmem> ToShmem for Locked<T> {
-    fn to_shmem(&self, builder: &mut SharedMemoryBuilder) -> ManuallyDrop<Self> {
+    fn to_shmem(&self, builder: &mut SharedMemoryBuilder) -> to_shmem::Result<Self> {
         let guard = self.shared_lock.read();
-        ManuallyDrop::new(Locked {
+        Ok(ManuallyDrop::new(Locked {
             shared_lock: SharedRwLock::read_only(),
             data: UnsafeCell::new(ManuallyDrop::into_inner(
-                self.read_with(&guard).to_shmem(builder),
+                self.read_with(&guard).to_shmem(builder)?,
             )),
-        })
+        }))
     }
 }
 
 #[cfg(feature = "servo")]
 impl<T: ToShmem> ToShmem for Locked<T> {
-    fn to_shmem(&self, _builder: &mut SharedMemoryBuilder) -> ManuallyDrop<Self> {
+    fn to_shmem(&self, _builder: &mut SharedMemoryBuilder) -> to_shmem::Result<Self> {
         panic!("ToShmem not supported in Servo currently")
     }
 }

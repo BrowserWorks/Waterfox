@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Do tabele konwertěrowaś">
+<!ENTITY instructions1.label   "Editor napórajo nowy tabelowy rěd za kuždy wótstawk we wuběrku.">
+<!ENTITY instructions2.label   "Wubjeŕśo znamuško, kótarež se ma wužywaś, aby se wuběrk do słupow rozrědował:">
+<!ENTITY commaRadio.label      "Koma">
+<!ENTITY spaceRadio.label      "Proznota">
+<!ENTITY otherRadio.label      "Druge znamuško:">
+<!ENTITY deleteCharCheck.label "Źěleńske znamuško wulašowaś">
+<!ENTITY collapseSpaces.label  "Pśidatne proznoty ignorěrowaś">
+<!ENTITY collapseSpaces.tooltip "Susedne proznoty do jadnogo źěleńskego znamuška konwertěrowaś">

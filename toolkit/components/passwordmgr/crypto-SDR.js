@@ -132,10 +132,7 @@ LoginManagerCrypto_SDR.prototype = {
 
     this._uiBusy = true;
     try {
-      cipherTexts = await this._decoderRing.asyncEncryptStrings(
-        plaintexts.length,
-        plaintexts
-      );
+      cipherTexts = await this._decoderRing.asyncEncryptStrings(plaintexts);
     } catch (e) {
       this.log("Failed to encrypt strings. (" + e.name + ")");
       // If the user clicks Cancel, we get NS_ERROR_FAILURE.
@@ -218,6 +215,61 @@ LoginManagerCrypto_SDR.prototype = {
     return plainText;
   },
 
+  /**
+   * Decrypts the specified strings, using the SecretDecoderRing.
+   *
+   * @resolve {string[]} The decrypted strings. If a string cannot
+   * be decrypted, the empty string is returned for that instance.
+   * Callers will need to use decrypt() to determine if the encrypted
+   * string is invalid or intentionally empty. Throws/reject with
+   * an error if there was a problem.
+   */
+  async decryptMany(cipherTexts) {
+    if (!Array.isArray(cipherTexts) || !cipherTexts.length) {
+      throw Components.Exception(
+        "Need at least one ciphertext to decrypt",
+        Cr.NS_ERROR_INVALID_ARG
+      );
+    }
+
+    let plainTexts = [];
+
+    let wasLoggedIn = this.isLoggedIn;
+    let canceledMP = false;
+
+    this._uiBusy = true;
+    try {
+      plainTexts = await this._decoderRing.asyncDecryptStrings(cipherTexts);
+    } catch (e) {
+      this.log("Failed to decrypt strings. (" + e.name + ")");
+      // If the user clicks Cancel, we get NS_ERROR_NOT_AVAILABLE.
+      // If the cipherText is bad / wrong key, we get NS_ERROR_FAILURE
+      // Wrong passwords are handled by the decoderRing reprompting;
+      // we get no notification.
+      if (e.result == Cr.NS_ERROR_NOT_AVAILABLE) {
+        canceledMP = true;
+        throw Components.Exception(
+          "User canceled master password entry",
+          Cr.NS_ERROR_ABORT
+        );
+      } else {
+        throw Components.Exception(
+          "Couldn't decrypt strings: " + e.result,
+          Cr.NS_ERROR_FAILURE
+        );
+      }
+    } finally {
+      this._uiBusy = false;
+      // If we triggered a master password prompt, notify observers.
+      if (!wasLoggedIn && this.isLoggedIn) {
+        this._notifyObservers("passwordmgr-crypto-login");
+      } else if (canceledMP) {
+        this._notifyObservers("passwordmgr-crypto-loginCanceled");
+      }
+    }
+    return plainTexts;
+  },
+
   /*
    * uiBusy
    */
@@ -261,4 +313,4 @@ XPCOMUtils.defineLazyGetter(
   }
 );
 
-var EXPORTED_SYMBOLS = ["LoginManagerCrypto_SDR"];
+const EXPORTED_SYMBOLS = ["LoginManagerCrypto_SDR"];

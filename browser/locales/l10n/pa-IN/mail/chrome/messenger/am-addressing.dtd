@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "ਲਿਖਣ ਅਤੇ ਐਡਰੈੱਸ">
+<!ENTITY addressingGroupTitle.label "ਐਡਰੈੱਸ">
+<!ENTITY addressingText.label      "ਜਦੋਂ ਐਡਰੈੱਸ ਦੀ ਖੋਜ ਕੀਤੀ ਜਾਵੇ:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "ਇਸ ਅਕਾਊਂਟ ਲਈ ਮੇਰੀ ਗਲੋਬਲ LDAP ਸਰਵਰ ਪਸੰਦ ਵਰਤੋਂ">
+<!ENTITY useGlobal.accesskey       "U">
+<!ENTITY editDirectories.label     "ਡਾਇਰੈਕਟਰੀ ਸੋਧ...">
+<!ENTITY editDirectories.accesskey "E">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "ਇੱਕ ਵੱਖਰਾ LDAP ਸਰਵਰ ਵਰਤੋਂ:">
+<!ENTITY directories.accesskey     "d">
+<!ENTITY directoriesNone.label     "ਕੋਈ ਨਹੀਂ">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label "ਲਿਖਣ">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "ਸੁਨੇਹਾ HTML ਫਾਰਮੈਟ ਵਿੱਚ ਲਿਖੋ">
+<!ENTITY useHtml.accesskey                    "C">
+<!ENTITY autoQuote.label                      "ਜਵਾਬ ਦੇਣ ਸਮੇਂ ਅਸਲੀ ਸੁਨੇਹੇ ਨੂੰ ਖੁਦ ਹੀ ਹਵਾਲੇ ਵਜੋਂ ਇਸਤੇਮਾਲ ਕਰੋ">
+<!ENTITY autoQuote.accesskey                  "q">
+<!ENTITY aboveQuote.label                     "ਮੇਰਾ ਜਵਾਬ ਹਵਾਲੇ ਦੇ ਉੱਤੇ ਸ਼ੁਰੂ ਕਰੋ">
+<!ENTITY belowQuote.label                     "ਮੇਰਾ ਜਵਾਬ ਹਵਾਲੇ ਦੇ ਹੇਠਾਂ ਸ਼ੁਰੂ ਕਰੋ">
+<!ENTITY selectAndQuote.label                 "ਹਵਾਲਾ ਚੁਣੋ">
+<!ENTITY place.label                          "ਅਤੇ ਮੇਰੇ ਦਸਤਖਤ ਕਰੋ">
+<!ENTITY place.accesskey                      "p">
+<!ENTITY belowText.label                      "ਹਵਾਲੇ ਦੇ ਹੇਠਾਂ (ਸਿਫਾਰਸ਼ੀ)">
+<!ENTITY aboveText.label                      "ਮੇਰੇ ਜਵਾਬ ਦੇ ਹੇਠਾਂ (ਹਵਾਲੇ ਦੇ ਉੱਤੇ)">
+<!ENTITY includeSigOnReply.label              "ਜਵਾਬ ਵਿੱਚ ਦਸਤਖਤ ਸ਼ਾਮਲ ਕਰੋ">
+<!ENTITY includeSigOnReply.accesskey          "s">
+<!ENTITY includeSigOnForward.label            "ਅੱਗੇ ਭੇਜਣ ਲਈ ਦਸਤਖਤ ਸ਼ਾਮਲ ਕਰੋ">
+<!ENTITY includeSigOnForward.accesskey        "w">
+
+<!ENTITY globalComposingPrefs.label           "Global Composing Preferences…">
+<!ENTITY globalComposingPrefs.accesskey       "G">
+
+<!ENTITY globalAddressingPrefs.label          "Global Addressing Preferences…">
+<!ENTITY globalAddressingPrefs.accesskey      "P">

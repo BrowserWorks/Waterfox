@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-composer.xul -->
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+
+
+<!ENTITY pref.composer.title "Composer">
+<!ENTITY recentFiles.title "সাম্প্রতিক পৃষ্ঠার মেনু">
+<!ENTITY documentsInMenu.label "তালিকাকৃত পৃষ্ঠার সর্বোচ্চ সংখ্যা (n):">
+<!ENTITY documentsInMenu.accesskey "n">
+<!ENTITY savingFiles.title "যখন পৃষ্ঠা সংরক্ষণ বা প্রকাশ করা হবে">
+<!ENTITY preserveExisting.label "আসল সোর্স বিন্যাস সংরক্ষণ করা হবে (P)">
+<!ENTITY preserveExisting.accesskey "P">
+<!ENTITY preserveExisting.tooltip "লাইন ব্রেক এবং পৃষ্ঠার আসল বিন্যাস সংরক্ষণ করা হবে">
+<!ENTITY saveAssociatedFiles.label "পৃষ্ঠা সংরক্ষণের সময় ছবি এবং অন্যান্য সংশ্লিষ্ট ফাইল সংরক্ষণ করা হবে (S)">
+<!ENTITY saveAssociatedFiles.accesskey "S">
+<!ENTITY showPublishDialog.label "পৃষ্ঠা প্রকাশের সময় প্রকাশের ডায়লগ সর্বদা দেখানো হবে (A)">
+<!ENTITY showPublishDialog.accesskey "A">
+<!ENTITY composerEditing.label "সম্পাদনা করা হচ্ছে">
+<!ENTITY maintainStructure.label "যখন ঘর প্রবেশ বা মুছে দেয়া হবে, তখন সারণির বর্হিবিন্যাস বজায় রাখা হবে (M)">
+<!ENTITY maintainStructure.tooltip "ঘর প্রবেশ বা মুছে ফেলার পরে স্বয়ংক্রিয়ভাবে ঘর যোগ করার মাধ্যমে সারণির আয়তক্ষেত্রাকার সংরক্ষণ করা হবে">
+<!ENTITY maintainStructure.accesskey "M">
+<!ENTITY useCSS.label "HTML উপাদান এবং বৈশিষ্ট্যের পরিবর্তে CSS শৈলী ব্যবহার করা হবে (U)">
+<!ENTITY useCSS.accesskey "U">
+<!ENTITY crInPCreatesNewP.label "অনুচ্ছেদে ফেরত আসলে, সবসময় একটি নতুন অনুচ্ছেদ তৈরি করা হবে (R)">
+<!ENTITY crInPCreatesNewP.accesskey "R">

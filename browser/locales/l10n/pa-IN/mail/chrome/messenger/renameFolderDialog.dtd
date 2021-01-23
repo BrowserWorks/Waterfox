@@ -1,0 +1,13 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+  - License, v. 2.0. If a copy of the MPL was not distributed with this
+  - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY renameFolderDialog.title          "ਫੋਲਡਰ ਨਾਂ ਬਦਲੋ">
+<!ENTITY rename.label                      "ਆਪਣੇ ਫੋਲਡਰ ਦਾ ਨਵਾਂ ਨਾਂ ਇੱਥੇ ਦਿਓ:">
+<!ENTITY rename.accesskey                  "e">
+<!ENTITY accept.label                      "Rename">
+<!ENTITY accept.accesskey                  "R">

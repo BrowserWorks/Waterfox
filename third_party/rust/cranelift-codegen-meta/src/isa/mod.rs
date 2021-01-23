@@ -1,3 +1,4 @@
+//! Define supported ISAs; includes ISA-specific instructions, encodings, registers, settings, etc.
 use crate::cdsl::isa::TargetIsa;
 use crate::shared::Definitions as SharedDefinitions;
 use std::fmt;
@@ -22,8 +23,7 @@ impl Isa {
         Isa::all()
             .iter()
             .cloned()
-            .filter(|isa| isa.to_string() == name)
-            .next()
+            .find(|isa| isa.to_string() == name)
     }
 
     /// Creates isa target from arch.
@@ -38,8 +38,8 @@ impl Isa {
     }
 
     /// Returns all supported isa targets.
-    pub fn all() -> [Isa; 4] {
-        [Isa::Riscv, Isa::X86, Isa::Arm32, Isa::Arm64]
+    pub fn all() -> &'static [Isa] {
+        &[Isa::Riscv, Isa::X86, Isa::Arm32, Isa::Arm64]
     }
 }
 
@@ -55,7 +55,7 @@ impl fmt::Display for Isa {
     }
 }
 
-pub fn define(isas: &Vec<Isa>, shared_defs: &mut SharedDefinitions) -> Vec<TargetIsa> {
+pub(crate) fn define(isas: &[Isa], shared_defs: &mut SharedDefinitions) -> Vec<TargetIsa> {
     isas.iter()
         .map(|isa| match isa {
             Isa::Riscv => riscv::define(shared_defs),

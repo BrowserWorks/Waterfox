@@ -8,9 +8,11 @@
 #define frontend_BytecodeCompiler_h
 
 #include "mozilla/Maybe.h"
+#include "mozilla/Utf8.h"  // mozilla::Utf8Unit
 
 #include "NamespaceImports.h"
 
+#include "js/BinASTFormat.h"  // JS::BinASTFormat
 #include "js/CompileOptions.h"
 #include "js/SourceText.h"
 #include "vm/Scope.h"
@@ -97,7 +99,6 @@ class JSLinearString;
 
 namespace js {
 
-class LazyScript;
 class ModuleObject;
 class ScriptSourceObject;
 
@@ -110,24 +111,34 @@ class ParseNode;
 #if defined(JS_BUILD_BINAST)
 
 JSScript* CompileGlobalBinASTScript(
-    JSContext* cx, LifoAlloc& alloc, const JS::ReadOnlyCompileOptions& options,
-    const uint8_t* src, size_t len,
+    JSContext* cx, const JS::ReadOnlyCompileOptions& options,
+    const uint8_t* src, size_t len, JS::BinASTFormat format,
     ScriptSourceObject** sourceObjectOut = nullptr);
 
 MOZ_MUST_USE bool CompileLazyBinASTFunction(JSContext* cx,
-                                            Handle<LazyScript*> lazy,
+                                            Handle<BaseScript*> lazy,
                                             const uint8_t* buf, size_t length);
 
 #endif  // JS_BUILD_BINAST
 
+// Compile a module of the given source using the given options.
 ModuleObject* CompileModule(JSContext* cx,
                             const JS::ReadOnlyCompileOptions& options,
                             JS::SourceText<char16_t>& srcBuf);
-
 ModuleObject* CompileModule(JSContext* cx,
                             const JS::ReadOnlyCompileOptions& options,
-                            JS::SourceText<char16_t>& srcBuf,
-                            ScriptSourceObject** sourceObjectOut);
+                            JS::SourceText<mozilla::Utf8Unit>& srcBuf);
+
+// Parse a module of the given source.  This is an internal API; if you want to
+// compile a module as a user, use CompileModule above.
+ModuleObject* ParseModule(JSContext* cx,
+                          const JS::ReadOnlyCompileOptions& options,
+                          JS::SourceText<char16_t>& srcBuf,
+                          ScriptSourceObject** sourceObjectOut);
+ModuleObject* ParseModule(JSContext* cx,
+                          const JS::ReadOnlyCompileOptions& options,
+                          JS::SourceText<mozilla::Utf8Unit>& srcBuf,
+                          ScriptSourceObject** sourceObjectOut);
 
 //
 // Compile a single function. The source in srcBuf must match the ECMA-262
@@ -163,8 +174,7 @@ MOZ_MUST_USE bool CompileStandaloneAsyncGenerator(
     const mozilla::Maybe<uint32_t>& parameterListEnd);
 
 ScriptSourceObject* CreateScriptSourceObject(
-    JSContext* cx, const JS::ReadOnlyCompileOptions& options,
-    const mozilla::Maybe<uint32_t>& parameterListEnd = mozilla::Nothing());
+    JSContext* cx, const JS::ReadOnlyCompileOptions& options);
 
 /*
  * True if str consists of an IdentifierStart character, followed by one or
@@ -190,17 +200,6 @@ bool IsIdentifierNameOrPrivateName(const char16_t* chars, size_t length);
 
 /* True if str is a keyword. Defined in TokenStream.cpp. */
 bool IsKeyword(JSLinearString* str);
-
-/* Trace all GC things reachable from parser. Defined in Parser.cpp. */
-void TraceParser(JSTracer* trc, JS::AutoGCRooter* parser);
-
-#if defined(JS_BUILD_BINAST)
-
-/* Trace all GC things reachable from binjs parser. Defined in
- * BinASTParserPerTokenizer.cpp. */
-void TraceBinASTParser(JSTracer* trc, JS::AutoGCRooter* parser);
-
-#endif  // defined(JS_BUILD_BINAST)
 
 class MOZ_STACK_CLASS AutoFrontendTraceLog {
 #ifdef JS_TRACE_LOGGING

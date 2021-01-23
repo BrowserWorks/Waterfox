@@ -16,9 +16,11 @@ interface imgIRequest;
 interface URI;
 interface nsIStreamListener;
 
-[HTMLConstructor,
- NamedConstructor=Image(optional unsigned long width, optional unsigned long height)]
+[NamedConstructor=Image(optional unsigned long width, optional unsigned long height),
+ Exposed=Window]
 interface HTMLImageElement : HTMLElement {
+  [HTMLConstructor] constructor();
+
            [CEReactions, SetterThrows]
            attribute DOMString alt;
            [CEReactions, SetterNeedsSubjectPrincipal=NonSystem, SetterThrows]
@@ -39,6 +41,8 @@ interface HTMLImageElement : HTMLElement {
            attribute unsigned long height;
            [CEReactions, SetterThrows]
            attribute DOMString decoding;
+           [CEReactions, SetterThrows, Pref="dom.image-lazy-loading.enabled"]
+           attribute DOMString loading;
   readonly attribute unsigned long naturalWidth;
   readonly attribute unsigned long naturalHeight;
   readonly attribute boolean complete;
@@ -81,8 +85,7 @@ partial interface HTMLImageElement {
   readonly attribute long y;
 };
 
-[NoInterfaceObject]
-interface MozImageLoadingContent {
+interface mixin MozImageLoadingContent {
   // Mirrored chrome-only nsIImageLoadingContent methods.  Please make sure
   // to update this list if nsIImageLoadingContent changes.
   [ChromeOnly]
@@ -130,4 +133,4 @@ interface MozImageLoadingContent {
   void forceImageState(boolean aForce, unsigned long long aState);
 };
 
-HTMLImageElement implements MozImageLoadingContent;
+HTMLImageElement includes MozImageLoadingContent;

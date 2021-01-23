@@ -3,24 +3,34 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-const { UPDATE_DETAILS } = require("../constants");
+const { UPDATE_DETAILS } = require("devtools/client/accessibility/constants");
 
 /**
  * Update details with the given accessible object.
  *
- * @param {Object} dom walker front
  * @param {Object} accessible front
- * @param {Object} list of supported serverside features.
  */
-exports.updateDetails = (domWalker, accessible, supports) => dispatch =>
-  Promise.all([
-    domWalker.getNodeFromActor(accessible.actorID, [
-      "rawAccessible",
-      "DOMNode",
-    ]),
-    supports.relations ? accessible.getRelations() : [],
-    supports.audit ? accessible.audit() : {},
-    supports.hydration ? accessible.hydrate() : null,
-  ])
-    .then(response => dispatch({ accessible, type: UPDATE_DETAILS, response }))
-    .catch(error => dispatch({ accessible, type: UPDATE_DETAILS, error }));
+exports.updateDetails = accessible => async dispatch => {
+  const { walker: domWalker } = await accessible.targetFront.getFront(
+    "inspector"
+  );
+  // By the time getFront resolves, the accessibleFront may have been destroyed.
+  // This typically happens during navigations.
+  if (!accessible.actorID) {
+    return;
+  }
+  try {
+    const response = await Promise.all([
+      domWalker.getNodeFromActor(accessible.actorID, [
+        "rawAccessible",
+        "DOMNode",
+      ]),
+      accessible.getRelations(),
+      accessible.audit(),
+      accessible.hydrate(),
+    ]);
+    dispatch({ accessible, type: UPDATE_DETAILS, response });
+  } catch (error) {
+    dispatch({ accessible, type: UPDATE_DETAILS, error });
+  }
+};

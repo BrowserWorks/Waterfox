@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE UI for Software Updates prefs -->
+<!ENTITY pref.smartUpdate.title               "პროგრამების ჩადგმა">
+<!ENTITY addOnsTitle.label                    "მოდულები">
+<!ENTITY addOnsAllow.label                    "ვებსაიტებისთვის დამატებებისა და განახლებების ჩადგმის ნებართვა">
+<!ENTITY addOnsAllow.accesskey                "b">
+<!ENTITY allowedSitesLink.label               "უფლებამოსილი საიტები">
+<!ENTITY autoAddOnsUpdates.label              "თვითშემოწმება განახლებაზე">
+<!ENTITY autoAddOnsUpdates.accesskey          "o">
+<!ENTITY daily.label                          "ყოველდღე">
+<!ENTITY addOnsDaily.accesskey                "d">
+<!ENTITY weekly.label                         "ყოველკვირეულად">
+<!ENTITY addOnsWeekly.accesskey               "k">
+<!ENTITY addOnsModeAutomatic.label            "განახლებათა თვითჩამოტვირთვა და ჩადგმა">
+<!ENTITY addOnsModeAutomatic.accesskey        "m">
+<!ENTITY enablePersonalized.label             "დამატებების შემოთავაზებების მორგება">
+<!ENTITY enablePersonalized.accesskey         "P">
+<!ENTITY addonManagerLink.label               "მოდულების მართვა">
+
+<!ENTITY appUpdates.caption                   "&brandShortName;">
+<!ENTITY autoAppUpdates.label                 "თვითშემოწმება განახლებაზე:">
+<!ENTITY autoAppUpdates.accesskey             "t">
+<!ENTITY appDaily.accesskey                   "a">
+<!ENTITY appWeekly.accesskey                  "e">
+<!ENTITY appModeAutomatic.label               "განახლების თვითჩამოტვირთვა და ჩადგმა">
+<!ENTITY appModeAutomatic.accesskey           "u">
+<!ENTITY updateHistoryButton.label            "განახლების ისტორიის ჩვენება…">
+<!ENTITY updateHistoryButton.accesskey        "S">

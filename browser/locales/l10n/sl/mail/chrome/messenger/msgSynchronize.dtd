@@ -1,0 +1,25 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label "Prenesi in Sinhroniziraj sporočila">
+<!ENTITY MsgSelect.label "Predmeti za rabo v načinu brez povezave">
+<!ENTITY MsgSyncDesc.label "Če ste že izbrali poštne mape in novičarske skupine za rabo v nepovezanem načinu, jih lahko zdaj prenesete in/ali sinhronizirate. V nasprotnem primeru uporabite gumb &quot;Izberi&quot; in izberite poštne mape in novičarske skupine za rabo v nepovezanem načinu.">
+<!ENTITY MsgSyncDirections.label "Prenesi in/ali sinhroniziraj naslednje:">
+<!ENTITY syncTypeMail.label "Poštna sporočila">
+<!ENTITY syncTypeMail.accesskey "P">
+<!ENTITY syncTypeNews.label "Sporočila novičarskih skupin">
+<!ENTITY syncTypeNews.accesskey "n">
+<!ENTITY sendMessage.label "Pošlji neposlana sporočila">
+<!ENTITY sendMessage.accesskey "š">
+<!ENTITY workOffline.label "Delaj v nepovezanem načinu, ko se prenos in/ali sinhronizacija konča">
+<!ENTITY workOffline.accesskey "D">
+<!ENTITY selectButton.label "Izberi …">
+<!ENTITY selectButton.accesskey "e">
+<!ENTITY MsgSelectDesc.label "Izberite mape za pošto in novičarske skupine za rabo v načinu brez povezave.">
+<!ENTITY MsgSelectInd.label "Prenesi">
+<!ENTITY MsgSelectItems.label "Imeniki in novičarske skupine">

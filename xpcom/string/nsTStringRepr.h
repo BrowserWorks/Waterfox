@@ -12,37 +12,11 @@
 #include "mozilla/Char16.h"
 #include "mozilla/fallible.h"
 #include "nsStringFlags.h"
+#include "nsStringIterator.h"
 #include "nsCharTraits.h"
 
 template <typename T>
 class nsTSubstringTuple;
-
-// The base for string comparators
-template <typename T>
-class nsTStringComparator {
- public:
-  typedef T char_type;
-
-  nsTStringComparator() {}
-
-  virtual int operator()(const char_type*, const char_type*, uint32_t,
-                         uint32_t) const = 0;
-};
-
-// The default string comparator (case-sensitive comparision)
-template <typename T>
-class nsTDefaultStringComparator : public nsTStringComparator<T> {
- public:
-  typedef T char_type;
-
-  nsTDefaultStringComparator() {}
-
-  virtual int operator()(const char_type*, const char_type*, uint32_t,
-                         uint32_t) const override;
-};
-
-extern template class nsTDefaultStringComparator<char>;
-extern template class nsTDefaultStringComparator<char16_t>;
 
 namespace mozilla {
 
@@ -124,8 +98,8 @@ class nsTStringRepr {
   typedef StringClassFlags ClassFlags;
 
   // Reading iterators.
-  const_char_iterator BeginReading() const { return mData; }
-  const_char_iterator EndReading() const { return mData + mLength; }
+  constexpr const_char_iterator BeginReading() const { return mData; }
+  constexpr const_char_iterator EndReading() const { return mData + mLength; }
 
   // Deprecated reading iterators.
   const_iterator& BeginReading(const_iterator& aIter) const {
@@ -163,26 +137,32 @@ class nsTStringRepr {
 #endif
 
   // Returns pointer to string data (not necessarily null-terminated)
-  const typename raw_type<T, int>::type Data() const { return mData; }
+  constexpr const typename raw_type<T, int>::type Data() const { return mData; }
 
-  size_type Length() const { return mLength; }
+  constexpr size_type Length() const { return mLength; }
 
-  DataFlags GetDataFlags() const { return mDataFlags; }
+  constexpr DataFlags GetDataFlags() const { return mDataFlags; }
 
-  bool IsEmpty() const { return mLength == 0; }
+  constexpr bool IsEmpty() const { return mLength == 0; }
 
-  bool IsLiteral() const { return !!(mDataFlags & DataFlags::LITERAL); }
+  constexpr bool IsLiteral() const {
+    return !!(mDataFlags & DataFlags::LITERAL);
+  }
 
-  bool IsVoid() const { return !!(mDataFlags & DataFlags::VOIDED); }
+  constexpr bool IsVoid() const { return !!(mDataFlags & DataFlags::VOIDED); }
 
-  bool IsTerminated() const { return !!(mDataFlags & DataFlags::TERMINATED); }
+  constexpr bool IsTerminated() const {
+    return !!(mDataFlags & DataFlags::TERMINATED);
+  }
 
-  char_type CharAt(index_type aIndex) const {
+  constexpr char_type CharAt(index_type aIndex) const {
     NS_ASSERTION(aIndex < mLength, "index exceeds allowable range");
     return mData[aIndex];
   }
 
-  char_type operator[](index_type aIndex) const { return CharAt(aIndex); }
+  constexpr char_type operator[](index_type aIndex) const {
+    return CharAt(aIndex);
+  }
 
   char_type First() const;
 
@@ -191,21 +171,47 @@ class nsTStringRepr {
   size_type NS_FASTCALL CountChar(char_type) const;
   int32_t NS_FASTCALL FindChar(char_type, index_type aOffset = 0) const;
 
-  inline bool Contains(char_type aChar) const {
-    return FindChar(aChar) != kNotFound;
-  }
+  bool Contains(char_type aChar) const;
 
   // Equality.
   bool NS_FASTCALL Equals(const self_type&) const;
-  bool NS_FASTCALL Equals(const self_type&, const comparator_type&) const;
+  bool NS_FASTCALL Equals(const self_type&, comparator_type) const;
 
   bool NS_FASTCALL Equals(const substring_tuple_type& aTuple) const;
   bool NS_FASTCALL Equals(const substring_tuple_type& aTuple,
-                          const comparator_type& aComp) const;
+                          comparator_type) const;
 
   bool NS_FASTCALL Equals(const char_type* aData) const;
-  bool NS_FASTCALL Equals(const char_type* aData,
-                          const comparator_type& aComp) const;
+  bool NS_FASTCALL Equals(const char_type* aData, comparator_type) const;
+
+  /**
+   * Compares a given string to this string.
+   *
+   * @param   aString is the string to be compared
+   * @param   aIgnoreCase tells us how to treat case
+   * @param   aCount tells us how many chars to compare
+   * @return  -1,0,1
+   */
+  template <typename Q = T, typename EnableIfChar = mozilla::CharOnlyT<Q>>
+  int32_t Compare(const char_type* aString, bool aIgnoreCase = false,
+                  int32_t aCount = -1) const;
+
+  /**
+   * Equality check between given string and this string.
+   *
+   * @param   aString is the string to check
+   * @param   aIgnoreCase tells us how to treat case
+   * @param   aCount tells us how many chars to compare
+   * @return  boolean
+   */
+  template <typename Q = T, typename EnableIfChar = mozilla::CharOnlyT<Q>>
+  bool EqualsIgnoreCase(const char_type* aString, int32_t aCount = -1) const {
+    return Compare(aString, true, aCount) == 0;
+  }
+
+  template <typename Q = T, typename EnableIfChar16 = mozilla::Char16OnlyT<Q>>
+  bool EqualsIgnoreCase(const incompatible_char_type* aString,
+                        int32_t aCount = -1) const;
 
 #if defined(MOZ_USE_CHAR16_WRAPPER)
   template <typename Q = T, typename EnableIfChar16 = Char16OnlyT<Q>>
@@ -213,8 +219,7 @@ class nsTStringRepr {
     return Equals(static_cast<const char16_t*>(aData));
   }
   template <typename Q = T, typename EnableIfChar16 = Char16OnlyT<Q>>
-  bool NS_FASTCALL Equals(char16ptr_t aData,
-                          const comparator_type& aComp) const {
+  bool NS_FASTCALL Equals(char16ptr_t aData, comparator_type aComp) const {
     return Equals(static_cast<const char16_t*>(aData), aComp);
   }
 #endif
@@ -227,6 +232,10 @@ class nsTStringRepr {
   // for wide strings. Call this version when 'data' is
   // null-terminated.
   bool NS_FASTCALL EqualsASCII(const char* aData) const;
+
+  // An efficient comparison with Latin1 characters that can be used even for
+  // wide strings.
+  bool EqualsLatin1(const char* aData, size_type aLength) const;
 
   // EqualsLiteral must ONLY be called with an actual literal string, or
   // a char array *constant* declared without an explicit size and with an
@@ -308,20 +317,29 @@ extern template class nsTStringRepr<char16_t>;
 }  // namespace mozilla
 
 template <typename T>
-int NS_FASTCALL
-Compare(const mozilla::detail::nsTStringRepr<T>& aLhs,
-        const mozilla::detail::nsTStringRepr<T>& aRhs,
-        const nsTStringComparator<T>& = nsTDefaultStringComparator<T>());
+int NS_FASTCALL Compare(const mozilla::detail::nsTStringRepr<T>& aLhs,
+                        const mozilla::detail::nsTStringRepr<T>& aRhs,
+                        nsTStringComparator<T> = nsTDefaultStringComparator<T>);
+
+extern template int NS_FASTCALL Compare<char>(
+    const mozilla::detail::nsTStringRepr<char>&,
+    const mozilla::detail::nsTStringRepr<char>&, nsTStringComparator<char>);
+
+extern template int NS_FASTCALL
+Compare<char16_t>(const mozilla::detail::nsTStringRepr<char16_t>&,
+                  const mozilla::detail::nsTStringRepr<char16_t>&,
+                  nsTStringComparator<char16_t>);
 
 template <typename T>
-inline bool operator!=(const mozilla::detail::nsTStringRepr<T>& aLhs,
-                       const mozilla::detail::nsTStringRepr<T>& aRhs) {
+inline constexpr bool operator!=(
+    const mozilla::detail::nsTStringRepr<T>& aLhs,
+    const mozilla::detail::nsTStringRepr<T>& aRhs) {
   return !aLhs.Equals(aRhs);
 }
 
 template <typename T>
-inline bool operator!=(const mozilla::detail::nsTStringRepr<T>& aLhs,
-                       const T* aRhs) {
+inline constexpr bool operator!=(const mozilla::detail::nsTStringRepr<T>& aLhs,
+                                 const T* aRhs) {
   return !aLhs.Equals(aRhs);
 }
 

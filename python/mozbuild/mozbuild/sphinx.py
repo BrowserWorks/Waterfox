@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 
 import importlib
 import os
@@ -102,6 +102,13 @@ def special_reference(v, func, typ, doc):
 def format_module(m):
     lines = []
 
+    lines.extend([
+        '.. note::',
+        "   moz.build files' implementation includes a ``Path`` class.",
+    ])
+    path_docstring_minus_summary = prepare_docstring(m.Path.__doc__)[2:]
+    lines.extend(['   ' + line for line in path_docstring_minus_summary])
+
     for subcontext, cls in sorted(m.SUBCONTEXTS.items()):
         lines.extend([
             '.. _mozbuild_subcontext_%s:' % subcontext,
@@ -187,9 +194,9 @@ def setup(app):
     # properly. We leverage the in-tree virtualenv for this.
     topsrcdir = manager.topsrcdir
     ve = VirtualenvManager(topsrcdir,
-        os.path.join(topsrcdir, 'dummy-objdir'),
-        os.path.join(app.outdir, '_venv'),
-        sys.stderr,
-        os.path.join(topsrcdir, 'build', 'virtualenv_packages.txt'))
+                           os.path.join(topsrcdir, 'dummy-objdir'),
+                           os.path.join(app.outdir, '_venv'),
+                           sys.stderr,
+                           os.path.join(topsrcdir, 'build', 'virtualenv_packages.txt'))
     ve.ensure()
     ve.activate()

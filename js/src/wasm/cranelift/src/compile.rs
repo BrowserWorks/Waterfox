@@ -18,20 +18,27 @@
 //! This module defines the `compile()` function which uses Cranelift to compile a single
 //! WebAssembly function.
 
-use baldrdash as bd;
-use cpu::make_isa;
-use cranelift_codegen::binemit::{Addend, CodeOffset, NullTrapSink, Reloc, RelocSink};
+use log::{debug, info};
+use std::fmt;
+use std::mem;
+
+use cranelift_codegen::binemit::{
+    Addend, CodeInfo, CodeOffset, NullStackmapSink, Reloc, RelocSink, Stackmap, TrapSink,
+};
 use cranelift_codegen::entity::EntityRef;
-use cranelift_codegen::ir;
-use cranelift_codegen::ir::stackslot::StackSize;
+use cranelift_codegen::ir::{
+    self, constant::ConstantOffset, stackslot::StackSize, ExternalName, JumpTable, SourceLoc,
+    TrapCode,
+};
 use cranelift_codegen::isa::TargetIsa;
 use cranelift_codegen::CodegenResult;
 use cranelift_codegen::Context;
-use cranelift_wasm::{FuncIndex, FuncTranslator, WasmResult};
-use std::fmt;
-use std::mem;
-use utils::DashResult;
-use wasm2clif::{init_sig, native_pointer_size, TransEnv};
+use cranelift_wasm::{FuncIndex, FuncTranslator, ModuleTranslationState, WasmResult};
+
+use crate::bindings;
+use crate::isa::make_isa;
+use crate::utils::DashResult;
+use crate::wasm2clif::{init_sig, TransEnv, TRAP_THROW_REPORTED};
 
 // Namespace for user-defined functions.
 const USER_FUNCTION_NAMESPACE: u32 = 0;
@@ -43,9 +50,14 @@ const SYMBOLIC_FUNCTION_NAMESPACE: u32 = 1;
 pub struct CompiledFunc {
     pub frame_pushed: StackSize,
     pub contains_calls: bool,
-    pub metadata: Vec<bd::MetadataEntry>,
+    pub metadata: Vec<bindings::MetadataEntry>,
+    // rodata_relocs is Vec<CodeOffset>, but u32 is C++-friendlier
+    pub rodata_relocs: Vec<u32>,
     // TODO(bbouvier) should just be a pointer into the masm buffer
     pub code_buffer: Vec<u8>,
+    pub code_size: CodeOffset,
+    pub jumptables_size: CodeOffset,
+    pub rodata_size: CodeOffset,
 }
 
 impl CompiledFunc {
@@ -54,119 +66,199 @@ impl CompiledFunc {
             frame_pushed: 0,
             contains_calls: false,
             metadata: vec![],
+            rodata_relocs: vec![],
             code_buffer: vec![],
+            code_size: 0,
+            jumptables_size: 0,
+            rodata_size: 0,
         }
     }
 
-    fn reset(self: &mut Self, frame_pushed: StackSize, contains_calls: bool) {
-        self.frame_pushed = frame_pushed;
-        self.contains_calls = contains_calls;
+    fn clear(&mut self) {
+        self.frame_pushed = 0;
+        self.contains_calls = false;
         self.metadata.clear();
+        self.rodata_relocs.clear();
         self.code_buffer.clear();
+        self.code_size = 0;
+        self.jumptables_size = 0;
+        self.rodata_size = 0;
     }
 }
 
 /// A batch compiler holds on to data structures that can be recycled for multiple function
 /// compilations.
-pub struct BatchCompiler<'a, 'b> {
-    static_environ: &'a bd::StaticEnvironment,
-    environ: bd::ModuleEnvironment<'b>,
-    isa: Box<TargetIsa>,
+pub struct BatchCompiler<'static_env, 'module_env> {
+    // Attributes that are constant accross multiple compilations.
+    static_environ: &'static_env bindings::StaticEnvironment,
+    environ: bindings::ModuleEnvironment<'module_env>,
+    isa: Box<dyn TargetIsa>,
+
+    // Stateless attributes.
+    func_translator: FuncTranslator,
+    dummy_module_state: ModuleTranslationState,
+
+    // Mutable attributes.
+    /// Cranelift overall context.
     context: Context,
-    trans: FuncTranslator,
+
+    /// Temporary storage for trap relocations before they're moved back to the CompiledFunc.
+    trap_relocs: Traps,
+
+    /// The translation from wasm to clif environment.
+    trans_env: TransEnv<'static_env, 'module_env>,
+
+    /// Results of the current compilation.
     pub current_func: CompiledFunc,
 }
 
-impl<'a, 'b> BatchCompiler<'a, 'b> {
+impl<'static_env, 'module_env> BatchCompiler<'static_env, 'module_env> {
     pub fn new(
-        static_environ: &'a bd::StaticEnvironment,
-        environ: bd::ModuleEnvironment<'b>,
+        static_environ: &'static_env bindings::StaticEnvironment,
+        environ: bindings::ModuleEnvironment<'module_env>,
     ) -> DashResult<Self> {
-        // TODO: The target ISA could be shared by multiple batch compilers across threads.
+        let isa = make_isa(static_environ)?;
+        let trans_env = TransEnv::new(&*isa, environ, static_environ);
         Ok(BatchCompiler {
             static_environ,
             environ,
-            isa: make_isa(static_environ)?,
+            isa,
+            func_translator: FuncTranslator::new(),
+            // TODO for Cranelift to support multi-value, feed it the real type section here.
+            dummy_module_state: ModuleTranslationState::new(),
             context: Context::new(),
-            trans: FuncTranslator::new(),
+            trap_relocs: Traps::new(),
+            trans_env,
             current_func: CompiledFunc::new(),
         })
     }
 
-    pub fn compile(&mut self) -> CodegenResult<()> {
-        let size = self.context.compile(&*self.isa)?;
+    /// Clears internal data structures.
+    pub fn clear(&mut self) {
+        self.context.clear();
+        self.trap_relocs.clear();
+        self.trans_env.clear();
+        self.current_func.clear();
+    }
+
+    pub fn compile(&mut self, stackmaps: bindings::Stackmaps) -> CodegenResult<()> {
+        let info = self.context.compile(&*self.isa)?;
         debug!("Optimized wasm function IR: {}", self);
-        self.binemit(size as usize)
+        self.binemit(info, stackmaps)
     }
 
     /// Translate the WebAssembly code to Cranelift IR.
-    pub fn translate_wasm(
-        &mut self,
-        func: &bd::FuncCompileInput,
-    ) -> WasmResult<bd::FuncTypeWithId> {
-        self.context.clear();
-
+    pub fn translate_wasm(&mut self, func: &bindings::FuncCompileInput) -> WasmResult<()> {
         // Set up the signature before translating the WebAssembly byte code.
         // The translator refers to it.
         let index = FuncIndex::new(func.index as usize);
-        let wsig = init_sig(&mut self.context.func.signature, &self.environ, index)?;
+
+        self.context.func.signature =
+            init_sig(&self.environ, self.static_environ.call_conv(), index)?;
         self.context.func.name = wasm_function_name(index);
 
-        let tenv = &mut TransEnv::new(&*self.isa, &self.environ, self.static_environ);
-        self.trans.translate(
+        self.func_translator.translate(
+            &self.dummy_module_state,
             func.bytecode(),
             func.offset_in_module as usize,
             &mut self.context.func,
-            tenv,
+            &mut self.trans_env,
         )?;
 
         info!("Translated wasm function {}.", func.index);
         debug!("Translated wasm function IR: {}", self);
-        Ok(wsig)
+        Ok(())
     }
 
     /// Emit binary machine code to `emitter`.
-    fn binemit(&mut self, size: usize) -> CodegenResult<()> {
+    fn binemit(&mut self, info: CodeInfo, stackmaps: bindings::Stackmaps) -> CodegenResult<()> {
+        let total_size = info.total_size as usize;
         let frame_pushed = self.frame_pushed();
         let contains_calls = self.contains_calls();
 
-        info!("Emitting {} bytes, frame_pushed={}\n.", size, frame_pushed);
+        info!(
+            "Emitting {} bytes, frame_pushed={}\n.",
+            total_size, frame_pushed
+        );
 
-        self.current_func.reset(frame_pushed, contains_calls);
-
-        // Generate metadata about function calls and traps now that the emitter knows where the
-        // Cranelift code is going to end up.
-        let mut metadata = mem::replace(&mut self.current_func.metadata, vec![]);
-        self.emit_metadata(&mut metadata);
-        mem::swap(&mut metadata, &mut self.current_func.metadata);
+        self.current_func.frame_pushed = frame_pushed;
+        self.current_func.contains_calls = contains_calls;
 
         // TODO: If we can get a pointer into `size` pre-allocated bytes of memory, we wouldn't
         // have to allocate and copy here.
         // TODO(bbouvier) try to get this pointer from the C++ caller, with an unlikely callback to
         // C++ if the remaining size is smaller than  needed.
-        if self.current_func.code_buffer.len() < size {
+        if self.current_func.code_buffer.len() < total_size {
             let current_size = self.current_func.code_buffer.len();
             // There's no way to do a proper uninitialized reserve, so first reserve and then
             // unsafely set the final size.
-            self.current_func.code_buffer.reserve(size - current_size);
-            unsafe { self.current_func.code_buffer.set_len(size) };
+            self.current_func
+                .code_buffer
+                .reserve(total_size - current_size);
+            unsafe { self.current_func.code_buffer.set_len(total_size) };
         }
 
         {
-            let emit_env = &mut EmitEnv::new(&mut self.current_func.metadata);
-            let mut trap_sink = NullTrapSink {};
+            let mut relocs = Relocations::new(
+                &mut self.current_func.metadata,
+                &mut self.current_func.rodata_relocs,
+            );
+
+            let code_buffer = &mut self.current_func.code_buffer;
             unsafe {
-                let code_buffer = &mut self.current_func.code_buffer;
                 self.context.emit_to_memory(
                     &*self.isa,
                     code_buffer.as_mut_ptr(),
-                    emit_env,
-                    &mut trap_sink,
+                    &mut relocs,
+                    &mut self.trap_relocs,
+                    &mut NullStackmapSink {},
                 )
             };
+
+            self.current_func
+                .metadata
+                .append(&mut self.trap_relocs.metadata);
         }
 
+        if self.static_environ.ref_types_enabled {
+            if self.context.mach_compile_result.is_some() {
+                // TODO Bug 1633721: new backend: support stackmaps.
+                log::warn!("new isel backend doesn't support stackmaps yet");
+            } else {
+                self.emit_stackmaps(stackmaps);
+            }
+        }
+
+        self.current_func.code_size = info.code_size;
+        self.current_func.jumptables_size = info.jumptables_size;
+        self.current_func.rodata_size = info.rodata_size;
+
         Ok(())
+    }
+
+    /// Iterate over each instruction to generate a stack map for each instruction that needs it.
+    ///
+    /// Note a stackmap is associated to the address of the next instruction following the actual
+    /// instruction needing the stack map. This is because this is the only information
+    /// Spidermonkey has access to when it looks up a stack map (during stack frame iteration).
+    fn emit_stackmaps(&self, mut stackmaps: bindings::Stackmaps) {
+        let encinfo = self.isa.encoding_info();
+        let func = &self.context.func;
+        let stack_slots = &func.stack_slots;
+        for block in func.layout.blocks() {
+            let mut pending_safepoint = None;
+            for (offset, inst, inst_size) in func.inst_offsets(block, &encinfo) {
+                if let Some(stackmap) = pending_safepoint.take() {
+                    stackmaps.add_stackmap(stack_slots, offset + inst_size, stackmap);
+                }
+                if func.dfg[inst].opcode() == ir::Opcode::Safepoint {
+                    let args = func.dfg.inst_args(inst);
+                    let stackmap = Stackmap::from_values(&args, func, &*self.isa);
+                    pending_safepoint = Some(stackmap);
+                }
+            }
+            debug_assert!(pending_safepoint.is_none());
+        }
     }
 
     /// Compute the `framePushed` argument to pass to `GenerateFunctionPrologue`. This is the
@@ -175,9 +267,20 @@ impl<'a, 'b> BatchCompiler<'a, 'b> {
     fn frame_pushed(&self) -> StackSize {
         // Cranelift computes the total stack frame size including the pushed return address,
         // standard SM prologue pushes, and its own stack slots.
-        let total = self.context.func.stack_slots.frame_size.expect("No frame");
+        let total = if let Some(result) = &self.context.mach_compile_result {
+            result.frame_size
+        } else {
+            self.context
+                .func
+                .stack_slots
+                .layout_info
+                .expect("No frame")
+                .frame_size
+        };
+
         let sm_pushed = StackSize::from(self.isa.flags().baldrdash_prologue_words())
             * mem::size_of::<usize>() as StackSize;
+
         total
             .checked_sub(sm_pushed)
             .expect("SpiderMonkey prologue pushes not counted")
@@ -189,319 +292,244 @@ impl<'a, 'b> BatchCompiler<'a, 'b> {
         // signatures which could be called.
         !self.context.func.dfg.signatures.is_empty()
     }
-
-    #[cfg(feature = "cranelift_x86")]
-    fn platform_specific_ignores_metadata(opcode: ir::Opcode) -> bool {
-        match opcode {
-            ir::Opcode::X86Sdivmodx | ir::Opcode::X86Udivmodx => true,
-            _ => false,
-        }
-    }
-
-    #[cfg(not(feature = "cranelift_x86"))]
-    fn platform_specific_ignores_metadata(_opcode: ir::Opcode) -> bool {
-        false
-    }
-
-    /// Emit metadata by scanning the compiled function before `emit_to_memory`.
-    ///
-    /// - All call sites need metadata: direct, indirect, symbolic.
-    /// - All explicit traps must be registered.
-    ///
-    /// We don't get enough callbacks through the `RelocSink` trait to generate all the metadata we
-    /// need.
-    fn emit_metadata(&self, metadata: &mut Vec<bd::MetadataEntry>) {
-        let encinfo = self.isa.encoding_info();
-        let func = &self.context.func;
-        for ebb in func.layout.ebbs() {
-            for (offset, inst, inst_size) in func.inst_offsets(ebb, &encinfo) {
-                let opcode = func.dfg[inst].opcode();
-                match opcode {
-                    ir::Opcode::Call => self.call_metadata(metadata, inst, offset + inst_size),
-                    ir::Opcode::CallIndirect => {
-                        self.indirect_call_metadata(metadata, inst, offset + inst_size)
-                    }
-                    ir::Opcode::Trap | ir::Opcode::Trapif | ir::Opcode::Trapff => {
-                        self.trap_metadata(metadata, inst, offset)
-                    }
-                    ir::Opcode::Load
-                    | ir::Opcode::LoadComplex
-                    | ir::Opcode::Uload8
-                    | ir::Opcode::Uload8Complex
-                    | ir::Opcode::Sload8
-                    | ir::Opcode::Sload8Complex
-                    | ir::Opcode::Uload16
-                    | ir::Opcode::Uload16Complex
-                    | ir::Opcode::Sload16
-                    | ir::Opcode::Sload16Complex
-                    | ir::Opcode::Uload32
-                    | ir::Opcode::Uload32Complex
-                    | ir::Opcode::Sload32
-                    | ir::Opcode::Sload32Complex
-                    | ir::Opcode::Store
-                    | ir::Opcode::StoreComplex
-                    | ir::Opcode::Istore8
-                    | ir::Opcode::Istore8Complex
-                    | ir::Opcode::Istore16
-                    | ir::Opcode::Istore16Complex
-                    | ir::Opcode::Istore32
-                    | ir::Opcode::Istore32Complex => self.memory_metadata(metadata, inst, offset),
-
-                    // Instructions that are not going to trap in our use, even though their opcode
-                    // says they can.
-                    ir::Opcode::Spill | ir::Opcode::Fill => {}
-
-                    _ if BatchCompiler::platform_specific_ignores_metadata(opcode) => {}
-
-                    _ => {
-                        debug_assert!(!opcode.is_call(), "Missed call opcode");
-                        debug_assert!(
-                            !opcode.can_trap(),
-                            "Missed trap: {}",
-                            func.dfg.display_inst(inst, Some(self.isa.as_ref()))
-                        );
-                        debug_assert!(
-                            !opcode.can_load(),
-                            "Missed load: {}",
-                            func.dfg.display_inst(inst, Some(self.isa.as_ref()))
-                        );
-                        debug_assert!(
-                            !opcode.can_store(),
-                            "Missed store: {}",
-                            func.dfg.display_inst(inst, Some(self.isa.as_ref()))
-                        );
-                    }
-                }
-            }
-        }
-    }
-
-    fn srcloc(&self, inst: ir::Inst) -> ir::SourceLoc {
-        let srcloc = self.context.func.srclocs[inst];
-        debug_assert!(
-            !srcloc.is_default(),
-            "No source location on {}",
-            self.context
-                .func
-                .dfg
-                .display_inst(inst, Some(self.isa.as_ref()))
-        );
-        srcloc
-    }
-
-    /// Emit metadata for direct call `inst`.
-    fn call_metadata(
-        &self,
-        metadata: &mut Vec<bd::MetadataEntry>,
-        inst: ir::Inst,
-        ret_addr: CodeOffset,
-    ) {
-        let func = &self.context.func;
-
-        // This is a direct call, so the callee should be a non-imported wasm
-        // function. We register both the call site *and* the target for relocation.
-        let callee = match func.dfg[inst] {
-            ir::InstructionData::Call { func_ref, .. } => &func.dfg.ext_funcs[func_ref].name,
-            _ => panic!("Bad format for call"),
-        };
-
-        let func_index = match *callee {
-            ir::ExternalName::User {
-                namespace: USER_FUNCTION_NAMESPACE,
-                index,
-            } => FuncIndex::new(index as usize),
-            _ => panic!("Direct call to {} unsupported", callee),
-        };
-
-        metadata.push(bd::MetadataEntry::direct_call(
-            ret_addr,
-            func_index,
-            self.srcloc(inst),
-        ));
-    }
-
-    /// Emit metadata for indirect call `inst`.
-    fn indirect_call_metadata(
-        &self,
-        metadata: &mut Vec<bd::MetadataEntry>,
-        inst: ir::Inst,
-        ret_addr: CodeOffset,
-    ) {
-        // A call_indirect instruction can represent either a table call or a far call to a runtime
-        // function. The CallSiteDesc::Kind enum does distinguish between the two, but it is not
-        // clear that the information is used anywhere. For now, we won't bother distinguishing
-        // them, and mark all calls as `Kind::Dynamic`.
-        //
-        // If we do need to make a distinction in the future, it is probably easiest to add a
-        // `call_far` instruction to Cranelift that encodes like an indirect call, but includes the
-        // callee like a direct call.
-        metadata.push(bd::MetadataEntry::indirect_call(
-            ret_addr,
-            self.srcloc(inst),
-        ));
-    }
-
-    fn trap_metadata(
-        &self,
-        metadata: &mut Vec<bd::MetadataEntry>,
-        inst: ir::Inst,
-        offset: CodeOffset,
-    ) {
-        let func = &self.context.func;
-        let (code, trap_offset) = match func.dfg[inst] {
-            ir::InstructionData::Trap { code, .. } => (code, 0),
-            ir::InstructionData::IntCondTrap { code, .. }
-            | ir::InstructionData::FloatCondTrap { code, .. } => {
-                // This instruction expands to a conditional branch over ud2 on Intel archs.
-                // The actual trap happens on the ud2 instruction.
-                (code, 2)
-            }
-            _ => panic!("Bad format for trap"),
-        };
-
-        // Translate the trap code into one of BaldrMonkey's trap codes.
-        let bd_trap = match code {
-            ir::TrapCode::StackOverflow => bd::Trap::StackOverflow,
-            ir::TrapCode::HeapOutOfBounds => bd::Trap::OutOfBounds,
-            ir::TrapCode::OutOfBounds => bd::Trap::OutOfBounds,
-            ir::TrapCode::TableOutOfBounds => bd::Trap::OutOfBounds,
-            ir::TrapCode::IndirectCallToNull => bd::Trap::IndirectCallToNull,
-            ir::TrapCode::BadSignature => bd::Trap::IndirectCallBadSig,
-            ir::TrapCode::IntegerOverflow => bd::Trap::IntegerOverflow,
-            ir::TrapCode::IntegerDivisionByZero => bd::Trap::IntegerDivideByZero,
-            ir::TrapCode::BadConversionToInteger => bd::Trap::InvalidConversionToInteger,
-            ir::TrapCode::Interrupt => bd::Trap::CheckInterrupt,
-            ir::TrapCode::UnreachableCodeReached => bd::Trap::Unreachable,
-            ir::TrapCode::User(_) => panic!("Uncovered trap code {}", code),
-        };
-
-        metadata.push(bd::MetadataEntry::trap(
-            offset + trap_offset,
-            self.srcloc(inst),
-            bd_trap,
-        ));
-    }
-
-    fn memory_metadata(
-        &self,
-        metadata: &mut Vec<bd::MetadataEntry>,
-        inst: ir::Inst,
-        offset: CodeOffset,
-    ) {
-        let func = &self.context.func;
-        let memflags = match func.dfg[inst] {
-            ir::InstructionData::Load { flags, .. }
-            | ir::InstructionData::LoadComplex { flags, .. }
-            | ir::InstructionData::Store { flags, .. }
-            | ir::InstructionData::StoreComplex { flags, .. } => flags,
-            _ => panic!("Bad format for memory access"),
-        };
-
-        // Some load/store instructions may be accessing VM data structures instead of the
-        // WebAssembly heap. These are tagged with `notrap` since their trapping is not part of
-        // the semantics, i.e. that would be a bug.
-        if memflags.notrap() {
-            return;
-        }
-
-        metadata.push(bd::MetadataEntry::memory_access(offset, self.srcloc(inst)));
-    }
 }
 
-impl<'a, 'b> fmt::Display for BatchCompiler<'a, 'b> {
+impl<'static_env, 'module_env> fmt::Display for BatchCompiler<'static_env, 'module_env> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.context.func.display(self.isa.as_ref()))
     }
 }
 
 /// Create a Cranelift function name representing a WebAssembly function with `index`.
-pub fn wasm_function_name(func: FuncIndex) -> ir::ExternalName {
-    ir::ExternalName::User {
+pub fn wasm_function_name(func: FuncIndex) -> ExternalName {
+    ExternalName::User {
         namespace: USER_FUNCTION_NAMESPACE,
         index: func.index() as u32,
     }
 }
 
 /// Create a Cranelift function name representing a builtin function.
-pub fn symbolic_function_name(sym: bd::SymbolicAddress) -> ir::ExternalName {
-    ir::ExternalName::User {
+pub fn symbolic_function_name(sym: bindings::SymbolicAddress) -> ExternalName {
+    ExternalName::User {
         namespace: SYMBOLIC_FUNCTION_NAMESPACE,
         index: sym as u32,
     }
 }
 
-/// References joined so we can implement `RelocSink`.
-struct EmitEnv<'a> {
-    metadata: &'a mut Vec<bd::MetadataEntry>,
+struct Relocations<'a> {
+    metadata: &'a mut Vec<bindings::MetadataEntry>,
+    rodata_relocs: &'a mut Vec<CodeOffset>,
 }
 
-impl<'a> EmitEnv<'a> {
-    pub fn new(metadata: &'a mut Vec<bd::MetadataEntry>) -> EmitEnv<'a> {
-        EmitEnv { metadata }
+impl<'a> Relocations<'a> {
+    fn new(
+        metadata: &'a mut Vec<bindings::MetadataEntry>,
+        rodata_relocs: &'a mut Vec<CodeOffset>,
+    ) -> Self {
+        Self {
+            metadata,
+            rodata_relocs,
+        }
     }
 }
 
-impl<'a> RelocSink for EmitEnv<'a> {
-    fn reloc_ebb(&mut self, _offset: CodeOffset, _reloc: Reloc, _ebb_offset: CodeOffset) {
-        unimplemented!();
+impl<'a> RelocSink for Relocations<'a> {
+    /// Add a relocation referencing a block at the current offset.
+    fn reloc_block(&mut self, _at: CodeOffset, _reloc: Reloc, _block_offset: CodeOffset) {
+        unimplemented!("block relocations NYI");
     }
 
+    /// Add a relocation referencing an external symbol at the current offset.
     fn reloc_external(
         &mut self,
-        offset: CodeOffset,
-        _reloc: Reloc,
-        name: &ir::ExternalName,
+        at: CodeOffset,
+        srcloc: SourceLoc,
+        reloc: Reloc,
+        name: &ExternalName,
         _addend: Addend,
     ) {
-        // Decode the function name.
+        debug_assert!(!srcloc.is_default());
+
         match *name {
-            ir::ExternalName::User {
+            ExternalName::User {
                 namespace: USER_FUNCTION_NAMESPACE,
-                ..
+                index,
             } => {
-                // This is a direct function call handled by `call_metadata` above.
+                // A simple function call to another wasm function.
+                let func_index = FuncIndex::new(index as usize);
+
+                // On x86, the Spidermonkey relocation must point to the next instruction.
+                // Cranelift gives us the exact offset to the immediate, so fix it up by the
+                // relocation's size.
+                #[cfg(feature = "cranelift_x86")]
+                let offset = at
+                    + match reloc {
+                        Reloc::X86CallPCRel4 => 4,
+                        _ => unreachable!(),
+                    };
+
+                // Spidermonkey Aarch64 requires the relocation to point just after the start of
+                // the actual relocation, for historical reasons.
+                #[cfg(feature = "cranelift_arm64")]
+                let offset = match reloc {
+                    Reloc::Arm64Call => at + 4,
+                    _ => unreachable!(),
+                };
+
+                #[cfg(not(any(feature = "cranelift_x86", feature = "cranelift_arm64")))]
+                let offset = {
+                    // Avoid warning about unused relocation.
+                    let _reloc = reloc;
+                    at
+                };
+
+                self.metadata.push(bindings::MetadataEntry::direct_call(
+                    offset, srcloc, func_index,
+                ));
             }
 
-            ir::ExternalName::User {
+            ExternalName::User {
                 namespace: SYMBOLIC_FUNCTION_NAMESPACE,
                 index,
             } => {
                 // This is a symbolic function reference encoded by `symbolic_function_name()`.
                 let sym = index.into();
 
-                // The symbolic access patch address points *after* the stored pointer.
-                let offset = offset + native_pointer_size() as u32;
-                self.metadata
-                    .push(bd::MetadataEntry::symbolic_access(offset, sym));
+                // See comments about offsets in the User match arm above.
+
+                #[cfg(feature = "cranelift_x86")]
+                let offset = at
+                    + match reloc {
+                        Reloc::Abs8 => 8,
+                        _ => unreachable!(),
+                    };
+
+                #[cfg(feature = "cranelift_arm64")]
+                let offset = match reloc {
+                    Reloc::Abs8 => at + 4,
+                    _ => unreachable!(),
+                };
+
+                #[cfg(not(any(feature = "cranelift_x86", feature = "cranelift_arm64")))]
+                let offset = at;
+
+                self.metadata.push(bindings::MetadataEntry::symbolic_access(
+                    offset, srcloc, sym,
+                ));
             }
 
-            ir::ExternalName::LibCall(call) => {
+            ExternalName::LibCall(call) => {
                 let sym = match call {
-                    ir::LibCall::CeilF32 => bd::SymbolicAddress::CeilF32,
-                    ir::LibCall::CeilF64 => bd::SymbolicAddress::CeilF64,
-                    ir::LibCall::FloorF32 => bd::SymbolicAddress::FloorF32,
-                    ir::LibCall::FloorF64 => bd::SymbolicAddress::FloorF64,
-                    ir::LibCall::NearestF32 => bd::SymbolicAddress::NearestF32,
-                    ir::LibCall::NearestF64 => bd::SymbolicAddress::NearestF64,
-                    ir::LibCall::TruncF32 => bd::SymbolicAddress::TruncF32,
-                    ir::LibCall::TruncF64 => bd::SymbolicAddress::TruncF64,
+                    ir::LibCall::CeilF32 => bindings::SymbolicAddress::CeilF32,
+                    ir::LibCall::CeilF64 => bindings::SymbolicAddress::CeilF64,
+                    ir::LibCall::FloorF32 => bindings::SymbolicAddress::FloorF32,
+                    ir::LibCall::FloorF64 => bindings::SymbolicAddress::FloorF64,
+                    ir::LibCall::NearestF32 => bindings::SymbolicAddress::NearestF32,
+                    ir::LibCall::NearestF64 => bindings::SymbolicAddress::NearestF64,
+                    ir::LibCall::TruncF32 => bindings::SymbolicAddress::TruncF32,
+                    ir::LibCall::TruncF64 => bindings::SymbolicAddress::TruncF64,
                     _ => {
                         panic!("Don't understand external {}", name);
                     }
                 };
 
-                // The symbolic access patch address points *after* the stored pointer.
-                let offset = offset + native_pointer_size() as u32;
-                self.metadata
-                    .push(bd::MetadataEntry::symbolic_access(offset, sym));
+                // The Spidermonkey relocation must point to the next instruction, on x86.
+                #[cfg(feature = "cranelift_x86")]
+                let offset = at
+                    + match reloc {
+                        Reloc::Abs8 => 8,
+                        _ => unreachable!(),
+                    };
+
+                // Spidermonkey AArch64 doesn't expect a relocation offset, in this case.
+                #[cfg(feature = "cranelift_arm64")]
+                let offset = match reloc {
+                    Reloc::Abs8 => at,
+                    _ => unreachable!(),
+                };
+
+                #[cfg(not(any(feature = "cranelift_x86", feature = "cranelift_arm64")))]
+                let offset = at;
+
+                self.metadata.push(bindings::MetadataEntry::symbolic_access(
+                    offset, srcloc, sym,
+                ));
             }
+
             _ => {
                 panic!("Don't understand external {}", name);
             }
         }
     }
 
-    fn reloc_jt(&mut self, _offset: CodeOffset, _reloc: Reloc, _jt: ir::JumpTable) {
-        unimplemented!();
+    /// Add a relocation referencing a constant.
+    fn reloc_constant(&mut self, _at: CodeOffset, _reloc: Reloc, _const_offset: ConstantOffset) {
+        unimplemented!("constant pool relocations NYI");
+    }
+
+    /// Add a relocation referencing a jump table.
+    fn reloc_jt(&mut self, at: CodeOffset, reloc: Reloc, _jt: JumpTable) {
+        match reloc {
+            Reloc::X86PCRelRodata4 => {
+                self.rodata_relocs.push(at);
+            }
+            _ => {
+                panic!("Unhandled/unexpected reloc type");
+            }
+        }
+    }
+
+    /// Track call sites information, giving us the return address offset.
+    fn add_call_site(&mut self, opcode: ir::Opcode, ret_addr: CodeOffset, srcloc: SourceLoc) {
+        // Direct calls need a plain relocation, so we don't need to handle them again.
+        if opcode == ir::Opcode::CallIndirect {
+            self.metadata
+                .push(bindings::MetadataEntry::indirect_call(ret_addr, srcloc));
+        }
+    }
+}
+
+struct Traps {
+    metadata: Vec<bindings::MetadataEntry>,
+}
+
+impl Traps {
+    fn new() -> Self {
+        Self {
+            metadata: Vec::new(),
+        }
+    }
+    fn clear(&mut self) {
+        self.metadata.clear();
+    }
+}
+
+impl TrapSink for Traps {
+    /// Add trap information for a specific offset.
+    fn trap(&mut self, trap_offset: CodeOffset, loc: SourceLoc, trap: TrapCode) {
+        // Translate the trap code into one of BaldrMonkey's trap codes.
+        use ir::TrapCode::*;
+        let bd_trap = match trap {
+            StackOverflow => {
+                // Cranelift will give us trap information for every spill/push/call. But
+                // Spidermonkey takes care of tracking stack overflows itself in the function
+                // entries, so we don't have to.
+                return;
+            }
+            HeapOutOfBounds | OutOfBounds | TableOutOfBounds => bindings::Trap::OutOfBounds,
+            IndirectCallToNull => bindings::Trap::IndirectCallToNull,
+            BadSignature => bindings::Trap::IndirectCallBadSig,
+            IntegerOverflow => bindings::Trap::IntegerOverflow,
+            IntegerDivisionByZero => bindings::Trap::IntegerDivideByZero,
+            BadConversionToInteger => bindings::Trap::InvalidConversionToInteger,
+            Interrupt => bindings::Trap::CheckInterrupt,
+            UnreachableCodeReached => bindings::Trap::Unreachable,
+            User(x) if x == TRAP_THROW_REPORTED => bindings::Trap::ThrowReported,
+            User(_) => panic!("Uncovered trap code {}", trap),
+        };
+
+        debug_assert!(!loc.is_default());
+        self.metadata
+            .push(bindings::MetadataEntry::trap(trap_offset, loc, bd_trap));
     }
 }

@@ -1,0 +1,23 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!-- Day Names -->
+<!-- LOCALIZATION NOTE : Accesskeys for day.1.Ddd to day.7.Ddd are currently
+     only used in Preferences > Views > Workweek groupbox -->
+
+
+<!ENTITY month.1.name "ژانویه" >
+<!ENTITY month.2.name "فوریه" >
+<!ENTITY month.3.name "مارس" >
+<!ENTITY month.4.name "آوریل" >
+<!ENTITY month.5.name "مه" >
+<!ENTITY month.6.name "ژوئن" >
+<!ENTITY month.7.name "جولای" >
+<!ENTITY month.8.name "اوت" >
+<!ENTITY month.9.name "سپتامبر" >
+<!ENTITY month.10.name "اکتبر" >
+<!ENTITY month.11.name "نوامبر" >
+<!ENTITY month.12.name "دسامبر" >
+

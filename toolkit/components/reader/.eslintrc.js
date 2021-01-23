@@ -1,9 +1,13 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
 
 module.exports = {
-  "rules": {
+  rules: {
     "no-inner-declarations": "error",
     "no-shadow": "error",
-    "no-unused-vars": ["error", {"vars": "all", "args": "none"}],
+    "no-unused-vars": ["error", { vars: "all", args: "none" }],
   },
-}
+};

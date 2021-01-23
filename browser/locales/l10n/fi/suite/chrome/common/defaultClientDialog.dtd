@@ -1,0 +1,14 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY defaultClient.title  "Oletusohjelma">
+<!ENTITY defaultClient.intro  "Käytä seuraavia &brandShortName;n osia oletusohjelmina:">
+
+<!ENTITY browser.label "Selain">
+<!ENTITY email.label "Sähköposti">
+<!ENTITY newsgroups.label "Keskusteluryhmät">
+<!ENTITY feeds.label "Syötteet">
+
+<!ENTITY checkOnStartup.label "Tee tämä tarkistus aina, kun &brandShortName; käynnistetään">
+<!ENTITY checkOnStartup.accesskey "a">

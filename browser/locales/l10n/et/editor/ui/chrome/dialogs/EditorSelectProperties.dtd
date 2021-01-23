@@ -1,0 +1,48 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label          "Valiknimekirja omadused">
+
+<!ENTITY Select.label               "Valiknimekiri">
+<!ENTITY SelectName.label           "Nimekirja nimi:">
+<!ENTITY SelectName.accesskey       "N">
+<!ENTITY SelectSize.label           "Kõrgus:">
+<!ENTITY SelectSize.accesskey       "K">
+<!ENTITY SelectMultiple.label       "Mitmikvalik">
+<!ENTITY SelectMultiple.accesskey   "M">
+<!ENTITY SelectDisabled.label       "Keelatud">
+<!ENTITY SelectDisabled.accesskey   "K">
+<!ENTITY SelectTabIndex.label       "Kaardi indeks:">
+<!ENTITY SelectTabIndex.accesskey   "K">
+
+<!ENTITY OptGroup.label             "Valiku grupp">
+<!ENTITY OptGroupLabel.label        "Vahepealkiri:">
+<!ENTITY OptGroupLabel.accesskey    "V">
+<!ENTITY OptGroupDisabled.label     "Keelatud">
+<!ENTITY OptGroupDisabled.accesskey "K">
+
+<!ENTITY Option.label               "Valik">
+<!ENTITY OptionText.label           "Tekst:">
+<!ENTITY OptionText.accesskey       "T">
+<!ENTITY OptionValue.label          "Väärtus:">
+<!ENTITY OptionValue.accesskey      "V">
+<!ENTITY OptionSelected.label       "Algselt valitud">
+<!ENTITY OptionSelected.accesskey   "A">
+<!ENTITY OptionDisabled.label       "Keelatud">
+<!ENTITY OptionDisabled.accesskey   "K">
+
+<!ENTITY TextHeader.label           "Tekst">
+<!ENTITY ValueHeader.label          "Väärtus">
+<!ENTITY SelectedHeader.label       "Valitud">
+
+<!ENTITY AddOption.label            "Lisa valik">
+<!ENTITY AddOption.accesskey        "L">
+<!ENTITY AddOptGroup.label          "Lisa grupp">
+<!ENTITY AddOptGroup.accesskey      "i">
+<!ENTITY RemoveElement.label        "Eemalda">
+<!ENTITY RemoveElement.accesskey    "E">
+<!ENTITY MoveElementUp.label        "Liiguta üles">
+<!ENTITY MoveElementUp.accesskey    "g">
+<!ENTITY MoveElementDown.label      "Liiguta alla">
+<!ENTITY MoveElementDown.accesskey  "u">

@@ -5,7 +5,8 @@
 
 #include "JoinNodeTransaction.h"
 
-#include "mozilla/EditorBase.h"  // for EditorBase
+#include "HTMLEditUtils.h"
+#include "mozilla/HTMLEditor.h"  // for HTMLEditor
 #include "mozilla/dom/Text.h"
 #include "nsAString.h"
 #include "nsDebug.h"          // for NS_ASSERTION, etc.
@@ -19,98 +20,120 @@ using namespace dom;
 
 // static
 already_AddRefed<JoinNodeTransaction> JoinNodeTransaction::MaybeCreate(
-    EditorBase& aEditorBase, nsINode& aLeftNode, nsINode& aRightNode) {
+    HTMLEditor& aHTMLEditor, nsIContent& aLeftContent,
+    nsIContent& aRightContent) {
   RefPtr<JoinNodeTransaction> transaction =
-      new JoinNodeTransaction(aEditorBase, aLeftNode, aRightNode);
+      new JoinNodeTransaction(aHTMLEditor, aLeftContent, aRightContent);
   if (NS_WARN_IF(!transaction->CanDoIt())) {
     return nullptr;
   }
   return transaction.forget();
 }
 
-JoinNodeTransaction::JoinNodeTransaction(EditorBase& aEditorBase,
-                                         nsINode& aLeftNode,
-                                         nsINode& aRightNode)
-    : mEditorBase(&aEditorBase),
-      mLeftNode(&aLeftNode),
-      mRightNode(&aRightNode),
+JoinNodeTransaction::JoinNodeTransaction(HTMLEditor& aHTMLEditor,
+                                         nsIContent& aLeftContent,
+                                         nsIContent& aRightContent)
+    : mHTMLEditor(&aHTMLEditor),
+      mLeftContent(&aLeftContent),
+      mRightContent(&aRightContent),
       mOffset(0) {}
 
 NS_IMPL_CYCLE_COLLECTION_INHERITED(JoinNodeTransaction, EditTransactionBase,
-                                   mEditorBase, mLeftNode, mRightNode, mParent)
+                                   mHTMLEditor, mLeftContent, mRightContent,
+                                   mParentNode)
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(JoinNodeTransaction)
 NS_INTERFACE_MAP_END_INHERITING(EditTransactionBase)
 
 bool JoinNodeTransaction::CanDoIt() const {
-  if (NS_WARN_IF(!mLeftNode) || NS_WARN_IF(!mRightNode) ||
-      NS_WARN_IF(!mEditorBase) || !mLeftNode->GetParentNode()) {
+  if (NS_WARN_IF(!mLeftContent) || NS_WARN_IF(!mRightContent) ||
+      NS_WARN_IF(!mHTMLEditor) || !mLeftContent->GetParentNode()) {
     return false;
   }
-  return mEditorBase->IsModifiableNode(*mLeftNode->GetParentNode());
+  return HTMLEditUtils::IsRemovableFromParentNode(*mLeftContent);
 }
 
 // After DoTransaction() and RedoTransaction(), the left node is removed from
 // the content tree and right node remains.
-NS_IMETHODIMP
-JoinNodeTransaction::DoTransaction() {
-  if (NS_WARN_IF(!mEditorBase) || NS_WARN_IF(!mLeftNode) ||
-      NS_WARN_IF(!mRightNode)) {
-    return NS_ERROR_NOT_INITIALIZED;
+NS_IMETHODIMP JoinNodeTransaction::DoTransaction() {
+  if (NS_WARN_IF(!mHTMLEditor) || NS_WARN_IF(!mLeftContent) ||
+      NS_WARN_IF(!mRightContent)) {
+    return NS_ERROR_NOT_AVAILABLE;
   }
 
   // Get the parent node
-  nsCOMPtr<nsINode> leftParent = mLeftNode->GetParentNode();
-  NS_ENSURE_TRUE(leftParent, NS_ERROR_NULL_POINTER);
-
-  // Verify that mLeftNode and mRightNode have the same parent
-  if (leftParent != mRightNode->GetParentNode()) {
-    NS_ASSERTION(false, "Nodes do not have same parent");
-    return NS_ERROR_INVALID_ARG;
+  nsINode* leftContentParent = mLeftContent->GetParentNode();
+  if (NS_WARN_IF(!leftContentParent)) {
+    return NS_ERROR_NOT_AVAILABLE;
   }
 
-  // Set this instance's mParent.  Other methods will see a non-null mParent
-  // and know all is well
-  mParent = leftParent;
-  mOffset = mLeftNode->Length();
+  // Verify that mLeftContent and mRightContent have the same parent
+  if (leftContentParent != mRightContent->GetParentNode()) {
+    NS_ASSERTION(false, "Nodes do not have same parent");
+    return NS_ERROR_NOT_AVAILABLE;
+  }
 
-  return mEditorBase->DoJoinNodes(mRightNode, mLeftNode, mParent);
+  // Set this instance's mParentNode.  Other methods will see a non-null
+  // mParentNode and know all is well
+  mParentNode = leftContentParent;
+  mOffset = mLeftContent->Length();
+
+  OwningNonNull<HTMLEditor> htmlEditor = *mHTMLEditor;
+  OwningNonNull<nsIContent> leftContent = *mLeftContent;
+  OwningNonNull<nsIContent> rightContent = *mRightContent;
+  nsresult rv = htmlEditor->DoJoinNodes(rightContent, leftContent);
+  NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "HTMLEditor::DoJoinNodes() failed");
+  return rv;
 }
 
 // XXX: What if instead of split, we just deleted the unneeded children of
 //     mRight and re-inserted mLeft?
-NS_IMETHODIMP
-JoinNodeTransaction::UndoTransaction() {
-  if (NS_WARN_IF(!mParent) || NS_WARN_IF(!mLeftNode) ||
-      NS_WARN_IF(!mRightNode)) {
-    return NS_ERROR_NOT_INITIALIZED;
+NS_IMETHODIMP JoinNodeTransaction::UndoTransaction() {
+  if (NS_WARN_IF(!mParentNode) || NS_WARN_IF(!mLeftContent) ||
+      NS_WARN_IF(!mRightContent) || NS_WARN_IF(!mHTMLEditor)) {
+    return NS_ERROR_NOT_AVAILABLE;
   }
 
+  OwningNonNull<nsIContent> leftContent = *mLeftContent;
+  OwningNonNull<nsIContent> rightContent = *mRightContent;
+  OwningNonNull<nsINode> parentNode = *mParentNode;
+
   // First, massage the existing node so it is in its post-split state
-  ErrorResult rv;
-  if (mRightNode->GetAsText()) {
-    mRightNode->GetAsText()->DeleteData(0, mOffset, rv);
-    if (rv.Failed()) {
-      return rv.StealNSResult();
+  ErrorResult error;
+  if (Text* rightTextNode = rightContent->GetAsText()) {
+    OwningNonNull<HTMLEditor> htmlEditor = *mHTMLEditor;
+    htmlEditor->DoDeleteText(MOZ_KnownLive(*rightTextNode), 0, mOffset, error);
+    if (error.Failed()) {
+      NS_WARNING("EditorBase::DoDeleteText() failed");
+      return error.StealNSResult();
     }
   } else {
-    nsCOMPtr<nsIContent> child = mRightNode->GetFirstChild();
-    for (uint32_t i = 0; i < mOffset; i++) {
-      if (rv.Failed()) {
-        return rv.StealNSResult();
+    AutoTArray<OwningNonNull<nsIContent>, 24> movingChildren;
+    if (nsIContent* child = mRightContent->GetFirstChild()) {
+      movingChildren.AppendElement(*child);
+      for (uint32_t i = 0; i < mOffset; i++) {
+        child = child->GetNextSibling();
+        if (!child) {
+          break;
+        }
+        movingChildren.AppendElement(*child);
       }
-      if (!child) {
-        return NS_ERROR_NULL_POINTER;
+    }
+    for (OwningNonNull<nsIContent>& child : movingChildren) {
+      leftContent->AppendChild(child, error);
+      if (error.Failed()) {
+        NS_WARNING("nsINode::AppendChild() failed");
+        return error.StealNSResult();
       }
-      nsCOMPtr<nsIContent> nextSibling = child->GetNextSibling();
-      mLeftNode->AppendChild(*child, rv);
-      child = nextSibling;
     }
   }
+
+  NS_WARNING_ASSERTION(!error.Failed(), "The previous error was ignored");
+
   // Second, re-insert the left node into the tree
-  nsCOMPtr<nsINode> refNode = mRightNode;
-  mParent->InsertBefore(*mLeftNode, refNode, rv);
-  return rv.StealNSResult();
+  parentNode->InsertBefore(leftContent, rightContent, error);
+  NS_WARNING_ASSERTION(!error.Failed(), "nsINode::InsertBefore() failed");
+  return error.StealNSResult();
 }
 
 }  // namespace mozilla

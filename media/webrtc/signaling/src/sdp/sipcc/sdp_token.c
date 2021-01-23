@@ -11,6 +11,11 @@
 #include "CSFLog.h"
 #include "prprf.h"
 
+#if __MINGW32__
+#include <minmax.h>
+#endif
+
+
 static const char *logTag = "sdp_token";
 
 #define MCAST_STRING_LEN 4
@@ -1210,8 +1215,8 @@ sdp_result_e sdp_parse_media (sdp_t *sdp_p, uint16_t level, const char *ptr)
             (mca_p->transport == SDP_TRANSPORT_RTPSAVPF) ||
             (mca_p->transport == SDP_TRANSPORT_UDPTLSRTPSAVP) ||
             (mca_p->transport == SDP_TRANSPORT_UDPTLSRTPSAVPF) ||
-            (mca_p->transport == SDP_TRANSPORT_TCPTLSRTPSAVP) ||
-            (mca_p->transport == SDP_TRANSPORT_TCPTLSRTPSAVPF) ||
+            (mca_p->transport == SDP_TRANSPORT_TCPDTLSRTPSAVP) ||
+            (mca_p->transport == SDP_TRANSPORT_TCPDTLSRTPSAVPF) ||
             (mca_p->transport == SDP_TRANSPORT_UDP) ||
             (mca_p->transport == SDP_TRANSPORT_TCP) ||
             (mca_p->transport == SDP_TRANSPORT_UDPTL) ||
@@ -1255,8 +1260,8 @@ sdp_result_e sdp_parse_media (sdp_t *sdp_p, uint16_t level, const char *ptr)
             (mca_p->transport == SDP_TRANSPORT_RTPSAVPF) ||
             (mca_p->transport == SDP_TRANSPORT_UDPTLSRTPSAVP) ||
             (mca_p->transport == SDP_TRANSPORT_UDPTLSRTPSAVPF) ||
-            (mca_p->transport == SDP_TRANSPORT_TCPTLSRTPSAVP) ||
-            (mca_p->transport == SDP_TRANSPORT_TCPTLSRTPSAVPF) ||
+            (mca_p->transport == SDP_TRANSPORT_TCPDTLSRTPSAVP) ||
+            (mca_p->transport == SDP_TRANSPORT_TCPDTLSRTPSAVPF) ||
             (mca_p->transport == SDP_TRANSPORT_UDP) ||
             (mca_p->transport == SDP_TRANSPORT_LOCAL)) {
             /* Port format is <port>/<num of ports>. Make sure choose

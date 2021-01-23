@@ -716,6 +716,7 @@ class Telemetry {
  *        The ID of the tool that has been opened.
  *
  */
+// eslint-disable-next-line complexity
 function getChartsFromToolId(id) {
   if (!id) {
     return null;
@@ -747,12 +748,10 @@ function getChartsFromToolId(id) {
     case "OPTIONS":
     case "PAINTFLASHING":
     case "RESPONSIVE":
-    case "SCRATCHPAD":
     case "STORAGE":
     case "STYLEEDITOR":
     case "TOOLBOX":
     case "WEBCONSOLE":
-    case "WEBIDE":
       timerHist = `DEVTOOLS_${id}_TIME_ACTIVE_SECONDS`;
       countHist = `DEVTOOLS_${id}_OPENED_COUNT`;
       break;
@@ -771,6 +770,7 @@ function getChartsFromToolId(id) {
       countScalar = `devtools.${lowerCaseId}.opened_count`;
       break;
     case "ANIMATIONINSPECTOR":
+    case "COMPATIBILITYVIEW":
     case "COMPUTEDVIEW":
     case "FONTINSPECTOR":
     case "LAYOUTVIEW":

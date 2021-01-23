@@ -1,0 +1,40 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- File menu items -->
+<!ENTITY openFileCmd.label "Avrir la datoteca…">
+<!ENTITY openFileCmd.accesskey "A">
+<!ENTITY openFileCmd.key "O">
+<!ENTITY openRemoteCmd.label "Avrir l'adressa da web">
+<!ENTITY openRemoteCmd.accesskey "W">
+<!ENTITY openRemoteCmd.key "L">
+<!ENTITY fileRecentMenu.label "Paginas visitadas ultimamain">
+<!ENTITY fileRecentMenu.accesskey "u">
+<!ENTITY saveCmd.label "Memorisar las midadas">
+<!ENTITY saveCmd.accesskey "M">
+<!ENTITY saveAsCmd.label "Memorisar sut…">
+<!ENTITY saveAsCmd.accesskey "s">
+<!ENTITY saveAsChangeEncodingCmd2.label "Memorisar e midar la codaziun dal text">
+<!ENTITY saveAsChangeEncodingCmd2.accesskey "c">
+<!ENTITY publishCmd.label "Publitgar">
+<!ENTITY publishCmd.accesskey "P">
+<!ENTITY publishCmd.key "S">
+<!ENTITY publishAsCmd.label "Publitgar sco…">
+<!ENTITY publishAsCmd.accesskey "g">
+<!ENTITY fileRevert.label "Enavos">
+<!ENTITY fileRevert.accesskey "v">
+
+<!-- Edit menu items -->
+<!ENTITY publishSettings.label "Parameters da la pagina da publicaziun…">
+<!ENTITY publishSettings.accesskey "z">
+
+<!-- Toolbar buttons/items -->
+<!ENTITY newToolbarCmd.label "Nov">
+<!ENTITY newToolbarCmd.tooltip "Crear ina nova pagina da Composer">
+<!ENTITY openToolbarCmd.label "Avrir">
+<!ENTITY openToolbarCmd.tooltip "Avrir ina datoteca locala">
+<!ENTITY saveToolbarCmd.tooltip "Memorisar la datoteca en in'adressa locala">
+<!ENTITY publishToolbarCmd.tooltip "Chargiar la datoeca sin in'adressa externa">
+<!ENTITY printToolbarCmd.label "Stampar">
+<!ENTITY printToolbarCmd.tooltip "Stampar questa pagina">

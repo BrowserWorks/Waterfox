@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY syncKey.page.title               "Kekunci &syncBrand.fullName.label; Anda">
+<!ENTITY syncKey.page.description         "Kekunci ini digunakan untuk menyahkod data dalam akaun &syncBrand.fullName.label;. Anda perlu masukkan kekunci ini setiap kali anda mengkonfigurasi &syncBrand.fullName.label; dalam komputer atau peranti baru.">
+<!ENTITY syncKey.keepItSecret.heading     "Ini rahsia anda">
+<!ENTITY syncKey.keepItSecret.description "Akaun &syncBrand.fullName.label; telah dienkripsi untuk melindungi privasi anda. Tanpa kekunci ini, mungkin akan mengambil masa bertahun-tahun untuk menyahkod maklumat peribadi anda. Anda seorang sahaja yang memegang kekunci ini. Ini bermakna anda sahaja yang boleh mengakses data &syncBrand.fullName.label;.">
+<!ENTITY syncKey.keepItSafe.heading       "Ini rahsia anda">
+<!ENTITY syncKey.keepItSafe1.description  "Jangan hilangkan kekunci ini.">
+<!ENTITY syncKey.keepItSafe2.description  " Kami tidak menyimpan salinan kata kunci anda (ini bukan lagi dipanggil rahsia!) jadi ">
+<!ENTITY syncKey.keepItSafe3.description  "kami tidak dapat membantu anda memulihkannya">
+<!ENTITY syncKey.keepItSafe4.description  " jika kata kunci ini hilang. Anda perlu gunakan kekunci ini pada bila-bila masa anda membuat sambungan komputer atau peranti baru ke &syncBrand.fullName.label;.">
+<!ENTITY syncKey.findOutMore1.label       "Ketahui selanjutnya mengenai &syncBrand.fullName.label; dan privasi anda di ">
+<!ENTITY syncKey.findOutMore2.label       ".">
+<!ENTITY syncKey.footer1.label            "Terma Perkhidmatan &syncBrand.fullName.label; ada tersedia di ">
+<!ENTITY syncKey.footer2.label            ". Polisi Privasi ada tersedia di ">
+<!ENTITY syncKey.footer3.label            ".">

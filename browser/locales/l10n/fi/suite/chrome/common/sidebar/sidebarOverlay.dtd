@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY sidebar.panels.label           "Sivupaneeli">
+<!ENTITY sidebar.reload.label           "Päivitä">
+<!ENTITY sidebar.reload.accesskey       "ä">
+<!ENTITY sidebar.picker.label           "Välilehdet">
+<!ENTITY sidebar.customize.label        "Muokkaa Sivupaneelia…">
+<!ENTITY sidebar.customize.accesskey    "u">
+<!ENTITY sidebar.hide.label             "Piilota välilehti">
+<!ENTITY sidebar.hide.accesskey         "h">
+<!ENTITY sidebar.switch.label           "Valitse välilehti">
+<!ENTITY sidebar.switch.accesskey       "t">
+<!ENTITY sidebarCmd.label               "Sivupaneeli">
+<!ENTITY sidebarCmd.accesskey           "i">
+<!ENTITY sidebar.loading.label          "Ladataan…">
+<!ENTITY sidebar.loadstopped.label      "Lataus pysäytetty">
+<!ENTITY sidebar.loading.stop.label     "Pysäytä">
+<!ENTITY sidebar.loading.stop.accesskey "y">
+
+<!-- LOCALIZATION NOTE (showHideSidebarCmd.key): This is only used on the
+     mac platform, other platforms use VK_F9. -->
+<!ENTITY showHideSidebarCmd.key         "S">
+
+<!ENTITY sidebar.no-panels.state     "Sivupaneeli on juuri nyt tyhjä.">
+<!ENTITY sidebar.no-panels.add       'Voit lisätä välilehtiä painamalla yllä olevaa Välilehdet-painiketta.'>
+<!ENTITY sidebar.no-panels.hide      'Jos haluat piilottaa Sivupaneelin kokonaan, valitse Näytä-valikosta Työkalupalkit, ja sieltä Sivupaneeli.'>
+<!ENTITY sidebar.sbDirectory.label   "Sivupalkkihakemisto…">
+
+<!ENTITY sidebar.pagenotfound.label  "Tämä välilehti ei ole juuri nyt käytettävissä.">
+<!ENTITY sidebar.close.tooltip       "Sulje Sivupaneeli">
+<!ENTITY sidebar.open.tooltip        "Avaa Sivupaneeli">
+
+<!ENTITY sidebar.search.label         "Verkkohaku">
+<!ENTITY sidebar.client-bookmarks.label     "Kirjanmerkit">
+<!ENTITY sidebar.client-history.label       "Sivuhistoria">
+<!ENTITY sidebar.client-addressbook.label   "Osoitekirja">

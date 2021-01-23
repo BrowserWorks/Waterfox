@@ -6,14 +6,14 @@
 
 #include "FlacDecoder.h"
 #include "MediaContainerType.h"
-#include "mozilla/StaticPrefs.h"
+#include "mozilla/StaticPrefs_media.h"
 
 namespace mozilla {
 
 /* static */
 bool FlacDecoder::IsEnabled() {
 #ifdef MOZ_FFVPX
-  return StaticPrefs::MediaFlacEnabled();
+  return StaticPrefs::media_flac_enabled();
 #else
   // Until bug 1295886 is fixed.
   return false;

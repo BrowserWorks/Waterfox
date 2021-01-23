@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY progress.title                  "ダウンロードしています...">
+<!ENTITY closeWindow.key                 "w">
+<!ENTITY cmd.pause.tooltip               "中断">
+<!ENTITY cmd.resume.tooltip              "再開">
+<!ENTITY cmd.retry.tooltip               "再試行">
+<!ENTITY cmd.cancel.tooltip              "キャンセル">
+<!ENTITY cmd.open.label                  "ファイルを開く">
+<!ENTITY cmd.open.accesskey              "O">
+<!ENTITY cmd.show.label                  "保存フォルダーを開く">
+<!ENTITY cmd.show.accesskey              "F">
+<!ENTITY cmd.goToDownloadPage.label      "ダウンロードしたページを開く">
+<!ENTITY cmd.goToDownloadPage.accesskey  "G">
+<!ENTITY cmd.copyDownloadLink.label      "ダウンロードした URL をコピー">
+<!ENTITY cmd.copyDownloadLink.accesskey  "L">
+<!ENTITY closeWhenDone.label             "ダウンロード完了後、このウィンドウを閉じる">
+<!ENTITY closeWhenDone.accesskey         "w">

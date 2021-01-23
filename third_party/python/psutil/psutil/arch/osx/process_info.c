@@ -19,9 +19,9 @@
 #include <sys/sysctl.h>
 #include <libproc.h>
 
-#include "process_info.h"
 #include "../../_psutil_common.h"
 #include "../../_psutil_posix.h"
+#include "process_info.h"
 
 /*
  * Returns a list of all BSD processes on the system.  This routine
@@ -59,8 +59,10 @@ psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
      */
     while (lim-- > 0) {
         size = 0;
-        if (sysctl((int *)mib3, 3, NULL, &size, NULL, 0) == -1)
-            return errno;
+        if (sysctl((int *)mib3, 3, NULL, &size, NULL, 0) == -1) {
+            PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_ALL)");
+            return 1;
+        }
         size2 = size + (size >> 3);  // add some
         if (size2 > size) {
             ptr = malloc(size2);
@@ -72,22 +74,32 @@ psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
         else {
             ptr = malloc(size);
         }
-        if (ptr == NULL)
-            return ENOMEM;
+        if (ptr == NULL) {
+            PyErr_NoMemory();
+            return 1;
+        }
 
         if (sysctl((int *)mib3, 3, ptr, &size, NULL, 0) == -1) {
             err = errno;
             free(ptr);
-            if (err != ENOMEM)
-                return err;
+            if (err != ENOMEM) {
+                PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_PROC_ALL)");
+                return 1;
+            }
         }
         else {
             *procList = (kinfo_proc *)ptr;
             *procCount = size / sizeof(kinfo_proc);
-            return 0;
+            if (procCount <= 0) {
+                PyErr_Format(PyExc_RuntimeError, "no PIDs found");
+                return 1;
+            }
+            return 0;  // success
         }
     }
-    return ENOMEM;
+
+    PyErr_Format(PyExc_RuntimeError, "couldn't collect PIDs list");
+    return 1;
 }
 
 
@@ -100,13 +112,26 @@ psutil_get_argmax() {
 
     if (sysctl(mib, 2, &argmax, &size, NULL, 0) == 0)
         return argmax;
+    PyErr_SetFromOSErrnoWithSyscall("sysctl(KERN_ARGMAX)");
     return 0;
 }
 
 
+// Return 1 if pid refers to a zombie process else 0.
+int
+psutil_is_zombie(pid_t pid) {
+    struct kinfo_proc kp;
+
+    if (psutil_get_kinfo_proc(pid, &kp) == -1)
+        return 0;
+    return (kp.kp_proc.p_stat == SZOMB) ? 1 : 0;
+}
+
+
+
 // return process args as a python list
 PyObject *
-psutil_get_cmdline(long pid) {
+psutil_get_cmdline(pid_t pid) {
     int mib[3];
     int nargs;
     size_t len;
@@ -125,26 +150,24 @@ psutil_get_cmdline(long pid) {
 
     // read argmax and allocate memory for argument space.
     argmax = psutil_get_argmax();
-    if (! argmax) {
-        PyErr_SetFromErrno(PyExc_OSError);
+    if (! argmax)
         goto error;
-    }
 
     procargs = (char *)malloc(argmax);
     if (NULL == procargs) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        PyErr_NoMemory();
         goto error;
     }
 
     // read argument space
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROCARGS2;
-    mib[2] = (pid_t)pid;
+    mib[2] = pid;
     if (sysctl(mib, 3, procargs, &argmax, NULL, 0) < 0) {
         // In case of zombie process we'll get EINVAL. We translate it
         // to NSP and _psosx.py will translate it to ZP.
         if ((errno == EINVAL) && (psutil_pid_exists(pid)))
-            NoSuchProcess("");
+            NoSuchProcess("sysctl");
         else
             PyErr_SetFromErrno(PyExc_OSError);
         goto error;
@@ -202,7 +225,7 @@ error:
 
 // return process environment as a python string
 PyObject *
-psutil_get_environ(long pid) {
+psutil_get_environ(pid_t pid) {
     int mib[3];
     int nargs;
     char *procargs = NULL;
@@ -219,26 +242,24 @@ psutil_get_environ(long pid) {
 
     // read argmax and allocate memory for argument space.
     argmax = psutil_get_argmax();
-    if (! argmax) {
-        PyErr_SetFromErrno(PyExc_OSError);
+    if (! argmax)
         goto error;
-    }
 
     procargs = (char *)malloc(argmax);
     if (NULL == procargs) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        PyErr_NoMemory();
         goto error;
     }
 
     // read argument space
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROCARGS2;
-    mib[2] = (pid_t)pid;
+    mib[2] = pid;
     if (sysctl(mib, 3, procargs, &argmax, NULL, 0) < 0) {
         // In case of zombie process we'll get EINVAL. We translate it
         // to NSP and _psosx.py will translate it to ZP.
         if ((errno == EINVAL) && (psutil_pid_exists(pid)))
-            NoSuchProcess("");
+            NoSuchProcess("sysctl");
         else
             PyErr_SetFromErrno(PyExc_OSError);
         goto error;
@@ -318,13 +339,13 @@ error:
 
 
 int
-psutil_get_kinfo_proc(long pid, struct kinfo_proc *kp) {
+psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp) {
     int mib[4];
     size_t len;
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
     mib[2] = KERN_PROC_PID;
-    mib[3] = (pid_t)pid;
+    mib[3] = pid;
 
     // fetch the info with sysctl()
     len = sizeof(struct kinfo_proc);
@@ -338,7 +359,7 @@ psutil_get_kinfo_proc(long pid, struct kinfo_proc *kp) {
 
     // sysctl succeeds but len is zero, happens when process has gone away
     if (len == 0) {
-        NoSuchProcess("");
+        NoSuchProcess("sysctl (len == 0)");
         return -1;
     }
     return 0;
@@ -350,9 +371,9 @@ psutil_get_kinfo_proc(long pid, struct kinfo_proc *kp) {
  * Returns 0 on failure (and Python exception gets already set).
  */
 int
-psutil_proc_pidinfo(long pid, int flavor, uint64_t arg, void *pti, int size) {
+psutil_proc_pidinfo(pid_t pid, int flavor, uint64_t arg, void *pti, int size) {
     errno = 0;
-    int ret = proc_pidinfo((int)pid, flavor, arg, pti, size);
+    int ret = proc_pidinfo(pid, flavor, arg, pti, size);
     if ((ret <= 0) || ((unsigned long)ret < sizeof(pti))) {
         psutil_raise_for_pid(pid, "proc_pidinfo()");
         return 0;

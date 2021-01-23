@@ -1,7 +1,7 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
-/* globals $, $$ */
+/* globals $ */
 "use strict";
 
 const { PrefObserver } = require("devtools/client/shared/prefs");
@@ -17,10 +17,14 @@ const flags = require("devtools/shared/flags");
 const {
   PerformanceTelemetry,
 } = require("devtools/client/performance/modules/logic/telemetry");
-const { PerformanceView } = require("./performance-view");
-const { DetailsView } = require("./views/details");
-const { RecordingsView } = require("./views/recordings");
-const { ToolbarView } = require("./views/toolbar");
+const {
+  PerformanceView,
+} = require("devtools/client/performance/performance-view");
+const { DetailsView } = require("devtools/client/performance/views/details");
+const {
+  RecordingsView,
+} = require("devtools/client/performance/views/recordings");
+const { ToolbarView } = require("devtools/client/performance/views/toolbar");
 
 /**
  * Functions handling target-related lifetime events and
@@ -34,10 +38,9 @@ const PerformanceController = {
    * Listen for events emitted by the current tab target and
    * main UI events.
    */
-  async initialize(toolbox, target, front) {
-    this.toolbox = toolbox;
-    this.target = target;
-    this.front = front;
+  async initialize(targetFront, performanceFront) {
+    this.target = targetFront;
+    this.front = performanceFront;
 
     this._telemetry = new PerformanceTelemetry(this);
     this.startRecording = this.startRecording.bind(this);
@@ -118,6 +121,12 @@ const PerformanceController = {
     this._prefObserver.destroy();
 
     this._telemetry.destroy();
+  },
+
+  updateFronts(targetFront, performanceFront) {
+    this.target = targetFront;
+    this.front = performanceFront;
+    this.enableFrontEventListeners();
   },
 
   /**
@@ -242,7 +251,17 @@ const PerformanceController = {
    */
   async stopRecording() {
     const recording = this.getLatestManualRecording();
-    await this.front.stopRecording(recording);
+
+    // What the actorID is null means this actor was already destroyed.
+    if (this.front.actorID) {
+      await this.front.stopRecording(recording);
+    } else {
+      // As the front was destroyed, we do stop sequence manually without the actor.
+      recording._recording = false;
+      recording._completed = true;
+      await this._onRecordingStopped(recording);
+    }
+
     this.emit(EVENTS.BACKEND_READY_AFTER_RECORDING_STOP);
   },
 

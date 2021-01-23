@@ -14,13 +14,13 @@
 #include "mozilla/Preferences.h"
 #include "mozilla/Unused.h"
 #include "nsAppDirectoryServiceDefs.h"
+#include "nsComponentManagerUtils.h"  // for do_CreateInstance
 #include "nsDependentString.h"
 #include "nsDirectoryServiceUtils.h"
 #include "nsICryptoHash.h"
 #include "nsIFileStreams.h"
 #include "nsILineInputStream.h"
 #include "nsISafeOutputStream.h"
-#include "nsIX509Cert.h"
 #include "nsNetCID.h"
 #include "nsNetUtil.h"
 #include "nsPromiseFlatString.h"
@@ -446,7 +446,7 @@ CertBlocklist::SaveEntries() {
 
   for (auto iter = issuers.Iter(); !iter.Done(); iter.Next()) {
     nsCStringHashKey* hashKey = iter.Get();
-    nsAutoPtr<BlocklistStringSet> issuerSet;
+    UniquePtr<BlocklistStringSet> issuerSet;
     issuerTable.Remove(hashKey->GetKey(), &issuerSet);
 
     nsresult rv = WriteLine(outputStream, hashKey->GetKey());
@@ -609,11 +609,9 @@ CertBlocklist::IsBlocklistFresh(bool* _retval) {
 }
 
 /* static */
-void CertBlocklist::PreferenceChanged(const char* aPref,
-                                      CertBlocklist* aBlocklist)
-
-{
-  MutexAutoLock lock(aBlocklist->mMutex);
+void CertBlocklist::PreferenceChanged(const char* aPref, void* aBlocklist) {
+  auto blocklist = static_cast<CertBlocklist*>(aBlocklist);
+  MutexAutoLock lock(blocklist->mMutex);
 
   MOZ_LOG(gCertBlockPRLog, LogLevel::Warning,
           ("CertBlocklist::PreferenceChanged %s changed", aPref));

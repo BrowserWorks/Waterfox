@@ -18,7 +18,6 @@ using namespace js::jit;
 
 using mozilla::Abs;
 using mozilla::FloorLog2;
-using mozilla::Swap;
 
 LTableSwitch* LIRGeneratorX86Shared::newLTableSwitch(
     const LAllocation& in, const LDefinition& inputCopy,
@@ -173,12 +172,16 @@ void LIRGeneratorX86Shared::lowerDivI(MDiv* div) {
     if (rhs != 0 && uint32_t(1) << shift == Abs(rhs)) {
       LAllocation lhs = useRegisterAtStart(div->lhs());
       LDivPowTwoI* lir;
-      if (!div->canBeNegativeDividend()) {
+      // When truncated with maybe a non-zero remainder, we have to round the
+      // result toward 0. This requires an extra register to round up/down
+      // whether the left-hand-side is signed.
+      bool needRoundNeg = div->canBeNegativeDividend() && div->isTruncated();
+      if (!needRoundNeg) {
         // Numerator is unsigned, so does not need adjusting.
         lir = new (alloc()) LDivPowTwoI(lhs, lhs, shift, rhs < 0);
       } else {
-        // Numerator is signed, and needs adjusting, and an extra
-        // lhs copy register is needed.
+        // Numerator might be signed, and needs adjusting, and an extra lhs copy
+        // is needed to round the result of the integer division towards zero.
         lir = new (alloc())
             LDivPowTwoI(lhs, useRegister(div->lhs()), shift, rhs < 0);
       }
@@ -339,6 +342,7 @@ void LIRGenerator::visitAsmJSStoreHeap(MAsmJSStoreHeap* ins) {
                           limitAlloc, memoryBaseAlloc);
       break;
     case Scalar::Int64:
+    case Scalar::Simd128:
       MOZ_CRASH("NYI");
     case Scalar::Uint8Clamped:
     case Scalar::BigInt64:

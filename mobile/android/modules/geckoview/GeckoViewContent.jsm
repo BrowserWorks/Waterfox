@@ -46,6 +46,12 @@ class GeckoViewContent extends GeckoViewModule {
       /* capture */ true,
       /* untrusted */ false
     );
+    this.window.addEventListener(
+      "framefocusrequested",
+      this,
+      /* capture */ true,
+      /* untrusted */ false
+    );
 
     this.messageManager.addMessageListener("GeckoView:DOMFullscreenExit", this);
     this.messageManager.addMessageListener(
@@ -54,6 +60,7 @@ class GeckoViewContent extends GeckoViewModule {
     );
 
     Services.obs.addObserver(this, "oop-frameloader-crashed");
+    Services.obs.addObserver(this, "ipc:content-shutdown");
   }
 
   onDisable() {
@@ -64,6 +71,11 @@ class GeckoViewContent extends GeckoViewModule {
     );
     this.window.removeEventListener(
       "MozDOMFullscreen:Exited",
+      this,
+      /* capture */ true
+    );
+    this.window.removeEventListener(
+      "framefocusrequested",
       this,
       /* capture */ true
     );
@@ -78,6 +90,7 @@ class GeckoViewContent extends GeckoViewModule {
     );
 
     Services.obs.removeObserver(this, "oop-frameloader-crashed");
+    Services.obs.removeObserver(this, "ipc:content-shutdown");
   }
 
   // Bundle event handler.
@@ -101,7 +114,7 @@ class GeckoViewContent extends GeckoViewModule {
         break;
       }
       case "GeckoView:ZoomToInput":
-        this.messageManager.sendAsyncMessage(aEvent);
+        this.messageManager.sendAsyncMessage(aEvent, aData);
         break;
       case "GeckoView:ScrollBy":
         this.messageManager.sendAsyncMessage(aEvent, aData);
@@ -115,11 +128,9 @@ class GeckoViewContent extends GeckoViewModule {
         } else {
           this.browser.docShellIsActive = false;
         }
-        var msgData = {
+        this.messageManager.sendAsyncMessage("GeckoView:SetActive", {
           active: aData.active,
-          suspendMedia: this.settings.suspendMediaWhenInactive,
-        };
-        this.messageManager.sendAsyncMessage("GeckoView:SetActive", msgData);
+        });
         break;
       case "GeckoView:SetFocused":
         if (aData.focused) {
@@ -141,6 +152,18 @@ class GeckoViewContent extends GeckoViewModule {
     debug`handleEvent: ${aEvent.type}`;
 
     switch (aEvent.type) {
+      case "framefocusrequested":
+        if (this.browser != aEvent.target) {
+          return;
+        }
+        if (this.browser.hasAttribute("primary")) {
+          return;
+        }
+        this.eventDispatcher.sendRequest({
+          type: "GeckoView:FocusRequest",
+        });
+        aEvent.preventDefault();
+        break;
       case "MozDOMFullscreen:Entered":
         if (this.browser == aEvent.target) {
           // Remote browser; dispatch to content process.
@@ -172,17 +195,38 @@ class GeckoViewContent extends GeckoViewModule {
   // nsIObserver event handler
   observe(aSubject, aTopic, aData) {
     debug`observe: ${aTopic}`;
+    this._contentCrashed = false;
+    const browser = aSubject.ownerElement;
 
     switch (aTopic) {
       case "oop-frameloader-crashed": {
-        const browser = aSubject.ownerElement;
         if (!browser || browser != this.browser) {
           return;
         }
-
-        this.eventDispatcher.sendRequest({
-          type: "GeckoView:ContentCrash",
-        });
+        this.window.setTimeout(() => {
+          if (this._contentCrashed) {
+            this.eventDispatcher.sendRequest({
+              type: "GeckoView:ContentCrash",
+            });
+          } else {
+            this.eventDispatcher.sendRequest({
+              type: "GeckoView:ContentKill",
+            });
+          }
+        }, 250);
+        break;
+      }
+      case "ipc:content-shutdown": {
+        aSubject.QueryInterface(Ci.nsIPropertyBag2);
+        if (aSubject.get("dumpID")) {
+          if (
+            browser &&
+            aSubject.get("childID") != browser.frameLoader.childID
+          ) {
+            return;
+          }
+          this._contentCrashed = true;
+        }
         break;
       }
     }
@@ -286,6 +330,7 @@ class GeckoViewContent extends GeckoViewModule {
 
     finder.caseSensitive = !!aData.matchCase;
     finder.entireWord = !!aData.wholeWord;
+    finder.matchDiacritics = !!aData.matchDiacritics;
     finder.addResultListener(this._finderListener);
 
     const drawOutline =
@@ -294,7 +339,12 @@ class GeckoViewContent extends GeckoViewModule {
     if (!aData.searchString || aData.searchString === finder.searchString) {
       // Search again.
       aData.searchString = finder.searchString;
-      finder.findAgain(!!aData.backwards, !!aData.linksOnly, drawOutline);
+      finder.findAgain(
+        aData.searchString,
+        !!aData.backwards,
+        !!aData.linksOnly,
+        drawOutline
+      );
     } else {
       finder.fastFind(aData.searchString, !!aData.linksOnly, drawOutline);
     }

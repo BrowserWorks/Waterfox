@@ -14,7 +14,10 @@ add_task(async function() {
 
   let remote = gBrowser.selectedBrowser.isRemoteBrowser;
 
-  let findBarOpenPromise = promiseWaitForEvent(gBrowser, "findbaropen");
+  let findBarOpenPromise = BrowserTestUtils.waitForEvent(
+    gBrowser,
+    "findbaropen"
+  );
   EventUtils.synthesizeKey("f", { accelKey: true });
   await findBarOpenPromise;
 
@@ -28,10 +31,10 @@ add_task(async function() {
   await scrollPromise;
 
   // Wait for one paint to ensure we've processed the previous key events and scrolling.
-  await ContentTask.spawn(gBrowser.selectedBrowser, null, async function() {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], async function() {
     return new Promise(resolve => {
       content.requestAnimationFrame(() => {
-        setTimeout(resolve, 0);
+        content.setTimeout(resolve, 0);
       });
     });
   });
@@ -43,7 +46,7 @@ add_task(async function() {
   EventUtils.synthesizeKey("g", { accelKey: true });
   await scrollPromise;
 
-  await ContentTask.spawn(gBrowser.selectedBrowser, null, async function() {
+  await SpecialPowers.spawn(gBrowser.selectedBrowser, [], async function() {
     Assert.ok(
       content.document.getElementById("s").getBoundingClientRect().left >= 0,
       "scroll should include find result"

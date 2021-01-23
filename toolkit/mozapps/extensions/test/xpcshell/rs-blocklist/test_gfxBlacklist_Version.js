@@ -35,7 +35,7 @@ async function run_test() {
     case "Darwin":
       gfxInfo.spoofVendorID("0xabcd");
       gfxInfo.spoofDeviceID("0x1234");
-      gfxInfo.spoofOSVersion(0x1090);
+      gfxInfo.spoofOSVersion(0xa0900);
       break;
     case "Android":
       gfxInfo.spoofVendorID("abcd");
@@ -117,7 +117,7 @@ async function run_test() {
     Assert.equal(status, Ci.nsIGfxInfo.FEATURE_STATUS_OK);
 
     status = gfxInfo.getFeatureStatus(
-      Ci.nsIGfxInfo.FEATURE_WEBRTC_HW_ACCELERATION,
+      Ci.nsIGfxInfo.FEATURE_WEBRTC_HW_ACCELERATION_H264,
       failureId
     );
     Assert.equal(status, Ci.nsIGfxInfo.FEATURE_STATUS_OK);

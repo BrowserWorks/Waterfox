@@ -11,16 +11,18 @@
 // inputs and outputs, as well as the interface instructions must conform to.
 
 #include "mozilla/Array.h"
+#include "mozilla/Casting.h"
 
 #include "jit/Bailouts.h"
 #include "jit/FixedList.h"
 #include "jit/InlineList.h"
 #include "jit/JitAllocPolicy.h"
-#include "jit/LOpcodes.h"
+#include "jit/LOpcodesGenerated.h"
 #include "jit/MIR.h"
 #include "jit/MIRGraph.h"
 #include "jit/Registers.h"
 #include "jit/Safepoints.h"
+#include "util/Memory.h"
 
 namespace js {
 namespace jit {
@@ -29,8 +31,11 @@ class LUse;
 class LGeneralReg;
 class LFloatReg;
 class LStackSlot;
+class LStackArea;
 class LArgument;
 class LConstantIndex;
+class LInstruction;
+class LDefinition;
 class MBasicBlock;
 class MIRGenerator;
 
@@ -78,24 +83,48 @@ class LAllocation : public TempObject {
     GPR,         // General purpose register.
     FPU,         // Floating-point register.
     STACK_SLOT,  // Stack slot.
+    STACK_AREA,  // Stack area.
     ARGUMENT_SLOT  // Argument slot.
   };
 
   static const uintptr_t DATA_MASK = (1 << DATA_BITS) - 1;
 
  protected:
-  uint32_t data() const { return uint32_t(bits_) >> DATA_SHIFT; }
-  void setData(uint32_t data) {
+  uint32_t data() const {
+    MOZ_ASSERT(!hasIns());
+    return mozilla::AssertedCast<uint32_t>(bits_ >> DATA_SHIFT);
+  }
+  void setData(uintptr_t data) {
+    MOZ_ASSERT(!hasIns());
     MOZ_ASSERT(data <= DATA_MASK);
     bits_ &= ~(DATA_MASK << DATA_SHIFT);
     bits_ |= (data << DATA_SHIFT);
   }
-  void setKindAndData(Kind kind, uint32_t data) {
+  void setKindAndData(Kind kind, uintptr_t data) {
     MOZ_ASSERT(data <= DATA_MASK);
-    bits_ = (uint32_t(kind) << KIND_SHIFT) | data << DATA_SHIFT;
+    bits_ = (uintptr_t(kind) << KIND_SHIFT) | data << DATA_SHIFT;
+    MOZ_ASSERT(!hasIns());
   }
 
-  LAllocation(Kind kind, uint32_t data) { setKindAndData(kind, data); }
+  bool hasIns() const { return isStackArea(); }
+  const LInstruction* ins() const {
+    MOZ_ASSERT(hasIns());
+    return reinterpret_cast<const LInstruction*>(bits_ &
+                                                 ~(KIND_MASK << KIND_SHIFT));
+  }
+  LInstruction* ins() {
+    MOZ_ASSERT(hasIns());
+    return reinterpret_cast<LInstruction*>(bits_ & ~(KIND_MASK << KIND_SHIFT));
+  }
+  void setKindAndIns(Kind kind, LInstruction* ins) {
+    uintptr_t data = reinterpret_cast<uintptr_t>(ins);
+    MOZ_ASSERT((data & (KIND_MASK << KIND_SHIFT)) == 0);
+    bits_ = data | (uintptr_t(kind) << KIND_SHIFT);
+    MOZ_ASSERT(hasIns());
+  }
+
+  LAllocation(Kind kind, uintptr_t data) { setKindAndData(kind, data); }
+  LAllocation(Kind kind, LInstruction* ins) { setKindAndIns(kind, ins); }
   explicit LAllocation(Kind kind) { setKindAndData(kind, 0); }
 
  public:
@@ -120,6 +149,7 @@ class LAllocation : public TempObject {
   bool isGeneralReg() const { return kind() == GPR; }
   bool isFloatReg() const { return kind() == FPU; }
   bool isStackSlot() const { return kind() == STACK_SLOT; }
+  bool isStackArea() const { return kind() == STACK_AREA; }
   bool isArgument() const { return kind() == ARGUMENT_SLOT; }
   bool isRegister() const { return isGeneralReg() || isFloatReg(); }
   bool isRegister(bool needFloat) const {
@@ -132,6 +162,8 @@ class LAllocation : public TempObject {
   inline const LGeneralReg* toGeneralReg() const;
   inline const LFloatReg* toFloatReg() const;
   inline const LStackSlot* toStackSlot() const;
+  inline LStackArea* toStackArea();
+  inline const LStackArea* toStackArea() const;
   inline const LArgument* toArgument() const;
   inline const LConstantIndex* toConstantIndex() const;
   inline AnyRegister toRegister() const;
@@ -194,6 +226,10 @@ class LUse : public LAllocation {
     // available. This is similar to ANY but hints to the register allocator
     // that it is never useful to optimize this site.
     KEEPALIVE,
+
+    // Input must be allocated on the stack.  Only used when extracting stack
+    // results from stack result areas.
+    STACK,
 
     // For snapshot inputs, indicates that the associated instruction will
     // write this input to its output register before bailing out.
@@ -291,15 +327,21 @@ class LInt64Value {
 #endif
 
  public:
+  LInt64Value() = default;
+
 #if JS_BITS_PER_WORD == 32
   LInt64Value(ValT high, ValT low) : high_(high), low_(low) {}
 
   ValT high() const { return high_; }
   ValT low() const { return low_; }
+
+  const ValT* pointerHigh() const { return &high_; }
+  const ValT* pointerLow() const { return &low_; }
 #else
   explicit LInt64Value(ValT value) : value_(value) {}
 
   ValT value() const { return value_; }
+  const ValT* pointer() const { return &value_; }
 #endif
 };
 
@@ -338,6 +380,42 @@ class LStackSlot : public LAllocation {
   explicit LStackSlot(uint32_t slot) : LAllocation(STACK_SLOT, slot) {}
 
   uint32_t slot() const { return data(); }
+};
+
+// Stack area indicates a contiguous stack allocation meant to receive call
+// results that don't fit in registers.
+class LStackArea : public LAllocation {
+ public:
+  explicit LStackArea(LInstruction* stackArea)
+      : LAllocation(STACK_AREA, stackArea) {}
+
+  // Byte index of base of stack area, in the same coordinate space as
+  // LStackSlot::slot().
+  inline uint32_t base() const;
+  inline void setBase(uint32_t base);
+
+  // Size in bytes of the stack area.
+  inline uint32_t size() const;
+  inline uint32_t alignment() const { return 8; }
+
+  class ResultIterator {
+    const LStackArea& alloc_;
+    uint32_t idx_;
+
+   public:
+    explicit ResultIterator(const LStackArea& alloc) : alloc_(alloc), idx_(0) {}
+
+    inline bool done() const;
+    inline void next();
+    inline LAllocation alloc() const;
+    inline bool isGcPointer() const;
+
+    explicit operator bool() const { return !done(); }
+  };
+
+  ResultIterator results() const { return ResultIterator(*this); }
+
+  inline LStackSlot resultAlloc(LInstruction* lir, LDefinition* def) const;
 };
 
 // Arguments are reverse indices into the stack. The indices are byte indices.
@@ -395,22 +473,24 @@ class LDefinition {
     // A random register of an appropriate class will be assigned.
     REGISTER,
 
+    // An area on the stack must be assigned.  Used when defining stack results
+    // and stack result areas.
+    STACK,
+
     // One definition per instruction must re-use the first input
     // allocation, which (for now) must be a register.
     MUST_REUSE_INPUT
   };
 
-  // This should be kept in sync with LIR.cpp's TypeChars.
   enum Type {
-    GENERAL,     // Generic, integer or pointer-width data (GPR).
-    INT32,       // int32 data (GPR).
-    OBJECT,      // Pointer that may be collected as garbage (GPR).
-    SLOTS,       // Slots/elements pointer that may be moved by minor GCs (GPR).
-    FLOAT32,     // 32-bit floating-point value (FPU).
-    DOUBLE,      // 64-bit floating-point value (FPU).
-    SIMD128INT,  // 128-bit SIMD integer vector (FPU).
-    SIMD128FLOAT,  // 128-bit SIMD floating point vector (FPU).
-    SINCOS,
+    GENERAL,  // Generic, integer or pointer-width data (GPR).
+    INT32,    // int32 data (GPR).
+    OBJECT,   // Pointer that may be collected as garbage (GPR).
+    SLOTS,    // Slots/elements pointer that may be moved by minor GCs (GPR).
+    FLOAT32,  // 32-bit floating-point value (FPU).
+    DOUBLE,   // 64-bit floating-point value (FPU).
+    SIMD128,  // 128-bit SIMD vector (FPU).
+    STACKRESULTS,  // A variable-size stack allocation that may contain objects.
 #ifdef JS_NUNBOX32
     // A type virtual register must be followed by a payload virtual
     // register, as both will be tracked as a single gcthing.
@@ -422,10 +502,12 @@ class LDefinition {
   };
 
   void set(uint32_t index, Type type, Policy policy) {
-    JS_STATIC_ASSERT(MAX_VIRTUAL_REGISTERS <= VREG_MASK);
+    static_assert(MAX_VIRTUAL_REGISTERS <= VREG_MASK);
     bits_ =
         (index << VREG_SHIFT) | (policy << POLICY_SHIFT) | (type << TYPE_SHIFT);
-    MOZ_ASSERT_IF(!SupportsSimd, !isSimdType());
+#ifndef ENABLE_WASM_SIMD
+    MOZ_ASSERT(this->type() != SIMD128);
+#endif
   }
 
  public:
@@ -453,9 +535,6 @@ class LDefinition {
     return (Policy)((bits_ >> POLICY_SHIFT) & POLICY_MASK);
   }
   Type type() const { return (Type)((bits_ >> TYPE_SHIFT) & TYPE_MASK); }
-  bool isSimdType() const {
-    return type() == SIMD128INT || type() == SIMD128FLOAT;
-  }
   bool isCompatibleReg(const AnyRegister& r) const {
     if (isFloatReg() && r.isFloat()) {
       if (type() == FLOAT32) {
@@ -464,7 +543,7 @@ class LDefinition {
       if (type() == DOUBLE) {
         return r.fpu().isDouble();
       }
-      if (isSimdType()) {
+      if (type() == SIMD128) {
         return r.fpu().isSimd128();
       }
       MOZ_CRASH("Unexpected MDefinition type");
@@ -483,7 +562,7 @@ class LDefinition {
   }
 
   bool isFloatReg() const {
-    return type() == FLOAT32 || type() == DOUBLE || isSimdType();
+    return type() == FLOAT32 || type() == DOUBLE || type() == SIMD128;
   }
   uint32_t virtualRegister() const {
     uint32_t index = (bits_ >> VREG_SHIFT) & VREG_MASK;
@@ -538,8 +617,6 @@ class LDefinition {
       case MIRType::Value:
         return LDefinition::BOX;
 #endif
-      case MIRType::SinCosDouble:
-        return LDefinition::SINCOS;
       case MIRType::Slots:
       case MIRType::Elements:
         return LDefinition::SLOTS;
@@ -549,15 +626,10 @@ class LDefinition {
       case MIRType::Int64:
         return LDefinition::GENERAL;
 #endif
-      case MIRType::Int8x16:
-      case MIRType::Int16x8:
-      case MIRType::Int32x4:
-      case MIRType::Bool8x16:
-      case MIRType::Bool16x8:
-      case MIRType::Bool32x4:
-        return LDefinition::SIMD128INT;
-      case MIRType::Float32x4:
-        return LDefinition::SIMD128FLOAT;
+      case MIRType::StackResults:
+        return LDefinition::STACKRESULTS;
+      case MIRType::Simd128:
+        return LDefinition::SIMD128;
       default:
         MOZ_CRASH("unexpected type");
     }
@@ -570,7 +642,21 @@ class LDefinition {
 #endif
 };
 
-using LInt64Definition = LInt64Value<LDefinition>;
+class LInt64Definition : public LInt64Value<LDefinition> {
+ public:
+  using LInt64Value<LDefinition>::LInt64Value;
+
+  static LInt64Definition BogusTemp() { return LInt64Definition(); }
+
+  bool isBogusTemp() const {
+#if JS_BITS_PER_WORD == 32
+    MOZ_ASSERT(high().isBogusTemp() == low().isBogusTemp());
+    return high().isBogusTemp();
+#else
+    return value().isBogusTemp();
+#endif
+  }
+};
 
 // Forward declarations of LIR types.
 #define LIROP(op) class L##op;
@@ -579,7 +665,6 @@ LIR_OPCODE_LIST(LIROP)
 
 class LSnapshot;
 class LSafepoint;
-class LInstruction;
 class LElementVisitor;
 
 constexpr size_t MaxNumLInstructionOperands = 63;
@@ -710,7 +795,8 @@ class LNode {
   LIR_OPCODE_LIST(LIROP)
 #undef LIROP
 
-// Note: GenerateOpcodeFiles.py generates LOpcodes.h based on this macro.
+// Note: GenerateOpcodeFiles.py generates LOpcodesGenerated.h based on this
+// macro.
 #define LIR_HEADER(opcode) \
   static constexpr LNode::Opcode classOpcode = LNode::Opcode::opcode;
 };
@@ -821,8 +907,8 @@ class LElementVisitor {
       : ins_(nullptr), lastPC_(nullptr), lastNotInlinedPC_(nullptr) {}
 };
 
-typedef InlineList<LInstruction>::iterator LInstructionIterator;
-typedef InlineList<LInstruction>::reverse_iterator LInstructionReverseIterator;
+using LInstructionIterator = InlineList<LInstruction>::iterator;
+using LInstructionReverseIterator = InlineList<LInstruction>::reverse_iterator;
 
 class MPhi;
 
@@ -961,6 +1047,15 @@ class LInstructionFixedDefsTempsHelper : public LInstruction {
   LDefinition* getTemp(size_t index) {
     MOZ_ASSERT(index < Temps);
     return &defsAndTemps_[Defs + index];
+  }
+  LInt64Definition getInt64Temp(size_t index) {
+    MOZ_ASSERT(index + INT64_PIECES <= Temps);
+#if JS_BITS_PER_WORD == 32
+    return LInt64Definition(defsAndTemps_[Defs + index + INT64HIGH_INDEX],
+                            defsAndTemps_[Defs + index + INT64LOW_INDEX]);
+#else
+    return LInt64Definition(defsAndTemps_[Defs + index]);
+#endif
   }
 
   void setDef(size_t index, const LDefinition& def) {
@@ -1293,8 +1388,8 @@ struct SafepointNunboxEntry {
 };
 
 class LSafepoint : public TempObject {
-  typedef SafepointSlotEntry SlotEntry;
-  typedef SafepointNunboxEntry NunboxEntry;
+  using SlotEntry = SafepointSlotEntry;
+  using NunboxEntry = SafepointNunboxEntry;
 
  public:
   typedef Vector<SlotEntry, 0, JitAllocPolicy> SlotList;
@@ -1482,6 +1577,18 @@ class LSafepoint : public TempObject {
       }
     }
     return false;
+  }
+
+  // Return true if all GC-managed pointers from `alloc` are recorded in this
+  // safepoint.
+  bool hasAllGcPointersFromStackArea(LAllocation alloc) const {
+    for (LStackArea::ResultIterator iter = alloc.toStackArea()->results(); iter;
+         iter.next()) {
+      if (iter.isGcPointer() && !hasGcPointer(iter.alloc())) {
+        return false;
+      }
+    }
+    return true;
   }
 
   MOZ_MUST_USE bool addValueSlot(bool stack, uint32_t slot) {
@@ -1709,7 +1816,7 @@ class LInstruction::InputIterator {
 
 class LIRGraph {
   struct ValueHasher {
-    typedef Value Lookup;
+    using Lookup = Value;
     static HashNumber hash(const Value& v) { return HashNumber(v.asRawBits()); }
     static bool match(const Value& lhs, const Value& rhs) { return lhs == rhs; }
   };
@@ -1890,6 +1997,8 @@ LALLOC_CONST_CAST(Use)
 LALLOC_CONST_CAST(GeneralReg)
 LALLOC_CONST_CAST(FloatReg)
 LALLOC_CONST_CAST(StackSlot)
+LALLOC_CAST(StackArea)
+LALLOC_CONST_CAST(StackArea)
 LALLOC_CONST_CAST(Argument)
 LALLOC_CONST_CAST(ConstantIndex)
 

@@ -10,12 +10,12 @@
 #include <CoreFoundation/CFDictionary.h>  // For CFDictionaryRef
 #include <CoreMedia/CoreMedia.h>          // For CMVideoFormatDescriptionRef
 #include <VideoToolbox/VideoToolbox.h>    // For VTDecompressionSessionRef
+#include "AppleDecoderModule.h"
 #include "PlatformDecoderModule.h"
 #include "ReorderQueue.h"
 #include "TimeUnits.h"
 #include "mozilla/Atomics.h"
 #include "mozilla/gfx/Types.h"
-#include "nsIThread.h"
 
 namespace mozilla {
 
@@ -68,13 +68,16 @@ class AppleVTDecoder : public MediaDataDecoder,
   // Access from the taskqueue and the decoder's thread.
   // OutputFrame is thread-safe.
   void OutputFrame(CVPixelBufferRef aImage, AppleFrameRef aFrameRef);
+  void OnDecodeError(OSStatus aError);
 
  private:
+  friend class AppleDecoderModule;  // To access InitializeSession.
   virtual ~AppleVTDecoder();
   RefPtr<FlushPromise> ProcessFlush();
   RefPtr<DecodePromise> ProcessDrain();
   void ProcessShutdown();
   void ProcessDecode(MediaRawData* aSample);
+  void MaybeResolveBufferedFrames();
 
   void AssertOnTaskQueueThread() {
     MOZ_ASSERT(mTaskQueue->IsCurrentThreadIn());
@@ -89,6 +92,7 @@ class AppleVTDecoder : public MediaDataDecoder,
   const uint32_t mDisplayWidth;
   const uint32_t mDisplayHeight;
   const gfx::YUVColorSpace mColorSpace;
+  const gfx::ColorRange mColorRange;
 
   // Method to set up the decompression session.
   MediaResult InitializeSession();
@@ -96,6 +100,8 @@ class AppleVTDecoder : public MediaDataDecoder,
   CFDictionaryRef CreateDecoderSpecification();
   CFDictionaryRef CreateDecoderExtensions();
 
+  enum class StreamType { Unknown, H264, VP9 };
+  const StreamType mStreamType;
   const RefPtr<TaskQueue> mTaskQueue;
   const uint32_t mMaxRefFrames;
   const RefPtr<layers::ImageContainer> mImageContainer;
@@ -108,7 +114,7 @@ class AppleVTDecoder : public MediaDataDecoder,
   // Protects mReorderQueue and mPromise.
   Monitor mMonitor;
   ReorderQueue mReorderQueue;
-  MozPromiseHolder<DecodePromise> mPromise;
+  MozMonitoredPromiseHolder<DecodePromise> mPromise;
 
   // Decoded frame will be dropped if its pts is smaller than this
   // value. It shold be initialized before Input() or after Flush(). So it is

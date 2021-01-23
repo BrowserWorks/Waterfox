@@ -1,0 +1,121 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Zmólka pśi cytanju boka">
+<!ENTITY retry.label "Hyšći raz wopytaś">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Zwisk njejo móžny">
+<!ENTITY connectionFailure.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY deniedPortAccess.title "Toś ta adresa jo wobgranicowana">
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.title "Serwer njejo se namakał">
+<!-- LOCALIZATION NOTE (dnsNotFound.longDesc4) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside tags should be localized.  Do not change the ids. -->
+<!ENTITY dnsNotFound.longDesc4 "<ul> <li>Pśeglědajśo adresu za pisańskimi zmólkami ako <strong>ww</strong>.example.com město <strong>www</strong>.example.com</li> <div id='searchbox'> <input id='searchtext' type='search'></input> <button id='searchbutton'>Pytaś</button> </div> <li>Jolic njamóžośo boki zacytaś, pśeglědajśo daty swójogo rěda abo WLAN-zwisk. <button id='wifi'>WLAN zmóžniś</button> </li> </ul>">
+
+<!ENTITY fileNotFound.title "Dataja njejo se namakała">
+<!ENTITY fileNotFound.longDesc "<ul> <li>Pśeglědajśo datajowe mě za wjelikopisańskimi abo hynakšymi pisańskimi zmólkami.</li> <li>Pśeglědajśo, lěc dataja jo se pśesunuła, pśemjeniła abo wótpórała.</li> </ul>">
+
+<!ENTITY fileAccessDenied.title "Pśistup k dataji jo se wótpokazał">
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>Snaź jo se wótpórała, pśesunuła, abo datajowe pšawa zajźuju pśistupoju.</li> </ul>">
+
+<!ENTITY generic.title "Hopla.">
+<!ENTITY generic.longDesc "<p>&brandShortName; njamóžo toś ten bok z někakeje pśicyny cytaś.</p>">
+
+<!ENTITY malformedURI.title "Adresa njejo płaśiwa">
+<!-- LOCALIZATION NOTE (malformedURI.longDesc2) This string contains markup including widgets for searching
+     or enabling wifi connections. The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY malformedURI.longDesc2 "<ul> <li>Web-adrese pišu se zwětšego ako <strong>http://www.example.com/</strong></li> <div id='searchbox'> <input id='searchtext' type='search'></input> <button id='searchbutton'>Pytaś</button> </div> <li>Zawěsććo, až wužywaśo nakósne smužki (t. gr. <strong>/</strong>).</li> </ul>">
+
+<!ENTITY netInterrupt.title "Zwisk jo se pśetergnuł">
+<!ENTITY netInterrupt.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY notCached.title "Dokument jo njepłaśiwy">
+<!ENTITY notCached.longDesc "<p>Pominany dokument stoj w pufrowaku &brandShortName; k dispoziciji.</p><ul><li>Ako wěstnotnu napšawu &brandShortName; njewótwołujo awtomatiski sensibelne dokumenty znowego.</li><li>Klikniśo na Hyšći raz, aby dokument hyšći raz z websedła wótwołał.</li></ul>">
+
+<!ENTITY netOffline.title "Offline-modus">
+
+<!ENTITY contentEncodingError.title "Zmólka pśi koděrowanju wopśimjeśa">
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Pšosym stajśo se z wobsejźarjami websedła do zwiska, aby jich wó toś tom problemje informěrował.</li> </ul>">
+
+<!ENTITY unsafeContentType.title "Njewěsty datajowy typ">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Pšosym stajśo se z wobsejźarjami websedła do zwiska, aby jich wó toś tom problemje informěrował.</li> </ul>">
+
+<!ENTITY netReset.title "Zwisk jo se slědk stajił">
+<!ENTITY netReset.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY netTimeout.title "Zwisk jo cas pśekšocył">
+<!ENTITY netTimeout.longDesc2 "&sharedLongDesc3;">
+
+<!ENTITY unknownProtocolFound.title "Adresa njejo se zrozměła">
+<!ENTITY unknownProtocolFound.longDesc "<ul> <li>Snaź musyśo druge programy instalěrowaś, aby se toś ta adresa wócyniła.</li> </ul>">
+
+<!ENTITY proxyConnectFailure.title "Proksyjowy serwer wótpokazujo zwiski">
+<!ENTITY proxyConnectFailure.longDesc "<ul> <li>Pśeglědajśo proksyjowe nastajenja, aby se zawěsćiło, až wóne su korektne.</li> <li>Stajśo se ze swójim seśowym administratorom, aby se zawěsćiło, až proksyjowy serwer źěła.</li> </ul>">
+
+<!ENTITY proxyResolveFailure.title "Njejo móžno, proksyjowy serwer namakaś">
+<!-- LOCALIZATION NOTE (proxyResolveFailure.longDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY proxyResolveFailure.longDesc3 "<ul> <li>Pśeglědajśo proksyjowe nastajenja, aby zawěsćił, až su korektne.</li> <li>Pśegldajśo, aby zawěsćił, až waš rěd ma funkcioněrujucy datowy abo WLAN-zwisk. <button id='wifi'>WLAN zmóžniś</button> </li> </ul>">
+
+<!ENTITY redirectLoop.title "Bok njepósrědnja pšawje">
+<!ENTITY redirectLoop.longDesc "<ul> <li>Toś ten problem zwainujo se wótergi pśez zmóžnjenje abo znjemóžnjenje cookiejow.</li> </ul>">
+
+<!ENTITY unknownSocketType.title "Njewótcakane wótegrono ze serwera">
+<!ENTITY unknownSocketType.longDesc "<ul> <li>Pséglědajśo, lěc Personal Security Manager jo zainstalěrowany na wašom systemje.</li> <li>Pśicyna jo snaź njestandardna konfiguracija na wašom serwerje.</li> </ul>">
+
+<!ENTITY nssFailure2.title "Wěsty zwisk njejo móžny">
+<!ENTITY nssFailure2.longDesc2 "<ul> <li>Bok, kótaryž cośo se woglědaś, njedajo se pokazaś, dokulaž awtentiskosć dostanych datow njedajo se pśeglědaś.</li> <li>Pšosym stajśo se z wobsejźarjami websedła do zwiska, aby jich wó toś tym problemje informěrował.</li> </ul>">
+
+<!ENTITY nssBadCert.title "Wěsty zwisk njejo móžny">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>To by mógło problem z konfiguraciju serwera byś, abo by mógło byś, až něchten wopytujo serwer imitěrowaś.</li> <li>Jolic sćo ze serwerom w zachadnosći wuspěšnje zwězany był, by mógła zmólka snaź nachylna byś a móžośo pózdźej hyšći raz wopytaś.</li> </ul>">
+
+<!-- LOCALIZATION NOTE (sharedLongDesc3) This string contains markup including widgets for enabling wifi connections.
+     The text inside the tags should be localized. Do not touch the ids. -->
+<!ENTITY sharedLongDesc3 "<ul> <li>Sedło njestoj snaź nachylu k dispoziciji abo jo pśeśězone. Wopytajśo za mało wokognuśow hyšći raz.</li> <li>Jolic njamóžośo boki zacytaś, pśeglědajśo datowy abo WLAN-zwisk wašogo mobilnego rěda. <button id='wifi'>WLAN zmóžniś</button> </li> </ul>">
+
+<!ENTITY cspBlocked.title "Pśez wěstotne pšawidła za wopśimjeśe blokěrowany">
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; jo zacytowanjeju toś togo boka na toś tu wašnju zajźował, dokulaž bok ma wěstotne pšawidła za wopśimjeśe, kótarež to njedowóluju.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Zmólka - wobškóźone wopśimjeśe">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Bok, kótaryž cośo se woglědaś, njedajo se pokazaś, dokulaž jo se zmólka pśi pśenosowanju datow namakała.</p><ul><li>Pšosym stajśo se z wobsejźarjami websedła do zwiska, aby jich wó toś tom problemje informěrował.</li></ul>">
+
+<!ENTITY securityOverride.linkText "Abo móžośo wuwześe pśidaś…">
+<!ENTITY securityOverride.getMeOutOfHereButton "Cu how wen!">
+<!ENTITY securityOverride.exceptionButtonLabel "Wuwześe pśidaś…">
+
+<!-- LOCALIZATION NOTE (securityOverride.warningContent) - Do not translate the
+contents of the <xul:button> tags.  The only language content is the label= field,
+which uses strings already defined above. The button is included here (instead of
+netError.xhtml) because it exposes functionality specific to firefox. -->
+
+<!ENTITY securityOverride.warningContent "<p>Wy njeby měł wuwześe pśidaś, jolic wužywaśo internetny zwisk, kótaremuž cele njedowěriśo abo jolic njewiźiśo warnowanje za toś ten serwer.</p>  <button id='getMeOutOfHereButton'>&securityOverride.getMeOutOfHereButton;</button> <button id='exceptionDialogButton'>&securityOverride.exceptionButtonLabel;</button>">
+
+<!ENTITY remoteXUL.title "Daloki XUL">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Pšosym stajśo se z wobsejźarjami websedła do zwiska, aby jich wó problemje informěrował.</li></ul></p>">
+
+<!ENTITY sslv3Used.title "Wěsty zwisk njejo móžny">
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc "Rozšyrjona info: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY weakCryptoUsed.title "Waš zwisk njejo wěsty">
+<!-- LOCALIZATION NOTE (weakCryptoUsed.longDesc) - Do not translate
+     "SSL_ERROR_NO_CYPHER_OVERLAP". -->
+<!ENTITY weakCryptoUsed.longDesc "Rozšyrjona informacija: SSL_ERROR_NO_CYPHER_OVERLAP">
+
+<!ENTITY inadequateSecurityError.title "Waš zwisk njejo wěsty">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> wužywa wěstotnu technologiju, kótaraž jo zestarjona a sensibelna za napady. Napadowaŕ by mógał informacije lažko namakaś, kótarež maśo za wěste. Websedłowy administrator musy problem na serwerje rozwězaś, nježli až móžośo se k sedłoju woglědaś.</p><p>Zmólkowy kod: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY networkProtocolError.title "Zmólka seśowego protokola">
+<!ENTITY networkProtocolError.longDesc "<p>Bok, kótaryž cośo se woglědaś, njedajo se pokazaś, dokulaž jo se zmólka w seśowem protokolu namakała.</p><ul><li>Pšosym stajśo se z wobsejźarjami websedła do zwiska, aby je wó toś tom problemje informěrował.</li></ul>">

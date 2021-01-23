@@ -11,7 +11,6 @@ export * from "../ui";
 export { onMouseOver } from "./token-events";
 
 import { createEditor } from "./create-editor";
-import { shouldPrettyPrint } from "../source";
 import { findNext, findPrev } from "./source-search";
 
 import { isWasm, lineToWasmOffset, wasmOffsetToLine } from "../wasm";
@@ -21,8 +20,8 @@ import type { EditorPosition, EditorRange } from "../editor/types";
 import type {
   SearchModifiers,
   Source,
-  SourceContent,
   SourceLocation,
+  SourceId,
 } from "../../types";
 type Editor = Object;
 
@@ -63,10 +62,6 @@ export function endOperation() {
   codeMirror.endOperation();
 }
 
-export function shouldShowPrettyPrint(source: Source, content: SourceContent) {
-  return shouldPrettyPrint(source, content);
-}
-
 export function traverseResults(
   e: Event,
   ctx: any,
@@ -84,7 +79,7 @@ export function traverseResults(
   }
 }
 
-export function toEditorLine(sourceId: string, lineOrOffset: number): number {
+export function toEditorLine(sourceId: SourceId, lineOrOffset: number): number {
   if (isWasm(sourceId)) {
     // TODO ensure offset is always "mappable" to edit line.
     return wasmOffsetToLine(sourceId, lineOrOffset) || 0;
@@ -93,7 +88,7 @@ export function toEditorLine(sourceId: string, lineOrOffset: number): number {
   return lineOrOffset ? lineOrOffset - 1 : 1;
 }
 
-export function fromEditorLine(sourceId: string, line: number): number {
+export function fromEditorLine(sourceId: SourceId, line: number): number {
   if (isWasm(sourceId)) {
     return lineToWasmOffset(sourceId, line) || 0;
   }
@@ -109,7 +104,7 @@ export function toEditorPosition(location: SourceLocation): EditorPosition {
 }
 
 export function toEditorRange(
-  sourceId: string,
+  sourceId: SourceId,
   location: AstLocation
 ): EditorRange {
   const { start, end } = location;
@@ -119,15 +114,12 @@ export function toEditorRange(
   };
 }
 
-export function toSourceLine(sourceId: string, line: number): ?number {
+export function toSourceLine(sourceId: SourceId, line: number): ?number {
   return isWasm(sourceId) ? lineToWasmOffset(sourceId, line) : line + 1;
 }
 
 export function scrollToColumn(codeMirror: any, line: number, column: number) {
-  const { top, left } = codeMirror.charCoords(
-    { line: line, ch: column },
-    "local"
-  );
+  const { top, left } = codeMirror.charCoords({ line, ch: column }, "local");
 
   if (!isVisible(codeMirror, top, left)) {
     const scroller = codeMirror.getScrollerElement();
@@ -163,7 +155,13 @@ function isVisible(codeMirror: any, top: number, left: number) {
   return inXView && inYView;
 }
 
-export function getLocationsInViewport({ codeMirror }: Object) {
+export function getLocationsInViewport(
+  { codeMirror }: Object,
+  // Offset represents an allowance of characters or lines offscreen to improve
+  // perceived performance of column breakpoint rendering
+  offsetHorizontalCharacters: number = 100,
+  offsetVerticalLines: number = 20
+) {
   // Get scroll position
   if (!codeMirror) {
     return {
@@ -175,20 +173,25 @@ export function getLocationsInViewport({ codeMirror }: Object) {
   const scrollArea = codeMirror.getScrollInfo();
   const { scrollLeft } = codeMirror.doc;
   const rect = codeMirror.getWrapperElement().getBoundingClientRect();
-  const topVisibleLine = codeMirror.lineAtHeight(rect.top, "window");
-  const bottomVisibleLine = codeMirror.lineAtHeight(rect.bottom, "window");
+  const topVisibleLine =
+    codeMirror.lineAtHeight(rect.top, "window") - offsetVerticalLines;
+  const bottomVisibleLine =
+    codeMirror.lineAtHeight(rect.bottom, "window") + offsetVerticalLines;
 
-  const leftColumn = Math.floor(scrollLeft > 0 ? scrollLeft / charWidth : 0);
+  const leftColumn = Math.floor(
+    scrollLeft > 0 ? scrollLeft / charWidth - offsetHorizontalCharacters : 0
+  );
   const rightPosition = scrollLeft + (scrollArea.clientWidth - 30);
-  const rightCharacter = Math.floor(rightPosition / charWidth);
+  const rightCharacter =
+    Math.floor(rightPosition / charWidth) + offsetHorizontalCharacters;
 
   return {
     start: {
-      line: topVisibleLine,
-      column: leftColumn,
+      line: topVisibleLine || 0,
+      column: leftColumn || 0,
     },
     end: {
-      line: bottomVisibleLine,
+      line: bottomVisibleLine || 0,
       column: rightCharacter,
     },
   };
@@ -208,7 +211,7 @@ export function markText(
 
 export function lineAtHeight(
   { codeMirror }: Object,
-  sourceId: string,
+  sourceId: SourceId,
   event: MouseEvent
 ) {
   const _editorLine = codeMirror.lineAtHeight(event.clientY);
@@ -224,11 +227,12 @@ export function getSourceLocationFromMouseEvent(
     left: e.clientX,
     top: e.clientY,
   });
+  const sourceId = source.id;
 
   return {
-    sourceId: source.id,
-    line: line + 1,
-    column: ch + 1,
+    sourceId,
+    line: fromEditorLine(sourceId, line),
+    column: isWasm(sourceId) ? 0 : ch + 1,
   };
 }
 
@@ -243,7 +247,7 @@ export function removeLineClass(
   line: number,
   className: string
 ) {
-  codeMirror.removeLineClass(line, "line", className);
+  codeMirror.removeLineClass(line, "wrapClass", className);
 }
 
 export function clearLineClass(codeMirror: Object, className: string) {
@@ -260,11 +264,16 @@ export function getCursorLine(codeMirror: Object): number {
   return codeMirror.getCursor().line;
 }
 
+export function getCursorColumn(codeMirror: Object): number {
+  return codeMirror.getCursor().ch;
+}
+
 export function getTokenEnd(codeMirror: Object, line: number, column: number) {
   const token = codeMirror.getTokenAt({
-    line: line,
+    line,
     ch: column + 1,
   });
+  const tokenString = token.string;
 
-  return token.end;
+  return tokenString === "{" || tokenString === "[" ? null : token.end;
 }

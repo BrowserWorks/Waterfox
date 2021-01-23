@@ -13,7 +13,7 @@
 
 # Preserve all native method names and the names of their classes.
 
--keepclasseswithmembernames class * {
+-keepclasseswithmembernames,includedescriptorclasses class * {
     native <methods>;
 }
 
@@ -86,6 +86,14 @@
     *;
 }
 
+-keep class org.mozilla.gecko.mozglue.JNIObject {
+    *;
+}
+
+-keep class * extends org.mozilla.gecko.mozglue.JNIObject {
+    *;
+}
+
 # Keep the annotation.
 -keep @interface org.mozilla.gecko.annotation.JNITarget
 
@@ -132,18 +140,18 @@
 # Keep generator-targeted entry points.
 -keep @interface org.mozilla.gecko.annotation.WrapForJNI
 -keep @org.mozilla.gecko.annotation.WrapForJNI class *
--keepclassmembers class * {
+-keepclassmembers,includedescriptorclasses class * {
     @org.mozilla.gecko.annotation.WrapForJNI *;
 }
--keepclasseswithmembers class * {
+-keepclasseswithmembers,includedescriptorclasses class * {
     @org.mozilla.gecko.annotation.WrapForJNI <methods>;
 }
--keepclasseswithmembers class * {
+-keepclasseswithmembers,includedescriptorclasses class * {
     @org.mozilla.gecko.annotation.WrapForJNI <fields>;
 }
 
 # Keep all members of an annotated class.
--keepclassmembers @org.mozilla.gecko.annotation.WrapForJNI class * {
+-keepclassmembers,includedescriptorclasses @org.mozilla.gecko.annotation.WrapForJNI class * {
     *;
 }
 

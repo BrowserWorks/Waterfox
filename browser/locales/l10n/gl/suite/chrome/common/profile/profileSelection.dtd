@@ -1,0 +1,19 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowTitle.label    "Seleccionar perfil de usuario">
+<!ENTITY            profileManager.title "Xestor de perfiles do &brandShortName;">
+
+<!ENTITY            manage.label     "Xestionar perfiles…">
+<!ENTITY            manage.accesskey "X">
+<!ENTITY            select.label     "Usar perfil">
+
+<!ENTITY            availableProfiles.label "Perfís dispoñíbeis">
+
+<!ENTITY            introStart.label         "Para acceder ao seu perfil persoal, que contén as mensaxes gardadas, a configuración e outra información personalizada, escolla o seu perfil da lista e prema &start.label; para iniciar a súa sesión.">
+<!ENTITY            introSwitch.label        "Para cambiar a outro perfil, que contén as mensaxes gardadas, a configuración e outra información personalizada, escolla ese perfil da lista e prema &select.label; para comenzar a usar ese perfil.">
+<!ENTITY            profileManagerText.label "&brandShortName; garda información sobre a súa configuración, preferencias, marcadores, mensaxes almacenadas e outros elementos no perfil de usuario.">

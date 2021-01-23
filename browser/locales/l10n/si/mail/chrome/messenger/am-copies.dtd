@@ -1,0 +1,58 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "පිටපත් සහ ෆෝල්ඩර">
+<!ENTITY sendingPrefix.label "ලිපි යවන විටදී, ස්වයංක්‍රීයව:">
+<!ENTITY fccMailFolder.label "පිටපත් තබන්න:">
+<!ENTITY fccMailFolder.accesskey "P">
+<!ENTITY fccReplyFollowsParent.label "පිළිතුරු ලිපි මුල් ලිපිය අඩංගු ෆෝල්ඩරය තුළ">
+<!ENTITY fccReplyFollowsParent.accesskey "l">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "මෙම ලිපිනයන්ට පිටපත් යවන්න:">
+<!ENTITY ccAddress.accesskey "C">
+<!ENTITY ccAddressList.placeholder "කොමා මඟින් ලිපින වෙන් කරන්න">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "මෙම ලිපිනයන්ට රහස්‍ය පිටපත් යවන්න:">
+<!ENTITY bccAddress.accesskey "B">
+<!ENTITY bccAddressList.placeholder "කොමා මඟින් ලිපින වෙන් කරන්න">
+<!ENTITY saveMessageDlg.label "ලිපි සුරකින විටදී එය තහවුරු කරවා ගන්න">
+<!ENTITY saveMessageDlg.accesskey "S">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "&quot;යැවූලිපි&quot; ෆෝල්ඩරය තුළ:">
+<!ENTITY sentFolderOn.accesskey "e">
+<!ENTITY sentInOtherFolder.label "වෙනත්:">
+<!ENTITY sentInOtherFolder.accesskey "O">
+<!ENTITY archivesTitle.label "සංරක්ෂිත ලිපි">
+<!ENTITY keepArchives.label "සංරක්ෂිත ලිපි තබන්න:">
+
+<!--
+Entities below were automatically added by compare-locales,
+ based on en-US entities.
+-->
+
+<!ENTITY keepArchives.accesskey "K">
+<!ENTITY archiveHierarchyButton.label "සංරක්ෂණ විකල්ප…">
+<!ENTITY archiveHierarchyButton.accesskey "A">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesFolderOn.label "&quot;සංරක්ෂණ&quot; ෆෝල්ඩරය තුළ:">
+<!ENTITY archivesFolderOn.accesskey "D">
+<!ENTITY archiveInOtherFolder.label "වෙනත්:">
+<!ENTITY archiveInOtherFolder.accesskey "t">
+<!ENTITY specialFolders.label "කෙටුම්පත් සහ අචුචු">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "&quot;කෙටුම්පත්&quot; ෆෝල්ඩරය තුළ:">
+<!ENTITY draftsFolderOn.accesskey "D">
+<!ENTITY draftInOtherFolder.label "වෙනත්:">
+
+<!ENTITY draftInOtherFolder.accesskey "t">
+<!ENTITY keepTemplates.label "මෙතුළ ලිපි අච්චු තබන්න:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "&quot;ආකෘතීන්&quot; ෆෝල්ඩරය තුළ:">
+<!ENTITY templatesFolderOn.accesskey "m">
+<!ENTITY templateInOtherFolder.label "වෙනත්:">
+<!ENTITY templateInOtherFolder.accesskey "r">

@@ -14,7 +14,6 @@
 #define mozilla_dom_Element_h__
 
 #include "AttrArray.h"
-#include "DOMIntersectionObserver.h"
 #include "nsAttrValue.h"
 #include "nsAttrValueInlines.h"
 #include "nsChangeHint.h"
@@ -22,15 +21,12 @@
 #include "nsDOMAttributeMap.h"
 #include "nsINodeList.h"
 #include "nsIScrollableFrame.h"
-#include "nsNodeUtils.h"
-#include "nsPresContext.h"
 #include "Units.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/CORSMode.h"
 #include "mozilla/EventForwards.h"
 #include "mozilla/EventStates.h"
 #include "mozilla/FlushType.h"
-#include "mozilla/PresShell.h"
 #include "mozilla/PseudoStyleType.h"
 #include "mozilla/RustCell.h"
 #include "mozilla/SMILAttr.h"
@@ -83,7 +79,7 @@ namespace css {
 struct URLValue;
 }  // namespace css
 namespace dom {
-struct AnimationFilter;
+struct GetAnimationsOptions;
 struct ScrollIntoViewOptions;
 struct ScrollToOptions;
 class DOMIntersectionObserver;
@@ -161,12 +157,22 @@ class Grid;
     }                                                \
   }
 
+#define REFLECT_NULLABLE_DOMSTRING_ATTR(method, attr)           \
+  void Get##method(nsAString& aValue) const {                   \
+    if (!GetAttr(nsGkAtoms::attr, aValue)) {                    \
+      SetDOMStringToNull(aValue);                               \
+    }                                                           \
+  }                                                             \
+  void Set##method(const nsAString& aValue, ErrorResult& aRv) { \
+    SetAttr(nsGkAtoms::attr, aValue, aRv);                      \
+  }
+
 class Element : public FragmentOrElement {
  public:
 #ifdef MOZILLA_INTERNAL_API
   explicit Element(already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo)
       : FragmentOrElement(std::move(aNodeInfo)),
-        mState(NS_EVENT_STATE_MOZ_READONLY | NS_EVENT_STATE_DEFINED) {
+        mState(NS_EVENT_STATE_READONLY | NS_EVENT_STATE_DEFINED) {
     MOZ_ASSERT(mNodeInfo->NodeType() == ELEMENT_NODE,
                "Bad NodeType in aNodeInfo");
     SetIsElement();
@@ -221,25 +227,14 @@ class Element : public FragmentOrElement {
   int32_t TabIndex();
 
   /**
+   * Get the parsed value of tabindex attribute.
+   */
+  Maybe<int32_t> GetTabIndexAttrValue();
+
+  /**
    * Set tabIndex value to this element.
    */
   void SetTabIndex(int32_t aTabIndex, mozilla::ErrorResult& aError);
-
-  /**
-   * Sets or unsets an XBL binding for this element. Setting a
-   * binding on an element that already has a binding will remove the
-   * old binding.
-   *
-   * @param aBinding The binding to bind to this content. If nullptr is
-   *        provided as the argument, then existing binding will be
-   *        removed.
-   *
-   * @param aOldBindingManager The old binding manager that contains
-   *                           this content if this content was adopted
-   *                           to another document.
-   */
-  void SetXBLBinding(nsXBLBinding* aBinding,
-                     nsBindingManager* aOldBindingManager = nullptr);
 
   /**
    * Sets the ShadowRoot binding for this element. The contents of the
@@ -252,7 +247,8 @@ class Element : public FragmentOrElement {
   /**
    * Make focus on this element.
    */
-  virtual void Focus(const FocusOptions& aOptions, ErrorResult& aError);
+  virtual void Focus(const FocusOptions& aOptions, const CallerType aCallerType,
+                     ErrorResult& aError);
 
   /**
    * Show blur and clear focus.
@@ -353,7 +349,7 @@ class Element : public FragmentOrElement {
    * notify the document's pres context, so that the style changes will be
    * noticed.
    */
-  nsresult SetSMILOverrideStyleDeclaration(DeclarationBlock* aDeclaration);
+  void SetSMILOverrideStyleDeclaration(DeclarationBlock&);
 
   /**
    * Returns a new SMILAttr that allows the caller to animate the given
@@ -382,7 +378,7 @@ class Element : public FragmentOrElement {
   /**
    * Returns if the element is interactive content as per HTML specification.
    */
-  virtual bool IsInteractiveHTMLContent(bool aIgnoreTabindex) const;
+  virtual bool IsInteractiveHTMLContent() const;
 
   /**
    * Returns |this| as an nsIMozBrowserFrame* if the element is a frame or
@@ -458,8 +454,6 @@ class Element : public FragmentOrElement {
       UpdateState(true);
     }
   }
-
-  bool GetBindingURL(Document* aDocument, css::URLValue** aResult);
 
   Directionality GetComputedDirectionality() const;
 
@@ -558,6 +552,52 @@ class Element : public FragmentOrElement {
     }
   }
 
+  // AccessibilityRole
+  REFLECT_NULLABLE_DOMSTRING_ATTR(Role, role)
+
+  // AriaAttributes
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaAtomic, aria_atomic)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaAutoComplete, aria_autocomplete)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaBusy, aria_busy)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaChecked, aria_checked)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaColCount, aria_colcount)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaColIndex, aria_colindex)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaColIndexText, aria_colindextext)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaColSpan, aria_colspan)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaCurrent, aria_current)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaDescription, aria_description)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaDisabled, aria_disabled)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaExpanded, aria_expanded)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaHasPopup, aria_haspopup)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaHidden, aria_hidden)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaInvalid, aria_invalid)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaKeyShortcuts, aria_keyshortcuts)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaLabel, aria_label)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaLevel, aria_level)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaLive, aria_live)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaModal, aria_modal)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaMultiLine, aria_multiline)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaMultiSelectable, aria_multiselectable)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaOrientation, aria_orientation)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaPlaceholder, aria_placeholder)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaPosInSet, aria_posinset)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaPressed, aria_pressed)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaReadOnly, aria_readonly)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaRelevant, aria_relevant)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaRequired, aria_required)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaRoleDescription, aria_roledescription)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaRowCount, aria_rowcount)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaRowIndex, aria_rowindex)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaRowIndexText, aria_rowindextext)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaRowSpan, aria_rowspan)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaSelected, aria_selected)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaSetSize, aria_setsize)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaSort, aria_sort)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaValueMax, aria_valuemax)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaValueMin, aria_valuemin)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaValueNow, aria_valuenow)
+  REFLECT_NULLABLE_DOMSTRING_ATTR(AriaValueText, aria_valuetext)
+
  protected:
   /**
    * Method to get the _intrinsic_ content state of this element.  This is the
@@ -652,10 +692,9 @@ class Element : public FragmentOrElement {
 
   void UpdateEditableState(bool aNotify) override;
 
-  nsresult BindToTree(Document* aDocument, nsIContent* aParent,
-                      nsIContent* aBindingParent) override;
+  nsresult BindToTree(BindContext&, nsINode& aParent) override;
 
-  void UnbindFromTree(bool aDeep = true, bool aNullParent = true) override;
+  void UnbindFromTree(bool aNullParent = true) override;
 
   /**
    * Normalizes an attribute name and returns it as a nodeinfo if an attribute
@@ -763,6 +802,20 @@ class Element : public FragmentOrElement {
 
   bool HasAttr(const nsAtom* aAttr) const {
     return HasAttr(kNameSpaceID_None, aAttr);
+  }
+
+  /**
+   * Determine if an attribute has been set to a non-empty string value. If the
+   * attribute is not set at all, this will return false.
+   *
+   * @param aNameSpaceId the namespace id of the attribute (defaults to
+   *                     kNameSpaceID_None in the overload that omits this arg)
+   * @param aAttr the attribute name
+   */
+  inline bool HasNonEmptyAttr(int32_t aNameSpaceID, const nsAtom* aName) const;
+
+  bool HasNonEmptyAttr(const nsAtom* aAttr) const {
+    return HasNonEmptyAttr(kNameSpaceID_None, aAttr);
   }
 
   /**
@@ -1031,6 +1084,8 @@ class Element : public FragmentOrElement {
   }
 
   nsDOMTokenList* ClassList();
+  nsDOMTokenList* Part();
+
   nsDOMAttributeMap* Attributes() {
     nsDOMSlots* slots = DOMSlots();
     if (!slots->mAttributeMap) {
@@ -1062,6 +1117,11 @@ class Element : public FragmentOrElement {
                     ErrorResult& aError) {
     SetAttribute(aName, aValue, nullptr, aError);
   }
+  void SetAttributeDevtools(const nsAString& aName, const nsAString& aValue,
+                            ErrorResult& aError);
+  void SetAttributeDevtoolsNS(const nsAString& aNamespaceURI,
+                              const nsAString& aLocalName,
+                              const nsAString& aValue, ErrorResult& aError);
 
   void RemoveAttribute(const nsAString& aName, ErrorResult& aError);
   void RemoveAttributeNS(const nsAString& aNamespaceURI,
@@ -1170,31 +1230,11 @@ class Element : public FragmentOrElement {
     }
     return false;
   }
-  void SetCapture(bool aRetargetToElement) {
-    // If there is already an active capture, ignore this request. This would
-    // occur if a splitter, frame resizer, etc had already captured and we don't
-    // want to override those.
-    if (!PresShell::GetCapturingContent()) {
-      PresShell::SetCapturingContent(
-          this, CaptureFlags::PreventDragStart |
-                    (aRetargetToElement ? CaptureFlags::RetargetToElement
-                                        : CaptureFlags::None));
-    }
-  }
+  void SetCapture(bool aRetargetToElement);
 
-  void SetCaptureAlways(bool aRetargetToElement) {
-    PresShell::SetCapturingContent(
-        this, CaptureFlags::PreventDragStart |
-                  CaptureFlags::IgnoreAllowedState |
-                  (aRetargetToElement ? CaptureFlags::RetargetToElement
-                                      : CaptureFlags::None));
-  }
+  void SetCaptureAlways(bool aRetargetToElement);
 
-  void ReleaseCapture() {
-    if (PresShell::GetCapturingContent() == this) {
-      PresShell::ReleaseCapturingContent();
-    }
-  }
+  void ReleaseCapture();
 
   already_AddRefed<Promise> RequestFullscreen(CallerType, ErrorResult&);
   void RequestPointerLock(CallerType aCallerType);
@@ -1265,48 +1305,52 @@ class Element : public FragmentOrElement {
   MOZ_CAN_RUN_SCRIPT int32_t ScrollHeight();
   MOZ_CAN_RUN_SCRIPT void MozScrollSnap();
   MOZ_CAN_RUN_SCRIPT int32_t ClientTop() {
-    return nsPresContext::AppUnitsToIntCSSPixels(GetClientAreaRect().y);
+    return CSSPixel::FromAppUnits(GetClientAreaRect().y).Rounded();
   }
   MOZ_CAN_RUN_SCRIPT int32_t ClientLeft() {
-    return nsPresContext::AppUnitsToIntCSSPixels(GetClientAreaRect().x);
+    return CSSPixel::FromAppUnits(GetClientAreaRect().x).Rounded();
   }
   MOZ_CAN_RUN_SCRIPT int32_t ClientWidth() {
-    return nsPresContext::AppUnitsToIntCSSPixels(GetClientAreaRect().Width());
+    return CSSPixel::FromAppUnits(GetClientAreaRect().Width()).Rounded();
   }
   MOZ_CAN_RUN_SCRIPT int32_t ClientHeight() {
-    return nsPresContext::AppUnitsToIntCSSPixels(GetClientAreaRect().Height());
+    return CSSPixel::FromAppUnits(GetClientAreaRect().Height()).Rounded();
   }
   MOZ_CAN_RUN_SCRIPT int32_t ScrollTopMin() {
     nsIScrollableFrame* sf = GetScrollFrame();
-    return sf ? nsPresContext::AppUnitsToIntCSSPixels(sf->GetScrollRange().y)
-              : 0;
+    if (!sf) {
+      return 0;
+    }
+    return CSSPixel::FromAppUnits(sf->GetScrollRange().y).Rounded();
   }
   MOZ_CAN_RUN_SCRIPT int32_t ScrollTopMax() {
     nsIScrollableFrame* sf = GetScrollFrame();
-    return sf ? nsPresContext::AppUnitsToIntCSSPixels(
-                    sf->GetScrollRange().YMost())
-              : 0;
+    if (!sf) {
+      return 0;
+    }
+    return CSSPixel::FromAppUnits(sf->GetScrollRange().YMost()).Rounded();
   }
   MOZ_CAN_RUN_SCRIPT int32_t ScrollLeftMin() {
     nsIScrollableFrame* sf = GetScrollFrame();
-    return sf ? nsPresContext::AppUnitsToIntCSSPixels(sf->GetScrollRange().x)
-              : 0;
+    if (!sf) {
+      return 0;
+    }
+    return CSSPixel::FromAppUnits(sf->GetScrollRange().x).Rounded();
   }
   MOZ_CAN_RUN_SCRIPT int32_t ScrollLeftMax() {
     nsIScrollableFrame* sf = GetScrollFrame();
-    return sf ? nsPresContext::AppUnitsToIntCSSPixels(
-                    sf->GetScrollRange().XMost())
-              : 0;
+    if (!sf) {
+      return 0;
+    }
+    return CSSPixel::FromAppUnits(sf->GetScrollRange().XMost()).Rounded();
   }
 
   MOZ_CAN_RUN_SCRIPT double ClientHeightDouble() {
-    return nsPresContext::AppUnitsToDoubleCSSPixels(
-        GetClientAreaRect().Height());
+    return CSSPixel::FromAppUnits(GetClientAreaRect().Height());
   }
 
   MOZ_CAN_RUN_SCRIPT double ClientWidthDouble() {
-    return nsPresContext::AppUnitsToDoubleCSSPixels(
-        GetClientAreaRect().Width());
+    return CSSPixel::FromAppUnits(GetClientAreaRect().Width());
   }
 
   // This function will return the block size of first line box, no matter if
@@ -1316,6 +1360,8 @@ class Element : public FragmentOrElement {
 
   already_AddRefed<Flex> GetAsFlexContainer();
   void GetGridFragments(nsTArray<RefPtr<Grid>>& aResult);
+
+  bool HasGridFragments();
 
   already_AddRefed<DOMMatrixReadOnly> GetTransformToAncestor(
       Element& aAncestor);
@@ -1327,22 +1373,18 @@ class Element : public FragmentOrElement {
       const UnrestrictedDoubleOrKeyframeAnimationOptions& aOptions,
       ErrorResult& aError);
 
-  // A helper method that factors out the common functionality needed by
-  // Element::Animate and CSSPseudoElement::Animate
-  static already_AddRefed<Animation> Animate(
-      const Nullable<ElementOrCSSPseudoElement>& aTarget, JSContext* aContext,
-      JS::Handle<JSObject*> aKeyframes,
-      const UnrestrictedDoubleOrKeyframeAnimationOptions& aOptions,
-      ErrorResult& aError);
-
-  // Note: GetAnimations will flush style while GetAnimationsUnsorted won't.
-  // Callers must keep this element alive because flushing style may destroy
-  // this element.
-  void GetAnimations(const AnimationFilter& filter,
+  MOZ_CAN_RUN_SCRIPT
+  void GetAnimations(const GetAnimationsOptions& aOptions,
                      nsTArray<RefPtr<Animation>>& aAnimations);
+
+  void GetAnimationsWithoutFlush(const GetAnimationsOptions& aOptions,
+                                 nsTArray<RefPtr<Animation>>& aAnimations);
+
   static void GetAnimationsUnsorted(Element* aElement,
                                     PseudoStyleType aPseudoType,
                                     nsTArray<RefPtr<Animation>>& aAnimations);
+
+  void CloneAnimationsFrom(const Element& aOther);
 
   virtual void GetInnerHTML(nsAString& aInnerHTML, OOMReporter& aError);
   virtual void SetInnerHTML(const nsAString& aInnerHTML,
@@ -1362,8 +1404,8 @@ class Element : public FragmentOrElement {
    * @param aValue the JS to attach
    * @param aDefer indicates if deferred execution is allowed
    */
-  nsresult SetEventHandler(nsAtom* aEventName, const nsAString& aValue,
-                           bool aDefer = true);
+  void SetEventHandler(nsAtom* aEventName, const nsAString& aValue,
+                       bool aDefer = true);
 
   /**
    * Do whatever needs to be done when the mouse leaves a link
@@ -1405,6 +1447,14 @@ class Element : public FragmentOrElement {
   bool IsDisplayContents() const {
     return HasServoData() && Servo_Element_IsDisplayContents(this);
   }
+
+  /*
+   * https://html.spec.whatwg.org/#being-rendered
+   *
+   * With a gotcha for display contents:
+   *   https://github.com/whatwg/html/issues/1837
+   */
+  bool IsRendered() const { return GetPrimaryFrame() || IsDisplayContents(); }
 
   const nsAttrValue* GetParsedAttr(const nsAtom* aAttr) const {
     return mAttrs.GetAttr(aAttr);
@@ -1451,19 +1501,6 @@ class Element : public FragmentOrElement {
   }
 
   /**
-   * Called when we have been adopted, and the information of the
-   * node has been changed.
-   *
-   * The new document can be reached via OwnerDoc().
-   *
-   * If you override this method,
-   * please call up to the parent NodeInfoChanged.
-   *
-   * If you change this, change also the similar method in Link.
-   */
-  virtual void NodeInfoChanged(Document* aOldDoc) {}
-
-  /**
    * Parse a string into an nsAttrValue for a CORS attribute.  This
    * never fails.  The resulting value is an enumerated value whose
    * GetEnumValue() returns one of the above constants.
@@ -1481,14 +1518,12 @@ class Element : public FragmentOrElement {
    */
   static CORSMode AttrValueToCORSMode(const nsAttrValue* aValue);
 
-  JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) final;
-
   nsINode* GetScopeChainParent() const override;
 
   /**
    * Locate a TextEditor rooted at this content node, if there is one.
    */
-  mozilla::TextEditor* GetTextEditorInternal();
+  MOZ_CAN_RUN_SCRIPT_BOUNDARY mozilla::TextEditor* GetTextEditorInternal();
 
   /**
    * Gets value of boolean attribute. Only works for attributes in null
@@ -1581,8 +1616,10 @@ class Element : public FragmentOrElement {
    */
   float FontSizeInflation();
 
-  net::ReferrerPolicy GetReferrerPolicyAsEnum();
-  net::ReferrerPolicy ReferrerPolicyFromAttr(const nsAttrValue* aValue);
+  void GetImplementedPseudoElement(nsAString&) const;
+
+  ReferrerPolicy GetReferrerPolicyAsEnum() const;
+  ReferrerPolicy ReferrerPolicyFromAttr(const nsAttrValue* aValue) const;
 
   /*
    * Helpers for .dataset.  This is implemented on Element, though only some
@@ -1770,15 +1807,11 @@ class Element : public FragmentOrElement {
    *        principal is directly responsible for the attribute change.
    * @param aNotify Whether we plan to notify document observers.
    */
-  // Note that this is inlined so that when subclasses call it it gets
-  // inlined.  Those calls don't go through a vtable.
   virtual nsresult AfterSetAttr(int32_t aNamespaceID, nsAtom* aName,
                                 const nsAttrValue* aValue,
                                 const nsAttrValue* aOldValue,
                                 nsIPrincipal* aMaybeScriptedPrincipal,
-                                bool aNotify) {
-    return NS_OK;
-  }
+                                bool aNotify);
 
   /**
    * This function shall be called just before the id attribute changes. It will
@@ -1903,17 +1936,27 @@ class Element : public FragmentOrElement {
    */
   virtual void GetLinkTarget(nsAString& aTarget);
 
-  nsDOMTokenList* GetTokenList(
-      nsAtom* aAtom,
-      const DOMTokenListSupportedTokenArray aSupportedTokens = nullptr);
-
+  enum class ReparseAttributes { No, Yes };
   /**
    * Copy attributes and state to another element
    * @param aDest the object to copy to
    */
-  nsresult CopyInnerTo(Element* aDest);
+  nsresult CopyInnerTo(Element* aDest,
+                       ReparseAttributes = ReparseAttributes::Yes);
+
+  /**
+   * Some event handler content attributes have a different name (e.g. different
+   * case) from the actual event name.  This function takes an event handler
+   * content attribute name and returns the corresponding event name, to be used
+   * for adding the actual event listener.
+   */
+  static nsAtom* GetEventNameForAttr(nsAtom* aAttr);
 
  private:
+#ifdef MOZ_DIAGNOSTIC_ASSERT_ENABLED
+  void AssertInvariantsOnNodeInfoChange();
+#endif
+
   /**
    * Slow path for GetClasses, this should only be called for SVG elements.
    */
@@ -1951,20 +1994,6 @@ class Element : public FragmentOrElement {
   AttrArray mAttrs;
 };
 
-class RemoveFromBindingManagerRunnable : public mozilla::Runnable {
- public:
-  RemoveFromBindingManagerRunnable(nsBindingManager* aManager,
-                                   nsIContent* aContent, Document* aDoc);
-
-  NS_IMETHOD Run() override;
-
- private:
-  virtual ~RemoveFromBindingManagerRunnable();
-  RefPtr<nsBindingManager> mManager;
-  RefPtr<nsIContent> mContent;
-  RefPtr<Document> mDoc;
-};
-
 NS_DEFINE_STATIC_IID_ACCESSOR(Element, NS_ELEMENT_IID)
 
 inline bool Element::HasAttr(int32_t aNameSpaceID, const nsAtom* aName) const {
@@ -1973,6 +2002,15 @@ inline bool Element::HasAttr(int32_t aNameSpaceID, const nsAtom* aName) const {
                "must have a real namespace ID!");
 
   return mAttrs.IndexOfAttr(aName, aNameSpaceID) >= 0;
+}
+
+inline bool Element::HasNonEmptyAttr(int32_t aNameSpaceID,
+                                     const nsAtom* aName) const {
+  MOZ_ASSERT(aNameSpaceID > kNameSpaceID_Unknown, "Must have namespace");
+  MOZ_ASSERT(aName, "Must have attribute name");
+
+  const nsAttrValue* val = mAttrs.GetAttr(aName, aNameSpaceID);
+  return val && !val->IsEmptyString();
 }
 
 inline bool Element::AttrValueIs(int32_t aNameSpaceID, const nsAtom* aName,
@@ -2025,6 +2063,11 @@ inline mozilla::dom::Element* nsINode::GetPreviousElementSibling() const {
   return nullptr;
 }
 
+inline mozilla::dom::Element* nsINode::GetAsElementOrParentElement() const {
+  return IsElement() ? const_cast<mozilla::dom::Element*>(AsElement())
+                     : GetParentElement();
+}
+
 inline mozilla::dom::Element* nsINode::GetNextElementSibling() const {
   nsIContent* nextSibling = GetNextSibling();
   while (nextSibling) {
@@ -2046,7 +2089,8 @@ inline mozilla::dom::Element* nsINode::GetNextElementSibling() const {
                                nsINode** aResult) const {           \
     *aResult = nullptr;                                             \
     RefPtr<mozilla::dom::NodeInfo> ni(aNodeInfo);                   \
-    RefPtr<_elementName> it = new _elementName(ni.forget());        \
+    auto* nim = ni->NodeInfoManager();                              \
+    RefPtr<_elementName> it = new (nim) _elementName(ni.forget());  \
     nsresult rv = const_cast<_elementName*>(this)->CopyInnerTo(it); \
     if (NS_SUCCEEDED(rv)) {                                         \
       it.forget(aResult);                                           \
@@ -2061,8 +2105,9 @@ inline mozilla::dom::Element* nsINode::GetNextElementSibling() const {
                                nsINode** aResult) const {                 \
     *aResult = nullptr;                                                   \
     RefPtr<mozilla::dom::NodeInfo> ni(aNodeInfo);                         \
+    auto* nim = ni->NodeInfoManager();                                    \
     RefPtr<_elementName> it =                                             \
-        new _elementName(ni.forget() EXPAND extra_args_);                 \
+        new (nim) _elementName(ni.forget() EXPAND extra_args_);           \
     nsresult rv = it->Init();                                             \
     nsresult rv2 = const_cast<_elementName*>(this)->CopyInnerTo(it);      \
     if (NS_FAILED(rv2)) {                                                 \

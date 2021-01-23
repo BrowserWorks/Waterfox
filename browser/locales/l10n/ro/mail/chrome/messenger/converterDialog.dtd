@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY converterDialog.title "Convertorul pentru tipul de stocare al mesajului">
+<!ENTITY converterDialog.continueButton "Continuă">
+<!ENTITY converterDialog.cancelButton "Renunță">
+<!ENTITY converterDialog.finishButton "Termină">
+<!ENTITY converterDialog.complete "Conversia a fost finalizată. &brandShortName; va reporni.">
+<!ENTITY converterDialog.error "Conversia a eșuat.">
+

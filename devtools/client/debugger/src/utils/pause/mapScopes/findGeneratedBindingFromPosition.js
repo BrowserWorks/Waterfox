@@ -11,7 +11,7 @@ import type { BindingContents } from "../../../types";
 // eslint-disable-next-line max-len
 import type { ApplicableBinding } from "./getApplicableBindingsForOriginalPosition";
 
-import { createObjectClient } from "../../../client/firefox";
+import { clientCommands } from "../../../client/firefox";
 
 export type GeneratedDescriptor = {
   name: string,
@@ -260,7 +260,7 @@ async function mapImportReferenceToDescriptor({
     for (
       let op = meta, index = 0;
       op && mappingContains(range, op) && desc && index < 2;
-      index++, op = op && op.parent
+      index++, op = op?.parent
     ) {
       // Calling could potentially trigger side-effects, which would not
       // be ideal for this case.
@@ -324,6 +324,6 @@ async function readDescriptorProperty(
     return desc;
   }
 
-  const objectClient = createObjectClient(desc.value);
-  return (await objectClient.getProperty(property)).descriptor;
+  const objectFront = clientCommands.createObjectFront(desc.value);
+  return (await objectFront.getProperty(property)).descriptor;
 }

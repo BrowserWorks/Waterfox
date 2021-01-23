@@ -18,7 +18,6 @@ XPIDL_SOURCES += [
     'nsIMemoryInfoDumper.idl',
     'nsIMemoryReporter.idl',
     'nsIMessageLoop.idl',
-    'nsIMutable.idl',
     'nsISecurityConsoleMessage.idl',
     'nsISupports.idl',
     'nsIUUIDGenerator.idl',
@@ -53,9 +52,7 @@ EXPORTS += [
     '!ErrorList.h',
     '!ErrorNamesInternal.h',
     'CodeAddressService.h',
-    'nsAgg.h',
     'nsAlgorithm.h',
-    'nsAutoPtr.h',
     'nsAutoRef.h',
     'nsCom.h',
     'nsCOMPtr.h',
@@ -88,7 +85,6 @@ EXPORTS += [
     'nsQueryObject.h',
     'nsSystemInfo.h',
     'nsTraceRefcnt.h',
-    'nsTWeakRef.h',
     'nsVersionComparator.h',
     'nsWeakReference.h',
 ]
@@ -103,6 +99,7 @@ if CONFIG['OS_ARCH'] == 'WINNT':
         ]
 
 EXPORTS.mozilla += [
+    'AppShutdown.h',
     'AutoRestore.h',
     'AvailableMemoryTracker.h',
     'ClearOnShutdown.h',
@@ -126,21 +123,28 @@ EXPORTS.mozilla += [
     'nsMemoryInfoDumper.h',
     'NSPRLogModulesParser.h',
     'OwningNonNull.h',
+    'ShutdownPhase.h',
     'SizeOfState.h',
+    'StaticLocalPtr.h',
     'StaticMonitor.h',
     'StaticMutex.h',
     'StaticPtr.h',
     'TupleCycleCollection.h',
 ]
 
+SOURCES += [
 # nsDebugImpl isn't unified because we disable PGO so that NS_ABORT_OOM isn't
 # optimized away oddly.
-SOURCES += [
     'nsDebugImpl.cpp',
+# nsDumpUtils.cpp includes SpecialSystemDirectory.h which includes
+# nsLocalFileMac.h which upsets other files in this dir that have a different
+# idea about what `TextRange` means.
+    'nsDumpUtils.cpp',
 ]
 SOURCES['nsDebugImpl.cpp'].no_pgo = True
 
 UNIFIED_SOURCES += [
+    'AppShutdown.cpp',
     'AvailableMemoryTracker.cpp',
     'ClearOnShutdown.cpp',
     'CycleCollectedJSContext.cpp',
@@ -164,7 +168,6 @@ UNIFIED_SOURCES += [
     'nsCycleCollectionParticipant.cpp',
     'nsCycleCollector.cpp',
     'nsCycleCollectorTraceJSHelpers.cpp',
-    'nsDumpUtils.cpp',
     'nsErrorService.cpp',
     'nsGZFileWriter.cpp',
     'nsID.cpp',
@@ -197,15 +200,11 @@ if CONFIG['OS_TARGET'] == 'WINNT':
         'MemoryInfo.cpp',
     ]
 
-GENERATED_FILES += [
-    "error_list.rs",
-    "ErrorList.h",
-    "ErrorNamesInternal.h",
-]
-
-GENERATED_FILES["ErrorList.h"].script = "ErrorList.py:error_list_h"
-GENERATED_FILES["ErrorNamesInternal.h"].script = "ErrorList.py:error_names_internal_h"
-GENERATED_FILES["error_list.rs"].script = "ErrorList.py:error_list_rs"
+GeneratedFile("ErrorList.h", script="ErrorList.py", entry_point="error_list_h")
+GeneratedFile("ErrorNamesInternal.h", script="ErrorList.py",
+              entry_point="error_names_internal_h")
+GeneratedFile("error_list.rs", script="ErrorList.py",
+              entry_point="error_list_rs")
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
     SOURCES += [
@@ -217,19 +216,13 @@ elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
     ]
 
 if CONFIG['COMPILE_ENVIRONMENT']:
-    GENERATED_FILES += [
-        'gk_rust_utils_ffi_generated.h',
-    ]
-
     EXPORTS.mozilla += [
         '!gk_rust_utils_ffi_generated.h',
     ]
 
-    ffi_generated = GENERATED_FILES['gk_rust_utils_ffi_generated.h']
-    ffi_generated.script = '/layout/style/RunCbindgen.py:generate'
-    ffi_generated.inputs = [
-        '/xpcom/rust/gkrust_utils',
-    ]
+    GeneratedFile('gk_rust_utils_ffi_generated.h',
+                  script='/build/RunCbindgen.py',
+                  entry_point='generate', inputs=['/xpcom/rust/gkrust_utils'])
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
@@ -243,5 +236,5 @@ LOCAL_INCLUDES += [
     '/xpcom/ds',
 ]
 
-if 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gtk':
     CXXFLAGS += CONFIG['TK_CFLAGS']

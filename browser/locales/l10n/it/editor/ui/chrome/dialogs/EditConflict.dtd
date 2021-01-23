@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Selezione modifiche">
+<!ENTITY conflictWarning.label "Questa pagina è stata modificata da un altro programma, ma sono presenti delle modifiche non salvate.">
+<!ENTITY conflictResolve.label "Selezionare la versione da conservare:">
+<!ENTITY keepCurrentPageButton.label "Mantieni le modifiche correnti alla pagina">
+<!ENTITY useOtherPageButton.label "Sostituisci la pagina corrente con la versione modificata">

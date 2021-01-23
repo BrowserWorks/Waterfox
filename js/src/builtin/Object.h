@@ -9,14 +9,12 @@
 
 #include "jsapi.h"
 
-#include "jstypes.h"
+#include "js/Value.h"
 #include "vm/NativeObject.h"
 
-namespace JS {
-union JS_PUBLIC_API Value;
-}  // namespace JS
-
 namespace js {
+
+class PlainObject;
 
 // Object constructor native. Exposed only so the JIT can know its address.
 MOZ_MUST_USE bool obj_construct(JSContext* cx, unsigned argc, JS::Value* vp);
@@ -26,7 +24,7 @@ PlainObject* ObjectCreateImpl(JSContext* cx, HandleObject proto,
                               HandleObjectGroup group = nullptr);
 
 PlainObject* ObjectCreateWithTemplate(JSContext* cx,
-                                      HandlePlainObject templateObj);
+                                      Handle<PlainObject*> templateObj);
 
 // Object methods exposed so they can be installed in the self-hosting global.
 MOZ_MUST_USE bool obj_propertyIsEnumerable(JSContext* cx, unsigned argc,
@@ -36,10 +34,9 @@ MOZ_MUST_USE bool obj_create(JSContext* cx, unsigned argc, JS::Value* vp);
 
 MOZ_MUST_USE bool obj_is(JSContext* cx, unsigned argc, JS::Value* vp);
 
-MOZ_MUST_USE bool obj_getOwnPropertyNames(JSContext* cx, unsigned argc,
-                                          JS::Value* vp);
-
 MOZ_MUST_USE bool obj_toString(JSContext* cx, unsigned argc, JS::Value* vp);
+
+MOZ_MUST_USE bool obj_setProto(JSContext* cx, unsigned argc, JS::Value* vp);
 
 JSString* ObjectClassToString(JSContext* cx, HandleObject obj);
 

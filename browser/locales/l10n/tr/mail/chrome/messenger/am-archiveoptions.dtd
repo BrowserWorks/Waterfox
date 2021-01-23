@@ -1,0 +1,26 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-archiveoptions.xul -->
+
+
+<!-- extracted from am-archiveoptions.xhtml -->
+
+<!ENTITY dialogTitle.label "Arşiv Seçenekleri">
+<!ENTITY archiveGranularityPrefix.label "Arşivlenen iletileri şu şekilde ayır:">
+<!ENTITY archiveFlat.label "Tek klasör">
+<!ENTITY archiveFlat.accesskey "T">
+<!ENTITY archiveYearly.label "Yıllık arşivlenmiş klasörler">
+<!ENTITY archiveYearly.accesskey "Y">
+<!ENTITY archiveMonthly.label "Aylık arşivlenmiş klasörler">
+<!ENTITY archiveMonthly.accesskey "A">
+<!ENTITY keepFolderStructure.label "Arşivlenmiş iletilerin mevcut klasör yapısını koru">
+<!ENTITY keepFolderStructure.accesskey "m">
+<!ENTITY archiveExample.label "Örnek">
+<!-- LOCALIZATION NOTE (archiveFolderName.label): this should match the default
+     name for the "Archives" folder -->
+<!ENTITY archiveFolderName.label "Arşivler">
+<!-- LOCALIZATION NOTE (inboxFolderName.label): this should match the default
+     name for the "Inbox" folder -->
+<!ENTITY inboxFolderName.label "Gelen">

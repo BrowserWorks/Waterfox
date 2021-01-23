@@ -9,7 +9,7 @@
 #include "DDLogUtils.h"
 #include "DDMediaLogs.h"
 #include "mozilla/ClearOnShutdown.h"
-#include "mozilla/SystemGroup.h"
+#include "mozilla/SchedulerGroup.h"
 #include "mozilla/Unused.h"
 
 namespace mozilla {
@@ -89,6 +89,11 @@ void DecoderDoctorLogger::PanicInternal(const char* aReason, bool aDontBlock) {
 
 /* static */
 bool DecoderDoctorLogger::EnsureLogIsEnabled() {
+#ifdef RELEASE_OR_BETA
+  // Just refuse to enable DDLogger on release&beta because it makes it too easy
+  // to trigger an OOM. See bug 1571648.
+  return false;
+#else
   for (;;) {
     LogState state = static_cast<LogState>(sLogState);
     switch (state) {
@@ -107,7 +112,7 @@ bool DecoderDoctorLogger::EnsureLogIsEnabled() {
           MOZ_ASSERT(mediaLogsConstruction.mMediaLogs);
           sMediaLogs = mediaLogsConstruction.mMediaLogs;
           // Setup shutdown-time clean-up.
-          MOZ_ALWAYS_SUCCEEDS(SystemGroup::Dispatch(
+          MOZ_ALWAYS_SUCCEEDS(SchedulerGroup::Dispatch(
               TaskCategory::Other,
               NS_NewRunnableFunction("DDLogger shutdown setup", [] {
                 sDDLogShutdowner = MakeUnique<DDLogShutdowner>();
@@ -137,6 +142,7 @@ bool DecoderDoctorLogger::EnsureLogIsEnabled() {
     }
     // Not returned yet, loop around to examine the new situation.
   }
+#endif
 }
 
 /* static */

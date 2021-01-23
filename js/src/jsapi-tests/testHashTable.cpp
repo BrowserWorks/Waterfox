@@ -2,11 +2,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "mozilla/Move.h"
+#include "mozilla/HashFunctions.h"
 
+#include <utility>
+
+#include "ds/OrderedHashTable.h"
 #include "js/HashTable.h"
 #include "js/Utility.h"
-
 #include "jsapi-tests/tests.h"
 
 //#define FUZZ
@@ -30,7 +32,7 @@ const size_t TestSize = 10000;
 const size_t TestIterations = 10;
 #endif
 
-JS_STATIC_ASSERT(TestSize <= 0x0000FFFF / 2);
+static_assert(TestSize <= 0x0000FFFF / 2);
 
 struct LowToHigh {
   static uint32_t rekey(uint32_t initial) {
@@ -533,3 +535,30 @@ BEGIN_TEST(testHashLazyStorage) {
   return true;
 }
 END_TEST(testHashLazyStorage)
+
+BEGIN_TEST(testOrderedHashSetWithoutInit) {
+  {
+    struct NonzeroUint32HashPolicy {
+      using Lookup = uint32_t;
+      static js::HashNumber hash(const Lookup& v,
+                                 const mozilla::HashCodeScrambler& hcs) {
+        return mozilla::HashGeneric(v);
+      }
+      static bool match(const uint32_t& k, const Lookup& l) { return k == l; }
+      static bool isEmpty(const uint32_t& v) { return v == 0; }
+      static void makeEmpty(uint32_t* v) { *v = 0; }
+    };
+
+    using OHS = js::OrderedHashSet<uint32_t, NonzeroUint32HashPolicy,
+                                   js::SystemAllocPolicy>;
+
+    OHS set(js::SystemAllocPolicy(), mozilla::HashCodeScrambler(17, 42));
+    CHECK(set.count() == 0);
+
+    // This test passes if the set is safely destructible even when |init()| is
+    // never called.
+  }
+
+  return true;
+}
+END_TEST(testOrderedHashSetWithoutInit)

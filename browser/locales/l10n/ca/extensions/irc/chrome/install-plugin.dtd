@@ -1,0 +1,17 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowtitle                    "Instal·la el connector…">
+
+<!ENTITY name.label                     "Nom:">
+<!ENTITY name.accesskey                 "N">
+
+<!ENTITY name.autopick.label            "Escull un nom automàticament per mi">
+<!ENTITY name.autopick.accesskey        "A">
+
+<!ENTITY source.label                   "Font:">
+<!ENTITY source.accesskey               "F">
+
+<!ENTITY browse.label                   "Navega…">
+<!ENTITY browse.accesskey               "v">

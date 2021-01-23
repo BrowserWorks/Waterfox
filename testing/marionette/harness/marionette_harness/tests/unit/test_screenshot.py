@@ -9,20 +9,24 @@ import hashlib
 import imghdr
 import struct
 import tempfile
-import urllib
+import unittest
+
+import six
+from six.moves.urllib.parse import quote
+
+import mozinfo
 
 from marionette_driver import By
-from marionette_driver.errors import NoSuchElementException, NoSuchWindowException
+from marionette_driver.errors import NoSuchWindowException
 from marionette_harness import (
     MarionetteTestCase,
     skip,
-    skip_if_mobile,
     WindowManagerMixin,
 )
 
 
 def inline(doc, mime="text/html;charset=utf-8"):
-    return "data:{0},{1}".format(mime, urllib.quote(doc))
+    return "data:{0},{1}".format(mime, quote(doc))
 
 
 box = inline("<body><div id='box'><p id='green' style='width: 50px; height: 50px; "
@@ -40,6 +44,8 @@ class ScreenCaptureTestCase(MarionetteTestCase):
 
     def setUp(self):
         super(ScreenCaptureTestCase, self).setUp()
+
+        self.maxDiff = None
 
         self._device_pixel_ratio = None
 
@@ -69,6 +75,8 @@ class ScreenCaptureTestCase(MarionetteTestCase):
 
     def assert_png(self, screenshot):
         """Test that screenshot is a Base64 encoded PNG file."""
+        if six.PY3 and not isinstance(screenshot, bytes):
+            screenshot = bytes(screenshot, encoding='utf-8')
         image = base64.decodestring(screenshot)
         self.assertEqual(imghdr.what("", image), "png")
 
@@ -77,7 +85,11 @@ class ScreenCaptureTestCase(MarionetteTestCase):
             element = self.document_element
 
         screenshot_default = self.marionette.screenshot(element=element)
+        if six.PY3 and not isinstance(screenshot_default, bytes):
+            screenshot_default = bytes(screenshot_default, encoding='utf-8')
         screenshot_image = self.marionette.screenshot(element=element, format="base64")
+        if six.PY3 and not isinstance(screenshot_image, bytes):
+            screenshot_image = bytes(screenshot_image, encoding='utf-8')
         binary1 = self.marionette.screenshot(element=element, format="binary")
         binary2 = self.marionette.screenshot(element=element, format="binary")
         hash1 = self.marionette.screenshot(element=element, format="hash")
@@ -104,6 +116,8 @@ class ScreenCaptureTestCase(MarionetteTestCase):
         return rect["width"], rect["height"]
 
     def get_image_dimensions(self, screenshot):
+        if six.PY3 and not isinstance(screenshot, bytes):
+            screenshot = bytes(screenshot, encoding='utf-8')
         self.assert_png(screenshot)
         image = base64.decodestring(screenshot)
         width, height = struct.unpack(">LL", image[16:24])
@@ -119,10 +133,8 @@ class TestScreenCaptureChrome(WindowManagerMixin, ScreenCaptureTestCase):
     def setUp(self):
         super(TestScreenCaptureChrome, self).setUp()
         self.marionette.set_context("chrome")
-        self.marionette.set_pref("marionette.log.truncate", False)
 
     def tearDown(self):
-        self.marionette.clear_pref("marionette.log.truncate")
         self.close_all_windows()
         super(TestScreenCaptureChrome, self).tearDown()
 
@@ -135,7 +147,7 @@ class TestScreenCaptureChrome(WindowManagerMixin, ScreenCaptureTestCase):
             """))
 
     def open_dialog(self):
-        return self.open_chrome_window("chrome://marionette/content/test_dialog.xul")
+        return self.open_chrome_window("chrome://marionette/content/test_dialog.xhtml")
 
     def test_capture_different_context(self):
         """Check that screenshots in content and chrome are different."""
@@ -144,7 +156,6 @@ class TestScreenCaptureChrome(WindowManagerMixin, ScreenCaptureTestCase):
         screenshot_chrome = self.marionette.screenshot()
         self.assertNotEqual(screenshot_content, screenshot_chrome)
 
-    @skip_if_mobile("Fennec doesn't support other chrome windows")
     def test_capture_element(self):
         dialog = self.open_dialog()
         self.marionette.switch_to_window(dialog)
@@ -162,37 +173,26 @@ class TestScreenCaptureChrome(WindowManagerMixin, ScreenCaptureTestCase):
         self.marionette.close_chrome_window()
         self.marionette.switch_to_window(self.start_window)
 
-    # @skip_if_mobile("Fennec doesn't support other chrome windows")
-    @skip("Bug 1329424 - AssertionError: u'iVBORw0KGgoA... (images unexpectedly equal)")
-    def test_capture_flags(self):
+    def test_capture_full_area(self):
         dialog = self.open_dialog()
         self.marionette.switch_to_window(dialog)
 
-        textbox = self.marionette.find_element(By.ID, "text-box")
-        textbox.send_keys("")
-        screenshot_focus = self.marionette.screenshot()
+        root_dimensions = self.scale(self.get_element_dimensions(self.document_element))
 
-        self.marionette.execute_script("arguments[0].blur();", script_args=[textbox])
-        screenshot_no_focus = self.marionette.screenshot()
-
-        self.marionette.close_chrome_window()
-        self.marionette.switch_to_window(self.start_window)
-
-        self.assertNotEqual(screenshot_focus, screenshot_no_focus)
-
-    def test_capture_full_area(self):
+        # self.marionette.set_window_rect(width=100, height=100)
         # A full capture is not the outer dimensions of the window,
         # but instead the bounding box of the window's root node (documentElement).
         screenshot_full = self.marionette.screenshot()
         screenshot_root = self.marionette.screenshot(element=self.document_element)
 
+        self.marionette.close_chrome_window()
+        self.marionette.switch_to_window(self.start_window)
+
         self.assert_png(screenshot_full)
         self.assert_png(screenshot_root)
+        self.assertEqual(root_dimensions, self.get_image_dimensions(screenshot_full))
         self.assertEqual(screenshot_root, screenshot_full)
-        self.assertEqual(self.scale(self.get_element_dimensions(self.document_element)),
-                         self.get_image_dimensions(screenshot_full))
 
-    @skip_if_mobile("Fennec doesn't support other chrome windows")
     def test_capture_window_already_closed(self):
         dialog = self.open_dialog()
         self.marionette.switch_to_window(dialog)
@@ -201,7 +201,6 @@ class TestScreenCaptureChrome(WindowManagerMixin, ScreenCaptureTestCase):
         self.assertRaises(NoSuchWindowException, self.marionette.screenshot)
         self.marionette.switch_to_window(self.start_window)
 
-    @skip_if_mobile("Fennec doesn't support other chrome windows")
     def test_formats(self):
         dialog = self.open_dialog()
         self.marionette.switch_to_window(dialog)
@@ -214,46 +213,6 @@ class TestScreenCaptureChrome(WindowManagerMixin, ScreenCaptureTestCase):
     def test_format_unknown(self):
         with self.assertRaises(ValueError):
             self.marionette.screenshot(format="cheese")
-
-    @skip_if_mobile("Fennec doesn't support other chrome windows")
-    def test_highlight_elements(self):
-        dialog = self.open_dialog()
-        self.marionette.switch_to_window(dialog)
-
-        # Highlighting the element itself shouldn't make the image larger
-        element = self.marionette.find_element(By.ID, "test-list")
-        screenshot_element = self.marionette.screenshot(element=element)
-        screenshot_highlight = self.marionette.screenshot(element=element,
-                                                          highlights=[element])
-        self.assertEqual(self.scale(self.get_element_dimensions(element)),
-                         self.get_image_dimensions(screenshot_element))
-        self.assertNotEqual(screenshot_element, screenshot_highlight)
-
-        # Highlighting a sub element
-        button = self.marionette.find_element(By.ID, "choose-button")
-        screenshot_highlight_button = self.marionette.screenshot(element=element,
-                                                                 highlights=[button])
-        self.assertNotEqual(screenshot_element, screenshot_highlight_button)
-        self.assertNotEqual(screenshot_highlight, screenshot_highlight_button)
-
-        self.marionette.close_chrome_window()
-        self.marionette.switch_to_window(self.start_window)
-
-    def test_highlight_element_not_seen(self):
-        """Check that for not found elements an exception is raised."""
-        with self.marionette.using_context('content'):
-            self.marionette.navigate(box)
-            content_element = self.marionette.find_element(By.ID, "green")
-
-        self.assertRaisesRegexp(NoSuchElementException, "Web element reference not seen before",
-                                self.marionette.screenshot, highlights=[content_element])
-
-        chrome_document_element = self.document_element
-        with self.marionette.using_context('content'):
-            self.assertRaisesRegexp(NoSuchElementException,
-                                    "Web element reference not seen before",
-                                    self.marionette.screenshot,
-                                    highlights=[chrome_document_element])
 
 
 class TestScreenCaptureContent(WindowManagerMixin, ScreenCaptureTestCase):
@@ -269,7 +228,10 @@ class TestScreenCaptureContent(WindowManagerMixin, ScreenCaptureTestCase):
     @property
     def scroll_dimensions(self):
         return tuple(self.marionette.execute_script("""
-            return [document.body.scrollWidth, document.body.scrollHeight]
+            return [
+              document.documentElement.scrollWidth,
+              document.documentElement.scrollHeight
+            ];
             """))
 
     def test_capture_tab_already_closed(self):
@@ -280,9 +242,22 @@ class TestScreenCaptureContent(WindowManagerMixin, ScreenCaptureTestCase):
         self.assertRaises(NoSuchWindowException, self.marionette.screenshot)
         self.marionette.switch_to_window(self.start_tab)
 
-    @skip_if_mobile("Bug 1487124 - Android need its own maximum allowed dimensions")
+    @unittest.skipIf(mozinfo.info["bits"] == 32, "Bug 1582973 - Risk for OOM on 32bit")
     def test_capture_vertical_bounds(self):
         self.marionette.navigate(inline("<body style='margin-top: 32768px'>foo"))
+        screenshot = self.marionette.screenshot()
+        self.assert_png(screenshot)
+
+    @unittest.skipIf(mozinfo.info["bits"] == 32, "Bug 1582973 - Risk for OOM on 32bit")
+    def test_capture_horizontal_bounds(self):
+        self.marionette.navigate(inline("<body style='margin-left: 32768px'>foo"))
+        screenshot = self.marionette.screenshot()
+        self.assert_png(screenshot)
+
+    @unittest.skipIf(mozinfo.info["bits"] == 32, "Bug 1582973 - Risk for OOM on 32bit")
+    def test_capture_area_bounds(self):
+        self.marionette.navigate(
+            inline("<body style='margin-right: 21747px; margin-top: 21747px'>foo"))
         screenshot = self.marionette.screenshot()
         self.assert_png(screenshot)
 
@@ -304,31 +279,18 @@ class TestScreenCaptureContent(WindowManagerMixin, ScreenCaptureTestCase):
                          self.get_image_dimensions(screenshot))
         self.assertGreater(self.page_y_offset, 0)
 
-    @skip("Bug 1330560 - AssertionError: u'iVBORw0KGgoA... (images unexpectedly equal)")
-    def test_capture_flags(self):
-        self.marionette.navigate(input)
-
-        textbox = self.marionette.find_element(By.ID, "text-input")
-        textbox.send_keys("")
-        screenshot_focus = self.marionette.screenshot()
-
-        self.marionette.execute_script("arguments[0].blur();", script_args=[textbox])
-        screenshot_no_focus = self.marionette.screenshot()
-
-        self.assertNotEqual(screenshot_focus, screenshot_no_focus)
-
-    def test_capture_html_document_element(self):
+    def test_capture_full_html_document_element(self):
         self.marionette.navigate(long)
         screenshot = self.marionette.screenshot()
         self.assert_png(screenshot)
         self.assertEqual(self.scale(self.scroll_dimensions),
                          self.get_image_dimensions(screenshot))
 
-    def test_capture_svg_document_element(self):
+    def test_capture_full_svg_document_element(self):
         self.marionette.navigate(svg)
         screenshot = self.marionette.screenshot()
         self.assert_png(screenshot)
-        self.assertEqual(self.scale(self.get_element_dimensions(self.document_element)),
+        self.assertEqual(self.scale(self.scroll_dimensions),
                          self.get_image_dimensions(screenshot))
 
     def test_capture_viewport(self):
@@ -360,25 +322,6 @@ class TestScreenCaptureContent(WindowManagerMixin, ScreenCaptureTestCase):
     def test_format_unknown(self):
         with self.assertRaises(ValueError):
             self.marionette.screenshot(format="cheese")
-
-    def test_highlight_elements(self):
-        self.marionette.navigate(box)
-        element = self.marionette.find_element(By.TAG_NAME, "div")
-
-        # Highlighting the element itself shouldn't make the image larger
-        screenshot_element = self.marionette.screenshot(element=element)
-        screenshot_highlight = self.marionette.screenshot(element=element,
-                                                          highlights=[element])
-        self.assertEqual(self.scale(self.get_element_dimensions(element)),
-                         self.get_image_dimensions(screenshot_highlight))
-        self.assertNotEqual(screenshot_element, screenshot_highlight)
-
-        # Highlighting a sub element
-        paragraph = self.marionette.find_element(By.ID, "green")
-        screenshot_highlight_paragraph = self.marionette.screenshot(element=element,
-                                                                    highlights=[paragraph])
-        self.assertNotEqual(screenshot_element, screenshot_highlight_paragraph)
-        self.assertNotEqual(screenshot_highlight, screenshot_highlight_paragraph)
 
     def test_save_screenshot(self):
         expected = self.marionette.screenshot(format="binary")

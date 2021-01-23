@@ -25,6 +25,8 @@
 //    Second, we check if the request id of the rest requests is equal to focused
 //    window id.
 
+"use strict";
+
 const { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
 
 var server = new HttpServer();
@@ -109,11 +111,11 @@ function HttpResponseListener(id) {
 }
 
 HttpResponseListener.prototype = {
-  onStartRequest: function(request) {},
+  onStartRequest(request) {},
 
-  onDataAvailable: function(request, stream, off, cnt) {},
+  onDataAvailable(request, stream, off, cnt) {},
 
-  onStopRequest: function(request, status) {
+  onStopRequest(request, status) {
     log("STOP id=" + this.id);
     do_test_finished();
   },
@@ -127,7 +129,7 @@ function check_response_id(responses, windowId) {
   }
 }
 
-var responseQueue = new Array();
+var responseQueue = [];
 function setup_http_server() {
   log("setup_http_server");
   var prefs = Cc["@mozilla.org/preferences-service;1"].getService(

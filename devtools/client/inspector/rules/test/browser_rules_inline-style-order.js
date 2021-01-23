@@ -1,4 +1,3 @@
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -44,7 +43,9 @@ add_task(async function() {
 
     const onStyleMutation = waitForStyleModification(inspector);
     const onRuleRefreshed = inspector.once("rule-view-refreshed");
-    await ContentTask.spawn(browser, { name, value }, async function(change) {
+    await SpecialPowers.spawn(browser, [{ name, value }], async function(
+      change
+    ) {
       content.document.querySelector("div").style[change.name] = change.value;
     });
     await Promise.all([onStyleMutation, onRuleRefreshed]);

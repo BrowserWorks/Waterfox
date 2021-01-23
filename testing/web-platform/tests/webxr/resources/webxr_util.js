@@ -7,17 +7,63 @@
 //
 //   --enable-blink-features=MojoJS,MojoJSTest
 
+// Debugging message helper, by default does nothing. Implementations can
+// override this.
+var xr_debug = function(name, msg) {}
+var isChromiumBased = 'MojoInterfaceInterceptor' in self;
+var isWebKitBased = 'internals' in self && 'xrTest' in internals;
+
 function xr_promise_test(name, func, properties) {
   promise_test(async (t) => {
     // Perform any required test setup:
+    xr_debug(name, 'setup');
 
-    if (window.XRTest === undefined) {
-      // Chrome setup
-      await loadChromiumResources;
+    if (!navigator.xr.test) {
+      if (isChromiumBased) {
+        // Chrome setup
+        await loadChromiumResources();
+      } else if (isWebKitBased) {
+        // WebKit setup
+        await setupWebKitWebXRTestAPI();
+      }
     }
 
+    // Either the test api needs to be polyfilled and it's not set up above, or
+    // something happened to one of the known polyfills and it failed to be
+    // setup properly. Either way, the fact that xr_promise_test is being used
+    // means that the tests expect navigator.xr.test to be set. By rejecting now
+    // we can hopefully provide a clearer indication of what went wrong.
+    if (!navigator.xr.test) {
+      // We can't use assert_true here because it causes the wpt testharness
+      // to treat this as a test page and not as a test.
+      return Promise.reject("No navigator.xr.test object found, even after attempted load");
+    }
+
+    // Ensure that any devices are disconnected when done. If this were done in
+    // a .then() for the success case, a test that expected failure would
+    // already be marked done at the time that runs and the shutdown would
+    // interfere with the next test.
+    t.add_cleanup(async () => {
+      // Ensure system state is cleaned up.
+      xr_debug(name, 'cleanup');
+      await navigator.xr.test.disconnectAllDevices();
+    });
+
+    xr_debug(name, 'main');
     return func(t);
   }, name, properties);
+}
+
+// A utility function for waiting one animation frame before running the callback
+//
+// This is only needed after calling FakeXRDevice methods outside of an animation frame
+//
+// This is so that we can paper over the potential race allowed by the "next animation frame"
+// concept https://immersive-web.github.io/webxr-test-api/#xrsession-next-animation-frame
+function requestSkipAnimationFrame(session, callback) {
+ session.requestAnimationFrame(() => {
+  session.requestAnimationFrame(callback);
+ });
 }
 
 // A test function which runs through the common steps of requesting a session.
@@ -25,65 +71,90 @@ function xr_promise_test(name, func, properties) {
 // device, and the test object.
 // Requires a webglCanvas on the page.
 function xr_session_promise_test(
-    name, func, fakeDeviceInit, sessionOptions, properties) {
+    name, func, fakeDeviceInit, sessionMode, sessionInit, properties, glcontextPropertiesParam, gllayerPropertiesParam) {
   let testDeviceController;
   let testSession;
+  let sessionObjects = {};
+  const glcontextProperties = (glcontextPropertiesParam) ? glcontextPropertiesParam : {};
+  const gllayerProperties = (gllayerPropertiesParam) ? gllayerPropertiesParam : {};
 
   const webglCanvas = document.getElementsByTagName('canvas')[0];
+  // We can't use assert_true here because it causes the wpt testharness to treat
+  // this as a test page and not as a test.
   if (!webglCanvas) {
     promise_test(async (t) => {
       Promise.reject('xr_session_promise_test requires a canvas on the page!');
     }, name, properties);
   }
-  let gl = webglCanvas.getContext('webgl', {alpha: false, antialias: false});
+  let gl = webglCanvas.getContext('webgl', {alpha: false, antialias: false, ...glcontextProperties});
+  sessionObjects.gl = gl;
 
   xr_promise_test(
       name,
-      (t) =>
-          XRTest.simulateDeviceConnection(fakeDeviceInit)
+      (t) => {
+          // Ensure that any pending sessions are ended when done. This needs to
+          // use a cleanup function to ensure proper sequencing. If this were
+          // done in a .then() for the success case, a test that expected
+          // failure would already be marked done at the time that runs, and the
+          // shutdown would interfere with the next test which may have started.
+          t.add_cleanup(async () => {
+            // If a session was created, end it.
+            if (testSession) {
+              await testSession.end().catch(() => {});
+            }
+          });
+
+          return navigator.xr.test.simulateDeviceConnection(fakeDeviceInit)
               .then((controller) => {
                 testDeviceController = controller;
                 return gl.makeXRCompatible();
               })
               .then(() => new Promise((resolve, reject) => {
                       // Perform the session request in a user gesture.
-                      XRTest.simulateUserActivation(() => {
-                        navigator.xr.requestSession(sessionOptions)
+                      xr_debug(name, 'simulateUserActivation');
+                      navigator.xr.test.simulateUserActivation(() => {
+                        xr_debug(name, 'document.hasFocus()=' + document.hasFocus());
+                        navigator.xr.requestSession(sessionMode, sessionInit || {})
                             .then((session) => {
+                              xr_debug(name, 'session start');
                               testSession = session;
+                              session.mode = sessionMode;
+                              let glLayer = new XRWebGLLayer(session, gl, gllayerProperties);
+                              glLayer.context = gl;
                               // Session must have a baseLayer or frame requests
                               // will be ignored.
                               session.updateRenderState({
-                                  baseLayer: new XRWebGLLayer(session, gl),
-                                  outputContext: getOutputContext()
+                                  baseLayer: glLayer
                               });
-                              resolve(func(session, testDeviceController, t));
+                              sessionObjects.glLayer = glLayer;
+                              xr_debug(name, 'session.visibilityState=' + session.visibilityState);
+                              resolve(func(session, testDeviceController, t, sessionObjects));
                             })
                             .catch((err) => {
+                              xr_debug(name, 'error: ' + err);
                               reject(
                                   'Session with params ' +
-                                  JSON.stringify(sessionOptions) +
+                                  JSON.stringify(sessionMode) +
                                   ' was rejected on device ' +
                                   JSON.stringify(fakeDeviceInit) +
                                   ' with error: ' + err);
                             });
                       });
-                    }))
-              .then(() => {
-                // Cleanup system state.
-                testSession.end().catch(() => {});
-                XRTest.simulateDeviceDisconnection();
-              }),
+              }));
+      },
       properties);
 }
 
-// A utility function to create an output context as required by non-immersive
-// sessions.
-// https://immersive-web.github.io/webxr/#xrsessioncreationoptions-interface
-function getOutputContext() {
-  let outputCanvas = document.createElement('canvas');
-  document.body.appendChild(outputCanvas);
-  return outputCanvas.getContext('xrpresent');
+
+// This function wraps the provided function in a
+// simulateUserActivation() call, and resolves the promise with the
+// result of func(), or an error if one is thrown
+function promise_simulate_user_activation(func) {
+  return new Promise((resolve, reject) => {
+    navigator.xr.test.simulateUserActivation(() => {
+      try { let a = func(); resolve(a); } catch(e) { reject(e); }
+    });
+  });
 }
 
 // This functions calls a callback with each API object as specified
@@ -100,10 +171,10 @@ function forEachWebxrObject(callback) {
   callback(window.XRFrameRequestCallback, 'XRFrameRequestCallback');
   callback(window.XRPresentationContext, 'XRPresentationContext');
   callback(window.XRFrame, 'XRFrame');
+  callback(window.XRLayer, 'XRLayer');
   callback(window.XRView, 'XRView');
   callback(window.XRViewport, 'XRViewport');
   callback(window.XRViewerPose, 'XRViewerPose');
-  callback(window.XRLayer, 'XRLayer');
   callback(window.XRWebGLLayer, 'XRWebGLLayer');
   callback(window.XRWebGLLayerInit, 'XRWebGLLayerInit');
   callback(window.XRCoordinateSystem, 'XRCoordinateSystem');
@@ -113,35 +184,54 @@ function forEachWebxrObject(callback) {
   callback(window.XRCoordinateSystemEvent, 'XRCoordinateSystemEvent');
 }
 
-// Code for loading test api in chromium.
-let loadChromiumResources = Promise.resolve().then(() => {
-  if (!MojoInterfaceInterceptor) {
-    // Do nothing on non-Chromium-based browsers or when the Mojo bindings are
-    // not present in the global namespace.
-    return;
+// Code for loading test API in Chromium.
+function loadChromiumResources() {
+  let chromiumResources = [
+    '/gen/layout_test_data/mojo/public/js/mojo_bindings.js',
+    '/gen/mojo/public/mojom/base/time.mojom.js',
+    '/gen/gpu/ipc/common/mailbox_holder.mojom.js',
+    '/gen/gpu/ipc/common/sync_token.mojom.js',
+    '/gen/ui/display/mojom/display.mojom.js',
+    '/gen/ui/gfx/geometry/mojom/geometry.mojom.js',
+    '/gen/ui/gfx/mojom/gpu_fence_handle.mojom.js',
+    '/gen/ui/gfx/mojom/transform.mojom.js',
+    '/gen/device/vr/public/mojom/vr_service.mojom.js',
+    '/resources/chromium/webxr-test-math-helper.js',
+    '/resources/chromium/webxr-test.js',
+    '/resources/testdriver.js',
+    '/resources/testdriver-vendor.js',
+  ];
+
+  // This infrastructure is also used by Chromium-specific internal tests that
+  // may need additional resources (e.g. internal API extensions), this allows
+  // those tests to rely on this infrastructure while ensuring that no tests
+  // make it into public WPTs that rely on APIs outside of the webxr test API.
+  if (typeof(additionalChromiumResources) !== 'undefined') {
+    chromiumResources = chromiumResources.concat(additionalChromiumResources);
   }
 
   let chain = Promise.resolve();
-  ['/gen/layout_test_data/mojo/public/js/mojo_bindings.js',
-   '/gen/mojo/public/mojom/base/time.mojom.js',
-   '/gen/gpu/ipc/common/mailbox_holder.mojom.js',
-   '/gen/gpu/ipc/common/sync_token.mojom.js',
-   '/gen/ui/display/mojo/display.mojom.js',
-   '/gen/ui/gfx/geometry/mojo/geometry.mojom.js',
-   '/gen/ui/gfx/mojo/gpu_fence_handle.mojom.js',
-   '/gen/ui/gfx/mojo/transform.mojom.js',
-   '/gen/device/vr/public/mojom/vr_service.mojom.js',
-   '/resources/chromium/webxr-test.js', '/resources/testdriver.js',
-   '/resources/testdriver-vendor.js',
-  ].forEach(path => {
-    let script = document.createElement('script');
-    script.src = path;
-    script.async = false;
-    chain = chain.then(() => new Promise(resolve => {
-                         script.onload = () => resolve();
-                       }));
-    document.head.appendChild(script);
+    chromiumResources.forEach(path => {
+      let script = document.createElement('script');
+      script.src = path;
+      script.async = false;
+      chain = chain.then(() => new Promise(resolve => {
+                           script.onload = () => resolve();
+                         }));
+      document.head.appendChild(script);
+  });
+
+  chain = chain.then(() => {
+    xr_debug = navigator.xr.test.Debug;
   });
 
   return chain;
-});
+}
+
+function setupWebKitWebXRTestAPI() {
+  // WebKit setup. The internals object is used by the WebKit test runner
+  // to provide JS access to internal APIs. In this case it's used to
+  // ensure that XRTest is only exposed to wpt tests.
+  navigator.xr.test = internals.xrTest;
+  return Promise.resolve();
+}

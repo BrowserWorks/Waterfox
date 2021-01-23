@@ -1,0 +1,54 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY time.midnight "შუაღამე" >
+<!ENTITY time.noon "შუადღე" >
+
+<!-- Day Names -->
+<!-- LOCALIZATION NOTE : Accesskeys for day.1.Ddd to day.7.Ddd are currently
+     only used in Preferences > Views > Workweek groupbox -->
+<!ENTITY day.1.Ddd "კვი" >
+<!ENTITY day.1.Ddd.accesskey "კ">
+<!ENTITY day.2.Ddd "ორშ" >
+<!ENTITY day.2.Ddd.accesskey "ო">
+<!ENTITY day.3.Ddd "სამ" >
+<!ENTITY day.3.Ddd.accesskey "ს">
+<!ENTITY day.4.Ddd "ოთხ" >
+<!ENTITY day.4.Ddd.accesskey "თ">
+<!ENTITY day.5.Ddd "ხუთ" >
+<!ENTITY day.5.Ddd.accesskey "ხ">
+<!ENTITY day.6.Ddd "პარ" >
+<!ENTITY day.6.Ddd.accesskey "პ">
+<!ENTITY day.7.Ddd "შაბ" >
+<!ENTITY day.7.Ddd.accesskey "შ">
+
+<!ENTITY day.1.name "კვირა" >
+<!ENTITY day.2.name "ორშაბათი" >
+<!ENTITY day.3.name "სამშაბათი" >
+<!ENTITY day.4.name "ოთხშაბათი" >
+<!ENTITY day.5.name "ხუთშაბათი" >
+<!ENTITY day.6.name "პარასკევი" >
+<!ENTITY day.7.name "შაბათი" >
+
+<!ENTITY month.1.name "იანვარი" >
+<!ENTITY month.2.name "თებერვალი" >
+<!ENTITY month.3.name "მარტი" >
+<!ENTITY month.4.name "აპრილი" >
+<!ENTITY month.5.name "მაისი" >
+<!ENTITY month.6.name "ივნისი" >
+<!ENTITY month.7.name "ივლისი" >
+<!ENTITY month.8.name "აგვისტო" >
+<!ENTITY month.9.name "სექტემბერი" >
+<!ENTITY month.10.name "ოქტომბერი" >
+<!ENTITY month.11.name "ნოემბერი" >
+<!ENTITY month.12.name "დეკემებერი" >
+
+<!ENTITY onemonthbackward.tooltip "ერთი თვით წინ" >
+<!ENTITY onemonthforward.tooltip "ერთი თვით შემდგომ" >
+<!ENTITY oneyearbackward.tooltip "ერთი წლით წინ" >
+<!ENTITY oneyearforward.tooltip "ერთი წლით შემდგომ" >
+<!ENTITY showToday.tooltip "დღეს">
+<!ENTITY onedayforward.tooltip "ერთი დღით შემდგომ">
+<!ENTITY onedaybackward.tooltip "ერთი დღით წინ">
+<!ENTITY showselectedday.tooltip "ღონისძიებები მითითებული დღისთვის">

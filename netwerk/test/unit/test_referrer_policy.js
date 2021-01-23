@@ -1,3 +1,5 @@
+"use strict";
+
 const ReferrerInfo = Components.Constructor(
   "@mozilla.org/referrer-info;1",
   "nsIReferrerInfo",
@@ -21,7 +23,7 @@ function test_policy(test) {
 
   var uri = NetUtil.newURI(test.url);
   var chan = NetUtil.newChannel({
-    uri: uri,
+    uri,
     loadUsingSystemPrincipal: true,
   });
 
@@ -40,96 +42,96 @@ function test_policy(test) {
   }
 }
 
-const nsIHttpChannel = Ci.nsIHttpChannel;
+const nsIReferrerInfo = Ci.nsIReferrerInfo;
 // Assuming cross origin because we have no triggering principal available
 var gTests = [
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_UNSET,
+    policy: nsIReferrerInfo.EMPTY,
     defaultReferrerPolicyPref: 0,
     url: "https://test.example/foo",
     referrer: "https://test.example/referrer",
     expectedReferrerSpec: undefined,
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_UNSET,
+    policy: nsIReferrerInfo.EMPTY,
     defaultReferrerPolicyPref: 1,
     url: "http://test.example/foo",
     referrer: "http://test1.example/referrer",
     expectedReferrerSpec: undefined,
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_UNSET,
+    policy: nsIReferrerInfo.EMPTY,
     defaultReferrerPolicyPref: 2,
     url: "https://sub1.\xe4lt.example/foo",
     referrer: "https://sub1.\xe4lt.example/referrer",
     expectedReferrerSpec: "https://sub1.xn--lt-uia.example/",
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_UNSET,
+    policy: nsIReferrerInfo.EMPTY,
     defaultReferrerPolicyPref: 2,
     url: "https://test.example/foo",
     referrer: "https://test1.example/referrer",
     expectedReferrerSpec: "https://test1.example/",
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_UNSET,
+    policy: nsIReferrerInfo.EMPTY,
     defaultReferrerPolicyPref: 3,
     url: "https://test.example/foo",
     referrer: "https://test.example/referrer",
     expectedReferrerSpec: "https://test.example/referrer",
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_UNSET,
+    policy: nsIReferrerInfo.EMPTY,
     defaultReferrerPolicyPref: 3,
     url: "https://sub1.\xe4lt.example/foo",
     referrer: "https://sub1.\xe4lt.example/referrer",
     expectedReferrerSpec: "https://sub1.xn--lt-uia.example/referrer",
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_UNSET,
+    policy: nsIReferrerInfo.EMPTY,
     defaultReferrerPolicyPref: 3,
     url: "http://test.example/foo",
     referrer: "https://test.example/referrer",
     expectedReferrerSpec: undefined,
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_NO_REFERRER,
+    policy: nsIReferrerInfo.NO_REFERRER,
     url: "https://test.example/foo",
     referrer: "https://test.example/referrer",
     expectedReferrerSpec: undefined,
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_ORIGIN,
+    policy: nsIReferrerInfo.ORIGIN,
     url: "https://test.example/foo",
     referrer: "https://test.example/referrer",
     expectedReferrerSpec: "https://test.example/",
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_ORIGIN,
+    policy: nsIReferrerInfo.ORIGIN,
     url: "https://sub1.\xe4lt.example/foo",
     referrer: "https://sub1.\xe4lt.example/referrer",
     expectedReferrerSpec: "https://sub1.xn--lt-uia.example/",
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_UNSAFE_URL,
+    policy: nsIReferrerInfo.UNSAFE_URL,
     url: "https://test.example/foo",
     referrer: "https://test.example/referrer",
     expectedReferrerSpec: "https://test.example/referrer",
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_UNSAFE_URL,
+    policy: nsIReferrerInfo.UNSAFE_URL,
     url: "https://sub1.\xe4lt.example/foo",
     referrer: "https://sub1.\xe4lt.example/referrer",
     expectedReferrerSpec: "https://sub1.xn--lt-uia.example/referrer",
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_UNSAFE_URL,
+    policy: nsIReferrerInfo.UNSAFE_URL,
     url: "http://test.example/foo",
     referrer: "https://test.example/referrer",
     expectedReferrerSpec: "https://test.example/referrer",
   },
   {
-    policy: nsIHttpChannel.REFERRER_POLICY_UNSAFE_URL,
+    policy: nsIReferrerInfo.UNSAFE_URL,
     url: "http://sub1.\xe4lt.example/foo",
     referrer: "https://sub1.\xe4lt.example/referrer",
     expectedReferrerSpec: "https://sub1.xn--lt-uia.example/referrer",

@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Erweiterte Account-Einstellungen">
+<!-- LOCALIZATION NOTE (serverDirectory.label): DONT_TRANSLATE "IMAP" -->
+<!ENTITY serverDirectory.label "IMAP-Server-Ordner:">
+<!ENTITY serverDirectory.accesskey "I">
+<!ENTITY usingSubscription.label "Nur abonnierte Ordner anzeigen">
+<!ENTITY usingSubscription.accesskey "N">
+<!ENTITY dualUseFolders.label "Der Server unterstützt Ordner, die Unterordner und Nachrichten enthalten">
+<!ENTITY dualUseFolders.accesskey "D">
+<!ENTITY maximumConnectionsNumber.label "Maximale Anzahl der aufrecht erhaltenen Server-Verbindungen">
+<!ENTITY maximumConnectionsNumber.accesskey "M">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): DONT_TRANSLATE "IMAP" -->
+<!ENTITY namespaceDesc.label "Diese Einstellungen geben die Namespaces auf Ihrem IMAP-Server an">
+<!ENTITY personalNamespace.label "Persönlicher Namespace:">
+<!ENTITY personalNamespace.accesskey "P">
+<!ENTITY publicNamespace.label "Öffentlich (gemeinsam benutzt):">
+<!ENTITY publicNamespace.accesskey "Ö">
+<!ENTITY otherUsersNamespace.label "Andere Benutzer:">
+<!ENTITY otherUsersNamespace.accesskey "A">
+<!ENTITY overrideNamespaces.label "Server erlauben, diese Namespaces zu übergehen">
+<!ENTITY overrideNamespaces.accesskey "S">
+<!ENTITY pop3DeferringDesc.label "Beim Herunterladen von Mails vom Server dieses Accounts, folgende Ordner verwenden, um neue Nachrichten zu speichern:" >
+<!ENTITY accountInbox.label "Posteingang für diesen Account">
+<!ENTITY accountInbox.accesskey "o">
+<!ENTITY deferToServer.label "Posteingang eines anderen Accounts">
+<!ENTITY deferToServer.accesskey "P">
+<!ENTITY deferGetNewMail.label "Diesen Server beim Abfragen neuer Mails einbeziehen">
+<!ENTITY deferGetNewMail.accesskey "D">

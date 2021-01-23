@@ -30,13 +30,14 @@ import AccessibleImage from "./shared/AccessibleImage";
 import type { List } from "immutable";
 import type { ActiveSearchType } from "../reducers/types";
 import type { StatusType } from "../reducers/project-text-search";
-import type { Context } from "../types";
+import type { Context, SourceId } from "../types";
+import { PluralForm } from "devtools-modules";
 
 import "./ProjectSearch.css";
 
 export type Match = {
   type: "MATCH",
-  sourceId: string,
+  sourceId: SourceId,
   line: number,
   column: number,
   matchIndex: number,
@@ -49,22 +50,24 @@ type Result = {
   type: "RESULT",
   filepath: string,
   matches: Array<Match>,
-  sourceId: string,
+  sourceId: SourceId,
 };
 
 type Item = Result | Match;
 
 type State = {
   inputValue: string,
+  inputFocused: boolean,
   focusedItem: ?Item,
 };
 
+type OwnProps = {||};
 type Props = {
   cx: Context,
   query: string,
   results: List<Result>,
   status: StatusType,
-  activeSearch: ActiveSearchType,
+  activeSearch: ?ActiveSearchType,
   closeProjectSearch: typeof actions.closeProjectSearch,
   searchSources: typeof actions.searchSources,
   clearSearch: typeof actions.clearSearch,
@@ -89,6 +92,7 @@ export class ProjectSearch extends Component<Props, State> {
     super(props);
     this.state = {
       inputValue: this.props.query || "",
+      inputFocused: false,
       focusedItem: null,
     };
   }
@@ -177,7 +181,11 @@ export class ProjectSearch extends Component<Props, State> {
   };
 
   onEnterPress = () => {
-    if (!this.isProjectSearchEnabled() || !this.state.focusedItem) {
+    if (
+      !this.isProjectSearchEnabled() ||
+      !this.state.focusedItem ||
+      this.state.inputFocused
+    ) {
       return;
     }
     if (this.state.focusedItem.type === "MATCH") {
@@ -274,9 +282,12 @@ export class ProjectSearch extends Component<Props, State> {
   };
 
   renderSummary = () => {
-    return this.props.query !== ""
-      ? L10N.getFormatStr("sourceSearch.resultsSummary1", this.getResultCount())
-      : "";
+    if (this.props.query !== "") {
+      const resultsSummaryString = L10N.getStr("sourceSearch.resultsSummary2");
+      const count = this.getResultCount();
+      return PluralForm.get(count, resultsSummaryString).replace("#1", count);
+    }
+    return "";
   };
 
   shouldShowErrorEmoji() {
@@ -284,7 +295,7 @@ export class ProjectSearch extends Component<Props, State> {
   }
 
   renderInput() {
-    const { status } = this.props;
+    const { cx, closeProjectSearch, status } = this.props;
     return (
       <SearchInput
         query={this.state.inputValue}
@@ -295,12 +306,11 @@ export class ProjectSearch extends Component<Props, State> {
         summaryMsg={this.renderSummary()}
         isLoading={status === statusType.fetching}
         onChange={this.inputOnChange}
+        onFocus={() => this.setState({ inputFocused: true })}
+        onBlur={() => this.setState({ inputFocused: false })}
         onKeyDown={this.onKeyDown}
         onHistoryScroll={this.onHistoryScroll}
-        handleClose={
-          // TODO - This function doesn't quite match the signature.
-          (this.props.closeProjectSearch: any)
-        }
+        handleClose={() => closeProjectSearch(cx)}
         ref="searchInput"
       />
     );
@@ -333,14 +343,11 @@ const mapStateToProps = state => ({
   status: getTextSearchStatus(state),
 });
 
-export default connect(
-  mapStateToProps,
-  {
-    closeProjectSearch: actions.closeProjectSearch,
-    searchSources: actions.searchSources,
-    clearSearch: actions.clearSearch,
-    selectSpecificLocation: actions.selectSpecificLocation,
-    setActiveSearch: actions.setActiveSearch,
-    doSearchForHighlight: actions.doSearchForHighlight,
-  }
-)(ProjectSearch);
+export default connect<Props, OwnProps, _, _, _, _>(mapStateToProps, {
+  closeProjectSearch: actions.closeProjectSearch,
+  searchSources: actions.searchSources,
+  clearSearch: actions.clearSearch,
+  selectSpecificLocation: actions.selectSpecificLocation,
+  setActiveSearch: actions.setActiveSearch,
+  doSearchForHighlight: actions.doSearchForHighlight,
+})(ProjectSearch);

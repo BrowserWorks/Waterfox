@@ -14,15 +14,12 @@
 #include "nsString.h"
 #include "nsClipboard.h"
 #include "nsXPCOM.h"
-#include "nsISupportsPrimitives.h"
 #include "nsCOMPtr.h"
 #include "nsPrimitiveHelpers.h"
 #include "nsLinebreakConverter.h"
-#include "nsIMacUtils.h"
 #include "nsINode.h"
 #include "nsRect.h"
 #include "nsPoint.h"
-#include "nsIIOService.h"
 #include "mozilla/PresShell.h"
 #include "mozilla/dom/Document.h"
 #include "mozilla/dom/DocumentInlines.h"
@@ -72,18 +69,15 @@ NSImage* nsDragService::ConstructDragImage(nsINode* aDOMNode, const Maybe<CSSInt
     NSSize size;
     size.width = nsCocoaUtils::DevPixelsToCocoaPoints(dragRect.width, scaleFactor);
     size.height = nsCocoaUtils::DevPixelsToCocoaPoints(dragRect.height, scaleFactor);
-    image = [[NSImage alloc] initWithSize:size];
-    [image lockFocus];
-    [[NSColor grayColor] set];
-    NSBezierPath* path = [NSBezierPath bezierPath];
-    [path setLineWidth:2.0];
-    [path moveToPoint:NSMakePoint(0, 0)];
-    [path lineToPoint:NSMakePoint(0, size.height)];
-    [path lineToPoint:NSMakePoint(size.width, size.height)];
-    [path lineToPoint:NSMakePoint(size.width, 0)];
-    [path lineToPoint:NSMakePoint(0, 0)];
-    [path stroke];
-    [image unlockFocus];
+    image = [NSImage imageWithSize:size
+                           flipped:YES
+                    drawingHandler:^BOOL(NSRect dstRect) {
+                      [[NSColor grayColor] set];
+                      NSBezierPath* path = [NSBezierPath bezierPathWithRect:dstRect];
+                      [path setLineWidth:2.0];
+                      [path stroke];
+                      return YES;
+                    }];
   }
 
   LayoutDeviceIntPoint pt(dragRect.x, dragRect.YMost());
@@ -255,13 +249,10 @@ nsresult nsDragService::InvokeDragSessionImpl(nsIArray* aTransferableArray,
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NSRESULT;
 
   if (!gLastDragView) {
-    // gLastDragView is only set during -[ChildView mouseDragged:].
-    // InvokeDragSessionImpl is only called while Gecko processes a mouse move
-    // event. So if we get here with gLastDragView being null, that means that
-    // the mouse button has already been released, and mouseMoved is on the
-    // stack instead of mouseDragged. In that case we need to abort the drag
-    // because the OS won't know where to drop whatever's being dragged, and we
-    // might end up with a stuck drag & drop session.
+    // gLastDragView is non-null between -[ChildView mouseDown:] and -[ChildView mouseUp:].
+    // If we get here with gLastDragView being null, that means that the mouse button has already
+    // been released. In that case we need to abort the drag because the OS won't know where to drop
+    // whatever's being dragged, and we might end up with a stuck drag & drop session.
     return NS_ERROR_FAILURE;
   }
 

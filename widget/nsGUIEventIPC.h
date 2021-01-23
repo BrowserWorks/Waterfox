@@ -74,6 +74,8 @@ struct ParamTraits<mozilla::WidgetEvent> {
       // Reset cross process dispatching state here because the event has not
       // been dispatched to different process from current process.
       aResult->ResetCrossProcessDispatchingState();
+      // Mark the event comes from another process.
+      aResult->MarkAsComingFromAnotherProcess();
     }
     return ret;
   }
@@ -136,7 +138,6 @@ struct ParamTraits<mozilla::WidgetMouseEventBase> {
     WriteParam(aMsg, aParam.mButton);
     WriteParam(aMsg, aParam.mButtons);
     WriteParam(aMsg, aParam.mPressure);
-    WriteParam(aMsg, aParam.mHitCluster);
     WriteParam(aMsg, aParam.mInputSource);
   }
 
@@ -147,7 +148,6 @@ struct ParamTraits<mozilla::WidgetMouseEventBase> {
            ReadParam(aMsg, aIter, &aResult->mButton) &&
            ReadParam(aMsg, aIter, &aResult->mButtons) &&
            ReadParam(aMsg, aIter, &aResult->mPressure) &&
-           ReadParam(aMsg, aIter, &aResult->mHitCluster) &&
            ReadParam(aMsg, aIter, &aResult->mInputSource);
   }
 };
@@ -484,7 +484,8 @@ struct ParamTraits<mozilla::TextRangeStyle> {
 
   static void Write(Message* aMsg, const paramType& aParam) {
     WriteParam(aMsg, aParam.mDefinedStyles);
-    WriteParam(aMsg, aParam.mLineStyle);
+    WriteParam(aMsg, static_cast<mozilla::TextRangeStyle::LineStyleType>(
+                         aParam.mLineStyle));
     WriteParam(aMsg, aParam.mIsBoldLine);
     WriteParam(aMsg, aParam.mForegroundColor);
     WriteParam(aMsg, aParam.mBackgroundColor);
@@ -493,12 +494,17 @@ struct ParamTraits<mozilla::TextRangeStyle> {
 
   static bool Read(const Message* aMsg, PickleIterator* aIter,
                    paramType* aResult) {
-    return ReadParam(aMsg, aIter, &aResult->mDefinedStyles) &&
-           ReadParam(aMsg, aIter, &aResult->mLineStyle) &&
-           ReadParam(aMsg, aIter, &aResult->mIsBoldLine) &&
-           ReadParam(aMsg, aIter, &aResult->mForegroundColor) &&
-           ReadParam(aMsg, aIter, &aResult->mBackgroundColor) &&
-           ReadParam(aMsg, aIter, &aResult->mUnderlineColor);
+    mozilla::TextRangeStyle::LineStyleType lineStyle;
+    if (!ReadParam(aMsg, aIter, &aResult->mDefinedStyles) ||
+        !ReadParam(aMsg, aIter, &lineStyle) ||
+        !ReadParam(aMsg, aIter, &aResult->mIsBoldLine) ||
+        !ReadParam(aMsg, aIter, &aResult->mForegroundColor) ||
+        !ReadParam(aMsg, aIter, &aResult->mBackgroundColor) ||
+        !ReadParam(aMsg, aIter, &aResult->mUnderlineColor)) {
+      return false;
+    }
+    aResult->mLineStyle = mozilla::TextRangeStyle::ToLineStyle(lineStyle);
+    return true;
   }
 };
 
@@ -1005,12 +1011,12 @@ struct ParamTraits<mozilla::WritingMode> {
   typedef mozilla::WritingMode paramType;
 
   static void Write(Message* aMsg, const paramType& aParam) {
-    WriteParam(aMsg, aParam.mWritingMode);
+    WriteParam(aMsg, aParam.mWritingMode.bits);
   }
 
   static bool Read(const Message* aMsg, PickleIterator* aIter,
                    paramType* aResult) {
-    return ReadParam(aMsg, aIter, &aResult->mWritingMode);
+    return ReadParam(aMsg, aIter, &aResult->mWritingMode.bits);
   }
 };
 
@@ -1211,7 +1217,15 @@ struct ParamTraits<mozilla::PanGestureInput::PanGestureType>
           mozilla::PanGestureInput::sHighestPanGestureType> {};
 
 template <>
-struct ParamTraits<mozilla::PanGestureInput> {
+struct ParamTraits<mozilla::PanGestureInput::PanDeltaType>
+    : public ContiguousEnumSerializerInclusive<
+          mozilla::PanGestureInput::PanDeltaType,
+          mozilla::PanGestureInput::PanDeltaType::PANDELTA_PAGE,
+          mozilla::PanGestureInput::sHighestPanDeltaType> {};
+
+template <>
+struct ParamTraits<mozilla::PanGestureInput>
+    : BitfieldHelper<mozilla::PanGestureInput> {
   typedef mozilla::PanGestureInput paramType;
 
   static void Write(Message* aMsg, const paramType& aParam) {
@@ -1225,6 +1239,7 @@ struct ParamTraits<mozilla::PanGestureInput> {
     WriteParam(aMsg, aParam.mLineOrPageDeltaY);
     WriteParam(aMsg, aParam.mUserDeltaMultiplierX);
     WriteParam(aMsg, aParam.mUserDeltaMultiplierY);
+    WriteParam(aMsg, aParam.mDeltaType);
     WriteParam(aMsg, aParam.mHandledByAPZ);
     WriteParam(aMsg, aParam.mFollowedByMomentum);
     WriteParam(
@@ -1232,6 +1247,7 @@ struct ParamTraits<mozilla::PanGestureInput> {
         aParam
             .mRequiresContentResponseIfCannotScrollHorizontallyInStartDirection);
     WriteParam(aMsg, aParam.mOverscrollBehaviorAllowsSwipe);
+    WriteParam(aMsg, aParam.mSimulateMomentum);
   }
 
   static bool Read(const Message* aMsg, PickleIterator* aIter,
@@ -1246,13 +1262,19 @@ struct ParamTraits<mozilla::PanGestureInput> {
            ReadParam(aMsg, aIter, &aResult->mLineOrPageDeltaY) &&
            ReadParam(aMsg, aIter, &aResult->mUserDeltaMultiplierX) &&
            ReadParam(aMsg, aIter, &aResult->mUserDeltaMultiplierY) &&
-           ReadParam(aMsg, aIter, &aResult->mHandledByAPZ) &&
-           ReadParam(aMsg, aIter, &aResult->mFollowedByMomentum) &&
-           ReadParam(
-               aMsg, aIter,
-               &aResult
-                    ->mRequiresContentResponseIfCannotScrollHorizontallyInStartDirection) &&
-           ReadParam(aMsg, aIter, &aResult->mOverscrollBehaviorAllowsSwipe);
+           ReadParam(aMsg, aIter, &aResult->mDeltaType) &&
+           ReadBoolForBitfield(aMsg, aIter, aResult,
+                               &paramType::SetHandledByAPZ) &&
+           ReadBoolForBitfield(aMsg, aIter, aResult,
+                               &paramType::SetFollowedByMomentum) &&
+           ReadBoolForBitfield(
+               aMsg, aIter, aResult,
+               &paramType::
+                   SetRequiresContentResponseIfCannotScrollHorizontallyInStartDirection) &&
+           ReadBoolForBitfield(aMsg, aIter, aResult,
+                               &paramType::SetOverscrollBehaviorAllowsSwipe) &&
+           ReadBoolForBitfield(aMsg, aIter, aResult,
+                               &paramType::SetSimulateMomentum);
   }
 };
 
@@ -1275,6 +1297,7 @@ struct ParamTraits<mozilla::PinchGestureInput> {
     WriteParam(aMsg, aParam.mLocalFocusPoint);
     WriteParam(aMsg, aParam.mCurrentSpan);
     WriteParam(aMsg, aParam.mPreviousSpan);
+    WriteParam(aMsg, aParam.mHandledByAPZ);
   }
 
   static bool Read(const Message* aMsg, PickleIterator* aIter,
@@ -1285,7 +1308,8 @@ struct ParamTraits<mozilla::PinchGestureInput> {
            ReadParam(aMsg, aIter, &aResult->mFocusPoint) &&
            ReadParam(aMsg, aIter, &aResult->mLocalFocusPoint) &&
            ReadParam(aMsg, aIter, &aResult->mCurrentSpan) &&
-           ReadParam(aMsg, aIter, &aResult->mPreviousSpan);
+           ReadParam(aMsg, aIter, &aResult->mPreviousSpan) &&
+           ReadParam(aMsg, aIter, &aResult->mHandledByAPZ);
   }
 };
 
@@ -1338,6 +1362,13 @@ struct ParamTraits<mozilla::WheelDeltaAdjustmentStrategy>
           mozilla::WheelDeltaAdjustmentStrategy::eSentinel> {};
 
 template <>
+struct ParamTraits<mozilla::layers::APZWheelAction>
+    : public ContiguousEnumSerializerInclusive<
+          mozilla::layers::APZWheelAction,
+          mozilla::layers::APZWheelAction::Scroll,
+          mozilla::layers::kHighestAPZWheelAction> {};
+
+template <>
 struct ParamTraits<mozilla::ScrollWheelInput> {
   typedef mozilla::ScrollWheelInput paramType;
 
@@ -1359,6 +1390,7 @@ struct ParamTraits<mozilla::ScrollWheelInput> {
     WriteParam(aMsg, aParam.mIsMomentum);
     WriteParam(aMsg, aParam.mAllowToOverrideSystemScrollSpeed);
     WriteParam(aMsg, aParam.mWheelDeltaAdjustmentStrategy);
+    WriteParam(aMsg, aParam.mAPZAction);
   }
 
   static bool Read(const Message* aMsg, PickleIterator* aIter,
@@ -1380,7 +1412,8 @@ struct ParamTraits<mozilla::ScrollWheelInput> {
            ReadParam(aMsg, aIter, &aResult->mIsMomentum) &&
            ReadParam(aMsg, aIter,
                      &aResult->mAllowToOverrideSystemScrollSpeed) &&
-           ReadParam(aMsg, aIter, &aResult->mWheelDeltaAdjustmentStrategy);
+           ReadParam(aMsg, aIter, &aResult->mWheelDeltaAdjustmentStrategy) &&
+           ReadParam(aMsg, aIter, &aResult->mAPZAction);
   }
 };
 

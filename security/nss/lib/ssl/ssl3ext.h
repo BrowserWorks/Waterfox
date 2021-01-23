@@ -77,6 +77,16 @@ struct TLSExtensionDataStr {
     SSLSignatureScheme *sigSchemes;
     unsigned int numSigSchemes;
 
+    /* Keep track of signature schemes that the remote peer supports for
+     * Delegated Credentials signatures, as well was those we have
+     * advertised (for purposes of validating any received DC).
+     * This list may not be the same as those supported for certificates.
+     * Only valid for TLS 1.3. */
+    SSLSignatureScheme *delegCredSigSchemes;
+    unsigned int numDelegCredSigSchemes;
+    SSLSignatureScheme *delegCredSigSchemesAdvertised;
+    unsigned int numDelegCredSigSchemesAdvertised;
+
     SECItem certReqContext;
     CERTDistNames certReqAuthorities;
 
@@ -111,6 +121,19 @@ struct TLSExtensionDataStr {
     /* Pointer into |ss->esniKeys->keyShares| */
     TLS13KeyShareEntry *peerEsniShare;
     PRUint8 esniNonce[TLS13_ESNI_NONCE_SIZE];
+
+    /* Delegated credentials.
+     *
+     * The delegated credential sent by the peer. Set by
+     * |tls13_ReadDelegatedCredential|.
+     */
+    sslDelegatedCredential *peerDelegCred;
+    /* Whether the peer requested a delegated credential. */
+    PRBool peerRequestedDelegCred;
+    /* Whether the host is committed to using a delegated credential. Set by
+     * |tls13_MaybeSetDelegatedCredential|.
+     */
+    PRBool sendingDelegCredToPeer;
 };
 
 typedef struct TLSExtensionStr {

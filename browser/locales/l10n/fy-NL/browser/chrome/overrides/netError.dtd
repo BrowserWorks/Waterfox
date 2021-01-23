@@ -1,0 +1,208 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "Probleem by it laden fan de side">
+<!ENTITY retry.label "Probearje it opnij">
+<!ENTITY returnToPreviousPage.label "Tebek">
+<!ENTITY returnToPreviousPage1.label "Gean werom (oanrekommandearre)">
+<!ENTITY advanced2.label "Avansearre…">
+<!ENTITY viewCertificate.label "Sertifikaat besjen">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "Server net fûn">
+<!ENTITY dnsNotFound.longDesc1 "
+<strong>As it adres krekt is, kinne jo trije oare saken probearje:</strong>
+<ul>
+ <li>Probearje it letter opnij.</li>
+ <li>Kontrolearje jo netwurkferbining.</li>
+ <li>As jo ferbining hawwe mar jo efter in firewall binne, kontrolearje dan oft &brandShortName; tagong hat ta it web.</li>
+</ul>
+">
+
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>Kontrolearje de bestânsnamme op grutte/lytse letters of oare typflaters.</li>
+  <li>Kontrolearje oft it bestân ferpleatst, omneamd of fuortsmiten is.</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.longDesc "
+<ul>
+  <li>It kin fuortsmiten wêze, ferpleatst, of bestânsmachtigingen kinne tagong tsjingean.</li>
+</ul>
+">
+
+<!ENTITY generic.longDesc "
+<p>&brandShortName; kin om ien oft oare reden dizze side net lade.</p>
+">
+
+<!ENTITY captivePortal.title "Oanmelde by netwurk">
+<!ENTITY captivePortal.longDesc2 "
+<p>Jo moatte jo oanmelde by dit netwurk eardat jo tagong krije ta it ynternet.</p>
+">
+
+<!ENTITY openPortalLoginPage.label2 "Oanmeldside fan netwurk iepenje">
+
+<!ENTITY malformedURI.pageTitle "Unjildige URL">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>It opfrege dokumint is net beskikber yn de buffer fan &brandShortName;.</p><ul><li>As befeiligingsmaatregel freget &brandShortName; gefoelige dokuminten net automatysk opnij op.</li><li>Klik op Opnij probearje om it dokumint opnij fan de website op te freegjen.</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "
+<ul>
+  <li>Klik ‘Opnij probearje’ om nei online modus te gean en fernij de side.</li>
+</ul>
+">
+
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>Nim kontakt op mei de website-eigeners om se oer dit probleem te ynformearjen.</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>Nim kontakt op mei de website-eigeners om se oer dit probleem te ynformearjen.</li>
+</ul>
+">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>Miskien moatte jo oare software ynstallearje om dit adres te iepenjen.</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>Kontrolearje oft jo proxy-ynstellingen goed binne.</li>
+  <li>Nim kontakt op mei jo netwurkbehearder om te kontrolearjen oft de proxyserver
+    wurket.</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.longDesc "
+<ul>
+  <li>Kontrolearje oft jo proxy-ynstellingen goed binne.</li>
+  <li>Gean nei oft jo kompjûter op in wurkjend netwurk oansletten is.</li>
+  <li>Gean nei oft &brandShortName; tagong hat ta it web of jo 
+    kompjûter of netwurk befeilige is troch in brânmuorre of proxyserver.</li>
+</ul>
+">
+
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>Dit probleem kin somtiden feroarsake wurde troch it útskeakeljen of wegerjen
+   fan cookies.</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>Soargje derfoar dat de persoanlike befeiligingsbehearder op jo systeem 
+  ynstallearre is.</li>
+  <li>Dit kin it gefolch wêze fan in net-standert konfiguraasje fan de server.</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>De side dy't jo besjen wolle kin net toand wurde, omdat de echtheid fan de ûntfongen gegevens net ferifiearre wurde kin.</li>
+  <li>Nim kontakt op mei de website-eigeners om se oer dit probleem te ynformearjen.</li>
+</ul>
+">
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara2 "&brandShortName; hat in mooglik befeiligingsrisiko detektearre en is net trochgien nei <span class='hostname'/>. As jo dizze website besykje, soene hackers probearje kinne gegevens te stellen, lykas jo wachtwurden, e-mailadressen of creditcardgegevens.">
+<!ENTITY certerror.sts.introPara "&brandShortName; hat in mooglik befeiligingsrisiko detektearre en is net trochgien nei <span class='hostname'/>, omdat dizze website in befeilige ferbining fereasket.">
+
+<!ENTITY certerror.expiredCert.introPara "&brandShortName; hat in probleem detektearre en is net trochgien nei <span class='hostname'/>. Of de website is net krekt konfigurearre, of jo kompjûterklok is op de ferkearde tiid ynsteld.">
+<!ENTITY certerror.expiredCert.secondPara2 "Wierskynlik is it sertifikaat fan de website ferrûn, wêrtroch &brandShortName; gjin befeilige ferbining meitsje kin. As jo dizze website besykje, soene oanfallers probearje kinne gegevens te stellen, lykas jo wachtwurden, e-mailadressen of creditcardgegevens.">
+<!ENTITY certerror.expiredCert.sts.secondPara "Wierskynlik is it sertifikaat fan de website ferrûn, wêrtroch &brandShortName; gjin befeilige ferbining meitsje kin.">
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "Wat kinne jo hjir oan dwaan?">
+
+<!ENTITY certerror.unknownIssuer.whatCanYouDoAboutIt "
+<p>It probleem leit hiel wierskynlik by de website, en jo kinne neat dwaan om dit te ferhelpen.</p>
+<p>As jo op in saaklik netwurk binne of antifirussoftware brûke, kinne jo kontakt opnimme mei de stipeôfdielingen foar assistinsje. Jo kinne ek de behearder fan de website oer it probleem ynformearje.</p>
+">
+
+<!ENTITY certerror.expiredCert.whatCanYouDoAboutIt2 "
+<p>Jo kompjûterklok is ynsteld op <span id='wrongSystemTime_systemDate2'/>. Soargje derfoar dat jo kompjûter op de krekte datum, tiid en tiidssône ynsteld is yn jo systeemynstellingen, en fernij dêrnei <span class='hostname'/>.</p>
+<p>As jo klok al op de krekte tiid ynsteld is, is de website wierskynlik net krekt konfigurearre, en kinne jo neat dwaan om it probleem te ferhelpen. Jo kinne wol de behearder fan de website oer it probleem ynformearje.</p>
+">
+
+<!ENTITY certerror.badCertDomain.whatCanYouDoAboutIt "
+<p>It probleem leit hiel wierskynlik by de website, en jo kinne neat dwaan om dit te ferhelpen. Jo kinne de behearder fan de website oer it probleem ynformearje.</p>
+">
+
+<!ENTITY sharedLongDesc "
+<ul>
+  <li>Miskien is de website tydlik net beskikber. Probearje it letter 
+    nochris.</li>
+  <li>As jo gjin inkelde side lade kinne, kontrolearje dan de netwurkferbining
+    fan jo kompjûter.</li>
+  <li>As jo kompjûter of netwurk befeilige wurdt troch in firewall of proxy,
+    soargje der dan foar dat &brandShortName; tagong hat ta it web.</li>
+</ul>
+">
+
+<!ENTITY cspBlocked.longDesc "<p>De browser hat opkeard dat de side op dizze manier laden wurd, omdat de side in ynhâldsbefeiligingsbelied hat dat dit net tastiet.</p>">
+
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; hat opkeard dat de side yn dizze kontekst laden waard, omdat de side in belied foar X-Frame-Options hat dat dit net tastiet.</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>De side dy't jo besjen wolle kin net werjûn wurde, omdat der in flater yn de gegevensoerdracht detektearre is.</p><ul><li>Nim kontakt op mei de website-eigeners om se oer dit probleem te ynformearjen.</li></ul>">
+
+<!ENTITY securityOverride.exceptionButton1Label "It risiko oanfurdigje en trochgean">
+
+<!ENTITY errorReporting.automatic2 "Flaters as dizze rapportearje om Mozilla te helpen kweawollende websites te werkennen en te blokkearjen">
+<!ENTITY errorReporting.learnMore "Mear ynfo…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Nim kontakt op mei de website-eigeners om se oer dit probleem te ynformearjen.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Avansearre ynfo: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.pagetitle2  "Warskôging: mooglik befeiligingsrisiko">
+<!ENTITY certerror.sts.pagetitle  "Gjin ferbining makke: mooglik befeiligingsprobleem">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation1 "<span class='hostname'></span> hat in befeiligingsbelied mei de namme HTTP Strict Transport Security (HSTS), wat betsjut dat &brandShortName; allinnich in befeilige ferbining dêrmei meitsje kin. Jo kinne gjin útsûndering tafoegje om dizze website te besykjen.">
+<!ENTITY certerror.copyToClipboard.label "Tekst nei klamboerd kopiearje">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> brûkt ferâldere befeiligingstechnology dy't kwetsber is foar oanfallen. In oanfaller kin ienfâldichwei gegevens ûntdekke wêrfan jo tochten dat dizze feilich wiene. De websitebehearder moat earst de server yn oarder meitsje eardat jo de website besykje kinne.</p><p>Flaterkoade: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Blokkearre side">
+
+<!ENTITY certerror.mitm.longDesc "<span class='hostname'></span> is hiel wierskynlik in feilige website, mar der koe gjin befeilige ferbining ta stân brocht wurde. Dit probleem wurdt feroarsake troch <span class='mitm-name'/>, dat software op jo kompjûter of op jo netwurk oanbelanget.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt1 "As jo antifirussoftware in funksje befettet dy fersifere ferbiningen scant (faaks ‘webscanning’ of ‘https-scanning’ neamd), kinne jo dy funksje útskeakelje. As dat net wurket, kinne jo de antifirussoftware fuortsmite en opnij ynstallearje.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt2 "As jo op in saaklik netwurk binne, kinne jo kontakt opnimme mei jo IT-ôfdieling.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt3 "As jo net bekend binne mei <span class='mitm-name'/>, kin dit in oanfal wêze en kinne jo de website better net besykje.">
+<!ENTITY certerror.mitm.sts.whatCanYouDoAboutIt3 "As jo net bekend binne mei <span class='mitm-name'/>, kin dit in oanfal wêze, en is der neat wat jo dwaan kinne om de website te besykjen.">
+
+<!ENTITY clockSkewError.longDesc "Jo kompjûter tinkt dat it <span id='wrongSystemTime_systemDate1'/> is, wêrtroch &brandShortName; gjin befeilige ferbining mei <span class='hostname'></span> meitsje kin. Stel jo kompjûterklok yn nei de aktuele datum, tiid en tiidsône yn jo systeemynstellingen, en fernij dêrnei de side om <span class='hostname'></span> te besykjen.">
+
+<!ENTITY prefReset.longDesc "It liket derop dat dit troch jo netwurkbefeiligingsynstellingen feroarsake wurdt. Wolle jo de standertynstellingen werom bringe?">
+<!ENTITY prefReset.label "Standertynstellingen werom bringe">
+
+<!ENTITY enableTls10.longDesc "Dizze website stipet mooglik it TLS 1.2-protokol net, wat de minimale ferzje is dy't troch &brandShortName; stipe wurdt. Troch TLS 1.0 en TLS 1.1 yn te skeakeljen kin mooglik de ferbining ta stân brocht wurde.">
+<!ENTITY enableTls10.note "TLS 1.0 en TLS 1.1 wurde yn in takomstige ferzje permanint útskeakele.">
+<!ENTITY enableTls10.label "TLS 1.0 en 1.1 ynskeakelje">
+
+<!ENTITY networkProtocolError.longDesc "<p>De side dy't jo besjen wolle kin net werjûn wurde, omdat der in flater yn it netwurkprotokol detektearre is.</p><ul><li>Nim kontakt op mei de website-eigeners om se oer dit probleem te ynformearjen.</li></ul>">

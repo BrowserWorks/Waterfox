@@ -1,15 +1,17 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
-/* globals $, $$, PerformanceController */
+/* globals $ PerformanceController */
 "use strict";
 
 // No sense updating the overview more often than receiving data from the
 // backend. Make sure this isn't lower than DEFAULT_TIMELINE_DATA_PULL_TIMEOUT
 // in devtools/server/actors/timeline.js
 
-const EVENTS = require("../events");
-const { GraphsController } = require("../modules/widgets/graphs");
+const EVENTS = require("devtools/client/performance/events");
+const {
+  GraphsController,
+} = require("devtools/client/performance/modules/widgets/graphs");
 
 const EventEmitter = require("devtools/shared/event-emitter");
 
@@ -245,7 +247,7 @@ const OverviewView = {
     if (recording !== PerformanceController.getCurrentRecording()) {
       return;
     }
-    this.render(FRAMERATE_GRAPH_HIGH_RES_INTERVAL);
+    await this.render(FRAMERATE_GRAPH_HIGH_RES_INTERVAL);
     await this._checkSelection(recording);
   }),
 

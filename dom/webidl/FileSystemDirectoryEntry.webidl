@@ -6,16 +6,17 @@
  * https://wicg.github.io/entries-api/#idl-index
  */
 
+[Exposed=Window]
 interface FileSystemDirectoryEntry : FileSystemEntry {
     FileSystemDirectoryReader createReader();
 
     void getFile(optional USVString? path,
-                 optional FileSystemFlags options,
+                 optional FileSystemFlags options = {},
                  optional FileSystemEntryCallback successCallback,
                  optional ErrorCallback errorCallback);
 
     void getDirectory(optional USVString? path,
-                      optional FileSystemFlags options,
+                      optional FileSystemFlags options = {},
                       optional FileSystemEntryCallback successCallback,
                       optional ErrorCallback errorCallback);
 };

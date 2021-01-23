@@ -20,12 +20,13 @@ add_task(async function test_flush() {
   is(entries.length, 1, "there is a single history entry");
 
   // Click the link to navigate, this will add second shistory entry.
-  await ContentTask.spawn(browser, null, async function() {
+  await SpecialPowers.spawn(browser, [], async function() {
     return new Promise(resolve => {
-      addEventListener("hashchange", function onHashChange() {
-        removeEventListener("hashchange", onHashChange);
-        resolve();
-      });
+      docShell.chromeEventHandler.addEventListener(
+        "hashchange",
+        () => resolve(),
+        { once: true, capture: true }
+      );
 
       // Click the link.
       content.document.querySelector("a").click();
@@ -58,12 +59,13 @@ add_task(async function test_crash() {
   is(entries.length, 1, "there is a single history entry");
 
   // Click the link to navigate.
-  await ContentTask.spawn(browser, null, async function() {
+  await SpecialPowers.spawn(browser, [], async function() {
     return new Promise(resolve => {
-      addEventListener("hashchange", function onHashChange() {
-        removeEventListener("hashchange", onHashChange);
-        resolve();
-      });
+      docShell.chromeEventHandler.addEventListener(
+        "hashchange",
+        () => resolve(),
+        { once: true, capture: true }
+      );
 
       // Click the link.
       content.document.querySelector("a").click();
@@ -74,7 +76,7 @@ add_task(async function test_crash() {
   // the content process. The "crash" message makes it first so that we don't
   // get a chance to process the flush. The TabStateFlusher however should be
   // notified so that the flush still completes.
-  let promise1 = BrowserTestUtils.crashBrowser(browser);
+  let promise1 = BrowserTestUtils.crashFrame(browser);
   let promise2 = TabStateFlusher.flush(browser);
   await Promise.all([promise1, promise2]);
 
@@ -100,12 +102,13 @@ add_task(async function test_remove() {
   is(entries.length, 1, "there is a single history entry");
 
   // Click the link to navigate.
-  await ContentTask.spawn(browser, null, async function() {
+  await SpecialPowers.spawn(browser, [], async function() {
     return new Promise(resolve => {
-      addEventListener("hashchange", function onHashChange() {
-        removeEventListener("hashchange", onHashChange);
-        resolve();
-      });
+      docShell.chromeEventHandler.addEventListener(
+        "hashchange",
+        () => resolve(),
+        { once: true, capture: true }
+      );
 
       // Click the link.
       content.document.querySelector("a").click();

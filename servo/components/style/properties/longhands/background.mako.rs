@@ -10,38 +10,38 @@ ${helpers.predefined_type(
     "background-color",
     "Color",
     "computed::Color::transparent()",
+    engines="gecko servo-2013 servo-2020",
     initial_specified_value="SpecifiedValue::transparent()",
     spec="https://drafts.csswg.org/css-backgrounds/#background-color",
     animation_value_type="AnimatedColor",
     ignored_when_colors_disabled=True,
-    allow_quirks=True,
-    flags="APPLIES_TO_FIRST_LETTER APPLIES_TO_FIRST_LINE APPLIES_TO_PLACEHOLDER \
-           CAN_ANIMATE_ON_COMPOSITOR",
+    allow_quirks="Yes",
+    flags="CAN_ANIMATE_ON_COMPOSITOR",
 )}
 
 ${helpers.predefined_type(
     "background-image",
-    "ImageLayer",
-    initial_value="Either::First(None_)",
-    initial_specified_value="Either::First(None_)",
+    "Image",
+    engines="gecko servo-2013 servo-2020",
+    initial_value="computed::Image::None",
+    initial_specified_value="specified::Image::None",
     spec="https://drafts.csswg.org/css-backgrounds/#the-background-image",
     vector="True",
     animation_value_type="discrete",
     ignored_when_colors_disabled="True",
-    flags="APPLIES_TO_FIRST_LETTER APPLIES_TO_FIRST_LINE APPLIES_TO_PLACEHOLDER",
 )}
 
 % for (axis, direction, initial) in [("x", "Horizontal", "left"), ("y", "Vertical", "top")]:
     ${helpers.predefined_type(
         "background-position-" + axis,
         "position::" + direction + "Position",
-        initial_value="computed::LengthPercentage::zero()",
+        "computed::LengthPercentage::zero_percent()",
+        engines="gecko servo-2013 servo-2020",
         initial_specified_value="SpecifiedValue::initial_specified_value()",
         spec="https://drafts.csswg.org/css-backgrounds-4/#propdef-background-position-" + axis,
         animation_value_type="ComputedValue",
         vector=True,
         vector_animation_type="repeatable_list",
-        flags="APPLIES_TO_FIRST_LETTER APPLIES_TO_FIRST_LINE APPLIES_TO_PLACEHOLDER",
     )}
 % endfor
 
@@ -49,56 +49,56 @@ ${helpers.predefined_type(
     "background-repeat",
     "BackgroundRepeat",
     "computed::BackgroundRepeat::repeat()",
+    engines="gecko servo-2013 servo-2020",
     initial_specified_value="specified::BackgroundRepeat::repeat()",
     animation_value_type="discrete",
     vector=True,
     spec="https://drafts.csswg.org/css-backgrounds/#the-background-repeat",
-    flags="APPLIES_TO_FIRST_LETTER APPLIES_TO_FIRST_LINE APPLIES_TO_PLACEHOLDER",
 )}
 
 ${helpers.single_keyword(
     "background-attachment",
-    "scroll fixed" + (" local" if product == "gecko" else ""),
+    "scroll" + (" fixed" if engine in ["gecko", "servo-2013"] else "") + (" local" if engine == "gecko" else ""),
+    engines="gecko servo-2013 servo-2020",
     vector=True,
     gecko_enum_prefix="StyleImageLayerAttachment",
     spec="https://drafts.csswg.org/css-backgrounds/#the-background-attachment",
     animation_value_type="discrete",
-    flags="APPLIES_TO_FIRST_LETTER APPLIES_TO_FIRST_LINE APPLIES_TO_PLACEHOLDER",
 )}
 
 ${helpers.single_keyword(
     "background-clip",
     "border-box padding-box content-box",
+    engines="gecko servo-2013 servo-2020",
     extra_gecko_values="text",
     vector=True, extra_prefixes="webkit",
     gecko_enum_prefix="StyleGeometryBox",
     gecko_inexhaustive=True,
     spec="https://drafts.csswg.org/css-backgrounds/#the-background-clip",
     animation_value_type="discrete",
-    flags="APPLIES_TO_FIRST_LETTER APPLIES_TO_FIRST_LINE APPLIES_TO_PLACEHOLDER",
 )}
 
 ${helpers.single_keyword(
     "background-origin",
     "padding-box border-box content-box",
+    engines="gecko servo-2013 servo-2020",
     vector=True, extra_prefixes="webkit",
     gecko_enum_prefix="StyleGeometryBox",
     gecko_inexhaustive=True,
     spec="https://drafts.csswg.org/css-backgrounds/#the-background-origin",
     animation_value_type="discrete",
-    flags="APPLIES_TO_FIRST_LETTER APPLIES_TO_FIRST_LINE APPLIES_TO_PLACEHOLDER"
 )}
 
 ${helpers.predefined_type(
     "background-size",
     "BackgroundSize",
+    engines="gecko servo-2013 servo-2020",
     initial_value="computed::BackgroundSize::auto()",
     initial_specified_value="specified::BackgroundSize::auto()",
     spec="https://drafts.csswg.org/css-backgrounds/#the-background-size",
     vector=True,
     vector_animation_type="repeatable_list",
     animation_value_type="BackgroundSizeList",
-    flags="APPLIES_TO_FIRST_LETTER APPLIES_TO_FIRST_LINE APPLIES_TO_PLACEHOLDER",
     extra_prefixes="webkit")}
 
 // https://drafts.fxtf.org/compositing/#background-blend-mode
@@ -107,8 +107,9 @@ ${helpers.single_keyword(
     """normal multiply screen overlay darken lighten color-dodge
     color-burn hard-light soft-light difference exclusion hue
     saturation color luminosity""",
-    gecko_constant_prefix="NS_STYLE_BLEND",
-    vector=True, products="gecko", animation_value_type="discrete",
+    gecko_enum_prefix="StyleBlend",
+    vector=True,
+    engines="gecko",
+    animation_value_type="discrete",
     spec="https://drafts.fxtf.org/compositing/#background-blend-mode",
-    flags="APPLIES_TO_FIRST_LETTER APPLIES_TO_FIRST_LINE APPLIES_TO_PLACEHOLDER",
 )}

@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY onlineContactsHeader.label    "Kontaktoj enrete">
+<!ENTITY offlineContactsHeader.label   "Kontaktoj eksterrete">
+<!ENTITY conversationsHeader.label     "Interparoladoj">
+<!ENTITY searchResultConversation.label "Serĉ‑rezultoj">
+<!ENTITY chat.noConv.title             "Interparoladoj montriĝos tie ĉi.">
+<!ENTITY chat.noConv.description       "Uzu la liston de kontaktoj ĉe maldekstre por ekigi interparoladon.">
+<!ENTITY chat.noPreviousConv.description       "&brandShortName; nuntempe ne havas iujn antaŭajn konservitajn interparoladoj por tiu kontakto.">
+<!ENTITY chat.noAccount.title             "Neniu agordita tujmesaĝila konto">
+<!ENTITY chat.noAccount.description       "Klaku la butonon “nova konto” por ke &brandShortName; gvidu vin tra krei novan tujmesaĝilan konton.">
+<!ENTITY chat.accountWizard.button       "Nova konto">
+<!ENTITY chat.noConnectedAccount.title             "Viaj tujmesaĝilaj kontoj ne estas konektitaj.">
+<!ENTITY chat.noConnectedAccount.description       "Vi povas konekti ĉe la fenestro “stato de tujmesaĝiloj”:">
+<!ENTITY chat.showAccountManager.button       "Stato de tujmesaĝiloj">
+
+<!ENTITY chat.participants             "Anoj:">
+<!ENTITY chat.previousConversations    "Antaŭaj interparoladoj:">
+<!ENTITY chat.ongoingConversation      "Estantaj interparoladoj">
+
+<!ENTITY openConversationCmd.label     "Komenci interparoladon">
+<!ENTITY openConversationCmd.accesskey "K">
+<!ENTITY closeConversationCmd.label    "Fermi interparoladon">
+<!ENTITY closeConversationCmd.accesskey "F">
+<!ENTITY aliasCmd.label                "Renomi">
+<!ENTITY aliasCmd.accesskey            "R">
+<!ENTITY deleteCmd.label               "Forigi kontakton">
+<!ENTITY deleteCmd.accesskey           "i">
+
+<!ENTITY openConversationButton.tooltip  "Komenci interparoladon">
+<!ENTITY closeConversationButton.tooltip "Fermi interparoladon">
+
+<!ENTITY addBuddyButton.label          "Aldoni kontakton">
+<!ENTITY joinChatButton.label          "Aliĝi al interparolado">
+<!ENTITY chatAccountsButton.label      "Montri kontojn">
+
+<!ENTITY status.available          "Disponebla">
+<!ENTITY status.unavailable        "Nedisponebla">
+<!ENTITY status.offline            "Eksterrete">
+
+<!ENTITY openLinkCmd.label            "Malfermi ligilon…">
+<!ENTITY openLinkCmd.accesskey        "M">

@@ -39,6 +39,7 @@ class Test(object):
     alert_threshold = 2.0
     perfherder_framework = 'talos'
     subtest_alerts = False
+    suite_should_alert = True
 
     @classmethod
     def name(cls):
@@ -119,6 +120,7 @@ class TsBase(Test):
         'setup',
         'cleanup',
         'webextensions',
+        'webextensions_folder',
         'reinstall',     # A list of files from the profile directory that
                          # should be copied to the temporary profile prior to
                          # running each cycle, to avoid one cycle overwriting
@@ -127,6 +129,20 @@ class TsBase(Test):
                          # use the exact same sessionstore.js, rather than a
                          # more recent copy).
     ]
+
+    def __init__(self, **kw):
+        super(TsBase, self).__init__(**kw)
+
+        # Unless set to False explicitly, all TsBase tests will have the blocklist
+        # enabled by default in order to more accurately test the startup paths.
+        BLOCKLIST_PREF = "extensions.blocklist.enabled"
+
+        if not hasattr(self, "preferences"):
+            self.preferences = {
+              BLOCKLIST_PREF: True,
+            }
+        elif BLOCKLIST_PREF not in self.preferences:
+            self.preferences[BLOCKLIST_PREF] = True
 
 
 @register_test()
@@ -175,6 +191,18 @@ class startup_about_home_paint(ts_paint):
     cycles = 20
     extensions = ['${talos}/startup_test/startup_about_home_paint/addon']
     tpmanifest = '${talos}/startup_test/startup_about_home_paint/startup_about_home_paint.manifest'
+
+
+@register_test()
+class startup_about_home_paint_realworld_webextensions(ts_paint):
+    url = None
+    cycles = 20
+    extensions = [
+        '${talos}/startup_test/startup_about_home_paint/addon',
+        '${talos}/getinfooffline'
+    ]
+    tpmanifest = '${talos}/startup_test/startup_about_home_paint/startup_about_home_paint.manifest'
+    webextensions_folder = '${talos}/webextensions'
 
 
 @register_test()
@@ -253,7 +281,8 @@ class PageloaderTest(Test):
             'profile_path', 'xperf_providers', 'xperf_user_providers', 'xperf_stackwalk',
             'format_pagename', 'filters', 'preferences', 'extensions', 'setup', 'cleanup',
             'lower_is_better', 'alert_threshold', 'unit', 'webextensions', 'profile',
-            'subtest_alerts', 'perfherder_framework']
+            'suite_should_alert', 'subtest_alerts', 'perfherder_framework', 'pdfpaint',
+            'webextensions_folder', 'a11y']
 
 
 class QuantumPageloadTest(PageloaderTest):
@@ -289,6 +318,22 @@ class twinopen(PageloaderTest):
     unit = 'ms'
     preferences = {
         'browser.startup.homepage': 'about:blank'
+    }
+
+
+@register_test()
+class pdfpaint(PageloaderTest):
+    """
+    Tests the amount of time it takes for the the first page of a PDF to
+    be rendered.
+    """
+    tpmanifest = '${talos}/tests/pdfpaint/pdfpaint.manifest'
+    tppagecycles = 20
+    gecko_profile_entries = 1000000
+    pdfpaint = True
+    unit = 'ms'
+    preferences = {
+        'pdfjs.eventBusDispatchToDOM': True
     }
 
 
@@ -426,11 +471,10 @@ class damp(PageloaderTest):
     tploadnocache = True
     tpmozafterpaint = False
     gecko_profile_interval = 10
-    gecko_profile_entries = 2000000
+    gecko_profile_entries = 10000000
     win_counters = w7_counters = linux_counters = mac_counters = None
     filters = filter.ignore_first.prepare(1) + filter.median.prepare()
-    preferences = {'devtools.memory.enabled': True,
-                   'addon.test.damp.webserver': '${webserver}'}
+    preferences = {'devtools.memory.enabled': True}
     unit = 'ms'
     subtest_alerts = True
     perfherder_framework = 'devtools'
@@ -810,6 +854,7 @@ class a11yr(PageloaderTest):
     preferences = {'dom.send_after_paint_to_content': False}
     unit = 'ms'
     alert_threshold = 5.0
+    a11y = True
 
 
 class WebkitBenchmark(PageloaderTest):
@@ -823,12 +868,6 @@ class WebkitBenchmark(PageloaderTest):
 
 
 @register_test()
-class speedometer(WebkitBenchmark):
-    # Speedometer benchmark used by many browser vendors (from webkit)
-    tpmanifest = '${talos}/tests/speedometer/speedometer.manifest'
-
-
-@register_test()
 class stylebench(WebkitBenchmark):
     # StyleBench benchmark used by many browser vendors (from webkit)
     tpmanifest = '${talos}/tests/stylebench/stylebench.manifest'
@@ -838,6 +877,13 @@ class stylebench(WebkitBenchmark):
 class motionmark_animometer(WebkitBenchmark):
     # MotionMark benchmark used by many browser vendors (from webkit)
     tpmanifest = '${talos}/tests/motionmark/animometer.manifest'
+
+
+@register_test()
+class motionmark_webgl(WebkitBenchmark):
+    # MotionMark benchmark used by many browser vendors (from webkit)
+    tpmanifest = '${talos}/tests/motionmark/webgl.manifest'
+    unit = 'fps'
 
 
 @register_test()
@@ -877,6 +923,7 @@ class perf_reftest(PageloaderTest):
     unit = 'ms'
     lower_is_better = True
     alert_threshold = 5.0
+    subtest_alerts = True
 
 
 @register_test()
@@ -894,72 +941,8 @@ class perf_reftest_singletons(PageloaderTest):
     unit = 'ms'
     lower_is_better = True
     alert_threshold = 5.0
-
-
-@register_test()
-class tp6_google(QuantumPageloadTest):
-    """
-    Quantum Pageload Test - Google
-    """
-    tpmanifest = '${talos}/tests/quantum_pageload/quantum_pageload_google.manifest'
-    fnbpaint = False
-    tphero = True
-
-
-@register_test()
-class tp6_google_heavy(tp6_google):
-    """
-    tp6_google test ran against a heavy-user profile
-    """
-    profile = 'simple'
-
-
-@register_test()
-class tp6_youtube(QuantumPageloadTest):
-    """
-    Quantum Pageload Test - YouTube
-    """
-    tpmanifest = '${talos}/tests/quantum_pageload/quantum_pageload_youtube.manifest'
-
-
-@register_test()
-class tp6_youtube_heavy(tp6_youtube):
-    """
-    tp6_youtube test ran against a heavy-user profile
-    """
-    profile = 'simple'
-
-
-@register_test()
-class tp6_amazon(QuantumPageloadTest):
-    """
-    Quantum Pageload Test - Amazon
-    """
-    tpmanifest = '${talos}/tests/quantum_pageload/quantum_pageload_amazon.manifest'
-
-
-@register_test()
-class tp6_amazon_heavy(tp6_amazon):
-    """
-    tp6_amazon test ran against a heavy-user profile
-    """
-    profile = 'simple'
-
-
-@register_test()
-class tp6_facebook(QuantumPageloadTest):
-    """
-    Quantum Pageload Test - Facebook
-    """
-    tpmanifest = '${talos}/tests/quantum_pageload/quantum_pageload_facebook.manifest'
-
-
-@register_test()
-class tp6_facebook_heavy(tp6_facebook):
-    """
-    tp6_facebook test ran against a heavy-user profile
-    """
-    profile = 'simple'
+    subtest_alerts = True
+    suite_should_alert = False
 
 
 @register_test()
@@ -1048,3 +1031,37 @@ class about_preferences_basic(PageloaderTest):
     unit = 'ms'
     lower_is_better = True
     fnbpaint = True
+
+
+@register_test()
+class about_newtab_with_snippets(PageloaderTest):
+    """
+    Load about ActivityStream (about:home and about:newtab) with snippets enabled
+    """
+    tpmanifest = '${talos}/tests/about-newtab/about_newtab.manifest'
+    tpcycles = 25
+    tppagecycles = 1
+    responsiveness = True
+    gecko_profile_interval = 1
+    gecko_profile_entries = 2000000
+    filters = filter.ignore_first.prepare(5) + filter.median.prepare()
+    unit = 'ms'
+    lower_is_better = True
+    fnbpaint = True
+    preferences = {
+            # ensure that snippets are turned on and load the json messages
+            'browser.newtabpage.activity-stream.asrouter.providers.snippets':\
+            '{"id":"snippets","enabled":true,"type":"json","location":\
+            "http://fakedomain/tests/about-newtab/snippets.json",\
+            "updateCycleInMs":14400000}',
+            'browser.newtabpage.activity-stream.feeds.snippets': True,
+            'browser.newtabpage.activity-stream.feeds.section.topstories': True,
+            'browser.newtabpage.activity-stream.feeds.section.topstories.options':\
+            '{"provider_name":""}',
+            'browser.newtabpage.activity-stream.discoverystream.endpoints': 'http://fakedomain',
+            'browser.newtabpage.activity-stream.discoverystream.config':\
+            '{"api_key_pref":"extensions.pocket.oAuthConsumerKey","collapsible":true,\
+            "enabled":true,"show_spocs":false,"hardcoded_layout":false,"personalized":true,\
+            "layout_endpoint":\
+            "http://fakedomain/tests/about-newtab/ds_layout.json"}'
+            }

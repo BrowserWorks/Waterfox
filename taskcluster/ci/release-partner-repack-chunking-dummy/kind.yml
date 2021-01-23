@@ -24,8 +24,6 @@ kind-dependencies:
 only-for-build-platforms:
     - linux-shippable/opt
     - linux64-shippable/opt
-    - linux-nightly/opt
-    - linux64-nightly/opt
 
 job-template:
     shipping-phase: promote
@@ -33,13 +31,6 @@ job-template:
     name: release-partner-repack-chunking-dummy
     description: Dummy task to deal with fanning out Linux partner repacks
     run-on-projects: []
-    worker-type: b-linux
+    worker-type: succeed
     worker:
-        implementation: docker-worker
-        os: linux
-        docker-image: "ubuntu:16.10"
-        max-run-time: 600
-        command:
-            - /bin/bash
-            - -c
-            - echo "Dummy task"
+        implementation: succeed

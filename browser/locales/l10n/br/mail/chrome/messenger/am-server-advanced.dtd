@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Arventennoù kont kempleshoc'h">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "Kavlec'hiad an dafariad IMAP :">
+<!ENTITY serverDirectory.accesskey "d">
+<!ENTITY usingSubscription.label "Diskouez an teuliadoù koumanantet nemetken">
+<!ENTITY usingSubscription.accesskey "s">
+<!ENTITY dualUseFolders.label "Skorañ a ra an dafariad an teuliadoù a zo kemennadennoù hag isteuliadoù enno">
+<!ENTITY dualUseFolders.accesskey "f">
+<!ENTITY maximumConnectionsNumber.label "Niver uhelañ a gennaskadurioù ouzh an dafariad da lakaat er grubuilh">
+<!ENTITY maximumConnectionsNumber.accesskey "h">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Erspizañ a ra ar gwellvezioù-mañ an anvioù egoroù war ho tafariad IMAP">
+<!ENTITY personalNamespace.label "Anv egor personel :">
+<!ENTITY personalNamespace.accesskey "p">
+<!ENTITY publicNamespace.label "Publik (rannet) :">
+<!ENTITY publicNamespace.accesskey "u">
+<!ENTITY otherUsersNamespace.label "Arveriaded all :">
+<!ENTITY otherUsersNamespace.accesskey "r">
+<!ENTITY overrideNamespaces.label "Aotren an dafariad da flastrañ an egoroù envel-mañ">
+<!ENTITY overrideNamespaces.accesskey "A">
+<!ENTITY pop3DeferringDesc.label "Pa vez pellgarget posteloù adalek dafariad ar gont-mañ, arverañ an teuliad da heul evit kadaviñ kemennadennoù nevez :" >
+<!ENTITY accountInbox.label "Boest degemer evit ar gont-mañ">
+<!ENTITY accountInbox.accesskey "g">
+<!ENTITY deferToServer.label "Boestad-degemer evit meur a gont">
+<!ENTITY deferToServer.accesskey "m">
+<!ENTITY deferGetNewMail.label "Enlakaat an dafariad-mañ pa vez kerc'het posteloù nevez">
+<!ENTITY deferGetNewMail.accesskey "i">

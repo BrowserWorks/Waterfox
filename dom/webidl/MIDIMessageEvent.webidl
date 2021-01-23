@@ -7,11 +7,14 @@
  * https://webaudio.github.io/web-midi-api/
  */
 
-[Constructor(DOMString type, optional MIDIMessageEventInit eventInitDict),
- SecureContext,
- Pref="dom.webmidi.enabled"]
+[SecureContext,
+ Pref="dom.webmidi.enabled",
+ Exposed=Window]
 interface MIDIMessageEvent : Event
 {
+  [Throws]
+  constructor(DOMString type, optional MIDIMessageEventInit eventInitDict = {});
+  
   [Throws]
   readonly attribute Uint8Array  data;
 };

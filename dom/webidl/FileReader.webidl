@@ -10,9 +10,10 @@
  * liability, trademark and document use rules apply.
  */
 
-[Constructor,
- Exposed=(Window,Worker)]
+[Exposed=(Window,Worker)]
 interface FileReader : EventTarget {
+  constructor();
+
   // async read methods
   [Throws]
   void readAsArrayBuffer(Blob blob);
@@ -33,10 +34,7 @@ interface FileReader : EventTarget {
 
   readonly attribute unsigned short readyState;
 
-  // File or Blob data
-  // bug 858217: readonly attribute (DOMString or ArrayBuffer)? result;
-  [Throws]
-  readonly attribute any result;
+  readonly attribute (DOMString or ArrayBuffer)? result;
 
   readonly attribute DOMException? error;
 

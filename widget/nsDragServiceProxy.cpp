@@ -6,7 +6,6 @@
 
 #include "nsDragServiceProxy.h"
 #include "mozilla/dom/Document.h"
-#include "nsISupportsPrimitives.h"
 #include "mozilla/dom/BrowserChild.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/UniquePtr.h"
@@ -16,15 +15,17 @@
 using mozilla::CSSIntRegion;
 using mozilla::LayoutDeviceIntRect;
 using mozilla::Maybe;
+using mozilla::Nothing;
+using mozilla::Some;
 using mozilla::dom::BrowserChild;
 using mozilla::gfx::DataSourceSurface;
 using mozilla::gfx::SourceSurface;
 using mozilla::gfx::SurfaceFormat;
 using mozilla::ipc::Shmem;
 
-nsDragServiceProxy::nsDragServiceProxy() {}
+nsDragServiceProxy::nsDragServiceProxy() = default;
 
-nsDragServiceProxy::~nsDragServiceProxy() {}
+nsDragServiceProxy::~nsDragServiceProxy() = default;
 
 nsresult nsDragServiceProxy::InvokeDragSessionImpl(
     nsIArray* aArrayTransferables, const Maybe<CSSIntRegion>& aRegion,
@@ -39,6 +40,11 @@ nsresult nsDragServiceProxy::InvokeDragSessionImpl(
   nsCOMPtr<nsIPrincipal> principal;
   if (mSourceNode) {
     principal = mSourceNode->NodePrincipal();
+  }
+
+  nsCOMPtr<nsIContentSecurityPolicy> csp;
+  if (mSourceDocument) {
+    csp = mSourceDocument->GetCsp();
   }
 
   LayoutDeviceIntRect dragRect;
@@ -68,7 +74,7 @@ nsresult nsDragServiceProxy::InvokeDragSessionImpl(
 
         mozilla::Unused << child->SendInvokeDragSession(
             dataTransfers, aActionType, Some(std::move(surfaceData)), stride,
-            dataSurface->GetFormat(), dragRect, IPC::Principal(principal));
+            dataSurface->GetFormat(), dragRect, principal, csp);
         StartDragSession();
         return NS_OK;
       }
@@ -77,7 +83,7 @@ nsresult nsDragServiceProxy::InvokeDragSessionImpl(
 
   mozilla::Unused << child->SendInvokeDragSession(
       dataTransfers, aActionType, Nothing(), 0, static_cast<SurfaceFormat>(0),
-      dragRect, IPC::Principal(principal));
+      dragRect, principal, csp);
   StartDragSession();
   return NS_OK;
 }

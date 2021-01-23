@@ -4,8 +4,12 @@
 
 from __future__ import absolute_import, unicode_literals
 
+import sys
+
 import jsone
 import pprint
+
+import pytest
 import slugid
 import unittest
 
@@ -18,8 +22,13 @@ from taskgraph import GECKO
 
 class TestTaskclusterYml(unittest.TestCase):
 
-    taskcluster_yml = load_yaml(GECKO, ".taskcluster.yml")
+    @property
+    def taskcluster_yml(self):
+        return load_yaml(GECKO, ".taskcluster.yml")
 
+    @pytest.mark.xfail(
+        sys.version_info >= (3, 0), reason="python3 migration is not complete"
+    )
     def test_push(self):
         context = {
             "tasks_for": "hg-push",
@@ -42,6 +51,9 @@ class TestTaskclusterYml(unittest.TestCase):
             rendered["tasks"][0]["metadata"]["name"], "Gecko Decision Task"
         )
 
+    @pytest.mark.xfail(
+        sys.version_info >= (3, 0), reason="python3 migration is not complete"
+    )
     def test_cron(self):
         context = {
             "tasks_for": "cron",
@@ -71,6 +83,9 @@ class TestTaskclusterYml(unittest.TestCase):
             rendered["tasks"][0]["metadata"]["name"], "Decision Task for cron job test"
         )
 
+    @pytest.mark.xfail(
+        sys.version_info >= (3, 0), reason="python3 migration is not complete"
+    )
     def test_action(self):
         context = {
             "tasks_for": "action",

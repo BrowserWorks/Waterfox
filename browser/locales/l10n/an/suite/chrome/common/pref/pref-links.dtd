@@ -1,0 +1,29 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY linksHeader.label "Comportamiento d'os vinclos">
+<!ENTITY newWindow.label "Comportamiento en ubrir vinclos">
+<!ENTITY newWindowDescription.label "Ubrir vinclos que intentan ubrir una finestra nueva en:">
+<!ENTITY newWindowRestriction.label "Quan os scripts quieran ubrir una finestra nueva:">
+<!ENTITY external.label "Vinclos d'atras aplicacions">
+<!ENTITY externalDescription.label "Ubrir vinclos pasaus dende atras aplicacions en:">
+
+<!ENTITY openCurrent.label "a pestanya/finestra actual">
+<!ENTITY newWindowGroupCurrent.accesskey "L">
+<!ENTITY externalGroupCurrent.accesskey "a">
+
+<!ENTITY openTab.label "Una pestanya nueva en a finestra actual">
+<!ENTITY newWindowGroupTab.accesskey "t">
+<!ENTITY externalGroupTab.accesskey "n">
+
+<!ENTITY openWindow.label "Una finestra nueva">
+<!ENTITY newWindowGroupWindow.accesskey "v">
+<!ENTITY externalGroupWindow.accesskey "y">
+
+<!ENTITY divertAll.label "Convertir siempre finestras en pestanyas">
+<!ENTITY divertAll.accesskey "C">
+<!ENTITY divertNoFeatures.label "No convertir finestras personalizadas en pestanyas">
+<!ENTITY divertNoFeatures.accesskey "d">
+<!ENTITY dontDivert.label "Abrir siempre finestras nuevas">
+<!ENTITY dontDivert.accesskey "b">

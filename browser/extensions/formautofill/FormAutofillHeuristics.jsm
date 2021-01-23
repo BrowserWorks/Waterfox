@@ -167,7 +167,7 @@ class FieldScanner {
     if (!this._sectionEnabled) {
       return this._getFinalDetails(this.fieldDetails);
     }
-    if (this._sections.length == 0) {
+    if (!this._sections.length) {
       return [];
     }
     if (
@@ -304,7 +304,7 @@ class FieldScanner {
         });
         return section;
       })
-      .filter(section => section.fieldDetails.length > 0);
+      .filter(section => !!section.fieldDetails.length);
   }
 
   elementExisting(index) {
@@ -352,7 +352,7 @@ var LabelUtils = {
         return;
       }
 
-      if (el.nodeType == el.TEXT_NODE || el.childNodes.length == 0) {
+      if (el.nodeType == el.TEXT_NODE || !el.childNodes.length) {
         let trimmedText = el.textContent.trim();
         if (trimmedText) {
           strings.push(trimmedText);
@@ -472,7 +472,10 @@ this.FormAutofillHeuristics = {
         options.map(e => +e.value),
         desiredValues
       ) ||
-      this._matchContiguousSubArray(options.map(e => +e.label), desiredValues)
+      this._matchContiguousSubArray(
+        options.map(e => +e.label),
+        desiredValues
+      )
     );
   },
 
@@ -502,7 +505,10 @@ this.FormAutofillHeuristics = {
         options.map(e => +e.value),
         desiredValues
       ) ||
-      this._matchContiguousSubArray(options.map(e => +e.label), desiredValues)
+      this._matchContiguousSubArray(
+        options.map(e => +e.label),
+        desiredValues
+      )
     );
   },
 
@@ -1000,7 +1006,7 @@ this.FormAutofillHeuristics = {
     }
 
     let regexps = this._getRegExpList(isAutoCompleteOff, element.tagName);
-    if (regexps.length == 0) {
+    if (!regexps.length) {
       return null;
     }
 
@@ -1218,33 +1224,29 @@ this.FormAutofillHeuristics = {
   ],
 };
 
-XPCOMUtils.defineLazyGetter(this.FormAutofillHeuristics, "RULES", () => {
+XPCOMUtils.defineLazyGetter(FormAutofillHeuristics, "RULES", () => {
   let sandbox = {};
   const HEURISTICS_REGEXP = "chrome://formautofill/content/heuristicsRegexp.js";
   Services.scriptloader.loadSubScript(HEURISTICS_REGEXP, sandbox);
   return sandbox.HeuristicsRegExp.RULES;
 });
 
-XPCOMUtils.defineLazyGetter(this.FormAutofillHeuristics, "_prefEnabled", () => {
+XPCOMUtils.defineLazyGetter(FormAutofillHeuristics, "_prefEnabled", () => {
   return Services.prefs.getBoolPref(PREF_HEURISTICS_ENABLED);
 });
 
 Services.prefs.addObserver(PREF_HEURISTICS_ENABLED, () => {
-  this.FormAutofillHeuristics._prefEnabled = Services.prefs.getBoolPref(
+  FormAutofillHeuristics._prefEnabled = Services.prefs.getBoolPref(
     PREF_HEURISTICS_ENABLED
   );
 });
 
-XPCOMUtils.defineLazyGetter(
-  this.FormAutofillHeuristics,
-  "_sectionEnabled",
-  () => {
-    return Services.prefs.getBoolPref(PREF_SECTION_ENABLED);
-  }
-);
+XPCOMUtils.defineLazyGetter(FormAutofillHeuristics, "_sectionEnabled", () => {
+  return Services.prefs.getBoolPref(PREF_SECTION_ENABLED);
+});
 
 Services.prefs.addObserver(PREF_SECTION_ENABLED, () => {
-  this.FormAutofillHeuristics._sectionEnabled = Services.prefs.getBoolPref(
+  FormAutofillHeuristics._sectionEnabled = Services.prefs.getBoolPref(
     PREF_SECTION_ENABLED
   );
 });

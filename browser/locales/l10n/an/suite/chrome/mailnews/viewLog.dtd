@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY viewLog.title "Rechistro de filtros">
+<!ENTITY viewLogInfo.text "O rechistro de filtros documenta qué filtros s'han executau en ista cuenta. Use a caixeta de selección de debaixo ta habilitar o rechistro.">
+<!ENTITY clearLog.label "Limpiar rechistro">
+<!ENTITY clearLog.accesskey "L">
+<!ENTITY enableLog.label "Habilitar o rechistro de filtrau">
+<!ENTITY enableLog.accesskey "o">
+<!ENTITY closeLog.label "Zarrar">
+<!ENTITY closeLog.accesskey "Z">

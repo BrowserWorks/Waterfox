@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label        "გვერდის ჩატვირთვის შეცდომა">
+<!ENTITY gopherAddon.title      "Gopher ოქმი">
+<!ENTITY gopherAddon.shortDesc  "gopher არაა დარეგისტრებული ოქმი.">
+<!ENTITY gopherAddon.longDesc   "მისამართი იყენებს gopher ოქმს, რომელიც აღარაა მხარდაჭერილი, შესაბამისად ბრაუზერი ვერ ახერხებს საიტთან დაკავშირებას. შეგიძლიათ გადმოწეროთ თავსებადი დამატება Mozilla-ს დამატებების საიტიდან, ამ სერვერთან დასაკავშირებლად.">
+<!ENTITY goToAddOn.label        "დამატების გვერდზე გადასვლა">

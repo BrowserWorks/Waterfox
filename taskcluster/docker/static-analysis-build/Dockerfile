@@ -1,6 +1,6 @@
 # %ARG DOCKER_IMAGE_PARENT
 FROM $DOCKER_IMAGE_PARENT
-MAINTAINER Robert Bartlensky <rbartlensky@mozilla.com>
+LABEL maintainer="Andi-Bogdan Postelnicu <andi@mozilla.com>"
 
 VOLUME /builds/worker/checkouts
 VOLUME /builds/worker/workspace
@@ -21,13 +21,14 @@ RUN apt-get update && \
       cmake \
       flex \
       curl \
-      opam \
       libsqlite3-dev \
       file \
       gawk \
       gcc-multilib \
       gnupg \
+      jq \
       libc6-dev \
+      libmpfr-dev \
       nasm \
       openjdk-8-jdk-headless \
       pkg-config \
@@ -54,10 +55,16 @@ RUN apt-get update && \
       libfontconfig1-dev \
       libfreetype6-dev \
       libgconf2-dev \
+      libgmp-dev \
       libgtk-3-dev \
       libgtk2.0-dev \
       libpango1.0-dev \
       libpulse-dev \
       libx11-xcb-dev \
       libxt-dev \
-      lib32z1
+      lib32z1 \
+      patchelf
+
+# Install opam 2
+RUN curl -sL https://github.com/ocaml/opam/releases/download/2.0.3/opam-2.0.3-x86_64-linux > /usr/bin/opam && \
+    chmod +x /usr/bin/opam

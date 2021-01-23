@@ -12,7 +12,6 @@
 #include "nsIAuthPrompt.h"
 #include "nsIDHCPClient.h"
 #include "nsIHttpChannel.h"
-#include "nsIPrefService.h"
 #include "nsIPrefBranch.h"
 #include "nsIPromptFactory.h"
 #include "nsIProtocolProxyService.h"
@@ -21,6 +20,7 @@
 #include "nsThreadUtils.h"
 #include "mozilla/Result.h"
 #include "mozilla/ResultExtensions.h"
+#include "mozilla/Telemetry.h"
 
 //-----------------------------------------------------------------------------
 
@@ -33,6 +33,10 @@ LazyLogModule gProxyLog("proxy");
 #define LOG(args) MOZ_LOG(gProxyLog, LogLevel::Debug, args)
 #define MOZ_WPAD_URL "http://wpad/wpad.dat"
 #define MOZ_DHCP_WPAD_OPTION 252
+
+// These pointers are declared in nsProtocolProxyService.cpp
+extern const char kProxyType_HTTPS[];
+extern const char kProxyType_DIRECT[];
 
 // The PAC thread does evaluations of both PAC files and
 // nsISystemProxySettings because they can both block the calling thread and we
@@ -301,10 +305,11 @@ class ExecutePACThreadAction final : public Runnable {
 //-----------------------------------------------------------------------------
 
 PendingPACQuery::PendingPACQuery(nsPACMan* pacMan, nsIURI* uri,
-                                 nsPACManCallback* callback,
+                                 nsPACManCallback* callback, uint32_t flags,
                                  bool mainThreadResponse)
     : Runnable("net::PendingPACQuery"),
       mPort(0),
+      mFlags(flags),
       mPACMan(pacMan),
       mCallback(callback),
       mOnMainThreadOnly(mainThreadResponse) {
@@ -428,6 +433,7 @@ nsresult nsPACMan::DispatchToPAC(already_AddRefed<nsIRunnable> aEvent,
 }
 
 nsresult nsPACMan::AsyncGetProxyForURI(nsIURI* uri, nsPACManCallback* callback,
+                                       uint32_t flags,
                                        bool mainThreadResponse) {
   MOZ_ASSERT(NS_IsMainThread(), "wrong thread");
   if (mShutdown) return NS_ERROR_NOT_AVAILABLE;
@@ -441,7 +447,7 @@ nsresult nsPACMan::AsyncGetProxyForURI(nsIURI* uri, nsPACManCallback* callback,
   }
 
   RefPtr<PendingPACQuery> query =
-      new PendingPACQuery(this, uri, callback, mainThreadResponse);
+      new PendingPACQuery(this, uri, callback, flags, mainThreadResponse);
 
   if (IsPACURI(uri)) {
     // deal with this directly instead of queueing it
@@ -631,13 +637,21 @@ void nsPACMan::ContinueLoadingAfterPACUriKnown() {
 
       // NOTE: This results in GetProxyForURI being called
       if (pacURI) {
+        if (pacURI->SchemeIs("ftp")) {
+          Telemetry::AccumulateCategorical(
+              Telemetry::LABELS_NETWORK_PAC_URL_SCHEME::ftp);
+        } else {
+          Telemetry::AccumulateCategorical(
+              Telemetry::LABELS_NETWORK_PAC_URL_SCHEME::other);
+        }
+
         nsresult rv = pacURI->GetSpec(mNormalPACURISpec);
         MOZ_RELEASE_ASSERT(NS_SUCCEEDED(rv));
         NS_NewChannel(getter_AddRefs(channel), pacURI,
                       nsContentUtils::GetSystemPrincipal(),
                       nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
                       nsIContentPolicy::TYPE_OTHER,
-                      nullptr,  // nsICookieSettings
+                      nullptr,  // nsICookieJarSettings
                       nullptr,  // PerformanceStorage
                       nullptr,  // aLoadGroup
                       nullptr,  // aCallbacks
@@ -648,6 +662,10 @@ void nsPACMan::ContinueLoadingAfterPACUriKnown() {
       }
 
       if (channel) {
+        // allow deprecated HTTP request from SystemPrincipal
+        nsCOMPtr<nsILoadInfo> loadInfo = channel->LoadInfo();
+        loadInfo->SetAllowDeprecatedSystemRequests(true);
+
         channel->SetLoadFlags(nsIRequest::LOAD_BYPASS_CACHE);
         channel->SetNotificationCallbacks(this);
         if (NS_SUCCEEDED(channel->AsyncOpen(mLoader))) return;
@@ -766,6 +784,18 @@ bool nsPACMan::ProcessPending() {
       NS_SUCCEEDED(mSystemProxySettings->GetProxyForURI(
           query->mSpec, query->mScheme, query->mHost, query->mPort,
           pacString))) {
+    if (query->mFlags & nsIProtocolProxyService::RESOLVE_PREFER_SOCKS_PROXY &&
+        query->mFlags & nsIProtocolProxyService::RESOLVE_PREFER_HTTPS_PROXY) {
+      if (StringBeginsWith(pacString, nsDependentCString(kProxyType_DIRECT),
+                           nsCaseInsensitiveUTF8StringComparator)) {
+        // DIRECT indicates that system proxy settings are not configured to use
+        // SOCKS proxy. Try https proxy as a secondary preferrable proxy. This
+        // is mainly for websocket whose precedence is SOCKS > HTTPS > DIRECT.
+        NS_SUCCEEDED(mSystemProxySettings->GetProxyForURI(
+            query->mSpec, nsDependentCString(kProxyType_HTTPS), query->mHost,
+            query->mPort, pacString));
+      }
+    }
     LOG(("Use proxy from system settings: %s\n", pacString.get()));
     query->Complete(NS_OK, pacString);
     completed = true;
@@ -851,8 +881,13 @@ nsPACMan::GetInterface(const nsIID& iid, void** result) {
   if (iid.Equals(NS_GET_IID(nsIAuthPrompt))) {
     nsCOMPtr<nsIPromptFactory> promptFac =
         do_GetService("@mozilla.org/prompter;1");
-    NS_ENSURE_TRUE(promptFac, NS_ERROR_FAILURE);
-    return promptFac->GetPrompt(nullptr, iid, reinterpret_cast<void**>(result));
+    NS_ENSURE_TRUE(promptFac, NS_ERROR_NO_INTERFACE);
+    nsresult rv =
+        promptFac->GetPrompt(nullptr, iid, reinterpret_cast<void**>(result));
+    if (NS_FAILED(rv)) {
+      return NS_ERROR_NO_INTERFACE;
+    }
+    return NS_OK;
   }
 
   // In case loading the PAC file results in a redirect.

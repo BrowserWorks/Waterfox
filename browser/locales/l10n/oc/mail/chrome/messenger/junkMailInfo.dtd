@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "A prepaus del corrièr indesirable">
+<!ENTITY window.width  "450">
+<!ENTITY info1a.label  "&brandShortName; detècta automaticament los messatges entrant que semblan indesirables (en anglés de « Junk Mail » o « Spam »). Una icòna « indesirable » serà afichada en fàcia dels messatges reperats per &brandShortName;">
+<!ENTITY info1b.label  ".">
+<!ENTITY info2.label   "Per començar, vos cal utilizar lo boton « indesirable » de la barra d'espleches per marcar los messatges coma indesirables o pas e ensenhar atal a &brandShortName; a los detectar sol.">
+<!ENTITY info3.label   "Un còp que &brandShortName; identifica corrèctament l'estatut dels messatges, podètz utilizar lo gestionari dels indesirables per desplaçar automaticament los messatges indesirables dins lo dorsièr del meteis nom tre lor arribada.">
+<!ENTITY info4.label   "Per mai d'entresenhas, clicatz sus Ajuda.">

@@ -7,16 +7,17 @@
 #ifndef mozilla_mscom_Interceptor_h
 #define mozilla_mscom_Interceptor_h
 
-#include "mozilla/Move.h"
+#include <callobj.h>
+#include <objidl.h>
+
+#include <utility>
+
 #include "mozilla/Mutex.h"
-#include "nsTArray.h"
+#include "mozilla/RefPtr.h"
 #include "mozilla/mscom/IHandlerProvider.h"
 #include "mozilla/mscom/Ptr.h"
 #include "mozilla/mscom/WeakRef.h"
-#include "mozilla/RefPtr.h"
-
-#include <objidl.h>
-#include <callobj.h>
+#include "nsTArray.h"
 
 namespace mozilla {
 namespace mscom {
@@ -43,6 +44,7 @@ struct IInterceptor : public IUnknown {
       REFIID aIid, InterceptorTargetPtr<IUnknown>& aTarget) = 0;
   virtual STDMETHODIMP GetInterceptorForIID(REFIID aIid,
                                             void** aOutInterceptor) = 0;
+  virtual STDMETHODIMP GetEventSink(IInterceptorSink** aSink) = 0;
 };
 
 /**
@@ -119,6 +121,12 @@ class Interceptor final : public WeakReferenceSupport,
       REFIID aIid, InterceptorTargetPtr<IUnknown>& aTarget) override;
   STDMETHODIMP GetInterceptorForIID(REFIID aIid,
                                     void** aOutInterceptor) override;
+
+  STDMETHODIMP GetEventSink(IInterceptorSink** aSink) override {
+    RefPtr<IInterceptorSink> sink = mEventSink;
+    sink.forget(aSink);
+    return mEventSink ? S_OK : S_FALSE;
+  }
 
  private:
   struct MapEntry {

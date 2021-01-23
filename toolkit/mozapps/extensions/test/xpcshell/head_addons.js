@@ -15,7 +15,6 @@ if (!_TEST_FILE[0].includes("toolkit/mozapps/extensions/test/xpcshell/")) {
 const PREF_EM_CHECK_UPDATE_SECURITY = "extensions.checkUpdateSecurity";
 const PREF_EM_STRICT_COMPATIBILITY = "extensions.strictCompatibility";
 const PREF_GETADDONS_BYIDS = "extensions.getAddons.get.url";
-const PREF_COMPAT_OVERRIDES = "extensions.getAddons.compatOverides.url";
 const PREF_XPI_SIGNATURES_REQUIRED = "xpinstall.signatures.required";
 
 const PREF_DISABLE_SECURITY =
@@ -257,7 +256,7 @@ var BootstrapMonitor = {
     let { id } = params;
 
     info(
-      `Bootstrap method ${method} for ${params.id} version ${params.version}`
+      `Bootstrap method ${method} ${reason} for ${params.id} version ${params.version}`
     );
 
     if (method !== "install") {
@@ -308,9 +307,7 @@ var BootstrapMonitor = {
   checkMatches(method, lastMethod, params, { params: lastParams } = {}) {
     ok(
       lastParams,
-      `Expecting matching ${lastMethod} call for add-on ${
-        params.id
-      } ${method} call`
+      `Expecting matching ${lastMethod} call for add-on ${params.id} ${method} call`
     );
 
     if (method == "update") {
@@ -336,9 +333,7 @@ var BootstrapMonitor = {
 
       ok(
         params.resourceURI.equals(lastParams.resourceURI),
-        `params.resourceURI should match: "${params.resourceURI.spec}" == "${
-          lastParams.resourceURI.spec
-        }"`
+        `params.resourceURI should match: "${params.resourceURI.spec}" == "${lastParams.resourceURI.spec}"`
       );
     }
   },
@@ -350,6 +345,7 @@ var BootstrapMonitor = {
     if (version !== undefined) {
       equal(started.params.version, version, "Expected version number");
     }
+    return started;
   },
 
   checkNotStarted(id) {
@@ -784,6 +780,7 @@ class EventChecker {
   constructor(options) {
     this.expectedEvents = options.addonEvents || {};
     this.expectedInstalls = options.installEvents || null;
+    this.ignorePlugins = options.ignorePlugins || false;
 
     this.finished = new Promise(resolve => {
       this.resolveFinished = resolve;
@@ -874,7 +871,7 @@ class EventChecker {
     }
 
     let events = this.expectedEvents[aId];
-    Assert.ok(events.length > 0, `Should be expecting events for ${aId}`);
+    Assert.ok(!!events.length, `Should be expecting events for ${aId}`);
 
     return events.shift();
   }
@@ -986,6 +983,15 @@ class EventChecker {
 
   // Install listener events.
   checkInstall(event, install, details = {}) {
+    // Lazy initialization of the plugin host means we can get spurious
+    // install events for plugins. If we're not looking for plugin
+    // installs, ignore them completely. If we *are* looking for plugin
+    // installs, the onus is on the individual test to ensure it waits
+    // for the plugin host to have done its initial work.
+    if (this.ignorePlugins && install.type == "plugin") {
+      info(`Ignoring install event for plugin ${install.id}`);
+      return undefined;
+    }
     info(`Got install event "${event}"`);
 
     let expected = this.expectedInstalls.shift();
@@ -1084,6 +1090,10 @@ class EventChecker {
   }
 
   onExternalInstall(addon, existingAddon, requiresRestart) {
+    if (this.ignorePlugins && addon.type == "plugin") {
+      info(`Ignoring install event for plugin ${addon.id}`);
+      return undefined;
+    }
     let expected = this.expectedInstalls.shift();
     Assert.ok(expected, "Should be expecting install event");
 
@@ -1157,7 +1167,7 @@ Services.prefs.setBoolPref("extensions.strictCompatibility", true);
 // Ensure signature checks are enabled by default
 Services.prefs.setBoolPref(PREF_XPI_SIGNATURES_REQUIRED, true);
 
-Services.prefs.setBoolPref("extensions.legacy.enabled", true);
+Services.prefs.setBoolPref("extensions.experiments.enabled", true);
 
 // Copies blocklistFile (an nsIFile) to gProfD/blocklist.xml.
 function copyBlocklistToProfile(blocklistFile) {
@@ -1186,24 +1196,22 @@ async function mockGfxBlocklistItems(items) {
     Services.prefs.getCharPref("services.blocklist.gfx.collection"),
     { bucketNamePref: "services.blocklist.bucket" }
   );
-  const collection = await client.openCollection();
-  await collection.clear();
-  await collection.loadDump(
-    items.map(item => {
-      if (item.id && item.last_modified) {
-        return item;
-      }
-      return Object.assign(
-        {
-          id: generateUUID()
-            .toString()
-            .replace(/[{}]/g, ""),
-          last_modified: Date.now(),
-        },
-        item
-      );
-    })
-  );
+  await client.db.clear();
+  const records = items.map(item => {
+    if (item.id && item.last_modified) {
+      return item;
+    }
+    return {
+      id: generateUUID()
+        .toString()
+        .replace(/[{}]/g, ""),
+      last_modified: Date.now(),
+      ...item,
+    };
+  });
+  const collectionTimestamp = Math.max(...records.map(r => r.last_modified));
+  await client.db.importBulk(records);
+  await client.db.saveLastModified(collectionTimestamp);
   let rv = await bsPass.GfxBlocklistRS.checkForEntries();
   return rv;
 }
@@ -1243,7 +1251,7 @@ async function saveJSON(aData, aFile) {
     aFile,
     new TextEncoder().encode(JSON.stringify(aData, null, 2))
   );
-  info("Done saving JSON file " + aFile.path);
+  info("Done saving JSON file " + aFile);
 }
 
 XPCOMUtils.defineLazyServiceGetter(
@@ -1305,7 +1313,7 @@ async function setInitialState(addon, initialState) {
   }
 }
 
-async function installBuiltinExtension(extensionData) {
+async function setupBuiltinExtension(extensionData) {
   let xpi = await AddonTestUtils.createTempWebExtensionFile(extensionData);
 
   // The built-in location requires a resource: URL that maps to a
@@ -1316,10 +1324,16 @@ async function installBuiltinExtension(extensionData) {
     .getProtocolHandler("resource")
     .QueryInterface(Ci.nsIResProtocolHandler);
   resProto.setSubstitution("ext-test", base);
+}
+
+async function installBuiltinExtension(extensionData, waitForStartup = true) {
+  await setupBuiltinExtension(extensionData);
 
   let id = extensionData.manifest.applications.gecko.id;
   let wrapper = ExtensionTestUtils.expectExtension(id);
   await AddonManager.installBuiltinAddon("resource://ext-test/");
-  await wrapper.awaitStartup();
+  if (waitForStartup) {
+    await wrapper.awaitStartup();
+  }
   return wrapper;
 }

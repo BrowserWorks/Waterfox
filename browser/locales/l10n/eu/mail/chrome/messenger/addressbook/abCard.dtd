@@ -1,0 +1,156 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY Contact.tab                     "Kontaktua">
+<!ENTITY Contact.accesskey               "K">
+<!ENTITY Name.box                        "Izena">
+
+<!-- LOCALIZATION NOTE:
+ NameField1, NameField2, PhoneticField1, PhoneticField2
+ those fields are either LN or FN depends on the target country.
+ "FirstName" and "LastName" can be swapped for id to change the order
+ but they should not be translated (same applied to phonetic id).
+ Make sure the translation of label corresponds to the order of id.
+-->
+
+<!-- LOCALIZATION NOTE (NameField1.id) : DONT_TRANSLATE -->
+<!ENTITY NameField1.id                  "FirstName">
+<!-- LOCALIZATION NOTE (NameField2.id) : DONT_TRANSLATE -->
+<!ENTITY NameField2.id                  "LastName">
+<!-- LOCALIZATION NOTE (PhoneticField1.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField1.id              "PhoneticFirstName">
+<!-- LOCALIZATION NOTE (PhoneticField2.id) : DONT_TRANSLATE -->
+<!ENTITY PhoneticField2.id              "PhoneticLastName">
+
+<!ENTITY NameField1.label               "Izena:">
+<!ENTITY NameField1.accesskey           "I">
+<!ENTITY NameField2.label               "Abizena:">
+<!ENTITY NameField2.accesskey           "A">
+<!ENTITY PhoneticField1.label           "Fonetikoa:">
+<!ENTITY PhoneticField2.label           "Fonetikoa:">
+<!ENTITY DisplayName.label              "Erakutsi:">
+<!ENTITY DisplayName.accesskey          "E">
+<!ENTITY preferDisplayName.label        "Hobetsi bistaratzeko izena mezuaren goiburuaren aurretik">
+<!ENTITY preferDisplayName.accesskey    "o">
+<!ENTITY NickName.label                 "Goitizena:">
+<!ENTITY NickName.accesskey             "G">
+
+<!ENTITY PrimaryEmail.label             "Helbide elektronikoa:">
+<!ENTITY PrimaryEmail.accesskey         "H">
+<!ENTITY SecondEmail.label              "Helbide elektroniko gehigarria:">
+<!ENTITY SecondEmail.accesskey          "+">
+<!ENTITY PreferMailFormat.label         "Nahiago ditu formatu honetako mezuak:">
+<!ENTITY PreferMailFormat.accesskey     "f">
+<!ENTITY PlainText.label                "Testu arrunta">
+<!ENTITY HTML.label                     "HTML">
+<!ENTITY Unknown.label                  "Ezezaguna">
+<!ENTITY chatName.label                 "Txateko izena:">
+
+<!ENTITY WorkPhone.label                "Lana:">
+<!ENTITY WorkPhone.accesskey            "l">
+<!ENTITY HomePhone.label                "Etxea:">
+<!ENTITY HomePhone.accesskey            "x">
+<!ENTITY FaxNumber.label                "Faxa:">
+<!ENTITY FaxNumber.accesskey            "a">
+<!ENTITY PagerNumber.label              "Bilagailua:">
+<!ENTITY PagerNumber.accesskey          "b">
+<!ENTITY CellularNumber.label           "Mugikorra:">
+<!ENTITY CellularNumber.accesskey       "m">
+
+<!ENTITY Home.tab                       "Pribatua">
+<!ENTITY Home.accesskey                 "P">
+<!ENTITY HomeAddress.label              "Helbidea:">
+<!ENTITY HomeAddress.accesskey          "e">
+<!ENTITY HomeAddress2.label             "">
+<!ENTITY HomeAddress2.accesskey         "">
+<!ENTITY HomeCity.label                 "Hiria:">
+<!ENTITY HomeCity.accesskey             "H">
+<!ENTITY HomeState.label                "Estatua/probintzia:">
+<!ENTITY HomeState.accesskey            "E">
+<!ENTITY HomeZipCode.label              "Posta Kodea:">
+<!ENTITY HomeZipCode.accesskey          "P">
+<!ENTITY HomeCountry.label              "Herrialdea:">
+<!ENTITY HomeCountry.accesskey          "r">
+<!ENTITY HomeWebPage.label              "Webgunea:">
+<!ENTITY HomeWebPage.accesskey          "W">
+<!ENTITY Birthday.label                 "Jaiotze-data:">
+<!ENTITY Birthday.accesskey             "J">
+<!ENTITY Month.placeholder              "Hilabetea">
+<!ENTITY Day.placeholder                "Eguna">
+<!ENTITY Year.placeholder               "Urtea">
+<!ENTITY Age.label                      "Adina:">
+<!ENTITY Age.placeholder                "Adina">
+
+<!ENTITY Work.tab                       "Lana">
+<!ENTITY Work.accesskey                 "L">
+<!ENTITY JobTitle.label                 "Titulua:">
+<!ENTITY JobTitle.accesskey             "T">
+<!ENTITY Department.label               "Saila:">
+<!ENTITY Department.accesskey           "S">
+<!ENTITY Company.label                  "Erakundea:">
+<!ENTITY Company.accesskey              "k">
+<!ENTITY WorkAddress.label              "Helbidea:">
+<!ENTITY WorkAddress.accesskey          "d">
+<!ENTITY WorkAddress2.label             "">
+<!ENTITY WorkAddress2.accesskey         "">
+<!ENTITY WorkCity.label                 "Hiria:">
+<!ENTITY WorkCity.accesskey             "H">
+<!ENTITY WorkState.label                "Estatua/probintzia:">
+<!ENTITY WorkState.accesskey            "E">
+<!ENTITY WorkZipCode.label              "Posta Kodea:">
+<!ENTITY WorkZipCode.accesskey          "P">
+<!ENTITY WorkCountry.label              "Herrialdea:">
+<!ENTITY WorkCountry.accesskey          "r">
+<!ENTITY WorkWebPage.label              "Webgunea:">
+<!ENTITY WorkWebPage.accesskey          "W">
+
+<!ENTITY Other.tab                      "Bestelakoak">
+<!ENTITY Other.accesskey                "B">
+<!ENTITY Custom1.label                  "Pertsonalizatua 1:">
+<!ENTITY Custom1.accesskey              "1">
+<!ENTITY Custom2.label                  "2 pertsonalizatua:">
+<!ENTITY Custom2.accesskey              "2">
+<!ENTITY Custom3.label                  "3 pertsonalizatua:">
+<!ENTITY Custom3.accesskey              "3">
+<!ENTITY Custom4.label                  "4 pertsonalizatua:">
+<!ENTITY Custom4.accesskey              "4">
+<!ENTITY Notes.label                    "Oharrak:">
+<!ENTITY Notes.accesskey                "O">
+
+<!ENTITY Chat.tab                       "Txata">
+<!ENTITY Chat.accesskey                 "T">
+<!ENTITY Gtalk.label                    "Google Talk:">
+<!ENTITY Gtalk.accesskey                "G">
+<!ENTITY AIM.label                      "AIM:">
+<!ENTITY AIM2.accesskey                 "M">
+<!ENTITY Yahoo.label                    "Yahoo!:">
+<!ENTITY Yahoo.accesskey                "Y">
+<!ENTITY Skype.label                    "Skype:">
+<!ENTITY Skype.accesskey                "S">
+<!ENTITY QQ.label                       "QQ:">
+<!ENTITY QQ.accesskey                   "Q">
+<!ENTITY MSN.label                      "MSN:">
+<!ENTITY MSN2.accesskey                 "N">
+<!ENTITY ICQ.label                      "ICQ:">
+<!ENTITY ICQ.accesskey                  "I">
+<!ENTITY XMPP.label                     "Jabber ID:">
+<!ENTITY XMPP.accesskey                 "J">
+<!ENTITY IRC.label                      "IRC Nick:">
+<!ENTITY IRC.accesskey                  "R">
+
+<!ENTITY Photo.tab                      "Argazkia">
+<!ENTITY Photo.accesskey                "A">
+<!ENTITY GenericPhoto.label             "Argazki arrunta">
+<!ENTITY GenericPhoto.accesskey         "A">
+<!ENTITY DefaultPhoto.label             "Lehenetsia">
+<!ENTITY PhotoFile.label                "Ordenagailu honetan">
+<!ENTITY PhotoFile.accesskey            "o">
+<!ENTITY BrowsePhoto.label              "Arakatu">
+<!ENTITY BrowsePhoto.accesskey          "r">
+<!ENTITY PhotoURL.label                 "Webean">
+<!ENTITY PhotoURL.accesskey             "w">
+<!ENTITY PhotoURL.placeholder           "Itsatsi edo idatzi argazkiaren web helbidea">
+<!ENTITY UpdatePhoto.label              "Eguneratu">
+<!ENTITY UpdatePhoto.accesskey          "E">
+<!ENTITY PhotoDropTarget.label          "Arrastatu argazki berria hona">

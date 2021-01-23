@@ -9,6 +9,7 @@
 using namespace js;
 using namespace js::jit;
 
+#ifdef DEBUG
 bool AllocationIntegrityState::record() {
   // Ignore repeated record() calls.
   if (!instructions.empty()) {
@@ -89,15 +90,14 @@ bool AllocationIntegrityState::record() {
   return true;
 }
 
-bool AllocationIntegrityState::check(bool populateSafepoints) {
+bool AllocationIntegrityState::check() {
   MOZ_ASSERT(!instructions.empty());
 
-#ifdef JS_JITSPEW
+#  ifdef JS_JITSPEW
   if (JitSpewEnabled(JitSpew_RegAlloc)) {
     dump();
   }
-#endif
-#ifdef DEBUG
+#  endif
   for (size_t blockIndex = 0; blockIndex < graph.numBlocks(); blockIndex++) {
     LBlock* block = graph.getBlock(blockIndex);
 
@@ -133,7 +133,6 @@ bool AllocationIntegrityState::check(bool populateSafepoints) {
       }
     }
   }
-#endif
 
   // Check that the register assignment and move groups preserve the original
   // semantics of the virtual registers. Each virtual register has a single
@@ -159,14 +158,10 @@ bool AllocationIntegrityState::check(bool populateSafepoints) {
           }
           uint32_t vreg = info.temps[i].virtualRegister();
           LAllocation* alloc = ins->getTemp(i)->output();
-          if (!checkSafepointAllocation(ins, vreg, *alloc,
-                                        populateSafepoints)) {
-            return false;
-          }
+          checkSafepointAllocation(ins, vreg, *alloc);
         }
-        MOZ_ASSERT_IF(ins->isCall() && !populateSafepoints,
-                      safepoint->liveRegs().emptyFloat() &&
-                          safepoint->liveRegs().emptyGeneral());
+        MOZ_ASSERT_IF(ins->isCall(), safepoint->liveRegs().emptyFloat() &&
+                                         safepoint->liveRegs().emptyGeneral());
       }
 
       size_t inputIndex = 0;
@@ -180,24 +175,21 @@ bool AllocationIntegrityState::check(bool populateSafepoints) {
         uint32_t vreg = oldInput.toUse()->virtualRegister();
 
         if (safepoint && !oldInput.toUse()->usedAtStart()) {
-          if (!checkSafepointAllocation(ins, vreg, **alloc,
-                                        populateSafepoints)) {
-            return false;
-          }
+          checkSafepointAllocation(ins, vreg, **alloc);
         }
 
         // Start checking at the previous instruction, in case this
         // instruction reuses its input register for an output.
         LInstructionReverseIterator riter = block->rbegin(ins);
         riter++;
-        if (!checkIntegrity(block, *riter, vreg, **alloc, populateSafepoints)) {
+        if (!checkIntegrity(block, *riter, vreg, **alloc)) {
           return false;
         }
 
         while (!worklist.empty()) {
           IntegrityItem item = worklist.popCopy();
           if (!checkIntegrity(item.block, *item.block->rbegin(), item.vreg,
-                              item.alloc, populateSafepoints)) {
+                              item.alloc)) {
             return false;
           }
         }
@@ -209,8 +201,8 @@ bool AllocationIntegrityState::check(bool populateSafepoints) {
 }
 
 bool AllocationIntegrityState::checkIntegrity(LBlock* block, LInstruction* ins,
-                                              uint32_t vreg, LAllocation alloc,
-                                              bool populateSafepoints) {
+                                              uint32_t vreg,
+                                              LAllocation alloc) {
   for (LInstructionReverseIterator iter(block->rbegin(ins));
        iter != block->rend(); iter++) {
     ins = *iter;
@@ -257,9 +249,7 @@ bool AllocationIntegrityState::checkIntegrity(LBlock* block, LInstruction* ins,
     }
 
     if (ins->safepoint()) {
-      if (!checkSafepointAllocation(ins, vreg, alloc, populateSafepoints)) {
-        return false;
-      }
+      checkSafepointAllocation(ins, vreg, alloc);
     }
   }
 
@@ -294,29 +284,24 @@ bool AllocationIntegrityState::checkIntegrity(LBlock* block, LInstruction* ins,
   return true;
 }
 
-bool AllocationIntegrityState::checkSafepointAllocation(
-    LInstruction* ins, uint32_t vreg, LAllocation alloc,
-    bool populateSafepoints) {
+void AllocationIntegrityState::checkSafepointAllocation(LInstruction* ins,
+                                                        uint32_t vreg,
+                                                        LAllocation alloc) {
   LSafepoint* safepoint = ins->safepoint();
   MOZ_ASSERT(safepoint);
 
   if (ins->isCall() && alloc.isRegister()) {
-    return true;
+    return;
   }
 
   if (alloc.isRegister()) {
-    AnyRegister reg = alloc.toRegister();
-    if (populateSafepoints) {
-      safepoint->addLiveRegister(reg);
-    }
-
-    MOZ_ASSERT(safepoint->liveRegs().has(reg));
+    MOZ_ASSERT(safepoint->liveRegs().has(alloc.toRegister()));
   }
 
   // The |this| argument slot is implicitly included in all safepoints.
   if (alloc.isArgument() &&
       alloc.toArgument()->index() < THIS_FRAME_ARGSLOT + sizeof(Value)) {
-    return true;
+    return;
   }
 
   LDefinition::Type type = virtualRegisters[vreg]
@@ -325,66 +310,32 @@ bool AllocationIntegrityState::checkSafepointAllocation(
 
   switch (type) {
     case LDefinition::OBJECT:
-      if (populateSafepoints) {
-        JitSpew(JitSpew_RegAlloc, "Safepoint object v%u i%u %s", vreg,
-                ins->id(), alloc.toString().get());
-        if (!safepoint->addGcPointer(alloc)) {
-          return false;
-        }
-      }
       MOZ_ASSERT(safepoint->hasGcPointer(alloc));
       break;
+    case LDefinition::STACKRESULTS:
+      MOZ_ASSERT(safepoint->hasAllGcPointersFromStackArea(alloc));
+      break;
     case LDefinition::SLOTS:
-      if (populateSafepoints) {
-        JitSpew(JitSpew_RegAlloc, "Safepoint slots v%u i%u %s", vreg, ins->id(),
-                alloc.toString().get());
-        if (!safepoint->addSlotsOrElementsPointer(alloc)) {
-          return false;
-        }
-      }
       MOZ_ASSERT(safepoint->hasSlotsOrElementsPointer(alloc));
       break;
-#ifdef JS_NUNBOX32
+#  ifdef JS_NUNBOX32
     // Do not assert that safepoint information for nunbox types is complete,
     // as if a vreg for a value's components are copied in multiple places
     // then the safepoint information may not reflect all copies. All copies
     // of payloads must be reflected, however, for generational GC.
     case LDefinition::TYPE:
-      if (populateSafepoints) {
-        JitSpew(JitSpew_RegAlloc, "Safepoint type v%u i%u %s", vreg, ins->id(),
-                alloc.toString().get());
-        if (!safepoint->addNunboxType(vreg, alloc)) {
-          return false;
-        }
-      }
       break;
     case LDefinition::PAYLOAD:
-      if (populateSafepoints) {
-        JitSpew(JitSpew_RegAlloc, "Safepoint payload v%u i%u %s", vreg,
-                ins->id(), alloc.toString().get());
-        if (!safepoint->addNunboxPayload(vreg, alloc)) {
-          return false;
-        }
-      }
       MOZ_ASSERT(safepoint->hasNunboxPayload(alloc));
       break;
-#else
+#  else
     case LDefinition::BOX:
-      if (populateSafepoints) {
-        JitSpew(JitSpew_RegAlloc, "Safepoint boxed value v%u i%u %s", vreg,
-                ins->id(), alloc.toString().get());
-        if (!safepoint->addBoxedValue(alloc)) {
-          return false;
-        }
-      }
       MOZ_ASSERT(safepoint->hasBoxedValue(alloc));
       break;
-#endif
+#  endif
     default:
       break;
   }
-
-  return true;
 }
 
 bool AllocationIntegrityState::addPredecessor(LBlock* block, uint32_t vreg,
@@ -410,7 +361,7 @@ bool AllocationIntegrityState::addPredecessor(LBlock* block, uint32_t vreg,
 }
 
 void AllocationIntegrityState::dump() {
-#ifdef DEBUG
+#  ifdef JS_JITSPEW
   fprintf(stderr, "Register Allocation Integrity State:\n");
 
   for (size_t blockIndex = 0; blockIndex < graph.numBlocks(); blockIndex++) {
@@ -514,8 +465,9 @@ void AllocationIntegrityState::dump() {
   }
 
   fprintf(stderr, "\n");
-#endif
+#  endif
 }
+#endif  // DEBUG
 
 const CodePosition CodePosition::MAX(UINT_MAX);
 const CodePosition CodePosition::MIN(0);

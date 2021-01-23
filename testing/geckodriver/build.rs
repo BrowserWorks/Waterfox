@@ -37,7 +37,7 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
-fn get_build_info(dir: &Path) -> Box<BuildInfo> {
+fn get_build_info(dir: &Path) -> Box<dyn BuildInfo> {
     if Path::exists(&dir.join(".hg")) {
         Box::new(Hg {})
     } else if Path::exists(&dir.join(".git")) {
@@ -112,8 +112,8 @@ impl BuildInfo for Git {
         self.exec(&["rev-parse", "HEAD"])
             .and_then(|sha| self.to_hg_sha(sha))
             .map(|mut s| {
-              s.truncate(12);
-              s
+                s.truncate(12);
+                s
             })
     }
 

@@ -1,0 +1,51 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!-- extracted from am-addressing.xhtml -->
+
+<!ENTITY addressing.label          "Tz'ib'anïk &amp; Ochochib'äl">
+<!ENTITY addressingGroupTitle.label "Taq ochochib'äl">
+<!ENTITY addressingText.label      "Toq yekanöx taq ochochib'äl:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Ke'okisäx ri ajowel taq chijun LDAP k'uxasamaj richin re rub'i' taqoya'l re'">
+<!ENTITY useGlobal.accesskey       "K">
+<!ENTITY editDirectories.label     "Kenuk' taq Cholb'äl…">
+<!ENTITY editDirectories.accesskey "K">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Tokisäx jun chik wi chi LDAP k'uxasamaj:">
+<!ENTITY directories.accesskey     "c">
+<!ENTITY directoriesNone.label     "Majun">
+
+<!-- am-addressing.xul -->
+
+<!-- am-addressing.xhtml -->
+
+<!ENTITY compositionGroupTitle.label          "Ruch'akulal">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Ketz'ib'äx taq tzijol pa HTML b'anikil">
+<!ENTITY useHtml.accesskey                    "K">
+<!ENTITY autoQuote.label                      "Tisik'ïx chik pa ruyonil ri nab'ey rutzijol toq nitzolïx tzij">
+<!ENTITY autoQuote.accesskey                  "r">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "Toq noyöx,">
+<!ENTITY quoting.accesskey                    "n">
+<!ENTITY aboveQuote.label                     "titikirisäx ri rutzolixik nutzij pa ruwi' ri rucholajem tzij sik'in">
+<!ENTITY belowQuote.label                     "titikirisäx ri rutzolixik nutzij chuxe' ri rucholajem tzij sik'in">
+<!ENTITY selectAndQuote.label                 "ticha' ri rucholajem tzij sik'in">
+<!ENTITY place.label                          "chuqa' tiya' el ri juch'un nub'i'">
+<!ENTITY place.accesskey                      "j">
+<!ENTITY belowText.label                      "chuxe' ri rucholajem tzij sik'in (chilab'en)">
+<!ENTITY aboveText.label                      "chuxe' ri rutzolixik nutzij (pa ruwi' ri rucholajem tzij sik'in)">
+<!ENTITY includeSigOnReply.label              "Titz'aqatisäx juch'un b'i'aj pa taq rutzolixik tzij">
+<!ENTITY includeSigOnReply.accesskey          "T">
+<!ENTITY includeSigOnForward.label            "Titz'aqatisäx juch'un b'i'aj pa ri yetaq chik">
+<!ENTITY includeSigOnForward.accesskey        "y">
+
+<!ENTITY globalComposingPrefs.label           "Chijun taq Kajowab'al Tz'ib'anïk…">
+<!ENTITY globalComposingPrefs.accesskey       "C">
+
+<!ENTITY globalAddressingPrefs.label          "Chijun taq Kajowab'al Ochochib'äl…">
+<!ENTITY globalAddressingPrefs.accesskey      "K">

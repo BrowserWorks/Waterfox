@@ -23,6 +23,9 @@ XPCOMUtils.defineLazyModuleGetters(this, {
 // ${InstallDir}/distribution folder.
 const POLICIES_FILENAME = "policies.json";
 
+// When true browser policy is loaded per-user from
+// /run/user/$UID/appname
+const PREF_PER_USER_DIR = "toolkit.policies.perUserDir";
 // For easy testing, modify the helpers/sample.json file,
 // and set PREF_ALTERNATE_PATH in firefox.js as:
 // /your/repo/browser/components/enterprisepolicies/helpers/sample.json
@@ -147,13 +150,12 @@ EnterprisePoliciesManager.prototype = {
         continue;
       }
 
-      let [
-        parametersAreValid,
-        parsedParameters,
-      ] = JsonSchemaValidator.validateAndParseParameters(
-        policyParameters,
-        policySchema
-      );
+      let {
+        valid: parametersAreValid,
+        parsedValue: parsedParameters,
+      } = JsonSchemaValidator.validate(policyParameters, policySchema, {
+        allowExtraProperties: true,
+      });
 
       if (!parametersAreValid) {
         log.error(`Invalid parameters specified for ${policyName}.`);
@@ -206,7 +208,7 @@ EnterprisePoliciesManager.prototype = {
 
   _runPoliciesCallbacks(timing) {
     let callbacks = this._callbacks[timing];
-    while (callbacks.length > 0) {
+    while (callbacks.length) {
       let callback = callbacks.shift();
       try {
         callback();
@@ -422,18 +424,16 @@ let InstallSources = null;
  * @returns {Bool} Whether the policy can run.
  */
 function areEnterpriseOnlyPoliciesAllowed() {
-  if (Services.prefs.getBoolPref(PREF_DISALLOW_ENTERPRISE, false)) {
-    // This is used as an override to test the "enterprise_only"
-    // functionality itself on tests, which would always return
-    // true due to the Cu.isInAutomation check below.
-    return false;
+  if (Cu.isInAutomation || isXpcshell) {
+    if (Services.prefs.getBoolPref(PREF_DISALLOW_ENTERPRISE, false)) {
+      // This is used as an override to test the "enterprise_only"
+      // functionality itself on tests.
+      return false;
+    }
+    return true;
   }
 
-  if (
-    AppConstants.MOZ_UPDATE_CHANNEL != "release" ||
-    Cu.isInAutomation ||
-    isXpcshell
-  ) {
+  if (AppConstants.MOZ_UPDATE_CHANNEL != "release") {
     return true;
   }
 
@@ -487,7 +487,12 @@ class JSONPoliciesProvider {
     }
 
     try {
-      configFile = Services.dirsvc.get("XREAppDist", Ci.nsIFile);
+      let perUserPath = Services.prefs.getBoolPref(PREF_PER_USER_DIR, false);
+      if (perUserPath) {
+        configFile = Services.dirsvc.get("XREUserRunTimeDir", Ci.nsIFile);
+      } else {
+        configFile = Services.dirsvc.get("XREAppDist", Ci.nsIFile);
+      }
       configFile.append(POLICIES_FILENAME);
     } catch (ex) {
       // Getting the correct directory will fail in xpcshell tests. This should
@@ -590,11 +595,15 @@ class WindowsGPOPoliciesProvider {
   }
 
   _readData(wrk, root) {
-    wrk.open(root, "SOFTWARE\\Policies", wrk.ACCESS_READ);
-    if (wrk.hasChild("Mozilla\\" + Services.appinfo.name)) {
-      this._policies = WindowsGPOParser.readPolicies(wrk, this._policies);
+    try {
+      wrk.open(root, "SOFTWARE\\Policies", wrk.ACCESS_READ);
+      if (wrk.hasChild("Waterfox\\" + Services.appinfo.name)) {
+        this._policies = WindowsGPOParser.readPolicies(wrk, this._policies);
+      }
+      wrk.close();
+    } catch (e) {
+      log.error("Unable to access registry - ", e);
     }
-    wrk.close();
   }
 }
 

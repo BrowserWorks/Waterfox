@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY rights.locale-direction "ltr">
+<!ENTITY rights.pagetitle "Пра правы">
+<!ENTITY rights.intro-header "Пра вашы правы">
+<!ENTITY rights.intro "&brandFullName; свабоднае праграмнае забеспячэнне з адкрытымі зыходнікамі, створанае шматлюднай сусветнай грамадой. Вам будзе цікава ведаць:">
+<!ENTITY rights.intro-point1a "&brandShortName; даступны вам згодна умовам">
+<!ENTITY rights.intro-point1b "Прылюднай Ліцэнзіі Mozilla">
+<!ENTITY rights.intro-point1c ". Яна дазваляе вам ужываць, капіяваць і распаўсюджваць &brandShortName;.  Вы таксама можаце змяняць зыходны код &brandShortName; дзеля задавальнення вашых патрэбаў. Прылюдная Ліцэнзія Mozilla дазваляе вам распаўсюджваць вашы змененыя версіі.">
+<!ENTITY rights.intro-point2a "Mozilla не дае вам ніякіх правоў на гандлёвыя маркі і эмблемы Mozilla і SeaMonkey. Дадатковыя звесткі пра гандлёвыя маркі можна адшукаць ">
+<!ENTITY rights.intro-point2b "тут">
+<!ENTITY rights.intro-point2c ".">
+<!ENTITY rights.intro-point3a "З палітыкамі прыватнасці прадуктаў &vendorShortName; можна пазнаёміцца ">
+<!ENTITY rights.intro-point3b "тут">
+<!ENTITY rights.intro-point3c ".">
+<!ENTITY rights.intro-point4a "&brandShortName; прапануе дадатковыя звесткавыя службы на пляцоўках Сеціва, такія як служба абнаўлення дадаткаў; аднак мы не гарантуем, што яны працуюць на 100&#037; правільна і адсутнасць памылак. Падрабязнасці, разам з звесткамі пра забарону службаў, можна знайсці ў ">
+<!ENTITY rights.intro-point4b "умовах пагаднення службаў">
+<!ENTITY rights.intro-point4c ".">
+<!ENTITY rights.webservices-header "Службы пляцовак Сеціва &brandFullName;">
+<!ENTITY rights.webservices-a "&brandFullName; прапануе дадатковыя службы (&quot;Службы&quot;), такія як служба абнаўлення дадаткаў, якія даступныя вам для ўжывання ў гэтай двайковай версіі &brandShortName;, як апісаны ніжэй. Калі вы не хочаце ўжываць гэтыя службы ці ўмовы пагаднення непрымальныя, вы можаце забараніць службу абнаўлення дадаткаў у перавагах прыстасавання. Выберыце раздзел ">
+<!ENTITY rights.webservices-b "Пашыраны">
+<!ENTITY rights.webservices-c ", наступным за ўстаўкай">
+<!ENTITY rights.webservices-d "Усталяванне праграмнага забеспячэння">
+<!ENTITY rights.webservices-e " і прыміце адзнакі з &quot;Самастойна правяраць, ці існуюць абнаўленні да;&quot;.">
+<!ENTITY rights.webservices-term1 "&vendorShortName; можа спыніць дзеянне ці змяніць Службы па свайму одуму.">
+<!ENTITY rights.webservices-term2 "Вы можаце карыстацца гэтымі службамі разам з дадзенай версіяй  &brandShortName;, вы маеце ўсе неабходныя правы. &vendorShortName; і ўсе ліцэнзіяты захоўваюць за сабой усе іншыя правы Службаў. Гэтыя ўмовы пагадненняў не абмяжоўваюць правоў, якія дадзеныя ліцэнзіямі адкрытых зыходнікаў, прыдатных для &brandShortName; і адпаведных версіяў зыходнага кода &brandShortName;.">
+<!ENTITY rights.webservices-term3 "Службы прадастаўляюцца &quot;як ёсць.&quot;  &vendorShortName;, яго ўкладчыкі, ліцэнзіяты і размеркавальнікі выракаюцца ўсякіх зарукаў, выказаных яўна або тых, што падразумяваюцца, у тым ліку зарукаў таго, што службы ходкія і прыдатныя для задавальнення вашых асабістых патрэбаў. Вы бераце на сябе ўсю рызыку за выбар і адпаведнасць якасці і хуткасці службаў для задавальнення сваіх патрэбаў. Асобныя юрысдыкцыі не дазваляюць выключэнне або абмежавання зарукаў, якія падразумяваюцца, таму гэты вырак можа не тычыцца вас.">
+<!ENTITY rights.webservices-term4 "Except as required by law, &vendorShortName;, its contributors, licensors, and distributors will not be liable for any indirect, special, incidental, consequential, punitive, or exemplary damages arising out of or in any way relating to the use of &brandShortName; and the Services.  The collective liability under these terms will not exceed $500 (five hundred dollars). Some jurisdictions do not allow the exclusion or limitation of certain damages, so this exclusion and limitation may not apply to you.">
+<!ENTITY rights.webservices-term5 "&vendorShortName; можа абнаўляць гэтыя ўмовы пагаднення час ад часу, калі гэта будзе неабходна. Гэтыя ўмовы не могуць быць зменены або скасованы без пісьмовага дазволу &vendorShortName;.">
+<!ENTITY rights.webservices-term6 "These terms are governed by the laws of the state of California, U.S.A., excluding its conflict of law provisions. If any portion of these terms is held to be invalid or unenforceable, the remaining portions will remain in full force and effect. In the event of a conflict between a translated version of these terms and the English language version, the English language version shall control.">

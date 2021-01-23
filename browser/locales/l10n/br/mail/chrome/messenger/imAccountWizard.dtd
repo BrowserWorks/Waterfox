@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label            "Skoazeller kont postelerezh prim">
+
+<!ENTITY accountProtocolTitle.label   "Rouedad postelerezh prim">
+<!ENTITY accountProtocolInfo.label    "Mar plij dibabit ar rouedad eus ho kont postelerezh prim.">
+<!ENTITY accountProtocolField.label   "Rouedad :">
+<!ENTITY accountProtocolGetMore.label "Kaout muioc'h…">
+
+<!ENTITY accountUsernameTitle.label   "Anv arveriad">
+<!ENTITY accountUsernameDuplicate.label "Kefluniet eo ar gont-mañ endeo !">
+
+<!ENTITY accountPasswordTitle.label   "Ger-tremen">
+<!ENTITY accountPasswordInfo.label    "Mar plij, bizskrivit ho ker-tremen er voest amañ dindan.">
+<!ENTITY accountPasswordField.label   "Ger-tremen :">
+<!ENTITY accountPasswordManager.label "Enrollet e vo ar ger-tremen enanket e ardoer ar gerioù-tremen. Laoskit ar voest-mañ goullo ma fell deoc'h bezañ goulennet ho ker-tremen bewech ma vo kennasket ho kont.">
+
+<!ENTITY accountAdvancedTitle.label   "Dibarzhioù kempleshoc'h">
+<!ENTITY accountAdvancedInfo.label    "Gallout a rit mont e-biou ar bazenn-mañ ma fell deoc'h hen ober.">
+<!ENTITY accountAdvanced.newMailNotification.label   "Rebuziñ ar posteloù nevez">
+<!ENTITY accountAliasGroupbox.caption "Lesanv lec'hel">
+<!ENTITY accountAliasField.label      "Lesanv :">
+<!ENTITY accountAliasInfo.label       "Diskouezet e vo an dra-se e-barzh ho kaozeadennoù pa viot o prezeg, ne vo ket gwelet gant an darempredoù a-bell.">
+<!ENTITY accountProxySettings.caption "Arventennoù proksi">
+<!ENTITY accountProxySettings.change.label     "Kemmañ…">
+<!ENTITY accountProxySettings.change.accessKey "K">
+
+<!ENTITY accountSummaryTitle.label   "Krennadur">
+<!ENTITY accountSummaryInfo.label    "Diskouezet ez eus amañ dindan ur c'hrennadur eus an titouroù hoc'h eus enanket. Mar plij, gwiriit anezhañ a-raok krouiñ ar gont.">
+<!ENTITY accountSummary.connectNow.label "Kennaskañ ar gont-mañ diouzhtu.">

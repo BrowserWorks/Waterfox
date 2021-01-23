@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pane.title                   "Inagan n waggaḍ">
+<!ENTITY useGlobalPrefs.label         "Seqdec ismenyifen inu imuta n inagan n waggaḍ deg umidan-agi">
+<!ENTITY useGlobalPrefs.accesskey     "q">
+<!ENTITY globalReceipts.label         "Iɣewwaṛen imuta…">
+<!ENTITY globalReceipts.accesskey     "ɣ">
+<!ENTITY useCustomPrefs.label         "Sagen inagan n waggaḍ i umiḍan-agi">
+<!ENTITY useCustomPrefs.accesskey     "g">
+<!ENTITY requestReceipt.label         "&amp;Ticki ttuzneḍ iznan, sutur yal tikelt inagan n waggaḍ">
+<!ENTITY requestReceipt.accesskey     "c">
+<!ENTITY receiptArrive.label          "Ticki yuɣla-d unagi n wawwaḍ.">
+<!ENTITY leaveIt.label                "Ǧǧi-t di tirawt inu">
+<!ENTITY leaveIt.accesskey            "t">
+<!-- LOCALIZATION NOTE moveToSent.label Translate: 'Sent' according to Netscape glossary -->
+<!ENTITY moveToSent.label             "Senkez-it ɣer ukaram inu n &quot;Tuzna&quot;">
+<!ENTITY moveToSent.accesskey         "M">
+<!ENTITY requestMDN.label             "Ticki remseɣ-d asuter n unagi n wawwaḍ:">
+<!ENTITY returnSome.label             "Sireg inagan n wawwaḍ i kra n yeznan">
+<!ENTITY returnSome.accesskey         "n">
+<!ENTITY never.label                  "Weṛǧin azen anagi n wawwaḍ">
+<!ENTITY never.accesskey              "W">
+<!ENTITY notInToCc.label              "Ma yella ur lliɣ ara di I neɣ Anɣ.I n yizen:">
+<!ENTITY notInToCc.accesskey          "I">
+<!ENTITY outsideDomain.label          "Ma yella amazan ulac-it deg taɣult-inu:">
+<!ENTITY outsideDomain.accesskey      "m">
+<!ENTITY otherCases.label             "Deg tikwal nniḍen:">
+<!ENTITY otherCases.accesskey         "w">
+<!ENTITY askMe.label                  "Steqsi-yi-d">
+<!ENTITY alwaysSend.label             "Azen yal tikelt">
+<!ENTITY neverSend.label              "Ur ttazen ara">

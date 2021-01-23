@@ -6,11 +6,12 @@ loader: taskgraph.loader.transform:loader
 
 kind-dependencies:
     - toolchain
+    - fetch
 
 transforms:
+    - taskgraph.transforms.build:transforms
     - taskgraph.transforms.build_attrs:transforms
     - taskgraph.transforms.build_lints:transforms
-    - taskgraph.transforms.use_toolchains:transforms
     - taskgraph.transforms.job:transforms
     - taskgraph.transforms.task:transforms
 
@@ -47,13 +48,16 @@ jobs:
             script: "mozharness/scripts/fx_desktop_build.py"
             tooltool-downloads: public
             keep-artifacts: false
-        toolchains:
-            - linux64-binutils
-            - linux64-clang
-            - linux64-nasm
-            - linux64-node
-            - linux64-rust
-            - linux64-cbindgen
+        fetches:
+            toolchain:
+                - linux64-binutils
+                - linux64-clang
+                - linux64-nasm
+                - linux64-node
+                - linux64-rust
+                - linux64-cbindgen
+                - linux64-lucetc
+                - wasi-sysroot
 
     macosx64-searchfox/debug:
         description: "MacOS X x64 Debug Cross-compile Searchfox"
@@ -80,27 +84,30 @@ jobs:
             secrets: true
             tooltool-downloads: internal
             keep-artifacts: false
-        toolchains:
-            - linux64-binutils
-            - linux64-cctools-port
-            - linux64-clang
-            - linux64-hfsplus
-            - linux64-libdmg
-            - linux64-llvm-dsymutil
-            - linux64-nasm
-            - linux64-node
-            - linux64-rust-macos
-            - linux64-cbindgen
+        fetches:
+            toolchain:
+                - linux64-binutils
+                - linux64-cctools-port
+                - linux64-clang-macosx-cross
+                - linux64-hfsplus
+                - linux64-libdmg
+                - linux64-llvm-dsymutil
+                - linux64-nasm
+                - linux64-node
+                - linux64-rust-macos
+                - linux64-cbindgen
+                - linux64-lucetc
+                - wasi-sysroot
 
     win64-searchfox/debug:
         description: "Win64 Searchfox Debug (clang-cl)"
         index:
-            product: firefox
             job-name: win64-searchfox-debug
         treeherder:
             platform: windows2012-64/debug
-        worker-type: b-win2012
+        worker-type: b-linux
         worker:
+            docker-image: {in-tree: debian9-amd64-build}
             max-run-time: 36000
             env:
                 TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/win64/releng.manifest"
@@ -109,22 +116,37 @@ jobs:
                 MOZSEARCH_PLATFORM: "windows"
         run:
             using: mozharness
-            actions: [build]
-            use-caches: false
             options: [append-env-variables-from-configs]
+            actions: [get-secrets, build]
             script: mozharness/scripts/fx_desktop_build.py
+            secrets: true
             config:
                 - builds/releng_base_firefox.py
-                - builds/taskcluster_base_windows.py
-                - builds/taskcluster_base_win64.py
+                - builds/releng_base_linux_64_builds.py
                 - builds/taskcluster_sub_win64/searchfox_debug.py
             tooltool-downloads: internal
-        toolchains:
-            - win64-clang-cl
-            - win64-node
-            - win64-rust
-            - win64-cbindgen
-            - win64-nasm
+            extra-config:
+                mozconfig_platform: win64
+                env:
+                    LD_PRELOAD: "/builds/worker/fetches/liblowercase/liblowercase.so"
+                    LOWERCASE_DIRS: "/builds/worker/checkouts/gecko/vs2017_15.8.4"
+        fetches:
+            toolchain:
+                - linux64-binutils
+                - linux64-clang-win-cross
+                - linux64-rust-cross
+                - linux64-rust-size
+                - linux64-nasm
+                - linux64-node
+                - linux64-cbindgen
+                - linux64-sccache
+                - linux64-dump-syms
+                - linux64-wine
+                - linux64-liblowercase
+                - linux64-winchecksec
+            fetch:
+                - nsis-3.01-win
+                - upx-3.95-win
 
     android-armv7-searchfox/debug:
         description: "Android ARMv7 Debug Searchfox"
@@ -140,7 +162,7 @@ jobs:
                 PERFHERDER_EXTRA_OPTIONS: searchfox
                 RUSTC_BOOTSTRAP: "1"
                 MOZSEARCH_PLATFORM: "android-armv7"
-                GRADLE_USER_HOME: "/builds/worker/workspace/build/src/mobile/android/gradle/dotgradle-offline"
+                GRADLE_USER_HOME: "/builds/worker/checkouts/gecko/mobile/android/gradle/dotgradle-offline"
                 TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android/releng.manifest"
         run:
             using: mozharness
@@ -151,14 +173,15 @@ jobs:
             secrets: true
             custom-build-variant-cfg: api-16-debug-searchfox
             tooltool-downloads: internal
-        toolchains:
-            - android-gradle-dependencies
-            - android-ndk-linux
-            - android-sdk-linux
-            - linux64-clang
-            - linux64-rust-android
-            - linux64-rust-size
-            - linux64-cbindgen
-            - linux64-sccache
-            - linux64-nasm
-            - linux64-node
+        fetches:
+            toolchain:
+                - android-gradle-dependencies
+                - android-ndk-linux
+                - android-sdk-linux
+                - linux64-clang
+                - linux64-rust-android
+                - linux64-rust-size
+                - linux64-cbindgen
+                - linux64-sccache
+                - linux64-nasm
+                - linux64-node

@@ -70,8 +70,18 @@ class ResizeObserverController final {
   void Traverse(nsCycleCollectionTraversalCallback& aCb);
   void Unlink();
 
+  void AddSizeOfIncludingThis(nsWindowSizes&) const;
+
   void ShellDetachedFromDocument();
-  void AddResizeObserver(ResizeObserver* aObserver);
+  void AddResizeObserver(ResizeObserver& aObserver) {
+    MOZ_ASSERT(!mResizeObservers.Contains(&aObserver));
+    mResizeObservers.AppendElement(&aObserver);
+  }
+
+  void RemoveResizeObserver(ResizeObserver& aObserver) {
+    MOZ_ASSERT(mResizeObservers.Contains(&aObserver));
+    mResizeObservers.RemoveElement(&aObserver);
+  }
 
   /**
    * Schedule the notification via ResizeObserverNotificationHelper refresh
@@ -121,7 +131,7 @@ class ResizeObserverController final {
   Document* const mDocument;
 
   RefPtr<ResizeObserverNotificationHelper> mResizeObserverNotificationHelper;
-  nsTObserverArray<RefPtr<ResizeObserver>> mResizeObservers;
+  nsTArray<RefPtr<ResizeObserver>> mResizeObservers;
 };
 
 }  // namespace dom

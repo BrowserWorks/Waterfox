@@ -10,35 +10,28 @@
 #include "mozilla/Atomics.h"
 #include "mozilla/DebugOnly.h"
 
-#include "jsutil.h"
-
 #include "ds/BitArray.h"
 #include "gc/AllocKind.h"
 #include "gc/GCEnum.h"
 #include "js/TypeDecls.h"
+#include "util/Poison.h"
 
 namespace js {
 
 class AutoLockGC;
 class AutoLockGCBgAlloc;
-class FreeOp;
+class NurseryDecommitTask;
 
 namespace gc {
 
 class Arena;
 class ArenaCellSet;
 class ArenaList;
+class GCRuntime;
 class SortedArenaList;
 class StoreBuffer;
 class TenuredCell;
 struct Chunk;
-
-/*
- * This flag allows an allocation site to request a specific heap based upon the
- * estimated lifetime or lifetime requirements of objects allocated from that
- * site.
- */
-enum InitialHeap : uint8_t { DefaultHeap, TenuredHeap };
 
 // Cells are aligned to CellAlignShift, so the largest tagged null pointer is:
 const uintptr_t LargestTaggedNullCellPointer = (1 << CellAlignShift) - 1;
@@ -176,10 +169,9 @@ class FreeSpan {
  * <-------------------------> = first thing offset
  */
 class Arena {
-  static JS_FRIEND_DATA const uint32_t ThingSizes[];
-  static JS_FRIEND_DATA const uint32_t FirstThingOffsets[];
-  static JS_FRIEND_DATA const uint32_t ThingsPerArena[];
-
+  static JS_FRIEND_DATA const uint8_t ThingSizes[];
+  static JS_FRIEND_DATA const uint8_t FirstThingOffsets[];
+  static JS_FRIEND_DATA const uint8_t ThingsPerArena[];
   /*
    * The first span of free things in the arena. Most of these spans are
    * stored as offsets in free regions of the data array, and most operations
@@ -278,7 +270,7 @@ class Arena {
 
     // Poison zone pointer to highlight UAF on released arenas in crash data.
     AlwaysPoison(&zone, JS_FREED_ARENA_PATTERN, sizeof(zone),
-                 MemCheckKind::MakeUndefined);
+                 MemCheckKind::MakeNoAccess);
 
     allocKind = size_t(AllocKind::LIMIT);
     onDelayedMarkingList_ = 0;
@@ -440,9 +432,10 @@ class Arena {
   inline size_t& atomBitmapStart();
 
   template <typename T>
-  size_t finalize(FreeOp* fop, AllocKind thingKind, size_t thingSize);
+  size_t finalize(JSFreeOp* fop, AllocKind thingKind, size_t thingSize);
 
   static void staticAsserts();
+  static void checkLookupTables();
 
   void unmarkAll();
   void unmarkPreMarkedFreeCells();
@@ -542,6 +535,7 @@ struct ChunkInfo {
 
  private:
   friend class ChunkPool;
+  friend class js::NurseryDecommitTask;
   Chunk* next;
   Chunk* prev;
 
@@ -619,7 +613,7 @@ struct ChunkBitmap {
   volatile uintptr_t bitmap[ArenaBitmapWords * ArenasPerChunk];
 
  public:
-  ChunkBitmap() {}
+  ChunkBitmap() = default;
 
   MOZ_ALWAYS_INLINE void getMarkWordAndMask(const TenuredCell* cell,
                                             ColorBit colorBit,
@@ -726,7 +720,7 @@ static_assert(ArenaBitmapBytes * ArenasPerChunk == sizeof(ChunkBitmap),
 static_assert(js::gc::ChunkMarkBitmapBits == ArenaBitmapBits * ArenasPerChunk,
               "Ensure that the mark bitmap has the right number of bits.");
 
-typedef BitArray<ArenasPerChunk> PerArenaBitmap;
+using PerArenaBitmap = BitArray<ArenasPerChunk>;
 
 const size_t ChunkPadSize = ChunkSize - (sizeof(Arena) * ArenasPerChunk) -
                             sizeof(ChunkBitmap) - sizeof(PerArenaBitmap) -
@@ -780,34 +774,36 @@ struct Chunk {
 
   bool isNurseryChunk() const { return trailer.storeBuffer; }
 
-  Arena* allocateArena(JSRuntime* rt, JS::Zone* zone, AllocKind kind,
+  Arena* allocateArena(GCRuntime* gc, JS::Zone* zone, AllocKind kind,
                        const AutoLockGC& lock);
 
-  void releaseArena(JSRuntime* rt, Arena* arena, const AutoLockGC& lock);
+  void releaseArena(GCRuntime* gc, Arena* arena, const AutoLockGC& lock);
   void recycleArena(Arena* arena, SortedArenaList& dest, size_t thingsPerArena);
 
-  MOZ_MUST_USE bool decommitOneFreeArena(JSRuntime* rt, AutoLockGC& lock);
-  void decommitAllArenasWithoutUnlocking(const AutoLockGC& lock);
-
-  static Chunk* allocate(JSRuntime* rt);
-  void init(JSRuntime* rt);
-
- private:
+  MOZ_MUST_USE bool decommitOneFreeArena(GCRuntime* gc, AutoLockGC& lock);
   void decommitAllArenas();
 
+  // This will decommit each unused not-already decommitted arena. It performs a
+  // system call for each arena but is only used during OOM.
+  void decommitFreeArenasWithoutUnlocking(const AutoLockGC& lock);
+
+  static Chunk* allocate(GCRuntime* gc);
+  void init(GCRuntime* gc);
+
+ private:
   /* Search for a decommitted arena to allocate. */
   unsigned findDecommittedArenaOffset();
   Arena* fetchNextDecommittedArena();
 
-  void addArenaToFreeList(JSRuntime* rt, Arena* arena);
+  void addArenaToFreeList(GCRuntime* gc, Arena* arena);
   void addArenaToDecommittedList(const Arena* arena);
 
-  void updateChunkListAfterAlloc(JSRuntime* rt, const AutoLockGC& lock);
-  void updateChunkListAfterFree(JSRuntime* rt, const AutoLockGC& lock);
+  void updateChunkListAfterAlloc(GCRuntime* gc, const AutoLockGC& lock);
+  void updateChunkListAfterFree(GCRuntime* gc, const AutoLockGC& lock);
 
  public:
   /* Unlink and return the freeArenasHead. */
-  Arena* fetchNextFreeArena(JSRuntime* rt);
+  Arena* fetchNextFreeArena(GCRuntime* gc);
 };
 
 static_assert(
@@ -826,54 +822,6 @@ static_assert(
     js::gc::ChunkStoreBufferOffset ==
         offsetof(Chunk, trailer) + offsetof(ChunkTrailer, storeBuffer),
     "The hardcoded API storeBuffer offset must match the actual offset.");
-
-/*
- * Tracks the used sizes for owned heap data and automatically maintains the
- * memory usage relationship between GCRuntime and Zones.
- */
-class HeapSize {
-  /*
-   * A heap usage that contains our parent's heap usage, or null if this is
-   * the top-level usage container.
-   */
-  HeapSize* const parent_;
-
-  /*
-   * The approximate number of bytes in use on the GC heap, to the nearest
-   * ArenaSize. This does not include any malloc data. It also does not
-   * include not-actively-used addresses that are still reserved at the OS
-   * level for GC usage. It is atomic because it is updated by both the active
-   * and GC helper threads.
-   */
-  mozilla::Atomic<size_t, mozilla::ReleaseAcquire,
-                  mozilla::recordreplay::Behavior::DontPreserve>
-      gcBytes_;
-
- public:
-  explicit HeapSize(HeapSize* parent) : parent_(parent), gcBytes_(0) {}
-
-  size_t gcBytes() const { return gcBytes_; }
-
-  void addGCArena() {
-    gcBytes_ += ArenaSize;
-    if (parent_) {
-      parent_->addGCArena();
-    }
-  }
-  void removeGCArena() {
-    MOZ_ASSERT(gcBytes_ >= ArenaSize);
-    gcBytes_ -= ArenaSize;
-    if (parent_) {
-      parent_->removeGCArena();
-    }
-  }
-
-  /* Pair to adoptArenas. Adopts the attendant usage statistics. */
-  void adopt(HeapSize& other) {
-    gcBytes_ += other.gcBytes_;
-    other.gcBytes_ = 0;
-  }
-};
 
 inline void Arena::checkAddress() const {
   mozilla::DebugOnly<uintptr_t> addr = uintptr_t(this);
@@ -894,6 +842,46 @@ static const int32_t ChunkLocationOffsetFromLastByte =
     int32_t(gc::ChunkLocationOffset) - int32_t(gc::ChunkMask);
 static const int32_t ChunkStoreBufferOffsetFromLastByte =
     int32_t(gc::ChunkStoreBufferOffset) - int32_t(gc::ChunkMask);
+
+// Cell header stored before all nursery cells.
+struct alignas(gc::CellAlignBytes) NurseryCellHeader {
+  // Store zone pointer with the trace kind in the lowest three bits.
+  const uintptr_t zoneAndTraceKind;
+
+  // We only need to store a subset of trace kinds so this doesn't cover the
+  // full range.
+  static const uintptr_t TraceKindMask = 3;
+
+  static uintptr_t MakeValue(JS::Zone* const zone, JS::TraceKind kind) {
+    MOZ_ASSERT(uintptr_t(kind) < TraceKindMask);
+    MOZ_ASSERT((uintptr_t(zone) & TraceKindMask) == 0);
+    return uintptr_t(zone) | uintptr_t(kind);
+  }
+
+  NurseryCellHeader(JS::Zone* const zone, JS::TraceKind kind)
+      : zoneAndTraceKind(MakeValue(zone, kind)) {}
+
+  JS::Zone* zone() const {
+    return reinterpret_cast<JS::Zone*>(zoneAndTraceKind & ~TraceKindMask);
+  }
+
+  JS::TraceKind traceKind() const {
+    return JS::TraceKind(zoneAndTraceKind & TraceKindMask);
+  }
+
+  static const NurseryCellHeader* from(const Cell* cell) {
+    MOZ_ASSERT(IsInsideNursery(cell));
+    return reinterpret_cast<const NurseryCellHeader*>(
+        uintptr_t(cell) - sizeof(NurseryCellHeader));
+  }
+};
+
+static_assert(uintptr_t(JS::TraceKind::Object) <=
+              NurseryCellHeader::TraceKindMask);
+static_assert(uintptr_t(JS::TraceKind::String) <=
+              NurseryCellHeader::TraceKindMask);
+static_assert(uintptr_t(JS::TraceKind::BigInt) <=
+              NurseryCellHeader::TraceKindMask);
 
 } /* namespace gc */
 

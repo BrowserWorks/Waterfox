@@ -30,8 +30,9 @@ class SerializedStackHolder {
  public:
   SerializedStackHolder();
 
-  // Fill this holder with a main thread stack.
-  void SerializeMainThreadStack(JSContext* aCx, JS::HandleObject aStack);
+  // Fill this holder with a main or worklet thread stack.
+  void SerializeMainThreadOrWorkletStack(JSContext* aCx,
+                                         JS::HandleObject aStack);
 
   // Fill this holder with a worker thread stack.
   void SerializeWorkerStack(JSContext* aCx, WorkerPrivate* aWorkerPrivate,
@@ -50,8 +51,8 @@ class SerializedStackHolder {
 //
 // This always creates a stack, even if the net monitor isn't active for the
 // associated window. The net monitor will only be active if the associated
-// docshell or worker's WatchedByDevtools flag is set, so this should be checked
-// before creating the stack.
+// Browsing Context or worker's WatchedByDevTools flag is set, so this should
+// be checked before creating the stack.
 UniquePtr<SerializedStackHolder> GetCurrentStackForNetMonitor(JSContext* aCx);
 
 // If aStackHolder is non-null, this notifies the net monitor that aStackHolder
@@ -59,8 +60,8 @@ UniquePtr<SerializedStackHolder> GetCurrentStackForNetMonitor(JSContext* aCx);
 // thread. This call is synchronous, and aChannel and aStackHolder will not be
 // used afterward. aChannel is an nsISupports object because this can be used
 // with either nsIChannel or nsIWebSocketChannel.
-void NotifyNetworkMonitorAlternateStack(nsISupports* aChannel,
-                                        UniquePtr<SerializedStackHolder> aStackHolder);
+void NotifyNetworkMonitorAlternateStack(
+    nsISupports* aChannel, UniquePtr<SerializedStackHolder> aStackHolder);
 
 // Read back the saved frame stack and store it in a string as JSON.
 // This must be called on the main thread.

@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Event Menu -->
+
+<!ENTITY event.new.event                        "Digwyddiad Newydd…">
+<!ENTITY event.new.event.accesskey              "D">
+
+<!ENTITY event.new.task                         "Tasg Newydd…">
+<!ENTITY event.new.task.accesskey               "T">
+
+<!ENTITY calendar.import.label                  "Mewnforio…">
+<!ENTITY calendar.import.accesskey              "M">
+
+<!ENTITY calendar.export.label                  "Allforio…">
+<!ENTITY calendar.export.accesskey              "A">
+
+<!ENTITY calendar.publish.label                 "Cyhoeddi…">
+<!ENTITY calendar.publish.accesskey             "y">
+
+<!ENTITY calendar.deletecalendar.label          "Dileu'r Calendr…">
+<!ENTITY calendar.deletecalendar.accesskey      "i">
+<!ENTITY calendar.unsubscribecalendar.label     "Dad-danysgrifo Calendrau Penodol…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "D">
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+
+<!ENTITY calendar.removecalendar.label          "Tynnu Calendrau Penodol…">
+<!ENTITY calendar.removecalendar.accesskey      "T">
+
+
+<!ENTITY calendar.menu.customize.label          "Cyfaddasu…">
+<!ENTITY calendar.menu.customize.accesskey      "f">
+
+<!ENTITY showUnifinderCmd.label                 "Canfod Digwyddiadau">
+<!ENTITY showUnifinderCmd.accesskey             "f">
+<!ENTITY showUnifinderCmd.tooltip               "Toglo'r paen canfod digwyddiadau">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "Dangos Tasgau yn y Calendr">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "D">
+
+<!ENTITY goTodayCmd.label                       "Heddiw">
+<!ENTITY goTodayCmd.accesskey                   "H">
+
+<!ENTITY showCurrentView.label                  "Golwg Cyfredol">
+<!ENTITY showCurrentView.accesskey              "G">
+
+<!ENTITY calendar.properties.label              "Priodweddau'r Calendr…">
+<!ENTITY calendar.properties.accesskey          "P">

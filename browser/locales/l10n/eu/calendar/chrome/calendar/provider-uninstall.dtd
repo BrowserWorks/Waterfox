@@ -1,0 +1,12 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY providerUninstall.title                           "Desinstalatu hornitzailea">
+<!ENTITY providerUninstall.accept.label                    "Aukeratutako harpidetzari baja">
+<!ENTITY providerUninstall.accept.accesskey                "d">
+<!ENTITY providerUninstall.cancel.label                    "Mantendu harpidetza">
+<!ENTITY providerUninstall.cancel.accesskey                "M">
+<!ENTITY providerUninstall.preName.label                   "Desinstalatu edo desgaitzeko eskaria egin duzu:">
+<!ENTITY providerUninstall.postName.label                  "Honek azpiko egutegiak ezgaitzea ekarriko du.">
+<!ENTITY providerUninstall.reinstallNote.label             "Hornitzaile hau berrinstalatzeko asmorik ez badaukazu, hornitzaile honen egutegietako harpidetzei baja eman beharko zenieke.">

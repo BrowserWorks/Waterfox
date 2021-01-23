@@ -15,14 +15,14 @@ extern crate xpcom;
 use nserror::{nsresult, NS_OK};
 use nsstring::{nsACString, nsCString};
 use std::{
+    ffi::CStr,
     marker::PhantomData,
     mem, ptr,
     sync::atomic::{AtomicBool, Ordering},
-    ffi::CStr,
 };
 use xpcom::{
     getter_addrefs,
-    interfaces::{nsIEventTarget, nsIRunnable, nsISupports, nsIThread},
+    interfaces::{nsIEventTarget, nsIRunnable, nsISerialEventTarget, nsISupports, nsIThread},
     xpcom, xpcom_method, AtomicRefcnt, RefCounted, RefPtr, XpCom,
 };
 
@@ -42,6 +42,11 @@ extern "C" {
         doomed: *const nsISupports,
         always_proxy: bool,
     );
+    fn NS_CreateBackgroundTaskQueue(
+        name: *const libc::c_char,
+        target: *mut *const nsISerialEventTarget,
+    ) -> nsresult;
+    fn NS_DispatchBackgroundTask(event: *const nsIRunnable, flags: u32) -> nsresult;
 }
 
 pub fn get_current_thread() -> Result<RefPtr<nsIThread>, nsresult> {
@@ -64,6 +69,81 @@ pub fn create_thread(name: &str) -> Result<RefPtr<nsIThread>, nsresult> {
 
 pub fn is_current_thread(thread: &nsIThread) -> bool {
     unsafe { NS_IsCurrentThread(thread.coerce()) }
+}
+
+/// Creates a queue that runs tasks on the background thread pool. The tasks
+/// will run in the order they're dispatched, one after the other.
+pub fn create_background_task_queue(
+    name: &'static CStr,
+) -> Result<RefPtr<nsISerialEventTarget>, nsresult> {
+    getter_addrefs(|p| unsafe { NS_CreateBackgroundTaskQueue(name.as_ptr(), p) })
+}
+
+/// Dispatches a one-shot task runnable to the background thread pool with the
+/// default options.
+#[inline]
+pub fn dispatch_background_task(runnable: RefPtr<nsIRunnable>) -> Result<(), nsresult> {
+    dispatch_background_task_with_options(runnable, DispatchOptions::default())
+}
+
+/// Dispatches a one-shot task runnable to the background thread pool with the
+/// given options. The task may run concurrently with other background tasks.
+/// If you need tasks to run in a specific order, please create a background
+/// task queue using `create_background_task_queue`, and dispatch tasks to it
+/// instead.
+///
+/// ### Safety
+///
+/// This function leaks the runnable if dispatch fails. This avoids a race where
+/// a runnable can be destroyed on either the original or target thread, which
+/// is important if the runnable holds thread-unsafe members.
+pub fn dispatch_background_task_with_options(
+    runnable: RefPtr<nsIRunnable>,
+    options: DispatchOptions,
+) -> Result<(), nsresult> {
+    // This eventually calls the non-`already_AddRefed<nsIRunnable>` overload of
+    // `nsIEventTarget::Dispatch` (see xpcom/threads/nsIEventTarget.idl#20-25),
+    // which adds an owning reference and leaks if dispatch fails.
+    unsafe { NS_DispatchBackgroundTask(runnable.coerce(), options.flags()) }.to_result()
+}
+
+/// Options to control how task runnables are dispatched.
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+pub struct DispatchOptions(u32);
+
+impl Default for DispatchOptions {
+    #[inline]
+    fn default() -> Self {
+        DispatchOptions(nsIEventTarget::DISPATCH_NORMAL as u32)
+    }
+}
+
+impl DispatchOptions {
+    /// Creates a blank set of options. The runnable will be dispatched using
+    /// the default mode.
+    #[inline]
+    pub fn new() -> Self {
+        DispatchOptions::default()
+    }
+
+    /// Indicates whether or not the dispatched runnable may block its target
+    /// thread by waiting on I/O. If `true`, the runnable may be dispatched to a
+    /// dedicated thread pool, leaving the main pool free for CPU-bound tasks.
+    #[inline]
+    pub fn may_block(self, may_block: bool) -> DispatchOptions {
+        const FLAG: u32 = nsIEventTarget::DISPATCH_EVENT_MAY_BLOCK as u32;
+        if may_block {
+            DispatchOptions(self.flags() | FLAG)
+        } else {
+            DispatchOptions(self.flags() & !FLAG)
+        }
+    }
+
+    /// Returns the set of bitflags to pass to `DispatchFromScript`.
+    #[inline]
+    fn flags(self) -> u32 {
+        self.0
+    }
 }
 
 /// A task represents an operation that asynchronously executes on a target
@@ -103,11 +183,30 @@ impl TaskRunnable {
         }))
     }
 
-    pub fn dispatch(&self, target_thread: &nsIThread) -> Result<(), nsresult> {
-        unsafe {
-            target_thread.DispatchFromScript(self.coerce(), nsIEventTarget::DISPATCH_NORMAL as u32)
-        }
-        .to_result()
+    /// Dispatches this task runnable to an event target with the default
+    /// options.
+    #[inline]
+    pub fn dispatch(this: RefPtr<Self>, target: &nsIEventTarget) -> Result<(), nsresult> {
+        Self::dispatch_with_options(this, target, DispatchOptions::default())
+    }
+
+    /// Dispatches this task runnable to an event target, like a thread or a
+    /// task queue, with the given options.
+    ///
+    /// Note that this is an associated function, not a method, because it takes
+    /// an owned reference to the runnable, and must be called like
+    /// `TaskRunnable::dispatch_with_options(runnable, options)` and *not*
+    /// `runnable.dispatch_with_options(options)`.
+    ///
+    /// ### Safety
+    ///
+    /// This function leaks the runnable if dispatch fails.
+    pub fn dispatch_with_options(
+        this: RefPtr<Self>,
+        target: &nsIEventTarget,
+        options: DispatchOptions,
+    ) -> Result<(), nsresult> {
+        unsafe { target.DispatchFromScript(this.coerce(), options.flags()) }.to_result()
     }
 
     xpcom_method!(run => Run());
@@ -119,7 +218,7 @@ impl TaskRunnable {
             Ok(_) => {
                 assert!(!is_current_thread(&self.original_thread));
                 self.task.run();
-                self.dispatch(&self.original_thread)
+                Self::dispatch(RefPtr::new(self), &self.original_thread)
             }
             Err(_) => {
                 assert!(is_current_thread(&self.original_thread));

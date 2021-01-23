@@ -24,7 +24,6 @@ class TimeStamp;
 namespace wr {
 struct Transaction;
 class TransactionWrapper;
-struct WrTransformProperty;
 struct WrWindowId;
 }  // namespace wr
 
@@ -58,16 +57,15 @@ class APZSampler {
    * which thread it is.
    */
   static void SetSamplerThread(const wr::WrWindowId& aWindowId);
-  static void SampleForWebRender(const wr::WrWindowId& aWindowId,
-                                 wr::Transaction* aTxn,
-                                 const wr::DocumentId& aRenderRootId);
+  static void SampleForWebRender(
+      const wr::WrWindowId& aWindowId, wr::Transaction* aTxn,
+      const wr::WrPipelineIdEpochs* aEpochsBeingRendered);
 
   void SetSampleTime(const TimeStamp& aSampleTime);
   void SampleForWebRender(wr::TransactionWrapper& aTxn,
-                          wr::RenderRoot aRenderRoot);
+                          const wr::WrPipelineIdEpochs* aEpochsBeingRendered);
 
-  bool SampleAnimations(const LayerMetricsWrapper& aLayer,
-                        const TimeStamp& aSampleTime);
+  bool AdvanceAnimations(const TimeStamp& aSampleTime);
 
   /**
    * Compute the updated shadow transform for a scroll thumb layer that
@@ -91,17 +89,19 @@ class APZSampler {
       const LayerMetricsWrapper& aLayer);
   AsyncTransform GetCurrentAsyncTransform(const LayerMetricsWrapper& aLayer,
                                           AsyncTransformComponents aComponents);
-  AsyncTransform GetCurrentAsyncTransformForFixedAdjustment(
-      const LayerMetricsWrapper& aLayer);
   AsyncTransformComponentMatrix GetOverscrollTransform(
       const LayerMetricsWrapper& aLayer);
   AsyncTransformComponentMatrix GetCurrentAsyncTransformWithOverscroll(
+      const LayerMetricsWrapper& aLayer);
+  Maybe<CompositionPayload> NotifyScrollSampling(
       const LayerMetricsWrapper& aLayer);
 
   void MarkAsyncTransformAppliedToContent(const LayerMetricsWrapper& aLayer);
   bool HasUnusedAsyncTransform(const LayerMetricsWrapper& aLayer);
 
   ScrollableLayerGuid GetGuid(const LayerMetricsWrapper& aLayer);
+
+  ScreenMargin GetGeckoFixedLayerMargins() const;
 
   /**
    * This can be used to assert that the current thread is the

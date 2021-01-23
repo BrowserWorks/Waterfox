@@ -1145,6 +1145,93 @@
   !verbose pop
 !macroend
 
+/**
+ * Read the value of an installer pref that's been set by the product.
+ *
+ * @param   _KEY ($R1)
+ *          Sub key containing all the installer prefs
+ *          Usually "Software\Mozilla\${AppName}"
+ * @param   _PREF ($R2)
+ *          Name of the pref to look up
+ * @return  _RESULT ($R3)
+ *          'true' or 'false' (only boolean prefs are supported)
+ *          If no value exists for the requested pref, the result is 'false'
+ */
+!macro GetInstallerRegistryPref
+  !ifndef ${_MOZFUNC_UN}GetInstallerRegistryPref
+    !verbose push
+    !verbose ${_MOZFUNC_VERBOSE}
+    !define ${_MOZFUNC_UN}GetInstallerRegistryPref "!insertmacro GetInstallerRegistryPrefCall"
+
+    Function ${_MOZFUNC_UN}GetInstallerRegistryPref
+      ; stack: key, pref
+      Exch $R1 ; key, stack: old R1, pref
+      Exch 1   ; stack: pref, old R1
+      Exch $R2 ; pref, stack: old R2, old R1
+      Push $R3
+
+      StrCpy $R3 0
+
+      ; These prefs are always stored in the native registry.
+      SetRegView 64
+
+      ClearErrors
+      ReadRegDWORD $R3 HKCU "$R1\Installer\$AppUserModelID" "$R2"
+
+      SetRegView lastused
+
+      ${IfNot} ${Errors}
+      ${AndIf} $R3 != 0
+        StrCpy $R1 "true"
+      ${Else}
+        StrCpy $R1 "false"
+      ${EndIf}
+
+      ; stack: old R3, old R2, old R1
+      Pop $R3 ; stack: old R2, old R1
+      Pop $R2 ; stack: old R1
+      Exch $R1 ; stack: result
+    FunctionEnd
+
+    !verbose pop
+  !endif
+!macroend
+
+!macro GetInstallerRegistryPrefCall _KEY _PREF _RESULT
+  !verbose push
+  !verbose ${_MOZFUNC_VERBOSE}
+  Push "${_PREF}"
+  Push "${_KEY}"
+  Call GetInstallerRegistryPref
+  Pop ${_RESULT}
+  !verbose pop
+!macroend
+
+!macro un.GetInstallerRegistryPrefCall _KEY _PREF _RESULT
+  !verbose push
+  !verbose ${_MOZFUNC_VERBOSE}
+  Push "${_PREF}"
+  Push "${_KEY}"
+  Call un.GetInstallerRegistryPref
+  Pop ${_RESULT}
+  !verbose pop
+!macroend
+
+!macro un.GetInstallerRegistryPref
+  !ifndef un.GetInstallerRegistryPref
+    !verbose push
+    !verbose ${_MOZFUNC_VERBOSE}
+    !undef _MOZFUNC_UN
+    !define _MOZFUNC_UN "un."
+
+    !insertmacro GetInstallerRegistryPref
+
+    !undef _MOZFUNC_UN
+    !define _MOZFUNC_UN
+    !verbose pop
+  !endif
+!macroend
+
 ################################################################################
 # Macros for adding file and protocol handlers
 
@@ -2661,6 +2748,73 @@
     !define _MOZFUNC_UN "un."
 
     !insertmacro RegCleanMain
+
+    !undef _MOZFUNC_UN
+    !define _MOZFUNC_UN
+    !verbose pop
+  !endif
+!macroend
+
+
+/**
+ * Removes registry keys that reference this install location and for paths that
+ * no longer exist.
+ *
+ * @param   _KEY ($R1)
+ *          The registry subkey
+ *          (typically this will be Software\Mozilla\${AppName}).
+ */
+!macro RegCleanPrefs
+  !ifndef ${_MOZFUNC_UN}RegCleanPrefs
+    !verbose push
+    !verbose ${_MOZFUNC_VERBOSE}
+    !define ${_MOZFUNC_UN}RegCleanPrefs "!insertmacro ${_MOZFUNC_UN}RegCleanPrefsCall"
+
+    Function ${_MOZFUNC_UN}RegCleanPrefs
+      Exch $R1 ; get _KEY from the stack
+
+      ; These prefs are always stored in the native registry.
+      SetRegView 64
+
+      ; Delete the installer prefs key for this installation, if one exists.
+      DeleteRegKey HKCU "$R1\Installer\$AppUserModelID"
+
+      ; If there aren't any more installer prefs keys, delete the parent key.
+      DeleteRegKey /ifempty HKCU "$R1\Installer"
+
+      SetRegView lastused
+
+      Pop $R1 ; restore the previous $R1
+    FunctionEnd
+
+    !verbose pop
+  !endif
+!macroend
+
+!macro RegCleanPrefsCall _KEY
+  !verbose push
+  !verbose ${_MOZFUNC_VERBOSE}
+  Push "${_KEY}"
+  Call RegCleanPrefs
+  !verbose pop
+!macroend
+
+!macro un.RegCleanPrefsCall _KEY
+  !verbose push
+  !verbose ${_MOZFUNC_VERBOSE}
+  Push "${_KEY}"
+  Call un.RegCleanPrefs
+  !verbose pop
+!macroend
+
+!macro un.RegCleanPrefs
+  !ifndef un.RegCleanPrefs
+    !verbose push
+    !verbose ${_MOZFUNC_VERBOSE}
+    !undef _MOZFUNC_UN
+    !define _MOZFUNC_UN "un."
+
+    !insertmacro RegCleanPrefs
 
     !undef _MOZFUNC_UN
     !define _MOZFUNC_UN
@@ -5097,9 +5251,7 @@ end:
       Push $R8
 
       GetDlgItem $R8 $HWNDPARENT 1046
-      System::Call 'user32::LoadImageW(i 0, w "$R9", i 0, i 0, i 0, i 0x0010|0x2000) i.s'
-      Pop $hHeaderBitmap
-      SendMessage $R8 ${STM_SETIMAGE} 0 $hHeaderBitmap
+      ${SetStretchedImageOLE} $R8 "$R9" $hHeaderBitmap
       ; There is no way to specify a show function for a custom page so hide
       ; and then show the control to force the bitmap to redraw.
       ShowWindow $R8 ${SW_HIDE}
@@ -5144,6 +5296,77 @@ end:
   !endif
 !macroend
 
+/**
+ * Replaces the sidebar image on the wizard's welcome and finish pages.
+ *
+ * @param   _PATH_TO_IMAGE
+ *          Fully qualified path to the bitmap to use for the header image.
+ *
+ * $R8 = hwnd for the bitmap control
+ * $R9 = _PATH_TO_IMAGE
+ */
+!macro ChangeMUISidebarImage
+
+  !ifndef ${_MOZFUNC_UN}ChangeMUISidebarImage
+    Var hSidebarBitmap
+
+    !verbose push
+    !verbose ${_MOZFUNC_VERBOSE}
+    !define ${_MOZFUNC_UN}ChangeMUISidebarImage "!insertmacro ${_MOZFUNC_UN}ChangeMUISidebarImageCall"
+
+    Function ${_MOZFUNC_UN}ChangeMUISidebarImage
+      Exch $R9
+      Push $R8
+
+      ; Make sure we're not about to leak an existing handle.
+      ${If} $hSidebarBitmap <> 0
+        System::Call "gdi32::DeleteObject(p $hSidebarBitmap)"
+        StrCpy $hSidebarBitmap 0
+      ${EndIf}
+      ; The controls on the welcome and finish pages aren't in the dialog
+      ; template, they're always created manually from the INI file, so we need
+      ; to query it to find the right HWND.
+      ReadINIStr $R8 "$PLUGINSDIR\ioSpecial.ini" "Field 1" "HWND"
+      ${SetStretchedImageOLE} $R8 "$R9" $hSidebarBitmap
+
+      Pop $R8
+      Exch $R9
+    FunctionEnd
+
+    !verbose pop
+  !endif
+!macroend
+
+!macro ChangeMUISidebarImageCall _PATH_TO_IMAGE
+  !verbose push
+  !verbose ${_MOZFUNC_VERBOSE}
+  Push "${_PATH_TO_IMAGE}"
+  Call ChangeMUISidebarImage
+  !verbose pop
+!macroend
+
+!macro un.ChangeMUISidebarImageCall _PATH_TO_IMAGE
+  !verbose push
+  !verbose ${_MOZFUNC_VERBOSE}
+  Push "${_PATH_TO_IMAGE}"
+  Call un.ChangeMUISidebarImage
+  !verbose pop
+!macroend
+
+!macro un.ChangeMUISidebarImage
+  !ifndef un.ChangeMUISidebarImage
+    !verbose push
+    !verbose ${_MOZFUNC_VERBOSE}
+    !undef _MOZFUNC_UN
+    !define _MOZFUNC_UN "un."
+
+    !insertmacro ChangeMUISidebarImage
+
+    !undef _MOZFUNC_UN
+    !define _MOZFUNC_UN
+    !verbose pop
+  !endif
+!macroend
 
 ################################################################################
 # User interface callback helper defines and macros
@@ -5210,6 +5433,13 @@ end:
       StrCmp $hHeaderBitmap "" +3 +1
       System::Call "gdi32::DeleteObject(i s)" $hHeaderBitmap
       StrCpy $hHeaderBitmap ""
+      ; If ChangeMUISidebarImage was called, then we also need to clean up the
+      ; GDI bitmap handle that it would have created.
+      !ifdef ${_MOZFUNC_UN}ChangeMUISidebarImage
+        StrCmp $hSidebarBitmap "" +3 +1
+        System::Call "gdi32::DeleteObject(i s)" $hSidebarBitmap
+        StrCpy $hSidebarBitmap ""
+      !endif
 
       System::Free 0
 
@@ -5433,6 +5663,13 @@ end:
               StrCpy $InstallMaintenanceService "1"
             ${EndIf}
 
+            ReadINIStr $R8 $R7 "Install" "RegisterDefaultAgent"
+            ${If} $R8 == "false"
+              StrCpy $RegisterDefaultAgent "0"
+            ${Else}
+              StrCpy $RegisterDefaultAgent "1"
+            ${EndIf}
+
             !ifdef MOZ_OPTIONAL_EXTENSIONS
               ReadINIStr $R8 $R7 "Install" "OptionalExtensions"
               ${If} $R8 == "false"
@@ -5478,6 +5715,7 @@ end:
         ${InstallGetOption} $R8 "StartMenuShortcut" $AddStartMenuSC
         ${InstallGetOption} $R8 "TaskbarShortcut" $AddTaskbarSC
         ${InstallGetOption} $R8 "MaintenanceService" $InstallMaintenanceService
+        ${InstallGetOption} $R8 "RegisterDefaultAgent" $RegisterDefaultAgent
         !ifdef MOZ_OPTIONAL_EXTENSIONS
           ${InstallGetOption} $R8 "OptionalExtensions" $InstallOptionalExtensions
         !endif
@@ -5595,7 +5833,7 @@ end:
 !ifmacrodef InitHashAppModelId
       ; setup the application model id registration value
       !ifdef AppName
-      ${InitHashAppModelId} "$INSTDIR" "Software\Waterfox\${AppName}\TaskBarIDs"
+      ${InitHashAppModelId} "$INSTDIR" "Software\Mozilla\${AppName}\TaskBarIDs"
       !endif
 !endif
 
@@ -5624,20 +5862,23 @@ end:
 
       ${GetParameters} $R0
 
-      StrCmp "$R0" "" continue +1
+      ${Unless} ${Silent}
+        ; Manually check for /S in the command line due to Bug 506867
+        ClearErrors
+        ${GetOptions} "$R0" "/S" $R2
+        ${Unless} ${Errors}
+          SetSilent silent
+        ${Else}
+          ; Support for the deprecated -ms command line argument.
+          ClearErrors
+          ${GetOptions} "$R0" "-ms" $R2
+          ${Unless} ${Errors}
+            SetSilent silent
+          ${EndUnless}
+        ${EndUnless}
+      ${EndUnless}
 
-      ; Update this user's shortcuts with the latest app user model id.
-      ClearErrors
-      ${GetOptions} "$R0" "/UpdateShortcutAppUserModelIds" $R2
-      IfErrors hideshortcuts +1
-      StrCpy $R2 ""
-!ifmacrodef InitHashAppModelId
-      ${If} "$AppUserModelID" != ""
-        ${UpdateShortcutAppModelIDs}  "$INSTDIR\${FileMainEXE}" "$AppUserModelID" $R2
-      ${EndIf}
-!endif
-      StrCmp "$R2" "false" +1 finish ; true indicates that shortcuts have been updated
-      Quit ; Nothing initialized so no need to call OnEndCommon
+      StrCmp "$R0" "" continue +1
 
       ; Require elevation if the user can elevate
       hideshortcuts:
@@ -5712,7 +5953,7 @@ end:
 
       finish:
       ${UnloadUAC}
-      System::Call "shell32::SHChangeNotify(i ${SHCNE_ASSOCCHANGED}, i 0, i 0, i 0)"
+      ${RefreshShellIcons}
       Quit ; Nothing initialized so no need to call OnEndCommon
 
       continue:
@@ -5722,27 +5963,110 @@ end:
       IfFileExists "$INSTDIR\uninstall\uninstall.log" +2 +1
       Quit ; Nothing initialized so no need to call OnEndCommon
 
-      ; Require elevation if the user can elevate
-      ${ElevateUAC}
+      ; When silent, try to avoid elevation if we have a chance to succeed.  We
+      ; can succeed when we can write to (hence delete from) the install
+      ; directory and when we can clean up all registry entries.  Now, the
+      ; installer when elevated writes privileged registry entries for the use
+      ; of the Maintenance Service, even when the service is not and will not be
+      ; installed.  (In fact, even when a service installed in the future will
+      ; never update the installation, for example due to not being in a
+      ; privileged location.)  In practice this means we can only truly silently
+      ; remove an unelevated install: an elevated installer writing to an
+      ; unprivileged install directory will still write privileged registry
+      ; entries, requiring an elevated uninstaller to completely clean up.
+      ;
+      ; This avoids a wrinkle, whereby an uninstaller which runs unelevated will
+      ; never itself launch the Maintenance Service uninstaller, because it will
+      ; fail to remove its own service registration (removing the relevant
+      ; registry key would require elevation).  Therefore the check for the
+      ; service being unused will fail, which will prevent running the service
+      ; uninstaller.  That's both subtle and possibly leaves the service
+      ; registration hanging around, which might be a security risk.
+      ;
+      ; That is why we look for a privileged service registration for this
+      ; installation when deciding to elevate, and elevate unconditionally if we
+      ; find one, regardless of the result of the write check that would avoid
+      ; elevation.
+
+      ; The reason for requiring elevation, or "" for not required.
+      StrCpy $R4 ""
+
+      ${IfNot} ${Silent}
+        ; In normal operation, require elevation if the user can elevate so that
+        ; we are most likely to succeed.
+        StrCpy $R4 "not silent"
+      ${EndIf}
+
+      GetTempFileName $R6 "$INSTDIR"
+      FileOpen $R5 "$R6" w
+      FileWrite $R5 "Write Access Test"
+      FileClose $R5
+      Delete $R6
+      ${If} ${Errors}
+        StrCpy $R4 "write"
+      ${EndIf}
+
+      !ifdef MOZ_MAINTENANCE_SERVICE
+        ; We don't necessarily have $MaintCertKey, so use temporary registers.
+        ServicesHelper::PathToUniqueRegistryPath "$INSTDIR"
+        Pop $R5
+
+        ${If} $R5 != ""
+          ; Always use the 64bit registry for certs on 64bit systems.
+          ${If} ${RunningX64}
+          ${OrIf} ${IsNativeARM64}
+            SetRegView 64
+          ${EndIf}
+
+          EnumRegKey $R6 HKLM $R5 0
+          ClearErrors
+
+          ${If} ${RunningX64}
+          ${OrIf} ${IsNativeARM64}
+            SetRegView lastused
+          ${EndIf}
+
+          ${IfNot} "$R6" == ""
+            StrCpy $R4 "mms"
+          ${EndIf}
+        ${EndIf}
+      !endif
+
+      ${If} "$R4" != ""
+        ; In the future, we might not try to elevate to remain truly silent.  Or
+        ; we might add a command line arguments to specify behaviour.  One
+        ; reason to not do that immediately is that we have no great way to
+        ; signal that we exited without taking action.
+        ${ElevateUAC}
+      ${EndIf}
+
+      ; Now we've elevated, try the write access test again.
+      ClearErrors
+      GetTempFileName $R6 "$INSTDIR"
+      FileOpen $R5 "$R6" w
+      FileWrite $R5 "Write Access Test"
+      FileClose $R5
+      Delete $R6
+      ${If} ${Errors}
+        ; Nothing initialized so no need to call OnEndCommon
+        Quit
+      ${EndIf}
+
+      !ifdef MOZ_MAINTENANCE_SERVICE
+        ; And verify that if we need to, we're going to clean up the registry
+        ; correctly.
+        ${If} "$R4" == "mms"
+          WriteRegStr HKLM "Software\Mozilla" "${BrandShortName}InstallerTest" "Write Test"
+          ${If} ${Errors}
+            ; Nothing initialized so no need to call OnEndCommon
+            Quit
+          ${Endif}
+          DeleteRegValue HKLM "Software\Mozilla" "${BrandShortName}InstallerTest"
+        ${EndIf}
+      !endif
 
       ; If we made it this far then this installer is being used as an uninstaller.
       WriteUninstaller "$EXEDIR\uninstaller.exe"
-
-      ${Unless} ${Silent}
-        ; Manually check for /S in the command line due to Bug 506867
-        ClearErrors
-        ${GetOptions} "$R0" "/S" $R2
-        ${Unless} ${Errors}
-          SetSilent silent
-        ${Else}
-          ; Support for the deprecated -ms command line argument.
-          ClearErrors
-          ${GetOptions} "$R0" "-ms" $R2
-          ${Unless} ${Errors}
-            SetSilent silent
-          ${EndUnless}
-        ${EndUnless}
-      ${EndUnless}
 
       ${If} ${Silent}
         StrCpy $R1 "$\"$EXEDIR\uninstaller.exe$\" /S"
@@ -5846,20 +6170,20 @@ end:
       ${If} ${IsNativeAMD64}
       ${OrIf} ${IsNativeARM64}
         SetRegView 64
-        ${GetSingleInstallPath} "Software\Waterfox\${BrandFullNameInternal}" $R9
+        ${GetSingleInstallPath} "Software\Mozilla\${BrandFullNameInternal}" $R9
         SetRegView lastused
       ${EndIf}
 
       StrCmp "$R9" "false" +1 finish_get_install_dir
 
       SetRegView 32
-      ${GetSingleInstallPath} "Software\Waterfox\${BrandFullNameInternal}" $R9
+      ${GetSingleInstallPath} "Software\Mozilla\${BrandFullNameInternal}" $R9
       SetRegView lastused
 
       StrCmp "$R9" "false" +1 finish_get_install_dir
 
       SetShellVarContext current  ; Set SHCTX to HKCU
-      ${GetSingleInstallPath} "Software\Waterfox\${BrandFullNameInternal}" $R9
+      ${GetSingleInstallPath} "Software\Mozilla\${BrandFullNameInternal}" $R9
 
       finish_get_install_dir:
       StrCmp "$R9" "false" +2 +1
@@ -7626,6 +7950,86 @@ end:
   !endif
 !macroend
 
+/**
+ * Try to locate the default profile of this install from AppUserModelID
+ * using installs.ini.
+ * FIXME This could instead use the Install<AUMID> entries in profiles.ini?
+ *
+ * - `SetShellVarContext current` must be called before this macro so
+ *   $APPDATA gets the current user's data.
+ * - InitHashAppModelId must have been called before this macro to set
+ *   $AppUserModelID
+ *
+ * @result: Path of the profile directory (not checked for existence),
+ *          or "" if not found, left on top of the stack.
+ */
+!macro FindInstallSpecificProfileMaybeUn _MOZFUNC_UN
+  Push $R0
+  Push $0
+  Push $1
+  Push $2
+
+  StrCpy $R0 ""
+  ; Look for an install-specific profile, which might be listed as
+  ; either a relative or an absolute path (installs.ini doesn't say which).
+  ${If} ${FileExists} "$APPDATA\Waterfox\installs.ini"
+    ClearErrors
+    ReadINIStr $1 "$APPDATA\Waterfox\installs.ini" "$AppUserModelID" "Default"
+    ${IfNot} ${Errors}
+      ${${_MOZFUNC_UN}GetLongPath} "$APPDATA\Waterfox\$1" $2
+      ${If} ${FileExists} $2
+        StrCpy $R0 $2
+      ${Else}
+        ${${_MOZFUNC_UN}GetLongPath} "$1" $2
+        ${If} ${FileExists} $2
+          StrCpy $R0 $2
+        ${EndIf}
+      ${EndIf}
+    ${EndIf}
+  ${EndIf}
+
+  Pop $2
+  Pop $1
+  Pop $0
+  Exch $R0
+!macroend
+!define FindInstallSpecificProfile "!insertmacro FindInstallSpecificProfileMaybeUn ''"
+!define un.FindInstallSpecificProfile "!insertmacro FindInstallSpecificProfileMaybeUn un."
+
+/**
+ * Copy the post-signing data, which was left alongside the installer
+ * by the self-extractor stub, into the global location for this data.
+ *
+ * If the post-signing data file doesn't exist, or is empty, "0" is
+ * pushed on the stack, and nothing is copied.
+ * Otherwise the first line of the post-signing data (including newline,
+ * if any) is pushed on the stack.
+ */
+!macro CopyPostSigningData
+  !ifndef CopyPostSigningData
+    !verbose push
+    !verbose ${_MOZFUNC_VERBOSE}
+    !define CopyPostSigningData "Call CopyPostSigningData"
+
+    Function CopyPostSigningData
+      Push $0   ; Stack: old $0
+
+      ${LineRead} "$EXEDIR\postSigningData" "1" $0
+      ${If} ${Errors}
+        ClearErrors
+        StrCpy $0 "0"
+      ${Else}
+        CreateDirectory "$LOCALAPPDATA\Waterfox"
+        CopyFiles /SILENT "$EXEDIR\postSigningData" "$LOCALAPPDATA\Waterfox"
+      ${Endif}
+
+      Exch $0   ; Stack: postSigningData
+    FunctionEnd
+
+    !verbose pop
+  !endif
+!macroend
+
 ################################################################################
 # Helpers for taskbar progress
 
@@ -7803,11 +8207,11 @@ end:
   !define DT_NOFULLWIDTHCHARBREAK 0x00080000
 !endif
 
+!define /ifndef GWL_STYLE -16
+!define /ifndef GWL_EXSTYLE -20
+
 !ifndef WS_EX_NOINHERITLAYOUT
   !define WS_EX_NOINHERITLAYOUT 0x00100000
-!endif
-!ifndef WS_EX_LAYOUTRTL
-  !define WS_EX_LAYOUTRTL 0x00400000
 !endif
 
 !ifndef PBS_MARQUEE
@@ -7854,6 +8258,9 @@ end:
   !endif
   !ifndef HALFTONE
     !define HALFTONE 4
+  !endif
+  !ifndef IMAGE_BITMAP
+    !define IMAGE_BITMAP 0
   !endif
 
   Push $0 ; HANDLE
@@ -8032,6 +8439,23 @@ end:
 !define RemoveStyle "!insertmacro _RemoveStyle"
 
 /**
+ * Adds a single extended style to a control.
+ *
+ * _HANDLE  the handle of the control
+ * _EXSTYLE the extended style to add
+ */
+!macro _AddExStyle _HANDLE _EXSTYLE
+  Push $0
+
+  System::Call 'user32::GetWindowLongW(i ${_HANDLE}, i ${GWL_EXSTYLE}) i .r0'
+  IntOp $0 $0 | ${_EXSTYLE}
+  System::Call 'user32::SetWindowLongW(i ${_HANDLE}, i ${GWL_EXSTYLE}, i r0)'
+
+  Pop $0
+!macroend
+!define AddExStyle "!insertmacro _AddExStyle"
+
+/**
  * Removes a single extended style from a control.
  *
  * _HANDLE  the handle of the control
@@ -8048,6 +8472,25 @@ end:
   Pop $0
 !macroend
 !define RemoveExStyle "!insertmacro _RemoveExStyle"
+
+/**
+ * Set the necessary styles to configure the given window as right-to-left
+ *
+ * _HANDLE the handle of the control to configure
+ */
+!macro _MakeWindowRTL _HANDLE
+  !define /ifndef WS_EX_RIGHT 0x00001000
+  !define /ifndef WS_EX_LEFT 0x00000000
+  !define /ifndef WS_EX_RTLREADING 0x00002000
+  !define /ifndef WS_EX_LTRREADING 0x00000000
+  !define /ifndef WS_EX_LAYOUTRTL 0x00400000
+
+  ${AddExStyle} ${_HANDLE} ${WS_EX_LAYOUTRTL}
+  ${RemoveExStyle} ${_HANDLE} ${WS_EX_RTLREADING}
+  ${RemoveExStyle} ${_HANDLE} ${WS_EX_RIGHT}
+  ${AddExStyle} ${_HANDLE} ${WS_EX_LEFT}|${WS_EX_LTRREADING}
+!macroend
+!define MakeWindowRTL "!insertmacro _MakeWindowRTL"
 
 /**
  * Gets the extent of the specified text in pixels for sizing a control.

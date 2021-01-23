@@ -1,0 +1,45 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.cookies.title             "Cookies">
+<!-- cookies -->
+
+
+<!ENTITY cookiePolicy.label             "Politica d'acceptación de cookies">
+
+<!ENTITY disableCookies.label           "Bloquiar cookies">
+<!ENTITY disableCookies.accesskey       "B">
+
+<!ENTITY accNo3rdPartyCookies.label     "Allow cookies for the originating website only (no third-party cookies)">
+<!ENTITY accNo3rdPartyCookies.accesskey "o">
+
+<!ENTITY acc3rdPartyVisited.label       "Allow third-party cookies for previously visited websites only">
+<!ENTITY acc3rdPartyVisited.accesskey   "v">
+
+<!ENTITY accAllCookies.label            "Permitir todas as cookies">
+<!ENTITY accAllCookies.accesskey        "c">
+
+<!ENTITY cookieRetentionPolicy.label    "Politica de retención de cookies">
+
+<!ENTITY acceptNormally.label           "Acceptar cookies normalment">
+<!ENTITY acceptNormally.accesskey       "n">
+
+<!ENTITY acceptForSession.label         "Acceptar solament t'a sesión en curso">
+<!ENTITY acceptForSession.accesskey     "s">
+
+<!ENTITY acceptforNDays.label           "Acceptar cookies entre">
+<!ENTITY acceptforNDays.accesskey       "e">
+<!ENTITY days.label                     "días">
+
+<!ENTITY warnAboutCookies.label         "Preguntar ta cada cookie">
+<!ENTITY warnAboutCookies.accesskey     "a">
+<!ENTITY forCurrentSession.label        "fueras d'as de sesión">
+<!ENTITY forCurrentSession.accesskey    "f">
+
+<!ENTITY manageCookies.label            "Administrar cookies y puestos">
+<!ENTITY manageCookiesDescription.label "Le permite veyer y administrar cookies alzadas y configuracions ta cada puesto web ta acceptar y refusar cookies. As configuracions por puesto web prevalerán sobre as configuracions d'alto.">
+
+<!ENTITY viewCookies.label              "Administrador de cookies">
+<!ENTITY viewCookies.accesskey          "m">
+

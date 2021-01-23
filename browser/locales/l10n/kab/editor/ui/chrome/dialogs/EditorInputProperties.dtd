@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Timeẓliyin n wurti n tferkit">
+<!ENTITY windowTitleImage.label "Timeẓliyin n tugna n tferkit">
+
+<!ENTITY InputType.label "Tawsit n wurti">
+<!ENTITY InputType.accesskey "r">
+<!ENTITY text.value "Aḍris">
+<!ENTITY password.value "Awal uffir">
+<!ENTITY checkbox.value "Tanaka n ṛṛcem">
+<!ENTITY radio.value "Taqeffalt ṛadyu">
+<!ENTITY submit.value "Taqeffalt n tuzzna">
+<!ENTITY reset.value "Taqeffalt n uwennez">
+<!ENTITY file.value "Afaylu">
+<!ENTITY hidden.value "Uffir">
+<!ENTITY image.value "Tugna">
+<!ENTITY button.value "Taqeffalt">
+
+<!ENTITY InputSettings.label "Iɣewwaṛen n wurti">
+<!ENTITY InputName.label "Isem n wurti:">
+<!ENTITY InputName.accesskey "s">
+<!ENTITY GroupName.label "Isem n ugraw:">
+<!ENTITY GroupName.accesskey "g">
+<!ENTITY InputValue.label "Azal n wurti:">
+<!ENTITY InputValue.accesskey "z">
+<!ENTITY InitialValue.label "Azal asentay:">
+<!ENTITY InitialValue.accesskey "t">
+<!ENTITY InputChecked.label "Ittwaṛcem di tazwara">
+<!ENTITY InputChecked.accesskey "w">
+<!ENTITY InputSelected.label "Ittufren di tazwara">
+<!ENTITY InputSelected.accesskey "f">
+<!ENTITY InputReadOnly.label "Taɣuṛi kan">
+<!ENTITY InputReadOnly.accesskey "k">
+<!ENTITY InputDisabled.label "Arurmid">
+<!ENTITY InputDisabled.accesskey "r">
+<!ENTITY tabIndex.label "Amatar n yiccer:">
+<!ENTITY tabIndex.accesskey "m">
+<!ENTITY TextSize.label "Teɣzi n wurti:">
+<!ENTITY TextSize.accesskey "u">
+<!ENTITY TextLength.label "Teɣzi taddayt:">
+<!ENTITY TextLength.accesskey "i">
+<!ENTITY AccessKey.label "Tasarutt n unekcum:">
+<!ENTITY AccessKey.accesskey "s">
+<!ENTITY Accept.label "Qbel anawen:">
+<!ENTITY Accept.accesskey "Q">
+
+<!ENTITY ImageProperties.label "Taɣaṛa n tugna…">
+<!ENTITY ImageProperties.accesskey "n">

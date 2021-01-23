@@ -8,9 +8,15 @@
 "use strict";
 
 this.StoragePrincipalHelper = {
-  runTest(name, callback, cleanupFunction, extraPrefs) {
+  runTest(name, callback, cleanupFunction, extraPrefs, runInPrivateWindow) {
     add_task(async _ => {
-      info("Starting test `" + name + "'...");
+      info(
+        "Starting test `" +
+          name +
+          "' with storage principal running in a " +
+          (runInPrivateWindow ? "private" : "normal") +
+          " window..."
+      );
 
       await SpecialPowers.flushPrefEnv();
       await SpecialPowers.pushPrefEnv({
@@ -26,7 +32,7 @@ this.StoragePrincipalHelper = {
           ["privacy.storagePrincipal.enabledForTrackers", true],
           [
             "privacy.restrict3rdpartystorage.userInteractionRequiredForHosts",
-            "tracking.example.com,tracking.example.org",
+            "tracking.example.org",
           ],
         ],
       });
@@ -37,36 +43,46 @@ this.StoragePrincipalHelper = {
 
       await UrlClassifierTestUtils.addTestTrackers();
 
-      info("Creating a new tab");
-      let tab = BrowserTestUtils.addTab(gBrowser, TEST_TOP_PAGE);
-      gBrowser.selectedTab = tab;
+      let win = window;
+      if (runInPrivateWindow) {
+        win = OpenBrowserWindow({ private: true });
+        await TestUtils.topicObserved("browser-delayed-startup-finished");
+      }
 
-      let browser = gBrowser.getBrowserForTab(tab);
+      info("Creating a new tab");
+      let tab = BrowserTestUtils.addTab(win.gBrowser, TEST_TOP_PAGE);
+      win.gBrowser.selectedTab = tab;
+
+      let browser = win.gBrowser.getBrowserForTab(tab);
       await BrowserTestUtils.browserLoaded(browser);
 
       info("Creating a 3rd party content");
-      await ContentTask.spawn(
+      await SpecialPowers.spawn(
         browser,
-        {
-          page: TEST_3RD_PARTY_STORAGE_PAGE,
-          callback: callback.toString(),
-        },
+        [
+          {
+            page: TEST_3RD_PARTY_STORAGE_PAGE,
+            callback: callback.toString(),
+          },
+        ],
         async obj => {
           await new content.Promise(resolve => {
             let ifr = content.document.createElement("iframe");
-            ifr.onload = __ => {
-              is(
-                ifr.contentWindow.document.nodePrincipal.originAttributes
-                  .firstPartyDomain,
-                "",
-                "We don't have first-party set on nodePrincipal"
-              );
-              is(
-                ifr.contentWindow.document.effectiveStoragePrincipal
-                  .originAttributes.firstPartyDomain,
-                "example.net",
-                "We have first-party set on storagePrincipal"
-              );
+            ifr.onload = async _ => {
+              await SpecialPowers.spawn(ifr, [], async _ => {
+                is(
+                  content.document.nodePrincipal.originAttributes
+                    .firstPartyDomain,
+                  "",
+                  "We don't have first-party set on nodePrincipal"
+                );
+                is(
+                  content.document.effectiveStoragePrincipal.originAttributes
+                    .firstPartyDomain,
+                  "(http,example.net)",
+                  "We have first-party set on storagePrincipal"
+                );
+              });
               info("Sending code to the 3rd party content");
               ifr.contentWindow.postMessage(obj.callback, "*");
             };
@@ -99,6 +115,10 @@ this.StoragePrincipalHelper = {
 
       info("Removing the tab");
       BrowserTestUtils.removeTab(tab);
+
+      if (runInPrivateWindow) {
+        win.close();
+      }
     });
 
     add_task(async _ => {
@@ -106,6 +126,12 @@ this.StoragePrincipalHelper = {
       if (cleanupFunction) {
         await cleanupFunction();
       }
+      UrlClassifierTestUtils.cleanupTestTrackers();
+
+      // While running these tests we typically do not have enough idle time to do
+      // GC reliably, so force it here.
+      /* import-globals-from antitracking_head.js */
+      forceGC();
     });
   },
 };

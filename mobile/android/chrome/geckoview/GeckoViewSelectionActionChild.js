@@ -44,7 +44,6 @@ class GeckoViewSelectionActionChild extends GeckoViewChildModule {
           e.selectionEditable &&
           Services.clipboard.hasDataMatchingFlavors(
             ["text/unicode"],
-            1,
             Ci.nsIClipboard.kGlobalClipboard
           ),
         perform: _ => this._performPaste(),
@@ -71,7 +70,27 @@ class GeckoViewSelectionActionChild extends GeckoViewChildModule {
       },
       {
         id: "org.mozilla.geckoview.SELECT_ALL",
-        predicate: e => e.reason !== "longpressonemptycontent",
+        predicate: e => {
+          if (e.reason === "longpressonemptycontent") {
+            return false;
+          }
+          if (e.selectionEditable && e.target && e.target.activeElement) {
+            const element = e.target.activeElement;
+            let value = "";
+            if (element.value) {
+              value = element.value;
+            } else if (
+              element.isContentEditable ||
+              e.target.designMode === "on"
+            ) {
+              value = element.innerText;
+            }
+            // Do not show SELECT_ALL if the editable is empty
+            // or all the editable text is already selected.
+            return value !== "" && value !== e.selectedTextContent;
+          }
+          return true;
+        },
         perform: e => docShell.doCommand("cmd_selectAll"),
       },
     ];
@@ -112,7 +131,7 @@ class GeckoViewSelectionActionChild extends GeckoViewChildModule {
       offset.left += currentRect.left;
       offset.top += currentRect.top;
 
-      let targetDocShell = currentWindow.docShell;
+      const targetDocShell = currentWindow.docShell;
       if (targetDocShell.isMozBrowser) {
         break;
       }
@@ -237,7 +256,7 @@ class GeckoViewSelectionActionChild extends GeckoViewChildModule {
             warn`Stale response ${response.id}`;
             return;
           }
-          let action = actions.find(action => action.id === response.id);
+          const action = actions.find(action => action.id === response.id);
           if (action) {
             debug`Performing ${response.id}`;
             action.perform.call(this, aEvent, response);
@@ -272,7 +291,7 @@ class GeckoViewSelectionActionChild extends GeckoViewChildModule {
 
       this.eventDispatcher.sendRequest({
         type: "GeckoView:HideSelectionAction",
-        reason: reason,
+        reason,
       });
     } else {
       warn`Unknown reason: ${reason}`;

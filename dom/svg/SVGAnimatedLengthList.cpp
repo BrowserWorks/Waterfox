@@ -6,12 +6,13 @@
 
 #include "SVGAnimatedLengthList.h"
 
-#include "mozilla/Move.h"
+#include <utility>
+
+#include "DOMSVGAnimatedLengthList.h"
+#include "SVGLengthListSMILType.h"
 #include "mozilla/SMILValue.h"
 #include "mozilla/dom/SVGElement.h"
 #include "mozilla/dom/SVGLengthBinding.h"
-#include "DOMSVGAnimatedLengthList.h"
-#include "SVGLengthListSMILType.h"
 
 namespace mozilla {
 
@@ -84,7 +85,7 @@ nsresult SVGAnimatedLengthList::SetAnimValue(const SVGLengthList& aNewAnimValue,
     domWrapper->InternalAnimValListWillChangeTo(aNewAnimValue);
   }
   if (!mAnimVal) {
-    mAnimVal = new SVGLengthList();
+    mAnimVal = MakeUnique<SVGLengthList>();
   }
   nsresult rv = mAnimVal->CopyFrom(aNewAnimValue);
   if (NS_FAILED(rv)) {

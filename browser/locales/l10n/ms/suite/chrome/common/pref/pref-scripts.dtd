@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-scripts.xul -->
+
+<!--LOCALIZATION NOTE : FILE The 'Scripts & Plugins' preferences dialog -->
+<!ENTITY pref.scripts.title              "Skrip &amp; Plugin">
+
+<!ENTITY navigator.label                 "Pelayar">
+<!ENTITY navigator.accesskey             "P">
+
+<!--LOCALIZATION NOTE (enableJavaScript.label): 'JavaScript' should never be translated -->
+<!ENTITY enableJavaScript.label          "Dayakan JavaScript untuk">
+<!ENTITY allowScripts.label              "Izinkan skrip untuk:">
+<!ENTITY allowScripts.accesskey          "s">
+<!ENTITY allowWindowMoveResize.label     "Mengalih atau mengubah saiz tetingkap yang sedia ada">
+<!ENTITY allowWindowFlip.label           "Meningkatkan atau merendahkan tetingkap">
+<!ENTITY allowWindowStatusChange.label   "Menukar teks bar status">
+<!ENTITY allowContextmenuDisable.label   "Menyahdayakan atau menggantikan menu konteks">
+<!ENTITY allowHideStatusBar.label        "Menyorokkan bar status">
+
+<!ENTITY enableDrmMedia.label            "Dayakan Digital Rights Management untuk">
+<!ENTITY enableEmeForSuite.label         "Modul Dekripsi Kandungan Pihak-ketiga">
+<!ENTITY enableEmeForSuite.accesskey     "K">
+
+<!ENTITY enablePlugins.label             "Dayakan Plugin untuk">
+<!ENTITY enablePluginForSuite.label      "Suit">
+<!ENTITY enablePluginForSuite.accesskey  "u">
+
+<!ENTITY whenPageRequiresPlugins.label   "Apabila halaman memerlukan plugin">
+<!ENTITY activateAllPlugins.label        "Aktifkan semua plugin secara piawai">
+<!ENTITY activateAllPlugins.accesskey    "p">
+<!ENTITY warnPluginsRequired.label       "Beri amaran jika plugin tambahan perlu dipasang">
+<!ENTITY warnPluginsRequired.accesskey   "B">

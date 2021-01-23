@@ -105,7 +105,7 @@ class PRFileDescStream final : public mozilla::gfx::EventStream {
     mGood = res >= 0 && (static_cast<size_t>(res) == aSize);
   }
 
-  bool good() { return mGood; }
+  bool good() final { return mGood; }
 
   void SetIsBad() final { mGood = false; }
 
@@ -127,7 +127,7 @@ class PRFileDescStream final : public mozilla::gfx::EventStream {
 class DrawEventRecorderPRFileDesc final : public gfx::DrawEventRecorderPrivate {
  public:
   MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(DrawEventRecorderPRFileDesc, override)
-  explicit DrawEventRecorderPRFileDesc(){};
+  explicit DrawEventRecorderPRFileDesc() = default;
   ~DrawEventRecorderPRFileDesc();
 
   void RecordEvent(const gfx::RecordedEvent& aEvent) override;

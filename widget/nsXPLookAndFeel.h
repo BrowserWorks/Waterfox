@@ -75,23 +75,11 @@ class nsXPLookAndFeel : public mozilla::LookAndFeel {
   virtual nsTArray<LookAndFeelInt> GetIntCacheImpl();
   virtual void SetIntCacheImpl(
       const nsTArray<LookAndFeelInt>& aLookAndFeelIntCache) {}
-  void SetShouldRetainCacheImplForTest(bool aValue) {
-    mShouldRetainCacheForTest = aValue;
-  }
 
   virtual void NativeInit() = 0;
 
-  void SetPrefersReducedMotionOverrideForTest(bool aValue) {
-    sIsInPrefersReducedMotionForTest = true;
-    sPrefersReducedMotionForTest = aValue;
-  }
-  void ResetPrefersReducedMotionOverrideForTest() {
-    sIsInPrefersReducedMotionForTest = false;
-    sPrefersReducedMotionForTest = false;
-  }
-
  protected:
-  nsXPLookAndFeel();
+  nsXPLookAndFeel() = default;
 
   static void IntPrefChanged(nsLookAndFeelIntPref* data);
   static void FloatPrefChanged(nsLookAndFeelFloatPref* data);
@@ -103,6 +91,7 @@ class nsXPLookAndFeel : public mozilla::LookAndFeel {
   bool IsSpecialColor(ColorID aID, nscolor& aColor);
   bool ColorIsNotCSSAccessible(ColorID aID);
   nscolor GetStandinForNativeColor(ColorID aID);
+  void RecordTelemetry();
 
   static void OnPrefChanged(const char* aPref, void* aClosure);
 
@@ -115,18 +104,9 @@ class nsXPLookAndFeel : public mozilla::LookAndFeel {
   static const char sColorPrefs[][41];
   static int32_t sCachedColors[size_t(LookAndFeel::ColorID::End)];
   static int32_t sCachedColorBits[COLOR_CACHE_SIZE];
-  static bool sUseNativeColors;
-  static bool sFindbarModalHighlight;
 
   static nsXPLookAndFeel* sInstance;
   static bool sShutdown;
-
-  static bool sIsInPrefersReducedMotionForTest;
-  static bool sPrefersReducedMotionForTest;
-
-  // True if we shouldn't clear the cache value in RefreshImpl().
-  // NOTE: This should be used only for testing.
-  bool mShouldRetainCacheForTest;
 };
 
 #endif

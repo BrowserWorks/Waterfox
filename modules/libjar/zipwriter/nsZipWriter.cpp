@@ -10,10 +10,8 @@
 #include "StreamFunctions.h"
 #include "nsZipDataStream.h"
 #include "nsISeekableStream.h"
-#include "nsIAsyncStreamCopier.h"
 #include "nsIStreamListener.h"
 #include "nsIInputStreamPump.h"
-#include "nsILoadInfo.h"
 #include "nsComponentManagerUtils.h"
 #include "nsMemory.h"
 #include "nsError.h"
@@ -291,7 +289,9 @@ NS_IMETHODIMP nsZipWriter::AddEntryDirectory(const nsACString& aZipEntry,
     item.mZipEntry = aZipEntry;
     item.mModTime = aModTime;
     item.mPermissions = PERMISSIONS_DIR;
-    if (!mQueue.AppendElement(item)) return NS_ERROR_OUT_OF_MEMORY;
+    // XXX(Bug 1631371) Check if this should use a fallible operation as it
+    // pretended earlier.
+    mQueue.AppendElement(item);
     return NS_OK;
   }
 
@@ -313,7 +313,9 @@ NS_IMETHODIMP nsZipWriter::AddEntryFile(const nsACString& aZipEntry,
     item.mCompression = aCompression;
     rv = aFile->Clone(getter_AddRefs(item.mFile));
     NS_ENSURE_SUCCESS(rv, rv);
-    if (!mQueue.AppendElement(item)) return NS_ERROR_OUT_OF_MEMORY;
+    // XXX(Bug 1631371) Check if this should use a fallible operation as it
+    // pretended earlier.
+    mQueue.AppendElement(item);
     return NS_OK;
   }
 
@@ -367,7 +369,9 @@ NS_IMETHODIMP nsZipWriter::AddEntryChannel(const nsACString& aZipEntry,
     item.mCompression = aCompression;
     item.mPermissions = PERMISSIONS_FILE;
     item.mChannel = aChannel;
-    if (!mQueue.AppendElement(item)) return NS_ERROR_OUT_OF_MEMORY;
+    // XXX(Bug 1631371) Check if this should use a fallible operation as it
+    // pretended earlier.
+    mQueue.AppendElement(item);
     return NS_OK;
   }
 
@@ -410,7 +414,9 @@ nsresult nsZipWriter::AddEntryStream(const nsACString& aZipEntry,
     item.mCompression = aCompression;
     item.mPermissions = aPermissions;
     item.mStream = aStream;
-    if (!mQueue.AppendElement(item)) return NS_ERROR_OUT_OF_MEMORY;
+    // XXX(Bug 1631371) Check if this should use a fallible operation as it
+    // pretended earlier.
+    mQueue.AppendElement(item);
     return NS_OK;
   }
 
@@ -419,9 +425,14 @@ nsresult nsZipWriter::AddEntryStream(const nsACString& aZipEntry,
 
   RefPtr<nsZipHeader> header = new nsZipHeader();
   NS_ENSURE_TRUE(header, NS_ERROR_OUT_OF_MEMORY);
-  header->Init(aZipEntry, aModTime, ZIP_ATTRS(aPermissions, ZIP_ATTRS_FILE),
-               mCDSOffset);
-  nsresult rv = header->WriteFileHeader(mStream);
+  nsresult rv = header->Init(
+      aZipEntry, aModTime, ZIP_ATTRS(aPermissions, ZIP_ATTRS_FILE), mCDSOffset);
+  if (NS_FAILED(rv)) {
+    SeekCDS();
+    return rv;
+  }
+
+  rv = header->WriteFileHeader(mStream);
   if (NS_FAILED(rv)) {
     SeekCDS();
     return rv;
@@ -451,7 +462,9 @@ NS_IMETHODIMP nsZipWriter::RemoveEntry(const nsACString& aZipEntry,
     nsZipQueueItem item;
     item.mOperation = OPERATION_REMOVE;
     item.mZipEntry = aZipEntry;
-    if (!mQueue.AppendElement(item)) return NS_ERROR_OUT_OF_MEMORY;
+    // XXX(Bug 1631371) Check if this should use a fallible operation as it
+    // pretended earlier.
+    mQueue.AppendElement(item);
     return NS_OK;
   }
 
@@ -776,17 +789,24 @@ nsresult nsZipWriter::InternalAddEntryDirectory(const nsACString& aZipEntry,
 
   uint32_t zipAttributes = ZIP_ATTRS(aPermissions, ZIP_ATTRS_DIRECTORY);
 
+  nsresult rv = NS_OK;
   if (aZipEntry.Last() != '/') {
     nsCString dirPath;
     dirPath.Assign(aZipEntry + NS_LITERAL_CSTRING("/"));
-    header->Init(dirPath, aModTime, zipAttributes, mCDSOffset);
-  } else
-    header->Init(aZipEntry, aModTime, zipAttributes, mCDSOffset);
+    rv = header->Init(dirPath, aModTime, zipAttributes, mCDSOffset);
+  } else {
+    rv = header->Init(aZipEntry, aModTime, zipAttributes, mCDSOffset);
+  }
+
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    Cleanup();
+    return rv;
+  }
 
   if (mEntryHash.Get(header->mName, nullptr))
     return NS_ERROR_FILE_ALREADY_EXISTS;
 
-  nsresult rv = header->WriteFileHeader(mStream);
+  rv = header->WriteFileHeader(mStream);
   if (NS_FAILED(rv)) {
     Cleanup();
     return rv;
@@ -893,8 +913,11 @@ inline nsresult nsZipWriter::BeginProcessingAddition(nsZipQueueItem* aItem,
     RefPtr<nsZipHeader> header = new nsZipHeader();
     NS_ENSURE_TRUE(header, NS_ERROR_OUT_OF_MEMORY);
 
-    header->Init(aItem->mZipEntry, aItem->mModTime, zipAttributes, mCDSOffset);
-    nsresult rv = header->WriteFileHeader(mStream);
+    nsresult rv = header->Init(aItem->mZipEntry, aItem->mModTime, zipAttributes,
+                               mCDSOffset);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    rv = header->WriteFileHeader(mStream);
     NS_ENSURE_SUCCESS(rv, rv);
 
     RefPtr<nsZipDataStream> stream = new nsZipDataStream();

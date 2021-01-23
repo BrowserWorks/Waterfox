@@ -5,13 +5,23 @@
 
 "use strict";
 
-const EVENTS = require("../events");
+const EVENTS = require("devtools/client/performance/events");
 
-const { WaterfallView } = require("./details-waterfall");
-const { JsCallTreeView } = require("./details-js-call-tree");
-const { JsFlameGraphView } = require("./details-js-flamegraph");
-const { MemoryCallTreeView } = require("./details-memory-call-tree");
-const { MemoryFlameGraphView } = require("./details-memory-flamegraph");
+const {
+  WaterfallView,
+} = require("devtools/client/performance/views/details-waterfall");
+const {
+  JsCallTreeView,
+} = require("devtools/client/performance/views/details-js-call-tree");
+const {
+  JsFlameGraphView,
+} = require("devtools/client/performance/views/details-js-flamegraph");
+const {
+  MemoryCallTreeView,
+} = require("devtools/client/performance/views/details-memory-call-tree");
+const {
+  MemoryFlameGraphView,
+} = require("devtools/client/performance/views/details-memory-flamegraph");
 
 const EventEmitter = require("devtools/shared/event-emitter");
 
@@ -158,10 +168,9 @@ const DetailsView = {
       return false;
     }
 
-    const prefSupported =
-      prefs && prefs.length
-        ? prefs.every(p => PerformanceController.getPref(p))
-        : true;
+    const prefSupported = prefs?.length
+      ? prefs.every(p => PerformanceController.getPref(p))
+      : true;
     return PerformanceController.isFeatureSupported(features) && prefSupported;
   },
 

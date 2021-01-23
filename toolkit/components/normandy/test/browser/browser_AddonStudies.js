@@ -6,6 +6,15 @@ ChromeUtils.import("resource://testing-common/TestUtils.jsm", this);
 ChromeUtils.import("resource://testing-common/AddonTestUtils.jsm", this);
 ChromeUtils.import("resource://normandy/lib/AddonStudies.jsm", this);
 ChromeUtils.import("resource://normandy/lib/TelemetryEvents.jsm", this);
+ChromeUtils.import("resource://gre/modules/IndexedDB.jsm", this);
+
+const { NormandyTestUtils } = ChromeUtils.import(
+  "resource://testing-common/NormandyTestUtils.jsm"
+);
+const {
+  addonStudyFactory,
+  branchedAddonStudyFactory,
+} = NormandyTestUtils.factories;
 
 // Initialize test utils
 AddonTestUtils.initMochitest(this);
@@ -19,7 +28,7 @@ decorate_task(AddonStudies.withStudies(), async function testGetMissing() {
 });
 
 decorate_task(
-  AddonStudies.withStudies([addonStudyFactory({ name: "test-study" })]),
+  AddonStudies.withStudies([addonStudyFactory({ slug: "test-study" })]),
   async function testGet([study]) {
     const storedStudy = await AddonStudies.get(study.recipeId);
     Assert.deepEqual(study, storedStudy, "get retrieved a study from storage.");
@@ -39,7 +48,7 @@ decorate_task(
 );
 
 decorate_task(
-  AddonStudies.withStudies([addonStudyFactory({ name: "test-study" })]),
+  AddonStudies.withStudies([addonStudyFactory({ slug: "test-study" })]),
   async function testHas([study]) {
     let hasStudy = await AddonStudies.has(study.recipeId);
     ok(hasStudy, "has returns true for a study that exists in storage.");
@@ -54,8 +63,8 @@ decorate_task(
 
 decorate_task(
   AddonStudies.withStudies([
-    addonStudyFactory({ name: "test-study1" }),
-    addonStudyFactory({ name: "test-study2" }),
+    addonStudyFactory({ slug: "test-study1" }),
+    addonStudyFactory({ slug: "test-study2" }),
   ]),
   async function testClear([study1, study2]) {
     const hasAll =
@@ -72,13 +81,13 @@ decorate_task(
 );
 
 decorate_task(
-  AddonStudies.withStudies([addonStudyFactory({ name: "foo" })]),
+  AddonStudies.withStudies([addonStudyFactory({ slug: "foo" })]),
   async function testUpdate([study]) {
     Assert.deepEqual(await AddonStudies.get(study.recipeId), study);
 
     const updatedStudy = {
       ...study,
-      name: "bar",
+      slug: "bar",
     };
     await AddonStudies.update(updatedStudy);
 
@@ -133,14 +142,20 @@ decorate_task(
       [
         "unenroll",
         "addon_study",
-        activeUninstalledStudy.name,
+        activeUninstalledStudy.slug,
         {
           addonId: activeUninstalledStudy.addonId,
           addonVersion: activeUninstalledStudy.addonVersion,
           reason: "uninstalled-sideload",
+          branch: AddonStudies.NO_BRANCHES_MARKER,
+          enrollmentId: events[0][5].enrollmentId,
         },
       ],
       "AddonStudies.init() should send the correct telemetry event"
+    );
+    ok(
+      NormandyTestUtils.isUuid(events[0][5].enrollmentId),
+      "enrollment ID should be a UUID"
     );
 
     const newInactiveStudy = await AddonStudies.get(inactiveStudy.recipeId);
@@ -171,6 +186,54 @@ decorate_task(
   }
 );
 
+// init should register telemetry experiments
+decorate_task(
+  AddonStudies.withStudies([
+    branchedAddonStudyFactory({
+      active: true,
+      addonId: "installed1@example.com",
+    }),
+    branchedAddonStudyFactory({
+      active: true,
+      addonId: "installed2@example.com",
+    }),
+  ]),
+  withInstalledWebExtensionSafe({ id: "installed1@example.com" }),
+  withInstalledWebExtension({ id: "installed2@example.com" }),
+  withStub(TelemetryEnvironment, "setExperimentActive"),
+  async function testInit(
+    studies,
+    [extensionId1],
+    [extensionId2],
+    setExperimentActiveStub
+  ) {
+    await AddonStudies.init();
+    Assert.deepEqual(
+      setExperimentActiveStub.args,
+      [
+        [
+          studies[0].slug,
+          studies[0].branch,
+          {
+            type: "normandy-addonstudy",
+            enrollmentId: studies[0].enrollmentId,
+          },
+        ],
+        [
+          studies[1].slug,
+          studies[1].branch,
+          {
+            type: "normandy-addonstudy",
+            enrollmentId: studies[1].enrollmentId,
+          },
+        ],
+      ],
+      "Add-on studies are registered in Telemetry by AddonStudies.init"
+    );
+  }
+);
+
+// Test that AddonStudies.init() ends studies that have been uninstalled
 decorate_task(
   AddonStudies.withStudies([
     addonStudyFactory({
@@ -198,6 +261,47 @@ decorate_task(
     ok(
       newStudy.studyEndDate,
       "The study end date is set when the add-on for the study is uninstalled."
+    );
+  }
+);
+
+decorate_task(
+  AddonStudies.withStudies([
+    NormandyTestUtils.factories.addonStudyFactory({ active: true }),
+    NormandyTestUtils.factories.branchedAddonStudyFactory(),
+  ]),
+  async function testRemoveOldAddonStudies([noBranchStudy, branchedStudy]) {
+    // pre check, both studies are active
+    const preActiveIds = (await AddonStudies.getAllActive()).map(
+      addon => addon.recipeId
+    );
+    Assert.deepEqual(
+      preActiveIds,
+      [noBranchStudy.recipeId, branchedStudy.recipeId],
+      "Both studies should be active"
+    );
+
+    // run the migration
+    await AddonStudies.migrations.migration02RemoveOldAddonStudyAction();
+
+    // The unbrached study should end
+    const postActiveIds = (await AddonStudies.getAllActive()).map(
+      addon => addon.recipeId
+    );
+    Assert.deepEqual(
+      postActiveIds,
+      [branchedStudy.recipeId],
+      "The unbranched study should end"
+    );
+
+    // But both studies should still be present
+    const postAllIds = (await AddonStudies.getAll()).map(
+      addon => addon.recipeId
+    );
+    Assert.deepEqual(
+      postAllIds,
+      [noBranchStudy.recipeId, branchedStudy.recipeId],
+      "Both studies should still be present"
     );
   }
 );

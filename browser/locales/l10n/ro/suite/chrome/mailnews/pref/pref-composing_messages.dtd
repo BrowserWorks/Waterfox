@@ -1,0 +1,60 @@
+<!--
+# Translator(s):
+#
+# nicubunu <nicubunu@gmail.com>
+# Alexandru Szasz <alexxed@gmail.com>
+# evinteler <emil_vinteler2000@yahoo.com>
+# Laudatti <Laudatti@gmail.com>
+# janimo <jani@ubuntu.com>
+#
+-->
+<!--
+# Reviewer(s):
+#
+# Alexandru Szasz <alexxed@gmail.com>
+#
+-->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.composing.messages.title        "Redactare">
+<!ENTITY generalComposing.label               "General">
+<!ENTITY forwardMsg.label                     "Înaintează mesajele:">
+<!ENTITY inline.label                         "Mesaj inclus">
+<!ENTITY inline.accesskey                     "n">
+<!ENTITY asAttachment.label                   "Ca anexă">
+<!ENTITY asAttachment.accesskey               "a">
+
+<!ENTITY replyQuoteInline.label               "Quote attachments viewed inline in replies">
+<!ENTITY replyQuoteInline.accesskey           "Q">
+<!ENTITY warnOnSendAccelKey.label             "Confirmă trimiterea când se folosesc scurtături de taste">
+<!ENTITY warnOnSendAccelKey.accesskey         "C">
+<!-- LOCALIZATION NOTE (autoSave.label): This will concatenate with
+     "xxx minutes", using a number and (autoSaveEnd.label). -->
+<!ENTITY autoSave.label                       "Automatically save the message every">
+<!ENTITY autoSave.accesskey                   "u">
+<!ENTITY autoSaveEnd.label                    "minute">
+<!-- LOCALIZATION NOTE (wrapOutMsg.label): This will concatenate with "xxx characters", using a number and (char.label). -->
+<!ENTITY wrapOutMsg.label                     "Încadrează mesajele text pe lățime la">
+<!ENTITY wrapOutMsg.accesskey                 "n">
+<!ENTITY char.label                           "caractere">
+
+<!ENTITY spellingHeader.label                 "Spelling">
+<!ENTITY spellCheck.label                     "Verifică ortografia înainte de a trimite">
+<!ENTITY spellCheck.accesskey                 "c">
+<!ENTITY spellCheckInline.label               "Verific ortografia pe măsură ce scrieți">
+<!ENTITY spellCheckInline.accesskey           "e">
+<!ENTITY languagePopup.label                  "Limba:">
+<!ENTITY languagePopup.accessKey              "L">
+<!ENTITY moreDictionaries.label               "Descarcă mai multe dicționare…">
+
+<!ENTITY defaultMessagesHeader.label          "Defaults for HTML Messages">
+<!ENTITY font.label                           "Font:">
+<!ENTITY font.accesskey                       "F">
+<!ENTITY size.label                           "Mărime:">
+<!ENTITY size.accesskey                       "M">
+<!ENTITY fontColor.label                      "Text:">
+<!ENTITY fontColor.accesskey                  "T">
+<!ENTITY bgColor.label                        "Fundal:">
+<!ENTITY bgColor.accesskey                    "F">

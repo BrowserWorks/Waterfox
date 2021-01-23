@@ -48,7 +48,7 @@ const gPromptFactory = {
 };
 
 function findCertByCommonName(commonName) {
-  for (let cert of gCertDB.getCerts().getEnumerator()) {
+  for (let cert of gCertDB.getCerts()) {
     if (cert.commonName == commonName) {
       return cert;
     }
@@ -92,7 +92,7 @@ function run_test() {
   let output = do_get_tempdir();
   output.append("output.p12");
   ok(!output.exists(), "output shouldn't exist before exporting PKCS12 file");
-  errorCode = gCertDB.exportPKCS12File(output, 1, [cert], TEST_CERT_PASSWORD);
+  errorCode = gCertDB.exportPKCS12File(output, [cert], TEST_CERT_PASSWORD);
   equal(errorCode, Ci.nsIX509CertDB.Success, "cert should export");
   ok(output.exists(), "output should exist after exporting PKCS12 file");
   output.remove(false /* not a directory; recursive doesn't apply */);
@@ -106,7 +106,7 @@ function run_test() {
   let output2 = do_get_tempdir();
   output2.append("output2.p12");
   ok(!output2.exists(), "output2 shouldn't exist before exporting PKCS12 file");
-  errorCode = gCertDB.exportPKCS12File(output, 1, [cert], TEST_CERT_PASSWORD);
+  errorCode = gCertDB.exportPKCS12File(output, [cert], TEST_CERT_PASSWORD);
   equal(
     errorCode,
     Ci.nsIX509CertDB.ERROR_PKCS12_BACKUP_FAILED,

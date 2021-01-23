@@ -3,6 +3,7 @@
 ChromeUtils.import("resource://gre/modules/Services.jsm", this);
 ChromeUtils.import("resource://gre/modules/Preferences.jsm", this);
 ChromeUtils.import("resource://gre/modules/TelemetryEnvironment.jsm", this);
+ChromeUtils.import("resource://normandy/actions/BaseAction.jsm", this);
 ChromeUtils.import(
   "resource://normandy/actions/PreferenceRollbackAction.jsm",
   this
@@ -23,7 +24,7 @@ decorate_task(
       .setCharPref("test.pref2", "rollout value");
     Services.prefs.getDefaultBranch("").setBoolPref("test.pref3", true);
 
-    PreferenceRollouts.add({
+    await PreferenceRollouts.add({
       slug: "test-rollout",
       state: PreferenceRollouts.STATE_ACTIVE,
       preferences: [
@@ -35,12 +36,13 @@ decorate_task(
         },
         { preferenceName: "test.pref3", value: true, previousValue: false },
       ],
+      enrollmentId: "test-enrollment-id",
     });
 
     const recipe = { id: 1, arguments: { rolloutSlug: "test-rollout" } };
 
     const action = new PreferenceRollbackAction();
-    await action.runRecipe(recipe);
+    await action.processRecipe(recipe, BaseAction.suitability.FILTER_MATCH);
     await action.finalize();
     is(action.lastError, null, "lastError should be null");
 
@@ -79,8 +81,9 @@ decorate_task(
     );
 
     // rollout in db was updated
+    const rollouts = await PreferenceRollouts.getAll();
     Assert.deepEqual(
-      await PreferenceRollouts.getAll(),
+      rollouts,
       [
         {
           slug: "test-rollout",
@@ -94,6 +97,7 @@ decorate_task(
             },
             { preferenceName: "test.pref3", value: true, previousValue: false },
           ],
+          enrollmentId: rollouts[0].enrollmentId,
         },
       ],
       "Rollout should be updated in db"
@@ -133,12 +137,13 @@ decorate_task(
       preferences: [
         { preferenceName: "test.pref", value: 1, previousValue: 1 },
       ],
+      enrollmentId: "test-enrollment-id",
     });
 
     let recipe = { id: 1, arguments: { rolloutSlug: "graduated-rollout" } };
 
     const action = new PreferenceRollbackAction();
-    await action.runRecipe(recipe);
+    await action.processRecipe(recipe, BaseAction.suitability.FILTER_MATCH);
     await action.finalize();
     is(action.lastError, null, "lastError should be null");
 
@@ -159,6 +164,7 @@ decorate_task(
           preferences: [
             { preferenceName: "test.pref", value: 1, previousValue: 1 },
           ],
+          enrollmentId: "test-enrollment-id",
         },
       ],
       "Rollout should not change in db"
@@ -169,7 +175,7 @@ decorate_task(
         "unenrollFailed",
         "preference_rollback",
         "graduated-rollout",
-        { reason: "graduated" },
+        { reason: "graduated", enrollmentId: "test-enrollment-id" },
       ],
     ]);
 
@@ -187,7 +193,7 @@ decorate_task(
     let recipe = { id: 1, arguments: { rolloutSlug: "missing-rollout" } };
 
     const action = new PreferenceRollbackAction();
-    await action.runRecipe(recipe);
+    await action.processRecipe(recipe, BaseAction.suitability.FILTER_MATCH);
     await action.finalize();
     is(action.lastError, null, "lastError should be null");
 
@@ -218,11 +224,12 @@ decorate_task(
       preferences: [
         { preferenceName: "test.pref", value: 2, previousValue: 1 },
       ],
+      enrollmentId: "test-rollout-id",
     };
-    PreferenceRollouts.add(rollout);
+    await PreferenceRollouts.add(rollout);
 
     const action = new PreferenceRollbackAction();
-    await action.runRecipe(recipe);
+    await action.processRecipe(recipe, BaseAction.suitability.FILTER_MATCH);
     await action.finalize();
     is(action.lastError, null, "lastError should be null");
 
@@ -261,7 +268,7 @@ decorate_task(PreferenceRollouts.withTestMock, async function simple_rollback(
   Services.prefs.getDefaultBranch("").setCharPref("test.pref", "rollout value");
   Services.prefs.setCharPref("test.pref", "user value");
 
-  PreferenceRollouts.add({
+  await PreferenceRollouts.add({
     slug: "test-rollout",
     state: PreferenceRollouts.STATE_ACTIVE,
     preferences: [
@@ -271,12 +278,13 @@ decorate_task(PreferenceRollouts.withTestMock, async function simple_rollback(
         previousValue: "builtin value",
       },
     ],
+    enrollmentId: "test-enrollment-id",
   });
 
   const recipe = { id: 1, arguments: { rolloutSlug: "test-rollout" } };
 
   const action = new PreferenceRollbackAction();
-  await action.runRecipe(recipe);
+  await action.processRecipe(recipe, BaseAction.suitability.FILTER_MATCH);
   await action.finalize();
   is(action.lastError, null, "lastError should be null");
 

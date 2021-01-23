@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "प्रपत्र गुण">
+
+<!ENTITY Settings.label "जमावट">
+
+<!ENTITY FormName.label "प्रपत्र नाम:">
+<!ENTITY FormName.accesskey "N">
+<!ENTITY FormAction.label "क्रिया URL:">
+<!ENTITY FormAction.accesskey "A">
+<!ENTITY FormMethod.label "विधि:">
+<!ENTITY FormMethod.accesskey "M">
+<!ENTITY FormEncType.label "एनकोडिंग:">
+<!ENTITY FormEncType.accesskey "c">
+<!ENTITY FormTarget.label "लक्ष्य ढांचा:">
+<!ENTITY FormTarget.accesskey "T">
+
+<!ENTITY RemoveForm.label "प्रपत्र हटायें">
+<!ENTITY RemoveForm.accesskey "R">

@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- for SearchDialog.xul -->
+<!ENTITY searchHeading.label         "Guetar mensaxes en:">
+<!ENTITY searchHeading.accesskey     "G">
+<!ENTITY searchSubfolders.label      "Guetar subcarpetes">
+<!ENTITY searchSubfolders.accesskey  "c">
+<!ENTITY searchOnServer.label        "Executar gueta nel sirvidor">
+<!ENTITY searchOnServer.accesskey    "s">
+<!ENTITY resetButton.label           "Llimpiar">
+<!ENTITY resetButton.accesskey       "L">
+<!ENTITY openButton.label            "Abrir">
+<!ENTITY openButton.accesskey        "A">
+<!ENTITY deleteButton.label          "Desaniciar">
+<!ENTITY deleteButton.accesskey      "D">
+<!ENTITY searchDialogTitle.label     "Guetar mensaxes">
+<!ENTITY results.label               "Resultaos">
+<!ENTITY moveButton.label            "Mover a">
+<!ENTITY moveButton.accesskey        "M">
+<!ENTITY closeCmd.key                "W"> 
+<!ENTITY openInFolder.label          "Abrir en carpeta">
+<!ENTITY openInFolder.accesskey      "i">
+<!ENTITY saveAsVFButton.label        "Guardar como carpeta de gueta">
+<!ENTITY saveAsVFButton.accesskey    "G">
+
+<!-- for ABSearchDialog.xul -->
+<!ENTITY abSearchHeading.label       "Guetar en:">
+<!ENTITY abSearchHeading.accesskey   "n">
+<!ENTITY propertiesButton.label      "Propiedaes">
+<!ENTITY propertiesButton.accesskey  "P">
+<!ENTITY composeButton.label         "Redactar">
+<!ENTITY composeButton.accesskey     "R">
+<!ENTITY deleteCardButton.label      "Desaniciar">
+<!ENTITY deleteCardButton.accesskey  "D">
+<!ENTITY abSearchDialogTitle.label   "Gueta avanzada na llibreta de direiciones">
+

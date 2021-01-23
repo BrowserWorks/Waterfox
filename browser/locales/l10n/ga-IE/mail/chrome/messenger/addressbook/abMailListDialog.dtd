@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Title -->
+
+<!ENTITY mailListWindowAdd.title        "Liosta Ríomhphoist Nua">
+<!-- Labels and Access Keys -->
+
+<!ENTITY addToAddressBook.label         "Cuir le: ">
+<!ENTITY addToAddressBook.accesskey     "C">
+<!ENTITY ListName.label                 "Ainm an liosta: ">
+<!ENTITY ListName.accesskey             "l">
+<!ENTITY ListNickName.label             "Leasainm an liosta:">
+<!ENTITY ListNickName.accesskey         "n">
+<!ENTITY ListDescription.label          "Cur Síos: ">
+<!ENTITY ListDescription.accesskey      "C">
+<!-- See bug 58485, when we implement drag and drop, add 'or drag addresses' back in -->
+<!ENTITY AddressTitle.label             "Cuir isteach seoltaí ríomhphoist chun iad a chur leis an liosta ríomhphoist:">
+<!ENTITY AddressTitle.accesskey         "m">
+<!ENTITY UpButton.label                 "Bog Suas">
+<!ENTITY DownButton.label               "Bog Síos">
+

@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  SSLProtocolVersions.caption       "Versions del protocol SSL">
+<!ENTITY  SSLWarnings.caption               "Avisos SSL">
+<!ENTITY  SSLMixedContent.caption           "Contingut mixt">
+<!ENTITY  SSLClientAuthMethod.caption       "Selecció de certificats de client">
+
+<!ENTITY pref.ssl.title                     "Capa de sòcols segurs (SSL)">
+<!ENTITY limit.description                  "Podeu restringir els protocols que s'utilitzaran en les connexions segures. Seleccioneu una única versió o un interval continu de versions.">
+<!ENTITY limit.enable.label                 "Habilita:">
+<!ENTITY limit.ssl30.label                  "SSL 3.0">
+<!ENTITY limit.ssl30.accesskey              "3">
+<!ENTITY limit.tls10.label                  "TLS 1.0">
+<!ENTITY limit.tls10.accesskey              "T">
+<!ENTITY limit.tls11.label                  "TLS 1.1">
+<!ENTITY limit.tls11.accesskey              "1">
+<!ENTITY limit.tls12.label                  "TLS 1.2">
+<!ENTITY limit.tls12.accesskey              "2">
+
+<!ENTITY warn.description2                  "El &brandShortName; us pot avisar de l'estat de la seguretat de la pàgina web que esteu veient. El &brandShortName; us mostrarà un avís en:">
+<!ENTITY warn.enteringsecure                "Carregar una pàgina que admet xifratge">
+<!ENTITY warn.enteringsecure.accesskey      "C">
+<!ENTITY warn.insecurepost                  "Enviar dades de formulari d'una pàgina sense xifrar a una altra que tampoc ho estigui">
+<!ENTITY warn.insecurepost.accesskey        "s">
+<!ENTITY warn.leavingsecure                 "Sortir d'una pàgina que admet xifratge">
+<!ENTITY warn.leavingsecure.accesskey       "a">
+
+<!ENTITY mixed.description                  "Les pàgines xifrades poden contenir contingut sense xifrar vulnerable a la intercepció o falsificació de dades. El &brandShortName; pot detectar-ho i blocar-lo:">
+<!ENTITY warn.mixedactivecontent            "Avisa'm quan pàgines xifrades tinguin continguts insegurs">
+<!ENTITY warn.mixedactivecontent.accesskey  "A">
+<!ENTITY block.activecontent                "No carreguis continguts insegurs en pàgines xifrades">
+<!ENTITY block.activecontent.accesskey      "N">
+<!ENTITY warn.mixeddisplaycontent           "Avisa'm quan pàgines xifrades tinguin altres tipus de contingut mixt">
+<!ENTITY warn.mixeddisplaycontent.accesskey "c">
+<!ENTITY block.displaycontent               "No carreguis altres tipus de contingut mixt en pàgines xifrades">
+<!ENTITY block.displaycontent.accesskey     "m">
+
+<!ENTITY certselect.description             "Decideix com el &brandShortName; selecciona un certificat de seguretat per presentar als llocs web que en requereixin:">
+<!ENTITY certselect.auto                    "Seleccioneu-ho automàticament">
+<!ENTITY certselect.auto.accesskey          "a">
+<!ENTITY certselect.ask                     "Demana-m'ho cada vegada">
+<!ENTITY certselect.ask.accesskey           "e">

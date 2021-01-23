@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+
+<!ENTITY windowTitle.label "HTML postari buruzko galdera">
+
+<!ENTITY recipient.label "Hartzaile batzuk ez daude HTML posta jasotzeko bezala zerrendatuta.">
+
+<!ENTITY question.label "Mezua testu arruntera bihurtu nahi duzu edo halere HTML gisa bidali?">
+
+<!ENTITY plainTextAndHtml.label "Bidali testu arrunt eta HTML gisa">
+<!ENTITY plainTextAndHtml.accesskey "a">
+<!ENTITY plainTextOnly.label "Bidali testu arrunt gisa soilik">
+<!ENTITY plainTextOnly.accesskey "t">
+<!ENTITY htmlOnly.label "Bidali HTML gisa soilik">
+<!ENTITY htmlOnly.accesskey "H">
+
+<!ENTITY send.label "Bidali">
+<!ENTITY send.accesskey "l">

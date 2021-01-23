@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Eienskappe van horisontale strepe">
+
+<!ENTITY dimensionsBox.label "Dimensies">
+<!ENTITY heightEditField.label "Hoogte:">
+<!ENTITY heightEditField.accessKey "g">
+<!ENTITY widthEditField.label "Wydte:">
+<!ENTITY widthEditField.accessKey "W">
+<!ENTITY pixelsPopup.value "pixels">
+<!ENTITY alignmentBox.label "Gerigtheid">
+<!ENTITY leftRadio.label "Links">
+<!ENTITY leftRadio.accessKey "L">
+<!ENTITY centerRadio.label "Middel">
+<!ENTITY centerRadio.accessKey "M">
+<!ENTITY rightRadio.label "Regs">
+<!ENTITY rightRadio.accessKey "R">
+
+<!ENTITY threeDShading.label "3-D skaduwees">
+<!ENTITY threeDShading.accessKey "s">
+<!ENTITY saveSettings.label "Gebruik as verstek">
+<!ENTITY saveSettings.accessKey "v">
+<!ENTITY saveSettings.tooltip "Stoor dié opstelling vir die invoeg van nuwe horisontale strepe">

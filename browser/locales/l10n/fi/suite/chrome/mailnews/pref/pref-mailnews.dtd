@@ -1,0 +1,38 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.mailnews.title              "Sähköposti ja keskusteluryhmät">
+<!ENTITY generalSettings.caption          "Yleiset asetukset">
+<!ENTITY confirmMove.label                "Kysy vahvistus siirrettäessä kansiota roskakoriin">
+<!ENTITY confirmMove.accesskey            "K">
+<!ENTITY preserveThreading.label          "Säilytä viestiketjujen rakenne viestejä lajiteltaessa">
+<!ENTITY preserveThreading.accesskey      "S">
+<!ENTITY loadInBackground.label           "Siirry uusiin välilehtiin, kun ne avataan">
+<!ENTITY loadInBackground.accesskey       "v">
+<!ENTITY mailBiffOnNewWindow.label        "Nouda uudet viestit vasta sähköpostiohjelman avaamisen jälkeen">
+<!ENTITY mailBiffOnNewWindow.accesskey    "N">
+
+<!ENTITY defaultMailSettings.description  "Tee &brandShortName;stä oletusohjelma seuraaville sovelluksille:">
+<!ENTITY setDefaultMail.label             "Sähköposti">
+<!ENTITY setDefaultMail.accesskey         "ä">
+<!ENTITY setDefaultNews.label             "Keskusteluryhmät">
+<!ENTITY setDefaultNews.accesskey         "e">
+<!ENTITY setDefaultFeed.label             "Syötteet">
+<!ENTITY setDefaultFeed.accesskey         "y">
+
+<!ENTITY useInternalSettings.description  "Käytä &brandShortName;n sähköposti- ja keskusteluryhmäohjelmaa, kun selaimessa avataan seuraavia linkkejä:">
+<!ENTITY useInternalMail.label            "Sähköposti (mailto:)">
+<!ENTITY useInternalMail.accesskey        "h">
+<!ENTITY useInternalNews.label            "Keskusteluryhmät (news:, snews:, nntp:)">
+<!ENTITY useInternalNews.accesskey        "u">
+
+<!ENTITY messengerStartPage.caption       "Aloitussivu">
+<!ENTITY enableStartPage.label            "Näytä aloitussivu viestiruudussa, kun sähköpostiohjelma käynnistyy">
+<!ENTITY enableStartPage.accesskey        "N">
+<!ENTITY location.label                   "Osoite:">
+<!ENTITY location.accesskey               "O">
+<!ENTITY useDefault.label                 "Palauta oletus">
+<!ENTITY useDefault.accesskey             "P">
+<!ENTITY rememberLastMsg.label            "Muista viimeksi valittu viesti">
+<!ENTITY rememberLastMsg.accesskey        "M">

@@ -31,7 +31,7 @@ def set_defaults(config, jobs):
         worker = job.setdefault('worker', {})
         worker.setdefault('env', {})
         if worker_os == "linux":
-            worker.setdefault('docker-image', {'in-tree': 'debian7-amd64-build'})
+            worker.setdefault('docker-image', {'in-tree': 'debian8-amd64-build'})
             worker['chain-of-trust'] = True
         elif worker_os == "windows":
             worker['chain-of-trust'] = True
@@ -70,27 +70,34 @@ def resolve_shipping_product(config, jobs):
 
 
 @transforms.add
-def mozharness_extra_config(config, jobs):
+def update_channel(config, jobs):
+    keys = [
+        'run.update-channel',
+        'run.mar-channel-id',
+        'run.accepted-mar-channel-ids',
+    ]
     for job in jobs:
-        resolve_keyed_by(
-            job, 'run.update-channel', item_name=job['name'],
-            **{
-                'release-type': config.params['release_type'],
-            }
-        )
-
-        for item_name, should_become_attribute in (
-            ('branding', False),
-            ('update-channel', True),
-            ('version-file', False),
-        ):
-            item = job['run'].pop(item_name, None)
-            if item:
-                underscored_name = item_name.replace('-', '_')
-                job['run'].setdefault('extra-config', {})[underscored_name] = item
-
-                if should_become_attribute:
-                    job['attributes'][item_name] = item
+        job['worker'].setdefault('env', {})
+        for key in keys:
+            resolve_keyed_by(
+                job, key, item_name=job['name'],
+                **{
+                    'project': config.params['project'],
+                    'release-type': config.params['release_type'],
+                }
+            )
+        update_channel = job['run'].pop('update-channel', None)
+        if update_channel:
+            job['run'].setdefault('extra-config', {})['update_channel'] = update_channel
+            job['attributes']['update-channel'] = update_channel
+        mar_channel_id = job['run'].pop('mar-channel-id', None)
+        if mar_channel_id:
+            job['attributes']['mar-channel-id'] = mar_channel_id
+            job['worker']['env']['MAR_CHANNEL_ID'] = mar_channel_id
+        accepted_mar_channel_ids = job['run'].pop('accepted-mar-channel-ids', None)
+        if accepted_mar_channel_ids:
+            job['attributes']['accepted-mar-channel-ids'] = accepted_mar_channel_ids
+            job['worker']['env']['ACCEPTED_MAR_CHANNEL_IDS'] = accepted_mar_channel_ids
 
         yield job
 
@@ -114,7 +121,8 @@ def mozconfig(config, jobs):
 def use_profile_data(config, jobs):
     for job in jobs:
         use_pgo = job.pop('use-pgo', False)
-        if not use_pgo:
+        disable_pgo = config.params['try_task_config'].get('disable-pgo', False)
+        if not use_pgo or disable_pgo:
             yield job
             continue
 
@@ -128,19 +136,13 @@ def use_profile_data(config, jobs):
         dependencies = 'generate-profile-{}'.format(name)
         job.setdefault('dependencies', {})['generate-profile'] = dependencies
         job.setdefault('fetches', {})['generate-profile'] = ['profdata.tar.xz']
-        job['worker']['env'].update({"MOZ_PGO_PROFILE_USE": "1"})
-        yield job
+        job['worker']['env'].update({"TASKCLUSTER_PGO_PROFILE_USE": "1"})
 
+        _, worker_os = worker_type_implementation(config.graph_config, job['worker-type'])
+        if worker_os == "linux":
+            # LTO linkage needs more open files than the default from run-task.
+            job['worker']['env'].update({"MOZ_LIMIT_NOFILE": "8192"})
 
-@transforms.add
-def set_env(config, jobs):
-    """Set extra environment variables from try command line."""
-    env = []
-    if config.params['try_mode'] == 'try_option_syntax':
-        env = config.params['try_options']['env'] or []
-    for job in jobs:
-        if env:
-            job['worker']['env'].update(dict(x.split('=') for x in env))
         yield job
 
 
@@ -163,16 +165,12 @@ def enable_full_crashsymbols(config, jobs):
 
 @transforms.add
 def use_artifact(config, jobs):
-    if config.params['try_mode'] == 'try_task_config':
-        use_artifact = config.params['try_task_config'] \
-            .get('templates', {}).get('artifact', {}).get('enabled')
-    elif config.params['try_mode'] == 'try_option_syntax':
-        use_artifact = config.params['try_options'].get('artifact')
+    if config.params.is_try():
+        use_artifact = config.params['try_task_config'].get('use-artifact-builds', False)
     else:
         use_artifact = False
     for job in jobs:
         if (config.kind == 'build' and use_artifact and
-            not job.get('attributes', {}).get('nightly', False) and
             job.get('index', {}).get('job-name') in ARTIFACT_JOBS):
             job['treeherder']['symbol'] += 'a'
             job['worker']['env']['USE_ARTIFACT'] = '1'

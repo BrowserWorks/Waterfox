@@ -6,7 +6,7 @@ MockFilePicker.init(window);
 
 const SAVE_PER_SITE_PREF = "browser.download.lastDir.savePerSite";
 const ALWAYS_DOWNLOAD_DIR_PREF = "browser.download.useDownloadDir";
-const UCT_URI = "chrome://mozapps/content/downloads/unknownContentType.xul";
+const UCT_URI = "chrome://mozapps/content/downloads/unknownContentType.xhtml";
 
 /* import-globals-from ../../../../../toolkit/content/tests/browser/common/mockTransfer.js */
 Services.scriptloader.loadSubScript(
@@ -63,20 +63,17 @@ function triggerSave(aWindow, aCallback) {
   };
 
   function onUCTDialog(dialog) {
-    function doLoad() {
+    SpecialPowers.spawn(testBrowser, [], async () => {
       content.document.querySelector("iframe").remove();
-    }
-    testBrowser.messageManager.loadFrameScript(
-      "data:,(" + doLoad.toString() + ")()",
-      false
-    );
-    executeSoon(continueDownloading);
+    }).then(() => executeSoon(continueDownloading));
   }
 
   function continueDownloading() {
     for (let win of Services.wm.getEnumerator("")) {
       if (win.location && win.location.href == UCT_URI) {
-        win.document.documentElement._fireButtonEvent("accept");
+        win.document
+          .getElementById("unknownContentType")
+          ._fireButtonEvent("accept");
         win.close();
         return;
       }

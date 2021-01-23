@@ -5,8 +5,8 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 
+use crate::raw_mutex::RawMutex;
 use lock_api;
-use raw_mutex::RawMutex;
 
 /// A mutual exclusion primitive useful for protecting shared data
 ///
@@ -53,10 +53,9 @@ use raw_mutex::RawMutex;
 /// # Examples
 ///
 /// ```
-/// use std::sync::Arc;
 /// use parking_lot::Mutex;
+/// use std::sync::{Arc, mpsc::channel};
 /// use std::thread;
-/// use std::sync::mpsc::channel;
 ///
 /// const N: usize = 10;
 ///
@@ -69,7 +68,7 @@ use raw_mutex::RawMutex;
 ///
 /// let (tx, rx) = channel();
 /// for _ in 0..10 {
-///     let (data, tx) = (data.clone(), tx.clone());
+///     let (data, tx) = (Arc::clone(&data), tx.clone());
 ///     thread::spawn(move || {
 ///         // The shared state can only be accessed once the lock is held.
 ///         // Our non-atomic increment is safe because we're the only thread
@@ -86,6 +85,13 @@ use raw_mutex::RawMutex;
 /// rx.recv().unwrap();
 /// ```
 pub type Mutex<T> = lock_api::Mutex<RawMutex, T>;
+
+/// Creates a new mutex in an unlocked state ready for use.
+///
+/// This allows creating a mutex in a constant context on stable Rust.
+pub const fn const_mutex<T>(val: T) -> Mutex<T> {
+    Mutex::const_new(<RawMutex as lock_api::RawMutex>::INIT, val)
+}
 
 /// An RAII implementation of a "scoped lock" of a mutex. When this structure is
 /// dropped (falls out of scope), the lock will be unlocked.
@@ -105,11 +111,14 @@ pub type MappedMutexGuard<'a, T> = lock_api::MappedMutexGuard<'a, RawMutex, T>;
 
 #[cfg(test)]
 mod tests {
+    use crate::{Condvar, Mutex};
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::mpsc::channel;
     use std::sync::Arc;
     use std::thread;
-    use {Condvar, Mutex};
+
+    #[cfg(feature = "serde")]
+    use bincode::{deserialize, serialize};
 
     struct Packet<T>(Arc<(Mutex<T>, Condvar)>);
 
@@ -242,7 +251,7 @@ mod tests {
     fn test_mutex_arc_access_in_unwind() {
         let arc = Arc::new(Mutex::new(1));
         let arc2 = arc.clone();
-        let _ = thread::spawn(move || -> () {
+        let _ = thread::spawn(move || {
             struct Unwinder {
                 i: Arc<Mutex<i32>>,
             }
@@ -253,7 +262,8 @@ mod tests {
             }
             let _u = Unwinder { i: arc2 };
             panic!();
-        }).join();
+        })
+        .join();
         let lock = arc.lock();
         assert_eq!(*lock, 2);
     }
@@ -283,16 +293,20 @@ mod tests {
         let mutex = Mutex::new(vec![0u8, 10]);
 
         assert_eq!(format!("{:?}", mutex), "Mutex { data: [0, 10] }");
-        assert_eq!(
-            format!("{:#?}", mutex),
-            "Mutex {
-    data: [
-        0,
-        10
-    ]
-}"
-        );
         let _lock = mutex.lock();
-        assert_eq!(format!("{:?}", mutex), "Mutex { <locked> }");
+        assert_eq!(format!("{:?}", mutex), "Mutex { data: <locked> }");
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn test_serde() {
+        let contents: Vec<u8> = vec![0, 1, 2];
+        let mutex = Mutex::new(contents.clone());
+
+        let serialized = serialize(&mutex).unwrap();
+        let deserialized: Mutex<Vec<u8>> = deserialize(&serialized).unwrap();
+
+        assert_eq!(*(mutex.lock()), *(deserialized.lock()));
+        assert_eq!(contents, *(deserialized.lock()));
     }
 }

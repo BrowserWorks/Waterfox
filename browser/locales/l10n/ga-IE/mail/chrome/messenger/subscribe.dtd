@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY subscribeDialog.title        "Liostáil">
+<!ENTITY subscribeButton.label        "Liostáil">
+<!ENTITY subscribeButton.accesskey    "s">
+<!ENTITY unsubscribeButton.label      "Díliostáil">
+<!ENTITY unsubscribeButton.accesskey  "D">
+<!ENTITY newGroupsTab.label           "Grúpaí Nua">
+<!ENTITY newGroupsTab.accesskey       "N">
+<!ENTITY refreshButton.label          "Athnuaigh">
+<!ENTITY refreshButton.accesskey      "A">
+<!ENTITY stopButton.label             "Stad">
+<!ENTITY stopButton.accesskey         "t">
+<!ENTITY server.label                 "Cuntas:">
+<!ENTITY server.accesskey             "C">
+<!ENTITY subscribedHeader.label       "Liostáil">
+<!-- commenting out until bug 38906 is fixed 
+<!ENTITY messagesHeader.label         "Messages"> -->
+<!ENTITY namefield.label              "Taispeáin míreanna ina bhfuil:">
+<!ENTITY namefield.accesskey          "m">

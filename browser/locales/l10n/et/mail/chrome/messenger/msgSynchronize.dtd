@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOffline.xul-->
+
+<!-- extracted from MsgSynchronize.xul and msgSelectOfflineFolders.xul-->
+
+<!-- extracted from MsgSynchronize.xhtml and msgSelectOfflineFolders.xhtml-->
+
+<!ENTITY MsgSynchronize.label    "Kirjade allalaadimine ja sünkroniseerimine">
+<!ENTITY MsgSelect.label         "Võrguta režiimis kasutatavad asjad">
+<!ENTITY MsgSyncDesc.label       "Kui oled juba valinud e-posti kaustad ja uudistegrupid võrguta režiimis kasutamiseks, siis võid need nüüd alla laadida ja/või sünkroniseerida. Muul juhul kasuta nuppu &quot;Vali&quot;, et valida e-posti kaustad ja uudistegrupid, mida võrguta režiimis kasutada.">
+<!ENTITY MsgSyncDirections.label "Laaditakse alla ja/või sünkroniseeritakse:">
+<!ENTITY syncTypeMail.label      "E-post">
+<!ENTITY syncTypeMail.accesskey  "E">
+<!ENTITY syncTypeNews.label      "Uudistegrupid">
+<!ENTITY syncTypeNews.accesskey  "U">
+<!ENTITY sendMessage.label       "Saadetakse saatmata kirjad">
+<!ENTITY sendMessage.accesskey   "t">
+<!ENTITY workOffline.label       "Pärast allalaadimise ja/või sünkroniseerimise lõpetamist lülitutakse võrguta režiimi">
+<!ENTITY workOffline.accesskey   "P">
+<!ENTITY selectButton.label      "Vali...">
+<!ENTITY selectButton.accesskey  "a">
+<!ENTITY MsgSelectDesc.label     "Vali e-posti kaustad ja uudistegrupid, mida tahad võrguta režiimis kasutada. ">
+<!ENTITY MsgSelectInd.label      "Tõmba">
+<!ENTITY MsgSelectItems.label    "Kaustad ja uudistegrupid">

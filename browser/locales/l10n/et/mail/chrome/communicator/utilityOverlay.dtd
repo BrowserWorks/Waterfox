@@ -1,0 +1,44 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label                   "Fail">
+<!ENTITY fileMenu.accesskey               "F">
+<!ENTITY newMenu.label                    "Uus">
+<!ENTITY newMenu.accesskey                "U">
+
+<!ENTITY editMenu.label                   "Redigeerimine">
+<!ENTITY editMenu.accesskey               "R">
+<!ENTITY undoCmd.label                    "Võta tagasi">
+<!ENTITY undoCmd.accesskey                "T">
+<!ENTITY redoCmd.label                    "Tee uuesti">
+<!ENTITY redoCmd.accesskey                "S">
+<!ENTITY deleteCmd.label                  "Kustuta">
+<!ENTITY deleteCmd.accesskey              "K">
+<!ENTITY preferencesCmd2.label            "Valikud">
+<!ENTITY preferencesCmd2.accesskey        "V">
+<!ENTITY preferencesCmdUnix.label         "Eelistused">
+<!ENTITY preferencesCmdUnix.accesskey     "E">
+
+<!ENTITY viewMenu.label                   "Vaade">
+<!ENTITY viewMenu.accesskey               "V">
+<!ENTITY viewToolbarsMenu.label           "Tööriistaribad">
+<!ENTITY viewToolbarsMenu.accesskey       "T">
+<!ENTITY showTaskbarCmd.label             "Olekuriba">
+<!ENTITY showTaskbarCmd.accesskey         "l">
+
+<!ENTITY closeCmd.label                   "Sulge">
+<!ENTITY closeCmd.key                     "W">
+<!ENTITY closeCmd.accesskey               "u">
+
+<!ENTITY quitApplicationCmd.label         "Välju">
+<!ENTITY quitApplicationCmd.key           "Q">
+<!ENTITY quitApplicationCmd.accesskey     "j">
+
+<!ENTITY quitApplicationCmdUnix.label     "Välju">
+<!ENTITY quitApplicationCmdUnix.accesskey "V">
+
+<!ENTITY quitApplicationCmdMac.label      "Välju &brandShortName;ist">
+<!ENTITY quitApplicationCmdMac.accesskey  "V">

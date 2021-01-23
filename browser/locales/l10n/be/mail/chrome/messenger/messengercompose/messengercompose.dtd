@@ -1,0 +1,317 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE messengercompose.dtd Main UI for message composition -->
+<!ENTITY msgComposeWindow.title "Укладанне: (без тэмы)">
+
+<!-- File Menu -->
+<!ENTITY fileMenu.label "Файл">
+<!ENTITY fileMenu.accesskey "ф">
+<!ENTITY newMenu.label "Новы">
+<!ENTITY newMenu.accesskey "н">
+<!ENTITY newMessage.label "Ліст">
+<!ENTITY newMessage.key "M">
+<!ENTITY newMessageCmd2.key "N">
+<!ENTITY newMessage.accesskey "л">
+<!ENTITY newContact.label "Сувязь з адраснай кнігі…">
+<!ENTITY newContact.accesskey "С">
+<!ENTITY attachMenu.label "Далучыць">
+<!ENTITY attachMenu.accesskey "л">
+<!ENTITY attachFileCmd.label "Файл(ы)…">
+<!ENTITY attachFileCmd.accesskey "Ф">
+<!ENTITY attachFileCmd.key "A">
+<!ENTITY attachCloudCmd.label "Filelink">
+<!ENTITY attachCloudCmd.accesskey "i">
+<!ENTITY attachPageCmd.label "Старонку Сеціва…">
+<!ENTITY attachPageCmd.accesskey "С">
+<!--LOCALIZATION NOTE attachVCardCmd.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCardCmd.label "Асабістую картку (vCard)">
+<!ENTITY attachVCardCmd.accesskey "А">
+<!ENTITY remindLater.label "Напомніць мне пазней">
+<!ENTITY remindLater.accesskey "п">
+<!ENTITY closeCmd.label "Зачыніць">
+<!ENTITY closeCmd.key "W">
+<!ENTITY closeCmd.accesskey "ч">
+<!ENTITY saveCmd.label "Захаваць">
+<!ENTITY saveCmd.key "S">
+<!ENTITY saveCmd.accesskey "З">
+<!ENTITY saveAsCmd.label "Захаваць як">
+<!ENTITY saveAsCmd.accesskey "Я">
+<!ENTITY saveAsFileCmd.label "Файл…">
+<!ENTITY saveAsFileCmd.accesskey "Ф">
+<!ENTITY saveAsDraftCmd.label "Чарнавік">
+<!ENTITY saveAsDraftCmd.accesskey "Ч">
+<!ENTITY saveAsTemplateCmd.label "Узор">
+<!ENTITY saveAsTemplateCmd.accesskey "У">
+<!ENTITY sendNowCmd.label "Даслаць зараз">
+<!ENTITY sendCmd.keycode "VK_RETURN">
+<!ENTITY sendNowCmd.accesskey "Д">
+<!ENTITY sendLaterCmd.label "Даслаць пазней">
+<!ENTITY sendLaterCmd.keycode "VK_RETURN">
+<!ENTITY sendLaterCmd.accesskey "П">
+<!ENTITY printSetupCmd.label "Уладкаваць старонку…">
+<!ENTITY printSetupCmd.accesskey "л">
+<!ENTITY printPreviewCmd.label "Перадпрагляд друку">
+<!ENTITY printPreviewCmd.accesskey "д">
+<!ENTITY printCmd.label "Друкаваць…">
+<!ENTITY printCmd.key "P">
+<!ENTITY printCmd.accesskey "Д">
+
+<!-- Edit Menu -->
+<!ENTITY editMenu.label "Праўка">
+<!ENTITY editMenu.accesskey "П">
+<!ENTITY undoCmd.label "Адмяніць">
+<!ENTITY undoCmd.key "Z">
+<!ENTITY undoCmd.accesskey "А">
+<!ENTITY redoCmd.label "Вярнуць">
+<!ENTITY redoCmd.key "Y">
+<!ENTITY redoCmd.accesskey "В">
+<!ENTITY cutCmd.key "X">
+<!ENTITY copyCmd.key "C">
+<!ENTITY pasteCmd.key "V">
+<!ENTITY pasteNoFormattingCmd.key "V">
+<!ENTITY pasteAsQuotationCmd.key "o">
+<!ENTITY editRewrapCmd.accesskey "г">
+<!ENTITY deleteCmd.label "Выдаліць">
+<!ENTITY deleteCmd.accesskey "д">
+<!ENTITY editRewrapCmd.label "Перазагінаць">
+<!ENTITY editRewrapCmd.key "R">
+<!ENTITY renameAttachmentCmd.label "Перайменаваць далучэнне…">
+<!ENTITY renameAttachmentCmd.accesskey "й">
+<!ENTITY reorderAttachmentsCmd.label "Перапарадкаваць укладанні…">
+<!ENTITY reorderAttachmentsCmd.accesskey "а">
+<!ENTITY reorderAttachmentsCmd.key "x">
+<!ENTITY selectAllCmd.accesskey "у">
+<!ENTITY findBarCmd.label "Знайсці…">
+<!ENTITY findBarCmd.accesskey "З">
+<!ENTITY findBarCmd.key "F">
+<!ENTITY findReplaceCmd.label "Знайсці і замяніць…">
+<!ENTITY findReplaceCmd.accesskey "м">
+<!ENTITY findReplaceCmd.key "H">
+<!ENTITY findAgainCmd.label "Знайсці зноў">
+<!ENTITY findAgainCmd.accesskey "ў">
+<!ENTITY findAgainCmd.key "G">
+<!ENTITY findAgainCmd.key2 "VK_F3">
+<!ENTITY findPrevCmd.label "Знайсці папярэдні">
+<!ENTITY findPrevCmd.accesskey "я">
+<!ENTITY findPrevCmd.key "G">
+<!ENTITY findPrevCmd.key2 "VK_F3">
+
+<!-- Reorder Attachment Panel -->
+<!ENTITY reorderAttachmentsPanel.label "Перапарадкаваць укладанні">
+<!ENTITY moveAttachmentTopPanelBtn.label "Перайсці да пачатку">
+<!ENTITY moveAttachmentUpPanelBtn.label "Перамясціць уверх">
+<!ENTITY moveAttachmentBundleUpPanelBtn.label "Перамясціць разам">
+<!ENTITY moveAttachmentDownPanelBtn.label "Перамясціць уніз">
+<!ENTITY moveAttachmentBottomPanelBtn.label "Перамясціць у канец">
+
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.Sort.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.Sort.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.Sort.AZ.label "Сартаваць: А - Я">
+<!ENTITY sortAttachmentsPanelBtn.Sort.ZA.label "Сартаваць: Я - А">
+<!-- LOCALIZATION NOTE (sortAttachmentsPanelBtn.SortSelection.AZ.label):
+     Please ensure that this translation matches
+     sortAttachmentsPanelBtn.SortSelection.ZA.label, except for the sort direction. -->
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.AZ.label "Сартаваць абранае: А - Я">
+<!ENTITY sortAttachmentsPanelBtn.SortSelection.ZA.label "Сартаваць абранае: Я - А">
+
+<!-- View Menu -->
+<!ENTITY viewMenu.label "Прагляд">
+<!ENTITY viewMenu.accesskey "г">
+<!ENTITY viewToolbarsMenuNew.label "Паліцы прыладаў">
+<!ENTITY viewToolbarsMenuNew.accesskey "п">
+<!ENTITY menubarCmd.label "Паліца меню">
+<!ENTITY menubarCmd.accesskey "м">
+<!ENTITY showCompositionToolbarCmd.label "Прыладапаліца ўкладання">
+<!ENTITY showCompositionToolbarCmd.accesskey "ў">
+<!ENTITY showFormattingBarCmd.label "Прыладапаліца фарматавання">
+<!ENTITY showFormattingBarCmd.accesskey "ф">
+<!ENTITY showTaskbarCmd.label "Паліца статуса">
+<!ENTITY showTaskbarCmd.accesskey "с">
+<!ENTITY customizeToolbar.label "Наладзіць…">
+<!ENTITY customizeToolbar.accesskey "Н">
+
+<!ENTITY addressSidebar.label "Палічка сувязяў">
+<!ENTITY addressSidebar.accesskey "с">
+
+<!-- Format Menu -->
+<!ENTITY formatMenu.label "Фармат">
+<!ENTITY formatMenu.accesskey "р">
+
+<!-- Options Menu -->
+<!ENTITY optionsMenu.label "Наладжванні">
+<!ENTITY optionsMenu.accesskey "Н">
+<!ENTITY checkSpellingCmd2.label "Праверыць правапіс…">
+<!ENTITY checkSpellingCmd2.key "p">
+<!ENTITY checkSpellingCmd2.key2 "VK_F7">
+<!ENTITY checkSpellingCmd2.accesskey "р">
+<!ENTITY enableInlineSpellChecker.label "Праверка правапісу падчас набору">
+<!ENTITY enableInlineSpellChecker.accesskey "П">
+<!ENTITY quoteCmd.label "Працытаваць ліст">
+<!ENTITY quoteCmd.accesskey "ц">
+
+<!--LOCALIZATION NOTE attachVCard.label Don't translate the term 'vCard' -->
+<!ENTITY attachVCard.label "Далучыць асабістую картку (vCard)">
+<!ENTITY attachVCard.accesskey "v">
+
+<!ENTITY returnReceiptMenu.label "Квіток атрымання">
+<!ENTITY returnReceiptMenu.accesskey "т">
+<!ENTITY dsnMenu.label "Пацвярджэнне дастаўкі">
+<!ENTITY dsnMenu.accesskey "П">
+<!ENTITY deliveryFormatMenu.label "Фармат дастаўкі">
+<!ENTITY deliveryFormatMenu.accesskey "Ф">
+<!ENTITY autoFormatCmd.label "Сама-вызначэнне">
+<!ENTITY autoFormatCmd.accesskey "С">
+<!ENTITY plainTextFormatCmd.label "Толькі просты тэкст">
+<!ENTITY plainTextFormatCmd.accesskey "П">
+<!ENTITY htmlFormatCmd.label "Толькі аздоблены тэкст (HTML)">
+<!ENTITY htmlFormatCmd.accesskey "з">
+<!ENTITY bothFormatCmd.label "Просты і аздоблены (HTML) тэкст">
+<!ENTITY bothFormatCmd.accesskey "і">
+<!ENTITY priorityMenu.label "Прыярытэт">
+<!ENTITY priorityMenu.accesskey "П">
+<!ENTITY priorityButton.title "Прыярытэт">
+<!ENTITY priorityButton.tooltiptext "Змена прыярытэту паведамлення">
+<!ENTITY priorityButton.label "Прыярытэт:">
+<!ENTITY lowestPriorityCmd.label "Найніжэйшы">
+<!ENTITY lowestPriorityCmd.accesskey "й">
+<!ENTITY lowPriorityCmd.label "Нізкі">
+<!ENTITY lowPriorityCmd.accesskey "Н">
+<!ENTITY normalPriorityCmd.label "Звычайны">
+<!ENTITY normalPriorityCmd.accesskey "З">
+<!ENTITY highPriorityCmd.label "Высокі">
+<!ENTITY highPriorityCmd.accesskey "с">
+<!ENTITY highestPriorityCmd.label "Найвышэйшы">
+<!ENTITY highestPriorityCmd.accesskey "в">
+<!ENTITY fileCarbonCopyCmd.label "Змясціць копію ў">
+<!ENTITY fileCarbonCopyCmd.accesskey "ь">
+<!ENTITY fileHereMenu.label "Пакласці тут">
+
+<!-- Tools Menu -->
+<!ENTITY tasksMenu.label "Прылады">
+<!ENTITY tasksMenu.accesskey "л">
+<!ENTITY messengerCmd.label "Пошта і Навінакупы">
+<!ENTITY messengerCmd.accesskey "П">
+<!ENTITY messengerCmd.commandkey "1">
+<!ENTITY addressBookCmd.label "Адрасная кніга">
+<!ENTITY addressBookCmd.accesskey "а">
+<!ENTITY addressBookCmd.key "B">
+<!ENTITY accountManagerCmd2.label "Наладжванні рахунку">
+<!ENTITY accountManagerCmd2.accesskey "Н">
+<!ENTITY accountManagerCmdUnix2.accesskey "Н">
+<!ENTITY preferencesCmd2.label "Наладжванні">
+<!ENTITY preferencesCmd2.accesskey "Н">
+<!ENTITY preferencesCmdUnix.label "Перавагі">
+<!ENTITY preferencesCmdUnix.accesskey "П">
+
+<!--  Mac OS X Window Menu -->
+<!ENTITY minimizeWindow.key "m">
+<!ENTITY minimizeWindow.label "Мінімізаваць">
+<!ENTITY bringAllToFront.label "Выцягнуць усе наперад">
+<!ENTITY zoomWindow.label "Павялічыць">
+<!ENTITY windowMenu.label "Акно">
+
+<!-- Mail Toolbar -->
+<!ENTITY sendButton.label "Даслаць">
+<!ENTITY quoteButton.label "Вытрымка">
+<!ENTITY addressButton.label "Адрас">
+<!ENTITY attachButton.label "Далучыць">
+<!ENTITY spellingButton.label "Праверка правапісу">
+<!ENTITY saveButton.label "Захаваць">
+<!ENTITY printButton.label "Друкаваць">
+
+<!-- Mail Toolbar Tooltips -->
+<!ENTITY sendButton.tooltip "Даслаць гэты ліст зараз">
+<!ENTITY sendlaterButton.tooltip "Даслаць гэты ліст пазней">
+<!ENTITY quoteButton.tooltip "Працытаваць папярэдні ліст">
+<!ENTITY addressButton.tooltip "Выбраць атрымальніка з адраснай кнігі">
+<!ENTITY spellingButton.tooltip "Праверка правапісу вылучэння або ўсяго ліста">
+<!ENTITY saveButton.tooltip "Захаваць гэты ліст">
+<!ENTITY cutButton.tooltip              "Выразаць">
+<!ENTITY copyButton.tooltip             "Капіяваць">
+<!ENTITY pasteButton.tooltip            "Уставіць">
+<!ENTITY printButton.tooltip "Надрукаваць гэты ліст">
+
+<!-- Headers -->
+<!ENTITY fromAddr.accesskey "А">
+<!ENTITY subject.accesskey "Т">
+
+<!-- Format Toolbar, imported from editorAppShell.xul -->
+<!ENTITY SmileButton.tooltip "Уставіць тварык-усмешку">
+<!ENTITY smiley1Cmd.label "Усмешка">
+<!ENTITY smiley2Cmd.label "Пахмурны">
+<!ENTITY smiley3Cmd.label "Падміргванне">
+<!ENTITY smiley4Cmd.label "З высунутым языком">
+<!ENTITY smiley5Cmd.label "Смех">
+<!ENTITY smiley6Cmd.label "Сарамлівы">
+<!ENTITY smiley7Cmd.label "Няўпэўнены">
+<!ENTITY smiley8Cmd.label "Здзіўленне">
+<!ENTITY smiley9Cmd.label "Пацалунак">
+<!ENTITY smiley10Cmd.label "Роў">
+<!ENTITY smiley11Cmd.label "Файна">
+<!ENTITY smiley12Cmd.label "Карыслівы">
+<!ENTITY smiley13Cmd.label "Ступня ў роце">
+<!ENTITY smiley14Cmd.label "Бязгрэшны">
+<!ENTITY smiley15Cmd.label "Рыданне">
+<!ENTITY smiley16Cmd.label "Надзьмуты">
+
+<!-- Message Pane Context Menu -->
+<!ENTITY spellCheckNoSuggestions.label "Прапановы не знойдзены">
+<!ENTITY spellCheckIgnoreWord.label "Ігнараваць слова">
+<!ENTITY spellCheckIgnoreWord.accesskey "І">
+<!ENTITY spellCheckAddToDictionary.label "Дадаць у слоўнік">
+<!ENTITY spellCheckAddToDictionary.accesskey "с">
+<!ENTITY undo.label "Адмяніць">
+<!ENTITY undo.accesskey "м">
+<!ENTITY cut.label "Выразаць">
+<!ENTITY cut.accesskey "р">
+<!ENTITY copy.label "Капіяваць">
+<!ENTITY copy.accesskey "К">
+<!ENTITY paste.label "Уставіць">
+<!ENTITY paste.accesskey "У">
+<!ENTITY pasteQuote.label "Уставіць як вытрымку">
+<!ENTITY pasteQuote.accesskey "В">
+
+<!ENTITY openAttachment.label "Адчыніць">
+<!ENTITY openAttachment.accesskey "А">
+<!ENTITY delete.label "Выдаліць">
+<!ENTITY delete.accesskey "д">
+<!ENTITY removeAttachment.label "Выдаліць далучэнне">
+<!ENTITY removeAttachment.accesskey "д">
+<!ENTITY renameAttachment.label "Змяніць назву…">
+<!ENTITY renameAttachment.accesskey "З">
+<!ENTITY reorderAttachments.label "Перапарадкаваць укладанні…">
+<!ENTITY reorderAttachments.accesskey "а">
+<!ENTITY selectAll.label "Вылучыць усё">
+<!ENTITY selectAll.accesskey "У">
+<!ENTITY attachFile.label "Далучыць файл(ы)…">
+<!ENTITY attachFile.accesskey "Ф">
+<!ENTITY attachCloud.label "Filelink…">
+<!ENTITY attachCloud.accesskey "i">
+<!ENTITY convertCloud.label "Ператварыць у…">
+<!ENTITY convertCloud.accesskey "т">
+<!ENTITY cancelUpload.label "Скасаваць зацягванне">
+<!ENTITY cancelUpload.accesskey "к">
+<!ENTITY convertRegularAttachment.label "Звычайнае далучэнне">
+<!ENTITY convertRegularAttachment.accesskey "д">
+<!ENTITY attachPage.label "Далучыць старонку Сеціва…">
+<!ENTITY attachPage.accesskey "с">
+
+<!-- Attachment Pane Header Bar Context Menu -->
+
+<!-- Spell checker context menu items -->
+<!ENTITY spellAddDictionaries.label "Дадаць слоўнікі…">
+<!ENTITY spellAddDictionaries.accesskey "Д">
+
+<!-- Title for the address picker panel -->
+<!ENTITY addressesSidebarTitle.label "Сувязі">
+
+<!-- Identity popup customize menuitem -->
+<!ENTITY customizeFromAddress.label "Наладзіць адрас адпраўніка…">
+<!ENTITY customizeFromAddress.accesskey "Н">
+
+<!-- Status Bar -->
+<!ENTITY languageStatusButton.tooltip "Мова праверкі правапісу">
+<!ENTITY encodingStatusPanel.tooltip "Кадаванне тэксту">

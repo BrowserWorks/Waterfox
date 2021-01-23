@@ -24,12 +24,16 @@ TODO:
 - log rotation config
 """
 
-from datetime import datetime
+from __future__ import print_function
+
 import logging
 import os
 import sys
 import time
 import traceback
+from datetime import datetime
+
+from six import binary_type
 
 # Define our own FATAL_LEVEL
 FATAL_LEVEL = logging.CRITICAL + 10
@@ -95,9 +99,9 @@ class LogMixin(object):
         """
         if not hasattr(self, 'config') or self.config.get('log_to_console', True):
             if stderr:
-                print >> sys.stderr, message
+                print(message, file=sys.stderr)
             else:
-                print message
+                print(message)
 
     def log(self, message, level=INFO, exit_code=-1):
         """ log the message passed to it according to level, exit if level == FATAL
@@ -347,13 +351,17 @@ class OutputParser(LogMixin):
         Args:
             output (str | list): string or list of string to parse
         """
-
-        if isinstance(output, basestring):
+        if not isinstance(output, list):
             output = [output]
+
         for line in output:
             if not line or line.isspace():
                 continue
-            line = line.decode("utf-8", 'replace').rstrip()
+
+            if isinstance(line, binary_type):
+                line = line.decode("utf-8", 'replace')
+
+            line = line.rstrip()
             self.parse_single_line(line)
 
 
@@ -629,7 +637,8 @@ class SimpleFileLogger(BaseLogger):
         """ calls the BaseLogger.new_logger method and adds a file handler to it."""
 
         BaseLogger.new_logger(self)
-        self.log_path = os.path.join(self.abs_log_dir, '%s.log' % self.log_name)
+        self.log_path = os.path.join(
+            self.abs_log_dir, '%s.log' % self.log_name)
         self.log_files['default'] = self.log_path
         self.add_file_handler(self.log_path)
 
@@ -674,7 +683,7 @@ class MultiFileLogger(BaseLogger):
 
         BaseLogger.new_logger(self)
         min_logger_level = self.get_logger_level(self.log_level)
-        for level in self.LEVELS.keys():
+        for level in list(self.LEVELS.keys()):
             if self.get_logger_level(level) >= min_logger_level:
                 self.log_files[level] = '%s_%s.log' % (self.log_name,
                                                        level)

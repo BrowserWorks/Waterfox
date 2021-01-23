@@ -8,24 +8,19 @@ const UPDATE_BEGIN = "safebrowsing-update-begin";
 const UPDATE_FINISH = "safebrowsing-update-finished";
 const JSLOG_PREF = "browser.safebrowsing.debug";
 
-function unLoad() {
-  window.removeEventListener("unload", unLoad);
-
+window.onunload = function() {
   Search.uninit();
   Provider.uninit();
   Cache.uninit();
   Debug.uninit();
-}
+};
 
-function onLoad() {
-  window.removeEventListener("load", onLoad);
-  window.addEventListener("unload", unLoad);
-
+window.onload = function() {
   Search.init();
   Provider.init();
   Cache.init();
   Debug.init();
-}
+};
 
 /*
  * Search
@@ -196,7 +191,7 @@ var Provider = {
   init() {
     this.providers = new Set();
     let branch = Services.prefs.getBranch("browser.safebrowsing.provider.");
-    let children = branch.getChildList("", {});
+    let children = branch.getChildList("");
     for (let child of children) {
       let provider = child.split(".")[0];
       if (this.isActiveProvider(provider)) {
@@ -661,7 +656,7 @@ var Debug = {
       env.get("MOZ_LOG_MODULES") ||
       env.get("NSPR_LOG_MODULES");
 
-    if (logModules.length > 0) {
+    if (logModules.length) {
       document.getElementById("set-log-modules").disabled = true;
       for (let module of this.modules) {
         document.getElementById("chk-" + module).disabled = true;
@@ -674,7 +669,7 @@ var Debug = {
     // Disable set log file if log file is already set
     // by environment variable.
     let logFile = env.get("MOZ_LOG_FILE") || env.get("NSPR_LOG_FILE");
-    if (logFile.length > 0) {
+    if (logFile.length) {
       document.getElementById("set-log-file").disabled = true;
       document.getElementById("log-file").value = logFile;
     }
@@ -701,7 +696,7 @@ var Debug = {
 
   nsprlog() {
     // Turn off debugging for all the modules.
-    let children = Services.prefs.getBranch("logging.").getChildList("", {});
+    let children = Services.prefs.getBranch("logging.").getChildList("");
     for (let pref of children) {
       if (!pref.startsWith("config.")) {
         Services.prefs.clearUserPref(`logging.${pref}`);

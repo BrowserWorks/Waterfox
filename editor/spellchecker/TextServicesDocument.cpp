@@ -8,6 +8,7 @@
 #include "FilteredContentIterator.h"  // for FilteredContentIterator
 #include "mozilla/Assertions.h"       // for MOZ_ASSERT, etc
 #include "mozilla/EditorUtils.h"      // for AutoTransactionBatchExternal
+#include "mozilla/dom/AbstractRange.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/Selection.h"
 #include "mozilla/mozalloc.h"    // for operator new, etc
@@ -22,6 +23,7 @@
 #include "nsIContent.h"                // for nsIContent, etc
 #include "nsID.h"                      // for NS_GET_IID
 #include "nsIEditor.h"                 // for nsIEditor, etc
+#include "nsIEditorSpellCheck.h"       // for nsIEditorSpellCheck, etc
 #include "nsINode.h"                   // for nsINode
 #include "nsISelectionController.h"    // for nsISelectionController, etc
 #include "nsISupportsBase.h"           // for nsISupports
@@ -142,61 +144,66 @@ nsresult TextServicesDocument::InitWithEditor(nsIEditor* aEditor) {
   return rv;
 }
 
-nsresult TextServicesDocument::SetExtent(nsRange* aRange) {
-  NS_ENSURE_ARG_POINTER(aRange);
-  NS_ENSURE_TRUE(mDocument, NS_ERROR_FAILURE);
+nsresult TextServicesDocument::SetExtent(const AbstractRange* aAbstractRange) {
+  MOZ_ASSERT(aAbstractRange);
 
-  // We need to store a copy of aDOMRange since we don't
-  // know where it came from.
+  if (NS_WARN_IF(!mDocument)) {
+    return NS_ERROR_FAILURE;
+  }
 
-  mExtent = aRange->CloneRange();
+  // We need to store a copy of aAbstractRange since we don't know where it
+  // came from.
+  mExtent = nsRange::Create(aAbstractRange, IgnoreErrors());
+  if (NS_WARN_IF(!mExtent)) {
+    return NS_ERROR_FAILURE;
+  }
 
   // Create a new iterator based on our new extent range.
-
   nsresult rv =
       CreateFilteredContentIterator(mExtent, getter_AddRefs(mFilteredIter));
-
-  if (NS_FAILED(rv)) {
+  if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
 
   // Now position the iterator at the start of the first block
   // in the range.
-
   mIteratorStatus = IteratorStatus::eDone;
 
   rv = FirstBlock();
-
+  NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "FirstBlock() failed");
   return rv;
 }
 
-nsresult TextServicesDocument::ExpandRangeToWordBoundaries(nsRange* aRange) {
-  NS_ENSURE_ARG_POINTER(aRange);
+nsresult TextServicesDocument::ExpandRangeToWordBoundaries(
+    StaticRange* aStaticRange) {
+  MOZ_ASSERT(aStaticRange);
 
   // Get the end points of the range.
 
   nsCOMPtr<nsINode> rngStartNode, rngEndNode;
   int32_t rngStartOffset, rngEndOffset;
 
-  nsresult rv =
-      GetRangeEndPoints(aRange, getter_AddRefs(rngStartNode), &rngStartOffset,
-                        getter_AddRefs(rngEndNode), &rngEndOffset);
-
-  NS_ENSURE_SUCCESS(rv, rv);
+  nsresult rv = GetRangeEndPoints(aStaticRange, getter_AddRefs(rngStartNode),
+                                  &rngStartOffset, getter_AddRefs(rngEndNode),
+                                  &rngEndOffset);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
 
   // Create a content iterator based on the range.
-
   RefPtr<FilteredContentIterator> filteredIter;
-  rv = CreateFilteredContentIterator(aRange, getter_AddRefs(filteredIter));
-
-  NS_ENSURE_SUCCESS(rv, rv);
+  rv =
+      CreateFilteredContentIterator(aStaticRange, getter_AddRefs(filteredIter));
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
 
   // Find the first text node in the range.
-
   IteratorStatus iterStatus = IteratorStatus::eDone;
-
   rv = FirstTextNode(filteredIter, &iterStatus);
-  NS_ENSURE_SUCCESS(rv, rv);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
 
   if (iterStatus == IteratorStatus::eDone) {
     // No text was found so there's no adjustment necessary!
@@ -204,12 +211,16 @@ nsresult TextServicesDocument::ExpandRangeToWordBoundaries(nsRange* aRange) {
   }
 
   nsINode* firstText = filteredIter->GetCurrentNode();
-  NS_ENSURE_TRUE(firstText, NS_ERROR_FAILURE);
+  if (NS_WARN_IF(!firstText)) {
+    return NS_ERROR_FAILURE;
+  }
 
   // Find the last text node in the range.
 
   rv = LastTextNode(filteredIter, &iterStatus);
-  NS_ENSURE_SUCCESS(rv, rv);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
 
   if (iterStatus == IteratorStatus::eDone) {
     // We should never get here because a first text block
@@ -219,7 +230,9 @@ nsresult TextServicesDocument::ExpandRangeToWordBoundaries(nsRange* aRange) {
   }
 
   nsINode* lastText = filteredIter->GetCurrentNode();
-  NS_ENSURE_TRUE(lastText, NS_ERROR_FAILURE);
+  if (NS_WARN_IF(!lastText)) {
+    return NS_ERROR_FAILURE;
+  }
 
   // Now make sure our end points are in terms of text nodes in the range!
 
@@ -240,13 +253,16 @@ nsresult TextServicesDocument::ExpandRangeToWordBoundaries(nsRange* aRange) {
 
   RefPtr<FilteredContentIterator> docFilteredIter;
   rv = CreateDocumentContentIterator(getter_AddRefs(docFilteredIter));
-  NS_ENSURE_SUCCESS(rv, rv);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
 
   // Grab all the text in the block containing our
   // first text node.
-
   rv = docFilteredIter->PositionAt(firstText);
-  NS_ENSURE_SUCCESS(rv, rv);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
 
   iterStatus = IteratorStatus::eValid;
 
@@ -269,7 +285,9 @@ nsresult TextServicesDocument::ExpandRangeToWordBoundaries(nsRange* aRange) {
 
   ClearOffsetTable(&offsetTable);
 
-  NS_ENSURE_SUCCESS(rv, rv);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
 
   rngStartNode = wordStartNode;
   rngStartOffset = wordStartOffset;
@@ -278,7 +296,9 @@ nsresult TextServicesDocument::ExpandRangeToWordBoundaries(nsRange* aRange) {
   // last text node.
 
   rv = docFilteredIter->PositionAt(lastText);
-  NS_ENSURE_SUCCESS(rv, rv);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
 
   iterStatus = IteratorStatus::eValid;
 
@@ -295,7 +315,9 @@ nsresult TextServicesDocument::ExpandRangeToWordBoundaries(nsRange* aRange) {
 
   ClearOffsetTable(&offsetTable);
 
-  NS_ENSURE_SUCCESS(rv, rv);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
 
   // To prevent expanding the range too much, we only change
   // rngEndNode and rngEndOffset if it isn't already at the start of the
@@ -307,14 +329,11 @@ nsresult TextServicesDocument::ExpandRangeToWordBoundaries(nsRange* aRange) {
     rngEndOffset = wordEndOffset;
   }
 
-  // Now adjust the range so that it uses our new
-  // end points.
-  rv = aRange->SetStartAndEnd(rngStartNode, rngStartOffset, rngEndNode,
-                              rngEndOffset);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return rv;
-  }
-  return NS_OK;
+  // Now adjust the range so that it uses our new end points.
+  rv = aStaticRange->SetStartAndEnd(rngStartNode, rngStartOffset, rngEndNode,
+                                    rngEndOffset);
+  NS_WARNING_ASSERTION(NS_SUCCEEDED(rv), "Failed to update the given range");
+  return rv;
 }
 
 nsresult TextServicesDocument::SetFilterType(uint32_t aFilterType) {
@@ -382,7 +401,7 @@ nsresult TextServicesDocument::LastSelectedBlock(
     return NS_ERROR_FAILURE;
   }
 
-  RefPtr<nsRange> range;
+  RefPtr<const nsRange> range;
   nsCOMPtr<nsINode> parent;
 
   if (selection->IsCollapsed()) {
@@ -1094,6 +1113,7 @@ nsresult TextServicesDocument::InsertText(const nsAString& aText) {
 
   nsresult rv = textEditor->InsertTextAsAction(aText);
   if (NS_FAILED(rv)) {
+    NS_WARNING("InsertTextAsAction() failed");
     return rv;
   }
 
@@ -1116,9 +1136,9 @@ nsresult TextServicesDocument::InsertText(const nsAString& aText) {
       itEntry = new OffsetEntry(entry->mNode, entry->mStrOffset, strLength);
       itEntry->mIsInsertedText = true;
       itEntry->mNodeOffset = entry->mNodeOffset;
-      if (!mOffsetTable.InsertElementAt(mSelStartIndex, itEntry)) {
-        return NS_ERROR_FAILURE;
-      }
+      // XXX(Bug 1631371) Check if this should use a fallible operation as it
+      // pretended earlier.
+      mOffsetTable.InsertElementAt(mSelStartIndex, itEntry);
     }
   } else if (entry->mStrOffset + entry->mLength == mSelStartOffset) {
     // We are inserting text at the end of the current offset entry.
@@ -1149,10 +1169,9 @@ nsresult TextServicesDocument::InsertText(const nsAString& aText) {
       itEntry = new OffsetEntry(entry->mNode, mSelStartOffset, 0);
       itEntry->mNodeOffset = entry->mNodeOffset + entry->mLength;
       itEntry->mIsInsertedText = true;
-      if (!mOffsetTable.InsertElementAt(i, itEntry)) {
-        delete itEntry;
-        return NS_ERROR_FAILURE;
-      }
+      // XXX(Bug 1631371) Check if this should use a fallible operation as it
+      // pretended earlier.
+      mOffsetTable.InsertElementAt(i, itEntry);
     }
 
     // We have a valid inserted text offset entry. Update its
@@ -1191,9 +1210,9 @@ nsresult TextServicesDocument::InsertText(const nsAString& aText) {
     itEntry = new OffsetEntry(entry->mNode, mSelStartOffset, strLength);
     itEntry->mIsInsertedText = true;
     itEntry->mNodeOffset = entry->mNodeOffset + entry->mLength;
-    if (!mOffsetTable.InsertElementAt(mSelStartIndex + 1, itEntry)) {
-      return NS_ERROR_FAILURE;
-    }
+    // XXX(Bug 1631371) Check if this should use a fallible operation as it
+    // pretended earlier.
+    mOffsetTable.InsertElementAt(mSelStartIndex + 1, itEntry);
 
     mSelEndIndex = ++mSelStartIndex;
   }
@@ -1366,8 +1385,11 @@ void TextServicesDocument::DidJoinNodes(nsINode& aLeftNode,
 }
 
 nsresult TextServicesDocument::CreateFilteredContentIterator(
-    nsRange* aRange, FilteredContentIterator** aFilteredIter) {
-  NS_ENSURE_TRUE(aRange && aFilteredIter, NS_ERROR_NULL_POINTER);
+    const AbstractRange* aAbstractRange,
+    FilteredContentIterator** aFilteredIter) {
+  if (NS_WARN_IF(!aAbstractRange) || NS_WARN_IF(!aFilteredIter)) {
+    return NS_ERROR_INVALID_ARG;
+  }
 
   *aFilteredIter = nullptr;
 
@@ -1387,7 +1409,7 @@ nsresult TextServicesDocument::CreateFilteredContentIterator(
   RefPtr<FilteredContentIterator> filter =
       new FilteredContentIterator(std::move(composeFilter));
 
-  nsresult rv = filter->Init(aRange);
+  nsresult rv = filter->Init(aAbstractRange);
   if (NS_FAILED(rv)) {
     return rv;
   }
@@ -1402,6 +1424,13 @@ Element* TextServicesDocument::GetDocumentContentRootNode() const {
   }
 
   if (mDocument->IsHTMLOrXHTML()) {
+    Element* rootElement = mDocument->GetRootElement();
+    if (rootElement && rootElement->IsXULElement()) {
+      // HTML documents with root XUL elements should eventually be transitioned
+      // to a regular document structure, but for now the content root node will
+      // be the document element.
+      return mDocument->GetDocumentElement();
+    }
     // For HTML documents, the content root node is the body.
     return mDocument->GetBody();
   }
@@ -1416,14 +1445,10 @@ already_AddRefed<nsRange> TextServicesDocument::CreateDocumentContentRange() {
     return nullptr;
   }
 
-  RefPtr<nsRange> range = new nsRange(node);
-  ErrorResult errorResult;
-  range->SelectNodeContents(*node, errorResult);
-  if (NS_WARN_IF(errorResult.Failed())) {
-    errorResult.SuppressException();
-    return nullptr;
-  }
-
+  RefPtr<nsRange> range = nsRange::Create(node);
+  IgnoredErrorResult ignoredError;
+  range->SelectNodeContents(*node, ignoredError);
+  NS_WARNING_ASSERTION(!ignoredError.Failed(), "SelectNodeContents() failed");
   return range.forget();
 }
 
@@ -1461,12 +1486,10 @@ TextServicesDocument::CreateDocumentContentRootToNodeOffsetRange(
     endOffset = endNode ? endNode->GetChildCount() : 0;
   }
 
-  RefPtr<nsRange> range;
-  nsresult rv = nsRange::CreateRange(startNode, startOffset, endNode, endOffset,
-                                     getter_AddRefs(range));
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return nullptr;
-  }
+  RefPtr<nsRange> range = nsRange::Create(startNode, startOffset, endNode,
+                                          endOffset, IgnoreErrors());
+  NS_WARNING_ASSERTION(range,
+                       "nsRange::Create() failed to create new valid range");
   return range.forget();
 }
 
@@ -1609,7 +1632,6 @@ bool TextServicesDocument::IsBlockNode(nsIContent* aContent) {
           nsGkAtoms::font    != atom &&
           nsGkAtoms::i       != atom &&
           nsGkAtoms::kbd     != atom &&
-          nsGkAtoms::keygen  != atom &&
           nsGkAtoms::nobr    != atom &&
           nsGkAtoms::s       != atom &&
           nsGkAtoms::samp    != atom &&
@@ -1854,7 +1876,7 @@ nsresult TextServicesDocument::GetCollapsedSelection(
   int32_t eStartOffset = eStart->mNodeOffset;
   int32_t eEndOffset = eEnd->mNodeOffset + eEnd->mLength;
 
-  RefPtr<nsRange> range = selection->GetRangeAt(0);
+  RefPtr<const nsRange> range = selection->GetRangeAt(0);
   NS_ENSURE_STATE(range);
 
   nsCOMPtr<nsINode> parent = range->GetStartContainer();
@@ -1862,12 +1884,16 @@ nsresult TextServicesDocument::GetCollapsedSelection(
 
   uint32_t offset = range->StartOffset();
 
-  int32_t e1s1 = nsContentUtils::ComparePoints(
+  const Maybe<int32_t> e1s1 = nsContentUtils::ComparePoints(
       eStart->mNode, eStartOffset, parent, static_cast<int32_t>(offset));
-  int32_t e2s1 = nsContentUtils::ComparePoints(eEnd->mNode, eEndOffset, parent,
-                                               static_cast<int32_t>(offset));
+  const Maybe<int32_t> e2s1 = nsContentUtils::ComparePoints(
+      eEnd->mNode, eEndOffset, parent, static_cast<int32_t>(offset));
 
-  if (e1s1 > 0 || e2s1 < 0) {
+  if (NS_WARN_IF(!e1s1) || NS_WARN_IF(!e2s1)) {
+    return NS_ERROR_FAILURE;
+  }
+
+  if (*e1s1 > 0 || *e2s1 < 0) {
     // We're done if the caret is outside the current text block.
     return NS_OK;
   }
@@ -1905,12 +1931,15 @@ nsresult TextServicesDocument::GetCollapsedSelection(
   // child of this non-text node. Then look for the closest text
   // node.
 
-  nsresult rv = nsRange::CreateRange(eStart->mNode, eStartOffset, eEnd->mNode,
-                                     eEndOffset, getter_AddRefs(range));
-  NS_ENSURE_SUCCESS(rv, rv);
+  range = nsRange::Create(eStart->mNode, eStartOffset, eEnd->mNode, eEndOffset,
+                          IgnoreErrors());
+  if (NS_WARN_IF(!range)) {
+    return NS_ERROR_FAILURE;
+  }
 
   RefPtr<FilteredContentIterator> filteredIter;
-  rv = CreateFilteredContentIterator(range, getter_AddRefs(filteredIter));
+  nsresult rv =
+      CreateFilteredContentIterator(range, getter_AddRefs(filteredIter));
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsIContent* saveNode;
@@ -2015,7 +2044,7 @@ nsresult TextServicesDocument::GetCollapsedSelection(
 nsresult TextServicesDocument::GetUncollapsedSelection(
     BlockSelectionStatus* aSelStatus, int32_t* aSelOffset,
     int32_t* aSelLength) {
-  RefPtr<nsRange> range;
+  RefPtr<const nsRange> range;
   OffsetEntry* entry;
 
   RefPtr<Selection> selection =
@@ -2029,7 +2058,6 @@ nsresult TextServicesDocument::GetUncollapsedSelection(
   nsCOMPtr<nsINode> startContainer, endContainer;
   int32_t startOffset, endOffset;
   int32_t tableCount;
-  int32_t e1s1 = 0, e1s2 = 0, e2s1 = 0, e2s2 = 0;
 
   OffsetEntry *eStart, *eEnd;
   int32_t eStartOffset, eEndOffset;
@@ -2050,11 +2078,12 @@ nsresult TextServicesDocument::GetUncollapsedSelection(
   eStartOffset = eStart->mNodeOffset;
   eEndOffset = eEnd->mNodeOffset + eEnd->mLength;
 
-  uint32_t rangeCount = selection->RangeCount();
+  const uint32_t rangeCount = selection->RangeCount();
 
   // Find the first range in the selection that intersects
   // the current text block.
-
+  Maybe<int32_t> e1s2;
+  Maybe<int32_t> e2s1;
   for (uint32_t i = 0; i < rangeCount; i++) {
     range = selection->GetRangeAt(i);
     NS_ENSURE_STATE(range);
@@ -2067,41 +2096,54 @@ nsresult TextServicesDocument::GetUncollapsedSelection(
 
     e1s2 = nsContentUtils::ComparePoints(eStart->mNode, eStartOffset,
                                          endContainer, endOffset);
+    if (NS_WARN_IF(!e1s2)) {
+      return NS_ERROR_FAILURE;
+    }
+
     e2s1 = nsContentUtils::ComparePoints(eEnd->mNode, eEndOffset,
                                          startContainer, startOffset);
+    if (NS_WARN_IF(!e2s1)) {
+      return NS_ERROR_FAILURE;
+    }
 
     // Break out of the loop if the text block intersects the current range.
 
-    if (e1s2 <= 0 && e2s1 >= 0) {
+    if (*e1s2 <= 0 && *e2s1 >= 0) {
       break;
     }
   }
 
   // We're done if we didn't find an intersecting range.
 
-  if (rangeCount < 1 || e1s2 > 0 || e2s1 < 0) {
+  if (rangeCount < 1 || *e1s2 > 0 || *e2s1 < 0) {
     *aSelStatus = BlockSelectionStatus::eBlockOutside;
     *aSelOffset = *aSelLength = -1;
     return NS_OK;
   }
 
   // Now that we have an intersecting range, find out more info:
+  const Maybe<int32_t> e1s1 = nsContentUtils::ComparePoints(
+      eStart->mNode, eStartOffset, startContainer, startOffset);
+  if (NS_WARN_IF(!e1s1)) {
+    return NS_ERROR_FAILURE;
+  }
 
-  e1s1 = nsContentUtils::ComparePoints(eStart->mNode, eStartOffset,
-                                       startContainer, startOffset);
-  e2s2 = nsContentUtils::ComparePoints(eEnd->mNode, eEndOffset, endContainer,
-                                       endOffset);
+  const Maybe<int32_t> e2s2 = nsContentUtils::ComparePoints(
+      eEnd->mNode, eEndOffset, endContainer, endOffset);
+  if (NS_WARN_IF(!e2s2)) {
+    return NS_ERROR_FAILURE;
+  }
 
   if (rangeCount > 1) {
     // There are multiple selection ranges, we only deal
     // with the first one that intersects the current,
     // text block, so mark this a as a partial.
     *aSelStatus = BlockSelectionStatus::eBlockPartial;
-  } else if (e1s1 > 0 && e2s2 < 0) {
+  } else if (*e1s1 > 0 && *e2s2 < 0) {
     // The range extends beyond the start and
     // end of the current text block.
     *aSelStatus = BlockSelectionStatus::eBlockInside;
-  } else if (e1s1 <= 0 && e2s2 >= 0) {
+  } else if (*e1s1 <= 0 && *e2s2 >= 0) {
     // The current text block contains the entire
     // range.
     *aSelStatus = BlockSelectionStatus::eBlockContains;
@@ -2119,7 +2161,7 @@ nsresult TextServicesDocument::GetUncollapsedSelection(
   // The start of the range will be the rightmost
   // start node.
 
-  if (e1s1 >= 0) {
+  if (*e1s1 >= 0) {
     p1 = eStart->mNode;
     o1 = eStartOffset;
   } else {
@@ -2130,7 +2172,7 @@ nsresult TextServicesDocument::GetUncollapsedSelection(
   // The end of the range will be the leftmost
   // end node.
 
-  if (e2s2 <= 0) {
+  if (*e2s2 <= 0) {
     p2 = eEnd->mNode;
     o2 = eEndOffset;
   } else {
@@ -2138,15 +2180,17 @@ nsresult TextServicesDocument::GetUncollapsedSelection(
     o2 = endOffset;
   }
 
-  nsresult rv = nsRange::CreateRange(p1, o1, p2, o2, getter_AddRefs(range));
-
-  NS_ENSURE_SUCCESS(rv, rv);
+  range = nsRange::Create(p1, o1, p2, o2, IgnoreErrors());
+  if (NS_WARN_IF(!range)) {
+    return NS_ERROR_FAILURE;
+  }
 
   // Now iterate over this range to figure out the selection's
   // block offset and length.
 
   RefPtr<FilteredContentIterator> filteredIter;
-  rv = CreateFilteredContentIterator(range, getter_AddRefs(filteredIter));
+  nsresult rv =
+      CreateFilteredContentIterator(range, getter_AddRefs(filteredIter));
 
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -2240,24 +2284,27 @@ bool TextServicesDocument::SelectionIsCollapsed() {
 bool TextServicesDocument::SelectionIsValid() { return mSelStartIndex >= 0; }
 
 // static
-nsresult TextServicesDocument::GetRangeEndPoints(nsRange* aRange,
-                                                 nsINode** aStartContainer,
-                                                 int32_t* aStartOffset,
-                                                 nsINode** aEndContainer,
-                                                 int32_t* aEndOffset) {
-  NS_ENSURE_TRUE(
-      aRange && aStartContainer && aStartOffset && aEndContainer && aEndOffset,
-      NS_ERROR_NULL_POINTER);
+nsresult TextServicesDocument::GetRangeEndPoints(
+    const AbstractRange* aAbstractRange, nsINode** aStartContainer,
+    int32_t* aStartOffset, nsINode** aEndContainer, int32_t* aEndOffset) {
+  if (NS_WARN_IF(!aAbstractRange) || NS_WARN_IF(!aStartContainer) ||
+      NS_WARN_IF(!aEndContainer) || NS_WARN_IF(!aEndOffset)) {
+    return NS_ERROR_INVALID_ARG;
+  }
 
-  NS_IF_ADDREF(*aStartContainer = aRange->GetStartContainer());
-  NS_ENSURE_TRUE(aStartContainer, NS_ERROR_FAILURE);
+  nsCOMPtr<nsINode> startContainer = aAbstractRange->GetStartContainer();
+  if (NS_WARN_IF(!startContainer)) {
+    return NS_ERROR_FAILURE;
+  }
+  nsCOMPtr<nsINode> endContainer = aAbstractRange->GetEndContainer();
+  if (NS_WARN_IF(!endContainer)) {
+    return NS_ERROR_FAILURE;
+  }
 
-  *aStartOffset = static_cast<int32_t>(aRange->StartOffset());
-
-  NS_IF_ADDREF(*aEndContainer = aRange->GetEndContainer());
-  NS_ENSURE_TRUE(aEndContainer, NS_ERROR_FAILURE);
-
-  *aEndOffset = static_cast<int32_t>(aRange->EndOffset());
+  startContainer.forget(aStartContainer);
+  endContainer.forget(aEndContainer);
+  *aStartOffset = static_cast<int32_t>(aAbstractRange->StartOffset());
+  *aEndOffset = static_cast<int32_t>(aAbstractRange->EndOffset());
   return NS_OK;
 }
 
@@ -2656,10 +2703,9 @@ nsresult TextServicesDocument::SplitOffsetEntry(int32_t aTableIndex,
   OffsetEntry* newEntry = new OffsetEntry(
       entry->mNode, entry->mStrOffset + oldLength, aNewEntryLength);
 
-  if (!mOffsetTable.InsertElementAt(aTableIndex + 1, newEntry)) {
-    delete newEntry;
-    return NS_ERROR_FAILURE;
-  }
+  // XXX(Bug 1631371) Check if this should use a fallible operation as it
+  // pretended earlier.
+  mOffsetTable.InsertElementAt(aTableIndex + 1, newEntry);
 
   // Adjust entry fields:
 
@@ -2876,12 +2922,6 @@ TextServicesDocument::DidInsertText(CharacterData* aTextNode, int32_t aOffset,
 NS_IMETHODIMP
 TextServicesDocument::WillDeleteText(CharacterData* aTextNode, int32_t aOffset,
                                      int32_t aLength) {
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-TextServicesDocument::DidDeleteText(CharacterData* aTextNode, int32_t aOffset,
-                                    int32_t aLength, nsresult aResult) {
   return NS_OK;
 }
 

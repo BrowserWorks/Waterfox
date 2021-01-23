@@ -38,7 +38,7 @@ HTMLMenuElement::HTMLMenuElement(
     already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo)
     : nsGenericHTMLElement(std::move(aNodeInfo)), mType(MENU_TYPE_TOOLBAR) {}
 
-HTMLMenuElement::~HTMLMenuElement() {}
+HTMLMenuElement::~HTMLMenuElement() = default;
 
 NS_IMPL_ELEMENT_CLONE(HTMLMenuElement)
 
@@ -135,10 +135,9 @@ bool HTMLMenuElement::CanLoadIcon(nsIContent* aContent,
 
   Document* doc = aContent->OwnerDoc();
 
-  nsCOMPtr<nsIURI> baseURI = aContent->GetBaseURI();
   nsCOMPtr<nsIURI> uri;
   nsContentUtils::NewURIWithDocumentCharset(getter_AddRefs(uri), aIcon, doc,
-                                            baseURI);
+                                            aContent->GetBaseURI());
 
   if (!uri) {
     return false;

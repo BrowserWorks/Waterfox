@@ -1,11 +1,20 @@
-import {_ASRouterPreferences, ASRouterPreferences as ASRouterPreferencesSingleton, TEST_PROVIDERS} from "lib/ASRouterPreferences.jsm";
-const FAKE_PROVIDERS = [{id: "foo"}, {id: "bar"}];
+import {
+  _ASRouterPreferences,
+  ASRouterPreferences as ASRouterPreferencesSingleton,
+  getTrailheadConfigFromPref,
+  TEST_PROVIDERS,
+} from "lib/ASRouterPreferences.jsm";
+const FAKE_PROVIDERS = [{ id: "foo" }, { id: "bar" }];
 
-const PROVIDER_PREF_BRANCH = "browser.newtabpage.activity-stream.asrouter.providers.";
-const DEVTOOLS_PREF = "browser.newtabpage.activity-stream.asrouter.devtoolsEnabled";
+const PROVIDER_PREF_BRANCH =
+  "browser.newtabpage.activity-stream.asrouter.providers.";
+const DEVTOOLS_PREF =
+  "browser.newtabpage.activity-stream.asrouter.devtoolsEnabled";
 const SNIPPETS_USER_PREF = "browser.newtabpage.activity-stream.feeds.snippets";
-const CFR_USER_PREF_ADDONS = "browser.newtabpage.activity-stream.asrouter.userprefs.cfr.addons";
-const CFR_USER_PREF_FEATURES = "browser.newtabpage.activity-stream.asrouter.userprefs.cfr.features";
+const CFR_USER_PREF_ADDONS =
+  "browser.newtabpage.activity-stream.asrouter.userprefs.cfr.addons";
+const CFR_USER_PREF_FEATURES =
+  "browser.newtabpage.activity-stream.asrouter.userprefs.cfr.features";
 
 /** NUMBER_OF_PREFS_TO_OBSERVE includes:
  *  1. asrouter.providers. pref branch
@@ -29,14 +38,22 @@ describe("ASRouterPreferences", () => {
 
     sandbox = sinon.createSandbox();
     addObserverStub = sandbox.stub(global.Services.prefs, "addObserver");
-    stringPrefStub =  sandbox.stub(global.Services.prefs, "getStringPref");
+    stringPrefStub = sandbox.stub(global.Services.prefs, "getStringPref");
     FAKE_PROVIDERS.forEach(provider => {
-      stringPrefStub.withArgs(`${PROVIDER_PREF_BRANCH}${provider.id}`).returns(JSON.stringify(provider));
+      stringPrefStub
+        .withArgs(`${PROVIDER_PREF_BRANCH}${provider.id}`)
+        .returns(JSON.stringify(provider));
     });
-    sandbox.stub(global.Services.prefs, "getChildList")
-      .withArgs(PROVIDER_PREF_BRANCH).returns(FAKE_PROVIDERS.map(provider => `${PROVIDER_PREF_BRANCH}${provider.id}`));
+    sandbox
+      .stub(global.Services.prefs, "getChildList")
+      .withArgs(PROVIDER_PREF_BRANCH)
+      .returns(
+        FAKE_PROVIDERS.map(provider => `${PROVIDER_PREF_BRANCH}${provider.id}`)
+      );
 
-    boolPrefStub = sandbox.stub(global.Services.prefs, "getBoolPref").returns(false);
+    boolPrefStub = sandbox
+      .stub(global.Services.prefs, "getBoolPref")
+      .returns(false);
   });
 
   afterEach(() => {
@@ -48,7 +65,9 @@ describe("ASRouterPreferences", () => {
   }
 
   function setPrefForProvider(providerId, value) {
-    stringPrefStub.withArgs(getPrefNameForProvider(providerId)).returns(JSON.stringify(value));
+    stringPrefStub
+      .withArgs(getPrefNameForProvider(providerId))
+      .returns(JSON.stringify(value));
   }
 
   it("ASRouterPreferences should be an instance of _ASRouterPreferences", () => {
@@ -76,9 +95,19 @@ describe("ASRouterPreferences", () => {
     it("should clear cached values for ._initialized, .devtoolsEnabled", () => {
       ASRouterPreferences.init();
       // trigger caching
-      const result = [ASRouterPreferences.providers, ASRouterPreferences.devtoolsEnabled]; // eslint-disable-line no-unused-vars
-      assert.isNotNull(ASRouterPreferences._providers, "providers should not be null");
-      assert.isNotNull(ASRouterPreferences._devtoolsEnabled, "devtolosEnabled should not be null");
+      // eslint-disable-next-line no-unused-vars
+      const result = [
+        ASRouterPreferences.providers,
+        ASRouterPreferences.devtoolsEnabled,
+      ];
+      assert.isNotNull(
+        ASRouterPreferences._providers,
+        "providers should not be null"
+      );
+      assert.isNotNull(
+        ASRouterPreferences._devtoolsEnabled,
+        "devtolosEnabled should not be null"
+      );
 
       ASRouterPreferences.uninit();
       assert.isNull(ASRouterPreferences._providers);
@@ -111,7 +140,10 @@ describe("ASRouterPreferences", () => {
     });
     it("should return the cached value the second time .providers is accessed", () => {
       ASRouterPreferences.init();
-      const [, secondCall] = [ASRouterPreferences.providers, ASRouterPreferences.providers];
+      const [, secondCall] = [
+        ASRouterPreferences.providers,
+        ASRouterPreferences.providers,
+      ];
 
       assert.deepEqual(secondCall, FAKE_PROVIDERS);
       // once per pref
@@ -119,7 +151,10 @@ describe("ASRouterPreferences", () => {
     });
     it("should just parse the pref each time if ASRouterPreferences hasn't been initialized yet", () => {
       // Intentionally not initialized
-      const [firstCall, secondCall] = [ASRouterPreferences.providers, ASRouterPreferences.providers];
+      const [firstCall, secondCall] = [
+        ASRouterPreferences.providers,
+        ASRouterPreferences.providers,
+      ];
 
       assert.deepEqual(firstCall, FAKE_PROVIDERS);
       assert.deepEqual(secondCall, FAKE_PROVIDERS);
@@ -129,13 +164,16 @@ describe("ASRouterPreferences", () => {
       stringPrefStub.withArgs(`${PROVIDER_PREF_BRANCH}foo`).returns("not json");
       ASRouterPreferences.init();
 
-      assert.deepEqual(ASRouterPreferences.providers, [{id: "bar"}]);
+      assert.deepEqual(ASRouterPreferences.providers, [{ id: "bar" }]);
     });
     it("should include TEST_PROVIDERS if devtools is turned on", () => {
       boolPrefStub.withArgs(DEVTOOLS_PREF).returns(true);
       ASRouterPreferences.init();
 
-      assert.deepEqual(ASRouterPreferences.providers, [...TEST_PROVIDERS, ...FAKE_PROVIDERS]);
+      assert.deepEqual(ASRouterPreferences.providers, [
+        ...TEST_PROVIDERS,
+        ...FAKE_PROVIDERS,
+      ]);
     });
   });
   describe(".devtoolsEnabled", () => {
@@ -148,14 +186,20 @@ describe("ASRouterPreferences", () => {
     });
     it("should return the cached value the second time .devtoolsEnabled is accessed", () => {
       ASRouterPreferences.init();
-      const [, secondCall] = [ASRouterPreferences.devtoolsEnabled, ASRouterPreferences.devtoolsEnabled];
+      const [, secondCall] = [
+        ASRouterPreferences.devtoolsEnabled,
+        ASRouterPreferences.devtoolsEnabled,
+      ];
 
       assert.deepEqual(secondCall, false);
       assert.calledOnce(boolPrefStub);
     });
     it("should just parse the pref each time if ASRouterPreferences hasn't been initialized yet", () => {
       // Intentionally not initialized
-      const [firstCall, secondCall] = [ASRouterPreferences.devtoolsEnabled, ASRouterPreferences.devtoolsEnabled];
+      const [firstCall, secondCall] = [
+        ASRouterPreferences.devtoolsEnabled,
+        ASRouterPreferences.devtoolsEnabled,
+      ];
 
       assert.deepEqual(firstCall, false);
       assert.deepEqual(secondCall, false);
@@ -174,27 +218,39 @@ describe("ASRouterPreferences", () => {
       boolPrefStub.withArgs(CFR_USER_PREF_ADDONS).returns(false);
       boolPrefStub.withArgs(CFR_USER_PREF_FEATURES).returns(true);
       const result = ASRouterPreferences.getAllUserPreferences();
-      assert.deepEqual(result, {snippets: true, cfrAddons: false, cfrFeatures: true});
+      assert.deepEqual(result, {
+        snippets: true,
+        cfrAddons: false,
+        cfrFeatures: true,
+      });
     });
   });
   describe("#enableOrDisableProvider", () => {
     it("should enable an existing provider if second param is true", () => {
       const setStub = sandbox.stub(global.Services.prefs, "setStringPref");
-      setPrefForProvider("foo", {id: "foo", enabled: false});
+      setPrefForProvider("foo", { id: "foo", enabled: false });
       assert.isFalse(ASRouterPreferences.providers[0].enabled);
 
       ASRouterPreferences.enableOrDisableProvider("foo", true);
 
-      assert.calledWith(setStub, getPrefNameForProvider("foo"), JSON.stringify({id: "foo", enabled: true}));
+      assert.calledWith(
+        setStub,
+        getPrefNameForProvider("foo"),
+        JSON.stringify({ id: "foo", enabled: true })
+      );
     });
     it("should disable an existing provider if second param is false", () => {
       const setStub = sandbox.stub(global.Services.prefs, "setStringPref");
-      setPrefForProvider("foo", {id: "foo", enabled: true});
+      setPrefForProvider("foo", { id: "foo", enabled: true });
       assert.isTrue(ASRouterPreferences.providers[0].enabled);
 
       ASRouterPreferences.enableOrDisableProvider("foo", false);
 
-      assert.calledWith(setStub, getPrefNameForProvider("foo"), JSON.stringify({id: "foo", enabled: false}));
+      assert.calledWith(
+        setStub,
+        getPrefNameForProvider("foo"),
+        JSON.stringify({ id: "foo", enabled: false })
+      );
     });
     it("should not throw if the id does not exist", () => {
       assert.doesNotThrow(() => {
@@ -202,7 +258,9 @@ describe("ASRouterPreferences", () => {
       });
     });
     it("should not throw if pref is not parseable", () => {
-      stringPrefStub.withArgs(getPrefNameForProvider("foo")).returns("not valid");
+      stringPrefStub
+        .withArgs(getPrefNameForProvider("foo"))
+        .returns("not valid");
       assert.doesNotThrow(() => {
         ASRouterPreferences.enableOrDisableProvider("foo", true);
       });
@@ -233,16 +291,25 @@ describe("ASRouterPreferences", () => {
   });
   describe("observer, listeners", () => {
     it("should invalidate .providers when the pref is changed", () => {
-      const testProvider = {id: "newstuff"};
+      const testProvider = { id: "newstuff" };
       const newProviders = [...FAKE_PROVIDERS, testProvider];
 
       ASRouterPreferences.init();
 
       assert.deepEqual(ASRouterPreferences.providers, FAKE_PROVIDERS);
-      stringPrefStub.withArgs(getPrefNameForProvider(testProvider.id)).returns(JSON.stringify(testProvider));
+      stringPrefStub
+        .withArgs(getPrefNameForProvider(testProvider.id))
+        .returns(JSON.stringify(testProvider));
       global.Services.prefs.getChildList
-        .withArgs(PROVIDER_PREF_BRANCH).returns(newProviders.map(provider => getPrefNameForProvider(provider.id)));
-      ASRouterPreferences.observe(null, null, getPrefNameForProvider(testProvider.id));
+        .withArgs(PROVIDER_PREF_BRANCH)
+        .returns(
+          newProviders.map(provider => getPrefNameForProvider(provider.id))
+        );
+      ASRouterPreferences.observe(
+        null,
+        null,
+        getPrefNameForProvider(testProvider.id)
+      );
 
       // Cache should be invalidated so we access the new value of the pref now
       assert.deepEqual(ASRouterPreferences.providers, newProviders);
@@ -253,7 +320,8 @@ describe("ASRouterPreferences", () => {
       assert.isFalse(ASRouterPreferences.devtoolsEnabled);
       boolPrefStub.withArgs(DEVTOOLS_PREF).returns(true);
       global.Services.prefs.getChildList
-        .withArgs(PROVIDER_PREF_BRANCH).returns([]);
+        .withArgs(PROVIDER_PREF_BRANCH)
+        .returns([]);
       ASRouterPreferences.observe(null, null, DEVTOOLS_PREF);
 
       // Cache should be invalidated so we access the new value of the pref now
@@ -289,40 +357,44 @@ describe("ASRouterPreferences", () => {
       assert.notCalled(callback);
     });
   });
-  describe("_migratePrefs", () => {
-    beforeEach(() => {
-      sandbox.stub(global.Services.prefs, "setBoolPref");
-      sandbox.stub(global.Services.prefs, "clearUserPref");
+  describe("#_transformPersonalizedCfrScores", () => {
+    it("should report JSON.parse errors", () => {
+      sandbox.stub(global.Cu, "reportError");
+
+      ASRouterPreferences._transformPersonalizedCfrScores("");
+
+      assert.calledOnce(global.Cu.reportError);
     });
-    it("should not do anything if userpref was not modified", () => {
-      ASRouterPreferences.init();
-
-      assert.notCalled(global.Services.prefs.getBoolPref);
-      assert.notCalled(global.Services.prefs.setBoolPref);
+    it("should return an object parsed from a string", () => {
+      const scores = { FOO: 3000, BAR: 4000 };
+      assert.deepEqual(
+        ASRouterPreferences._transformPersonalizedCfrScores(
+          JSON.stringify(scores)
+        ),
+        scores
+      );
     });
-    it("should not do migration if newPref was modified", () => {
-      sandbox.stub(global.Services.prefs, "prefHasUserValue").returns(true);
-
-      ASRouterPreferences.init();
-
-      assert.notCalled(global.Services.prefs.getBoolPref);
-      assert.notCalled(global.Services.prefs.setBoolPref);
-      assert.calledOnce(global.Services.prefs.clearUserPref);
-      assert.calledWith(global.Services.prefs.clearUserPref, "browser.newtabpage.activity-stream.asrouter.userprefs.cfr");
+  });
+  describe("#getTrailheadConfigFromPref", () => {
+    it("should return trailHeadTriplet and trailHeadInterrupt", () => {
+      let result = getTrailheadConfigFromPref("foo-bar");
+      assert.propertyVal(result, "trailheadInterrupt", "foo");
+      assert.propertyVal(result, "trailheadTriplet", "bar");
     });
-    it("should migrate userprefs.cfr", () => {
-      const hasUserValueStub = sandbox.stub(global.Services.prefs, "prefHasUserValue");
-      hasUserValueStub.onCall(0).returns(true);
-      hasUserValueStub.returns(false);
-
-      ASRouterPreferences.init();
-
-      assert.calledOnce(global.Services.prefs.getBoolPref);
-      assert.calledWith(global.Services.prefs.getBoolPref, "browser.newtabpage.activity-stream.asrouter.userprefs.cfr");
-      assert.calledOnce(global.Services.prefs.setBoolPref);
-      assert.calledWith(global.Services.prefs.setBoolPref, CFR_USER_PREF_ADDONS, false);
-      assert.calledOnce(global.Services.prefs.clearUserPref);
-      assert.calledWith(global.Services.prefs.clearUserPref, "browser.newtabpage.activity-stream.asrouter.userprefs.cfr");
+    it("should return default values when pref is empty", () => {
+      let result = getTrailheadConfigFromPref("");
+      assert.propertyVal(result, "trailheadInterrupt", "join");
+      assert.propertyVal(result, "trailheadTriplet", "supercharge");
+    });
+    it("should return default trailHeadTriplet and trailHeadInterrupt when no hyphen", () => {
+      let result = getTrailheadConfigFromPref("control");
+      assert.propertyVal(result, "trailheadInterrupt", "control");
+      assert.propertyVal(result, "trailheadTriplet", "supercharge");
+    });
+    it("should return trailHeadTriplet and default trailHeadInterrupt when prefixed with hyphen", () => {
+      let result = getTrailheadConfigFromPref("-control");
+      assert.propertyVal(result, "trailheadInterrupt", "join");
+      assert.propertyVal(result, "trailheadTriplet", "control");
     });
   });
 });

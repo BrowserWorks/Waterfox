@@ -1,0 +1,24 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY aboutDownloads.title                      "Kartela të Ruajtura">
+<!ENTITY aboutDownloads.empty                      "Pa Kartela të Ruajtura">
+<!-- LOCALIZATION NOTE (cmd.show.label, cmd.show.accesskey, cmd.showMac.label,
+     cmd.showMac.accesskey):
+     The show and showMac commands are never shown together, thus they can share
+     the same access key (though the two access keys can also be different).
+     -->
+<!ENTITY cmd.show.label                            "Hap Dosjen Përkatëse">
+<!ENTITY cmd.show.accesskey                        "D">
+<!ENTITY cmd.showMac.label                         "Shfaqe Në Finder">
+<!ENTITY cmd.showMac.accesskey                     "F">
+<!ENTITY cmd.open.label                            "Hape">
+<!ENTITY cmd.open.accesskey                        "H">
+<!ENTITY cmd.removeFromHistory.label               "Hiqe Nga Historiku">
+<!ENTITY cmd.removeFromHistory.accesskey           "Q">
+<!ENTITY cmd.clearList.label                       "Spastroje Listën">
+<!ENTITY cmd.clearList.accesskey                   "P">
+<!ENTITY cmd.clearList.tooltip                     "Hiq krejt zërat prej listës së kartelave të ruajtura, me përjashtim të shkarkimeve në rrugë e sipër.">
+<!ENTITY cmd.searchDownloads.label                 "Kërkoni…">
+<!ENTITY cmd.searchDownloads.key                   "F">

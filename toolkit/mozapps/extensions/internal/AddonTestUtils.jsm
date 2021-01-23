@@ -41,13 +41,16 @@ ChromeUtils.defineModuleGetter(
   "ExtensionTestCommon",
   "resource://testing-common/ExtensionTestCommon.jsm"
 );
-XPCOMUtils.defineLazyGetter(this, "Management", () => {
-  let { Management } = ChromeUtils.import(
-    "resource://gre/modules/Extension.jsm",
-    null
-  );
-  return Management;
-});
+ChromeUtils.defineModuleGetter(
+  this,
+  "Management",
+  "resource://gre/modules/Extension.jsm"
+);
+ChromeUtils.defineModuleGetter(
+  this,
+  "ExtensionAddonObserver",
+  "resource://gre/modules/Extension.jsm"
+);
 
 ChromeUtils.defineModuleGetter(
   this,
@@ -144,9 +147,7 @@ class MockBarrier {
         } catch (e) {
           Cu.reportError(e);
           dump(
-            `Shutdown blocker '${name}' for ${this.name} threw error: ${e} :: ${
-              e.stack
-            }\n`
+            `Shutdown blocker '${name}' for ${this.name} threw error: ${e} :: ${e.stack}\n`
           );
         }
       })
@@ -403,10 +404,6 @@ var AddonTestUtils = {
       "http://127.0.0.1/updateBackgroundURL"
     );
     Services.prefs.setCharPref(
-      "extensions.blocklist.url",
-      "http://127.0.0.1/blocklistURL"
-    );
-    Services.prefs.setCharPref(
       "services.settings.server",
       "http://localhost/dummy-kinto/v1"
     );
@@ -416,19 +413,6 @@ var AddonTestUtils = {
 
     // Ensure signature checks are enabled by default
     Services.prefs.setBoolPref("xpinstall.signatures.required", true);
-
-    // Write out an empty blocklist.xml file to the profile to ensure nothing
-    // is blocklisted by default
-    var blockFile = OS.Path.join(this.profileDir.path, "blocklist.xml");
-
-    var data =
-      '<?xml version="1.0" encoding="UTF-8"?>\n' +
-      '<blocklist xmlns="http://www.mozilla.org/2006/addons-blocklist">\n' +
-      "</blocklist>\n";
-
-    this.awaitPromise(
-      OS.File.writeAtomic(blockFile, new TextEncoder().encode(data))
-    );
 
     // Make sure that a given path does not exist
     function pathShouldntExist(file) {
@@ -596,7 +580,7 @@ var AddonTestUtils = {
           null
         ),
 
-        applyFilter(service, channel, defaultProxyInfo, callback) {
+        applyFilter(channel, defaultProxyInfo, callback) {
           if (hosts.has(channel.URI.host)) {
             callback.onProxyFilterResult(this.proxyInfo);
           } else {
@@ -634,13 +618,29 @@ var AddonTestUtils = {
   },
 
   cleanupTempXPIs() {
+    let didGC = false;
+
     for (let file of this.tempXPIs.splice(0)) {
       if (file.exists()) {
         try {
           Services.obs.notifyObservers(file, "flush-cache-entry");
           file.remove(false);
         } catch (e) {
-          Cu.reportError(e);
+          if (didGC) {
+            Cu.reportError(`Failed to remove ${file.path}: ${e}`);
+          } else {
+            // Bug 1606684 - Sometimes XPI files are still in use by a process
+            // after the test has been finished. Force a GC once and try again.
+            this.info(`Force a GC`);
+            Cu.forceGC();
+            didGC = true;
+
+            try {
+              file.remove(false);
+            } catch (e) {
+              Cu.reportError(`Failed to remove ${file.path} after GC: ${e}`);
+            }
+          }
         }
       }
     }
@@ -686,9 +686,6 @@ var AddonTestUtils = {
       version,
       platformVersion,
       crashReporter: true,
-      extraProps: {
-        browserTabsRemoteAutostart: false,
-      },
     });
     this.appInfo = AppInfo.getAppInfo();
   },
@@ -891,6 +888,7 @@ var AddonTestUtils = {
     );
     const blocklistMapping = {
       extensions: bsPass.ExtensionBlocklistRS,
+      extensionsMLBF: bsPass.ExtensionBlocklistMLBF,
       plugins: bsPass.PluginBlocklistRS,
     };
 
@@ -915,9 +913,13 @@ var AddonTestUtils = {
         }
       }
       blocklistObj.ensureInitialized();
-      let collection = await blocklistObj._client.openCollection();
-      await collection.clear();
-      await collection.loadDump(newData);
+      let db = await blocklistObj._client.db;
+      await db.clear();
+      const collectionTimestamp = Math.max(
+        ...newData.map(r => r.last_modified)
+      );
+      await db.saveLastModified(collectionTimestamp);
+      await db.importBulk(newData);
       // We manually call _onUpdate... which is evil, but at the moment kinto doesn't have
       // a better abstraction unless you want to mock your own http server to do the update.
       await blocklistObj._onUpdate();
@@ -940,16 +942,11 @@ var AddonTestUtils = {
 
     if (newVersion) {
       this.appInfo.version = newVersion;
-      if (Cu.isModuleLoaded("resource://gre/modules/Blocklist.jsm")) {
-        let bsPassBlocklist = ChromeUtils.import(
-          "resource://gre/modules/Blocklist.jsm",
-          null
-        );
-        Object.defineProperty(bsPassBlocklist, "gAppVersion", {
-          value: newVersion,
-        });
-      }
     }
+    // AddonListeners are removed when the addonManager is shutdown,
+    // ensure the Extension observer is added.  We call uninit in
+    // promiseShutdown to allow re-initialization.
+    ExtensionAddonObserver.init();
 
     let XPIScope = ChromeUtils.import(
       "resource://gre/modules/addons/XPIProvider.jsm",
@@ -1048,6 +1045,7 @@ var AddonTestUtils = {
       "resource://gre/modules/Extension.jsm",
       null
     );
+    ExtensionAddonObserver.uninit();
     ChromeUtils.defineModuleGetter(
       ExtensionScope,
       "XPIProvider",
@@ -1148,10 +1146,11 @@ var AddonTestUtils = {
 
       let stream = ArrayBufferInputStream(data, 0, data.byteLength);
 
-      // Note these files are being created in the XPI archive with date "0" which is 1970-01-01.
+      // Note these files are being created in the XPI archive with date
+      // 1 << 49, which is a valid time for ZipWriter.
       zipW.addEntryStream(
         path,
-        0,
+        Math.pow(2, 49),
         Ci.nsIZipWriter.COMPRESSION_NONE,
         stream,
         false
@@ -1617,7 +1616,9 @@ var AddonTestUtils = {
     reason = AddonTestUtils.updateReason,
     ...args
   ) {
-    let equal = this.testScope.equal;
+    // Retrieve the test assertion helper from the testScope
+    // (which is `equal` in xpcshell-test and `is` in mochitest)
+    let equal = this.testScope.equal || this.testScope.is;
     return new Promise((resolve, reject) => {
       let result = {};
       addon.findUpdates(

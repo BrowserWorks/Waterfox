@@ -26,7 +26,6 @@
 namespace js {
 
 class Debugger;
-class WasmBreakpoint;
 class WasmBreakpointSite;
 class WasmInstanceObject;
 
@@ -47,7 +46,7 @@ struct ExprLoc {
 };
 
 typedef HashMap<uint32_t, uint32_t, DefaultHasher<uint32_t>, SystemAllocPolicy>
-    StepModeCounters;
+    StepperCounters;
 typedef HashMap<uint32_t, WasmBreakpointSite*, DefaultHasher<uint32_t>,
                 SystemAllocPolicy>
     WasmBreakpointSiteMap;
@@ -63,18 +62,22 @@ class DebugState {
   bool enterFrameTrapsEnabled_;
   uint32_t enterAndLeaveFrameTrapsCounter_;
   WasmBreakpointSiteMap breakpointSites_;
-  StepModeCounters stepModeCounters_;
+  StepperCounters stepperCounters_;
 
   void toggleDebugTrap(uint32_t offset, bool enabled);
 
  public:
   DebugState(const Code& code, const Module& module);
 
+  void trace(JSTracer* trc);
+  void finalize(JSFreeOp* fop);
+
   const Bytes& bytecode() const { return module_->debugBytecode(); }
 
-  bool getLineOffsets(JSContext* cx, size_t lineno, Vector<uint32_t>* offsets);
-  bool getAllColumnOffsets(JSContext* cx, Vector<ExprLoc>* offsets);
-  bool getOffsetLocation(uint32_t offset, size_t* lineno, size_t* column);
+  MOZ_MUST_USE bool getLineOffsets(size_t lineno, Vector<uint32_t>* offsets);
+  MOZ_MUST_USE bool getAllColumnOffsets(Vector<ExprLoc>* offsets);
+  MOZ_MUST_USE bool getOffsetLocation(uint32_t offset, size_t* lineno,
+                                      size_t* column);
 
   // The Code can track enter/leave frame events. Any such event triggers
   // debug trap. The enter/leave frame events enabled or disabled across
@@ -89,31 +92,43 @@ class DebugState {
 
   bool hasBreakpointTrapAtOffset(uint32_t offset);
   void toggleBreakpointTrap(JSRuntime* rt, uint32_t offset, bool enabled);
-  WasmBreakpointSite* getOrCreateBreakpointSite(JSContext* cx, uint32_t offset);
+  WasmBreakpointSite* getBreakpointSite(uint32_t offset) const;
+  WasmBreakpointSite* getOrCreateBreakpointSite(JSContext* cx,
+                                                Instance* instance,
+                                                uint32_t offset);
   bool hasBreakpointSite(uint32_t offset);
-  void destroyBreakpointSite(FreeOp* fop, uint32_t offset);
-  void clearBreakpointsIn(FreeOp* fp, WasmInstanceObject* instance,
+  void destroyBreakpointSite(JSFreeOp* fop, Instance* instance,
+                             uint32_t offset);
+  void clearBreakpointsIn(JSFreeOp* fp, WasmInstanceObject* instance,
                           js::Debugger* dbg, JSObject* handler);
-  void clearAllBreakpoints(FreeOp* fp, WasmInstanceObject* instance);
+  void clearAllBreakpoints(JSFreeOp* fp, WasmInstanceObject* instance);
 
   // When the Code is debug-enabled, single-stepping mode can be toggled on
   // the granularity of individual functions.
 
   bool stepModeEnabled(uint32_t funcIndex) const;
-  bool incrementStepModeCount(JSContext* cx, uint32_t funcIndex);
-  bool decrementStepModeCount(FreeOp* fop, uint32_t funcIndex);
+  MOZ_MUST_USE bool incrementStepperCount(JSContext* cx, uint32_t funcIndex);
+  void decrementStepperCount(JSFreeOp* fop, uint32_t funcIndex);
 
   // Stack inspection helpers.
 
-  bool debugGetLocalTypes(uint32_t funcIndex, ValTypeVector* locals,
-                          size_t* argsLength);
-  ExprType debugGetResultType(uint32_t funcIndex);
-  bool getGlobal(Instance& instance, uint32_t globalIndex,
-                 MutableHandleValue vp);
+  MOZ_MUST_USE bool debugGetLocalTypes(uint32_t funcIndex,
+                                       ValTypeVector* locals,
+                                       size_t* argsLength,
+                                       StackResults* stackResults);
+  // Invariant: the result of getDebugResultType can only be used as long as
+  // code_->metadata() is live.  See MetaData::getFuncResultType for more
+  // information.
+  ResultType debugGetResultType(uint32_t funcIndex) const {
+    return metadata().getFuncResultType(funcIndex);
+  }
+  MOZ_MUST_USE bool getGlobal(Instance& instance, uint32_t globalIndex,
+                              MutableHandleValue vp);
 
   // Debug URL helpers.
 
-  bool getSourceMappingURL(JSContext* cx, MutableHandleString result) const;
+  MOZ_MUST_USE bool getSourceMappingURL(JSContext* cx,
+                                        MutableHandleString result) const;
 
   // Accessors for commonly used elements of linked structures.
 
@@ -133,11 +148,10 @@ class DebugState {
   // about:memory reporting:
 
   void addSizeOfMisc(MallocSizeOf mallocSizeOf, Metadata::SeenSet* seenMetadata,
-                     ShareableBytes::SeenSet* seenBytes,
                      Code::SeenSet* seenCode, size_t* code, size_t* data) const;
 };
 
-typedef UniquePtr<DebugState> UniqueDebugState;
+using UniqueDebugState = UniquePtr<DebugState>;
 
 }  // namespace wasm
 }  // namespace js

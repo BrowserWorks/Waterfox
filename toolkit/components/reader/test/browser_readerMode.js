@@ -81,20 +81,16 @@ add_task(async function test_reader_button() {
     readerButton,
     "Reader mode button is present on about:reader"
   );
-  let iconEl = document.getAnonymousElementByAttribute(
-    tab,
-    "anonid",
-    "tab-icon-image"
-  );
+  let iconEl = tab.iconImage;
   await TestUtils.waitForCondition(
     () => iconEl.getBoundingClientRect().width != 0
   );
   is_element_visible(iconEl, "Favicon should be visible");
   is(iconEl.src, favicon, "Correct favicon should be loaded");
 
-  is(gURLBar.value, readerUrl, "gURLBar value is about:reader URL");
+  is(gURLBar.untrimmedValue, url, "gURLBar value is about:reader URL");
   is(
-    gURLBar.textValue,
+    gURLBar.value,
     url.substring("http://".length),
     "gURLBar is displaying original article URL"
   );
@@ -118,7 +114,9 @@ add_task(async function test_reader_button() {
   // Switch page back out of reader mode.
   let promisePageShow = BrowserTestUtils.waitForContentEvent(
     tab.linkedBrowser,
-    "pageshow"
+    "pageshow",
+    false,
+    e => e.target.location.href != "about:blank"
   );
   readerButton.click();
   await promisePageShow;
@@ -168,7 +166,9 @@ add_task(async function test_reader_button() {
   // Switch page back out of reader mode.
   promisePageShow = BrowserTestUtils.waitForContentEvent(
     newTab.linkedBrowser,
-    "pageshow"
+    "pageshow",
+    false,
+    e => e.target.location.href != "about:blank"
   );
   readerButton.click();
   await promisePageShow;
@@ -226,22 +226,24 @@ add_task(async function test_reader_view_element_attribute_transform() {
     }
   });
 
-  function observeAttribute(element, attribute, triggerFn, checkFn) {
+  function observeAttribute(element, attributes, triggerFn, checkFn) {
     return new Promise(resolve => {
       let observer = new MutationObserver(mutations => {
-        mutations.forEach(mu => {
-          if (element.getAttribute(attribute) !== mu.oldValue) {
-            checkFn();
-            resolve();
-            observer.disconnect();
+        for (let mu of mutations) {
+          if (element.getAttribute(mu.attributeName) !== mu.oldValue) {
+            if (checkFn()) {
+              resolve();
+              observer.disconnect();
+              return;
+            }
           }
-        });
+        }
       });
 
       observer.observe(element, {
         attributes: true,
         attributeOldValue: true,
-        attributeFilter: [attribute],
+        attributeFilter: Array.isArray(attributes) ? attributes : [attributes],
       });
 
       triggerFn();
@@ -257,10 +259,15 @@ add_task(async function test_reader_view_element_attribute_transform() {
   );
 
   info("Navigate a reader-able page");
-  let waitForPageshow = BrowserTestUtils.waitForContentEvent(
-    tab.linkedBrowser,
-    "pageshow"
-  );
+  function waitForNonBlankPage() {
+    return BrowserTestUtils.waitForContentEvent(
+      tab.linkedBrowser,
+      "pageshow",
+      false,
+      e => e.target.location.href != "about:blank"
+    );
+  }
+  let waitForPageshow = waitForNonBlankPage();
   await observeAttribute(
     menuitem,
     "hidden",
@@ -268,21 +275,17 @@ add_task(async function test_reader_view_element_attribute_transform() {
       let url = TEST_PATH + "readerModeArticle.html";
       BrowserTestUtils.loadURI(tab.linkedBrowser, url);
     },
-    () => {
-      is(
-        menuitem.hidden,
-        false,
-        "menuitem's hidden attribute should be false on a reader-able page"
-      );
-    }
+    () => !menuitem.hidden
+  );
+  is(
+    menuitem.hidden,
+    false,
+    "menuitem's hidden attribute should be false on a reader-able page"
   );
   await waitForPageshow;
 
   info("Navigate a non-reader-able page");
-  waitForPageshow = BrowserTestUtils.waitForContentEvent(
-    tab.linkedBrowser,
-    "pageshow"
-  );
+  waitForPageshow = waitForNonBlankPage();
   await observeAttribute(
     menuitem,
     "hidden",
@@ -290,21 +293,17 @@ add_task(async function test_reader_view_element_attribute_transform() {
       let url = TEST_PATH + "readerModeArticleHiddenNodes.html";
       BrowserTestUtils.loadURI(tab.linkedBrowser, url);
     },
-    () => {
-      is(
-        menuitem.hidden,
-        true,
-        "menuitem's hidden attribute should be true on a non-reader-able page"
-      );
-    }
+    () => menuitem.hidden
+  );
+  is(
+    menuitem.hidden,
+    true,
+    "menuitem's hidden attribute should be true on a non-reader-able page"
   );
   await waitForPageshow;
 
   info("Navigate a reader-able page");
-  waitForPageshow = BrowserTestUtils.waitForContentEvent(
-    tab.linkedBrowser,
-    "pageshow"
-  );
+  waitForPageshow = waitForNonBlankPage();
   await observeAttribute(
     menuitem,
     "hidden",
@@ -312,63 +311,58 @@ add_task(async function test_reader_view_element_attribute_transform() {
       let url = TEST_PATH + "readerModeArticle.html";
       BrowserTestUtils.loadURI(tab.linkedBrowser, url);
     },
-    () => {
-      is(
-        menuitem.hidden,
-        false,
-        "menuitem's hidden attribute should be false on a reader-able page"
-      );
-    }
+    () => !menuitem.hidden
+  );
+  is(
+    menuitem.hidden,
+    false,
+    "menuitem's hidden attribute should be false on a reader-able page"
   );
   await waitForPageshow;
 
   info("Enter Reader Mode");
-  waitForPageshow = BrowserTestUtils.waitForContentEvent(
-    tab.linkedBrowser,
-    "pageshow"
-  );
+  waitForPageshow = waitForNonBlankPage();
   await observeAttribute(
     readerButton,
     "readeractive",
     () => {
       readerButton.click();
     },
-    () => {
-      is(
-        readerButton.getAttribute("readeractive"),
-        "true",
-        "readerButton's readeractive attribute should be true when entering reader mode"
-      );
-    }
+    () => readerButton.getAttribute("readeractive") == "true"
+  );
+  is(
+    readerButton.getAttribute("readeractive"),
+    "true",
+    "readerButton's readeractive attribute should be true when entering reader mode"
   );
   await waitForPageshow;
 
   info("Exit Reader Mode");
-  waitForPageshow = BrowserTestUtils.waitForContentEvent(
-    tab.linkedBrowser,
-    "pageshow"
-  );
+  waitForPageshow = waitForNonBlankPage();
   await observeAttribute(
     readerButton,
-    "readeractive",
+    ["readeractive", "hidden"],
     () => {
       readerButton.click();
     },
     () => {
-      is(
-        readerButton.getAttribute("readeractive"),
-        "",
-        "readerButton's readeractive attribute should be empty when reader mode is exited"
+      info(
+        `active: ${readerButton.getAttribute("readeractive")}; hidden: ${
+          menuitem.hidden
+        }`
       );
+      return !readerButton.getAttribute("readeractive") && !menuitem.hidden;
     }
   );
+  ok(
+    !readerButton.getAttribute("readeractive"),
+    "readerButton's readeractive attribute should be empty when reader mode is exited"
+  );
+  ok(!menuitem.hidden, "menuitem should not be hidden.");
   await waitForPageshow;
 
   info("Navigate a non-reader-able page");
-  waitForPageshow = BrowserTestUtils.waitForContentEvent(
-    tab.linkedBrowser,
-    "pageshow"
-  );
+  waitForPageshow = waitForNonBlankPage();
   await observeAttribute(
     menuitem,
     "hidden",
@@ -376,13 +370,12 @@ add_task(async function test_reader_view_element_attribute_transform() {
       let url = TEST_PATH + "readerModeArticleHiddenNodes.html";
       BrowserTestUtils.loadURI(tab.linkedBrowser, url);
     },
-    () => {
-      is(
-        menuitem.hidden,
-        true,
-        "menuitem's hidden attribute should be true on a non-reader-able page"
-      );
-    }
+    () => menuitem.hidden
+  );
+  is(
+    menuitem.hidden,
+    true,
+    "menuitem's hidden attribute should be true on a non-reader-able page"
   );
   await waitForPageshow;
 });

@@ -1,3 +1,5 @@
+"use strict";
+
 var CC = Components.Constructor;
 
 const ServerSocket = CC(
@@ -74,9 +76,8 @@ function buf2ip(buf) {
       }
     }
     return ip;
-  } else {
-    return buf.join(".");
   }
+  return buf.join(".");
 }
 
 function buf2int(buf) {
@@ -118,7 +119,7 @@ function SocksClient(server, client_in, client_out) {
   this.waitRead(this.client_in);
 }
 SocksClient.prototype = {
-  onInputStreamReady: function(input) {
+  onInputStreamReady(input) {
     var len = getAvailableBytes(input);
 
     if (len == 0) {
@@ -161,7 +162,7 @@ SocksClient.prototype = {
     this.waitRead(input);
   },
 
-  onOutputStreamReady: function(output) {
+  onOutputStreamReady(output) {
     var len = output.write(this.outbuf, this.outbuf.length);
     if (len != this.outbuf.length) {
       this.outbuf = this.outbuf.substring(len);
@@ -171,20 +172,20 @@ SocksClient.prototype = {
     }
   },
 
-  waitRead: function(input) {
+  waitRead(input) {
     input.asyncWait(this, 0, 0, currentThread);
   },
 
-  waitWrite: function(output) {
+  waitWrite(output) {
     output.asyncWait(this, 0, 0, currentThread);
   },
 
-  write: function(buf) {
+  write(buf) {
     this.outbuf += buf;
     this.waitWrite(this.client_out);
   },
 
-  checkSocksGreeting: function() {
+  checkSocksGreeting() {
     if (this.inbuf.length == 0) {
       return;
     }
@@ -204,7 +205,7 @@ SocksClient.prototype = {
     }
   },
 
-  checkSocks4Request: function() {
+  checkSocks4Request() {
     if (this.inbuf.length < 8) {
       return;
     }
@@ -219,7 +220,7 @@ SocksClient.prototype = {
     this.checkSocks4Username();
   },
 
-  readString: function() {
+  readString() {
     var i = this.inbuf.indexOf(0);
     var str = null;
 
@@ -232,7 +233,7 @@ SocksClient.prototype = {
     return str;
   },
 
-  checkSocks4Username: function() {
+  checkSocks4Username() {
     var str = this.readString();
 
     if (str == null) {
@@ -253,7 +254,7 @@ SocksClient.prototype = {
     }
   },
 
-  checkSocks4Hostname: function() {
+  checkSocks4Hostname() {
     var str = this.readString();
 
     if (str == null) {
@@ -264,12 +265,12 @@ SocksClient.prototype = {
     this.sendSocks4Response();
   },
 
-  sendSocks4Response: function() {
+  sendSocks4Response() {
     this.outbuf = "\x00\x5a\x00\x00\x00\x00\x00\x00";
     this.sendPing();
   },
 
-  checkSocks5Greeting: function() {
+  checkSocks5Greeting() {
     if (this.inbuf.length < 2) {
       return;
     }
@@ -287,7 +288,7 @@ SocksClient.prototype = {
     this.write("\x05\x00");
   },
 
-  checkSocks5Request: function() {
+  checkSocks5Request() {
     if (this.inbuf.length < 4) {
       return;
     }
@@ -320,7 +321,7 @@ SocksClient.prototype = {
         return;
       }
 
-      buf = this.inbuf.slice(5, 5 + len);
+      let buf = this.inbuf.slice(5, 5 + len);
       this.dest_name = buf2str(buf);
       len += 1;
     } else {
@@ -337,7 +338,7 @@ SocksClient.prototype = {
     this.sendSocks5Response();
   },
 
-  sendSocks5Response: function() {
+  sendSocks5Response() {
     if (this.dest_addr.length == 16) {
       // send a successful response with the address, [::1]:80
       this.outbuf +=
@@ -349,7 +350,7 @@ SocksClient.prototype = {
     this.sendPing();
   },
 
-  sendPing: function() {
+  sendPing() {
     print("server: sending ping");
     this.state = STATE_WAIT_PONG;
     this.outbuf += "PING!";
@@ -358,14 +359,14 @@ SocksClient.prototype = {
     this.waitRead(this.client_in);
   },
 
-  checkPong: function() {
+  checkPong() {
     var pong = buf2str(this.inbuf);
     Assert.equal(pong, "PONG!");
     this.state = STATE_GOT_PONG;
     this.waitRead(this.client_in);
   },
 
-  close: function() {
+  close() {
     this.client_in.close();
     this.client_out.close();
   },
@@ -384,13 +385,13 @@ function SocksTestServer() {
   this.tests_completed = 0;
 }
 SocksTestServer.prototype = {
-  addTestCase: function(test) {
+  addTestCase(test) {
     test.finished = false;
     test.port = this.test_port_id++;
     this.test_cases.push(test);
   },
 
-  pickTest: function(id) {
+  pickTest(id) {
     for (var i in this.test_cases) {
       var test = this.test_cases[i];
       if (test.port == id) {
@@ -401,7 +402,7 @@ SocksTestServer.prototype = {
     do_throw("No test case with id " + id);
   },
 
-  testCompleted: function(client) {
+  testCompleted(client) {
     var port_id = buf2int(client.dest_port);
     var test = this.pickTest(port_id);
 
@@ -423,7 +424,7 @@ SocksTestServer.prototype = {
     }
   },
 
-  runClientSubprocess: function() {
+  runClientSubprocess() {
     var argv = [];
 
     // marshaled: socks_ver|server_port|dest_host|dest_port|<remote|local>
@@ -452,7 +453,7 @@ SocksTestServer.prototype = {
     );
   },
 
-  onSocketAccepted: function(socket, trans) {
+  onSocketAccepted(socket, trans) {
     print("server: got client connection");
     var input = trans.openInputStream(0, 0, 0);
     var output = trans.openOutputStream(0, 0, 0);
@@ -460,9 +461,9 @@ SocksTestServer.prototype = {
     this.client_connections.push(client);
   },
 
-  onStopListening: function(socket) {},
+  onStopListening(socket) {},
 
-  close: function() {
+  close() {
     if (this.client_subprocess) {
       try {
         this.client_subprocess.kill();

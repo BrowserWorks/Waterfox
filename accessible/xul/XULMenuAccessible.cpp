@@ -13,11 +13,9 @@
 #include "States.h"
 #include "XULFormControlAccessible.h"
 
-#include "nsIMutableArray.h"
 #include "nsIDOMXULContainerElement.h"
+#include "nsIDOMXULSelectCntrlEl.h"
 #include "nsIDOMXULSelectCntrlItemEl.h"
-#include "nsIDOMXULMultSelectCntrlEl.h"
-#include "nsIServiceManager.h"
 #include "nsIContent.h"
 #include "nsMenuBarFrame.h"
 #include "nsMenuPopupFrame.h"
@@ -36,9 +34,7 @@ using namespace mozilla::a11y;
 
 XULMenuitemAccessible::XULMenuitemAccessible(nsIContent* aContent,
                                              DocAccessible* aDoc)
-    : AccessibleWrap(aContent, aDoc) {
-  mStateFlags |= eNoXBLKids;
-}
+    : AccessibleWrap(aContent, aDoc) {}
 
 uint64_t XULMenuitemAccessible::NativeState() const {
   uint64_t state = Accessible::NativeState();
@@ -53,8 +49,8 @@ uint64_t XULMenuitemAccessible::NativeState() const {
   }
 
   // Checkable/checked?
-  static Element::AttrValuesArray strings[] = {nsGkAtoms::radio,
-                                               nsGkAtoms::checkbox, nullptr};
+  static dom::Element::AttrValuesArray strings[] = {
+      nsGkAtoms::radio, nsGkAtoms::checkbox, nullptr};
 
   if (mContent->AsElement()->FindAttrValueIn(kNameSpaceID_None, nsGkAtoms::type,
                                              strings, eCaseMatters) >= 0) {
@@ -183,7 +179,7 @@ KeyBinding XULMenuitemAccessible::KeyboardShortcut() const {
   mContent->AsElement()->GetAttr(kNameSpaceID_None, nsGkAtoms::key, keyElmId);
   if (keyElmId.IsEmpty()) return KeyBinding();
 
-  Element* keyElm = mContent->OwnerDoc()->GetElementById(keyElmId);
+  dom::Element* keyElm = mContent->OwnerDoc()->GetElementById(keyElmId);
   if (!keyElm) return KeyBinding();
 
   uint32_t key = 0;
@@ -222,8 +218,10 @@ role XULMenuitemAccessible::NativeRole() const {
   nsCOMPtr<nsIDOMXULContainerElement> xulContainer = Elm()->AsXULContainer();
   if (xulContainer) return roles::PARENT_MENUITEM;
 
-  if (mParent && mParent->Role() == roles::COMBOBOX_LIST)
+  Accessible* widget = ContainerWidget();
+  if (widget && widget->Role() == roles::COMBOBOX_LIST) {
     return roles::COMBOBOX_OPTION;
+  }
 
   if (mContent->AsElement()->AttrValueIs(kNameSpaceID_None, nsGkAtoms::type,
                                          nsGkAtoms::radio, eCaseMatters))
@@ -288,11 +286,21 @@ Accessible* XULMenuitemAccessible::ContainerWidget() const {
   if (menuFrame) {
     nsMenuParent* menuParent = menuFrame->GetMenuParent();
     if (menuParent) {
-      if (menuParent->IsMenuBar())  // menubar menu
-        return mParent;
-
-      // a menupoup or parent menu item
-      if (menuParent->IsMenu()) return mParent;
+      nsBoxFrame* frame = nullptr;
+      if (menuParent->IsMenuBar()) {  // menubar menu
+        frame = static_cast<nsMenuBarFrame*>(menuParent);
+      } else if (menuParent->IsMenu()) {  // a menupopup or parent menu item
+        frame = static_cast<nsMenuPopupFrame*>(menuParent);
+      }
+      if (frame) {
+        nsIContent* content = frame->GetContent();
+        if (content) {
+          MOZ_ASSERT(mDoc);
+          // We use GetAccessibleOrContainer instead of just GetAccessible
+          // because we strip menupopups from the tree for ATK.
+          return mDoc->GetAccessibleOrContainer(content);
+        }
+      }
 
       // otherwise it's different kind of popups (like panel or tooltip), it
       // shouldn't be a real case.
@@ -341,18 +349,15 @@ XULMenupopupAccessible::XULMenupopupAccessible(nsIContent* aContent,
   if (menuPopupFrame && menuPopupFrame->IsMenu()) mType = eMenuPopupType;
 
   // May be the anonymous <menupopup> inside <menulist> (a combobox)
-  nsIContent* parent = mContent->GetFlattenedTreeParent();
+  auto* parent = mContent->GetParentElement();
   nsCOMPtr<nsIDOMXULSelectControlElement> selectControl =
-      parent && parent->AsElement() ? parent->AsElement()->AsXULSelectControl()
-                                    : nullptr;
+      parent ? parent->AsXULSelectControl() : nullptr;
   if (selectControl) {
-    mSelectControl = parent->AsElement();
+    mSelectControl = parent;
   } else {
     mSelectControl = nullptr;
     mGenericTypes &= ~eSelect;
   }
-
-  mStateFlags |= eNoXBLKids;
 }
 
 uint64_t XULMenupopupAccessible::NativeState() const {
@@ -394,8 +399,11 @@ ENameValueFlag XULMenupopupAccessible::NativeName(nsString& aName) const {
 }
 
 role XULMenupopupAccessible::NativeRole() const {
-  // If accessible is not bound to the tree (this happens while children are
-  // cached) return general role.
+  nsMenuPopupFrame* menuPopupFrame = do_QueryFrame(GetFrame());
+  if (menuPopupFrame && menuPopupFrame->IsContextMenu()) {
+    return roles::MENUPOPUP;
+  }
+
   if (mParent) {
     if (mParent->IsCombobox() || mParent->IsAutoComplete())
       return roles::COMBOBOX_LIST;
@@ -408,6 +416,8 @@ role XULMenupopupAccessible::NativeRole() const {
     }
   }
 
+  // If accessible is not bound to the tree (this happens while children are
+  // cached) return general role.
   return roles::MENUPOPUP;
 }
 

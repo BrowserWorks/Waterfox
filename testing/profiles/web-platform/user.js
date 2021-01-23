@@ -23,7 +23,7 @@ user_pref("places.history.enabled", false);
 // Suppress automatic safe mode after crashes
 user_pref("toolkit.startup.max_resumed_crashes", -1);
 // Disable antialiasing for the Ahem font.
-user_pref("gfx.font_ahem_antialias_none", true);
+user_pref("gfx.font_rendering.ahem_antialias_none", true);
 // Disable antiphishing popup
 user_pref("network.http.phishy-userpass-length", 255);
 // Disable safebrowsing components
@@ -34,3 +34,21 @@ user_pref("browser.safebrowsing.malware.enabled", false);
 user_pref("browser.safebrowsing.phishing.enabled", false);
 // Automatically unload beforeunload alerts
 user_pref("dom.disable_beforeunload", true);
+// Enable implicit keyframes since the common animation interpolation test
+// function assumes this is available.
+user_pref("dom.animations-api.implicit-keyframes.enabled", true);
+// Disable high DPI
+user_pref("layout.css.devPixelsPerPx", "1.0")
+// sometime wpt runs test even before the document becomes visible, which would
+// delay video.play() and cause play() running in wrong order.
+user_pref("media.block-autoplay-until-in-foreground", false);
+// Disable dark scrollbars as it can be semi-transparent that many reftests
+// don't expect.
+user_pref("widget.disable-dark-scrollbar", true);
+user_pref("media.block-autoplay-until-in-foreground", false);
+// Enable AppCache globally for now whilst it's being removed in Bug 1584984
+user_pref("browser.cache.offline.storage.enable", true);
+user_pref("browser.cache.offline.enable", true);
+// Enable blocking access to storage from tracking resources by default.
+// We don't want to run WPT using BEHAVIOR_REJECT_TRACKER_AND_PARTITION_FOREIGN (5 - aka Dynamic First Party Isolation) yet.
+user_pref("network.cookie.cookieBehavior", 4);

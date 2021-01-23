@@ -45,10 +45,6 @@ XULMAP(label, [](Element* aElement, Accessible* aContext) -> Accessible* {
 })
 
 XULMAP(image, [](Element* aElement, Accessible* aContext) -> Accessible* {
-  if (aElement->HasAttr(kNameSpaceID_None, nsGkAtoms::onclick)) {
-    return new XULToolbarButtonAccessible(aElement, aContext->Document());
-  }
-
   // Don't include nameless images in accessible tree.
   if (!aElement->HasAttr(kNameSpaceID_None, nsGkAtoms::tooltiptext)) {
     return nullptr;
@@ -80,15 +76,6 @@ XULMAP(panel, [](Element* aElement, Accessible* aContext) -> Accessible* {
 
 XULMAP(popup, [](Element* aElement, Accessible* aContext) {
   return CreateMenupopupAccessible(aElement, aContext);
-})
-
-XULMAP(textbox, [](Element* aElement, Accessible* aContext) -> Accessible* {
-  if (aElement->AttrValueIs(kNameSpaceID_None, nsGkAtoms::type,
-                            nsGkAtoms::autocomplete, eIgnoreCase)) {
-    return new XULComboboxAccessible(aElement, aContext->Document());
-  }
-
-  return new EnumRoleAccessible<roles::SECTION>(aElement, aContext->Document());
 })
 
 XULMAP(tree, [](Element* aElement, Accessible* aContext) -> Accessible* {

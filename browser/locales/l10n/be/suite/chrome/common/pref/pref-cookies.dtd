@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.cookies.title "Біркі">
+<!ENTITY cookiePolicy.label "Палітыка набывання бірак">
+<!ENTITY disableCookies.label "Забараніць біркі">
+<!ENTITY disableCookies.accesskey "б">
+<!ENTITY accNo3rdPartyCookies.label "Дазваляць біркі толькі з першапачатковых пляцовак (без пабочных пляцовак)">
+<!ENTITY accNo3rdPartyCookies.accesskey "п">
+<!ENTITY acc3rdPartyVisited.label "Дазваляць пабочныя біркі толькі для папярэдні наведаных пляцовак">
+<!ENTITY acc3rdPartyVisited.accesskey "н">
+<!ENTITY accAllCookies.label "Дазволіць усе біркі">
+<!ENTITY accAllCookies.accesskey "у">
+<!ENTITY cookieRetentionPolicy.label "Палітыка ўтрымання бірак">
+<!ENTITY acceptNormally.label "Звычайнае набыванне бірак">
+<!ENTITY acceptNormally.accesskey "з">
+<!ENTITY acceptForSession.label "Набываць толькі для цяперашняй сэсіі">
+<!ENTITY acceptForSession.accesskey "с">
+<!ENTITY acceptforNDays.label "Набываць біркі на">
+<!ENTITY acceptforNDays.accesskey "н">
+<!ENTITY days.label "дзён">
+<!ENTITY warnAboutCookies.label "Спытаць для кожнай біркі">
+<!ENTITY warnAboutCookies.accesskey "С">
+<!ENTITY forCurrentSession.label "апрача сэсійных бірак">
+<!ENTITY forCurrentSession.accesskey "а">
+<!ENTITY manageCookies.label "Кіраванне біркамі і пляцоўкамі">
+<!ENTITY manageCookiesDescription.label "Дазваляе вам праглядаць і кіраваць захаванымі біркамі і наладжваннямі сеціўных пляцовак для набывання і адхілення бірак. Наладжванні для пляцовак пераважваюць наладжванні ўгары.">
+<!ENTITY viewCookies.label "Кіраўнік бірак">
+<!ENTITY viewCookies.accesskey "К">

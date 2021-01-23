@@ -200,18 +200,18 @@ void HeadlessWidget::Show(bool aState) {
 
 bool HeadlessWidget::IsVisible() const { return mVisible; }
 
-nsresult HeadlessWidget::SetFocus(bool aRaise) {
-  LOGFOCUS(("  SetFocus %d [%p]\n", aRaise, (void*)this));
+void HeadlessWidget::SetFocus(Raise aRaise,
+                              mozilla::dom::CallerType aCallerType) {
+  LOGFOCUS(("  SetFocus %d [%p]\n", aRaise == Raise::Yes, (void*)this));
 
-  // aRaise == true means we request activation of our toplevel window.
-  if (aRaise) {
+  // This means we request activation of our toplevel window.
+  if (aRaise == Raise::Yes) {
     HeadlessWidget* topLevel = (HeadlessWidget*)GetTopLevelWidget();
 
     // The toplevel only becomes active if it's currently visible; otherwise, it
     // will be activated anyway when it's shown.
     if (topLevel->IsVisible()) topLevel->RaiseWindow();
   }
-  return NS_OK;
 }
 
 void HeadlessWidget::Enable(bool aState) { mEnabled = aState; }
@@ -346,6 +346,9 @@ void HeadlessWidget::ApplySizeModeSideEffects() {
   }
 
   mEffectiveSizeMode = mSizeMode;
+  if (mWidgetListener) {
+    mWidgetListener->SizeModeChanged(mSizeMode);
+  }
 }
 
 nsresult HeadlessWidget::MakeFullScreen(bool aFullScreen,
@@ -389,14 +392,17 @@ nsresult HeadlessWidget::AttachNativeKeyEvent(WidgetKeyboardEvent& aEvent) {
   return bindings.AttachNativeKeyEvent(aEvent);
 }
 
-void HeadlessWidget::GetEditCommands(NativeKeyBindingsType aType,
+bool HeadlessWidget::GetEditCommands(NativeKeyBindingsType aType,
                                      const WidgetKeyboardEvent& aEvent,
                                      nsTArray<CommandInt>& aCommands) {
   // Validate the arguments.
-  nsIWidget::GetEditCommands(aType, aEvent, aCommands);
+  if (NS_WARN_IF(!nsIWidget::GetEditCommands(aType, aEvent, aCommands))) {
+    return false;
+  }
 
   HeadlessKeyBindings& bindings = HeadlessKeyBindings::GetInstance();
   bindings.GetEditCommands(aType, aEvent, aCommands);
+  return true;
 }
 
 nsresult HeadlessWidget::DispatchEvent(WidgetGUIEvent* aEvent,

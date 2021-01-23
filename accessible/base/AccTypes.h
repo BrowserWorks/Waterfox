@@ -50,6 +50,7 @@ enum AccType {
    * Other accessible types.
    */
   eApplicationType,
+  eHTMLLinkType,
   eHTMLOptGroupType,
   eImageMapType,
   eMenuPopupType,
@@ -59,6 +60,7 @@ enum AccType {
   eXULLabelType,
   eXULListItemType,
   eXULTabpanelsType,
+  eXULTooltipType,
   eXULTreeType,
 
   eLastAccType = eXULTreeType

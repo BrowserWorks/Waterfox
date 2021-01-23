@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY migrationWizard.title          "راهنمای گام‌به‌گام وارد کردن اطلاعات">
+
+<!ENTITY importFromWin.label            "Import Options, Account Settings, Address Book, Filters and other data from:">
+<!ENTITY importFromNonWin.label         "Import Preferences, Account Settings, Address Book, Filters, and other data from:">
+
+
+<!ENTITY importFromNothing.label        "چیزی وارد نشود">
+<!ENTITY importFromNothing.accesskey    "چ">
+
+
+<!ENTITY importFromOutlook.label        "Outlook">
+<!ENTITY importFromOutlook.accesskey    "O">
+
+<!ENTITY importSource.title             "Import Settings and Mail Folders">
+<!ENTITY importItems.title              "مواردی که وارد شوند">
+<!ENTITY importItems.label              "مواردی را که می‌خواهید وارد شوند انتخاب کنید:">
+
+<!ENTITY migrating.title                "در حال وارد کردن…">
+<!ENTITY migrating.label                "موارد زیر در حال وارد شدن هستند…">
+
+<!ENTITY selectProfile.title            "انتخاب مجموعهٔ تنظیمات">
+<!ENTITY selectProfile.label            "مجموعه تنظیمات زیر برای وارد کردن موجودند:">
+
+<!ENTITY done.title                     "اطلاعات وارد شد">
+<!ENTITY done.label                     "موارد زیر با موفقیت وارد شدند:">

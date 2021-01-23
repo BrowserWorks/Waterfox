@@ -1,0 +1,55 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Subscription Dialog -->
+<!ENTITY feedSubscriptions.label     "Жаңалықтар таспаларына жазылу">
+<!ENTITY learnMore.label             "Таспалар жөнінде көбірек білу">
+
+<!ENTITY feedTitle.label             "Атауы:">
+<!ENTITY feedTitle.accesskey         "А">
+
+<!ENTITY feedLocation.label          "Таспа сілтемесі:">
+<!ENTITY feedLocation.accesskey      "п">
+<!ENTITY feedLocation2.placeholder   "Жарамды таспа сілтемесін енгізіңіз">
+<!ENTITY locationValidate.label      "Дұрыстығын тексеру">
+<!ENTITY validateText.label          "Дұрыстығын тексеріп, жарамды сілтемені алу.">
+
+<!ENTITY feedFolder.label            "Мақалаларды сақтау орны:">
+<!ENTITY feedFolder.accesskey        "с">
+
+<!-- Account Settings and Subscription Dialog -->
+<!ENTITY biffStart.label             "Жаңа мақалаларды тексеру уақыт аралығы ">
+<!ENTITY biffStart.accesskey         "а">
+<!ENTITY biffMinutes.label           "минут">
+<!ENTITY biffMinutes.accesskey       "н">
+<!ENTITY biffDays.label              "күн">
+<!ENTITY biffDays.accesskey          "к">
+<!ENTITY recommendedUnits.label      "Жариялаушы ұсынады:">
+
+<!ENTITY quickMode.label             "Веб парағын жүктеп алу орнына мақаланың қысқаша қорытындысын көрсету">
+<!ENTITY quickMode.accesskey         "с">
+
+<!ENTITY autotagEnable.label         "Тегтерді автоматты түрде &lt;category&gt; атауларынан жасау">
+<!ENTITY autotagEnable.accesskey     "о">
+<!ENTITY autotagUsePrefix.label      "Тегтерді келесімен префикстеу:">
+<!ENTITY autotagUsePrefix.accesskey  "п">
+<!ENTITY autoTagPrefix.placeholder   "Тег префиксін енгізіңіз">
+
+<!-- Subscription Dialog -->
+<!ENTITY button.addFeed.label        "Қосу">
+<!ENTITY button.addFeed.accesskey    "о">
+<!ENTITY button.verifyFeed.label     "Растау">
+<!ENTITY button.verifyFeed.accesskey "р">
+<!ENTITY button.updateFeed.label     "Жаңарту">
+<!ENTITY button.updateFeed.accesskey "Ж">
+<!ENTITY button.removeFeed.label     "Өшіру">
+<!ENTITY button.removeFeed.accesskey "ш">
+<!ENTITY button.importOPML.label     "Импорттау">
+<!ENTITY button.importOPML.accesskey "И">
+<!ENTITY button.exportOPML.label     "Экспорттау">
+<!ENTITY button.exportOPML.accesskey "к">
+<!ENTITY button.exportOPML.tooltip   "Таспаларды бума құрылысымен экспорттау; Таспаларды тізім ретінде экспорттау үшін ctrl+шерту немесе ctrl+enter">
+
+<!ENTITY cmd.close.commandKey        "w">
+<!ENTITY button.close.label          "Жабу">

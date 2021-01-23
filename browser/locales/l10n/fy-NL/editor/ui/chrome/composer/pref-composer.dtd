@@ -1,0 +1,32 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from content/pref-composer.xul -->
+
+<!--LOCALIZATION NOTE : FILE 'Composer' prefs dialog. Similar to Communcator 4.x Document Properties/Colors and Background -->
+
+<!--LOCALIZATION NOTE (pref.composer.title): DONT_TRANSLATE -->
+<!ENTITY  pref.composer.title           "Composer">
+
+<!ENTITY  recentFiles.title             "Menu resinte siden">
+<!ENTITY  documentsInMenu.label         "Maksimumoantal toande siden:">
+<!ENTITY  documentsInMenu.accesskey     "n">
+
+<!ENTITY  savingFiles.title             "By it bewarjen of publisearjen fan siden">
+<!ENTITY  preserveExisting.label        "Orizjinele boarne-opmaak behâlde">
+<!ENTITY  preserveExisting.accesskey    "b">
+<!ENTITY  preserveExisting.tooltip      "Behâldt nije rigels en de orizjinele opmaak fan de side">
+<!ENTITY  saveAssociatedFiles.label     "Ofbyldings en oare assosjearre bestannen bewarje by it bewarjen fan siden">
+<!ENTITY  saveAssociatedFiles.accesskey "O">
+<!ENTITY  showPublishDialog.label       "Altyd publiseardialooch toane by it publisearjen fan siden">
+<!ENTITY  showPublishDialog.accesskey   "d">
+
+<!ENTITY  composerEditing.label         "Bewurkje">
+<!ENTITY  maintainStructure.label       "Tabellay-out behâlde by it yngoegjen of fuortsmiten fan sellen">
+<!ENTITY  maintainStructure.tooltip     "Behâldt de rjochthoekige foarm fan de tabel troch automatysk sellen by te foegjen nei it fuortsmiten of ynfoegjen fan sellen">
+<!ENTITY  maintainStructure.accesskey   "T">
+<!ENTITY  useCSS.label                  "CSS-styl brûke in stee fan HTML-eleminten en -attributen">
+<!ENTITY  useCSS.accesskey              "C">
+<!ENTITY  crInPCreatesNewP.label        "Nije rigel yn alinea makket hieltyd in nije alinea">
+<!ENTITY  crInPCreatesNewP.accesskey    "r">

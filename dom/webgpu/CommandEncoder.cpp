@@ -3,106 +3,205 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "mozilla/dom/WebGPUBinding.h"
 #include "CommandEncoder.h"
 
+#include "CommandBuffer.h"
+#include "Buffer.h"
+#include "ComputePassEncoder.h"
 #include "Device.h"
-#include "mozilla/dom/WebGPUBinding.h"
+#include "RenderPassEncoder.h"
 
 namespace mozilla {
 namespace webgpu {
 
-CommandEncoder::~CommandEncoder() = default;
+GPU_IMPL_CYCLE_COLLECTION(CommandEncoder, mParent, mBridge)
+GPU_IMPL_JS_WRAP(CommandEncoder)
 
-already_AddRefed<CommandBuffer> CommandEncoder::FinishEncoding() const {
-  MOZ_CRASH("todo");
+static ffi::WGPUBufferCopyView ConvertBufferCopyView(
+    const dom::GPUBufferCopyView& aView) {
+  ffi::WGPUBufferCopyView view = {};
+  view.buffer = aView.mBuffer->mId;
+  view.offset = aView.mOffset;
+  view.bytes_per_row = aView.mBytesPerRow;
+  view.rows_per_image = aView.mRowsPerImage;
+  return view;
 }
 
-void CommandEncoder::CopyBufferToBuffer(const Buffer& src,
-                                        const uint32_t srcOffset,
-                                        const Buffer& dst,
-                                        const uint32_t dstOffset,
-                                        const uint32_t size) const {
-  MOZ_CRASH("todo");
+static ffi::WGPUTextureCopyView ConvertTextureCopyView(
+    const dom::GPUTextureCopyView& aView) {
+  ffi::WGPUTextureCopyView view = {};
+  view.texture = aView.mTexture->mId;
+  view.mip_level = aView.mMipLevel;
+  view.array_layer = aView.mArrayLayer;
+  if (aView.mOrigin.WasPassed()) {
+    const auto& origin = aView.mOrigin.Value();
+    if (origin.IsUnsignedLongSequence()) {
+      const auto& seq = origin.GetAsUnsignedLongSequence();
+      view.origin.x = seq.Length() > 0 ? seq[0] : 0;
+      view.origin.y = seq.Length() > 1 ? seq[1] : 0;
+      view.origin.z = seq.Length() > 2 ? seq[2] : 0;
+    } else if (origin.IsGPUOrigin3DDict()) {
+      const auto& dict = origin.GetAsGPUOrigin3DDict();
+      view.origin.x = dict.mX;
+      view.origin.y = dict.mY;
+      view.origin.z = dict.mZ;
+    } else {
+      MOZ_CRASH("Unexpected origin type");
+    }
+  }
+  return view;
 }
 
-void CommandEncoder::CopyBufferToTexture() const { MOZ_CRASH("todo"); }
-
-void CommandEncoder::CopyTextureToBuffer() const { MOZ_CRASH("todo"); }
-
-void CommandEncoder::CopyTextureToTexture() const { MOZ_CRASH("todo"); }
-
-void CommandEncoder::Blit() const { MOZ_CRASH("todo"); }
-
-void CommandEncoder::TransitionBuffer(const Buffer& b,
-                                      const uint32_t flags) const {
-  MOZ_CRASH("todo");
+static ffi::WGPUExtent3d ConvertExtent(const dom::GPUExtent3D& aExtent) {
+  ffi::WGPUExtent3d extent = {};
+  if (aExtent.IsUnsignedLongSequence()) {
+    const auto& seq = aExtent.GetAsUnsignedLongSequence();
+    extent.width = seq.Length() > 0 ? seq[0] : 0;
+    extent.height = seq.Length() > 1 ? seq[1] : 0;
+    extent.depth = seq.Length() > 2 ? seq[2] : 0;
+  } else if (aExtent.IsGPUExtent3DDict()) {
+    const auto& dict = aExtent.GetAsGPUExtent3DDict();
+    extent.width = dict.mWidth;
+    extent.height = dict.mHeight;
+    extent.depth = dict.mDepth;
+  } else {
+    MOZ_CRASH("Unexptected extent type");
+  }
+  return extent;
 }
 
-void CommandEncoder::SetPushConstants(const uint32_t stageFlags,
-                                      const uint32_t offset,
-                                      const uint32_t count,
-                                      const dom::ArrayBuffer& data) const {
-  MOZ_CRASH("todo");
+CommandEncoder::CommandEncoder(Device* const aParent,
+                               WebGPUChild* const aBridge, RawId aId)
+    : ChildOf(aParent), mId(aId), mBridge(aBridge) {}
+
+CommandEncoder::~CommandEncoder() { Cleanup(); }
+
+void CommandEncoder::Cleanup() {
+  if (mValid && mParent) {
+    mValid = false;
+    auto bridge = mParent->GetBridge();
+    if (bridge && bridge->IsOpen()) {
+      bridge->SendCommandEncoderDestroy(mId);
+    }
+  }
 }
 
-void CommandEncoder::SetBindGroup(const uint32_t index,
-                                  const BindGroup& bindGroup) const {
-  MOZ_CRASH("todo");
+void CommandEncoder::CopyBufferToBuffer(const Buffer& aSource,
+                                        BufferAddress aSourceOffset,
+                                        const Buffer& aDestination,
+                                        BufferAddress aDestinationOffset,
+                                        BufferAddress aSize) {
+  if (mValid) {
+    mBridge->SendCommandEncoderCopyBufferToBuffer(
+        mId, aSource.mId, aSourceOffset, aDestination.mId, aDestinationOffset,
+        aSize);
+  }
 }
 
-void CommandEncoder::SetPipeline(
-    const dom::WebGPUComputePipelineOrWebGPURenderPipeline& pipeline) const {
-  MOZ_CRASH("todo");
+void CommandEncoder::CopyBufferToTexture(
+    const dom::GPUBufferCopyView& aSource,
+    const dom::GPUTextureCopyView& aDestination,
+    const dom::GPUExtent3D& aCopySize) {
+  if (mValid) {
+    const auto source = ConvertBufferCopyView(aSource);
+    const auto destination = ConvertTextureCopyView(aDestination);
+    const auto size = ConvertExtent(aCopySize);
+    mBridge->SendCommandEncoderCopyBufferToTexture(mId, source, destination,
+                                                   size);
+  }
+}
+void CommandEncoder::CopyTextureToBuffer(
+    const dom::GPUTextureCopyView& aSource,
+    const dom::GPUBufferCopyView& aDestination,
+    const dom::GPUExtent3D& aCopySize) {
+  if (mValid) {
+    const auto source = ConvertTextureCopyView(aSource);
+    const auto destination = ConvertBufferCopyView(aDestination);
+    const auto size = ConvertExtent(aCopySize);
+    mBridge->SendCommandEncoderCopyTextureToBuffer(mId, source, destination,
+                                                   size);
+  }
+}
+void CommandEncoder::CopyTextureToTexture(
+    const dom::GPUTextureCopyView& aSource,
+    const dom::GPUTextureCopyView& aDestination,
+    const dom::GPUExtent3D& aCopySize) {
+  if (mValid) {
+    const auto source = ConvertTextureCopyView(aSource);
+    const auto destination = ConvertTextureCopyView(aDestination);
+    const auto size = ConvertExtent(aCopySize);
+    mBridge->SendCommandEncoderCopyTextureToTexture(mId, source, destination,
+                                                    size);
+  }
 }
 
-void CommandEncoder::BeginComputePass() const { MOZ_CRASH("todo"); }
-void CommandEncoder::EndComputePass() const { MOZ_CRASH("todo"); }
-
-void CommandEncoder::Dispatch(const uint32_t x, const uint32_t y,
-                              const uint32_t z) const {
-  MOZ_CRASH("todo");
+already_AddRefed<ComputePassEncoder> CommandEncoder::BeginComputePass(
+    const dom::GPUComputePassDescriptor& aDesc) {
+  RefPtr<ComputePassEncoder> pass = new ComputePassEncoder(this, aDesc);
+  return pass.forget();
 }
 
-void CommandEncoder::BeginRenderPass(
-    const dom::WebGPURenderPassDescriptor& desc) const {
-  MOZ_CRASH("todo");
+already_AddRefed<RenderPassEncoder> CommandEncoder::BeginRenderPass(
+    const dom::GPURenderPassDescriptor& aDesc) {
+  for (const auto& at : aDesc.mColorAttachments) {
+    auto* targetCanvasElement = at.mAttachment->GetTargetCanvasElement();
+    if (targetCanvasElement) {
+      if (mTargetCanvasElement) {
+        NS_WARNING("Command encoder touches more than one canvas");
+      } else {
+        mTargetCanvasElement = targetCanvasElement;
+      }
+    }
+  }
+
+  RefPtr<RenderPassEncoder> pass = new RenderPassEncoder(this, aDesc);
+  return pass.forget();
 }
 
-void CommandEncoder::EndRenderPass() const { MOZ_CRASH("todo"); }
+void CommandEncoder::EndComputePass(Span<const uint8_t> aData,
+                                    ErrorResult& aRv) {
+  if (!mValid) {
+    return aRv.ThrowInvalidStateError("Command encoder is not valid");
+  }
+  ipc::Shmem shmem;
+  if (!mBridge->AllocShmem(aData.Length(), ipc::Shmem::SharedMemory::TYPE_BASIC,
+                           &shmem)) {
+    return aRv.ThrowAbortError(nsPrintfCString(
+        "Unable to allocate shmem of size %zu", aData.Length()));
+  }
 
-void CommandEncoder::SetBlendColor(const float r, const float g, const float b,
-                                   const float a) const {
-  MOZ_CRASH("todo");
+  memcpy(shmem.get<uint8_t>(), aData.data(), aData.Length());
+  mBridge->SendCommandEncoderRunComputePass(mId, std::move(shmem));
 }
 
-void CommandEncoder::SetIndexBuffer(const Buffer& buffer,
-                                    const uint32_t offset) const {
-  MOZ_CRASH("todo");
+void CommandEncoder::EndRenderPass(Span<const uint8_t> aData,
+                                   ErrorResult& aRv) {
+  if (!mValid) {
+    return aRv.ThrowInvalidStateError("Command encoder is not valid");
+  }
+  ipc::Shmem shmem;
+  if (!mBridge->AllocShmem(aData.Length(), ipc::Shmem::SharedMemory::TYPE_BASIC,
+                           &shmem)) {
+    return aRv.ThrowAbortError(nsPrintfCString(
+        "Unable to allocate shmem of size %zu", aData.Length()));
+  }
+
+  memcpy(shmem.get<uint8_t>(), aData.data(), aData.Length());
+  mBridge->SendCommandEncoderRunRenderPass(mId, std::move(shmem));
 }
 
-void CommandEncoder::SetVertexBuffers(
-    const uint32_t startSlot,
-    const dom::Sequence<OwningNonNull<Buffer>>& buffers,
-    const dom::Sequence<uint32_t>& offsets) const {
-  MOZ_CRASH("todo");
+already_AddRefed<CommandBuffer> CommandEncoder::Finish(
+    const dom::GPUCommandBufferDescriptor& aDesc) {
+  RawId id = 0;
+  if (mValid) {
+    mValid = false;
+    id = mBridge->CommandEncoderFinish(mId, aDesc);
+  }
+  RefPtr<CommandBuffer> comb =
+      new CommandBuffer(mParent, id, mTargetCanvasElement);
+  return comb.forget();
 }
-
-void CommandEncoder::Draw(const uint32_t vertexCount,
-                          const uint32_t instanceCount,
-                          const uint32_t firstVertex,
-                          const uint32_t firstInstance) const {
-  MOZ_CRASH("todo");
-}
-
-void CommandEncoder::DrawIndexed(const uint32_t indexCount,
-                                 const uint32_t instanceCount,
-                                 const uint32_t firstIndex,
-                                 const uint32_t firstInstance,
-                                 const uint32_t firstVertex) const {
-  MOZ_CRASH("todo");
-}
-
-WEBGPU_IMPL_GOOP_0(CommandEncoder)
 
 }  // namespace webgpu
 }  // namespace mozilla

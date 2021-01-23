@@ -10,7 +10,8 @@
  * enable on untrusted pages.
 */
 
-[Pref="fuzzing.enabled"]
+[Pref="fuzzing.enabled",
+ Exposed=Window]
 interface FuzzingFunctions {
   /**
    * Synchronously perform a garbage collection.
@@ -108,5 +109,5 @@ interface FuzzingFunctions {
    */
   [Throws]
   static void synthesizeKeyboardEvents(DOMString aKeyValue,
-                                       optional KeyboardEventInit aDictionary);
+                                       optional KeyboardEventInit aDictionary = {});
 };

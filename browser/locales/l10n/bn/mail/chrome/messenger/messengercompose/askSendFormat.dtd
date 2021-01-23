@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE askSendFormat.dtd UI for dialog that asks the user, which format to use for sending a message -->
+<!ENTITY windowTitle.label "HTML মেইলের প্রশ্ন">
+
+<!ENTITY recipient.label "HTML মেইলের প্রাপক হিসেবে, কিছু প্রাপককে তালিকাভুক্ত করা হয়নি।">
+
+<!ENTITY question.label "আপনি কি বার্তাটি সরল লেখায় রূপান্তর করতে চান বা যেকোনো উপায়ে HTML হিসেবে প্রেরণ করবেন?">
+
+<!ENTITY plainTextAndHtml.label "সরল লেখায় এবং HTML এ প্রেরণ করা হবে (a)">
+<!ENTITY plainTextAndHtml.accesskey "a">
+<!ENTITY plainTextOnly.label "শুধুমাত্র সরল লেখায় প্রেরণ করা হবে (P)">
+<!ENTITY plainTextOnly.accesskey "P">
+<!ENTITY htmlOnly.label "শুধুমাত্র HTML এ প্রেরণ করা হবে (H)">
+<!ENTITY htmlOnly.accesskey "H">
+
+<!ENTITY send.label "প্রেরণ করুন (S)">
+<!ENTITY send.accesskey "S">

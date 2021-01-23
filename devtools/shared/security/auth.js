@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -101,9 +99,9 @@ Prompt.Client.prototype = {
    * to ensure it meets the authenticator's policies.
    *
    * @param host string
-   *        The host name or IP address of the debugger server.
+   *        The host name or IP address of the devtools server.
    * @param port number
-   *        The port number of the debugger server.
+   *        The port number of the devtools server.
    * @param encryption boolean (optional)
    *        Whether the server requires encryption.  Defaults to false.
    * @param cert object (optional)
@@ -124,9 +122,9 @@ Prompt.Client.prototype = {
    * Debugging commences after this hook completes successfully.
    *
    * @param host string
-   *        The host name or IP address of the debugger server.
+   *        The host name or IP address of the devtools server.
    * @param port number
-   *        The port number of the debugger server.
+   *        The port number of the devtools server.
    * @param encryption boolean (optional)
    *        Whether the server requires encryption.  Defaults to false.
    * @param transport DebuggerTransport
@@ -272,9 +270,9 @@ OOBCert.Client.prototype = {
    * to ensure it meets the authenticator's policies.
    *
    * @param host string
-   *        The host name or IP address of the debugger server.
+   *        The host name or IP address of the devtools server.
    * @param port number
-   *        The port number of the debugger server.
+   *        The port number of the devtools server.
    * @param encryption boolean (optional)
    *        Whether the server requires encryption.  Defaults to false.
    * @param cert object (optional)
@@ -308,9 +306,9 @@ OOBCert.Client.prototype = {
    * Debugging commences after this hook completes successfully.
    *
    * @param host string
-   *        The host name or IP address of the debugger server.
+   *        The host name or IP address of the devtools server.
    * @param port number
-   *        The port number of the debugger server.
+   *        The port number of the devtools server.
    * @param encryption boolean (optional)
    *        Whether the server requires encryption.  Defaults to false.
    * @param cert object (optional)
@@ -328,7 +326,7 @@ OOBCert.Client.prototype = {
     const closeDialog = () => {
       // Close any prompts the client may have been showing from previous
       // authentication steps
-      if (activeSendDialog && activeSendDialog.close) {
+      if (activeSendDialog?.close) {
         activeSendDialog.close();
         activeSendDialog = null;
       }
@@ -412,9 +410,9 @@ OOBCert.Client.prototype = {
    * Send data across the OOB channel to the server to authenticate the devices.
    *
    * @param host string
-   *        The host name or IP address of the debugger server.
+   *        The host name or IP address of the devtools server.
    * @param port number
-   *        The port number of the debugger server.
+   *        The port number of the devtools server.
    * @param cert object (optional)
    *        The server's cert details.
    * @param authResult AuthenticationResult

@@ -1,0 +1,47 @@
+{
+  "data": [
+    {
+      "webExtension": {
+        "id": "plainengine@search.waterfox.net"
+      },
+      "orderHint": 10000,
+      "appliesTo": [{
+        "included": { "everywhere": true },
+        "default": "yes-if-no-other"
+      }]
+    },
+    {
+      "webExtension": {
+        "id": "special-engine@search.waterfox.net"
+      },
+      "orderHint": 7000,
+      "appliesTo": [{
+          "included": { "regions": ["tr"] },
+          "default": "yes"
+        }, {
+        "included": { "everywhere": true }
+      }]
+    },
+    {
+      "webExtension": {
+        "id": "multilocale@search.waterfox.net",
+        "locales": ["an"]
+      },
+      "orderHint": 6000,
+      "appliesTo": [{
+        "included": { "regions": ["an"] },
+        "default": "yes"
+      }]
+    },
+    {
+      "webExtension": {
+        "id": "multilocale@search.waterfox.net",
+        "locales": ["af", "an"]
+      },
+      "orderHint": 6500,
+      "appliesTo": [{
+        "included": { "regions": ["af"] }
+      }]
+    }
+  ]
+}

@@ -8,18 +8,19 @@
 
 # BrandFullNameInternal is used for some registry and file system values
 # instead of BrandFullName and typically should not be modified.
-!define BrandFullNameInternal "Waterfox Current"
+!define BrandFullNameInternal "Waterfox"
+!define BrandFullName         "Waterfox"
 !define BrandShortName        "Waterfox"
-!define BrandFullName         "Waterfox Current"
-!define CompanyName           "waterfox.net"
+!define CompanyName           "Waterfox Ltd."
 !define URLInfoAbout          "https://www.waterfox.net"
-!define HelpLink              "https://www.reddit.com/r/waterfox"
+!define URLUpdateInfo         "https://www.waterfox.net/blog/waterfox-${AppVersion}/"
+!define HelpLink              "https://support.waterfox.net"
 
-!define URLStubDownloadX86 "https://www.waterfox.net/releases"
-!define URLStubDownloadAMD64 "https://www.waterfox.net/releases"
-!define URLStubDownloadAArch64 "https://www.waterfox.net/releases"
-!define URLManualDownload "https://www.waterfox.net/releases"
-!define URLSystemRequirements "https://www.waterfox.net/releases"
+!define URLStubDownloadX86 ""
+!define URLStubDownloadAMD64 ""
+!define URLStubDownloadAArch64 ""
+!define URLManualDownload "https://www.waterfox.net/download/"
+!define URLSystemRequirements "https://www.waterfox.net/download/"
 !define Channel "aurora"
 
 # The installer's certificate name and issuer expected by the stub installer
@@ -28,9 +29,10 @@
 
 # Dialog units are used so the UI displays correctly with the system's DPI
 # settings.
-!define PROFILE_CLEANUP_LABEL_TOP "39u"
+!define PROFILE_CLEANUP_LABEL_TOP "35u"
 !define PROFILE_CLEANUP_LABEL_LEFT "0"
 !define PROFILE_CLEANUP_LABEL_WIDTH "100%"
+!define PROFILE_CLEANUP_LABEL_HEIGHT "80u"
 !define PROFILE_CLEANUP_LABEL_ALIGN "center"
 !define PROFILE_CLEANUP_CHECKBOX_LEFT "center"
 !define PROFILE_CLEANUP_CHECKBOX_WIDTH "100%"

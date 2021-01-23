@@ -24,8 +24,9 @@ bool nsWrapperCache::HasJSObjectMovedOp(JSObject* aWrapper) {
 #endif
 
 void nsWrapperCache::HoldJSObjects(void* aScriptObjectHolder,
-                                   nsScriptObjectTracer* aTracer) {
-  cyclecollector::HoldJSObjectsImpl(aScriptObjectHolder, aTracer);
+                                   nsScriptObjectTracer* aTracer,
+                                   JS::Zone* aWrapperZone) {
+  cyclecollector::HoldJSObjectsImpl(aScriptObjectHolder, aTracer, aWrapperZone);
   if (mWrapper && !JS::ObjectIsTenured(mWrapper)) {
     CycleCollectedJSRuntime::Get()->NurseryWrapperPreserved(mWrapper);
   }
@@ -38,13 +39,11 @@ void nsWrapperCache::SetWrapperJSObject(JSObject* aWrapper) {
   if (aWrapper && !JS::ObjectIsTenured(aWrapper)) {
     CycleCollectedJSRuntime::Get()->NurseryWrapperAdded(this);
   }
-
-  if (mozilla::recordreplay::IsReplaying()) {
-    mozilla::recordreplay::SetWeakPointerJSRoot(this, aWrapper);
-  }
 }
 
 void nsWrapperCache::ReleaseWrapper(void* aScriptObjectHolder) {
+  // If the behavior here changes in a substantive way, you may need
+  // to update css::Rule::UnlinkDeclarationWrapper as well.
   if (PreservingWrapper()) {
     SetPreservingWrapper(false);
     cyclecollector::DropJSObjectsImpl(aScriptObjectHolder);
@@ -96,16 +95,15 @@ static void DebugWrapperTraceCallback(JS::GCCellPtr aPtr, const char* aName,
 
 void nsWrapperCache::CheckCCWrapperTraversal(void* aScriptObjectHolder,
                                              nsScriptObjectTracer* aTracer) {
-  // Skip checking if we are recording or replaying, as calling
-  // GetWrapperPreserveColor() can cause the cache's wrapper to be cleared.
-  if (recordreplay::IsRecordingOrReplaying()) {
-    return;
-  }
-
   JSObject* wrapper = GetWrapperPreserveColor();
   if (!wrapper) {
     return;
   }
+
+  // Temporarily make this a preserving wrapper so that TraceWrapper() traces
+  // it.
+  bool wasPreservingWrapper = PreservingWrapper();
+  SetPreservingWrapper(true);
 
   DebugWrapperTraversalCallback callback(wrapper);
 
@@ -124,6 +122,8 @@ void nsWrapperCache::CheckCCWrapperTraversal(void* aScriptObjectHolder,
   MOZ_ASSERT(callback.mFound,
              "Cycle collection participant didn't trace preserved wrapper! "
              "This will probably crash.");
+
+  SetPreservingWrapper(wasPreservingWrapper);
 }
 
 #endif  // DEBUG

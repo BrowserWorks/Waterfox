@@ -1,0 +1,30 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY newMessageCmd.label             "Mesej">
+<!ENTITY newMessageCmd.accesskey         "M">
+<!ENTITY newMessageCmd.key               "M">
+
+<!ENTITY newContactCmd.label             "Kenalan…">
+<!ENTITY newContactCmd.accesskey         "K">
+
+<!ENTITY sendPage.label                  "Hantar Halaman…">
+<!ENTITY sendPage.accesskey              "H">
+
+<!ENTITY contextSendThisPage.label       "Hantar Halaman Ini…">
+<!ENTITY contextSendThisPage.accesskey   "r">
+<!ENTITY contextSendThisLink.label       "Hantar Pautan Ini…">
+<!ENTITY contextSendThisLink.accesskey   "n">
+<!ENTITY contextSendImage.label          "Hantar Imej…">
+<!ENTITY contextSendImage.accesskey      "t">
+<!ENTITY contextSendVideo.label          "Hantar Video…">
+<!ENTITY contextSendVideo.accesskey      "n">
+<!ENTITY contextSendAudio.label          "Hantar Audio…">
+<!ENTITY contextSendAudio.accesskey      "n">
+<!ENTITY contextSendFrame.label          "Hantar Bingkai…">
+<!ENTITY contextSendFrame.accesskey      "r">
+
+<!ENTITY sendLinkCmd.label               "Hantar Pautan…"> 
+<!ENTITY sendLinkCmd.accesskey           "r">
+

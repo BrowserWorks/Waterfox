@@ -78,7 +78,8 @@ already_AddRefed<BlobImpl> Deserialize(const IPCBlob& aIPCBlob) {
 template <typename M>
 nsresult SerializeInputStreamParent(nsIInputStream* aInputStream,
                                     uint64_t aSize, uint64_t aChildID,
-                                    IPCBlob& aIPCBlob, M* aManager) {
+                                    PIPCBlobInputStreamParent*& aActorParent,
+                                    M* aManager) {
   // Parent to Child we always send a IPCBlobInputStream.
   MOZ_ASSERT(XRE_IsParentProcess());
 
@@ -106,69 +107,70 @@ nsresult SerializeInputStreamParent(nsIInputStream* aInputStream,
     return rv;
   }
 
-  // We need manually to increase the reference for this actor because the
-  // IPC allocator method is not triggered. The Release() is called by IPDL
-  // when the actor is deleted.
-  parentActor.get()->AddRef();
-
   if (!aManager->SendPIPCBlobInputStreamConstructor(
           parentActor, parentActor->ID(), parentActor->Size())) {
     return NS_ERROR_FAILURE;
   }
 
-  aIPCBlob.inputStream() = parentActor;
+  aActorParent = parentActor;
   return NS_OK;
 }
 
 template <typename M>
 nsresult SerializeInputStreamChild(nsIInputStream* aInputStream,
-                                   IPCBlob& aIPCBlob, M* aManager) {
+                                   IPCBlobStream& aIPCBlob, M* aManager) {
   AutoIPCStream ipcStream(true /* delayed start */);
   if (!ipcStream.Serialize(aInputStream, aManager)) {
     return NS_ERROR_FAILURE;
   }
 
-  aIPCBlob.inputStream() = ipcStream.TakeValue();
+  aIPCBlob = ipcStream.TakeValue();
   return NS_OK;
 }
 
 nsresult SerializeInputStream(nsIInputStream* aInputStream, uint64_t aSize,
-                              uint64_t aChildID, IPCBlob& aIPCBlob,
+                              PIPCBlobInputStreamParent*& aActorParent,
                               ContentParent* aManager) {
-  return SerializeInputStreamParent(aInputStream, aSize, aChildID, aIPCBlob,
-                                    aManager);
+  return SerializeInputStreamParent(aInputStream, aSize, aManager->ChildID(),
+                                    aActorParent, aManager);
 }
 
 nsresult SerializeInputStream(nsIInputStream* aInputStream, uint64_t aSize,
-                              uint64_t aChildID, IPCBlob& aIPCBlob,
+                              PIPCBlobInputStreamParent*& aActorParent,
                               PBackgroundParent* aManager) {
-  return SerializeInputStreamParent(aInputStream, aSize, aChildID, aIPCBlob,
+  return SerializeInputStreamParent(aInputStream, aSize,
+                                    BackgroundParent::GetChildID(aManager),
+                                    aActorParent, aManager);
+}
+
+nsresult SerializeInputStream(nsIInputStream* aInputStream, uint64_t aSize,
+                              IPCBlobStream& aIPCBlob,
+                              ContentParent* aManager) {
+  aIPCBlob = (PIPCBlobInputStreamParent*)nullptr;
+  return SerializeInputStreamParent(aInputStream, aSize, aManager->ChildID(),
+                                    aIPCBlob.get_PIPCBlobInputStreamParent(),
                                     aManager);
 }
 
 nsresult SerializeInputStream(nsIInputStream* aInputStream, uint64_t aSize,
-                              uint64_t aChildID, IPCBlob& aIPCBlob,
-                              ContentChild* aManager) {
+                              IPCBlobStream& aIPCBlob,
+                              PBackgroundParent* aManager) {
+  aIPCBlob = (PIPCBlobInputStreamParent*)nullptr;
+  return SerializeInputStreamParent(
+      aInputStream, aSize, BackgroundParent::GetChildID(aManager),
+      aIPCBlob.get_PIPCBlobInputStreamParent(), aManager);
+}
+
+nsresult SerializeInputStream(nsIInputStream* aInputStream, uint64_t aSize,
+                              IPCBlobStream& aIPCBlob, ContentChild* aManager) {
   return SerializeInputStreamChild(aInputStream, aIPCBlob, aManager);
 }
 
 nsresult SerializeInputStream(nsIInputStream* aInputStream, uint64_t aSize,
-                              uint64_t aChildID, IPCBlob& aIPCBlob,
+                              IPCBlobStream& aIPCBlob,
                               PBackgroundChild* aManager) {
   return SerializeInputStreamChild(aInputStream, aIPCBlob, aManager);
 }
-
-uint64_t ChildIDFromManager(ContentParent* aManager) {
-  return aManager->ChildID();
-}
-
-uint64_t ChildIDFromManager(PBackgroundParent* aManager) {
-  return BackgroundParent::GetChildID(aManager);
-}
-
-uint64_t ChildIDFromManager(ContentChild* aManager) { return 0; }
-
-uint64_t ChildIDFromManager(PBackgroundChild* aManager) { return 0; }
 
 template <typename M>
 nsresult SerializeInternal(BlobImpl* aBlobImpl, M* aManager,
@@ -224,7 +226,7 @@ nsresult SerializeInternal(BlobImpl* aBlobImpl, M* aManager,
   }
 
   rv = SerializeInputStream(inputStream, aIPCBlob.size(),
-                            ChildIDFromManager(aManager), aIPCBlob, aManager);
+                            aIPCBlob.inputStream(), aManager);
   if (NS_WARN_IF(rv.Failed())) {
     return rv.StealNSResult();
   }
@@ -261,7 +263,7 @@ nsresult SerializeUntyped(BlobImpl* aBlobImpl, IProtocol* aActor,
   }
 
   // We always need the toplevel protocol
-  switch (manager->GetProtocolTypeId()) {
+  switch (manager->GetProtocolId()) {
     case PBackgroundMsgStart:
       if (manager->GetSide() == mozilla::ipc::ParentSide) {
         return SerializeInternal(
@@ -287,7 +289,7 @@ nsresult SerializeUntyped(BlobImpl* aBlobImpl, IProtocol* aActor,
 }  // namespace dom
 
 namespace ipc {
-void IPDLParamTraits<mozilla::dom::BlobImpl>::Write(
+void IPDLParamTraits<mozilla::dom::BlobImpl*>::Write(
     IPC::Message* aMsg, IProtocol* aActor, mozilla::dom::BlobImpl* aParam) {
   nsresult rv;
   mozilla::dom::IPCBlob ipcblob;
@@ -302,7 +304,7 @@ void IPDLParamTraits<mozilla::dom::BlobImpl>::Write(
   }
 }
 
-bool IPDLParamTraits<mozilla::dom::BlobImpl>::Read(
+bool IPDLParamTraits<mozilla::dom::BlobImpl*>::Read(
     const IPC::Message* aMsg, PickleIterator* aIter, IProtocol* aActor,
     RefPtr<mozilla::dom::BlobImpl>* aResult) {
   *aResult = nullptr;

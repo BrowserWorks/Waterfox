@@ -2,6 +2,12 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
+// Make Cu.isInAutomation true.
+Services.prefs.setBoolPref(
+  "security.turn_off_all_security_so_that_viruses_can_take_over_this_computer",
+  true
+);
+
 // Tests that extensions installed through the registry work as expected
 createAppInfo("xpcshell@tests.mozilla.org", "XPCShell", "1", "1.9.2");
 
@@ -12,6 +18,8 @@ Services.prefs.setIntPref(
     AddonManager.SCOPE_USER +
     AddonManager.SCOPE_SYSTEM
 );
+
+Services.prefs.setIntPref("extensions.sideloadScopes", AddonManager.SCOPE_ALL);
 
 const ID1 = "addon1@tests.mozilla.org";
 const ID2 = "addon2@tests.mozilla.org";
@@ -38,13 +46,13 @@ add_task(async function setup() {
 add_task(async function test_1() {
   registry.setValue(
     Ci.nsIWindowsRegKey.ROOT_KEY_LOCAL_MACHINE,
-    "SOFTWARE\\Mozilla\\XPCShell\\Extensions",
+    "SOFTWARE\\Waterfox\\XPCShell\\Extensions",
     ID1,
     xpi1.path
   );
   registry.setValue(
     Ci.nsIWindowsRegKey.ROOT_KEY_CURRENT_USER,
-    "SOFTWARE\\Mozilla\\XPCShell\\Extensions",
+    "SOFTWARE\\Waterfox\\XPCShell\\Extensions",
     ID2,
     xpi2.path
   );
@@ -67,13 +75,13 @@ add_task(async function test_1() {
 add_task(async function test_2() {
   registry.setValue(
     Ci.nsIWindowsRegKey.ROOT_KEY_LOCAL_MACHINE,
-    "SOFTWARE\\Mozilla\\XPCShell\\Extensions",
+    "SOFTWARE\\Waterfox\\XPCShell\\Extensions",
     ID1,
     null
   );
   registry.setValue(
     Ci.nsIWindowsRegKey.ROOT_KEY_CURRENT_USER,
-    "SOFTWARE\\Mozilla\\XPCShell\\Extensions",
+    "SOFTWARE\\Waterfox\\XPCShell\\Extensions",
     ID2,
     null
   );
@@ -89,13 +97,13 @@ add_task(async function test_2() {
 add_task(async function test_3() {
   registry.setValue(
     Ci.nsIWindowsRegKey.ROOT_KEY_LOCAL_MACHINE,
-    "SOFTWARE\\Mozilla\\XPCShell\\Extensions",
+    "SOFTWARE\\Waterfox\\XPCShell\\Extensions",
     ID1,
     xpi2.path
   );
   registry.setValue(
     Ci.nsIWindowsRegKey.ROOT_KEY_CURRENT_USER,
-    "SOFTWARE\\Mozilla\\XPCShell\\Extensions",
+    "SOFTWARE\\Waterfox\\XPCShell\\Extensions",
     ID2,
     xpi1.path
   );
@@ -114,13 +122,13 @@ add_task(async function test_4() {
 
   registry.setValue(
     Ci.nsIWindowsRegKey.ROOT_KEY_LOCAL_MACHINE,
-    "SOFTWARE\\Mozilla\\XPCShell\\Extensions",
+    "SOFTWARE\\Waterfox\\XPCShell\\Extensions",
     ID1,
     null
   );
   registry.setValue(
     Ci.nsIWindowsRegKey.ROOT_KEY_CURRENT_USER,
-    "SOFTWARE\\Mozilla\\XPCShell\\Extensions",
+    "SOFTWARE\\Waterfox\\XPCShell\\Extensions",
     ID2,
     null
   );
@@ -129,7 +137,7 @@ add_task(async function test_4() {
 
   registry.setValue(
     Ci.nsIWindowsRegKey.ROOT_KEY_LOCAL_MACHINE,
-    "SOFTWARE\\Mozilla\\XPCShell\\Extensions",
+    "SOFTWARE\\Waterfox\\XPCShell\\Extensions",
     ID1,
     xpi1.path
   );
@@ -138,13 +146,13 @@ add_task(async function test_4() {
 
   registry.setValue(
     Ci.nsIWindowsRegKey.ROOT_KEY_LOCAL_MACHINE,
-    "SOFTWARE\\Mozilla\\XPCShell\\Extensions",
+    "SOFTWARE\\Waterfox\\XPCShell\\Extensions",
     ID1,
     null
   );
   registry.setValue(
     Ci.nsIWindowsRegKey.ROOT_KEY_CURRENT_USER,
-    "SOFTWARE\\Mozilla\\XPCShell\\Extensions",
+    "SOFTWARE\\Waterfox\\XPCShell\\Extensions",
     ID2,
     xpi1.path
   );

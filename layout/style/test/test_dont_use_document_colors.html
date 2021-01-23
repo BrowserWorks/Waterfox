@@ -8,7 +8,7 @@
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
   <style type="text/css">
 
-  #one, #three { background: blue; color: yellow; border: thin solid red; -moz-column-rule: 2px solid green; text-shadow: 2px 2px green; box-shadow: 3px 7px blue; }
+  #one, #three { background: blue; color: yellow; border: thin solid red; column-rule: 2px solid green; text-shadow: 2px 2px green; box-shadow: 3px 7px blue; }
   #two { background: transparent; border: thin solid; }
   #five, #six {border: thick solid red; border-inline-start-color:green; border-inline-end-color:blue}
   #seven {
@@ -43,6 +43,8 @@
 <div id="eight">I have a border-image</div>
 <div id="nine">I do not have a border-image</div>
 
+<input id="ten" type="button" value="Hello"><!-- Nothing should match this -->
+
 </div>
 <pre id="test">
 <script class="testbody" type="text/javascript">
@@ -59,6 +61,7 @@ var cs6 = getComputedStyle(document.getElementById("six"), "");
 var cs7 = getComputedStyle(document.getElementById("seven"), "");
 var cs8 = getComputedStyle(document.getElementById("eight"), "");
 var cs9 = getComputedStyle(document.getElementById("nine"), "");
+var cs10 = getComputedStyle(document.getElementById("ten"), "");
 
 function pushPrefEnvAndWait(args, cb) {
   SpecialPowers.pushPrefEnv(args, _ => {
@@ -88,8 +91,8 @@ function part1()
           "border-left-color applies");
     isnot(cs1.borderBottomColor, cs2.borderBottomColor,
           "border-top-color applies");
-    isnot(cs1.MozColumnRuleColor, cs2.MozColumnRuleColor,
-          "-moz-column-rule-color applies");
+    isnot(cs1.columnRuleColor, cs2.columnRuleColor,
+          "column-rule-color applies");
     isnot(cs1.textShadow, cs2.textShadow,
           "text-shadow applies");
     isnot(cs1.boxShadow, cs2.boxShadow,
@@ -101,8 +104,8 @@ function part1()
        "border-left-color applies");
     is(cs1.borderBottomColor, cs3.borderBottomColor, 
        "border-top-color applies");
-    is(cs1.MozColumnRuleColor, cs3.MozColumnRuleColor,
-       "-moz-column-rule-color applies");
+    is(cs1.columnRuleColor, cs3.columnRuleColor,
+       "column-rule-color applies");
     is(cs1.textShadow, cs3.textShadow,
        "text-shadow applies");
     is(cs1.boxShadow, cs3.boxShadow,
@@ -157,14 +160,14 @@ function part2()
        "border-inline-end-color is blocked");
     is(cs1.borderBottomColor, cs2.borderBottomColor,
        "border-bottom-color is blocked");
-    is(cs1.MozColumnRuleColor, cs2.MozColumnRuleColor,
-       "-moz-column-rule-color is blocked");
+    is(cs1.columnRuleColor, cs2.columnRuleColor,
+       "column-rule-color is blocked");
     is(cs1.textShadow, cs2.textShadow,
        "text-shadow is blocked");
     is(cs1.boxShadow, cs2.boxShadow,
        "box-shadow is blocked");
-    is(cs3.backgroundColor, cs1.backgroundColor, "background-color transparency preserved (opaque)");
-    is(cs3.color, cs4.color, "color is blocked");
+    is(cs3.backgroundColor, cs10.backgroundColor, "background-color transparency preserved (opaque)");
+    is(cs3.color, cs10.color, "color is blocked");
     is(cs3.borderTopColor, cs4.borderTopColor, "border-top-color is blocked");
     is(cs3.borderRightColor, cs4.borderRightColor,
        "border-right-color is blocked");

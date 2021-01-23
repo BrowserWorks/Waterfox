@@ -21,7 +21,7 @@
 //
 // This file is input to Rust's bindgen, so as to create primitive APIs for the
 // Cranelift pipeline to access compilation metadata. The actual Rust API then
-// wraps these primitive APIs.  See src/baldrdash.rs.
+// wraps these primitive APIs.  See src/bindings/mod.rs.
 //
 // This file can be included in SpiderMonkey's C++ code, where all the prefixes
 // must be obeyed.  The purpose of the prefixes is to avoid type confusion.  See
@@ -57,23 +57,27 @@ struct ModuleEnvironment;
 // to, but which can't be automatically provided to Rust.
 
 struct CraneliftStaticEnvironment {
-  bool hasSse2;
-  bool hasSse3;
-  bool hasSse41;
-  bool hasSse42;
-  bool hasPopcnt;
-  bool hasAvx;
-  bool hasBmi1;
-  bool hasBmi2;
-  bool hasLzcnt;
-  size_t staticMemoryBound;
-  size_t memoryGuardSize;
-  size_t instanceTlsOffset;
-  size_t interruptTlsOffset;
-  size_t cxTlsOffset;
-  size_t realmCxOffset;
-  size_t realmTlsOffset;
-  size_t realmFuncImportTlsOffset;
+  bool has_sse2;
+  bool has_sse3;
+  bool has_sse41;
+  bool has_sse42;
+  bool has_popcnt;
+  bool has_avx;
+  bool has_bmi1;
+  bool has_bmi2;
+  bool has_lzcnt;
+  bool platform_is_windows;
+  bool ref_types_enabled;
+  size_t static_memory_bound;
+  size_t memory_guard_size;
+  size_t memory_base_tls_offset;
+  size_t instance_tls_offset;
+  size_t interrupt_tls_offset;
+  size_t cx_tls_offset;
+  size_t realm_cx_offset;
+  size_t realm_tls_offset;
+  size_t realm_func_import_tls_offset;
+  size_t size_of_wasm_frame;
 
   // Not bindgen'd because it's inlined.
   inline CraneliftStaticEnvironment();
@@ -92,15 +96,20 @@ struct CraneliftModuleEnvironment {
       const js::wasm::ModuleEnvironment& env);
 };
 
+struct BD_Stackmaps;
+
 // Data for a single wasm function to be compiled by Cranelift.
 // This information is all from the corresponding `js::wasm::FuncCompileInput`
 // struct, but formatted in a Rust-friendly way.
 
 struct CraneliftFuncCompileInput {
   const uint8_t* bytecode;
-  size_t bytecodeSize;
+  size_t bytecode_size;
   uint32_t index;
   uint32_t offset_in_module;
+
+  // The stackmaps sink to use when compiling this function.
+  BD_Stackmaps* stackmaps;
 
   // Not bindgen'd because it's inlined.
   explicit inline CraneliftFuncCompileInput(const js::wasm::FuncCompileInput&);
@@ -114,15 +123,9 @@ struct CraneliftFuncCompileInput {
 // handle them, with a lot of unsafe'ing.
 
 struct CraneliftMetadataEntry {
-  enum Which {
-    DirectCall,
-    IndirectCall,
-    Trap,
-    MemoryAccess,
-    SymbolicAccess
-  } which;
-  uint32_t codeOffset;
-  uint32_t moduleBytecodeOffset;
+  enum Which { DirectCall, IndirectCall, Trap, SymbolicAccess } which;
+  uint32_t code_offset;
+  uint32_t module_bytecode_offset;
   size_t extra;
 };
 
@@ -131,14 +134,27 @@ struct CraneliftMetadataEntry {
 // prologue/epilogue etc.
 
 struct CraneliftCompiledFunc {
-  size_t numMetadata;
+  size_t num_metadata;
   const CraneliftMetadataEntry* metadatas;
 
-  size_t framePushed;
-  bool containsCalls;
+  size_t frame_pushed;
+  bool contains_calls;
 
-  size_t codeSize;
+  // The compiled code comprises machine code, relocatable jump tables, and
+  // copyable read-only data, concatenated without padding.  The "...Size"
+  // members give the sizes of the individual sections.  The code starts at
+  // offsets 0; the other offsets can be derived from the sizes.
   const uint8_t* code;
+  size_t code_size;
+  size_t jumptables_size;
+  size_t rodata_size;
+  size_t total_size;
+
+  // Relocation information for instructions that reference into the jump tables
+  // and read-only data segments.  The relocation information is
+  // machine-specific.
+  size_t num_rodata_relocs;
+  const uint32_t* rodata_relocs;
 };
 
 // Possible constant values for initializing globals.
@@ -150,6 +166,7 @@ struct BD_ConstantValue {
     int64_t i64;
     float f32;
     double f64;
+    void* r;
   } u;
 };
 
@@ -157,13 +174,27 @@ struct BD_ValType {
   uint32_t packed;
 };
 
-// A subset of the wasm SymbolicAddress enum.
-// XXX this is not quite maintenable, because the number of values in this
-// enum is hardcoded in wasm2clif.rs.
+// A subset of the wasm SymbolicAddress enum. This is converted to wasm using
+// ToSymbolicAddress in WasmCraneliftCompile.
 
-enum class BD_SymbolicAddress {
-  MemoryGrow,
+enum class BD_SymbolicAddress : uint32_t {
+  MemoryGrow = 0,
   MemorySize,
+  MemoryCopy,
+  MemoryCopyShared,
+  DataDrop,
+  MemoryFill,
+  MemoryFillShared,
+  MemoryInit,
+  TableSize,
+  TableGrow,
+  TableGet,
+  TableSet,
+  TableCopy,
+  TableFill,
+  TableInit,
+  ElemDrop,
+  RefFunc,
   FloorF32,
   FloorF64,
   CeilF32,
@@ -172,12 +203,15 @@ enum class BD_SymbolicAddress {
   NearestF64,
   TruncF32,
   TruncF64,
+  PreBarrier,
+  PostBarrier,
   Limit
 };
 
 extern "C" {
 js::wasm::TypeCode env_unpack(BD_ValType type);
 
+bool env_uses_shared_memory(const CraneliftModuleEnvironment* env);
 const js::wasm::FuncTypeWithId* env_function_signature(
     const CraneliftModuleEnvironment* env, size_t funcIndex);
 size_t env_func_import_tls_offset(const CraneliftModuleEnvironment* env,
@@ -201,10 +235,15 @@ size_t table_tlsOffset(const js::wasm::TableDesc*);
 
 size_t funcType_numArgs(const js::wasm::FuncTypeWithId*);
 const BD_ValType* funcType_args(const js::wasm::FuncTypeWithId*);
-js::wasm::TypeCode funcType_retType(const js::wasm::FuncTypeWithId*);
+size_t funcType_numResults(const js::wasm::FuncTypeWithId*);
+const BD_ValType* funcType_results(const js::wasm::FuncTypeWithId*);
 js::wasm::FuncTypeIdDescKind funcType_idKind(const js::wasm::FuncTypeWithId*);
 size_t funcType_idImmediate(const js::wasm::FuncTypeWithId*);
 size_t funcType_idTlsOffset(const js::wasm::FuncTypeWithId*);
+
+void stackmaps_add(BD_Stackmaps* sink, const uint32_t* bitMap,
+                   size_t mappedWords, size_t argsSize, size_t codeOffset);
+
 }  // extern "C"
 
 #endif  // wasm_cranelift_baldrapi_h

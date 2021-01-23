@@ -3,17 +3,31 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "mozilla/dom/WebGPUBinding.h"
 #include "PipelineLayout.h"
 
 #include "Device.h"
-#include "mozilla/dom/WebGPUBinding.h"
 
 namespace mozilla {
 namespace webgpu {
 
-PipelineLayout::~PipelineLayout() = default;
+GPU_IMPL_CYCLE_COLLECTION(PipelineLayout, mParent)
+GPU_IMPL_JS_WRAP(PipelineLayout)
 
-WEBGPU_IMPL_GOOP_0(PipelineLayout)
+PipelineLayout::PipelineLayout(Device* const aParent, RawId aId)
+    : ChildOf(aParent), mId(aId) {}
+
+PipelineLayout::~PipelineLayout() { Cleanup(); }
+
+void PipelineLayout::Cleanup() {
+  if (mValid && mParent) {
+    mValid = false;
+    auto bridge = mParent->GetBridge();
+    if (bridge && bridge->IsOpen()) {
+      bridge->SendPipelineLayoutDestroy(mId);
+    }
+  }
+}
 
 }  // namespace webgpu
 }  // namespace mozilla

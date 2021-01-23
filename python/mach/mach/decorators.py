@@ -7,7 +7,7 @@ from __future__ import absolute_import, unicode_literals
 import argparse
 import collections
 import inspect
-import types
+import sys
 
 from .base import MachError
 from .registrar import Registrar
@@ -30,8 +30,9 @@ class _MachCommand(object):
         'arguments',
         'argument_group_names',
 
-        # When `conditions` are met, rename this command to the following name.
-        'conditional_name',
+        # By default, subcommands will be sorted. If this is set to
+        # 'declaration', they will be left in declaration order.
+        'order',
 
         # Describes how dispatch is performed.
 
@@ -53,11 +54,15 @@ class _MachCommand(object):
         # Dict of string to _MachCommand defining sub-commands for this
         # command.
         'subcommand_handlers',
+
+        # For subcommands, the global order that the subcommand's declaration
+        # was seen.
+        'decl_order',
     )
 
     def __init__(self, name=None, subcommand=None, category=None,
                  description=None, conditions=None, parser=None,
-                 conditional_name=None):
+                 order=None):
         self.name = name
         self.subcommand = subcommand
         self.category = category
@@ -66,12 +71,13 @@ class _MachCommand(object):
         self._parser = parser
         self.arguments = []
         self.argument_group_names = []
-        self.conditional_name = conditional_name
+        self.order = order
 
         self.cls = None
         self.pass_context = None
         self.method = None
         self.subcommand_handlers = {}
+        self.decl_order = None
 
     @property
     def parser(self):
@@ -114,7 +120,8 @@ def CommandProvider(cls):
     # Tell mach driver whether to pass context argument to __init__.
     pass_context = False
 
-    if inspect.ismethod(cls.__init__):
+    isfunc = inspect.ismethod if sys.version_info < (3, 0) else inspect.isfunction
+    if isfunc(cls.__init__):
         spec = inspect.getargspec(cls.__init__)
 
         if len(spec.args) > 2:
@@ -128,20 +135,17 @@ def CommandProvider(cls):
 
     seen_commands = set()
 
-    # We scan __dict__ because we only care about the classes own attributes,
+    # We scan __dict__ because we only care about the classes' own attributes,
     # not inherited ones. If we did inherited attributes, we could potentially
     # define commands multiple times. We also sort keys so commands defined in
     # the same class are grouped in a sane order.
-    for attr in sorted(cls.__dict__.keys()):
-        value = cls.__dict__[attr]
+    command_methods = sorted([
+        (name, value._mach_command)
+        for name, value in cls.__dict__.items()
+        if hasattr(value, '_mach_command')
+    ])
 
-        if not isinstance(value, types.FunctionType):
-            continue
-
-        command = getattr(value, '_mach_command', None)
-        if not command:
-            continue
-
+    for method, command in command_methods:
         # Ignore subcommands for now: we handle them later.
         if command.subcommand:
             continue
@@ -165,7 +169,7 @@ def CommandProvider(cls):
                 raise MachError(msg)
 
         command.cls = cls
-        command.method = attr
+        command.method = method
         command.pass_context = pass_context
 
         Registrar.register_command_handler(command)
@@ -173,16 +177,7 @@ def CommandProvider(cls):
     # Now do another pass to get sub-commands. We do this in two passes so
     # we can check the parent command existence without having to hold
     # state and reconcile after traversal.
-    for attr in sorted(cls.__dict__.keys()):
-        value = cls.__dict__[attr]
-
-        if not isinstance(value, types.FunctionType):
-            continue
-
-        command = getattr(value, '_mach_command', None)
-        if not command:
-            continue
-
+    for method, command in command_methods:
         # It is a regular command.
         if not command.subcommand:
             continue
@@ -195,7 +190,7 @@ def CommandProvider(cls):
             continue
 
         command.cls = cls
-        command.method = attr
+        command.method = method
         command.pass_context = pass_context
         parent = Registrar.command_handlers[command.name]
 
@@ -257,9 +252,15 @@ class SubCommand(object):
 
         description -- A textual description for this sub command.
     """
+
+    global_order = 0
+
     def __init__(self, command, subcommand, description=None, parser=None):
         self._mach_command = _MachCommand(name=command, subcommand=subcommand,
-                                          description=description, parser=parser)
+                                          description=description,
+                                          parser=parser)
+        self._mach_command.decl_order = SubCommand.global_order
+        SubCommand.global_order += 1
 
     def __call__(self, func):
         if not hasattr(func, '_mach_command'):
@@ -289,7 +290,7 @@ class CommandArgument(object):
             # These are the assertions we make in dispatcher.py about
             # those types of CommandArguments.
             assert len(args) == 1
-            assert all(k in ('default', 'nargs', 'help', 'group') for k in kwargs)
+            assert all(k in ('default', 'nargs', 'help', 'group', 'metavar') for k in kwargs)
         self._command_args = (args, kwargs)
 
     def __call__(self, func):

@@ -37,16 +37,18 @@ add_task(async function checkReturnToAboutHome() {
     is(entries.length, 1, "there is one shistory entry");
 
     info("Clicking the go back button on about:certerror");
-    await ContentTask.spawn(browser, { frame: useFrame }, async function({
-      frame,
-    }) {
-      let doc = frame
-        ? content.document.querySelector("iframe").contentDocument
-        : content.document;
-
-      let returnButton = doc.getElementById("returnButton");
-      if (!frame) {
-        is(
+    let bc = browser.browsingContext;
+    if (useFrame) {
+      bc = bc.children[0];
+    }
+    let locationChangePromise = BrowserTestUtils.waitForLocationChange(
+      gBrowser,
+      "about:home"
+    );
+    await SpecialPowers.spawn(bc, [useFrame], async function(subFrame) {
+      let returnButton = content.document.getElementById("returnButton");
+      if (!subFrame) {
+        Assert.equal(
           returnButton.getAttribute("autofocus"),
           "true",
           "returnButton has autofocus"
@@ -58,7 +60,7 @@ add_task(async function checkReturnToAboutHome() {
       returnButton.click();
     });
 
-    await BrowserTestUtils.waitForLocationChange(gBrowser, "about:home");
+    await locationChangePromise;
 
     is(browser.webNavigation.canGoBack, true, "webNavigation.canGoBack");
     is(
@@ -110,17 +112,21 @@ add_task(async function checkReturnToPreviousPage() {
     is(entries.length, 2, "there are two shistory entries");
 
     info("Clicking the go back button on about:certerror");
-    await ContentTask.spawn(browser, { frame: useFrame }, async function({
-      frame,
-    }) {
-      let doc = frame
-        ? content.document.querySelector("iframe").contentDocument
-        : content.document;
-      let returnButton = doc.getElementById("returnButton");
-      returnButton.click();
+    let bc = browser.browsingContext;
+    if (useFrame) {
+      bc = bc.children[0];
+    }
 
-      await ContentTaskUtils.waitForEvent(this, "pageshow", true);
+    let pageShownPromise = BrowserTestUtils.waitForContentEvent(
+      browser,
+      "pageshow",
+      true
+    );
+    await SpecialPowers.spawn(bc, [useFrame], async function(subFrame) {
+      let returnButton = content.document.getElementById("returnButton");
+      returnButton.click();
     });
+    await pageShownPromise;
 
     is(browser.webNavigation.canGoBack, false, "!webNavigation.canGoBack");
     is(browser.webNavigation.canGoForward, true, "webNavigation.canGoForward");
@@ -151,33 +157,37 @@ add_task(async function checkAdvancedDetails() {
     let tab = await openErrorPage(BAD_CERT, useFrame);
     let browser = tab.linkedBrowser;
 
-    let message = await ContentTask.spawn(
-      browser,
-      { frame: useFrame },
-      async function({ frame }) {
-        let doc = frame
-          ? content.document.querySelector("iframe").contentDocument
-          : content.document;
+    let bc = browser.browsingContext;
+    if (useFrame) {
+      bc = bc.children[0];
+    }
 
-        let shortDescText = doc.getElementById("errorShortDescText");
-        info("Main error text: " + shortDescText.textContent);
-        ok(
-          shortDescText.textContent.includes("expired.example.com"),
-          "Should list hostname in error message."
-        );
+    let message = await SpecialPowers.spawn(bc, [], async function() {
+      let doc = content.document;
+      let shortDescText = doc.getElementById("errorShortDescText");
+      Assert.ok(
+        shortDescText.textContent.includes("expired.example.com"),
+        "Should list hostname in error message."
+      );
 
-        let exceptionButton = doc.getElementById("exceptionDialogButton");
-        ok(
-          !exceptionButton.disabled,
-          "Exception button is not disabled by default."
-        );
+      let exceptionButton = doc.getElementById("exceptionDialogButton");
+      Assert.ok(
+        !exceptionButton.disabled,
+        "Exception button is not disabled by default."
+      );
 
-        let advancedButton = doc.getElementById("advancedButton");
-        advancedButton.click();
-        let el = doc.getElementById("errorCode");
-        return { textContent: el.textContent, tagName: el.tagName };
-      }
-    );
+      let advancedButton = doc.getElementById("advancedButton");
+      advancedButton.click();
+
+      // Wait until fluent sets the errorCode inner text.
+      let el;
+      await ContentTaskUtils.waitForCondition(() => {
+        el = doc.getElementById("errorCode");
+        return el.textContent != "";
+      }, "error code has been set inside the advanced button panel");
+
+      return { textContent: el.textContent, tagName: el.tagName };
+    });
     is(
       message.textContent,
       "SEC_ERROR_EXPIRED_CERTIFICATE",
@@ -185,34 +195,26 @@ add_task(async function checkAdvancedDetails() {
     );
     is(message.tagName, "a", "Error message is a link");
 
-    message = await ContentTask.spawn(
-      browser,
-      { frame: useFrame },
-      async function({ frame }) {
-        let win = frame
-          ? content.document.querySelector("iframe").contentWindow
-          : content;
-        let doc = win.document;
+    message = await SpecialPowers.spawn(bc, [], async function() {
+      let doc = content.document;
+      let errorCode = doc.getElementById("errorCode");
+      errorCode.click();
+      let div = doc.getElementById("certificateErrorDebugInformation");
+      let text = doc.getElementById("certificateErrorText");
 
-        let errorCode = doc.getElementById("errorCode");
-        errorCode.click();
-        let div = doc.getElementById("certificateErrorDebugInformation");
-        let text = doc.getElementById("certificateErrorText");
-
-        let serhelper = Cc[
-          "@mozilla.org/network/serialization-helper;1"
-        ].getService(Ci.nsISerializationHelper);
-        let serializable = win.docShell.failedChannel.securityInfo
-          .QueryInterface(Ci.nsITransportSecurityInfo)
-          .QueryInterface(Ci.nsISerializable);
-        let serializedSecurityInfo = serhelper.serializeToString(serializable);
-        return {
-          divDisplay: content.getComputedStyle(div).display,
-          text: text.textContent,
-          securityInfoAsString: serializedSecurityInfo,
-        };
-      }
-    );
+      let serhelper = Cc[
+        "@mozilla.org/network/serialization-helper;1"
+      ].getService(Ci.nsISerializationHelper);
+      let serializable = content.docShell.failedChannel.securityInfo
+        .QueryInterface(Ci.nsITransportSecurityInfo)
+        .QueryInterface(Ci.nsISerializable);
+      let serializedSecurityInfo = serhelper.serializeToString(serializable);
+      return {
+        divDisplay: content.getComputedStyle(div).display,
+        text: text.textContent,
+        securityInfoAsString: serializedSecurityInfo,
+      };
+    });
     isnot(message.divDisplay, "none", "Debug information is visible");
     ok(message.text.includes(BAD_CERT), "Correct URL found");
     ok(
@@ -242,26 +244,31 @@ add_task(async function checkAdvancedDetailsForHSTS() {
     let tab = await openErrorPage(BAD_STS_CERT, useFrame);
     let browser = tab.linkedBrowser;
 
-    let message = await ContentTask.spawn(
-      browser,
-      { frame: useFrame },
-      async function({ frame }) {
-        let doc = frame
-          ? content.document.querySelector("iframe").contentDocument
-          : content.document;
+    let bc = browser.browsingContext;
+    if (useFrame) {
+      bc = bc.children[0];
+    }
 
-        let advancedButton = doc.getElementById("advancedButton");
-        advancedButton.click();
-        let ec = doc.getElementById("errorCode");
-        let cdl = doc.getElementById("cert_domain_link");
-        return {
-          ecTextContent: ec.textContent,
-          ecTagName: ec.tagName,
-          cdlTextContent: cdl.textContent,
-          cdlTagName: cdl.tagName,
-        };
-      }
-    );
+    let message = await SpecialPowers.spawn(bc, [], async function() {
+      let doc = content.document;
+      let advancedButton = doc.getElementById("advancedButton");
+      advancedButton.click();
+
+      // Wait until fluent sets the errorCode inner text.
+      let ec;
+      await ContentTaskUtils.waitForCondition(() => {
+        ec = doc.getElementById("errorCode");
+        return ec.textContent != "";
+      }, "error code has been set inside the advanced button panel");
+
+      let cdl = doc.getElementById("cert_domain_link");
+      return {
+        ecTextContent: ec.textContent,
+        ecTagName: ec.tagName,
+        cdlTextContent: cdl.textContent,
+        cdlTagName: cdl.tagName,
+      };
+    });
 
     const badStsUri = Services.io.newURI(BAD_STS_CERT);
     is(
@@ -274,34 +281,27 @@ add_task(async function checkAdvancedDetailsForHSTS() {
     is(message.cdlTextContent, url, "Correct cert_domain_link contents found");
     is(message.cdlTagName, "a", "cert_domain_link is a link");
 
-    message = await ContentTask.spawn(
-      browser,
-      { frame: useFrame },
-      async function({ frame }) {
-        let win = frame
-          ? content.document.querySelector("iframe").contentWindow
-          : content;
-        let doc = win.document;
+    message = await SpecialPowers.spawn(bc, [], async function() {
+      let doc = content.document;
 
-        let errorCode = doc.getElementById("errorCode");
-        errorCode.click();
-        let div = doc.getElementById("certificateErrorDebugInformation");
-        let text = doc.getElementById("certificateErrorText");
+      let errorCode = doc.getElementById("errorCode");
+      errorCode.click();
+      let div = doc.getElementById("certificateErrorDebugInformation");
+      let text = doc.getElementById("certificateErrorText");
 
-        let serhelper = Cc[
-          "@mozilla.org/network/serialization-helper;1"
-        ].getService(Ci.nsISerializationHelper);
-        let serializable = win.docShell.failedChannel.securityInfo
-          .QueryInterface(Ci.nsITransportSecurityInfo)
-          .QueryInterface(Ci.nsISerializable);
-        let serializedSecurityInfo = serhelper.serializeToString(serializable);
-        return {
-          divDisplay: content.getComputedStyle(div).display,
-          text: text.textContent,
-          securityInfoAsString: serializedSecurityInfo,
-        };
-      }
-    );
+      let serhelper = Cc[
+        "@mozilla.org/network/serialization-helper;1"
+      ].getService(Ci.nsISerializationHelper);
+      let serializable = content.docShell.failedChannel.securityInfo
+        .QueryInterface(Ci.nsITransportSecurityInfo)
+        .QueryInterface(Ci.nsISerializable);
+      let serializedSecurityInfo = serhelper.serializeToString(serializable);
+      return {
+        divDisplay: content.getComputedStyle(div).display,
+        text: text.textContent,
+        securityInfoAsString: serializedSecurityInfo,
+      };
+    });
     isnot(message.divDisplay, "none", "Debug information is visible");
     ok(message.text.includes(badStsUri.spec), "Correct URL found");
     ok(
@@ -333,17 +333,15 @@ add_task(async function checkUnknownIssuerLearnMoreLink() {
     let tab = await openErrorPage(UNKNOWN_ISSUER, useFrame);
     let browser = tab.linkedBrowser;
 
-    let href = await ContentTask.spawn(
-      browser,
-      { frame: useFrame },
-      async function({ frame }) {
-        let doc = frame
-          ? content.document.querySelector("iframe").contentDocument
-          : content.document;
-        let learnMoreLink = doc.getElementById("learnMoreLink");
-        return learnMoreLink.href;
-      }
-    );
+    let bc = browser.browsingContext;
+    if (useFrame) {
+      bc = bc.children[0];
+    }
+
+    let href = await SpecialPowers.spawn(bc, [], async function() {
+      let learnMoreLink = content.document.getElementById("learnMoreLink");
+      return learnMoreLink.href;
+    });
     ok(href.endsWith("security-error"), "security-error in the Learn More URL");
 
     BrowserTestUtils.removeTab(gBrowser.selectedTab);
@@ -356,32 +354,26 @@ add_task(async function checkCautionClass() {
     let tab = await openErrorPage(UNKNOWN_ISSUER, useFrame);
     let browser = tab.linkedBrowser;
 
-    await ContentTask.spawn(browser, { frame: useFrame }, async function({
-      frame,
-    }) {
-      let doc = frame
-        ? content.document.querySelector("iframe").contentDocument
-        : content.document;
-      is(
-        doc.body.classList.contains("caution"),
-        !frame,
-        `Cert error body has ${frame ? "no" : ""} caution class`
+    let bc = browser.browsingContext;
+    if (useFrame) {
+      bc = bc.children[0];
+    }
+
+    await SpecialPowers.spawn(bc, [useFrame], async function(subFrame) {
+      Assert.equal(
+        content.document.body.classList.contains("caution"),
+        !subFrame,
+        `Cert error body has ${subFrame ? "no" : ""} caution class`
       );
     });
 
     BrowserTestUtils.removeTab(gBrowser.selectedTab);
 
     tab = await openErrorPage(BAD_STS_CERT, useFrame);
-    browser = tab.linkedBrowser;
-
-    await ContentTask.spawn(browser, { frame: useFrame }, async function({
-      frame,
-    }) {
-      let doc = frame
-        ? content.document.querySelector("iframe").contentDocument
-        : content.document;
-      ok(
-        !doc.body.classList.contains("caution"),
+    bc = tab.linkedBrowser.browsingContext;
+    await SpecialPowers.spawn(bc, [], async function() {
+      Assert.ok(
+        !content.document.body.classList.contains("caution"),
         "Cert error body has no caution class"
       );
     });
@@ -392,36 +384,70 @@ add_task(async function checkCautionClass() {
 
 add_task(async function checkViewCertificate() {
   info("Loading a cert error and checking that the certificate can be shown.");
-  for (let useFrame of [false, true]) {
+  SpecialPowers.pushPrefEnv({
+    set: [["security.aboutcertificate.enabled", true]],
+  });
+  for (let useFrame of [true, false]) {
+    if (useFrame) {
+      // Bug #1573502
+      continue;
+    }
     let tab = await openErrorPage(UNKNOWN_ISSUER, useFrame);
     let browser = tab.linkedBrowser;
 
-    let dialogOpened = BrowserTestUtils.domWindowOpened();
+    let bc = browser.browsingContext;
+    if (useFrame) {
+      bc = bc.children[0];
+    }
 
-    await ContentTask.spawn(browser, { frame: useFrame }, async function({
-      frame,
-    }) {
-      let doc = frame
-        ? content.document.querySelector("iframe").contentDocument
-        : content.document;
-      let viewCertificate = doc.getElementById("viewCertificate");
+    let loaded = BrowserTestUtils.waitForNewTab(gBrowser, null, true);
+    await SpecialPowers.spawn(bc, [], async function() {
+      let viewCertificate = content.document.getElementById("viewCertificate");
       viewCertificate.click();
     });
+    await loaded;
 
-    let win = await dialogOpened;
-    await BrowserTestUtils.waitForEvent(win, "load");
-    is(
-      win.document.documentURI,
-      "chrome://pippki/content/certViewer.xul",
-      "Opened the cert viewer dialog"
+    let spec = gBrowser.selectedTab.linkedBrowser.documentURI.spec;
+    Assert.ok(
+      spec.startsWith("about:certificate"),
+      "about:certificate is the new opened tab"
     );
-    is(
-      win.document.getElementById("commonname").value,
-      "self-signed.example.com",
-      "Shows the correct certificate in the dialog"
-    );
-    win.close();
 
+    await SpecialPowers.spawn(
+      gBrowser.selectedTab.linkedBrowser,
+      [],
+      async function() {
+        let doc = content.document;
+        let certificateSection = await ContentTaskUtils.waitForCondition(() => {
+          return doc.querySelector("certificate-section");
+        }, "Certificate section found");
+
+        let infoGroup = certificateSection.shadowRoot.querySelector(
+          "info-group"
+        );
+        Assert.ok(infoGroup, "infoGroup found");
+
+        let items = infoGroup.shadowRoot.querySelectorAll("info-item");
+        let commonnameID = items[items.length - 1].shadowRoot
+          .querySelector("label")
+          .getAttribute("data-l10n-id");
+        Assert.equal(
+          commonnameID,
+          "certificate-viewer-common-name",
+          "The correct item was selected"
+        );
+
+        let commonnameValue = items[items.length - 1].shadowRoot.querySelector(
+          ".info"
+        ).textContent;
+        Assert.equal(
+          commonnameValue,
+          "self-signed.example.com",
+          "Shows the correct certificate in the page"
+        );
+      }
+    );
+    BrowserTestUtils.removeTab(gBrowser.selectedTab); // closes about:certificate
     BrowserTestUtils.removeTab(gBrowser.selectedTab);
   }
 });
@@ -434,28 +460,65 @@ add_task(async function checkBadStsCertHeadline() {
     let tab = await openErrorPage(BAD_CERT, useFrame);
     let browser = tab.linkedBrowser;
 
-    let titleContent = await ContentTask.spawn(
-      browser,
-      { frame: useFrame },
-      async function({ frame }) {
-        let doc = frame
-          ? content.document.querySelector("iframe").contentDocument
-          : content.document;
-        let titleText = doc.querySelector(".title-text");
-        return titleText.textContent;
-      }
-    );
+    let bc = browser.browsingContext;
     if (useFrame) {
-      ok(
-        titleContent.endsWith("Security Issue"),
-        "Did Not Connect: Potential Security Issue"
-      );
-    } else {
-      ok(
-        titleContent.endsWith("Risk Ahead"),
-        "Warning: Potential Security Risk Ahead"
-      );
+      bc = bc.children[0];
     }
+
+    await SpecialPowers.spawn(bc, [useFrame], async _useFrame => {
+      let titleText = content.document.querySelector(".title-text");
+      await ContentTaskUtils.waitForCondition(
+        () => titleText.textContent,
+        "Error page title is initialized"
+      );
+      let titleContent = titleText.textContent;
+      if (_useFrame) {
+        ok(
+          titleContent.endsWith("Security Issue"),
+          "Did Not Connect: Potential Security Issue"
+        );
+      } else {
+        ok(
+          titleContent.endsWith("Risk Ahead"),
+          "Warning: Potential Security Risk Ahead"
+        );
+      }
+    });
     BrowserTestUtils.removeTab(gBrowser.selectedTab);
   }
+});
+
+add_task(async function checkSandboxedIframe() {
+  info(
+    "Loading a bad sts cert error in a sandboxed iframe and check that the correct headline is shown"
+  );
+  let useFrame = true;
+  let sandboxed = true;
+  let tab = await openErrorPage(BAD_CERT, useFrame, sandboxed);
+  let browser = tab.linkedBrowser;
+
+  let bc = browser.browsingContext.children[0];
+  await SpecialPowers.spawn(bc, [], async function() {
+    let doc = content.document;
+    let titleText = doc.querySelector(".title-text");
+    Assert.ok(
+      titleText.textContent.endsWith("Security Issue"),
+      "Title shows Did Not Connect: Potential Security Issue"
+    );
+
+    // Wait until fluent sets the errorCode inner text.
+    let el;
+    await ContentTaskUtils.waitForCondition(() => {
+      el = doc.getElementById("errorCode");
+      return el.textContent != "";
+    }, "error code has been set inside the advanced button panel");
+
+    Assert.equal(
+      el.textContent,
+      "SEC_ERROR_EXPIRED_CERTIFICATE",
+      "Correct error message found"
+    );
+    Assert.equal(el.tagName, "a", "Error message is a link");
+  });
+  BrowserTestUtils.removeTab(gBrowser.selectedTab);
 });

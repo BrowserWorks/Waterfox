@@ -25,11 +25,14 @@ const testCasesUserContextId = [
       getCookieId(
         "sc1uc1",
         "sectest1.example.org",
-        "/browser/devtools/client/storage/test/"
+        "/browser/devtools/client/storage/test"
       ),
     ],
   ],
-  [["localStorage", "http://test1.example.org"], ["ls1uc1", "ls2uc1"]],
+  [
+    ["localStorage", "http://test1.example.org"],
+    ["ls1uc1", "ls2uc1"],
+  ],
   [["localStorage", "http://sectest1.example.org"], ["iframe-u-ls1uc1"]],
   [["localStorage", "https://sectest1.example.org"], ["iframe-s-ls1uc1"]],
   [["sessionStorage", "http://test1.example.org"], ["ss1uc1"]],

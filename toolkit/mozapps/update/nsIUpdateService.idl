@@ -5,7 +5,6 @@
 
 #include "nsISupports.idl"
 
-interface nsIDOMWindow;
 interface nsIRequest;
 interface nsIRequestObserver;
 interface nsISimpleEnumerator;
@@ -145,7 +144,7 @@ interface nsIUpdate : nsISupports
    * Whether the update is no longer supported on this system.
    */
   readonly attribute boolean unsupported;
-  
+
   /**
    * Allows overriding the default amount of time in seconds before prompting the
    * user to apply an update. If not specified, the value of
@@ -240,12 +239,8 @@ interface nsIUpdateCheckListener : nsISupports
    *          The XMLHttpRequest handling the update check.
    * @param   updates
    *          An array of nsIUpdate objects listing available updates.
-   * @param   updateCount
-   *          The size of the |updates| array.
    */
-  void onCheckComplete(in jsval request,
-                       [array, size_is(updateCount)] in nsIUpdate updates,
-                       in unsigned long updateCount);
+  void onCheckComplete(in jsval request, in Array<nsIUpdate> updates);
 
   /**
    * An error occurred while loading the remote update service file.
@@ -309,11 +304,8 @@ interface nsIApplicationUpdateService : nsISupports
    * Selects the best update to install from a list of available updates.
    * @param   updates
    *          An array of updates that are available
-   * @param   updateCount
-   *          The length of the |updates| array
    */
-  nsIUpdate selectUpdate([array, size_is(updateCount)] in nsIUpdate updates,
-                         in unsigned long updateCount);
+  nsIUpdate selectUpdate(in Array<nsIUpdate> updates);
 
   /**
    * Adds a listener that receives progress and state information about the
@@ -421,14 +413,14 @@ interface nsIUpdateProcessor : nsISupports
    * Since this function does its work off of the main thread and does not
    * block, it will only throw if it was unable to dispatch to another thread.
    *
-   * @param shouldUseService If set to false, Firefox will attempt to fix the
-   *                         permissions itself, but the maintenance service
-   *                         will not be used. If set to true and Firefox is
-   *                         unable to fix the permissions itself, it will
-   *                         attempt to call into the maintenance service to
-   *                         request that it attempt to fix the permissions.
+   * @param useServiceOnFailure
+   *        If set to false, Firefox will attempt to fix the permissions itself,
+   *        but the maintenance service will not be used. If set to true and
+   *        Firefox is unable to fix the permissions itself, it will attempt to
+   *        call into the maintenance service to request that it attempt to fix
+   *        the permissions.
    */
-  void fixUpdateDirectoryPerms(in boolean shouldUseService);
+  void fixUpdateDirectoryPerms(in boolean useServiceOnFailure);
 };
 
 /**
@@ -476,67 +468,4 @@ interface nsIUpdateManager : nsISupports
    * Clean up and remove the active update without applying it.
    */
   void cleanupActiveUpdate();
-};
-
-/**
- * An interface describing an object that can show various kinds of Update
- * notification UI to the user.
- */
-[scriptable, uuid(cee3bd60-c564-42ff-a2bf-d442cb15f75c)]
-interface nsIUpdatePrompt : nsISupports
-{
-  /**
-   * Shows the application update checking user interface and checks if there
-   * is an update available.
-   */
-  void checkForUpdates();
-
-  /**
-   * Shows the application update available user interface advising that an
-   * update is available for download and install. If the app.update.silent
-   * preference is true or the user interface is already displayed the call will
-   * be a no-op.
-   * @param   update
-   *          The nsIUpdate object to be downloaded and installed
-   */
-  void showUpdateAvailable(in nsIUpdate update);
-
-  /**
-   * Shows the application update downloaded user interface advising that an
-   * update has now been downloaded and a restart is necessary to complete the
-   * update. If background is true (e.g. the download was not user initiated)
-   * and the app.update.silent preference is true the call will be a no-op.
-   * @param   update
-   *          The nsIUpdate object that was downloaded
-   * @param   background
-   *          Less obtrusive UI, starting with a non-modal notification alert
-   */
-  void showUpdateDownloaded(in nsIUpdate update,
-                            [optional] in boolean background);
-
-  /**
-   * Shows the application update error user interface advising that an error
-   * occurred while checking for or applying an update. If the app.update.silent
-   * preference is true the call will be a no-op.
-   * @param   update
-   *          An nsIUpdate object representing the update that could not be
-   *          installed. The nsIUpdate object will not be the actual update when
-   *          the error occurred during an update check and will instead be an
-   *          nsIUpdate object with the error information for the update check.
-   */
-  void showUpdateError(in nsIUpdate update);
-
-  /**
-   * Shows a list of all updates installed to date.
-   * @param   parent
-   *          An nsIDOMWindow to set as the parent for this window. Can be null.
-   */
-  void showUpdateHistory(in nsIDOMWindow parent);
-
-  /**
-   * Shows the application update downloaded user interface advising that an
-   * update, which requires elevation, has now been downloaded and a restart is
-   * necessary to complete the update.
-   */
-  void showUpdateElevationRequired();
 };

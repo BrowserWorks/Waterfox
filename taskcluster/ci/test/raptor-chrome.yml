@@ -1,0 +1,247 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+---
+job-defaults:
+    max-run-time:
+        by-test-platform:
+            .*-qr/.*: 2400
+            .*-ux/.*: 2400
+            default: 1800
+    suite: raptor
+    workdir: /home/cltbld
+    run-on-projects: []
+    tier: 2
+    virtualization:
+        by-test-platform:
+            windows10-64-ccov/.*: virtual
+            default: hardware
+    mozharness:
+        script: raptor_script.py
+        config:
+            by-test-platform:
+                macosx.*:
+                    - raptor/mac_config.py
+                windows.*:
+                    - raptor/windows_config.py
+                windows10-64-ccov/.*:
+                    - raptor/windows_vm_config.py
+                linux64-ccov/.*:
+                    - raptor/linux64_config_taskcluster.py
+                default:
+                    - raptor/linux_config.py
+
+raptor-speedometer-chrome:
+    description: "Raptor Speedometer on Chrome"
+    try-name: raptor-speedometer-chrome
+    treeherder-symbol: Rap-ChR(sp)
+    mozharness:
+        extra-options:
+            - --test=raptor-speedometer
+            - --app=chrome
+
+raptor-stylebench-chrome:
+    description: "Raptor StyleBench on Chrome"
+    try-name: raptor-stylebench-chrome
+    treeherder-symbol: Rap-ChR(sb)
+    mozharness:
+        extra-options:
+            - --test=raptor-stylebench
+            - --app=chrome
+
+raptor-motionmark-htmlsuite-chrome:
+    description: "Raptor MotionMark HtmlSuite on Chrome"
+    try-name: raptor-motionmark-htmlsuite-chrome
+    treeherder-symbol: Rap-ChR(mm-h)
+    mozharness:
+        extra-options:
+            - --test=raptor-motionmark-htmlsuite
+            - --app=chrome
+
+raptor-motionmark-animometer-chrome:
+    description: "Raptor MotionMark Animometer on Chrome"
+    try-name: raptor-motionmark-animometer-chrome
+    treeherder-symbol: Rap-ChR(mm-a)
+    mozharness:
+        extra-options:
+            - --test=raptor-motionmark-animometer
+            - --app=chrome
+
+raptor-webaudio-chrome:
+    description: "Raptor WebAudio on Chrome"
+    try-name: raptor-webaudio-chrome
+    treeherder-symbol: Rap-ChR(wa)
+    mozharness:
+        extra-options:
+            - --test=raptor-webaudio
+            - --app=chrome
+
+raptor-sunspider-chrome:
+    description: "Raptor SunSpider on Chrome"
+    try-name: raptor-sunspider-chrome
+    treeherder-symbol: Rap-ChR(ss)
+    mozharness:
+        extra-options:
+            - --test=raptor-sunspider
+            - --app=chrome
+
+raptor-unity-webgl-chrome:
+    description: "Raptor Unity WebGL on Chrome"
+    try-name: raptor-unity-webgl-chrome
+    treeherder-symbol: Rap-ChR(ugl)
+    tier: 3
+    mozharness:
+        extra-options:
+            - --test=raptor-unity-webgl
+            - --app=chrome
+    fetches:
+        fetch:
+            - unity-webgl
+
+raptor-wasm-misc-chrome:
+    description: "Raptor WASM Misc on Chrome"
+    try-name: raptor-wasm-misc-chrome
+    treeherder-symbol: Rap-ChR(wm)
+    mozharness:
+        extra-options:
+            - --test=raptor-wasm-misc
+            - --app=chrome
+    fetches:
+        fetch:
+            - wasm-misc
+
+raptor-assorted-dom-chrome:
+    description: "Raptor Assorted-Dom on Chrome"
+    try-name: raptor-assorted-dom-chrome
+    treeherder-symbol: Rap-ChR(dom)
+    max-run-time: 1500
+    mozharness:
+        extra-options:
+            - --test=raptor-assorted-dom
+            - --app=chrome
+    fetches:
+        fetch:
+            - assorted-dom
+
+raptor-wasm-godot-chrome:
+    description: "Raptor Wasm Godot on Chrome"
+    try-name: raptor-wasm-godot-chrome
+    treeherder-symbol: Rap-ChR(godot)
+    max-run-time: 1500
+    mozharness:
+        extra-options:
+            - --test=raptor-wasm-godot
+            - --app=chrome
+
+raptor-ares6-chrome:
+    description: "Raptor Ares6 on Chrome"
+    try-name: raptor-ares6-chrome
+    treeherder-symbol: Rap-ChR(ares6)
+    max-run-time: 2500
+    tier: 3
+    mozharness:
+        extra-options:
+            - --test=raptor-ares6
+            - --app=chrome
+
+raptor-jetstream2-chrome:
+    description: "Raptor Jetstream2 on Chrome"
+    try-name: raptor-jetstream2-chrome
+    treeherder-symbol: Rap-ChR(js2)
+    max-run-time: 8000
+    tier: 3
+    mozharness:
+        extra-options:
+            - --test=raptor-jetstream2
+            - --app=chrome
+    fetches:
+        fetch:
+            - jetstream2
+
+raptor-youtube-playback-chrome:
+    description: "Raptor YouTube Playback on Chrome"
+    try-name: raptor-youtube-playback-chrome
+    treeherder-symbol: Rap-ChR(ytp)
+    max-run-time: 2700
+    mozharness:
+        extra-options:
+            - --test=raptor-youtube-playback
+            - --app=chrome
+
+raptor-youtube-playback-av1-sfr-chrome:
+    description: "Raptor YouTube Playback AV1 SFR on Chrome"
+    try-name: raptor-youtube-playback-av1-sfr-chrome
+    treeherder-symbol: Rap-ChR(ytp-av1-sfr)
+    max-run-time:
+        by-test-platform:
+            windows10-aarch64/opt: 3600
+            default: 1800
+    mozharness:
+        extra-options:
+            - --test=raptor-youtube-playback-av1-sfr
+            - --app=chrome
+
+raptor-youtube-playback-h264-sfr-chrome:
+    description: "Raptor YouTube Playback H264 SFR on Chrome"
+    try-name: raptor-youtube-playback-h264-sfr-chrome
+    treeherder-symbol: Rap-ChR(ytp-h264-sfr)
+    max-run-time:
+        by-test-platform:
+            windows10-aarch64/opt: 3600
+            default: 1800
+    mozharness:
+        extra-options:
+            - --test=raptor-youtube-playback-h264-sfr
+            - --app=chrome
+
+raptor-youtube-playback-vp9-sfr-chrome:
+    description: "Raptor YouTube Playback VP9 SFR on Chrome"
+    try-name: raptor-youtube-playback-vp9-sfr-chrome
+    treeherder-symbol: Rap-ChR(ytp-vp9-sfr)
+    max-run-time:
+        by-test-platform:
+            windows10-aarch64/opt: 3600
+            default: 1800
+    mozharness:
+        extra-options:
+            - --test=raptor-youtube-playback-vp9-sfr
+            - --app=chrome
+
+raptor-youtube-playback-widevine-hfr-chrome:
+    description: "Raptor YouTube Playback Widevine HFR on Chrome"
+    try-name: raptor-youtube-playback-widevine-hfr-chrome
+    treeherder-symbol: Rap-ChR(ytp-widevine-hfr)
+    max-run-time:
+        by-test-platform:
+            windows10-aarch64/opt: 3600
+            default: 2700
+    mozharness:
+        extra-options:
+            - --test=raptor-youtube-playback-widevine-hfr
+            - --app=chrome
+
+raptor-youtube-playback-widevine-h264-sfr-chrome:
+    description: "Raptor YouTube Playback Widevine H264 SFR on Chrome"
+    try-name: raptor-youtube-playback-widevine-h264-sfr-chrome
+    treeherder-symbol: Rap-ChR(ytp-widevine-h264-sfr)
+    max-run-time:
+        by-test-platform:
+            windows10-aarch64/opt: 3600
+            default: 2700
+    mozharness:
+        extra-options:
+            - --test=raptor-youtube-playback-widevine-h264-sfr
+            - --app=chrome
+
+raptor-youtube-playback-widevine-vp9-sfr-chrome:
+    description: "Raptor YouTube Playback Widevine VP9 SFR on Chrome"
+    try-name: raptor-youtube-playback-widevine-vp9-sfr-chrome
+    treeherder-symbol: Rap-ChR(ytp-widevine-vp9-sfr)
+    max-run-time:
+        by-test-platform:
+            windows10-aarch64/opt: 3600
+            default: 2700
+    mozharness:
+        extra-options:
+            - --test=raptor-youtube-playback-widevine-vp9-sfr
+            - --app=chrome

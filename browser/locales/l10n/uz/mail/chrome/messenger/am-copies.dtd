@@ -1,0 +1,53 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "Nusxalar va jildlar">
+<!ENTITY sendingPrefix.label "Xabarlar jo‘natilayotganda, avtomatik tarzda: ">
+<!ENTITY fccMailFolder.label "Nusxalash joyi:">
+<!ENTITY fccMailFolder.accesskey "N">
+<!ENTITY fccReplyFollowsParent.label "Javoblarni javob qaytariladigan xabar jildi ichiga joylashtirish">
+<!ENTITY fccReplyFollowsParent.accesskey "J">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "Ushbu e-pochtalarga nusxasini jo‘natish:">
+<!ENTITY ccAddress.accesskey "C">
+<!ENTITY ccAddressList.placeholder "Manzillarni vergullar bilan ajratish">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "Yashirin nusxasini ushbu e-pochta manzillariga jo‘natish:">
+<!ENTITY bccAddress.accesskey "Y">
+<!ENTITY bccAddressList.placeholder "Manzillarni vergullar bilan ajratish">
+<!ENTITY saveMessageDlg.label "Xabarlar saqlanganda tasdiqlash oynasi ko‘rsatilsin">
+<!ENTITY saveMessageDlg.accesskey "k">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "&quot;Jo‘natilgan xabarlar&quot; jildi joylashuvi:">
+<!ENTITY sentFolderOn.accesskey "S">
+<!ENTITY sentInOtherFolder.label "Boshqa:">
+<!ENTITY sentInOtherFolder.accesskey "B">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "Xabar arxivlari">
+<!ENTITY keepArchives.label "Xabar arxivlarini saqlash joyi:">
+<!ENTITY keepArchives.accesskey "K">
+<!ENTITY archiveHierarchyButton.label "Arxivlash parametrlari…">
+<!ENTITY archiveHierarchyButton.accesskey "A">
+<!ENTITY archivesFolderOn.label "&quot;Arxivlar jildi&quot; joylashuvi:">
+<!ENTITY archivesFolderOn.accesskey "n">
+<!ENTITY archiveInOtherFolder.label "Boshqa:">
+<!ENTITY archiveInOtherFolder.accesskey "B">
+<!ENTITY specialFolders.label "Qoralama va namunalar">
+<!ENTITY keepDrafts2.label "Qoralamalarni saqlash manzili:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "&quot;Qoralamalar&quot; jildi joylashuvi:">
+<!ENTITY draftsFolderOn.accesskey "Q">
+<!ENTITY draftInOtherFolder.label "Boshqa:">
+<!ENTITY draftInOtherFolder.accesskey "B">
+<!ENTITY keepTemplates.label "Xabar namunalarini saqlash joyi:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "&quot;Namunalar&quot; jildi joylashuvi:">
+<!ENTITY templatesFolderOn.accesskey "N">
+<!ENTITY templateInOtherFolder.label "Boshqa:">
+<!ENTITY templateInOtherFolder.accesskey "B">

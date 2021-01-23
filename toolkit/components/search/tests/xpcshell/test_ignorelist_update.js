@@ -26,31 +26,19 @@ add_task(async function test_ignoreList() {
   let updatePromise = SearchTestUtils.promiseSearchNotification(
     "settings-update-complete"
   );
-  await Services.search.addEngineWithDetails(
-    kSearchEngineID1,
-    "",
-    "",
-    "",
-    "get",
-    kSearchEngineURL1
-  );
-  await Services.search.addEngineWithDetails(
-    kSearchEngineID2,
-    "",
-    "",
-    "",
-    "get",
-    kSearchEngineURL2
-  );
-  await Services.search.addEngineWithDetails(
-    kSearchEngineID3,
-    "",
-    "",
-    "",
-    "get",
-    kSearchEngineURL3,
-    kExtensionID
-  );
+  await Services.search.addEngineWithDetails(kSearchEngineID1, {
+    method: "get",
+    template: kSearchEngineURL1,
+  });
+  await Services.search.addEngineWithDetails(kSearchEngineID2, {
+    method: "get",
+    template: kSearchEngineURL2,
+  });
+  await Services.search.addEngineWithDetails(kSearchEngineID3, {
+    method: "get",
+    template: kSearchEngineURL3,
+    extensionID: kExtensionID,
+  });
 
   // Ensure that the initial remote settings update from default values is
   // complete. The defaults do not include the special inclusions inserted below.

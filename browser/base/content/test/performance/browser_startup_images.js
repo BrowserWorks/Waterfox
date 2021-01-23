@@ -22,25 +22,13 @@
  */
 const whitelist = [
   {
-    file: "chrome://browser/skin/arrow-left.svg",
+    file: "chrome://global/skin/icons/arrow-left.svg",
     platforms: ["linux", "win", "macosx"],
   },
 
   {
-    file: "chrome://browser/skin/places/toolbarDropMarker.png",
+    file: "chrome://browser/skin/toolbar-drag-indicator.svg",
     platforms: ["linux", "win", "macosx"],
-  },
-
-  {
-    file: "chrome://browser/skin/tabbrowser/tabDragIndicator.png",
-    hidpi: "chrome://browser/skin/tabbrowser/tabDragIndicator@2x.png",
-    platforms: ["macosx"],
-  },
-
-  {
-    file: "chrome://browser/skin/tabbrowser/tabDragIndicator.png",
-    hidpi: "<not loaded>",
-    platforms: ["linux", "win"],
   },
 
   {

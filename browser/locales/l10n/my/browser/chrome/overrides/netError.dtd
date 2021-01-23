@@ -1,0 +1,155 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "စာမျက်နှာ ဖွင့်လှစ်မှု အမှား">
+<!ENTITY retry.label "ထပ်ကြိုးစားပါ">
+<!ENTITY returnToPreviousPage.label "နောက်သို့ သွားရန်">
+<!ENTITY returnToPreviousPage1.label "ပြန်သွားပါ (အကြံပြုချက်အရ)">
+<!ENTITY advanced2.label "အဆင့်မြင့်…">
+<!ENTITY viewCertificate.label "အထောက်အထားများကို ကြည့်ရန်">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "ဆာဗာကို မတွေ့ပါ">
+<!ENTITY dnsNotFound.longDesc1 "<strong>လိပ်စာမှန်ကန်နေပါက၊ အောက်ပါအချက်များကို စမ်းကြည့်နိုင်သည်။</strong>
+<ul>
+  <li>နောက်မှပြန်ဖွင့်ရန်။</li>
+  <li>ကွန်ယက်ချိတ်ဆက်မှုကိုစစ်ဆေးရန်။</li>
+  <li>ကွန်ယက်ကို ချိတ်ဆက်ထားသော်လည်း မီးနံရံနောက်တွင် ရှိနေပါက &brandShortName; သည် ဝဘ်သို့ချိတ်ဆက်ခွင့်ရှိ၊ မရှိ စစ်ဆေးပါ။</li>
+</ul>">
+
+<!ENTITY fileNotFound.longDesc "
+<ul>
+  <li>အကြီးအသေး မှားရိုက်ခြင်း သို့မဟုတ် အခြား စာလုံးပေါင်းအမှားများ ဖြစ်နိုင်သည့်အတွက် ဖိုင်အမည်ကို စစ်ဆေးပါ။</li>
+  <li>ဖိုင်ကို ရွှေ့ထားခြင်း၊ အမည်ပြောင်းထားခြင်း သို့မဟုတ် ဖျက်ထားခြင်း ရှိ/မရှိ စစ်ဆေးပါ။</li>
+</ul>
+">
+
+<!ENTITY fileAccessDenied.longDesc "<ul> <li>၎င်းကို ဖျက်ထားခြင်း၊ ရွှေ့ထားခြင်း သို့မဟုတ် ဖိုင်အသုံးပြုမှုဆိုင်ရာမူဝါဒများက အသုံးမပြုနိုင်စေရန် တားမြစ်နေခြင်း ဖြစ်နိုင်ပါသည်။</li> </ul>">
+
+<!ENTITY generic.longDesc "<p>&brandShortName; သည် အကြောင်းတစ်ခုခုကြောင့် ယခုစာမျက်နှာကို မဖွင့်နိုင်ပါ။</p>">
+
+<!ENTITY captivePortal.title "ကွန်ယက်သို့ ဝင်ရောက်ပါ">
+<!ENTITY captivePortal.longDesc2 "<p>အင်တာနက်ကို အသုံးမပြုနိုင်မီ ဒီကွန်ယက်သို့ လက်မှတ်ထိုး ဝင်ရောက်ရပါမည်။</p>">
+
+<!ENTITY openPortalLoginPage.label2 "ကွန်ယက်သို့ လက်မှတ်ထိုးဝင်ရန် စာမျက်နှာကို ဖွင့်ပါ">
+
+<!ENTITY malformedURI.pageTitle "မမှန်ကန်သောURL">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>တောင်းဆိုထားသော စာတမ်းကို &brandShortName;၏ ယာယီမှတ်ဉာဏ်တွင် မရှိတော့ပါ။</p><ul><li>လုံခြုံရေးကြိုတင်ကာကွယ်မှုအနေဖြင့် &brandShortName; သည် အရေးကြီးစာတမ်းကို အလိုအလျောက် ထပ်မံ မတောင်းဆိုပါ။</li><li>ထပ်မံဆောင်ရွက်ကြည့်ပါကို ကလစ်နှိပ်ပြီး ဝဘ်ဆိုက်ထံမှ စာတမ်းကို ပြန်လည် တောင်းဆိုနိုင်ပါသည်။</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "<ul> <li>&quot;Try Again&quot; အားနှိပ်ပြီး အင်တာနက်ပြန်လည်ချိတ်ဆက်ကာ စာမျက်နှာအားဖွင့်.</li> </ul>">
+
+<!ENTITY contentEncodingError.longDesc "
+<ul>
+  <li>ယခုပြဿနာကို အသိပေးရန် ကျေးဇူးပြု၍ ဝဘ်ဆိုက်ပိုင်ရှင်ကို ဆက်သွယ်ပါ။</li>
+</ul>
+">
+
+<!ENTITY unsafeContentType.longDesc "
+<ul>
+  <li>ယခုပြဿနာကို အသိပေးရန် ကျေးဇူးပြု၍ ဝဘ်ဆိုက်ပိုင်ရှင်ကို ဆက်သွယ်ပါ။</li>
+</ul>
+">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "
+<ul>
+  <li>ယခုလိပ်စာကို ဖွင့်ရန် အခြားဆော့ဖ်ဝဲလ်တစ်ခုကို လိုအပ်ကောင်း လိုအပ်ပါလိမ့်မည်။</li>
+</ul>
+">
+
+<!ENTITY proxyConnectFailure.longDesc "
+<ul>
+  <li>ကြားခံဆာဗာအပြင်အဆင်များ မှန်ကန်မှုရှိ/မရှိ စစ်ဆေးပါ။</li>
+  <li>ကြားခံဆာဗာများ ကောင်းစွာ ဆောင်ရွက်ခြင်း ရှိ/မရှိ စစ်ဆေးရန်
+    ကွန်ယက်စီမံသူနှင့် ဆက်သွယ်ပါ။</li>
+</ul>
+">
+
+<!ENTITY proxyResolveFailure.longDesc "
+<ul>
+  <li>ကြားခံဆာဗာအပြင်အဆင်များ မှန်ကန်မှု ရှိ/မရှိ စစ်ဆေးပါ။</li>
+  <li>ကွန်ပျူတာသည် အင်တာနက်ရှိသော ကွန်ယက်တွင် ချိတ်ထားခြင်း ရှိ/မရှိ စစ်ဆေးပါ။</li>
+  <li>အကယ်၍ ကွန်ပျူတာ သို့မဟုတ် ကွန်ယက်သည် မီးနံရံ သို့မဟုတ် ကြားခံဆာဗာဖြင့် ကာကွယ်ထားပါက
+    ၎င်း &brandShortName; ကို အင်တာနက် အသုံးပြုခွင့် ပေးထားခြင်း ရှိ/မရှိ စစ်ဆေးပါ။</li>
+</ul>
+">
+
+<!ENTITY redirectLoop.longDesc "
+<ul>
+  <li>ကွတ်ကီးအသုံးပြုမှုကို ငြင်းဆန်ခြင်း သို့မဟုတ် ပိတ်ထားခြင်းတို့ကြောင့် ယခုပြဿနာကဲ့သို့
+    ဖြစ်ပေါ်စေနိုင်သည်။</li>
+</ul>
+">
+
+<!ENTITY unknownSocketType.longDesc "
+<ul>
+  <li>သင့်ကွန်ပျူတာစနစ်တွင် Personal Security Manager တပ်ဆင်ထားခြင်း ရှိ/မရှိ
+    စစ်ဆေးပါ။</li>
+  <li>ဆာဗာတွင် စံမဟုတ်သော ပြင်ဆင်ပြုပြင်မှုများကြောင့် ယခုပြဿနာကဲ့သို့ ဖြစ်ပေါ်စေနိုင်သည်။</li>
+</ul>
+">
+
+<!ENTITY nssFailure2.longDesc2 "<ul>
+  <li>လက်ခံရရှိသော ဒေတာ၏ မှန်ကန်မှုကို အတည်မပြုနိုင်သောကြောင့် သင်ကြည့်ရှုလိုသော ဝဘ်ဆိုက်ကို မပြနိုင်ပါ။</li>
+  <li>ယခုပြဿနာကို အသိပေးရန် ဝဘ်ဆိုက်ပိုင်ရှင်ကို ကျေးဇူးပြု၍ ဆက်သွယ်ပါ။</li>
+</ul>">
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+
+
+
+
+
+
+<!ENTITY sharedLongDesc "<ul>
+  <li>ဝဘ်ဆိုက်ကို လောလောဆယ် မရနိုင်ပါ သို့မဟုတ် ဝဘ်ဆာဗာ အလွန် အလုပ်များနေသောကြောင့် ဖြစ်ပါလိမ့်မည်။ ကျေးဇူးပြု၍
+    ခေတ္တစောင့်ဆိုင်းပြီး ထပ်မံ ဆောင်ရွက်ကြည့်ပါ။</li>
+  <li>အကယ်၍ မည်သည့်စာမျက်နှာမျှ မဖွင့်နိုင်ဘူးဆိုပါက ကွန်ပျူတာ၏ ကွန်ယက်ချိတ်ဆက်မှုကို
+    စစ်ဆေးပါ။</li>
+  <li>အကယ်၍ ကွန်ပျူတာ သို့မဟုတ် ကွန်ယက်ကို မီးနံရံ သို့မဟုတ် ကြားခံဆာဗာဖြင့် ကာကွယ်ထားပါက
+    &brandShortName; သည် ဝဘ်ကို အသုံးပြုခွင့် ရှိမရှိ စစ်ဆေးပါ။</li>
+</ul>">
+
+<!ENTITY cspBlocked.longDesc "<p>&brandShortName; သည်ယခု၀တ်ဆိုက်အားပါ၀င်နေသောအရာတစ်ခု၏လုံခြုံရေး ကြောင့်ရယူခြင်းကိုခွင့်မပြုပါ.</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>အချက်အလက်ကူးယူပြောင်းခြင်းပြသာနာကြောင့်၀တ်ဆိုက်အားမပြသနိုင်ပါ။</p><ul><li>၀တ်ဆိုက်ပိုင်ရှင်များဤပြသာနာအားအသိပေးရန်ကျေးဇူးပြုပြီးဆက်သွယ်ပေးပါ။</li></ul>">
+
+
+<!ENTITY errorReporting.automatic2 "မလိုတမာဝဘ်ဆိုက်များကို Mozilla က ခွဲခြားသတ်မှတ်ရာတွင်နှင့် ပိတ်ပင်တားဆီးရာတွင် ကူညီရန် ယခုကိစ္စကဲ့သို့သော အမှားများကို အကြောင်းကြားပေးပို့ပါ။">
+<!ENTITY errorReporting.learnMore "ပိုမို လေ့လာပါ…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>၀တ်ဆိုက်ပိုင်ရှင်အားဤပြသာနားအားတင်ပြရန်ဆက်သွယ်ပါ</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Advanced info: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.copyToClipboard.label "စာကို ကလစ်ဘုတ်သို့ ကူးပါ">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span>သည် အိုဟောင်းပြီး တိုက်ခိုက်ရန်လွယ်ကူသည့် လုံခြုံရေးနည်းပညာကို အသုံးပြုထားသည်။ တိုက်ခိုက်သူသည် သင်လုံခြုံသည်ဟုထင်သည့် အချက်အလက်များကို လွယ်ကူစွာ ဖော်ထုတ်နိုင်ပါလိမ့်မည်။ သင်လာရောက်မလည်ပတ်မီ ဝဘ်ဆိုဒ်စီမံခန့်ခွဲသူသည် ဆာဗာကို အရင်ဆုံး ပြုပြင်ဖြေရှင်းရန် လိုအပ်သည်။</p><p>Error code: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+
+
+
+<!ENTITY prefReset.longDesc "သင့်ကွန်ယက်လုံခြုံရေးအပြင်အဆင်များတွင် ဒီပြဿနာဖြစ်နေသည်ဟု ထင်မြင်ရပါသည်။ သင်သည် မူလအပြင်အဆင်များအတိုင်း ပြန်လည်သတ်မှတ်လိုပါသလား။">
+<!ENTITY prefReset.label "မူလသတ်မှတ်ထားသည့်အတိုင်း ပြန်ထားပါ">
+

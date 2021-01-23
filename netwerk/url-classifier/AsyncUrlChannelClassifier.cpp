@@ -14,8 +14,6 @@
 #include "nsContentUtils.h"
 #include "nsIChannel.h"
 #include "nsIHttpChannel.h"
-#include "nsIHttpChannelInternal.h"
-#include "nsIURIClassifier.h"
 #include "nsNetCID.h"
 #include "nsNetUtil.h"
 #include "nsPrintfCString.h"
@@ -66,7 +64,9 @@ class URIData {
  public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(URIData);
 
-  static nsresult Create(nsIURI* aURI, nsIURI* aInnermostURI, URIData** aData);
+  static nsresult Create(nsIURI* aURI, nsIURI* aInnermostURI,
+                         nsIUrlClassifierFeature::URIType aURIType,
+                         URIData** aData);
 
   bool IsEqual(nsIURI* aURI) const;
 
@@ -81,16 +81,20 @@ class URIData {
   nsCOMPtr<nsIURI> mURI;
   nsCString mURISpec;
   nsTArray<nsCString> mFragments;
+  nsIUrlClassifierFeature::URIType mURIType;
 };
 
 /* static */
-nsresult URIData::Create(nsIURI* aURI, nsIURI* aInnermostURI, URIData** aData) {
+nsresult URIData::Create(nsIURI* aURI, nsIURI* aInnermostURI,
+                         nsIUrlClassifierFeature::URIType aURIType,
+                         URIData** aData) {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aURI);
   MOZ_ASSERT(aInnermostURI);
 
   RefPtr<URIData> data = new URIData();
   data->mURI = aURI;
+  data->mURIType = aURIType;
 
   nsUrlClassifierUtils* utilsService = nsUrlClassifierUtils::GetInstance();
   if (NS_WARN_IF(!utilsService)) {
@@ -111,9 +115,7 @@ nsresult URIData::Create(nsIURI* aURI, nsIURI* aInnermostURI, URIData** aData) {
 
 URIData::URIData() { MOZ_ASSERT(NS_IsMainThread()); }
 
-URIData::~URIData() {
-  NS_ReleaseOnMainThreadSystemGroup("URIData:mURI", mURI.forget());
-}
+URIData::~URIData() { NS_ReleaseOnMainThread("URIData:mURI", mURI.forget()); }
 
 bool URIData::IsEqual(nsIURI* aURI) const {
   MOZ_ASSERT(NS_IsMainThread());
@@ -132,7 +134,14 @@ const nsTArray<nsCString>& URIData::Fragments() {
   MOZ_ASSERT(!NS_IsMainThread());
 
   if (mFragments.IsEmpty()) {
-    nsresult rv = LookupCache::GetLookupFragments(mURISpec, &mFragments);
+    nsresult rv;
+
+    if (mURIType == nsIUrlClassifierFeature::pairwiseWhitelistURI) {
+      rv = LookupCache::GetLookupWhitelistFragments(mURISpec, &mFragments);
+    } else {
+      rv = LookupCache::GetLookupFragments(mURISpec, &mFragments);
+    }
+
     Unused << NS_WARN_IF(NS_FAILED(rv));
   }
 
@@ -286,7 +295,7 @@ class FeatureData {
 FeatureData::FeatureData() : mState(eUnclassified) {}
 
 FeatureData::~FeatureData() {
-  NS_ReleaseOnMainThreadSystemGroup("FeatureData:mFeature", mFeature.forget());
+  NS_ReleaseOnMainThread("FeatureData:mFeature", mFeature.forget());
 }
 
 nsresult FeatureData::Initialize(FeatureTask* aTask, nsIChannel* aChannel,
@@ -506,6 +515,7 @@ class FeatureTask {
   void CompleteClassification();
 
   nsresult GetOrCreateURIData(nsIURI* aURI, nsIURI* aInnermostURI,
+                              nsIUrlClassifierFeature::URIType aURIType,
                               URIData** aData);
 
   nsresult GetOrCreateTableData(URIData* aURIData, const nsACString& aTable,
@@ -572,13 +582,14 @@ FeatureTask::FeatureTask(nsIChannel* aChannel,
 }
 
 FeatureTask::~FeatureTask() {
-  NS_ReleaseOnMainThreadSystemGroup("FeatureTask::mChannel", mChannel.forget());
-  NS_ReleaseOnMainThreadSystemGroup("FeatureTask::mCallbackHolder",
-                                    mCallbackHolder.forget());
+  NS_ReleaseOnMainThread("FeatureTask::mChannel", mChannel.forget());
+  NS_ReleaseOnMainThread("FeatureTask::mCallbackHolder",
+                         mCallbackHolder.forget());
 }
 
-nsresult FeatureTask::GetOrCreateURIData(nsIURI* aURI, nsIURI* aInnermostURI,
-                                         URIData** aData) {
+nsresult FeatureTask::GetOrCreateURIData(
+    nsIURI* aURI, nsIURI* aInnermostURI,
+    nsIUrlClassifierFeature::URIType aURIType, URIData** aData) {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aURI);
   MOZ_ASSERT(aInnermostURI);
@@ -601,7 +612,8 @@ nsresult FeatureTask::GetOrCreateURIData(nsIURI* aURI, nsIURI* aInnermostURI,
   }
 
   RefPtr<URIData> data;
-  nsresult rv = URIData::Create(aURI, aInnermostURI, getter_AddRefs(data));
+  nsresult rv =
+      URIData::Create(aURI, aInnermostURI, aURIType, getter_AddRefs(data));
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
@@ -688,16 +700,23 @@ nsresult FeatureData::InitializeList(
           this, aListType, aChannel));
 
   nsCOMPtr<nsIURI> uri;
-  nsresult rv =
-      mFeature->GetURIByListType(aChannel, aListType, getter_AddRefs(uri));
-  if (NS_WARN_IF(NS_FAILED(rv)) || !uri) {
+  nsIUrlClassifierFeature::URIType URIType;
+  nsresult rv = mFeature->GetURIByListType(aChannel, aListType, &URIType,
+                                           getter_AddRefs(uri));
+  if (NS_WARN_IF(NS_FAILED(rv))) {
     if (UC_LOG_ENABLED()) {
       nsAutoCString errorName;
       GetErrorName(rv, errorName);
-      UC_LOG(("FeatureData::InitializeList got an unexpected error (rv=%s)",
-              errorName.get()));
+      UC_LOG(("FeatureData::InitializeList[%p] got an unexpected error (rv=%s)",
+              this, errorName.get()));
     }
     return rv;
+  }
+
+  if (!uri) {
+    // Return success when the URI is empty to conitnue to do the lookup.
+    UC_LOG(("FeatureData::InitializeList[%p] got an empty URL", this));
+    return NS_OK;
   }
 
   nsCOMPtr<nsIURI> innermostURI = NS_GetInnermostURI(uri);
@@ -723,7 +742,8 @@ nsresult FeatureData::InitializeList(
   }
 
   RefPtr<URIData> uriData;
-  rv = aTask->GetOrCreateURIData(uri, innermostURI, getter_AddRefs(uriData));
+  rv = aTask->GetOrCreateURIData(uri, innermostURI, URIType,
+                                 getter_AddRefs(uriData));
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }

@@ -4,13 +4,16 @@
 
 from __future__ import absolute_import, print_function
 
-from StringIO import StringIO
-import json
+import codecs
 import fnmatch
+import io
+import json
 import os
 import shutil
 import sys
 import types
+
+from six import string_types, StringIO
 
 from .ini import read_ini
 from .filters import (
@@ -23,7 +26,6 @@ from .filters import (
 __all__ = ['ManifestParser', 'TestManifest', 'convert']
 
 relpath = os.path.relpath
-string = (basestring,)
 
 
 # path normalization
@@ -74,13 +76,12 @@ class ManifestParser(object):
                                 variable in this case.
         """
         self._defaults = defaults or {}
-        self._ancestor_defaults = {}
         self.tests = []
         self.manifest_defaults = {}
         self.source_files = set()
         self.strict = strict
         self.rootdir = rootdir
-        self.relativeRoot = None
+        self._root = None
         self.finder = finder
         self._handle_defaults = handle_defaults
         if manifests:
@@ -91,19 +92,44 @@ class ManifestParser(object):
             return self.finder.get(path) is not None
         return os.path.exists(path)
 
+    @property
+    def root(self):
+        if not self._root:
+            if self.rootdir is None:
+                self._root = ""
+            else:
+                assert os.path.isabs(self.rootdir)
+                self._root = self.rootdir + os.path.sep
+        return self._root
+
+    def relative_to_root(self, path):
+        # Microoptimization, because relpath is quite expensive.
+        # We know that rootdir is an absolute path or empty. If path
+        # starts with rootdir, then path is also absolute and the tail
+        # of the path is the relative path (possibly non-normalized,
+        # when here is unknown).
+        # For this to work rootdir needs to be terminated with a path
+        # separator, so that references to sibling directories with
+        # a common prefix don't get misscomputed (e.g. /root and
+        # /rootbeer/file).
+        # When the rootdir is unknown, the relpath needs to be left
+        # unchanged. We use an empty string as rootdir in that case,
+        # which leaves relpath unchanged after slicing.
+        if path.startswith(self.root):
+            return path[len(self.root):]
+        else:
+            return relpath(path, self.root)
+
     # methods for reading manifests
 
-    def _read(self, root, filename, defaults, defaults_only=False, parentmanifest=None):
+    def _read(self, root, filename, defaults, parentmanifest=None):
         """
         Internal recursive method for reading and parsing manifests.
         Stores all found tests in self.tests
         :param root: The base path
         :param filename: File object or string path for the base manifest file
         :param defaults: Options that apply to all items
-        :param defaults_only: If True will only gather options, not include
-                              tests. Used for upstream parent includes
-                              (default False)
-        :param parentmanifest: Filename of the parent manifest (default None)
+        :param parentmanifest: Filename of the parent manifest, relative to rootdir (default None)
         """
         def read_file(type):
             include_file = section.split(type, 1)[-1]
@@ -120,7 +146,7 @@ class ManifestParser(object):
             return include_file
 
         # get directory of this file if not file-like object
-        if isinstance(filename, string):
+        if isinstance(filename, string_types):
             # If we're using mercurial as our filesystem via a finder
             # during manifest reading, the getcwd() calls that happen
             # with abspath calls will not be meaningful, so absolute
@@ -128,28 +154,22 @@ class ManifestParser(object):
             if self.finder:
                 assert os.path.isabs(filename)
             filename = os.path.abspath(filename)
+            filename_rel = self.relative_to_root(filename)
             self.source_files.add(filename)
             if self.finder:
-                fp = self.finder.get(filename)
+                fp = codecs.getreader('utf-8')(self.finder.get(filename).open())
             else:
-                fp = open(filename)
+                fp = io.open(filename, encoding='utf-8')
             here = os.path.dirname(filename)
         else:
             fp = filename
             filename = here = None
+            filename_rel = None
         defaults['here'] = here
 
-        # Rootdir is needed for relative path calculation. Precompute it for
-        # the microoptimization used below.
-        if self.rootdir is None:
-            rootdir = ""
-        else:
-            assert os.path.isabs(self.rootdir)
-            rootdir = self.rootdir + os.path.sep
-
         # read the configuration
-        sections = read_ini(fp=fp, variables=defaults, strict=self.strict,
-                            handle_defaults=self._handle_defaults)
+        sections, defaults = read_ini(fp=fp, defaults=defaults, strict=self.strict,
+                                      handle_defaults=self._handle_defaults)
         if parentmanifest and filename:
             # A manifest can be read multiple times, via "include:", optionally
             # with section-specific variables. These variables only apply to
@@ -165,24 +185,8 @@ class ManifestParser(object):
         else:
             self.manifest_defaults[filename] = defaults
 
-        parent_section_found = False
-
         # get the tests
         for section, data in sections:
-            # In case of defaults only, no other section than parent: has to
-            # be processed.
-            if defaults_only and not section.startswith('parent:'):
-                continue
-
-            # read the parent manifest if specified
-            if section.startswith('parent:'):
-                parent_section_found = True
-
-                include_file = read_file('parent:')
-                if include_file:
-                    self._read(root, include_file, {}, True)
-                continue
-
             # a file to include
             # TODO: keep track of included file structure:
             # self.manifests = {'manifest.ini': 'relative/path.ini'}
@@ -190,18 +194,18 @@ class ManifestParser(object):
                 include_file = read_file('include:')
                 if include_file:
                     include_defaults = data.copy()
-                    self._read(root, include_file, include_defaults, parentmanifest=filename)
+                    self._read(root, include_file, include_defaults, parentmanifest=filename_rel)
                 continue
 
             # otherwise an item
-            # apply ancestor defaults, while maintaining current file priority
-            data = dict(self._ancestor_defaults.items() + data.items())
-
-            test = data
+            test = data.copy()
             test['name'] = section
 
             # Will be None if the manifest being read is a file-like object.
             test['manifest'] = filename
+            test['manifest_relpath'] = None
+            if filename:
+                test['manifest_relpath'] = filename_rel
 
             # determine the path
             path = test.get('path', section)
@@ -216,23 +220,7 @@ class ManifestParser(object):
                     path = os.path.join(here, path)
                     if '..' in path:
                         path = os.path.normpath(path)
-
-                # Microoptimization, because relpath is quite expensive.
-                # We know that rootdir is an absolute path or empty. If path
-                # starts with rootdir, then path is also absolute and the tail
-                # of the path is the relative path (possibly non-normalized,
-                # when here is unknown).
-                # For this to work rootdir needs to be terminated with a path
-                # separator, so that references to sibling directories with
-                # a common prefix don't get misscomputed (e.g. /root and
-                # /rootbeer/file).
-                # When the rootdir is unknown, the relpath needs to be left
-                # unchanged. We use an empty string as rootdir in that case,
-                # which leaves relpath unchanged after slicing.
-                if path.startswith(rootdir):
-                    _relpath = path[len(rootdir):]
-                else:
-                    _relpath = relpath(path, rootdir)
+                _relpath = self.relative_to_root(path)
 
             test['path'] = path
             test['relpath'] = _relpath
@@ -242,17 +230,10 @@ class ManifestParser(object):
                 # indicate that in the test object for the sake of identifying
                 # a test, particularly in the case a test file is included by
                 # multiple manifests.
-                test['ancestor-manifest'] = parentmanifest
+                test['ancestor_manifest'] = parentmanifest
 
             # append the item
             self.tests.append(test)
-
-        # if no parent: section was found for defaults-only, only read the
-        # defaults section of the manifest without interpreting variables
-        if defaults_only and not parent_section_found:
-            sections = read_ini(fp=fp, variables=defaults, defaults_only=True,
-                                strict=self.strict)
-            (section, self._ancestor_defaults) = sections[0]
 
     def read(self, *filenames, **defaults):
         """
@@ -264,7 +245,7 @@ class ManifestParser(object):
 
         # ensure all files exist
         missing = [filename for filename in filenames
-                   if isinstance(filename, string) and not self.path_exists(filename)]
+                   if isinstance(filename, string_types) and not self.path_exists(filename)]
         if missing:
             raise IOError('Missing files: %s' % ', '.join(missing))
 
@@ -277,7 +258,7 @@ class ManifestParser(object):
             # set the per file defaults
             defaults = _defaults.copy()
             here = None
-            if isinstance(filename, string):
+            if isinstance(filename, string_types):
                 here = os.path.dirname(os.path.abspath(filename))
                 defaults['here'] = here  # directory of master .ini file
 
@@ -326,7 +307,7 @@ class ManifestParser(object):
                 return not tags.intersection(test.keys())
 
             def dict_query(test):
-                for key, value in kwargs.items():
+                for key, value in list(kwargs.items()):
                     if test.get(key) == value:
                         return False
                 return True
@@ -335,7 +316,7 @@ class ManifestParser(object):
                 return tags.issubset(test.keys())
 
             def dict_query(test):
-                for key, value in kwargs.items():
+                for key, value in list(kwargs.items()):
                     if test.get(key) != value:
                         return False
                 return True
@@ -359,7 +340,7 @@ class ManifestParser(object):
         if tests is None:
             manifests = []
             # Make sure to return all the manifests, even ones without tests.
-            for manifest in self.manifest_defaults.keys():
+            for manifest in list(self.manifest_defaults.keys()):
                 if isinstance(manifest, tuple):
                     parentmanifest, manifest = manifest
                 if manifest not in manifests:
@@ -409,7 +390,7 @@ class ManifestParser(object):
         """
 
         files = set([])
-        if isinstance(directories, basestring):
+        if isinstance(directories, string_types):
             directories = [directories]
 
         # get files in directories
@@ -446,8 +427,8 @@ class ManifestParser(object):
 
         # open file if `fp` given as string
         close = False
-        if isinstance(fp, string):
-            fp = file(fp, 'w')
+        if isinstance(fp, string_types):
+            fp = open(fp, 'w')
             close = True
 
         # root directory
@@ -476,7 +457,7 @@ class ManifestParser(object):
             print('[DEFAULT]', file=fp)
             for tag in global_tags:
                 print('%s =' % tag, file=fp)
-            for key, value in global_kwargs.items():
+            for key, value in list(global_kwargs.items()):
                 print('%s = %s' % (key, value), file=fp)
             print(file=fp)
 
@@ -492,7 +473,15 @@ class ManifestParser(object):
             print('[%s]' % path, file=fp)
 
             # reserved keywords:
-            reserved = ['path', 'name', 'here', 'manifest', 'relpath', 'ancestor-manifest']
+            reserved = [
+                'path',
+                'name',
+                'here',
+                'manifest',
+                'manifest_relpath',
+                'relpath',
+                'ancestor_manifest'
+            ]
             for key in sorted(test.keys()):
                 if key in reserved:
                     continue
@@ -602,7 +591,7 @@ class ManifestParser(object):
         internal function to import directories
         """
 
-        if isinstance(pattern, basestring):
+        if isinstance(pattern, string_types):
             patterns = [pattern]
         else:
             patterns = pattern
@@ -692,7 +681,7 @@ class ManifestParser(object):
 
             manifest_path = os.path.join(dirpath, filename)
             if (dirnames or filenames) and not (os.path.exists(manifest_path) and overwrite):
-                with file(manifest_path, 'w') as manifest:
+                with open(manifest_path, 'w') as manifest:
                     for dirname in dirnames:
                         print('[include:%s]' % os.path.join(dirname, filename), file=manifest)
                     for _filename in filenames:
@@ -725,9 +714,9 @@ class ManifestParser(object):
         # determine output
         opened_manifest_file = None  # name of opened manifest file
         absolute = not relative_to  # whether to output absolute path names as names
-        if isinstance(write, string):
+        if isinstance(write, string_types):
             opened_manifest_file = write
-            write = file(write, 'w')
+            write = open(write, 'w')
         if write is None:
             write = StringIO()
 
@@ -746,8 +735,10 @@ class ManifestParser(object):
                              for filename in filenames]
 
             # write to manifest
-            print('\n'.join(['[%s]' % denormalize_path(filename)
-                             for filename in filenames]), file=write)
+            write_content = '\n'.join([
+                '[{}]'.format(denormalize_path(filename)) for filename in filenames
+            ])
+            print(write_content, file=write)
 
         cls._walk_directories(directories, callback, pattern=pattern, ignore=ignore)
 

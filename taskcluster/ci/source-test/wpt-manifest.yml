@@ -7,7 +7,7 @@ job-defaults:
     treeherder:
         kind: test
         tier: 2
-    worker-type: t-linux-xlarge
+    worker-type: t-linux-xlarge-source
     worker:
         docker-image: {in-tree: "lint"}
         max-run-time: 1800
@@ -22,9 +22,9 @@ upload:
         rank: build_date
     run:
         using: run-task
+        cwd: '{checkout}'
         command: >
-            cd /builds/worker/checkouts/gecko
-            && ./mach wpt-manifest-update --config testing/web-platform/wptrunner.ini --no-download
+            ./mach wpt-manifest-update --config testing/web-platform/wptrunner.ini --no-download
             && tar -cvzf manifests.tar.gz -C testing/web-platform/ meta/MANIFEST.json mozilla/meta/MANIFEST.json
     worker:
         artifacts:

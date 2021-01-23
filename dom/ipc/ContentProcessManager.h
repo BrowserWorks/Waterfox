@@ -7,119 +7,54 @@
 #ifndef mozilla_dom_ContentProcessManager_h
 #define mozilla_dom_ContentProcessManager_h
 
-#include <map>
-#include <set>
 #include "mozilla/StaticPtr.h"
 #include "mozilla/dom/TabContext.h"
 #include "mozilla/dom/ipc/IdType.h"
 #include "nsTArray.h"
+#include "nsDataHashtable.h"
 
 namespace mozilla {
 namespace dom {
 class ContentParent;
 
-struct RemoteFrameInfo {
-  ContentParentId mOpenerCpId;
-  TabId mOpenerTabId;
-  TabContext mContext;
-};
-
-struct ContentProcessInfo {
-  ContentParent* mCp;
-  ContentParentId mParentCpId;
-  std::set<ContentParentId> mChildrenCpId;
-  std::map<TabId, RemoteFrameInfo> mRemoteFrames;
-};
-
 class ContentProcessManager final {
  public:
   static ContentProcessManager* GetSingleton();
-  ~ContentProcessManager() { MOZ_COUNT_DTOR(ContentProcessManager); };
+  MOZ_COUNTED_DTOR(ContentProcessManager);
 
   /**
    * Add a new content process into the map.
-   * If aParentCpId is not 0, it's a nested content process.
    */
-  void AddContentProcess(
-      ContentParent* aChildCp,
-      const ContentParentId& aParentCpId = ContentParentId(0));
+  void AddContentProcess(ContentParent* aChildCp);
+
   /**
    * Remove the content process by id.
    */
   void RemoveContentProcess(const ContentParentId& aChildCpId);
-  /**
-   * Get the parent process's id by child process's id.
-   * Used to check if a child really belongs to the parent.
-   */
-  bool GetParentProcessId(const ContentParentId& aChildCpId,
-                          /*out*/ ContentParentId* aParentCpId);
+
   /**
    * Return the ContentParent pointer by id.
    */
   ContentParent* GetContentProcessById(const ContentParentId& aChildCpId);
 
   /**
-   * Return a list of all child process's id.
+   * Add a new browser parent into the map.
    */
-  nsTArray<ContentParentId> GetAllChildProcessById(
-      const ContentParentId& aParentCpId);
+  bool RegisterRemoteFrame(BrowserParent* aChildBp);
 
   /**
-   * Register RemoteFrameInfo with given tab id.
-   * Used when a content process wants to create a new tab. aOpenerTabId and
-   * aContext are saved in RemoteFrameInfo, which is a part of
-   * ContentProcessInfo.  We can use the tab id and process id to locate the
-   * TabContext for future use.
+   * Remove the browser parent by the given tab id.
    */
-  bool RegisterRemoteFrame(const TabId& aTabId,
-                           const ContentParentId& aOpenerCpId,
-                           const TabId& aOpenerTabId,
-                           const IPCTabContext& aContext,
-                           const ContentParentId& aChildCpId);
-
-  /**
-   * Remove the RemoteFrameInfo by the given process and tab id.
-   */
-  void UnregisterRemoteFrame(const ContentParentId& aChildCpId,
-                             const TabId& aChildTabId);
-
-  /**
-   * Get the TabContext by the given content process and tab id.
-   */
-  bool GetTabContextByProcessAndTabId(const ContentParentId& aChildCpId,
-                                      const TabId& aChildTabId,
-                                      /*out*/ TabContext* aTabContext);
-
-  /**
-   * Get all TabContext which are inside the given content process.
-   */
-  nsTArray<TabContext> GetTabContextByContentProcess(
-      const ContentParentId& aChildCpId);
-
-  /**
-   * Query a tab's opener id by the given process and tab id.
-   * XXX Currently not used. Plan to be used for bug 1020179.
-   */
-  bool GetRemoteFrameOpenerTabId(const ContentParentId& aChildCpId,
-                                 const TabId& aChildTabId,
-                                 /*out*/ ContentParentId* aOpenerCpId,
-                                 /*out*/ TabId* aOpenerTabId);
+  void UnregisterRemoteFrame(const TabId& aChildTabId);
 
   /**
    * Get the ContentParentId of the parent of the given tab id.
    */
-  ContentParentId GetTabProcessId(const TabId& aTabId);
-
-  /**
-   * Get all BrowserParents' Ids managed by the givent content process.
-   * Return empty array when BrowserParent couldn't be found via aChildCpId
-   */
-  nsTArray<TabId> GetBrowserParentsByProcessId(
-      const ContentParentId& aChildCpId);
+  ContentParentId GetTabProcessId(const TabId& aChildTabId);
 
   /**
    * Get the number of BrowserParents managed by the givent content process.
-   * Return 0 when BrowserParent couldn't be found via aChildCpId.
+   * Return 0 when ContentParent couldn't be found via aChildCpId.
    */
   uint32_t GetBrowserParentCountByProcessId(const ContentParentId& aChildCpId);
 
@@ -127,7 +62,6 @@ class ContentProcessManager final {
    * Get the BrowserParent by the given content process and tab id.
    * Return nullptr when BrowserParent couldn't be found via aChildCpId
    * and aChildTabId.
-   * (or probably because the BrowserParent is not in the chrome process)
    */
   already_AddRefed<BrowserParent> GetBrowserParentByProcessAndTabId(
       const ContentParentId& aChildCpId, const TabId& aChildTabId);
@@ -135,23 +69,21 @@ class ContentProcessManager final {
   /**
    * Get the BrowserParent on top level by the given content process and tab id.
    *
-   *  This function return the BrowserParent belong to the chrome process,
-   *  called top-level BrowserParent here, by given aChildCpId and aChildTabId.
-   *  The given aChildCpId and aChildTabId are related to a content process
-   *  and a tab respectively. In nested-oop, the top-level BrowserParent isn't
-   *  always the opener tab of the given tab in content process. This function
-   *  will call GetBrowserParentByProcessAndTabId iteratively until the Tab
-   * returned is belong to the chrome process.
+   * This function returns the BrowserParent directly within a BrowserHost,
+   * called top-level BrowserParent here, by given aChildCpId and aChildTabId.
+   * The given aChildCpId and aChildTabId are related to a content process
+   * and a tab respectively.
    */
   already_AddRefed<BrowserParent> GetTopLevelBrowserParentByProcessAndTabId(
       const ContentParentId& aChildCpId, const TabId& aChildTabId);
 
  private:
   static StaticAutoPtr<ContentProcessManager> sSingleton;
-  std::map<ContentParentId, ContentProcessInfo> mContentParentMap;
-  std::map<TabId, ContentParentId> mTabProcessMap;
 
-  ContentProcessManager() { MOZ_COUNT_CTOR(ContentProcessManager); };
+  nsDataHashtable<nsUint64HashKey, ContentParent*> mContentParentMap;
+  nsDataHashtable<nsUint64HashKey, BrowserParent*> mBrowserParentMap;
+
+  MOZ_COUNTED_DEFAULT_CTOR(ContentProcessManager);
 };
 
 }  // namespace dom

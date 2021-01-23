@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.character.encoding2.title  "文字編碼">
+<!ENTITY messageDisplay.caption          "訊息顯示">
+<!ENTITY viewFallbackCharset2.label      "備用字元編碼:">
+<!ENTITY viewFallbackCharset2.accesskey  "E">
+<!ENTITY viewFallbackCharset.desc        "（用於未宣告編碼的老舊內容。）">
+
+<!ENTITY composingMessages.caption       "撰寫訊息">
+<!ENTITY useMIME.label                   "包含 8 位元字元的郵件將使用「quoted printable」的 MIME 編碼方式寄出。若不勾選此項，則以郵件原本的編碼方式寄出。">
+<!ENTITY useMIME.accesskey               "F">
+<!ENTITY sendDefaultCharset2.label       "預設文字編碼:">
+<!ENTITY sendDefaultCharset2.accesskey   "T">
+<!ENTITY replyInDefaultCharset3.label    "可用時，在回信中使用預設文字編碼（未勾選時，僅有新訊息會套用此預設值。）">
+<!ENTITY replyInDefaultCharset3.accesskey "W">
+

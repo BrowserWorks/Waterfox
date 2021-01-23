@@ -1,0 +1,290 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the browser main menu items -->
+<!-- LOCALIZATION NOTE : FILE Do not translate commandkeys -->
+
+<!ENTITY appmenu.tooltip                     "Aperir le menu">
+<!ENTITY navbarOverflow.label                "Plus instrumentos…">
+
+<!-- Tab context menu -->
+
+<!-- LOCALIZATION NOTE (pinTab.label, unpinTab.label): "Pin" is being
+used as a metaphor for expressing the fact that these tabs are "pinned" to the
+left edge of the tabstrip. Really we just want the string to express the idea
+that this is a lightweight and reversible action that keeps your tab where you
+can reach it easily. -->
+<!ENTITY  pinTab.label                       "Clavar le scheda">
+<!ENTITY  unpinTab.label                     "Disclavar le scheda">
+
+<!ENTITY  listAllTabs.label      "Listar tote le schedas">
+
+<!ENTITY tabCmd.label "Nove scheda">
+<!ENTITY openFileCmd.label "Aperir un file…">
+<!ENTITY printCmd.label "Imprimer…">
+
+<!ENTITY taskManagerCmd.label "Gestor de activitate">
+
+<!ENTITY menubarCmd.label "Barra de menu">
+<!ENTITY menubarCmd.accesskey "u">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY navbar.accessibleLabel "Navigation">
+<!ENTITY personalbarCmd.label "Barra de marcapaginas">
+<!ENTITY personalbarCmd.accesskey "m">
+<!-- LOCALIZATION NOTE: The accessibleLabel is a spoken label that should not
+include the word "toolbar" or such, because screen readers already know that
+this container is a toolbar. This avoids double-speaking. -->
+<!ENTITY personalbar.accessibleLabel "Marcapaginas">
+<!ENTITY bookmarksToolbarItem.label "Elementos del barra de marcapaginas">
+
+<!ENTITY fullScreenCmd.label "Plen schermo">
+
+
+<!ENTITY pictureInPictureHideToggle.label "Celar le commutator imagine-in-imagine">
+<!ENTITY pictureInPictureHideToggle.accesskey "C">
+
+<!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
+     for the Waterfox Account toolbar menu screen. The `Signed in as` text is
+     followed by the user's email. -->
+<!ENTITY fxa.menu.syncSettings2.label "Parametros de &syncBrand.shortName.label;">
+<!ENTITY fxa.menu.connectAnotherDevice2.label "Connecter un altere apparato…">
+<!ENTITY fxa.menu.firefoxAccount "&syncBrand.fxAccount.label;">
+
+<!ENTITY fxa.menu.signin.label "Aperir session in &brandProductName;">
+<!ENTITY fxa.menu.turnOnSync.label "Activar &syncBrand.shortName.label;">
+<!ENTITY fxa.menu.firefoxServices.label "Servicios de &brandProductName;">
+<!ENTITY fxa.menu.account.label "Conto">
+<!ENTITY fxa.menu.settings.label "Parametros">
+<!ENTITY fxa.menu.accountSettings.label "Parametros del conto">
+<!ENTITY fxa.menu.manageAccount2.label "Gerer le conto">
+<!ENTITY fxa.menu.signOut.label "Clauder session…">
+<!ENTITY fxa.menu.setupSync.label "Configurar &syncBrand.shortName.label;…">
+
+<!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
+     for the Waterfox Account toolbar menu screen.  -->
+<!ENTITY fxa.service.sendTab.description "Invia un scheda instantaneemente a qualcunque apparato in que tu ha aperite session.">
+
+<!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
+     fullscreenWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring fullscreen.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY fullscreenWarning.beforeDomain.label "">
+<!ENTITY fullscreenWarning.afterDomain.label "es ora in plen schermo">
+<!ENTITY fullscreenWarning.generic.label "Le documento es ora in plen schermo">
+
+<!-- LOCALIZATION NOTE (exitDOMFullscreen.button,
+     exitDOMFullscreenMac.button): the "escape" button on PC keyboards
+     is uppercase, while on Mac keyboards it is lowercase -->
+<!ENTITY exitDOMFullscreen.button "Exir del plen schermo (Esc)">
+<!ENTITY exitDOMFullscreenMac.button "Exir del plen schermo (esc)">
+
+<!-- LOCALIZATION NOTE (pointerlockWarning.beforeDomain.label,
+     pointerlockWarning.afterDomain.label): these two strings are used
+     respectively before and after the domain requiring pointerlock.
+     Localizers can use one of them, or both, to better adapt this
+     sentence to their language. -->
+<!ENTITY pointerlockWarning.beforeDomain.label "">
+<!ENTITY pointerlockWarning.afterDomain.label "ha controlo super tu punctator. Preme Esc pro recuperar le controlo.">
+<!ENTITY pointerlockWarning.generic.label "Iste documento ha controlo super tu punctator. Preme Esc pro recuperar le controlo.">
+
+<!ENTITY showAllBookmarks2.label "Monstrar tote le marcapaginas">
+<!ENTITY recentBookmarks.label "Marcapaginas recente">
+<!ENTITY bookmarksToolbarChevron.tooltip "Monstrar plus marcapaginas">
+
+<!ENTITY printButton.label            "Imprimer">
+<!ENTITY printButton.tooltip          "Imprimer iste pagina">
+
+<!ENTITY searchItem.title             "Cercar">
+
+<!-- Toolbar items -->
+<!ENTITY homeButton.label             "Initio">
+<!ENTITY homeButton.defaultPage.tooltip "Pagina principal de &brandShortName;">
+
+<!ENTITY bookmarksButton.label          "Marcapaginas">
+
+<!ENTITY bookmarksSubview.label             "Marcapaginas">
+<!ENTITY bookmarksMenuButton2.label         "Menu de marcapaginas">
+<!ENTITY bookmarksMenuButton.other.label    "Altere marcapaginas">
+<!ENTITY bookmarksMenuButton.mobile.label   "Marcapaginas del apparatos mobile">
+<!ENTITY viewBookmarksSidebar2.label        "Vider le barra lateral de marcapaginas">
+<!ENTITY hideBookmarksSidebar.label         "Celar le barra lateral de marcapaginas">
+<!ENTITY viewBookmarksToolbar.label         "Vider le barra de marcapaginas">
+<!ENTITY hideBookmarksToolbar.label         "Celar le barra de marcapaginas">
+<!ENTITY searchBookmarks.label              "Cercar in le marcapaginas">
+<!ENTITY bookmarkingTools.label             "Instrumentos de marcapaginas">
+<!ENTITY addBookmarksMenu.label             "Adder le menu de marcapaginas al barra">
+<!ENTITY removeBookmarksMenu.label          "Remover le menu de marcapaginas del barra">
+
+<!ENTITY historyButton.label            "Chronologia">
+
+<!ENTITY downloads.label              "Discargamentos">
+<!-- LOCALIZATION NOTE (libraryDownloads.label): This label is similar to
+  -  downloads.label, but used in the Library panel. -->
+<!ENTITY libraryDownloads.label       "Discargas">
+<!ENTITY addons.label                 "Additivos">
+
+<!ENTITY webDeveloperMenu.label       "Disveloppamento web">
+
+<!ENTITY newNavigatorCmd.label        "Nove fenestra">
+<!ENTITY newPrivateWindow.label     "Nove fenestra private">
+
+<!ENTITY editMenu.label         "Edition">
+<!ENTITY preferencesCmd2.label       "Optiones">
+<!ENTITY preferencesCmdUnix.label       "Preferentias">
+<!ENTITY logins.label                           "Contos e contrasignos">
+
+<!ENTITY overflowCustomizeToolbar.label       "Personalisar le barra de instrumentos…">
+<!ENTITY overflowCustomizeToolbar.accesskey   "P">
+
+<!ENTITY historyMenu.label "Chronologia">
+<!ENTITY historyUndoMenu.label "Schedas claudite recentemente">
+<!-- LOCALIZATION NOTE (historyUndoWindowMenu): see bug 394759 -->
+<!ENTITY historyUndoWindowMenu.label "Fenestras claudite recentemente">
+
+<!ENTITY appMenuHistory.showAll.label "Monstrar tote le chronologia">
+<!ENTITY appMenuHistory.clearRecent.label "Vacuar le chronologia recente…">
+<!ENTITY appMenuHistory.restoreSession.label "Restaurar le session previe">
+<!ENTITY appMenuHistory.viewSidebar.label "Vider barra lateral de chronologia">
+<!ENTITY appMenuHistory.hideSidebar.label "Celar barra lateral de chronologia">
+<!ENTITY appMenuHistory.recentHistory.label "Chronologia recente">
+<!ENTITY appMenuHelp.label "Adjuta">
+
+<!ENTITY appMenuRemoteTabs.label "Schedas synchronisate">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.notabs.label): This is shown beneath
+     the name of a device when that device has no open tabs -->
+<!ENTITY appMenuRemoteTabs.notabs.label "Nulle schedas aperte">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showMore.label, appMenuRemoteTabs.showMore.tooltip):
+     This is shown after the tabs list if we can display more tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showMore.label "Monstrar plus">
+<!ENTITY appMenuRemoteTabs.showMore.tooltip "Monstrar plus schedas de iste apparato">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.showAll.label, appMenuRemoteTabs.showAll.tooltip):
+     This is shown after the tabs list if we can all the remaining tabs by clicking on the button -->
+<!ENTITY appMenuRemoteTabs.showAll.label "Monstrar totes">
+<!ENTITY appMenuRemoteTabs.showAll.tooltip "Monstrar tote le schedas de iste apparato">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.tabsnotsyncing.label): This is shown
+     when Sync is configured but syncing tabs is disabled. -->
+<!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Activa le synchronisation de schedas pro vider un lista de schedas de tu altere apparatos.">
+<!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
+     when Sync is configured but this appears to be the only device attached to
+     the account. We also show links to download Waterfox for android/ios. -->
+<!ENTITY appMenuRemoteTabs.noclients.subtitle "Desira tu vider le schedas de altere apparatos hic?">
+<!ENTITY appMenuRemoteTabs.opensyncprefs.label "Aperir le preferentias de Sync">
+<!ENTITY appMenuRemoteTabs.welcome.label "Vider un lista de schedas de tu altere apparatos.">
+<!ENTITY appMenuRemoteTabs.unverified.label "Il necesse verificar tu conto.">
+<!ENTITY appMenuRemoteTabs.signintosync.label "Aperir session in &syncBrand.shortName.label;…">
+<!ENTITY appMenuRemoteTabs.turnonsync.label "Activar &syncBrand.shortName.label;…">
+<!ENTITY appMenuRemoteTabs.managedevices.label "Gerer le apparatos…">
+<!ENTITY appMenuRemoteTabs.sidebar.label "Vider le barra lateral de schedas synchronisate">
+<!ENTITY appMenuRemoteTabs.hidesidebar.label "Celar le barra lateral de schedas synchronisate">
+<!ENTITY appMenuRemoteTabs.connectdevice.label "Connecter un altere apparato">
+
+<!ENTITY appMenuRecentHighlights.label "Evidentias recente">
+
+<!ENTITY customizeMenu.addToToolbar.label "Adder al barra de instrumentos">
+<!ENTITY customizeMenu.addToToolbar.accesskey "A">
+<!-- LOCALIZATION NOTE (customizeMenu.addToOverflowMenu.label,
+     customizeMenu.unpinFromOverflowMenu.label)
+     The overflow menu is the menu that appears if you click the chevron (>> button)
+     in the location bar. -->
+<!ENTITY customizeMenu.addToOverflowMenu.label "Adder al menu disbordante">
+<!ENTITY customizeMenu.addToOverflowMenu.accesskey "M">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.label "Disclavar del menu disbordante">
+<!ENTITY customizeMenu.unpinFromOverflowMenu.accesskey "U">
+<!ENTITY customizeMenu.removeFromToolbar.label "Remover del barra de instrumentos">
+<!ENTITY customizeMenu.removeFromToolbar.accesskey "R">
+<!ENTITY customizeMenu.addMoreItems.label "Adder plus elementos…">
+<!ENTITY customizeMenu.addMoreItems.accesskey "A">
+
+<!-- LOCALIZATION NOTE (moreMenu.label) This label is used in the new Photon
+    app (hamburger) menu. When clicked, it opens a subview that contains
+    secondary commands. -->
+<!ENTITY moreMenu.label "Plus">
+
+<!ENTITY contentSearchSubmit.tooltip  "Submitter cerca">
+
+<!-- LOCALIZATION NOTE (searchInput.placeholder):
+     This string is displayed in the search box when the input field is empty. -->
+<!ENTITY searchInput.placeholder      "Cercar">
+<!ENTITY searchIcon.tooltip           "Cercar">
+
+<!ENTITY openLinkCmdInTab.accesskey   "s">
+
+<!ENTITY pageAction.copyLink.label    "Copiar le ligamine">
+
+<!-- LOCALIZATION NOTE(pocket-button.tooltiptext, saveToPocketCmd.label, saveLinkToPocketCmd.label, pocketMenuitem.label):
+  "Pocket" is a brand name. -->
+<!ENTITY saveToPocketCmd.label        "Salvar le pagina in Pocket">
+<!ENTITY pocketMenuitem.label         "Vider le lista de Pocket">
+
+<!ENTITY emailPageCmd.label           "Inviar le ligamine per email…">
+
+<!-- Media (video/audio) controls -->
+
+<!-- LOCALIZATION NOTE :
+fullZoomEnlargeCmd.commandkey3, fullZoomReduceCmd.commandkey2 and
+fullZoomResetCmd.commandkey2 are alternative acceleration keys for zoom.
+If shift key is needed with your locale popular keyboard for them,
+you can use these alternative items. Otherwise, their values should be empty.  -->
+
+<!ENTITY fullZoom.label                 "Zoom">
+
+<!ENTITY sidebarCloseButton.tooltip     "Clauder barra lateral">
+
+<!ENTITY quitApplicationCmdWin2.label       "Exir">
+<!ENTITY quitApplicationCmdWin2.accesskey   "E">
+<!ENTITY quitApplicationCmdWin2.tooltip     "Exir de &brandShorterName;">
+<!ENTITY quitApplicationCmd.label       "Quitar">
+<!ENTITY quitApplicationCmd.accesskey   "Q">
+<!ENTITY quitApplicationCmdMac2.label   "Quitar &brandShorterName;">
+
+<!ENTITY allowPopups.accesskey "p">
+<!-- On Windows we use the term "Options" to describe settings, but
+     on Linux and Mac OS X we use "Preferences" - carry that distinction
+     over into this string, which is used in the "popup blocked" info bar . -->
+<!ENTITY editPopupSettingsUnix.label "Modificar le preferentias del blocator de fenestras emergente…">
+<!ENTITY editPopupSettings.label "Modificar le optiones del blocator de fenestras emergente…">
+<!ENTITY editPopupSettings.accesskey "E">
+<!ENTITY dontShowMessage.accesskey "D">
+
+<!ENTITY findOnCmd.label     "Cercar in iste pagina…">
+
+<!ENTITY spellAddDictionaries.label "Adder dictionarios…">
+<!ENTITY spellAddDictionaries.accesskey "A">
+
+
+<!-- Name for the tabs toolbar as spoken by screen readers.
+     The word "toolbar" is appended automatically and should not be contained below! -->
+<!ENTITY tabsToolbar.label "Schedas del navigator">
+
+<!ENTITY syncBrand.shortName.label    "Sync">
+
+<!ENTITY customizeMode.autoHideDownloadsButton.label "Celar automaticamente">
+
+
+<!ENTITY uiTour.infoPanel.close "Clauder">
+
+<!ENTITY panicButton.thankyou.msg1                "Tu chronologia recente es vacue.">
+<!ENTITY panicButton.thankyou.msg2                "Naviga cautemente!">
+<!ENTITY panicButton.thankyou.buttonlabel         "Gratias!">
+
+<!ENTITY updateAvailable.panelUI.label "Discargar actualisation de &brandShorterName;">
+<!ENTITY updateManual.panelUI.label "Discargar un nove copia de &brandShorterName;">
+<!ENTITY updateUnsupported.panelUI.label "Impossibile installar altere actualisationes">
+<!ENTITY updateRestart.panelUI.label2 "Reinitiar pro actualisar &brandShorterName;">
+
+<!ENTITY sendToDevice.syncNotReady.label "Synchronisante apparatos…">
+
+<!ENTITY pageAction.shareUrl.label "Compartir">
+<!ENTITY pageAction.shareMore.label "Plus…">
+
+<!ENTITY libraryButton.tooltip "Vider chronologia, marcapaginas salvate, e plus">
+
+<!-- LOCALIZATION NOTE: (accessibilityIndicator.tooltip): This is used to
+     display a tooltip for accessibility indicator in toolbar/tabbar. It is also
+     used as a textual label for the indicator used by assistive technology
+     users. -->
+<!ENTITY accessibilityIndicator.tooltip "Functionalitates de accessibilitate active">

@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Roghainnean na leubail">
+
+<!ENTITY Settings.label "Roghainnean">
+<!ENTITY Settings.accesskey "R">
+
+<!ENTITY EditLabelText.label "Deasaich an teacsa:">
+<!ENTITY EditLabelText.accesskey "t">
+<!ENTITY LabelFor.label "Airson na h-uidheim-smachd:">
+<!ENTITY LabelFor.accesskey "A">
+<!ENTITY AccessKey.label "Iuchair inntrigidh:">
+<!ENTITY AccessKey.accesskey "I">
+
+<!ENTITY RemoveLabel.label "Thoir air falbh an leubail">
+<!ENTITY RemoveLabel.accesskey "r">

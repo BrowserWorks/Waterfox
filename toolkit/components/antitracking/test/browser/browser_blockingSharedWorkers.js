@@ -1,8 +1,8 @@
 /* import-globals-from antitracking_head.js */
 
-requestLongerTimeout(2);
+requestLongerTimeout(4);
 
-AntiTracking.runTest(
+AntiTracking.runTestInNormalAndPrivateMode(
   "SharedWorkers",
   async _ => {
     try {
@@ -26,7 +26,7 @@ AntiTracking.runTest(
   }
 );
 
-AntiTracking.runTest(
+AntiTracking.runTestInNormalAndPrivateMode(
   "SharedWorkers and Storage Access API",
   async _ => {
     /* import-globals-from storageAccessAPIHelpers.js */
@@ -44,9 +44,12 @@ AntiTracking.runTest(
     await callRequestStorageAccess();
 
     if (
-      SpecialPowers.Services.prefs.getIntPref(
-        "network.cookie.cookieBehavior"
-      ) == SpecialPowers.Ci.nsICookieService.BEHAVIOR_REJECT
+      [
+        SpecialPowers.Ci.nsICookieService.BEHAVIOR_REJECT,
+        SpecialPowers.Ci.nsICookieService.BEHAVIOR_REJECT_FOREIGN,
+      ].includes(
+        SpecialPowers.Services.prefs.getIntPref("network.cookie.cookieBehavior")
+      )
     ) {
       try {
         new SharedWorker("a.js", "foo");

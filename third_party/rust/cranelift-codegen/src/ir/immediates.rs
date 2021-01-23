@@ -1,13 +1,44 @@
 //! Immediate operands for Cranelift instructions
 //!
 //! This module defines the types of immediate operands that can appear on Cranelift instructions.
-//! Each type here should have a corresponding definition in the `cranelift.immediates` Python
-//! module in the meta language.
+//! Each type here should have a corresponding definition in the
+//! `cranelift-codegen/meta/src/shared/immediates` crate in the meta language.
 
+use alloc::vec::Vec;
 use core::fmt::{self, Display, Formatter};
-use core::mem;
 use core::str::FromStr;
 use core::{i32, u32};
+
+/// Convert a type into a vector of bytes; all implementors in this file must use little-endian
+/// orderings of bytes to match WebAssembly's little-endianness.
+pub trait IntoBytes {
+    /// Return the little-endian byte representation of the implementing type.
+    fn into_bytes(self) -> Vec<u8>;
+}
+
+impl IntoBytes for u8 {
+    fn into_bytes(self) -> Vec<u8> {
+        vec![self]
+    }
+}
+
+impl IntoBytes for i16 {
+    fn into_bytes(self) -> Vec<u8> {
+        self.to_le_bytes().to_vec()
+    }
+}
+
+impl IntoBytes for i32 {
+    fn into_bytes(self) -> Vec<u8> {
+        self.to_le_bytes().to_vec()
+    }
+}
+
+impl IntoBytes for Vec<u8> {
+    fn into_bytes(self) -> Vec<u8> {
+        self
+    }
+}
 
 /// 64-bit immediate signed integer operand.
 ///
@@ -19,12 +50,17 @@ pub struct Imm64(i64);
 impl Imm64 {
     /// Create a new `Imm64` representing the signed number `x`.
     pub fn new(x: i64) -> Self {
-        Imm64(x)
+        Self(x)
     }
 
     /// Return self negated.
     pub fn wrapping_neg(self) -> Self {
-        Imm64(self.0.wrapping_neg())
+        Self(self.0.wrapping_neg())
+    }
+
+    /// Return bits of this immediate.
+    pub fn bits(&self) -> i64 {
+        self.0
     }
 }
 
@@ -34,9 +70,15 @@ impl Into<i64> for Imm64 {
     }
 }
 
+impl IntoBytes for Imm64 {
+    fn into_bytes(self) -> Vec<u8> {
+        self.0.to_le_bytes().to_vec()
+    }
+}
+
 impl From<i64> for Imm64 {
     fn from(x: i64) -> Self {
-        Imm64(x)
+        Self(x)
     }
 }
 
@@ -93,12 +135,12 @@ pub struct Uimm64(u64);
 impl Uimm64 {
     /// Create a new `Uimm64` representing the unsigned number `x`.
     pub fn new(x: u64) -> Self {
-        Uimm64(x)
+        Self(x)
     }
 
     /// Return self negated.
     pub fn wrapping_neg(self) -> Self {
-        Uimm64(self.0.wrapping_neg())
+        Self(self.0.wrapping_neg())
     }
 }
 
@@ -110,7 +152,7 @@ impl Into<u64> for Uimm64 {
 
 impl From<u64> for Uimm64 {
     fn from(x: u64) -> Self {
-        Uimm64(x)
+        Self(x)
     }
 }
 
@@ -235,7 +277,7 @@ impl Into<i64> for Uimm32 {
 
 impl From<u32> for Uimm32 {
     fn from(x: u32) -> Self {
-        Uimm32(x)
+        Self(x)
     }
 }
 
@@ -256,11 +298,43 @@ impl FromStr for Uimm32 {
     fn from_str(s: &str) -> Result<Self, &'static str> {
         parse_i64(s).and_then(|x| {
             if 0 <= x && x <= i64::from(u32::MAX) {
-                Ok(Uimm32(x as u32))
+                Ok(Self(x as u32))
             } else {
                 Err("Uimm32 out of range")
             }
         })
+    }
+}
+
+/// A 128-bit immediate operand.
+///
+/// This is used as an immediate value in SIMD instructions.
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+pub struct V128Imm(pub [u8; 16]);
+
+impl V128Imm {
+    /// Iterate over the bytes in the constant.
+    pub fn bytes(&self) -> impl Iterator<Item = &u8> {
+        self.0.iter()
+    }
+
+    /// Convert the immediate into a vector.
+    pub fn to_vec(self) -> Vec<u8> {
+        self.0.to_vec()
+    }
+
+    /// Convert the immediate into a slice.
+    pub fn as_slice(&self) -> &[u8] {
+        &self.0[..]
+    }
+}
+
+impl From<&[u8]> for V128Imm {
+    fn from(slice: &[u8]) -> Self {
+        assert_eq!(slice.len(), 16);
+        let mut buffer = [0; 16];
+        buffer.copy_from_slice(slice);
+        Self(buffer)
     }
 }
 
@@ -274,7 +348,7 @@ pub struct Offset32(i32);
 impl Offset32 {
     /// Create a new `Offset32` representing the signed number `x`.
     pub fn new(x: i32) -> Self {
-        Offset32(x)
+        Self(x)
     }
 
     /// Create a new `Offset32` representing the signed number `x` if possible.
@@ -312,7 +386,7 @@ impl Into<i64> for Offset32 {
 
 impl From<i32> for Offset32 {
     fn from(x: i32) -> Self {
-        Offset32(x)
+        Self(x)
     }
 }
 
@@ -607,7 +681,7 @@ fn parse_float(s: &str, w: u8, t: u8) -> Result<u64, &'static str> {
 impl Ieee32 {
     /// Create a new `Ieee32` containing the bits of `x`.
     pub fn with_bits(x: u32) -> Self {
-        Ieee32(x)
+        Self(x)
     }
 
     /// Create an `Ieee32` number representing `2.0^n`.
@@ -619,7 +693,7 @@ impl Ieee32 {
         let exponent = (n + bias) as u32;
         assert!(exponent > 0, "Underflow n={}", n);
         assert!(exponent < (1 << w) + 1, "Overflow n={}", n);
-        Ieee32(exponent << t)
+        Self(exponent << t)
     }
 
     /// Create an `Ieee32` number representing the greatest negative value
@@ -633,12 +707,12 @@ impl Ieee32 {
 
     /// Return self negated.
     pub fn neg(self) -> Self {
-        Ieee32(self.0 ^ (1 << 31))
+        Self(self.0 ^ (1 << 31))
     }
 
     /// Create a new `Ieee32` representing the number `x`.
     pub fn with_float(x: f32) -> Self {
-        Ieee32(unsafe { mem::transmute(x) })
+        Self(x.to_bits())
     }
 
     /// Get the bitwise representation.
@@ -659,7 +733,7 @@ impl FromStr for Ieee32 {
 
     fn from_str(s: &str) -> Result<Self, &'static str> {
         match parse_float(s, 8, 23) {
-            Ok(b) => Ok(Ieee32(b as u32)),
+            Ok(b) => Ok(Self(b as u32)),
             Err(s) => Err(s),
         }
     }
@@ -667,14 +741,20 @@ impl FromStr for Ieee32 {
 
 impl From<f32> for Ieee32 {
     fn from(x: f32) -> Self {
-        Ieee32::with_float(x)
+        Self::with_float(x)
+    }
+}
+
+impl IntoBytes for Ieee32 {
+    fn into_bytes(self) -> Vec<u8> {
+        self.0.to_le_bytes().to_vec()
     }
 }
 
 impl Ieee64 {
     /// Create a new `Ieee64` containing the bits of `x`.
     pub fn with_bits(x: u64) -> Self {
-        Ieee64(x)
+        Self(x)
     }
 
     /// Create an `Ieee64` number representing `2.0^n`.
@@ -686,7 +766,7 @@ impl Ieee64 {
         let exponent = (n + bias) as u64;
         assert!(exponent > 0, "Underflow n={}", n);
         assert!(exponent < (1 << w) + 1, "Overflow n={}", n);
-        Ieee64(exponent << t)
+        Self(exponent << t)
     }
 
     /// Create an `Ieee64` number representing the greatest negative value
@@ -700,12 +780,12 @@ impl Ieee64 {
 
     /// Return self negated.
     pub fn neg(self) -> Self {
-        Ieee64(self.0 ^ (1 << 63))
+        Self(self.0 ^ (1 << 63))
     }
 
     /// Create a new `Ieee64` representing the number `x`.
     pub fn with_float(x: f64) -> Self {
-        Ieee64(unsafe { mem::transmute(x) })
+        Self(x.to_bits())
     }
 
     /// Get the bitwise representation.
@@ -726,7 +806,7 @@ impl FromStr for Ieee64 {
 
     fn from_str(s: &str) -> Result<Self, &'static str> {
         match parse_float(s, 11, 52) {
-            Ok(b) => Ok(Ieee64(b)),
+            Ok(b) => Ok(Self(b)),
             Err(s) => Err(s),
         }
     }
@@ -734,17 +814,30 @@ impl FromStr for Ieee64 {
 
 impl From<f64> for Ieee64 {
     fn from(x: f64) -> Self {
-        Ieee64::with_float(x)
+        Self::with_float(x)
+    }
+}
+
+impl From<u64> for Ieee64 {
+    fn from(x: u64) -> Self {
+        Self::with_float(f64::from_bits(x))
+    }
+}
+
+impl IntoBytes for Ieee64 {
+    fn into_bytes(self) -> Vec<u8> {
+        self.0.to_le_bytes().to_vec()
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use alloc::string::ToString;
     use core::fmt::Display;
+    use core::mem;
     use core::str::FromStr;
     use core::{f32, f64};
-    use std::string::ToString;
 
     #[test]
     fn format_imm64() {

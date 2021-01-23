@@ -4,7 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /*
- * File:		prinet.h
+ * File:        prinet.h
  * Description:
  *     Header file used to find the system header files for socket support[1].
  *     This file serves the following purposes:
@@ -32,9 +32,9 @@
 #ifndef prinet_h__
 #define prinet_h__
 
-#if defined(XP_UNIX) || defined(XP_OS2) || defined(XP_BEOS)
+#if defined(XP_UNIX) || defined(XP_OS2)
 #include <sys/types.h>
-#include <sys/socket.h>		/* AF_INET */
+#include <sys/socket.h>     /* AF_INET */
 #include <netinet/in.h>         /* INADDR_ANY, ..., ntohl(), ... */
 #ifdef XP_OS2
 #include <sys/ioctl.h>
@@ -70,7 +70,7 @@ struct sockaddr_dl;
  * Prototypes of ntohl() etc. are declared in <machine/endian.h>
  * on these platforms.
  */
-#if defined(BSDI) || defined(OSF1)
+#if defined(BSDI)
 #include <machine/endian.h>
 #endif
 

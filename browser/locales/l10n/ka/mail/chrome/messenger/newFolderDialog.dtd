@@ -1,0 +1,16 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Labels -->
+<!ENTITY newFolderDialog.title      "ახალი საქაღალდე">
+<!ENTITY name.label                 "სახელი:">
+<!ENTITY name.accesskey             "n">
+<!ENTITY description.label          "ქვესაქაღალდის შექმნა აქ:">
+<!ENTITY description.accesskey      "c">
+<!ENTITY folderRestriction1.label   "ეს სერვერი იღებს მხოლოდ ორი სახის საქაღალდეებს.">
+<!ENTITY folderRestriction2.label   "ახალ საქაღალდეში შეიძლება ინახებოდეს:">
+<!ENTITY foldersOnly.label          "მხოლოდ საქაღალდეები">
+<!ENTITY messagesOnly.label         "მხოლოდ წერილები">
+<!ENTITY accept.label               "საქაღალდის შექმნა">
+<!ENTITY accept.accesskey           "შ">

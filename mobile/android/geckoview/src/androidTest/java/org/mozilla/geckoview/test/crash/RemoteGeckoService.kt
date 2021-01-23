@@ -10,6 +10,7 @@ import org.mozilla.geckoview.GeckoRuntime
 import org.mozilla.geckoview.GeckoRuntimeSettings
 import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.GeckoSessionSettings
+import org.mozilla.geckoview.test.TestCrashHandler
 
 class RemoteGeckoService : Service() {
     companion object {
@@ -32,7 +33,6 @@ class RemoteGeckoService : Service() {
                 }
                 CMD_CRASH_CONTENT_NATIVE -> {
                     val settings = GeckoSessionSettings.Builder()
-                            .useMultiprocess(true)
                             .build()
                     val session = GeckoSession(settings)
                     session.open(runtime!!)
@@ -57,7 +57,7 @@ class RemoteGeckoService : Service() {
             runtime = GeckoRuntime.create(this.applicationContext,
                     GeckoRuntimeSettings.Builder()
                             .extras(extras)
-                            .crashHandler(CrashTestHandler::class.java).build())
+                            .crashHandler(TestCrashHandler::class.java).build())
         }
 
         return handler.binder

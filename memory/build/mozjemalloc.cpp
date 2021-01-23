@@ -141,6 +141,7 @@
 #include "mozilla/ThreadLocal.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/Unused.h"
+#include "mozilla/XorShift128PlusRNG.h"
 #include "mozilla/fallible.h"
 #include "rb.h"
 #include "Mutex.h"
@@ -421,10 +422,7 @@ static const size_t kChunkSizeMask = kChunkSize - 1;
 // VM page size. It must divide the runtime CPU page size or the code
 // will abort.
 // Platform specific page size conditions copied from js/public/HeapAPI.h
-#  if (defined(SOLARIS) || defined(__FreeBSD__)) && \
-      (defined(__sparc) || defined(__sparcv9) || defined(__ia64))
-static const size_t gPageSize = 8_KiB;
-#  elif defined(__powerpc64__)
+#  if defined(__powerpc64__)
 static const size_t gPageSize = 64_KiB;
 #  else
 static const size_t gPageSize = 4_KiB;
@@ -506,11 +504,8 @@ END_GLOBALS
 // 6.25% of the process address space on a 32-bit OS for later use.
 static const size_t gRecycleLimit = 128_MiB;
 
-// The current amount of recycled bytes, updated atomically. Malloc may be
-// called non-deterministically when recording/replaying, so this atomic's
-// accesses are not recorded.
-static Atomic<size_t, ReleaseAcquire, recordreplay::Behavior::DontPreserve>
-    gRecycledSize;
+// The current amount of recycled bytes, updated atomically.
+static Atomic<size_t, ReleaseAcquire> gRecycledSize;
 
 // Maximum number of dirty pages per arena.
 #define DIRTY_MAX_DEFAULT (1U << 8)
@@ -549,11 +544,7 @@ static void* base_alloc(size_t aSize);
 // threads are created.
 static bool malloc_initialized;
 #else
-// Malloc may be called non-deterministically when recording/replaying, so this
-// atomic's accesses are not recorded.
-static Atomic<bool, SequentiallyConsistent,
-              recordreplay::Behavior::DontPreserve>
-    malloc_initialized;
+static Atomic<bool, SequentiallyConsistent> malloc_initialized;
 #endif
 
 static StaticMutex gInitLock = {STATIC_MUTEX_INIT};
@@ -587,8 +578,13 @@ enum ChunkType {
 
 // Tree of extents.
 struct extent_node_t {
-  // Linkage for the size/address-ordered tree.
-  RedBlackTreeNode<extent_node_t> mLinkBySize;
+  union {
+    // Linkage for the size/address-ordered tree for chunk recycling.
+    RedBlackTreeNode<extent_node_t> mLinkBySize;
+    // Arena id for huge allocations. It's meant to match mArena->mId,
+    // which only holds true when the arena hasn't been disposed of.
+    arena_id_t mArenaId;
+  };
 
   // Linkage for the address-ordered tree.
   RedBlackTreeNode<extent_node_t> mLinkByAddr;
@@ -883,9 +879,13 @@ struct arena_t {
 #  define ARENA_MAGIC 0x947d3d24
 #endif
 
-  arena_id_t mId;
   // Linkage for the tree of arenas by id.
   RedBlackTreeNode<arena_t> mLink;
+
+  // Arena id, that we keep away from the beginning of the struct so that
+  // free list pointers in TypedBaseAlloc<arena_t> don't overflow in it,
+  // and it keeps the value it had after the destructor.
+  arena_id_t mId;
 
   // All operations on this arena require that lock be locked.
   Mutex mLock;
@@ -911,6 +911,14 @@ struct arena_t {
   // order to avoid interactions between multiple threads that could make
   // a single spare inadequate.
   arena_chunk_t* mSpare;
+
+  // A per-arena opt-in to randomize the offset of small allocations
+  bool mRandomizeSmallAllocations;
+
+  // A pseudorandom number generator. Initially null, it gets initialized
+  // on first use to avoid recursive malloc initialization (e.g. on OSX
+  // arc4random allocates memory).
+  mozilla::non_crypto::XorShift128PlusRNG* mPRNG;
 
  public:
   // Current count of pages within unused runs that are potentially
@@ -952,6 +960,7 @@ struct arena_t {
   arena_bin_t mBins[1];  // Dynamically sized.
 
   explicit arena_t(arena_params_t* aParams);
+  ~arena_t();
 
  private:
   void InitChunk(arena_chunk_t* aChunk, bool aZeroed);
@@ -972,6 +981,10 @@ struct arena_t {
                    size_t aNewSize, bool dirty);
 
   arena_run_t* GetNonFullBinRun(arena_bin_t* aBin);
+
+  inline uint8_t FindFreeBitInMask(uint32_t aMask, uint32_t& aRng);
+
+  inline void* ArenaRunRegAlloc(arena_run_t* aRun, arena_bin_t* aBin);
 
   inline void* MallocSmall(size_t aSize, bool aZero);
 
@@ -1015,15 +1028,9 @@ struct arena_t {
 #if !defined(_MSC_VER) || defined(_CPPUNWIND)
       noexcept
 #endif
-  {
-    MOZ_ASSERT(aCount == sizeof(arena_t));
-    // Allocate enough space for trailing bins.
-    return base_alloc(
-        aCount + (sizeof(arena_bin_t) * (kNumTinyClasses + kNumQuantumClasses +
-                                         gNumSubPageClasses - 1)));
-  }
+      ;
 
-  void operator delete(void*) = delete;
+  void operator delete(void*);
 };
 
 struct ArenaTreeTrait {
@@ -1062,10 +1069,10 @@ class ArenaCollection {
 
   void DisposeArena(arena_t* aArena) {
     MutexAutoLock lock(mLock);
-    (mPrivateArenas.Search(aArena) ? mPrivateArenas : mArenas).Remove(aArena);
-    // The arena is leaked, and remaining allocations in it still are alive
-    // until they are freed. After that, the arena will be empty but still
-    // taking have at least a chunk taking address space. TODO: bug 1364359.
+    MOZ_RELEASE_ASSERT(mPrivateArenas.Search(aArena),
+                       "Can only dispose of private arenas");
+    mPrivateArenas.Remove(aArena);
+    delete aArena;
   }
 
   using Tree = RedBlackTree<arena_t, ArenaTreeTrait>;
@@ -1145,7 +1152,6 @@ static void* base_pages;
 static void* base_next_addr;
 static void* base_next_decommitted;
 static void* base_past_addr;  // Addr immediately past base_pages.
-static extent_node_t* base_nodes;
 static Mutex base_mtx;
 static size_t base_mapped;
 static size_t base_committed;
@@ -1178,6 +1184,7 @@ static bool opt_zero = false;
 static const bool opt_junk = false;
 static const bool opt_zero = false;
 #endif
+static bool opt_randomize_small = true;
 
 // ***************************************************************************
 // Begin forward declarations.
@@ -1284,7 +1291,19 @@ static inline void pages_decommit(void* aAddr, size_t aSize) {
 #else
   if (mmap(aAddr, aSize, PROT_NONE, MAP_FIXED | MAP_PRIVATE | MAP_ANON, -1,
            0) == MAP_FAILED) {
-    MOZ_CRASH();
+    // We'd like to report the OOM for our tooling, but we can't allocate
+    // memory at this point, so avoid the use of printf.
+    const char out_of_mappings[] =
+        "[unhandlable oom] Failed to mmap, likely no more mappings "
+        "available " __FILE__ " : " MOZ_STRINGIFY(__LINE__);
+    if (errno == ENOMEM) {
+#  ifndef ANDROID
+      fputs(out_of_mappings, stderr);
+      fflush(stderr);
+#  endif
+      MOZ_CRASH_ANNOTATE(out_of_mappings);
+    }
+    MOZ_REALLY_CRASH(__LINE__);
   }
   MozTagAnonymousMemory(aAddr, aSize, "jemalloc-decommitted");
 #endif
@@ -1384,33 +1403,59 @@ static void* base_calloc(size_t aNumber, size_t aSize) {
   return ret;
 }
 
-static extent_node_t* base_node_alloc(void) {
-  extent_node_t* ret;
+// A specialization of the base allocator with a free list.
+template <typename T>
+struct TypedBaseAlloc {
+  static T* sFirstFree;
 
-  base_mtx.Lock();
-  if (base_nodes) {
-    ret = base_nodes;
-    base_nodes = *(extent_node_t**)ret;
-    base_mtx.Unlock();
-  } else {
-    base_mtx.Unlock();
-    ret = (extent_node_t*)base_alloc(sizeof(extent_node_t));
+  static size_t size_of() { return sizeof(T); }
+
+  static T* alloc() {
+    T* ret;
+
+    base_mtx.Lock();
+    if (sFirstFree) {
+      ret = sFirstFree;
+      sFirstFree = *(T**)ret;
+      base_mtx.Unlock();
+    } else {
+      base_mtx.Unlock();
+      ret = (T*)base_alloc(size_of());
+    }
+
+    return ret;
   }
 
-  return ret;
-}
-
-static void base_node_dealloc(extent_node_t* aNode) {
-  MutexAutoLock lock(base_mtx);
-  *(extent_node_t**)aNode = base_nodes;
-  base_nodes = aNode;
-}
-
-struct BaseNodeFreePolicy {
-  void operator()(extent_node_t* aPtr) { base_node_dealloc(aPtr); }
+  static void dealloc(T* aNode) {
+    MutexAutoLock lock(base_mtx);
+    *(T**)aNode = sFirstFree;
+    sFirstFree = aNode;
+  }
 };
 
-using UniqueBaseNode = UniquePtr<extent_node_t, BaseNodeFreePolicy>;
+using ExtentAlloc = TypedBaseAlloc<extent_node_t>;
+
+template <>
+extent_node_t* ExtentAlloc::sFirstFree = nullptr;
+
+template <>
+arena_t* TypedBaseAlloc<arena_t>::sFirstFree = nullptr;
+
+template <>
+size_t TypedBaseAlloc<arena_t>::size_of() {
+  // Allocate enough space for trailing bins.
+  return sizeof(arena_t) +
+         (sizeof(arena_bin_t) *
+          (kNumTinyClasses + kNumQuantumClasses + gNumSubPageClasses - 1));
+}
+
+template <typename T>
+struct BaseAllocFreePolicy {
+  void operator()(T* aPtr) { TypedBaseAlloc<T>::dealloc(aPtr); }
+};
+
+using UniqueBaseNode =
+    UniquePtr<extent_node_t, BaseAllocFreePolicy<extent_node_t>>;
 
 // End Utility functions/macros.
 // ***************************************************************************
@@ -1772,12 +1817,12 @@ static void* chunk_recycle(size_t aSize, size_t aAlignment, bool* aZeroed) {
     // Insert the trailing space as a smaller chunk.
     if (!node) {
       // An additional node is required, but
-      // base_node_alloc() can cause a new base chunk to be
+      // TypedBaseAlloc::alloc() can cause a new base chunk to be
       // allocated.  Drop chunks_mtx in order to avoid
       // deadlock, and if node allocation fails, deallocate
       // the result before returning an error.
       chunks_mtx.Unlock();
-      node = base_node_alloc();
+      node = ExtentAlloc::alloc();
       if (!node) {
         chunk_dealloc(ret, aSize, chunk_type);
         return nullptr;
@@ -1797,7 +1842,7 @@ static void* chunk_recycle(size_t aSize, size_t aAlignment, bool* aZeroed) {
   chunks_mtx.Unlock();
 
   if (node) {
-    base_node_dealloc(node);
+    ExtentAlloc::dealloc(node);
   }
   if (!pages_commit(ret, aSize)) {
     return nullptr;
@@ -1883,10 +1928,10 @@ static void chunk_record(void* aChunk, size_t aSize, ChunkType aType) {
   }
 
   // Allocate a node before acquiring chunks_mtx even though it might not
-  // be needed, because base_node_alloc() may cause a new base chunk to
+  // be needed, because TypedBaseAlloc::alloc() may cause a new base chunk to
   // be allocated, which could cause deadlock if chunks_mtx were already
   // held.
-  UniqueBaseNode xnode(base_node_alloc());
+  UniqueBaseNode xnode(ExtentAlloc::alloc());
   // Use xprev to implement conditional deferred deallocation of prev.
   UniqueBaseNode xprev;
 
@@ -1910,7 +1955,7 @@ static void chunk_record(void* aChunk, size_t aSize, ChunkType aType) {
   } else {
     // Coalescing forward failed, so insert a new node.
     if (!xnode) {
-      // base_node_alloc() failed, which is an exceedingly
+      // TypedBaseAlloc::alloc() failed, which is an exceedingly
       // unlikely failure.  Leak chunk; its pages have
       // already been purged, so this is only a virtual
       // memory leak.
@@ -2030,52 +2075,66 @@ static inline arena_t* choose_arena(size_t size) {
   return ret;
 }
 
-static inline void* arena_run_reg_alloc(arena_run_t* run, arena_bin_t* bin) {
+inline uint8_t arena_t::FindFreeBitInMask(uint32_t aMask, uint32_t& aRng) {
+  if (mPRNG != nullptr) {
+    if (aRng == UINT_MAX) {
+      aRng = mPRNG->next() % 32;
+    }
+    uint8_t bitIndex;
+    // RotateRight asserts when provided bad input.
+    aMask = aRng ? RotateRight(aMask, aRng)
+                 : aMask;  // Rotate the mask a random number of slots
+    bitIndex = CountTrailingZeroes32(aMask);
+    return (bitIndex + aRng) % 32;
+  }
+  return CountTrailingZeroes32(aMask);
+}
+
+inline void* arena_t::ArenaRunRegAlloc(arena_run_t* aRun, arena_bin_t* aBin) {
   void* ret;
   unsigned i, mask, bit, regind;
+  uint32_t rndPos = UINT_MAX;
 
-  MOZ_DIAGNOSTIC_ASSERT(run->mMagic == ARENA_RUN_MAGIC);
-  MOZ_ASSERT(run->mRegionsMinElement < bin->mRunNumRegionsMask);
+  MOZ_DIAGNOSTIC_ASSERT(aRun->mMagic == ARENA_RUN_MAGIC);
+  MOZ_ASSERT(aRun->mRegionsMinElement < aBin->mRunNumRegionsMask);
 
-  // Move the first check outside the loop, so that run->mRegionsMinElement can
+  // Move the first check outside the loop, so that aRun->mRegionsMinElement can
   // be updated unconditionally, without the possibility of updating it
   // multiple times.
-  i = run->mRegionsMinElement;
-  mask = run->mRegionsMask[i];
+  i = aRun->mRegionsMinElement;
+  mask = aRun->mRegionsMask[i];
   if (mask != 0) {
-    // Usable allocation found.
-    bit = CountTrailingZeroes32(mask);
+    bit = FindFreeBitInMask(mask, rndPos);
 
     regind = ((i << (LOG2(sizeof(int)) + 3)) + bit);
-    MOZ_ASSERT(regind < bin->mRunNumRegions);
-    ret = (void*)(((uintptr_t)run) + bin->mRunFirstRegionOffset +
-                  (bin->mSizeClass * regind));
+    MOZ_ASSERT(regind < aBin->mRunNumRegions);
+    ret = (void*)(((uintptr_t)aRun) + aBin->mRunFirstRegionOffset +
+                  (aBin->mSizeClass * regind));
 
     // Clear bit.
     mask ^= (1U << bit);
-    run->mRegionsMask[i] = mask;
+    aRun->mRegionsMask[i] = mask;
 
     return ret;
   }
 
-  for (i++; i < bin->mRunNumRegionsMask; i++) {
-    mask = run->mRegionsMask[i];
+  for (i++; i < aBin->mRunNumRegionsMask; i++) {
+    mask = aRun->mRegionsMask[i];
     if (mask != 0) {
-      // Usable allocation found.
-      bit = CountTrailingZeroes32(mask);
+      bit = FindFreeBitInMask(mask, rndPos);
 
       regind = ((i << (LOG2(sizeof(int)) + 3)) + bit);
-      MOZ_ASSERT(regind < bin->mRunNumRegions);
-      ret = (void*)(((uintptr_t)run) + bin->mRunFirstRegionOffset +
-                    (bin->mSizeClass * regind));
+      MOZ_ASSERT(regind < aBin->mRunNumRegions);
+      ret = (void*)(((uintptr_t)aRun) + aBin->mRunFirstRegionOffset +
+                    (aBin->mSizeClass * regind));
 
       // Clear bit.
       mask ^= (1U << bit);
-      run->mRegionsMask[i] = mask;
+      aRun->mRegionsMask[i] = mask;
 
       // Make a note that nothing before this element
       // contains a free region.
-      run->mRegionsMinElement = i;  // Low payoff: + (mask == 0);
+      aRun->mRegionsMinElement = i;  // Low payoff: + (mask == 0);
 
       return ret;
     }
@@ -2762,6 +2821,28 @@ void* arena_t::MallocSmall(size_t aSize, bool aZero) {
   MOZ_DIAGNOSTIC_ASSERT(aSize == bin->mSizeClass);
 
   {
+    // Before we lock, we determine if we need to randomize the allocation
+    // because if we do, we need to create the PRNG which might require
+    // allocating memory (arc4random on OSX for example) and we need to
+    // avoid the deadlock
+    if (MOZ_UNLIKELY(mRandomizeSmallAllocations && mPRNG == nullptr)) {
+      // This is frustrating. Because the code backing RandomUint64 (arc4random
+      // for example) may allocate memory, and because
+      // mRandomizeSmallAllocations is true and we haven't yet initilized mPRNG,
+      // we would re-enter this same case and cause a deadlock inside e.g.
+      // arc4random.  So we temporarily disable mRandomizeSmallAllocations to
+      // skip this case and then re-enable it
+      mRandomizeSmallAllocations = false;
+      mozilla::Maybe<uint64_t> prngState1 = mozilla::RandomUint64();
+      mozilla::Maybe<uint64_t> prngState2 = mozilla::RandomUint64();
+      void* backing =
+          base_alloc(sizeof(mozilla::non_crypto::XorShift128PlusRNG));
+      mPRNG = new (backing) mozilla::non_crypto::XorShift128PlusRNG(
+          prngState1.valueOr(0), prngState2.valueOr(0));
+      mRandomizeSmallAllocations = true;
+    }
+    MOZ_ASSERT(!mRandomizeSmallAllocations || mPRNG);
+
     MutexAutoLock lock(mLock);
     run = bin->mCurrentRun;
     if (MOZ_UNLIKELY(!run || run->mNumFree == 0)) {
@@ -2772,7 +2853,7 @@ void* arena_t::MallocSmall(size_t aSize, bool aZero) {
     }
     MOZ_DIAGNOSTIC_ASSERT(run->mMagic == ARENA_RUN_MAGIC);
     MOZ_DIAGNOSTIC_ASSERT(run->mNumFree > 0);
-    ret = arena_run_reg_alloc(run, bin);
+    ret = ArenaRunRegAlloc(run, bin);
     MOZ_DIAGNOSTIC_ASSERT(ret);
     run->mNumFree--;
     if (!ret) {
@@ -3040,7 +3121,18 @@ class AllocInfo {
   size_t Size() { return mSize; }
 
   arena_t* Arena() {
-    return (mSize <= gMaxLargeClass) ? mChunk->arena : mNode->mArena;
+    if (mSize <= gMaxLargeClass) {
+      return mChunk->arena;
+    }
+    // Best effort detection that we're not trying to access an already
+    // disposed arena. In the case of a disposed arena, the memory location
+    // pointed by mNode->mArena is either free (but still a valid memory
+    // region, per TypedBaseAlloc<arena_t>), in which case its id was reset,
+    // or has been reallocated for a new region, and its id is very likely
+    // different (per randomness). In both cases, the id is unlikely to
+    // match what it was for the disposed arena.
+    MOZ_RELEASE_ASSERT(mNode->mArenaId == mNode->mArena->mId);
+    return mNode->mArena;
   }
 
  private:
@@ -3081,7 +3173,7 @@ inline void MozJemalloc::jemalloc_ptr_info(const void* aPtr,
             &huge)
             ->Search(&key);
     if (node) {
-      *aInfo = {TagLiveHuge, node->mAddr, node->mSize, node->mArena->mId};
+      *aInfo = {TagLiveAlloc, node->mAddr, node->mSize, node->mArena->mId};
       return;
     }
   }
@@ -3105,21 +3197,8 @@ inline void MozJemalloc::jemalloc_ptr_info(const void* aPtr,
   size_t mapbits = chunk->map[pageind].bits;
 
   if (!(mapbits & CHUNK_MAP_ALLOCATED)) {
-    PtrInfoTag tag = TagFreedPageDirty;
-    if (mapbits & CHUNK_MAP_DIRTY) {
-      tag = TagFreedPageDirty;
-    } else if (mapbits & CHUNK_MAP_DECOMMITTED) {
-      tag = TagFreedPageDecommitted;
-    } else if (mapbits & CHUNK_MAP_MADVISED) {
-      tag = TagFreedPageMadvised;
-    } else if (mapbits & CHUNK_MAP_ZEROED) {
-      tag = TagFreedPageZeroed;
-    } else {
-      MOZ_CRASH();
-    }
-
     void* pageaddr = (void*)(uintptr_t(aPtr) & ~gPageSizeMask);
-    *aInfo = {tag, pageaddr, gPageSize, chunk->arena->mId};
+    *aInfo = {TagFreedPage, pageaddr, gPageSize, chunk->arena->mId};
     return;
   }
 
@@ -3152,7 +3231,7 @@ inline void MozJemalloc::jemalloc_ptr_info(const void* aPtr,
     }
 
     void* addr = ((char*)chunk) + (pageind << gPageSize2Pow);
-    *aInfo = {TagLiveLarge, addr, size, chunk->arena->mId};
+    *aInfo = {TagLiveAlloc, addr, size, chunk->arena->mId};
     return;
   }
 
@@ -3181,7 +3260,7 @@ inline void MozJemalloc::jemalloc_ptr_info(const void* aPtr,
   unsigned elm = regind >> (LOG2(sizeof(int)) + 3);
   unsigned bit = regind - (elm << (LOG2(sizeof(int)) + 3));
   PtrInfoTag tag =
-      ((run->mRegionsMask[elm] & (1U << bit))) ? TagFreedSmall : TagLiveSmall;
+      ((run->mRegionsMask[elm] & (1U << bit))) ? TagFreedAlloc : TagLiveAlloc;
 
   *aInfo = {tag, addr, size, chunk->arena->mId};
 }
@@ -3418,6 +3497,19 @@ void* arena_t::Ralloc(void* aPtr, size_t aSize, size_t aOldSize) {
                                    : RallocHuge(aPtr, aSize, aOldSize);
 }
 
+void* arena_t::operator new(size_t aCount, const fallible_t&)
+#if !defined(_MSC_VER) || defined(_CPPUNWIND)
+    noexcept
+#endif
+{
+  MOZ_ASSERT(aCount == sizeof(arena_t));
+  return TypedBaseAlloc<arena_t>::alloc();
+}
+
+void arena_t::operator delete(void* aPtr) {
+  TypedBaseAlloc<arena_t>::dealloc((arena_t*)aPtr);
+}
+
 arena_t::arena_t(arena_params_t* aParams) {
   unsigned i;
 
@@ -3433,8 +3525,24 @@ arena_t::arena_t(arena_params_t* aParams) {
 #endif
   mSpare = nullptr;
 
-  mNumDirty = 0;
+  mRandomizeSmallAllocations = opt_randomize_small;
+  if (aParams) {
+    uint32_t flags = aParams->mFlags & ARENA_FLAG_RANDOMIZE_SMALL_MASK;
+    switch (flags) {
+      case ARENA_FLAG_RANDOMIZE_SMALL_ENABLED:
+        mRandomizeSmallAllocations = true;
+        break;
+      case ARENA_FLAG_RANDOMIZE_SMALL_DISABLED:
+        mRandomizeSmallAllocations = false;
+        break;
+      case ARENA_FLAG_RANDOMIZE_SMALL_DEFAULT:
+      default:
+        break;
+    }
+  }
+  mPRNG = nullptr;
 
+  mNumDirty = 0;
   // The default maximum amount of dirty pages allowed on arenas is a fraction
   // of opt_dirty_max.
   mMaxDirty = (aParams && aParams->mMaxDirty) ? aParams->mMaxDirty
@@ -3461,6 +3569,32 @@ arena_t::arena_t(arena_params_t* aParams) {
 #if defined(MOZ_DIAGNOSTIC_ASSERT_ENABLED)
   mMagic = ARENA_MAGIC;
 #endif
+}
+
+arena_t::~arena_t() {
+  size_t i;
+  MutexAutoLock lock(mLock);
+  MOZ_RELEASE_ASSERT(!mLink.Left() && !mLink.Right(),
+                     "Arena is still registered");
+  MOZ_RELEASE_ASSERT(!mStats.allocated_small && !mStats.allocated_large,
+                     "Arena is not empty");
+  if (mSpare) {
+    chunk_dealloc(mSpare, kChunkSize, ARENA_CHUNK);
+  }
+  for (i = 0; i < kNumTinyClasses + kNumQuantumClasses + gNumSubPageClasses;
+       i++) {
+    MOZ_RELEASE_ASSERT(!mBins[i].mNonFullRuns.First(), "Bin is not empty");
+  }
+#ifdef MOZ_DEBUG
+  {
+    MutexAutoLock lock(huge_mtx);
+    // This is an expensive check, so we only do it on debug builds.
+    for (auto node : huge.iter()) {
+      MOZ_RELEASE_ASSERT(node->mArenaId != mId, "Arena has huge allocations");
+    }
+  }
+#endif
+  mId = 0;
 }
 
 arena_t* ArenaCollection::CreateArena(bool aIsPrivate,
@@ -3496,6 +3630,11 @@ arena_t* ArenaCollection::CreateArena(bool aIsPrivate,
   while (true) {
     mozilla::Maybe<uint64_t> maybeRandomId = mozilla::RandomUint64();
     MOZ_RELEASE_ASSERT(maybeRandomId.isSome());
+
+    // Avoid 0 as an arena Id. We use 0 for disposed arenas.
+    if (!maybeRandomId.value()) {
+      continue;
+    }
 
     // Keep looping until we ensure that the random number we just generated
     // isn't already in use by another active arena
@@ -3535,7 +3674,7 @@ void* arena_t::PallocHuge(size_t aSize, size_t aAlignment, bool aZero) {
   }
 
   // Allocate an extent node with which to track the chunk.
-  node = base_node_alloc();
+  node = ExtentAlloc::alloc();
   if (!node) {
     return nullptr;
   }
@@ -3543,7 +3682,7 @@ void* arena_t::PallocHuge(size_t aSize, size_t aAlignment, bool aZero) {
   // Allocate one or more contiguous chunks for this request.
   ret = chunk_alloc(csize, aAlignment, false, &zeroed);
   if (!ret) {
-    base_node_dealloc(node);
+    ExtentAlloc::dealloc(node);
     return nullptr;
   }
   psize = PAGE_CEILING(aSize);
@@ -3557,6 +3696,7 @@ void* arena_t::PallocHuge(size_t aSize, size_t aAlignment, bool aZero) {
   node->mAddr = ret;
   node->mSize = psize;
   node->mArena = this;
+  node->mArenaId = mId;
 
   {
     MutexAutoLock lock(huge_mtx);
@@ -3681,6 +3821,8 @@ static void huge_dalloc(void* aPtr, arena_t* aArena) {
     MOZ_RELEASE_ASSERT(node, "Double-free?");
     MOZ_ASSERT(node->mAddr == aPtr);
     MOZ_RELEASE_ASSERT(!aArena || node->mArena == aArena);
+    // See AllocInfo::Arena.
+    MOZ_RELEASE_ASSERT(node->mArenaId == node->mArena->mId);
     huge.Remove(node);
 
     mapped = CHUNK_CEILING(node->mSize + gPageSize);
@@ -3691,7 +3833,7 @@ static void huge_dalloc(void* aPtr, arena_t* aArena) {
   // Unmap chunk.
   chunk_dealloc(node->mAddr, mapped, HUGE_CHUNK);
 
-  base_node_dealloc(node);
+  ExtentAlloc::dealloc(node);
 }
 
 static size_t GetKernelPageSize() {
@@ -3802,6 +3944,12 @@ static bool malloc_init_hard() {
             opt_zero = true;
             break;
 #endif
+          case 'r':
+            opt_randomize_small = false;
+            break;
+          case 'R':
+            opt_randomize_small = true;
+            break;
           default: {
             char cbuf[2];
 
@@ -3833,7 +3981,6 @@ static bool malloc_init_hard() {
   // Initialize base allocation data structures.
   base_mapped = 0;
   base_committed = 0;
-  base_nodes = nullptr;
   base_mtx.Init();
 
   // Initialize arenas collection here.
@@ -4302,10 +4449,6 @@ inline arena_id_t MozJemalloc::moz_create_arena_with_params(
 
 template <>
 inline void MozJemalloc::moz_dispose_arena(arena_id_t aArenaId) {
-  // Until Bug 1364359 is fixed it is unsafe to call moz_dispose_arena.
-  // We want to catch any such occurances of that behavior.
-  MOZ_CRASH("Do not call moz_dispose_arena until Bug 1364359 is fixed.");
-
   arena_t* arena = gArenas.GetById(aArenaId, /* IsPrivate = */ true);
   MOZ_RELEASE_ASSERT(arena);
   gArenas.DisposeArena(arena);
@@ -4405,23 +4548,30 @@ static
 
 #  define MALLOC_DECL(name, return_type, ...) MozJemalloc::name,
 
-static const malloc_table_t gReplaceMallocTableDefault = {
+// The default malloc table, i.e. plain allocations. It never changes. It's
+// used by init(), and not used after that.
+static const malloc_table_t gDefaultMallocTable = {
 #  include "malloc_decls.h"
 };
-static malloc_table_t gReplaceMallocTables[2] = {
-    {
-#  include "malloc_decls.h"
-    },
-    {
-#  include "malloc_decls.h"
-    },
-};
-unsigned gReplaceMallocIndex = 0;
 
-// Avoid races when swapping malloc impls dynamically
-static Atomic<malloc_table_t const*, mozilla::MemoryOrdering::Relaxed,
-              recordreplay::Behavior::DontPreserve>
-    gReplaceMallocTable;
+// The malloc table installed by init(). It never changes from that point
+// onward. It will be the same as gDefaultMallocTable if no replace-malloc tool
+// is enabled at startup.
+static malloc_table_t gOriginalMallocTable = {
+#  include "malloc_decls.h"
+};
+
+// The malloc table installed by jemalloc_replace_dynamic(). (Read the
+// comments above that function for more details.)
+static malloc_table_t gDynamicMallocTable = {
+#  include "malloc_decls.h"
+};
+
+// This briefly points to gDefaultMallocTable at startup. After that, it points
+// to either gOriginalMallocTable or gDynamicMallocTable. It's atomic to avoid
+// races when switching between tables.
+static Atomic<malloc_table_t const*, mozilla::MemoryOrdering::Relaxed>
+    gMallocTablePtr;
 
 #  ifdef MOZ_DYNAMIC_REPLACE_INIT
 #    undef replace_init
@@ -4468,6 +4618,8 @@ static void replace_malloc_init_funcs(malloc_table_t*);
 extern "C" void logalloc_init(malloc_table_t*, ReplaceMallocBridge**);
 
 extern "C" void dmd_init(malloc_table_t*, ReplaceMallocBridge**);
+
+extern "C" void phc_init(malloc_table_t*, ReplaceMallocBridge**);
 #  endif
 
 bool Equals(const malloc_table_t& aTable1, const malloc_table_t& aTable2) {
@@ -4478,7 +4630,7 @@ bool Equals(const malloc_table_t& aTable1, const malloc_table_t& aTable2) {
 // replacement functions if they exist.
 static ReplaceMallocBridge* gReplaceMallocBridge = nullptr;
 static void init() {
-  malloc_table_t tempTable = gReplaceMallocTableDefault;
+  malloc_table_t tempTable = gDefaultMallocTable;
 
 #  ifdef MOZ_DYNAMIC_REPLACE_INIT
   replace_malloc_handle_t handle = replace_malloc_handle();
@@ -4489,77 +4641,99 @@ static void init() {
 
   // Set this *before* calling replace_init, otherwise if replace_init calls
   // malloc() we'll get an infinite loop.
-  gReplaceMallocTable = &gReplaceMallocTableDefault;
+  gMallocTablePtr = &gDefaultMallocTable;
 
-  // Pass in the a new (default allocator table so replace functions can
-  // copy and use it for their allocations.  The replace_init() function
-  // should modify the table if it wants to be active, otherwise leave it
-  // unmodified.
+  // Pass in the default allocator table so replace functions can copy and use
+  // it for their allocations. The replace_init() function should modify the
+  // table if it wants to be active, otherwise leave it unmodified.
   if (replace_init) {
     replace_init(&tempTable, &gReplaceMallocBridge);
   }
 #  ifdef MOZ_REPLACE_MALLOC_STATIC
-  if (Equals(tempTable, gReplaceMallocTableDefault)) {
+  if (Equals(tempTable, gDefaultMallocTable)) {
     logalloc_init(&tempTable, &gReplaceMallocBridge);
   }
 #    ifdef MOZ_DMD
-  if (Equals(tempTable, gReplaceMallocTableDefault)) {
+  if (Equals(tempTable, gDefaultMallocTable)) {
     dmd_init(&tempTable, &gReplaceMallocBridge);
   }
 #    endif
-#  endif
-  if (!Equals(tempTable, gReplaceMallocTableDefault)) {
-    replace_malloc_init_funcs(&tempTable);
-    gReplaceMallocIndex = (gReplaceMallocIndex + 1) % 2;
-    gReplaceMallocTables[gReplaceMallocIndex] = tempTable;
-    // Atomic change
-    gReplaceMallocTable = &gReplaceMallocTables[gReplaceMallocIndex];
+#    ifdef MOZ_PHC
+  if (Equals(tempTable, gDefaultMallocTable)) {
+    phc_init(&tempTable, &gReplaceMallocBridge);
   }
+#    endif
+#  endif
+  if (!Equals(tempTable, gDefaultMallocTable)) {
+    replace_malloc_init_funcs(&tempTable);
+  }
+  gOriginalMallocTable = tempTable;
+  gMallocTablePtr = &gOriginalMallocTable;
 }
 
-// Note: since other allocations have happened before this, it must deal
-// with allocations being freed that weren't allocated through it, and when
-// it's removed the normal allocator must deal with allocations made by the
-// replacement that are freed by the normal allocator.
+// WARNING WARNING WARNING: this function should be used with extreme care. It
+// is not as general-purpose as it looks. It is currently used by
+// tools/profiler/core/memory_hooks.cpp for counting allocations and probably
+// should not be used for any other purpose.
 //
-// This means that simple replacements that don't modify much about the
-// allocations or just record information about it are fine.
+// This function allows the original malloc table to be temporarily replaced by
+// a different malloc table. Or, if the argument is nullptr, it switches back to
+// the original malloc table.
+//
+// Limitations:
+//
+// - It is not threadsafe. If multiple threads pass it the same
+//   `replace_init_func` at the same time, there will be data races writing to
+//   the malloc_table_t within that function.
+//
+// - Only one replacement can be installed. No nesting is allowed.
+//
+// - The new malloc table must be able to free allocations made by the original
+//   malloc table, and upon removal the original malloc table must be able to
+//   free allocations made by the new malloc table. This means the new malloc
+//   table can only do simple things like recording extra information, while
+//   delegating actual allocation/free operations to the original malloc table.
+//
 MOZ_JEMALLOC_API void jemalloc_replace_dynamic(
     jemalloc_init_func replace_init_func) {
-  malloc_table_t tempTable = gReplaceMallocTableDefault;
   if (replace_init_func) {
+    malloc_table_t tempTable = gOriginalMallocTable;
     (*replace_init_func)(&tempTable, &gReplaceMallocBridge);
-    if (!Equals(tempTable, gReplaceMallocTableDefault)) {
+    if (!Equals(tempTable, gOriginalMallocTable)) {
       replace_malloc_init_funcs(&tempTable);
-      // flip-flop between two tables
-      gReplaceMallocIndex = (gReplaceMallocIndex + 1) % 2;
-      gReplaceMallocTables[gReplaceMallocIndex] = tempTable;
-      gReplaceMallocTable = &gReplaceMallocTables[gReplaceMallocIndex];
+
+      // Temporarily switch back to the original malloc table. In the
+      // (supported) non-nested case, this is a no-op. But just in case this is
+      // a (unsupported) nested call, it makes the overwriting of
+      // gDynamicMallocTable less racy, because ongoing calls to malloc() and
+      // friends won't go through gDynamicMallocTable.
+      gMallocTablePtr = &gOriginalMallocTable;
+
+      gDynamicMallocTable = tempTable;
+      gMallocTablePtr = &gDynamicMallocTable;
       // We assume that dynamic replaces don't occur close enough for a
       // thread to still have old copies of the table pointer when the 2nd
       // replace occurs.
-      return;
     }
+  } else {
+    // Switch back to the original malloc table.
+    gMallocTablePtr = &gOriginalMallocTable;
   }
-  // When a replacer is removed, switch back to the original default.  A
-  // new replacement will not immediately re-use the same table array index
-  // as the last malloc replacer.
-  gReplaceMallocTable = &gReplaceMallocTableDefault;
 }
 
-#  define MALLOC_DECL(name, return_type, ...)                               \
-    template <>                                                             \
-    inline return_type ReplaceMalloc::name(                                 \
-        ARGS_HELPER(TYPED_ARGS, ##__VA_ARGS__)) {                           \
-      if (MOZ_UNLIKELY(!gReplaceMallocTable)) {                             \
-        init();                                                             \
-      }                                                                     \
-      return (*gReplaceMallocTable).name(ARGS_HELPER(ARGS, ##__VA_ARGS__)); \
+#  define MALLOC_DECL(name, return_type, ...)                           \
+    template <>                                                         \
+    inline return_type ReplaceMalloc::name(                             \
+        ARGS_HELPER(TYPED_ARGS, ##__VA_ARGS__)) {                       \
+      if (MOZ_UNLIKELY(!gMallocTablePtr)) {                             \
+        init();                                                         \
+      }                                                                 \
+      return (*gMallocTablePtr).name(ARGS_HELPER(ARGS, ##__VA_ARGS__)); \
     }
 #  include "malloc_decls.h"
 
 MOZ_JEMALLOC_API struct ReplaceMallocBridge* get_bridge(void) {
-  if (MOZ_UNLIKELY(!gReplaceMallocTable)) {
+  if (MOZ_UNLIKELY(!gMallocTablePtr)) {
     init();
   }
   return gReplaceMallocBridge;
@@ -4615,31 +4789,35 @@ static void replace_malloc_init_funcs(malloc_table_t* table) {
   return_type name(ARGS_HELPER(TYPED_ARGS, ##__VA_ARGS__))            \
       __attribute__((alias(MOZ_STRINGIFY(name_impl))));
 
-#define GENERIC_MALLOC_DECL2(name, name_impl, return_type, ...)   \
-  return_type name_impl(ARGS_HELPER(TYPED_ARGS, ##__VA_ARGS__)) { \
-    return DefaultMalloc::name(ARGS_HELPER(ARGS, ##__VA_ARGS__)); \
+#define GENERIC_MALLOC_DECL2(attributes, name, name_impl, return_type, ...)  \
+  return_type name_impl(ARGS_HELPER(TYPED_ARGS, ##__VA_ARGS__)) attributes { \
+    return DefaultMalloc::name(ARGS_HELPER(ARGS, ##__VA_ARGS__));            \
   }
 
 #ifndef __MINGW32__
-#  define GENERIC_MALLOC_DECL(name, return_type, ...) \
-    GENERIC_MALLOC_DECL2(name, name##_impl, return_type, ##__VA_ARGS__)
+#  define GENERIC_MALLOC_DECL(attributes, name, return_type, ...)    \
+    GENERIC_MALLOC_DECL2(attributes, name, name##_impl, return_type, \
+                         ##__VA_ARGS__)
 #else
-#  define GENERIC_MALLOC_DECL(name, return_type, ...)                   \
-    GENERIC_MALLOC_DECL2(name, name##_impl, return_type, ##__VA_ARGS__) \
+#  define GENERIC_MALLOC_DECL(attributes, name, return_type, ...)    \
+    GENERIC_MALLOC_DECL2(attributes, name, name##_impl, return_type, \
+                         ##__VA_ARGS__)                              \
     GENERIC_MALLOC_DECL2_MINGW(name, name##_impl, return_type, ##__VA_ARGS__)
 #endif
 
+#define NOTHROW_MALLOC_DECL(...) \
+  MOZ_MEMORY_API MACRO_CALL(GENERIC_MALLOC_DECL, (noexcept(true), __VA_ARGS__))
 #define MALLOC_DECL(...) \
-  MOZ_MEMORY_API MACRO_CALL(GENERIC_MALLOC_DECL, (__VA_ARGS__))
+  MOZ_MEMORY_API MACRO_CALL(GENERIC_MALLOC_DECL, (, __VA_ARGS__))
 #define MALLOC_FUNCS MALLOC_FUNCS_MALLOC
 #include "malloc_decls.h"
 
 #undef GENERIC_MALLOC_DECL
-#define GENERIC_MALLOC_DECL(name, return_type, ...) \
-  GENERIC_MALLOC_DECL2(name, name, return_type, ##__VA_ARGS__)
+#define GENERIC_MALLOC_DECL(attributes, name, return_type, ...) \
+  GENERIC_MALLOC_DECL2(attributes, name, name, return_type, ##__VA_ARGS__)
 
 #define MALLOC_DECL(...) \
-  MOZ_JEMALLOC_API MACRO_CALL(GENERIC_MALLOC_DECL, (__VA_ARGS__))
+  MOZ_JEMALLOC_API MACRO_CALL(GENERIC_MALLOC_DECL, (, __VA_ARGS__))
 #define MALLOC_FUNCS (MALLOC_FUNCS_JEMALLOC | MALLOC_FUNCS_ARENA)
 #include "malloc_decls.h"
 // ***************************************************************************

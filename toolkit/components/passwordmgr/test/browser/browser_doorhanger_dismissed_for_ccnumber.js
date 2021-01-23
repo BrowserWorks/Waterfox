@@ -1,26 +1,10 @@
 "use strict";
 
-const TEST_HOSTNAME = "https://example.com";
+const TEST_ORIGIN = "https://example.com";
 const BASIC_FORM_PAGE_PATH = DIRECTORY_PATH + "form_basic.html";
 
-function getSubmitMessage() {
-  info("getSubmitMessage");
-  return new Promise((resolve, reject) => {
-    Services.mm.addMessageListener(
-      "PasswordManager:onFormSubmit",
-      function onFormSubmit() {
-        Services.mm.removeMessageListener(
-          "PasswordManager:onFormSubmit",
-          onFormSubmit
-        );
-        resolve();
-      }
-    );
-  });
-}
-
 add_task(async function test_doorhanger_dismissal_un() {
-  let url = TEST_HOSTNAME + BASIC_FORM_PAGE_PATH;
+  let url = TEST_ORIGIN + BASIC_FORM_PAGE_PATH;
   await BrowserTestUtils.withNewTab(
     {
       gBrowser,
@@ -31,28 +15,41 @@ add_task(async function test_doorhanger_dismissal_un() {
       // the password field is a three digit numberic value,
       // we automatically dismiss the save logins prompt on submission.
 
-      let processedPromise = getSubmitMessage();
-      ContentTask.spawn(browser, null, async () => {
-        content.document
-          .getElementById("form-basic-username")
-          .setUserInput("4111111111111111");
-        content.document
-          .getElementById("form-basic-password")
-          .setUserInput("123");
+      let passwordFilledPromise = listenForTestNotification(
+        "PasswordEditedOrGenerated"
+      );
+      await changeContentFormValues(browser, {
+        "#form-basic-password": "123",
+        // We are interested in the state of the doorhanger created and don't want a
+        // false positive from the password-edited handling
+        "#form-basic-username": "4111111111111111",
+      });
+      info("Waiting for passwordFilledPromise");
+      await passwordFilledPromise;
+      // reset doorhanger/notifications, we're only interested in the submit outcome
+      await cleanupDoorhanger();
+      await cleanupPasswordNotifications();
+      // reset message cache so we can disambiguate between dismissed doorhanger from
+      // password edited vs form submitted w. cc number as username
+      await clearMessageCache(browser);
 
+      let processedPromise = listenForTestNotification("FormSubmit");
+      await SpecialPowers.spawn(browser, [], async () => {
         content.document.getElementById("form-basic-submit").click();
       });
+      info("Waiting for FormSubmit");
       await processedPromise;
 
       let notif = getCaptureDoorhanger("password-save");
       ok(notif, "got notification popup");
       ok(notif.dismissed, "notification popup was automatically dismissed");
+      await cleanupDoorhanger(notif);
     }
   );
 });
 
 add_task(async function test_doorhanger_dismissal_pw() {
-  let url = TEST_HOSTNAME + BASIC_FORM_PAGE_PATH;
+  let url = TEST_ORIGIN + BASIC_FORM_PAGE_PATH;
   await BrowserTestUtils.withNewTab(
     {
       gBrowser,
@@ -63,18 +60,28 @@ add_task(async function test_doorhanger_dismissal_pw() {
       // the password field is also tagged autocomplete="cc-number",
       // we automatically dismiss the save logins prompt on submission.
 
-      let processedPromise = getSubmitMessage();
-      ContentTask.spawn(browser, null, async () => {
-        content.document
-          .getElementById("form-basic-username")
-          .setUserInput("aaa");
-        content.document
-          .getElementById("form-basic-password")
-          .setUserInput("4111111111111111");
+      let passwordFilledPromise = listenForTestNotification(
+        "PasswordEditedOrGenerated"
+      );
+      await changeContentFormValues(browser, {
+        "#form-basic-password": "4111111111111111",
+        "#form-basic-username": "aaa",
+      });
+      await SpecialPowers.spawn(browser, [], async () => {
         content.document
           .getElementById("form-basic-password")
           .setAttribute("autocomplete", "cc-number");
+      });
+      await passwordFilledPromise;
+      // reset doorhanger/notifications, we're only interested in the submit outcome
+      await cleanupDoorhanger();
+      await cleanupPasswordNotifications();
+      // reset message cache so we can disambiguate between dismissed doorhanger from
+      // password edited vs form submitted w. cc number as password
+      await clearMessageCache(browser);
 
+      let processedPromise = listenForTestNotification("FormSubmit");
+      await SpecialPowers.spawn(browser, [], async () => {
         content.document.getElementById("form-basic-submit").click();
       });
       await processedPromise;
@@ -82,12 +89,13 @@ add_task(async function test_doorhanger_dismissal_pw() {
       let notif = getCaptureDoorhanger("password-save");
       ok(notif, "got notification popup");
       ok(notif.dismissed, "notification popup was automatically dismissed");
+      await cleanupDoorhanger(notif);
     }
   );
 });
 
 add_task(async function test_doorhanger_shown_on_un_with_invalid_ccnumber() {
-  let url = TEST_HOSTNAME + BASIC_FORM_PAGE_PATH;
+  let url = TEST_ORIGIN + BASIC_FORM_PAGE_PATH;
   await BrowserTestUtils.withNewTab(
     {
       gBrowser,
@@ -97,28 +105,41 @@ add_task(async function test_doorhanger_shown_on_un_with_invalid_ccnumber() {
       // If the username field has a CC number that is invalid,
       // we show the doorhanger to save logins like we usually do.
 
-      let processedPromise = getSubmitMessage();
-      ContentTask.spawn(browser, null, async () => {
-        content.document.getElementById("form-basic-username").value =
-          "1234123412341234";
-        content.document.getElementById("form-basic-password").value = "411";
+      let passwordFilledPromise = listenForTestNotification(
+        "PasswordEditedOrGenerated"
+      );
+      await changeContentFormValues(browser, {
+        "#form-basic-password": "411",
+        "#form-basic-username": "1234123412341234",
+      });
 
+      await passwordFilledPromise;
+      // reset doorhanger/notifications, we're only interested in the submit outcome
+      await cleanupDoorhanger();
+      await cleanupPasswordNotifications();
+      // reset message cache so we can disambiguate between dismissed doorhanger from
+      // password edited vs form submitted w. cc number as password
+      await clearMessageCache(browser);
+
+      let processedPromise = listenForTestNotification("FormSubmit");
+      await SpecialPowers.spawn(browser, [], async () => {
         content.document.getElementById("form-basic-submit").click();
       });
       await processedPromise;
 
-      let notif = getCaptureDoorhanger("password-save");
+      let notif = await getCaptureDoorhangerThatMayOpen("password-save");
       ok(notif, "got notification popup");
       ok(
         !notif.dismissed,
         "notification popup was not automatically dismissed"
       );
+      await cleanupDoorhanger(notif);
     }
   );
 });
 
 add_task(async function test_doorhanger_dismissal_on_change() {
-  let url = TEST_HOSTNAME + BASIC_FORM_PAGE_PATH;
+  let url = TEST_ORIGIN + BASIC_FORM_PAGE_PATH;
   await BrowserTestUtils.withNewTab(
     {
       gBrowser,
@@ -131,28 +152,42 @@ add_task(async function test_doorhanger_dismissal_on_change() {
         "init"
       );
       let login = new nsLoginInfo(
-        "https://example.org",
-        "https://example.org",
+        TEST_ORIGIN,
+        TEST_ORIGIN,
         null,
         "4111111111111111",
-        "111",
+        "111", // password looks like a card security code
         "form-basic-username",
         "form-basic-password"
       );
       Services.logins.addLogin(login);
 
-      let processedPromise = getSubmitMessage();
-      ContentTask.spawn(browser, null, async () => {
-        content.document
-          .getElementById("form-basic-password")
-          .setUserInput("111");
+      let passwordFilledPromise = listenForTestNotification(
+        "PasswordEditedOrGenerated"
+      );
+
+      await changeContentFormValues(browser, {
+        "#form-basic-password": "222", // password looks like a card security code
+        "#form-basic-username": "4111111111111111",
+      });
+      await passwordFilledPromise;
+      // reset doorhanger/notifications, we're only interested in the submit outcome
+      await cleanupDoorhanger();
+      await cleanupPasswordNotifications();
+      // reset message cache so we can disambiguate between dismissed doorhanger from
+      // password edited vs form submitted w. cc number as username
+      await clearMessageCache(browser);
+
+      let processedPromise = listenForTestNotification("FormSubmit");
+      await SpecialPowers.spawn(browser, [], async () => {
         content.document.getElementById("form-basic-submit").click();
       });
       await processedPromise;
 
-      let notif = getCaptureDoorhanger("password-save");
+      let notif = getCaptureDoorhanger("password-change");
       ok(notif, "got notification popup");
       ok(notif.dismissed, "notification popup was automatically dismissed");
+      await cleanupDoorhanger(notif);
     }
   );
 });

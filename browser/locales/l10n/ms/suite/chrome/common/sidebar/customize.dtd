@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from ./customize.xul -->
+
+<!-- LOCALIZATION NOTE  sidebar.customize.title.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.title.label          "Penyesuaian &sidebarName;">
+<!-- LOCALIZATION NOTE  sidebar.customize.current.label: Do NOT localize the term "&sidebarName;"  -->
+<!ENTITY sidebar.customize.current.label        "Tab dalam &sidebarName;:">
+<!ENTITY sidebar.customize.current.accesskey    "T">
+<!ENTITY sidebar.customize.customize.label      "Penyesuaian Tab…">
+<!ENTITY sidebar.customize.customize.accesskey  "P">
+<!ENTITY sidebar.customize.remove.label         "Buang">
+<!ENTITY sidebar.customize.remove.accesskey     "B">
+<!ENTITY sidebar.customize.additional.label     "Tab Tersedia:">
+<!ENTITY sidebar.customize.additional.accesskey "s">
+<!ENTITY sidebar.customize.add.label            "Tambah">
+<!ENTITY sidebar.customize.add.accesskey        "T">
+<!ENTITY sidebar.customize.preview.label        "Previu…">
+<!ENTITY sidebar.customize.preview.accesskey    "P">
+<!ENTITY sidebar.customize.up.label             "Pindah Atas">
+<!ENTITY sidebar.customize.up.accesskey         "A">
+<!ENTITY sidebar.customize.down.label           "Pindah Bawah">
+<!ENTITY sidebar.customize.down.accesskey       "B">
+<!ENTITY sidebar.more.label                     "Cari Lagi Tab…">
+<!ENTITY sidebar.more.accesskey                 "C">

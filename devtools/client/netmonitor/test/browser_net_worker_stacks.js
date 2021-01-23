@@ -17,7 +17,7 @@ const EXPECTED_REQUESTS = [
     url: TOP_URL,
     causeType: "document",
     causeUri: null,
-    stack: true,
+    stack: false,
   },
   {
     method: "GET",
@@ -25,9 +25,9 @@ const EXPECTED_REQUESTS = [
     causeType: "script",
     causeUri: TOP_URL,
     stack: [
-      { fn: "startWorkerInner", file: TOP_FILE_NAME, line: 11 },
-      { fn: "startWorker", file: TOP_FILE_NAME, line: 8 },
-      { file: TOP_FILE_NAME, line: 4 },
+      { fn: "startWorkerInner", file: TOP_URL, line: 11 },
+      { fn: "startWorker", file: TOP_URL, line: 8 },
+      { file: TOP_URL, line: 4 },
     ],
   },
   {
@@ -36,8 +36,8 @@ const EXPECTED_REQUESTS = [
     causeType: "script",
     causeUri: TOP_URL,
     stack: [
-      { fn: "importScriptsFromWorker", file: WORKER_FILE_NAME, line: 14 },
-      { file: WORKER_FILE_NAME, line: 10 },
+      { fn: "importScriptsFromWorker", file: WORKER_URL, line: 14 },
+      { file: WORKER_URL, line: 10 },
     ],
   },
   {
@@ -46,8 +46,8 @@ const EXPECTED_REQUESTS = [
     causeType: "script",
     causeUri: TOP_URL,
     stack: [
-      { fn: "importScriptsFromWorker", file: WORKER_FILE_NAME, line: 14 },
-      { file: WORKER_FILE_NAME, line: 10 },
+      { fn: "importScriptsFromWorker", file: WORKER_URL, line: 14 },
+      { file: WORKER_URL, line: 10 },
     ],
   },
   {
@@ -56,8 +56,8 @@ const EXPECTED_REQUESTS = [
     causeType: "script",
     causeUri: TOP_URL,
     stack: [
-      { fn: "startWorkerFromWorker", file: WORKER_FILE_NAME, line: 7 },
-      { file: WORKER_FILE_NAME, line: 3 },
+      { fn: "startWorkerFromWorker", file: WORKER_URL, line: 7 },
+      { file: WORKER_URL, line: 3 },
     ],
   },
   {
@@ -66,8 +66,18 @@ const EXPECTED_REQUESTS = [
     causeType: "xhr",
     causeUri: TOP_URL,
     stack: [
-      { fn: "createJSONRequest", file: WORKER_FILE_NAME, line: 22 },
-      { file: WORKER_FILE_NAME, line: 18 },
+      { fn: "createJSONRequest", file: WORKER_URL, line: 22 },
+      { file: WORKER_URL, line: 18 },
+    ],
+  },
+  {
+    method: "GET",
+    url: EXAMPLE_URL + "missing.txt",
+    causeType: "fetch",
+    causeUri: TOP_URL,
+    stack: [
+      { fn: "fetchThing", file: WORKER_URL, line: 29 },
+      { file: WORKER_URL, line: 26 },
     ],
   },
 ];
@@ -75,19 +85,22 @@ const EXPECTED_REQUESTS = [
 add_task(async function() {
   // Load a different URL first to instantiate the network monitor before we
   // load the page we're really interested in.
-  const { tab, monitor } = await initNetMonitor(SIMPLE_URL);
+  const { monitor } = await initNetMonitor(SIMPLE_URL, { requestCount: 1 });
 
   const { store, windowRequire, connector } = monitor.panelWin;
   const { getSortedRequests } = windowRequire(
     "devtools/client/netmonitor/src/selectors/index"
   );
 
-  BrowserTestUtils.loadURI(tab.linkedBrowser, TOP_URL);
-
-  await waitForNetworkEvents(monitor, EXPECTED_REQUESTS.length);
+  const onNetworkEvents = waitForNetworkEvents(
+    monitor,
+    EXPECTED_REQUESTS.length
+  );
+  await navigateTo(TOP_URL);
+  await onNetworkEvents;
 
   is(
-    store.getState().requests.requests.size,
+    store.getState().requests.requests.length,
     EXPECTED_REQUESTS.length,
     "All the page events should be recorded."
   );

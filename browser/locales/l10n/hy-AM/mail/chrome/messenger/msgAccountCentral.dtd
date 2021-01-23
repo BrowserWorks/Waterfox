@@ -1,0 +1,27 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY emailSectionHdr.label        "Էլ. նամակ">
+<!ENTITY readMsgsLink.label           "Ընթերցել նամակներ">
+<!ENTITY composeMsgLink.label         "Գրել նոր նամակ">
+
+<!ENTITY newsSectionHdr.label         "Լուրախմբեր">
+<!ENTITY subscribeNewsLink.label      "Կառավարել բաժանորդագրությունները">
+
+<!ENTITY feedsSectionHdr.label        "Սնումներ">
+<!ENTITY subscribeFeeds.label         "Կառավարել բաժանորդագրությունները">
+
+<!ENTITY chat.label                   "Զրույց">
+<!ENTITY movemail.label               "Movemail">
+
+<!ENTITY accountsSectionHdr.label     "Փոստարկղեր">
+<!ENTITY subscribeImapFolders.label   "Կառավարել բաժանորդագրությունները">
+<!ENTITY settingsLink.label           "Փոստարկղի մանրամասները">
+<!ENTITY setupNewAcct.label           "Ստեղծել հաշիվ.">
+
+<!ENTITY advFeaturesSectionHdr.label  "Ընդլայնված հնարավորություններ">
+<!ENTITY searchMsgsLink.label         "Նամակների որոնում">
+<!ENTITY filtersLink.label            "Կառավարել նամակի զտիչները">
+<!ENTITY junkSettings.label           "Թափոն նամակի կարգավորումներ">
+<!ENTITY offlineLink.label            "Անցանց կարգավորումներ">

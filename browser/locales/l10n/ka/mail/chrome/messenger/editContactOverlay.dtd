@@ -1,0 +1,20 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY editContactPanelDeleteContact.label "წაშლა">
+<!ENTITY editContactPanelDeleteContact.accesskey "ლ">
+
+<!ENTITY editContactName.label "სახელი:">
+<!ENTITY editContactName.accesskey "ს">
+
+<!ENTITY editContactEmail.label "ელფოსტა:">
+<!ENTITY editContactEmail.accesskey "ე">
+
+<!ENTITY editContactAddressBook.label "წიგნაკი:">
+<!ENTITY editContactAddressBook.accesskey "წ">
+
+<!ENTITY editContactPanelDone.label "მზადაა">
+<!ENTITY editContactPanelDone.accesskey "მ">
+
+<!ENTITY contactMoveDisabledWarning.description "წიგნაკს ვერ შეცვლით, რადგან ეს პირი დაგზავნის სიაშია.">

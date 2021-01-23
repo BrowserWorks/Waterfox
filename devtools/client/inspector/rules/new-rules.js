@@ -13,24 +13,30 @@ const {
 const { Provider } = require("devtools/client/shared/vendor/react-redux");
 const EventEmitter = require("devtools/shared/event-emitter");
 
+const classListReducer = require("devtools/client/inspector/rules/reducers/class-list");
+const pseudoClassesReducer = require("devtools/client/inspector/rules/reducers/pseudo-classes");
+const rulesReducer = require("devtools/client/inspector/rules/reducers/rules");
 const {
   updateClasses,
   updateClassPanelExpanded,
-} = require("./actions/class-list");
+} = require("devtools/client/inspector/rules/actions/class-list");
 const {
   disableAllPseudoClasses,
   setPseudoClassLocks,
   togglePseudoClass,
-} = require("./actions/pseudo-classes");
+} = require("devtools/client/inspector/rules/actions/pseudo-classes");
 const {
   updateAddRuleEnabled,
+  updateColorSchemeSimulationHidden,
   updateHighlightedSelector,
   updatePrintSimulationHidden,
   updateRules,
   updateSourceLinkEnabled,
-} = require("./actions/rules");
+} = require("devtools/client/inspector/rules/actions/rules");
 
-const RulesApp = createFactory(require("./components/RulesApp"));
+const RulesApp = createFactory(
+  require("devtools/client/inspector/rules/components/RulesApp")
+);
 
 const { LocalizationHelper } = require("devtools/shared/l10n");
 const INSPECTOR_L10N = new LocalizationHelper(
@@ -51,6 +57,17 @@ loader.lazyRequireGetter(
 );
 loader.lazyRequireGetter(
   this,
+  "getNodeInfo",
+  "devtools/client/inspector/rules/utils/utils",
+  true
+);
+loader.lazyRequireGetter(
+  this,
+  "StyleInspectorMenu",
+  "devtools/client/inspector/shared/style-inspector-menu"
+);
+loader.lazyRequireGetter(
+  this,
   "advanceValidate",
   "devtools/client/inspector/shared/utils",
   true
@@ -66,6 +83,12 @@ loader.lazyRequireGetter(
   "devtools/client/shared/inplace-editor",
   true
 );
+loader.lazyRequireGetter(
+  this,
+  "COLOR_SCHEMES",
+  "devtools/client/inspector/rules/constants",
+  true
+);
 
 const PREF_UA_STYLES = "devtools.inspector.showUserAgentStyles";
 
@@ -74,7 +97,6 @@ class RulesView {
     this.cssProperties = inspector.cssProperties;
     this.doc = window.document;
     this.inspector = inspector;
-    this.pageStyle = inspector.pageStyle;
     this.selection = inspector.selection;
     this.store = inspector.store;
     this.telemetry = inspector.telemetry;
@@ -82,6 +104,10 @@ class RulesView {
     this.isNewRulesView = true;
 
     this.showUserAgentStyles = Services.prefs.getBoolPref(PREF_UA_STYLES);
+
+    this.store.injectReducer("classList", classListReducer);
+    this.store.injectReducer("pseudoClasses", pseudoClassesReducer);
+    this.store.injectReducer("rules", rulesReducer);
 
     this.onAddClass = this.onAddClass.bind(this);
     this.onAddRule = this.onAddRule.bind(this);
@@ -93,11 +119,15 @@ class RulesView {
     );
     this.onToggleDeclaration = this.onToggleDeclaration.bind(this);
     this.onTogglePrintSimulation = this.onTogglePrintSimulation.bind(this);
+    this.onToggleColorSchemeSimulation = this.onToggleColorSchemeSimulation.bind(
+      this
+    );
     this.onTogglePseudoClass = this.onTogglePseudoClass.bind(this);
     this.onToolChanged = this.onToolChanged.bind(this);
     this.onToggleSelectorHighlighter = this.onToggleSelectorHighlighter.bind(
       this
     );
+    this.showContextMenu = this.showContextMenu.bind(this);
     this.showDeclarationNameEditor = this.showDeclarationNameEditor.bind(this);
     this.showDeclarationValueEditor = this.showDeclarationValueEditor.bind(
       this
@@ -129,17 +159,19 @@ class RulesView {
       onOpenSourceLink: this.onOpenSourceLink,
       onSetClassState: this.onSetClassState,
       onToggleClassPanelExpanded: this.onToggleClassPanelExpanded,
+      onToggleColorSchemeSimulation: this.onToggleColorSchemeSimulation,
       onToggleDeclaration: this.onToggleDeclaration,
       onTogglePrintSimulation: this.onTogglePrintSimulation,
       onTogglePseudoClass: this.onTogglePseudoClass,
       onToggleSelectorHighlighter: this.onToggleSelectorHighlighter,
+      showContextMenu: this.showContextMenu,
       showDeclarationNameEditor: this.showDeclarationNameEditor,
       showDeclarationValueEditor: this.showDeclarationValueEditor,
       showNewDeclarationEditor: this.showNewDeclarationEditor,
       showSelectorEditor: this.showSelectorEditor,
     });
 
-    this.initPrintSimulation();
+    this.initSimulationFeatures();
 
     const provider = createElement(
       Provider,
@@ -156,27 +188,42 @@ class RulesView {
     this.provider = provider;
   }
 
-  async initPrintSimulation() {
-    const target = this.inspector.target;
+  /**
+   * Initializes the content-viewer front and enable the print and color scheme simulation
+   * if they are supported in the current target.
+   */
+  async initSimulationFeatures() {
+    // In order to query if the content-viewer actor's print and color simulation methods are
+    // supported, we have to call the content-viewer front so that the actor is lazily loaded.
+    // This allows us to use `actorHasMethod`. Please see `getActorDescription` for more
+    // information.
+    this.contentViewerFront = await this.currentTarget.getFront(
+      "contentViewer"
+    );
 
-    // In order to query if the emulation actor's print simulation methods are supported,
-    // we have to call the emulation front so that the actor is lazily loaded. This allows
-    // us to use `actorHasMethod`. Please see `getActorDescription` for more information.
-    this.emulationFront = await target.getFront("emulation");
-
-    // Show the toggle button if:
-    // - Print simulation is supported for the current target.
-    // - Not debugging content document.
-    if (
-      (await target.actorHasMethod(
-        "emulation",
-        "getIsPrintSimulationEnabled"
-      )) &&
-      !target.chrome
-    ) {
+    if (!this.currentTarget.chrome) {
       this.store.dispatch(updatePrintSimulationHidden(false));
     } else {
       this.store.dispatch(updatePrintSimulationHidden(true));
+    }
+
+    // Show the color scheme simulation toggle button if:
+    // - The feature pref is enabled.
+    // - Color scheme simulation is supported for the current target.
+    const isEmulateColorSchemeSupported = await this.currentTarget.actorHasMethod(
+      "contentViewer",
+      "getEmulatedColorScheme"
+    );
+
+    if (
+      Services.prefs.getBoolPref(
+        "devtools.inspector.color-scheme-simulation.enabled"
+      ) &&
+      isEmulateColorSchemeSupported
+    ) {
+      this.store.dispatch(updateColorSchemeSimulationHidden(false));
+    } else {
+      this.store.dispatch(updateColorSchemeSimulationHidden(true));
     }
   }
 
@@ -198,6 +245,11 @@ class RulesView {
       this._classList = null;
     }
 
+    if (this._contextMenu) {
+      this._contextMenu.destroy();
+      this._contextMenu = null;
+    }
+
     if (this._selectHighlighter) {
       this._selectorHighlighter.finalize();
       this._selectorHighlighter = null;
@@ -208,9 +260,9 @@ class RulesView {
       this.elementStyle = null;
     }
 
-    if (this.emulationFront) {
-      this.emulationFront.destroy();
-      this.emulationFront = null;
+    if (this.contentViewerFront) {
+      this.contentViewerFront.destroy();
+      this.contentViewerFront = null;
     }
 
     this._dummyElement = null;
@@ -254,6 +306,24 @@ class RulesView {
 
     return this._classList;
   }
+
+  get contextMenu() {
+    if (!this._contextMenu) {
+      this._contextMenu = new StyleInspectorMenu(this, { isRuleView: true });
+    }
+
+    return this._contextMenu;
+  }
+
+  /**
+   * Get the current target the toolbox is debugging.
+   *
+   * @return {Target}
+   */
+  get currentTarget() {
+    return this.inspector.currentTarget;
+  }
+
   /**
    * Creates a dummy element in the document that helps get the computed style in
    * TextProperty.
@@ -313,6 +383,23 @@ class RulesView {
   }
 
   /**
+   * Get the type of a given node in the Rules view.
+   *
+   * @param {DOMNode} node
+   *        The node which we want information about.
+   * @return {Object|null} containing the following props:
+   * - rule {Rule} The Rule object.
+   * - type {String} One of the VIEW_NODE_XXX_TYPE const in
+   *   client/inspector/shared/node-types.
+   * - value {Object} Depends on the type of the node.
+   * - view {String} Always "rule" to indicate the rule view.
+   * Otherwise, returns null if the node isn't anything we care about.
+   */
+  getNodeInfo(node) {
+    return getNodeInfo(node, this.elementStyle);
+  }
+
+  /**
    * Get an instance of SelectorHighlighter (used to highlight nodes that match
    * selectors in the rule-view).
    *
@@ -328,7 +415,7 @@ class RulesView {
     }
 
     try {
-      const front = this.inspector.inspector;
+      const front = this.inspector.inspectorFront;
       this._selectorHighlighter = await front.getHighlighterByType(
         "SelectorHighlighter"
       );
@@ -379,12 +466,12 @@ class RulesView {
    */
   async onOpenSourceLink(ruleId) {
     const rule = this.elementStyle.getRule(ruleId);
-    if (!rule || !Tools.styleEditor.isTargetSupported(this.inspector.target)) {
+    if (!rule || !Tools.styleEditor.isTargetSupported(this.currentTarget)) {
       return;
     }
 
     const toolbox = await gDevTools.showToolbox(
-      this.inspector.target,
+      this.currentTarget,
       "styleeditor"
     );
     const styleEditor = toolbox.getCurrentPanel();
@@ -460,15 +547,26 @@ class RulesView {
   }
 
   /**
+   * Handler for toggling color scheme simulation.
+   */
+  async onToggleColorSchemeSimulation() {
+    const currentState = await this.contentViewerFront.getEmulatedColorScheme();
+    const index = COLOR_SCHEMES.indexOf(currentState);
+    const nextState = COLOR_SCHEMES[(index + 1) % COLOR_SCHEMES.length];
+    await this.contentViewerFront.setEmulatedColorScheme(nextState);
+    await this.updateElementStyle();
+  }
+
+  /**
    * Handler for toggling print media simulation.
    */
   async onTogglePrintSimulation() {
-    const enabled = await this.emulationFront.getIsPrintSimulationEnabled();
+    const enabled = await this.contentViewerFront.getIsPrintSimulationEnabled();
 
     if (!enabled) {
-      await this.emulationFront.startPrintMediaSimulation();
+      await this.contentViewerFront.startPrintMediaSimulation();
     } else {
-      await this.emulationFront.stopPrintMediaSimulation(false);
+      await this.contentViewerFront.stopPrintMediaSimulation(false);
     }
 
     await this.updateElementStyle();
@@ -541,6 +639,13 @@ class RulesView {
   }
 
   /**
+   * Handler for showing the context menu.
+   */
+  showContextMenu(event) {
+    this.contextMenu.show(event);
+  }
+
+  /**
    * Handler for showing the inplace editor when an editable property name is clicked in
    * the rules view.
    *
@@ -601,7 +706,8 @@ class RulesView {
       advanceChars: advanceValidate,
       contentType: InplaceEditor.CONTENT_TYPES.CSS_VALUE,
       cssProperties: this.cssProperties,
-      cssVariables: this.elementStyle.variables,
+      cssVariables:
+        this.elementStyle.variablesMap.get(rule.pseudoElement) || [],
       defaultIncrement: declaration.name === "opacity" ? 0.1 : 1,
       done: async (value, commit) => {
         if (!commit || !value || !value.trim()) {
@@ -627,6 +733,7 @@ class RulesView {
       multiline: true,
       popup: this.autocompletePopup,
       property: declaration,
+      showSuggestCompletionOnEmpty: true,
     });
   }
 
@@ -717,6 +824,7 @@ class RulesView {
       return;
     }
 
+    this.pageStyle = element.inspectorFront.pageStyle;
     this.elementStyle = new ElementStyle(
       element,
       this,

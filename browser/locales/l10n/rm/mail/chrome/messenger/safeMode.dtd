@@ -1,0 +1,21 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY safeModeDialog.title             "&brandShortName; Modus segirà">
+<!ENTITY window.width                     "37em">
+
+<!ENTITY safeModeDescription.label        "&brandShortName; vegn ussa exequì en il modus segirà. Quel deactivescha temporarmain tias configuraziuns persunalisadas, ils themes e las extensiuns.">
+<!ENTITY safeModeDescription2.label       "Ti pos far daventar permanentas intginas u tuttas questas midadas:">
+
+<!ENTITY disableAddons.label              "Deactivar tut ils supplements">
+<!ENTITY disableAddons.accesskey          "D">
+
+<!ENTITY resetToolbars.label              "Reinizialisar las travs d'utensils">
+<!ENTITY resetToolbars.accesskey          "R">
+
+<!ENTITY changeAndRestartButton.label     "Exequir las midadas e reaviar">
+<!ENTITY changeAndRestartButton.accesskey "M">
+
+<!ENTITY continueButton.label             "Cuntinuar en il modus segirà">
+<!ENTITY continueButton.accesskey         "C">

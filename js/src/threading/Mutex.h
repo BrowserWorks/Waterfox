@@ -8,10 +8,14 @@
 #define threading_Mutex_h
 
 #include "mozilla/Assertions.h"
-#include "mozilla/Move.h"
+#include "mozilla/Maybe.h"
 #include "mozilla/PlatformMutex.h"
 #include "mozilla/ThreadLocal.h"
 #include "mozilla/Vector.h"
+
+#include <utility>
+
+#include "threading/ThreadId.h"
 
 namespace js {
 
@@ -25,53 +29,71 @@ struct MutexId {
   uint32_t order;
 };
 
-#ifndef DEBUG
+// The Mutex class below wraps mozilla::detail::MutexImpl, but we don't want to
+// use public inheritance, and private inheritance is problematic because
+// Mutex's friends can access the private parent class as if it was public
+// inheritance.  So use a data member, but for Mutex to access the data member
+// we must override it and make Mutex a friend.
+class MutexImpl : public mozilla::detail::MutexImpl {
+ protected:
+  MutexImpl() : mozilla::detail::MutexImpl() {}
 
-class Mutex : public mozilla::detail::MutexImpl {
- public:
-  static bool Init() { return true; }
-  static void ShutDown() {}
-
-  explicit Mutex(const MutexId& id)
-      : mozilla::detail::MutexImpl(
-            mozilla::recordreplay::Behavior::DontPreserve) {}
-
-  using MutexImpl::lock;
-  using MutexImpl::unlock;
+  friend class Mutex;
 };
-
-#else
 
 // In debug builds, js::Mutex is a wrapper over MutexImpl that checks correct
 // locking order is observed.
 //
 // The class maintains a per-thread stack of currently-held mutexes to enable it
 // to check this.
-class Mutex : public mozilla::detail::MutexImpl {
+class Mutex {
+ private:
+  MutexImpl impl_;
+
  public:
+#ifdef DEBUG
   static bool Init();
-  static void ShutDown();
+#else
+  static bool Init() { return true; }
+#endif
 
   explicit Mutex(const MutexId& id)
-      : mozilla::detail::MutexImpl(
-            mozilla::recordreplay::Behavior::DontPreserve),
-        id_(id) {
+#ifdef DEBUG
+      : id_(id)
+#endif
+  {
     MOZ_ASSERT(id_.order != 0);
   }
 
+#ifdef DEBUG
   void lock();
   void unlock();
+#else
+  void lock() { impl_.lock(); }
+  void unlock() { impl_.unlock(); }
+#endif
+
+#ifdef DEBUG
+ public:
   bool ownedByCurrentThread() const;
 
  private:
   const MutexId id_;
+  Mutex* prev_ = nullptr;
+  mozilla::Maybe<ThreadId> owningThread_;
 
-  using MutexVector = mozilla::Vector<const Mutex*>;
-  static MOZ_THREAD_LOCAL(MutexVector*) HeldMutexStack;
-  static MutexVector& heldMutexStack();
-};
-
+  static MOZ_THREAD_LOCAL(Mutex*) HeldMutexStack;
 #endif
+
+ private:
+#ifdef DEBUG
+  void preLockChecks() const;
+  void postLockChecks();
+  void preUnlockChecks();
+#endif
+
+  friend class ConditionVariable;
+};
 
 }  // namespace js
 

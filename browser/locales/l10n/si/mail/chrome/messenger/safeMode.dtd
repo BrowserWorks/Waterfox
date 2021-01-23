@@ -1,0 +1,22 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+
+<!ENTITY safeModeDialog.title "&brandShortName; ආරක්ෂිත ආකාරය (Safe Mode)">
+<!ENTITY window.width "37em">
+
+<!ENTITY safeModeDescription.label "&brandShortName; ආරක්ෂිත ආකාරය (Safe Mode) තුළ ක්‍රියාත්මක වේ, එය ඔබගේ රිසිකරණ සැකසුම්, තේමාවන්, සහ දිගුකිරීම් තාවකාලිකව අබක (disable) කරනු ඇත.">
+<!ENTITY safeModeDescription2.label "ඔබට මෙම සමහර හෝ සියළුම වෙනස්කම් ස්ථිර කළ හැකිය:">
+
+<!ENTITY disableAddons.label "සියළු ඇඩෝන අබල (Disable) කරන්න">
+<!ENTITY disableAddons.accesskey "D">
+
+<!ENTITY resetToolbars.label "මෙවලම්තීරු සහ පාලක (controls) ප්‍රති-සකසන්න">
+<!ENTITY resetToolbars.accesskey "R">
+
+<!ENTITY changeAndRestartButton.label "වෙනස්කම් සිදුකර යළි-ආරම්භ කරන්න">
+<!ENTITY changeAndRestartButton.accesskey "M">
+
+<!ENTITY continueButton.label "ආරක්ෂිත ආකාරය (Safe Mode) තුළ දිගටම ක්‍රියාත්මක වන්න">
+<!ENTITY continueButton.accesskey "C">

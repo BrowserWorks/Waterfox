@@ -5,12 +5,6 @@
   <script src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"></script>
   <script src="chrome://mochikit/content/tests/SimpleTest/paint_listener.js"></script>
   <style>
-    #checkOpacityRepaint {
-      will-change: opacity;
-    }
-    #checkTransformRepaint {
-      will-change: transform;
-    }
     div {
       width: 100px;
       height: 100px;
@@ -19,79 +13,127 @@
   </style>
 </head>
 <body>
-  <div id="checkRepaint">
-    Check repaint without will-change
-  </div>
-  <div id="checkOpacityRepaint">
-    Check repaint with will-change
-  </div>
-  <div id="checkTransformRepaint">
-    Check repaint with will-change
-  </div>
 </body>
 <script>
 
 var utils = window.windowUtils;
 
-var initialPaintCount = 0;
-
-function test_checkRepaint(next) {
-  var element = document.getElementById("checkRepaint");
-  waitForAllPaintsFlushed(function () {
-    utils.checkAndClearPaintedState(element);
-    element.style.opacity = "0.5";
-    waitForAllPaintsFlushed(function () {
-      var painted = utils.checkAndClearPaintedState(element);
-      // *** We check that this repaints because the test is relying
-      //     on this property. If this is broken then this test wont
-      //     be reliable check for will-change.
-      is(painted, true, "element should have been painted");
-      next();
-    });
+function waitForPaints() {
+  return new Promise(function(resolve, reject) {
+    waitForAllPaintsFlushed(resolve);
   });
 }
 
-function test_checkOpacityRepaint(next) {
-  var element = document.getElementById("checkOpacityRepaint");
-  waitForAllPaintsFlushed(function () {
-    utils.checkAndClearPaintedState(element);
-    element.style.opacity = "0.5";
-    waitForAllPaintsFlushed(function () {
-      var painted = utils.checkAndClearPaintedState(element);
-      // BasicLayers' heuristics are so that even with will-change:opacity,
-      // we can still have repaints.
-      if (utils.layerManagerType != "Basic") {
-        is(painted, false, "will-change checkOpacityRepaint element should not have been painted");
-      }
-      next();
-    });
-  });
-}
+add_task(async () => {
+  var element = document.createElement("div");
+  document.body.appendChild(element);
 
-function test_checkTransformRepaint(next) {
-  var element = document.getElementById("checkTransformRepaint");
-  waitForAllPaintsFlushed(function () {
-    utils.checkAndClearPaintedState(element);
-    element.style.transform = "translateY(-5px)";
-    waitForAllPaintsFlushed(function () {
-      var painted = utils.checkAndClearPaintedState(element);
-      // BasicLayers' heuristics are so that even with will-change:transform,
-      // we can still have repaints.
-      if (utils.layerManagerType != "Basic") {
-        is(painted, false, "will-change checkTransformRepaint element should not have been painted");
-      }
-      next();
-    });
-  });
-}
+  await waitForPaints();
 
-SimpleTest.waitForExplicitFinish();
-test_checkRepaint(function(){
-  test_checkOpacityRepaint(function(){
-    test_checkTransformRepaint(function(){
-      SimpleTest.finish();
-    });
-  });
+  utils.checkAndClearPaintedState(element);
+  element.style.opacity = "0.5";
+
+  await waitForPaints();
+
+  var painted = utils.checkAndClearPaintedState(element);
+  // *** We check that this repaints because the test is relying
+  //     on this property. If this is broken then this test wont
+  //     be reliable check for will-change.
+  is(painted, true, "element should have been painted");
+
+  element.remove();
+});
+
+add_task(async () => {
+  var element = document.createElement("div");
+  document.body.appendChild(element);
+
+  element.style.willChange = "opacity";
+
+  await waitForPaints();
+
+  utils.checkAndClearPaintedState(element);
+  element.style.opacity = "0.5";
+
+  await waitForPaints();
+
+  var painted = utils.checkAndClearPaintedState(element);
+  // BasicLayers' heuristics are so that even with will-change:opacity,
+  // we can still have repaints.
+  if (utils.layerManagerType != "Basic") {
+    is(painted, false, "will-change:opacity element should not have been painted");
+  }
+
+  element.remove();
+});
+
+add_task(async () => {
+  var element = document.createElement("div");
+  document.body.appendChild(element);
+
+  element.style.willChange = "transform";
+
+  await waitForPaints();
+
+  utils.checkAndClearPaintedState(element);
+  element.style.transform = "translateY(-5px)";
+
+  await waitForPaints();
+
+  var painted = utils.checkAndClearPaintedState(element);
+  // BasicLayers' heuristics are so that even with will-change:transform,
+  // we can still have repaints.
+  if (utils.layerManagerType != "Basic") {
+    is(painted, false, "will-change:transform element should not have been painted");
+  }
+
+  element.remove();
+});
+
+add_task(async () => {
+  var element = document.createElement("div");
+  document.body.appendChild(element);
+
+  element.style.willChange = "translate";
+
+  await waitForPaints();
+
+  utils.checkAndClearPaintedState(element);
+  element.style.translate = "5px";
+
+  await waitForPaints();
+
+  var painted = utils.checkAndClearPaintedState(element);
+  // BasicLayers' heuristics are so that even with will-change:translate,
+  // we can still have repaints.
+  if (utils.layerManagerType != "Basic") {
+    is(painted, false, "will-change:translate element should not have been painted");
+  }
+
+  element.remove();
+});
+
+add_task(async () => {
+  var element = document.createElement("div");
+  document.body.appendChild(element);
+
+  element.style.willChange = "offset-path";
+
+  await waitForPaints();
+
+  utils.checkAndClearPaintedState(element);
+  element.style.offsetPath = "path('M55 50 h1')";
+
+  await waitForPaints();
+
+  var painted = utils.checkAndClearPaintedState(element);
+  // BasicLayers' heuristics are so that even with will-change:offset-path,
+  // we can still have repaints.
+  if (utils.layerManagerType != "Basic") {
+    is(painted, false, "will-change:offset-path element should not have been painted");
+  }
+
+  element.remove();
 });
 
 </script>

@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label      "Tabeliks muutmine">
+<!ENTITY instructions1.label    "Komponist loob iga valitud lõigu kohta tabelirea.">
+<!ENTITY instructions2.label    "Vali, millist märki kasutada veergudeks jaotamisel.">
+<!ENTITY commaRadio.label       "Koma">
+<!ENTITY spaceRadio.label       "Tühik">
+<!ENTITY otherRadio.label       "Muu märk:">
+<!ENTITY deleteCharCheck.label  "Eraldav märk kustutatakse">
+<!ENTITY collapseSpaces.label   "Lisatühikuid ignoreeritakse">
+<!ENTITY collapseSpaces.tooltip "Kõrvuti olevad tühikud liidetakse">

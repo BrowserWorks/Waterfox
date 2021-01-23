@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- LOCALIZATION NOTE : FILE This file contains the global menu items -->
+
+<!ENTITY fileMenu.label          "Yakb'äl">
+<!ENTITY fileMenu.accesskey        "Y">
+<!ENTITY newMenu.label            "K'ak'a'">
+<!ENTITY newMenu.accesskey          "K">
+
+<!ENTITY editMenu.label          "Tinuk'">
+<!ENTITY editMenu.accesskey        "n">
+<!ENTITY undoCmd.label            "Titzolïx">
+<!ENTITY undoCmd.accesskey          "x">
+<!ENTITY redoCmd.label            "Tikamulüx">
+<!ENTITY redoCmd.accesskey          "T">
+<!ENTITY deleteCmd.label          "Tiyuj">
+<!ENTITY deleteCmd.accesskey        "y">
+<!ENTITY preferencesCmd2.label "Taq cha'oj">
+<!ENTITY preferencesCmd2.accesskey "o">
+<!ENTITY preferencesCmdUnix.label       "Taq ajowab'äl">
+<!ENTITY preferencesCmdUnix.accesskey     "w">
+
+<!ENTITY customizeCmd.label "Tichinäx">
+<!ENTITY customizeCmd.accesskey "c">
+
+<!ENTITY viewMenu.label          "Titz'et">
+<!ENTITY viewMenu.accesskey        "t">
+<!ENTITY viewToolbarsMenu.label        "Taq cholsamajib'äl">
+<!ENTITY viewToolbarsMenu.accesskey      "c">
+<!ENTITY showTaskbarCmd.label          "Rub'anikil Kajtz'ik">
+<!ENTITY showTaskbarCmd.accesskey        "u">
+
+<!ENTITY closeCmd.label      "Titz'apïx">
+<!ENTITY closeCmd.key      "W">
+<!ENTITY closeCmd.accesskey    "t">
+
+<!ENTITY quitApplicationCmd.label  "Tel">
+<!ENTITY quitApplicationCmd.key    "Q">
+<!ENTITY quitApplicationCmd.accesskey  "l">
+
+<!ENTITY quitApplicationCmdUnix.label  "Tel">
+<!ENTITY quitApplicationCmdUnix.accesskey  "T">
+
+<!ENTITY quitApplicationCmdMac.label  "Tel pa &brandShortName;">
+<!ENTITY quitApplicationCmdMac.accesskey  "T">

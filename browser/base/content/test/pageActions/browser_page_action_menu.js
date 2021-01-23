@@ -38,6 +38,57 @@ const mockTargets = [
   { id: "3", name: "no client record device", type: "phone" },
 ];
 
+add_task(async function openPanel() {
+  if (AppConstants.platform == "macosx") {
+    // Ignore this test on Mac.
+    return;
+  }
+
+  let url = "http://example.com/";
+  await BrowserTestUtils.withNewTab(url, async () => {
+    // Should still open the panel when Ctrl key is pressed.
+    await promisePageActionPanelOpen({ ctrlKey: true });
+
+    // Done.
+    let hiddenPromise = promisePageActionPanelHidden();
+    BrowserPageActions.panelNode.hidePopup();
+    await hiddenPromise;
+  });
+});
+
+add_task(async function starButtonCtrlClick() {
+  // On macOS, ctrl-click shouldn't open the panel because this normally opens
+  // the context menu. This happens via the `contextmenu` event which is created
+  // by widget code, so our simulated clicks do not do so, so we can't test
+  // anything on macOS.
+  if (AppConstants.platform == "macosx") {
+    return;
+  }
+
+  // Open a unique page.
+  let url = "http://example.com/browser_page_action_star_button";
+  await BrowserTestUtils.withNewTab(url, async () => {
+    StarUI._createPanelIfNeeded();
+    // The button ignores activation while the bookmarked status is being
+    // updated. So, wait for it to finish updating.
+    await TestUtils.waitForCondition(
+      () => BookmarkingUI.status != BookmarkingUI.STATUS_UPDATING
+    );
+
+    const popup = document.getElementById("editBookmarkPanel");
+    const starButtonBox = document.getElementById("star-button-box");
+
+    let shownPromise = promisePanelShown(popup);
+    EventUtils.synthesizeMouseAtCenter(starButtonBox, { ctrlKey: true });
+    await shownPromise;
+    ok(true, "Panel shown after button pressed");
+
+    let hiddenPromise = promisePanelHidden(popup);
+    document.getElementById("editBookmarkPanelRemoveButton").click();
+    await hiddenPromise;
+  });
+});
+
 add_task(async function bookmark() {
   // Open a unique page.
   let url = "http://example.com/browser_page_action_menu";
@@ -97,8 +148,9 @@ add_task(async function bookmark() {
     });
 
     let onItemRemovedPromise = PlacesTestUtils.waitForNotification(
-      "onItemRemoved",
-      (id, parentId, index, type, itemUrl) => url == itemUrl.spec
+      "bookmark-removed",
+      events => events.some(event => event.url == url),
+      "places"
     );
 
     // Click the remove-bookmark button in the panel.
@@ -162,14 +214,14 @@ add_task(async function pinTabFromURLBar() {
     // Click the Pin Tab button.
     let pinTabButton = document.getElementById("pageAction-urlbar-pinTab");
     EventUtils.synthesizeMouseAtCenter(pinTabButton, {});
-    await BrowserTestUtils.waitForCondition(
+    await TestUtils.waitForCondition(
       () => gBrowser.selectedTab.pinned,
       "Tab was pinned"
     );
 
     // Click the Unpin Tab button
     EventUtils.synthesizeMouseAtCenter(pinTabButton, {});
-    await BrowserTestUtils.waitForCondition(
+    await TestUtils.waitForCondition(
       () => !gBrowser.selectedTab.pinned,
       "Tab was unpinned"
     );
@@ -221,7 +273,7 @@ add_task(async function copyURLFromPanel() {
     EventUtils.synthesizeMouseAtCenter(copyURLButton, {});
     await hiddenPromise;
 
-    let feedbackPanel = document.getElementById("confirmation-hint");
+    let feedbackPanel = ConfirmationHint._panel;
     let feedbackShownPromise = BrowserTestUtils.waitForEvent(
       feedbackPanel,
       "popupshown"
@@ -232,7 +284,7 @@ add_task(async function copyURLFromPanel() {
       "pageActionButton",
       "Feedback menu should be anchored on the main Page Action button"
     );
-    let feedbackHiddenPromise = promisePanelHidden("confirmation-hint");
+    let feedbackHiddenPromise = promisePanelHidden(feedbackPanel);
     await feedbackHiddenPromise;
 
     action.pinnedToUrlbar = false;
@@ -250,17 +302,17 @@ add_task(async function copyURLFromURLBar() {
     registerCleanupFunction(() => (action.pinnedToUrlbar = false));
 
     let copyURLButton = document.getElementById("pageAction-urlbar-copyURL");
-    let feedbackShownPromise = promisePanelShown("confirmation-hint");
+    let panel = ConfirmationHint._panel;
+    let feedbackShownPromise = promisePanelShown(panel);
     EventUtils.synthesizeMouseAtCenter(copyURLButton, {});
 
     await feedbackShownPromise;
-    let panel = document.getElementById("confirmation-hint");
     Assert.equal(
       panel.anchorNode.id,
       "pageAction-urlbar-copyURL",
       "Feedback menu should be anchored on the main URL bar button"
     );
-    let feedbackHiddenPromise = promisePanelHidden("confirmation-hint");
+    let feedbackHiddenPromise = promisePanelHidden(panel);
     await feedbackHiddenPromise;
 
     action.pinnedToUrlbar = false;
@@ -307,7 +359,7 @@ add_task(async function sendToDevice_syncNotReady_other_states() {
   await BrowserTestUtils.withNewTab("http://example.com/", async () => {
     await promiseSyncReady();
     const sandbox = sinon.createSandbox();
-    sandbox.stub(gSync, "syncReady").get(() => false);
+    sandbox.stub(fxAccounts.device, "recentDeviceList").get(() => null);
     sandbox
       .stub(UIState, "get")
       .returns({ status: UIState.STATUS_NOT_VERIFIED });
@@ -366,17 +418,22 @@ add_task(async function sendToDevice_syncNotReady_configured() {
   await BrowserTestUtils.withNewTab("http://example.com/", async () => {
     await promiseSyncReady();
     const sandbox = sinon.createSandbox();
-    const syncReady = sandbox.stub(gSync, "syncReady").get(() => false);
-    const hasSyncedThisSession = sandbox
-      .stub(Weave.Service.clientsEngine, "hasSyncedThisSession")
-      .get(() => false);
+    const recentDeviceList = sandbox
+      .stub(fxAccounts.device, "recentDeviceList")
+      .get(() => null);
     sandbox.stub(UIState, "get").returns({ status: UIState.STATUS_SIGNED_IN });
     sandbox.stub(gSync, "isSendableURI").returns(true);
 
-    sandbox.stub(Weave.Service, "sync").callsFake(() => {
-      syncReady.get(() => true);
-      hasSyncedThisSession.get(() => true);
-      sandbox.stub(gSync, "sendTabTargets").get(() => mockTargets);
+    sandbox.stub(fxAccounts.device, "refreshDeviceList").callsFake(() => {
+      recentDeviceList.get(() =>
+        mockTargets.map(({ id, name, type }) => ({ id, name, type }))
+      );
+      sandbox
+        .stub(Weave.Service.clientsEngine, "getClientByFxaDeviceId")
+        .callsFake(fxaDeviceId => {
+          let target = mockTargets.find(c => c.id == fxaDeviceId);
+          return target ? target.clientRecord : null;
+        });
       sandbox
         .stub(Weave.Service.clientsEngine, "getClientType")
         .callsFake(
@@ -491,14 +548,14 @@ add_task(async function sendToDevice_notSignedIn() {
       },
       {
         attrs: {
-          label: "Not Connected to Sync",
+          label: "Not Signed In",
         },
         disabled: true,
       },
       null,
       {
         attrs: {
-          label: "Sign in to Sync...",
+          label: "Sign in to Firefox...",
         },
       },
       {
@@ -521,13 +578,16 @@ add_task(async function sendToDevice_noDevices() {
   await BrowserTestUtils.withNewTab("http://example.com/", async () => {
     await promiseSyncReady();
     const sandbox = sinon.createSandbox();
-    sandbox.stub(gSync, "syncReady").get(() => true);
-    sandbox
-      .stub(Weave.Service.clientsEngine, "hasSyncedThisSession")
-      .get(() => true);
-    sandbox.stub(Weave.Service.clientsEngine, "fxaDevices").get(() => []);
+    sandbox.stub(fxAccounts.device, "recentDeviceList").get(() => []);
     sandbox.stub(UIState, "get").returns({ status: UIState.STATUS_SIGNED_IN });
     sandbox.stub(gSync, "isSendableURI").returns(true);
+    sandbox.stub(fxAccounts.device, "refreshDeviceList").resolves(true);
+    sandbox
+      .stub(Weave.Service.clientsEngine, "getClientByFxaDeviceId")
+      .callsFake(fxaDeviceId => {
+        let target = mockTargets.find(c => c.id == fxaDeviceId);
+        return target ? target.clientRecord : null;
+      });
     sandbox
       .stub(Weave.Service.clientsEngine, "getClientType")
       .callsFake(
@@ -596,13 +656,22 @@ add_task(async function sendToDevice_devices() {
   await BrowserTestUtils.withNewTab("http://example.com/", async () => {
     await promiseSyncReady();
     const sandbox = sinon.createSandbox();
-    sandbox.stub(gSync, "syncReady").get(() => true);
     sandbox
-      .stub(Weave.Service.clientsEngine, "hasSyncedThisSession")
-      .get(() => true);
+      .stub(fxAccounts.device, "recentDeviceList")
+      .get(() => mockTargets.map(({ id, name, type }) => ({ id, name, type })));
     sandbox.stub(UIState, "get").returns({ status: UIState.STATUS_SIGNED_IN });
     sandbox.stub(gSync, "isSendableURI").returns(true);
-    sandbox.stub(gSync, "sendTabTargets").get(() => mockTargets);
+    sandbox
+      .stub(fxAccounts.commands.sendTab, "isDeviceCompatible")
+      .returns(true);
+    sandbox.stub(fxAccounts.device, "refreshDeviceList").resolves(true);
+    sandbox.spy(Weave.Service, "sync");
+    sandbox
+      .stub(Weave.Service.clientsEngine, "getClientByFxaDeviceId")
+      .callsFake(fxaDeviceId => {
+        let target = mockTargets.find(c => c.id == fxaDeviceId);
+        return target ? target.clientRecord : null;
+      });
     sandbox
       .stub(Weave.Service.clientsEngine, "getClientType")
       .callsFake(
@@ -636,22 +705,126 @@ add_task(async function sendToDevice_devices() {
         display: "none",
         disabled: true,
       },
-    ];
-    for (let target of mockTargets) {
-      expectedItems.push({
+      {
         attrs: {
-          clientId: target.id,
-          label: target.name,
-          clientType: target.type,
+          clientId: "1",
+          label: "bar",
+          clientType: "desktop",
         },
-      });
-    }
-    expectedItems.push(null, {
-      attrs: {
-        label: "Send to All Devices",
       },
-    });
+      {
+        attrs: {
+          clientId: "2",
+          label: "baz",
+          clientType: "phone",
+        },
+      },
+      {
+        attrs: {
+          clientId: "0",
+          label: "foo",
+          clientType: "phone",
+        },
+      },
+      {
+        attrs: {
+          clientId: "3",
+          label: "no client record device",
+          clientType: "phone",
+        },
+      },
+      null,
+      {
+        attrs: {
+          label: "Send to All Devices",
+        },
+      },
+    ];
     checkSendToDeviceItems(expectedItems);
+
+    Assert.ok(Weave.Service.sync.notCalled);
+
+    // Done, hide the panel.
+    let hiddenPromise = promisePageActionPanelHidden();
+    BrowserPageActions.panelNode.hidePopup();
+    await hiddenPromise;
+
+    cleanUp();
+  });
+});
+
+add_task(async function sendTabToDevice_syncEnabled() {
+  // Open a tab that's sendable.
+  await BrowserTestUtils.withNewTab("http://example.com/", async () => {
+    await promiseSyncReady();
+    const sandbox = sinon.createSandbox();
+    sandbox.stub(fxAccounts.device, "recentDeviceList").get(() => []);
+    sandbox
+      .stub(UIState, "get")
+      .returns({ status: UIState.STATUS_SIGNED_IN, syncEnabled: true });
+    sandbox.stub(gSync, "isSendableURI").returns(true);
+    sandbox.spy(fxAccounts.device, "refreshDeviceList");
+    sandbox.spy(Weave.Service, "sync");
+    sandbox
+      .stub(Weave.Service.clientsEngine, "getClientByFxaDeviceId")
+      .callsFake(fxaDeviceId => {
+        let target = mockTargets.find(c => c.id == fxaDeviceId);
+        return target ? target.clientRecord : null;
+      });
+    sandbox
+      .stub(Weave.Service.clientsEngine, "getClientType")
+      .callsFake(
+        id =>
+          mockTargets.find(c => c.clientRecord && c.clientRecord.id == id)
+            .clientRecord.type
+      );
+
+    let cleanUp = () => {
+      sandbox.restore();
+    };
+    registerCleanupFunction(cleanUp);
+
+    // Open the panel.
+    await promisePageActionPanelOpen();
+    let sendToDeviceButton = document.getElementById(
+      "pageAction-panel-sendToDevice"
+    );
+    Assert.ok(!sendToDeviceButton.disabled);
+
+    // Click Send to Device.
+    let viewPromise = promisePageActionViewShown();
+    EventUtils.synthesizeMouseAtCenter(sendToDeviceButton, {});
+    let view = await viewPromise;
+    Assert.equal(view.id, "pageAction-panel-sendToDevice-subview");
+
+    let expectedItems = [
+      {
+        className: "pageAction-sendToDevice-notReady",
+        display: "none",
+        disabled: true,
+      },
+      {
+        attrs: {
+          label: "No Devices Connected",
+        },
+        disabled: true,
+      },
+      null,
+      {
+        attrs: {
+          label: "Connect Another Device...",
+        },
+      },
+      {
+        attrs: {
+          label: "Learn About Sending Tabs...",
+        },
+      },
+    ];
+    checkSendToDeviceItems(expectedItems);
+
+    Assert.ok(Weave.Service.sync.notCalled);
+    Assert.equal(fxAccounts.device.refreshDeviceList.callCount, 1);
 
     // Done, hide the panel.
     let hiddenPromise = promisePageActionPanelHidden();
@@ -670,15 +843,18 @@ add_task(async function sendToDevice_title() {
       await BrowserTestUtils.withNewTab("http://example.com/b", async () => {
         await promiseSyncReady();
         const sandbox = sinon.createSandbox();
-        sandbox.stub(gSync, "syncReady").get(() => true);
-        sandbox
-          .stub(Weave.Service.clientsEngine, "hasSyncedThisSession")
-          .get(() => true);
+        sandbox.stub(fxAccounts.device, "recentDeviceList").get(() => []);
         sandbox
           .stub(UIState, "get")
           .returns({ status: UIState.STATUS_SIGNED_IN });
         sandbox.stub(gSync, "isSendableURI").returns(true);
-        sandbox.stub(gSync, "sendTabTargets").get(() => []);
+        sandbox.stub(fxAccounts.device, "refreshDeviceList").resolves(true);
+        sandbox
+          .stub(Weave.Service.clientsEngine, "getClientByFxaDeviceId")
+          .callsFake(fxaDeviceId => {
+            let target = mockTargets.find(c => c.id == fxaDeviceId);
+            return target ? target.clientRecord : null;
+          });
         sandbox
           .stub(Weave.Service.clientsEngine, "getClientType")
           .callsFake(
@@ -714,7 +890,7 @@ add_task(async function sendToDevice_title() {
         // Add the other tab to the selection.
         gBrowser.addToMultiSelectedTabs(
           gBrowser.getTabForBrowser(otherBrowser),
-          false
+          { isLastMultiSelectChange: true }
         );
 
         // Open the panel again.  Now the action's title should be "Send 2 Tabs to
@@ -745,13 +921,21 @@ add_task(async function sendToDevice_inUrlbar() {
   await BrowserTestUtils.withNewTab("http://example.com/", async () => {
     await promiseSyncReady();
     const sandbox = sinon.createSandbox();
-    sandbox.stub(gSync, "syncReady").get(() => true);
     sandbox
-      .stub(Weave.Service.clientsEngine, "hasSyncedThisSession")
-      .get(() => true);
+      .stub(fxAccounts.device, "recentDeviceList")
+      .get(() => mockTargets.map(({ id, name, type }) => ({ id, name, type })));
     sandbox.stub(UIState, "get").returns({ status: UIState.STATUS_SIGNED_IN });
     sandbox.stub(gSync, "isSendableURI").returns(true);
-    sandbox.stub(gSync, "sendTabTargets").get(() => mockTargets);
+    sandbox
+      .stub(fxAccounts.commands.sendTab, "isDeviceCompatible")
+      .returns(true);
+    sandbox.stub(fxAccounts.device, "refreshDeviceList").resolves(true);
+    sandbox
+      .stub(Weave.Service.clientsEngine, "getClientByFxaDeviceId")
+      .callsFake(fxaDeviceId => {
+        let target = mockTargets.find(c => c.id == fxaDeviceId);
+        return target ? target.clientRecord : null;
+      });
     sandbox
       .stub(Weave.Service.clientsEngine, "getClientType")
       .callsFake(
@@ -759,6 +943,7 @@ add_task(async function sendToDevice_inUrlbar() {
           mockTargets.find(c => c.clientRecord && c.clientRecord.id == id)
             .clientRecord.type
       );
+    sandbox.stub(gSync, "sendTabToDevice").resolves(true);
 
     let cleanUp = () => {
       sandbox.restore();
@@ -795,21 +980,41 @@ add_task(async function sendToDevice_inUrlbar() {
         display: "none",
         disabled: true,
       },
-    ];
-    for (let target of mockTargets) {
-      expectedItems.push({
+      {
         attrs: {
-          clientId: target.id,
-          label: target.name,
-          clientType: target.type,
+          clientId: "1",
+          label: "bar",
+          clientType: "desktop",
         },
-      });
-    }
-    expectedItems.push(null, {
-      attrs: {
-        label: "Send to All Devices",
       },
-    });
+      {
+        attrs: {
+          clientId: "2",
+          label: "baz",
+          clientType: "phone",
+        },
+      },
+      {
+        attrs: {
+          clientId: "0",
+          label: "foo",
+          clientType: "phone",
+        },
+      },
+      {
+        attrs: {
+          clientId: "3",
+          label: "no client record device",
+          clientType: "phone",
+        },
+      },
+      null,
+      {
+        attrs: {
+          label: "Send to All Devices",
+        },
+      },
+    ];
     checkSendToDeviceItems(expectedItems, true);
 
     // Get the first device menu item in the panel.
@@ -822,7 +1027,7 @@ add_task(async function sendToDevice_inUrlbar() {
 
     // For good measure, wait until it's visible.
     let dwu = window.windowUtils;
-    await BrowserTestUtils.waitForCondition(() => {
+    await TestUtils.waitForCondition(() => {
       let bounds = dwu.getBoundsWithoutFlushing(deviceMenuItem);
       return bounds.height > 0 && bounds.width > 0;
     }, "Waiting for first device menu item to appear");
@@ -883,7 +1088,7 @@ add_task(async function contextMenu() {
     // The action should be removed from the urlbar.  In this case, the bookmark
     // star, the node in the urlbar should be hidden.
     let starButtonBox = document.getElementById("star-button-box");
-    await BrowserTestUtils.waitForCondition(() => {
+    await TestUtils.waitForCondition(() => {
       return starButtonBox.hidden;
     }, "Waiting for star button to become hidden");
 
@@ -909,7 +1114,7 @@ add_task(async function contextMenu() {
     await contextMenuPromise;
 
     // The action should be added to the urlbar.
-    await BrowserTestUtils.waitForCondition(() => {
+    await TestUtils.waitForCondition(() => {
       return !starButtonBox.hidden;
     }, "Waiting for star button to become unhidden");
 
@@ -934,7 +1139,7 @@ add_task(async function contextMenu() {
     await contextMenuPromise;
 
     // The action should be removed from the urlbar.
-    await BrowserTestUtils.waitForCondition(() => {
+    await TestUtils.waitForCondition(() => {
       return starButtonBox.hidden;
     }, "Waiting for star button to become hidden");
 
@@ -958,7 +1163,7 @@ add_task(async function contextMenu() {
     contextMenuPromise = promisePanelHidden("pageActionContextMenu");
     EventUtils.synthesizeMouseAtCenter(menuItems[0], {});
     await contextMenuPromise;
-    await BrowserTestUtils.waitForCondition(() => {
+    await TestUtils.waitForCondition(() => {
       return !starButtonBox.hidden;
     }, "Waiting for star button to become unhidden");
   });

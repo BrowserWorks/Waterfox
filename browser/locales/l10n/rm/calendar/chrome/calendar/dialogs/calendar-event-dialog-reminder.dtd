@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY reminderdialog.title                              "Configurar propemorias">
+<!ENTITY reminder.add.label                                "Agiuntar">
+<!ENTITY reminder.add.accesskey                            "A">
+<!ENTITY reminder.remove.label                             "Allontanar">
+<!ENTITY reminder.remove.accesskey                         "A">
+
+<!ENTITY reminder.reminderDetails.label                    "Detagls da promemoria">
+<!ENTITY reminder.action.label                             "Tscherner in'acziun da promemoria">
+
+<!ENTITY reminder.action.alert.label                       "Mussar in avis">
+<!ENTITY reminder.action.email.label                       "Trametter in e-mail">
+
+<!ENTITY alarm.units.minutes                               "minutas" >
+<!ENTITY alarm.units.hours                                 "uras" >
+<!ENTITY alarm.units.days                                  "dis" >

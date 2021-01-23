@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY serverAdvanced.label "Rozšěrjene kontowe nastajenja">
+<!-- LOCALIZATION NOTE (serverDirectory.label): Do not translate "IMAP" -->
+<!ENTITY serverDirectory.label "Rjadowak serwera IMAP:">
+<!ENTITY serverDirectory.accesskey "R">
+<!ENTITY usingSubscription.label "Jenož abonowane rjadowaki pokazać">
+<!ENTITY usingSubscription.accesskey "J">
+<!ENTITY dualUseFolders.label "Serwer rjadowaki podpěruje, kotrež podrjadowaki a powěsće wobsahuja">
+<!ENTITY dualUseFolders.accesskey "S">
+<!ENTITY maximumConnectionsNumber.label "Maksimalna ličba serwerowych zwiskow, kotrež dyrbja so pufrować">
+<!ENTITY maximumConnectionsNumber.accesskey "M">
+<!-- LOCALIZATION NOTE (namespaceDesc.label): Do not translate "IMAP" -->
+<!ENTITY namespaceDesc.label "Tute nastajenja mjenowe rumy na wašim IMAP-serwerje podawaja">
+<!ENTITY personalNamespace.label "Wosobinski mjenowy rum:">
+<!ENTITY personalNamespace.accesskey "W">
+<!ENTITY publicNamespace.label "Zjawny (hromadźe wužiwany):">
+<!ENTITY publicNamespace.accesskey "h">
+<!ENTITY otherUsersNamespace.label "Druzy wužiwarjo:">
+<!ENTITY otherUsersNamespace.accesskey "D">
+<!ENTITY overrideNamespaces.label "Serwerej dowolić, zo tute mjenowe rumy přeńdźe">
+<!ENTITY overrideNamespaces.accesskey "l">
+<!ENTITY pop3DeferringDesc.label "Hdyž e-mejl wot serwera tutoho konta sćahujeće, wužiwajće slědowacy rjadowak, zo byšće nowe powěsće składował:" >
+<!ENTITY accountInbox.label "Póstowy dochad za tute konto">
+<!ENTITY accountInbox.accesskey "t">
+<!ENTITY deferToServer.label "Póstowy kašćik za druhe konto">
+<!ENTITY deferToServer.accesskey "d">
+<!ENTITY deferGetNewMail.label "Tutón serwer při přijimanju noweje e-mejle zapřijeć">
+<!ENTITY deferGetNewMail.accesskey "T">

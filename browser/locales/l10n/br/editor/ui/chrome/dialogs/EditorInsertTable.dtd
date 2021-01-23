@@ -1,0 +1,18 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+<!ENTITY windowTitle.label "Enlakaat un daolenn">
+
+<!ENTITY size.label "Ment">
+<!ENTITY numRowsEditField.label "Renkadoù :">
+<!ENTITY numRowsEditField.accessKey "n">
+<!ENTITY numColumnsEditField.label "Bannoù :">
+<!ENTITY numColumnsEditField.accessKey "B">
+<!ENTITY widthEditField.label "Led :">
+<!ENTITY widthEditField.accessKey "d">
+<!ENTITY borderEditField.label "Riblenn :">
+<!ENTITY borderEditField.accessKey "b">
+<!ENTITY borderEditField.tooltip "Biziata un niver evit riblenn an daolenn pe viziata mann (0) evit riblenn ebet">
+<!ENTITY pixels.label "a bikselioù">

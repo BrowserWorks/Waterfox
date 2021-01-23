@@ -1,0 +1,29 @@
+<!-- -*- Mode: SGML; indent-tabs-mode: nil; -*- -->
+<!--
+
+ This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY            windowTitle.label    "Izaberite korisnički profil">
+<!ENTITY            profileManager.title "&brandShortName; menadžer profila">
+
+<!ENTITY            manage.label     "Upravljanje profilima…">
+<!ENTITY            select.label     "Koristite profil">
+
+<!ENTITY            availableProfiles.label "Dostupni profili">
+
+<!ENTITY            introStart.label         "Da pristupite vašem profilu, koji sadrži pohranjene poruke, postavke i druge prilagođene informacije, molimo odaberite vaš profil sa liste i kliknite &start.label; da započnete sesiju.">
+<!ENTITY            introSwitch.label        "Da se prebacite na drugi profil, koji sadrži pohranjene poruke, postavke i druge prilagođene informacije, molimo odaberite taj profil sa liste i kliknite &select.label; da ga počnete koristiti.">
+<!ENTITY            profileManagerText.label "&brandShortName; pohranjuje informacije o vašim postavkama, preferencijama, zabilješkama, pohranjenim porukama i drugim korisničkim stavkama u vaš profil.">
+
+<!ENTITY            autoSelect.label         "Koristite ovaj profil kao glavni">
+
+<!ENTITY            start.label              "Pokrenite &brandShortName;">
+<!ENTITY            exit.label               "Izađi">
+
+<!ENTITY            newButton.label          "Napravi profil…">
+<!ENTITY            renameButton.label       "Promijeni ime profila…">
+<!ENTITY            deleteButton.label       "Izbriši profil…">
+
+<!ENTITY            offlineState.label       "Rad van mreže">

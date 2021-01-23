@@ -1,0 +1,52 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-copies.xul -->
+
+<!-- extracted from am-copies.xhtml -->
+
+<!ENTITY copyAndFolderTitle.label "עותקים ותיקיות">
+<!ENTITY sendingPrefix.label "כאשר שולחים הודעות, אוטומטית:">
+<!ENTITY fccMailFolder.label "שים עותק בתוך:">
+<!ENTITY fccMailFolder.accesskey "ע">
+<!ENTITY fccReplyFollowsParent.label "שים השבות בתיקייה של ההודעה שהושבה">
+<!ENTITY fccReplyFollowsParent.accesskey "ש">
+<!-- LOCALIZATION NOTE (ccAddress.label): do not translate "Cc" in below line -->
+<!ENTITY ccAddress.label "שלח עותק לכתובות אלו:">
+<!ENTITY ccAddress.accesskey "ע">
+<!ENTITY ccAddressList.placeholder "הפרד בין כתובות עם פסיקים">
+<!-- LOCALIZATION NOTE (bccAddress.label): do not translate "Bcc" in below line -->
+<!ENTITY bccAddress.label "עותק סמוי לכתובות אלו:">
+<!ENTITY bccAddress.accesskey "מ">
+<!ENTITY bccAddressList.placeholder "הפרד בין כתובות עם פסיקים">
+<!ENTITY saveMessageDlg.label "הצג בקשה לאישור כאשר הודעות נשמרות">
+<!ENTITY saveMessageDlg.accesskey "נ">
+<!-- LOCALIZATION NOTE (sentFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY sentFolderOn.label "תיקיית &quot;נשלח&quot; על:">
+<!ENTITY sentFolderOn.accesskey "נ">
+<!ENTITY sentInOtherFolder.label "אחר:">
+<!ENTITY sentInOtherFolder.accesskey "א">
+<!-- LOCALIZATION NOTE (archivesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY archivesTitle.label "ארכיוני הודעות">
+<!ENTITY keepArchives.label "שמור ארכיון הודעות בתוך:">
+<!ENTITY keepArchives.accesskey "ש">
+<!ENTITY archiveHierarchyButton.label "אפשרויות הארכיון…">
+<!ENTITY archiveHierarchyButton.accesskey "א">
+<!ENTITY archivesFolderOn.label "תיקיית &quot;ארכיון&quot; על:">
+<!ENTITY archivesFolderOn.accesskey "ר">
+<!ENTITY archiveInOtherFolder.label "אחר:">
+<!ENTITY archiveInOtherFolder.accesskey "ח">
+<!ENTITY specialFolders.label "טיוטות ותבניות">
+<!ENTITY keepDrafts2.label "להשאיר הודעות טיוטה בתוך:">
+<!-- LOCALIZATION NOTE (draftsFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY draftsFolderOn.label "תיקיית &quot;טיוטות&quot; על:">
+<!ENTITY draftsFolderOn.accesskey "ט">
+<!ENTITY draftInOtherFolder.label "אחר:">
+<!ENTITY draftInOtherFolder.accesskey "א">
+<!ENTITY keepTemplates.label "שמור תבניות הודעה בתוך:">
+<!-- LOCALIZATION NOTE (templatesFolderOn.label): OK to translate this, bug #57440 -->
+<!ENTITY templatesFolderOn.label "תיקיית &quot;תבניות&quot; על:">
+<!ENTITY templatesFolderOn.accesskey "ב">
+<!ENTITY templateInOtherFolder.label "אחר:">
+<!ENTITY templateInOtherFolder.accesskey "א">

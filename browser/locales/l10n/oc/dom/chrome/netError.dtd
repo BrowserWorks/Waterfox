@@ -1,0 +1,98 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY loadError.label "Error de cargament de la pagina">
+<!ENTITY retry.label "Tornar ensajar">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.title "Failed to Connect">
+
+<!ENTITY deniedPortAccess.title "Pòrt restrench per de rasons de seguretat.">
+<!ENTITY deniedPortAccess.longDesc "<p>L'adreça demandada indica un pòrt (per ex.<q>mozilla.org:80</q> pel pòrt 80 sus mozilla.org) qu'es normalament utilizat per d'<em>autres</em> usatges que la navegacion sul Web. Lo navegador a anullat la requèsta per vòstra proteccion e vòstra seguretat.</p>">
+
+<!ENTITY dnsNotFound.title "Adreça introbabla">
+
+<!ENTITY fileNotFound.title "Fichièr introbable">
+<!ENTITY fileNotFound.longDesc "<ul>
+  <li>Lo fichièr es benlèu estat renomenat, suprimit o desplaçat ?</li>
+  <li>I a una deca de majuscula, d’accent o una autra error ?</li>
+  <li>Avètz las permissions d’accès que cal per aqueste fichièr ?</li>
+</ul>">
+
+<!ENTITY fileAccessDenied.title "L’accès al fichièr es estat refusat">
+<!ENTITY fileAccessDenied.longDesc "<ul><li>Benlèu es estat suprimit, desplaçat o las permissions associadas al fichièr permeton pas d'i accedir.</li></ul>">
+
+<!ENTITY generic.title "Impossible de completar la requèsta">
+<!ENTITY generic.longDesc "<p>I a pas cap d‘informacion disponibla actualament tocant aqueste problèma o error.</p>">
+
+<!ENTITY malformedURI.title "Adreça invalida">
+<!ENTITY malformedURI.longDesc "<p>L’adreça fornida es pas dins un format reconegut. Mercés de verificar qu’i aja pas cap d’error a la barra d’adreça e tornatz ensajar.</p>">
+
+<!ENTITY netInterrupt.title "Data Transfer Interrupted">
+<!ENTITY netInterrupt.longDesc "<p>Lo navegador s’es corrèctament connectat, mas la connexion es estada interrompuda pendent lo transferiment d’informacions. Tornatz ensajar.</p><ul><li>Podètz pas consultar d’autres sites tanpauc ? Verificatz la connexion de l’ordenador.</li><li>Avètz encara de problèmas ? Consultatz l’administrator ret o vòstre provesidor d’accès Internet per dire d’obténer d’ajuda.</li></ul>">
+
+<!ENTITY notCached.title "Lo document a expirat">
+<!ENTITY notCached.longDesc "<p>Lo document demandat es pas disponible dins lo cache del navegador.</p> <ul> <li>Per de rasons de seguretat, lo navegador redemanda pas automaticament los documents sensibles.</li> <li>Clicar sus « Ensajar tornarmai » per tornar demandar lo document a partir del site Web.</li> </ul>">
+
+<!ENTITY netOffline.title "Mòde fòra connexion">
+<!ENTITY netOffline.longDesc2 "<p>Lo navegador es en mòde fòra connexion e se pòt pas connectar a l&apos;adreça indicada.</p><ul><li>L&apos;ordenador es connectat a la ret ?</li><li>Clicatz sul boton &quot;Ensajar tornarmai&quot; per tornar en mòde connectat e recargar la pagina.</li></ul>">
+
+<!ENTITY contentEncodingError.title "Error d'encodatge de contengut">
+<!ENTITY contentEncodingError.longDesc "<p>La pagina qu'ensajatz de veire pòt pas èsser afichada perque utiliza un tipe de compression invalid o pas pres en carga. </p><ul><li>Contactatz lo webmèstre del site Web per l'assabentar d'aqueste problèma.</li></ul>">
+
+<!ENTITY unsafeContentType.title "Tipe de fichièr pas segur">
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Contactatz lo webmèstre del site per l'assabentar d'aqueste problèma.</li> </ul>">
+
+<!ENTITY netReset.title "Connexion interrompuda">
+<!ENTITY netReset.longDesc "<p>Lo ligam ret es estat interromput pendent la negociacion d’una connexion. Tornat ensajar</p>">
+
+<!ENTITY netTimeout.title "Network Timeout">
+<!ENTITY netTimeout.longDesc "<p>Lo navegador a esperat tròp longtemps al moment de la connexion al site e a arrestat d'esperar una responsa.</p> <ul> <li>Benlèu que lo servidor es en suscarga o es temporàriament en pana ? Ensajatz pus tard.</li><li>D'autres sites son tanben inaccessibles ? Verificatz la connexion a la ret de vòstre ordenador.</li> <li>Vòstre ordenador o vòstra ret es protegida per un parafuòc o un proxy ? De paramètres incorrèctes pòdon interferir amb la navegacion sus lo Web.</li> <li>Avètz totjorn de problèmas ? Consultatz vòstre administrator de la ret o vòstre provesidor d'accès a Internet per obténer d'ajuda.</li> </ul>">
+
+<!ENTITY unknownProtocolFound.title "Protocòl desconegut">
+<!ENTITY unknownProtocolFound.longDesc "<p>L'adreça indica un protocòl (per ex. <q>wxyz://</q>) desconegut del navegador que doncas se pòt pas connectar corrèctament al site.</p><ul><li>Ensajatz d'accedir a de contengut multimèdia o d'autres servicis que son pas de tèxte ? Verificatz los prerequesits logicials del site.</li><li>D'unes protocòls pòdon necessitar un logiciel tèrç o de plugins per que lo navegador los pòsca reconéisser.</li></ul>">
+
+<!ENTITY proxyConnectFailure.title "Lo servidor mandatari a refusat la connexion">
+<!ENTITY proxyConnectFailure.longDesc "<p>Lo navegador es configurat per utilizar un servidor proxy mas lo proxy a refusat la connexion.</p><ul><li>La configuracion proxy del navegador es corrècta ? Verificatz los paramètres e tornatz ensajar.</li><li>Lo servici proxy autoriza las connexions a partir d'aquesta ret ?</li><li>Avètz encara de problèmas ? Consultatz vòstre administrator de ret o vòstre provesidor d'accès a Internet per obténer d'ajuda.</li></ul>">
+
+<!ENTITY proxyResolveFailure.title "Impossible de trobar lo servidor mandatari">
+<!ENTITY proxyResolveFailure.longDesc "<p>Lo navegador es configurat per utilizar un servidor proxy mas lo servidor proxy es introbable.</p><ul><li>La configuracion proxy del navegador es corrècta ? Verificatz los paramètres e tornatz ensajar.</li><li>L'ordenador es connectat a la ret ?</li><li>Avètz encara de problèmas ? Consultatz vòstre administrator de ret o  vòstre provesidor d'accès a Internet per obténer d'ajuda.</li></ul>">
+
+<!ENTITY redirectLoop.title "Redirect Loop">
+<!ENTITY redirectLoop.longDesc "<p>Lo navegador a quitat d’esperar una responsa del site. Lo site crèa una redireccion d’un biais que fa qu’acabarà pas jamai.</p><ul><li>Avètz desactivat o blocat los cookies necessaris per aqueste site ?</li><li><em>NÒTA</em> : se lo problèma es pas resolgut en acceptant los cookies d’aqueste site, s’agís probablament d’un problèma de configuracion del servidor e non pas de vòstre ordenador.</li></ul>">
+
+<!ENTITY unknownSocketType.title "Responsa inesperada del servidor">
+<!ENTITY unknownSocketType.longDesc "<p>Lo site a respondut a la requèsta de la ret d'una faiçon inesperada e lo navegador pòt pas contunhar.</p>">
+
+<!ENTITY nssFailure2.title "La connexion segura a pas capitat">
+<!ENTITY nssFailure2.longDesc2 "<p>La pagina qu'ensajatz de consultar pòt pas èsser afichada perque l'autenticitat de las donadas recebudas pò pas èsser verificada.</p><ul><li>Contactatz los proprietaris del site Web per los n'assabentar.</li></ul>">
+
+<!ENTITY nssBadCert.title "La connexion segura a pas capitat">
+<!ENTITY nssBadCert.longDesc2 "<ul> <li>Aquò pòt èsser degut a un problèma de configuracion del servidor o a una persona qu'ensaja d'usurpar l'identitat del servidor.</li> <li>Se ja sètz connectat(ada) amb succès a aqueste servidor, benlèu l'error es temporària e podètz ensajar tornamai pus tard.</li> </ul>">
+
+<!ENTITY securityOverride.linkText "O podètz apondre una excepcion…">
+<!ENTITY securityOverride.warningContent "<p>Vos cal pas apondre d'excepcion s'utilizatz una connexion a Internet dins la quala avètz pas totalament fisança o s'avètz pas la costuma de recebre un avertiment per aqueste servidor.</p> <p>Se volètz encara apondre una excepcion a aqueste site, lo podètz far dins vòstres paramètres de criptatge avançat.</p>">
+
+<!ENTITY cspBlocked.title "Blocat per Content Security Policy">
+<!ENTITY cspBlocked.longDesc "<p>Lo navegador a empachat lo cargament d'aquesta pagina d'aqueste biais perque la pagina a una estrategia de seguretat de contengut que lo permet pas.</p>">
+
+<!ENTITY xfoBlocked.title "Blocat per la politica X-Frame-Options">
+<!ENTITY xfoBlocked.longDesc "<p>Lo navegador a empachat lo cargament d'aquesta pagina dins aqueste contèxte perque la pagina a una estrategia X-Frame-Options que lo permet pas.</p>">
+
+<!ENTITY corruptedContentErrorv2.title "Error deguda a un contengut corromput">
+<!ENTITY corruptedContentErrorv2.longDesc "<p>La pagina qu'ensajatz de veire pòt pas èsser afichada perque una error dins la transmission de donadas es estada detectada.</p><ul><li>Contactatz los proprietaris del site Web per los assabentar d'aqueste problèma.</li></ul>">
+
+<!ENTITY remoteXUL.title "XUL distant">
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Contactatz lo webmèstre del site per l'assabentar d'aqueste problèma.</li></ul></p>">
+
+<!ENTITY inadequateSecurityError.title "Vòstra connexion es pas segura">
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p><span class='hostname'></span> utiliza de tecnologias de securizacion obsolètas e vulnerablas als atacs. Un atacant poiriá aisidament prendre d'informacions qu'auriatz pensat seguras. L’administrator del site web deurà d’en primièr corregir lo servidor abans que poguèssetz visitar lo site.</p><p>Còde d’orror : NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Pagina blocada">
+
+<!ENTITY networkProtocolError.title "Error de protocòl ret">
+<!ENTITY networkProtocolError.longDesc "<p>La pagina que volètz veire pòt pas èsser afichada a causa d’una error de protocòl ret detectada.</p><ul><li>Mercés de contactar los proprietaris del site web per los informar d’aqueste problèma.</li></ul>">

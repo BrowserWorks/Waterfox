@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY junkSettings.label "Roghainnean na truilleis">
+<!ENTITY trainingDescription.label "Ma chuireas tu seo an comas, bi agad ri &brandShortName; a thrèanadh gus an aithnich e post-truilleis. Nì thu seo bàr-inneal na truilleis. Feumaidh tu an dà chuid teachdaireachdan truilleis is feadhainn chòir a chomharradh. Bidh &brandShortName; comasach air truilleis a chomharradh e fhèin an uairsin.">
+<!ENTITY level.label "Cuir an comas na h-uidheaman-smachd tuigseach air a' chunntas seo">
+<!ENTITY level.accesskey "e">
+
+<!ENTITY move.label "Gluais teachdaireachdan truilleis ùra gu:">
+<!ENTITY move.accesskey "G">
+<!ENTITY junkFolderOn.label "Pasgan na &quot;truilleis&quot; air:">
+<!ENTITY junkFolderOn.accesskey "P">
+<!ENTITY otherFolder.label "Eile:">
+<!ENTITY otherFolder.accesskey "E">
+<!ENTITY purge1.label "Sguab às post-truilleis a ghnàth a tha nas sìn na">
+<!ENTITY purge1.accesskey "u">
+<!ENTITY purge2.label "là(ithean)">
+
+<!ENTITY whitelistHeader.label "Na cuir comharra truilleis air post gu fèin-obrachail ma tha an seòladair ann an: ">
+<!ENTITY whitelistHeader.accesskey "d">
+
+<!ENTITY ispHeadersWarning.label "Ma chuireas tu an comas seo, bidh &brandShortName; a' coimhead air teachdaireachdan ris a bheil an comharra seo mar thruilleis.">
+<!ENTITY ispHeaders.label "Cuir earbsa ann am bannan-cinn post-truilleis a chuir: ">
+<!ENTITY ispHeaders.accesskey "t">
+
+<!ENTITY junkClassification.label "Taghadh">
+<!ENTITY junkActions.label "Ceann-uidhe 's glèidheadh">
+
+<!ENTITY globalJunkPrefs.label "Roghainnean truilleis uile-choitcheann…">
+<!ENTITY globalJunkPrefs.accesskey "g">

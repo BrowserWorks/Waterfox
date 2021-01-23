@@ -52,7 +52,7 @@ interface nsIProtocolHandler : nsISupports
      */
     readonly attribute ACString scheme;
 
-    /** 
+    /**
      * The default port is the port that this protocol normally uses.
      * If a port does not make sense for the protocol (e.g., "about:")
      * then -1 will be returned.
@@ -60,7 +60,7 @@ interface nsIProtocolHandler : nsISupports
     readonly attribute long defaultPort;
 
     /**
-     * Returns the protocol specific flags (see flag definitions below).  
+     * Returns the protocol specific flags (see flag definitions below).
      */
     readonly attribute unsigned long protocolFlags;
 
@@ -81,35 +81,6 @@ interface nsIProtocolHandler : nsISupports
 %}
 
     /**
-     * Makes a URI object that is suitable for loading by this protocol,
-     * where the URI string is given as an UTF-8 string.  The caller may
-     * provide the charset from which the URI string originated, so that
-     * the URI string can be translated back to that charset (if necessary)
-     * before communicating with, for example, the origin server of the URI
-     * string.  (Many servers do not support UTF-8 IRIs at the present time,
-     * so we must be careful about tracking the native charset of the origin
-     * server.)
-     *
-     * @param aSpec          - the URI string in UTF-8 encoding. depending
-     *                         on the protocol implementation, unicode character
-     *                         sequences may or may not be %xx escaped.
-     * @param aOriginCharset - the charset of the document from which this URI
-     *                         string originated.  this corresponds to the
-     *                         charset that should be used when communicating
-     *                         this URI to an origin server, for example.  if
-     *                         null, then UTF-8 encoding is assumed (i.e.,
-     *                         no charset transformation from aSpec).
-     * @param aBaseURI       - if null, aSpec must specify an absolute URI.
-     *                         otherwise, aSpec may be resolved relative
-     *                         to aBaseURI, depending on the protocol. 
-     *                         If the protocol has no concept of relative 
-     *                         URI aBaseURI will simply be ignored.
-     */
-    nsIURI newURI(in AUTF8String aSpec,
-                  [optional] in string aOriginCharset,
-                  [optional] in nsIURI aBaseURI);
-
-    /**
      * Constructs a new channel from the given URI for this protocol handler and
      * sets the loadInfo for the constructed channel.
      */
@@ -118,11 +89,11 @@ interface nsIProtocolHandler : nsISupports
     /**
      * Allows a protocol to override blacklisted ports.
      *
-     * This method will be called when there is an attempt to connect to a port 
+     * This method will be called when there is an attempt to connect to a port
      * that is blacklisted.  For example, for most protocols, port 25 (Simple Mail
-     * Transfer) is banned.  When a URI containing this "known-to-do-bad-things" 
-     * port number is encountered, this function will be called to ask if the 
-     * protocol handler wants to override the ban.  
+     * Transfer) is banned.  When a URI containing this "known-to-do-bad-things"
+     * port number is encountered, this function will be called to ask if the
+     * protocol handler wants to override the ban.
      */
     boolean allowPort(in long port, in string scheme);
 
@@ -200,16 +171,18 @@ interface nsIProtocolHandler : nsISupports
      * |                                                                   |
      * +-------------------------------------------------------------------+
      *
+     *    * URI_LOADABLE_BY_ANYONE
+     *    * URI_DANGEROUS_TO_LOAD
+     *    * URI_IS_UI_RESOURCE
+     *    * URI_IS_LOCAL_FILE
+     *    * URI_LOADABLE_BY_SUBSUMERS
+     *
      * These flags are used to determine who is allowed to load URIs for this
      * protocol.  Note that if a URI is nested, only the flags for the
      * innermost URI matter.  See nsINestedURI.
      *
-     * If none of these five flags are set, the URI must be treated as if it
-     * had the URI_LOADABLE_BY_ANYONE flag set, for compatibility with protocol
-     * handlers written against Gecko 1.8 or earlier.  In this case, there may
-     * be run-time warning messages indicating that a "default insecure"
-     * assumption is being made.  At some point in the futures (Mozilla 2.0,
-     * most likely), these warnings will become errors.
+     * If none of these five flags are set, the ContentSecurityManager will
+     * deny the load.
      */
 
     /**
@@ -218,7 +191,7 @@ interface nsIProtocolHandler : nsISupports
      * Web-safe protocols like "http" should set this flag.
      */
     const unsigned long URI_LOADABLE_BY_ANYONE = (1<<6);
-    
+
     /**
      * The URIs for this protocol are UNSAFE if loaded by untrusted (web)
      * content and may only be loaded by privileged code (for example, code
@@ -226,7 +199,7 @@ interface nsIProtocolHandler : nsISupports
      * this flag.
      */
     const unsigned long URI_DANGEROUS_TO_LOAD = (1<<7);
-    
+
     /**
      * The URIs for this protocol point to resources that are part of the
      * application's user interface.  There are cases when such resources may

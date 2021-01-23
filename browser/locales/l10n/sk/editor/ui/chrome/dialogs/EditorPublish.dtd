@@ -1,0 +1,65 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+   
+<!-- Window title -->
+<!ENTITY windowTitle.label          "Publikovanie stránky">
+<!ENTITY windowTitleSettings.label  "Nastavenia pre publikovanie">
+<!ENTITY publishTab.label           "Publikovať">
+<!ENTITY settingsTab.label          "Nastavenie">
+<!ENTITY publishButton.label        "Publikovať">
+
+<!-- Publish Tab Panel -->
+<!ENTITY siteList.label               "Názov servera:">
+<!ENTITY siteList.accesskey           "e">
+<!ENTITY siteList.tooltip             "Vyberte server, na ktorý chcete publikovať">
+<!ENTITY newSiteButton.label          "Nový server">
+<!ENTITY newSiteButton.accesskey      "N">
+<!ENTITY docDirList.label             "Podpriečinok servera pre túto stránku:">
+<!ENTITY docDirList.accesskey         "s">
+<!ENTITY docDirList.tooltip           "Vyberte alebo potvrďte názov vzdialeného podpriečinka pre túto stránku">
+<!ENTITY publishImgCheckbox.label     "Zahrnúť aj obrázky a iné súbory">
+<!ENTITY publishImgCheckbox.accesskey "b">
+<!ENTITY publishImgCheckbox.tooltip   "Publikovať obrázky a iné súbory, na ktoré odkazuje táto stránka">
+<!ENTITY sameLocationRadio.label      "Použiť to isté umiestnenie ako pre stránku">
+<!ENTITY sameLocationRadio.accesskey  "P">
+<!ENTITY sameLocationRadio.tooltip    "Publikovať súbory na to isté miesto ako stránku">
+<!ENTITY useSubdirRadio.label         "Použiť tento podpriečinok servera:">
+<!ENTITY useSubdirRadio.accesskey     "r">
+<!ENTITY useSubdirRadio.tooltip       "Súbory publikovať do vybraného vzdialeného podpriečinka">
+<!ENTITY otherDirList.tooltip         "Vyberte alebo potvrďte názov vzdialeného podpriečinka pre publikované súbory">
+<!ENTITY pageTitle.label              "Titulok stránky:">
+<!ENTITY pageTitle.accesskey          "T">
+<!ENTITY pageTitle.tooltip            "Zadajte titulok, ktorý bude stránku identifikovať v okne a v záložkách">
+<!ENTITY pageTitleExample.label       "napríklad: &quot;Moja webová stránka&quot;">
+<!ENTITY filename.label               "Názov súboru:">
+<!ENTITY filename.accesskey           "u">
+<!ENTITY filename.tooltip             "Zadajte názov tohto súboru, vrátane '.html' pre web stránku">
+<!ENTITY filenameExample.label        "napríklad: &quot;mojastranka.html&quot;">
+<!ENTITY setDefaultButton.label       "Nastaviť ako predvolený">
+<!ENTITY setDefaultButton.accesskey   "d">
+<!ENTITY removeButton.label           "Odstrániť server">
+<!ENTITY removeButton.accesskey       "O">
+
+<!-- Settings Tab Panel -->
+<!ENTITY publishSites.label           "Publikačné servery">
+<!ENTITY serverInfo.label             "Informácie o serveri">
+<!ENTITY loginInfo.label              "Prihlasovacie informácie">
+<!ENTITY siteName.label               "Názov servera:">
+<!ENTITY siteName.accesskey           "e">
+<!ENTITY siteName.tooltip             "Prezývka, ktorá identifikuje tento publikačný server (napríklad: MojServer)">
+<!ENTITY siteUrl.label                "Publikačná adresa (napríklad 'ftp://ftp.mojisp.sk/mojemeno'):">
+<!ENTITY siteUrl.accesskey            "a">
+<!ENTITY siteUrl.tooltip              "FTP:// alebo HTTP:// adresa, poskytnutá vaším poskytovateľom internetu alebo webhostingovou službou">
+<!ENTITY browseUrl.label              "HTTP adresa vašej domovskej stránky (napríklad 'http://www.mojisp.sk/mojemeno'):">
+<!ENTITY browseUrl.accesskey          "T">
+<!ENTITY browseUrl.tooltip            "HTTP:// adresa vášho domovského priečinka (bez názvu súboru)">
+<!ENTITY username.label               "Používateľské meno:">
+<!ENTITY username.accesskey           "u">
+<!ENTITY username.tooltip             "Používateľské meno, ktorým sa prihlasujete k vášmu poskytovateľovi alebo webhostingovej službe">
+<!ENTITY password.label               "Heslo:">
+<!ENTITY password.accesskey           "H">
+<!ENTITY password.tooltip             "Heslo priradené k vášmu používateľskému menu">
+<!ENTITY savePassword.label           "Uložiť heslo">
+<!ENTITY savePassword.accesskey       "U">
+<!ENTITY savePassword.tooltip         "Označte, ak chcete, aby správca hesiel uložil toto heslo">

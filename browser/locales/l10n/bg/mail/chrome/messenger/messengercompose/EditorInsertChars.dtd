@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Вмъкване на символ">
+<!ENTITY category.label "Категория">
+<!ENTITY letter.label "Буква:">
+<!ENTITY letter.accessKey "Б">
+<!ENTITY character.label "Символ:">
+<!ENTITY character.accessKey "С">
+<!ENTITY accentUpper.label "Главна с ударение">
+<!ENTITY accentLower.label "Малка с ударение">
+<!ENTITY otherUpper.label "Други главни">
+<!ENTITY otherLower.label "Други малки">
+<!ENTITY commonSymbols.label "Общи символи">
+<!ENTITY insertButton.label "Вмъкване">
+<!ENTITY closeButton.label "Затваряне">

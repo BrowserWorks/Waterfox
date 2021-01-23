@@ -1,0 +1,39 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- extracted from am-addressing.xul -->
+
+<!ENTITY addressing.label          "Sastavljanje i adresiranje">
+<!ENTITY addressingGroupTitle.label "Adresiranje">
+<!ENTITY autocompleteToMyDomain.label     "Automatski dodaj moju domenu u adrese">
+<!ENTITY addressingText.label      "Prilikom pretrage email adresa:">
+<!-- LOCALIZATION NOTE (override.label) : do not translate "LDAP" in below line -->
+<!ENTITY useGlobal.label           "Koristi moj LDAP server za ovaj račun">
+<!ENTITY editDirectories.label     "Uredi direktorije…">
+<!-- LOCALIZATION NOTE (directories.label) : do not translate "LDAP" in below line -->
+<!ENTITY directories.label         "Koristi drugi LDAP server:">
+<!ENTITY directoriesNone.label     "Nijedan">
+
+<!-- am-addressing.xul -->
+
+<!ENTITY compositionGroupTitle.label          "Sastavljanje">
+<!-- LOCALIZATION NOTE (useHtml.label) : do not translate "html" in below line -->
+<!ENTITY useHtml.label                        "Sastavljaj poruke u HTML formatu">
+<!ENTITY autoQuote.label                      "Citiraj izvornu poruku prilikom odgovora">
+<!-- LOCALIZATION NOTE (then.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY then.label                           "Zatim,">
+<!-- LOCALIZATION NOTE (quoting.label): This will concatenate with the 4 strings that follow. -->
+<!ENTITY quoting.label                        "Kada citirate,">
+<!ENTITY aboveQuote.label                     "započni moj odgovor iznad citata">
+<!ENTITY belowQuote.label                     "započni moj odgovor ispod citata">
+<!ENTITY selectAndQuote.label                 "izaberi citat">
+<!ENTITY place.label                          "i stavi moj potpis">
+<!ENTITY belowText.label                      "ispod citata (preporučeno)">
+<!ENTITY aboveText.label                      "ispod mog odgovora (iznad citata)">
+<!ENTITY includeSigOnReply.label              "Uključi potpis za odgovore">
+<!ENTITY includeSigOnForward.label            "Uključi potpis za proslijeđivanja">
+
+<!ENTITY globalComposingPrefs.label           "Globalne postavke sastavljanja…">
+
+<!ENTITY globalAddressingPrefs.label          "Globalne postavke adresiranja…">

@@ -1,0 +1,66 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title "חוקי מסנן">
+<!ENTITY filterEditorDialog.dimensions "width: 100ch;">
+<!ENTITY filterName.label "שם מסנן:">
+<!ENTITY filterName.accesskey "i">
+
+<!ENTITY junk.label "זבל">
+<!ENTITY notJunk.label "לא זבל">
+
+<!ENTITY lowestPriorityCmd.label "הכי נמוכה">
+<!ENTITY lowPriorityCmd.label "נמוכה">
+<!ENTITY normalPriorityCmd.label "רגילה">
+<!ENTITY highPriorityCmd.label "גבוהה">
+<!ENTITY highestPriorityCmd.label "הכי גבוהה">
+
+<!ENTITY contextDesc.label "הפעל מסננים כאשר:">
+<!ENTITY contextIncomingMail.label "קבלת הודעת דוא״ל חדשה:">
+<!ENTITY contextIncomingMail.accesskey "ק">
+<!ENTITY contextManual.label "מורץ ידנית">
+<!ENTITY contextManual.accesskey "ר">
+<!ENTITY contextBeforeCls.label "סינון לפני סיווג כזבל">
+<!ENTITY contextAfterCls.label "סינון אחרי סיווג כזבל">
+<!ENTITY contextOutgoing.label "לאחר השליחה">
+<!ENTITY contextOutgoing.accesskey "ש">
+<!ENTITY contextArchive.label "העברה לארכיון">
+<!ENTITY contextArchive.accesskey "א">
+
+<!ENTITY filterActionDesc.label "בצע פעולות אלו:">
+<!ENTITY filterActionDesc.accesskey "P">
+
+<!ENTITY filterActionOrderWarning.label "לתשומת לבך: פעולות המסנן תרוצנה בסדר שונה.">
+<!ENTITY filterActionOrder.label "הצגת סדר הפעולות">
+
+<!-- New Style Filter Rule Actions -->
+<!ENTITY moveMessage.label "העבר הודעה אל">
+<!ENTITY copyMessage.label "העתק הודעה אל">
+<!ENTITY forwardTo.label "העבר אל:">
+<!ENTITY replyWithTemplate.label "השב עם תבנית:">
+<!ENTITY markMessageRead.label "סמן כנקרא">
+<!ENTITY markMessageUnread.label "סימון כלא נקרא">
+<!ENTITY markMessageStarred.label "הוסף כוכבית">
+<!ENTITY setPriority.label "קבע עדיפות ל:">
+<!ENTITY addTag.label "סמן הודעה">
+<!ENTITY setJunkScore.label "קבע מצב דואר זבל ל:">
+<!ENTITY deleteMessage.label "מחק הודעה">
+<!ENTITY deleteFromPOP.label "מחק משרת POP">
+<!ENTITY fetchFromPOP.label "טען משרת POP">
+<!ENTITY ignoreThread.label "התעלם מנושא דיון">
+<!ENTITY ignoreSubthread.label "התעלם מתת שרשור">
+<!ENTITY watchThread.label "עקוב אחר נושא דיון">
+<!ENTITY stopExecution.label "הפסק הפעלת מסננים">
+
+<!ENTITY addAction.tooltip "הוספת פעולה חדשה">
+<!ENTITY removeAction.tooltip "הסרת פעולה זו">
+
+<!-- LOCALIZATION NOTE
+     The values below are used to control the widths of the filter action widgets.
+     Change the values only when the localized strings in the popup menus
+     are truncated in the widgets.
+  -->
+<!-- Flex Attribute: https://developer.mozilla.org/docs/XUL/Attribute/flex -->
+<!ENTITY filterActionTypeFlexValue "1">
+<!ENTITY filterActionTargetFlexValue "4">

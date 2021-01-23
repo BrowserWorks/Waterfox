@@ -12,6 +12,7 @@
 #include "nsTextControlFrame.h"
 #include "nsListControlFrame.h"
 #include "nsComboboxControlFrame.h"
+#include "mozilla/dom/Text.h"  // for inline nsINode::AsText() definition
 #include "mozilla/PresShell.h"
 #include "mozilla/ReflowInput.h"
 #include "nsTextFrameUtils.h"
@@ -194,7 +195,7 @@ void nsFontInflationData::UpdateISize(const ReflowInput& aReflowInput) {
   nscoord newNCAISize = ComputeDescendantISize(aReflowInput, nca);
 
   // See comment above "font.size.inflation.lineThreshold" in
-  // modules/libpref/src/init/all.js .
+  // modules/libpref/src/init/StaticPrefList.yaml .
   PresShell* presShell = bfc->PresShell();
   uint32_t lineThreshold = presShell->FontSizeInflationLineThreshold();
   nscoord newTextThreshold = (newNCAISize * lineThreshold) / 100;
@@ -258,7 +259,7 @@ void nsFontInflationData::UpdateISize(const ReflowInput& aReflowInput) {
         if (content && kid == content->GetPrimaryFrame()) {
           uint32_t len = nsTextFrameUtils::
               ComputeApproximateLengthWithWhitespaceCompression(
-                  content, kid->StyleText());
+                  content->AsText(), kid->StyleText());
           if (len != 0) {
             return kid;
           }
@@ -295,7 +296,8 @@ static uint32_t DoCharCountOfLargestOption(nsIFrame* aContainer) {
         if (optionChild->IsTextFrame()) {
           optionResult += nsTextFrameUtils::
               ComputeApproximateLengthWithWhitespaceCompression(
-                  optionChild->GetContent(), optionChild->StyleText());
+                  optionChild->GetContent()->AsText(),
+                  optionChild->StyleText());
         }
       }
     }
@@ -318,11 +320,8 @@ void nsFontInflationData::ScanTextIn(nsIFrame* aFrame) {
   // FIXME: Should probably only scan the text that's actually going to
   // be inflated!
 
-  nsIFrame::ChildListIterator lists(aFrame);
-  for (; !lists.IsDone(); lists.Next()) {
-    nsFrameList::Enumerator kids(lists.CurrentList());
-    for (; !kids.AtEnd(); kids.Next()) {
-      nsIFrame* kid = kids.get();
+  for (const auto& childList : aFrame->ChildLists()) {
+    for (nsIFrame* kid : childList.mList) {
       if (kid->GetStateBits() & NS_FRAME_FONT_INFLATION_FLOW_ROOT) {
         // Goes in a different set of inflation data.
         continue;
@@ -334,7 +333,7 @@ void nsFontInflationData::ScanTextIn(nsIFrame* aFrame) {
         if (content && kid == content->GetPrimaryFrame()) {
           uint32_t len = nsTextFrameUtils::
               ComputeApproximateLengthWithWhitespaceCompression(
-                  content, kid->StyleText());
+                  content->AsText(), kid->StyleText());
           if (len != 0) {
             nscoord fontSize = kid->StyleFont()->mFont.size;
             if (fontSize > 0) {

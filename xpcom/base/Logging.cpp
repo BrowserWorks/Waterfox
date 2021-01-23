@@ -10,6 +10,7 @@
 
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/FileUtils.h"
+#include "mozilla/LateWriteChecks.h"
 #include "mozilla/Mutex.h"
 #include "mozilla/StaticPtr.h"
 #include "mozilla/Printf.h"
@@ -55,6 +56,14 @@ void log_print(const LogModule* aModule, LogLevel aLevel, const char* aFmt,
   va_list ap;
   va_start(ap, aFmt);
   aModule->Printv(aLevel, aFmt, ap);
+  va_end(ap);
+}
+
+void log_print(const LogModule* aModule, LogLevel aLevel, TimeStamp* aStart,
+               const char* aFmt, ...) {
+  va_list ap;
+  va_start(ap, aFmt);
+  aModule->Printv(aLevel, aStart, aFmt, ap);
   va_end(ap);
 }
 
@@ -113,16 +122,27 @@ class LogFile {
   LogFile* mNextToRelease;
 };
 
-static const char* ExpandPIDMarker(const char* aFilename,
-                                   char (&buffer)[2048]) {
+static const char* ExpandLogFileName(const char* aFilename,
+                                     char (&buffer)[2048]) {
   MOZ_ASSERT(aFilename);
-  static const char kPIDToken[] = "%PID";
+  static const char kPIDToken[] = MOZ_LOG_PID_TOKEN;
+  static const char kMOZLOGExt[] = MOZ_LOG_FILE_EXTENSION;
+
+  bool hasMozLogExtension = StringEndsWith(nsDependentCString(aFilename),
+                                           nsLiteralCString(kMOZLOGExt));
+
   const char* pidTokenPtr = strstr(aFilename, kPIDToken);
   if (pidTokenPtr &&
-      SprintfLiteral(
-          buffer, "%.*s%s%d%s", static_cast<int>(pidTokenPtr - aFilename),
-          aFilename, XRE_IsParentProcess() ? "-main." : "-child.",
-          base::GetCurrentProcId(), pidTokenPtr + strlen(kPIDToken)) > 0) {
+      SprintfLiteral(buffer, "%.*s%s%d%s%s",
+                     static_cast<int>(pidTokenPtr - aFilename), aFilename,
+                     XRE_IsParentProcess() ? "-main." : "-child.",
+                     base::GetCurrentProcId(), pidTokenPtr + strlen(kPIDToken),
+                     hasMozLogExtension ? "" : kMOZLOGExt) > 0) {
+    return buffer;
+  }
+
+  if (!hasMozLogExtension &&
+      SprintfLiteral(buffer, "%s%s", aFilename, kMOZLOGExt) > 0) {
     return buffer;
   }
 
@@ -142,9 +162,7 @@ void empty_va(va_list* va, ...) {
 class LogModuleManager {
  public:
   LogModuleManager()
-      // As for logging atomics, don't preserve behavior for this lock when
-      // recording/replaying.
-      : mModulesLock("logmodules", recordreplay::Behavior::DontPreserve),
+      : mModulesLock("logmodules"),
         mModules(kInitialModuleCount),
         mPrintEntryCount(0),
         mOutFile(nullptr),
@@ -258,7 +276,7 @@ class LogModuleManager {
 
     if (logFile && logFile[0]) {
       char buf[2048];
-      logFile = detail::ExpandPIDMarker(logFile, buf);
+      logFile = detail::ExpandLogFileName(logFile, buf);
       mOutFilePath.reset(strdup(logFile));
 
       if (mRotate > 0) {
@@ -288,7 +306,7 @@ class LogModuleManager {
 
     const char* filename = aFilename ? aFilename : "";
     char buf[2048];
-    filename = detail::ExpandPIDMarker(filename, buf);
+    filename = detail::ExpandLogFileName(filename, buf);
 
     // Can't use rotate at runtime yet.
     MOZ_ASSERT(mRotate == 0,
@@ -366,8 +384,13 @@ class LogModuleManager {
 
   void Print(const char* aName, LogLevel aLevel, const char* aFmt,
              va_list aArgs) MOZ_FORMAT_PRINTF(4, 0) {
-    // We don't do nuwa-style forking anymore, so our pid can't change.
-    static long pid = static_cast<long>(base::GetCurrentProcId());
+    Print(aName, aLevel, nullptr, aFmt, aArgs);
+  }
+
+  void Print(const char* aName, LogLevel aLevel, const TimeStamp* aStart,
+             const char* aFmt, va_list aArgs) MOZ_FORMAT_PRINTF(5, 0) {
+    AutoSuspendLateWriteChecks suspendLateWriteChecks;
+    long pid = static_cast<long>(base::GetCurrentProcId());
     const size_t kBuffSize = 1024;
     char buff[kBuffSize];
 
@@ -395,10 +418,16 @@ class LogModuleManager {
     }
 
 #ifdef MOZ_GECKO_PROFILER
-    if (mAddProfilerMarker && profiler_is_active()) {
-      profiler_add_marker(
-          "LogMessages", JS::ProfilingCategoryPair::OTHER,
-          MakeUnique<LogMarkerPayload>(aName, buffToWrite, TimeStamp::Now()));
+    if (mAddProfilerMarker && profiler_can_accept_markers()) {
+      if (aStart) {
+        PROFILER_ADD_MARKER_WITH_PAYLOAD(
+            "LogMessages", OTHER, LogMarkerPayload,
+            (aName, buffToWrite, *aStart, TimeStamp::Now()));
+      } else {
+        PROFILER_ADD_MARKER_WITH_PAYLOAD(
+            "LogMessages", OTHER, LogMarkerPayload,
+            (aName, buffToWrite, TimeStamp::Now()));
+      }
     }
 #endif
 
@@ -437,7 +466,7 @@ class LogModuleManager {
       currentThreadName = noNameThread;
     }
 
-    if (!mAddTimestamp) {
+    if (!mAddTimestamp && !aStart) {
       if (!mIsRaw) {
         fprintf_stderr(out, "[%s %ld: %s]: %s/%s %s%s",
                        nsDebugImpl::GetMultiprocessMode(), pid,
@@ -447,14 +476,38 @@ class LogModuleManager {
         fprintf_stderr(out, "%s%s", buffToWrite, newline);
       }
     } else {
-      PRExplodedTime now;
-      PR_ExplodeTime(PR_Now(), PR_GMTParameters, &now);
-      fprintf_stderr(
-          out,
-          "%04d-%02d-%02d %02d:%02d:%02d.%06d UTC - [%s %ld: %s]: %s/%s %s%s",
-          now.tm_year, now.tm_month + 1, now.tm_mday, now.tm_hour, now.tm_min,
-          now.tm_sec, now.tm_usec, nsDebugImpl::GetMultiprocessMode(), pid,
-          currentThreadName, ToLogStr(aLevel), aName, buffToWrite, newline);
+      if (aStart) {
+        // XXX is there a reasonable way to convert one to the other?  this is
+        // bad
+        PRTime prnow = PR_Now();
+        TimeStamp tmnow = TimeStamp::NowUnfuzzed();
+        TimeDuration duration = tmnow - *aStart;
+        PRTime prstart = prnow - duration.ToMicroseconds();
+
+        PRExplodedTime now;
+        PRExplodedTime start;
+        PR_ExplodeTime(prnow, PR_GMTParameters, &now);
+        PR_ExplodeTime(prstart, PR_GMTParameters, &start);
+        // Ignore that the start time might be in a different day
+        fprintf_stderr(
+            out,
+            "%04d-%02d-%02d %02d:%02d:%02d.%06d -> %02d:%02d:%02d.%06d UTC "
+            "(%.1gms)- [%s %ld: %s]: %s/%s %s%s",
+            now.tm_year, now.tm_month + 1, start.tm_mday, start.tm_hour,
+            start.tm_min, start.tm_sec, start.tm_usec, now.tm_hour, now.tm_min,
+            now.tm_sec, now.tm_usec, duration.ToMilliseconds(),
+            nsDebugImpl::GetMultiprocessMode(), pid, currentThreadName,
+            ToLogStr(aLevel), aName, buffToWrite, newline);
+      } else {
+        PRExplodedTime now;
+        PR_ExplodeTime(PR_Now(), PR_GMTParameters, &now);
+        fprintf_stderr(
+            out,
+            "%04d-%02d-%02d %02d:%02d:%02d.%06d UTC - [%s %ld: %s]: %s/%s %s%s",
+            now.tm_year, now.tm_month + 1, now.tm_mday, now.tm_hour, now.tm_min,
+            now.tm_sec, now.tm_usec, nsDebugImpl::GetMultiprocessMode(), pid,
+            currentThreadName, ToLogStr(aLevel), aName, buffToWrite, newline);
+      }
     }
 
     if (mIsSync) {
@@ -559,6 +612,22 @@ void LogModule::SetIsSync(bool aIsSync) {
   sLogModuleManager->SetIsSync(aIsSync);
 }
 
+// This function is defined in gecko_logger/src/lib.rs
+// We mirror the level in rust code so we don't get forwarded all of the
+// rust logging and have to create an LogModule for each rust component.
+extern "C" void set_rust_log_level(const char* name, uint8_t level);
+
+void LogModule::SetLevel(LogLevel level) {
+  mLevel = level;
+
+  // If the log module contains `::` it is likely a rust module, so we
+  // pass the level into the rust code so it will know to forward the logging
+  // to Gecko.
+  if (strstr(mName, "::")) {
+    set_rust_log_level(mName, static_cast<uint8_t>(level));
+  }
+}
+
 void LogModule::Init(int argc, char* argv[]) {
   // NB: This method is not threadsafe; it is expected to be called very early
   //     in startup prior to any other threads being run.
@@ -587,4 +656,30 @@ void LogModule::Printv(LogLevel aLevel, const char* aFmt, va_list aArgs) const {
   sLogModuleManager->Print(Name(), aLevel, aFmt, aArgs);
 }
 
+void LogModule::Printv(LogLevel aLevel, const TimeStamp* aStart,
+                       const char* aFmt, va_list aArgs) const {
+  MOZ_ASSERT(sLogModuleManager != nullptr);
+
+  // Forward to LogModule manager w/ level and name
+  sLogModuleManager->Print(Name(), aLevel, aStart, aFmt, aArgs);
+}
+
 }  // namespace mozilla
+
+extern "C" {
+
+// This function is called by external code (rust) to log to one of our
+// log modules.
+void ExternMozLog(const char* aModule, mozilla::LogLevel aLevel,
+                  const char* aMsg) {
+  MOZ_ASSERT(sLogModuleManager != nullptr);
+
+  LogModule* m = sLogModuleManager->CreateOrGetModule(aModule);
+  if (MOZ_LOG_TEST(m, aLevel)) {
+    va_list va;
+    empty_va(&va);
+    m->Printv(aLevel, aMsg, va);
+  }
+}
+
+}  // extern "C"

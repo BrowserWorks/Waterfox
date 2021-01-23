@@ -1,5 +1,3 @@
-/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -10,23 +8,12 @@ const promise = require("promise");
 const Services = require("Services");
 const flags = require("devtools/shared/flags");
 const { l10n } = require("devtools/shared/inspector/css-logic");
+const { PSEUDO_CLASSES } = require("devtools/shared/css/constants");
 const { ELEMENT_STYLE } = require("devtools/shared/specs/styles");
 const OutputParser = require("devtools/client/shared/output-parser");
 const { PrefObserver } = require("devtools/client/shared/prefs");
 const ElementStyle = require("devtools/client/inspector/rules/models/element-style");
 const RuleEditor = require("devtools/client/inspector/rules/views/rule-editor");
-const {
-  VIEW_NODE_FONT_TYPE,
-  VIEW_NODE_IMAGE_URL_TYPE,
-  VIEW_NODE_INACTIVE_CSS,
-  VIEW_NODE_LOCATION_TYPE,
-  VIEW_NODE_PROPERTY_TYPE,
-  VIEW_NODE_SELECTOR_TYPE,
-  VIEW_NODE_SHAPE_POINT_TYPE,
-  VIEW_NODE_SHAPE_SWATCH,
-  VIEW_NODE_VALUE_TYPE,
-  VIEW_NODE_VARIABLE_TYPE,
-} = require("devtools/client/inspector/shared/node-types");
 const TooltipsOverlay = require("devtools/client/inspector/shared/tooltips-overlay");
 const {
   createChild,
@@ -54,6 +41,18 @@ loader.lazyRequireGetter(
 );
 loader.lazyRequireGetter(
   this,
+  "getNodeInfo",
+  "devtools/client/inspector/rules/utils/utils",
+  true
+);
+loader.lazyRequireGetter(
+  this,
+  "COLOR_SCHEMES",
+  "devtools/client/inspector/rules/constants",
+  true
+);
+loader.lazyRequireGetter(
+  this,
   "StyleInspectorMenu",
   "devtools/client/inspector/shared/style-inspector-menu"
 );
@@ -78,14 +77,13 @@ const PREF_UA_STYLES = "devtools.inspector.showUserAgentStyles";
 const PREF_DEFAULT_COLOR_UNIT = "devtools.defaultColorUnit";
 const FILTER_CHANGED_TIMEOUT = 150;
 // Removes the flash-out class from an element after 1 second.
-const REMOVE_FLASH_OUT_CLASS_TIMER = 1000;
+const PROPERTY_FLASHING_DURATION = 1000;
 
 // This is used to parse user input when filtering.
 const FILTER_PROP_RE = /\s*([^:\s]*)\s*:\s*(.*?)\s*;?$/;
 // This is used to parse the filter search value to see if the filter
 // should be strict or not
 const FILTER_STRICT_RE = /\s*`(.*?)`\s*$/;
-const INSET_POINT_TYPES = ["top", "right", "bottom", "left"];
 
 /**
  * Our model looks like this:
@@ -143,7 +141,6 @@ function CssRuleView(inspector, document, store) {
   this.styleDocument = document;
   this.styleWindow = this.styleDocument.defaultView;
   this.store = store || {};
-  this.pageStyle = inspector.pageStyle;
 
   // Allow tests to override debouncing behavior, as this can cause intermittents.
   this.debounce = debounce;
@@ -158,9 +155,13 @@ function CssRuleView(inspector, document, store) {
   this._onTogglePseudoClassPanel = this._onTogglePseudoClassPanel.bind(this);
   this._onTogglePseudoClass = this._onTogglePseudoClass.bind(this);
   this._onToggleClassPanel = this._onToggleClassPanel.bind(this);
+  this._onToggleColorSchemeSimulation = this._onToggleColorSchemeSimulation.bind(
+    this
+  );
   this._onTogglePrintSimulation = this._onTogglePrintSimulation.bind(this);
   this.highlightElementRule = this.highlightElementRule.bind(this);
   this.highlightProperty = this.highlightProperty.bind(this);
+  this.refreshPanel = this.refreshPanel.bind(this);
 
   const doc = this.styleDocument;
   this.element = doc.getElementById("ruleview-container-focusable");
@@ -171,12 +172,12 @@ function CssRuleView(inspector, document, store) {
   this.pseudoClassToggle = doc.getElementById("pseudo-class-panel-toggle");
   this.classPanel = doc.getElementById("ruleview-class-panel");
   this.classToggle = doc.getElementById("class-panel-toggle");
-  this.hoverCheckbox = doc.getElementById("pseudo-hover-toggle");
-  this.activeCheckbox = doc.getElementById("pseudo-active-toggle");
-  this.focusCheckbox = doc.getElementById("pseudo-focus-toggle");
-  this.focusWithinCheckbox = doc.getElementById("pseudo-focus-within-toggle");
+  this.colorSchemeSimulationButton = doc.getElementById(
+    "color-scheme-simulation-toggle"
+  );
+  this.printSimulationButton = doc.getElementById("print-simulation-toggle");
 
-  this._initPrintSimulation();
+  this._initSimulationFeatures();
 
   this.searchClearButton.hidden = true;
 
@@ -198,10 +199,8 @@ function CssRuleView(inspector, document, store) {
     this._onTogglePseudoClassPanel
   );
   this.classToggle.addEventListener("click", this._onToggleClassPanel);
-  this.hoverCheckbox.addEventListener("click", this._onTogglePseudoClass);
-  this.activeCheckbox.addEventListener("click", this._onTogglePseudoClass);
-  this.focusCheckbox.addEventListener("click", this._onTogglePseudoClass);
-  this.focusWithinCheckbox.addEventListener("click", this._onTogglePseudoClass);
+  // The "change" event bubbles up from checkbox inputs nested within the panel container.
+  this.pseudoClassPanel.addEventListener("change", this._onTogglePseudoClass);
 
   if (flags.testing) {
     // In tests, we start listening immediately to avoid having to simulate a mousemove.
@@ -229,6 +228,7 @@ function CssRuleView(inspector, document, store) {
     this._handleDefaultColorUnitPrefChange
   );
 
+  this.pseudoClassCheckboxes = this._createPseudoClassCheckboxes();
   this.showUserAgentStyles = Services.prefs.getBoolPref(PREF_UA_STYLES);
 
   // Add the tooltips and highlighters to the view
@@ -281,10 +281,6 @@ CssRuleView.prototype = {
     return this._dummyElement;
   },
 
-  get emulationFront() {
-    return this._emulationFront;
-  },
-
   // Get the highlighters overlay from the Inspector.
   get highlighters() {
     if (!this._highlighters) {
@@ -304,7 +300,7 @@ CssRuleView.prototype = {
     return this._elementStyle ? this._elementStyle.rules : [];
   },
 
-  get target() {
+  get currentTarget() {
     return this.inspector.toolbox.target;
   },
 
@@ -325,7 +321,7 @@ CssRuleView.prototype = {
     }
 
     try {
-      const front = this.inspector.inspector;
+      const front = this.inspector.inspectorFront;
       const h = await front.getHighlighterByType("SelectorHighlighter");
       this.selectorHighlighter = h;
       return h;
@@ -385,34 +381,57 @@ CssRuleView.prototype = {
     }
   },
 
+  isPanelVisible: function() {
+    if (this.inspector.is3PaneModeEnabled) {
+      return true;
+    }
+    return (
+      this.inspector.toolbox &&
+      this.inspector.sidebar &&
+      this.inspector.toolbox.currentToolId === "inspector" &&
+      this.inspector.sidebar.getCurrentTabID() == "ruleview"
+    );
+  },
+
   /**
-   * Check the print emulation actor's backwards-compatibility via the target actor's
-   * actorHasMethod.
+   * Initializes the content-viewer front and enable the print and color scheme simulation
+   * if they are supported in the current target.
    */
-  async _initPrintSimulation() {
-    // In order to query if the emulation actor's print simulation methods are supported,
-    // we have to call the emulation front so that the actor is lazily loaded. This allows
-    // us to use `actorHasMethod`. Please see `getActorDescription` for more information.
-    this._emulationFront = await this.target.getFront("emulation");
+  async _initSimulationFeatures() {
+    // In order to query if the content-viewer actor's print and color simulation methods are
+    // supported, we have to call the content-viewer front so that the actor is lazily loaded.
+    // This allows us to use `actorHasMethod`. Please see `getActorDescription` for more
+    // information.
+    this.contentViewerFront = await this.currentTarget.getFront(
+      "contentViewer"
+    );
 
-    // Show the toggle button if:
-    // - Print simulation is supported for the current target.
-    // - Not debugging content document.
-    if (
-      (await this.target.actorHasMethod(
-        "emulation",
-        "getIsPrintSimulationEnabled"
-      )) &&
-      !this.target.chrome
-    ) {
-      this.printSimulationButton = this.styleDocument.getElementById(
-        "print-simulation-toggle"
-      );
+    if (!this.currentTarget.chrome) {
       this.printSimulationButton.removeAttribute("hidden");
-
       this.printSimulationButton.addEventListener(
         "click",
         this._onTogglePrintSimulation
+      );
+    }
+
+    // Show the color scheme simulation toggle button if:
+    // - The feature pref is enabled.
+    // - Color scheme simulation is supported for the current target.
+    const isEmulateColorSchemeSupported = await this.currentTarget.actorHasMethod(
+      "contentViewer",
+      "getEmulatedColorScheme"
+    );
+
+    if (
+      Services.prefs.getBoolPref(
+        "devtools.inspector.color-scheme-simulation.enabled"
+      ) &&
+      isEmulateColorSchemeSupported
+    ) {
+      this.colorSchemeSimulationButton.removeAttribute("hidden");
+      this.colorSchemeSimulationButton.addEventListener(
+        "click",
+        this._onToggleColorSchemeSimulation
       );
     }
   },
@@ -422,144 +441,15 @@ CssRuleView.prototype = {
    *
    * @param {DOMNode} node
    *        The node which we want information about
-   * @return {Object} The type information object contains the following props:
-   * - view {String} Always "rule" to indicate the rule view.
+   * @return {Object|null} containing the following props:
    * - type {String} One of the VIEW_NODE_XXX_TYPE const in
-   *   client/inspector/shared/node-types
-   * - value {Object} Depends on the type of the node
-   * returns null of the node isn't anything we care about
+   *   client/inspector/shared/node-types.
+   * - rule {Rule} The Rule object.
+   * - value {Object} Depends on the type of the node.
+   * Otherwise, returns null if the node isn't anything we care about.
    */
   getNodeInfo: function(node) {
-    if (!node) {
-      return null;
-    }
-
-    let type, value;
-    const classes = node.classList;
-    const prop = getParentTextProperty(node);
-
-    if (classes.contains("ruleview-propertyname") && prop) {
-      type = VIEW_NODE_PROPERTY_TYPE;
-      value = {
-        property: node.textContent,
-        value: getPropertyNameAndValue(node).value,
-        enabled: prop.enabled,
-        overridden: prop.overridden,
-        pseudoElement: prop.rule.pseudoElement,
-        sheetHref: prop.rule.domRule.href,
-        textProperty: prop,
-      };
-    } else if (classes.contains("ruleview-propertyvalue") && prop) {
-      type = VIEW_NODE_VALUE_TYPE;
-      value = {
-        property: getPropertyNameAndValue(node).name,
-        value: node.textContent,
-        enabled: prop.enabled,
-        overridden: prop.overridden,
-        pseudoElement: prop.rule.pseudoElement,
-        sheetHref: prop.rule.domRule.href,
-        textProperty: prop,
-      };
-    } else if (classes.contains("ruleview-font-family") && prop) {
-      type = VIEW_NODE_FONT_TYPE;
-      value = {
-        property: getPropertyNameAndValue(node).name,
-        value: getPropertyNameAndValue(node).value,
-        enabled: prop.enabled,
-        overridden: prop.overridden,
-        pseudoElement: prop.rule.pseudoElement,
-        sheetHref: prop.rule.domRule.href,
-        textProperty: prop,
-      };
-    } else if (classes.contains("ruleview-shape-point") && prop) {
-      type = VIEW_NODE_SHAPE_POINT_TYPE;
-      value = {
-        property: getPropertyNameAndValue(node).name,
-        value: node.textContent,
-        enabled: prop.enabled,
-        overridden: prop.overridden,
-        pseudoElement: prop.rule.pseudoElement,
-        sheetHref: prop.rule.domRule.href,
-        textProperty: prop,
-        toggleActive: getShapeToggleActive(node),
-        point: getShapePoint(node),
-      };
-    } else if (classes.contains("ruleview-unused-warning") && prop) {
-      type = VIEW_NODE_INACTIVE_CSS;
-      value = prop.isUsed();
-    } else if (classes.contains("ruleview-shapeswatch") && prop) {
-      type = VIEW_NODE_SHAPE_SWATCH;
-      value = {
-        enabled: prop.enabled,
-        overridden: prop.overridden,
-        textProperty: prop,
-      };
-    } else if (
-      (classes.contains("ruleview-variable") ||
-        classes.contains("ruleview-unmatched-variable")) &&
-      prop
-    ) {
-      type = VIEW_NODE_VARIABLE_TYPE;
-      value = {
-        property: getPropertyNameAndValue(node).name,
-        value: node.textContent,
-        enabled: prop.enabled,
-        overridden: prop.overridden,
-        pseudoElement: prop.rule.pseudoElement,
-        sheetHref: prop.rule.domRule.href,
-        textProperty: prop,
-        variable: node.dataset.variable,
-      };
-    } else if (
-      classes.contains("theme-link") &&
-      !classes.contains("ruleview-rule-source") &&
-      prop
-    ) {
-      type = VIEW_NODE_IMAGE_URL_TYPE;
-      value = {
-        property: getPropertyNameAndValue(node).name,
-        value: node.parentNode.textContent,
-        url: node.href,
-        enabled: prop.enabled,
-        overridden: prop.overridden,
-        pseudoElement: prop.rule.pseudoElement,
-        sheetHref: prop.rule.domRule.href,
-        textProperty: prop,
-      };
-    } else if (
-      classes.contains("ruleview-selector-unmatched") ||
-      classes.contains("ruleview-selector-matched") ||
-      classes.contains("ruleview-selectorcontainer") ||
-      classes.contains("ruleview-selector") ||
-      classes.contains("ruleview-selector-attribute") ||
-      classes.contains("ruleview-selector-pseudo-class") ||
-      classes.contains("ruleview-selector-pseudo-class-lock")
-    ) {
-      type = VIEW_NODE_SELECTOR_TYPE;
-      value = this._getRuleEditorForNode(node).selectorText.textContent;
-    } else if (
-      classes.contains("ruleview-rule-source") ||
-      classes.contains("ruleview-rule-source-label")
-    ) {
-      type = VIEW_NODE_LOCATION_TYPE;
-      const rule = this._getRuleEditorForNode(node).rule;
-      value = rule.sheet && rule.sheet.href ? rule.sheet.href : rule.title;
-    } else {
-      return null;
-    }
-
-    return {
-      view: "rule",
-      type,
-      value,
-    };
-  },
-
-  /**
-   * Retrieve the RuleEditor instance.
-   */
-  _getRuleEditorForNode: function(node) {
-    return node.closest(".ruleview-rule")._ruleEditor;
+    return getNodeInfo(node, this._elementStyle);
   },
 
   /**
@@ -590,6 +480,7 @@ CssRuleView.prototype = {
     if (event) {
       this.copySelection(event.target);
       event.preventDefault();
+      event.stopPropagation();
     }
   },
 
@@ -604,7 +495,7 @@ CssRuleView.prototype = {
     try {
       let text = "";
 
-      const nodeName = target && target.nodeName;
+      const nodeName = target?.nodeName;
       if (nodeName === "input" || nodeName == "textarea") {
         const start = Math.min(target.selectionStart, target.selectionEnd);
         const end = Math.max(target.selectionStart, target.selectionEnd);
@@ -659,10 +550,6 @@ CssRuleView.prototype = {
       !this.inspector.selection.isElementNode() ||
       this.inspector.selection.isAnonymousNode();
     this.addRuleButton.disabled = shouldBeDisabled;
-  },
-
-  setPageStyle: function(pageStyle) {
-    this.pageStyle = pageStyle;
   },
 
   /**
@@ -824,16 +711,21 @@ CssRuleView.prototype = {
     }
 
     // Clean-up for print simulation.
-    if (this._emulationFront) {
+    if (this.contentViewerFront) {
+      this.colorSchemeSimulationButton.removeEventListener(
+        "click",
+        this._onToggleColorSchemeSimulation
+      );
       this.printSimulationButton.removeEventListener(
         "click",
         this._onTogglePrintSimulation
       );
 
-      this._emulationFront.destroy();
+      this.contentViewerFront.destroy();
 
+      this.colorSchemeSimulationButton = null;
       this.printSimulationButton = null;
-      this._emulationFront = null;
+      this.contentViewerFront = null;
     }
 
     this.tooltips.destroy();
@@ -845,29 +737,23 @@ CssRuleView.prototype = {
     this.addRuleButton.removeEventListener("click", this._onAddRule);
     this.searchField.removeEventListener("input", this._onFilterStyles);
     this.searchClearButton.removeEventListener("click", this._onClearSearch);
+    this.pseudoClassPanel.removeEventListener(
+      "change",
+      this._onTogglePseudoClass
+    );
     this.pseudoClassToggle.removeEventListener(
       "click",
       this._onTogglePseudoClassPanel
     );
     this.classToggle.removeEventListener("click", this._onToggleClassPanel);
-    this.hoverCheckbox.removeEventListener("click", this._onTogglePseudoClass);
-    this.activeCheckbox.removeEventListener("click", this._onTogglePseudoClass);
-    this.focusCheckbox.removeEventListener("click", this._onTogglePseudoClass);
-    this.focusWithinCheckbox.removeEventListener(
-      "click",
-      this._onTogglePseudoClass
-    );
 
     this.searchField = null;
     this.searchClearButton = null;
     this.pseudoClassPanel = null;
     this.pseudoClassToggle = null;
+    this.pseudoClassCheckboxes = null;
     this.classPanel = null;
     this.classToggle = null;
-    this.hoverCheckbox = null;
-    this.activeCheckbox = null;
-    this.focusCheckbox = null;
-    this.focusWithinCheckbox = null;
 
     this.inspector = null;
     this.styleDocument = null;
@@ -932,8 +818,15 @@ CssRuleView.prototype = {
       this._clearRules();
       this._showEmpty();
       this.refreshPseudoClassPanel();
+      if (this.pageStyle) {
+        this.pageStyle.off("stylesheet-updated", this.refreshPanel);
+        this.pageStyle = null;
+      }
       return promise.resolve(undefined);
     }
+
+    this.pageStyle = element.inspectorFront.pageStyle;
+    this.pageStyle.on("stylesheet-updated", this.refreshPanel);
 
     // To figure out how shorthand properties are interpreted by the
     // engine, we will set properties on a dummy element and observe
@@ -993,8 +886,8 @@ CssRuleView.prototype = {
    * Update the rules for the currently highlighted element.
    */
   refreshPanel: function() {
-    // Ignore refreshes during editing or when no element is selected.
-    if (this.isEditing || !this._elementStyle) {
+    // Ignore refreshes when the panel is hidden, or during editing or when no element is selected.
+    if (!this.isPanelVisible() || this.isEditing || !this._elementStyle) {
       return promise.resolve(undefined);
     }
 
@@ -1016,10 +909,39 @@ CssRuleView.prototype = {
    * attributes for each checkbox.
    */
   clearPseudoClassPanel: function() {
-    this.hoverCheckbox.checked = this.hoverCheckbox.disabled = false;
-    this.activeCheckbox.checked = this.activeCheckbox.disabled = false;
-    this.focusCheckbox.checked = this.focusCheckbox.disabled = false;
-    this.focusWithinCheckbox.checked = this.focusWithinCheckbox.disabled = false;
+    this.pseudoClassCheckboxes.forEach(checkbox => {
+      checkbox.checked = false;
+      checkbox.disabled = false;
+    });
+  },
+
+  /**
+   * For each item in PSEUDO_CLASSES, create a checkbox input element for toggling a
+   * pseudo-class on the selected element and append it to the pseudo-class panel.
+   *
+   * Returns an array with the checkbox input elements for pseudo-classes.
+   *
+   * @return {Array}
+   */
+  _createPseudoClassCheckboxes: function() {
+    const doc = this.styleDocument;
+    const fragment = doc.createDocumentFragment();
+
+    for (const pseudo of PSEUDO_CLASSES) {
+      const label = doc.createElement("label");
+      const checkbox = doc.createElement("input");
+      checkbox.setAttribute("tabindex", "-1");
+      checkbox.setAttribute("type", "checkbox");
+      checkbox.setAttribute("value", pseudo);
+
+      label.append(checkbox, pseudo);
+      fragment.append(label);
+    }
+
+    this.pseudoClassPanel.append(fragment);
+    return Array.from(
+      this.pseudoClassPanel.querySelectorAll("input[type=checkbox]")
+    );
   },
 
   /**
@@ -1027,33 +949,17 @@ CssRuleView.prototype = {
    */
   refreshPseudoClassPanel: function() {
     if (!this._elementStyle || !this.inspector.selection.isElementNode()) {
-      this.hoverCheckbox.disabled = true;
-      this.activeCheckbox.disabled = true;
-      this.focusCheckbox.disabled = true;
-      this.focusWithinCheckbox.disabled = true;
+      this.pseudoClassCheckboxes.forEach(checkbox => {
+        checkbox.disabled = true;
+      });
       return;
     }
 
-    for (const pseudoClassLock of this._elementStyle.element.pseudoClassLocks) {
-      switch (pseudoClassLock) {
-        case ":hover": {
-          this.hoverCheckbox.checked = true;
-          break;
-        }
-        case ":active": {
-          this.activeCheckbox.checked = true;
-          break;
-        }
-        case ":focus": {
-          this.focusCheckbox.checked = true;
-          break;
-        }
-        case ":focus-within": {
-          this.focusWithinCheckbox.checked = true;
-          break;
-        }
-      }
-    }
+    const pseudoClassLocks = this._elementStyle.element.pseudoClassLocks;
+    this.pseudoClassCheckboxes.forEach(checkbox => {
+      checkbox.disabled = false;
+      checkbox.checked = pseudoClassLocks.includes(checkbox.value);
+    });
   },
 
   _populate: function() {
@@ -1113,6 +1019,11 @@ CssRuleView.prototype = {
     if (this._elementStyle) {
       this._elementStyle.destroy();
       this._elementStyle = null;
+    }
+
+    if (this.pageStyle) {
+      this.pageStyle.off("stylesheet-updated", this.refreshPanel);
+      this.pageStyle = null;
     }
   },
 
@@ -1255,6 +1166,7 @@ CssRuleView.prototype = {
   /**
    * Creates editor UI for each of the rules in _elementStyle.
    */
+  // eslint-disable-next-line complexity
   _createEditors: function() {
     // Run through the current list of rules, attaching
     // their editors in order.  Create editors if needed.
@@ -1613,21 +1525,17 @@ CssRuleView.prototype = {
     this.hideClassPanel();
 
     this.pseudoClassToggle.classList.add("checked");
-    this.hoverCheckbox.setAttribute("tabindex", "0");
-    this.activeCheckbox.setAttribute("tabindex", "0");
-    this.focusCheckbox.setAttribute("tabindex", "0");
-    this.focusWithinCheckbox.setAttribute("tabindex", "0");
-
+    this.pseudoClassCheckboxes.forEach(checkbox => {
+      checkbox.setAttribute("tabindex", "0");
+    });
     this.pseudoClassPanel.hidden = false;
   },
 
   hidePseudoClassPanel: function() {
     this.pseudoClassToggle.classList.remove("checked");
-    this.hoverCheckbox.setAttribute("tabindex", "-1");
-    this.activeCheckbox.setAttribute("tabindex", "-1");
-    this.focusCheckbox.setAttribute("tabindex", "-1");
-    this.focusWithinCheckbox.setAttribute("tabindex", "-1");
-
+    this.pseudoClassCheckboxes.forEach(checkbox => {
+      checkbox.setAttribute("tabindex", "-1");
+    });
     this.pseudoClassPanel.hidden = true;
   },
 
@@ -1636,7 +1544,7 @@ CssRuleView.prototype = {
    * the pseudo class for the current selected element.
    */
   _onTogglePseudoClass: function(event) {
-    const target = event.currentTarget;
+    const target = event.target;
     this.inspector.togglePseudoClass(target.value);
   },
 
@@ -1694,15 +1602,30 @@ CssRuleView.prototype = {
     }
   },
 
+  async _onToggleColorSchemeSimulation() {
+    const currentState = await this.contentViewerFront.getEmulatedColorScheme();
+    const index = COLOR_SCHEMES.indexOf(currentState);
+    const nextState = COLOR_SCHEMES[(index + 1) % COLOR_SCHEMES.length];
+
+    if (nextState) {
+      this.colorSchemeSimulationButton.setAttribute("state", nextState);
+    } else {
+      this.colorSchemeSimulationButton.removeAttribute("state");
+    }
+
+    await this.contentViewerFront.setEmulatedColorScheme(nextState);
+    this.refreshPanel();
+  },
+
   async _onTogglePrintSimulation() {
-    const enabled = await this.emulationFront.getIsPrintSimulationEnabled();
+    const enabled = await this.contentViewerFront.getIsPrintSimulationEnabled();
 
     if (!enabled) {
       this.printSimulationButton.classList.add("checked");
-      await this.emulationFront.startPrintMediaSimulation();
+      await this.contentViewerFront.startPrintMediaSimulation();
     } else {
       this.printSimulationButton.classList.remove("checked");
-      await this.emulationFront.stopPrintMediaSimulation(false);
+      await this.contentViewerFront.stopPrintMediaSimulation(false);
     }
 
     // Refresh the current element's rules in the panel.
@@ -1717,24 +1640,22 @@ CssRuleView.prototype = {
    */
   _flashElement(element) {
     flashElementOn(element, {
-      backgroundClass: "ruleview-property-highlight-background-color",
-    });
-    flashElementOff(element, {
-      backgroundClass: "ruleview-property-highlight-background-color",
+      backgroundClass: "theme-bg-contrast",
     });
 
-    if (this._removeFlashOutTimer) {
+    if (this._flashMutationTimer) {
       clearTimeout(this._removeFlashOutTimer);
-      this._removeFlashOutTimer = null;
+      this._flashMutationTimer = null;
     }
 
-    // Remove the flash-out class to prevent the element from re-flashing when the view
-    // is resized.
-    this._removeFlashOutTimer = setTimeout(() => {
-      element.classList.remove("flash-out");
+    this._flashMutationTimer = setTimeout(() => {
+      flashElementOff(element, {
+        backgroundClass: "theme-bg-contrast",
+      });
+
       // Emit "scrolled-to-property" for use by tests.
       this.emit("scrolled-to-element");
-    }, REMOVE_FLASH_OUT_CLASS_TIMER);
+    }, PROPERTY_FLASHING_DURATION);
   },
 
   /**
@@ -1907,128 +1828,6 @@ CssRuleView.prototype = {
   },
 };
 
-/**
- * Helper functions
- */
-
-/**
- * Walk up the DOM from a given node until a parent property holder is found.
- * For elements inside the computed property list, the non-computed parent
- * property holder will be returned
- *
- * @param {DOMNode} node
- *        The node to start from
- * @return {DOMNode} The parent property holder node, or null if not found
- */
-function getParentTextPropertyHolder(node) {
-  while (true) {
-    if (!node || !node.classList) {
-      return null;
-    }
-    if (node.classList.contains("ruleview-property")) {
-      return node;
-    }
-    node = node.parentNode;
-  }
-}
-
-/**
- * For any given node, find the TextProperty it is in if any
- * @param {DOMNode} node
- *        The node to start from
- * @return {TextProperty}
- */
-function getParentTextProperty(node) {
-  const parent = getParentTextPropertyHolder(node);
-  if (!parent) {
-    return null;
-  }
-
-  const propValue = parent.querySelector(".ruleview-propertyvalue");
-  if (!propValue) {
-    return null;
-  }
-
-  return propValue.textProperty;
-}
-
-/**
- * Walker up the DOM from a given node until a parent property holder is found,
- * and return the textContent for the name and value nodes.
- * Stops at the first property found, so if node is inside the computed property
- * list, the computed property will be returned
- *
- * @param {DOMNode} node
- *        The node to start from
- * @return {Object} {name, value}
- */
-function getPropertyNameAndValue(node) {
-  while (true) {
-    if (!node || !node.classList) {
-      return null;
-    }
-    // Check first for ruleview-computed since it's the deepest
-    if (
-      node.classList.contains("ruleview-computed") ||
-      node.classList.contains("ruleview-property")
-    ) {
-      return {
-        name: node.querySelector(".ruleview-propertyname").textContent,
-        value: node.querySelector(".ruleview-propertyvalue").textContent,
-      };
-    }
-    node = node.parentNode;
-  }
-}
-
-/**
- * Walk up the DOM from a given node until a parent property holder is found,
- * and return an active shape toggle if one exists.
- *
- * @param {DOMNode} node
- *        The node to start from
- * @returns {DOMNode} The active shape toggle node, if one exists.
- */
-function getShapeToggleActive(node) {
-  while (true) {
-    if (!node || !node.classList) {
-      return null;
-    }
-    // Check first for ruleview-computed since it's the deepest
-    if (
-      node.classList.contains("ruleview-computed") ||
-      node.classList.contains("ruleview-property")
-    ) {
-      return node.querySelector(".ruleview-shapeswatch.active");
-    }
-    node = node.parentNode;
-  }
-}
-
-/**
- * Get the point associated with a shape point node.
- *
- * @param {DOMNode} node
- *        A shape point node
- * @returns {String} The point associated with the given node.
- */
-function getShapePoint(node) {
-  const classList = node.classList;
-  let point = node.dataset.point;
-  // Inset points use classes instead of data because a single span can represent
-  // multiple points.
-  const insetClasses = [];
-  classList.forEach(className => {
-    if (INSET_POINT_TYPES.includes(className)) {
-      insetClasses.push(className);
-    }
-  });
-  if (insetClasses.length > 0) {
-    point = insetClasses.join(",");
-  }
-  return point;
-}
-
 function RuleViewTool(inspector, window) {
   this.inspector = inspector;
   this.document = window.document;
@@ -2047,24 +1846,20 @@ function RuleViewTool(inspector, window) {
   this.inspector.selection.on("detached-front", this.onDetachedFront);
   this.inspector.selection.on("new-node-front", this.onSelected);
   this.inspector.selection.on("pseudoclass", this.refresh);
-  this.inspector.target.on("navigate", this.clearUserProperties);
+  this.inspector.currentTarget.on("navigate", this.clearUserProperties);
   this.inspector.ruleViewSideBar.on("ruleview-selected", this.onPanelSelected);
   this.inspector.sidebar.on("ruleview-selected", this.onPanelSelected);
-  this.inspector.pageStyle.on("stylesheet-updated", this.refresh);
   this.inspector.styleChangeTracker.on("style-changed", this.refresh);
 
   this.onSelected();
 }
 
 RuleViewTool.prototype = {
-  isSidebarActive: function() {
+  isPanelVisible: function() {
     if (!this.view) {
       return false;
     }
-
-    return this.inspector.is3PaneModeEnabled
-      ? true
-      : this.inspector.sidebar.getCurrentTabID() == "ruleview";
+    return this.view.isPanelVisible();
   },
 
   onDetachedFront: function() {
@@ -2081,12 +1876,10 @@ RuleViewTool.prototype = {
     }
 
     const isInactive =
-      !this.isSidebarActive() && this.inspector.selection.nodeFront;
+      !this.isPanelVisible() && this.inspector.selection.nodeFront;
     if (isInactive) {
       return;
     }
-
-    this.view.setPageStyle(this.inspector.pageStyle);
 
     if (
       !this.inspector.selection.isConnected() ||
@@ -2105,7 +1898,7 @@ RuleViewTool.prototype = {
   },
 
   refresh: function() {
-    if (this.isSidebarActive()) {
+    if (this.isPanelVisible()) {
       this.view.refreshPanel();
     }
   },
@@ -2133,11 +1926,8 @@ RuleViewTool.prototype = {
     this.inspector.selection.off("detached-front", this.onDetachedFront);
     this.inspector.selection.off("pseudoclass", this.refresh);
     this.inspector.selection.off("new-node-front", this.onSelected);
-    this.inspector.target.off("navigate", this.clearUserProperties);
+    this.inspector.currentTarget.off("navigate", this.clearUserProperties);
     this.inspector.sidebar.off("ruleview-selected", this.onPanelSelected);
-    if (this.inspector.pageStyle) {
-      this.inspector.pageStyle.off("stylesheet-updated", this.refresh);
-    }
 
     this.view.off("ruleview-refreshed", this.onViewRefreshed);
 

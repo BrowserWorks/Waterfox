@@ -20,6 +20,8 @@
 
 #include "unicode/utypes.h"
 
+#if U_SHOW_CPLUSPLUS_API
+
 /**
  * \file
  * \brief C++ API: NumberingSystem object
@@ -70,6 +72,12 @@ public:
      * @stable ICU 4.2
      */
     NumberingSystem(const NumberingSystem& other);
+
+    /**
+     * Copy assignment.
+     * @stable ICU 4.2
+     */
+    NumberingSystem& operator=(const NumberingSystem& other) = default;
 
     /**
      * Destructor.
@@ -209,6 +217,8 @@ private:
 U_NAMESPACE_END
 
 #endif /* #if !UCONFIG_NO_FORMATTING */
+
+#endif /* U_SHOW_CPLUSPLUS_API */
 
 #endif // _NUMSYS
 //eof

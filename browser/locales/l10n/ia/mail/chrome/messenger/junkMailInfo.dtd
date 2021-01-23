@@ -1,0 +1,11 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY window.title  "A proposito del posta indesirate">
+<!ENTITY window.width  "450">
+<!ENTITY info1a.label  "&brandShortName; detege automaticamente messages entrante que pare esser indesirate (etiam appellate spam). Le messages que &brandShortName; considera indesirate apparera con un icone">
+<!ENTITY info1b.label  ".">
+<!ENTITY info2.label   "Primo, tu debe inseniar a &brandShortName; a recognoscer le messages indesirate, usante le button Indesirate del barra de instrumentos pro marcar o dismarcar messages como indesirate.">
+<!ENTITY info3.label   "Un vice que &brandShortName; detege correctemente le messages indesirate, tu pote usar le controlos de posta indesirate pro displaciar automaticamente le posta indesirate recipite al dossier Indesirate.">
+<!ENTITY info4.label   "Pro altere informationes, clicca Adjutar">

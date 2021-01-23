@@ -27,11 +27,13 @@
 
 #include "config.h"
 
-#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "common/attributes.h"
+#include "common/intops.h"
 
 #include "input/input.h"
 #include "input/demuxer.h"
@@ -41,86 +43,75 @@ struct DemuxerContext {
     const Demuxer *impl;
 };
 
-#define MAX_NUM_DEMUXERS 2
-static const Demuxer *demuxers[MAX_NUM_DEMUXERS];
-static int num_demuxers = 0;
-
-#define register_demuxer(impl) { \
-    extern const Demuxer impl; \
-    assert(num_demuxers < MAX_NUM_DEMUXERS); \
-    demuxers[num_demuxers++] = &impl; \
-}
-
-void init_demuxers(void) {
-    register_demuxer(ivf_demuxer);
-    register_demuxer(annexb_demuxer);
-}
-
-static const char *find_extension(const char *const f) {
-    const size_t l = strlen(f);
-
-    if (l == 0) return NULL;
-
-    const char *const end = &f[l - 1], *step = end;
-    while ((*step >= 'a' && *step <= 'z') ||
-           (*step >= 'A' && *step <= 'Z') ||
-           (*step >= '0' && *step <= '9'))
-    {
-        step--;
-    }
-
-    return (step < end && step > f && *step == '.' && step[-1] != '/') ?
-           &step[1] : NULL;
-}
+extern const Demuxer ivf_demuxer;
+extern const Demuxer annexb_demuxer;
+extern const Demuxer section5_demuxer;
+static const Demuxer *const demuxers[] = {
+    &ivf_demuxer,
+    &annexb_demuxer,
+    &section5_demuxer,
+    NULL
+};
 
 int input_open(DemuxerContext **const c_out,
                const char *const name, const char *const filename,
-               unsigned fps[2], unsigned *const num_frames)
+               unsigned fps[2], unsigned *const num_frames, unsigned timebase[2])
 {
     const Demuxer *impl;
     DemuxerContext *c;
     int res, i;
 
     if (name) {
-        for (i = 0; i < num_demuxers; i++) {
+        for (i = 0; demuxers[i]; i++) {
             if (!strcmp(demuxers[i]->name, name)) {
                 impl = demuxers[i];
                 break;
             }
         }
-        if (i == num_demuxers) {
+        if (!demuxers[i]) {
             fprintf(stderr, "Failed to find demuxer named \"%s\"\n", name);
             return DAV1D_ERR(ENOPROTOOPT);
         }
     } else {
-        const char *const ext = find_extension(filename);
-        if (!ext) {
-            fprintf(stderr, "No extension found for file %s\n", filename);
-            return -1;
+        int probe_sz = 0;
+        for (i = 0; demuxers[i]; i++)
+            probe_sz = imax(probe_sz, demuxers[i]->probe_sz);
+        uint8_t *const probe_data = malloc(probe_sz);
+        if (!probe_data) {
+            fprintf(stderr, "Failed to allocate memory\n");
+            return DAV1D_ERR(ENOMEM);
+        }
+        FILE *f = fopen(filename, "rb");
+        res = !!fread(probe_data, 1, probe_sz, f);
+        fclose(f);
+        if (!res) {
+            free(probe_data);
+            fprintf(stderr, "Failed to read probe data\n");
+            return errno ? DAV1D_ERR(errno) : DAV1D_ERR(EIO);
         }
 
-        for (i = 0; i < num_demuxers; i++) {
-            if (!strcmp(demuxers[i]->extension, ext)) {
+        for (i = 0; demuxers[i]; i++) {
+            if (demuxers[i]->probe(probe_data)) {
                 impl = demuxers[i];
                 break;
             }
         }
-        if (i == num_demuxers) {
+        free(probe_data);
+        if (!demuxers[i]) {
             fprintf(stderr,
-                    "Failed to find demuxer for file %s (\"%s\")\n",
-                    filename, ext);
+                    "Failed to probe demuxer for file %s\n",
+                    filename);
             return DAV1D_ERR(ENOPROTOOPT);
         }
     }
 
-    if (!(c = malloc(sizeof(DemuxerContext) + impl->priv_data_size))) {
+    if (!(c = calloc(1, sizeof(DemuxerContext) + impl->priv_data_size))) {
         fprintf(stderr, "Failed to allocate memory\n");
         return DAV1D_ERR(ENOMEM);
     }
-    memset(c, 0, sizeof(DemuxerContext) + impl->priv_data_size);
     c->impl = impl;
     c->data = (DemuxerPriv *) &c[1];
-    if ((res = impl->open(c->data, filename, fps, num_frames)) < 0) {
+    if ((res = impl->open(c->data, filename, fps, num_frames, timebase)) < 0) {
         free(c);
         return res;
     }

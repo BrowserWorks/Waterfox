@@ -40,7 +40,7 @@ union FactoryRequestParams
   DeleteDatabaseRequestParams;
 };
 
-sync protocol PBackgroundIDBFactory
+sync refcounted protocol PBackgroundIDBFactory
 {
   manager PBackground;
 
@@ -51,8 +51,6 @@ parent:
   async DeleteMe();
 
   async PBackgroundIDBFactoryRequest(FactoryRequestParams params);
-
-  async IncrementLoggingRequestSerialNumber();
 
 child:
   async __delete__();

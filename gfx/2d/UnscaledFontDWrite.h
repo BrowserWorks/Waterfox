@@ -19,21 +19,14 @@ class ScaledFontDWrite;
 class UnscaledFontDWrite final : public UnscaledFont {
  public:
   MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(UnscaledFontDWrite, override)
-  UnscaledFontDWrite(
-      const RefPtr<IDWriteFontFace>& aFontFace,
-      const RefPtr<IDWriteFont>& aFont,
-      DWRITE_FONT_SIMULATIONS aSimulations = DWRITE_FONT_SIMULATIONS_NONE,
-      bool aNeedsCairo = false)
-      : mFontFace(aFontFace),
-        mFont(aFont),
-        mSimulations(aSimulations),
-        mNeedsCairo(aNeedsCairo) {}
+  UnscaledFontDWrite(const RefPtr<IDWriteFontFace>& aFontFace,
+                     const RefPtr<IDWriteFont>& aFont)
+      : mFontFace(aFontFace), mFont(aFont) {}
 
   FontType GetType() const override { return FontType::DWRITE; }
 
   const RefPtr<IDWriteFontFace>& GetFontFace() const { return mFontFace; }
   const RefPtr<IDWriteFont>& GetFont() const { return mFont; }
-  DWRITE_FONT_SIMULATIONS GetSimulations() const { return mSimulations; }
 
   bool GetFontFileData(FontFileDataOutput aDataCallback, void* aBaton) override;
 
@@ -47,13 +40,17 @@ class UnscaledFontDWrite final : public UnscaledFont {
       const wr::FontInstancePlatformOptions* aPlatformOptions,
       const FontVariation* aVariations, uint32_t aNumVariations) override;
 
-  bool GetWRFontDescriptor(WRFontDescriptorOutput aCb, void* aBaton) override;
+  bool GetFontDescriptor(FontDescriptorOutput aCb, void* aBaton) override;
+
+  static already_AddRefed<UnscaledFont> CreateFromFontDescriptor(
+      const uint8_t* aData, uint32_t aDataLength, uint32_t aIndex);
 
  private:
+  bool InitBold();
+
   RefPtr<IDWriteFontFace> mFontFace;
+  RefPtr<IDWriteFontFace> mFontFaceBold;
   RefPtr<IDWriteFont> mFont;
-  DWRITE_FONT_SIMULATIONS mSimulations;
-  bool mNeedsCairo;
 };
 
 }  // namespace gfx

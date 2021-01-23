@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Advanced Proxy Preferences dialog -->
+<!ENTITY  pref.proxies.advanced.title "進階 Proxy 偏好設定">
+<!ENTITY  protocols.caption           "不同通訊協定所使用的代理伺服器">
+<!ENTITY  protocols.description       "通常同一個 Proxy 就能處理這邊列出的所有通訊協定。">
+<!ENTITY  http.label                  "HTTP Proxy:">
+<!ENTITY  http.accesskey              "x">
+<!ENTITY  ssl.label                   "SSL Proxy:">
+<!ENTITY  ssl.accesskey               "L">
+<!ENTITY  ftp.label                   "FTP Proxy:">
+<!ENTITY  ftp.accesskey               "F">
+<!ENTITY  reuseProxy.label            "將 HTTP Proxy 設定套用到所有通訊協定">
+<!ENTITY  reuseProxy.accesskey        "U">
+<!ENTITY  port.label                  "Port:">
+<!ENTITY  HTTPPort.accesskey          "P">
+<!ENTITY  SSLPort.accesskey           "o">
+<!ENTITY  FTPPort.accesskey           "r">
+
+<!ENTITY  socks.caption               "通用 Proxy">
+<!ENTITY  socks.description           "SOCKS Proxy 是一種企業或類似環境中常用的通用代理伺服器。">
+<!ENTITY  socks.label                 "SOCKS 主機:">
+<!ENTITY  socks.accesskey             "S">
+<!ENTITY  socks4.label                "SOCKS v4">
+<!ENTITY  socks4.accesskey            "C">
+<!ENTITY  socks5.label                "SOCKS v5">
+<!ENTITY  socks5.accesskey            "K">
+<!ENTITY  socksRemoteDNS.label        "使用代理伺服器來解析主機名稱（建議於 SOCKS v5 使用）">
+<!ENTITY  socksRemoteDNS.accesskey    "e">
+<!ENTITY  SOCKSport.accesskey         "t">
+

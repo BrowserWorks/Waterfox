@@ -12,7 +12,7 @@
 
 #include "BackgroundChildImpl.h"
 #include "GeckoProfiler.h"
-#include "IDBCursor.h"
+#include "IDBCursorType.h"
 #include "IDBDatabase.h"
 #include "IDBIndex.h"
 #include "IDBKeyRange.h"
@@ -47,7 +47,7 @@ class MOZ_STACK_CLASS LoggingIdString final
       const BackgroundChildImpl::ThreadLocal* threadLocal =
           BackgroundChildImpl::GetThreadLocalForCurrentThread();
       if (threadLocal) {
-        const ThreadLocal* idbThreadLocal = threadLocal->mIndexedDBThreadLocal;
+        const auto& idbThreadLocal = threadLocal->mIndexedDBThreadLocal;
         if (idbThreadLocal) {
           Assign(idbThreadLocal->IdString());
         }
@@ -88,13 +88,11 @@ class MOZ_STACK_CLASS LoggingString final : public nsAutoCString {
     Append(kQuote);
   }
 
-  explicit LoggingString(IDBTransaction* aTransaction)
+  explicit LoggingString(const IDBTransaction& aTransaction)
       : nsAutoCString(kOpenBracket) {
-    MOZ_ASSERT(aTransaction);
-
     NS_NAMED_LITERAL_CSTRING(kCommaSpace, ", ");
 
-    const nsTArray<nsString>& stores = aTransaction->ObjectStoreNamesInternal();
+    const nsTArray<nsString>& stores = aTransaction.ObjectStoreNamesInternal();
 
     for (uint32_t count = stores.Length(), index = 0; index < count; index++) {
       Append(kQuote);
@@ -109,20 +107,20 @@ class MOZ_STACK_CLASS LoggingString final : public nsAutoCString {
     Append(kCloseBracket);
     Append(kCommaSpace);
 
-    switch (aTransaction->GetMode()) {
-      case IDBTransaction::READ_ONLY:
+    switch (aTransaction.GetMode()) {
+      case IDBTransaction::Mode::ReadOnly:
         AppendLiteral("\"readonly\"");
         break;
-      case IDBTransaction::READ_WRITE:
+      case IDBTransaction::Mode::ReadWrite:
         AppendLiteral("\"readwrite\"");
         break;
-      case IDBTransaction::READ_WRITE_FLUSH:
+      case IDBTransaction::Mode::ReadWriteFlush:
         AppendLiteral("\"readwriteflush\"");
         break;
-      case IDBTransaction::CLEANUP:
+      case IDBTransaction::Mode::Cleanup:
         AppendLiteral("\"cleanup\"");
         break;
-      case IDBTransaction::VERSION_CHANGE:
+      case IDBTransaction::Mode::VersionChange:
         AppendLiteral("\"versionchange\"");
         break;
       default:
@@ -189,18 +187,18 @@ class MOZ_STACK_CLASS LoggingString final : public nsAutoCString {
     }
   }
 
-  explicit LoggingString(const IDBCursor::Direction aDirection) {
+  explicit LoggingString(const IDBCursorDirection aDirection) {
     switch (aDirection) {
-      case IDBCursor::NEXT:
+      case IDBCursorDirection::Next:
         AssignLiteral("\"next\"");
         break;
-      case IDBCursor::NEXT_UNIQUE:
+      case IDBCursorDirection::Nextunique:
         AssignLiteral("\"nextunique\"");
         break;
-      case IDBCursor::PREV:
+      case IDBCursorDirection::Prev:
         AssignLiteral("\"prev\"");
         break;
-      case IDBCursor::PREV_UNIQUE:
+      case IDBCursorDirection::Prevunique:
         AssignLiteral("\"prevunique\"");
         break;
       default:
@@ -290,7 +288,7 @@ inline void MOZ_FORMAT_PRINTF(2, 3)
 }  // namespace dom
 }  // namespace mozilla
 
-#define IDB_LOG_MARK(_detailedFmt, _conciseFmt, ...)                           \
+#define IDB_LOG_MARK2(_detailedFmt, _conciseFmt, ...)                          \
   do {                                                                         \
     using namespace mozilla::dom::indexedDB;                                   \
                                                                                \
@@ -317,10 +315,84 @@ inline void MOZ_FORMAT_PRINTF(2, 3)
     }                                                                          \
   } while (0)
 
+#define IDB_LOG_MARK(_detailedFmt, _conciseFmt, _loggingId, ...)             \
+  IDB_LOG_MARK2("IndexedDB %s: " _detailedFmt, "IndexedDB %s: " _conciseFmt, \
+                _loggingId, ##__VA_ARGS__)
+
 #define IDB_LOG_ID_STRING(...) \
   mozilla::dom::indexedDB::LoggingIdString(__VA_ARGS__).get()
 
 #define IDB_LOG_STRINGIFY(...) \
   mozilla::dom::indexedDB::LoggingString(__VA_ARGS__).get()
+
+// IDB_LOG_MARK_DETAILED_PARENT and IDB_LOG_MARK_DETAILED_CHILD should have the
+// same width.
+#define IDB_LOG_MARK_DETAILED_PARENT "Parent"
+#define IDB_LOG_MARK_DETAILED_CHILD "Child "
+
+#define IDB_LOG_MARK_CONCISE_PARENT "P"
+#define IDB_LOG_MARK_CONCISE_CHILD "C"
+
+#define IDB_LOG_MARK_DETAILED_TRANSACTION "Transaction[%lld]"
+#define IDB_LOG_MARK_DETAILED_REQUEST "Request[%llu]"
+
+#define IDB_LOG_MARK_CONCISE_TRANSACTION "T[%lld]"
+#define IDB_LOG_MARK_CONCISE_REQUEST "R[%llu]"
+
+#define IDB_LOG_MARK_TRANSACTION_REQUEST(                                      \
+    _detailedPeer, _concisePeer, _detailedFmt, _conciseFmt, _loggingId,        \
+    _transactionSerialNumber, _requestSerialNumber, ...)                       \
+  IDB_LOG_MARK(_detailedPeer " " IDB_LOG_MARK_DETAILED_TRANSACTION             \
+                             " " IDB_LOG_MARK_DETAILED_REQUEST                 \
+                             ": " _detailedFmt,                                \
+               _concisePeer " " IDB_LOG_MARK_CONCISE_TRANSACTION               \
+                            " " IDB_LOG_MARK_CONCISE_REQUEST ": " _conciseFmt, \
+               _loggingId, _transactionSerialNumber, _requestSerialNumber,     \
+               ##__VA_ARGS__)
+
+#define IDB_LOG_MARK_PARENT_TRANSACTION_REQUEST(                               \
+    _detailedFmt, _conciseFmt, _loggingId, _transactionSerialNumber,           \
+    _requestSerialNumber, ...)                                                 \
+  IDB_LOG_MARK_TRANSACTION_REQUEST(                                            \
+      IDB_LOG_MARK_DETAILED_PARENT, IDB_LOG_MARK_CONCISE_PARENT, _detailedFmt, \
+      _conciseFmt, _loggingId, _transactionSerialNumber, _requestSerialNumber, \
+      ##__VA_ARGS__)
+
+#define IDB_LOG_MARK_CHILD_TRANSACTION_REQUEST(_detailedFmt, _conciseFmt,    \
+                                               _transactionSerialNumber,     \
+                                               _requestSerialNumber, ...)    \
+  IDB_LOG_MARK_TRANSACTION_REQUEST(                                          \
+      IDB_LOG_MARK_DETAILED_CHILD, IDB_LOG_MARK_CONCISE_CHILD, _detailedFmt, \
+      _conciseFmt, IDB_LOG_ID_STRING(), _transactionSerialNumber,            \
+      _requestSerialNumber, ##__VA_ARGS__)
+
+#define IDB_LOG_MARK_CHILD_REQUEST(_detailedFmt, _conciseFmt,                \
+                                   _requestSerialNumber, ...)                \
+  IDB_LOG_MARK(IDB_LOG_MARK_DETAILED_CHILD " " IDB_LOG_MARK_DETAILED_REQUEST \
+                                           ": " _detailedFmt,                \
+               IDB_LOG_MARK_CONCISE_CHILD " " IDB_LOG_MARK_CONCISE_REQUEST   \
+                                          ": " _conciseFmt,                  \
+               IDB_LOG_ID_STRING(), _requestSerialNumber, ##__VA_ARGS__)
+
+#define IDB_LOG_MARK_TRANSACTION(_detailedPeer, _concisePeer, _detailedFmt,  \
+                                 _conciseFmt, _loggingId,                    \
+                                 _transactionSerialNumber, ...)              \
+  IDB_LOG_MARK(                                                              \
+      _detailedPeer " " IDB_LOG_MARK_DETAILED_TRANSACTION ": " _detailedFmt, \
+      _concisePeer " " IDB_LOG_MARK_CONCISE_TRANSACTION ": " _conciseFmt,    \
+      _loggingId, _transactionSerialNumber, ##__VA_ARGS__)
+
+#define IDB_LOG_MARK_PARENT_TRANSACTION(_detailedFmt, _conciseFmt, _loggingId, \
+                                        _transactionSerialNumber, ...)         \
+  IDB_LOG_MARK_TRANSACTION(                                                    \
+      IDB_LOG_MARK_DETAILED_PARENT, IDB_LOG_MARK_CONCISE_PARENT, _detailedFmt, \
+      _conciseFmt, _loggingId, _transactionSerialNumber, ##__VA_ARGS__)
+
+#define IDB_LOG_MARK_CHILD_TRANSACTION(_detailedFmt, _conciseFmt,     \
+                                       _transactionSerialNumber, ...) \
+  IDB_LOG_MARK_TRANSACTION(IDB_LOG_MARK_DETAILED_CHILD,               \
+                           IDB_LOG_MARK_CONCISE_CHILD, _detailedFmt,  \
+                           _conciseFmt, IDB_LOG_ID_STRING(),          \
+                           _transactionSerialNumber, ##__VA_ARGS__)
 
 #endif  // mozilla_dom_indexeddb_profilerhelpers_h__

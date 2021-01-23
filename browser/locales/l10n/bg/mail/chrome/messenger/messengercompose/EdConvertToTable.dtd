@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Преобразуване в таблица">
+<!ENTITY instructions1.label   "Композитора създава нов ред в таблицата за всеки абзац в селекцията.">
+<!ENTITY instructions2.label   "Изберете символа, който ще използва за разделяне на селекцията в колони:">
+<!ENTITY commaRadio.label      "Запетая">
+<!ENTITY spaceRadio.label      "Интервал">
+<!ENTITY otherRadio.label      "Друг символ:">
+<!ENTITY deleteCharCheck.label "Изтриване на разделител">
+<!ENTITY collapseSpaces.label  "Без допълнителни интервали">
+<!ENTITY collapseSpaces.tooltip "Преобразуване на съседните интервали в един разделител">

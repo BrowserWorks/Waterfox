@@ -7,16 +7,11 @@ EXTRA_JS_MODULES += [
     'BootstrapLoader.jsm',
     'ChromeManifest.jsm',
     'ExtensionSupport.jsm',
-    'IOUtils.js',
+    'IOUtils.jsm',
     'iteratorUtils.jsm',
     'Overlays.jsm',
     'RDFDataSource.jsm',
     'RDFManifestConverter.jsm',
-]
-
-SOURCES += [
-    'nsCommonModule.cpp',
-    'nsComponentManagerExtra.cpp',
 ]
 
 LOCAL_INCLUDES += [

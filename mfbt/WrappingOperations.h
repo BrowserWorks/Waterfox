@@ -25,9 +25,9 @@
 #define mozilla_WrappingOperations_h
 
 #include "mozilla/Attributes.h"
-#include "mozilla/TypeTraits.h"
 
 #include <limits.h>
+#include <type_traits>
 
 namespace mozilla {
 
@@ -35,10 +35,10 @@ namespace detail {
 
 template <typename UnsignedType>
 struct WrapToSignedHelper {
-  static_assert(mozilla::IsUnsigned<UnsignedType>::value,
+  static_assert(std::is_unsigned_v<UnsignedType>,
                 "WrapToSigned must be passed an unsigned type");
 
-  using SignedType = typename mozilla::MakeSigned<UnsignedType>::Type;
+  using SignedType = std::make_signed_t<UnsignedType>;
 
   static constexpr SignedType MaxValue =
       (UnsignedType(1) << (CHAR_BIT * sizeof(SignedType) - 1)) - 1;
@@ -101,16 +101,16 @@ WrapToSigned(UnsignedType aValue) {
 namespace detail {
 
 template <typename T>
-constexpr T ToResult(typename MakeUnsigned<T>::Type aUnsigned) {
+constexpr T ToResult(std::make_unsigned_t<T> aUnsigned) {
   // We could *always* return WrapToSigned and rely on unsigned conversion to
   // undo the wrapping when |T| is unsigned, but this seems clearer.
-  return IsSigned<T>::value ? WrapToSigned(aUnsigned) : aUnsigned;
+  return std::is_signed_v<T> ? WrapToSigned(aUnsigned) : aUnsigned;
 }
 
 template <typename T>
 struct WrappingAddHelper {
  private:
-  using UnsignedT = typename MakeUnsigned<T>::Type;
+  using UnsignedT = std::make_unsigned_t<T>;
 
  public:
   MOZ_NO_SANITIZE_UNSIGNED_OVERFLOW
@@ -158,7 +158,7 @@ namespace detail {
 template <typename T>
 struct WrappingSubtractHelper {
  private:
-  using UnsignedT = typename MakeUnsigned<T>::Type;
+  using UnsignedT = std::make_unsigned_t<T>;
 
  public:
   MOZ_NO_SANITIZE_UNSIGNED_OVERFLOW
@@ -204,7 +204,7 @@ namespace detail {
 template <typename T>
 struct WrappingMultiplyHelper {
  private:
-  using UnsignedT = typename MakeUnsigned<T>::Type;
+  using UnsignedT = std::make_unsigned_t<T>;
 
  public:
   MOZ_NO_SANITIZE_UNSIGNED_OVERFLOW
@@ -256,30 +256,6 @@ template <typename T>
 constexpr T WrappingMultiply(T aX, T aY) {
   return detail::WrappingMultiplyHelper<T>::compute(aX, aY);
 }
-
-// The |mozilla::Wrapping*| functions are constexpr. Unfortunately, MSVC warns
-// about well-defined unsigned integer overflows that may occur within the
-// constexpr math.
-//
-//   https://msdn.microsoft.com/en-us/library/4kze989h.aspx (C4307)
-//   https://developercommunity.visualstudio.com/content/problem/211134/unsigned-integer-overflows-in-constexpr-functionsa.html
-//   (bug report)
-//
-// So we need a way to suppress these warnings. Unfortunately, the warnings are
-// issued at the very top of the `constexpr` chain, which is often some
-// distance from the triggering Wrapping*() operation. So we can't suppress
-// them within this file. Instead, callers have to do it with these macros.
-//
-// If/when MSVC fix this bug, we should remove these macros.
-#ifdef _MSC_VER
-#  define MOZ_PUSH_DISABLE_INTEGRAL_CONSTANT_OVERFLOW_WARNING \
-    __pragma(warning(push)) __pragma(warning(disable : 4307))
-#  define MOZ_POP_DISABLE_INTEGRAL_CONSTANT_OVERFLOW_WARNING \
-    __pragma(warning(pop))
-#else
-#  define MOZ_PUSH_DISABLE_INTEGRAL_CONSTANT_OVERFLOW_WARNING
-#  define MOZ_POP_DISABLE_INTEGRAL_CONSTANT_OVERFLOW_WARNING
-#endif
 
 } /* namespace mozilla */
 

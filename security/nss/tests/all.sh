@@ -51,10 +51,10 @@
 #   pkix         - run test suites with PKIX enabled
 #   upgradedb    - upgrade existing certificate databases to shareable
 #                  format (creates them if doesn't exist yet) and run
-#                  test suites with those databases
+#                  test suites with those databases. Requires to enable libdm.
 #   sharedb      - run test suites with shareable database format
 #                  enabled (databases are created directly to this
-#                  format)
+#                  format). This is the default and doesn't need to be run separately.
 #
 # Mandatory environment variables (to be set before testing):
 # -----------------------------------------------------------
@@ -86,7 +86,7 @@
 #          +------------+------------+-----------+       ~  run_cycles
 #          |            |            |           |             |
 #      standard       pkix       upgradedb     sharedb   ~  run_cycle_*
-#                       |                                      |
+#         ...           |           ...         ...            |
 #                +------+------+------+----->            ~  run_tests
 #                |      |      |      |                        |
 #              cert   tools   fips   ssl   ...           ~  . *.sh
@@ -135,7 +135,7 @@ run_tests()
 }
 
 ########################## run_cycle_standard ##########################
-# run test suites with dbm database (no PKIX, no sharedb)
+# run test suites with sql database (no PKIX)
 ########################################################################
 run_cycle_standard()
 {
@@ -144,11 +144,8 @@ run_cycle_standard()
     TESTS="${ALL_TESTS}"
     TESTS_SKIP="cipher libpkix sdr ocsp pkits"
 
-    NSS_DEFAULT_DB_TYPE="dbm"
+    NSS_DEFAULT_DB_TYPE=${NSS_DEFAULT_DB_TYPE:-"sql"}
     export NSS_DEFAULT_DB_TYPE
-
-    NSS_SSL_TESTS=`echo "${NSS_SSL_TESTS}" | sed -e "s/normal//g" -e "s/fips//g" -e "s/_//g"`
-    NSS_SSL_RUN=`echo "${NSS_SSL_RUN}" | sed -e "s/cov//g" -e "s/auth//g"`
 
     run_tests
 }
@@ -174,7 +171,6 @@ run_cycle_pkix()
     TESTS="${ALL_TESTS}"
     TESTS_SKIP="cipher dbtests sdr crmf smime merge multinit"
 
-    NSS_SSL_TESTS=`echo "${NSS_SSL_TESTS}" | sed -e "s/normal//g" -e "s/fips//g" -e "s/_//g"`
     export -n NSS_SSL_RUN
 
     # use the default format. (unset for the shell, export -n for binaries)
@@ -221,9 +217,6 @@ run_cycle_upgrade_db()
     # run the subset of tests with the upgraded database
     TESTS="${ALL_TESTS}"
     TESTS_SKIP="cipher libpkix cert dbtests sdr ocsp pkits chains"
-
-    NSS_SSL_TESTS=`echo "${NSS_SSL_TESTS}" | sed -e "s/normal//g" -e "s/fips//g" -e "s/_//g"`
-    NSS_SSL_RUN=`echo "${NSS_SSL_RUN}" | sed -e "s/cov//g" -e "s/auth//g"`
 
     run_tests
 }
@@ -295,7 +288,7 @@ if [ -z "${INIT_SOURCED}" -o "${INIT_SOURCED}" != "TRUE" ]; then
     . ./init.sh
 fi
 
-cycles="standard pkix upgradedb sharedb"
+cycles="standard pkix"
 CYCLES=${NSS_CYCLES:-$cycles}
 
 NO_INIT_SUPPORT=`certutil --build-flags |grep -cw NSS_NO_INIT_SUPPORT`
@@ -318,7 +311,8 @@ if [ $NO_INIT_SUPPORT -eq 0 ]; then
 fi
 NSS_SSL_TESTS="${NSS_SSL_TESTS:-$nss_ssl_tests}"
 
-nss_ssl_run="cov auth stapling signed_cert_timestamps stress scheme"
+# NOTE: 'stress' run is omitted by default
+nss_ssl_run="cov auth stapling signed_cert_timestamps scheme"
 NSS_SSL_RUN="${NSS_SSL_RUN:-$nss_ssl_run}"
 
 # NOTE:

@@ -1,0 +1,19 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<!-- Calendar Invitations Dialog -->
+
+<!ENTITY calendar.invitations.dialog.invitations.text                   "Takliflar">
+<!ENTITY calendar.invitations.dialog.statusmessage.updating.text        "Takliflarning yangi ro‘yxati.">
+<!ENTITY calendar.invitations.dialog.statusmessage.noinvitations.text   "Tasdiqlanmagan takliflar topilmadi.">
+<!-- Calendar Invitations List -->
+
+<!ENTITY calendar.invitations.list.accept.button.label                  "Qabul qilish">
+<!ENTITY calendar.invitations.list.decline.button.label                 "Rad qilish">
+<!ENTITY calendar.invitations.list.recurrentevent.text                  "Takroriy tadbir">
+<!ENTITY calendar.invitations.list.alldayevent.text                     "To‘liq bir kunlik tadbir">
+<!ENTITY calendar.invitations.list.location.text                        "Joylashuvi:">
+<!ENTITY calendar.invitations.list.organizer.text                       "Tashkilotchi:">
+<!ENTITY calendar.invitations.list.attendee.text                        "Ishtirokchilar:">
+<!ENTITY calendar.invitations.list.none.text                            "Yo‘q">

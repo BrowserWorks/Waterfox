@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!--LOCALIZATION NOTE : FILE The Appearance prefs dialog.  -->
+
+<!ENTITY pref.appearance.title "表示">
+<!--LOCALIZATION NOTE (onStartLegend.label): Don't translate "&brandShortName;".
+    Place &brandShortName; in the phrase where the name of the application should appear
+-->
+<!ENTITY onStartLegend.label                    "&brandShortName; の起動時に開く">
+<!ENTITY navCheck.label                         "ブラウザー">
+<!ENTITY navCheck.accesskey                     "B">
+<!ENTITY showToolsLegend.label                  "ツールバーの表示">
+<!ENTITY picsNtextRadio.label                   "絵と文字">
+<!ENTITY picsNtextRadio.accesskey               "P">
+<!ENTITY picsOnlyRadio.label                    "絵のみ">
+<!ENTITY picsOnlyRadio.accesskey                "o">
+<!ENTITY textonlyRadio.label                    "文字のみ">
+<!ENTITY textonlyRadio.accesskey                "x">
+<!ENTITY showHideTooltips.label                 "ツールチップを表示する">
+<!ENTITY showHideTooltips.accesskey             "T">
+<!ENTITY showHideGrippies.label                 "ツールバーのグリッピーを隠す">
+<!ENTITY showHideGrippies.accesskey             "G">
+
+<!ENTITY pref.locales.title                     "メニューなどの表示に使用する言語">
+<!ENTITY selectLocale.label                     "ダイアログボックス、メニュー、ツールバー、ボタンに使用する言語を選択してください:">
+
+<!--LOCALIZATION NOTE (dateTimeFormatting.label): labels/accesskeys for
+     radiobuttons are set dynamically from prefutilities.properties
+-->
+<!ENTITY dateTimeFormatting.label               "日付と時刻の書式">
+
+<!--LOCALIZATION NOTE (restartOnLocaleChange.label): Don't translate "&brandShortName;".
+    Place &brandShortName; in the phrase where the name of the application should appear
+-->
+<!ENTITY restartOnLocaleChange.label            "言語と書式の設定は &brandShortName; を再起動した後に有効になります。">

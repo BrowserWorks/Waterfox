@@ -20,17 +20,16 @@
  *                      -- scc
  */
 
+#include <type_traits>
+#include <utility>
+
 #include "mozilla/AlreadyAddRefed.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/Attributes.h"
-#include "mozilla/Move.h"
-#include "mozilla/TypeTraits.h"
-
+#include "mozilla/RefPtr.h"
+#include "nsCycleCollectionNoteChild.h"
 #include "nsDebug.h"  // for |NS_ASSERTION|
 #include "nsISupportsUtils.h"  // for |nsresult|, |NS_ADDREF|, |NS_GET_TEMPLATE_IID| et al
-#include "mozilla/RefPtr.h"
-
-#include "nsCycleCollectionNoteChild.h"
 
 /*
  * WARNING: This file defines several macros for internal use only. These
@@ -204,8 +203,7 @@ namespace mozilla {
 // variety of smart pointer types in addition to raw pointers. These types
 // include RefPtr<>, nsCOMPtr<>, and OwningNonNull<>.
 template <class T>
-using PointedToType =
-    typename mozilla::RemovePointer<decltype(&*mozilla::DeclVal<T>())>::Type;
+using PointedToType = std::remove_pointer_t<decltype(&*std::declval<T>())>;
 }  // namespace mozilla
 
 #ifdef NSCAP_FEATURE_USE_BASE
@@ -223,14 +221,14 @@ inline nsQueryInterfaceISupportsWithError do_QueryInterface(T aPtr,
 }
 #else
 template <class T>
-inline nsQueryInterface<mozilla::PointedToType<T> > do_QueryInterface(T aPtr) {
-  return nsQueryInterface<mozilla::PointedToType<T> >(aPtr);
+inline nsQueryInterface<mozilla::PointedToType<T>> do_QueryInterface(T aPtr) {
+  return nsQueryInterface<mozilla::PointedToType<T>>(aPtr);
 }
 
 template <class T>
-inline nsQueryInterfaceWithError<mozilla::PointedToType<T> > do_QueryInterface(
+inline nsQueryInterfaceWithError<mozilla::PointedToType<T>> do_QueryInterface(
     T aRawPtr, nsresult* aError) {
-  return nsQueryInterfaceWithError<mozilla::PointedToType<T> >(aRawPtr, aError);
+  return nsQueryInterfaceWithError<mozilla::PointedToType<T>>(aRawPtr, aError);
 }
 
 #endif  // ! #ifdef NSCAP_FEATURE_USE_BASE
@@ -485,8 +483,7 @@ class MOZ_IS_REFPTR nsCOMPtr final
   MOZ_IMPLICIT nsCOMPtr(const nsCOMPtr<U>& aSmartPtr)
       : NSCAP_CTOR_BASE(aSmartPtr.get()) {
     // Make sure that U actually inherits from T
-    static_assert(mozilla::IsBaseOf<T, U>::value,
-                  "U should be a subclass of T");
+    static_assert(std::is_base_of<T, U>::value, "U should be a subclass of T");
     assert_validity();
     if (mRawPtr) {
       NSCAP_ADDREF(this, mRawPtr);
@@ -504,8 +501,7 @@ class MOZ_IS_REFPTR nsCOMPtr final
   MOZ_IMPLICIT nsCOMPtr(nsCOMPtr<U>&& aSmartPtr)
       : NSCAP_CTOR_BASE(aSmartPtr.forget().template downcast<T>().take()) {
     // Make sure that U actually inherits from T
-    static_assert(mozilla::IsBaseOf<T, U>::value,
-                  "U should be a subclass of T");
+    static_assert(std::is_base_of<T, U>::value, "U should be a subclass of T");
     assert_validity();
     NSCAP_LOG_ASSIGNMENT(this, mRawPtr);
     NSCAP_ASSERT_NO_QUERY_NEEDED();
@@ -535,13 +531,25 @@ class MOZ_IS_REFPTR nsCOMPtr final
     NSCAP_ASSERT_NO_QUERY_NEEDED();
   }
 
+  // Construct from |std::move(otherRefPtr)|.
+  template <typename U>
+  MOZ_IMPLICIT nsCOMPtr(RefPtr<U>&& aSmartPtr)
+      : NSCAP_CTOR_BASE(
+            static_cast<already_AddRefed<T>>(aSmartPtr.forget()).take()) {
+    assert_validity();
+    // Make sure that U actually inherits from T
+    static_assert(std::is_base_of<T, U>::value, "U is not a subclass of T");
+    NSCAP_LOG_ASSIGNMENT(this, mRawPtr);
+    NSCAP_ASSERT_NO_QUERY_NEEDED();
+  }
+
   // Construct from |already_AddRefed|.
   template <typename U>
   MOZ_IMPLICIT nsCOMPtr(already_AddRefed<U>& aSmartPtr)
       : NSCAP_CTOR_BASE(static_cast<T*>(aSmartPtr.take())) {
     assert_validity();
     // But make sure that U actually inherits from T.
-    static_assert(mozilla::IsBaseOf<T, U>::value, "U is not a subclass of T");
+    static_assert(std::is_base_of<T, U>::value, "U is not a subclass of T");
     NSCAP_LOG_ASSIGNMENT(this, static_cast<T*>(mRawPtr));
     NSCAP_ASSERT_NO_QUERY_NEEDED();
   }
@@ -552,7 +560,7 @@ class MOZ_IS_REFPTR nsCOMPtr final
       : NSCAP_CTOR_BASE(static_cast<T*>(aSmartPtr.take())) {
     assert_validity();
     // But make sure that U actually inherits from T.
-    static_assert(mozilla::IsBaseOf<T, U>::value, "U is not a subclass of T");
+    static_assert(std::is_base_of<T, U>::value, "U is not a subclass of T");
     NSCAP_LOG_ASSIGNMENT(this, static_cast<T*>(mRawPtr));
     NSCAP_ASSERT_NO_QUERY_NEEDED();
   }
@@ -647,8 +655,7 @@ class MOZ_IS_REFPTR nsCOMPtr final
   template <class U>
   nsCOMPtr<T>& operator=(const nsCOMPtr<U>& aRhs) {
     // Make sure that U actually inherits from T
-    static_assert(mozilla::IsBaseOf<T, U>::value,
-                  "U should be a subclass of T");
+    static_assert(std::is_base_of<T, U>::value, "U should be a subclass of T");
     assign_with_AddRef(ToSupports(static_cast<T*>(aRhs.get())));
     return *this;
   }
@@ -661,8 +668,7 @@ class MOZ_IS_REFPTR nsCOMPtr final
   template <class U>
   nsCOMPtr<T>& operator=(nsCOMPtr<U>&& aRhs) {
     // Make sure that U actually inherits from T
-    static_assert(mozilla::IsBaseOf<T, U>::value,
-                  "U should be a subclass of T");
+    static_assert(std::is_base_of<T, U>::value, "U should be a subclass of T");
     assign_assuming_AddRef(aRhs.forget().template downcast<T>().take());
     NSCAP_ASSERT_NO_QUERY_NEEDED();
     return *this;
@@ -683,7 +689,7 @@ class MOZ_IS_REFPTR nsCOMPtr final
   template <typename U>
   nsCOMPtr<T>& operator=(already_AddRefed<U>& aRhs) {
     // Make sure that U actually inherits from T
-    static_assert(mozilla::IsBaseOf<T, U>::value, "U is not a subclass of T");
+    static_assert(std::is_base_of<T, U>::value, "U is not a subclass of T");
     assign_assuming_AddRef(static_cast<T*>(aRhs.take()));
     NSCAP_ASSERT_NO_QUERY_NEEDED();
     return *this;
@@ -693,8 +699,18 @@ class MOZ_IS_REFPTR nsCOMPtr final
   template <typename U>
   nsCOMPtr<T>& operator=(already_AddRefed<U>&& aRhs) {
     // Make sure that U actually inherits from T
-    static_assert(mozilla::IsBaseOf<T, U>::value, "U is not a subclass of T");
+    static_assert(std::is_base_of<T, U>::value, "U is not a subclass of T");
     assign_assuming_AddRef(static_cast<T*>(aRhs.take()));
+    NSCAP_ASSERT_NO_QUERY_NEEDED();
+    return *this;
+  }
+
+  // Assign from |std::move(otherRefPtr)|.
+  template <typename U>
+  nsCOMPtr<T>& operator=(RefPtr<U>&& aRhs) {
+    // Make sure that U actually inherits from T
+    static_assert(std::is_base_of<T, U>::value, "U is not a subclass of T");
+    assign_assuming_AddRef(static_cast<T*>(aRhs.forget().take()));
     NSCAP_ASSERT_NO_QUERY_NEEDED();
     return *this;
   }
@@ -1156,7 +1172,7 @@ template <typename U>
 void nsCOMPtr<T>::assign_from_qi(const nsQueryInterface<U> aQI,
                                  const nsIID& aIID) {
   static_assert(
-      !(mozilla::IsSame<T, U>::value || mozilla::IsBaseOf<T, U>::value),
+      !(std::is_same_v<T, U> || std::is_base_of<T, U>::value),
       "don't use do_QueryInterface for compile-time-determinable casts");
   void* newRawPtr;
   if (NS_FAILED(aQI(aIID, &newRawPtr))) {
@@ -1170,7 +1186,7 @@ template <typename U>
 void nsCOMPtr<T>::assign_from_qi_with_error(
     const nsQueryInterfaceWithError<U>& aQI, const nsIID& aIID) {
   static_assert(
-      !(mozilla::IsSame<T, U>::value || mozilla::IsBaseOf<T, U>::value),
+      !(std::is_same_v<T, U> || std::is_base_of<T, U>::value),
       "don't use do_QueryInterface for compile-time-determinable casts");
   void* newRawPtr;
   if (NS_FAILED(aQI(aIID, &newRawPtr))) {
@@ -1482,5 +1498,29 @@ template <class T>
 std::ostream& operator<<(std::ostream& aOut, const nsCOMPtr<T>& aObj) {
   return mozilla::DebugValue(aOut, aObj.get());
 }
+
+// ToRefPtr allows to move an nsCOMPtr<T> into a RefPtr<T>. Be mindful when
+// using this, because usually RefPtr<T> should only be used with concrete T and
+// nsCOMPtr<T> should only be used with XPCOM interface T.
+template <class T>
+RefPtr<T> ToRefPtr(nsCOMPtr<T>&& aObj) {
+  return aObj.forget();
+}
+
+// Integration with ResultExtensions.h
+template <typename R>
+auto ResultRefAsParam(nsCOMPtr<R>& aResult) {
+  return getter_AddRefs(aResult);
+}
+
+namespace mozilla::detail {
+template <typename T>
+struct outparam_as_pointer;
+
+template <typename T>
+struct outparam_as_pointer<nsGetterAddRefs<T>> {
+  using type = T**;
+};
+}  // namespace mozilla::detail
 
 #endif  // !defined(nsCOMPtr_h___)

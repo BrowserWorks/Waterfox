@@ -8,15 +8,20 @@
 
 #include <stdio.h>
 
-#ifdef SYMBIAN
-#define SHM_NAME "c:\\data\\counter"
-#define SEM_NAME1 "c:\\data\\foo.sem"
-#define SEM_NAME2 "c:\\data\\bar.sem"
+#ifdef DEBUG
+#define SEM_D "D"
 #else
-#define SHM_NAME "/tmp/counter"
-#define SEM_NAME1 "/tmp/foo.sem"
-#define SEM_NAME2 "/tmp/bar.sem"
+#define SEM_D
 #endif
+#ifdef IS_64
+#define SEM_64 "64"
+#else
+#define SEM_64
+#endif
+
+#define SHM_NAME "/tmp/counter" SEM_D SEM_64
+#define SEM_NAME1 "/tmp/foo.sem" SEM_D SEM_64
+#define SEM_NAME2 "/tmp/bar.sem" SEM_D SEM_64
 #define ITERATIONS 1000
 
 static PRBool debug_mode = PR_FALSE;
@@ -40,7 +45,9 @@ int main(int argc, char **argv)
     PLOptState *opt = PL_CreateOptState(argc, argv, "dc:h");
 
     while (PL_OPT_EOL != (os = PL_GetNextOpt(opt))) {
-        if (PL_OPT_BAD == os) continue;
+        if (PL_OPT_BAD == os) {
+            continue;
+        }
         switch (opt->option) {
             case 'd':  /* debug mode */
                 debug_mode = PR_TRUE;
@@ -90,7 +97,9 @@ int main(int argc, char **argv)
             exit(1);
         }
         if (*counter_addr == 2*i+1) {
-            if (debug_mode) printf("process 2: counter = %d\n", *counter_addr);
+            if (debug_mode) {
+                printf("process 2: counter = %d\n", *counter_addr);
+            }
         } else {
             fprintf(stderr, "process 2: counter should be %d but is %d\n",
                     2*i+1, *counter_addr);

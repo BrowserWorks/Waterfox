@@ -88,7 +88,7 @@ struct ClearTypeParameterInfo {
   int32_t enhancedContrast;
 };
 
-class gfxWindowsPlatform : public gfxPlatform {
+class gfxWindowsPlatform final : public gfxPlatform {
   friend class mozilla::gfx::DeviceManagerDx;
 
  public:
@@ -151,12 +151,6 @@ class gfxWindowsPlatform : public gfxPlatform {
   void GetCommonFallbackFonts(uint32_t aCh, uint32_t aNextCh, Script aRunScript,
                               nsTArray<const char*>& aFontList) override;
 
-  gfxFontGroup* CreateFontGroup(const mozilla::FontFamilyList& aFontFamilyList,
-                                const gfxFontStyle* aStyle,
-                                gfxTextPerfMetrics* aTextPerf,
-                                gfxUserFontSet* aUserFontSet,
-                                gfxFloat aDevToCssSize) override;
-
   bool CanUseHardwareVideoDecoding() override;
 
   void CompositorUpdated() override;
@@ -209,7 +203,6 @@ class gfxWindowsPlatform : public gfxPlatform {
   static mozilla::Atomic<size_t> sD3D9SharedTextures;
 
   bool SupportsPluginDirectBitmapDrawing() override { return true; }
-  bool SupportsPluginDirectDXGIDrawing();
 
   static void RecordContentDeviceFailure(
       mozilla::gfx::TelemetryDeviceCode aDevice);
@@ -218,7 +211,7 @@ class gfxWindowsPlatform : public gfxPlatform {
   bool AccelerateLayersByDefault() override { return true; }
   void GetAcceleratedCompositorBackends(
       nsTArray<mozilla::layers::LayersBackend>& aBackends) override;
-  void GetPlatformCMSOutputProfile(void*& mem, size_t& size) override;
+  nsTArray<uint8_t> GetPlatformCMSOutputProfileData() override;
 
   void ImportGPUDeviceData(const mozilla::gfx::GPUDeviceData& aData) override;
   void ImportContentDeviceData(
@@ -233,7 +226,11 @@ class gfxWindowsPlatform : public gfxPlatform {
   RenderMode mRenderMode;
 
  private:
-  bool HasBattery() override;
+  enum class DwmCompositionStatus : uint32_t {
+    Unknown,
+    Disabled,
+    Enabled,
+  };
 
   void Init();
   void InitAcceleration() override;
@@ -262,6 +259,12 @@ class gfxWindowsPlatform : public gfxPlatform {
 
   RefPtr<mozilla::layers::ReadbackManagerD3D11> mD3D11ReadbackManager;
   bool mInitializedDevices = false;
+
+  mozilla::Atomic<DwmCompositionStatus, mozilla::ReleaseAcquire>
+      mDwmCompositionStatus;
+
+  // Cached contents of the output color profile file
+  nsTArray<uint8_t> mCachedOutputColorProfile;
 };
 
 #endif /* GFX_WINDOWS_PLATFORM_H */

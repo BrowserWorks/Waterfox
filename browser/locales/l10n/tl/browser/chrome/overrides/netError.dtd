@@ -1,0 +1,150 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY % brandDTD SYSTEM "chrome://branding/locale/brand.dtd">
+%brandDTD;
+
+<!ENTITY loadError.label "May problema sa pag-load ng pahina">
+<!ENTITY retry.label "Subukan uli">
+<!ENTITY returnToPreviousPage.label "Bumalik">
+<!ENTITY returnToPreviousPage1.label "Bumalik (Inirerekomenda)">
+<!ENTITY advanced2.label "Advanced…">
+<!ENTITY viewCertificate.label "Ipakita ang Certificate">
+
+<!-- Specific error messages -->
+
+<!ENTITY connectionFailure.longDesc "&sharedLongDesc;">
+
+<!ENTITY deniedPortAccess.longDesc "">
+
+<!ENTITY dnsNotFound.pageTitle "Hindi matagpuan ang server">
+<!ENTITY dnsNotFound.longDesc1 "<strong>Kung tama ang address, ito pa ang tatlong bagay na maaari mong gawin:</strong>
+<ul>
+  <li>Subukan mo uli maya-maya.</li>
+  <li>I-check mo ang iyong network connection.</li>
+  <li>Kung nakakonekta ka pero nasa likod ng firewall, i-check mo na may permiso ang &brandShortName; para ma-access ang Web.</li>
+</ul>">
+
+<!ENTITY fileNotFound.longDesc "<ul><li>Suriin ang file name kung may capitalization o anumang mali sa pagkasulat.</li><li>Suriin kung ang file ay nalipat, nabago ang pangalan, o nabura.</li></ul>">
+
+<!ENTITY fileAccessDenied.longDesc "<ul><li>Maaaring ito ay nabura, nalipat, o ang nailagay na pahintulot sa file ang humarang upang ma-access ito.</li> </ul>">
+
+<!ENTITY generic.longDesc "<p>Hindi kayang i-load ng &brandShortName; ang page na ito sa di-kilalang kadahilanan.</p>">
+
+<!ENTITY captivePortal.title "Mag log in sa network">
+<!ENTITY captivePortal.longDesc2 "<p>Kailangan mo munang mag-log in sa network na ito bago mo maaccess ang Internet.</p>">
+
+<!ENTITY openPortalLoginPage.label2 "Buksan ang Login na Pahina para sa Network">
+
+<!ENTITY malformedURI.pageTitle "Di-wastong URL">
+
+<!ENTITY netInterrupt.longDesc "&sharedLongDesc;">
+
+<!ENTITY notCached.longDesc "<p>Ang dokumento na hiningi ay wala sa cache ng &brandShortName;. </p><ul><li>Bilang security precaution, hindi awtomatikong hinihingi ng &brandShortName; ang mga sensitibong dokumento.</li><li>Pindutin ang Subukan Uli para muling hingin ang dokumento mula sa website.</li></ul>">
+
+<!ENTITY netOffline.longDesc2 "<ul>
+  <li>Pindutin ang &quot;Subukan Uli&quot; para makabalik sa online mode at maireload ang page.</li></ul>">
+
+<!ENTITY contentEncodingError.longDesc "<ul> <li>Mangyaring makipag-ugnayan sa mga may-ari ng website upang ipaalam sa kanila ang problemang ito</li> </ul>">
+
+<!ENTITY unsafeContentType.longDesc "<ul> <li>Mangyaring makipag-ugnayan sa mga may-ari ng website upang ipaalam sa kanila ang problemang ito</li> </ul>">
+
+<!ENTITY netReset.longDesc "&sharedLongDesc;">
+
+<!ENTITY netTimeout.longDesc "&sharedLongDesc;">
+
+<!ENTITY unknownProtocolFound.longDesc "<ul>
+  <li>Mukhang kakailanganin mong mag-install ng ibang software para mabuksan ang address na ito.</li></ul>">
+
+<!ENTITY proxyConnectFailure.longDesc "<ul>
+  <li>I-check ang proxy settings para masigurong tama ang mga ito.</li>
+  <li>Tawagan ang iyong network administrator para masigurong gumagana ang proxy server.</li></ul>">
+
+<!ENTITY proxyResolveFailure.longDesc "<ul>
+  <li>I-check ang mga proxy setting para masigurong ang mga ito ay tama.</li>
+  <li>I-check na ang computer mo ay may gumaganang network connection.</li>
+  <li>Kung ang computer o network mo ay protektado ng firewall o proxy, siguruhing pinapayagan ang &brandShortName; para ma-access ang Web.</li></ul>">
+
+<!ENTITY redirectLoop.longDesc "<ul>
+  <li>Maaaring nangyayari ang problema na ito dahil na-disable o hindi pinayagan ang mga cookie.</li></ul>">
+
+<!ENTITY unknownSocketType.longDesc "<ul>
+  <li>Siguruhing naka-install sa iyong system ang Personal Security Manager.</li>
+  <li>Ito ay maaaring dahil sa hindi standard na configuration sa server.</li></ul>">
+
+<!ENTITY nssFailure2.longDesc2 "
+<ul>
+  <li>Ang pahinang gusto mong matingnan ay hindi maipakita dahil hindi masigurong katiwa-tiwala ang nakuhang data.</li>
+  <li>Pakitawagan ang mga may-ari ng website para maipagbigay-alam ang problemang ito.</li>
+</ul>
+">
+
+<!-- Localization note (certerror.introPara2) - The text content of the span tag
+will be replaced at runtime with the name of the server to which the user
+was trying to connect. -->
+<!ENTITY certerror.introPara2 "Naka-detect ng potential security threat ang &brandShortName; kaya hindi nagpatuloy sa <span class='hostname'/>. Kung bibisitahin mo ang site na ito, maaari kang manakawan ng mga impormasyon gaya ng iyong mga password, email, o detalye ng credit card.">
+<!ENTITY certerror.sts.introPara "Naka-detect ng potential security threat ang &brandShortName; kaya hindi nagpatuloy sa <span class='hostname'/> dahil kailangan ng website na ito ang isang secure connection.">
+
+<!ENTITY certerror.expiredCert.introPara "Naka-detect ng isyu ang &brandShortName; kaya hindi nagpatuloy sa <span class='hostname'/>. Maaaring misconfigured ang website o mali ang oras na naka-set sa iyong computer.">
+<!ENTITY certerror.expiredCert.secondPara2 "Maaaring expired na ang certificate ng website, na pumipigil sa &brandShortName; para makapag-connect nang maayos. Kung bibisitahin mo ang site na ito, maaari kang manakawan ng impormasyon kagaya ng iyong mga password, email, o detalye ng credit card.">
+<!ENTITY certerror.expiredCert.sts.secondPara "Malamang ay expired ang certificate ng website na ito, na pumipigil sa &brandShortName; mula sa pag-connect nang ligtas.">
+
+<!ENTITY certerror.whatCanYouDoAboutItTitle "Ano ang maaari mong gawin?">
+
+<!ENTITY certerror.unknownIssuer.whatCanYouDoAboutIt "<p>Malamang na ang isyu ay konektado sa website, at wala tayong magagawa para maayos ito.</p><p>Kung ikaw ay nasa corporate network o gumagamit ng anti-virus software, maaari kang magpatulong sa mga support team. Maaari mo ring ipagbigay-alam ang problema sa administrator ng website na ito.</p>">
+
+<!ENTITY certerror.expiredCert.whatCanYouDoAboutIt2 "<p>Ang oras ng iyong computer ay naka-set sa <span id='wrongSystemTime_systemDate2'/>. Siguruhing tama ang petsa, oras, at time zone ng iyong computer, at pagkatapos ay i-refresh ang <span class='hostname'/>.</p><p>Kung ang iyong orasan ay naka-set na sa tamang oras, malamang ay misconfigured ang website, at wala tayong magagawa para maayos ito. Maaari mong ipagbigay-alam ang problema sa administrator ng website.</p>">
+
+<!ENTITY certerror.badCertDomain.whatCanYouDoAboutIt "<p>Malamang na sa website ang isyu, at wala tayong magagawa para maayos ito. Maaari mong ipagbigay-alam ang problema sa administrator ng website.</p>">
+
+<!ENTITY sharedLongDesc "<ul>
+  <li>Maaaring pansamantalang hindi tumatakbo o abala nang husto ang site. Subukan uli sa loob ng ilang sandali.</li>
+  <li>Kung hindi ka nakakapag-load ng kahit anong mga pahina, tingnan ang network connection ng iyong computer.</li>
+  <li>Kung ang iyong computer o network ay pinoprotektahan ng isang firewall o proxy, siguruhing pinapayagan ang &brandShortName; na makakonekta sa Web.</li>
+</ul>">
+
+<!ENTITY cspBlocked.longDesc "<p>Hinarang ng &brandShortName; na mag-load ang pahinang ito sa ganitong paraan dahil sa content security policy ng pahinang ito.</p>">
+
+<!ENTITY xfoBlocked.longDesc "<p>&brandShortName; ay pumigil sa page na ito na mag-load dahil ang page ay may X-Frame-Options policy na nagbabawal dito.</p>">
+
+<!ENTITY corruptedContentErrorv2.longDesc "<p>Ang pahinang sinusubukan mong tingnan ay hindi maipakita dahil may problemang natuklasan sa pag-transmit ng data.</p><ul><li>Pakitawagan ang mga may-ari ng website upang ipagbigay-alam ang problemang ito.</li></ul>">
+
+<!ENTITY securityOverride.exceptionButton1Label "Tanggapin ang Panganib at Magpatuloy">
+
+<!ENTITY errorReporting.automatic2 "Mag-ulat ng mga error na kagaya nito para matulungan ang Mozilla na matukoy at maharang ang mga delikadong site">
+<!ENTITY errorReporting.learnMore "Alamin…">
+
+<!ENTITY remoteXUL.longDesc "<p><ul><li>Makipag-ugnayan sa mga may-ari ng website upang ipaalam sa kanila ang problemang ito.</li></ul></p>">
+
+<!-- LOCALIZATION NOTE (sslv3Used.longDesc2) - Do not translate
+     "SSL_ERROR_UNSUPPORTED_VERSION". -->
+<!ENTITY sslv3Used.longDesc2 "Advanced na impormasyon: SSL_ERROR_UNSUPPORTED_VERSION">
+
+<!ENTITY certerror.pagetitle2  "Babala: Mayroong Potential Security Risk">
+<!ENTITY certerror.sts.pagetitle  "Hindi nag-connect: Potential Security Issue">
+<!ENTITY certerror.whatShouldIDo.badStsCertExplanation1 "Ang <span class='hostname'></span> ay may security policy na tinatawag na HTTP Strict Transport Security (HSTS), na ang ibig sabihin ay magko-connect lang ang &brandShortName; dito sa isang ligtas na paraan. Hindi ka maaaring magdagdag ng exception para mabisita ang site na ito.">
+<!ENTITY certerror.copyToClipboard.label "Kopyahin sa clipboard">
+
+<!-- LOCALIZATION NOTE (inadequateSecurityError.longDesc) - Do not translate
+     "NS_ERROR_NET_INADEQUATE_SECURITY". -->
+<!ENTITY inadequateSecurityError.longDesc "<p>Gumagamit ang <span class='hostname'></span> ng security technology na luma na at madaling atakihin. Ang isang umaatake ay madaling makapagbubulgar ng impormasyon na akala mo ay ligtas. Kakailanganin ng website administrator na ayusin muna ang server bago mo mabisita ang site.</p><p>Error code: NS_ERROR_NET_INADEQUATE_SECURITY</p>">
+
+<!ENTITY blockedByPolicy.title "Naka-block na Pahina">
+
+<!ENTITY certerror.mitm.longDesc "Malamang ay ligtas na site ang <span class='hostname'></span>, ngunit hindi kayang makapag-establish ng isang secure connection. Ang issue na ito ay dahil sa <span class='mitm-name'/>, na maaaring software sa computer mo o iyong network.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt1 "Kung ang iyong antivirus software ay may feature na nagii-scan ng mga encrypted connection (kadalasa'y tinatawag na “web scanning” o “https scanning”), maaari mo itong i-disable. Kapag hindi gumana, subukan mong tanggalin at i-reinstall ang antivirus software.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt2 "Kung ikaw ay nasa corporate network, maaari mong tawagan ang iyong IT department.">
+<!ENTITY certerror.mitm.whatCanYouDoAboutIt3 "Kung hindi ka pamilyar sa <span class='mitm-name'/>, ito ay maaring isang atake at hindi ka dapat magpatuloy sa site.">
+<!ENTITY certerror.mitm.sts.whatCanYouDoAboutIt3 "Kung hindi ka pamilyar sa <span class='mitm-name'/>, ito ay maaring isang atake, at wala tayong magagawa para ma-access ang site.">
+
+<!ENTITY clockSkewError.longDesc "Akala ng computer mo na ngayon ay <span id='wrongSystemTime_systemDate1'/>, na pumipigil sa &brandShortName; sa pag-connect nang ligtas. Para mapuntahan ang <span class='hostname'></span>, baguhin sa system settings ang orasan ng iyong computer sa tamang petsa, oras, at time zone, at pagkatapos ay i-refresh ang <span class='hostname'></span>.">
+
+<!ENTITY prefReset.longDesc "Mukhang ang iyong mga setting ng seguridad sa network ay maaaring magdulot nito. Nais mo bang maibalik ang mga default na setting?">
+<!ENTITY prefReset.label "Ibalik ang default settings">
+
+<!ENTITY enableTls10.longDesc "Maaaring hindi suportado ng website na ito ang TLS 1.2 protocol, ang pinakamababang bersyong sinusuportahan ng &brandShortName;. Ang pag-enable sa TLS 1.0 at TLS 1.1 ay maaaring makatulong para makakonekta nang maayos.">
+<!ENTITY enableTls10.note "Ang TLS 1.0 at TLS 1.1 ay permanenteng idi-disable sa hinaharap.">
+<!ENTITY enableTls10.label "I-enable ang TLS 1.0 at 1.1">
+
+<!ENTITY networkProtocolError.longDesc "<p>Ang page na sinusubukan mong tingnan ay hindi maipakita dahil nagkaroon ng problema sa network protocol.</p><ul><li>Mangyaring tawagan ang may-ari ng website at ipagbigay-alam ang problemang ito.</li></ul>">

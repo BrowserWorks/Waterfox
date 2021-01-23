@@ -1,0 +1,127 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Entities for AccountWizard -->
+
+<!ENTITY windowTitle.label "Ruto'onel Rub'i' Taqoya'l">
+<!ENTITY accountWizard.size "width: 40em; height: 38em;">
+
+<!-- Entities for Account Type page -->
+
+<!ENTITY accountSetupInfo2.label "Richin ye'ak'ül taq rutzijol, nab'ey k'o chi nab'än runuk'ulem jun rub'i' taqoya'l.">
+<!ENTITY accountTypeTitle.label "Tib'an Runuk'ulem jun K'ak'a' Rub'i' Taqoya'l">
+<!ENTITY accountTypeDesc2.label "Re To'onel re' xkerumöl rajowaxik taq etamab'äl richin nib'an runuk'ulem jun rub'i' taqoya'l. We man awetaman ta achike etamab'äl xtik'utüx chawe, katzijon rik'in ri Runuk'samajel Q'inoj o ri Ya'öl K'amaya'l.">
+<!ENTITY accountTypeDirections.label "Tacha' ri ruwäch chi rub'i' taqoya'l nawajo' nab'än runuk'ulem:">
+<!ENTITY accountTypeMail.label "Email rub'i' taqoya'l">
+<!ENTITY accountTypeMail.accesskey "m">
+<!ENTITY accountTypeNews.label "Rub'i' rutaqoya'l tzijol">
+<!ENTITY accountTypeNews.accesskey "z">
+<!-- LOCALIZATION NOTE(accountTypeMovemail.label): do not translate 'Movemail' -->
+<!ENTITY accountTypeMovemail.label "Unix Mailspool (Movemail)">
+<!ENTITY accountTypeMovemail.accesskey "U">
+
+<!-- Entities for Identity page -->
+
+<!ENTITY identityTitle.label "B'anikil">
+<!ENTITY identityDesc.label "Chi kijujunal ri taq rub'i' taqoya'l k'o jun kib'anikil, ja ri' ri etamab'äl nuya' awetal chi kiwäch ch'aqa' chik toq yekik'ül ri taq atzijol.">
+
+<!-- LOCALIZATION NOTE (fullnameDesc.label) : do not translate two of "&quot;" in below line -->
+<!ENTITY fullnameDesc.label "Tatz'ib'aj ri b'i'aj nawajo' chi niq'alajin pa ri ruk'ojlib'al &quot;Richin&quot; toq ye'atäq taq rutzijol">
+<!-- LOCALIZATION NOTE (fullnameExample.label) : use following directions for below line
+  1, do not translate two of "&quot;"
+  2, Use localized full name instead of "John Smith"
+-->
+<!ENTITY fullnameExample.label "(achi'el, &quot;John Smith&quot;).">
+<!ENTITY fullnameLabel.label "Ab'i':">
+<!ENTITY fullnameLabel.accesskey "A">
+
+<!ENTITY emailLabel.label "Rochochib'al Taqoya'l:">
+<!ENTITY emailLabel.accesskey "T">
+
+<!-- Entities for Incoming Server page -->
+
+<!ENTITY incomingTitle.label "Retamab'al Ruk'uxasamaj Okem">
+<!ENTITY incomingServerTypeDesc.label "Tacha' ri ruwäch ruk'uxasamaj okem nawokisaj.">
+<!-- LOCALIZATION NOTE (imapType.label) : Do not translate "IMAP" in below line -->
+<!ENTITY imapType.label "IMAP">
+<!ENTITY imapType.accesskey "I">
+<!-- LOCALIZATION NOTE (popType.label) : Do not translate "POP" in below line -->
+<!ENTITY popType.label "POP">
+<!ENTITY popType.accesskey "P">
+<!ENTITY leaveMsgsOnSrvr.label "Keya' kan taq tzijol pa k'uxasamaj">
+<!ENTITY leaveMsgsOnSrvr.accesskey "K">
+<!ENTITY portNum.label "B'ey:">
+<!ENTITY portNum.accesskey "e">
+<!ENTITY defaultPortLabel.label "K'o wi:">
+<!ENTITY defaultPortValue.label "">
+<!-- LOCALIZATION NOTE (incomingServerNameDesc.label) : Do not translate "&quot;pop.example.net&quot;" in below line -->
+<!ENTITY incomingServer.description "Tatz'ib'aj rub'i' ri ruk'uxasamaj awokem (achi'el, &quot;mail.example.net&quot;).">
+<!ENTITY incomingServer.label "K'uxasamaj Okem:">
+<!ENTITY incomingServer.accesskey "K">
+<!-- LOCALIZATION NOTE (incomingUsername.description) : do not translate "&quot;jsmith&quot;" in below line -->
+<!ENTITY incomingUsername.description "Tatz'ib'aj rub'i' winäq okem ya'on ruma ri ya'öl ataqoya'l (achi'el, &quot;jsmith&quot;).">
+<!ENTITY incomingUsername.label "Rub'i' Winäq:">
+<!ENTITY incomingUsername.accesskey "W">
+<!-- LOCALIZATION NOTE (newsServerNameDesc.label) : Do not translate "NNTP" or the "&quot;" entities in below line -->
+<!ENTITY newsServerNameDesc.label "Tatz'ib'aj rub'i' ri ruk'uxasamaj atzijol (NNTP) (achi'el, &quot;news.example.net&quot;).">
+<!ENTITY newsServerLabel.label "K'uxasamaj Tzijol:">
+<!ENTITY newsServerLabel.accesskey "s">
+
+<!-- Entities for Outgoing Server page -->
+
+<!ENTITY outgoingTitle.label "Retamab'al Ruk'uxasamaj Elem">
+<!-- LOCALIZATION NOTE (outgoingServer.description) : Do not translate "SMTP" and "&quot;smtp.example.net&quot;" in below line -->
+<!ENTITY outgoingServer.description "Tatz'ib'aj rub'i' ri ruk'uxasamaj awelem (SMTP) (achi'el, &quot;smtp.example.net&quot;).">
+<!ENTITY outgoingServer.label "K'uxasamaj Elem:">
+<!ENTITY outgoingServer.accesskey "K">
+<!ENTITY outgoingUsername.description "Tatz'ib'aj rub'i' ri elem winäq ya'on ruma ri ya'öl ataqoya'l (jantape' junam rik'in ri okem winäq).">
+<!ENTITY outgoingUsername.label "Rub'i' Elem Winäq:">
+<!ENTITY outgoingUsername.accesskey "W">
+
+<!-- LOCALIZATION NOTE (modifyOutgoing.suffix) : This string will be appended after each of
+     haveSmtp1.suffix3, haveSmtp2.suffix3, haveSmtp3.suffix3 .
+-->
+<!ENTITY modifyOutgoing.suffix "Yatikïr ye'ajäl ri ruk'uxasamaj elem pa kinuk'ulem rub'i' taqoya'l.">
+<!-- LOCALIZATION NOTE (haveSmtp1.prefix and haveSmtp1.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp1.prefix and haveSmtp1.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp1.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp1.prefix "Ri ruk'uxasamaj awokem k'o (SMTP), &quot;">
+<!ENTITY haveSmtp1.suffix3 "&quot;, ja ri' xtokisäx.">
+<!-- LOCALIZATION NOTE (haveSmtp2.prefix and haveSmtp2.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp2.prefix and haveSmtp2.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp2.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp2.prefix "Ri ruk'uxasamaj awokem k'o (SMTP) rub'i' winäq, &quot;">
+<!ENTITY haveSmtp2.suffix3 "&quot;, ja ri' xtokisäx.">
+<!-- LOCALIZATION NOTE (haveSmtp3.prefix and haveSmtp3.suffix3) : Do not translate "SMTP" and "&quot;" in
+     these variables. Also, translate haveSmtp3.prefix and haveSmtp3.suffix3 as a single sentence, inserting
+     text after the "&quot;" entity in haveSmtp3.suffix3, if required grammatically.
+-->
+<!ENTITY haveSmtp3.prefix "Ri ruk'uxasamaj (SMTP) awokem, &quot;">
+<!ENTITY haveSmtp3.suffix3 "&quot;, junam rik'in ri ruk'uxasamaj okem, xtokisäx ri rub'i' winäq richin xtib'an okem chupam.">
+
+<!-- Entities for Account name page -->
+
+<!ENTITY accnameTitle.label "Rub'i' Taqoya'l">
+<!-- LOCALIZATION NOTE (accnameDesc.label) : do not translate any "&quot;" in below line -->
+<!ENTITY accnameDesc.label "Tatz'ib'aj ri b'i'aj mawajo' naya' chi re ri rub'i' taqoya'l re' (achi'el, &quot;Rutaqoya'l Samaj&quot;, &quot;Rutaqoya'l Jay&quot; o &quot;Rutaqoya'l taq Tzijol&quot;).">
+<!ENTITY accnameLabel.label "Rub'i' Taqoya'l:">
+<!ENTITY accnameLabel.accesskey "T">
+
+<!-- Entities for Done (Congratulations) page -->
+
+<!ENTITY completionTitle.label "¡Kakikot!">
+<!ENTITY completionText.label "Tanik'oj chi ütz re etamab'äl re'.">
+<!ENTITY serverTypePrefix.label "Ruwäch K'uxasamaj Okem:">
+<!ENTITY serverNamePrefix.label "Rub'i' K'uxasamaj Okem:">
+<!ENTITY smtpServerNamePrefix.label "Rub'i' K'uxasamaj Elem (SMTP):">
+<!ENTITY newsServerNamePrefix.label "Rub'i' Kik'uxasamaj taq Tzijol (NNTP):">
+<!ENTITY downloadOnLogin.label "Keqasäx taq tzijol wakami">
+<!ENTITY downloadOnLogin.accesskey "K">
+<!ENTITY deferStorageDesc.label "Tik'am retal re ch'utikajtz'ik re' richin niyak ri rutaqoya'l re rub'i' taqoya'l re' pan acholb'al. Re re' xtub'än chi re ri rub'i' taqoya'l niwachin pa jun nïm chowi'. We man ke ta ri', xtik'oje' chi kikojol ri chijun rutaqoya'l rumolb'al aj wawe' taq molwuj.">
+<!ENTITY deferStorage.label "Tokisäx ri Chijun Molb'äl (tiyak taqoya'l pa aj wawe' taq molwuj)">
+<!ENTITY deferStorage.accesskey "C">
+<!ENTITY clickFinish.label "Tipitz' pa Tik'is richin yeyak kan ri taq nuk'ulem chuqa' richin nel pa ri Rutob'al Rub'i' Taqoya'l.">
+<!ENTITY clickFinish.labelMac "Tipitz' pa Xk'is richin yeyak kan ri taq nuk'ulem chuqa' richin nel pa ri Rutob'al Rub'i' Taqoya'l.">

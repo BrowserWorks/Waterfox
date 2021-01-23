@@ -7,9 +7,11 @@
 #ifndef mozilla_gfx_layers_LayerAttributes_h
 #define mozilla_gfx_layers_LayerAttributes_h
 
+#include "FrameMetrics.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/gfx/Types.h"
 #include "mozilla/layers/LayersTypes.h"
+#include "mozilla/layers/ScrollableLayerGuid.h"
 
 namespace IPC {
 template <typename T>
@@ -19,7 +21,13 @@ struct ParamTraits;
 namespace mozilla {
 namespace layers {
 
-enum class ScrollbarLayerType : uint8_t { None, Thumb, Container };
+// clang-format off
+MOZ_DEFINE_ENUM_CLASS_WITH_BASE(ScrollbarLayerType, uint8_t, (
+  None,
+  Thumb,
+  Container
+));
+// clang-format on
 
 /**
  *  It stores data for scroll thumb layer or container layers.
@@ -124,8 +132,7 @@ struct ScrollbarData {
 };
 
 /**
- * Infrequently changing layer attributes that require no special
- * serialization work.
+ * Infrequently changing layer attributes.
  */
 class SimpleLayerAttributes final {
   friend struct IPC::ParamTraits<mozilla::layers::SimpleLayerAttributes>;
@@ -236,7 +243,7 @@ class SimpleLayerAttributes final {
   }
 
   bool SetFixedPositionData(ScrollableLayerGuid::ViewID aTargetViewId,
-                            const LayerPoint& aAnchor, int32_t aSides) {
+                            const LayerPoint& aAnchor, SideBits aSides) {
     if (mFixedPositionData && mFixedPositionData->mScrollId == aTargetViewId &&
         mFixedPositionData->mAnchor == aAnchor &&
         mFixedPositionData->mSides == aSides) {
@@ -326,8 +333,8 @@ class SimpleLayerAttributes final {
     return mFixedPositionData ? mFixedPositionData->mAnchor : LayerPoint();
   }
 
-  int32_t GetFixedPositionSides() const {
-    return mFixedPositionData ? mFixedPositionData->mSides : eSideBitsNone;
+  SideBits GetFixedPositionSides() const {
+    return mFixedPositionData ? mFixedPositionData->mSides : SideBits::eNone;
   }
 
   bool IsStickyPosition() const { return !!mStickyPositionData; }
@@ -377,9 +384,11 @@ class SimpleLayerAttributes final {
   struct FixedPositionData {
     ScrollableLayerGuid::ViewID mScrollId;
     LayerPoint mAnchor;
-    int32_t mSides;
+    SideBits mSides;
   };
   Maybe<FixedPositionData> mFixedPositionData;
+  friend struct IPC::ParamTraits<
+      mozilla::layers::SimpleLayerAttributes::FixedPositionData>;
 
   struct StickyPositionData {
     ScrollableLayerGuid::ViewID mScrollId;
@@ -387,11 +396,11 @@ class SimpleLayerAttributes final {
     LayerRectAbsolute mInner;
   };
   Maybe<StickyPositionData> mStickyPositionData;
+  friend struct IPC::ParamTraits<
+      mozilla::layers::SimpleLayerAttributes::StickyPositionData>;
 
-  /**
-   * This class may only contain plain-old-data members that can be safely
-   * copied over IPC. Make sure to add new members to operator ==.
-   */
+  // Make sure to add new members to operator== and the ParamTraits template
+  // instantiation.
 };
 
 }  // namespace layers

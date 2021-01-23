@@ -2,14 +2,13 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-@depends(check_build_environment, prepare_configure_options, prepare_mozconfig,
-         old_configure, old_configure_assignments, '--cache-file')
+@depends(host_for_sub_configure, target_for_sub_configure, check_build_environment,
+         js_configure_args, prepare_mozconfig, old_configure,
+         old_configure_assignments, '--cache-file')
 @imports('errno')
-@imports('itertools')
 @imports('logging')
 @imports('os')
 @imports('pickle')
-@imports('subprocess')
 @imports('sys')
 @imports(_from='__main__', _import='config_status')
 @imports(_from='__builtin__', _import='OSError')
@@ -17,8 +16,7 @@
 @imports(_from='__builtin__', _import='object')
 @imports(_from='mozbuild.configure', _import='ConfigureSandbox')
 @imports(_from='mozbuild.configure.util', _import='ConfigureOutputHandler')
-@imports(_from='mozbuild.util', _import='encode')
-def js_subconfigure(build_env, prepare_configure_options, mozconfig,
+def js_subconfigure(host, target, build_env, js_configure_args, mozconfig,
                     old_configure, old_configure_assignments, cache_file):
 
     class PrefixOutput(object):
@@ -48,24 +46,8 @@ def js_subconfigure(build_env, prepare_configure_options, mozconfig,
     substs = dict(old_configure['substs'])
     assignments = dict(old_configure_assignments)
     environ = dict(os.environ)
-    if prepare_configure_options.extra_env:
-        environ.update(prepare_configure_options.extra_env)
 
-    options = [
-        o for o in prepare_configure_options.options
-        # --with-system-nspr will have been converted into the relevant $NSPR_CFLAGS
-        # and $NSPR_LIBS.
-        if not o.startswith('--with-system-nspr')
-    ]
-
-    if not substs.get('ENABLE_INTL_API'):
-        options.append('--without-intl-api')
-
-    if substs.get('NSPR_CFLAGS') or substs.get('NSPR_LIBS'):
-        options.append(
-            '--with-nspr-cflags=%s' % ' '.join(substs.get('NSPR_CFLAGS', [])))
-        options.append(
-            '--with-nspr-libs=%s' % ' '.join(substs.get('NSPR_LIBS', [])))
+    options = [host, target] +  js_configure_args
 
     options.append('--prefix=%s/dist' % build_env.topobjdir)
 
@@ -91,14 +73,14 @@ def js_subconfigure(build_env, prepare_configure_options, mozconfig,
     # automatically inherited from subconfigure. We assume the relevant ones
     # have a corresponding AC_SUBST in old-configure, making them available
     # in `substs`.
-    for var in itertools.chain((
+    for var in (
         'MOZ_SYSTEM_ZLIB', 'MOZ_ZLIB_CFLAGS', 'MOZ_ZLIB_LIBS',
         'MOZ_APP_NAME', 'MOZ_APP_REMOTINGNAME', 'MOZ_DEV_EDITION',
         'STLPORT_LIBS', 'DIST', 'MOZ_LINKER', 'ZLIB_IN_MOZGLUE', 'RANLIB',
         'AR', 'CPP', 'CC', 'CXX', 'CPPFLAGS', 'CFLAGS', 'CXXFLAGS',
         'LDFLAGS', 'HOST_CC', 'HOST_CXX', 'HOST_CPPFLAGS',
         'HOST_CXXFLAGS', 'HOST_LDFLAGS'
-    ), prepare_configure_options.extra_env):
+    ):
         if var not in from_assignment and var in substs:
             value = substs[var]
         elif var in assignments:
@@ -123,7 +105,7 @@ def js_subconfigure(build_env, prepare_configure_options, mozconfig,
         with open(data_file, 'rb') as f:
             previous_args = pickle.load(f)
 
-    cache_file = cache_file or './config.cache'
+    cache_file = cache_file[0] if cache_file else './config.cache'
     cache_file = os.path.join(build_env.topobjdir, cache_file)
 
     try:

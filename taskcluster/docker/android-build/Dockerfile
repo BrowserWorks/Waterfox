@@ -19,10 +19,12 @@ RUN apt-get update && \
       curl \
       file \
       gnupg \
+      jq \
       less \
       openssh-client \
       procps \
       python-cryptography \
+      python-dev \
       python-pip \
       python-setuptools \
       python-virtualenv \
@@ -32,6 +34,7 @@ RUN apt-get update && \
       tar \
       unzip \
       uuid \
+      valgrind \
       vim \
       wget \
       yasm \

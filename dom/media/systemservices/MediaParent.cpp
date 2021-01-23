@@ -12,7 +12,6 @@
 #include "MediaUtils.h"
 #include "MediaEngine.h"
 #include "VideoUtils.h"
-#include "nsAutoPtr.h"
 #include "nsThreadUtils.h"
 #include "nsNetCID.h"
 #include "nsNetUtil.h"
@@ -86,7 +85,7 @@ class OriginKeyStore : public nsISupports {
       // Avoid int64_t* <-> void* casting offset
       OriginKey since(nsCString(), aSinceWhen / PR_USEC_PER_SEC);
       for (auto iter = mKeys.Iter(); !iter.Done(); iter.Next()) {
-        nsAutoPtr<OriginKey>& originKey = iter.Data();
+        auto originKey = iter.UserData();
         LOG((((originKey->mSecondsStamp >= since.mSecondsStamp)
                   ? "%s: REMOVE %" PRId64 " >= %" PRId64
                   : "%s: KEEP   %" PRId64 " < %" PRId64),
@@ -158,7 +157,7 @@ class OriginKeyStore : public nsISupports {
 
   class OriginKeysLoader : public OriginKeysTable {
    public:
-    OriginKeysLoader() {}
+    OriginKeysLoader() = default;
 
     nsresult GetPrincipalKey(const ipc::PrincipalInfo& aPrincipalInfo,
                              nsCString& aResult, bool aPersist = false) {
@@ -378,7 +377,7 @@ class OriginKeyStore : public nsISupports {
   virtual ~OriginKeyStore() {
     StaticMutexAutoLock lock(sOriginKeyStoreMutex);
     sOriginKeyStore = nullptr;
-    LOG((__FUNCTION__));
+    LOG(("%s", __FUNCTION__));
   }
 
  public:
@@ -441,7 +440,7 @@ mozilla::ipc::IPCResult Parent<Super>::RecvGetPrincipalKey(
 
         nsresult rv;
         nsAutoCString result;
-        if (IsPincipalInfoPrivate(aPrincipalInfo)) {
+        if (IsPrincipalInfoPrivate(aPrincipalInfo)) {
           rv = sOriginKeyStore->mPrivateBrowsingOriginKeys.GetPrincipalKey(
               aPrincipalInfo, result);
         } else {
@@ -509,7 +508,7 @@ template <class Super>
 void Parent<Super>::ActorDestroy(ActorDestroyReason aWhy) {
   // No more IPC from here
   mDestroyed = true;
-  LOG((__FUNCTION__));
+  LOG(("%s", __FUNCTION__));
 }
 
 template <class Super>

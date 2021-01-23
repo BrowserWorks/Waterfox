@@ -1,7 +1,9 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-function run_test() {
+"use strict";
+
+add_task(async () => {
   var cs = Cc["@mozilla.org/cookieService;1"].getService(Ci.nsICookieService);
   var cm = Cc["@mozilla.org/cookiemanager;1"].getService(Ci.nsICookieManager);
   var expiry = (Date.now() + 1000) * 1000;
@@ -18,8 +20,13 @@ function run_test() {
     true,
     expiry,
     {},
-    Ci.nsICookie2.SAMESITE_UNSET
+    Ci.nsICookie.SAMESITE_NONE
   );
   Assert.equal(cm.countCookiesFromHost("a"), 1);
-  Assert.equal(cs.getCookieString(NetUtil.newURI("http://a"), null), "foo=bar");
-}
+
+  CookieXPCShellUtils.createServer({ hosts: ["a"] });
+  const cookies = await CookieXPCShellUtils.getCookieStringFromDocument(
+    "http://a/"
+  );
+  Assert.equal(cookies, "foo=bar");
+});

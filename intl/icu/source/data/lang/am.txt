@@ -99,6 +99,7 @@ am{
         car{"ካሪብ"}
         cay{"ካዩጋ"}
         cch{"አትሳም"}
+        ccp{"ቻክማ"}
         ce{"ችችን"}
         ceb{"ካቡዋኖ"}
         cgg{"ቺጋኛ"}
@@ -164,6 +165,7 @@ am{
         eu{"ባስክኛ"}
         ewo{"ኤዎንዶ"}
         fa{"ፐርሺያኛ"}
+        fa_AF{"ዳሪኛ"}
         ff{"ፉላህ"}
         fi{"ፊኒሽ"}
         fil{"ፊሊፒንኛ"}
@@ -488,6 +490,14 @@ am{
         zxx{"ቋንቋዊ ይዘት አይደለም"}
         zza{"ዛዛ"}
     }
+    Languages%long{
+        zh_Hans{"ቀለል ያለ ማንድሪን ቻይንኛ"}
+        zh_Hant{"ባህላዊ ማንድሪን ቻይንኛ"}
+    }
+    Languages%menu{
+        yue{"ቻይና፤ ካንቶንኛ"}
+        zh{"ማንድሪን ቻይንኛ"}
+    }
     Languages%short{
         az{"አዜሪ"}
         en_GB{"የዩናይትድ ኪንግደም እንግሊዝኛ"}
@@ -536,8 +546,8 @@ am{
         Thaa{"ታና"}
         Thai{"ታይ"}
         Tibt{"ቲቤታን"}
-        Zmth{"Zmth"}
-        Zsye{"Zsye"}
+        Zmth{"የሂሳብ መግለጫ"}
+        Zsye{"ኢሞጂ"}
         Zsym{"ምልክቶች"}
         Zxxx{"ያልተጻፈ"}
         Zyyy{"የጋራ"}
@@ -688,7 +698,7 @@ am{
             vaii{"የቫይ አሃዞች"}
         }
     }
-    Version{"2.1.49.82"}
+    Version{"37"}
     characterLabelPattern{
         all{"{0} — ሁሉም"}
         category-list{"{0}: {1}"}

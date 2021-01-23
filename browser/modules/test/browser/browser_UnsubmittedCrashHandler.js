@@ -109,9 +109,14 @@ function createPendingCrashReports(howMany, accessDate) {
   let uuidGenerator = Cc["@mozilla.org/uuid-generator;1"].getService(
     Ci.nsIUUIDGenerator
   );
-  // CrashSubmit expects there to be a ServerURL key-value
-  // pair in the .extra file, so we'll satisfy it.
-  let extraFileContents = "ServerURL=" + SERVER_URL;
+  // Some annotations are always present in the .extra file and CrashSubmit.jsm
+  // expects there to be a ServerURL entry, so we'll add them here.
+  let extraFileContents = JSON.stringify({
+    ServerURL: SERVER_URL,
+    TelemetryServerURL: "http://telemetry.mozilla.org/",
+    TelemetryClientId: "c69e7487-df10-4c98-ab1a-c85660feecf3",
+    TelemetrySessionId: "22af5a41-6e84-4112-b1f7-4cb12cb6f6a5",
+  });
 
   return (async function() {
     let uuids = [];
@@ -147,6 +152,22 @@ function waitForSubmittedReports(reportIDs) {
           let dumpID = propBag.getPropertyAsAString("minidumpID");
           if (dumpID == reportID) {
             return true;
+          }
+          let extra = propBag.getPropertyAsInterface(
+            "extra",
+            Ci.nsIPropertyBag2
+          );
+          const blockedAnnotations = [
+            "ServerURL",
+            "TelemetryClientId",
+            "TelemetryServerURL",
+            "TelemetrySessionId",
+          ];
+          for (const key of blockedAnnotations) {
+            Assert.ok(
+              !extra.hasKey(key),
+              "The " + key + " annotation should have been stripped away"
+            );
           }
         }
         return false;
@@ -575,7 +596,7 @@ add_task(async function test_dont_decrement_chances_on_same_day() {
   let initChances = UnsubmittedCrashHandler.prefs.getIntPref(
     "chancesUntilSuppress"
   );
-  Assert.ok(initChances > 1, "We should start with at least 1 chance.");
+  Assert.greater(initChances, 1, "We should start with at least 1 chance.");
 
   await createPendingCrashReports(1);
   let notification = await UnsubmittedCrashHandler.checkForUnsubmittedCrashReports();
@@ -625,7 +646,7 @@ add_task(async function test_decrement_chances_on_other_day() {
   let initChances = UnsubmittedCrashHandler.prefs.getIntPref(
     "chancesUntilSuppress"
   );
-  Assert.ok(initChances > 1, "We should start with at least 1 chance.");
+  Assert.greater(initChances, 1, "We should start with at least 1 chance.");
 
   await createPendingCrashReports(1);
   let notification = await UnsubmittedCrashHandler.checkForUnsubmittedCrashReports();

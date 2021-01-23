@@ -12,22 +12,6 @@ config = {
     ],
     "replacements": [
         # File, from, to
-        ("{}{}".format(d, f),
-        "ac_add_options --with-branding=mobile/android/branding/beta",
-        "ac_add_options --with-branding=mobile/android/branding/official")
-        for d in ["mobile/android/config/mozconfigs/android-aarch64/",
-                  "mobile/android/config/mozconfigs/android-api-16/",
-                  "mobile/android/config/mozconfigs/android-x86/",
-                  "mobile/android/config/mozconfigs/android-x86_64/"]
-        for f in ["debug", "nightly"]
-    ] + [
-        # File, from, to
-        ("browser/confvars.sh",
-         "ACCEPTED_MAR_CHANNEL_IDS=firefox-mozilla-beta,firefox-mozilla-release",
-         "ACCEPTED_MAR_CHANNEL_IDS=firefox-mozilla-release"),
-        ("browser/confvars.sh",
-         "MAR_CHANNEL_ID=firefox-mozilla-beta",
-         "MAR_CHANNEL_ID=firefox-mozilla-release"),
     ],
 
     "vcs_share_base": os.path.join(ABS_WORK_DIR, 'hg-shared'),

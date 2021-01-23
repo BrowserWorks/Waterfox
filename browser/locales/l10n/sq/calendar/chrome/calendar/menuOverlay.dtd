@@ -1,0 +1,50 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- Event Menu -->
+<!ENTITY event.new.event                        "Veprimtari e Re…">
+<!ENTITY event.new.event.accesskey              "R">
+
+<!ENTITY event.new.task                         "Punë e Re…">
+<!ENTITY event.new.task.accesskey               "P">
+
+<!ENTITY calendar.import.label                  "Importoni…">
+<!ENTITY calendar.import.accesskey              "I">
+
+<!ENTITY calendar.export.label                  "Eksportoni…">
+<!ENTITY calendar.export.accesskey              "E">
+
+<!ENTITY calendar.publish.label                 "Botoni…">
+<!ENTITY calendar.publish.accesskey             "b">
+
+<!ENTITY calendar.deletecalendar.label          "Fshini Kalendarin e Përzgjedhur…">
+<!ENTITY calendar.deletecalendar.accesskey      "F">
+<!ENTITY calendar.unsubscribecalendar.label     "Shpajtohuni Prej Kalendarit të Përzgjedhur…">
+<!ENTITY calendar.unsubscribecalendar.accesskey "U">
+
+<!-- LOCALIZATION NOTE (calendar.removecalendar.label): Removing the calendar
+      is the general action of removing it, while deleting means to clear the
+      data and unsubscribing means just taking it out of the calendar list. -->
+<!ENTITY calendar.removecalendar.label          "Hiqeni Kalendarin e Përzgjedhur…">
+<!ENTITY calendar.removecalendar.accesskey      "H">
+
+
+<!ENTITY calendar.menu.customize.label          "Përshtateni…">
+<!ENTITY calendar.menu.customize.accesskey      "a">
+
+<!ENTITY showUnifinderCmd.label                 "Gjeni Veprimtari">
+<!ENTITY showUnifinderCmd.accesskey             "G">
+<!ENTITY showUnifinderCmd.tooltip               "Hapni/mbyllni kuadratin e gjetjes së veprimtarive">
+
+<!ENTITY calendar.displaytodos.checkbox.label       "Shfaqi Punët në Kalendar">
+<!ENTITY calendar.displaytodos.checkbox.accesskey   "S">
+
+<!ENTITY goTodayCmd.label                       "Sot">
+<!ENTITY goTodayCmd.accesskey                   "S">
+
+<!ENTITY showCurrentView.label                  "Pamja e Tanishme">
+<!ENTITY showCurrentView.accesskey              "P">
+
+<!ENTITY calendar.properties.label              "Veti Kalendari…">
+<!ENTITY calendar.properties.accesskey          "V">

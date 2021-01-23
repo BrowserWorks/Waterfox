@@ -1,0 +1,37 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY securityTitle.label "Bezpečnosť">
+<!ENTITY securityTab.label "Bezpečnosť">
+<!ENTITY securityHeading.label "Ak chcete posielať a prijímať podpísané alebo šifrované správy, mali by ste zadať certifikát pre šifrovanie a certifikát pre digitálne podpisovanie.">
+<!ENTITY encryptionGroupTitle.label "Šifrovanie">
+<!ENTITY encryptionChoiceLabel.label "Prednastavené šifrovanie pri posielaní správ:">
+<!ENTITY neverEncrypt.label "Nikdy (nepoužívať šifrovanie)">
+<!ENTITY neverEncrypt.accesskey "N">
+<!ENTITY alwaysEncryptMessage.label "Vždy (neumožní odoslanie, ak všetci adresáti nemajú certifikát)">
+<!ENTITY alwaysEncryptMessage.accesskey "d">
+<!ENTITY encryptionCert.message "Na šifrovanie a dešifrovanie správ posielaných vám používať tento osobný certifikát:">
+<!ENTITY digitalSign.certificate.button "Vybrať…">
+<!ENTITY digitalSign.certificate.accesskey "b">
+<!ENTITY digitalSign.certificate_clear.button "Vymazať">
+<!ENTITY digitalSign.certificate_clear.accesskey "V">
+<!ENTITY encryption.certificate.button "Vybrať…">
+<!ENTITY encryption.certificate.accesskey "a">
+<!ENTITY encryption.certificate_clear.button "Vymazať">
+<!ENTITY encryption.certificate_clear.accesskey "z">
+<!ENTITY signingGroupTitle.label "Digitálne podpisovanie">
+<!ENTITY signMessage.label "Digitálne podpisovať správy (predvolene)">
+<!ENTITY signMessage.accesskey "D">
+<!ENTITY signingCert.message "Na digitálne podpisovanie správ používať tento osobný certifikát:">
+
+<!ENTITY certificates.label "Certifikáty">
+<!ENTITY manageCerts2.label "Spravovať certifikáty…">
+<!ENTITY manageCerts2.accesskey "S">
+<!ENTITY manageDevices.label "Spravovať bezpečnostné zariadenia…">
+<!ENTITY manageDevices.accesskey "e">
+
+<!-- Strings for the cert picker dialog -->
+<!ENTITY certPicker.title "Vyberte certifikát">
+<!ENTITY certPicker.info  "Certifikát:">
+<!ENTITY certPicker.detailsLabel "Podrobnosti vybraného certifikátu:">

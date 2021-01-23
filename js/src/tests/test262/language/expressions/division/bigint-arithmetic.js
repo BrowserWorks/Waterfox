@@ -1,4 +1,3 @@
-// |reftest| skip-if(!this.hasOwnProperty('BigInt')) -- BigInt is not enabled unconditionally
 // Copyright (C) 2017 Robin Templeton. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 /*---
@@ -1069,4 +1068,5 @@ assert.sameValue(
   0x1n,
   'The result of (-0xFEDCBA9876543210n / -0xFEDCBA9876543210n) is 0x1n'
 );
+
 reportCompare(0, 0);

@@ -9,7 +9,6 @@
 
 #include "mozilla/dom/BasicCardPaymentBinding.h"
 #include "nsPIDOMWindow.h"
-#include "nsIPaymentAddress.h"
 #include "nsTArray.h"
 
 namespace mozilla {
@@ -24,7 +23,8 @@ class BasicCardService final {
   bool IsBasicCardPayment(const nsAString& aSupportedMethods);
   bool IsValidBasicCardRequest(JSContext* aCx, JSObject* aData,
                                nsAString& aErrorMsg);
-  bool IsValidBasicCardErrors(JSContext* aCx, JSObject* aData);
+  void CheckForValidBasicCardErrors(JSContext* aCx, JSObject* aData,
+                                    ErrorResult& aRv);
   bool IsValidExpiryMonth(const nsAString& aExpiryMonth);
   bool IsValidExpiryYear(const nsAString& aExpiryYear);
 

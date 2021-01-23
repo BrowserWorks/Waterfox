@@ -1,0 +1,47 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Уласцівасці поля формы">
+<!ENTITY windowTitleImage.label "Уласцівасці выявы формы">
+<!ENTITY InputType.label "Тып поля:">
+<!ENTITY InputType.accesskey "Т">
+<!ENTITY text.value "Тэкст">
+<!ENTITY password.value "Пароль">
+<!ENTITY checkbox.value "Скрынка адзнакі">
+<!ENTITY radio.value "Радыё кнопка">
+<!ENTITY submit.value "Кнопка падачы">
+<!ENTITY reset.value "Кнопка ўзнаўлення:">
+<!ENTITY file.value "Файл">
+<!ENTITY hidden.value "Схаванае">
+<!ENTITY image.value "Выява">
+<!ENTITY button.value "Кнопка">
+<!ENTITY InputSettings.label "Наладжванні поля">
+<!ENTITY InputName.label "Назва поля:">
+<!ENTITY InputName.accesskey "Н">
+<!ENTITY GroupName.label "Назва групы:">
+<!ENTITY GroupName.accesskey "Н">
+<!ENTITY InputValue.label "Значэнне поля:">
+<!ENTITY InputValue.accesskey "З">
+<!ENTITY InitialValue.label "Пачатковае значэнне:">
+<!ENTITY InitialValue.accesskey "З">
+<!ENTITY InputChecked.label "Спярша адзначаны">
+<!ENTITY InputChecked.accesskey "а">
+<!ENTITY InputSelected.label "Вылучанае спярша">
+<!ENTITY InputSelected.accesskey "с">
+<!ENTITY InputReadOnly.label "Толькі для чытання">
+<!ENTITY InputReadOnly.accesskey "Ч">
+<!ENTITY InputDisabled.label "Забаронена">
+<!ENTITY InputDisabled.accesskey "б">
+<!ENTITY tabIndex.label "Паказальнік зруху:">
+<!ENTITY tabIndex.accesskey "к">
+<!ENTITY TextSize.label "Памер поля:">
+<!ENTITY TextSize.accesskey "П">
+<!ENTITY TextLength.label "Найбольшая даўжыня:">
+<!ENTITY TextLength.accesskey "д">
+<!ENTITY AccessKey.label "Клавіша доступу:">
+<!ENTITY AccessKey.accesskey "К">
+<!ENTITY Accept.label "Прымальныя тыпы:">
+<!ENTITY Accept.accesskey "т">
+<!ENTITY ImageProperties.label "Уласцівасці выявы…">
+<!ENTITY ImageProperties.accesskey "в">

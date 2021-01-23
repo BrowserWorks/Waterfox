@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Window title -->
+
+
+<!ENTITY windowTitle.label "Amdreiñ da daolenn">
+<!ENTITY instructions1.label   "Krouet e vo ur renkad taolenn gant ar saverez evit pep rannbennad en diuzad.">
+<!ENTITY instructions2.label   "Dibabit un arouezenn implijet evit dispartiañ an diuzad e bannoù :">
+<!ENTITY commaRadio.label      "Skej">
+<!ENTITY spaceRadio.label      "Esaouenn">
+<!ENTITY otherRadio.label      "Arouezenn all :">
+<!ENTITY deleteCharCheck.label "Dilemel arouezenn gefarz">
+<!ENTITY collapseSpaces.label  "Leuskel a-gostez an esaouennoù">
+<!ENTITY collapseSpaces.tooltip "Treiñ en ur c'hefarz an esaouennoù en em heuilh">

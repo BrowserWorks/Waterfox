@@ -49,10 +49,8 @@ static nsresult WriteAll(nsIOutputStream* os, const char* buf, uint32_t bufLen,
   return NS_OK;
 }
 
-class nsReceiver final : public nsIRunnable {
+class nsReceiver final : public Runnable {
  public:
-  NS_DECL_THREADSAFE_ISUPPORTS
-
   NS_IMETHOD Run() override {
     nsresult rv;
     char buf[101];
@@ -81,24 +79,21 @@ class nsReceiver final : public nsIRunnable {
     return rv;
   }
 
-  explicit nsReceiver(nsIInputStream* in) : mIn(in), mCount(0) {}
+  explicit nsReceiver(nsIInputStream* in)
+      : Runnable("nsReceiver"), mIn(in), mCount(0) {}
 
   uint32_t GetBytesRead() { return mCount; }
 
  private:
-  ~nsReceiver() {}
+  ~nsReceiver() = default;
 
  protected:
   nsCOMPtr<nsIInputStream> mIn;
   uint32_t mCount;
 };
 
-NS_IMPL_ISUPPORTS(nsReceiver, nsIRunnable)
-
 static nsresult TestPipe(nsIInputStream* in, nsIOutputStream* out) {
   RefPtr<nsReceiver> receiver = new nsReceiver(in);
-  if (!receiver) return NS_ERROR_OUT_OF_MEMORY;
-
   nsresult rv;
 
   nsCOMPtr<nsIThread> thread;
@@ -138,10 +133,8 @@ static nsresult TestPipe(nsIInputStream* in, nsIOutputStream* out) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class nsShortReader final : public nsIRunnable {
+class nsShortReader final : public Runnable {
  public:
-  NS_DECL_THREADSAFE_ISUPPORTS
-
   NS_IMETHOD Run() override {
     nsresult rv;
     char buf[101];
@@ -173,7 +166,8 @@ class nsShortReader final : public nsIRunnable {
     return rv;
   }
 
-  explicit nsShortReader(nsIInputStream* in) : mIn(in), mReceived(0) {
+  explicit nsShortReader(nsIInputStream* in)
+      : Runnable("nsShortReader"), mIn(in), mReceived(0) {
     mMon = new ReentrantMonitor("nsShortReader");
   }
 
@@ -199,7 +193,7 @@ class nsShortReader final : public nsIRunnable {
   }
 
  private:
-  ~nsShortReader() {}
+  ~nsShortReader() = default;
 
  protected:
   nsCOMPtr<nsIInputStream> mIn;
@@ -207,12 +201,8 @@ class nsShortReader final : public nsIRunnable {
   ReentrantMonitor* mMon;
 };
 
-NS_IMPL_ISUPPORTS(nsShortReader, nsIRunnable)
-
 static nsresult TestShortWrites(nsIInputStream* in, nsIOutputStream* out) {
   RefPtr<nsShortReader> receiver = new nsShortReader(in);
-  if (!receiver) return NS_ERROR_OUT_OF_MEMORY;
-
   nsresult rv;
 
   nsCOMPtr<nsIThread> thread;
@@ -253,10 +243,8 @@ static nsresult TestShortWrites(nsIInputStream* in, nsIOutputStream* out) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class nsPump final : public nsIRunnable {
+class nsPump final : public Runnable {
  public:
-  NS_DECL_THREADSAFE_ISUPPORTS
-
   NS_IMETHOD Run() override {
     nsresult rv;
     uint32_t count;
@@ -281,18 +269,16 @@ class nsPump final : public nsIRunnable {
   }
 
   nsPump(nsIInputStream* in, nsIOutputStream* out)
-      : mIn(in), mOut(out), mCount(0) {}
+      : Runnable("nsPump"), mIn(in), mOut(out), mCount(0) {}
 
  private:
-  ~nsPump() {}
+  ~nsPump() = default;
 
  protected:
   nsCOMPtr<nsIInputStream> mIn;
   nsCOMPtr<nsIOutputStream> mOut;
   uint32_t mCount;
 };
-
-NS_IMPL_ISUPPORTS(nsPump, nsIRunnable)
 
 TEST(Pipes, ChainedPipes)
 {

@@ -28,6 +28,8 @@ if (!this.runTest) {
 
     enableTesting();
 
+    Cu.importGlobalProperties(["crypto"]);
+
     Assert.ok(
       typeof testSteps === "function",
       "There should be a testSteps function"
@@ -111,14 +113,18 @@ function init() {
   return request;
 }
 
-function initOrigin(principal, persistence) {
-  let request = Services.qms.initStoragesForPrincipal(principal, persistence);
+function initStorageAndOrigin(principal, persistence) {
+  let request = Services.qms.initStorageAndOrigin(principal, persistence, "ls");
 
   return request;
 }
 
-function getOriginUsage(principal) {
-  let request = Services.qms.getUsageForPrincipal(principal, function() {});
+function getOriginUsage(principal, fromMemory = false) {
+  let request = Services.qms.getUsageForPrincipal(
+    principal,
+    function() {},
+    fromMemory
+  );
 
   return request;
 }
@@ -259,16 +265,20 @@ function getPrincipal(url, attrs) {
   if (!attrs) {
     attrs = {};
   }
-  return Services.scriptSecurityManager.createCodebasePrincipal(uri, attrs);
+  return Services.scriptSecurityManager.createContentPrincipal(uri, attrs);
 }
 
 function getCurrentPrincipal() {
   return Cc["@mozilla.org/systemprincipal;1"].createInstance(Ci.nsIPrincipal);
 }
 
+function getDefaultPrincipal() {
+  return getPrincipal("http://example.com");
+}
+
 function getLocalStorage(principal) {
   if (!principal) {
-    principal = getCurrentPrincipal();
+    principal = getDefaultPrincipal();
   }
 
   return Services.domStorageManager.createStorage(
@@ -295,4 +305,20 @@ function loadSubscript(path) {
   let file = do_get_file(path, false);
   let uri = Services.io.newFileURI(file);
   Services.scriptloader.loadSubScript(uri.spec);
+}
+
+async function readUsageFromUsageFile(usageFile) {
+  let file = await File.createFromNsIFile(usageFile);
+
+  let buffer = await new Promise(resolve => {
+    let reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.readAsArrayBuffer(file);
+  });
+
+  // Manually getting the lower 32-bits because of the lack of support for
+  // 64-bit values currently from DataView/JS (other than the BigInt support
+  // that's currently behind a flag).
+  let view = new DataView(buffer, 8, 4);
+  return view.getUint32();
 }

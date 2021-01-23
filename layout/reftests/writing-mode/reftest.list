@@ -24,14 +24,14 @@ random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) == 1091058-1.html 1091058-1
 == 1094914-1b.html 1094914-1-ref.html
 == 1096224-1a.html 1096224-1-ref.html
 == 1096224-1b.html 1096224-1-ref.html
-fails random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) == 1102175-1a.html 1102175-1-ref.html # Bug 1392106
+random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) == 1102175-1a.html 1102175-1-ref.html # Bug 1392106
 random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) == 1102175-1b.html 1102175-1-ref.html # Bug 1392106
 == 1103613-1.html 1103613-1-ref.html
 == 1105268-1-min-max-dimensions.html 1105268-1-min-max-dimensions-ref.html
 == 1105268-2-min-max-dimensions.html 1105268-2-min-max-dimensions-ref.html
 == 1106669-1-intrinsic-for-container.html 1106669-1-intrinsic-for-container-ref.html
 == 1108923-1-percentage-margins.html 1108923-1-percentage-margins-ref.html
-random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) == 1111944-1-list-marker.html 1111944-1-list-marker-ref.html # Bug 1392106
+fuzzy-if(Android,0-128,0-94) random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) == 1111944-1-list-marker.html 1111944-1-list-marker-ref.html # Bug 1392106
 fuzzy(0-116,0-94) fuzzy-if(winWidget,0-135,0-124) == 1115916-1-vertical-metrics.html 1115916-1-vertical-metrics-ref.html
 == 1117210-1-vertical-baseline-snap.html 1117210-1-vertical-baseline-snap-ref.html
 == 1117227-1-text-overflow.html 1117227-1-text-overflow-ref.html
@@ -62,13 +62,21 @@ fuzzy(0-116,0-94) fuzzy-if(winWidget,0-135,0-124) == 1115916-1-vertical-metrics.
 == ua-style-sheet-size-2.html ua-style-sheet-size-2-ref.html
 
 == ua-style-sheet-fieldset-1.html ua-style-sheet-fieldset-1-ref.html
-skip-if(Android||winWidget) == ua-style-sheet-textarea-1.html ua-style-sheet-textarea-1a-ref.html
-skip-if(!(Android)) == ua-style-sheet-textarea-1.html ua-style-sheet-textarea-1b-ref.html
+
+# These don't like padding on textareas by default different to the UA stylesheet ones.
+# FIXME(emilio): Maybe these should be rewritten to use -moz-appearance: none?
+skip-if(Android||winWidget||!nativeThemePref) == ua-style-sheet-textarea-1.html ua-style-sheet-textarea-1a-ref.html
+skip-if(!(Android&&nativeThemePref)) == ua-style-sheet-textarea-1.html ua-style-sheet-textarea-1b-ref.html
 skip-if(!winWidget) == ua-style-sheet-textarea-1.html ua-style-sheet-textarea-1c-ref.html
+
 fuzzy-if(Android,0-1,0-18) == ua-style-sheet-checkbox-radio-1.html ua-style-sheet-checkbox-radio-1-ref.html
 # Android uses different margins for buttons compared to the ref.
 skip-if(Android) fuzzy-if(skiaContent&&!Android,0-2,0-6) == ua-style-sheet-button-1.html ua-style-sheet-button-1a-ref.html
-skip-if(!(Android)) == ua-style-sheet-button-1.html ua-style-sheet-button-1b-ref.html
+
+# These don't like padding on buttons by default different to the UA stylesheet ones.
+# FIXME(emilio): Maybe these should be rewritten to use -moz-appearance: none?
+skip-if(!(Android&&nativeThemePref)) == ua-style-sheet-button-1.html ua-style-sheet-button-1b-ref.html
+
 # Android uses different margins for buttons compared to the ref.
 skip-if(Android) == ua-style-sheet-input-color-1.html ua-style-sheet-input-color-1-ref.html
 fuzzy-if(gtkWidget,0-1,0-15) == ua-style-sheet-input-number-1.html ua-style-sheet-input-number-1-ref.html
@@ -107,9 +115,9 @@ random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) == 1130907-intrinsic-sizing
 == 1130907-intrinsic-sizing-2.html 1130907-intrinsic-sizing-2-ref.html
 == 1131013-vertical-bidi.html 1131013-vertical-bidi-ref.html
 == 1133945-1-vertical-align.html 1133945-1-vertical-align-ref.html
-skip-if(Android) == 1134744-radio-checkbox-baseline-1.html 1134744-radio-checkbox-baseline-1-ref.html # Disabled on Android until bug 1352238 is fixed.
+== 1134744-radio-checkbox-baseline-1.html 1134744-radio-checkbox-baseline-1-ref.html
 == 1134849-orthogonal-inline.html 1134849-orthogonal-inline-ref.html
-== 1135361-ruby-justify-1.html 1135361-ruby-justify-1-ref.html
+fails-if(geckoview) == 1135361-ruby-justify-1.html 1135361-ruby-justify-1-ref.html # Bug 1558513 for GV
 fuzzy-if(winWidget,0-255,0-163) fuzzy-if(skiaContent,0-159,0-111) == 1136557-1-nested-spans.html 1136557-1-nested-spans-ref.html
 fuzzy-if(winWidget,0-255,0-221) fuzzy-if(skiaContent,0-159,0-111) == 1136557-2-nested-spans.html 1136557-2-nested-spans-ref.html
 fuzzy-if(winWidget,0-255,0-236) == 1136557-3-nested-spans.html 1136557-3-nested-spans-ref.html
@@ -124,6 +132,7 @@ test-pref(dom.meta-viewport.enabled,true) test-pref(font.size.inflation.emPerLin
 pref(dom.meta-viewport.enabled,true) pref(font.size.inflation.emPerLine,15) pref(font.size.inflation.forceEnabled,true) pref(font.size.inflation.lineThreshold,0) != font-inflation-1c.html font-inflation-1d.html
 test-pref(dom.meta-viewport.enabled,true) test-pref(font.size.inflation.emPerLine,15) test-pref(font.size.inflation.forceEnabled,true) test-pref(font.size.inflation.lineThreshold,0) == font-inflation-1c.html font-inflation-1c-ref.html
 test-pref(dom.meta-viewport.enabled,true) test-pref(font.size.inflation.emPerLine,15) test-pref(font.size.inflation.forceEnabled,true) test-pref(font.size.inflation.lineThreshold,0) == font-inflation-1d.html font-inflation-1d-ref.html
+test-pref(dom.meta-viewport.enabled,true) test-pref(font.size.inflation.emPerLine,15) test-pref(font.size.inflation.forceEnabled,true) test-pref(font.size.inflation.lineThreshold,0) test-pref(layout.accessiblecaret.enabled,true) == font-inflation-1e.html font-inflation-1-ref.html
 
 == 1144501-1a-block-end-margin-orthogonal-size.html 1144501-1-block-end-margin-orthogonal-size-ref.html
 == 1144501-1b-block-end-margin-orthogonal-size.html 1144501-1-block-end-margin-orthogonal-size-ref.html
@@ -146,11 +155,11 @@ random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) == 1188061-1-nsChangeHint_C
 random-if(/^Windows\x20NT\x206\.1/.test(http.oscpu)) == 1188061-2-nsChangeHint_UpdateComputedBSize.html 1188061-2-nsChangeHint_UpdateComputedBSize-ref.html # Bug 1392106
 
 # tests involving sideways-lr mode
-== 1193519-sideways-lr-1.html 1193519-sideways-lr-1-ref.html
-== 1193519-sideways-lr-2.html 1193519-sideways-lr-2-ref.html
-fuzzy-if(winWidget,0-3,0-84) fails-if(webrender&&!gtkWidget) == 1193519-sideways-lr-3.html 1193519-sideways-lr-3-ref.html
-fuzzy-if(winWidget,0-3,0-112) fails-if(webrender||Android) == 1193519-sideways-lr-4.html 1193519-sideways-lr-4-ref.html # see bug 1366692. Rounding error with WR enabled, and on Android.
-fuzzy-if(gtkWidget,0-255,0-6) fuzzy-if(cocoaWidget,0-65,0-69) == 1193519-sideways-lr-decoration-1.html 1193519-sideways-lr-decoration-1-ref.html
+random-if(gtkWidget) == 1193519-sideways-lr-1.html 1193519-sideways-lr-1-ref.html
+random-if(gtkWidget) == 1193519-sideways-lr-2.html 1193519-sideways-lr-2-ref.html
+fuzzy-if(winWidget,0-3,0-84) fails-if(webrender&&winWidget) == 1193519-sideways-lr-3.html 1193519-sideways-lr-3-ref.html
+fuzzy-if(winWidget,0-3,0-112) fails-if(webrender&&!cocoaWidget) fails-if(Android) random-if(gtkWidget) == 1193519-sideways-lr-4.html 1193519-sideways-lr-4-ref.html # see bug 1366692. Rounding error with WR enabled, and on Android.
+fuzzy-if(gtkWidget,0-255,0-12) fuzzy-if(cocoaWidget,0-65,0-69) fuzzy-if(geckoview&&webrender,0-255,0-13) == 1193519-sideways-lr-decoration-1.html 1193519-sideways-lr-decoration-1-ref.html
 
 == 1196887-1-computed-display-inline-block.html 1196887-1-computed-display-inline-block-ref.html
 == 1205787-legacy-svg-values-1.html 1205787-legacy-svg-values-1-ref.html

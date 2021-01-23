@@ -1,0 +1,35 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY pref.popups.title              "Vyskakovacie okná">
+
+<!ENTITY pref.popups.caption            "Vyskakovacie okná">
+
+<!ENTITY popupBlock.label               "Blokovať nevyžiadané vyskakovacie okná">
+<!ENTITY popupBlock.accesskey           "B">
+
+<!ENTITY viewPermissions.label          "Spravovať povolenia">
+<!ENTITY viewPermissions.accesskey      "o">
+
+<!ENTITY whenBlock.description          "Pri zablokovaní vyskakovacieho okna:">
+<!ENTITY playSound.label                "Prehrať zvuk:">
+<!ENTITY playSound.accesskey            "e">
+<!ENTITY systemSound.label              "Systémový">
+<!ENTITY systemSound.accesskey          "S">
+<!ENTITY customSound.label              "Vlastný zvukový súbor">
+<!ENTITY customSound.accesskey          "V">
+
+<!ENTITY selectSound.label              "Prehľadávať…">
+<!ENTITY selectSound.accesskey          "r">
+<!ENTITY playSoundButton.label          "Prehrať">
+<!ENTITY playSoundButton.accesskey      "h">
+
+<!ENTITY displayIcon.label              "Zobraziť ikonu v stavovom riadku prehliadača">
+<!ENTITY displayIcon.accesskey          "Z">
+
+<!ENTITY displayNotification.label      "Zobraziť notifikačný panel nad horným okrajom stránky">
+<!ENTITY displayNotification.accesskey  "n">
+
+<!ENTITY popupNote.description          "Poznámka: Blokovanie všetkých vyskakovacích okien môže zabrániť správnej funkčnosti niektorých webových stránok, ako napr. prihlasovacie obrazovky bánk alebo obchodných centier. Ďalšie informácie o spôsobe, ako povoliť zobrazovanie vyskakovacích okien pre určité stránky a zároveň blokovať okná z ostatných stránok, sa dozviete po kliknutí na tlačidlo Pomocník. Aj po zablokovaní však môžu stránky použiť iné metódy na zobrazovanie vyskakovacích okien.">
+

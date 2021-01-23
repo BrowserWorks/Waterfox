@@ -1,0 +1,33 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY windowTitle.label "Proprietăți zonă text">
+
+<!ENTITY Settings.label "Setări">
+
+<!ENTITY TextAreaName.label "Denumire câmp:">
+<!ENTITY TextAreaName.accessKey "N">
+<!ENTITY TextAreaRows.label "Rânduri:">
+<!ENTITY TextAreaRows.accessKey "R">
+<!ENTITY TextAreaCols.label "Coloane:">
+<!ENTITY TextAreaCols.accessKey "C">
+<!ENTITY TextAreaReadOnly.label "Doar-citire">
+<!ENTITY TextAreaReadOnly.accessKey "o">
+<!ENTITY TextAreaDisabled.label "Inactiv">
+<!ENTITY TextAreaDisabled.accessKey "I">
+<!ENTITY TextAreaTabIndex.label "Index file:">
+<!ENTITY TextAreaTabIndex.accessKey "I">
+<!ENTITY TextAreaAccessKey.label "Tastă acces:">
+<!ENTITY TextAreaAccessKey.accessKey "s">
+<!ENTITY InitialText.label "Text inițial:">
+<!ENTITY InitialText.accessKey "T">
+
+<!ENTITY TextAreaWrap.label "Mod de încadrare:">
+<!ENTITY TextAreaWrap.accessKey "f">
+<!ENTITY WrapDefault.value "Implicit">
+<!ENTITY WrapOff.value "Fără">
+<!ENTITY WrapHard.value "'Hard'">
+<!ENTITY WrapSoft.value "'Soft'">
+<!ENTITY WrapPhysical.value "Fizic">
+<!ENTITY WrapVirtual.value "Virtual">
